@@ -3141,7 +3141,7 @@ git commit -m "feat(skins): iran-icu-as-found preset and Solar (Jalali) date for
 - Consumes: `ResolvedSkin` (Task 5), the audio API names from Tasks 12–16 (written here so Stage 4b has one page to read; the names are fixed by this plan).
 - Produces: the field-by-field mapping Stage 4b implements, and the renderer/engine request IDs RR-1…RR-6, E-4a-1…E-4a-3.
 
-- [ ] **Step 1: Write the document**
+- [x] **Step 1: Write the document**
 
 Create `packages/skins/CONTRACT.md`:
 
@@ -3213,12 +3213,12 @@ bars and lamps from these fields.
 A `null` table or cell means "not published" and must never be filled with invented values.
 ````
 
-- [ ] **Step 2: Check every file and symbol it names exists on this branch or is marked as a request**
+- [x] **Step 2: Check every file and symbol it names exists on this branch or is marked as a request**
 
 Run: `grep -n "LaneConfig\|eraseGapPx\|gainMmPerMv\|THEME\b\|drawChrome\|TileOptions" packages/renderer/src/*.ts | head -20 && grep -n "EcgFilterMode\|HrMethod" packages/engine-core/src/types.ts packages/engine-core/src/l3/hr.ts`
 Expected: each renderer/engine name in the table appears in the output.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/skins/CONTRACT.md
