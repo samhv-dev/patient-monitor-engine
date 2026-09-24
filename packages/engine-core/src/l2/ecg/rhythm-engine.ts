@@ -177,15 +177,42 @@ function flutterRatio(st: RhythmState, s: Sfc32State): number {
   return r;
 }
 
+/**
+ * Rate calibration (review M1: the formulas alone gave 32.5 bpm at a 40 target and 159.6 at 180) [ENG].
+ * Pairs [target bpm, command bpm]: the command fed to afThresholdMv/afRefractoryS that yields the target mean
+ * ventricular rate. Made by simulating the model (rhythm engine alone, 600 s × seeds 11–13, commands 30–300 bpm)
+ * and inverting the measured rate curve by linear interpolation; the test checks it on an unseen seed.
+ * Above ~150 the refractory floor (AF_MIN_REFRACTORY_S) dominates, so the command climbs steeply.
+ */
+const AF_RATE_CAL: ReadonlyArray<readonly [number, number]> = [
+  [20, 30], [40, 45.1], [50, 51.8], [60, 59.1], [70, 68.8], [80, 79.1], [90, 89.0], [100, 101.5], [110, 110.1],
+  [120, 116.6], [130, 124.9], [140, 141.3], [150, 160.5], [160, 189.1], [170, 230.8], [180, 274.0],
+];
+
+/** The command (bpm) that makes the AF junction's mean rate equal `hr` (piecewise-linear in AF_RATE_CAL). */
+export function afCommandBpm(hr: number): number {
+  const t = AF_RATE_CAL;
+  if (hr <= (t[0] as readonly [number, number])[0]) return (t[0] as readonly [number, number])[1];
+  for (let i = 1; i < t.length; i++) {
+    const [x1, y1] = t[i] as readonly [number, number];
+    if (hr <= x1) {
+      const [x0, y0] = t[i - 1] as readonly [number, number];
+      return y0 + ((hr - x0) * (y1 - y0)) / (x1 - x0);
+    }
+  }
+  return (t[t.length - 1] as readonly [number, number])[1];
+}
+
 /** AF junction threshold (mV above reset) for a target ventricular rate `hr`. */
 export function afThresholdMv(hr: number): number {
-  const rr = (60 * AF_RATE_CORRECTION) / hr;
+  const rr = (60 * AF_RATE_CORRECTION) / afCommandBpm(hr);
   return AF_THETA_K * rr * rr;
 }
 
 /** AF junction refractory period that gives a mean ventricular rate of `hr`. */
 export function afRefractoryS(hr: number): number {
-  return Math.max(AF_MIN_REFRACTORY_S, (60 * AF_RATE_CORRECTION) / hr - afThresholdMv(hr) / AF_DRIVE_MV_S);
+  const rr = (60 * AF_RATE_CORRECTION) / afCommandBpm(hr);
+  return Math.max(AF_MIN_REFRACTORY_S, rr - (AF_THETA_K * rr * rr) / AF_DRIVE_MV_S);
 }
 
 function drawFWave(t0: number, s: Sfc32State): FWave {

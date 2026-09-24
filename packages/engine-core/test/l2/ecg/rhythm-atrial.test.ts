@@ -22,11 +22,11 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(st.fwaves.length).toBeGreaterThan(0);
   });
 
-  it('afib mean ventricular rate follows the hr target within ±10% (60–150 bpm)', () => {
-    for (const hr of [60, 100, 150]) {
-      const { beats } = runRhythm('afib', 600, { hr, seed: 11 });
+  it('afib mean ventricular rate follows the hr target within ±5% across the whole 40–180 range (review M1)', () => {
+    for (const hr of [40, 50, 60, 80, 100, 120, 150, 180]) {
+      const { beats } = runRhythm('afib', 600, { hr, seed: 21 }); // not a calibration seed (11–13)
       const got = 60 / mean(diffs(beats.map((b) => b.t)));
-      expect(Math.abs(got - hr) / hr).toBeLessThan(0.1);
+      expect(Math.abs(got - hr) / hr, `target ${hr}, got ${got.toFixed(1)}`).toBeLessThan(0.05);
     }
   });
 
