@@ -6,7 +6,8 @@
 import { Clock, TICK_MS } from './clock/clock.ts';
 import { RingBuffer } from './buffers/ring.ts';
 import { constantRamp, rampValue, retarget, type RampState } from './l1/ramp.ts';
-import { ECG_RATE, generateVcg, pruneEvents } from './l2/ecg/generator.ts';
+import { ECG_RATE, pruneEvents } from './l2/ecg/generator.ts';
+import { ecgFrontEnd, ecgGenInputs, generateEcg } from './l2/ecg/ecg-gen.ts';
 import { drawHrvPhase, type HrvPhase } from './l2/ecg/hrv.ts';
 import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmState } from './l2/ecg/rhythm-engine.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
@@ -14,7 +15,7 @@ import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrMeasure, hrOnQrs, type HrState } from './l3/hr.ts';
 import { createQrsState, qrsStep, type QrsState } from './l3/qrs.ts';
-import { defaultModifiers } from './modifiers.ts';
+import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 import { createRngState, type Sfc32State, type StreamName } from './rng/sfc32.ts';
 import {
   LEAD_IDS,
@@ -86,7 +87,6 @@ const toneId = (d: Detection) => `qrs-${d.r}`;
 type Listener = { fn: (e: EngineEvent) => void; types: Set<EngineEventType> | null };
 
 const ECG_CHANNELS = new Set<ChannelId>([...LEAD_IDS, 'vcgX', 'vcgY', 'vcgZ']);
-const MOD_KEYS = new Set(['pvc', 'rsa', 'hrvScale', 'qtc', 'artefact']);
 
 function rhythmCtx(ps: PipelineState): RhythmCtx {
   return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv };
@@ -335,8 +335,8 @@ class Engine implements MonitorEngine {
     const by = this.bufs.get('vcgY') as RingBuffer;
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const laneBufs = ps.lanes.map((l) => this.bufs.get(l) as RingBuffer);
-    generateVcg(
-      { events: ps.rhythm.events, fwaves: ps.rhythm.fwaves, hrv: ps.hrv, noiseLevel: ps.mods.artefact.noise, noise: ps.rng.noise },
+    generateEcg(
+      ecgGenInputs(ps, this.mainsHz),
       ps.n,
       end,
       (n, x, y, z) => {
@@ -344,10 +344,11 @@ class Engine implements MonitorEngine {
         by.write(n, y);
         bz.write(n, z);
         for (let i = 0; i < ps.lanes.length; i++) {
-          const v = filterSample(sections, ps.laneFilter[i] as number[], projectLead(ps.lanes[i] as LeadId, x, y, z));
+          const lead = ps.lanes[i] as LeadId;
+          const v = filterSample(sections, ps.laneFilter[i] as number[], ecgFrontEnd(ps.mods, this.mainsHz, lead, n, projectLead(lead, x, y, z)));
           (laneBufs[i] as RingBuffer).write(n, v);
         }
-        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, projectLead(DETECTION_LEAD, x, y, z)));
+        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z))));
         if (r >= 0) {
           hrOnQrs(ps.hrm, r / ECG_RATE);
           ps.detections.push({ r, n });
@@ -405,19 +406,7 @@ class Engine implements MonitorEngine {
         );
       }
       case 'setModifiers': {
-        const m = cmd.modifiers;
-        const bad = Object.keys(m).filter((k) => !MOD_KEYS.has(k));
-        if (bad.length) return `modifiers not implemented until later stages: ${bad.join(', ')}`;
-        const p = m.pvc;
-        if (p && !(p.pattern === 'single' || p.pattern === 'bigeminy')) return 'pvc.pattern must be single or bigeminy in Stage 1';
-        if (p && !(p.probability >= 0 && p.probability <= 0.9)) return 'pvc.probability must be 0–0.9';
-        return (
-          numReason('rsa', m.rsa, 0, 1) ??
-          numReason('hrvScale', m.hrvScale, 0, 3) ??
-          numReason('qtc', m.qtc, 300, 650) ??
-          numReason('artefact.noise', m.artefact?.noise, 0, 10) ??
-          rampReason(cmd.ramp)
-        );
+        return validateModifiers(cmd.modifiers) ?? rampReason(cmd.ramp);
       }
       case 'device': {
         const a = cmd.action;
@@ -449,8 +438,7 @@ class Engine implements MonitorEngine {
         return;
       }
       case 'setModifiers': {
-        const m = cmd.modifiers;
-        ps.mods = { ...ps.mods, ...m, artefact: { ...ps.mods.artefact, ...(m.artefact ?? {}) } };
+        ps.mods = mergeModifiers(ps.mods, cmd.modifiers);
         return;
       }
       case 'device': {

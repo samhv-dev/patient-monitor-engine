@@ -25,7 +25,7 @@ export type {
   ArtefactSpec, BbbKind, BurstSpec, CprSpec, Modifiers, ModifiersPatch, PacerFault, PacerOpts, PacSpec, PjcSpec,
   PvcPattern, PvcSpec, RhythmGroup, RhythmId, RhythmOpts, ShockSpec, StSpec, StTerritory, TcpSpec,
 } from './l2/ecg/api-types.ts';
-import type { Modifiers, RhythmId, RhythmOpts } from './l2/ecg/api-types.ts';
+import type { ModifiersPatch, RhythmId, RhythmOpts } from './l2/ecg/api-types.ts';
 
 /** Stage 1 subset of the brief's PatientProfile (same shape as the scenario JSON `patient`, §7.4). */
 export interface PatientProfile {
@@ -62,7 +62,7 @@ export type Command = CommandBase &
   (
     | { type: 'setTarget'; variable: StateVar; value: number; ramp?: Ramp }
     | { type: 'setRhythm'; rhythm: RhythmId; opts?: RhythmOpts; when?: 'now' | 'nextBeat'; respectRefractory?: boolean }
-    | { type: 'setModifiers'; modifiers: Partial<Modifiers>; ramp?: Ramp }
+    | { type: 'setModifiers'; modifiers: ModifiersPatch; ramp?: Ramp }
     | { type: 'device'; action: DeviceAction }
   );
 

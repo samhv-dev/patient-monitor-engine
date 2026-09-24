@@ -1744,7 +1744,7 @@ The only engine.ts change in this stage (see "Parallel-work rules"): `setModifie
 - Consumes: Task 3 (`validateModifiers`, `mergeModifiers`, `RhythmState`).
 - Produces: `EcgGenInputs extends GenInputs { mods; st: RhythmState; mainsHz: 50 | 60; artefactRng }`, `VcgSource = (g, n, s, acc: Float64Array) => void`, `VCG_SOURCES: VcgSource[]`, `FrontEndStage = (mods, mainsHz, lead, n, v) => number`, `FRONT_END_STAGES`, `ecgGenInputs(ps, mainsHz)`, `generateEcg(g, from, to, sink)`, `ecgFrontEnd(mods, mainsHz, lead, n, v)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/engine/engine-seams.test.ts` with exactly:
 
@@ -1781,13 +1781,13 @@ describe('engine seams (Stage 5)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/engine-seams.test.ts`
 
 Expected: FAIL — the engine still rejects `bbb`, `k` and `artefact.mains` ("modifiers not implemented until later stages").
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/ecg-gen.ts` with exactly:
 
@@ -2022,13 +2022,13 @@ expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bogus: 1 } })).reason
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 -r typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/types.ts packages/engine-core/test/engine/engine-commands.test.ts packages/engine-core/test/engine/engine-seams.test.ts
