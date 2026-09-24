@@ -1859,7 +1859,7 @@ git commit -m "feat(scenario): replay log — inputs and control calls reproduce
 **Interfaces:**
 - Produces: `describeWhen(w)`, `describeTransition(t)`, `manualLabel(w)`; `class ScenarioView { doc, docVersion, stateId, enteredT, paused, history, onEvent(e): boolean, current(), timeInState(simT), next(): NextTransition[], stateLabel(id?) }`; `ControllerSession.scenario: ScenarioView` (fed from every host event); log entries of kind `'scenario'` (`→ vf (arrest)`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // ScenarioView: what a controller rebuilds from the wire alone.
@@ -1925,12 +1925,12 @@ describe('ScenarioView', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/view.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/view.ts"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/scenario/describe.ts`:
 ```ts
@@ -2069,7 +2069,7 @@ export class ScenarioView {
 }
 ```
 
-- [ ] **Step 4: Give `ControllerSession` a view and a `scenario` log line**
+- [x] **Step 4: Give `ControllerSession` a view and a `scenario` log line**
 
 In `packages/controller/src/session/controller-session.ts`:
 1. Replace `} from '../protocol.ts';` (the end of the first import) with:
@@ -2098,7 +2098,7 @@ import { ScenarioView } from '../scenario/view.ts';
     else if (e.type === 'scenario') this.addLog('scenario', `→ ${e.stateId}${e.transitionId ? ` (${e.transitionId})` : ''}`);
 ```
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/view.test.ts
@@ -2106,7 +2106,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller typecheck
 ```
 Expected: `Tests  4 passed (4)`; typecheck exit 0.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/controller/src/scenario/describe.ts packages/controller/src/scenario/view.ts packages/controller/test/scenario/view.test.ts packages/controller/src/session/controller-session.ts

@@ -18,13 +18,14 @@ import {
   type WireEvent,
   type WireMessage,
 } from '../protocol.ts';
+import { ScenarioView } from '../scenario/view.ts';
 
 export interface LogEntry {
   /** Wall time (epoch ms) the entry was made. */
   at: number;
   /** Host sim time, when known. */
   simT: SimSeconds | null;
-  kind: 'command' | 'ack' | 'applied' | 'note' | 'status' | 'alarm' | 'marker';
+  kind: 'command' | 'ack' | 'applied' | 'note' | 'status' | 'alarm' | 'marker' | 'scenario';
   text: string;
   commandId?: string;
 }
@@ -55,6 +56,8 @@ export class ControllerSession {
   hostOnline = false;
   hostEngineVersion: string | null = null;
   bookmarks: string[] = [];
+  /** The host's scenario as seen from here (Stage 6b). */
+  readonly scenario = new ScenarioView();
   private readonly o: ControllerSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
@@ -165,10 +168,12 @@ export class ControllerSession {
 
   private onEvent(e: WireEvent): void {
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t);
+    this.scenario.onEvent(e);
     if (e.type === 'state') this.state = e;
     else if (e.type === 'measurement') Object.assign(this.measurements, e.values);
     else if (e.type === 'alarm') this.addLog('alarm', `${e.priority} ${e.state}: ${e.text}`);
     else if (e.type === 'marker') this.addLog('marker', e.kind);
+    else if (e.type === 'scenario') this.addLog('scenario', `→ ${e.stateId}${e.transitionId ? ` (${e.transitionId})` : ''}`);
     else if (e.type === 'commandApplied') {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
