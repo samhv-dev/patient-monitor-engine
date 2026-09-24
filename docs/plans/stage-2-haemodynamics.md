@@ -385,7 +385,7 @@ git commit -m "feat(engine-core): stage 2 public types (sensors, line/cpr events
 - Consumes: `ramp.ts` (`RampState`, `constantRamp`, `rampValue`, `retarget`), `ControlFlag` (Task 1).
 - Produces: `interface VarSpec { def; min; max; stage: 2|3|4|5|7; manual: 'target'|'derived' }`, `STATE_SCHEMA: Record<StateVar, VarSpec>`, `STATE_VARS: StateVar[]`, `type L1Var = Exclude<StateVar,'hr'>`, `interface L1State { mode: 'manual'; vars: Record<L1Var, RampState>; pinned: StateVar[] }`, `createL1State(profile?: PatientProfile): L1State`, `l1Value(st, v: L1Var, t): number`, `isRamping(r: RampState, t): boolean`, `validateTarget(variable: StateVar, value: number|undefined, ramp: Ramp|undefined): string|undefined`, `setL1Target(st, v: L1Var, t, value, ramp?)`, `pinVar(st, v: StateVar)`, `releaseVar(st, v: StateVar|'all')`, `l1Flags(st, t, hrRamp: RampState, overrides: readonly StateVar[]): Partial<Record<StateVar, ControlFlag>>`. `hr` stays in the engine's Stage 1 ramp.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/engine-core/test/l1/state.test.ts`:
 
@@ -457,12 +457,12 @@ describe('l1/ramp exp curve (Stage 2, brief §4.9: τ = duration/3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1`
 Expected: FAIL — `state.test.ts` cannot load `../../src/l1/state.ts`; the new ramp test fails (Stage 1's curve uses τ = duration/5).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l1/state.ts`:
 
@@ -611,12 +611,12 @@ function shape(curve: RampState['curve'], u: number): number {
   if (curve === 'exp') return (1 - Math.exp(-3 * u)) / (1 - Math.exp(-3));
 ```
 
-- [ ] **Step 4: Run them to see them pass**
+- [x] **Step 4: Run them to see them pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1`
 Expected: PASS (9 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l1 packages/engine-core/test/l1

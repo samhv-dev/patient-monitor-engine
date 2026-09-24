@@ -37,3 +37,10 @@ describe('l1/ramp', () => {
     expect(rampValue(r2, 20)).toBe(60);
   });
 });
+
+describe('l1/ramp exp curve (Stage 2, brief §4.9: τ = duration/3)', () => {
+  it('reaches 1 − e^(−1) of the normalised change at one third of the duration', () => {
+    const r = retarget(constantRamp(0), 0, 1, { durationS: 30, curve: 'exp' });
+    expect(rampValue(r, 10)).toBeCloseTo((1 - Math.exp(-1)) / (1 - Math.exp(-3)), 9);
+  });
+});
