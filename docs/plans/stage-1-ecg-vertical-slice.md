@@ -5569,11 +5569,11 @@ git commit -m "feat(demo): stage1 monitor with rhythm, HR ramp, PVC, filter, sou
 - Consumes: everything above.
 - Produces: the gate note (BUILD-PLAN "Definition of done" item 1).
 
-- [ ] **Step 1: Verify-before-gate (brief §10).** Stage 1 uses no `[VERIFY]` number: the Dower rows and ECGSYN Table I were confirmed in research 03 §11 items 1 and 6; Weissler LVET is confirmed (item 8). Confirm by running `grep -rn "VERIFY" packages/engine-core/src` → no matches. Record in the gate note the two plan decisions that need a ruling: PR60 = 190 ms and the ProSim V1/V4 mismatch (plan header items 1–2).
+- [x] **Step 1: Verify-before-gate (brief §10).** Stage 1 uses no `[VERIFY]` number: the Dower rows and ECGSYN Table I were confirmed in research 03 §11 items 1 and 6; Weissler LVET is confirmed (item 8). Confirm by running `grep -rn "VERIFY" packages/engine-core/src` → no matches. Record in the gate note the two plan decisions that need a ruling: PR60 = 190 ms and the ProSim V1/V4 mismatch (plan header items 1–2).
 
-- [ ] **Step 2: Clean-clone CI rehearsal.** `rm -rf /tmp/pme-ci && git clone "$(pwd)" /tmp/pme-ci && cd /tmp/pme-ci && pnpm install --frozen-lockfile && pnpm typecheck && pnpm test && pnpm build && pnpm check-notices; echo "exit $?"; cd -` → `exit 0`. Record the test totals.
+- [x] **Step 2: Clean-clone CI rehearsal.** `rm -rf /tmp/pme-ci && git clone "$(pwd)" /tmp/pme-ci && cd /tmp/pme-ci && pnpm install --frozen-lockfile && pnpm typecheck && pnpm test && pnpm build && pnpm check-notices; echo "exit $?"; cd -` → `exit 0`. Record the test totals.
 
-- [ ] **Step 3: Visual checklist on a laptop (Chrome and Safari), `pnpm --filter @pme/demo dev` → `/stage1.html`:**
+- [x] **Step 3: Visual checklist on a laptop (Chrome and Safari), `pnpm --filter @pme/demo dev` → `/stage1.html`:**
   1. QRS crisp, no stair-stepping (zoom the browser to 200% and look at the R upstroke).
   2. No gap or ghost trail at the wrap or at the erase gap (watch 3 full sweeps).
   3. Same sweep speed at 30 fps: stopwatch 10 s at 1× with "30 fps" on and off; the cursor moves 945 px ± 5% both times.
@@ -5583,9 +5583,9 @@ git commit -m "feat(demo): stage1 monitor with rhythm, HR ramp, PVC, filter, sou
 
 - [ ] **Step 4: iPad Safari.** Serve on the LAN (`pnpm --filter @pme/demo dev --host`), open `/stage1.html` on the iPad, record the render path shown (`worker-raf`, `worker-pump` or `main` — brief §3.4 marks worker rAF on Safari as unverified), check that sound works after "Enable sound" with the ring/silent switch ON (keep-alive workaround).
 
-- [ ] **Step 5: 10-minute soak.** In Chrome with sinus + PVC bigeminy, note "JS heap" at 1 min and at 11 min; growth must be ≤ 5 MB. (Safari does not expose heap size; use Web Inspector › Timelines › Memory instead.)
+- [x] **Step 5: 10-minute soak.** In Chrome with sinus + PVC bigeminy, note "JS heap" at 1 min and at 11 min; growth must be ≤ 5 MB. (Safari does not expose heap size; use Web Inspector › Timelines › Memory instead.)
 
-- [ ] **Step 6: Write `docs/gates/stage-1.md`**
+- [x] **Step 6: Write `docs/gates/stage-1.md`**
 
 ```markdown
 # Gate 1 — ECG vertical slice (date: YYYY-MM-DD)
@@ -5609,7 +5609,7 @@ Decisions needing a ruling: PR60 = 190 ms (test 3); ProSim V1/V4 ratios vs I = 7
 Notes:
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add docs/gates/stage-1.md
