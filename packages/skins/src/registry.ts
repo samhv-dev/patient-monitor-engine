@@ -8,6 +8,8 @@ import mindrayLike from './data/skins/mindray-like.json';
 import philipsLike from './data/skins/philips-like.json';
 import saadatLike from './data/skins/saadat-like.json';
 import zollLike from './data/skins/zoll-like.json';
+import ecgGrid from './data/themes/ecg-grid.json';
+import projectorLight from './data/themes/projector-light.json';
 import type { DeepPartial, Preset, Skin, Theme } from './types.ts';
 
 /** A skin file as stored: complete (no `extends`) or a partial over a base. */
@@ -24,7 +26,10 @@ export const SKINS: Readonly<Record<string, SkinSource>> = {
   'lifepak-like': lifepakLike as unknown as SkinSource,
 };
 
-export const THEMES: Readonly<Record<string, Theme>> = {};
+export const THEMES: Readonly<Record<string, Theme>> = {
+  'projector-light': projectorLight as unknown as Theme,
+  'ecg-grid': ecgGrid as unknown as Theme,
+};
 
 export const PRESETS: Readonly<Record<string, Preset>> = {};
 

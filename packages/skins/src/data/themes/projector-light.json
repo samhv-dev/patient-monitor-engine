@@ -1,0 +1,20 @@
+{
+  "schema": "pme-theme/1",
+  "kind": "theme",
+  "id": "projector-light",
+  "label": "Projector (light background)",
+  "scheme": "projector-light",
+  "background": "#FFFFFF",
+  "foreground": "#000000",
+  "chrome": { "divider": "#A0A0A0", "windowFrame": "#404040", "pageBox": { "bg": "#000000", "fg": "#FFFFFF" }, "patientCategoryColor": "#000000", "grid": null },
+  "colorTransform": { "kind": "darken-to-contrast", "minRatio": 4.5 },
+  "messageBarIdle": { "bg": "#E0E0E0", "fg": "#000000" },
+  "provenance": {
+    "scheme": { "tag": "documented", "source": "research/05 §2.7 (Infirmary Integrated 'Light' projector scheme); brief §3.8" },
+    "background": { "tag": "eng", "source": "ENG" },
+    "foreground": { "tag": "eng", "source": "ENG" },
+    "chrome": { "tag": "eng", "source": "ENG" },
+    "colorTransform": { "tag": "eng", "source": "ENG", "note": "keep hue, darken to WCAG 4.5:1 on white" },
+    "messageBarIdle": { "tag": "eng", "source": "ENG" }
+  }
+}

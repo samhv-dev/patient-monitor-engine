@@ -2788,7 +2788,7 @@ git commit -m "feat(skins): mindray-like, ge-like (limits null, unverified) and 
 - Consumes: `applyTheme` inside `resolveSkin` (Task 5), `darkenToContrast` (Task 3).
 - Produces: `THEMES`, `THEME_IDS = ['projector-light', 'ecg-grid']`; `resolveSkin(id, { theme })`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/themes.test.ts`:
 
@@ -2823,12 +2823,12 @@ describe('themes', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/themes.test.ts`
 Expected: FAIL, `unknown theme: projector-light`.
 
-- [ ] **Step 3: Write the themes**
+- [x] **Step 3: Write the themes**
 
 Create `packages/skins/src/data/themes/projector-light.json`:
 
@@ -2884,7 +2884,7 @@ Create `packages/skins/src/data/themes/ecg-grid.json`:
 }
 ```
 
-- [ ] **Step 4: Replace the registry**
+- [x] **Step 4: Replace the registry**
 
 ```ts
 // Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
@@ -2928,12 +2928,12 @@ export const PRESET_IDS = Object.keys(PRESETS);
 export const THEME_IDS = Object.keys(THEMES);
 ```
 
-- [ ] **Step 5: Run the package**
+- [x] **Step 5: Run the package**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: all pass; the contrast suite now runs every skin × {none, projector-light, ecg-grid}; 12 theme snapshots written.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test

@@ -1,0 +1,24 @@
+{
+  "schema": "pme-theme/1",
+  "kind": "theme",
+  "id": "ecg-grid",
+  "label": "ECG paper grid",
+  "scheme": "ecg-grid",
+  "background": "#FFF8F4",
+  "foreground": "#000000",
+  "chrome": {
+    "divider": "#C0A0A0", "windowFrame": "#404040", "pageBox": { "bg": "#000000", "fg": "#FFFFFF" }, "patientCategoryColor": "#000000",
+    "grid": { "minorMm": 1, "majorMm": 5, "minor": "#F4C8C8", "major": "#E08888" }
+  },
+  "colorTransform": { "kind": "darken-to-contrast", "minRatio": 4.5 },
+  "messageBarIdle": { "bg": "#E0E0E0", "fg": "#000000" },
+  "provenance": {
+    "scheme": { "tag": "documented", "source": "research/05 §2.7 (Infirmary Integrated 'Grid' scheme); brief §3.8" },
+    "background": { "tag": "eng", "source": "ENG", "note": "ECG paper tint" },
+    "foreground": { "tag": "eng", "source": "ENG" },
+    "chrome.grid": { "tag": "documented", "source": "brief §6.6 (25 mm/s, 10 mm/mV paper: 1 mm minor, 5 mm major)", "note": "grid colours [ENG]" },
+    "chrome": { "tag": "eng", "source": "ENG" },
+    "colorTransform": { "tag": "eng", "source": "ENG" },
+    "messageBarIdle": { "tag": "eng", "source": "ENG" }
+  }
+}
