@@ -11,9 +11,10 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@pme/audio": "workspace:*",
+    "@pme/controller": "workspace:*",
     "@pme/engine-core": "workspace:*",
     "@pme/renderer": "workspace:*",
-    "@pme/audio": "workspace:*",
-    "@pme/controller": "workspace:*"
+    "@pme/skins": "workspace:*"
   }
 }

@@ -9,7 +9,7 @@ export const K_STRIDE = 7;
 export const SUPPORT_SIGMAS = 4;
 
 /** Wave codes stored in the 7th slot (used by tests and by QRS-span measurement). */
-export const WAVE = { P: 0, Q: 1, R: 2, S: 3, T: 4, U: 5, F: 6, RETRO_P: 7 } as const;
+export const WAVE = { P: 0, Q: 1, R: 2, S: 3, T: 4, U: 5, F: 6, RETRO_P: 7, DELTA: 8, ST: 9, J: 10, ART: 11 } as const;
 export type WaveCode = (typeof WAVE)[keyof typeof WAVE];
 
 export function kernel(
@@ -56,13 +56,13 @@ export function addEventAt(ev: EcgEvent, s: number, acc: Float64Array): void {
   }
 }
 
-/** QRS span of a kernel list: from the earliest Q/R/S τ − 2.5σ to the latest τ + 2.5σ, in ms [ENG]. */
+/** QRS span of a kernel list: from the earliest Q/R/S/delta τ − 2.5σ to the latest τ + 2.5σ, in ms [ENG]. */
 export function qrsSpanMs(k: readonly number[]): number {
   let lo = Infinity;
   let hi = -Infinity;
   for (let i = 0; i < k.length; i += K_STRIDE) {
     const w = k[i + 6];
-    if (w !== WAVE.Q && w !== WAVE.R && w !== WAVE.S) continue;
+    if (w !== WAVE.Q && w !== WAVE.R && w !== WAVE.S && w !== WAVE.DELTA) continue;
     lo = Math.min(lo, (k[i] as number) - 2.5 * (k[i + 1] as number));
     hi = Math.max(hi, (k[i] as number) + 2.5 * (k[i + 2] as number));
   }

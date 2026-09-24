@@ -55,7 +55,7 @@ describe('scenario over a HostSession', () => {
     await waitFor(() => ctl.hostOnline);
     await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
     run(60.02);
-    await waitFor(() => got.some((m) => m.kind === 'event' && m.body.some((e) => e.type === 'commandApplied' && (e.resolved as AppliedResolution).command.issuedBy === 'scenario' && (e.resolved as AppliedResolution).command.type === 'setRhythm' && ((e.resolved as AppliedResolution).command as { rhythm: string }).rhythm === 'vtMono')));
+    await waitFor(() => got.some((m) => m.kind === 'event' && m.body.some((e) => e.type === 'commandApplied' && (e.resolved as AppliedResolution).command.issuedBy === 'scenario' && (e.resolved as AppliedResolution).command.type === 'setRhythm' && ((e.resolved as AppliedResolution).command as { rhythm: string }).rhythm === 'vfCoarse')));
     const applied = got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied');
     const setup0 = applied.filter((e) => (e.resolved as AppliedResolution).command.stageGroup === 'scenario-1');
     expect(new Set(setup0.map((e) => e.tick)).size).toBe(1); // one stage group → one tick

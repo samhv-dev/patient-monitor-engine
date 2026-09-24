@@ -1,0 +1,54 @@
+{
+  "schema": "pme-skin/1",
+  "kind": "skin",
+  "id": "zoll-like",
+  "label": "ZOLL-like (defibrillator monitor)",
+  "extends": "iec-defaults",
+  "colors": {
+    "ECG": "#00FF00", "HR": "#00FF00",
+    "SpO2": "#00FFFF", "PLETH": "#00FFFF", "PR": "#00FFFF",
+    "NIBP": "#FFFFFF",
+    "ART": "#FF4040", "CVP": "#40A0FF", "PAP": "#FFFF00",
+    "RESP": "#FFFFFF", "CO2": "#FFFF00", "AWRR": "#FFFF00",
+    "TEMP": "#FFFFFF"
+  },
+  "layout": {
+    "lanes": ["ECG1", "PLETH", "CO2"],
+    "tiles": [
+      [{ "param": "HR", "size": "large" }, { "param": "NIBP", "extras": ["MEAN"] }],
+      [{ "param": "SpO2", "extras": ["PR"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR"] }]
+    ]
+  },
+  "sweep": { "co2": { "options": [3.13, 6.25, 12.5], "default": 6.25 } },
+  "ecg": { "gainOptions": [0.125, 0.25, 0.5, 1, 2, 4, "AUTO"], "gainDefault": 1, "gainLabel": "cm-per-mV" },
+  "beep": { "defaultOn": false },
+  "alarms": { "repeatS": { "L1": 15, "L2": 30, "L3": null } },
+  "syncMarker": "r-above",
+  "defib": { "energyAdultJ": 120, "energyPaedJ": 50, "aedSequenceJ": null, "chargeTimeS": null, "readyTimeoutS": 60, "toneSet": "zoll-like" },
+  "pacer": { "rateDefault": 70, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 5 }, "modeDefault": "demand", "pausePct": null },
+  "provenance": {
+    "colors": { "tag": "assumed", "source": "research/05 §2.1 (ZOLL: user-configurable colour, black background)", "note": "conventional parameter colours; no ZOLL factory table retrieved" },
+    "layout.lanes": { "tag": "eng", "source": "ENG" },
+    "layout.tiles": { "tag": "eng", "source": "ENG" },
+    "sweep.co2": { "tag": "documented", "source": "research/05 §2.2 (ZOLL CO2 3.13/6.25/12.5, default 6.25)" },
+    "ecg.gainOptions": { "tag": "documented", "source": "research/05 §2.2 (0.125-4 cm/mV or AUTO)" },
+    "ecg.gainDefault": { "tag": "documented", "source": "research/05 §2.2 (1 cm/mV); brief §3.5" },
+    "ecg.gainLabel": { "tag": "documented", "source": "research/05 §2.2" },
+    "beep.defaultOn": { "tag": "documented", "source": "research/05 §2.5 (HR/PR tone Off); brief §3.6" },
+    "alarms.repeatS": { "tag": "documented", "source": "research/05 §2.5 (high every 15 s, medium every 30 s, low not repeated)" },
+    "syncMarker": { "tag": "documented", "source": "research/05 §2.6 (R-wave markers above the ECG)" },
+    "defib.energyAdultJ": { "tag": "documented", "source": "research/05 §2.6; brief §6.5" },
+    "defib.energyPaedJ": { "tag": "documented", "source": "research/05 §2.6; brief §6.5" },
+    "defib.aedSequenceJ": { "tag": "documented", "source": "research/05 §2.6", "note": "no escalation sequence given" },
+    "defib.chargeTimeS": { "tag": "unverified", "source": "brief §6.5", "note": "ZOLL charge time not given" },
+    "defib.readyTimeoutS": { "tag": "documented", "source": "research/05 §2.6 (continuous tone 50 s + higher tone 10 s, then disarm)" },
+    "defib.toneSet": { "tag": "documented", "source": "research/05 §2.6" },
+    "pacer.rateDefault": { "tag": "assumed", "source": "research/05 §2.6", "note": "ZOLL default rate not given; example shows 80 ppm" },
+    "pacer.rateRange": { "tag": "documented", "source": "research/05 §2.6; brief §6.5" },
+    "pacer.mADefault": { "tag": "documented", "source": "research/05 §2.6 (0 when paused)" },
+    "pacer.mARange": { "tag": "documented", "source": "research/05 §2.6 (10-140 mA); brief §6.5" },
+    "pacer.mAStep": { "tag": "documented", "source": "research/05 §2.6 (+10 / -5 mA)" },
+    "pacer.modeDefault": { "tag": "documented", "source": "research/05 §2.6 (example 'Demand')" },
+    "pacer.pausePct": { "tag": "documented", "source": "research/05 §2.6", "note": "no ZOLL pause mode given" }
+  }
+}

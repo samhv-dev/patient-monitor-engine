@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 4a: skins and alarm sounds</title>
+    <style>
+      body { margin: 0; background: #111; color: #ccc; font: 14px system-ui, sans-serif; }
+      #controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 8px 12px; background: #1b1b1b; }
+      #controls label { display: inline-flex; gap: 6px; align-items: center; }
+      button, select, input { font: inherit; }
+      #screen { width: 1280px; height: 640px; display: grid; grid-template-rows: 30px 26px 1fr; overflow: hidden; }
+      #header, #bar { display: flex; align-items: center; gap: 12px; padding: 0 8px; white-space: nowrap; }
+      #body { display: flex; min-height: 0; }
+      #waves { position: relative; min-width: 0; }
+      #waves canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+      #tiles { flex: 1; display: flex; min-width: 0; }
+      .col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      .tile { flex: 1; position: relative; padding: 4px 8px; line-height: 1; overflow: hidden; }
+      .tile.large { flex: 2; }
+      .tile .v { font-size: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+      .tile.large .v { font-size: 88px; }
+      .tile .x { font-size: 12px; opacity: .9; margin-top: 4px; }
+      .bell { position: absolute; left: 6px; bottom: 4px; font-size: 13px; }
+      .lamp { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; }
+      #alarmdemo { display: flex; gap: 6px; }
+      #alarmdemo span { padding: 2px 8px; }
+      #diag { font: 12px ui-monospace, monospace; white-space: pre; padding: 8px 12px; color: #8f8; }
+      @keyframes pme-flash { 50% { opacity: 0; } }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <label>Skin <select id="skin"></select></label>
+      <label>Theme <select id="theme"></select></label>
+      <button id="sound">Enable sound</button>
+      <span id="levels"></span>
+      <button id="clear">Clear alarms</button>
+      <button id="silence">Silence</button>
+      <label>Volume <input id="vol" type="range" /> <span id="volVal"></span></label>
+      <span id="devtones"></span>
+      <span id="beeps"></span>
+    </div>
+    <div id="screen"></div>
+    <div id="diag"></div>
+    <script type="module" src="./src/stage4a/preview.ts"></script>
+  </body>
+</html>

@@ -85,7 +85,8 @@ describe('ScenarioDriver', () => {
     const log = driver.runner!.log;
     const rhythm = log.filter((e) => e.op === 'dispatch' && e.type === 'setRhythm');
     expect(rhythm.every((e) => e.op === 'dispatch' && e.accepted)).toBe(true);
-    expect(driver.notes).toContain('vfCoarse: coarse VF shown as VT 240 until Stage 5');
+    // Stage 5 merged: vfCoarse is a real rhythm now, so no stand-in note is needed for the ACLS path.
+    expect(driver.notes.filter((n) => n.startsWith('vfCoarse'))).toEqual([]);
     expect(host.engine.now().simT).toBe(600);
   }, SLOW);
 

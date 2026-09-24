@@ -2,78 +2,78 @@
   "entries": [
     {
       "op": "start",
-      "t": 0.32,
+      "t": 1.18,
       "seed": 42
     },
     {
       "op": "enter",
-      "t": 0.32,
+      "t": 1.18,
       "stateId": "stable"
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-0",
       "type": "setRhythm",
       "accepted": true,
-      "tick": 19
+      "tick": 62
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-1",
       "type": "setTarget",
       "accepted": true,
-      "tick": 19
+      "tick": 62
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-2",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 19,
+      "tick": 62,
       "reason": "scenario only: the engine does not model attachSensor yet"
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-3",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 19,
+      "tick": 62,
       "reason": "scenario only: the engine does not model attachSensor yet"
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-4",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 19,
+      "tick": 62,
       "reason": "scenario only: the engine does not model attachSensor yet"
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-5",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 19,
+      "tick": 62,
       "reason": "scenario only: the engine does not model attachSensor yet"
     },
     {
       "op": "dispatch",
-      "t": 0.32,
+      "t": 1.18,
       "commandId": "scenario-1-6",
       "type": "device",
       "accepted": false,
-      "tick": 16,
+      "tick": 59,
       "reason": "device nibp is not implemented until later stages"
     },
     {
       "op": "advance",
-      "t": 0.34,
+      "t": 1.18,
       "inputs": [
         {
           "kind": "values",
@@ -106,27 +106,27 @@
     },
     {
       "op": "trigger",
-      "t": 0.5,
+      "t": 1.98,
       "transitionId": "arrest"
     },
     {
       "op": "advance",
-      "t": 0.5,
+      "t": 1.98,
       "inputs": []
     },
     {
       "op": "enter",
-      "t": 0.5,
+      "t": 1.98,
       "stateId": "vf",
       "transitionId": "arrest"
     },
     {
       "op": "dispatch",
-      "t": 0.5,
+      "t": 1.98,
       "commandId": "scenario-2-0",
       "type": "setRhythm",
       "accepted": true,
-      "tick": 28
+      "tick": 102
     },
     {
       "op": "advance",
@@ -136,7 +136,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 241
+            "hr": 197
           }
         }
       ]
@@ -149,20 +149,20 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 239
+            "hr": 176
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 5,
+      "t": 5.02,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 240
+            "hr": 173
           }
         }
       ]
@@ -175,7 +175,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 240
+            "hr": 175
           }
         }
       ]
@@ -188,27 +188,40 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 240
+            "hr": 174
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 8.16,
+      "t": 8,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 240
+            "hr": 174
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 8.78,
+      "t": 9,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 170
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 9.44,
       "inputs": [
         {
           "kind": "clinical",
@@ -223,20 +236,7 @@
     },
     {
       "op": "advance",
-      "t": 9.14,
-      "inputs": [
-        {
-          "kind": "values",
-          "rank": 2,
-          "values": {
-            "hr": 241
-          }
-        }
-      ]
-    },
-    {
-      "op": "advance",
-      "t": 9.5,
+      "t": 9.48,
       "inputs": [
         {
           "kind": "clinical",
@@ -250,7 +250,7 @@
     },
     {
       "op": "roll",
-      "t": 9.5,
+      "t": 9.48,
       "transitionId": "shockVf",
       "u": 0.06174324615858495,
       "p": 0.3,
@@ -258,29 +258,29 @@
     },
     {
       "op": "enter",
-      "t": 9.5,
+      "t": 9.48,
       "stateId": "rosc",
       "transitionId": "shockVf"
     },
     {
       "op": "dispatch",
-      "t": 9.5,
+      "t": 9.48,
       "commandId": "scenario-3-0",
       "type": "setRhythm",
       "accepted": true,
-      "tick": 478
+      "tick": 477
     },
     {
       "op": "dispatch",
-      "t": 9.5,
+      "t": 9.48,
       "commandId": "scenario-3-1",
       "type": "setTarget",
       "accepted": true,
-      "tick": 478
+      "tick": 477
     },
     {
       "op": "advance",
-      "t": 9.76,
+      "t": 9.48,
       "inputs": [
         {
           "kind": "values",
@@ -293,39 +293,39 @@
     },
     {
       "op": "advance",
-      "t": 10.2,
+      "t": 10,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 241
+            "hr": 157
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 11.08,
+      "t": 11,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 222
+            "hr": 146
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 12.18,
+      "t": 12,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 176
+            "hr": 129
           }
         }
       ]
@@ -338,7 +338,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 162
+            "hr": 119
           }
         }
       ]
@@ -351,7 +351,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 139
+            "hr": 115
           }
         }
       ]
@@ -364,7 +364,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 121
+            "hr": 111
           }
         }
       ]
@@ -377,7 +377,7 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 108
+            "hr": 104
           }
         }
       ]
@@ -397,26 +397,22 @@
     },
     {
       "op": "advance",
-      "t": 18.06,
+      "t": 18,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 107
+            "hr": 108
           }
         }
       ]
     }
   ],
-  "notes": [
-    "/states/1/onEnter/0/rhythm: \"vfCoarse\" is not in this engine",
-    "/states/2/onEnter/0/rhythm: \"vfFine\" is not in this engine",
-    "vfCoarse: coarse VF shown as VT 240 until Stage 5"
-  ],
+  "notes": [],
   "lines": [
-    "0.32 s → stable",
-    "0.50 s → vf (arrest)",
-    "9.50 s → rosc (shockVf)"
+    "1.18 s → stable",
+    "1.98 s → vf (arrest)",
+    "9.48 s → rosc (shockVf)"
   ]
 }
