@@ -2114,7 +2114,7 @@ git commit -m "feat(controller): pme-relay bin (Node type stripping), README, We
 - Consumes: `TransportBase` (4), `backoffDelay` (7), `WebSocketCtor/WebSocketLike` (7), `startRelay` (8, test).
 - Produces: `HOST_SIGNAL_ID = 'host'`; `interface SignalData { type: 'offer'|'answer'|'candidate'; sdp?; candidate? }`; `interface Signaling { selfId; send(to, data); onSignal(fn); close() }`; `createRelaySignaling({ url, session, peerId, WebSocketImpl? }): Signaling` (connects to `<url>/signal?session=&peer=`, queues until open); `interface PeerConnectionLike`, `interface DataChannelLike`, `type PeerConnectionCtor`; `interface WebRtcOptions { signaling; remoteId; initiator; RTCPeerConnectionImpl?; iceServers? ([]); backoff? }`; `createWebRtcTransport(o, firstOffer?): WebRtcTransport` (`ManagedTransport & { dropForTest() }`; the initiator creates the ordered channel `'pme'` and re-offers with backoff when it dies; a responder closes for good); `acceptWebRtcPeers({ signaling, onTransport, RTCPeerConnectionImpl?, iceServers? }): () => void` (host side; a second offer from the same peer replaces its transport). Early trickled ICE candidates are held until the remote description is set (the browser run failed without this).
 
-- [ ] **Step 1: Write the fake peer connection and the failing test**
+- [x] **Step 1: Write the fake peer connection and the failing test**
 
 `packages/controller/test/fakes/fake-rtc.ts` (Node has no WebRTC; offers/answers carry the connection's registry id as their "sdp"):
 ```ts
@@ -2254,12 +2254,12 @@ describe('WebRTC reconnect', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/webrtc.test.ts`
 Expected: FAIL — cannot load `../../src/transport/webrtc.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/transport/webrtc.ts`:
 ```ts
@@ -2533,12 +2533,12 @@ export function acceptWebRtcPeers(o: {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: all transport files pass — in-process 6, postMessage 6, broadcastChannel 6, websocket 6 (unit) + 6 (relay), webrtc 7; typecheck exits 0. The real browser WebRTC path is exercised in Task 23.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/transport/webrtc.ts packages/controller/test/fakes/fake-rtc.ts packages/controller/test/transport/webrtc.test.ts
