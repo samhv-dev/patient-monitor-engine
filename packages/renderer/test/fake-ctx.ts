@@ -1,7 +1,7 @@
 // A recording stand-in for CanvasRenderingContext2D (tests run in Node without a canvas).
 import type { Ctx2D } from '../src/ctx.ts';
 
-export type Call = { op: string; args: number[]; style?: string; clip?: number[] | null };
+export type Call = { op: string; args: number[]; style?: string; clip?: number[][] | null };
 
 export class FakeCtx implements Ctx2D {
   fillStyle: string | CanvasGradient | CanvasPattern = '#000';
@@ -17,6 +17,7 @@ export class FakeCtx implements Ctx2D {
     this.calls.push({ op: 'fillRect', args: [x, y, w, h], style: String(this.fillStyle) });
   }
   beginPath(): void {
+    this.pathRects = [];
     this.calls.push({ op: 'beginPath', args: [] });
   }
   moveTo(x: number, y: number): void {
@@ -33,10 +34,10 @@ export class FakeCtx implements Ctx2D {
     this.calls.push({ op: 'fillText', args: [x, y] });
   }
   setTransform(): void {}
-  /** Active clip rectangle [x, y, w, h] (null = whole canvas); tracked through save/restore. */
-  clipRect: number[] | null = null;
-  private clipStack: (number[] | null)[] = [];
-  private pathRect: number[] | null = null;
+  /** Active clip: a union of rectangles [x, y, w, h] (null = whole canvas); tracked through save/restore. */
+  clipRect: number[][] | null = null;
+  private clipStack: (number[][] | null)[] = [];
+  private pathRects: number[][] = [];
   save(): void {
     this.clipStack.push(this.clipRect);
   }
@@ -44,10 +45,10 @@ export class FakeCtx implements Ctx2D {
     this.clipRect = this.clipStack.pop() ?? null;
   }
   rect(x: number, y: number, w: number, h: number): void {
-    this.pathRect = [x, y, w, h];
+    this.pathRects.push([x, y, w, h]);
   }
   clip(): void {
-    this.clipRect = this.pathRect;
+    this.clipRect = [...this.pathRects];
   }
   clear(): void {
     this.calls = [];
