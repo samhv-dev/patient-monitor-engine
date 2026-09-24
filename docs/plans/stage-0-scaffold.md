@@ -905,7 +905,7 @@ git commit -m "feat(engine-core): fixed-step clock with 250 ms clamp, time scale
 - Consumes: the dev dependencies pinned in Task 2.
 - Produces: NOTICES rows `N-001`…`N-005` (IDs that `check-notices` in Task 7 parses: a table row starting `| N-### |`). Later stages append `N-006` onward.
 
-- [ ] **Step 1: Write `LICENSE`**
+- [x] **Step 1: Write `LICENSE`**
 
 ```text
 MIT License
@@ -931,7 +931,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-- [ ] **Step 2: Append the build-only dependency rows to `NOTICES.md`**
+- [x] **Step 2: Append the build-only dependency rows to `NOTICES.md`**
 
 Append these lines directly under the existing `|---|---|---|---|---|---|` line (TypeScript and Playwright are Apache-2.0, not MIT as brief §8 says; they are build/test tools that are never redistributed, so no `LICENSES/` text is required — see the note row):
 
@@ -943,7 +943,7 @@ Append these lines directly under the existing `|---|---|---|---|---|---|` line 
 | N-005 | @types/node 22.20.4 (build only) | https://github.com/DefinitelyTyped/DefinitelyTyped | MIT | Node type definitions for tests and scripts | 2026-09-24 |
 ```
 
-- [ ] **Step 3: Update `README.md`**
+- [x] **Step 3: Update `README.md`**
 
 Replace the line `MIT (pending final confirmation). Every third-party item is listed in [NOTICES.md](NOTICES.md).` with:
 ```markdown
@@ -954,7 +954,7 @@ Replace `**Status: design phase (2026-09-24).** There is no code yet.` with:
 **Status: Stage 0 (scaffold) — see [docs/plans/](docs/plans/).** Run `pnpm i && pnpm typecheck && pnpm test && pnpm build`.
 ```
 
-- [ ] **Step 4: Write the PR template**
+- [x] **Step 4: Write the PR template**
 
 `.github/pull_request_template.md`:
 ```markdown
@@ -983,12 +983,12 @@ Replace `**Status: design phase (2026-09-24).** There is no code yet.` with:
 - [ ] Demo page for this stage runs
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run: `grep -c '^| N-00' NOTICES.md && head -3 LICENSE`
 Expected: `5`, then `MIT License`, blank line, `Copyright (c) 2026 Ali Mahdavi and contributors`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add LICENSE NOTICES.md README.md .github/pull_request_template.md

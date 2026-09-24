@@ -12,7 +12,7 @@ An open-source **simulated patient-monitor engine** for web-based ACLS/BLS and O
 - A pure-TypeScript engine runs in a Web Worker and drives a Canvas2D sweep renderer. Audio (Web Audio) runs on the main thread.
 - It embeds as ES modules or as one IIFE file.
 
-**Status: design phase (2026-09-24).** There is no code yet.
+**Status: Stage 0 (scaffold) — see [docs/plans/](docs/plans/).** Run `pnpm i && pnpm typecheck && pnpm test && pnpm build`.
 
 ## Documents
 - [docs/DESIGN-BRIEF.md](docs/DESIGN-BRIEF.md): the spec (architecture, signal models, device behaviour, API, licence policy, validation).
@@ -20,4 +20,4 @@ An open-source **simulated patient-monitor engine** for web-based ACLS/BLS and O
 - Research behind both documents is outside this repo, in `../research/` (reports 00–05).
 
 ## Licence
-MIT (pending final confirmation). Every third-party item is listed in [NOTICES.md](NOTICES.md).
+MIT (see [LICENSE](LICENSE)). Every third-party item is listed in [NOTICES.md](NOTICES.md).
