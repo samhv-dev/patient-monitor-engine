@@ -151,6 +151,22 @@ describe('engine commands', () => {
     expect(Array.from(b)).toEqual(Array.from(a));
   });
 
+  it('restore() drops the discarded timeline from the sample buffers (review M4)', () => {
+    const e = createEngine({ seed: 9 });
+    e.advanceTo(10);
+    const snap = e.snapshot();
+    e.advanceTo(40);
+    e.restore(snap);
+    expect(e.latestSampleIndex('ecgII')).toBe(5050); // 10 s × 500 + the 100 ms look-ahead
+    expect(e.readSamples('ecgII', 5051, new Float32Array(100))).toBe(0); // nothing from the discarded future
+    const fresh = createEngine({ seed: 9 });
+    fresh.restore(snap);
+    const out = new Float32Array(10_000);
+    const n = fresh.readSamples('ecgII', 0, out); // only what the restored engine generated, not 120 s of zeros
+    expect(n).toBeLessThanOrEqual(51);
+    expect(fresh.latestSampleIndex('ecgII')).toBe(5050);
+  });
+
   it('start / pause / setTimeScale / step drive the internal wall-clock pump', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const e = createEngine();

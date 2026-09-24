@@ -46,4 +46,18 @@ describe('buffers/RingBuffer', () => {
     expect(rb.at(43_199_999)).toBe(999);
     expect(rb.at(43_150_123)).toBe(123);
   });
+
+  it('after clear() the retained window starts at the first index written, not capacity back from latest (review M4)', () => {
+    const rb = new RingBuffer(10, 1);
+    for (let i = 0; i < 25; i++) rb.write(i, i);
+    rb.clear();
+    rb.write(12, 1);
+    rb.write(13, 2);
+    expect(rb.latest).toBe(13);
+    expect(rb.oldest).toBe(12);
+    const out = new Float32Array(10);
+    expect(rb.read(0, out)).toBe(2);
+    expect([out[0], out[1]]).toEqual([1, 2]);
+    expect(rb.at(11)).toBeNaN();
+  });
 });

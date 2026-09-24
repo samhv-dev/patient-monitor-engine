@@ -243,6 +243,7 @@ class Engine implements MonitorEngine {
     this.queue = data.queue;
     this.tick = s.tick;
     this.syncLaneBuffers();
+    for (const b of this.bufs.values()) b.clear(); // the discarded timeline's samples are not history (review M4)
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
     this.posted.clear();
