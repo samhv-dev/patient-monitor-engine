@@ -1071,7 +1071,7 @@ git commit -m "feat(controller): postMessage transport for iframes, workers and 
 - Consumes: `TransportBase` (Task 4).
 - Produces: `channelName(session) = 'pme/' + session`; `createBroadcastChannelTransport(session, { BroadcastChannelImpl? }): ManagedTransport` (open at once; a channel never hears its own posts).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/transport/broadcast-channel.test.ts`:
 ```ts
@@ -1087,12 +1087,12 @@ runTransportConformance('broadcastChannel', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/broadcast-channel.test.ts`
 Expected: FAIL — cannot load `../../src/transport/broadcast-channel.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/transport/broadcast-channel.ts`:
 ```ts
@@ -1134,12 +1134,12 @@ export function createBroadcastChannelTransport(
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/broadcast-channel.test.ts`
 Expected: `6 passed`. Node's global `BroadcastChannel` delivers between instances in the same thread, so no fake is needed (verified in the prototype).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/transport/broadcast-channel.ts packages/controller/test/transport/broadcast-channel.test.ts
