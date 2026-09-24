@@ -1387,7 +1387,7 @@ git commit -m "feat(hemo): transducer (fn/ζ), 12 Hz display filter, flush/zero/
 - Consumes: `ejection.ts` (`Pulse`, `pressureAt`), `params.ts` (`breathU`).
 - Produces: `interface Wave { t; a; s }`, `CVP_WAVES`, `CANNON_GAIN` 3, `CVP_RESP_MMHG` 3, `interface CvpState { waves; corr; pendingArea; lastOnset; lastQt }`, `createCvpState()`, `cvpOnP(st, tP)`, `cvpOnBeat(st, tR, qrsMs, qtMs, rr)`, `cvpWavesAt(st, t)`, `cvpAt(st, t, pv, phi, thor)`, `pruneCvp(st, t, arrested)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/hemo/cvp.test.ts`:
 
@@ -1427,12 +1427,12 @@ describe('l2/hemo/cvp (brief §4.2 CVP; research 03 §2.9)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/cvp.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/cvp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/cvp.ts`:
 
@@ -1533,12 +1533,12 @@ export function pruneCvp(st: CvpState, t: number, arrested: boolean): void {
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/cvp.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/cvp.ts packages/engine-core/test/l2/hemo/cvp.test.ts
