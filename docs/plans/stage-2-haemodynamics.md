@@ -5454,13 +5454,13 @@ git commit -m "feat(demo): stage2 monitor — ABP, pleth, CVP lanes, pressure/NI
 - Consumes: everything above.
 - Produces: the gate evidence and the PR (R20).
 
-- [ ] **Step 1: Verify-before-gate (brief §10).** Run `grep -rn "VERIFY" packages/engine-core/src` → expect no matches. The only research items this stage leans on that §11 still lists as open are the Weissler **PEP intercept** (131 vs 133 ms by sex, slope confirmed; irrelevant at the ±20 ms test tolerance) — note it in the gate file.
+- [x] **Step 1: Verify-before-gate (brief §10).** Run `grep -rn "VERIFY" packages/engine-core/src` → expect no matches. The only research items this stage leans on that §11 still lists as open are the Weissler **PEP intercept** (131 vs 133 ms by sex, slope confirmed; irrelevant at the ±20 ms test tolerance) — note it in the gate file.
 
-- [ ] **Step 2: Partition check.** `git diff main --stat -- packages/engine-core/src/l2/ecg packages/engine-core/templates packages/controller` → no output. `git diff main -- packages/engine-core/src/engine.ts | grep '^-' | grep -v '^---'` → only the two changed lines (`const tick` → `let tick`, and the `syncLaneBuffers` deletion condition).
+- [x] **Step 2: Partition check.** `git diff main --stat -- packages/engine-core/src/l2/ecg packages/engine-core/templates packages/controller` → no output. `git diff main -- packages/engine-core/src/engine.ts | grep '^-' | grep -v '^---'` → only the two changed lines (`const tick` → `let tick`, and the `syncLaneBuffers` deletion condition).
 
-- [ ] **Step 3: Clean-clone rehearsal.** `rm -rf "$TMPDIR/pme-ci" && git clone "$(pwd)" "$TMPDIR/pme-ci" && cd "$TMPDIR/pme-ci" && git checkout stage-2-haemodynamics && npx -y pnpm@9.15.9 install --frozen-lockfile && npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices; echo "exit $?"; cd -` → `exit 0`. Record the test totals (engine-core 177, renderer 31, controller 97, audio 19, validation 6, skins 1); `check-notices: OK (1 governed files)` (Stage 1.1's vendored cyrb53). Then the browser smoke suite: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e` → 10 passed (Stage 1 IIFE smoke + Stage 6a host/remote/viewer, latency and screens), ≈ 2 min.
+- [x] **Step 3: Clean-clone rehearsal.** `rm -rf "$TMPDIR/pme-ci" && git clone "$(pwd)" "$TMPDIR/pme-ci" && cd "$TMPDIR/pme-ci" && git checkout stage-2-haemodynamics && npx -y pnpm@9.15.9 install --frozen-lockfile && npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices; echo "exit $?"; cd -` → `exit 0`. Record the test totals (engine-core 177, renderer 31, controller 97, audio 19, validation 6, skins 1); `check-notices: OK (1 governed files)` (Stage 1.1's vendored cyrb53). Then the browser smoke suite: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e` → 10 passed (Stage 1 IIFE smoke + Stage 6a host/remote/viewer, latency and screens), ≈ 2 min.
 
-- [ ] **Step 4: Write `docs/gates/stage-2.md`** (fill every cell with measured values from Tasks 14–21):
+- [x] **Step 4: Write `docs/gates/stage-2.md`** (fill every cell with measured values from Tasks 14–21):
 
 ```markdown
 # Gate 2 — Haemodynamics (date: YYYY-MM-DD)
@@ -5490,14 +5490,14 @@ Open research item: Weissler PEP intercept by sex (research 03 §11 #10).
 Notes:
 ```
 
-- [ ] **Step 5: Commit the gate note**
+- [x] **Step 5: Commit the gate note**
 
 ```bash
 git add docs/gates/stage-2.md
 git commit -m "docs(gates): stage 2 gate evidence" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 6: Push and open the pull request (do not merge)**
+- [x] **Step 6: Push and open the pull request (do not merge)**
 
 ```bash
 git push -u origin stage-2-haemodynamics
