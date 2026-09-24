@@ -12,6 +12,11 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@pme/engine-core": "workspace:*"
+    "@pme/engine-core": "workspace:*",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.1",
+    "happy-dom": "20.14.5"
   }
 }
