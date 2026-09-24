@@ -148,7 +148,7 @@ New kernel wave codes (delta, ST, J, artefact) and every new QRS-T template: WPW
 - Consumes: Stage 1 `kernels.ts` (`kernel`, `K_STRIDE`, `qrsSpanMs`), `templates.ts` (`narrowKernels`, `templateKernels`, `VEC`, `T_END_AFTER_PEAK_S`, `WIDE_QT_EXTRA_MS`, `TemplateId`).
 - Produces: `WAVE.DELTA = 8, WAVE.ST = 9, WAVE.J = 10, WAVE.ART = 11`; `type BeatTemplateId = TemplateId | 'wpw' | 'aberrant' | 'pacedV' | 'pvc2' | 'pvc3' | 'agonal'`; `beatKernels(id, qtMs, scale = 1, pre = 1): number[]`; `wpwKernels(qtMs, scale?, pre?)`; `fiducialOf(k): number` (s); `beatQrsMs(id, pre?)`; `rotateZ(k, rad): number[]` (in place); constants `RBBB_RPRIME_VEC`, `WPW_PR_MS = 100`, `DELTA_S = 0.035`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/beat-templates.test.ts` with exactly:
 
@@ -203,13 +203,13 @@ describe('Stage 5 beat templates', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/beat-templates.test.ts`
 
 Expected: FAIL — cannot resolve `../../../../src/l2/ecg/beat-templates.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/kernels.ts`, replace:
 
@@ -365,13 +365,13 @@ export function rotateZ(k: number[], rad: number): number[] {
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/beat-templates.ts packages/engine-core/src/l2/ecg/kernels.ts packages/engine-core/test/l2/ecg/s5/beat-templates.test.ts
