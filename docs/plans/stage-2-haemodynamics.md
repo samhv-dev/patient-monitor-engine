@@ -4447,7 +4447,7 @@ git commit -m "test(nibp): stage 2 acceptance 9 — cycle time, AAMI bias/SD, AF
 - Consumes: the wired engine.
 - Produces: evidence for "determinism hash" and "no drift for 125 Hz over 24 h sim".
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/hemo-longrun.test.ts`:
 
@@ -4501,17 +4501,17 @@ describe('Stage 2 determinism and drift', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-longrun.test.ts`
 Expected: PASS (2 tests); the 24 h run takes ≈ 70 s and must not print "Timeout calling onTaskUpdate".
 
-- [ ] **Step 3: Run the whole engine-core suite**
+- [x] **Step 3: Run the whole engine-core suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core test && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS — 35 files, 177 tests (112 existing + 65 new), ≈ 75–80 s.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/hemo-longrun.test.ts
