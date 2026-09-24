@@ -1,0 +1,54 @@
+{
+  "schema": "pme-skin/1",
+  "kind": "skin",
+  "id": "lifepak-like",
+  "label": "LIFEPAK-like (defibrillator monitor)",
+  "extends": "iec-defaults",
+  "colors": {
+    "ECG": "#00FF00", "HR": "#00FF00",
+    "SpO2": "#00FFFF", "PLETH": "#00FFFF", "PR": "#00FFFF",
+    "NIBP": "#FFFFFF",
+    "ART": "#FF4040", "CVP": "#40A0FF", "PAP": "#FFFF00",
+    "RESP": "#FFFFFF", "CO2": "#FFFF00", "AWRR": "#FFFF00",
+    "TEMP": "#FFFFFF"
+  },
+  "layout": {
+    "lanes": ["ECG1", "PLETH", "CO2"],
+    "tiles": [
+      [{ "param": "HR", "size": "large" }, { "param": "NIBP", "extras": ["MEAN"] }],
+      [{ "param": "SpO2", "extras": ["PR"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR"] }]
+    ]
+  },
+  "sweep": { "co2": { "options": [12.5, 25], "default": 12.5 } },
+  "ecg": { "laneLeads": ["II"] },
+  "nibp": { "modeDefault": "MANUAL", "autoIntervalMin": null, "initialInflation": { "adult": 160, "paed": 140, "neo": 100 } },
+  "beep": { "defaultOn": false },
+  "syncMarker": "triangle-mid-qrs",
+  "defib": { "energyAdultJ": 200, "energyPaedJ": 50, "aedSequenceJ": [200, 300, 360], "chargeTimeS": { "200": 7, "360": 10 }, "readyTimeoutS": 60, "toneSet": "lifepak-like" },
+  "pacer": { "rateDefault": 60, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 10 }, "modeDefault": "demand", "pausePct": 25 },
+  "provenance": {
+    "colors": { "tag": "assumed", "source": "research/05 §2.1", "note": "conventional parameter colours; no LIFEPAK factory table retrieved" },
+    "layout.lanes": { "tag": "eng", "source": "ENG" },
+    "layout.tiles": { "tag": "eng", "source": "ENG" },
+    "sweep.co2": { "tag": "documented", "source": "research/05 §2.2 (screen CO2 12.5 mm/s); brief §6.8" },
+    "ecg.laneLeads": { "tag": "documented", "source": "research/05 §2.2 (channel 1 lead II)" },
+    "nibp.modeDefault": { "tag": "documented", "source": "research/05 §2.4 (auto interval OFF by default)" },
+    "nibp.autoIntervalMin": { "tag": "documented", "source": "research/05 §2.4" },
+    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §2.4 (160 mmHg)", "note": "paed/neo [ENG]" },
+    "beep.defaultOn": { "tag": "documented", "source": "research/05 §2.5 (SpO2 tone Off); brief §3.6" },
+    "syncMarker": { "tag": "documented", "source": "research/05 §2.6 (triangle near the middle of each QRS)" },
+    "defib.energyAdultJ": { "tag": "documented", "source": "research/05 §2.6 (pads 200 J); brief §6.5" },
+    "defib.energyPaedJ": { "tag": "assumed", "source": "research/05 §2.6", "note": "LIFEPAK paediatric default not retrieved" },
+    "defib.aedSequenceJ": { "tag": "documented", "source": "research/05 §2.6 (200-300-360)" },
+    "defib.chargeTimeS": { "tag": "documented", "source": "research/05 §2.6 (200 J ≤7 s, 360 J ≤10 s)" },
+    "defib.readyTimeoutS": { "tag": "documented", "source": "research/05 §2.6 (auto-disarm 60 s)" },
+    "defib.toneSet": { "tag": "documented", "source": "research/05 §2.6 (ramping charge tone)" },
+    "pacer.rateDefault": { "tag": "documented", "source": "research/05 §2.6 (60 ppm)" },
+    "pacer.rateRange": { "tag": "assumed", "source": "brief §6.5 (30-180 ppm)", "note": "LIFEPAK range not retrieved" },
+    "pacer.mADefault": { "tag": "documented", "source": "research/05 §2.6 (0 mA)" },
+    "pacer.mARange": { "tag": "assumed", "source": "brief §6.5 (10-140 mA)" },
+    "pacer.mAStep": { "tag": "documented", "source": "research/05 §2.6 (buttons step 10)" },
+    "pacer.modeDefault": { "tag": "documented", "source": "research/05 §2.6 (Demand)" },
+    "pacer.pausePct": { "tag": "documented", "source": "research/05 §2.6 (PAUSE paces at 25%)" }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "schema": "pme-skin/1",
+  "kind": "skin",
+  "id": "philips-like",
+  "label": "Philips-like (IntelliVue-style, OR configuration)",
+  "extends": "iec-defaults",
+  "colors": {
+    "ECG": "#00FF00", "HR": "#00FF00", "ST": "#00FF00", "PVC": "#00FF00",
+    "SpO2": "#00FFFF", "PLETH": "#00FFFF", "PR": "#00FFFF", "PI": "#00FFFF",
+    "NIBP": "#FF4040",
+    "ART": "#FF4040", "CVP": "#00FFFF", "PAP": "#FFFF00", "ICP": "#FF00FF",
+    "RESP": "#FFFF00", "CO2": "#FFFF00", "AWRR": "#FFFF00",
+    "TEMP": "#00FF00"
+  },
+  "ecg": {
+    "filters": { "Monitor": [0.5, 40], "Ext. Monitor": [0.5, 150], "Filter": [0.5, 20], "Diag": [0.05, 150] },
+    "filterDefault": "Monitor"
+  },
+  "hr": { "method": "mean-12rr" },
+  "alarms": { "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2 },
+  "limits": {
+    "adult": {
+      "values": {
+        "HR": [50, 120], "SpO2": [90, 100], "SpO2_desat": 80,
+        "NIBP_S": [90, 160], "NIBP_M": [60, 110], "NIBP_D": [50, 90],
+        "ART_S": [90, 160], "ART_M": [70, 110], "ART_D": [50, 90],
+        "CVP_M": [0, 10], "PAP_S": [10, 35], "PAP_M": [0, 20], "PAP_D": [0, 16],
+        "RR": [8, 30], "apneaS": 20, "EtCO2": [30, 50], "imCO2_high": 4, "TEMP": [36, 39]
+      }
+    },
+    "paed": {
+      "values": {
+        "HR": [75, 160], "SpO2": [90, 100], "SpO2_desat": 80,
+        "NIBP_S": [70, 120], "NIBP_M": [50, 90], "NIBP_D": [40, 70],
+        "ART_S": [70, 120], "ART_M": [50, 90], "ART_D": [40, 70],
+        "CVP_M": [0, 4], "PAP_S": [24, 60], "PAP_M": [12, 26], "PAP_D": [-4, 4],
+        "RR": null, "apneaS": null, "EtCO2": null, "imCO2_high": null, "TEMP": null
+      }
+    },
+    "neo": {
+      "values": {
+        "HR": [100, 200], "SpO2": [85, 95], "SpO2_desat": 80,
+        "NIBP_S": [40, 90], "NIBP_M": [24, 70], "NIBP_D": [20, 60],
+        "ART_S": [55, 90], "ART_M": [35, 70], "ART_D": [20, 60],
+        "CVP_M": [0, 4], "PAP_S": [24, 60], "PAP_M": [12, 26], "PAP_D": [-4, 4],
+        "RR": [30, 100], "apneaS": 20, "EtCO2": null, "imCO2_high": null, "TEMP": null
+      }
+    }
+  },
+  "arrhythmia": { "defaultOn": false },
+  "provenance": {
+    "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
+    "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
+    "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },
+    "hr.method": { "tag": "documented", "source": "brief §3.8 (Philips-like mean-12rr)" },
+    "alarms.repeatS": { "tag": "documented", "source": "research/05 §2.5 (ISO red 5/10/15 s, yellow 10/20/30 s); brief §6.4" },
+    "alarms.lowPulses": { "tag": "documented", "source": "research/05 §2.5 (INOP: lower tone ×2); brief §6.4" },
+    "limits.adult": { "tag": "documented", "source": "brief §6.8 (Philips factory); research/03 §8.10" },
+    "limits.paed": { "tag": "documented", "source": "brief §6.8 (Philips factory)", "note": "null = not given in the table" },
+    "limits.neo": { "tag": "documented", "source": "brief §6.8 (Philips factory)", "note": "null = not given in the table" },
+    "arrhythmia.defaultOn": { "tag": "documented", "source": "brief §6.4 (off on the OR skin); research/03 §1.12" }
+  }
+}
