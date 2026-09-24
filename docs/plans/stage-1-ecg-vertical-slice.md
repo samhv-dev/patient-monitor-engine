@@ -519,7 +519,7 @@ git commit -m "feat(engine-core): public Stage 1 types, default modifiers and hr
 - Consumes: `LeadId`, `LEAD_IDS` (Task 2); `createRngState`, `normal` (Stage 0).
 - Produces: `vcg.ts`: `type Vec3 = readonly [number, number, number]`, `DOWER` (rows for ecgI, ecgII, V1–V6), `projectLead(lead: LeadId, x, y, z): number`, `projectLeads(x, y, z, out: Float64Array /*12*/): Float64Array`. `kernels.ts`: `K_STRIDE = 7` (layout `[tau, sigmaRise, sigmaFall, ax, ay, az, wave]`, seconds and mV), `SUPPORT_SIGMAS = 4`, `WAVE = { P:0, Q:1, R:2, S:3, T:4, U:5, F:6, RETRO_P:7 }`, `type WaveCode`, `kernel(tau, sigmaRise, sigmaFall, a: Vec3-like, wave, scale?): number[]`, `interface EcgEvent { t; start; end; k: number[] }`, `makeEvent(t, k): EcgEvent`, `addEventAt(ev, s, acc: Float64Array): void`, `qrsSpanMs(k): number`.
 
-- [ ] **Step 1: Write the failing test (acceptance test 4, part 1: identities at every sample)**
+- [x] **Step 1: Write the failing test (acceptance test 4, part 1: identities at every sample)**
 
 `packages/engine-core/test/l2/ecg/vcg.test.ts`:
 ```ts
@@ -553,12 +553,12 @@ describe('l2/ecg/vcg', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/vcg`
 Expected: FAIL — cannot load `vcg.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/ecg/vcg.ts`:
 ```ts
@@ -696,12 +696,12 @@ export function qrsSpanMs(k: readonly number[]): number {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/vcg`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
