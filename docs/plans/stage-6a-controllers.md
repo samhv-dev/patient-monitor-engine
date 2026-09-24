@@ -1161,7 +1161,7 @@ git commit -m "feat(controller): BroadcastChannel transport for same-browser win
   - `interface WebSocketLike`, `type WebSocketCtor`; `interface WebSocketTransportOptions { url; WebSocketImpl?; backoff?; livenessMs? (25 000); onRelayFrame? }`; `createWebSocketTransport(o): WebSocketTransport` where `type WebSocketTransport = ManagedTransport & { readonly reconnects: number; dropForTest(): void }`.
   - Behaviour: `connecting → open`; on an unexpected close → `connecting` and retry after `backoffDelay(attempt++)`; on a fatal close code or a `{relay:'error'}` frame → `error` (no retry); nothing received for `livenessMs` → close and reconnect. Sessions re-send `hello` on every `open`.
 
-- [ ] **Step 1: Write the fake and the failing test**
+- [x] **Step 1: Write the fake and the failing test**
 
 `packages/controller/test/fakes/fake-websocket.ts`:
 ```ts
@@ -1303,12 +1303,12 @@ describe('WebSocket transport', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/websocket.test.ts`
 Expected: FAIL — cannot load `../../src/transport/backoff.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/transport/backoff.ts`:
 ```ts
@@ -1488,12 +1488,12 @@ export function createWebSocketTransport(o: WebSocketTransportOptions): WebSocke
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/websocket.test.ts`
 Expected: `6 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/transport/backoff.ts packages/controller/src/transport/relay-frames.ts packages/controller/src/transport/websocket.ts packages/controller/test/fakes/fake-websocket.ts packages/controller/test/transport/websocket.test.ts
