@@ -659,7 +659,7 @@ git commit -m "feat(controller): runtime sample guard and WireMessage validation
   - `createInProcessHub(): { connect(): ManagedTransport }` — every endpoint hears every other endpoint (never itself), asynchronously, as a structured clone.
   - Test module `conformance.ts`: `SESSION = 'ABC234'`, `HOST_ID = 'host-1'`, `CTL_ID = 'ctl-1'`, `interface TransportPair { a; b; cleanup(): Promise<void> }`, `runTransportConformance(kind, makePair)`. `a` plays host (sends `event`s), `b` a controller (sends `command`s) — the relay routes only those directions.
 
-- [ ] **Step 1: Write the helpers, the conformance suite and the failing in-process test**
+- [x] **Step 1: Write the helpers, the conformance suite and the failing in-process test**
 
 `packages/controller/test/helpers.ts`:
 ```ts
@@ -805,12 +805,12 @@ runTransportConformance('in-process', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/in-process.test.ts`
 Expected: FAIL — cannot load `../../src/transport/in-process.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/transport/base.ts`:
 ```ts
@@ -930,12 +930,12 @@ export function createInProcessHub(): InProcessHub {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/in-process.test.ts`
 Expected: `6 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/transport/base.ts packages/controller/src/transport/in-process.ts packages/controller/test/helpers.ts packages/controller/test/transport/conformance.ts packages/controller/test/transport/in-process.test.ts
