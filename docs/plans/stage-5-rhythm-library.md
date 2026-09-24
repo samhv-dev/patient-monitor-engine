@@ -4774,7 +4774,7 @@ Brief §4.1/§11 C1 end to end (acceptance test 2). The VCG source integrates t_
 - Consumes: Tasks 13 and 15, `HOOKS.onApply`, `HOOKS.apply`, `rng.outcome` (four draws seed the episode).
 - Produces: `VfState`, `vfSource`, `vfClock`, `epiBump`, `vfFreqHz`, `vfAmplitudeMv`, constants `F0_HZ, F_DROP_HZ, F_TAU_S, TAU_A_S (420 s), TAU_A_CPR_S (1050 s), CPR_BOOST_HZ, EPI_*, A0_MV (0.8), FINE_MV (0.2), ASYSTOLE_MV (0.05), HAZARD_PER_S`; events `rhythmSegment { rhythm: 'vfCoarse' | 'vfFine' | 'asystole', seed, templateId: 'vf-cudb' }`. Amplitude A is the peak-to-peak-equivalent 2√2·RMS in lead II.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/vf.test.ts` with exactly:
 
@@ -4869,13 +4869,13 @@ describe('VF hybrid generator (acceptance 2)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/vf.test.ts`
 
 Expected: FAIL — lead II is flat during vfCoarse (no VCG source).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/arrest/vf.ts` with exactly:
 
@@ -5106,13 +5106,13 @@ export const VCG_SOURCES: VcgSource[] = [vfSource];
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/arrest/vf.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s5/vf.test.ts

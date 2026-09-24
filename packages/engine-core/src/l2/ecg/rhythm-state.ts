@@ -6,6 +6,7 @@ import type { EcgEvent } from './kernels.ts';
 import type { HrvPhase } from './hrv.ts';
 import type { BeatTemplateId } from './beat-templates.ts';
 import { RHYTHMS, type RhythmDef } from './rhythms.ts';
+import type { VfState } from './arrest/vf.ts';
 
 /** JSON-safe stand-in for ±Infinity. */
 export const NEVER = 1e12;
@@ -79,6 +80,8 @@ export interface RhythmState {
   pacer?: { nextA: number; nextV: number } | undefined;
   /** Next transcutaneous pulse (tcp.ts); undefined when TCP is off. */
   tcpNextT?: number | undefined;
+  /** Running VF episode (arrest/vf.ts). */
+  vf?: VfState | undefined;
 }
 
 export interface RhythmCtx {
