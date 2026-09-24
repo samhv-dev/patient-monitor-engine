@@ -3,6 +3,7 @@
 import type { Modifiers } from '../../../types.ts';
 import type { BeatTemplateId } from '../beat-templates.ts';
 import { alternansStage, axisStage, bbbStage, lowVoltageStage, lvhStage, qrsOverrideStage, transitionStage } from './conduction.ts';
+import { pPotassiumStage, potassiumStage, prPotassium, prTemperature, temperatureStage } from './electrolytes.ts';
 import { brugadaStage, digoxinStage, ischaemiaStage, longQtStage, stStage, tInversionStage } from './st.ts';
 
 export interface BeatInfo {
@@ -18,6 +19,8 @@ export type MorphStage = (k: number[], info: BeatInfo, mods: Modifiers) => numbe
 /** Order matters: fingerprint → timing (overrides, K, temperature) → conduction/axis/voltage → ST/T → alternans. */
 export const MORPH_STAGES: MorphStage[] = [
   qrsOverrideStage,
+  potassiumStage,
+  temperatureStage,
   bbbStage,
   axisStage,
   transitionStage,
@@ -40,7 +43,7 @@ export function applyMorphology(k: number[], info: BeatInfo, mods: Modifiers): n
 
 /** P-wave modifiers (hyperkalaemia flattening, low voltage, individuality). Later tasks append stages. */
 export type PStage = (k: number[], mods: Modifiers) => number[];
-export const P_STAGES: PStage[] = [];
+export const P_STAGES: PStage[] = [pPotassiumStage];
 
 export function applyPMorphology(k: number[], mods: Modifiers): number[] {
   let out = k;
@@ -50,7 +53,7 @@ export function applyPMorphology(k: number[], mods: Modifiers): number[] {
 
 /** PR additions from modifiers (ms). Later tasks append terms. */
 export type PrTerm = (mods: Modifiers) => number;
-export const PR_TERMS: PrTerm[] = [];
+export const PR_TERMS: PrTerm[] = [prPotassium, prTemperature];
 
 export function prDeltaMs(mods: Modifiers): number {
   let d = 0;

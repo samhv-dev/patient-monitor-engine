@@ -5954,7 +5954,7 @@ Acceptance test 7: raising K from 5 to 8.5 gives peaked T → PR↑ → QRS↑ �
 - Consumes: Task 18 ops and `ISCHAEMIA_DIR`.
 - Produces: `hyperK(k) → { s1, s2, s3, s4 }`, `hypoK(k)`, `coldness(tempC)`, `OSBORN_DIR`, `potassiumStage`, `temperatureStage`, `pPotassiumStage` (also applies `lowVoltage` to P), `prPotassium`, `prTemperature`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts` with exactly:
 
@@ -6018,13 +6018,13 @@ describe('electrolytes and temperature', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/morph-electrolytes.test.ts`
 
 Expected: FAIL — cannot resolve `morphology/electrolytes.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/morphology/electrolytes.ts` with exactly:
 
@@ -6185,13 +6185,13 @@ export const PR_TERMS: PrTerm[] = [prPotassium, prTemperature];
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/electrolytes.ts packages/engine-core/src/l2/ecg/morphology/index.ts packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts
