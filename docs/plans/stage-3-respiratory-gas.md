@@ -2383,7 +2383,7 @@ git commit -m "feat(l3): capnogram breath detection, EtCO2/FiCO2/awRR and the ga
 **Interfaces:**
 - Produces: `RIPPLE_FRACTION` 0.1, `IMP_APNOEA_S` 20, `interface ImpNum`, `createImpNum()`, `impedanceSample(volMl, t, beats, ripple?)`, `impStep(st, t, x, dt): 'apnoea' | 'resumed' | null`, `impRr(st, t): Measured`, `plethRr(beats: {t, amp}[], t, windowS?): number | null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l3/resp/impedance.test.ts`:**
 
@@ -2434,12 +2434,12 @@ describe('impedance respiration', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/resp`
 Expected: FAIL — cannot find the module.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/resp/impedance.ts`:**
 
@@ -2533,9 +2533,9 @@ export function plethRr(beats: ReadonlyArray<{ t: number; amp: number }>, t: num
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/resp packages/engine-core/test/l3/resp
