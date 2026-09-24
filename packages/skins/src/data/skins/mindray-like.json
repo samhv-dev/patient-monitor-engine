@@ -1,0 +1,45 @@
+{
+  "schema": "pme-skin/1",
+  "kind": "skin",
+  "id": "mindray-like",
+  "label": "Mindray-like (bedside)",
+  "extends": "iec-defaults",
+  "colors": {
+    "ECG": "#00FF00", "HR": "#00FF00", "ST": "#00FF00", "PVC": "#00FF00",
+    "SpO2": "#00FFFF", "PLETH": "#00FFFF", "PR": "#00FFFF",
+    "NIBP": "#FFFFFF",
+    "ART": "#FF4040", "CVP": "#40A0FF", "PAP": "#FFFF00",
+    "RESP": "#FFFF00", "CO2": "#FFFF00", "AWRR": "#FFFF00",
+    "TEMP": "#FFFFFF"
+  },
+  "sweep": { "resp": { "options": [3, 6.25, 12.5, 25, 50], "default": 6.25 } },
+  "ecg": {
+    "filters": { "Diagnostic": [0.05, 150], "Monitor": [0.5, 40], "Surgical": [1, 20], "ST": [0.05, 40] },
+    "filterDefault": "Monitor",
+    "gainLabel": "mm-per-mV"
+  },
+  "alarms": { "pause": { "durationS": 120 }, "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
+  "provenance": {
+    "colors.ECG": { "tag": "documented", "source": "research/05 §2.1 (ECG 'normally green')" },
+    "colors.HR": { "tag": "documented", "source": "research/05 §2.1" },
+    "colors.ST": { "tag": "documented", "source": "research/05 §2.1 (ST view follows the ECG colour)" },
+    "colors.PVC": { "tag": "documented", "source": "research/05 §2.1" },
+    "colors.SpO2": { "tag": "assumed", "source": "research/06 §6 (Mindray SpO2 cyan, typical)" },
+    "colors.PLETH": { "tag": "assumed", "source": "research/06 §6" },
+    "colors.PR": { "tag": "assumed", "source": "research/06 §6" },
+    "colors.NIBP": { "tag": "assumed", "source": "research/05 §2.1", "note": "varies by vendor" },
+    "colors.ART": { "tag": "assumed", "source": "research/05 §2.1 (ABP red convention)" },
+    "colors.CVP": { "tag": "assumed", "source": "research/05 §2.1", "note": "varies" },
+    "colors.PAP": { "tag": "assumed", "source": "research/05 §2.1 (PAP yellow convention)" },
+    "colors.RESP": { "tag": "assumed", "source": "research/05 §2.1" },
+    "colors.CO2": { "tag": "assumed", "source": "research/05 §2.1" },
+    "colors.AWRR": { "tag": "assumed", "source": "research/05 §2.1" },
+    "colors.TEMP": { "tag": "assumed", "source": "research/05 §2.1", "note": "varies" },
+    "sweep.resp": { "tag": "documented", "source": "research/05 §2.2 (Mindray 6.25-50, Resp adds 3 mm/s)" },
+    "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Mindray Diagnostic/Monitor/Surgical/ST); brief §6.8" },
+    "ecg.filterDefault": { "tag": "eng", "source": "ENG", "note": "Mindray default mode not retrieved" },
+    "ecg.gainLabel": { "tag": "documented", "source": "research/05 §2.2 (mm/mV steps)" },
+    "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min)" },
+    "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.4-2.5 (white on red, black on yellow, black on cyan)", "note": "hex [ENG]" }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "pme-preset/1",
+  "kind": "preset",
+  "id": "iran-icu-as-found",
+  "label": "Saadat-like, Iranian ICU as found",
+  "base": "saadat-like",
+  "overrides": {
+    "layout": { "lanes": ["ECG1", "ECG2", "PLETH", "RESP"] },
+    "calendar": { "default": "solar" },
+    "ecg": { "laneLeads": ["II", "II"], "gainDefault": 2, "filterDefault": "MONITOR" },
+    "hr": { "windowDefault": 16, "source": "ECG" },
+    "beep": { "defaultOn": false },
+    "sweep": { "resp": { "options": [3, 6, 12.5, 25], "default": 12.5 } }
+  },
+  "alarmSwitches": { "HR": false, "RR": false, "NIBP": true, "SpO2": true },
+  "startState": { "apneaLimit": "OFF" },
+  "provenance": {
+    "overrides.layout.lanes": { "tag": "documented", "source": "research/06 §3.1 F7 (S8: ECG lanes 1 and 2, pleth, flat resp)" },
+    "overrides.calendar.default": { "tag": "documented", "source": "research/06 §3.1 F7 (date 1402/04/04); brief §6.9" },
+    "overrides.ecg.laneLeads": { "tag": "documented", "source": "research/06 §3.1 F7 (lead II on two lanes)" },
+    "overrides.ecg.gainDefault": { "tag": "documented", "source": "research/06 §3.1 F7 (X2; later X1.25 [unverified])" },
+    "overrides.ecg.filterDefault": { "tag": "documented", "source": "research/06 §3.1 F7; brief §6.9" },
+    "overrides.hr.windowDefault": { "tag": "documented", "source": "research/06 §3.1 F7 (HR AVERAGE 16); brief §6.9" },
+    "overrides.hr.source": { "tag": "documented", "source": "research/06 §3.1 F7 (HR SOURCE ECG)" },
+    "overrides.beep.defaultOn": { "tag": "documented", "source": "research/06 §3.1 F7 (BEAT VOLUME OFF); brief §6.9" },
+    "overrides.sweep.resp": { "tag": "documented", "source": "research/06 §3.1 F7 ('RA_LA X0.25 12.5 mm/s')" },
+    "alarmSwitches": { "tag": "documented", "source": "research/06 §3.1 F7 (crossed bells on HR and RR; NIBP and SpO2 limits shown)", "note": "n = 1 video [S8]" },
+    "startState.apneaLimit": { "tag": "documented", "source": "research/06 §3.1 F7 ('APNEA LIMIT: OFF'); brief §6.9" }
+  }
+}
