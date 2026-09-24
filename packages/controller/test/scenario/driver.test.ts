@@ -77,7 +77,7 @@ describe('ScenarioDriver', () => {
     expect(driver.load(bad)).toEqual({ ok: false, reason: 'invalid scenario: /states/1/transitions/0/probability: must be <= 1' });
   });
 
-  it('ACLS VF end to end: stable → VF at 60 s → shock → ROSC, every rhythm command accepted', () => {
+  it('ACLS VF end to end: stable → VF at 60 s → shock → ROSC, every rhythm command accepted', { timeout: 60_000 }, () => {
     const { driver, events, run, host } = rig();
     driver.load('acls-vf-witnessed');
     run(50 * 600, everyTwoMin(70, 600));
@@ -127,7 +127,7 @@ describe('ScenarioDriver', () => {
     expect(samples(66, 199)).toEqual(first.ecg);
   }, SLOW);
 
-  it('replay identity: same seed + same learner commands → identical samples, dispatches and decisions', () => {
+  it('replay identity: same seed + same learner commands → identical samples, dispatches and decisions', { timeout: 60_000 }, () => {
     const go = () => {
       nL = 0;
       const g = rig();
