@@ -23,9 +23,9 @@ describe('engine commands', () => {
   it('dispatch accepts Stage 1 commands for the next tick and rejects the rest with a reason', () => {
     const e = createEngine();
     expect(e.dispatch(cmd({ type: 'setRhythm', rhythm: 'afib' }))).toEqual({ accepted: true, tick: 1 });
-    expect(e.dispatch(cmd({ type: 'setTarget', variable: 'sbp', value: 90 })).accepted).toBe(false);
+    expect(e.dispatch(cmd({ type: 'setTarget', variable: 'spo2', value: 90 })).accepted).toBe(false); // Stage 3
     expect(e.dispatch(cmd({ type: 'setRhythm', rhythm: 'notARhythm' })).reason).toMatch(/unknown rhythm/);
-    expect(e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'cpr', active: true } })).accepted).toBe(false);
+    expect(e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(false); // Stage 4
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: 'surgical' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bogus: 1 } })).reason).toMatch(/unknown modifiers/);
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 100, atTick: 50 })).tick).toBe(50);

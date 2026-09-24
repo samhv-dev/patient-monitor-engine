@@ -8,3 +8,4 @@ export { RHYTHMS, RHYTHM_IDS } from './l2/ecg/rhythms.ts';
 export { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 export { ecgVocabulary, type EcgVocabulary } from './l2/ecg/vocabulary.ts';
 export { dominantHz, rms, welch } from './util/dsp.ts';
+export * from './types-hemo.ts'; // Stage 2

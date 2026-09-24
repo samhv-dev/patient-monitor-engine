@@ -1,6 +1,7 @@
 // Public engine types. Names and shapes are copied from DESIGN-BRIEF §7.1–§7.3.
 // Stage 1 implements a SUBSET: the unions below list only what Stage 1 handles. Later stages add
 // the remaining Command variants, EngineEvent variants and MonitorEngine members listed in §7.
+import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -29,8 +30,9 @@ import type { ModifiersPatch, RhythmId, RhythmOpts } from './l2/ecg/api-types.ts
 
 /** Stage 1 subset of the brief's PatientProfile (same shape as the scenario JSON `patient`, §7.4). */
 export interface PatientProfile {
-  baseline?: { hr?: number };
+  baseline?: Partial<Record<StateVar, number>>; // Stage 2: every StateVar (was { hr?: number })
   rhythm?: { id: RhythmId; opts?: RhythmOpts };
+  sensors?: Partial<Record<SensorId, string>>; // Stage 2 (brief §7.4 patient.sensors)
 }
 
 export interface EngineOptions {
@@ -49,12 +51,14 @@ type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: s
  *   { device:'ecg', action:'lead', value: LeadId, lane: 0 | 1 | 2 }
  * 'capture12' and 'arrhythmiaAnalysis' are rejected until Stage 4.
  */
-export type DeviceAction = {
-  device: 'ecg';
-  action: 'filter' | 'lead' | 'capture12' | 'arrhythmiaAnalysis';
-  value?: string | boolean;
-  lane?: number;
-};
+export type DeviceAction =
+  | {
+      device: 'ecg';
+      action: 'filter' | 'lead' | 'capture12' | 'arrhythmiaAnalysis';
+      value?: string | boolean;
+      lane?: number;
+    }
+  | NibpDeviceAction; // Stage 2
 
 export type EcgFilterMode = 'monitor' | 'diagnostic';
 
@@ -64,6 +68,7 @@ export type Command = CommandBase &
     | { type: 'setRhythm'; rhythm: RhythmId; opts?: RhythmOpts; when?: 'now' | 'nextBeat'; respectRefractory?: boolean }
     | { type: 'setModifiers'; modifiers: ModifiersPatch; ramp?: Ramp }
     | { type: 'device'; action: DeviceAction }
+    | HemoCommandBody // Stage 2 (types-hemo.ts)
   );
 
 export type DispatchResult = { accepted: boolean; tick: Tick; reason?: string };
@@ -97,7 +102,8 @@ export type EngineEvent =
       refT?: SimSeconds;
     }
   /** Revoke tones: those listed in `ids` when present (the engine's normal case), else every tone with t > after. */
-  | { type: 'toneCancel'; after: SimSeconds; ids?: string[] };
+  | { type: 'toneCancel'; after: SimSeconds; ids?: string[] }
+  | HemoEvent; // Stage 2 (types-hemo.ts)
 
 export type EngineEventType = EngineEvent['type'];
 

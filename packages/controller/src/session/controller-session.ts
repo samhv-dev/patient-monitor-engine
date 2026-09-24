@@ -205,6 +205,7 @@ export function describe(c: WireCommand): string {
     case 'setModifiers':
       return `modifiers ${JSON.stringify(c.modifiers)}`;
     case 'device':
+      if (c.action.device === 'nibp') return `nibp ${c.action.action}${c.action.intervalMin !== undefined ? ` every ${c.action.intervalMin} min` : ''}`; // Stage 2
       return `${c.action.device} ${c.action.action} ${String(c.action.value ?? '')}${c.action.lane !== undefined ? ` lane ${c.action.lane}` : ''}`;
     case 'time':
       return `time ${c.action}${c.value !== undefined ? ` ${c.value}` : ''}`;
@@ -218,9 +219,9 @@ export function describe(c: WireCommand): string {
       return `${c.input} × ${c.factor}`;
     case 'setMode':
       return `mode ${c.mode}`;
-    case 'applyEvent':
+    case 'applyEvent': // generic: every ClinicalEvent kind logs its fields (Stage 6b), e.g. "event cpr true 110"
       return `event ${Object.values(c.event).join(' ')}`;
-    case 'attachSensor':
-      return `sensor ${c.sensor} ${c.state}`;
+    case 'attachSensor': // Stage 2 adds the site
+      return `sensor ${c.sensor} ${c.state}${c.site ? ` @${c.site}` : ''}`;
   }
 }

@@ -63,13 +63,13 @@ describe('HostSession', () => {
 
   it('acks rejections with the engine reason, and rejects MODELED-only and 6b-only commands', async () => {
     const { command, of } = setup();
-    command({ type: 'setTarget', variable: 'sbp', value: 120 });
+    command({ type: 'setTarget', variable: 'spo2', value: 90 }); // Stage 2 accepts sbp; spo2 is Stage 3
     command({ type: 'pin', variable: 'hr', value: 60 });
     command({ type: 'scenario', action: 'goto', target: 'vf' });
     command({ type: 'time', action: 'jump', value: 60 });
     await waitFor(() => of('ack').length === 4);
     expect(of('ack').map((a) => a.accepted)).toEqual([false, false, false, false]);
-    expect(of('ack')[0]!.reason).toMatch(/Stage 2/);
+    expect(of('ack')[0]!.reason).toMatch(/Stage 3/);
     expect(of('ack')[1]!.reason).toMatch(/MODELED/);
     expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
   });
@@ -118,20 +118,22 @@ describe('HostSession', () => {
     expect(replayed.sort()).toEqual(['pause', 'scale']);
   });
 
-  it('synthesises a target-derived state event with a ramping flag (engine request E1)', async () => {
+  it("forwards the engine's own state (engine request E1, delivered by Stage 2) with a ramping flag", async () => {
     const { command, of, events, hs: h, host } = setup();
     command({ type: 'setTarget', variable: 'hr', value: 120, ramp: { durationS: 10 } });
     await waitFor(() => of('ack').length === 1);
     host.advance(1000);
-    h.emitState();
+    h.emitState(); // a no-op now: the engine emits its own 1 Hz state, with the ramp's truth, not the target
     await sleep(5);
     const st = events().filter((e) => e.type === 'state').at(-1) as Extract<ReturnType<typeof events>[number], { type: 'state' }>;
-    expect(st.values.hr).toBe(120);
+    expect(st.values.hr).toBeGreaterThan(75);
+    expect(st.values.hr).toBeLessThan(120);
     expect(st.control.hr).toBe('ramping');
     host.advance(10_000);
     h.emitState();
     await sleep(5);
     const st2 = events().filter((e) => e.type === 'state').at(-1) as typeof st;
+    expect(st2.values.hr).toBe(120);
     expect(st2.control.hr).toBeUndefined();
   });
 

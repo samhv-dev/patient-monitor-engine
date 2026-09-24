@@ -15,9 +15,12 @@ export function constantRamp(value: number): RampState {
   return { from: value, to: value, t0: 0, delayS: 0, durationS: 0, curve: 'linear' };
 }
 
-/** Shape functions on u ∈ [0,1], each 0 at u=0 and exactly 1 at u=1 [ENG]. */
+/**
+ * Shape functions on u ∈ [0,1], each 0 at u=0 and exactly 1 at u=1. 'exp' uses τ = duration/3 (brief §4.9
+ * ramp semantics; Stage 1 had τ = duration/5); 'sigmoid' is logistic with 10–90% inside the middle of the ramp.
+ */
 function shape(curve: RampState['curve'], u: number): number {
-  if (curve === 'exp') return (1 - Math.exp(-5 * u)) / (1 - Math.exp(-5));
+  if (curve === 'exp') return (1 - Math.exp(-3 * u)) / (1 - Math.exp(-3));
   if (curve === 'sigmoid') {
     const s = (x: number) => 1 / (1 + Math.exp(-10 * (x - 0.5)));
     return (s(u) - s(0)) / (s(1) - s(0));
