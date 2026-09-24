@@ -634,7 +634,7 @@ git commit -m "feat(l1): PatientState schema, MANUAL targets with ramps, control
 - Consumes: nothing.
 - Produces: constants `HEMO_RATE` 125, `SUBSTEPS` 4, `H_S` 0.002, `WK_R0`, `WK_C`, `WK_P0`, `WK_CK`, `WK_ZC`, `WK_L`, `SV_REF_ML` 70, `KAPPA`, `EJECTION_SKEW`, `BACKFLOW_FRAC`, `BACKFLOW_S`, `RADIAL_FR_HZ`, `RADIAL_ZETA`, `RADIAL_GAIN`, `RADIAL_DELAY_S`, `RADIAL_PTT_S`, `FINGER_DELAY_S`, `EAR_DELAY_S`, `PA_R0`, `PA_C`, `PA_ZC`, `RV_PEP_LEAD_S`, `RV_LVET_EXTRA_S`, `TRANSDUCER_FN_HZ`, `TRANSDUCER_ZETA`, `DISPLAY_FILTER_HZ`, `FLUSH_MMHG`, `FLUSH_S`, `ZERO_S`, `SAMPLE_S`, `MMHG_PER_CM`, `DAMP_PRESETS`, `ARREST_AFTER_S`, `VENOUS_TAU_S`, `CPR_SV_FRAC`, `CPR_THORACIC_MMHG`, `CPR_DUTY`, `K_OPEN`, `FS_CARRY`, `G_MAX`, `INSUFFLATION_GAIN`, `BREATH_HZ`, `PULSELESS_RHYTHMS`; functions `pmsf(vs)`, `pepS(hr)`, `lvetS(hr)`, `fFill(rr)`, `ejectionFactor(k)`, `gainCeiling(rr)`, `gHyp(vs)`, `volumeStatusForGHyp(g)`, `breathU(t, phi)`, `respFactor(t, rr, phi, g)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/hemo/params.test.ts`:
 
@@ -680,12 +680,12 @@ describe('l2/hemo/params', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/params.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/params.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/params.ts` (every value is the prototype-tuned one; do not change them without re-running Tasks 14–18):
 
@@ -849,12 +849,12 @@ export function respFactor(t: number, rr: number, phi: number, g: number): numbe
 export const PULSELESS_RHYTHMS: ReadonlySet<string> = new Set(['asystole', 'vf', 'vfCoarse', 'vfFine', 'pea']);
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/params.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/params.ts packages/engine-core/test/l2/hemo/params.test.ts
