@@ -2715,7 +2715,7 @@ Junctional escape / accelerated / tachycardia with a retrograde P′ before (def
 - Consumes: `pushPending`, `rhythmRate`, `WPW_PR_MS` (already used by `conductP`), `beatKernels('wpw', qt, scale, pre)`.
 - Produces: `onJunctional`, `onAvrt`, `RETRO_JUNCTIONAL_P_VEC`, `AVRT_RP_ONSET_S`; `PendingV.pre` drawn 0.4–1.8 per pre-excited AF beat.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/svt-junctional.test.ts` with exactly:
 
@@ -2787,13 +2787,13 @@ describe('Stage 5 rhythms: SVT family and junctional', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/svt-junctional.test.ts`
 
 Expected: FAIL — junctional rhythms and AVRT produce no beats; pre-excited AF QRS width does not vary.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/foci-junctional.ts` with exactly:
 
@@ -2891,13 +2891,13 @@ export function fireJunction(st: RhythmState, t: number, ctx: RhythmCtx): void {
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/foci-junctional.ts packages/engine-core/src/l2/ecg/foci.ts packages/engine-core/test/l2/ecg/s5/svt-junctional.test.ts

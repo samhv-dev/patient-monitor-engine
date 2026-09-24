@@ -3,6 +3,7 @@
 import { uniform } from '../../rng/sfc32.ts';
 import { RHYTHMS, type FocusMode } from './rhythms.ts';
 import { pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
+import { onAvrt, onJunctional } from './foci-junctional.ts';
 
 export const VT_JITTER_S = 0.004; // ±4 ms cycle-length jitter [ENG]
 
@@ -23,6 +24,8 @@ export type FocusHandler = (st: RhythmState, t: number, ctx: RhythmCtx) => void;
 export const FOCUS_HANDLERS: Partial<Record<FocusMode, FocusHandler>> = {
   vt: onVt,
   svt: onAvnrt,
+  junctional: onJunctional,
+  avrt: onAvrt,
 };
 
 export function onFocus(st: RhythmState, t: number, ctx: RhythmCtx): void {

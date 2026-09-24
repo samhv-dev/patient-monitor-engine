@@ -85,10 +85,15 @@ export function junctionSpontT(st: RhythmState, ctx: RhythmCtx): number {
   return Math.max(j.vT, j.refUntil) + (afThresholdMv(rhythmRate(st, j.vT, ctx)) - j.v) / AF_SLOPE_MV_S;
 }
 
+const PREEXCITED_MIN_REFRACTORY_S = 0.2; // accessory pathway: very short RR (research 03 §1.5 "Pre-excited AF") [ENG]
+
 export function fireJunction(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];
-  pushPending(st, { t: t + AF_AV_S, origin: 'atrial', template: d.conductedTemplate, prMs: null, pvc: false, coupling: 0, bypass: true });
-  const ref = t + afRefractoryS(rhythmRate(st, t, ctx));
+  const pre = d.conductedTemplate === 'wpw';
+  // Pre-excited AF: every beat is a different fusion of pathway and node conduction → varying QRS width [ENG].
+  const p = pre ? 0.4 + 1.4 * uniform(ctx.rng.conduction) : 1;
+  pushPending(st, { t: t + AF_AV_S, origin: 'atrial', template: d.conductedTemplate, prMs: null, pvc: false, coupling: 0, bypass: true, pre: p });
+  const ref = t + afRefractoryS(rhythmRate(st, t, ctx), pre ? PREEXCITED_MIN_REFRACTORY_S : AF_MIN_REFRACTORY_S);
   st.junction = { refUntil: ref, v: 0, vT: ref };
 }
 
