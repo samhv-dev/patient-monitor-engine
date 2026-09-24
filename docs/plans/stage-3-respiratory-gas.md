@@ -113,7 +113,7 @@ Prototyped in a scratch copy of `main` `121c3f4` + the Stage 2 branch head `52ef
 - Consumes: Stage 2 `types.ts` (`Command`, `EngineEvent`, `PatientProfile`, `SimSeconds`).
 - Produces (exported from `src/types-resp.ts`; re-exported from `@pme/engine-core` in Task 16): `VentFrame`, `AirwayState`, `VentSource`, `BreathKind`, `TempSite`, `RespClinicalEvent` (`airway`, `ventilation` with `fico2?`/`effort?`, `preoxygenate`, `condition` `mh`, `thermal`), `RespCommandBody` (`applyEvent` with a `RespClinicalEvent`, `externalDrive`), `RespEvent` (`breath`, `lungState`). `Command` and `EngineEvent` include them; `PatientProfile` gains `ageY?`, `weightKg?`, `heightCm?`, `sex?`.
 
-- [ ] **Step 1: Create the branch and worktree**
+- [x] **Step 1: Create the branch and worktree**
 
 ```bash
 git fetch origin && git worktree add ../scratch/wt-stage-3 -b stage-3-respiratory-gas origin/main
@@ -124,7 +124,7 @@ npx -y pnpm@9.15.9 install --frozen-lockfile
 
 From here on every command runs inside `../scratch/wt-stage-3` (the worktree is the repo root for this plan's relative paths).
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 **Create `packages/engine-core/test/types-resp.test.ts`:**
 
@@ -160,12 +160,12 @@ describe('Stage 3 public types', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: FAIL — `Cannot find module '../src/types-resp.ts'`.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 **Create `packages/engine-core/src/types-resp.ts`:**
 
@@ -314,12 +314,12 @@ replace with:
   }
 ```
 
-- [ ] **Step 5: Run and verify**
+- [x] **Step 5: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/types-resp.test.ts`
 Expected: typecheck clean in every package; 1 test passes.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core/src/types-resp.ts packages/engine-core/src/types.ts packages/engine-core/test/types-resp.test.ts packages/controller/src/session/controller-session.ts
