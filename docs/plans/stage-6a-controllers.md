@@ -1956,7 +1956,7 @@ git commit -m "feat(controller): relay with rooms, host authority, ack routing, 
 - Consumes: `startRelay` (Task 8); `createWebSocketTransport` (Task 7); conformance suite (Task 4).
 - Produces: the executable `packages/controller/relay/bin.ts` (`pme-relay [--port 8787] [--host 0.0.0.0] [--room-ttl-min 10] [--quiet]`, runs with `node --experimental-strip-types`); root scripts `relay` so `npx -y pnpm@9.15.9 relay -- --port 9000` and `npx pme-relay` work at the repo root.
 
-- [ ] **Step 1: Write the conformance test against the real relay**
+- [x] **Step 1: Write the conformance test against the real relay**
 
 `packages/controller/test/transport/websocket-relay.test.ts`:
 ```ts
@@ -1983,12 +1983,12 @@ runTransportConformance('websocket', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/websocket-relay.test.ts`
 Expected: `6 passed` (Tasks 7–8 already implement everything; this task proves the pair over a real socket). If "delivers host → controller" times out, check that the hello `from` ids equal `HOST_ID`/`CTL_ID` — the relay drops frames whose `from` differs from the socket's hello.
 
-- [ ] **Step 3: Write the bin**
+- [x] **Step 3: Write the bin**
 
 `packages/controller/relay/bin.ts`:
 ```ts
@@ -2021,7 +2021,7 @@ process.on('SIGTERM', stop);
 
 Then: `chmod +x packages/controller/relay/bin.ts`
 
-- [ ] **Step 4: Wire the bin and scripts**
+- [x] **Step 4: Wire the bin and scripts**
 
 In `packages/controller/package.json` add the script and the bin (keep the rest):
 ```json
@@ -2037,7 +2037,7 @@ In `packages/controller/package.json` add the script and the bin (keep the rest)
 ```
 In the root `package.json` add `"relay": "pme-relay"` to `scripts` and `"@pme/controller": "workspace:*"` to `devDependencies` (this links the bin into the root `node_modules/.bin`). Then run `npx -y pnpm@9.15.9 install`.
 
-- [ ] **Step 5: Write the README**
+- [x] **Step 5: Write the README**
 
 `packages/controller/relay/README.md`:
 ````markdown
@@ -2088,7 +2088,7 @@ The session code is the only secret. Run the relay on a trusted LAN, or behind a
 carrying typed arrays or long numeric arrays, are refused.
 ````
 
-- [ ] **Step 6: Run the relay by hand**
+- [x] **Step 6: Run the relay by hand**
 
 ```bash
 npx -y pnpm@9.15.9 relay -- --port 0 --host 127.0.0.1 & RELAY_PID=$!; sleep 3; kill $RELAY_PID
@@ -2096,7 +2096,7 @@ npx pme-relay --port 0 --host 127.0.0.1 --quiet & RELAY_PID=$!; sleep 3; kill $R
 ```
 Expected: each prints `pme-relay ready on ws://127.0.0.1:<port>/ (Ctrl+C to stop)` (the first also prints `[pme-relay] pme relay listening …`). `kill` the PID you started — killing a wrapper subshell leaves the relay running.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/controller/test/transport/websocket-relay.test.ts packages/controller/relay/bin.ts packages/controller/relay/README.md packages/controller/package.json package.json pnpm-lock.yaml

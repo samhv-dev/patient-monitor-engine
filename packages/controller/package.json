@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build"
+    "build": "vite build",
+    "relay": "node --experimental-strip-types --no-warnings relay/bin.ts"
   },
   "dependencies": {
     "@pme/engine-core": "workspace:*",
@@ -18,5 +19,8 @@
   "devDependencies": {
     "@types/ws": "8.18.1",
     "happy-dom": "20.14.5"
+  },
+  "bin": {
+    "pme-relay": "./relay/bin.ts"
   }
 }
