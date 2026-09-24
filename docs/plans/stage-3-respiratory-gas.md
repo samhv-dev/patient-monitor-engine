@@ -1879,7 +1879,7 @@ git commit -m "feat(resp): respiratory driver — sources, airway states, extern
 - Consumes: Task 8 `cycleAt`, `lastCycleBefore`, `Cycle`, `DriverState`.
 - Produces: `CO2_RATE` 62.5, `SHAPES`, `SAMPLING`, `interface CapnoCtx { etco2, beats, cpr: { active, rate, quality, anchor } }`, `airwayCo2(d, t, x)`, `interface SamplerState { mode, neonatal, y }`, `createSampler(mode?, neonatal?)`, `sampleCo2(s, t, airway)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 2: delay and rise time)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 2: delay and rise time)
 
 **Create `packages/engine-core/test/l2/co2/capno.test.ts`:**
 
@@ -1922,12 +1922,12 @@ describe('capnograph sampler', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/co2/capno.test.ts`
 Expected: FAIL — cannot find `src/l2/co2/capno.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/co2/capno.ts`:**
 
@@ -2059,9 +2059,9 @@ export function sampleCo2(s: SamplerState, t: number, airway: (t: number) => num
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass. The shapes (α, patterns) are pinned at engine level in Task 17.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass. The shapes (α, patterns) are pinned at engine level in Task 17.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/co2/capno.ts packages/engine-core/test/l2/co2/capno.test.ts
