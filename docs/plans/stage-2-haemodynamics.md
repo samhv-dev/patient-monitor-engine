@@ -5156,7 +5156,7 @@ git commit -m "feat(renderer): ABP/CVP/PAP/PR/PI tiles and NIBP tile with live c
 - Consumes: `mountMonitor` with `waves`/`nibp` (Task 20), `RHYTHM_IDS` (Stage 1), all Stage 2 commands.
 - Produces: the Gate 2 demo page. (Stage 6a adds its own pages in parallel; if `vite.config.ts` or `index.html` conflict at merge, keep both sets of lines.)
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 `apps/demo/stage2.html`:
 
@@ -5388,12 +5388,12 @@ replace with:
       <li><a href="./stage2.html">Stage 2: haemodynamics (ABP, pleth, CVP, NIBP)</a></li>
 ```
 
-- [ ] **Step 2: Typecheck and build**
+- [x] **Step 2: Typecheck and build**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck && npx -y pnpm@9.15.9 --filter @pme/demo build`
 Expected: PASS; `dist/stage2.html` and `dist/assets/stage2-*.js` exist.
 
-- [ ] **Step 3: Headless smoke screenshot (system Chrome through Playwright; not the Browser pane)**
+- [x] **Step 3: Headless smoke screenshot (system Chrome through Playwright; not the Browser pane)**
 
 Serve the build: `python3 -m http.server 5288 --directory apps/demo/dist` (in a second terminal, or backgrounded). Save this script OUTSIDE the repo, e.g. as `$TMPDIR/pme-stage2-shot.mjs`:
 
@@ -5436,7 +5436,7 @@ await browser.close();
 Run: `mkdir -p docs/gates/stage-2 && node "$TMPDIR/pme-stage2-shot.mjs"`, then stop the server.
 Expected: `render path: worker-raf`; `truth 120/80 … shown 11x/7x-8x`; the NIBP line ends with a result; `errors` lists at most a favicon 404. Look at every PNG: sinus shows steep radial upstrokes with a dicrotic notch, a cyan pleth ≈ 250 ms after each R, a blue CVP with a/c/v; the NBP tile shows the live cuff while measuring and `S/D (M)` + `00:00` afterwards; under-damped shows a spikier ABP; flush shows the clipped square wave and ringing; AF shows irregular pulses with some missing; pulseless shows flat ABP ≈ 12 mmHg and a flat pleth; CPR shows compression pulses ≈ 91–95/20–22 and CVP spikes clipped at the top of the CVP lane.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/stage2.html apps/demo/src/stage2.ts apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-2/*.png

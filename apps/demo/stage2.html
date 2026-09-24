@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 2: haemodynamics</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 600px; max-width: 1240px; border: 1px solid #333; }
+      .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 10px 0; max-width: 1240px; }
+      .controls label { display: inline-flex; gap: 6px; align-items: center; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; }
+      legend { color: #888; }
+      button, select, input { font: inherit; }
+      button[aria-pressed='true'] { background: #2a2; color: #000; }
+      #diag { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="controls">
+      <fieldset><legend>Rhythm</legend>
+        <select id="rhythm"></select>
+        <label>HR <input id="hr" type="range" min="20" max="250" value="75" /> <span id="hrVal">75</span></label>
+        <button id="pvc" aria-pressed="false">PVC bigeminy</button>
+      </fieldset>
+      <fieldset><legend>Targets</legend>
+        <label>SBP <input id="sbp" type="number" min="0" max="300" value="120" style="width:4em" /></label>
+        <label>DBP <input id="dbp" type="number" min="0" max="300" value="80" style="width:4em" /></label>
+        <label>CVP <input id="cvp" type="number" min="-5" max="40" value="6" style="width:4em" /></label>
+        <label>Ramp <select id="ramp"><option value="0">0 s</option><option value="10">10 s</option><option value="30" selected>30 s</option><option value="60">60 s</option></select></label>
+        <label>Volume <input id="vol" type="range" min="0" max="1" step="0.05" value="1" /></label>
+        <button id="apply">Apply targets</button>
+      </fieldset>
+      <fieldset><legend>Arterial line</legend>
+        <select id="damp"><option value="normal">Normal (fn 20, ζ 0.45)</option><option value="under">Under-damped (fn 12, ζ 0.2)</option><option value="over">Over-damped (ζ 1.2)</option></select>
+        <button id="flush">Flush</button>
+        <button id="zero">Zero</button>
+      </fieldset>
+      <fieldset><legend>NIBP</legend>
+        <button id="nibpStart">Start</button>
+        <button id="nibpAuto">Auto 5 min</button>
+        <button id="nibpStat">STAT</button>
+        <button id="nibpStop">Stop</button>
+        <label>Cuff <select id="cuffSite"><option value="rightArm">right arm</option><option value="leftArm">left arm (A-line arm)</option></select></label>
+      </fieldset>
+      <fieldset><legend>Sensors</legend>
+        <button id="sAbp" aria-pressed="true">ABP</button>
+        <button id="sCvp" aria-pressed="true">CVP</button>
+        <button id="sSpo2" aria-pressed="true">SpO2</button>
+        <button id="sNibp" aria-pressed="true">NIBP cuff</button>
+      </fieldset>
+      <fieldset><legend>Arrest</legend>
+        <button id="vf">VF / pulseless</button>
+        <button id="cpr" aria-pressed="false">CPR</button>
+      </fieldset>
+      <button id="sound">Enable sound</button>
+    </div>
+    <div id="diag"></div>
+    <script type="module" src="./src/stage2.ts"></script>
+  </body>
+</html>
