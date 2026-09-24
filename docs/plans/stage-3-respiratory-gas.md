@@ -1180,7 +1180,7 @@ git commit -m "feat(gas): circulatory dead time to the SpO2 site, scaled by CO a
 - Consumes: `TempSite` (Task 1).
 - Produces: constants (`GA_KCP`, `VASOCONSTRICT_C`, `MH_MAX_FACTOR` 5, `MH_VCO2_FACTOR` 3, `MH_ONSET_S`, `SITES`, `SENSOR_TAU_S` …), `interface TempState { tc, tp, ta, capCore, capPer, k0, h, m0, anaesthesia, warming, mh, sites }`, `createTemp(tCore, effKg)`, `mhFactor(st, t, max?)`, `stepTemp(st, t, dtS)`, `setCoreTarget(st, tCore)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 7)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 7)
 
 **Create `packages/engine-core/test/l2/temp/temp.test.ts`:**
 
@@ -1268,12 +1268,12 @@ describe('two-compartment heat model', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/temp/temp.test.ts`
 Expected: FAIL — cannot find `src/l2/temp/temp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/temp/temp.ts`:**
 
@@ -1380,9 +1380,9 @@ export function setCoreTarget(st: TempState, tCore: number): void {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 6 tests pass (prototype: GA −1.28 °C at 60 min, −0.39 °C in hour 2, plateau 34.65 °C; rectal τ 40 min).
+- [x] **Step 4: Run and verify** — same command; expected: 6 tests pass (prototype: GA −1.28 °C at 60 min, −0.39 °C in hour 2, plateau 34.65 °C; rectal τ 40 min).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/temp/temp.ts packages/engine-core/test/l2/temp/temp.test.ts
