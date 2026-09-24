@@ -467,7 +467,7 @@ git commit -m "feat(renderer): sweep geometry and ESM+IIFE library build" -m "Co
   - `interface Rng { readonly seed; stream(name: StreamName): RandomStream; getState(): Record<StreamName, Sfc32State> }`; `createRng(seed: number): Rng`
   - `createRngState(seed: number): Record<StreamName, Sfc32State>` — what the Stage 1 engine stores in its snapshot-able state.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/rng/sfc32.test.ts`:
 ```ts
@@ -530,12 +530,12 @@ describe('rng/sfc32', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `pnpm --filter @pme/engine-core test`
 Expected: FAIL — cannot load `../../src/rng/sfc32.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/rng/sfc32.ts`:
 ```ts
@@ -676,12 +676,12 @@ export const version = '0.0.0';
 export * from './rng/sfc32.ts';
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm --filter @pme/engine-core test && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS (`Tests  6 passed (6)` including the version test); typecheck clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
