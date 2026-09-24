@@ -1,0 +1,50 @@
+{
+  "$comment": "[draft] Clinical content awaits Ali's review. Atropine rarely helps a wide-complex complete heart block; pacing with capture at ≥ 70 mA (brief §6.5 default threshold) is the way out. pacedVVI is a Stage 5 id (stand-in until then). Probabilities are [ENG] placeholders.",
+  "schema": "pme-scenario/1",
+  "id": "acls-bradycardia-unstable",
+  "title": "[draft] Unstable bradycardia — complete heart block",
+  "notes": "72-year-old woman, dizzy and grey in the emergency department. Complete heart block with a wide escape at 32/min.",
+  "seed": 11,
+  "patient": {
+    "ageY": 72, "sex": "F", "weightKg": 70, "ageBand": "adult",
+    "baseline": { "hr": 32 },
+    "rhythm": { "id": "avb3Wide", "opts": { "rateBpm": 32 } },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on" }
+  },
+  "initialState": "chb",
+  "states": [
+    {
+      "id": "chb", "label": "CHB, wide escape 32/min",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 74 }.",
+      "transitions": [
+        { "id": "atropine", "label": "Atropine (p 0.2)", "to": "atropineResponse", "when": { "event": { "kind": "drug", "drugId": "atropine", "minDose": 0.5 } }, "probability": 0.2 },
+        { "id": "capture", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } } },
+        { "id": "chronotrope", "label": "Epinephrine infusion", "to": "infusion", "when": { "event": { "kind": "drug", "drugId": "epinephrine", "infusion": true } } },
+        { "id": "arrestBrady", "label": "Deteriorates (asystole)", "to": "asystole", "when": { "any": [ { "afterS": 420 }, { "manual": { "label": "Deteriorates (asystole)" } } ] } }
+      ]
+    },
+    {
+      "id": "atropineResponse", "label": "Partial response to atropine",
+      "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 42, "ramp": { "durationS": 60, "curve": "exp" } } ],
+      "transitions": [
+        { "id": "captureLate", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } } },
+        { "id": "fadeAtropine", "label": "Effect fades", "to": "chb", "when": { "afterS": 300 } }
+      ]
+    },
+    {
+      "id": "paced", "label": "Paced, capturing",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "pacedVVI", "opts": { "rateBpm": 70 }, "when": "now" } ],
+      "transitions": [
+        { "id": "pacerOff", "label": "Pacer switched off", "to": "chb", "when": { "event": { "kind": "pacer", "mode": "off" } } },
+        { "id": "lossOfCapture", "label": "Loss of capture", "to": "chb", "when": { "manual": { "label": "Loss of capture" } } }
+      ]
+    },
+    {
+      "id": "infusion", "label": "On epinephrine infusion",
+      "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 48, "ramp": { "durationS": 120, "curve": "sigmoid" } } ],
+      "transitions": [ { "id": "captureInf", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } } } ]
+    },
+    { "id": "asystole", "label": "Asystole", "onEnter": [ { "type": "setRhythm", "rhythm": "asystole", "when": "now" } ],
+      "transitions": [ { "id": "captureAsys", "label": "Pacing with capture", "to": "paced", "when": { "event": { "kind": "pacer", "minMa": 70 } }, "probability": 0.5 } ] }
+  ]
+}

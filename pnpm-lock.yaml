@@ -52,6 +52,9 @@ importers:
       '@pme/engine-core':
         specifier: workspace:*
         version: link:../engine-core
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
       ws:
         specifier: 8.21.3
         version: 8.21.3

@@ -17,7 +17,7 @@ export {
 } from './transport/webrtc.ts';
 export { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './transport/backoff.ts';
 export type { RelayFrame } from './transport/relay-frames.ts';
-export { HostSession, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook } from './session/host-session.ts';
+export { HostSession, STAGE_LEAD_TICKS, type HostSessionOptions, type HostTarget, type ScenarioHook, type ScenarioHookResult } from './session/host-session.ts';
 export { ControllerSession, describe, type ControllerSessionOptions, type LogEntry } from './session/controller-session.ts';
 export { ViewerSync, type ViewerSyncOptions, type ViewerStatus, type ViewerTarget } from './session/viewer-sync.ts';
 export * from './panel/controls.ts';
@@ -26,6 +26,10 @@ export { RevealGesture, attachReveal, DEFAULT_REVEAL, type RevealOptions } from 
 export { renderControls, type ControlsHost, type ControlsView } from './panel/render-controls.ts';
 export { mountInstructorPanel, type PanelHandle, type PanelOptions } from './panel/panel.ts';
 export { mountRemote, type RemoteHandle, type RemoteOptions, type Via } from './remote/remote-app.ts';
+// Scenario view + text only (no ajv): the runner, driver and validation are in '@pme/controller/scenario'.
+export { ScenarioView, type NextTransition } from './scenario/view.ts';
+export { describeWhen, describeTransition, manualLabel } from './scenario/describe.ts';
+export type { ScenarioDoc, ScenarioState, Transition, When, DocCommand } from './scenario/types.ts';
 
 import { createBroadcastChannelTransport } from './transport/broadcast-channel.ts';
 import { createInProcessHub } from './transport/in-process.ts';

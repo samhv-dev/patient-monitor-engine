@@ -180,19 +180,20 @@ export class ViewerSync {
       return;
     }
     if (c.type === 'scenario' || c.type === 'pin' || c.type === 'release' || c.type === 'setFactor' || c.type === 'setMode') return;
+    const m = c as Command; // applyEvent/attachSensor are mirrored too; the engine validates them (Stage 6b)
     if (res?.replay) {
-      if (this.awaiting) this.replays.push(c);
+      if (this.awaiting) this.replays.push(m);
       return;
     }
     if (this.awaiting) {
-      this.early.push(c);
+      this.early.push(m);
       return;
     }
     if (this.status !== 'synced' || this.mirrored.has(e.commandId)) return;
-    if ((c.atTick ?? 0) <= this.o.target.tick()) return this.requestSync(); // too late to mirror exactly
+    if ((m.atTick ?? 0) <= this.o.target.tick()) return this.requestSync(); // too late to mirror exactly
     this.mirrored.add(e.commandId);
     if (this.mirrored.size > 256) this.mirrored.delete(this.mirrored.values().next().value as string);
-    this.o.target.dispatch(c);
+    this.o.target.dispatch(m);
   }
 
   /** Blend a new host anchor: small disagreements are smoothed, big ones reset [ENG]. */

@@ -44,6 +44,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
     </form>
     <div class="pme-live" hidden>
       <div class="pme-vitals"><span data-v="hr">HR ---</span><span data-v="simT">t --:--</span></div>
+      <div class="pme-scn-remote" hidden><div class="pme-scn-state"></div><div class="pme-row pme-scn-buttons"></div></div>
       <div class="pme-controls-slot"></div>
       <div class="pme-stagebar" data-count="0">
         <label><input type="checkbox" name="stage" /> Stage changes</label>
@@ -96,8 +97,35 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
       if (a === 'pause' || a === 'resume') fire({ type: 'time', action: a });
       refreshStage();
     };
+    let shownState: string | null = null;
+    const scn = q<HTMLElement>('.pme-scn-remote');
+    scn.onclick = (ev) => {
+      const target = (ev.target as HTMLElement).closest('button')?.dataset.target;
+      if (target) fire({ type: 'scenario', action: 'trigger', target });
+    };
+    /** Stage 6b: the scenario's current state and its manual-trigger buttons. */
+    const renderScenario = () => {
+      const v = s.scenario;
+      scn.hidden = !v.doc;
+      if (!v.doc) return;
+      const tin = s.simT === null ? 0 : v.timeInState(s.simT);
+      q<HTMLElement>('.pme-scn-remote .pme-scn-state').textContent = `${v.stateLabel()} · ${Math.floor(tin)} s${v.paused ? ' · paused' : ''}`;
+      if (shownState === `${v.docVersion}:${v.stateId}`) return;
+      shownState = `${v.docVersion}:${v.stateId}`;
+      q<HTMLElement>('.pme-scn-buttons').replaceChildren(
+        ...v.next().filter((n) => n.manual !== null).map((n) => {
+          const b = doc.createElement('button');
+          b.type = 'button';
+          b.dataset.action = 'scenario-trigger';
+          b.dataset.target = n.id;
+          b.textContent = n.manual as string;
+          return b;
+        }),
+      );
+    };
     const render = () => {
       controls.update(s.state, s.measurements);
+      renderScenario();
       const hr = s.measurements.hr;
       q<HTMLElement>('[data-v=hr]').textContent = `HR ${hr && hr.value !== null ? Math.round(hr.value) : '---'}`;
       const t = s.simT;

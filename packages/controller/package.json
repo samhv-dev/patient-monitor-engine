@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./scenario": "./src/scenario/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
@@ -14,6 +15,7 @@
   },
   "dependencies": {
     "@pme/engine-core": "workspace:*",
+    "ajv": "8.20.0",
     "ws": "8.21.3"
   },
   "devDependencies": {

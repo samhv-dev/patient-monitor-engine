@@ -1,0 +1,69 @@
+{
+  "$comment": "[draft] Clinical content awaits Ali's review (Stage 6b gate). Brief §7.4 example, expanded. Probabilities are [ENG] placeholders: shock ROSC 0.3 in coarse VF (brief §6.5 'organised with pulse' raised for teaching), 0.15 in fine VF; decay to fine VF at 4 min and asystole 5 min later follow the three-phase model (research 03 §1.8). vfCoarse/vfFine are Stage 5 ids; until Stage 5 merges the host shows stand-ins (standins.ts).",
+  "schema": "pme-scenario/1",
+  "id": "acls-vf-witnessed",
+  "title": "[draft] Witnessed VF in PACU",
+  "notes": "58-year-old man in PACU after laparoscopic cholecystectomy. Nurse calls: 'he's not responding'. Shockable arrest; ROSC is probabilistic per shock and after epinephrine with good CPR (EtCO2 ≥ 20 mmHg for 30 s; needs Stage 2 for EtCO2).",
+  "seed": 42,
+  "mode": "manual",
+  "patient": {
+    "ageY": 58, "sex": "M", "weightKg": 80, "ageBand": "adult",
+    "baseline": { "hr": 88 },
+    "rhythm": { "id": "sinus" },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on", "co2": "off" }
+  },
+  "device": { "skin": "zoll-like", "layout": "acls" },
+  "initialState": "stable",
+  "states": [
+    {
+      "id": "stable", "label": "Stable in PACU", "notes": "Handover given. VF starts after 60 s (or press the button).",
+      "$comment": "Stage 2+: add { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 132 } and dbp 78, spo2 97, etco2 36 to the patient baseline.",
+      "onEnter": [ { "type": "device", "action": { "device": "nibp", "action": "auto", "intervalMin": 5 } } ],
+      "transitions": [
+        { "id": "arrest", "label": "Start VF now", "to": "vf", "when": { "any": [ { "afterS": 60 }, { "manual": { "label": "Start VF now" } } ] } }
+      ]
+    },
+    {
+      "id": "vf", "label": "Coarse VF",
+      "notes": "Shock 150–200 J biphasic; CPR 2-min cycles; epinephrine 1 mg after the 2nd shock; amiodarone 300 mg after the 3rd.",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "vfCoarse", "when": "now" } ],
+      "transitions": [
+        { "id": "shockVf", "label": "Shock (p 0.3)", "to": "rosc", "when": { "event": { "kind": "defib", "action": "shock", "minJ": 150 } }, "probability": 0.3, "else": "vf" },
+        { "id": "epiCpr", "label": "Epinephrine + good CPR", "to": "rosc",
+          "when": { "all": [ { "event": { "kind": "drug", "drugId": "epinephrine" } }, { "vital": { "var": "etco2", "op": ">=", "value": 20, "forS": 30 } } ] } },
+        { "id": "decay", "label": "Decay to fine VF", "to": "vfFine", "when": { "afterS": 240 } },
+        { "id": "roscVf", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
+      ]
+    },
+    {
+      "id": "vfFine", "label": "Fine VF",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "vfFine", "when": "now" } ],
+      "transitions": [
+        { "id": "shockFine", "label": "Shock (p 0.15)", "to": "rosc", "when": { "event": { "kind": "defib", "action": "shock", "minJ": 150 } }, "probability": 0.15 },
+        { "id": "toAsystole", "label": "Deteriorate to asystole", "to": "asystole", "when": { "afterS": 300 } },
+        { "id": "roscFine", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
+      ]
+    },
+    {
+      "id": "asystole", "label": "Asystole",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "asystole", "when": "now" } ],
+      "transitions": [
+        { "id": "roscAsys", "label": "ROSC after epinephrine", "to": "rosc",
+          "when": { "all": [ { "event": { "kind": "drug", "drugId": "epinephrine" } }, { "manual": { "label": "ROSC after epinephrine" } } ] } }
+      ]
+    },
+    {
+      "id": "rosc", "label": "ROSC",
+      "notes": "Post-shock organised rhythm accelerating over 10–60 s (brief §6.5).",
+      "$comment": "Stage 2+: add { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 95, \"ramp\": { \"durationS\": 30, \"curve\": \"sigmoid\" } } and { \"type\": \"setTarget\", \"variable\": \"etco2\", \"value\": 45, \"ramp\": { \"durationS\": 20 } } (the EtCO2 ROSC jump, brief §4.4).",
+      "onEnter": [
+        { "type": "setRhythm", "rhythm": "sinusTachy", "opts": { "rateBpm": 105 }, "when": "now" },
+        { "type": "setTarget", "variable": "hr", "value": 118, "ramp": { "durationS": 45, "curve": "sigmoid" } }
+      ],
+      "transitions": [
+        { "id": "reArrest", "label": "Re-arrest (VF)", "to": "vf", "when": { "manual": { "label": "Re-arrest (VF)" } } }
+      ]
+    }
+  ],
+  "bookmarks": [ { "id": "preArrest", "label": "Before the arrest", "state": "stable" }, { "id": "atVf", "label": "VF onset", "state": "vf" } ]
+}
