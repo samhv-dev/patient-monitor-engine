@@ -6334,7 +6334,7 @@ git commit -m "docs(gates): stage 6a gate evidence — latency, screenshots, cle
 git push -u origin stage-6a-controllers
 ```
 
-- [ ] **Step 3: Open the PR**
+- [x] **Step 3: Open the PR**
 
 ```bash
 gh pr create --base main --head stage-6a-controllers --title "Stage 6a: controllers and transports (panel, remote, relay, viewer)" --body "$(cat <<'BODY'

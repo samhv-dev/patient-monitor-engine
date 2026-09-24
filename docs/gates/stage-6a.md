@@ -16,6 +16,8 @@ Gate question (BUILD-PLAN Stage 6, first half): "Can Ali drive the monitor from 
 | iPad host: panel reveal by touch, sound | **pending Ali** (no iPad here). The gestures are unit-tested (`reveal.test.ts` 3/3: `i`, Ctrl+Shift+I, 5 taps in the 64 px corner within 3 s, a three-finger hold of 800 ms) |
 | Screenshots | `stage-6a/host-panel.png`, `stage-6a/remote.png`, `stage-6a/viewer.png` (headless Chrome; 75 KB, 52 KB and 24 KB) |
 
+Pull request: https://github.com/samhv-dev/patient-monitor-engine/pull/1 (not merged; R20).
+
 ## Latency (headless Chrome, localhost, 200 commands per path)
 
 | Path | ack p50 | ack p95 | visible p50 | visible p95 | visible max |
