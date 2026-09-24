@@ -4228,7 +4228,7 @@ git commit -m "test(controller): late-join viewer is sample-identical over Broad
 - Consumes: vocabulary types (11), protocol `CommandInput`, `ControlFlag`, `StateEvent`, `AckResult` (2).
 - Produces: `clamp(v, min, max)`; `rampFrom(durationS, curve, maxDurationS = 900): Ramp | undefined` (0 → no ramp); `targetCommand(spec, value, ramp?)`; `pinCommand(spec, value?, ramp?)`; `releaseCommand(spec, ramp?)`; `rhythmCommand(rhythm, when = 'now')`; `modifierPatch(path, value)` (dotted path → nested object); `modifierCommand(spec, value | object | null)`; `deviceCommand(spec, value, lane?)`; `interface FlagView { flag; text; className; title }`; `flagView(flag)` (`ramping` → blue ▲, `override` → yellow !, `pinned` → P, `modeled` → M); `readout(spec, state, displayed): string` ("target / truth / displayed unit"); `class StageBuffer { constructor(prefix); size; staged; stage(c, key) /* same key replaces */; discard(); commit(send): Promise<AckResult[]> /* one stageGroup '<prefix>-sg<n>' */ }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/panel/controls.test.ts`:
 ```ts
@@ -4296,12 +4296,12 @@ describe('StageBuffer', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/controls.test.ts`
 Expected: FAIL — cannot load `../../src/panel/controls.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/panel/controls.ts`:
 ```ts
@@ -4436,12 +4436,12 @@ export class StageBuffer {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/controls.test.ts`
 Expected: `5 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/panel/controls.ts packages/controller/src/panel/staging.ts packages/controller/test/panel/controls.test.ts
