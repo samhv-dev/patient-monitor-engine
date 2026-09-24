@@ -195,6 +195,14 @@ describe('engine commands', () => {
     expect(Array.from(b)).toEqual(Array.from(a));
   });
 
+  it('restore() refuses a snapshot from another engine version or mains frequency (exact replay only on the same build; review L10)', () => {
+    const snap60 = createEngine({ seed: 1, device: { mainsHz: 60 } }).snapshot();
+    expect(() => createEngine({ seed: 1, device: { mainsHz: 50 } }).restore(snap60)).toThrow(/mains/);
+    const snap = createEngine({ seed: 1 }).snapshot();
+    expect(() => createEngine({ seed: 1 }).restore({ ...snap, engineVersion: '9.9.9' })).toThrow(/version/);
+    expect(() => createEngine({ seed: 1 }).restore(snap)).not.toThrow();
+  });
+
   it('restore() drops the discarded timeline from the sample buffers (review M4)', () => {
     const e = createEngine({ seed: 9 });
     e.advanceTo(10);

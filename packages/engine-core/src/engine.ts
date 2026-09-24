@@ -234,12 +234,17 @@ class Engine implements MonitorEngine {
       engineVersion: this.version,
       seed: this.seed,
       tick: this.tick,
-      state: structuredClone({ st: this.st, queue: this.queue }),
+      state: structuredClone({ st: this.st, queue: this.queue, mainsHz: this.mainsHz }),
     };
   }
   restore(s: PatientSnapshot): void {
     if (s.schema !== 'pme-snapshot/1') throw new Error(`unknown snapshot schema ${String(s.schema)}`);
-    const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }> };
+    // Exact replay is promised only on the same build and the same filter design (review L10).
+    if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
+    const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number };
+    if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
+      throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
+    }
     this.st = data.st;
     this.queue = data.queue;
     this.tick = s.tick;
