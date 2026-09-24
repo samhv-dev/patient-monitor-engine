@@ -35,6 +35,18 @@ import {
   type SimSeconds,
 } from './types.ts';
 import { version } from './version.ts';
+import { createL1State, type L1State } from './l1/state.ts'; // Stage 2
+import {
+  advanceHemo,
+  applyHemoCommand,
+  createHemoState,
+  HEMO_CHANNELS,
+  hemoChannelActive,
+  validateHemoCommand,
+  type HemoChannel,
+  type HemoState,
+} from './l2/hemo/pipeline.ts'; // Stage 2
+import { HEMO_RATE } from './l2/hemo/params.ts'; // Stage 2
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -67,6 +79,8 @@ interface PipelineState {
   hrm: HrState;
   out: EngineEvent[]; // measurement events waiting for their time
   detections: Detection[]; // QRS detections found during this pass
+  l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
+  hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -122,6 +136,7 @@ class Engine implements MonitorEngine {
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastWall = 0;
   private readonly sections = new Map<EcgFilterMode, Biquad[]>();
+  private readonly groupTicks = new Map<string, number>(); // Stage 2: stageGroup → tick (brief §4.9)
 
   constructor(opts: EngineOptions) {
     if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');
@@ -141,6 +156,7 @@ class Engine implements MonitorEngine {
     const mods = defaultModifiers();
     const hrv = drawHrvPhase(rng.hrv);
     const ctx: RhythmCtx = { hrAt: (t) => rampValue(hr, t), mods, rng, hrv };
+    const l1 = createL1State(opts.patient); // Stage 2
     this.st = {
       n: 0,
       rng,
@@ -156,6 +172,8 @@ class Engine implements MonitorEngine {
       hrm: createHrState(),
       out: [],
       detections: [],
+      l1, // Stage 2
+      hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
     };
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
@@ -199,8 +217,14 @@ class Engine implements MonitorEngine {
   // --- commands and events ---------------------------------------------------------------------
   dispatch(cmd: Command): DispatchResult {
     const reason = this.validate(cmd);
-    const tick = Math.max(cmd.atTick ?? this.tick + 1, this.tick + 1);
+    let tick = Math.max(cmd.atTick ?? this.tick + 1, this.tick + 1);
     if (reason) return { accepted: false, tick: this.tick, reason };
+    if (cmd.stageGroup !== undefined) {
+      // Stage 2: commands sharing a stageGroup apply on the same tick (brief §4.9 "stage then commit")
+      const g = this.groupTicks.get(cmd.stageGroup);
+      if (g !== undefined && g > this.tick) tick = g;
+      else this.groupTicks.set(cmd.stageGroup, tick);
+    }
     let i = this.queue.length;
     while (i > 0 && (this.queue[i - 1] as { tick: number }).tick > tick) i--;
     this.queue.splice(i, 0, { cmd, tick });
@@ -249,6 +273,7 @@ class Engine implements MonitorEngine {
     this.queue = data.queue;
     this.tick = s.tick;
     this.syncLaneBuffers();
+    this.syncHemoBuffers(); // Stage 2
     for (const b of this.bufs.values()) b.clear(); // the discarded timeline's samples are not history (review M4)
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
@@ -358,6 +383,12 @@ class Engine implements MonitorEngine {
         }
       },
     );
+    advanceHemo(
+      ps.hemo,
+      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi },
+      Math.floor(end / 4),
+      (ch, m, v) => this.hemoWrite(ch, m, v),
+    ); // Stage 2
     ps.n = end + 1;
   }
 
@@ -375,6 +406,7 @@ class Engine implements MonitorEngine {
       });
     this.st.rhythm.records = keep(this.st.rhythm.records);
     this.st.out = keep(this.st.out);
+    this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     for (const e of due) this.emit(e);
   }
@@ -387,6 +419,8 @@ class Engine implements MonitorEngine {
     // Every numeric input is range-checked: a NaN or Infinity used to reach min(...) and the IIR/QRS state and
     // freeze or poison the pipeline for good (review M5).
     if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
+    const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
+    if (hemo !== null) return hemo;
     switch (cmd.type) {
       case 'setTarget':
         if (cmd.variable !== 'hr') return `setTarget ${cmd.variable} is not implemented until Stage 2`;
@@ -436,6 +470,13 @@ class Engine implements MonitorEngine {
 
   private apply(cmd: Command, simT: number): void {
     const ps = this.st;
+    const setHr = (v: number, r?: Ramp) => {
+      ps.hr = retarget(ps.hr, simT, v, r);
+    };
+    if (applyHemoCommand(ps.hemo, ps.l1, cmd, simT, setHr, ps.rng)) {
+      this.syncHemoBuffers(); // Stage 2
+      return;
+    }
     switch (cmd.type) {
       case 'setTarget':
         ps.hr = retarget(ps.hr, simT, cmd.value, cmd.ramp);
@@ -473,8 +514,23 @@ class Engine implements MonitorEngine {
   /** Make the lane buffers match the current lanes (new leads start empty). */
   private syncLaneBuffers(): void {
     const want = new Set<ChannelId>(this.st.lanes);
-    for (const ch of [...this.bufs.keys()]) if (!ch.startsWith('vcg') && !want.has(ch)) this.bufs.delete(ch);
+    for (const ch of [...this.bufs.keys()]) if (ECG_CHANNELS.has(ch) && !ch.startsWith('vcg') && !want.has(ch)) this.bufs.delete(ch);
     for (const ch of want) if (!this.bufs.has(ch)) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
+  }
+
+  /** Stage 2: write one 125 Hz sample; the buffer is created on the first write (brief §3.5 ring buffers). */
+  private hemoWrite(ch: HemoChannel, m: number, v: number): void {
+    let b = this.bufs.get(ch);
+    if (!b) {
+      b = new RingBuffer(HEMO_RATE, BUFFER_SECONDS);
+      this.bufs.set(ch, b);
+    }
+    b.write(m, v);
+  }
+
+  /** Stage 2: a channel whose sensor is 'none' has no trace, so its buffer is dropped (brief §6.2). */
+  private syncHemoBuffers(): void {
+    for (const ch of HEMO_CHANNELS) if (!hemoChannelActive(this.st.hemo, ch)) this.bufs.delete(ch);
   }
 }
 

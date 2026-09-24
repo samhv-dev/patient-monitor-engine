@@ -3369,7 +3369,7 @@ git commit -m "feat(hemo): per-tick haemodynamic pipeline — beats → ejection
 - Consumes: `pipeline.ts` (Task 12), `l1/state.ts` (Task 2), `params.ts` (`HEMO_RATE`).
 - Produces: `PipelineState.l1: L1State`, `PipelineState.hemo: HemoState`; engine channels `abp`/`cvp`/`pap` (created on the first write, dropped when the sensor goes to `'none'`) and `pleth`; `stageGroup` semantics in `dispatch`. Test helpers (`test/helpers/hemo.ts`): `cmd(body)`, `rig(opts): { e; ev }`, `read(e, ch, t0, t1): Float32Array`, `type Beat`, `beatsOf(ev, t0?, t1?)`, `numeric(ev, id, t0?, t1?)`, `mean`, `sd`, `footAfter(x, t0, tR)`, `notchAfter(x, t0, tR)`, `riseAfter(x, t0, tR, rrNext)`, `rmssd(xs)`.
 
-- [ ] **Step 1: Write the test helpers and the failing wiring test**
+- [x] **Step 1: Write the test helpers and the failing wiring test**
 
 `packages/engine-core/test/helpers/hemo.ts`:
 
@@ -3570,12 +3570,12 @@ describe('engine + Stage 2 pipeline wiring', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-engine.test.ts`
 Expected: FAIL — `latestSampleIndex('pleth')` is −1 and every Stage 2 command is rejected ("not implemented until Stage 2" / "later stages").
 
-- [ ] **Step 3: Wire the pipeline into `packages/engine-core/src/engine.ts`** — additive edits only (each new line is marked `// Stage 2`; the only two changed Stage 1 lines are `const tick` → `let tick` in `dispatch` and the `syncLaneBuffers` deletion condition, which must only touch ECG lanes or a lead change would delete the pressure buffers). `type Ramp` is already imported by Stage 1.1. Every "find" block occurs exactly once.
+- [x] **Step 3: Wire the pipeline into `packages/engine-core/src/engine.ts`** — additive edits only (each new line is marked `// Stage 2`; the only two changed Stage 1 lines are `const tick` → `let tick` in `dispatch` and the `syncLaneBuffers` deletion condition, which must only touch ECG lanes or a lead change would delete the pressure buffers). `type Ramp` is already imported by Stage 1.1. Every "find" block occurs exactly once.
 
 Edit `packages/engine-core/src/engine.ts`:
 
@@ -3805,7 +3805,7 @@ replace with:
 
 What the edits do, in order: imports; `PipelineState.l1/hemo`; the `stageGroup` → tick map; L1 + haemodynamic state in the constructor; `stageGroup` in `dispatch`; drop 'none'-sensor buffers in `restore` (before they are cleared); run `advanceHemo` after the ECG in `advance` (125 Hz indices up to `floor(end/4)`); flush the haemodynamic events; the validate hook (after the `atTick` check); the apply hook (with `setHr` for `pin hr`); the buffer helpers.
 
-- [ ] **Step 4: Update the two Stage 1 tests whose premise Stage 2 changes**
+- [x] **Step 4: Update the two Stage 1 tests whose premise Stage 2 changes**
 
 Edit `packages/engine-core/test/engine/engine-commands.test.ts` (the test "dispatch accepts Stage 1 commands …" asserted that `setTarget sbp` and `applyEvent cpr` are rejected; both are Stage 2 commands now):
 
@@ -3926,12 +3926,12 @@ replace with:
   });
 ```
 
-- [ ] **Step 5: Run the engine tests**
+- [x] **Step 5: Run the engine tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-engine.test.ts test/engine/engine-commands.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/engine-pipeline.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck && npx -y pnpm@9.15.9 --filter @pme/controller test`
 Expected: PASS (20 tests, then 8 tests — acceptance 11 takes ≈ 55–65 s — then controller 97 tests). The Stage 1 test "fills the look-ahead at creation" still sees `latestSampleIndex('abp') === -1` because the arterial line defaults to `'none'`, and the Stage 1.1 "chunking invariance" test still passes because the haemodynamics advance only the committed state deterministically.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/test/helpers/hemo.ts packages/engine-core/test/engine packages/controller/test/session/host-session.test.ts

@@ -25,9 +25,12 @@ describe('engine pipeline', () => {
     expect(e.latestSampleIndex('abp')).toBe(-1);
   });
 
-  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 120_000 }, () => {
+  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 180_000 }, async () => {
     const e = createEngine({ seed: 11 });
-    e.advanceTo(86_400);
+    for (let h = 1; h <= 24; h++) {
+      e.advanceTo(h * 3600);
+      await new Promise((r) => setTimeout(r, 0)); // Stage 2: the run now takes ~55 s; yield so Vitest's RPC does not time out
+    }
     expect(e.now().tick).toBe(4_320_000);
     expect(e.latestSampleIndex('ecgII')).toBe(43_200_000 + 50);
   });
