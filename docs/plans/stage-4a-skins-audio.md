@@ -1110,7 +1110,7 @@ git commit -m "feat(skins): closed JSON Schemas for skins, themes and presets; a
 
 The skin is research 06 §5's draft mapped onto the schema, with research 06's `[measured]/[assumed]/[unverified]/[conflict]/[inferred]` tags carried into `provenance`. The `resolve.ts` written here already contains the preset and theme code paths (exercised from Tasks 9–10); the registry starts with `saadat-like` only.
 
-- [ ] **Step 1: Write the failing tests** (they iterate the registry, so later skins are covered automatically)
+- [x] **Step 1: Write the failing tests** (they iterate the registry, so later skins are covered automatically)
 
 Create `packages/skins/test/schema.test.ts`:
 
@@ -1306,12 +1306,12 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/schema.test.ts test/resolve.test.ts`
 Expected: FAIL, `resolveSkin` / `SKIN_IDS` not exported from `../src/index.ts`.
 
-- [ ] **Step 3: Write the skin**
+- [x] **Step 3: Write the skin**
 
 Create `packages/skins/src/data/skins/saadat-like.json`:
 
@@ -1636,7 +1636,7 @@ Create `packages/skins/src/data/skins/saadat-like.json`:
 }
 ```
 
-- [ ] **Step 4: Write the registry (saadat-like only for now)**
+- [x] **Step 4: Write the registry (saadat-like only for now)**
 
 Create `packages/skins/src/registry.ts`:
 
@@ -1666,7 +1666,7 @@ export const PRESET_IDS = Object.keys(PRESETS);
 export const THEME_IDS = Object.keys(THEMES);
 ```
 
-- [ ] **Step 5: Write `resolve.ts`**
+- [x] **Step 5: Write `resolve.ts`**
 
 Create `packages/skins/src/resolve.ts`:
 
@@ -1921,7 +1921,7 @@ export function resolveSkin(id: string, opts: ResolveOptions = {}): ResolvedSkin
 }
 ```
 
-- [ ] **Step 6: Replace `packages/skins/src/index.ts`**
+- [x] **Step 6: Replace `packages/skins/src/index.ts`**
 
 ```ts
 // @pme/skins: skins as data (brief §3.8). Validation (ajv) lives in '@pme/skins/validate' so renderer bundles stay small.
@@ -1937,12 +1937,12 @@ export {
 } from './resolve.ts';
 ```
 
-- [ ] **Step 7: Run the whole package and the typecheck**
+- [x] **Step 7: Run the whole package and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: 8 files, 35 passed; `1 snapshot written`; typecheck clean. If a provenance test fails, the message lists the uncovered leaf or dangling key: fix the JSON, never loosen the test.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test
