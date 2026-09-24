@@ -5374,7 +5374,7 @@ git commit -m "feat(controller): remote controller — join by code, live readou
 - Consumes: everything in `src/`.
 - Produces: `@pme/controller` exports (see the file) and `transports = { inProcess, postMessage, broadcastChannel, websocket, webrtc }` — the object renderer request R-2 will put on `PatientMonitor.transports`. `src/index.ts` must not import `relay/`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/index.test.ts`:
 ```ts
@@ -5394,12 +5394,12 @@ describe('@pme/controller public API', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/index.test.ts`
 Expected: FAIL — `transports` is undefined (`Cannot convert undefined or null to object`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/index.ts`:
 ```ts
@@ -5447,7 +5447,7 @@ export const transports = {
 };
 ```
 
-- [ ] **Step 4: Run everything for the package, build, and check the bundle has no `ws`**
+- [x] **Step 4: Run everything for the package, build, and check the bundle has no `ws`**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller test
@@ -5457,7 +5457,7 @@ grep -c "WebSocketServer" packages/controller/dist/index.js
 ```
 Expected: 20 test files, 97 tests passed; typecheck 0; build prints `dist/index.js` (≈ 62 kB, engine-core included as in the other packages); the grep prints `0`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/index.ts packages/controller/test/index.test.ts
