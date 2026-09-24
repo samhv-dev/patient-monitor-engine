@@ -2686,7 +2686,7 @@ git commit -m "feat(nibp): oscillometric cycle — inflate, step-deflate with ma
 - Consumes: everything from Tasks 2–11; `l1/ramp.ts`; `types.ts`.
 - Produces: `HEMO_CHANNELS = ['abp','cvp','pap','pleth']`, `type HemoChannel`, `interface RhythmView { id: string; records: readonly EngineEvent[] }` (structural view of the rhythm engine's state, so `l2/ecg` is never imported), `interface HemoCtx { l1; hr: RampState; rhythm: RhythmView; rng; phi }`, `interface SiteBeatStat`, `interface HemoState` (fields as in the code; `out: EngineEvent[]` holds events waiting for their time), `createHemoState(profile, l1, hr0)`, `hemoChannelActive(hs, ch)`, `advanceHemo(hs, ctx, mEnd, write: (ch, m, v) => void)`, `validateHemoCommand(cmd, hs): string|undefined|null` (null = not a Stage 2 command), `applyHemoCommand(hs, l1, cmd, t, setHr, rng): boolean`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/hemo/pipeline.test.ts`:
 
@@ -2762,12 +2762,12 @@ describe('l2/hemo/pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/pipeline.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/pipeline.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/pipeline.ts`:
 
@@ -3346,12 +3346,12 @@ export function applyHemoCommand(
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo`
 Expected: PASS (all `l2/hemo` files, 21 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/l2/hemo/pipeline.test.ts
