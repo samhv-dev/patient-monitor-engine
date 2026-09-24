@@ -1890,7 +1890,7 @@ git commit -m "test(ecg): AF irregularity, flutter ratios, AVNRT and VT (accepta
 - Consumes: `runRhythm`, `diffs` (Task 5). `beat.template === 'pvc'` marks PVC beats (Task 5).
 - Produces: nothing new.
 
-- [ ] **Step 1: Write the tests (acceptance test 8)**
+- [x] **Step 1: Write the tests (acceptance test 8)**
 
 `packages/engine-core/test/l2/ecg/rhythm-pvc.test.ts`:
 ```ts
@@ -1944,16 +1944,16 @@ describe('rhythm engine: PVC modifier', () => {
 });
 ```
 
-- [ ] **Step 2: Prove the compensatory-pause test can fail**
+- [x] **Step 2: Prove the compensatory-pause test can fail**
 
 Temporarily change `REFRACTORY_QT_FRACTION` to `0.1` in `rhythm-engine.ts` (the next sinus beat is then no longer concealed → interpolated PVCs), run the file, expect FAIL, restore `0.8`.
 
-- [ ] **Step 3: Run to see them pass**
+- [x] **Step 3: Run to see them pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-pvc`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test
