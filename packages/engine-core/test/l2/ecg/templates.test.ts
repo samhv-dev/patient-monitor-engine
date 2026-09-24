@@ -33,14 +33,14 @@ describe('l2/ecg/templates', () => {
     expect(p('V5', VEC.R)).toBeGreaterThan(Math.abs(p('V5', VEC.S)));
   });
 
-  it('narrow QRS 70–100 ms, wide QRS 120–200 ms with a discordant T and 1.2–2× amplitude in II', () => {
+  it('narrow QRS 70–100 ms, wide QRS 120–200 ms with a discordant T and 1.5–2× amplitude in II (brief §5; review L12)', () => {
     expect(templateQrsMs('narrow')).toBeGreaterThanOrEqual(70);
     expect(templateQrsMs('narrow')).toBeLessThanOrEqual(100);
     expect(templateQrsMs('wide')).toBeGreaterThanOrEqual(120);
     expect(templateQrsMs('wide')).toBeLessThanOrEqual(200);
     expect(Math.sign(p('ecgII', WIDE_VEC.T))).toBe(-Math.sign(p('ecgII', WIDE_VEC.R)));
     const ratio = p('ecgII', WIDE_VEC.R) / p('ecgII', VEC.R);
-    expect(ratio).toBeGreaterThanOrEqual(1.2);
+    expect(ratio).toBeGreaterThanOrEqual(1.5);
     expect(ratio).toBeLessThanOrEqual(2);
   });
 

@@ -18,11 +18,15 @@ export const VEC: Readonly<Record<'P' | 'Q' | 'R' | 'S' | 'T' | 'U', Vec3>> = {
   U: [0.04, 0.017, -0.016],
 };
 
-/** Wide ventricular complex (PVC, VT, ventricular escape) [ENG]: LBBB-like, upright in II, discordant T. */
+/**
+ * Wide ventricular complex (PVC, VT, ventricular escape) [ENG]: LBBB-like, upright in II, discordant T.
+ * Scaled ×1.2 in Stage 1.1 so R in II is 1.63× the normal beat (brief §5: 1.5–2× amplitude; review L12).
+ */
+const WIDE_GAIN = 1.2;
 export const WIDE_VEC: Readonly<Record<'R' | 'S' | 'T', Vec3>> = {
-  R: [0.9, 1.3, 0.8],
-  S: [-0.3, -0.4, -0.2],
-  T: [-0.4, -0.45, -0.3],
+  R: [0.9 * WIDE_GAIN, 1.3 * WIDE_GAIN, 0.8 * WIDE_GAIN],
+  S: [-0.3 * WIDE_GAIN, -0.4 * WIDE_GAIN, -0.2 * WIDE_GAIN],
+  T: [-0.4 * WIDE_GAIN, -0.45 * WIDE_GAIN, -0.3 * WIDE_GAIN],
 };
 
 /** Retrograde P (AVNRT), negative in II, buried at the end of the QRS [ENG, research 03 §1.5]. */
