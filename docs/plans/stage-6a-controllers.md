@@ -6198,7 +6198,7 @@ git commit -m "test(demo): command→ack→visible latency on in-process, Broadc
 - Consumes: everything above.
 - Produces: the gate evidence the orchestrator inspects (R11).
 
-- [ ] **Step 1: Screenshot script**
+- [x] **Step 1: Screenshot script**
 
 `apps/demo/e2e/stage6a-screens.e2e.ts`:
 ```ts
@@ -6258,7 +6258,7 @@ test('panel, remote and viewer screenshots', async ({ page }) => {
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage6a-screens.e2e.ts`
 Expected: `1 passed`; three PNGs in `docs/gates/stage-6a/`. Open them: `host-panel.png` shows the drawer (Controls tab, HR row with a blue ▲ flag and "95 / 95 / … bpm"), `remote.png` a phone-width page with `connected · GATE6A`, the controls and the log, `viewer.png` a monitor showing Mobitz I with the diagnostics line `synced · lag 100 ms · beat drift 0.0 ms · resyncs 0`.
 
-- [ ] **Step 2: Clean-clone CI rehearsal**
+- [x] **Step 2: Clean-clone CI rehearsal**
 
 ```bash
 S=/private/tmp/pme-6a-ci; rm -rf $S && git clone "$(pwd)" $S && cd $S && git checkout stage-6a-controllers \
@@ -6267,7 +6267,7 @@ S=/private/tmp/pme-6a-ci; rm -rf $S && git clone "$(pwd)" $S && cd $S && git che
 ```
 Expected: `exit 0`. Record per-package test totals (controller 97 in 20 files; the other packages unchanged from Stage 1).
 
-- [ ] **Step 3: LAN run with the relay (laptop + a second device)**
+- [ ] **Step 3: LAN run with the relay (laptop + a second device)** — **pending Ali** (no second device available to the executor; recorded in the gate note)
 
 ```bash
 npx -y pnpm@9.15.9 relay & RELAY_PID=$!
@@ -6276,9 +6276,9 @@ ipconfig getifaddr en0   # the laptop's LAN address, e.g. 192.168.1.20
 ```
 On the laptop open `http://<ip>:5173/stage6a.html?relay=ws://<ip>:8787/`. On a phone or the iPad open `http://<ip>:5173/stage6a-remote.html`, type the session code, choose **Relay (WebSocket)**, **Join**. Check and record: commands apply; turning Wi-Fi off on the phone shows `disconnected — retrying` while the laptop monitor keeps running; turning it back on reconnects and a command queued meanwhile is applied exactly once (host diagnostics `applied` rises by 1, `duplicates` may rise). Repeat with **Direct (WebRTC)**. Then open the viewer on the iPad (`/stage6a-viewer.html?session=CODE&via=relay&relay=ws://<ip>:8787/`) and record `lag` and `beat drift`. `kill $RELAY_PID $DEV_PID`. If no second device is at hand, write "pending Ali" in the note.
 
-- [ ] **Step 4: iPad as the host (panel by touch)** — open `stage6a.html` on the iPad; the drawer must open with a 5-tap in the top-left corner and with a three-finger long-press, the controls must be usable by touch, and sound must play after **Sound on** in the drawer. Record, or "pending Ali".
+- [ ] **Step 4: iPad as the host (panel by touch)** — open `stage6a.html` on the iPad; the drawer must open with a 5-tap in the top-left corner and with a three-finger long-press, the controls must be usable by touch, and sound must play after **Sound on** in the drawer. Record, or "pending Ali". — **pending Ali** (no second device / iPad available to the executor; recorded in the gate note)
 
-- [ ] **Step 5: Write `docs/gates/stage-6a.md`**
+- [x] **Step 5: Write `docs/gates/stage-6a.md`**
 
 ```markdown
 # Gate 6a — Controllers and transports (date: YYYY-MM-DD)
@@ -6309,7 +6309,7 @@ Not checked here:
 ```
 Fill every row with measured values (copy the latency table from Task 24 Step 3).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/demo/e2e/stage6a-screens.e2e.ts docs/gates/stage-6a.md docs/gates/stage-6a
