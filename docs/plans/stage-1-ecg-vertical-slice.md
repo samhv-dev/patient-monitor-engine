@@ -719,7 +719,7 @@ git commit -m "feat(ecg): Gaussian VCG kernels and Dower projection with Einthov
 - Consumes: `kernel`, `K_STRIDE`, `WAVE`, `qrsSpanMs` (Task 3); `projectLead`, `Vec3` (Task 3).
 - Produces: `intervals.ts`: `qtFridericiaMs(rrS, qtcMs = 400)`, `DEFAULT_PR60_MS = 190`, `prMs(hrBpm, pr60Ms = 190)`, `lvetMs(hrBpm)` (Weissler men). `templates.ts`: `VEC` (P,Q,R,S,T,U vectors), `WIDE_VEC`, `RETRO_P_VEC`, `FLUTTER_VEC`, `FWAVE_DIR`, `WANDER_DIR`, `T_END_AFTER_PEAK_S = 0.11`, `WIDE_QT_EXTRA_MS = 60`, `type TemplateId = 'narrow'|'wide'|'narrowRetroP'`, `pWaveKernels(scale?)`, `flutterKernels()`, `narrowKernels(qtMs, rScale?)`, `wideKernels(qtMs, scale?)`, `templateKernels(id, qtMs, scale?)`, `fiducialS(id)` (0.04 narrow, 0.05 wide; `beat.t` = QRS onset + this), `templateQrsMs(id)`, `kernelQtMs(k)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/engine-core/test/l2/ecg/intervals.test.ts`:
 ```ts
@@ -800,12 +800,12 @@ describe('l2/ecg/templates', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see them fail**
+- [x] **Step 2: Run to see them fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/intervals test/l2/ecg/templates`
 Expected: FAIL — cannot load `intervals.ts` / `templates.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/ecg/intervals.ts`:
 ```ts
@@ -942,12 +942,12 @@ export function kernelQtMs(k: readonly number[]): number {
 }
 ```
 
-- [ ] **Step 4: Run to see them pass**
+- [x] **Step 4: Run to see them pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/intervals test/l2/ecg/templates`
 Expected: PASS, 3 + 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
