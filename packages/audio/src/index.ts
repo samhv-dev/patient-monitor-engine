@@ -6,3 +6,4 @@ export * from './context.ts';
 export * from './profiles/index.ts';
 export * from './alarm-bursts.ts';
 export * from './alarm-sounder.ts';
+export * from './alarm-voice.ts';

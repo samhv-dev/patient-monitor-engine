@@ -4281,7 +4281,7 @@ git commit -m "feat(audio): AlarmSounder: priority trains, repeat cadence, silen
 - Consumes: `playBeep` (existing `tones.ts`), Tasks 12–15.
 - Produces: `harmonicTable(harmonicsDb)`, `playAlarmPulse(ctx, dest, when, { freqHz, durS, gain }, harmonicsDb, rampMs): ToneHandle`, `playSegments(ctx, dest, when, segs, gain, harmonicsDb?)`, `DeviceToneRequest`, `TonePlayerOptions { profile, toneSet?, beepGain?, deviceGain? }`, `createTonePlayer(ctx, dest, opts): (tone, when) => ToneHandle | void` (kinds `qrs`, `pulse`, `alarm`, `charge`, `chargeReady`, `shock`, `nibpDone`; anything else plays nothing).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/audio/test/alarm-voice.test.ts`:
 
@@ -4345,12 +4345,12 @@ describe('alarm voices', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/alarm-voice.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/audio/src/alarm-voice.ts`:
 
@@ -4480,12 +4480,12 @@ Append to `packages/audio/src/index.ts`:
 export * from './alarm-voice.ts';
 ```
 
-- [ ] **Step 4: Run the whole audio package, typecheck and build**
+- [x] **Step 4: Run the whole audio package, typecheck and build**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio test && npx -y pnpm@9.15.9 --filter @pme/audio typecheck && npx -y pnpm@9.15.9 --filter @pme/audio build`
 Expected: 10 files, **58 passed** (the 19 Stage 1 tests unchanged); typecheck clean; build OK.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/audio/src/alarm-voice.ts packages/audio/src/index.ts packages/audio/test/alarm-voice.test.ts
