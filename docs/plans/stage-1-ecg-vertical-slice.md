@@ -1650,7 +1650,7 @@ git commit -m "feat(ecg): rhythm engine with atrial/ventricular clocks, AV node,
 
 These tests exercise code written in Task 5. Run them expecting PASS; a failure is a bug in Task 5's `rhythm-engine.ts` (or in the helper) — fix it there, never by loosening a tolerance from BUILD-PLAN.
 
-- [ ] **Step 1: Write the helper and the tests (acceptance tests 5 and 6)**
+- [x] **Step 1: Write the helper and the tests (acceptance tests 5 and 6)**
 
 `packages/engine-core/test/helpers/stats.ts`:
 ```ts
@@ -1763,16 +1763,16 @@ describe('rhythm engine: AV blocks', () => {
 });
 ```
 
-- [ ] **Step 2: Prove the tests can fail**
+- [x] **Step 2: Prove the tests can fail**
 
 Temporarily change `MOBITZ1_R` in `rhythm-engine.ts` from `0.5` to `1.5`, run `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-avblock`, expect the Mobitz test to FAIL (increments grow), then restore `0.5`.
 
-- [ ] **Step 3: Run to see them pass**
+- [x] **Step 3: Run to see them pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-avblock`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test
