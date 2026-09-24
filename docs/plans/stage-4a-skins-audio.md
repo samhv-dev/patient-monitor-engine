@@ -3237,7 +3237,7 @@ git commit -m "docs(skins): renderer/audio contract for Stage 4b" -m "Co-Authore
 **Interfaces:**
 - Produces: `type AlarmLevel = 1 | 2 | 3`, `type LevelKey = 'L1' | 'L2' | 'L3'`, `levelKey(l)`, `LevelSound { pulseMs, freqHz, gapsMs, repeatS: number | null, levelDb }`, `VolumeCurve { min, max, default, dbPerStep, maxGain }`, `AlarmSoundProfile { id, label, claim, levels, harmonicsDb, rampMs, volume, silence: { durationS, cancelOnNewAlarm }, provenance }`, `ProfileOverrides { repeatS?, lowPulses?, volume?, silence? }` (the skin's `ResolvedSkin.audio.alarm` fits it); `IEC_STYLE`, `SAADAT`, `TRADITIONAL`, `ALARM_PROFILES`, `getAlarmProfile(id)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/audio/test/profiles.test.ts`:
 
@@ -3282,12 +3282,12 @@ describe('alarm profiles as data', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/profiles.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Write the profile types and data**
+- [x] **Step 3: Write the profile types and data**
 
 Create `packages/audio/src/profiles/types.ts`:
 
@@ -3512,18 +3512,18 @@ export * from './types.ts';
 export { IEC_STYLE, SAADAT, TRADITIONAL };
 ```
 
-- [ ] **Step 4: Export from the package** — append to `packages/audio/src/index.ts`:
+- [x] **Step 4: Export from the package** — append to `packages/audio/src/index.ts`:
 
 ```ts
 export * from './profiles/index.ts';
 ```
 
-- [ ] **Step 5: Run the test and the typecheck**
+- [x] **Step 5: Run the test and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/profiles.test.ts && npx -y pnpm@9.15.9 --filter @pme/audio typecheck`
 Expected: 11 passed; typecheck clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/audio/src/profiles packages/audio/src/index.ts packages/audio/test/profiles.test.ts
