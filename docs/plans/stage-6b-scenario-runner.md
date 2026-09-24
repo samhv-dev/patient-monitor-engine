@@ -3861,7 +3861,7 @@ git commit -m "feat(panel): Scenario tab — load (built-in/file/URL), state and
 **Interfaces:**
 - Produces: a `.pme-scn-remote` strip (hidden until a scenario is loaded) under the vitals: `.pme-scn-state` = "<state label> · <n> s[ · paused]" and one `button[data-action=scenario-trigger][data-target=<id>]` per transition of the current state that has a manual trigger (label = the manual label). Pressing one sends `scenario trigger`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // @vitest-environment happy-dom
@@ -3908,12 +3908,12 @@ describe('remote scenario strip (DOM)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/remote/remote-scenario.dom.test.ts`
 Expected: FAIL — `strip()` is null (`Cannot read properties of null (reading 'hidden')`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/controller/src/remote/remote-app.ts`, replace:
 ```html
@@ -3962,7 +3962,7 @@ with:
       renderScenario();
 ```
 
-- [ ] **Step 4: Run the whole controller suite**
+- [x] **Step 4: Run the whole controller suite**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller typecheck
@@ -3970,7 +3970,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller test
 ```
 Expected: typecheck exit 0; `Test Files  32 passed (32)`, `Tests  185 passed (185)` (≈ 15 s).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/remote/remote-app.ts packages/controller/test/remote/remote-scenario.dom.test.ts
