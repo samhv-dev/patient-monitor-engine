@@ -113,6 +113,20 @@ describe('engine commands', () => {
     for (let k = 1; k < tones.length; k++) expect(tones[k]! - tones[k - 1]!).toBeGreaterThan(0.2); // no double beeps
   });
 
+  it('switching lane 0 to a small lead (aVL) keeps the HR: detection runs on the primary lead II (review M3)', () => {
+    const e = createEngine({ seed: 12, patient: { baseline: { hr: 75 } } });
+    const hr: Array<{ t: number; v: number | null }> = [];
+    e.on((x) => {
+      if (x.type === 'measurement' && x.values.hr) hr.push({ t: x.t, v: x.values.hr.value });
+    }, ['measurement']);
+    e.advanceTo(10);
+    e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'lead', value: 'aVL', lane: 0 } }));
+    e.advanceTo(25);
+    const after = hr.filter((m) => m.t > 10);
+    expect(after.length).toBeGreaterThan(10);
+    for (const m of after) expect(Math.abs(m.v! - 75)).toBeLessThanOrEqual(3);
+  });
+
   it('filter and lead device actions change the displayed channels', () => {
     const e = createEngine({ seed: 8 });
     e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'lead', value: 'V1', lane: 1 } }));

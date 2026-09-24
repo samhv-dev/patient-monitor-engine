@@ -44,6 +44,12 @@ const LATE_TONE_POST_S = 0.12;
 export const QRS_TONE_HZ = 880; // fixed pitch until SpO2 exists (brief §3.6; Stage 3 adds pitch(SpO2))
 const PLAN_LEAD_S = 0.15; // plan rhythm events this far beyond the last generated sample (kernel lead-in)
 const DEFAULT_LANES: LeadId[] = ['ecgII', 'V5'];
+/**
+ * The primary (detection) lead: the QRS detector and HR run on lead II, monitor-filtered with its own filter state,
+ * whatever lead lane 0 shows. Detecting on lane 0 kept thresholds learned on II after a switch to a small lead
+ * (aVL: QRS ~23 %), so HR read 0 within 4 s, a false asystole (review M3) [ENG].
+ */
+const DETECTION_LEAD: LeadId = 'ecgII';
 
 interface PipelineState {
   n: number; // next ECG sample index to generate
@@ -55,6 +61,7 @@ interface PipelineState {
   filterMode: EcgFilterMode;
   lanes: LeadId[];
   laneFilter: number[][];
+  detFilter: number[]; // filter state of the detection lead
   qrs: QrsState;
   hrm: HrState;
   out: EngineEvent[]; // measurement events waiting for their time
@@ -143,6 +150,7 @@ class Engine implements MonitorEngine {
       filterMode: 'monitor',
       lanes,
       laneFilter: lanes.map(() => createFilterState(this.filter('monitor'))),
+      detFilter: createFilterState(this.filter('monitor')),
       qrs: createQrsState(0),
       hrm: createHrState(),
       out: [],
@@ -331,13 +339,11 @@ class Engine implements MonitorEngine {
         for (let i = 0; i < ps.lanes.length; i++) {
           const v = filterSample(sections, ps.laneFilter[i] as number[], projectLead(ps.lanes[i] as LeadId, x, y, z));
           (laneBufs[i] as RingBuffer).write(n, v);
-          if (i === 0) {
-            const r = qrsStep(ps.qrs, v);
-            if (r >= 0) {
-              hrOnQrs(ps.hrm, r / ECG_RATE);
-              ps.detections.push({ r, n });
-            }
-          }
+        }
+        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, projectLead(DETECTION_LEAD, x, y, z)));
+        if (r >= 0) {
+          hrOnQrs(ps.hrm, r / ECG_RATE);
+          ps.detections.push({ r, n });
         }
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
@@ -426,6 +432,7 @@ class Engine implements MonitorEngine {
         if (a.action === 'filter') {
           ps.filterMode = a.value as EcgFilterMode;
           ps.laneFilter = ps.lanes.map(() => createFilterState(this.filter(ps.filterMode)));
+          ps.detFilter = createFilterState(this.filter(ps.filterMode));
         } else if (a.action === 'lead') {
           const lane = Math.min(a.lane as number, ps.lanes.length);
           ps.lanes[lane] = a.value as LeadId;
