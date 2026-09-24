@@ -105,3 +105,39 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(posts[posts.length - 1]!.events.some((e) => e.type === 'beat')).toBe(true);
   });
 });
+
+describe('MonitorCore Stage 2 waveform lanes', () => {
+  it('adds ABP and pleth lanes below the ECG lanes with label and scale chrome, and draws them in their colours', () => {
+    const ctx = new FakeCtx();
+    const canvas = { width: 0, height: 0 };
+    const core = new MonitorCore(
+      canvas,
+      ctx,
+      { cssW: 1056, cssH: 400, dpr: 1 },
+      { engine: { seed: 1, patient: { sensors: { abp: 'connected' } } }, waves: ['abp', 'pleth'] },
+      () => {},
+    );
+    expect(ctx.texts).toEqual(['II  M', 'V5  M', 'ABP', '150', '0', 'Pleth']);
+    ctx.clear();
+    for (let f = 0; f <= 180; f++) core.frame(1000 + (f * 1000) / 60);
+    const styles = new Set(ctx.calls.filter((c) => c.op === 'stroke').map((c) => c.style));
+    expect(styles.has('#ff3b3b')).toBe(true);
+    expect(styles.has('#00e5ff')).toBe(true);
+  });
+
+  it('a lane whose sensor is none draws nothing', () => {
+    const ctx = new FakeCtx();
+    const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 800, cssH: 300, dpr: 1 }, { engine: { seed: 1 }, waves: ['cvp'] }, () => {});
+    ctx.clear();
+    for (let f = 0; f <= 60; f++) core.frame(1000 + (f * 1000) / 60);
+    expect(ctx.calls.some((c) => c.op === 'stroke' && c.style === '#3d8bff')).toBe(false);
+  });
+
+  it('a lead change on lane 1 does not touch the wave lanes, and the filter letter redraw keeps the wave labels', () => {
+    const ctx = new FakeCtx();
+    const core = new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 400, dpr: 1 }, { engine: { seed: 1 }, waves: ['pleth'] }, () => {});
+    ctx.texts = [];
+    core.command({ id: 'l', issuedBy: 't', type: 'device', action: { device: 'ecg', action: 'lead', value: 'V1', lane: 1 } });
+    expect(ctx.texts).toEqual(['V1  M']);
+  });
+});

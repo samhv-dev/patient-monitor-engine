@@ -1,5 +1,6 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
 import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { WaveLaneId } from './wave-lanes.ts'; // Stage 2
 
 export interface Size {
   cssW: number;
@@ -11,6 +12,8 @@ export interface CoreOptions {
   engine?: EngineOptions;
   /** Displayed ECG leads, one per lane (1–3). Default ['ecgII', 'V5']. */
   lanes?: LeadId[];
+  /** Stage 2: waveform lanes drawn below the ECG lanes, in order (default none). */
+  waves?: WaveLaneId[];
   pxPerMm?: number;
   fps?: 60 | 30;
 }

@@ -6,6 +6,7 @@ import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { SweepLane } from './sweep-lane.ts';
+import { autoRange, scaleFor, WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts'; // Stage 2
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // hard-coded dark theme (Stage 1)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
@@ -24,6 +25,10 @@ export class MonitorCore {
   readonly clock = new Clock();
   private lanes: SweepLane[] = [];
   private leads: LeadId[];
+  private waves: WaveLaneId[]; // Stage 2
+  private waveLive: boolean[] = []; // Stage 2: the channel had samples on the last frame
+  private plethRangeT = -1; // Stage 2: sim time of the last pleth auto-scale
+  private readonly plethScratch = new Float32Array(500); // Stage 2
   private size: Size;
   private pxPerMm: number;
   private fps: 60 | 30;
@@ -49,6 +54,7 @@ export class MonitorCore {
     this.post = post;
     this.engine = createEngine(opts.engine ?? {});
     this.leads = [...(opts.lanes ?? ['ecgII', 'V5'])];
+    this.waves = [...(opts.waves ?? [])]; // Stage 2
     this.pxPerMm = opts.pxPerMm ?? DEFAULT_PX_PER_MM;
     this.fps = opts.fps ?? 60;
     this.size = size;
@@ -67,7 +73,7 @@ export class MonitorCore {
       if (cmd.action.action === 'filter') {
         this.filterLetter = cmd.action.value === 'diagnostic' ? 'D' : 'M';
         this.drawChrome(this.leads.map((_, i) => i));
-      } else if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number' && cmd.action.lane < this.lanes.length) {
+      } else if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number' && cmd.action.lane < this.leads.length) { // Stage 2: leads, not lanes (wave lanes follow)
         const lane = cmd.action.lane;
         this.leads[lane] = cmd.action.value as LeadId;
         this.lanes[lane]?.reset(this.ctx);
@@ -120,15 +126,38 @@ export class MonitorCore {
     const t = this.clock.renderT;
     if (this.visible) {
       this.lanes.forEach((lane, i) => {
+        if (i >= this.leads.length) return; // Stage 2: wave lanes are drawn by drawWaves
         const ch = this.leads[i] as LeadId;
         lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(ch, from, out));
       });
+      this.drawWaves(t); // Stage 2
     }
     if (this.batch.length > 0 || epochMs - this.lastPost >= EVENT_POST_MS) {
       this.post({ simT: t, epochMs, timeScale: this.clock.timeScale }, this.batch);
       this.batch = [];
       this.lastPost = epochMs;
     }
+  }
+
+  /** Stage 2: pressure and pleth lanes (125 Hz), auto-scaled pleth, cleared when a sensor goes to 'none'. */
+  private drawWaves(t: number): void {
+    this.waves.forEach((w, j) => {
+      const lane = this.lanes[this.leads.length + j] as SweepLane;
+      const live = this.engine.latestSampleIndex(w) >= 0;
+      if (!live) {
+        if (this.waveLive[j]) lane.reset(this.ctx);
+        this.waveLive[j] = false;
+        return;
+      }
+      this.waveLive[j] = true;
+      if (w === 'pleth' && t - this.plethRangeT >= 1) {
+        this.plethRangeT = t;
+        const n = this.engine.readSamples('pleth', Math.floor((t - 4) * 125), this.plethScratch);
+        const [lo, hi] = autoRange(this.plethScratch, n);
+        Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
+      }
+      lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(w, from, out));
+    });
   }
 
   private layout(): void {
@@ -138,7 +167,7 @@ export class MonitorCore {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.fillStyle = THEME.background;
     this.ctx.fillRect(0, 0, cssW, cssH);
-    const h = cssH / this.leads.length;
+    const h = cssH / (this.leads.length + this.waves.length); // Stage 2: wave lanes share the height
     this.lanes = this.leads.map((_, i) => {
       const lane = new SweepLane(
         {
@@ -150,13 +179,48 @@ export class MonitorCore {
       lane.reset(this.ctx, dpr);
       return lane;
     });
+    // Stage 2: waveform lanes below the ECG lanes
+    this.waves.forEach((w, j) => {
+      const st = WAVE_STYLE[w];
+      const [lo, hi] = st.range ?? [-0.5, 3];
+      const lane = new SweepLane(
+        {
+          x: LABEL_W, y: (this.leads.length + j) * h, width: cssW - LABEL_W, height: h, rate: 125, mmPerS: 25,
+          pxPerMm: this.pxPerMm, ...scaleFor(lo, hi, h, this.pxPerMm), color: st.color, background: THEME.background,
+          lineWidth: 1.75, eraseGapPx: 16,
+        },
+        dpr,
+      );
+      lane.reset(this.ctx, dpr);
+      this.lanes.push(lane);
+    });
+    this.waveLive = this.waves.map(() => false);
+    this.plethRangeT = -1;
     this.drawChrome(this.leads.map((_, i) => i));
+    this.drawWaveChrome(h); // Stage 2
+  }
+
+  /** Stage 2: label and scale of each waveform lane (static chrome, brief §3.5). */
+  private drawWaveChrome(h: number): void {
+    const ctx = this.ctx;
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.textBaseline = 'top';
+    this.waves.forEach((w, j) => {
+      const st = WAVE_STYLE[w];
+      const y0 = (this.leads.length + j) * h;
+      ctx.fillStyle = st.color;
+      ctx.fillText(st.label, 6, y0 + 6);
+      if (st.range) {
+        ctx.fillText(String(st.range[1]), 6, y0 + 24);
+        ctx.fillText(String(st.range[0]), 6, y0 + h - 18);
+      }
+    });
   }
 
   /** Static chrome (brief §3.5): lead label, filter letter, 1 mV calibration bar, for the given lanes. */
   private drawChrome(lanes: number[]): void {
     const ctx = this.ctx;
-    const h = this.size.cssH / this.leads.length;
+    const h = this.size.cssH / (this.leads.length + this.waves.length); // Stage 2
     for (const i of lanes) {
       ctx.fillStyle = THEME.background;
       ctx.fillRect(0, i * h, LABEL_W, h);

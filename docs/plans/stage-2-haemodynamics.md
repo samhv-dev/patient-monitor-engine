@@ -4529,7 +4529,7 @@ git commit -m "test(hemo): determinism hash over abp/cvp/pap/pleth and 24 h no-d
 - Consumes: `SweepLane`/`LaneConfig` (Stage 1), engine channels `abp`, `cvp`, `pap`, `pleth` (Task 13).
 - Produces: `type WaveLaneId = 'abp'|'pleth'|'cvp'|'pap'`, `interface WaveStyle { label; color; range: [lo, hi] | null }`, `WAVE_STYLE` (ABP `#ff3b3b` 0–150, pleth `#00e5ff` auto, CVP `#3d8bff` −5–20, PAP `#ffe14d` 0–40), `scaleFor(lo, hi, height, pxPerMm): { baseline; gainMmPerMv }`, `autoRange(samples, count): [lo, hi]`; `CoreOptions.waves?: WaveLaneId[]` (default `[]`, so Stage 1 layouts and tests are unchanged).
 
-- [ ] **Step 1: Write the failing test** — append to `packages/renderer/test/monitor-core.test.ts`:
+- [x] **Step 1: Write the failing test** — append to `packages/renderer/test/monitor-core.test.ts`:
 
 ```ts
 describe('MonitorCore Stage 2 waveform lanes', () => {
@@ -4569,12 +4569,12 @@ describe('MonitorCore Stage 2 waveform lanes', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/monitor-core.test.ts`
 Expected: FAIL — `texts` has only the two ECG labels (and a TypeScript error for `waves` if you run `typecheck`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/wave-lanes.ts`:
 
@@ -4861,12 +4861,12 @@ export type { RenderPath } from './worker-host.ts';
 export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from './wave-lanes.ts'; // Stage 2
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run && npx -y pnpm@9.15.9 --filter @pme/renderer typecheck`
 Expected: PASS (29 tests: 26 existing + 3).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/wave-lanes.ts packages/renderer/src/protocol.ts packages/renderer/src/monitor-core.ts packages/renderer/src/index.ts packages/renderer/test/monitor-core.test.ts
