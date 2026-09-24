@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
+import { createRhythmState, planUntil } from '../../src/l2/ecg/rhythm-engine.ts';
+import { defaultModifiers } from '../../src/modifiers.ts';
+import { createRngState } from '../../src/rng/sfc32.ts';
 import type { Command, EngineEvent } from '../../src/types.ts';
 
 function cmd(c: Record<string, unknown>, id = 'c'): Command {
@@ -26,6 +29,47 @@ describe('engine commands', () => {
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: 'surgical' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bbb: 'lbbb' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 100, atTick: 50 })).tick).toBe(50);
+  });
+
+  it('rejects NaN / Infinity / out-of-range numeric inputs and never corrupts the pipeline (review M5)', () => {
+    const e = createEngine({ seed: 3, patient: { baseline: { hr: 75 } } });
+    const bad: Array<Record<string, unknown>> = [
+      { type: 'setTarget', variable: 'hr', value: 80, ramp: { durationS: Infinity } },
+      { type: 'setTarget', variable: 'hr', value: 80, ramp: { durationS: 5, delayS: NaN } },
+      { type: 'setTarget', variable: 'hr', value: 80, atTick: NaN },
+      { type: 'setRhythm', rhythm: 'sinus', opts: { rateBpm: NaN } },
+      { type: 'setRhythm', rhythm: 'sinus', opts: { rateBpm: Infinity } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { atrialRateBpm: NaN } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { atrialRateBpm: 5000 } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { ratio: 7 } },
+      { type: 'setRhythm', rhythm: 'avb1', opts: { prMs: -10 } },
+      { type: 'setRhythm', rhythm: 'avb2Mobitz1', opts: { groupSize: 0 } },
+      { type: 'setModifiers', modifiers: { qtc: NaN } },
+      { type: 'setModifiers', modifiers: { qtc: 5000 } },
+      { type: 'setModifiers', modifiers: { rsa: Infinity } },
+      { type: 'setModifiers', modifiers: { hrvScale: -1 } },
+      { type: 'setModifiers', modifiers: { artefact: { noise: NaN } } },
+      { type: 'setModifiers', modifiers: { pvc: { pattern: 'single', probability: NaN } } },
+    ];
+    for (const b of bad) {
+      const r = e.dispatch(cmd(b));
+      expect(r.accepted, JSON.stringify(b)).toBe(false);
+      expect(r.reason).toBeTruthy();
+    }
+    const hr: number[] = [];
+    e.on((x) => x.type === 'measurement' && x.values.hr?.value != null && hr.push(x.values.hr.value), ['measurement']);
+    e.advanceTo(20);
+    const out = new Float32Array(10_000);
+    const n = e.readSamples('ecgII', 0, out);
+    expect(out.subarray(0, n).every(Number.isFinite)).toBe(true);
+    expect(Math.abs(hr[hr.length - 1]! - 75)).toBeLessThanOrEqual(2);
+  });
+
+  it('planUntil refuses a non-finite event time instead of spinning (review M5)', () => {
+    const rng = createRngState(1);
+    const ctx = { hrAt: () => Number.NaN, mods: defaultModifiers(), rng, hrv: { phi: 0, psi: 0 } };
+    const st = createRhythmState('sinus', {}, 0, ctx);
+    expect(() => planUntil(st, 5, ctx)).toThrow(RangeError);
   });
 
   it('setRhythm now: the new rhythm starts within one look-ahead window', () => {

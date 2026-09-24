@@ -488,6 +488,8 @@ export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
     const tE = def.escape === 'none' ? NEVER : st.escapeNextT;
     const tJ = def.av === 'integrateFire' ? junctionSpontT(st, ctx) : NEVER;
     const t = Math.min(tA, tP, tF, tE, tJ);
+    // A NaN/Infinity rate would otherwise make every clock NaN and spin to the guard on every tick (review M5).
+    if (!Number.isFinite(t)) throw new RangeError(`rhythm ${st.id}: next event time is ${t}`);
     if (t > T) break;
     if (t === tA) onAtrial(st, t, ctx);
     else if (t === tJ) fireJunction(st, t, ctx);

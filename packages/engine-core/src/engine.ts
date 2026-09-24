@@ -29,6 +29,7 @@ import {
   type Modifiers,
   type MonitorEngine,
   type PatientSnapshot,
+  type Ramp,
   type RhythmId,
   type RhythmOpts,
   type SimSeconds,
@@ -378,21 +379,40 @@ class Engine implements MonitorEngine {
   }
 
   private validate(cmd: Command): string | undefined {
+    // Every numeric input is range-checked: a NaN or Infinity used to reach min(...) and the IIR/QRS state and
+    // freeze or poison the pipeline for good (review M5).
+    if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
     switch (cmd.type) {
       case 'setTarget':
         if (cmd.variable !== 'hr') return `setTarget ${cmd.variable} is not implemented until Stage 2`;
         if (!Number.isFinite(cmd.value) || cmd.value < 0 || cmd.value > 300) return 'hr must be 0–300 bpm';
-        if (cmd.ramp && !(cmd.ramp.durationS >= 0)) return 'ramp.durationS must be ≥ 0';
-        return undefined;
-      case 'setRhythm':
-        return cmd.rhythm in RHYTHMS ? undefined : `unknown rhythm ${String(cmd.rhythm)}`;
+        return rampReason(cmd.ramp);
+      case 'setRhythm': {
+        if (!(cmd.rhythm in RHYTHMS)) return `unknown rhythm ${String(cmd.rhythm)}`;
+        if (cmd.when !== undefined && cmd.when !== 'now' && cmd.when !== 'nextBeat') return 'when must be now or nextBeat';
+        const o = cmd.opts ?? {};
+        return (
+          numReason('opts.rateBpm', o.rateBpm, 0, 300) ??
+          numReason('opts.atrialRateBpm', o.atrialRateBpm, 20, 400) ??
+          numReason('opts.prMs', o.prMs, 80, 600) ??
+          (o.groupSize !== undefined && ![3, 4, 5, 6].includes(o.groupSize) ? 'opts.groupSize must be 3, 4, 5 or 6' : undefined) ??
+          (o.ratio !== undefined && ![2, 3, 4, 'variable'].includes(o.ratio) ? "opts.ratio must be 2, 3, 4 or 'variable'" : undefined)
+        );
+      }
       case 'setModifiers': {
-        const bad = Object.keys(cmd.modifiers).filter((k) => !MOD_KEYS.has(k));
+        const m = cmd.modifiers;
+        const bad = Object.keys(m).filter((k) => !MOD_KEYS.has(k));
         if (bad.length) return `modifiers not implemented until later stages: ${bad.join(', ')}`;
-        const p = cmd.modifiers.pvc;
+        const p = m.pvc;
         if (p && !(p.pattern === 'single' || p.pattern === 'bigeminy')) return 'pvc.pattern must be single or bigeminy in Stage 1';
         if (p && !(p.probability >= 0 && p.probability <= 0.9)) return 'pvc.probability must be 0–0.9';
-        return undefined;
+        return (
+          numReason('rsa', m.rsa, 0, 1) ??
+          numReason('hrvScale', m.hrvScale, 0, 3) ??
+          numReason('qtc', m.qtc, 300, 650) ??
+          numReason('artefact.noise', m.artefact?.noise, 0, 10) ??
+          rampReason(cmd.ramp)
+        );
       }
       case 'device': {
         const a = cmd.action;
@@ -451,6 +471,18 @@ class Engine implements MonitorEngine {
     for (const ch of [...this.bufs.keys()]) if (!ch.startsWith('vcg') && !want.has(ch)) this.bufs.delete(ch);
     for (const ch of want) if (!this.bufs.has(ch)) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
   }
+}
+
+/** undefined, or a reason when `v` is present but not a finite number in [lo, hi]. */
+function numReason(name: string, v: number | undefined, lo: number, hi: number): string | undefined {
+  if (v === undefined) return undefined;
+  return Number.isFinite(v) && v >= lo && v <= hi ? undefined : `${name} must be a finite number in ${lo}–${hi}`;
+}
+
+function rampReason(r: Ramp | undefined): string | undefined {
+  if (r === undefined) return undefined;
+  if (r.curve !== undefined && !['linear', 'exp', 'sigmoid'].includes(r.curve)) return 'ramp.curve must be linear, exp or sigmoid';
+  return numReason('ramp.durationS', r.durationS, 0, 86_400) ?? numReason('ramp.delayS', r.delayS, 0, 86_400);
 }
 
 export function createEngine(opts: EngineOptions = {}): MonitorEngine {
