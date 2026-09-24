@@ -5699,7 +5699,7 @@ Conduction and voltage stages (supraventricular beats only, except low voltage a
 - Consumes: Task 18 ops, `RBBB_RPRIME_VEC`.
 - Produces: `bbbStage`, `axisStage` (5° grid search + ternary refinement: the axis-vs-rotation map is monotone but steep near 0°), `transitionStage` (`DEFAULT_TRANSITION = 3.5`), `lvhStage`, `qrsOverrideStage`, `lowVoltageStage`, `alternansStage`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts` with exactly:
 
@@ -5760,13 +5760,13 @@ describe('conduction, axis and voltage modifiers', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/morph-conduction.test.ts`
 
 Expected: FAIL — cannot resolve `morphology/conduction.ts`… or QRS width unchanged by bbb.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/morphology/conduction.ts` with exactly:
 
@@ -5926,13 +5926,13 @@ export const MORPH_STAGES: MorphStage[] = [
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/conduction.ts packages/engine-core/src/l2/ecg/morphology/index.ts packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts
