@@ -13,7 +13,7 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2 | merged to main | DONE | — |
-| 3 respiratory/gas | `stage-3-respiratory-gas` (plan: `docs/plans/stage-3-respiratory-gas.md`) | plan being written → executing | resume from first unticked task |
+| 3 respiratory/gas | `stage-3-respiratory-gas` (plan: `docs/plans/stage-3-respiratory-gas.md`, worktree `../scratch/wt-stage-3`) | executing (started 2026-09-25) | resume from first unticked task |
 | 4b device layer | `stage-4b-device-layer` (plan: `docs/plans/stage-4b-device-layer.md`) | plan being written → executing | resume from first unticked task |
 | 5.1 rhythm polish | not started | waits for Ali's strip review (G5-obs) | write plan, then execute |
 | 7 modeled physiology | not started | waits for 3 + 6b; Ali reviews R22–R24, R26, R28 tables first | write plan |
