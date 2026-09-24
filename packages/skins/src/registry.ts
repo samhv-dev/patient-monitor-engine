@@ -4,6 +4,7 @@
 import iecDefaults from './data/base/iec-defaults.json';
 import philipsLike from './data/skins/philips-like.json';
 import saadatLike from './data/skins/saadat-like.json';
+import zollLike from './data/skins/zoll-like.json';
 import type { DeepPartial, Preset, Skin, Theme } from './types.ts';
 
 /** A skin file as stored: complete (no `extends`) or a partial over a base. */
@@ -14,6 +15,7 @@ export const BASES: Readonly<Record<string, SkinSource>> = { 'iec-defaults': iec
 export const SKINS: Readonly<Record<string, SkinSource>> = {
   'saadat-like': saadatLike as unknown as SkinSource,
   'philips-like': philipsLike as unknown as SkinSource,
+  'zoll-like': zollLike as unknown as SkinSource,
 };
 
 export const THEMES: Readonly<Record<string, Theme>> = {};

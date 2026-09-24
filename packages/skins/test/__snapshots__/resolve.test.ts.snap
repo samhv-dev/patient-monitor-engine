@@ -728,3 +728,104 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
   },
 }
 `;
+
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot zoll-like (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [],
+    "paed": [],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "iec-style",
+      "repeatS": {
+        "L1": 15,
+        "L2": 30,
+        "L3": null,
+      },
+      "silence": {
+        "cancelOnNewAlarm": false,
+        "durationS": 90,
+      },
+      "volume": {
+        "default": 5,
+        "max": 10,
+        "min": 0,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": false,
+      "pitchMap": "nellcor-like",
+      "source": "ECG",
+      "volume": {
+        "default": 3,
+        "max": 10,
+        "min": 0,
+      },
+    },
+  },
+  "limits": {
+    "adult": null,
+    "neo": null,
+    "paed": null,
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        40,
+      ],
+      "engineMode": "monitor",
+      "exact": true,
+      "name": "Monitor",
+    },
+    "eraseGapPx": 16,
+    "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
+    "foreground": "#FFFFFF",
+    "grid": null,
+    "hrMethod": {
+      "engine": "dropMaxMin",
+      "skin": "trimmed-mean-12rr",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "II  M",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FFFF",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FFFF00",
+        "gainMmPerMv": 10,
+        "label": "CO2",
+        "lane": "CO2",
+        "mmPerS": 6.25,
+      },
+    ],
+    "lineWidth": 1.75,
+    "numericWeight": 600,
+    "tileColors": {
+      "CO2": "#FFFF00",
+      "HR": "#00FF00",
+      "NIBP": "#FFFFFF",
+      "SpO2": "#00FFFF",
+    },
+  },
+}
+`;

@@ -2376,7 +2376,7 @@ git commit -m "feat(skins): iec-defaults base (brief 3.8 default column) and phi
 
 ZOLL colours were not retrieved (research 05 §2.1: user-configurable), so they are conventional and tagged **[assumed]**; ZOLL alarm limits stay `null` (inherited from the base, tagged unverified).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/zoll-like.test.ts`:
 
@@ -2407,12 +2407,12 @@ describe('zoll-like', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/zoll-like.test.ts`
 Expected: FAIL, `unknown skin: zoll-like`.
 
-- [ ] **Step 3: Write the skin**
+- [x] **Step 3: Write the skin**
 
 Create `packages/skins/src/data/skins/zoll-like.json`:
 
@@ -2473,7 +2473,7 @@ Create `packages/skins/src/data/skins/zoll-like.json`:
 }
 ```
 
-- [ ] **Step 4: Replace the registry**
+- [x] **Step 4: Replace the registry**
 
 ```ts
 // Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
@@ -2506,12 +2506,12 @@ export const PRESET_IDS = Object.keys(PRESETS);
 export const THEME_IDS = Object.keys(THEMES);
 ```
 
-- [ ] **Step 5: Run the package**
+- [x] **Step 5: Run the package**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: all pass; a zoll-like snapshot written.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test
