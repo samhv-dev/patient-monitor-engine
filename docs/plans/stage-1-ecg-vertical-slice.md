@@ -2796,7 +2796,7 @@ git commit -m "feat(l3): IEC-style 12-RR HR averaging with slow-rate and asystol
   - `beat`/`atrial`/`measurement` events are emitted when their `t ≤ simT` (never ahead); `tone` events are emitted ahead of time from the look-ahead pass, strictly increasing in `t`; an accepted command emits `{ type:'toneCancel', after: simT }` in the tick it is applied.
   - `readSamples('ecgII'|…)` returns MONITOR-FILTERED lane leads; `vcgX/Y/Z` are unfiltered truth.
 
-- [ ] **Step 1: Write the failing test (acceptance tests 4-filtered, 9, 10, 11 + tone timing)**
+- [x] **Step 1: Write the failing test (acceptance tests 4-filtered, 9, 10, 11 + tone timing)**
 
 `packages/engine-core/test/engine/engine-pipeline.test.ts`:
 ```ts
@@ -2926,12 +2926,12 @@ describe('engine pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/engine`
 Expected: FAIL — cannot load `../../src/engine.ts`.
 
-- [ ] **Step 3: Implement the engine**
+- [x] **Step 3: Implement the engine**
 
 `packages/engine-core/src/engine.ts`:
 ```ts
@@ -3355,12 +3355,12 @@ export { RHYTHMS, RHYTHM_IDS } from './l2/ecg/rhythms.ts';
 export { defaultModifiers } from './modifiers.ts';
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/engine && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS, 7 tests (the 24 h test takes ≈ 15 s; its timeout is 120 s).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
