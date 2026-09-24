@@ -4459,7 +4459,7 @@ git commit -m "feat(controller): vocabulary-driven command builders, CAE-style f
 - Consumes: nothing.
 - Produces: `interface RevealOptions { cornerPx: 64; taps: 5; windowMs: 3000; longPressMs: 800 }` (defaults in `DEFAULT_REVEAL`); `interface KeyLike { key; ctrlKey; shiftKey; altKey; metaKey; targetTag }`; `class RevealGesture { constructor(onToggle, o?); key(e): boolean; down(x, y, touches, t); up() }`; `attachReveal(win, g): () => void` (keydown, touchstart, mousedown, touchend, touchcancel).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/panel/reveal.test.ts`:
 ```ts
@@ -4511,12 +4511,12 @@ describe('RevealGesture', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/reveal.test.ts`
 Expected: FAIL — cannot load `../../src/panel/reveal.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/panel/reveal.ts`:
 ```ts
@@ -4621,12 +4621,12 @@ export function attachReveal(win: Window, g: RevealGesture): () => void {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/reveal.test.ts`
 Expected: `3 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/panel/reveal.ts packages/controller/test/panel/reveal.test.ts
