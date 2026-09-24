@@ -2245,7 +2245,7 @@ git commit -m "feat(l3): SpO2 device chain (lag, bias, averaging, update, pulse 
 **Interfaces:**
 - Produces: `GAS_APNOEA_S` 20, `interface Co2Num`, `createCo2Num()`, `co2NumStep(st, t, x, dt): 'breath' | 'apnoea' | 'resumed' | null`, `co2Numerics(st, t, shownNow): { etco2, imco2, awrr }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts`:**
 
@@ -2276,12 +2276,12 @@ describe('CO2 numerics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/co2-numerics`
 Expected: FAIL — cannot find the module.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/co2-numerics/co2-numerics.ts`:**
 
@@ -2364,9 +2364,9 @@ export function co2Numerics(st: Co2Num, t: number, shownNow: number): { etco2: M
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 1 test passes.
+- [x] **Step 4: Run and verify** — same command; expected: 1 test passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/co2-numerics packages/engine-core/test/l3/co2-numerics
