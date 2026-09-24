@@ -5157,7 +5157,7 @@ git commit -m "feat(controller): hidden instructor panel — generated controls 
 - Consumes: `ControllerSession` (13), `renderControls`, `StageBuffer`, `injectStyles` (16, 18), `normalizeSessionCode` (2).
 - Produces: `type Via = 'broadcastChannel'|'websocket'|'webrtc'`; `interface RemoteOptions { vocabulary; connect(session, via): ManagedTransport; vias: Via[]; session?; autoJoin? }`; `interface RemoteHandle { session: ControllerSession | null; join(code, via): ControllerSession; destroy() }`; `mountRemote(parent, o): RemoteHandle` — join form (code + link type), status line (`connected · CODE` / `waiting for host` / `disconnected — retrying`), live `HR` and sim time, the same generated controls, a stage bar with Commit/Discard/Pause/Resume, and the last 8 log lines. It never creates a canvas.
 
-- [ ] **Step 1: Write the failing DOM test**
+- [x] **Step 1: Write the failing DOM test**
 
 `packages/controller/test/remote/remote.dom.test.ts`:
 ```ts
@@ -5196,12 +5196,12 @@ describe('remote controller (DOM)', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/remote`
 Expected: FAIL — cannot load `../../src/remote/remote-app.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/remote/remote-app.ts`:
 ```ts
@@ -5350,12 +5350,12 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/remote`
 Expected: `1 passed`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/remote/remote-app.ts packages/controller/test/remote/remote.dom.test.ts
