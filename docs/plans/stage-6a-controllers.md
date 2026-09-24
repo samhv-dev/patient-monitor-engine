@@ -1511,7 +1511,7 @@ git commit -m "feat(controller): WebSocket transport with backoff reconnect, fat
 - Consumes: `parseWireMessage`, `WIRE_LIMITS` (Task 3); `SESSION_CODE_RE`, `Role`, `WireMessage` (Task 2); `RELAY_CLOSE`, `RelayFrame` (Task 7); `ws` `WebSocketServer`.
 - Produces: `interface RelayOptions { port? (8787; 0 = random); host? ('0.0.0.0'); roomTtlMs? (600 000); heartbeatMs? (10 000); maxRooms? (500); log? }`; `interface RelayHandle { port; stats(): { rooms; sockets; dropped }; room(code): { hostOnline; peers; hasSnapshot } | undefined; sweep(now?): void; close(): Promise<void> }`; `startRelay(opts?): Promise<RelayHandle>`. Endpoints `/` (WireMessages; first frame must be `hello`) and `/signal?session=&peer=` (`{to, data}` → `{from, data}`). Routing table: see the header comment in `server.ts` and `relay/README.md` (Task 9).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/relay/relay.test.ts` (a real `ws` server on a random port; the clients are Node's global `WebSocket`):
 ```ts
@@ -1658,12 +1658,12 @@ describe('relay', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/relay`
 Expected: FAIL — cannot load `../../relay/server.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/relay/server.ts`:
 ```ts
@@ -1932,12 +1932,12 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
 }
 ```
 
-- [ ] **Step 4: Run to see it pass, and typecheck**
+- [x] **Step 4: Run to see it pass, and typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/relay && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: `7 passed`; typecheck exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/relay/server.ts packages/controller/test/relay/relay.test.ts
