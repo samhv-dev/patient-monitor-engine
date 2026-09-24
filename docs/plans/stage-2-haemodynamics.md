@@ -1724,7 +1724,7 @@ git commit -m "feat(hemo): M2 tracker — PP feedback on reference beats, R by t
 - Consumes: `rng/sfc32.ts` (`uniform`, `Sfc32State`), `Spo2Site` (Task 1), `params.ts` (`EAR_DELAY_S`, `FINGER_DELAY_S`, `WK_R0`).
 - Produces: `PLETH_KERNEL`, `interface PlethPulse { t0; amp; sc; a2 }`, `interface PlethState { state: 'on'|'off'|'motion'; site: Spo2Site; pulses; motion }`, `createPlethState(state = 'on', site = 'leftFinger')`, `plethDelayS(site)`, `toneRatio(R)`, `addPlethPulse(st, t0, amp, lvet, R)`, `plethShape(p, u)`, `plethAt(st, t, occlusion, pi)`, `prunePleth(st, t)`, `setPlethSensor(st, state, site, rng)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/pleth/pleth.test.ts`:
 
@@ -1762,12 +1762,12 @@ describe('l2/pleth (brief §4.3 pleth; research 03 §3.1–3.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pleth`
 Expected: FAIL — cannot load `../../../src/l2/pleth/pleth.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/pleth/pleth.ts`:
 
@@ -1859,12 +1859,12 @@ export function setPlethSensor(st: PlethState, state: PlethState['state'], site:
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pleth`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/pleth packages/engine-core/test/l2/pleth
