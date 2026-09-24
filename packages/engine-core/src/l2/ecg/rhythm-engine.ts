@@ -256,6 +256,8 @@ export function applyRhythm(
 
   // Atria
   if (def.atria === 'none') st.atria.nextT = NEVER;
+  // A new sinus rhythm's first P comes 100 ms after the switch (so it is never inside the switch tick) [ENG];
+  // flutter/AF atria start at once.
   else if (def.atria !== prev.atria || st.atria.nextT >= NEVER) st.atria.nextT = t0 + (def.atria === 'sinus' ? 0.1 : 0);
   st.atria.groupPos = 0;
   st.atria.groupRatio = def.atria === 'flutter' ? flutterRatio(st, ctx.rng.conduction) : 2;
@@ -279,6 +281,7 @@ export function applyRhythm(
   } else endFWaves(st, 'flutter', t0);
 
   // Ventricular focus (VT / AVNRT)
+  // The first focus beat fires 50 ms after the switch, or 10 ms after the ventricle recovers [ENG]
   st.focusNextT = def.focus === 'none' ? NEVER : Math.max(t0 + 0.05, st.refractoryUntil + 0.01);
 
   // Escape timer
@@ -368,6 +371,7 @@ function onAtrial(st: RhythmState, t: number, ctx: RhythmCtx): void {
 function fFill(rr: number): number {
   // f_fill(RR) = 1 − exp(−max(0, RR − t_sys)/τ_fill), t_sys = LVET + 0.08 s, τ_fill 0.18 s,
   // normalised to 1 at RR 1 s (brief §4.8; research 03 §8.2)
+  // LVET floored at 150 ms: Weissler's line (413 − 1.7·HR) reaches 0 at 243/min, far outside its fitted range [ENG]
   const f = (x: number) => 1 - Math.exp(-Math.max(0, x - (Math.max(150, lvetMs(60 / x)) / 1000 + 0.08)) / 0.18);
   return f(rr) / f(1);
 }
@@ -402,6 +406,8 @@ function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolea
   const afterConducted = isConducted(p) && st.lastConducted;
   if (st.respectRefractory && !p.bypass && !afterConducted && t < st.refractoryUntil) return false;
   const rate = rhythmRate(st, t, ctx);
+  // First beat of a run: no previous RR, so use the rhythm rate (≥ 30/min; 60 if the rate is 0) [ENG]. QT uses the RR
+  // clamped to 0.25–2 s (240–30/min), the span over which Fridericia is applied clinically [ENG, 03 §1.1].
   const rr = st.lastVT > -NEVER / 2 ? t - st.lastVT : 60 / Math.max(30, rate || 60);
   const qt = qtFridericiaMs(clamp(rr, 0.25, 2), ctx.mods.qtc);
   const scale = p.template === 'wide' ? (RHYTHMS[st.id].focus === 'vt' ? 0.9 : 1) : 1 + QRS_AMP_RESP_MOD * respSin(t, ctx.hrv);
@@ -440,6 +446,7 @@ function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolea
     if (fire) {
       const rrNow = 60 / Math.max(20, atrialRate(st, def, t, ctx) || rate || 60);
       const frac = PVC_COUPLING_MIN + PVC_COUPLING_SPAN * uniform(ctx.rng.ectopy);
+      // Never inside the refractory period of the beat that triggered it: 5 ms after it ends at the earliest [ENG]
       const tp = Math.max(t + frac * rrNow, st.refractoryUntil + 0.005);
       pushPending(st, { t: tp, origin: 'ventricular', template: 'wide', prMs: null, pvc: true, coupling: (tp - t) / rrNow, bypass: false });
     }

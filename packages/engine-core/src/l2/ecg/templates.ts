@@ -130,6 +130,7 @@ export function narrowKernels(qtMs: number, rScale = 1): number[] {
 export function wideKernels(qtMs: number, scale = 1): number[] {
   const qt = (qtMs + WIDE_QT_EXTRA_MS) / 1000;
   return [
+    // R τ 50 σ 22 ms and S τ 110 σ 20 ms: a slurred ~165 ms QRS, inside brief §5's 120–200 ms for PVC/VT [ENG]
     ...kernel(0.05, 0.022, 0.022, WIDE_VEC.R, WAVE.R, scale),
     ...kernel(0.11, 0.02, 0.02, WIDE_VEC.S, WAVE.S, scale),
     ...kernel(qt - tEndAfterPeakS(WIDE_T_SIGMA_FALL_S), WIDE_T_SIGMA_RISE_S, WIDE_T_SIGMA_FALL_S, WIDE_VEC.T, WAVE.T, scale),
@@ -139,6 +140,8 @@ export function wideKernels(qtMs: number, scale = 1): number[] {
 export function templateKernels(id: TemplateId, qtMs: number, scale = 1): number[] {
   if (id === 'wide') return wideKernels(qtMs, scale);
   const k = narrowKernels(qtMs, scale);
+  // Retrograde P 70 ms after QRS onset (σ 20 ms): at the end of the QRS, the "pseudo-r'/pseudo-S" of typical AVNRT
+  // (research 03 §1.5) [ENG timing]
   if (id === 'narrowRetroP') k.push(...kernel(0.07, 0.02, 0.02, RETRO_P_VEC, WAVE.RETRO_P));
   return k;
 }
