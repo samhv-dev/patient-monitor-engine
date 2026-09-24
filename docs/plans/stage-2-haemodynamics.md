@@ -2057,7 +2057,7 @@ git commit -m "feat(l3): slope-sum pulse detector, pulse rate and PR source rule
 - Consumes: `detector.ts` (Task 9), `Measured` (Stage 1).
 - Produces: `AVG_BEATS` 6, `interface BeatValues { t; sys; dia; mean; dur }`, `interface WaveNumerics { det; ring; n; prevFoot; beats; feet }`, `createWaveNumerics(floor)`, `numericsStep(wn, m, x): BeatValues|null`, `pressureNumerics(wn, t): { sys: Measured; dia: Measured; mean: Measured }`, `piNumeric(wn, t): Measured`, `prNumeric(wn, t): Measured`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l3/pressure-numerics/numerics.test.ts`:
 
@@ -2097,12 +2097,12 @@ describe('l3/pressure-numerics (brief §4.2 numerics)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/pressure-numerics`
 Expected: FAIL — cannot load `../../../src/l3/pressure-numerics/numerics.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/pressure-numerics/numerics.ts`:
 
@@ -2215,12 +2215,12 @@ export function prNumeric(wn: WaveNumerics, t: number): Measured {
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/pressure-numerics`
 Expected: PASS (1 test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/pressure-numerics packages/engine-core/test/l3/pressure-numerics
