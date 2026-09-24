@@ -4506,7 +4506,7 @@ git commit -m "feat(audio): PeriodicWave alarm voice, device-tone voice and crea
 
 The page draws the static skin (header with page box, category colour, crossed bell when alarms are factory-off and the date in the skin's calendar; the idle message bar plus one bar and lamp per level; lanes drawn with `SweepLane` from `ResolvedSkin.render`, ECG from the real engine and the other lanes from labelled sample shapes; tiles from `layout.tiles` in `render.tileColors`). With sound enabled it raises alarms of each level through `AlarmSounder` on a real `ToneScheduler`, silences with a countdown, changes the volume within the skin's range, plays the four device tones and pitch-mapped beeps at SpO2 100/90/80.
 
-- [ ] **Step 1: Add the dependency, the Vite input and the index link**
+- [x] **Step 1: Add the dependency, the Vite input and the index link**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo add @pme/skins@workspace:*
@@ -4528,7 +4528,7 @@ In `apps/demo/index.html` add, before the Stage 6a list item:
       <li><a href="./stage4a-skins.html">Stage 4a: skin preview and alarm sound profiles</a></li>
 ```
 
-- [ ] **Step 2: Write the page**
+- [x] **Step 2: Write the page**
 
 Create `apps/demo/stage4a-skins.html`:
 
@@ -4981,16 +4981,16 @@ const api = { ready: false, get resolved() { return resolved; }, renderTiming };
 render();
 ```
 
-- [ ] **Step 3: Typecheck and build the demo**
+- [x] **Step 3: Typecheck and build the demo**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck && npx -y pnpm@9.15.9 --filter @pme/demo build`
 Expected: clean; `dist/stage4a-skins.html` is emitted.
 
-- [ ] **Step 4: Look at it**
+- [x] **Step 4: Look at it**
 
 Run `npx -y pnpm@9.15.9 --filter @pme/demo dev` in your own terminal (not through an agent launcher: memory "browser pane verification recipe"), open `http://localhost:5173/stage4a-skins.html`, switch through every skin and theme, press **Enable sound**, raise each level for `saadat-like` (5 / 3 / 1 pulses), press **Silence** (the diagnostics line counts down from 120), raise a new level during silence (sound resumes at once), then switch to `philips-like` and repeat (silence 90 s, new alarms stay silent). Stop the server.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/demo/stage4a-skins.html apps/demo/src/stage4a apps/demo/package.json apps/demo/vite.config.ts apps/demo/index.html pnpm-lock.yaml

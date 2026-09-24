@@ -41,6 +41,9 @@ importers:
       '@pme/renderer':
         specifier: workspace:*
         version: link:../../packages/renderer
+      '@pme/skins':
+        specifier: workspace:*
+        version: link:../../packages/skins
 
   packages/audio: {}
 
