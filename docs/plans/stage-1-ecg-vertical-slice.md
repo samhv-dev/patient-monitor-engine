@@ -3686,7 +3686,7 @@ git commit -m "feat(renderer): min/max decimation per device-pixel column (accep
 - Consumes: `sweepPxPerS` (Stage 0); `decimateMinMax`, `Column` (Task 15).
 - Produces: `interface Ctx2D` (Canvas 2D subset satisfied by both `CanvasRenderingContext2D` and `OffscreenCanvasRenderingContext2D`), `interface LaneConfig { x; y; width; height; baseline; rate; mmPerS; pxPerMm; gainMmPerMv; color; background; lineWidth; eraseGapPx }`, `type SampleSource = (from: number, out: Float32Array) => number`, `class SweepLane { cfg; constructor(cfg, dpr); get pxPerS(); reset(ctx, dpr?); xOf(n); draw(ctx, t, read): number /* cursor x in lane */ }`. Test fake `FakeCtx` records calls.
 
-- [ ] **Step 1: Write the fake context and the failing test**
+- [x] **Step 1: Write the fake context and the failing test**
 
 `packages/renderer/test/fake-ctx.ts`:
 ```ts
@@ -3823,12 +3823,12 @@ describe('SweepLane', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/sweep-lane`
 Expected: FAIL — cannot load `ctx.ts` / `sweep-lane.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/ctx.ts`:
 ```ts
@@ -4014,12 +4014,12 @@ export class SweepLane {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/sweep-lane && pnpm --filter @pme/renderer typecheck`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer
