@@ -7,7 +7,6 @@ import { startRelay, type RelayHandle } from '../../../packages/controller/relay
 
 // Headless Chrome cannot resolve the mDNS (.local) host candidates it hands out, so WebRTC on localhost needs
 // real IPs. Headed browsers on a LAN resolve mDNS normally.
-test.use({ launchOptions: { args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] } });
 
 let vite: ViteDevServer;
 let relay: RelayHandle;

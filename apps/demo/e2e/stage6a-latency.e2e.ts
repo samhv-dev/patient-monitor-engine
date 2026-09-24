@@ -10,7 +10,6 @@ import { expect, test, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import { startRelay, type RelayHandle } from '../../../packages/controller/relay/server.ts';
 
-test.use({ launchOptions: { args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] } });
 test.setTimeout(600_000);
 
 const N = Number(process.env.LAT_N ?? 200);
