@@ -2333,7 +2333,7 @@ git commit -m "feat(l3): monitor and diagnostic ECG filters with mains notch (RB
 - Consumes: Tasks 3–5, 9, 10.
 - Produces: `QRS_RATE = 500`, `SPK_FLOOR = 2e-4`, `interface QrsState` (plain data), `createQrsState(startIndex: number)`, `qrsStep(st, x): number` (absolute index of a newly detected R, or −1; must be fed every sample starting at `startIndex`). Helper `detectOn(id, hr, seconds, opts)` and `score(result, seconds)`.
 
-- [ ] **Step 1: Write the helper and the failing test**
+- [x] **Step 1: Write the helper and the failing test**
 
 `packages/engine-core/test/helpers/ecg.ts`:
 ```ts
@@ -2461,12 +2461,12 @@ describe('l3/qrs detector on the displayed lead II (monitor filter)', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/qrs`
 Expected: FAIL — cannot load `qrs.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/qrs.ts`:
 ```ts
@@ -2630,12 +2630,12 @@ export function qrsStep(st: QrsState, x: number): number {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/qrs`
 Expected: PASS, 18 tests (14 rhythm cases + PVCs + diagnostic + asystole + latency). If a wide-complex case reports false positives, check `findR` uses the window MEAN as baseline (a sloping discordant T otherwise wins).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
