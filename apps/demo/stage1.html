@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 1: ECG + sweep + beep</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 420px; max-width: 1240px; border: 1px solid #333; }
+      .controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 12px 0; max-width: 1240px; }
+      .controls label { display: inline-flex; gap: 6px; align-items: center; }
+      button, select { font: inherit; }
+      button[aria-pressed='true'] { background: #2a2; color: #000; }
+      #diag { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="controls">
+      <label>Rhythm <select id="rhythm"></select></label>
+      <label>HR <input id="hr" type="range" min="20" max="250" value="75" /> <span id="hrVal">75</span> bpm</label>
+      <label>Ramp <select id="ramp"><option value="0">0 s</option><option value="10">10 s</option><option value="30">30 s</option></select></label>
+      <button id="pvc" aria-pressed="false">PVC bigeminy</button>
+      <button id="filter" aria-pressed="false">Filter: Monitor</button>
+      <button id="sound">Enable sound</button>
+      <button id="fps30" aria-pressed="false">30 fps</button>
+    </div>
+    <div id="diag"></div>
+    <script type="module" src="./src/stage1.ts"></script>
+  </body>
+</html>

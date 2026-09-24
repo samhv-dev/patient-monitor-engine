@@ -5364,7 +5364,7 @@ git commit -m "feat(renderer): minimal mountMonitor and IIFE global { mountMonit
 - Consumes: `mountMonitor` (Task 21); `Command`, `RhythmId`, `RhythmOpts` types.
 - Produces: the page BUILD-PLAN specifies — dark monitor, lanes II and V5 at 25 mm/s and 10 mm/mV with lead labels, filter letter and 1 mV calibration bars; green HR tile updating at 1 Hz; rhythm dropdown (all 12 rhythms, flutter as 2:1 / 4:1 / variable); HR slider with ramp 0/10/30 s; PVC bigeminy toggle; Monitor/Diagnostic filter toggle; "Enable sound"; 30 fps toggle; a diagnostics line with the render path, beep − R statistics from the audio log and JS heap size.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 `apps/demo/stage1.html`:
 ```html
@@ -5502,7 +5502,7 @@ setInterval(() => {
 }, 1000);
 ```
 
-- [ ] **Step 2: Register it**
+- [x] **Step 2: Register it**
 
 `apps/demo/vite.config.ts` (final):
 ```ts
@@ -5546,12 +5546,12 @@ export default defineConfig({
 </html>
 ```
 
-- [ ] **Step 3: Type-check, build, run**
+- [x] **Step 3: Type-check, build, run**
 
 Run: `pnpm typecheck && pnpm build && pnpm --filter @pme/demo dev`
 Open `/stage1.html`. Expected within 3 s: sinus rhythm at 75 on both lanes, HR tile reads 74–76, diagnostics show `render path: worker-raf` in Chrome. Pick "Monomorphic VT": wide complexes at ~170 within one second; HR tile reaches 165–175 within ~11 s.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo
