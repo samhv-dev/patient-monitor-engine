@@ -6051,7 +6051,7 @@ git commit -m "test(demo): host + remote + viewer browser smoke over BroadcastCh
 - Consumes: `__pme6a.firePanel()` (host), `__pme6a.fire()` (remote), `__pme6a.timings` (host) — Tasks 21–22.
 - Produces: `docs/gates/stage-6a/latency.json` = `{ n, measuredAt, results: { 'in-process' | 'bc' | 'relay' | 'rtc': { ack: {n,min,p50,p95,max}, visible: {…} } } }` and a printed table; the test fails if in-process visible p95 > 60 ms or relay visible p95 > 150 ms (BUILD-PLAN Stage 6 acceptance 1; localhost stands in for the LAN here — Task 25 records the LAN run separately).
 
-- [ ] **Step 1: Write the measurement**
+- [x] **Step 1: Write the measurement**
 
 `apps/demo/e2e/stage6a-latency.e2e.ts`:
 ```ts
@@ -6143,7 +6143,7 @@ test('command → ack → visible latency on four paths', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2: Trial run with 30 samples**
+- [x] **Step 2: Trial run with 30 samples**
 
 Run: `PW_SYSTEM_CHROME=1 LAT_N=30 npx playwright test apps/demo/e2e/stage6a-latency.e2e.ts`
 Expected: `1 passed` and four lines like (prototype, localhost, headless Chrome):
@@ -6155,11 +6155,11 @@ rtc        ack p50 0.8 p95 2.2 | visible p50 11.1 p95 26.2 max 30.5 ms
 ```
 Visible ≈ wait for the next 20 ms tick + the next frame; the look-ahead does not add delay because a command invalidates and regenerates it (brief §3.3).
 
-- [ ] **Step 3: The recorded run (200 samples per path, BUILD-PLAN acceptance 1)**
+- [x] **Step 3: The recorded run (200 samples per path, BUILD-PLAN acceptance 1)**
 
 Run: `PW_SYSTEM_CHROME=1 LAT_N=200 npx playwright test apps/demo/e2e/stage6a-latency.e2e.ts` (≈ 2 min). Keep the printed table for the gate note; `docs/gates/stage-6a/latency.json` is rewritten.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage6a-latency.e2e.ts docs/gates/stage-6a/latency.json
