@@ -462,7 +462,7 @@ git commit -m "feat(controller): WireMessage v1, session codes, stamper and per-
 - Consumes: `WireMessage` (Task 2); `createEngine` (engine-core) in the test.
 - Produces: `WIRE_LIMITS = { maxBytes: 262144, eventNumericArray: 64, snapshotNumericArray: 1024 }`; `FORBIDDEN_KEYS`; `class WireSafetyError extends Error`; `findSampleLeak(m): string | null`; `assertWireSafe(m): void` (throws `WireSafetyError`); `parseWireMessage(data: unknown): WireMessage | null` (JSON string or object; validates header, kind-specific fields, size and samples).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/guard.test.ts`:
 ```ts
@@ -522,12 +522,12 @@ describe('parseWireMessage (untrusted input)', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/guard.test.ts`
 Expected: FAIL — cannot load `../src/guard.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/guard.ts`:
 ```ts
@@ -632,12 +632,12 @@ export function parseWireMessage(data: unknown): WireMessage | null {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/guard.test.ts`
 Expected: `5 passed`. (A real Stage 1 snapshot is ≈ 6–7 KB and its longest numeric array is the QRS detector's 128-entry history — hence the 1024 snapshot limit.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/guard.ts packages/controller/test/guard.test.ts
