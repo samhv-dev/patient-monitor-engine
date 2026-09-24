@@ -85,6 +85,8 @@ export interface RhythmState {
   vf?: VfState | undefined;
   /** Body-artefact filter/phase state (artefacts/body.ts). */
   art?: ArtState | undefined;
+  /** Last lead-off flag the planner announced (artefacts/lead-off.ts). */
+  leadOff?: boolean | undefined;
 }
 
 export interface RhythmCtx {

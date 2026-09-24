@@ -6669,7 +6669,7 @@ Per-lead electrode/amplifier effects as pure functions of (modifiers, lead, samp
 - Consumes: `hash53`, `NEVER`.
 - Produces: `RAIL_MV = 5`, `MAINS_MAX_MV`, `MOTION_MAX_MV`, `mainsStage`, `motionStage`, `diathermyStage`, `shockResponse(lead, atS, energyJ) → { satS, sign, offsetMv, tauS }`, `shockStage`, `leadOffStage`, `railStage`, `leadOffClock`, `LEADS_OFF_ALARM_ID`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/artefacts.test.ts` with exactly:
 
@@ -6765,13 +6765,13 @@ describe('front-end artefacts (per lead)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/artefacts.test.ts`
 
 Expected: FAIL — "front-end artefacts": no 50 Hz peak, leads never flat, no rail.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/artefacts/front-end.ts` with exactly:
 
@@ -6953,13 +6953,13 @@ export const FRONT_END_STAGES: FrontEndStage[] = [mainsStage, motionStage, diath
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/artefacts/front-end.ts packages/engine-core/src/l2/ecg/artefacts/lead-off.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s5/artefacts.test.ts

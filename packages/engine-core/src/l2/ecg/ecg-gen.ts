@@ -11,6 +11,7 @@ import type { RhythmState } from './rhythm-state.ts';
 import { vfSource } from './arrest/vf.ts';
 import { afSource } from './af-texture.ts';
 import { bodyArtefactSource } from './artefacts/body.ts';
+import { diathermyStage, leadOffStage, mainsStage, motionStage, railStage, shockStage } from './artefacts/front-end.ts';
 
 export interface EcgGenInputs extends GenInputs {
   mods: Modifiers;
@@ -25,7 +26,8 @@ export const VCG_SOURCES: VcgSource[] = [vfSource, afSource, bodyArtefactSource]
 
 /** Maps one projected lead sample v (mV) to what the amplifier delivers. Must be a pure function of its inputs. */
 export type FrontEndStage = (mods: Modifiers, mainsHz: 50 | 60, lead: LeadId, n: number, v: number) => number;
-export const FRONT_END_STAGES: FrontEndStage[] = [];
+/** Order: pickup (mains, motion, diathermy) → defibrillator → lead-off → rail clip. */
+export const FRONT_END_STAGES: FrontEndStage[] = [mainsStage, motionStage, diathermyStage, shockStage, leadOffStage, railStage];
 
 export function ecgGenInputs(
   ps: { rhythm: RhythmState; mods: Modifiers; hrv: HrvPhase; rng: Record<StreamName, Sfc32State> },

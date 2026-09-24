@@ -19,6 +19,7 @@ import { applyMorphology } from './morphology/index.ts';
 import { pacerClock } from './pacing.ts';
 import { tcpClock } from './tcp.ts';
 import { vfClock } from './arrest/vf.ts';
+import { leadOffClock } from './artefacts/lead-off.ts';
 import { HOOKS, NEVER, clamp, rhythmRate, type FWave, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import { sfc32Next, uniform, type Sfc32State } from '../../rng/sfc32.ts';
 import { afTemplatesAvailable } from './af-texture.ts';
@@ -229,7 +230,7 @@ export interface ClockSource {
   next(st: RhythmState, ctx: RhythmCtx): number;
   fire(st: RhythmState, t: number, ctx: RhythmCtx): void;
 }
-const EXTRA_CLOCKS: ClockSource[] = [pacerClock, tcpClock, vfClock];
+const EXTRA_CLOCKS: ClockSource[] = [pacerClock, tcpClock, vfClock, leadOffClock];
 
 HOOKS.activate = activateVentricle;
 HOOKS.apply = applyRhythm;
