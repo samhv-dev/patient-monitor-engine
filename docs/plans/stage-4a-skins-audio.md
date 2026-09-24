@@ -5275,7 +5275,7 @@ git commit -m "docs(gates): stage 4a gate note with the Saadat not-documented ta
 **Interfaces:**
 - Produces: an open PR `stage-4a-skins-audio` → `main` (not merged; R21: the orchestrator merges after inspecting the gate).
 
-- [ ] **Step 1: Rebase check against a moving `main`** (Stages 2, 5 and 6b may have merged)
+- [x] **Step 1: Rebase check against a moving `main`** (Stages 2, 5 and 6b may have merged)
 
 ```bash
 git fetch origin
@@ -5283,7 +5283,7 @@ git rebase origin/main
 ```
 If `NOTICES.md` conflicts, keep both rows and renumber this stage's ajv row to the next free ID (if Stage 6b added ajv first, drop this stage's row and use its version). If `pnpm-lock.yaml` conflicts, take `origin/main`'s and run `npx -y pnpm@9.15.9 install`, then commit the lockfile. Re-run Task 19 Step 1 after any rebase that changed files.
 
-- [ ] **Step 2: Push and open the PR**
+- [x] **Step 2: Push and open the PR**
 
 ```bash
 git push -u origin stage-4a-skins-audio
