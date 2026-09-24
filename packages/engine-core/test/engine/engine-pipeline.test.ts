@@ -125,4 +125,19 @@ describe('engine pipeline', () => {
       expect(tone.postedAt).toBeLessThan(tone.t);
     }
   });
+
+  it('chunking invariance: tick-by-tick and bulk advanceTo commit identical samples and events (review §5)', () => {
+    const run = (step: number) => {
+      const e = createEngine({ seed: 21 });
+      const ev: string[] = [];
+      e.on((x) => ev.push(JSON.stringify(x)), ['beat', 'atrial', 'measurement']);
+      e.dispatch(cmd({ type: 'setModifiers', modifiers: { pvc: { pattern: 'single', probability: 0.3 } } }));
+      for (let t = step; t <= 30 + 1e-9; t += step) e.advanceTo(t);
+      return { ev, ii: readAll(e, 'ecgII', 0, 30 * 500) };
+    };
+    const a = run(0.02);
+    const b = run(1.5);
+    expect(b.ev).toEqual(a.ev);
+    expect(Array.from(b.ii)).toEqual(Array.from(a.ii));
+  });
 });
