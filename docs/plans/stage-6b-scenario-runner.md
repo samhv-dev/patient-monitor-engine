@@ -4206,7 +4206,7 @@ git commit -m "feat(demo): stage6b-acls — scenario host, Scenario tab, learner
 **Interfaces:**
 - Consumes: Task 16's page and `__pme6b`; 6a's remote page.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `apps/demo/e2e/stage6b.e2e.ts`:
 ```ts
@@ -4279,17 +4279,17 @@ test('ACLS VF: panel load → remote starts VF → learner shocks → ROSC', asy
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage6b.e2e.ts`
 Expected: `1 passed` (≈ 18 s). Open the three PNGs: `host-vf.png` shows the drawer on the Scenario tab (Coarse VF, four "Next" rows with Force/ROSC now) over the VT-240 stand-in; `host-rosc.png` shows ROSC; `remote-vf.png` shows the strip "Coarse VF · n s" with one button "ROSC now". `run-log.json` holds the runner log (start, enter, dispatch …, roll with `u ≈ 0.0617`, enter rosc), `notes` and three `lines`.
 
-- [ ] **Step 3: Existing browser tests still pass**
+- [x] **Step 3: Existing browser tests still pass**
 
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage6a.e2e.ts apps/demo/e2e/stage6a-worker.e2e.ts apps/demo/e2e/iife-smoke.e2e.ts --workers=1`
 Expected: `8 passed` (viewers synced over bc/relay/rtc with drift 0).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage6b.e2e.ts docs/gates/stage-6b
