@@ -44,9 +44,11 @@ const stats = (xs: number[]) => {
   return { n: a.length, min: a[0] as number, p50: pct(a, 0.5), p95: pct(a, 0.95), max: a[a.length - 1] as number };
 };
 
-test('command → ack → visible latency on four paths', async ({ page }) => {
+test('command → ack → visible latency on four paths', async ({ page, browserName }) => {
   const results: Record<string, { ack: ReturnType<typeof stats>; visible: ReturnType<typeof stats> }> = {};
-  for (const path of ['in-process', 'bc', 'relay', 'rtc'] as const) {
+  // Headless WebKit on Linux CI cannot complete a loopback WebRTC ICE exchange; skip that path there.
+  const paths = browserName === 'webkit' ? (['in-process', 'bc', 'relay'] as const) : (['in-process', 'bc', 'relay', 'rtc'] as const);
+  for (const path of paths) {
     const relayQ = path === 'relay' || path === 'rtc' ? `&relay=${encodeURIComponent(relayUrl)}` : '';
     const session = { 'in-process': 'QATAAA', bc: 'QATBBB', relay: 'QATCCC', rtc: 'QATDDD' }[path];
     await page.goto(`${base}/stage6a.html?session=${session}${relayQ}`);
