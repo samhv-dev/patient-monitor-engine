@@ -4,3 +4,4 @@ export * from './scheduler.ts';
 export * from './tones.ts';
 export * from './context.ts';
 export * from './profiles/index.ts';
+export * from './alarm-bursts.ts';

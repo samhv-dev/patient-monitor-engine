@@ -3706,7 +3706,7 @@ git commit -m "feat(audio): SpO2 pitch maps (nellcor-like, enhanced, none) and c
 - Consumes: `AlarmSoundProfile`, `LevelSound`, `ProfileOverrides`, `levelKey` (Task 12).
 - Produces: `BurstPulse { offsetS, durS, freqHz }`; `levelSound(profile, level, overrides?): LevelSound` (applies `repeatS` and `lowPulses`); `burstPulses(ls): BurstPulse[]`; `burstDurationS(ls)`; `volumeGain(volume, step)`; `dbToGain(db)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/audio/test/alarm-bursts.test.ts`:
 
@@ -3761,12 +3761,12 @@ describe('volume curve', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/alarm-bursts.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/audio/src/alarm-bursts.ts`:
 
@@ -3828,12 +3828,12 @@ Append to `packages/audio/src/index.ts`:
 export * from './alarm-bursts.ts';
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/alarm-bursts.test.ts`
 Expected: 6 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/audio/src/alarm-bursts.ts packages/audio/src/index.ts packages/audio/test/alarm-bursts.test.ts
