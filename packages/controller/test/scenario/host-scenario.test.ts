@@ -25,10 +25,12 @@ function setup() {
   const ctl = new ControllerSession({ session: S, transport: hub.connect(), issuedBy: 'panel' });
   cleanup.push(() => ctl.close(), () => (hs as HostSession).close(), () => driver.close());
   /** Advance sim time tick by tick, polling the driver like a frame loop would. */
-  const run = (toS: number) => {
+  const run = async (toS: number) => {
     for (let tick = host.engine.now().tick + 1; tick <= Math.round(toS * 50); tick++) {
       host.engine.advanceTo(tick * 0.02);
       driver.poll();
+      // Yield once per sim-minute so long runs do not starve the Vitest worker RPC on slow CI.
+      if (tick % 3000 === 0) await new Promise<void>((resolve) => setImmediate(resolve));
     }
   };
   return { host, hs: hs as HostSession, driver, hub, ctl, run };
@@ -42,7 +44,7 @@ describe('scenario over a HostSession', () => {
     expect(ack.accepted).toBe(true);
     await waitFor(() => ctl.scenario.doc?.id === 'acls-vf-witnessed');
     expect(ctl.scenario.stateLabel()).toBe('Stable in PACU');
-    run(60.02);
+    await run(60.02);
     await waitFor(() => ctl.scenario.stateId === 'vf');
     expect(ctl.log.some((l) => l.kind === 'scenario' && l.text === '→ vf (arrest)')).toBe(true);
     expect(ctl.scenario.next().map((n) => n.manual)).toEqual([null, null, null, 'ROSC now']);
@@ -54,7 +56,7 @@ describe('scenario over a HostSession', () => {
     const got = collect(watcher);
     await waitFor(() => ctl.hostOnline);
     await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
-    run(60.02);
+    await run(60.02);
     await waitFor(() => got.some((m) => m.kind === 'event' && m.body.some((e) => e.type === 'commandApplied' && (e.resolved as AppliedResolution).command.issuedBy === 'scenario' && (e.resolved as AppliedResolution).command.type === 'setRhythm' && ((e.resolved as AppliedResolution).command as { rhythm: string }).rhythm === 'vfCoarse')));
     const applied = got.flatMap((m) => (m.kind === 'event' ? m.body : [])).filter((e): e is Extract<WireEvent, { type: 'commandApplied' }> => e.type === 'commandApplied');
     const setup0 = applied.filter((e) => (e.resolved as AppliedResolution).command.stageGroup === 'scenario-1');
@@ -67,7 +69,7 @@ describe('scenario over a HostSession', () => {
     const { ctl, run } = setup();
     await waitFor(() => ctl.hostOnline);
     await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
-    run(1);
+    await run(1);
     expect((await ctl.send({ type: 'scenario', action: 'trigger', target: 'nope' })).reason).toBe('no transition nope in state stable');
     expect((await ctl.send({ type: 'scenario', action: 'trigger', target: 'arrest' })).accepted).toBe(true);
     await waitFor(() => ctl.scenario.stateId === 'vf');
@@ -85,7 +87,7 @@ describe('scenario over a HostSession', () => {
     const { ctl, hub, run } = setup();
     await waitFor(() => ctl.hostOnline);
     await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
-    run(61);
+    await run(61);
     await ctl.send({ type: 'scenario', action: 'pause' });
     const late = new ControllerSession({ session: S, transport: hub.connect(), issuedBy: 'remote' });
     cleanup.push(() => late.close());
@@ -99,10 +101,10 @@ describe('scenario over a HostSession', () => {
     const { ctl, run, driver, host } = setup();
     await waitFor(() => ctl.hostOnline);
     await ctl.send({ type: 'scenario', action: 'load', target: 'acls-vf-witnessed' });
-    run(30);
+    await run(30);
     await ctl.send({ type: 'scenario', action: 'bookmark', target: 'calm' });
     await waitFor(() => ctl.bookmarks.includes('calm'));
-    run(65);
+    await run(65);
     expect(driver.runner?.stateId).toBe('vf');
     expect((await ctl.send({ type: 'scenario', action: 'restoreBookmark', target: 'calm' })).accepted).toBe(true);
     expect(host.engine.now().tick).toBe(1500);
