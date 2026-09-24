@@ -1006,7 +1006,7 @@ git commit -m "chore: MIT licence, NOTICES rows for build tools, PR template" -m
 - Consumes: `NOTICES.md` row format from Task 6.
 - Produces: `governedFiles(root: string): string[]`, `noticeIds(noticesMd: string): Set<string>`, `checkNotices(root: string): string[]` (empty = pass). CLI: `pnpm check-notices` (= `node --experimental-strip-types scripts/check-notices.ts`) exits 1 and prints one line per problem. Governed files: `packages/*/src/vendor/**` and `packages/engine-core/templates/**`; each must carry `NOTICE-ID: N-###` on its FIRST line (any comment syntax; bytes are read as latin1 so binary files with an ASCII header work).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/validation/test/check-notices.test.ts`:
 ```ts
@@ -1065,12 +1065,12 @@ describe('scripts/check-notices', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `pnpm --filter @pme/validation test`
 Expected: FAIL — cannot load `../../../scripts/check-notices.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `scripts/check-notices.ts`:
 ```ts
@@ -1144,7 +1144,7 @@ if (invokedDirectly) {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the CLI**
+- [x] **Step 4: Run the tests and the CLI**
 
 Run: `pnpm --filter @pme/validation test && pnpm --filter @pme/validation typecheck`
 Expected: PASS, `Tests  5 passed (5)`.
@@ -1154,7 +1154,7 @@ Expected: `check-notices: OK (0 governed files)`, exit 0.
 
 Negative check: `mkdir -p packages/engine-core/templates && echo 'x' > packages/engine-core/templates/tmp.bin && pnpm check-notices; echo "exit $?"` → prints `check-notices: packages/engine-core/templates/tmp.bin: first line has no "NOTICE-ID: N-###" header` and `exit 1`. Then `rm -r packages/engine-core/templates`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts packages/validation/test/check-notices.test.ts
