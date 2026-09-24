@@ -5950,7 +5950,7 @@ git commit -m "feat(demo): stage6a remote controller and viewer (second monitor)
 - Consumes: the three pages (21–22), `startRelay` (8), Vite's `createServer`.
 - Produces: a Playwright test that starts its own relay and Vite dev server on free ports and, for each link (`bc`, `relay`, `rtc`), opens host + remote + viewer in one browser context, sends 20 commands from the remote (all accepted), and checks the viewer is `synced` with beat drift 0 and every command reached a visible frame on the host.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `apps/demo/e2e/stage6a.e2e.ts`:
 ```ts
@@ -6026,14 +6026,14 @@ for (const via of ['bc', 'relay', 'rtc'] as const) {
 }
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage6a.e2e.ts`
 Expected: `3 passed` (≈ 12 s), each printing e.g. `relay {"status":"synced","resyncs":0,"lag":0.09,"drift":0}`. If `rtc` alone times out at "hostOnline", the `--disable-features=WebRtcHideLocalIpsWithMdns` launch flag is missing (headless Chrome cannot resolve its own `.local` candidates).
 
-- [ ] **Step 3: Confirm the demo package's Vitest run ignores e2e files** — `npx -y pnpm@9.15.9 --filter @pme/demo test` → `No test files found, exiting with code 0` (`*.e2e.ts` does not match Vitest's pattern).
+- [x] **Step 3: Confirm the demo package's Vitest run ignores e2e files** — `npx -y pnpm@9.15.9 --filter @pme/demo test` → `No test files found, exiting with code 0` (`*.e2e.ts` does not match Vitest's pattern).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage6a.e2e.ts
