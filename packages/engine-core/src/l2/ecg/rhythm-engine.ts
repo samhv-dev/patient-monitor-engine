@@ -20,7 +20,8 @@ import { pacerClock } from './pacing.ts';
 import { tcpClock } from './tcp.ts';
 import { vfClock } from './arrest/vf.ts';
 import { HOOKS, NEVER, clamp, rhythmRate, type FWave, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
-import { uniform, type Sfc32State } from '../../rng/sfc32.ts';
+import { sfc32Next, uniform, type Sfc32State } from '../../rng/sfc32.ts';
+import { afTemplatesAvailable } from './af-texture.ts';
 
 export { NEVER, type FWave, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 export { afCommandBpm, afRefractoryS, afThresholdMv } from './atria.ts';
@@ -72,7 +73,9 @@ export function escapeRate(st: RhythmState, d: RhythmDef, t: number, ctx: Rhythm
 }
 
 function drawFWave(t0: number, s: Sfc32State): FWave {
-  // 3 random-phase sinusoids at 5–9 Hz, 0.03–0.05 mV each (brief §4.1: 2–4 at 5–9 Hz, 0.02–0.15 mV) [ENG]
+  // Recorded MIT-BIH texture when templates are bundled (brief §11 C1) ...
+  if (afTemplatesAvailable()) return { kind: 'fib', start: t0, end: NEVER, f: [], ph: [], a: [], dir: [...FWAVE_DIR], seed: sfc32Next(s) };
+  // ... else 3 random-phase sinusoids at 5–9 Hz, 0.03–0.05 mV each (brief §4.1: 2–4 at 5–9 Hz, 0.02–0.15 mV) [ENG]
   const f: number[] = [];
   const ph: number[] = [];
   const a: number[] = [];
@@ -116,6 +119,7 @@ export function applyRhythm(st: RhythmState, id: RhythmId, opts: RhythmOpts, at:
     const fw = drawFWave(t0, ctx.rng.conduction);
     st.fwaves.push(fw);
     st.junction = { refUntil: t0, v: 0, vT: t0 };
+    if (fw.seed !== undefined) st.records.push({ type: 'rhythmSegment', t: t0, rhythm: id, seed: fw.seed, templateId: 'af-mitdb' });
   }
   if (d.atria !== 'fib' && wasFib) endFWaves(st, 'fib', t0);
 

@@ -5134,7 +5134,7 @@ When AF templates are bundled, `drawFWave` returns an empty sinusoid list plus a
 - Consumes: Tasks 13 and 15, `hash53`, `FWAVE_DIR`.
 - Produces: `afTemplatesAvailable()`, `afTexture(seed, u)`, `afSource`, `F_RMS_MV = 0.03`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/af-texture.test.ts` with exactly:
 
@@ -5184,13 +5184,13 @@ describe('AF f-wave texture', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/af-texture.test.ts`
 
 Expected: FAIL — cannot resolve `src/l2/ecg/af-texture.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/af-texture.ts` with exactly:
 
@@ -5319,13 +5319,13 @@ export const VCG_SOURCES: VcgSource[] = [vfSource, afSource];
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/af-texture.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/test/l2/ecg/s5/af-texture.test.ts
