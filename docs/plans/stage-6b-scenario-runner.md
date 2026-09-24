@@ -2359,7 +2359,7 @@ git commit -m "feat(controller): HostSession routes all scenario actions to the 
   - **svt-adenosine** (seed 3): AVNRT 180 → adenosine ≥ 6 mg → 15 s circulating → transient AV block (CHB narrow, atrial 110, escape 20/min, 6 s; brief §4.9: "AV block for 3–10 s, 10–30 s after the push") → sinus 92 → 80 (p 0.6) else SVT resumes (repeat dose allowed); manual "Vagal manoeuvre works".
   - **or-induction-hypotension** (seed 5): pre-induction (NIBP auto 3 min) → propofol or "Induce" → 60 s → hypotension: sinus tachycardia 102 (next beat) + HR 122 over 90 s (sigmoid); phenylephrine → sinus 100 → 82 over 60 s; ephedrine → HR 108; HR ≥ 115 for 20 s (vital trigger on the measured HR) → "profound". Every BP step is the exact command in `$comment`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/scenario/builtins.test.ts`:
 ```ts
@@ -2392,12 +2392,12 @@ describe('built-in scenarios', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/builtins.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 
-- [ ] **Step 3: Write the five scenarios**
+- [x] **Step 3: Write the five scenarios**
 
 `packages/controller/scenarios/acls-vf-witnessed.json`:
 ```json
@@ -2691,7 +2691,7 @@ Expected: FAIL — `Failed to resolve import "../../src/scenario/builtins.ts"`.
 }
 ```
 
-- [ ] **Step 4: Stand-ins and the catalogue**
+- [x] **Step 4: Stand-ins and the catalogue**
 
 `packages/controller/src/scenario/standins.ts`:
 ```ts
@@ -2742,7 +2742,7 @@ export const BUILTIN_SCENARIOS: Record<string, unknown> = Object.fromEntries(LIS
 export const BUILTIN_CATALOGUE: Array<{ id: string; title: string }> = LIST.map((d) => ({ id: d.id, title: d.title }));
 ```
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/builtins.test.ts
@@ -2750,7 +2750,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller typecheck
 ```
 Expected: `Tests  6 passed (6)`; typecheck exit 0 (JSON default imports work under `moduleResolution: Bundler` + `resolveJsonModule`, both already in `tsconfig.base.json`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/controller/scenarios packages/controller/src/scenario/standins.ts packages/controller/src/scenario/builtins.ts packages/controller/test/scenario/builtins.test.ts
