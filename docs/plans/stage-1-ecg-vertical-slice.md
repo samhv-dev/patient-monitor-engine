@@ -4359,7 +4359,7 @@ git commit -m "feat(renderer): MonitorCore drives engine and lanes from frame ti
 - Consumes: `Measured` from `@pme/engine-core`.
 - Produces: `formatNumeric(m: Measured | undefined): string` ('---' when null/invalid/absent), `interface TileOptions { label; unit; color }`, `class NumericTile { readonly el; constructor(parent: HTMLElement, opts); update(m) }` (root element has class `pme-tile`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/renderer/test/numerics-dom.test.ts`:
 ```ts
@@ -4376,12 +4376,12 @@ describe('numerics-dom', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/numerics-dom`
 Expected: FAIL — cannot load `numerics-dom.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/numerics-dom.ts`:
 ```ts
@@ -4425,12 +4425,12 @@ export class NumericTile {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/numerics-dom`
 Expected: PASS, 1 test.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer
