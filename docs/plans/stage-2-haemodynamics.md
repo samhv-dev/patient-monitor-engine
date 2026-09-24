@@ -1882,7 +1882,7 @@ git commit -m "feat(pleth): two-kernel pleth per mechanical beat with PI amplitu
 - Consumes: nothing.
 - Produces: `DET_RATE` 125, `interface PulseDetState`, `createPulseDet(floor, startIndex = 0)`, `pulseStep(st, x): number` (absolute foot index or −1), `pulseRate(feet: number[]): number|null`, `prSource(spo2: 'on'|'off'|'motion', abpActive: boolean): 'pleth'|'abp'|null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l3/pulse/detector.test.ts`:
 
@@ -1922,12 +1922,12 @@ describe('l3/pulse detector (slope sum, Zong 2003)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/pulse`
 Expected: FAIL — cannot load `../../../src/l3/pulse/detector.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/pulse/detector.ts`:
 
@@ -2034,12 +2034,12 @@ export function prSource(spo2: 'on' | 'off' | 'motion', abpActive: boolean): 'pl
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/pulse`
 Expected: PASS (2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/pulse packages/engine-core/test/l3/pulse
