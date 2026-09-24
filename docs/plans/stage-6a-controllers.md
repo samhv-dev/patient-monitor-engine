@@ -953,7 +953,7 @@ git commit -m "feat(controller): transport base, in-process transport and the sh
 - Consumes: `TransportBase` (Task 4).
 - Produces: `interface PostEndpoint { postMessage(data); addEventListener('message', fn); removeEventListener('message', fn); start?() }`; `createPostMessageTransport(ep): ManagedTransport` (messages travel as `{ __pme: 1, m }`); `windowEndpoint(other: Window, targetOrigin: string, self?: Window): PostEndpoint` (accepts only `ev.source === other` and, unless `'*'`, `ev.origin === targetOrigin`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/transport/post-message.test.ts`:
 ```ts
@@ -968,12 +968,12 @@ runTransportConformance('postMessage', async () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/post-message.test.ts`
 Expected: FAIL — cannot load `../../src/transport/post-message.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/transport/post-message.ts`:
 ```ts
@@ -1048,12 +1048,12 @@ export function windowEndpoint(other: Window, targetOrigin: string, self: Window
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/transport/post-message.test.ts`
 Expected: `6 passed` (Node's `MessageChannel` ports; `start()` is needed with `addEventListener`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/transport/post-message.ts packages/controller/test/transport/post-message.test.ts
