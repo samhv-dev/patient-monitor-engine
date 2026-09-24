@@ -24,6 +24,11 @@ export class ClockMap {
     return this.anchor !== null;
   }
 
+  /** Sim seconds per wall second (1 until an anchor arrives). */
+  get timeScale(): number {
+    return this.anchor?.timeScale ?? 1;
+  }
+
   /** performance.now() time (ms) at which sim time t reaches the screen. */
   simToPerfMs(t: number): number {
     const a = this.anchor;

@@ -17,7 +17,8 @@ export function beepEnvelope(g: number): Array<[number, number]> {
   ];
 }
 
-export function playBeep(ctx: BaseAudioContext, dest: AudioNode, when: number, freqHz: number, gain = 0.25): void {
+/** Schedule one beep at audio time `when`; the handle silences it (a cancelled tone already handed to Web Audio). */
+export function playBeep(ctx: BaseAudioContext, dest: AudioNode, when: number, freqHz: number, gain = 0.25): { stop(): void } {
   const osc = ctx.createOscillator();
   const wave = ctx.createPeriodicWave(new Float32Array([0, 0, 0]), new Float32Array([0, 1, BEEP_HARMONIC2]));
   osc.setPeriodicWave(wave);
@@ -28,4 +29,14 @@ export function playBeep(ctx: BaseAudioContext, dest: AudioNode, when: number, f
   osc.connect(env).connect(dest);
   osc.start(when);
   osc.stop(when + BEEP_MS / 1000 + 0.01);
+  return {
+    stop() {
+      env.disconnect();
+      try {
+        osc.stop(0);
+      } catch {
+        // already stopped
+      }
+    },
+  };
 }

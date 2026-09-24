@@ -251,7 +251,7 @@ Trends are stored at 1 Hz for 8 h: 28,800 × 24 numerics × 4 B = 2.8 MB **[ENG]
 - **Context.** `AudioContext({latencyHint:'interactive'})`, created *and* resumed inside the first user gesture. An "Enable sound" gate is shown.
 - **iOS mute switch.** Use the `<audio>` keep-alive workaround [05 §3.2].
 - **Clock mapping.** `wallMs(t) = anchorWall + (t − anchorSim)/timeScale`, then map to the audio clock with `getOutputTimestamp()` [05 §3.2].
-- **Scheduler.** A 25 ms timer with 100 ms look-ahead [05 §3.2]. Tone events are also scheduled the moment they arrive. An event up to 30 ms late plays immediately; a later one is dropped **[ENG]**.
+- **Scheduler.** A 25 ms timer with 100 ms look-ahead [05 §3.2]. Tone events are also scheduled the moment they arrive. A late tone plays immediately. The QRS beep is a *detection* event (Gate 1 ruling R15): it sounds at detected R + **30 ms**; lateness is judged net of the measured `AudioContext.outputLatency` (20 ms when unreported), and a QRS tone is dropped only if it would sound **> 150 ms** after its R. Other tones are never dropped. Each tone id plays once; a cancel also stops tones already scheduled **[ENG]**.
 - **QRS/pulse beep:**
   - 60 ms long, sine plus 2nd harmonic, 5 ms attack and release **[ENG]**;
   - pitch `f = 880·2^(−(100 − SpO2)·s/12)`, with `s` = 0.1 semitone/% for "Nellcor-like" (≈5 Hz/%) or 0.25–0.5 for "enhanced" [03 §3.6];
@@ -360,7 +360,7 @@ T wave = two half-Gaussians, rising σ = 1.6 × falling σ      [03 §1.3, ENG]
 | Q | 12 | 8 | −0.08 |
 | R | 40 | 10 | 1.1 |
 | S | 62 | 9 | −0.25 |
-| T peak | QT − 110 (e.g. 290) | 45 rise / 30 fall | 0.30 |
+| T peak | QT − 2·σ_fall = QT − 60 (e.g. 340), so the tangent-method T end falls on QT (Stage 1.1, review H4) | 45 rise / 30 fall | 0.30 |
 | U (optional) | QT + 70 | 35 | 0.03 |
 
 **Lead projection** [03 §1.2]:
@@ -368,7 +368,7 @@ T wave = two half-Gaussians, rising σ = 1.6 × falling σ      [03 §1.3, ENG]
 - Leads I, II and V1–V6 come from the Dower rows below **[VERIFY: Dower 1980 / Edenbrandt & Pahlm 1988]**.
 - The other limb leads follow the exact Einthoven/Goldberger identities: `III = II − I`, `aVR = −(I+II)/2`, `aVL = I − II/2`, `aVF = II − I/2`.
 - The default wave vectors are fitted in Stage 1 so that the projected normal beat meets two checks:
-  - the ProSim lead ratios: I 70%, III 30%, V1 24%, V4 120% of II [01 §4.16];
+  - lead II exact, I 70% and III 30% of II (the ProSim limb ratios [01 §4.16]); the chest leads follow a normal R progression. ProSim's V1 24% / V4 120% are not a target (Gate 1 ruling R17);
   - (in Stage 5) the PTB-XL normal median beats.
 - Frontal axis (normal −30° to +90°) and precordial transition lead (1.5–5.5) are rotations of those vectors [04 §4].
 
@@ -385,7 +385,7 @@ T wave = two half-Gaussians, rising σ = 1.6 × falling σ      [03 §1.3, ENG]
 
 **Rate rules** [03 §1.1]:
 - `QT = QTc · RR^(1/3)` (Fridericia), with QTc 400 ms by default. This gives QT 458 / 400 / 363 / 317 / 295 / 268 ms at 40 / 60 / 80 / 120 / 150 / 200 bpm.
-- `PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60)`.
+- `PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60)`, with **PR60 = 160 ms** by default (Gate 1 ruling R16).
 - QRS width changes by ≤5% across rates.
 - P riding on T at 150 bpm must *emerge* from the timing and never be special-cased.
 - Paediatric intervals use the per-age values in [03 §1.1].
@@ -467,7 +467,7 @@ pacer:              demand fires if nothing sensed within 60/rate; fixed always 
 
 - Filter names are skin data (`ecg.filters`); the engine keys filters by band. On `saadat-like`, **"MONITOR" is the narrow 0.5–24 Hz filter**, the reverse of the Philips-like naming, where Monitor is the 0.5–40 Hz default. Real Iranian ICUs run MONITOR [06 §3.2, §6; 06 §3.1 F7].
 - The 50/60 Hz notch is automatic in monitor and surgical modes.
-- A Pan–Tompkins-like QRS detector runs on the *displayed* lead and feeds HR averaging (§6.1). It never reads the truth list. Tall T waves, artefact and pacing can therefore cause realistic miscounts.
+- A Pan–Tompkins-like QRS detector runs on the primary (detection) lead, monitor-filtered lead II, and feeds HR averaging (§6.1) (Stage 1.1, review M3: detecting on whatever lane 0 shows read HR 0 after a switch to aVL). It never reads the truth list. Tall T waves, artefact and pacing can therefore cause realistic miscounts.
 
 ### 4.2 Arterial, CVP and PAP pressures
 

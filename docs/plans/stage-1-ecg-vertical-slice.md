@@ -5549,7 +5549,7 @@ export default defineConfig({
 - [x] **Step 3: Type-check, build, run**
 
 Run: `pnpm typecheck && pnpm build && pnpm --filter @pme/demo dev`
-Open `/stage1.html`. Expected within 3 s: sinus rhythm at 75 on both lanes, HR tile reads 74–76, diagnostics show `render path: worker-raf` in Chrome. Pick "Monomorphic VT": wide complexes at ~170 within one second; HR tile reaches 165–175 within ~11 s.
+Open `/stage1.html`. Expected: sinus rhythm at 75 on both lanes within 3 s, HR tile first reads 74–76 within 5 s (Gate 1 ruling R19), diagnostics show `render path: worker-raf` in Chrome. Pick "Monomorphic VT": wide complexes at ~170 within one second; HR tile reaches 165–175 within ~11 s.
 
 - [x] **Step 4: Commit**
 

@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
+import { createRhythmState, planUntil } from '../../src/l2/ecg/rhythm-engine.ts';
+import { defaultModifiers } from '../../src/modifiers.ts';
+import { createRngState } from '../../src/rng/sfc32.ts';
 import type { Command, EngineEvent } from '../../src/types.ts';
 
 function cmd(c: Record<string, unknown>, id = 'c'): Command {
@@ -26,6 +29,47 @@ describe('engine commands', () => {
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: 'surgical' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bbb: 'lbbb' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 100, atTick: 50 })).tick).toBe(50);
+  });
+
+  it('rejects NaN / Infinity / out-of-range numeric inputs and never corrupts the pipeline (review M5)', () => {
+    const e = createEngine({ seed: 3, patient: { baseline: { hr: 75 } } });
+    const bad: Array<Record<string, unknown>> = [
+      { type: 'setTarget', variable: 'hr', value: 80, ramp: { durationS: Infinity } },
+      { type: 'setTarget', variable: 'hr', value: 80, ramp: { durationS: 5, delayS: NaN } },
+      { type: 'setTarget', variable: 'hr', value: 80, atTick: NaN },
+      { type: 'setRhythm', rhythm: 'sinus', opts: { rateBpm: NaN } },
+      { type: 'setRhythm', rhythm: 'sinus', opts: { rateBpm: Infinity } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { atrialRateBpm: NaN } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { atrialRateBpm: 5000 } },
+      { type: 'setRhythm', rhythm: 'aflutter', opts: { ratio: 7 } },
+      { type: 'setRhythm', rhythm: 'avb1', opts: { prMs: -10 } },
+      { type: 'setRhythm', rhythm: 'avb2Mobitz1', opts: { groupSize: 0 } },
+      { type: 'setModifiers', modifiers: { qtc: NaN } },
+      { type: 'setModifiers', modifiers: { qtc: 5000 } },
+      { type: 'setModifiers', modifiers: { rsa: Infinity } },
+      { type: 'setModifiers', modifiers: { hrvScale: -1 } },
+      { type: 'setModifiers', modifiers: { artefact: { noise: NaN } } },
+      { type: 'setModifiers', modifiers: { pvc: { pattern: 'single', probability: NaN } } },
+    ];
+    for (const b of bad) {
+      const r = e.dispatch(cmd(b));
+      expect(r.accepted, JSON.stringify(b)).toBe(false);
+      expect(r.reason).toBeTruthy();
+    }
+    const hr: number[] = [];
+    e.on((x) => x.type === 'measurement' && x.values.hr?.value != null && hr.push(x.values.hr.value), ['measurement']);
+    e.advanceTo(20);
+    const out = new Float32Array(10_000);
+    const n = e.readSamples('ecgII', 0, out);
+    expect(out.subarray(0, n).every(Number.isFinite)).toBe(true);
+    expect(Math.abs(hr[hr.length - 1]! - 75)).toBeLessThanOrEqual(2);
+  });
+
+  it('planUntil refuses a non-finite event time instead of spinning (review M5)', () => {
+    const rng = createRngState(1);
+    const ctx = { hrAt: () => Number.NaN, mods: defaultModifiers(), rng, hrv: { phi: 0, psi: 0 } };
+    const st = createRhythmState('sinus', {}, 0, ctx);
+    expect(() => planUntil(st, 5, ctx)).toThrow(RangeError);
   });
 
   it('setRhythm now: the new rhythm starts within one look-ahead window', () => {
@@ -71,17 +115,60 @@ describe('engine commands', () => {
     expect(rrAt(25)).toBeCloseTo(0.5, 3);
   });
 
-  it('an accepted command emits toneCancel at the command tick and tones are re-posted after it', () => {
+  it('a command every tick (slider drag) still gives exactly one tone per R and never re-posts a live tone (review H3)', () => {
     const e = createEngine({ seed: 7 });
     const ev = collect(e);
-    for (let t = 0; t <= 5; t += 0.02) e.advanceTo(t);
-    e.dispatch(cmd({ type: 'setModifiers', modifiers: { pvc: { pattern: 'bigeminy', probability: 0 } } }));
-    e.advanceTo(5.02);
-    const cancel = ev.find((x) => x.type === 'toneCancel');
-    expect(cancel).toEqual({ type: 'toneCancel', after: 5.02 });
-    for (let t = 5.04; t <= 10; t += 0.02) e.advanceTo(t);
-    const tonesAfter = ev.filter((x) => x.type === 'tone' && x.t > 5.02);
-    expect(tonesAfter.length).toBeGreaterThan(3);
+    let i = 0;
+    for (let t = 0; t <= 30; t += 0.02) {
+      e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 75 }, `drag-${i++}`));
+      e.advanceTo(t);
+    }
+    // Web Audio cannot un-schedule a tone it already has, so the engine must post each R's tone exactly once.
+    const tones = ev.filter((x) => x.type === 'tone').map((x) => (x as { t: number }).t);
+    expect(ev.filter((x) => x.type === 'toneCancel')).toHaveLength(0); // nothing in flight changed
+    const beats = ev.filter((x) => x.type === 'beat' && x.t > 3 && x.t < 29.5).map((x) => (x as { t: number }).t);
+    expect(beats.length).toBeGreaterThan(25);
+    for (const r of beats) expect(tones.filter((t) => t > r && t < r + 0.1)).toHaveLength(1);
+  });
+
+  it('a command that changes the in-flight detections cancels exactly the stale tones, by id', () => {
+    const e = createEngine({ seed: 7 });
+    const ev = collect(e);
+    let i = 0;
+    for (let t = 0; t <= 30; t += 0.02) {
+      if (i % 37 === 0) {
+        const value = (i / 37) % 2 === 1 ? 'diagnostic' : 'monitor';
+        e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value } }, `f-${i}`));
+      }
+      i++;
+      e.advanceTo(t);
+    }
+    const live = new Map<string, number>();
+    for (const x of ev) {
+      if (x.type === 'tone') {
+        expect(live.has(x.id)).toBe(false); // never re-posted while live
+        live.set(x.id, x.t);
+      } else if (x.type === 'toneCancel') {
+        expect(x.ids).toBeDefined();
+        for (const id of x.ids!) expect(live.delete(id)).toBe(true); // only tones that were posted
+      }
+    }
+    const tones = [...live.values()].sort((a, b) => a - b);
+    for (let k = 1; k < tones.length; k++) expect(tones[k]! - tones[k - 1]!).toBeGreaterThan(0.2); // no double beeps
+  });
+
+  it('switching lane 0 to a small lead (aVL) keeps the HR: detection runs on the primary lead II (review M3)', () => {
+    const e = createEngine({ seed: 12, patient: { baseline: { hr: 75 } } });
+    const hr: Array<{ t: number; v: number | null }> = [];
+    e.on((x) => {
+      if (x.type === 'measurement' && x.values.hr) hr.push({ t: x.t, v: x.values.hr.value });
+    }, ['measurement']);
+    e.advanceTo(10);
+    e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'lead', value: 'aVL', lane: 0 } }));
+    e.advanceTo(25);
+    const after = hr.filter((m) => m.t > 10);
+    expect(after.length).toBeGreaterThan(10);
+    for (const m of after) expect(Math.abs(m.v! - 75)).toBeLessThanOrEqual(3);
   });
 
   it('filter and lead device actions change the displayed channels', () => {
@@ -106,6 +193,30 @@ describe('engine commands', () => {
     const b = new Float32Array(5000);
     e.readSamples('ecgII', 5001, b);
     expect(Array.from(b)).toEqual(Array.from(a));
+  });
+
+  it('restore() refuses a snapshot from another engine version or mains frequency (exact replay only on the same build; review L10)', () => {
+    const snap60 = createEngine({ seed: 1, device: { mainsHz: 60 } }).snapshot();
+    expect(() => createEngine({ seed: 1, device: { mainsHz: 50 } }).restore(snap60)).toThrow(/mains/);
+    const snap = createEngine({ seed: 1 }).snapshot();
+    expect(() => createEngine({ seed: 1 }).restore({ ...snap, engineVersion: '9.9.9' })).toThrow(/version/);
+    expect(() => createEngine({ seed: 1 }).restore(snap)).not.toThrow();
+  });
+
+  it('restore() drops the discarded timeline from the sample buffers (review M4)', () => {
+    const e = createEngine({ seed: 9 });
+    e.advanceTo(10);
+    const snap = e.snapshot();
+    e.advanceTo(40);
+    e.restore(snap);
+    expect(e.latestSampleIndex('ecgII')).toBe(5050); // 10 s × 500 + the 100 ms look-ahead
+    expect(e.readSamples('ecgII', 5051, new Float32Array(100))).toBe(0); // nothing from the discarded future
+    const fresh = createEngine({ seed: 9 });
+    fresh.restore(snap);
+    const out = new Float32Array(10_000);
+    const n = fresh.readSamples('ecgII', 0, out); // only what the restored engine generated, not 120 s of zeros
+    expect(n).toBeLessThanOrEqual(51);
+    expect(fresh.latestSampleIndex('ecgII')).toBe(5050);
   });
 
   it('start / pause / setTimeScale / step drive the internal wall-clock pump', () => {

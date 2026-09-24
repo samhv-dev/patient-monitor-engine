@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { K_STRIDE, WAVE, type EcgEvent } from '../../../src/l2/ecg/kernels.ts';
+import { tangentTEnd } from '../../helpers/qt.ts';
 import { diffs, mean, runRhythm, sd } from '../../helpers/rhythm.ts';
-
-const hasWave = (e: EcgEvent, w: number) => e.k.some((v, i) => i % K_STRIDE === 6 && v === w);
-function waveOf(e: EcgEvent, w: number): { tau: number; sigRise: number } {
-  for (let i = 0; i < e.k.length; i += K_STRIDE) if (e.k[i + 6] === w) return { tau: e.k[i]!, sigRise: e.k[i + 1]! };
-  throw new Error('wave not found');
-}
 
 describe('rhythm engine: sinus family', () => {
   it('acceptance 1: sinus 60 with HRV off has mean RR 1.000 ± 0.002 s over 60 beats', () => {
@@ -16,29 +10,25 @@ describe('rhythm engine: sinus family', () => {
     expect(Math.abs(mean(rr) - 1)).toBeLessThanOrEqual(0.002);
   });
 
-  it('acceptance 2: QT at 60/120/150 bpm is 400/317/295 ms ±5 ms, measured from kernel timing', () => {
+  it('acceptance 2: QT at 60/120/150 bpm is 400/317/295 ms ±10 ms, measured on the lead-II waveform (tangent method)', () => {
     for (const [hr, qt] of [[60, 400], [120, 317], [150, 295]] as const) {
-      const { st } = runRhythm('sinus', 10, { hr, mods: { hrvScale: 0 } });
-      const qrs = st.events.filter((e) => hasWave(e, WAVE.R));
-      const steady = qrs[qrs.length - 2]!;
-      const qtMeasured = (waveOf(steady, WAVE.T).tau + 0.11) * 1000; // T end = T peak + 110 ms (seed table)
-      expect(Math.abs(qtMeasured - qt)).toBeLessThanOrEqual(5);
+      const { st, beats } = runRhythm('sinus', 10, { hr, mods: { hrvScale: 0 } });
+      const b = beats[beats.length - 4]!;
+      const onset = b.t - 0.04; // QRS onset = R fiducial − 40 ms (seed table R τ)
+      const { end } = tangentTEnd(st.events, onset, Math.min(0.6, (0.8 * 60) / hr));
+      expect(Math.abs((end - onset) * 1000 - qt)).toBeLessThanOrEqual(10);
     }
   });
 
-  it('acceptance 3: at 150 bpm the P-wave peak falls inside the preceding T wave span', () => {
-    const { st } = runRhythm('sinus', 10, { hr: 150, mods: { hrvScale: 0 } });
-    const pPeaks = st.events.filter((e) => hasWave(e, WAVE.P)).map((e) => e.t + waveOf(e, WAVE.P).tau);
-    const qrs = st.events.filter((e) => hasWave(e, WAVE.R));
+  it('acceptance 3 (ruling R16): at 160 bpm the P-wave onset falls inside the preceding T wave (after its peak, before its tangent end)', () => {
+    const { st, beats, atrial } = runRhythm('sinus', 10, { hr: 160, mods: { hrvScale: 0 } });
     let checked = 0;
-    for (const ev of qrs.slice(2, -2)) {
-      const T = waveOf(ev, WAVE.T);
-      const tStart = ev.t + T.tau - 2.5 * T.sigRise; // T onset
-      const tEnd = ev.t + T.tau + 0.11; // T end (= QT)
-      const p = pPeaks.find((x) => x > ev.t + 0.1 && x < ev.t + 0.4);
-      expect(p).toBeDefined();
-      expect(p!).toBeGreaterThan(tStart);
-      expect(p!).toBeLessThan(tEnd);
+    for (const b of beats.slice(3, -3)) {
+      const onset = b.t - 0.04;
+      const { peak, end } = tangentTEnd(st.events, onset, 0.32);
+      const pOnset = atrial.find((a) => a.kind === 'p' && a.t > onset + 0.1)!.t; // the P kernel starts at the atrial event
+      expect(pOnset).toBeGreaterThan(peak);
+      expect(pOnset).toBeLessThan(end);
       checked++;
     }
     expect(checked).toBeGreaterThan(10);
@@ -65,7 +55,7 @@ describe('rhythm engine: sinus family', () => {
     const { beats } = runRhythm('sinus', 10, { hr: 75, mods: { hrvScale: 0 } });
     const b = beats[3]!;
     expect(b.origin).toBe('sinus');
-    expect(b.prMs).toBe(184);
+    expect(b.prMs).toBe(154); // PR60 160 − 0.4·15 (ruling R16)
     expect(b.qrsMs).toBeGreaterThanOrEqual(70);
     expect(b.qrsMs).toBeLessThanOrEqual(100);
     expect(b.qtMs).toBe(371); // 400 · 0.8^(1/3)

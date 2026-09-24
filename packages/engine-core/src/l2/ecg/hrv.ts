@@ -9,7 +9,7 @@ export const F_RESP_HZ = 0.25; // 15 breaths/min [ENG, Stage 1 stand-in for the 
 export const A_RSA_MAX_S = 0.06; // rsa = 1 → 60 ms at RR 1 s
 export const A_LF_S = 0.03;
 export const EPS_SD_S = 0.012;
-export const MIN_RR_S = 0.2;
+export const MIN_RR_S = 0.2; // floor on a sinus RR (300/min), far above any sinus rate [ENG]
 
 export interface HrvPhase {
   phi: number;

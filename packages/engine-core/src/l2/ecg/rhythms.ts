@@ -29,6 +29,7 @@ const BACKUP_JUNCTIONAL_BPM = 40; // [ENG] junctional escape 40–60 (brief §5)
 
 export const RHYTHMS: Readonly<Record<RhythmId, RhythmDef>> = {
   sinus: { atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [20, 250], defaultRateBpm: 75, escapeTemplate: 'narrow', backupEscapeBpm: BACKUP_JUNCTIONAL_BPM },
+  // sinusBrady backup escape 30/min [ENG]: below the junctional 40–60 (brief §5) so it cannot pre-empt a slow sinus down to 31/min
   sinusBrady: { atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [20, 59], defaultRateBpm: 45, escapeTemplate: 'narrow', backupEscapeBpm: 30 },
   sinusTachy: { atria: 'sinus', av: 'conducted', focus: 'none', escape: 'junctional', rateDrives: 'sinus', rateRange: [101, 220], defaultRateBpm: 120, escapeTemplate: 'narrow', backupEscapeBpm: BACKUP_JUNCTIONAL_BPM },
   afib: { atria: 'fib', av: 'integrateFire', focus: 'none', escape: 'none', rateDrives: 'afResponse', rateRange: [40, 180], defaultRateBpm: 100, escapeTemplate: 'narrow', backupEscapeBpm: 0 },

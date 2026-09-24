@@ -32,7 +32,7 @@ export function detectOn(
   const detections: number[] = [];
   const latencies: number[] = [];
   generateVcg(
-    { events: st.events, fwave: st.fwave, hrv: ctx.hrv, noiseLevel: mods.artefact.noise, noise: rng.noise },
+    { events: st.events, fwaves: st.fwaves, hrv: ctx.hrv, noiseLevel: mods.artefact.noise, noise: rng.noise },
     0,
     seconds * 500,
     (n, x, y, z) => {
@@ -47,15 +47,19 @@ export function detectOn(
   return { beats, detections, latencies };
 }
 
-/** Match detections to beats within ±60 ms, ignoring the first 2.2 s (learning) and the last 0.3 s. */
+/**
+ * Match detections to beats within ±60 ms, ignoring beats in the first 2.2 s (learning) and the last 0.3 s.
+ * Matching uses every detection (and false positives are counted against every beat), so a beat just inside the
+ * window whose detection lands just outside it is not scored as a miss.
+ */
 export function score(r: DetectResult, seconds: number) {
   const inRange = (t: number) => t > 2.2 && t < seconds - 0.3;
   const beats = r.beats.filter(inRange);
-  const dets = r.detections.filter(inRange);
   const errors: number[] = [];
   for (const b of beats) {
-    const d = dets.find((x) => Math.abs(x - b) < 0.06);
+    const d = r.detections.find((x) => Math.abs(x - b) < 0.06);
     if (d !== undefined) errors.push(d - b);
   }
-  return { beats: beats.length, tp: errors.length, fp: dets.length - errors.length, errors };
+  const fp = r.detections.filter((d) => inRange(d) && !r.beats.some((b) => Math.abs(d - b) < 0.06)).length;
+  return { beats: beats.length, tp: errors.length, fp, errors };
 }

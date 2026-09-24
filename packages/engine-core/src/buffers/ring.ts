@@ -6,6 +6,8 @@ export class RingBuffer {
   readonly capacity: number;
   private readonly data: Float32Array;
   private _latest = -1;
+  /** First absolute index written since construction or clear() (-1 when empty). */
+  private _first = -1;
 
   constructor(rate: number, seconds: number) {
     this.rate = rate;
@@ -18,9 +20,9 @@ export class RingBuffer {
     return this._latest;
   }
 
-  /** Oldest absolute index still held. */
+  /** Oldest absolute index still held (never before the first index written: review M4). */
   get oldest(): number {
-    return Math.max(0, this._latest - this.capacity + 1);
+    return Math.max(0, this._first, this._latest - this.capacity + 1);
   }
 
   /**
@@ -31,6 +33,7 @@ export class RingBuffer {
     if (index < 0 || index <= this._latest - this.capacity) return; // too old: silently dropped
     this.data[index % this.capacity] = value;
     if (index > this._latest) this._latest = index;
+    if (this._first < 0 || index < this._first) this._first = index;
   }
 
   /** Read one sample; NaN when not held. */
@@ -59,6 +62,7 @@ export class RingBuffer {
 
   clear(): void {
     this._latest = -1;
+    this._first = -1;
     this.data.fill(0);
   }
 }
