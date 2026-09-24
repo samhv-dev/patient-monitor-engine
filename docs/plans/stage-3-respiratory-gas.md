@@ -1400,7 +1400,7 @@ git commit -m "feat(temp): two-compartment heat model (redistribution, linear ph
 - Consumes: `normal`, `Sfc32State` (rng), Task 1 types.
 - Produces: constants `INSP_FLOW_LPS` 0.05, `DRIVE_TIMEOUT_S` 5, `U_REF_CMH2O` 10, `NEVER` 1e12, `GASTRIC_BREATHS` 5, `EXP_TAU_S`; types `Sampled`, `Shape`, `interface Cycle { seq, t0, ti, te, vt, kind, mech, exch, sampled, gastric, effort, shape, severity, cleft, fio2, fico2, cutAt, emitted }`, `ExtDrive`, `DriverState`, `DriverCtx { rr, vt, fio2, etco2, complianceMl }`; functions `createDriver(rng)`, `cycleAt(d, t)`, `lastCycleBefore(d, t)`, `preoxActive(d, t)`, `planCycles(d, ctx, until)`, `pruneCycles(d, t)`, `replan(d, t, cut, restartNow): number[]`, `onVentFrame(d, frame, t)`, `checkDrive(d, t)`, `cycleVolume(c, t)`, `chestVolume(d, t)`, `breathSignal(d, t, complianceMl)` (the u(t) seam), `meanAirwayPressure(d, t, complianceMl)`, `alveolarVentilation(d, t, deadSpaceMl)`, `nominalRate(d, ctx)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/resp/driver.test.ts`:**
 
@@ -1485,12 +1485,12 @@ describe('respiratory driver', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/driver.test.ts`
 Expected: FAIL — cannot find `src/l2/resp/driver.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/resp/driver.ts`:**
 
@@ -1859,9 +1859,9 @@ export function nominalRate(d: DriverState, ctx: DriverCtx): { rr: number; vt: n
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 4 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/resp/driver.ts packages/engine-core/test/l2/resp/driver.test.ts
