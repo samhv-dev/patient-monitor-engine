@@ -3622,7 +3622,7 @@ git commit -m "feat(controller): ControllerSession — id'd commands resent unti
   - Behaviour: says `hello(viewer)` on every transport `open`, on every host `hello`, after a late command (its `atTick` ≤ local tick) and after a beat mismatch (|host t − local t| > 1 ms for the same `seq`); on the snapshot it asked for: apply buffered replays (lane chrome), `restore`, apply commands buffered while waiting whose tick is after the snapshot; mirrors `commandApplied` engine commands with `atTick` (de-duplicated by `commandId`); `time` commands set host pause/rate; `state` events anchor the host clock (blended ±50 ms, reset beyond); `follow()` steers the local clock to `hostNow − delayS` (rate ±10 %, jump when > 1 s behind, pause when > 50 ms ahead, stop 3 s after the last anchor).
   - Test fake `manualViewer(opts?): ManualViewer` (`ViewerTarget` over `createEngine` with `advance(wallMs)`, `paused`, `rate`, `t`).
 
-- [ ] **Step 1: Write the fake and the failing test**
+- [x] **Step 1: Write the fake and the failing test**
 
 `packages/controller/test/fakes/manual-viewer.ts`:
 ```ts
@@ -3793,12 +3793,12 @@ describe('ViewerSync', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/viewer-sync.test.ts`
 Expected: FAIL — cannot load `../../src/session/viewer-sync.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/session/viewer-sync.ts`:
 ```ts
@@ -4024,12 +4024,12 @@ export class ViewerSync {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/viewer-sync.test.ts && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: `4 passed` (≈ 1.6 s); typecheck exits 0. The first test asserts the viewer's ecgIII equals the host's **exactly** over 5 s after a rhythm change and a lead change — if it fails by a small amount, a command was applied on a different tick than the host's (check `atTick` handling), not a tolerance problem.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/session/viewer-sync.ts packages/controller/test/fakes/manual-viewer.ts packages/controller/test/session/viewer-sync.test.ts
