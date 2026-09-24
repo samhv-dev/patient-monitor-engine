@@ -702,7 +702,7 @@ git commit -m "feat(engine-core): sfc32 PRNG with named independent streams" -m 
   `class Clock { readonly tickMs; get tick(): number; get simT(): number; get renderT(): number; get accumulatorMs(): number; get/set timeScale (RangeError outside 0.25–4); get paused(); advance(wallDeltaMs: number): number /* ticks to run now */; pause(); resume(); step(ticks?: number): number; setTick(tick: number): void }`.
   `renderT` = sim time including the un-ticked remainder — what a renderer draws (Stage 1 relies on it).
 
-- [ ] **Step 1: Write the failing test (the randomised accumulator test first, BUILD-PLAN S0.4)**
+- [x] **Step 1: Write the failing test (the randomised accumulator test first, BUILD-PLAN S0.4)**
 
 `packages/engine-core/test/clock/clock.test.ts`:
 ```ts
@@ -782,12 +782,12 @@ describe('clock/Clock', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `pnpm --filter @pme/engine-core test`
 Expected: FAIL — cannot load `../../src/clock/clock.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/clock/clock.ts`:
 ```ts
@@ -881,12 +881,12 @@ export * from './clock/clock.ts';
 export * from './rng/sfc32.ts';
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm --filter @pme/engine-core test && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS, `Tests  12 passed (12)`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
