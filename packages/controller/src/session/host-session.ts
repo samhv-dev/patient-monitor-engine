@@ -211,12 +211,13 @@ export class HostSession {
     if (cmd.type === 'pin' || cmd.type === 'release' || cmd.type === 'setFactor' || cmd.type === 'setMode') {
       return reject(`${cmd.type} needs MODELED mode (Stage 7)`);
     }
-    let c: Command = cmd;
+    // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
+    let c = cmd as Command;
     if (cmd.stageGroup) {
       const g = this.groups.get(cmd.stageGroup);
       const at = g && this.now() - g.at < STAGE_GROUP_TTL_MS ? g.tick : tick + STAGE_LEAD_TICKS;
       if (!g) this.groups.set(cmd.stageGroup, { tick: at, at: this.now() });
-      c = { ...cmd, atTick: at };
+      c = { ...c, atTick: at };
     }
     const result = await this.o.target.dispatch(c);
     const applied: Command = { ...c, atTick: result.tick };

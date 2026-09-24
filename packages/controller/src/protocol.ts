@@ -22,6 +22,34 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
 type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string };
 
+/** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings until Stage 7 defines DrugId). */
+export type ClinicalEvent =
+  | {
+      kind: 'drug'; drugId: string; dose: number; unit: 'mcg' | 'mg' | 'mcg/kg' | 'mg/kg' | 'mEq' | 'units' | 'mcg/kg/min';
+      route: 'iv' | 'io' | 'im' | 'inh'; infusion?: boolean;
+    }
+  | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood'; volumeMl: number; overS: number }
+  | { kind: 'bleed'; rateMlPerMin?: number; volumeMl?: number; overS?: number }
+  | {
+      kind: 'airway'; state: 'patent' | 'obstructed' | 'apnoea' | 'disconnected' | 'oesophageal' | 'endobronchial' | 'bronchospasm';
+      severity?: number;
+    }
+  | {
+      kind: 'ventilation'; source: 'spontaneous' | 'bvm' | 'ventilator' | 'none'; rr?: number; vtMl?: number;
+      fio2?: number; peep?: number; ie?: number;
+    }
+  | { kind: 'preoxygenate'; fio2: number; durationS: number }
+  | { kind: 'cpr'; active: boolean; rate?: number; quality?: number; ventilation?: '30:2' | 'continuous' }
+  | { kind: 'defib'; action: 'selectEnergy' | 'charge' | 'shock' | 'disarm' | 'syncOn' | 'syncOff'; energyJ?: number }
+  | { kind: 'pacer'; mode: 'off' | 'demand' | 'fixed'; ratePpm?: number; mA?: number; pause?: boolean }
+  | {
+      kind: 'line'; line: 'abp' | 'cvp' | 'pap';
+      action: 'flush' | 'zero' | 'sample' | 'disconnect' | 'reconnect' | 'damp' | 'level' | 'wedge'; value?: number;
+    }
+  | { kind: 'surgical'; action: 'diathermy' | 'shiver' | 'motion'; on: boolean; durationS?: number }
+  | { kind: 'condition'; id: 'anaphylaxis' | 'mh' | 'last' | 'tamponade' | 'tensionPtx' | 'pe'; severity: number };
+export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
+
 /**
  * Brief §7.2 Command variants that @pme/engine-core does not export yet (its Stage 1 union is a subset).
  * Shapes are copied verbatim from the brief; `doc` is `unknown` until Stage 6b defines ScenarioDoc.
@@ -40,11 +68,19 @@ export type ExtraCommand = CommandBase &
         doc?: unknown;
       }
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
+    | { type: 'applyEvent'; event: ClinicalEvent }
+    | {
+        type: 'attachSensor'; sensor: SensorId; state: string; site?: string; leadSet?: 3 | 5 | 12;
+        sampling?: 'sidestream' | 'mainstream';
+      }
   );
 /** Brief §7.2 `Command` as it travels on the wire. */
 export type WireCommand = Command | ExtraCommand;
 export type TimeCommand = Extract<ExtraCommand, { type: 'time' }>;
 export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
+/** applyEvent / attachSensor: the host passes them to the engine, which validates them (Stages 3, 4 and 7 model them). */
+export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'attachSensor' }>;
+export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
 
 /** Brief §7.3 EngineEvent variants not yet in engine-core's Stage 1 union (verbatim shapes). */
 export type ExtraEvent =

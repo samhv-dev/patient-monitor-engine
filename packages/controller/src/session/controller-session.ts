@@ -213,5 +213,9 @@ export function describe(c: WireCommand): string {
       return `${c.input} × ${c.factor}`;
     case 'setMode':
       return `mode ${c.mode}`;
+    case 'applyEvent':
+      return `event ${Object.values(c.event).join(' ')}`;
+    case 'attachSensor':
+      return `sensor ${c.sensor} ${c.state}`;
   }
 }

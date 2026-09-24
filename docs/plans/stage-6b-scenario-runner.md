@@ -175,7 +175,7 @@ git commit -m "chore(controller): ajv for scenario validation; NOTICES N-010..N-
 - Produces (protocol.ts): `type ClinicalEvent` (brief §7.2 verbatim; `drugId: string`), `type SensorId`, `ExtraCommand` gains `{ type: 'applyEvent'; event: ClinicalEvent }` and `{ type: 'attachSensor'; sensor: SensorId; state: string; site?; leadSet?: 3|5|12; sampling? }`, `type ClinicalCommand`, `type ScenarioEvent = Extract<ExtraEvent, {type:'scenario'}>`. `describe()` names the two new commands.
 - Behaviour: a plain `HostSession` passes them to the engine (which rejects them as not implemented); `ViewerSync` mirrors them like other engine commands.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // applyEvent / attachSensor (brief §7.2) travel as WireCommands; without a scenario driver the host passes them
@@ -216,12 +216,12 @@ describe('clinical commands', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/clinical-commands.test.ts`
 Expected: FAIL — typecheck-level errors are not reported by Vitest, but `describeCommand(shock)` returns `undefined` (no `applyEvent` case) so the first test fails with `expected undefined to be 'event defib shock 200'`.
 
-- [ ] **Step 3: Extend `protocol.ts`**
+- [x] **Step 3: Extend `protocol.ts`**
 
 In `packages/controller/src/protocol.ts`, replace:
 ```ts
@@ -286,7 +286,7 @@ export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'atta
 export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
 ```
 
-- [ ] **Step 4: `describe()` cases**
+- [x] **Step 4: `describe()` cases**
 
 In `packages/controller/src/session/controller-session.ts`, replace:
 ```ts
@@ -303,7 +303,7 @@ with:
       return `sensor ${c.sensor} ${c.state}`;
 ```
 
-- [ ] **Step 5: Let the host and the viewer pass them to the engine**
+- [x] **Step 5: Let the host and the viewer pass them to the engine**
 
 In `packages/controller/src/session/host-session.ts` (`apply()`), replace:
 ```ts
@@ -358,7 +358,7 @@ with:
     this.o.target.dispatch(m);
 ```
 
-- [ ] **Step 6: Run the test and the controller typecheck**
+- [x] **Step 6: Run the test and the controller typecheck**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/clinical-commands.test.ts
@@ -367,7 +367,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller test
 ```
 Expected: `2 passed`; typecheck exit 0 (without the two casts, `tsc` reports `Type '… type: "applyEvent" …' is not assignable to type 'Command'` in host-session.ts and viewer-sync.ts); `Tests  99 passed (99)`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/controller/src/protocol.ts packages/controller/src/session packages/controller/test/session/clinical-commands.test.ts
