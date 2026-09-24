@@ -3243,7 +3243,7 @@ git commit -m "feat(controller): HostSession — dispatch/ack with de-dup, per-f
 - Consumes: protocol (2), `TransportBase` (4, test), `createInProcessHub` (4, test).
 - Produces: `interface LogEntry { at; simT: number | null; kind: 'command'|'ack'|'applied'|'note'|'status'|'alarm'|'marker'; text; commandId? }`; `interface ControllerSessionOptions { session; transport; peerId?; issuedBy? ('controller:<peerId>'); wallNow?; logMax? (500) }`; `class ControllerSession { peerId; log; measurements: MeasuredMap; state: StateEvent | null; simT; hostOnline; hostEngineVersion; bookmarks: string[]; status; pendingCount; send(input: CommandInput): Promise<AckResult>; note(text); onChange(fn): () => void; close() }` (ids are `<peerId>-<n>`; `close()` rejects pending sends with `Error('session closed')`); `describe(cmd): string` (one-line log text).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/session/controller-session.test.ts`:
 ```ts
@@ -3366,12 +3366,12 @@ describe('ControllerSession', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/controller-session.test.ts`
 Expected: FAIL — cannot load `../../src/session/controller-session.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/session/controller-session.ts`:
 ```ts
@@ -3594,12 +3594,12 @@ export function describe(c: WireCommand): string {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/controller-session.test.ts`
 Expected: `6 passed`, and no "Unhandled Errors" block (a send that `close()` rejects must be caught by its caller — the test does).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/session/controller-session.ts packages/controller/test/session/controller-session.test.ts
