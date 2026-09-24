@@ -572,7 +572,7 @@ git commit -m "feat(skins): data model types, deep merge and provenance coverage
 **Interfaces:**
 - Produces: `parseHex(hex): [r,g,b]`, `toHex(rgb): string` (upper-case `#RRGGBB`), `luminance(hex)`, `contrastRatio(a, b)` (1..21), `darkenToContrast(hex, bg, minRatio): string`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/color.test.ts`:
 
@@ -604,12 +604,12 @@ describe('colour helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/color.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/skins/src/color.ts`:
 
@@ -684,12 +684,12 @@ export function darkenToContrast(hex: string, bg: string, minRatio: number): str
 }
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/color.test.ts`
 Expected: 3 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/skins/src/color.ts packages/skins/test/color.test.ts
