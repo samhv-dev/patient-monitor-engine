@@ -6326,9 +6326,9 @@ git commit -m "docs(gates): stage 6a gate evidence — latency, screenshots, cle
 - Consumes: the finished branch.
 - Produces: a PR against `main` (R20); Ali speaks the merge.
 
-- [ ] **Step 1: Rebase check** — `git fetch origin && git log --oneline origin/main -5`. If `main` moved, `git rebase origin/main`, resolve conflicts only in files this stage owns (likely `pnpm-lock.yaml`: re-run `npx -y pnpm@9.15.9 install` and take its result; `NOTICES.md`: renumber this stage's rows after the last ID on `main`), then re-run `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test`.
+- [x] **Step 1: Rebase check** — `git fetch origin && git log --oneline origin/main -5`. If `main` moved, `git rebase origin/main`, resolve conflicts only in files this stage owns (likely `pnpm-lock.yaml`: re-run `npx -y pnpm@9.15.9 install` and take its result; `NOTICES.md`: renumber this stage's rows after the last ID on `main`), then re-run `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test`.
 
-- [ ] **Step 2: Push**
+- [x] **Step 2: Push**
 
 ```bash
 git push -u origin stage-6a-controllers
