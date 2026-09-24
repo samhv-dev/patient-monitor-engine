@@ -4449,7 +4449,7 @@ git commit -m "feat(renderer): HR numeric tile" -m "Co-Authored-By: Claude Fable
 - Consumes: nothing from other packages.
 - Produces: `clock-map.ts`: `interface Anchor { simT; perfMs; timeScale }`, `interface OutputTimestamp { contextTime; performanceTime }`, `class ClockMap { setAnchor(a); get hasAnchor(); simToPerfMs(t) }`, `perfToAudioTime(perfMs, ts)`. `scheduler.ts`: `TIMER_MS = 25`, `LOOKAHEAD_S = 0.1`, `MAX_LATE_S = 0.03`, `interface ToneRequest { t; id; kind; freqHz? }`, `interface SchedulerDeps { audioNow(); perfToAudio(perfMs); play(tone, when) }`, `interface ToneLogEntry { id; kind; simT; when; lateS; dropped }`, `class ToneScheduler { readonly clock: ClockMap; readonly log; start(); stop(); enqueue(tone); cancelAfter(after); get pending(); pump() }`. `tones.ts`: `BEEP_MS = 60`, `BEEP_RAMP_MS = 5`, `BEEP_HARMONIC2 = 0.3`, `beepEnvelope(g)`, `playBeep(ctx, dest, when, freqHz, gain?)`. `context.ts`: `interface AudioOut { ctx; master; perfToAudio(perfMs) }`, `silentWavDataUri()`, `unlockAudio(): Promise<AudioOut>` (call inside a user gesture).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/audio/test/clock-map.test.ts`:
 ```ts
@@ -4542,12 +4542,12 @@ describe('ToneScheduler', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see them fail**
+- [x] **Step 2: Run to see them fail**
 
 Run: `pnpm --filter @pme/audio exec vitest run`
 Expected: FAIL — cannot load `clock-map.ts` / `scheduler.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/audio/src/clock-map.ts`:
 ```ts
@@ -4789,12 +4789,12 @@ export * from './tones.ts';
 export * from './context.ts';
 ```
 
-- [ ] **Step 4: Run to see them pass**
+- [x] **Step 4: Run to see them pass**
 
 Run: `pnpm --filter @pme/audio test && pnpm --filter @pme/audio typecheck`
 Expected: PASS — 3 files (version, clock-map, scheduler), 8 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/audio
