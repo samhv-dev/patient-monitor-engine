@@ -1792,7 +1792,7 @@ git commit -m "test(ecg): Mobitz I grouping and complete heart block dissociatio
 
 Same rule as Task 6: expect PASS; fix `rhythm-engine.ts` if not.
 
-- [ ] **Step 1: Write the tests (acceptance test 7 plus rate checks)**
+- [x] **Step 1: Write the tests (acceptance test 7 plus rate checks)**
 
 `packages/engine-core/test/l2/ecg/rhythm-atrial.test.ts`:
 ```ts
@@ -1863,16 +1863,16 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
 });
 ```
 
-- [ ] **Step 2: Prove the AF test can fail**
+- [x] **Step 2: Prove the AF test can fail**
 
 Temporarily set `AF_THETA_K = 10` in `rhythm-engine.ts`, run the file, expect the AF CV test to FAIL (CV < 0.15), then restore `80`.
 
-- [ ] **Step 3: Run to see them pass**
+- [x] **Step 3: Run to see them pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-atrial`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test
