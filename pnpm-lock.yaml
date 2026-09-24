@@ -67,6 +67,9 @@ importers:
       '@pme/audio':
         specifier: workspace:*
         version: link:../audio
+      '@pme/controller':
+        specifier: workspace:*
+        version: link:../controller
       '@pme/engine-core':
         specifier: workspace:*
         version: link:../engine-core

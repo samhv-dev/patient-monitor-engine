@@ -1,7 +1,7 @@
 // Main-thread side of the engine+renderer (brief §3.4): an OffscreenCanvas worker when possible, the same
 // MonitorCore on the main thread otherwise. Frame pump: the worker's own rAF if it has one, else the main
 // thread posts every rAF timestamp. While the tab is hidden a 1 s interval advances sim time in bulk.
-import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
+import type { Command, DispatchResult, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import EngineWorker from './engine.worker.ts?worker&inline';
 import type { Ctx2D } from './ctx.ts';
 import { MonitorCore } from './monitor-core.ts';
@@ -19,6 +19,10 @@ export interface Host {
   readonly path: Promise<RenderPath>;
   command(cmd: Command): Promise<DispatchResult>;
   control(msg: ControlMsg): void;
+  /** Engine snapshot (renderer request R-1, ruling R25). */
+  snapshot(): Promise<PatientSnapshot>;
+  /** Restore the engine and put the sim clock at the snapshot's tick (R-1). */
+  restore(s: PatientSnapshot): Promise<void>;
   destroy(): void;
 }
 
@@ -57,6 +61,11 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     canvas,
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
+    snapshot: () => Promise.resolve(core.engine.snapshot()),
+    restore: async (s) => {
+      core.engine.restore(s);
+      core.clock.setTick(s.tick);
+    },
     control: (m) => {
       if (m.type === 'resize') core.resize(m.size);
       else if (m.type === 'timeScale') core.clock.timeScale = m.k;
@@ -77,6 +86,8 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const worker = new EngineWorker();
   const offscreen = canvas.transferControlToOffscreen();
   const pending = new Map<number, (r: DispatchResult) => void>();
+  const snapshots = new Map<number, (s: PatientSnapshot) => void>();
+  const restores = new Map<number, { resolve: () => void; reject: (e: Error) => void }>();
   let reqId = 0;
   let raf = 0;
   let pumping = false;
@@ -94,6 +105,14 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       else if (m.type === 'result') {
         pending.get(m.reqId)?.(m.result);
         pending.delete(m.reqId);
+      } else if (m.type === 'snapshot') {
+        snapshots.get(m.reqId)?.(m.snapshot);
+        snapshots.delete(m.reqId);
+      } else if (m.type === 'restored') {
+        const r = restores.get(m.reqId);
+        restores.delete(m.reqId);
+        if (m.error === undefined) r?.resolve();
+        else r?.reject(new Error(m.error));
       } else {
         clearTimeout(timer);
         reject(new Error(m.message));
@@ -129,6 +148,18 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         const id = ++reqId;
         pending.set(id, resolve);
         post({ type: 'command', reqId: id, cmd });
+      }),
+    snapshot: () =>
+      new Promise<PatientSnapshot>((resolve) => {
+        const id = ++reqId;
+        snapshots.set(id, resolve);
+        post({ type: 'snapshot', reqId: id });
+      }),
+    restore: (snapshot) =>
+      new Promise<void>((resolve, reject) => {
+        const id = ++reqId;
+        restores.set(id, { resolve, reject });
+        post({ type: 'restore', reqId: id, snapshot });
       }),
     control: (m) => post(m),
     destroy: () => {

@@ -1,6 +1,7 @@
 // Stage 6a demo glue: a monitor that runs MonitorCore on the MAIN thread (the renderer's fallback path), so the
-// page has the engine in hand for snapshot/restore/clock control. MountOptions/MonitorHandle do not expose
-// those yet (renderer request R-1 in the plan); the drawing code is the renderer's own.
+// page has the engine in hand for snapshot/restore/clock control. MonitorHandle now has async snapshot()/restore()
+// and role (renderer request R-1, ruling R25), but not the synchronous clock control (renderT, rate, jump) that
+// ViewerSync steers every frame, so the pages stay on this path; the drawing code is the renderer's own.
 import { playBeep, ToneScheduler, unlockAudio } from '@pme/audio';
 import type { EngineEvent, EngineOptions, LeadId } from '@pme/engine-core';
 import { MonitorCore, NumericTile } from '@pme/renderer';

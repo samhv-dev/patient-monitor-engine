@@ -5941,6 +5941,27 @@ git commit -m "feat(demo): stage6a remote controller and viewer (second monitor)
 
 ---
 
+### Task 22b: Renderer requests R-1/R-2 (added by the executor under ruling R25)
+
+Ruling R25 (research/00-orchestrator-rulings.md) lets Stage 6a edit `packages/renderer/src/mount.ts` and the IIFE export
+list additively. Snapshot/restore through the worker also needs two message pairs, so `protocol.ts`, `worker-host.ts`
+and `engine.worker.ts` gain additive cases too; nothing existing changes behaviour. Engine-core is untouched.
+
+**Files:**
+- Modify: `packages/renderer/src/{mount,worker-host,protocol,engine.worker,index}.ts`, `packages/renderer/package.json` (`@pme/controller` dependency), `apps/demo/src/stage6a/sim-monitor.ts` (comment), `pnpm-lock.yaml`
+- Create: `packages/renderer/test/host-snapshot.test.ts`, `packages/renderer/test/transports.test.ts`, `apps/demo/e2e/stage6a-worker.e2e.ts`
+
+**Interfaces:**
+- Produces: `MountOptions.role?: MonitorRole` (`'host'|'viewer'`, default `'host'`); `MonitorHandle.role`, `MonitorHandle.snapshot(): Promise<PatientSnapshot>`, `MonitorHandle.restore(s): Promise<void>` (engine restore + sim clock to `s.tick`; rejects an unknown schema) on the worker and the main-thread path; `PatientMonitor.transports` = `@pme/controller`'s `transports` (IIFE +10 kB, no panel code).
+- Not done (outside the ruling): `MountOptions.transport` and synchronous clock following on `MonitorHandle`; the demo pages keep `MonitorCore` on the main thread because `ViewerSync` steers the clock every frame.
+
+- [x] **Step 1: Failing tests** — `host-snapshot.test.ts` (main-thread host round-trip, schema refusal), `transports.test.ts` (five keys, same object as the controller's). Run: `npx vitest run test/host-snapshot.test.ts test/transports.test.ts` in `packages/renderer` → 3 failed.
+- [x] **Step 2: Implement** the additive worker messages (`snapshot`/`restore` → `snapshot`/`restored`), `Host.snapshot/restore`, `MonitorHandle.role/snapshot/restore`, and re-export `transports`.
+- [x] **Step 3: Verify** — renderer 8 files / 21 tests pass; whole-repo typecheck passes; `npx -y pnpm@9.15.9 --filter @pme/renderer build && PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage6a-worker.e2e.ts apps/demo/e2e/iife-smoke.e2e.ts` → 5 passed (worker-raf and main paths).
+- [x] **Step 4: Commit** — `feat(renderer): MonitorHandle snapshot/restore/role and PatientMonitor.transports (R-1/R-2, ruling R25)`.
+
+---
+
 ### Task 23: Browser smoke over BroadcastChannel, relay and WebRTC
 
 **Files:**

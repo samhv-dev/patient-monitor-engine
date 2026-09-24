@@ -1,7 +1,7 @@
 // mountMonitor (brief §7.6), Stage 1 minimal: two ECG lanes + HR tile, hard-coded dark theme, QRS beep.
 // Skins (setSkin), the instructor panel and transports arrive in Stages 4 and 6.
 import { playBeep, ToneScheduler, unlockAudio, type ToneLogEntry } from '@pme/audio';
-import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId } from '@pme/engine-core';
+import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
 import { NumericTile } from './numerics-dom.ts';
 import type { ClockAnchor, Size } from './protocol.ts';
 import { createHost, type Host, type RenderPath } from './worker-host.ts';
@@ -15,7 +15,12 @@ export interface MountOptions {
   lanes?: LeadId[];
   fps?: 60 | 30;
   pxPerMm?: number;
+  /** The part this monitor plays in a session (brief §7.5; renderer request R-1, ruling R25). Default 'host'. */
+  role?: MonitorRole;
 }
+
+/** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
+export type MonitorRole = 'host' | 'viewer';
 
 export interface MonitorHandle {
   dispatch(cmd: Command): Promise<DispatchResult>;
@@ -34,6 +39,12 @@ export interface MonitorHandle {
   readonly audioLog: readonly ToneLogEntry[];
   /** Worker proxy (brief §7.6 `engine`). */
   readonly engine: { dispatch(cmd: Command): Promise<DispatchResult> };
+  /** MountOptions.role (R-1). */
+  readonly role: MonitorRole;
+  /** Engine snapshot, from the worker or the main thread (R-1): a late joiner or a bookmark starts from it. */
+  snapshot(): Promise<PatientSnapshot>;
+  /** Restore an engine snapshot and move the sim clock to its tick (R-1). */
+  restore(s: PatientSnapshot): Promise<void>;
 }
 
 const TILE_W = 190;
@@ -130,5 +141,8 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       return scheduler?.log ?? [];
     },
     engine: { dispatch },
+    role: opts.role ?? 'host',
+    snapshot: () => hostP.then((h) => h.snapshot()),
+    restore: (s) => hostP.then((h) => h.restore(s)),
   };
 }
