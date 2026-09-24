@@ -63,6 +63,20 @@ scope.onmessage = (ev) => {
       case 'visible':
         core?.setVisible(m.visible);
         return;
+      case 'snapshot':
+        if (core) scope.postMessage({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
+        else scope.postMessage({ type: 'error', message: 'not initialised' });
+        return;
+      case 'restore':
+        try {
+          if (!core) throw new Error('not initialised');
+          core.engine.restore(m.snapshot);
+          core.clock.setTick(m.snapshot.tick);
+          scope.postMessage({ type: 'restored', reqId: m.reqId });
+        } catch (err) {
+          scope.postMessage({ type: 'restored', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
+        }
+        return;
     }
   } catch (err) {
     scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err) });

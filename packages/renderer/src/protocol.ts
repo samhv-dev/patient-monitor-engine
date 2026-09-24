@@ -1,5 +1,5 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
-import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId } from '@pme/engine-core';
+import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
 
 export interface Size {
   cssW: number;
@@ -33,10 +33,15 @@ export type ToWorker =
   | { type: 'resume' }
   | { type: 'fps'; fps: 60 | 30 }
   | { type: 'calibrate'; pxPerMm: number }
-  | { type: 'visible'; visible: boolean };
+  | { type: 'visible'; visible: boolean }
+  // Renderer request R-1 (ruling R25): engine snapshot/restore through the worker.
+  | { type: 'snapshot'; reqId: number }
+  | { type: 'restore'; reqId: number; snapshot: PatientSnapshot };
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
+  | { type: 'restored'; reqId: number; error?: string };
