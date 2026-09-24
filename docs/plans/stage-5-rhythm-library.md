@@ -7888,7 +7888,7 @@ One PNG per catalogue item (70), headless system Google Chrome (docs/gates/stage
 - Consumes: Task 26 (`?strip=` mode, `CATALOGUE`), Vite `createServer`, `@playwright/test` `chromium`.
 - Produces: gate evidence.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create or replace `apps/demo/scripts/stage5-shots.ts` with exactly:
 
@@ -7989,9 +7989,9 @@ Stage 1.x baseline this branch started from: `<commit>`, `DEFAULT_PR60_MS = <val
 ```
 
 
-- [ ] **Step 2: Look at every PNG before committing (macOS: `open docs/gates/stage-5/*.png`). For each, the label must match what you see (e.g. `pacedDDD`: two ticks per complex; `torsades`: amplitude waxing/waning with polarity flips; `stemiInferior`: ST up in II, down in aVL). Fill the gate document: run `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5 --reporter=verbose` and copy the numbers the acceptance table asks for (add `console.log` temporarily if a value is not printed, and remove it before committing).**
+- [x] **Step 2: Look at every PNG before committing (macOS: `open docs/gates/stage-5/*.png`). For each, the label must match what you see (e.g. `pacedDDD`: two ticks per complex; `torsades`: amplitude waxing/waning with polarity flips; `stemiInferior`: ST up in II, down in aVL). Fill the gate document: run `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5 --reporter=verbose` and copy the numbers the acceptance table asks for (add `console.log` temporarily if a value is not printed, and remove it before committing).**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.md docs/gates/stage-5
