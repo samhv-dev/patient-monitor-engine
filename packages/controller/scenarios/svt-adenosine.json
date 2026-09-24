@@ -1,0 +1,35 @@
+{
+  "$comment": "[draft] Clinical content awaits Ali's review. Adenosine: AV block for 3–10 s, 10–30 s after the push (brief §4.9 drug table). The transient block is shown with rhythms the engine has today: complete heart block with a 20/min escape (P waves march on, almost no QRS). Conversion probability 0.6 per dose ≥ 6 mg is an [ENG] placeholder.",
+  "schema": "pme-scenario/1",
+  "id": "svt-adenosine",
+  "title": "[draft] SVT and adenosine",
+  "notes": "26-year-old woman with palpitations, stable, narrow-complex tachycardia 180/min. Vagal manoeuvres, then adenosine 6 mg rapid push with a flush; 12 mg if it fails.",
+  "seed": 3,
+  "patient": {
+    "ageY": 26, "sex": "F", "weightKg": 58, "ageBand": "adult",
+    "baseline": { "hr": 180 },
+    "rhythm": { "id": "svtAvnrt", "opts": { "rateBpm": 180 } },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on" }
+  },
+  "initialState": "svt",
+  "states": [
+    {
+      "id": "svt", "label": "AVNRT 180/min",
+      "transitions": [
+        { "id": "adenosine", "label": "Adenosine ≥ 6 mg", "to": "circulating", "when": { "event": { "kind": "drug", "drugId": "adenosine", "minDose": 6 } } },
+        { "id": "vagal", "label": "Vagal manoeuvre works", "to": "sinus", "when": { "manual": { "label": "Vagal manoeuvre works" } } }
+      ]
+    },
+    { "id": "circulating", "label": "Adenosine circulating", "notes": "10–30 s from push to effect.",
+      "transitions": [ { "id": "reachesNode", "to": "block", "when": { "afterS": 15 } } ] },
+    {
+      "id": "block", "label": "Transient AV block",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "avb3Narrow", "opts": { "atrialRateBpm": 110, "rateBpm": 20 }, "when": "now" } ],
+      "transitions": [ { "id": "wearsOff", "label": "Block wears off (p 0.6 converts)", "to": "sinus", "when": { "afterS": 6 }, "probability": 0.6, "else": "svtAgain" } ]
+    },
+    { "id": "svtAgain", "label": "SVT resumes", "onEnter": [ { "type": "setRhythm", "rhythm": "svtAvnrt", "opts": { "rateBpm": 180 }, "when": "now" } ],
+      "transitions": [ { "id": "adenosine2", "label": "Adenosine ≥ 6 mg", "to": "circulating", "when": { "event": { "kind": "drug", "drugId": "adenosine", "minDose": 6 } } } ] },
+    { "id": "sinus", "label": "Sinus rhythm", "onEnter": [ { "type": "setRhythm", "rhythm": "sinus", "opts": { "rateBpm": 92 }, "when": "now" },
+        { "type": "setTarget", "variable": "hr", "value": 80, "ramp": { "durationS": 60, "curve": "exp" } } ] }
+  ]
+}

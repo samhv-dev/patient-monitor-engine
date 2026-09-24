@@ -13,6 +13,7 @@ export default defineConfig({
         index: page('index'), stage0: page('stage0'), stage1: page('stage1'), stage5: page('stage5'),
         stage6a: page('stage6a'), 'stage6a-remote': page('stage6a-remote'), 'stage6a-viewer': page('stage6a-viewer'),
         'stage4a-skins': page('stage4a-skins'),
+        'stage6b-acls': page('stage6b-acls'),
       },
     },
   },

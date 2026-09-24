@@ -5,6 +5,7 @@ import type { ControllerSession } from '../session/controller-session.ts';
 import type { CommandInput } from '../protocol.ts';
 import type { Vocabulary } from '../vocabulary.ts';
 import { renderControls } from './render-controls.ts';
+import { mountScenarioTab } from './scenario-tab.ts';
 import { attachReveal, RevealGesture, type RevealOptions } from './reveal.ts';
 import { StageBuffer } from './staging.ts';
 import { injectStyles } from './styles.ts';
@@ -18,6 +19,8 @@ export interface PanelOptions {
   reveal?: Partial<RevealOptions>;
   /** Window to listen on for the reveal gestures (default: the element's window). */
   win?: Window;
+  /** Built-in scenarios the host can load by id (Stage 6b Scenario tab). */
+  scenarios?: Array<{ id: string; title: string }>;
 }
 
 export interface PanelHandle {
@@ -46,6 +49,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
       <button type="button" role="tab" data-tab="controls" aria-selected="true">Controls</button>
       <button type="button" role="tab" data-tab="log" aria-selected="false">Log</button>
       <button type="button" role="tab" data-tab="bookmarks" aria-selected="false">Bookmarks</button>
+      <button type="button" role="tab" data-tab="scenario" aria-selected="false">Scenario</button>
     </div>
     <div class="pme-body" data-pane="controls"></div>
     <div class="pme-body" data-pane="log" hidden>
@@ -56,6 +60,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
       <div class="pme-row"><input name="bookmark" placeholder="Label (optional)" /><button type="button" data-action="bookmark">Bookmark now</button></div>
       <ul class="pme-log pme-bookmarks"></ul>
     </div>
+    <div class="pme-body" data-pane="scenario" hidden></div>
     <div class="pme-stagebar" data-count="0">
       <label><input type="checkbox" name="stage" /> Stage changes</label>
       <span class="pme-staged">0 staged</span>
@@ -83,6 +88,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
     } else fire(c);
   };
   const controls = renderControls(q('[data-pane=controls]'), o.vocabulary, { submit }, { mode: s.state?.mode ?? 'manual' });
+  const scenarioTab = mountScenarioTab(q('[data-pane=scenario]'), { session: s, ...(o.scenarios ? { catalogue: o.scenarios } : {}) });
 
   const logList = q<HTMLUListElement>('[data-pane=log] .pme-log');
   const marks = q<HTMLUListElement>('.pme-bookmarks');
@@ -90,6 +96,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
   const fmtT = (t: number | null) => (t === null ? '--:--' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
   const render = () => {
     controls.update(s.state, s.measurements);
+    scenarioTab.update();
     status.textContent = `${s.status}${s.hostOnline ? '' : ' · no host'}${s.pendingCount ? ` · ${s.pendingCount} pending` : ''}`;
     status.dataset.ok = String(s.status === 'open' && s.hostOnline);
     logList.replaceChildren(

@@ -1,0 +1,65 @@
+{
+  "$comment": "[draft] Clinical content awaits Ali's review. Blood pressure arrives with Stage 2: every BP step is written in `$comment` as the exact command to move into onEnter then. Until then the story is carried by HR (reflex tachycardia) and the notes. Stage 7 (MODELED) will make the propofol response emerge instead of being scripted.",
+  "schema": "pme-scenario/1",
+  "id": "or-induction-hypotension",
+  "title": "[draft] Post-induction hypotension",
+  "notes": "67-year-old man, hypertensive on an ACE inhibitor, for a hernia repair. Induction with propofol; hypotension with a reflex tachycardia follows. Treat with phenylephrine or ephedrine.",
+  "seed": 5,
+  "patient": {
+    "ageY": 67, "sex": "M", "weightKg": 84, "ageBand": "adult",
+    "baseline": { "hr": 78 },
+    "rhythm": { "id": "sinus" },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on", "co2": "on" }
+  },
+  "initialState": "preInduction",
+  "states": [
+    {
+      "id": "preInduction", "label": "Awake, pre-induction",
+      "$comment": "Stage 2+: patient.baseline gains sbp 158, dbp 88.",
+      "onEnter": [ { "type": "device", "action": { "device": "nibp", "action": "auto", "intervalMin": 3 } } ],
+      "transitions": [
+        { "id": "induce", "label": "Induce", "to": "induction", "when": { "any": [ { "event": { "kind": "drug", "drugId": "propofol" } }, { "manual": { "label": "Induce" } } ] } }
+      ]
+    },
+    {
+      "id": "induction", "label": "Induced",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 112, \"ramp\": { \"durationS\": 60, \"curve\": \"exp\" } }.",
+      "transitions": [ { "id": "fall", "to": "hypotension", "when": { "afterS": 60 } } ]
+    },
+    {
+      "id": "hypotension", "label": "Hypotension, reflex tachycardia",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 76, \"ramp\": { \"durationS\": 90, \"curve\": \"sigmoid\" } } and dbp 42.",
+      "onEnter": [
+        { "type": "setRhythm", "rhythm": "sinusTachy", "opts": { "rateBpm": 102 }, "when": "nextBeat" },
+        { "type": "setTarget", "variable": "hr", "value": 122, "ramp": { "durationS": 90, "curve": "sigmoid" } }
+      ],
+      "transitions": [
+        { "id": "phenylephrine", "label": "Phenylephrine", "to": "treated", "when": { "event": { "kind": "drug", "drugId": "phenylephrine" } } },
+        { "id": "ephedrine", "label": "Ephedrine", "to": "treatedEphedrine", "when": { "event": { "kind": "drug", "drugId": "ephedrine" } } },
+        { "id": "worse", "label": "Profound (HR ≥ 115 for 20 s)", "to": "profound", "when": { "vital": { "var": "hr", "op": ">=", "value": 115, "forS": 20 } } }
+      ]
+    },
+    {
+      "id": "profound", "label": "Profound hypotension",
+      "notes": "Instructor: 'the NIBP reads 62/35'.",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 64, \"ramp\": { \"durationS\": 45 } }.",
+      "transitions": [
+        { "id": "phenylephrine2", "label": "Phenylephrine", "to": "treated", "when": { "event": { "kind": "drug", "drugId": "phenylephrine" } } },
+        { "id": "ephedrine2", "label": "Ephedrine", "to": "treatedEphedrine", "when": { "event": { "kind": "drug", "drugId": "ephedrine" } } }
+      ]
+    },
+    {
+      "id": "treated", "label": "Treated (phenylephrine: HR falls)",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 118, \"ramp\": { \"durationS\": 60, \"curve\": \"sigmoid\" } }.",
+      "onEnter": [
+        { "type": "setRhythm", "rhythm": "sinus", "opts": { "rateBpm": 100 }, "when": "nextBeat" },
+        { "type": "setTarget", "variable": "hr", "value": 82, "ramp": { "durationS": 60, "curve": "exp" } }
+      ]
+    },
+    {
+      "id": "treatedEphedrine", "label": "Treated (ephedrine: HR stays up)",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 110, \"ramp\": { \"durationS\": 120, \"curve\": \"sigmoid\" } }.",
+      "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 108, "ramp": { "durationS": 60, "curve": "exp" } } ]
+    }
+  ]
+}

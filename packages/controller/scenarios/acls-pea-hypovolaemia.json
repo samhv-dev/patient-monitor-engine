@@ -1,0 +1,53 @@
+{
+  "$comment": "[draft] Clinical content awaits Ali's review. PEA = `pulseless: true` on an organised rhythm (brief §5; Stage 5 honours the flag, earlier engines ignore it and show the rhythm). Probabilities are [ENG] placeholders.",
+  "schema": "pme-scenario/1",
+  "id": "acls-pea-hypovolaemia",
+  "title": "[draft] PEA from haemorrhage",
+  "notes": "34-year-old woman, 2 h after a road-traffic collision, splenic injury; on the ward with worsening tachycardia. She loses her pulse: PEA from hypovolaemia. Treat the cause: CPR, epinephrine, 1 L warmed crystalloid/blood.",
+  "seed": 7,
+  "patient": {
+    "ageY": 34, "sex": "F", "weightKg": 62, "ageBand": "adult",
+    "baseline": { "hr": 118 },
+    "rhythm": { "id": "sinusTachy", "opts": { "rateBpm": 118 } },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on" }
+  },
+  "initialState": "bleeding",
+  "states": [
+    {
+      "id": "bleeding", "label": "Compensating haemorrhage",
+      "$comment": "Stage 2+: { \"type\": \"setTarget\", \"variable\": \"sbp\", \"value\": 82, \"ramp\": { \"durationS\": 120, \"curve\": \"linear\" } }; Stage 7: { \"type\": \"applyEvent\", \"event\": { \"kind\": \"bleed\", \"rateMlPerMin\": 150 } }.",
+      "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 142, "ramp": { "durationS": 120, "curve": "linear" } } ],
+      "transitions": [
+        { "id": "fluidEarly", "label": "Early volume", "to": "stabilised", "when": { "event": { "kind": "fluid", "minVolumeMl": 1000 } } },
+        { "id": "losePulse", "label": "Lose pulse now", "to": "pea", "when": { "any": [ { "afterS": 150 }, { "manual": { "label": "Lose pulse now" } } ] } }
+      ]
+    },
+    {
+      "id": "pea", "label": "PEA (sinus tachycardia, no pulse)",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "sinusTachy", "opts": { "rateBpm": 128, "pulseless": true }, "when": "now" } ],
+      "transitions": [
+        { "id": "volumeEpi", "label": "Volume + epinephrine", "to": "rosc", "when": { "all": [ { "event": { "kind": "fluid", "minVolumeMl": 500 } }, { "event": { "kind": "drug", "drugId": "epinephrine" } } ] }, "probability": 0.6 },
+        { "id": "brady", "label": "Slowing (agonal)", "to": "peaBrady", "when": { "afterS": 300 } },
+        { "id": "roscPea", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
+      ]
+    },
+    {
+      "id": "peaBrady", "label": "Slow PEA",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "avb3Wide", "opts": { "rateBpm": 32, "pulseless": true }, "when": "now" } ],
+      "transitions": [
+        { "id": "toAsys", "label": "Asystole", "to": "asystole", "when": { "afterS": 180 } },
+        { "id": "roscLate", "label": "ROSC now", "to": "rosc", "when": { "manual": { "label": "ROSC now" } } }
+      ]
+    },
+    { "id": "asystole", "label": "Asystole", "onEnter": [ { "type": "setRhythm", "rhythm": "asystole", "when": "now" } ] },
+    {
+      "id": "rosc", "label": "ROSC (still hypovolaemic)",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "sinusTachy", "opts": { "rateBpm": 130 }, "when": "now" },
+                   { "type": "setTarget", "variable": "hr", "value": 115, "ramp": { "durationS": 180, "curve": "exp" } } ]
+    },
+    {
+      "id": "stabilised", "label": "Stabilised after volume",
+      "onEnter": [ { "type": "setTarget", "variable": "hr", "value": 104, "ramp": { "durationS": 120, "curve": "exp" } } ]
+    }
+  ]
+}
