@@ -117,6 +117,16 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(retro.length).toBeGreaterThan(0);
   });
 
+  it('vtMono 120–130: a conducted sinus capture never overlaps a VT complex (review M2)', () => {
+    for (const hr of [120, 125, 130]) {
+      for (const seed of [1, 2, 3]) {
+        const { beats } = runRhythm('vtMono', 60, { hr, seed });
+        const rr = diffs(beats.map((b) => b.t));
+        expect(Math.min(...rr), `VT ${hr} seed ${seed}`).toBeGreaterThan(0.2);
+      }
+    }
+  });
+
   it('vtMono: 170/min wide complexes (QRS 140–200 ms) with dissociated P waves', () => {
     const { beats, atrial } = runRhythm('vtMono', 30);
     expect(60 / mean(diffs(beats.map((b) => b.t)))).toBeCloseTo(170, -1);

@@ -425,6 +425,9 @@ function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolea
   st.refractoryUntil = t + qrsMs / 1000 + (REFRACTORY_QT_FRACTION * qtDrawn) / 1000;
   st.lastVT = t;
   const def = RHYTHMS[st.id];
+  // A beat that is not the focus's own (a sinus capture during VT) depolarises the ventricle and resets the focus,
+  // so the focus cannot fire 15–40 ms later on top of it (review M2) [ENG].
+  if (def.focus !== 'none' && !p.bypass) st.focusNextT = t + 60 / rate;
   const er = escapeRate(st, def, t, ctx);
   st.escapeNextT = er > 0 ? t + 60 / er + (def.rateDrives === 'escape' ? ESCAPE_JITTER_SD_S * ctx.mods.hrvScale * normal(ctx.rng.hrv) : 0) : NEVER;
 
