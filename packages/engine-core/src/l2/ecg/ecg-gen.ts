@@ -10,6 +10,7 @@ import type { HrvPhase } from './hrv.ts';
 import type { RhythmState } from './rhythm-state.ts';
 import { vfSource } from './arrest/vf.ts';
 import { afSource } from './af-texture.ts';
+import { bodyArtefactSource } from './artefacts/body.ts';
 
 export interface EcgGenInputs extends GenInputs {
   mods: Modifiers;
@@ -20,7 +21,7 @@ export interface EcgGenInputs extends GenInputs {
 
 /** Adds a continuous contribution for sample n (time s) into acc[0..2] (VCG mV). May mutate state inside g.st. */
 export type VcgSource = (g: EcgGenInputs, n: number, s: number, acc: Float64Array) => void;
-export const VCG_SOURCES: VcgSource[] = [vfSource, afSource];
+export const VCG_SOURCES: VcgSource[] = [vfSource, afSource, bodyArtefactSource];
 
 /** Maps one projected lead sample v (mV) to what the amplifier delivers. Must be a pure function of its inputs. */
 export type FrontEndStage = (mods: Modifiers, mainsHz: 50 | 60, lead: LeadId, n: number, v: number) => number;

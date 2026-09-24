@@ -7,6 +7,7 @@ import type { HrvPhase } from './hrv.ts';
 import type { BeatTemplateId } from './beat-templates.ts';
 import { RHYTHMS, type RhythmDef } from './rhythms.ts';
 import type { VfState } from './arrest/vf.ts';
+import type { ArtState } from './artefacts/body.ts';
 
 /** JSON-safe stand-in for ±Infinity. */
 export const NEVER = 1e12;
@@ -82,6 +83,8 @@ export interface RhythmState {
   tcpNextT?: number | undefined;
   /** Running VF episode (arrest/vf.ts). */
   vf?: VfState | undefined;
+  /** Body-artefact filter/phase state (artefacts/body.ts). */
+  art?: ArtState | undefined;
 }
 
 export interface RhythmCtx {

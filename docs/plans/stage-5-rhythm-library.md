@@ -6444,7 +6444,7 @@ VCG-level artefacts summed before projection and before the L3 filter. CPR is th
 - Consumes: `EcgGenInputs.artefactRng`, `WANDER_DIR`.
 - Produces: `ArtState`, `createArtState`, `bodyArtefactSource`, `CPR_DIR`, `WANDER_MAX_MV`, `EMG_MAX_RMS_MV`, `CPR_HARMONICS`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/artefacts.test.ts` with exactly:
 
@@ -6495,13 +6495,13 @@ describe('body artefacts (VCG)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/artefacts.test.ts`
 
 Expected: FAIL — no CPR lines / no EMG (no body artefact source).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/artefacts/body.ts` with exactly:
 
@@ -6641,13 +6641,13 @@ export const VCG_SOURCES: VcgSource[] = [vfSource, afSource, bodyArtefactSource]
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/artefacts/body.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s5/artefacts.test.ts
