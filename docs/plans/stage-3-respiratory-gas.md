@@ -2078,7 +2078,7 @@ git commit -m "feat(co2): phase-built capnogram with the pattern library and a s
 **Interfaces:**
 - Produces: `SPO2_LAG_TAU_S` 3, `SPO2_PROFILE { averagingS: 8, updateS: 1 }`, `PULSE_HOLD_S` 4, `PULSE_LOST_S` 10, `LOW_PERF_PI` 0.3, `interface Spo2Inputs { siteSa, probe, lastFootT, pi, cuffOnLimb, cpr }`, `interface Spo2State { lag, ring, shown, flag, nextUpdate, validSince, bias }`, `createSpo2(sa0, bias)`, `deviceBias(sat, bias)`, `stepSpo2(st, x, t)`, `spo2Measured(st, t): Measured`, `spo2PitchHz(spo2, semitonePerPct?)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 6c and 9)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 6c and 9)
 
 **Create `packages/engine-core/test/l3/spo2/spo2.test.ts`:**
 
@@ -2127,12 +2127,12 @@ describe('SpO2 device chain', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/spo2/spo2.test.ts`
 Expected: FAIL — cannot find `src/l3/spo2/spo2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/spo2/spo2.ts`:**
 
@@ -2226,9 +2226,9 @@ export function spo2PitchHz(spo2: number | null, semitonePerPct = 0.1): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/spo2/spo2.ts packages/engine-core/test/l3/spo2/spo2.test.ts
