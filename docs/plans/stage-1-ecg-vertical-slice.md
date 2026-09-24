@@ -228,7 +228,7 @@ git commit -m "feat(engine-core): Float32 ring buffer with absolute sample index
 - Consumes: nothing new.
 - Produces (`types.ts`, copied from brief §7.1–7.3 and narrowed to Stage 1): `Tick`, `SimSeconds`, `ChannelId`, `NumericId`, `StateVar`, `Ramp`, `LeadId` + `LEAD_IDS` (the 12 lead channels, in order I, II, III, aVR, aVL, aVF, V1–V6), `RhythmId` (12 Stage 1 IDs), `RhythmOpts { ratio?: 2|3|4|'variable'; atrialRateBpm?; prMs?; groupSize?: 3|4|5|6; rateBpm? }`, `PvcSpec { probability: number; pattern: 'single'|'bigeminy' }`, `Modifiers { pvc: PvcSpec|null; rsa: number; hrvScale: number; qtc: number; artefact: { noise: number } }`, `PatientProfile { baseline?: { hr?: number }; rhythm?: { id: RhythmId; opts?: RhythmOpts } }`, `EngineOptions { seed?; mode?; patient?; device?: { skin?; ageBand?; mainsHz?: 50|60 }; lookaheadS? }`, `DeviceAction` (brief shape, ecg member), `EcgFilterMode = 'monitor'|'diagnostic'`, `Command` (setTarget | setRhythm | setModifiers | device), `DispatchResult`, `Measured`, `BeatOrigin`, `EngineEvent` (beat | atrial | measurement | tone | toneCancel), `EngineEventType`, `PatientSnapshot { schema: 'pme-snapshot/1'; engineVersion; seed; tick; state: unknown }`, `MonitorEngine` (Stage 1 members). `modifiers.ts`: `defaultModifiers(): Modifiers` = `{ pvc: null, rsa: 0.67, hrvScale: 1, qtc: 400, artefact: { noise: 1 } }`. `l1/ramp.ts`: `interface RampState { from; to; t0; delayS; durationS; curve }`, `constantRamp(v)`, `rampValue(r, t)`, `retarget(r, t, to, ramp?)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l1/ramp.test.ts`:
 ```ts
@@ -273,12 +273,12 @@ describe('l1/ramp', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l1`
 Expected: FAIL — cannot load `../../src/l1/ramp.ts`.
 
-- [ ] **Step 3: Write the types**
+- [x] **Step 3: Write the types**
 
 `packages/engine-core/src/types.ts`:
 ```ts
@@ -445,7 +445,7 @@ export function defaultModifiers(): Modifiers {
 }
 ```
 
-- [ ] **Step 4: Implement the ramps**
+- [x] **Step 4: Implement the ramps**
 
 `packages/engine-core/src/l1/ramp.ts`:
 ```ts
@@ -496,12 +496,12 @@ export function retarget(r: RampState, t: number, to: number, ramp?: Ramp): Ramp
 }
 ```
 
-- [ ] **Step 5: Run to see it pass**
+- [x] **Step 5: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l1 && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS, 4 tests; typecheck clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
