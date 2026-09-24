@@ -155,7 +155,7 @@ git commit -m "chore(controller): ws relay dependency, happy-dom for DOM tests, 
   - `epochNow(): number` (epoch ms); `type Stamper = (body: WireBody) => WireMessage`; `createStamper(session, from, now?)`.
   - `class SeqFilter { check(m): 'accept'|'gap'|'duplicate'; forget(from); duplicates; gaps }`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/controller/test/protocol.test.ts`:
 ```ts
@@ -245,12 +245,12 @@ const bad: WireMessage = { ...header, v: 2, kind: 'hello', role: 'host' };
 void bad;
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/protocol.test.ts`
 Expected: FAIL — `Failed to load url ../src/protocol.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/protocol.ts`:
 ```ts
@@ -439,12 +439,12 @@ export class SeqFilter {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/protocol.test.ts && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: `5 passed`; typecheck exits 0 (every `@ts-expect-error` in `types.test-d.ts` is used — if one line compiled, tsc would report "Unused '@ts-expect-error' directive").
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/protocol.ts packages/controller/test/protocol.test.ts packages/controller/test/types.test-d.ts
