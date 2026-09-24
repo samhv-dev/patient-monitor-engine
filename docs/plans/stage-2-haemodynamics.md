@@ -2238,7 +2238,7 @@ git commit -m "feat(l3): per-beat pressure numerics with MAP by integral, PI and
 - Consumes: `rng/sfc32.ts` (`normal`, `Sfc32State`), `NibpPhase`, `NibpSite` (Task 1).
 - Produces: `NIBP` (constants), `AUTO_INTERVALS_MIN`, `interface NibpResult { sys; dia; map; pr; at }`, `interface NibpState` (fields as in the code), `createNibpState(sensor = 'on', site = 'rightArm')`, `type NibpOut = { kind:'phase'; phase; cuff; nextInS?; result? } | { kind:'cuff'; cuff; phase } | { kind:'failed'; text }`, `nibpMeasuring(nb)`, `nibpCommand(nb, action, t, intervalMin, out): string|undefined`, `nibpOnPulse(nb, t, beat: {sbp,dbp,map}, artefact, rng)`, `invertEnvelope(steps: number[][]): {sys,dia,map} | null | 'repump'`, `nibpStep(nb, t, dt, rng, out)`, `nibpNextIn(nb, t): number|undefined`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l3/nibp/nibp.test.ts`:
 
@@ -2313,12 +2313,12 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/nibp`
 Expected: FAIL — cannot load `../../../src/l3/nibp/nibp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/nibp/nibp.ts`:
 
@@ -2663,12 +2663,12 @@ export function nibpNextIn(nb: NibpState, t: number): number | undefined {
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/nibp`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/nibp packages/engine-core/test/l3/nibp
