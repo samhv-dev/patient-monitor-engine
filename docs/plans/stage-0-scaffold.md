@@ -1482,15 +1482,15 @@ git commit -m "feat(demo): stage0 sim-time sweep cursor with scale, pause and 30
 - Consumes: everything above.
 - Produces: the gate note the orchestrator reads (BUILD-PLAN "Definition of done" item 1).
 
-- [ ] **Step 1: Full local run from a clean clone** — repeat Task 9 Step 2; record the exit code.
+- [x] **Step 1: Full local run from a clean clone** — repeat Task 9 Step 2; record the exit code.
 
-- [ ] **Step 2: Stopwatch check at 60 fps.** In Chrome, open `stage0.html` at 1×. Start a phone stopwatch when the cursor passes x = 0 and stop it after 10.0 s; the cursor must be 945 px ± 5% (898–992 px) from the left edge — use the 1 s tick marks (94.5 px apart): it must be between the 9th and the 11th mark. Also read "last lap" (expected 10.58 s ± 5%).
+- [x] **Step 2: Stopwatch check at 60 fps.** In Chrome, open `stage0.html` at 1×. Start a phone stopwatch when the cursor passes x = 0 and stop it after 10.0 s; the cursor must be 945 px ± 5% (898–992 px) from the left edge — use the 1 s tick marks (94.5 px apart): it must be between the 9th and the 11th mark. Also read "last lap" (expected 10.58 s ± 5%).
 
-- [ ] **Step 3: Same check with "30 fps throttle" on.** Same tolerance. Record both "measured" values.
+- [x] **Step 3: Same check with "30 fps throttle" on.** Same tolerance. Record both "measured" values.
 
 - [ ] **Step 4: IIFE from `file://` in Safari and Chrome.** Open `apps/demo/e2e/iife-smoke.html` by double-clicking it (after `pnpm build`). In each browser's console run `PatientMonitor.version` → `'0.0.0'`, and confirm no console errors.
 
-- [ ] **Step 5: Write `docs/gates/stage-0.md`**
+- [x] **Step 5: Write `docs/gates/stage-0.md`**
 
 ```markdown
 # Gate 0 — Scaffold (date: YYYY-MM-DD)
@@ -1513,7 +1513,7 @@ Notes:
 ```
 Fill every cell with the observed value.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add docs/gates/stage-0.md
