@@ -1,5 +1,332 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-like (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [],
+    "paed": [],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "iec-style",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": false,
+        "durationS": 90,
+      },
+      "volume": {
+        "default": 5,
+        "max": 10,
+        "min": 0,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": true,
+      "pitchMap": "nellcor-like",
+      "source": "ECG",
+      "volume": {
+        "default": 3,
+        "max": 10,
+        "min": 0,
+      },
+    },
+  },
+  "limits": {
+    "adult": null,
+    "neo": null,
+    "paed": null,
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.05,
+        32,
+      ],
+      "engineMode": "diagnostic",
+      "exact": false,
+      "name": "Monitoring",
+    },
+    "eraseGapPx": 16,
+    "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
+    "foreground": "#FFFFFF",
+    "grid": null,
+    "hrMethod": {
+      "engine": "dropMaxMin",
+      "skin": "trimmed-mean-12rr",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "II  M",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "V1  M",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FF4040",
+        "gainMmPerMv": 10,
+        "label": "ART",
+        "lane": "ART",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FFFF",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FFFF00",
+        "gainMmPerMv": 10,
+        "label": "CO2",
+        "lane": "CO2",
+        "mmPerS": 6.25,
+      },
+    ],
+    "lineWidth": 1.75,
+    "numericWeight": 600,
+    "tileColors": {
+      "ART": "#FF4040",
+      "CO2": "#FFFF00",
+      "HR": "#00FF00",
+      "NIBP": "#FFFFFF",
+      "SpO2": "#00FFFF",
+      "TEMP": "#FFFFFF",
+    },
+  },
+}
+`;
+
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lifepak-like (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [],
+    "paed": [],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "iec-style",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": false,
+        "durationS": 90,
+      },
+      "volume": {
+        "default": 5,
+        "max": 10,
+        "min": 0,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": false,
+      "pitchMap": "nellcor-like",
+      "source": "ECG",
+      "volume": {
+        "default": 3,
+        "max": 10,
+        "min": 0,
+      },
+    },
+  },
+  "limits": {
+    "adult": null,
+    "neo": null,
+    "paed": null,
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        40,
+      ],
+      "engineMode": "monitor",
+      "exact": true,
+      "name": "Monitor",
+    },
+    "eraseGapPx": 16,
+    "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
+    "foreground": "#FFFFFF",
+    "grid": null,
+    "hrMethod": {
+      "engine": "dropMaxMin",
+      "skin": "trimmed-mean-12rr",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "II  M",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FFFF",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FFFF00",
+        "gainMmPerMv": 10,
+        "label": "CO2",
+        "lane": "CO2",
+        "mmPerS": 12.5,
+      },
+    ],
+    "lineWidth": 1.75,
+    "numericWeight": 600,
+    "tileColors": {
+      "CO2": "#FFFF00",
+      "HR": "#00FF00",
+      "NIBP": "#FFFFFF",
+      "SpO2": "#00FFFF",
+    },
+  },
+}
+`;
+
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot mindray-like (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [],
+    "paed": [],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "iec-style",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": false,
+        "durationS": 90,
+      },
+      "volume": {
+        "default": 5,
+        "max": 10,
+        "min": 0,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": true,
+      "pitchMap": "nellcor-like",
+      "source": "ECG",
+      "volume": {
+        "default": 3,
+        "max": 10,
+        "min": 0,
+      },
+    },
+  },
+  "limits": {
+    "adult": null,
+    "neo": null,
+    "paed": null,
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        40,
+      ],
+      "engineMode": "monitor",
+      "exact": true,
+      "name": "Monitor",
+    },
+    "eraseGapPx": 16,
+    "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
+    "foreground": "#FFFFFF",
+    "grid": null,
+    "hrMethod": {
+      "engine": "dropMaxMin",
+      "skin": "trimmed-mean-12rr",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "II  M",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "V1  M",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FF4040",
+        "gainMmPerMv": 10,
+        "label": "ART",
+        "lane": "ART",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FFFF",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FFFF00",
+        "gainMmPerMv": 10,
+        "label": "CO2",
+        "lane": "CO2",
+        "mmPerS": 6.25,
+      },
+    ],
+    "lineWidth": 1.75,
+    "numericWeight": 600,
+    "tileColors": {
+      "ART": "#FF4040",
+      "CO2": "#FFFF00",
+      "HR": "#00FF00",
+      "NIBP": "#FFFFFF",
+      "SpO2": "#00FFFF",
+      "TEMP": "#FFFFFF",
+    },
+  },
+}
+`;
+
 exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot philips-like (theme (none)) 1`] = `
 {
   "approximateLimits": {

@@ -2532,7 +2532,7 @@ git commit -m "feat(skins): zoll-like (defib/pacer data, 15/30 s alarm cadence, 
 
 These three may slip to v1.1 under R12; they are small because the base carries the shared defaults. GE, Mindray and LIFEPAK alarm limits are `null` (not retrieved, brief §6.8); ge-like states it explicitly with `unverified` tags.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/vendors.test.ts`:
 
@@ -2567,12 +2567,12 @@ describe('mindray-like, ge-like, lifepak-like', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/vendors.test.ts`
 Expected: FAIL, `unknown skin: mindray-like`.
 
-- [ ] **Step 3: Write the three skins**
+- [x] **Step 3: Write the three skins**
 
 Create `packages/skins/src/data/skins/mindray-like.json`:
 
@@ -2724,7 +2724,7 @@ Create `packages/skins/src/data/skins/lifepak-like.json`:
 }
 ```
 
-- [ ] **Step 4: Replace the registry**
+- [x] **Step 4: Replace the registry**
 
 ```ts
 // Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
@@ -2763,12 +2763,12 @@ export const PRESET_IDS = Object.keys(PRESETS);
 export const THEME_IDS = Object.keys(THEMES);
 ```
 
-- [ ] **Step 5: Run the package**
+- [x] **Step 5: Run the package**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: all pass; three snapshots written.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test
