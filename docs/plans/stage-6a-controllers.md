@@ -5809,7 +5809,7 @@ git commit -m "feat(demo): stage6a host page — main-thread monitor, hidden pan
 - Consumes: `mountRemote`, `vocabularyOf`, `ViewerSync`, `normalizeSessionCode` (Task 20); `mountSimMonitor`, `links.ts` (Task 21).
 - Produces: `stage6a-remote.html?session=CODE&via=bc|relay|rtc[&relay=ws://…]` (auto-joins; `window.__pme6a = { role: 'remote', remote, fire }` where `fire()` sends one HR target and returns `{ commandId, sentAt, ackAt, rttMs, accepted }` in epoch ms); `stage6a-viewer.html?session=CODE&via=…` (a second monitor; `window.__pme6a = { role: 'viewer', sync, mon }`; diagnostics line `viewer CODE · link … · synced · lag … ms · beat drift … ms · resyncs …`).
 
-- [ ] **Step 1: Remote page**
+- [x] **Step 1: Remote page**
 
 `apps/demo/stage6a-remote.html`:
 ```html
@@ -5828,7 +5828,7 @@ git commit -m "feat(demo): stage6a host page — main-thread monitor, hidden pan
 </html>
 ```
 
-- [ ] **Step 2: Remote module**
+- [x] **Step 2: Remote module**
 
 `apps/demo/src/stage6a/remote.ts`:
 ```ts
@@ -5859,7 +5859,7 @@ async function fire(): Promise<{ commandId: string; sentAt: number; ackAt: numbe
 Object.assign(window, { __pme6a: { role: 'remote', remote, fire } });
 ```
 
-- [ ] **Step 3: Viewer page**
+- [x] **Step 3: Viewer page**
 
 `apps/demo/stage6a-viewer.html`:
 ```html
@@ -5883,7 +5883,7 @@ Object.assign(window, { __pme6a: { role: 'remote', remote, fire } });
 </html>
 ```
 
-- [ ] **Step 4: Viewer module**
+- [x] **Step 4: Viewer module**
 
 `apps/demo/src/stage6a/viewer.ts`:
 ```ts
@@ -5909,7 +5909,7 @@ setInterval(() => {
 Object.assign(window, { __pme6a: { role: 'viewer', sync, mon } });
 ```
 
-- [ ] **Step 5: Add both pages to the build and the index**
+- [x] **Step 5: Add both pages to the build and the index**
 
 In `apps/demo/vite.config.ts` replace the `input` line with:
 ```ts
@@ -5924,7 +5924,7 @@ In `apps/demo/index.html` add after the Stage 1 list item:
         <a href="./stage6a-remote.html">remote controller</a> · <a href="./stage6a-viewer.html">viewer</a></li>
 ```
 
-- [ ] **Step 6: Typecheck, build, and try all three windows**
+- [x] **Step 6: Typecheck, build, and try all three windows**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck && npx -y pnpm@9.15.9 --filter @pme/demo build
@@ -5932,7 +5932,7 @@ npx -y pnpm@9.15.9 --filter @pme/demo dev --port 5173 --strictPort & DEV_PID=$!;
 ```
 In Chrome open `http://localhost:5173/stage6a.html`, click **Open remote** and **Open viewer**. Expected: the remote shows `connected · CODE` and an HR number within ~5 s; the viewer's diagnostics read `synced · lag ≈100 ms · beat drift 0.0 ms · resyncs 0`; choosing a rhythm on the remote and pressing **Apply** changes both monitors, the viewer ≈ 0.1 s later. `kill $DEV_PID`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/demo/stage6a-remote.html apps/demo/stage6a-viewer.html apps/demo/src/stage6a/remote.ts apps/demo/src/stage6a/viewer.ts apps/demo/vite.config.ts apps/demo/index.html
