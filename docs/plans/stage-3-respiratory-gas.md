@@ -338,7 +338,7 @@ git commit -m "feat(engine-core): stage 3 public types (VentFrame, breath, lungS
 - Consumes: Stage 2 `L1State`, `STATE_SCHEMA`, `l1Flags`, `rampValue`.
 - Produces: `L1State.coupled?: Partial<Record<L1Var, number>>` (a coupled truth replaces the ramp in `l1Value`); `l1Target(st, v, t): number` (the ramp only); `validateTarget` accepts every Stage ≤ 3 variable; `l1Flags` shows `override` when a coupled truth departs from its target by > 0.5 (0.01 for fio2/shunt, 0.02 for volumeStatus).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l1/state-coupled.test.ts`:**
 
@@ -369,12 +369,12 @@ describe('l1/state: Stage 3 coupled truths', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1/state-coupled.test.ts`
 Expected: FAIL — `l1Target` is not exported; `spo2 is not implemented until Stage 3`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/l1/state.ts`** (1/5) — find:
 
@@ -531,12 +531,12 @@ replace with:
     expect(of('ack')[1]!.reason).toMatch(/MODELED/);
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1 test/engine/engine-commands.test.ts && npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run`
 Expected: all pass (controller 97).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l1/state.ts packages/engine-core/test/l1 packages/engine-core/test/engine/engine-commands.test.ts packages/controller/test/session/host-session.test.ts

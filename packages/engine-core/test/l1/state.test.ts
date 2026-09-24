@@ -22,7 +22,7 @@ describe('l1/state (brief §4.9 PatientState, MANUAL)', () => {
   it('validates range, stage and MANUAL role', () => {
     expect(validateTarget('sbp', 90, { durationS: 30 })).toBeUndefined();
     expect(validateTarget('sbp', 400, undefined)).toMatch(/0–300/);
-    expect(validateTarget('spo2', 90, undefined)).toMatch(/Stage 3/);
+    expect(validateTarget('k', 5, undefined)).toMatch(/Stage 5/); // Stage 3 accepts spo2
     expect(validateTarget('svr', 1.2, undefined)).toMatch(/derived/);
     expect(validateTarget('dbp', 50, { durationS: 1000 })).toMatch(/0–900/);
   });
