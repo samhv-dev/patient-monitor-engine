@@ -964,7 +964,7 @@ git commit -m "feat(scenario): ajv validation with path-level messages and cross
 - Consumes: `seedStream`, `uniform`, `Sfc32State` from `@pme/engine-core` (public exports of `rng/sfc32.ts`).
 - Produces: `class ScenarioRunner(doc, { seed? })` with `start(t)`, `advance(t, inputs?)`, `goto(t, stateId)`, `trigger(t, transitionId) → { ok, reason? }`, `pause(t)`, `resume(t)`, `getState()`, `setState(s)`, `value(name)`, getters `stateId stateT scenarioT paused started enteredT history`, `state()`, `readonly log: RunLogEntry[]`, `readonly seed`, `readonly doc`. Types `RunnerInput` (`clinical | values(rank 1–3) | sensor`), `RunnerEffect` (`commands {batch, reason, commands} | event {ScenarioEvent}`), `RunLogEntry`, `RunnerState` (plain JSON). Helpers `compare`, `matches`, `hasManual`.
 
-- [ ] **Step 1: Write the fixtures and the failing tests**
+- [x] **Step 1: Write the fixtures and the failing tests**
 
 `packages/controller/test/scenario/fixtures.ts`:
 ```ts
@@ -1210,12 +1210,12 @@ describe('ScenarioRunner', () => {
 });
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/runner.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/runner.ts"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/scenario/runner.ts`:
 ```ts
@@ -1589,12 +1589,12 @@ function strip(c: DocCommand): DocCommand {
 export type { Transition };
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/runner.test.ts`
 Expected: `Tests  18 passed (18)`. The poll-rate test ("timers do not depend on the polling rate") is the one that catches an implementation that evaluates vitals only at polls: both runs must fire at exactly 12.5 s.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/scenario/runner.ts packages/controller/test/scenario/fixtures.ts packages/controller/test/scenario/runner.test.ts
