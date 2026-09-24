@@ -92,3 +92,16 @@ describe('Stage 5 pacing faults (acceptance 8)', () => {
     expect(beats.every((b) => b.origin === 'ventricular')).toBe(true); // wide escape at 25/min
   });
 });
+
+describe('Stage 5 transcutaneous pacing (modifier tcp)', () => {
+  it('captures iff mA ≥ threshold; artefact kernel on every pulse; fixed mode ignores intrinsic beats', () => {
+    const below = run5('asystole', 30, { mods: { tcp: { mode: 'fixed', ratePpm: 70, mA: 60, thresholdMa: 70 } } });
+    expect(below.markers.length).toBeGreaterThan(30);
+    expect(below.beats.length).toBe(0);
+    const above = run5('asystole', 30, { mods: { tcp: { mode: 'fixed', ratePpm: 70, mA: 80, thresholdMa: 70 } } });
+    expect(above.beats.length).toBe(above.markers.length);
+    expect(above.beats.every((b) => b.origin === 'paced' && b.qrsMs >= 140)).toBe(true);
+    const demand = run5('sinus', 30, { hr: 80, mods: { tcp: { mode: 'demand', ratePpm: 60, mA: 100, thresholdMa: 70 } } });
+    expect(demand.markers.filter((m) => m.t > 2).length).toBe(0); // inhibited once sinus beats are sensed
+  });
+});

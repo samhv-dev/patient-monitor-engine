@@ -3526,7 +3526,7 @@ The `tcp` modifier (Stage 4's pacer device will write it): demand or fixed pulse
 - Consumes: `HOOKS.activate`, `WAVE.ART`.
 - Produces: `tcpClock`, `TCP_ART_DIR`, `tcpArtefactMv(mA)`; markers `data: { chamber: 2, captured, tcp: true, mA }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/pacing.test.ts` with exactly:
 
@@ -3641,13 +3641,13 @@ describe('Stage 5 transcutaneous pacing (modifier tcp)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/pacing.test.ts`
 
 Expected: FAIL — "Stage 5 transcutaneous pacing": no markers.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/tcp.ts` with exactly:
 
@@ -3737,13 +3737,13 @@ const EXTRA_CLOCKS: ClockSource[] = [pacerClock, tcpClock];
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/src/l2/ecg/tcp.ts packages/engine-core/test/l2/ecg/s5/pacing.test.ts
