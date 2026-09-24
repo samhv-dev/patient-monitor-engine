@@ -103,13 +103,17 @@ describe('engine pipeline', () => {
     for (let i = 1; i < ts.length; i++) expect(ts[i]!).toBeGreaterThanOrEqual(ts[i - 1]!);
   });
 
-  it('posts a QRS tone 20–60 ms after each true R, before the tone is due', () => {
+  it('posts a QRS tone 20–45 ms after each true R (BEEP_DELAY 30 ms, ruling R15), before the tone is due', () => {
     const e = createEngine({ seed: 3 });
     const beats: number[] = [];
     const tones: Array<{ t: number; postedAt: number }> = [];
     e.on((ev) => {
       if (ev.type === 'beat') beats.push(ev.t);
-      if (ev.type === 'tone') tones.push({ t: ev.t, postedAt: e.now().simT });
+      if (ev.type === 'tone') {
+        tones.push({ t: ev.t, postedAt: e.now().simT });
+        expect(ev.id).toBe(`qrs-${Math.round(ev.refT! * 500)}`); // stable id: the detected R sample
+        expect(ev.t - ev.refT!).toBeCloseTo(0.03, 9);
+      }
     });
     for (let t = 0; t <= 30; t += 0.02) e.advanceTo(t); // real-time-like ticking, look-ahead on every tick
     const late = tones.filter((x) => x.t > 3);
@@ -117,7 +121,7 @@ describe('engine pipeline', () => {
     for (const tone of late) {
       const r = beats.reduce((best, b) => (Math.abs(b - tone.t) < Math.abs(best - tone.t) ? b : best), -1e9);
       expect(tone.t - r).toBeGreaterThanOrEqual(0.02);
-      expect(tone.t - r).toBeLessThanOrEqual(0.06);
+      expect(tone.t - r).toBeLessThanOrEqual(0.045);
       expect(tone.postedAt).toBeLessThan(tone.t);
     }
   });

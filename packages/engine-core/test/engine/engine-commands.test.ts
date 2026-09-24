@@ -71,17 +71,46 @@ describe('engine commands', () => {
     expect(rrAt(25)).toBeCloseTo(0.5, 3);
   });
 
-  it('an accepted command emits toneCancel at the command tick and tones are re-posted after it', () => {
+  it('a command every tick (slider drag) still gives exactly one tone per R and never re-posts a live tone (review H3)', () => {
     const e = createEngine({ seed: 7 });
     const ev = collect(e);
-    for (let t = 0; t <= 5; t += 0.02) e.advanceTo(t);
-    e.dispatch(cmd({ type: 'setModifiers', modifiers: { pvc: { pattern: 'bigeminy', probability: 0 } } }));
-    e.advanceTo(5.02);
-    const cancel = ev.find((x) => x.type === 'toneCancel');
-    expect(cancel).toEqual({ type: 'toneCancel', after: 5.02 });
-    for (let t = 5.04; t <= 10; t += 0.02) e.advanceTo(t);
-    const tonesAfter = ev.filter((x) => x.type === 'tone' && x.t > 5.02);
-    expect(tonesAfter.length).toBeGreaterThan(3);
+    let i = 0;
+    for (let t = 0; t <= 30; t += 0.02) {
+      e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 75 }, `drag-${i++}`));
+      e.advanceTo(t);
+    }
+    // Web Audio cannot un-schedule a tone it already has, so the engine must post each R's tone exactly once.
+    const tones = ev.filter((x) => x.type === 'tone').map((x) => (x as { t: number }).t);
+    expect(ev.filter((x) => x.type === 'toneCancel')).toHaveLength(0); // nothing in flight changed
+    const beats = ev.filter((x) => x.type === 'beat' && x.t > 3 && x.t < 29.5).map((x) => (x as { t: number }).t);
+    expect(beats.length).toBeGreaterThan(25);
+    for (const r of beats) expect(tones.filter((t) => t > r && t < r + 0.1)).toHaveLength(1);
+  });
+
+  it('a command that changes the in-flight detections cancels exactly the stale tones, by id', () => {
+    const e = createEngine({ seed: 7 });
+    const ev = collect(e);
+    let i = 0;
+    for (let t = 0; t <= 30; t += 0.02) {
+      if (i % 37 === 0) {
+        const value = (i / 37) % 2 === 1 ? 'diagnostic' : 'monitor';
+        e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value } }, `f-${i}`));
+      }
+      i++;
+      e.advanceTo(t);
+    }
+    const live = new Map<string, number>();
+    for (const x of ev) {
+      if (x.type === 'tone') {
+        expect(live.has(x.id)).toBe(false); // never re-posted while live
+        live.set(x.id, x.t);
+      } else if (x.type === 'toneCancel') {
+        expect(x.ids).toBeDefined();
+        for (const id of x.ids!) expect(live.delete(id)).toBe(true); // only tones that were posted
+      }
+    }
+    const tones = [...live.values()].sort((a, b) => a - b);
+    for (let k = 1; k < tones.length; k++) expect(tones[k]! - tones[k - 1]!).toBeGreaterThan(0.2); // no double beeps
   });
 
   it('filter and lead device actions change the displayed channels', () => {

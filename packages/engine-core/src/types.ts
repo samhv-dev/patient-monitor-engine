@@ -117,8 +117,11 @@ export type EngineEvent =
       type: 'tone'; t: SimSeconds; id: string;
       kind: 'qrs' | 'pulse' | 'alarmBurst' | 'charge' | 'chargeReady' | 'shock' | 'nibpDone';
       freqHz?: number; priority?: 'high' | 'medium' | 'low';
+      /** Sim time of the event the tone marks (the detected R for 'qrs'); lets the audio side judge staleness. */
+      refT?: SimSeconds;
     }
-  | { type: 'toneCancel'; after: SimSeconds };
+  /** Revoke tones: those listed in `ids` when present (the engine's normal case), else every tone with t > after. */
+  | { type: 'toneCancel'; after: SimSeconds; ids?: string[] };
 
 export type EngineEventType = EngineEvent['type'];
 
