@@ -8,6 +8,7 @@ import { pWaveKernels } from './templates.ts';
 import { WPW_PR_MS } from './beat-templates.ts';
 import { HOOKS, NEVER, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import { applyPMorphology, prDeltaMs } from './morphology/index.ts';
+import { onEctopic, onMultifocal } from './atria-ectopic.ts';
 
 // --- constants (sources in comments) -------------------------------------------------------------
 const MOBITZ1_DELTA_S = 0.1; // Δ 60–120 ms [03 §1.5]
@@ -205,6 +206,8 @@ export type AtrialHandler = (st: RhythmState, t: number, ctx: RhythmCtx) => void
 /** One handler per atrial mode. Later tasks add 'ectopic' and 'multifocal'. */
 export const ATRIAL_HANDLERS: Partial<Record<AtrialMode, AtrialHandler>> = {
   sinus: onSinus,
+  ectopic: onEctopic,
+  multifocal: onMultifocal,
   flutter: onFlutter,
   fib: onFib,
 };
