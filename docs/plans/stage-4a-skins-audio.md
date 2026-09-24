@@ -170,7 +170,7 @@ git commit -m "chore(skins): ajv dependency behind @pme/skins/validate, NOTICES 
 **Interfaces:**
 - Produces: `deepMerge<T>(base: T, over: unknown): T` (objects merge, arrays/scalars/null replace, never mutates); `leafPaths(doc, prefix?): string[]`; `coveringKey(prov, path): string | undefined`; `provenanceGaps(doc, prov): { uncovered: string[]; dangling: string[] }`; all types in `types.ts` (`Skin`, `Theme`, `Preset`, `Provenance`, `ProvEntry`, `ProvTag`, `LaneId`, `TileParam`, `Level`, `AgeBand`, `LimitTable`, `LimitBand`, `DeepPartial`, the `*_KEYS/*_IDS` const lists).
 
-- [ ] **Step 1: Write the types** (no test of its own; every later test exercises it).
+- [x] **Step 1: Write the types** (no test of its own; every later test exercises it).
 
 Create `packages/skins/src/types.ts`:
 
@@ -443,7 +443,7 @@ export interface Preset {
 export type DeepPartial<T> = T extends unknown[] ? T : T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `packages/skins/test/merge-provenance.test.ts`:
 
@@ -484,12 +484,12 @@ describe('provenance helpers', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/merge-provenance.test.ts`
 Expected: FAIL, `Failed to load url ../src/merge.ts` (or "Cannot find module").
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 Create `packages/skins/src/merge.ts`:
 
@@ -549,12 +549,12 @@ export function provenanceGaps(doc: Record<string, unknown>, prov: Provenance): 
 }
 ```
 
-- [ ] **Step 5: Run the test and the typecheck**
+- [x] **Step 5: Run the test and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/merge-provenance.test.ts && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: 5 passed; typecheck clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src/types.ts packages/skins/src/merge.ts packages/skins/src/provenance.ts packages/skins/test/merge-provenance.test.ts
