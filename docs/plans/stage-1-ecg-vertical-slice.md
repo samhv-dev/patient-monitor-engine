@@ -1971,7 +1971,7 @@ git commit -m "test(ecg): PVC bigeminy compensatory pause and PVC mechanics (acc
 - Consumes: `EcgEvent`, `addEventAt` (Task 3); `FWAVE_DIR`, `WANDER_DIR`, `narrowKernels` (Task 4); `respSin`, `HrvPhase` (Task 5); `FWave` (Task 5); `sfc32Next`.
 - Produces: `ECG_RATE = 500`, `NOISE_SD_MV = 0.025`, `WANDER_MV = 0.08`, `tableNormal(s)`, `interface GenInputs { events; fwave; hrv; noiseLevel; noise: Sfc32State }`, `pruneEvents(events, t)`, `generateVcg(g, from, to, sink: (index, x, y, z) => void)` (inclusive range).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/ecg/generator.test.ts`:
 ```ts
@@ -2030,12 +2030,12 @@ describe('l2/ecg/generator', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/generator`
 Expected: FAIL — cannot load `generator.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/ecg/generator.ts`:
 ```ts
@@ -2119,12 +2119,12 @@ export function generateVcg(
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/generator`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
