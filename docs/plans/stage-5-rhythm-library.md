@@ -3764,7 +3764,7 @@ Shared spectral helpers (Welch, dominant frequency) and the engine-side texture 
 - Consumes: `sfc32Next`.
 - Produces: `fft`, `welch(x, fs, nfft)`, `dominantHz(x, fs, lo?, hi?, nfft?)`, `rms`, `organisation`, `lowFraction`; `TemplateSet { scale; items: { id; fdomHz; b64 }[] }`, `DecodedTexture`, `decodeTemplates(set)`, `TexState`, `createTex(n, rng)`, `texSample(tex, state, fHz)`, `XFADE_SAMPLES`, `ArState`, `arSample(state, fHz, e[4])`, `AR_MULT`, `AR_WEIGHT`, `AR_BANDWIDTH_HZ`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/texture.test.ts` with exactly:
 
@@ -3813,13 +3813,13 @@ describe('recorded-texture player', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/texture.test.ts`
 
 Expected: FAIL — cannot resolve `src/util/dsp.ts` / `src/l2/ecg/texture.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/util/dsp.ts` with exactly:
 
@@ -4066,13 +4066,13 @@ export function arSample(s: ArState, fHz: number, e: readonly number[]): number 
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/texture.ts packages/engine-core/src/util/dsp.ts packages/engine-core/test/l2/ecg/s5/texture.test.ts
