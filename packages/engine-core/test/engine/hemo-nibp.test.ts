@@ -69,13 +69,18 @@ describe('Stage 2 acceptance 9: NIBP', () => {
     expect(Math.abs(mean(s.map((x) => x.dMap)))).toBeLessThanOrEqual(3);
   });
 
-  it('in AF, the cycle is longer and the error SD larger than in sinus', { timeout: 60_000 }, () => {
+  it('in AF, the cycle is longer and the error SD larger than in sinus, but not biased: |bias| ≤ 6, SD ≤ 10', { timeout: 120_000 }, () => {
     const s = series('sinus', 30, 9);
     const a = series('afib', 30, 9);
     expect(s.length).toBe(30);
     expect(a.length).toBeGreaterThanOrEqual(25); // an occasional AF cycle may fail
     expect(mean(a.durs)).toBeGreaterThan(mean(s.durs));
     expect(sd(a.map((x) => x.dSys))).toBeGreaterThan(sd(s.map((x) => x.dSys)));
+    // orchestrator ruling on the Stage 2 gate: AF makes oscillometry noisy, not biased
+    for (const k of ['dSys', 'dDia', 'dMap'] as const) {
+      expect(Math.abs(mean(a.map((x) => x[k])))).toBeLessThanOrEqual(6);
+      expect(sd(a.map((x) => x[k]))).toBeLessThanOrEqual(10);
+    }
   });
 
   it('at SBP 45 the cycle fails with an INOP after 2 attempts', () => {

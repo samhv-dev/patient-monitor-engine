@@ -4,6 +4,9 @@
 //   from the ACTUAL site beats:  A(Pc) = Amax·exp(−((Pc − MAP)/w)²), Amax = 0.05·PP (1–4 mmHg),
 //   w_hi = (SBP − MAP)/√(−ln Rs), w_lo = (MAP − DBP)/√(−ln Rd), Rs 0.50, Rd 0.80 → invert the envelope at
 //   Rs/Rd, MAP = envelope peak, + noise SD 4 mmHg → result + timestamp, or fail.
+// Irregular rhythms (AF): a step's amplitude is the mean of its pulses, an empty step waits for the longest
+// recent RR, the envelope is smoothed across steps and deflation continues until it is well below the DBP ratio,
+// so beat-to-beat pulse-pressure scatter makes the reading noisy but not biased (Stage 2 gate ruling).
 // Failures: Amax < 1 mmHg or SBP < 50 (no reliable envelope, e.g. SBP 45 / no pulse) fail the attempt; the
 // second failed attempt raises the "NBP measurement failed" INOP. CPR corrupts every pulse → the cycle runs to
 // the 170 s safety deflation and fails. Envelope not bracketed above SBP → one re-pump to +40 mmHg.
@@ -23,6 +26,8 @@ export const NIBP = {
   STEP_MAX_S: 6, // hard cap on one step [ENG]
   MAX_PULSES: 5, // AF/ectopy: up to 5 pulses per step [ENG]
   MATCH: 0.15, // two pulses within 15% are "matched" [ENG]
+  RR_LOOKBACK: 5, // an empty step waits 1.5 × the longest of the last 5 pulse intervals [ENG]
+  STOP_BELOW: 0.6, // stop once two smoothed steps below the peak are < 0.6·peak, i.e. past the Rd point [ENG]
   MIN_CUFF: 30, // stop deflating below this [ENG]
   RS: 0.5, // Rs 0.45–0.57 → 0.50 (brief §4.5)
   RD: 0.8, // Rd 0.75–0.86 → 0.80
@@ -167,7 +172,22 @@ function matched(a: readonly number[]): boolean {
  * Linear interpolation between 8 mmHg steps instead would bias DBP ≈ +4 mmHg (the envelope is concave there).
  * Returns null when the envelope is unusable and 'repump' when the top step was not above SBP.
  */
-export function invertEnvelope(steps: readonly number[][]): { sys: number; dia: number; map: number } | null | 'repump' {
+/**
+ * [1 2 1]/4 smoothing of the step amplitudes across neighbouring cuff steps (end steps use the two-point
+ * weights), so one large or small AF pulse cannot become the envelope peak or end the deflation early [ENG].
+ * For a Gaussian envelope this adds the kernel variance, i.e. w² grows by STEP²; `invertEnvelope` removes it.
+ */
+export function smoothEnvelope(steps: readonly number[][]): number[][] {
+  return steps.map(([pc, a], i) => {
+    const p = steps[i - 1]?.[1];
+    const q = steps[i + 1]?.[1];
+    const wt = 2 + (p === undefined ? 0 : 1) + (q === undefined ? 0 : 1);
+    return [pc as number, (2 * (a as number) + (p ?? 0) + (q ?? 0)) / wt];
+  });
+}
+
+/** `smoothedH`: the step (mmHg) of a `smoothEnvelope` pass to undo in the widths (0 = raw steps). */
+export function invertEnvelope(steps: readonly number[][], smoothedH = 0): { sys: number; dia: number; map: number } | null | 'repump' {
   if (steps.length < 3) return null;
   let iMax = 0;
   steps.forEach((st, i) => {
@@ -199,7 +219,7 @@ export function invertEnvelope(steps: readonly number[][]): { sys: number; dia: 
       sum += (d * d) / -Math.log(a / amax);
       n++;
     }
-    return n > 0 ? Math.sqrt(sum / n) : Number.NaN;
+    return n > 0 ? Math.sqrt(Math.max(1, sum / n - smoothedH * smoothedH)) : Number.NaN;
   };
   const wHi = width(1);
   const wLo = width(-1);
@@ -208,7 +228,7 @@ export function invertEnvelope(steps: readonly number[][]): { sys: number; dia: 
 }
 
 function finishAttempt(nb: NibpState, t: number, rng: Sfc32State, out: NibpOut[]): void {
-  const inv = invertEnvelope(nb.steps);
+  const inv = invertEnvelope(smoothEnvelope(nb.steps), NIBP.STEP);
   if (inv === 'repump' && !nb.repumped) {
     nb.repumped = true;
     nb.target = ((nb.steps[0] as number[])[0] as number) + NIBP.REPUMP_ABOVE;
@@ -286,8 +306,10 @@ export function nibpStep(nb: NibpState, t: number, dt: number, rng: Sfc32State, 
     nb.cuff = nb.stepPc;
     const a = nb.stepAmps;
     const pt = nb.pulseTimes;
-    const rr = pt.length >= 2 ? (pt[pt.length - 1] as number) - (pt[pt.length - 2] as number) : 0.8;
-    // no usable pulse for max(1.0 s, 1.5 RR) → an empty step; otherwise wait for a matched pair (≤ 4 pulses)
+    let rr = pt.length >= 2 ? 0 : 0.8;
+    for (let i = Math.max(1, pt.length - NIBP.RR_LOOKBACK); i < pt.length; i++) rr = Math.max(rr, (pt[i] as number) - (pt[i - 1] as number));
+    // no usable pulse for max(1.0 s, 1.5 × the longest recent RR) → an empty step; otherwise wait for a matched
+    // pair (≤ MAX_PULSES)
     const waited = t - nb.stepStartT;
     const timedOut = a.length === 0 ? waited >= Math.max(NIBP.STEP_MIN_WAIT_S, NIBP.STEP_WAIT_RR * rr) : waited >= NIBP.STEP_MAX_S;
     if (matched(a) || a.length >= NIBP.MAX_PULSES || timedOut) {
@@ -296,14 +318,16 @@ export function nibpStep(nb: NibpState, t: number, dt: number, rng: Sfc32State, 
         nb.stepRejects = 0;
         return;
       }
-      // the last pair (matched or not — with irregular pulses the device settles for what it has) [ENG]
-      const amp = a.length >= 2 ? ((a[a.length - 1] as number) + (a[a.length - 2] as number)) / 2 : a.length ? (a[0] as number) : 0;
+      // the mean of the step's pulses: the matched pair in a regular rhythm; with irregular pulses the device
+      // averages all it collected (up to MAX_PULSES) rather than trusting the last two [ENG]
+      const amp = a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
       nb.steps.push([nb.stepPc, amp]);
-      // done when the last TWO steps are below Rd·peak on the low side (one noisy dip is not the end)
-      const peak = nb.steps.reduce((m, st) => Math.max(m, st[1] as number), 0);
-      const iPeak = nb.steps.findIndex((st) => st[1] === peak);
-      const n = nb.steps.length;
-      const low = (i: number) => i > iPeak && ((nb.steps[i] as number[])[1] as number) < NIBP.RD * peak;
+      // done when the last TWO smoothed steps are below STOP_BELOW·peak on the low side (past the Rd point)
+      const env = smoothEnvelope(nb.steps);
+      const peak = env.reduce((m, st) => Math.max(m, st[1] as number), 0);
+      const iPeak = env.findIndex((st) => st[1] === peak);
+      const n = env.length;
+      const low = (i: number) => i > iPeak && ((env[i] as number[])[1] as number) < NIBP.STOP_BELOW * peak;
       const pastPeak = peak >= NIBP.A_MIN_ENVELOPE && low(n - 1) && low(n - 2);
       if (pastPeak || nb.stepPc - NIBP.STEP < NIBP.MIN_CUFF) {
         finishAttempt(nb, t, rng, out);
