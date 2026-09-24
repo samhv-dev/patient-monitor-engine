@@ -554,7 +554,7 @@ git commit -m "feat(l1): coupled truths, l1Target, stage 3 state variables accep
 - Consumes: `PatientProfile` (Task 1).
 - Produces: constants `GAS_DT_S` 0.1, `PB_MMHG`, `PH2O_MMHG`, `RQ`, `HB_G_DL`, `K_CO2` 0.863, `PA_ET_GRADIENT` 3, `CMH2O_TO_MMHG`, `CO2_CF_PER_VCO2`, `CO2_CS_PER_VCO2`, `CO2_KFS_PER_VCO2`, `LOW_FLOW_EXP` 0.6, `LOW_FLOW_TAU_S` 5, `ANAT_DEAD_SPACE_ML_PER_KG` 2.2, `MASS_FLOW_DEFICIT_ML_MIN` 20, `BLOOD_VENOUS_FRACTION`, `CO_REF_LPM` 5.25, `CI_LPM_PER_KG` 0.075, `GA_METABOLIC` 0.85, `FRC_AWAKE_ML_KG` 30; `apparatusDeadSpaceMl(weightKg)`, `ageBand(ageY)`, `interface GasPatient { weightKg, ibwKg, effKg, frcMl, frcGaMl, vo2, vco2, bloodL, deadSpaceMl, cf, cs, kfs, complianceMl, resistance }`, `gasPatient(profile)`, `tempFactor(tCore)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/params.test.ts`:**
 
@@ -589,12 +589,12 @@ describe('gas patient scaling', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/params.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/params.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/params.ts`:**
 
@@ -718,9 +718,9 @@ export function tempFactor(tCore: number): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/params.ts packages/engine-core/test/l2/gas/params.test.ts
