@@ -1701,7 +1701,7 @@ git commit -m "test(scenario): probability determinism and frequency (10,000 see
 **Interfaces:**
 - Produces: `type ScenarioRunLog = { schema: 'pme-scenario-log/1'; docId; seed; entries: RunLogEntry[] }`; `runLog(runner)`; `replayRunLog(doc, log) → { ok, firstDiff, decisions }` (decisions = `enter` and `roll` entries).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // The runner's replay log (brief §3.3): feeding the logged inputs and control calls to a fresh runner with the
@@ -1764,12 +1764,12 @@ describe('replay log', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/replay.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/replay.ts"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/scenario/replay.ts`:
 ```ts
@@ -1836,12 +1836,12 @@ export function replayRunLog(doc: ScenarioDoc, log: ScenarioRunLog): { ok: boole
 }
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/replay.test.ts`
 Expected: `Tests  4 passed (4)`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/scenario/replay.ts packages/controller/test/scenario/replay.test.ts
