@@ -738,7 +738,7 @@ git commit -m "feat(gas): gas-exchange constants and patient scaling (IBW, FRC a
 - Consumes: Task 3 constants.
 - Produces: `odc(po2, tempC?, pco2?)`, `content(po2, tempC?, pco2?)` (mL/L), `po2ForContent(c, …)`, `interface O2Inputs { vaLpm, fio2, massFlowFio2: number | null, qLpm, vo2, shunt, paco2, tempC, frcMl, bloodL }`, `interface O2State { fa, cv, sa, pao2 }`, `o2Steady(x, shunt): O2State | null`, `solveShunt(x, targetSa): number`, `createO2State(x)`, `stepO2(st, x, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/o2.test.ts`:**
 
@@ -779,12 +779,12 @@ describe('O2 model', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/o2.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/o2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/o2.ts`:**
 
@@ -907,9 +907,9 @@ export function stepO2(st: O2State, x: O2Inputs, dtS: number): void {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/o2.ts packages/engine-core/test/l2/gas/o2.test.ts
