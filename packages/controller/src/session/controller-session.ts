@@ -200,6 +200,7 @@ export function describe(c: WireCommand): string {
     case 'setModifiers':
       return `modifiers ${JSON.stringify(c.modifiers)}`;
     case 'device':
+      if (c.action.device === 'nibp') return `nibp ${c.action.action}${c.action.intervalMin !== undefined ? ` every ${c.action.intervalMin} min` : ''}`; // Stage 2
       return `${c.action.device} ${c.action.action} ${String(c.action.value ?? '')}${c.action.lane !== undefined ? ` lane ${c.action.lane}` : ''}`;
     case 'time':
       return `time ${c.action}${c.value !== undefined ? ` ${c.value}` : ''}`;
@@ -213,5 +214,9 @@ export function describe(c: WireCommand): string {
       return `${c.input} × ${c.factor}`;
     case 'setMode':
       return `mode ${c.mode}`;
+    case 'applyEvent': // Stage 2
+      return `event ${c.event.kind}${'action' in c.event ? ` ${c.event.action}` : ` ${c.event.active ? 'on' : 'off'}`}`;
+    case 'attachSensor': // Stage 2
+      return `sensor ${c.sensor} ${c.state}${c.site ? ` @${c.site}` : ''}`;
   }
 }
