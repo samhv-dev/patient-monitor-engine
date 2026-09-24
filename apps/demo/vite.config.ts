@@ -10,7 +10,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        index: page('index'), stage0: page('stage0'), stage1: page('stage1'),
+        index: page('index'), stage0: page('stage0'), stage1: page('stage1'), stage5: page('stage5'),
         stage2: page('stage2'), // Stage 2
         stage6a: page('stage6a'), 'stage6a-remote': page('stage6a-remote'), 'stage6a-viewer': page('stage6a-viewer'),
       },

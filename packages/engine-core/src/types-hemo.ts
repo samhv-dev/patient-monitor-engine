@@ -50,8 +50,4 @@ export type HemoEvent =
   | {
       type: 'state'; t: SimSeconds; tick: number; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
-    }
-  | {
-      type: 'alarm'; t: SimSeconds; id: string; priority: 'high' | 'medium' | 'low';
-      category: 'physiological' | 'technical'; state: 'raised' | 'cleared' | 'acked' | 'silenced' | 'paused'; text: string;
-    };
+    }; // the brief §7.3 `alarm` event (NIBP INOP) is Stage 5's copy in types.ts

@@ -25,11 +25,13 @@ describe('engine pipeline', () => {
     expect(e.latestSampleIndex('abp')).toBe(-1);
   });
 
-  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 180_000 }, async () => {
+  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 300_000 }, async () => {
     const e = createEngine({ seed: 11 });
+    // Advance one sim-hour at a time and yield between chunks: 24 h of synchronous ticks takes
+    // > 60 s on a 2-vCPU CI runner, which starves the Vitest worker's RPC ("Timeout calling onTaskUpdate").
     for (let h = 1; h <= 24; h++) {
-      e.advanceTo(h * 3600);
-      await new Promise((r) => setTimeout(r, 0)); // Stage 2: the run now takes ~55 s; yield so Vitest's RPC does not time out
+      e.advanceTo(h * 3_600);
+      await new Promise<void>((resolve) => setImmediate(resolve));
     }
     expect(e.now().tick).toBe(4_320_000);
     expect(e.latestSampleIndex('ecgII')).toBe(43_200_000 + 50);
