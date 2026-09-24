@@ -1172,7 +1172,7 @@ git commit -m "feat(tooling): check-notices enforces NOTICE-ID headers against N
 - Consumes: `packages/renderer/dist/patient-monitor.iife.js` (Task 3; run `pnpm build` first).
 - Produces: `pnpm test:e2e` (projects `chromium` and `webkit`; with `PW_SYSTEM_CHROME=1`, one project `chrome` using the installed Google Chrome). E2E files end in `.e2e.ts` so Vitest never picks them up.
 
-- [ ] **Step 1: Write the smoke page and the test**
+- [x] **Step 1: Write the smoke page and the test**
 
 `apps/demo/e2e/iife-smoke.html`:
 ```html
@@ -1210,7 +1210,7 @@ test('the IIFE loads from file:// and exposes window.PatientMonitor.version', as
 });
 ```
 
-- [ ] **Step 2: Write the Playwright config**
+- [x] **Step 2: Write the Playwright config**
 
 `playwright.config.ts`:
 ```ts
@@ -1228,17 +1228,17 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Run it red first**
+- [x] **Step 3: Run it red first**
 
 Run: `rm -rf packages/renderer/dist && PW_SYSTEM_CHROME=1 pnpm test:e2e`
 Expected: FAIL — `expected undefined to be '0.0.0'` (the IIFE file is missing). If Playwright says Chrome is not installed, skip the local run (note it in the commit body) and rely on CI.
 
-- [ ] **Step 4: Build and run green**
+- [x] **Step 4: Build and run green**
 
 Run: `pnpm build && PW_SYSTEM_CHROME=1 pnpm test:e2e`
 Expected: `1 passed`. (Anywhere the CDN is reachable: `pnpm exec playwright install chromium webkit && pnpm test:e2e` → `2 passed`.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add playwright.config.ts apps/demo/e2e
