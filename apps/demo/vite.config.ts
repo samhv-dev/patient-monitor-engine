@@ -9,7 +9,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: { index: page('index'), stage0: page('stage0'), stage1: page('stage1') },
+      input: { index: page('index'), stage0: page('stage0'), stage1: page('stage1'), stage5: page('stage5') },
     },
   },
 });

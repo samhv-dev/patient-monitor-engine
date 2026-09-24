@@ -7421,7 +7421,7 @@ BUILD-PLAN Stage 5 demo. A live two-lane monitor (the Stage 1 `mountMonitor`) wi
 - Consumes: `createEngine`, `ecgVocabulary`, `mountMonitor` (Stage 1), marker events.
 - Produces: `renderStrip(canvas, spec, label | null)`, `StripSpec`, `STRIP_S = 10`, `CATALOGUE: CatalogueItem[]` (70 items: every rhythm id plus modifier/artefact showcases).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 Create or replace `apps/demo/src/strip.ts` with exactly:
 
@@ -7858,15 +7858,15 @@ input: { index: page('index'), stage0: page('stage0'), stage1: page('stage1'), s
 ```
 
 
-- [ ] **Step 2: Run the tests and the type check**
+- [x] **Step 2: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck && npx -y pnpm@9.15.9 --filter @pme/demo build`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 3: Open it: `npx -y pnpm@9.15.9 --filter @pme/demo dev`, then http://localhost:5173/stage5.html. Expected: the monitor sweeps sinus in II and V1; the gallery shows five labelled sinus strips; choosing "paced" shows spike ticks before paced complexes; "Run ACLS strip" walks through the seven steps in ~50 s (the step name is shown next to the button). Stop the dev server.**
+- [x] **Step 3: Open it: `npx -y pnpm@9.15.9 --filter @pme/demo dev`, then http://localhost:5173/stage5.html. Expected: the monitor sweeps sinus in II and V1; the gallery shows five labelled sinus strips; choosing "paced" shows spike ticks before paced complexes; "Run ACLS strip" walks through the seven steps in ~50 s (the step name is shown next to the button). Stop the dev server.**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/src/stage5-catalogue.ts apps/demo/src/stage5.ts apps/demo/src/strip.ts apps/demo/stage5.html apps/demo/vite.config.ts
