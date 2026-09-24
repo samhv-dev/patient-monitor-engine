@@ -340,7 +340,7 @@ git commit -m "build: pnpm workspace with seven package skeletons" -m "Co-Author
 - Consumes: Task 2 skeleton.
 - Produces: `pnpm build` writes `packages/<name>/dist/index.js` for every package and `packages/renderer/dist/patient-monitor.iife.js` defining the global `PatientMonitor` (= the renderer's exports). From `calibration.ts`: `DEFAULT_PX_PER_MM: number` (= 96/25.4), `SWEEP_SPEEDS_MM_S`, `type SweepSpeed`, `sweepPxPerS(mmPerS: number, pxPerMm?: number): number`, `sweepXUnwrapped(t: number, mmPerS: number, pxPerMm?: number): number`, `sweepX(t: number, mmPerS: number, pxPerMm: number, laneWidthPx: number): number`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/renderer/test/calibration.test.ts`:
 ```ts
@@ -363,12 +363,12 @@ describe('calibration', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `pnpm --filter @pme/renderer test`
 Expected: FAIL — `Failed to load url ../src/calibration.ts` (or "Cannot find module").
 
-- [ ] **Step 3: Implement the sweep geometry**
+- [x] **Step 3: Implement the sweep geometry**
 
 `packages/renderer/src/calibration.ts`:
 ```ts
@@ -403,12 +403,12 @@ export const version = '0.0.0';
 export * from './calibration.ts';
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm --filter @pme/renderer test`
 Expected: PASS, `Tests  3 passed (3)`.
 
-- [ ] **Step 5: Add the IIFE build**
+- [x] **Step 5: Add the IIFE build**
 
 Replace `packages/renderer/vite.config.ts`:
 ```ts
@@ -429,7 +429,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 6: Build and check the IIFE in a bare JS context**
+- [x] **Step 6: Build and check the IIFE in a bare JS context**
 
 Run: `pnpm build`
 Expected: every package prints `✓ built`; `packages/renderer/dist/` contains `index.js` and `patient-monitor.iife.js`.
@@ -440,7 +440,7 @@ node -e "const vm=require('vm');const fs=require('fs');const c={};vm.createConte
 ```
 Expected: `PatientMonitor.version = 0.0.0`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/renderer
