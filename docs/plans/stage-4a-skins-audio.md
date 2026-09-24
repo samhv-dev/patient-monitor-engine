@@ -3855,7 +3855,7 @@ git commit -m "feat(audio): alarm burst geometry and volume-step gain curve" -m 
 
 The tests drive the REAL `ToneScheduler` with a fake audio clock (audio time = sim time / timeScale), stepping 25 ms at a time exactly as the scheduler's timer would, and read what was handed to `play` and what was stopped.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/audio/test/alarm-sounder.test.ts`:
 
@@ -4046,12 +4046,12 @@ describe('alarm level loudness', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/alarm-sounder.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/audio/src/alarm-sounder.ts`:
 
@@ -4256,12 +4256,12 @@ Append to `packages/audio/src/index.ts`:
 export * from './alarm-sounder.ts';
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/alarm-sounder.test.ts`
 Expected: 12 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/audio/src/alarm-sounder.ts packages/audio/src/index.ts packages/audio/test/alarm-sounder.test.ts
