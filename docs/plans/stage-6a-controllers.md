@@ -5478,7 +5478,7 @@ git commit -m "feat(controller): public API and the transports object; browser b
   - `links.ts`: `params`, `relayUrl()` (default `ws://<page host>:8787/`), `viaParam(): Via` (`?via=bc|relay|rtc`), `viaToParam`, `connect(session, via): ManagedTransport`, `epochNow()`.
   - `stage6a.html`: session code from `?session=` (else a new one, written back into the URL); HostSession over in-process (panel) + BroadcastChannel, and over the relay + WebRTC when `?relay=` is present; buttons **Open remote**, **Open viewer**, **Enable sound**; a diagnostics line. `window.__pme6a = { role: 'host', session, hs, mon, panel, timings, firePanel, now }` for the browser tests: `timings[]` = `{ commandId, from, receivedAt, tick, visibleAt }` where `visibleAt` is the first frame whose drawn sim time reaches `tick × 0.02 s`.
 
-- [ ] **Step 1: Add the demo dependencies and pages to the build**
+- [x] **Step 1: Add the demo dependencies and pages to the build**
 
 In `apps/demo/package.json` add to `dependencies`: `"@pme/audio": "workspace:*"` and `"@pme/controller": "workspace:*"`, then run `npx -y pnpm@9.15.9 install`.
 
@@ -5487,7 +5487,7 @@ In `apps/demo/vite.config.ts` replace the `input` line with:
       input: { index: page('index'), stage0: page('stage0'), stage1: page('stage1'), stage6a: page('stage6a') },
 ```
 
-- [ ] **Step 2: Write the monitor glue**
+- [x] **Step 2: Write the monitor glue**
 
 `apps/demo/src/stage6a/sim-monitor.ts`:
 ```ts
@@ -5651,7 +5651,7 @@ export function connect(session: string, via: Via): ManagedTransport {
 export const epochNow = (): number => performance.timeOrigin + performance.now();
 ```
 
-- [ ] **Step 3: Write the host page**
+- [x] **Step 3: Write the host page**
 
 `apps/demo/stage6a.html`:
 ```html
@@ -5781,7 +5781,7 @@ async function firePanel() {
 Object.assign(window, { __pme6a: { role: 'host', session, hs, mon, panel, timings, firePanel, now: epochNow } });
 ```
 
-- [ ] **Step 4: Typecheck, build, and look at it**
+- [x] **Step 4: Typecheck, build, and look at it**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck
@@ -5790,7 +5790,7 @@ npx -y pnpm@9.15.9 --filter @pme/demo dev --port 5173 --strictPort & DEV_PID=$!;
 ```
 Open `http://localhost:5173/stage6a.html` in Chrome (a visible window — a hidden pane throttles rAF to ~1 fps and the sweep crawls, docs/gates/stage-0.md). Expected: two ECG lanes sweeping, HR tile ≈ 75 within ~5 s, a 6-character session code, and pressing `i` slides the Instructor drawer in from the right; **Set** HR 120 with ramp 20 s → the HR flag turns blue and the tile climbs. (**Open remote** / **Open viewer** 404 until Task 22.) Then `kill $DEV_PID`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/demo/package.json apps/demo/vite.config.ts apps/demo/stage6a.html apps/demo/src/stage6a pnpm-lock.yaml

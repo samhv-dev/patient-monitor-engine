@@ -29,6 +29,12 @@ importers:
 
   apps/demo:
     dependencies:
+      '@pme/audio':
+        specifier: workspace:*
+        version: link:../../packages/audio
+      '@pme/controller':
+        specifier: workspace:*
+        version: link:../../packages/controller
       '@pme/engine-core':
         specifier: workspace:*
         version: link:../../packages/engine-core
