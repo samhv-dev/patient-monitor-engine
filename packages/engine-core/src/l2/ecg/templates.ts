@@ -1,6 +1,7 @@
 // Beat templates built from the brief §4.1 seed table (lead II at 60 bpm, τ from QRS onset):
 //   P  τ −PR+45 σ 22 a 0.15 | Q τ 12 σ 8 a −0.08 | R τ 40 σ 10 a 1.1 | S τ 62 σ 9 a −0.25
-//   T  τ QT−110 σ 45 rise / 30 fall a 0.30 | U τ QT+70 σ 35 a 0.03
+//   T  τ QT−2σ_fall (= QT−60) σ 45 rise / 30 fall a 0.30 | U τ QT+70 σ 35 a 0.03
+// (The seed table's T peak at QT−110 drew a tangent-method QT 50 ms short, review H4; see T_SIGMA_FALL_S.)
 // Each wave's VCG vector (X, Y, Z in mV) was fitted in Stage 1 so that, through the Dower rows (vcg.ts),
 // lead II reproduces the seed amplitudes exactly and lead I is 70% / lead III 30% of II (ProSim ratios,
 // research 01 §4.16). Z was chosen by least squares against a normal precordial R progression
@@ -38,8 +39,19 @@ export const FWAVE_DIR: Vec3 = [0.2, 0.9, -0.35];
 /** Respiratory baseline-wander direction (lead II gain ≈ 1) [ENG]. */
 export const WANDER_DIR: Vec3 = [0.3, 0.9, 0.2];
 
-/** T end is 110 ms after the T peak (seed table: T peak = QT − 110), so QT = τ_T + 110 ms. */
-export const T_END_AFTER_PEAK_S = 0.11;
+/** T wave half-Gaussian widths (brief §4.1 seed table: 45 ms rise / 30 ms fall; wide complexes 60 / 40 [ENG]). */
+const T_SIGMA_RISE_S = 0.045;
+const T_SIGMA_FALL_S = 0.03;
+const WIDE_T_SIGMA_RISE_S = 0.06;
+const WIDE_T_SIGMA_FALL_S = 0.04;
+/**
+ * Where the drawn T ends. The tangent through the steepest point of a half-Gaussian's falling limb (τ + σ, value
+ * a·e^−½, slope −a·e^−½/σ) meets the baseline at τ + 2σ. So the T peak is placed 2σ_fall before the target QT and
+ * the tangent-method QT on screen equals the Fridericia QT (review H4; measured by the waveform test).
+ */
+export function tEndAfterPeakS(sigmaFall: number): number {
+  return 2 * sigmaFall;
+}
 /** Wide complexes: QT is longer by 60 ms [ENG]. */
 export const WIDE_QT_EXTRA_MS = 60;
 
@@ -60,12 +72,12 @@ export function flutterKernels(): number[] {
 
 /** Narrow (supraventricular) QRS-T relative to QRS onset. rScale modulates QRS amplitude (respiration). */
 export function narrowKernels(qtMs: number, rScale = 1): number[] {
-  const tPeak = qtMs / 1000 - T_END_AFTER_PEAK_S;
+  const tPeak = qtMs / 1000 - tEndAfterPeakS(T_SIGMA_FALL_S);
   return [
     ...kernel(0.012, 0.008, 0.008, VEC.Q, WAVE.Q, rScale),
     ...kernel(0.04, 0.01, 0.01, VEC.R, WAVE.R, rScale),
     ...kernel(0.062, 0.009, 0.009, VEC.S, WAVE.S, rScale),
-    ...kernel(tPeak, 0.045, 0.03, VEC.T, WAVE.T),
+    ...kernel(tPeak, T_SIGMA_RISE_S, T_SIGMA_FALL_S, VEC.T, WAVE.T),
     ...kernel(qtMs / 1000 + 0.07, 0.035, 0.035, VEC.U, WAVE.U),
   ];
 }
@@ -76,7 +88,7 @@ export function wideKernels(qtMs: number, scale = 1): number[] {
   return [
     ...kernel(0.05, 0.022, 0.022, WIDE_VEC.R, WAVE.R, scale),
     ...kernel(0.11, 0.02, 0.02, WIDE_VEC.S, WAVE.S, scale),
-    ...kernel(qt - T_END_AFTER_PEAK_S, 0.06, 0.04, WIDE_VEC.T, WAVE.T, scale),
+    ...kernel(qt - tEndAfterPeakS(WIDE_T_SIGMA_FALL_S), WIDE_T_SIGMA_RISE_S, WIDE_T_SIGMA_FALL_S, WIDE_VEC.T, WAVE.T, scale),
   ];
 }
 
@@ -97,10 +109,10 @@ export function templateQrsMs(id: TemplateId): number {
   return qrsSpanMs(templateKernels(id, 400));
 }
 
-/** QT of a beat as drawn: T peak τ + 110 ms (for wide templates this includes WIDE_QT_EXTRA_MS). */
+/** QT of a beat as drawn (tangent T end): T peak τ + 2σ_fall (for wide templates this includes WIDE_QT_EXTRA_MS). */
 export function kernelQtMs(k: readonly number[]): number {
   for (let i = 0; i < k.length; i += K_STRIDE) {
-    if (k[i + 6] === WAVE.T) return ((k[i] as number) + T_END_AFTER_PEAK_S) * 1000;
+    if (k[i + 6] === WAVE.T) return ((k[i] as number) + tEndAfterPeakS(k[i + 2] as number)) * 1000;
   }
   return Number.NaN;
 }
