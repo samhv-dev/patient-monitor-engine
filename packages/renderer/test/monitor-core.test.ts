@@ -62,4 +62,21 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(core.clock.simT).toBeLessThanOrEqual(60.02);
     expect(core.engine.now().simT).toBe(core.clock.simT);
   });
+
+  it('carries the fractional tick across hidden pumps, so sim time does not fall behind (review L1)', () => {
+    const { core } = make();
+    core.frame(1000);
+    for (let k = 1; k <= 60; k++) core.catchUp(1000 + k * 1010); // 1 Hz hidden pump with 10 ms of jitter
+    expect(core.clock.renderT).toBeCloseTo(60.6, 1);
+    expect(Math.abs(core.clock.renderT - 60.6)).toBeLessThan(0.021);
+  });
+
+  it('posts the events generated while hidden instead of letting the batch grow (review L2)', () => {
+    const { core, posts } = make();
+    core.frame(1000);
+    const before = posts.length;
+    core.catchUp(11_000);
+    expect(posts.length).toBe(before + 1);
+    expect(posts[posts.length - 1]!.events.some((e) => e.type === 'beat')).toBe(true);
+  });
 });

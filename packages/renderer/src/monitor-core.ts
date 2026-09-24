@@ -96,9 +96,11 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0) return;
-    const target = this.clock.renderT + (dt / 1000) * this.clock.timeScale;
-    this.clock.setTick(Math.floor(target * 50 + 1e-6));
-    this.engine.advanceTo(this.clock.simT);
+    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // remainder carried (review L1)
+    // Post what was generated while hidden, so the batch does not grow without frames (review L2).
+    this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
+    this.batch = [];
+    this.lastPost = epochMs;
   }
 
   /** One animation frame. `epochMs` = performance.timeOrigin + frame timestamp (ms). */

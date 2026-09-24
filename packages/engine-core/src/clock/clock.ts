@@ -47,8 +47,16 @@ export class Clock {
 
   /** Feed one frame's wall-clock delta. Returns how many 20 ms ticks the caller must run now. */
   advance(wallDeltaMs: number): number {
+    return this.advanceUnclamped(Math.min(wallDeltaMs, MAX_FRAME_MS));
+  }
+
+  /**
+   * Like advance() but without the 250 ms clamp: for hidden-tab catch-up, which must follow the full wall time
+   * (brief §3.3). The sub-tick remainder stays in the accumulator (review L1).
+   */
+  advanceUnclamped(wallDeltaMs: number): number {
     if (this._paused || !(wallDeltaMs > 0)) return 0;
-    this._accMs += Math.min(wallDeltaMs, MAX_FRAME_MS) * this._timeScale;
+    this._accMs += wallDeltaMs * this._timeScale;
     let n = 0;
     while (this._accMs >= TICK_MS) {
       this._accMs -= TICK_MS;
