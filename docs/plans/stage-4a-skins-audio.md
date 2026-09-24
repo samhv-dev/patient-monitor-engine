@@ -5127,7 +5127,7 @@ git commit -m "test(demo): stage 4a gate screenshots and OfflineAudioContext ala
 - Consumes: everything above.
 - Produces: the gate note the orchestrator reads (R21), including the Saadat not-documented table and Ali's bedside checklist.
 
-- [ ] **Step 1: Run the whole repository**
+- [x] **Step 1: Run the whole repository**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
@@ -5139,13 +5139,13 @@ PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage4a-skins.e2e.ts apps/d
 ```
 Expected: every package green (skins 155, audio 58, renderer, engine-core, controller and validation as on main); build OK; `check-notices: OK`; `0` (no ajv in the skins bundle); Playwright all passed.
 
-- [ ] **Step 2: Print the audio-timing table for the note**
+- [x] **Step 2: Print the audio-timing table for the note**
 
 ```bash
 node -e "const d=require('./docs/gates/stage-4a/audio-timing.json');console.log('| Profile | Level | Skin | Pulses/burst | Intervals (s) | First-burst onsets (s) | Pulse width (s) | Rise (ms) |\n|---|---|---|---|---|---|---|---|');for(const c of d)console.log('|',c.profile,'|',c.level,'|',c.skin??'—','|',c.pulsesPerBurst.join(', '),'|',c.intervalsS.join(', ')||'—','|',c.firstBurstOnsetsS.join(' '),'|',c.pulseDurS.join(', '),'|',c.riseMs,'|')"
 ```
 
-- [ ] **Step 3: Write the gate note** — create `docs/gates/stage-4a.md` with the content below, replacing every `FILL` with the numbers from Steps 1–2 (the not-documented table is the prototype's output of the saadat-like provenance and the `saadat` profile provenance filtered to tags other than `documented` and `measured`; re-check that it still matches the committed data):
+- [x] **Step 3: Write the gate note** — create `docs/gates/stage-4a.md` with the content below, replacing every `FILL` with the numbers from Steps 1–2 (the not-documented table is the prototype's output of the saadat-like provenance and the `saadat` profile provenance filtered to tags other than `documented` and `measured`; re-check that it still matches the committed data):
 
 ```markdown
 # Stage 4a gate: skins as data and alarm sound profiles
@@ -5259,7 +5259,7 @@ FILL: none, or each one with its reason.
 
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/gates/stage-4a.md

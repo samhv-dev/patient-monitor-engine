@@ -4,7 +4,7 @@
 #   for f in docs/gates/stage-4a/*.png; do python3 docs/gates/stage-4a/shrink-png.py "$f" "$f" 256; done
 # Needs ffmpeg/ffprobe on PATH (quantiser only); the PNG writer is stdlib (zlib). Anti-aliased edge pixels change,
 # flat colours are kept exactly (96-99 % of pixels identical on the 11 gate images).
-"""shrink.py IN.png OUT.png COLOURS — palette-quantise a screenshot (ffmpeg palettegen/paletteuse, no dither) and
+"""shrink-png.py IN.png OUT.png COLOURS — palette-quantise a screenshot (ffmpeg palettegen/paletteuse, no dither) and
 write it as an indexed PNG at the smallest bit depth (1/2/4/8) with the best of five row-filter strategies + zlib 9."""
 import struct, subprocess, sys, zlib
 src, dst, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
