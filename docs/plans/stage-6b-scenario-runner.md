@@ -2768,7 +2768,7 @@ git commit -m "feat(scenario): five built-in [draft] scenarios and run-time rhyt
 - Consumes: `HostTarget`, `ScenarioHookResult` (Task 9), `ScenarioRunner` (Task 5), `validateScenario` (Task 4), `resolveRhythm`, `BUILTIN_SCENARIOS` (Task 10), `RHYTHM_IDS` from `@pme/engine-core`.
 - Produces: `class ScenarioDriver({ target, submit?, publish?, builtins?, rhythms? })` with `host: HostTarget` (the wrapped target — give THIS to `HostSession`), `runner: ScenarioRunner | null`, `notes: string[]`, `poll()`, `load(docOrBuiltinId)`, `hook` (the `HostSession` `scenario` option), `welcomeEvents()`, `bookmarks()`, `close()`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/controller/test/scenario/driver.test.ts`:
 ```ts
@@ -2930,12 +2930,12 @@ describe('ScenarioDriver', () => {
 });
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/driver.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/driver.ts"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/scenario/driver.ts`:
 ```ts
@@ -3160,12 +3160,12 @@ export class ScenarioDriver {
 }
 ```
 
-- [ ] **Step 4: Run them**
+- [x] **Step 4: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/driver.test.ts`
 Expected: `Tests  10 passed (10)` in ≈ 10 s. The ACLS path is `['0:stable', '60:vf/arrest', '70:rosc/shockVf']` and the no-shock path `['0:stable', '60:vf', '300:vfFine', '600:asystole']`. If the bookmark test fails on samples, check that `restoreBookmark` awaits `target.restore()` BEFORE `runner.setState()` and clears `pending`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/scenario/driver.ts packages/controller/test/scenario/driver.test.ts
