@@ -2730,7 +2730,7 @@ git commit -m "feat(controller): pme-vocabulary/1 with a Stage 1 fallback that t
   - Behaviour: `hello(host)` on every transport `open`; a peer `hello` → sticky `commandApplied{replay:true}` batch, then a fresh `snapshot`, on that transport; `command` → de-dup by id (cached ack, no re-dispatch) → dispatch (stageGroup → shared `atTick`; `time` and `scenario bookmark|restoreBookmark` handled here; `scenario` other → hook or reject; `pin|release|setFactor|setMode` rejected) → `ack` on that transport → `commandApplied{ resolved: { command: {...cmd, atTick} } }` to all; engine events except `tone`/`toneCancel` are batched into one `event` message per microtask (= per frame); a target-derived `state` every `stateIntervalMs` and after each `time` command, unless the engine emits its own `state` (E1).
   - Test fake `manualHost(opts?): ManualHost` (`HostTarget` over `createEngine` with `advance(wallMs)`, `paused`, `scale`, `engine`).
 
-- [ ] **Step 1: Write the fake and the failing test**
+- [x] **Step 1: Write the fake and the failing test**
 
 `packages/controller/test/fakes/manual-host.ts`:
 ```ts
@@ -2938,12 +2938,12 @@ describe('HostSession', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/host-session.test.ts`
 Expected: FAIL — cannot load `../../src/session/host-session.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/session/host-session.ts`:
 ```ts
@@ -3220,12 +3220,12 @@ export class HostSession {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/host-session.test.ts && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: `11 passed`; typecheck exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/session/host-session.ts packages/controller/test/fakes/manual-host.ts packages/controller/test/session/host-session.test.ts
