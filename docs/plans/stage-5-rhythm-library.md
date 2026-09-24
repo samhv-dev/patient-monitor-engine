@@ -6981,7 +6981,7 @@ Acceptance test 1 (every rhythm's rate and regularity over 40 seeds), the engine
 - Consumes: everything above.
 - Produces: `ecgVocabulary(): EcgVocabulary { rhythms[{ id, group, rateRange, defaultRateBpm, rateDrives }], groups, modifiers, artefacts }`; index exports `mergeModifiers`, `validateModifiers`, `ecgVocabulary`, `EcgVocabulary`, `dominantHz`, `rms`, `welch`. The engine-level `vocabulary()` and `commandApplied` (brief §7.1/§7.3) stay with whoever owns engine.ts next (Stage 6) — they consume `ecgVocabulary()`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/library.test.ts` with exactly:
 
@@ -7083,13 +7083,13 @@ describe('engine integration', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/library.test.ts`
 
 Expected: FAIL — cannot resolve `src/l2/ecg/vocabulary.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/vocabulary.ts` with exactly:
 
@@ -7170,13 +7170,13 @@ export { dominantHz, rms, welch } from './util/dsp.ts';
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 -r typecheck && npx -y pnpm@9.15.9 test`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/l2/ecg/vocabulary.ts packages/engine-core/test/l2/ecg/s5/library.test.ts
