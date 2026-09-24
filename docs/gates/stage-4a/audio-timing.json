@@ -1,0 +1,280 @@
+[
+ {
+  "profile": "iec-style",
+  "level": 1,
+  "seconds": 24,
+  "pulses": 10,
+  "repeatS": 10,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   10,
+   10,
+   10
+  ],
+  "intervalsS": [
+   10,
+   10
+  ],
+  "firstBurstOnsetsS": [
+   0.002,
+   0.252,
+   0.502,
+   1.002,
+   1.252,
+   2.002,
+   2.252,
+   2.502,
+   3.002,
+   3.252
+  ],
+  "pulseDurS": [
+   0.146,
+   0.146,
+   0.146
+  ],
+  "riseMs": 11
+ },
+ {
+  "profile": "iec-style",
+  "level": 2,
+  "seconds": 42,
+  "pulses": 3,
+  "repeatS": 20,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   3,
+   3,
+   3
+  ],
+  "intervalsS": [
+   20,
+   20
+  ],
+  "firstBurstOnsetsS": [
+   0.001,
+   0.401,
+   0.801
+  ],
+  "pulseDurS": [
+   0.198,
+   0.198,
+   0.198
+  ],
+  "riseMs": 12
+ },
+ {
+  "profile": "iec-style",
+  "level": 3,
+  "seconds": 20,
+  "pulses": 1,
+  "repeatS": null,
+  "bursts": 1,
+  "pulsesPerBurst": [
+   1
+  ],
+  "intervalsS": [],
+  "firstBurstOnsetsS": [
+   0.001
+  ],
+  "pulseDurS": [
+   0.197
+  ],
+  "riseMs": 12
+ },
+ {
+  "profile": "iec-style",
+  "level": 3,
+  "seconds": 20,
+  "skin": "philips-like",
+  "pulses": 2,
+  "repeatS": null,
+  "bursts": 1,
+  "pulsesPerBurst": [
+   2
+  ],
+  "intervalsS": [],
+  "firstBurstOnsetsS": [
+   0.001,
+   0.401
+  ],
+  "pulseDurS": [
+   0.197,
+   0.197
+  ],
+  "riseMs": 12
+ },
+ {
+  "profile": "iec-style",
+  "level": 1,
+  "seconds": 34,
+  "skin": "zoll-like",
+  "pulses": 10,
+  "repeatS": 15,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   10,
+   10,
+   10
+  ],
+  "intervalsS": [
+   15,
+   15
+  ],
+  "firstBurstOnsetsS": [
+   0.002,
+   0.252,
+   0.502,
+   1.002,
+   1.252,
+   2.002,
+   2.252,
+   2.502,
+   3.002,
+   3.252
+  ],
+  "pulseDurS": [
+   0.146,
+   0.146,
+   0.146
+  ],
+  "riseMs": 11
+ },
+ {
+  "profile": "saadat",
+  "level": 1,
+  "seconds": 22,
+  "pulses": 5,
+  "repeatS": 10,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   5,
+   5,
+   5
+  ],
+  "intervalsS": [
+   10,
+   10
+  ],
+  "firstBurstOnsetsS": [
+   0.002,
+   0.252,
+   0.502,
+   0.952,
+   1.202
+  ],
+  "pulseDurS": [
+   0.146,
+   0.146,
+   0.146
+  ],
+  "riseMs": 11
+ },
+ {
+  "profile": "saadat",
+  "level": 2,
+  "seconds": 42,
+  "pulses": 3,
+  "repeatS": 20,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   3,
+   3,
+   3
+  ],
+  "intervalsS": [
+   20,
+   20
+  ],
+  "firstBurstOnsetsS": [
+   0.002,
+   0.252,
+   0.502
+  ],
+  "pulseDurS": [
+   0.146,
+   0.146,
+   0.146
+  ],
+  "riseMs": 11
+ },
+ {
+  "profile": "saadat",
+  "level": 3,
+  "seconds": 62,
+  "pulses": 1,
+  "repeatS": 30,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   1,
+   1,
+   1
+  ],
+  "intervalsS": [
+   30,
+   30
+  ],
+  "firstBurstOnsetsS": [
+   0.002
+  ],
+  "pulseDurS": [
+   0.146,
+   0.146,
+   0.146
+  ],
+  "riseMs": 11
+ },
+ {
+  "profile": "traditional",
+  "level": 1,
+  "seconds": 3.5,
+  "pulses": 1,
+  "repeatS": 1,
+  "bursts": 4,
+  "pulsesPerBurst": [
+   1,
+   1,
+   1,
+   1
+  ],
+  "intervalsS": [
+   1,
+   1,
+   1
+  ],
+  "firstBurstOnsetsS": [
+   0.001
+  ],
+  "pulseDurS": [
+   0.198,
+   0.198,
+   0.198
+  ],
+  "riseMs": 13
+ },
+ {
+  "profile": "traditional",
+  "level": 2,
+  "seconds": 5,
+  "pulses": 1,
+  "repeatS": 2,
+  "bursts": 3,
+  "pulsesPerBurst": [
+   1,
+   1,
+   1
+  ],
+  "intervalsS": [
+   2,
+   2
+  ],
+  "firstBurstOnsetsS": [
+   0.001
+  ],
+  "pulseDurS": [
+   0.198,
+   0.198,
+   0.198
+  ],
+  "riseMs": 12
+ }
+]

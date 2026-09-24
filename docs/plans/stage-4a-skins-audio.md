@@ -5011,7 +5011,7 @@ git commit -m "feat(demo): stage4a skin preview page with playable alarm profile
 
 The audio test renders each case with `OfflineAudioContext` in the page, detects pulse onsets from the samples, and fails unless every burst has the profile's pulse count, every inter-burst interval is within 5 ms of the data, a non-repeating level sounds once, and the rise time is ≥ 10 ms (BUILD-PLAN Stage 4 acceptance 1–2, for the sound side). Render lengths are chosen so the last burst is complete.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Create `apps/demo/e2e/stage4a-skins.e2e.ts`:
 
@@ -5102,14 +5102,14 @@ test('alarm profiles: rendered pulse timing matches the data (OfflineAudioContex
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage4a-skins.e2e.ts`
 Expected: `2 passed`; `docs/gates/stage-4a/` holds 11 PNGs and `audio-timing.json` whose numbers match the "Prototype evidence" table at the top of this plan.
 
-- [ ] **Step 3: Look at every PNG** (open them). Check: saadat-like green ECG / magenta pleth / salmon IBP1 / light-blue IBP2 / yellow resp, grey idle bar, crossed bells in every tile and the header; iran-icu-as-found with two `II  X2  MONITOR` lanes and the date `1402/04/04`; philips-like with `***`, `**`, `*` bars and `II  M`; the projector and grid themes readable on white. Record anything wrong in the gate note instead of silently fixing data.
+- [x] **Step 3: Look at every PNG** (open them). Check: saadat-like green ECG / magenta pleth / salmon IBP1 / light-blue IBP2 / yellow resp, grey idle bar, crossed bells in every tile and the header; iran-icu-as-found with two `II  X2  MONITOR` lanes and the date `1402/04/04`; philips-like with `***`, `**`, `*` bars and `II  M`; the projector and grid themes readable on white. Record anything wrong in the gate note instead of silently fixing data.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage4a-skins.e2e.ts docs/gates/stage-4a
