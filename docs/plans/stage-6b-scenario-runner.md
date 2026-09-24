@@ -2124,7 +2124,7 @@ git commit -m "feat(controller): ScenarioView rebuilt from the wire; scenario li
 **Interfaces:**
 - Produces: `type ScenarioHookResult = DispatchResult & { applied?: ScenarioCommand }`; `ScenarioHook` now returns it; `HostSessionOptions.welcomeEvents?: () => WireEvent[]`; `HostSession.submit(cmd: WireCommand): Promise<DispatchResult>` (same path as a remote command — stage groups, sticky, stats, `commandApplied` — minus the ack; serialised on the same chain as incoming messages); `HostSession.publish(e: WireEvent)`. With a hook, every scenario action goes to it; accepted `load` and `pause|resume` become sticky (`scenario.load`, `scenario.run`), `bookmark` stays sticky as in 6a, and an accepted `restoreBookmark` makes the host say hello again (viewers resync) as in 6a.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // HostSession ↔ scenario hook (Stage 6b): every scenario action goes to the hook when there is one; `applied`
@@ -2205,12 +2205,12 @@ describe('HostSession scenario hook', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/host-scenario-hook.test.ts`
 Expected: FAIL — the first test sees `seen = []` (6a handles bookmarks before the hook) and `hs.submit is not a function`.
 
-- [ ] **Step 3: Edit `host-session.ts`**
+- [x] **Step 3: Edit `host-session.ts`**
 
 In `packages/controller/src/session/host-session.ts`:
 
@@ -2328,7 +2328,7 @@ with:
   private pruneGroups(): void {
 ```
 
-- [ ] **Step 4: Run the new test and the whole controller suite**
+- [x] **Step 4: Run the new test and the whole controller suite**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/host-scenario-hook.test.ts
@@ -2337,7 +2337,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller test
 ```
 Expected: `4 passed`; typecheck exit 0; `Tests  156 passed (156)` (every 6a test still passes — a host without a hook behaves exactly as before).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/session/host-session.ts packages/controller/test/session/host-scenario-hook.test.ts
