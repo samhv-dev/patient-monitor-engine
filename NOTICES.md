@@ -18,3 +18,4 @@ This file lists every borrowed code file, data table, recorded template, dataset
 | N-007 | ws 8.21.3 (relay runtime, Node only) | https://github.com/websockets/ws | MIT | WebSocket server for `packages/controller/relay`; never bundled into browser builds | 2026-09-24 |
 | N-008 | @types/ws 8.18.1 (build only) | https://github.com/DefinitelyTyped/DefinitelyTyped | MIT | Type definitions for ws | 2026-09-24 |
 | N-009 | happy-dom 20.14.5 (test only) | https://github.com/capricorn86/happy-dom | MIT | DOM for the panel/remote unit tests; not redistributed | 2026-09-24 |
+| N-010 | ajv 8.20.0 (runtime, `@pme/skins/validate` only) | https://github.com/ajv-validator/ajv | MIT | JSON Schema validation of skins, themes and presets; not imported by the main `@pme/skins` entry or the IIFE | 2026-09-25 |
