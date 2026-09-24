@@ -53,19 +53,19 @@
 - Consumes: nothing.
 - Produces: the first commit on `main`; every later task commits on top of it.
 
-- [ ] **Step 1: Confirm the repo state**
+- [x] **Step 1: Confirm the repo state**
 
 Run: `git status --short && git branch --show-current`
 Expected: `?? NOTICES.md`, `?? README.md`, `?? docs/` and branch `main` ("No commits yet" if you run plain `git status`). If the branch is not `main`, run `git checkout -b main`.
 
-- [ ] **Step 2: Commit the documents**
+- [x] **Step 2: Commit the documents**
 
 ```bash
 git add README.md NOTICES.md docs/
 git commit -m "docs: design brief, build plan, stage 0–1 task plans, NOTICES" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Run: `git log --oneline && git status --short`
 Expected: one commit; clean working tree.
@@ -84,7 +84,7 @@ Expected: one commit; clean working tree.
 - Consumes: nothing.
 - Produces: every package exports `export const version = '0.0.0'`. Root scripts `pnpm typecheck` (= `pnpm -r typecheck`), `pnpm test` (= `pnpm -r test`), `pnpm build` (= `pnpm -r build`). Each package script: `typecheck` = `tsc -p tsconfig.json`, `test` = `vitest run --passWithNoTests`, `build` = `vite build`. `@pme/renderer`, `@pme/controller` and `@pme/validation` depend on `@pme/engine-core` (`workspace:*`).
 
-- [ ] **Step 1: Write the root files**
+- [x] **Step 1: Write the root files**
 
 `package.json`:
 ```json
@@ -164,7 +164,7 @@ test-results/
 packages/validation/datasets/cache/
 ```
 
-- [ ] **Step 2: Write the six package skeletons with one script**
+- [x] **Step 2: Write the six package skeletons with one script**
 
 Run this from the repo root (it writes 30 files; read it before running):
 
@@ -234,7 +234,7 @@ mk skins ""
 mk validation "$DEP"
 ```
 
-- [ ] **Step 3: Write the demo app skeleton**
+- [x] **Step 3: Write the demo app skeleton**
 
 `apps/demo/package.json`:
 ```json
@@ -308,7 +308,7 @@ export default defineConfig({
 </html>
 ```
 
-- [ ] **Step 4: Install and run the version tests (they must pass)**
+- [x] **Step 4: Install and run the version tests (they must pass)**
 
 Run: `pnpm install`
 Expected: ends with `Done`, creates `pnpm-lock.yaml`, prints `+ typescript 5.9.3`, `+ vite 6.4.3`, `+ vitest 3.2.7`.
@@ -316,11 +316,11 @@ Expected: ends with `Done`, creates `pnpm-lock.yaml`, prints `+ typescript 5.9.3
 Run: `pnpm typecheck && pnpm test`
 Expected: `Scope: 7 of 8 workspace projects`; every package `typecheck: Done`; six packages report `Tests  1 passed (1)`; `apps/demo` reports "No test files found, exiting with code 0".
 
-- [ ] **Step 5: Break one to prove the tests run**
+- [x] **Step 5: Break one to prove the tests run**
 
 Temporarily change `packages/skins/src/index.ts` to `export const version = '0.0.1';`, run `pnpm --filter @pme/skins test`, expect `FAIL ... expected '0.0.1' to be '0.0.0'`, then restore `'0.0.0'` and re-run to PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json vitest.workspace.ts .gitignore packages apps
