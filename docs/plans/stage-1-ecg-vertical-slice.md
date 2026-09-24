@@ -4037,7 +4037,7 @@ git commit -m "feat(renderer): sweep lane with erase gap, wrap-safe strokes and 
 - Consumes: `createEngine`, `Clock`, `Command`, `DispatchResult`, `EngineEvent`, `EngineOptions`, `LeadId`, `MonitorEngine` from `@pme/engine-core`; `SweepLane` (Task 16); `DEFAULT_PX_PER_MM` (Stage 0); `FakeCtx` (Task 16, tests).
 - Produces: `protocol.ts`: `interface Size { cssW; cssH; dpr }`, `interface CoreOptions { engine?; lanes?: LeadId[]; pxPerMm?; fps?: 60|30 }`, `interface ClockAnchor { simT; epochMs; timeScale }`, `type ToWorker` (`init`, `frame`, `catchUp`, `command`, `resize`, `timeScale`, `pause`, `resume`, `fps`, `calibrate`, `visible`), `type FromWorker` (`ready`, `events`, `result`, `error`). `monitor-core.ts`: `THEME`, `LABEL_W = 56`, `interface CanvasTarget { width; height }`, `class MonitorCore { readonly engine; readonly clock; constructor(canvas, ctx, size, opts, post(anchor, events)); command(cmd): DispatchResult; resize(size); calibrate(pxPerMm); setFps(fps); setVisible(v); frame(epochMs); catchUp(epochMs) }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/renderer/test/monitor-core.test.ts`:
 ```ts
@@ -4108,12 +4108,12 @@ describe('MonitorCore hidden-tab catch-up', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/monitor-core`
 Expected: FAIL — cannot load `monitor-core.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/protocol.ts`:
 ```ts
@@ -4336,12 +4336,12 @@ export class MonitorCore {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/monitor-core && pnpm --filter @pme/renderer typecheck`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer
