@@ -3951,7 +3951,7 @@ git commit -m "feat(engine-core): wire the haemodynamic pipeline, 125 Hz buffers
 
 These tests exercise behaviour built in Tasks 3–13, so they are expected to PASS on the first run. If one fails, do NOT loosen a tolerance: re-check that the constants in `params.ts`, `tracker.ts` and `nibp.ts` match this plan exactly, then report the measured value in the gate note.
 
-- [ ] **Step 1: Write the acceptance file**
+- [x] **Step 1: Write the acceptance file**
 
 `packages/engine-core/test/engine/hemo-acceptance.test.ts`:
 
@@ -4233,12 +4233,12 @@ describe('Stage 2 acceptance (engine level)', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests 1–3**
+- [x] **Step 2: Run tests 1–3**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts -t "^Stage 2 acceptance \(engine level\) [123]\."`
 Expected: PASS (3 tests). Record in the gate note: R→radial foot ≈ 180/168/154 ms, R→pleth foot ≈ 258/254/233 ms, the notch within ±20 ms of R + PEP + LVET + 85 ms; displayed MAP within 1 mmHg of the waveform mean; ≈ 92/52 ten beats after the ramp.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/hemo-acceptance.test.ts
