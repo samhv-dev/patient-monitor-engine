@@ -4644,7 +4644,7 @@ git commit -m "feat(controller): panel reveal — i, Ctrl+Shift+I, 5-tap corner,
 - Consumes: controls/staging (16), reveal (17), `ControllerSession` (13), vocabulary (11); tests use `HostSession` (12), `manualHost` (12), in-process hub (4).
 - Produces: `PANEL_CSS`, `injectStyles(doc)`; `interface ControlsHost { submit(c: CommandInput, key: string): void }`; `interface ControlsView { update(state, measured); el }`; `renderControls(parent, vocab, host, { mode? }): ControlsView` (sections Rhythm / Targets / Modifiers / Device, one row per vocabulary entry: `[data-var]`, `[data-modifier]`, `[data-device]`; buttons carry `data-action`); `interface PanelOptions { session; vocabulary; sound?: { enable(): Promise<void> }; startOpen?; reveal?; win? }`; `interface PanelHandle { el; isOpen; open(); close(); toggle(); destroy() }`; `mountInstructorPanel(parent, o): PanelHandle` (drawer `aside.pme-drawer[data-open]`, tabs Controls/Log/Bookmarks, stage bar with Commit/Discard, optional Sound button). Plain DOM, ≥ 36–44 px touch targets for iPad.
 
-- [ ] **Step 1: Write the failing DOM test** (runs under happy-dom via the first-line pragma)
+- [x] **Step 1: Write the failing DOM test** (runs under happy-dom via the first-line pragma)
 
 `packages/controller/test/panel/panel.dom.test.ts`:
 ```ts
@@ -4737,12 +4737,12 @@ describe('instructor panel (DOM)', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/panel.dom.test.ts`
 Expected: FAIL — cannot load `../../src/panel/panel.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/panel/styles.ts`:
 ```ts
@@ -5134,12 +5134,12 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: panel.dom 5, controls 5, reveal 3 passed; typecheck exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/panel/styles.ts packages/controller/src/panel/render-controls.ts packages/controller/src/panel/panel.ts packages/controller/test/panel/panel.dom.test.ts
