@@ -52,6 +52,31 @@ describe('MonitorCore', () => {
   });
 });
 
+describe('MonitorCore lane changes (review L3)', () => {
+  const laneClears = (ctx: FakeCtx) =>
+    ctx.calls.filter((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[2] === 1000).map((c) => c.args[1]);
+
+  it('a filter change redraws only the chrome and keeps every trace', () => {
+    const { core, ctx } = make();
+    for (let f = 0; f <= 120; f++) core.frame(5000 + (f * 1000) / 60);
+    ctx.clear();
+    ctx.texts = [];
+    core.command({ id: 'f', issuedBy: 't', type: 'device', action: { device: 'ecg', action: 'filter', value: 'diagnostic' } });
+    expect(laneClears(ctx)).toEqual([]);
+    expect(ctx.texts).toEqual(['II  D', 'V5  D']);
+  });
+
+  it('a lead change clears only that lane', () => {
+    const { core, ctx } = make();
+    for (let f = 0; f <= 120; f++) core.frame(5000 + (f * 1000) / 60);
+    ctx.clear();
+    ctx.texts = [];
+    core.command({ id: 'l', issuedBy: 't', type: 'device', action: { device: 'ecg', action: 'lead', value: 'V1', lane: 1 } });
+    expect(laneClears(ctx)).toEqual([150]);
+    expect(ctx.texts).toEqual(['V1  M']);
+  });
+});
+
 describe('MonitorCore hidden-tab catch-up', () => {
   it('advances by the full hidden time in bulk, without the 250 ms clamp', () => {
     const { core } = make();

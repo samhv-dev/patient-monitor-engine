@@ -63,9 +63,16 @@ export class MonitorCore {
   command(cmd: Command): DispatchResult {
     const r = this.engine.dispatch(cmd);
     if (r.accepted && cmd.type === 'device' && cmd.action.device === 'ecg') {
-      if (cmd.action.action === 'filter') this.filterLetter = cmd.action.value === 'diagnostic' ? 'D' : 'M';
-      if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number') this.leads[cmd.action.lane] = cmd.action.value as LeadId;
-      this.layout();
+      // Only what changed is redrawn: a filter change touches the chrome, a lead change one lane (review L3).
+      if (cmd.action.action === 'filter') {
+        this.filterLetter = cmd.action.value === 'diagnostic' ? 'D' : 'M';
+        this.drawChrome(this.leads.map((_, i) => i));
+      } else if (cmd.action.action === 'lead' && typeof cmd.action.lane === 'number' && cmd.action.lane < this.lanes.length) {
+        const lane = cmd.action.lane;
+        this.leads[lane] = cmd.action.value as LeadId;
+        this.lanes[lane]?.reset(this.ctx);
+        this.drawChrome([lane]);
+      } else this.layout();
     }
     return r;
   }
@@ -143,18 +150,23 @@ export class MonitorCore {
       lane.reset(this.ctx, dpr);
       return lane;
     });
-    this.drawChrome();
+    this.drawChrome(this.leads.map((_, i) => i));
   }
 
-  /** Static chrome, drawn once per layout (brief §3.5): lead label, filter letter, 1 mV calibration bar. */
-  private drawChrome(): void {
+  /** Static chrome (brief §3.5): lead label, filter letter, 1 mV calibration bar, for the given lanes. */
+  private drawChrome(lanes: number[]): void {
     const ctx = this.ctx;
     const h = this.size.cssH / this.leads.length;
+    for (const i of lanes) {
+      ctx.fillStyle = THEME.background;
+      ctx.fillRect(0, i * h, LABEL_W, h);
+    }
     ctx.fillStyle = THEME.label;
     ctx.strokeStyle = THEME.label;
     ctx.font = '14px system-ui, sans-serif';
     ctx.textBaseline = 'top';
-    this.leads.forEach((lead, i) => {
+    lanes.forEach((i) => {
+      const lead = this.leads[i] as LeadId;
       const y0 = i * h;
       ctx.fillText(`${LEAD_LABEL[lead]}  ${this.filterLetter}`, 6, y0 + 6);
       const base = y0 + 0.6 * h;
