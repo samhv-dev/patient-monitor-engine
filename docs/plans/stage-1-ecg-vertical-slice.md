@@ -3546,7 +3546,7 @@ git commit -m "test(engine-core): commands, look-ahead invalidation, snapshot/re
 - Consumes: `sweepPxPerS`, `sweepX` (Stage 0 `calibration.ts`).
 - Produces: `interface Column { col; first; last; min; max; maxIndex; minIndex }`, `columnOf(n, rate, pxPerS, dpr)`, `decimateMinMax(samples, count, startIndex, rate, pxPerS, dpr, out?): Column[]`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/renderer/test/decimate.test.ts`:
 ```ts
@@ -3596,12 +3596,12 @@ describe('decimate + sweep maths (acceptance 12)', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/decimate`
 Expected: FAIL — cannot load `decimate.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/decimate.ts`:
 ```ts
@@ -3663,12 +3663,12 @@ export function decimateMinMax(
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/renderer exec vitest run test/decimate`
 Expected: PASS, 3 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer
