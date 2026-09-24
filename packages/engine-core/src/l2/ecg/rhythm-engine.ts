@@ -16,6 +16,7 @@ import { atrialRate, fireJunction, flutterRatio, junctionSpontT, onAtrial } from
 import { onFocus } from './foci.ts';
 import { BASE_SV_ML, kRhythm } from './mech.ts';
 import { applyMorphology } from './morphology/index.ts';
+import { pacerClock } from './pacing.ts';
 import { HOOKS, NEVER, clamp, rhythmRate, type FWave, type PendingV, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import { uniform, type Sfc32State } from '../../rng/sfc32.ts';
 
@@ -222,7 +223,7 @@ export interface ClockSource {
   next(st: RhythmState, ctx: RhythmCtx): number;
   fire(st: RhythmState, t: number, ctx: RhythmCtx): void;
 }
-const EXTRA_CLOCKS: ClockSource[] = [];
+const EXTRA_CLOCKS: ClockSource[] = [pacerClock];
 
 HOOKS.activate = activateVentricle;
 HOOKS.apply = applyRhythm;

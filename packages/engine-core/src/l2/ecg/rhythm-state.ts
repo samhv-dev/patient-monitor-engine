@@ -75,6 +75,8 @@ export interface RhythmState {
   records: EngineEvent[];
   beatSeq: number;
   pendingSwitch: { id: RhythmId; opts: RhythmOpts; respectRefractory: boolean } | null;
+  /** Implanted pacemaker timers (pacing.ts); undefined when the rhythm is not paced. */
+  pacer?: { nextA: number; nextV: number } | undefined;
 }
 
 export interface RhythmCtx {
