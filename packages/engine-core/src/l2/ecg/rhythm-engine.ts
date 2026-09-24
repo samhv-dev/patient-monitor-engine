@@ -56,6 +56,12 @@ const PVC_COUPLING_MIN = 0.55; // PVC coupling 40–80% of RR (brief §5); Stage
 const PVC_COUPLING_SPAN = 0.1;
 const PVC_NO_EJECTION_BELOW = 0.45; // no ejection at coupling < ~45% of RR (brief §4.8)
 const REFRACTORY_QT_FRACTION = 0.8; // refractoryUntil = t + QRS + 0.8·QT (brief §4.1) [ENG]
+/**
+ * AV-node effective refractory period, P to P (review H1: "≈250–300 ms"; the low end, so 1:1 conduction holds up
+ * to 240/min, above sinusTachy's 220 ceiling even with HRV) [ENG]. Supraventricular impulses are filtered HERE,
+ * not by ventricular refractoriness: a conducted beat after a conducted beat is never concealed by the ventricle.
+ */
+const AV_NODE_ERP_S = 0.25;
 const QRS_AMP_RESP_MOD = 0.08; // respiration modulates R by ±5–15% (brief §4.1)
 const BASE_SV_ML = 70; // placeholder SV until the Stage 2 haemodynamic core [ENG]
 
@@ -94,6 +100,10 @@ export interface RhythmState {
   focusNextT: number;
   escapeNextT: number;
   refractoryUntil: number;
+  /** The AV node conducts no sinus P before this time (AV_NODE_ERP_S after the last conducted P). */
+  avRefUntil: number;
+  /** Was the last ventricular activation a conducted supraventricular beat (not a PVC/escape/focus beat)? */
+  lastConducted: boolean;
   lastVT: number;
   lastSupraT: number;
   lastWasPvc: boolean;
@@ -125,6 +135,8 @@ export function createRhythmState(id: RhythmId, opts: RhythmOpts, t0: number, ct
     focusNextT: NEVER,
     escapeNextT: NEVER,
     refractoryUntil: -NEVER,
+    avRefUntil: -NEVER,
+    lastConducted: false,
     lastVT: -NEVER,
     lastSupraT: -NEVER,
     lastWasPvc: false,
@@ -313,7 +325,15 @@ function onAtrial(st: RhythmState, t: number, ctx: RhythmCtx): void {
     }
     st.atria.groupPos = (pos + 1) % n;
   }
-  if (pr !== null) pushPending(st, { t: t + pr / 1000, origin: 'sinus', template: 'narrow', prMs: pr, pvc: false, coupling: 0, bypass: false });
+  if (pr !== null) {
+    if (t < st.avRefUntil) pr = null; // AV node still refractory: blocked (review H1)
+    // After an ectopic beat (PVC, escape) the ventricle may still be refractory: the P is concealed (brief §4.1).
+    else if (st.respectRefractory && !st.lastConducted && t + pr / 1000 < st.refractoryUntil) pr = null;
+  }
+  if (pr !== null) {
+    st.avRefUntil = t + AV_NODE_ERP_S;
+    pushPending(st, { t: t + pr / 1000, origin: 'sinus', template: 'narrow', prMs: pr, pvc: false, coupling: 0, bypass: false });
+  }
   st.records.push({ type: 'atrial', t, kind: 'p', conducted: pr !== null });
   st.atria.nextT = t + sinusRR(60 / rate, t, ctx.hrv, ctx.mods, ctx.rng.hrv);
 }
@@ -341,11 +361,19 @@ function kRhythm(st: RhythmState, p: PendingV, rr: number): number {
   return Math.max(0, k);
 }
 
+/** A beat conducted from the atria (sinus P, flutter F) rather than a ventricular or junctional pacemaker. */
+function isConducted(p: PendingV): boolean {
+  return !p.pvc && (p.origin === 'sinus' || p.origin === 'atrial');
+}
+
 function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolean {
   const t = p.t;
   // Concealed if the ventricle is refractory (brief §4.1). Primary pacemakers (p.bypass) are exempt: the
-  // VT/AVNRT focus and the AF junction already set their own cycle length [ENG].
-  if (st.respectRefractory && !p.bypass && t < st.refractoryUntil) return false;
+  // VT/AVNRT focus and the AF junction already set their own cycle length [ENG]. A conducted beat that follows a
+  // conducted beat is exempt too: the AV node (AV_NODE_ERP_S) is what limits supraventricular conduction, and
+  // letting ventricular refractoriness do it locked sinus above ~180/min into 2:1 (review H1).
+  const afterConducted = isConducted(p) && st.lastConducted;
+  if (st.respectRefractory && !p.bypass && !afterConducted && t < st.refractoryUntil) return false;
   const rate = rhythmRate(st, t, ctx);
   const rr = st.lastVT > -NEVER / 2 ? t - st.lastVT : 60 / Math.max(30, rate || 60);
   const qt = qtFridericiaMs(clamp(rr, 0.25, 2), ctx.mods.qtc);
@@ -387,6 +415,7 @@ function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolea
     }
   }
   st.lastWasPvc = p.pvc;
+  st.lastConducted = isConducted(p);
 
   if (st.pendingSwitch) {
     const sw = st.pendingSwitch;
