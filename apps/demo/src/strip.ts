@@ -11,6 +11,8 @@ export interface StripSpec {
   seed?: number;
   /** Seconds of sim time to run before the 10 s window starts (lets HRV/filters settle; VF evolves). */
   warmupS?: number;
+  /** ECG filter mode (default monitor: 0.5–40 Hz + mains notch, which removes mains interference entirely). */
+  filter?: 'monitor' | 'diagnostic';
 }
 
 export const STRIP_S = 10;
@@ -25,6 +27,7 @@ export function renderStrip(canvas: HTMLCanvasElement, spec: StripSpec, label: s
   const send = (c: Record<string, unknown>) => e.dispatch({ id: `s${++n}`, issuedBy: 'strip', ...c } as Command);
   send({ type: 'device', action: { device: 'ecg', action: 'lead', value: leads[0], lane: 0 } });
   send({ type: 'device', action: { device: 'ecg', action: 'lead', value: leads[1], lane: 1 } });
+  if (spec.filter) send({ type: 'device', action: { device: 'ecg', action: 'filter', value: spec.filter } });
   if (spec.mods) send({ type: 'setModifiers', modifiers: spec.mods });
   const markers: number[] = [];
   e.on((ev: EngineEvent) => {
