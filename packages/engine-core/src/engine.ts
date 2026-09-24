@@ -314,13 +314,14 @@ class Engine implements MonitorEngine {
     const ctx = rhythmCtx(ps);
     planUntil(ps.rhythm, end / ECG_RATE + PLAN_LEAD_S, ctx);
     ps.rhythm.events = pruneEvents(ps.rhythm.events, ps.n / ECG_RATE);
+    ps.rhythm.fwaves = ps.rhythm.fwaves.filter((f) => f.end >= ps.n / ECG_RATE);
     const sections = this.filter(ps.filterMode);
     const bx = this.bufs.get('vcgX') as RingBuffer;
     const by = this.bufs.get('vcgY') as RingBuffer;
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const laneBufs = ps.lanes.map((l) => this.bufs.get(l) as RingBuffer);
     generateVcg(
-      { events: ps.rhythm.events, fwave: ps.rhythm.fwave, hrv: ps.hrv, noiseLevel: ps.mods.artefact.noise, noise: ps.rng.noise },
+      { events: ps.rhythm.events, fwaves: ps.rhythm.fwaves, hrv: ps.hrv, noiseLevel: ps.mods.artefact.noise, noise: ps.rng.noise },
       ps.n,
       end,
       (n, x, y, z) => {

@@ -28,11 +28,59 @@ export const WIDE_VEC: Readonly<Record<'R' | 'S' | 'T', Vec3>> = {
 /** Retrograde P (AVNRT), negative in II, buried at the end of the QRS [ENG, research 03 §1.5]. */
 export const RETRO_P_VEC: Vec3 = [-0.05, -0.12, 0.02];
 
-/** Flutter F-wave: sharp negative limb then slow recovery; negative sawtooth in II/III/aVF [ENG, 03 §1.5]. */
-export const FLUTTER_VEC: Readonly<Record<'down' | 'up', Vec3>> = {
-  down: [-0.03, -0.18, 0.02],
-  up: [0.01, 0.07, -0.01],
-};
+/**
+ * Flutter F-wave direction (lead II gain 1): large in II/III/aVF, small in I, small upright in V1 [ENG, 03 §1.5].
+ * Research 03 §1.5 (rhythm table): typical flutter shows a continuous negative "sawtooth" in II/III/aVF, ~0.1–0.3 mV,
+ * with no isoelectric line (Gate 1 ruling R18).
+ */
+export const FLUTTER_DIR: Vec3 = [0.1 / 0.996, 0.9 / 0.996, -0.1 / 0.996];
+/** F-wave peak-to-peak in lead II, mV: the top of research 03 §1.5's 0.1–0.3 mV (the Gate 1 trace was too faint). */
+export const FLUTTER_PP_MV = 0.3;
+/** Fraction of each flutter cycle spent on the slow descending ramp; the rest is the fast return [ENG, review §4]. */
+export const FLUTTER_FALL_FRACTION = 0.7;
+const FLUTTER_HARMONICS = 4; // first 4 Fourier terms of the sawtooth (review §4) [ENG]
+
+/**
+ * Fourier series of an asymmetric triangle (sawtooth) of period 1 that falls linearly from +1 at φ = 0 to −1 at
+ * φ = d and rises back to +1 at φ = 1 (derived by integrating the series of its piecewise-constant derivative):
+ *   x(φ) = −Σ_k c_k · sin(2πk(φ − d/2)),   c_k = 2·sin(πkd) / (π²k²·d·(1 − d)).
+ */
+function sawtoothCoefficient(k: number, d: number): number {
+  return (2 * Math.sin(Math.PI * k * d)) / (Math.PI * Math.PI * k * k * d * (1 - d));
+}
+
+/** Peak-to-peak of the truncated series (so the drawn wave is scaled to FLUTTER_PP_MV exactly). */
+const FLUTTER_SERIES_PP = (() => {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let i = 0; i < 2000; i++) {
+    const phi = i / 2000;
+    let x = 0;
+    for (let k = 1; k <= FLUTTER_HARMONICS; k++) x -= sawtoothCoefficient(k, FLUTTER_FALL_FRACTION) * Math.sin(2 * Math.PI * k * (phi - FLUTTER_FALL_FRACTION / 2));
+    lo = Math.min(lo, x);
+    hi = Math.max(hi, x);
+  }
+  return hi - lo;
+})();
+
+/**
+ * Flutter F waves as a sum of sinusoids sin(2π·f·s + ph)·a (absolute time s), phase-locked so that each F event
+ * (at anchor + k·cycle) is the top of a cycle: a slow descent over 70% of the cycle, then a fast return.
+ */
+export function flutterHarmonics(anchor: number, atrialRateBpm: number): { f: number[]; ph: number[]; a: number[] } {
+  const f0 = atrialRateBpm / 60;
+  const d = FLUTTER_FALL_FRACTION;
+  const scale = FLUTTER_PP_MV / FLUTTER_SERIES_PP;
+  const f: number[] = [];
+  const ph: number[] = [];
+  const a: number[] = [];
+  for (let k = 1; k <= FLUTTER_HARMONICS; k++) {
+    f.push(k * f0);
+    ph.push(-2 * Math.PI * k * f0 * anchor - Math.PI * k * d + Math.PI); // −sin(θ) = sin(θ + π)
+    a.push(scale * sawtoothCoefficient(k, d));
+  }
+  return { f, ph, a };
+}
 
 /** AF f-wave VCG direction (lead II gain ≈ 1) [ENG]. */
 export const FWAVE_DIR: Vec3 = [0.2, 0.9, -0.35];
@@ -60,14 +108,6 @@ export type TemplateId = 'narrow' | 'wide' | 'narrowRetroP';
 /** P wave kernels relative to P onset (the atrial event time): peak 45 ms after onset. */
 export function pWaveKernels(scale = 1): number[] {
   return kernel(0.045, 0.022, 0.022, VEC.P, WAVE.P, scale);
-}
-
-/** Flutter wave kernels relative to the flutter event time [ENG]. */
-export function flutterKernels(): number[] {
-  return [
-    ...kernel(0.04, 0.018, 0.018, FLUTTER_VEC.down, WAVE.F),
-    ...kernel(0.12, 0.045, 0.045, FLUTTER_VEC.up, WAVE.F),
-  ];
 }
 
 /** Narrow (supraventricular) QRS-T relative to QRS onset. rScale modulates QRS amplitude (respiration). */

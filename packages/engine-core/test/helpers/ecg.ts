@@ -32,7 +32,7 @@ export function detectOn(
   const detections: number[] = [];
   const latencies: number[] = [];
   generateVcg(
-    { events: st.events, fwave: st.fwave, hrv: ctx.hrv, noiseLevel: mods.artefact.noise, noise: rng.noise },
+    { events: st.events, fwaves: st.fwaves, hrv: ctx.hrv, noiseLevel: mods.artefact.noise, noise: rng.noise },
     0,
     seconds * 500,
     (n, x, y, z) => {

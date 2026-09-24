@@ -15,8 +15,10 @@ import {
   type RhythmDef,
 } from './rhythms.ts';
 import {
+  FLUTTER_DIR,
+  FWAVE_DIR,
   fiducialS,
-  flutterKernels,
+  flutterHarmonics,
   kernelQtMs,
   pWaveKernels,
   templateKernels,
@@ -68,12 +70,17 @@ export interface PendingV {
   bypass: boolean;
 }
 
+/** A continuous atrial wave: Σ a_i·sin(2π·f_i·s + ph_i) along the VCG direction `dir`, between start and end. */
 export interface FWave {
+  kind: 'fib' | 'flutter';
   start: number;
   end: number;
   f: number[];
   ph: number[];
   a: number[];
+  dir: [number, number, number];
+  /** Flutter only: the atrial rate it was built for (bpm). */
+  rateBpm?: number;
 }
 
 export interface RhythmState {
@@ -90,7 +97,8 @@ export interface RhythmState {
   lastVT: number;
   lastSupraT: number;
   lastWasPvc: boolean;
-  fwave: FWave | null;
+  /** Active and recently ended atrial waves (the generator may still need an ended one for unrendered samples). */
+  fwaves: FWave[];
   events: EcgEvent[];
   records: EngineEvent[];
   beatSeq: number;
@@ -120,7 +128,7 @@ export function createRhythmState(id: RhythmId, opts: RhythmOpts, t0: number, ct
     lastVT: -NEVER,
     lastSupraT: -NEVER,
     lastWasPvc: false,
-    fwave: null,
+    fwaves: [],
     events: [],
     records: [],
     beatSeq: 0,
@@ -178,7 +186,12 @@ function drawFWave(t0: number, s: Sfc32State): FWave {
     ph.push(2 * Math.PI * uniform(s));
     a.push(0.03 + 0.02 * uniform(s));
   }
-  return { start: t0, end: NEVER, f, ph, a };
+  return { kind: 'fib', start: t0, end: NEVER, f, ph, a, dir: [...FWAVE_DIR] };
+}
+
+/** End every open atrial wave of this kind at t. */
+function endFWaves(st: RhythmState, kind: FWave['kind'], t: number): void {
+  for (const fw of st.fwaves) if (fw.kind === kind && fw.end >= NEVER) fw.end = t;
 }
 
 /**
@@ -196,7 +209,7 @@ export function applyRhythm(
   const prev = RHYTHMS[st.id];
   const def = RHYTHMS[id];
   const t0 = Math.max(at, st.planT);
-  const wasFib = st.id === 'afib';
+  const wasFib = prev.atria === 'fib';
   st.id = id;
   st.opts = { ...opts };
   st.respectRefractory = respectRefractory;
@@ -210,10 +223,21 @@ export function applyRhythm(
 
   // AF: f-waves and the integrate-and-fire junction
   if (def.atria === 'fib' && !wasFib) {
-    st.fwave = drawFWave(t0, ctx.rng.conduction);
+    st.fwaves.push(drawFWave(t0, ctx.rng.conduction));
     st.junction = { refUntil: t0, v: 0, vT: t0 };
   }
-  if (def.atria !== 'fib' && wasFib && st.fwave) st.fwave.end = t0;
+  if (def.atria !== 'fib' && wasFib) endFWaves(st, 'fib', t0);
+
+  // Flutter: a continuous sawtooth phase-locked to the F events (ruling R18); rebuilt only if the rate changes
+  if (def.atria === 'flutter') {
+    const rate = atrialRate(st, def, t0, ctx);
+    const open = st.fwaves.find((fw) => fw.kind === 'flutter' && fw.end >= NEVER);
+    if (!open || open.rateBpm !== rate) {
+      const anchor = st.atria.nextT;
+      endFWaves(st, 'flutter', anchor);
+      st.fwaves.push({ kind: 'flutter', start: anchor, end: NEVER, ...flutterHarmonics(anchor, rate), dir: [...FLUTTER_DIR], rateBpm: rate });
+    }
+  } else endFWaves(st, 'flutter', t0);
 
   // Ventricular focus (VT / AVNRT)
   st.focusNextT = def.focus === 'none' ? NEVER : Math.max(t0 + 0.05, st.refractoryUntil + 0.01);
@@ -262,7 +286,7 @@ function onAtrial(st: RhythmState, t: number, ctx: RhythmCtx): void {
     return;
   }
   if (def.atria === 'flutter') {
-    st.events.push(makeEvent(t, flutterKernels()));
+    // The F wave itself is the continuous sawtooth in st.fwaves; this event only drives conduction.
     const conducted = st.atria.groupPos === 0;
     st.atria.groupPos++;
     if (st.atria.groupPos >= st.atria.groupRatio) {
