@@ -1,6 +1,6 @@
 // mountMonitor (brief §7.6), Stage 1 minimal: two ECG lanes + HR tile, hard-coded dark theme, QRS beep.
 // Skins (setSkin), the instructor panel and transports arrive in Stages 4 and 6.
-import { playBeep, ToneScheduler, unlockAudio, type ToneLogEntry } from '@pme/audio';
+import { playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneLogEntry } from '@pme/audio';
 import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
 import { NumericTile } from './numerics-dom.ts';
 import type { ClockAnchor, Size } from './protocol.ts';
@@ -67,12 +67,23 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
 
   const listeners = new Set<(e: EngineEvent) => void>();
   let scheduler: ToneScheduler | null = null;
+  let audio: AudioOut | null = null;
+  let soundP: Promise<void> | null = null;
   const onEvents = (anchor: ClockAnchor, events: EngineEvent[]) => {
     scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale });
     for (const e of events) {
       if (e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
-      if (e.type === 'tone') scheduler?.enqueue({ t: e.t, id: e.id, kind: e.kind, ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}) });
-      if (e.type === 'toneCancel') scheduler?.cancelAfter(e.after);
+      if (e.type === 'tone') {
+        scheduler?.enqueue({
+          t: e.t, id: e.id, kind: e.kind,
+          ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
+          ...(e.refT !== undefined ? { refT: e.refT } : {}),
+        });
+      }
+      if (e.type === 'toneCancel') {
+        if (e.ids) scheduler?.cancel(e.ids);
+        else scheduler?.cancelAfter(e.after);
+      }
       for (const fn of listeners) fn(e);
     }
   };
@@ -115,15 +126,19 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       };
     },
     calibrate: (pxPerMm) => void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm })),
-    async enableSound() {
-      if (scheduler) return;
-      const out = await unlockAudio();
-      scheduler = new ToneScheduler({
-        audioNow: () => out.ctx.currentTime,
-        perfToAudio: out.perfToAudio,
-        play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880),
+    enableSound() {
+      // Idempotent: two quick taps must not create two AudioContexts (iOS caps live contexts; review M7).
+      soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
+        audio = out;
+        scheduler = new ToneScheduler({
+          audioNow: () => out.ctx.currentTime,
+          perfToAudio: out.perfToAudio,
+          outputLatency: out.outputLatency,
+          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880),
+        });
+        scheduler.start();
       });
-      scheduler.start();
+      return soundP;
     },
     setTimeScale: (k) => void hostP.then((h) => h.control({ type: 'timeScale', k })),
     pause: () => void hostP.then((h) => h.control({ type: 'pause' })),
@@ -133,6 +148,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       ro.disconnect();
       mq?.removeEventListener('change', onDpr);
       scheduler?.stop();
+      audio?.close();
       void hostP.then((h) => h.destroy());
       root.remove();
     },

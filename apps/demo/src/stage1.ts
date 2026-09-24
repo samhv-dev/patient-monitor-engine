@@ -69,7 +69,9 @@ soundBtn.addEventListener('click', () => {
   });
 });
 
-// Diagnostics for the Gate 1 checklist: render path, beep − R, memory.
+// Diagnostics for the Gate 1 checklist: render path, AUDIBLE beep − R (ruling R15), memory.
+// Audible beep − R = (tone sim time − true R) + the tone's audible lag behind its intended time. The scheduler maps
+// the intended time to the audio clock through getOutputTimestamp, so that lag includes the device output latency.
 const beats: number[] = [];
 let simT = 0;
 pm.on((e) => {
@@ -84,14 +86,17 @@ void pm.renderPath.then((p) => (path = p));
 setInterval(() => {
   const played = pm.audioLog.filter((l) => !l.dropped).slice(-20);
   const diffs = played
-    .map((l) => l.simT - beats.reduce((b, x) => (Math.abs(x - l.simT) < Math.abs(b - l.simT) ? x : b), -1e9))
-    .map((d) => d * 1000);
+    .map((l) => {
+      const r = beats.filter((b) => b <= l.simT).at(-1);
+      return r === undefined ? Number.NaN : (l.simT - r + l.lateS) * 1000;
+    })
+    .filter(Number.isFinite);
   const dropped = pm.audioLog.filter((l) => l.dropped).length;
   const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
   $('diag').textContent =
     `render path: ${path}   last beat t=${simT.toFixed(2)} s\n` +
     (diffs.length
-      ? `beep − R over last ${diffs.length}: min ${Math.min(...diffs).toFixed(0)} ms, mean ${(diffs.reduce((a, b) => a + b, 0) / diffs.length).toFixed(0)} ms, max ${Math.max(...diffs).toFixed(0)} ms; dropped tones ${dropped}\n`
-      : 'beep − R: enable sound to measure\n') +
+      ? `audible beep − R over last ${diffs.length}: min ${Math.min(...diffs).toFixed(0)} ms, mean ${(diffs.reduce((a, b) => a + b, 0) / diffs.length).toFixed(0)} ms, max ${Math.max(...diffs).toFixed(0)} ms; dropped tones ${dropped}\n`
+      : 'audible beep − R: enable sound to measure\n') +
     (mem ? `JS heap: ${(mem.usedJSHeapSize / 1048576).toFixed(1)} MB` : 'JS heap: (not exposed by this browser)');
 }, 1000);

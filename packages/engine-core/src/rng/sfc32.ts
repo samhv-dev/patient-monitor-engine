@@ -1,6 +1,10 @@
 // sfc32 ("Small Fast Counting", Chris Doty-Humphrey, PractRand) — a public-domain 128-bit-state PRNG.
 // Written from the algorithm description; no code copied. Brief §3.3: one stream per subsystem,
 // each seeded from hash(seed, name), so drawing from one stream never shifts another.
+// hash53 is bryc's cyrb53 (public domain, MIT fallback), vendored with NOTICES row N-006.
+import { hash53 } from '../vendor/cyrb53.ts';
+
+export { hash53 };
 
 /** The subsystem streams named in brief §3.3. */
 export type StreamName =
@@ -26,22 +30,6 @@ export const STREAM_NAMES: readonly StreamName[] = [
 
 /** Four uint32 words. Plain data so engine snapshots stay JSON-serialisable. */
 export type Sfc32State = [number, number, number, number];
-
-/** cyrb53-style string hash (public-domain construction), returning two independent 32-bit halves. */
-export function hash53(str: string, salt = 0): [number, number] {
-  let h1 = 0xdeadbeef ^ salt;
-  let h2 = 0x41c6ce57 ^ salt;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
-  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
-  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return [h1 >>> 0, h2 >>> 0];
-}
 
 /** Advance the state in place and return the next uint32. */
 export function sfc32Next(s: Sfc32State): number {

@@ -7,10 +7,11 @@ export function qtFridericiaMs(rrS: number, qtcMs = 400): number {
 
 /**
  * PR = clamp(PR60 − 0.4·(HR − 60), 110, PR60) ms [03 §1.1, ENG].
- * PR60 default 190 ms [ENG]: with it, at 150 bpm the P peak (RR − PR + 45 ms after QRS onset = 291 ms)
- * falls inside the preceding T wave (T end = QT = 295 ms), so "P on T" emerges from timing alone (brief §4.1).
+ * PR60 default 160 ms, the textbook resting adult (Gate 1 ruling R16; 190 ms is withdrawn). With the drawn T
+ * ending at QT, at 150–160 bpm the P ONSET (RR − PR after QRS onset: 276 ms at 150, 255 ms at 160) lands on the
+ * T downslope before its end (295 / 288 ms), so "P on T" emerges from timing alone (brief §4.1).
  */
-export const DEFAULT_PR60_MS = 190;
+export const DEFAULT_PR60_MS = 160;
 export function prMs(hrBpm: number, pr60Ms = DEFAULT_PR60_MS): number {
   return Math.min(pr60Ms, Math.max(110, pr60Ms - 0.4 * (hrBpm - 60)));
 }

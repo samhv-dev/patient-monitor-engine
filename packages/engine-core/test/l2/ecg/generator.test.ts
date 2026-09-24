@@ -11,7 +11,7 @@ describe('l2/ecg/generator', () => {
   it('reproduces the analytic kernel sum: lead II R peak ≈ 1.1 mV at QRS onset + 40 ms', () => {
     const ev = makeEvent(1.0, narrowKernels(400));
     const ii: number[] = [];
-    generateVcg({ events: [ev], fwave: null, hrv, noiseLevel: 0, noise: createRngState(1).noise }, 450, 700, (_n, x, y, z) =>
+    generateVcg({ events: [ev], fwaves: [], hrv, noiseLevel: 0, noise: createRngState(1).noise }, 450, 700, (_n, x, y, z) =>
       ii.push(projectLead('ecgII', x, y, z)),
     );
     const peak = Math.max(...ii);
@@ -25,14 +25,14 @@ describe('l2/ecg/generator', () => {
   it('noise level 1 gives ≈0.025 mV SD per axis; level 0 gives none', () => {
     const noise = createRngState(9).noise;
     const xs: number[] = [];
-    generateVcg({ events: [], fwave: null, hrv, noiseLevel: 1, noise }, 0, 49_999, (_n, x) => xs.push(x));
+    generateVcg({ events: [], fwaves: [], hrv, noiseLevel: 1, noise }, 0, 49_999, (_n, x) => xs.push(x));
     // remove the (deterministic) wander by differencing adjacent samples: var(diff) = 2σ²
     const d = xs.slice(1).map((x, i) => x - xs[i]!);
     const sd = Math.sqrt(d.reduce((a, b) => a + b * b, 0) / d.length / 2);
     expect(sd).toBeGreaterThan(0.023);
     expect(sd).toBeLessThan(0.027);
     const q: number[] = [];
-    generateVcg({ events: [], fwave: null, hrv, noiseLevel: 0, noise }, 0, 10, (_n, x) => q.push(x));
+    generateVcg({ events: [], fwaves: [], hrv, noiseLevel: 0, noise }, 0, 10, (_n, x) => q.push(x));
     expect(new Set(q.map((v) => Math.abs(v) < 0.2)).has(false)).toBe(false);
   });
 

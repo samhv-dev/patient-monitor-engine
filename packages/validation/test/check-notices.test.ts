@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { checkNotices, noticeIds } from '../../../scripts/check-notices.ts';
+import { checkNotices, governedFiles, noticeIds } from '../../../scripts/check-notices.ts';
 
 const NOTICES = `# NOTICES
 | ID | Item | Source URL | Licence | How used | Added on |
@@ -49,5 +49,11 @@ describe('scripts/check-notices', () => {
 
   it('ignores files outside the governed folders', () => {
     expect(checkNotices(fixture({ 'packages/audio/src/tones.ts': 'export {};' }))).toEqual([]);
+  });
+
+  it('the repository itself: borrowed code (cyrb53) sits under vendor/ with a NOTICE-ID row, and the check passes', () => {
+    const root = join(import.meta.dirname, '..', '..', '..');
+    expect(checkNotices(root)).toEqual([]);
+    expect(governedFiles(root).map((f) => f.replace(root, ''))).toContain(join('/packages', 'engine-core', 'src', 'vendor', 'cyrb53.ts'));
   });
 });

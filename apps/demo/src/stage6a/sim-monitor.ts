@@ -2,7 +2,7 @@
 // page has the engine in hand for snapshot/restore/clock control. MonitorHandle now has async snapshot()/restore()
 // and role (renderer request R-1, ruling R25), but not the synchronous clock control (renderT, rate, jump) that
 // ViewerSync steers every frame, so the pages stay on this path; the drawing code is the renderer's own.
-import { playBeep, ToneScheduler, unlockAudio } from '@pme/audio';
+import { playBeep, ToneScheduler, unlockAudio, type AudioOut } from '@pme/audio';
 import type { EngineEvent, EngineOptions, LeadId } from '@pme/engine-core';
 import { MonitorCore, NumericTile } from '@pme/renderer';
 import type { HostTarget, ViewerTarget } from '@pme/controller';
@@ -35,14 +35,27 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
   const hrTile = new NumericTile(tiles, { label: 'HR', unit: 'bpm', color: '#00ff66' });
 
   let scheduler: ToneScheduler | null = null;
+  let audio: AudioOut | null = null;
+  let soundP: Promise<void> | null = null;
   const size = () => ({ cssW: Math.max(200, wrap.clientWidth), cssH: Math.max(100, wrap.clientHeight), dpr: globalThis.devicePixelRatio || 1 });
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) as unknown as ConstructorParameters<typeof MonitorCore>[1];
   const core = new MonitorCore(canvas, ctx, size(), { ...(opts.engine ? { engine: opts.engine } : {}), ...(opts.lanes ? { lanes: opts.lanes } : {}) }, (anchor, events: EngineEvent[]) => {
     scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale });
     for (const e of events) {
       if (e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
-      if (e.type === 'tone') scheduler?.enqueue({ t: e.t, id: e.id, kind: e.kind, ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}) });
-      if (e.type === 'toneCancel') scheduler?.cancelAfter(e.after);
+      // Same tone handling as the renderer's mountMonitor after Stage 1.1 (R15, H3): stable ids, refT for the
+      // lateness rule, cancel by id when the engine lists them.
+      if (e.type === 'tone') {
+        scheduler?.enqueue({
+          t: e.t, id: e.id, kind: e.kind,
+          ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
+          ...(e.refT !== undefined ? { refT: e.refT } : {}),
+        });
+      }
+      if (e.type === 'toneCancel') {
+        if (e.ids) scheduler?.cancel(e.ids);
+        else scheduler?.cancelAfter(e.after);
+      }
     }
   });
   const frameFns = new Set<(epochMs: number, renderT: number) => void>();
@@ -107,11 +120,19 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
         frameFns.delete(fn);
       };
     },
-    async enableSound() {
-      if (scheduler) return;
-      const out = await unlockAudio();
-      scheduler = new ToneScheduler({ audioNow: () => out.ctx.currentTime, perfToAudio: out.perfToAudio, play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880) });
-      scheduler.start();
+    enableSound() {
+      // Idempotent, as mountMonitor (Stage 1.1, review M7): one AudioContext however often it is tapped.
+      soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
+        audio = out;
+        scheduler = new ToneScheduler({
+          audioNow: () => out.ctx.currentTime,
+          perfToAudio: out.perfToAudio,
+          outputLatency: out.outputLatency,
+          play: (tone, when) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880),
+        });
+        scheduler.start();
+      });
+      return soundP;
     },
     destroy() {
       cancelAnimationFrame(raf);
@@ -119,6 +140,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
       doc.removeEventListener('visibilitychange', onVis);
       ro.disconnect();
       scheduler?.stop();
+      audio?.close();
       root.remove();
     },
   };
