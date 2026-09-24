@@ -130,6 +130,12 @@ export class SweepLane {
   private strokeWrapped(ctx: Ctx2D, pts: Pt[]): void {
     const c = this.cfg;
     if (pts.length < 2) return;
+    // Clip to the lane: half the line width (and the round caps) would otherwise spill ~1 px past the lane
+    // edges, outside every erase-gap clear, and build up a ghost column at the wrap [ENG, Gate 1 check].
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(c.x, c.y, c.width, c.height);
+    ctx.clip();
     ctx.strokeStyle = c.color;
     ctx.lineWidth = c.lineWidth;
     ctx.lineJoin = 'round';
@@ -150,5 +156,6 @@ export class SweepLane {
       }
     }
     ctx.stroke();
+    ctx.restore();
   }
 }

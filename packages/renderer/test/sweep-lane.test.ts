@@ -60,6 +60,18 @@ describe('SweepLane', () => {
     }
   });
 
+  it('clips every stroke to the lane, so line width and round caps never spill past the erased area (wrap ghost)', () => {
+    // Gate 1 visual check: without the clip, the ~1 px of a 1.75 px stroke left of the lane start was never
+    // erased and built up a faint vertical ghost column at the wrap.
+    const lane = new SweepLane(CFG, 2);
+    const ctx = new FakeCtx();
+    for (let f = 0; f <= 60 * 12; f++) lane.draw(ctx, f / 60, sine);
+    const strokes = ctx.calls.filter((c) => c.op === 'stroke');
+    expect(strokes.length).toBeGreaterThan(0);
+    for (const s of strokes) expect(s.clip).toEqual([CFG.x, CFG.y, CFG.width, CFG.height]);
+    expect(ctx.clipRect).toBeNull(); // restored after drawing
+  });
+
   it('a jump longer than one lane redraws from a clean lane', () => {
     const lane = new SweepLane(CFG, 1);
     const ctx = new FakeCtx();
