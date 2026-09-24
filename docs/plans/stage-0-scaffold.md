@@ -1256,7 +1256,7 @@ git commit -m "test(e2e): IIFE loads from file:// and exposes PatientMonitor.ver
 - Consumes: root scripts (Tasks 2, 7, 8) and the committed `pnpm-lock.yaml`.
 - Produces: GitHub Actions job `build`: install (frozen lockfile) → typecheck → test → build → check-notices → Playwright Chromium + WebKit smoke → upload artefact `patient-monitor-iife`.
 
-- [ ] **Step 1: Write the workflow**
+- [x] **Step 1: Write the workflow**
 
 `.github/workflows/ci.yml`:
 ```yaml
@@ -1291,7 +1291,7 @@ jobs:
           if-no-files-found: error
 ```
 
-- [ ] **Step 2: Rehearse CI locally from a clean clone**
+- [x] **Step 2: Rehearse CI locally from a clean clone**
 
 ```bash
 rm -rf /tmp/pme-ci && git clone "$(pwd)" /tmp/pme-ci && cd /tmp/pme-ci \
@@ -1299,14 +1299,14 @@ rm -rf /tmp/pme-ci && git clone "$(pwd)" /tmp/pme-ci && cd /tmp/pme-ci \
 ```
 Expected: `exit 0`. (The clone contains only committed files, so this also proves nothing needed is git-ignored or uncommitted. Commit the workflow first if you want it in the clone; it is not needed for the rehearsal.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add .github/workflows/ci.yml
 git commit -m "ci: typecheck, test, build, check-notices, IIFE smoke, upload IIFE artefact" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 4: (If a GitHub remote exists) push a branch and open a PR — never push to `main` directly**
+- [x] **Step 4: (If a GitHub remote exists) push a branch and open a PR — never push to `main` directly**
 
 Only if `git remote -v` shows a remote: `git push -u origin HEAD:stage-0` and open a PR; confirm the `build` job is green and the `patient-monitor-iife` artefact is attached. If there is no remote, record "CI not yet run on GitHub" for the gate.
 
@@ -1322,7 +1322,7 @@ Only if `git remote -v` shows a remote: `git push -u origin HEAD:stage-0` and op
 - Consumes: `Clock` (Task 5) from `@pme/engine-core`; `DEFAULT_PX_PER_MM`, `sweepPxPerS`, `sweepX` (Task 3) from `@pme/renderer`.
 - Produces: page `stage0.html`: 1000 CSS px black lane, green cursor at `x = sweepX(clock.renderT, 25, DEFAULT_PX_PER_MM, 1000)`, buttons 0.25×/1×/4×, Pause, "30 fps throttle"; readout of `simT`, tick, scale, the expected 94.49 px/s and the measured px/s per sim second from the wall time of the last full lap.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 `apps/demo/stage0.html`:
 ```html
@@ -1443,7 +1443,7 @@ drawStatic();
 requestAnimationFrame(frame);
 ```
 
-- [ ] **Step 2: Register the page**
+- [x] **Step 2: Register the page**
 
 `apps/demo/vite.config.ts` — change the `input` line to:
 ```ts
@@ -1454,17 +1454,17 @@ requestAnimationFrame(frame);
       <li><a href="./stage0.html">Stage 0: sim-time sweep cursor</a></li>
 ```
 
-- [ ] **Step 3: Type-check and build**
+- [x] **Step 3: Type-check and build**
 
 Run: `pnpm typecheck && pnpm build`
 Expected: clean; `apps/demo build: dist/stage0.html`.
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `pnpm --filter @pme/demo dev` and open the printed URL + `/stage0.html`.
 Expected: the cursor sweeps left→right and wraps; after the first full lap the readout shows `measured 94.4x–94.5x px/s per sim s`; at 4× the cursor is 4× faster and "measured" still reads ≈94.5 per sim s; Pause freezes `simT`; with "30 fps throttle" on, the measured speed is unchanged.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/demo

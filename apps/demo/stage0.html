@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 0: sim-time sweep</title>
+    <style>
+      body { background: #000; color: #ddd; font: 14px system-ui, sans-serif; margin: 16px; }
+      canvas { display: block; background: #000; border: 1px solid #333; }
+      button { font: inherit; margin-right: 6px; }
+      button[aria-pressed='true'] { background: #2a2; color: #000; }
+      #readout { font: 16px ui-monospace, monospace; margin-top: 10px; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <h1>Stage 0: sim-time sweep cursor (25 mm/s)</h1>
+    <canvas id="lane"></canvas>
+    <p>
+      <button data-scale="0.25">0.25×</button>
+      <button data-scale="1" aria-pressed="true">1×</button>
+      <button data-scale="4">4×</button>
+      <button id="pause">Pause</button>
+      <button id="fps30" aria-pressed="false">30 fps throttle</button>
+    </p>
+    <div id="readout"></div>
+    <p>
+      Stopwatch check: at 1× the cursor moves 94.5 CSS px/s (25 mm/s at 3.78 px/mm). One full 1000 px lane
+      takes 10.58 s. Tick marks are 1 s (25 mm) apart.
+    </p>
+    <script type="module" src="./src/stage0.ts"></script>
+  </body>
+</html>
