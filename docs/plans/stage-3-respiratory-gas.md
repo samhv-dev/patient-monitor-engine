@@ -1084,7 +1084,7 @@ git commit -m "feat(gas): two-compartment CO2 kinetics fitted to the apnoea data
 **Interfaces:**
 - Produces: `DELAY_FINGER_S` 15, `DELAY_EAR_S` 5, `DELAY_MAX_S` 60, `interface DelayLine { hist, k, delay }`, `createDelay(sa0)`, `siteDelay(site, coRatio, pi)`, `delayStep(d, sa, target, dtS): number` (site SaO2).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/delay.test.ts`:**
 
@@ -1110,12 +1110,12 @@ describe('circulatory delay', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/delay.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/delay.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/delay.ts`:**
 
@@ -1160,9 +1160,9 @@ export function delayStep(d: DelayLine, sa: number, target: number, dtS: number)
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/delay.ts packages/engine-core/test/l2/gas/delay.test.ts
