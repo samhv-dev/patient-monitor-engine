@@ -395,7 +395,7 @@ Every v1 rhythm id and modifier type becomes public; the rhythm table lists all 
 - Produces (exact names used by every later task): in `api-types.ts` — `RhythmId` (36 ids), `RhythmGroup`, `RhythmOpts` (adds `pulseless`, `pauseS`, `pauseEveryS`, `retroP`, `twistBeats`, `vfAmplitudeMv`, `autoAsystole`, `pacer`), `PacerOpts`, `PacerFault`, `PvcSpec`/`PvcPattern`, `PacSpec`, `PjcSpec`, `StSpec`/`StTerritory`, `TcpSpec`, `CprSpec`, `ShockSpec`, `BurstSpec`, `ArtefactSpec`, `BbbKind`, `Modifiers`, `ModifiersPatch`. `modifiers.ts` — `defaultArtefact()`, `defaultModifiers()`, `mergeModifiers(base, patch)`, re-export `validateModifiers(patch): string | undefined`. `rhythm-state.ts` — `NEVER`, `PendingV` (adds `scale?`, `twistRad?`, `pre?`), `FWave` (adds `seed?`), `RhythmState` (adds `atria.lastT`, `atria.pac`, `focusN`, `startT`, `focusAxis`, `ectopyCount`), `RhythmCtx`, `clamp`, `def`, `rhythmRate`, `pushPending`, `HOOKS { activate, apply, onP[], onBeat[], onApply[] }`. `rhythms.ts` — `RhythmDef` (adds `group`, `continuous`, `pacing`, `conductedTemplate`, `atrialDefaultBpm`), `RHYTHMS`, `RHYTHM_IDS`. `atria.ts` — `atrialRate`, `flutterRatio`, `afThresholdMv`, `afRefractoryS(hr, minRefractoryS?)`, `junctionSpontT`, `fireJunction`, `conductP(st, rate, ctx): number | null`, `ATRIAL_HANDLERS`, `onAtrial`, `AVB1_DEFAULT_PR_MS`. `foci.ts` — `FOCUS_HANDLERS`, `onFocus`, `VT_JITTER_S`. `ectopy.ts` — `prevailingRR`, `afterSupraBeat(st, p, t, ctx, qtMs?)`. `mech.ts` — `fFill`, `kRhythm` (PEA: `opts.pulseless` → 0), `BASE_SV_ML`. `morphology/index.ts` — `BeatInfo`, `MorphStage`, `MORPH_STAGES`, `applyMorphology`, `PStage`, `P_STAGES`, `applyPMorphology`, `PrTerm`, `PR_TERMS`, `prDeltaMs`. `rhythm-engine.ts` — `createRhythmState`, `applyRhythm`, `activateVentricle`, `escapeRate`, `isWide`, `planUntil`, `ClockSource`, re-exports `NEVER`, `FWave`, `PendingV`, `RhythmCtx`, `RhythmState`, `afRefractoryS`, `afThresholdMv`, `atrialRate`.
 - Contract kept for engine.ts and Stage 2: beat events keep `{ type, t, seq, origin, template, qrsMs, qtMs, prMs?, mech: { perfused, kSV, svMl, lvetMs } }`; PVC beats keep `template: 'pvc'` whatever their focus.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/modifiers.test.ts` with exactly:
 
@@ -433,13 +433,13 @@ describe('Stage 5 modifiers: defaults, merge, validation', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/modifiers.test.ts`
 
 Expected: FAIL — `mergeModifiers` / `validateModifiers` are not exported from `src/modifiers.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/api-types.ts` with exactly:
 
@@ -1712,15 +1712,15 @@ export { atrialRate };
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Expected: every Stage 1 test passes unchanged except `test/engine/engine-commands.test.ts` › "dispatch accepts Stage 1 commands…", which still expects `vfCoarse` to be an unknown rhythm and `bbb` to be rejected — Task 4 updates those two lines together with the engine seam. If anything else fails, the refactor changed behaviour: compare the function you moved with its Stage 1 original in `git show HEAD~1:packages/engine-core/src/l2/ecg/rhythm-engine.ts`.**
+- [x] **Step 5: Expected: every Stage 1 test passes unchanged except `test/engine/engine-commands.test.ts` › "dispatch accepts Stage 1 commands…", which still expects `vfCoarse` to be an unknown rhythm and `bbb` to be rejected — Task 4 updates those two lines together with the engine seam. If anything else fails, the refactor changed behaviour: compare the function you moved with its Stage 1 original in `git show HEAD~1:packages/engine-core/src/l2/ecg/rhythm-engine.ts`.**
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/api-types.ts packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/ectopy.ts packages/engine-core/src/l2/ecg/foci.ts packages/engine-core/src/l2/ecg/mech.ts packages/engine-core/src/l2/ecg/modifier-schema.ts packages/engine-core/src/l2/ecg/morphology/index.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/src/l2/ecg/rhythms.ts packages/engine-core/src/modifiers.ts packages/engine-core/src/types.ts packages/engine-core/test/l2/ecg/s5/modifiers.test.ts

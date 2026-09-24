@@ -21,44 +21,11 @@ export const LEAD_IDS: readonly LeadId[] = [
   'ecgI', 'ecgII', 'ecgIII', 'aVR', 'aVL', 'aVF', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6',
 ];
 
-/** Rhythm IDs implemented in Stage 1 (brief §5 lists the full v1 set; Stage 5 adds the rest). */
-export type RhythmId =
-  | 'sinus' | 'sinusBrady' | 'sinusTachy' | 'afib' | 'aflutter' | 'svtAvnrt' | 'avb1' | 'avb2Mobitz1'
-  | 'avb3Narrow' | 'avb3Wide' | 'vtMono' | 'asystole';
-
-/** Per-rhythm options (defined here; the brief names the type but not its fields). */
-export interface RhythmOpts {
-  /** Flutter conduction ratio (brief §5): 2, 3, 4 or 'variable' (random 2:1/4:1 mix). Default 2. */
-  ratio?: 2 | 3 | 4 | 'variable';
-  /** Atrial rate for aflutter (default 300) and for the dissociated atria of avb3Narrow/avb3Wide (default 80). */
-  atrialRateBpm?: number;
-  /** avb1 PR (default 280 ms). */
-  prMs?: number;
-  /** avb2Mobitz1 group size in P waves: 3 → 3:2 … 6 → 6:5 (default 4 → 4:3). */
-  groupSize?: 3 | 4 | 5 | 6;
-  /** Sets the 'hr' target when the rhythm starts (default: the rhythm's default rate, see RHYTHMS). */
-  rateBpm?: number;
-}
-
-/** PVC ectopy (brief §5 modifiers). Stage 1 implements patterns 'single' and 'bigeminy'. */
-export interface PvcSpec {
-  /** 'single': each sinus beat is followed by a PVC with this probability (0–0.9). Ignored for bigeminy. */
-  probability: number;
-  pattern: 'single' | 'bigeminy';
-}
-
-/** Modifiers subset for Stage 1 (brief §5). Later stages add the rest of the table. */
-export interface Modifiers {
-  pvc: PvcSpec | null;
-  /** RSA depth 0–1 (1 = A_RSA 60 ms at RR 1 s). Default 0.67. */
-  rsa: number;
-  /** Multiplies every HRV term (0 = HRV off). Default 1. */
-  hrvScale: number;
-  /** QTc for Fridericia, ms (300–650). Default 400. */
-  qtc: number;
-  /** Artefact levels. Stage 1 has only additive white noise: 1 = 0.025 mV SD (brief §5 artefacts), 0 = off. */
-  artefact: { noise: number };
-}
+export type {
+  ArtefactSpec, BbbKind, BurstSpec, CprSpec, Modifiers, ModifiersPatch, PacerFault, PacerOpts, PacSpec, PjcSpec,
+  PvcPattern, PvcSpec, RhythmGroup, RhythmId, RhythmOpts, ShockSpec, StSpec, StTerritory, TcpSpec,
+} from './l2/ecg/api-types.ts';
+import type { Modifiers, RhythmId, RhythmOpts } from './l2/ecg/api-types.ts';
 
 /** Stage 1 subset of the brief's PatientProfile (same shape as the scenario JSON `patient`, §7.4). */
 export interface PatientProfile {
@@ -112,6 +79,15 @@ export type EngineEvent =
       mech: { perfused: boolean; kSV: number; svMl: number; lvetMs: number };
     }
   | { type: 'atrial'; t: SimSeconds; kind: 'p' | 'flutter' | 'fib' | 'retrograde' | 'paced'; conducted: boolean }
+  | { type: 'rhythmSegment'; t: SimSeconds; rhythm: RhythmId; seed: number; templateId?: string }
+  | {
+      type: 'marker'; t: SimSeconds; kind: 'paceSpike' | 'syncR' | 'shock' | 'chargeStart' | 'chargeReady' | 'disarm';
+      data?: Record<string, number | boolean>;
+    }
+  | {
+      type: 'alarm'; t: SimSeconds; id: string; priority: 'high' | 'medium' | 'low'; category: 'physiological' | 'technical';
+      state: 'raised' | 'cleared' | 'acked' | 'silenced' | 'paused'; text: string;
+    }
   | { type: 'measurement'; t: SimSeconds; values: Partial<Record<NumericId, Measured>> }
   | {
       type: 'tone'; t: SimSeconds; id: string;
