@@ -759,7 +759,7 @@ git commit -m "feat(scenario): pme-scenario/1 JSON Schema and document types (br
 **Interfaces:**
 - Produces: `validateScenario(input: unknown, opts?: { rhythms?: readonly string[] }): { ok: true; doc; warnings } | { ok: false; errors; warnings }`; `formatAjvError(e)`; `SCENARIO_SCHEMA`. Errors are `<JSON path>: <what>` (at most 20, de-duplicated). Cross-reference errors: duplicate state ids, duplicate transition ids (unique per document), missing `initialState`/`to`/`else`/bookmark state, more than one `manual` leaf per transition. Warnings: a `setRhythm`/`patient.rhythm` id outside `opts.rhythms`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/scenario/schema.test.ts`:
 ```ts
@@ -828,12 +828,12 @@ describe('validateScenario', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/schema.test.ts`
 Expected: FAIL — `Failed to resolve import "../../src/scenario/validate.ts"`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/scenario/validate.ts`:
 ```ts
@@ -941,12 +941,12 @@ function countManual(w: When): number {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/schema.test.ts`
 Expected: `Tests  21 passed (21)`. (If ajv throws `strict mode: …` at compile time, the schema differs from Task 3's text: fix the schema, not the ajv options.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/scenario/validate.ts packages/controller/test/scenario/schema.test.ts
