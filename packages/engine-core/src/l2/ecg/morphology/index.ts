@@ -2,6 +2,7 @@
 // function (kernels, info, mods) → kernels. Later tasks append stages to MORPH_STAGES.
 import type { Modifiers } from '../../../types.ts';
 import type { BeatTemplateId } from '../beat-templates.ts';
+import { brugadaStage, digoxinStage, ischaemiaStage, longQtStage, stStage, tInversionStage } from './st.ts';
 
 export interface BeatInfo {
   template: BeatTemplateId;
@@ -13,7 +14,15 @@ export interface BeatInfo {
 
 export type MorphStage = (k: number[], info: BeatInfo, mods: Modifiers) => number[];
 
-export const MORPH_STAGES: MorphStage[] = [];
+/** Order matters: fingerprint → timing (overrides, K, temperature) → conduction/axis/voltage → ST/T → alternans. */
+export const MORPH_STAGES: MorphStage[] = [
+  longQtStage,
+  digoxinStage,
+  tInversionStage,
+  stStage,
+  ischaemiaStage,
+  brugadaStage,
+];
 
 export function applyMorphology(k: number[], info: BeatInfo, mods: Modifiers): number[] {
   let out = k;

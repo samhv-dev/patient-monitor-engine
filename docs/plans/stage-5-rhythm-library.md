@@ -5347,7 +5347,7 @@ The first morphology stages. A STEMI is ONE injury vector per territory added as
 - Consumes: `DOWER`, `WAVE`, `K_STRIDE`, `T_END_AFTER_PEAK_S`, `morphBeat` helper.
 - Produces: ops `QRS_WAVES`, `isWave`, `scaleWaves`, `stretchQrs`, `jPointS`, `qrsOnsetS`, `mainT`, `leadOf`, `addShaped(k, tau, sRise, sFall, dir, lead, mv, atS, wave)`, `rotateY`, `rotateZSel`, `netArea`, `frontalAxisDeg`; stages `stStage`, `ischaemiaStage`, `tInversionStage`, `longQtStage`, `brugadaStage`, `digoxinStage`; tables `ST_TERRITORIES`, `ISCHAEMIA_DIR`, `BRUGADA_DIR`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/morph-st.test.ts` with exactly:
 
@@ -5420,13 +5420,13 @@ describe('ST/T modifiers (acceptance 6)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/morph-st.test.ts`
 
 Expected: FAIL — cannot resolve `morphology/ops.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/morphology/ops.ts` with exactly:
 
@@ -5671,13 +5671,13 @@ export const MORPH_STAGES: MorphStage[] = [
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/index.ts packages/engine-core/src/l2/ecg/morphology/ops.ts packages/engine-core/src/l2/ecg/morphology/st.ts packages/engine-core/test/l2/ecg/s5/morph-st.test.ts
