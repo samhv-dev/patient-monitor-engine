@@ -970,7 +970,7 @@ git commit -m "feat(ecg): Fridericia QT, PR rule and seed-table beat templates w
   - Test helper `runRhythm(id, seconds, { hr?, seed?, mods?, rhythmOpts? }): { st, beats, atrial }`, `mean`, `sd`, `diffs`, types `Beat`, `Atrial`.
   - The engine file below implements ALL Stage 1 rhythms and the PVC modifier at once (they share one state machine); Tasks 6–8 add their acceptance tests.
 
-- [ ] **Step 1: Write the test helper and the failing tests (acceptance tests 1, 2, 3)**
+- [x] **Step 1: Write the test helper and the failing tests (acceptance tests 1, 2, 3)**
 
 `packages/engine-core/test/helpers/rhythm.ts`:
 ```ts
@@ -1099,12 +1099,12 @@ describe('rhythm engine: sinus family', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see them fail**
+- [x] **Step 2: Run to see them fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-sinus`
 Expected: FAIL — cannot load `hrv.ts` / `rhythm-engine.ts`.
 
-- [ ] **Step 3: Implement HRV and the rhythm table**
+- [x] **Step 3: Implement HRV and the rhythm table**
 
 `packages/engine-core/src/l2/ecg/hrv.ts`:
 ```ts
@@ -1201,7 +1201,7 @@ export const DEFAULT_DISSOCIATED_ATRIAL_BPM = 80;
 export const DEFAULT_FLUTTER_ATRIAL_BPM = 300;
 ```
 
-- [ ] **Step 4: Implement the rhythm engine**
+- [x] **Step 4: Implement the rhythm engine**
 
 How it works (read before typing): `planUntil(T)` repeatedly picks the earliest of five internal clocks — atrial (`atria.nextT`), pending ventricular activations (`pending[0]`), the VT/AVNRT focus, the escape timer, and the AF junction's spontaneous crossing — handles it, and stops when the earliest is after `T`. Atrial handlers emit P / flutter kernels and decide conduction (AV mode); ventricular activation emits QRS-T kernels, a `beat` record with `k_rhythm` mechanics, sets `refractoryUntil`, resets the escape timer and draws ectopy. A PVC does not touch the SA clock, so the next sinus beat is concealed and the pause is compensatory — this emerges; it is not coded as a rule.
 
@@ -1625,12 +1625,12 @@ export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
 }
 ```
 
-- [ ] **Step 5: Run to see them pass**
+- [x] **Step 5: Run to see them pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-sinus && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
