@@ -3,15 +3,16 @@
 //   T  τ QT−2σ_fall (= QT−60) σ 45 rise / 30 fall a 0.30 | U τ QT+70 σ 35 a 0.03
 // (The seed table's T peak at QT−110 drew a tangent-method QT 50 ms short, review H4; see T_SIGMA_FALL_S.)
 // Each wave's VCG vector (X, Y, Z in mV) was fitted in Stage 1 so that, through the Dower rows (vcg.ts),
-// lead II reproduces the seed amplitudes exactly and lead I is 70% / lead III 30% of II (ProSim ratios,
-// research 01 §4.16). Z was chosen by least squares against a normal precordial R progression
-// (V1 rS, transition V3–V4). The PTB-XL refit is Stage 5.
+// lead II reproduces the seed amplitudes exactly, lead I is 70 % and lead III 30 % of II (Gate 1 ruling R17; these
+// limb ratios match ProSim-class simulators, research 01 §4.16, and are Einthoven-consistent), and the chest leads
+// follow a normal R-wave progression (V1 rS, transition V3–V4, dominant R in V5–V6). ProSim's V1 24 % / V4 120 %
+// ratios are NOT a target (R17: a scaled-copy test-signal convention, not physiology). The PTB-XL refit is Stage 5.
 import { K_STRIDE, WAVE, kernel, qrsSpanMs } from './kernels.ts';
 import type { Vec3 } from './vcg.ts';
 
 export const VEC: Readonly<Record<'P' | 'Q' | 'R' | 'S' | 'T' | 'U', Vec3>> = {
   P: [0.165, 0.105, 0.007],
-  Q: [-0.097, -0.058, -0.033],
+  Q: [-0.097, -0.0722, -0.15], // Stage 1.1: more anterior (−Z) septal vector so r(V1) ≈ 0.15 mV and r(V2) > r(V1) (R17)
   R: [1.521, 0.708, 0.091],
   S: [-0.319, -0.089, 0.609],
   T: [0.394, 0.181, -0.111],
