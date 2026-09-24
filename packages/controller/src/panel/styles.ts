@@ -31,6 +31,12 @@ export const PANEL_CSS = `
 .pme-status{font-size:12px;color:#aaa}.pme-status[data-ok="false"]{color:#f66}
 .pme-remote{background:#000;color:#ddd;font:15px system-ui,sans-serif;padding:10px;max-width:640px;margin:auto}
 .pme-remote .pme-vitals{display:flex;gap:18px;font-size:28px;font-variant-numeric:tabular-nums;margin:8px 0}
+.pme-scn-error{color:#f66;font-size:12px;white-space:pre-wrap}
+.pme-scn-next,.pme-scn-states{margin:0;padding-left:18px}
+.pme-scn-next li,.pme-scn-states li{margin:4px 0}
+.pme-scn-states li[aria-current="step"]{color:#fff;font-weight:700}
+.pme-scn-notes{color:#aaa;font-size:12px;margin:4px 0}
+.pme-scn-remote{border:1px solid #333;border-radius:8px;padding:6px 8px;margin:8px 0}
 `;
 
 export function injectStyles(doc: Document): void {

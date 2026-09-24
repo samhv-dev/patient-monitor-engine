@@ -3428,7 +3428,7 @@ git commit -m "feat(controller): @pme/controller/scenario entry (ajv stays out o
 - Produces: `mountScenarioTab(el, { session, catalogue? }) → { update() }`; `PanelOptions.scenarios?: Array<{ id; title }>`; a fourth tab `data-tab="scenario"`. DOM hooks used by tests and the e2e: `select[name=scenario-builtin]`, `[data-action=scenario-load-builtin]`, `input[name=scenario-file]`, `input[name=scenario-url]`, `[data-action=scenario-load-url]`, `.pme-scn-error`, `.pme-scn-live`, `.pme-scn-title`, `.pme-scn-state`, `.pme-scn-clock`, `[data-action=scenario-pause|scenario-resume]`, `.pme-scn-next li[data-transition]` with `[data-action=scenario-trigger][data-target=<id>]` (text = the manual label, or "Force"), `select[name=scenario-goto]` + `[data-action=scenario-goto]`, `.pme-scn-states li[data-state]` (`aria-current="step"` on the current one) with `[data-action=scenario-jump][data-target=<state>]` for doc bookmarks.
 - Rebuild policy (so a select never closes under the user's finger): the goto list is rebuilt only when `view.docVersion` changes, the "Next" list only when the state changes, the timeline only when the history grows; the clock text every render.
 
-- [ ] **Step 1: Write the failing DOM test**
+- [x] **Step 1: Write the failing DOM test**
 
 `packages/controller/test/panel/scenario-tab.dom.test.ts`:
 ```ts
@@ -3555,12 +3555,12 @@ describe('panel Scenario tab (DOM)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/scenario-tab.dom.test.ts`
 Expected: FAIL — `q(...)` is null for `[data-tab=scenario]` (`Cannot read properties of null (reading 'click')`).
 
-- [ ] **Step 3: Implement the tab**
+- [x] **Step 3: Implement the tab**
 
 `packages/controller/src/panel/scenario-tab.ts`:
 ```ts
@@ -3757,7 +3757,7 @@ export function mountScenarioTab(el: HTMLElement, o: ScenarioTabOptions): Scenar
 
 Note: happy-dom has no `Option` constructor; the `option()` helper uses `createElement('option')`.
 
-- [ ] **Step 4: Mount it in the panel**
+- [x] **Step 4: Mount it in the panel**
 
 In `packages/controller/src/panel/panel.ts`:
 1. Replace `import { renderControls } from './render-controls.ts';` with:
@@ -3816,7 +3816,7 @@ with:
     status.textContent
 ```
 
-- [ ] **Step 5: Styles**
+- [x] **Step 5: Styles**
 
 In `packages/controller/src/panel/styles.ts`, replace:
 ```ts
@@ -3835,7 +3835,7 @@ with:
 `;
 ```
 
-- [ ] **Step 6: Run**
+- [x] **Step 6: Run**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel
@@ -3843,7 +3843,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller typecheck
 ```
 Expected: `Tests  19 passed (19)` (6a's 13 panel tests + 6); typecheck exit 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/controller/src/panel packages/controller/test/panel/scenario-tab.dom.test.ts
