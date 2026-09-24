@@ -2144,7 +2144,7 @@ git commit -m "feat(ecg): 500 Hz VCG generator with f-waves, respiratory wander 
 
 The design function (RBJ cookbook, bilinear with pre-warping) is the documented design; coefficients are computed at start-up. For reference, at fs = 500 Hz the monitor high-pass (0.5 Hz, Q = 1/√2) has b = [0.995567, −1.991134, 0.995567], a1 = −1.991114, a2 = 0.991154 (values to 6 d.p.; the test checks responses, not these digits).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l3/ecg-filter.test.ts`:
 ```ts
@@ -2198,12 +2198,12 @@ describe('l3/ecg-filter', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/ecg-filter`
 Expected: FAIL — cannot load `ecg-filter.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/ecg-filter.ts`:
 ```ts
@@ -2310,12 +2310,12 @@ export function magnitudeAt(sections: readonly Biquad[], f: number, fs: number):
 export const toDb = (m: number): number => 20 * Math.log10(m);
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/ecg-filter`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
