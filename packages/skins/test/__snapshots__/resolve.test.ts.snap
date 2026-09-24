@@ -1,5 +1,300 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot philips-like (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [],
+    "paed": [],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": 2,
+      "profile": "iec-style",
+      "repeatS": {
+        "L1": 10,
+        "L2": 20,
+      },
+      "silence": {
+        "cancelOnNewAlarm": false,
+        "durationS": 90,
+      },
+      "volume": {
+        "default": 5,
+        "max": 10,
+        "min": 0,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": true,
+      "pitchMap": "nellcor-like",
+      "source": "ECG",
+      "volume": {
+        "default": 3,
+        "max": 10,
+        "min": 0,
+      },
+    },
+  },
+  "limits": {
+    "adult": {
+      "ART_D": [
+        50,
+        90,
+      ],
+      "ART_M": [
+        70,
+        110,
+      ],
+      "ART_S": [
+        90,
+        160,
+      ],
+      "CVP_M": [
+        0,
+        10,
+      ],
+      "EtCO2": [
+        30,
+        50,
+      ],
+      "HR": [
+        50,
+        120,
+      ],
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        0,
+        16,
+      ],
+      "PAP_M": [
+        0,
+        20,
+      ],
+      "PAP_S": [
+        10,
+        35,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        36,
+        39,
+      ],
+      "apneaS": 20,
+      "imCO2_high": 4,
+    },
+    "neo": {
+      "ART_D": [
+        20,
+        60,
+      ],
+      "ART_M": [
+        35,
+        70,
+      ],
+      "ART_S": [
+        55,
+        90,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": null,
+      "HR": [
+        100,
+        200,
+      ],
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        24,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        30,
+        100,
+      ],
+      "SpO2": [
+        85,
+        95,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": null,
+      "apneaS": 20,
+      "imCO2_high": null,
+    },
+    "paed": {
+      "ART_D": [
+        40,
+        70,
+      ],
+      "ART_M": [
+        50,
+        90,
+      ],
+      "ART_S": [
+        70,
+        120,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": null,
+      "HR": [
+        75,
+        160,
+      ],
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": null,
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": null,
+      "apneaS": null,
+      "imCO2_high": null,
+    },
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        40,
+      ],
+      "engineMode": "monitor",
+      "exact": true,
+      "name": "Monitor",
+    },
+    "eraseGapPx": 16,
+    "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
+    "foreground": "#FFFFFF",
+    "grid": null,
+    "hrMethod": {
+      "engine": "mean12",
+      "skin": "mean-12rr",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "II  M",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FF00",
+        "gainMmPerMv": 10,
+        "label": "V1  M",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FF4040",
+        "gainMmPerMv": 10,
+        "label": "ART",
+        "lane": "ART",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00FFFF",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#FFFF00",
+        "gainMmPerMv": 10,
+        "label": "CO2",
+        "lane": "CO2",
+        "mmPerS": 6.25,
+      },
+    ],
+    "lineWidth": 1.75,
+    "numericWeight": 600,
+    "tileColors": {
+      "ART": "#FF4040",
+      "CO2": "#FFFF00",
+      "HR": "#00FF00",
+      "NIBP": "#FF4040",
+      "SpO2": "#00FFFF",
+      "TEMP": "#00FF00",
+    },
+  },
+}
+`;
+
 exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saadat-like (theme (none)) 1`] = `
 {
   "approximateLimits": {

@@ -1964,7 +1964,7 @@ git commit -m "feat(skins): saadat-like skin with research 06 provenance; resolv
 
 The base is brief §3.8's "Default (other skins)" column, §3.5 sweep/gap/gain and §6.4 alarms; it is not a skin (`id` has no `-like`) and has no colours (colours are vendor data). Philips colours are the IntelliVue factory colour **names** (research 05 §2.1) rendered to hex [ENG]; limits are the brief §6.8 Philips factory table.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/philips-like.test.ts`:
 
@@ -2014,12 +2014,12 @@ describe('philips-like (over iec-defaults)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/philips-like.test.ts`
 Expected: FAIL, `unknown skin: philips-like`.
 
-- [ ] **Step 3: Write the base**
+- [x] **Step 3: Write the base**
 
 Create `packages/skins/src/data/base/iec-defaults.json`:
 
@@ -2249,7 +2249,7 @@ Create `packages/skins/src/data/base/iec-defaults.json`:
 }
 ```
 
-- [ ] **Step 4: Write the skin**
+- [x] **Step 4: Write the skin**
 
 Create `packages/skins/src/data/skins/philips-like.json`:
 
@@ -2319,7 +2319,7 @@ Create `packages/skins/src/data/skins/philips-like.json`:
 }
 ```
 
-- [ ] **Step 5: Replace the registry**
+- [x] **Step 5: Replace the registry**
 
 ```ts
 // Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
@@ -2350,12 +2350,12 @@ export const PRESET_IDS = Object.keys(PRESETS);
 export const THEME_IDS = Object.keys(THEMES);
 ```
 
-- [ ] **Step 6: Run the package**
+- [x] **Step 6: Run the package**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: all pass; new snapshot `snapshot philips-like (theme (none))` written; the schema/provenance/contrast suites now also cover philips-like and the base.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test
