@@ -4457,7 +4457,7 @@ Run the two extraction scripts against PhysioNet, commit the generated Int16 tem
 - Consumes: Task 14.
 - Produces: `VF_TEMPLATES`/`VF_SCALE` (6 × 8 s, 500 Hz, unit RMS × 4096) and `AF_TEMPLATES`/`AF_SCALE` (4 × 8 s); `extractVf(cache)`, `extractAf(cache)`, `VF_ATTRIBUTION`, `AF_ATTRIBUTION`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/validation/test/templates/bundled.test.ts` with exactly:
 
@@ -4496,13 +4496,13 @@ describe('bundled templates (acceptance 9: provenance)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/templates/bundled.test.ts`
 
 Expected: FAIL — cannot resolve `engine-core/templates/vf-cudb.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/validation/src/templates/extract-vf.ts` with exactly:
 
@@ -4746,13 +4746,13 @@ Append these rows to the table in `NOTICES.md` (IDs from the reserved N-050…N-
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run && npx -y pnpm@9.15.9 check-notices`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NOTICES.md packages/validation/package.json packages/validation/src/templates/extract-af.ts packages/validation/src/templates/extract-vf.ts packages/validation/test/templates/bundled.test.ts packages/engine-core/templates/vf-cudb.ts packages/engine-core/templates/af-mitdb.ts

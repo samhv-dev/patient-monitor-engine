@@ -9,7 +9,9 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build"
+    "build": "vite build",
+    "templates": "node --experimental-strip-types src/templates/extract-vf.ts datasets/cache ../engine-core/templates/vf-cudb.ts && node --experimental-strip-types src/templates/extract-af.ts datasets/cache ../engine-core/templates/af-mitdb.ts",
+    "ptbxl-report": "node --experimental-strip-types src/templates/compare-ptbxl.ts datasets/cache ../../docs/gates/stage-5/ptbxl-normal-comparison.json 20"
   },
   "dependencies": {
     "@pme/engine-core": "workspace:*"
