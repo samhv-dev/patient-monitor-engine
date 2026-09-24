@@ -3188,7 +3188,7 @@ hs = new HostSession({ session, target: driver.host, scenario: driver.hook, welc
 // every frame (or tick): driver.poll();
 ```
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```ts
 // The driver inside a HostSession: controllers load/trigger/pause over the wire, runner commands reach viewers
@@ -3305,12 +3305,12 @@ describe('scenario over a HostSession', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/host-scenario.test.ts`
 Expected: `Tests  6 passed (6)`. This checks: a built-in loads by id over the wire; the controller's view follows; runner commands arrive as `commandApplied` with `issuedBy: 'scenario'` and the stand-in rhythm (`vtMono`, never `vfCoarse`); the setup batch lands on one tick (a regression here means the driver's scenario-only acceptance ignored `atTick`); a trigger acts at once; an invalid doc is refused with its path; a late joiner gets the doc, the paused flag and the state entered at 60 s; bookmarks through the host restore the runner.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/controller/test/scenario/host-scenario.test.ts
