@@ -45,6 +45,9 @@ importers:
 
   packages/renderer:
     dependencies:
+      '@pme/audio':
+        specifier: workspace:*
+        version: link:../audio
       '@pme/engine-core':
         specifier: workspace:*
         version: link:../engine-core

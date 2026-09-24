@@ -4816,7 +4816,7 @@ git commit -m "feat(audio): sim→wall→audio clock map, look-ahead tone schedu
 
 This task has no unit test (browser-only APIs); it is verified by type-checking, the IIFE build, and the Playwright smoke in Task 21.
 
-- [ ] **Step 1: Add the Vite client types and the worker entry**
+- [x] **Step 1: Add the Vite client types and the worker entry**
 
 `packages/renderer/src/vite-env.d.ts`:
 ```ts
@@ -4897,7 +4897,7 @@ scope.onmessage = (ev) => {
 };
 ```
 
-- [ ] **Step 2: Write the host**
+- [x] **Step 2: Write the host**
 
 `packages/renderer/src/worker-host.ts`:
 ```ts
@@ -5073,7 +5073,7 @@ export function createHost(
 }
 ```
 
-- [ ] **Step 3: Add the audio dependency**
+- [x] **Step 3: Add the audio dependency**
 
 `packages/renderer/package.json` (final):
 ```json
@@ -5100,12 +5100,12 @@ export function createHost(
 Run: `pnpm install`
 Expected: `Done`; `pnpm-lock.yaml` updated.
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `pnpm --filter @pme/renderer typecheck && pnpm --filter @pme/renderer test`
 Expected: clean; all renderer tests still pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer pnpm-lock.yaml

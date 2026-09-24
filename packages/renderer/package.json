@@ -12,6 +12,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@pme/audio": "workspace:*",
     "@pme/engine-core": "workspace:*"
   }
 }
