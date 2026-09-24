@@ -3328,7 +3328,7 @@ git commit -m "test(scenario): driver inside HostSession — load, trigger, view
 **Interfaces:**
 - Produces: `@pme/controller/scenario` (runner, driver, validation, replay, stand-ins, built-ins, document types); root `@pme/controller` additionally exports `ScenarioView`, `NextTransition`, `describeWhen`, `describeTransition`, `manualLabel`, the document types, `ScenarioHookResult` (and, from Task 2, `ClinicalEvent`, `SensorId`, `ClinicalCommand`, `ScenarioEvent` through `export * from './protocol.ts'`).
 
-- [ ] **Step 1: The scenario entry**
+- [x] **Step 1: The scenario entry**
 
 `packages/controller/src/scenario/index.ts`:
 ```ts
@@ -3343,7 +3343,7 @@ export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';
 export { BUILTIN_SCENARIOS, BUILTIN_CATALOGUE } from './builtins.ts';
 ```
 
-- [ ] **Step 2: package.json exports**
+- [x] **Step 2: package.json exports**
 
 In `packages/controller/package.json`, replace:
 ```json
@@ -3359,7 +3359,7 @@ with:
   },
 ```
 
-- [ ] **Step 3: Two library entries**
+- [x] **Step 3: Two library entries**
 
 Replace the whole of `packages/controller/vite.config.ts` with:
 ```ts
@@ -3377,7 +3377,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4: Root exports**
+- [x] **Step 4: Root exports**
 
 In `packages/controller/src/index.ts`, replace:
 ```ts
@@ -3400,7 +3400,7 @@ export { describeWhen, describeTransition, manualLabel } from './scenario/descri
 export type { ScenarioDoc, ScenarioState, Transition, When, DocCommand } from './scenario/types.ts';
 ```
 
-- [ ] **Step 5: Build and check that ajv stays out of the root entry and the IIFE**
+- [x] **Step 5: Build and check that ajv stays out of the root entry and the IIFE**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -3409,7 +3409,7 @@ grep -c ajv packages/renderer/dist/patient-monitor.iife.js packages/controller/d
 ```
 Expected: typecheck exit 0; `dist/index.js ≈ 72.5 kB`, `dist/scenario.js ≈ 224 kB`, `patient-monitor.iife.js 94.05 kB` (unchanged from Stage 6a); grep counts `…iife.js:0`, `…index.js:0`, `…scenario.js:` > 0. A non-zero count for the IIFE or `index.js` means something in the root entry imports `validate.ts`/`driver.ts`/`builtins.ts`: find and remove that import.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/controller/src/scenario/index.ts packages/controller/package.json packages/controller/vite.config.ts packages/controller/src/index.ts
