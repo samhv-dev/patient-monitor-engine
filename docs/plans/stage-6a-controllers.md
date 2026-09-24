@@ -4047,7 +4047,7 @@ git commit -m "feat(controller): ViewerSync — snapshot restore, exact command 
 - Consumes: everything from Tasks 4–14.
 - Produces: the executable evidence for BUILD-PLAN Stage 6 acceptance 2 (late join: a viewer joining mid-ramp mirrors the host sample-for-sample; beat timing identical) and 3 (a controller drop through the relay never applies a command twice; the controller logs `link connecting`), plus stage-then-commit landing on one tick.
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 `packages/controller/test/session/sessions.test.ts`:
 ```ts
@@ -4200,17 +4200,17 @@ describe('robustness over the relay', () => {
 });
 ```
 
-- [ ] **Step 2: Run them**
+- [x] **Step 2: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/sessions.test.ts`
 Expected: `4 passed` (≈ 2 s). These are integration tests over code that already exists; they are expected to pass on the first run. If one fails, fix the session code, not the test, and say so in the commit message.
 
-- [ ] **Step 3: Run the whole controller suite**
+- [x] **Step 3: Run the whole controller suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller test && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: every file passes, no unhandled errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/controller/test/session/sessions.test.ts
