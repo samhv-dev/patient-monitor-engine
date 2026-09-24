@@ -872,7 +872,7 @@ git commit -m "feat(hemo): constants, Weissler PEP/LVET, f_fill, valve-opening m
 - Consumes: `params.ts` (Task 3).
 - Produces: `interface Pulse { t0; dur; qpk; kappa; skew; back; cpr? }`, `sinPowIntegral(kappa, skew = 1)`, `makePulse(t0, dur, sv, kappa, backFrac, skew = 1): Pulse`, `flowAt(list, t)`, `pressureAt(list, t)` (thoracic CPR pulses; `qpk` holds mmHg), `prunePulses(list, t)`; `N_CIRC` 5, `interface CircInputs { lv; rv; thor; pFloor; pawp; R; Rp }`, `compliance(p)`, `stepCirculation(s: number[], t, h, x)`, `radialPressure(s, t, x)`, `aorticPressure(s, t, x)`, `paPressure(s, t, x)`, `restState(map, pam): number[]`. State vector `s = [Pc, QL, x, x', Ppa]`.
 
-- [ ] **Step 1: Write the failing test (includes BUILD-PLAN acceptance 4)**
+- [x] **Step 1: Write the failing test (includes BUILD-PLAN acceptance 4)**
 
 `packages/engine-core/test/l2/hemo/circulation.test.ts`:
 
@@ -934,12 +934,12 @@ describe('l2/hemo ejection and circulation (brief §4.2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/circulation.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/circulation.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/ejection.ts`:
 
@@ -1099,12 +1099,12 @@ export function restState(map: number, pam: number): number[] {
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/circulation.test.ts`
 Expected: PASS (4 tests). Radial PP ≈ 44 mmHg, radial SBP ≈ 10 mmHg above aortic.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/ejection.ts packages/engine-core/src/l2/hemo/circulation.ts packages/engine-core/test/l2/hemo/circulation.test.ts
