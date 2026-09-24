@@ -1611,7 +1611,7 @@ git commit -m "feat(scenario): pure tick-driven runner — all trigger types, pr
 **Interfaces:**
 - Consumes: Task 5's runner (the draw is already implemented in `evaluate()`; this task pins its statistics — BUILD-PLAN Stage 6 acceptance 5).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 ```ts
 // probability/else on the `scenario` PRNG stream (brief §3.3, §7.4; BUILD-PLAN Stage 6 acceptance 5).
@@ -1679,12 +1679,12 @@ describe('probability', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/probability.test.ts`
 Expected: `Tests  6 passed (6)` and the printed lines `p 0.3 × 10,000: 0.298` and `p 0.3 × 1,000: 0.306` (exact, because the seeds are fixed). A different number means the stream derivation changed: the runner must use `seedStream(seed, 'scenario')` and one `uniform()` per roll.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/controller/test/scenario/probability.test.ts
