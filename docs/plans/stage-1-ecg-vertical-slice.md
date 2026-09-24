@@ -2653,7 +2653,7 @@ git commit -m "feat(l3): Pan–Tompkins-like QRS detector on the displayed lead"
 - Consumes: `Measured` (Task 2).
 - Produces: `type HrMethod = 'dropMaxMin'|'mean12'`, `HR_WINDOW = 12`, `interface HrState { method; rrs; lastR }`, `createHrState(method = 'dropMaxMin')`, `hrOnQrs(st, tR)`, `hrMeasure(st, t): Measured`. The engine calls `hrMeasure` exactly at whole sim seconds, so updates are ≤ 1 Hz by construction.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l3/hr.test.ts`:
 ```ts
@@ -2707,12 +2707,12 @@ describe('l3/hr', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/hr`
 Expected: FAIL — cannot load `hr.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l3/hr.ts`:
 ```ts
@@ -2768,12 +2768,12 @@ export function hrMeasure(st: HrState, t: number): Measured {
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/l3/hr`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
