@@ -927,7 +927,7 @@ git commit -m "feat(gas): O2 store, Severinghaus ODC with virtual-PO2 shift, shu
 - Consumes: Task 3 constants and `gasPatient`.
 - Produces: `interface Co2State { pf, ps, flow, vdExtraMl }`, `interface Co2Inputs { vaLpm, vco2, coRatio, cf, cs, kfs, extraGradient }`, `lowFlowFactor(coRatio)`, `createCo2State(paco2)`, `stepCo2(st, x, dtS)`, `etco2True(st, extraGradient)`, `vaForPaco2(vco2, paco2)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 4 on the model; decision 3 explains the +33 % step)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 4 on the model; decision 3 explains the +33 % step)
 
 **Create `packages/engine-core/test/l2/gas/co2.test.ts`:**
 
@@ -997,12 +997,12 @@ describe('two-compartment CO2 kinetics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/co2.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/co2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/co2.ts`:**
 
@@ -1065,9 +1065,9 @@ export function vaForPaco2(vco2: number, paco2: number): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 4 tests pass (prototype: apnoea +12.0 then 3.34 mmHg/min; +33 % step 35.7 % at 2 min, 90 % at 24.4 min).
+- [x] **Step 4: Run and verify** — same command; expected: 4 tests pass (prototype: apnoea +12.0 then 3.34 mmHg/min; +33 % step 35.7 % at 2 min, 90 % at 24.4 min).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/co2.ts packages/engine-core/test/l2/gas/co2.test.ts
