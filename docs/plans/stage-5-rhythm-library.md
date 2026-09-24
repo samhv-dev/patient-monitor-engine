@@ -7199,7 +7199,7 @@ BUILD-PLAN asked for a PTB-XL refit of the default vectors; ruling R17 fixes the
 - Consumes: Task 14, `narrowKernels`, `projectLeads`.
 - Produces: `csvCells`, `rPeaks`, `medianBeat`, `engineBeat(qtMs)`, `comparePtbxl(cache, n)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/validation/test/templates/compare-ptbxl.test.ts` with exactly:
 
@@ -7226,13 +7226,13 @@ describe('PTB-XL comparison helpers', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/templates/compare-ptbxl.test.ts`
 
 Expected: FAIL — cannot resolve `compare-ptbxl.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/validation/src/templates/compare-ptbxl.ts` with exactly:
 
@@ -7394,13 +7394,13 @@ Append these rows to the table in `NOTICES.md` (IDs from the reserved N-050…N-
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run && npx -y pnpm@9.15.9 check-notices`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NOTICES.md packages/validation/src/templates/compare-ptbxl.ts packages/validation/test/templates/compare-ptbxl.test.ts docs/gates/stage-5/ptbxl-normal-comparison.json
