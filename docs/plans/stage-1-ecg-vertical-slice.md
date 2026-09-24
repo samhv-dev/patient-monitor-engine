@@ -5124,7 +5124,7 @@ git commit -m "feat(renderer): OffscreenCanvas worker host with worker-rAF, fram
 - Consumes: Tasks 17–20; `playBeep`, `ToneScheduler`, `unlockAudio`, `ToneLogEntry` from `@pme/audio`.
 - Produces: `interface MountOptions { engine?; skin?: string /* only 'philips-like' in Stage 1 */; layout?; worker?: 'auto'|'off'; lanes?: LeadId[]; fps?: 60|30; pxPerMm? }`, `interface MonitorHandle { dispatch(cmd): Promise<DispatchResult>; on(fn): () => void; calibrate(pxPerMm); enableSound(): Promise<void>; setTimeScale(k); pause(); resume(); setFps(fps); destroy(); readonly renderPath: Promise<RenderPath>; readonly audioLog: readonly ToneLogEntry[]; readonly engine: { dispatch } }`, `mountMonitor(el, opts?): MonitorHandle`. Renderer index exports `version`, `createEngine`, `mountMonitor`, `transports` (an empty registry until Stage 6), plus the lane/geometry modules. The IIFE global therefore has keys `mountMonitor`, `createEngine`, `transports`, `version` (brief §7.6).
 
-- [ ] **Step 1: Extend the smoke test first**
+- [x] **Step 1: Extend the smoke test first**
 
 `apps/demo/e2e/iife-smoke.e2e.ts` (replace):
 ```ts
@@ -5174,7 +5174,7 @@ test('Stage 1: mountMonitor draws two ECG lanes and an HR number from file://', 
 Run: `pnpm build && PW_SYSTEM_CHROME=1 pnpm test:e2e`
 Expected: the Stage 0 test passes; the Stage 1 test FAILS (`typeof mountMonitor` is `'undefined'`).
 
-- [ ] **Step 2: Implement `mountMonitor`**
+- [x] **Step 2: Implement `mountMonitor`**
 
 `packages/renderer/src/mount.ts`:
 ```ts
@@ -5330,7 +5330,7 @@ export type { RenderPath } from './worker-host.ts';
 export const transports: Record<string, never> = {};
 ```
 
-- [ ] **Step 3: Build and check the IIFE shape**
+- [x] **Step 3: Build and check the IIFE shape**
 
 Run: `pnpm typecheck && pnpm build`
 Then:
@@ -5340,12 +5340,12 @@ grep -c 'new Worker' packages/renderer/dist/patient-monitor.iife.js
 ```
 Expected: `mountMonitor:function createEngine:function transports:object version:string`; the grep count ≥ 1 (the worker is inlined as a blob, with a `data:` URL fallback, so it works from `file://`).
 
-- [ ] **Step 4: Run the smoke test green**
+- [x] **Step 4: Run the smoke test green**
 
 Run: `PW_SYSTEM_CHROME=1 pnpm test:e2e` (CI runs Chromium and WebKit)
 Expected: `2 passed` per project; the HR tile shows a 2–3 digit number within 15 s.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer apps/demo/e2e
