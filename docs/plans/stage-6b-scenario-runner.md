@@ -4360,7 +4360,7 @@ git commit -m "docs(gates): stage 6b gate evidence — scenario runner, ACLS dem
 
 ### Task 20: Push and open the pull request (do not merge)
 
-- [ ] **Step 1: Sync with `main` if it moved**
+- [ ] **Step 1: Sync with `main` if it moved** — NOT DONE (orchestrator: do not merge mid-way; the merge was refused by the session permission guard). A trial merge in a throwaway clone is recorded in `docs/gates/stage-6b.md`, Deviations 8. NOTICES were renumbered to N-011–N-013 instead.
 
 ```bash
 git fetch origin
@@ -4368,7 +4368,7 @@ git merge --no-edit origin/main   # only if origin/main moved since Task 1
 ```
 Expected conflicts only in `NOTICES.md` (renumber this stage's rows to the next free IDs, and the note/README references to them), `apps/demo/vite.config.ts` and `apps/demo/index.html` (keep both stages' lines). If Stage 5 merged: re-run `driver.test.ts` — the ACLS path must be unchanged; `driver.notes` then has no stand-in lines (update the two expectations that assume the stand-in: in `driver.test.ts` the `notes` check becomes "has no stand-in line", and in `host-scenario.test.ts` the awaited rhythm `vtMono` becomes `vfCoarse`; record both under Deviations). If Stage 2 merged and the engine emits `state`: nothing to change; `vital` triggers read it at rank 3. Re-run Task 18 Step 1 after any merge.
 
-- [ ] **Step 2: Push and open the PR**
+- [x] **Step 2: Push and open the PR**
 
 ```bash
 git push -u origin stage-6b-scenario-runner

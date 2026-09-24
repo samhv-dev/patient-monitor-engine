@@ -2,7 +2,7 @@
 
 Gate question (BUILD-PLAN Stage 6): "Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" The Wi-Fi drop half was answered at Gate 6a. This gate covers the scenario half: a `pme-scenario/1` timeline runs on the host, the instructor drives it from the panel or the remote, and the learner's actions move it on.
 
-Branch `stage-6b-scenario-runner`, worktree `projects/patient-monitor-engine/scratch/wt-stage-6b`, base `origin/main` at `8e46032` (Stage 6a merged on top of Stage 1.1). Plan: `docs/plans/stage-6b-scenario-runner.md`, Tasks 1–20.
+Branch `stage-6b-scenario-runner`, worktree `projects/patient-monitor-engine/scratch/wt-stage-6b`, base `origin/main` at `8e46032` (Stage 6a merged on top of Stage 1.1). `main` has since gained Stages 5 and 4a. The branch was not merged with them; a trial merge is described under Deviations 8. Plan: `docs/plans/stage-6b-scenario-runner.md`, Tasks 1–20.
 
 | Check | Result |
 |---|---|
@@ -99,7 +99,20 @@ The driver checks the engine's own `RHYTHM_IDS` at run time. It substitutes an i
 4. **Clean-clone rehearsal.** This ran in the session scratchpad instead of `mktemp -d`.
 5. **Commit trailer.** At the orchestrator's instruction, commits end with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`.
 6. **Code:** otherwise none. Every file the plan gives in full was written exactly as given, and every replace-anchor matched once. Every step passed as written, so the reference tree was not needed.
-7. **NOTICES:** N-010, N-011 and N-012 were still free when the rows were added. Stage 2's open PR has none of its own, and Stage 5 uses N-050+.
+7. **NOTICES renumbered (Task 20).** N-010, N-011 and N-012 were free when Task 1 added the rows. Before the PR opened, `main` gained **N-010** (ajv 8.20.0 for `@pme/skins/validate`, from Stage 4a). This stage's rows are therefore **N-011** (ajv, `@pme/controller/scenario` entry), **N-012** (fast-uri, BSD-3-Clause, `LICENSES/fast-uri-3.1.8.txt`) and **N-013** (fast-deep-equal, json-schema-traverse, require-from-string). The comment in `validate.ts` now cites N-011. The plan text keeps its original numbers.
+8. **`main` moved and was not merged (Task 20 Step 1 skipped).** While this plan ran, `origin/main` went from `8e46032` to `b0ddf12` (Stage 5 merged, PR #3) and then to `121c3f4` (Stage 4a merged, PR #5). Two things stopped the merge. The orchestrator had said "do not merge it mid-way; finish the plan on your base", and the session's permission guard refused `git merge origin/main` in the worktree. The PR is therefore based on `8e46032`, and every number above is from that base. Instead, a **trial merge** ran in a throwaway clone in the session scratchpad; the branch was not touched:
+   - **Conflicts:** only the two the plan predicts.
+     - `NOTICES.md`: keep both blocks, with main's N-010 and this stage's N-011–N-013.
+     - `apps/demo/vite.config.ts`: keep both `'stage4a-skins'` and `'stage6b-acls'`.
+     - `apps/demo/index.html` and `pnpm-lock.yaml` auto-merge.
+   - **After the merge, before any fix:** 183/185 controller tests passed. The two failures are exactly the expectations Task 20 names:
+     - `driver.test.ts`: `driver.notes` no longer has the `vfCoarse` stand-in line. The fix is "has no stand-in line": `expect(driver.notes.some((n) => n.includes('until Stage 5'))).toBe(false)`.
+     - `host-scenario.test.ts`: the awaited rhythm is `vfCoarse`, not `vtMono`.
+   - **Unchanged after the merge:** the ACLS path (`0:stable → 60:vf/arrest → 70:rosc/shockVf`, and the no-shock decay to vfFine at 300 s and asystole at 600 s).
+   - **With those two one-line changes:** `typecheck && test && build && check-notices` gave exit 0. That is **677 tests**: controller 185, engine-core 237, skins 155, audio 58, validation 16, renderer 26. `check-notices: OK (3 governed files)`. The IIFE is 373.62 kB (Stage 5 and 4a content) with 0 × `ajv`, and controller `dist/index.js` has 0 × `ajv`.
+   - **Browser:** `stage6b.e2e.ts` passed 1/1 with the real Stage 5 rhythms: `0.38 s → stable`, `0.56 s → vf (arrest)`, `7.82 s → rosc (shockVf)`, with no notes, i.e. no stand-ins.
+
+   Whoever merges applies the conflict resolutions and the two test edits above.
 
 ## Notes for other stages
 

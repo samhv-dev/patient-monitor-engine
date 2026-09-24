@@ -1,4 +1,4 @@
-// Scenario validation: the JSON Schema (ajv, MIT — NOTICES N-010) for shape, then the cross-references a schema
+// Scenario validation: the JSON Schema (ajv, MIT — NOTICES N-011) for shape, then the cross-references a schema
 // cannot express (unique ids, `to`/`else`/bookmark targets exist). Errors carry the JSON path of the offending
 // value, e.g. `/states/1/transitions/0/when: a trigger must have exactly one of afterS, …` (BUILD-PLAN Stage 6
 // acceptance 6). This module is the only importer of ajv; it lives behind the `@pme/controller/scenario` entry
