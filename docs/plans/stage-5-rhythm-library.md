@@ -2050,7 +2050,7 @@ Shared test helpers for every later task (plan-only runner, sample runner throug
 - Consumes: Tasks 3–4.
 - Produces (test helpers): `run5(id, seconds, { hr?, seed?, mods?: ModifiersPatch, rhythmOpts? }) → { st, ctx, mods, beats, atrial, markers, records }`; `samples5(id, seconds, leads, opts & { mainsHz? }) → … & { lead: Record<LeadId, Float64Array> }` (pre-filter lead samples through `generateEcg` + `ecgFrontEnd`, planned 150 ms ahead in 20 ms chunks exactly like the engine); `kernelLead(k, lead, s)`; `eventsWith(st, wave)`; `morphBeat(patch, seq?, template?)`; `mean`, `sd`, `diffs`; types `Beat`, `Atrial`, `Marker`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/helpers/s5.ts` with exactly:
 
@@ -2219,13 +2219,13 @@ describe('Stage 5 rhythms: sinus', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/sinus.test.ts`
 
 Expected: FAIL — sinusArrhythmia PP swing < 0.12 s, and sinusPause has no 3 s pause (both still behave as plain sinus).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/atria.ts`, replace:
 
@@ -2270,13 +2270,13 @@ with:
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/test/helpers/s5.ts packages/engine-core/test/l2/ecg/s5/sinus.test.ts

@@ -170,6 +170,24 @@ export function conductAt(st: RhythmState, t: number, rate: number, ctx: RhythmC
   return pr;
 }
 
+/** sinusArrhythmia: RSA depth at least 2.5 (A_RSA 150 ms at RR 1 s → phasic PP swing > 120 ms, research 03 §1.5) [ENG]. */
+const SINUS_ARRHYTHMIA_RSA = 2.5;
+
+/** Next sinus P time after a P at t (HRV, sinus arrhythmia, sinus pause). */
+function nextSinusT(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): number {
+  const m = st.id === 'sinusArrhythmia'
+    ? { rsa: Math.max(ctx.mods.rsa, SINUS_ARRHYTHMIA_RSA), hrvScale: Math.max(1, ctx.mods.hrvScale) }
+    : ctx.mods;
+  const next = t + sinusRR(60 / rate, t, ctx.hrv, m, ctx.rng.hrv);
+  if (st.id === 'sinusPause') {
+    const every = st.opts.pauseEveryS ?? 12; // [ENG]
+    const k0 = Math.floor((t - st.startT) / every);
+    const k1 = Math.floor((next - st.startT) / every);
+    if (k1 > k0 && k0 >= 0) return t + (st.opts.pauseS ?? 3); // sinus arrest: not a multiple of PP
+  }
+  return next;
+}
+
 function onSinus(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];
   const rate = atrialRate(st, d, t, ctx);
@@ -178,7 +196,7 @@ function onSinus(st: RhythmState, t: number, ctx: RhythmCtx): void {
   if (pr !== null) pushPending(st, { t: t + pr / 1000, origin: 'sinus', template: d.conductedTemplate, prMs: pr, pvc: false, coupling: 0, bypass: false });
   st.records.push({ type: 'atrial', t, kind: 'p', conducted: pr !== null });
   st.atria.lastT = t;
-  st.atria.nextT = t + sinusRR(60 / rate, t, ctx.hrv, ctx.mods, ctx.rng.hrv);
+  st.atria.nextT = nextSinusT(st, t, rate, ctx);
   for (const h of HOOKS.onP) h(st, t, ctx);
 }
 
