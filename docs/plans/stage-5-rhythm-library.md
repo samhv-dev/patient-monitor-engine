@@ -4093,7 +4093,7 @@ Dev-only dataset tooling in `@pme/validation`, written from PhysioNet's format d
 - Consumes: `engine-core/src/util/dsp.ts` (relative import; the scripts must not import the engine-core index, which imports the template modules they generate).
 - Produces: `parseHeader`, `decode212`, `decode16`, `parseAnnotations`, `ANN { RHYTHM: 28, VFON: 32, VFOFF: 33, NOISE: 14 }`; `PHYSIONET`, `fetchCached(cache, project, file)`, `parseSums`, `sha256`, `fetchVerified(cache, project, file, sums)`; `highpassZeroPhase`, `bandpassZeroPhase`, `resample(x, fsIn, fsOut)`, `toInt16Base64(x, scale)`; `writeTemplateModule(path, { noticeId, attribution, generator, constName, scaleName, scale, items })`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/validation/test/templates/wfdb.test.ts` with exactly:
 
@@ -4169,13 +4169,13 @@ describe('extraction DSP and the template format', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/templates/wfdb.test.ts`
 
 Expected: FAIL — cannot resolve `../../src/templates/wfdb.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/validation/src/templates/wfdb.ts` with exactly:
 
@@ -4428,13 +4428,13 @@ export function writeTemplateModule(path: string, o: { noticeId: string; attribu
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation typecheck && npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/validation/src/templates/dsp.ts packages/validation/src/templates/fetch.ts packages/validation/src/templates/template-module.ts packages/validation/src/templates/wfdb.ts packages/validation/test/templates/wfdb.test.ts
