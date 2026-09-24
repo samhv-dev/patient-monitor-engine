@@ -4302,14 +4302,14 @@ git commit -m "test(e2e): ACLS scenario in the browser — panel load, remote tr
 
 **Files:** none (evidence for the gate note).
 
-- [ ] **Step 1: Whole repository**
+- [x] **Step 1: Whole repository**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices
 ```
 Expected: exit 0. Tests: controller **185** (32 files), engine-core 112, renderer 26, audio 19, validation 6, skins 1 — **349** in total (Stage 6a: 261). `check-notices: OK (1 governed files)`. IIFE `94.05 kB`.
 
-- [ ] **Step 2: Clean clone (what CI does)**
+- [x] **Step 2: Clean clone (what CI does)**
 
 ```bash
 SCR=$(mktemp -d)
@@ -4319,7 +4319,7 @@ cd - && rm -rf "$SCR"
 ```
 Expected: exit 0 with the same numbers. (CI also runs `pnpm test:e2e` on Chromium AND WebKit: `stage6b.e2e.ts` uses only BroadcastChannel, which WebKit supports.)
 
-- [ ] **Step 3: Viewer spot check (manual, 2 min)**
+- [x] **Step 3: Viewer spot check (manual, 2 min)**
 
 With Task 16's server running, open `stage6b-acls.html?session=GATE6B&scenario=acls-vf-witnessed` and `stage6a-viewer.html?session=GATE6B&via=bc`; press "Start VF now" in the panel and "Shock 200 J". The viewer's line must stay `synced · … · beat drift 0.0 ms` through both scenario transitions (it mirrors the runner's commands, stand-ins included). Record the line for the gate note.
 
@@ -4330,7 +4330,7 @@ With Task 16's server running, open `stage6b-acls.html?session=GATE6B&scenario=a
 **Files:**
 - Create: `docs/gates/stage-6b.md`
 
-- [ ] **Step 1: Write the note** in the house style of `docs/gates/stage-6a.md`: title with date; the gate question from BUILD-PLAN Stage 6 ("Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" — the drop half was Gate 6a); then a **check table** with measured numbers:
+- [x] **Step 1: Write the note** in the house style of `docs/gates/stage-6a.md`: title with date; the gate question from BUILD-PLAN Stage 6 ("Can Ali run a 10-minute ACLS scenario from the laptop without touching the iPad monitor, and recover cleanly from a Wi-Fi drop?" — the drop half was Gate 6a); then a **check table** with measured numbers:
 
 | Check | Where the number comes from |
 |---|---|
@@ -4349,7 +4349,7 @@ With Task 16's server running, open `stage6b-acls.html?session=GATE6B&scenario=a
 
 Then: **Screenshots** (`stage-6b/host-vf.png`, `host-rosc.png`, `remote-vf.png`, one line each on what they show); **Scenario run log** — paste the three `lines` from `stage-6b/run-log.json` and the `roll` entry, and link the file; **Clinical review for Ali** — the five scenario summaries from Task 10 with every [ENG] probability/timing listed as a question (e.g. "ROSC per shock in coarse VF 0.3?", "fine VF after 4 min?", "adenosine conversion 0.6 per dose?", "atropine partial response 0.2 in wide CHB?", "PEA: fluid ≥ 500 mL AND epinephrine, p 0.6?"); **Stand-ins in force** (the table from Decision 9, and that they vanish when Stage 5 merges); **Not done / deferred** (`time step|jump`; BP/EtCO2 steps waiting for Stage 2 in `$comment`; the physiology of shocks/drugs/CPR — Stages 4/7; LAN/iPad runs); **Deviations from the plan** (anything you changed and why; NOTICE ID renumbering if any; merge conflicts with Stage 5 in `apps/demo/vite.config.ts`/`index.html` if `main` moved); **Notes for other stages** (the three bullets of "Requests for the orchestrator" above).
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/gates/stage-6b.md docs/plans/stage-6b-scenario-runner.md
