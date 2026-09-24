@@ -3989,7 +3989,7 @@ git commit -m "feat(remote): scenario state and manual-trigger buttons"
 - Consumes: `mountSimMonitor` from `apps/demo/src/stage6a/sim-monitor.ts` (read-only reuse), `@pme/controller`, `@pme/controller/scenario`.
 - Produces: the page (URL `?session=CODE&scenario=<built-in id>&seed=<engine seed, default 42>`), and `window.__pme6b = { session, hs, driver, mon, panel, panelSession, learner, scenarioLog }` for the e2e. The remote is 6a's `stage6a-remote.html` (it gains the scenario strip from Task 15), opened by the "Open remote" button over BroadcastChannel.
 
-- [ ] **Step 1: The page**
+- [x] **Step 1: The page**
 
 `apps/demo/stage6b-acls.html`:
 ```html
@@ -4151,7 +4151,7 @@ setInterval(() => {
 Object.assign(window, { __pme6b: { session, hs, driver, mon, panel, panelSession, learner, scenarioLog } });
 ```
 
-- [ ] **Step 2: Register the page**
+- [x] **Step 2: Register the page**
 
 In `apps/demo/vite.config.ts`, replace:
 ```ts
@@ -4172,7 +4172,7 @@ with:
       <li><a href="./stage6b-acls.html?scenario=acls-vf-witnessed">Stage 6b: scenario runner — ACLS (VF)</a></li>
 ```
 
-- [ ] **Step 3: Typecheck and build**
+- [x] **Step 3: Typecheck and build**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck
@@ -4180,7 +4180,7 @@ npx -y pnpm@9.15.9 --filter @pme/demo build 2>&1 | grep stage6b
 ```
 Expected: exit 0; `dist/stage6b-acls.html` and a `stage6b-acls-*.js` asset listed.
 
-- [ ] **Step 4: Look at it**
+- [x] **Step 4: Look at it**
 
 Serve from your own shell (the browser-pane launcher sandbox and `file://` do not work for this app; Stage 6a gate, deviation 4): `npx -y pnpm@9.15.9 --filter @pme/demo exec vite --port 5207 --strictPort --host 127.0.0.1` in the background, then open `http://127.0.0.1:5207/stage6b-acls.html?scenario=acls-vf-witnessed` (a visible browser window, or headless Chrome — a hidden pane throttles rAF). Check:
 - the orange line reads `[draft] Witnessed VF in PACU — Stable in PACU · 00:0x in state …` and the notes list `/states/1/onEnter/0/rhythm: "vfCoarse" is not in this engine` (until Stage 5 merges);
@@ -4189,7 +4189,7 @@ Serve from your own shell (the browser-pane launcher sandbox and `file://` do no
 - "Open remote" → the phone-size remote shows the scenario strip with the manual buttons of the current state.
 Stop the server afterwards.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/demo/stage6b-acls.html apps/demo/src/stage6b apps/demo/vite.config.ts apps/demo/index.html
