@@ -3,6 +3,8 @@
 import { playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneLogEntry } from '@pme/audio';
 import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
 import { NumericTile } from './numerics-dom.ts';
+import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts'; // Stage 2
+import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts'; // Stage 2
 import type { ClockAnchor, Size } from './protocol.ts';
 import { createHost, type Host, type RenderPath } from './worker-host.ts';
 
@@ -13,6 +15,10 @@ export interface MountOptions {
   layout?: string;
   worker?: 'auto' | 'off';
   lanes?: LeadId[];
+  /** Stage 2: waveform lanes below the ECG lanes (their tiles appear with them). */
+  waves?: WaveLaneId[];
+  /** Stage 2: show the NIBP tile. */
+  nibp?: boolean;
   fps?: 60 | 30;
   pxPerMm?: number;
   /** The part this monitor plays in a session (brief §7.5; renderer request R-1, ruling R25). Default 'host'. */
@@ -60,10 +66,21 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
   wrap.append(canvas);
   const tiles = doc.createElement('div');
-  tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;`;
+  tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Stage 2: scroll
   root.append(wrap, tiles);
   el.append(root);
   const hrTile = new NumericTile(tiles, { label: 'HR', unit: 'bpm', color: '#00ff66' });
+  // Stage 2 tiles (brief §6.1, §6.3)
+  const waves = opts.waves ?? [];
+  const abpTile = waves.includes('abp') ? new PressureTile(tiles, 'ABP', 'mmHg', WAVE_STYLE.abp.color) : null;
+  const papTile = waves.includes('pap') ? new PressureTile(tiles, 'PAP', 'mmHg', WAVE_STYLE.pap.color) : null;
+  const cvpTile = waves.includes('cvp') ? new PressureTile(tiles, 'CVP', 'mmHg', WAVE_STYLE.cvp.color) : null;
+  const prTile = waves.includes('pleth') ? new PressureTile(tiles, 'PR', 'bpm', WAVE_STYLE.pleth.color) : null;
+  const piTile = waves.includes('pleth') ? new PressureTile(tiles, 'PI', '%', WAVE_STYLE.pleth.color) : null;
+  const nibpTile = opts.nibp ? new PressureTile(tiles, 'NBP', 'mmHg', '#ff7ad9') : null;
+  let nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
+  const single = (m: { value: number | null; flag: string } | undefined, digits = 0) =>
+    m && m.value !== null && m.flag !== 'invalid' ? m.value.toFixed(digits) : '---';
 
   const listeners = new Set<(e: EngineEvent) => void>();
   let scheduler: ToneScheduler | null = null;
@@ -73,6 +90,30 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale });
     for (const e of events) {
       if (e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
+      if (e.type === 'measurement') {
+        // Stage 2 tiles
+        const v = e.values;
+        if (abpTile && v.abpSys) {
+          const p = formatPressure(v.abpSys, v.abpDia, v.abpMean);
+          abpTile.set(p.main, p.sub);
+        }
+        if (papTile && v.papSys) {
+          const p = formatPressure(v.papSys, v.papDia, v.papMean);
+          papTile.set(p.main, p.sub);
+        }
+        if (cvpTile && v.cvpMean) cvpTile.set(single(v.cvpMean), '');
+        if (prTile && v.pr) prTile.set(single(v.pr), '');
+        if (piTile && v.pi) piTile.set(single(v.pi, 1), '');
+        if (nibpTile && v.nibpSys && v.nibpSys.value !== null) {
+          nibpLast = { sys: v.nibpSys.value, dia: v.nibpDia?.value ?? 0, map: v.nibpMean?.value ?? 0, at: e.t };
+          const n = formatNibp(undefined, nibpLast);
+          nibpTile.set(n.main, n.sub, n.status);
+        }
+      }
+      if (e.type === 'nibp' && nibpTile) {
+        const n = formatNibp(e, nibpLast);
+        nibpTile.set(n.main, n.sub, n.status);
+      }
       if (e.type === 'tone') {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
@@ -96,6 +137,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const coreOpts = {
     ...(opts.engine ? { engine: opts.engine } : {}),
     ...(opts.lanes ? { lanes: opts.lanes } : {}),
+    ...(opts.waves ? { waves: opts.waves } : {}), // Stage 2
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
   };

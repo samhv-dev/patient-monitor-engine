@@ -4885,7 +4885,7 @@ git commit -m "feat(renderer): opt-in ABP/pleth/CVP/PAP sweep lanes with scale c
 - Consumes: `Measured`, `EngineEvent` (`nibp`, `measurement`), `WAVE_STYLE` (Task 19).
 - Produces: `formatPressure(sys, dia, mean): { main; sub }`, `formatClock(simT): 'hh:mm'`, `interface NibpView { main; sub; status }`, `formatNibp(e, last): NibpView`, `class PressureTile { constructor(parent, label, unit, color); set(main, sub, status = '') }`; `MountOptions.waves?: WaveLaneId[]`, `MountOptions.nibp?: boolean`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/renderer/test/numerics-hemo.test.ts`:
 
@@ -4912,12 +4912,12 @@ describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/numerics-hemo.test.ts`
 Expected: FAIL — cannot load `../src/numerics-hemo.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/renderer/src/numerics-hemo.ts`:
 
@@ -5132,12 +5132,12 @@ export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from
 export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts'; // Stage 2
 ```
 
-- [ ] **Step 4: Run it to see it pass, and build the IIFE**
+- [x] **Step 4: Run it to see it pass, and build the IIFE**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run && npx -y pnpm@9.15.9 --filter @pme/renderer typecheck && npx -y pnpm@9.15.9 --filter @pme/renderer build`
 Expected: PASS (31 tests); `dist/patient-monitor.iife.js` builds (≈ 150 kB with the Stage 6a transports).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/numerics-hemo.ts packages/renderer/src/mount.ts packages/renderer/src/index.ts packages/renderer/test/numerics-hemo.test.ts

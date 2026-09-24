@@ -9,5 +9,6 @@ export { NumericTile, formatNumeric } from './numerics-dom.ts';
 export { mountMonitor, type MonitorHandle, type MonitorRole, type MountOptions } from './mount.ts';
 export type { RenderPath } from './worker-host.ts';
 export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from './wave-lanes.ts'; // Stage 2
+export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts'; // Stage 2
 /** The five transport adapters of @pme/controller (brief §7.5; renderer request R-2, ruling R25). */
 export { transports } from '@pme/controller';
