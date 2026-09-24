@@ -1556,7 +1556,7 @@ git commit -m "feat(hemo): parametric CVP (a/c/x/v/y Gaussians, cannon a waves, 
 - Consumes: nothing.
 - Produces: `TRACK_ALPHA` 0.25, `TRACK_ALPHA_R` 0.5, `TRACK_BEATS` 4, `REF_E_MIN` 0.4, `REF_E_MAX` 1.05, `REF_CARRY_MAX` 0.25, `isReferenceBeat(e, carryMl, nominalMl, ventricular = false)`, `interface TrackerLimits { gMin; gMax; rMin; rMax }`, `interface TrackerState { g; R; ref: number[][]; saturated; lastRefT }`, `createTracker(R0)`, `interface SiteBeat { t; sbp; dbp; map; ref: boolean; sv; dur }`, `trackBeat(tr, b, target: {sbp, dbp}, pFloor, lim, gCap)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/hemo/tracker.test.ts`:
 
@@ -1600,12 +1600,12 @@ describe('l2/hemo/tracker (brief §4.9 M2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/tracker.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/tracker.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/tracker.ts`:
 
@@ -1701,12 +1701,12 @@ export function trackBeat(
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/tracker.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/tracker.ts packages/engine-core/test/l2/hemo/tracker.test.ts
