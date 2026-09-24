@@ -4256,17 +4256,17 @@ git commit -m "test(hemo): stage 2 acceptance 1–3 (R→foot/notch timing, MAP 
 - Consumes: Task 14's file.
 - Produces: evidence for BUILD-PLAN tests 5, 6, 7 and the extras "post-PVC potentiation", "AF beat-to-beat pulse-pressure variability", "pulseless → flat within 20 s".
 
-- [ ] **Step 1: Run the tests**
+- [x] **Step 1: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts -t "(5a|5b|5c|extra|6\.|7\.)"`
 Expected: PASS (7 tests with the current rhythm set: 5a, 5b, 5c, extra, 6 asystole, 6 VT 220, 7; an 8th, "6. VF", appears once Stage 5's `vfCoarse` is merged). Record: number of RR < 350 ms beats with an upstroke < 5 mmHg and mean PR vs HR in AF 150 (≈ 76 of 115; PR ≈ 88 vs HR ≈ 136), mean post-PVC ΔSBP (≈ +11), arrest plateau (≈ 12 mmHg), CPR trace (≈ 94/22) and the 5 s post-pause level (≈ 20 mmHg).
 
-- [ ] **Step 2: Check the partition rule once more**
+- [x] **Step 2: Check the partition rule once more**
 
 Run: `git diff main --stat -- packages/engine-core/src/l2/ecg packages/engine-core/templates`
 Expected: no output (Stage 2 never edits Stage 5's files).
 
-- [ ] **Step 3: Commit** (only if Step 1 required a documented fix; otherwise nothing to commit — go on to Task 16)
+- [x] **Step 3: Commit** (only if Step 1 required a documented fix; otherwise nothing to commit — go on to Task 16)
 
 ---
 
@@ -4279,12 +4279,12 @@ Expected: no output (Stage 2 never edits Stage 5's files).
 - Consumes: Task 14's file.
 - Produces: evidence for BUILD-PLAN tests 8, 10, 11 and the extra "PPV/SPV magnitude vs volumeStatus".
 
-- [ ] **Step 1: Run the tests**
+- [x] **Step 1: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts -t "(8\.|10\.|11\.)"`
 Expected: PASS (4 tests). Record: SBP change at fn 10/ζ 0.2 (≈ +7) and ζ 1.2 (≈ −1.4, DBP ≈ +0.6), MAP changes (< 0.5), ring period (≈ 102 ms), PPV (≈ 8% and ≈ 24%), SPV ratio, a-wave delay (≈ 89 ms).
 
-- [ ] **Step 2: Run the whole acceptance file**
+- [x] **Step 2: Run the whole acceptance file**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts`
 Expected: PASS (14 tests), ≈ 2 s.
@@ -4300,7 +4300,7 @@ Expected: PASS (14 tests), ≈ 2 s.
 - Consumes: helpers (Task 13), the engine with the NIBP wired (Tasks 11–13).
 - Produces: evidence for BUILD-PLAN test 9 (all six bullets) and the extra "NIBP ≈ IBP MAP".
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/hemo-nibp.test.ts`:
 
@@ -4424,12 +4424,12 @@ describe('Stage 2 acceptance 9: NIBP', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-nibp.test.ts`
 Expected: PASS (6 tests), ≈ 10 s. Record: mean first-cycle duration (≈ 32 s), NIBP − IBP bias/SD for SBP and DBP over 100 cycles (≈ +0.7/6.8 and +1.5/5.7), AF vs sinus mean duration and SBP-error SD, how many AF cycles failed, the time to the SBP 45 failure (≈ 56 s).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/hemo-nibp.test.ts
