@@ -384,7 +384,7 @@ git commit -m "feat(controller): applyEvent and attachSensor commands (brief §7
 **Interfaces:**
 - Produces: the schema (draft-07; `$comment` allowed on the document, states, transitions and commands; `when` = an object with exactly one of `afterS | atScenarioS | vital | event | sensor | manual | all | any`; commands are a `discriminator` on `type` over `setTarget pin release setFactor setMode setRhythm setModifiers applyEvent attachSensor device`, each with `additionalProperties: false`, so `id`/`issuedBy`/`atTick`/`stageGroup` are refused). Types `Op`, `VitalVar`, `EventFilter`, `When`, `DocCommand`, `Transition`, `ScenarioState`, `ScenarioPatient`, `DocBookmark`, `ScenarioDoc`.
 
-- [ ] **Step 1: Write the schema**
+- [x] **Step 1: Write the schema**
 
 `packages/controller/scenarios/pme-scenario-1.schema.json`:
 ```json
@@ -640,7 +640,7 @@ git commit -m "feat(controller): applyEvent and attachSensor commands (brief §7
 
 Notes: `"properties": { "type": { "type": "string" } }` on `command` is needed by ajv's strict mode (`strictRequired`); `"additionalProperties": { "type": ["string","number","boolean"] }` on `event` needs `allowUnionTypes` (Task 4). The `rhythm` id is a pattern, not an enum: the engine decides which ids exist (Decision 9).
 
-- [ ] **Step 2: Write the types**
+- [x] **Step 2: Write the types**
 
 `packages/controller/src/scenario/types.ts`:
 ```ts
@@ -737,12 +737,12 @@ export interface ScenarioDoc extends C {
 }
 ```
 
-- [ ] **Step 3: Typecheck**
+- [x] **Step 3: Typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/controller/scenarios/pme-scenario-1.schema.json packages/controller/src/scenario/types.ts

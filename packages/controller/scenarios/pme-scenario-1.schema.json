@@ -1,0 +1,248 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/samhv-dev/patient-monitor-engine/packages/controller/scenarios/pme-scenario-1.schema.json",
+  "title": "pme-scenario/1",
+  "description": "Scenario timeline (DESIGN-BRIEF §7.4): states with onEnter/onExit command lists and prioritised transitions. `$comment` is allowed on the document, states, transitions and commands and is never interpreted.",
+  "type": "object",
+  "required": ["schema", "id", "title", "initialState", "states"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string" },
+    "schema": { "const": "pme-scenario/1" },
+    "id": { "$ref": "#/definitions/id" },
+    "title": { "type": "string", "minLength": 1 },
+    "notes": { "type": "string" },
+    "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "mode": { "enum": ["manual", "modeled"] },
+    "patient": { "$ref": "#/definitions/patient" },
+    "device": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "skin": { "type": "string" }, "layout": { "type": "string" } }
+    },
+    "initialState": { "$ref": "#/definitions/id" },
+    "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/state" } },
+    "bookmarks": { "type": "array", "items": { "$ref": "#/definitions/bookmark" } }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+    "comment": { "type": "string" },
+    "stateVar": {
+      "enum": ["hr", "sbp", "dbp", "cvp", "papSys", "papDia", "pawp", "spo2", "pi", "rr", "vt", "etco2", "fio2",
+               "shunt", "tempCore", "contractility", "svr", "k", "qtc", "volumeStatus", "paceThresholdMa"]
+    },
+    "vitalVar": {
+      "enum": ["hr", "sbp", "dbp", "map", "cvp", "papSys", "papDia", "pawp", "spo2", "pi", "rr", "vt", "etco2", "fio2",
+               "shunt", "tempCore", "contractility", "svr", "k", "qtc", "volumeStatus", "paceThresholdMa",
+               "pr", "abpSys", "abpDia", "abpMean", "cvpMean", "papMean", "nibpSys", "nibpDia", "nibpMean",
+               "imco2", "awrr", "tempSite", "stII"]
+    },
+    "sensorId": { "enum": ["ecg", "spo2", "nibp", "abp", "cvp", "pap", "co2", "temp"] },
+    "eventKind": {
+      "enum": ["drug", "fluid", "bleed", "airway", "ventilation", "preoxygenate", "cpr", "defib", "pacer", "line",
+               "surgical", "condition"]
+    },
+    "ramp": {
+      "type": "object",
+      "required": ["durationS"],
+      "additionalProperties": false,
+      "properties": {
+        "durationS": { "type": "number", "minimum": 0, "maximum": 900 },
+        "curve": { "enum": ["linear", "exp", "sigmoid"] },
+        "delayS": { "type": "number", "minimum": 0 }
+      }
+    },
+    "patient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ageY": { "type": "number", "minimum": 0, "maximum": 120 },
+        "sex": { "enum": ["M", "F"] },
+        "weightKg": { "type": "number", "exclusiveMinimum": 0, "maximum": 300 },
+        "heightCm": { "type": "number", "exclusiveMinimum": 0, "maximum": 250 },
+        "ageBand": { "enum": ["adult", "paediatric", "neonatal"] },
+        "baseline": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/definitions/stateVar" },
+          "additionalProperties": { "type": "number" }
+        },
+        "rhythm": {
+          "type": "object",
+          "required": ["id"],
+          "additionalProperties": false,
+          "properties": { "id": { "$ref": "#/definitions/id" }, "opts": { "type": "object" } }
+        },
+        "sensors": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/definitions/sensorId" },
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "label": { "type": "string" },
+        "notes": { "type": "string" },
+        "$comment": { "$ref": "#/definitions/comment" },
+        "onEnter": { "$ref": "#/definitions/commands" },
+        "onExit": { "$ref": "#/definitions/commands" },
+        "transitions": { "type": "array", "items": { "$ref": "#/definitions/transition" } }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "required": ["id", "to", "when"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "label": { "type": "string" },
+        "$comment": { "$ref": "#/definitions/comment" },
+        "to": { "$ref": "#/definitions/id" },
+        "when": { "$ref": "#/definitions/when" },
+        "probability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "else": { "$ref": "#/definitions/id" }
+      },
+      "dependencies": { "else": ["probability"] }
+    },
+    "when": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "afterS": { "type": "number", "minimum": 0 },
+        "atScenarioS": { "type": "number", "minimum": 0 },
+        "vital": {
+          "type": "object",
+          "required": ["var", "op", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "var": { "$ref": "#/definitions/vitalVar" },
+            "op": { "enum": ["<", "<=", ">", ">=", "==", "!="] },
+            "value": { "type": "number" },
+            "forS": { "type": "number", "minimum": 0 }
+          }
+        },
+        "event": {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": { "$ref": "#/definitions/eventKind" },
+            "minJ": { "type": "number", "minimum": 0 },
+            "minDose": { "type": "number", "minimum": 0 },
+            "minVolumeMl": { "type": "number", "minimum": 0 },
+            "minMa": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        },
+        "sensor": {
+          "type": "object",
+          "required": ["sensor", "state"],
+          "additionalProperties": false,
+          "properties": { "sensor": { "$ref": "#/definitions/sensorId" }, "state": { "type": "string" } }
+        },
+        "manual": {
+          "type": "object",
+          "required": ["label"],
+          "additionalProperties": false,
+          "properties": { "label": { "type": "string", "minLength": 1 } }
+        },
+        "all": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/when" } },
+        "any": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/when" } }
+      }
+    },
+    "bookmark": {
+      "type": "object",
+      "required": ["id", "state"],
+      "additionalProperties": false,
+      "properties": { "id": { "$ref": "#/definitions/id" }, "label": { "type": "string" }, "state": { "$ref": "#/definitions/id" } }
+    },
+    "commands": { "type": "array", "items": { "$ref": "#/definitions/command" } },
+    "command": {
+      "type": "object",
+      "required": ["type"],
+      "properties": { "type": { "type": "string" } },
+      "discriminator": { "propertyName": "type" },
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "setTarget" }, "$comment": { "type": "string" },
+            "variable": { "$ref": "#/definitions/stateVar" }, "value": { "type": "number" }, "ramp": { "$ref": "#/definitions/ramp" }
+          },
+          "required": ["variable", "value"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "pin" }, "$comment": { "type": "string" },
+            "variable": { "$ref": "#/definitions/stateVar" }, "value": { "type": "number" }, "ramp": { "$ref": "#/definitions/ramp" }
+          },
+          "required": ["variable"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "release" }, "$comment": { "type": "string" },
+            "variable": { "anyOf": [{ "$ref": "#/definitions/stateVar" }, { "const": "all" }] }, "ramp": { "$ref": "#/definitions/ramp" }
+          },
+          "required": ["variable"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "setFactor" }, "$comment": { "type": "string" },
+            "input": { "enum": ["hrFactor", "svrFactor", "contractilityFactor", "vo2Factor", "vco2Factor"] },
+            "factor": { "type": "number", "minimum": 0 }, "ramp": { "$ref": "#/definitions/ramp" }
+          },
+          "required": ["input", "factor"], "additionalProperties": false
+        },
+        {
+          "properties": { "type": { "const": "setMode" }, "$comment": { "type": "string" }, "mode": { "enum": ["manual", "modeled"] } },
+          "required": ["mode"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "setRhythm" }, "$comment": { "type": "string" },
+            "rhythm": { "$ref": "#/definitions/id" }, "opts": { "type": "object" },
+            "when": { "enum": ["now", "nextBeat"] }, "respectRefractory": { "type": "boolean" }
+          },
+          "required": ["rhythm"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "setModifiers" }, "$comment": { "type": "string" },
+            "modifiers": { "type": "object" }, "ramp": { "$ref": "#/definitions/ramp" }
+          },
+          "required": ["modifiers"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "applyEvent" }, "$comment": { "type": "string" },
+            "event": { "type": "object", "required": ["kind"], "properties": { "kind": { "$ref": "#/definitions/eventKind" } } }
+          },
+          "required": ["event"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "attachSensor" }, "$comment": { "type": "string" },
+            "sensor": { "$ref": "#/definitions/sensorId" }, "state": { "type": "string" }, "site": { "type": "string" },
+            "leadSet": { "enum": [3, 5, 12] }, "sampling": { "enum": ["sidestream", "mainstream"] }
+          },
+          "required": ["sensor", "state"], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "type": { "const": "device" }, "$comment": { "type": "string" },
+            "action": {
+              "type": "object", "required": ["device", "action"],
+              "properties": { "device": { "enum": ["nibp", "alarm", "ecg", "display"] }, "action": { "type": "string" } }
+            }
+          },
+          "required": ["action"], "additionalProperties": false
+        }
+      ]
+    }
+  }
+}
