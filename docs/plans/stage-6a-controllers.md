@@ -2555,7 +2555,7 @@ git commit -m "feat(controller): WebRTC DataChannel transport with relay signall
 - Consumes: engine-core `LEAD_IDS`, `RHYTHMS`, `RHYTHM_IDS`, `RhythmId`, `StateVar`, `createEngine` (test).
 - Produces: `interface VarSpec { id: StateVar; label; unit; min; max; step; normal; rampable; pinnable }`; `interface EnumOption { value; label }`; `type ModifierField`; `type ModifierSpec = {kind:'number'; path; label; min; max; step; normal} | {kind:'object'; path; label; fields: ModifierField[]}`; `interface DeviceSpec { id; label; device: 'ecg'; action: 'filter'|'lead'; options; normal: string | string[]; lanes? }`; `interface Vocabulary { schema: 'pme-vocabulary/1'; engineVersion; variables; rhythms: Array<{id; label; defaultRateBpm}>; modifiers; devices; ramp: { maxDurationS; curves }; constraints }`; `stage1Vocabulary(engineVersion?)`; `vocabularyOf(engine: { version; vocabulary?() }): Vocabulary`. This shape is engine request E2.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/controller/test/vocabulary.test.ts`:
 ```ts
@@ -2589,12 +2589,12 @@ describe('vocabulary', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/vocabulary.test.ts`
 Expected: FAIL — cannot load `../src/vocabulary.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/controller/src/vocabulary.ts`:
 ```ts
@@ -2700,12 +2700,12 @@ export function vocabularyOf(engine: { readonly version: string; vocabulary?: ()
 }
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/vocabulary.test.ts`
 Expected: `2 passed` — every Stage 1 vocabulary entry is accepted by a real engine.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/controller/src/vocabulary.ts packages/controller/test/vocabulary.test.ts
