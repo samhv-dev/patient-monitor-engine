@@ -59,7 +59,9 @@ export interface Vocabulary {
   constraints: Array<{ id: string; text: string }>;
 }
 
-const RHYTHM_LABEL: Record<RhythmId, string> = {
+// Rhythm ids come from engine-core's RHYTHM_IDS (36 after Stage 5); an id without a label here is shown as
+// its id. Labels are display-only, so a new rhythm never breaks the controller build.
+const RHYTHM_LABEL: Partial<Record<RhythmId, string>> = {
   sinus: 'Sinus', sinusBrady: 'Sinus bradycardia', sinusTachy: 'Sinus tachycardia', afib: 'Atrial fibrillation',
   aflutter: 'Atrial flutter', svtAvnrt: 'SVT (AVNRT)', avb1: '1st-degree AV block', avb2Mobitz1: '2nd-degree Mobitz I',
   avb3Narrow: '3rd-degree, narrow escape', avb3Wide: '3rd-degree, wide escape', vtMono: 'Monomorphic VT', asystole: 'Asystole',

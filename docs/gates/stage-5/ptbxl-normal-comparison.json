@@ -1,0 +1,40 @@
+{
+  "source": "PTB-XL 1.0.3 (CC BY 4.0), NORM 100",
+  "ruling": "R17: report only, no refit",
+  "records": [
+    "records500/00000/00001_hr",
+    "records500/00000/00003_hr",
+    "records500/00000/00004_hr",
+    "records500/00000/00005_hr",
+    "records500/00000/00006_hr",
+    "records500/00000/00007_hr",
+    "records500/00000/00009_hr",
+    "records500/00000/00010_hr",
+    "records500/00000/00013_hr",
+    "records500/00000/00014_hr",
+    "records500/00000/00015_hr",
+    "records500/00000/00016_hr",
+    "records500/00000/00019_hr",
+    "records500/00000/00021_hr",
+    "records500/00000/00024_hr",
+    "records500/00000/00025_hr",
+    "records500/00000/00029_hr",
+    "records500/00000/00031_hr",
+    "records500/00000/00033_hr",
+    "records500/00000/00035_hr"
+  ],
+  "meanR": {
+    "I": 0.742,
+    "II": 0.891,
+    "III": 0.484,
+    "AVR": 0.871,
+    "AVL": 0.111,
+    "AVF": 0.804,
+    "V1": 0.733,
+    "V2": 0.695,
+    "V3": 0.708,
+    "V4": 0.853,
+    "V5": 0.901,
+    "V6": 0.907
+  }
+}
