@@ -1122,7 +1122,7 @@ git commit -m "feat(hemo): skewed ejection, 4-element Windkessel with radial res
 - Consumes: `l3/ecg-filter.ts` (`lowpass`, `createFilterState`, `filterSample`, `Biquad` — Stage 1, not owned by Stage 5), `params.ts`, `HemoClinicalEvent`, `LineSensorState` (Task 1).
 - Produces: `DISPLAY_FILTER`, `LINE_SENSOR_STATES`, `interface LineState { sensor; fnHz; zeta; levelCm; flushUntil; zeroUntil; sampleUntil; disconnected; x; v; f }`, `createLineState(sensor = 'none')`, `lineActive(ls)`, `lineInput(ls, pPatient, t)`, `lineDynamics(ls)`, `stepTransducer(ls, u0, u1, h)`, `displaySample(ls)`, `settleLine(ls, p)`, `setLineSensor(ls, state, t, pNow)`, `applyLineEvent(ls, ev, t)`, `validateLineEvent(ev): string|undefined`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/hemo/line.test.ts`:
 
@@ -1192,12 +1192,12 @@ describe('l2/hemo/line (brief §4.2 transducer and line)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/line.test.ts`
 Expected: FAIL — cannot load `../../../src/l2/hemo/line.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/hemo/line.ts`:
 
@@ -1364,12 +1364,12 @@ export function validateLineEvent(ev: Extract<HemoClinicalEvent, { kind: 'line' 
 }
 ```
 
-- [ ] **Step 4: Run it to see it pass**
+- [x] **Step 4: Run it to see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/line.test.ts`
 Expected: PASS (3 tests); the ring period at fn 10 Hz, ζ 0.2 is ≈ 102 ms.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/line.ts packages/engine-core/test/l2/hemo/line.test.ts
