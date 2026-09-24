@@ -710,7 +710,7 @@ git commit -m "feat(skins): WCAG contrast and hue-preserving darken-to-contrast"
 
 Notes: ajv runs in `strict` mode with `strictTypes: false` (the `if/then/else` colour rule has no `type`) and `strictRequired: false` (the `then` branch lists `required` keys defined in the outer object). Hex colours must be upper-case `#RRGGBB`. Skin ids must end in `-like`; the base (`iec-defaults`) is validated with the source schema, whose id pattern does not require `-like`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/schema-unit.test.ts`:
 
@@ -748,12 +748,12 @@ describe('validate', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/schema-unit.test.ts`
 Expected: FAIL (module not found).
 
-- [ ] **Step 3: Implement the schema**
+- [x] **Step 3: Implement the schema**
 
 Create `packages/skins/src/schema.ts`:
 
@@ -1050,7 +1050,7 @@ export const presetSchema: JsonSchema = obj(
 );
 ```
 
-- [ ] **Step 4: Implement the validator**
+- [x] **Step 4: Implement the validator**
 
 Create `packages/skins/src/validate.ts`:
 
@@ -1083,12 +1083,12 @@ export function validate(kind: keyof typeof compiled, doc: unknown): ValidationR
 }
 ```
 
-- [ ] **Step 5: Run the test and the typecheck**
+- [x] **Step 5: Run the test and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/schema-unit.test.ts && npx -y pnpm@9.15.9 --filter @pme/skins typecheck`
 Expected: 5 passed, no ajv strict-mode error, typecheck clean.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src/schema.ts packages/skins/src/validate.ts packages/skins/test/schema-unit.test.ts
