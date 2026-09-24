@@ -3542,7 +3542,7 @@ git commit -m "feat(audio): iec-style, saadat and traditional alarm sound profil
 **Interfaces:**
 - Produces: `type PitchMapId = 'none' | 'nellcor-like' | 'enhanced'`, `PITCH_MAPS`, `pitchHz(map, spo2: number | null, baseHz = 880): number | null`; `ToneSegment { startHz, endHz, durMs, gapMs }`, `type ToneSet = 'zoll-like' | 'lifepak-like'`, `chargeTone(set, chargeS)`, `chargeReadyTone(set)`, `SHOCK_TONE`, `NIBP_DONE_TONE`, `DEVICE_TONE_PROVENANCE`, `toneDurationMs(segs)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/audio/test/pitch-and-device-tones.test.ts`:
 
@@ -3590,12 +3590,12 @@ describe('device tones', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/pitch-and-device-tones.test.ts`
 Expected: FAIL (`pitchHz` is not exported).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/audio/src/profiles/pitch-maps.ts`:
 
@@ -3681,12 +3681,12 @@ export * from './pitch-maps.ts';
 export * from './device-tones.ts';
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/audio exec vitest run test/pitch-and-device-tones.test.ts`
 Expected: 7 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/audio/src/profiles packages/audio/test/pitch-and-device-tones.test.ts

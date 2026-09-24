@@ -17,3 +17,5 @@ export function getAlarmProfile(id: string): AlarmSoundProfile {
 
 export * from './types.ts';
 export { IEC_STYLE, SAADAT, TRADITIONAL };
+export * from './pitch-maps.ts';
+export * from './device-tones.ts';
