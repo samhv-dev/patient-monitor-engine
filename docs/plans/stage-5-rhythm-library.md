@@ -8011,7 +8011,7 @@ Clean-clone rehearsal, clean-room check, push, PR (ruling R20: every stage lands
 - Consumes: everything.
 - Produces: the PR.
 
-- [ ] **Step 1: Clean-clone rehearsal**
+- [x] **Step 1: Clean-clone rehearsal**
 
 ```bash
 rm -rf /tmp/pme-s5-ci && git clone --branch stage-5-rhythm-library "$(pwd)" /tmp/pme-s5-ci && cd /tmp/pme-s5-ci
@@ -8019,16 +8019,16 @@ npx -y pnpm@9.15.9 install --frozen-lockfile && npx -y pnpm@9.15.9 typecheck && 
 cd - && rm -rf /tmp/pme-s5-ci
 ```
 
-- [ ] **Step 2: Expected: exit code 0; `check-notices: OK (3 governed files)` (cyrb53 from Stage 1.1 plus the two templates). Record the test totals in `docs/gates/stage-5.md`.**
+- [x] **Step 2: Expected: exit code 0; `check-notices: OK (3 governed files)` (cyrb53 from Stage 1.1 plus the two templates). Record the test totals in `docs/gates/stage-5.md`.**
 
-- [ ] **Step 3: Hygiene checks. Expected: no output from the first command; the second lists exactly the two template modules**
+- [x] **Step 3: Hygiene checks. Expected: no output from the first command; the second lists exactly the two template modules**
 
 ```bash
 grep -rn "VERIFY" packages/engine-core/src || true
 git ls-files packages/engine-core/templates
 ```
 
-- [ ] **Step 4: Add a "Sources consulted" section to `docs/gates/stage-5.md` (brief §8: every PR records them): the design brief, research 00/02/03, PhysioNet format docs header(5)/signal(5)/annot(5), the CUDB/MIT-BIH/PTB-XL project pages and licences (ODC-By 1.0, CC BY 4.0). State that no ECGSYN, NeuroKit2-ECGSYN, WFDB-library or other GPL/unlicensed code was opened.**
+- [x] **Step 4: Add a "Sources consulted" section to `docs/gates/stage-5.md` (brief §8: every PR records them): the design brief, research 00/02/03, PhysioNet format docs header(5)/signal(5)/annot(5), the CUDB/MIT-BIH/PTB-XL project pages and licences (ODC-By 1.0, CC BY 4.0). State that no ECGSYN, NeuroKit2-ECGSYN, WFDB-library or other GPL/unlicensed code was opened.**
 
 - [ ] **Step 5: Commit the gate numbers if you changed the document, then push and open the PR (do not merge)**
 

@@ -6,7 +6,7 @@ Stage 1.x baseline this branch started from: `e8f00f9` (main, merge of PR #2 —
 
 | Check | Result |
 |---|---|
-| Clean clone typecheck/test/build/check-notices | CLEAN_CLONE_PLACEHOLDER |
+| Clean clone typecheck/test/build/check-notices | exit 0 (fresh clone of `stage-5-rhythm-library` at `a0c7e9c`, `install --frozen-lockfile`, typecheck, test, build, check-notices): engine-core 237 tests / 39 files, validation 16 / 5, renderer 23 / 6, audio 19 / 5, controller 1 / 1, skins 1 / 1; `check-notices: OK (3 governed files)` |
 | Acceptance 1–10 | table below — all pass |
 | Strip screenshots (85, each ≤ 50 KB) | `stage-5/*.png` (70 from the plan + 15 coverage additions, see Deviations), largest `diathermy.png` 29085 B; gallery at the end of this document |
 | PTB-XL comparison (report only, R17) | `stage-5/ptbxl-normal-comparison.json` (20 NORM 100 records): mean r I 0.74, II 0.89, III 0.48, AVR 0.87, AVL 0.11, AVF 0.80, V1 0.73, V2 0.69, V3 0.71, V4 0.85, V5 0.90, V6 0.91 |
@@ -143,10 +143,26 @@ Every plan step was applied verbatim with a script that writes each "Create or r
 - **Pre-excited AF** reads fast (≈ 210/min) but only mildly irregular at a glance (RR CV ≤ 0.17 over 40 seeds).
 - **Junctional escape:** the retrograde P 80 ms before the QRS is small and hard to see at strip scale.
 
+## Merging with main (Stage 6a landed after this branch was cut)
+
+`main` moved to `8e46032` (Stage 6a merged) while this stage was running. This branch is based on `e8f00f9` and was **not** re-based or merged, because a merge breaks a package Stage 5 may not edit:
+
+- **Text conflicts (trivial, as the plan predicted):** `NOTICES.md` (keep both blocks: N-007…N-009 from 6a, then N-050…N-052) and `apps/demo/vite.config.ts` (keep 6a's multi-line `input` and add `stage5: page('stage5')`).
+- **Type break after resolving them:** `packages/controller/src/vocabulary.ts:62` declares `const RHYTHM_LABEL: Record<RhythmId, string>` with Stage 1's 12 labels. Stage 5 makes `RhythmId` the full 36-id union, so `@pme/controller` typecheck fails (TS2740: 24 labels missing). The fix belongs to the controller's owner, and either option works: add the 24 labels, or type it `Partial<Record<RhythmId, string>>` (the code already falls back with `RHYTHM_LABEL[id] ?? id`). Better still, derive the labels from `ecgVocabulary()` (exported by this stage). Stage 5's partition forbids editing `packages/controller/**`, and no additive file can fix a type error there, so this is left for the merge.
+
 ## Needs a ruling
 
+- How to land this PR on top of Stage 6a (see "Merging with main"): whoever merges needs the one-line `RHYTHM_LABEL` change in `packages/controller/src/vocabulary.ts`.
 - NOTICE IDs N-050…N-052 were taken from a reserved block (Stages 2 and 6a add rows concurrently).
 - engine.ts was touched in Task 4 only (8 replacements from the plan = 8 hunks at `-U0`: two imports, `MOD_KEYS` removed, the `generateEcg` call, the lane projection, the detection projection, `setModifiers` validate and apply; the plan text says "7 hunks" / "6 hunks" in different places); `types.ts` gained 3 EngineEvent variants and the `ModifiersPatch` command type; `index.ts` one export line.
+
+## Sources consulted
+
+- `docs/plans/stage-5-rhythm-library.md` (executed verbatim). Through it: `docs/DESIGN-BRIEF.md` §4.1, §4.8, §5, §6.5, §7.2–7.3, §8, §11 C1/C2; `docs/BUILD-PLAN.md` Stage 5; `research/00-orchestrator-rulings.md` (R6, R16–R20, R25), `research/02-open-source-and-academic.md` §D, `research/03-waveform-physiology-reference.md` §1 and §11. The physiological constants and their citation comments are the plan's.
+- PhysioNet WFDB format documents header(5), signal(5), annot(5) (https://physionet.org/physiotools/wag/), which the plan's readers were written from.
+- PhysioNet project pages and licences: CUDB v1.0.0 (ODC-By 1.0, DOI 10.13026/C2X59M), MIT-BIH Arrhythmia v1.0.0 (ODC-By 1.0, DOI 10.13026/C2F305), PTB-XL v1.0.3 (CC BY 4.0, DOI 10.13026/kfzx-aw45). Files fetched from `physionet.org/files/…` and SHA-256-checked.
+- The plan author's finished tree (planning scratchpad), used only to compare outputs: engine.ts, the generated template modules and the PTB-XL JSON.
+- **Clean room:** no ECGSYN (C, MATLAB or any port; the copies in the planning scratchpad were not opened), no NeuroKit2 ECGSYN, no WFDB library source, no PhysioNet ECG/PPG simulator, no Python Anesthesia Simulator and no other GPL/unlicensed code was opened.
 
 ## Strip gallery (every rhythm id and every modifier group)
 
