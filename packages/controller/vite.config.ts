@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -9,4 +10,6 @@ export default defineConfig({
     emptyOutDir: true,
     sourcemap: true,
   },
+  // Scenario tests run whole ACLS cases through a real engine; ~3 s locally, >5 s on the 2-vCPU CI runner.
+  test: { testTimeout: 60_000 },
 });
