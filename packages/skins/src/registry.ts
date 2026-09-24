@@ -2,6 +2,7 @@
 // then mindray-like, ge-like, lifepak-like). JSON imports are typed loosely, so they are cast once here; the
 // schema tests are what guarantee the shapes.
 import iecDefaults from './data/base/iec-defaults.json';
+import iranIcuAsFound from './data/presets/iran-icu-as-found.json';
 import geLike from './data/skins/ge-like.json';
 import lifepakLike from './data/skins/lifepak-like.json';
 import mindrayLike from './data/skins/mindray-like.json';
@@ -31,7 +32,9 @@ export const THEMES: Readonly<Record<string, Theme>> = {
   'ecg-grid': ecgGrid as unknown as Theme,
 };
 
-export const PRESETS: Readonly<Record<string, Preset>> = {};
+export const PRESETS: Readonly<Record<string, Preset>> = {
+  'iran-icu-as-found': iranIcuAsFound as unknown as Preset,
+};
 
 /** Skin and preset ids in build order, then presets (the demo's switcher order). */
 export const SKIN_IDS = Object.keys(SKINS);

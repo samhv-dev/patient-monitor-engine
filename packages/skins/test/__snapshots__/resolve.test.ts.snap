@@ -350,6 +350,1289 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-
 }
 `;
 
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot iran-icu-as-found (theme (none)) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+    "paed": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "saadat",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": true,
+        "durationS": 120,
+      },
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": false,
+      "pitchMap": "none",
+      "source": "HR_SOURCE",
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+  },
+  "limits": {
+    "adult": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        10,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        15,
+        60,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "paed": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+  },
+  "render": {
+    "background": "#000000",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        24,
+      ],
+      "engineMode": "monitor",
+      "exact": false,
+      "name": "MONITOR",
+    },
+    "eraseGapPx": 4,
+    "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
+    "foreground": "#F0F0F0",
+    "grid": null,
+    "hrMethod": {
+      "engine": null,
+      "skin": "moving-average-seconds",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#00F000",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#00F000",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#F000F0",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#F0F030",
+        "gainMmPerMv": 10,
+        "label": "RESP",
+        "lane": "RESP",
+        "mmPerS": 12.5,
+      },
+    ],
+    "lineWidth": 1.5,
+    "numericWeight": 400,
+    "tileColors": {
+      "HR": "#00F000",
+      "IBP1": "#E08080",
+      "IBP2": "#B0D0E8",
+      "NIBP": "#F0F0F0",
+      "RR": "#F0F030",
+      "SpO2": "#F000F0",
+      "TEMP": "#00F0F0",
+    },
+  },
+}
+`;
+
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot iran-icu-as-found (theme ecg-grid) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+    "paed": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "saadat",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": true,
+        "durationS": 120,
+      },
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": false,
+      "pitchMap": "none",
+      "source": "HR_SOURCE",
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+  },
+  "limits": {
+    "adult": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        10,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        15,
+        60,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "paed": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+  },
+  "render": {
+    "background": "#FFF8F4",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        24,
+      ],
+      "engineMode": "monitor",
+      "exact": false,
+      "name": "MONITOR",
+    },
+    "eraseGapPx": 4,
+    "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
+    "foreground": "#000000",
+    "grid": {
+      "major": "#E08888",
+      "majorMm": 5,
+      "minor": "#F4C8C8",
+      "minorMm": 1,
+    },
+    "hrMethod": {
+      "engine": null,
+      "skin": "moving-average-seconds",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#008600",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#008600",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#CC00CC",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#777709",
+        "gainMmPerMv": 10,
+        "label": "RESP",
+        "lane": "RESP",
+        "mmPerS": 12.5,
+      },
+    ],
+    "lineWidth": 1.5,
+    "numericWeight": 400,
+    "tileColors": {
+      "HR": "#008600",
+      "IBP1": "#D03E3E",
+      "IBP2": "#3278AD",
+      "NIBP": "#737373",
+      "RR": "#777709",
+      "SpO2": "#CC00CC",
+      "TEMP": "#008080",
+    },
+  },
+}
+`;
+
+exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot iran-icu-as-found (theme projector-light) 1`] = `
+{
+  "approximateLimits": {
+    "adult": [],
+    "neo": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+    "paed": [
+      "HR",
+      "SpO2",
+      "ART_S",
+      "ART_D",
+      "ART_M",
+      "PAP_S",
+      "PAP_D",
+      "PAP_M",
+      "CVP_M",
+      "RAP_M",
+      "LAP_M",
+      "RR",
+      "apneaS",
+      "gasApneaS",
+      "EtCO2_pctV",
+      "FiCO2_pctV_high",
+      "T1",
+      "T2",
+      "dT",
+      "ST_mV",
+    ],
+  },
+  "audio": {
+    "alarm": {
+      "lowPulses": null,
+      "profile": "saadat",
+      "repeatS": {},
+      "silence": {
+        "cancelOnNewAlarm": true,
+        "durationS": 120,
+      },
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+    "beep": {
+      "baseHz": 880,
+      "enabled": false,
+      "pitchMap": "none",
+      "source": "HR_SOURCE",
+      "volume": {
+        "default": 1,
+        "max": 7,
+        "min": 1,
+      },
+    },
+  },
+  "limits": {
+    "adult": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        10,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        15,
+        60,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+    "paed": {
+      "ART_D": [
+        50,
+        100,
+      ],
+      "ART_M": [
+        60,
+        115,
+      ],
+      "ART_S": [
+        80,
+        150,
+      ],
+      "AWRR": [
+        5,
+        30,
+      ],
+      "CVP_M": [
+        -5,
+        15,
+      ],
+      "EtCO2_pctV": [
+        2.6,
+        6.5,
+      ],
+      "FiCO2_pctV_high": 1.3,
+      "HR": [
+        50,
+        150,
+      ],
+      "ICP": [
+        0,
+        4,
+      ],
+      "LAP_M": [
+        -5,
+        20,
+      ],
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -5,
+        20,
+      ],
+      "PAP_M": [
+        0,
+        30,
+      ],
+      "PAP_S": [
+        5,
+        40,
+      ],
+      "RAP_M": [
+        -5,
+        15,
+      ],
+      "RR": [
+        5,
+        25,
+      ],
+      "ST_mV": [
+        -0.2,
+        0.2,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "T1": [
+        35,
+        39,
+      ],
+      "T2": [
+        36,
+        40,
+      ],
+      "apneaS": 10,
+      "dT": [
+        1,
+        5,
+      ],
+      "gasApneaS": 20,
+    },
+  },
+  "render": {
+    "background": "#FFFFFF",
+    "cursorLine": false,
+    "ecgFilter": {
+      "band": [
+        0.5,
+        24,
+      ],
+      "engineMode": "monitor",
+      "exact": false,
+      "name": "MONITOR",
+    },
+    "eraseGapPx": 4,
+    "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
+    "foreground": "#000000",
+    "grid": null,
+    "hrMethod": {
+      "engine": null,
+      "skin": "moving-average-seconds",
+    },
+    "lanes": [
+      {
+        "autoGain": false,
+        "color": "#008A00",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG1",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#008A00",
+        "gainMmPerMv": 20,
+        "label": "II  X2  MONITOR",
+        "lane": "ECG2",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#D100D1",
+        "gainMmPerMv": 10,
+        "label": "PLETH",
+        "lane": "PLETH",
+        "mmPerS": 25,
+      },
+      {
+        "autoGain": false,
+        "color": "#7A7A09",
+        "gainMmPerMv": 10,
+        "label": "RESP",
+        "lane": "RESP",
+        "mmPerS": 12.5,
+      },
+    ],
+    "lineWidth": 1.5,
+    "numericWeight": 400,
+    "tileColors": {
+      "HR": "#008A00",
+      "IBP1": "#D14545",
+      "IBP2": "#347CB1",
+      "NIBP": "#767676",
+      "RR": "#7A7A09",
+      "SpO2": "#D100D1",
+      "TEMP": "#008484",
+    },
+  },
+}
+`;
+
 exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lifepak-like (theme (none)) 1`] = `
 {
   "approximateLimits": {

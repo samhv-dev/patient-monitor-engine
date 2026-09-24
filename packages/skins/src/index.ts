@@ -9,3 +9,4 @@ export {
   BASE_GAIN_MM_PER_MV, ENGINE_FILTER_BANDS, engineFilterFor, formatLaneLabel, laneColor, mergeSkinSource, resolveSkin,
   type AudioContract, type EngineFilterMode, type LaneRender, type RenderContract, type ResolveOptions, type ResolvedSkin,
 } from './resolve.ts';
+export { formatDate } from './calendar.ts';

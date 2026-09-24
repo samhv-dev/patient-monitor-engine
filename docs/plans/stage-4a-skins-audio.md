@@ -2954,7 +2954,7 @@ git commit -m "feat(skins): projector-light and ecg-grid themes (hue-preserving 
 
 The preset reproduces brief §6.9 / research 06 §3.1 F7 (one Aparat video, n = 1): MONITOR filter, lead II ×2 on two lanes, HR AVERAGE 16 from ECG, BEAT VOLUME OFF, Solar date, crossed bells on HR and RR, NIBP and SpO2 alarms on, APNEA LIMIT OFF, resp lane at 12.5 mm/s.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/preset.test.ts`:
 
@@ -3003,12 +3003,12 @@ describe('formatDate', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/preset.test.ts`
 Expected: FAIL (`formatDate` not exported / unknown skin `iran-icu-as-found`).
 
-- [ ] **Step 3: Write the preset and the calendar helper**
+- [x] **Step 3: Write the preset and the calendar helper**
 
 Create `packages/skins/src/data/presets/iran-icu-as-found.json`:
 
@@ -3065,7 +3065,7 @@ export function formatDate(d: Date, calendar: 'gregorian' | 'solar', gregorianFo
 }
 ```
 
-- [ ] **Step 4: Replace the registry and export `formatDate`**
+- [x] **Step 4: Replace the registry and export `formatDate`**
 
 ```ts
 // Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
@@ -3118,12 +3118,12 @@ Append to `packages/skins/src/index.ts`:
 export { formatDate } from './calendar.ts';
 ```
 
-- [ ] **Step 5: Run the package, typecheck and build**
+- [x] **Step 5: Run the package, typecheck and build**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/skins typecheck && npx -y pnpm@9.15.9 --filter @pme/skins build && ! grep -q "ajv" packages/skins/dist/index.js && echo "no ajv in the bundle"`
 Expected: 13 files, **155 passed**, 21 snapshots in total; build ≈ 58 kB; `no ajv in the bundle`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/skins/src packages/skins/test
