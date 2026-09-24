@@ -8030,7 +8030,7 @@ git ls-files packages/engine-core/templates
 
 - [x] **Step 4: Add a "Sources consulted" section to `docs/gates/stage-5.md` (brief §8: every PR records them): the design brief, research 00/02/03, PhysioNet format docs header(5)/signal(5)/annot(5), the CUDB/MIT-BIH/PTB-XL project pages and licences (ODC-By 1.0, CC BY 4.0). State that no ECGSYN, NeuroKit2-ECGSYN, WFDB-library or other GPL/unlicensed code was opened.**
 
-- [ ] **Step 5: Commit the gate numbers if you changed the document, then push and open the PR (do not merge)**
+- [x] **Step 5: Commit the gate numbers if you changed the document, then push and open the PR (do not merge)**
 
 ```bash
 git add docs/gates/stage-5.md && git commit -m "docs(gates): stage 5 measured values" || true
@@ -8038,7 +8038,7 @@ git push -u origin stage-5-rhythm-library
 gh pr create --base main --head stage-5-rhythm-library --title "Stage 5: full rhythm library, recorded VF/AF templates, artefacts" --body-file docs/gates/stage-5.md
 ```
 
-- [ ] **Step 6: If your session instructions require an attribution line in PR descriptions, append it to the body with `gh pr edit --body-file`. Report the PR URL. Leave the worktree in place until Ali merges; afterwards `git worktree remove ../scratch/wt-stage-5`.**
+- [x] **Step 6: If your session instructions require an attribution line in PR descriptions, append it to the body with `gh pr edit --body-file`. Report the PR URL. Leave the worktree in place until Ali merges; afterwards `git worktree remove ../scratch/wt-stage-5`.**
 
 ---
 
