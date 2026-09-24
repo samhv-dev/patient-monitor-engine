@@ -2553,7 +2553,7 @@ git commit -m "feat(l3): impedance respiration with cardiogenic ripple, its RR d
 - Consumes: Task 2 `l1Target`, `L1State.coupled`; Stage 2 `HemoState` (read only: `cpr`, `lastEjT`, `lastRR`, `siteBeats`, `sys.g`), `CPR_SV_FRAC`, `SV_REF_ML`; Task 7 `SENSOR_TAU_S`.
 - Produces: `createTempNum(t0)`, `tempNumStep(st, sites, site, dtS)`, `tempMeasured(v, on, t)`; `RAP_FRACTION` 0.4, `PAW_REF_CMH2O` 10, `venousGradient(vs)`, `cardiacOutput(hs, t)` (L/min), `applyPawCoupling(l1, meanPawCmH2O, t): number` (the output factor f).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/coupling.test.ts`:**
 
@@ -2592,12 +2592,12 @@ describe('coupling', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/coupling.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/coupling.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/temp/temp-numerics.ts`:**
 
@@ -2688,9 +2688,9 @@ export function applyPawCoupling(l1: L1State, meanPawCmH2O: number, t: number): 
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/temp packages/engine-core/src/l2/gas/coupling.ts packages/engine-core/test/l2/gas/coupling.test.ts
