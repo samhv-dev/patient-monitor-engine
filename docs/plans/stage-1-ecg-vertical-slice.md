@@ -3380,7 +3380,7 @@ git commit -m "feat(engine-core): createEngine with look-ahead pipeline, ring bu
 
 These tests cover `dispatch` validation, `setRhythm` (`now` / `nextBeat`), `setTarget hr` with `Ramp`, `setModifiers pvc`, `device ecg filter/lead`, `toneCancel`, `snapshot`/`restore` and `start`/`pause`/`setTimeScale`/`step`, all written in Task 13. Expect PASS; fix `engine.ts` if not.
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 `packages/engine-core/test/engine/engine-commands.test.ts`:
 ```ts
@@ -3519,16 +3519,16 @@ describe('engine commands', () => {
 });
 ```
 
-- [ ] **Step 2: Prove one can fail**
+- [x] **Step 2: Prove one can fail**
 
 Temporarily comment out the `this.emit({ type: 'toneCancel', after: simT });` line inside `tickOnce` in `engine.ts`, run `pnpm --filter @pme/engine-core exec vitest run test/engine/engine-commands`, expect the toneCancel test to FAIL, restore the line.
 
-- [ ] **Step 3: Run the whole package**
+- [x] **Step 3: Run the whole package**
 
 Run: `pnpm --filter @pme/engine-core test && pnpm --filter @pme/engine-core typecheck && pnpm --filter @pme/engine-core build`
 Expected: `Test Files  18 passed (18)`, `Tests  98 passed (98)`; build `✓ built`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test
