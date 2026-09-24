@@ -62,7 +62,7 @@
 - Consumes: Stage 0 engine-core.
 - Produces: `version` now lives in `src/version.ts` (index re-exports it). `class RingBuffer { constructor(rate: number, seconds: number); readonly rate; readonly capacity /* ceil(rate·seconds) */; get latest(): number /* -1 when empty */; get oldest(): number; write(index: number, value: number): void /* overwrite allowed; latest never moves back */; at(index: number): number /* NaN if not held */; read(from: number, out: Float32Array): number /* copies from max(from, oldest); returns count */; clear(): void }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/buffers/ring.test.ts`:
 ```ts
@@ -117,12 +117,12 @@ describe('buffers/RingBuffer', () => {
 });
 ```
 
-- [ ] **Step 2: Run to see it fail**
+- [x] **Step 2: Run to see it fail**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run test/buffers`
 Expected: FAIL — cannot load `../../src/buffers/ring.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/version.ts`:
 ```ts
@@ -205,12 +205,12 @@ export * from './rng/sfc32.ts';
 export { RingBuffer } from './buffers/ring.ts';
 ```
 
-- [ ] **Step 4: Run to see it pass**
+- [x] **Step 4: Run to see it pass**
 
 Run: `pnpm --filter @pme/engine-core exec vitest run && pnpm --filter @pme/engine-core typecheck`
 Expected: PASS (ring: 5 tests; all earlier tests still pass).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
