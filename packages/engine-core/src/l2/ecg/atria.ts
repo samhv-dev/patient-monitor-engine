@@ -156,6 +156,14 @@ export function conductP(st: RhythmState, rate: number, ctx: RhythmCtx): number 
       // PR_n = PR_1 + Δ·(1 − r^(n−1))/(1 − r)  (brief §4.1), n = pos + 1
       return basePr() + 1000 * MOBITZ1_DELTA_S * ((1 - MOBITZ1_R ** pos) / (1 - MOBITZ1_R));
     }
+    case 'mobitz2': {
+      // Mobitz II (n:n−1), 2:1 and high-grade (3:1, 4:1): constant PR, sudden non-conducted P (research 03 §1.5).
+      const n = st.id === 'avb2to1' ? 2 : st.id === 'avbHighGrade' ? (st.opts.ratio === 4 ? 4 : 3) : (st.opts.groupSize ?? 4);
+      const pos = st.atria.groupPos;
+      st.atria.groupPos = (pos + 1) % n;
+      const conducts = st.id === 'avb2Mobitz2' ? pos < n - 1 : pos === 0;
+      return conducts ? basePr() : null;
+    }
     default:
       return null;
   }

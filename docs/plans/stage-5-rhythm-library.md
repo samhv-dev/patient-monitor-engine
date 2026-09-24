@@ -3132,7 +3132,7 @@ Constant-PR blocks (acceptance test 5): Mobitz II n:n−1 (groupSize), fixed 2:1
 - Consumes: `st.atria.groupPos`, `RhythmOpts.groupSize`, `RhythmOpts.ratio`.
 - Produces: AV mode `mobitz2` in `conductP`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/avblock.test.ts` with exactly:
 
@@ -3168,13 +3168,13 @@ describe('Stage 5 rhythms: Mobitz II, 2:1, high grade (acceptance 5)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/avblock.test.ts`
 
 Expected: FAIL — every P is blocked (no conduction for AV mode mobitz2).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/atria.ts`, replace:
 
@@ -3197,13 +3197,13 @@ with:
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/test/l2/ecg/s5/avblock.test.ts
