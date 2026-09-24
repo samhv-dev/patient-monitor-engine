@@ -6213,7 +6213,7 @@ A stable per-patient fingerprint (acceptance test 10): per-wave rotations, ampli
 - Consumes: `createRngState`, ops.
 - Produces: `fingerprint(seed)`, `individualityStage`, `pIndividualityStage`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts` with exactly:
 
@@ -6260,13 +6260,13 @@ describe('individuality (acceptance 10)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/morph-individuality.test.ts`
 
 Expected: FAIL — cannot resolve… / different seeds give identical beats.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/morphology/individuality.ts` with exactly:
 
@@ -6416,13 +6416,13 @@ export const P_STAGES: PStage[] = [pIndividualityStage, pPotassiumStage];
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/index.ts packages/engine-core/src/l2/ecg/morphology/individuality.ts packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts
