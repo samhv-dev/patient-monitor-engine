@@ -1,7 +1,7 @@
 // Atrial clock handlers (brief §4.1 "Rhythm engine": atria × AV node; research 03 §1.5).
 import { uniform, type Sfc32State } from '../../rng/sfc32.ts';
 import { prMs } from './intervals.ts';
-import { makeEvent } from './kernels.ts';
+import { WAVE, kernel, makeEvent } from './kernels.ts';
 import { sinusRR } from './hrv.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS, type AtrialMode, type RhythmDef } from './rhythms.ts';
 import { pWaveKernels } from './templates.ts';
@@ -189,13 +189,27 @@ function nextSinusT(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): n
   return next;
 }
 
+const PAC_P_VEC: readonly [number, number, number] = [0.02, -0.12, 0.03]; // P′ of a different (low-atrial) shape, II −0.13 mV [ENG]
+const PAC_EXTRA_PR_MS = 20; // PR′ ≥ normal PR (research 03 §1.5) [ENG value]
+
 function onSinus(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];
   const rate = atrialRate(st, d, t, ctx);
-  st.events.push(makeEvent(t, applyPMorphology(pWaveKernels(), ctx.mods)));
-  const pr = conductAt(st, t, rate, ctx);
-  if (pr !== null) pushPending(st, { t: t + pr / 1000, origin: 'sinus', template: d.conductedTemplate, prMs: pr, pvc: false, coupling: 0, bypass: false });
-  st.records.push({ type: 'atrial', t, kind: 'p', conducted: pr !== null });
+  const pac = st.atria.pac;
+  st.atria.pac = null;
+  if (pac) {
+    // Premature atrial beat: different P′, PR′ ≥ PR, resets the SA clock (research 03 §1.5).
+    st.events.push(makeEvent(t, applyPMorphology(kernel(0.045, 0.022, 0.022, PAC_P_VEC, WAVE.P), ctx.mods)));
+    const pr0 = pac.blocked ? null : conductAt(st, t, rate, ctx);
+    const pr = pr0 === null ? null : pr0 + PAC_EXTRA_PR_MS;
+    if (pr !== null) pushPending(st, { t: t + pr / 1000, origin: 'atrial', template: pac.aberrant ? 'aberrant' : d.conductedTemplate, prMs: pr, pvc: false, coupling: 0, bypass: false });
+    st.records.push({ type: 'atrial', t, kind: 'p', conducted: pr !== null });
+  } else {
+    st.events.push(makeEvent(t, applyPMorphology(pWaveKernels(), ctx.mods)));
+    const pr = conductAt(st, t, rate, ctx);
+    if (pr !== null) pushPending(st, { t: t + pr / 1000, origin: 'sinus', template: d.conductedTemplate, prMs: pr, pvc: false, coupling: 0, bypass: false });
+    st.records.push({ type: 'atrial', t, kind: 'p', conducted: pr !== null });
+  }
   st.atria.lastT = t;
   st.atria.nextT = nextSinusT(st, t, rate, ctx);
   for (const h of HOOKS.onP) h(st, t, ctx);

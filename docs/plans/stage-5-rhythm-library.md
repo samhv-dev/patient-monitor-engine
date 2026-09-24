@@ -2446,7 +2446,7 @@ The full ectopy modifier set. PACs reset the SA clock (pause less than compensat
 - Consumes: `st.atria.lastT`, `st.atria.pac`, `st.ectopyCount`, `T_END_AFTER_PEAK_S`.
 - Produces: `afterSupraBeat` with all patterns; `PVC_RUN_RATE_BPM = 160`; `st.atria.pac = { blocked, aberrant }` consumed by `onSinus`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create or replace `packages/engine-core/test/l2/ecg/s5/pvc.test.ts` with exactly:
 
@@ -2539,13 +2539,13 @@ describe('Stage 5 ectopy: PACs and PJCs', () => {
 ```
 
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/pvc.test.ts test/l2/ecg/s5/pac-pjc.test.ts`
 
 Expected: FAIL — trigeminy/couplets/runs are treated as single PVCs; no PACs or PJCs appear.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create or replace `packages/engine-core/src/l2/ecg/ectopy.ts` with exactly:
 
@@ -2687,13 +2687,13 @@ with:
 ```
 
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 
 Expected: PASS (no failures; the Stage 1 tests keep passing).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/ectopy.ts packages/engine-core/test/l2/ecg/s5/pac-pjc.test.ts packages/engine-core/test/l2/ecg/s5/pvc.test.ts
