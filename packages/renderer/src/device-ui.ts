@@ -28,6 +28,7 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
+    '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
     '.pme-stile{padding:4px 10px;line-height:1.05;border-top:1px solid var(--pme-divider)}',
     '.pme-stile .h{display:flex;gap:6px;align-items:center;font-size:13px}',
@@ -38,6 +39,16 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile .s{font-size:16px;text-align:right;font-variant-numeric:tabular-nums;min-height:18px}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
   ].join('\n');
+}
+
+/** Defibrillator / pacer readout for the header (brief §6.5: energy, charging/ready, SYNC; pacer mode, rate, output). */
+export function deviceText(d: DeviceStatus | null): string {
+  const out: string[] = [];
+  const f = d?.defib;
+  if (f && (f.state !== 'idle' || f.sync)) out.push(`${f.energyJ} J${f.state === 'charging' ? ' CHARGING' : f.state === 'ready' ? ' READY' : ''}${f.sync ? ' SYNC' : ''}`);
+  const p = d?.pacer;
+  if (p && p.mode !== 'off') out.push(`PACER ${p.mode.toUpperCase()} ${p.ratePpm} ppm ${p.mA} mA${p.paused ? ' PAUSED' : ''}`);
+  return out.join('  ');
 }
 
 interface Tile {
@@ -66,6 +77,7 @@ export class DeviceUI {
   private readonly bar: HTMLDivElement;
   private readonly cd: HTMLSpanElement;
   private readonly allOff: HTMLSpanElement;
+  private readonly devEl: HTMLSpanElement;
   private readonly badge: HTMLSpanElement;
   private readonly date: HTMLSpanElement;
 
@@ -77,12 +89,13 @@ export class DeviceUI {
     this.header.className = 'pme-hdr';
     this.header.innerHTML =
       '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-cd" data-pme="cd"></span>' +
-      '<span data-pme="alloff"></span><span class="pme-badge" data-pme="badge"></span><span data-pme="date"></span>';
+      '<span class="pme-dev" data-pme="dev"></span><span data-pme="alloff"></span><span class="pme-badge" data-pme="badge"></span><span data-pme="date"></span>';
     const q = <T extends HTMLElement>(k: string) => this.header.querySelector(`[data-pme="${k}"]`) as T;
     this.lamp = q('lamp');
     this.bar = q('bar');
     this.cd = q('cd');
     this.allOff = q('alloff');
+    this.devEl = q('dev');
     this.badge = q('badge');
     this.date = q('date');
     this.tiles = doc.createElement('div');
@@ -193,6 +206,7 @@ export class DeviceUI {
     this.cd.textContent = b.countdownS !== null ? `${b.countdownKind === 'pause' ? 'PAUSE' : '🔇'} ${b.countdownS}s` : '';
     this.cd.className = `pme-cd${b.countdownKind === 'silence' ? ' pme-f2' : ''}`;
     this.allOff.innerHTML = b.allOffBell ? BELL_OFF_SVG : '';
+    this.devEl.textContent = deviceText(this.dev);
     const cal = this.r.skin.calendar;
     this.date.textContent = formatDate(new Date(), cal.default, cal.gregorianFormat);
   }

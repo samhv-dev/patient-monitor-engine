@@ -14,6 +14,9 @@ import { autoRange, scaleFor } from './wave-lanes.ts'; // Stage 2
 
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // Stage 1 look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
+const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
+const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
+const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 /** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
 export const AUTO_GAIN_EVERY_S = 2;
@@ -36,6 +39,8 @@ export class MonitorCore {
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private autoGainT = -Infinity;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
+  /** ECG labels wider than LABEL_W (e.g. Saadat-like `II  X1  NORMAL`) run into the sweep area; kept to repaint them. */
+  private labelTail: Array<{ text: string; w: number } | null> = [];
   private readonly overlays = new Overlays();
   private size: Size;
   private pxPerMm: number;
@@ -167,6 +172,7 @@ export class MonitorCore {
         const before = lane.lastDrawnIndex;
         lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(pl.channel as LeadId, from, out));
         if (this.overlays.leadsOff && before >= 0) drawLeadOffDashes(this.ctx, lane, before, lane.lastDrawnIndex);
+        this.repaintLabelTail(i, lane);
       });
       const marks = this.overlays.due(t);
       for (const m of marks) {
@@ -245,6 +251,7 @@ export class MonitorCore {
     this.ctx.fillRect(0, 0, cssW, cssH);
     const h = cssH / Math.max(1, p.lanes.length);
     this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+    this.labelTail = [];
     this.lanes = p.lanes.map((pl, i) => {
       const rate = pl.kind === 'ecg' ? 500 : pl.channel ? this.engine.sampleRate(pl.channel) : 125;
       const [lo, hi] = pl.range ?? [-0.5, 3];
@@ -263,6 +270,31 @@ export class MonitorCore {
     this.autoRangeT = p.lanes.map(() => -1);
     this.autoGainT = -Infinity;
     this.drawChrome(p.lanes.map((_, i) => i));
+  }
+
+  /**
+   * Repaint the part of a long ECG label that lies in the sweep area while the erase bar passes under it (the label
+   * stays on top of the trace, as on the monitor). Clipped to x ≥ LABEL_W so the chrome part is not overdrawn.
+   */
+  private repaintLabelTail(i: number, lane: SweepLane): void {
+    const tail = this.labelTail[i];
+    if (!tail || lane.lastDrawnIndex < 0) return;
+    const head = (lane.xOf(lane.lastDrawnIndex) + lane.cfg.eraseGapPx) % lane.cfg.width;
+    if (head > tail.w + lane.cfg.eraseGapPx + LABEL_REPAINT_SLACK_PX) return;
+    const ctx = this.ctx;
+    const y0 = lane.cfg.y;
+    const pl = this.plan.lanes[i] as PlanLane;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(LABEL_W, y0 + 4, tail.w, LABEL_STRIP_H);
+    ctx.clip();
+    ctx.fillStyle = this.plan.background;
+    ctx.fillRect(LABEL_W, y0 + 4, tail.w, LABEL_STRIP_H);
+    ctx.font = `14px ${this.plan.font}`;
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = pl.color;
+    ctx.fillText(tail.text, 6, y0 + 6);
+    ctx.restore();
   }
 
   /** Static chrome (brief §3.5): ECG lead label + gain + filter and the 1 mV bar; wave label and scale. */
@@ -290,7 +322,16 @@ export class MonitorCore {
         continue;
       }
       const filterName = p.filterNames[this.filterMode] ?? this.filterMode.replace('band:', '');
-      ctx.fillText(ecgLabel(pl.label, pl.channel as LeadId, this.gainMult[i] ?? 1, p.gainLabel, filterName), 6, y0 + 6);
+      const text = ecgLabel(pl.label, pl.channel as LeadId, this.gainMult[i] ?? 1, p.gainLabel, filterName);
+      const old = this.labelTail[i];
+      if (old) {
+        ctx.fillStyle = p.background; // erase the previous label's tail (it lies in the sweep area)
+        ctx.fillRect(LABEL_W, y0 + 4, old.w, LABEL_STRIP_H);
+        ctx.fillStyle = pl.color;
+      }
+      const w = 6 + text.length * LABEL_CHAR_W - LABEL_W;
+      this.labelTail[i] = w > 0 ? { text, w } : null;
+      ctx.fillText(text, 6, y0 + 6);
       const base = y0 + 0.6 * h;
       const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
       ctx.lineWidth = 1.5;
