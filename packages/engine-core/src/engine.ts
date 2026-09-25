@@ -36,7 +36,7 @@ import {
   type SimSeconds,
 } from './types.ts';
 import { version } from './version.ts';
-import { createL1State, type L1State } from './l1/state.ts'; // Stage 2
+import { createL1State, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
 import {
   advanceHemo,
   applyHemoCommand,
@@ -424,13 +424,42 @@ class Engine implements MonitorEngine {
   /** Stage 4b: the committed state as the device layer sees it; its writes invalidate the look-ahead. */
   private deviceHost(simT: number): DeviceHost {
     const ps = this.st;
+    const dirty = () => {
+      this.dirtyFromN = Math.min(this.dirtyFromN, ps.n);
+    };
+    const bx = this.bufs.get('vcgX') as RingBuffer;
+    const by = this.bufs.get('vcgY') as RingBuffer;
+    const bz = this.bufs.get('vcgZ') as RingBuffer;
     return {
       simT,
       rhythmId: ps.rhythm.id,
+      pulseless: ps.rhythm.opts.pulseless === true,
       spo2Probe: ps.hemo.pleth.state,
+      leadsOff: ps.mods.artefact.leadOff,
+      committedN: ps.n,
+      vcgAt: (n) => {
+        const x = bx.at(n);
+        return Number.isNaN(x) ? null : [x, by.at(n), bz.at(n)];
+      },
+      outcomeRng: ps.rng.outcome,
+      l1: (v) => (v === 'hr' ? rampValue(ps.hr, simT) : l1Value(ps.l1, v as L1Var, simT)),
       setModifiers: (patch) => {
         ps.mods = mergeModifiers(ps.mods, patch);
-        this.dirtyFromN = Math.min(this.dirtyFromN, ps.n);
+        dirty();
+      },
+      setRhythm: (id, opts) => {
+        ps.hr = constantRamp(startRate(id, opts));
+        applyRhythm(ps.rhythm, id, opts, simT, true, rhythmCtx(ps));
+        dirty();
+      },
+      setHr: (value, ramp) => {
+        ps.hr = retarget(ps.hr, simT, value, ramp);
+        dirty();
+      },
+      setL1: (v, value, ramp) => {
+        if (v === 'hr') ps.hr = retarget(ps.hr, simT, value, ramp);
+        else setL1Target(ps.l1, v as L1Var, simT, value, ramp);
+        dirty();
       },
     };
   }

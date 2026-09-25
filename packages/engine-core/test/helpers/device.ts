@@ -20,3 +20,14 @@ export const alarmsOf = (ev: EngineEvent[], id?: string, state?: Alarm['state'])
   ev.filter((x): x is Alarm => x.type === 'alarm' && x.level !== undefined && (!id || x.id === id) && (!state || x.state === state));
 export const beats = (ev: EngineEvent[]): Beat[] => ev.filter((x): x is Beat => x.type === 'beat');
 export const markers = (ev: EngineEvent[], kind?: Marker['kind']): Marker[] => ev.filter((x): x is Marker => x.type === 'marker' && (!kind || x.kind === kind));
+
+/** Advance to `t` in ≤ 1 sim-minute chunks, yielding to the event loop between chunks (CI rule: the Vitest worker's
+ * RPC starves on a 2-vCPU runner otherwise; see test/engine/engine-pipeline.test.ts). */
+export async function advanceYielding(e: MonitorEngine, t: number): Promise<void> {
+  let at = e.now().simT;
+  while (at < t) {
+    at = Math.min(t, at + 60);
+    e.advanceTo(at);
+    await new Promise<void>((r) => setImmediate(r));
+  }
+}

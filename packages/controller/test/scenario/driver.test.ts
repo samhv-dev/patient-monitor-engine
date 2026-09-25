@@ -17,6 +17,9 @@ type Learner = Map<number, Command[]>; // tick → commands the learner sends on
 let nL = 0;
 const learner = (event: object): Command => ({ id: `L${++nL}`, issuedBy: 'learner', type: 'applyEvent', event } as unknown as Command);
 const SHOCK = { kind: 'defib', action: 'shock', energyJ: 200 };
+// Stage 4b: the engine models the defibrillator, so a shock needs a charge first (200 J charges in 7 s [ENG]).
+const CHARGE = { kind: 'defib', action: 'charge', energyJ: 200 };
+const CHARGE_LEAD_S = 9;
 
 /** A driver over a fresh engine; await run(ticks) steps one tick at a time, sends the learner's commands, polls. */
 function rig(seed = 42) {
@@ -42,7 +45,10 @@ function rig(seed = 42) {
 }
 const everyTwoMin = (fromS: number, untilS: number): Learner => {
   const m: Learner = new Map();
-  for (let t = fromS; t <= untilS; t += 120) m.set(Math.round(t * 50), [learner(SHOCK)]);
+  for (let t = fromS; t <= untilS; t += 120) {
+    m.set(Math.round((t - CHARGE_LEAD_S) * 50), [learner(CHARGE)]);
+    m.set(Math.round(t * 50), [learner(SHOCK)]);
+  }
   return m;
 };
 
@@ -56,13 +62,15 @@ describe('ScenarioDriver', () => {
     expect(resolveRhythm('vfCoarse', undefined, new Set(['vfCoarse']))).toEqual({ rhythm: 'vfCoarse' });
   }, SLOW);
 
-  it('the wrapped target accepts applyEvent as scenario-only and feeds it to the runner', async () => {
+  it('a charged shock is delivered by the engine and fed to the runner', async () => {
     const { driver, run } = rig();
     expect(driver.load('acls-vf-witnessed').ok).toBe(true);
     await run(3001); // VF at 60 s
     expect(driver.runner?.stateId).toBe('vf');
+    expect((driver.host.dispatch(learner(CHARGE)) as { accepted: boolean }).accepted).toBe(true);
+    await run(3001 + 50 * CHARGE_LEAD_S);
     const r = driver.host.dispatch(learner(SHOCK)) as { accepted: boolean; reason?: string };
-    expect(r).toMatchObject({ accepted: true, reason: 'scenario only: the engine does not model applyEvent yet' });
+    expect(r.accepted).toBe(true); // Stage 4b: the engine delivers the shock itself (no longer scenario-only)
     driver.poll();
     expect(driver.runner?.stateId).toBe('rosc'); // seed 42: the first shock's draw is 0.062 < 0.3
   });
@@ -118,7 +126,7 @@ describe('ScenarioDriver', () => {
     await run(50 * 65);
     expect((await driver.hook({ type: 'scenario', action: 'bookmark', target: 'vf', id: 'b1', issuedBy: 't' })).accepted).toBe(true);
     events.length = 0;
-    const script: Learner = new Map([[50 * 70, [learner(SHOCK)]]]);
+    const script: Learner = new Map([[50 * (70 - CHARGE_LEAD_S), [learner(CHARGE)]], [50 * 70, [learner(SHOCK)]]]);
     await run(50 * 200, script);
     const first = { events: events.splice(0).map((e) => `${e.t}:${e.stateId}`), ecg: samples(66, 199) };
     const r = await driver.hook({ type: 'scenario', action: 'restoreBookmark', target: 'vf', id: 'b2', issuedBy: 't' });
@@ -126,7 +134,7 @@ describe('ScenarioDriver', () => {
     expect(host.engine.now().tick).toBe(50 * 65);
     expect(driver.runner?.stateId).toBe('vf');
     expect(events.splice(0).map((e) => `${e.t}:${e.stateId}`)).toEqual(['60:vf']); // the restore republishes the state
-    await run(50 * 200, new Map([[50 * 70, [learner(SHOCK)]]]));
+    await run(50 * 200, new Map([[50 * (70 - CHARGE_LEAD_S), [learner(CHARGE)]], [50 * 70, [learner(SHOCK)]]]));
     expect(events.map((e) => `${e.t}:${e.stateId}`)).toEqual(first.events);
     expect(samples(66, 199)).toEqual(first.ecg);
   }, SLOW);

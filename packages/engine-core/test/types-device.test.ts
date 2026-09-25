@@ -17,7 +17,7 @@ describe('Stage 4b types', () => {
     const evs: EngineEvent[] = [
       { type: 'alarm', t: 1, id: 'HR_HIGH', priority: 'medium', category: 'physiological', state: 'raised', text: '**HR 130>120', level: 2 },
       { type: 'tone', t: 1, id: 'defib-charge-1', kind: 'charge', chargeS: 7 },
-      { type: 'deviceStatus', t: 1, defib: null, pacer: null } satisfies DeviceEvent,
+      { type: 'deviceStatus', t: 1, defib: null, pacer: null, hrDashes: false } satisfies DeviceEvent,
     ];
     expect(evs.map((e) => e.type)).toEqual(['alarm', 'tone', 'deviceStatus']);
   });

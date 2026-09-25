@@ -90,6 +90,12 @@ export type DeviceEvent =
   | {
       /** Defibrillator and pacer state, on every change and at 1 Hz. */
       type: 'deviceStatus'; t: SimSeconds;
-      defib: { energyJ: number; state: 'idle' | 'charging' | 'ready'; sync: boolean; readyAt: SimSeconds | null; shocks: number } | null;
+      defib: {
+        energyJ: number; state: 'idle' | 'charging' | 'ready'; sync: boolean; readyAt: SimSeconds | null; shocks: number;
+        /** outcome: 'unchanged' | 'vf' | 'asystole' | 'pea' | 'rosc' | 'sinus', or the pre-selected rhythm id. */
+        lastShock: { t: SimSeconds; energyJ: number; sync: boolean; outcome: string } | null;
+      } | null;
       pacer: { mode: 'off' | 'demand' | 'fixed'; ratePpm: number; mA: number; paused: boolean } | null;
+      /** HR shows dashes while pacing on this skin (LIFEPAK-like, research/05 §2.6). */
+      hrDashes: boolean;
     };

@@ -3352,7 +3352,7 @@ git commit -m "feat(engine-core): defibrillator (energy, charge time, ready, aut
 - Consumes: Tasks 9–12.
 - Produces: `l3/device-layer.ts` replaced — `DeviceState` gains `defib, pacer, sync, pending, lastBeat, tcpKey, statusKey, lastStatusT`; `DeviceHost` gains `pulseless, leadsOff, committedN, vcgAt(n), outcomeRng, l1(v), setRhythm(id, opts), setHr(v, ramp?), setL1(v, value, ramp?)`; constants `SYNC_DELAY_S = 0.02`, `T_PEAK_QT_FRACTION`, `ISO_S`, `ROSC_*`, `CARDIOVERSION_*`. `setTarget paceThresholdMa` and `applyEvent defib|pacer` are device commands. The `deviceStatus` event gains `defib.lastShock` and `hrDashes`; the `shock` marker carries `data.atS`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/engine-core/test/engine/defib-engine.test.ts`:
 
@@ -3625,12 +3625,12 @@ with:
     expect(evs.map((e) => e.type)).toEqual(['alarm', 'tone', 'deviceStatus']);
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/engine-core && npx vitest run test/engine/defib-engine.test.ts test/engine/pacer-engine.test.ts test/engine/device-determinism.test.ts; cd -`
 Expected: FAIL — `applyEvent defib` is rejected (`command type applyEvent is not implemented`), so no `chargeStart`/`shock` markers; the pacer tests see no `paceSpike`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 2), replace this block (it occurs exactly once):
 
@@ -4040,7 +4040,7 @@ with:
     };
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/defib-engine.test.ts test/engine/pacer-engine.test.ts test/engine/device-determinism.test.ts; cd -
@@ -4048,7 +4048,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/device-layer.ts packages/engine-core/src/types-device.ts packages/engine-core/test/engine/defib-engine.test.ts packages/engine-core/test/engine/device-determinism.test.ts packages/engine-core/test/engine/engine-commands.test.ts packages/engine-core/test/engine/pacer-engine.test.ts packages/engine-core/test/types-device.test.ts
