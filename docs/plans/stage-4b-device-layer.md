@@ -2718,7 +2718,7 @@ git commit -m "feat(engine-core): device layer wired into the engine — live al
 - Consumes: `uniform`, `createRngState` (Stage 1 rng).
 - Produces (`l3/defib-pacer/outcome.ts`): `ShockClass`, `ShockOutcome = 'unchanged'|'vf'|'asystole'|'pea'|'rosc'|'sinus'`, the table constants, `T_PEAK_WINDOW_S = 0.04`, `shockClass(id, pulseless)`, `interface ShockContext`, `outcomeProbabilities(c)`, `drawOutcome(c, rng)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/outcome.test.ts`:
 
@@ -2779,12 +2779,12 @@ describe('post-shock outcome table', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/outcome.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/outcome.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/outcome.ts`:
 
@@ -2878,7 +2878,7 @@ export function drawOutcome(c: ShockContext, rng: Sfc32State): ShockOutcome {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/outcome.test.ts; cd -
@@ -2886,7 +2886,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/outcome.ts packages/engine-core/test/l3/defib-pacer/outcome.test.ts
