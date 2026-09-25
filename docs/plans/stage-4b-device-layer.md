@@ -6246,7 +6246,7 @@ git commit -m "feat(renderer): alarm bar/lamp/countdown and tile views from alar
 - Consumes: Task 19 views, `formatNibp` (Stage 2), `formatDate` (`@pme/skins`), `Capture12`, `TrendStore`.
 - Produces: `device-ui.ts` — `flashCss(r)`, `class DeviceUI {header, tiles, setSkin(r, page?), onEvent(e), paint(t), destroy()}`; `views.ts` — `PAPER`, `report12Size(pxPerMm)`, `draw12Lead(ctx, capture, pxPerMm): number`, `interface TrendSeries`, `drawTrend(ctx, store, series, fromS, toS, w, h, style, background?)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/views.test.ts`:
 
@@ -6285,12 +6285,12 @@ describe('views', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/views.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/views.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/device-ui.ts`:
 
@@ -6646,7 +6646,7 @@ export function drawTrend(ctx: Ctx2D, store: TrendStore, series: readonly TrendS
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/views.test.ts; cd -
@@ -6654,7 +6654,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/device-ui.ts packages/renderer/src/views.ts packages/renderer/test/views.test.ts
