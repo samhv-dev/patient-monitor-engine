@@ -117,3 +117,16 @@ export function desatTime(p: PatientProfile, preox: boolean): number {
   e.advanceTo(180 + 900);
   return (firstBelow(stateSeries(ev, 'spo2', 180), 90) ?? Infinity) - 180;
 }
+
+/**
+ * Advance to sim time `t` one sim-minute at a time, yielding to the event loop between chunks (CI rule G2: a
+ * multi-minute synchronous run starves the Vitest worker RPC on the 2-vCPU runner). Same ticks as advanceTo(t).
+ */
+export async function run(e: MonitorEngine, t: number): Promise<void> {
+  for (;;) {
+    const x = Math.min(t, e.now().simT + 60);
+    e.advanceTo(x);
+    await new Promise<void>((r) => setImmediate(r));
+    if (x >= t) return;
+  }
+}

@@ -3825,7 +3825,7 @@ git commit -m "feat(engine-core): wire the respiratory pipeline before the haemo
 
 **Interfaces:** consumes the Task 16 helpers (`capnoAngles` measures α on the 25 mmHg/s axis: phase II slope between the 25 % and 75 % crossings of the plateau-end value, phase III by regression from the 90 % crossing + 0.2 s).
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 1–2; decisions 5, 6, 16)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 1–2; decisions 5, 6, 16)
 
 **Create `packages/engine-core/test/engine/resp-capnogram.test.ts`:**
 
@@ -3913,12 +3913,12 @@ describe('Stage 3 acceptance: capnogram', { timeout: 30_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-capnogram.test.ts`
 Expected: 4 tests pass (the behaviour was built in Tasks 8–16; this task pins it). Prototype: α 105.6° normal, 157° bronchospasm; lag 2.33–2.35 s. If one fails, fix the module the failure points to (`capno.ts` shape constants, `driver.ts` airway rules) — never widen a band.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-capnogram.test.ts
