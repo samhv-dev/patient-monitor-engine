@@ -5,16 +5,22 @@ export const DELAY_FINGER_S = 15;
 export const DELAY_EAR_S = 5;
 export const DELAY_MAX_S = 60;
 export const DELAY_SMOOTH_S = 5; // the delay itself moves with τ 5 s so the read point never jumps [ENG]
-const HIST = 700; // 70 s at 10 Hz
+const HIST = 72; // 71 s of whole-second points (1 Hz) — see DelayLine
 
+/**
+ * History of pulmonary SaO2 as whole-second points plus the current gas step. 1 Hz is enough for a signal whose
+ * fastest change is a few %/s, and it keeps the state small: the engine structured-clones the whole state every
+ * tick for its look-ahead, and a 700-point 10 Hz ring made this the largest object in it (Stage 3 perf fix).
+ */
 export interface DelayLine {
-  hist: number[]; // ring, index k % HIST holds gas step k
+  hist: number[]; // ring: hist[s % HIST] holds the SaO2 at whole second s (gas step s·10)
   k: number; // next gas step index
+  last: number; // SaO2 of the latest gas step
   delay: number; // current smoothed delay (s)
 }
 
 export function createDelay(sa0: number): DelayLine {
-  return { hist: new Array<number>(HIST).fill(sa0), k: 0, delay: DELAY_FINGER_S };
+  return { hist: new Array<number>(HIST).fill(sa0), k: 0, last: sa0, delay: DELAY_FINGER_S };
 }
 
 /** Target delay for a site, CO ratio and PI (vasoconstriction below PI 1 % lengthens it) [ENG]. */
@@ -27,12 +33,19 @@ export function siteDelay(site: string, coRatio: number, pi: number | null): num
 
 /** Push this gas step's pulmonary SaO2 and return the SaO2 at the site (interpolated `delay` seconds back). */
 export function delayStep(d: DelayLine, sa: number, target: number, dtS: number): number {
-  d.hist[d.k % HIST] = sa;
+  const perS = Math.round(1 / dtS);
+  const now = d.k * dtS; // time of this gas step
+  if (d.k % perS === 0) d.hist[(d.k / perS) % HIST] = sa;
+  d.last = sa;
   d.k++;
   d.delay += (target - d.delay) * (1 - Math.exp(-dtS / DELAY_SMOOTH_S));
-  const back = Math.min(HIST - 2, d.delay / dtS);
-  const i0 = Math.floor(back);
-  const w = back - i0;
-  const at = (j: number) => d.hist[(((d.k - 1 - j) % HIST) + HIST) % HIST] as number;
-  return at(i0) * (1 - w) + at(i0 + 1) * w;
+  const tq = now - Math.min(HIST - 2, d.delay);
+  const sNow = Math.floor(d.k === 0 ? 0 : (d.k - 1) / perS); // latest whole second stored
+  const at = (s: number) => d.hist[Math.max(0, s) % HIST] as number;
+  if (tq >= sNow) {
+    const span = now - sNow;
+    return span > 0 ? at(sNow) + (d.last - at(sNow)) * ((tq - sNow) / span) : d.last;
+  }
+  const s0 = Math.floor(tq);
+  return at(s0) + (at(s0 + 1) - at(s0)) * (tq - s0);
 }
