@@ -1234,7 +1234,7 @@ git commit -m "feat(engine-core): DeviceProfile from the resolved skin — limit
 - Consumes: `DeviceProfile`, `LimitDef` (Task 5).
 - Produces (`l3/alarms/text.ts`): `type FixedAlarmId`, `fixedText(p, id, level, technical)`, `limitText(p, def, 'HIGH'|'LOW', value)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/text.test.ts`:
 
@@ -1261,12 +1261,12 @@ describe('alarm texts', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/text.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/text.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/text.ts`:
 
@@ -1331,7 +1331,7 @@ export function limitText(p: DeviceProfile, d: LimitDef, side: 'HIGH' | 'LOW', v
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/text.test.ts; cd -
@@ -1339,7 +1339,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/text.ts packages/engine-core/test/l3/alarms/text.test.ts
