@@ -5026,7 +5026,7 @@ git commit -m "feat(demo): stage3 monitor — CO2/RESP lanes, gas/temperature ti
 **Files:**
 - Create: `docs/gates/stage-3.md`
 
-- [ ] **Step 1: Run everything from a clean install**
+- [x] **Step 1: Run everything from a clean install**
 
 ```bash
 rm -rf node_modules packages/*/node_modules apps/*/node_modules && npx -y pnpm@9.15.9 install --frozen-lockfile
@@ -5036,7 +5036,7 @@ PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
 
 Expected: exit 0; engine-core ≈ 369 tests (the exact count after PR #4's reconciliation may differ), renderer 34, controller 97, audio 58, skins 155, validation 16; `check-notices: OK`; e2e as on `main`.
 
-- [ ] **Step 2: Measure the gate numbers**
+- [x] **Step 2: Measure the gate numbers**
 
 Write this scratch probe to `packages/engine-core/test/zz-gate3.test.ts` (it is NOT committed), run it with `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/zz-gate3.test.ts`, copy the printed lines, then delete the file:
 
@@ -5181,11 +5181,11 @@ GA temperature: −1.28 °C at 60 min, −0.39 °C in hour 2, hour-8 plateau 34.
 rectal probe τ 40.0 min
 ```
 
-- [ ] **Step 3: Write `docs/gates/stage-3.md`**
+- [x] **Step 3: Write `docs/gates/stage-3.md`**
 
 Structure it like `docs/gates/stage-2.md`: the gate question ("Does the airway-loss sequence feel right to an anaesthetist — EtCO2 gone at once, SpO2 falling late and still falling after the airway is back — and do the capnogram patterns read correctly at a glance?"), a table with one row per BUILD-PLAN Stage 3 acceptance item (1–9) plus the extra checks of this plan (PPV through the driver, RR three ways, ventilator link and PEEP, lungState, determinism, 24 h), each with the MEASURED value from Step 2 next to the prototype value from this plan's "Prototype results"; then a "Plan decisions needing a ruling" list: decision 3 (CO2 constants; the halving acceptance is unreachable), decision 4 (room-air desaturation ≈ 40 s vs the brief's 1–2 min), decision 5 (RR 60 sidestream under-read ≈ 1 mmHg vs > 3), decision 7 (MANUAL PEEP coupling above 10 cmH2O), decision 2 (MANUAL gas targets as calibrations), and the two partition exceptions; then the screenshots list with one line on what each shows.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/gates/stage-3.md
