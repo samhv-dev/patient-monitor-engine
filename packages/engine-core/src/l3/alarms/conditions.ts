@@ -105,8 +105,8 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
 
   // Limit alarms on displayed numerics (brief §6.4), only where the per-parameter switch is ON (brief §6.4.1).
   for (const [key, d] of Object.entries(p.limits)) {
-    if (!isEnabled(s, key) || (hrSuppressed && d.numeric === 'hr')) continue;
-    const v = valid(inp, d.numeric, t);
+    const v = valid(inp, d.numeric, t); // cheapest test first: this loop runs every tick
+    if (v === null || (hrSuppressed && d.numeric === 'hr') || !isEnabled(s, key)) continue;
     const l = limitOf(s, key);
     if (v === null || !l) continue;
     const delayS = d.numeric === 'spo2' ? p.spo2DelayS : p.delayS;

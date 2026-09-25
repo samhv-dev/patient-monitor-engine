@@ -36,7 +36,7 @@ describe('Stage 3 determinism and drift', () => {
     expect(hashRun(42)).not.toBe(hashRun(43));
   });
 
-  it('no drift at 62.5 Hz: after advanceTo(86400) latestSampleIndex(co2) = latestSampleIndex(resp) = 5,400,000 + 6', { timeout: 300_000 }, async () => {
+  it('no drift at 62.5 Hz: after advanceTo(86400) latestSampleIndex(co2) = latestSampleIndex(resp) = 5,400,000 + 6', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
     const e = createEngine({ seed: 11, patient: { sensors: { co2: 'on' } } });
     // one sim-hour at a time, yielding between chunks (main's CI pattern: a synchronous 24 h run starves the
     // Vitest worker RPC on a 2-vCPU runner)

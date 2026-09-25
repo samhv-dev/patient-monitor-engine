@@ -84,7 +84,10 @@ export interface DeviceProfile {
 }
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */
-export const limitGroup = (key: string): string => key.split('_')[0] as string;
+export const limitGroup = (key: string): string => {
+  const i = key.indexOf('_'); // no split(): this runs every tick
+  return i < 0 ? key : key.slice(0, i);
+};
 
 /** Engine age bands (brief §7.1 EngineOptions.device.ageBand) → skin bands. */
 export function skinBand(b: 'adult' | 'paediatric' | 'neonatal' | AgeBand | undefined): AgeBand {

@@ -70,7 +70,7 @@ export function setProfile(s: AlarmMgrState, p: DeviceProfile, t: number, out: E
 export function limitOf(s: AlarmMgrState, key: string): { low: number | null; high: number | null } | null {
   const d = s.profile.limits[key];
   if (!d) return null;
-  return s.cfg.limits[key] ?? { low: d.low, high: d.high };
+  return s.cfg.limits[key] ?? d; // the LimitDef carries low/high (no allocation: this runs every tick)
 }
 
 export function isEnabled(s: AlarmMgrState, key: string): boolean {

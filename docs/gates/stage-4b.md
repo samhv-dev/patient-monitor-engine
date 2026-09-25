@@ -34,7 +34,7 @@ All numbers below were measured on this branch. The plan author's value is in pa
 
 | Check | Result |
 |---|---|
-| typecheck / build / check-notices | exit 0 / exit 0; renderer IIFE 689.0 kB after the Stage 3 merge (628.9; 633.1 before the merge) / `OK (3 governed files)` |
+| typecheck / build / check-notices | exit 0 / exit 0; renderer IIFE 689.7 kB after the Stage 3 merge (628.9; 633.1 before the merge) / `OK (3 governed files)` |
 | unit tests | After the Stage 3 merge: engine-core **444**, renderer **61**, skins 159, audio 58, controller 185, validation 16, for **923** in total, all passing. Before the merge: engine-core 377 (372), renderer 57 (54), skins 159 (159), audio 58, controller 185 (97; the base now carries 6b), validation 16. Base: 305 / 31 / 155 / 58 / 185 / 16 |
 | browser tests | whole Playwright suite **19 passed**, before and after the Stage 3 merge (iife-smoke, stage4a-skins, stage6a ×3, stage6a-worker ×3, stage6a-screens, stage6a-latency, stage6b, stage4b-device ×6). `stage4b-device.e2e.ts` has 6 tests (the plan had 5; one was added for the brief's gate list) |
 
@@ -203,4 +203,8 @@ Things seen in the screenshots that belong to other stages (not changed here):
 - **Task 24 (screenshots)**: the older suites rewrite their gate screenshots, so `docs/gates/stage-4a`, `stage-6a` and `stage-6b` were restored. 4a's two ecg-grid shots now render differently because Task 2 dimmed the grid; 4a's originals were kept as its evidence.
 - **CI timeouts (6b test)**: GitHub CI failed on `driver.test.ts` "a different runner seed…" at its 30 s timeout. It runs 4 × 320 sim-s tick by tick, about 12 s on a laptop and more than 30 s on the 2-vCPU runner. The same test also fails on main's own CI (runs 36082491476, 36079617326), so this is not a 4b regression. Under the binding CI rule, the file's `SLOW` timeout is now 300 s and applies to that test and to the 2 × 400 sim-s replay-identity test.
 - **CI WebKit** (the plan's e2e ran on Chrome only). GitHub CI also runs WebKit, where two 4b tests failed. The skin-switch test's sim time had not moved 1.5 s after the switch (2.02 → 2.02), so it now polls for up to 15 s and reports any page error. The audio-timing test measured a 58 s lateness because headless WebKit's AudioContext clock does not run on the runner, so it is skipped on WebKit; the gate's audio log is Chrome's.
+- **CI time budget of the 24 h drift tests**: at the merge commit, CI timed out at 300 s on two 24-sim-hour tests: `engine-pipeline` acceptance 11 and `hemo-longrun`. On main's own CI (with Stage 3) these already take about 262–281 s. Profiling put `stepDevice` at about 10 % of engine time. Two changes followed:
+  - The per-tick allocations are gone: string keys replace `JSON.stringify` for the TCP spec, deviceStatus changes are detected by a field compare, `limitOf` returns without a copy, `limitGroup` avoids `split`, and a limit is checked for a valid value before its switch.
+  - The 4b engine now runs 1200 sim-s in about 630 ms, against 588 ms on main (+7 %; it was +16 %).
+  - The three 24 h tests (`engine-pipeline`, `hemo-longrun`, `resp-longrun`) take `{ timeout: 600_000 }`. The CI rule's 300 s was sized for main without the device layer.
 - **Environment**: the host ran at a load average of about 90 while Stage 3 ran concurrently. Under that load the controller test "a different runner seed…" (30 s timeout) timed out once, on 601b410 as well as on this branch. It passed in the final run.

@@ -53,7 +53,8 @@ export interface DeviceState {
   pending: PendingRhythm | null;
   lastBeat: { t: number; qtMs: number } | null;
   tcpKey: string;
-  statusKey: string;
+  /** defib/pacer fields of the last deviceStatus (JSON-safe), compared field by field. */
+  statusLast: Array<number | string | boolean | null>;
   lastStatusT: number;
 }
 
@@ -91,7 +92,7 @@ export function createDevice(skin: string | undefined, ageBand: 'adult' | 'paedi
     pending: null,
     lastBeat: null,
     tcpKey: 'null',
-    statusKey: '',
+    statusLast: [],
     lastStatusT: -1,
   };
 }
@@ -220,6 +221,18 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
   afterShock(d.defib, t, atS, synced, outcome, out);
 }
 
+/** Whether the defibrillator/pacer fields of deviceStatus changed since the last one (field compare, no string or
+ * object built: this runs every tick). Updates the remembered values. */
+function statusChanged(d: DeviceState): boolean {
+  const df = d.defib;
+  const pc = d.pacer;
+  const now = [df.energyJ, df.state, df.sync, df.readyAt, df.shocks, df.lastShock?.t ?? null, pc.mode, pc.ratePpm, pc.mA, pc.paused];
+  let changed = d.statusLast.length !== now.length;
+  for (let i = 0; i < now.length && !changed; i++) if (d.statusLast[i] !== now[i]) changed = true;
+  if (changed) d.statusLast = now;
+  return changed;
+}
+
 /** A committed QRS detection (R time, s). */
 export function deviceOnQrs(d: DeviceState, tR: number): void {
   observeQrs(d.inputs, tR);
@@ -264,8 +277,9 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
     if (d.defib.syncArmed && d.defib.state === 'ready') deliverShock(d, host, Math.max(tR + SYNC_DELAY_S, host.committedN / SYNC_RATE), true, out);
   }
   // pacer → Modifiers.tcp (threshold from PatientState.paceThresholdMa, brief §6.5)
-  const tcp = tcpSpec(d.pacer, pacerSpec(d), host.l1('paceThresholdMa'), host.leadsOff);
-  const key = JSON.stringify(tcp);
+  const tcp = d.pacer.mode === 'off' ? null : tcpSpec(d.pacer, pacerSpec(d), host.l1('paceThresholdMa'), host.leadsOff);
+  // a plain string key, not JSON: this runs every tick (the 24 h CI runs are near their time budget)
+  const key = tcp === null ? 'null' : `${tcp.mode}|${tcp.ratePpm}|${tcp.mA}|${tcp.thresholdMa}`;
   if (key !== d.tcpKey) {
     d.tcpKey = key;
     host.setModifiers({ tcp });
@@ -280,17 +294,15 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   stepAlarms(d.alarms, t, buildConditions(d.alarms, inp, t), out);
   // device status on change and at 1 Hz
   const df = d.defib;
-  const status: Extract<EngineEvent, { type: 'deviceStatus' }> = {
-    type: 'deviceStatus', t,
-    defib: { energyJ: df.energyJ, state: df.state, sync: df.sync, readyAt: df.readyAt, shocks: df.shocks, lastShock: df.lastShock },
-    pacer: { mode: d.pacer.mode, ratePpm: d.pacer.ratePpm, mA: d.pacer.mA, paused: d.pacer.paused },
-    hrDashes: p.hrDashesWhilePacing && d.pacer.mode !== 'off',
-  };
-  const sk = JSON.stringify([status.defib, status.pacer]);
-  if (sk !== d.statusKey || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
-    d.statusKey = sk;
+  const pc = d.pacer;
+  if (statusChanged(d) || t - d.lastStatusT >= STATUS_EVERY_S - 1e-9) {
     d.lastStatusT = t;
-    out.push(status);
+    out.push({
+      type: 'deviceStatus', t,
+      defib: { energyJ: df.energyJ, state: df.state, sync: df.sync, readyAt: df.readyAt, shocks: df.shocks, lastShock: df.lastShock },
+      pacer: { mode: pc.mode, ratePpm: pc.ratePpm, mA: pc.mA, paused: pc.paused },
+      hrDashes: p.hrDashesWhilePacing && pc.mode !== 'off',
+    });
   }
   return keep;
 }

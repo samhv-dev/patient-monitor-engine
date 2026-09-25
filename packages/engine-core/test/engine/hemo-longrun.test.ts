@@ -34,7 +34,7 @@ describe('Stage 2 determinism and drift', () => {
     expect(run(42)).not.toBe(run(43));
   });
 
-  it('no drift at 125 Hz: after advanceTo(86400) latestSampleIndex(abp) = latestSampleIndex(pleth) = 10,800,000 + 12', { timeout: 300_000 }, async () => {
+  it('no drift at 125 Hz: after advanceTo(86400) latestSampleIndex(abp) = latestSampleIndex(pleth) = 10,800,000 + 12', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
     const e = createEngine({ seed: 11, patient: { sensors: { abp: 'connected' } } });
     // Same pattern as the ECG 24 h test on main: one sim-hour at a time, yielding between chunks, so the
     // ≈ 65 s run does not starve the Vitest worker's RPC on a 2-vCPU CI runner ("Timeout calling onTaskUpdate").
