@@ -1360,7 +1360,7 @@ git commit -m "feat(engine-core): alarm message texts — IEC-style ***/**/* wit
 - Consumes: `DeviceProfile`, `limitGroup` (Task 5); `AlarmDeviceAction`, `AlarmEntry`, `LimitState` (Task 3).
 - Produces (`l3/alarms/manager.ts`): `interface Condition {id, level, category, text, delayS, numeric?}`, `interface AlarmConfig`, `interface AlarmMgrState`, `LEVEL_PRIORITY`, `defaultConfig(p)`, `createAlarmMgr(p)`, `setProfile(s, p, t, out)`, `limitOf(s, key)`, `isEnabled(s, key)`, `validateAlarmAction(s, a)`, `applyAlarmAction(s, a, t, out)`, `stepAlarms(s, t, conds, out)`, `alarmStatus(s, t)`. `DeviceProfile` gains `volume`; the `alarmStatus` event gains `volume`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/manager.test.ts`:
 
@@ -1491,12 +1491,12 @@ describe('alarm manager', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/manager.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/manager.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/manager.ts`:
 
@@ -1814,7 +1814,7 @@ with:
   | {
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/manager.test.ts; cd -
@@ -1822,7 +1822,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/manager.ts packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/src/types-device.ts packages/engine-core/test/l3/alarms/manager.test.ts

@@ -57,6 +57,7 @@ export interface DeviceProfile {
   spo2DelayS: number;
   silence: { durationS: number; suppressesVisual: boolean; cancelOnNewAlarm: boolean; technicalActsAsAck: boolean };
   pauseS: number | null;
+  volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
   /** SpO2 desaturation threshold (%), level 1 (brief §6.4), or null. */
   desat: number | null;
@@ -130,6 +131,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     spo2DelayS: a.spo2DelayS ?? a.delayS,
     silence: { durationS: a.silence.durationS, suppressesVisual: a.silence.suppressesVisual, cancelOnNewAlarm: a.silence.cancelOnNewAlarm, technicalActsAsAck: a.silence.technicalActsAsAck },
     pauseS: a.pause ? a.pause.durationS : null,
+    volume: { ...a.volume },
     limits: limitsFor(r, band),
     desat: typeof desat === 'number' ? desat : null,
     arrhythmia: {

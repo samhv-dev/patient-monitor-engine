@@ -84,6 +84,8 @@ export type DeviceEvent =
       limits: Record<string, LimitState>;
       allOff: boolean;
       arrhythmiaAnalysis: boolean;
+      /** Alarm volume step (skin range, brief §6.4 / §6.4.1). */
+      volume: number;
     }
   | {
       /** Defibrillator and pacer state, on every change and at 1 Hz. */
