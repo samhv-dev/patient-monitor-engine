@@ -6,7 +6,7 @@ import type { DeviceProfile, LimitDef } from './profile.ts';
 
 export type FixedAlarmId =
   | 'ASYSTOLE' | 'VFIB' | 'VTAC' | 'EXTREME_BRADY' | 'EXTREME_TACHY' | 'BRADY' | 'TACHY' | 'PAUSE' | 'PVCS' | 'DESAT'
-  | 'ecgLeadsOff' | 'spo2SensorOff' | 'nibp-failed';
+  | 'ecgLeadsOff' | 'spo2SensorOff' | 'nibp-failed' | 'APNEA' | 'co2Line';
 
 const IEC_TEXT: Record<FixedAlarmId, string> = {
   ASYSTOLE: 'ASYSTOLE',
@@ -22,6 +22,8 @@ const IEC_TEXT: Record<FixedAlarmId, string> = {
   ecgLeadsOff: 'ECG LEADS OFF', // brief §6.2 "LEADS OFF" INOP
   spo2SensorOff: 'SpO2 SENSOR OFF', // brief §6.2
   'nibp-failed': 'NBP MEASUREMENT FAILED', // brief §6.3
+  APNEA: 'APNEA', // brief §6.4 conditions [inferred text]
+  co2Line: 'CO2 LINE', // brief §6.4 technical INOP "CO2 line" [inferred text]
 };
 
 const SAADAT_TEXT: Record<FixedAlarmId, string> = {
@@ -38,6 +40,8 @@ const SAADAT_TEXT: Record<FixedAlarmId, string> = {
   ecgLeadsOff: 'ECG CHECK LA/RA/LL', // brief §6.4.1
   spo2SensorOff: 'SPO2 SENSOR OFF',
   'nibp-failed': 'NIBP MEASUREMENT FAILED',
+  APNEA: 'RESP APNEA', // brief §6.4.1
+  co2Line: 'CO2 CHECK LINE', // [inferred] from the "ECG CHECK LA/RA/LL" pattern
 };
 
 /** IEC-style priority marks: *** high, ** medium, * low (research/05 §2.5). Technical INOPs carry none. */

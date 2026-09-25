@@ -16,6 +16,10 @@ export const VT_GAP_S = 2;
 /** Extreme brady/tachy: the HR limit ∓ 20 bpm, clamped at 40/200 (adult) or 50/240 (neonatal) (brief §6.4). */
 export const EXTREME_OFFSET = 20;
 export const EXTREME_CLAMP = { adult: [40, 200], paed: [40, 200], neo: [50, 240] } as const;
+/** Stage 3's raw apnoea alarm ids (its plan: CO2 and impedance detectors) → APNEA. */
+export const APNOEA_FLAGS: ReadonlySet<string> = new Set(['apnoea-co2', 'apnoea-resp']);
+/** Raw CO2 sampling-line INOP ids accepted from Stage 3 (request R-4b-1 names `co2Line`). */
+export const CO2_LINE_FLAGS: ReadonlySet<string> = new Set(['co2Line', 'co2-line']);
 const RR_EMA = 0.2; // mean R-R for the Saadat-like pause ratio (brief §6.4.1 "R-R > 2.1× mean R-R") [ENG weight]
 
 export interface AlarmInputs {
@@ -31,12 +35,18 @@ export interface AlarmInputs {
   spo2Probe: 'on' | 'off' | 'motion';
   nibpFailed: boolean;
   pacing: boolean;
+  /** Last `breath` event (brief §7.3, Stage 3); null until a respiratory source has produced one. */
+  lastBreathT: number | null;
+  /** Stage 3's raw apnoea flags (its CO2 and impedance detectors) and a CO2 line INOP flag (request R-4b-1). */
+  apnoeaFlags: string[];
+  co2Line: boolean;
 }
 
 export function createInputs(t0 = 0): AlarmInputs {
   return {
     measured: {}, lastQrsT: null, meanRR: null, ecgOnSince: t0, leadsOff: false, vfSince: null,
     vt: { count: 0, firstT: 0, lastT: -1e9 }, pvcTimes: [], spo2Probe: 'on', nibpFailed: false, pacing: false,
+    lastBreathT: null, apnoeaFlags: [], co2Line: false,
   };
 }
 
@@ -68,8 +78,15 @@ export function observeEvent(inp: AlarmInputs, e: EngineEvent): void {
     // raw technical flags from L2 (lead-off.ts, hemo pipeline): the manager re-issues them with the skin's level
     if (e.id === 'ecgLeadsOff') inp.leadsOff = e.state === 'raised';
     if (e.id === 'nibp-failed') inp.nibpFailed = e.state === 'raised';
+    if (APNOEA_FLAGS.has(e.id)) {
+      inp.apnoeaFlags = inp.apnoeaFlags.filter((x) => x !== e.id);
+      if (e.state === 'raised') inp.apnoeaFlags.push(e.id);
+    }
+    if (CO2_LINE_FLAGS.has(e.id)) inp.co2Line = e.state === 'raised';
   } else if (e.type === 'nibp' && (e.phase === 'inflating' || e.result !== undefined)) {
     inp.nibpFailed = false;
+  } else if ((e as { type: string }).type === 'breath') {
+    inp.lastBreathT = (e as unknown as { t: number }).t; // Stage 3's `breath` event (brief §7.3); structural so it compiles before Stage 3 merges
   }
 }
 
@@ -138,6 +155,13 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
       if (inp.pvcTimes.filter((x) => x > t - 60).length >= p.arrhythmiaPvcPerMin) out.push(fixed('PVCS', 2, 'physiological'));
     }
   }
+  // APNEA (brief §6.4 "apnoea (20 s)"; §6.4.1 always on, level 1): a breath gap of the skin's apnoea time, or
+  // Stage 3's own detectors; nothing until a respiratory source exists; APNEA LIMIT OFF (preset) disables it.
+  if (p.apneaS !== null) {
+    const gap = inp.lastBreathT !== null && t - inp.lastBreathT >= p.apneaS;
+    if (gap || inp.apnoeaFlags.length > 0) out.push(fixed('APNEA', 1, 'physiological'));
+  }
+  if (inp.co2Line) out.push(fixed('co2Line', 3, 'technical'));
   if (inp.spo2Probe === 'off') out.push(fixed('spo2SensorOff', 3, 'technical'));
   if (inp.nibpFailed) out.push(fixed('nibp-failed', 3, 'technical'));
   return out;

@@ -32,6 +32,8 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
 export const BAROMETRIC_MMHG = 760;
 /** Skins whose HR reads dashes and whose HR alarms are off while the pacer runs (research/05 §2.6, LIFEPAK 15). */
 export const PACING_HR_DASHES: ReadonlySet<string> = new Set(['lifepak-like']);
+/** Apnoea time when the skin's limit table has none (brief §6.4 "apnoea (20 s)"). */
+export const APNEA_DEFAULT_S = 20;
 
 export interface LimitDef {
   numeric: NumericId;
@@ -59,6 +61,8 @@ export interface DeviceProfile {
   pauseS: number | null;
   volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
+  /** APNEA after this long without a breath (skin `apneaS`, brief §6.4 / §6.4.1); null = APNEA LIMIT OFF (preset). */
+  apneaS: number | null;
   /** SpO2 desaturation threshold (%), level 1 (brief §6.4), or null. */
   desat: number | null;
   arrhythmia: {
@@ -121,6 +125,8 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
   const a = s.alarms;
   const ar = s.arrhythmia;
   const desat = r.limits[band]?.SpO2_desat;
+  const apnea = r.limits[band]?.apneaS;
+  const apneaLimit = r.preset?.startState?.apneaLimit; // research/06 §3.1 F7: a real ICU had APNEA LIMIT OFF
   return {
     skin: id,
     ageBand: band,
@@ -136,6 +142,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     volume: { ...a.volume },
     limits: limitsFor(r, band),
     desat: typeof desat === 'number' ? desat : null,
+    apneaS: apneaLimit === 'OFF' ? null : typeof apneaLimit === 'number' ? apneaLimit : typeof apnea === 'number' ? apnea : APNEA_DEFAULT_S,
     arrhythmia: {
       defaultOn: ar.defaultOn,
       asystoleS: band === 'neo' ? ar.asystoleS.neo : ar.asystoleS.adult,
