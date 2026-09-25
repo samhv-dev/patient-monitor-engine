@@ -4383,7 +4383,7 @@ git commit -m "test(resp): determinism hash over co2/resp/pleth/abp and 24 h no-
 **Interfaces:**
 - Produces: `WaveLaneId` gains `'co2' | 'resp'`; `WaveStyle.rate?: 125 | 62.5`, `WaveStyle.mmPerS?`; `WAVE_STYLE.co2` (yellow `#f0f030`, 0–50 mmHg, 62.5 Hz, 6.25 mm/s), `WAVE_STYLE.resp` (yellow, auto-scaled over 10 s); `formatSpo2`, `formatEtco2`, `formatRr`, `formatTemp`; `MountOptions.temp?: boolean`. Tiles appear with their lanes: SpO2 (+PI, LOW PERF / NO PULSE) with `pleth`, EtCO2 (+FiCO2, awRR) with `co2`, RR with `resp`, TEMP (T1/T2) with `temp: true`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/renderer/test/numerics-resp.test.ts`:**
 
@@ -4414,12 +4414,12 @@ describe('numerics-resp formatters (brief §6.1) and Stage 3 lanes', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/numerics-resp.test.ts`
 Expected: FAIL — cannot find `src/numerics-resp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/renderer/src/numerics-resp.ts`:**
 
@@ -4686,12 +4686,12 @@ export { transports } from '@pme/controller';
 export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run`
 Expected: typecheck clean; renderer 34 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer

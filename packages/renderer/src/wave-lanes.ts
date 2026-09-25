@@ -2,13 +2,16 @@
 // existing SweepLane at 125 Hz. SweepLane maps "mV" to y through baseline + gainMmPerMv; a pressure lane maps
 // mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm).
 // The pleth is auto-scaled (brief §4.3: "the display is auto-scaled; PI is kept as a number").
-export type WaveLaneId = 'abp' | 'pleth' | 'cvp' | 'pap';
+export type WaveLaneId = 'abp' | 'pleth' | 'cvp' | 'pap' | 'co2' | 'resp'; // Stage 3: co2, resp (62.5 Hz)
 
 export interface WaveStyle {
   label: string;
   color: string;
   /** Fixed scale in mmHg, or null for auto-scale (pleth). */
   range: readonly [number, number] | null;
+  /** Stage 3: channel sample rate (default 125) and sweep speed in mm/s (default 25). */
+  rate?: 125 | 62.5;
+  mmPerS?: number;
 }
 
 /** Philips-like defaults (brief §6.8): ABP scale 150 adult; CVP (blue, OR option); PAP yellow. */
@@ -17,6 +20,9 @@ export const WAVE_STYLE: Readonly<Record<WaveLaneId, WaveStyle>> = {
   pleth: { label: 'Pleth', color: '#00e5ff', range: null },
   cvp: { label: 'CVP', color: '#3d8bff', range: [-5, 20] },
   pap: { label: 'PAP', color: '#ffe14d', range: [0, 40] },
+  // Stage 3 (brief §6.8; BUILD-PLAN Stage 3 demo): CO2 yellow 0–50 mmHg at 6.25 mm/s; Resp yellow, auto-scaled
+  co2: { label: 'CO2', color: '#f0f030', range: [0, 50], rate: 62.5, mmPerS: 6.25 },
+  resp: { label: 'RESP', color: '#f0f030', range: null, rate: 62.5, mmPerS: 6.25 },
 };
 
 /** SweepLane baseline and gain that map [lo, hi] onto a lane of `height` CSS px. */
