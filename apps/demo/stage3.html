@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 3: respiratory, gas and temperature</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 680px; max-width: 1240px; border: 1px solid #333; }
+      .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 10px 0; max-width: 1240px; }
+      .controls label { display: inline-flex; gap: 6px; align-items: center; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; }
+      legend { color: #888; }
+      button, select, input { font: inherit; }
+      input[type='number'] { width: 4.5em; }
+      button[aria-pressed='true'] { background: #2a2; color: #000; }
+      #lag { background: #050505; border: 1px solid #333; }
+      #diag { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="controls">
+      <fieldset><legend>Ventilation</legend>
+        <select id="source"><option value="spontaneous">spontaneous</option><option value="bvm">BVM</option><option value="ventilator">ventilator</option><option value="none">none</option></select>
+        <label>RR <input id="rr" type="number" min="1" max="80" value="15" /></label>
+        <label>VT <input id="vt" type="number" min="20" max="1500" value="500" /></label>
+        <label>FiO2 <input id="fio2" type="number" min="0.21" max="1" step="0.01" value="0.21" /></label>
+        <label>PEEP <input id="peep" type="number" min="0" max="30" value="5" /></label>
+        <button id="applyVent">Apply</button>
+      </fieldset>
+      <fieldset><legend>Airway</legend>
+        <select id="airway"><option>patent</option><option>obstructed</option><option>apnoea</option><option>disconnected</option><option>oesophageal</option><option>bronchospasm</option><option>endobronchial</option></select>
+        <button id="preox">Preoxygenate 3 min</button>
+        <button id="rebreathe" aria-pressed="false">Rebreathing</button>
+        <button id="cleft" aria-pressed="false">Curare cleft</button>
+      </fieldset>
+      <fieldset><legend>Conditions</legend>
+        <button id="ga" aria-pressed="false">GA induction (temperature)</button>
+        <button id="mh" aria-pressed="false">Malignant hyperthermia</button>
+        <button id="vf">VF</button>
+      </fieldset>
+      <fieldset><legend>Sensors</legend>
+        <select id="co2"><option value="sidestream">CO2 sidestream</option><option value="mainstream">CO2 mainstream</option><option value="off">CO2 off</option></select>
+        <button id="sSpo2" aria-pressed="true">SpO2</button>
+        <button id="sTemp" aria-pressed="true">Temp</button>
+        <select id="tsite"><option>axilla</option><option>nasopharyngeal</option><option>tympanic</option><option>bladder</option><option>rectal</option></select>
+      </fieldset>
+      <fieldset><legend>Teaching</legend>
+        <button id="story">Apnoea after preoxygenation (×4)</button>
+        <label>Speed <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select></label>
+      </fieldset>
+      <button id="sound">Enable sound</button>
+    </div>
+    <canvas id="lag" width="600" height="120" title="SaO2 truth (white) vs displayed SpO2 (cyan), last 6 min"></canvas>
+    <div id="diag"></div>
+    <script type="module" src="./src/stage3.ts"></script>
+  </body>
+</html>

@@ -13,6 +13,9 @@ export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrom
 const LEAD_LABEL: Record<LeadId, string> = {
   ecgI: 'I', ecgII: 'II', ecgIII: 'III', aVR: 'aVR', aVL: 'aVL', aVF: 'aVF', V1: 'V1', V2: 'V2', V3: 'V3', V4: 'V4', V5: 'V5', V6: 'V6',
 };
+// Stage 3: impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple
+// (0.1) stays small in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
+const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 
 export interface CanvasTarget {
@@ -27,8 +30,8 @@ export class MonitorCore {
   private leads: LeadId[];
   private waves: WaveLaneId[]; // Stage 2
   private waveLive: boolean[] = []; // Stage 2: the channel had samples on the last frame
-  private plethRangeT = -1; // Stage 2: sim time of the last pleth auto-scale
-  private readonly plethScratch = new Float32Array(500); // Stage 2
+  private rangeT: number[] = []; // Stage 2/3: sim time of each auto-scaled lane's last rescale (pleth, resp)
+  private readonly plethScratch = new Float32Array(1250); // Stage 2 (10 s at 125 Hz)
   private size: Size;
   private pxPerMm: number;
   private fps: 60 | 30;
@@ -150,10 +153,13 @@ export class MonitorCore {
         return;
       }
       this.waveLive[j] = true;
-      if (w === 'pleth' && t - this.plethRangeT >= 1) {
-        this.plethRangeT = t;
-        const n = this.engine.readSamples('pleth', Math.floor((t - 4) * 125), this.plethScratch);
-        const [lo, hi] = autoRange(this.plethScratch, n);
+      const st = WAVE_STYLE[w];
+      if (st.range === null && t - (this.rangeT[j] ?? -1) >= 1) {
+        // Stage 3: every auto-scaled lane (pleth over 4 s, resp over 10 s: two or three breaths)
+        this.rangeT[j] = t;
+        const rate = st.rate ?? 125;
+        const n = this.engine.readSamples(w, Math.floor((t - (w === 'resp' ? 10 : 4)) * rate), this.plethScratch.subarray(0, Math.round((w === 'resp' ? 10 : 4) * rate)));
+        const [lo, hi] = autoRange(this.plethScratch, n, w === 'resp' ? RESP_MIN_SPAN : undefined);
         Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
       }
       lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(w, from, out));
@@ -185,7 +191,7 @@ export class MonitorCore {
       const [lo, hi] = st.range ?? [-0.5, 3];
       const lane = new SweepLane(
         {
-          x: LABEL_W, y: (this.leads.length + j) * h, width: cssW - LABEL_W, height: h, rate: 125, mmPerS: 25,
+          x: LABEL_W, y: (this.leads.length + j) * h, width: cssW - LABEL_W, height: h, rate: st.rate ?? 125, mmPerS: st.mmPerS ?? 25, // Stage 3
           pxPerMm: this.pxPerMm, ...scaleFor(lo, hi, h, this.pxPerMm), color: st.color, background: THEME.background,
           lineWidth: 1.75, eraseGapPx: 16,
         },
@@ -195,7 +201,7 @@ export class MonitorCore {
       this.lanes.push(lane);
     });
     this.waveLive = this.waves.map(() => false);
-    this.plethRangeT = -1;
+    this.rangeT = this.waves.map(() => -1);
     this.drawChrome(this.leads.map((_, i) => i));
     this.drawWaveChrome(h); // Stage 2
   }

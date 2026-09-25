@@ -8,7 +8,7 @@
 //   hold the engine snapshot AND the runner state);
 // - on poll() advances the runner at the engine's sim time and dispatches each command batch as one stage group.
 import { RHYTHM_IDS, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot } from '@pme/engine-core';
-import type { ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
+import type { ClinicalEvent, ScenarioCommand, ScenarioEvent, WireCommand, WireEvent } from '../protocol.ts';
 import type { HostTarget, ScenarioHookResult } from '../session/host-session.ts';
 import { ScenarioRunner, type RunnerEffect, type RunnerInput, type RunnerState } from './runner.ts';
 import { BUILTIN_SCENARIOS } from './builtins.ts';
@@ -186,7 +186,8 @@ export class ScenarioDriver {
         res = { accepted: true, tick: Math.max(c.atTick ?? 0, r.tick + 1), reason: `scenario only: the engine does not model ${w.type} yet` };
       }
       if (!res.accepted) return res;
-      if (w.type === 'applyEvent') this.pending.push({ kind: 'clinical', event: structuredClone(w.event) });
+      // Stage 3: engine-core's event union adds `thermal` and ventilation fico2/effort (plan decisions 6 and 8), outside the brief's verbatim ClinicalEvent.
+      if (w.type === 'applyEvent') this.pending.push({ kind: 'clinical', event: structuredClone(w.event) as ClinicalEvent });
       else if (w.type === 'attachSensor') this.pending.push({ kind: 'sensor', sensor: w.sensor, state: w.state });
       else if (w.type === 'setTarget') this.pending.push({ kind: 'values', rank: 1, values: { [w.variable]: w.value } });
       return res;

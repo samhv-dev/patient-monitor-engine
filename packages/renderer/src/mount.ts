@@ -1,10 +1,11 @@
 // mountMonitor (brief §7.6), Stage 1 minimal: two ECG lanes + HR tile, hard-coded dark theme, QRS beep.
 // Skins (setSkin), the instructor panel and transports arrive in Stages 4 and 6.
 import { playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneLogEntry } from '@pme/audio';
-import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, Measured, PatientSnapshot } from '@pme/engine-core';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts'; // Stage 2
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts'; // Stage 2
+import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
 import type { ClockAnchor, Size } from './protocol.ts';
 import { createHost, type Host, type RenderPath } from './worker-host.ts';
 
@@ -19,6 +20,8 @@ export interface MountOptions {
   waves?: WaveLaneId[];
   /** Stage 2: show the NIBP tile. */
   nibp?: boolean;
+  /** Stage 3: show the temperature tile (T1/T2). */
+  temp?: boolean;
   fps?: 60 | 30;
   pxPerMm?: number;
   /** The part this monitor plays in a session (brief §7.5; renderer request R-1, ruling R25). Default 'host'. */
@@ -78,6 +81,12 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const prTile = waves.includes('pleth') ? new PressureTile(tiles, 'PR', 'bpm', WAVE_STYLE.pleth.color) : null;
   const piTile = waves.includes('pleth') ? new PressureTile(tiles, 'PI', '%', WAVE_STYLE.pleth.color) : null;
   const nibpTile = opts.nibp ? new PressureTile(tiles, 'NBP', 'mmHg', '#ff7ad9') : null;
+  // Stage 3 tiles (brief §6.1, §6.8)
+  const spo2Tile = waves.includes('pleth') ? new PressureTile(tiles, 'SpO2', '%', WAVE_STYLE.pleth.color) : null;
+  const co2Tile = waves.includes('co2') ? new PressureTile(tiles, 'EtCO2', 'mmHg', WAVE_STYLE.co2.color) : null;
+  const rrTile = waves.includes('resp') ? new PressureTile(tiles, 'RR', 'rpm', WAVE_STYLE.resp.color) : null;
+  const tempTile = opts.temp ? new PressureTile(tiles, 'TEMP', '°C', '#e0e0e0') : null;
+  let lastPi: Measured | undefined;
   let nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   const single = (m: { value: number | null; flag: string } | undefined, digits = 0) =>
     m && m.value !== null && m.flag !== 'invalid' ? m.value.toFixed(digits) : '---';
@@ -104,6 +113,24 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         if (cvpTile && v.cvpMean) cvpTile.set(single(v.cvpMean), '');
         if (prTile && v.pr) prTile.set(single(v.pr), '');
         if (piTile && v.pi) piTile.set(single(v.pi, 1), '');
+        // Stage 3 tiles
+        if (v.pi) lastPi = v.pi;
+        if (spo2Tile && v.spo2) {
+          const f = formatSpo2(v.spo2, lastPi);
+          spo2Tile.set(f.main, f.sub, f.status);
+        }
+        if (co2Tile && (v.etco2 || v.awrr)) {
+          const f = formatEtco2(v.etco2, v.imco2, v.awrr);
+          co2Tile.set(f.main, f.sub, f.status);
+        }
+        if (rrTile && v.rr) {
+          const f = formatRr(v.rr);
+          rrTile.set(f.main, '', f.status);
+        }
+        if (tempTile && v.tempCore) {
+          const f = formatTemp(v.tempCore, v.tempSite);
+          tempTile.set(f.main, f.sub);
+        }
         if (nibpTile && v.nibpSys && v.nibpSys.value !== null) {
           nibpLast = { sys: v.nibpSys.value, dia: v.nibpDia?.value ?? 0, map: v.nibpMean?.value ?? 0, at: e.t };
           const n = formatNibp(undefined, nibpLast);

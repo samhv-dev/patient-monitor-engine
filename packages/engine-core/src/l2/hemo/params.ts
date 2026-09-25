@@ -148,9 +148,9 @@ export function breathU(t: number, phi: number): number {
  * insufflation term, t_lag ≈ 2 beats. Normalised so the breath-cycle mean is 1 (the M2 tracker then meets
  * the targets on average).
  */
-export function respFactor(t: number, rr: number, phi: number, g: number): number {
-  const lagged = breathU(t - 2 * rr, phi);
-  return (1 - g * lagged + INSUFFLATION_GAIN * breathU(t, phi)) / (1 - g / 2 + INSUFFLATION_GAIN / 2);
+export function respFactor(t: number, rr: number, phi: number, g: number, u: (t: number) => number = (x) => breathU(x, phi)): number { // Stage 3 seam: u
+  const lagged = u(t - 2 * rr);
+  return (1 - g * lagged + INSUFFLATION_GAIN * u(t)) / (1 - g / 2 + INSUFFLATION_GAIN / 2);
 }
 
 /** Rhythms with electrical activity but no mechanical output (brief §4.8: VF, asystole, PEA → k 0). Stage 5 adds the IDs. */

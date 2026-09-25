@@ -43,12 +43,16 @@ export const STATE_SCHEMA: Readonly<Record<StateVar, VarSpec>> = {
 };
 
 export const STATE_VARS = Object.keys(STATE_SCHEMA) as StateVar[];
+/** Stage 3: how far a coupled truth may sit from its target before the 'override' flag shows. */
+const overrideTol = (v: StateVar): number => (v === 'fio2' || v === 'shunt' ? 0.01 : v === 'volumeStatus' ? 0.02 : 0.5);
 export type L1Var = Exclude<StateVar, 'hr'>;
 
 export interface L1State {
   mode: 'manual';
   vars: Record<L1Var, RampState>;
   pinned: StateVar[];
+  /** Stage 3: coupled truths (coupling rules and the gas/temperature models); absent → the ramp is the truth. */
+  coupled?: Partial<Record<L1Var, number>>;
 }
 
 export function createL1State(profile?: PatientProfile): L1State {
@@ -61,8 +65,14 @@ export function createL1State(profile?: PatientProfile): L1State {
   return { mode: 'manual', vars, pinned: [] };
 }
 
-/** Truth of an L1 variable at time t (sim seconds). */
+/** Truth of an L1 variable at time t (sim seconds): the coupled truth when a coupling rule sets one (Stage 3). */
 export function l1Value(st: L1State, v: L1Var, t: number): number {
+  const c = st.coupled?.[v];
+  return c !== undefined ? c : rampValue(st.vars[v], t);
+}
+
+/** Stage 3: the instructor's target (ramp) itself, ignoring couplings. */
+export function l1Target(st: L1State, v: L1Var, t: number): number {
   return rampValue(st.vars[v], t);
 }
 
@@ -75,7 +85,7 @@ export function isRamping(r: RampState, t: number): boolean {
 export function validateTarget(variable: StateVar, value: number | undefined, ramp: Ramp | undefined): string | undefined {
   const spec = STATE_SCHEMA[variable];
   if (!spec) return `unknown state variable ${String(variable)}`;
-  if (spec.stage > 2) return `${variable} is not implemented until Stage ${spec.stage}`;
+  if (spec.stage > 3) return `${variable} is not implemented until Stage ${spec.stage}`;
   if (spec.manual === 'derived') return `${variable} is derived in MANUAL mode (coupling rule M2)`;
   if (value !== undefined && (!Number.isFinite(value) || value < spec.min || value > spec.max)) {
     return `${variable} must be ${spec.min}–${spec.max}`;
@@ -113,7 +123,8 @@ export function l1Flags(
   const out: Partial<Record<StateVar, ControlFlag>> = {};
   for (const v of STATE_VARS) {
     const r = v === 'hr' ? hrRamp : st.vars[v];
-    if (overrides.includes(v)) out[v] = 'override';
+    const c = v === 'hr' ? undefined : st.coupled?.[v]; // Stage 3: a coupled truth away from its target
+    if (overrides.includes(v) || (c !== undefined && Math.abs(c - rampValue(r, t)) > overrideTol(v))) out[v] = 'override';
     else if (st.pinned.includes(v)) out[v] = 'pinned';
     else if (isRamping(r, t)) out[v] = 'ramping';
   }

@@ -113,7 +113,7 @@ Prototyped in a scratch copy of `main` `121c3f4` + the Stage 2 branch head `52ef
 - Consumes: Stage 2 `types.ts` (`Command`, `EngineEvent`, `PatientProfile`, `SimSeconds`).
 - Produces (exported from `src/types-resp.ts`; re-exported from `@pme/engine-core` in Task 16): `VentFrame`, `AirwayState`, `VentSource`, `BreathKind`, `TempSite`, `RespClinicalEvent` (`airway`, `ventilation` with `fico2?`/`effort?`, `preoxygenate`, `condition` `mh`, `thermal`), `RespCommandBody` (`applyEvent` with a `RespClinicalEvent`, `externalDrive`), `RespEvent` (`breath`, `lungState`). `Command` and `EngineEvent` include them; `PatientProfile` gains `ageY?`, `weightKg?`, `heightCm?`, `sex?`.
 
-- [ ] **Step 1: Create the branch and worktree**
+- [x] **Step 1: Create the branch and worktree**
 
 ```bash
 git fetch origin && git worktree add ../scratch/wt-stage-3 -b stage-3-respiratory-gas origin/main
@@ -124,7 +124,7 @@ npx -y pnpm@9.15.9 install --frozen-lockfile
 
 From here on every command runs inside `../scratch/wt-stage-3` (the worktree is the repo root for this plan's relative paths).
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 **Create `packages/engine-core/test/types-resp.test.ts`:**
 
@@ -160,12 +160,12 @@ describe('Stage 3 public types', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: FAIL — `Cannot find module '../src/types-resp.ts'`.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 **Create `packages/engine-core/src/types-resp.ts`:**
 
@@ -314,12 +314,12 @@ replace with:
   }
 ```
 
-- [ ] **Step 5: Run and verify**
+- [x] **Step 5: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/types-resp.test.ts`
 Expected: typecheck clean in every package; 1 test passes.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core/src/types-resp.ts packages/engine-core/src/types.ts packages/engine-core/test/types-resp.test.ts packages/controller/src/session/controller-session.ts
@@ -338,7 +338,7 @@ git commit -m "feat(engine-core): stage 3 public types (VentFrame, breath, lungS
 - Consumes: Stage 2 `L1State`, `STATE_SCHEMA`, `l1Flags`, `rampValue`.
 - Produces: `L1State.coupled?: Partial<Record<L1Var, number>>` (a coupled truth replaces the ramp in `l1Value`); `l1Target(st, v, t): number` (the ramp only); `validateTarget` accepts every Stage ≤ 3 variable; `l1Flags` shows `override` when a coupled truth departs from its target by > 0.5 (0.01 for fio2/shunt, 0.02 for volumeStatus).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l1/state-coupled.test.ts`:**
 
@@ -369,12 +369,12 @@ describe('l1/state: Stage 3 coupled truths', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1/state-coupled.test.ts`
 Expected: FAIL — `l1Target` is not exported; `spo2 is not implemented until Stage 3`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/l1/state.ts`** (1/5) — find:
 
@@ -531,12 +531,12 @@ replace with:
     expect(of('ack')[1]!.reason).toMatch(/MODELED/);
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l1 test/engine/engine-commands.test.ts && npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run`
 Expected: all pass (controller 97).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l1/state.ts packages/engine-core/test/l1 packages/engine-core/test/engine/engine-commands.test.ts packages/controller/test/session/host-session.test.ts
@@ -554,7 +554,7 @@ git commit -m "feat(l1): coupled truths, l1Target, stage 3 state variables accep
 - Consumes: `PatientProfile` (Task 1).
 - Produces: constants `GAS_DT_S` 0.1, `PB_MMHG`, `PH2O_MMHG`, `RQ`, `HB_G_DL`, `K_CO2` 0.863, `PA_ET_GRADIENT` 3, `CMH2O_TO_MMHG`, `CO2_CF_PER_VCO2`, `CO2_CS_PER_VCO2`, `CO2_KFS_PER_VCO2`, `LOW_FLOW_EXP` 0.6, `LOW_FLOW_TAU_S` 5, `ANAT_DEAD_SPACE_ML_PER_KG` 2.2, `MASS_FLOW_DEFICIT_ML_MIN` 20, `BLOOD_VENOUS_FRACTION`, `CO_REF_LPM` 5.25, `CI_LPM_PER_KG` 0.075, `GA_METABOLIC` 0.85, `FRC_AWAKE_ML_KG` 30; `apparatusDeadSpaceMl(weightKg)`, `ageBand(ageY)`, `interface GasPatient { weightKg, ibwKg, effKg, frcMl, frcGaMl, vo2, vco2, bloodL, deadSpaceMl, cf, cs, kfs, complianceMl, resistance }`, `gasPatient(profile)`, `tempFactor(tCore)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/params.test.ts`:**
 
@@ -589,12 +589,12 @@ describe('gas patient scaling', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/params.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/params.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/params.ts`:**
 
@@ -718,9 +718,9 @@ export function tempFactor(tCore: number): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/params.ts packages/engine-core/test/l2/gas/params.test.ts
@@ -738,7 +738,7 @@ git commit -m "feat(gas): gas-exchange constants and patient scaling (IBW, FRC a
 - Consumes: Task 3 constants.
 - Produces: `odc(po2, tempC?, pco2?)`, `content(po2, tempC?, pco2?)` (mL/L), `po2ForContent(c, …)`, `interface O2Inputs { vaLpm, fio2, massFlowFio2: number | null, qLpm, vo2, shunt, paco2, tempC, frcMl, bloodL }`, `interface O2State { fa, cv, sa, pao2 }`, `o2Steady(x, shunt): O2State | null`, `solveShunt(x, targetSa): number`, `createO2State(x)`, `stepO2(st, x, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/o2.test.ts`:**
 
@@ -779,12 +779,12 @@ describe('O2 model', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/o2.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/o2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/o2.ts`:**
 
@@ -907,9 +907,9 @@ export function stepO2(st: O2State, x: O2Inputs, dtS: number): void {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/o2.ts packages/engine-core/test/l2/gas/o2.test.ts
@@ -927,7 +927,7 @@ git commit -m "feat(gas): O2 store, Severinghaus ODC with virtual-PO2 shift, shu
 - Consumes: Task 3 constants and `gasPatient`.
 - Produces: `interface Co2State { pf, ps, flow, vdExtraMl }`, `interface Co2Inputs { vaLpm, vco2, coRatio, cf, cs, kfs, extraGradient }`, `lowFlowFactor(coRatio)`, `createCo2State(paco2)`, `stepCo2(st, x, dtS)`, `etco2True(st, extraGradient)`, `vaForPaco2(vco2, paco2)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 4 on the model; decision 3 explains the +33 % step)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 4 on the model; decision 3 explains the +33 % step)
 
 **Create `packages/engine-core/test/l2/gas/co2.test.ts`:**
 
@@ -997,12 +997,12 @@ describe('two-compartment CO2 kinetics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/co2.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/co2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/co2.ts`:**
 
@@ -1065,9 +1065,9 @@ export function vaForPaco2(vco2: number, paco2: number): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 4 tests pass (prototype: apnoea +12.0 then 3.34 mmHg/min; +33 % step 35.7 % at 2 min, 90 % at 24.4 min).
+- [x] **Step 4: Run and verify** — same command; expected: 4 tests pass (prototype: apnoea +12.0 then 3.34 mmHg/min; +33 % step 35.7 % at 2 min, 90 % at 24.4 min).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/co2.ts packages/engine-core/test/l2/gas/co2.test.ts
@@ -1084,7 +1084,7 @@ git commit -m "feat(gas): two-compartment CO2 kinetics fitted to the apnoea data
 **Interfaces:**
 - Produces: `DELAY_FINGER_S` 15, `DELAY_EAR_S` 5, `DELAY_MAX_S` 60, `interface DelayLine { hist, k, delay }`, `createDelay(sa0)`, `siteDelay(site, coRatio, pi)`, `delayStep(d, sa, target, dtS): number` (site SaO2).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/delay.test.ts`:**
 
@@ -1110,12 +1110,12 @@ describe('circulatory delay', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/delay.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/delay.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/gas/delay.ts`:**
 
@@ -1160,9 +1160,9 @@ export function delayStep(d: DelayLine, sa: number, target: number, dtS: number)
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/delay.ts packages/engine-core/test/l2/gas/delay.test.ts
@@ -1180,7 +1180,7 @@ git commit -m "feat(gas): circulatory dead time to the SpO2 site, scaled by CO a
 - Consumes: `TempSite` (Task 1).
 - Produces: constants (`GA_KCP`, `VASOCONSTRICT_C`, `MH_MAX_FACTOR` 5, `MH_VCO2_FACTOR` 3, `MH_ONSET_S`, `SITES`, `SENSOR_TAU_S` …), `interface TempState { tc, tp, ta, capCore, capPer, k0, h, m0, anaesthesia, warming, mh, sites }`, `createTemp(tCore, effKg)`, `mhFactor(st, t, max?)`, `stepTemp(st, t, dtS)`, `setCoreTarget(st, tCore)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 7)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 7)
 
 **Create `packages/engine-core/test/l2/temp/temp.test.ts`:**
 
@@ -1268,12 +1268,12 @@ describe('two-compartment heat model', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/temp/temp.test.ts`
 Expected: FAIL — cannot find `src/l2/temp/temp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/temp/temp.ts`:**
 
@@ -1380,9 +1380,9 @@ export function setCoreTarget(st: TempState, tCore: number): void {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 6 tests pass (prototype: GA −1.28 °C at 60 min, −0.39 °C in hour 2, plateau 34.65 °C; rectal τ 40 min).
+- [x] **Step 4: Run and verify** — same command; expected: 6 tests pass (prototype: GA −1.28 °C at 60 min, −0.39 °C in hour 2, plateau 34.65 °C; rectal τ 40 min).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/temp/temp.ts packages/engine-core/test/l2/temp/temp.test.ts
@@ -1400,7 +1400,7 @@ git commit -m "feat(temp): two-compartment heat model (redistribution, linear ph
 - Consumes: `normal`, `Sfc32State` (rng), Task 1 types.
 - Produces: constants `INSP_FLOW_LPS` 0.05, `DRIVE_TIMEOUT_S` 5, `U_REF_CMH2O` 10, `NEVER` 1e12, `GASTRIC_BREATHS` 5, `EXP_TAU_S`; types `Sampled`, `Shape`, `interface Cycle { seq, t0, ti, te, vt, kind, mech, exch, sampled, gastric, effort, shape, severity, cleft, fio2, fico2, cutAt, emitted }`, `ExtDrive`, `DriverState`, `DriverCtx { rr, vt, fio2, etco2, complianceMl }`; functions `createDriver(rng)`, `cycleAt(d, t)`, `lastCycleBefore(d, t)`, `preoxActive(d, t)`, `planCycles(d, ctx, until)`, `pruneCycles(d, t)`, `replan(d, t, cut, restartNow): number[]`, `onVentFrame(d, frame, t)`, `checkDrive(d, t)`, `cycleVolume(c, t)`, `chestVolume(d, t)`, `breathSignal(d, t, complianceMl)` (the u(t) seam), `meanAirwayPressure(d, t, complianceMl)`, `alveolarVentilation(d, t, deadSpaceMl)`, `nominalRate(d, ctx)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/resp/driver.test.ts`:**
 
@@ -1485,12 +1485,12 @@ describe('respiratory driver', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/driver.test.ts`
 Expected: FAIL — cannot find `src/l2/resp/driver.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/resp/driver.ts`:**
 
@@ -1859,9 +1859,9 @@ export function nominalRate(d: DriverState, ctx: DriverCtx): { rr: number; vt: n
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 4 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 4 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/resp/driver.ts packages/engine-core/test/l2/resp/driver.test.ts
@@ -1879,7 +1879,7 @@ git commit -m "feat(resp): respiratory driver — sources, airway states, extern
 - Consumes: Task 8 `cycleAt`, `lastCycleBefore`, `Cycle`, `DriverState`.
 - Produces: `CO2_RATE` 62.5, `SHAPES`, `SAMPLING`, `interface CapnoCtx { etco2, beats, cpr: { active, rate, quality, anchor } }`, `airwayCo2(d, t, x)`, `interface SamplerState { mode, neonatal, y }`, `createSampler(mode?, neonatal?)`, `sampleCo2(s, t, airway)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 2: delay and rise time)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 2: delay and rise time)
 
 **Create `packages/engine-core/test/l2/co2/capno.test.ts`:**
 
@@ -1922,12 +1922,12 @@ describe('capnograph sampler', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/co2/capno.test.ts`
 Expected: FAIL — cannot find `src/l2/co2/capno.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/co2/capno.ts`:**
 
@@ -2059,9 +2059,9 @@ export function sampleCo2(s: SamplerState, t: number, airway: (t: number) => num
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass. The shapes (α, patterns) are pinned at engine level in Task 17.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass. The shapes (α, patterns) are pinned at engine level in Task 17.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/co2/capno.ts packages/engine-core/test/l2/co2/capno.test.ts
@@ -2078,7 +2078,7 @@ git commit -m "feat(co2): phase-built capnogram with the pattern library and a s
 **Interfaces:**
 - Produces: `SPO2_LAG_TAU_S` 3, `SPO2_PROFILE { averagingS: 8, updateS: 1 }`, `PULSE_HOLD_S` 4, `PULSE_LOST_S` 10, `LOW_PERF_PI` 0.3, `interface Spo2Inputs { siteSa, probe, lastFootT, pi, cuffOnLimb, cpr }`, `interface Spo2State { lag, ring, shown, flag, nextUpdate, validSince, bias }`, `createSpo2(sa0, bias)`, `deviceBias(sat, bias)`, `stepSpo2(st, x, t)`, `spo2Measured(st, t): Measured`, `spo2PitchHz(spo2, semitonePerPct?)`.
 
-- [ ] **Step 1: Write the failing test** (BUILD-PLAN acceptance 6c and 9)
+- [x] **Step 1: Write the failing test** (BUILD-PLAN acceptance 6c and 9)
 
 **Create `packages/engine-core/test/l3/spo2/spo2.test.ts`:**
 
@@ -2127,12 +2127,12 @@ describe('SpO2 device chain', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/spo2/spo2.test.ts`
 Expected: FAIL — cannot find `src/l3/spo2/spo2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/spo2/spo2.ts`:**
 
@@ -2226,9 +2226,9 @@ export function spo2PitchHz(spo2: number | null, semitonePerPct = 0.1): number {
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/spo2/spo2.ts packages/engine-core/test/l3/spo2/spo2.test.ts
@@ -2245,7 +2245,7 @@ git commit -m "feat(l3): SpO2 device chain (lag, bias, averaging, update, pulse 
 **Interfaces:**
 - Produces: `GAS_APNOEA_S` 20, `interface Co2Num`, `createCo2Num()`, `co2NumStep(st, t, x, dt): 'breath' | 'apnoea' | 'resumed' | null`, `co2Numerics(st, t, shownNow): { etco2, imco2, awrr }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts`:**
 
@@ -2276,12 +2276,12 @@ describe('CO2 numerics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/co2-numerics`
 Expected: FAIL — cannot find the module.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/co2-numerics/co2-numerics.ts`:**
 
@@ -2364,9 +2364,9 @@ export function co2Numerics(st: Co2Num, t: number, shownNow: number): { etco2: M
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 1 test passes.
+- [x] **Step 4: Run and verify** — same command; expected: 1 test passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/co2-numerics packages/engine-core/test/l3/co2-numerics
@@ -2383,7 +2383,7 @@ git commit -m "feat(l3): capnogram breath detection, EtCO2/FiCO2/awRR and the ga
 **Interfaces:**
 - Produces: `RIPPLE_FRACTION` 0.1, `IMP_APNOEA_S` 20, `interface ImpNum`, `createImpNum()`, `impedanceSample(volMl, t, beats, ripple?)`, `impStep(st, t, x, dt): 'apnoea' | 'resumed' | null`, `impRr(st, t): Measured`, `plethRr(beats: {t, amp}[], t, windowS?): number | null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l3/resp/impedance.test.ts`:**
 
@@ -2434,12 +2434,12 @@ describe('impedance respiration', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/resp`
 Expected: FAIL — cannot find the module.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/resp/impedance.ts`:**
 
@@ -2533,9 +2533,9 @@ export function plethRr(beats: ReadonlyArray<{ t: number; amp: number }>, t: num
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/resp packages/engine-core/test/l3/resp
@@ -2553,7 +2553,7 @@ git commit -m "feat(l3): impedance respiration with cardiogenic ripple, its RR d
 - Consumes: Task 2 `l1Target`, `L1State.coupled`; Stage 2 `HemoState` (read only: `cpr`, `lastEjT`, `lastRR`, `siteBeats`, `sys.g`), `CPR_SV_FRAC`, `SV_REF_ML`; Task 7 `SENSOR_TAU_S`.
 - Produces: `createTempNum(t0)`, `tempNumStep(st, sites, site, dtS)`, `tempMeasured(v, on, t)`; `RAP_FRACTION` 0.4, `PAW_REF_CMH2O` 10, `venousGradient(vs)`, `cardiacOutput(hs, t)` (L/min), `applyPawCoupling(l1, meanPawCmH2O, t): number` (the output factor f).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/gas/coupling.test.ts`:**
 
@@ -2592,12 +2592,12 @@ describe('coupling', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/coupling.test.ts`
 Expected: FAIL — cannot find `src/l2/gas/coupling.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l3/temp/temp-numerics.ts`:**
 
@@ -2688,9 +2688,9 @@ export function applyPawCoupling(l1: L1State, meanPawCmH2O: number, t: number): 
 }
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 3 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 3 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/temp packages/engine-core/src/l2/gas/coupling.ts packages/engine-core/test/l2/gas/coupling.test.ts
@@ -2708,7 +2708,7 @@ git commit -m "feat(gas): CO read from the haemodynamics, mean-airway-pressure c
 **Interfaces:**
 - Produces: `respFactor(t, rr, phi, g, u?)`, `cvpAt(st, t, pv, phi, thor, u?)`, `HemoCtx.u?: (t: number) => number`. Absent `u` → Stage 2's `breathU(t, phi)` exactly (its tests and hashes are unchanged by this task).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/hemo/seam-stage3.test.ts`:**
 
@@ -2730,12 +2730,12 @@ describe('Stage 3 breath-signal seam', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/seam-stage3.test.ts`
 Expected: FAIL — the 5th argument is ignored, so `respFactor(…, () => 0.5)` is not 1.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/l2/hemo/params.ts`** (1/1) — find:
 
@@ -2822,12 +2822,12 @@ replace with:
         }
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo test/engine/hemo-acceptance.test.ts`
 Expected: all pass (nothing passes `u` yet, so Stage 2 is byte-identical).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo packages/engine-core/test/l2/hemo/seam-stage3.test.ts
@@ -2845,7 +2845,7 @@ git commit -m "feat(hemo): optional breath-signal seam u(t) for the Stage 3 resp
 - Consumes: everything from Tasks 2–14; Stage 2 `HemoState`, `RhythmView`, `piNumeric`.
 - Produces: `RESP_CHANNELS = ['co2', 'resp']`, `type RespChannel`, `RESP_RATE` 62.5, `interface RespCtx { l1, hemo, rhythm, hr }`, `interface RespState` (plain data; `num.spo2.shown` is the displayed SpO2), `createRespState(profile, l1, seed)`, `respBreathU(rs, t)`, `advanceResp(rs, ctx, mEnd, write)`, `validateRespCommand(cmd): string | undefined | null`, `applyRespCommand(rs, l1, cmd, t): boolean`. Events pushed to `rs.out`: `breath`, `lungState`, `measurement` (spo2, etco2, imco2, awrr, rr, tempCore, tempSite), `alarm` (`apnoea-co2`, `apnoea-resp`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/resp/pipeline.test.ts`:**
 
@@ -2891,12 +2891,12 @@ describe('respiratory pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/pipeline.test.ts`
 Expected: FAIL — cannot find `src/l2/resp/pipeline.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/resp/pipeline.ts`:**
 
@@ -3359,9 +3359,9 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
 
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/l2/resp/pipeline.test.ts
@@ -3380,7 +3380,7 @@ git commit -m "feat(resp): per-tick respiratory pipeline — 10 Hz gas, 1 Hz hea
 - Consumes: Task 15.
 - Produces: `PipelineState.resp`; `advance()` runs `advanceResp` before `advanceHemo` and passes `u: (t) => respBreathU(resp, t)`; `co2`/`resp` 62.5 Hz buffers created on first write, `co2` dropped when the sensor is off; `validateRespCommand` runs BEFORE Stage 2's validation (attachSensor co2/temp); QRS tone `freqHz = spo2PitchHz(displayed SpO2)`. `@pme/engine-core` re-exports `types-resp.ts` and `spo2PitchHz`. Test helpers: `cmd`, `ev3`, `rig3`, `read62`, `stateSeries`, `numSeries`, `firstBelow`, `mean`, `capnoAngles`, `ADULT`, `vent`, `beatsIn`, `breaths`, `hemoOf`, `desatTime`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/helpers/resp.ts`:**
 
@@ -3563,12 +3563,12 @@ describe('engine + Stage 3 pipeline wiring', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-engine.test.ts`
 Expected: FAIL — `latestSampleIndex('co2')` is −1 and `applyEvent airway` is rejected.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/engine.ts`** (1/10) — find:
 
@@ -3804,12 +3804,12 @@ replace with:
       e.dispatch(cmd({ type: 'setTarget', variable: 'volumeStatus', value: volumeStatusForGHyp(g) }));
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine`
 Expected: typecheck clean; every engine test passes, including all of Stage 2's (prototype: PPV 6.9 % / 22.5 % through the driver) — the 24 h tests take ≈ 70 s each.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/index.ts packages/engine-core/test/helpers/resp.ts packages/engine-core/test/engine/resp-engine.test.ts packages/engine-core/test/engine/hemo-engine.test.ts packages/engine-core/test/engine/hemo-acceptance.test.ts
@@ -3825,7 +3825,7 @@ git commit -m "feat(engine-core): wire the respiratory pipeline before the haemo
 
 **Interfaces:** consumes the Task 16 helpers (`capnoAngles` measures α on the 25 mmHg/s axis: phase II slope between the 25 % and 75 % crossings of the plateau-end value, phase III by regression from the 90 % crossing + 0.2 s).
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 1–2; decisions 5, 6, 16)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 1–2; decisions 5, 6, 16)
 
 **Create `packages/engine-core/test/engine/resp-capnogram.test.ts`:**
 
@@ -3913,12 +3913,12 @@ describe('Stage 3 acceptance: capnogram', { timeout: 30_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-capnogram.test.ts`
 Expected: 4 tests pass (the behaviour was built in Tasks 8–16; this task pins it). Prototype: α 105.6° normal, 157° bronchospasm; lag 2.33–2.35 s. If one fails, fix the module the failure points to (`capno.ts` shape constants, `driver.ts` airway rules) — never widen a band.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-capnogram.test.ts
@@ -3932,7 +3932,7 @@ git commit -m "test(co2): stage 3 acceptance 1–2 (α angle, phase III, sidestr
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-airway.test.ts`
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 3; brief M4)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 3; brief M4)
 
 **Create `packages/engine-core/test/engine/resp-airway.test.ts`:**
 
@@ -3979,12 +3979,12 @@ describe('Stage 3 acceptance: airway loss, apnoea and CO2 kinetics', { timeout: 
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-airway.test.ts`
 Expected: 2 tests pass (prototype: no breath event after the disconnection, trace < 1 mmHg from +5 s, apnoea alarm 20.0 s after the last displayed breath; first breath after 60 s +9.3 mmHg).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-airway.test.ts
@@ -3998,7 +3998,7 @@ git commit -m "test(resp): stage 3 acceptance 3–4 (airway loss, apnoea at 20 s
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-oxygen.test.ts`
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 5–6; R8; brief §4.3 arrest and cuff; decision 4)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 5–6; R8; brief §4.3 arrest and cuff; decision 4)
 
 **Create `packages/engine-core/test/engine/resp-oxygen.test.ts`:**
 
@@ -4100,12 +4100,12 @@ describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-oxygen.test.ts`
 Expected: 6 tests pass. Prototype: 501 s preoxygenated adult, 41 s room air, 158 s child, 170 s obese; R8: displayed SpO2 lowest 20 s after the rescue; SpO2 first moves 18 s after a SaO2 step; VF invalid at 11 s.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-oxygen.test.ts
@@ -4119,7 +4119,7 @@ git commit -m "test(gas): stage 3 acceptance 5–6 (Benumof/Patel desaturation, 
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-coupling.test.ts`
 
-- [ ] **Step 1: Write the test** (brief M6, §4.7, §7.6; R27; BUILD-PLAN acceptance 8–9; decisions 1, 7, 13, 14, 15)
+- [x] **Step 1: Write the test** (brief M6, §4.7, §7.6; R27; BUILD-PLAN acceptance 8–9; decisions 1, 7, 13, 14, 15)
 
 **Create `packages/engine-core/test/engine/resp-coupling.test.ts`:**
 
@@ -4283,12 +4283,12 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-coupling.test.ts`
 Expected: 7 tests pass; the ventilator-link test takes ≈ 15 s (39 000 frames, each a dispatch plus a tick with its look-ahead).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-coupling.test.ts
@@ -4302,7 +4302,7 @@ git commit -m "test(resp): PPV through the driver, RR three ways, VentFrame link
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-longrun.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 **Create `packages/engine-core/test/engine/resp-longrun.test.ts`:**
 
@@ -4360,12 +4360,12 @@ describe('Stage 3 determinism and drift', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-longrun.test.ts`
 Expected: 2 tests pass; the 24 h test takes ≈ 70 s.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-longrun.test.ts
@@ -4383,7 +4383,7 @@ git commit -m "test(resp): determinism hash over co2/resp/pleth/abp and 24 h no-
 **Interfaces:**
 - Produces: `WaveLaneId` gains `'co2' | 'resp'`; `WaveStyle.rate?: 125 | 62.5`, `WaveStyle.mmPerS?`; `WAVE_STYLE.co2` (yellow `#f0f030`, 0–50 mmHg, 62.5 Hz, 6.25 mm/s), `WAVE_STYLE.resp` (yellow, auto-scaled over 10 s); `formatSpo2`, `formatEtco2`, `formatRr`, `formatTemp`; `MountOptions.temp?: boolean`. Tiles appear with their lanes: SpO2 (+PI, LOW PERF / NO PULSE) with `pleth`, EtCO2 (+FiCO2, awRR) with `co2`, RR with `resp`, TEMP (T1/T2) with `temp: true`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/renderer/test/numerics-resp.test.ts`:**
 
@@ -4414,12 +4414,12 @@ describe('numerics-resp formatters (brief §6.1) and Stage 3 lanes', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/numerics-resp.test.ts`
 Expected: FAIL — cannot find `src/numerics-resp.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/renderer/src/numerics-resp.ts`:**
 
@@ -4686,12 +4686,12 @@ export { transports } from '@pme/controller';
 export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run`
 Expected: typecheck clean; renderer 34 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer
@@ -4708,7 +4708,7 @@ git commit -m "feat(renderer): CO2 and RESP lanes at 62.5 Hz and 6.25 mm/s, SpO2
 
 **Interfaces:** consumes `mountMonitor` with `waves: ['abp', 'pleth', 'co2', 'resp']`, `temp: true`. The page: ECG II + ABP + pleth + CO2 + RESP lanes; HR, ABP, PR, PI, SpO2, EtCO2, RR, TEMP tiles; controls — ventilation source (spontaneous/BVM/ventilator/none) with RR, VT, FiO2, PEEP; airway state (patent/obstructed/apnoea/disconnected/oesophageal/bronchospasm/endobronchial); Preoxygenate 3 min; Rebreathing; Curare cleft; GA induction (temperature); Malignant hyperthermia; VF; sensors (CO2 sidestream/mainstream/off, SpO2, Temp + T2 site); speed ×1/×2/×4; the scripted "Apnoea after preoxygenation (×4)" (GA, preoxygenate 3 min, apnoea, BVM FiO2 1 rescue when SaO2 truth ≤ 85 %) and a truth-vs-displayed SpO2 plot of the last 6 min.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 **Create `apps/demo/stage3.html`:**
 
@@ -5000,7 +5000,7 @@ replace with:
       <li><a href="./stage4a-skins.html">Stage 4a: skin preview and alarm sound profiles</a></li>
 ```
 
-- [ ] **Step 2: Build and look at it**
+- [x] **Step 2: Build and look at it**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build
@@ -5012,7 +5012,7 @@ pkill -f "vite preview --port 4817"
 
 Expected: the script prints `render path: worker-raf   story: rescue` (or `idle` if the story has not reached the rescue) and `page errors: []`; seven PNGs in `docs/gates/stage-3/`. Open each: `spontaneous` (rounded capnogram, impedance with small cardiogenic ripple), `ventilated` (square capnogram at 12/min), `bronchospasm` (shark fin), `curare-cleft` (a notch in the plateau at RR 8), `oesophageal` (fading bumps then flat), `r8-still-falling` (the white SaO2 truth already rising while the cyan displayed SpO2 is still going down), `r8-recovered`. The prototype ran this page headless with no page errors (only a favicon 404 in the console).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/stage3.html apps/demo/src/stage3.ts apps/demo/scripts/stage3-shots.mjs apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-3/*.png
@@ -5026,7 +5026,7 @@ git commit -m "feat(demo): stage3 monitor — CO2/RESP lanes, gas/temperature ti
 **Files:**
 - Create: `docs/gates/stage-3.md`
 
-- [ ] **Step 1: Run everything from a clean install**
+- [x] **Step 1: Run everything from a clean install**
 
 ```bash
 rm -rf node_modules packages/*/node_modules apps/*/node_modules && npx -y pnpm@9.15.9 install --frozen-lockfile
@@ -5036,7 +5036,7 @@ PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
 
 Expected: exit 0; engine-core ≈ 369 tests (the exact count after PR #4's reconciliation may differ), renderer 34, controller 97, audio 58, skins 155, validation 16; `check-notices: OK`; e2e as on `main`.
 
-- [ ] **Step 2: Measure the gate numbers**
+- [x] **Step 2: Measure the gate numbers**
 
 Write this scratch probe to `packages/engine-core/test/zz-gate3.test.ts` (it is NOT committed), run it with `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/zz-gate3.test.ts`, copy the printed lines, then delete the file:
 
@@ -5181,11 +5181,11 @@ GA temperature: −1.28 °C at 60 min, −0.39 °C in hour 2, hour-8 plateau 34.
 rectal probe τ 40.0 min
 ```
 
-- [ ] **Step 3: Write `docs/gates/stage-3.md`**
+- [x] **Step 3: Write `docs/gates/stage-3.md`**
 
 Structure it like `docs/gates/stage-2.md`: the gate question ("Does the airway-loss sequence feel right to an anaesthetist — EtCO2 gone at once, SpO2 falling late and still falling after the airway is back — and do the capnogram patterns read correctly at a glance?"), a table with one row per BUILD-PLAN Stage 3 acceptance item (1–9) plus the extra checks of this plan (PPV through the driver, RR three ways, ventilator link and PEEP, lungState, determinism, 24 h), each with the MEASURED value from Step 2 next to the prototype value from this plan's "Prototype results"; then a "Plan decisions needing a ruling" list: decision 3 (CO2 constants; the halving acceptance is unreachable), decision 4 (room-air desaturation ≈ 40 s vs the brief's 1–2 min), decision 5 (RR 60 sidestream under-read ≈ 1 mmHg vs > 3), decision 7 (MANUAL PEEP coupling above 10 cmH2O), decision 2 (MANUAL gas targets as calibrations), and the two partition exceptions; then the screenshots list with one line on what each shows.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/gates/stage-3.md
@@ -5196,7 +5196,7 @@ git commit -m "docs(gates): stage 3 gate evidence" -m "Co-Authored-By: Claude Op
 
 ### Task 25: Pull request
 
-- [ ] **Step 1: Check the partition**
+- [x] **Step 1: Check the partition**
 
 ```bash
 git diff --stat origin/main...HEAD -- packages/engine-core/src/l2/ecg packages/engine-core/src/l3/nibp packages/skins packages/audio   # must print nothing
@@ -5204,7 +5204,7 @@ git diff origin/main...HEAD -- packages/engine-core/src/l2/hemo | grep '^[+-][^+
 git diff --stat origin/main...HEAD -- packages/controller                                                                  # 2 files (exception (b)/(c))
 ```
 
-- [ ] **Step 2: Push and open the PR**
+- [x] **Step 2: Push and open the PR**
 
 ```bash
 git push -u origin stage-3-respiratory-gas

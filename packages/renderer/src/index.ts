@@ -12,3 +12,4 @@ export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from
 export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts'; // Stage 2
 /** The five transport adapters of @pme/controller (brief §7.5; renderer request R-2, ruling R25). */
 export { transports } from '@pme/controller';
+export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3

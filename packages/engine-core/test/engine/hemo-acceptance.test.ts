@@ -219,6 +219,8 @@ describe('Stage 2 acceptance (engine level)', () => {
   it('10. PPV: g_hyp 0.05 → 5–10%; g_hyp 0.2 → 15–30%; SPV grows with it', () => {
     const ppvOf = (g: number) => {
       const { e, ev } = rig({ seed: 11, hrv: false });
+      // Stage 3: PPV is an index of the MECHANICALLY ventilated patient; the respiratory driver now supplies the breath
+      e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 15, vtMl: 500, peep: 5 } }));
       e.dispatch(cmd({ type: 'setTarget', variable: 'volumeStatus', value: volumeStatusForGHyp(g) }));
       e.advanceTo(70);
       const abp = read(e, 'abp', 0, 70);
