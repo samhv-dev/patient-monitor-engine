@@ -4277,7 +4277,7 @@ git commit -m "feat(engine-core): capture12 — 10 s of 12 leads through the dia
 - Consumes: engine events and commands.
 - Produces (exported from `@pme/engine-core`): `class TrendStore {bytes, latestS, oldestS, record(e), series(id, fromS, toS), table(ids, stepS, fromS, toS)}`, `TREND_NUMERICS`, `TREND_SLOTS = 28 800`; `class EventLog {entries, command(cmd, t), event(e), count(kind), toJSON(), toCSV()}`, `LogEntry`, `LogKind`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/trends/trends.test.ts`:
 
@@ -4347,12 +4347,12 @@ describe('event log', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/trends/trends.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/trends/event-log.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -4534,7 +4534,7 @@ export class TrendStore {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/trends/trends.test.ts; cd -
@@ -4542,7 +4542,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/l3/trends/event-log.ts packages/engine-core/src/l3/trends/trend-store.ts packages/engine-core/test/l3/trends/trends.test.ts

@@ -11,3 +11,5 @@ export { dominantHz, rms, welch } from './util/dsp.ts';
 export * from './types-hemo.ts'; // Stage 2
 export * from './types-device.ts'; // Stage 4b
 export { capture12, LAYOUT_3X4, CAPTURE_S, type Capture12 } from './l3/capture12/capture.ts'; // Stage 4b
+export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store.ts'; // Stage 4b
+export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'; // Stage 4b
