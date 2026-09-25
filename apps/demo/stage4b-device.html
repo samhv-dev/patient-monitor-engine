@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 4b: device layer</title>
+    <style>
+      body { background: #111; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 560px; max-width: 1280px; border: 1px solid #333; }
+      .controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 10px 0; max-width: 1280px; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      legend { color: #888; }
+      button, select, input { font: inherit; }
+      button[aria-pressed='true'] { background: #2a2; color: #000; }
+      #tabs button[aria-selected='true'] { background: #357; color: #fff; }
+      #trendCanvas { width: 1200px; height: 300px; background: #000; display: block; }
+      #log { max-height: 260px; overflow: auto; font: 12px ui-monospace, monospace; white-space: pre; background: #000; padding: 6px; }
+      dialog { background: #fff; color: #000; max-width: 96vw; }
+      #ecg12 { width: 1080px; height: 540px; display: block; }
+      @media print { body > *:not(dialog) { display: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="controls">
+      <fieldset><legend>Skin</legend>
+        <select id="skin">
+          <option value="saadat-like">Saadat-like (factory)</option><option value="iran-icu-as-found">Saadat-like: iran-icu-as-found</option>
+          <option value="philips-like">Philips-like OR</option><option value="zoll-like">ZOLL-like defib</option>
+          <option value="lifepak-like">LIFEPAK-like defib</option><option value="mindray-like">Mindray-like</option><option value="ge-like">GE-like</option>
+        </select>
+        <select id="theme"><option value="">dark</option><option value="projector-light">projector-light</option><option value="ecg-grid">ecg-grid</option></select>
+        <select id="page"><option value="">default page</option><option value="P10">P10 PUMP (saadat-like)</option></select>
+        <select id="age"><option value="adult">adult</option><option value="paed">paediatric</option><option value="neo">neonatal</option></select>
+        <button id="sound">Enable sound</button>
+      </fieldset>
+      <fieldset><legend>Patient</legend>
+        <select id="rhythm"></select>
+        <label>HR <input id="hr" type="range" min="20" max="220" value="75" /> <span id="hrVal">75</span></label>
+        <button id="leads" aria-pressed="false">ECG leads off</button>
+        <button id="probe" aria-pressed="false">SpO2 probe off</button>
+        <button id="nibp">NIBP start</button>
+      </fieldset>
+      <fieldset><legend>Alarms</legend>
+        <button id="silence">Silence</button><button id="pause">Pause</button><button id="ack">Ack</button>
+        <button id="allOn">All alarms ON</button><button id="arr" aria-pressed="false">Arrhythmia analysis</button>
+      </fieldset>
+      <fieldset><legend>Defibrillator</legend>
+        <label>J <input id="energy" type="number" min="1" max="360" value="200" style="width:4.5em" /></label>
+        <button id="charge">Charge</button><button id="shock">Shock</button><button id="sync" aria-pressed="false">Sync</button><button id="disarm">Disarm</button>
+        <select id="preselect"><option value="">outcome: table</option><option value="sinus">convert → sinus</option><option value="asystole">→ asystole</option><option value="unchanged">no change</option></select>
+      </fieldset>
+      <fieldset><legend>Pacer</legend>
+        <select id="pmode"><option>off</option><option>demand</option><option>fixed</option></select>
+        <label>ppm <input id="prate" type="number" min="30" max="180" value="70" style="width:4em" /></label>
+        <label>mA <input id="pma" type="number" min="0" max="140" value="0" style="width:4em" /></label>
+        <label>threshold <input id="pthr" type="number" min="10" max="200" value="70" style="width:4em" /></label>
+        <select id="pfault"><option value="none">no fault</option><option value="failureToSense">failure to sense</option><option value="failureToCapture">failure to capture</option></select>
+        <button id="ppause" aria-pressed="false">Pause</button><button id="papply">Apply</button>
+      </fieldset>
+      <fieldset><legend>Records</legend><button id="capture">12-lead</button></fieldset>
+    </div>
+    <div id="tabs" class="controls"><button data-tab="trends" aria-selected="true">Trends</button><button data-tab="log" aria-selected="false">Event log</button>
+      <select id="span"><option value="600">10 min</option><option value="3600">1 h</option><option value="28800">8 h</option></select>
+      <button id="csv">Export CSV</button><button id="json">Export JSON</button></div>
+    <div data-pane="trends"><canvas id="trendCanvas" width="1200" height="300"></canvas></div>
+    <div data-pane="log" hidden><div id="log"></div></div>
+    <dialog id="dlg"><canvas id="ecg12" width="1080" height="540"></canvas>
+      <p><button id="png">PNG</button> <button id="cjson">JSON</button> <button onclick="window.print()">Print</button> <button id="close">Close</button></p></dialog>
+    <script type="module" src="./src/stage4b/device.ts"></script>
+  </body>
+</html>

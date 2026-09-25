@@ -14,6 +14,7 @@ export default defineConfig({
         stage2: page('stage2'), // Stage 2
         stage6a: page('stage6a'), 'stage6a-remote': page('stage6a-remote'), 'stage6a-viewer': page('stage6a-viewer'),
         'stage4a-skins': page('stage4a-skins'),
+        'stage4b-device': page('stage4b-device'), // Stage 4b
         'stage6b-acls': page('stage6b-acls'),
       },
     },

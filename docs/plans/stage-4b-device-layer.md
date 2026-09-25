@@ -7150,7 +7150,7 @@ git commit -m "feat(renderer): mountMonitor follows the skin — lanes, tiles, a
 - Consumes: `mountMonitor`, `draw12Lead`, `drawTrend` (Tasks 20–21).
 - Produces: `apps/demo/stage4b-device.html` with `window.__pme4b = { pm, send, events, ready }` (the e2e hook of Task 23).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 In `apps/demo/index.html`, replace this block (it occurs exactly once):
 
@@ -7367,7 +7367,7 @@ with:
         'stage4b-device': page('stage4b-device'), // Stage 4b
 ```
 
-- [ ] **Step 2: Type check and look at the page**
+- [x] **Step 2: Type check and look at the page**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
@@ -7375,7 +7375,7 @@ npx -y pnpm@9.15.9 --filter @pme/demo exec vite --port 5214 --strictPort
 ```
 Expected: the type check exits 0. Open `http://localhost:5214/stage4b-device.html` in Chrome: the saadat-like monitor sweeps with a grey idle alarm bar, red crossed bells and a green ECG; choose "vfCoarse" in the rhythm list and within ~4 s the bar turns red with `ECG VFIB`. Stop the server (Ctrl-C). (If you cannot open a browser, Task 23 checks the same headless.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/index.html apps/demo/src/stage4b/device.ts apps/demo/stage4b-device.html apps/demo/vite.config.ts
