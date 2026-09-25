@@ -12,11 +12,10 @@
 ## Stage status table (edit at every gate)
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2 | merged to main | DONE | — |
-| 3 respiratory/gas | `stage-3-respiratory-gas` (plan: `docs/plans/stage-3-respiratory-gas.md`, worktree `../scratch/wt-stage-3`) | executing (started 2026-09-25) | resume from first unticked task |
+| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3 | merged to main | DONE | — |
 | 4b device layer | `stage-4b-device-layer` (plan: `docs/plans/stage-4b-device-layer.md`, worktree `../scratch/wt-stage-4b`) | executing (started 2026-09-25 04:25) | resume from first unticked task |
-| 5.1 rhythm polish | not started | waits for Ali's strip review (G5-obs) | write plan, then execute |
-| 7 modeled physiology | not started | waits for 3 + 6b; Ali reviews R22–R24, R26, R28 tables first | write plan |
+| 5.1 rhythm polish | plan being written (`docs/plans/stage-5.1-rhythm-polish.md`) | Ali's strip list slots in at the end | execute when plan lands |
+| 7 whole-body physiology (7a–7g, R32/R34) | not started | Ali reviewing docs/physiology/stage-7-parameter-tables.md; Pulse annex being written | write 7a plan after Q1–Q23 answered |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
