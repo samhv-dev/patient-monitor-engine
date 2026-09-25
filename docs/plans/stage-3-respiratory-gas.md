@@ -4708,7 +4708,7 @@ git commit -m "feat(renderer): CO2 and RESP lanes at 62.5 Hz and 6.25 mm/s, SpO2
 
 **Interfaces:** consumes `mountMonitor` with `waves: ['abp', 'pleth', 'co2', 'resp']`, `temp: true`. The page: ECG II + ABP + pleth + CO2 + RESP lanes; HR, ABP, PR, PI, SpO2, EtCO2, RR, TEMP tiles; controls — ventilation source (spontaneous/BVM/ventilator/none) with RR, VT, FiO2, PEEP; airway state (patent/obstructed/apnoea/disconnected/oesophageal/bronchospasm/endobronchial); Preoxygenate 3 min; Rebreathing; Curare cleft; GA induction (temperature); Malignant hyperthermia; VF; sensors (CO2 sidestream/mainstream/off, SpO2, Temp + T2 site); speed ×1/×2/×4; the scripted "Apnoea after preoxygenation (×4)" (GA, preoxygenate 3 min, apnoea, BVM FiO2 1 rescue when SaO2 truth ≤ 85 %) and a truth-vs-displayed SpO2 plot of the last 6 min.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 **Create `apps/demo/stage3.html`:**
 
@@ -5000,7 +5000,7 @@ replace with:
       <li><a href="./stage4a-skins.html">Stage 4a: skin preview and alarm sound profiles</a></li>
 ```
 
-- [ ] **Step 2: Build and look at it**
+- [x] **Step 2: Build and look at it**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build
@@ -5012,7 +5012,7 @@ pkill -f "vite preview --port 4817"
 
 Expected: the script prints `render path: worker-raf   story: rescue` (or `idle` if the story has not reached the rescue) and `page errors: []`; seven PNGs in `docs/gates/stage-3/`. Open each: `spontaneous` (rounded capnogram, impedance with small cardiogenic ripple), `ventilated` (square capnogram at 12/min), `bronchospasm` (shark fin), `curare-cleft` (a notch in the plateau at RR 8), `oesophageal` (fading bumps then flat), `r8-still-falling` (the white SaO2 truth already rising while the cyan displayed SpO2 is still going down), `r8-recovered`. The prototype ran this page headless with no page errors (only a favicon 404 in the console).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/stage3.html apps/demo/src/stage3.ts apps/demo/scripts/stage3-shots.mjs apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-3/*.png
