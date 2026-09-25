@@ -1842,7 +1842,7 @@ git commit -m "feat(engine-core): alarm manager — onset delays, IEC-style latc
 - Consumes: Tasks 5–7.
 - Produces (`l3/alarms/conditions.ts`): `VF_CONFIRM_S = 3`, `DESAT_DELAY_S = 20`, `STALE_S`, `VT_GAP_S`, `EXTREME_OFFSET`, `EXTREME_CLAMP`, `interface AlarmInputs`, `createInputs(t0)`, `observeQrs(inp, tR)`, `observeEvent(inp, e)`, `buildConditions(s, inp, t): Condition[]`. `DeviceProfile` gains `arrhythmiaPvcPerMin`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/conditions.test.ts`:
 
@@ -1928,12 +1928,12 @@ describe('alarm conditions', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/conditions.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/conditions.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/conditions.ts`:
 
@@ -2122,7 +2122,7 @@ with:
     pacer: s.pacer ? structuredClone(s.pacer) : null,
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/conditions.test.ts; cd -
@@ -2130,7 +2130,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/conditions.ts packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/test/l3/alarms/conditions.test.ts

@@ -70,6 +70,8 @@ export interface DeviceProfile {
     tachy: number | null;
     brady: number | null;
   };
+  /** PVCs/min alarm threshold (brief §6.4 "PVCs/min (10)"). */
+  arrhythmiaPvcPerMin: number;
   defib: Skin['defib'];
   pacer: Skin['pacer'];
   syncMarker: Skin['syncMarker'];
@@ -143,6 +145,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
       tachy: ar.tachy,
       brady: ar.brady,
     },
+    arrhythmiaPvcPerMin: ar.freqPvcPerMin,
     defib: s.defib ? structuredClone(s.defib) : null,
     pacer: s.pacer ? structuredClone(s.pacer) : null,
     syncMarker: s.syncMarker,
