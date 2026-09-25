@@ -56,7 +56,9 @@ pulses already handed to Web Audio.
 `r.skin.alarms.lamp` (`L1..L3` style plus `flashHz` and `duty`), `messageBar` (`bg`/`fg` per level, idle, acknowledged,
 `prefix`, `rotate`), `numericFlash`, `alarmOffIcon`, `factoryEnabled`, `alwaysOn`, `silence.suppressesVisual`,
 `silence.headerCountdown`: consumed by the Stage 4b alarm engine and alarm bar. The 4a preview page draws the
-bars and lamps from these fields.
+bars and lamps from these fields. Stage 4b adds two optional fields: `alarms.numericStyle` (`'flash-text'`, the
+default, or `'flash-box'`, Mindray-like) and `layout.badge` (header text such as `LAYOUT UNVERIFIED` for skins whose
+layout was not taken from a manual: `ge-like`, `mindray-like`).
 
 ## Limits
 

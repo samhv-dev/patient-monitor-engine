@@ -168,7 +168,7 @@ git commit -m "build: engine-core and renderer depend on @pme/skins (stage 4b)" 
 - Consumes: `resolveSkin`, `contrastRatio`, `validate` (Stage 4a).
 - Produces: optional skin fields `alarms.numericStyle?: 'flash-text' | 'flash-box'` and `layout.badge?: string` (types, schema, CONTRACT.md); `mindray-like` sets both, `ge-like` sets the badge; the `ecg-grid` theme grid is minor `#FAE2E2`, major `#F4C4C4`. Task 20 (device UI) reads `r.skin.alarms.numericStyle ?? 'flash-text'` and `r.skin.layout.badge`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/g4a-followups.test.ts`:
 
@@ -208,12 +208,12 @@ describe('G4a follow-ups', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/skins && npx vitest run test/g4a-followups.test.ts; cd -`
 Expected: FAIL — the ecg-grid contrast test (`saadat-like IBP1 … expected 1.81 to be greater than or equal to 3`), `numericStyle` undefined for mindray-like, `badge` undefined
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/skins/CONTRACT.md`, replace this block (it occurs exactly once):
 
@@ -442,7 +442,7 @@ with:
     alwaysOn: string[];
 ```
 
-- [ ] **Step 3b: Refresh the seven ecg-grid snapshots and read the diff**
+- [x] **Step 3b: Refresh the seven ecg-grid snapshots and read the diff**
 
 ```bash
 cd packages/skins && npx vitest run -u && cd ../..
@@ -451,7 +451,7 @@ git diff packages/skins/test/__snapshots__/resolve.test.ts.snap | grep '^[-+] ' 
 ```
 Expected: exactly four distinct changed lines, each 7 times: `-"major": "#E08888"`, `-"minor": "#F4C8C8"`, `+"major": "#F4C4C4"`, `+"minor": "#FAE2E2"` (the seven skin/preset × ecg-grid snapshots). Anything else changed means a data edit went wrong: stop and compare with Step 3.
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/skins && npx vitest run test/g4a-followups.test.ts; cd -
@@ -459,7 +459,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/skins/CONTRACT.md packages/skins/src/data/skins/ge-like.json packages/skins/src/data/skins/mindray-like.json packages/skins/src/data/themes/ecg-grid.json packages/skins/src/schema.ts packages/skins/src/types.ts packages/skins/test/g4a-followups.test.ts packages/skins/test/__snapshots__/resolve.test.ts.snap
