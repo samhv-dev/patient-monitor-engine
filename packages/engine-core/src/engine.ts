@@ -12,7 +12,7 @@ import { drawHrvPhase, type HrvPhase } from './l2/ecg/hrv.ts';
 import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmState } from './l2/ecg/rhythm-engine.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
-import { createFilterState, designEcgFilter, filterSample, type Biquad } from './l3/ecg-filter.ts';
+import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrMeasure, hrOnQrs, type HrState } from './l3/hr.ts';
 import { createQrsState, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
@@ -445,7 +445,7 @@ class Engine implements MonitorEngine {
       case 'device': {
         const a = cmd.action;
         if (a.device !== 'ecg') return `device ${String(a.device)} is not implemented until later stages`;
-        if (a.action === 'filter') return a.value === 'monitor' || a.value === 'diagnostic' ? undefined : 'filter must be monitor or diagnostic';
+        if (a.action === 'filter') return typeof a.value === 'string' && filterBand(a.value as EcgFilterMode) ? undefined : "filter must be monitor, diagnostic or 'band:<lo>-<hi>' (lo 0.01–10 Hz, hi 10–200 Hz)"; // Stage 4b (E-4a-1)
         if (a.action === 'lead') {
           if (!LEAD_IDS.includes(a.value as LeadId)) return 'lead must be a LeadId';
           return a.lane === 0 || a.lane === 1 || a.lane === 2 ? undefined : 'lane must be 0, 1 or 2';

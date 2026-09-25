@@ -63,7 +63,8 @@ export type DeviceAction =
   | AlarmDeviceAction // Stage 4b
   | MonitorDeviceAction; // Stage 4b
 
-export type EcgFilterMode = 'monitor' | 'diagnostic';
+/** 'monitor' 0.5–40 Hz + notch, 'diagnostic' 0.05–150 Hz, or any skin band 'band:<lo>-<hi>' (Stage 4b, request E-4a-1). */
+export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}`;
 
 export type Command = CommandBase &
   (

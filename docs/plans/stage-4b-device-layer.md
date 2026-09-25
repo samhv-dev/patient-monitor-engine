@@ -767,7 +767,7 @@ git commit -m "feat(engine-core): stage 4b device types — defib/pacer events, 
 - Consumes: `designEcgFilter`, `FILTER_BANDS` (Stage 1 `l3/ecg-filter.ts`).
 - Produces: `EcgFilterMode = 'monitor' | 'diagnostic' | \`band:${number}-${number}\``; `filterBand(mode): readonly [lo, hi] | null`; `designEcgFilter` accepts band modes (notch when hi < 100 Hz); the engine accepts `{device:'ecg', action:'filter', value:'band:0.5-24'}`. Task 16 maps skin filter names to these modes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/ecg-filter-bands.test.ts`:
 
@@ -821,12 +821,12 @@ describe('ECG filter bands (E-4a-1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/ecg-filter-bands.test.ts; cd -`
 Expected: FAIL — `filterBand` is not exported (`SyntaxError … does not provide an export named 'filterBand'`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 2), replace this block (it occurs exactly once):
 
@@ -947,7 +947,7 @@ export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}
 export type Command = CommandBase &
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/ecg-filter-bands.test.ts; cd -
@@ -955,7 +955,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/ecg-filter.ts packages/engine-core/src/types.ts packages/engine-core/test/l3/ecg-filter-bands.test.ts
