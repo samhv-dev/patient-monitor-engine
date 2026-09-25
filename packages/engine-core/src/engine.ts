@@ -48,6 +48,17 @@ import {
   type HemoState,
 } from './l2/hemo/pipeline.ts'; // Stage 2
 import { HEMO_RATE } from './l2/hemo/params.ts'; // Stage 2
+import {
+  advanceResp,
+  applyRespCommand,
+  createRespState,
+  respBreathU,
+  RESP_RATE,
+  validateRespCommand,
+  type RespChannel,
+  type RespState,
+} from './l2/resp/pipeline.ts'; // Stage 3
+import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -82,6 +93,7 @@ interface PipelineState {
   detections: Detection[]; // QRS detections found during this pass
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
+  resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -174,6 +186,7 @@ class Engine implements MonitorEngine {
       detections: [],
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
+      resp: createRespState(opts.patient, l1, this.seed), // Stage 3
     };
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
@@ -274,6 +287,7 @@ class Engine implements MonitorEngine {
     this.tick = s.tick;
     this.syncLaneBuffers();
     this.syncHemoBuffers(); // Stage 2
+    this.syncRespBuffers(); // Stage 3
     for (const b of this.bufs.values()) b.clear(); // the discarded timeline's samples are not history (review M4)
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
@@ -342,7 +356,7 @@ class Engine implements MonitorEngine {
       const t = refT + BEEP_DELAY_S;
       if (this.posted.has(id) || t < simT - LATE_TONE_POST_S) continue;
       this.posted.set(id, { t, n: d.n });
-      this.emit({ type: 'tone', t, id, kind: 'qrs', freqHz: QRS_TONE_HZ, refT });
+      this.emit({ type: 'tone', t, id, kind: 'qrs', freqHz: spo2PitchHz(this.st.resp.num.spo2.shown), refT }); // Stage 3: pitch(SpO2)
     }
     this.committedDet = [];
     this.dirtyFromN = Number.POSITIVE_INFINITY;
@@ -384,9 +398,11 @@ class Engine implements MonitorEngine {
         }
       },
     );
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
+    const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
-      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi },
+      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t) }, // Stage 3: u
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     ); // Stage 2
@@ -408,6 +424,7 @@ class Engine implements MonitorEngine {
     this.st.rhythm.records = keep(this.st.rhythm.records);
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
+    this.st.resp.out = keep(this.st.resp.out); // Stage 3
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     for (const e of due) this.emit(e);
   }
@@ -420,6 +437,8 @@ class Engine implements MonitorEngine {
     // Every numeric input is range-checked: a NaN or Infinity used to reach min(...) and the IIR/QRS state and
     // freeze or poison the pipeline for good (review M5).
     if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
+    const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
+    if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
     if (hemo !== null) return hemo;
     switch (cmd.type) {
@@ -462,6 +481,10 @@ class Engine implements MonitorEngine {
     const setHr = (v: number, r?: Ramp) => {
       ps.hr = retarget(ps.hr, simT, v, r);
     };
+    if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
+      this.syncRespBuffers(); // Stage 3
+      return;
+    }
     if (applyHemoCommand(ps.hemo, ps.l1, cmd, simT, setHr, ps.rng)) {
       this.syncHemoBuffers(); // Stage 2
       return;
@@ -514,6 +537,21 @@ class Engine implements MonitorEngine {
       this.bufs.set(ch, b);
     }
     b.write(m, v);
+  }
+
+  /** Stage 3: write one 62.5 Hz sample (co2, resp); the buffer is created on the first write. */
+  private respWrite(ch: RespChannel, m: number, v: number): void {
+    let b = this.bufs.get(ch);
+    if (!b) {
+      b = new RingBuffer(RESP_RATE, BUFFER_SECONDS);
+      this.bufs.set(ch, b);
+    }
+    b.write(m, v);
+  }
+
+  /** Stage 3: the co2 sensor 'off' has no trace (brief §6.2). */
+  private syncRespBuffers(): void {
+    if (this.st.resp.co2Sensor === 'off') this.bufs.delete('co2');
   }
 
   /** Stage 2: a channel whose sensor is 'none' has no trace, so its buffer is dropped (brief §6.2). */

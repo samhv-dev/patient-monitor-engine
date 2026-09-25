@@ -3380,7 +3380,7 @@ git commit -m "feat(resp): per-tick respiratory pipeline — 10 Hz gas, 1 Hz hea
 - Consumes: Task 15.
 - Produces: `PipelineState.resp`; `advance()` runs `advanceResp` before `advanceHemo` and passes `u: (t) => respBreathU(resp, t)`; `co2`/`resp` 62.5 Hz buffers created on first write, `co2` dropped when the sensor is off; `validateRespCommand` runs BEFORE Stage 2's validation (attachSensor co2/temp); QRS tone `freqHz = spo2PitchHz(displayed SpO2)`. `@pme/engine-core` re-exports `types-resp.ts` and `spo2PitchHz`. Test helpers: `cmd`, `ev3`, `rig3`, `read62`, `stateSeries`, `numSeries`, `firstBelow`, `mean`, `capnoAngles`, `ADULT`, `vent`, `beatsIn`, `breaths`, `hemoOf`, `desatTime`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/helpers/resp.ts`:**
 
@@ -3563,12 +3563,12 @@ describe('engine + Stage 3 pipeline wiring', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-engine.test.ts`
 Expected: FAIL — `latestSampleIndex('co2')` is −1 and `applyEvent airway` is rejected.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/engine.ts`** (1/10) — find:
 
@@ -3804,12 +3804,12 @@ replace with:
       e.dispatch(cmd({ type: 'setTarget', variable: 'volumeStatus', value: volumeStatusForGHyp(g) }));
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine`
 Expected: typecheck clean; every engine test passes, including all of Stage 2's (prototype: PPV 6.9 % / 22.5 % through the driver) — the 24 h tests take ≈ 70 s each.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/index.ts packages/engine-core/test/helpers/resp.ts packages/engine-core/test/engine/resp-engine.test.ts packages/engine-core/test/engine/hemo-engine.test.ts packages/engine-core/test/engine/hemo-acceptance.test.ts
