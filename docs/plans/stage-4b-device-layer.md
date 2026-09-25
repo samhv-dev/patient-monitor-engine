@@ -114,7 +114,7 @@ Every block in this plan was run in a scratch copy of `origin/main` 121c3f4 merg
 - Consumes: `origin/main` with Stage 2 merged.
 - Produces: branch `stage-4b-device-layer` in `scratch/wt-stage-4b`; `@pme/skins` importable from `@pme/engine-core` and `@pme/renderer`.
 
-- [ ] **Step 1: Check that Stage 2 is on main, then create the worktree**
+- [x] **Step 1: Check that Stage 2 is on main, then create the worktree**
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -126,14 +126,14 @@ npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 Expected: both paths print (Stage 2 is merged); if they do not, STOP — this plan's edit blocks anchor on Stage 2 code. Then `Preparing worktree (new branch 'stage-4b-device-layer')` and pnpm `Done`. From here on every command runs in the worktree.
 
-- [ ] **Step 2: Baseline**
+- [x] **Step 2: Baseline**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck && npx -y pnpm@9.15.9 -r test 2>&1 | grep -E "Tests "
 ```
 Expected: typecheck exit 0; every package passes (on the plan author's base: engine-core 305, skins 155, audio 58, controller 97, validation 16, renderer 31). Note your numbers in the gate note; later "Expected" counts in this plan are for the NEW test files only, so they do not depend on the base.
 
-- [ ] **Step 3: Add the workspace dependency**
+- [x] **Step 3: Add the workspace dependency**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/engine-core add '@pme/skins@workspace:*'
@@ -144,7 +144,7 @@ grep -n '@pme/skins' packages/engine-core/package.json packages/renderer/package
 ```
 Expected: each file has `"@pme/skins": "workspace:*"` (pnpm writes `workspace:^`; the other workspace deps use `*`); `pnpm-lock.yaml` gains the two `link:../skins` entries.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/package.json packages/renderer/package.json pnpm-lock.yaml

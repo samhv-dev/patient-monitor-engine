@@ -10,5 +10,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "build": "vite build"
+  },
+  "dependencies": {
+    "@pme/skins": "workspace:*"
   }
 }

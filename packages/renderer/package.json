@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "@pme/audio": "workspace:*",
+    "@pme/controller": "workspace:*",
     "@pme/engine-core": "workspace:*",
-    "@pme/controller": "workspace:*"
+    "@pme/skins": "workspace:*"
   }
 }
