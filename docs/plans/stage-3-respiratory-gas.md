@@ -5196,7 +5196,7 @@ git commit -m "docs(gates): stage 3 gate evidence" -m "Co-Authored-By: Claude Op
 
 ### Task 25: Pull request
 
-- [ ] **Step 1: Check the partition**
+- [x] **Step 1: Check the partition**
 
 ```bash
 git diff --stat origin/main...HEAD -- packages/engine-core/src/l2/ecg packages/engine-core/src/l3/nibp packages/skins packages/audio   # must print nothing
@@ -5204,7 +5204,7 @@ git diff origin/main...HEAD -- packages/engine-core/src/l2/hemo | grep '^[+-][^+
 git diff --stat origin/main...HEAD -- packages/controller                                                                  # 2 files (exception (b)/(c))
 ```
 
-- [ ] **Step 2: Push and open the PR**
+- [x] **Step 2: Push and open the PR**
 
 ```bash
 git push -u origin stage-3-respiratory-gas
