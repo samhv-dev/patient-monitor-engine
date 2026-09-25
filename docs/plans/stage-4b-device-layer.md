@@ -4781,7 +4781,7 @@ git commit -m "feat(renderer): render plan from the resolved skin (RR-1) and the
 - Consumes: `SweepLane` (Stage 1).
 - Produces: `LaneConfig.grid?`, `LaneConfig.cursorLine?`, `SweepLane.lastDrawnIndex`; the grid is repainted inside every cleared rect.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/sweep-lane-4b.test.ts`:
 
@@ -4836,12 +4836,12 @@ describe('SweepLane 4b options', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/sweep-lane-4b.test.ts; cd -`
 Expected: FAIL — no grid strokes after `reset` (`expected [] to deeply equal ['#FAE2E2', '#F4C4C4']`) and `lastDrawnIndex` undefined
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/sweep-lane.ts` (edit 1 of 4), replace this block (it occurs exactly once):
 
@@ -4960,7 +4960,7 @@ with:
   }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/sweep-lane-4b.test.ts; cd -
@@ -4968,7 +4968,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/sweep-lane.ts packages/renderer/test/sweep-lane-4b.test.ts
