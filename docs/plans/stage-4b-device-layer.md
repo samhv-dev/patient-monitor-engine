@@ -7667,7 +7667,7 @@ git commit -m "docs(gates): stage 4b gate note — evidence, screenshots, reques
 
 **Files:** none.
 
-- [ ] **Step 1: Push and open the PR (do not merge; R21)**
+- [x] **Step 1: Push and open the PR (do not merge; R21)**
 
 ```bash
 git push -u origin stage-4b-device-layer
