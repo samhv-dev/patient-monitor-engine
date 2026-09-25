@@ -7551,7 +7551,7 @@ git commit -m "test(e2e): stage 4b live-monitor screenshots per skin and alarm s
 - Consumes: everything above.
 - Produces: the numbers for the gate note.
 
-- [ ] **Step 1: Type check, unit tests, build, NOTICES**
+- [x] **Step 1: Type check, unit tests, build, NOTICES**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
@@ -7561,7 +7561,7 @@ npx -y pnpm@9.15.9 check-notices
 ```
 Expected: typecheck exit 0; every package passes — engine-core = base + 67, renderer = base + 23, skins = base + 4, audio / controller / validation unchanged (plan author: 372, 54, 159, 58, 97, 16); build exit 0 (renderer IIFE about 629 kB); `check-notices: OK`.
 
-- [ ] **Step 2: The older browser suites still pass**
+- [x] **Step 2: The older browser suites still pass**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/stage4a-skins.e2e.ts apps/demo/e2e/stage6a.e2e.ts apps/demo/e2e/stage6a-worker.e2e.ts apps/demo/e2e/stage6a-screens.e2e.ts
@@ -7570,7 +7570,7 @@ git checkout -- docs/gates/stage-4a docs/gates/stage-6a
 ```
 Expected: all pass. Those suites rewrite their own gate screenshots (4a's are palette-shrunk after capture), so the `git checkout` drops the rewritten PNGs; `git status --short` afterwards shows nothing under `docs/gates/stage-4a` or `stage-6a`. If `iife-smoke` fails with a strict-mode `.pme-tile` error, Task 21's HR-only `pme-tile` class is missing.
 
-- [ ] **Step 3: No edits outside the ownership list**
+- [x] **Step 3: No edits outside the ownership list**
 
 ```bash
 git diff --name-only origin/main...HEAD | grep -vE '^(packages/engine-core/src/(l3/(alarms|defib-pacer|capture12|trends)/|l3/device-layer.ts|l3/ecg-filter.ts|engine.ts|types.ts|types-device.ts|index.ts)|packages/engine-core/(test/|package.json)|packages/renderer/|packages/skins/|apps/demo/(stage4b-device.html|src/stage4b/|e2e/stage4b-device.e2e.ts|vite.config.ts|index.html)|docs/gates/stage-4b|docs/plans/stage-4b|pnpm-lock.yaml)' || echo "ownership OK"
