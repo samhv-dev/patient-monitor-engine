@@ -2845,7 +2845,7 @@ git commit -m "feat(hemo): optional breath-signal seam u(t) for the Stage 3 resp
 - Consumes: everything from Tasks 2–14; Stage 2 `HemoState`, `RhythmView`, `piNumeric`.
 - Produces: `RESP_CHANNELS = ['co2', 'resp']`, `type RespChannel`, `RESP_RATE` 62.5, `interface RespCtx { l1, hemo, rhythm, hr }`, `interface RespState` (plain data; `num.spo2.shown` is the displayed SpO2), `createRespState(profile, l1, seed)`, `respBreathU(rs, t)`, `advanceResp(rs, ctx, mEnd, write)`, `validateRespCommand(cmd): string | undefined | null`, `applyRespCommand(rs, l1, cmd, t): boolean`. Events pushed to `rs.out`: `breath`, `lungState`, `measurement` (spo2, etco2, imco2, awrr, rr, tempCore, tempSite), `alarm` (`apnoea-co2`, `apnoea-resp`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/resp/pipeline.test.ts`:**
 
@@ -2891,12 +2891,12 @@ describe('respiratory pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/pipeline.test.ts`
 Expected: FAIL — cannot find `src/l2/resp/pipeline.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/l2/resp/pipeline.ts`:**
 
@@ -3359,9 +3359,9 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
 
 ```
 
-- [ ] **Step 4: Run and verify** — same command; expected: 2 tests pass.
+- [x] **Step 4: Run and verify** — same command; expected: 2 tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/l2/resp/pipeline.test.ts
