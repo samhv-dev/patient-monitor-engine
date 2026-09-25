@@ -182,6 +182,8 @@ export class DeviceUI {
       } else if (TILE_NUMERICS[p].numerics.length === 1) main = this.text(v[TILE_NUMERICS[p].numerics[0] as NumericId], p === 'TEMP' || p === 'ST' ? 1 : 0);
       if (p === 'SpO2') sub = `PR ${this.text(v.pr)}  PI ${this.text(v.pi, 1)}`;
       tile.value.textContent = main;
+      // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
+      tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;
       const av = tileAlarmView(p, this.status, this.r, t, this.pump);
       tile.bell.innerHTML = av.bellOff && this.r.skin.alarms.alarmOffIcon === 'crossed-bell-red' ? BELL_OFF_SVG : av.bellOff ? '🔕' : '';
