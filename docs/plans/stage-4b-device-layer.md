@@ -480,7 +480,7 @@ git commit -m "feat(skins): G4a follow-ups — dimmed ecg-grid major line, mindr
 - Consumes: `types.ts` / `types-hemo.ts` (Stages 1–2).
 - Produces (`packages/engine-core/src/types-device.ts`, re-exported from the package): `AlarmLevel = 1|2|3`, `AlarmPriority`, `AgeBand = 'adult'|'paed'|'neo'`, `DefibEvent` `{kind:'defib', action:'selectEnergy'|'charge'|'shock'|'disarm'|'syncOn'|'syncOff'|'preselect', energyJ?, outcome?}`, `PacerEvent` `{kind:'pacer', action:'set', mode:'off'|'demand'|'fixed', ratePpm?, mA?, pause?, fault?:'none'|'failureToSense'|'failureToCapture'}`, `DeviceClinicalEvent`, `AlarmDeviceAction` `{device:'alarm', action:'silence'|'pause'|'ack'|'setLimit'|'setVolume'|'enable'|'enableAll'|'arrhythmiaAnalysis', param?, low?, high?, value?}`, `MonitorDeviceAction` `{device:'monitor', action:'skin'|'ageBand', value}`, `AlarmEntry`, `LimitState`, `DeviceEvent` (`alarmStatus`, `deviceStatus`). In `types.ts`: `DeviceAction` gains the two actions, `Command` gains `{type:'applyEvent'; event: DeviceClinicalEvent}`, the `alarm` event gains `level?: AlarmLevel`, the `tone` event gains `chargeS?`, `EngineEvent` gains `DeviceEvent`. Task 7 adds `volume` to `alarmStatus` and Task 13 extends `deviceStatus`, each with an edit block.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/types-device.test.ts`:
 
@@ -511,12 +511,12 @@ describe('Stage 4b types', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx tsc -p packages/engine-core/tsconfig.json`
 Expected: errors — `Module '"../src/index.ts"' has no exported member 'AlarmDeviceAction'` (and the other new names). Vitest alone would pass here because type-only imports are erased.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -738,7 +738,7 @@ with:
 export type EngineEventType = EngineEvent['type'];
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/types-device.test.ts; cd -
@@ -746,7 +746,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/types-device.ts packages/engine-core/src/types.ts packages/engine-core/test/types-device.test.ts

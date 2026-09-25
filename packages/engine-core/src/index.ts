@@ -9,3 +9,4 @@ export { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers
 export { ecgVocabulary, type EcgVocabulary } from './l2/ecg/vocabulary.ts';
 export { dominantHz, rms, welch } from './util/dsp.ts';
 export * from './types-hemo.ts'; // Stage 2
+export * from './types-device.ts'; // Stage 4b

@@ -2,6 +2,7 @@
 // Stage 1 implements a SUBSET: the unions below list only what Stage 1 handles. Later stages add
 // the remaining Command variants, EngineEvent variants and MonitorEngine members listed in §7.
 import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
+import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -58,7 +59,9 @@ export type DeviceAction =
       value?: string | boolean;
       lane?: number;
     }
-  | NibpDeviceAction; // Stage 2
+  | NibpDeviceAction // Stage 2
+  | AlarmDeviceAction // Stage 4b
+  | MonitorDeviceAction; // Stage 4b
 
 export type EcgFilterMode = 'monitor' | 'diagnostic';
 
@@ -69,6 +72,7 @@ export type Command = CommandBase &
     | { type: 'setModifiers'; modifiers: ModifiersPatch; ramp?: Ramp }
     | { type: 'device'; action: DeviceAction }
     | HemoCommandBody // Stage 2 (types-hemo.ts)
+    | { type: 'applyEvent'; event: DeviceClinicalEvent } // Stage 4b (types-device.ts)
   );
 
 export type DispatchResult = { accepted: boolean; tick: Tick; reason?: string };
@@ -92,6 +96,8 @@ export type EngineEvent =
   | {
       type: 'alarm'; t: SimSeconds; id: string; priority: 'high' | 'medium' | 'low'; category: 'physiological' | 'technical';
       state: 'raised' | 'cleared' | 'acked' | 'silenced' | 'paused'; text: string;
+      /** Stage 4b (request E-4a-3): 1 = highest; set on every alarm the device layer emits. */
+      level?: AlarmLevel;
     }
   | { type: 'measurement'; t: SimSeconds; values: Partial<Record<NumericId, Measured>> }
   | {
@@ -100,10 +106,13 @@ export type EngineEvent =
       freqHz?: number; priority?: 'high' | 'medium' | 'low';
       /** Sim time of the event the tone marks (the detected R for 'qrs'); lets the audio side judge staleness. */
       refT?: SimSeconds;
+      /** 'charge' only (request E-4a-3): how long the charge takes, s. */
+      chargeS?: number;
     }
   /** Revoke tones: those listed in `ids` when present (the engine's normal case), else every tone with t > after. */
   | { type: 'toneCancel'; after: SimSeconds; ids?: string[] }
-  | HemoEvent; // Stage 2 (types-hemo.ts)
+  | HemoEvent // Stage 2 (types-hemo.ts)
+  | DeviceEvent; // Stage 4b (types-device.ts)
 
 export type EngineEventType = EngineEvent['type'];
 
