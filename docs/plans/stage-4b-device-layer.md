@@ -3052,7 +3052,7 @@ git commit -m "feat(engine-core): sync R detector — marks every R within 20 ms
 - Consumes: `DeviceProfile` (Task 5), `DefibEvent`, `PacerEvent` (Task 3), `RHYTHMS` (Stage 5, read-only), `TcpSpec` (Stage 5 type).
 - Produces: `defib.ts` — `DefibSpec`, `FALLBACK_DEFIB` (ZOLL-like), `CHARGE_S_PER_J = 7/200`, `ENERGY_RANGE_J`, `interface DefibState`, `createDefib(spec)`, `chargeTimeS(spec, J)`, `validateDefib(d, ev)`, `applyDefib(d, ev, t, spec, out): 'shock' | null`, `stepDefib(d, t, spec, out)`, `afterShock(d, t, atS, synced, outcome, out)`; `pacer.ts` — `PacerSpec`, `FALLBACK_PACER`, `NO_CAPTURE_MA`, `interface PacerState`, `createPacer(spec)`, `validatePacer(ev, spec)`, `applyPacer(p, ev)`, `tcpSpec(p, spec, thresholdMa, leadsOff): TcpSpec | null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/defib-pacer-units.test.ts`:
 
@@ -3100,12 +3100,12 @@ describe('pacer → Modifiers.tcp', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/defib-pacer-units.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/defib.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/defib.ts`:
 
@@ -3319,7 +3319,7 @@ export function tcpSpec(p: PacerState, spec: PacerSpec, thresholdMa: number, lea
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/defib-pacer-units.test.ts; cd -
@@ -3327,7 +3327,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/defib.ts packages/engine-core/src/l3/defib-pacer/pacer.ts packages/engine-core/test/l3/defib-pacer/defib-pacer-units.test.ts
