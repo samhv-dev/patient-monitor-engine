@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-25 (Wave A complete; Wave B starting).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-25 04:25 (Wave B executing: Stage 3 resumed after a usage cap, Stage 4b started).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2 | merged to main | DONE | — |
 | 3 respiratory/gas | `stage-3-respiratory-gas` (plan: `docs/plans/stage-3-respiratory-gas.md`, worktree `../scratch/wt-stage-3`) | executing (started 2026-09-25) | resume from first unticked task |
-| 4b device layer | `stage-4b-device-layer` (plan: `docs/plans/stage-4b-device-layer.md`) | plan being written → executing | resume from first unticked task |
+| 4b device layer | `stage-4b-device-layer` (plan: `docs/plans/stage-4b-device-layer.md`, worktree `../scratch/wt-stage-4b`) | executing (started 2026-09-25 04:25) | resume from first unticked task |
 | 5.1 rhythm polish | not started | waits for Ali's strip review (G5-obs) | write plan, then execute |
 | 7 modeled physiology | not started | waits for 3 + 6b; Ali reviews R22–R24, R26, R28 tables first | write plan |
 | 8 validation/release | not started | waits for all | write plan |
