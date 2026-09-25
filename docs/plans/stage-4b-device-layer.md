@@ -7588,7 +7588,7 @@ Expected: `ownership OK`.
 - Consumes: the numbers from Tasks 1, 23 and 24.
 - Produces: the orchestrator's gate evidence.
 
-- [ ] **Step 1: Write the gate note** — create `docs/gates/stage-4b.md` with the text below. Where your measured value differs from the plan author's (in parentheses in the Evidence table), write yours and say so under "Deviations".
+- [x] **Step 1: Write the gate note** — create `docs/gates/stage-4b.md` with the text below. Where your measured value differs from the plan author's (in parentheses in the Evidence table), write yours and say so under "Deviations".
 
 ```markdown
 # Stage 4b gate: the device layer
@@ -7654,7 +7654,7 @@ Screenshots (`docs/gates/stage-4b/`): `saadat-like--{idle,raised,silenced}.png`,
 (none, or list them)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/gates/stage-4b.md
