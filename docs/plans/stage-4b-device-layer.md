@@ -974,7 +974,7 @@ git commit -m "feat(engine-core): ECG filter bands from skins (E-4a-1): band:<lo
 - Consumes: `resolveSkin`, `LimitTable`, `ResolvedSkin`, `Skin` from `@pme/skins` (Task 1 dependency).
 - Produces (`l3/alarms/profile.ts`): `LIMIT_KEYS`, `BAROMETRIC_MMHG = 760`, `PACING_HR_DASHES`, `interface LimitDef {numeric, label, upper, low, high, level, approximate}`, `interface DeviceProfile` (fields listed in the file), `limitGroup(key)`, `skinBand(b)`, `deviceProfile(id, band = 'adult'): DeviceProfile`. Tasks 6–8 add `volume` and `arrhythmiaPvcPerMin` to the profile with edit blocks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/profile.test.ts`:
 
@@ -1045,12 +1045,12 @@ describe('deviceProfile', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/profile.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/profile.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/profile.ts`:
 
@@ -1207,7 +1207,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/profile.test.ts; cd -
@@ -1215,7 +1215,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/test/l3/alarms/profile.test.ts
