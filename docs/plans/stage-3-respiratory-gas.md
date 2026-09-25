@@ -4302,7 +4302,7 @@ git commit -m "test(resp): PPV through the driver, RR three ways, VentFrame link
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-longrun.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 **Create `packages/engine-core/test/engine/resp-longrun.test.ts`:**
 
@@ -4360,12 +4360,12 @@ describe('Stage 3 determinism and drift', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-longrun.test.ts`
 Expected: 2 tests pass; the 24 h test takes ≈ 70 s.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-longrun.test.ts
