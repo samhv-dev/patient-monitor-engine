@@ -3998,7 +3998,7 @@ git commit -m "test(resp): stage 3 acceptance 3–4 (airway loss, apnoea at 20 s
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-oxygen.test.ts`
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 5–6; R8; brief §4.3 arrest and cuff; decision 4)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 5–6; R8; brief §4.3 arrest and cuff; decision 4)
 
 **Create `packages/engine-core/test/engine/resp-oxygen.test.ts`:**
 
@@ -4100,12 +4100,12 @@ describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-oxygen.test.ts`
 Expected: 6 tests pass. Prototype: 501 s preoxygenated adult, 41 s room air, 158 s child, 170 s obese; R8: displayed SpO2 lowest 20 s after the rescue; SpO2 first moves 18 s after a SaO2 step; VF invalid at 11 s.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-oxygen.test.ts

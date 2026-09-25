@@ -108,13 +108,13 @@ export const breaths = (ev: EngineEvent[], t0 = -1, t1 = Infinity) => ev.filter(
 export const hemoOf = (e: MonitorEngine) => (e.snapshot().state as { st: { hemo: HemoState } }).st.hemo;
 
 /** Time of the apnoea desaturation to SaO2 < 90 % (s after the airway event), GA, optional preoxygenation. */
-export function desatTime(p: PatientProfile, preox: boolean): number {
+export async function desatTime(p: PatientProfile, preox: boolean): Promise<number> {
   const { e, ev } = rig3({ patient: p });
   e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
   if (preox) e.dispatch(ev3({ kind: 'preoxygenate', fio2: 1, durationS: 180 }));
-  e.advanceTo(180);
+  await run(e, 180);
   e.dispatch(ev3({ kind: 'airway', state: 'apnoea' }));
-  e.advanceTo(180 + 900);
+  await run(e, 180 + 900);
   return (firstBelow(stateSeries(ev, 'spo2', 180), 90) ?? Infinity) - 180;
 }
 
