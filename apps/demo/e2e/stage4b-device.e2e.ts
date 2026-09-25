@@ -80,7 +80,8 @@ test('skin switch relayouts lanes and tiles without restarting the engine', asyn
   const advanced = async (than: number) => (errors.length > 0 ? `page error: ${errors.join('; ')}` : (await simT(page)) > than);
   await expect.poll(() => advanced(t0), { timeout: 15_000 }).toBe(true);
   const t1 = await simT(page);
-  await expect(page.locator('.pme-stile[data-param="CO2"]')).toHaveCount(1);
+  // setSkin awaits the worker's command acks before it relayouts the tiles (slow on CI WebKit)
+  await expect.poll(async () => (errors.length > 0 ? `page error: ${errors.join('; ')}` : page.locator('.pme-stile[data-param="CO2"]').count()), { timeout: 20_000 }).toBe(1);
   await page.selectOption('#theme', 'ecg-grid');
   await page.waitForTimeout(9000); // one full sweep, so the screenshot shows traces across the grid
   await page.locator('#monitor').screenshot({ path: resolve(out, 'zoll-like--ecg-grid.png') });
