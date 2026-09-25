@@ -2905,7 +2905,7 @@ git commit -m "feat(engine-core): post-shock outcome table (brief §6.5) with VF
 - Consumes: `projectLead` (Stage 1 `l2/ecg/vcg.ts`, read-only import).
 - Produces (`l3/defib-pacer/sync.ts`): `SYNC_RATE = 500`, `interface SyncState`, `createSyncState(n0)`, `syncStep(st, end, vcg): Array<{r, at}>`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/sync.test.ts`:
 
@@ -2956,12 +2956,12 @@ describe('sync detector', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/sync.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/sync.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/sync.ts`:
 
@@ -3024,7 +3024,7 @@ export function syncStep(st: SyncState, end: number, vcg: (n: number) => [number
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/sync.test.ts; cd -
@@ -3032,7 +3032,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/sync.ts packages/engine-core/test/l3/defib-pacer/sync.test.ts
