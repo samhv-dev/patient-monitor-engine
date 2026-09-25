@@ -10,8 +10,9 @@ import type { ScenarioEvent } from '../../src/protocol.ts';
 import type { ScenarioDoc } from '../../src/scenario/types.ts';
 import { manualHost } from '../fakes/manual-host.ts';
 
-// Each test steps the engine tick by tick for 1–10 sim-minutes (≈ 0.2–2.5 s each on a laptop).
-const SLOW = 30_000;
+// Each test steps the engine tick by tick for 1–10 sim-minutes (≈ 0.2–2.5 s each on a laptop). CI rule: tests that run
+// the engine past ~1 sim-minute take a 300 s timeout (the 2-vCPU runner needs > 30 s for the 4 × 320 sim-s seed test).
+const SLOW = 300_000;
 
 type Learner = Map<number, Command[]>; // tick → commands the learner sends on that tick
 let nL = 0;
@@ -118,7 +119,7 @@ describe('ScenarioDriver', () => {
       paths.push(events.map((e) => `${e.t}:${e.stateId}`).join(' '));
     }
     expect(new Set(paths).size).toBeGreaterThan(1);
-  }, 30_000);
+  }, SLOW);
 
   it('bookmark = engine snapshot + runner state: restoring and replaying the same inputs is identical', async () => {
     const { driver, events, run, samples, host } = rig();
@@ -154,7 +155,7 @@ describe('ScenarioDriver', () => {
     const replay = replayRunLog(a.g.driver.runner!.doc, runLog(a.g.driver.runner!));
     expect(replay.ok).toBe(true);
     expect(replay.decisions.length).toBeGreaterThan(2);
-  });
+  }, SLOW);
 
   it('a replay with another seed diverges and says where', async () => {
     const { driver, run } = rig();
