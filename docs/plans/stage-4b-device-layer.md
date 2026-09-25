@@ -4561,7 +4561,7 @@ git commit -m "feat(engine-core): trend store (22 numerics × 8 h ≤ 3 MB) and 
 - Consumes: `ResolvedSkin`, `engineFilterFor` (`@pme/skins`); `WAVE_STYLE` (Stage 2).
 - Produces (`packages/renderer/src/skin-plan.ts`): `interface PlanLane`, `interface RenderPlan`, `LEAD_LABEL`, `filterModeFor(band)`, `leadOf(skinLead)`, `formatGain(mult, gainLabel)`, `ecgLabel(template, lead, mult, gainLabel, filterName)`, `renderPlan(r, page?)`, `legacyPlan(leads, waves)`. Tasks 18 and 21 extend it with edit blocks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/skin-plan.test.ts`:
 
@@ -4613,12 +4613,12 @@ describe('renderPlan', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/skin-plan.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/skin-plan.ts`:
 
@@ -4754,7 +4754,7 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -
@@ -4762,7 +4762,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/skin-plan.ts packages/renderer/test/skin-plan.test.ts
