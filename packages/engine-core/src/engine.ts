@@ -48,6 +48,7 @@ import {
   type HemoState,
 } from './l2/hemo/pipeline.ts'; // Stage 2
 import { HEMO_RATE } from './l2/hemo/params.ts'; // Stage 2
+import { applyDeviceCommand, createDevice, deviceOnQrs, stepDevice, validateDeviceCommand, type DeviceHost, type DeviceState } from './l3/device-layer.ts'; // Stage 4b
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -137,6 +138,8 @@ class Engine implements MonitorEngine {
   private lastWall = 0;
   private readonly sections = new Map<EcgFilterMode, Biquad[]>();
   private readonly groupTicks = new Map<string, number>(); // Stage 2: stageGroup → tick (brief §4.9)
+  private dev: DeviceState; // Stage 4b: alarms, defibrillator, pacer (brief §6.4–§6.5)
+  private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
 
   constructor(opts: EngineOptions) {
     if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');
@@ -147,6 +150,8 @@ class Engine implements MonitorEngine {
       throw new RangeError(`lookaheadS must be a positive multiple of 0.020 s, got ${look}`);
     }
     this.mainsHz = opts.device?.mainsHz ?? 50;
+    this.devOpts = opts.device;
+    this.dev = createDevice(opts.device?.skin, opts.device?.ageBand); // Stage 4b (throws for an unknown skin)
     const rng = createRngState(this.seed);
     const rhythmId = opts.patient?.rhythm?.id ?? 'sinus';
     const rhythmOpts = opts.patient?.rhythm?.opts ?? {};
@@ -258,19 +263,20 @@ class Engine implements MonitorEngine {
       engineVersion: this.version,
       seed: this.seed,
       tick: this.tick,
-      state: structuredClone({ st: this.st, queue: this.queue, mainsHz: this.mainsHz }),
+      state: structuredClone({ st: this.st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev }), // Stage 4b: dev
     };
   }
   restore(s: PatientSnapshot): void {
     if (s.schema !== 'pme-snapshot/1') throw new Error(`unknown snapshot schema ${String(s.schema)}`);
     // Exact replay is promised only on the same build and the same filter design (review L10).
     if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
-    const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number };
+    const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
     this.st = data.st;
     this.queue = data.queue;
+    this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand); // Stage 4b
     this.tick = s.tick;
     this.syncLaneBuffers();
     this.syncHemoBuffers(); // Stage 2
@@ -309,8 +315,11 @@ class Engine implements MonitorEngine {
     let maxPostedN = -1;
     for (const p of this.posted.values()) maxPostedN = Math.max(maxPostedN, p.n);
     for (const d of this.st.detections) if (this.dirtyFromN < Infinity || d.n <= maxPostedN) this.committedDet.push(d);
+    for (const d of this.st.detections) deviceOnQrs(this.dev, d.r / ECG_RATE); // Stage 4b
     this.st.detections.length = 0;
-    this.flush(simT);
+    const devOut: EngineEvent[] = []; // Stage 4b
+    for (const e of stepDevice(this.dev, this.deviceHost(simT), this.flush(simT), devOut)) this.emit(e);
+    for (const e of devOut) this.emit(e);
     if (speculate) this.speculate();
   }
 
@@ -393,8 +402,8 @@ class Engine implements MonitorEngine {
     ps.n = end + 1;
   }
 
-  /** Emit committed records whose time has come, in time order. */
-  private flush(simT: number): void {
+  /** Committed records whose time has come, in time order (Stage 4b: returned for the device layer to see first). */
+  private flush(simT: number): EngineEvent[] {
     const due: EngineEvent[] = [];
     const keep = (list: EngineEvent[]) =>
       list.filter((e) => {
@@ -409,7 +418,21 @@ class Engine implements MonitorEngine {
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
-    for (const e of due) this.emit(e);
+    return due;
+  }
+
+  /** Stage 4b: the committed state as the device layer sees it; its writes invalidate the look-ahead. */
+  private deviceHost(simT: number): DeviceHost {
+    const ps = this.st;
+    return {
+      simT,
+      rhythmId: ps.rhythm.id,
+      spo2Probe: ps.hemo.pleth.state,
+      setModifiers: (patch) => {
+        ps.mods = mergeModifiers(ps.mods, patch);
+        this.dirtyFromN = Math.min(this.dirtyFromN, ps.n);
+      },
+    };
   }
 
   private emit(e: EngineEvent): void {
@@ -420,6 +443,8 @@ class Engine implements MonitorEngine {
     // Every numeric input is range-checked: a NaN or Infinity used to reach min(...) and the IIR/QRS state and
     // freeze or poison the pipeline for good (review M5).
     if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
+    const dev = validateDeviceCommand(this.dev, cmd); // Stage 4b
+    if (dev !== null) return dev;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
     if (hemo !== null) return hemo;
     switch (cmd.type) {
@@ -462,6 +487,11 @@ class Engine implements MonitorEngine {
     const setHr = (v: number, r?: Ramp) => {
       ps.hr = retarget(ps.hr, simT, v, r);
     };
+    const devOut: EngineEvent[] = []; // Stage 4b
+    if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
+      for (const e of devOut) this.emit(e);
+      return;
+    }
     if (applyHemoCommand(ps.hemo, ps.l1, cmd, simT, setHr, ps.rng)) {
       this.syncHemoBuffers(); // Stage 2
       return;

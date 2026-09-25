@@ -2152,7 +2152,7 @@ git commit -m "feat(engine-core): alarm conditions — limits, desat, asystole, 
 - Consumes: Tasks 3–8; the engine's `flush`, `apply`, `validate`, `snapshot/restore` (Stages 1–2).
 - Produces (`l3/device-layer.ts`, first version; Task 13 replaces it): `VF_RHYTHMS`, `DEFAULT_SKIN = 'philips-like'`, `interface DeviceState {alarms, inputs}`, `interface DeviceHost {simT, rhythmId, spo2Probe, setModifiers}`, `createDevice(skin, ageBand)`, `validateDeviceCommand(d, cmd)`, `applyDeviceCommand(d, cmd, host, out)`, `deviceOnQrs(d, tR)`, `stepDevice(d, host, due, out)`. `engine.ts`: `EngineOptions.device.skin` picks the profile; `attachSensor ecg`; `device alarm|monitor` commands; raw L2 technical alarm events are re-issued by the manager with `level`; the snapshot carries `dev`. Test helper `test/helpers/device.ts`: `devRig(skin, opts)`, `alarmsOf`, `beats`, `markers`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/engine-core/test/engine/alarms-engine.test.ts`:
 
@@ -2313,12 +2313,12 @@ export const beats = (ev: EngineEvent[]): Beat[] => ev.filter((x): x is Beat => 
 export const markers = (ev: EngineEvent[], kind?: Marker['kind']): Marker[] => ev.filter((x): x is Marker => x.type === 'marker' && (!kind || x.kind === kind));
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/engine-core && npx vitest run test/engine/alarms-engine.test.ts; cd -`
 Expected: FAIL — `alarmsOf(ev, 'HR_HIGH', 'raised')[0]` is undefined (no alarm events yet) and `device monitor` commands are rejected
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 11), replace this block (it occurs exactly once):
 
@@ -2691,7 +2691,7 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/alarms-engine.test.ts; cd -
@@ -2699,7 +2699,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/alarms/conditions.ts packages/engine-core/src/l3/device-layer.ts packages/engine-core/test/engine/alarms-engine.test.ts packages/engine-core/test/helpers/device.ts

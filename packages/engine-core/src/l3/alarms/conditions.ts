@@ -87,7 +87,8 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
   const fixed = (id: FixedAlarmId, level: 1 | 2 | 3, category: 'physiological' | 'technical', delayS = 0): Condition => ({
     id, level, category, text: fixedText(p, id, level, category === 'technical'), delayS,
   });
-  const hrSuppressed = inp.pacing && p.hrDashesWhilePacing; // LIFEPAK-like: HR alarms off while pacing (research/05 §2.6)
+  // LIFEPAK-like: HR alarms off while pacing (research/05 §2.6); with the leads off HR is not measured (brief §6.2).
+  const hrSuppressed = (inp.pacing && p.hrDashesWhilePacing) || inp.leadsOff;
 
   // Limit alarms on displayed numerics (brief §6.4), only where the per-parameter switch is ON (brief §6.4.1).
   for (const [key, d] of Object.entries(p.limits)) {
