@@ -5935,7 +5935,7 @@ git commit -m "feat(renderer): MonitorCore draws from the skin plan — setPlan 
 - Consumes: `alarmStatus` (Task 7), `ResolvedSkin`, `AlarmSounder`/`ToneScheduler` (Stage 4a).
 - Produces: `alarm-view.ts` — `type AlarmStatus`, `ROTATE_S`, `interface BarView`, `visibleAlarms(st, r, t, pump?)`, `barView(st, r, t, pump?)`, `TILE_NUMERICS`, `interface TileAlarmView`, `tileAlarmView(param, st, r, t, pump?)`; `alarm-audio.ts` — `interface SounderLike`, `class AlarmAudioBridge {onStatus(st)}`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/renderer/test/alarm-audio.test.ts`:
 
@@ -6063,12 +6063,12 @@ describe('tileAlarmView', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/renderer && npx vitest run test/alarm-view.test.ts test/alarm-audio.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/alarm-view.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/alarm-audio.ts`:
 
@@ -6218,7 +6218,7 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/alarm-view.test.ts test/alarm-audio.test.ts; cd -
@@ -6226,7 +6226,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  7 passed (7)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/alarm-audio.ts packages/renderer/src/alarm-view.ts packages/renderer/test/alarm-audio.test.ts packages/renderer/test/alarm-view.test.ts
