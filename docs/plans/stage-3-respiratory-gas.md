@@ -2708,7 +2708,7 @@ git commit -m "feat(gas): CO read from the haemodynamics, mean-airway-pressure c
 **Interfaces:**
 - Produces: `respFactor(t, rr, phi, g, u?)`, `cvpAt(st, t, pv, phi, thor, u?)`, `HemoCtx.u?: (t: number) => number`. Absent `u` → Stage 2's `breathU(t, phi)` exactly (its tests and hashes are unchanged by this task).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/hemo/seam-stage3.test.ts`:**
 
@@ -2730,12 +2730,12 @@ describe('Stage 3 breath-signal seam', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo/seam-stage3.test.ts`
 Expected: FAIL — the 5th argument is ignored, so `respFactor(…, () => 0.5)` is not 1.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Modify `packages/engine-core/src/l2/hemo/params.ts`** (1/1) — find:
 
@@ -2822,12 +2822,12 @@ replace with:
         }
 ```
 
-- [ ] **Step 4: Run and verify**
+- [x] **Step 4: Run and verify**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/hemo test/engine/hemo-acceptance.test.ts`
 Expected: all pass (nothing passes `u` yet, so Stage 2 is byte-identical).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo packages/engine-core/test/l2/hemo/seam-stage3.test.ts

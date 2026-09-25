@@ -45,6 +45,7 @@ export interface HemoCtx {
   rhythm: RhythmView;
   rng: Record<StreamName, Sfc32State>;
   phi: number; // respiratory phase shared with the ECG's RSA (hrv.phi)
+  u?: (t: number) => number; // Stage 3 seam: the respiratory driver's breath signal (replaces breathU when present)
 }
 
 interface Win {
@@ -177,7 +178,7 @@ function onBeat(hs: HemoState, ctx: HemoCtx, b: Extract<EngineEvent, { type: 'be
   // M1: rhythm → pulse. PEA/VF/asystole have no mechanical output; E(k) maps k_rhythm to ejection.
   const k = PULSELESS_RHYTHMS.has(ctx.rhythm.id) || !b.mech.perfused ? 0 : b.mech.kSV;
   const e = ejectionFactor(k);
-  const resp = respFactor(t, rr, ctx.phi, gHyp(l1Value(ctx.l1, 'volumeStatus', t))); // M6 (PPV)
+  const resp = respFactor(t, rr, ctx.phi, gHyp(l1Value(ctx.l1, 'volumeStatus', t)), ctx.u); // M6 (PPV); Stage 3 seam: ctx.u
   const nominal = SV_REF_ML * hs.sys.g * resp; // what a normal beat would eject now
   if (e <= 0) {
     hs.missed = nominal; // no upstroke: pulse deficit (brief §4.8); the volume stays for the next beat
@@ -373,7 +374,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         if (ab.sensor !== 'none') stepTransducer(ab, lineInput(ab, atCatheter(pr0), ta), lineInput(ab, atCatheter(radialPressure(s, tb, x)), tb), H_S);
         if (pa.sensor !== 'none') stepTransducer(pa, lineInput(pa, wedged(pa0, ta), ta), lineInput(pa, wedged(paPressure(s, tb, x), tb), tb), H_S);
         if (cv.sensor !== 'none') {
-          stepTransducer(cv, lineInput(cv, cvpAt(hs.cvp, ta, hs.pv, ctx.phi, hs.thorCen), ta), lineInput(cv, cvpAt(hs.cvp, tb, hs.pv, ctx.phi, hs.thorCen), tb), H_S);
+          stepTransducer(cv, lineInput(cv, cvpAt(hs.cvp, ta, hs.pv, ctx.phi, hs.thorCen, ctx.u), ta), lineInput(cv, cvpAt(hs.cvp, tb, hs.pv, ctx.phi, hs.thorCen, ctx.u), tb), H_S); // Stage 3 seam: ctx.u
         }
       }
     }
