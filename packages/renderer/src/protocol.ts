@@ -1,5 +1,6 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
-import type { Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { Capture12, Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
+import type { RenderPlan } from './skin-plan.ts'; // Stage 4b
 import type { WaveLaneId } from './wave-lanes.ts'; // Stage 2
 
 export interface Size {
@@ -16,6 +17,8 @@ export interface CoreOptions {
   waves?: WaveLaneId[];
   pxPerMm?: number;
   fps?: 60 | 30;
+  /** Stage 4b: the skin's lane layout (skin-plan.ts); when present, `lanes`/`waves` are ignored. */
+  plan?: RenderPlan;
 }
 
 /** Wall/sim clock anchor sent with every event batch (brief §3.4). epochMs = timeOrigin + now. */
@@ -39,7 +42,10 @@ export type ToWorker =
   | { type: 'visible'; visible: boolean }
   // Renderer request R-1 (ruling R25): engine snapshot/restore through the worker.
   | { type: 'snapshot'; reqId: number }
-  | { type: 'restore'; reqId: number; snapshot: PatientSnapshot };
+  | { type: 'restore'; reqId: number; snapshot: PatientSnapshot }
+  // Stage 4b: skin switch without restart, and the 12-lead capture
+  | { type: 'plan'; plan: RenderPlan }
+  | { type: 'capture12'; reqId: number };
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
@@ -47,4 +53,5 @@ export type FromWorker =
   | { type: 'result'; reqId: number; result: DispatchResult }
   | { type: 'error'; message: string }
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
-  | { type: 'restored'; reqId: number; error?: string };
+  | { type: 'restored'; reqId: number; error?: string }
+  | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string }; // Stage 4b

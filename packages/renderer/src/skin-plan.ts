@@ -16,7 +16,7 @@ export interface PlanLane {
   autoGain: boolean;
   /** ECG gain multipliers (of 10 mm/mV) auto-gain may choose from. */
   gainOptions: number[];
-  /** Wave scale [lo, hi] (mmHg; CO2 mmHg); null = auto-scale (pleth). */
+  /** Wave scale [lo, hi] (mmHg; CO2 mmHg); null = auto-scale (pleth, impedance resp). */
   range: [number, number] | null;
   /** Static label (waves) or the template for ECG lanes: '{lead}  X{gain}  {FILTER}'. */
   label: string;
@@ -35,6 +35,10 @@ export interface RenderPlan {
   /** Engine filter mode → the name the lane label shows ('M', 'NORMAL', …). */
   filterNames: Record<string, string>;
   paceMarker: Skin['ecg']['paceMarker'];
+  /** Draw implanted-pacemaker spikes (skin `ecg.paceDetectDefault`, brief §6.5 saadat-like PACE DETECT). */
+  paceDetect: boolean;
+  /** The skin is a defibrillator/pacer, so its own TCP pulses are always marked (research/05 §2.6 LIFEPAK 15). */
+  devicePacer: boolean;
   syncMarker: Skin['syncMarker'];
   hideScaleNumbers: boolean;
   lanes: PlanLane[];
@@ -91,7 +95,7 @@ export function renderPlan(r: ResolvedSkin, page?: string): RenderPlan {
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
     const range: [number, number] | null =
-      id === 'PLETH' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : id === 'RESP' ? [-1, 1] : sc ? [sc[0], sc[2]] : [0, 150];
+      id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : [0, 150];
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id };
   });
   return {
@@ -106,6 +110,8 @@ export function renderPlan(r: ResolvedSkin, page?: string): RenderPlan {
     gainLabel: s.ecg.gainLabel,
     filterNames,
     paceMarker: s.ecg.paceMarker,
+    paceDetect: s.ecg.paceDetectDefault,
+    devicePacer: s.pacer !== null,
     syncMarker: s.syncMarker,
     hideScaleNumbers: pg?.pump?.hideScaleNumbers ?? false,
     lanes,
@@ -124,6 +130,7 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,
     font: 'system-ui, sans-serif', gainLabel: 'mm-per-mV', filterNames: { monitor: 'M', diagnostic: 'D' },
-    paceMarker: { style: 'marker-above', heightMm: 2 }, syncMarker: 'line', hideScaleNumbers: false, lanes: [...ecg, ...wv],
+    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false,
+    lanes: [...ecg, ...wv],
   };
 }

@@ -4992,7 +4992,7 @@ git commit -m "feat(renderer): sweep lane grid painter (RR-4) and optional curso
 - Consumes: Tasks 14, 16, 17.
 - Produces: `overlays.ts` — `DRAW_LAG_S`, `interface OverlayMark`, `class Overlays {leadsOff, push(e), due(t), clear()}`, `shows(plan, m)`, `drawMark(ctx, lane, m, plan, pxPerMm)`, `drawLeadOffDashes(ctx, lane, from, to)`; `RenderPlan` gains `paceDetect`, `devicePacer`; `MonitorCore` is replaced (same public API plus `setPlan(plan)`, `capture12()`; constants `AUTO_GAIN_*`); `protocol.ts` — `CoreOptions.plan?`, messages `plan` and `capture12`; `worker-host.ts` — `Host.capture12()`, control `plan`; `engine.worker.ts` handles both.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/monitor-core-4b.test.ts`:
 
@@ -5082,12 +5082,12 @@ describe('MonitorCore with a skin plan', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/monitor-core-4b.test.ts test/monitor-core.test.ts; cd -`
 Expected: FAIL — `setPlan` is not a function; `CoreOptions.plan` ignored (the saadat-like texts come out as `II  M`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/engine.worker.ts`, replace this block (it occurs exactly once):
 
@@ -5906,7 +5906,7 @@ with:
       cancelAnimationFrame(raf);
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/monitor-core-4b.test.ts test/monitor-core.test.ts; cd -
@@ -5914,7 +5914,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  17 passed (17)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/engine.worker.ts packages/renderer/src/monitor-core.ts packages/renderer/src/overlays.ts packages/renderer/src/protocol.ts packages/renderer/src/skin-plan.ts packages/renderer/src/worker-host.ts packages/renderer/test/monitor-core-4b.test.ts
