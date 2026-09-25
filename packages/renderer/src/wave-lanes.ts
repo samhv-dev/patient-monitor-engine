@@ -31,7 +31,7 @@ export function scaleFor(lo: number, hi: number, height: number, pxPerMm: number
 }
 
 /** Pleth auto-scale [ENG]: the last 4 s fill 80% of the lane, centred; flat traces keep a 0.1 % span. */
-export function autoRange(samples: ArrayLike<number>, count: number): [number, number] {
+export function autoRange(samples: ArrayLike<number>, count: number, minSpan = 0.1): [number, number] { // Stage 3: minSpan
   let lo = Infinity;
   let hi = -Infinity;
   for (let i = 0; i < count; i++) {
@@ -40,7 +40,7 @@ export function autoRange(samples: ArrayLike<number>, count: number): [number, n
     if (v > hi) hi = v;
   }
   if (!Number.isFinite(lo)) return [-0.05, 0.05];
-  const span = Math.max(0.1, hi - lo) / 0.8;
+  const span = Math.max(minSpan, hi - lo) / 0.8;
   const mid = (hi + lo) / 2;
   return [mid - span / 2, mid + span / 2];
 }

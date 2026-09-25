@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from '../src/numerics-resp.ts';
-import { WAVE_STYLE } from '../src/wave-lanes.ts';
+import { autoRange, WAVE_STYLE } from '../src/wave-lanes.ts';
 
 const v = (value: number | null, flag: 'valid' | 'questionable' | 'invalid' = 'valid') => ({ value, flag, at: 1 });
 
@@ -20,5 +20,10 @@ describe('numerics-resp formatters (brief §6.1) and Stage 3 lanes', () => {
   it('CO2 and RESP lanes run at 62.5 Hz and 6.25 mm/s; CO2 is 0–50 mmHg yellow', () => {
     expect(WAVE_STYLE.co2).toMatchObject({ range: [0, 50], rate: 62.5, mmPerS: 6.25 });
     expect(WAVE_STYLE.resp).toMatchObject({ range: null, rate: 62.5, mmPerS: 6.25 });
+  });
+  it('the RESP auto-scale keeps a minimum span so the apnoeic cardiogenic ripple stays small', () => {
+    const ripple = Float32Array.from({ length: 625 }, (_, i) => 0.1 * Math.max(0, Math.sin(i / 8)));
+    const [lo, hi] = autoRange(ripple, ripple.length, 0.5);
+    expect(hi - lo).toBeCloseTo(0.5 / 0.8, 9);
   });
 });
