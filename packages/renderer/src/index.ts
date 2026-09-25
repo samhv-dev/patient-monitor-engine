@@ -19,3 +19,4 @@ export { AlarmAudioBridge } from './alarm-audio.ts';
 export { DeviceUI, flashCss } from './device-ui.ts';
 export { draw12Lead, drawTrend, report12Size, PAPER, type TrendSeries } from './views.ts';
 export { Overlays, drawMark, drawLeadOffDashes } from './overlays.ts';
+export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3

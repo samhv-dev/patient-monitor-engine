@@ -61,7 +61,7 @@ export interface DeviceProfile {
   pauseS: number | null;
   volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
-  /** APNEA after this long without a breath (skin `apneaS`, brief §6.4 / §6.4.1); null = APNEA LIMIT OFF (preset). */
+  /** Skin apnoea time (`apneaS`, brief §6.4 / §6.4.1; Stage 3 detectors run at a fixed 20 s, request R-4b-9); null = APNEA LIMIT OFF (preset). */
   apneaS: number | null;
   /** SpO2 desaturation threshold (%), level 1 (brief §6.4), or null. */
   desat: number | null;

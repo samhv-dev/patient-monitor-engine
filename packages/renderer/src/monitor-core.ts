@@ -17,6 +17,9 @@ export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrom
 const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
 const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
+// Stage 3: impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple
+// (0.1) stays small in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
+const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 /** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
 export const AUTO_GAIN_EVERY_S = 2;
@@ -35,7 +38,7 @@ export class MonitorCore {
   private plan: RenderPlan;
   private waveLive: boolean[] = []; // Stage 2: the channel had samples on the last frame
   private autoRangeT: number[] = []; // Stage 2 (4b: per lane): sim time of the last auto-scale
-  private readonly plethScratch = new Float32Array(500); // Stage 2
+  private readonly plethScratch = new Float32Array(1250); // Stage 2 (Stage 3: 10 s at 125 Hz)
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private autoGainT = -Infinity;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
@@ -233,9 +236,11 @@ export class MonitorCore {
     this.waveLive[i] = true;
     if (pl.range === null && t - (this.autoRangeT[i] ?? -1) >= 1) {
       this.autoRangeT[i] = t;
+      // Stage 3: every auto-scaled lane (pleth over 4 s, resp over 10 s: two or three breaths)
       const rate = this.engine.sampleRate(ch);
-      const n = this.engine.readSamples(ch, Math.floor((t - 4) * rate), this.plethScratch);
-      const [lo, hi] = autoRange(this.plethScratch, n);
+      const winS = ch === 'resp' ? 10 : 4;
+      const n = this.engine.readSamples(ch, Math.floor((t - winS) * rate), this.plethScratch.subarray(0, Math.round(winS * rate)));
+      const [lo, hi] = autoRange(this.plethScratch, n, ch === 'resp' ? RESP_MIN_SPAN : undefined);
       Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
     }
     lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(ch, from, out));

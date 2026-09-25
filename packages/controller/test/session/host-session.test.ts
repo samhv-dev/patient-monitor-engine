@@ -63,13 +63,13 @@ describe('HostSession', () => {
 
   it('acks rejections with the engine reason, and rejects MODELED-only and 6b-only commands', async () => {
     const { command, of } = setup();
-    command({ type: 'setTarget', variable: 'spo2', value: 90 }); // Stage 2 accepts sbp; spo2 is Stage 3
+    command({ type: 'setTarget', variable: 'k', value: 5 }); // Stage 3 accepts spo2; k is Stage 5
     command({ type: 'pin', variable: 'hr', value: 60 });
     command({ type: 'scenario', action: 'goto', target: 'vf' });
     command({ type: 'time', action: 'jump', value: 60 });
     await waitFor(() => of('ack').length === 4);
     expect(of('ack').map((a) => a.accepted)).toEqual([false, false, false, false]);
-    expect(of('ack')[0]!.reason).toMatch(/Stage 3/);
+    expect(of('ack')[0]!.reason).toMatch(/Stage 5/);
     expect(of('ack')[1]!.reason).toMatch(/MODELED/);
     expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
   });

@@ -81,7 +81,7 @@ export interface LaneOverride {
   lanes?: readonly LeadId[];
   waves?: readonly WaveLaneId[];
 }
-const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP' };
+const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP' }; // Stage 3: co2, resp
 
 export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride): RenderPlan {
   const s = r.skin;
@@ -134,7 +134,8 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
     id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}',
   }));
   const wv = waves.map((w): PlanLane => ({
-    id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [],
+    id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // Stage 3: co2/resp 6.25 mm/s
+    autoGain: false, gainOptions: [],
     range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label,
   }));
   return {

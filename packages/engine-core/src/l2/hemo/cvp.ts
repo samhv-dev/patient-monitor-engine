@@ -83,8 +83,8 @@ export function cvpWavesAt(st: CvpState, t: number): number {
 }
 
 /** CVP at time t: venous mean + waves + positive-pressure respiratory swing + CPR thoracic pulses. */
-export function cvpAt(st: CvpState, t: number, pv: number, phi: number, thor: readonly Pulse[]): number {
-  return pv + cvpWavesAt(st, t) + CVP_RESP_MMHG * (breathU(t, phi) - 0.5) + pressureAt(thor, t);
+export function cvpAt(st: CvpState, t: number, pv: number, phi: number, thor: readonly Pulse[], u: (t: number) => number = (x) => breathU(x, phi)): number { // Stage 3 seam: u
+  return pv + cvpWavesAt(st, t) + CVP_RESP_MMHG * (u(t) - 0.5) + pressureAt(thor, t);
 }
 
 /** Drop waves that can no longer contribute; stop the mean correction when no beat arrives (arrest). */

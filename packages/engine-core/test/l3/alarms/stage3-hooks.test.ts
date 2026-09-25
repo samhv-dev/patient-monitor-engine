@@ -1,6 +1,6 @@
-// Stage 3 hooks (request R-4b-1, orchestrator brief for 4b): APNEA, the CO2 line INOP and the SpO2 / EtCO2 limit
-// alarms, driven here by SYNTHETIC events in the shapes brief §7.3 defines (`breath`, `measurement`) and the raw
-// L2 alarm ids Stage 3's plan emits (`apnoea-co2`, `apnoea-resp`), so they light up when Stage 3 merges.
+// Stage 3 hooks (request R-4b-1): the raw apnoea flags of Stage 3's detectors are re-issued with the SAME ids and the
+// skin's level and text; APNEA LIMIT OFF disables them; the CO2 line INOP; SpO2 / EtCO2 limit and desat alarms.
+// Unit level on synthetic events here; test/engine/stage3-alarms-engine.test.ts runs the same against Stage 3.
 import { describe, expect, it } from 'vitest';
 import { buildConditions, createInputs, observeEvent } from '../../../src/l3/alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, stepAlarms } from '../../../src/l3/alarms/manager.ts';
@@ -8,7 +8,6 @@ import { APNEA_DEFAULT_S, deviceProfile } from '../../../src/l3/alarms/profile.t
 import type { EngineEvent } from '../../../src/types.ts';
 
 const ids = (c: { id: string }[]) => c.map((x) => x.id).sort();
-const breath = (t: number) => ({ type: 'breath', t, seq: Math.round(t), kind: 'mech', tiS: 1.6, teS: 3.4, vtMl: 500, etco2True: 36 }) as unknown as EngineEvent;
 const raw = (t: number, id: string, raised: boolean) =>
   ({ type: 'alarm', t, id, priority: 'high', category: id.startsWith('apnoea') ? 'physiological' : 'technical', state: raised ? 'raised' : 'cleared', text: id }) as EngineEvent;
 const meas = (t: number, values: Record<string, number>): EngineEvent => ({
@@ -16,48 +15,38 @@ const meas = (t: number, values: Record<string, number>): EngineEvent => ({
 });
 
 describe('Stage 3 alarm hooks (synthetic events)', () => {
-  it('APNEA after the skin apnoea time without a breath: saadat-like 10 s, philips-like 20 s; none before any breath', () => {
+  it('skin apnoea times: saadat-like 10 s, philips-like 20 s, no table → 20 s, iran-icu-as-found APNEA LIMIT OFF', () => {
     expect(deviceProfile('saadat-like').apneaS).toBe(10);
     expect(deviceProfile('philips-like').apneaS).toBe(20);
-    expect(deviceProfile('zoll-like').apneaS).toBe(APNEA_DEFAULT_S); // no table: brief §6.4 "apnoea (20 s)"
-    for (const [skin, s] of [['saadat-like', 10], ['philips-like', 20]] as const) {
-      const m = createAlarmMgr(deviceProfile(skin));
-      const inp = createInputs();
-      expect(ids(buildConditions(m, inp, 60))).not.toContain('APNEA'); // no respiratory source yet (pre-Stage 3)
-      observeEvent(inp, breath(5));
-      expect(ids(buildConditions(m, inp, 5 + s - 0.1))).not.toContain('APNEA');
-      expect(ids(buildConditions(m, inp, 5 + s))).toContain('APNEA');
-      observeEvent(inp, breath(5 + s + 1));
-      expect(ids(buildConditions(m, inp, 5 + s + 1.5))).not.toContain('APNEA');
-    }
+    expect(deviceProfile('zoll-like').apneaS).toBe(APNEA_DEFAULT_S); // brief §6.4 "apnoea (20 s)"
+    expect(deviceProfile('iran-icu-as-found').apneaS).toBeNull();
   });
 
-  it("Stage 3's raw apnoea flags raise APNEA too, and are re-issued with a level (the raw event never leaves)", () => {
+  it("Stage 3's apnoea flags are re-issued with the same ids, level 1 and the skin's text", () => {
     const m = createAlarmMgr(deviceProfile('philips-like'));
     const inp = createInputs();
+    expect(ids(buildConditions(m, inp, 1))).not.toContain('apnoea-co2');
     observeEvent(inp, raw(30, 'apnoea-co2', true));
-    expect(ids(buildConditions(m, inp, 30))).toContain('APNEA');
-    observeEvent(inp, raw(31, 'apnoea-co2', false));
-    observeEvent(inp, raw(31, 'apnoea-resp', true));
-    expect(ids(buildConditions(m, inp, 31))).toContain('APNEA');
-    observeEvent(inp, raw(32, 'apnoea-resp', false));
-    expect(ids(buildConditions(m, inp, 32))).not.toContain('APNEA');
+    observeEvent(inp, raw(30, 'apnoea-resp', true));
     const out: EngineEvent[] = [];
-    observeEvent(inp, raw(33, 'apnoea-co2', true));
-    stepAlarms(m, 33, buildConditions(m, inp, 33), out);
-    const a = out.find((e): e is Extract<EngineEvent, { type: 'alarm' }> => e.type === 'alarm' && e.id === 'APNEA')!;
-    expect(a).toMatchObject({ state: 'raised', level: 1, priority: 'high', category: 'physiological', text: '***APNEA' });
+    stepAlarms(m, 30, buildConditions(m, inp, 30), out);
+    const a = out.filter((e): e is Extract<EngineEvent, { type: 'alarm' }> => e.type === 'alarm' && e.state === 'raised' && e.id.startsWith('apnoea'));
+    expect(a.map((x) => [x.id, x.level, x.priority, x.text]).sort()).toEqual([['apnoea-co2', 1, 'high', '***APNEA'], ['apnoea-resp', 1, 'high', '***APNEA (RESP)']]);
+    observeEvent(inp, raw(31, 'apnoea-co2', false));
+    expect(ids(buildConditions(m, inp, 31))).not.toContain('apnoea-co2');
+    expect(ids(buildConditions(m, inp, 31))).toContain('apnoea-resp');
   });
 
-  it('APNEA cannot be switched off on saadat-like (always on) but APNEA LIMIT OFF (iran-icu-as-found) silences it', () => {
+  it('saadat-like: APNEA cannot be switched off (RESP APNEA, CO2 APNEA); APNEA LIMIT OFF (iran-icu-as-found) silences it', () => {
     const m = createAlarmMgr(deviceProfile('saadat-like'));
     applyAlarmAction(m, { device: 'alarm', action: 'enable', param: 'RR', value: false }, 0, []);
     const inp = createInputs();
-    observeEvent(inp, breath(1));
-    const c = buildConditions(m, inp, 12).find((x) => x.id === 'APNEA')!;
-    expect(c).toMatchObject({ level: 1, text: 'RESP APNEA' });
-    expect(deviceProfile('iran-icu-as-found').apneaS).toBeNull();
-    expect(ids(buildConditions(createAlarmMgr(deviceProfile('iran-icu-as-found')), inp, 60))).not.toContain('APNEA');
+    observeEvent(inp, raw(12, 'apnoea-resp', true));
+    observeEvent(inp, raw(12, 'apnoea-co2', true));
+    const c = buildConditions(m, inp, 12);
+    expect(c.find((x) => x.id === 'apnoea-resp')).toMatchObject({ level: 1, text: 'RESP APNEA' });
+    expect(c.find((x) => x.id === 'apnoea-co2')).toMatchObject({ level: 1, text: 'CO2 APNEA' });
+    expect(ids(buildConditions(createAlarmMgr(deviceProfile('iran-icu-as-found')), inp, 12))).not.toContain('apnoea-resp');
   });
 
   it('CO2 line INOP from the raw flag, level 3 technical', () => {

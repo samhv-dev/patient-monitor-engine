@@ -35,8 +35,6 @@ export interface AlarmInputs {
   spo2Probe: 'on' | 'off' | 'motion';
   nibpFailed: boolean;
   pacing: boolean;
-  /** Last `breath` event (brief §7.3, Stage 3); null until a respiratory source has produced one. */
-  lastBreathT: number | null;
   /** Stage 3's raw apnoea flags (its CO2 and impedance detectors) and a CO2 line INOP flag (request R-4b-1). */
   apnoeaFlags: string[];
   co2Line: boolean;
@@ -46,7 +44,7 @@ export function createInputs(t0 = 0): AlarmInputs {
   return {
     measured: {}, lastQrsT: null, meanRR: null, ecgOnSince: t0, leadsOff: false, vfSince: null,
     vt: { count: 0, firstT: 0, lastT: -1e9 }, pvcTimes: [], spo2Probe: 'on', nibpFailed: false, pacing: false,
-    lastBreathT: null, apnoeaFlags: [], co2Line: false,
+    apnoeaFlags: [], co2Line: false,
   };
 }
 
@@ -85,8 +83,6 @@ export function observeEvent(inp: AlarmInputs, e: EngineEvent): void {
     if (CO2_LINE_FLAGS.has(e.id)) inp.co2Line = e.state === 'raised';
   } else if (e.type === 'nibp' && (e.phase === 'inflating' || e.result !== undefined)) {
     inp.nibpFailed = false;
-  } else if ((e as { type: string }).type === 'breath') {
-    inp.lastBreathT = (e as unknown as { t: number }).t; // Stage 3's `breath` event (brief §7.3); structural so it compiles before Stage 3 merges
   }
 }
 
@@ -155,12 +151,10 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
       if (inp.pvcTimes.filter((x) => x > t - 60).length >= p.arrhythmiaPvcPerMin) out.push(fixed('PVCS', 2, 'physiological'));
     }
   }
-  // APNEA (brief §6.4 "apnoea (20 s)"; §6.4.1 always on, level 1): a breath gap of the skin's apnoea time, or
-  // Stage 3's own detectors; nothing until a respiratory source exists; APNEA LIMIT OFF (preset) disables it.
-  if (p.apneaS !== null) {
-    const gap = inp.lastBreathT !== null && t - inp.lastBreathT >= p.apneaS;
-    if (gap || inp.apnoeaFlags.length > 0) out.push(fixed('APNEA', 1, 'physiological'));
-  }
+  // APNEA (brief §6.4 "apnoea (20 s)"; §6.4.1 always on, level 1): what the monitor's own detectors see — Stage 3's
+  // capnograph (awRR, `apnoea-co2`) and impedance (`apnoea-resp`) flags, re-issued with the SAME ids, the skin's level
+  // and text (as ecgLeadsOff / nibp-failed). APNEA LIMIT OFF (a preset, research/06 §3.1 F7) disables both.
+  if (p.apneaS !== null) for (const id of inp.apnoeaFlags) out.push(fixed(id as 'apnoea-co2' | 'apnoea-resp', 1, 'physiological'));
   if (inp.co2Line) out.push(fixed('co2Line', 3, 'technical'));
   if (inp.spo2Probe === 'off') out.push(fixed('spo2SensorOff', 3, 'technical'));
   if (inp.nibpFailed) out.push(fixed('nibp-failed', 3, 'technical'));

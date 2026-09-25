@@ -223,5 +223,7 @@ export function describe(c: WireCommand): string {
       return `event ${Object.values(c.event).join(' ')}`;
     case 'attachSensor': // Stage 2 adds the site
       return `sensor ${c.sensor} ${c.state}${c.site ? ` @${c.site}` : ''}`;
+    case 'externalDrive': // Stage 3
+      return `drive paw ${c.frame.pawCmH2O.toFixed(1)} flow ${c.frame.flowLps.toFixed(2)}`;
   }
 }
