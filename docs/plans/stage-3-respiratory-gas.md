@@ -3932,7 +3932,7 @@ git commit -m "test(co2): stage 3 acceptance 1–2 (α angle, phase III, sidestr
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-airway.test.ts`
 
-- [ ] **Step 1: Write the test** (BUILD-PLAN acceptance 3; brief M4)
+- [x] **Step 1: Write the test** (BUILD-PLAN acceptance 3; brief M4)
 
 **Create `packages/engine-core/test/engine/resp-airway.test.ts`:**
 
@@ -3979,12 +3979,12 @@ describe('Stage 3 acceptance: airway loss, apnoea and CO2 kinetics', { timeout: 
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-airway.test.ts`
 Expected: 2 tests pass (prototype: no breath event after the disconnection, trace < 1 mmHg from +5 s, apnoea alarm 20.0 s after the last displayed breath; first breath after 60 s +9.3 mmHg).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-airway.test.ts
