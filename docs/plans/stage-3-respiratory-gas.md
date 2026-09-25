@@ -4119,7 +4119,7 @@ git commit -m "test(gas): stage 3 acceptance 5–6 (Benumof/Patel desaturation, 
 **Files:**
 - Create: `packages/engine-core/test/engine/resp-coupling.test.ts`
 
-- [ ] **Step 1: Write the test** (brief M6, §4.7, §7.6; R27; BUILD-PLAN acceptance 8–9; decisions 1, 7, 13, 14, 15)
+- [x] **Step 1: Write the test** (brief M6, §4.7, §7.6; R27; BUILD-PLAN acceptance 8–9; decisions 1, 7, 13, 14, 15)
 
 **Create `packages/engine-core/test/engine/resp-coupling.test.ts`:**
 
@@ -4283,12 +4283,12 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-coupling.test.ts`
 Expected: 7 tests pass; the ventilator-link test takes ≈ 15 s (39 000 frames, each a dispatch plus a tick with its look-ahead).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/resp-coupling.test.ts
