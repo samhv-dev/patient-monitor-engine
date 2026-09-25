@@ -1,0 +1,116 @@
+{
+ "skin": "zoll-like",
+ "counts": {
+  "charge": 1,
+  "alarm": 10,
+  "chargeReady": 1,
+  "shock": 1
+ },
+ "alarmMaxLateS": 0.0329762356770833,
+ "entries": [
+  {
+   "id": "defib-charge-1",
+   "kind": "charge",
+   "simT": 3.34,
+   "when": 0,
+   "lateS": 0.017933235605558213,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:0",
+   "kind": "alarm",
+   "simT": 6.32,
+   "when": 2.88,
+   "lateS": 0.0329762356770833,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:1",
+   "kind": "alarm",
+   "simT": 6.57,
+   "when": 3.097055097703935,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:2",
+   "kind": "alarm",
+   "simT": 6.82,
+   "when": 3.3471137643467594,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:3",
+   "kind": "alarm",
+   "simT": 7.32,
+   "when": 3.8470510977039343,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:4",
+   "kind": "alarm",
+   "simT": 7.57,
+   "when": 4.097073431084952,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "defib-ready-2",
+   "kind": "chargeReady",
+   "simT": 7.54,
+   "when": 4.096,
+   "lateS": 0.028889235653242196,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:5",
+   "kind": "alarm",
+   "simT": 8.32,
+   "when": 4.847073431084951,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:6",
+   "kind": "alarm",
+   "simT": 8.57,
+   "when": 5.097044097703933,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:7",
+   "kind": "alarm",
+   "simT": 8.82,
+   "when": 5.347113764346759,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:8",
+   "kind": "alarm",
+   "simT": 9.32,
+   "when": 5.847047097703934,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:9",
+   "kind": "alarm",
+   "simT": 9.57,
+   "when": 6.097072431084951,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "defib-shock-3",
+   "kind": "shock",
+   "simT": 12.34,
+   "when": 8.896,
+   "lateS": 0.02898723567708572,
+   "dropped": false
+  }
+ ]
+}

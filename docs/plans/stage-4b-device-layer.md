@@ -7394,7 +7394,7 @@ git commit -m "feat(demo): stage4b device page — skins, alarm tests, defibrill
 - Consumes: `window.__pme4b` (Task 22), the `.pme-bar`, `.pme-lamp`, `.pme-cd`, `.pme-stile[data-param]` elements (Task 20), `#skin`, `#theme`, `#capture`, `#ecg12`, `#sound` (Task 22).
 - Produces: the gate evidence files above.
 
-- [ ] **Step 1: Write the e2e file**
+- [x] **Step 1: Write the e2e file**
 
 Create `apps/demo/e2e/stage4b-device.e2e.ts`:
 
@@ -7516,14 +7516,14 @@ test('audio timing log: alarm pulses, charge / ready / shock tones', async ({ pa
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage4b-device.e2e.ts
 ```
 Expected: `5 passed` (about 1–2 minutes). Failures and what they mean: the VFIB bar text not appearing within 8 s means the device layer is not stepping (Task 9); a flash duration other than 0.5 s / 1.667 s means `flashCss` or the lamp classes (Task 20); no `alarm` entries in the audio log means `enableSound` did not build the sounder (Task 21).
 
-- [ ] **Step 3: Look at every screenshot** (open them; this is the gate evidence)
+- [x] **Step 3: Look at every screenshot** (open them; this is the gate evidence)
 
 Check, and write what you see into the gate note (Task 25):
 - `saadat-like--idle.png`: grey idle bar, red crossed bells in the HR, NIBP, IBP1, IBP2, SpO2, TEMP and RR tiles and in the header, a green `II  X…  NORMAL` lane, magenta PLETH, salmon IBP1 (200/40 scale), light-blue IBP2, an empty RESP lane (Stage 3).
@@ -7534,7 +7534,7 @@ Check, and write what you see into the gate note (Task 25):
 - `zoll-like--ecg-grid.png`: ECG-paper grid under the traces, readable traces on the dimmed major lines, no black gaps left by the erase bar.
 - `12-lead-3x4.png`: 3 rows × 4 columns (I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6), a lead II rhythm strip, one 1 mV × 200 ms calibration pulse per row, header `II  25 mm/s  10 mm/mV  0.05–150 Hz  HR 75  axis …°`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage4b-device.e2e.ts docs/gates/stage-4b
