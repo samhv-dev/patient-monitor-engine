@@ -4068,7 +4068,7 @@ git commit -m "feat(engine-core): shocks with rail artefact and outcome table, s
 - Consumes: `MonitorEngine.readSamples('vcgX'|'vcgY'|'vcgZ')`, `now()` (public API only), `projectLeads`, `designEcgFilter('diagnostic')`.
 - Produces: `capture12(e, endT?): Capture12`, `LAYOUT_3X4`, `CAPTURE_S`, `interface Capture12 {t0, rate, durationS, leads: Record<LeadId, Float32Array>, filter, layout, paper, cal, measurements: {hr, axisDeg}}` — exported from `@pme/engine-core`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/capture12.test.ts`:
 
@@ -4121,12 +4121,12 @@ describe('capture12', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/capture12.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../src/l3/capture12/capture.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -4248,7 +4248,7 @@ function measure(leads: Record<LeadId, Float32Array>): Capture12['measurements']
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/capture12.test.ts; cd -
@@ -4256,7 +4256,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/l3/capture12/capture.ts packages/engine-core/test/l3/capture12.test.ts
