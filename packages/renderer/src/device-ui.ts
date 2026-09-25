@@ -113,7 +113,8 @@ export class DeviceUI {
       c.style.cssText = `width:180px;border-left:1px solid ${r.skin.chrome.divider};`;
       for (const spec of col) {
         const el = doc.createElement('div');
-        el.className = `pme-stile${spec.size === 'large' ? ' large' : ''}`;
+        // the HR tile keeps the Stage 1 class `pme-tile`, which the IIFE smoke test (and embedders) look up
+        el.className = `${spec.param === 'HR' ? 'pme-tile ' : ''}pme-stile${spec.size === 'large' ? ' large' : ''}`;
         el.dataset.param = spec.param;
         el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
         el.style.fontFamily = r.render.fontStack;

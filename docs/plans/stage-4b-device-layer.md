@@ -6676,7 +6676,7 @@ git commit -m "feat(renderer): device UI (alarm header, skin tiles with bells/li
 - Consumes: Tasks 14–20; `createTonePlayer`, `getAlarmProfile`, `AlarmSounder` (Stage 4a, RR-6).
 - Produces: `MountOptions.skin` (any `resolveSkin` id), `theme?`, `page?`; `MonitorHandle.setSkin(id, {theme?, page?})`, `.skin`, `.capture12()`, `.trends`, `.eventLog`; `renderPlan(r, page?, only?: LaneOverride)` keeps the lanes a page names; the HR tile keeps the class `pme-tile`; the renderer index exports the Stage 4b modules.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/renderer/test/skin-plan.test.ts`, replace this block (it occurs exactly once):
 
@@ -6701,12 +6701,12 @@ with:
     const p = legacyPlan(['ecgII', 'V5'], ['abp']);
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -`
 Expected: FAIL — the new `renderPlan(…, { lanes, waves })` test: the override is ignored (`expected [ … 'ECG1', 'ecgII' … 'CO2' ] to deeply equal …`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/device-ui.ts`, replace this block (it occurs exactly once):
 
@@ -7121,7 +7121,7 @@ with:
     }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -
@@ -7129,7 +7129,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/device-ui.ts packages/renderer/src/index.ts packages/renderer/src/mount.ts packages/renderer/src/skin-plan.ts packages/renderer/test/skin-plan.test.ts

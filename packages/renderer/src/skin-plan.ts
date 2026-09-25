@@ -76,10 +76,20 @@ export function ecgLabel(template: string, lead: LeadId, gainMult: number, gainL
   return template.replace('{lead}', LEAD_LABEL[lead]).replace('{gain}', formatGain(gainMult, gainLabel)).replace('{FILTER}', filterName);
 }
 
-export function renderPlan(r: ResolvedSkin, page?: string): RenderPlan {
+/** Pages that name their lanes (Stage 1/2/5 demos pass `lanes`/`waves`) keep them, in the skin's colours. */
+export interface LaneOverride {
+  lanes?: readonly LeadId[];
+  waves?: readonly WaveLaneId[];
+}
+const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP' };
+
+export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride): RenderPlan {
   const s = r.skin;
   const pg = s.pages.find((p) => p.id === (page ?? s.defaultPage));
-  const laneIds = pg?.lanes ?? s.layout.lanes;
+  const laneIds: readonly LaneId[] = only
+    ? [...(only.lanes ?? ['ecgII']).map((_, i) => `ECG${Math.min(3, i + 1)}` as LaneId), ...(only.waves ?? []).map((w) => WAVE_LANE[w])]
+    : (pg?.lanes ?? s.layout.lanes);
+  const leadAt = (i: number): LeadId => (only?.lanes ? (only.lanes[i] ?? 'ecgII') : leadOf(s.ecg.laneLeads[i] ?? s.ecg.laneLeads[0] ?? 'II'));
   const gainOptions = s.ecg.gainOptions.filter((g): g is number => typeof g === 'number');
   const filterNames: Record<string, string> = {};
   for (const [name, band] of Object.entries(s.ecg.filters)) filterNames[filterModeFor(band)] = s.ecg.filterLabel === 'letter' ? name.charAt(0) : name;
@@ -89,7 +99,7 @@ export function renderPlan(r: ResolvedSkin, page?: string): RenderPlan {
     const color = rl?.color ?? s.foreground;
     const mmPerS = rl?.mmPerS ?? s.sweep.ibp.default;
     if (id.startsWith('ECG')) {
-      const lead = leadOf(s.ecg.laneLeads[ecgIndex++] ?? s.ecg.laneLeads[0] ?? 'II');
+      const lead = leadAt(ecgIndex++);
       return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel };
     }
     const scaleKey = IBP_SCALE_KEY[id];
