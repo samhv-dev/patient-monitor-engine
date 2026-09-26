@@ -18,6 +18,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+        env:
+          PME_TEST_SET: fast # the slow engine set runs in the test-slow job
       - run: pnpm build
       - run: pnpm check-notices
       - run: pnpm exec playwright install --with-deps chromium webkit
@@ -27,3 +29,21 @@ jobs:
           name: patient-monitor-iife
           path: packages/renderer/dist/patient-monitor.iife.js
           if-no-files-found: error
+
+  test-slow:
+    # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
+    # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
+    # cannot starve the Vitest worker RPC there.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pme/engine-core test
+        env:
+          PME_TEST_SET: slow
