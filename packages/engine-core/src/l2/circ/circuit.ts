@@ -17,8 +17,22 @@
 import { compliance } from '../hemo/circulation.ts';
 import { RADIAL_FR_HZ, RADIAL_GAIN, RADIAL_ZETA, WK_C, WK_CK, WK_L, WK_P0 } from '../hemo/params.ts';
 import { activationAt, type Activation } from './activation.ts';
-import { R_VR_BACK, V0_ART, ZC_AO as WK_ZC } from './params.ts';
+import { R_VR_BACK, V0_ART, ZC_AO } from './params.ts';
 import { valveFlow, type Valve } from './valves.ts';
+// hot-loop locals: module bindings of imported constants go through getters under the vitest transform [perf]
+const L_compliance = compliance;
+const L_RADIAL_FR_HZ = RADIAL_FR_HZ;
+const L_RADIAL_GAIN = RADIAL_GAIN;
+const L_RADIAL_ZETA = RADIAL_ZETA;
+const L_WK_C = WK_C;
+const L_WK_CK = WK_CK;
+const L_WK_L = WK_L;
+const L_WK_P0 = WK_P0;
+const L_activationAt = activationAt;
+const L_R_VR_BACK = R_VR_BACK;
+const L_V0_ART = V0_ART;
+const L_ZC_AO = ZC_AO;
+const L_valveFlow = valveFlow;
 
 export const N_STATE = 11;
 export const S = { PC: 0, QL: 1, X: 2, XD: 3, VSV: 4, VRA: 5, VRV: 6, VPA: 7, VPV: 8, VLA: 9, VLV: 10 } as const;
@@ -48,6 +62,9 @@ export interface CircDrive {
   qIn: number; // net volume in (+ fluid, − bleed), mL/s, into the systemic veins
   qVad: (lvp: number, aop: number) => number; // LV → aorta device flow (LVAD), mL/s
   qAortaSrc: (t: number) => number; // volume source in the aorta (IABP dV/dt), mL/s
+  memoT?: number; // activation memo (set by evaluate) [perf]
+  memoA?: number;
+  memoAa?: number;
 }
 
 /** Algebraic outputs at one instant (pressures mmHg, flows mL/s). Reused, never allocated per call. */
@@ -64,12 +81,23 @@ export function createOut(): CircOut {
   };
 }
 
-const WR = 2 * Math.PI * RADIAL_FR_HZ;
+const WR = 2 * Math.PI * L_RADIAL_FR_HZ;
 
 /** Evaluate every pressure and flow of state s at time t into o. */
 export function evaluate(s: readonly number[], t: number, p: CircParams, d: CircDrive, o: CircOut): void {
-  const a = activationAt(d.vent, t);
-  const aa = activationAt(d.atria, t);
+  // RK4 evaluates t + h/2 twice and t + h twice (k4 and the outputs): the activation is memoised per time [perf]
+  let a: number;
+  let aa: number;
+  if (d.memoT === t) {
+    a = d.memoA as number;
+    aa = d.memoAa as number;
+  } else {
+    a = L_activationAt(d.vent, t);
+    aa = L_activationAt(d.atria, t);
+    d.memoT = t;
+    d.memoA = a;
+    d.memoAa = aa;
+  }
   const pit = d.pIt(t);
   const cc = d.cprCardiac(t);
   const ct = d.cprThoracic(t);
@@ -92,19 +120,19 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   // aortic valve against the Windkessel's characteristic impedance: P_ao = PC + Zc·(Q_av − QL) + ct. A balloon (IABP)
   // displaces volume in the descending aorta, i.e. into the compliance, not through the root's Zc (which turned a
   // 60 ms deflation into a −35 mmHg spike at the valve) [ENG]
-  const pX = pc - WK_ZC * ql + ct;
-  const qAv = valveFlow(p.av, pLv - pX, WK_ZC);
-  const pAo = pX + WK_ZC * qAv;
-  const qPv = valveFlow(p.pv, pRv - pPa, p.zPa);
+  const pX = pc - L_ZC_AO * ql + ct;
+  const qAv = L_valveFlow(p.av, pLv - pX, L_ZC_AO);
+  const pAo = pX + L_ZC_AO * qAv;
+  const qPv = L_valveFlow(p.pv, pRv - pPa, p.zPa);
   const dpv = pSv - pRa;
   o.pAo = pAo;
-  o.pRad = pAo + (RADIAL_GAIN * 2 * RADIAL_ZETA * (s[3] as number)) / WR;
+  o.pRad = pAo + (L_RADIAL_GAIN * 2 * L_RADIAL_ZETA * (s[3] as number)) / WR;
   o.pSv = pSv; o.pRa = pRa; o.pRv = pRv; o.pPa = pPa; o.pPaRoot = pPa + p.zPa * qPv; o.pPv = pPv; o.pLa = pLa; o.pLv = pLv;
   o.pPeri = peri; o.pIt = pit;
   o.qAv = qAv; o.qPv = qPv;
-  o.qMv = valveFlow(p.mv, pLa - pLv);
-  o.qTv = valveFlow(p.tv, pRa - pRv);
-  o.qVr = dpv >= 0 ? dpv / p.rVr : dpv / (p.rVr * R_VR_BACK);
+  o.qMv = L_valveFlow(p.mv, pLa - pLv);
+  o.qTv = L_valveFlow(p.tv, pRa - pRv);
+  o.qVr = dpv >= 0 ? dpv / p.rVr : dpv / (p.rVr * L_R_VR_BACK);
   o.qSys = (pc - pSv) / p.rSys;
   o.qLungL = (pPa - pPv) / p.pvrL;
   o.qLungR = (pPa - pPv) / p.pvrR;
@@ -118,10 +146,10 @@ const ev = createOut();
 function deriv(t: number, s: readonly number[], ds: number[], p: CircParams, d: CircDrive): void {
   evaluate(s, t, p, d, ev);
   const qSrc = d.qAortaSrc(t);
-  ds[0] = (ev.qAv + ev.qVad + qSrc - ev.qSys) / (compliance(s[0] as number) * p.cArt);
-  ds[1] = (WK_ZC * (ev.qAv - (s[1] as number))) / WK_L;
+  ds[0] = (ev.qAv + ev.qVad + qSrc - ev.qSys) / (L_compliance(s[0] as number) * p.cArt);
+  ds[1] = (L_ZC_AO * (ev.qAv - (s[1] as number))) / L_WK_L;
   ds[2] = s[3] as number;
-  ds[3] = WR * WR * (ev.pAo - (s[2] as number)) - 2 * RADIAL_ZETA * WR * (s[3] as number);
+  ds[3] = WR * WR * (ev.pAo - (s[2] as number)) - 2 * L_RADIAL_ZETA * WR * (s[3] as number);
   ds[4] = ev.qSys - ev.qVr + d.qIn;
   ds[5] = ev.qVr - ev.qTv;
   ds[6] = ev.qTv - ev.qPv;
@@ -153,23 +181,23 @@ export function stepCirc(s: number[], t: number, h: number, p: CircParams, d: Ci
 
 /** Stressed arterial volume ∫₀^PC C(p) dp for Stage 2's C(P) = WK_C·clamp(e^{−k(P−P0)}, 0.5, 3), × cArt. */
 export function arterialVolume(pc: number, cArt: number): number {
-  const lo = WK_P0 - Math.log(3) / WK_CK; // below: C = 3·WK_C
-  const hi = WK_P0 + Math.log(2) / WK_CK; // above: C = 0.5·WK_C
+  const lo = L_WK_P0 - Math.log(3) / L_WK_CK; // below: C = 3·WK_C
+  const hi = L_WK_P0 + Math.log(2) / L_WK_CK; // above: C = 0.5·WK_C
   const seg = (a: number, b: number): number => {
     // ∫ WK_C·e^{−k(p−P0)} dp from a to b inside [lo, hi]
-    return (WK_C / WK_CK) * (Math.exp(-WK_CK * (a - WK_P0)) - Math.exp(-WK_CK * (b - WK_P0)));
+    return (L_WK_C / L_WK_CK) * (Math.exp(-L_WK_CK * (a - L_WK_P0)) - Math.exp(-L_WK_CK * (b - L_WK_P0)));
   };
   let v = 0;
   const x = Math.max(0, pc);
-  if (x <= lo) v = 3 * WK_C * x;
+  if (x <= lo) v = 3 * L_WK_C * x;
   else {
-    v = 3 * WK_C * Math.max(0, lo) + seg(Math.max(0, lo), Math.min(x, hi));
-    if (x > hi) v += 0.5 * WK_C * (x - hi);
+    v = 3 * L_WK_C * Math.max(0, lo) + seg(Math.max(0, lo), Math.min(x, hi));
+    if (x > hi) v += 0.5 * L_WK_C * (x - hi);
   }
   return v * cArt;
 }
 
 /** Total blood volume represented by state s (mL): the unstressed arterial volume is bookkeeping only. */
 export function totalVolume(s: readonly number[], p: CircParams): number {
-  return V0_ART + arterialVolume(s[0] as number, p.cArt) + (s[4] as number) + (s[5] as number) + (s[6] as number) + (s[7] as number) + (s[8] as number) + (s[9] as number) + (s[10] as number);
+  return L_V0_ART + arterialVolume(s[0] as number, p.cArt) + (s[4] as number) + (s[5] as number) + (s[6] as number) + (s[7] as number) + (s[8] as number) + (s[9] as number) + (s[10] as number);
 }

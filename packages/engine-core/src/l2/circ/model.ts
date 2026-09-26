@@ -11,6 +11,10 @@ import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
 
+// hot-loop locals (imported bindings are getters under the vitest transform) [perf]
+const L_H = H_S;
+const L_evaluate = evaluate;
+const L_stepCirc = stepCirc;
 export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 /**
  * R45(a) post-extrasystolic potentiation is a contractility (calcium) effect, not only Frank–Starling (research 03
@@ -84,7 +88,12 @@ export interface CircModelState {
    * Extra multipliers owned by other modules (coronary ischaemia, conditions; 7b lungs via R46): applied at the next
    * control step. pvrLung × both beds, pvrLungL/R × one bed (HPV, one-lung ventilation, unilateral disease); default 1.
    */
-  ext: { kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number; pvrLung?: number; pvrLungL?: number; pvrLungR?: number };
+  ext: {
+    kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number;
+    pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
+    rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
+    endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
+  };
 }
 
 export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircModelState {
@@ -178,20 +187,21 @@ function control(m: CircModelState, env: CircEnv): void {
   const p = m.p;
   const base = m.base;
   const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
-  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF;
-  p.v0Sv = base.v0Sv + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
+  const x = m.ext; // R48/R49 multipliers (default 1; endoDV0Frac default 0)
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * (x.endoSvrF ?? 1);
+  p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split
   p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
-  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF;
+  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * (x.endoEesF ?? 1);
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF;
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF) + b.rrMs / 1000;
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * (x.endoEesF ?? 1);
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * (x.endoHrF ?? 1)) + b.rrMs / 1000;
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);
@@ -216,8 +226,21 @@ const newAcc = (t: number, edv: number, edp: number): BeatAcc => ({
  * `onStep(o, t)` (optional) sees every one of them (the pipeline samples the radial pressure for its transducer).
  */
 export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: CircOut, onStep?: (o: CircOut, t: number) => void): void {
+  // RK4 asks for the inputs at t, t + h/2 (twice), t + h and again at t + h for the outputs: remember the last two
+  // pleural values (the breath-driver lookup is the costliest input) [perf]
+  let t1 = Number.NaN, v1 = 0, t2 = Number.NaN, v2 = 0;
+  const pIt = (t: number): number => {
+    if (t === t1) return v1;
+    if (t === t2) return v2;
+    const v = env.pIt(t) + m.ext.pPtx;
+    t2 = t1;
+    v2 = v1;
+    t1 = t;
+    v1 = v;
+    return v;
+  };
   const d: CircDrive = {
-    vent: m.vent, atria: m.atria, kLv: m.kLv, kRv: m.kRv, pIt: (t) => env.pIt(t) + m.ext.pPtx, cprCardiac: env.cprCardiac, cprThoracic: env.cprThoracic,
+    vent: m.vent, atria: m.atria, kLv: m.kLv, kRv: m.kRv, pIt, cprCardiac: env.cprCardiac, cprThoracic: env.cprThoracic,
     qIn: 0, qVad: env.qVad, qAortaSrc: env.qAortaSrc,
   };
   while (m.t < tEnd - 1e-9) {
@@ -231,17 +254,17 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     for (const v of m.vol) if (v.until > m.t) q += v.rate;
     d.qIn = q;
     // a beat window opens at each ventricular activation onset inside this step
-    const next = m.vent.find((x) => x.t0 > m.t && x.t0 <= m.t + H_S);
+    const next = m.vent.find((x) => x.t0 > m.t && x.t0 <= m.t + L_H);
     if (next) {
       closeBeat(m, next.t0);
-      evaluate(m.s, m.t, m.p, d, o);
+      L_evaluate(m.s, m.t, m.p, d, o);
       m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt);
       if (next.origin !== undefined) m.acc.origin = next.origin;
     }
-    stepCirc(m.s, m.t, H_S, m.p, d);
-    m.t += H_S;
-    evaluate(m.s, m.t, m.p, d, o);
-    m.qFwd += (Math.max(0, o.qAv) + o.qVad - m.qFwd) * (H_S / CO_TAU_S);
+    L_stepCirc(m.s, m.t, L_H, m.p, d);
+    m.t += L_H;
+    L_evaluate(m.s, m.t, m.p, d, o);
+    m.qFwd += (Math.max(0, o.qAv) + o.qVad - m.qFwd) * (L_H / CO_TAU_S);
     if (o.qAv > 1 && env.cprCardiac(m.t) > 0) m.lastEjT = m.t; // a compression that ejects (beats set it below)
     m.mapSum += o.pRad;
     m.raTmSum += o.pRa - o.pIt - o.pPeri; // atrial stretch: transmural across the wall (pericardial pressure compresses)
@@ -254,8 +277,8 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
       a.n++;
       if (o.pAo > a.aoS) a.aoS = o.pAo;
       if (o.pAo < a.aoD) a.aoD = o.pAo;
-      a.sv += Math.max(0, o.qAv) * H_S;
-      a.svRv += Math.max(0, o.qPv) * H_S;
+      a.sv += Math.max(0, o.qAv) * L_H;
+      a.svRv += Math.max(0, o.qPv) * L_H;
       const v = m.s[S.VLV] as number;
       if (v < a.esv) a.esv = v;
       if (o.pLv > a.lvsp) a.lvsp = o.pLv;

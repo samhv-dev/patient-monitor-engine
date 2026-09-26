@@ -39,13 +39,15 @@ describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PULSE_ORACLE_DIR=…
         if (k === 'cvp') return avg(s.map((x) => x.values.cvp ?? 0));
         return avg(s.map((x) => x.values.pawp ?? 0));
       };
+      const verdicts: string[] = [];
       for (const row of sc.rows) {
         const o = row.metric === 'abs' ? ours(sc.compareAtS, row.channel) : ours(sc.compareAtS, row.channel) - ours(sc.baselineS || 10, row.channel);
         const pv = row.metric === 'abs' ? pulseAt[sc.compareAtS]![PULSE_KEYS[row.channel]]! : pulseAt[sc.compareAtS]![PULSE_KEYS[row.channel]]! - pulseAt[sc.baselineS]![PULSE_KEYS[row.channel]]!;
         const verdict = compareRow(o, pv, row);
         console.log(`${sc.id} ${row.channel} ${row.metric}: ours ${o.toFixed(2)} pulse ${pv.toFixed(2)} → ${verdict}${row.note ? ` (${row.note})` : ''}`);
-        expect(verdict).not.toBe('fail');
+        verdicts.push(verdict);
       }
+      expect(verdicts).not.toContain('fail'); // every row is printed before the verdict (a fail is a gate-note finding)
     }, 600_000);
   }
 });

@@ -4,11 +4,16 @@
 // or per atrial depolarisation (atria); activations are plain data so the pipeline state stays JSON-safe.
 import { lvetS, pepS } from '../hemo/params.ts';
 import { DH_A1, DH_A2, DH_N1, DH_N2, T_ACT_PER_SYSTOLE } from './params.ts';
+// hot-loop locals: module bindings of imported constants go through getters under the vitest transform [perf]
+const L_DH_A1 = DH_A1;
+const L_DH_A2 = DH_A2;
+const L_DH_N1 = DH_N1;
+const L_DH_N2 = DH_N2;
 
 function raw(u: number): number {
   if (u <= 0) return 0;
-  const g1 = (u / DH_A1) ** DH_N1;
-  return (g1 / (1 + g1)) * (1 / (1 + (u / DH_A2) ** DH_N2));
+  const g1 = (u / L_DH_A1) ** L_DH_N1;
+  return (g1 / (1 + g1)) * (1 / (1 + (u / L_DH_A2) ** L_DH_N2));
 }
 
 /** Peak of the raw double-Hill on u ∈ (0, 1] (Pulse's 0.598 at its own grid; computed here to 1e-9). */

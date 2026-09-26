@@ -4,6 +4,9 @@
 //   forward  (ΔP > 0): ΔP = R·Q + k·Q²,  k = max(0, 1/(K·A)² − 1/(K·A_ref)²)          [Gorlin; excess over normal, ENG]
 //   backward (ΔP < 0): Q = −44.3·EROA·|ΔP|/√(|ΔP| + ε)                                  [orifice law, smoothed]
 import { REGURG_EPS, REGURG_K } from './params.ts';
+// hot-loop locals: module bindings of imported constants go through getters under the vitest transform [perf]
+const L_REGURG_EPS = REGURG_EPS;
+const L_REGURG_K = REGURG_K;
 
 export interface Valve {
   r: number; // open resistance incl. any series characteristic impedance, mmHg·s/mL
@@ -24,5 +27,5 @@ export function valveFlow(v: Valve, dp: number, rExtra = 0): number {
     return (-r + Math.sqrt(r * r + 4 * v.k * dp)) / (2 * v.k);
   }
   if (v.eroa <= 0) return 0;
-  return (REGURG_K * v.eroa * dp) / Math.sqrt(-dp + REGURG_EPS);
+  return (L_REGURG_K * v.eroa * dp) / Math.sqrt(-dp + L_REGURG_EPS);
 }
