@@ -307,7 +307,7 @@ git push -u origin stage-v-ventilator-link
 **Interfaces:**
 - Produces: `VentMode` (`'VC'|'PC'|'PRVC'|'PSV'|'PAV'`), `Shape`, `VentPhase`, `VentConfig` (the original `S`, every key), `Measured`, `Marker`, `VentPhysics` (the original `P` + `dPaw`, `dFlow`, `dispPaw`, `dispFlowLpm`), `VentState { cfg, p, seed, flowTarget, hold, pendingHold, n, circuit, lastBreathT, silenceUntil }`, `VentAlarmId`, `VentAlarm`; `clamp(x,a,b)`, `easeShape(x, sh)`, `pbw(cfg)`, `recoilPressure(cfg, v)`, `expResistance(cfg)`, `pmusValue(cfg, t)`, `pmusDuration(cfg)`, `simRand(vs)`. From `presets.ts` (created here, used by Task 3): `DEFAULT_CONFIG`, `PresetId`, `PRESETS`, `PRESET_KEYS`, `HAMILTON_MODES`, `MODE_MAP`, `modeName(cfg)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/mechanics.test.ts`:**
 
@@ -353,12 +353,12 @@ describe('v1.9 mechanics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/mechanics.test.ts`
 Expected: FAIL — `DEFAULT_CONFIG`/`recoilPressure` not exported.
 
-- [ ] **Step 3: Create the types**
+- [x] **Step 3: Create the types**
 
 **Create `packages/ventilator/src/types.ts`:**
 
@@ -431,7 +431,7 @@ export type VentAlarmId =
 export interface VentAlarm { id: VentAlarmId; text: string; priority: 'high' | 'medium' }
 ```
 
-- [ ] **Step 4: Create the mechanics and the presets data**
+- [x] **Step 4: Create the mechanics and the presets data**
 
 **Create `packages/ventilator/src/mechanics.ts`** (line-for-line port; keep the arithmetic order):
 
@@ -566,12 +566,12 @@ export * from './mechanics.ts';
 export * from './presets.ts';
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/mechanics.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 4 passed; typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/ventilator
