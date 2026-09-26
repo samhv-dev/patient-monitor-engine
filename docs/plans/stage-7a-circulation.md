@@ -1690,7 +1690,7 @@ git push origin stage-7a-circulation
 - Consumes: Tasks 2–8.
 - Produces: `CTL_DT`, `interface CircBeat { t; sbp; dbp; map; aoSys; aoDia; sv; svRv; lvedv; lvesv; lvedp; lvsp; avOpen; avClose; dur }`, `interface VolumeEvent { rate; until }`, `interface CircModelState` (fields `prof, weightKg, base, p, s, t, vent, atria, kLv, kRv, baro, boluses, vol, hrModel, ctlNext, mapSum, mapN, acc, beats, lastEjT, mapSetPinned, ext: { kLv, kRv, pvr, vFluid, pPtx, kIsch }`), `createCircModel(profile?)`, `circOnBeat(m, t, hr, origin, perfused)`, `circOnAtrial(m, tP)`, `circGiveDrug(m, drug, doseMg)`, `circVolume(m, ml, overS)`, `interface CircEnv { pIt; cprCardiac; cprThoracic; qVad; qAortaSrc; modeled }`, `RESTING_ENV`, `stepCircModel(m, tEnd, env, o, onStep?)`, `circCardiacOutput(m)`. Test helpers: `palv`, `ventEnv`, `driver`, `runTo`, `collectBeats`, `beatsIn`, `ppv`, `mean`, `VENT_DEFAULT`.
 
-- [ ] **Step 1: Write the helpers and the failing sanity test**
+- [x] **Step 1: Write the helpers and the failing sanity test**
 
 `packages/engine-core/test/helpers/circ.ts`:
 
@@ -1814,12 +1814,12 @@ describe('CircModel sanity (prototype numbers)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/model-sanity.test.ts`
 Expected: FAIL — cannot resolve `model.ts`.
 
-- [ ] **Step 3: Implement the model**
+- [x] **Step 3: Implement the model**
 
 `packages/engine-core/src/l2/circ/model.ts`:
 
@@ -2038,12 +2038,12 @@ export function circCardiacOutput(m: CircModelState): number {
 }
 ```
 
-- [ ] **Step 4: Run the sanity test**
+- [x] **Step 4: Run the sanity test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/model-sanity.test.ts`
 Expected: PASS (3 tests, ≈ 5 s). Prototype: phenylephrine MAP +20.0 at 45 s, HR −14.0; 25 % bleed HR 104–109, PP 37 → 20; β-blocked 35 % HR 79.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/test/helpers/circ.ts packages/engine-core/test/l2/circ/model-sanity.test.ts

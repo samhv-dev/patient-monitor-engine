@@ -15,9 +15,9 @@
 // P = (Emin + a·(Emax − Emin))·(V − V0); every intrathoracic compartment adds P_it (pleural, audit R-B) and the
 // four chambers add P_peri = A_p·(e^{λ(V_LV + V_RV + vFluid − v0Peri)} − 1) floored at 0 (tables §2.2).
 import { compliance } from '../hemo/circulation.ts';
-import { RADIAL_FR_HZ, RADIAL_GAIN, RADIAL_ZETA, WK_C, WK_CK, WK_L, WK_P0, WK_ZC } from '../hemo/params.ts';
+import { RADIAL_FR_HZ, RADIAL_GAIN, RADIAL_ZETA, WK_C, WK_CK, WK_L, WK_P0 } from '../hemo/params.ts';
 import { activationAt, type Activation } from './activation.ts';
-import { R_VR_BACK, V0_ART } from './params.ts';
+import { R_VR_BACK, V0_ART, ZC_AO as WK_ZC } from './params.ts';
 import { valveFlow, type Valve } from './valves.ts';
 
 export const N_STATE = 11;

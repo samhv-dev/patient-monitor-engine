@@ -58,6 +58,13 @@ export const REGURG_K = 44.3;
 export const REGURG_EPS = 1; // mmHg
 
 // --- vessels ---
+/**
+ * Aortic characteristic impedance for the elastance heart (R45(b)): 0.035 mmHg·s/mL, inside Stage 2's WK_ZC range
+ * 0.03–0.06. With Stage 2's 0.05 the Zc·Q_peak term dominated the pulse pressure of an ejecting elastance
+ * ventricle, the stabiliser had to raise arterial compliance to 3.5 mL/mmHg (C 1.4 ± 0.7) and PP stopped following
+ * stroke volume (class II PPV 7 %). At 0.035 the tuned compliance is ≈ 2.1 mL/mmHg and PP ∝ SV again [ENG].
+ */
+export const ZC_AO = 0.035;
 /** Systemic veins: compliance 110 mL/mmHg (tables cSv; R03 §8.2), unstressed volume set by stabilisation. */
 export const C_SV = 110;
 /** Veins → RA resistance. Lumped-venous equivalent of R_vr 1.4 mmHg·min/L once P_sv ≈ Pmsf − 1 [ENG fit]. */
@@ -80,8 +87,12 @@ export const PERI_LAMBDA = 0.03; // /mL (Smith)
 export const PERI_RESERVE = 1.0;
 export const PERI_EXTRA_ML = 0;
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
-/** Fraction of alveolar pressure reaching the pleura (tables tIt 0.4; Q28 default). */
-export const T_IT = 0.4;
+/**
+ * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). R45(b): raised to
+ * 0.65 toward the evidence value 0.5–0.7 so class II haemorrhage gives PPV > 13 % on the ventilator (0.4 gave
+ * 5 % → 7 %) while normovolaemic PPV stays < 10 % [calibration pass R44].
+ */
+export const T_IT = 0.65;
 export const CMH2O_TO_MMHG = 0.7356;
 /** Spontaneous inspiratory pleural swing, cmH2O (Stage 3 SPONT_PPL_CMH2O). */
 export const SPONT_SWING_CMH2O = 4;

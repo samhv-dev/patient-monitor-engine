@@ -31,8 +31,9 @@ describe('baroreflex', () => {
     expect(o.rrMs).toBe(-200); // vagal withdrawal saturates
   });
   it('β-blockade removes most of the HR and contractility response but not SVR', () => {
-    const a = run(createBaro(90), 70, 60);
-    const b = run(createBaro(90), 70, 60, { ...g, betaBlock: 0.6 });
+    // MAP 80 (not 70): with g_hs 0.04 (R45(b)) a 20 mmHg error saturates the unblocked HR factor at +60 %
+    const a = run(createBaro(90), 80, 60);
+    const b = run(createBaro(90), 80, 60, { ...g, betaBlock: 0.6 });
     expect(b.hrF - 1).toBeCloseTo((a.hrF - 1) * 0.4, 6);
     expect(b.svrF).toBeCloseTo(a.svrF, 9);
   });

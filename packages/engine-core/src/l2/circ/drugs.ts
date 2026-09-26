@@ -27,8 +27,8 @@ interface DrugRow {
 
 /** Peak effects at the reference dose (tables §6.2/§6.3; [ENG] where marked there). */
 export const DRUGS: Record<DrugId, DrugRow> = {
-  // phenylephrine 100 µg: SVR ×1.8 at peak [ENG, refitted in the 7a prototype to MAP +15–25 against the emergent reflex; tables said ×1.35], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
-  phenylephrine: { refDose: 0.1, unit: 'mg', tauOn: 30, tauOff: 300, peak: { hr: 0, ees: 0, svr: 0.8, v0Frac: -0.03, pvr: 0.1 } },
+  // phenylephrine 100 µg: SVR ×1.7 at peak [ENG, refitted to MAP +15–25 against the emergent reflex: prototype ×1.8, ×1.7 after the R45(b) reflex/Zc changes; tables said ×1.35], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
+  phenylephrine: { refDose: 0.1, unit: 'mg', tauOn: 30, tauOff: 300, peak: { hr: 0, ees: 0, svr: 0.7, v0Frac: -0.03, pvr: 0.1 } },
   // ephedrine 10 mg: HR +12 %, contractility +18 %, SVR +12 %, V −3 %; peak 4–5 min, ~1 h; tachyphylaxis ×0.7
   ephedrine: { refDose: 10, unit: 'mg', tauOn: 90, tauOff: 1800, peak: { hr: 0.12, ees: 0.18, svr: 0.12, v0Frac: -0.03, pvr: 0 }, betaMediated: true, tachyphylaxis: 0.7 },
   // nitroglycerin 100 µg bolus: venous +10 % of V, SVR ×0.9, PVR ×0.8; onset 1–2 min, 5–10 min

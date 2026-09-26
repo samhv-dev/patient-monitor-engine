@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus } from '../../../src/l2/circ/drugs.ts';
 
 describe('7a bolus effect curves', () => {
-  it('phenylephrine 100 µg peaks at ×1.8 SVR 70–80 s after the bolus and is < 10 % of peak by 15 min', () => {
+  it('phenylephrine 100 µg peaks at ×1.7 SVR 70–80 s after the bolus and is < 10 % of peak by 15 min', () => {
     const list: Bolus[] = [{ drug: 'phenylephrine', t: 0, scale: bolusScale('phenylephrine', 0.1, 70, []) }];
     let best = { t: 0, svr: 1 };
     for (let t = 0; t < 600; t += 1) {
       const e = drugEffect(list, t, 0);
       if (e.svr > best.svr) best = { t, svr: e.svr };
     }
-    expect(best.svr).toBeCloseTo(1.8, 3);
+    expect(best.svr).toBeCloseTo(1.7, 3); // ×1.8 in the prototype; ×1.7 after the R45(b) reflex (MAP +21 at 60 s)
     expect(best.t).toBeGreaterThanOrEqual(70);
     expect(best.t).toBeLessThanOrEqual(80);
     expect(drugEffect(list, 900, 0).svr - 1).toBeLessThan(0.08);

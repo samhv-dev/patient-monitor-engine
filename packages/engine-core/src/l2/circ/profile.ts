@@ -40,7 +40,8 @@ export interface ResolvedProfile {
   gVagal: number; // ms/mmHg
   gSymp: number; // × on the sympathetic gains
   cfr: number; // coronary flow reserve (tables §3)
-  betaBlock: number; // 0–1 fraction of β response removed
+  betaBlock: number; // 0–1 fraction of the reflex β1 chronotropic gain removed (g_hs)
+  betaBlockC: number; // 0–1 fraction of the β contractility gain and β-agonist drug response removed (g_c, betaResp)
   lvedpTarget: number;
   /** R45(c): the stabiliser anchors the LV EDPVR at the EDV the ventricle actually reaches (conditions that set an LVEDP). */
   tuneLvedp: boolean;
@@ -106,7 +107,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
   const r: ResolvedProfile = {
     band, params: p, bloodVolumeMl: bvKg * pr.weightKg, stressedFrac: band === 'elderly' ? 0.22 : 0.25,
     targets: { sbp: 120, dbp: 80, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
-    hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0,
+    hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0, betaBlockC: 0,
     lvedpTarget: 8,
     tuneLvedp: false,
   };
@@ -183,8 +184,11 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       r.cfr = GRADES.cad[(c.grade ?? 'severe') as keyof typeof GRADES.cad];
       if (c.grade === 'recentMI') p.eesLv *= 0.8;
       return;
-    case 'betaBlocked': // tables §1.5: HR 55–65, g_hs ×0.4, g_c ×0.5, β-agonist ×0.5
-      r.betaBlock = 0.6 * s;
+    case 'betaBlocked': // tables §1.5: HR 55–65, g_hs ×0.4 (range ×0.2–0.7), g_c ×0.5, β-agonist ×0.5
+      // g_hs ×0.2 (low end of the tables' range): the 7a reflex needs more sympathetic drive in class III than the
+      // tables' linear sketch, and "HR stays < 100 in class III" (tables §1.5, §7 17b) holds only at ×0.2 [ENG, R44]
+      r.betaBlock = 0.8 * s;
+      r.betaBlockC = 0.5 * s;
       r.hrRest = 60;
       r.targets = { ...r.targets, hr: 60 };
       return;
