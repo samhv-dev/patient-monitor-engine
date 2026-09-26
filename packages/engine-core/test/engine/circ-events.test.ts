@@ -5,13 +5,14 @@ import { totalVolume } from '../../src/l2/circ/circuit.ts';
 const ev = (event: Record<string, unknown>) => cmd({ type: 'applyEvent', event });
 
 describe('circulation clinical events', () => {
-  it('accepts the five 7a drugs and rejects the rest until 7g', () => {
+  it('accepts the 7a drugs and every library drug (Stage 7g); unknown ids are rejected', () => {
     const { e } = rig();
     expect(e.dispatch(ev({ kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' })).accepted).toBe(true);
     expect(e.dispatch(ev({ kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' })).accepted).toBe(true);
-    const r = e.dispatch(ev({ kind: 'drug', drugId: 'vasopressin', dose: 1, unit: 'units', route: 'iv' }));
+    expect(e.dispatch(ev({ kind: 'drug', drugId: 'vasopressin', dose: 1, unit: 'units', route: 'iv' })).accepted).toBe(true); // Stage 7g
+    const r = e.dispatch(ev({ kind: 'drug', drugId: 'unobtainium', dose: 1, unit: 'mg', route: 'iv' }));
     expect(r.accepted).toBe(false);
-    expect(r.reason).toMatch(/7g/);
+    expect(r.reason).toMatch(/unknown drug/);
   });
   it('a 500 mL bleed over 60 s removes 500 mL from the circulation', () => {
     const { e } = rig();

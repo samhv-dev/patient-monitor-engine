@@ -3675,22 +3675,22 @@ describe('drugs panel event', () => {
 - Modify (declared exception, R51 addendum 11): `packages/engine-core/src/l2/circ/drugs.ts` and the one call in
   `packages/engine-core/src/l2/circ/model.ts` — 7a's `propofolAgeFactor` is removed (Step 4)
 
-- [ ] **Step 1: Run the 7a acceptance files and every test that dispatches a `drug` event:**
+- [x] **Step 1: Run the 7a acceptance files and every test that dispatches a `drug` event:**
   `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts test/engine/circ-events.test.ts test/l2/circ/drugs.test.ts`
   and `grep -rln "kind: 'drug'\|\"kind\": \"drug\"" packages/*/test packages/controller/scenarios`.
-- [ ] **Step 2: Required outward behaviour (bands unchanged — R45):** phenylephrine 100 µg MAP +15–25, HR −5 to −16
+- [x] **Step 2: Required outward behaviour (bands unchanged — R45):** phenylephrine 100 µg MAP +15–25, HR −5 to −16
   at 60 s (7g prototype +21.2 / −14.3); propofol 2 mg/kg MAP ratio at 2 min 0.60–0.80, HR rise < 15; the AS+CAD
   scenario (tables §7 10): MAP 60–65 at 2 min after 1.5 mg/kg in the 75 y profile, rescue with phenylephrine ≥ 85
   within 90 s, ephedrine slower (peak 4–5 min). 7a's `drugs.test.ts` stays as is (it unit-tests the retired curves;
   none of its tests uses the age factor removed in Step 4).
-- [ ] **Step 3: If the propofol band fails**, re-fit on the Ce model, in this order and only within the tables §6.3
+- [x] **Step 3: If the propofol band fails**, re-fit on the Ce model, in this order and only within the tables §6.3
   ranges: (a) the `gvHr` Emax (−0.5 to −0.8), (b) the SVR Emax (−0.35 to −0.55), (c) the EC50 3.5 → 2.5–4.5 µg/mL.
   Note: Eleveld's Ce peaks at 2.9 min (7a's Bateman peaked at ≈ 1.5 min), so the "2 min" MAP reads a rising Ce;
   the elderly deeper fall now comes from the Eleveld age covariates (PK) and the Eleveld Ce50 age term on the
   hypnotic C50 (Task 11) — 7a's `propofolAgeFactor` is dead and goes in Step 4; if scenario 10 falls short, report
   the numbers rather than adding an age factor (R45: mechanism, not a looser test).
   Record the chosen values in the row's `src` with the measured MAP ratio.
-- [ ] **Step 4: Remove 7a's dead `propofolAgeFactor` (R51 addendum 11).** After Task 17 no event reaches
+- [x] **Step 4: Remove 7a's dead `propofolAgeFactor` (R51 addendum 11).** After Task 17 no event reaches
   `circGiveDrug`, and the Eleveld PK + Ce50 age term carry the elderly sensitivity. In
   `packages/engine-core/src/l2/circ/drugs.ts` delete the doc comment and the function
   `export function propofolAgeFactor(ageY: number): number { … }`; in `bolusScale` replace the signature
@@ -3703,7 +3703,7 @@ describe('drugs panel event', () => {
   `bolusScale(drug, doseMg, m.weightKg, m.boluses, m.prof.ageY)` to `bolusScale(drug, doseMg, m.weightKg, m.boluses)`.
   Run `git grep -n propofolAgeFactor` (expect nothing) and
   `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/drugs.test.ts` (expect PASS).
-- [ ] **Step 5: Scenario and controller tests.** Drugs the engine rejected before 7g (e.g. `adenosine`, `amiodarone`,
+- [x] **Step 5: Scenario and controller tests.** Drugs the engine rejected before 7g (e.g. `adenosine`, `amiodarone`,
   `epinephrine`, `atropine` in `packages/controller/scenarios/*.json`) are now ACCEPTED. In
   `packages/controller/test/session/clinical-commands.test.ts` (line 35 on 7a's head), the test
   `'a plain host forwards applyEvent to the engine, which rejects it as not implemented'` changes to (title and
@@ -3724,7 +3724,7 @@ describe('drugs panel event', () => {
   Any other test the Step 1 grep finds asserting `is not implemented until Stage 7g` changes the same way
   (assertion → accepted). The `svt-adenosine` scenario still scripts its own block; with 7g the engine ALSO blocks —
   see Requests (6b drops its scripted step).
-- [ ] **Step 6: Full suite** — `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices`.
+- [x] **Step 6: Full suite** — `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices`.
   Every earlier test green. Commit and push — `git add -A && git commit -m "test(pk): 7a drug scenarios pass through the PK/PD engine; propofol re-fit on Eleveld Ce; 7a propofolAgeFactor removed" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 21: Acceptance — PK through the engine (Ce curves, TCI, CSHT on the panel)

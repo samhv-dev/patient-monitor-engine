@@ -137,7 +137,7 @@ export function circOnAtrial(m: CircModelState, tP: number): void {
 }
 
 export function circGiveDrug(m: CircModelState, drug: DrugId, doseMg: number): void {
-  m.boluses.push({ drug, t: m.t, scale: bolusScale(drug, doseMg, m.weightKg, m.boluses, m.prof.ageY) });
+  m.boluses.push({ drug, t: m.t, scale: bolusScale(drug, doseMg, m.weightKg, m.boluses) });
 }
 
 /** Bleed (negative) or infuse (positive) `ml` over `overS` seconds from now. */
