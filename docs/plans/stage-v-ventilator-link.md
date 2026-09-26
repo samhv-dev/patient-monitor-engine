@@ -3184,7 +3184,7 @@ git push origin stage-v-ventilator-link
 - Consumes: `createLinkCore`, `linkTick`, `linkEvent`, `patchVent`, `LINK_TICK_S`, `PROFILES` (Task 12); `advanceVent`, `createVent`, `resetPhysics`, `setCircuit` (Task 3).
 - Produces: `LinkMsg` (`cmds {tick, cmds}`, `lungState {ev}`, `clock {ventTick}`, `time {action, value?}`, `control {patch?, circuit?, profile?}`, all `v: 1`); `LinkPort { post, onMessage, close }`; `linkChannelName(session)` = `pme-vent/<session>`; `createBroadcastPort(session, Impl?)`; `createLocalPortPair()`; `MonitorLike { dispatch, on, pause?, resume?, setTimeScale? }` (a `MonitorHandle` or a `MonitorEngine` fits); `LEAD_TICKS = 5`; `MAX_AHEAD_TICKS = 75`; `attachMonitorToLink(mon, port, onRejected?)`; `VentDriver { vs, core, simT(), frame(nowMs), setProfile(id), paused, scale, onStep, onControl, dispose() }`; `createVentDriver(port | null, profile = 'normal', vs = createVent())`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/ports.test.ts`:**
 
@@ -3261,12 +3261,12 @@ describe('link ports', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/ports.test.ts`
 Expected: FAIL — `createBroadcastPort` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/ventilator/src/link/port.ts`:**
 
@@ -3515,12 +3515,12 @@ export * from './link/port.ts';
 export * from './link/vent-driver.ts';
 ```
 
-- [ ] **Step 4: Run the whole package**
+- [x] **Step 4: Run the whole package**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator test && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck && npx -y pnpm@9.15.9 --filter @pme/ventilator build`
 Expected: **87 passed** (13 files); typecheck clean; build OK.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
