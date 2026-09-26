@@ -1443,7 +1443,7 @@ export function tciRate(p: PkParams, x: readonly number[], mode: TciMode, target
 **Interfaces (Produces):** `decrementTimeMin(p, durationMin, fraction?, site?, maxMin?)` (classic Hughes CSHT),
 `decrementFromNowMin(p, x, fraction?, site?, maxMin?)` (panel, decision 13).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/csht.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/csht.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1489,9 +1489,9 @@ describe('context-sensitive half-time (decision 3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/csht.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/csht.ts`**
 
 ```ts
 // Context-sensitive half-time (Hughes, Glass & Jacobs 1992): after an infusion that held the PLASMA concentration
@@ -1530,9 +1530,9 @@ export function decrementTimeMin(p: PkParams, durationMin: number, fraction = 0.
 }
 ```
 
-- [ ] **Step 4: Run the test** → PASS. (Prototype values: see decision 3; the prototype used 1 s steps throughout —
+- [x] **Step 4: Run the test** → PASS. (Prototype values: see decision 3; the prototype used 1 s steps throughout —
   the 10 s coarse step with 1 s refinement gives the same result to ±1 s.)
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): context-sensitive half-time and decrement-from-now" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): context-sensitive half-time and decrement-from-now" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 8: Volatile uptake, FA/FI and MAC(age) (PROTOTYPED)
 
