@@ -1699,7 +1699,7 @@ export const macFraction = (s: VolatileState, ageY: number): number => (100 * s.
 string; `toRate(rate, unit, amountUnit, weightKg, conc?)` → amount/min; `gammaShape(tSinceS, tpS, n)` (brief §4.9
 `(t/tp)^n·e^{n(1 − t/tp)}`, peak 1 at t = tp); `GammaDose { t; scale }`, `gammaConc(doses, t, tpS, n)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/units-gamma.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/units-gamma.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1733,9 +1733,9 @@ describe('gamma fallback (brief §4.9)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/units.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/units.ts`**
 
 ```ts
 // Dose and rate normalisation (Stage 7g). The API keeps the brief's units; each library row has ONE amount unit.
@@ -1770,7 +1770,7 @@ export function toRate(rate: number, unit: RateUnit, amountUnit: AmountUnit, wei
 }
 ```
 
-- [ ] **Step 4: Create `packages/engine-core/src/l2/pk/gamma.ts`**
+- [x] **Step 4: Create `packages/engine-core/src/l2/pk/gamma.ts`**
 
 ```ts
 // The brief §4.9 drug effect curve, kept as the FALLBACK path for drugs without a PK model in v1 (tables §6.1 "kept
@@ -1802,7 +1802,7 @@ export function gammaN(tpS: number, t10S: number): number {
 }
 ```
 
-- [ ] **Step 5: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): dose/rate units and the brief's gamma effect curve as the fallback path" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): dose/rate units and the brief's gamma effect curve as the fallback path" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 10: PD primitives and the library row type
 
