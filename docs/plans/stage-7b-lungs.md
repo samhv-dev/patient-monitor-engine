@@ -1861,7 +1861,7 @@ git push origin stage-7b-lungs
 - Consumes: Tasks 2–9.
 - Produces: `type Mainstem = 'both' | 'left' | 'right'`, `LungState` (fields `lp, mp, mech, rec, hpv, o2, mainstem, aer, perf, co2, frcGaMl, inInsp, v0, tidal, tInsp, teS, tExp0, pInsp, peepTot, tauBar, t`), `blockedSides(m)`, `createLung(lp, frcGaMl, fa0, cv0)`, `lungMechStep(ls, mode, x, dt)`, `capnoTerms(ls): { tauII; riseIII }`, `GasInputs` (fields `va, q, baseShunt, fio2, massFlowFio2, vo2, vco2, paco2, tempC, bloodL, coRatio, ga, indFactor, volatileMac, sideFlow`), `lungGasStep(ls, x, dt)`, `shuntFraction(ls, baseShunt)`. Test helper: `PAT`, `RigVent`, `LungRig`, `paramsFor(specs)`, `lungRig(specs, vent, baseShunt?)`, `runRig(r, seconds, onGas?)`, `rigOut(r)`.
 
-- [ ] **Step 1: Write the failing test and the rig helper**
+- [x] **Step 1: Write the failing test and the rig helper**
 
 `packages/engine-core/test/helpers/lung.ts`:
 
@@ -1970,12 +1970,12 @@ describe('lung module, stand-alone rig (prototype numbers)', { timeout: 300_000 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/lung-rig.test.ts`
 Expected: FAIL — cannot resolve `lung.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/lung.ts`:
 
@@ -2160,12 +2160,12 @@ export function shuntFraction(ls: LungState, baseShunt: number): number {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/lung-rig.test.ts`
 Expected: PASS (3) in ≈ 1 s. (Prototype: healthy gap 3.1; COPD GOLD 3 gap 11.5, τ term 0.23 s; OLV FiO2 0.5 nadir 93.5 % at 6.7 min, 95.6 % at 60 min, left-lung flow 0.24.)
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/lung.ts packages/engine-core/test/helpers/lung.ts packages/engine-core/test/l2/lung/lung-rig.test.ts
