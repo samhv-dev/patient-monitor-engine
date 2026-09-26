@@ -12,3 +12,10 @@ describe('lung pathology catalogue — ventilator signatures at the reference se
     }
   });
 });
+
+describe('catalogue coverage', () => {
+  it('has the R36 parenchymal/restrictive rows (Task 10)', () => {
+    const ids = LUNG_PATHOLOGIES.map((r) => r.id);
+    for (const id of ['ards-mild', 'ards-moderate', 'ards-severe-recruitable', 'ards-severe-nonrecruitable', 'fibrosis-ild', 'scleroderma', 'chest-wall-restriction', 'obesity-ohs', 'pneumonia-lobar', 'atelectasis', 'oedema-cardiogenic', 'oedema-noncardiogenic', 'aspiration', 'covid-pneumonitis']) expect(ids).toContain(id);
+  });
+});

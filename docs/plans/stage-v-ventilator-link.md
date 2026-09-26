@@ -2087,7 +2087,7 @@ git push origin stage-v-ventilator-link
 
 **Interfaces:** adds rows `ards-mild`, `ards-moderate`, `ards-severe-recruitable`, `ards-severe-nonrecruitable`, `fibrosis-ild`, `scleroderma`, `chest-wall-restriction`, `obesity-ohs`, `pneumonia-lobar`, `atelectasis`, `oedema-cardiogenic`, `oedema-noncardiogenic`, `aspiration`, `covid-pneumonitis` (Tasks 12–14 and 18 use these ids).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `packages/ventilator/test/pathology-signature.test.ts` (after the `describe` block):
 
@@ -2100,12 +2100,12 @@ describe('catalogue coverage', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts`
 Expected: FAIL — `expected [...] to include 'ards-mild'`.
 
-- [ ] **Step 3: Insert the rows**
+- [x] **Step 3: Insert the rows**
 
 In `packages/ventilator/src/pathology/catalogue.ts`, insert the following block immediately BEFORE the final `];` line:
 
@@ -2268,12 +2268,12 @@ In `packages/ventilator/src/pathology/catalogue.ts`, insert the following block 
   },
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 24 passed (23 rows + coverage). Prototype: ARDS mild 17.3/12.3/0/11.8, moderate 20.3/15.3/0/12.8, severe recruitable 24.6/19.6/0/14.8, severe non-recruitable 27.3/22.3/0/14.7, fibrosis 21.3/16.3/0/9.8, obesity 19.0/14.0/0/13.8.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
