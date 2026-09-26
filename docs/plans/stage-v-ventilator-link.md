@@ -1617,7 +1617,7 @@ git push origin stage-v-ventilator-link
 - Consumes: `EngineEvent` (engine-core); `VentConfig`, `VentState`.
 - Produces: `LungStateEvent`; `LUNG_KEYS = ['compliance','resistance','efl','eflSeverity','spont','pmus']`; `LungBase`; `lungBaseOf(cfg)`; `EFFORT_PMUS_CMH2O = 8`; `LungLink { base, ref, last }`; `createLungLink(cfg)`; `applyLungState(vs, ll, ev)`; `RecruitParams { shuntMax, shuntMin, p50, k }`; `TAU_RECRUIT_S = 40`, `TAU_DERECRUIT_S = 10`; `RecruitState { r, sent }`; `recruitTarget(p, totalPeep)`; `shuntOf(p, r)`; `createRecruit(p, totalPeep)`; `stepRecruit(s, p, totalPeep, dt): number | null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/lung-recruit.test.ts`:**
 
@@ -1669,12 +1669,12 @@ describe('interim recruitment → shunt', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/lung-recruit.test.ts`
 Expected: FAIL — `applyLungState` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/ventilator/src/lung-input.ts`:**
 
@@ -1770,12 +1770,12 @@ export * from './lung-input.ts';
 export * from './link/recruit.ts';
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/lung-recruit.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 3 passed; typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
