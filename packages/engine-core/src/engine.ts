@@ -155,7 +155,7 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
 
   constructor(opts: EngineOptions) {
-    if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');
+    // Stage 7a: MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
     this.lookTicks = Math.round((look * 1000) / TICK_MS);
@@ -175,6 +175,7 @@ class Engine implements MonitorEngine {
     const hrv = drawHrvPhase(rng.hrv);
     const ctx: RhythmCtx = { hrAt: (t) => rampValue(hr, t), mods, rng, hrv };
     const l1 = createL1State(opts.patient); // Stage 2
+    if (opts.mode === 'modeled') l1.mode = 'modeled'; // Stage 7a
     this.st = {
       n: 0,
       rng,

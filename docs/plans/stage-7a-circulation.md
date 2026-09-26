@@ -2773,7 +2773,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `setMode { mode: 'modeled' }` accepted; `EngineOptions.mode: 'modeled'` accepted; `state` event `mode: 'modeled'` with control flag `'modeled'` on `sbp, dbp, cvp, papSys, papDia, pawp, svr` unless pinned; in MODELED the pipeline calls `ctx.requestHr(circ.hrModel)` every 100 ms when `hr` is not pinned and the change exceeds 0.2 bpm. MANUAL → MODELED re-bases the baroreflex set point on the current MAP (brief §4.9 "no step > 2 mmHg / 2 bpm"); MODELED → MANUAL freezes the current truths as targets (`setL1Target` for sbp/dbp/cvp from the last beat, hr ramp unchanged).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-modeled.test.ts`:
 
@@ -2810,12 +2810,12 @@ describe('MODELED mode', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-modeled.test.ts`
 Expected: FAIL — `MODELED mode arrives in Stage 7`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `engine.ts` constructor: replace `if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');` with `// Stage 7a: MODELED is accepted (the circulation's reflexes run)`, and after `const l1 = createL1State(opts.patient); // Stage 2` add `if (opts.mode === 'modeled') l1.mode = 'modeled'; // Stage 7a`.
 
@@ -2858,12 +2858,12 @@ Expected: FAIL — `MODELED mode arrives in Stage 7`.
 ```
 where `flags` is the `l1Flags(…)` result stored in a local first; in MODELED also write the model's truths into `values`: `values.sbp = hs.lastSite.sbp; values.dbp = hs.lastSite.dbp; values.cvp = hs.circOut.pRa; values.pawp = hs.circOut.pPv;`.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-modeled.test.ts test/engine/engine-commands.test.ts`
 Expected: circ-modeled PASS (2). In `engine-commands.test.ts` the assertion that `setMode modeled` is rejected (and the constructor test `mode: 'modeled'` throws) must flip: change those two expectations to "accepted"/"does not throw" and note it in the commit body (Stage 1/2 tests touched, as Stage 2's decision 15 did).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/circ-modeled.test.ts packages/engine-core/test/engine/engine-commands.test.ts

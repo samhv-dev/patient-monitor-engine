@@ -17,6 +17,7 @@ import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, 
 import { ARREST_AFTER_S, CPR_DUTY, CPR_SV_FRAC, G_MAX, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
+import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { circOnAtrial, circOnBeat, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
@@ -306,7 +307,16 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const values: Partial<Record<StateVar, number>> = {};
   for (const s of STATE_VARS) values[s] = s === 'hr' ? rampValue(ctx.hr, t) : l1Value(ctx.l1, s, t);
   values.svr = hs.circ.p.rSys; // Stage 7a
-  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: 'manual', values, control: l1Flags(ctx.l1, t, ctx.hr, overrides(hs, t)) });
+  const flags = l1Flags(ctx.l1, t, ctx.hr, overrides(hs, t));
+  if (ctx.l1.mode === 'modeled') {
+    // Stage 7a: the model's truths, flagged 'modeled' unless the instructor pinned them (brief §4.9)
+    values.sbp = hs.lastSite.sbp;
+    values.dbp = hs.lastSite.dbp;
+    values.cvp = hs.circOut.pRa;
+    values.pawp = hs.circOut.pPv;
+    for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
+  }
+  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags });
   if (hs.nibp.phase === 'idle') {
     const next = nibpNextIn(hs.nibp, t);
     if (next !== undefined) hs.out.push({ type: 'nibp', t, phase: 'idle', nextInS: Math.round(next) });
@@ -372,6 +382,10 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         c.man.pvr = cur * (want / cur) ** 0.1;
       }
     }
+    if (ctx.l1.mode === 'modeled' && m % 12 === 0 && !ctx.l1.pinned.includes('hr') && ctx.requestHr) {
+      const want = hs.circ.hrModel; // Stage 7a MODELED: the reflexes drive the rhythm engine's rate
+      if (Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
+    }
     // Stage 7a: completed CircBeats → site beats (tracker, NIBP, pleth)
     for (const cb of hs.circ.beats) {
       if (cb.t <= hs.beatT) continue;
@@ -420,7 +434,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
     case 'release':
       return cmd.variable === 'all' || cmd.variable in STATE_SCHEMA ? undefined : `unknown state variable ${String(cmd.variable)}`;
     case 'setMode':
-      return cmd.mode === 'manual' ? undefined : 'MODELED mode arrives in Stage 7';
+      return cmd.mode === 'manual' || cmd.mode === 'modeled' ? undefined : 'mode must be manual or modeled';
     case 'applyEvent': {
       const ev = cmd.event as { kind: string };
       if (ev.kind === 'line') return validateLineEvent(cmd.event as Extract<HemoClinicalEvent, { kind: 'line' }>);
@@ -488,8 +502,29 @@ export function applyHemoCommand(
     case 'release':
       releaseVar(l1, cmd.variable);
       return true;
-    case 'setMode':
+    case 'setMode': {
+      if (cmd.mode === l1.mode) return true;
+      const c = hs.circ;
+      if (cmd.mode === 'modeled') {
+        c.baro = createBaro(hs.lastSite.map, c.baro.cpLp); // no step on entry (brief §4.9): the reflexes start at rest
+        c.base.rSys = c.man.rSys ?? c.base.rSys; // the MANUAL solution becomes the model's baseline
+        c.base.v0Sv += c.man.dV0;
+        c.base.eesLv *= c.man.eesF;
+        c.base.eesRv *= c.man.eesRvF;
+        if (c.man.pvr !== null) {
+          const f = c.man.pvr / ((c.base.pvrL * c.base.pvrR) / (c.base.pvrL + c.base.pvrR));
+          c.base.pvrL *= f;
+          c.base.pvrR *= f;
+        }
+        c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null };
+      } else {
+        setL1Target(l1, 'sbp', t, Math.round(hs.lastSite.sbp)); // freeze outputs as targets
+        setL1Target(l1, 'dbp', t, Math.round(hs.lastSite.dbp));
+        setL1Target(l1, 'cvp', t, Math.round(hs.circOut.pRa));
+      }
+      l1.mode = cmd.mode;
       return true;
+    }
     case 'applyEvent': {
       const ev = cmd.event as HemoClinicalEvent | { kind: string };
       if (ev.kind === 'line') {
