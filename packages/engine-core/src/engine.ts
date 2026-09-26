@@ -328,6 +328,12 @@ class Engine implements MonitorEngine {
       this.dirtyFromN = Math.min(this.dirtyFromN, firstN);
     }
     this.advance(this.st, this.tick * SAMPLES_PER_TICK);
+    const stp = this.st.hemo.stPatch; // Stage 7a: coronary ST hook (R23) through the existing modifiers, committed state only
+    if (stp) {
+      this.st.mods = mergeModifiers(this.st.mods, stp);
+      this.st.hemo.stPatch = null;
+      this.dirtyFromN = Math.min(this.dirtyFromN, this.st.n);
+    }
     let maxPostedN = -1;
     for (const p of this.posted.values()) maxPostedN = Math.max(maxPostedN, p.n);
     for (const d of this.st.detections) if (this.dirtyFromN < Infinity || d.n <= maxPostedN) this.committedDet.push(d);

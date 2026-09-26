@@ -20,6 +20,7 @@ import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
 import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
+import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
 import { circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
@@ -84,6 +85,8 @@ export interface HemoState {
   circOut: CircOut; // Stage 7a: algebraic outputs at the last 2 ms step
   radQ: number[]; // Stage 7a: radial delay line (RAD_DELAY_STEPS + 1 values)
   beatT: number; // Stage 7a: onset time of the last CircBeat turned into a site beat
+  stPatch: { ischaemicDepressionMv: number } | null; // Stage 7a: ST modifier patch for the engine to apply (R23)
+  stApplied: number; // Stage 7a: the ischaemic ST depression last handed to the ECG, mV
   sys: TrackerState;
   pul: TrackerState;
   prevRef: boolean; // the previous beat was a reference beat
@@ -130,7 +133,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
   return {
     m: 0,
-    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1,
+    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0,
     sys: createTracker(Math.min(4, Math.max(0.3, (map - cvp) / flow))),
     pul: createTracker(Math.min(0.6, Math.max(0.02, (pam - pawp) / flow))),
     prevRef: true, pv: cvp, pla: pawp,
@@ -300,6 +303,16 @@ function overrides(hs: HemoState, t: number): StateVar[] {
 }
 
 function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
+  // Stage 7a (R23): coronary supply/demand at 1 Hz → contractility (ext.kIsch) and the ST patch
+  const c = hs.circ;
+  c.cor.eesF = c.kLv;
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR));
+  c.ext.kIsch = c.cor.kIsch;
+  const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
+  if (Math.abs(nxt - hs.stApplied) >= 0.01) {
+    hs.stPatch = { ischaemicDepressionMv: nxt };
+    hs.stApplied = nxt;
+  }
   const v: Partial<Record<NumericId, Measured>> = {};
   if (lineActive(hs.lines.abp)) {
     const p = pressureNumerics(hs.num.abp, t);

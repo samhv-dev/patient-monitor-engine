@@ -9,6 +9,7 @@ import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugId } from '.
 import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
+import { createCoronary, type CoronaryState } from './coronary.ts';
 
 export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 /**
@@ -74,6 +75,7 @@ export interface CircModelState {
   rrRef: number; // R45(a): running normal RR, s
   pespNext: number; // R45(a): Emax boost for the next beat
   ref: Stabilised['ref']; // the stabilised resting reference (coronary demand, pulsatile sensing)
+  cor: CoronaryState; // R23 coronary supply/demand (stepped at 1 Hz by the pipeline)
   /** Extra multipliers owned by other modules (coronary ischaemia, conditions): applied at the next control step. */
   ext: { kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number };
 }
@@ -84,7 +86,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref,
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref),
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }

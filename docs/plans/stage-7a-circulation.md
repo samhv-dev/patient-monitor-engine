@@ -3107,7 +3107,7 @@ git push origin stage-7a-circulation
 - Consumes: `CircBeat` (dbp via aortic diastolic, `lvedp`, `lvsp`, `avOpen/avClose`, `dur`, `lvedv`), `CircModelState.ext.kIsch`, `ResolvedProfile.cfr`, `Stabilised.ref` (rest values: stored on the model at creation as `m.ref`).
 - Produces: `interface CoronaryState { kIsch; delta; stMv; lagT; ref }`, `createCoronary(ref)`, `stepCoronary(c, beats, cfr, dt, hrNow): void`, `stPatchOf(c): { ischaemicDepressionMv: number } | null`; `CircModelState.cor: CoronaryState`, `CircModelState.ref` (the stabilised resting reference).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/coronary.test.ts`:
 
@@ -3146,12 +3146,12 @@ describe('coronary supply/demand (R23, tables §3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/coronary.test.ts`
 Expected: FAIL — cannot resolve `coronary.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/coronary.ts`:
 
@@ -3250,12 +3250,12 @@ In `engine.ts` `tickOnce`, right after `this.advance(this.st, this.tick * SAMPLE
     }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/coronary.test.ts test/engine/circ-pipeline.test.ts`
 Expected: PASS. (At rest the ratio equals CFR 3.5 by construction; the AS + CAD run in Task 27 exercises the engine path.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/coronary.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/test/l2/circ/coronary.test.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/engine.ts
