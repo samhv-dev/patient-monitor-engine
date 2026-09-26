@@ -2818,7 +2818,7 @@ git push origin stage-v-ventilator-link
 
 These tests assert behaviour the previous tasks already built; they are the R27 acceptance record. If one fails, do not loosen it — report the measured number (run with `PRINT=1`) and stop.
 
-- [ ] **Step 1: Write the helpers and the tests**
+- [x] **Step 1: Write the helpers and the tests**
 
 **Create `packages/ventilator/test/helpers.ts`:**
 
@@ -2973,7 +2973,7 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
 });
 ```
 
-- [ ] **Step 2: Run with the numbers printed**
+- [x] **Step 2: Run with the numbers printed**
 
 Run: `PRINT=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/link-r27.test.ts`
 Expected: 7 passed (≈ 50 s). Prototype lines:
@@ -2990,7 +2990,7 @@ LINK disconnect: alarm +0.94 s, co2 max 124–135 0.00, etco2 37,37,0,0
 
 Copy these lines into the gate note (Task 20).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/ventilator/test
