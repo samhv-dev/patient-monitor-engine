@@ -19,9 +19,10 @@ export function circSideFlows(hemo: unknown): number[] | null {
 }
 
 /** Hand the per-lung PVR multipliers to the circulation when it exists; returns true when written. */
-export function writeCircPvr(hemo: unknown, pvrMult: readonly number[]): boolean {
+export function writeCircPvr(hemo: unknown, pvrMult: readonly number[], global = 1): boolean {
   const ext = (hemo as CircLike | null)?.circ?.ext;
   if (!ext || typeof ext !== 'object') return false;
+  ext.pvrLung = global; // Stage 7b Task 26 (adapter part): the lungs' global PVR multiplier (COPD, PH group 3, OLV)
   ext.pvrLungL = pvrMult[0] ?? 1;
   ext.pvrLungR = pvrMult[1] ?? 1;
   return true;

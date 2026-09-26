@@ -3734,6 +3734,8 @@ git push origin stage-7b-lungs
 
 ### Task 26: Stage 7a hook-up (per-lung PVR, lung pleural pressure) — conditional on 7a on main
 
+> **Executor note:** skipped — 7a not on main at 2026-09-26 21:45 (origin/main c5ca0c0; branch stage-7a-circulation open). The adapter part was done anyway (duck-typed, no 7a file touched): writeCircPvr also writes the lungs' global multiplier ext.pvrLung (7a's R46 seam 576e7a5 already reads pvrLung/pvrLungL/pvrLungR in control()). Still to do when 7a is on main (whichever PR merges second): the pleural hook — engine.ts passes HemoCtx.pItExternal = P_PL0 + tIt·(mean ventilated-unit alveolar pressure)·0.7356 + pPtx (Task 26 respPleural body), and the lung-circ test.
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/circ/model.ts` (the `control` lines that set `p.pvrL`/`p.pvrR`, and `createCircModel`'s `ext` literal), `packages/engine-core/src/l2/circ/pleural.ts`, `packages/engine-core/src/l2/resp/pipeline.ts` (`respPleural`)
 - Create: `packages/engine-core/test/engine/lung-circ.test.ts`
@@ -3742,7 +3744,7 @@ git push origin stage-7b-lungs
 - Consumes: 7a's `CircModelState.ext` (`{ kLv, kRv, pvr, vFluid, pPtx, kIsch }`), `control()`, `pleuralPressureMmHg(d, t, complianceMl)`, `respPleural(rs, t)`, `T_IT`, `P_PL0`, `CMH2O_TO_MMHG` (7a plan Tasks 5, 8, 11, 14); 7b's `writeCircPvr` (Task 7), `LungParams.tIt`, `LungParams.pPtx`, `LungParams.pvr`.
 - Produces: 7a's per-lung resistances gain the 7b multipliers `ext.pvrLungL/R` (HPV, collapse, OLV); the global lung `pvr` (COPD, PH group 3, OLV ×1.35) multiplies both; the pleural pressure uses the lung module's alveolar pressure (auto-PEEP included) and the condition's `tIt` (obesity 0.425, COPD 0.55, ARDS pulmonary 0.2) plus the condition's `pPtx`.
 
-- [ ] **Step 1: Check that 7a is on main**
+- [x] **Step 1: Check that 7a is on main**
 
 ```bash
 git fetch origin && git merge --no-edit origin/main
@@ -3751,7 +3753,7 @@ test -f packages/engine-core/src/l2/circ/model.ts && echo "7a present" || echo "
 
 If "7a absent": tick every step of this task with the note "skipped — 7a not on main at <date>; the adapter (Task 7) already reads/writes its seams by duck typing", commit the plan, push, and go to Task 27.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `packages/engine-core/test/engine/lung-circ.test.ts`:
 
@@ -3787,12 +3789,12 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
 
 (`hemoOf` and `siteBeats` with `sbp`/`dbp` exist in Stage 2/7a; if 7a renamed the per-beat record, use the field its own `circ-*` tests read for MAP.)
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-circ.test.ts`
 Expected: FAIL — `pvrLungL` is written by the adapter but not used by 7a's `control()`; MAP barely moves with RR.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 In `packages/engine-core/src/l2/circ/model.ts`:
 - in `createCircModel`'s `ext: { … }` literal add `pvrLungL: 1, pvrLungR: 1, pvrLung: 1` and the same three fields to the `ext` type in `CircModelState` (`// Stage 7b`).
@@ -3832,12 +3834,12 @@ export function respPleural(rs: RespState, t: number): number {
 
 with imports `chestWallPressure`, `unitPressure` from `../lung/mechanics.ts` and `P_PL0`, `CMH2O_TO_MMHG` from `../circ/params.ts` (7a).
 
-- [ ] **Step 5: Run the test and 7a's suites**
+- [x] **Step 5: Run the test and 7a's suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-circ.test.ts test/engine/circ-*.test.ts test/l2/circ`
 Expected: lung-circ PASS; 7a's suites PASS with the default healthy lung (pvrLung* = 1, tIt 0.4 = 7a's T_IT, mean alveolar pressure ≈ its PEEP + ΔV/C). If a 7a number moves beyond its band because the lung module's alveolar pressure differs from 7a's `PEEP + ΔV/C` estimate, report both values in the gate note and STOP (R45 rule).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/lung/circ-link.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/lung-circ.test.ts

@@ -242,7 +242,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), volatileMac: 0, sideFlow: side,
     qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
   }, GAS_DT_S);
-  writeCircPvr(h, rs.lung.perf.pvrMult);
+  writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
   const etT = l1Target(l1, 'etco2', t);
   if (etT !== rs.seen.etco2) {
