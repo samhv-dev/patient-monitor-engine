@@ -1863,7 +1863,7 @@ git push
 
 Planning note on PPG: VitalDB `SNUADC/PLETH` is the patient monitor's analogue output. Measured on four windows its foot follows the radial foot by **396–497 ms** with a shape r of **0.95–0.99** — far beyond the 20–100 ms physiology (research 03 §3.1), i.e. the recording includes the monitor's processing latency. The recorded PPG delay is therefore report-only; the engine's delay (102–112 ms measured) is graded against the literature band (Task 11).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/validation/test/metrics/capno.test.ts`:
 
@@ -1957,11 +1957,11 @@ describe('device metrics', () => {
 });
 ```
 
-- [ ] **Step 2: Run them. Expected: capno PASS (the module exists since Task 4), the other file FAIL (modules missing)**
+- [x] **Step 2: Run them. Expected: capno PASS (the module exists since Task 4), the other file FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/metrics/capno.test.ts test/metrics/resp-ppg-device.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/metrics/resp-variation.ts`**
+- [x] **Step 3: Write `packages/validation/src/metrics/resp-variation.ts`**
 
 ```ts
 // Respiratory variation of the arterial pulse against the ventilator cycle (brief §9 metrics list; research 03 §2.4):
@@ -1993,7 +1993,7 @@ export function respVariation(beats: PulseBeat[], inspirations: number[]): RespV
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/metrics/ppg.ts`**
+- [x] **Step 4: Write `packages/validation/src/metrics/ppg.ts`**
 
 ```ts
 // PPG ↔ ABP correspondence (brief §9 V3). Pleth feet are searched AFTER each arterial foot (pulseBeats with the
@@ -2035,7 +2035,7 @@ export function ppgAbp(abp: Wave, pleth: Wave, rS: number[], abpBeats?: PulseBea
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/metrics/device.ts`**
+- [x] **Step 5: Write `packages/validation/src/metrics/device.ts`**
 
 ```ts
 // Device-behaviour metrics computed identically on recorded numerics and engine `measurement` events:
@@ -2079,11 +2079,11 @@ export function paEtGap(paco2: Array<[number, number]>, etco2: Array<[number, nu
 }
 ```
 
-- [ ] **Step 6: Run the tests. Expected: PASS (6 tests)**
+- [x] **Step 6: Run the tests. Expected: PASS (6 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/metrics/capno.test.ts test/metrics/resp-ppg-device.test.ts`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/validation/src/metrics/resp-variation.ts packages/validation/src/metrics/ppg.ts packages/validation/src/metrics/device.ts packages/validation/test/metrics/capno.test.ts packages/validation/test/metrics/resp-ppg-device.test.ts
