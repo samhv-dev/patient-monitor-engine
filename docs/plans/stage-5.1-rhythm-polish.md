@@ -1618,7 +1618,7 @@ Fix: `pacedV` R kernel τ 60 ms σ 26 ms (was 55/22), S τ 125 ms σ 18 ms (was 
 - Consumes: `beatQrs` (Task 2).
 - Produces: nothing new.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/tcp-capture.test.ts` with exactly:
 
@@ -1645,12 +1645,12 @@ describe('Stage 5.1 paced / transcutaneous capture complex (measured)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp-capture.test.ts`
 Expected: FAIL: `expected 133… to be greater than or equal to 140`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/beat-templates.ts`, replace this block (it occurs exactly once):
 
@@ -1672,12 +1672,12 @@ with:
     case 'pvc3':
 ```
 
-- [ ] **Step 4: Run it with the Stage 5 paced tests**
+- [x] **Step 4: Run it with the Stage 5 paced tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp-capture.test.ts test/l2/ecg/s5/pacing.test.ts test/l2/ecg/s5/beat-templates.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/beat-templates.ts packages/engine-core/test/l2/ecg/s51/tcp-capture.test.ts

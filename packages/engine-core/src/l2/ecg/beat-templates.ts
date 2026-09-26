@@ -61,7 +61,7 @@ export function beatKernels(id: BeatTemplateId, qtMs: number, scale = 1, pre = 1
     case 'aberrant':
       return [...narrowKernels(qtMs, scale), ...kernel(0.085, 0.016, 0.016, RBBB_RPRIME_VEC, WAVE.S, scale)];
     case 'pacedV':
-      return wideFrom(PACED_VEC, qtMs, scale, [0.055, 0.022], [0.115, 0.014], [0.07, 0.045]);
+      return wideFrom(PACED_VEC, qtMs, scale, [0.06, 0.026], [0.125, 0.018], [0.07, 0.045]); // Stage 5.1: broader, lower slope (was R 55/22, S 115/14)
     case 'pvc2':
     case 'pvc3':
       return wideFrom(PVC_FOCI[id], qtMs, scale, [0.05, 0.022], [0.11, 0.02], [0.06, 0.04]);
