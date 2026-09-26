@@ -1049,7 +1049,7 @@ git push origin stage-v-ventilator-link
 - Consumes: the reference copy (Task 1); `createVent`, `setMode`, `loadPreset`, `runScenario`, `resetPhysics`, `stepVent`, `DT`, `SEED0` (Task 3).
 - Produces: `runReference(tr)` and `maxErr(a, b, col, until?)` exported from `test/fidelity.test.ts`; `CORRECTED_FROM_S` (empty here; Task 5 fills it).
 
-- [ ] **Step 1: Write the scenarios**
+- [x] **Step 1: Write the scenarios**
 
 **Create `packages/ventilator/reference/scenarios.json`** — each `setup` is JavaScript run against the ORIGINAL page's globals (`S`, `setMode`, `loadPreset`, `runScenario`); the fidelity test runs the same strings against the port:
 
@@ -1068,7 +1068,7 @@ git push origin stage-v-ventilator-link
 ]
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 **Create `packages/ventilator/test/fidelity.test.ts`:**
 
@@ -1131,12 +1131,12 @@ describe('port fidelity against the original v1.9 simulator', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/fidelity.test.ts`
 Expected: FAIL — `ENOENT … fixtures/reference-traces.json`.
 
-- [ ] **Step 4: Write the capture script and capture the traces**
+- [x] **Step 4: Write the capture script and capture the traces**
 
 **Create `packages/ventilator/scripts/capture-reference.mjs`:**
 
@@ -1208,12 +1208,12 @@ vc-spont-variability: 1500 rows, breaths 12, PIP 23.1, autoPEEP 0.22, VTE 495
 
 The fixture is ≈ 375 KB; commit it (CI does not have the original's page open — the fixture IS the reference).
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/fidelity.test.ts`
 Expected: 10 passed. (Prototype: every column's max error ≤ 5 × 10⁻⁴, i.e. the fixture's rounding.) If a trace fails, the port's arithmetic order differs from the original somewhere — diff the function against the reference file's line; never widen the tolerance.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/ventilator
