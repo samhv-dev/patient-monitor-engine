@@ -99,6 +99,12 @@ importers:
         specifier: workspace:*
         version: link:../engine-core
 
+  packages/ventilator:
+    dependencies:
+      '@pme/engine-core':
+        specifier: workspace:*
+        version: link:../engine-core
+
 packages:
 
   '@esbuild/aix-ppc64@0.25.12':
