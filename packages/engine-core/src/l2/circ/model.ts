@@ -5,7 +5,8 @@
 import { activationPeriodS, pruneActivations, type Activation } from './activation.ts';
 import { createBaro, K_PP, stepBaro, type BaroState } from './baroreflex.ts';
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
-import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugId } from './drugs.ts';
+import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
+import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
 import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
@@ -94,6 +95,7 @@ export interface CircModelState {
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
+    drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers
   };
 }
 
@@ -180,9 +182,13 @@ function control(m: CircModelState, env: CircEnv): void {
   m.mapSum = 0;
   m.mapN = 0;
   const de = drugEffect(m.boluses, m.t, m.prof.betaBlockC);
+  const d7 = m.ext.drug; // Stage 7g: multipliers from l2/pk (the 7a bolus list stays empty once 7g consumes drug events)
+  if (d7) {
+    de.hr *= d7.hr; de.ees *= d7.ees; de.svr *= d7.svr; de.v0Frac += d7.v0Frac; de.pvr *= d7.pvr; de.gv *= d7.gv; de.gvHr *= d7.gvHr;
+  }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: m.prof.betaBlock, betaBlockC: m.prof.betaBlockC, hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned }, raTm)
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;
@@ -198,14 +204,14 @@ function control(m: CircModelState, env: CircEnv): void {
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
   const kc = x.kChem ?? 1;
-  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * (x.endoEesF ?? 1) * kc;
+  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * (x.endoEesF ?? 1) * kc;
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
   p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc; // atrial active elastance (7c kChem)
   p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc;
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * (x.endoHrF ?? 1)) + b.rrMs / 1000;
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0)) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);

@@ -3300,7 +3300,7 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
 - Modify: `packages/engine-core/src/engine.ts`, `packages/engine-core/src/l2/circ/model.ts`, `packages/engine-core/src/l2/hemo/pipeline.ts`
 - Create: `packages/engine-core/test/engine/pk-wiring.test.ts`, `packages/engine-core/test/helpers/pk.ts`
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/helpers/pk.ts` and `test/engine/pk-wiring.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/helpers/pk.ts` and `test/engine/pk-wiring.test.ts`:
 
 ```ts
 // test/helpers/pk.ts
@@ -3389,9 +3389,9 @@ describe('Stage 7g engine wiring', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (drug events still go to 7a; `pk` missing from the snapshot).
+- [x] **Step 2: Run it** → FAIL (drug events still go to 7a; `pk` missing from the snapshot).
 
-- [ ] **Step 3: `engine.ts`** — first `git fetch origin && git merge origin/main` (Global Constraints; re-run the
+- [x] **Step 3: `engine.ts`** — first `git fetch origin && git merge origin/main` (Global Constraints; re-run the
   suite if the merge brought 7b–7f). Additive edits, each marked `// Stage 7g`:
   1. Imports (after the Stage 3 resp import block):
      ```ts
@@ -3458,7 +3458,7 @@ describe('Stage 7g engine wiring', () => {
   8. `flush()`: `this.st.pk.out = keep(this.st.pk.out); // Stage 7g`
   9. `restore()`: after `const data = structuredClone(s.state) …`: `data.st.pk ??= createPkState(pkPatientOf(undefined)); data.st.pkHooks ??= createHookState(); // Stage 7g: pre-7g snapshots` (adjust the type of `data` with `as { st: PipelineState … }` as the surrounding code does).
 
-- [ ] **Step 4: `l2/circ/model.ts`** (7a) — marked edits:
+- [x] **Step 4: `l2/circ/model.ts`** (7a) — marked edits:
   - In `CircModelState.ext` add `drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers`
     (import `type DrugEffect` from `./drugs.ts` — it is already imported for `drugEffect`; add the type), and
     `import { betaBlunt } from '../pk/pd.ts'; // Stage 7g` after the `./drugs.ts` import.
@@ -3502,7 +3502,7 @@ describe('Stage 7g engine wiring', () => {
       expect(blocked - rest).toBeLessThan(0.5 * (surge - rest)); // betaBlunt: 1 + 0.3·0.2 = 1.06 plus the reflex arm's blunting
     }, 120_000);
     ```
-- [ ] **Step 5: `l2/hemo/pipeline.ts`** — declared exception: the pk validator/handler now runs first for every
+- [x] **Step 5: `l2/hemo/pipeline.ts`** — declared exception: the pk validator/handler now runs first for every
   drug event, so 7a's `drug` branches are unreachable; delete them (one owner per command):
   - in the imports, delete the whole line `import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a`, and in
     the `../circ/model.ts` import line delete `circGiveDrug, ` (keep the other names);
@@ -3530,10 +3530,10 @@ describe('Stage 7g engine wiring', () => {
     ```
   Then `npx -y pnpm@9.15.9 typecheck` must show no unused-import error in `l2/hemo/pipeline.ts`; `circGiveDrug` and
   `DRUGS` stay exported from 7a's files (7a's own unit tests use them).
-- [ ] **Step 6: Run the test, then the 7a sanity files** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-wiring.test.ts test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts`.
+- [x] **Step 6: Run the test, then the 7a sanity files** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-wiring.test.ts test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts`.
   Expected: pk-wiring PASS. The 7a propofol/AS+CAD tests may move (the propofol curve is now Eleveld Ce-driven):
   Task 20 re-fits them; record the numbers here in the task's commit message and continue.
-- [ ] **Step 7: Commit and push** — `git add -A && git commit -m "feat(engine): Stage 7g wiring — pk before resp/hemo, DrugEffect into 7a control, rhythm hooks, snapshot; 7a drug branch retired" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 7: Commit and push** — `git add -A && git commit -m "feat(engine): Stage 7g wiring — pk before resp/hemo, DrugEffect into 7a control, rhythm hooks, snapshot; 7a drug branch retired" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 18: Engine wiring II — alveolar ventilation for the volatiles, the bus for 7b/7c/7d/7f (pull model)
 
