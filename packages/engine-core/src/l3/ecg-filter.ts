@@ -47,16 +47,36 @@ export const lowpass = (f0: number, fs: number, q = BUTTERWORTH_Q): Biquad => rb
 export const highpass = (f0: number, fs: number, q = BUTTERWORTH_Q): Biquad => rbj('hp', f0, fs, q);
 export const notch = (f0: number, fs: number, q = NOTCH_Q): Biquad => rbj('notch', f0, fs, q);
 
-export const FILTER_BANDS: Readonly<Record<EcgFilterMode, readonly [number, number]>> = {
+export const FILTER_BANDS: Readonly<Record<'monitor' | 'diagnostic', readonly [number, number]>> = {
   monitor: [0.5, 40],
   diagnostic: [0.05, 150],
 };
 
+/** Band limits accepted for 'band:<lo>-<hi>' (Stage 4b, request E-4a-1): every skin band lies inside [ENG]. */
+export const BAND_LO_RANGE = [0.01, 10] as const;
+export const BAND_HI_RANGE = [10, 200] as const;
+/** A band filter gets the mains notch when its upper corner is below this (research/05 §2.2: Mindray notches the
+ * monitor, surgical and ST modes, not diagnostic) [ENG]. */
+export const BAND_NOTCH_BELOW_HZ = 100;
+
+/** [lo, hi] Hz of a filter mode ('band:0.5-24' → [0.5, 24]), or null when the band is malformed or out of range. */
+export function filterBand(mode: EcgFilterMode): readonly [number, number] | null {
+  if (mode === 'monitor' || mode === 'diagnostic') return FILTER_BANDS[mode];
+  const m = /^band:([0-9]*\.?[0-9]+)-([0-9]*\.?[0-9]+)$/.exec(String(mode));
+  if (!m) return null;
+  const lo = Number(m[1]);
+  const hi = Number(m[2]);
+  const ok = lo >= BAND_LO_RANGE[0] && lo <= BAND_LO_RANGE[1] && hi >= BAND_HI_RANGE[0] && hi <= BAND_HI_RANGE[1] && lo < hi;
+  return ok ? [lo, hi] : null;
+}
+
 /** The section cascade for a mode at sample rate fs. */
 export function designEcgFilter(mode: EcgFilterMode, fs: number, mainsHz: 50 | 60 = 50): Biquad[] {
-  const [lo, hi] = FILTER_BANDS[mode];
+  const band = filterBand(mode);
+  if (!band) throw new RangeError(`unknown ECG filter ${String(mode)}`);
+  const [lo, hi] = band;
   const sections = [highpass(lo, fs), lowpass(hi, fs)];
-  if (mode === 'monitor') sections.push(notch(mainsHz, fs));
+  if (mode === 'monitor' || (mode !== 'diagnostic' && hi < BAND_NOTCH_BELOW_HZ)) sections.push(notch(mainsHz, fs));
   return sections;
 }
 

@@ -18,7 +18,8 @@
     "filterDefault": "Monitor",
     "gainLabel": "mm-per-mV"
   },
-  "alarms": { "pause": { "durationS": 120 }, "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
+  "layout": { "badge": "LAYOUT UNVERIFIED" },
+  "alarms": { "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
   "provenance": {
     "colors.ECG": { "tag": "documented", "source": "research/05 §2.1 (ECG 'normally green')" },
     "colors.HR": { "tag": "documented", "source": "research/05 §2.1" },
@@ -40,6 +41,8 @@
     "ecg.filterDefault": { "tag": "eng", "source": "ENG", "note": "Mindray default mode not retrieved" },
     "ecg.gainLabel": { "tag": "documented", "source": "research/05 §2.2 (mm/mV steps)" },
     "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min)" },
-    "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.4-2.5 (white on red, black on yellow, black on cyan)", "note": "hex [ENG]" }
+    "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.4-2.5 (white on red, black on yellow, black on cyan)", "note": "hex [ENG]" },
+    "alarms.numericStyle": { "tag": "documented", "source": "research/05 §2.4 (Mindray alarmed numeric: text in a flashing red / yellow / cyan box)" },
+    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for Mindray; shown as unverified on screen" }
   }
 }

@@ -1,0 +1,116 @@
+{
+ "skin": "zoll-like",
+ "counts": {
+  "charge": 1,
+  "alarm": 10,
+  "chargeReady": 1,
+  "shock": 1
+ },
+ "alarmMaxLateS": 0.031977235677083105,
+ "entries": [
+  {
+   "id": "defib-charge-1",
+   "kind": "charge",
+   "simT": 3.24,
+   "when": 0.005333333333333333,
+   "lateS": 0.020033235629399616,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:0",
+   "kind": "alarm",
+   "simT": 6.24,
+   "when": 2.965333333333333,
+   "lateS": 0.031977235677083105,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:1",
+   "kind": "alarm",
+   "simT": 6.49,
+   "when": 3.183288431013425,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:2",
+   "kind": "alarm",
+   "simT": 6.74,
+   "when": 3.4332450977516173,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:3",
+   "kind": "alarm",
+   "simT": 7.24,
+   "when": 3.9332984310134256,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:4",
+   "kind": "alarm",
+   "simT": 7.49,
+   "when": 4.18335609765625,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "defib-ready-2",
+   "kind": "chargeReady",
+   "simT": 7.44,
+   "when": 4.165333333333334,
+   "lateS": 0.032075235581716655,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:5",
+   "kind": "alarm",
+   "simT": 8.24,
+   "when": 4.933323764394442,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:6",
+   "kind": "alarm",
+   "simT": 8.49,
+   "when": 5.1833914310372675,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:7",
+   "kind": "alarm",
+   "simT": 8.74,
+   "when": 5.433280097751618,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:8",
+   "kind": "alarm",
+   "simT": 9.24,
+   "when": 5.933290431013425,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "alarm:VFIB:0:0:9",
+   "kind": "alarm",
+   "simT": 9.49,
+   "when": 6.183355097656251,
+   "lateS": 0,
+   "dropped": false
+  },
+  {
+   "id": "defib-shock-3",
+   "kind": "shock",
+   "simT": 12.24,
+   "when": 8.965333333333334,
+   "lateS": 0.03207523558171488,
+   "dropped": false
+  }
+ ]
+}

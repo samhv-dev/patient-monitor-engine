@@ -21,6 +21,7 @@
     "filterDefault": "Monitoring"
   },
   "limits": { "adult": null, "paed": null, "neo": null },
+  "layout": { "badge": "LAYOUT UNVERIFIED" },
   "provenance": {
     "colors": { "tag": "assumed", "source": "research/05 §2.1 (GE: per-label colours configurable)", "note": "no GE factory colour table retrieved" },
     "sweep.co2": { "tag": "documented", "source": "research/05 §2.2 (GE CO2 0.625-50 mm/s); brief §6.8" },
@@ -31,6 +32,7 @@
     "ecg.filterDefault": { "tag": "eng", "source": "research/00 R12 (mains 50 Hz) [ENG]" },
     "limits.adult": { "tag": "unverified", "source": "brief §6.8", "note": "GE table not retrieved; not invented" },
     "limits.paed": { "tag": "unverified", "source": "brief §6.8" },
-    "limits.neo": { "tag": "unverified", "source": "brief §6.8" }
+    "limits.neo": { "tag": "unverified", "source": "brief §6.8" },
+    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for GE; shown as unverified on screen" }
   }
 }

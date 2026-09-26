@@ -112,6 +112,8 @@ export interface Skin {
     menuRegion: 'popup' | 'wave-area-bottom';
     header: HeaderItem[];
     messageBars: 'single-under-header' | 'split-technical-physiological';
+    /** Text drawn in the header when the layout is not taken from the vendor's manual (Stage 4b, gate G4a). */
+    badge?: string;
   };
   pages: PageSpec[];
   defaultPage: string;
@@ -192,6 +194,8 @@ export interface Skin {
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
     messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean };
     numericFlash: boolean;
+    /** How an alarmed numeric flashes: the text ('flash-text', default) or a level-coloured box ('flash-box', Mindray-like). */
+    numericStyle?: 'flash-text' | 'flash-box';
     factoryEnabled: boolean;
     alwaysOn: string[];
     alarmOffIcon: 'crossed-bell-red' | 'bell-off';

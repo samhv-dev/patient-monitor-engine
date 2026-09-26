@@ -40,7 +40,10 @@ export type ClinicalEvent =
     }
   | { kind: 'preoxygenate'; fio2: number; durationS: number }
   | { kind: 'cpr'; active: boolean; rate?: number; quality?: number; ventilation?: '30:2' | 'continuous' }
-  | { kind: 'defib'; action: 'selectEnergy' | 'charge' | 'shock' | 'disarm' | 'syncOn' | 'syncOff'; energyJ?: number }
+  | {
+      kind: 'defib'; action: 'selectEnergy' | 'charge' | 'shock' | 'disarm' | 'syncOn' | 'syncOff' | 'preselect'; energyJ?: number;
+      outcome?: string; // Stage 4b: `preselect` (the instructor's post-shock rhythm, engine-core DefibEvent)
+    }
   | { kind: 'pacer'; mode: 'off' | 'demand' | 'fixed'; ratePpm?: number; mA?: number; pause?: boolean }
   | {
       kind: 'line'; line: 'abp' | 'cvp' | 'pap';

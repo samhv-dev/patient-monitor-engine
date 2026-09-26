@@ -25,7 +25,7 @@ describe('engine pipeline', () => {
     expect(e.latestSampleIndex('abp')).toBe(-1);
   });
 
-  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 300_000 }, async () => {
+  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
     const e = createEngine({ seed: 11 });
     // Advance one sim-hour at a time and yield between chunks: 24 h of synchronous ticks takes
     // > 60 s on a 2-vCPU CI runner, which starves the Vitest worker's RPC ("Timeout calling onTaskUpdate").

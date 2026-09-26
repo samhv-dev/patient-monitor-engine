@@ -34,7 +34,7 @@ describe('engine + Stage 2 pipeline wiring', () => {
     expect(r({ type: 'release', variable: 'all' }).accepted).toBe(true);
     expect(r({ type: 'setMode', mode: 'modeled' }).reason).toMatch(/Stage 7/);
     expect(r({ type: 'attachSensor', sensor: 'abp', state: 'plugged' }).accepted).toBe(false);
-    expect(r({ type: 'attachSensor', sensor: 'ecg', state: 'off' }).reason).toMatch(/Stage 4/); // Stage 3 took co2/temp
+    expect(r({ type: 'attachSensor', sensor: 'ecg', state: 'off' }).accepted).toBe(true); // Stage 3 took co2/temp, Stage 4b ecg
     expect(r({ type: 'applyEvent', event: { kind: 'line', line: 'cvp', action: 'wedge' } }).accepted).toBe(false);
     expect(r({ type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 200 } }).accepted).toBe(false);
     expect(r({ type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 7 } }).accepted).toBe(false);
