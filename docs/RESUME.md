@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 16:15 (Waves A+B merged; 7a executing at Task 22/29; 7b starting; 7c/8a plans being written).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 21:20 (7c plan landed, 26 tasks; 7a/7b/FU-1 executing; 8a plan finishing; 7d/7e/7g plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -15,9 +15,13 @@
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1 | merged to main | DONE (Waves A + B) | — |
 | 7a circulation | `stage-7a-circulation` (plan: `docs/plans/stage-7a-circulation.md`, worktree `../scratch/wt-stage-7a`) | executing (started 2026-09-26 ~13:00) | resume from first unticked task |
 | 7b lungs | `stage-7b-lungs` (plan: `docs/plans/stage-7b-lungs.md`, worktree `../scratch/wt-stage-7b`) | executing | resume from first unticked task |
-| 7c blood/acid–base | plan being written (`docs/plans/stage-7c-blood.md`, partial) | R34 port from Pulse | execute when plan lands |
-| 8a validation harness | plan being written (`docs/plans/stage-8a-validation.md`, partial) | R9/R40 | execute when plan lands |
-| 7 whole-body physiology (7a–7g, R32/R34) | not started | Ali reviewing docs/physiology/stage-7-parameter-tables.md; Pulse annex being written | write 7a plan after Q1–Q23 answered |
+| 7c blood/acid–base | plan ready (`docs/plans/stage-7c-blood.md`, 26 tasks, verified reproducible; R50 review pending) | R34 port from Pulse; gate: tests and Pulse oracle never concurrently | execute after 7a merges |
+| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review pending) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
+| 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
+| 7f NMB/depth | plan on disk (`docs/plans/stage-7f-neuro-depth.md`; R50 review running) | consumes 7g effect sites | verify plan, execute after 7g |
+| 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks; R50 review pending) | conforms to 7f contract | execute after 7a merges |
+| FU-1 follow-ups | `fu-1-followups`, PR #12 (worktree `../scratch/wt-fu1`) | all 8 items done, CI pending | gate + merge when CI is green |
+| 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
