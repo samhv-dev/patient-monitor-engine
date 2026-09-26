@@ -4200,7 +4200,9 @@ git push origin stage-7b-lungs
 
 ### Task 30: Full verification and pull request
 
-- [ ] **Step 1: Merge main and run the full gate**
+> **Executor note:** Full gate green on the branch merged with origin/main after 7a (see gate note §0). docs/RESUME.md not edited.
+
+- [x] **Step 1: Merge main and run the full gate**
 
 ```bash
 git fetch origin && git merge --no-edit origin/main
@@ -4209,7 +4211,7 @@ npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 bu
 
 Expected: all green. Fix any conflict by keeping both sides (NOTICES rows keep all ids); re-run.
 
-- [ ] **Step 2: Tick the plan and open the PR**
+- [x] **Step 2: Tick the plan and open the PR**
 
 Tick every checkbox of this plan copy in `docs/plans/stage-7b-lungs.md`, commit (`docs: stage 7b plan fully ticked`), push, then:
 
@@ -4224,7 +4226,7 @@ BODY
 )"
 ```
 
-- [ ] **Step 3: Update the runbook row**
+- [x] **Step 3: Update the runbook row**
 
 Do NOT edit `docs/RESUME.md` on the branch (the orchestrator owns it); state the PR number and the gate-note path in your final report.
 

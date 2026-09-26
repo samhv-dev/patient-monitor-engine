@@ -4,7 +4,9 @@ Gate question: "Do plateau, driving pressure, auto-PEEP, the Pa−EtCO2 gap, the
 
 Branch `stage-7b-lungs`, from `origin/main` `9e39b29`, executed task by task from `docs/plans/stage-7b-lungs.md` (30 tasks; every step ticked, executor notes under each task heading). Tasks 1–12 (the lung module) are byte-identical to the plan author's prototype and reproduce its numbers exactly. Tasks 13–19 and 22–25 (engine wiring) were not prototyped; their numbers were treated as targets with the catalogue/evidence bands (R45 rule) and every adjustment is listed below. Rulings applied: R43 (two compartments), R46 (accepted deviations; GOLD 3 / RR 20 auto-PEEP band 6–12; band misses < 25 % tuned within catalogue ranges, the rest under "Needs a ruling"; the phase-III-slope follow-up NOT done), R39, R41, R45.
 
-__GATE_RUN__
+## 0. Full gate (branch merged with `origin/main` after Stage 7a, 2026-09-26 22:40)
+
+`typecheck` exit 0 · `pnpm test` exit 0 — engine-core **739 passed, 1 skipped** (173 files; 7b adds 27 files / 113 tests: 14 unit files in `test/l2/lung` + `types-lung`, 12 engine files `test/engine/lung-*`), ventilator **88** (+1 consistency file), renderer 65, controller 196, skins 168, audio 58, validation 16 (+5 skipped) · `build` exit 0 · `check-notices: OK` · `PW_SYSTEM_CHROME=1 test:e2e` **24 passed** (2.4 min). The 24 h tests (ECG, Stage 2, Stage 3, 7b's lung) ran the full 24 sim-h locally (350 s each under the parallel suite); CI runs 6 h (`LONGRUN_HOURS`).
 
 ## 1. Per-condition ventilator and gas signatures (Task 20, all 32 conditions)
 
@@ -132,7 +134,7 @@ PPV falls ~10 % because the lung-module compliance is 55 (Stage 3's fixed 50): s
 ## 7. CPU, determinism, 24 h
 
 - Lung module stand-alone (COPD, 1 h): **0.0028 ms per 20 ms tick** (prototype 0.0011; budget 0.1).
-- Whole engine per tick, main → 7b (healthy ventilated / COPD, 20 sim-min, machine under load avg ≈ 19): **0.027 → 0.042 ms / 0.027 → 0.037 ms** — the lung module inside the engine costs ≈ +0.010–0.014 ms per tick.
+- Whole engine per tick (healthy ventilated / COPD, 20 sim-min; machine shared with other executors): before 7a, main → 7b **0.027 → 0.042 / 0.027 → 0.037 ms**; on 7a, main → 7b **0.031 → 0.036 / 0.029 → 0.043 ms** — the lung module inside the engine costs ≈ +0.005–0.015 ms per tick. In the full parallel suite the stand-alone module measured 0.0056 ms.
 - Determinism: same seed and script → identical lung state JSON; snapshot → restore → 60 s continuation identical.
 - 24 h ventilated ARDS: unit volumes bounded, PaCO2 drift < 1 mmHg after hour 1, both O2 stores in (0.1, 1). Stage 3's 24 h 62.5 Hz index test passes.
 
