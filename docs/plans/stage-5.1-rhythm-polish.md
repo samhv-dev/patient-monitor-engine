@@ -2821,21 +2821,21 @@ Items that are not morphology (a label, a catalogue seed, a missing strip) skip 
 **Files:**
 - Create: `docs/gates/stage-5.1.md`
 
-- [ ] **Step 1: Full verification from a clean clone of the pushed branch (the Stage 5 procedure)**
+- [x] **Step 1: Full verification from a clean clone of the pushed branch (the Stage 5 procedure)**
 
 ```bash
-rm -rf /tmp/pme-51-clean && git clone --branch stage-5.1-rhythm-polish "$(git remote get-url origin)" /tmp/pme-51-clean
-cd /tmp/pme-51-clean
+rm -rf <scratchpad>/pme-51-clean && git clone --branch stage-5.1-rhythm-polish "$(git remote get-url origin)" <scratchpad>/pme-51-clean
+cd <scratchpad>/pme-51-clean
 npx -y pnpm@9.15.9 install --frozen-lockfile
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices
-cd - && rm -rf /tmp/pme-51-clean
+cd - && rm -rf <scratchpad>/pme-51-clean
 ```
 
 Expected: exit 0. Any long engine run added to a test must yield per sim-minute with `{ timeout: 300_000 }` (G2 CI lesson; the Stage 5.1 tests already do).
 
-- [ ] **Step 2: Measure the numbers for the gate note with the tests' own computations (a temporary `test/l2/ecg/s51/zz-measure.test.ts` that prints them with `console.log`; delete it before committing)**: VF worst ACF / min and median bandwidth / V1 and V5 ratio ranges; vtPoly V1/II range; RBBB and LBBB tangent QRS, V1 R′ and S; ST at J+60 per territory index and reciprocal lead at 2 mm (diagnostic filter) and, for inferior, the monitor-filter value; K 8.5 QRS, T/R, trough; Osborn J II/V5 at 32/30/28 °C; paced QRS and slope ratio; TCP pulses per minute (demand and fixed), spike FWHM and amplitude; RSA correlation with the driver; fingerprint axis range.
+- [x] **Step 2: Measure the numbers for the gate note with the tests' own computations (a temporary `test/l2/ecg/s51/zz-measure.test.ts` that prints them with `console.log`; delete it before committing)**: VF worst ACF / min and median bandwidth / V1 and V5 ratio ranges; vtPoly V1/II range; RBBB and LBBB tangent QRS, V1 R′ and S; ST at J+60 per territory index and reciprocal lead at 2 mm (diagnostic filter) and, for inferior, the monitor-filter value; K 8.5 QRS, T/R, trough; Osborn J II/V5 at 32/30/28 °C; paced QRS and slope ratio; TCP pulses per minute (demand and fixed), spike FWHM and amplitude; RSA correlation with the driver; fingerprint axis range.
 
-- [ ] **Step 3: Write `docs/gates/stage-5.1.md` with these sections**, in the Stage 5 gate note's style:
+- [x] **Step 3: Write `docs/gates/stage-5.1.md` with these sections**, in the Stage 5 gate note's style:
   1. Gate question: "Do the G5-obs strips now show what their labels say, measured and by eye?"
   2. Check table: clean-clone command result; each acceptance item (1–8 of the brief) → test file › name → measured number.
   3. Before/after gallery: for each of the 22 keys, the before and after image side by side (`![before](stage-5.1/<key>-before.png) ![after](stage-5.1/<key>-after.png)`) and the one-line observation from Task 13 Step 5.
@@ -2844,7 +2844,7 @@ Expected: exit 0. Any long engine run added to a test must yield per sim-minute 
   6. Requests to other stages (copy the table from this plan, with status).
   7. Sources consulted and the clean-room statement (no ECGSYN or GPL code opened).
 
-- [ ] **Step 4: Commit, push, open the PR (do not merge — R21: the orchestrator merges after CI and gate inspection)**
+- [x] **Step 4: Commit, push, open the PR (do not merge — R21: the orchestrator merges after CI and gate inspection)**
 
 ```bash
 git add docs/gates/stage-5.1.md
