@@ -24,7 +24,9 @@ describe('link core', () => {
     linkEvent(core, { ...ev, resistanceCmH2OPerLps: 40, shunt: 0.1 }); // still bronchospastic: ×4 of the NEW base
     expect([core.vs.cfg.compliance, core.vs.cfg.resistance]).toEqual([20, 40]);
   });
-  it('in-process: the engine counts the ventilator’s 14 breaths/min', () => {
+  // One sim-minute of engine + ventilator: ≈ 2 s alone, 8.6 s when `pnpm -r test` runs the packages in parallel —
+  // the CI budget (G2) instead of Vitest's 5 s default.
+  it('in-process: the engine counts the ventilator’s 14 breaths/min', { timeout: 300_000 }, () => {
     const s = createLinkedSim({ profile: 'normal' });
     s.advanceTo(60);
     const br = s.events.filter((e) => e.type === 'breath' && e.t > 15);
