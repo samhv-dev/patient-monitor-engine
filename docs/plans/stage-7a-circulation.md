@@ -2322,7 +2322,7 @@ This is the central integration task. Stage 2's pulse generator (`lv/rv` Pulse l
 - Consumes: Task 9 model API, Task 11 `respPleural`.
 - Produces: `HemoState.circ: CircModelState`, `HemoState.circOut: CircOut`, `HemoState.radQ: number[]` (radial delay line, `RAD_DELAY_STEPS = 22` × 2 ms = 44 ms), `HemoState.beatT: number` (last CircBeat consumed), `HemoCtx.pIt?: (t: number) => number`, `HemoCtx.requestHr?: (bpm: number) => void` (used in Task 15). `createHemoState(profile, l1, hr0)` signature unchanged.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-pipeline.test.ts`:
 
@@ -2365,12 +2365,12 @@ describe('hemo pipeline fed by the circulation', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-pipeline.test.ts`
 Expected: the snapshot test FAILS (`circ` undefined); the others may pass or fail on Stage 2's generator — both are fine.
 
-- [ ] **Step 3: Wire the model into the pipeline**
+- [x] **Step 3: Wire the model into the pipeline**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`:
 
@@ -2523,7 +2523,7 @@ In `packages/engine-core/src/engine.ts`, in `advance()`:
 - change the `advanceHemo` context object to
 `{ l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), pIt: (t) => respPleural(resp, t), requestHr: (bpm) => { ps.hr = constantRamp(bpm); } }, // Stage 7a: pIt, requestHr`.
 
-- [ ] **Step 4: Run the new test, then the Stage 2/3 engine suites**
+- [x] **Step 4: Run the new test, then the Stage 2/3 engine suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-pipeline.test.ts`
 Expected: PASS (3). If the resting ABP sits outside 112–128/74–86 it is because the MANUAL tracker is not wired yet (Task 14): the untracked adult (radial 121/80 at HR 70 with PEEP 0) is inside the band, so a failure here means a wiring error — print `hs.circ.beats.at(-1)` and check that `circOnBeat` receives perfused beats.
@@ -2531,7 +2531,7 @@ Expected: PASS (3). If the resting ABP sits outside 112–128/74–86 it is beca
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine`
 Expected: most Stage 2/3 engine tests pass; those that depend on the Stage 2 generator's specific numbers (PPV via `g_hyp`, post-PVC +8–15, CPR amplitude, pulseless plateau, tracker 90/50, NIBP bias) may fail — Task 25 re-checks and re-specifies each one. Record the failing test names in the commit body.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/src/l1/state.ts packages/engine-core/test/engine/circ-pipeline.test.ts

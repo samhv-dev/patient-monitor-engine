@@ -54,6 +54,7 @@ import {
   applyRespCommand,
   createRespState,
   respBreathU,
+  respPleural, // Stage 7a
   RESP_RATE,
   validateRespCommand,
   type RespChannel,
@@ -411,7 +412,13 @@ class Engine implements MonitorEngine {
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
-      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t) }, // Stage 3: u
+      {
+        l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), // Stage 3: u
+        pIt: (t) => respPleural(resp, t), // Stage 7a
+        requestHr: (bpm) => {
+          ps.hr = constantRamp(bpm); // Stage 7a: MODELED mode drives the rhythm engine's rate
+        },
+      },
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     ); // Stage 2
