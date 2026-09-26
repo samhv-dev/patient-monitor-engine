@@ -4015,7 +4015,7 @@ git push origin stage-7a-circulation
 - Produces: `loadPulse(dir: string): Promise<PulseHandle>` (`step(n)`, `read(): Record<string, number>` by `drm_names.json` index, `act(json: string)`), `ORACLE_SCENARIOS: OracleScenario[]` (O1–O5 of annex §D: baseline 10 min; 20 % haemorrhage; 1 L crystalloid; propofol 2 mg/kg; norepinephrine 0.1 µg/kg/min — O5 runs Pulse only and asserts direction on ours as `expect-differ`/`exclude` until 7g adds norepinephrine), `compareRow(ours, pulse, rule)` returning `'agree' | 'expect-differ-ok' | 'fail'`.
 - The wasm lives OUTSIDE the repo (`research/pulse-spike/web/{pulse.js,pulse.wasm,pulse.data}`, 6.9 MB): the test reads `process.env.PULSE_ORACLE_DIR` and is skipped when it is unset (CI) — the gate note records a local run.
 
-- [ ] **Step 1: Write the runner**
+- [x] **Step 1: Write the runner**
 
 `packages/validation/src/oracle/pulse-runner.ts`:
 
@@ -4125,7 +4125,7 @@ export function compareRow(ours: number, pulse: number, row: OracleRow): 'agree'
 }
 ```
 
-- [ ] **Step 2: Write the test (skipped without the wasm)**
+- [x] **Step 2: Write the test (skipped without the wasm)**
 
 `packages/validation/test/oracle.test.ts`:
 
@@ -4183,13 +4183,13 @@ describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PULSE_ORACLE_DIR=…
 });
 ```
 
-- [ ] **Step 3: Run it locally with the wasm**
+- [x] **Step 3: Run it locally with the wasm**
 
 Run: `PULSE_ORACLE_DIR=/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle.test.ts`
 Expected: 5 tests; every row prints `agree`, `expect-differ-ok` or `excluded`. If `pulse.js` fails to load in Node (it was built for a Web Worker), rebuild is out of scope: record "oracle: wasm is web-only" in the gate note, keep the test skipped, and continue — the runner and scenarios are the deliverable. A `fail` on an `agree` row is a finding for the gate note, not a reason to retune our model (audit §4).
 Run without the env var: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle.test.ts` → 5 skipped.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/validation/src/oracle packages/validation/test/oracle.test.ts
