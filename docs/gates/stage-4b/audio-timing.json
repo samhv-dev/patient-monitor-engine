@@ -6,110 +6,110 @@
   "chargeReady": 1,
   "shock": 1
  },
- "alarmMaxLateS": 0.038053235676710706,
+ "alarmMaxLateS": 0.025147479816962637,
  "entries": [
   {
    "id": "defib-charge-1",
    "kind": "charge",
-   "simT": 4.82,
+   "simT": 3.48,
    "when": 0,
-   "lateS": 0.02013323567745586,
+   "lateS": 0.010433479816963276,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:0",
    "kind": "alarm",
-   "simT": 7.8,
-   "when": 2.8106666666666666,
-   "lateS": 0.038053235676710706,
+   "simT": 6.48,
+   "when": 2.9226666666666667,
+   "lateS": 0.025147479816962637,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:1",
    "kind": "alarm",
-   "simT": 8.05,
-   "when": 3.0226234309899556,
+   "simT": 6.73,
+   "when": 3.147529520182293,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:2",
    "kind": "alarm",
-   "simT": 8.3,
-   "when": 3.2725730976555067,
+   "simT": 6.98,
+   "when": 3.397613186849332,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:3",
    "kind": "alarm",
-   "simT": 8.8,
-   "when": 3.772614430989958,
+   "simT": 7.48,
+   "when": 3.8976091868493317,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:4",
    "kind": "alarm",
-   "simT": 9.05,
-   "when": 4.022637764322544,
+   "simT": 7.73,
+   "when": 4.147551520182292,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "defib-ready-2",
    "kind": "chargeReady",
-   "simT": 9.02,
-   "when": 4.026666666666666,
-   "lateS": 0.034060235676709905,
+   "simT": 7.68,
+   "when": 4.117333333333334,
+   "lateS": 0.01965047981696344,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:5",
    "kind": "alarm",
-   "simT": 9.8,
-   "when": 4.772646764322545,
+   "simT": 8.48,
+   "when": 4.897572853516743,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:6",
    "kind": "alarm",
-   "simT": 10.05,
-   "when": 5.022605430989958,
+   "simT": 8.73,
+   "when": 5.1476325201819195,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:7",
    "kind": "alarm",
-   "simT": 10.3,
-   "when": 5.272574097655507,
+   "simT": 8.98,
+   "when": 5.397606186849331,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:8",
    "kind": "alarm",
-   "simT": 10.8,
-   "when": 5.772614430989957,
+   "simT": 9.48,
+   "when": 5.897503186849703,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "alarm:VFIB:0:0:9",
    "kind": "alarm",
-   "simT": 11.05,
-   "when": 6.022579097655507,
+   "simT": 9.73,
+   "when": 6.147535520182291,
    "lateS": 0,
    "dropped": false
   },
   {
    "id": "defib-shock-3",
    "kind": "shock",
-   "simT": 13.84,
-   "when": 8.842666666666666,
-   "lateS": 0.030149235676336872,
+   "simT": 12.52,
+   "when": 8.970666666666666,
+   "lateS": 0.03316047981696357,
    "dropped": false
   }
  ]
