@@ -3733,7 +3733,7 @@ git push
 
 Measured while planning: the 5 cases write a 113 KB baseline in 0.6 s; comparing a regenerated run gives 13/13 channels green; determinism over all 36 rhythms × 3 seeds = 216 runs in 21 s, 0 non-deterministic.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/regression/regression.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/regression/regression.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3767,11 +3767,11 @@ describe('V9 determinism', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/regression/regression.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/regression/baseline.ts`**
+- [x] **Step 3: Write `packages/validation/src/regression/baseline.ts`**
 
 ```ts
 // Waveform regression baselines (R40 borrow #1, audit N-P02): fixed scenarios, 5 s windows per channel, compared
@@ -3851,7 +3851,7 @@ export async function runRegression(opts: { rebaseline?: boolean } = {}): Promis
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/regression/determinism.ts`**
+- [x] **Step 4: Write `packages/validation/src/regression/determinism.ts`**
 
 ```ts
 // V9 determinism (brief §9): SHA-256 of the sample buffers for rhythms × seeds × 60 s. Gating: two runs in one
@@ -3896,11 +3896,11 @@ export function writeGolden(h: Record<string, string>): void {
 }
 ```
 
-- [ ] **Step 5: Run the test. Expected: PASS (4 tests)**
+- [x] **Step 5: Run the test. Expected: PASS (4 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/regression/regression.test.ts`
 
-- [ ] **Step 6: Generate and commit the first baselines. Expected: `waveforms.json` ≈ 110–120 KB; `nondet []`**
+- [x] **Step 6: Generate and commit the first baselines. Expected: `waveforms.json` ≈ 110–120 KB; `nondet []`**
 
 ```bash
 mkdir -p packages/validation/baselines
@@ -3917,7 +3917,7 @@ rm packages/validation/gen-baselines.ts
 ls -la packages/validation/baselines/
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/validation/src/regression packages/validation/test/regression packages/validation/baselines
