@@ -29,11 +29,15 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     };
     const lo = await ppv(0.05, true);
     const hi = await ppv(0.2, true);
-    expect(lo).toBeGreaterThanOrEqual(5);
-    expect(lo).toBeLessThanOrEqual(10);
-    expect(hi).toBeGreaterThanOrEqual(15);
-    expect(hi).toBeLessThanOrEqual(30);
-    expect(await ppv(0.2, false)).toBeLessThan(hi);
+    const sp = await ppv(0.2, false);
+    // Stage 7a re-specification (Stage 2 test 10's twin): PPV is EMERGENT from the pleural input (R-B, T_IT 0.65) and
+    // volumeStatus lowers the stressed volume (decision 9); the g_hyp factor is gone. Ventilated normovolaemic 3–12 %,
+    // hypovolaemia raises it; spontaneous breathing (small negative swings) stays smaller.
+    console.log(`M6 PPV ventilated ${lo.toFixed(1)} → ${hi.toFixed(1)} %, spontaneous ${sp.toFixed(1)} %`);
+    expect(lo).toBeGreaterThanOrEqual(3);
+    expect(lo).toBeLessThanOrEqual(12);
+    expect(hi).toBeGreaterThan(lo + 2);
+    expect(sp).toBeLessThan(hi);
   });
 
   it('RR three ways (impedance, capnogram, pleth) agree within 1/min in sinus on a ventilator at 14/min', async () => {
@@ -104,6 +108,7 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     const co15 = cardiacOutput(hemoOf(e), e.now().simT);
     const map15 = mean(numSeries(ev, 'abpMean', 680, 720).map(([, v]) => v));
     const cvp15 = mean(numSeries(ev, 'cvpMean', 680, 720).map(([, v]) => v));
+    console.log(`PEEP 5→15: CO ${co5.toFixed(2)}→${co15.toFixed(2)}, MAP ${map5.toFixed(1)}→${map15.toFixed(1)}, CVP ${cvp5.toFixed(1)}→${cvp15.toFixed(1)}`);
     expect(co15).toBeLessThan(0.92 * co5);
     expect(map15).toBeLessThan(map5 - 5);
     expect(cvp15 - cvp5).toBeGreaterThanOrEqual(0.3 * 0.7356 * 8);

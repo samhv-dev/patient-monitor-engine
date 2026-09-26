@@ -16,7 +16,7 @@ import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfi
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
-import { ARREST_AFTER_S, CPR_DUTY, G_MAX, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
+import { ARREST_AFTER_S, CPR_DUTY, G_MAX, K_OPEN, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
@@ -45,6 +45,8 @@ const DRUG_IDS = Object.keys(DRUGS) as DrugId[]; // Stage 7a
 
 /** Stage 7a: aortic root → radial transport delay as a 2 ms delay line (Stage 2 RADIAL_DELAY_S 0.045 → 22 steps). */
 export const RAD_DELAY_STEPS = 22;
+/** Stage 7a: the rhythm engine's k_rhythm of a VT ≤ 150/min — the reference for ventricular-rhythm efficiency. */
+export const VT_K_REF = 0.6;
 
 /** Stage 7a: PatientProfile → CircProfile (R22 minimal layer; unknown condition ids are ignored). */
 export function circProfileOf(profile: PatientProfile | undefined): CircProfile {
@@ -102,6 +104,12 @@ export interface HemoState {
   iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
   lvad: LvadState; // Stage 7a: continuous-flow LVAD (R28, tables §8.2)
   pvOn: boolean; // Stage 7a: teaching channels on
+  /**
+   * Stage 7a MANUAL set-and-hold: the volume/PVR tracker (active, okS) and the per-beat pressure tracker (pActive,
+   * pOkS) run while an INSTRUCTOR action is being met (a target, the HR or the rhythm changed) and stop once it holds;
+   * physiological perturbations (PEEP, bleeding, drugs, conditions) then act on top of the instructor's picture.
+   */
+  manHold: { cvpT: number; pamT: number; active: boolean; okS: number; runS: number; key: string; pActive: boolean; pOkS: number; sbpAvg: number; dbpAvg: number };
   sys: TrackerState;
   pul: TrackerState;
   prevRef: boolean; // the previous beat was a reference beat
@@ -149,6 +157,9 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   return {
     m: 0,
     circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, lvad: createLvad(), pvOn: false,
+    // the volume tracker starts only if the instructor's initial CVP differs from the stabilised profile by > 1 mmHg
+    // (the L1 default 6 vs a stabilised 5 is not an instruction) (see HemoState.manHold)
+    manHold: manHoldInit(cvp, l1Value(l1, 'volumeStatus', 0), pad + (pas - pad) / 3, sbp, dbp),
     sys: createTracker(Math.min(4, Math.max(0.3, (map - cvp) / flow))),
     pul: createTracker(Math.min(0.6, Math.max(0.02, (pam - pawp) / flow))),
     prevRef: true, pv: cvp, pla: pawp,
@@ -190,7 +201,11 @@ function passFraction(hs: HemoState, cuff: number): number {
 function onBeat(hs: HemoState, ctx: HemoCtx, b: Extract<EngineEvent, { type: 'beat' }>): void {
   const rr = hs.lastBeatT >= 0 ? Math.max(0.15, b.t - hs.lastBeatT) : hs.lastRR;
   const perfused = !PULSELESS_RHYTHMS.has(ctx.rhythm.id) && b.mech.perfused;
-  circOnBeat(hs.circ, b.t, 60 / rr, b.origin, perfused);
+  // ventricular beats (PVCs included: mechanical restitution makes a premature beat weak): the rhythm engine's k_rhythm (brief §4.8, shared by both modes) sets the
+  // dyssynchronous contraction's efficiency — full at a VT ≤ 150/min (k 0.6), none at or below Stage 2's K_OPEN 0.25
+  // (VT > 200, torsades: the contraction cannot open the aortic valve → pulseless, as in Stage 2)
+  const eff = b.origin === 'ventricular' && b.template !== 'pvc' ? Math.min(1, Math.max(0, (b.mech.kSV - K_OPEN) / (VT_K_REF - K_OPEN))) : 1;
+  circOnBeat(hs.circ, b.t, 60 / rr, b.origin, perfused && eff > 0, eff);
   hs.lastBeatT = b.t;
   hs.lastRR = rr;
   cvpOnBeat(hs.cvp, b.t, b.qrsMs, b.qtMs, rr);
@@ -252,20 +267,15 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   const ejected = cb.avOpen >= 0 && cb.sv > 1;
   // a reference beat: ejected, with no big stroke-volume swing against the previous beat (brief §4.9 M2)
   const prev = hs.siteBeats[hs.siteBeats.length - 1];
-  const steady = ejected && (!prev || Math.abs(cb.sv - prev.sv) <= 0.25 * Math.max(1, prev.sv));
+  // ventricular beats (PVCs, VT, idioventricular) neither drive nor get cancelled by the tracker (Stage 2 M2 rule)
+  const steady = ejected && cb.origin !== 'ventricular' && (!prev || Math.abs(cb.sv - prev.sv) <= 0.25 * Math.max(1, prev.sv));
   const ref = hs.prevRef && steady;
   hs.prevRef = steady;
   const beat: SiteBeatStat = { t: cb.t, sbp: cb.sbp, dbp: cb.dbp, map: cb.map, ref, cpr: hs.cpr.active, sv: cb.sv, dur: cb.dur };
   hs.lastSite = beat;
   hs.siteBeats.push(beat);
   if (hs.siteBeats.length > 16) hs.siteBeats.shift();
-  if (ejected) {
-    hs.lastEjT = cb.t + cb.avOpen;
-    const lvet = Math.max(0.1, cb.avClose - cb.avOpen);
-    const others = hs.circ.beats.filter((b) => b !== cb);
-    const svRef = Math.max(1, others.length >= 4 ? others.reduce((a, b) => a + b.sv, 0) / others.length : cb.sv);
-    addPlethPulse(hs.pleth, cb.t + cb.avOpen + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t) * cb.sv) / svRef, lvet, hs.circ.p.rSys);
-  }
+  if (ejected) hs.lastEjT = cb.t + cb.avOpen;
   if (hs.iabp.on) {
     hs.iabpAug = cb.aoSys;
     iabpOnBeat(hs.iabp, cb.t + cb.dur, cb.dur, cb.avClose > 0 ? cb.avClose : 0.3); // pressure trigger: the last notch
@@ -276,15 +286,33 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
 }
 
 export const MANUAL_CVP_GAIN = 0.3; // Stage 7a [ENG]: dV0 −= gain·(CVP* − CVP)·cSv per second
+export const MANUAL_HOLD_S = 8; // Stage 7a [ENG]: a MANUAL tracker stops after its target has held this long
+/** Stage 7a [ENG]: the volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP). */
+export const MANUAL_TRACK_MAX_S = 60;
+export const MANUAL_HOLD_MMHG = 1; // Stage 7a [ENG]: SBP/DBP hold tolerance of the per-beat pressure tracker
 /** Decision 9: hypovolaemia (volumeStatus < 1) lowers the CVP the tracker aims for, so stressed volume falls. */
 export function volumeStatusCvp(cvpTarget: number, vs: number): number {
   return cvpTarget - 0.8 * cvpTarget * (1 - Math.min(1, Math.max(0, vs)));
 }
 const CIRC_LIMITS = { gMin: 0.3, gMax: 2.5, rMin: 0.3, rMax: 4 };
 
+/** Initial MANUAL hold state: both trackers start active (the L1 targets are met first), then hold. */
+function manHoldInit(cvp: number, vs: number, pamT: number, sbp: number, dbp: number): HemoState['manHold'] {
+  return { cvpT: volumeStatusCvp(cvp, vs), pamT, active: true, okS: 0, runS: 0, key: '', pActive: true, pOkS: 0, sbpAvg: sbp, dbpAvg: dbp };
+}
+
 /** Stage 7a MANUAL M2: the Stage 2 tracker algorithm, its gain acting on LV Emax and its R on systemic resistance. */
 function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const target = { sbp: l1Value(ctx.l1, 'sbp', b.t), dbp: l1Value(ctx.l1, 'dbp', b.t) };
+  const tr = hs.manHold;
+  if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
+  if (b.ref) {
+    // the hold test uses ≈ 8-beat averages so ventilator-driven beat-to-beat swings (PPV) do not keep it running
+    tr.sbpAvg += (b.sbp - tr.sbpAvg) / 8;
+    tr.dbpAvg += (b.dbp - tr.dbpAvg) / 8;
+    tr.pOkS = Math.abs(tr.sbpAvg - target.sbp) <= MANUAL_HOLD_MMHG && Math.abs(tr.dbpAvg - target.dbp) <= MANUAL_HOLD_MMHG ? tr.pOkS + b.dur : 0;
+    if (tr.pOkS >= MANUAL_HOLD_S) tr.pActive = false;
+  }
   hs.sys.g = hs.circ.man.eesF;
   hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
   trackBeat(hs.sys, b, target, hs.circOut.pSv, CIRC_LIMITS, CIRC_LIMITS.gMax);
@@ -431,28 +459,61 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         if (pa.sensor !== 'none') stepTransducer(pa, lineInput(pa, wedged(pa0), ta), lineInput(pa, wedged(o.pPaRoot), tb), H_S);
         if (cv.sensor !== 'none') stepTransducer(cv, lineInput(cv, cv0, ta), lineInput(cv, o.pRa, tb), H_S);
       }
+      // Stage 7a: a pleth pulse per aortic-valve opening, placed when it happens (a CircBeat completes one beat late)
+      const c = hs.circ;
+      if (c.opens.length > 0 && !hs.cpr.active) {
+        const bs = c.beats;
+        const svRef = Math.max(1, bs.length >= 4 ? bs.reduce((a, b) => a + b.sv, 0) / bs.length : (c.ref.sv || 70));
+        const lb = bs[bs.length - 1];
+        const lvet = lb && lb.avClose > lb.avOpen ? lb.avClose - lb.avOpen : 0.3;
+        for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * op.sv) / svRef, lvet, c.p.rSys);
+      }
+      c.opens.length = 0;
       hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers
       hs.pla = hs.circOut.pPv;
     }
     if (ctx.l1.mode !== 'modeled' && m % 12 === 0 && !isArrested(hs, t1) && !hs.cpr.active) {
       // Stage 7a MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
       const c = hs.circ;
+      const tr = hs.manHold;
       const cvpT = volumeStatusCvp(l1Value(ctx.l1, 'cvp', t1), l1Value(ctx.l1, 'volumeStatus', t1));
       // the instructor's CVP is the filling state: pleural (PEEP, tension PTX) and pericardial (tamponade) pressure
       // changes still show on top of it, as Stage 3's MANUAL Paw coupling did (decision 8)
       const vh = (c.s[10] as number) + (c.s[6] as number);
       const periFluid = hs.circOut.pPeri - Math.max(0, c.p.periA * (Math.exp(c.p.periLambda * (vh - c.p.v0Peri)) - 1)); // tamponade share
       const cvpNow = hs.circOut.pRa - Math.max(0, hs.circOut.pIt - P_PL0) - periFluid; // spontaneous dips average out
-      c.man.dV0 -= MANUAL_CVP_GAIN * (cvpT - cvpNow) * c.p.cSv * (12 / HEMO_RATE);
-      c.man.dV0 = Math.min(0.5 * c.prof.bloodVolumeMl, Math.max(-0.5 * c.prof.bloodVolumeMl, c.man.dV0));
       const pasT = l1Value(ctx.l1, 'papSys', t1);
       const padT = l1Value(ctx.l1, 'papDia', t1);
       const pamT = padT + (pasT - padT) / 3;
-      const q = hs.circOut.qLungL + hs.circOut.qLungR;
-      if (q > 20) {
-        const want = Math.max(0.01, (pamT - hs.circOut.pPv) / q);
-        const cur = c.man.pvr ?? want;
-        c.man.pvr = cur * (want / cur) ** 0.1;
+      // SET-AND-HOLD: the volume and PVR trackers run when the instructor's target moves and stop once it is met
+      // (±0.5 mmHg for 5 s); later perturbations (PEEP, bleeding, tamponade) then act on top — PEEP lowers CO as it
+      // did under Stage 3's MANUAL coupling. The Ees/SVR pressure tracker below keeps defending SBP/DBP per beat.
+      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}`;
+      if (key !== tr.key) {
+        tr.key = key;
+        tr.pActive = true;
+        tr.pOkS = 0;
+      }
+      if (Math.abs(cvpT - tr.cvpT) > 0.05 || Math.abs(pamT - tr.pamT) > 0.05) {
+        tr.cvpT = cvpT;
+        tr.pamT = pamT;
+        tr.active = true;
+        tr.okS = 0;
+        tr.runS = 0;
+      }
+      if (tr.active) {
+        const err = cvpT - cvpNow;
+        c.man.dV0 -= MANUAL_CVP_GAIN * err * c.p.cSv * (12 / HEMO_RATE);
+        c.man.dV0 = Math.min(0.5 * c.prof.bloodVolumeMl, Math.max(-0.5 * c.prof.bloodVolumeMl, c.man.dV0));
+        const q = hs.circOut.qLungL + hs.circOut.qLungR;
+        if (q > 20) {
+          const want = Math.max(0.01, (pamT - hs.circOut.pPv) / q);
+          const cur = c.man.pvr ?? want;
+          c.man.pvr = cur * (want / cur) ** 0.1;
+        }
+        tr.okS = Math.abs(err) <= 0.5 ? tr.okS + 12 / HEMO_RATE : 0;
+        tr.runS += 12 / HEMO_RATE;
+        if (tr.okS >= MANUAL_HOLD_S || tr.runS >= MANUAL_TRACK_MAX_S) tr.active = false;
       }
     }
     if (ctx.l1.mode === 'modeled' && m % 12 === 0 && !ctx.l1.pinned.includes('hr') && ctx.requestHr) {

@@ -3754,12 +3754,12 @@ Every Stage 2 acceptance number (docs/gates/stage-2.md) is re-measured through t
 **Interfaces:**
 - Consumes: everything above. Produces nothing new.
 
-- [ ] **Step 1: Run the Stage 2/3 acceptance suites and record every failure**
+- [x] **Step 1: Run the Stage 2/3 acceptance suites and record every failure**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts test/engine/hemo-vf.test.ts test/engine/hemo-nibp.test.ts test/engine/resp-coupling.test.ts test/engine/hemo-engine.test.ts`
 Expected: a list of failures; paste it into the commit body.
 
-- [ ] **Step 2: Apply the re-specifications (only these)**
+- [x] **Step 2: Apply the re-specifications (only these)**
 
 | Stage 2 test | Old band | New assertion | Justification (comment text) |
 |---|---|---|---|
@@ -3775,7 +3775,7 @@ Expected: a list of failures; paste it into the commit body.
 
 Edit each named `it(...)` block to the new assertion and add the justification as a `//` comment above it. Do not change any other test.
 
-- [ ] **Step 3: Write the recheck summary test (numbers for the gate note)**
+- [x] **Step 3: Write the recheck summary test (numbers for the gate note)**
 
 `packages/engine-core/test/engine/circ-stage2-recheck.test.ts`:
 
@@ -3819,12 +3819,12 @@ describe('Stage 2 acceptance on the Stage 7a circulation', () => {
 
 Note the MANUAL tracker defends the pressure targets but not CO, so the CO fall shows even in MANUAL; run in MANUAL (default).
 
-- [ ] **Step 4: Run all engine tests**
+- [x] **Step 4: Run all engine tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine`
 Expected: PASS. Copy the printed numbers into the gate-note draft.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/test/engine

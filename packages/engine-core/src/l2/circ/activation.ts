@@ -39,6 +39,7 @@ export interface Activation {
   t0: number;
   T: number;
   amp: number;
+  origin?: string; // Stage 7a: the beat's origin (ventricular beats never drive the MANUAL tracker)
 }
 
 /** Activation level at time t: the largest of the scheduled activations (overlaps never exceed 1). */

@@ -33,11 +33,12 @@ export interface CircBeat {
   lvedv: number; lvesv: number; lvedp: number; lvsp: number;
   avOpen: number; avClose: number; // s after onset (−1 = did not open)
   dur: number; // to the next beat
+  origin?: string; // rhythm-engine origin of the beat (sinus, ventricular, paced, …)
 }
 
 interface BeatAcc {
   t: number; sbp: number; dbp: number; sum: number; n: number; aoS: number; aoD: number; sv: number; svRv: number;
-  edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number;
+  edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number; origin?: string;
 }
 
 export interface VolumeEvent {
@@ -66,6 +67,8 @@ export interface CircModelState {
   raTmSum: number; // R45(b): transmural RA pressure accumulator for the cardiopulmonary limb
   acc: BeatAcc | null;
   beats: CircBeat[]; // last 16
+  /** Aortic-valve openings since the pipeline last looked: time, EDV and the stroke volume they will eject (estimate). */
+  opens: { t: number; sv: number }[];
   lastEjT: number;
   qFwd: number; // LPF (τ CO_TAU_S) of the forward aortic-valve + LVAD flow, mL/s: CO for beats AND compressions
   mapSetPinned: boolean;
@@ -90,13 +93,18 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
 
 /** A mechanical beat at time t (the rhythm engine's R time). Pulseless beats schedule nothing (activation off). */
-export function circOnBeat(m: CircModelState, t: number, hr: number, origin: string, perfused: boolean): void {
+/**
+ * `eff` (0–1): mechanical efficiency of a dyssynchronous ventricular rhythm relative to a well-conducted VT ≤ 150/min,
+ * from the rhythm engine's k_rhythm (brief §4.8, "shared by both modes": VT 0.6 → 0.2 above 200/min, torsades 0.1);
+ * the filling part of k_rhythm is NOT used — filling is emergent here.
+ */
+export function circOnBeat(m: CircModelState, t: number, hr: number, origin: string, perfused: boolean, eff = 1): void {
   // R45(a): prematurity → potentiation of the NEXT beat; normal intervals update the reference RR
   const boost = m.pespNext;
   m.pespNext = 0;
@@ -107,8 +115,8 @@ export function circOnBeat(m: CircModelState, t: number, hr: number, origin: str
   }
   m.lastVentT = t;
   if (!perfused) return;
-  const amp = (origin === 'ventricular' || origin === 'paced' ? DYSSYNC : 1) * (1 + boost);
-  m.vent.push({ t0: t, T: activationPeriodS(Math.max(30, Math.min(250, hr))), amp });
+  const amp = (origin === 'ventricular' || origin === 'paced' ? DYSSYNC : 1) * Math.min(1, Math.max(0, eff)) * (1 + boost);
+  m.vent.push({ t0: t, T: activationPeriodS(Math.max(30, Math.min(250, hr))), amp, origin });
 }
 
 /** An atrial depolarisation (P onset): atrial contraction, whatever the ventricles are doing (cannon waves emerge). */
@@ -191,7 +199,7 @@ function closeBeat(m: CircModelState, t: number): void {
   if (!a || a.n < 5) return;
   m.beats.push({
     t: a.t, sbp: a.sbp, dbp: a.dbp, map: a.sum / a.n, aoSys: a.aoS, aoDia: a.aoD, sv: a.sv, svRv: a.svRv, lvedv: a.edv, lvesv: a.esv,
-    lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t,
+    lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t, origin: a.origin,
   });
   if (m.beats.length > 16) m.beats.shift();
 }
@@ -225,6 +233,7 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
       closeBeat(m, next.t0);
       evaluate(m.s, m.t, m.p, d, o);
       m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt);
+      if (next.origin !== undefined) m.acc.origin = next.origin;
     }
     stepCirc(m.s, m.t, H_S, m.p, d);
     m.t += H_S;
@@ -250,6 +259,10 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
       if (a.prevQ <= 1 && o.qAv > 1 && a.open < 0) {
         a.open = m.t - a.t;
         m.lastEjT = m.t;
+        // the pleth needs its pulse when the valve opens: SV estimated as EDV − the last beat's ESV
+        const lb = m.beats[m.beats.length - 1];
+        m.opens.push({ t: m.t, sv: Math.max(0, a.edv - (lb ? lb.lvesv : a.edv * 0.4)) });
+        if (m.opens.length > 8) m.opens.shift();
       }
       if (a.prevQ > 1 && o.qAv <= 1 && a.open >= 0) a.close = m.t - a.t;
       a.prevQ = o.qAv;
