@@ -1735,7 +1735,7 @@ git push origin stage-7b-lungs
 **Interfaces:**
 - Produces: `CO2_SLOPE`, `APNOEA_OFFSET`, `HVR_A`, `PTI_CRIT`, `P_MAX_CMH2O`, `FATIGUE_TAU_S`, `PAIN_GAIN`, `J_RR_PER_EVLWI`; `DriveInputs`, `DriveOut { ve; rr; vt }`, `hypoxicFactor(pao2)`, `drive(x, fatigue?)`, `pti(vt, c, r, ti, ttot, pMaxMult?)`, `stepFatigue(f, pti, dt)`. Used in MODELED mode only (Task 13 wiring); 7f supplies `opioidDep`/`hypnoticDep` later (0 until then).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/drive.test.ts`:
 
@@ -1770,12 +1770,12 @@ describe('respiratory drive (tables §4.6, Q36)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/drive.test.ts`
 Expected: FAIL — cannot resolve `drive.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/drive.ts`:
 
@@ -1837,12 +1837,12 @@ export function stepFatigue(f: number, ptiNow: number, dt: number): number {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/drive.test.ts`
 Expected: PASS (4).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/drive.ts packages/engine-core/test/l2/lung/drive.test.ts
