@@ -3215,6 +3215,8 @@ git push origin stage-7b-lungs
 
 ### Task 20: Acceptance — per-condition ventilator signatures (catalogue bands)
 
+> **Executor note:** 32 pass. R46 tuning: chestWall — data fix (the crs knots held the whole-system 45/32/20 while ccw also held the stiff chest wall: counted twice); now the row's lung ×1/0.85/0.7 → Crs 33.5 (band 32); KNOWN entry deleted. The other nine KNOWN misses reproduce the prototype values exactly and are listed under 'Needs a ruling' in the gate note (none can be tuned inside the catalogue's own ranges: see the note).
+
 **Files:**
 - Create: `packages/engine-core/test/l2/lung/signatures.test.ts`
 
@@ -3222,7 +3224,7 @@ git push origin stage-7b-lungs
 - Consumes: `LUNG_CONDITIONS[].bands` (Task 4), `referenceRun` (Task 12), the lung rig (Task 11), `capnoTerms` (Task 11).
 - Produces: one test per condition (32) measuring Cstat, Rinsp, auto-PEEP (at the catalogue's VT 8 mL/kg, I:E 1:2), plateau, driving pressure, Pa−EtCO2, true shunt and SpO2 at FiO2 0.21 / 0.4 / 1.0 at the condition's reference severity; tolerance 10 % of the band's upper value (shunt ±0.03, SpO2 ±1 %). The 10 known misses of the prototype are listed in `KNOWN` with their measured values; a new miss fails. The test prints every miss; copy those lines into the gate note.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/l2/lung/signatures.test.ts`:
 
@@ -3290,12 +3292,12 @@ describe('per-condition signatures within the catalogue bands', { timeout: 300_0
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/signatures.test.ts`
 Expected: PASS (32) in ≈ 7 s; the console shows the 10 `signature <id>: …` lines for the KNOWN entries (prototype values in the comments). If a KNOWN entry no longer misses, delete it. If a condition misses a key NOT in KNOWN, find the cause (usually a data row whose unit conversion is wrong: check its `src`) and fix the DATA or the mechanism; never widen a band.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/lung/signatures.test.ts

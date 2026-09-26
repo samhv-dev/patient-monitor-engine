@@ -300,7 +300,7 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     grades: [{ name: 'Cobb 60–70°', severity: 0.33 }, { name: 'Cobb 70–100°', severity: 0.67 }, { name: 'Cobb > 100°', severity: 1 }],
     effects: [
       { key: 'ccw', op: 'mul', v: [[0, 1], [0.33, 0.6], [0.67, 0.35], [1, 0.2]], src: "§9 row 'Chest-wall compliance': 120/70/40 ÷ 200 [ENG conversion] (Stoelting 8e ch. 3 p. 48; Bergofsky not opened)", tag: 'VERIFY', q: 'Q77' },
-      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 0.818], [0.67, 0.582], [1, 0.364]], src: "§9 row 'Resulting Crs' ≈45/32/20 ÷ 55 (system Crs incl. ccw and lung ×1/0.85/0.7) [ENG]", tag: 'ENG', q: 'Q77' },
+      { key: 'crs', op: 'mul', v: [[0, 1], [0.33, 1], [0.67, 0.887], [1, 0.763]], src: "§9 row 'Resulting Crs' ≈45/32/20: the row's LUNG part ×1/0.85/0.7 expressed on the healthy-chest-wall scale conditions.ts converts from (1/(1/(75.9·m) + 1/200) ÷ 55); the chest wall comes from `ccw`. Stage 7b executor fix: the extraction put the whole-system 45/32/20 here AND the stiff chest wall in `ccw`, counting the wall twice (measured Crs 24.6 vs 32) [ENG]", tag: 'ENG', q: 'Q77' },
       { key: 'tIt', op: 'set', v: [[0, 0.4], [0.33, 0.5], [0.67, 0.6], [1, 0.7]], src: "§9 row 'Airway → pleural transmission': 0.5/0.6/0.7 (main §2.2: 0.7 for a stiff chest wall)", tag: 'TXT' },
       { key: 'frc', op: 'mul', v: [[0, 1], [0.33, 0.85], [0.67, 0.7], [1, 0.5]], src: "§9 row 'FRC, VC': 0.85/0.7/0.5 (Stoelting 8e ch. 3 p. 48)", tag: 'TXT' },
       { key: 'extraShunt', op: 'add', v: [[0, 0], [0.33, 0.02], [0.67, 0.05], [1, 0.1]], src: "§9 row 'Shunt / A–a gradient': +0.02/+0.05/+0.10 (compressed concave-side lung; Stoelting 8e ch. 3 p. 48)", tag: 'TXT' },
