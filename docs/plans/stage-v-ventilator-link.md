@@ -2515,7 +2515,7 @@ git push origin stage-v-ventilator-link
 - Consumes: `LUNG_PATHOLOGIES`, `mechanicsToVent`, `recruitOf` (Task 9); `applyLungState`, `createLungLink`, `LUNG_KEYS`, `lungBaseOf` (Task 8); `createRecruit`, `stepRecruit` (Task 8); `toVentFrame` (Task 7); `createVent`, `advanceVent` (Task 3); `createEngine` (engine-core).
 - Produces: `ProfileId = string`; `StandIn { variable: StateVar; value; rampS }`; `LinkProfile { id, label, group, patient, vent, recruit, shunt, standIn, stage7 }`; `STAND_INS: Record<string, StandIn[]>`; `profileOf(row)`; `PROFILES: Record<ProfileId, LinkProfile>` (one per catalogue row); `LINK_TICK_S = 0.02`; `LinkCore { vs, lung, profile, recruit, circuitSent, started, seq }`; `createLinkCore(vs, profile)` (applies `profile.vent`); `linkTick(core, dt): Command[]` (first tick: shunt when not recruitable, stand-ins; each tick: airway event on a circuit change, one `externalDrive` frame, `setTarget shunt` when recruitment moves it); `linkEvent(core, ev)`; `patchVent(core, patch)`; `LinkedSim { engine, vs, core, events, set(patch), send(body), advanceTo(t), now() }`; `createLinkedSim({ profile?, seed?, vent? })` (throws on any rejected command; dispatches `thermal anaesthesia general` at start: a sedated ventilated patient).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/link-core.test.ts`:**
 
@@ -2556,12 +2556,12 @@ describe('link core', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/link-core.test.ts`
 Expected: FAIL — `createLinkCore` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/ventilator/src/link/profiles.ts`:**
 
@@ -2792,12 +2792,12 @@ export * from './link/core.ts';
 export * from './link/in-process.ts';
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/link-core.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 3 passed; typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
