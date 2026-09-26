@@ -98,9 +98,16 @@ importers:
 
   packages/validation:
     dependencies:
+      '@pme/controller':
+        specifier: workspace:*
+        version: link:../controller
       '@pme/engine-core':
         specifier: workspace:*
         version: link:../engine-core
+    devDependencies:
+      vite-node:
+        specifier: 3.2.4
+        version: 3.2.4(@types/node@22.20.4)
 
   packages/ventilator:
     dependencies:

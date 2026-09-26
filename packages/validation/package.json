@@ -11,9 +11,19 @@
     "test": "vitest run --passWithNoTests",
     "build": "vite build",
     "templates": "node --experimental-strip-types src/templates/extract-vf.ts datasets/cache ../engine-core/templates/vf-cudb.ts && node --experimental-strip-types src/templates/extract-af.ts datasets/cache ../engine-core/templates/af-mitdb.ts",
-    "ptbxl-report": "node --experimental-strip-types src/templates/compare-ptbxl.ts datasets/cache ../../docs/gates/stage-5/ptbxl-normal-comparison.json 20"
+    "ptbxl-report": "node --experimental-strip-types src/templates/compare-ptbxl.ts datasets/cache ../../docs/gates/stage-5/ptbxl-normal-comparison.json 20",
+    "datasets:fetch": "vite-node src/datasets/cli-fetch.ts",
+    "validate": "vite-node src/cli/validate.ts",
+    "review:build": "vite-node src/review/cli-clips.ts",
+    "review:score": "vite-node src/review/cli-score.ts",
+    "bedside:apply": "vite-node src/bedside/cli-apply.ts",
+    "perf:ticks": "NODE_OPTIONS=--expose-gc vite-node src/perf/cli-ticks.ts"
   },
   "dependencies": {
+    "@pme/controller": "workspace:*",
     "@pme/engine-core": "workspace:*"
+  },
+  "devDependencies": {
+    "vite-node": "3.2.4"
   }
 }
