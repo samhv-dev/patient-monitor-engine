@@ -3167,7 +3167,7 @@ export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
 - A hook fires at most once per episode (`hs.episode` keys) and never while the instructor holds a rhythm pinned
   (`current.pinned`).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/hooks.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/hooks.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3227,9 +3227,9 @@ describe('rhythm hooks', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/hooks.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/hooks.ts`**
 
 ```ts
 // Drug → rhythm hooks (Stage 7g decisions 11–12). A PURE decision on the pipeline's bus/concentrations; the engine
@@ -3287,12 +3287,12 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
 }
 ```
 
-- [ ] **Step 4: Run the test.** The adenosine timing comes from the row's gamma (tp 15 s, t10 30 s) and EC50
+- [x] **Step 4: Run the test.** The adenosine timing comes from the row's gamma (tp 15 s, t10 30 s) and EC50
   0.42 (Hill 2): prototype arithmetic — E_peak 0.85 (6 mg), 0.59 (3 mg), 0.96 (12 mg); block ≥ 0.5 from ≈ 9 s to
   ≈ 22 s for 6 mg. If `s[1] − s[0]` is outside 3–15 s, adjust ONLY `t10S` of the adenosine row within 25–40 s.
   Bupivacaine 225 mg IV in 70 kg (the maximum dose WITH epinephrine given intravascularly): V1 17.5 L → Cp0 12.9
   µg/mL → Ce ≈ 9.5 at ≈ 2 min → E_cv ≈ 0.93 (threshold 4, Hill 3); 150 mg peaks at E_cv ≈ 0.8 (bradycardia only).
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): rhythm hooks — adenosine AV block/conversion, LAST bradycardia→VF, magnesium on torsades" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): rhythm hooks — adenosine AV block/conversion, LAST bradycardia→VF, magnesium on torsades" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 17: Engine wiring I — chain, state, 7a circulation, snapshot (declared exception: 7a's drug branch removed)
 
