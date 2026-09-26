@@ -1445,7 +1445,7 @@ git push origin stage-v-ventilator-link
 - Consumes: `VentState`, `VentAlarm` (Task 2); `VentFrameExt` (Task 6).
 - Produces: `ventAlarms(vs): VentAlarm[]` (priority order: disconnection, apnea, then v1.9's pmax, mvHigh, mvLow, vtHigh, vtLow, fHigh, fLow, intrinsicPeep); `bannerText(vs): { cls: '' | 'armed' | 'silenced'; text }`; `LinkFrame = VentFrameExt & { palvCmH2O: number; mode: string }`; `toVentFrame(vs, mode): LinkFrame`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/alarms-frame.test.ts`:**
 
@@ -1514,12 +1514,12 @@ describe('VentFrame', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/alarms-frame.test.ts`
 Expected: FAIL — `ventAlarms` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/ventilator/src/alarms.ts`:**
 
@@ -1592,12 +1592,12 @@ export * from './alarms.ts';
 export * from './frame.ts';
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/alarms-frame.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 4 passed; typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
