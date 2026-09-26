@@ -2,10 +2,11 @@
 // the PD combination. Outputs: pk.fx (7a DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce, volatiles,
 // the dose log; R51 §2–3), pk.out (1 Hz `drugs`). 7g consumes EVERY library drug event (decision 10).
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type PkClinicalEvent } from '../../types-pk.ts';
+import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
 import { cp, pkStep, pkSystem, zeroState, type PkParams } from './compartment.ts';
+import { decrementFromNowMin } from './csht.ts';
 import { DEFAULT_PK_PATIENT, type PkPatient } from './covariates.ts';
 import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
@@ -20,6 +21,7 @@ import { createVolatile, macForAge, macFraction, stepVolatile, type VolatileAgen
 
 export const PK_DT_S = 0.1;
 const TACHY_WINDOW_S = 3600;
+const DECREMENT_EVERY_S = 10;
 /** "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. */
 export const NEVER = 1e12;
 
@@ -52,6 +54,7 @@ export interface PkState {
   desSurgeT: number; // desflurane sympathetic surge start (−NEVER: none)
   macPrev: number[]; // desflurane MAC over the last 60 s at 1 Hz
   panelNext: number;
+  dec: Record<string, number>; // decrement-from-now per running drug, min (Task 19)
   out: EngineEvent[];
 }
 
@@ -74,7 +77,7 @@ export function pkPatientOf(p: PatientProfile | undefined): PkPatient {
 export function createPkState(patient: PkPatient = DEFAULT_PK_PATIENT): PkState {
   return {
     t: 0, patient, drugs: {}, vap: null, fx: { ...NEUTRAL_FX }, betaBlockAdd: 0, bus: structuredClone(DRUG_BUS_NEUTRAL),
-    pending: [], lastC: {}, desSurgeT: -NEVER, macPrev: [], panelNext: 1, out: [],
+    pending: [], lastC: {}, desSurgeT: -NEVER, macPrev: [], panelNext: 1, dec: {}, out: [],
   };
 }
 
@@ -394,6 +397,33 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   r.bus.last = { cnsE, cvE };
   r.bus.cns.seizure = seizure;
   pk.bus = r.bus;
+  // 1 Hz panel event (decision 13: decrement-from-now every 10 s, off the per-step path)
+  if (t + 1e-9 >= pk.panelNext) {
+    pk.panelNext = Math.round((pk.panelNext + 1) * 10) / 10;
+    const rows: DrugPanelRow[] = [];
+    for (const d of Object.values(pk.drugs)) {
+      const row = DRUGS[d.id] as DrugRow;
+      const p = d.x.length ? params(pk, row, d) : null;
+      const unit = concUnit(row); // the same unit as bus.agents (Task 15)
+      const running = d.rate > 0 || d.infTarget > 0 || d.tci !== null;
+      if (p && running && Math.round(t) % DECREMENT_EVERY_S === 0) pk.dec[d.id] = decrementFromNowMin(p, d.x);
+      rows.push({
+        id: d.id, name: row.name, unit,
+        cp: p ? cp(p, d.x) : pk.lastC[d.id] ?? 0,
+        ce: pk.lastC[d.id] ?? 0,
+        rate: running ? d.rate : null, rateUnit: running ? `${row.amountUnit}/min` : null,
+        tci: d.tci ? { mode: d.tci.mode, target: d.tci.target, model: d.model ?? (row.pk.kind === 'model' ? row.pk.model : '') } : null,
+        totalAmount: d.total, amountUnit: row.amountUnit,
+        decrement50Min: running && p ? (pk.dec[d.id] ?? decrementFromNowMin(p, d.x)) : null,
+      });
+    }
+    const v = pk.vap;
+    pk.out.push({
+      type: 'drugs', t, drugs: rows,
+      volatile: v ? { agent: v.agent, dialPct: v.dialPct, fgfLpm: v.s.fgf, fi: 100 * v.s.fi, fa: 100 * v.s.fa, brain: 100 * v.s.vrg, macAge: macForAge(v.agent, pk.patient.ageY), macFrac: macBrain, n2oFrac: v.n2oFrac } : null,
+      macTotal: macBrain,
+    });
+  }
 }
 
 /**

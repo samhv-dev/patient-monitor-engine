@@ -3598,7 +3598,7 @@ describe('Stage 7g bus', () => {
 - Modify: `packages/engine-core/src/l2/pk/pipeline.ts`
 - Create: `packages/engine-core/test/l2/pk/panel.test.ts`
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/panel.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/panel.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3626,8 +3626,8 @@ describe('drugs panel event', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
-- [ ] **Step 3: Add to `pipeline.ts`** — `import { decrementFromNowMin } from './csht.ts';` and `DrugPanelRow` in the
+- [x] **Step 2: Run it** → FAIL.
+- [x] **Step 3: Add to `pipeline.ts`** — `import { decrementFromNowMin } from './csht.ts';` and `DrugPanelRow` in the
   existing `../../types-pk.ts` type import (`cp`, `macForAge` and `concUnit` are already there from Task 15), a constant `const DECREMENT_EVERY_S = 10;`, a field `dec: Record<string, number>` in `PkState`
   (initialised `{}` in `createPkState`), and at the END of `stepOnce` (after its last line `pk.bus = r.bus;`):
 
@@ -3664,7 +3664,7 @@ describe('drugs panel event', () => {
   (`macBrain` is the local computed earlier in `stepOnce`; `EngineEvent` must include `DrugsEvent` — Task 1.) For
   `perKg` rows `cp` is the plasma concentration in amount/L, while `ce` is in the PD unit — the panel shows both
   with their own labels. Keep the `out` array bounded: the engine's `flush()` drains it (Task 17 step 3.8).
-- [ ] **Step 4: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): 1 Hz drugs panel event with decrement-from-now" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): 1 Hz drugs panel event with decrement-from-now" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 20: Migration — 7a drug tests through the new engine, propofol re-fit, full suite
 
