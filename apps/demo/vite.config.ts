@@ -20,6 +20,7 @@ export default defineConfig({
         'vent-hamilton': page('vent-hamilton'), // Stage V
         'vent-link': page('vent-link'), // Stage V
         stage7a: page('stage7a'), // Stage 7a
+        stage7g: page('stage7g'), // Stage 7g
       },
     },
   },

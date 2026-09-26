@@ -4125,7 +4125,7 @@ describe('Stage 7g long run', () => {
 - Create: `packages/renderer/src/drug-panel.ts`, `packages/renderer/test/drug-panel.test.ts`, `apps/demo/stage7g.html`, `apps/demo/src/stage7g.ts`, `apps/demo/e2e/stage7g.e2e.ts`, `apps/demo/scripts/stage7g-shots.mjs`
 - Modify: `packages/renderer/src/index.ts` (one export), `apps/demo/vite.config.ts` (one input), `apps/demo/index.html` (one link)
 
-- [ ] **Step 1: Write the failing renderer test** — `packages/renderer/test/drug-panel.test.ts` (happy-dom, as the renderer's other DOM tests):
+- [x] **Step 1: Write the failing renderer test** — `packages/renderer/test/drug-panel.test.ts` (happy-dom, as the renderer's other DOM tests):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -4152,7 +4152,7 @@ describe('drug panel', () => {
   Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/drug-panel.test.ts` → FAIL (cannot resolve
   `../src/drug-panel.ts`).
 
-- [ ] **Step 2: Create `packages/renderer/src/drug-panel.ts`**
+- [x] **Step 2: Create `packages/renderer/src/drug-panel.ts`**
 
 ```ts
 // Stage 7g drug panel: a compact table (drug, Cp, Ce, pump/TCI, total, 50 % decrement) plus a 10-minute Ce sparkline
@@ -4224,7 +4224,7 @@ export function createDrugPanel(host: HTMLElement): DrugPanel {
 
   Export it from `packages/renderer/src/index.ts`: `export { createDrugPanel, type DrugPanel } from './drug-panel.ts'; // Stage 7g`.
   (If happy-dom's canvas has no 2D context the `if (!g) return;` path keeps the test green.)
-- [ ] **Step 3: Demo page — `apps/demo/stage7g.html`** (layout copied from 7a's `stage7a.html`: monitor left, a side
+- [x] **Step 3: Demo page — `apps/demo/stage7g.html`** (layout copied from 7a's `stage7a.html`: monitor left, a side
   panel right):
 
 ```html
@@ -4385,7 +4385,7 @@ start();
   add after the Stage 7a link:
   `<li><a href="./stage7g.html">Stage 7g: drug PK/PD — TCI, vasoactives, volatiles, adenosine, LAST, reversal</a></li>`.
 
-- [ ] **Step 4: Gate screenshots — `apps/demo/e2e/stage7g.e2e.ts`** (modelled on 7a's `apps/demo/e2e/stage7a.e2e.ts`:
+- [x] **Step 4: Gate screenshots — `apps/demo/e2e/stage7g.e2e.ts`** (modelled on 7a's `apps/demo/e2e/stage7a.e2e.ts`:
   its own Vite server, the page hook, ×4 time scale; the PNGs are the gate evidence) and the runner
   `apps/demo/scripts/stage7g-shots.mjs`:
 
@@ -4497,7 +4497,7 @@ const r = spawnSync('npx', ['-y', 'pnpm@9.15.9', 'exec', 'playwright', 'test', '
 process.exit(r.status ?? 1);
 ```
 
-- [ ] **Step 5: Run** the renderer test (`npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/drug-panel.test.ts`),
+- [x] **Step 5: Run** the renderer test (`npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/drug-panel.test.ts`),
   `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build`, and `node apps/demo/scripts/stage7g-shots.mjs`
   (expected: 1 passed; ten PNGs in `docs/gates/stage-7g/`). Open every PNG and check: (a) both Ce rows at target and
   the ABP fall; (b) the ABP step; (c) the 0.5 L/min volatile line lower than the 2 L/min one; (d) the pause or
