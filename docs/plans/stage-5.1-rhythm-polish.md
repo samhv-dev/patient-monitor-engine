@@ -1705,7 +1705,7 @@ No capture (mA < threshold) must leave the rhythm untouched: the test compares a
 - Consumes: `run5`, `samples5` (Stage 5 helpers).
 - Produces: `TCP_SPIKE_SIGMA_S`, `TCP_TAIL`, `TCP_SENSE_REFRACTORY_S`, `tcpArtefactMv(mA)` (new scale) from `tcp.ts`; `RhythmState.tcpLastPulseT?: number`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/tcp.test.ts` with exactly:
 
@@ -1764,12 +1764,12 @@ describe('Stage 5.1 transcutaneous pacing (measured)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp.test.ts`
 Expected: FAIL: R30 (`expected 1.6… / 2 to be less than or equal to 1`: 68–69 pulses in demand mode) and the spike shape (FWHM ≈ 40 ms). The no-capture case passes already.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/tcp.ts`, replace this block (it occurs exactly once):
 
@@ -1867,12 +1867,12 @@ with:
   vf?: VfState | undefined;
 ```
 
-- [ ] **Step 4: Run the pacing tests**
+- [x] **Step 4: Run the pacing tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp.test.ts test/l2/ecg/s51/tcp-capture.test.ts test/l2/ecg/s5/pacing.test.ts test/engine`
 Expected: PASS (the engine determinism test runs pacing).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/tcp.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s51/tcp.test.ts

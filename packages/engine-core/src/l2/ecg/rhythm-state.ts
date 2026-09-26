@@ -81,6 +81,8 @@ export interface RhythmState {
   pacer?: { nextA: number; nextV: number } | undefined;
   /** Next transcutaneous pulse (tcp.ts); undefined when TCP is off. */
   tcpNextT?: number | undefined;
+  /** Time of the last transcutaneous pulse (tcp.ts, Stage 5.1: sensing refractory). */
+  tcpLastPulseT?: number | undefined;
   /** Running VF episode (arrest/vf.ts). */
   vf?: VfState | undefined;
   /** Body-artefact filter/phase state (artefacts/body.ts). */
