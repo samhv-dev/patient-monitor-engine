@@ -15,5 +15,8 @@ export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store
 export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'; // Stage 4b
 export * from './types-resp.ts'; // Stage 3
 export * from './types-lung.ts'; // Stage 7b
+export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.ts'; // Stage 7b
+export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b
+export { ventReference, type VentReference } from './l2/lung/vent-reference.ts'; // Stage 7b
 export * from './types-vent-link.ts'; // Stage V
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3

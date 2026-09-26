@@ -3851,6 +3851,8 @@ git push origin stage-7b-lungs
 
 ### Task 27: Stage V reconciliation — the ventilator catalogue reads the engine's data — conditional on V on main
 
+> **Executor note:** Ran (Stage V on main). Deviations: (1) the generated copy uses a new engine export ventReference(spec, pbwKg) — the resolved Crs/Rinsp WITH the condition's mainstem block (the plan's formula summed both lungs, so OLV/endobronchial came out at two-lung compliance: plateau 11.4/14.0 vs 15–25/18–30) — at each row's own PBW; the neonatal row keeps its authored numbers (engine data is adult-frame until R22); the consistency test follows. (2) Signature bands widened to the engine-generated mechanics in 8 rows (listed in the gate note; tension pneumothorax is flagged for a ruling). (3) lung-input.ts stays RELATIVE: absolute lungState needs the link profiles to carry the engine condition and the interim link shunt/recruit to retire, which moves R27/R36 demo numbers — listed under 'Needs a ruling'. (4) Engine: staticCompliance before the first breath is the chord of a nominal 7 mL/kg breath, so the first lungState equals later ones (the relative link drifted 6 %). (5) Stage V tests re-specified: link-core ARDS C → the generated row value (35); link-r27 COPD auto-PEEP at RR 20 → R46 band 6–12 (7.8). packages/ventilator 88/88.
+
 **Files:**
 - Modify: `packages/ventilator/src/pathology/catalogue.ts` (end of file), `packages/ventilator/src/lung-input.ts` (absolute mode)
 - Create: `packages/ventilator/test/pathology-consistency.test.ts`
@@ -3859,7 +3861,7 @@ git push origin stage-7b-lungs
 - Consumes: `VENT_ROW_MAP`, `LUNG_CONDITIONS` (`@pme/engine-core` data, Task 4 — export it: add `export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.ts'; // Stage 7b` to `packages/engine-core/src/index.ts`), `resolveLung` (export it too: `export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b`).
 - Produces: Stage V's `LUNG_PATHOLOGIES` is a GENERATED COPY for the numbers that the engine now owns — `complianceMl.value`, `rInsp.value`, `rExp.value`, `shunt.value`, `deadSpaceFraction.value` are computed from the engine's data at the row's mapped severity; the ventilator-only fields (labels, signatures, monitor text, pitfalls, sources, `ref`, `wired`) stay Stage V's. A consistency test pins it.
 
-- [ ] **Step 1: Check that Stage V is on main**
+- [x] **Step 1: Check that Stage V is on main**
 
 ```bash
 git fetch origin && git merge --no-edit origin/main
@@ -3868,7 +3870,7 @@ test -f packages/ventilator/src/pathology/catalogue.ts && echo "V present" || ec
 
 If "V absent": tick this task "skipped — Stage V not on main at <date>; `VENT_ROW_MAP` is ready for it", commit the plan, push, go to Task 28.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `packages/ventilator/test/pathology-consistency.test.ts`:
 
@@ -3896,12 +3898,12 @@ describe('Stage V catalogue numbers come from the engine lung data (Stage 7b Tas
 });
 ```
 
-- [ ] **Step 3: Run it to see it fail**
+- [x] **Step 3: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-consistency.test.ts`
 Expected: FAIL on the first row whose hand-written value differs from the engine's.
 
-- [ ] **Step 4: Implement the generated copy**
+- [x] **Step 4: Implement the generated copy**
 
 In `packages/ventilator/src/pathology/catalogue.ts`, rename the exported array `export const LUNG_PATHOLOGIES: LungPathology[] = [` to `const AUTHORED: LungPathology[] = [` and append at the end of the file:
 
@@ -3933,12 +3935,12 @@ export const LUNG_PATHOLOGIES: LungPathology[] = AUTHORED.map((row) => {
 
 (Move the `import` to the top of the file with the others.) Run Stage V's `pathology-signature.test.ts`: rows whose regenerated C/R leave their authored `signature` bands fail; for each, record authored vs engine value in the gate note and set the row's `signature` bands from the engine's own `referenceRun` at REF_SETTINGS (plateau, ΔP, auto-PEEP, peak − plateau) — the engine is now the source of truth (R27, decision 15). In `packages/ventilator/src/lung-input.ts`, where Stage V's decision 6 computes `compliance = profile × (current / first lungState)`, switch to the absolute lungState values (`ls.complianceMlPerCmH2O`, `ls.resistanceCmH2OPerLps`, `ls.resistanceExpCmH2OPerLps ?? ls.resistanceCmH2OPerLps`) — Stage V's plan names this "one function"; delete `link/recruit.ts` only if its tests are replaced by the engine's recruitment (Task 23) — otherwise leave it and list it in the gate note.
 
-- [ ] **Step 5: Run the ventilator suite**
+- [x] **Step 5: Run the ventilator suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator test` and `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (all ventilator files incl. the new consistency test).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/ventilator packages/engine-core/src/index.ts

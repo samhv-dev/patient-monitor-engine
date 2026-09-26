@@ -221,11 +221,17 @@ export function shuntFraction(ls: LungState, baseShunt: number): number {
  */
 export function staticCompliance(ls: LungState): number {
   let cl = 0;
+  const open = (u: number) => !ls.mp.blocked[u] && ls.mp.units[u]!.rIn < 1e3;
+  // before the first breath: a nominal 7 mL/kg breath shared by the units' compliances (Task 27: the first lungState
+  // must equal the later ones, or Stage V's relative lung link drifts by the tangent/chord ratio)
+  const noBreath = ls.tidal.every((x) => !(x > 1));
+  let c0Sum = 0;
+  if (noBreath) for (let u = 0; u < N_UNITS; u++) if (open(u)) c0Sum += complianceAt(ls.mp.units[u]!.sig, ls.v0[u] as number);
   for (let u = 0; u < N_UNITS; u++) {
-    if (ls.mp.blocked[u] || !(ls.mp.units[u]!.rIn < 1e3)) continue;
+    if (!open(u)) continue;
     const sig = ls.mp.units[u]!.sig;
     const v0 = ls.v0[u] as number;
-    const tid = ls.tidal[u] as number;
+    const tid = noBreath ? (7 * ls.lp.ibwKg * complianceAt(sig, v0)) / Math.max(1e-6, c0Sum) : (ls.tidal[u] as number);
     const dp = tid > 1 ? pressureAt(sig, v0 + tid) - pressureAt(sig, v0) : 0;
     cl += dp > 1e-3 ? tid / dp : complianceAt(sig, v0);
   }

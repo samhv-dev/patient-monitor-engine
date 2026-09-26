@@ -11,7 +11,8 @@ describe('link core', () => {
     expect(first).toEqual(['setTarget:shunt', 'setTarget:sbp', 'setTarget:dbp', 'setTarget:cvp', 'setTarget:hr', 'externalDrive']);
     expect(linkTick(pe, 0.02).map((c) => c.type)).toEqual(['externalDrive']);
     const ards = createLinkCore(createVent(), PROFILES['ards-moderate']!);
-    expect(ards.vs.cfg.compliance).toBe(32);
+    // Stage 7b (Task 27): the row's compliance is generated from the engine lung data (ARDS moderate Crs 35, Pulse 35)
+    expect(ards.vs.cfg.compliance).toBe(LUNG_PATHOLOGIES.find((r) => r.id === 'ards-moderate')!.complianceMl.value);
     expect(linkTick(ards, 0.02).map((c) => c.type)).toEqual(['externalDrive', 'setTarget']);
   });
   it('lungState moves the lung; a patch to the lung moves the base with it', () => {
