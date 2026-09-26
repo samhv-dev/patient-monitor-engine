@@ -3400,6 +3400,8 @@ git push origin stage-7b-lungs
 
 ### Task 22: Acceptance — COPD auto-PEEP vs RR, α by GOLD grade, EtCO2 gap (engine level)
 
+> **Executor note:** Engine numbers equal the rig: auto-PEEP GOLD 2 2.0; GOLD 3 2.3/4.2/7.2/10.3 at RR 10/14/20/26; GOLD 4 8.2. Added R46's revised band (GOLD 3, RR 20: 6–12 → 7.2). Deviation as Task 14: the gap is asserted at the reference PaCO2 40 (11.6); raw engine gap 16.5 at the MANUAL-placed PaCO2 52 is logged and listed for a ruling.
+
 **Files:**
 - Create: `packages/engine-core/test/engine/lung-copd.test.ts`
 
@@ -3407,7 +3409,7 @@ git push origin stage-7b-lungs
 - Consumes: the wired engine (Tasks 13–18): `lungState.autoPeepCmH2O`, `respOf(e).etco2`, `respOf(e).co2.pf`.
 - Produces: engine-level versions of the prototype's COPD numbers.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/lung-copd.test.ts`:
 
@@ -3449,12 +3451,12 @@ describe('COPD through the engine (catalogue §5, Q19, R27)', { timeout: 300_000
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-copd.test.ts`
 Expected: PASS. Prototype (stand-alone): auto-PEEP GOLD 2 1.9, GOLD 3 2.3 / 4.2 / 7.2 / 10.3 at RR 10 / 14 / 20 / 26, GOLD 4 8.2; gap 11.5. The engine's internal ventilator has no inspiratory pause and I:E from `ie` exactly like the rig; if the engine numbers differ from the rig by more than 1 cmH2O, compare `lungDrive` flows with the rig's (`vt / ti`) before touching constants.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/lung-copd.test.ts
