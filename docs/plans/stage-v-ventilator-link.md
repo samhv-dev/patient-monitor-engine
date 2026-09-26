@@ -3542,7 +3542,7 @@ git push origin stage-v-ventilator-link
 
 The markup and CSS are the original's, byte for byte (the page is generated from the reference copy, so there is nothing to retype and no drift); only the inline script is replaced by the TypeScript port. No logos exist in the original; its credit line stays.
 
-- [ ] **Step 1: Write the failing e2e test**
+- [x] **Step 1: Write the failing e2e test**
 
 **Create `apps/demo/e2e/vent-link.e2e.ts`** (Task 18 appends the combined-page test):
 
@@ -3592,12 +3592,12 @@ test('vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEE
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/vent-link.e2e.ts`
 Expected: FAIL — 404 / `__vent` never defined.
 
-- [ ] **Step 3: Wire the package into the demo app**
+- [x] **Step 3: Wire the package into the demo app**
 
 In `apps/demo/package.json` replace `"@pme/skins": "workspace:*"` with:
 
@@ -3614,7 +3614,7 @@ In `apps/demo/vite.config.ts`, after `'stage6b-acls': page('stage6b-acls'),` add
 
 Run `npx -y pnpm@9.15.9 install` (updates `pnpm-lock.yaml`).
 
-- [ ] **Step 4: Generate the page from the reference copy**
+- [x] **Step 4: Generate the page from the reference copy**
 
 ```bash
 node -e "
@@ -3625,7 +3625,7 @@ grep -c "<style>" apps/demo/vent-hamilton.html   # 1
 tail -3 apps/demo/vent-hamilton.html             # the module script, </body>, </html>
 ```
 
-- [ ] **Step 5: Port the UI**
+- [x] **Step 5: Port the UI**
 
 **Create `apps/demo/src/vent/hamilton-ui.ts`** (the v1.9 UI block rendering from the TS engine; deviations listed in its header comment):
 
@@ -4189,12 +4189,12 @@ mountHamiltonUi(driver);
 (window as unknown as { __vent: typeof driver }).__vent = driver; // e2e hook
 ```
 
-- [ ] **Step 6: Run to verify it passes**
+- [x] **Step 6: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/vent-link.e2e.ts`
 Expected: typecheck clean; 1 passed (≈ 5 s). Open `npx -y pnpm@9.15.9 --filter @pme/demo dev` → `/vent-hamilton.html` once by eye (headless Chrome screenshot if no display): navy cockpit, yellow/green/cyan traces, round knobs, Graphics/Dynamic Lung tabs.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add apps/demo pnpm-lock.yaml

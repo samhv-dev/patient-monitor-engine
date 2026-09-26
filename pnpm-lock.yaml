@@ -44,6 +44,9 @@ importers:
       '@pme/skins':
         specifier: workspace:*
         version: link:../../packages/skins
+      '@pme/ventilator':
+        specifier: workspace:*
+        version: link:../../packages/ventilator
 
   packages/audio: {}
 
