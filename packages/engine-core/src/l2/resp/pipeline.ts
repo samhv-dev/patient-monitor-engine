@@ -377,6 +377,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     }
     case 'condition': {
       const c = ev as { id: string; severity: number };
+      if (['tamponade', 'pe', 'tensionPtx', 'rvInfarct'].includes(c.id)) return null; // Stage 7a: circulation conditions
       return c.id === 'mh' ? num('severity', c.severity, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined) : `condition ${c.id} arrives in Stage 7`;
     }
     case 'thermal': {
@@ -449,6 +450,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       return true;
     }
     case 'condition': {
+      if ((ev as { id: string }).id !== 'mh') return false; // Stage 7a: circulation conditions
       const c = ev as { severity: number };
       rs.temp.mh = c.severity > 0 ? { severity: c.severity, t0: t } : null;
       return true;

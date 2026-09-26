@@ -2881,7 +2881,7 @@ git push origin stage-7a-circulation
 - Consumes: `circGiveDrug`, `circVolume`, `applyCircCondition`, `CIRC_CONDITIONS`.
 - Produces: drug doses converted to mg (`mcg` ÷ 1000, `mg/kg`/`mcg/kg` × weight); accepted drug ids `phenylephrine | ephedrine | nitroglycerin | esmolol | propofol`; others rejected with `drug <id> arrives in Stage 7g`; `bleed` accepts `volumeMl` + `overS` or `rateMlPerMin` (open-ended until a `rateMlPerMin: 0` bleed); `fluid` adds volume (no redistribution in 7a, brief §4.9).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-events.test.ts`:
 
@@ -2924,12 +2924,12 @@ describe('circulation clinical events', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-events.test.ts`
 Expected: FAIL (drug rejected as "not implemented").
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `validateHemoCommand`, `case 'applyEvent':` add before `return null;`:
 
@@ -2985,12 +2985,12 @@ Note `circVolume` uses `m.t` (the model's own clock) as "now"; the model's clock
 In `resp/pipeline.ts` `validateRespCommand`, `case 'condition':` replace the return with
 `return c.id === 'mh' ? … (unchanged) : ['tamponade', 'pe', 'tensionPtx', 'rvInfarct'].includes(c.id) ? null : \`condition ${c.id} arrives in Stage 7\`;` and in `applyRespCommand` `case 'condition':` start with `if ((ev as { id: string }).id !== 'mh') return false; // Stage 7a: circulation conditions`.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-events.test.ts test/engine/resp-engine.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/circ-events.test.ts

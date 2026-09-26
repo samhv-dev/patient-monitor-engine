@@ -18,7 +18,9 @@ import { ARREST_AFTER_S, CPR_DUTY, CPR_SV_FRAC, G_MAX, gainCeiling, HEMO_RATE, H
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
-import { circOnAtrial, circOnBeat, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
+import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
+import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
+import { circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -32,6 +34,7 @@ const SPO2_SITES: readonly string[] = ['leftFinger', 'rightFinger', 'ear', 'fore
 const ABP_SITES: readonly string[] = ['leftRadial', 'rightRadial', 'femoral'];
 const NIBP_SITES: readonly string[] = ['rightArm', 'leftArm', 'leg'];
 if (H_S !== CIRC_H) throw new Error('hemo and circ steps differ');
+const DRUG_IDS = Object.keys(DRUGS) as DrugId[]; // Stage 7a
 
 /** Stage 7a: aortic root → radial transport delay as a 2 ms delay line (Stage 2 RADIAL_DELAY_S 0.045 → 22 steps). */
 export const RAD_DELAY_STEPS = 22;
@@ -370,7 +373,12 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       // Stage 7a MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
       const c = hs.circ;
       const cvpT = volumeStatusCvp(l1Value(ctx.l1, 'cvp', t1), l1Value(ctx.l1, 'volumeStatus', t1));
-      c.man.dV0 -= MANUAL_CVP_GAIN * (cvpT - hs.circOut.pRa) * c.p.cSv * (12 / HEMO_RATE);
+      // the instructor's CVP is the filling state: pleural (PEEP, tension PTX) and pericardial (tamponade) pressure
+      // changes still show on top of it, as Stage 3's MANUAL Paw coupling did (decision 8)
+      const vh = (c.s[10] as number) + (c.s[6] as number);
+      const periFluid = hs.circOut.pPeri - Math.max(0, c.p.periA * (Math.exp(c.p.periLambda * (vh - c.p.v0Peri)) - 1)); // tamponade share
+      const cvpNow = hs.circOut.pRa - Math.max(0, hs.circOut.pIt - P_PL0) - periFluid; // spontaneous dips average out
+      c.man.dV0 -= MANUAL_CVP_GAIN * (cvpT - cvpNow) * c.p.cSv * (12 / HEMO_RATE);
       c.man.dV0 = Math.min(0.5 * c.prof.bloodVolumeMl, Math.max(-0.5 * c.prof.bloodVolumeMl, c.man.dV0));
       const pasT = l1Value(ctx.l1, 'papSys', t1);
       const padT = l1Value(ctx.l1, 'papDia', t1);
@@ -443,6 +451,25 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
         if (c.rate !== undefined && !(c.rate >= 60 && c.rate <= 150)) return 'cpr rate must be 60–150/min';
         if (c.quality !== undefined && !(c.quality >= 0 && c.quality <= 1.5)) return 'cpr quality must be 0–1.5';
         return undefined;
+      }
+      // Stage 7a: drug, fluid, bleed and circulation conditions act on the circulation
+      if (ev.kind === 'drug') {
+        const d = cmd.event as { drugId: string; dose: number; unit: string };
+        if (!(DRUG_IDS as readonly string[]).includes(d.drugId)) return `drug ${d.drugId} arrives in Stage 7g`;
+        if (!(Number.isFinite(d.dose) && d.dose > 0)) return 'dose must be > 0';
+        return ['mcg', 'mg', 'mcg/kg', 'mg/kg'].includes(d.unit) ? undefined : 'unit must be mcg, mg, mcg/kg or mg/kg';
+      }
+      if (ev.kind === 'bleed' || ev.kind === 'fluid') {
+        const b = cmd.event as { volumeMl?: number; overS?: number; rateMlPerMin?: number };
+        if (b.rateMlPerMin !== undefined) return Number.isFinite(b.rateMlPerMin) && b.rateMlPerMin >= 0 && b.rateMlPerMin <= 2000 ? undefined : 'rateMlPerMin must be 0–2000';
+        return b.volumeMl !== undefined && Number.isFinite(b.volumeMl) && b.volumeMl > 0 && b.volumeMl <= 5000 && Number.isFinite(b.overS ?? 1) && (b.overS ?? 1) > 0
+          ? undefined
+          : 'volumeMl must be 0–5000 with overS > 0';
+      }
+      if (ev.kind === 'condition') {
+        const c = cmd.event as { id: string; severity: number };
+        if (!(CIRC_CONDITIONS as readonly string[]).includes(c.id)) return null;
+        return Number.isFinite(c.severity) && c.severity >= 0 && c.severity <= 1 ? undefined : 'severity must be 0–1';
       }
       return null;
     }
@@ -541,6 +568,27 @@ export function applyHemoCommand(
         } else {
           hs.cpr.active = false;
         }
+        return true;
+      }
+      if (ev.kind === 'drug') {
+        const d = ev as unknown as { drugId: DrugId; dose: number; unit: string };
+        const w = hs.circ.weightKg;
+        const mg = d.unit === 'mcg' ? d.dose / 1000 : d.unit === 'mg' ? d.dose : d.unit === 'mcg/kg' ? (d.dose * w) / 1000 : d.dose * w;
+        circGiveDrug(hs.circ, d.drugId, mg);
+        return true;
+      }
+      if (ev.kind === 'bleed' || ev.kind === 'fluid') {
+        const b = ev as unknown as { volumeMl?: number; overS?: number; rateMlPerMin?: number };
+        const sign = ev.kind === 'bleed' ? -1 : 1;
+        if (b.rateMlPerMin !== undefined) {
+          hs.circ.vol = hs.circ.vol.filter((v) => Math.sign(v.rate) !== sign || v.until < 1e8); // replaces an open-ended rate
+          if (b.rateMlPerMin > 0) hs.circ.vol.push({ rate: (sign * b.rateMlPerMin) / 60, until: 1e9 });
+        } else circVolume(hs.circ, sign * (b.volumeMl ?? 0), b.overS ?? 1);
+        return true;
+      }
+      if (ev.kind === 'condition') {
+        const c = ev as unknown as { id: CircConditionId; severity: number };
+        applyCircCondition(hs.circ, c.id, c.severity);
         return true;
       }
       return false;
