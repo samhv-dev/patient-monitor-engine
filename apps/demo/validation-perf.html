@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Performance gate</title>
+    <style>
+      body { background: #000; color: #ccc; font: 13px ui-monospace, monospace; margin: 8px; }
+      #monitor { height: 700px; max-width: 1280px; border: 1px solid #333; }
+      #stats { white-space: pre; color: #8f8; margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div id="stats"></div>
+    <script type="module" src="./src/validation/perf.ts"></script>
+  </body>
+</html>
