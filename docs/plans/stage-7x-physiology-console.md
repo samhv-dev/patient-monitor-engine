@@ -1035,7 +1035,7 @@ git push
   string`; `fmtDelta(d: number | null, m, ref: number): string` (`ref` = the baseline); `type Dir = 'up' | 'down' |
   'diff' | null`; `CHANGE_REL = 0.02`; `changeDir(cur, base, m: Pick<Meta, 'digits' | 'scale' | 'tol'>): Dir`.
 
-- [ ] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/format.test.ts`:
+- [x] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/format.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1141,12 +1141,12 @@ describe('formatting', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/format.test.ts`
 Expected: FAIL — `./format.ts` / `./meta.ts` do not exist.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `apps/demo/src/physiology-console/meta.ts`:
 
@@ -1333,12 +1333,12 @@ export function changeDir(cur: Leaf | undefined, base: Leaf | undefined, m: Pick
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/format.test.ts`
 Expected: PASS, 45 tests.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/physiology-console/meta.ts apps/demo/src/physiology-console/format.ts apps/demo/src/physiology-console/format.test.ts
