@@ -706,7 +706,7 @@ git push -u origin stage-7x-physiology-console
   `GROUP_BY_PREFIX`, `groupOf(path: string): GroupId`, `INTERNAL_PREFIXES` (`*` = one segment),
   `isInternal(path: string): boolean`, `PHASE_PREFIXES`, `isPhase(path: string): boolean`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/demo/src/physiology-console/flatten.test.ts`:
 
@@ -814,12 +814,12 @@ describe('organ grouping', () => {
 });
 ```
 
-- [ ] **Step 2: Run them and see them fail**
+- [x] **Step 2: Run them and see them fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/flatten.test.ts src/physiology-console/organs.test.ts`
 Expected: FAIL — `./flatten.ts` and `./organs.ts` do not exist.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `apps/demo/src/physiology-console/flatten.ts`:
 
@@ -1006,12 +1006,12 @@ export function isPhase(path: string): boolean {
 }
 ```
 
-- [ ] **Step 4: Run them and see them pass**
+- [x] **Step 4: Run them and see them pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/flatten.test.ts src/physiology-console/organs.test.ts`
 Expected: PASS, 44 tests (flatten 5, organs 39).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/physiology-console/flatten.ts apps/demo/src/physiology-console/organs.ts apps/demo/src/physiology-console/flatten.test.ts apps/demo/src/physiology-console/organs.test.ts
