@@ -49,6 +49,7 @@ export interface RespCtx {
 }
 
 export interface RespState {
+  vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
   pat: GasPatient;
@@ -197,6 +198,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.co2.ps = pf;
   }
   const va = alveolarVentilation(d, t, deadSpace(rs));
+  rs.vaLpm = va; // Stage 7g
   stepCo2(rs.co2, { vaLpm: va, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
   rs.etco2 = etco2True(rs.co2, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)

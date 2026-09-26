@@ -3546,7 +3546,7 @@ writes into their modules and ships NO shim for 7f: 7f executes after 7g merges 
 `bus.volatiles`, `bus.doses`, `bus.antagonist` and `bus.nmb.achGain` (the Interfaces section). The bus field names in
 `types-pk.ts` are the contract; a rename needs an orchestrator ruling, not a local edit.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/engine/pk-bus.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/engine/pk-bus.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3584,13 +3584,13 @@ describe('Stage 7g bus', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (`vaLpm` absent).
-- [ ] **Step 3: `l2/resp/pipeline.ts`** — in `interface RespState` add `vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)`,
+- [x] **Step 2: Run it** → FAIL (`vaLpm` absent).
+- [x] **Step 3: `l2/resp/pipeline.ts`** — in `interface RespState` add `vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)`,
   and after the line `const va = alveolarVentilation(d, t, deadSpace(rs));` add `rs.vaLpm = va; // Stage 7g`.
-- [ ] **Step 4: `index.ts`** — first `git fetch origin && git merge origin/main` if `engine.ts`/`index.ts` moved;
+- [x] **Step 4: `index.ts`** — first `git fetch origin && git merge origin/main` if `engine.ts`/`index.ts` moved;
   then export the pipeline types consumers need: `export type { PkState, DrugInst } from './l2/pk/pipeline.ts'; // Stage 7g`
   and `export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // Stage 7g (demo/controller drug pickers)`.
-- [ ] **Step 5: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): alveolar ventilation for volatile uptake; the R51 DrugBus exported for 7b/7c/7d/7f (pull model)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): alveolar ventilation for volatile uptake; the R51 DrugBus exported for 7b/7c/7d/7f (pull model)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 19: The 1 Hz `drugs` panel event and decrement-from-now
 

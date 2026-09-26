@@ -19,3 +19,5 @@ export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 export type * from './types-circ.ts'; // Stage 7a
 export type * from './types-pk.ts'; // Stage 7g
 export { DRUG_BUS_NEUTRAL } from './types-pk.ts'; // Stage 7g
+export type { PkState, DrugInst } from './l2/pk/pipeline.ts'; // Stage 7g
+export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // Stage 7g (demo/controller drug pickers)
