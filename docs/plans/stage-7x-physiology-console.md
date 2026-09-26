@@ -1359,7 +1359,7 @@ git push
   [number, number] | null`; `sparkY(v, h, range): number`; `sparkPoints(values, w, h, range?, n?):
   Array<[number, number]>`; `drawSpark(g: CanvasRenderingContext2D | null, values, w, h, color, base?): void`.
 
-- [ ] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/sparkline.test.ts`:
+- [x] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/sparkline.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1391,12 +1391,12 @@ describe('sparkline', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/sparkline.test.ts`
 Expected: FAIL — `./sparkline.ts` does not exist.
 
-- [ ] **Step 3: Implement** — `apps/demo/src/physiology-console/sparkline.ts`:
+- [x] **Step 3: Implement** — `apps/demo/src/physiology-console/sparkline.ts`:
 
 ```ts
 // Stage 7x: 60 s sparklines — a bounded history per numeric path (one sample per truth event, 1 Hz) and a tiny canvas
@@ -1451,12 +1451,12 @@ export function drawSpark(g: CanvasRenderingContext2D | null, values: readonly n
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/sparkline.test.ts`
 Expected: PASS, 4 tests.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/physiology-console/sparkline.ts apps/demo/src/physiology-console/sparkline.test.ts
