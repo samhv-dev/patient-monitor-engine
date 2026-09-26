@@ -202,7 +202,7 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     m.t += H_S;
     evaluate(m.s, m.t, m.p, d, o);
     m.mapSum += o.pRad;
-    m.raTmSum += o.pRa - o.pIt;
+    m.raTmSum += o.pRa - o.pIt - o.pPeri; // atrial stretch: transmural across the wall (pericardial pressure compresses)
     m.mapN++;
     const a = m.acc;
     if (a) {

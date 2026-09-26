@@ -2061,7 +2061,7 @@ git push origin stage-7a-circulation
 - Consumes: `CircModelState.ext` (Task 9).
 - Produces: `type CircConditionId`, `CIRC_CONDITIONS`, `applyCircCondition(m, id, severity)`, constants `TAMPONADE_ML`, `PE_MAX_FRAC`, `PE_VASO`, `PTX_MMHG`, `RV_INFARCT_LOSS`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/conditions.test.ts`:
 
@@ -2113,12 +2113,12 @@ describe('circulatory conditions (tables §2.3 H5, H7, H8)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/conditions.test.ts`
 Expected: FAIL — cannot resolve `conditions.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/conditions.ts`:
 
@@ -2160,12 +2160,12 @@ export function applyCircCondition(m: CircModelState, id: CircConditionId, sever
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/conditions.test.ts`
 Expected: PASS (3 tests). Prototype (adult, ventilated, 90 s after onset): baseline CVP 6.3 / PCWP 7.8 / mPAP 18.3 / CO 5.2; tamponade 200 mL CVP 9.5 / PCWP 11.9 / CO 3.9 / HR +14; PE φ 0.6 mPAP 38 (46/31), CVP 7.2, CO 4.6; RV infarct CVP 8.5, PCWP 5.6, CO 4.4.
 
-- [ ] **Step 5: Run the whole circ folder, then commit**
+- [x] **Step 5: Run the whole circ folder, then commit**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ`
 Expected: PASS (all circ tests).
