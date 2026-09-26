@@ -72,6 +72,7 @@ export interface BaroGains {
   betaBlockC?: number; // 0–1: fraction of the β-mediated contractility gain removed (tables g_c ×0.5)
   weightScale: number; // W/70
   pinnedSet: boolean; // MAP_set pinned by the instructor: no resetting
+  hrGain?: number; // × on the sympathetic HR arm only (drug depression of the chronotropic reflex)
 }
 
 export interface BaroOut {
@@ -118,7 +119,7 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
   const scp = g.gSymp * (ecp < 0 ? SYMP_WITHDRAW : 1);
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
-    hrF: 1 + clampSat(G_HS * g.gSymp * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
+    hrF: 1 + clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
     svrF: 1 + clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
     eesF: 1 + clampSat(G_C * s * betaC * b.es),
     dV0: Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),

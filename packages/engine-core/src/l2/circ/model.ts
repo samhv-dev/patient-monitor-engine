@@ -172,7 +172,7 @@ function control(m: CircModelState, env: CircEnv): void {
   const de = drugEffect(m.boluses, m.t, m.prof.betaBlockC);
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: m.prof.betaBlock, betaBlockC: m.prof.betaBlockC, weightScale: w, pinnedSet: m.mapSetPinned }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: m.prof.betaBlock, betaBlockC: m.prof.betaBlockC, hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned }, raTm)
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;

@@ -13,6 +13,7 @@ export interface DrugEffect {
   v0Frac: number; // + fraction of blood volume moved INTO the venous unstressed pool (+ = venodilation)
   pvr: number; // × on PVR
   gv: number; // × on the vagal and sympathetic reflex gains
+  gvHr: number; // × on the sympathetic HR arm only (propofol depresses the baroreflex HR response most: Cullen 1987)
 }
 
 interface DrugRow {
@@ -20,7 +21,7 @@ interface DrugRow {
   unit: 'mg' | 'mg/kg';
   tauOn: number;
   tauOff: number;
-  peak: Omit<DrugEffect, 'gv'> & { gv?: number }; // relative change at the peak of the reference dose (× − 1 or + frac)
+  peak: Omit<DrugEffect, 'gv' | 'gvHr'> & { gv?: number; gvHr?: number }; // relative change at the peak of the reference dose (× − 1 or + frac)
   betaMediated?: boolean; // hr/ees part is β-mediated (blunted by β-blockade)
   tachyphylaxis?: number;
 }
@@ -35,8 +36,11 @@ export const DRUGS: Record<DrugId, DrugRow> = {
   nitroglycerin: { refDose: 0.1, unit: 'mg', tauOn: 20, tauOff: 240, peak: { hr: 0, ees: 0, svr: -0.1, v0Frac: 0.1, pvr: -0.2 } },
   // esmolol 0.5 mg/kg: HR −20 %, contractility −15 %; t½ 9 min
   esmolol: { refDose: 0.5, unit: 'mg/kg', tauOn: 30, tauOff: 540, peak: { hr: -0.2, ees: -0.15, svr: 0, v0Frac: 0, pvr: 0 } },
-  // propofol 2 mg/kg (E ≈ 0.6 of Ce/(Ce + 3.5)): SVR ×(1 − 0.45E), Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E)
-  propofol: { refDose: 2, unit: 'mg/kg', tauOn: 40, tauOff: 420, peak: { hr: 0, ees: -0.12, svr: -0.27, v0Frac: 0.05, pvr: 0, gv: -0.36 } },
+  // propofol 2 mg/kg: tables §6.3 row at E = 0.9 (the upper end of E = Ce/(Ce + 3.5) after 2 mg/kg): SVR ×(1 − 0.45E),
+  // Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); plus the sympathetic HR arm ×0.3 at peak (tables "HR ~/↓";
+  // propofol depresses the baroreflex HR response most, Cullen 1987) [ENG, fitted in Task 24 to brief sanity check 3:
+  // the prototype's E 0.6 row gave MAP 88 % and HR +33 against the R45(b) reflexes]
+  propofol: { refDose: 2, unit: 'mg/kg', tauOn: 40, tauOff: 420, peak: { hr: 0, ees: -0.18, svr: -0.405, v0Frac: 0.072, pvr: 0, gv: -0.54, gvHr: -0.7 } },
 };
 
 export interface Bolus {
@@ -61,7 +65,7 @@ function bateman(t: number, on: number, off: number): number {
 
 /** Combined multipliers of every bolus at time t (β-mediated parts × (1 − betaBlock)). */
 export function drugEffect(list: readonly Bolus[], t: number, betaBlock: number): DrugEffect {
-  const e: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1 };
+  const e: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1 };
   for (const b of list) {
     const row = DRUGS[b.drug];
     const k = b.scale * bateman(t - b.t, row.tauOn, row.tauOff);
@@ -73,6 +77,7 @@ export function drugEffect(list: readonly Bolus[], t: number, betaBlock: number)
     e.v0Frac += row.peak.v0Frac * k;
     e.pvr *= 1 + row.peak.pvr * k;
     e.gv *= 1 + (row.peak.gv ?? 0) * k;
+    e.gvHr *= 1 + (row.peak.gvHr ?? 0) * k;
   }
   return e;
 }

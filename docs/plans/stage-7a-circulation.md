@@ -3840,7 +3840,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Consumes: the engine in MODELED mode with the circulation; `circ` events; `applyEvent` drug/bleed.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/circ-sanity-1.test.ts`:
 
@@ -3904,12 +3904,12 @@ describe('sanity scenarios I (MODELED)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-1.test.ts`
 Expected: PASS. The propofol curve was NOT prototyped: if the MAP ratio at 2 min falls outside 0.6–0.8, scale `DRUGS.propofol.peak.svr` (currently −0.27) in steps of 0.03 within −0.18…−0.36 (tables §6.3 SVR ×(1 − 0.45E), E 0.4–0.8) and record the value in the gate note and in the `drugs.ts` comment.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/circ-sanity-1.test.ts packages/engine-core/src/l2/circ/drugs.ts
