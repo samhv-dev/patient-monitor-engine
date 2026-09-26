@@ -1187,7 +1187,7 @@ git push origin stage-7b-lungs
 - Consumes: `params.ts` (Task 2), `SideParams` (Task 3).
 - Produces: `HpvState { a1; a2; stimS }`, `Perfusion { f; pvrMult; shunt; hypoxic }`, `createHpv()`, `hpvStimulus(pao2)`, `stepHpv(st, hypoxic, dt)`, `perfusion(sp, nonAer, pao2, st, volatileMac)`; `circSideFlows(hemo: unknown): number[] | null` (L/min), `writeCircPvr(hemo: unknown, pvrMult): boolean` (writes `hemo.circ.ext.pvrLungL/pvrLungR`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/engine-core/test/l2/lung/perfusion.test.ts`:
 
@@ -1250,12 +1250,12 @@ describe('Stage 7a adapter (duck-typed, with fallback)', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/perfusion.test.ts test/l2/lung/circ-link.test.ts`
 Expected: FAIL — cannot resolve the modules.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/perfusion.ts`:
 
@@ -1359,12 +1359,12 @@ export function writeCircPvr(hemo: unknown, pvrMult: readonly number[]): boolean
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/perfusion.test.ts test/l2/lung/circ-link.test.ts`
 Expected: PASS (3 + 3).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/perfusion.ts packages/engine-core/src/l2/lung/circ-link.ts packages/engine-core/test/l2/lung/perfusion.test.ts packages/engine-core/test/l2/lung/circ-link.test.ts
