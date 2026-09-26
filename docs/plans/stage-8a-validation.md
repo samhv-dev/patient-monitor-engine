@@ -4708,7 +4708,7 @@ git push
 
 Design (decision 12, brief §9): N = 20 real + 20 synthetic clips per channel (ECG II, ABP, pleth, CO2), synthetic ones from engine runs matched to the same windows, all resampled to the engine's rates, recorded ECG band-passed 0.5–40 Hz like the monitor filter; MGH/MF CO2 is excluded (uncalibrated). The bundle and its key stay in the cache (they contain recorded samples); only the scored results are committed. A second clinician gets the same `bundle.json` and a fresh page session — the page shuffles per rater.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/review/review.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/review/review.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -4748,11 +4748,11 @@ describe('scoring (brief §9 step 4)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/review/review.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/review/types.ts`**
+- [x] **Step 3: Write `packages/validation/src/review/types.ts`**
 
 ```ts
 // Blind realism review (brief §9 "Realism review protocol"): bundle → page → answers → score.
@@ -4765,7 +4765,7 @@ export interface Answer { id: string; guess: 'real' | 'synthetic'; realism: 1 | 
 export interface ReviewAnswers { schema: 'pme-review-answers/1'; session: string; rater: string; startedAt: string; finishedAt: string; answers: Answer[] }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/review/clips.ts`**
+- [x] **Step 4: Write `packages/validation/src/review/clips.ts`**
 
 ```ts
 // Build a blind-review bundle (brief §9 step 1–2): per channel N real 10 s segments (VitalDB, MGH/MF manifest
@@ -4843,7 +4843,7 @@ export async function buildBundle(cache: string, perChannel = 20, seed = 101): P
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/review/cli-clips.ts`**
+- [x] **Step 5: Write `packages/validation/src/review/cli-clips.ts`**
 
 ```ts
 // Entry-only: pnpm --filter @pme/validation review:build [--per-channel 20]
@@ -4863,7 +4863,7 @@ writeFileSync(join(dir, 'key.json'), JSON.stringify(key, null, 1));
 console.log(`${bundle.clips.length} clips → ${join(dir, 'bundle.json')} (key: key.json, do not share)`);
 ```
 
-- [ ] **Step 6: Write `packages/validation/src/review/score.ts`**
+- [x] **Step 6: Write `packages/validation/src/review/score.ts`**
 
 ```ts
 // Scoring of one rater's blind review (brief §9 step 4): per channel, identification accuracy (chance 50 %; pass
@@ -4919,7 +4919,7 @@ export function scoreMarkdown(ans: ReviewAnswers, s: ChannelScore[]): string {
 }
 ```
 
-- [ ] **Step 7: Write `packages/validation/src/review/cli-score.ts`**
+- [x] **Step 7: Write `packages/validation/src/review/cli-score.ts`**
 
 ```ts
 // Entry-only: pnpm --filter @pme/validation review:score --bundle B --key K --answers A [--out dir]
@@ -4944,7 +4944,7 @@ writeFileSync(`${base}.json`, `${JSON.stringify({ session: ans.session, rater: a
 console.log(`${base}.md`);
 ```
 
-- [ ] **Step 8: Point the three scripts in `packages/validation/package.json` at the entry files:**
+- [x] **Step 8: Point the three scripts in `packages/validation/package.json` at the entry files:**
 
 ```json
     "review:build": "vite-node src/review/cli-clips.ts",
@@ -4952,14 +4952,14 @@ console.log(`${base}.md`);
     "bedside:apply": "vite-node src/bedside/cli-apply.ts",
 ```
 
-- [ ] **Step 9: Run the test and build one real bundle (needs Task 6's cache). Expected: PASS (4 tests); the build prints `160 clips → …/bundle.json` (fewer if the manifests have fewer windows)**
+- [x] **Step 9: Run the test and build one real bundle (needs Task 6's cache). Expected: PASS (4 tests); the build prints `160 clips → …/bundle.json` (fewer if the manifests have fewer windows)**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/review/review.test.ts
 npx -y pnpm@9.15.9 --filter @pme/validation review:build --per-channel 20
 ```
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/validation/src/review packages/validation/test/review packages/validation/package.json
