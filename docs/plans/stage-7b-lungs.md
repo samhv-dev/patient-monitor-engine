@@ -3143,6 +3143,8 @@ git push origin stage-7b-lungs
 
 ### Task 19: External drive — per-lung mechanics from VentFrames (Stage V `palvCmH2O`/`mode`)
 
+> **Executor note:** Passed on Task 13's lungDrive without change; Stage V is on main so the palvCmH2O/mode frames were exercised (accepted, lungs unchanged).
+
 **Files:**
 - Create: `packages/engine-core/test/engine/lung-external.test.ts`
 - Modify: none beyond Task 13's `lungDrive` (this task proves it)
@@ -3151,7 +3153,7 @@ git push origin stage-7b-lungs
 - Consumes: `externalDrive` frames (Stage 3), optional `palvCmH2O`/`mode` (Stage V, `types-vent-link.ts`, read structurally), `lungDrive` (Task 13).
 - Produces: under an external ventilator the units are driven by the frames' delivered FLOW during inspiration (so the unit tidal volumes add up to the ventilator's VT and a blocked lung takes none) and empty passively to the frame's PEEP by their OWN time constants (so auto-PEEP in `lungState` is the lung module's, the value the ventilator itself receives). `palvCmH2O` is not consumed by the lung (it reaches Stage 7a's pleural input through `ext.frames`, Stage V decision 4).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-external.test.ts`:
 
@@ -3196,12 +3198,12 @@ describe('external ventilator frames drive the two lungs', { timeout: 300_000 },
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-external.test.ts`
 Expected: PASS if Task 13's `lungDrive` is right. If the first test fails with a tidal sum far from 500, check that `frameAt(d.ext, t, 2)` returns the VOLUME column (index 2 of each stride-3 triple) and that `lungDrive` uses the 16 ms difference, then fix `lungDrive` (Task 13 code) — do not change the test.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/lung-external.test.ts packages/engine-core/src/l2/resp/pipeline.ts
