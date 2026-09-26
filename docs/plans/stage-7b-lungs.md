@@ -1383,7 +1383,7 @@ git push origin stage-7b-lungs
 - Consumes: `K_CO2` (`src/l2/gas/params.ts`), `CO2_SLOPE_BLOOD`, `HEALTHY_VDALV`, `VQ_LOW` (Task 2).
 - Produces: `Co2MixInputs { va; vent; perf; qLow; qShunt; vdAlv; tauEx; teS; paco2; vco2 }`, `Co2Mix { pA; pv; e; g; riseIII; faCo2 }`, `mixCo2(x): Co2Mix`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/mix.test.ts`:
 
@@ -1414,12 +1414,12 @@ describe('CO2 mixing point (tables §4.4, decision 7)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mix.test.ts`
 Expected: FAIL — cannot resolve `mix-co2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/mix-co2.ts`:
 
@@ -1509,12 +1509,12 @@ export function mixCo2(x: Co2MixInputs): Co2Mix {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mix.test.ts`
 Expected: PASS (3).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/mix-co2.ts packages/engine-core/test/l2/lung/mix.test.ts
