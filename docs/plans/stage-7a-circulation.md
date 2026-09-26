@@ -1522,7 +1522,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `type DrugId`, `interface DrugEffect { hr; ees; svr; v0Frac; pvr; gv }`, `DRUGS`, `interface Bolus { drug; t; scale }`, `bolusScale(drug, doseMg, weightKg, previous)`, `drugEffect(list, t, betaBlock)`, `pruneBoluses(list, t)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/drugs.test.ts`:
 
@@ -1573,12 +1573,12 @@ describe('7a bolus effect curves', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/drugs.test.ts`
 Expected: FAIL — cannot resolve `drugs.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/drugs.ts`:
 
@@ -1668,12 +1668,12 @@ export function pruneBoluses(list: Bolus[], t: number): Bolus[] {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/drugs.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/drugs.ts packages/engine-core/test/l2/circ/drugs.test.ts
