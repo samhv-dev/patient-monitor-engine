@@ -6,6 +6,8 @@ import { resolveLung } from '../../src/l2/lung/conditions.ts';
 import { createLung, lungGasStep, lungMechStep, shuntFraction, type LungState, type Mainstem } from '../../src/l2/lung/lung.ts';
 import type { LungParams } from '../../src/l2/lung/side.ts';
 import type { LungConditionSpec } from '../../src/types-lung.ts';
+import type { RespState } from '../../src/l2/resp/pipeline.ts';
+import type { MonitorEngine } from '../../src/types.ts';
 
 export const PAT = gasPatient({ ageY: 40, weightKg: 70, heightCm: 175, sex: 'M' });
 const VD_ML = PAT.deadSpaceMl + 50; // anatomic + apparatus (Stage 3)
@@ -53,3 +55,6 @@ export const rigOut = (r: LungRig) => ({
   spo2: r.ls.o2.sa * 100, pao2: r.ls.o2.pao2, paco2: r.co2.pf, etco2: r.co2.pf * r.ls.co2.g, gap: r.co2.pf * (1 - r.ls.co2.g),
   shunt: shuntFraction(r.ls, r.baseShunt), fL: r.ls.perf.f[0] as number, aer: r.ls.aer.slice(), pInsp: r.ls.pInsp, peepTot: r.ls.peepTot,
 });
+
+/** The engine's committed Stage 3/7b resp state (a structured clone; read-only). */
+export const respOf = (e: MonitorEngine): RespState => (e.snapshot().state as { st: { resp: RespState } }).st.resp;

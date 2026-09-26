@@ -2321,6 +2321,8 @@ git push origin stage-7b-lungs
 
 ### Task 13: Resp pipeline wiring I — mechanics from the module, driver τ, compliance/shunt seams
 
+> **Executor note:** Deviations: (1) staticCompliance uses the per-breath CHORD compliance of each unit (tangent at v0 before the first breath) instead of the tangent at the instantaneous volume, which rippled lungState and u(t) by ±2 mL/cmH2O inside every breath; (2) the COPD τ test is skipped here and enabled in Task 14 (τ̄_exp is computed by the 10 Hz gas step that Task 14 wires); (3) resp-coupling R27 test: the exact Stage 3 compliance 50 is re-specified to the lung module's healthy 48–60 (plan decision 15). resp-airway needed no change.
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/resp/pipeline.ts`, `packages/engine-core/src/l2/resp/driver.ts`, `packages/engine-core/src/l2/lung/lung.ts` (one export)
 - Create: `packages/engine-core/test/engine/lung-wiring.test.ts`
@@ -2329,7 +2331,7 @@ git push origin stage-7b-lungs
 - Consumes: `resolveLung` (Task 5), `createLung`, `lungMechStep`, `blockedSides`, `capnoTerms` (Task 11), `mechParams` (Task 3), `complianceAt` (Task 2).
 - Produces: `RespState.lung: LungState`, `RespState.lungSpecs: LungConditionSpec[]`, `RespState.rawEvent: number`, `RespState.mainstemCmd: Mainstem | null`, `RespState.recruit: { p: number; until: number } | null`; `applyLungSpecs(rs)`; `lungDrive(rs, t): { mode; x }`; `staticCompliance(ls)` (lung.ts); driver `Cycle.tauE?`, `Cycle.lungTauII?`, `Cycle.lungRiseIII?`; `export function frameAt` in driver.ts.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-wiring.test.ts`:
 
@@ -2382,12 +2384,12 @@ export const respOf = (e: MonitorEngine): RespState => (e.snapshot().state as { 
 
 (put the two `import type` lines with the file's other imports).
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-wiring.test.ts`
 Expected: FAIL — `lung` is undefined on the resp state.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/lung/lung.ts` add at the end:
 
@@ -2516,12 +2518,12 @@ export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'
 
   and add `cycleAt` to the `./driver.ts` import if it is not there.
 
-- [ ] **Step 4: Run the test and every Stage 3 suite**
+- [x] **Step 4: Run the test and every Stage 3 suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-wiring.test.ts test/l2/resp test/l2/co2 test/l2/gas test/engine/resp-engine.test.ts test/engine/resp-airway.test.ts test/engine/resp-coupling.test.ts`
 Expected: lung-wiring PASS (3). Stage 3 suites PASS except any assertion on the endobronchial compliance ×0.5/shunt +0.25 being IMMEDIATE (the shunt now builds over minutes by absorption): if `test/engine/resp-airway.test.ts` asserts an immediate endobronchial desaturation or compliance value, re-specify it in this task to the emergent behaviour (Ppeak/plateau rise immediately; SpO2 falls over ≥ 2 min) and record the change for the gate note (decision 11). No other Stage 3 test may change.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/l2/resp/driver.ts packages/engine-core/src/l2/lung/lung.ts packages/engine-core/test/helpers/lung.ts packages/engine-core/test/engine/lung-wiring.test.ts packages/engine-core/test/engine/resp-airway.test.ts

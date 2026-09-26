@@ -1,6 +1,6 @@
 // The lung module (R31, R43): mechanics at 250 Hz inside the 62.5 Hz respiratory loop, slow dynamics and the mixing
 // point at the 10 Hz gas step. Plain JSON-safe state; the resp pipeline (Tasks 13–15) owns one LungState.
-import { complianceAt } from './venegas.ts';
+import { complianceAt, pressureAt } from './venegas.ts';
 import { airwayFlow, createMech, mechSubstep, type MechParams, type MechState } from './mechanics.ts';
 import { createO2Lung, stepO2Lung, type O2LungState } from './mix-o2.ts';
 import { mixCo2, type Co2Mix } from './mix-co2.ts';
@@ -175,4 +175,24 @@ export function shuntFraction(ls: LungState, baseShunt: number): number {
   const extra = Math.min(0.6, baseShunt + ls.lp.extraShunt);
   const f = ls.perf.f;
   return Math.min(0.9, extra + (1 - extra) * ((f[0] as number) * (ls.perf.shunt[0] as number) + (f[1] as number) * (ls.perf.shunt[1] as number)));
+}
+
+/**
+ * Whole respiratory-system static compliance (mL/cmH2O): ventilated units in parallel, in series with the chest wall.
+ * Executor deviation (Task 13): each unit's lung compliance is the CHORD over the last breath (tidal volume / its
+ * transpulmonary pressure change from the end-expiratory volume v0), the tangent at v0 before the first breath — so
+ * the value is a per-breath Cstat that does not ripple within a breath (the plan's tangent at the instantaneous
+ * volume moved lungState and the Stage 2 breath signal u(t) by ±2 mL/cmH2O inside every breath).
+ */
+export function staticCompliance(ls: LungState): number {
+  let cl = 0;
+  for (let u = 0; u < N_UNITS; u++) {
+    if (ls.mp.blocked[u] || !(ls.mp.units[u]!.rIn < 1e3)) continue;
+    const sig = ls.mp.units[u]!.sig;
+    const v0 = ls.v0[u] as number;
+    const tid = ls.tidal[u] as number;
+    const dp = tid > 1 ? pressureAt(sig, v0 + tid) - pressureAt(sig, v0) : 0;
+    cl += dp > 1e-3 ? tid / dp : complianceAt(sig, v0);
+  }
+  return cl > 0 ? 1 / (1 / cl + 1 / ls.mp.ccw) : 1;
 }
