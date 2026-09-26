@@ -2184,7 +2184,7 @@ git push origin stage-7b-lungs
 - Consumes: `mechSubstep`, `MechParams`, `MechState` (Task 3); `paramsFor` (Task 11 helper).
 - Produces: `VcSettings { vtMl; rr; peep; flowLps; pauseS }`, `Breath { ppeak; pplat; peepTot; autoPeep; cstat; rInsp; drivingP; vtUnits }`, `holdPressure(mp, ms, s, peepOffset)`, `vcBreath(mp, ms, s, measure)`, `referenceRun(mp, ms, s, n = 30)`. Holds run on a COPY of the unit state.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/measure.test.ts`:
 
@@ -2240,12 +2240,12 @@ describe('ventilator measurements on the unit model (Arnal 2018 method)', () => 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/measure.test.ts`
 Expected: FAIL — cannot resolve `measure.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/measure.ts`:
 
@@ -2304,12 +2304,12 @@ export function referenceRun(mp: MechParams, ms: MechState, s: VcSettings, n = 3
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/measure.test.ts`
 Expected: PASS (5). Prototype: healthy Cstat 54.8 / R 9.9; COPD auto-PEEP at RR 14 (VT 560, I:E 1:2) 0.8 / 1.9 / 4.2 / 8.2 for GOLD 1–4, and 2.3 / 4.2 / 7.2 / 10.3 at RR 10/14/20/26 for GOLD 3; ARDS Cstat 39.7 / 34.6 / 29.4, R 11.9; endobronchial ΔP +60 %.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/measure.ts packages/engine-core/test/l2/lung/measure.test.ts
