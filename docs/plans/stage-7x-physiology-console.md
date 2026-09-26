@@ -1483,7 +1483,7 @@ git push
   truncated; bytes }; ingest(e: EngineEvent): boolean; setBaseline(): void; clearHistory(): void; clear(): void;
   row(path): Row; rows(): Row[]; toJSON(): ConsoleExport; toCSV(): string }`.
 
-- [ ] **Step 1: Write the failing test** (includes the fake 7b–7g tree: fields of unmerged stages land in their organ
+- [x] **Step 1: Write the failing test** (includes the fake 7b–7g tree: fields of unmerged stages land in their organ
   groups, an unknown `ecmo.*` in "other") — `apps/demo/src/physiology-console/model.test.ts`:
 
 ```ts
@@ -1590,12 +1590,12 @@ describe('ConsoleModel', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/model.test.ts`
 Expected: FAIL — `./model.ts` does not exist.
 
-- [ ] **Step 3: Implement** — `apps/demo/src/physiology-console/model.ts`:
+- [x] **Step 3: Implement** — `apps/demo/src/physiology-console/model.ts`:
 
 ```ts
 // Stage 7x: the console's data model — current leaves (truth tree + folded events + monitor numerics), the baseline,
@@ -1727,12 +1727,12 @@ export class ConsoleModel {
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/model.test.ts`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/physiology-console/model.ts apps/demo/src/physiology-console/model.test.ts
