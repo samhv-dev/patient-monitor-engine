@@ -2671,6 +2671,8 @@ git push origin stage-7b-lungs
 
 ### Task 15: Capnogram — phase II/III and α from per-lung heterogeneity (l2/co2 adapted)
 
+> **Executor note:** Measured through the engine (sidestream, RR 14): healthy 105.6°, GOLD 1/2/3/4 109.3/113.7/122.9/127.2° (Q72 110/115/125/130); phase III rise 1.33 → 1.94 mmHg at GOLD 3. Applied on the Stage 3.1 form of shapeOf (shark τ replaces). Stage 3 capnogram suites pass. No deviation.
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/co2/capno.ts` (`shapeOf` only)
 - Create: `packages/engine-core/test/engine/lung-capno.test.ts`
@@ -2679,7 +2681,7 @@ git push origin stage-7b-lungs
 - Consumes: `Cycle.lungTauII`, `Cycle.lungRiseIII` (Task 13 stamps them).
 - Produces: the capnogram adds the cycle's lung terms to its family constants; a homogeneous lung adds 0 (Stage 3's α 105.6° sidestream unchanged).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-capno.test.ts`:
 
@@ -2711,12 +2713,12 @@ describe('capnogram α emerges from the lungs (R39-6, Q72)', { timeout: 300_000 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-capno.test.ts`
 Expected: FAIL — α is the same for every GOLD grade.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/co2/capno.ts`, in `function shapeOf(c: Cycle)`, replace the first line `  const s = SHAPES[c.shape];` with
 
@@ -2728,12 +2730,12 @@ In `packages/engine-core/src/l2/co2/capno.ts`, in `function shapeOf(c: Cycle)`, 
 
 The rest of `shapeOf` is unchanged in both versions of the file: on `main` it continues `if (c.shape !== 'shark') return s; return { tauII: s.tauII + 0.35 * c.severity, … }`; on Stage 3.1 it continues `return { tauII: sharkTauII(c.severity), … }` — keep whichever you have (on 3.1 the shark τ replaces, not adds; that is intended: bronchospasm's angle is R39-6's map).
 
-- [ ] **Step 4: Run the test and the Stage 3 capnogram suites**
+- [x] **Step 4: Run the test and the Stage 3 capnogram suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-capno.test.ts test/engine/resp-capnogram.test.ts test/l2/co2`
 Expected: PASS. Prototype (stand-alone driver + sampler): healthy 107.2°, GOLD 1–4 111.6 / 115.7 / 124.1 / ≈ 131°.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/co2/capno.ts packages/engine-core/test/engine/lung-capno.test.ts
