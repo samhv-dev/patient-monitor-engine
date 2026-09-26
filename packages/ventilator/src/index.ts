@@ -7,3 +7,5 @@ export * from './alarms.ts';
 export * from './frame.ts';
 export * from './lung-input.ts';
 export * from './link/recruit.ts';
+export * from './pathology/catalogue.ts';
+export * from './pathology/mechanics.ts';

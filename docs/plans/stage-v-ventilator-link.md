@@ -1797,7 +1797,7 @@ git push origin stage-v-ventilator-link
 
 R36 rows are grouped into three tasks (9: normal, obstructive, airway; 10: parenchymal, restrictive; 11: vascular, pleural, device, special). Every value follows R37: the default is where the sources agree, the band is what they span, citations are extracted textbook sentences (Miller 10e by PDF page; Co-Existing 8e and Dellinger 5e by chapter/printed page), `ENG` marks judgement with its reason. These are for Ali's review (Task 20 publishes them as §4b), so copy them exactly — do not "improve" numbers here.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/pathology-signature.test.ts`:**
 
@@ -1834,12 +1834,12 @@ describe('catalogue coverage', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts`
 Expected: FAIL — `LUNG_PATHOLOGIES` is not exported.
 
-- [ ] **Step 3: Create the catalogue (schema + first group)**
+- [x] **Step 3: Create the catalogue (schema + first group)**
 
 **Create `packages/ventilator/src/pathology/catalogue.ts`:**
 
@@ -2050,12 +2050,12 @@ export * from './pathology/catalogue.ts';
 export * from './pathology/mechanics.ts';
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 9 passed. Prototype values (plateau / ΔP / auto-PEEP / peak−plateau): normal 13.9/8.9/0.0/9.9; bronchospasm 19.2/9.8/4.4/29.9; anaphylaxis 21.2/10.9/5.3/34.9; COPD 1–2 14.5/8.2/1.4/14.9; COPD 3–4 17.7/7.5/5.2/21.9; CF 17.7/10.9/1.8/21.9; tube obstruction 17.4/8.9/3.5/39.9; tracheal 15.6/8.9/1.7/29.9; smoke 16.2/10.9/0.3/17.9.
 
-- [ ] **Step 5: Spot-check three citations against the books (R37: the page must be opened)**
+- [x] **Step 5: Spot-check three citations against the books (R37: the page must be opened)**
 
 ```bash
 /Users/samhv/Desktop/Claude/CODE/.venv-studyaid/bin/python - <<'PY'
@@ -2069,7 +2069,7 @@ PY
 
 Expected: three `True`. (Co-Existing 8e ch. 2 p. 32 is PDF page 44, p. 26 is PDF page 38.) A `False` means the citation is wrong: fix the `src` text to what the page says and note it in the gate note.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/ventilator
