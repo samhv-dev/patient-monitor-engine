@@ -1084,7 +1084,7 @@ Rocuronium prototype (grid over 324 sets against the label, with the tables' ke0
 0.6 mg/kg: T1 ≤ 1 % at **1.77 min** (label max block 1.8; Miller 10e ch. 24 Table 24.5: 1.5 with isoflurane), T1
 back to 25 % at **30.0 min** (label 31; Miller 37 with isoflurane); 1.2 mg/kg: **0.77 / 62.9 min** (label 1.0 / 67).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/nmb.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/nmb.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1173,9 +1173,9 @@ describe('neuromuscular blockers', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (module missing).
+- [x] **Step 2: Run it** → FAIL (module missing).
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/nmb.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/nmb.ts`**
 
 ```ts
 // Neuromuscular blockers, succinylcholine and sugammadex (Stage 7g; tables §5d/§6.1). Per-kg 2-compartment PK with
@@ -1266,7 +1266,7 @@ export function bindSugammadexSites(nmb: number[], sgx: number[], mwNmb: number 
 }
 ```
 
-- [ ] **Step 4: Run the test.** The four NMB tests and the central-compartment binding test pass as prototyped:
+- [x] **Step 4: Run the test.** The four NMB tests and the central-compartment binding test pass as prototyped:
   rocuronium 1.77/30.0 and 0.77/62.9; vecuronium 3.6/26.8; cisatracurium 2.82/42.4; succinylcholine 0.43/7.2 (het 12
   min, hom 5.2 h). The effect-site binding test is arithmetic (values in its comments). Should a later edit break
   one, fit ONLY `ke0[0]` (and set `ke0[1] = 1.6 × ke0[0]`) and, for succinylcholine, `cl1` within the ranges below
@@ -1297,7 +1297,7 @@ it('fit', () => {
   If no value in range meets a band, keep the closest, mark the row `[ENG, band missed: …]`, and list it under
   "needs a ruling" in the gate note (R45: do not widen the band).
 
-- [ ] **Step 5: Commit and push** — `git add packages/engine-core/src/l2/pk/nmb.ts packages/engine-core/test/l2/pk/nmb.test.ts && git commit -m "feat(pk): NMBA and succinylcholine PK with thumb/diaphragm effect sites; cholinesterase phenotypes; sugammadex 1:1 binding in plasma and at the effect sites" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Commit and push** — `git add packages/engine-core/src/l2/pk/nmb.ts packages/engine-core/test/l2/pk/nmb.test.ts && git commit -m "feat(pk): NMBA and succinylcholine PK with thumb/diaphragm effect sites; cholinesterase phenotypes; sugammadex 1:1 binding in plasma and at the effect sites" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 6: Target-controlled infusion (PROTOTYPED)
 
