@@ -2656,7 +2656,7 @@ Regenerate every strip this stage changes as `<key>-after.png` beside the `<key>
 - Consumes: every earlier task; `CATALOGUE` (`apps/demo/src/stage5-catalogue.ts`, STEMI entries changed in Task 7).
 - Produces: 22 before/after pairs for the gate note (Task 15).
 
-- [ ] **Step 1: Minor grid and the ONLY/SUFFIX switches**
+- [x] **Step 1: Minor grid and the ONLY/SUFFIX switches**
 
 In `apps/demo/src/strip.ts`, replace this block (it occurs exactly once):
 
@@ -2759,27 +2759,27 @@ with:
 console.log(`${items.length} strips written to ${out}`);
 ```
 
-- [ ] **Step 2: Typecheck the demo**
+- [x] **Step 2: Typecheck the demo**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Check the demo presets use 3 mm for STEMI (brief task: "demo default 3 mm for inferior/anterior presets"). Expected: one line containing `mm: 3`. If it shows another value, change it to 3 in `apps/demo/src/stage5.ts`**
+- [x] **Step 3: Check the demo presets use 3 mm for STEMI (brief task: "demo default 3 mm for inferior/anterior presets"). Expected: one line containing `mm: 3`. If it shows another value, change it to 3 in `apps/demo/src/stage5.ts`**
 
 ```bash
 grep -n "STEMI \${t}" apps/demo/src/stage5.ts
 ```
 
-- [ ] **Step 4: Render the after strips (headless system Chrome, as Stage 5; the script starts its own Vite server on port 5205 — if that port is busy, change the two `5205`s in the script for this run only and revert)**
+- [x] **Step 4: Render the after strips (headless system Chrome, as Stage 5; the script starts its own Vite server on port 5205 — if that port is busy, change the two `5205`s in the script for this run only and revert)**
 
 ```bash
 ONLY=vfCoarse,vfFine,vfEpinephrine,cpr,shock,vtPoly,torsades,rbbb,lbbb,pacAberrant,stemiInferior,stemiAnterior,hyperK,hyperKsine,osborn,tcpCapture,tcpNoCapture,pacedVVI,pacedDDD,failureToCapture,individualityA,individualityB SUFFIX=-after node --experimental-strip-types apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.1
 ls docs/gates/stage-5.1/*-after.png | wc -l   # expected: 22
 ```
 
-- [ ] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for Ali's list (Task 14)**
+- [x] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for Ali's list (Task 14)**
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add apps/demo/src/strip.ts apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.1

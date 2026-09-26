@@ -41,8 +41,22 @@ export function renderStrip(canvas: HTMLCanvasElement, spec: StripSpec, label: s
   const g = canvas.getContext('2d') as CanvasRenderingContext2D;
   g.fillStyle = '#000';
   g.fillRect(0, 0, w, 2 * LANE_H);
-  g.strokeStyle = '#1d2a1d';
+  // Stage 5.1: faint 1 mm minor grid (4 px) so 1–3 mm ST/J changes can be read off the strip
+  g.strokeStyle = '#0f170f';
   g.lineWidth = 1;
+  for (let x = 0; x <= w; x += 4) {
+    g.beginPath();
+    g.moveTo(x + 0.5, 0);
+    g.lineTo(x + 0.5, 2 * LANE_H);
+    g.stroke();
+  }
+  for (let y = 0; y <= 2 * LANE_H; y += 4) {
+    g.beginPath();
+    g.moveTo(0, y + 0.5);
+    g.lineTo(w, y + 0.5);
+    g.stroke();
+  }
+  g.strokeStyle = '#1d2a1d';
   for (let x = 0; x <= w; x += 20) {
     g.beginPath();
     g.moveTo(x + 0.5, 0);
