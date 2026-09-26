@@ -1,7 +1,8 @@
 // VF hybrid generator (brief §4.1 "Special generators", §11 C1; research 03 §1.8):
-//   f_dom(t) = 5.5 − 1.5·(1 − e^(−t_noCPR/8 min)) Hz (+ CPR boost 0.75 Hz, + epinephrine 0.5 Hz)
+//   f_dom(t) = 5.5 − 2.25·(1 − e^(−t_noCPR/8 min)) Hz (+ CPR boost 0.75 Hz, + epinephrine 0.5 Hz)
+//              (Stage 5.1, R39 item 3: 5.5 Hz at onset, 5.0 at 2 min, 4.6 at 4, 4.3 at 6, 3.9 at 10 min)
 //   A(t)     = A0·e^(−t_eff/τ_A), τ_A 7 min without CPR, 17.5 min with CPR (t_eff runs slower during CPR)
-//   VF(t)    = A(t)/(2√2) · texture(f_dom(t)) along a slowly rotating VCG direction
+//   VF(t)    = A(t)/(2√2) · two jittered texture channels along two VCG directions (Stage 5.1)
 // A is the peak-to-peak-equivalent amplitude in lead II (2√2·RMS). Recorded CUDB texture is time-warped to
 // f_dom(t); without templates the AR(2) resonator bank is used. Coarse → fine at 0.2 mV; asystole hazard
 // 0.02/min, forced below 0.05 mV. The generator integrates the clocks sample by sample (so CPR/epinephrine
@@ -13,9 +14,10 @@ import { arSample, createTex, decodeTemplates, texSample, type ArState, type Tex
 import { HOOKS, NEVER, type RhythmCtx, type RhythmState } from '../rhythm-state.ts';
 import { RHYTHMS } from '../rhythms.ts';
 import type { EcgGenInputs } from '../ecg-gen.ts';
+import { tableNormal } from '../generator.ts';
 
 export const F0_HZ = 5.5; // brief §4.1
-export const F_DROP_HZ = 1.5;
+export const F_DROP_HZ = 2.25; // Stage 5.1 (R39 item 3, research/09-evidence-rulings.md): 3.9 Hz at 10 min (was 1.5 → 4.4 Hz)
 export const F_TAU_S = 8 * 60;
 export const TAU_A_S = 7 * 60; // τ_A 6–8 min without CPR
 export const TAU_A_CPR_S = 17.5 * 60; // 15–20 min with CPR
@@ -24,16 +26,31 @@ const CPR_BOOST_TAU_S = 30; // [ENG]
 export const EPI_A_GAIN = 0.3; // +20–40% A
 export const EPI_F_HZ = 0.5; // +0.5 Hz
 export const EPI_S = 180; // 2–4 min
-export const A0_MV = 0.8; // 0.6–1.0 mV coarse
-export const FINE_MV = 0.2; // coarse/fine split
+export const A0_MV = 1.2; // coarse VF onset (Stage 5.1, R39 item 3: 1.2 mV; 2 min 0.9, 4 min 0.7, 10 min 0.33; was 0.8)
+export const FINE_MV = 0.2; // coarse/fine split (R39 item 3: fine VF ≤ 0.2 mV, very fine ≤ 0.1)
 export const ASYSTOLE_MV = 0.05;
 export const HAZARD_PER_S = 0.02 / 60;
 const FINE_START_MV = 0.15; // vfFine starts here [ENG]
-/** VF VCG direction (lead II gain ≈ 1) plus a slow rotation of ±15% [ENG]. */
-const VF_DIR = [0.25, 0.85, -0.3] as const;
-const VF_ROT = [0.35, -0.1, 0.5] as const;
-const ROT_PERIOD_S = 20; // slow rotation, one period per 20 s analysis window [ENG]
+/**
+ * Stage 5.1: two independent texture channels along two VCG directions, so the VF vector wanders in 3-D and no
+ * lead is ever the null lead of a single fixed direction (G5-obs: V1 was 24–36 % of II). DIR_A is inferior (II),
+ * DIR_B anterior-leftward (V1–V5). Lead gains per unit (A, B): II 1.00/0.12, V1 0.28/0.58, V5 0.44/0.57 [ENG].
+ */
+export const VF_DIR_A = [0.25, 0.85, -0.3] as const;
+export const VF_DIR_B = [0.45, -0.1, -0.9] as const;
+export const VF_B_WEIGHT = 0.9; // channel B RMS relative to channel A [ENG; planning prototype, 40 seeds: V1/II 0.41–0.92, V5/II 0.50–0.96]
+/** Per-cycle jitter (Ornstein–Uhlenbeck, 500 Hz): log-speed SD and correlation time; log-gain SD and time [ENG]. */
+export const VF_FREQ_JITTER = 0.18;
+export const VF_FREQ_TAU_S = 0.25;
+export const VF_AMP_JITTER = 0.35;
+export const VF_AMP_TAU_S = 0.4;
+/** Hop to another recorded window every 1–2.5 s (was: play each 8 s window to its end) [ENG]. */
+export const VF_HOP_S: readonly [number, number] = [1, 2.5];
 const TWO_SQRT2 = 2 * Math.SQRT2;
+const DT = 1 / 500;
+const dotII = (d: readonly [number, number, number]) => 0.235 * d[0] + 1.066 * d[1] - 0.132 * d[2]; // Dower lead II row
+/** Scales the two channels so lead II carries exactly A/(2√2) RMS (unit-RMS channels, independent). */
+const II_NORM = 1 / Math.hypot(dotII(VF_DIR_A), VF_B_WEIGHT * dotII(VF_DIR_B));
 
 const TEX = VF_TEMPLATES.length > 0 ? decodeTemplates({ scale: VF_SCALE, items: VF_TEMPLATES }) : [];
 
@@ -46,7 +63,11 @@ export interface VfState {
   boost: number;
   rng: Sfc32State;
   tex: TexState | null;
+  /** Stage 5.1: second texture channel (along VF_DIR_B) and the OU jitter states [log-speed, gainA, gainB]. */
+  tex2: TexState | null;
+  ou: [number, number, number];
   ar: ArState;
+  ar2: ArState;
   fine: boolean;
   fineAt: number | null;
   asystoleAt: number | null;
@@ -81,8 +102,11 @@ function onApply(st: RhythmState, _prev: unknown, t0: number, ctx: RhythmCtx): v
   const t = st.id === 'vfFine' ? TAU_A_S * Math.log(a0 / FINE_START_MV) : 0;
   st.vf = {
     start: t0, end: NEVER, a0, tNoCpr: t, tEff: t, boost: 0, rng,
-    tex: TEX.length > 0 ? createTex(TEX.length, [rng[0], rng[1] ^ 0x9e37, rng[2], rng[3]]) : null,
+    tex: TEX.length > 0 ? createTex(TEX.length, [rng[0], rng[1] ^ 0x9e37, rng[2], rng[3]], VF_HOP_S) : null,
+    tex2: TEX.length > 0 ? createTex(TEX.length, [rng[0] ^ 0x5bd1, rng[1], rng[2] ^ 0x3c6e, rng[3]], VF_HOP_S) : null,
+    ou: [0, 0, 0],
     ar: { y1: [0, 0, 0, 0], y2: [0, 0, 0, 0] },
+    ar2: { y1: [0, 0, 0, 0], y2: [0, 0, 0, 0] },
     fine: st.id === 'vfFine', fineAt: null, asystoleAt: null, announcedFine: st.id === 'vfFine',
   };
   st.records.push({ type: 'rhythmSegment', t: t0, rhythm: st.id, seed: rng[0], ...(TEX.length > 0 ? { templateId: 'vf-cudb' } : {}) });
@@ -100,14 +124,24 @@ export function vfSource(g: EcgGenInputs, n: number, s: number, acc: Float64Arra
     v.tNoCpr += dt;
   }
   v.boost += ((cpr ? CPR_BOOST_HZ : 0) - v.boost) * (dt / CPR_BOOST_TAU_S);
-  const f = vfFreqHz(v, g.mods, s);
+  // Stage 5.1 jitter: three OU processes (unit stationary SD) → per-cycle speed and per-channel gain.
+  const ou = v.ou;
+  ou[0] += -ou[0] * (DT / VF_FREQ_TAU_S) + Math.sqrt((2 * DT) / VF_FREQ_TAU_S) * tableNormal(v.rng);
+  ou[1] += -ou[1] * (DT / VF_AMP_TAU_S) + Math.sqrt((2 * DT) / VF_AMP_TAU_S) * tableNormal(v.rng);
+  ou[2] += -ou[2] * (DT / VF_AMP_TAU_S) + Math.sqrt((2 * DT) / VF_AMP_TAU_S) * tableNormal(v.rng);
+  const f = vfFreqHz(v, g.mods, s) * Math.exp(VF_FREQ_JITTER * ou[0] - (VF_FREQ_JITTER * VF_FREQ_JITTER) / 2);
   const a = vfAmplitudeMv(v, g.mods, s);
-  const u = v.tex ? texSample(TEX, v.tex, f) : arSample(v.ar, f, [normal(v.rng), normal(v.rng), normal(v.rng), normal(v.rng)]);
-  const k = (a / TWO_SQRT2) * u;
-  const r = 0.15 * Math.sin((2 * Math.PI * s) / ROT_PERIOD_S + (v.rng[3] % 7));
-  acc[0] = (acc[0] as number) + k * (VF_DIR[0] + r * VF_ROT[0]);
-  acc[1] = (acc[1] as number) + k * (VF_DIR[1] + r * VF_ROT[1]);
-  acc[2] = (acc[2] as number) + k * (VF_DIR[2] + r * VF_ROT[2]);
+  // log-normal gains with E[g²] = 1, so lead II keeps A/(2√2) RMS on average
+  const gA = Math.exp(VF_AMP_JITTER * ou[1] - VF_AMP_JITTER * VF_AMP_JITTER);
+  const gB = Math.exp(VF_AMP_JITTER * ou[2] - VF_AMP_JITTER * VF_AMP_JITTER);
+  const uA = v.tex ? texSample(TEX, v.tex, f) : arSample(v.ar, f, [normal(v.rng), normal(v.rng), normal(v.rng), normal(v.rng)]);
+  const uB = v.tex2 ? texSample(TEX, v.tex2, f) : arSample(v.ar2, f, [normal(v.rng), normal(v.rng), normal(v.rng), normal(v.rng)]);
+  const k = (a / TWO_SQRT2) * II_NORM;
+  const kA = k * gA * uA;
+  const kB = k * VF_B_WEIGHT * gB * uB;
+  acc[0] = (acc[0] as number) + kA * VF_DIR_A[0] + kB * VF_DIR_B[0];
+  acc[1] = (acc[1] as number) + kA * VF_DIR_A[1] + kB * VF_DIR_B[1];
+  acc[2] = (acc[2] as number) + kA * VF_DIR_A[2] + kB * VF_DIR_B[2];
   if (n % 500 === 0) {
     if (!v.fine && a < FINE_MV) {
       v.fine = true;

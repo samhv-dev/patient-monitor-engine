@@ -536,7 +536,7 @@ Planning prototype (20 seeds × 4 windows, 10 s each): autocorrelation max **0.5
 - Consumes: `createTex(n, rng, hopS)` (Task 3), `tableNormal` (`generator.ts`), `spectralPeak`, `acfAtPeriod`, `rmsRatio` (Task 2).
 - Produces: exported constants `VF_DIR_A`, `VF_DIR_B`, `VF_B_WEIGHT`, `VF_FREQ_JITTER`, `VF_FREQ_TAU_S`, `VF_AMP_JITTER`, `VF_AMP_TAU_S`, `VF_HOP_S`; `VfState` gains `tex2`, `ou`, `ar2`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/vf-realism.test.ts` with exactly:
 
@@ -579,12 +579,12 @@ describe('Stage 5.1 VF realism', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vf-realism.test.ts`
 Expected: FAIL: `expected 0.79… to be less than 0.6` (Stage 5 periodicity).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/arrest/vf.ts`, replace this block (it occurs exactly once):
 
@@ -741,7 +741,7 @@ with:
     if (!v.fine && a < FINE_MV) {
 ```
 
-- [ ] **Step 4: Make the epinephrine test a 6-seed mean**
+- [x] **Step 4: Make the epinephrine test a 6-seed mean**
 
 In `packages/engine-core/test/l2/ecg/s5/vf.test.ts`, replace this block (it occurs exactly once):
 
@@ -789,12 +789,12 @@ with:
 
 ```
 
-- [ ] **Step 5: Run the VF tests**
+- [x] **Step 5: Run the VF tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vf-realism.test.ts test/l2/ecg/s5/vf.test.ts test/l2/ecg/s5/library.test.ts test/l2/ecg/s5/artefacts.test.ts`
 Expected: PASS (all). `library.test.ts` still finds 0 QRS in 40 vfCoarse/vfFine runs.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/arrest/vf.ts packages/engine-core/test/l2/ecg/s51/vf-realism.test.ts packages/engine-core/test/l2/ecg/s5/vf.test.ts
