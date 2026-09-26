@@ -696,7 +696,7 @@ git push origin stage-7b-lungs
 
 The file is the 32-condition catalogue (`docs/physiology/stage-7-lung-pathology-catalogue.md`) turned into effects on the lung-module symbols, with provenance (`§n row '…': source`, tag, Q) on every effect, test bands per condition, and the mapping from Stage V's ventilator catalogue. It was extracted for this plan and then tuned in the prototype (decision 4: COPD `crs` knots 1.09/1.24/1.36 and `rawExp` 1.5/1.55/1.7; endobronchial collapse left to the mainstem block; COPD α band 120–130).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/data.test.ts`:
 
@@ -739,21 +739,21 @@ describe('lung-pathology data (R36, catalogue §1–§33)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/data.test.ts`
 Expected: FAIL — cannot resolve `data/lung-pathology.ts`.
 
-- [ ] **Step 3: Create the data file**
+- [x] **Step 3: Create the data file**
 
 Create `packages/engine-core/data/lung-pathology.ts` with the exact content of **Appendix A** at the end of this plan (copy the code block verbatim, including its header comment).
 
-- [ ] **Step 4: Run the test and the typecheck**
+- [x] **Step 4: Run the test and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/data.test.ts` and `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (4); typecheck clean (the file has no imports; `data` is in `include` since Task 1).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/data/lung-pathology.ts packages/engine-core/test/l2/lung/data.test.ts
