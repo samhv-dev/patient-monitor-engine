@@ -4981,13 +4981,13 @@ git push
 
 Measured while planning: the e2e test (two synthetic clips) passes in 1.6 s on system Chrome; the canvas shows > 50 lit pixels after 0.6 s; no page errors.
 
-- [ ] **Step 1: Add the page to `apps/demo/vite.config.ts`: after the `'stage6b-acls': page('stage6b-acls'),` line add**
+- [x] **Step 1: Add the page to `apps/demo/vite.config.ts`: after the `'stage6b-acls': page('stage6b-acls'),` line add**
 
 ```ts
         'validation-review': page('validation-review'), // Stage 8a
 ```
 
-- [ ] **Step 2: Write the failing e2e test `apps/demo/e2e/validation-review.e2e.ts`**
+- [x] **Step 2: Write the failing e2e test `apps/demo/e2e/validation-review.e2e.ts`**
 
 ```ts
 // Stage 8a: the blind review page loads a bundle, draws a clip, records two answers and downloads them.
@@ -5046,11 +5046,11 @@ test('rate two clips and download the answers', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 3: Run it. Expected: FAIL (page missing, 404)**
+- [x] **Step 3: Run it. Expected: FAIL (page missing, 404)**
 
 Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/validation-review.e2e.ts`
 
-- [ ] **Step 4: Write `apps/demo/validation-review.html`**
+- [x] **Step 4: Write `apps/demo/validation-review.html`**
 
 ```html
 <!doctype html>
@@ -5089,7 +5089,7 @@ Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/v
 </html>
 ```
 
-- [ ] **Step 5: Write `apps/demo/src/validation/review.ts`**
+- [x] **Step 5: Write `apps/demo/src/validation/review.ts`**
 
 ```ts
 // Blind realism review page (brief §9 steps 2–3, 6). Loads a bundle (packages/validation review:build), shuffles it
@@ -5221,7 +5221,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (ev) => {
 });
 ```
 
-- [ ] **Step 6: Write `docs/validation/review/README.md`**
+- [x] **Step 6: Write `docs/validation/review/README.md`**
 
 ```markdown
 # Blind realism review (brief §9)
@@ -5232,14 +5232,14 @@ $<HTMLInputElement>('file').addEventListener('change', async (ev) => {
 4. Pass (brief §9): identification ≤ 60 % per channel, mean synthetic realism ≥ 4.0, real − synthetic ≤ 0.5. A second clinician repeats step 2 with the same bundle; each rater's file is scored separately.
 ```
 
-- [ ] **Step 7: Typecheck and run the e2e test. Expected: typecheck clean; 1 passed**
+- [x] **Step 7: Typecheck and run the e2e test. Expected: typecheck clean; 1 passed**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/validation-review.e2e.ts
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/demo/validation-review.html apps/demo/src/validation/review.ts apps/demo/e2e/validation-review.e2e.ts apps/demo/vite.config.ts docs/validation/review/README.md
