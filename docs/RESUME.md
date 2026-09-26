@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 21:15 (fourth cap cut-off at ~17:45 resumed at 21:10; 7a 17 steps left, 7b at Task 13, FU-1 running; 7c/8a plans finishing; 7d/7e/7g plans ready).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 21:20 (7c plan landed, 26 tasks; 7a/7b/FU-1 executing; 8a plan finishing; 7d/7e/7g plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -15,8 +15,8 @@
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1 | merged to main | DONE (Waves A + B) | — |
 | 7a circulation | `stage-7a-circulation` (plan: `docs/plans/stage-7a-circulation.md`, worktree `../scratch/wt-stage-7a`) | executing (started 2026-09-26 ~13:00) | resume from first unticked task |
 | 7b lungs | `stage-7b-lungs` (plan: `docs/plans/stage-7b-lungs.md`, worktree `../scratch/wt-stage-7b`) | executing | resume from first unticked task |
-| 7c blood/acid–base | plan nearly complete (`docs/plans/stage-7c-blood.md`) | R34 port from Pulse | execute after 7a merges |
-| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49) | needs 7a ext.rSysF/hrF | execute after 7a (ideally 7c) merges |
+| 7c blood/acid–base | plan ready (`docs/plans/stage-7c-blood.md`, 26 tasks, verified reproducible) | R34 port from Pulse; gate: tests and Pulse oracle never concurrently | execute after 7a merges |
+| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48) | patches 7a and 7c | execute after 7a AND 7c merge |
 | 7f NMB/depth | plan on disk (`docs/plans/stage-7f-neuro-depth.md`, completeness unverified) | consumes 7g effect sites | verify plan, execute after 7g |
 | 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks) | conforms to 7f contract | execute after 7a merges |
