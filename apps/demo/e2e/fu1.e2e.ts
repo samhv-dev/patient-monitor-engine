@@ -40,3 +40,16 @@ test('R-51-1: TCP pace marks drawn as overlays on a pacer skin', async ({ page }
   await expect.poll(async () => (await events(page, 'marker', 'paceSpike')).filter((m) => m.data?.tcp === true).length, { timeout: 30_000 }).toBeGreaterThan(10);
   await page.locator('#monitor').screenshot({ path: resolve(out, 'tcp-marks-zoll-like.png') });
 });
+
+test('item 5: a host page registers a Device tab in the instructor panel (registerTab)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${base}/stage6b-acls.html?session=FUONE2&seed=42`);
+  await page.keyboard.press('i');
+  await expect(page.locator('.pme-tabs [role=tab]')).toHaveText(['Controls', 'Log', 'Bookmarks', 'Scenario', 'Device']);
+  await page.locator('[data-tab=device]').click();
+  await page.locator('[data-pane=device] [data-dev=charge]').click();
+  await expect(page.locator('.pme-dev-status')).toContainText('defib ready 200 J', { timeout: 30_000 });
+  const b = (await page.locator('.pme-drawer').boundingBox())!;
+  await page.screenshot({ path: resolve(out, 'panel-device-tab.png'), clip: { x: b.x, y: b.y, width: b.width, height: 330 } });
+});
