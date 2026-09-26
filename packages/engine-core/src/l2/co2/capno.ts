@@ -54,7 +54,9 @@ function sharkTauII(sev: number): number {
 }
 
 function shapeOf(c: Cycle) {
-  const s = SHAPES[c.shape];
+  const s0 = SHAPES[c.shape];
+  // Stage 7b: the lung module's heterogeneity terms (0 for a homogeneous lung; plan decision 9)
+  const s = { tauII: s0.tauII + (c.lungTauII ?? 0), tau0: s0.tau0, riseIII: s0.riseIII + (c.lungRiseIII ?? 0) };
   if (c.shape !== 'shark') return s;
   return { tauII: sharkTauII(c.severity), tau0: s.tau0, riseIII: s.riseIII + SHARK_RISE_III * c.severity };
 }

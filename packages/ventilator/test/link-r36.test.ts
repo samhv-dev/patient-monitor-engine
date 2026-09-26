@@ -53,12 +53,15 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
 
   // NEEDS A RULING NR-3: the PE stand-in is now Stage 7a's own condition (φ 0.6): CO −8 %, EtCO2 unchanged — the EtCO2 fall
   // of PE is alveolar dead space (Stage 7b); the old MANUAL-target stand-in raised CO on 7a's trackers. it.fails flags it.
-  it.fails('massive PE (stand-in): EtCO2 falls ≥ 4 mmHg with ventilation unchanged; airway pressures unchanged', async () => {
+  // Stage 7b: closed — the scenario sends 7a's PE condition (the stand-in) AND the lung's `pe` condition (plan decision 14),
+  // whose alveolar dead space lowers EtCO2 at unchanged ventilation.
+  it('massive PE (stand-in): EtCO2 falls ≥ 4 mmHg with ventilation unchanged; airway pressures unchanged', async () => {
     const s = createLinkedSim({ profile: 'normal' });
     await run(s, 120);
     const a = snap(s, 90, 120);
     standIn(s, 'pe-massive');
     s.send({ type: 'setTarget', variable: 'shunt', value: 0.12 });
+    s.send({ type: 'applyEvent', event: { kind: 'lungCondition', id: 'pe', severity: 1 } }); // Stage 7b
     await run(s, 240);
     const b = snap(s, 210, 240);
     log('pe before', a); log('pe after', b);
