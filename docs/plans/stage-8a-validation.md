@@ -4228,7 +4228,7 @@ git push
 - Consumes: `MorphRow` (Task 11), `TargetResult`/`Unsupported`/`Grade` (Tasks 11–12), `WaveCompare`/`DeterminismResult` (Task 15), `OracleRow` (Task 16), `SourceId` (Task 3).
 - Produces: `interface DocSummary`, `interface Report` (`schema: 'pme-validation-report/1'`), `interface QueueItem`; `calibrationQueue(r): QueueItem[]` (every yellow/red row, reds first); `gatingFailures(r): string[]` (reds + non-determinism); `renderMarkdown(r): string`; `renderQueue(q): string[]`.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/report/write.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/report/write.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -4269,11 +4269,11 @@ describe('report writer', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/report/write.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/report/types.ts`**
+- [x] **Step 3: Write `packages/validation/src/report/types.ts`**
 
 ```ts
 // The report of one `pnpm validate` run (docs/validation/report.json); report.md is rendered from it.
@@ -4306,7 +4306,7 @@ export interface Report {
 export interface QueueItem { suite: string; id: string; measured: string; expected: string; grade: Exclude<Grade, 'green'>; source: string }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/report/write.ts`**
+- [x] **Step 4: Write `packages/validation/src/report/write.ts`**
 
 ```ts
 // report.md + report.json + calibration-queue.md (brief §9; R40 grades; R44: the calibration queue lists every row
@@ -4376,11 +4376,11 @@ export function renderQueue(q: QueueItem[]): string[] {
 }
 ```
 
-- [ ] **Step 5: Run the test. Expected: PASS (3 tests)**
+- [x] **Step 5: Run the test. Expected: PASS (3 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/report/write.test.ts`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/validation/src/report packages/validation/test/report
