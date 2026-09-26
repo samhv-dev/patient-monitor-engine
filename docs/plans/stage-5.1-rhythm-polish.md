@@ -2373,7 +2373,7 @@ Planning prototype (30 seeds): axis offsets −14.2° to +14.3°; amplitudes wit
 - Consumes: `QRS_T` (Task 6), `frontalAxisDeg`, `rotateZSel`, `stretchQrs`, `QRS_WAVES` (`ops.ts`).
 - Produces: `solveAxisRad(k: readonly number[], targetDeg: number): number`; `FP_AMP`, `FP_WIDTH`, `FP_AXIS_DEG`, `interface Fingerprint { amp: {p,qrs,t}; width: {p,qrs,t}; axisDeg }`, `fingerprint(seed)`; `individualityStage`, `pIndividualityStage` keep their names and places in `MORPH_STAGES`/`P_STAGES`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/fingerprint.test.ts` with exactly:
 
@@ -2444,12 +2444,12 @@ describe('Stage 5.1 per-patient fingerprint (Squiggler-style)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/fingerprint.test.ts`
 Expected: FAIL in the bounds case (a Stage 5 amplitude or axis beyond ±10 % / ±15°).
 
-- [ ] **Step 3: Factor out the axis solver**
+- [x] **Step 3: Factor out the axis solver**
 
 In `packages/engine-core/src/l2/ecg/morphology/conduction.ts`, replace this block (it occurs exactly once):
 
@@ -2502,7 +2502,7 @@ with:
 /** Default precordial transition of the Stage 1 template (V3–V4) and the horizontal rotation per lead [ENG]. */
 ```
 
-- [ ] **Step 4: Replace the fingerprint**
+- [x] **Step 4: Replace the fingerprint**
 
 Create (or replace) `packages/engine-core/src/l2/ecg/morphology/individuality.ts` with exactly:
 
@@ -2582,7 +2582,7 @@ export const pIndividualityStage: PStage = (k, mods: Modifiers) => {
 };
 ```
 
-- [ ] **Step 5: Update the Stage 5 individuality case**
+- [x] **Step 5: Update the Stage 5 individuality case**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts`, replace this block (it occurs exactly once):
 
@@ -2629,12 +2629,12 @@ with:
   });
 ```
 
-- [ ] **Step 6: Run the morphology tests**
+- [x] **Step 6: Run the morphology tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/fingerprint.test.ts test/l2/ecg/s5`
 Expected: PASS.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/conduction.ts packages/engine-core/src/l2/ecg/morphology/individuality.ts packages/engine-core/test/l2/ecg/s51/fingerprint.test.ts packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts

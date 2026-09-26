@@ -62,9 +62,14 @@ export const bbbStage: MorphStage = (k, info, mods) => {
 export const axisStage: MorphStage = (k, info, mods) => {
   const target = mods.axisDeg;
   if (target === null || !info.supra) return k;
+  return rotateZSel(k, solveAxisRad(k, target), QRS_T);
+};
+
+/** The frontal rotation (rad) of QRS and T that makes the measured frontal axis of k equal `target` degrees. */
+export function solveAxisRad(k: readonly number[], target: number): number {
   const wrap = (a: number) => ((((a + 180) % 360) + 360) % 360) - 180;
   const err = (deg: number) => {
-    const c = k.slice();
+    const c = [...k];
     rotateZSel(c, (deg * Math.PI) / 180, QRS_T);
     return Math.abs(wrap(target - frontalAxisDeg(c)));
   };
@@ -85,8 +90,8 @@ export const axisStage: MorphStage = (k, info, mods) => {
     if (err(m1) < err(m2)) hi = m2;
     else lo = m1;
   }
-  return rotateZSel(k, (((lo + hi) / 2) * Math.PI) / 180, QRS_T);
-};
+  return (((lo + hi) / 2) * Math.PI) / 180;
+}
 
 /** Default precordial transition of the Stage 1 template (V3–V4) and the horizontal rotation per lead [ENG]. */
 export const DEFAULT_TRANSITION = 3.5;
