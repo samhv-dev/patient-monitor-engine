@@ -972,7 +972,7 @@ export function ttpeMin(p: PkParams, site = 0): number {
 **Interfaces (Produces):** `mintoRemifentanil(p)`, `shaferFentanyl()`, `geptsSufentanil()`, `ke0ForTtpe(p, ttpeMin)`,
 `FENTANYL_KE0 = 0.117`, `SUFENTANIL_KE0 = 0.176`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/opioids.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/opioids.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1011,9 +1011,9 @@ describe('opioid models', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (exports missing).
+- [x] **Step 2: Run it** → FAIL (exports missing).
 
-- [ ] **Step 3: Append to `packages/engine-core/src/l2/pk/models.ts`**
+- [x] **Step 3: Append to `packages/engine-core/src/l2/pk/models.ts`**
 
 ```ts
 /** Minto 1997 remifentanil (Anesthesiology 86:10), LBM (James) and age covariates; ke0 0.595 − 0.007(age − 40). */
@@ -1063,10 +1063,10 @@ export function geptsSufentanil(): PkParams {
 }
 ```
 
-- [ ] **Step 4: Run the test** → PASS (prototype: Minto 40 y TTPE 1.43, 80 y 2.26; fentanyl 3.60; sufentanil 5.6;
+- [x] **Step 4: Run the test** → PASS (prototype: Minto 40 y TTPE 1.43, 80 y 2.26; fentanyl 3.60; sufentanil 5.6;
   ke0ForTtpe(fentanyl, 3.6) = 0.1172).
 
-- [ ] **Step 5: Commit and push** — `git commit -am "feat(pk): Minto remifentanil, Shafer fentanyl, Gepts sufentanil; ke0 by the TTPE method" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Commit and push** — `git commit -am "feat(pk): Minto remifentanil, Shafer fentanyl, Gepts sufentanil; ke0 by the TTPE method" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 5: Neuromuscular blockers and sugammadex binding (PROTOTYPED)
 

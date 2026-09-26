@@ -63,3 +63,49 @@ export function ttpeMin(p: PkParams, site = 0): number {
   }
   return t;
 }
+
+/** Minto 1997 remifentanil (Anesthesiology 86:10), LBM (James) and age covariates; ke0 0.595 − 0.007(age − 40). */
+export function mintoRemifentanil(p: PkPatient): PkParams {
+  const lbm = lbmJames(p);
+  const a = p.ageY - 40;
+  const l = lbm - 55;
+  return fromClearances(
+    5.1 - 0.0201 * a + 0.072 * l,
+    9.82 - 0.0811 * a + 0.108 * l,
+    5.42,
+    2.6 - 0.0162 * a + 0.0191 * l,
+    2.05 - 0.0301 * a,
+    0.076 - 0.00113 * a,
+    [0.595 - 0.007 * a],
+  );
+}
+
+/**
+ * ke0 fitted by the time-to-peak-effect method (Minto 2003; Shafer & Varvel 1991): the ke0 for which ttpeMin(p)
+ * equals the published TTPE with THIS PK (a ke0 belongs to its PK model). Geometric bisection, 40 iterations.
+ */
+export function ke0ForTtpe(p: PkParams, ttpe: number): number {
+  let lo = 0.01;
+  let hi = 5;
+  for (let i = 0; i < 40; i++) {
+    const m = Math.sqrt(lo * hi);
+    if (ttpeMin({ ...p, ke0: [m] }) > ttpe) lo = m;
+    else hi = m;
+  }
+  return Math.sqrt(lo * hi);
+}
+
+/** Fentanyl ke0 = ke0ForTtpe(Shafer PK, 3.6 min) — decision 2 / D2 (tables 0.147 was fitted with another PK). */
+export const FENTANYL_KE0 = 0.117;
+/** Sufentanil ke0 = ke0ForTtpe(Gepts PK, 5.6 min, Shafer & Varvel 1991). */
+export const SUFENTANIL_KE0 = 0.176;
+
+/** Shafer 1990 fentanyl (Anesthesiology 73:1091) microconstants [VERIFY against the paper's Table 3]. */
+export function shaferFentanyl(): PkParams {
+  return { v1: 6.09, k10: 0.0827, k12: 0.471, k21: 0.102, k13: 0.225, k31: 0.006, ke0: [FENTANYL_KE0] };
+}
+
+/** Gepts 1995 sufentanil (Anesthesiology 83:1194) microconstants [VERIFY]; CSHT 3 h ≈ 26 min (Hughes 1992: 20–30). */
+export function geptsSufentanil(): PkParams {
+  return { v1: 14.3, k10: 0.0645, k12: 0.1086, k21: 0.0245, k13: 0.0229, k31: 0.0013, ke0: [SUFENTANIL_KE0] };
+}
