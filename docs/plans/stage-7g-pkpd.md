@@ -2497,7 +2497,7 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
 - Create: `packages/engine-core/src/l2/pk/data/rows-other.ts`
 - Modify: `packages/engine-core/src/l2/pk/data/drugs.ts`, `packages/engine-core/test/l2/pk/library.test.ts`
 
-- [ ] **Step 1: Extend the test** — add `import { LAST_THRESHOLDS } from '../../../src/l2/pk/data/rows-other.ts';` to the
+- [x] **Step 1: Extend the test** — add `import { LAST_THRESHOLDS } from '../../../src/l2/pk/data/rows-other.ts';` to the
   imports at the top of `library.test.ts`, then append:
 
 ```ts
@@ -2520,9 +2520,9 @@ describe('library III', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-other.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-other.ts`**
 
 ```ts
 // Drug library III (Stage 7g Task 14). DATA only.
@@ -2594,10 +2594,10 @@ export const OTHER_ROWS: DrugRow[] = [
 ];
 ```
 
-- [ ] **Step 4: Register** — in `data/drugs.ts` add `import { OTHER_ROWS } from './rows-other.ts';` and make
+- [x] **Step 4: Register** — in `data/drugs.ts` add `import { OTHER_ROWS } from './rows-other.ts';` and make
   `const ALL: DrugRow[] = [...ANAESTHETIC_ROWS, ...CARDIOVASCULAR_ROWS, ...OTHER_ROWS];`. Also add, once, a duplicate-id
   guard after `ALL`: `if (new Set(ALL.map((r) => r.id)).size !== ALL.length) throw new Error('duplicate drug id in the library');`.
-- [ ] **Step 5: Run the test and typecheck** → PASS (14 + 23 + 21 = **58 rows**). Commit and push — `git add -A && git commit -m "feat(pk): drug library III — 7c-shared chemistry, LAST thresholds, lipid, antagonists, placeholders (58 rows)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test and typecheck** → PASS (14 + 23 + 21 = **58 rows**). Commit and push — `git add -A && git commit -m "feat(pk): drug library III — 7c-shared chemistry, LAST thresholds, lipid, antagonists, placeholders (58 rows)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 15: The PK/PD pipeline (state, commands, 10 Hz step, clearance factors, the bus)
 

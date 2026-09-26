@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DRUGS, DRUG_IDS } from '../../../src/l2/pk/data/drugs.ts';
+import { LAST_THRESHOLDS } from '../../../src/l2/pk/data/rows-other.ts';
 
 describe('drug library', () => {
   it('every row is complete: source, tag, Iranian-availability question, doses, onset, a PK spec', () => {
@@ -32,5 +33,23 @@ describe('library II', () => {
     expect(DRUGS.norepinephrine!.pd.every((e) => e.catecholamine)).toBe(true);
     expect(DRUGS.vasopressin!.pd.some((e) => e.catecholamine)).toBe(false);
     expect(DRUGS.milrinone!.pd.some((e) => e.catecholamine || e.beta)).toBe(false);
+  });
+});
+
+describe('library III', () => {
+  it('Task 14 rows exist; the library has ≥ 55 rows', () => {
+    for (const id of ['calciumChloride', 'calciumGluconate', 'sodiumBicarbonate', 'magnesium', 'insulinDextrose', 'salbutamol', 'insulin', 'dextrose', 'dantrolene', 'furosemide', 'mannitol', 'hypertonicSaline', 'tranexamicAcid', 'naloxone', 'flumazenil', 'ondansetron', 'dexamethasone', 'lidocaine', 'bupivacaine', 'ropivacaine', 'lipidEmulsion'])
+      expect(DRUGS[id], id).toBeDefined();
+    expect(DRUG_IDS.length).toBeGreaterThanOrEqual(55);
+  });
+  it('7c-owned chemistry rows are shared or blood-only (decision 10)', () => {
+    for (const id of ['calciumChloride', 'calciumGluconate', 'sodiumBicarbonate', 'insulinDextrose'])
+      expect(DRUGS[id]!.pk.kind).toBe('blood');
+    expect(DRUGS.magnesium!.shared).toBe('blood');
+    expect(DRUGS.succinylcholine!.shared).toBe('blood');
+  });
+  it('LAST thresholds: bupivacaine is the most cardiotoxic (lowest CV threshold)', () => {
+    expect(LAST_THRESHOLDS.bupivacaine!.cv).toBeLessThan(LAST_THRESHOLDS.ropivacaine!.cv);
+    expect(LAST_THRESHOLDS.ropivacaine!.cv).toBeLessThan(LAST_THRESHOLDS.lidocaine!.cv);
   });
 });
