@@ -5,6 +5,7 @@ import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './t
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
+import type { DrugsEvent, PkClinicalEvent } from './types-pk.ts'; // Stage 7g
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -84,6 +85,7 @@ export type Command = CommandBase &
     | HemoCommandBody // Stage 2 (types-hemo.ts)
     | { type: 'applyEvent'; event: DeviceClinicalEvent } // Stage 4b (types-device.ts)
     | { type: 'applyEvent'; event: CircClinicalEvent } // Stage 7a
+    | { type: 'applyEvent'; event: PkClinicalEvent } // Stage 7g
     | RespCommandBody // Stage 3 (types-resp.ts)
   );
 
@@ -126,7 +128,8 @@ export type EngineEvent =
   | HemoEvent // Stage 2 (types-hemo.ts)
   | DeviceEvent // Stage 4b (types-device.ts)
   | RespEvent // Stage 3 (types-resp.ts)
-  | CircEvent; // Stage 7a (types-circ.ts)
+  | CircEvent // Stage 7a (types-circ.ts)
+  | DrugsEvent; // Stage 7g (types-pk.ts)
 
 export type EngineEventType = EngineEvent['type'];
 

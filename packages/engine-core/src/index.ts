@@ -17,3 +17,5 @@ export * from './types-resp.ts'; // Stage 3
 export * from './types-vent-link.ts'; // Stage V
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 export type * from './types-circ.ts'; // Stage 7a
+export type * from './types-pk.ts'; // Stage 7g
+export { DRUG_BUS_NEUTRAL } from './types-pk.ts'; // Stage 7g
