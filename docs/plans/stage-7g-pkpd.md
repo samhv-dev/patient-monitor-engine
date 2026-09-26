@@ -3798,7 +3798,7 @@ rocuronium 1.2 → T1 10 % in 0.6–2.0 min (label 1.2; prototype 1.80) and TOFR
 TOFR 0.9 not before 10 min (recurarisation teaching; prototype 129.5 min). The NMB/TOFR arithmetic here is 7f's
 formula (tables §5d: T1 Hill on the thumb Ce, EC50 823, γ 4.8; TOFR ≈ T1^2.5) used ONLY to test 7g's PK; 7f owns it.
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/pk-acceptance-pd.test.ts`:
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/pk-acceptance-pd.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3981,12 +3981,12 @@ describe('7g acceptance — sugammadex reversal (tables §5d, §7 25; plasma + e
 });
 ```
 
-- [ ] **Step 2: Run it** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-acceptance-pd.test.ts`.
+- [x] **Step 2: Run it** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-acceptance-pd.test.ts`.
   Record every printed number in the gate note. Misses: vasopressors — Task 13's rule (ke0 and EC50 within ×0.5–×2,
   recorded `[ENG, fitted …]`); reversal — tune ONLY `SUGAMMADEX.ke0` (keep `[k, 1.6k]`) within 0.08–0.12 and record it
   in D7; the MAC(age) and naloxone checks have no free parameter — a miss is a wiring bug. If a band cannot be met
   inside those ranges, stop and report (R45: never widen a band).
-- [ ] **Step 3: Commit and push** — `git add -A && git commit -m "test(pk): acceptance — vasopressor dose–response, β/acidosis context, tachyphylaxis, MAC age, naloxone, sugammadex reversal" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 3: Commit and push** — `git add -A && git commit -m "test(pk): acceptance — vasopressor dose–response, β/acidosis context, tachyphylaxis, MAC age, naloxone, sugammadex reversal" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 23: Acceptance — scenarios (adenosine on SVT, LAST + lipid), determinism, CPU, 24 h
 
