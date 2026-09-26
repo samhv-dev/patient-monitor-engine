@@ -3922,7 +3922,7 @@ git push origin stage-7a-circulation
 **Files:**
 - Create: `packages/engine-core/test/engine/circ-sanity-2.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/circ-sanity-2.test.ts`:
 
@@ -3993,12 +3993,12 @@ describe('sanity scenarios II', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-2.test.ts`
 Expected: PASS. The AS + CAD trajectory was NOT prototyped through the engine; if propofol 1.5 mg/kg does not produce `supplyDemand < 1` in the AS + CAD profile, first check the resting ratio (should equal the profile's CFR 1.4); the tables' worked example needs DBP ≈ 45 and LVEDP ≈ 25 at 2 min. Adjust nothing else before reporting: record the measured DBP/LVEDP/ratio trajectory in the gate note as the R23 evidence, and if the test fails, keep it `it.fails` with a comment naming the measured numbers (the orchestrator decides — R23 is an acceptance criterion).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/circ-sanity-2.test.ts

@@ -9,7 +9,7 @@ import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugId } from '.
 import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
-import { createCoronary, type CoronaryState } from './coronary.ts';
+import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
 
 export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 /**
@@ -125,7 +125,7 @@ export function circOnAtrial(m: CircModelState, tP: number): void {
 }
 
 export function circGiveDrug(m: CircModelState, drug: DrugId, doseMg: number): void {
-  m.boluses.push({ drug, t: m.t, scale: bolusScale(drug, doseMg, m.weightKg, m.boluses) });
+  m.boluses.push({ drug, t: m.t, scale: bolusScale(drug, doseMg, m.weightKg, m.boluses, m.prof.ageY) });
 }
 
 /** Bleed (negative) or infuse (positive) `ml` over `overS` seconds from now. */
@@ -187,6 +187,9 @@ function control(m: CircModelState, env: CircEnv): void {
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
   m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF;
+  // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
+  // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
+  p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF;
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF) + b.rrMs / 1000;
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
