@@ -89,9 +89,10 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   const pc = s[0] as number;
   const ql = s[1] as number;
   const qVad = d.qVad(pLv, pc);
-  const qSrc = d.qAortaSrc(t);
-  // aortic valve against the Windkessel's characteristic impedance: P_ao = PC + Zc·(Q_av + Q_src − QL) + ct
-  const pX = pc + WK_ZC * (qSrc - ql) + ct;
+  // aortic valve against the Windkessel's characteristic impedance: P_ao = PC + Zc·(Q_av − QL) + ct. A balloon (IABP)
+  // displaces volume in the descending aorta, i.e. into the compliance, not through the root's Zc (which turned a
+  // 60 ms deflation into a −35 mmHg spike at the valve) [ENG]
+  const pX = pc - WK_ZC * ql + ct;
   const qAv = valveFlow({ r: p.av.r + WK_ZC, k: p.av.k, eroa: p.av.eroa }, pLv - pX);
   const pAo = pX + WK_ZC * qAv;
   const qPv = valveFlow({ r: p.pv.r + p.zPa, k: p.pv.k, eroa: p.pv.eroa }, pRv - pPa);
@@ -118,7 +119,7 @@ function deriv(t: number, s: readonly number[], ds: number[], p: CircParams, d: 
   evaluate(s, t, p, d, ev);
   const qSrc = d.qAortaSrc(t);
   ds[0] = (ev.qAv + ev.qVad + qSrc - ev.qSys) / (compliance(s[0] as number) * p.cArt);
-  ds[1] = (WK_ZC * (ev.qAv + qSrc - (s[1] as number))) / WK_L;
+  ds[1] = (WK_ZC * (ev.qAv - (s[1] as number))) / WK_L;
   ds[2] = s[3] as number;
   ds[3] = WR * WR * (ev.pAo - (s[2] as number)) - 2 * RADIAL_ZETA * WR * (s[3] as number);
   ds[4] = ev.qSys - ev.qVr + d.qIn;

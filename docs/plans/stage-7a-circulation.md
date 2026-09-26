@@ -3365,7 +3365,7 @@ git push origin stage-7a-circulation
   - `createIabp(): IabpState`, `iabpOnBeat(d, beatT, rr, avCloseS)` (schedules inflation at the beat's aortic closure (dicrotic notch, "trigger from pressure") + offset, deflation at the next R − 40 ms + offset, only on every `ratio`-th beat), `iabpFlow(d, t): number` (dV/dt of the balloon: inflation over 80 ms, deflation over 60 ms, half-sine profiles).
   - `IABP_INFLATE_S = 0.08`, `IABP_DEFLATE_S = 0.06`, `IABP_VOLUME_ML = 40` (tables §8.1).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/iabp.test.ts`:
 
@@ -3422,12 +3422,12 @@ describe('IABP (tables §8.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/iabp.test.ts`
 Expected: FAIL — cannot resolve `devices.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/devices.ts`:
 
@@ -3516,12 +3516,12 @@ In `pipeline.ts`: add `iabp: IabpState;` to `HemoState` (`iabp: createIabp(),` i
 
 (`DeviceAction` import from `../../types.ts`.) Add `iabp: hs.iabp.on ? { ratio: hs.iabp.ratio, augmentation: … } : undefined` to the `circ` event, with augmentation = max aortic pressure in the last diastole minus the unassisted systolic (track both in `onCircBeat`: store `hs.iabpAug`, a number, updated from `cb` when `hs.iabp.on`: `hs.iabpAug = Math.max(0, cb.aoSys - (hs.lastUnassistedSys ?? cb.aoSys))` — keep it simple: report `cb.aoSys` of the last assisted beat as `augmentation`).
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/iabp.test.ts`
 Expected: PASS (not prototyped: if the diastolic peak does not exceed the unassisted systolic, raise `IABP_VOLUME_ML` within the tables' 25–50 mL range and record it).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/devices.ts packages/engine-core/test/l2/circ/iabp.test.ts packages/engine-core/src/l2/hemo/pipeline.ts

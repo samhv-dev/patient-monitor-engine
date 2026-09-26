@@ -11,6 +11,7 @@ import { prSource } from '../../l3/pulse/detector.ts';
 import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
+import type { DeviceAction } from '../../types.ts'; // Stage 7a
 import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, StateVar } from '../../types.ts';
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
@@ -22,6 +23,7 @@ import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
 import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
 import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
+import { createIabp, iabpFlow, iabpOnBeat, iabpStop, type IabpState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
@@ -88,6 +90,8 @@ export interface HemoState {
   beatT: number; // Stage 7a: onset time of the last CircBeat turned into a site beat
   stPatch: { ischaemicDepressionMv: number } | null; // Stage 7a: ST modifier patch for the engine to apply (R23)
   stApplied: number; // Stage 7a: the ischaemic ST depression last handed to the ECG, mV
+  iabp: IabpState; // Stage 7a: intra-aortic balloon pump (R28, tables §8.1)
+  iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
   sys: TrackerState;
   pul: TrackerState;
   prevRef: boolean; // the previous beat was a reference beat
@@ -134,7 +138,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
   return {
     m: 0,
-    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0,
+    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0,
     sys: createTracker(Math.min(4, Math.max(0.3, (map - cvp) / flow))),
     pul: createTracker(Math.min(0.6, Math.max(0.02, (pam - pawp) / flow))),
     prevRef: true, pv: cvp, pla: pawp,
@@ -223,7 +227,7 @@ function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return {
     pIt: ctx.pIt ?? (() => P_PL0),
     cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
-    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: () => 0, qAortaSrc: zeroFn, modeled: ctx.l1.mode === 'modeled' };
+    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: () => 0, qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }
 
 /** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
@@ -245,7 +249,12 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
     const svRef = Math.max(1, others.length >= 4 ? others.reduce((a, b) => a + b.sv, 0) / others.length : cb.sv);
     addPlethPulse(hs.pleth, cb.t + cb.avOpen + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t) * cb.sv) / svRef, lvet, hs.circ.p.rSys);
   }
-  if (ctx.l1.mode !== 'modeled') trackCircBeat(hs, ctx, beat); // Task 14
+  if (hs.iabp.on) {
+    hs.iabpAug = cb.aoSys;
+    iabpOnBeat(hs.iabp, cb.t + cb.dur, cb.dur, cb.avClose > 0 ? cb.avClose : 0.3); // pressure trigger: the last notch
+  }
+  // Task 14 MANUAL tracker; frozen while the balloon reshapes the waveform (its targets describe the native heart)
+  if (ctx.l1.mode !== 'modeled' && !hs.iabp.on) trackCircBeat(hs, ctx, beat);
   nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
 }
 
@@ -356,6 +365,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     pmsf: ((c.s[4] as number) - c.p.v0Sv) / c.p.cSv, pvr: (c.p.pvrL * c.p.pvrR) / (c.p.pvrL + c.p.pvrR), svr: c.p.rSys,
     cpp: lb ? lb.aoDia - lb.lvedp : 0, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch,
   };
+  if (hs.iabp.on) ce.iabp = { ratio: hs.iabp.ratio, augmentation: hs.iabpAug };
   hs.out.push(ce);
   if (hs.nibp.phase === 'idle') {
     const next = nibpNextIn(hs.nibp, t);
@@ -529,6 +539,14 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
     }
     case 'device': {
       const a = cmd.action;
+      if (a.device === 'iabp') {
+        const x = a as Extract<DeviceAction, { device: 'iabp' }>;
+        if (!['start', 'stop', 'set'].includes(x.action)) return 'iabp action must be start, stop or set';
+        if (x.ratio !== undefined && ![1, 2, 3].includes(x.ratio)) return 'ratio must be 1, 2 or 3';
+        if (x.volumeMl !== undefined && !(x.volumeMl >= 20 && x.volumeMl <= 50)) return 'volumeMl must be 20–50';
+        for (const v of [x.inflateOffsetMs, x.deflateOffsetMs]) if (v !== undefined && !(v >= -200 && v <= 200)) return 'timing offsets must be −200…200 ms';
+        return undefined;
+      }
       if (a.device !== 'nibp') return null;
       if (!['start', 'stat', 'stop', 'auto'].includes(a.action)) return 'nibp action must be start, stat, stop or auto';
       if (a.action !== 'stop' && hs.nibp.sensor !== 'on') return 'cuff not connected';
@@ -656,6 +674,17 @@ export function applyHemoCommand(
     }
     case 'device': {
       const a = cmd.action;
+      if (a.device === 'iabp') {
+        const x = a as Extract<DeviceAction, { device: 'iabp' }>;
+        const d = hs.iabp;
+        if (x.action === 'start') d.on = true;
+        if (x.action === 'stop') iabpStop(d, t);
+        if (x.ratio !== undefined) d.ratio = x.ratio;
+        if (x.volumeMl !== undefined) d.volumeMl = x.volumeMl;
+        if (x.inflateOffsetMs !== undefined) d.inflateOffsetMs = x.inflateOffsetMs;
+        if (x.deflateOffsetMs !== undefined) d.deflateOffsetMs = x.deflateOffsetMs;
+        return true;
+      }
       if (a.device !== 'nibp') return false;
       const outs: NibpOut[] = [];
       nibpCommand(hs.nibp, a.action, t, a.intervalMin, outs);
