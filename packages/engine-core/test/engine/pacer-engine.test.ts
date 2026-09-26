@@ -31,7 +31,7 @@ function abpPulses(e: ReturnType<typeof devRig>['e'], t0: number, t1: number): n
 describe('transcutaneous pacer', () => {
   it('below threshold: spikes, no capture, intrinsic rhythm unchanged; at/above: paced wide QRS after every spike and ABP pulses at the pacing rate', async () => {
     const { e, ev } = devRig('zoll-like', { patient: { rhythm: { id: 'avb3Wide' }, sensors: { abp: 'connected' } } });
-    e.dispatch(cmd({ type: 'setTarget', variable: 'paceThresholdMa', value: 70 })); // brief §6.5 default 70 mA [ENG]
+    e.dispatch(cmd({ type: 'setTarget', variable: 'paceThresholdMa', value: 70 })); // R39-4: the default is 70 mA; set explicitly anyway
     e.dispatch(pacer('fixed', { ratePpm: 70, mA: 40 }));
     e.advanceTo(30);
     const below = markers(ev, 'paceSpike').filter((m) => m.t > 5 && m.t < 30);
@@ -49,6 +49,20 @@ describe('transcutaneous pacer', () => {
     for (const s of spikes) expect(paced.some((b) => b.t > s.t && b.t - s.t < 0.15)).toBe(true); // capture after 100 % of spikes
     expect(paced.every((b) => b.template === 'pacedV' && b.qrsMs >= 140 && b.mech.perfused)).toBe(true);
     expect(Math.abs(abpPulses(e, 85, 95) - (70 * 9.4) / 60)).toBeLessThanOrEqual(1); // Stage 2 ejects every captured beat
+  }, { timeout: 300_000 });
+
+  it('R39-4 default adult threshold is 70 mA: no capture at 65 mA, capture at 70 mA (no setTarget)', () => {
+    const { e, ev } = devRig('zoll-like', { patient: { rhythm: { id: 'avb3Wide' } } });
+    e.dispatch(pacer('fixed', { ratePpm: 70, mA: 65 }));
+    e.advanceTo(15);
+    const at65 = markers(ev, 'paceSpike').filter((m) => m.t > 3 && m.t < 15);
+    expect(at65.length).toBeGreaterThan(10);
+    expect(at65.every((m) => m.data?.captured === false)).toBe(true);
+    e.dispatch(pacer('fixed', { ratePpm: 70, mA: 70 }));
+    e.advanceTo(30);
+    const at70 = markers(ev, 'paceSpike').filter((m) => m.t > 17 && m.t < 30);
+    expect(at70.length).toBeGreaterThan(10);
+    expect(at70.every((m) => m.data?.captured === true)).toBe(true);
   }, { timeout: 300_000 });
 
   it('demand mode is inhibited by intrinsic beats; failure to sense paces asynchronously through them', async () => {

@@ -39,7 +39,7 @@ export const STATE_SCHEMA: Readonly<Record<StateVar, VarSpec>> = {
   k: { def: 4.2, min: 2, max: 9, stage: 5, manual: 'target' },
   qtc: { def: 400, min: 300, max: 650, stage: 5, manual: 'target' },
   volumeStatus: { def: 1, min: 0, max: 1, stage: 2, manual: 'target' }, // 1 = normovolaemic, 0 = severe hypovolaemia
-  paceThresholdMa: { def: 60, min: 10, max: 200, stage: 4, manual: 'target' },
+  paceThresholdMa: { def: 70, min: 10, max: 200, stage: 4, manual: 'target' }, // R39-4: adult TCP threshold 70 mA (patients 40–120)
 };
 
 export const STATE_VARS = Object.keys(STATE_SCHEMA) as StateVar[];

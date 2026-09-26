@@ -20,7 +20,10 @@
   },
   "layout": { "badge": "LAYOUT UNVERIFIED" },
   "alarms": { "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
+  "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
+    "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
     "colors.ECG": { "tag": "documented", "source": "research/05 §2.1 (ECG 'normally green')" },
     "colors.HR": { "tag": "documented", "source": "research/05 §2.1" },
     "colors.ST": { "tag": "documented", "source": "research/05 §2.1 (ST view follows the ECG colour)" },

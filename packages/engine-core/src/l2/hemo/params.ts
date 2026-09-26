@@ -71,6 +71,8 @@ export function pmsf(volumeStatus: number): number {
 }
 
 // CPR pump (brief §4.2; research 03 §2.8 "CPR pump")
+/** Learner default `cpr.quality` when the event gives none: real manual CPR falls 10–20 % short (R39-2, research 09 §2). */
+export const CPR_QUALITY_DEFAULT = 0.8;
 export const CPR_SV_FRAC = 0.2; // SV_cpr 15–30% of normal SV, × quality
 export const CPR_THORACIC_MMHG = 40; // thoracic-pump term 30–80 mmHg, × quality, on ABP and CVP
 export const CPR_DUTY = 0.5; // compression phase = half the cycle [ENG]

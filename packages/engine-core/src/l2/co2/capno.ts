@@ -13,7 +13,7 @@ export const PHASE_I_S = { mech: 0.1, spont: 0.15 } as const; // dead-space wash
 export const SHAPES = {
   mech: { tauII: 0.09, tau0: 0.03, riseIII: 2 },
   spont: { tauII: 0.12, tau0: 0.12, riseIII: 1 }, // rounded (research 03 §4.3)
-  shark: { tauII: 0.15, tau0: 0.03, riseIII: 2 }, // + 0.35 s τ_II and + 10 mmHg phase III per unit severity
+  shark: { tauII: 0.09, tau0: 0.03, riseIII: 2 }, // τ_II from SHARK_TAU_II and phase III + SHARK_RISE_III per unit severity
   bifid: { tauII: 0.09, tau0: 0.03, riseIII: 2 }, // endobronchial: second, slow half (τ 0.6 s) [ENG]
 } as const;
 export const APNOEA_DECAY_S = 1.0; // after the last expiration the sampled gas returns to baseline [ENG]
@@ -32,10 +32,31 @@ export interface CapnoCtx {
   cpr: { active: boolean; rate: number; quality: number; anchor: number };
 }
 
+/**
+ * Bronchospasm severity → phase II τ (s), piecewise linear (R39-6, research 09 §6). Knots fitted so the α angle
+ * measured on the 25 mmHg/s axis scale (brief §4.4; test/helpers/resp.ts capnoAngles) is 105° / 125° / 135° / 145° at
+ * severity 0 / 0.5 / 0.8 / 1.0; severity 1.25 is the near-fatal extreme (157°), reachable only on purpose.
+ */
+export const SHARK_TAU_II: ReadonlyArray<readonly [number, number]> = [[0, 0.09], [0.5, 0.26], [0.8, 0.315], [1, 0.4], [1.25, 0.6]];
+
+/** Phase III rise added per unit bronchospasm severity (mmHg) [ENG, fitted with SHARK_TAU_II; was 10 before R39-6]. */
+export const SHARK_RISE_III = 6;
+
+function sharkTauII(sev: number): number {
+  const k = SHARK_TAU_II;
+  if (sev <= k[0]![0]) return k[0]![1];
+  for (let i = 1; i < k.length; i++) {
+    const [x1, y1] = k[i]!;
+    const [x0, y0] = k[i - 1]!;
+    if (sev <= x1) return y0 + ((sev - x0) / (x1 - x0)) * (y1 - y0);
+  }
+  return k[k.length - 1]![1];
+}
+
 function shapeOf(c: Cycle) {
   const s = SHAPES[c.shape];
   if (c.shape !== 'shark') return s;
-  return { tauII: s.tauII + 0.35 * c.severity, tau0: s.tau0, riseIII: s.riseIII + 10 * c.severity };
+  return { tauII: sharkTauII(c.severity), tau0: s.tau0, riseIII: s.riseIII + SHARK_RISE_III * c.severity };
 }
 
 /** Plateau-end level of a cycle (what its expiration ends at). */
@@ -108,6 +129,8 @@ export interface SamplerState {
   mode: 'sidestream' | 'mainstream';
   neonatal: boolean;
   y: number; // LPF output
+  /** The active skin's sidestream module (R39-5): delay (s) and adult 10–90 % rise (s); absent → SAMPLING.sidestream. */
+  side?: { delayS: number; riseS: number };
 }
 
 export function createSampler(mode: 'sidestream' | 'mainstream' = 'sidestream', neonatal = false): SamplerState {
@@ -117,9 +140,11 @@ export function createSampler(mode: 'sidestream' | 'mainstream' = 'sidestream', 
 /** Displayed CO2 at 62.5 Hz sample time t: LPF1{airway(t − delay)}, τ = rise(10–90 %)/2.2 (brief §4.4). */
 export function sampleCo2(s: SamplerState, t: number, airway: (t: number) => number): number {
   const p = SAMPLING[s.mode];
-  const tau = (s.neonatal ? p.riseNeoS : p.riseS) / 2.2;
+  const side = s.mode === 'sidestream' ? s.side : undefined; // mainstream has no transport delay on any skin
+  const delayS = side ? side.delayS : p.delayS;
+  const tau = (s.neonatal ? p.riseNeoS : side ? side.riseS : p.riseS) / 2.2;
   const h = 1 / (CO2_RATE * CO2_SUBSTEPS);
   const a = 1 - Math.exp(-h / tau);
-  for (let j = CO2_SUBSTEPS - 1; j >= 0; j--) s.y += (airway(t - j * h - p.delayS) - s.y) * a;
+  for (let j = CO2_SUBSTEPS - 1; j >= 0; j--) s.y += (airway(t - j * h - delayS) - s.y) * a;
   return s.y;
 }

@@ -179,7 +179,7 @@ export const skinSchema: JsonSchema = {
       meanOnlyLabels: arr(str),
       scales: record(triple),
     }),
-    co2: obj({ unit: en(['mmHg', 'kPa', '%']), scale: num(1, 100), scaleUnit: en(['mmHg', '%']) }),
+    co2: obj({ unit: en(['mmHg', 'kPa', '%']), scale: num(1, 100), scaleUnit: en(['mmHg', '%']), sidestreamDelayS: num(0, 10), riseTimeMs: num(20, 1000) }),
     alarms,
     limits: obj({ adult: limitBand, paed: limitBand, neo: limitBand }),
     arrhythmia: obj({

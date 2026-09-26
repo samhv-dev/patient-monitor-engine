@@ -131,7 +131,7 @@ test('device evidence: pacing with capture, charge-ready with sync markers, tren
   await page.waitForTimeout(10_000);
   const spikes = await markers('paceSpike');
   expect(spikes.length).toBeGreaterThan(5);
-  expect(spikes.slice(2).every((m) => m.data?.captured === true)).toBe(true); // 90 mA > the 60 mA default threshold (R30)
+  expect(spikes.slice(2).every((m) => m.data?.captured === true)).toBe(true); // 90 mA > the 70 mA default threshold (R39-4)
   await expect(page.locator('.pme-hdr')).toContainText('PACER FIXED 70 ppm 90 mA');
   await page.locator('#monitor').screenshot({ path: resolve(out, 'zoll-like--pacing-capture.png') });
 
