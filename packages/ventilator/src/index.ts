@@ -2,3 +2,4 @@
 export * from './types.ts';
 export * from './mechanics.ts';
 export * from './presets.ts';
+export * from './vent.ts';

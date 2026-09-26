@@ -591,7 +591,7 @@ git push origin stage-v-ventilator-link
 - Consumes: Task 2's types, mechanics, presets.
 - Produces: `DT = 0.005`, `SUBSTEPS = 4`, `SEED0 = 12345`; `createVent(cfg?: Partial<VentConfig>): VentState`; `resetPhysics(vs)`; `setMode(vs, m)`; `loadPreset(vs, id)`; `SCENARIOS: Record<string, {name, apply(vs)}>`; `runScenario(vs, id)`; `startInspiration(vs, mandatory)`; `stepVent(vs)` (one 5 ms step); `advanceVent(vs, t, onStep?)` (steps while `(n+1)·DT ≤ t`, calling `onStep` after each); `toggleHold(vs, 'insp'|'exp')`; `manualBreath(vs)`; `setCircuit(vs, 'connected'|'disconnected')`; `silenceAlarms(vs)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/vent-basics.test.ts`:**
 
@@ -639,12 +639,12 @@ describe('ventilator engine', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/vent-basics.test.ts`
 Expected: FAIL — `createVent` is not exported.
 
-- [ ] **Step 3: Implement the engine**
+- [x] **Step 3: Implement the engine**
 
 **Create `packages/ventilator/src/vent.ts`** — the v1.9 functions in their original order and arithmetic. The VC cycling line is v1.9's (`p.vtDelivered >= c.vt`); Task 5 corrects it. Lines marked `// Stage V` (open circuit, apnoea clock) never run in the reference scenarios.
 
@@ -1025,12 +1025,12 @@ Append to `packages/ventilator/src/index.ts`:
 export * from './vent.ts';
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 9 passed (reference 1, mechanics 4, basics 4); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
