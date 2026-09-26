@@ -1,7 +1,6 @@
 # Stage 3.1 gate: evidence fixes (R39)
 
-*Branch `stage-3.1-evidence-fixes`, base `origin/main` 69731e8 (Stages 0–4b merged). No written plan: six items from R39
-(research/00 R39, research/09), each done test-first as one commit. Numbers below were measured on this branch.*
+*Branch `stage-3.1-evidence-fixes`, base `origin/main` 69731e8 (Stages 0–4b merged); `origin/main` f26403f (Stage 5.1, PR #9) was merged in before item 7. There is no written plan. Items 1–6 are the six R39 rulings (research/00 R39, research/09); item 7 is an orchestrator ruling. Each was done test-first as its own commit. The numbers below were measured on this branch.*
 
 ## Items
 
@@ -13,6 +12,7 @@
 | 4 | R39-5 | Skin schema gains `co2.sidestreamDelayS` (0–10 s) and `co2.riseTimeMs` (20–1000 ms), with a provenance entry per skin. `DeviceProfile.co2Sidestream` carries them. The engine copies them into the capnograph sampler at start, on restore and on every device command (so a runtime skin switch applies). With no skin data the sampler falls back to `SAMPLING`. Mainstream and the neonatal rise are unchanged. | Step response on the sampled waveform (delay = step → 10 %, rise = 10 → 90 %): philips-like **2.30 s / 0.24 s**; saadat-like, zoll-like, lifepak-like **2.60 / 0.20**; mindray-like, ge-like **3.50 / 0.28**. In the engine the mindray-like capnogram lags the philips-like one by **1.2 s**. Before: every skin 2.30 / 0.24. | per research 09 §5 |
 | 5 | R39-6 | Shark fin: τ_II now comes from a piecewise-linear severity map `SHARK_TAU_II`. Phase III rises 6 mmHg per unit severity (was 10). Bronchospasm severity now validates to **1.25**, the near-fatal extreme; other airway states stay 0–1. | α (mean of about 7 breaths): sev 0 **109.4 → 105.3°**; 0.5 **134.4 → 124.9°**; 0.8 **150.2 → 135.1°**; 1.0 **157.9 → 144.7°**; 1.25 (new) **156.7°**. | 100–110 / 120–130 / 128–142 / 140–150 / 150–160 |
 | 6 | R39-7 | Test only (engine level, default 70 kg adult, `thermal` general at t = 60 s). The `thermal` event's `warming` flag is the forced-air case. | Unwarmed: **−0.97 °C** at 30 min, **−1.28 °C** at 60 min. Warmed: **−0.68 °C** at 60 min. No constants changed. | −0.7 to −1.1 / −1.0 to −1.6 / −0.6 to −1.2 |
+| 7 | orchestrator (R-S3-3) | (b) Stage 2's NIBP test now asserts the **median of 12 seeds** for the first-cycle duration within 25–40 s (was a 6-seed mean within 25–35 s, which depended on the seeds). (a) After PR #9 merged, `docs/gates/stage-5.1/r-51-2-engine-breath.patch` was applied cleanly: the ECG's RSA, wander and QRS modulation now read the Stage 3 breath driver in the engine. (c) The engine correlation test is tightened from r > 0.5 to **r ≥ 0.8**. | NIBP 12-seed median **35.2 s** before the wiring and **35.7 s** after (mean 35.5 s both ways; range 29.9–40.5 s). RSA vs breath phase r = **0.832**. The Stage 5.1 breath-clock unit tests still pass. | 25–40 s; r ≥ 0.8 |
 
 **Angle convention (item 5), fixed in the test.** The test uses `capnoAngles` in `packages/engine-core/test/helpers/resp.ts`, on the brief §4.4 axis scale of **25 mmHg/s**:
 - Phase II slope: taken between the 25 % and 75 % crossings of the plateau-end value.
@@ -38,10 +38,12 @@ This is the scale on which the capno.ts comment gets 105° for normal (research 
 
 ## Gate
 
+These are the final results, after the main merge and item 7:
 - `pnpm -r typecheck`: clean.
-- `pnpm -r test`: engine-core **460** (main 444, +16), skins **166** (+7), controller 185, renderer 61, audio 58, validation 16. Total **946**, all passing.
+- `pnpm -r test`: engine-core **489** (444 on the original base, 16 added by items 1–6; the rest comes from Stage 5.1 and item 7's engine test), skins **166** (+7), controller 185, renderer 61, audio 58, validation 16. Total **975**, all passing.
 - `pnpm build`: all packages built. `pnpm check-notices`: OK.
-- `PW_SYSTEM_CHROME=1 pnpm test:e2e`: 19/19 in 3 of 5 full runs on this branch.
-  - The first two full runs each failed one test, `stage6b.e2e.ts` "ACLS VF … → ROSC" (`stateId` never reached `rosc` within 5 s after the shock). It passes alone (2/2 with `--repeat-each 2`), and the next three full runs were 19/19.
+- `PW_SYSTEM_CHROME=1 pnpm test:e2e`: 19/19 on the final run. Before the main merge the branch was 19/19 in 3 of 5 full runs:
+  - The first two full runs each failed one test, `stage6b.e2e.ts` "ACLS VF … → ROSC" (`stateId` never reached `rosc` within 5 s after the shock). It passes alone (2/2 with `--repeat-each 2`).
   - For comparison, `origin/main` (built) gave 19/19 in 2 of 2 full runs.
   - The test clicks Shock after a fixed 8 s wall-clock wait for a 7 s sim-time charge, so under load it can shock before READY. This looks like a timing flake of the test, not a result of these items (none of them touches the defibrillator or the scenario runner). Suggested follow-up: poll for READY before shocking.
+- Running e2e regenerates other stages' gate screenshots and JSON (stage-4a/4b/6a/6b). Those rewrites were reverted and are not part of this branch.
