@@ -1759,7 +1759,7 @@ git push
   `recruit(pressureCmH2O, durationS)`, `lab('abg' | 'vbg')`, `ventilation(source, rr, vtMl, peep, fio2)`,
   `rhythm(id)`, `setMode(mode)` → `Body`; `describe(b: Body): string` (one change-log line).
 
-- [ ] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/actions.test.ts`:
+- [x] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/actions.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1817,12 +1817,12 @@ describe('rail command builders', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/actions.test.ts`
 Expected: FAIL — `./actions.ts` does not exist.
 
-- [ ] **Step 3: Implement** — `apps/demo/src/physiology-console/actions.ts`:
+- [x] **Step 3: Implement** — `apps/demo/src/physiology-console/actions.ts`:
 
 ```ts
 // Stage 7x: the actions rail's command builders — the same Command bodies the instructor panel and the scenario
@@ -1935,7 +1935,7 @@ export function describe(b: Body): string {
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/actions.test.ts`
 Expected: PASS, 4 tests. (The engine accepts phenylephrine, fluid, bleed, tamponade, ventilator and spontaneous
@@ -1944,7 +1944,7 @@ ventilation, AF and MANUAL on 7a's main; an unknown drug is rejected with a reas
 accepted or rejected depends on whether that stage has merged; their SHAPES are asserted against the published types
 of `origin/stage-7b-lungs`, `origin/stage-7g-pkpd` and the 7c plan.)
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/physiology-console/actions.ts apps/demo/src/physiology-console/actions.test.ts
