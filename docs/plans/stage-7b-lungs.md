@@ -3468,13 +3468,15 @@ git push origin stage-7b-lungs
 
 ### Task 23: Acceptance — ARDS PEEP recruitment time course and absorption atelectasis at FiO2 1.0
 
+> **Executor note:** Measured: high recruiter shunt 0.274 → 0.220 (−20 %) at PEEP 15, RM + PEEP 15 0.160 (−42 %), back at PEEP 5 0.203 at 60 s → 0.263 at 5 min; low recruiter −7 %; absorption FiO2 1.0 ZEEP shunt +0.026 and atelectasis 0.055, FiO2 0.4 none. Deviation: the absorption baseline is read at 12 s (right after the 10 s manoeuvre) instead of 59 s — by 59 s re-collapse at FiO2 1.0 had begun (Δ 0.0199 vs > 0.02); an atelectasis 4–8 % / < 1 % assertion was added (the test title's claim).
+
 **Files:**
 - Create: `packages/engine-core/test/engine/lung-recruitment.test.ts`
 
 **Interfaces:**
 - Consumes: `lungCondition` with `recruitFrac`, `recruit` (Task 16), `stateSeries(ev, 'shunt')`, `stateSeries(ev, 'spo2')` (Stage 3 helper; the `state` event carries the coupled truths).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/lung-recruitment.test.ts`:
 
@@ -3535,12 +3537,12 @@ describe('recruitment and absorption (catalogue §6, tables §4.1, Q34, Q73)', {
 
 The `ventilation` event with only `peep` keeps the other settings (Stage 3's `applyRespCommand` merges `v.rr ?? d.vent.rr` etc.).
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-recruitment.test.ts`
 Expected: PASS. Prototype (stand-alone): shunt 0.280 → 0.221 (−21 %) at PEEP 15 with SpO2 96.4 → 97.9 at 60 s; RM + PEEP 15 0.163 (−42 %); back to PEEP 5: 0.207 at 60 s, 0.269 at 5 min; low recruiter −7 %; absorption at FiO2 1.0 ZEEP 0.02 → 0.05, FiO2 0.4 none.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/lung-recruitment.test.ts
