@@ -4659,7 +4659,7 @@ Branch `stage-v-ventilator-link`, based on `main` `<sha>`, built from `docs/plan
 - Nothing under Stage 4b's or 5.1's paths changed: `git diff origin/main --stat -- packages/engine-core/src/l2/ecg packages/engine-core/src/l3/alarms packages/renderer packages/skins` is empty.
 ```
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add docs/gates/stage-V.md
@@ -4673,7 +4673,7 @@ git push origin stage-v-ventilator-link
 
 **Files:** none new (fix-ups only if a check fails; each fix is its own commit with its own test).
 
-- [ ] **Step 1: Clean install and every check**
+- [x] **Step 1: Clean install and every check**
 
 ```bash
 rm -rf node_modules packages/*/node_modules apps/*/node_modules && npx -y pnpm@9.15.9 install --frozen-lockfile
@@ -4683,7 +4683,7 @@ PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
 
 Expected: all exit 0; `@pme/ventilator` 87 passed; engine-core 372 passed; every existing e2e still passes plus `vent-link.e2e.ts` (2).
 
-- [ ] **Step 2: Partition check**
+- [x] **Step 2: Partition check**
 
 ```bash
 git diff origin/main --stat -- packages/engine-core    # only types-vent-link.ts, l2/resp/driver.ts, l2/resp/pipeline.ts, index.ts, test/l2/resp/vent-frame-ext.test.ts
@@ -4692,7 +4692,7 @@ git diff origin/main --stat -- packages/renderer packages/skins packages/audio p
 
 If `origin/main` moved (Stage 4b/5.1 merged), `git merge origin/main` (keep both sides; NOTICES keeps every row), rerun Step 1, push.
 
-- [ ] **Step 3: Tick the plan, push, open the PR**
+- [x] **Step 3: Tick the plan, push, open the PR**
 
 Tick every checkbox of `docs/plans/stage-v-ventilator-link.md` in the branch, commit (`docs: stage V plan fully ticked`), push, then:
 
