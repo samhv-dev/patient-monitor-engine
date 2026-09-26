@@ -3070,7 +3070,7 @@ git push
 
 Measured while planning: the Stage 6b built-in `or-induction-hypotension` runs 420 s in 1.5 s (states preInduction → induction 30 s → hypotension 90 s → profound 161 s), 7 targets all green. Throughput ≈ 26 ms per simulated second with the 100 ms poll.
 
-- [ ] **Step 1: Write the document `packages/validation/suites/sanity/or-induction-hypotension.json`**
+- [x] **Step 1: Write the document `packages/validation/suites/sanity/or-induction-hypotension.json`**
 
 ```json
 {
@@ -3101,7 +3101,7 @@ Measured while planning: the Stage 6b built-in `or-induction-hypotension` runs 4
 }
 ```
 
-- [ ] **Step 2: Write the failing test `packages/validation/test/segments/run.test.ts`**
+- [x] **Step 2: Write the failing test `packages/validation/test/segments/run.test.ts`**
 
 ```ts
 import { readFileSync } from 'node:fs';
@@ -3121,11 +3121,11 @@ describe('segment runner on the Stage 6b induction scenario', { timeout: 120_000
 });
 ```
 
-- [ ] **Step 3: Run it. Expected: FAIL (module `run.ts` missing)**
+- [x] **Step 3: Run it. Expected: FAIL (module `run.ts` missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/run.test.ts`
 
-- [ ] **Step 4: Write `packages/validation/src/segments/series.ts`**
+- [x] **Step 4: Write `packages/validation/src/segments/series.ts`**
 
 ```ts
 // Series recorded during a validation run, and the per-segment reductions of brief §9 / R40.
@@ -3194,7 +3194,7 @@ export class SeriesStore {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/segments/run.ts`**
+- [x] **Step 5: Write `packages/validation/src/segments/run.ts`**
 
 ```ts
 // Headless runner: one pme-validation/1 document → the scenario driven through Stage 6b's ScenarioDriver on a
@@ -3302,11 +3302,11 @@ export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
 }
 ```
 
-- [ ] **Step 6: Run the test. Expected: PASS (1 test, ≈ 2 s)**
+- [x] **Step 6: Run the test. Expected: PASS (1 test, ≈ 2 s)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/run.test.ts`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/validation/src/segments/series.ts packages/validation/src/segments/run.ts packages/validation/suites/sanity/or-induction-hypotension.json packages/validation/test/segments/run.test.ts

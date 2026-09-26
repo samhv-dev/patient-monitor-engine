@@ -1,0 +1,26 @@
+{
+  "schema": "pme-validation/1",
+  "id": "or-induction-hypotension",
+  "title": "Post-induction hypotension (Stage 6b built-in) — HR story",
+  "scenario": "or-induction-hypotension",
+  "seed": 5,
+  "durationS": 420,
+  "actions": [ { "t": 30, "trigger": "induce" } ],
+  "segments": [
+    { "id": "awake", "fromS": 10, "toS": 30, "targets": [
+      { "id": "hr-baseline", "series": "state:hr", "reduce": "mean", "type": "EqualTo", "value": 78, "source": "scenario patient.baseline.hr 78" },
+      { "id": "displayed-hr", "series": "numeric:hr", "reduce": "mean", "type": "Range", "min": 75, "max": 81, "source": "brief §6.1: displayed HR within 3 bpm of truth at steady state [ENG]" }
+    ] },
+    { "id": "induced", "fromS": 30, "toS": 90, "targets": [
+      { "id": "enters-induction", "series": "scenario", "stateId": "induction", "reduce": "firstT", "type": "LessThan", "value": 1, "source": "manual Induce acts on the same poll (6b driver)" }
+    ] },
+    { "id": "hypotension", "fromS": 90, "toS": 200, "targets": [
+      { "id": "enters-hypotension", "series": "scenario", "stateId": "hypotension", "reduce": "firstT", "type": "Range", "min": 0, "max": 2, "source": "scenario: afterS 60 after induction (t = 90 s)" },
+      { "id": "hr-rises", "series": "state:hr", "reduce": "last", "type": "TrendsTo", "value": 122, "tolPct": 10, "source": "scenario: hr → 122 over 90 s, sigmoid" },
+      { "id": "hr-above-awake", "series": "state:hr", "reduce": "max", "type": "GreaterThan", "value": { "segment": "awake", "factor": 1.3 }, "source": "reflex tachycardia ≥ 30 % above awake [ENG]" }
+    ] },
+    { "id": "profound", "fromS": 150, "toS": 420, "targets": [
+      { "id": "enters-profound", "series": "scenario", "stateId": "profound", "reduce": "firstT", "type": "LessThan", "value": 120, "source": "scenario: HR ≥ 115 for 20 s → profound" }
+    ] }
+  ]
+}
