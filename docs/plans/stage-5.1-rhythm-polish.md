@@ -367,7 +367,7 @@ G5-obs: coarse VF "too periodic"; the executor saw the first ~3 s regular. One c
 - Consumes: nothing new.
 - Produces: `createTex(n, rng, hopS: readonly [number, number] | null = null): TexState`; `TexState` gains `left: number`, `hop: [number, number] | null` (JSON-safe).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/engine-core/test/l2/ecg/s5/texture.test.ts`, replace this block (it occurs exactly once):
 
@@ -406,12 +406,12 @@ describe('recorded-texture player: hopping (Stage 5.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/texture.test.ts`
 Expected: FAIL in "hopping (Stage 5.1)": `expected 3 to be greater than or equal to 10` (the third argument is ignored, so segments change only at 8 s ends).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/texture.ts`, replace this block (it occurs exactly once):
 
@@ -500,12 +500,12 @@ with:
   }
 ```
 
-- [ ] **Step 4: Run it to see it pass, with the rest of the ECG tests**
+- [x] **Step 4: Run it to see it pass, with the rest of the ECG tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 Expected: PASS (every file).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/texture.ts packages/engine-core/test/l2/ecg/s5/texture.test.ts
