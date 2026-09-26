@@ -44,6 +44,12 @@ export const VF_FREQ_JITTER = 0.18;
 export const VF_FREQ_TAU_S = 0.25;
 export const VF_AMP_JITTER = 0.35;
 export const VF_AMP_TAU_S = 0.4;
+/**
+ * The per-cycle speed jitter raises the measured spectral peak by ≈ 4.7 % over f_dom(t) (16 seeds × 0/2/4/6/10 min:
+ * +0.32/+0.12/+0.38/+0.08/+0.20 Hz against the same runs without jitter), so the jittered speed is scaled back to keep
+ * the measured dominant frequency on R39 item 3's 5.5 → 3.9 Hz course [ENG, Stage 5.1 executor calibration].
+ */
+export const VF_FREQ_JITTER_BIAS = 1 / 1.047;
 /** Hop to another recorded window every 1–2.5 s (was: play each 8 s window to its end) [ENG]. */
 export const VF_HOP_S: readonly [number, number] = [1, 2.5];
 const TWO_SQRT2 = 2 * Math.SQRT2;
@@ -129,7 +135,7 @@ export function vfSource(g: EcgGenInputs, n: number, s: number, acc: Float64Arra
   ou[0] += -ou[0] * (DT / VF_FREQ_TAU_S) + Math.sqrt((2 * DT) / VF_FREQ_TAU_S) * tableNormal(v.rng);
   ou[1] += -ou[1] * (DT / VF_AMP_TAU_S) + Math.sqrt((2 * DT) / VF_AMP_TAU_S) * tableNormal(v.rng);
   ou[2] += -ou[2] * (DT / VF_AMP_TAU_S) + Math.sqrt((2 * DT) / VF_AMP_TAU_S) * tableNormal(v.rng);
-  const f = vfFreqHz(v, g.mods, s) * Math.exp(VF_FREQ_JITTER * ou[0] - (VF_FREQ_JITTER * VF_FREQ_JITTER) / 2);
+  const f = vfFreqHz(v, g.mods, s) * VF_FREQ_JITTER_BIAS * Math.exp(VF_FREQ_JITTER * ou[0] - (VF_FREQ_JITTER * VF_FREQ_JITTER) / 2);
   const a = vfAmplitudeMv(v, g.mods, s);
   // log-normal gains with E[g²] = 1, so lead II keeps A/(2√2) RMS on average
   const gA = Math.exp(VF_AMP_JITTER * ou[1] - VF_AMP_JITTER * VF_AMP_JITTER);
