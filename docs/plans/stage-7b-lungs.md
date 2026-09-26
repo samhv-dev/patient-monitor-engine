@@ -1533,7 +1533,7 @@ git push origin stage-7b-lungs
 - Consumes: `content`, `odc`, `po2ForContent` (`src/l2/gas/o2.ts`), `BLOOD_VENOUS_FRACTION`, `MASS_FLOW_DEFICIT_ML_MIN`, `PB_MMHG`, `PH2O_MMHG`, `RQ` (`src/l2/gas/params.ts`), `VQ_LOW` (Task 2).
 - Produces: `O2LungState { fa: number[]; cv; sa; pao2 }`, `O2LungInputs` (fields `va, vent, perf, vdAlv, qLow, qShunt, fio2, massFlowFio2, blocked, vo2, paco2, pA, tempC, frcSide, bloodL, dl, coRatio`), `createO2Lung(fa, cv)`, `unitPao2(st, x)`, `stepO2Lung(st, x, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/mix-o2.test.ts`:
 
@@ -1574,12 +1574,12 @@ describe('O2 mixing point, two stores (R43; tables §4.1, §4.5)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mix-o2.test.ts`
 Expected: FAIL — cannot resolve `mix-o2.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/mix-o2.ts`:
 
@@ -1712,12 +1712,12 @@ export function stepO2Lung(st: O2LungState, x: O2LungInputs, dtS: number): void 
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mix-o2.test.ts`
 Expected: PASS (3).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/mix-o2.ts packages/engine-core/test/l2/lung/mix-o2.test.ts
