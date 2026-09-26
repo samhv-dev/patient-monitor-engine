@@ -882,7 +882,7 @@ git push origin stage-7a-circulation
 - Consumes: Tasks 2–4; `WK_R0` (Stage 2).
 - Produces: `type AgeBand`, `type ConditionId = 'hfref' | 'hfpef' | 'htn' | 'as' | 'ar' | 'mr' | 'ms' | 'tr' | 'cad' | 'betaBlocked' | 'rvFailure' | 'ph'`, `interface CircCondition { id; grade?; severity? }`, `interface CircProfile { ageY; sex; weightKg; conditions }`, `interface ResolvedProfile` (fields below), `DEFAULT_PROFILE`, `GRADES`, `ageBand(ageY)`, `resolveProfile(pr?)`.
 
-- [ ] **Step 1: Implement** (tested through the stabiliser in Task 6, which exercises six profiles)
+- [x] **Step 1: Implement** (tested through the stabiliser in Task 6, which exercises six profiles)
 
 `packages/engine-core/src/l2/circ/profile.ts`:
 
@@ -1076,12 +1076,12 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
 
 Then make one edit the prototype showed necessary for the AS + CAD profile (Deviations): in `applyCondition`, `case 'as'`, after `r.lvedpTarget = Math.max(r.lvedpTarget, 14);` add `r.targets = { ...r.targets, cvp: 3 }; // stiff LV over-fills at CVP 5 (prototype LVEDP 40) [ENG]`.
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec tsc -p tsconfig.json --noEmit`
 Expected: only the `stabilise.ts` import error in `circuit.test.ts` remains.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/profile.ts
