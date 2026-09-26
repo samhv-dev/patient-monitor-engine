@@ -3940,7 +3940,7 @@ git push
 
 Measured while planning (`PME_PULSE_DIR=../research/pulse-spike/web`, wasm SHA-256 `a3be71ad…`): Pulse ready in ≈ 30 ms in Node, 10 min of O1 in 81 s wall (both engines). **O1 baseline:** HR 72.0 vs 71.1 (green), SaO2 96.9 vs 97.5 (green), EtCO2 36.6 vs 36.7 (green), MAP 87.3 vs 95.4 (yellow: our state MAP is DBP + PP/3 of 114/74 while Pulse integrates its waveform), RR 15.0 vs 12.2 (yellow), CVP 6.0 vs 4.7 (yellow). **O-VF:** Pulse's pH reaches **10.58** at 30 min — D1 reproduced, graded green as an expected disagreement; our side has no public pH until 7c. O2/O4 are not measurable on our side before 7a/7c/7g. Our state SBP/DBP keep their MANUAL targets through an arrest (flag `override`), so VF MAP is compared on the DISPLAYED mean.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/oracle/oracle.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/oracle/oracle.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3975,11 +3975,11 @@ describe('oracle comparator (annex §C)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle/oracle.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/oracle/pulse-node.ts`**
+- [x] **Step 3: Write `packages/validation/src/oracle/pulse-node.ts`**
 
 ```ts
 // The Pulse Physiology Engine 4.3.2 wasm build (research/pulse-spike/web, Apache-2.0, Kitware) loaded in Node as a
@@ -4057,7 +4057,7 @@ export async function loadPulse(dir: string): Promise<PulseOracle> {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/oracle/oracle.ts`**
+- [x] **Step 4: Write `packages/validation/src/oracle/oracle.ts`**
 
 ```ts
 // Pulse differential oracle (R34; docs/physiology/pulse-parameter-annex.md §C–§D). Identical scenarios run in Pulse
@@ -4193,14 +4193,14 @@ export async function runOracle(s: OracleScenario, pulse: PulseOracle | null): P
 }
 ```
 
-- [ ] **Step 5: Append two rows to `NOTICES.md`**
+- [x] **Step 5: Append two rows to `NOTICES.md`**
 
 ```markdown
 | N-083 | Segment-validation method: target types EqualTo/GreaterThan/LessThan/TrendsTo/Range, 10/30 % grading, 2 % per-sample regression limit (audit N-P01/N-P02) | https://gitlab.kitware.com/physiology/engine (Pulse 4.3.2, `src/python/pulse/pipelines/validation/segment_validation.py`, `ValidationTool.java`, `csv_compare.py`) | Apache-2.0 (method only) | Method re-implemented in TypeScript in `packages/validation/src/segments/` and `src/regression/`; no code copied. Credit: Pulse Physiology Engine, Kitware, Inc. and Contributors | 2026-09-26 |
 | N-084 | Pulse Physiology Engine 4.3.2 wasm as a differential-test oracle (run time only, never committed or distributed) | https://gitlab.kitware.com/physiology/engine | Apache-2.0 | `packages/validation/src/oracle/pulse-node.ts` loads a local build from `PME_PULSE_DIR`; if `pulse.wasm` is ever committed or shipped, carry Pulse's full `NOTICE` (Kitware, BioGears/ARA, Eigen, protobuf, abseil) and `LICENSE` (annex §E) | 2026-09-26 |
 ```
 
-- [ ] **Step 6: Run the test without and with the oracle build. Expected: 3 passed + 1 skipped; then 4 passed**
+- [x] **Step 6: Run the test without and with the oracle build. Expected: 3 passed + 1 skipped; then 4 passed**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle/oracle.test.ts
@@ -4208,7 +4208,7 @@ PME_PULSE_DIR=/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/resear
 npx -y pnpm@9.15.9 check-notices
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/validation/src/oracle packages/validation/test/oracle NOTICES.md
