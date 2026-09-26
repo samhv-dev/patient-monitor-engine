@@ -3554,10 +3554,12 @@ git push origin stage-7b-lungs
 
 ### Task 24: Acceptance — one-lung ventilation, endobronchial intubation, unilateral pneumothorax
 
+> **Executor note:** All four pass. Deviations: (1) the endobronchial tube stays in 60 min before withdrawal (the prototype's sequence; after 10 min the blocked lung was only ≈ 30 % collapsed at FiO2 0.5, so withdrawal alone gave 99.4 %); (2) a held manoeuvre pressure keeps updating the lung's pInsp after flow falls below the 50 mL/s breath threshold, and the healthy-lung opening check has a 1 cmH2O tolerance — the alveolar pressure approaches 40 only asymptotically, so a 40 cmH2O RM opened nothing (SpO2 stayed 96.4); (3) the Task 19 test's drive() parameter typed as MonitorEngine (typecheck). Numbers in the gate note (engine not anaesthetised → OLV lower than the rig).
+
 **Files:**
 - Create: `packages/engine-core/test/engine/lung-unilateral.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/lung-unilateral.test.ts`:
 
@@ -3638,12 +3640,12 @@ describe('unilateral states (R43, catalogue §15, §22, §23)', { timeout: 300_0
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-unilateral.test.ts`
 Expected: PASS. Prototype (stand-alone): OLV FiO2 0.5 nadir 93.5 % at 6.7 min → 95.6 % at 60 min, left flow 0.24; OLV lateral FiO2 1.0 shunt 0.23 at 30 min (PaO2 nadir 146); endobronchial 92.3 % at 5 min, withdrawal 98.2 %, + RM 99.8 %. The pneumothorax numbers were not prototyped: if the SpO2 fall is < 1 %, check that `ptxSimple`'s consolidation reaches `nonAerated` for side L (Task 6) and that HPV acts on it (Task 7), and report the measured value in the gate note rather than moving the band.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/lung-unilateral.test.ts

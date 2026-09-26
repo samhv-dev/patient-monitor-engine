@@ -75,6 +75,10 @@ export function lungMechStep(ls: LungState, mode: 'flow' | 'pressure' | 'closed'
       ls.tidal = ls.mech.v.map((v, u) => Math.max(0, v - (ls.v0[u] as number)));
       ls.pInsp = maxAlveolar(ls);
       ls.tExp0 = ls.t;
+    } else if (!insp && mode === 'pressure' && x >= ls.pInsp) {
+      // Executor addition (Task 24): an airway pressure held at or above the last peak (a sustained-inflation
+      // manoeuvre) keeps raising the alveolar pressure after the flow has fallen below the 50 mL/s breath threshold
+      ls.pInsp = Math.max(ls.pInsp, maxAlveolar(ls));
     }
   }
 }

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { respOf as resp } from '../helpers/lung.ts';
 import { cmd, ev3, rig3 } from '../helpers/resp.ts';
+import type { MonitorEngine } from '../../src/types.ts';
 
 /** A 50 Hz square-flow VC ventilator: 0.5 L/s for 1 s, passive expiration (frames report volume), period 4.3 s. */
-function drive(e: { dispatch: (c: unknown) => unknown; advanceTo: (t: number) => void }, t0: number, t1: number, palv = false) {
+function drive(e: MonitorEngine, t0: number, t1: number, palv = false) {
   for (let t = t0; t < t1; t += 0.02) {
     const ph = t % 4.3;
     const insp = ph < 1;

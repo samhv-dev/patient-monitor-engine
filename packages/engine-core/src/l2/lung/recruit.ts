@@ -58,7 +58,9 @@ export function stepRecruit(st: RecruitState, sp: SideParams[], x: RecruitInputs
       st.blk[s] = relax(st.blk[s] as number, 0.98, 60 * (TAU_BLOCK_MIN + TAU_BLOCK_N2_MIN * inert / 0.79), dt);
       continue;
     }
-    const opens = x.pInsp >= P_OPEN_HEALTHY;
+    // Executor deviation (Task 24): 1 cmH2O tolerance — the alveolar pressure approaches a held manoeuvre pressure only
+    // asymptotically (τ = R·C), so a '40 cmH2O' manoeuvre never reached 40.000 and could not open anything
+    const opens = x.pInsp >= P_OPEN_HEALTHY - 1;
     if (opens) {
       st.ind[s] = relax(st.ind[s] as number, 0, TAU_REC_HEALTHY_S, dt);
       st.blk[s] = relax(st.blk[s] as number, 0, TAU_REC_HEALTHY_S, dt);
