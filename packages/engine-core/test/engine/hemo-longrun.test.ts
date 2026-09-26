@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { expectedIndex, LONGRUN_HOURS } from '../helpers/longrun.ts';
 import { createEngine } from '../../src/engine.ts';
 import type { Command } from '../../src/types.ts';
 import { cmd } from '../helpers/hemo.ts';
@@ -34,16 +35,16 @@ describe('Stage 2 determinism and drift', () => {
     expect(run(42)).not.toBe(run(43));
   });
 
-  it('no drift at 125 Hz: after advanceTo(86400) latestSampleIndex(abp) = latestSampleIndex(pleth) = 10,800,000 + 12', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
+  it(`no drift at 125 Hz: after advanceTo(${LONGRUN_HOURS} h) latestSampleIndex(abp) = latestSampleIndex(pleth) = 125 × t + 12 (24 h locally, 6 h on CI)`, { timeout: 600_000 }, async () => {
     const e = createEngine({ seed: 11, patient: { sensors: { abp: 'connected' } } });
     // Same pattern as the ECG 24 h test on main: one sim-hour at a time, yielding between chunks, so the
     // ≈ 65 s run does not starve the Vitest worker's RPC on a 2-vCPU CI runner ("Timeout calling onTaskUpdate").
-    for (let h = 1; h <= 24; h++) {
+    for (let h = 1; h <= LONGRUN_HOURS; h++) {
       e.advanceTo(h * 3_600);
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
-    expect(e.latestSampleIndex('abp')).toBe(10_800_000 + 12);
-    expect(e.latestSampleIndex('pleth')).toBe(10_800_000 + 12);
-    expect(e.latestSampleIndex('ecgII')).toBe(43_200_000 + 50);
+    expect(e.latestSampleIndex('abp')).toBe(expectedIndex(125, 12));
+    expect(e.latestSampleIndex('pleth')).toBe(expectedIndex(125, 12));
+    expect(e.latestSampleIndex('ecgII')).toBe(expectedIndex(500, 50));
   });
 });

@@ -1,6 +1,7 @@
 // Stage 3 determinism (brief §3.3: same seed + commands → same samples) and 62.5 Hz no-drift over 24 h.
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { expectedIndex, LONGRUN_HOURS } from '../helpers/longrun.ts';
 import { createEngine } from '../../src/engine.ts';
 import type { Command } from '../../src/types.ts';
 import { cmd, ev3, run } from '../helpers/resp.ts';
@@ -36,16 +37,16 @@ describe('Stage 3 determinism and drift', () => {
     expect(hashRun(42)).not.toBe(hashRun(43));
   });
 
-  it('no drift at 62.5 Hz: after advanceTo(86400) latestSampleIndex(co2) = latestSampleIndex(resp) = 5,400,000 + 6', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
+  it(`no drift at 62.5 Hz: after advanceTo(${LONGRUN_HOURS} h) latestSampleIndex(co2) = latestSampleIndex(resp) = 62.5 × t + 6 (24 h locally, 6 h on CI)`, { timeout: 600_000 }, async () => {
     const e = createEngine({ seed: 11, patient: { sensors: { co2: 'on' } } });
     // one sim-hour at a time, yielding between chunks (main's CI pattern: a synchronous 24 h run starves the
     // Vitest worker RPC on a 2-vCPU runner)
-    for (let h = 1; h <= 24; h++) {
+    for (let h = 1; h <= LONGRUN_HOURS; h++) {
       await run(e, h * 3_600);
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
-    expect(e.latestSampleIndex('co2')).toBe(5_400_000 + 6);
-    expect(e.latestSampleIndex('resp')).toBe(5_400_000 + 6);
-    expect(e.latestSampleIndex('ecgII')).toBe(43_200_000 + 50);
+    expect(e.latestSampleIndex('co2')).toBe(expectedIndex(62.5, 6));
+    expect(e.latestSampleIndex('resp')).toBe(expectedIndex(62.5, 6));
+    expect(e.latestSampleIndex('ecgII')).toBe(expectedIndex(500, 50));
   });
 });
