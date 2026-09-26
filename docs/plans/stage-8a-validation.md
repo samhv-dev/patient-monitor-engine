@@ -2548,7 +2548,7 @@ git push
 
 PTB-XL (100 NORM records, lead II, same `intervalsOf`) p10/p50/p90 vs engine (HR 60/75/90/100 × 3 seeds): PR 140/176/216 vs 208/214/222 ms (engine at the p90 edge); QRS 44/54/76 vs 50/62/64; QT 314/346/387 vs 316/342/374; QTcF 339/366/396 vs 374/378/380. Readings: the engine's respiratory variation is ≈ 2× the recordings' at matched ventilator settings; its dicrotic notch is always a deep true minimum (recordings: a shallow inflection in ≈ 80 % of radial beats); its PPG pulse is less arterial-shaped than the finger's; its PR (P-onset) sits late. All are calibration-queue items, not harness bugs.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/validation/test/segments/grade.test.ts`:
 
@@ -2630,11 +2630,11 @@ describe('morphology grading (R40 grades on evidence bands)', () => {
 });
 ```
 
-- [ ] **Step 2: Run them. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run them. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/grade.test.ts test/morphology/suite.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/segments/types.ts`**
+- [x] **Step 3: Write `packages/validation/src/segments/types.ts`**
 
 ```ts
 // `pme-validation/1` — segment validation documents (R40 borrow #1; method after Pulse's segment validation,
@@ -2710,7 +2710,7 @@ export interface TargetResult {
 export interface Unsupported { t: number; type: string; reason: string }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/segments/grade.ts`**
+- [x] **Step 4: Write `packages/validation/src/segments/grade.ts`**
 
 ```ts
 // Target grading (R40 borrow #1). errPct = 0 when the target holds, else the distance to the nearest satisfying
@@ -2784,7 +2784,7 @@ export function gradeTarget(t: Target, measured: number, ctx: { segValue: (segme
 const fmt = (v: number) => (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2));
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/morphology/bands.ts`**
+- [x] **Step 5: Write `packages/validation/src/morphology/bands.ts`**
 
 ```ts
 // Pass criteria for the recorded-vs-engine morphology suite. Evidence bands first (R37/R39: the band IS the test);
@@ -2832,7 +2832,7 @@ export const hrBin = (hr: number): string => {
 };
 ```
 
-- [ ] **Step 6: Write `packages/validation/src/morphology/suite.ts`**
+- [x] **Step 6: Write `packages/validation/src/morphology/suite.ts`**
 
 ```ts
 // The recorded-vs-engine morphology suite (brief §9 V1–V5): every manifest window is measured twice with the SAME
@@ -2972,7 +2972,7 @@ export function gradePairs(pairs: WindowPair[], fills: SuiteOptions['fills'] = {
 }
 ```
 
-- [ ] **Step 7: Write `packages/validation/src/morphology/intervals-suite.ts`**
+- [x] **Step 7: Write `packages/validation/src/morphology/intervals-suite.ts`**
 
 ```ts
 // V5: ECG intervals of PTB-XL NORM records (CC BY 4.0) vs the engine's 12-lead capture, one method (intervalsOf).
@@ -3030,11 +3030,11 @@ export function intervalFills(ref: Intervals[]): Record<string, { min: number; m
 }
 ```
 
-- [ ] **Step 8: Run the tests. Expected: PASS (5 + 5 tests)**
+- [x] **Step 8: Run the tests. Expected: PASS (5 + 5 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/grade.test.ts test/morphology/suite.test.ts`
 
-- [ ] **Step 9: Smoke-run the suite on the first two manifest windows (needs Task 6's cache). Expected: two progress lines and ≥ 20 graded rows, no exception**
+- [x] **Step 9: Smoke-run the suite on the first two manifest windows (needs Task 6's cache). Expected: two progress lines and ≥ 20 graded rows, no exception**
 
 ```bash
 cat > packages/validation/smoke-morph.ts <<'TS'
@@ -3047,7 +3047,7 @@ TS
 rm packages/validation/smoke-morph.ts
 ```
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/validation/src/morphology packages/validation/src/segments/types.ts packages/validation/src/segments/grade.ts packages/validation/test/morphology packages/validation/test/segments/grade.test.ts
