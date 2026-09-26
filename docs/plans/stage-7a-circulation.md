@@ -4504,7 +4504,7 @@ git push origin stage-7a-circulation
 - Modify: `NOTICES.md`
 - Create: `docs/gates/stage-7a.md`
 
-- [ ] **Step 1: NOTICES**
+- [x] **Step 1: NOTICES**
 
 Append to `NOTICES.md` (keep the file's existing table format and the next free `N-0xx` ids; the Pulse NOTICE paragraphs of annex §E go in ONCE, verbatim, above the first Pulse row if not already present):
 
@@ -4521,16 +4521,16 @@ Also add `export const ICRP89_FLOW_FRACTIONS_M = { brain: 0.12, myocardium: 0.04
 Run: `npx -y pnpm@9.15.9 check-notices`
 Expected: `check-notices: OK`.
 
-- [ ] **Step 2: Full gate run**
+- [x] **Step 2: Full gate run**
 
 Run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e`
 Expected: all exit 0.
 
-- [ ] **Step 3: Write `docs/gates/stage-7a.md`**
+- [x] **Step 3: Write `docs/gates/stage-7a.md`**
 
 Same shape as `docs/gates/stage-2.md`: gate question ("Does the two-sided elastance heart reproduce the resting chambers, emergent PPV/PVC/AF effects, the reflex responses and the R23 ischaemia trajectory, within the CPU budget?"), a Check | Result table with every number printed by Tasks 6, 9, 10, 23–27 (resting chambers H1; phenylephrine; haemorrhage classes II/III; β-blocked; propofol; AS + CAD trajectory with DBP/LVEDP/ratio/kIsch/ST at 0/2/2.5/4/5 min for both rescues; tamponade; PE; RV infarct; MR; PEEP 5→15 CO drop; post-PVC ΔSBP; AF PP variability; pulseless plateau; CPR SBP/DBP/CO; IABP augmentation; LVAD PP/MAP; CPU per tick; hashes; 24 h drift; oracle rows), the re-specified Stage 2 bands with their justifications (Task 23), the Deviations list from this plan (still open ones marked for Ali's R44 calibration pass), the screenshots, and "Requests to other stages" (copy the plan's list).
 
-- [ ] **Step 4: Tick the plan, commit, push, open the PR**
+- [x] **Step 4: Tick the plan, commit, push, open the PR**
 
 ```bash
 git add NOTICES.md docs/gates/stage-7a.md docs/plans/stage-7a-circulation.md packages/engine-core/src/l2/circ/params.ts
