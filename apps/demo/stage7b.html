@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 7b: the lungs</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 560px; max-width: 1240px; border: 1px solid #333; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; max-width: 1240px; margin-top: 10px; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; }
+      legend { color: #888; }
+      button, select, input { font: inherit; }
+      input[type='number'] { width: 4.5em; }
+      #lungs { background: #050505; border: 1px solid #333; }
+      #diag { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="row">
+      <canvas id="lungs" width="420" height="260"></canvas>
+      <fieldset><legend>Ventilator (built-in)</legend>
+        <label>RR <input id="rr" type="number" min="4" max="40" value="14" /></label>
+        <label>VT <input id="vt" type="number" min="100" max="1000" value="490" /></label>
+        <label>PEEP <input id="peep" type="number" min="0" max="25" value="5" /></label>
+        <label>FiO2 <input id="fio2" type="number" min="0.21" max="1" step="0.05" value="0.4" /></label>
+        <label>I:E 1: <input id="ie" type="number" min="1" max="4" step="0.5" value="2" /></label>
+        <button id="apply">Apply</button> <button id="rm">Recruit 40 × 30 s</button>
+        <br /><label>Mainstem <select id="mainstem"><option value="both">both</option><option value="right">right only (left blocked)</option><option value="left">left only (right blocked)</option></select></label>
+      </fieldset>
+      <fieldset><legend>Lung condition</legend>
+        <select id="cond"></select>
+        <label>severity <input id="sev" type="range" min="0" max="1" step="0.05" value="0.75" /> <span id="sevv">0.75</span></label>
+        <label>side <select id="side"><option value="">—</option><option>L</option><option>R</option></select></label>
+        <label>recruitable <input id="rf" type="number" min="0" max="1" step="0.05" placeholder="data" /></label>
+        <button id="add">Add</button> <button id="clear">Clear all</button>
+      </fieldset>
+      <fieldset><legend>Demonstrations (R27/R36)</legend>
+        <button data-demo="copd">COPD: RR 10 → 26</button>
+        <button data-demo="ards">ARDS: PEEP 5 → 15 → RM</button>
+        <button data-demo="olv">OLV at FiO2 0.5</button>
+        <button data-demo="endo">Endobronchial → fix</button>
+        <button data-demo="absorb">Absorption at FiO2 1.0</button>
+        <label>speed <select id="speed"><option>1</option><option>2</option><option selected>4</option></select></label>
+      </fieldset>
+    </div>
+    <div id="diag"></div>
+    <script type="module" src="./src/stage7b.ts"></script>
+  </body>
+</html>

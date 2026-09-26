@@ -18,14 +18,22 @@ import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfi
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { cardiacOutput } from '../gas/coupling.ts';
 import { pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a
-import { createCo2State, etco2True, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts';
+import { CMH2O_TO_MMHG, P_PL0, T_IT } from '../circ/params.ts'; // Stage 7b (Task 26)
+import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
+import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
-import { o2Steady, solveShunt, stepO2, type O2Inputs, type O2State } from '../gas/o2.ts';
+import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
+import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
+import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
+import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
+import { mechParams } from '../lung/side.ts'; // Stage 7b
+import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
+import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
-  alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, nominalRate,
+  alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
   onVentFrame, planCycles, preoxActive, pruneCycles, replan, type DriverCtx, type DriverState,
 } from './driver.ts';
 
@@ -71,6 +79,15 @@ export interface RespState {
   beatSeq: number;
   shownCo2: number;
   lungKey: string;
+  lungCore: string; // Stage 7b: the seven Stage 3 fields of the last emission
+  lungT: number; // Stage 7b: time of the last emission
+  // Stage 7b: the lung module (R43) and what configures it
+  lung: LungState;
+  lungSpecs: LungConditionSpec[];
+  rawEvent: number; // bronchospasm airway multiplier (Q20)
+  mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
+  recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
+  circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
   out: EngineEvent[];
 }
 
@@ -95,8 +112,11 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
       spo2: createSpo2(l1Target(l1, 'spo2', 0) / 100, Math.max(-2, Math.min(2, normal(rng)))), // bias ±2–3 % RMS [ENG]
       temp: createTempNum(t0),
     },
-    beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', out: [],
+    beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
+    lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
+    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0,
   };
+  applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
   return rs;
 }
 
@@ -105,7 +125,7 @@ function driverCtx(rs: RespState, l1: L1State, t: number): DriverCtx {
   return { rr: l1Target(l1, 'rr', t), vt: l1Target(l1, 'vt', t), fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs) };
 }
 function compliance(rs: RespState): number {
-  return rs.pat.complianceMl * (rs.driver.airway === 'endobronchial' ? 0.5 : 1);
+  return staticCompliance(rs.lung); // Stage 7b: the lung module (endobronchial ×0.5 now emerges from the mainstem block)
 }
 function deadSpace(rs: RespState): number {
   const mech = rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none';
@@ -116,7 +136,7 @@ function extraGradient(rs: RespState): number {
 }
 function extraShunt(rs: RespState): number {
   const a = rs.driver.airway;
-  return a === 'endobronchial' ? 0.25 : a === 'bronchospasm' ? 0.05 * rs.driver.severity : 0; // research 03 §8.7 [ENG]
+  return a === 'bronchospasm' ? 0.05 * rs.driver.severity : 0; // research 03 §8.7 [ENG]; Stage 7b: endobronchial shunt emerges (mainstem block)
 }
 function currentFio2(rs: RespState, l1: L1State, t: number): number {
   const d = rs.driver;
@@ -135,9 +155,58 @@ export function respBreathU(rs: RespState, t: number): number {
   return breathSignal(rs.driver, t, compliance(rs));
 }
 
+/** Stage 7b: re-resolve the lung from its condition specs, the bronchospasm multiplier and the mainstem state. */
+export function applyLungSpecs(rs: RespState): void {
+  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent);
+  const ls = rs.lung;
+  ls.lp = r.lp;
+  ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
+  ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
+}
+
+/** Stage 7b: induction-atelectasis factor by body size (catalogue §10: atel 0.11 at BMI 40 vs 0.06 lean) [ENG]. */
+export function inductionFactor(pat: GasPatient): number {
+  const bmi = pat.weightKg / (pat.ibwKg > 0 ? (pat.ibwKg / 22) : 1); // ≈ BMI from IBW at BMI 22
+  return Math.min(3, 1 + 0.05 * Math.max(0, bmi - 25));
+}
+
+/**
+ * Stage 7b: how the breath driver drives the lung units at time t. Positive-pressure inspiration and spontaneous
+ * inspiration are flow sources (the driver's volume curve); expiration returns to PEEP (ventilator) or 0; a
+ * recruitment manoeuvre holds its pressure; external frames: Task 19.
+ */
+export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'; x: number } {
+  const d = rs.driver;
+  const peep = d.source === 'ventilator' ? d.vent.peep : d.source === 'external' && d.ext ? d.ext.peep : 0;
+  if (rs.recruit && t < rs.recruit.until) return { mode: 'pressure', x: rs.recruit.p };
+  if (d.source === 'external' && d.ext) {
+    const dt = 0.016;
+    const q = (frameAt(d.ext, t, 2) - frameAt(d.ext, t - dt, 2)) / dt; // mL/s from the frames' volume
+    return q > 50 ? { mode: 'flow', x: q } : { mode: 'pressure', x: d.ext.peep };
+  }
+  const c = cycleAt(d, t);
+  if (!c || !c.exch || t >= c.cutAt || !(c.vt > 0)) return { mode: 'pressure', x: peep };
+  const u = t - c.t0;
+  if (u >= c.ti) return { mode: 'pressure', x: c.mech ? peep : 0 };
+  if (c.mech) return { mode: 'flow', x: c.vt / Math.max(1e-3, c.ti) };
+  return { mode: 'flow', x: ((c.vt * Math.PI) / (2 * c.ti)) * Math.sin((Math.PI * u) / c.ti) };
+}
+
 /** Stage 7a seam: continuous pleural pressure (mmHg) for the circulation (audit R-B). */
 export function respPleural(rs: RespState, t: number): number {
-  return pleuralPressureMmHg(rs.driver, t, compliance(rs));
+  // Stage 7b (Task 26, R45/R46): 7a's continuous pleural shape, carried by the lung module — the condition's own
+  // airway-to-pleura transmission (tIt relative to the healthy 0.4, so a healthy lung keeps 7a's calibrated T_IT 0.65;
+  // Q78, catalogue §5/§6/§10), the trapped-gas pressure (auto-PEEP) on the internal ventilator, and the lungs' pleural
+  // pressure (effusion, haemothorax, pneumothorax) max-combined with 7a's own ext.pPtx so a scenario that sends both
+  // commands (plan decision 14) does not count it twice. External frames already carry the ventilator's alveolar
+  // pressure (Stage V palv), so no auto-PEEP term is added there.
+  const d = rs.driver;
+  const lp = rs.lung.lp;
+  const k = lp.tIt / HEALTHY.tIt;
+  const base = pleuralPressureMmHg(d, t, compliance(rs));
+  let p = P_PL0 + k * (base - P_PL0);
+  if (d.source === 'ventilator') p += k * T_IT * Math.max(0, rs.lung.peepTot - d.vent.peep) * CMH2O_TO_MMHG;
+  return p + Math.max(0, lp.pPtx - rs.circPtx);
 }
 
 /** Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). */
@@ -181,24 +250,39 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     tempNumStep(rs.num.temp, rs.temp.sites, rs.tempSite, 1);
   }
   const vco2 = rs.pat.vco2 * metabolic(rs, t);
+  // Stage 7b: the lung module's 10 Hz step (recruitment, HPV, perfusion, CO2 mix, O2 stores) before the CO2 store.
+  // Executor deviation (Task 14): it runs BEFORE the MANUAL etco2 calibration, so the calibration at t = 0 already
+  // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
+  const va0 = alveolarVentilation(d, t, deadSpace(rs));
+  const x = o2Inputs(rs, l1, t, va0);
+  const ga = rs.temp.anaesthesia === 'general';
+  rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
+  const side = circSideFlows(h);
+  lungGasStep(rs.lung, {
+    va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
+    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), volatileMac: 0, sideFlow: side,
+    qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
+  }, GAS_DT_S);
+  writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
+  rs.circPtx = circPtx(h); // Stage 7b (Task 26)
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
   const etT = l1Target(l1, 'etco2', t);
   if (etT !== rs.seen.etco2) {
     rs.seen.etco2 = etT;
     const n = nominalRate(d, driverCtx(rs, l1, t));
     rs.co2.flow = lowFlowFactor(rs.coRatio); // calibrate against the settled low-flow factor
-    const pf = etT / Math.max(0.05, rs.co2.flow) + PA_ET_GRADIENT + extraGradient(rs);
+    const pf = (etT / Math.max(0.05, rs.co2.flow) + extraGradient(rs)) / Math.max(0.5, rs.lung.co2.g); // Stage 7b: the mixing point's gap
     if (n.rr > 0) {
       const base = deadSpace(rs) - rs.co2.vdExtraMl;
-      const need = n.vt - (vaForPaco2(vco2, pf) * 1000) / n.rr;
+      const need = n.vt - (vaForPaco2(vco2, pf) / Math.max(0.3, rs.lung.co2.e) * 1000) / n.rr; // Stage 7b: ÷ the lung's elimination efficiency
       rs.co2.vdExtraMl = Math.min(0.8 * n.vt, Math.max(-0.5 * rs.pat.deadSpaceMl, need - base));
     }
     rs.co2.pf = pf;
     rs.co2.ps = pf;
   }
   const va = alveolarVentilation(d, t, deadSpace(rs));
-  stepCo2(rs.co2, { vaLpm: va, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
-  rs.etco2 = etco2True(rs.co2, extraGradient(rs));
+  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
+  rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)
   const sh = l1Target(l1, 'shunt', t);
   if (sh !== rs.seen.shunt) {
@@ -212,8 +296,14 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.shunt = Math.max(0, solveShunt(x, spT / 100) - extraShunt(rs));
     const ss = o2Steady({ ...x, shunt: rs.shunt + extraShunt(rs) }, rs.shunt + extraShunt(rs));
     if (ss && (va > 0 || rs.gasK === 0)) Object.assign(rs.o2, ss);
+    if (ss && (va > 0 || rs.gasK === 0)) { rs.lung.o2.fa = [ss.fa, ss.fa]; rs.lung.o2.cv = ss.cv; } // Stage 7b: place both stores
   }
-  stepO2(rs.o2, o2Inputs(rs, l1, t, va), GAS_DT_S);
+  // Stage 7b: the O2 truth is the lung's two stores (stepped inside lungGasStep); rs.o2 mirrors it for Stage 3 readers
+  const lo = rs.lung.o2;
+  rs.o2.sa = lo.sa;
+  rs.o2.pao2 = lo.pao2;
+  rs.o2.cv = lo.cv;
+  rs.o2.fa = (lo.fa[0] as number) * 0.45 + (lo.fa[1] as number) * 0.55;
   const pinned = l1.pinned.includes('spo2');
   const sa = pinned ? spT / 100 : rs.o2.sa; // M5: an instructor pin on spo2 disables autoDesat
   const piM = piNumeric(h.num.pleth, t);
@@ -234,7 +324,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   c.spo2 = sa * 100;
   c.etco2 = rs.etco2;
   c.fio2 = currentFio2(rs, l1, t);
-  c.shunt = Math.min(0.9, rs.shunt + extraShunt(rs));
+  c.shunt = shuntFraction(rs.lung, Math.min(0.9, rs.shunt + extraShunt(rs))); // Stage 7b
   c.tempCore = rs.temp.tc;
   if (d.source === 'spontaneous' && d.airway !== 'apnoea') {
     delete c.rr; // the spontaneous driver breathes at the rr/vt targets
@@ -250,19 +340,19 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
 
 function lungStateEvent(rs: RespState, t: number): void {
   const d = rs.driver;
-  const sev = d.severity;
-  const ev = {
-    complianceMlPerCmH2O: Math.round(compliance(rs)),
-    resistanceCmH2OPerLps: Math.round(rs.pat.resistance * (d.airway === 'bronchospasm' ? 1 + 3 * sev : 1)),
-    effort: d.source === 'spontaneous' ? 1 : Math.round(d.cleft * 100) / 100,
-    autoPeepTendency: d.airway === 'bronchospasm' ? Math.round(80 * sev) / 100 : 0,
-    shunt: Math.round(Math.min(0.9, rs.shunt + extraShunt(rs)) * 100) / 100,
-    deadSpaceMl: Math.round(deadSpace(rs)),
-    frcMl: Math.round(rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl),
-  };
+  const ev = lungStatePayload(rs.lung, {
+    deadSpaceMl: deadSpace(rs), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
+    effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
+    baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
+  }); // Stage 7b: absolute + per-lung fields (decision 15)
   const key = JSON.stringify(ev);
   if (key === rs.lungKey) return;
+  // the per-lung fields move slowly but continuously: emit at most once per second unless a Stage 3 field changed
+  const core = JSON.stringify([ev.complianceMlPerCmH2O, ev.resistanceCmH2OPerLps, ev.effort, ev.autoPeepTendency, ev.shunt, ev.deadSpaceMl, ev.frcMl]);
+  if (core === rs.lungCore && t - rs.lungT < 1) return;
   rs.lungKey = key;
+  rs.lungCore = core;
+  rs.lungT = t;
   rs.out.push({ type: 'lungState', t, ...ev });
 }
 
@@ -295,6 +385,14 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
   }
   const tEnd = mEnd / RESP_RATE;
   planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd), tEnd + PLAN_AHEAD_S);
+  // Stage 7b: stamp newly planned cycles with the lung's expiratory τ and capnogram terms
+  const ct = capnoTerms(rs.lung);
+  for (const c of rs.driver.cycles) {
+    if (c.tauE !== undefined) continue;
+    c.tauE = Math.max(0.1, rs.lung.tauBar);
+    c.lungTauII = ct.tauII;
+    c.lungRiseIII = ct.riseIII;
+  }
   for (const c of rs.driver.cycles) {
     const ext = rs.driver.source === 'external' && rs.driver.ext?.inInsp && c === rs.driver.cycles[rs.driver.cycles.length - 1];
     if (!c.emitted && c.exch && c.vt > 0 && !ext) {
@@ -308,6 +406,8 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
   for (; rs.m <= mEnd; rs.m++) {
     const m = rs.m;
     const t = m / RESP_RATE;
+    const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
+    lungMechStep(rs.lung, ld.mode, ld.x, DT);
     while (rs.gasK * GAS_DT_S <= t + 1e-9) {
       gasStep(rs, ctx, rs.gasK * GAS_DT_S);
       rs.gasK++;
@@ -360,7 +460,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     return null;
   }
   if (cmd.type !== 'applyEvent') return null;
-  const ev = cmd.event as RespClinicalEvent | { kind: string };
+  const ev = cmd.event as RespClinicalEvent | LungClinicalEvent | { kind: string }; // Stage 7b
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
@@ -385,6 +485,21 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined && !['none', 'general', 'neuraxial'].includes(th.anaesthesia)) return 'anaesthesia must be none, general or neuraxial';
       return num('ambientC', th.ambientC, 5, 40);
+    }
+    // Stage 7b (plan decision 11)
+    case 'lungCondition': {
+      const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
+      if (!(LUNG_CONDITION_IDS as readonly string[]).includes(c.id)) return `lungCondition id must be one of ${LUNG_CONDITION_IDS.join(', ')}`;
+      if (c.side !== undefined && c.side !== 'L' && c.side !== 'R') return "side must be 'L' or 'R'";
+      return num('severity', c.severity, 0, 1) ?? num('recruitFrac', c.recruitFrac, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined);
+    }
+    case 'mainstem': {
+      const m = ev as Extract<LungClinicalEvent, { kind: 'mainstem' }>;
+      return ['both', 'left', 'right'].includes(m.ventilated) ? undefined : "ventilated must be 'both', 'left' or 'right'";
+    }
+    case 'recruit': {
+      const p = ev as Extract<LungClinicalEvent, { kind: 'recruit' }>;
+      return num('pressureCmH2O', p.pressureCmH2O, 20, 60) ?? num('durationS', p.durationS, 1, 60) ?? (p.pressureCmH2O === undefined || p.durationS === undefined ? 'recruit needs pressureCmH2O and durationS' : undefined);
     }
     default:
       return null;
@@ -418,13 +533,17 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
     return false;
   }
   if (cmd.type !== 'applyEvent') return false;
-  const ev = cmd.event as RespClinicalEvent | { kind: string };
+  const ev = cmd.event as RespClinicalEvent | LungClinicalEvent | { kind: string }; // Stage 7b
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
       if (a.state === 'oesophageal' && d.airway !== 'oesophageal') d.gastricN = 0;
       d.airway = a.state;
       d.severity = a.severity ?? 1;
+      // Stage 7b: endobronchial is a mainstem block (its shunt/compliance emerge); bronchospasm raises airway R (Q20)
+      rs.mainstemCmd = a.state === 'endobronchial' ? 'right' : rs.mainstemCmd === 'right' ? null : rs.mainstemCmd;
+      rs.rawEvent = a.state === 'bronchospasm' ? 1 + 5 * Math.min(1, d.severity) ** 1.5 : 1;
+      applyLungSpecs(rs);
       withdraw(replan(d, t, LOSS.includes(a.state), false));
       return true;
     }
@@ -461,6 +580,28 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       if (th.anaesthesia !== undefined) rs.temp.anaesthesia = th.anaesthesia;
       if (th.warming !== undefined) rs.temp.warming = th.warming;
       if (th.ambientC !== undefined) rs.temp.ta = th.ambientC;
+      return true;
+    }
+    case 'lungCondition': {
+      const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
+      const same = (s: { id: string; side?: string }) => s.id === c.id && (s.side ?? null) === (c.side ?? null);
+      const next = { id: c.id, severity: c.severity, ...(c.side ? { side: c.side } : {}), ...(c.recruitFrac !== undefined ? { recruitFrac: c.recruitFrac } : {}) };
+      const i = rs.lungSpecs.findIndex(same);
+      if (c.severity <= 0) rs.lungSpecs = rs.lungSpecs.filter((s) => !same(s));
+      else if (i >= 0) rs.lungSpecs[i] = next;
+      else rs.lungSpecs.push(next);
+      applyLungSpecs(rs);
+      return true;
+    }
+    case 'mainstem': {
+      const m = ev as Extract<LungClinicalEvent, { kind: 'mainstem' }>;
+      rs.mainstemCmd = m.ventilated === 'both' ? null : m.ventilated;
+      applyLungSpecs(rs);
+      return true;
+    }
+    case 'recruit': {
+      const p = ev as Extract<LungClinicalEvent, { kind: 'recruit' }>;
+      rs.recruit = { p: p.pressureCmH2O, until: t + p.durationS };
       return true;
     }
     default:

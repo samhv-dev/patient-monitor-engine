@@ -43,6 +43,10 @@ export interface Cycle {
   /** Airway loss mid-cycle: from this time the cycle neither exchanges nor reaches the sampler. */
   cutAt: number;
   emitted: boolean;
+  /** Stage 7b: the lung module's expiratory τ (s) and capnogram terms for this cycle (absent → Stage 3 constants). */
+  tauE?: number;
+  lungTauII?: number;
+  lungRiseIII?: number;
 }
 
 export interface ExtDrive {
@@ -278,7 +282,7 @@ export function checkDrive(d: DriverState, t: number): void {
   }
 }
 
-export function frameAt(e: ExtDrive, t: number, k: 1 | 2): number { // Stage 7a: exported for the pleural input
+export function frameAt(e: ExtDrive, t: number, k: 1 | 2): number { // Stage 7a/7b: exported (pleural input; lung drive)
   const f = e.frames;
   if (f.length < 3) return 0;
   if (t >= (f[f.length - 3] as number)) return f[f.length - 3 + k] as number;
@@ -300,7 +304,7 @@ export function cycleVolume(c: Cycle, t: number): number {
   const vt = c.vt > 0 ? c.vt : 500 * c.effort; // obstructed efforts still move the chest
   if (u < c.ti) return c.mech ? (vt * u) / Math.max(1e-3, c.ti) : (vt * (1 - Math.cos((Math.PI * u) / c.ti))) / 2;
   const w = u - c.ti;
-  if (c.mech) return vt * Math.exp(-w / EXP_TAU_S);
+  if (c.mech) return vt * Math.exp(-w / (c.tauE ?? EXP_TAU_S)); // Stage 7b: the lung's τ
   const act = 0.6 * c.te;
   return w < act ? (vt * (1 + Math.cos((Math.PI * w) / act))) / 2 : 0;
 }
@@ -309,7 +313,8 @@ export function cycleVolume(c: Cycle, t: number): number {
 function meanVolume(c: Cycle): number {
   const vt = c.vt > 0 ? c.vt : 500 * c.effort;
   const T = Math.max(1e-3, c.ti + c.te);
-  if (c.mech) return (vt * (c.ti / 2 + EXP_TAU_S * (1 - Math.exp(-c.te / EXP_TAU_S)))) / T;
+  const tau = c.tauE ?? EXP_TAU_S; // Stage 7b
+  if (c.mech) return (vt * (c.ti / 2 + tau * (1 - Math.exp(-c.te / tau)))) / T;
   return (vt * (c.ti / 2 + 0.3 * c.te)) / T;
 }
 
