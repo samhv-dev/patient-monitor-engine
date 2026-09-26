@@ -21,9 +21,18 @@ export function venousGradient(vs: number): number {
   return 4 + 11 * Math.min(1, Math.max(0, vs));
 }
 
+/**
+ * Net forward flow of CPR vs compression quality, as the gas exchange sees it (R39-2, research 09 §2) [ENG, fitted]:
+ * below guideline quality flow falls off steeply (quality^1.9), above it the gain is linear. With the low-flow
+ * compression this gives EtCO2 ≈ 12 / 20 / 25 / 29 mmHg at quality 0.5 / 0.8 / 1.0 / 1.2 (10 breaths/min, minutes
+ * 1–10). The pressure waveforms (Stage 2) keep scaling linearly with quality.
+ */
+export const CPR_FLOW_EXP = 1.9;
+export const cprFlowFactor = (q: number): number => (q < 1 ? Math.max(0, q) ** CPR_FLOW_EXP : q);
+
 /** CO (L/min) from Stage 2's completed site beats over the last 10 s; CPR pump flow; 0 in arrest. */
 export function cardiacOutput(hs: HemoState, t: number): number {
-  if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * hs.cpr.quality * hs.cpr.rate) / 1000;
+  if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * cprFlowFactor(hs.cpr.quality) * hs.cpr.rate) / 1000;
   if (t - hs.lastEjT > Math.max(3, 2.2 * hs.lastRR)) return 0;
   const bs = hs.siteBeats.filter((b) => !b.cpr && t - b.t < 10);
   if (bs.length < 2) return (SV_REF_ML * hs.sys.g * 60) / Math.max(0.3, hs.lastRR) / 1000;

@@ -17,7 +17,7 @@ import { createCvpState, cvpAt, cvpOnBeat, cvpOnP, cvpWavesAt, pruneCvp, type Cv
 import { makePulse, prunePulses, type Pulse } from './ejection.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
 import {
-  ARREST_AFTER_S, BACKFLOW_FRAC, EJECTION_SKEW, FS_CARRY, RADIAL_DELAY_S, CPR_DUTY, CPR_SV_FRAC, CPR_THORACIC_MMHG, ejectionFactor, G_MAX, gainCeiling,
+  ARREST_AFTER_S, BACKFLOW_FRAC, EJECTION_SKEW, FS_CARRY, RADIAL_DELAY_S, CPR_DUTY, CPR_QUALITY_DEFAULT, CPR_SV_FRAC, CPR_THORACIC_MMHG, ejectionFactor, G_MAX, gainCeiling,
   gHyp, HEMO_RATE, H_S, KAPPA, lvetS, pepS, pmsf, PULSELESS_RHYTHMS, respFactor, RV_LVET_EXTRA_S, RV_PEP_LEAD_S,
   SUBSTEPS, SV_REF_ML, VENOUS_TAU_S,
 } from './params.ts';
@@ -141,7 +141,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
     pleth: createPlethState(spo2),
     lines: { abp: createLineState(lineStateOf(sens.abp)), cvp: createLineState(lineStateOf(sens.cvp)), pap: createLineState(lineStateOf(sens.pap)) },
     abpSite: 'leftRadial',
-    cpr: { active: false, rate: 110, quality: 1, nextT: 0 },
+    cpr: { active: false, rate: 110, quality: CPR_QUALITY_DEFAULT, nextT: 0 },
     wedge: { on: false, w: 0 },
     num: { abp: createWaveNumerics(3), pap: createWaveNumerics(1.5), pleth: createWaveNumerics(0.03), cvpAvg: cvp },
     nibp: createNibpState(sens.nibp === 'off' ? 'off' : 'on'),
@@ -521,7 +521,7 @@ export function applyHemoCommand(
         const c = ev as Extract<HemoClinicalEvent, { kind: 'cpr' }>;
         if (c.active) {
           const was = hs.cpr.active;
-          hs.cpr = { active: true, rate: c.rate ?? 110, quality: c.quality ?? 1, nextT: was ? hs.cpr.nextT : t };
+          hs.cpr = { active: true, rate: c.rate ?? 110, quality: c.quality ?? CPR_QUALITY_DEFAULT, nextT: was ? hs.cpr.nextT : t };
         } else {
           hs.cpr.active = false;
           const keep = (p: Pulse) => !(p.cpr && p.t0 > t);
