@@ -23,7 +23,7 @@ function measure(e: MonitorEngine, ev: EngineEvent[]): { end: Nibp; dur: number;
  * Back-to-back measurements (5 s apart) with the error against the displayed IBP over each window. A failed
  * cycle (possible in AF, brief §4.5) counts in `durs` but has no error.
  */
-function series(rhythm: 'sinus' | 'afib', n: number, seed: number) {
+async function series(rhythm: 'sinus' | 'afib', n: number, seed: number) {
   const { e, ev } = rig({ seed });
   if (rhythm === 'afib') e.dispatch(cmd({ type: 'setRhythm', rhythm: 'afib', opts: { rateBpm: 75 } }));
   e.advanceTo(20);
@@ -33,6 +33,9 @@ function series(rhythm: 'sinus' | 'afib', n: number, seed: number) {
     const { end, dur, start } = measure(e, ev);
     durs.push(dur);
     e.advanceTo(e.now().simT + 5);
+    // CI rule: ~40 sim-s per measurement, 100 measurements ≈ 67 sim-min — yield per measurement so the Vitest
+    // worker RPC is not starved on the 2-vCPU runner (the Stage 7a/7b engine costs more per tick)
+    await new Promise<void>((resolve) => setImmediate(resolve));
     if (!end.result) continue;
     const r = end.result;
     out.push({
@@ -63,8 +66,8 @@ describe('Stage 2 acceptance 9: NIBP', () => {
     expect(median).toBeLessThanOrEqual(40);
   });
 
-  it('over 100 sinus measurements: bias ≤ 5 and SD ≤ 8 mmHg vs the site pressures; MAP ≈ IBP MAP', { timeout: 60_000 }, () => {
-    const s = series('sinus', 100, 9);
+  it('over 100 sinus measurements: bias ≤ 5 and SD ≤ 8 mmHg vs the site pressures; MAP ≈ IBP MAP', { timeout: 300_000 }, async () => {
+    const s = await series('sinus', 100, 9);
     expect(s.length).toBe(100);
     for (const k of ['dSys', 'dDia'] as const) {
       expect(Math.abs(mean(s.map((x) => x[k])))).toBeLessThanOrEqual(5);
@@ -73,9 +76,9 @@ describe('Stage 2 acceptance 9: NIBP', () => {
     expect(Math.abs(mean(s.map((x) => x.dMap)))).toBeLessThanOrEqual(3);
   });
 
-  it('in AF, the cycle is longer and the error SD larger than in sinus, but not biased: |bias| ≤ 6, SD ≤ 10', { timeout: 120_000 }, () => {
-    const s = series('sinus', 30, 9);
-    const a = series('afib', 30, 9);
+  it('in AF, the cycle is longer and the error SD larger than in sinus, but not biased: |bias| ≤ 6, SD ≤ 10', { timeout: 300_000 }, async () => {
+    const s = await series('sinus', 30, 9);
+    const a = await series('afib', 30, 9);
     expect(s.length).toBe(30);
     expect(a.length).toBeGreaterThanOrEqual(25); // an occasional AF cycle may fail
     expect(mean(a.durs)).toBeGreaterThan(mean(s.durs));
