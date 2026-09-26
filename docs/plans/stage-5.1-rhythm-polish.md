@@ -927,7 +927,7 @@ G5-obs: "rbbb: V1 needs a clear rSR′ (M pattern) and terminal broad R′; V6 a
 - Consumes: `beatQrs`, `peaks` (Task 2).
 - Produces: `LBBB_R1_VEC`, `LBBB_R2_VEC`, `RBBB_S_SCALE`, `RBBB_RPRIME_TAU_S`, `RBBB_RPRIME_SIGMA_S`, `QRS_T` exported from `morphology/conduction.ts`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/bbb.test.ts` with exactly:
 
@@ -979,12 +979,12 @@ describe('Stage 5.1 bundle-branch block morphology (measured on the waveform)', 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/bbb.test.ts`
 Expected: FAIL in RBBB (`expected 121… to be greater than or equal to 130`) and LBBB (`expected 2 to be 1`: two V1 troughs). The normal-conduction case passes.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/beat-templates.ts`, replace this block (it occurs exactly once):
 
@@ -1090,7 +1090,7 @@ with:
   return out;
 ```
 
-- [ ] **Step 4: Move the Stage 5 kernel-span bounds (RBBB 125–145 → 135–170 ms, LBBB 145–165 → 145–175 ms); the morphology checks now live in `s51/bbb.test.ts`**
+- [x] **Step 4: Move the Stage 5 kernel-span bounds (RBBB 125–145 → 135–170 ms, LBBB 145–165 → 145–175 ms); the morphology checks now live in `s51/bbb.test.ts`**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts`, replace this block (it occurs exactly once):
 
@@ -1132,12 +1132,12 @@ describe('conduction, axis and voltage modifiers', () => {
   });
 ```
 
-- [ ] **Step 5: Run the conduction tests**
+- [x] **Step 5: Run the conduction tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/bbb.test.ts test/l2/ecg/s5/morph-conduction.test.ts test/l2/ecg/s5/beat-templates.test.ts test/l2/ecg/s5/pac-pjc.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/beat-templates.ts packages/engine-core/src/l2/ecg/morphology/conduction.ts packages/engine-core/test/l2/ecg/s51/bbb.test.ts packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts

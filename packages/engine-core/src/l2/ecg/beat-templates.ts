@@ -7,8 +7,8 @@ import type { Vec3 } from './vcg.ts';
 
 export type BeatTemplateId = TemplateId | 'wpw' | 'aberrant' | 'pacedV' | 'pvc2' | 'pvc3' | 'agonal';
 
-/** RBBB terminal R′ (V1 +0.51 mV, I −0.25 mV) at τ 85 ms, σ 16 ms → QRS ≈ 133 ms (brief §5 RBBB 133). */
-export const RBBB_RPRIME_VEC: Vec3 = [-0.35, 0.05, -0.35];
+/** RBBB terminal R′ (Stage 5.1: V1 +0.80, I −0.25, V6 −0.43, II ≈ 0 per unit; solved on the Dower rows) [ENG]. */
+export const RBBB_RPRIME_VEC: Vec3 = [-0.33, 0, -0.69];
 /** PR (P onset → delta onset) for pre-excited conduction (research 03 §1.5: PR < 120 ms). */
 export const WPW_PR_MS = 100;
 /** Delta wave: 35 ms of slurred upstroke at full pre-excitation (research 03 §1.5: 30–60 ms). */
