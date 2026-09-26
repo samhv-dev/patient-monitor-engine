@@ -7,6 +7,7 @@ import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { LeadId, Modifiers } from '../../types.ts';
 import { ECG_RATE, generateVcg, type GenInputs } from './generator.ts';
 import type { HrvPhase } from './hrv.ts';
+import type { BreathClock } from './breath-clock.ts';
 import type { RhythmState } from './rhythm-state.ts';
 import { vfSource } from './arrest/vf.ts';
 import { afSource } from './af-texture.ts';
@@ -30,10 +31,11 @@ export type FrontEndStage = (mods: Modifiers, mainsHz: 50 | 60, lead: LeadId, n:
 export const FRONT_END_STAGES: FrontEndStage[] = [mainsStage, motionStage, diathermyStage, shockStage, leadOffStage, railStage];
 
 export function ecgGenInputs(
-  ps: { rhythm: RhythmState; mods: Modifiers; hrv: HrvPhase; rng: Record<StreamName, Sfc32State> },
+  ps: { rhythm: RhythmState; mods: Modifiers; hrv: HrvPhase; rng: Record<StreamName, Sfc32State>; breath?: BreathClock | undefined },
   mainsHz: 50 | 60,
 ): EcgGenInputs {
   return {
+    ...(ps.breath ? { breath: ps.breath } : {}), // Stage 5.1 (R-S3-3)
     events: ps.rhythm.events,
     fwaves: ps.rhythm.fwaves,
     hrv: ps.hrv,

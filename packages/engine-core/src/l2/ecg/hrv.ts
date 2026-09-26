@@ -21,16 +21,19 @@ export function drawHrvPhase(s: Sfc32State): HrvPhase {
   return { phi: 2 * Math.PI * uniform(s), psi: 2 * Math.PI * uniform(s) };
 }
 
-/** Respiratory phase term in [−1, 1] at time t (used for RSA, baseline wander and QRS amplitude modulation). */
-export function respSin(t: number, ph: HrvPhase): number {
-  return Math.sin(2 * Math.PI * F_RESP_HZ * t + ph.phi);
+/**
+ * Respiratory phase term in [−1, 1] at time t (used for RSA, baseline wander and QRS amplitude modulation). With a
+ * BreathClock (Stage 5.1, breath-clock.ts) it follows the breathing; without one, Stage 1's fixed 15/min clock.
+ */
+export function respSin(t: number, ph: HrvPhase, clock?: { phaseRad(t: number): number }): number {
+  return clock ? Math.sin(clock.phaseRad(t)) : Math.sin(2 * Math.PI * F_RESP_HZ * t + ph.phi);
 }
 
 /** Next sinus RR interval (s) for a beat starting at time t. Consumes one normal draw when HRV is on. */
-export function sinusRR(meanRR: number, t: number, ph: HrvPhase, mods: Pick<Modifiers, 'rsa' | 'hrvScale'>, s: Sfc32State): number {
+export function sinusRR(meanRR: number, t: number, ph: HrvPhase, mods: Pick<Modifiers, 'rsa' | 'hrvScale'>, s: Sfc32State, clock?: { phaseRad(t: number): number }): number {
   const k = mods.hrvScale;
   if (!(k > 0)) return meanRR;
-  const rsa = A_RSA_MAX_S * mods.rsa * meanRR * k * respSin(t, ph);
+  const rsa = A_RSA_MAX_S * mods.rsa * meanRR * k * respSin(t, ph, clock);
   const lf = A_LF_S * meanRR * k * Math.sin(2 * Math.PI * 0.1 * t + ph.psi);
   const eps = EPS_SD_S * meanRR * k * normal(s);
   return Math.max(MIN_RR_S, meanRR + rsa + lf + eps);

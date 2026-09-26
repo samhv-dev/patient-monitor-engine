@@ -1900,7 +1900,7 @@ Planning prototype: RR vs the driver phase r = **0.85** with a 10/min driver (r 
 - Consumes: `F_RESP_HZ`, `HrvPhase` (`hrv.ts`). With Stage 3: `lastCycleBefore(d: DriverState, t): Cycle | undefined` (`l2/resp/driver.ts`), `PipelineState.resp.driver`.
 - Produces: `interface BreathClock { rateBpm(t): number; phaseRad(t): number }`, `fixedBreathClock(ph: HrvPhase): BreathClock`, `interface BreathCycleLike { seq; t0; ti; te }`, `cycleBreathClock(lastCycleBefore, fallback): BreathClock`; `respSin(t, ph, clock?)`, `sinusRR(meanRR, t, ph, mods, s, clock?)`; `RhythmCtx.breath?`, `GenInputs.breath?`; `ecgGenInputs(ps & { breath? }, mainsHz)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/breath-clock.test.ts` with exactly:
 
@@ -1986,12 +1986,12 @@ describe('Stage 5.1 BreathClock seam (R-S3-3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/breath-clock.test.ts`
 Expected: FAIL: cannot resolve `../../../../src/l2/ecg/breath-clock.ts`.
 
-- [ ] **Step 3: Create the clock module**
+- [x] **Step 3: Create the clock module**
 
 Create (or replace) `packages/engine-core/src/l2/ecg/breath-clock.ts` with exactly:
 
@@ -2045,7 +2045,7 @@ export function cycleBreathClock(lastCycleBefore: (t: number) => BreathCycleLike
 }
 ```
 
-- [ ] **Step 4: Thread the optional clock through the ECG**
+- [x] **Step 4: Thread the optional clock through the ECG**
 
 In `packages/engine-core/src/l2/ecg/hrv.ts`, replace this block (it occurs exactly once):
 
@@ -2272,12 +2272,12 @@ with:
 
 ```
 
-- [ ] **Step 5: Run the new test and every ECG test (RSA/wander tests must be unchanged)**
+- [x] **Step 5: Run the new test and every ECG test (RSA/wander tests must be unchanged)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg test/engine`
 Expected: PASS.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/breath-clock.ts packages/engine-core/src/l2/ecg/hrv.ts packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/generator.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s51/breath-clock.test.ts

@@ -4,6 +4,7 @@ import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { BeatOrigin, EngineEvent, Modifiers, RhythmId, RhythmOpts } from '../../types.ts';
 import type { EcgEvent } from './kernels.ts';
 import type { HrvPhase } from './hrv.ts';
+import type { BreathClock } from './breath-clock.ts';
 import type { BeatTemplateId } from './beat-templates.ts';
 import { RHYTHMS, type RhythmDef } from './rhythms.ts';
 import type { VfState } from './arrest/vf.ts';
@@ -97,6 +98,8 @@ export interface RhythmCtx {
   mods: Modifiers;
   rng: Record<StreamName, Sfc32State>;
   hrv: HrvPhase;
+  /** Stage 5.1 (R-S3-3): respiratory clock for RSA and QRS amplitude modulation; absent = fixed 15/min clock. */
+  breath?: BreathClock | undefined;
 }
 
 export function clamp(x: number, lo: number, hi: number): number {
