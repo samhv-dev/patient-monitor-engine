@@ -4133,11 +4133,13 @@ git push origin stage-7b-lungs
 
 ### Task 29: NOTICES, gate screenshots and the gate note
 
+> **Executor note:** NOTICES rows N-090/N-091/N-092 (N-062 is 7a's; N-070–077 are reserved by the 7c/7g plans and N-080–084 by 8a); check-notices OK. Screenshots are JPEG ≤ 60 KB (PNG exceeded the limit), captured at ×4 on port 5216 (the engine's time scale is 0.25–4), scrolled to the top before each shot. The gate note's test counts are filled by Task 30's final run.
+
 **Files:**
 - Modify: `NOTICES.md` (three rows)
 - Create: `apps/demo/scripts/stage7b-shots.mjs`, `docs/gates/stage-7b.md`, `docs/gates/stage-7b/*.png`
 
-- [ ] **Step 1: NOTICES rows**
+- [x] **Step 1: NOTICES rows**
 
 Find the highest `N-0xx` on `origin/main` (`grep -o 'N-0[0-9][0-9]' NOTICES.md | sort | tail -1`) and add the next three ids (shown here as N-0A/N-0B/N-0C) to the table:
 
@@ -4149,7 +4151,7 @@ Find the highest `N-0xx` on `origin/main` (`grep -o 'N-0[0-9][0-9]' NOTICES.md |
 
 Run `npx -y pnpm@9.15.9 check-notices` → OK.
 
-- [ ] **Step 2: Screenshot script**
+- [x] **Step 2: Screenshot script**
 
 `apps/demo/scripts/stage7b-shots.mjs`:
 
@@ -4180,11 +4182,11 @@ await b.close();
 
 Run it (build first); keep each PNG ≤ 60 KB (lower the viewport or switch to `type: 'jpeg', quality: 70` if not).
 
-- [ ] **Step 3: Gate note**
+- [x] **Step 3: Gate note**
 
 Write `docs/gates/stage-7b.md` with: the test count (`npx -y pnpm@9.15.9 test` summary), every acceptance number measured in Tasks 20–25 next to its prototype value and band (the tables of this plan's "Prototype results"), the `signature <id>: …` lines from Task 20, the Pulse exclusions of Task 21, the Stage 3 re-check list of Task 25, the Edmark apnoea times of Task 17, the CPU per tick, whether Tasks 26/27 ran or were skipped (and why), the deviations list of this plan (copy "Deviations from the tables/catalogue"), the data-extraction choices (Appendix A header), and the six screenshots with one line each on what they show.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add NOTICES.md apps/demo/scripts/stage7b-shots.mjs docs/gates/stage-7b.md docs/gates/stage-7b
