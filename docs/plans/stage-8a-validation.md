@@ -1095,7 +1095,7 @@ git push
 
 Measured while planning: mgh021 metadata as in the test; its 600–900 s window decodes to ECG/ABP/CO2 at 360 Hz. PWDB (4,374 subjects, 729 per age): radial PTT p50 84 / 82 / 76 / 72 / 66 / 62 ms at 25–75 y, femoral 120 → 68 ms; about 2 % of subjects carry negative PTTs (failed onsets), dropped. The PWDB MD5s in `PWDB_FILES` were verified on download.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/datasets/mghdb-pwdb.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/datasets/mghdb-pwdb.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1138,11 +1138,11 @@ describe('PWDB per-site/age statistics', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/mghdb-pwdb.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/datasets/mghdb.ts`**
+- [x] **Step 3: Write `packages/validation/src/datasets/mghdb.ts`**
 
 ```ts
 // MGH/MF Waveform Database (ODC-By 1.0): header metadata (age, sex, rhythm, ventilation mode from the # comments),
@@ -1224,7 +1224,7 @@ export function mghSignals(h: WfdbHeader, meta: MghMeta, dat: Uint8Array, fromS:
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/datasets/pwdb.ts`**
+- [x] **Step 4: Write `packages/validation/src/datasets/pwdb.ts`**
 
 ```ts
 // PWDB (PDDL 1.0) virtual-subject indices: per-site, per-age distributions of the timing metrics we also measure.
@@ -1265,11 +1265,11 @@ export function pwdbStats(indicesCsv: string, sites: PwdbSite[] = ['Radial', 'Fe
 }
 ```
 
-- [ ] **Step 5: Run the test. Expected: PASS (2 tests)**
+- [x] **Step 5: Run the test. Expected: PASS (2 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/mghdb-pwdb.test.ts`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/validation/src/datasets/mghdb.ts packages/validation/src/datasets/pwdb.ts packages/validation/test/datasets/mghdb-pwdb.test.ts
