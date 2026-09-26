@@ -114,7 +114,7 @@ Every block in this plan was run in a scratch copy of `origin/main` 121c3f4 merg
 - Consumes: `origin/main` with Stage 2 merged.
 - Produces: branch `stage-4b-device-layer` in `scratch/wt-stage-4b`; `@pme/skins` importable from `@pme/engine-core` and `@pme/renderer`.
 
-- [ ] **Step 1: Check that Stage 2 is on main, then create the worktree**
+- [x] **Step 1: Check that Stage 2 is on main, then create the worktree**
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -126,14 +126,14 @@ npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 Expected: both paths print (Stage 2 is merged); if they do not, STOP — this plan's edit blocks anchor on Stage 2 code. Then `Preparing worktree (new branch 'stage-4b-device-layer')` and pnpm `Done`. From here on every command runs in the worktree.
 
-- [ ] **Step 2: Baseline**
+- [x] **Step 2: Baseline**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck && npx -y pnpm@9.15.9 -r test 2>&1 | grep -E "Tests "
 ```
 Expected: typecheck exit 0; every package passes (on the plan author's base: engine-core 305, skins 155, audio 58, controller 97, validation 16, renderer 31). Note your numbers in the gate note; later "Expected" counts in this plan are for the NEW test files only, so they do not depend on the base.
 
-- [ ] **Step 3: Add the workspace dependency**
+- [x] **Step 3: Add the workspace dependency**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/engine-core add '@pme/skins@workspace:*'
@@ -144,7 +144,7 @@ grep -n '@pme/skins' packages/engine-core/package.json packages/renderer/package
 ```
 Expected: each file has `"@pme/skins": "workspace:*"` (pnpm writes `workspace:^`; the other workspace deps use `*`); `pnpm-lock.yaml` gains the two `link:../skins` entries.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/package.json packages/renderer/package.json pnpm-lock.yaml
@@ -168,7 +168,7 @@ git commit -m "build: engine-core and renderer depend on @pme/skins (stage 4b)" 
 - Consumes: `resolveSkin`, `contrastRatio`, `validate` (Stage 4a).
 - Produces: optional skin fields `alarms.numericStyle?: 'flash-text' | 'flash-box'` and `layout.badge?: string` (types, schema, CONTRACT.md); `mindray-like` sets both, `ge-like` sets the badge; the `ecg-grid` theme grid is minor `#FAE2E2`, major `#F4C4C4`. Task 20 (device UI) reads `r.skin.alarms.numericStyle ?? 'flash-text'` and `r.skin.layout.badge`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/skins/test/g4a-followups.test.ts`:
 
@@ -208,12 +208,12 @@ describe('G4a follow-ups', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/skins && npx vitest run test/g4a-followups.test.ts; cd -`
 Expected: FAIL — the ecg-grid contrast test (`saadat-like IBP1 … expected 1.81 to be greater than or equal to 3`), `numericStyle` undefined for mindray-like, `badge` undefined
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/skins/CONTRACT.md`, replace this block (it occurs exactly once):
 
@@ -442,7 +442,7 @@ with:
     alwaysOn: string[];
 ```
 
-- [ ] **Step 3b: Refresh the seven ecg-grid snapshots and read the diff**
+- [x] **Step 3b: Refresh the seven ecg-grid snapshots and read the diff**
 
 ```bash
 cd packages/skins && npx vitest run -u && cd ../..
@@ -451,7 +451,7 @@ git diff packages/skins/test/__snapshots__/resolve.test.ts.snap | grep '^[-+] ' 
 ```
 Expected: exactly four distinct changed lines, each 7 times: `-"major": "#E08888"`, `-"minor": "#F4C8C8"`, `+"major": "#F4C4C4"`, `+"minor": "#FAE2E2"` (the seven skin/preset × ecg-grid snapshots). Anything else changed means a data edit went wrong: stop and compare with Step 3.
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/skins && npx vitest run test/g4a-followups.test.ts; cd -
@@ -459,7 +459,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/skins/CONTRACT.md packages/skins/src/data/skins/ge-like.json packages/skins/src/data/skins/mindray-like.json packages/skins/src/data/themes/ecg-grid.json packages/skins/src/schema.ts packages/skins/src/types.ts packages/skins/test/g4a-followups.test.ts packages/skins/test/__snapshots__/resolve.test.ts.snap
@@ -480,7 +480,7 @@ git commit -m "feat(skins): G4a follow-ups — dimmed ecg-grid major line, mindr
 - Consumes: `types.ts` / `types-hemo.ts` (Stages 1–2).
 - Produces (`packages/engine-core/src/types-device.ts`, re-exported from the package): `AlarmLevel = 1|2|3`, `AlarmPriority`, `AgeBand = 'adult'|'paed'|'neo'`, `DefibEvent` `{kind:'defib', action:'selectEnergy'|'charge'|'shock'|'disarm'|'syncOn'|'syncOff'|'preselect', energyJ?, outcome?}`, `PacerEvent` `{kind:'pacer', action:'set', mode:'off'|'demand'|'fixed', ratePpm?, mA?, pause?, fault?:'none'|'failureToSense'|'failureToCapture'}`, `DeviceClinicalEvent`, `AlarmDeviceAction` `{device:'alarm', action:'silence'|'pause'|'ack'|'setLimit'|'setVolume'|'enable'|'enableAll'|'arrhythmiaAnalysis', param?, low?, high?, value?}`, `MonitorDeviceAction` `{device:'monitor', action:'skin'|'ageBand', value}`, `AlarmEntry`, `LimitState`, `DeviceEvent` (`alarmStatus`, `deviceStatus`). In `types.ts`: `DeviceAction` gains the two actions, `Command` gains `{type:'applyEvent'; event: DeviceClinicalEvent}`, the `alarm` event gains `level?: AlarmLevel`, the `tone` event gains `chargeS?`, `EngineEvent` gains `DeviceEvent`. Task 7 adds `volume` to `alarmStatus` and Task 13 extends `deviceStatus`, each with an edit block.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/types-device.test.ts`:
 
@@ -511,12 +511,12 @@ describe('Stage 4b types', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx tsc -p packages/engine-core/tsconfig.json`
 Expected: errors — `Module '"../src/index.ts"' has no exported member 'AlarmDeviceAction'` (and the other new names). Vitest alone would pass here because type-only imports are erased.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -738,7 +738,7 @@ with:
 export type EngineEventType = EngineEvent['type'];
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/types-device.test.ts; cd -
@@ -746,7 +746,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/types-device.ts packages/engine-core/src/types.ts packages/engine-core/test/types-device.test.ts
@@ -767,7 +767,7 @@ git commit -m "feat(engine-core): stage 4b device types — defib/pacer events, 
 - Consumes: `designEcgFilter`, `FILTER_BANDS` (Stage 1 `l3/ecg-filter.ts`).
 - Produces: `EcgFilterMode = 'monitor' | 'diagnostic' | \`band:${number}-${number}\``; `filterBand(mode): readonly [lo, hi] | null`; `designEcgFilter` accepts band modes (notch when hi < 100 Hz); the engine accepts `{device:'ecg', action:'filter', value:'band:0.5-24'}`. Task 16 maps skin filter names to these modes.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/ecg-filter-bands.test.ts`:
 
@@ -821,12 +821,12 @@ describe('ECG filter bands (E-4a-1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/ecg-filter-bands.test.ts; cd -`
 Expected: FAIL — `filterBand` is not exported (`SyntaxError … does not provide an export named 'filterBand'`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 2), replace this block (it occurs exactly once):
 
@@ -947,7 +947,7 @@ export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}
 export type Command = CommandBase &
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/ecg-filter-bands.test.ts; cd -
@@ -955,7 +955,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/ecg-filter.ts packages/engine-core/src/types.ts packages/engine-core/test/l3/ecg-filter-bands.test.ts
@@ -974,7 +974,7 @@ git commit -m "feat(engine-core): ECG filter bands from skins (E-4a-1): band:<lo
 - Consumes: `resolveSkin`, `LimitTable`, `ResolvedSkin`, `Skin` from `@pme/skins` (Task 1 dependency).
 - Produces (`l3/alarms/profile.ts`): `LIMIT_KEYS`, `BAROMETRIC_MMHG = 760`, `PACING_HR_DASHES`, `interface LimitDef {numeric, label, upper, low, high, level, approximate}`, `interface DeviceProfile` (fields listed in the file), `limitGroup(key)`, `skinBand(b)`, `deviceProfile(id, band = 'adult'): DeviceProfile`. Tasks 6–8 add `volume` and `arrhythmiaPvcPerMin` to the profile with edit blocks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/profile.test.ts`:
 
@@ -1045,12 +1045,12 @@ describe('deviceProfile', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/profile.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/profile.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/profile.ts`:
 
@@ -1207,7 +1207,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/profile.test.ts; cd -
@@ -1215,7 +1215,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/test/l3/alarms/profile.test.ts
@@ -1234,7 +1234,7 @@ git commit -m "feat(engine-core): DeviceProfile from the resolved skin — limit
 - Consumes: `DeviceProfile`, `LimitDef` (Task 5).
 - Produces (`l3/alarms/text.ts`): `type FixedAlarmId`, `fixedText(p, id, level, technical)`, `limitText(p, def, 'HIGH'|'LOW', value)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/text.test.ts`:
 
@@ -1261,12 +1261,12 @@ describe('alarm texts', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/text.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/text.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/text.ts`:
 
@@ -1331,7 +1331,7 @@ export function limitText(p: DeviceProfile, d: LimitDef, side: 'HIGH' | 'LOW', v
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/text.test.ts; cd -
@@ -1339,7 +1339,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/text.ts packages/engine-core/test/l3/alarms/text.test.ts
@@ -1360,7 +1360,7 @@ git commit -m "feat(engine-core): alarm message texts — IEC-style ***/**/* wit
 - Consumes: `DeviceProfile`, `limitGroup` (Task 5); `AlarmDeviceAction`, `AlarmEntry`, `LimitState` (Task 3).
 - Produces (`l3/alarms/manager.ts`): `interface Condition {id, level, category, text, delayS, numeric?}`, `interface AlarmConfig`, `interface AlarmMgrState`, `LEVEL_PRIORITY`, `defaultConfig(p)`, `createAlarmMgr(p)`, `setProfile(s, p, t, out)`, `limitOf(s, key)`, `isEnabled(s, key)`, `validateAlarmAction(s, a)`, `applyAlarmAction(s, a, t, out)`, `stepAlarms(s, t, conds, out)`, `alarmStatus(s, t)`. `DeviceProfile` gains `volume`; the `alarmStatus` event gains `volume`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/manager.test.ts`:
 
@@ -1491,12 +1491,12 @@ describe('alarm manager', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/manager.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/manager.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/manager.ts`:
 
@@ -1814,7 +1814,7 @@ with:
   | {
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/manager.test.ts; cd -
@@ -1822,7 +1822,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/manager.ts packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/src/types-device.ts packages/engine-core/test/l3/alarms/manager.test.ts
@@ -1842,7 +1842,7 @@ git commit -m "feat(engine-core): alarm manager — onset delays, IEC-style latc
 - Consumes: Tasks 5–7.
 - Produces (`l3/alarms/conditions.ts`): `VF_CONFIRM_S = 3`, `DESAT_DELAY_S = 20`, `STALE_S`, `VT_GAP_S`, `EXTREME_OFFSET`, `EXTREME_CLAMP`, `interface AlarmInputs`, `createInputs(t0)`, `observeQrs(inp, tR)`, `observeEvent(inp, e)`, `buildConditions(s, inp, t): Condition[]`. `DeviceProfile` gains `arrhythmiaPvcPerMin`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/alarms/conditions.test.ts`:
 
@@ -1928,12 +1928,12 @@ describe('alarm conditions', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/alarms/conditions.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/alarms/conditions.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/alarms/conditions.ts`:
 
@@ -2122,7 +2122,7 @@ with:
     pacer: s.pacer ? structuredClone(s.pacer) : null,
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/alarms/conditions.test.ts; cd -
@@ -2130,7 +2130,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/conditions.ts packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/test/l3/alarms/conditions.test.ts
@@ -2152,7 +2152,7 @@ git commit -m "feat(engine-core): alarm conditions — limits, desat, asystole, 
 - Consumes: Tasks 3–8; the engine's `flush`, `apply`, `validate`, `snapshot/restore` (Stages 1–2).
 - Produces (`l3/device-layer.ts`, first version; Task 13 replaces it): `VF_RHYTHMS`, `DEFAULT_SKIN = 'philips-like'`, `interface DeviceState {alarms, inputs}`, `interface DeviceHost {simT, rhythmId, spo2Probe, setModifiers}`, `createDevice(skin, ageBand)`, `validateDeviceCommand(d, cmd)`, `applyDeviceCommand(d, cmd, host, out)`, `deviceOnQrs(d, tR)`, `stepDevice(d, host, due, out)`. `engine.ts`: `EngineOptions.device.skin` picks the profile; `attachSensor ecg`; `device alarm|monitor` commands; raw L2 technical alarm events are re-issued by the manager with `level`; the snapshot carries `dev`. Test helper `test/helpers/device.ts`: `devRig(skin, opts)`, `alarmsOf`, `beats`, `markers`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/engine-core/test/engine/alarms-engine.test.ts`:
 
@@ -2313,12 +2313,12 @@ export const beats = (ev: EngineEvent[]): Beat[] => ev.filter((x): x is Beat => 
 export const markers = (ev: EngineEvent[], kind?: Marker['kind']): Marker[] => ev.filter((x): x is Marker => x.type === 'marker' && (!kind || x.kind === kind));
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/engine-core && npx vitest run test/engine/alarms-engine.test.ts; cd -`
 Expected: FAIL — `alarmsOf(ev, 'HR_HIGH', 'raised')[0]` is undefined (no alarm events yet) and `device monitor` commands are rejected
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 11), replace this block (it occurs exactly once):
 
@@ -2691,7 +2691,7 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/alarms-engine.test.ts; cd -
@@ -2699,7 +2699,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/alarms/conditions.ts packages/engine-core/src/l3/device-layer.ts packages/engine-core/test/engine/alarms-engine.test.ts packages/engine-core/test/helpers/device.ts
@@ -2718,7 +2718,7 @@ git commit -m "feat(engine-core): device layer wired into the engine — live al
 - Consumes: `uniform`, `createRngState` (Stage 1 rng).
 - Produces (`l3/defib-pacer/outcome.ts`): `ShockClass`, `ShockOutcome = 'unchanged'|'vf'|'asystole'|'pea'|'rosc'|'sinus'`, the table constants, `T_PEAK_WINDOW_S = 0.04`, `shockClass(id, pulseless)`, `interface ShockContext`, `outcomeProbabilities(c)`, `drawOutcome(c, rng)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/outcome.test.ts`:
 
@@ -2779,12 +2779,12 @@ describe('post-shock outcome table', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/outcome.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/outcome.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/outcome.ts`:
 
@@ -2878,7 +2878,7 @@ export function drawOutcome(c: ShockContext, rng: Sfc32State): ShockOutcome {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/outcome.test.ts; cd -
@@ -2886,7 +2886,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  4 passed (4)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/outcome.ts packages/engine-core/test/l3/defib-pacer/outcome.test.ts
@@ -2905,7 +2905,7 @@ git commit -m "feat(engine-core): post-shock outcome table (brief §6.5) with VF
 - Consumes: `projectLead` (Stage 1 `l2/ecg/vcg.ts`, read-only import).
 - Produces (`l3/defib-pacer/sync.ts`): `SYNC_RATE = 500`, `interface SyncState`, `createSyncState(n0)`, `syncStep(st, end, vcg): Array<{r, at}>`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/sync.test.ts`:
 
@@ -2956,12 +2956,12 @@ describe('sync detector', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/sync.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/sync.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/sync.ts`:
 
@@ -3024,7 +3024,7 @@ export function syncStep(st: SyncState, end: number, vcg: (n: number) => [number
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/sync.test.ts; cd -
@@ -3032,7 +3032,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/sync.ts packages/engine-core/test/l3/defib-pacer/sync.test.ts
@@ -3052,7 +3052,7 @@ git commit -m "feat(engine-core): sync R detector — marks every R within 20 ms
 - Consumes: `DeviceProfile` (Task 5), `DefibEvent`, `PacerEvent` (Task 3), `RHYTHMS` (Stage 5, read-only), `TcpSpec` (Stage 5 type).
 - Produces: `defib.ts` — `DefibSpec`, `FALLBACK_DEFIB` (ZOLL-like), `CHARGE_S_PER_J = 7/200`, `ENERGY_RANGE_J`, `interface DefibState`, `createDefib(spec)`, `chargeTimeS(spec, J)`, `validateDefib(d, ev)`, `applyDefib(d, ev, t, spec, out): 'shock' | null`, `stepDefib(d, t, spec, out)`, `afterShock(d, t, atS, synced, outcome, out)`; `pacer.ts` — `PacerSpec`, `FALLBACK_PACER`, `NO_CAPTURE_MA`, `interface PacerState`, `createPacer(spec)`, `validatePacer(ev, spec)`, `applyPacer(p, ev)`, `tcpSpec(p, spec, thresholdMa, leadsOff): TcpSpec | null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/defib-pacer/defib-pacer-units.test.ts`:
 
@@ -3100,12 +3100,12 @@ describe('pacer → Modifiers.tcp', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/defib-pacer/defib-pacer-units.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/defib-pacer/defib.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/engine-core/src/l3/defib-pacer/defib.ts`:
 
@@ -3319,7 +3319,7 @@ export function tcpSpec(p: PacerState, spec: PacerSpec, thresholdMa: number, lea
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/defib-pacer/defib-pacer-units.test.ts; cd -
@@ -3327,7 +3327,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/defib-pacer/defib.ts packages/engine-core/src/l3/defib-pacer/pacer.ts packages/engine-core/test/l3/defib-pacer/defib-pacer-units.test.ts
@@ -3352,7 +3352,7 @@ git commit -m "feat(engine-core): defibrillator (energy, charge time, ready, aut
 - Consumes: Tasks 9–12.
 - Produces: `l3/device-layer.ts` replaced — `DeviceState` gains `defib, pacer, sync, pending, lastBeat, tcpKey, statusKey, lastStatusT`; `DeviceHost` gains `pulseless, leadsOff, committedN, vcgAt(n), outcomeRng, l1(v), setRhythm(id, opts), setHr(v, ramp?), setL1(v, value, ramp?)`; constants `SYNC_DELAY_S = 0.02`, `T_PEAK_QT_FRACTION`, `ISO_S`, `ROSC_*`, `CARDIOVERSION_*`. `setTarget paceThresholdMa` and `applyEvent defib|pacer` are device commands. The `deviceStatus` event gains `defib.lastShock` and `hrDashes`; the `shock` marker carries `data.atS`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/engine-core/test/engine/defib-engine.test.ts`:
 
@@ -3625,12 +3625,12 @@ with:
     expect(evs.map((e) => e.type)).toEqual(['alarm', 'tone', 'deviceStatus']);
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/engine-core && npx vitest run test/engine/defib-engine.test.ts test/engine/pacer-engine.test.ts test/engine/device-determinism.test.ts; cd -`
 Expected: FAIL — `applyEvent defib` is rejected (`command type applyEvent is not implemented`), so no `chargeStart`/`shock` markers; the pacer tests see no `paceSpike`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/engine.ts` (edit 1 of 2), replace this block (it occurs exactly once):
 
@@ -4040,7 +4040,7 @@ with:
     };
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/defib-engine.test.ts test/engine/pacer-engine.test.ts test/engine/device-determinism.test.ts; cd -
@@ -4048,7 +4048,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  9 passed (9)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l3/device-layer.ts packages/engine-core/src/types-device.ts packages/engine-core/test/engine/defib-engine.test.ts packages/engine-core/test/engine/device-determinism.test.ts packages/engine-core/test/engine/engine-commands.test.ts packages/engine-core/test/engine/pacer-engine.test.ts packages/engine-core/test/types-device.test.ts
@@ -4068,7 +4068,7 @@ git commit -m "feat(engine-core): shocks with rail artefact and outcome table, s
 - Consumes: `MonitorEngine.readSamples('vcgX'|'vcgY'|'vcgZ')`, `now()` (public API only), `projectLeads`, `designEcgFilter('diagnostic')`.
 - Produces: `capture12(e, endT?): Capture12`, `LAYOUT_3X4`, `CAPTURE_S`, `interface Capture12 {t0, rate, durationS, leads: Record<LeadId, Float32Array>, filter, layout, paper, cal, measurements: {hr, axisDeg}}` — exported from `@pme/engine-core`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/capture12.test.ts`:
 
@@ -4121,12 +4121,12 @@ describe('capture12', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/capture12.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../src/l3/capture12/capture.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -4248,7 +4248,7 @@ function measure(leads: Record<LeadId, Float32Array>): Capture12['measurements']
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/capture12.test.ts; cd -
@@ -4256,7 +4256,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/l3/capture12/capture.ts packages/engine-core/test/l3/capture12.test.ts
@@ -4277,7 +4277,7 @@ git commit -m "feat(engine-core): capture12 — 10 s of 12 leads through the dia
 - Consumes: engine events and commands.
 - Produces (exported from `@pme/engine-core`): `class TrendStore {bytes, latestS, oldestS, record(e), series(id, fromS, toS), table(ids, stepS, fromS, toS)}`, `TREND_NUMERICS`, `TREND_SLOTS = 28 800`; `class EventLog {entries, command(cmd, t), event(e), count(kind), toJSON(), toCSV()}`, `LogEntry`, `LogKind`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/engine-core/test/l3/trends/trends.test.ts`:
 
@@ -4347,12 +4347,12 @@ describe('event log', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/engine-core && npx vitest run test/l3/trends/trends.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../../../src/l3/trends/event-log.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/index.ts`, replace this block (it occurs exactly once):
 
@@ -4534,7 +4534,7 @@ export class TrendStore {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/engine-core && npx vitest run test/l3/trends/trends.test.ts; cd -
@@ -4542,7 +4542,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/index.ts packages/engine-core/src/l3/trends/event-log.ts packages/engine-core/src/l3/trends/trend-store.ts packages/engine-core/test/l3/trends/trends.test.ts
@@ -4561,7 +4561,7 @@ git commit -m "feat(engine-core): trend store (22 numerics × 8 h ≤ 3 MB) and 
 - Consumes: `ResolvedSkin`, `engineFilterFor` (`@pme/skins`); `WAVE_STYLE` (Stage 2).
 - Produces (`packages/renderer/src/skin-plan.ts`): `interface PlanLane`, `interface RenderPlan`, `LEAD_LABEL`, `filterModeFor(band)`, `leadOf(skinLead)`, `formatGain(mult, gainLabel)`, `ecgLabel(template, lead, mult, gainLabel, filterName)`, `renderPlan(r, page?)`, `legacyPlan(leads, waves)`. Tasks 18 and 21 extend it with edit blocks.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/skin-plan.test.ts`:
 
@@ -4613,12 +4613,12 @@ describe('renderPlan', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/skin-plan.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/skin-plan.ts`:
 
@@ -4754,7 +4754,7 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -
@@ -4762,7 +4762,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  5 passed (5)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/skin-plan.ts packages/renderer/test/skin-plan.test.ts
@@ -4781,7 +4781,7 @@ git commit -m "feat(renderer): render plan from the resolved skin (RR-1) and the
 - Consumes: `SweepLane` (Stage 1).
 - Produces: `LaneConfig.grid?`, `LaneConfig.cursorLine?`, `SweepLane.lastDrawnIndex`; the grid is repainted inside every cleared rect.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/sweep-lane-4b.test.ts`:
 
@@ -4836,12 +4836,12 @@ describe('SweepLane 4b options', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/sweep-lane-4b.test.ts; cd -`
 Expected: FAIL — no grid strokes after `reset` (`expected [] to deeply equal ['#FAE2E2', '#F4C4C4']`) and `lastDrawnIndex` undefined
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/sweep-lane.ts` (edit 1 of 4), replace this block (it occurs exactly once):
 
@@ -4960,7 +4960,7 @@ with:
   }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/sweep-lane-4b.test.ts; cd -
@@ -4968,7 +4968,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  3 passed (3)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/sweep-lane.ts packages/renderer/test/sweep-lane-4b.test.ts
@@ -4992,7 +4992,7 @@ git commit -m "feat(renderer): sweep lane grid painter (RR-4) and optional curso
 - Consumes: Tasks 14, 16, 17.
 - Produces: `overlays.ts` — `DRAW_LAG_S`, `interface OverlayMark`, `class Overlays {leadsOff, push(e), due(t), clear()}`, `shows(plan, m)`, `drawMark(ctx, lane, m, plan, pxPerMm)`, `drawLeadOffDashes(ctx, lane, from, to)`; `RenderPlan` gains `paceDetect`, `devicePacer`; `MonitorCore` is replaced (same public API plus `setPlan(plan)`, `capture12()`; constants `AUTO_GAIN_*`); `protocol.ts` — `CoreOptions.plan?`, messages `plan` and `capture12`; `worker-host.ts` — `Host.capture12()`, control `plan`; `engine.worker.ts` handles both.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/monitor-core-4b.test.ts`:
 
@@ -5082,12 +5082,12 @@ describe('MonitorCore with a skin plan', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/monitor-core-4b.test.ts test/monitor-core.test.ts; cd -`
 Expected: FAIL — `setPlan` is not a function; `CoreOptions.plan` ignored (the saadat-like texts come out as `II  M`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/engine.worker.ts`, replace this block (it occurs exactly once):
 
@@ -5906,7 +5906,7 @@ with:
       cancelAnimationFrame(raf);
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/monitor-core-4b.test.ts test/monitor-core.test.ts; cd -
@@ -5914,7 +5914,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  17 passed (17)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/engine.worker.ts packages/renderer/src/monitor-core.ts packages/renderer/src/overlays.ts packages/renderer/src/protocol.ts packages/renderer/src/skin-plan.ts packages/renderer/src/worker-host.ts packages/renderer/test/monitor-core-4b.test.ts
@@ -5935,7 +5935,7 @@ git commit -m "feat(renderer): MonitorCore draws from the skin plan — setPlan 
 - Consumes: `alarmStatus` (Task 7), `ResolvedSkin`, `AlarmSounder`/`ToneScheduler` (Stage 4a).
 - Produces: `alarm-view.ts` — `type AlarmStatus`, `ROTATE_S`, `interface BarView`, `visibleAlarms(st, r, t, pump?)`, `barView(st, r, t, pump?)`, `TILE_NUMERICS`, `interface TileAlarmView`, `tileAlarmView(param, st, r, t, pump?)`; `alarm-audio.ts` — `interface SounderLike`, `class AlarmAudioBridge {onStatus(st)}`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/renderer/test/alarm-audio.test.ts`:
 
@@ -6063,12 +6063,12 @@ describe('tileAlarmView', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to see them fail**
+- [x] **Step 2: Run them to see them fail**
 
 Run: `cd packages/renderer && npx vitest run test/alarm-view.test.ts test/alarm-audio.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/alarm-view.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/alarm-audio.ts`:
 
@@ -6218,7 +6218,7 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/alarm-view.test.ts test/alarm-audio.test.ts; cd -
@@ -6226,7 +6226,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  7 passed (7)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/alarm-audio.ts packages/renderer/src/alarm-view.ts packages/renderer/test/alarm-audio.test.ts packages/renderer/test/alarm-view.test.ts
@@ -6246,7 +6246,7 @@ git commit -m "feat(renderer): alarm bar/lamp/countdown and tile views from alar
 - Consumes: Task 19 views, `formatNibp` (Stage 2), `formatDate` (`@pme/skins`), `Capture12`, `TrendStore`.
 - Produces: `device-ui.ts` — `flashCss(r)`, `class DeviceUI {header, tiles, setSkin(r, page?), onEvent(e), paint(t), destroy()}`; `views.ts` — `PAPER`, `report12Size(pxPerMm)`, `draw12Lead(ctx, capture, pxPerMm): number`, `interface TrendSeries`, `drawTrend(ctx, store, series, fromS, toS, w, h, style, background?)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/views.test.ts`:
 
@@ -6285,12 +6285,12 @@ describe('views', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/views.test.ts; cd -`
 Expected: FAIL — `Failed to resolve import "../src/views.ts"`
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `packages/renderer/src/device-ui.ts`:
 
@@ -6646,7 +6646,7 @@ export function drawTrend(ctx: Ctx2D, store: TrendStore, series: readonly TrendS
 }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/views.test.ts; cd -
@@ -6654,7 +6654,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  2 passed (2)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/device-ui.ts packages/renderer/src/views.ts packages/renderer/test/views.test.ts
@@ -6676,7 +6676,7 @@ git commit -m "feat(renderer): device UI (alarm header, skin tiles with bells/li
 - Consumes: Tasks 14–20; `createTonePlayer`, `getAlarmProfile`, `AlarmSounder` (Stage 4a, RR-6).
 - Produces: `MountOptions.skin` (any `resolveSkin` id), `theme?`, `page?`; `MonitorHandle.setSkin(id, {theme?, page?})`, `.skin`, `.capture12()`, `.trends`, `.eventLog`; `renderPlan(r, page?, only?: LaneOverride)` keeps the lanes a page names; the HR tile keeps the class `pme-tile`; the renderer index exports the Stage 4b modules.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/renderer/test/skin-plan.test.ts`, replace this block (it occurs exactly once):
 
@@ -6701,12 +6701,12 @@ with:
     const p = legacyPlan(['ecgII', 'V5'], ['abp']);
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -`
 Expected: FAIL — the new `renderPlan(…, { lanes, waves })` test: the override is ignored (`expected [ … 'ECG1', 'ecgII' … 'CO2' ] to deeply equal …`)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/device-ui.ts`, replace this block (it occurs exactly once):
 
@@ -7121,7 +7121,7 @@ with:
     }
 ```
 
-- [ ] **Step 4: Run the tests and the type check**
+- [x] **Step 4: Run the tests and the type check**
 
 ```bash
 cd packages/renderer && npx vitest run test/skin-plan.test.ts; cd -
@@ -7129,7 +7129,7 @@ npx -y pnpm@9.15.9 -r typecheck
 ```
 Expected: `Tests  6 passed (6)`; the type check exits 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer/src/device-ui.ts packages/renderer/src/index.ts packages/renderer/src/mount.ts packages/renderer/src/skin-plan.ts packages/renderer/test/skin-plan.test.ts
@@ -7150,7 +7150,7 @@ git commit -m "feat(renderer): mountMonitor follows the skin — lanes, tiles, a
 - Consumes: `mountMonitor`, `draw12Lead`, `drawTrend` (Tasks 20–21).
 - Produces: `apps/demo/stage4b-device.html` with `window.__pme4b = { pm, send, events, ready }` (the e2e hook of Task 23).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 In `apps/demo/index.html`, replace this block (it occurs exactly once):
 
@@ -7367,7 +7367,7 @@ with:
         'stage4b-device': page('stage4b-device'), // Stage 4b
 ```
 
-- [ ] **Step 2: Type check and look at the page**
+- [x] **Step 2: Type check and look at the page**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
@@ -7375,7 +7375,7 @@ npx -y pnpm@9.15.9 --filter @pme/demo exec vite --port 5214 --strictPort
 ```
 Expected: the type check exits 0. Open `http://localhost:5214/stage4b-device.html` in Chrome: the saadat-like monitor sweeps with a grey idle alarm bar, red crossed bells and a green ECG; choose "vfCoarse" in the rhythm list and within ~4 s the bar turns red with `ECG VFIB`. Stop the server (Ctrl-C). (If you cannot open a browser, Task 23 checks the same headless.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/index.html apps/demo/src/stage4b/device.ts apps/demo/stage4b-device.html apps/demo/vite.config.ts
@@ -7394,7 +7394,7 @@ git commit -m "feat(demo): stage4b device page — skins, alarm tests, defibrill
 - Consumes: `window.__pme4b` (Task 22), the `.pme-bar`, `.pme-lamp`, `.pme-cd`, `.pme-stile[data-param]` elements (Task 20), `#skin`, `#theme`, `#capture`, `#ecg12`, `#sound` (Task 22).
 - Produces: the gate evidence files above.
 
-- [ ] **Step 1: Write the e2e file**
+- [x] **Step 1: Write the e2e file**
 
 Create `apps/demo/e2e/stage4b-device.e2e.ts`:
 
@@ -7516,14 +7516,14 @@ test('audio timing log: alarm pulses, charge / ready / shock tones', async ({ pa
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage4b-device.e2e.ts
 ```
 Expected: `5 passed` (about 1–2 minutes). Failures and what they mean: the VFIB bar text not appearing within 8 s means the device layer is not stepping (Task 9); a flash duration other than 0.5 s / 1.667 s means `flashCss` or the lamp classes (Task 20); no `alarm` entries in the audio log means `enableSound` did not build the sounder (Task 21).
 
-- [ ] **Step 3: Look at every screenshot** (open them; this is the gate evidence)
+- [x] **Step 3: Look at every screenshot** (open them; this is the gate evidence)
 
 Check, and write what you see into the gate note (Task 25):
 - `saadat-like--idle.png`: grey idle bar, red crossed bells in the HR, NIBP, IBP1, IBP2, SpO2, TEMP and RR tiles and in the header, a green `II  X…  NORMAL` lane, magenta PLETH, salmon IBP1 (200/40 scale), light-blue IBP2, an empty RESP lane (Stage 3).
@@ -7534,7 +7534,7 @@ Check, and write what you see into the gate note (Task 25):
 - `zoll-like--ecg-grid.png`: ECG-paper grid under the traces, readable traces on the dimmed major lines, no black gaps left by the erase bar.
 - `12-lead-3x4.png`: 3 rows × 4 columns (I aVR V1 V4 / II aVL V2 V5 / III aVF V3 V6), a lead II rhythm strip, one 1 mV × 200 ms calibration pulse per row, header `II  25 mm/s  10 mm/mV  0.05–150 Hz  HR 75  axis …°`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/demo/e2e/stage4b-device.e2e.ts docs/gates/stage-4b
@@ -7551,7 +7551,7 @@ git commit -m "test(e2e): stage 4b live-monitor screenshots per skin and alarm s
 - Consumes: everything above.
 - Produces: the numbers for the gate note.
 
-- [ ] **Step 1: Type check, unit tests, build, NOTICES**
+- [x] **Step 1: Type check, unit tests, build, NOTICES**
 
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
@@ -7561,7 +7561,7 @@ npx -y pnpm@9.15.9 check-notices
 ```
 Expected: typecheck exit 0; every package passes — engine-core = base + 67, renderer = base + 23, skins = base + 4, audio / controller / validation unchanged (plan author: 372, 54, 159, 58, 97, 16); build exit 0 (renderer IIFE about 629 kB); `check-notices: OK`.
 
-- [ ] **Step 2: The older browser suites still pass**
+- [x] **Step 2: The older browser suites still pass**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/stage4a-skins.e2e.ts apps/demo/e2e/stage6a.e2e.ts apps/demo/e2e/stage6a-worker.e2e.ts apps/demo/e2e/stage6a-screens.e2e.ts
@@ -7570,7 +7570,7 @@ git checkout -- docs/gates/stage-4a docs/gates/stage-6a
 ```
 Expected: all pass. Those suites rewrite their own gate screenshots (4a's are palette-shrunk after capture), so the `git checkout` drops the rewritten PNGs; `git status --short` afterwards shows nothing under `docs/gates/stage-4a` or `stage-6a`. If `iife-smoke` fails with a strict-mode `.pme-tile` error, Task 21's HR-only `pme-tile` class is missing.
 
-- [ ] **Step 3: No edits outside the ownership list**
+- [x] **Step 3: No edits outside the ownership list**
 
 ```bash
 git diff --name-only origin/main...HEAD | grep -vE '^(packages/engine-core/src/(l3/(alarms|defib-pacer|capture12|trends)/|l3/device-layer.ts|l3/ecg-filter.ts|engine.ts|types.ts|types-device.ts|index.ts)|packages/engine-core/(test/|package.json)|packages/renderer/|packages/skins/|apps/demo/(stage4b-device.html|src/stage4b/|e2e/stage4b-device.e2e.ts|vite.config.ts|index.html)|docs/gates/stage-4b|docs/plans/stage-4b|pnpm-lock.yaml)' || echo "ownership OK"
@@ -7588,7 +7588,7 @@ Expected: `ownership OK`.
 - Consumes: the numbers from Tasks 1, 23 and 24.
 - Produces: the orchestrator's gate evidence.
 
-- [ ] **Step 1: Write the gate note** — create `docs/gates/stage-4b.md` with the text below. Where your measured value differs from the plan author's (in parentheses in the Evidence table), write yours and say so under "Deviations".
+- [x] **Step 1: Write the gate note** — create `docs/gates/stage-4b.md` with the text below. Where your measured value differs from the plan author's (in parentheses in the Evidence table), write yours and say so under "Deviations".
 
 ```markdown
 # Stage 4b gate: the device layer
@@ -7654,7 +7654,7 @@ Screenshots (`docs/gates/stage-4b/`): `saadat-like--{idle,raised,silenced}.png`,
 (none, or list them)
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/gates/stage-4b.md
@@ -7667,7 +7667,7 @@ git commit -m "docs(gates): stage 4b gate note — evidence, screenshots, reques
 
 **Files:** none.
 
-- [ ] **Step 1: Push and open the PR (do not merge; R21)**
+- [x] **Step 1: Push and open the PR (do not merge; R21)**
 
 ```bash
 git push -u origin stage-4b-device-layer

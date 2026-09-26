@@ -28,6 +28,10 @@ export interface LaneConfig {
   background: string;
   lineWidth: number; // 1.5–2 CSS px
   eraseGapPx: number; // 16 CSS px default (brief §3.5)
+  /** ECG-paper grid painted wherever the lane is cleared, so the erase bar keeps it (request RR-4). */
+  grid?: { minorMm: number; majorMm: number; minor: string; major: string } | null;
+  /** A 1-px line at the leading edge of the erase gap (request RR-3; every shipped skin says false). */
+  cursorLine?: boolean;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -63,6 +67,42 @@ export class SweepLane {
     this.tail = [];
     ctx.fillStyle = this.cfg.background;
     ctx.fillRect(this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height);
+    this.paintGrid(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
+  }
+
+  /** Absolute index of the last sample drawn (-1 after a reset). */
+  get lastDrawnIndex(): number {
+    return this.lastIndex;
+  }
+
+  /** Paint the grid inside one cleared rect (RR-4): minor then major lines, anchored to the lane's top-left. */
+  private paintGrid(ctx: Ctx2D, r: Rect): void {
+    const g = this.cfg.grid;
+    if (!g || r[2] <= 0) return;
+    const c = this.cfg;
+    const step = g.minorMm * c.pxPerMm;
+    const every = Math.max(1, Math.round(g.majorMm / g.minorMm));
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(...r);
+    ctx.clip();
+    ctx.lineWidth = 1 / this.dpr;
+    for (const major of [false, true]) {
+      ctx.strokeStyle = major ? g.major : g.minor;
+      ctx.beginPath();
+      for (let k = Math.ceil((r[0] - c.x) / step); k * step <= r[0] + r[2] - c.x; k++) {
+        if ((k % every === 0) !== major) continue;
+        ctx.moveTo(c.x + k * step, r[1]);
+        ctx.lineTo(c.x + k * step, r[1] + r[3]);
+      }
+      for (let k = 0; k * step <= c.height; k++) {
+        if ((k % every === 0) !== major) continue;
+        ctx.moveTo(r[0], c.y + k * step);
+        ctx.lineTo(r[0] + r[2], c.y + k * step);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   /** Unwrapped x (CSS px) of absolute sample n. */
@@ -102,7 +142,9 @@ export class SweepLane {
       const la = this.snap(a - lap * c.width);
       const lb = end - lap * c.width >= c.width ? c.width : this.snap(end - lap * c.width) + 1 / this.dpr;
       const r: Rect = [c.x + la, c.y, Math.max(0, lb - la), c.height];
+      ctx.fillStyle = c.background;
       ctx.fillRect(...r);
+      this.paintGrid(ctx, r);
       rects.push(r);
       a = end;
     }
@@ -153,6 +195,11 @@ export class SweepLane {
     this.tail = pts.slice(k);
     this.lastIndex = last;
     this.lastCol = (this.cols[this.cols.length - 1] as Column).col;
+    if (c.cursorLine) {
+      // inside the band the next frame clears, so it moves with the sweep and never leaves a trail
+      ctx.fillStyle = c.color;
+      ctx.fillRect(c.x + ((this.xOf(last) + c.eraseGapPx - 1) % c.width), c.y, 1 / this.dpr, c.height);
+    }
     return cursor;
   }
 

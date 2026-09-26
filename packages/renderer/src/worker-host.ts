@@ -1,7 +1,7 @@
 // Main-thread side of the engine+renderer (brief §3.4): an OffscreenCanvas worker when possible, the same
 // MonitorCore on the main thread otherwise. Frame pump: the worker's own rAF if it has one, else the main
 // thread posts every rAF timestamp. While the tab is hidden a 1 s interval advances sim time in bulk.
-import type { Command, DispatchResult, EngineEvent, PatientSnapshot } from '@pme/engine-core';
+import type { Capture12, Command, DispatchResult, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import EngineWorker from './engine.worker.ts?worker&inline';
 import type { Ctx2D } from './ctx.ts';
 import { MonitorCore } from './monitor-core.ts';
@@ -9,7 +9,7 @@ import type { ClockAnchor, CoreOptions, FromWorker, Size, ToWorker } from './pro
 
 export type RenderPath = 'worker-raf' | 'worker-pump' | 'main';
 export type EventsHandler = (anchor: ClockAnchor, events: EngineEvent[]) => void;
-export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' }>;
+export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' }>; // Stage 4b: plan
 
 export const READY_TIMEOUT_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
@@ -23,6 +23,8 @@ export interface Host {
   snapshot(): Promise<PatientSnapshot>;
   /** Restore the engine and put the sim clock at the snapshot's tick (R-1). */
   restore(s: PatientSnapshot): Promise<void>;
+  /** Stage 4b: the last 10 s as a 12-lead capture (brief §6.6). */
+  capture12(): Promise<Capture12>;
   destroy(): void;
 }
 
@@ -72,8 +74,10 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
       else if (m.type === 'pause') core.clock.pause();
       else if (m.type === 'resume') core.clock.resume();
       else if (m.type === 'fps') core.setFps(m.fps);
+      else if (m.type === 'plan') core.setPlan(m.plan); // Stage 4b
       else core.calibrate(m.pxPerMm);
     },
+    capture12: () => Promise.resolve().then(() => core.capture12()), // Stage 4b
     destroy: () => {
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
@@ -88,6 +92,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   const pending = new Map<number, (r: DispatchResult) => void>();
   const snapshots = new Map<number, (s: PatientSnapshot) => void>();
   const restores = new Map<number, { resolve: () => void; reject: (e: Error) => void }>();
+  const captures = new Map<number, { resolve: (c: Capture12) => void; reject: (e: Error) => void }>(); // Stage 4b
   let reqId = 0;
   let raf = 0;
   let pumping = false;
@@ -113,6 +118,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         restores.delete(m.reqId);
         if (m.error === undefined) r?.resolve();
         else r?.reject(new Error(m.error));
+      } else if (m.type === 'capture12') {
+        const c = captures.get(m.reqId);
+        captures.delete(m.reqId);
+        if (m.capture) c?.resolve(m.capture);
+        else c?.reject(new Error(m.error ?? 'capture12 failed'));
       } else {
         clearTimeout(timer);
         reject(new Error(m.message));
@@ -162,6 +172,12 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
         post({ type: 'restore', reqId: id, snapshot });
       }),
     control: (m) => post(m),
+    capture12: () =>
+      new Promise<Capture12>((resolve, reject) => {
+        const id = ++reqId;
+        captures.set(id, { resolve, reject });
+        post({ type: 'capture12', reqId: id });
+      }),
     destroy: () => {
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);

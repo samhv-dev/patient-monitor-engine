@@ -64,6 +64,8 @@ test('ACLS VF: panel load → remote starts VF → learner shocks → ROSC', asy
   await remote.screenshot({ path: resolve(out, 'remote-vf.png'), fullPage: true });
 
   await page.locator('#actions button', { hasText: 'Start CPR' }).click();
+  await page.locator('#actions button', { hasText: 'Charge 200 J' }).click(); // Stage 4b: the engine charges (7 s) before it shocks
+  await page.waitForTimeout(8_000);
   await page.locator('#actions button', { hasText: 'Shock 200 J' }).click();
   await expect.poll(() => stateId(page), { timeout: 5_000 }).toBe('rosc'); // seed 42: the first draw is 0.062 < 0.3
   await expect(page.locator('.pme-scn-state')).toHaveText('ROSC');

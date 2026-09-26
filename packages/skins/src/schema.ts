@@ -88,7 +88,11 @@ const alarms = obj(
     alarmFreezeOption: bool,
     recall: nullable(obj({ count: int(1, 1000), windowS: pair })),
   },
-  { repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }), lowPulses: en([1, 2]) },
+  {
+    repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),
+    lowPulses: en([1, 2]),
+    numericStyle: en(['flash-text', 'flash-box']),
+  },
 );
 
 const limitBand = nullable(obj({ values: record(limitValue) }, { inherit: en(['adult', 'paed', 'neo']) }));
@@ -114,7 +118,7 @@ export const skinSchema: JsonSchema = {
       menuRegion: en(['popup', 'wave-area-bottom']),
       header: arr(en(HEADER_ITEMS), 1),
       messageBars: en(['single-under-header', 'split-technical-physiological']),
-    }),
+    }, { badge: str }),
     pages: arr(page, 1),
     defaultPage: { type: 'string', pattern: '^P[0-9]{1,2}$' },
     calendar: obj({

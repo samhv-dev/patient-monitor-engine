@@ -170,9 +170,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ge-
     "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -1149,9 +1149,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -1785,9 +1785,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot lif
     "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -2099,9 +2099,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -2809,9 +2809,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -3976,9 +3976,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "fontStack": "Arial, 'Liberation Sans', Helvetica, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {
@@ -4636,9 +4636,9 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot zol
     "fontStack": "system-ui, 'Helvetica Neue', Arial, sans-serif",
     "foreground": "#000000",
     "grid": {
-      "major": "#E08888",
+      "major": "#F4C4C4",
       "majorMm": 5,
-      "minor": "#F4C8C8",
+      "minor": "#FAE2E2",
       "minorMm": 1,
     },
     "hrMethod": {

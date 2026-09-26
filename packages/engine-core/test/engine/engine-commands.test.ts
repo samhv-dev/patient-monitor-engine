@@ -25,7 +25,7 @@ describe('engine commands', () => {
     expect(e.dispatch(cmd({ type: 'setRhythm', rhythm: 'afib' }))).toEqual({ accepted: true, tick: 1 });
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'k', value: 5 })).accepted).toBe(false); // Stage 5 (Stage 3 accepts spo2)
     expect(e.dispatch(cmd({ type: 'setRhythm', rhythm: 'notARhythm' })).reason).toMatch(/unknown rhythm/);
-    expect(e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'charge' } })).accepted).toBe(false); // Stage 4
+    expect(e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'defib', action: 'shock' } })).reason).toMatch(/not charged/); // Stage 4b
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: 'surgical' } })).accepted).toBe(false);
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bogus: 1 } })).reason).toMatch(/unknown modifiers/);
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 100, atTick: 50 })).tick).toBe(50);

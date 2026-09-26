@@ -1,6 +1,7 @@
 // The learner action bar: what the team at the bedside does. Each button is an `applyEvent` (brief §7.2
-// ClinicalEvent). The engine does not model these events yet (Stages 4 and 7); the scenario runner still sees
+// ClinicalEvent). The engine does not model most of these events yet (Stage 7); the scenario runner still sees
 // them, so transitions fire — shocks, drugs, CPR, pacing — while the rhythm changes come from the scenario.
+// Stage 4b: the engine models the defibrillator and pacer, so a shock needs a charge first (200 J in 7 s).
 import type { ClinicalEvent } from '@pme/controller';
 
 export interface LearnerAction {
@@ -12,6 +13,7 @@ export interface LearnerAction {
 }
 
 export const LEARNER_ACTIONS: LearnerAction[] = [
+  { id: 'charge200', label: 'Charge 200 J', event: { kind: 'defib', action: 'charge', energyJ: 200 } },
   { id: 'shock200', label: 'Shock 200 J', event: { kind: 'defib', action: 'shock', energyJ: 200 } },
   { id: 'cpr', label: 'Start CPR', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, off: { kind: 'cpr', active: false } },
   { id: 'epi1', label: 'Epinephrine 1 mg', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' } },

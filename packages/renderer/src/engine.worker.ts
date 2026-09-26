@@ -67,6 +67,21 @@ scope.onmessage = (ev) => {
         if (core) scope.postMessage({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
         else scope.postMessage({ type: 'error', message: 'not initialised' });
         return;
+      case 'plan': // Stage 4b
+        core?.setPlan(m.plan);
+        return;
+      case 'capture12': // Stage 4b: the 12 lead arrays are transferred, not copied
+        try {
+          if (!core) throw new Error('not initialised');
+          const capture = core.capture12();
+          (scope.postMessage as (msg: FromWorker, transfer: Transferable[]) => void)(
+            { type: 'capture12', reqId: m.reqId, capture },
+            Object.values(capture.leads).map((a) => a.buffer),
+          );
+        } catch (err) {
+          scope.postMessage({ type: 'capture12', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
+        }
+        return;
       case 'restore':
         try {
           if (!core) throw new Error('not initialised');
