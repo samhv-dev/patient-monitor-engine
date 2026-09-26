@@ -4508,7 +4508,7 @@ process.exit(r.status ?? 1);
 
 **Files:** Modify `NOTICES.md`, `docs/physiology/stage-7-parameter-tables.md` (§6 intro note only); Create `docs/gates/stage-7g.md`
 
-- [ ] **Step 1: NOTICES** — add rows in the existing table format (published parameter sets are facts; no code is
+- [x] **Step 1: NOTICES** — add rows in the existing table format (published parameter sets are facts; no code is
   borrowed; "How used" says so). Use the next free IDs (check the file; the block below assumes N-070…):
 
 ```
@@ -4523,17 +4523,17 @@ process.exit(r.status ?? 1);
 ```
   Verify each DOI resolves by opening it (R37: web sources require the page to be opened); if one does not, replace
   it with the journal's article URL you opened. Run `npx -y pnpm@9.15.9 check-notices`.
-- [ ] **Step 2: Tables cross-reference** — under `## 6. Drug PK/PD extensions (sub-stage 7g)` add ONE paragraph:
+- [x] **Step 2: Tables cross-reference** — under `## 6. Drug PK/PD extensions (sub-stage 7g)` add ONE paragraph:
   "Implementation (7g): values as coded live in `packages/engine-core/src/l2/pk/data/*.ts` and `l2/pk/nmb.ts`;
   deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item are in `docs/plans/stage-7g-pkpd.md`." Do not move or edit any row (R40: amendments land after Ali's review in one edit).
-- [ ] **Step 3: Gate note** `docs/gates/stage-7g.md` — the numbers every acceptance test printed (TTPE, TCI, CSHT,
+- [x] **Step 3: Gate note** `docs/gates/stage-7g.md` — the numbers every acceptance test printed (TTPE, TCI, CSHT,
   FA/FI, MAC, vasopressor bands, reversal times, adenosine timing, LAST, CPU µs/tick, 24 h), the calibrations made
   (SGX capture, vec/cis/sux ke0, any vasoactive EC50, propofol re-fit) with before/after, the screenshots, the
   deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item and "needs a ruling" items (incl. the 16 mg/kg sugammadex T1-10 % lag, D7), the [ENG]
   values the fixer pass introduced (sugammadex site ke0, cholinesterase multipliers, opioid haemodynamic EC50s,
   β-occupancy, esmolol PK set), and the Q list for Ali (Q-7g-1 CSHT band, Q-7g-2 LAST thresholds, Q51,
   Q57/Q58/Q60, the `ir` availability column for all 58 rows).
-- [ ] **Step 4: Commit and push** — `git add -A && git commit -m "docs(pk): NOTICES rows for the published parameter sets; tables cross-reference; Stage 7g gate note" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Commit and push** — `git add -A && git commit -m "docs(pk): NOTICES rows for the published parameter sets; tables cross-reference; Stage 7g gate note" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 26: Full verification and pull request
 
