@@ -27,6 +27,7 @@ import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
+import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, meanAirwayPressure, nominalRate,
@@ -75,6 +76,8 @@ export interface RespState {
   beatSeq: number;
   shownCo2: number;
   lungKey: string;
+  lungCore: string; // Stage 7b: the seven Stage 3 fields of the last emission
+  lungT: number; // Stage 7b: time of the last emission
   // Stage 7b: the lung module (R43) and what configures it
   lung: LungState;
   lungSpecs: LungConditionSpec[];
@@ -105,7 +108,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
       spo2: createSpo2(l1Target(l1, 'spo2', 0) / 100, Math.max(-2, Math.min(2, normal(rng)))), // bias ±2–3 % RMS [ENG]
       temp: createTempNum(t0),
     },
-    beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', out: [],
+    beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
     lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null,
   };
@@ -310,19 +313,19 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
 
 function lungStateEvent(rs: RespState, t: number): void {
   const d = rs.driver;
-  const sev = d.severity;
-  const ev = {
-    complianceMlPerCmH2O: Math.round(compliance(rs)),
-    resistanceCmH2OPerLps: Math.round(rs.pat.resistance * (d.airway === 'bronchospasm' ? 1 + 3 * sev : 1)),
-    effort: d.source === 'spontaneous' ? 1 : Math.round(d.cleft * 100) / 100,
-    autoPeepTendency: d.airway === 'bronchospasm' ? Math.round(80 * sev) / 100 : 0,
-    shunt: Math.round(Math.min(0.9, rs.shunt + extraShunt(rs)) * 100) / 100,
-    deadSpaceMl: Math.round(deadSpace(rs)),
-    frcMl: Math.round(rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl),
-  };
+  const ev = lungStatePayload(rs.lung, {
+    deadSpaceMl: deadSpace(rs), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
+    effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
+    baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
+  }); // Stage 7b: absolute + per-lung fields (decision 15)
   const key = JSON.stringify(ev);
   if (key === rs.lungKey) return;
+  // the per-lung fields move slowly but continuously: emit at most once per second unless a Stage 3 field changed
+  const core = JSON.stringify([ev.complianceMlPerCmH2O, ev.resistanceCmH2OPerLps, ev.effort, ev.autoPeepTendency, ev.shunt, ev.deadSpaceMl, ev.frcMl]);
+  if (core === rs.lungCore && t - rs.lungT < 1) return;
   rs.lungKey = key;
+  rs.lungCore = core;
+  rs.lungT = t;
   rs.out.push({ type: 'lungState', t, ...ev });
 }
 

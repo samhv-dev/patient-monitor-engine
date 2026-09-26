@@ -133,9 +133,11 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     expect(ls[0]!.complianceMlPerCmH2O).toBeLessThanOrEqual(60);
     expect(ls[0]!.frcMl).toBeGreaterThan(2000);
     e.dispatch(ev3({ kind: 'airway', state: 'bronchospasm', severity: 1 }));
-    await run(e, 2);
+    await run(e, 30); // Stage 7b: auto-PEEP (tendency = PEEPi/10, tables §4.3) is measured on the units, so it needs a few breaths
     const b = ev.filter((x): x is Extract<EngineEvent, { type: 'lungState' }> => x.type === 'lungState').pop()!;
-    expect(b.resistanceCmH2OPerLps).toBe(40);
+    // Stage 7b (plan decision 11, Q20 proposal): bronchospasm severity 1 raises airway R ×(1 + 5·sev^1.5) → 60 through the
+    // lung module (Stage 3's lungState reported ×4 = 40); auto-PEEP tendency is now PEEPi/10 measured on the units.
+    expect(b.resistanceCmH2OPerLps).toBe(60);
     expect(b.autoPeepTendency).toBeGreaterThan(0.5);
   });
 

@@ -2976,6 +2976,8 @@ git push origin stage-7b-lungs
 
 ### Task 18: `lungState` per-lung fields (additive) and the ventilator contract
 
+> **Executor note:** Implemented as written plus the 1 s rate limit. Stage 3 test re-specified (resp-coupling R27): bronchospasm severity 1 resistance 40 → 60 (decision 11, Q20) and read after 30 s, since autoPeepTendency is now the measured PEEPi/10 (8.7 cmH2O → 0.87 in spontaneous breathing). packages/ventilator 87/87 pass.
+
 **Files:**
 - Create: `packages/engine-core/src/l2/lung/state-event.ts`, `packages/engine-core/test/engine/lung-state.test.ts`
 - Modify: `packages/engine-core/src/l2/resp/pipeline.ts` (`lungStateEvent`)
@@ -2984,7 +2986,7 @@ git push origin stage-7b-lungs
 - Consumes: `LungStateExt`, `LungStateLung` (Task 1), `staticCompliance` (Task 13), `shuntFraction` (Task 11).
 - Produces: `lungStatePayload(ls, x: { deadSpaceMl; frcMl; effort; peep; baseShunt; specs }): Omit<lungState event, 'type' | 't'>`; R27's seven fields keep their meaning (absolute values — Stage V decision 6's "relative until Stage 7" ends here).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-state.test.ts`:
 
@@ -3036,12 +3038,12 @@ describe('lungState (R27) with per-lung fields (R43)', { timeout: 300_000 }, () 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-state.test.ts`
 Expected: FAIL — no `lungs` field.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/state-event.ts`:
 
@@ -3124,12 +3126,12 @@ function lungStateEvent(rs: RespState, t: number): void {
 
 Because `tauS`, `aerated` and `autoPeepCmH2O` move slowly but continuously, emission is additionally rate-limited: only emit when `t − rs.lungT ≥ 1` s OR one of the seven Stage 3 fields changed. Add `lungT: number` to `RespState` (init `-1e12` in `createRespState`) and wrap: compute `core = JSON.stringify([ev.complianceMlPerCmH2O, ev.resistanceCmH2OPerLps, ev.effort, ev.autoPeepTendency, ev.shunt, ev.deadSpaceMl, ev.frcMl])`; emit when `key !== rs.lungKey && (core !== rs.lungCore || t - rs.lungT >= 1)`; store `rs.lungCore = core; rs.lungT = t` on emit (`lungCore: string` in `RespState`, init `''`).
 
-- [ ] **Step 4: Run the test and the Stage 3 lungState/Stage V-facing suites**
+- [x] **Step 4: Run the test and the Stage 3 lungState/Stage V-facing suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-state.test.ts test/engine/resp-engine.test.ts test/engine/resp-coupling.test.ts`
 Expected: PASS. If `packages/ventilator` exists on your `main` (Stage V merged), also run `npx -y pnpm@9.15.9 --filter @pme/ventilator test` — its `lung-input` tests feed lungState into the ventilator; they must still pass (Task 27 switches the ventilator to absolute values).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/state-event.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/lung-state.test.ts
