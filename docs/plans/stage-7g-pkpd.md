@@ -1306,7 +1306,7 @@ it('fit', () => {
 
 **Interfaces (Produces):** `TCI_DT_S = 10`, `TCI_HORIZON_STEPS = 90`, `TciMode`, `tciRate(p, x, mode, target, maxRate, site?)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/tci.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/tci.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1376,9 +1376,9 @@ describe('TCI', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (module missing).
+- [x] **Step 2: Run it** → FAIL (module missing).
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/tci.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/tci.ts`**
 
 ```ts
 // Target-controlled infusion (Stage 7g). Every TCI_DT_S the controller chooses ONE rate for the next interval:
@@ -1432,8 +1432,8 @@ export function tciRate(p: PkParams, x: readonly number[], mode: TciMode, target
 }
 ```
 
-- [ ] **Step 4: Run the test** → PASS (prototype numbers in the comments).
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): plasma and effect-site TCI (Jacobs; Shafer–Gregg by linearity)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Run the test** → PASS (prototype numbers in the comments).
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): plasma and effect-site TCI (Jacobs; Shafer–Gregg by linearity)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 7: Context-sensitive half-time and decrement times (PROTOTYPED)
 
