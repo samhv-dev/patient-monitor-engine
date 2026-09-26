@@ -23,9 +23,9 @@ function adenosine(doseMg: number, rhythm: string) {
 }
 
 describe('rhythm hooks', () => {
-  it('adenosine 6 mg on AVNRT: transient complete block 10–30 s after the push, then sinus', () => {
+  it('adenosine 6 mg on AVNRT: transient complete block (P-wave standstill) 10–30 s after the push, then sinus', () => {
     const s = adenosine(6, 'svtAvnrt');
-    expect(s[0]!.id).toBe('avb3Narrow');
+    expect(s[0]!.id).toBe('pWaveAsystole'); // Task 23: ventricular standstill with P waves (avb3Narrow's escape is clamped 40–60/min)
     expect(s[0]!.t).toBeGreaterThan(5);
     expect(s[0]!.t).toBeLessThan(30);
     expect(s[1]!.id).toBe('sinus');

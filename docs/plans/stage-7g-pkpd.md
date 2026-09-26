@@ -3992,7 +3992,7 @@ describe('7g acceptance — sugammadex reversal (tables §5d, §7 25; plasma + e
 
 **Files:** Create `packages/engine-core/test/engine/pk-acceptance-scen.test.ts`, `packages/engine-core/test/engine/pk-longrun.test.ts`
 
-- [ ] **Step 1: Write the test:**
+- [x] **Step 1: Write the test:**
 
 ```ts
 import { createHash } from 'node:crypto';
@@ -4072,7 +4072,7 @@ describe('7g scenarios', () => {
 });
 ```
 
-- [ ] **Step 2: Write the 24 h run** in the long-run file every stage uses (`test/engine/*-longrun.test.ts`: Stage 2
+- [x] **Step 2: Write the 24 h run** in the long-run file every stage uses (`test/engine/*-longrun.test.ts`: Stage 2
   `hemo-longrun`, Stage 3 `resp-longrun`, 7a `circ-longrun`) — `packages/engine-core/test/engine/pk-longrun.test.ts`.
   The exact indices are the ones those files pin after `advanceTo(86400)` (look-ahead convention: 125 Hz
   10,800,000 + 12; ECG 500 Hz 43,200,000 + 50):
@@ -4113,11 +4113,11 @@ describe('Stage 7g long run', () => {
 });
 ```
 
-- [ ] **Step 3: Run both** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-acceptance-scen.test.ts test/engine/pk-longrun.test.ts`.
+- [x] **Step 3: Run both** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pk-acceptance-scen.test.ts test/engine/pk-longrun.test.ts`.
   CPU: if > 0.05 ms, profile — the expected hot spots are `structuredClone(DRUG_BUS_NEUTRAL)` in `combine` (replace by
   a hand-written fresh object) and `Object.values` allocations; do not reduce the 10 Hz rate. A 24 h index miss is a
   clock bug (the pk step must never change the sample grid): stop and report.
-- [ ] **Step 4: Commit and push** — `git add -A && git commit -m "test(pk): acceptance — adenosine on SVT, LAST + lipid, determinism, CPU budget; 24 h long run" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Commit and push** — `git add -A && git commit -m "test(pk): acceptance — adenosine on SVT, LAST + lipid, determinism, CPU budget; 24 h long run" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 24: Drug panel renderer, demo `stage7g.html` and gate screenshots
 

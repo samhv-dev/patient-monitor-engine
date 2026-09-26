@@ -22,7 +22,12 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
   // adenosine
   if (!hs.aden.active && block >= 0.5 && (NODE_DEPENDENT.includes(current.id) || ATRIAL.includes(current.id) || SINUS_GROUP.includes(current.id))) {
     hs.aden = { active: true, from: current.id, peak: block };
-    return SINUS_GROUP.includes(current.id) ? { id: 'sinusPause', opts: {} } : { id: 'avb3Narrow', opts: { atrialRateBpm: 110, rateBpm: 20 } };
+    if (SINUS_GROUP.includes(current.id)) return { id: 'sinusPause', opts: {} };
+    // AV-node-dependent SVT: transient ventricular standstill with P waves (Task 23). avb3Narrow cannot carry the
+    // intended 20/min escape (its junctional range is 40–60/min, and MODELED mode drives an escape rhythm's rate from
+    // the circulation); pWaveAsystole has no escape and no rate drive, so the pause is the block's own duration.
+    if (NODE_DEPENDENT.includes(current.id)) return { id: 'pWaveAsystole', opts: { atrialRateBpm: 110 } };
+    return { id: 'avb3Narrow', opts: { atrialRateBpm: 110, rateBpm: 20 } };
   }
   if (hs.aden.active) {
     hs.aden.peak = Math.max(hs.aden.peak, block);

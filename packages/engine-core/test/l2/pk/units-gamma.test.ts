@@ -10,6 +10,8 @@ describe('units', () => {
     expect(toAmount(1, 'g', 'mg', 70)).toBe(1000);
     expect(toAmount(10, 'mL', 'mg', 70, 10)).toBe(100); // 10 mL of 10 mg/mL
     expect(typeof toAmount(1, 'units', 'mg', 70)).toBe('string'); // incompatible → error text
+    expect(toAmount(1.5, 'mL/kg', 'mL', 70)).toBeCloseTo(105, 12); // a drug dosed in mL (lipid 20 %): no concentration needed (Task 23)
+    expect(toRate(0.25, 'mL/kg/min', 'mL', 70)).toBeCloseTo(17.5, 12);
   });
   it('rate units convert to amount/min', () => {
     expect(toRate(0.1, 'mcg/kg/min', 'mcg', 70)).toBeCloseTo(7, 12);

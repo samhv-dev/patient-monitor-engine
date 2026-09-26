@@ -9,9 +9,9 @@ export function toAmount(dose: number, unit: DoseUnit | RateUnit, amountUnit: Am
   const perKg = unit.endsWith('/kg');
   const base = perKg ? unit.slice(0, -3) : unit;
   const d = perKg ? dose * weightKg : dose;
+  if (base === amountUnit) return d; // before the volume rule: a drug dosed in mL (lipid, hypertonic saline) needs no concentration
   if (base === 'mL') return perMl !== undefined ? d * perMl : 'a volume dose needs the drug concentration';
   if (base in MASS && amountUnit in MASS) return (d * (MASS[base] as number)) / (MASS[amountUnit] as number);
-  if (base === amountUnit) return d;
   if (base === 'mEq' && amountUnit === 'mmol') return d; // monovalent (bicarbonate); 7c converts divalent ions itself
   return `unit ${unit} does not fit a drug dosed in ${amountUnit}`;
 }
