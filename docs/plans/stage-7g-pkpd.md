@@ -1814,7 +1814,7 @@ export function gammaN(tpS: number, t10S: number): number {
 imports it into 7a's control step, R51 addendum 11), `ELEVELD_CE50_AGE_K = 0.00635`; types `DrugClass`, `PdTarget`,
 `PdEffect`, `PkSpec` (the `model` variant carries `ventKe0?`, R51 §2), `DrugRow`, `CnsSpec` (`hypC50AgeK?`).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/pd.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/pd.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1851,9 +1851,9 @@ describe('PD primitives', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/pd.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/pd.ts`**
 
 ```ts
 // PD primitives (Stage 7g decision 6/7). Pure functions; every constant is cited where it is used.
@@ -1898,7 +1898,7 @@ export function betaBlunt(f: number, occupancy: number): number {
 export const ELEVELD_CE50_AGE_K = 0.00635;
 ```
 
-- [ ] **Step 4: Create `packages/engine-core/src/l2/pk/row.ts`** (types only — the library in Tasks 12–14 is data of this shape)
+- [x] **Step 4: Create `packages/engine-core/src/l2/pk/row.ts`** (types only — the library in Tasks 12–14 is data of this shape)
 
 ```ts
 // The drug-library row (Stage 7g). One row per drug; every number carries `src` and a tag (R37).
@@ -1970,7 +1970,7 @@ export interface DrugRow {
 }
 ```
 
-- [ ] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): PD primitives (Hill, competitive antagonism, acidosis, response surface, β blunting) and the library row type" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): PD primitives (Hill, competitive antagonism, acidosis, response surface, β blunting) and the library row type" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 11: Combination rules → `DrugEffect` + `DrugBus`
 
