@@ -15,3 +15,4 @@ export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store
 export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'; // Stage 4b
 export * from './types-resp.ts'; // Stage 3
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+export type * from './types-circ.ts'; // Stage 7a
