@@ -616,7 +616,7 @@ Chamber pressure (elastance + EDPVR + pericardium + pleural) lives inside `evalu
 - Consumes: `compliance(p)` from `src/l2/hemo/circulation.ts`; `RADIAL_*`, `WK_*` from `src/l2/hemo/params.ts`; Tasks 2–3.
 - Produces: `N_STATE = 11`, `S` (state indices), `interface CircParams`, `interface CircDrive`, `interface CircOut`, `createOut()`, `evaluate(s, t, p, d, o)`, `stepCirc(s, t, h, p, d)`, `arterialVolume(pc, cArt)`, `totalVolume(s, p)`.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/l2/circ/circuit.test.ts`:
 
@@ -678,7 +678,7 @@ describe('circuit ODE', () => {
 });
 ```
 
-- [ ] **Step 2: Implement the circuit**
+- [x] **Step 2: Implement the circuit**
 
 `packages/engine-core/src/l2/circ/circuit.ts`:
 
@@ -859,12 +859,12 @@ export function totalVolume(s: readonly number[], p: CircParams): number {
 }
 ```
 
-- [ ] **Step 3: Typecheck (the test runs at the end of Task 6)**
+- [x] **Step 3: Typecheck (the test runs at the end of Task 6)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec tsc -p tsconfig.json --noEmit`
 Expected: errors only for the not-yet-existing `profile.ts`/`stabilise.ts` imports in `circuit.test.ts`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/circuit.ts packages/engine-core/test/l2/circ/circuit.test.ts
