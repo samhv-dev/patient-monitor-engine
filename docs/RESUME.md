@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-25 04:25 (Wave B executing: Stage 3 resumed after a usage cap, Stage 4b started).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 11:25 (Wave B: 3 and 4b merged; 5.1 executing; V plan in progress; Stage 7 tables + lung catalogue + Pulse audit for Ali's review).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -12,9 +12,10 @@
 ## Stage status table (edit at every gate)
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3 | merged to main | DONE | — |
-| 4b device layer | `stage-4b-device-layer` (plan: `docs/plans/stage-4b-device-layer.md`, worktree `../scratch/wt-stage-4b`) | executing (started 2026-09-25 04:25) | resume from first unticked task |
-| 5.1 rhythm polish | plan being written (`docs/plans/stage-5.1-rhythm-polish.md`) | Ali's strip list slots in at the end | execute when plan lands |
+| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b | merged to main | DONE | — |
+| 5.1 rhythm polish | `stage-5.1-rhythm-polish` (plan: `docs/plans/stage-5.1-rhythm-polish.md`, worktree `../scratch/wt-stage-5.1`) | executing (started 2026-09-26 11:25) | resume from first unticked task |
+| V ventilator fork + link | plan being written (`docs/plans/stage-v-ventilator-link.md`) | R27/R35/R36 | execute when plan lands |
+| 3.1 evidence fixes | not started | R39 items 1, 2, 4, 5, 6, 7 (small) | write mini-plan, execute after 5.1 |
 | 7 whole-body physiology (7a–7g, R32/R34) | not started | Ali reviewing docs/physiology/stage-7-parameter-tables.md; Pulse annex being written | write 7a plan after Q1–Q23 answered |
 | 8 validation/release | not started | waits for all | write plan |
 
