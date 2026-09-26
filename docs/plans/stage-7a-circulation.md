@@ -3272,7 +3272,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `CircModelState.chemo: { sao2: number; paco2: number }` (written by the pipeline at 1 Hz from `l1Value(l1, 'spo2')/100` and `etco2 + 5`), `chemoFactors(chemo, band): { hrF: number; svrF: number }` (tables §1.1 `hypoxiaHrSign`; B §4.9 chemoreflex: SaO2 < 85 % → adult HR ↑ up to +30 %, infant/neonate or SaO2 < 60 % → vagal bradycardia ×0.6; PaCO2 > 50 → HR/SVR +1 %/mmHg to +20 %) [ENG magnitudes]; GA depth enters through propofol's `gv` (Task 8) and age through the profile's `gVagal`/`gSymp`; β-blockade through `betaBlock`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/chemo.test.ts`:
 
@@ -3297,12 +3297,12 @@ describe('chemoreflex hook (B §4.9; tables §1.1 hypoxiaHrSign)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/chemo.test.ts`
 Expected: FAIL — `chemoFactors` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `model.ts` add (and `chemo: { sao2: 0.97, paco2: 40 },` in `createCircModel`, `chemo: { sao2: number; paco2: number };` in the state):
 
@@ -3339,12 +3339,12 @@ In `pipeline.ts` `emitSecond` (1 Hz) add, before the coronary step: `hs.circ.che
 
 (`circCardiacOutput` import from `../circ/model.ts`.) Task 20/21 add `iabp`/`lvad` fields.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/chemo.test.ts test/engine/circ-arrest.test.ts`
 Expected: PASS (the CPR CO assertion of Task 17 now runs).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/l2/circ/chemo.test.ts

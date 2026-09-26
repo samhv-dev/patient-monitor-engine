@@ -76,6 +76,7 @@ export interface CircModelState {
   pespNext: number; // R45(a): Emax boost for the next beat
   ref: Stabilised['ref']; // the stabilised resting reference (coronary demand, pulsatile sensing)
   cor: CoronaryState; // R23 coronary supply/demand (stepped at 1 Hz by the pipeline)
+  chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
   /** Extra multipliers owned by other modules (coronary ischaemia, conditions): applied at the next control step. */
   ext: { kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number };
 }
@@ -86,7 +87,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref),
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -135,6 +136,18 @@ const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null } as con
 const zero = () => 0;
 export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
 
+/** Chemoreflex → circulation (B §4.9; tables §1.1). Hypoxic HR sign by age band; hypercapnic pressor response. */
+export function chemoFactors(c: { sao2: number; paco2: number }, band: string): { hrF: number; svrF: number } {
+  let hrF = 1;
+  const hyp = Math.max(0, 0.85 - c.sao2); // below 85 %
+  if (hyp > 0) {
+    const brady = band === 'neonate' || band === 'infant' || c.sao2 < 0.6;
+    hrF = brady ? Math.max(0.5, 1 - 2.5 * hyp) : Math.min(1.3, 1 + 1.2 * hyp); // plan slope 1.6 failed its own test (SaO2 75 % infant → HR ×0.84, wanted < 0.8) [ENG]
+  }
+  const hcap = Math.min(0.2, Math.max(0, c.paco2 - 50) * 0.01); // +1 %/mmHg above 50, capped at +20 % [ENG]
+  return { hrF: hrF * (1 + hcap), svrF: 1 + hcap };
+}
+
 function control(m: CircModelState, env: CircEnv): void {
   const map = m.mapN > 0 ? m.mapSum / m.mapN : m.baro.mapLp;
   // R45(b): pulsatile sensing — the last three beats' pulse pressure relative to the resting one (K_PP)
@@ -150,10 +163,11 @@ function control(m: CircModelState, env: CircEnv): void {
   const b = env.modeled
     ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: m.prof.betaBlock, betaBlockC: m.prof.betaBlockC, weightScale: w, pinnedSet: m.mapSetPinned }, raTm)
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
+  const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;
   const base = m.base;
   const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
-  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr;
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF;
   p.v0Sv = base.v0Sv + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
@@ -162,7 +176,7 @@ function control(m: CircModelState, env: CircEnv): void {
   p.vFluid = base.vFluid + m.ext.vFluid;
   m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF;
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF;
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr) + b.rrMs / 1000;
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF) + b.rrMs / 1000;
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);

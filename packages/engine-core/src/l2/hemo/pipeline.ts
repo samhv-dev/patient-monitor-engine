@@ -10,6 +10,7 @@ import { createWaveNumerics, numericsStep, piNumeric, pressureNumerics, prNumeri
 import { prSource } from '../../l3/pulse/detector.ts';
 import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
+import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
 import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, StateVar } from '../../types.ts';
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
@@ -21,7 +22,7 @@ import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
 import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
 import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
-import { circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
+import { circCardiacOutput, circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -305,6 +306,7 @@ function overrides(hs: HemoState, t: number): StateVar[] {
 function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   // Stage 7a (R23): coronary supply/demand at 1 Hz → contractility (ext.kIsch) and the ST patch
   const c = hs.circ;
+  c.chemo = { sao2: l1Value(ctx.l1, 'spo2', t) / 100, paco2: l1Value(ctx.l1, 'etco2', t) + 5 }; // Task 19 chemoreflex inputs
   c.cor.eesF = c.kLv;
   stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR));
   c.ext.kIsch = c.cor.kIsch;
@@ -345,6 +347,16 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
   }
   hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags });
+  // Stage 7a: the 1 Hz circulation summary (tables §2.1 step 5, §3)
+  const lb = c.beats[c.beats.length - 1];
+  const svRvMean = c.beats.length ? c.beats.reduce((a, b) => a + b.svRv, 0) / c.beats.length : 0;
+  const ce: CircEvent = {
+    type: 'circ', t, co: circCardiacOutput(c), sv: lb?.sv ?? 0, svRv: svRvMean, ef: lb ? (lb.lvedv - lb.lvesv) / Math.max(1, lb.lvedv) : 0,
+    lvedv: lb?.lvedv ?? 0, lvesv: lb?.lvesv ?? 0, lvedp: lb?.lvedp ?? 0, lvsp: lb?.lvsp ?? 0,
+    pmsf: ((c.s[4] as number) - c.p.v0Sv) / c.p.cSv, pvr: (c.p.pvrL * c.p.pvrR) / (c.p.pvrL + c.p.pvrR), svr: c.p.rSys,
+    cpp: lb ? lb.aoDia - lb.lvedp : 0, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch,
+  };
+  hs.out.push(ce);
   if (hs.nibp.phase === 'idle') {
     const next = nibpNextIn(hs.nibp, t);
     if (next !== undefined) hs.out.push({ type: 'nibp', t, phase: 'idle', nextInS: Math.round(next) });
