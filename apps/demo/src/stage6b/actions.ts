@@ -21,7 +21,7 @@ export const LEARNER_ACTIONS: LearnerAction[] = [
   { id: 'adeno6', label: 'Adenosine 6 mg', event: { kind: 'drug', drugId: 'adenosine', dose: 6, unit: 'mg', route: 'iv' } },
   { id: 'adeno12', label: 'Adenosine 12 mg', event: { kind: 'drug', drugId: 'adenosine', dose: 12, unit: 'mg', route: 'iv' } },
   { id: 'atropine', label: 'Atropine 1 mg', event: { kind: 'drug', drugId: 'atropine', dose: 1, unit: 'mg', route: 'iv' } },
-  { id: 'pace', label: 'Pace 70 mA', event: { kind: 'pacer', mode: 'fixed', ratePpm: 70, mA: 70 } },
+  { id: 'pace', label: 'Pace 80 mA', event: { kind: 'pacer', mode: 'fixed', ratePpm: 70, mA: 80 } }, // R39-4: ~10 % above the 70 mA default threshold
   { id: 'fluid', label: 'Fluid 1000 mL', event: { kind: 'fluid', fluid: 'crystalloid', volumeMl: 1000, overS: 300 } },
   { id: 'propofol', label: 'Propofol 150 mg', event: { kind: 'drug', drugId: 'propofol', dose: 150, unit: 'mg', route: 'iv' } },
   { id: 'phenyl', label: 'Phenylephrine 100 µg', event: { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' } },
