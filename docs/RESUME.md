@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 02:45 (after the fifth cap cut-off; 7b/7g at PRs #14/#15 gate-passed, CI fixes in flight; 8a stalled on a permission prompt; 7c fixer, 7x and 7d reviewers running).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 04:20 (7b merged; 7g CI rerun after merging main; 7x executing; 7c/7d plan fixers running; 8a stalled on a permission prompt). CI now has two jobs: build (fast set) + test-slow (serial).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -12,15 +12,14 @@
 ## Stage status table (edit at every gate)
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a | merged to main | DONE (Waves A + B; 7a G7a PR #13) | — |
-| 7b lungs | `stage-7b-lungs`, PR #14 (worktree `../scratch/wt-stage-7b`) | gate passed (G7b); CI budget fix pushed by orchestrator (hemo-nibp yields) | merge when CI is green; then 7g merges main |
+| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b | merged to main | DONE (Waves A + B; 7a PR #13; 7b PR #14) | — |
 | 7c blood/acid–base | plan under fix (`docs/plans/stage-7c-blood.md`; R50 review READY WITH FIXES F1–F13; fixer prototyping on 7a+7b+7g) | E-7c-1 partition exception: thread `odc` through 7b's mix-o2 | execute after 7b and 7g merge |
 | 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review running) | needs FU-2 (NR-7g-5 rhythm-rate rule) before it executes | execute after 7c merges |
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
-| 7g drug PK/PD | `stage-7g-pkpd`, PR #15 (worktree `../scratch/wt-stage-7g`) | all 26 tasks done, gate passed (G7g); CI red only on a worker-RPC timeout (same NIBP cause) | after #14 merges: merge origin/main into the branch (resolve engine.ts/resp conflicts, keep both), rerun CI, merge |
+| 7g drug PK/PD | `stage-7g-pkpd`, PR #15 (worktree `../scratch/wt-stage-7g`) | gate passed (G7g); main (7b) merged in by the orchestrator, CI rerunning | merge when both CI jobs are green |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| 7x physiology console | plan written (`docs/plans/stage-7x-physiology-console.md`, 9 tasks; R50 review running) | opt-in `truth` event ≤ 2 Hz; new files + 11 engine lines | execute after review, on main after 7b/7g |
+| 7x physiology console | `stage-7x-physiology-console` (plan fixed, 9 tasks; worktree `../scratch/wt-stage-7x`) | executing (started 2026-09-27 04:05) | resume from first unticked task |
 | FU-2 engine follow-ups | not started | (1) NR-7g-5 HIGH: rhythm-intrinsic rates must not be overridden by the circulation in MODELED (only sinus-family follows the HR set point); (2) β-agonist unstressed-volume mobilisation (dobutamine CO, NR-7g-2); (3) pressure-dependent arterial compliance (post-PVC, G7a NR-1); (4) rhythm field on the 1 Hz `state` event; (5) saadat 8 s HR averaging mapping | write plan; execute before 7d/7e |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 29 boxes unticked | STALLED since 2026-09-26 22:20 on an app permission prompt (`git -C` misread as destructive) — Ali allows the prompt or a fresh executor resumes | resume from first unticked task; merge main before gate |
