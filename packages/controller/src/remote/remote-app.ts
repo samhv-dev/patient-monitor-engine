@@ -124,7 +124,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
       );
     };
     const render = () => {
-      controls.update(s.state, s.measurements);
+      controls.update(s.state, s.measurements, { rhythm: s.rhythm });
       renderScenario();
       const hr = s.measurements.hr;
       q<HTMLElement>('[data-v=hr]').textContent = `HR ${hr && hr.value !== null ? Math.round(hr.value) : '---'}`;

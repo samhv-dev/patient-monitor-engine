@@ -1,7 +1,7 @@
 // The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC).
 // Commands carry a unique id; unacked ones are re-sent on every reconnect and host hello, and the host
 // de-duplicates by id, so a Wi-Fi drop never applies a command twice (BUILD-PLAN Stage 6 acceptance 3).
-import type { SimSeconds } from '@pme/engine-core';
+import type { RhythmId, SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
   newPeerId,
@@ -56,6 +56,8 @@ export class ControllerSession {
   hostOnline = false;
   hostEngineVersion: string | null = null;
   bookmarks: string[] = [];
+  /** The host's current rhythm (FU-1): from `rhythmSegment` events and applied `setRhythm` commands; null until seen. */
+  rhythm: RhythmId | null = null;
   /** The host's scenario as seen from here (Stage 6b). */
   readonly scenario = new ScenarioView();
   private readonly o: ControllerSessionOptions;
@@ -170,6 +172,7 @@ export class ControllerSession {
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t);
     this.scenario.onEvent(e);
     if (e.type === 'state') this.state = e;
+    else if (e.type === 'rhythmSegment') this.rhythm = e.rhythm;
     else if (e.type === 'measurement') Object.assign(this.measurements, e.values);
     else if (e.type === 'alarm') this.addLog('alarm', `${e.priority} ${e.state}: ${e.text}`);
     else if (e.type === 'marker') this.addLog('marker', e.kind);
@@ -178,6 +181,7 @@ export class ControllerSession {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
+      if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
       if (c && !res?.replay && !mine) this.addLog('applied', describe(c), e.commandId);
     }

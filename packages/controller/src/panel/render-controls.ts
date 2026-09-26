@@ -21,8 +21,12 @@ export interface ControlsHost {
 }
 
 export interface ControlsView {
-  /** Refresh the readouts and flags from the latest state and measurements. */
-  update(state: StateEvent | null, measured: MeasuredMap): void;
+  /**
+   * Refresh the readouts and flags from the latest state and measurements. FU-1: the rhythm dropdown and each target
+   * field FOLLOW the host — when the host's rhythm or target changes, the control shows it (unless the user is in that
+   * control); a typed value is kept until then.
+   */
+  update(state: StateEvent | null, measured: MeasuredMap, host?: { rhythm?: RhythmId | null }): void;
   readonly el: HTMLElement;
 }
 
@@ -70,10 +74,12 @@ export function renderControls(parent: HTMLElement, vocab: Vocabulary, host: Con
   const rhythmBtn = el(doc, 'button', { type: 'button', 'data-action': 'rhythm' }, 'Apply');
   rhythmBtn.addEventListener('click', () => host.submit(rhythmCommand(rhythmSel.value as RhythmId, whenSel.value as 'now' | 'nextBeat'), 'rhythm'));
   r1.append(rhythmSel, whenSel, rhythmBtn);
+  const focused = (e: Element) => doc.activeElement === e;
+  let hostRhythm: RhythmId | null = null;
 
   // Targets (one row per variable)
   const ts = section('Targets');
-  const readouts: Array<{ id: string; out: HTMLElement; flag: HTMLElement; spec: Vocabulary['variables'][number] }> = [];
+  const readouts: Array<{ id: string; out: HTMLElement; flag: HTMLElement; spec: Vocabulary['variables'][number]; val: HTMLInputElement; host?: number }> = [];
   for (const spec of vocab.variables) {
     const r = row(ts);
     r.dataset.var = spec.id;
@@ -96,7 +102,7 @@ export function renderControls(parent: HTMLElement, vocab: Vocabulary, host: Con
       rel.addEventListener('click', () => host.submit(releaseCommand(spec, ramp()), `pin.${spec.id}`));
       r.append(pin, rel);
     }
-    readouts.push({ id: spec.id, out, flag, spec });
+    readouts.push({ id: spec.id, out, flag, spec, val, host: spec.normal }); // the field starts at the normal value
   }
 
   // Modifiers
@@ -148,8 +154,18 @@ export function renderControls(parent: HTMLElement, vocab: Vocabulary, host: Con
   parent.append(root);
   return {
     el: root,
-    update(state, measured) {
+    update(state, measured, host) {
+      const rhythm = host?.rhythm ?? null;
+      if (rhythm !== null && rhythm !== hostRhythm && !focused(rhythmSel)) {
+        hostRhythm = rhythm;
+        if ([...rhythmSel.options].some((o) => o.value === rhythm)) rhythmSel.value = rhythm;
+      }
       for (const r of readouts) {
+        const target = state?.values[r.spec.id as keyof StateEvent['values']];
+        if (target !== undefined && target !== r.host && !focused(r.val)) {
+          r.host = target;
+          r.val.value = String(Math.round(target * 10) / 10);
+        }
         const id = DISPLAYED[r.id];
         const m = id ? measured[id as keyof MeasuredMap] : undefined;
         r.out.textContent = readout(r.spec, state, m?.value);

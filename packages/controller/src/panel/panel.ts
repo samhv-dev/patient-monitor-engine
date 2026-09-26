@@ -152,7 +152,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
     title: 'Controls',
     render: (el) => {
       const controls = renderControls(el, o.vocabulary, { submit }, { mode: s.state?.mode ?? 'manual' });
-      return { update: () => controls.update(s.state, s.measurements) };
+      return { update: () => controls.update(s.state, s.measurements, { rhythm: s.rhythm }) };
     },
   });
   registerTab({
