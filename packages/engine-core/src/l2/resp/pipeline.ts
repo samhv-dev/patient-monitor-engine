@@ -27,7 +27,7 @@ import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
-import type { LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
+import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, meanAirwayPressure, nominalRate,
   onVentFrame, planCycles, preoxActive, pruneCycles, replan, type DriverCtx, type DriverState,
@@ -424,7 +424,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     return null;
   }
   if (cmd.type !== 'applyEvent') return null;
-  const ev = cmd.event as RespClinicalEvent | { kind: string };
+  const ev = cmd.event as RespClinicalEvent | LungClinicalEvent | { kind: string }; // Stage 7b
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
@@ -448,6 +448,21 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined && !['none', 'general', 'neuraxial'].includes(th.anaesthesia)) return 'anaesthesia must be none, general or neuraxial';
       return num('ambientC', th.ambientC, 5, 40);
+    }
+    // Stage 7b (plan decision 11)
+    case 'lungCondition': {
+      const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
+      if (!(LUNG_CONDITION_IDS as readonly string[]).includes(c.id)) return `lungCondition id must be one of ${LUNG_CONDITION_IDS.join(', ')}`;
+      if (c.side !== undefined && c.side !== 'L' && c.side !== 'R') return "side must be 'L' or 'R'";
+      return num('severity', c.severity, 0, 1) ?? num('recruitFrac', c.recruitFrac, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined);
+    }
+    case 'mainstem': {
+      const m = ev as Extract<LungClinicalEvent, { kind: 'mainstem' }>;
+      return ['both', 'left', 'right'].includes(m.ventilated) ? undefined : "ventilated must be 'both', 'left' or 'right'";
+    }
+    case 'recruit': {
+      const p = ev as Extract<LungClinicalEvent, { kind: 'recruit' }>;
+      return num('pressureCmH2O', p.pressureCmH2O, 20, 60) ?? num('durationS', p.durationS, 1, 60) ?? (p.pressureCmH2O === undefined || p.durationS === undefined ? 'recruit needs pressureCmH2O and durationS' : undefined);
     }
     default:
       return null;
@@ -481,13 +496,17 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
     return false;
   }
   if (cmd.type !== 'applyEvent') return false;
-  const ev = cmd.event as RespClinicalEvent | { kind: string };
+  const ev = cmd.event as RespClinicalEvent | LungClinicalEvent | { kind: string }; // Stage 7b
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
       if (a.state === 'oesophageal' && d.airway !== 'oesophageal') d.gastricN = 0;
       d.airway = a.state;
       d.severity = a.severity ?? 1;
+      // Stage 7b: endobronchial is a mainstem block (its shunt/compliance emerge); bronchospasm raises airway R (Q20)
+      rs.mainstemCmd = a.state === 'endobronchial' ? 'right' : rs.mainstemCmd === 'right' ? null : rs.mainstemCmd;
+      rs.rawEvent = a.state === 'bronchospasm' ? 1 + 5 * Math.min(1, d.severity) ** 1.5 : 1;
+      applyLungSpecs(rs);
       withdraw(replan(d, t, LOSS.includes(a.state), false));
       return true;
     }
@@ -523,6 +542,28 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       if (th.anaesthesia !== undefined) rs.temp.anaesthesia = th.anaesthesia;
       if (th.warming !== undefined) rs.temp.warming = th.warming;
       if (th.ambientC !== undefined) rs.temp.ta = th.ambientC;
+      return true;
+    }
+    case 'lungCondition': {
+      const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
+      const same = (s: { id: string; side?: string }) => s.id === c.id && (s.side ?? null) === (c.side ?? null);
+      const next = { id: c.id, severity: c.severity, ...(c.side ? { side: c.side } : {}), ...(c.recruitFrac !== undefined ? { recruitFrac: c.recruitFrac } : {}) };
+      const i = rs.lungSpecs.findIndex(same);
+      if (c.severity <= 0) rs.lungSpecs = rs.lungSpecs.filter((s) => !same(s));
+      else if (i >= 0) rs.lungSpecs[i] = next;
+      else rs.lungSpecs.push(next);
+      applyLungSpecs(rs);
+      return true;
+    }
+    case 'mainstem': {
+      const m = ev as Extract<LungClinicalEvent, { kind: 'mainstem' }>;
+      rs.mainstemCmd = m.ventilated === 'both' ? null : m.ventilated;
+      applyLungSpecs(rs);
+      return true;
+    }
+    case 'recruit': {
+      const p = ev as Extract<LungClinicalEvent, { kind: 'recruit' }>;
+      rs.recruit = { p: p.pressureCmH2O, until: t + p.durationS };
       return true;
     }
     default:

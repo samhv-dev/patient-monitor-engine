@@ -2747,6 +2747,8 @@ git push origin stage-7b-lungs
 
 ### Task 16: Commands — `lungCondition`, `mainstem`, `recruit`; Stage 3 airway events routed into the module
 
+> **Executor note:** Deviation: the airway-event mainstem line is simplified to `endobronchial ? 'right' : mainstemCmd === 'right' ? null : mainstemCmd` (the plan's form did not type-check under strict TS; same behaviour). engine-commands' two 5 s-timeout tests time out only under the machine's load (load average 28–34 from concurrent executors); alone they pass (2.4 s vs 1.9 s on main).
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/resp/pipeline.ts` (`validateRespCommand`, `applyRespCommand`)
 - Create: `packages/engine-core/test/engine/lung-commands.test.ts`
@@ -2755,7 +2757,7 @@ git push origin stage-7b-lungs
 - Consumes: `LUNG_CONDITION_IDS`, `LungClinicalEvent` (Task 1), `applyLungSpecs` (Task 13).
 - Produces: `applyEvent { kind: 'lungCondition', id, severity, side?, recruitFrac? }` (severity 0 removes; a new spec for the same id+side replaces the old one); `applyEvent { kind: 'mainstem', ventilated }`; `applyEvent { kind: 'recruit', pressureCmH2O 20–60, durationS 1–60 }`; `airway endobronchial` → `mainstemCmd 'right'`, leaving it → `null`; `airway bronchospasm` → `rawEvent = 1 + 5·sev^1.5` (Q20).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-commands.test.ts`:
 
@@ -2807,12 +2809,12 @@ describe('Stage 7b commands', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-commands.test.ts`
 Expected: FAIL — `lungCondition` is not a Stage 3 command (validation returns null → the engine rejects it as unknown).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/resp/pipeline.ts`:
 - add `import { LUNG_CONDITION_IDS, type LungClinicalEvent } from '../../types-lung.ts'; // Stage 7b` (merge with the Task 13 type import).
@@ -2875,12 +2877,12 @@ In `packages/engine-core/src/l2/resp/pipeline.ts`:
 
 Note the `mainstem` command with `'both'` returns control to the conditions (an OLV condition still blocks); a manual `'left'`/`'right'` overrides them.
 
-- [ ] **Step 4: Run the test and the Stage 3 command suites**
+- [x] **Step 4: Run the test and the Stage 3 command suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-commands.test.ts test/engine/engine-commands.test.ts test/engine/resp-airway.test.ts test/l2/resp`
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/lung-commands.test.ts
