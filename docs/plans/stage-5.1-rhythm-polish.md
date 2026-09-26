@@ -1399,7 +1399,7 @@ Stage 5 executor: "K 8.5 sine wave: a wide QRS running into a tall T with no ST 
 - Consumes: `beatQrs`, `without`, `WAVE` (Task 2); `applyPMorphology`, `pWaveKernels`.
 - Produces: `osbornV3Mv(tempC: number): number` exported from `morphology/electrolytes.ts`; `hyperK(k).s4` now saturates at K 8.5.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/electrolytes.test.ts` with exactly:
 
@@ -1455,12 +1455,12 @@ describe('Stage 5.1 hyperkalaemia sine wave and Osborn J wave (measured)', () =>
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/electrolytes.test.ts`
 Expected: FAIL in both cases (sine: the R–T trough is only −0.17·R; Osborn: a J wave is present at 33 °C).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/morphology/electrolytes.ts`, replace this block (it occurs exactly once):
 
@@ -1547,7 +1547,7 @@ with:
   return k;
 ```
 
-- [ ] **Step 4: Update the Stage 5 Osborn case**
+- [x] **Step 4: Update the Stage 5 Osborn case**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts`, replace this block (it occurs exactly once):
 
@@ -1589,12 +1589,12 @@ with:
   });
 ```
 
-- [ ] **Step 5: Run the electrolyte tests**
+- [x] **Step 5: Run the electrolyte tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/electrolytes.test.ts test/l2/ecg/s5/morph-electrolytes.test.ts`
 Expected: PASS (the Stage 5 ordering test "peaked T → PR↑ → QRS↑ → sine" still holds).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/electrolytes.ts packages/engine-core/test/l2/ecg/s51/electrolytes.test.ts packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts
