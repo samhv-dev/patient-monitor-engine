@@ -818,7 +818,7 @@ Fix: a mean-reverting walk, axis ← 0.7·axis + 0.15·N(0,1) (stationary SD 0.2
 - Consumes: `rmsRatio` (Task 2).
 - Produces: nothing new (constants `POLY_AXIS_STEP_RAD`, `POLY_AXIS_KEEP` are module-private).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/vtpoly.test.ts` with exactly:
 
@@ -844,12 +844,12 @@ describe('Stage 5.1 polymorphic VT visibility', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vtpoly.test.ts`
 Expected: FAIL: a V1/II ratio below 0.4 or above 1.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/foci-ventricular.ts`, replace this block (it occurs exactly once):
 
@@ -895,12 +895,12 @@ export function onVtPoly(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const rr = (60 / rhythmRate(st, t, ctx)) * Math.max(0.7, 1 + POLY_RR_CV * normal(ctx.rng.ectopy));
 ```
 
-- [ ] **Step 4: Run it and the ventricular tests**
+- [x] **Step 4: Run it and the ventricular tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vtpoly.test.ts test/l2/ecg/s5/ventricular.test.ts test/l2/ecg/s5/library.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/foci-ventricular.ts packages/engine-core/test/l2/ecg/s51/vtpoly.test.ts
