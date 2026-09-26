@@ -1012,7 +1012,7 @@ git push origin stage-7b-lungs
 - Consumes: `params.ts` constants (Task 2); `SideParams` (Task 3).
 - Produces: `RecruitState { ind: number[]; blk: number[]; open: number[] }`, `RecruitInputs { fio2; faO2; faCo2; peepTot; pInsp; ga; indFactor; blocked }`, `P_REC_REF` (15), `createRecruit()`, `fio2AtelFactor(f)`, `tauCollapseS(fio2, peep)`, `stepRecruit(st, sp, x, dt)`, `nonAerated(st, sp): number[]`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/recruit.test.ts`:
 
@@ -1065,12 +1065,12 @@ describe('atelectasis, recruitment and absorption (tables §4.1, Q34)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/recruit.test.ts`
 Expected: FAIL — cannot resolve `recruit.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/recruit.ts`:
 
@@ -1163,12 +1163,12 @@ export function nonAerated(st: RecruitState, sp: SideParams[]): number[] {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/recruit.test.ts`
 Expected: PASS (4).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/recruit.ts packages/engine-core/test/l2/lung/recruit.test.ts
