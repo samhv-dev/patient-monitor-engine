@@ -1,0 +1,12 @@
+[
+  { "id": "vc-default", "durS": 20, "setup": "" },
+  { "id": "vc-decel-copd-rr20", "durS": 30, "setup": "loadPreset('copd');Object.assign(S,{flowPattern:'decel',rate:20,vt:560,vcFlow:60,pause:0})" },
+  { "id": "pc-ards-mod", "durS": 20, "setup": "setMode('PC');loadPreset('ardsMod');Object.assign(S,{pc:18,peep:10,itime:0.9,rate:20})" },
+  { "id": "prvc-convergence", "durS": 60, "setup": "setMode('PRVC');Object.assign(S,{prvcTarget:450,rate:16,itime:1.0,compliance:35})" },
+  { "id": "psv-spont", "durS": 20, "setup": "setMode('PSV');Object.assign(S,{ps:10,cycleOff:25,spont:true,spontRate:18,pmus:6})" },
+  { "id": "asv-pav", "durS": 20, "setup": "setMode('PAV');Object.assign(S,{pavAssist:60,spont:true,spontRate:16,pmus:8})" },
+  { "id": "scn-ineffective", "durS": 30, "setup": "runScenario('ineffective')" },
+  { "id": "scn-breath-stack", "durS": 20, "setup": "runScenario('breathStack')" },
+  { "id": "scn-auto-trigger", "durS": 20, "setup": "runScenario('autoTrig')" },
+  { "id": "vc-spont-variability", "durS": 30, "setup": "Object.assign(S,{spont:true,spontRate:22,pmus:5,variability:true,varPct:15})" }
+]

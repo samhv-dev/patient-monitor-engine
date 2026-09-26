@@ -12,10 +12,11 @@
 ## Stage status table (edit at every gate)
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b | merged to main | DONE | — |
-| 5.1 rhythm polish | `stage-5.1-rhythm-polish` (plan: `docs/plans/stage-5.1-rhythm-polish.md`, worktree `../scratch/wt-stage-5.1`) | executing (started 2026-09-26 11:25) | resume from first unticked task |
-| V ventilator fork + link | plan being written (`docs/plans/stage-v-ventilator-link.md`) | R27/R35/R36 | execute when plan lands |
-| 3.1 evidence fixes | not started | R39 items 1, 2, 4, 5, 6, 7 (small) | write mini-plan, execute after 5.1 |
+| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1 | merged to main | DONE | — |
+| V ventilator fork + link | `stage-v-ventilator-link`, PR #10 (worktree `../scratch/wt-stage-v`) | done; gate passed on inspection; CI pending | merge on green |
+| 7a circulation | `stage-7a-circulation` (plan: `docs/plans/stage-7a-circulation.md`, worktree `../scratch/wt-stage-7a`) | executing (started 2026-09-26 ~13:00) | resume from first unticked task |
+| 7b lungs | plan being written (`docs/plans/stage-7b-lungs.md`) | R43 two compartments | execute when plan lands |
+| 3.1 evidence fixes | `stage-3.1-evidence-fixes` (worktree `../scratch/wt-stage-3.1`, no plan file — items in R39 + the 5.1 breath patch) | executing (started 2026-09-26 ~12:00) | resume from the gate note's item list |
 | 7 whole-body physiology (7a–7g, R32/R34) | not started | Ali reviewing docs/physiology/stage-7-parameter-tables.md; Pulse annex being written | write 7a plan after Q1–Q23 answered |
 | 8 validation/release | not started | waits for all | write plan |
 
