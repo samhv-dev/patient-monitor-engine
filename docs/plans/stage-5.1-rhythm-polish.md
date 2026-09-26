@@ -1174,7 +1174,7 @@ Also fixed: the strip label "Anterior STEMI (V1/V3)" showed V3 and III (Stage 5 
 - Consumes: `beatQrs` (Task 2), `designEcgFilter`/`createFilterState`/`filterSample` (`src/l3/ecg-filter.ts`, read-only import), `samples5` (Stage 5 helper).
 - Produces: `ST_TERRITORIES: Record<StTerritory, { dir: Vec3; leads: readonly LeadId[]; recip: readonly LeadId[]; sign: 1 | -1 }>` (the `lead` field is gone; nothing outside `st.ts` and its tests read it — check with `grep -rn "ST_TERRITORIES" packages apps`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/stemi.test.ts` with exactly:
 
@@ -1232,12 +1232,12 @@ describe('Stage 5.1 STEMI magnitude (measured at J+60 on the generated leads)', 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/stemi.test.ts`
 Expected: FAIL: `ter.leads` is undefined (TypeError) — the Stage 5 table has `lead`, not `leads`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/morphology/st.ts`, replace this block (it occurs exactly once):
 
@@ -1316,7 +1316,7 @@ with:
 
 ```
 
-- [ ] **Step 4: Update the Stage 5 per-territory test and the STEMI strips**
+- [x] **Step 4: Update the Stage 5 per-territory test and the STEMI strips**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-st.test.ts`, replace this block (it occurs exactly once):
 
@@ -1368,12 +1368,12 @@ with:
   r('rbbb', 'RBBB', 'modifier', { rhythm: 'sinus', mods: { bbb: 'rbbb' }, leads: ['V1', 'V6'] }),
 ```
 
-- [ ] **Step 5: Run the ST tests and the demo typecheck**
+- [x] **Step 5: Run the ST tests and the demo typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/stemi.test.ts test/l2/ecg/s5/morph-st.test.ts && npx -y pnpm@9.15.9 --filter @pme/demo typecheck`
 Expected: PASS; typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/st.ts packages/engine-core/test/l2/ecg/s51/stemi.test.ts packages/engine-core/test/l2/ecg/s5/morph-st.test.ts apps/demo/src/stage5-catalogue.ts
