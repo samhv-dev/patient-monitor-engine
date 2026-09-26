@@ -2105,7 +2105,7 @@ git push
 
 Measured while planning on the engine's `capture12()` lead II (seed 3, 40 s): HR 60 → PR 220, QRS 62, QT 375, QTcF 376 ms; HR 75 → 214 / 52 / 351 / 379; HR 100 → 204 / 62 / 316 / 375. Absolute values are method-dependent (a 15 % slope threshold places QRS onset late and P onset early); they are only ever compared with PTB-XL measured by this same function (Task 11), never with textbook numbers. Without the 0.5–40 Hz band-pass the diagnostic-filter noise made QRS read 164–260 ms — the filter is required.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/metrics/intervals.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/metrics/intervals.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2142,11 +2142,11 @@ describe('ECG intervals on the median beat (brief §9 V5)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (module missing)**
+- [x] **Step 2: Run it. Expected: FAIL (module missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/metrics/intervals.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/metrics/intervals.ts`**
+- [x] **Step 3: Write `packages/validation/src/metrics/intervals.ts`**
 
 ```ts
 // ECG intervals on a lead-II median beat (brief §9 V5), one method for PTB-XL and for the engine's 12-lead capture:
@@ -2203,11 +2203,11 @@ export function intervalsOf(x: Float64Array, fs = 500): Intervals | null {
 }
 ```
 
-- [ ] **Step 4: Run the test. Expected: PASS (2 tests)**
+- [x] **Step 4: Run the test. Expected: PASS (2 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/metrics/intervals.test.ts`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/validation/src/metrics/intervals.ts packages/validation/test/metrics/intervals.test.ts
