@@ -63,9 +63,16 @@ test('ACLS VF: panel load → remote starts VF → learner shocks → ROSC', asy
   await page.screenshot({ path: resolve(out, 'learner-bar.png'), clip: await box(page, '#scenario', '#actions') });
   await remote.screenshot({ path: resolve(out, 'remote-vf.png'), fullPage: true });
 
+  // FU-1 item 2 (G3.1-obs): shock only once the defibrillator reports READY. A fixed 8 s wait for the 7 s charge flaked
+  // under load, because the engine's sim clock (not the wall clock) runs the charge. The engine's deviceStatus event
+  // carries the defib state; record it on the page and poll it.
+  await g(page, (w) => {
+    w.__pme6b.defibState = 'idle';
+    w.__pme6b.mon.core.engine.on((e: { defib: { state: string } }) => (w.__pme6b.defibState = e.defib.state), ['deviceStatus']);
+  });
   await page.locator('#actions button', { hasText: 'Start CPR' }).click();
   await page.locator('#actions button', { hasText: 'Charge 200 J' }).click(); // Stage 4b: the engine charges (7 s) before it shocks
-  await page.waitForTimeout(8_000);
+  await expect.poll(() => g(page, (w) => w.__pme6b.defibState as string), { timeout: 30_000 }).toBe('ready');
   await page.locator('#actions button', { hasText: 'Shock 200 J' }).click();
   await expect.poll(() => stateId(page), { timeout: 5_000 }).toBe('rosc'); // seed 42: the first draw is 0.062 < 0.3
   await expect(page.locator('.pme-scn-state')).toHaveText('ROSC');
