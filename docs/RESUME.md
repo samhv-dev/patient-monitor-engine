@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 22:25 (7a merged; 7g executing; 7b/8a executing; 7x console plan being written; 7c/7d/7e plans await R50 review).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 23:05 (7a merged; 7b at PR #14 gate-passed awaiting CI; 7g/8a executing; 7x console plan + 7c review running).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,7 +13,7 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a | merged to main | DONE (Waves A + B; 7a G7a PR #13) | — |
-| 7b lungs | `stage-7b-lungs` (plan: `docs/plans/stage-7b-lungs.md`, worktree `../scratch/wt-stage-7b`) | executing | resume from first unticked task |
+| 7b lungs | `stage-7b-lungs`, PR #14 (worktree `../scratch/wt-stage-7b`) | all 30 tasks done, gate passed (G7b), CI pending | merge when CI is green |
 | 7c blood/acid–base | plan ready (`docs/plans/stage-7c-blood.md`, 26 tasks, verified reproducible; R50 review pending) | R34 port from Pulse; gate: tests and Pulse oracle never concurrently | execute after 7a merges |
 | 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review pending) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
@@ -21,6 +21,7 @@
 | 7g drug PK/PD | `stage-7g-pkpd` (plan: `docs/plans/stage-7g-pkpd.md`, 26 tasks, fixed to R51; worktree `../scratch/wt-stage-7g`) | executing (started 2026-09-26 22:25) | resume from first unticked task |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | 7x physiology console | not started (R52; plan to be written) | new files only; generic truth-tree browser + monitor + actions rail | write plan after a slot frees; execute after 7a merges |
+| V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
