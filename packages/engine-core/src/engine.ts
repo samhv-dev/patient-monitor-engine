@@ -13,7 +13,8 @@ import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmS
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
-import { createHrState, hrMeasure, hrOnQrs, type HrState } from './l3/hr.ts';
+import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrState } from './l3/hr.ts';
+import { resolveSkin } from '@pme/skins'; // FU-1 (E-4a-2): data-only dependency (R30)
 import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 import { createRngState, type Sfc32State, type StreamName } from './rng/sfc32.ts';
@@ -429,7 +430,7 @@ class Engine implements MonitorEngine {
         }
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t) } });
+          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, this.hrAveraging()) } }); // FU-1: skin averaging
         }
       },
     );
@@ -611,6 +612,14 @@ class Engine implements MonitorEngine {
   /** R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). */
   private syncCo2Sampler(): void {
     this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
+  }
+
+  /** FU-1 (E-4a-2): the active skin's optional `hr.averaging`, cached per skin id (a skin switch picks it up). */
+  private hrAvgCache: { skin: string; avg: HrAveraging | undefined } | null = null;
+  private hrAveraging(): HrAveraging | undefined {
+    const skin = this.dev.alarms.profile.skin;
+    if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
+    return this.hrAvgCache.avg;
   }
 
   /** Make the lane buffers match the current lanes (new leads start empty). */
