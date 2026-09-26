@@ -228,4 +228,31 @@ rate-free rhythm; drug-induced brady/tachy rhythms will need a 7a rule for which
 
 ## 8. Final gate run and CI
 
-(filled in at Task 26)
+Local run on the branch after merging `origin/main` (36097c1), 2026-09-26:
+
+| Step | Result |
+|---|---|
+| `pnpm typecheck` | clean |
+| `pnpm -r test` | 1,283 passed, 7 skipped; `it.fails` entries count as passed |
+| `pnpm build` | clean |
+| `pnpm check-notices` | OK |
+| `PW_SYSTEM_CHROME=1 pnpm test:e2e` | 25 passed (8.0 min), including `stage7g.e2e.ts` |
+
+Unit results by package:
+
+| Package | Passed | Skipped |
+|---|---|---|
+| engine-core | 692 | 2 |
+| controller | 196 | 0 |
+| skins | 168 | 0 |
+| ventilator | 87 | 0 |
+| renderer | 66 | 0 |
+| audio | 58 | 0 |
+| validation | 16 | 5 |
+
+Stage 7g test files:
+- `test/types-pk.test.ts` and `test/l2/pk/*`: 14 files.
+- `test/engine/pk-{wiring,bus,acceptance-pk,acceptance-pd,acceptance-scen,longrun}.test.ts`.
+- `packages/renderer/test/drug-panel.test.ts`.
+
+The e2e run rewrites every stage's gate PNGs; the committed images are the verified Task 24 set.
