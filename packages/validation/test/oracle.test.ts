@@ -48,6 +48,6 @@ describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PULSE_ORACLE_DIR=…
         verdicts.push(verdict);
       }
       expect(verdicts).not.toContain('fail'); // every row is printed before the verdict (a fail is a gate-note finding)
-    }, 600_000);
+    }, 3_600_000); // local-only (skipped in CI): Pulse steps a full engine per 20 ms
   }
 });

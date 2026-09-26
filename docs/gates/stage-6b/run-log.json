@@ -2,78 +2,73 @@
   "entries": [
     {
       "op": "start",
-      "t": 1.18,
+      "t": 0.4,
       "seed": 42
     },
     {
       "op": "enter",
-      "t": 1.18,
+      "t": 0.4,
       "stateId": "stable"
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-0",
       "type": "setRhythm",
       "accepted": true,
-      "tick": 62
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-1",
       "type": "setTarget",
       "accepted": true,
-      "tick": 62
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-2",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 62,
-      "reason": "scenario only: the engine does not model attachSensor yet"
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-3",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 62,
-      "reason": "scenario only: the engine does not model attachSensor yet"
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-4",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 62,
-      "reason": "scenario only: the engine does not model attachSensor yet"
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-5",
       "type": "attachSensor",
       "accepted": true,
-      "tick": 62,
-      "reason": "scenario only: the engine does not model attachSensor yet"
+      "tick": 23
     },
     {
       "op": "dispatch",
-      "t": 1.18,
+      "t": 0.4,
       "commandId": "scenario-1-6",
       "type": "device",
-      "accepted": false,
-      "tick": 59,
-      "reason": "device nibp is not implemented until later stages"
+      "accepted": true,
+      "tick": 23
     },
     {
       "op": "advance",
-      "t": 1.18,
+      "t": 0.4,
       "inputs": [
         {
           "kind": "values",
@@ -106,27 +101,115 @@
     },
     {
       "op": "trigger",
-      "t": 1.98,
+      "t": 0.66,
       "transitionId": "arrest"
     },
     {
       "op": "advance",
-      "t": 1.98,
+      "t": 0.66,
       "inputs": []
     },
     {
       "op": "enter",
-      "t": 1.98,
+      "t": 0.66,
       "stateId": "vf",
       "transitionId": "arrest"
     },
     {
       "op": "dispatch",
-      "t": 1.98,
+      "t": 0.66,
       "commandId": "scenario-2-0",
       "type": "setRhythm",
       "accepted": true,
-      "tick": 102
+      "tick": 36
+    },
+    {
+      "op": "advance",
+      "t": 1,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.00395888003169,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 35.954915116097396,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 1.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 2,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.01803063915013,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 35.51202191012951,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
     },
     {
       "op": "advance",
@@ -136,7 +219,48 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 197
+            "hr": 182
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.04018393019517,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 34.44812780044409,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 3.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -149,7 +273,82 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 176
+            "hr": 173
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.09839914067064,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 29.398463471710034,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 5,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 163
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.14814956453053,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 24.56754165636155,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
           }
         }
       ]
@@ -162,7 +361,8 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 173
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -175,7 +375,42 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 175
+            "hr": 162
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.20328253107681,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 19.726004281790413,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -188,40 +423,55 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 174
+            "hr": 163
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.24417386360147,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 16.48280676638176,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 8,
+      "t": 7.02,
       "inputs": [
         {
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 174
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
     },
     {
       "op": "advance",
-      "t": 9,
-      "inputs": [
-        {
-          "kind": "values",
-          "rank": 2,
-          "values": {
-            "hr": 170
-          }
-        }
-      ]
-    },
-    {
-      "op": "advance",
-      "t": 9.44,
+      "t": 7.88,
       "inputs": [
         {
           "kind": "clinical",
@@ -236,57 +486,125 @@
     },
     {
       "op": "advance",
-      "t": 9.48,
+      "t": 7.92,
       "inputs": [
         {
           "kind": "clinical",
           "event": {
             "kind": "defib",
-            "action": "shock",
+            "action": "charge",
             "energyJ": 200
           }
         }
       ]
     },
     {
-      "op": "roll",
-      "t": 9.48,
-      "transitionId": "shockVf",
-      "u": 0.06174324615858495,
-      "p": 0.3,
-      "success": true
-    },
-    {
-      "op": "enter",
-      "t": 9.48,
-      "stateId": "rosc",
-      "transitionId": "shockVf"
-    },
-    {
-      "op": "dispatch",
-      "t": 9.48,
-      "commandId": "scenario-3-0",
-      "type": "setRhythm",
-      "accepted": true,
-      "tick": 477
-    },
-    {
-      "op": "dispatch",
-      "t": 9.48,
-      "commandId": "scenario-3-1",
-      "type": "setTarget",
-      "accepted": true,
-      "tick": 477
-    },
-    {
       "op": "advance",
-      "t": 9.48,
+      "t": 8,
       "inputs": [
         {
           "kind": "values",
-          "rank": 1,
+          "rank": 2,
           "values": {
-            "hr": 118
+            "hr": 148
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.28700869525733,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.758117178794828,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 9,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 157
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pi": 0.31847959180808066
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.3100599664647,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.700468569983737,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 9.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -301,6 +619,51 @@
           "values": {
             "hr": 157
           }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 107,
+            "pi": 0.28531586226312416
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.33561541197854,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.644601780876837,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
         }
       ]
     },
@@ -312,7 +675,58 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 146
+            "hr": 155
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 108,
+            "pi": 0.2787593435857724
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.35454101391012,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.608776722760343,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 11.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -325,7 +739,52 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 129
+            "hr": 162
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 108,
+            "pi": 0.2688088591157422
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.37796123572103,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.570513502105287,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -338,7 +797,58 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 119
+            "hr": 135
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 108,
+            "pi": 0.2688266573520306
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.40048781531783,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.536893705090538,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 13.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -351,7 +861,52 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 115
+            "hr": 139
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 109,
+            "pi": 0.268838596424589
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.42526466365108,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.503434802708998,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -364,7 +919,115 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 111
+            "hr": 140
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.26882295304111065
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.44346017805292,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.481310254130223,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 15.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 15.96,
+      "inputs": [
+        {
+          "kind": "clinical",
+          "event": {
+            "kind": "defib",
+            "action": "shock",
+            "energyJ": 200
+          }
+        }
+      ]
+    },
+    {
+      "op": "roll",
+      "t": 15.96,
+      "transitionId": "shockVf",
+      "u": 0.06174324615858495,
+      "p": 0.3,
+      "success": true
+    },
+    {
+      "op": "enter",
+      "t": 15.96,
+      "stateId": "rosc",
+      "transitionId": "shockVf"
+    },
+    {
+      "op": "dispatch",
+      "t": 15.96,
+      "commandId": "scenario-3-0",
+      "type": "setRhythm",
+      "accepted": true,
+      "tick": 801
+    },
+    {
+      "op": "dispatch",
+      "t": 15.96,
+      "commandId": "scenario-3-1",
+      "type": "setTarget",
+      "accepted": true,
+      "tick": 801
+    },
+    {
+      "op": "advance",
+      "t": 15.96,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 1,
+          "values": {
+            "hr": 118
           }
         }
       ]
@@ -377,7 +1040,52 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 104
+            "hr": 116
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.26882559323767913
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 0,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.4577077329923,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.47112421560831,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 0.9198657893390935,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -390,7 +1098,58 @@
           "kind": "values",
           "rank": 2,
           "values": {
-            "hr": 106
+            "hr": 114
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.2688296124759947
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.02127871027758,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.46427743966427,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.473590262122212,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 1.9619897850380614,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 17.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -403,7 +1162,482 @@
           "kind": "values",
           "rank": 2,
           "values": {
+            "hr": 114
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.276743692824897
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.04823721486467,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47112075488657,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.479259814198857,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 1.9619897850380614,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 19,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 110
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.2818161364267842
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.08174851142564,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47580521279718,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.4856738612664,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 1.9619897850380614,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 19.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 20,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 117
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.2918502255874241
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.12335796296641,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47794385225947,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.50101552387581,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 2.7159658678844485,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 21,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 111
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.301850410822829
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.17494951856138,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47732417849264,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.518306060497867,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 2.7159658678844485,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 21.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 22,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
             "hr": 108
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.2989722076891439
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.23880584427864,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47589405495678,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.540038935091056,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 3.162255684168569,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 23,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 114
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.29894704109746584
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.31767135249302,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47419925940994,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.55816144354592,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 3.162255684168569,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 23.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 24,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 104
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.29897122870321485
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.41481334763164,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47193440510503,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.579536416604402,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 3.4074618166171344,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 25,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "hr": 104
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "pr": 110,
+            "pi": 0.2989746174749944
+          }
+        },
+        {
+          "kind": "values",
+          "rank": 3,
+          "values": {
+            "hr": 105.53407327188496,
+            "sbp": 120,
+            "dbp": 80,
+            "cvp": 6,
+            "papSys": 24,
+            "papDia": 10,
+            "pawp": 9,
+            "spo2": 97.47290704702284,
+            "pi": 2,
+            "rr": 15,
+            "vt": 500,
+            "etco2": 13.58892109443108,
+            "fio2": 0.21,
+            "shunt": 0.040193223673850295,
+            "tempCore": 36.8,
+            "contractility": 1,
+            "svr": 3.4074618166171344,
+            "k": 4.2,
+            "qtc": 400,
+            "volumeStatus": 1,
+            "paceThresholdMa": 70
+          }
+        }
+      ]
+    },
+    {
+      "op": "advance",
+      "t": 25.02,
+      "inputs": [
+        {
+          "kind": "values",
+          "rank": 2,
+          "values": {
+            "spo2": 97,
+            "rr": 15,
+            "tempCore": 36.8,
+            "tempSite": 36.8
           }
         }
       ]
@@ -411,8 +1645,8 @@
   ],
   "notes": [],
   "lines": [
-    "1.18 s → stable",
-    "1.98 s → vf (arrest)",
-    "9.48 s → rosc (shockVf)"
+    "0.40 s → stable",
+    "0.66 s → vf (arrest)",
+    "15.96 s → rosc (shockVf)"
   ]
 }

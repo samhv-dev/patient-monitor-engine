@@ -8,7 +8,8 @@ describe('link core', () => {
     expect(Object.keys(PROFILES).sort()).toEqual(LUNG_PATHOLOGIES.map((r) => r.id).sort());
     const pe = createLinkCore(createVent(), PROFILES['pe-massive']!);
     const first = linkTick(pe, 0.02).map((c) => c.type + ('variable' in c ? `:${c.variable}` : ''));
-    expect(first).toEqual(['setTarget:shunt', 'setTarget:sbp', 'setTarget:dbp', 'setTarget:cvp', 'setTarget:hr', 'externalDrive']);
+    // Stage 7a: massive PE is the engine's own circulation condition now (R41: the MANUAL-target stand-in is deleted)
+    expect(first).toEqual(['setTarget:shunt', 'applyEvent', 'externalDrive']);
     expect(linkTick(pe, 0.02).map((c) => c.type)).toEqual(['externalDrive']);
     const ards = createLinkCore(createVent(), PROFILES['ards-moderate']!);
     expect(ards.vs.cfg.compliance).toBe(32);

@@ -17,7 +17,7 @@ export interface OracleScenario {
 }
 const bolus = (sub: string, mgPerMl: number, ml: number) =>
   JSON.stringify({ AnyAction: [{ PatientAction: { SubstanceBolus: { AdministrationRoute: 'Intravenous', Substance: sub, Concentration: { ScalarMassPerVolume: { Value: mgPerMl, Unit: 'mg/mL' } }, Dose: { ScalarVolume: { Value: ml, Unit: 'mL' } } } } }] });
-const bleed = (mlPerMin: number) => JSON.stringify({ AnyAction: [{ PatientAction: { Hemorrhage: { Compartment: 'RightLeg', Flow: { ScalarVolumePerTime: { Value: mlPerMin, Unit: 'mL/min' } } } } }] });
+const bleed = (mlPerMin: number) => JSON.stringify({ AnyAction: [{ PatientAction: { Hemorrhage: { Compartment: 'RightLeg', FlowRate: { ScalarVolumePerTime: { Value: mlPerMin, Unit: 'mL/min' } } } } }] });
 
 export const ORACLE_SCENARIOS: OracleScenario[] = [
   { id: 'O1', durationS: 600, baselineS: 0, pulse: [], ours: [], compareAtS: 600, rows: [

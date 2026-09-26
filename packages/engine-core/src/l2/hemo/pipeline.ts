@@ -109,7 +109,7 @@ export interface HemoState {
    * pOkS) run while an INSTRUCTOR action is being met (a target, the HR or the rhythm changed) and stop once it holds;
    * physiological perturbations (PEEP, bleeding, drugs, conditions) then act on top of the instructor's picture.
    */
-  manHold: { cvpT: number; pamT: number; active: boolean; okS: number; runS: number; key: string; pActive: boolean; pOkS: number; sbpAvg: number; dbpAvg: number };
+  manHold: { cvpT: number; pamT: number; active: boolean; okS: number; runS: number; key: string; pActive: boolean; pOkS: number; pRunS: number; sbpAvg: number; dbpAvg: number };
   sys: TrackerState;
   pul: TrackerState;
   prevRef: boolean; // the previous beat was a reference beat
@@ -298,7 +298,7 @@ const CIRC_LIMITS = { gMin: 0.3, gMax: 2.5, rMin: 0.3, rMax: 4 };
 
 /** Initial MANUAL hold state: both trackers start active (the L1 targets are met first), then hold. */
 function manHoldInit(cvp: number, vs: number, pamT: number, sbp: number, dbp: number): HemoState['manHold'] {
-  return { cvpT: volumeStatusCvp(cvp, vs), pamT, active: true, okS: 0, runS: 0, key: '', pActive: true, pOkS: 0, sbpAvg: sbp, dbpAvg: dbp };
+  return { cvpT: volumeStatusCvp(cvp, vs), pamT, active: true, okS: 0, runS: 0, key: '', pActive: true, pOkS: 0, pRunS: 0, sbpAvg: sbp, dbpAvg: dbp };
 }
 
 /** Stage 7a MANUAL M2: the Stage 2 tracker algorithm, its gain acting on LV Emax and its R on systemic resistance. */
@@ -311,7 +311,10 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
     tr.sbpAvg += (b.sbp - tr.sbpAvg) / 8;
     tr.dbpAvg += (b.dbp - tr.dbpAvg) / 8;
     tr.pOkS = Math.abs(tr.sbpAvg - target.sbp) <= MANUAL_HOLD_MMHG && Math.abs(tr.dbpAvg - target.dbp) <= MANUAL_HOLD_MMHG ? tr.pOkS + b.dur : 0;
-    if (tr.pOkS >= MANUAL_HOLD_S) tr.pActive = false;
+    tr.pRunS += b.dur;
+    // a target the heart cannot reach (e.g. PP 40 in stiff elderly arteries) is abandoned after MANUAL_TRACK_MAX_S,
+    // so the tracker does not keep cancelling later perturbations (PEEP, auto-PEEP)
+    if (tr.pOkS >= MANUAL_HOLD_S || tr.pRunS >= MANUAL_TRACK_MAX_S) tr.pActive = false;
   }
   hs.sys.g = hs.circ.man.eesF;
   hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
@@ -493,6 +496,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         tr.key = key;
         tr.pActive = true;
         tr.pOkS = 0;
+        tr.pRunS = 0;
       }
       if (Math.abs(cvpT - tr.cvpT) > 0.05 || Math.abs(pamT - tr.pamT) > 0.05) {
         tr.cvpT = cvpT;
@@ -590,7 +594,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
       // Stage 7a: drug, fluid, bleed and circulation conditions act on the circulation
       if (ev.kind === 'drug') {
         const d = cmd.event as { drugId: string; dose: number; unit: string };
-        if (!(DRUG_IDS as readonly string[]).includes(d.drugId)) return `drug ${d.drugId} arrives in Stage 7g`;
+        if (!(DRUG_IDS as readonly string[]).includes(d.drugId)) return `drug ${d.drugId} is not implemented until Stage 7g`; // 'not implemented': scenarios keep it scenario-only (6b)
         if (!(Number.isFinite(d.dose) && d.dose > 0)) return 'dose must be > 0';
         return ['mcg', 'mg', 'mcg/kg', 'mg/kg'].includes(d.unit) ? undefined : 'unit must be mcg, mg, mcg/kg or mg/kg';
       }

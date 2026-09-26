@@ -93,6 +93,7 @@ export interface CircModelState {
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
+    kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
   };
 }
 
@@ -196,11 +197,14 @@ function control(m: CircModelState, env: CircEnv): void {
   p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
-  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * (x.endoEesF ?? 1);
+  const kc = x.kChem ?? 1;
+  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * (x.endoEesF ?? 1) * kc;
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * (x.endoEesF ?? 1);
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * (x.endoEesF ?? 1) * kc;
+  p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc; // atrial active elastance (7c kChem)
+  p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc;
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * (x.endoHrF ?? 1)) + b.rrMs / 1000;
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);

@@ -31,6 +31,7 @@ describe('clinical commands', () => {
     await waitFor(() => s.hostOnline);
     const r = await s.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' } });
     expect(r.accepted).toBe(false);
-    expect(r.reason).toBe('command type applyEvent is not implemented until later stages');
+    // Stage 7a: the engine now owns drug events and rejects the drugs that arrive with 7g (still 'not implemented')
+    expect(r.reason).toBe('drug epinephrine is not implemented until Stage 7g');
   });
 });

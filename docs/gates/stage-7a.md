@@ -120,9 +120,13 @@ ORACLE
 `as-cad-propofol-2min-*`, `as-cad-phenylephrine-*`, `iabp-*`. The demo (`apps/demo/stage7a.html`) mounts the monitor as
 stage2 does and draws the teaching views from a deterministic shadow engine fed the same commands at the same ticks.
 
-## 7. R46 seams (coordinator request for 7b)
-`CircModelState.ext.pvrLung / pvrLungL / pvrLungR` (default 1, identical state tested) and `HemoCtx.pItExternal(t)` with the
-Stage 3 breath-driver path as fallback (`pleuralSource`).
+## 7. Interface additions for later stages (coordinator requests; all optional, defaults leave the state identical — tested)
+- **R46 (7b):** `CircModelState.ext.pvrLung`, `pvrLungL`, `pvrLungR` (per-lung PVR multipliers on the per-lung flow split,
+  default 1) and `HemoCtx.pItExternal(t) → number | undefined` (external pleural source, e.g. alveolar pressure × per-condition
+  transmission) with the Stage 3 breath-driver path as fallback (`pleuralSource`). `test/l2/circ/r46-seams.test.ts`.
+- **R48 (7d, Cushing response in MODELED):** `ext.rSysF` (systemic resistance ×), `ext.hrF` (HR set point ×).
+- **R49 (7e, endocrine stress):** `ext.endoHrF`, `ext.endoSvrF`, `ext.endoEesF` (LV and RV contractility ×), `ext.endoDV0Frac`
+  (fraction of the unstressed venous volume recruited, default 0). `test/l2/circ/r48-r49-seams.test.ts`.
 
 ## 8. Requests to other stages
 - Stage V: keep `palv ?? paw` in `ext.frames[i+1]` (read by `circ/pleural.ts`).
