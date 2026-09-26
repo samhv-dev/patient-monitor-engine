@@ -30,9 +30,13 @@ describe('ST/T modifiers (acceptance 6)', () => {
     expect(st60(k, 'ecgI')).toBeLessThan(0);
   });
 
-  it.each(Object.keys(ST_TERRITORIES))('%s: ST(J+60) in the measuring lead = ±mm·0.1 mV', (territory) => {
+  it.each(Object.keys(ST_TERRITORIES))('%s: mean kernel ST(J+60) over the index leads = ±mm·0.1 mV (Stage 5.1; measured on the leads in s51/stemi.test.ts)', (territory) => {
     const t = ST_TERRITORIES[territory as keyof typeof ST_TERRITORIES];
-    for (const mm of [1, 2.5, 4]) expect(st60(beat({ st: { territory: territory as never, mm } }), t.lead)).toBeCloseTo(t.sign * mm * 0.1, 3);
+    for (const mm of [1, 2.5, 4]) {
+      const k = beat({ st: { territory: territory as never, mm } });
+      const mean = t.leads.reduce((a, l) => a + st60(k, l), 0) / t.leads.length;
+      expect(mean).toBeCloseTo(t.sign * mm * 0.1, 3);
+    }
   });
 
   it('ischaemic depression −0.2 mV in II, V5 depressed, aVR elevated', () => {

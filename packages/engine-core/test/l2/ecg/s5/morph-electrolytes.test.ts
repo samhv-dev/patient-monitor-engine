@@ -43,14 +43,14 @@ describe('electrolytes and temperature', () => {
     }
   });
 
-  it('hypothermia 28 °C: Osborn J 0.4 mV, largest in V3–V4; none at 36 °C', () => {
+  it('hypothermia 28 °C: Osborn J 0.5 mV in V3 (Stage 5.1: 0.1 mV/°C below 33 °C), largest in V3–V4; none at 36 °C', () => {
     const jOf = (k: number[]) => {
       for (let i = 0; i < k.length; i += K_STRIDE) if (k[i + 6] === WAVE.J) return [k[i + 3]!, k[i + 4]!, k[i + 5]!] as const;
       return null;
     };
     expect(jOf(beat({ tempC: 36 }))).toBeNull();
     const v = jOf(beat({ tempC: 28 }))!;
-    expect(leadOf(v, 'V3')).toBeCloseTo(0.4, 3);
+    expect(leadOf(v, 'V3')).toBeCloseTo(0.5, 3);
     for (const l of ['ecgII', 'V1', 'V6', 'ecgI'] as const) expect(leadOf(v, l)).toBeLessThan(leadOf(v, 'V4') + 1e-9);
   });
 });

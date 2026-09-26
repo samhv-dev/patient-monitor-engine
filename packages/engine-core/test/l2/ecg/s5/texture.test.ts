@@ -39,3 +39,26 @@ describe('recorded-texture player', () => {
     expect(rms(x.subarray(5000))).toBeLessThan(1.2);
   });
 });
+
+describe('recorded-texture player: hopping (Stage 5.1)', () => {
+  it('with hopS [1, 2.5] the player changes segment every 1–2.5 s (+ 0.5 s crossfade); without it, only at segment ends', () => {
+    const tex = decodeTemplates(synthetic());
+    const count = (hop: readonly [number, number] | null) => {
+      const s = createTex(tex.length, [1, 2, 3, 4], hop);
+      let changes = 0;
+      let seg = s.seg;
+      for (let n = 0; n < 500 * 30; n++) {
+        texSample(tex, s, 5);
+        if (s.seg !== seg) {
+          changes++;
+          seg = s.seg;
+        }
+      }
+      return changes;
+    };
+    const hopped = count([1, 2.5]);
+    expect(hopped).toBeGreaterThanOrEqual(30 / 3); // ≥ one hop per 3 s
+    expect(hopped).toBeLessThanOrEqual(30 / 1.5 + 1);
+    expect(count(null)).toBeLessThanOrEqual(5); // 8 s windows played to their end
+  });
+});

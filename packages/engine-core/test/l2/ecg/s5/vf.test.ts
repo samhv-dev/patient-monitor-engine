@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { dominantHz, rms } from '../../../../src/util/dsp.ts';
 import { samples5 } from '../../../helpers/s5.ts';
 
-const fExpected = (tMin: number) => 5.5 - 1.5 * (1 - Math.exp(-tMin / 8));
+const fExpected = (tMin: number) => 5.5 - 2.25 * (1 - Math.exp(-tMin / 8)); // Stage 5.1 (R39 item 3): 3.9 Hz at 10 min
 const W = 20; // analysis window, s
 const win = (x: Float64Array, t0: number) => x.subarray(t0 * 500, (t0 + W) * 500);
 /** Remove < ~1 Hz content (respiratory wander) with a centred 0.5 s moving average before measuring amplitude. */
@@ -48,28 +48,38 @@ describe('VF hybrid generator (acceptance 2)', () => {
   });
 
   it('amplitude decays with τ = 7 min ± 20% without CPR and ≥ 15 min with CPR; coarse→fine at 0.2 mV', () => {
-    const r = samples5('vfCoarse', 10 * 60 + W, ['ecgII'], { mods: quiet, rhythmOpts: { autoAsystole: false } });
+    // Stage 5.1 (R39: A0 1.2 mV): the coarse→fine switch moves to ≈ 753 s, so the run covers 13 min
+    const r = samples5('vfCoarse', 13 * 60, ['ecgII'], { mods: quiet, rhythmOpts: { autoAsystole: false } });
     const tau = tauFit(r.lead.ecgII!, 0, 10 * 60 + W);
     expect(tau / 420).toBeGreaterThan(0.8);
     expect(tau / 420).toBeLessThan(1.2);
-    expect(ampMv(r.lead.ecgII!, 0)).toBeGreaterThan(0.6);
+    expect(ampMv(r.lead.ecgII!, 0)).toBeGreaterThan(1.0); // Stage 5.1 (R39 item 3): onset 1.2 mV
+    expect(ampMv(r.lead.ecgII!, 0)).toBeLessThan(1.4);
     const fine = r.records.find((e): e is Extract<typeof e, { type: 'rhythmSegment' }> => e.type === 'rhythmSegment' && e.rhythm === 'vfFine')!;
-    expect(fine.t).toBeCloseTo(420 * Math.log(0.8 / 0.2), -1); // 582 s ± 5 s
+    expect(fine.t).toBeCloseTo(420 * Math.log(1.2 / 0.2), -1); // Stage 5.1 (R39: A0 1.2 mV): 753 s ± 5 s
     const c = samples5('vfCoarse', 10 * 60 + W, ['ecgII'], { mods: { artefact: { noise: 0, cpr: { rateCpm: 110, depth: 0 } } }, rhythmOpts: { autoAsystole: false } });
     const tauCpr = tauFit(c.lead.ecgII!, 60, 10 * 60 + W);
     expect(tauCpr).toBeGreaterThan(15 * 60 * 0.8);
   });
 
-  it('epinephrine: +20–40% amplitude and ≈ +0.5 Hz at the peak of the bump (90 s after the dose)', () => {
-    const base = samples5('vfCoarse', 240, ['ecgII'], { mods: quiet, rhythmOpts: { autoAsystole: false }, seed: 3 });
-    const epi = samples5('vfCoarse', 240, ['ecgII'], { mods: { ...quiet, epinephrineAtS: 120 }, rhythmOpts: { autoAsystole: false }, seed: 3 });
-    const t0 = 200; // window 200–220 s straddles the peak at 210 s
-    const ratio = ampMv(epi.lead.ecgII!, t0) / ampMv(base.lead.ecgII!, t0);
-    expect(ratio).toBeGreaterThan(1.15);
-    expect(ratio).toBeLessThan(1.45);
-    const df = dominantHz(win(epi.lead.ecgII!, t0), 500) - dominantHz(win(base.lead.ecgII!, t0), 500);
-    expect(df).toBeGreaterThan(0.2);
-    expect(df).toBeLessThan(0.8);
+  it('epinephrine: +20–40% amplitude and ≈ +0.5 Hz at the peak of the bump (90 s after the dose), mean of 6 seeds', { timeout: 300_000 }, async () => {
+    // Stage 5.1: per-cycle frequency jitter makes one 20 s window's spectral peak a noisy estimator (±0.5 Hz), so
+    // the effect is measured as the mean over six seeds.
+    const ratios: number[] = [];
+    const dfs: number[] = [];
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const base = samples5('vfCoarse', 240, ['ecgII'], { mods: quiet, rhythmOpts: { autoAsystole: false }, seed });
+      const epi = samples5('vfCoarse', 240, ['ecgII'], { mods: { ...quiet, epinephrineAtS: 120 }, rhythmOpts: { autoAsystole: false }, seed });
+      const t0 = 200; // window 200–220 s straddles the peak at 210 s
+      ratios.push(ampMv(epi.lead.ecgII!, t0) / ampMv(base.lead.ecgII!, t0));
+      dfs.push(dominantHz(win(epi.lead.ecgII!, t0), 500) - dominantHz(win(base.lead.ecgII!, t0), 500));
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    }
+    const m = (x: number[]) => x.reduce((a, b) => a + b, 0) / x.length;
+    expect(m(ratios)).toBeGreaterThan(1.15);
+    expect(m(ratios)).toBeLessThan(1.45);
+    expect(m(dfs)).toBeGreaterThan(0.2);
+    expect(m(dfs)).toBeLessThan(0.8);
   });
 
   it('VF → asystole: forced when A < 0.05 mV (vfFine from 0.15 mV reaches it at ≈ 7.7 min)', () => {

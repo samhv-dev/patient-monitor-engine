@@ -105,7 +105,7 @@ Create the Stage 5.1 branch in its own worktree (Stages 3 and 4b run concurrentl
 - Consumes: `origin/main` at or after `f88175d` (Stage 5 + Stage 2 merged).
 - Produces: a clean worktree where every later command runs; `docs/gates/stage-5.1/` with the before strips.
 
-- [ ] **Step 1: Create the worktree from `origin/main` (never work in the shared `repo/` checkout)**
+- [x] **Step 1: Create the worktree from `origin/main` (never work in the shared `repo/` checkout)**
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -115,7 +115,7 @@ cd ../scratch/wt-stage-5.1
 npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 
-- [ ] **Step 2: Check the base. Expected: `f88175d` is an ancestor (prints `base ok`), and the Stage 5 files this plan edits exist**
+- [x] **Step 2: Check the base. Expected: `f88175d` is an ancestor (prints `base ok`), and the Stage 5 files this plan edits exist**
 
 ```bash
 git merge-base --is-ancestor f88175d HEAD && echo "base ok"
@@ -125,19 +125,19 @@ git diff 2d59ee3 HEAD --stat -- packages/engine-core/src/l2/ecg packages/engine-
 
 The last command lists changes on `main` since the tree this plan was verified against (`2d59ee3`). If it lists anything, read those hunks now; when a later "replace" anchor does not match exactly once, apply the plan's intent to the new text and record it under "Deviations" in the gate note.
 
-- [ ] **Step 3: Check whether Stage 3 has merged (decides Task 11 Step 7). Record the answer in your notes**
+- [x] **Step 3: Check whether Stage 3 has merged (decides Task 11 Step 7). Record the answer in your notes**
 
 ```bash
 git cat-file -e HEAD:packages/engine-core/src/l2/resp/driver.ts && echo "stage 3 merged" || echo "stage 3 not merged"
 ```
 
-- [ ] **Step 4: Baseline — everything green before touching anything**
+- [x] **Step 4: Baseline — everything green before touching anything**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 check-notices
 ```
 
-- [ ] **Step 5: Copy the Stage 5 strips that this stage changes as the "before" images**
+- [x] **Step 5: Copy the Stage 5 strips that this stage changes as the "before" images**
 
 ```bash
 mkdir -p docs/gates/stage-5.1
@@ -147,7 +147,7 @@ done
 ls docs/gates/stage-5.1 | wc -l   # expected: 22
 ```
 
-- [ ] **Step 6: Copy this plan into the worktree and commit; push the branch**
+- [x] **Step 6: Copy this plan into the worktree and commit; push the branch**
 
 ```bash
 cp /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo/docs/plans/stage-5.1-rhythm-polish.md docs/plans/
@@ -176,7 +176,7 @@ The methods:
 - Consumes: `kernelLead`, `morphBeat` (Stage 5 `test/helpers/s5.ts`), `welch`, `rms` (`src/util/dsp.ts`), `fiducialOf` (`beat-templates.ts`).
 - Produces: `qrsGlobal(lead: (l: LeadId, t: number) => number, tR: number): { ms, on, off }`, `beatQrs(k, tR)`, `detrend(x)`, `acfAtPeriod(x, fs, fd)`, `spectralPeak(x, fs): { fd, bw }`, `rmsRatio(a, b)`, `without(k, wave)`, `peaks(k, lead, t0, t1, min, sign?)`, re-export `WAVE`.
 
-- [ ] **Step 1: Write the helpers**
+- [x] **Step 1: Write the helpers**
 
 Create (or replace) `packages/engine-core/test/helpers/s51.ts` with exactly:
 
@@ -309,7 +309,7 @@ export function peaks(k: readonly number[], l: LeadId, t0: number, t1: number, m
 export { WAVE };
 ```
 
-- [ ] **Step 2: Write their tests**
+- [x] **Step 2: Write their tests**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/helpers.test.ts` with exactly:
 
@@ -340,12 +340,12 @@ describe('Stage 5.1 measurement helpers', () => {
 });
 ```
 
-- [ ] **Step 3: Run them**
+- [x] **Step 3: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/helpers.test.ts`
 Expected: PASS (3 tests). These pass on the untouched engine: the textbook beat is 80–100 ms by the tangent method.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/helpers/s51.ts packages/engine-core/test/l2/ecg/s51/helpers.test.ts
@@ -367,7 +367,7 @@ G5-obs: coarse VF "too periodic"; the executor saw the first ~3 s regular. One c
 - Consumes: nothing new.
 - Produces: `createTex(n, rng, hopS: readonly [number, number] | null = null): TexState`; `TexState` gains `left: number`, `hop: [number, number] | null` (JSON-safe).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `packages/engine-core/test/l2/ecg/s5/texture.test.ts`, replace this block (it occurs exactly once):
 
@@ -406,12 +406,12 @@ describe('recorded-texture player: hopping (Stage 5.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s5/texture.test.ts`
 Expected: FAIL in "hopping (Stage 5.1)": `expected 3 to be greater than or equal to 10` (the third argument is ignored, so segments change only at 8 s ends).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/texture.ts`, replace this block (it occurs exactly once):
 
@@ -500,12 +500,12 @@ with:
   }
 ```
 
-- [ ] **Step 4: Run it to see it pass, with the rest of the ECG tests**
+- [x] **Step 4: Run it to see it pass, with the rest of the ECG tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 Expected: PASS (every file).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/texture.ts packages/engine-core/test/l2/ecg/s5/texture.test.ts
@@ -536,7 +536,7 @@ Planning prototype (20 seeds × 4 windows, 10 s each): autocorrelation max **0.5
 - Consumes: `createTex(n, rng, hopS)` (Task 3), `tableNormal` (`generator.ts`), `spectralPeak`, `acfAtPeriod`, `rmsRatio` (Task 2).
 - Produces: exported constants `VF_DIR_A`, `VF_DIR_B`, `VF_B_WEIGHT`, `VF_FREQ_JITTER`, `VF_FREQ_TAU_S`, `VF_AMP_JITTER`, `VF_AMP_TAU_S`, `VF_HOP_S`; `VfState` gains `tex2`, `ou`, `ar2`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/vf-realism.test.ts` with exactly:
 
@@ -579,12 +579,12 @@ describe('Stage 5.1 VF realism', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vf-realism.test.ts`
 Expected: FAIL: `expected 0.79… to be less than 0.6` (Stage 5 periodicity).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/arrest/vf.ts`, replace this block (it occurs exactly once):
 
@@ -741,7 +741,7 @@ with:
     if (!v.fine && a < FINE_MV) {
 ```
 
-- [ ] **Step 4: Make the epinephrine test a 6-seed mean**
+- [x] **Step 4: Make the epinephrine test a 6-seed mean**
 
 In `packages/engine-core/test/l2/ecg/s5/vf.test.ts`, replace this block (it occurs exactly once):
 
@@ -789,12 +789,12 @@ with:
 
 ```
 
-- [ ] **Step 5: Run the VF tests**
+- [x] **Step 5: Run the VF tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vf-realism.test.ts test/l2/ecg/s5/vf.test.ts test/l2/ecg/s5/library.test.ts test/l2/ecg/s5/artefacts.test.ts`
 Expected: PASS (all). `library.test.ts` still finds 0 QRS in 40 vfCoarse/vfFine runs.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/arrest/vf.ts packages/engine-core/test/l2/ecg/s51/vf-realism.test.ts packages/engine-core/test/l2/ecg/s5/vf.test.ts
@@ -818,7 +818,7 @@ Fix: a mean-reverting walk, axis ← 0.7·axis + 0.15·N(0,1) (stationary SD 0.2
 - Consumes: `rmsRatio` (Task 2).
 - Produces: nothing new (constants `POLY_AXIS_STEP_RAD`, `POLY_AXIS_KEEP` are module-private).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/vtpoly.test.ts` with exactly:
 
@@ -844,12 +844,12 @@ describe('Stage 5.1 polymorphic VT visibility', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vtpoly.test.ts`
 Expected: FAIL: a V1/II ratio below 0.4 or above 1.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/foci-ventricular.ts`, replace this block (it occurs exactly once):
 
@@ -895,12 +895,12 @@ export function onVtPoly(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const rr = (60 / rhythmRate(st, t, ctx)) * Math.max(0.7, 1 + POLY_RR_CV * normal(ctx.rng.ectopy));
 ```
 
-- [ ] **Step 4: Run it and the ventricular tests**
+- [x] **Step 4: Run it and the ventricular tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/vtpoly.test.ts test/l2/ecg/s5/ventricular.test.ts test/l2/ecg/s5/library.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/foci-ventricular.ts packages/engine-core/test/l2/ecg/s51/vtpoly.test.ts
@@ -927,7 +927,7 @@ G5-obs: "rbbb: V1 needs a clear rSR′ (M pattern) and terminal broad R′; V6 a
 - Consumes: `beatQrs`, `peaks` (Task 2).
 - Produces: `LBBB_R1_VEC`, `LBBB_R2_VEC`, `RBBB_S_SCALE`, `RBBB_RPRIME_TAU_S`, `RBBB_RPRIME_SIGMA_S`, `QRS_T` exported from `morphology/conduction.ts`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/bbb.test.ts` with exactly:
 
@@ -979,12 +979,12 @@ describe('Stage 5.1 bundle-branch block morphology (measured on the waveform)', 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/bbb.test.ts`
 Expected: FAIL in RBBB (`expected 121… to be greater than or equal to 130`) and LBBB (`expected 2 to be 1`: two V1 troughs). The normal-conduction case passes.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/beat-templates.ts`, replace this block (it occurs exactly once):
 
@@ -1090,7 +1090,7 @@ with:
   return out;
 ```
 
-- [ ] **Step 4: Move the Stage 5 kernel-span bounds (RBBB 125–145 → 135–170 ms, LBBB 145–165 → 145–175 ms); the morphology checks now live in `s51/bbb.test.ts`**
+- [x] **Step 4: Move the Stage 5 kernel-span bounds (RBBB 125–145 → 135–170 ms, LBBB 145–165 → 145–175 ms); the morphology checks now live in `s51/bbb.test.ts`**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts`, replace this block (it occurs exactly once):
 
@@ -1132,12 +1132,12 @@ describe('conduction, axis and voltage modifiers', () => {
   });
 ```
 
-- [ ] **Step 5: Run the conduction tests**
+- [x] **Step 5: Run the conduction tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/bbb.test.ts test/l2/ecg/s5/morph-conduction.test.ts test/l2/ecg/s5/beat-templates.test.ts test/l2/ecg/s5/pac-pjc.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/beat-templates.ts packages/engine-core/src/l2/ecg/morphology/conduction.ts packages/engine-core/test/l2/ecg/s51/bbb.test.ts packages/engine-core/test/l2/ecg/s5/morph-conduction.test.ts
@@ -1174,7 +1174,7 @@ Also fixed: the strip label "Anterior STEMI (V1/V3)" showed V3 and III (Stage 5 
 - Consumes: `beatQrs` (Task 2), `designEcgFilter`/`createFilterState`/`filterSample` (`src/l3/ecg-filter.ts`, read-only import), `samples5` (Stage 5 helper).
 - Produces: `ST_TERRITORIES: Record<StTerritory, { dir: Vec3; leads: readonly LeadId[]; recip: readonly LeadId[]; sign: 1 | -1 }>` (the `lead` field is gone; nothing outside `st.ts` and its tests read it — check with `grep -rn "ST_TERRITORIES" packages apps`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/stemi.test.ts` with exactly:
 
@@ -1232,12 +1232,12 @@ describe('Stage 5.1 STEMI magnitude (measured at J+60 on the generated leads)', 
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/stemi.test.ts`
 Expected: FAIL: `ter.leads` is undefined (TypeError) — the Stage 5 table has `lead`, not `leads`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/morphology/st.ts`, replace this block (it occurs exactly once):
 
@@ -1316,7 +1316,7 @@ with:
 
 ```
 
-- [ ] **Step 4: Update the Stage 5 per-territory test and the STEMI strips**
+- [x] **Step 4: Update the Stage 5 per-territory test and the STEMI strips**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-st.test.ts`, replace this block (it occurs exactly once):
 
@@ -1368,12 +1368,12 @@ with:
   r('rbbb', 'RBBB', 'modifier', { rhythm: 'sinus', mods: { bbb: 'rbbb' }, leads: ['V1', 'V6'] }),
 ```
 
-- [ ] **Step 5: Run the ST tests and the demo typecheck**
+- [x] **Step 5: Run the ST tests and the demo typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/stemi.test.ts test/l2/ecg/s5/morph-st.test.ts && npx -y pnpm@9.15.9 --filter @pme/demo typecheck`
 Expected: PASS; typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/st.ts packages/engine-core/test/l2/ecg/s51/stemi.test.ts packages/engine-core/test/l2/ecg/s5/morph-st.test.ts apps/demo/src/stage5-catalogue.ts
@@ -1399,7 +1399,7 @@ Stage 5 executor: "K 8.5 sine wave: a wide QRS running into a tall T with no ST 
 - Consumes: `beatQrs`, `without`, `WAVE` (Task 2); `applyPMorphology`, `pWaveKernels`.
 - Produces: `osbornV3Mv(tempC: number): number` exported from `morphology/electrolytes.ts`; `hyperK(k).s4` now saturates at K 8.5.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/electrolytes.test.ts` with exactly:
 
@@ -1455,12 +1455,12 @@ describe('Stage 5.1 hyperkalaemia sine wave and Osborn J wave (measured)', () =>
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/electrolytes.test.ts`
 Expected: FAIL in both cases (sine: the R–T trough is only −0.17·R; Osborn: a J wave is present at 33 °C).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/morphology/electrolytes.ts`, replace this block (it occurs exactly once):
 
@@ -1547,7 +1547,7 @@ with:
   return k;
 ```
 
-- [ ] **Step 4: Update the Stage 5 Osborn case**
+- [x] **Step 4: Update the Stage 5 Osborn case**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts`, replace this block (it occurs exactly once):
 
@@ -1589,12 +1589,12 @@ with:
   });
 ```
 
-- [ ] **Step 5: Run the electrolyte tests**
+- [x] **Step 5: Run the electrolyte tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/electrolytes.test.ts test/l2/ecg/s5/morph-electrolytes.test.ts`
 Expected: PASS (the Stage 5 ordering test "peaked T → PR↑ → QRS↑ → sine" still holds).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/electrolytes.ts packages/engine-core/test/l2/ecg/s51/electrolytes.test.ts packages/engine-core/test/l2/ecg/s5/morph-electrolytes.test.ts
@@ -1618,7 +1618,7 @@ Fix: `pacedV` R kernel τ 60 ms σ 26 ms (was 55/22), S τ 125 ms σ 18 ms (was 
 - Consumes: `beatQrs` (Task 2).
 - Produces: nothing new.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/tcp-capture.test.ts` with exactly:
 
@@ -1645,12 +1645,12 @@ describe('Stage 5.1 paced / transcutaneous capture complex (measured)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp-capture.test.ts`
 Expected: FAIL: `expected 133… to be greater than or equal to 140`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/beat-templates.ts`, replace this block (it occurs exactly once):
 
@@ -1672,12 +1672,12 @@ with:
     case 'pvc3':
 ```
 
-- [ ] **Step 4: Run it with the Stage 5 paced tests**
+- [x] **Step 4: Run it with the Stage 5 paced tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp-capture.test.ts test/l2/ecg/s5/pacing.test.ts test/l2/ecg/s5/beat-templates.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/beat-templates.ts packages/engine-core/test/l2/ecg/s51/tcp-capture.test.ts
@@ -1705,7 +1705,7 @@ No capture (mA < threshold) must leave the rhythm untouched: the test compares a
 - Consumes: `run5`, `samples5` (Stage 5 helpers).
 - Produces: `TCP_SPIKE_SIGMA_S`, `TCP_TAIL`, `TCP_SENSE_REFRACTORY_S`, `tcpArtefactMv(mA)` (new scale) from `tcp.ts`; `RhythmState.tcpLastPulseT?: number`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/tcp.test.ts` with exactly:
 
@@ -1764,12 +1764,12 @@ describe('Stage 5.1 transcutaneous pacing (measured)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp.test.ts`
 Expected: FAIL: R30 (`expected 1.6… / 2 to be less than or equal to 1`: 68–69 pulses in demand mode) and the spike shape (FWHM ≈ 40 ms). The no-capture case passes already.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/tcp.ts`, replace this block (it occurs exactly once):
 
@@ -1867,12 +1867,12 @@ with:
   vf?: VfState | undefined;
 ```
 
-- [ ] **Step 4: Run the pacing tests**
+- [x] **Step 4: Run the pacing tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/tcp.test.ts test/l2/ecg/s51/tcp-capture.test.ts test/l2/ecg/s5/pacing.test.ts test/engine`
 Expected: PASS (the engine determinism test runs pacing).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/tcp.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s51/tcp.test.ts
@@ -1900,7 +1900,7 @@ Planning prototype: RR vs the driver phase r = **0.85** with a 10/min driver (r 
 - Consumes: `F_RESP_HZ`, `HrvPhase` (`hrv.ts`). With Stage 3: `lastCycleBefore(d: DriverState, t): Cycle | undefined` (`l2/resp/driver.ts`), `PipelineState.resp.driver`.
 - Produces: `interface BreathClock { rateBpm(t): number; phaseRad(t): number }`, `fixedBreathClock(ph: HrvPhase): BreathClock`, `interface BreathCycleLike { seq; t0; ti; te }`, `cycleBreathClock(lastCycleBefore, fallback): BreathClock`; `respSin(t, ph, clock?)`, `sinusRR(meanRR, t, ph, mods, s, clock?)`; `RhythmCtx.breath?`, `GenInputs.breath?`; `ecgGenInputs(ps & { breath? }, mainsHz)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/breath-clock.test.ts` with exactly:
 
@@ -1986,12 +1986,12 @@ describe('Stage 5.1 BreathClock seam (R-S3-3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/breath-clock.test.ts`
 Expected: FAIL: cannot resolve `../../../../src/l2/ecg/breath-clock.ts`.
 
-- [ ] **Step 3: Create the clock module**
+- [x] **Step 3: Create the clock module**
 
 Create (or replace) `packages/engine-core/src/l2/ecg/breath-clock.ts` with exactly:
 
@@ -2045,7 +2045,7 @@ export function cycleBreathClock(lastCycleBefore: (t: number) => BreathCycleLike
 }
 ```
 
-- [ ] **Step 4: Thread the optional clock through the ECG**
+- [x] **Step 4: Thread the optional clock through the ECG**
 
 In `packages/engine-core/src/l2/ecg/hrv.ts`, replace this block (it occurs exactly once):
 
@@ -2272,12 +2272,12 @@ with:
 
 ```
 
-- [ ] **Step 5: Run the new test and every ECG test (RSA/wander tests must be unchanged)**
+- [x] **Step 5: Run the new test and every ECG test (RSA/wander tests must be unchanged)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg test/engine`
 Expected: PASS.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/breath-clock.ts packages/engine-core/src/l2/ecg/hrv.ts packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/rhythm-engine.ts packages/engine-core/src/l2/ecg/generator.ts packages/engine-core/src/l2/ecg/ecg-gen.ts packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/test/l2/ecg/s51/breath-clock.test.ts
@@ -2285,7 +2285,7 @@ git commit -m "feat(ecg): BreathClock seam for RSA, wander and QRS modulation (R
 git push
 ```
 
-- [ ] **Step 7: ONLY if Stage 3 is on `main` (Task 1 Step 3) — wire the driver into the engine. Otherwise skip this step and record request R-51-2 (below) in the gate note**
+- [x] *(Executed 2026-09-26: Stage 3 IS on main, the wiring passed its own test but moved Stage 2's marginal NIBP-duration test out of band, so it is parked as `docs/gates/stage-5.1/r-51-2-engine-breath.patch` and request R-51-2 — see the gate note, Deviations.)* **Step 7: ONLY if Stage 3 is on `main` (Task 1 Step 3) — wire the driver into the engine. Otherwise skip this step and record request R-51-2 (below) in the gate note**
 
 In `packages/engine-core/src/engine.ts`, add after the last `import` line:
 
@@ -2373,7 +2373,7 @@ Planning prototype (30 seeds): axis offsets −14.2° to +14.3°; amplitudes wit
 - Consumes: `QRS_T` (Task 6), `frontalAxisDeg`, `rotateZSel`, `stretchQrs`, `QRS_WAVES` (`ops.ts`).
 - Produces: `solveAxisRad(k: readonly number[], targetDeg: number): number`; `FP_AMP`, `FP_WIDTH`, `FP_AXIS_DEG`, `interface Fingerprint { amp: {p,qrs,t}; width: {p,qrs,t}; axisDeg }`, `fingerprint(seed)`; `individualityStage`, `pIndividualityStage` keep their names and places in `MORPH_STAGES`/`P_STAGES`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/fingerprint.test.ts` with exactly:
 
@@ -2444,12 +2444,12 @@ describe('Stage 5.1 per-patient fingerprint (Squiggler-style)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/fingerprint.test.ts`
 Expected: FAIL in the bounds case (a Stage 5 amplitude or axis beyond ±10 % / ±15°).
 
-- [ ] **Step 3: Factor out the axis solver**
+- [x] **Step 3: Factor out the axis solver**
 
 In `packages/engine-core/src/l2/ecg/morphology/conduction.ts`, replace this block (it occurs exactly once):
 
@@ -2502,7 +2502,7 @@ with:
 /** Default precordial transition of the Stage 1 template (V3–V4) and the horizontal rotation per lead [ENG]. */
 ```
 
-- [ ] **Step 4: Replace the fingerprint**
+- [x] **Step 4: Replace the fingerprint**
 
 Create (or replace) `packages/engine-core/src/l2/ecg/morphology/individuality.ts` with exactly:
 
@@ -2582,7 +2582,7 @@ export const pIndividualityStage: PStage = (k, mods: Modifiers) => {
 };
 ```
 
-- [ ] **Step 5: Update the Stage 5 individuality case**
+- [x] **Step 5: Update the Stage 5 individuality case**
 
 In `packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts`, replace this block (it occurs exactly once):
 
@@ -2629,12 +2629,12 @@ with:
   });
 ```
 
-- [ ] **Step 6: Run the morphology tests**
+- [x] **Step 6: Run the morphology tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/fingerprint.test.ts test/l2/ecg/s5`
 Expected: PASS.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/morphology/conduction.ts packages/engine-core/src/l2/ecg/morphology/individuality.ts packages/engine-core/test/l2/ecg/s51/fingerprint.test.ts packages/engine-core/test/l2/ecg/s5/morph-individuality.test.ts
@@ -2656,7 +2656,7 @@ Regenerate every strip this stage changes as `<key>-after.png` beside the `<key>
 - Consumes: every earlier task; `CATALOGUE` (`apps/demo/src/stage5-catalogue.ts`, STEMI entries changed in Task 7).
 - Produces: 22 before/after pairs for the gate note (Task 15).
 
-- [ ] **Step 1: Minor grid and the ONLY/SUFFIX switches**
+- [x] **Step 1: Minor grid and the ONLY/SUFFIX switches**
 
 In `apps/demo/src/strip.ts`, replace this block (it occurs exactly once):
 
@@ -2759,27 +2759,27 @@ with:
 console.log(`${items.length} strips written to ${out}`);
 ```
 
-- [ ] **Step 2: Typecheck the demo**
+- [x] **Step 2: Typecheck the demo**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Check the demo presets use 3 mm for STEMI (brief task: "demo default 3 mm for inferior/anterior presets"). Expected: one line containing `mm: 3`. If it shows another value, change it to 3 in `apps/demo/src/stage5.ts`**
+- [x] **Step 3: Check the demo presets use 3 mm for STEMI (brief task: "demo default 3 mm for inferior/anterior presets"). Expected: one line containing `mm: 3`. If it shows another value, change it to 3 in `apps/demo/src/stage5.ts`**
 
 ```bash
 grep -n "STEMI \${t}" apps/demo/src/stage5.ts
 ```
 
-- [ ] **Step 4: Render the after strips (headless system Chrome, as Stage 5; the script starts its own Vite server on port 5205 — if that port is busy, change the two `5205`s in the script for this run only and revert)**
+- [x] **Step 4: Render the after strips (headless system Chrome, as Stage 5; the script starts its own Vite server on port 5205 — if that port is busy, change the two `5205`s in the script for this run only and revert)**
 
 ```bash
 ONLY=vfCoarse,vfFine,vfEpinephrine,cpr,shock,vtPoly,torsades,rbbb,lbbb,pacAberrant,stemiInferior,stemiAnterior,hyperK,hyperKsine,osborn,tcpCapture,tcpNoCapture,pacedVVI,pacedDDD,failureToCapture,individualityA,individualityB SUFFIX=-after node --experimental-strip-types apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.1
 ls docs/gates/stage-5.1/*-after.png | wc -l   # expected: 22
 ```
 
-- [ ] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for Ali's list (Task 14)**
+- [x] **Step 5: Look at every pair (open both PNGs of each key). Check, and write one line per key for the gate note: vfCoarse irregular from the first second, visible in V1; vtPoly V1 never flat; rbbb V1 r–S–tall R′, V6 broad S; lbbb V1 one broad trough, V6 notched R; STEMI ST plateau ≈ 3 small boxes in II/III/aVF (inferior) and V3 (anterior) with reciprocal depression in aVL / III; hyperKsine R–deep S–T oscillation with no flat ST; osborn visible J hump in II/V3 at 28 °C; tcpCapture/tcpNoCapture tall narrow spike + tail + white marker, capture complex broad; paced strips broader paced QRS. If a strip does not show what its label says, fix the cause (not the label) or record it for Ali's list (Task 14)**
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add apps/demo/src/strip.ts apps/demo/scripts/stage5-shots.ts docs/gates/stage-5.1
@@ -2790,6 +2790,8 @@ git push
 ---
 
 ### Task 14: Ali's list — apply Ali's strip corrections
+
+- [x] *Executed 2026-09-26: Ali's list is empty — PR #3 has 0 comments and 0 reviews, and `research/00-orchestrator-rulings.md` has no Ali strip items after G5-obs. Gate note says "none received by 2026-09-26"; the executor's own strip observations for Ali are in the gate note.*
 
 **Clearly marked slot.** G5-obs asks Ali to page through the 85 Stage 5 strips on PR #3 and add to the polish list; his review is pending. Before starting this task, read the latest `research/00-orchestrator-rulings.md` (G5-obs and anything after it) and the PR #3 conversation (`gh pr view 3 --comments --repo samhv-dev/patient-monitor-engine`). If Ali's list is still empty, write "Ali's list: none received by <date>" in the gate note and skip to Task 15.
 
@@ -2819,21 +2821,21 @@ Items that are not morphology (a label, a catalogue seed, a missing strip) skip 
 **Files:**
 - Create: `docs/gates/stage-5.1.md`
 
-- [ ] **Step 1: Full verification from a clean clone of the pushed branch (the Stage 5 procedure)**
+- [x] **Step 1: Full verification from a clean clone of the pushed branch (the Stage 5 procedure)**
 
 ```bash
-rm -rf /tmp/pme-51-clean && git clone --branch stage-5.1-rhythm-polish "$(git remote get-url origin)" /tmp/pme-51-clean
-cd /tmp/pme-51-clean
+rm -rf <scratchpad>/pme-51-clean && git clone --branch stage-5.1-rhythm-polish "$(git remote get-url origin)" <scratchpad>/pme-51-clean
+cd <scratchpad>/pme-51-clean
 npx -y pnpm@9.15.9 install --frozen-lockfile
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices
-cd - && rm -rf /tmp/pme-51-clean
+cd - && rm -rf <scratchpad>/pme-51-clean
 ```
 
 Expected: exit 0. Any long engine run added to a test must yield per sim-minute with `{ timeout: 300_000 }` (G2 CI lesson; the Stage 5.1 tests already do).
 
-- [ ] **Step 2: Measure the numbers for the gate note with the tests' own computations (a temporary `test/l2/ecg/s51/zz-measure.test.ts` that prints them with `console.log`; delete it before committing)**: VF worst ACF / min and median bandwidth / V1 and V5 ratio ranges; vtPoly V1/II range; RBBB and LBBB tangent QRS, V1 R′ and S; ST at J+60 per territory index and reciprocal lead at 2 mm (diagnostic filter) and, for inferior, the monitor-filter value; K 8.5 QRS, T/R, trough; Osborn J II/V5 at 32/30/28 °C; paced QRS and slope ratio; TCP pulses per minute (demand and fixed), spike FWHM and amplitude; RSA correlation with the driver; fingerprint axis range.
+- [x] **Step 2: Measure the numbers for the gate note with the tests' own computations (a temporary `test/l2/ecg/s51/zz-measure.test.ts` that prints them with `console.log`; delete it before committing)**: VF worst ACF / min and median bandwidth / V1 and V5 ratio ranges; vtPoly V1/II range; RBBB and LBBB tangent QRS, V1 R′ and S; ST at J+60 per territory index and reciprocal lead at 2 mm (diagnostic filter) and, for inferior, the monitor-filter value; K 8.5 QRS, T/R, trough; Osborn J II/V5 at 32/30/28 °C; paced QRS and slope ratio; TCP pulses per minute (demand and fixed), spike FWHM and amplitude; RSA correlation with the driver; fingerprint axis range.
 
-- [ ] **Step 3: Write `docs/gates/stage-5.1.md` with these sections**, in the Stage 5 gate note's style:
+- [x] **Step 3: Write `docs/gates/stage-5.1.md` with these sections**, in the Stage 5 gate note's style:
   1. Gate question: "Do the G5-obs strips now show what their labels say, measured and by eye?"
   2. Check table: clean-clone command result; each acceptance item (1–8 of the brief) → test file › name → measured number.
   3. Before/after gallery: for each of the 22 keys, the before and after image side by side (`![before](stage-5.1/<key>-before.png) ![after](stage-5.1/<key>-after.png)`) and the one-line observation from Task 13 Step 5.
@@ -2842,7 +2844,7 @@ Expected: exit 0. Any long engine run added to a test must yield per sim-minute 
   6. Requests to other stages (copy the table from this plan, with status).
   7. Sources consulted and the clean-room statement (no ECGSYN or GPL code opened).
 
-- [ ] **Step 4: Commit, push, open the PR (do not merge — R21: the orchestrator merges after CI and gate inspection)**
+- [x] **Step 4: Commit, push, open the PR (do not merge — R21: the orchestrator merges after CI and gate inspection)**
 
 ```bash
 git add docs/gates/stage-5.1.md

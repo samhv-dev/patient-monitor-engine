@@ -4,6 +4,7 @@
 import { sfc32Next, type Sfc32State } from '../../rng/sfc32.ts';
 import { addEventAt, type EcgEvent } from './kernels.ts';
 import { respSin, type HrvPhase } from './hrv.ts';
+import type { BreathClock } from './breath-clock.ts';
 import type { FWave } from './rhythm-engine.ts';
 import { WANDER_DIR } from './templates.ts';
 
@@ -50,6 +51,8 @@ export interface GenInputs {
   hrv: HrvPhase;
   noiseLevel: number; // Modifiers.artefact.noise
   noise: Sfc32State;
+  /** Stage 5.1 (R-S3-3): respiratory clock for the wander; absent = Stage 1's fixed 15/min clock. */
+  breath?: BreathClock | undefined;
 }
 
 /** Drop events that end before time `t` (they can never contribute again). */
@@ -77,7 +80,7 @@ export function generateVcg(
     acc[2] = 0;
     for (const ev of active) if (s >= ev.start && s <= ev.end) addEventAt(ev, s, acc);
     for (const fw of fws) fwaveAt(fw, s, acc);
-    const w = WANDER_MV * respSin(s, g.hrv);
+    const w = WANDER_MV * respSin(s, g.hrv, g.breath);
     let x = (acc[0] as number) + w * WANDER_DIR[0];
     let y = (acc[1] as number) + w * WANDER_DIR[1];
     let z = (acc[2] as number) + w * WANDER_DIR[2];

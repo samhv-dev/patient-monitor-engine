@@ -5,21 +5,23 @@ import { kernelQtMs } from '../templates.ts';
 import type { LeadId, StTerritory } from '../../../types.ts';
 import type { Vec3 } from '../vcg.ts';
 import type { MorphStage } from './index.ts';
-import { addShaped, jPointS, mainT, scaleWaves } from './ops.ts';
+import { addShaped, jPointS, leadOf, mainT, scaleWaves } from './ops.ts';
 
 /**
- * Injury vectors (VCG) and the lead in which `mm` is measured. Chosen so that, at mm = 2 (see the plan's
- * prototype table): anterior V2 +0.17 / V3 +0.20 with III −0.12, aVF −0.10; inferior III +0.20, aVF +0.17,
- * II +0.14 with aVL −0.13, I −0.06; lateral I +0.14, aVL +0.15, V5 +0.20 with III −0.17; septal V1 +0.16,
- * V2 +0.20; anterolateral V3 +0.20, V4 +0.18, I +0.08 with III −0.11; posterior V2 −0.20 (depression) [ENG].
+ * Injury vectors (VCG), solved on the Dower rows (Stage 5.1, weighted least squares) so that one unit of the vector
+ * projects ≈ 1 in every INDEX lead of the territory and negative in its RECIPROCAL leads. `mm` is the mean ST shift
+ * over the index leads at J + 60 ms (1 mm = 0.1 mV at 10 mm/mV). Per unit (index | reciprocal):
+ * inferior II 0.99 III 1.01 aVF 1.00 | aVL −0.52; anterior V2 0.96 V3 1.05 | III −0.37 aVF −0.30;
+ * septal V1 0.99 V2 1.01 | V6 −0.62; lateral aVL 1.06 V6 1.04 | III −1.23; anterolateral V3 0.96 V5 0.93 (V4 1.10) |
+ * III −0.33; posterior (depression) V1 −0.95 V2 −1.05 [ENG].
  */
-export const ST_TERRITORIES: Readonly<Record<StTerritory, { dir: Vec3; lead: LeadId; sign: 1 | -1 }>> = {
-  inferior: { dir: [-0.3, 1, 0.3], lead: 'ecgIII', sign: 1 },
-  anterior: { dir: [0.3, -0.75, -1], lead: 'V3', sign: 1 },
-  septal: { dir: [-0.35, 0.05, -1], lead: 'V2', sign: 1 },
-  lateral: { dir: [1, -0.35, 0.25], lead: 'V5', sign: 1 },
-  anterolateral: { dir: [0.9, -0.55, -0.7], lead: 'V3', sign: 1 },
-  posterior: { dir: [0, 0.05, 1], lead: 'V2', sign: -1 },
+export const ST_TERRITORIES: Readonly<Record<StTerritory, { dir: Vec3; leads: readonly LeadId[]; recip: readonly LeadId[]; sign: 1 | -1 }>> = {
+  inferior: { dir: [0.285, 0.86, -0.024], leads: ['ecgII', 'ecgIII', 'aVF'], recip: ['aVL'], sign: 1 },
+  anterior: { dir: [0.176, -0.341, -0.729], leads: ['V2', 'V3'], recip: ['ecgIII', 'aVF'], sign: 1 },
+  septal: { dir: [-0.567, 0.178, -0.725], leads: ['V1', 'V2'], recip: ['V6'], sign: 1 },
+  lateral: { dir: [1.162, -0.52, 0.498], leads: ['aVL', 'V6'], recip: ['ecgIII'], sign: 1 },
+  anterolateral: { dir: [0.813, -0.034, -0.192], leads: ['V3', 'V5'], recip: ['ecgIII'], sign: 1 },
+  posterior: { dir: [0.467, 0.023, 0.776], leads: ['V1', 'V2'], recip: [], sign: -1 },
 };
 /** Diffuse subendocardial ischaemia: depression in II/V5, elevation in aVR [ENG]. */
 export const ISCHAEMIA_DIR: Vec3 = [-0.6, -0.8, 0.25];
@@ -38,7 +40,14 @@ export const stStage: MorphStage = (k, _info, mods) => {
   const ter = ST_TERRITORIES[mods.st.territory];
   const j = jPointS(k);
   const sFall = Math.max(0.04, (qtS(k) - j) / 3);
-  return addShaped(k, j + 0.02, 0.01, sFall, ter.dir, ter.lead, ter.sign * mods.st.mm * 0.1, j + MEASURE_AFTER_J_S, WAVE.ST);
+  const tau = j + 0.02;
+  const d = MEASURE_AFTER_J_S - 0.02; // J+60 lies on the falling side of the kernel
+  const g = Math.exp((-d * d) / (2 * sFall * sFall));
+  // one unit of dir projects to `mean` on average over the index leads; size the kernel so that mean is mm·0.1 at J+60
+  const mean = ter.leads.reduce((a, l) => a + leadOf(ter.dir, l), 0) / ter.leads.length;
+  const c = (ter.sign * mods.st.mm * 0.1) / (mean * g);
+  k.push(tau, 0.01, sFall, ter.dir[0] * c, ter.dir[1] * c, ter.dir[2] * c, WAVE.ST);
+  return k;
 };
 
 export const ischaemiaStage: MorphStage = (k, _info, mods) => {
