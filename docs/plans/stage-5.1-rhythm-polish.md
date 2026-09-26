@@ -176,7 +176,7 @@ The methods:
 - Consumes: `kernelLead`, `morphBeat` (Stage 5 `test/helpers/s5.ts`), `welch`, `rms` (`src/util/dsp.ts`), `fiducialOf` (`beat-templates.ts`).
 - Produces: `qrsGlobal(lead: (l: LeadId, t: number) => number, tR: number): { ms, on, off }`, `beatQrs(k, tR)`, `detrend(x)`, `acfAtPeriod(x, fs, fd)`, `spectralPeak(x, fs): { fd, bw }`, `rmsRatio(a, b)`, `without(k, wave)`, `peaks(k, lead, t0, t1, min, sign?)`, re-export `WAVE`.
 
-- [ ] **Step 1: Write the helpers**
+- [x] **Step 1: Write the helpers**
 
 Create (or replace) `packages/engine-core/test/helpers/s51.ts` with exactly:
 
@@ -309,7 +309,7 @@ export function peaks(k: readonly number[], l: LeadId, t0: number, t1: number, m
 export { WAVE };
 ```
 
-- [ ] **Step 2: Write their tests**
+- [x] **Step 2: Write their tests**
 
 Create (or replace) `packages/engine-core/test/l2/ecg/s51/helpers.test.ts` with exactly:
 
@@ -340,12 +340,12 @@ describe('Stage 5.1 measurement helpers', () => {
 });
 ```
 
-- [ ] **Step 3: Run them**
+- [x] **Step 3: Run them**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/s51/helpers.test.ts`
 Expected: PASS (3 tests). These pass on the untouched engine: the textbook beat is 80–100 ms by the tangent method.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/helpers/s51.ts packages/engine-core/test/l2/ecg/s51/helpers.test.ts
