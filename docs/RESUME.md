@@ -20,7 +20,7 @@
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
 | 7f NMB/depth | plan on disk (`docs/plans/stage-7f-neuro-depth.md`; R50 review running) | consumes 7g effect sites | verify plan, execute after 7g |
 | 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks; R50 review pending) | conforms to 7f contract | execute after 7a merges |
-| FU-1 follow-ups | `fu-1-followups`, PR #12 (worktree `../scratch/wt-fu1`) | all 8 items done, CI pending | gate + merge when CI is green |
+| FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
