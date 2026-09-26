@@ -1542,7 +1542,7 @@ export function decrementTimeMin(p: PkParams, durationMin: number, fraction = 0.
 **Interfaces (Produces):** `VolatileAgent`, `AGENTS`, `GROUPS`, `CIRCUIT_L`, `VolatileState`, `createVolatile(agent)`,
 `VolatileEnv`, `stepVolatile(s, env, dtS)`, `macForAge(agent, ageY)`, `macFraction(s, ageY)`, `MAC_AWAKE = 0.34`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/volatile.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/volatile.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1609,9 +1609,9 @@ describe('volatile uptake (decision 9)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/volatile.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/volatile.ts`**
 
 ```ts
 // Volatile/N2O uptake and distribution (Stage 7g; tables §5d/§6.1): a breathing-circuit volume, the alveolar gas
@@ -1687,8 +1687,8 @@ export const macForAge = (agent: VolatileAgent, ageY: number): number => AGENTS[
 export const macFraction = (s: VolatileState, ageY: number): number => (100 * s.vrg) / macForAge(s.agent, ageY);
 ```
 
-- [ ] **Step 4: Run the test** → PASS (prototype numbers in the comments; decision 9 table).
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): volatile/N2O uptake (circuit, alveoli, VRG, muscle, fat), FA/FI by FGF, MAC(age)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Run the test** → PASS (prototype numbers in the comments; decision 9 table).
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): volatile/N2O uptake (circuit, alveoli, VRG, muscle, fat), FA/FI by FGF, MAC(age)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 9: Dose units and the gamma fallback path
 
