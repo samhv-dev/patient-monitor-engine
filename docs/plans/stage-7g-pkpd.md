@@ -543,7 +543,7 @@ git push -u origin stage-7g-pkpd
 **Interfaces (Produces):** `expm(a, n)`, `matMul`, `matVec`; `PkParams`, `PkSystem`, `fromClearances(v1, v2, v3, cl1, cl2, cl3, ke0[])`,
 `pkSystem(p, dtS)`, `pkStep(sys, x, rate)`, `cp(p, x)`, `zeroState(p)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/compartment.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/compartment.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -614,12 +614,12 @@ describe('exact compartment step', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/compartment.test.ts`
 Expected: FAIL — cannot resolve `../../../src/l2/pk/linalg.ts`.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/linalg.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/linalg.ts`**
 
 ```ts
 // Small dense linear algebra for the compartment models (Stage 7g). Matrices are row-major number[] of size n×n.
@@ -675,7 +675,7 @@ export function expm(a: readonly number[], n: number): number[] {
 }
 ```
 
-- [ ] **Step 4: Create `packages/engine-core/src/l2/pk/compartment.ts`**
+- [x] **Step 4: Create `packages/engine-core/src/l2/pk/compartment.ts`**
 
 ```ts
 // Linear mammillary compartment PK with one or more effect sites (Stage 7g; tables §6.1). States (amounts in the
@@ -761,12 +761,12 @@ export const cp = (p: PkParams, x: readonly number[]): number => (x[0] as number
 export const zeroState = (p: PkParams): number[] => new Array<number>(3 + p.ke0.length).fill(0);
 ```
 
-- [ ] **Step 5: Run the test**
+- [x] **Step 5: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/compartment.test.ts`
 Expected: PASS (5 tests; prototype relative error ≤ 3.3e-6).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add -A && git commit -m "feat(pk): exact zero-order-hold compartment step with effect sites (expm, cached)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
