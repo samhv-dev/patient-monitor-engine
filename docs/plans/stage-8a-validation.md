@@ -4619,7 +4619,7 @@ git push
 - Consumes: Task 18 (`pnpm validate`), Task 6 (`datasets:fetch`, manifests as the cache key), Task 23 (`playwright.validation.config.ts`; the workflow's last step fails until Task 23 lands — create the file now, it is only run by schedule/label).
 - Produces: a workflow that never runs on plain pushes.
 
-- [ ] **Step 1: Write `.github/workflows/validation.yml`**
+- [x] **Step 1: Write `.github/workflows/validation.yml`**
 
 ```yaml
 name: validation
@@ -4672,20 +4672,20 @@ jobs:
       - run: pnpm exec playwright test -c playwright.validation.config.ts
 ```
 
-- [ ] **Step 2: Check the YAML parses and that the push CI is untouched. Expected: `ok`, and `ci.yml` unchanged**
+- [x] **Step 2: Check the YAML parses and that the push CI is untouched. Expected: `ok`, and `ci.yml` unchanged**
 
 ```bash
 node -e "const y=require('node:fs').readFileSync('.github/workflows/validation.yml','utf8'); if(!/schedule:/.test(y)||/\n  push:/.test(y)) throw new Error('bad triggers'); console.log('ok')"
 git diff --stat origin/main -- .github/workflows/ci.yml
 ```
 
-- [ ] **Step 3: Create the label once (needs `gh` auth; skip if it exists)**
+- [x] **Step 3: Create the label once (needs `gh` auth; skip if it exists)**
 
 ```bash
 gh label create run-validation --description "Run the long validation workflow on this PR" --color 0E8A16 || true
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add .github/workflows/validation.yml

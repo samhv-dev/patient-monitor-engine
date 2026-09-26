@@ -1,0 +1,48 @@
+name: validation
+
+# Long (30–60 min): never on every push. Weekly, on demand, or when a PR carries the `run-validation` label.
+on:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      args:
+        description: 'extra flags for pnpm validate (e.g. --quick)'
+        required: false
+        default: ''
+  pull_request:
+    types: [labeled, synchronize]
+
+jobs:
+  validate:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-validation')
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: packages/validation/datasets/cache
+          key: datasets-${{ hashFiles('packages/validation/datasets/manifests/*.json') }}
+      - run: pnpm --filter @pme/validation datasets:fetch
+      - run: pnpm validate ${{ github.event.inputs.args }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-report
+          path: docs/validation/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: soak-and-perf
+          path: docs/validation/perf/
+          if-no-files-found: ignore
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test -c playwright.validation.config.ts
