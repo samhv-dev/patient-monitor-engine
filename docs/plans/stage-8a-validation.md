@@ -465,7 +465,7 @@ git push
 - Consumes: `fetchCached`, `fetchVerified`, `parseSums`, `sha256` from `src/templates/fetch.ts` (Stage 5).
 - Produces: `cacheDir(): string`; `type SourceId = 'vitaldb' | 'mghdb' | 'pwdb' | 'cudb' | 'mitdb' | 'ptbxl'`; `SOURCES: Record<SourceId, DatasetSource>` with `{ id, title, version, url, doi, licence, licenceUrl, attribution, notice, redistribution }`; `fetchZenodo(cache: string, record: string, file: string, md5: string): Promise<Uint8Array>`; `md5(buf: Uint8Array): string`.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/datasets/sources.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/datasets/sources.test.ts`**
 
 ```ts
 import { mkdtempSync, readFileSync } from 'node:fs';
@@ -516,11 +516,11 @@ describe('Zenodo fetcher', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/sources.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/datasets/cache.ts`**
+- [x] **Step 3: Write `packages/validation/src/datasets/cache.ts`**
 
 ```ts
 // The git-ignored dataset cache (brief §8: raw records are never committed). PME_DATASET_CACHE overrides it.
@@ -531,7 +531,7 @@ export function cacheDir(): string {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/datasets/sources.ts`**
+- [x] **Step 4: Write `packages/validation/src/datasets/sources.ts`**
 
 ```ts
 // Every dataset the harness reads, with the licence and attribution the report and NOTICES carry (brief §8, R6).
@@ -593,7 +593,7 @@ export const SOURCES: Record<SourceId, DatasetSource> = {
 
 (DOIs as shown on the PhysioNet pages on 2026-09-26: VitalDB 10.13026/czw8-9p62 — the page also lists 10.13026/w758-nw21 for the latest version — and MGH/MF 10.13026/C26K5Q. The VitalDB paper is https://doi.org/10.1038/s41597-022-01411-5.)
 
-- [ ] **Step 5: Write `packages/validation/src/datasets/fetch-zenodo.ts`**
+- [x] **Step 5: Write `packages/validation/src/datasets/fetch-zenodo.ts`**
 
 ```ts
 // Zenodo files (PWDB) into the cache, checked against the MD5 Zenodo publishes (it has no SHA-256).
@@ -621,7 +621,7 @@ export async function fetchZenodo(cache: string, record: string, file: string, w
 }
 ```
 
-- [ ] **Step 6: Append three rows to the table in `NOTICES.md` (after the last row, keep one row per line)**
+- [x] **Step 6: Append three rows to the table in `NOTICES.md` (after the last row, keep one row per line)**
 
 ```markdown
 | N-080 | VitalDB 1.0.0, PhysioNet copy (validation reference; nothing bundled) | https://physionet.org/content/vitaldb/1.0.0/ | CC BY 4.0 | Downloaded to the git-ignored cache by `packages/validation/src/datasets/cli-fetch.ts` (SHA-256 against the project's SHA256SUMS.txt). Committed: case ids, analysis-window times and hashes (`packages/validation/datasets/manifests/`), and derived statistics in `docs/validation/report.*`. Attribution: "Lee HC, Park Y, Yoon SB, Yang SM, Park D, Jung CW. VitalDB, a high-fidelity multi-parameter vital signs database in surgical patients. Sci Data 9:279 (2022)." | 2026-09-26 |
@@ -629,14 +629,14 @@ export async function fetchZenodo(cache: string, record: string, file: string, w
 | N-082 | Pulse Wave Database (PWDB) 0.1.0 CSV indices (validation reference; nothing bundled) | https://zenodo.org/records/2633175 | PDDL 1.0 | `pwdb_pw_indices.csv`, `pwdb_onset_times.csv`, `pwdb_haemod_params.csv` downloaded to the cache (MD5 from Zenodo); derived per-site/age statistics in the report. Credit: "Charlton PH et al. Am J Physiol Heart Circ Physiol 317:H1062-H1085 (2019)." PulseAnalyse (GPL-3) is not used | 2026-09-26 |
 ```
 
-- [ ] **Step 7: Run the test and check-notices. Expected: PASS (4 tests); `check-notices: OK`**
+- [x] **Step 7: Run the test and check-notices. Expected: PASS (4 tests); `check-notices: OK`**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/sources.test.ts
 npx -y pnpm@9.15.9 check-notices
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/validation/src/datasets/cache.ts packages/validation/src/datasets/sources.ts packages/validation/src/datasets/fetch-zenodo.ts packages/validation/test/datasets/sources.test.ts NOTICES.md
