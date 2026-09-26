@@ -1338,7 +1338,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `BARO_DT`, gains (`G_HS`, `G_R`, `G_C`, `G_V`, `G_CSV`, `SYMP_SAT`, `SYMP_WITHDRAW`, `VAGAL_STEADY`, `VAGAL_WITHDRAW_MS`, `RESET_*`), `interface BaroState`, `interface BaroGains { gVagal; gSymp; betaBlock; weightScale; pinnedSet }`, `interface BaroOut { rrMs; hrF; svrF; eesF; dV0; cSvF }`, `createBaro(set)`, `stepBaro(b, map, gains)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/baroreflex.test.ts`:
 
@@ -1393,12 +1393,12 @@ describe('baroreflex', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/baroreflex.test.ts`
 Expected: FAIL — cannot resolve `baroreflex.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/baroreflex.ts`:
 
@@ -1500,12 +1500,12 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains): BaroOut {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/baroreflex.test.ts`
 Expected: PASS (5 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/baroreflex.ts packages/engine-core/test/l2/circ/baroreflex.test.ts
