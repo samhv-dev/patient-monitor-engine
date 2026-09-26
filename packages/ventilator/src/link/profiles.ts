@@ -26,6 +26,8 @@ export interface LinkProfile {
   recruit: RecruitParams | null;
   shunt: number;
   standIn: StandIn[];
+  /** Stage 7a: a circulation condition the engine now models (replaces the MANUAL-target stand-in for that row). */
+  condition?: CircConditionStandIn;
   /** Fields this row carries that the engine cannot act on yet (shown in the picker tooltip and the gate note). */
   stage7: string;
 }
@@ -42,10 +44,14 @@ const PATIENTS: Record<string, PatientProfile> = {
 };
 const shock = (sbp: number, dbp: number, cvp: number, hr: number): StandIn[] =>
   ([['sbp', sbp], ['dbp', dbp], ['cvp', cvp], ['hr', hr]] as const).map(([variable, value]) => ({ variable, value, rampS: 20 }));
+/** Stage 7a replaced two stand-ins with its own circulation conditions (R41: "deleted when 7a lands"). */
+export interface CircConditionStandIn { id: 'pe' | 'tensionPtx'; severity: number }
+export const CIRC_CONDITIONS: Record<string, CircConditionStandIn> = {
+  'pe-massive': { id: 'pe', severity: 0.75 }, // φ 0.6: PVR ×4, RV failure → low CO (7a conditions.ts)
+  'pneumothorax-tension': { id: 'tensionPtx', severity: 1 }, // +20 mmHg pleural: obstructive shock
+};
 /** INTERIM (R41; deleted when Stage 7a's right heart consumes pvrMultiplier): Stage 7a/7g stand-ins [ENG] — the haemodynamic picture each condition produces, set as MANUAL targets. */
 export const STAND_INS: Record<string, StandIn[]> = {
-  'pe-massive': shock(70, 45, 15, 120), // RV failure → low CO; EtCO2 falls through Stage 3's low-flow factor
-  'pneumothorax-tension': shock(65, 40, 18, 125), // obstructive shock
   'anaphylaxis-bronchospasm': shock(70, 35, 3, 125), // vasoplegia (Stage 7g)
   'air-embolism': shock(80, 50, 12, 110), // RV outflow air lock
 };
@@ -59,7 +65,7 @@ export function profileOf(row: LungPathology): LinkProfile {
   return {
     id: row.id, label: row.label, group: row.group, patient: PATIENTS[row.id] ?? ADULT,
     vent: { ...mechanicsToVent(row), ...refVent }, recruit: recruitOf(row), shunt: row.shunt.value,
-    standIn: STAND_INS[row.id] ?? [], stage7: later.join(', '),
+    standIn: STAND_INS[row.id] ?? [], ...(CIRC_CONDITIONS[row.id] ? { condition: CIRC_CONDITIONS[row.id] } : {}), stage7: later.join(', '),
   };
 }
 

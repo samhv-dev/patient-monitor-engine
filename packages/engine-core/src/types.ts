@@ -4,13 +4,15 @@
 import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
+import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
 export type ChannelId =
   | 'ecgI' | 'ecgII' | 'ecgIII' | 'aVR' | 'aVL' | 'aVF' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6'
-  | 'vcgX' | 'vcgY' | 'vcgZ' | 'abp' | 'cvp' | 'pap' | 'pleth' | 'co2' | 'resp';
+  | 'vcgX' | 'vcgY' | 'vcgZ' | 'abp' | 'cvp' | 'pap' | 'pleth' | 'co2' | 'resp'
+  | TeachingChannel; // Stage 7a
 export type NumericId =
   | 'hr' | 'pr' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
   | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc';
@@ -40,6 +42,7 @@ export interface PatientProfile {
   weightKg?: number; // Stage 3 (brief §7.4 patient.weightKg)
   heightCm?: number; // Stage 3: ideal body weight and obesity (plan decision 9)
   sex?: 'M' | 'F'; // Stage 3 (brief §7.4 patient.sex)
+  conditions?: ProfileCondition[]; // Stage 7a (R22): e.g. [{ id: 'as', grade: 'severe' }]
   lungConditions?: LungConditionSpec[]; // Stage 7b: catalogue conditions on the patient (R36)
 }
 
@@ -68,7 +71,8 @@ export type DeviceAction =
     }
   | NibpDeviceAction // Stage 2
   | AlarmDeviceAction // Stage 4b
-  | MonitorDeviceAction; // Stage 4b
+  | MonitorDeviceAction // Stage 4b
+  | CircDeviceAction; // Stage 7a
 
 /** 'monitor' 0.5–40 Hz + notch, 'diagnostic' 0.05–150 Hz, or any skin band 'band:<lo>-<hi>' (Stage 4b, request E-4a-1). */
 export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}`;
@@ -81,6 +85,7 @@ export type Command = CommandBase &
     | { type: 'device'; action: DeviceAction }
     | HemoCommandBody // Stage 2 (types-hemo.ts)
     | { type: 'applyEvent'; event: DeviceClinicalEvent } // Stage 4b (types-device.ts)
+    | { type: 'applyEvent'; event: CircClinicalEvent } // Stage 7a
     | RespCommandBody // Stage 3 (types-resp.ts)
     | LungCommandBody // Stage 7b (types-lung.ts)
   );
@@ -123,7 +128,8 @@ export type EngineEvent =
   | { type: 'toneCancel'; after: SimSeconds; ids?: string[] }
   | HemoEvent // Stage 2 (types-hemo.ts)
   | DeviceEvent // Stage 4b (types-device.ts)
-  | RespEvent; // Stage 3 (types-resp.ts)
+  | RespEvent // Stage 3 (types-resp.ts)
+  | CircEvent; // Stage 7a (types-circ.ts)
 
 export type EngineEventType = EngineEvent['type'];
 

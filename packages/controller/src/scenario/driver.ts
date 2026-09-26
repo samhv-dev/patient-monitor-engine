@@ -188,7 +188,7 @@ export class ScenarioDriver {
       if (!res.accepted) return res;
       // Stage 3: engine-core's event union adds `thermal` and ventilation fico2/effort (plan decisions 6 and 8), outside the brief's verbatim ClinicalEvent.
       if (w.type === 'applyEvent') this.pending.push({ kind: 'clinical', event: structuredClone(w.event) as ClinicalEvent });
-      else if (w.type === 'attachSensor') this.pending.push({ kind: 'sensor', sensor: w.sensor, state: w.state });
+      else if (w.type === 'attachSensor' && w.sensor !== 'pv') this.pending.push({ kind: 'sensor', sensor: w.sensor, state: w.state }); // Stage 7a: 'pv' (teaching channels) is not a scenario sensor
       else if (w.type === 'setTarget') this.pending.push({ kind: 'values', rank: 1, values: { [w.variable]: w.value } });
       return res;
     };

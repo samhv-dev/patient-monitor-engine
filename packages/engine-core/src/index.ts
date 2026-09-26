@@ -20,3 +20,4 @@ export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b
 export { ventReference, type VentReference } from './l2/lung/vent-reference.ts'; // Stage 7b
 export * from './types-vent-link.ts'; // Stage V
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+export type * from './types-circ.ts'; // Stage 7a

@@ -5,6 +5,7 @@
 //    l1Value (its M2 tracker then meets the coupled pressures).
 import { l1Target, type L1State } from '../../l1/state.ts';
 import { CPR_SV_FRAC, SV_REF_ML } from '../hemo/params.ts';
+import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
 
@@ -30,15 +31,16 @@ export function venousGradient(vs: number): number {
 export const CPR_FLOW_EXP = 1.9;
 export const cprFlowFactor = (q: number): number => (q < 1 ? Math.max(0, q) ** CPR_FLOW_EXP : q);
 
-/** CO (L/min) from Stage 2's completed site beats over the last 10 s; CPR pump flow; 0 in arrest. */
+/**
+ * CO (L/min) for the gas model. Stage 7a: from the circulation (beats and CPR compressions eject through it).
+ * INTERIM during CPR: the gas exchange keeps Stage 3.1's R39-2 fit (flow ∝ quality^1.9), which the EtCO2 acceptance
+ * (12 / 20 / 25 / 29 mmHg) was calibrated on, until 3.1 re-measures CPR EtCO2 against the emergent circulation CO
+ * (R45 request; circulation CO 2.1 L/min at quality 0.8, 2.5 at 1.0).
+ */
 export function cardiacOutput(hs: HemoState, t: number): number {
+  void t;
   if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * cprFlowFactor(hs.cpr.quality) * hs.cpr.rate) / 1000;
-  if (t - hs.lastEjT > Math.max(3, 2.2 * hs.lastRR)) return 0;
-  const bs = hs.siteBeats.filter((b) => !b.cpr && t - b.t < 10);
-  if (bs.length < 2) return (SV_REF_ML * hs.sys.g * 60) / Math.max(0.3, hs.lastRR) / 1000;
-  const sv = bs.reduce((a, b) => a + b.sv, 0);
-  const dur = bs.reduce((a, b) => a + b.dur, 0);
-  return (sv / Math.max(0.1, dur)) * 0.06;
+  return circCardiacOutput(hs.circ); // Stage 7a
 }
 
 /** Apply the mean-airway-pressure coupling to the L1 coupled truths at time t (MANUAL). */
