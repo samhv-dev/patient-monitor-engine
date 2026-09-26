@@ -25,3 +25,22 @@ This file lists every borrowed code file, data table, recorded template, dataset
 | N-011 | ajv 8.20.0 (browser runtime, `@pme/controller/scenario` entry only) | https://github.com/ajv-validator/ajv | MIT | Validates `pme-scenario/1` documents against `packages/controller/scenarios/pme-scenario-1.schema.json`; bundled into the scenario entry, never into the root entry or the IIFE | 2026-09-25 |
 | N-012 | fast-uri 3.1.8 (ajv runtime dependency) | https://github.com/fastify/fast-uri | BSD-3-Clause (text in `LICENSES/fast-uri-3.1.8.txt`) | URI resolution inside ajv; bundled with it, unmodified | 2026-09-25 |
 | N-013 | fast-deep-equal 3.1.3, json-schema-traverse 1.0.0, require-from-string 2.0.2 (ajv runtime dependencies) | https://github.com/epoberezkin/fast-deep-equal · https://github.com/epoberezkin/json-schema-traverse · https://github.com/floatdrop/require-from-string | MIT | Used inside ajv; bundled with it where reachable, unmodified | 2026-09-25 |
+
+### Pulse Physiology Engine (Stage 7a onward)
+
+Attribution carried for the Pulse-derived items below (excerpt of Pulse 4.3.2's `NOTICE`, as recorded in
+`docs/physiology/pulse-parameter-annex.md` §E; the full verbatim `NOTICE` and `LICENSE` are added if `pulse.wasm` is
+ever committed or distributed — it is not): "This product includes software developed by Kitware, Inc. and Contributors
+… Pulse Physiology Simulation Engine, Copyright 2018-2025 Kitware, Inc. and Contributors, Distributed under the Apache
+License, Version 2.0 … a fork of the BioGears project, version 6.1.1 … (TATRC) award W81XWH-13-2-0068" and "This product
+includes software developed at Applied Research Associates, Inc. BioGears 6.1.1, Copyright 2015 Applied Research
+Associates, Inc. Licensed under the Apache License, Version 2.0 …". This project uses/derives from the Pulse Physiology
+Engine; no Kitware endorsement is implied. No Pulse code is copied (R34/R40).
+
+| ID | Item | Source | Licence class | How used | Added on |
+|---|---|---|---|---|---|
+| N-P06 | Profile stabilisation procedure (circuit-only tuning of resistance/compliance to the patient's SBP/DBP/CVP, then a convergence window) — `packages/engine-core/src/l2/circ/stabilise.ts` | Derived from the Pulse Physiology Engine 4.3.2 (commit e8a3649), src/cpp/engine/common/system/physiology/CardiovascularModel.cpp (TuneCircuit), Copyright 2018-2025 Kitware, Inc. and Contributors, a fork of BioGears 6.1.1 (Copyright 2015 Applied Research Associates, Inc.); Apache License 2.0 | courtesy | Procedure re-implemented; tolerances retuned; LV EDPVR anchoring added (R45(c)); no code copied | 2026-09-26 |
+| N-P07 | Double-Hill time-varying-elastance activation — `packages/engine-core/src/l2/circ/activation.ts` | Stergiopulos N, Meister JJ, Westerhof N. Am J Physiol 1996;270:H2050. Located via the Pulse Physiology Engine 4.3.2 (CardiovascularModel.cpp 2518–2539; PulseConfiguration.cpp 494–498), Apache License 2.0 | courtesy (published) | Published activation function; duration driven by our Weissler LVET(HR) regression | 2026-09-26 |
+| N-P10 | ICRP 89 organ flow fractions — `packages/engine-core/src/l2/circ/params.ts` (`ICRP89_FLOW_FRACTIONS_M`, for 7d) | Valentin J (ICRP Publication 89), as compiled in the Pulse Physiology Engine 4.3.2 SetupCircuitsAndCompartments.cpp 293–330, Apache License 2.0 | data | Fractions re-checked against ICRP 89; exposed as constants only | 2026-09-26 |
+| N-P16 | Baroreflex resetting rule (> 5 % for > 420 s → set point += 0.35·Δ) — `packages/engine-core/src/l2/circ/baroreflex.ts` | Pulse Physiology Engine 4.3.2, NervousModel.cpp 332–353, Apache License 2.0 | courtesy | Rule adopted as [ENG-Pulse]; constants tunable | 2026-09-26 |
+| N-062 | Pulse wasm as a differential-test oracle (not committed; loaded from `research/pulse-spike/web` at test time) — `packages/validation/src/oracle/**` | Pulse Physiology Engine 4.3.2 (Kitware), Apache License 2.0 | oracle | Test-time only; the wasm and its Eigen/protobuf/abseil components are not distributed by this repository | 2026-09-26 |

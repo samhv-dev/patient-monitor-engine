@@ -4202,7 +4202,7 @@ git push origin stage-7a-circulation
 **Files:**
 - Create: `packages/engine-core/test/engine/circ-longrun.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/circ-longrun.test.ts`:
 
@@ -4260,12 +4260,12 @@ describe('Stage 7a long runs', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-longrun.test.ts`
 Expected: PASS. Prototype: 0.016 ms per tick; the 24 h bare-model run takes ≈ 60–120 s wall. Also re-run the existing Stage 2 24 h engine test (`test/engine/hemo-longrun.test.ts`) — it must still pass inside its 600 s budget; if it now exceeds it, report the wall time in the gate note (do not raise the timeout above 600 s without the orchestrator).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/circ-longrun.test.ts

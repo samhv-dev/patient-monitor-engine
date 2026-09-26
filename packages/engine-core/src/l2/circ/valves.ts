@@ -17,10 +17,11 @@ export function stenosisK(a: number, kG: number, aRef: number): number {
 }
 
 /** Flow (mL/s, positive = forward) for pressure difference dp = P_upstream − P_downstream. */
-export function valveFlow(v: Valve, dp: number): number {
+export function valveFlow(v: Valve, dp: number, rExtra = 0): number {
   if (dp > 0) {
-    if (v.k <= 0) return dp / v.r;
-    return (-v.r + Math.sqrt(v.r * v.r + 4 * v.k * dp)) / (2 * v.k);
+    const r = v.r + rExtra; // rExtra: a series characteristic impedance (no per-call object allocation)
+    if (v.k <= 0) return dp / r;
+    return (-r + Math.sqrt(r * r + 4 * v.k * dp)) / (2 * v.k);
   }
   if (v.eroa <= 0) return 0;
   return (REGURG_K * v.eroa * dp) / Math.sqrt(-dp + REGURG_EPS);

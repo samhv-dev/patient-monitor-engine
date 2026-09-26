@@ -93,9 +93,9 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   // displaces volume in the descending aorta, i.e. into the compliance, not through the root's Zc (which turned a
   // 60 ms deflation into a −35 mmHg spike at the valve) [ENG]
   const pX = pc - WK_ZC * ql + ct;
-  const qAv = valveFlow({ r: p.av.r + WK_ZC, k: p.av.k, eroa: p.av.eroa }, pLv - pX);
+  const qAv = valveFlow(p.av, pLv - pX, WK_ZC);
   const pAo = pX + WK_ZC * qAv;
-  const qPv = valveFlow({ r: p.pv.r + p.zPa, k: p.pv.k, eroa: p.pv.eroa }, pRv - pPa);
+  const qPv = valveFlow(p.pv, pRv - pPa, p.zPa);
   const dpv = pSv - pRa;
   o.pAo = pAo;
   o.pRad = pAo + (RADIAL_GAIN * 2 * RADIAL_ZETA * (s[3] as number)) / WR;

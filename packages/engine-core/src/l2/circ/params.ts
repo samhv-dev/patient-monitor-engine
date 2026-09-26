@@ -112,3 +112,6 @@ export const CPR_THORACIC_MMHG = 35;
 
 // --- integration ---
 export const H_S = 0.002; // RK4 step (R42; Stage 2 H_S)
+
+/** ICRP 89 reference-adult (male) cardiac-output fractions (N-P10; audit #7) — used by 7d; 7a exposes them only. */
+export const ICRP89_FLOW_FRACTIONS_M = { brain: 0.12, myocardium: 0.04, kidneys: 0.17, liver: 0.255, muscle: 0.17, skin: 0.05, fat: 0.05, bone: 0.05 } as const;
