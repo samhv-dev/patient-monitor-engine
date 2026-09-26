@@ -32,7 +32,11 @@ async function open(page: Page, skin: string) {
   await page.waitForTimeout(3000);
 }
 
-test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ page }) => {
+// Chromium-only (FU-1 / G5.1): > 40 s of evidence screenshots on headless WebKit (41.5 s on CI) and the test headless WebKit
+// crashed in under load; Chromium and the local system Chrome produce the gate screenshots. The WebKit layout of the same
+// monitor is covered by stage4a-skins and the other 4b tests.
+test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence screenshots: Chromium only (FU-1)');
   test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -91,7 +95,7 @@ test('skin switch relayouts lanes and tiles without restarting the engine', asyn
 test('12-lead report: 3×4 + rhythm strip screenshot', async ({ page }) => {
   test.setTimeout(60_000);
   await open(page, 'zoll-like');
-  await page.waitForTimeout(8000); // 10 s of ECG
+  await expect.poll(() => simT(page), { timeout: 30_000 }).toBeGreaterThanOrEqual(10); // 10 s of ECG (sim time, FU-1)
   await page.click('#capture');
   await expect(page.locator('#dlg')).toBeVisible();
   await page.locator('#ecg12').screenshot({ path: resolve(out, '12-lead-3x4.png') });
@@ -104,10 +108,15 @@ test('audio timing log: alarm pulses, charge / ready / shock tones', async ({ pa
   await page.click('#sound');
   await send(page, { type: 'setRhythm', rhythm: 'vfCoarse' });
   await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge', energyJ: 120 } });
-  await page.waitForTimeout(9000);
+  // FU-1: shock once the engine reports READY (sim-time charge), not after a fixed wall-clock wait
+  const readyMarkers = () => page.evaluate(() => (window as unknown as { __pme4b: Hook }).__pme4b.events.filter((e) => e.type === 'marker' && e.kind === 'chargeReady').length);
+  await expect.poll(readyMarkers, { timeout: 30_000 }).toBeGreaterThan(0);
   await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'shock' } });
-  await page.waitForTimeout(3000);
-  const log = await page.evaluate(() => (window as unknown as { __pme4b: { pm: { audioLog: Array<{ id: string; kind: string; simT: number; when: number; lateS: number; dropped: boolean }> } } }).__pme4b.pm.audioLog);
+  type Entry = { id: string; kind: string; simT: number; when: number; lateS: number; dropped: boolean };
+  const audioLog = () => page.evaluate(() => (window as unknown as { __pme4b: { pm: { audioLog: Entry[] } } }).__pme4b.pm.audioLog);
+  await expect.poll(async () => (await audioLog()).some((e) => e.kind === 'shock'), { timeout: 15_000 }).toBe(true);
+  await page.waitForTimeout(1000); // let the alarm pulses after the shock land in the log
+  const log = await audioLog();
   const kinds = new Set(log.map((e) => e.kind));
   for (const k of ['alarm', 'charge', 'chargeReady', 'shock']) expect(kinds.has(k), k).toBe(true);
   const alarm = log.filter((e) => e.kind === 'alarm');
@@ -120,7 +129,9 @@ test('audio timing log: alarm pulses, charge / ready / shock tones', async ({ pa
 });
 
 // Added at execution (brief's gate list): pacing with capture, defibrillator charge-ready with sync markers, trends.
-test('device evidence: pacing with capture, charge-ready with sync markers, trends view', async ({ page }) => {
+// Chromium-only (FU-1 / G5.1): the heaviest evidence test (1.6 min on CI WebKit, crashed headless WebKit once under load).
+test('device evidence: pacing with capture, charge-ready with sync markers, trends view', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence screenshots: Chromium only (FU-1)');
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1300, height: 640 });
   type Ev = { type: string; t: number; kind?: string; data?: Record<string, unknown> };
@@ -128,9 +139,8 @@ test('device evidence: pacing with capture, charge-ready with sync markers, tren
   await open(page, 'zoll-like');
   await send(page, { type: 'setRhythm', rhythm: 'avb3Wide' });
   await send(page, { type: 'applyEvent', event: { kind: 'pacer', action: 'set', mode: 'fixed', ratePpm: 70, mA: 90 } });
-  await page.waitForTimeout(10_000);
+  await expect.poll(async () => (await markers('paceSpike')).length, { timeout: 30_000 }).toBeGreaterThan(5); // FU-1: poll, not a fixed wait
   const spikes = await markers('paceSpike');
-  expect(spikes.length).toBeGreaterThan(5);
   expect(spikes.slice(2).every((m) => m.data?.captured === true)).toBe(true); // 90 mA > the 70 mA default threshold (R39-4)
   await expect(page.locator('.pme-hdr')).toContainText('PACER FIXED 70 ppm 90 mA');
   await page.locator('#monitor').screenshot({ path: resolve(out, 'zoll-like--pacing-capture.png') });
@@ -140,8 +150,7 @@ test('device evidence: pacing with capture, charge-ready with sync markers, tren
   await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'syncOn' } });
   await send(page, { type: 'applyEvent', event: { kind: 'defib', action: 'charge', energyJ: 120 } });
   await expect(page.locator('.pme-hdr')).toContainText('120 J READY SYNC', { timeout: 15_000 });
-  await page.waitForTimeout(5000);
-  expect((await markers('syncR')).length).toBeGreaterThan(3);
+  await expect.poll(async () => (await markers('syncR')).length, { timeout: 20_000 }).toBeGreaterThan(3); // FU-1: poll
   await page.locator('#monitor').screenshot({ path: resolve(out, 'zoll-like--defib-sync-ready.png') });
 
   await open(page, 'philips-like');

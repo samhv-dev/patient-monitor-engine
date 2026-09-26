@@ -154,6 +154,8 @@ export interface Skin {
     source: string;
     autoPriority: string[];
     relabelNonEcgAs: string | null;
+    /** FU-1 (E-4a-2): optional HR averaging; absent = the `method` default. */
+    averaging?: { kind: 'beats' | 'seconds'; n: number };
   };
   spo2: {
     avgOptions: Array<number | string>;

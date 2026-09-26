@@ -58,7 +58,9 @@ pulses already handed to Web Audio.
 `silence.headerCountdown`: consumed by the Stage 4b alarm engine and alarm bar. The 4a preview page draws the
 bars and lamps from these fields. Stage 4b adds two optional fields: `alarms.numericStyle` (`'flash-text'`, the
 default, or `'flash-box'`, Mindray-like) and `layout.badge` (header text such as `LAYOUT UNVERIFIED` for skins whose
-layout was not taken from a manual: `ge-like`, `mindray-like`).
+layout was not taken from a manual: `ge-like`, `mindray-like`). FU-1 adds the optional `hr.averaging`
+(`{ kind: 'beats' | 'seconds', n }`, E-4a-2): the engine's HR numeric becomes the plain mean of the last n RR, or of the RR
+ending in the last n seconds (at least 2); absent (every shipped skin) = the `hr.method` default.
 
 ## Limits
 

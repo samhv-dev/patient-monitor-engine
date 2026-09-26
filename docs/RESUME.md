@@ -15,13 +15,13 @@
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1 | merged to main | DONE (Waves A + B) | — |
 | 7a circulation | `stage-7a-circulation` (plan: `docs/plans/stage-7a-circulation.md`, worktree `../scratch/wt-stage-7a`) | executing (started 2026-09-26 ~13:00) | resume from first unticked task |
 | 7b lungs | `stage-7b-lungs` (plan: `docs/plans/stage-7b-lungs.md`, worktree `../scratch/wt-stage-7b`) | executing | resume from first unticked task |
-| 7c blood/acid–base | plan ready (`docs/plans/stage-7c-blood.md`, 26 tasks, verified reproducible) | R34 port from Pulse; gate: tests and Pulse oracle never concurrently | execute after 7a merges |
-| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
-| 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48) | patches 7a and 7c | execute after 7a AND 7c merge |
-| 7f NMB/depth | plan on disk (`docs/plans/stage-7f-neuro-depth.md`, completeness unverified) | consumes 7g effect sites | verify plan, execute after 7g |
-| 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks) | conforms to 7f contract | execute after 7a merges |
-| FU-1 follow-ups | `fu-1-followups` (worktree `../scratch/wt-fu1`) | executing | resume from first unticked item |
-| 8a validation harness | plan being completed (`docs/plans/stage-8a-validation.md`) | R9/R40 | execute when plan lands (independent of 7) |
+| 7c blood/acid–base | plan ready (`docs/plans/stage-7c-blood.md`, 26 tasks, verified reproducible; R50 review pending) | R34 port from Pulse; gate: tests and Pulse oracle never concurrently | execute after 7a merges |
+| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review pending) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
+| 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
+| 7f NMB/depth | plan under fix (`docs/plans/stage-7f-neuro-depth.md`; R50 review done: READY WITH FIXES F1–F13; fixer running per R51) | consumes 7g bus only (R51) | re-review after fix; execute after 7g merges |
+| 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks; R50 review running; R51 contract applies) | conforms to 7f contract | execute after 7a merges |
+| FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
+| 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)

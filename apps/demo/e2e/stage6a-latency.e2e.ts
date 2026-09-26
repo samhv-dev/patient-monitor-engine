@@ -66,7 +66,12 @@ test('command → ack → visible latency on four paths', async ({ page, browser
       fired.push(await g(sender, fire));
       await page.waitForTimeout(100);
     }
-    await page.waitForTimeout(500);
+    // FU-1: wait until every fired command is visible (poll), then read the timings; a fixed 500 ms wait could leave NaN
+    const ids = fired.map((f) => f.commandId);
+    await expect.poll(() => page.evaluate((ids) => {
+      const t = (window as unknown as W).__pme6a.timings as Array<{ commandId: string; visibleAt: number | null }>;
+      return ids.every((id) => t.some((x) => x.commandId === id && x.visibleAt !== null));
+    }, ids), { timeout: 15_000 }).toBe(true);
     const timings = await g(page, (w) => w.__pme6a.timings as Array<{ commandId: string; visibleAt: number | null }>);
     const byId = new Map(timings.map((t) => [t.commandId, t.visibleAt]));
     expect(fired.every((f) => f.accepted)).toBe(true);
