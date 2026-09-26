@@ -2230,7 +2230,7 @@ git push
 
 Planning notes: the engine keeps 120 s per channel, so `capture` drains after every ≤ 20 s chunk (decision 6). With a 60 s warm-up the EtCO2 target had not settled (engine 36–38 mmHg for targets 30–33); 180 s fixes most windows (0001: 33.9 for 32) but not all (0001 hypotensive window: 37.0 for 30) — the report prints the achieved EtCO2 beside every α row. VitalDB's `Solar8000/NIBP_MBP` repeats the last reading every 2 s; without `newReadings` the NIBP bias counted each cuff reading ≈ 150 times.
 
-- [ ] **Step 1: Add `newReadings` to `packages/validation/src/datasets/vitaldb.ts`. Insert above `/** The recorded Signals of one window …`:**
+- [x] **Step 1: Add `newReadings` to `packages/validation/src/datasets/vitaldb.ts`. Insert above `/** The recorded Signals of one window …`:**
 
 ```ts
 /** Solar8000 repeats the last NIBP reading every 2 s: keep only the points where the value changes (a new cuff cycle). */
@@ -2257,7 +2257,7 @@ describe('newReadings', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing test `packages/validation/test/engine/capture-match.test.ts`**
+- [x] **Step 2: Write the failing test `packages/validation/test/engine/capture-match.test.ts`**
 
 ```ts
 import { createEngine } from '@pme/engine-core';
@@ -2300,11 +2300,11 @@ describe('matched engine run (decision 5)', { timeout: 60_000 }, () => {
 });
 ```
 
-- [ ] **Step 3: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 3: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/engine/capture-match.test.ts test/datasets/vitaldb.test.ts`
 
-- [ ] **Step 4: Write `packages/validation/src/engine/capture.ts`**
+- [x] **Step 4: Write `packages/validation/src/engine/capture.ts`**
 
 ```ts
 // Headless engine capture for the harness: run @pme/engine-core in Node with a fixed seed and scripted commands,
@@ -2377,7 +2377,7 @@ export async function capture(o: {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/engine/match.ts`**
+- [x] **Step 5: Write `packages/validation/src/engine/match.ts`**
 
 ```ts
 // An engine run matched to a recorded analysis window (decision 5): same HR, SBP/DBP, arterial site, ventilator
@@ -2433,7 +2433,7 @@ export async function matchedRun(w: AnalysisWindow, seed: number): Promise<{ sig
 }
 ```
 
-- [ ] **Step 6: Write `packages/validation/src/metrics/window-metrics.ts`**
+- [x] **Step 6: Write `packages/validation/src/metrics/window-metrics.ts`**
 
 ```ts
 // All morphology/device metrics of one analysis window, from one Signals bundle — recorded or generated (decision 3).
@@ -2501,11 +2501,11 @@ export function computeWindowMetrics(s: Signals): WindowMetrics {
 }
 ```
 
-- [ ] **Step 7: Run the tests. Expected: PASS (3 + 6 tests, ≈ 2 s)**
+- [x] **Step 7: Run the tests. Expected: PASS (3 + 6 tests, ≈ 2 s)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/engine/capture-match.test.ts test/datasets/vitaldb.test.ts`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/validation/src/engine packages/validation/src/metrics/window-metrics.ts packages/validation/src/datasets/vitaldb.ts packages/validation/test/engine packages/validation/test/datasets/vitaldb.test.ts

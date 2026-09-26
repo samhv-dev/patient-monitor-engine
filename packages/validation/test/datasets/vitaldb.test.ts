@@ -67,3 +67,10 @@ describe('helpers', () => {
     expect(inspirationsFromAwp(p, fs).map((t) => Math.round(t))).toEqual([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
   });
 });
+
+describe('newReadings', () => {
+  it('drops the 2 s repeats of the last NIBP value', async () => {
+    const { newReadings } = await import('../../src/datasets/vitaldb.ts');
+    expect(newReadings([[0, 80], [2, 80], [4, 80], [300, 76], [302, 76]])).toEqual([[0, 80], [300, 76]]);
+  });
+});

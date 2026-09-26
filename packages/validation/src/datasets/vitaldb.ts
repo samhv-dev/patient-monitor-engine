@@ -170,6 +170,11 @@ export function inspirationsFromAwp(p: Float64Array, fs: number): number[] {
   return out;
 }
 
+/** Solar8000 repeats the last NIBP reading every 2 s: keep only the points where the value changes (a new cuff cycle). */
+export function newReadings(p: Array<[number, number]>): Array<[number, number]> {
+  return p.filter(([, v], i) => i === 0 || v !== (p[i - 1] as [number, number])[1]);
+}
+
 /** The recorded Signals of one window (times re-based to the window start). */
 export function vitaldbSignals(f: VitalFile, w: AnalysisWindow): Signals {
   const wave = (name: string) => {
@@ -185,7 +190,7 @@ export function vitaldbSignals(f: VitalFile, w: AnalysisWindow): Signals {
     numerics: {
       hr: rebase(numbers(f, NUMS.hr, w.fromS, w.toS)),
       abpMean: rebase(numbers(f, NUMS.abpMean, w.fromS, w.toS)),
-      nibpMean: rebase(numbers(f, NUMS.nibpMean, w.fromS, w.toS)),
+      nibpMean: rebase(newReadings(numbers(f, NUMS.nibpMean, w.fromS - 600, w.toS))).filter(([t]) => t >= 0),
       etco2: rebase(numbers(f, NUMS.etco2, w.fromS, w.toS)),
     },
   };
