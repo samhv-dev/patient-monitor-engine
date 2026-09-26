@@ -2,7 +2,7 @@
 // validity rules (pulseless, low PI, same-limb cuff) at engine level.
 import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '../../src/types.ts';
-import { ADULT, cmd, desatTime, ev3, numSeries, rig3, stateSeries, run } from '../helpers/resp.ts';
+import { ADULT, cmd, desatTime, ev3, firstBelow, numSeries, rig3, stateSeries, run } from '../helpers/resp.ts';
 
 describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure', { timeout: 300_000 }, () => {
   it('5. preoxygenated healthy 70 kg adult: SaO2 90 % at 8 ± 1.5 min of apnoea', async () => {
@@ -11,16 +11,36 @@ describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure
     expect(t).toBeLessThanOrEqual(9.5);
   });
 
-  it('5b. room air: 90 % in 40–90 s (R29; model ≈ 0.7 min, plan decision 4); children 2–5 y 160 ± 30 s; obese 127 kg ≈ 2.7 min', async () => {
+  it('5b. room air: SaO2 90 % in 35–60 s (R39-1 true arterial band; model 41 s); children 2–5 y 160 ± 30 s; obese 127 kg ≈ 2.7 min', async () => {
     const room = await desatTime(ADULT, false);
-    expect(room).toBeGreaterThanOrEqual(40); // R29: band 40–90 s pending Ali's verdict at gate 3 (brief said 1–2 min)
-    expect(room).toBeLessThanOrEqual(90);
+    expect(room).toBeGreaterThanOrEqual(35); // R39-1: arterial 45 s (35–60); the displayed value is test 5c
+    expect(room).toBeLessThanOrEqual(60);
     const child = await desatTime({ ageY: 4, weightKg: 16, baseline: { rr: 24, vt: 130 } }, true);
     expect(child).toBeGreaterThanOrEqual(130);
     expect(child).toBeLessThanOrEqual(190);
     const obese = (await desatTime({ ageY: 40, weightKg: 127, heightCm: 175, sex: 'M' }, true)) / 60;
     expect(obese).toBeGreaterThanOrEqual(1.7);
     expect(obese).toBeLessThanOrEqual(3.7);
+  });
+
+  it('5c. R39-1 room air: TRUE SaO2 90 % at 35–60 s; DISPLAYED SpO2 < 90 at 45–90 s and first falls at 20–45 s', async () => {
+    // research 09 §1: arterial 45 s (35–60), displayed 60 s (45–90), displayed onset ≈ 30 s. Same run as desatTime.
+    const { e, ev } = rig3({ patient: ADULT });
+    e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
+    await run(e, 180);
+    e.dispatch(ev3({ kind: 'airway', state: 'apnoea' }));
+    await run(e, 180 + 150);
+    const trueT = firstBelow(stateSeries(ev, 'spo2', 180), 90)! - 180;
+    expect(trueT).toBeGreaterThanOrEqual(35);
+    expect(trueT).toBeLessThanOrEqual(60);
+    const shown = numSeries(ev, 'spo2', 180).filter(([, v]) => Number.isFinite(v));
+    const base = numSeries(ev, 'spo2', 179, 180)[0]![1];
+    const shownT = firstBelow(shown, 90)! - 180;
+    expect(shownT).toBeGreaterThanOrEqual(45);
+    expect(shownT).toBeLessThanOrEqual(90);
+    const onset = firstBelow(shown, base - 0.5)! - 180;
+    expect(onset).toBeGreaterThanOrEqual(20);
+    expect(onset).toBeLessThanOrEqual(45);
   });
 
   it('6. R8: EtCO2 vanishes at once on airway loss while SpO2 is still normal; displayed SpO2 KEEPS FALLING 10–30 s after ventilation resumes', async () => {
