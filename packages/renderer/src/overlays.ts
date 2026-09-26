@@ -9,6 +9,9 @@ import type { SweepLane } from './sweep-lane.ts';
 /** Marks are drawn once the render time is this far past them [ENG]: ≥ 4 px behind the cursor at 25 mm/s. */
 export const DRAW_LAG_S = 0.05;
 const DASH_PX = 6;
+/** TCP marks are this much taller than the skin's implanted-pacer mark, and at least TCP_MIN_MM (R-51-1) [ENG]. */
+const TCP_SCALE = 2.5;
+const TCP_MIN_MM = 5;
 
 export interface OverlayMark {
   t: number;
@@ -80,8 +83,22 @@ export function drawMark(ctx: Ctx2D, lane: SweepLane, m: OverlayMark, plan: Rend
   ctx.lineWidth = 1.5;
   if (m.kind === 'pace') {
     const h = plan.paceMarker.heightMm * pxPerMm;
+    if (m.tcp === true) {
+      // Transcutaneous pacing (R-51-1): taller than an implanted-pacer mark and never at the baseline, where the sampled
+      // 3–6 mV pad spike is drawn; a short cap on top tells it apart at a glance.
+      ctx.lineWidth = 2;
+      if (plan.paceMarker.style === 'vertical-line') vline(ctx, x, clampY(base - (TCP_SCALE * h) / 2), clampY(base + (TCP_SCALE * h) / 2));
+      else {
+        const top = c.y + 4;
+        const len = Math.min(Math.max(TCP_SCALE * h, TCP_MIN_MM * pxPerMm), base - top - 2 * pxPerMm - 1);
+        vline(ctx, x, top, top + len);
+        ctx.beginPath();
+        ctx.moveTo(x - 3, top);
+        ctx.lineTo(x + 3, top);
+        ctx.stroke();
+      }
+    } else if (plan.paceMarker.style === 'vertical-line') vline(ctx, x, clampY(base - h / 2), clampY(base + h / 2));
     // vertical-line: a 1 cm line through the baseline (saadat-like); marker-above: a short mark near the lane top
-    if (plan.paceMarker.style === 'vertical-line') vline(ctx, x, clampY(base - h / 2), clampY(base + h / 2));
     else vline(ctx, x, c.y + 4, c.y + 4 + h);
   } else if (m.kind === 'sync') {
     const s = 5;
