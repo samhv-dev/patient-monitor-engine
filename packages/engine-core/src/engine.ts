@@ -193,6 +193,7 @@ class Engine implements MonitorEngine {
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
     };
+    this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
     this.st.detections.length = 0;
@@ -290,6 +291,7 @@ class Engine implements MonitorEngine {
     this.st = data.st;
     this.queue = data.queue;
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand); // Stage 4b
+    this.syncCo2Sampler(); // R39-5
     this.tick = s.tick;
     this.syncLaneBuffers();
     this.syncHemoBuffers(); // Stage 2
@@ -537,6 +539,7 @@ class Engine implements MonitorEngine {
     };
     const devOut: EngineEvent[] = []; // Stage 4b
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
+      this.syncCo2Sampler(); // R39-5: a skin switch changes the sidestream module
       for (const e of devOut) this.emit(e);
       return;
     }
@@ -579,6 +582,11 @@ class Engine implements MonitorEngine {
         return;
       }
     }
+  }
+
+  /** R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). */
+  private syncCo2Sampler(): void {
+    this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
   }
 
   /** Make the lane buffers match the current lanes (new leads start empty). */

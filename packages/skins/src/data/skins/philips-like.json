@@ -48,7 +48,10 @@
     }
   },
   "arrhythmia": { "defaultOn": false },
+  "co2": { "sidestreamDelayS": 2.3, "riseTimeMs": 240 },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
+    "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Philips Microstream, adult; R39-5)" },
     "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },

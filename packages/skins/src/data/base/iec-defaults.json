@@ -85,7 +85,7 @@
     "meanOnlyLabels": ["CVP"],
     "scales": { "ART": [0, 75, 150], "CVP": [0, 10, 20], "PAP": [0, 20, 40] }
   },
-  "co2": { "unit": "mmHg", "scale": 40, "scaleUnit": "mmHg" },
+  "co2": { "unit": "mmHg", "scale": 40, "scaleUnit": "mmHg", "sidestreamDelayS": 2.3, "riseTimeMs": 240 },
   "alarms": {
     "levels": 3,
     "levelNames": ["high", "medium", "low"],
@@ -132,6 +132,8 @@
   "trend": { "style": "line", "hours": 8 },
   "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "outOfRange": "---", "ibpPrUnavailable": "---" },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
+    "co2.riseTimeMs": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
     "scheme": { "tag": "documented", "source": "research/05 §2.7; brief §3.8" },
     "background": { "tag": "documented", "source": "research/05 §2.7 (black background)" },
     "foreground": { "tag": "eng", "source": "ENG" },

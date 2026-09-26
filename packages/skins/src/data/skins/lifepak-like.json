@@ -26,7 +26,10 @@
   "syncMarker": "triangle-mid-qrs",
   "defib": { "energyAdultJ": 200, "energyPaedJ": 50, "aedSequenceJ": [200, 300, 360], "chargeTimeS": { "200": 7, "360": 10 }, "readyTimeoutS": 60, "toneSet": "lifepak-like" },
   "pacer": { "rateDefault": 60, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 10 }, "modeDefault": "demand", "pausePct": 25 },
+  "co2": { "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+    "co2.riseTimeMs": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
     "colors": { "tag": "assumed", "source": "research/05 §2.1", "note": "conventional parameter colours; no LIFEPAK factory table retrieved" },
     "layout.lanes": { "tag": "eng", "source": "ENG" },
     "layout.tiles": { "tag": "eng", "source": "ENG" },

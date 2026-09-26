@@ -126,7 +126,7 @@
       "LAP": [-10, 15, 40], "RAP": [-10, 10, 30], "ICP": [-10, 15, 40]
     }
   },
-  "co2": { "unit": "mmHg", "scale": 10, "scaleUnit": "%" },
+  "co2": { "unit": "mmHg", "scale": 10, "scaleUnit": "%", "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
   "alarms": {
     "levels": 3,
     "levelNames": ["1", "2", "3"],
@@ -188,6 +188,8 @@
   "trend": { "style": "filled-area", "hours": 96 },
   "glyphs": { "noValue": "---", "hrUnavailable": "-?-", "nibpFail": "?", "outOfRange": "--", "ibpPrUnavailable": "---" },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
+    "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
     "scheme": { "tag": "measured", "source": "research/06 §3.2 (F1, F4, F5)" },
     "background": { "tag": "measured", "source": "research/06 §3.2; brief §6.8" },
     "foreground": { "tag": "assumed", "source": "research/06 §3.1 F1", "note": "white lane labels; hex not published" },

@@ -108,6 +108,8 @@ export interface SamplerState {
   mode: 'sidestream' | 'mainstream';
   neonatal: boolean;
   y: number; // LPF output
+  /** The active skin's sidestream module (R39-5): delay (s) and adult 10–90 % rise (s); absent → SAMPLING.sidestream. */
+  side?: { delayS: number; riseS: number };
 }
 
 export function createSampler(mode: 'sidestream' | 'mainstream' = 'sidestream', neonatal = false): SamplerState {
@@ -117,9 +119,11 @@ export function createSampler(mode: 'sidestream' | 'mainstream' = 'sidestream', 
 /** Displayed CO2 at 62.5 Hz sample time t: LPF1{airway(t − delay)}, τ = rise(10–90 %)/2.2 (brief §4.4). */
 export function sampleCo2(s: SamplerState, t: number, airway: (t: number) => number): number {
   const p = SAMPLING[s.mode];
-  const tau = (s.neonatal ? p.riseNeoS : p.riseS) / 2.2;
+  const side = s.mode === 'sidestream' ? s.side : undefined; // mainstream has no transport delay on any skin
+  const delayS = side ? side.delayS : p.delayS;
+  const tau = (s.neonatal ? p.riseNeoS : side ? side.riseS : p.riseS) / 2.2;
   const h = 1 / (CO2_RATE * CO2_SUBSTEPS);
   const a = 1 - Math.exp(-h / tau);
-  for (let j = CO2_SUBSTEPS - 1; j >= 0; j--) s.y += (airway(t - j * h - p.delayS) - s.y) * a;
+  for (let j = CO2_SUBSTEPS - 1; j >= 0; j--) s.y += (airway(t - j * h - delayS) - s.y) * a;
   return s.y;
 }
