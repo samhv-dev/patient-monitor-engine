@@ -4589,7 +4589,7 @@ git push origin stage-v-ventilator-link
 **Files:**
 - Create: `docs/gates/stage-V.md`
 
-- [ ] **Step 1: Re-measure**
+- [x] **Step 1: Re-measure**
 
 Run `PRINT=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/link-r27.test.ts test/link-r36.test.ts` and the fidelity maximum errors:
 
@@ -4614,7 +4614,7 @@ npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/tmp/fid.test.ts
 
 (Scratch only — nothing under `test/tmp` is committed.)
 
-- [ ] **Step 2: Write the gate note**
+- [x] **Step 2: Write the gate note**
 
 **Create `docs/gates/stage-V.md`** with this structure, replacing every number with what Step 1 and Tasks 13–19 printed on YOUR run (the prototype's numbers are shown; a difference beyond the last digit is a finding to report, not to smooth over):
 
