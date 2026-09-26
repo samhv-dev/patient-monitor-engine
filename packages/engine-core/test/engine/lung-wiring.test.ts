@@ -16,8 +16,7 @@ describe('Stage 7b wiring I: the breath driver drives the lung module', { timeou
     expect((ls.tidal[0] as number) / vt).toBeCloseTo(0.45, 1);
     expect(ls.peepTot).toBeCloseTo(5, 0);
   });
-  // Executor deviation: τ̄_exp is computed by the 10 Hz gas step, which Task 14 wires; un-skipped there.
-  it.skip('a COPD patient stamps the cycles with a long expiratory τ', () => {
+  it('a COPD patient stamps the cycles with a long expiratory τ', () => {
     const r = rig3({ patient: { ageY: 60, weightKg: 70, heightCm: 175, sex: 'M', lungConditions: [{ id: 'copd', severity: 0.75 }] } });
     r.e.dispatch(ev3({ ...vent, vtMl: 560 }));
     r.e.advanceTo(90);

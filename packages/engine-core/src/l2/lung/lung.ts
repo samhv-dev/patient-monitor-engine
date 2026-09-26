@@ -4,7 +4,7 @@ import { complianceAt, pressureAt } from './venegas.ts';
 import { airwayFlow, createMech, mechSubstep, type MechParams, type MechState } from './mechanics.ts';
 import { createO2Lung, stepO2Lung, type O2LungState } from './mix-o2.ts';
 import { mixCo2, type Co2Mix } from './mix-co2.ts';
-import { K_TAU_II, MECH_H, N_UNITS, SIDE_SHARE, TAU_EXP_REF, TAU_II_MAX } from './params.ts';
+import { CO2_SLOPE_BLOOD, K_TAU_II, MECH_H, N_UNITS, SIDE_SHARE, TAU_EXP_REF, TAU_II_MAX } from './params.ts';
 import { createHpv, perfusion, stepHpv, type HpvState, type Perfusion } from './perfusion.ts';
 import { createRecruit, nonAerated, stepRecruit, type RecruitState } from './recruit.ts';
 import { mechParams, type LungParams } from './side.ts';
@@ -33,6 +33,8 @@ export interface LungState {
   peepTot: number; // last end-expiratory mean alveolar pressure (cmH2O)
   tauBar: number; // ventilation-weighted expiratory τ of the units (s)
   t: number;
+  /** Executor addition (Task 14): gas steps taken (the first one places g without the alveolar lag). */
+  nGas: number;
 }
 
 export function blockedSides(m: Mainstem): boolean[] {
@@ -46,7 +48,7 @@ export function createLung(lp: LungParams, frcGaMl: number, fa0: number, cv0: nu
     o2: createO2Lung(fa0, cv0), mainstem: 'both', aer,
     perf: { f: [SIDE_SHARE[0], SIDE_SHARE[1]], pvrMult: [1, 1], shunt: [0, 0], hypoxic: [0, 0] },
     co2: { pA: [40, 40, 40, 40], pv: 46, e: 1, g: 0.925, riseIII: 0, faCo2: 0.056 },
-    frcGaMl, inInsp: false, v0: [0, 0, 0, 0], tidal: [0, 0, 0, 0], tInsp: 0, teS: 3, tExp0: 0, pInsp: 0, peepTot: 0, tauBar: 0.54, t: 0,
+    frcGaMl, inInsp: false, v0: [0, 0, 0, 0], tidal: [0, 0, 0, 0], tInsp: 0, teS: 3, tExp0: 0, pInsp: 0, peepTot: 0, tauBar: 0.54, t: 0, nGas: 0,
   };
   return st;
 }
@@ -116,6 +118,8 @@ export interface GasInputs {
   volatileMac: number;
   /** 7a adapter: measured per-lung flows (L/min) when the circulation exists, else null (fallback split). */
   sideFlow: number[] | null;
+  /** Executor addition (Task 14): reference pulmonary flow (L/min, CO_ref); the CO2 mix never sees less. */
+  qRef?: number;
 }
 
 /** 10 Hz: recruitment, HPV, perfusion, CO2 mix, O2 stores. Rebuilds unit mechanics when aeration moves. */
@@ -135,13 +139,18 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   const sidePao2 = ls.o2.fa.map((f) => f * 713);
   ls.perf = perfusion(lp.side, non, sidePao2, ls.hpv, x.volatileMac);
   stepHpv(ls.hpv, ls.perf.hypoxic, dt);
-  // flows
+  // flows. Executor deviation (Task 14): the O2 side uses the actual flow floored at 0.05 L/min (arrest: q = 0 gave
+  // 0/0 = NaN in both mixes); the CO2 mix sees at least the reference flow `qRef`, so a low cardiac output does not
+  // lower g/e on top of Stage 3's low-flow factor φ, which already owns low-flow CO2 kinetics (R39-2 CPR retune;
+  // plan decision 7: "the CPR kinetics are untouched").
+  const qO2 = Math.max(0.05, x.q);
+  const qCo2 = Math.max(qO2, x.qRef ?? 0);
   const extra = Math.min(0.6, x.baseShunt + lp.extraShunt);
-  const qp = x.q * (1 - extra);
+  const qp = qO2 * (1 - extra);
   const f = x.sideFlow ? x.sideFlow.map((v) => v / Math.max(1e-6, x.sideFlow![0]! + x.sideFlow![1]!)) : ls.perf.f;
   const perfU = [0, 0, 0, 0];
   const qLow = [0, 0];
-  let qShunt = x.q * extra;
+  let qShunt = qO2 * extra;
   for (let s = 0; s < 2; s++) {
     const sp = lp.side[s]!;
     const qs = qp * (f[s] as number);
@@ -152,18 +161,40 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
     perfU[2 * s + 1] = qa * (1 - sp.vqLow) * sp.fSlow;
   }
   const tidSum = ls.tidal.reduce((a, b, u) => a + (ls.mp.blocked[u] ? 0 : b), 0);
-  const vent = ls.tidal.map((v, u) => (tidSum > 0 && !ls.mp.blocked[u] ? v / tidSum : 0));
+  // Executor deviation (Task 14): before the first complete breath (tidal all 0) ventilation is shared by the open
+  // units' compliances (the passive distribution), not zero — a zero split put every unit at PAO2 ≈ 7 mmHg and the
+  // SaO2 truth at 0.2 for the first breath of every run.
+  const cU = ls.mp.units.map((un, u) => (ls.mp.blocked[u] || !(un.rIn < 1e3) ? 0 : complianceAt(un.sig, ls.mech.v[u] as number)));
+  const cSum = cU.reduce((a, b) => a + b, 0);
+  const vent = tidSum > 0 ? ls.tidal.map((v, u) => (!ls.mp.blocked[u] ? v / tidSum : 0)) : cU.map((c) => (cSum > 0 ? c / cSum : 0));
   const vdAlv = [0, 1, 2, 3].map((u) => lp.side[u >> 1]!.vdAlv);
   const tauEx = ls.mp.units.map((un, u) => {
     const c = complianceAt(un.sig, ls.mech.v[u] as number);
     const crs = 1 / (1 / Math.max(1e-3, c) + 1 / (ls.mp.ccw * (SIDE_SHARE[u >> 1] as number)));
     return (un.rEx + ls.mp.rTube) * crs;
   });
-  ls.tauBar = tidSum > 0 ? tauEx.reduce((a, tau, u) => a + tau * (vent[u] as number), 0) : ls.tauBar;
-  ls.co2 = mixCo2({
-    va: x.va, vent, perf: [...perfU], qLow: qLow[0]! + qLow[1]!, qShunt, vdAlv, tauEx, teS: Math.max(0.3, ls.teS), paco2: x.paco2, vco2: x.vco2,
+  ls.tauBar = tidSum > 0 || cSum > 0 ? tauEx.reduce((a, tau, u) => a + tau * (vent[u] as number), 0) : ls.tauBar;
+  const gPrev = ls.co2.g;
+  const kC = qCo2 / qO2;
+  const mix = mixCo2({
+    // Executor deviation (Task 14): teS capped at 10 s — after an apnoea the 'expiration' lasted minutes and exp(−w/τ)
+    // underflowed to 0, which returned g = 0 (EtCO2 0) for the first breath after the apnoea
+    va: x.va, vent, perf: perfU.map((p) => p * kC), qLow: (qLow[0]! + qLow[1]!) * kC, qShunt: qShunt * kC, vdAlv, tauEx, teS: Math.min(10, Math.max(0.3, ls.teS)), paco2: x.paco2, vco2: x.vco2,
   });
   const frcSide = [0, 1].map((s) => ls.frcGaMl * lp.frcMult * (SIDE_SHARE[s] as number) * (aer[s] as number));
+  // Executor addition (Task 14): the end-tidal ratio g follows the alveolar gas, which relaxes toward the mixing
+  // point's steady state with the alveolar CO2 time constant τ = C_A/(Q·S + VA/713), C_A = aerated FRC/713 mL/mmHg
+  // (≈ 6 s ventilated, 8 s apnoeic in the healthy adult). During apnoea g → 1 (alveolar gas equilibrates with the
+  // capillary blood), so the first breath after an apnoea shows the accumulated CO2 (Stage 3 M4), and the
+  // momentary va = 0 at the start of every externally driven breath no longer flips EtCO2 by 8 %.
+  if (ls.nGas > 0) {
+    const cA = (frcSide[0]! + frcSide[1]!) / 713;
+    const gk = qCo2 * CO2_SLOPE_BLOOD + (x.va * 1000) / 713;
+    const tau = (60 * cA) / Math.max(1, gk);
+    mix.g = gPrev + (mix.g - gPrev) * (1 - Math.exp(-dt / Math.max(0.5, tau)));
+  }
+  ls.co2 = mix;
+  ls.nGas++;
   stepO2Lung(ls.o2, {
     va: x.va, vent, perf: perfU, vdAlv, qLow, qShunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2, blocked, vo2: x.vo2,
     paco2: x.paco2, pA: ls.co2.pA, tempC: x.tempC, frcSide, bloodL: x.bloodL, dl: lp.side.map((s) => s.dl), coRatio: x.coRatio,

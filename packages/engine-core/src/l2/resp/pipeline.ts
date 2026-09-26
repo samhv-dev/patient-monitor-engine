@@ -17,14 +17,15 @@ import type { VentFrameExt } from '../../types-vent-link.ts'; // Stage V
 import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfile } from '../../types.ts';
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { applyPawCoupling, cardiacOutput } from '../gas/coupling.ts';
-import { createCo2State, etco2True, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts';
+import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
-import { o2Steady, solveShunt, stepO2, type O2Inputs, type O2State } from '../gas/o2.ts';
+import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
-import { blockedSides, capnoTerms, createLung, lungMechStep, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
+import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
+import { circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
 import type { LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
@@ -219,24 +220,38 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     tempNumStep(rs.num.temp, rs.temp.sites, rs.tempSite, 1);
   }
   const vco2 = rs.pat.vco2 * metabolic(rs, t);
+  // Stage 7b: the lung module's 10 Hz step (recruitment, HPV, perfusion, CO2 mix, O2 stores) before the CO2 store.
+  // Executor deviation (Task 14): it runs BEFORE the MANUAL etco2 calibration, so the calibration at t = 0 already
+  // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
+  const va0 = alveolarVentilation(d, t, deadSpace(rs));
+  const x = o2Inputs(rs, l1, t, va0);
+  const ga = rs.temp.anaesthesia === 'general';
+  rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
+  const side = circSideFlows(h);
+  lungGasStep(rs.lung, {
+    va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
+    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: 1, volatileMac: 0, sideFlow: side,
+    qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
+  }, GAS_DT_S);
+  writeCircPvr(h, rs.lung.perf.pvrMult);
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
   const etT = l1Target(l1, 'etco2', t);
   if (etT !== rs.seen.etco2) {
     rs.seen.etco2 = etT;
     const n = nominalRate(d, driverCtx(rs, l1, t));
     rs.co2.flow = lowFlowFactor(rs.coRatio); // calibrate against the settled low-flow factor
-    const pf = etT / Math.max(0.05, rs.co2.flow) + PA_ET_GRADIENT + extraGradient(rs);
+    const pf = (etT / Math.max(0.05, rs.co2.flow) + extraGradient(rs)) / Math.max(0.5, rs.lung.co2.g); // Stage 7b: the mixing point's gap
     if (n.rr > 0) {
       const base = deadSpace(rs) - rs.co2.vdExtraMl;
-      const need = n.vt - (vaForPaco2(vco2, pf) * 1000) / n.rr;
+      const need = n.vt - (vaForPaco2(vco2, pf) / Math.max(0.3, rs.lung.co2.e) * 1000) / n.rr; // Stage 7b: ÷ the lung's elimination efficiency
       rs.co2.vdExtraMl = Math.min(0.8 * n.vt, Math.max(-0.5 * rs.pat.deadSpaceMl, need - base));
     }
     rs.co2.pf = pf;
     rs.co2.ps = pf;
   }
   const va = alveolarVentilation(d, t, deadSpace(rs));
-  stepCo2(rs.co2, { vaLpm: va, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
-  rs.etco2 = etco2True(rs.co2, extraGradient(rs));
+  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
+  rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)
   const sh = l1Target(l1, 'shunt', t);
   if (sh !== rs.seen.shunt) {
@@ -250,8 +265,14 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.shunt = Math.max(0, solveShunt(x, spT / 100) - extraShunt(rs));
     const ss = o2Steady({ ...x, shunt: rs.shunt + extraShunt(rs) }, rs.shunt + extraShunt(rs));
     if (ss && (va > 0 || rs.gasK === 0)) Object.assign(rs.o2, ss);
+    if (ss && (va > 0 || rs.gasK === 0)) { rs.lung.o2.fa = [ss.fa, ss.fa]; rs.lung.o2.cv = ss.cv; } // Stage 7b: place both stores
   }
-  stepO2(rs.o2, o2Inputs(rs, l1, t, va), GAS_DT_S);
+  // Stage 7b: the O2 truth is the lung's two stores (stepped inside lungGasStep); rs.o2 mirrors it for Stage 3 readers
+  const lo = rs.lung.o2;
+  rs.o2.sa = lo.sa;
+  rs.o2.pao2 = lo.pao2;
+  rs.o2.cv = lo.cv;
+  rs.o2.fa = (lo.fa[0] as number) * 0.45 + (lo.fa[1] as number) * 0.55;
   const pinned = l1.pinned.includes('spo2');
   const sa = pinned ? spT / 100 : rs.o2.sa; // M5: an instructor pin on spo2 disables autoDesat
   const piM = piNumeric(h.num.pleth, t);
@@ -267,7 +288,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   c.spo2 = sa * 100;
   c.etco2 = rs.etco2;
   c.fio2 = currentFio2(rs, l1, t);
-  c.shunt = Math.min(0.9, rs.shunt + extraShunt(rs));
+  c.shunt = shuntFraction(rs.lung, Math.min(0.9, rs.shunt + extraShunt(rs))); // Stage 7b
   c.tempCore = rs.temp.tc;
   if (d.source === 'spontaneous' && d.airway !== 'apnoea') {
     delete c.rr; // the spontaneous driver breathes at the rr/vt targets

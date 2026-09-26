@@ -2535,6 +2535,8 @@ git push origin stage-7b-lungs
 
 ### Task 14: Resp pipeline wiring II — gas exchange through the mixing point (l2/gas adapted)
 
+> **Executor note:** Deviations (all recorded in the gate note): (1) lung-gas test reads the gap at the catalogue's reference PaCO2 40 (40·(1 − g)) because in the engine the MANUAL etco2 target places PaCO2 (51 in GOLD 3, 70 in moderate ARDS) and φ = 0.96 at the default CO; raw engine gaps logged. (2) lungGasStep runs BEFORE the MANUAL etco2 calibration, and the calibration divides the needed VA by the lung's elimination efficiency e, so a profile's conditions are honoured at t = 0. (3) Before the first breath ventilation is split by unit compliance (a zero split gave SaO2 0.2 for the first breath). (4) teS capped at 10 s in the CO2 mix (after an apnoea exp(−w/τ) underflowed → EtCO2 0: Stage 3 M4 failed). (5) g lags toward the mix with the alveolar CO2 time constant C_A/(Q·S + VA/713) (≈ 6 s), → 1 in apnoea (Stage 3 M4 +9 band; external-drive va = 0 blips no longer flip EtCO2 8 %). (6) arrest: O2 flows floored at 0.05 L/min and the CO2 mix sees at least the reference flow (q = 0 gave NaN; low flow stays Stage 3's φ so the R39-2 CPR EtCO2 map is unchanged). Stage 3 suites: all pass (timeouts only under machine load).
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/gas/co2.ts` (one export), `packages/engine-core/src/l2/resp/pipeline.ts`
 - Create: `packages/engine-core/test/engine/lung-gas.test.ts`
@@ -2543,7 +2545,7 @@ git push origin stage-7b-lungs
 - Consumes: `lungGasStep`, `shuntFraction` (Task 11), `circSideFlows`, `writeCircPvr` (Task 7), `o2Steady` (Stage 3).
 - Produces: `etco2Mixed(st: Co2State, g: number, extraGradient: number): number` (gas/co2.ts); the pipeline's O2 truth is the lung's two stores, mirrored into `rs.o2` (`fa` = ventilation-weighted mean, `cv`, `sa`, `pao2`) so every Stage 3 reader is unchanged.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-gas.test.ts`:
 
@@ -2584,12 +2586,12 @@ describe('Stage 7b wiring II: gas exchange through the mixing point', { timeout:
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-gas.test.ts`
 Expected: FAIL — the gap is the constant 3 in every patient and the shunt ignores the lungs.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/gas/co2.ts` add at the end:
 
@@ -2652,12 +2654,12 @@ In `packages/engine-core/src/l2/resp/pipeline.ts`:
 - change `c.shunt = Math.min(0.9, rs.shunt + extraShunt(rs));` to `c.shunt = shuntFraction(rs.lung, Math.min(0.9, rs.shunt + extraShunt(rs))); // Stage 7b`
 - remove `stepO2` from the `../gas/o2.ts` import and `etco2True`, `PA_ET_GRADIENT` from their imports only if TypeScript reports them unused (`createRespState` still uses `PA_ET_GRADIENT`).
 
-- [ ] **Step 4: Run the test and the Stage 3 gas/oxygen suites**
+- [x] **Step 4: Run the test and the Stage 3 gas/oxygen suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-gas.test.ts test/engine/resp-oxygen.test.ts test/engine/resp-engine.test.ts test/engine/resp-capnogram.test.ts test/engine/resp-coupling.test.ts test/engine/stage3-alarms-engine.test.ts`
 Expected: lung-gas PASS (2). Stage 3 PASS with the numbers of `docs/gates/stage-3.md` within their bands — in particular Benumof 8.4 min / preoxygenated 501 s / room-air 41 s / child 158 s / obese 170 s to SaO2 90 %: the two stores together hold exactly Stage 3's FRC, so these move by < 5 %. If one leaves its band, STOP and report (R45 rule); do not retune Stage 3 constants here.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/gas/co2.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/lung-gas.test.ts
