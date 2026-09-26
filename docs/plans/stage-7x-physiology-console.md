@@ -1976,7 +1976,7 @@ git push
   `tr[data-path=<path>]` with cells `.lbl .par .v .u .b .d .s canvas` and class `up|down|diff|''`, log
   `.pc-log li[data-kind=cmd|mark]` with class `ok|rej|pending`, newest first.
 
-- [ ] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/view.dom.test.ts`:
+- [x] **Step 1: Write the failing test** — `apps/demo/src/physiology-console/view.dom.test.ts`:
 
 ```ts
 // @vitest-environment happy-dom
@@ -2224,13 +2224,13 @@ describe('physiology console page', { timeout: 30_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/view.dom.test.ts`
 Expected: FAIL — `./view.ts` does not exist. (If instead the failure is "Cannot find package 'happy-dom'", STOP and
 report — Global Constraints.)
 
-- [ ] **Step 3: Implement** — `apps/demo/src/physiology-console/view.ts`:
+- [x] **Step 3: Implement** — `apps/demo/src/physiology-console/view.ts`:
 
 ```ts
 // Stage 7x: the console page controller — header (clock, speed, baseline, filters, export), the actions rail, the
@@ -2624,13 +2624,13 @@ export function mountConsole(root: HTMLElement, host: ConsoleHost, o: { autoBase
 }
 ```
 
-- [ ] **Step 4: Run it and see it pass**
+- [x] **Step 4: Run it and see it pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console/view.dom.test.ts`
 Expected: PASS, 10 tests (≈ 4–7 s locally; each engine test stays ≤ 60 sim-s, the describe allows 30 s per test for
 the 2-vCPU runner).
 
-- [ ] **Step 5: Typecheck and commit**
+- [x] **Step 5: Typecheck and commit**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck` — Expected: clean.
 
