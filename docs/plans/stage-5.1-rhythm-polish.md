@@ -2791,6 +2791,8 @@ git push
 
 ### Task 14: Ali's list — apply Ali's strip corrections
 
+- [x] *Executed 2026-09-26: Ali's list is empty — PR #3 has 0 comments and 0 reviews, and `research/00-orchestrator-rulings.md` has no Ali strip items after G5-obs. Gate note says "none received by 2026-09-26"; the executor's own strip observations for Ali are in the gate note.*
+
 **Clearly marked slot.** G5-obs asks Ali to page through the 85 Stage 5 strips on PR #3 and add to the polish list; his review is pending. Before starting this task, read the latest `research/00-orchestrator-rulings.md` (G5-obs and anything after it) and the PR #3 conversation (`gh pr view 3 --comments --repo samhv-dev/patient-monitor-engine`). If Ali's list is still empty, write "Ali's list: none received by <date>" in the gate note and skip to Task 15.
 
 Each item becomes one sub-task, TDD as above, in this template (copy it once per item):
