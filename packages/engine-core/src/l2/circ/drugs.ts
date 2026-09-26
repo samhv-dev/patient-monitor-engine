@@ -49,22 +49,11 @@ export interface Bolus {
   scale: number; // dose/refDose × tachyphylaxis
 }
 
-/**
- * Age sensitivity of propofol (tables §6.1: Schnider C50 for loss of consciousness 2.35 / 1.8 / 1.25 µg/mL at 25 / 50 /
- * 75 y): the same mg/kg reaches a larger effect in the elderly — × C50(40 y)/C50(age), clamped 0.7–2. The 7a stand-in for
- * the age covariates of the 7g PK models (tables §1.5 HTN/elderly "larger induction fall").
- */
-export function propofolAgeFactor(ageY: number): number {
-  const c50 = (a: number) => Math.max(0.6, 2.35 - 0.022 * (a - 25));
-  return Math.min(2, Math.max(0.7, c50(40) / c50(ageY)));
-}
-
-export function bolusScale(drug: DrugId, doseMg: number, weightKg: number, previous: readonly Bolus[], ageY = 40): number {
+export function bolusScale(drug: DrugId, doseMg: number, weightKg: number, previous: readonly Bolus[]): number {
   const row = DRUGS[drug];
   const dose = row.unit === 'mg/kg' ? doseMg / weightKg : doseMg;
   const n = previous.filter((b) => b.drug === drug).length;
-  const age = drug === 'propofol' ? propofolAgeFactor(ageY) : 1;
-  return Math.min(2, (dose / row.refDose) * age) * (row.tachyphylaxis ?? 1) ** n;
+  return Math.min(2, dose / row.refDose) * (row.tachyphylaxis ?? 1) ** n; // Stage 7g: age sensitivity lives in the Eleveld models (l2/pk)
 }
 
 function bateman(t: number, on: number, off: number): number {
