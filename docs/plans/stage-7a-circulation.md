@@ -282,7 +282,7 @@ git push origin stage-7a-circulation
 - Consumes: `pepS(hr)`, `lvetS(hr)` from `src/l2/hemo/params.ts` (Stage 2).
 - Produces: every constant in `params.ts` (names used verbatim by Tasks 3–24); `doubleHill(u)`, `DH_PEAK`, `activationPeriodS(hr)`, `interface Activation { t0; T; amp }`, `activationAt(list, t)`, `pruneActivations(list, t)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/activation.test.ts`:
 
@@ -313,12 +313,12 @@ describe('double-Hill activation (Stergiopulos 1996)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/activation.test.ts`
 Expected: FAIL — cannot resolve `src/l2/circ/activation.ts`.
 
-- [ ] **Step 3: Write the constants and the activation**
+- [x] **Step 3: Write the constants and the activation**
 
 `packages/engine-core/src/l2/circ/params.ts`:
 
@@ -492,12 +492,12 @@ export function pruneActivations(list: Activation[], t: number): Activation[] {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/activation.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/params.ts packages/engine-core/src/l2/circ/activation.ts packages/engine-core/test/l2/circ/activation.test.ts
