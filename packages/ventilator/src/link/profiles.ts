@@ -42,7 +42,7 @@ const PATIENTS: Record<string, PatientProfile> = {
 };
 const shock = (sbp: number, dbp: number, cvp: number, hr: number): StandIn[] =>
   ([['sbp', sbp], ['dbp', dbp], ['cvp', cvp], ['hr', hr]] as const).map(([variable, value]) => ({ variable, value, rampS: 20 }));
-/** Stage 7a/7g stand-ins [ENG]: the haemodynamic picture each condition produces, set as MANUAL targets. */
+/** INTERIM (R41; deleted when Stage 7a's right heart consumes pvrMultiplier): Stage 7a/7g stand-ins [ENG] — the haemodynamic picture each condition produces, set as MANUAL targets. */
 export const STAND_INS: Record<string, StandIn[]> = {
   'pe-massive': shock(70, 45, 15, 120), // RV failure → low CO; EtCO2 falls through Stage 3's low-flow factor
   'pneumothorax-tension': shock(65, 40, 18, 125), // obstructive shock

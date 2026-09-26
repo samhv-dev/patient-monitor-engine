@@ -1,4 +1,4 @@
-// Interim PEEP-recruitment → shunt model for the link demo [ENG]. Stage 3's gas exchange takes shunt as an
+// INTERIM (R41; deleted when Stage 7b emits shunt): PEEP-recruitment → shunt model for the link demo [ENG]. Stage 3's gas exchange takes shunt as an
 // input; PEEP recruitment is Stage 7b's lung module (R31). Until it lands, the link owns this small model and
 // sends `setTarget shunt`: the recruited fraction follows a logistic curve of total PEEP (set + intrinsic),
 // reached with a first-order lag — slow to recruit, faster to derecruit (research 03 §8.7 direction; the time
