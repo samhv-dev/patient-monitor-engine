@@ -4480,7 +4480,7 @@ git push origin stage-v-ventilator-link
 
 **Interfaces:** consumes `window.__link.DEMOS` / `simT` (Task 18), `LUNG_PATHOLOGIES` and `REF_SETTINGS` (Task 9).
 
-- [ ] **Step 1: Write the screenshot script**
+- [x] **Step 1: Write the screenshot script**
 
 **Create `apps/demo/scripts/vent-shots.mjs`:**
 
@@ -4529,7 +4529,7 @@ await browser.close();
 await vite.close();
 ```
 
-- [ ] **Step 2: Take the screenshots and check their size**
+- [x] **Step 2: Take the screenshots and check their size**
 
 ```bash
 node apps/demo/scripts/vent-shots.mjs      # ≈ 8 min at ×4
@@ -4539,7 +4539,7 @@ find docs/gates/stage-V -name '*.jpg' -size +60k   # must print nothing
 
 Expected: `hamilton`, `combined`, `demo-copd`, `demo-ards`, `demo-hf` (the three R27 demonstrations), `demo-ph`, `demo-tension`, `demo-pe`, `demo-fibrosis` (R36); prototype sizes 48–60 KB. Open each (`Read` the JPEG): the ventilator's knobs show the step's settings (e.g. COPD: Rate 20, "Intrinsic PEEP" banner), the monitor's ABP/CVP tiles show the consequence (COPD ≈ 94/63 (75), CVP 9).
 
-- [ ] **Step 3: Generate §4b**
+- [x] **Step 3: Generate §4b**
 
 **Create `packages/ventilator/scripts/catalogue-md.ts`:**
 
@@ -4574,7 +4574,7 @@ printf '\n' >> docs/physiology/stage-7-parameter-tables.md && cat /tmp/pme-4b.md
 
 (If `stage-7-parameter-tables.md` already has a `## §4b` heading on your base — another stage added one — put this section under a heading `## §4b-V Lung pathology catalogue (Stage V)` instead and say so in the gate note.)
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add apps/demo/scripts/vent-shots.mjs packages/ventilator/scripts/catalogue-md.ts docs/gates/stage-V docs/physiology/stage-7-parameter-tables.md
