@@ -54,3 +54,11 @@ export function etco2True(st: Co2State, extraGradient: number): number {
 export function vaForPaco2(vco2: number, paco2: number): number {
   return (K_CO2 * vco2) / Math.max(1, paco2);
 }
+
+/**
+ * Stage 7b: end-tidal PCO2 from the lung module's mixing point — g = EtCO2/PaCO2 of the unit mix (healthy 0.925 →
+ * PaCO2 − 3 at 40, tables §4.4), the bronchospasm term and the low-flow factor φ as etco2True.
+ */
+export function etco2Mixed(st: Co2State, g: number, extraGradient: number): number {
+  return Math.max(0, (st.pf * g - extraGradient) * st.flow);
+}
