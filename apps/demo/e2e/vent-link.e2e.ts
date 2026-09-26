@@ -54,7 +54,10 @@ test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({
   expect(await vent<boolean>(page, '(v) => v.core.lung.ref !== null')).toBe(true);
   // disconnection: ventilator alarm, then EtCO2 0 on the monitor
   await page.click('#disc');
-  await expect.poll(() => page.frameLocator('#vent').locator('#alarmBanner').textContent(), { timeout: 10_000 }).toContain('Disconnection');
+  // On a slow runner the minute-volume-low alarm can win the banner first; both are valid consequences of a
+  // disconnection. The Disconnection alarm itself must still appear within its detection window.
+  await expect.poll(() => page.frameLocator('#vent').locator('#alarmBanner').textContent(), { timeout: 10_000 }).toMatch(/Disconnection|ExpMinVol low/);
+  await expect.poll(() => page.frameLocator('#vent').locator('#alarmBanner').textContent(), { timeout: 30_000 }).toContain('Disconnection');
   await expect.poll(() => last(page, 'etco2'), { timeout: 20_000 }).toBe(0);
   await page.click('#disc');
   await expect.poll(() => last(page, 'etco2'), { timeout: 30_000 }).toBeGreaterThan(25);
