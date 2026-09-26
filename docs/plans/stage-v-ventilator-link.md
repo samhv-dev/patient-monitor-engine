@@ -4216,7 +4216,7 @@ git push origin stage-v-ventilator-link
 
 Layout: the ventilator in an `<iframe>` (`vent-hamilton.html?link=<session>&profile=<id>` — the same path a separate window uses) on the left, the monitor (ECG II, ABP, CVP, pleth, CO2 lanes) on the right; a pathology picker grouped by catalogue group (tooltip lists what does not act yet); speed ×1/×4/×10; the ten demonstration buttons (each loads its profile and start settings, then applies its step after `settleS` sim seconds, engine stand-ins included); a Disconnect/Reconnect button; a status line with SpO2, EtCO2, ABP, CVP, HR.
 
-- [ ] **Step 1: Write the failing e2e test**
+- [x] **Step 1: Write the failing e2e test**
 
 Append to `apps/demo/e2e/vent-link.e2e.ts`:
 
@@ -4251,12 +4251,12 @@ test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/vent-link.e2e.ts -g "two-way"`
 Expected: FAIL — 404 on `/vent-link.html`.
 
-- [ ] **Step 3: Implement the page**
+- [x] **Step 3: Implement the page**
 
 **Create `apps/demo/vent-link.html`:**
 
@@ -4457,12 +4457,12 @@ In `apps/demo/index.html`, after the `stage6b-acls.html` list item add:
       <li><a href="./vent-link.html">Stage V: ventilator ↔ monitor link</a> · <a href="./vent-hamilton.html">ventilator alone</a></li>
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck && npx -y pnpm@9.15.9 --filter @pme/demo build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/vent-link.e2e.ts`
 Expected: typecheck clean; build lists `dist/vent-link.html` and `dist/vent-hamilton.html`; **2 passed (≈ 1.1 min)**. Measured in the prototype on the page: ×1 and ×4 hold exactly with the ventilator 30 ms ahead of the engine; at ×10 the headless worker runs ×4 and the ventilator stays ≤ 1.5 s ahead (MAX_AHEAD_TICKS) — record what your machine does in the gate note.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo

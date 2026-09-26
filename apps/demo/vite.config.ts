@@ -18,6 +18,7 @@ export default defineConfig({
         'stage4b-device': page('stage4b-device'), // Stage 4b
         'stage6b-acls': page('stage6b-acls'),
         'vent-hamilton': page('vent-hamilton'), // Stage V
+        'vent-link': page('vent-link'), // Stage V
       },
     },
   },

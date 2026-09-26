@@ -41,3 +41,32 @@ test('vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEE
   expect(await page.evaluate(() => (window as Any).__vent.vs.cfg.peep)).toBe(7);
   expect(errs).toEqual([]);
 });
+
+test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({ page }) => {
+  test.setTimeout(180_000);
+  const errs = errorsOf(page);
+  await page.setViewportSize({ width: 1400, height: 820 });
+  await page.goto(`${base}/vent-link.html`);
+  await page.selectOption('#speed', '4');
+  // vent → engine: the monitor counts the ventilator's 14/min
+  await expect.poll(() => last(page, 'awrr'), { timeout: 30_000 }).toBe(14);
+  // engine → vent: lungState arrived
+  expect(await vent<boolean>(page, '(v) => v.core.lung.ref !== null')).toBe(true);
+  // disconnection: ventilator alarm, then EtCO2 0 on the monitor
+  await page.click('#disc');
+  await expect.poll(() => page.frameLocator('#vent').locator('#alarmBanner').textContent(), { timeout: 10_000 }).toContain('Disconnection');
+  await expect.poll(() => last(page, 'etco2'), { timeout: 20_000 }).toBe(0);
+  await page.click('#disc');
+  await expect.poll(() => last(page, 'etco2'), { timeout: 30_000 }).toBeGreaterThan(25);
+  // COPD: RR 10 → 20 at 90 s sim; MAP falls
+  await page.click('button[data-demo="copd"]');
+  await page.selectOption('#speed', '4');
+  await page.waitForFunction(() => (window as Any).__link.simT >= 85, null, { timeout: 60_000 });
+  const before = (await last(page, 'abpMean')) as number;
+  await page.waitForFunction(() => (window as Any).__link.simT >= 200, null, { timeout: 90_000 });
+  const after = (await last(page, 'abpMean')) as number;
+  expect(await vent<number>(page, '(v) => v.vs.cfg.rate')).toBe(20);
+  expect(await vent<number>(page, '(v) => v.vs.p.measured.autoPEEP')).toBeGreaterThan(6);
+  expect(before - after).toBeGreaterThan(10);
+  expect(errs).toEqual([]);
+});
