@@ -515,7 +515,7 @@ git push origin stage-7a-circulation
 - Consumes: `REGURG_K`, `REGURG_EPS`, `GORLIN_AV`, `AVA_REF` (Task 2).
 - Produces: `interface Valve { r; k; eroa }`, `stenosisK(area, gorlinK, refArea)`, `valveFlow(v, dp)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/valves.test.ts`:
 
@@ -551,12 +551,12 @@ describe('valves', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/valves.test.ts`
 Expected: FAIL — cannot resolve `valves.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/valves.ts`:
 
@@ -590,12 +590,12 @@ export function valveFlow(v: Valve, dp: number): number {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/valves.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/valves.ts packages/engine-core/test/l2/circ/valves.test.ts
