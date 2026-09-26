@@ -4402,7 +4402,7 @@ git push
 
 Measured while planning: `--suites gates,regression,determinism --quick` finishes in 11 s with 12 green rows and writes all three files. Budget for the full run on this Mac: morphology ≈ 9 s per window × 70–90 windows (≈ 12–15 min), sanity ≈ 4 min, gates 40 s, determinism 21 s, oracle ≈ 10 min with Pulse — ≈ 30 min; CI's 2 vCPUs ≈ 2×.
 
-- [ ] **Step 1: Write `packages/validation/src/cli/validate.ts`**
+- [x] **Step 1: Write `packages/validation/src/cli/validate.ts`**
 
 ```ts
 // `pnpm validate` (root) → docs/validation/report.md, report.json, calibration-queue.md. Entry-only module.
@@ -4536,13 +4536,13 @@ log(`report: ${join(outDir, 'report.md')} — ${calibrationQueue(report).length}
 process.exit(fail.length ? 1 : 0);
 ```
 
-- [ ] **Step 2: Add the root script. In `package.json` (root), in `"scripts"`, after `"test:e2e": "playwright test",` add:**
+- [x] **Step 2: Add the root script. In `package.json` (root), in `"scripts"`, after `"test:e2e": "playwright test",` add:**
 
 ```json
     "validate": "pnpm --filter @pme/validation validate",
 ```
 
-- [ ] **Step 3: Write `docs/validation/README.md`** (the four-backtick fence is only the plan's wrapper)
+- [x] **Step 3: Write `docs/validation/README.md`** (the four-backtick fence is only the plan's wrapper)
 
 ````markdown
 # Validation (Stage 8a)
@@ -4592,7 +4592,7 @@ N-080…N-084 and the report's dataset table.
 - Performance: `validation-perf.html` and the soak (`playwright.validation.config.ts`); iPad numbers are manual.
 ````
 
-- [ ] **Step 4: Typecheck and a quick run. Expected: typecheck clean; the run prints one line per document and `report: …/report.md — 0 queued, 0 gating`, exit 0**
+- [x] **Step 4: Typecheck and a quick run. Expected: typecheck clean; the run prints one line per document and `report: …/report.md — 0 queued, 0 gating`, exit 0**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation typecheck
@@ -4600,7 +4600,7 @@ npx -y pnpm@9.15.9 validate --suites gates,regression,determinism --quick --out 
 head -20 /tmp/pme-8a-val/report.md
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/validation/src/cli/validate.ts docs/validation/README.md package.json

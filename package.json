@@ -12,6 +12,7 @@
     "build": "pnpm -r build",
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
     "test:e2e": "playwright test",
+    "validate": "pnpm --filter @pme/validation validate",
     "relay": "pme-relay"
   },
   "devDependencies": {
