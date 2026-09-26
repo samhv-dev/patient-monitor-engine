@@ -2178,7 +2178,7 @@ an effect "X at the reference dose" is written `emax: 2·X, ec50: 1` (a Hill of 
 rows the concentration is the agent's own brain MAC fraction and effects are `linear` per MAC (tables §6.3). For
 `perKg … rateEq` rows EC50s are in µg/kg/min (decision 4). Every row: `ir: '?'` (Q for Ali), `src`, `tag`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/library.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/library.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2207,9 +2207,9 @@ describe('drug library', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`**
 
 ```ts
 // Drug library I (Stage 7g Task 12): hypnotics, opioids, benzodiazepines, α2 agonist, volatiles. DATA only.
@@ -2353,7 +2353,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
 ];
 ```
 
-- [ ] **Step 4: Create `packages/engine-core/src/l2/pk/data/drugs.ts`** (Tasks 13–14 add two imports and two spreads)
+- [x] **Step 4: Create `packages/engine-core/src/l2/pk/data/drugs.ts`** (Tasks 13–14 add two imports and two spreads)
 
 ```ts
 // THE drug library (Stage 7g): every v1 drug as data. Rows live in three files by family; this is the index.
@@ -2367,7 +2367,7 @@ export const DRUG_IDS: readonly string[] = ALL.map((r) => r.id);
 export const drugRow = (id: string): DrugRow | undefined => DRUGS[id];
 ```
 
-- [ ] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): drug library I — hypnotics, opioids, benzodiazepines, α2, volatiles (data, sourced)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): drug library I — hypnotics, opioids, benzodiazepines, α2, volatiles (data, sourced)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 13: Drug library II — NMB and reversal, anticholinergics, vasoactives, β-blockers, antiarrhythmics (DATA)
 
