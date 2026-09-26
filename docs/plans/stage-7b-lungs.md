@@ -3309,6 +3309,8 @@ git push origin stage-7b-lungs
 
 ### Task 21: Acceptance — Pulse ventilator validation targets (healthy / ARDS / COPD ±10 %)
 
+> **Executor note:** 4 pass; values logged (healthy C 54.8/R 9.9; ARDS C 39.8/34.7, R 11.9; COPD GOLD 1 Rin 13.0 Rex 19.5 C 57.4; GOLD 3 Rin 25.0 Rex 38.8 C 67.9; ARDS shunt 0.291/0.371; PEEP 5→15 PaO2 82→97, shunt 0.291→0.247). Only change: console.log lines for the gate note.
+
 **Files:**
 - Create: `packages/engine-core/test/l2/lung/pulse-targets.test.ts`
 
@@ -3316,7 +3318,7 @@ git push origin stage-7b-lungs
 - Consumes: Tasks 5, 11, 12.
 - Produces: the N-P03 checks where the catalogue agrees with Pulse. Excluded, with reasons for the gate note: ARDS severe C 33 (catalogue Q73 adopts 30), ARDS mild shunt 0.2 (model 0.25: the healthy 0.02 base + induction atelectasis add to the condition's 0.25 non-aeration), COPD severe Rinsp 34/Rexp 51 (GOLD 4 ratio 1.7, decision 4), every VD/VT (Stage 3's anatomic + apparatus dead space alone gives 0.42 at 7 mL/kg: Pulse's healthy 0.2–0.4 has no apparatus), P/F ranges (FiO2-dependent; asserted as the Karbing trend instead).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/l2/lung/pulse-targets.test.ts`:
 
@@ -3381,12 +3383,12 @@ describe('Pulse ventilator reference values (N-P03) within ±10 %', { timeout: 3
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/pulse-targets.test.ts`
 Expected: PASS (4). Prototype: healthy C 54.8 / R 9.9; ARDS C 39.7 / 34.6, R 11.9; COPD GOLD 1 Rin 13.0, Rex 19.5, C 57.4; GOLD 3 Rin 25.0, Rex 38.8, C 67.9; ARDS shunt 0.29 / 0.40.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/lung/pulse-targets.test.ts
