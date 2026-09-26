@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 00:05 (7a merged; 7g executing; 7b/8a executing; 7x console plan being written; 7c/7d/7e plans await R50 review).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-26 22:25 (7a merged; 7g executing; 7b/8a executing; 7x console plan being written; 7c/7d/7e plans await R50 review).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -18,7 +18,7 @@
 | 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review pending) | needs 7a ext.rSysF/hrF; brief must add 7c requests (urine output replaces fixed fluid elimination, renal K/Na/Cl/gluconate, liver factor for lactate/citrate) | execute after 7a (ideally 7c) merges |
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
-| 7g drug PK/PD | `stage-7g-pkpd` (plan: `docs/plans/stage-7g-pkpd.md`, 26 tasks, fixed to R51; worktree `../scratch/wt-stage-7g`) | executing (started 2026-09-27 00:05) | resume from first unticked task |
+| 7g drug PK/PD | `stage-7g-pkpd` (plan: `docs/plans/stage-7g-pkpd.md`, 26 tasks, fixed to R51; worktree `../scratch/wt-stage-7g`) | executing (started 2026-09-26 22:25) | resume from first unticked task |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | 7x physiology console | not started (R52; plan to be written) | new files only; generic truth-tree browser + monitor + actions rail | write plan after a slot frees; execute after 7a merges |
 | 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
