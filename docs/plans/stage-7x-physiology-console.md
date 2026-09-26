@@ -2656,7 +2656,7 @@ git push
   `window.__pmeConsole = { ui: ConsoleHandle, host: ConsoleHost, renderPath(): Promise<RenderPath> | undefined,
   ready: true }`.
 
-- [ ] **Step 1: Write the failing e2e** — `apps/demo/e2e/physiology-console.e2e.ts`:
+- [x] **Step 1: Write the failing e2e** — `apps/demo/e2e/physiology-console.e2e.ts`:
 
 ```ts
 // Gate 7x evidence on the live page: the console loads with the real monitor, the organ sections fill from the
@@ -2734,12 +2734,12 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/physiology-console.e2e.ts`
 Expected: FAIL — the page 404s, `__pmeConsole` never becomes ready (timeout).
 
-- [ ] **Step 3: Create the page entry** — `apps/demo/src/physiology-console/main.ts`:
+- [x] **Step 3: Create the page entry** — `apps/demo/src/physiology-console/main.ts`:
 
 ```ts
 // Stage 7x page entry: the real monitor (mountMonitor, any skin via ?skin=, worker when available) with the engine's
@@ -2798,7 +2798,7 @@ start(params.get('preset') ?? 'adult', params.get('mode') === 'manual' ? 'manual
 Object.assign(window, { __pmeConsole: { ui, host, renderPath: () => pm?.renderPath, ready: true } });
 ```
 
-- [ ] **Step 4: Create the page** — `apps/demo/physiology-console.html`:
+- [x] **Step 4: Create the page** — `apps/demo/physiology-console.html`:
 
 ```html
 <!doctype html>
@@ -2854,7 +2854,7 @@ Object.assign(window, { __pmeConsole: { ui, host, renderPath: () => pm?.renderPa
 </html>
 ```
 
-- [ ] **Step 5: Merge main, then add the build entry and the index link (one line each)**
+- [x] **Step 5: Merge main, then add the build entry and the index link (one line each)**
 
 7b and 7g insert their own page lines right beside 7a's (`stage7b: page('stage7b')`, `stage7g: page('stage7g')`, and
 their `index.html` list items), so merge first (R51 §7) and edit the merged files:
@@ -2878,7 +2878,7 @@ git fetch origin && git merge origin/main
 
 Keep every sibling line (additive merge, R51 §6); never re-type a line you are not adding.
 
-- [ ] **Step 6: Run the e2e and see it pass**
+- [x] **Step 6: Run the e2e and see it pass**
 
 Run: `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/physiology-console.e2e.ts`
 Expected: PASS in ≈ 27 s (the auto-baseline waits for sim 60 s); the log line `render path worker-raf; truth ~700
@@ -2888,13 +2888,13 @@ Open `rest-left.jpg` and `phenylephrine-40s-organs-top.jpg`: the monitor shows A
 ≈ 1 750 against a baseline ≈ 1 220 with an amber `+5xx` and a rising sparkline; the log shows one green line
 `1:0x phenylephrine 100 mcg iv`.
 
-- [ ] **Step 7: Build and typecheck**
+- [x] **Step 7: Build and typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo build` — Expected: `dist/physiology-console.html` and
 `dist/assets/physiology-console-*.js` (≈ 29 KB, 11 KB gzip) in the output.
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck` — Expected: clean.
 
-- [ ] **Step 8: Commit and push**
+- [x] **Step 8: Commit and push**
 
 ```bash
 git add apps/demo/physiology-console.html apps/demo/src/physiology-console/main.ts apps/demo/e2e/physiology-console.e2e.ts apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-7x
