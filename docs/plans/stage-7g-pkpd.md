@@ -2612,7 +2612,7 @@ tEnd)` (moves the doses accepted since the last call into `bus.doses`, then step
 
 Not prototyped as a whole (its parts are). The unit test drives it WITHOUT the engine so failures localise.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/pipeline.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/pipeline.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2721,9 +2721,9 @@ describe('PK pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/pipeline.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/pipeline.ts`**
 
 ```ts
 // Stage 7g pipeline: plain-data drug state stepped at 10 Hz on the absolute grid, commands, clearance factors and
@@ -3140,12 +3140,12 @@ export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
 }
 ```
 
-- [ ] **Step 4: Run the test and typecheck.** Fix only what the test shows; the likely edges: the NE steady-state
+- [x] **Step 4: Run the test and typecheck.** Fix only what the test shows; the likely edges: the NE steady-state
   assertion needs 15 min at k10 0.3/min + ke0 1.0 (τ ≈ 3.3 min → 99 % at 15 min); the sugammadex bound is the fixer
   prototype's 0.27× (band < 0.4×; plasma-only binding gives 0.62× — a failure there means the site binding is not
   running). If the remifentanil `vent > 1.2 × brain` check fails at 30 s, print both values and stop (the ke0s are
   sourced: 0.92 vs 0.595).
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): the PK/PD pipeline — every drug event consumed, dose log, per-agent bus (vent/NMB sites), 10 Hz exact steps, TCI, sugammadex plasma+site binding, volatiles, LAST" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): the PK/PD pipeline — every drug event consumed, dose log, per-agent bus (vent/NMB sites), 10 Hz exact steps, TCI, sugammadex plasma+site binding, volatiles, LAST" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 16: Rhythm hooks — adenosine, LAST, magnesium on torsades (decisions 11–12)
 
