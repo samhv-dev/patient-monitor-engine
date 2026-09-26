@@ -772,7 +772,7 @@ git push origin stage-7b-lungs
 - Consumes: `HEALTHY`, `LUNG_CONDITIONS`, `Effect`, `EffectKey`, `Knots`, `LungConditionData` (Task 4); `LungConditionSpec`, `LungSide` (Task 1); `R_TUBE`, `SIDE_SHARE` (Task 2); `healthyParams`, `LungParams` (Task 3).
 - Produces: `conditionData(id)`, `effectValue(e, s)`, `interp(knots, s)`, `interface Resolved { lp: LungParams; blocked: LungSide[] }`, `resolveLung(specs, ibwKg, rawEvent = 1): Resolved`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/conditions.test.ts`:
 
@@ -830,12 +830,12 @@ describe('conditions → per-lung parameters (catalogue §33, Q93)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/conditions.test.ts`
 Expected: FAIL — cannot resolve `conditions.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/conditions.ts`:
 
@@ -988,12 +988,12 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/conditions.test.ts`
 Expected: PASS (7).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/conditions.ts packages/engine-core/test/l2/lung/conditions.test.ts
