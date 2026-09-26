@@ -3952,6 +3952,8 @@ git push origin stage-7b-lungs
 
 ### Task 28: Demo `apps/demo/stage7b.html`
 
+> **Executor note:** Built and loaded in headless Chrome (vite preview on :5216): 32 conditions in the picker, monitor running (t 23 s, SpO2 96, EtCO2 37), no page errors. Deviations: speed choices 1/2/4 (the engine's timeScale is 0.25–4 and throws outside it; GV-obs removed ×10), and `'t' in e` guard for the event clock (strict TS). The Task 27 commit message's 'lungState read as absolute' is wrong — lung-input stayed relative (see Task 27 note).
+
 **Files:**
 - Create: `apps/demo/stage7b.html`, `apps/demo/src/stage7b.ts`
 - Modify: `apps/demo/vite.config.ts` (one input), `apps/demo/index.html` (one list item)
@@ -3960,7 +3962,7 @@ git push origin stage-7b-lungs
 - Consumes: `mountMonitor` (`@pme/renderer`: `dispatch`, `on`, `setTimeScale`), `LUNG_CONDITIONS` (export it from `@pme/engine-core` as in Task 27 Step 4's first bullet if not yet done), the `lungState` event.
 - Produces: a page with the monitor (ECG II, ABP, pleth, CO2 lanes; SpO2/EtCO2 tiles), two lung icons drawn on a canvas (size ∝ aerated fraction; colour by shunt; C, R, τ, shunt, flow % printed under each), a condition picker (all 32 ids, severity slider 0–1, side L/R, "add"/"clear"), a built-in ventilator panel (RR, VT, PEEP, FiO2, I:E, recruit 40 cmH2O × 30 s), a mainstem selector, and five scripted R27/R36 demonstrations: COPD auto-PEEP vs RR, ARDS PEEP recruitment (high vs low recruiter), OLV desaturation with HPV recovery, endobronchial intubation and its fix, absorption atelectasis at FiO2 1.0.
 
-- [ ] **Step 1: Create the page**
+- [x] **Step 1: Create the page**
 
 `apps/demo/stage7b.html`:
 
@@ -4115,11 +4117,11 @@ for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-demo]'
 
 In `apps/demo/vite.config.ts` add after the `stage3` input line: `        stage7b: page('stage7b'), // Stage 7b`. In `apps/demo/index.html` add after the Stage 3 item: `      <li><a href="./stage7b.html">Stage 7b: the lungs (two lungs, mixing point, 32-condition catalogue)</a></li>`.
 
-- [ ] **Step 2: Build and look**
+- [x] **Step 2: Build and look**
 
 Run: `npx -y pnpm@9.15.9 build` then serve (`cd apps/demo && npx vite preview --port 4819 --strictPort &`) and open `http://localhost:4819/stage7b.html` in headless Chrome via Task 29's script (not the desktop pane). Expected: two lung icons, the condition list with 32 entries, no page errors.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add apps/demo/stage7b.html apps/demo/src/stage7b.ts apps/demo/vite.config.ts apps/demo/index.html packages/engine-core/src/index.ts
