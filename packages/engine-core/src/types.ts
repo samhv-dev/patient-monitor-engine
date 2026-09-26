@@ -5,6 +5,7 @@ import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './t
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
+import type { TruthEvent } from './types-truth.ts'; // Stage 7x
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -50,6 +51,8 @@ export interface EngineOptions {
   patient?: PatientProfile;
   device?: { skin?: string; ageBand?: 'adult' | 'paediatric' | 'neonatal'; mainsHz?: 50 | 60 };
   lookaheadS?: number; // default 0.100; must be a whole number of 20 ms ticks
+  /** Stage 7x (R52): emit the read-only `truth` event this often (0 = never, the default; at most 2 Hz). */
+  truthHz?: number;
 }
 
 type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string };
@@ -124,6 +127,7 @@ export type EngineEvent =
   /** Revoke tones: those listed in `ids` when present (the engine's normal case), else every tone with t > after. */
   | { type: 'toneCancel'; after: SimSeconds; ids?: string[] }
   | HemoEvent // Stage 2 (types-hemo.ts)
+  | TruthEvent // Stage 7x (types-truth.ts)
   | DeviceEvent // Stage 4b (types-device.ts)
   | RespEvent // Stage 3 (types-resp.ts)
   | CircEvent; // Stage 7a (types-circ.ts)
