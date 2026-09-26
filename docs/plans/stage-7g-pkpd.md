@@ -3731,7 +3731,7 @@ describe('drugs panel event', () => {
 
 **Files:** Create `packages/engine-core/test/engine/pk-acceptance-pk.test.ts`
 
-- [ ] **Step 1: Write the test** (it must pass on first run if Tasks 1–20 are right; a failure is a wiring bug):
+- [x] **Step 1: Write the test** (it must pass on first run if Tasks 1–20 are right; a failure is a wiring bug):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3777,7 +3777,7 @@ describe('7g acceptance — PK through the engine', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → PASS. Commit and push — `git add -A && git commit -m "test(pk): acceptance — engine PK equals the models; TCI induction; panel decrement times" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 2: Run it** → PASS. Commit and push — `git add -A && git commit -m "test(pk): acceptance — engine PK equals the models; TCI induction; panel decrement times" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 22: Acceptance — PD: vasopressor dose–response, β/acidosis context, MAC age, reversal, combinations
 

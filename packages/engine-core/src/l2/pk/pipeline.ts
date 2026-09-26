@@ -4,6 +4,7 @@
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
+import { STATE_SCHEMA } from '../../l1/state.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
 import { cp, pkStep, pkSystem, zeroState, type PkParams } from './compartment.ts';
 import { decrementFromNowMin } from './csht.ts';
@@ -24,6 +25,9 @@ const TACHY_WINDOW_S = 3600;
 const DECREMENT_EVERY_S = 10;
 /** "Never" / "long ago" as finite numbers: snapshots travel as JSON, which turns ±Infinity into null. */
 export const NEVER = 1e12;
+/** Normothermia = the engine's own resting core (L1 tempCore default 36.8 °C): hypothermia is measured from it, so a
+ * normothermic patient keeps its published clearance (Task 21: engine PK = standalone model). */
+const NORMOTHERMIA_C = STATE_SCHEMA.tempCore.def;
 
 export interface DrugInst {
   id: string;
@@ -50,6 +54,7 @@ export interface PkState {
   betaBlockAdd: number;
   bus: DrugBus;
   pending: DoseLogEntry[]; // boluses accepted since the last advancePk call (→ bus.doses, decision 10)
+  due: { id: string; amt: number; t: number }[]; // compartment boluses waiting for their own 0.1 s grid instant (Task 21)
   lastC: Record<string, number>; // last PD concentration per drug (panel, tests, hooks)
   desSurgeT: number; // desflurane sympathetic surge start (−NEVER: none)
   macPrev: number[]; // desflurane MAC over the last 60 s at 1 Hz
@@ -77,7 +82,7 @@ export function pkPatientOf(p: PatientProfile | undefined): PkPatient {
 export function createPkState(patient: PkPatient = DEFAULT_PK_PATIENT): PkState {
   return {
     t: 0, patient, drugs: {}, vap: null, fx: { ...NEUTRAL_FX }, betaBlockAdd: 0, bus: structuredClone(DRUG_BUS_NEUTRAL),
-    pending: [], lastC: {}, desSurgeT: -NEVER, macPrev: [], panelNext: 1, dec: {}, out: [],
+    pending: [], due: [], lastC: {}, desSurgeT: -NEVER, macPrev: [], panelNext: 1, dec: {}, out: [],
   };
 }
 
@@ -136,7 +141,7 @@ function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
   const r = row.elim?.renal ?? 0;
   const organ = h * (row.elim?.highExtraction ? ctx.hepFlow : ctx.hepFn) + r * ctx.renal + Math.max(0, 1 - h - r);
-  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, 37 - ctx.tempC)); // [ENG] ≈ −5 %/°C (M10 ch. 24 p. 698 direction)
+  const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [ENG] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
   return Math.round(organ * temp * 100) / 100;
 }
 
@@ -261,7 +266,9 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
         d.bolusTimes.push(t);
       } else {
         d.total += amt;
-        d.x[0] = (d.x[0] as number) + amt;
+        // the engine's committed pk state can trail the command time by < 1 step: the bolus lands on its own grid instant
+        if (t > pk.t + 1e-9) pk.due.push({ id: row.id, amt, t });
+        else d.x[0] = (d.x[0] as number) + amt;
       }
     }
   }
@@ -435,6 +442,10 @@ export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
   pk.bus.doses = pk.pending;
   pk.pending = [];
   while (pk.t + PK_DT_S <= tEnd + 1e-9) {
+    if (pk.due.length) {
+      for (const q of pk.due) if (q.t <= pk.t + 1e-9) (pk.drugs[q.id] as DrugInst).x[0] = ((pk.drugs[q.id] as DrugInst).x[0] as number) + q.amt;
+      pk.due = pk.due.filter((q) => q.t > pk.t + 1e-9);
+    }
     const t = Math.round((pk.t + PK_DT_S) * 10) / 10;
     stepOnce(pk, ctx, t);
     pk.t = t;
