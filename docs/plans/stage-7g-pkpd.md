@@ -1991,7 +1991,7 @@ catecholamine effects × `acidosisFactor(pH)` × `vasoResp`; occupancy targets (
 NMB EC50 multiplier); the class antagonists' EC50 multipliers go on `bus.antagonist` for 7f. The propofol hypnotic C50 carries
 the Eleveld age term (R51 addendum 11).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/combine.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/combine.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2054,9 +2054,9 @@ describe('combination rules', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL.
+- [x] **Step 2: Run it** → FAIL.
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/combine.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/combine.ts`**
 
 ```ts
 // Combination of every active drug's concentration into the engine inputs (Stage 7g decisions 6–7). R51 §2: the
@@ -2162,8 +2162,8 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
 }
 ```
 
-- [ ] **Step 4: Run the test and typecheck** → PASS (7 tests).
-- [ ] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): combination rules — Loewe within class, multiplicative across, β competition, acidosis, antagonist multipliers, CNS summaries (R51: no NMB/drive PD)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 4: Run the test and typecheck** → PASS (7 tests).
+- [x] **Step 5: Commit and push** — `git add -A && git commit -m "feat(pk): combination rules — Loewe within class, multiplicative across, β competition, acidosis, antagonist multipliers, CNS summaries (R51: no NMB/drive PD)" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 12: Drug library I — hypnotics, opioids, benzodiazepines, volatiles (DATA)
 
