@@ -2185,7 +2185,7 @@ git push origin stage-7a-circulation
 - Consumes: `DriverState`, `cycleAt`, `cycleVolume` (Stage 3 driver); `P_PL0`, `T_IT`, `CMH2O_TO_MMHG`, `SPONT_SWING_CMH2O` (Task 2).
 - Produces: `pleuralPressureMmHg(d: DriverState, t: number, complianceMl: number): number`; `respPleural(rs: RespState, t: number): number` (resp pipeline); `RespState` no longer writes `l1.coupled.cvp/sbp/dbp/volumeStatus`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/pleural.test.ts`:
 
@@ -2236,12 +2236,12 @@ describe('pleural pressure (audit R-B)', () => {
 ```
 
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/pleural.test.ts`
 Expected: FAIL — cannot resolve `pleural.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/resp/driver.ts` change `function frameAt(e: ExtDrive, t: number, k: 1 | 2): number {` to `export function frameAt(e: ExtDrive, t: number, k: 1 | 2): number { // Stage 7a: exported for the pleural input`.
 
@@ -2297,12 +2297,12 @@ export function respPleural(rs: RespState, t: number): number {
 
 - remove `applyPawCoupling` from the `../gas/coupling.ts` import and `meanAirwayPressure` from the `./driver.ts` import if they become unused (TypeScript `noUnusedLocals` is off, but keep the imports tidy).
 
-- [ ] **Step 4: Run the test and the Stage 3 suites**
+- [x] **Step 4: Run the test and the Stage 3 suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/pleural.test.ts test/l2/gas test/l2/resp`
 Expected: pleural PASS (4). `test/l2/gas/coupling*.test.ts` still pass (they call `applyPawCoupling` directly, which stays exported). Engine-level Stage 3 tests that assert the PEEP → CO/MAP coupling (`test/engine/resp-coupling.test.ts`) now FAIL until Task 12 wires the pleural input into the circulation — that is expected here; Task 12 Step 4 re-runs them.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/pleural.ts packages/engine-core/test/l2/circ/pleural.test.ts packages/engine-core/src/l2/resp/driver.ts packages/engine-core/src/l2/resp/pipeline.ts
