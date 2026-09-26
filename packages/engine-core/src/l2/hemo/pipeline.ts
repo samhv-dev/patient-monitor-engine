@@ -70,7 +70,12 @@ export interface HemoCtx {
   rng: Record<StreamName, Sfc32State>;
   phi: number; // respiratory phase shared with the ECG's RSA (hrv.phi)
   u?: (t: number) => number; // Stage 3 seam: the respiratory driver's breath signal (replaces breathU when present)
-  pIt?: (t: number) => number; // Stage 7a: continuous pleural pressure (mmHg); absent → resting −4
+  pIt?: (t: number) => number; // Stage 7a: continuous pleural pressure (mmHg) from Stage 3's breath driver; absent → resting −4
+  /**
+   * R46 (7b): an external pleural source (alveolar pressure × per-condition airway-to-pleura transmission). When it
+   * returns a number that value is the intrathoracic pressure; undefined → the Stage 3 path (pIt) is the fallback.
+   */
+  pItExternal?: (t: number) => number | undefined;
   requestHr?: (bpm: number) => void; // Stage 7a: MODELED mode drives the rhythm engine's rate (Task 15)
 }
 
@@ -227,10 +232,17 @@ export function cprPressure(c: HemoState['cpr'], t: number): number {
 }
 
 const zeroFn = () => 0;
+/** R46: the pleural input — the external (7b) source when it has a value, else the Stage 3 breath driver, else rest. */
+export function pleuralSource(ctx: Pick<HemoCtx, 'pIt' | 'pItExternal'>): (t: number) => number {
+  const base = ctx.pIt ?? (() => P_PL0);
+  const ext = ctx.pItExternal;
+  if (!ext) return base;
+  return (t) => ext(t) ?? base(t);
+}
 /** Stage 7a: the circulation's environment for one sample (pleural input; CPR and devices arrive in Tasks 17, 20–21). */
 function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return {
-    pIt: ctx.pIt ?? (() => P_PL0),
+    pIt: pleuralSource(ctx),
     cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
     cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }

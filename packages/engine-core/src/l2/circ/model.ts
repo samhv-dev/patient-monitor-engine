@@ -77,8 +77,11 @@ export interface CircModelState {
   ref: Stabilised['ref']; // the stabilised resting reference (coronary demand, pulsatile sensing)
   cor: CoronaryState; // R23 coronary supply/demand (stepped at 1 Hz by the pipeline)
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
-  /** Extra multipliers owned by other modules (coronary ischaemia, conditions): applied at the next control step. */
-  ext: { kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number };
+  /**
+   * Extra multipliers owned by other modules (coronary ischaemia, conditions; 7b lungs via R46): applied at the next
+   * control step. pvrLung × both beds, pvrLungL/R × one bed (HPV, one-lung ventilation, unilateral disease); default 1.
+   */
+  ext: { kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number; pvrLung?: number; pvrLungL?: number; pvrLungR?: number };
 }
 
 export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircModelState {
@@ -171,8 +174,9 @@ function control(m: CircModelState, env: CircEnv): void {
   p.v0Sv = base.v0Sv + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
-  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF;
-  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF;
+  const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split
+  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
+  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
   m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF;
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF;
