@@ -14,7 +14,7 @@ import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
 import { createHrState, hrMeasure, hrOnQrs, type HrState } from './l3/hr.ts';
-import { createQrsState, qrsStep, type QrsState } from './l3/qrs.ts';
+import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 import { createRngState, type Sfc32State, type StreamName } from './rng/sfc32.ts';
 import {
@@ -120,6 +120,19 @@ const ECG_CHANNELS = new Set<ChannelId>([...LEAD_IDS, 'vcgX', 'vcgY', 'vcgZ']);
 /** Stage 5.1 (R-S3-3): the ECG's RSA, wander and QRS modulation follow Stage 3's breath driver. */
 function breathOf(ps: PipelineState): BreathClock {
   return cycleBreathClock((t) => lastCycleBefore(ps.resp.driver, t), fixedBreathClock(ps.hrv));
+}
+
+/** FU-1 (R-51-3): transcutaneous pacing pulses to announce to the QRS detector while generating samples
+ * [from, to]: key = the sample at which to announce (PACE_LEAD_N early), value = the pulse's sample. */
+function tcpPulseAnnouncements(records: readonly EngineEvent[], from: number, to: number): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const r of records) {
+    if (r.type !== 'marker' || r.kind !== 'paceSpike' || r.data?.tcp !== true) continue;
+    const n = Math.round(r.t * ECG_RATE);
+    const at = Math.max(from, n - PACE_LEAD_N);
+    if (n >= from && at <= to) out.set(at, n);
+  }
+  return out;
 }
 
 function rhythmCtx(ps: PipelineState): RhythmCtx {
@@ -392,11 +405,14 @@ class Engine implements MonitorEngine {
     const by = this.bufs.get('vcgY') as RingBuffer;
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const laneBufs = ps.lanes.map((l) => this.bufs.get(l) as RingBuffer);
+    const pacePulses = tcpPulseAnnouncements(ps.rhythm.records, ps.n, end); // FU-1 (R-51-3): QRS detector pace blanking
     generateEcg(
       ecgGenInputs({ ...ps, breath: breathOf(ps) }, this.mainsHz), // Stage 5.1 (R-S3-3)
       ps.n,
       end,
       (n, x, y, z) => {
+        const pulse = pacePulses.get(n);
+        if (pulse !== undefined) qrsPacePulse(ps.qrs, pulse); // FU-1 (R-51-3)
         bx.write(n, x);
         by.write(n, y);
         bz.write(n, z);
@@ -405,7 +421,8 @@ class Engine implements MonitorEngine {
           const v = filterSample(sections, ps.laneFilter[i] as number[], ecgFrontEnd(ps.mods, this.mainsHz, lead, n, projectLead(lead, x, y, z)));
           (laneBufs[i] as RingBuffer).write(n, v);
         }
-        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z))));
+        const det = qrsPaceGate(ps.qrs, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z))); // FU-1 (R-51-3)
+        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, det));
         if (r >= 0) {
           hrOnQrs(ps.hrm, r / ECG_RATE);
           ps.detections.push({ r, n });

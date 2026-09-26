@@ -19,6 +19,16 @@ const SILENCE_DECAY_N = 750; // after 1.5 s without a QRS, SPK halves each furth
 const T_WINDOW_N = 300; // humps within 600 ms of the last R ... [ENG, after Pan–Tompkins' 360 ms T-wave rule]
 const T_RATIO = 0.5; // ... and below half the last QRS hump are T waves, not QRS
 const FINAL_FRACTION = 0.6; // a hump is closed when the MWI falls below 60% of its maximum [ENG, latency]
+/**
+ * Pace-pulse rejection (R-51-3): after a transcutaneous pacing pulse the detection lead is held at its pre-pulse
+ * value for this long, so the pad spike and the start of its polarisation tail never reach the filters
+ * (monitors blank their QRS detector after a detected pace pulse; research/03 §1.7) [ENG].
+ */
+export const PACE_BLANK_N = 30; // 60 ms
+/** R-51-3: announce a pace pulse this many samples before its marker time (8 ms) [ENG]. */
+export const PACE_LEAD_N = 4;
+const PACE_TAIL_TAU_N = 50; // 100 ms [ENG]
+const PACE_TAIL_DECAY = Math.exp(-1 / PACE_TAIL_TAU_N);
 /** Absolute floor for SPK in (mV/sample)² units, far above the MWI of 0.025 mV noise [ENG, see Task 14]. */
 export const SPK_FLOOR = 2e-4;
 
@@ -43,6 +53,14 @@ export interface QrsState {
   lastR: number; // absolute index of the last detected R, or -1
   lastDetN: number; // absolute index where the last detection was finalised
   lastQrsMax: number; // MWI hump maximum of the last detected QRS
+  /** R-51-3: pace-pulse blanking (qrsPaceGate). The input is held at `paceHold` for samples paceFrom..paceUntil. */
+  paceFrom?: number;
+  paceUntil?: number;
+  paceHold?: number;
+  /** R-51-3: the previous unfiltered input (the value held through a blank). */
+  paceLast?: number;
+  /** R-51-3: offset re-basing the pad's polarisation tail after the blank (fades to 0). */
+  paceOff?: number;
 }
 
 export function createQrsState(startIndex: number): QrsState {
@@ -88,11 +106,51 @@ function findR(st: QrsState, from: number, to: number): number {
 }
 
 /**
+ * R-51-3: a transcutaneous pacing pulse (paceSpike marker) is at absolute sample `n`. Call it at least
+ * PACE_LEAD_N samples ahead (the spike kernel starts ~4 ms before the marker); blanking starts at the current sample.
+ */
+export function qrsPacePulse(st: QrsState, n: number): void {
+  if (st.paceUntil === undefined) st.paceFrom = st.n;
+  st.paceUntil = Math.max(st.paceUntil ?? n, n + PACE_BLANK_N);
+}
+
+/**
+ * R-51-3 pace-pulse rejection, applied to the detection lead BEFORE the monitor filter (as a monitor's front end
+ * does; after the filter, the spike rings the mains notch for > 100 ms). Call once per sample, before qrsStep, with
+ * the unfiltered detection-lead value; returns the value to filter and detect on. During the blank the input is held
+ * at its pre-pulse value; after it, the pad's polarisation tail is re-based on the held value and the offset fades
+ * (τ 100 ms), too slowly for the 5–15 Hz band-pass to see a step.
+ */
+export function qrsPaceGate(st: QrsState, raw: number): number {
+  const n = st.n;
+  let x = raw;
+  if (st.paceUntil !== undefined && n >= (st.paceFrom as number)) {
+    if (n <= st.paceUntil) {
+      st.paceHold ??= st.paceLast ?? raw;
+      x = st.paceHold;
+    } else {
+      st.paceOff = raw - (st.paceHold as number);
+      delete st.paceFrom;
+      delete st.paceUntil;
+      delete st.paceHold;
+    }
+  }
+  if (st.paceOff !== undefined && st.paceUntil === undefined) {
+    x = raw - st.paceOff;
+    st.paceOff *= PACE_TAIL_DECAY;
+    if (Math.abs(st.paceOff) < 1e-4) delete st.paceOff;
+  }
+  st.paceLast = raw;
+  return x;
+}
+
+/**
  * Feed one displayed-lead sample (mV). Returns the absolute sample index of a newly detected R peak,
  * or -1. Detections are reported ~60–110 ms after the R peak.
  */
-export function qrsStep(st: QrsState, x: number): number {
+export function qrsStep(st: QrsState, xIn: number): number {
   const n = st.n;
+  const x = xIn;
   st.hist[n % HIST_N] = x;
   const b = filterSample(BP, st.bp, x);
   const d = st.d;
