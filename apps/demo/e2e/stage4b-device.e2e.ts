@@ -32,7 +32,11 @@ async function open(page: Page, skin: string) {
   await page.waitForTimeout(3000);
 }
 
-test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ page }) => {
+// Chromium-only (FU-1 / G5.1): > 40 s of evidence screenshots on headless WebKit (41.5 s on CI) and the test headless WebKit
+// crashed in under load; Chromium and the local system Chrome produce the gate screenshots. The WebKit layout of the same
+// monitor is covered by stage4a-skins and the other 4b tests.
+test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence screenshots: Chromium only (FU-1)');
   test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -120,7 +124,9 @@ test('audio timing log: alarm pulses, charge / ready / shock tones', async ({ pa
 });
 
 // Added at execution (brief's gate list): pacing with capture, defibrillator charge-ready with sync markers, trends.
-test('device evidence: pacing with capture, charge-ready with sync markers, trends view', async ({ page }) => {
+// Chromium-only (FU-1 / G5.1): the heaviest evidence test (1.6 min on CI WebKit, crashed headless WebKit once under load).
+test('device evidence: pacing with capture, charge-ready with sync markers, trends view', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence screenshots: Chromium only (FU-1)');
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1300, height: 640 });
   type Ev = { type: string; t: number; kind?: string; data?: Record<string, unknown> };
