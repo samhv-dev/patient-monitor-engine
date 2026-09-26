@@ -3538,7 +3538,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `interface LvadState extends CircuitDevice { kind: 'lvad'; rpm: number; suction: boolean; flowAvg: number; qMin: number; qMax: number }`, `createLvad()`, `lvadFlow(d, pLv, pAo): number` — HQ line `Q = max(0, Q0(rpm) − k_h·(pAo − pLv))`, `Q0 = 0.022·rpm − 30` mL/s (5400 rpm → 89 mL/s ≈ 5.3 L/min at ΔP 0), `k_h = 0.45` mL/s/mmHg (HeartMate-3-like: 4.8 L/min at ΔP 20, 3.7 L/min at ΔP 60 [ENG shape; tables §8.2 flow 4–6 L/min]); suction when LV volume < `LVAD_SUCTION_ML` 40 (× W/70): flow × 0.3 and `suction = true`; `lvadNumerics(d): { flowLpm; pi; powerW }` with PI = (qMax − qMin)/mean·10 over the last second and power = 0.8 + flow·0.7 W [ENG]. ECMO/CPB: `interface BypassDevice extends CircuitDevice { kind: 'vaEcmo' | 'cpb'; flowLpm: number }`, `bypassFlow(d, pSv, pAo): number` that THROWS `new Error('VA-ECMO/CPB arrive in Stage 7h')`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/lvad.test.ts`:
 
@@ -3593,12 +3593,12 @@ function createLvadOn() {
 }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/lvad.test.ts`
 Expected: FAIL — `createLvad` not exported.
 
-- [ ] **Step 3: Implement** (append to `devices.ts`, replacing the placeholder export line)
+- [x] **Step 3: Implement** (append to `devices.ts`, replacing the placeholder export line)
 
 ```ts
 // --- LVAD (tables §8.2: HeartMate-3-like continuous flow, 5400 rpm, 4–6 L/min; suction when the LV empties) ---
@@ -3659,12 +3659,12 @@ export function bypassFlow(_d: BypassDevice, _pSv: number, _pAo: number): number
 
 In `pipeline.ts`: `lvad: LvadState` in `HemoState` (`createLvad()`), `circEnv.qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number)`; commands `device: 'lvad'` (`start`/`stop`/`set` with `rpm` 3000–9000) mirroring the IABP block; the `circ` event gets `lvad: hs.lvad.on ? { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad), suction: hs.lvad.suction } : undefined`.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/lvad.test.ts`
 Expected: PASS (3 + 1 skipped). Not prototyped: if MAP < 65 with the HFrEF profile, the reflex is still settling — extend the run to 120 s before changing `LVAD_KH`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/devices.ts packages/engine-core/test/l2/circ/lvad.test.ts packages/engine-core/src/l2/hemo/pipeline.ts
