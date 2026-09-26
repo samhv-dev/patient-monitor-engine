@@ -4,6 +4,7 @@
 import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
+import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -39,6 +40,7 @@ export interface PatientProfile {
   weightKg?: number; // Stage 3 (brief §7.4 patient.weightKg)
   heightCm?: number; // Stage 3: ideal body weight and obesity (plan decision 9)
   sex?: 'M' | 'F'; // Stage 3 (brief §7.4 patient.sex)
+  lungConditions?: LungConditionSpec[]; // Stage 7b: catalogue conditions on the patient (R36)
 }
 
 export interface EngineOptions {
@@ -80,6 +82,7 @@ export type Command = CommandBase &
     | HemoCommandBody // Stage 2 (types-hemo.ts)
     | { type: 'applyEvent'; event: DeviceClinicalEvent } // Stage 4b (types-device.ts)
     | RespCommandBody // Stage 3 (types-resp.ts)
+    | LungCommandBody // Stage 7b (types-lung.ts)
   );
 
 export type DispatchResult = { accepted: boolean; tick: Tick; reason?: string };

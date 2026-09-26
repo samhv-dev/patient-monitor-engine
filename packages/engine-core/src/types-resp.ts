@@ -1,6 +1,7 @@
 // Stage 3 public types (brief §7.2–§7.3; ruling R27), in their own file so parallel stages do not collide in
 // types.ts. types.ts adds `RespCommandBody` and `RespEvent` to its unions with one line each.
 import type { SimSeconds } from './types.ts';
+import type { LungStateExt } from './types-lung.ts'; // Stage 7b
 
 /** Brief §7.2 VentFrame: one ventilator sample, ≤ 50 Hz (R27 vent → engine). */
 export type VentFrame = {
@@ -46,4 +47,4 @@ export type RespEvent =
       /** 0–1 tendency to gas trapping (obstruction). */
       autoPeepTendency: number;
       shunt: number; deadSpaceMl: number; frcMl: number;
-    };
+    } & Partial<LungStateExt>; // Stage 7b: additive per-lung fields (plan decision 15)
