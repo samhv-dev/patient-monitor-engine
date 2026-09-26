@@ -2648,7 +2648,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `CircModelState.man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null }` (MANUAL only; neutral `{1, null, 0, 1, null}` in MODELED); `MANUAL_CVP_GAIN = 0.3` (mL per mmHg per mL/mmHg per second); `volumeStatusCvp(cvpTarget, vs) = cvpTarget − 0.8·cvpTarget·(1 − vs)` [ENG, decision 9].
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-manual.test.ts`:
 
@@ -2686,12 +2686,12 @@ describe('MANUAL mode on the circulation (brief §4.9 M2 via Ees/SVR/V0)', () =>
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-manual.test.ts`
 Expected: FAIL (targets not met: no tracker yet).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `model.ts`:
 - add to `CircModelState`: `man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null };` and initialise `man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null },` in `createCircModel`;
@@ -2751,12 +2751,12 @@ and in the sample loop, after the substep block, add the slow CVP and PA tracker
 
 Keep `hs.pv` and `hs.pla` updated for the Stage 2 consumers that still read them: after the substep block set `hs.pv = hs.circOut.pRa; hs.pla = hs.circOut.pPv;`.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-manual.test.ts test/engine/circ-pipeline.test.ts`
 Expected: PASS (6).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/circ-manual.test.ts

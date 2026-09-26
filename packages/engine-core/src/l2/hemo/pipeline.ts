@@ -229,8 +229,22 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
 }
 
-/** Stage 7a MANUAL tracker hand-off (Task 14 implements it). */
-function trackCircBeat(_hs: HemoState, _ctx: HemoCtx, _b: SiteBeatStat): void {}
+export const MANUAL_CVP_GAIN = 0.3; // Stage 7a [ENG]: dV0 −= gain·(CVP* − CVP)·cSv per second
+/** Decision 9: hypovolaemia (volumeStatus < 1) lowers the CVP the tracker aims for, so stressed volume falls. */
+export function volumeStatusCvp(cvpTarget: number, vs: number): number {
+  return cvpTarget - 0.8 * cvpTarget * (1 - Math.min(1, Math.max(0, vs)));
+}
+const CIRC_LIMITS = { gMin: 0.3, gMax: 2.5, rMin: 0.3, rMax: 4 };
+
+/** Stage 7a MANUAL M2: the Stage 2 tracker algorithm, its gain acting on LV Emax and its R on systemic resistance. */
+function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
+  const target = { sbp: l1Value(ctx.l1, 'sbp', b.t), dbp: l1Value(ctx.l1, 'dbp', b.t) };
+  hs.sys.g = hs.circ.man.eesF;
+  hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
+  trackBeat(hs.sys, b, target, hs.circOut.pSv, CIRC_LIMITS, CIRC_LIMITS.gMax);
+  hs.circ.man.eesF = hs.sys.g;
+  hs.circ.man.rSys = hs.sys.R;
+}
 
 // --- events -------------------------------------------------------------------------------------------
 function nibpEvents(hs: HemoState, outs: NibpOut[], t: number): void {
@@ -341,6 +355,22 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       }
       hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers
       hs.pla = hs.circOut.pPv;
+    }
+    if (ctx.l1.mode !== 'modeled' && m % 12 === 0) {
+      // Stage 7a MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
+      const c = hs.circ;
+      const cvpT = volumeStatusCvp(l1Value(ctx.l1, 'cvp', t1), l1Value(ctx.l1, 'volumeStatus', t1));
+      c.man.dV0 -= MANUAL_CVP_GAIN * (cvpT - hs.circOut.pRa) * c.p.cSv * (12 / HEMO_RATE);
+      c.man.dV0 = Math.min(0.5 * c.prof.bloodVolumeMl, Math.max(-0.5 * c.prof.bloodVolumeMl, c.man.dV0));
+      const pasT = l1Value(ctx.l1, 'papSys', t1);
+      const padT = l1Value(ctx.l1, 'papDia', t1);
+      const pamT = padT + (pasT - padT) / 3;
+      const q = hs.circOut.qLungL + hs.circOut.qLungR;
+      if (q > 20) {
+        const want = Math.max(0.01, (pamT - hs.circOut.pPv) / q);
+        const cur = c.man.pvr ?? want;
+        c.man.pvr = cur * (want / cur) ** 0.1;
+      }
     }
     // Stage 7a: completed CircBeats → site beats (tracker, NIBP, pleth)
     for (const cb of hs.circ.beats) {

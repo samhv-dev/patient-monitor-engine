@@ -65,6 +65,8 @@ export interface CircModelState {
   beats: CircBeat[]; // last 16
   lastEjT: number;
   mapSetPinned: boolean;
+  /** MANUAL tracker outputs (Task 14; neutral in MODELED): LV Emax ×, systemic R (null = base), venous V0 +, RV Emax ×, PVR (null = base). */
+  man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null };
   lastVentT: number; // R45(a): last ventricular depolarisation (perfused or not)
   rrRef: number; // R45(a): running normal RR, s
   pespNext: number; // R45(a): Emax boost for the next beat
@@ -79,7 +81,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, mapSetPinned: false, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref,
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref,
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -124,6 +126,7 @@ export interface CircEnv {
   modeled: boolean; // reflexes and the HR request run only in MODELED mode
 }
 
+const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null } as const;
 const zero = () => 0;
 export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
 
@@ -144,14 +147,16 @@ function control(m: CircModelState, env: CircEnv): void {
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const p = m.p;
   const base = m.base;
-  p.rSys = base.rSys * b.svrF * de.svr;
-  p.v0Sv = base.v0Sv + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl;
+  const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr;
+  p.v0Sv = base.v0Sv + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
-  p.pvrL = base.pvrL * de.pvr * m.ext.pvr;
-  p.pvrR = base.pvrR * de.pvr * m.ext.pvr;
+  const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
+  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF;
+  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF;
   p.vFluid = base.vFluid + m.ext.vFluid;
-  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch;
-  m.kRv = b.eesF * de.ees * m.ext.kRv;
+  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF;
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF;
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr) + b.rrMs / 1000;
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
