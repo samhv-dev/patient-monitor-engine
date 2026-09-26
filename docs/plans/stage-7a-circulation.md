@@ -4282,7 +4282,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Consumes: `createEngine`, `mountMonitor` from `@pme/renderer` exactly as `apps/demo/src/stage2.ts` does (read it first and copy its mount/worker pattern — the page runs the engine in-process like stage2.ts), commands from Tasks 1, 15–22.
 
-- [ ] **Step 1: Write the page**
+- [x] **Step 1: Write the page**
 
 `apps/demo/stage7a.html`:
 
@@ -4459,7 +4459,7 @@ start();
 
 In `apps/demo/vite.config.ts` add `'stage7a': page('stage7a'), // Stage 7a` to `input`; in `apps/demo/index.html` add a link `<li><a href="./stage7a.html">Stage 7a — circulation</a></li>` beside the other stage links.
 
-- [ ] **Step 2: E2E smoke + screenshots**
+- [x] **Step 2: E2E smoke + screenshots**
 
 `apps/demo/e2e/stage7a.spec.ts` (copy the structure of the existing Stage 2 e2e spec in `apps/demo/e2e/`; the checks):
 
@@ -4490,7 +4490,7 @@ test('stage7a page runs, draws a PV loop and reacts to phenylephrine', async ({ 
 Run: `npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e -- stage7a`
 Expected: PASS; four PNGs ≤ 60 KB each (palette-quantise with the script Stage 2 used if larger).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/stage7a.html apps/demo/src/stage7a.ts apps/demo/e2e/stage7a.spec.ts apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-7a
