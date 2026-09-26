@@ -2285,7 +2285,7 @@ git commit -m "feat(ecg): BreathClock seam for RSA, wander and QRS modulation (R
 git push
 ```
 
-- [ ] **Step 7: ONLY if Stage 3 is on `main` (Task 1 Step 3) — wire the driver into the engine. Otherwise skip this step and record request R-51-2 (below) in the gate note**
+- [x] *(Executed 2026-09-26: Stage 3 IS on main, the wiring passed its own test but moved Stage 2's marginal NIBP-duration test out of band, so it is parked as `docs/gates/stage-5.1/r-51-2-engine-breath.patch` and request R-51-2 — see the gate note, Deviations.)* **Step 7: ONLY if Stage 3 is on `main` (Task 1 Step 3) — wire the driver into the engine. Otherwise skip this step and record request R-51-2 (below) in the gate note**
 
 In `packages/engine-core/src/engine.ts`, add after the last `import` line:
 
