@@ -1099,7 +1099,7 @@ git push origin stage-7a-circulation
 - Consumes: Tasks 2–5.
 - Produces: `STAB_WINDOW_S`, `STAB_MAX_WINDOWS`, `STAB_PR_S`, `interface LedgerRow { w; sbp; dbp; cvp; rSys; cArt; v0Sv }`, `interface Stabilised { s; params; ledger; converged; ref }`, `initialState(p, bloodVolumeMl, stressedFrac)`, `stabilise(resolved)` (cached, returns a deep copy).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/circ/stabilise.test.ts`:
 
@@ -1148,12 +1148,12 @@ describe('profile stabilisation (audit #3, A19)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/stabilise.test.ts`
 Expected: FAIL — cannot resolve `stabilise.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/circ/stabilise.ts`:
 
@@ -1316,12 +1316,12 @@ function solve(r: ResolvedProfile): Stabilised {
 }
 ```
 
-- [ ] **Step 4: Run the stabiliser and circuit tests**
+- [x] **Step 4: Run the stabiliser and circuit tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/stabilise.test.ts test/l2/circ/circuit.test.ts`
 Expected: PASS (10 tests; ≈ 0.4 s). The prototype converged in 24 / 21 / 26 / 21 / 20 / 21 windows for the six profiles.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/stabilise.ts packages/engine-core/test/l2/circ/stabilise.test.ts

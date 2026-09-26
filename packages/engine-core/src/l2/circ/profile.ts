@@ -42,6 +42,8 @@ export interface ResolvedProfile {
   cfr: number; // coronary flow reserve (tables §3)
   betaBlock: number; // 0–1 fraction of β response removed
   lvedpTarget: number;
+  /** R45(c): the stabiliser anchors the LV EDPVR at the EDV the ventricle actually reaches (conditions that set an LVEDP). */
+  tuneLvedp: boolean;
 }
 
 export function ageBand(ageY: number): AgeBand {
@@ -64,6 +66,11 @@ export const GRADES = {
 } as const;
 /** LV stiffness multiplier by AS grade (tables §1.5 Q15: β ×1.0 / 1.3 / 1.6 / 2.0). */
 const AS_BETA: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.6, critical: 2.0 };
+/**
+ * R45(c): concentric LV hypertrophy in AS raises end-systolic elastance with the grade (the hypertrophied LV
+ * normalises wall stress and keeps ESV near normal at LVSP 170–200) [ENG, magnitude for Ali's R44 calibration pass].
+ */
+const AS_EES: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.7, critical: 2.0 };
 
 const BAND = {
   // bvMlKg (M), MAP set, resting HR, vagal gain ms/mmHg, sympathetic ×, arterial compliance × (tables §1.1)
@@ -101,6 +108,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     targets: { sbp: 120, dbp: 80, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
     hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0,
     lvedpTarget: 8,
+    tuneLvedp: false,
   };
   if (band === 'elderly') r.targets = { sbp: 140, dbp: 80, hr: b.hr, cvp: 5 };
   let edvRef = 120 * w * lvScale; // mL, the EDV at which the EDPVR passes through the profile's LVEDP [ENG anchor]
@@ -127,11 +135,13 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       r.mapSet = 75;
       r.targets = { ...r.targets, sbp: 105, dbp: 65 };
       r.lvedpTarget = 18;
+      r.tuneLvedp = true;
       return;
     case 'hfpef': // β ×2.5, arterial C ×0.7
       p.betaLv *= lerp(2.5);
       p.cArt *= lerp(0.7);
       r.lvedpTarget = 18;
+      r.tuneLvedp = true;
       return;
     case 'htn': // +20 MAP_set, C ×0.7, R ×1.2, G_v ×0.6, β ×1.3
       r.mapSet += 20 * s;
@@ -146,8 +156,12 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       const ava = GRADES.as[g];
       p.av = { ...p.av, k: stenosisK(ava, GORLIN_AV, AVA_REF) };
       p.betaLv *= AS_BETA[g] ?? 1;
-      r.lvedpTarget = Math.max(r.lvedpTarget, 14);
-      r.targets = { ...r.targets, cvp: 3 }; // stiff LV over-fills at CVP 5 (prototype LVEDP 40) [ENG]
+      p.eesLv *= AS_EES[g] ?? 1;
+      // R45(c): a compensated severe AS rests at LVEDP ≈ 18 (tables §3 worked example; 15–20), milder grades lower [ENG].
+      // The stabiliser anchors the EDPVR at the EDV the hypertrophied LV actually reaches (the analytic 120 mL anchor
+      // left the prototype at LVEDP 40 at CVP 5, 30 at CVP 3), so the CVP target stays 5.
+      r.lvedpTarget = Math.max(r.lvedpTarget, g === 'severe' || g === 'critical' ? 18 : 12);
+      r.tuneLvedp = true;
       return;
     }
     case 'ms': {
