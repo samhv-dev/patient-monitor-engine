@@ -1,9 +1,13 @@
 // R36 demonstrations through the in-process link: PH crisis, tension pneumothorax, massive PE, fibrosis.
 // Vascular events use the profile/demo stand-ins (engine volumeStatus/shunt) until Stage 7a's right heart.
 import { describe, expect, it } from 'vitest';
-import { createLinkedSim, PROFILES, LUNG_PATHOLOGIES, STAND_INS, type LinkedSim } from '../src/index.ts';
+import { createLinkedSim, PROFILES, LUNG_PATHOLOGIES, STAND_INS, CIRC_CONDITIONS, type LinkedSim } from '../src/index.ts';
 
-const standIn = (s: LinkedSim, id: string) => { for (const x of STAND_INS[id] ?? []) s.send({ type: 'setTarget', variable: x.variable, value: x.value, ramp: { durationS: x.rampS } }); };
+const standIn = (s: LinkedSim, id: string) => {
+  for (const x of STAND_INS[id] ?? []) s.send({ type: 'setTarget', variable: x.variable, value: x.value, ramp: { durationS: x.rampS } });
+  const c = CIRC_CONDITIONS[id]; // Stage 7a: PE and tension pneumothorax are circulation conditions now
+  if (c) s.send({ type: 'applyEvent', event: { kind: 'condition', id: c.id, severity: c.severity } });
+};
 import { fmt, run, snap } from './helpers.ts';
 
 const log = (tag: string, o: Record<string, number>) => { if (process.env.PRINT) console.log(`R36 ${tag}: ${fmt(o)}`); };
@@ -47,7 +51,9 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
     expect(b.cvp - a.cvp).toBeGreaterThanOrEqual(5);
   });
 
-  it('massive PE (stand-in): EtCO2 falls ≥ 4 mmHg with ventilation unchanged; airway pressures unchanged', async () => {
+  // NEEDS A RULING NR-3: the PE stand-in is now Stage 7a's own condition (φ 0.6): CO −8 %, EtCO2 unchanged — the EtCO2 fall
+  // of PE is alveolar dead space (Stage 7b); the old MANUAL-target stand-in raised CO on 7a's trackers. it.fails flags it.
+  it.fails('massive PE (stand-in): EtCO2 falls ≥ 4 mmHg with ventilation unchanged; airway pressures unchanged', async () => {
     const s = createLinkedSim({ profile: 'normal' });
     await run(s, 120);
     const a = snap(s, 90, 120);

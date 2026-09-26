@@ -278,7 +278,7 @@ export function checkDrive(d: DriverState, t: number): void {
   }
 }
 
-function frameAt(e: ExtDrive, t: number, k: 1 | 2): number {
+export function frameAt(e: ExtDrive, t: number, k: 1 | 2): number { // Stage 7a: exported for the pleural input
   const f = e.frames;
   if (f.length < 3) return 0;
   if (t >= (f[f.length - 3] as number)) return f[f.length - 3 + k] as number;

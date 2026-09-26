@@ -16,3 +16,4 @@ export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'
 export * from './types-resp.ts'; // Stage 3
 export * from './types-vent-link.ts'; // Stage V
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+export type * from './types-circ.ts'; // Stage 7a

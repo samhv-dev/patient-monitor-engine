@@ -21,12 +21,12 @@ describe('sinus rate sweep (review H1: sinus above ~180 locked into 2:1)', () =>
         const got = measuredHr('sinus', hr, hrvScale);
         expect({ hr, got: Math.round(got * 10) / 10, ok: Math.abs(got - hr) / hr <= 0.03 }).toEqual({ hr, got: expect.any(Number), ok: true });
       }
-    });
+    }, 60_000); // Stage 7a: ten engines each now run the circulation (≈ 1.3 s alone; > 5 s on a loaded 2-vCPU runner)
   }
 
   it('sinusTachy 200 reads 200 with and without HRV (3 seeds)', () => {
     for (const seed of [1, 2, 3]) {
       for (const hrvScale of [0, 1]) expect(Math.abs(measuredHr('sinusTachy', 200, hrvScale, seed) - 200)).toBeLessThanOrEqual(6);
     }
-  });
+  }, 60_000);
 });

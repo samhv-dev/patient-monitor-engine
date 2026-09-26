@@ -43,6 +43,8 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  HEMO_TEACHING, // Stage 7a
+  type HemoTeachingChannel, // Stage 7a
   hemoChannelActive,
   validateHemoCommand,
   type HemoChannel,
@@ -55,6 +57,7 @@ import {
   applyRespCommand,
   createRespState,
   respBreathU,
+  respPleural, // Stage 7a
   RESP_RATE,
   validateRespCommand,
   type RespChannel,
@@ -175,7 +178,7 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
 
   constructor(opts: EngineOptions) {
-    if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');
+    // Stage 7a: MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
     this.lookTicks = Math.round((look * 1000) / TICK_MS);
@@ -195,6 +198,7 @@ class Engine implements MonitorEngine {
     const hrv = drawHrvPhase(rng.hrv);
     const ctx: RhythmCtx = { hrAt: (t) => rampValue(hr, t), mods, rng, hrv };
     const l1 = createL1State(opts.patient); // Stage 2
+    if (opts.mode === 'modeled') l1.mode = 'modeled'; // Stage 7a
     this.st = {
       n: 0,
       rng,
@@ -349,6 +353,12 @@ class Engine implements MonitorEngine {
       this.dirtyFromN = Math.min(this.dirtyFromN, firstN);
     }
     this.advance(this.st, this.tick * SAMPLES_PER_TICK);
+    const stp = this.st.hemo.stPatch; // Stage 7a: coronary ST hook (R23) through the existing modifiers, committed state only
+    if (stp) {
+      this.st.mods = mergeModifiers(this.st.mods, stp);
+      this.st.hemo.stPatch = null;
+      this.dirtyFromN = Math.min(this.dirtyFromN, this.st.n);
+    }
     let maxPostedN = -1;
     for (const p of this.posted.values()) maxPostedN = Math.max(maxPostedN, p.n);
     for (const d of this.st.detections) if (this.dirtyFromN < Infinity || d.n <= maxPostedN) this.committedDet.push(d);
@@ -438,7 +448,13 @@ class Engine implements MonitorEngine {
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
-      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t) }, // Stage 3: u
+      {
+        l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), // Stage 3: u
+        pIt: (t) => respPleural(resp, t), // Stage 7a
+        requestHr: (bpm) => {
+          ps.hr = constantRamp(bpm); // Stage 7a: MODELED mode drives the rhythm engine's rate
+        },
+      },
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     ); // Stage 2
@@ -630,7 +646,7 @@ class Engine implements MonitorEngine {
   }
 
   /** Stage 2: write one 125 Hz sample; the buffer is created on the first write (brief §3.5 ring buffers). */
-  private hemoWrite(ch: HemoChannel, m: number, v: number): void {
+  private hemoWrite(ch: HemoChannel | HemoTeachingChannel, m: number, v: number): void {
     let b = this.bufs.get(ch);
     if (!b) {
       b = new RingBuffer(HEMO_RATE, BUFFER_SECONDS);
@@ -657,6 +673,7 @@ class Engine implements MonitorEngine {
   /** Stage 2: a channel whose sensor is 'none' has no trace, so its buffer is dropped (brief §6.2). */
   private syncHemoBuffers(): void {
     for (const ch of HEMO_CHANNELS) if (!hemoChannelActive(this.st.hemo, ch)) this.bufs.delete(ch);
+    if (!this.st.hemo.pvOn) for (const ch of HEMO_TEACHING) this.bufs.delete(ch); // Stage 7a
   }
 }
 

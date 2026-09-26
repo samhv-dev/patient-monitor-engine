@@ -16,7 +16,8 @@ import type { AirwayState, RespClinicalEvent, TempSite, VentSource } from '../..
 import type { VentFrameExt } from '../../types-vent-link.ts'; // Stage V
 import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfile } from '../../types.ts';
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
-import { applyPawCoupling, cardiacOutput } from '../gas/coupling.ts';
+import { cardiacOutput } from '../gas/coupling.ts';
+import { pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a
 import { createCo2State, etco2True, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts';
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, stepO2, type O2Inputs, type O2State } from '../gas/o2.ts';
@@ -24,7 +25,7 @@ import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import {
-  alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, meanAirwayPressure, nominalRate,
+  alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, nominalRate,
   onVentFrame, planCycles, preoxActive, pruneCycles, replan, type DriverCtx, type DriverState,
 } from './driver.ts';
 
@@ -134,6 +135,11 @@ export function respBreathU(rs: RespState, t: number): number {
   return breathSignal(rs.driver, t, compliance(rs));
 }
 
+/** Stage 7a seam: continuous pleural pressure (mmHg) for the circulation (audit R-B). */
+export function respPleural(rs: RespState, t: number): number {
+  return pleuralPressureMmHg(rs.driver, t, compliance(rs));
+}
+
 /** Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). */
 function metabolic(rs: RespState, t: number): number {
   return tempFactor(rs.temp.tc) * mhFactor(rs.temp, t, MH_VCO2_FACTOR) * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
@@ -217,8 +223,13 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     pi: piM.value, cuffOnLimb: sameLimbCuff(h), cpr: h.cpr.active,
   }, t);
   // coupled truths (brief §4.9: the `state` event shows truth; flags show 'override' when it departs from target)
-  applyPawCoupling(l1, meanAirwayPressure(d, t, compliance(rs)), t);
+  // Stage 7a: heart–lung interaction is emergent through respPleural(); the MANUAL mean-Paw coupling is retired
+  // (decision 8). Clear any coupled truths a restored pre-7a snapshot might carry.
   const c = (l1.coupled ??= {});
+  delete c.cvp;
+  delete c.sbp;
+  delete c.dbp;
+  delete c.volumeStatus;
   const n = nominalRate(d, driverCtx(rs, l1, t));
   c.spo2 = sa * 100;
   c.etco2 = rs.etco2;
@@ -367,6 +378,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     }
     case 'condition': {
       const c = ev as { id: string; severity: number };
+      if (['tamponade', 'pe', 'tensionPtx', 'rvInfarct'].includes(c.id)) return null; // Stage 7a: circulation conditions
       return c.id === 'mh' ? num('severity', c.severity, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined) : `condition ${c.id} arrives in Stage 7`;
     }
     case 'thermal': {
@@ -439,6 +451,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       return true;
     }
     case 'condition': {
+      if ((ev as { id: string }).id !== 'mh') return false; // Stage 7a: circulation conditions
       const c = ev as { severity: number };
       rs.temp.mh = c.severity > 0 ? { severity: c.severity, t0: t } : null;
       return true;
