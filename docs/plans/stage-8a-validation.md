@@ -3618,7 +3618,7 @@ Measured on `6eeb6d1`: g2 displayed ABP 121.2/80.6 then 91.9/51.4 after the ramp
 
 Stage 3.1 changed defaults on its branch (CPR quality, per-skin sidestream delay); the `g3-cpr-etco2` document is tagged `requires: ['3.1']` and the executor re-measures every row after merging main (Task 24) — a moved row goes to the calibration queue with both numbers, never silently re-banded.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/segments/gate-docs.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/segments/gate-docs.test.ts`**
 
 ```ts
 import { validateScenario } from '@pme/controller/scenario';
@@ -3637,11 +3637,11 @@ describe('gate regression documents', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (module missing)**
+- [x] **Step 2: Run it. Expected: FAIL (module missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/gate-docs.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/suites/gates/gate-docs.ts`**
+- [x] **Step 3: Write `packages/validation/suites/gates/gate-docs.ts`**
 
 ```ts
 // Gate numbers as regression documents (R40 borrow #1: "band rules for numerics"). Each target is one number a
@@ -3706,11 +3706,11 @@ export const GATE_DOCS: ValidationDoc[] = [
 ];
 ```
 
-- [ ] **Step 4: Run the test. Expected: PASS (2 tests)**
+- [x] **Step 4: Run the test. Expected: PASS (2 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/gate-docs.test.ts`
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/validation/suites/gates/gate-docs.ts packages/validation/test/segments/gate-docs.test.ts
