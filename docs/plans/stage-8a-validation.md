@@ -659,7 +659,7 @@ git push
 
 Measured while planning: `selectCandidates` on the real `clinical_data.csv` (6,388 cases) gives 64 candidates — 20 femoral, 20 with a non-sinus pre-op ECG (AF, RBBB, 1st-degree block, PVCs …), 26 emergencies — first ids 1885, 4556, 3101, 1341, 0146. On case 0001 `findWindows` returns 2568–2868 s (stable, HR 105, 181/82, EtCO2 32, RR 10, VT 480) and 4248–4548 s (hypotension, HR 58, 96/43); 50 inspirations found from `Primus/AWP` in 300 s at RR 10; the case has no NIBP in those windows. Loading + windowing 0001 takes 5.7 s.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/datasets/vitaldb.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/datasets/vitaldb.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -733,11 +733,11 @@ describe('helpers', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/vitaldb.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/datasets/signals.ts`**
+- [x] **Step 3: Write `packages/validation/src/datasets/signals.ts`**
 
 ```ts
 // The one signal bundle every metric takes, whether the samples were recorded or generated (decision 3).
@@ -801,7 +801,7 @@ export function fillGaps(x: Float64Array): number {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/datasets/csv.ts`**
+- [x] **Step 4: Write `packages/validation/src/datasets/csv.ts`**
 
 ```ts
 // Minimal CSV reading for the dataset metadata files (quoted cells, header row → objects).
@@ -817,7 +817,7 @@ export function readCsv(text: string): Array<Record<string, string>> {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/metrics/capno.ts` (the Stage 3 convention, decision 4)**
+- [x] **Step 5: Write `packages/validation/src/metrics/capno.ts` (the Stage 3 convention, decision 4)**
 
 ```ts
 // Capnogram angles, the ONE measurement convention for recorded and generated capnograms (R39 item 6, brief §4.4).
@@ -869,7 +869,7 @@ export function capnoAngles(x: ArrayLike<number>, rate = 62.5): CapnoBreath[] {
 }
 ```
 
-- [ ] **Step 6: Write `packages/validation/src/datasets/vitaldb.ts`**
+- [x] **Step 6: Write `packages/validation/src/datasets/vitaldb.ts`**
 
 ```ts
 // VitalDB (PhysioNet copy, CC BY 4.0): candidate selection from clinical metadata (decision 2), case loading with
@@ -1066,14 +1066,14 @@ export function vitaldbSignals(f: VitalFile, w: AnalysisWindow): Signals {
 }
 ```
 
-- [ ] **Step 7: Run the test and typecheck. Expected: PASS (5 tests); no type errors**
+- [x] **Step 7: Run the test and typecheck. Expected: PASS (5 tests); no type errors**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/vitaldb.test.ts
 npx -y pnpm@9.15.9 --filter @pme/validation typecheck
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/validation/src/datasets/signals.ts packages/validation/src/datasets/csv.ts packages/validation/src/datasets/vitaldb.ts packages/validation/src/metrics/capno.ts packages/validation/test/datasets/vitaldb.test.ts
