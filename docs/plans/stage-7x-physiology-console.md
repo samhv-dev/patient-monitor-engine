@@ -2910,7 +2910,7 @@ git push
 - Create: `docs/gates/stage-7x.md`
 - Modify: this plan (tick the boxes)
 
-- [ ] **Step 1: Merge main and run everything**
+- [x] **Step 1: Merge main and run everything**
 
 ```bash
 git fetch origin && git merge origin/main
@@ -2928,7 +2928,7 @@ in the gate note which new sections/fields appeared and whether the truth tree i
 `truth-event` budget failure after a merge is NOT fixed by raising the cap: report it (the owning stage adds its
 machinery to a SKIP list — Requests).
 
-- [ ] **Step 2: Write `docs/gates/stage-7x.md`** with these sections, filled with the numbers you measured:
+- [x] **Step 2: Write `docs/gates/stage-7x.md`** with these sections, filled with the numbers you measured:
   1. *What shipped* — the page, the accessor (`truthHz`, `pruneTruth`), the file list (the File map above).
   2. *Accessor budget* — leaves, dropped, JSON bytes (engine test and live page), `pruneTruth` ms per call, render
      path (`worker-raf`), read-only proof (twin-engine test), the fake-future-tree size.
