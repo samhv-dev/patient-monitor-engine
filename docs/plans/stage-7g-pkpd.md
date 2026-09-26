@@ -4537,11 +4537,11 @@ process.exit(r.status ?? 1);
 
 ### Task 26: Full verification and pull request
 
-- [ ] **Step 1:** `git fetch origin && git merge origin/main` (resolve by the Global Constraints rule), then the full
+- [x] **Step 1:** `git fetch origin && git merge origin/main` (resolve by the Global Constraints rule), then the full
   run: `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices`
   and `npx -y pnpm@9.15.9 test:e2e` (Chromium). Everything green; record test counts in the gate note.
-- [ ] **Step 2:** Re-read the plan's Decisions and Deviations against the gate note; every "needs a ruling" item is listed.
-- [ ] **Step 3: PR** —
+- [x] **Step 2:** Re-read the plan's Decisions and Deviations against the gate note; every "needs a ruling" item is listed.
+- [x] **Step 3: PR** —
 ```bash
 git push
 gh pr create --base main --head stage-7g-pkpd --title "Stage 7g: drug PK/PD engine (compartment PK + effect site, TCI, volatiles, PD combination, 58-drug library)" --body "$(cat <<'BODY'
@@ -4561,7 +4561,7 @@ Implements docs/plans/stage-7g-pkpd.md. Gate note: docs/gates/stage-7g.md (numbe
 BODY
 )"
 ```
-- [ ] **Step 4:** Tick every box in this plan, commit `docs: stage 7g plan fully ticked`, push. Do not merge (R21: the orchestrator merges).
+- [x] **Step 4:** Tick every box in this plan, commit `docs: stage 7g plan fully ticked`, push. Do not merge (R21: the orchestrator merges).
 
 ---
 
