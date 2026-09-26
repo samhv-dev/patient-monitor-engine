@@ -21,6 +21,36 @@ describe('Stage 3 acceptance: capnogram', { timeout: 300_000 }, () => {
     expect(mean(b.map((x) => x.alpha))).toBeGreaterThanOrEqual(120);
   });
 
+  it('1b. R39-6 α vs bronchospasm severity: 0 → 105° (100–110), 0.5 → 125° (120–130), 0.8 → 135° (128–142), 1.0 → 145° (140–150); 1.25 near-fatal extreme → 157° (150–160)', async () => {
+    // ONE measurement convention (research 09 §6; brief §4.4 "declared axis scale of 25 mmHg/s"): capnoAngles in
+    // helpers/resp.ts — phase II slope between the 25 % and 75 % crossings of the plateau-end value, phase III by
+    // regression from the 90 % crossing + 0.2 s to the plateau end, both in mmHg/s, with 1 s on the time axis drawn
+    // the same length as 25 mmHg on the CO2 axis: α = 180° − atan(s_II/25) + atan(s_III/25). Sidestream, VC 12/min.
+    const alphaAt = async (severity: number) => {
+      const { e } = rig3({ patient: ADULT });
+      e.dispatch(vent());
+      await run(e, 30);
+      e.dispatch(ev3({ kind: 'airway', state: 'bronchospasm', severity }));
+      await run(e, 90);
+      const b = capnoAngles(read62(e, 'co2', 50, 90));
+      expect(b.length).toBeGreaterThanOrEqual(5);
+      return mean(b.map((x) => x.alpha));
+    };
+    const bands: Array<[number, number, number]> = [[0, 100, 110], [0.5, 120, 130], [0.8, 128, 142], [1, 140, 150], [1.25, 150, 160]];
+    for (const [sev, lo, hi] of bands) {
+      const a = await alphaAt(sev);
+      expect(a, `severity ${sev}`).toBeGreaterThanOrEqual(lo);
+      expect(a, `severity ${sev}`).toBeLessThanOrEqual(hi);
+    }
+  });
+
+  it('1b-2. severity above 1 (to 1.25) is accepted only for bronchospasm (the near-fatal extreme)', () => {
+    const { e } = rig3({ patient: ADULT });
+    expect(e.dispatch(ev3({ kind: 'airway', state: 'bronchospasm', severity: 1.25 })).accepted).toBe(true);
+    expect(e.dispatch(ev3({ kind: 'airway', state: 'bronchospasm', severity: 1.3 })).accepted).toBe(false);
+    expect(e.dispatch(ev3({ kind: 'airway', state: 'obstructed', severity: 1.1 })).accepted).toBe(false);
+  });
+
   it('2. sidestream: the trace is 2.3 ± 0.1 s behind the breath; at RR 60 sidestream reads below mainstream (≥ 0.5 mmHg)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(vent(12));

@@ -352,7 +352,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
-      return (AIRWAYS as readonly string[]).includes(a.state) ? num('severity', a.severity, 0, 1) : `airway state must be one of ${AIRWAYS.join(', ')}`;
+      return (AIRWAYS as readonly string[]).includes(a.state) ? num('severity', a.severity, 0, a.state === 'bronchospasm' ? 1.25 : 1) : `airway state must be one of ${AIRWAYS.join(', ')}`; // R39-6: bronchospasm 1–1.25 = near-fatal extreme
     }
     case 'ventilation': {
       const v = ev as Extract<RespClinicalEvent, { kind: 'ventilation' }>;
