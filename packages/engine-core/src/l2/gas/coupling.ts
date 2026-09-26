@@ -4,7 +4,7 @@
 //    this acts through L1 `coupled` truths on cvp/sbp/dbp/volumeStatus, which Stage 2's pipeline reads through
 //    l1Value (its M2 tracker then meets the coupled pressures).
 import { l1Target, type L1State } from '../../l1/state.ts';
-import { CPR_SV_FRAC, SV_REF_ML } from '../hemo/params.ts';
+import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
 
@@ -21,15 +21,10 @@ export function venousGradient(vs: number): number {
   return 4 + 11 * Math.min(1, Math.max(0, vs));
 }
 
-/** CO (L/min) from Stage 2's completed site beats over the last 10 s; CPR pump flow; 0 in arrest. */
+/** CO (L/min) from the Stage 7a circulation (CPR compressions eject through it); 0 in arrest. */
 export function cardiacOutput(hs: HemoState, t: number): number {
-  if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * hs.cpr.quality * hs.cpr.rate) / 1000;
-  if (t - hs.lastEjT > Math.max(3, 2.2 * hs.lastRR)) return 0;
-  const bs = hs.siteBeats.filter((b) => !b.cpr && t - b.t < 10);
-  if (bs.length < 2) return (SV_REF_ML * hs.sys.g * 60) / Math.max(0.3, hs.lastRR) / 1000;
-  const sv = bs.reduce((a, b) => a + b.sv, 0);
-  const dur = bs.reduce((a, b) => a + b.dur, 0);
-  return (sv / Math.max(0.1, dur)) * 0.06;
+  void t;
+  return circCardiacOutput(hs.circ); // Stage 7a
 }
 
 /** Apply the mean-airway-pressure coupling to the L1 coupled truths at time t (MANUAL). */

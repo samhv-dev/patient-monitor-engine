@@ -230,11 +230,12 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
   m.atria = pruneActivations(m.atria, m.t);
 }
 
-/** Cardiac output (L/min) from the last beats within 10 s; 0 when nothing ejected for 3 s. */
+/** Cardiac output (L/min) from the last beats within 10 s; 0 when nothing ejected for 3 s; the resting CO at start-up. */
 export function circCardiacOutput(m: CircModelState): number {
   if (m.t - m.lastEjT > 3) return 0;
   const bs = m.beats.filter((b) => m.t - b.t < 10);
-  if (bs.length < 2) return 0;
+  if (bs.length < 2) return bs.length === 1 ? (bs[0]!.sv / Math.max(0.2, bs[0]!.dur)) * 0.06 : m.ref.co; // start-up
+
   const sv = bs.reduce((a, b) => a + b.sv, 0);
   const dur = bs.reduce((a, b) => a + b.dur, 0);
   return (sv / Math.max(0.1, dur)) * 0.06;

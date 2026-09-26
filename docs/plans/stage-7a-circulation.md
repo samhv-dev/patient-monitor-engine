@@ -2549,7 +2549,7 @@ git push origin stage-7a-circulation
 - Consumes: `CircBeat` (Task 9), Stage 2 `trackBeat`, `nibpOnPulse`, `addPlethPulse`, `plethDelayS`, `isReferenceBeat`.
 - Produces: `cardiacOutput(hs, t)` now returns `circCardiacOutput(hs.circ)` (CPR included because compressions eject through the model, Task 17).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-beats.test.ts`:
 
@@ -2582,12 +2582,12 @@ describe('CircBeats feed the Stage 2/3 consumers', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-beats.test.ts`
 Expected: FAIL — PR invalid (no pleth pulses) and the NIBP cycle never completes (no oscillations).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Replace the `onCircBeat` stub body in `pipeline.ts` with:
 
@@ -2626,12 +2626,12 @@ In `packages/engine-core/src/l2/gas/coupling.ts` replace the body of `cardiacOut
 
 and add `import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a`. Remove the now-unused `CPR_SV_FRAC`, `SV_REF_ML` imports.
 
-- [ ] **Step 4: Run the test and the gas/resp engine suites**
+- [x] **Step 4: Run the test and the gas/resp engine suites**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-beats.test.ts test/engine/resp-oxygen.test.ts test/engine/resp-capnogram.test.ts`
 Expected: PASS. (CO at rest ≈ 5.2–5.6 L/min, prototype.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/l2/gas/coupling.ts packages/engine-core/test/engine/circ-beats.test.ts

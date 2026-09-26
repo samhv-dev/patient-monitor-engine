@@ -206,15 +206,31 @@ function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return { pIt: ctx.pIt ?? (() => P_PL0), cprCardiac: zeroFn, cprThoracic: zeroFn, qVad: () => 0, qAortaSrc: zeroFn, modeled: ctx.l1.mode === 'modeled' };
 }
 
-/** Stage 7a: a completed CircBeat → site beat (tracker, NIBP), pleth pulse (Task 13 fills this in). */
+/** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
 function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void {
-  const beat: SiteBeatStat = { t: cb.t, sbp: cb.sbp, dbp: cb.dbp, map: cb.map, ref: false, cpr: false, sv: cb.sv, dur: cb.dur };
+  const ejected = cb.avOpen >= 0 && cb.sv > 1;
+  // a reference beat: ejected, with no big stroke-volume swing against the previous beat (brief §4.9 M2)
+  const prev = hs.siteBeats[hs.siteBeats.length - 1];
+  const steady = ejected && (!prev || Math.abs(cb.sv - prev.sv) <= 0.25 * Math.max(1, prev.sv));
+  const ref = hs.prevRef && steady;
+  hs.prevRef = steady;
+  const beat: SiteBeatStat = { t: cb.t, sbp: cb.sbp, dbp: cb.dbp, map: cb.map, ref, cpr: hs.cpr.active, sv: cb.sv, dur: cb.dur };
   hs.lastSite = beat;
   hs.siteBeats.push(beat);
   if (hs.siteBeats.length > 16) hs.siteBeats.shift();
-  void ctx;
-  void t;
+  if (ejected) {
+    hs.lastEjT = cb.t + cb.avOpen;
+    const lvet = Math.max(0.1, cb.avClose - cb.avOpen);
+    const others = hs.circ.beats.filter((b) => b !== cb);
+    const svRef = Math.max(1, others.length >= 4 ? others.reduce((a, b) => a + b.sv, 0) / others.length : cb.sv);
+    addPlethPulse(hs.pleth, cb.t + cb.avOpen + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t) * cb.sv) / svRef, lvet, hs.circ.p.rSys);
+  }
+  if (ctx.l1.mode !== 'modeled') trackCircBeat(hs, ctx, beat); // Task 14
+  nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
 }
+
+/** Stage 7a MANUAL tracker hand-off (Task 14 implements it). */
+function trackCircBeat(_hs: HemoState, _ctx: HemoCtx, _b: SiteBeatStat): void {}
 
 // --- events -------------------------------------------------------------------------------------------
 function nibpEvents(hs: HemoState, outs: NibpOut[], t: number): void {
