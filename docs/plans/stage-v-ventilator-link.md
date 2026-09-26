@@ -3010,7 +3010,7 @@ git push origin stage-v-ventilator-link
 
 The four R36 demonstrations (PH crisis under high PEEP + hypercapnia, tension pneumothorax, massive PE, fibrosis) plus a start-up check of every catalogue row as a link profile. Vascular events use `STAND_INS` (plan decision 8) until Stage 7a.
 
-- [ ] **Step 1: Write the tests**
+- [x] **Step 1: Write the tests**
 
 **Create `packages/ventilator/test/link-r36.test.ts`:**
 
@@ -3091,7 +3091,7 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run with the numbers printed**
+- [x] **Step 2: Run with the numbers printed**
 
 Run: `PRINT=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/link-r36.test.ts`
 Expected: 5 passed (≈ 60 s; the 39-profile start-up is ≈ 40 s). Prototype:
@@ -3103,7 +3103,7 @@ R36 pe before: co 4.87 map 97.13 … etco2 37.00 … plat 14.11     R36 pe after
 R36 fibrosis ΔP 16.7 → 11.7
 ```
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/ventilator/test
