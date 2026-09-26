@@ -15,6 +15,7 @@
     "@pme/controller": "workspace:*",
     "@pme/engine-core": "workspace:*",
     "@pme/renderer": "workspace:*",
-    "@pme/skins": "workspace:*"
+    "@pme/skins": "workspace:*",
+    "@pme/ventilator": "workspace:*"
   }
 }

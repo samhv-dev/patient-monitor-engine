@@ -42,10 +42,23 @@ export interface TexState {
   npos: number;
   fade: number;
   rng: Sfc32State;
+  /** Stage 5.1: output samples left before hopping to another segment (−1 = play each segment to its end). */
+  left: number;
+  /** Stage 5.1: hop interval range in output samples [min, max]; null = no hopping (Stage 5 behaviour). */
+  hop: [number, number] | null;
 }
 
-export function createTex(n: number, rng: Sfc32State): TexState {
-  return { seg: sfc32Next(rng) % n, pos: sfc32Next(rng) % 1000, next: -1, npos: 0, fade: 0, rng };
+/** hopS: hop to a random segment every hopS[0]–hopS[1] s of output (Stage 5.1, VF: breaks up long regular runs). */
+export function createTex(n: number, rng: Sfc32State, hopS: readonly [number, number] | null = null): TexState {
+  const hop: [number, number] | null = hopS ? [Math.round(hopS[0] * 500), Math.round(hopS[1] * 500)] : null;
+  const s: TexState = { seg: sfc32Next(rng) % n, pos: sfc32Next(rng) % 1000, next: -1, npos: 0, fade: 0, rng, left: -1, hop };
+  if (hop) s.left = drawHop(s);
+  return s;
+}
+
+function drawHop(s: TexState): number {
+  const h = s.hop as [number, number];
+  return h[0] + (sfc32Next(s.rng) % (h[1] - h[0] + 1));
 }
 
 function at(x: Float32Array, p: number): number {
@@ -62,11 +75,12 @@ export function texSample(tex: readonly DecodedTexture[], s: TexState, fHz: numb
   const speed = fHz / cur.fdomHz;
   let v = at(cur.x, s.pos);
   s.pos += speed;
-  if (s.next < 0 && s.pos > cur.x.length - XFADE_SAMPLES * speed - 2) {
+  if (s.left > 0) s.left--;
+  if (s.next < 0 && (s.left === 0 || s.pos > cur.x.length - XFADE_SAMPLES * speed - 2)) {
     let n = sfc32Next(s.rng) % tex.length;
     if (n === s.seg && tex.length > 1) n = (n + 1) % tex.length;
     s.next = n;
-    s.npos = sfc32Next(s.rng) % 500;
+    s.npos = sfc32Next(s.rng) % (s.hop ? 2500 : 500); // Stage 5.1: hops enter anywhere in the first 5 s
     s.fade = 0;
   }
   if (s.next >= 0) {
@@ -79,6 +93,7 @@ export function texSample(tex: readonly DecodedTexture[], s: TexState, fHz: numb
       s.seg = s.next;
       s.pos = s.npos;
       s.next = -1;
+      if (s.hop) s.left = drawHop(s);
     }
   }
   return v;

@@ -4,6 +4,7 @@
 //    this acts through L1 `coupled` truths on cvp/sbp/dbp/volumeStatus, which Stage 2's pipeline reads through
 //    l1Value (its M2 tracker then meets the coupled pressures).
 import { l1Target, type L1State } from '../../l1/state.ts';
+import { CPR_SV_FRAC, SV_REF_ML } from '../hemo/params.ts';
 import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
@@ -21,9 +22,24 @@ export function venousGradient(vs: number): number {
   return 4 + 11 * Math.min(1, Math.max(0, vs));
 }
 
-/** CO (L/min) from the Stage 7a circulation (CPR compressions eject through it); 0 in arrest. */
+/**
+ * Net forward flow of CPR vs compression quality, as the gas exchange sees it (R39-2, research 09 §2) [ENG, fitted]:
+ * below guideline quality flow falls off steeply (quality^1.9), above it the gain is linear. With the low-flow
+ * compression this gives EtCO2 ≈ 12 / 20 / 25 / 29 mmHg at quality 0.5 / 0.8 / 1.0 / 1.2 (10 breaths/min, minutes
+ * 1–10). The pressure waveforms (Stage 2) keep scaling linearly with quality.
+ */
+export const CPR_FLOW_EXP = 1.9;
+export const cprFlowFactor = (q: number): number => (q < 1 ? Math.max(0, q) ** CPR_FLOW_EXP : q);
+
+/**
+ * CO (L/min) for the gas model. Stage 7a: from the circulation (beats and CPR compressions eject through it).
+ * INTERIM during CPR: the gas exchange keeps Stage 3.1's R39-2 fit (flow ∝ quality^1.9), which the EtCO2 acceptance
+ * (12 / 20 / 25 / 29 mmHg) was calibrated on, until 3.1 re-measures CPR EtCO2 against the emergent circulation CO
+ * (R45 request; circulation CO 2.1 L/min at quality 0.8, 2.5 at 1.0).
+ */
 export function cardiacOutput(hs: HemoState, t: number): number {
   void t;
+  if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * cprFlowFactor(hs.cpr.quality) * hs.cpr.rate) / 1000;
   return circCardiacOutput(hs.circ); // Stage 7a
 }
 

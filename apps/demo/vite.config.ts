@@ -17,6 +17,8 @@ export default defineConfig({
         'stage4a-skins': page('stage4a-skins'),
         'stage4b-device': page('stage4b-device'), // Stage 4b
         'stage6b-acls': page('stage6b-acls'),
+        'vent-hamilton': page('vent-hamilton'), // Stage V
+        'vent-link': page('vent-link'), // Stage V
         stage7a: page('stage7a'), // Stage 7a
       },
     },

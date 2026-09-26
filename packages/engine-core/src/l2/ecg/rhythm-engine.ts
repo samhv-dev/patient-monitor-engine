@@ -171,7 +171,7 @@ export function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx):
   const qtc = ctx.mods.longQT ? Math.max(ctx.mods.qtc, LONG_QT_QTC_MS) : ctx.mods.qtc;
   const qtBase = ctx.mods.overrides.qtMs ?? qtFridericiaMs(clamp(rr, 0.25, 2), qtc);
   const wide = isWide(p.template);
-  const scale = p.scale ?? (wide ? 1 : 1 + QRS_AMP_RESP_MOD * respSin(t, ctx.hrv));
+  const scale = p.scale ?? (wide ? 1 : 1 + QRS_AMP_RESP_MOD * respSin(t, ctx.hrv, ctx.breath));
   const supra = !p.pvc && !wide && p.origin !== 'ventricular' && p.origin !== 'paced';
   const raw = beatKernels(p.template, qtBase, scale, p.pre ?? 1);
   if (p.twistRad) rotateZ(raw, p.twistRad);

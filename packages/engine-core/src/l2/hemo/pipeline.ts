@@ -16,7 +16,7 @@ import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfi
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
-import { ARREST_AFTER_S, CPR_DUTY, G_MAX, K_OPEN, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
+import { ARREST_AFTER_S, CPR_DUTY, CPR_QUALITY_DEFAULT, G_MAX, K_OPEN, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
@@ -169,7 +169,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
     pleth: createPlethState(spo2),
     lines: { abp: createLineState(lineStateOf(sens.abp)), cvp: createLineState(lineStateOf(sens.cvp)), pap: createLineState(lineStateOf(sens.pap)) },
     abpSite: 'leftRadial',
-    cpr: { active: false, rate: 110, quality: 1, nextT: 0 },
+    cpr: { active: false, rate: 110, quality: CPR_QUALITY_DEFAULT, nextT: 0 },
     wedge: { on: false, w: 0 },
     num: { abp: createWaveNumerics(3), pap: createWaveNumerics(1.5), pleth: createWaveNumerics(0.03), cvpAvg: cvp },
     nibp: createNibpState(sens.nibp === 'off' ? 'off' : 'on'),
@@ -713,7 +713,7 @@ export function applyHemoCommand(
         const c = ev as Extract<HemoClinicalEvent, { kind: 'cpr' }>;
         if (c.active) {
           const was = hs.cpr.active;
-          hs.cpr = { active: true, rate: c.rate ?? 110, quality: c.quality ?? 1, nextT: was ? hs.cpr.nextT : t };
+          hs.cpr = { active: true, rate: c.rate ?? 110, quality: c.quality ?? CPR_QUALITY_DEFAULT, nextT: was ? hs.cpr.nextT : t };
         } else {
           hs.cpr.active = false;
         }

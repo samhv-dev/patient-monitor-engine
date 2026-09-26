@@ -26,7 +26,10 @@
   "syncMarker": "r-above",
   "defib": { "energyAdultJ": 120, "energyPaedJ": 50, "aedSequenceJ": null, "chargeTimeS": null, "readyTimeoutS": 60, "toneSet": "zoll-like" },
   "pacer": { "rateDefault": 70, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 5 }, "modeDefault": "demand", "pausePct": null },
+  "co2": { "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+    "co2.riseTimeMs": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
     "colors": { "tag": "assumed", "source": "research/05 §2.1 (ZOLL: user-configurable colour, black background)", "note": "conventional parameter colours; no ZOLL factory table retrieved" },
     "layout.lanes": { "tag": "eng", "source": "ENG" },
     "layout.tiles": { "tag": "eng", "source": "ENG" },

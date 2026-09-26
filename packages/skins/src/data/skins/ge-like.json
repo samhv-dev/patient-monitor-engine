@@ -22,7 +22,10 @@
   },
   "limits": { "adult": null, "paed": null, "neo": null },
   "layout": { "badge": "LAYOUT UNVERIFIED" },
+  "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
   "provenance": {
+    "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (GE sidestream 120 mL/min; R39-5)" },
+    "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (GE sidestream 120 mL/min; R39-5)" },
     "colors": { "tag": "assumed", "source": "research/05 §2.1 (GE: per-label colours configurable)", "note": "no GE factory colour table retrieved" },
     "sweep.co2": { "tag": "documented", "source": "research/05 §2.2 (GE CO2 0.625-50 mm/s); brief §6.8" },
     "ecg.gainOptions": { "tag": "documented", "source": "research/05 §2.2 (GE size 0.5x, 1x, 2x, 4x)" },

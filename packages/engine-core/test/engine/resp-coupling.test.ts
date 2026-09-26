@@ -151,6 +151,28 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     if (sp === 90) expect(Math.abs(tone.freqHz! - 830.6)).toBeLessThanOrEqual(1);
   });
 
+  it('R39-7 GA redistribution, default adult: core −0.9 °C at 30 min (−0.7 to −1.1), −1.3 °C at 60 min (−1.0 to −1.6); forced-air warming −0.9 at 60 min (−0.6 to −1.2)', async () => {
+    // research 09 §7: unwarmed, draped, 21–22 °C OR; the change is measured from the L1 core truth at induction.
+    // Measured at 3.1: −0.97 / −1.28 °C unwarmed, −0.68 °C warmed (the warm edge of its band; constants kept per R39-7).
+    const drop = async (warming: boolean) => {
+      const { e, ev } = rig3({ patient: ADULT });
+      await run(e, 60);
+      e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general', ...(warming ? { warming: true } : {}) }));
+      await run(e, 60 + 3600);
+      const tc = stateSeries(ev, 'tempCore');
+      const at = (s: number) => tc.find(([t]) => t >= 60 + s)![1];
+      return { d30: at(1800) - at(0), d60: at(3600) - at(0) };
+    };
+    const cold = await drop(false);
+    expect(cold.d30).toBeLessThanOrEqual(-0.7);
+    expect(cold.d30).toBeGreaterThanOrEqual(-1.1);
+    expect(cold.d60).toBeLessThanOrEqual(-1.0);
+    expect(cold.d60).toBeGreaterThanOrEqual(-1.6);
+    const warm = await drop(true);
+    expect(warm.d60).toBeLessThanOrEqual(-0.6);
+    expect(warm.d60).toBeGreaterThanOrEqual(-1.2);
+  });
+
   it('MH: VCO2 climbs, so EtCO2 rises at a fixed ventilation, and the core temperature rises', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));

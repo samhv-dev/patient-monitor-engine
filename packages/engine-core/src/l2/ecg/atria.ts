@@ -192,7 +192,7 @@ function nextSinusT(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): n
   const m = st.id === 'sinusArrhythmia'
     ? { rsa: Math.max(ctx.mods.rsa, SINUS_ARRHYTHMIA_RSA), hrvScale: Math.max(1, ctx.mods.hrvScale) }
     : ctx.mods;
-  const next = t + sinusRR(60 / rate, t, ctx.hrv, m, ctx.rng.hrv);
+  const next = t + sinusRR(60 / rate, t, ctx.hrv, m, ctx.rng.hrv, ctx.breath);
   if (st.id === 'sinusPause') {
     const every = st.opts.pauseEveryS ?? 12; // [ENG]
     const k0 = Math.floor((t - st.startT) / every);

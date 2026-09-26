@@ -63,6 +63,8 @@ import {
   type RespState,
 } from './l2/resp/pipeline.ts'; // Stage 3
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
+import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -118,8 +120,13 @@ type Listener = { fn: (e: EngineEvent) => void; types: Set<EngineEventType> | nu
 
 const ECG_CHANNELS = new Set<ChannelId>([...LEAD_IDS, 'vcgX', 'vcgY', 'vcgZ']);
 
+/** Stage 5.1 (R-S3-3): the ECG's RSA, wander and QRS modulation follow Stage 3's breath driver. */
+function breathOf(ps: PipelineState): BreathClock {
+  return cycleBreathClock((t) => lastCycleBefore(ps.resp.driver, t), fixedBreathClock(ps.hrv));
+}
+
 function rhythmCtx(ps: PipelineState): RhythmCtx {
-  return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv };
+  return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
 }
 
 /** hr truth when a rhythm starts: RhythmOpts.rateBpm, else the rhythm default (flutter: atrial/ratio). */
@@ -197,6 +204,7 @@ class Engine implements MonitorEngine {
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
     };
+    this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
     this.st.detections.length = 0;
@@ -294,6 +302,7 @@ class Engine implements MonitorEngine {
     this.st = data.st;
     this.queue = data.queue;
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand); // Stage 4b
+    this.syncCo2Sampler(); // R39-5
     this.tick = s.tick;
     this.syncLaneBuffers();
     this.syncHemoBuffers(); // Stage 2
@@ -394,7 +403,7 @@ class Engine implements MonitorEngine {
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const laneBufs = ps.lanes.map((l) => this.bufs.get(l) as RingBuffer);
     generateEcg(
-      ecgGenInputs(ps, this.mainsHz),
+      ecgGenInputs({ ...ps, breath: breathOf(ps) }, this.mainsHz), // Stage 5.1 (R-S3-3)
       ps.n,
       end,
       (n, x, y, z) => {
@@ -553,6 +562,7 @@ class Engine implements MonitorEngine {
     };
     const devOut: EngineEvent[] = []; // Stage 4b
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
+      this.syncCo2Sampler(); // R39-5: a skin switch changes the sidestream module
       for (const e of devOut) this.emit(e);
       return;
     }
@@ -595,6 +605,11 @@ class Engine implements MonitorEngine {
         return;
       }
     }
+  }
+
+  /** R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). */
+  private syncCo2Sampler(): void {
+    this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
   }
 
   /** Make the lane buffers match the current lanes (new leads start empty). */

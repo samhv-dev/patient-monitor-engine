@@ -13,6 +13,7 @@ import { createTempNum, tempMeasured, tempNumStep, type TempNum } from '../../l3
 import { piNumeric } from '../../l3/pressure-numerics/numerics.ts';
 import { normal, seedStream } from '../../rng/sfc32.ts';
 import type { AirwayState, RespClinicalEvent, TempSite, VentSource } from '../../types-resp.ts';
+import type { VentFrameExt } from '../../types-vent-link.ts'; // Stage V
 import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfile } from '../../types.ts';
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { cardiacOutput } from '../gas/coupling.ts';
@@ -345,7 +346,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     if (cmd.source !== 'ventilator') return "externalDrive source must be 'ventilator'";
     if (!f) return 'externalDrive needs a frame';
     return num('pawCmH2O', f.pawCmH2O, -30, 150) ?? num('flowLps', f.flowLps, -20, 20) ?? num('volumeMl', f.volumeMl, -100, 4000)
-      ?? num('fio2', f.fio2, 0.21, 1) ?? num('peepCmH2O', f.peepCmH2O, 0, 40) ?? (f.pawCmH2O === undefined || f.flowLps === undefined ? 'frame needs pawCmH2O and flowLps' : undefined);
+      ?? num('fio2', f.fio2, 0.21, 1) ?? num('peepCmH2O', f.peepCmH2O, 0, 40) ?? num('palvCmH2O', (f as VentFrameExt).palvCmH2O, -30, 150) ?? (f.pawCmH2O === undefined || f.flowLps === undefined ? 'frame needs pawCmH2O and flowLps' : undefined);
   }
   if (cmd.type === 'attachSensor') {
     if (cmd.sensor === 'co2') {
@@ -363,7 +364,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
   switch (ev.kind) {
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
-      return (AIRWAYS as readonly string[]).includes(a.state) ? num('severity', a.severity, 0, 1) : `airway state must be one of ${AIRWAYS.join(', ')}`;
+      return (AIRWAYS as readonly string[]).includes(a.state) ? num('severity', a.severity, 0, a.state === 'bronchospasm' ? 1.25 : 1) : `airway state must be one of ${AIRWAYS.join(', ')}`; // R39-6: bronchospasm 1–1.25 = near-fatal extreme
     }
     case 'ventilation': {
       const v = ev as Extract<RespClinicalEvent, { kind: 'ventilation' }>;

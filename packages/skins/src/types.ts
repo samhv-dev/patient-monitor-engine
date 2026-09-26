@@ -181,7 +181,15 @@ export interface Skin {
     /** Label → [low, mid, high] mmHg. */
     scales: Record<string, [number, number, number]>;
   };
-  co2: { unit: 'mmHg' | 'kPa' | '%'; scale: number; scaleUnit: 'mmHg' | '%' };
+  co2: {
+    unit: 'mmHg' | 'kPa' | '%';
+    scale: number;
+    scaleUnit: 'mmHg' | '%';
+    /** Sidestream transport delay (s) of this vendor's CO2 module (R39-5, research 09 §5); mainstream stays 0. */
+    sidestreamDelayS: number;
+    /** Sidestream 10–90 % rise time (ms), adult (R39-5); the engine keeps its own neonatal rise. */
+    riseTimeMs: number;
+  };
   alarms: {
     levels: 3;
     levelNames: [string, string, string];

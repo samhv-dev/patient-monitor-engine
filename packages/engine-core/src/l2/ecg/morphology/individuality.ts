@@ -1,18 +1,22 @@
-// Per-patient morphology fingerprint (brief §5 "Individuality: patientSeed, morphologyVariation"; research 04 §5).
-// A stable function of patientSeed: per-wave frontal/horizontal rotations (±20°·mv), amplitude scales (±25%·mv),
-// T timing (±25 ms·mv) and QRS width (±10%·mv). mv = 0 leaves the textbook morphology untouched.
+// Per-patient morphology fingerprint (brief §5 "Individuality: patientSeed, morphologyVariation"; research 04 §5,
+// Squiggler's "every patient drawn has an ECG fingerprint of their own"). Stage 5.1 bounds (at mv = 1): P, QRS and T
+// amplitude ±10 %, P, QRS and T width ±10 %, measured frontal QRS axis ±15° from the textbook beat. A stable
+// function of patientSeed (its own PRNG copy, never the engine's streams); mv = 0 leaves the textbook beat untouched.
 import { createRngState, uniform } from '../../../rng/sfc32.ts';
 import { K_STRIDE, WAVE } from '../kernels.ts';
 import type { Modifiers } from '../../../types.ts';
 import type { MorphStage, PStage } from './index.ts';
-import { stretchQrs } from './ops.ts';
+import { QRS_T, solveAxisRad } from './conduction.ts';
+import { QRS_WAVES, frontalAxisDeg, rotateZSel, stretchQrs } from './ops.ts';
 
-interface Fingerprint {
-  rotZ: number[]; // per wave code 0..5 (P Q R S T U), radians at mv = 1
-  rotY: number[];
-  amp: number[];
-  tShiftS: number;
-  qrsF: number;
+export const FP_AMP = 0.1;
+export const FP_WIDTH = 0.1;
+export const FP_AXIS_DEG = 15;
+
+export interface Fingerprint {
+  amp: { p: number; qrs: number; t: number }; // fractional, in [−FP_AMP, FP_AMP]
+  width: { p: number; qrs: number; t: number }; // fractional, in [−FP_WIDTH, FP_WIDTH]
+  axisDeg: number; // in [−FP_AXIS_DEG, FP_AXIS_DEG]
 }
 
 const cache = new Map<number, Fingerprint>();
@@ -22,49 +26,48 @@ export function fingerprint(seed: number): Fingerprint {
   if (!f) {
     const s = createRngState(seed).scenario; // a private copy: never touches the engine's streams
     const u = () => 2 * uniform(s) - 1;
-    const deg = Math.PI / 180;
     f = {
-      rotZ: Array.from({ length: 6 }, () => 20 * deg * u()),
-      rotY: Array.from({ length: 6 }, () => 20 * deg * u()),
-      amp: Array.from({ length: 6 }, () => 0.25 * u()),
-      tShiftS: 0.025 * u(),
-      qrsF: 0.1 * u(),
+      amp: { p: FP_AMP * u(), qrs: FP_AMP * u(), t: FP_AMP * u() },
+      width: { p: FP_WIDTH * u(), qrs: FP_WIDTH * u(), t: FP_WIDTH * u() },
+      axisDeg: FP_AXIS_DEG * u(),
     };
     cache.set(seed, f);
   }
   return f;
 }
 
-function perturb(k: number[], fp: Fingerprint, mv: number): void {
-  for (let i = 0; i < k.length; i += K_STRIDE) {
-    const w = k[i + 6] as number;
-    const c = w === WAVE.DELTA ? WAVE.R : w;
-    if (c > WAVE.U) continue;
-    const az = (fp.rotZ[c] as number) * mv;
-    const ay = (fp.rotY[c] as number) * mv;
-    let x = k[i + 3] as number;
-    let y = k[i + 4] as number;
-    let z = k[i + 5] as number;
-    [x, y] = [Math.cos(az) * x - Math.sin(az) * y, Math.sin(az) * x + Math.cos(az) * y];
-    [x, z] = [Math.cos(ay) * x + Math.sin(ay) * z, -Math.sin(ay) * x + Math.cos(ay) * z];
-    const a = 1 + (fp.amp[c] as number) * mv;
-    k[i + 3] = x * a;
-    k[i + 4] = y * a;
-    k[i + 5] = z * a;
-    if (w === WAVE.T || w === WAVE.U) k[i] = (k[i] as number) + fp.tShiftS * mv;
-  }
+function scaleVec(k: number[], i: number, a: number): void {
+  for (let j = 3; j < 6; j++) k[i + j] = (k[i + j] as number) * a;
 }
 
 export const individualityStage: MorphStage = (k, _info, mods) => {
   const mv = mods.morphologyVariation;
   if (mv === 0) return k;
   const fp = fingerprint(mods.patientSeed);
-  perturb(k, fp, mv);
-  return stretchQrs(k, 1 + fp.qrsF * mv);
+  for (let i = 0; i < k.length; i += K_STRIDE) {
+    const w = k[i + 6] as number;
+    if (QRS_WAVES.has(w)) scaleVec(k, i, 1 + fp.amp.qrs * mv);
+    else if (w === WAVE.T || w === WAVE.U) {
+      scaleVec(k, i, 1 + fp.amp.t * mv);
+      if (w === WAVE.T) {
+        k[i + 1] = (k[i + 1] as number) * (1 + fp.width.t * mv);
+        k[i + 2] = (k[i + 2] as number) * (1 + fp.width.t * mv);
+      }
+    }
+  }
+  stretchQrs(k, 1 + fp.width.qrs * mv);
+  // ±15° of MEASURED frontal axis (the VCG-rotation → axis map is non-linear, so solve it as axisStage does; ≈ 0.03 ms)
+  return rotateZSel(k, solveAxisRad(k, frontalAxisDeg(k) + fp.axisDeg * mv), QRS_T);
 };
 
 export const pIndividualityStage: PStage = (k, mods: Modifiers) => {
-  if (mods.morphologyVariation === 0) return k;
-  perturb(k, fingerprint(mods.patientSeed), mods.morphologyVariation);
+  const mv = mods.morphologyVariation;
+  if (mv === 0) return k;
+  const fp = fingerprint(mods.patientSeed);
+  for (let i = 0; i < k.length; i += K_STRIDE) {
+    scaleVec(k, i, 1 + fp.amp.p * mv);
+    k[i + 1] = (k[i + 1] as number) * (1 + fp.width.p * mv);
+    k[i + 2] = (k[i + 2] as number) * (1 + fp.width.p * mv);
+  }
   return k;
 };

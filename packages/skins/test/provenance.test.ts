@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BASES, PRESET_IDS, PRESETS, provenanceGaps, resolveSkin, SKIN_IDS, SKINS, THEMES, type Provenance } from '../src/index.ts';
 
 /** A source must cite a report section, a ruling or a brief section; only tag 'eng' may say ENG alone. */
-const SOURCE_RE = /(research\/0[0-6] (§\d|R\d)|brief §\d)/;
+const SOURCE_RE = /(research\/\d\d (§\d|R\d)|brief §\d)/;
 
 describe('provenance', () => {
   it.each([...SKIN_IDS, ...PRESET_IDS])('%s: every resolved leaf has a covering entry and no entry dangles', (id) => {

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Ventilator Monitor — Navy Cockpit</title>
+<style>
+/* ============================================================
+   NAVY COCKPIT SKIN — dark-blue clinical ventilator look.
+   Own implementation evoking the general ICU-ventilator design language.
+   ============================================================ */
+:root{
+  --bg:#071634; --bg2:#0a1e42; --panel:#0b1f45; --panel2:#123069; --edge:#1d3f7c;
+  --ink:#eaf1ff; --num:#ffffff; --numlab:#93aedd; --dim:#6f8bc0;
+  --btn:#173a76; --btn-ring:#2f63b4; --btn-sel:#2b6bd6; --btn-ink:#eaf1ff;
+  --paw:#ffd21e; --flow:#40d47f; --vol:#46c9e0;
+  --grid:#152f57; --grid2:#0f2547; --zero:#3a5788;
+  --alarm:#e02b2b; --alarm-ink:#fff; --redline:#e0625d; --ok:#2fb56a;
+  --tab:#123069; --tab-on:#2b6bd6;
+  --font:'Segoe UI',Roboto,Inter,system-ui,-apple-system,sans-serif;
+  --mono:'SF Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#04102a;font-family:var(--font);color:var(--ink);font-size:13px;-webkit-font-smoothing:antialiased}
+#screen{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;background:var(--bg)}
+/* header */
+#hdr{display:flex;align-items:stretch;gap:8px;padding:6px 8px;background:var(--bg2);min-height:46px}
+#alarmBanner{flex:1;display:flex;align-items:center;padding:0 14px;border-radius:6px;background:#0d2350;color:var(--dim);font-size:13px;font-weight:600;border:1px solid var(--edge)}
+#alarmBanner.armed{background:var(--alarm);color:#fff;border-color:var(--alarm);animation:pulse 1.1s infinite}
+#alarmBanner.silenced{background:#0d2350;color:#ffd21e;border-color:#5a4a10}
+@keyframes pulse{50%{filter:brightness(.82)}}
+.hbtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--btn-ink);border-radius:7px;padding:0 16px;font-size:13px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:7px}
+.hbtn:hover{background:#1d4a92}
+.hbtn .i{background:var(--alarm);color:#fff;font-style:italic;font-weight:700;border-radius:4px;padding:0 7px;font-size:12px}
+#modeName{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;min-width:120px;padding-right:8px}
+#modeName b{font-size:20px;font-weight:700;letter-spacing:.4px;line-height:1}
+#modeName span{font-size:11px;color:var(--numlab)}
+/* body */
+#body{display:grid;grid-template-columns:118px 1fr 138px;min-height:0;gap:6px;padding:6px 8px}
+/* left numeric monitoring */
+#nums{display:flex;flex-direction:column;gap:6px;min-height:0}
+.num{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.num .v{font-size:34px;font-weight:300;color:var(--num);line-height:.98;font-variant-numeric:tabular-nums}
+.num.warn .v{color:var(--redline);font-weight:500}
+.num .l{font-size:11px;color:var(--numlab);margin-top:1px}
+.num .l .u{color:var(--dim)}
+/* center waveforms */
+#center{display:flex;flex-direction:column;min-width:0;min-height:0;gap:5px}
+#viewbar{display:flex;gap:6px;flex:0 0 auto}
+.vtab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:4px 16px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.vtab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+#waves{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0}
+.wv{flex:1;position:relative;min-height:0;background:linear-gradient(180deg,#08183a,#061530);border:1px solid #122c55;border-radius:5px}
+.wv canvas{position:absolute;inset:0;width:100%;height:100%}
+#cockpit{flex:1;display:flex;flex-direction:column;gap:5px;min-height:0}
+.cpaw{flex:0 0 40%;position:relative;background:linear-gradient(180deg,#08183a,#061530);border:1px solid #122c55;border-radius:5px}
+.cpaw canvas{position:absolute;inset:0;width:100%;height:100%}
+.clow{flex:1;display:grid;grid-template-columns:0.85fr 1.5fr;gap:5px;min-height:0}
+#lungWrap{position:relative;background:radial-gradient(circle at 50% 40%,#0f2350,#07152e);border:1px solid #163266;border-radius:5px}
+#lungWrap canvas{position:absolute;inset:0;width:100%;height:100%}
+.panels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;min-height:0}
+.ipanel{background:linear-gradient(180deg,#0a1c40,#07152e);border:1px solid #122c55;border-radius:5px;padding:7px 5px;display:flex;flex-direction:column}
+.ipanel .pt{font-size:10px;color:var(--numlab);text-align:center;font-weight:600;margin-bottom:4px;line-height:1.15}
+.ipanel .bars{flex:1;display:flex;gap:12px;justify-content:center;align-items:flex-end;padding:16px 0}
+.ibar{position:relative;width:26px;background:#10264d;border-radius:3px 3px 0 0;height:100%}
+.ibar .fill{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 0 0;transition:height .25s}
+.ibar .val{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:11px;color:#fff;font-weight:600;font-variant-numeric:tabular-nums}
+.ibar .nm{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--dim);white-space:nowrap}
+/* right setting buttons */
+#rail{display:flex;flex-direction:column;gap:7px;min-height:0;overflow:auto}
+.dial{background:radial-gradient(circle at 50% 38%,#1f4a8f,#153872);border:2px solid var(--btn-ring);border-radius:12px;color:#fff;cursor:ns-resize;user-select:none;touch-action:none;padding:7px 4px;text-align:center;position:relative;transition:transform .08s,box-shadow .08s}
+.dial .dv{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.dial .du{font-size:9.5px;color:#bcd3ff;opacity:.8}
+.dial .dl{font-size:11px;color:#cfe0ff;margin-top:1px}
+.dial:hover{box-shadow:0 0 0 1px var(--btn-ring)}
+.dial.turning{transform:scale(1.05);box-shadow:0 0 0 2px var(--btn-sel),0 0 14px rgba(43,107,214,.5)}
+.railbtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--btn-ink);border-radius:8px;padding:8px 4px;font-size:12px;cursor:pointer;text-align:center;font-family:var(--font)}
+.railbtn:hover{background:#1d4a92}
+.railbtn.on{background:var(--btn-sel);border-color:#5b93ff}
+.railmini{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.railmini .railbtn{padding:7px 2px;font-size:10.5px}
+/* bottom tabs */
+#tabs{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg2)}
+.tab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:7px;padding:8px 20px;font-size:13px;cursor:pointer;font-family:var(--font)}
+.tab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+#power{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--numlab);font-size:11px}
+.batt{width:12px;height:20px;border:1px solid var(--ok);border-radius:2px;position:relative;background:linear-gradient(0deg,var(--ok) 70%,transparent 70%)}
+.batt:after{content:"";position:absolute;top:-3px;left:3px;width:6px;height:2px;background:var(--ok)}
+/* scrim + sheet + drawer */
+.scrim{position:fixed;inset:0;background:rgba(2,10,26,.55);opacity:0;pointer-events:none;transition:.18s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:72%;overflow:auto;background:var(--bg2);border-top:2px solid var(--btn-sel);transform:translateY(100%);transition:transform .2s;z-index:50;padding:14px 18px 26px}
+#sheet.on{transform:translateY(0)}
+#sheet h3{margin:0 0 10px;font-size:15px}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 22px}
+.sheettabs{display:flex;gap:6px;margin-bottom:14px}
+.stab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:6px 20px;font-size:12.5px;cursor:pointer;font-family:var(--font)}
+.stab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+.modegrp{font-size:11px;color:var(--numlab);font-weight:600;margin:14px 0 7px;text-transform:uppercase;letter-spacing:.5px}
+.moderow{display:flex;flex-wrap:wrap;gap:8px}
+.modebtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--ink);border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;font-family:var(--font);min-width:96px}
+.modebtn.on{background:var(--btn-sel);border-color:#7fb0ff;font-weight:700}
+.modefoot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.modefoot .railbtn{min-width:120px;padding:10px}
+.fld .lab{font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between}
+.fld .lab .u{color:var(--numlab);font-weight:500}
+.helper{font-size:11px;color:var(--numlab);margin-top:4px;font-style:italic}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;background:var(--edge);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--btn-sel);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:var(--btn-sel);cursor:pointer}
+select,input[type=number]{width:100%;border:1px solid var(--edge);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 9px;font-family:var(--font);font-size:13px}
+.seg2{display:flex;border:1px solid var(--edge);border-radius:6px;overflow:hidden}
+.seg2 button{flex:1;border:0;background:var(--panel);color:var(--ink);padding:7px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.seg2 button.on{background:var(--btn-sel);color:#fff;font-weight:600}
+.closebtn{float:right;background:var(--btn);border:1px solid var(--btn-ring);color:var(--ink);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--font)}
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(900px,95vw);background:var(--bg2);box-shadow:-8px 0 30px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .2s;z-index:50;overflow-y:auto}
+#drawer.on{transform:translateX(0)}
+#drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--panel);position:sticky;top:0;z-index:2}
+#drawer .dh h2{margin:0;font-size:17px}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:18px 20px 40px}
+.dcols h3{margin:0 0 10px;font-size:14px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.presets button{border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.pill-ylw{background:#e9c46a;color:#4a3500}.pill-org{background:#e8935a;color:#3a1900}.pill-red{background:#d96a6a;color:#3a0000}.pill-blu{background:#6a9bd9;color:#04203f}
+.dfld{margin:13px 0}
+.dfld .lab{font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.dfld .en{font-size:12px;color:var(--numlab);display:flex;align-items:center;gap:5px;font-weight:500}
+.status{font-size:11.5px;color:#6fd6a0;margin-top:3px}
+.hr{height:1px;background:var(--edge);margin:14px 0}
+.async{margin:6px 20px 30px}.async .t{font-size:12.5px;font-weight:700;margin-bottom:8px}
+.async .btns{display:flex;flex-wrap:wrap;gap:8px}
+.async .btns button{background:var(--btn-sel);color:#fff;border:0;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer}
+.credit{position:fixed;bottom:1px;left:6px;font-size:9px;color:var(--dim);opacity:.6;z-index:1}
+</style>
+</head>
+<body>
+<div id="screen">
+  <div id="hdr">
+    <div id="alarmBanner">No active alarms</div>
+    <button class="hbtn" id="modesBtn"><span class="i">i</span> Modes</button>
+    <div id="modeName"><b id="mnMain">(S)CMV+</b><span id="mnSub">Adult</span></div>
+  </div>
+  <div id="body">
+    <div id="nums"></div>
+    <div id="center">
+      <div id="viewbar">
+        <button class="vtab on" data-view="graphics">Graphics</button>
+        <button class="vtab" data-view="cockpit">Dynamic Lung</button>
+      </div>
+      <div id="waves"></div>
+      <div id="cockpit" style="display:none"></div>
+    </div>
+    <div id="rail"></div>
+  </div>
+  <div id="tabs">
+    <button class="tab on">Monitoring</button>
+    <button class="tab" id="tabUtil">Utilities</button>
+    <button class="tab" id="tabEvents">Events</button>
+    <button class="tab" id="tabSystem">System</button>
+    <div id="power"><span class="batt"></span><span>AC</span></div>
+  </div>
+</div>
+<div class="credit">Independent educational reimplementation — not affiliated with any manufacturer.</div>
+<div class="scrim" id="scrim"></div>
+<div id="sheet"><button class="closebtn" id="closeSheet">Close</button><h3 id="sheetTitle">Controls</h3><div id="sheetBody"></div></div>
+<div id="drawer"><div class="dh"><h2>Patient &amp; Scenarios</h2><button class="closebtn" id="closeDrawer">Close</button></div><div class="dcols" id="dcols"></div><div class="async"><div class="t">Asynchrony examples</div><div class="btns" id="asyncBtns"></div></div></div>
+
+<script>
+"use strict";
+/* ============================================================================
+   ENGINE — validated single-compartment model (own code, shared across front-ends)
+   ============================================================================ */
+const DT=0.005, SUBSTEPS=4;
+const S={mode:'VC',peep:5,rate:14,itime:1.0,fio2:40,riseTime:0.15,trigType:'flow',flowTrig:2.0,presTrig:-2.0,
+  vt:500,vcFlow:60,flowPattern:'square',pause:0.3,pc:15,prvcTarget:450,ps:12,cycleOff:25,pmax:35,pavAssist:60,
+  sex:'',height:170,compliance:50,resistance:10,spont:false,spontRate:16,pmus:6,responsiveness:80,
+  pmusRise:0.30,pmusHold:0.05,pmusDecay:0.40,riseShape:'smoothstep',decayShape:'halfcos',pmusOffset:0.0,
+  airwayClosure:false,openPressure:0,recruitedVol:0,stressIdx:false,stressB:1.0,uip:false,uipThresh:28,
+  reverseTrig:false,entrainRatio:'1:1',efl:false,eflSeverity:'moderate',pcrit:6,eflK:0.35,peepStent:40,
+  cardiac:false,hr:75,variability:false,varPct:8,showPmus:false,showP01:false,sweepSec:12,
+  modeLabel:null,
+  sigh:false,trc:false,trcPct:100,apneaTime:20,backup:true,backupRate:12,
+  almMVlo:3.0,almMVhi:12.0,almFlo:5,almFhi:40,almVTlo:200,almVThi:800};
+const P={V:0,Q:0,Paw:5,Pmus:0,Palv:5,t:0,phase:'exp',phaseT:0,breathT:0,targetPaw:5,peakInspFlow:0,vtDelivered:0,
+  prvcPressure:15,lastVTE:0,neuralT:0,neuralMult:1,lastMandStart:0,breathCount:0,pipCur:5,breathVstart:0,curBreathSpont:false,
+  measured:{PIP:0,PLAT:0,RR:0,VTE:0,MV:0,P01:0,autoPEEP:0,Pmean:5},breathTimes:[],markers:[]};
+const PRESETS={
+  ardsMild:{label:'ARDS Mild',cls:'pill-ylw',compliance:45,resistance:12,airwayClosure:true,openPressure:10,recruitedVol:120},
+  ardsMod:{label:'ARDS Mod',cls:'pill-ylw',compliance:33,resistance:13,airwayClosure:true,openPressure:14,recruitedVol:180,uip:true,uipThresh:27},
+  ardsSev:{label:'ARDS Severe',cls:'pill-org',compliance:22,resistance:15,airwayClosure:true,openPressure:18,recruitedVol:220,uip:true,uipThresh:25},
+  copd:{label:'COPD',cls:'pill-red',compliance:60,resistance:22,efl:true,eflSeverity:'moderate',pcrit:7},
+  asthma:{label:'Asthma',cls:'pill-blu',compliance:50,resistance:35,efl:true,eflSeverity:'severe',pcrit:9}};
+const SCENARIOS={
+  revTrigPC:{name:'Reverse Triggering (Early) PC',apply(){setMode('PC');Object.assign(S,{pc:14,rate:16,itime:1.0,peep:6,spont:true,pmus:7,spontRate:16,reverseTrig:true,entrainRatio:'1:1',pmusOffset:0.25,compliance:35,resistance:12});}},
+  revTrigVC:{name:'Reverse Triggering (Early) VC',apply(){setMode('VC');Object.assign(S,{vt:420,rate:16,peep:6,spont:true,pmus:8,spontRate:16,reverseTrig:true,entrainRatio:'1:1',pmusOffset:0.3,compliance:35,resistance:12,vcFlow:45});}},
+  ineffective:{name:'Ineffective Efforts',apply(){setMode('PC');loadPreset('copd');Object.assign(S,{pc:14,rate:12,itime:1.0,peep:5,spont:true,pmus:4,spontRate:22,responsiveness:60,efl:true,eflSeverity:'severe'});}},
+  earlyCycle:{name:'Early Cycling',apply(){setMode('PSV');Object.assign(S,{ps:10,peep:5,cycleOff:60,spont:true,pmus:7,spontRate:16,pmusRise:0.3,pmusHold:0.25,pmusDecay:0.6,responsiveness:100,flowTrig:1.0,compliance:30,resistance:6});}},
+  lateCycle:{name:'Late Cycling',apply(){setMode('PSV');loadPreset('copd');Object.assign(S,{ps:14,peep:5,cycleOff:10,spont:true,pmus:8,spontRate:16});}},
+  breathStack:{name:'Breath-Stacking',apply(){setMode('VC');Object.assign(S,{vt:350,rate:18,peep:5,spont:true,pmus:11,spontRate:20,pmusDecay:0.8,responsiveness:95,compliance:40,resistance:12,vcFlow:50});}},
+  autoTrig:{name:'Auto-trigger (False Trigger)',apply(){setMode('PSV');Object.assign(S,{ps:10,peep:5,flowTrig:0.6,trigType:'flow',spont:false,pmus:0,cardiac:true,hr:95,compliance:55,resistance:10});}}};
+function pbw(){const hin=S.height/2.54;const base=S.sex==='female'?45.5:50;return Math.max(30,base+2.3*(hin-60));}
+function clamp(x,a,b){return x<a?a:x>b?b:x;}
+function easeShape(x,sh){x=clamp(x,0,1);if(sh==='linear')return x;if(sh==='smoothstep')return x*x*(3-2*x);if(sh==='halfcos')return .5-.5*Math.cos(Math.PI*x);if(sh==='exp')return 1-Math.exp(-3*x);return x;}
+function recoilPressure(v){let C=S.compliance,p=v/C;if(S.airwayClosure){const vO=S.recruitedVol>0?S.recruitedVol:150;if(v<vO)p=S.openPressure*Math.sqrt(clamp(v/vO,0,1));else p=S.openPressure+(v-vO)/C;}if(S.uip){const pU=S.uipThresh-S.peep;if(p>pU)p=pU+(p-pU)*2.2;}if(S.stressIdx&&S.stressB!==1.0){const f=clamp(v/700,0.001,1.2);p*=Math.pow(f,S.stressB-1);}return p;}
+function expResistance(){let R=S.resistance;if(S.efl){const sev={mild:1.8,moderate:3.0,severe:5.0,custom:1/Math.max(.05,S.eflK)}[S.eflSeverity]||3;const st=1-(S.peepStent/100)*clamp((S.peep-3)/12,0,1);R*=sev*clamp(st,.3,1);}return R;}
+function pmusValue(t){const A=S.pmus*(0.4+0.6*(S.responsiveness/100));const tr=S.pmusRise,th=S.pmusHold,td=S.pmusDecay;if(t<0)return 0;if(t<tr)return A*easeShape(t/tr,S.riseShape);if(t<tr+th)return A;if(t<tr+th+td)return A*(1-easeShape((t-tr-th)/td,S.decayShape));return 0;}
+function pmusDuration(){return S.pmusRise+S.pmusHold+S.pmusDecay;}
+let flowTarget=0,holdMode=null,pendingHold=null;
+function vcTi(){return (S.vt/1000)/Math.max(0.05,S.vcFlow/60);}
+function stepPhysics(){const R_in=S.resistance,Rexp=expResistance(),peep=S.peep;updateSpontaneous();P.Pmus=currentPmus();controller();
+  for(let s=0;s<SUBSTEPS;s++){const dt=DT/SUBSTEPS,recoil=recoilPressure(P.V),Palv=peep+recoil-P.Pmus;let Q;
+    if(holdMode){Q=0;P.Paw=peep+recoil;}
+    else if(P.phase==='insp'&&S.mode==='VC'){Q=flowTarget;P.Paw=peep+recoil+Q*R_in-P.Pmus;if(P.Paw>S.pmax){P.Paw=S.pmax;Q=(P.Paw-peep-recoil+P.Pmus)/R_in;}}
+    else if(P.phase==='pause'){Q=0;P.Paw=peep+recoil;}
+    else{const paw=P.targetPaw,Rn=(P.phase==='exp')?Rexp:R_in;Q=(paw+P.Pmus-peep-recoil)/Rn;P.Paw=paw;}
+    P.V+=Q*1000*dt;if(P.V<0){P.V=0;if(Q<0)Q=0;}P.Q=Q;P.Palv=Palv;P.t+=dt;}
+  if(S.cardiac){const osc=Math.sin(2*Math.PI*(S.hr/60)*P.t);P.Q+=osc*0.006;P.Paw+=osc*0.15;}
+  if(P.phase==='insp')P.vtDelivered=P.V;if(!holdMode)advancePhase();updateMeasurements();pushSample();}
+let _seed=12345;function simRand(){_seed=(_seed*1103515245+12345)&0x7fffffff;return _seed/0x7fffffff;}
+function updateSpontaneous(){const a=S.spont||S.mode==='PSV'||S.mode==='PAV'||S.reverseTrig;if(!a){P.neuralT=0;return;}if(S.reverseTrig)return;P.neuralT+=DT;let per=60/Math.max(4,S.spontRate)*(P.neuralMult||1);if(P.neuralT>=per){P.neuralT-=per;P.neuralMult=S.variability?(1+((simRand()-0.5)*2*(S.varPct/100))):1;}}
+function currentPmus(){const a=S.spont||S.mode==='PSV'||S.mode==='PAV'||S.reverseTrig;if(!a)return 0;let ph;if(S.reverseTrig){const r={'1:1':1,'1:2':2,'1:3':3}[S.entrainRatio]||1;if(((P.breathCount||0)%r)!==0)return 0;ph=P.t-((P.lastMandStart||0)+S.pmusOffset);}else ph=P.neuralT;if(ph<0||ph>pmusDuration())return 0;return pmusValue(ph);}
+function controller(){const peep=S.peep;if(P.phase==='insp'){
+  if(S.mode==='VC'){const Ti=vcTi(),mean=S.vcFlow/60;if(S.flowPattern==='square')flowTarget=mean;else{const f=clamp(P.phaseT/Ti,0,1);flowTarget=mean*(4/3-(2/3)*f);}}
+  else if(S.mode==='PC')P.targetPaw=peep+Math.min(rampTo(S.pc),S.pmax-peep);
+  else if(S.mode==='PRVC')P.targetPaw=peep+Math.min(rampTo(P.prvcPressure),S.pmax-peep);
+  else if(S.mode==='PSV')P.targetPaw=peep+Math.min(rampTo(S.ps),S.pmax-peep);
+  else if(S.mode==='PAV'){const g=S.pavAssist/100,as=g*(recoilPressure(P.V)+S.resistance*Math.max(0,P.Q));P.targetPaw=peep+clamp(as,0,S.pmax-peep);}
+}else{P.targetPaw=peep;flowTarget=0;}}
+function rampTo(t){const rt=Math.max(0.02,S.riseTime);return t*Math.min(1,easeShape(P.phaseT/rt,'halfcos'));}
+function advancePhase(){P.phaseT+=DT;P.breathT+=DT;const mp=60/Math.max(4,S.rate),isSpont=(S.mode==='PSV'||S.mode==='PAV');
+  if(P.phase==='insp'){let cyc=false,Ti=(S.mode==='VC')?vcTi():S.itime;
+    if(S.mode==='VC'){if(P.vtDelivered>=S.vt||P.phaseT>=Ti)cyc=true;}
+    else if(S.mode==='PC'||S.mode==='PRVC'){if(P.phaseT>=S.itime)cyc=true;}
+    else if(S.mode==='PSV'){P.peakInspFlow=Math.max(P.peakInspFlow,P.Q);if(P.Q<=P.peakInspFlow*(S.cycleOff/100)&&P.phaseT>0.15)cyc=true;if(P.phaseT>3)cyc=true;}
+    else if(S.mode==='PAV'){if(P.Pmus<=0.2&&P.phaseT>0.2)cyc=true;if(P.phaseT>3)cyc=true;}
+    if(cyc){P.measured.PLAT=S.peep+recoilPressure(P.V);if(S.pause>0&&S.mode==='VC'){P.phase='pause';P.phaseT=0;}else startExpiration();if(pendingHold==='insp'){holdMode='insp';pendingHold=null;P.measured.PLAT=S.peep+recoilPressure(P.V);}}
+  }else if(P.phase==='pause'){P.measured.PLAT=P.Palv;if(P.phaseT>=S.pause)startExpiration();}
+  else{const minEx=0.25;let tg=false,md=false;if(!isSpont&&P.breathT>=mp){tg=true;md=true;}if(P.phaseT>=minEx&&patientTriggers())tg=true;if(isSpont&&P.breathT>=Math.max(mp,6)){tg=true;md=true;}if(pendingHold==='exp'&&P.phaseT>0.3){holdMode='exp';pendingHold=null;P.measured.autoPEEP=Math.max(0,recoilPressure(P.V));return;}if(tg)startInspiration(md);}}
+function patientTriggers(){const ap=P.measured.autoPEEP||0,net=Math.max(0,P.Pmus-ap);let sL=net/Math.max(2,S.resistance)*60,sP=net;if(S.cardiac&&Math.abs(P.Q*60)<12){const b=Math.max(0,Math.sin(2*Math.PI*(S.hr/60)*P.t));sL+=b*1.05;sP+=b*0.45;}if(sL<=0.01&&sP<=0.01)return false;if(S.trigType==='flow')return sL>=S.flowTrig;return sP>=(-S.presTrig);}
+function startInspiration(md){P.measured.autoPEEP=Math.max(0,recoilPressure(P.V));P.phase='insp';P.phaseT=0;P.breathT=0;P.vtDelivered=0;P.peakInspFlow=0;P.pipCur=P.Paw;if(md)P.lastMandStart=P.t;P.breathVstart=P.V;P.breathCount++;P.curBreathSpont=!md;if(!md)P.lastPtT=P.t;P.markers.push({t:P.t,type:md?'mand':'pt'});if(P.markers.length>60)P.markers.shift();}
+function startExpiration(){P.phase='exp';P.phaseT=0;P.measured.PIP=P.pipCur||P.Paw;const tidal=Math.max(0,P.V-(P.breathVstart||0));P.lastVTE=tidal;P.measured.VTE=tidal;if(S.mode==='PRVC'){const err=S.prvcTarget-tidal;P.prvcPressure=clamp(P.prvcPressure+clamp(err*0.01,-3,3),5,S.pmax-S.peep);}P.breathTimes.push(P.t);while(P.breathTimes.length>8)P.breathTimes.shift();
+  P.shown={PIP:P.measured.PIP,PLAT:P.measured.PLAT,RR:P.measured.RR,VTE:P.measured.VTE,MV:P.measured.MV,P01:P.measured.P01,autoPEEP:P.measured.autoPEEP,Pmean:P.measured.Pmean};numsDirty=true;}
+function updateMeasurements(){const m=P.measured;if(P.phase==='insp')P.pipCur=Math.max(P.pipCur||0,P.Paw);m.Pmean=m.Pmean*0.997+P.Paw*0.003;if(P.breathTimes.length>=2){let iv=[];for(let i=1;i<P.breathTimes.length;i++)iv.push(P.breathTimes[i]-P.breathTimes[i-1]);const a=iv.reduce((x,y)=>x+y,0)/iv.length;m.RR=a>0?60/a:0;}m.VTE=P.lastVTE;m.MV=(m.RR*m.VTE)/1000;m.P01=(S.spont||S.mode==='PSV'||S.mode==='PAV')?Math.min(P.Pmus,pmusValue(0.1)):0;}
+const BUF={p:[],f:[],v:[],m:[],t:[],sp:[]};
+function pushSample(){
+  // First-order display lag (valve/sensor dynamics) → smooth rounded transitions like a real ventilator.
+  const a=0.11;
+  P.dPaw=(P.dPaw==null)?P.Paw:(P.dPaw+(P.Paw-P.dPaw)*a);
+  P.dFlow=(P.dFlow==null)?P.Q*60:(P.dFlow+(P.Q*60-P.dFlow)*a);
+  const card=Math.sin(2*Math.PI*(72/60)*P.t);const pN=card*0.12+(simRand()-0.5)*0.09,fN=card*0.9+(simRand()-0.5)*0.8;
+  BUF.p.push(P.dPaw+pN);BUF.f.push(P.dFlow+fN);BUF.v.push(P.V);BUF.m.push(P.Pmus);BUF.t.push(P.t);BUF.sp.push(P.curBreathSpont?1:0);
+  const keep=Math.ceil((S.sweepSec||12)*1.15/DT)+40;while(BUF.t.length>keep){BUF.p.shift();BUF.f.shift();BUF.v.shift();BUF.m.shift();BUF.t.shift();BUF.sp.shift();}}
+
+/* ============================================================================
+   UI
+   ============================================================================ */
+let frozen=false,numsDirty=true,lastNumT=0,viewMode='graphics',cockpitPaw=null,lungCanvas=null;
+function M(){return P.shown||P.measured;}
+function el(t,a={},...k){const e=document.createElement(t);for(const n in a){if(n==='class')e.className=a[n];else if(n==='html')e.innerHTML=a[n];else e.setAttribute(n,a[n]);}k.forEach(c=>c!=null&&e.append(c));return e;}
+function setMode(m){S.mode=m;S.modeLabel=null;if(m==='PSV'||m==='PAV')S.spont=true;syncAll();}
+function loadPreset(id){const p=PRESETS[id];if(!p)return;Object.assign(S,{airwayClosure:false,efl:false,uip:false});for(const k of['compliance','resistance','airwayClosure','openPressure','recruitedVol','efl','eflSeverity','pcrit','uip','uipThresh'])if(p[k]!==undefined)S[k]=p[k];S._preset=id;syncAll();}
+function resetPatientDefaults(){Object.assign(S,{spont:false,reverseTrig:false,cardiac:false,variability:false,efl:false,airwayClosure:false,uip:false,stressIdx:false,trigType:'flow',flowTrig:2.0,presTrig:-2.0,responsiveness:80,pmusRise:0.30,pmusHold:0.05,pmusDecay:0.40,pmusOffset:0.0});}
+function runScenario(id){const s=SCENARIOS[id];if(!s)return;resetPatientDefaults();s.apply();S._preset=null;resetPhysics();syncAll();closeDrawer();}
+function resetPhysics(){Object.assign(P,{V:0,Q:0,Paw:S.peep,Palv:S.peep,phase:'exp',phaseT:0,breathT:999,vtDelivered:0,lastVTE:0,prvcPressure:S.pc,neuralT:0,neuralMult:1,lastMandStart:0,breathCount:0,pipCur:S.peep,breathVstart:0,curBreathSpont:false,measured:{PIP:0,PLAT:0,RR:0,VTE:0,MV:0,P01:0,autoPEEP:0,Pmean:S.peep},breathTimes:[],markers:[]});P.shown=null;P.dPaw=null;P.dFlow=null;numsDirty=true;BUF.p.length=BUF.f.length=BUF.v.length=BUF.m.length=BUF.t.length=BUF.sp.length=0;holdMode=null;pendingHold=null;}
+function modeName(){return S.modeLabel||{VC:'(S)CMV+',PC:'PCV+',PRVC:'APVcmv',PSV:'PSIMV+',PAV:'ASV'}[S.mode];}
+
+/* ---- header ---- */
+function syncHeader(){
+  document.getElementById('mnMain').textContent=modeName();
+  const m=M(),warns=[];
+  if(m.PIP>=S.pmax)warns.push('High pressure (Pmax)');
+  if(m.MV>S.almMVhi)warns.push('ExpMinVol high');
+  if(m.VTE>0&&m.MV<S.almMVlo)warns.push('ExpMinVol low');
+  if(m.VTE>S.almVThi)warns.push('Vt high');
+  if(m.VTE>0&&m.VTE<S.almVTlo)warns.push('Vt low');
+  if(m.RR>S.almFhi)warns.push('fTotal high');
+  if(m.RR>3&&m.RR<S.almFlo)warns.push('fTotal low');
+  if(m.autoPEEP>5)warns.push('Intrinsic PEEP');
+  const a=document.getElementById('alarmBanner');
+  const silenced=P.silenceUntil&&P.t<P.silenceUntil;
+  if(silenced){a.className='silenced';a.textContent='🔕 alarms silenced — '+Math.ceil(P.silenceUntil-P.t)+' s';}
+  else if(warns.length){a.className='armed';a.textContent='⚠ '+warns[0];}
+  else{a.className='';a.textContent='No active alarms';}
+}
+
+/* ---- numeric monitoring ---- */
+function buildNums(){
+  const wrap=document.getElementById('nums');const m=M();const spont=(S.mode==='PSV'||S.mode==='PAV');
+  const tiles=[
+    ['RR','/min',Math.round(m.RR),m.RR>35,'fTotal'],
+    ['VTE','ml',Math.round(m.VTE),false],
+    ['Ppeak','cmH₂O',Math.round(m.PIP),m.PIP>35],
+    ['MVe','l/min',m.MV.toFixed(1),m.MV>12,'ExpMinVol'],
+    ['Pmean','cmH₂O',Math.round(m.Pmean),false]
+  ];
+  if(spont&&S.showP01)tiles.push(['P0.1','cmH₂O',m.P01.toFixed(1),m.P01>3.5]);
+  wrap.innerHTML='';
+  tiles.forEach(([lab,u,val,warn,alt])=>{
+    wrap.append(el('div',{class:'num'+(warn?' warn':'')},
+      el('div',{class:'v'},''+val),
+      el('div',{class:'l',html:(alt||lab)+' <span class="u">'+u+'</span>'})));
+  });
+}
+
+/* ---- waveforms (line traces, Hamilton colours) ---- */
+const LANES=[{key:'p',unit:'Paw  cmH₂O',color:'--paw'},{key:'f',unit:'Flow  l/min',color:'--flow'},{key:'v',unit:'Volume  ml',color:'--vol'}];
+const canvases={};
+function buildWaves(){const w=document.getElementById('waves');w.innerHTML='';LANES.forEach(l=>{const wv=el('div',{class:'wv'});const cv=el('canvas');wv.append(cv);w.append(wv);canvases[l.key]=cv;});sizeCanvases();}
+function sizeOne(cv){if(!cv)return;const DPR=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth,h=cv.clientHeight;cv.width=w*DPR;cv.height=h*DPR;cv.getContext('2d').setTransform(DPR,0,0,DPR,0,0);}
+function sizeCanvases(){LANES.forEach(l=>sizeOne(canvases[l.key]));sizeOne(cockpitPaw);sizeOne(lungCanvas);}
+window.addEventListener('resize',()=>sizeCanvases());
+/* ---- Ventilation Cockpit: Dynamic Lung + Intelligent panels ---- */
+function buildCockpit(){
+  const c=document.getElementById('cockpit');c.innerHTML='';
+  const paw=el('div',{class:'cpaw'});cockpitPaw=el('canvas');paw.append(cockpitPaw);
+  const low=el('div',{class:'clow'});
+  const lw=el('div',{id:'lungWrap'});lungCanvas=el('canvas');lw.append(lungCanvas);
+  const panels=el('div',{class:'panels'});
+  ['Oxygenation','CO₂ Elimination','Spont / Activity'].forEach(t=>{const p=el('div',{class:'ipanel'});p.append(el('div',{class:'pt'},t),el('div',{class:'bars'}));panels.append(p);});
+  low.append(lw,panels);c.append(paw,low);sizeCanvases();updatePanels();
+}
+function updatePanels(){
+  const m=M();
+  const rsb=m.VTE>10?(m.RR/(m.VTE/1000)):0;
+  let pt=0,tot=Math.min(8,P.markers.length);P.markers.slice(-8).forEach(k=>{if(k.type==='pt')pt++;});const fspont=tot?Math.round(pt/tot*100):0;
+  const defs=[
+    [['Oxygen',S.fio2,21,100,'#46c9e0'],['PEEP',S.peep,0,20,'#46c9e0']],
+    [['MinVol',+m.MV.toFixed(1),0,20,'#40d47f'],['Ppeak',Math.round(m.PIP),0,45,'#40d47f']],
+    [['RSB',Math.round(rsb),0,150,'#ffd21e'],['%Spont',fspont,0,100,'#ffd21e']]
+  ];
+  document.querySelectorAll('#cockpit .ipanel').forEach((p,i)=>{
+    if(!defs[i])return;const bars=p.querySelector('.bars');bars.innerHTML='';
+    defs[i].forEach(([nm,val,mn,mx,col])=>{
+      const h=clamp((val-mn)/((mx-mn)||1),0,1)*100;
+      bars.append(el('div',{class:'ibar'},el('div',{class:'val'},''+val),el('div',{class:'fill',style:`height:${h}%;background:${col}`}),el('div',{class:'nm'},nm)));
+    });
+  });
+}
+function drawLung(cv){
+  if(!cv)return;const cx=cv.getContext('2d');const W=cv.clientWidth,H=cv.clientHeight;cx.clearRect(0,0,W,H);
+  const infl=clamp(P.V/Math.max(500,pbw()*9),0,1);          // 0..1 current inflation
+  const comp=clamp(S.compliance/55,0.5,1.15);               // lung width vs compliance
+  const airwayW=clamp(13-S.resistance*0.22,3.5,13);         // bronchi width vs resistance
+  const good=S.compliance>=35&&S.resistance<=15, warn=S.compliance>=24&&S.resistance<=26;
+  const border=good?'#40d47f':warn?'#ffd21e':'#e0625d';
+  const cxm=W/2, topY=H*0.10, lobeTop=H*0.26, lobeH=(H*0.48)*(0.62+0.38*infl), lobeW=(W*0.17)*comp;
+  // trachea
+  cx.strokeStyle='#a9c8ea';cx.lineWidth=airwayW;cx.lineCap='round';cx.beginPath();cx.moveTo(cxm,topY);cx.lineTo(cxm,lobeTop);cx.stroke();
+  cx.lineWidth=Math.max(2,airwayW*0.6);cx.beginPath();cx.moveTo(cxm,lobeTop);cx.lineTo(cxm-lobeW*0.5,lobeTop+lobeH*0.16);cx.moveTo(cxm,lobeTop);cx.lineTo(cxm+lobeW*0.5,lobeTop+lobeH*0.16);cx.stroke();
+  function lobe(dir){const bt=lobeTop+lobeH*0.1,bb=lobeTop+lobeH,bx=cxm+dir*lobeW*0.6;
+    const g=cx.createLinearGradient(0,bt,0,bb);g.addColorStop(0,'rgba(120,185,235,.92)');g.addColorStop(1,'rgba(40,105,170,.85)');
+    cx.beginPath();cx.moveTo(cxm+dir*airwayW*0.4,bt);
+    cx.quadraticCurveTo(bx+dir*lobeW,bt,bx+dir*lobeW*1.05,(bt+bb)/2);
+    cx.quadraticCurveTo(bx+dir*lobeW*0.85,bb,cxm+dir*lobeW*0.18,bb-2);
+    cx.quadraticCurveTo(cxm+dir*airwayW*0.3,(bt+bb)/2,cxm+dir*airwayW*0.4,bt);
+    cx.closePath();cx.fillStyle=g;cx.fill();cx.strokeStyle=border;cx.lineWidth=2.5;cx.lineJoin='round';cx.stroke();}
+  lobe(-1);lobe(1);
+  // diaphragm descends with inflation
+  const dy=lobeTop+lobeH+5;cx.strokeStyle='#4a6a92';cx.lineWidth=2;cx.beginPath();cx.moveTo(cxm-lobeW*1.5,dy-6*(1-infl));cx.quadraticCurveTo(cxm,dy+6*infl,cxm+lobeW*1.5,dy-6*(1-infl));cx.stroke();
+  // patient-trigger spark at the airway
+  if(P.lastPtT&&P.t-P.lastPtT<0.4){cx.fillStyle='#ff6b6b';cx.beginPath();cx.arc(cxm,topY-1,3.5+2.5*Math.abs(Math.sin(P.t*26)),0,7);cx.fill();}
+  // labels
+  const m=M();const cst=(m.PLAT>S.peep+0.5)?(m.VTE/(m.PLAT-S.peep)):S.compliance;
+  cx.textAlign='center';cx.fillStyle='#cfe0ff';cx.font='700 11px '+cssv('--font');cx.fillText('Dynamic Lung',cxm,H-28);
+  cx.fillStyle=border;cx.font='10px '+cssv('--mono');cx.fillText('Cstat '+(cst>0?cst.toFixed(0):'--')+'   Raw '+S.resistance+'   VT '+Math.round(m.VTE),cxm,H-13);
+}
+function cssv(v){return getComputedStyle(document.body).getPropertyValue(v).trim();}
+function niceTicks(mn,mx,n){const span=mx-mn;let step=Math.pow(10,Math.floor(Math.log10(span/n)));const e=span/n/step;if(e>5)step*=10;else if(e>2)step*=5;else if(e>1)step*=2;const t=[];for(let v=Math.ceil(mn/step)*step;v<=mx+1e-6;v+=step)t.push(v);return t;}
+function drawLane(lane){drawLaneOn(canvases[lane.key],lane);}
+function drawLaneOn(cv,lane){
+  if(!cv)return;const cx=cv.getContext('2d');
+  const W=cv.clientWidth,H=cv.clientHeight;cx.clearRect(0,0,W,H);
+  const mL=34,mR=6,mT=12,mB=13,plotW=W-mL-mR,plotH=H-mT-mB,n=BUF.t.length,sweep=S.sweepSec,arr=BUF[lane.key];
+  let mn,mx;
+  if(lane.key==='p'){mn=-10;let hi=30;for(let i=0;i<n;i++)hi=Math.max(hi,arr[i]);mx=Math.max(30,Math.ceil(hi/5)*5);}
+  else if(lane.key==='f'){let Mx=40;for(let i=0;i<n;i++)Mx=Math.max(Mx,Math.abs(arr[i]));Mx=Math.ceil(Mx/10)*10;mn=-Mx;mx=Mx;}
+  else{mn=0;let hi=100;for(let i=0;i<n;i++)hi=Math.max(hi,arr[i]);mx=Math.max(100,Math.ceil(hi/50)*50+50);}
+  const span=(mx-mn)||1,xOf=t=>mL+(((t%sweep)+sweep)%sweep)/sweep*plotW,yOf=v=>mT+plotH-((v-mn)/span)*plotH;
+  cx.font='9px '+cssv('--font');cx.textBaseline='middle';cx.strokeStyle=cssv('--grid');cx.lineWidth=1;
+  niceTicks(mn,mx,4).forEach(v=>{const y=yOf(v);cx.beginPath();cx.moveTo(mL,y);cx.lineTo(W-mR,y);cx.stroke();if(y>mT+10){cx.fillStyle=cssv('--dim');cx.textAlign='right';cx.fillText(Math.abs(v)<1?'0':(''+Math.round(v)),mL-3,y);}});
+  cx.textAlign='center';cx.textBaseline='top';
+  for(let s=0;s<=sweep;s+=2){const x=mL+s/sweep*plotW;cx.strokeStyle=cssv('--grid');cx.beginPath();cx.moveTo(x,mT);cx.lineTo(x,mT+plotH);cx.stroke();cx.fillStyle=cssv('--dim');cx.fillText(s,x,mT+plotH+2);}
+  cx.textAlign='left';cx.fillStyle=cssv('--numlab');cx.font='9px '+cssv('--font');cx.fillText(lane.unit,2,2);
+  if(lane.key==='p'){cx.strokeStyle=cssv('--redline');cx.setLineDash([5,3]);const yh=yOf(Math.min(mx,S.pmax));cx.beginPath();cx.moveTo(mL,yh);cx.lineTo(W-mR,yh);cx.stroke();cx.setLineDash([]);}
+  if(lane.key==='f'){cx.strokeStyle=cssv('--zero');cx.setLineDash([3,3]);const yz=yOf(0);cx.beginPath();cx.moveTo(mL,yz);cx.lineTo(W-mR,yz);cx.stroke();cx.setLineDash([]);}
+  cx.save();cx.beginPath();cx.rect(mL,mT,plotW,plotH);cx.clip();
+  if(n>=2){
+    const tEnd=BUF.t[n-1],xc=xOf(tEnd),gap=Math.max(7,plotW*0.02),win=2;
+    // smooth line trace
+    const pts=[];let px=null;
+    for(let i=0;i<n;i++){const t=BUF.t[i];if(tEnd-t>=sweep)continue;let s=0,c=0;for(let k=-win;k<=win;k++){const j=i+k;if(j>=0&&j<n){s+=arr[j];c++;}}pts.push({x:xOf(t),y:yOf(s/c),wrap:px!=null&&xOf(t)<px-plotW*0.5});px=xOf(t);}
+    cx.strokeStyle=cssv(lane.color);cx.lineWidth=1.8;cx.lineJoin='round';cx.lineCap='round';cx.beginPath();let started=false,prev=null;
+    for(const p of pts){if(!started||p.wrap){cx.moveTo(p.x,p.y);started=true;prev=p;continue;}cx.quadraticCurveTo(prev.x,prev.y,(prev.x+p.x)/2,(prev.y+p.y)/2);prev=p;}
+    if(prev&&started)cx.lineTo(prev.x,prev.y);cx.stroke();
+    // erase gap
+    cx.fillStyle='#061530';if(xc+gap<=W-mR)cx.fillRect(xc,mT,gap,plotH);else{cx.fillRect(xc,mT,W-mR-xc,plotH);cx.fillRect(mL,mT,(xc+gap)-(W-mR),plotH);}
+    if(frozen||holdMode){cx.strokeStyle=cssv('--dim');cx.setLineDash([4,4]);cx.beginPath();cx.moveTo(xc,mT);cx.lineTo(xc,mT+plotH);cx.stroke();cx.setLineDash([]);}
+    // red trigger markers at bottom of Paw lane (patient-triggered)
+    if(lane.key==='p'){P.markers.forEach(mk=>{if(tEnd-mk.t>=sweep)return;if(mk.type!=='pt')return;const x=xOf(mk.t);cx.fillStyle=cssv('--redline');cx.beginPath();cx.moveTo(x,mT+plotH-7);cx.lineTo(x-4,mT+plotH);cx.lineTo(x+4,mT+plotH);cx.closePath();cx.fill();});}
+  }
+  cx.restore();
+}
+
+/* ---- round setting buttons (right rail), operable by drag/scroll ---- */
+const HKNOBS={
+  VC:[['vt','VT','ml'],['rate','Rate','b/min'],['peep','PEEP','cmH₂O'],['fio2','Oxygen','%']],
+  PC:[['pc','Pinsp','cmH₂O'],['rate','Rate','b/min'],['itime','Ti','s'],['peep','PEEP','cmH₂O'],['fio2','Oxygen','%']],
+  PRVC:[['prvcTarget','VT','ml'],['rate','Rate','b/min'],['itime','Ti','s'],['peep','PEEP','cmH₂O'],['fio2','Oxygen','%']],
+  PSV:[['ps','Psupp','cmH₂O'],['peep','PEEP','cmH₂O'],['cycleOff','ETS','%'],['fio2','Oxygen','%']],
+  PAV:[['pavAssist','%Supp','%'],['peep','PEEP','cmH₂O'],['fio2','Oxygen','%']]
+};
+const KRANGE={peep:[0,20,1],vt:[150,800,10],vcFlow:[10,120,1],rate:[4,40,1],pause:[0,0.6,0.05],fio2:[21,100,1],pc:[5,40,1],itime:[0.3,2.5,0.05],riseTime:[0.02,0.6,0.01],prvcTarget:[150,800,10],pmax:[15,60,1],ps:[0,40,1],cycleOff:[5,70,1],pavAssist:[10,90,5]};
+function buildRail(){
+  const rail=document.getElementById('rail');rail.innerHTML='';
+  (HKNOBS[S.mode]||[]).forEach(([key,lab,u])=>{
+    const [min,max,step]=KRANGE[key]||[0,100,1];
+    const d=el('div',{class:'dial'});
+    const dv=el('div',{class:'dv'},'');const du=el('div',{class:'du'},u);const dl=el('div',{class:'dl'},lab);
+    d.append(dv,du,dl);
+    const fmt=v=>(step<1?(''+(+v).toFixed(2)).replace(/0$/,'').replace(/\.$/,''):''+v);
+    const show=()=>dv.textContent=(step<1?(+S[key]).toFixed(step<0.1?2:1):S[key]);
+    const change=v=>{S[key]=clamp(Math.round(v/step)*step,min,max);show();numsDirty=true;};
+    show();
+    let dg=false,sy=0,sv=0;
+    d.onpointerdown=e=>{dg=true;sy=e.clientY;sv=S[key];try{d.setPointerCapture(e.pointerId);}catch(_){}d.classList.add('turning');e.preventDefault();};
+    d.onpointermove=e=>{if(!dg)return;change(sv+Math.round((sy-e.clientY)/4)*step);};
+    const end=()=>{dg=false;d.classList.remove('turning');};d.onpointerup=end;d.onpointercancel=end;
+    d.onwheel=e=>{e.preventDefault();change(S[key]+(e.deltaY<0?step:-step));};
+    d.ondblclick=()=>openSheet('controls');
+    rail.append(d);
+  });
+  const ctrl=el('div',{class:'railbtn'},'Controls');ctrl.onclick=()=>openSheet('controls');
+  const alarms=el('div',{class:'railbtn'},'Alarms');alarms.onclick=()=>openSheet('alarms');
+  rail.append(ctrl,alarms);
+  const mini=el('div',{class:'railmini'});
+  const mk=(t,fn,on)=>{const b=el('div',{class:'railbtn'+(on?' on':'')},t);b.onclick=fn;return b;};
+  mini.append(
+    mk(frozen?'Resume':'Freeze',()=>{frozen=!frozen;buildRail();},frozen),
+    mk('Insp hold',()=>doHold('insp'),holdMode==='insp'),
+    mk('Exp hold',()=>doHold('exp'),holdMode==='exp'),
+    mk('Patient',()=>openDrawer()),
+    mk('Man. breath',()=>{if(P.phase==='exp')startInspiration(false);}),
+    mk('Reset',()=>resetPhysics())
+  );
+  rail.append(mini);
+}
+function doHold(kind){if(holdMode){holdMode=null;}else{pendingHold=kind;}buildRail();}
+
+/* ---- settings sheet (Controls / Alarms) ---- */
+function sld(key,label,min,max,step,unit,fmt,after){const f=el('div',{class:'fld'});const lab=el('div',{class:'lab'});lab.append(el('span',{},label),el('span',{class:'u'}));const inp=el('input',{type:'range',min,max,step,value:S[key]});const upd=()=>lab.querySelector('.u').textContent=(fmt?fmt(S[key]):S[key])+(unit?' '+unit:'');inp.oninput=()=>{S[key]=parseFloat(inp.value);upd();if(after)after();numsDirty=true;buildRail();};f.append(lab,inp);upd();return f;}
+function numFld(key,label){const f=el('div',{class:'fld'});f.append(el('div',{class:'lab'},el('span',{},label)));const inp=el('input',{type:'number',value:S[key]});inp.oninput=()=>{const v=parseFloat(inp.value);if(!isNaN(v)){S[key]=v;numsDirty=true;buildRail();}};f.append(inp);return f;}
+function seg(key,label,opts,after){const f=el('div',{class:'fld'});if(label)f.append(el('div',{class:'lab'},el('span',{},label)));const g=el('div',{class:'seg2'});opts.forEach(([v,t])=>{const b=el('button',{},t);if(S[key]===v)b.classList.add('on');b.onclick=()=>{S[key]=v;[...g.children].forEach(c=>c.classList.remove('on'));b.classList.add('on');if(after)after();buildRail();};g.append(b);});f.append(g);return f;}
+function modeSel(){const f=el('div',{class:'fld'});f.append(el('div',{class:'lab'},el('span',{},'Mode')));const s=el('select');[['VC','(S)CMV+ (volume)'],['PC','PCV+ (pressure)'],['PRVC','APVcmv (adaptive)'],['PSV','PSIMV+ / SPONT'],['PAV','ASV (adaptive)']].forEach(([v,t])=>s.append(el('option',{value:v},t)));s.value=S.mode;s.onchange=()=>{setMode(s.value);buildSheet('controls');};f.append(s);return f;}
+function ieHelper(){const Ti=vcTi(),period=60/Math.max(4,S.rate),te=Math.max(0.05,period-Ti-S.pause);return el('div',{class:'helper'},`Ti ${Ti.toFixed(2)}s · I:E 1:${(te/Ti).toFixed(1)}`);}
+/* Mode groups (Chatburn/Hamilton-style names) → underlying engine mode */
+const HMODES=[
+  ['Volume controlled (adaptive)',[['(S)CMV+','VC'],['APVcmv','PRVC'],['APVsimv','PRVC']]],
+  ['Pressure controlled (biphasic)',[['PCV+','PC'],['PSIMV+','PSV'],['SPONT','PSV'],['DuoPAP','PC'],['APRV','PC']]],
+  ['Intelligent Ventilation',[['ASV','PAV']]],
+  ['Noninvasive',[['NIV','PSV'],['NIV-ST','PSV']]]
+];
+const MODEMAP={};HMODES.forEach(([,l])=>l.forEach(([nm,eng])=>MODEMAP[nm]=eng));
+let pendingMode=null, sheetTab='basic';
+function sheetTog(key,label,after){const f=el('div',{class:'fld'});const w=el('label',{class:'en',style:'font-size:13px;color:var(--ink);gap:8px'});const c=el('input',{type:'checkbox'});if(S[key])c.checked=true;c.onchange=()=>{S[key]=c.checked;if(after)after();buildRail();};w.append(c,label);f.append(w);return f;}
+function buildSheet(which){
+  const title={modes:'Modes',controls:'Controls',alarms:'Alarms'}[which]||'Controls';
+  document.getElementById('sheetTitle').textContent=title;
+  const b=document.getElementById('sheetBody');b.innerHTML='';
+  if(which==='modes')return buildModes(b);
+  if(which==='alarms')return buildAlarms(b);
+  // Controls with Basic / More / Apnea tabs
+  const tabs=el('div',{class:'sheettabs'});
+  [['basic','Basic'],['more','More'],['apnea','Apnea']].forEach(([k,t])=>{const bt=el('button',{class:'stab'+(sheetTab===k?' on':'')},t);bt.onclick=()=>{sheetTab=k;buildSheet('controls');};tabs.append(bt);});
+  b.append(tabs);
+  const g=el('div',{class:'sheetgrid'});
+  if(sheetTab==='basic')buildBasic(g);else if(sheetTab==='more')buildMore(g);else buildApnea(g);
+  b.append(g);
+}
+function buildModes(b){
+  b.append(el('div',{class:'helper'},'Select a mode, then Confirm. (All modes drive the same single-compartment lung model — the point is navigating the menu.)'));
+  if(!pendingMode)pendingMode=modeName();
+  HMODES.forEach(([grp,list])=>{
+    b.append(el('div',{class:'modegrp'},grp));
+    const row=el('div',{class:'moderow'});
+    list.forEach(([nm])=>{const bt=el('button',{class:'modebtn'+(pendingMode===nm?' on':'')},nm);bt.onclick=()=>{pendingMode=nm;buildSheet('modes');};row.append(bt);});
+    b.append(row);
+  });
+  const foot=el('div',{class:'modefoot'});
+  const cancel=el('button',{class:'railbtn'},'Cancel');cancel.onclick=()=>{pendingMode=null;closeSheet();};
+  const confirm=el('button',{class:'railbtn on'},'Confirm');confirm.onclick=()=>{const nm=pendingMode;setMode(MODEMAP[nm]||'VC');S.modeLabel=nm;pendingMode=null;syncAll();closeSheet();};
+  foot.append(cancel,confirm);b.append(foot);
+}
+function buildBasic(g){
+  g.append(sld('peep','PEEP / CPAP',0,20,1,'cmH₂O'));
+  if(S.mode==='VC'){g.append(numFld('vt','Tidal Volume (ml)'));const fl=el('div');fl.append(sld('vcFlow','Flow',10,120,1,'l/min',null,()=>{const h=document.getElementById('ieh');if(h)h.replaceWith(Object.assign(ieHelper(),{id:'ieh'}));}));const ie=ieHelper();ie.id='ieh';fl.append(ie);g.append(fl);g.append(sld('rate','Rate',4,40,1,'b/min'));}
+  else if(S.mode==='PC'){g.append(sld('pc','Pcontrol (Pinsp)',5,40,1,'cmH₂O'));g.append(sld('rate','Rate',4,40,1,'b/min'));g.append(sld('itime','Ti',0.3,2.5,0.05,'s',v=>v.toFixed(2)));}
+  else if(S.mode==='PRVC'){g.append(sld('prvcTarget','Target VT',150,800,10,'ml'));g.append(sld('rate','Rate',4,40,1,'b/min'));g.append(sld('itime','Ti',0.3,2.5,0.05,'s',v=>v.toFixed(2)));}
+  else if(S.mode==='PSV'){g.append(sld('ps','Psupport',0,40,1,'cmH₂O'));g.append(sld('cycleOff','ETS (exp. trigger)',5,70,1,'%'));}
+  else if(S.mode==='PAV'){g.append(sld('pavAssist','% Support',10,90,5,'%'));}
+  g.append(sld('fio2','Oxygen',21,100,1,'%'));
+}
+function buildMore(g){
+  g.append(sld('riseTime','Pramp (rise time)',0.02,0.6,0.01,'s',v=>v.toFixed(2)));
+  if(S.mode==='VC'){g.append(seg('flowPattern','Flow Pattern',[['square','Constant'],['decel','Decel']]));g.append(sld('pause','Insp. Pause',0,0.6,0.05,'s',v=>v.toFixed(2)));}
+  if(S.mode==='PRVC')g.append(sld('pmax','Pmax',15,60,1,'cmH₂O'));
+  g.append(seg('trigType','Trigger type',[['pressure','P-trig'],['flow','Flowtrigger']]));
+  g.append(sld('flowTrig','Trigger sens.',0.3,10,0.1,'l/min',v=>v.toFixed(1)));
+  g.append(sheetTog('sigh','Sigh (a deep breath every ~50 breaths)'));
+  g.append(sheetTog('trc','TRC — Tube Resistance Compensation',()=>buildSheet('controls')));
+  if(S.trc)g.append(sld('trcPct','TRC compensation',0,100,5,'%'));
+}
+function buildApnea(g){
+  g.append(el('div',{class:'helper',style:'grid-column:1/-1'},'Apnea backup takes over if no breath is detected within the apnea time (available in spontaneous modes).'));
+  g.append(sheetTog('backup','Apnea backup ventilation'));
+  g.append(sld('apneaTime','Apnea time',10,60,1,'s'));
+  g.append(sld('backupRate','Backup rate',6,30,1,'b/min'));
+}
+function buildAlarms(b){
+  b.append(el('div',{class:'helper'},'Set alarm limits — crossing one raises the banner alarm (high-priority in red). Tap the banner to silence for 2 min.'));
+  const g=el('div',{class:'sheetgrid'});
+  g.append(sld('pmax','Pressure limit (Pmax)',15,70,1,'cmH₂O'));
+  g.append(sld('almMVlo','ExpMinVol low',0,20,0.5,'l/min',v=>v.toFixed(1)));
+  g.append(sld('almMVhi','ExpMinVol high',1,30,0.5,'l/min',v=>v.toFixed(1)));
+  g.append(sld('almFlo','fTotal low',0,40,1,'b/min'));
+  g.append(sld('almFhi','fTotal high',10,80,1,'b/min'));
+  g.append(sld('almVTlo','Vt low',0,800,10,'ml'));
+  g.append(sld('almVThi','Vt high',200,2000,10,'ml'));
+  g.append(sld('apneaTime','Apnea time',10,60,1,'s'));
+  b.append(g);
+}
+
+/* ---- patient drawer ---- */
+function dSld(key,label,min,max,step,unit,fmt,status){const f=el('div',{class:'dfld'});const lab=el('div',{class:'lab'});const txt=()=>label+': '+(fmt?fmt(S[key]):S[key])+(unit?' '+unit:'');lab.append(el('span',{},txt()));const inp=el('input',{type:'range',min,max,step,value:S[key]});inp.oninput=()=>{S[key]=parseFloat(inp.value);lab.firstChild.textContent=txt();if(st)st.textContent=status();numsDirty=true;buildRail();};f.append(lab,inp);const st=status?el('div',{class:'status'},status()):null;if(st)f.append(st);return f;}
+function dTog(key,label,after){const en=el('label',{class:'en'});const c=el('input',{type:'checkbox'});if(S[key])c.checked=true;c.onchange=()=>{S[key]=c.checked;if(after)after();buildDrawer();};en.append(c,'Enable');return el('div',{class:'dfld'},el('div',{class:'lab'},el('span',{},label),en));}
+function buildDrawer(){
+  const d=document.getElementById('dcols');d.innerHTML='';const L=el('div'),R=el('div');
+  L.append(el('h3',{},'Patient Characteristics'));
+  const pr=el('div',{class:'presets'});Object.entries(PRESETS).forEach(([id,p])=>{const b=el('button',{class:p.cls},p.label);b.onclick=()=>loadPreset(id);pr.append(b);});
+  L.append(el('div',{style:'font-size:12px;color:var(--numlab);margin-bottom:6px'},'Presets'),pr);
+  L.append(dSld('compliance','Compliance',10,90,1,'ml/cmH₂O',null,()=>S.compliance>=40?'Normal':S.compliance>=25?'Reduced':'Severely reduced'));
+  L.append(dSld('resistance','Resistance',5,50,1,'cmH₂O/l/s',null,()=>S.resistance<=15?'Normal':S.resistance<=25?'Elevated':'High'));
+  const tau=S.resistance*S.compliance/1000;
+  L.append(el('div',{class:'dfld'},el('div',{class:'lab'},el('span',{},'Time Constant τ: '+tau.toFixed(2)+' s')),el('div',{class:'status',style:'color:var(--numlab)'},'95% equilibration '+(3*tau).toFixed(2)+' s')));
+  L.append(el('div',{class:'hr'}));
+  L.append(dTog('airwayClosure','Airway Closure'));if(S.airwayClosure){L.append(dSld('recruitedVol','Recruited Volume',0,400,10,'ml'));L.append(dSld('openPressure','Opening Pressure',0,25,1,'cmH₂O'));}
+  L.append(el('div',{class:'hr'}));
+  L.append(dTog('stressIdx','Stress Index'));if(S.stressIdx)L.append(dSld('stressB','Stress Index',0.7,1.4,0.01,'',v=>v.toFixed(2),()=>S.stressB<0.9?'SI<0.9 concave':S.stressB>1.1?'SI>1.1 convex':'SI 0.9–1.1 normal'));
+  L.append(el('div',{class:'hr'}));
+  L.append(dTog('reverseTrig','Reverse Triggering'));
+  L.append(dTog('spont','Spontaneous Breathing'));if(S.spont){L.append(dSld('spontRate','Spont. Rate',6,40,1,'/min'));L.append(dSld('pmus','Peak Effort (Pmus)',0,20,0.5,'cmH₂O',v=>v.toFixed(1)));L.append(dSld('responsiveness','Responsiveness',0,100,5,'%'));}
+  R.append(el('h3',{},'Advanced'));
+  R.append(dTog('efl','Expiratory Flow Limitation'));if(S.efl){R.append(dSld('pcrit','Critical Closing P',2,15,1,'cmH₂O'));R.append(dSld('peepStent','PEEP Stenting',0,100,5,'%'));}
+  R.append(dTog('cardiac','Cardiac Oscillations'));if(S.cardiac)R.append(dSld('hr','Heart Rate',40,140,1,'bpm'));
+  R.append(dTog('variability','Natural Variability'));if(S.variability)R.append(dSld('varPct','Variability',5,20,1,'%'));
+  R.append(dTog('uip','Upper Inflection'));if(S.uip)R.append(dSld('uipThresh','UIP Threshold',20,40,1,'cmH₂O'));
+  R.append(el('div',{class:'hr'}));
+  R.append(dTog('showP01','Show P0.1'));
+  d.append(L,R);
+}
+function buildAsync(){const w=document.getElementById('asyncBtns');w.innerHTML='';Object.entries(SCENARIOS).forEach(([id,s])=>{const b=el('button',{},s.name);b.onclick=()=>runScenario(id);w.append(b);});}
+
+/* ---- open/close ---- */
+function openSheet(which){if(which==='controls')sheetTab='basic';if(which==='modes')pendingMode=null;buildSheet(which);document.getElementById('sheet').classList.add('on');document.getElementById('scrim').classList.add('on');}
+function closeSheet(){document.getElementById('sheet').classList.remove('on');document.getElementById('scrim').classList.remove('on');}
+function openDrawer(){buildDrawer();document.getElementById('drawer').classList.add('on');document.getElementById('scrim').classList.add('on');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('on');document.getElementById('scrim').classList.remove('on');}
+document.getElementById('closeSheet').onclick=closeSheet;
+document.getElementById('closeDrawer').onclick=closeDrawer;
+document.getElementById('scrim').onclick=()=>{closeSheet();closeDrawer();};
+document.getElementById('modesBtn').onclick=()=>openSheet('modes');
+document.getElementById('tabUtil').onclick=()=>openDrawer();
+document.getElementById('tabSystem').onclick=()=>openSheet('controls');
+document.getElementById('alarmBanner').onclick=()=>{P.silenceUntil=P.t+120;};
+document.querySelectorAll('.vtab').forEach(bt=>bt.onclick=()=>{viewMode=bt.dataset.view;document.querySelectorAll('.vtab').forEach(x=>x.classList.toggle('on',x===bt));document.getElementById('waves').style.display=viewMode==='graphics'?'':'none';document.getElementById('cockpit').style.display=viewMode==='cockpit'?'':'none';sizeCanvases();if(viewMode==='cockpit')updatePanels();});
+
+function syncAll(){buildWaves();buildNums();buildRail();buildDrawer();syncHeader();}
+
+/* ---- main loop ---- */
+let acc=0,last=0;
+function loop(ts){if(!last)last=ts;let dt=(ts-last)/1000;last=ts;if(dt>0.1)dt=0.1;
+  if(!frozen&&!holdMode){acc+=dt;let steps=0;while(acc>=DT&&steps<400){stepPhysics();acc-=DT;steps++;}}
+  else if(holdMode){for(let i=0;i<2;i++)stepPhysics();}
+  if(viewMode==='graphics'){LANES.forEach(drawLane);}
+  else{drawLaneOn(cockpitPaw,LANES[0]);drawLung(lungCanvas);}
+  if(numsDirty||P.t-lastNumT>1.4){buildNums();if(viewMode==='cockpit')updatePanels();lastNumT=P.t;numsDirty=false;}
+  syncHeader();
+  requestAnimationFrame(loop);
+}
+/* boot */
+buildWaves();buildCockpit();buildNums();buildRail();buildDrawer();buildAsync();syncHeader();resetPhysics();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
