@@ -157,6 +157,12 @@ export function applyLungSpecs(rs: RespState): void {
   ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
 }
 
+/** Stage 7b: induction-atelectasis factor by body size (catalogue §10: atel 0.11 at BMI 40 vs 0.06 lean) [ENG]. */
+export function inductionFactor(pat: GasPatient): number {
+  const bmi = pat.weightKg / (pat.ibwKg > 0 ? (pat.ibwKg / 22) : 1); // ≈ BMI from IBW at BMI 22
+  return Math.min(3, 1 + 0.05 * Math.max(0, bmi - 25));
+}
+
 /**
  * Stage 7b: how the breath driver drives the lung units at time t. Positive-pressure inspiration and spontaneous
  * inspiration are flow sources (the driver's volume curve); expiration returns to PEEP (ventilator) or 0; a
@@ -230,7 +236,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const side = circSideFlows(h);
   lungGasStep(rs.lung, {
     va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
-    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: 1, volatileMac: 0, sideFlow: side,
+    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), volatileMac: 0, sideFlow: side,
     qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
   }, GAS_DT_S);
   writeCircPvr(h, rs.lung.perf.pvrMult);

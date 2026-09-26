@@ -2894,6 +2894,8 @@ git push origin stage-7b-lungs
 
 ### Task 17: Profile conditions and FRC states (induction, supine, obesity, pregnancy)
 
+> **Executor note:** Measured: induction atelectasis at 15 min FiO2 1.0 0.055, FiO2 0.8 0.000, BMI ≈ 38 (122 kg) 0.090. Edmark (not asserted; GA, 3 min preoxygenation at FiO2 f, then apnoea, time to SaO2 90 %): FiO2 1.0 / 0.8 / 0.6 → 488 / 379 / 262 s (Edmark 411 / 303 / 213; ordering right, ≈ 20 % long). resp-oxygen suite passes. No deviation.
+
 **Files:**
 - Modify: `packages/engine-core/src/l2/resp/pipeline.ts` (indFactor), `packages/engine-core/src/l2/lung/lung.ts` (FRC multiplier use is already there)
 - Create: `packages/engine-core/test/engine/lung-frc.test.ts`
@@ -2902,7 +2904,7 @@ git push origin stage-7b-lungs
 - Consumes: `PatientProfile.lungConditions` (Task 1; read in Task 13's `createRespState`), `thermal { anaesthesia: 'general' }` (Stage 3), `preoxygenate` (Stage 3).
 - Produces: `inductionFactor(pat: GasPatient): number` in pipeline.ts — obesity (BMI above 25 already shrinks Stage 3's FRC) raises induction atelectasis ×(1 + 0.05·(BMI − 25)₊) capped ×3 [ENG on catalogue §10's atel 0.11 at BMI 40 vs 0.06]; FRC stays Stage 3's supine/GA/obesity rule × the conditions' `frc` multiplier (pregnancy, COPD).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/lung-frc.test.ts`:
 
@@ -2938,12 +2940,12 @@ describe('FRC states and induction atelectasis (tables §4.1, Q34, Edmark 2003)'
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-frc.test.ts`
 Expected: FAIL on the obesity assertion (indFactor is 1).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/resp/pipeline.ts` add after `applyLungSpecs`:
 
@@ -2957,12 +2959,12 @@ export function inductionFactor(pat: GasPatient): number {
 
 and in the Task 14 `lungGasStep` call change `indFactor: 1` to `indFactor: inductionFactor(rs.pat)`. In `lungGasStep` (lung.ts) the store volume already uses `ls.frcGaMl * lp.frcMult`; confirm `rs.lung.frcGaMl` is set each step (Task 14) — no further change.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-frc.test.ts test/engine/resp-oxygen.test.ts`
 Expected: PASS. Record for the gate note (not asserted): the time to SaO2 90 % after induction apnoea at FiO2 1.0 / 0.8 / 0.6 against Edmark's 411 / 303 / 213 s (tables §4.1 validation target; Stage 3 gives 501 s at FiO2 1.0 without atelectasis).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/lung-frc.test.ts
