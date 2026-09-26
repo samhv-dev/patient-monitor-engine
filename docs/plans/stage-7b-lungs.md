@@ -282,7 +282,7 @@ git push origin stage-7b-lungs
 **Interfaces:**
 - Produces: every constant in `params.ts` (names used by Tasks 3–12: `L`, `R`, `N_UNITS`, `SIDE_SHARE`, `PERF_SHARE`, `R_TUBE`, `CCW_ML`, `TLC_ML_KG`, `RV_ML_KG`, `VENEGAS_C`, `MECH_H`, `CO2_SLOPE_BLOOD`, `P_OPEN_HEALTHY`, `TAU_REC_HEALTHY_S`, `ATEL_IND`, `TAU_COLLAPSE_F1_MIN`, `TAU_COLLAPSE_F04_MIN`, `TAU_BLOCK_MIN`, `TAU_BLOCK_N2_MIN`, `TAU_DEREC_S`, `P_CLOSE`, `P_OPEN_LO`, `TAU_HPV1_S`, `HPV2_EXTRA`, `HPV2_ONSET_S`, `TAU_HPV2_S`, `HPV_PAO2_HI`, `HPV_PAO2_LO`, `ATEL_PERF`, `VQ_LOW`, `HEALTHY_VDALV`, `K_TAU_II`, `TAU_II_MAX`, `TAU_EXP_REF`); `interface Sigmoid { a; b; c; d }`, `sigmoidFor(rangeMl, cMl, c?)`, `volumeAt(s, p)`, `pressureAt(s, v)`, `complianceAt(s, v)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/venegas.test.ts`:
 
@@ -305,12 +305,12 @@ describe('Venegas sigmoid on the lung (N-P12)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/venegas.test.ts`
 Expected: FAIL — cannot resolve `venegas.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/params.ts`:
 
@@ -419,12 +419,12 @@ export function complianceAt(s: Sigmoid, v: number): number {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/venegas.test.ts`
 Expected: PASS (3).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/params.ts packages/engine-core/src/l2/lung/venegas.ts packages/engine-core/test/l2/lung/venegas.test.ts
