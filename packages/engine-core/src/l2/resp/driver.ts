@@ -5,6 +5,7 @@
 // does: exchange gas, reach the CO2 sampler, move the chest. Plain JSON-safe data.
 import { normal, type Sfc32State } from '../../rng/sfc32.ts';
 import type { AirwayState, BreathKind, VentFrame, VentSource } from '../../types-resp.ts';
+import { framePressure } from '../../types-vent-link.ts'; // Stage V
 
 export const INSP_FLOW_LPS = 0.05; // externalDrive: inspiration starts at flow > +0.05 L/s (brief §7.6) [ENG]
 export const DRIVE_TIMEOUT_S = 5; // no VentFrame for 5 s → the external drive is gone (apnoea) [ENG]
@@ -223,13 +224,13 @@ export function onVentFrame(d: DriverState, f: VentFrame, t: number): void {
   if (d.source !== 'external' || !e) {
     replan(d, t, false, true);
     d.source = 'external';
-    e = { lastT: t, inInsp: false, frames: [], meanPaw: f.pawCmH2O, peep: f.peepCmH2O, fio2: f.fio2, prevTi: 1, prevTe: 3 };
+    e = { lastT: t, inInsp: false, frames: [], meanPaw: framePressure(f), peep: f.peepCmH2O, fio2: f.fio2, prevTi: 1, prevTe: 3 };
     d.ext = e;
   }
   e.lastT = t;
   e.peep = f.peepCmH2O;
   e.fio2 = f.fio2;
-  e.frames.push(t, f.pawCmH2O, f.volumeMl);
+  e.frames.push(t, framePressure(f), f.volumeMl); // Stage V: alveolar when sent
   while (e.frames.length > 3 && (e.frames[0] as number) < t - 6) e.frames.splice(0, 3);
   // mean airway pressure over the last breath cycle (≤ 6 s of frames), so it does not ripple within a breath
   const win = Math.min(6, e.prevTi + e.prevTe);
@@ -239,7 +240,7 @@ export function onVentFrame(d: DriverState, f: VentFrame, t: number): void {
     sum += e.frames[i + 1] as number;
     n++;
   }
-  e.meanPaw = n > 0 ? sum / n : f.pawCmH2O;
+  e.meanPaw = n > 0 ? sum / n : framePressure(f);
   const cur = lastCycleBefore(d, t);
   const insp = f.phase ? f.phase === 'insp' : f.flowLps > INSP_FLOW_LPS;
   if (!e.inInsp && insp) {

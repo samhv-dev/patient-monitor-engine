@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Ventilator — navy cockpit (PME Stage V)</title>
+<style>
+/* ============================================================
+   NAVY COCKPIT SKIN — dark-blue clinical ventilator look.
+   Own implementation evoking the general ICU-ventilator design language.
+   ============================================================ */
+:root{
+  --bg:#071634; --bg2:#0a1e42; --panel:#0b1f45; --panel2:#123069; --edge:#1d3f7c;
+  --ink:#eaf1ff; --num:#ffffff; --numlab:#93aedd; --dim:#6f8bc0;
+  --btn:#173a76; --btn-ring:#2f63b4; --btn-sel:#2b6bd6; --btn-ink:#eaf1ff;
+  --paw:#ffd21e; --flow:#40d47f; --vol:#46c9e0;
+  --grid:#152f57; --grid2:#0f2547; --zero:#3a5788;
+  --alarm:#e02b2b; --alarm-ink:#fff; --redline:#e0625d; --ok:#2fb56a;
+  --tab:#123069; --tab-on:#2b6bd6;
+  --font:'Segoe UI',Roboto,Inter,system-ui,-apple-system,sans-serif;
+  --mono:'SF Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#04102a;font-family:var(--font);color:var(--ink);font-size:13px;-webkit-font-smoothing:antialiased}
+#screen{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;background:var(--bg)}
+/* header */
+#hdr{display:flex;align-items:stretch;gap:8px;padding:6px 8px;background:var(--bg2);min-height:46px}
+#alarmBanner{flex:1;display:flex;align-items:center;padding:0 14px;border-radius:6px;background:#0d2350;color:var(--dim);font-size:13px;font-weight:600;border:1px solid var(--edge)}
+#alarmBanner.armed{background:var(--alarm);color:#fff;border-color:var(--alarm);animation:pulse 1.1s infinite}
+#alarmBanner.silenced{background:#0d2350;color:#ffd21e;border-color:#5a4a10}
+@keyframes pulse{50%{filter:brightness(.82)}}
+.hbtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--btn-ink);border-radius:7px;padding:0 16px;font-size:13px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:7px}
+.hbtn:hover{background:#1d4a92}
+.hbtn .i{background:var(--alarm);color:#fff;font-style:italic;font-weight:700;border-radius:4px;padding:0 7px;font-size:12px}
+#modeName{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;min-width:120px;padding-right:8px}
+#modeName b{font-size:20px;font-weight:700;letter-spacing:.4px;line-height:1}
+#modeName span{font-size:11px;color:var(--numlab)}
+/* body */
+#body{display:grid;grid-template-columns:118px 1fr 138px;min-height:0;gap:6px;padding:6px 8px}
+/* left numeric monitoring */
+#nums{display:flex;flex-direction:column;gap:6px;min-height:0}
+.num{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0}
+.num .v{font-size:34px;font-weight:300;color:var(--num);line-height:.98;font-variant-numeric:tabular-nums}
+.num.warn .v{color:var(--redline);font-weight:500}
+.num .l{font-size:11px;color:var(--numlab);margin-top:1px}
+.num .l .u{color:var(--dim)}
+/* center waveforms */
+#center{display:flex;flex-direction:column;min-width:0;min-height:0;gap:5px}
+#viewbar{display:flex;gap:6px;flex:0 0 auto}
+.vtab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:4px 16px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.vtab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+#waves{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0}
+.wv{flex:1;position:relative;min-height:0;background:linear-gradient(180deg,#08183a,#061530);border:1px solid #122c55;border-radius:5px}
+.wv canvas{position:absolute;inset:0;width:100%;height:100%}
+#cockpit{flex:1;display:flex;flex-direction:column;gap:5px;min-height:0}
+.cpaw{flex:0 0 40%;position:relative;background:linear-gradient(180deg,#08183a,#061530);border:1px solid #122c55;border-radius:5px}
+.cpaw canvas{position:absolute;inset:0;width:100%;height:100%}
+.clow{flex:1;display:grid;grid-template-columns:0.85fr 1.5fr;gap:5px;min-height:0}
+#lungWrap{position:relative;background:radial-gradient(circle at 50% 40%,#0f2350,#07152e);border:1px solid #163266;border-radius:5px}
+#lungWrap canvas{position:absolute;inset:0;width:100%;height:100%}
+.panels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;min-height:0}
+.ipanel{background:linear-gradient(180deg,#0a1c40,#07152e);border:1px solid #122c55;border-radius:5px;padding:7px 5px;display:flex;flex-direction:column}
+.ipanel .pt{font-size:10px;color:var(--numlab);text-align:center;font-weight:600;margin-bottom:4px;line-height:1.15}
+.ipanel .bars{flex:1;display:flex;gap:12px;justify-content:center;align-items:flex-end;padding:16px 0}
+.ibar{position:relative;width:26px;background:#10264d;border-radius:3px 3px 0 0;height:100%}
+.ibar .fill{position:absolute;left:0;right:0;bottom:0;border-radius:3px 3px 0 0;transition:height .25s}
+.ibar .val{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:11px;color:#fff;font-weight:600;font-variant-numeric:tabular-nums}
+.ibar .nm{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--dim);white-space:nowrap}
+/* right setting buttons */
+#rail{display:flex;flex-direction:column;gap:7px;min-height:0;overflow:auto}
+.dial{background:radial-gradient(circle at 50% 38%,#1f4a8f,#153872);border:2px solid var(--btn-ring);border-radius:12px;color:#fff;cursor:ns-resize;user-select:none;touch-action:none;padding:7px 4px;text-align:center;position:relative;transition:transform .08s,box-shadow .08s}
+.dial .dv{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.dial .du{font-size:9.5px;color:#bcd3ff;opacity:.8}
+.dial .dl{font-size:11px;color:#cfe0ff;margin-top:1px}
+.dial:hover{box-shadow:0 0 0 1px var(--btn-ring)}
+.dial.turning{transform:scale(1.05);box-shadow:0 0 0 2px var(--btn-sel),0 0 14px rgba(43,107,214,.5)}
+.railbtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--btn-ink);border-radius:8px;padding:8px 4px;font-size:12px;cursor:pointer;text-align:center;font-family:var(--font)}
+.railbtn:hover{background:#1d4a92}
+.railbtn.on{background:var(--btn-sel);border-color:#5b93ff}
+.railmini{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.railmini .railbtn{padding:7px 2px;font-size:10.5px}
+/* bottom tabs */
+#tabs{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg2)}
+.tab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:7px;padding:8px 20px;font-size:13px;cursor:pointer;font-family:var(--font)}
+.tab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+#power{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--numlab);font-size:11px}
+.batt{width:12px;height:20px;border:1px solid var(--ok);border-radius:2px;position:relative;background:linear-gradient(0deg,var(--ok) 70%,transparent 70%)}
+.batt:after{content:"";position:absolute;top:-3px;left:3px;width:6px;height:2px;background:var(--ok)}
+/* scrim + sheet + drawer */
+.scrim{position:fixed;inset:0;background:rgba(2,10,26,.55);opacity:0;pointer-events:none;transition:.18s;z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:72%;overflow:auto;background:var(--bg2);border-top:2px solid var(--btn-sel);transform:translateY(100%);transition:transform .2s;z-index:50;padding:14px 18px 26px}
+#sheet.on{transform:translateY(0)}
+#sheet h3{margin:0 0 10px;font-size:15px}
+.sheetgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 22px}
+.sheettabs{display:flex;gap:6px;margin-bottom:14px}
+.stab{background:var(--tab);border:1px solid var(--edge);color:var(--ink);border-radius:6px;padding:6px 20px;font-size:12.5px;cursor:pointer;font-family:var(--font)}
+.stab.on{background:var(--tab-on);border-color:#5b93ff;font-weight:600}
+.modegrp{font-size:11px;color:var(--numlab);font-weight:600;margin:14px 0 7px;text-transform:uppercase;letter-spacing:.5px}
+.moderow{display:flex;flex-wrap:wrap;gap:8px}
+.modebtn{background:var(--btn);border:1px solid var(--btn-ring);color:var(--ink);border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;font-family:var(--font);min-width:96px}
+.modebtn.on{background:var(--btn-sel);border-color:#7fb0ff;font-weight:700}
+.modefoot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.modefoot .railbtn{min-width:120px;padding:10px}
+.fld .lab{font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between}
+.fld .lab .u{color:var(--numlab);font-weight:500}
+.helper{font-size:11px;color:var(--numlab);margin-top:4px;font-style:italic}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;background:var(--edge);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--btn-sel);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:var(--btn-sel);cursor:pointer}
+select,input[type=number]{width:100%;border:1px solid var(--edge);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 9px;font-family:var(--font);font-size:13px}
+.seg2{display:flex;border:1px solid var(--edge);border-radius:6px;overflow:hidden}
+.seg2 button{flex:1;border:0;background:var(--panel);color:var(--ink);padding:7px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.seg2 button.on{background:var(--btn-sel);color:#fff;font-weight:600}
+.closebtn{float:right;background:var(--btn);border:1px solid var(--btn-ring);color:var(--ink);border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--font)}
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(900px,95vw);background:var(--bg2);box-shadow:-8px 0 30px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .2s;z-index:50;overflow-y:auto}
+#drawer.on{transform:translateX(0)}
+#drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--panel);position:sticky;top:0;z-index:2}
+#drawer .dh h2{margin:0;font-size:17px}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:18px 20px 40px}
+.dcols h3{margin:0 0 10px;font-size:14px}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.presets button{border:0;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.pill-ylw{background:#e9c46a;color:#4a3500}.pill-org{background:#e8935a;color:#3a1900}.pill-red{background:#d96a6a;color:#3a0000}.pill-blu{background:#6a9bd9;color:#04203f}
+.dfld{margin:13px 0}
+.dfld .lab{font-size:12.5px;color:var(--ink);font-weight:600;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.dfld .en{font-size:12px;color:var(--numlab);display:flex;align-items:center;gap:5px;font-weight:500}
+.status{font-size:11.5px;color:#6fd6a0;margin-top:3px}
+.hr{height:1px;background:var(--edge);margin:14px 0}
+.async{margin:6px 20px 30px}.async .t{font-size:12.5px;font-weight:700;margin-bottom:8px}
+.async .btns{display:flex;flex-wrap:wrap;gap:8px}
+.async .btns button{background:var(--btn-sel);color:#fff;border:0;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer}
+.credit{position:fixed;bottom:1px;left:6px;font-size:9px;color:var(--dim);opacity:.6;z-index:1}
+</style>
+</head>
+<body>
+<div id="screen">
+  <div id="hdr">
+    <div id="alarmBanner">No active alarms</div>
+    <button class="hbtn" id="modesBtn"><span class="i">i</span> Modes</button>
+    <div id="modeName"><b id="mnMain">(S)CMV+</b><span id="mnSub">Adult</span></div>
+  </div>
+  <div id="body">
+    <div id="nums"></div>
+    <div id="center">
+      <div id="viewbar">
+        <button class="vtab on" data-view="graphics">Graphics</button>
+        <button class="vtab" data-view="cockpit">Dynamic Lung</button>
+      </div>
+      <div id="waves"></div>
+      <div id="cockpit" style="display:none"></div>
+    </div>
+    <div id="rail"></div>
+  </div>
+  <div id="tabs">
+    <button class="tab on">Monitoring</button>
+    <button class="tab" id="tabUtil">Utilities</button>
+    <button class="tab" id="tabEvents">Events</button>
+    <button class="tab" id="tabSystem">System</button>
+    <div id="power"><span class="batt"></span><span>AC</span></div>
+  </div>
+</div>
+<div class="credit">Independent educational reimplementation — not affiliated with any manufacturer.</div>
+<div class="scrim" id="scrim"></div>
+<div id="sheet"><button class="closebtn" id="closeSheet">Close</button><h3 id="sheetTitle">Controls</h3><div id="sheetBody"></div></div>
+<div id="drawer"><div class="dh"><h2>Patient &amp; Scenarios</h2><button class="closebtn" id="closeDrawer">Close</button></div><div class="dcols" id="dcols"></div><div class="async"><div class="t">Asynchrony examples</div><div class="btns" id="asyncBtns"></div></div></div>
+
+<script type="module" src="./src/vent/hamilton-page.ts"></script>
+</body>
+</html>
