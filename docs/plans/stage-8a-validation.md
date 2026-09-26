@@ -1529,7 +1529,7 @@ git push
 - Consumes: Stage 5 `bandpassZeroPhase` (`src/templates/dsp.ts`).
 - Produces: `quantile(xs, q)`, `median(xs)`, `mean(xs)`, `ksD(a, b)`, `wasserstein1(a, b)`, `coverage(xs, lo, hi)`, `pearson(a, b)`; `detectR(x: Float64Array, fs): number[]` (sample indices); `interface PulseBeat { r; foot; peak; sys; dia; slope; notch?; notchDepth?; notchKind?: 'minimum'|'inflection' }` (times in s); `pulseBeats(x, fs, rS: number[], opts?: { searchMs?: [number, number] }): PulseBeat[]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/validation/test/stats.test.ts`:
 
@@ -1622,11 +1622,11 @@ describe('R detection', () => {
 });
 ```
 
-- [ ] **Step 2: Run them. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run them. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/stats.test.ts test/metrics/abp.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/stats.ts`**
+- [x] **Step 3: Write `packages/validation/src/stats.ts`**
 
 ```ts
 // Distribution statistics for recorded-vs-generated comparisons (brief §9; decision 7).
@@ -1705,7 +1705,7 @@ export function pearson(a: ArrayLike<number>, b: ArrayLike<number>): number {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/metrics/ecg.ts`**
+- [x] **Step 4: Write `packages/validation/src/metrics/ecg.ts`**
 
 ```ts
 // R-peak detection for metric fiducials, identical for recorded and generated ECG (brief §9 V1–V3).
@@ -1745,7 +1745,7 @@ export function detectR(x: Float64Array, fs: number): number[] {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/metrics/abp.ts`**
+- [x] **Step 5: Write `packages/validation/src/metrics/abp.ts`**
 
 ```ts
 // Arterial (and pleth) beat fiducials, identical for recorded and generated pulses (brief §9 V1–V3):
@@ -1837,11 +1837,11 @@ export function pulseBeats(x: Float64Array, fs: number, rS: number[], opts: { se
 }
 ```
 
-- [ ] **Step 6: Run the tests. Expected: PASS (8 tests)**
+- [x] **Step 6: Run the tests. Expected: PASS (8 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/stats.test.ts test/metrics/abp.test.ts`
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/validation/src/stats.ts packages/validation/src/metrics/ecg.ts packages/validation/src/metrics/abp.ts packages/validation/test/stats.test.ts packages/validation/test/metrics/abp.test.ts
