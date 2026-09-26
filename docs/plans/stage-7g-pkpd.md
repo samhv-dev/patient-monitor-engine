@@ -781,7 +781,7 @@ git push
 **Interfaces (Produces):** `PkPatient`, `DEFAULT_PK_PATIENT`, `bmi`, `lbmJames`, `ffmAlSallami`; `ModelOpts`,
 `eleveldPropofol(p, o)`, `schniderPropofol(p)`, `marshPropofol(p, modified?)`; `ttpeMin(p, site?)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/propofol.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/propofol.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -851,9 +851,9 @@ describe('propofol models', () => {
 });
 ```
 
-- [ ] **Step 2: Run it and see it fail** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/propofol.test.ts` → FAIL (missing modules).
+- [x] **Step 2: Run it and see it fail** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/propofol.test.ts` → FAIL (missing modules).
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/covariates.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/covariates.ts`**
 
 ```ts
 // Patient covariates for the published PK models (Stage 7g). Every formula is the model author's own — a ke0 or a
@@ -888,7 +888,7 @@ export function ffmAlSallami(p: PkPatient): number {
 }
 ```
 
-- [ ] **Step 4: Create `packages/engine-core/src/l2/pk/models.ts`** (Task 4 appends the opioid models to this file)
+- [x] **Step 4: Create `packages/engine-core/src/l2/pk/models.ts`** (Task 4 appends the opioid models to this file)
 
 ```ts
 // Published PK(+ke0) models, as functions of the patient (Stage 7g; tables §6.1). Units: volumes L, clearances
@@ -958,10 +958,10 @@ export function ttpeMin(p: PkParams, site = 0): number {
 }
 ```
 
-- [ ] **Step 5: Run the test** → PASS (7 tests). Prototype: Eleveld V1 6.28, k10·V1 1.790, Q2 1.83, ke0 0.146, TTPE
+- [x] **Step 5: Run the test** → PASS (7 tests). Prototype: Eleveld V1 6.28, k10·V1 1.790, Q2 1.83, ke0 0.146, TTPE
   2.91; Schnider (53/77/177) TTPE 1.55; Marsh 3.92; 2 mg/kg Eleveld peak 3.00, Cp(1 min) 10.64.
 
-- [ ] **Step 6: Commit and push** — `git add -A && git commit -m "feat(pk): covariates and the Eleveld/Schnider/Marsh propofol models" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 6: Commit and push** — `git add -A && git commit -m "feat(pk): covariates and the Eleveld/Schnider/Marsh propofol models" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 4: Opioid models and ke0 from time-to-peak-effect (PROTOTYPED)
 
