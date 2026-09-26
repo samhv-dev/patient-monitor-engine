@@ -2940,7 +2940,7 @@ machinery to a SKIP list — Requests).
   6. *For Ali* — what to try first (open `physiology-console.html`, pick a preset, give a drug, watch the amber/cyan
      rows, "changed only", export CSV), and the open questions below.
 
-- [ ] **Step 3: Commit, push, open the PR**
+- [x] **Step 3: Commit, push, open the PR**
 
 ```bash
 git add docs/gates/stage-7x.md docs/gates/stage-7x
@@ -2961,7 +2961,7 @@ BODY
 )"
 ```
 
-- [ ] **Step 4: Tick every box in this plan, commit `docs: stage 7x plan fully ticked`, push. Do not merge (R21).**
+- [x] **Step 4: Tick every box in this plan, commit `docs: stage 7x plan fully ticked`, push. Do not merge (R21).**
 
 ---
 
