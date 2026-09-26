@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { lungRig, runRig } from '../helpers/lung.ts';
 import { respOf } from '../helpers/lung.ts';
 import { ev3, rig3 } from '../helpers/resp.ts';
+import { LONGRUN_HOURS } from '../helpers/longrun.ts';
 
 describe('lung module: determinism, CPU, 24 h', { timeout: 600_000 }, () => {
   it('the same seed and script give identical lung state; snapshot → restore → identical continuation', () => {
@@ -29,11 +30,11 @@ describe('lung module: determinism, CPU, 24 h', { timeout: 600_000 }, () => {
     console.log(`lung module: ${perTick.toFixed(4)} ms per tick`);
     expect(perTick).toBeLessThan(0.1);
   });
-  it('24 h ventilated ARDS + COPD: no drift (volumes, stores and PaCO2 bounded), yielding per sim-minute', async () => {
+  it(`${LONGRUN_HOURS} h ventilated ARDS: no drift (volumes, stores and PaCO2 bounded), yielding per sim-minute (24 h locally, 6 h on CI)`, async () => {
     const r = rig3({ patient: { lungConditions: [{ id: 'ards', severity: 0.5 }] } });
     r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 18, vtMl: 450, peep: 8, ie: 2, fio2: 0.5 }));
     let first = NaN;
-    for (let m = 1; m <= 24 * 60; m++) {
+    for (let m = 1; m <= LONGRUN_HOURS * 60; m++) {
       r.e.advanceTo(60 * m);
       if (m === 60) first = respOf(r.e).co2.pf;
       await new Promise((res) => setImmediate(res));

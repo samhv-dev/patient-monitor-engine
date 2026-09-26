@@ -27,3 +27,9 @@ export function writeCircPvr(hemo: unknown, pvrMult: readonly number[], global =
   ext.pvrLungR = pvrMult[1] ?? 1;
   return true;
 }
+
+/** Stage 7b (Task 26): 7a's own pleural pressure from its tension-pneumothorax condition (mmHg), 0 when absent. */
+export function circPtx(hemo: unknown): number {
+  const v = (hemo as CircLike | null)?.circ?.ext?.pPtx;
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}

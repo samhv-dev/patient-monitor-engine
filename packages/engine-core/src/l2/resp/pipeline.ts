@@ -18,6 +18,8 @@ import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfi
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { cardiacOutput } from '../gas/coupling.ts';
 import { pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a
+import { CMH2O_TO_MMHG, P_PL0, T_IT } from '../circ/params.ts'; // Stage 7b (Task 26)
+import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
 import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
@@ -26,7 +28,7 @@ import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
-import { circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
+import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
 import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
@@ -85,6 +87,7 @@ export interface RespState {
   rawEvent: number; // bronchospasm airway multiplier (Q20)
   mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
+  circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
   out: EngineEvent[];
 }
 
@@ -111,7 +114,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     },
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
-    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null,
+    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0,
   };
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
   return rs;
@@ -191,7 +194,19 @@ export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'
 
 /** Stage 7a seam: continuous pleural pressure (mmHg) for the circulation (audit R-B). */
 export function respPleural(rs: RespState, t: number): number {
-  return pleuralPressureMmHg(rs.driver, t, compliance(rs));
+  // Stage 7b (Task 26, R45/R46): 7a's continuous pleural shape, carried by the lung module — the condition's own
+  // airway-to-pleura transmission (tIt relative to the healthy 0.4, so a healthy lung keeps 7a's calibrated T_IT 0.65;
+  // Q78, catalogue §5/§6/§10), the trapped-gas pressure (auto-PEEP) on the internal ventilator, and the lungs' pleural
+  // pressure (effusion, haemothorax, pneumothorax) max-combined with 7a's own ext.pPtx so a scenario that sends both
+  // commands (plan decision 14) does not count it twice. External frames already carry the ventilator's alveolar
+  // pressure (Stage V palv), so no auto-PEEP term is added there.
+  const d = rs.driver;
+  const lp = rs.lung.lp;
+  const k = lp.tIt / HEALTHY.tIt;
+  const base = pleuralPressureMmHg(d, t, compliance(rs));
+  let p = P_PL0 + k * (base - P_PL0);
+  if (d.source === 'ventilator') p += k * T_IT * Math.max(0, rs.lung.peepTot - d.vent.peep) * CMH2O_TO_MMHG;
+  return p + Math.max(0, lp.pPtx - rs.circPtx);
 }
 
 /** Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). */
@@ -249,6 +264,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
   }, GAS_DT_S);
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
+  rs.circPtx = circPtx(h); // Stage 7b (Task 26)
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
   const etT = l1Target(l1, 'etco2', t);
   if (etT !== rs.seen.etco2) {
