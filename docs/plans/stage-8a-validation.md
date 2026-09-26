@@ -3328,7 +3328,7 @@ git push
 
 Measured on `6eeb6d1` (Stage 7 not merged; whole set 216 s wall): s1–s4 and every MODELED row (t10–t20, t22, t25) stop at once as **not measurable** ("MODELED mode arrives in Stage 7"). Graded: s6 preoxygenated **505 s** to SaO2 90 % (390–570, green; gate 3: 501 s); room air true **36 s** (35–60, green at the edge) and displayed **59 s** (45–90, green); s7 child **161 s** (130–190, green; Patel 160); s8 first breath after 60 s disconnection **+11.7 mmHg** (48.6 vs 36.9; +9–15, green); s9 VF: displayed ABP < 20 after **6 s** (≤ 20, green), EtCO2 < 5 after **18 s** (≤ 30, green); t21 MH EtCO2 at 10 min **76.5** (51–69, **yellow**: rises faster than the tables' 40 → 60) and still rising at 20 min (green); t23 term pregnancy **374 s** (150–240, **red** — no pregnancy physiology before 7b); t24 Edmark apnoea at FiO2 1.0/0.8/0.6 **505 / 383 / 265 s** vs 411 / 303 / 213 ±20 % (all **yellow**, 5–10 % beyond the band — no absorption atelectasis before 7b). Rows 23/24 turning red/yellow is the intended calibration signal, not a harness bug. Two planning bugs this measurement caught and the code above already fixes: the scenario setup batch does not carry the body (age/size/baseline), so `runValidationDoc` builds the engine from `patient` (a 4-year-old otherwise desaturated in 47 s like a room-air adult); and Stage 3's first-breath check measures the breath's own EtCO2 (`breath:etco2True`), not the averaged numeric.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/segments/sanity-docs.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/segments/sanity-docs.test.ts`**
 
 ```ts
 import { validateScenario } from '@pme/controller/scenario';
@@ -3356,11 +3356,11 @@ describe('sanity documents (brief §4.9 + tables §7)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (module missing)**
+- [x] **Step 2: Run it. Expected: FAIL (module missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/sanity-docs.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/suites/sanity/sanity-docs.ts`**
+- [x] **Step 3: Write `packages/validation/suites/sanity/sanity-docs.ts`**
 
 ```ts
 // The physiology sanity set as pme-validation/1 documents (brief §4.9 checks 1–9 = V8; tables
@@ -3574,11 +3574,11 @@ export const SANITY_DOCS: ValidationDoc[] = [
 ];
 ```
 
-- [ ] **Step 4: Run the test. Expected: PASS (3 tests, < 1 s — schema only, no engine run)**
+- [x] **Step 4: Run the test. Expected: PASS (3 tests, < 1 s — schema only, no engine run)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/sanity-docs.test.ts`
 
-- [ ] **Step 5: Run the whole set once (≈ 3–4 min) and paste the output into the commit body. Expected: every MODELED row `n/m …arrives in Stage 7`; s6/s7/s8/s9/t21 graded**
+- [x] **Step 5: Run the whole set once (≈ 3–4 min) and paste the output into the commit body. Expected: every MODELED row `n/m …arrives in Stage 7`; s6/s7/s8/s9/t21 graded**
 
 ```bash
 cat > packages/validation/smoke-sanity.ts <<'TS'
@@ -3594,7 +3594,7 @@ TS
 rm packages/validation/smoke-sanity.ts
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/validation/suites/sanity/sanity-docs.ts packages/validation/test/segments/sanity-docs.test.ts
