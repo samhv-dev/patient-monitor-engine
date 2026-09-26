@@ -3008,7 +3008,7 @@ git push origin stage-7a-circulation
 - Consumes: `CPR_CARDIAC_MMHG`, `CPR_THORACIC_MMHG` (Task 2); `hs.cpr` (Stage 2).
 - Produces: `cprPressure(cpr, t): number` — half-sine of unit amplitude over `CPR_DUTY` of each `60/rate` cycle starting at `cpr.nextT − k·60/rate`, × quality; `circEnv` uses `CPR_CARDIAC_MMHG·cprPressure` and `CPR_THORACIC_MMHG·cprPressure`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-arrest.test.ts`:
 
@@ -3049,12 +3049,12 @@ describe('arrest and CPR on the circulation', () => {
 
 (The `circ` event is emitted from Task 19; until then the CO assertion is skipped by the `?? 0` path failing — run this test fully after Task 19. Mark the CO line with `// needs Task 19` and keep it.)
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-arrest.test.ts`
 Expected: the asystole test passes or fails on the plateau value; the CPR test FAILS (no compressions reach the circuit).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `pipeline.ts` replace `planCompressions` with a phase-only version (no Pulse lists):
 
@@ -3084,12 +3084,12 @@ and in `circEnv` replace `cprCardiac: zeroFn, cprThoracic: zeroFn` with
 `cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t), cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t)`
 (import `CPR_CARDIAC_MMHG` and `CPR_THORACIC_MMHG as CPR_THORACIC_7A` from `../circ/params.ts`). In `applyHemoCommand` `cpr` off-branch delete the Pulse-list filters (`hs.lv`, `hs.rv`, `hs.thorArt`, `hs.thorCen`, `hs.opens`) — those lists are removed with Task 12's legacy code; delete their fields from `HemoState` and `createHemoState` now if Task 12 left them.
 
-- [ ] **Step 4: Run the test (after Task 19 for the CO line)**
+- [x] **Step 4: Run the test (after Task 19 for the CO line)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-arrest.test.ts`
 Expected: PASS. If CPR SBP exceeds 110 at quality 0.8, lower `CPR_CARDIAC_MMHG` in steps of 10 (range 30–60 [ENG]); if DBP < 10, raise `CPR_THORACIC_MMHG` in steps of 5 (range 20–40). Record the chosen pair in the gate note (these two constants were not prototyped).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/circ-arrest.test.ts packages/engine-core/src/l2/circ/params.ts

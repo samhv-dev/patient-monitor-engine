@@ -17,6 +17,8 @@ export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
  * gets its Emax raised by up to PESP_MAX for that one beat, scaled by prematurity [ENG magnitude, fitted to the
  * Stage 2 band +8–15 mmHg post-PVC SBP].
  */
+/** Cardiac-output averaging time constant (CO follows compressions and beats alike) [ENG]. */
+export const CO_TAU_S = 4;
 export const PESP_MAX = 0.5;
 export const PESP_PREMATURE = 0.8;
 
@@ -64,6 +66,7 @@ export interface CircModelState {
   acc: BeatAcc | null;
   beats: CircBeat[]; // last 16
   lastEjT: number;
+  qFwd: number; // LPF (τ CO_TAU_S) of the forward aortic-valve + LVAD flow, mL/s: CO for beats AND compressions
   mapSetPinned: boolean;
   /** MANUAL tracker outputs (Task 14; neutral in MODELED): LV Emax ×, systemic R (null = base), venous V0 +, RV Emax ×, PVR (null = base). */
   man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null };
@@ -81,7 +84,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref,
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref,
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -206,6 +209,8 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     stepCirc(m.s, m.t, H_S, m.p, d);
     m.t += H_S;
     evaluate(m.s, m.t, m.p, d, o);
+    m.qFwd += (Math.max(0, o.qAv) + o.qVad - m.qFwd) * (H_S / CO_TAU_S);
+    if (o.qAv > 1 && env.cprCardiac(m.t) > 0) m.lastEjT = m.t; // a compression that ejects (beats set it below)
     m.mapSum += o.pRad;
     m.raTmSum += o.pRa - o.pIt - o.pPeri; // atrial stretch: transmural across the wall (pericardial pressure compresses)
     m.mapN++;
@@ -235,13 +240,8 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
   m.atria = pruneActivations(m.atria, m.t);
 }
 
-/** Cardiac output (L/min) from the last beats within 10 s; 0 when nothing ejected for 3 s; the resting CO at start-up. */
+/** Cardiac output (L/min): forward aortic + LVAD flow averaged over ≈ 4 s (beats and CPR alike); 0 when nothing ejected for 3 s. */
 export function circCardiacOutput(m: CircModelState): number {
   if (m.t - m.lastEjT > 3) return 0;
-  const bs = m.beats.filter((b) => m.t - b.t < 10);
-  if (bs.length < 2) return bs.length === 1 ? (bs[0]!.sv / Math.max(0.2, bs[0]!.dur)) * 0.06 : m.ref.co; // start-up
-
-  const sv = bs.reduce((a, b) => a + b.sv, 0);
-  const dur = bs.reduce((a, b) => a + b.dur, 0);
-  return (sv / Math.max(0.1, dur)) * 0.06;
+  return m.qFwd * 0.06;
 }

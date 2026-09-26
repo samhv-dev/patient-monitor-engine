@@ -104,10 +104,11 @@ export const BV_ML_KG_F = 65;
 export const V0_ART = 600;
 
 // --- CPR (B §4.2; R39-2) ---
-/** Direct cardiac compression: chamber pressure added per unit quality, mmHg [ENG, prototype]. */
-export const CPR_CARDIAC_MMHG = 60;
-/** Thoracic-pump pressure on every intrathoracic compartment and the aortic root per unit quality [ENG]. */
-export const CPR_THORACIC_MMHG = 30;
+/** Direct cardiac compression: chamber pressure added per unit quality, mmHg [ENG; plan 60 (not prototyped) → 35 in the
+ * engine: 60 gave SBP 95 / DBP 40 / CO 3.5 L/min at quality 0.8; 35/35 gives 73/16 and CO 2.1 (quality 1: 91/21, 2.5)]. */
+export const CPR_CARDIAC_MMHG = 35;
+/** Thoracic-pump pressure on every intrathoracic compartment and the aortic root per unit quality [ENG; plan 30 → 35]. */
+export const CPR_THORACIC_MMHG = 35;
 
 // --- integration ---
 export const H_S = 0.002; // RK4 step (R42; Stage 2 H_S)

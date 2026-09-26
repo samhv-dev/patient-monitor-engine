@@ -14,7 +14,7 @@ import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfi
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
-import { ARREST_AFTER_S, CPR_DUTY, CPR_SV_FRAC, G_MAX, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
+import { ARREST_AFTER_S, CPR_DUTY, G_MAX, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
@@ -22,7 +22,7 @@ import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../ci
 import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
 import { circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
-import { H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
+import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
 export type HemoChannel = (typeof HEMO_CHANNELS)[number];
@@ -193,21 +193,33 @@ function intake(hs: HemoState, ctx: HemoCtx): void {
   }
 }
 
-/** Stage 7a: CPR as pressures on the circuit arrives in Task 17; this keeps the cycle clock and the pleth pulses. */
+/** Stage 7a: compressions are pressures on the circuit (decision 12); this keeps the cycle clock for the pleth/EtCO2. */
 function planCompressions(hs: HemoState, ctx: HemoCtx, until: number): void {
   const c = hs.cpr;
   while (c.active && c.nextT <= until) {
     const dur = (CPR_DUTY * 60) / c.rate;
-    addPlethPulse(hs.pleth, c.nextT + plethDelayS(hs.pleth.site), l1Value(ctx.l1, 'pi', c.nextT) * CPR_SV_FRAC * c.quality, dur, hs.circ.p.rSys);
+    addPlethPulse(hs.pleth, c.nextT + plethDelayS(hs.pleth.site), l1Value(ctx.l1, 'pi', c.nextT) * 0.2 * c.quality, dur, hs.circ.p.rSys);
     c.nextT += 60 / c.rate;
   }
+}
+
+/** Unit half-sine compression profile at time t (0 outside the compression phase), × quality. */
+export function cprPressure(c: HemoState['cpr'], t: number): number {
+  if (!c.active) return 0;
+  const T = 60 / c.rate;
+  const start = c.nextT - Math.ceil((c.nextT - t) / T) * T; // the last compression start ≤ t
+  const u = t - start;
+  const dur = CPR_DUTY * T;
+  return u >= 0 && u < dur ? c.quality * Math.sin((Math.PI * u) / dur) : 0;
 }
 
 const zeroFn = () => 0;
 /** Stage 7a: the circulation's environment for one sample (pleural input; CPR and devices arrive in Tasks 17, 20–21). */
 function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
-  void hs;
-  return { pIt: ctx.pIt ?? (() => P_PL0), cprCardiac: zeroFn, cprThoracic: zeroFn, qVad: () => 0, qAortaSrc: zeroFn, modeled: ctx.l1.mode === 'modeled' };
+  return {
+    pIt: ctx.pIt ?? (() => P_PL0),
+    cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
+    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: () => 0, qAortaSrc: zeroFn, modeled: ctx.l1.mode === 'modeled' };
 }
 
 /** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
@@ -369,7 +381,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers
       hs.pla = hs.circOut.pPv;
     }
-    if (ctx.l1.mode !== 'modeled' && m % 12 === 0) {
+    if (ctx.l1.mode !== 'modeled' && m % 12 === 0 && !isArrested(hs, t1) && !hs.cpr.active) {
       // Stage 7a MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
       const c = hs.circ;
       const cvpT = volumeStatusCvp(l1Value(ctx.l1, 'cvp', t1), l1Value(ctx.l1, 'volumeStatus', t1));
