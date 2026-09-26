@@ -20,8 +20,8 @@
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48) | patches 7a and 7c | execute after 7a AND 7c merge |
 | 7f NMB/depth | plan on disk (`docs/plans/stage-7f-neuro-depth.md`, completeness unverified) | consumes 7g effect sites | verify plan, execute after 7g |
 | 7g drug PK/PD | plan ready (`docs/plans/stage-7g-pkpd.md`, 26 tasks) | conforms to 7f contract | execute after 7a merges |
-| FU-1 follow-ups | `fu-1-followups` (worktree `../scratch/wt-fu1`) | executing | resume from first unticked item |
-| 8a validation harness | plan being completed (`docs/plans/stage-8a-validation.md`) | R9/R40 | execute when plan lands (independent of 7) |
+| FU-1 follow-ups | `fu-1-followups`, PR #12 (worktree `../scratch/wt-fu1`) | all 8 items done, CI pending | gate + merge when CI is green |
+| 8a validation harness | `stage-8a-validation` (plan: `docs/plans/stage-8a-validation.md`, 24 tasks, worktree `../scratch/wt-stage-8a`) | executing (started 2026-09-26 21:50) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
