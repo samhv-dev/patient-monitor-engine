@@ -1318,7 +1318,7 @@ git push origin stage-v-ventilator-link
 **Interfaces:**
 - Produces (exported from `@pme/engine-core`): `VentFrameExt = VentFrame & { palvCmH2O?: number; mode?: string }`, `framePressure(f): number` (= `f.palvCmH2O ?? f.pawCmH2O`). The external drive's pressure history (its mean → venous-return coupling; its swing → u(t)) uses `framePressure`. `palvCmH2O` is validated to −30…150 like Paw.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/engine-core/test/l2/resp/vent-frame-ext.test.ts`:**
 
@@ -1366,12 +1366,12 @@ describe('Stage V VentFrame extension', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/vent-frame-ext.test.ts`
 Expected: FAIL — cannot resolve `../../../src/types-vent-link.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 **Create `packages/engine-core/src/types-vent-link.ts`:**
 
@@ -1420,12 +1420,12 @@ In `packages/engine-core/src/index.ts`, after `export * from './types-resp.ts'; 
 export * from './types-vent-link.ts'; // Stage V
 ```
 
-- [ ] **Step 4: Run the new test and the whole engine-core suite**
+- [x] **Step 4: Run the new test and the whole engine-core suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/vent-frame-ext.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core test && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: 3 passed; then engine-core **372 passed** (369 + 3; ≈ 105 s — Stage 3's ventilator-link test still passes: Paw-only frames are unchanged); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core
