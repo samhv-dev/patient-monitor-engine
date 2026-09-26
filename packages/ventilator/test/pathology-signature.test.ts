@@ -18,4 +18,13 @@ describe('catalogue coverage', () => {
     const ids = LUNG_PATHOLOGIES.map((r) => r.id);
     for (const id of ['ards-mild', 'ards-moderate', 'ards-severe-recruitable', 'ards-severe-nonrecruitable', 'fibrosis-ild', 'scleroderma', 'chest-wall-restriction', 'obesity-ohs', 'pneumonia-lobar', 'atelectasis', 'oedema-cardiogenic', 'oedema-noncardiogenic', 'aspiration', 'covid-pneumonitis']) expect(ids).toContain(id);
   });
+  it('has all 39 R36 rows, unique ids, and every row cites its compliance and signature (Task 11)', () => {
+    expect(LUNG_PATHOLOGIES).toHaveLength(39);
+    expect(new Set(LUNG_PATHOLOGIES.map((r) => r.id)).size).toBe(39);
+    for (const r of LUNG_PATHOLOGIES) {
+      expect(r.sources.length).toBeGreaterThanOrEqual(2);
+      for (const b of [r.complianceMl, r.rInsp, r.rExp, r.shunt, r.deadSpaceFraction, r.pvrMultiplier]) expect(b.lo <= b.value && b.value <= b.hi).toBe(true);
+    }
+    expect(LUNG_PATHOLOGIES.find((r) => r.id === 'bronchopleural-fistula')!.monitor).toMatch(/NOT modelled/);
+  });
 });

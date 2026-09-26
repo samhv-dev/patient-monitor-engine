@@ -2290,7 +2290,7 @@ git push origin stage-v-ventilator-link
 
 **Interfaces:** adds `pulmonary-hypertension`, `pe-massive`, `pe-submassive`, `fat-embolism`, `air-embolism`, `pleural-effusion`, `pneumothorax-simple`, `pneumothorax-tension`, `haemothorax`, `one-lung-ventilation`, `endobronchial`, `bronchopleural-fistula`, `neuromuscular-weakness`, `diaphragm-paralysis`, `pregnancy`, `neonatal-rds`. `LUNG_PATHOLOGIES.length === 39` afterwards.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to the `describe('catalogue coverage', …)` block in `packages/ventilator/test/pathology-signature.test.ts`:
 
@@ -2306,12 +2306,12 @@ Append to the `describe('catalogue coverage', …)` block in `packages/ventilato
   });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts`
 Expected: FAIL — `expected [ …23 items ] to have a length of 39`.
 
-- [ ] **Step 3: Insert the rows**
+- [x] **Step 3: Insert the rows**
 
 Insert immediately BEFORE the final `];` of `packages/ventilator/src/pathology/catalogue.ts`:
 
@@ -2490,12 +2490,12 @@ Insert immediately BEFORE the final `];` of `packages/ventilator/src/pathology/c
   },
 ```
 
-- [ ] **Step 4: Run to verify it passes**
+- [x] **Step 4: Run to verify it passes**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/pathology-signature.test.ts && npx -y pnpm@9.15.9 --filter @pme/ventilator typecheck`
 Expected: 41 passed (39 rows + 2 coverage). Prototype: tension pneumothorax 32.2/27.2/0/13.7; endobronchial 22.5/17.5/0/13.8; OLV (VT 350) 19.0/14.0/0/17.8; neonatal RDS (VT 15, 6 L/min) 15.0/10.0/0/5.6; PE massive 14.8/9.8/0/10.9.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator
