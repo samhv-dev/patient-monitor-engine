@@ -3120,7 +3120,7 @@ git push origin stage-v-ventilator-link
 
 **Interfaces:** consumes `createLinkedSim`, `run`.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 **Create `packages/ventilator/test/determinism.test.ts`:**
 
@@ -3159,12 +3159,12 @@ describe('linked determinism', { timeout: 120_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/determinism.test.ts`
 Expected: 1 passed. (A failure means hidden state outside `VentState`/the engine snapshot — e.g. a module-level variable, `Math.random`, or `Date` — find and remove it.)
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/ventilator/test
