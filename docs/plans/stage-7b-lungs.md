@@ -3657,10 +3657,12 @@ git push origin stage-7b-lungs
 
 ### Task 25: Stage 3 acceptance re-check, determinism, CPU ≤ 0.1 ms/tick, 24 h no drift
 
+> **Executor note:** All three pass: determinism and snapshot continuation identical; stand-alone lung module 0.0028 ms per tick (prototype 0.0011; budget 0.1); engine per-tick cost main → 7b 0.027 → 0.042 ms healthy, 0.027 → 0.037 ms COPD (machine under load); 24 h ARDS run bounded. Stage 3 / 3.1 / 4b-on-3 acceptance files: 42/42 pass, including the 24 h 62.5 Hz drift test; every number is inside its band — the number-by-number table (main vs 7b) is in the gate note.
+
 **Files:**
 - Create: `packages/engine-core/test/engine/lung-longrun.test.ts`
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/lung-longrun.test.ts`:
 
@@ -3713,14 +3715,14 @@ describe('lung module: determinism, CPU, 24 h', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it, then the Stage 3 acceptance list**
+- [x] **Step 2: Run it, then the Stage 3 acceptance list**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-longrun.test.ts`
 Expected: PASS; CPU printed (prototype 0.0011 ms).
 
 Then run every Stage 3 acceptance file and compare with `docs/gates/stage-3.md` (and `docs/gates/stage-3.1.md` if 3.1 has merged): `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-capnogram.test.ts test/engine/resp-airway.test.ts test/engine/resp-oxygen.test.ts test/engine/resp-coupling.test.ts test/engine/resp-engine.test.ts test/engine/resp-longrun.test.ts test/engine/stage3-alarms-engine.test.ts`. Record in the gate note, number by number: α sidestream/mainstream (105.6°/100.5°), shark fin, sidestream delay 2.33 s / rise 240 ms, EtCO2 apnoea +12.0 then 3.34/min, SaO2 90 % at 501 s preoxygenated / 41 s room air / 158 s child / 170 s obese, R8 display lag, PPV, PEEP 5 → 15 CO/MAP, RR three ways, MH EtCO2 38 → 124, 24 h exact. Any number outside its Stage 3 band: STOP and report (R45 rule).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/lung-longrun.test.ts
