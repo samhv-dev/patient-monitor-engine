@@ -94,6 +94,25 @@ All Stage 3 acceptance files (resp-capnogram, resp-airway, resp-oxygen, resp-cou
 | MH EtCO2 rise at fixed ventilation | +85 (to 124) | +79 (to 117) | > 20 |
 | lungState R27 | C 50 exact, bronchospasm R 40 | C 48–60 (module), bronchospasm R **60** (Q20) — re-specified | plan decisions 11/15 |
 
+**Re-check on top of Stage 7a** (main `66bad51` with 7a vs this branch after merging it; same method, 57/57 tests pass on both):
+
+| Check | main (7a) | 7b on 7a | Band |
+|---|---|---|---|
+| α sidestream (RR 12) | 104.95–105.36° | 105.01–105.38° | 100–110 |
+| R39-6 bronchospasm α 0 / 0.5 / 0.8 / 1.0 / 1.25 | 104.8 / 123.5 / 133.3 / 142.7 / 155.2 | 104.8 / 123.7 / 133.7 / 143.1 / 155.7 | as above |
+| M4 first breath after 60 s apnoea | +9.2 | +9.5 | +9 to +15 |
+| Disconnection → apnoea alarm | 20.02 s | 20.00 s | 19.9–21 |
+| Preoxygenated adult / room-air true SaO2 90 % | 8.43 min / 43 s | 8.22 min / 44 s | 6.5–9.5 / 35–60 |
+| **Child 4 y, preoxygenated** | 171 s | **133 s** | 130–190 (near the low edge — "Needs a ruling" 12) |
+| Obese | 3.0 min | 2.8 min | 1.7–3.7 |
+| Displayed SpO2 (5c) true / display / first fall | 43 / 64 / 31 s | 44 / 65 / 32 s | 35–60 / 45–90 / 20–45 |
+| M6 PPV (7a band) | 5.2 % | 4.7 % | 3–12 |
+| Stage 2 PPV (7a band) | 5.5 % | 5.0 % | 3–12 |
+| Stage 2 on 7a: PEEP 5 → 15 CO drop | 18.1 % | 18.2 % | ≥ 3 % |
+| R39-2 CPR EtCO2 q 0.5 / 0.8 / 1.0 / 1.2; +10 breaths | 12.2 / 20.3 / 25.8 / 28.7; −2.36 | 12.0 / 20.0 / 25.4 / 28.3; −2.30 | 8–15 / 17–23 / 22–28 / 26–32; −2 to −4.5 |
+| MH EtCO2 rise | +85.6 | +79.2 | > 20 |
+| Stage 2 on 7a: radial SBP/DBP error, notch; post-PVC; transducer | identical to ±0.003 | | |
+
 PPV falls ~10 % because the lung-module compliance is 55 (Stage 3's fixed 50): smaller alveolar swing per breath. Stage 3 tests re-specified (plan decisions 11/15, not band misses): resp-coupling R27 (compliance 50 → 48–60; bronchospasm resistance 40 → 60; tendency read after 30 s because auto-PEEP is now measured).
 
 ### Stage V (packages/ventilator) after Task 27
@@ -130,7 +149,7 @@ PPV falls ~10 % because the lung-module compliance is 55 (Stage 3's fixed 50): s
 - **Task 23**: absorption baseline read at 12 s (right after the 10 s manoeuvre) instead of 59 s (re-collapse at FiO2 1.0 had begun: Δ 0.0199 vs > 0.02); an atelectasis 4–8 % / < 1 % assertion added.
 - **Task 24**: the endobronchial tube stays 60 min before withdrawal (the prototype's sequence; after 10 min the lung was only ≈ 30 % collapsed and withdrawal alone gave 99.4 %). **Mechanism fix**: a held manoeuvre pressure keeps updating the lung's end-inspiratory pressure after flow drops below the 50 mL/s breath threshold, and the healthy-lung opening check has a 1 cmH2O tolerance — the alveolar pressure approaches a held 40 cmH2O only asymptotically, so no recruitment manoeuvre could open induction/absorption/blocked-lung atelectasis (SpO2 stayed 96.4 after the RM). Also a typecheck fix in the Task 19 test.
 - **Task 25**: none.
-- **Task 26**: skipped (7a not on main at the time; see §11). The adapter part was done: `writeCircPvr` also writes the global `ext.pvrLung`.
+- **Task 26**: first skipped (7a not yet on main; the adapter part was done: `writeCircPvr` also writes the global `ext.pvrLung`), then RUN after 7a merged (§10). `respPleural` keeps 7a's calibrated pleural shape and scales it by the condition's tIt RELATIVE to the healthy 0.4 (the plan's absolute `tIt·Palv` would have taken a healthy patient from 7a's T_IT 0.65 to 0.4), adds auto-PEEP on the internal ventilator, and max-combines the lungs' pPtx with 7a's `ext.pPtx`. The COPD test runs in MODELED mode and asserts the CO fall plus MAP direction. The 24 h lung test uses 7a's `LONGRUN_HOURS` (6 h on CI).
 - **Task 27**: `ventReference` (new engine export) instead of the plan's two-lung formula (OLV/endobronchial need the block); rows at their own PBW; neonatal row authored; lung-input stays RELATIVE (see rulings). Its commit message says "lungState read as absolute" — that part was NOT done.
 - **Task 28**: speed choices 1/2/4 (engine timeScale is 0.25–4); a strict-TS guard in the event clock.
 - **Task 29**: NOTICES ids **N-090/N-091/N-092** (N-062 is 7a's, N-070–077 are reserved by the 7c/7g plans, N-080–084 by 8a); screenshots are JPEG (PNG exceeded 60 KB), port 5216, ×4 instead of ×10.
@@ -146,10 +165,20 @@ PPV falls ~10 % because the lung-module compliance is 55 (Stage 3's fixed 50): s
 6. **Edmark apnoea times** 488/379/262 s vs 411/303/213 (≈ 20 % long, ordering right) — calibration of ATEL_IND / collapse τ (Q34).
 7. **OLV at FiO2 1.0** in an awake-metabolism engine patient: PaO2 87 at 30 min (shunt 0.24 in band): the catalogue's "hypoxaemia infrequent" assumes GA VO2 and larger VT.
 8. **Orchestrator 7c interface requests** (lung water from `ps.blood.out` COP/capillary leak; Winter's compensation as the metabolic-acidosis drive): DEFERRED — the plan has no seam for them (`drive.ts` is not wired into the engine in 7b; lung water is only the `evlwi` condition key). They belong where 7c's output block lands.
-9. **Stage V NR-3 items from 7a** (massive-PE EtCO2 fall needs alveolar dead space; cardiogenic-oedema PEEP → CO band; COPD auto-PEEP MAP fall −9.4): see §11.
-10. **Follow-ups not in 7b's scope**: R46's within-lung V/Q distribution for an emergent phase III slope (explicitly out of scope); `docs/physiology/stage-v-lung-pathology-data.md` is not regenerated from the data file (GV-obs reconciliation); `drive.ts` wiring for MODELED spontaneous breathing (7f supplies the drug inputs).
+9. **Stage V NR-3 items from 7a**: massive PE — CLOSED (the scenario also sends the lung's `pe` condition; EtCO2 38 → 24.6, band ≥ 4); COPD GOLD 3–4 link — CLOSED by the orchestrator's rule (auto-PEEP in R46's 6–12, MAP fall asserted by direction > 3); cardiogenic oedema PEEP 5 → 12 CO fall — still `it.fails` (an `hfref` moderate profile condition was tried: CO 5.08 vs < 4.99 needed; in HFrEF PEEP often does not lower CO — the band itself may need a ruling).
+10. **ARDS link PEEP 15 → 5 SpO2 fall** (Stage V link-r27): main before 7a −5; 7a alone −3.4; 7a + 7b **−3.0** (band > 3) — marked `it.fails` + this ruling (the difference is 7b's two O2 stores; the two stages together sit on the edge).
+11. **COPD auto-PEEP haemodynamics on 7a (MODELED)**: GOLD 3, RR 10 → 26 (auto-PEEP 2.3 → 10.3): CO **4.35 → 3.35 (−23 %)** but MAP only **101.8 → 98.9 (−2.8 %)** — the baroreflex holds MAP; the plan's ≥ 10 % MAP fall (R27 demo) is not reached. The test asserts the CO fall and the MAP direction.
+12. **Child apnoea desaturation on 7a + 7b**: preoxygenated 4 y / 16 kg to SaO2 90 % 171 s on main (7a) → 133 s with 7b (band 130–190, Patel 160 ± 31): induction atelectasis during the 3 min of FiO2 1.0 at ZEEP shrinks the small child FRC; before 7a the same test gave 159 → 156. In band, at the edge; ATEL_IND/indFactor for children is [ENG].
+13. **Follow-ups not in 7b's scope**: R46's within-lung V/Q distribution for an emergent phase III slope (explicitly out of scope); `docs/physiology/stage-v-lung-pathology-data.md` is not regenerated from the data file (GV-obs reconciliation); `drive.ts` wiring for MODELED spontaneous breathing (7f supplies the drug inputs).
 
-## 10. Screenshots (`docs/gates/stage-7b/`, 1000 × 880 JPEG q70)
+## 10. Stage 7a integration (7a merged as `1fd0851` during this stage; merged into this branch, Task 26 run)
+
+- Merge conflicts (driver.ts `frameAt` export, types.ts profile fields and imports, resp/pipeline.ts imports + `respPleural` beside `lungDrive`, NOTICES: 7b's three rows join 7a's Pulse table) resolved keeping both sides; 7a retired the MANUAL mean-Paw coupling, and 7b's `compliance()` feeds its pleural input.
+- 7b drives 7a's R46 seams: per-lung `ext.pvrLungL/R` (HPV, collapse, OLV) and the global `ext.pvrLung` (`writeCircPvr`); 7a's measured `circOut.qLungL/qLungR` feed the mixing point (`circSideFlows`); the pleural input is `respPleural` (it IS 7a's `pIt` source, so `HemoCtx.pItExternal` is not needed).
+- OLV on 7a, FiO2 1.0, 30 min: isolated-lung PVR ×**1.91**, its measured flow **0.300** of pulmonary flow (band ≤ 0.30, at the edge).
+- Stage V NR-3 and the ARDS link item: "Needs a ruling" 9 and 10.
+
+## 11. Screenshots (`docs/gates/stage-7b/`, 900 px wide JPEG, ≤ 60 KB)
 
 Captured by `apps/demo/scripts/stage7b-shots.mjs` (headless system Chrome, `vite preview` on :5216, the demonstrations at ×4 — the engine's time-scale limit), re-encoded to ≤ 60 KB; `page errors: []`.
 
