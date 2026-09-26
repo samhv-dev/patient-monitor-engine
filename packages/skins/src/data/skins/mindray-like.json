@@ -46,6 +46,6 @@
     "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min)" },
     "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.4-2.5 (white on red, black on yellow, black on cyan)", "note": "hex [ENG]" },
     "alarms.numericStyle": { "tag": "documented", "source": "research/05 §2.4 (Mindray alarmed numeric: text in a flashing red / yellow / cyan box)" },
-    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for Mindray; shown as unverified on screen" }
+    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for Mindray; shown as unverified on screen. FU-1 item 7: still missing — the factory lane order and the numeric tile grid (research/05 §2.7 has neither); lanes/tiles are the inherited IEC default" }
   }
 }
