@@ -22,6 +22,10 @@ function mount(id: ProfileId) {
   detach();
   pm?.destroy();
   profile = id;
+  // A new engine starts at t = 0: forget the previous engine's clock and numerics, or a demo's step fires on the
+  // first measurement event (stale simT ≥ settleS) and a wait on simT returns at once.
+  simT = 0;
+  for (const k of Object.keys(last)) delete last[k];
   const m = mountMonitor($('monitor'), {
     skin: 'philips-like', engine: { seed: 7, patient: (PROFILES[id] ?? PROFILES.normal)!.patient },
     lanes: ['ecgII'], waves: ['abp', 'cvp', 'pleth', 'co2'], temp: false,
