@@ -221,7 +221,7 @@ git push -u origin stage-8a-validation
 **Interfaces:**
 - Produces: `parseVital(gz: Uint8Array, want?: ReadonlySet<string>): VitalFile`; `waveSlice(f, name, fromS, toS): { fs: number; x: Float64Array }` (gaps NaN); `numbers(f, name, fromS?, toS?): Array<[number, number]>` (t in s after the file's first record); `interface VitalTrack { tid; name ("<device>/<track>"); unit; kind: 'wave'|'number'|'string'; fmt; srate; gain; offset; recs: Array<{ t: number; v: Float32Array }> }`; `interface VitalFile { tracks: Map<string, VitalTrack>; t0: number }`.
 
-- [ ] **Step 1: Write the test-only writer `packages/validation/test/helpers/vital-writer.ts`**
+- [x] **Step 1: Write the test-only writer `packages/validation/test/helpers/vital-writer.ts`**
 
 ```ts
 // Test-only writer for the .vital layout the reader understands (so reader tests need no download).
@@ -254,7 +254,7 @@ export function writeVital(o: { devices: Array<{ did: number; name: string }>; t
 }
 ```
 
-- [ ] **Step 2: Write the failing test `packages/validation/test/datasets/vital.test.ts`**
+- [x] **Step 2: Write the failing test `packages/validation/test/datasets/vital.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -298,11 +298,11 @@ describe('.vital reader', () => {
 });
 ```
 
-- [ ] **Step 3: Run it. Expected: FAIL (`Failed to load url ../../src/datasets/vital.ts`)**
+- [x] **Step 3: Run it. Expected: FAIL (`Failed to load url ../../src/datasets/vital.ts`)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/vital.test.ts`
 
-- [ ] **Step 4: Write `packages/validation/src/datasets/vital.ts`**
+- [x] **Step 4: Write `packages/validation/src/datasets/vital.ts`**
 
 ```ts
 // Reader for VitalRecorder `.vital` files (the PhysioNet VitalDB 1.0.0 copy, CC BY 4.0), written clean-room from the
@@ -440,11 +440,11 @@ export function numbers(f: VitalFile, name: string, fromS = 0, toS = Infinity): 
 
 (`t0` is taken over EVERY track's records, before the `want` filter, so filtered and unfiltered reads share one time base.)
 
-- [ ] **Step 5: Run the test. Expected: PASS (3 tests)**
+- [x] **Step 5: Run the test. Expected: PASS (3 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/vital.test.ts`
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/validation/src/datasets/vital.ts packages/validation/test/helpers/vital-writer.ts packages/validation/test/datasets/vital.test.ts
