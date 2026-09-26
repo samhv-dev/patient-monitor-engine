@@ -22,3 +22,15 @@ describe('drug library', () => {
       expect(DRUGS[id], id).toBeDefined();
   });
 });
+
+describe('library II', () => {
+  it('Task 13 rows exist', () => {
+    for (const id of ['rocuronium', 'vecuronium', 'cisatracurium', 'succinylcholine', 'sugammadex', 'neostigmine', 'glycopyrrolate', 'atropine', 'phenylephrine', 'ephedrine', 'norepinephrine', 'epinephrine', 'vasopressin', 'dobutamine', 'milrinone', 'dopamine', 'nitroglycerin', 'hydralazine', 'esmolol', 'labetalol', 'metoprolol', 'amiodarone', 'adenosine'])
+      expect(DRUGS[id], id).toBeDefined();
+  });
+  it('catecholamines are flagged for acidosis; vasopressin and milrinone are not (T6.2)', () => {
+    expect(DRUGS.norepinephrine!.pd.every((e) => e.catecholamine)).toBe(true);
+    expect(DRUGS.vasopressin!.pd.some((e) => e.catecholamine)).toBe(false);
+    expect(DRUGS.milrinone!.pd.some((e) => e.catecholamine || e.beta)).toBe(false);
+  });
+});

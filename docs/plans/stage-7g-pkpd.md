@@ -2380,7 +2380,7 @@ PK is chosen from the label half-lives (k10 = ln2/t½ with V1 from the label or 
 tables' τ on; Task 22's dose–response tests are the calibration — if a band fails, tune ONLY `ke0` and the EC50 within
 ×0.5–×2 of the value below, record it as `[ENG, fitted …]`, and stop to report if that is not enough (R45).
 
-- [ ] **Step 1: Extend the test** — append to `library.test.ts`:
+- [x] **Step 1: Extend the test** — append to `library.test.ts`:
 
 ```ts
 describe('library II', () => {
@@ -2396,9 +2396,9 @@ describe('library II', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** → FAIL (rows missing).
+- [x] **Step 2: Run it** → FAIL (rows missing).
 
-- [ ] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts`**
+- [x] **Step 3: Create `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts`**
 
 ```ts
 // Drug library II (Stage 7g Task 13). DATA only. T6.x = tables §6.x; R03 = research 03 §8.6; M10 = Miller 10e.
@@ -2487,9 +2487,9 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
 ];
 ```
 
-- [ ] **Step 4: Register the rows** — in `data/drugs.ts` add `import { CARDIOVASCULAR_ROWS } from './rows-cardiovascular.ts';` and
+- [x] **Step 4: Register the rows** — in `data/drugs.ts` add `import { CARDIOVASCULAR_ROWS } from './rows-cardiovascular.ts';` and
   change `const ALL: DrugRow[] = [...ANAESTHETIC_ROWS];` to `const ALL: DrugRow[] = [...ANAESTHETIC_ROWS, ...CARDIOVASCULAR_ROWS];`.
-- [ ] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): drug library II — NMB/reversal, anticholinergics, vasoactives, β-blockers, antiarrhythmics" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
+- [x] **Step 5: Run the test and typecheck** → PASS. Commit and push — `git add -A && git commit -m "feat(pk): drug library II — NMB/reversal, anticholinergics, vasoactives, β-blockers, antiarrhythmics" -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" && git push`
 
 ### Task 14: Drug library III — electrolytes/metabolic (7c-shared), local anaesthetics and lipid, antagonists, placeholders (DATA)
 
