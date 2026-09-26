@@ -5263,7 +5263,7 @@ git push
 
 The page imports the checklist from `packages/validation/src/bedside/checklist.ts` by relative path (it is plain data with no Node imports; `@pme/validation` is not a demo dependency). Measured while planning: the e2e test finds 10 items, the asystole demo on saadat-like reports `ASYSTOLE after ≈ 10 s` (gate 4b: 10 s), and the downloaded results parse; 13 s.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/bedside/bedside.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/bedside/bedside.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -5294,11 +5294,11 @@ describe('Saadat bedside checklist (research/06 §7)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (modules missing)**
+- [x] **Step 2: Run it. Expected: FAIL (modules missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/bedside/bedside.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/bedside/checklist.ts`**
+- [x] **Step 3: Write `packages/validation/src/bedside/checklist.ts`**
 
 ```ts
 // The Saadat Alborz B9 bedside checklist (research/06 §7 "Photo checklist", "Audio", "Behaviour stopwatch") as data:
@@ -5337,7 +5337,7 @@ export interface BedsideResult { id: string; verdict: Verdict; observed: string;
 export interface BedsideResults { schema: 'pme-bedside-results/1'; device: string; firmware: string; observer: string; date: string; skin: 'saadat-like'; results: BedsideResult[] }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/bedside/apply.ts`**
+- [x] **Step 4: Write `packages/validation/src/bedside/apply.ts`**
 
 ```ts
 // Bedside results (the checklist page's download) → docs/validation/bedside/<date>.md with a verdict table and the
@@ -5374,7 +5374,7 @@ export function bedsideMarkdown(r: BedsideResults): string {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/bedside/cli-apply.ts`**
+- [x] **Step 5: Write `packages/validation/src/bedside/cli-apply.ts`**
 
 ```ts
 // Entry-only: pnpm --filter @pme/validation bedside:apply --results <bedside-results.json>
@@ -5395,17 +5395,17 @@ writeFileSync(join(dir, `${r.date}.md`), bedsideMarkdown(r));
 console.log(join(dir, `${r.date}.md`));
 ```
 
-- [ ] **Step 6: Run the unit test. Expected: PASS (2 tests)**
+- [x] **Step 6: Run the unit test. Expected: PASS (2 tests)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/bedside/bedside.test.ts`
 
-- [ ] **Step 7: Add the page to `apps/demo/vite.config.ts` after the `'validation-review'` line:**
+- [x] **Step 7: Add the page to `apps/demo/vite.config.ts` after the `'validation-review'` line:**
 
 ```ts
         'validation-bedside': page('validation-bedside'), // Stage 8a
 ```
 
-- [ ] **Step 8: Write the failing e2e test `apps/demo/e2e/validation-bedside.e2e.ts`**
+- [x] **Step 8: Write the failing e2e test `apps/demo/e2e/validation-bedside.e2e.ts`**
 
 ```ts
 // Stage 8a: the bedside checklist page lists every item, plays the asystole demo on the saadat-like skin and
@@ -5450,7 +5450,7 @@ test('asystole demo measures the saadat-like delay; results download', async ({ 
 });
 ```
 
-- [ ] **Step 9: Write `apps/demo/validation-bedside.html`**
+- [x] **Step 9: Write `apps/demo/validation-bedside.html`**
 
 ```html
 <!doctype html>
@@ -5488,7 +5488,7 @@ test('asystole demo measures the saadat-like delay; results download', async ({ 
 </html>
 ```
 
-- [ ] **Step 10: Write `apps/demo/src/validation/bedside.ts`**
+- [x] **Step 10: Write `apps/demo/src/validation/bedside.ts`**
 
 ```ts
 // Saadat bedside checklist page (research/06 §7; BUILD-PLAN Stage 8 "Saadat screens as a capture source"). The engine
@@ -5611,14 +5611,14 @@ $('save').addEventListener('click', () => {
 (window as unknown as { __pmeBedside: unknown }).__pmeBedside = { pm, results };
 ```
 
-- [ ] **Step 11: Typecheck and run the e2e test. Expected: clean; 1 passed (≈ 15 s)**
+- [x] **Step 11: Typecheck and run the e2e test. Expected: clean; 1 passed (≈ 15 s)**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/validation-bedside.e2e.ts
 ```
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add packages/validation/src/bedside packages/validation/test/bedside apps/demo/validation-bedside.html apps/demo/src/validation/bedside.ts apps/demo/e2e/validation-bedside.e2e.ts apps/demo/vite.config.ts

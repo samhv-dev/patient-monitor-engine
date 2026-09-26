@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Saadat bedside checklist</title>
+    <style>
+      body { background: #111; color: #ddd; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 520px; max-width: 1180px; border: 1px solid #333; }
+      .meta { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0; }
+      .item { border: 1px solid #333; padding: 8px 10px; margin: 8px 0; max-width: 1160px; }
+      .item h3 { margin: 0 0 4px; font-size: 15px; }
+      .item p { margin: 2px 0; color: #aaa; }
+      .item .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+      input, select, button { font: inherit; }
+      input.wide { width: 320px; }
+    </style>
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="meta">
+      <label>Device <input id="device" value="Saadat Alborz B9" /></label>
+      <label>Firmware <input id="firmware" /></label>
+      <label>Observer <input id="observer" /></label>
+      <label>Date <input id="date" type="date" /></label>
+      <button id="sound">Enable sound</button>
+      <button id="save">Download results</button>
+    </div>
+    <p>Each item: do the step at the real monitor, press <b>Run engine demo</b> to see the engine do the same on the saadat-like skin, then record what the monitor did and your verdict. Screens only, no patient identifiers (R12).</p>
+    <div id="items"></div>
+    <script type="module" src="./src/validation/bedside.ts"></script>
+  </body>
+</html>
