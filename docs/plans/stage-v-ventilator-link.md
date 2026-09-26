@@ -1233,7 +1233,7 @@ git push origin stage-v-ventilator-link
 
 This task is the only change to v1.9's physics (plan decision 2); it can be rejected at the gate on its own (revert this commit).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 **Create `packages/ventilator/test/vent-corrections.test.ts`:**
 
@@ -1259,12 +1259,12 @@ describe('correction C1 — VC volume cycling measures the breath, not the lung'
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/vent-corrections.test.ts`
 Expected: FAIL — VTE ≈ 293 mL (not 560), breath-stack VTE ≈ 104.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/ventilator/src/vent.ts` replace
 
@@ -1294,12 +1294,12 @@ export const CORRECTED_FROM_S: Record<string, number> = { 'vc-decel-copd-rr20': 
 
 (The three times are where the first VC breath starts on trapped gas; the traces are identical to the original up to them.)
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run`
 Expected: 21 passed (reference 1, mechanics 4, basics 4, fidelity 10, corrections 2).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/ventilator

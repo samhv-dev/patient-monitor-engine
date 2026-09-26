@@ -14,7 +14,7 @@ const PHASE = { insp: 0, pause: 1, exp: 2 } as const;
  * that starts on trapped gas: they are compared bit-for-bit UP TO that time (s); the corrected behaviour after it
  * is asserted in vent-corrections.test.ts. Every other scenario is compared whole.
  */
-export const CORRECTED_FROM_S: Record<string, number> = {};
+export const CORRECTED_FROM_S: Record<string, number> = { 'vc-decel-copd-rr20': 3.26, 'scn-breath-stack': 1.08, 'vc-spont-variability': 3.26 };
 
 /** Run a reference scenario on the port: the SAME setup string, with S/setMode/loadPreset/runScenario bound to the port. */
 export function runReference(tr: Trace): { vs: VentState; rows: number[][] } {

@@ -205,7 +205,9 @@ function advancePhase(vs: VentState): void {
     let cyc = false;
     const Ti = c.mode === 'VC' ? vcTi(c) : c.itime;
     if (c.mode === 'VC') {
-      if (p.vtDelivered >= c.vt || p.phaseT >= Ti) cyc = true;
+      // Correction C1 (Stage V): v1.9 compared the ABSOLUTE lung volume (vtDelivered = V) with VT, so trapped gas
+      // shortened every breath and capped auto-PEEP; a volume-controlled breath delivers VT on top of trapped gas.
+      if (p.V - p.breathVstart >= c.vt || p.phaseT >= Ti) cyc = true;
     } else if (c.mode === 'PC' || c.mode === 'PRVC') {
       if (p.phaseT >= c.itime) cyc = true;
     } else if (c.mode === 'PSV') {
