@@ -42,6 +42,8 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  HEMO_TEACHING, // Stage 7a
+  type HemoTeachingChannel, // Stage 7a
   hemoChannelActive,
   validateHemoCommand,
   type HemoChannel,
@@ -603,7 +605,7 @@ class Engine implements MonitorEngine {
   }
 
   /** Stage 2: write one 125 Hz sample; the buffer is created on the first write (brief §3.5 ring buffers). */
-  private hemoWrite(ch: HemoChannel, m: number, v: number): void {
+  private hemoWrite(ch: HemoChannel | HemoTeachingChannel, m: number, v: number): void {
     let b = this.bufs.get(ch);
     if (!b) {
       b = new RingBuffer(HEMO_RATE, BUFFER_SECONDS);
@@ -630,6 +632,7 @@ class Engine implements MonitorEngine {
   /** Stage 2: a channel whose sensor is 'none' has no trace, so its buffer is dropped (brief §6.2). */
   private syncHemoBuffers(): void {
     for (const ch of HEMO_CHANNELS) if (!hemoChannelActive(this.st.hemo, ch)) this.bufs.delete(ch);
+    if (!this.st.hemo.pvOn) for (const ch of HEMO_TEACHING) this.bufs.delete(ch); // Stage 7a
   }
 }
 

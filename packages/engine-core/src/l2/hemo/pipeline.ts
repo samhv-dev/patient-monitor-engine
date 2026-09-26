@@ -30,6 +30,9 @@ import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, 
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
 export type HemoChannel = (typeof HEMO_CHANNELS)[number];
+/** Stage 7a: PV-loop teaching channels (truth, no transducer), present only while the 'pv' sensor is on. */
+export const HEMO_TEACHING = ['lvp', 'lvv', 'lap', 'rap', 'rvp', 'pat'] as const satisfies readonly ChannelId[];
+export type HemoTeachingChannel = (typeof HEMO_TEACHING)[number];
 const DT = 1 / HEMO_RATE;
 const SYS_LIMITS = { gMin: 0.1, gMax: G_MAX, rMin: 0.3, rMax: 4 };
 const PA_LIMITS = { gMin: 0.1, gMax: 3, rMin: 0.02, rMax: 0.6 };
@@ -93,6 +96,7 @@ export interface HemoState {
   iabp: IabpState; // Stage 7a: intra-aortic balloon pump (R28, tables §8.1)
   iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
   lvad: LvadState; // Stage 7a: continuous-flow LVAD (R28, tables §8.2)
+  pvOn: boolean; // Stage 7a: teaching channels on
   sys: TrackerState;
   pul: TrackerState;
   prevRef: boolean; // the previous beat was a reference beat
@@ -139,7 +143,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
   return {
     m: 0,
-    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, lvad: createLvad(),
+    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, lvad: createLvad(), pvOn: false,
     sys: createTracker(Math.min(4, Math.max(0.3, (map - cvp) / flow))),
     pul: createTracker(Math.min(0.6, Math.max(0.02, (pam - pawp) / flow))),
     prevRef: true, pv: cvp, pla: pawp,
@@ -381,7 +385,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
  * belongs to time m/125 exactly like the ECG's absolute indexing (brief §3.3). `write(ch, m, v)` stores a
  * displayed sample in the engine's ring buffer.
  */
-export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (ch: HemoChannel, m: number, v: number) => void): void {
+export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (ch: HemoChannel | HemoTeachingChannel, m: number, v: number) => void): void {
   if (mEnd < hs.m) return;
   intake(hs, ctx);
   planCompressions(hs, ctx, mEnd / HEMO_RATE + 0.3);
@@ -468,6 +472,15 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
     const plethPass = cuff > 0 && sameLimb(hs.pleth.site, hs.nibp.site) ? passFraction(hs, cuff) : 1;
     const pl = plethAt(hs.pleth, t1, plethPass, l1Value(ctx.l1, 'pi', t1));
     write('pleth', m, pl);
+    if (hs.pvOn) {
+      const o = hs.circOut;
+      write('lvp', m, o.pLv);
+      write('lvv', m, hs.circ.s[10] as number);
+      write('lap', m, o.pLa);
+      write('rap', m, o.pRa);
+      write('rvp', m, o.pRv);
+      write('pat', m, o.pPaRoot);
+    }
     if (hs.pleth.state !== 'off') numericsStep(hs.num.pleth, m, pl);
     // NIBP cuff
     nouts.length = 0;
@@ -524,6 +537,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
     }
     case 'attachSensor': {
       const { sensor, state, site } = cmd;
+      if (sensor === 'pv') return state === 'on' || state === 'off' ? undefined : 'pv state must be on or off'; // Stage 7a
       if (sensor === 'abp' || sensor === 'cvp' || sensor === 'pap') {
         if (!(LINE_SENSOR_STATES as readonly string[]).includes(state)) return `${sensor} state must be ${LINE_SENSOR_STATES.join(', ')}`;
         if (site !== undefined && (sensor !== 'abp' || !ABP_SITES.includes(site))) return `site must be one of ${ABP_SITES.join(', ')} (abp only)`;
@@ -657,6 +671,10 @@ export function applyHemoCommand(
     }
     case 'attachSensor': {
       const { sensor, state, site } = cmd;
+      if (sensor === 'pv') {
+        hs.pvOn = state === 'on'; // Stage 7a
+        return true;
+      }
       if (sensor === 'abp' || sensor === 'cvp' || sensor === 'pap') {
         if (sensor === 'abp' && site !== undefined) hs.abpSite = site as AbpSite;
         const pNow = sensor === 'abp' ? (hs.circ.s[0] as number) : sensor === 'cvp' ? hs.circOut.pRa : hs.circOut.pPaRoot; // Stage 7a

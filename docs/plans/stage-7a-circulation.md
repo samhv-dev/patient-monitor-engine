@@ -3681,7 +3681,7 @@ git push origin stage-7a-circulation
 **Interfaces:**
 - Produces: `HEMO_TEACHING = ['lvp', 'lvv', 'lap', 'rap', 'rvp', 'pat'] as const`; `HemoState.pvOn: boolean` (default false); `attachSensor { sensor: 'pv', state: 'on' | 'off' }`; the pipeline's `write` callback accepts these channel ids (its type widens to `HemoChannel | TeachingChannel`); values are TRUTH (no transducer): `lvp = pLv`, `lvv = V_LV`, `lap = pLa`, `rap = pRa`, `rvp = pRv`, `pat = pPaRoot`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/circ-teaching.test.ts`:
 
@@ -3707,12 +3707,12 @@ describe('PV-loop teaching channels', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-teaching.test.ts`
 Expected: FAIL (`attachSensor pv` rejected).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `pipeline.ts`: `export const HEMO_TEACHING = ['lvp', 'lvv', 'lap', 'rap', 'rvp', 'pat'] as const satisfies readonly ChannelId[];`; `pvOn: false` in state; `validateHemoCommand` `attachSensor`: `if (sensor === 'pv') return state === 'on' || state === 'off' ? undefined : 'pv state must be on or off';`; `applyHemoCommand`: `if (sensor === 'pv') { hs.pvOn = state === 'on'; return true; }`; `advanceHemo`'s `write` parameter type becomes `(ch: HemoChannel | (typeof HEMO_TEACHING)[number], m: number, v: number) => void`; after the pleth write in the sample loop:
 
@@ -3730,12 +3730,12 @@ Expected: FAIL (`attachSensor pv` rejected).
 
 `engine.ts`: `hemoWrite`'s `ch` parameter type widens the same way; in `syncHemoBuffers` add `if (!this.st.hemo.pvOn) for (const ch of HEMO_TEACHING) this.bufs.delete(ch);` (import `HEMO_TEACHING`). `sampleRate` already returns 125 for any non-ECG, non-co2/resp channel.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-teaching.test.ts test/engine/hemo-engine.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/test/engine/circ-teaching.test.ts

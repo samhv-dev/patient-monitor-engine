@@ -22,11 +22,13 @@ describe('coupling', () => {
     expect(venousGradient(1)).toBe(15);
     expect(venousGradient(0)).toBe(4);
   });
-  it('cardiac output: 0 when no ejection for 3 s, CPR pump flow when compressing', () => {
+  // Stage 7a: CO is read from the circulation (compressions eject through it), no longer a CPR formula
+  it('cardiac output: 0 when the circulation has not ejected for 3 s, else its forward flow', () => {
     const hs = createHemoState(undefined, createL1State(), 75);
-    hs.lastEjT = 0;
+    hs.circ.t = 10;
+    hs.circ.lastEjT = 0;
     expect(cardiacOutput(hs, 10)).toBe(0);
-    hs.cpr = { active: true, rate: 110, quality: 1, nextT: 0 };
-    expect(cardiacOutput(hs, 10)).toBeCloseTo((70 * 0.2 * 110) / 1000, 9);
+    hs.circ.lastEjT = 9;
+    expect(cardiacOutput(hs, 10)).toBeCloseTo(hs.circ.qFwd * 0.06, 9);
   });
 });
