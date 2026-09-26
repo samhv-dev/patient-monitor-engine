@@ -443,7 +443,7 @@ git push origin stage-7b-lungs
 - Consumes: `params.ts`, `venegas.ts` (Task 2).
 - Produces: `UnitParams { sig; rIn; rEx }` (resistances in cmH2O·s/mL), `MechParams { units; rTube; ccw; blocked }`, `MechState { v; q; paw; pcar }`, `createMech()`, `unitPressure(mp, ms, u, pcw)`, `chestWallPressure(mp, ms)`, `mechSubstep(mp, ms, mode: 'flow'|'pressure'|'closed', x, h?)`, `airwayFlow(ms)`; `SideParams` (fields `cL, aerRef, rLung, rawExp, fSlow, tauSlowS, atel, consol, pOpen, tauRecS, vqLow, vdAlv, dl, hpv, perf`), `LungParams` (`side, ccw, rTube, extraShunt, frcMult, ibwKg, pvr, tIt, pPtx, leakFrac, co2Slope, pMax`), `healthyParams(ibwKg?)`, `mechParams(lp, aer: number[], blocked: boolean[])`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/lung/mechanics.test.ts`:
 
@@ -492,12 +492,12 @@ describe('four-unit mechanics (R43, tables §4.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to see it fail**
+- [x] **Step 2: Run it to see it fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mechanics.test.ts`
 Expected: FAIL — cannot resolve `mechanics.ts`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/lung/mechanics.ts`:
 
@@ -670,12 +670,12 @@ export function mechParams(lp: LungParams, aer: number[], blocked: boolean[]): M
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung/mechanics.test.ts`
 Expected: PASS (3). (Prototype: Paw 10.0 at 1 L/s, 45 % of VT to the left lung, τ 0.54 s.)
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/lung/mechanics.ts packages/engine-core/src/l2/lung/side.ts packages/engine-core/test/l2/lung/mechanics.test.ts
