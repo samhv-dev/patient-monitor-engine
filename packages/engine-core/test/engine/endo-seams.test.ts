@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { MonitorEngine } from '../../src/types.ts';
 import type { EngineEvent } from '../../src/types.ts';
 import { ADULT, ev3, rig3, run } from '../helpers/resp.ts';
+import { validateNeuroCommand } from '../../src/l2/neuro/pipeline.ts';
 
 type Labs = Extract<EngineEvent, { type: 'labs' }>;
 type Endo = Extract<EngineEvent, { type: 'endo' }>;
@@ -73,5 +74,17 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(s.blood.core.fl.kfMult).toBeGreaterThan(3);
     const a = s.resp.lungSpecs.find((x: { id: string }) => x.id === 'anaphylaxis');
     expect(a.severity).toBeGreaterThan(0.3);
+  });
+
+  it('7f hand-overs: 7e alone validates `stimulus` (R-7f-4) and 7f observes it; 7f reads endo.cascade.macF (R-7f-8)', async () => {
+    expect(validateNeuroCommand(ev3({ kind: 'stimulus', intensity: 1 }))).toBeNull();
+    const { e } = rig3({ patient: ADULT });
+    expect(e.dispatch(ev3({ kind: 'stimulus', intensity: 3 }))).toMatchObject({ accepted: false });
+    e.dispatch(ev3({ kind: 'stimulus', intensity: 1.5 }));
+    await run(e, 5);
+    const s = st(e);
+    expect(s.endo.noxious).toBe(1.5);
+    expect(s.neuro.stim.level).toBe(1);
+    expect(s.endo.cascade.macF).toBeCloseTo(1 - 0.05 * (37 - s.resp.temp.tc), 2);
   });
 });

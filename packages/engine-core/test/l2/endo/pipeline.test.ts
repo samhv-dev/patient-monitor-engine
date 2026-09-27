@@ -5,7 +5,7 @@ import { createL1State } from '../../../src/l1/state.ts';
 import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand } from '../../../src/l2/endo/pipeline.ts';
 import { tempFactor } from '../../../src/l2/gas/params.ts';
 import { createThermal, stepThermal } from '../../../src/l2/thermal/heat.ts';
-import { thermalMetabolic } from '../../../src/l2/thermal/metabolic.ts';
+import { cascade, thermalMetabolic } from '../../../src/l2/thermal/metabolic.ts';
 
 const ev = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
 function rig(ps: Record<string, unknown> = {}, profile: Record<string, unknown> = { endo: { diabetes: 'type2' } }) {
@@ -79,5 +79,14 @@ describe('Stage 7e pipeline', () => {
     expect(hr).toBeLessThanOrEqual(2);
     expect(o.svrF).toBeGreaterThanOrEqual(0.55);
     expect(o.svrF).toBeLessThanOrEqual(0.65);
+  });
+
+  it('stores cascade(th) on EndoState every second for 7f (R-7f-8): neutral when created, macF < 1 when the core is cold', () => {
+    const { es, resp, ctx } = rig();
+    expect(es.cascade.macF).toBe(1);
+    resp.temp.tc = 34;
+    advanceEndo(es, ctx as never, 1);
+    expect(es.cascade).toEqual(cascade(resp.temp as never));
+    expect(es.cascade.macF).toBeCloseTo(0.85, 9); // tables −5 %/°C below 37
   });
 });

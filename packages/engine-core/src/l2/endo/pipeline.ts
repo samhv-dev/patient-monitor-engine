@@ -9,11 +9,14 @@ import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import type { EndoClinicalEvent } from '../../types-endo.ts';
 import type { HemoState } from '../hemo/pipeline.ts';
 import type { RespState } from '../resp/pipeline.ts';
-import { thermalMetabolic } from '../thermal/metabolic.ts';
+import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
 import { observeDoses, pkOf, readEndoInputs, readInfusions } from './adapters.ts';
 import { SEPSIS_PHASES } from './conditions.ts';
 import { createEndoCore, DEFAULT_ENDO_PROFILE, stepEndoCore, type EndoCore, type EndoProfile } from './core.ts';
 import { meal } from './glucose.ts';
+
+/** The cascade before the first 1 Hz step (every factor neutral). */
+const NEUTRAL_CASCADE: Cascade = { hrF: 1, clearanceF: 1, macF: 1, coagF: 1, stage: 0, shiverLevel: 0 };
 
 export interface EndoState {
   core: EndoCore;
@@ -23,6 +26,7 @@ export interface EndoState {
   ecg: { tempC: number; shiver: number }; // last values pushed as ECG modifier deltas
   kfMult: number; // last capillary-leak multiplier written into 7c
   lungSev: number; // last 7b anaphylaxis severity written
+  cascade: Cascade; // cascade(th) at the last 1 Hz step: 7f reads endo.cascade.macF (R-7f-8)
   out: EngineEvent[];
 }
 
@@ -41,7 +45,7 @@ export function resolveEndoProfile(profile: PatientProfile | undefined): EndoPro
 export function createEndoState(profile: PatientProfile | undefined, weightKg: number): EndoState {
   return {
     core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ecg: { tempC: 0, shiver: 0 },
-    kfMult: 1, lungSev: 0, out: [],
+    kfMult: 1, lungSev: 0, cascade: { ...NEUTRAL_CASCADE }, out: [],
   };
 }
 
@@ -58,6 +62,7 @@ export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
     const o = es.core.out;
     th.extraX = o.vo2F; // endocrine metabolic heat (thyroid, sepsis, hypermetabolic)
     th.feverShift = o.setShiftC;
+    es.cascade = cascade(th); // R-7f-8: 7f's hypothermic MAC reduction reads macF
     es.out.push({
       type: 'endo', t,
       glucoseMgDl: Math.round(o.glucoseMgDl), glucoseMmolL: Math.round(o.glucoseMmol * 10) / 10,
