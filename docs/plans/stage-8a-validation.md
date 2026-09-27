@@ -5942,7 +5942,7 @@ git push
 - Consumes: every task above.
 - Produces: the gate evidence and PR. Does NOT merge (R21: the orchestrator inspects and merges).
 
-- [ ] **Step 1: Bring the branch up to date with main (Stages 3.1, V, 7a–7g may have merged since `6eeb6d1`). Keep both sides of any conflict; `NOTICES.md` keeps every ID**
+- [x] **Step 1: Bring the branch up to date with main (Stages 3.1, V, 7a–7g may have merged since `6eeb6d1`). Keep both sides of any conflict; `NOTICES.md` keeps every ID**
 
 ```bash
 git fetch origin
@@ -5951,7 +5951,7 @@ npx -y pnpm@9.15.9 install
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 check-notices
 ```
 
-- [ ] **Step 2: Re-check the regression baselines against the merged engine. Expected on a main with new physiology: some rows red. Do NOT silently rebaseline: list every red channel in the gate note with the stage that moved it, then rebaseline and commit the new files in their own commit**
+- [x] **Step 2: Re-check the regression baselines against the merged engine. Expected on a main with new physiology: some rows red. Do NOT silently rebaseline: list every red channel in the gate note with the stage that moved it, then rebaseline and commit the new files in their own commit**
 
 ```bash
 npx -y pnpm@9.15.9 validate --suites regression,determinism --out /tmp/pme-8a-reg || true

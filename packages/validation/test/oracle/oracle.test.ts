@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DocCommand } from '@pme/controller/scenario';
 import { judge, ORACLE, runOracle, type Compare, type OracleScenario } from '../../src/oracle/oracle.ts';
-import { loadPulse, pulseDir } from '../../src/oracle/pulse-node.ts';
+import { loadPulse, pulseDir, type PulseOracle } from '../../src/oracle/pulse-node.ts';
 
 const C = (expect: Compare['expect'], tolPct = 10): Compare => ({ id: 'x', ours: 'state:hr', pulse: 'HeartRate(1/min)', atS: 10, metric: 'abs', tolPct, expect });
 
@@ -23,6 +23,23 @@ describe('oracle comparator (annex §C)', () => {
     const r = await runOracle(later, null);
     expect(r.oursMeasurable).toBe(false);
     expect(r.rows.every((x) => x.expected === 'n/m' && x.grade === 'green')).toBe(true);
+  });
+  it('Pulse aborting mid-run (wasm abort) is recorded: later rows yellow with the abort time, never a crash', { timeout: 60_000 }, async () => {
+    let steps = 0;
+    const fake: PulseOracle = {
+      buildHash: 'fake',
+      step: (n) => {
+        steps += n;
+        if (steps > 750) throw new Error('RuntimeError: Aborted(undefined)');
+      },
+      pull: () => ({ t: steps * 0.02, 'HeartRate(1/min)': 72 }) as never,
+      act: () => true,
+    };
+    const s: OracleScenario = { id: 'Ox', title: 'abort', durationS: 20, pulseActions: [], ours: { actions: [] }, compare: [C({ kind: 'agree' }), { ...C({ kind: 'agree' }), id: 'late', atS: 20 }] };
+    const r = await runOracle(s, fake);
+    expect(r.pulseAbortedS).toBe(10);
+    expect(r.rows.map((x) => [x.id, x.grade])).toEqual([['x', 'green'], ['late', 'yellow']]);
+    expect(r.rows[1]?.note).toContain('Pulse aborted');
   });
   it.skipIf(!pulseDir())('Pulse loads in Node and StandardMale sits at HR 72, MAP ≈ 95 (needs PME_PULSE_DIR)', { timeout: 60_000 }, async () => {
     const p = await loadPulse(pulseDir() as string);

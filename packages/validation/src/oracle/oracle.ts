@@ -93,28 +93,43 @@ export function oursDoc(s: OracleScenario): ValidationDoc {
 }
 
 /** Run one scenario on both engines. Our side not measurable → rows say so and grade green (not gating). */
-export async function runOracle(s: OracleScenario, pulse: PulseOracle | null): Promise<{ rows: OracleRow[]; oursMeasurable: boolean }> {
+/** Pulse can abort mid-run (an uncaught C++ exception kills the wasm, e.g. at exsanguination): `pulseAbortedS` is the
+ *  sim time Pulse completed (to 10 s); later rows are yellow (queued for review, not gating: the failure is Pulse's). */
+export async function runOracle(s: OracleScenario, pulse: PulseOracle | null): Promise<{ rows: OracleRow[]; oursMeasurable: boolean; pulseAbortedS: number | null }> {
   const r = await runValidationDoc(oursDoc(s));
   const at = (series: string, t: number) => {
     const pts = (r.store.series.get(series) ?? []).filter(([x]) => Math.abs(x - t) <= 5);
     return pts.length ? pts.reduce((a, [, v]) => a + v, 0) / pts.length : Number.NaN;
   };
   const pulseAt = new Map<number, Record<string, number>>();
+  let pulseAbortedS: number | null = null;
   if (pulse) {
     const times = [...new Set([0, ...s.compare.map((c) => c.atS)])].sort((a, b) => a - b);
     const acts = [...s.pulseActions].sort((a, b) => a.t - b.t);
     let now = 0;
     let k = 0;
-    for (const t of times) {
-      while (k < acts.length && (acts[k] as { t: number }).t <= t) {
-        const a = acts[k++] as { t: number; json: string };
-        pulse.step(Math.round((a.t - now) / 0.02));
-        now = a.t;
-        if (!pulse.act(a.json)) throw new Error(`${s.id}: Pulse rejected ${a.json}`);
+    let reached = 0; // sim seconds Pulse has completed (stepped in 10 s chunks so an abort is located to 10 s)
+    const stepTo = (t: number) => {
+      for (let n = Math.round((t - now) / 0.02); n > 0; n -= 500) {
+        pulse.step(Math.min(n, 500));
+        reached += Math.min(n, 500) * 0.02;
       }
-      pulse.step(Math.round((t - now) / 0.02));
-      now = t;
-      pulseAt.set(t, pulse.pull());
+    };
+    try {
+      for (const t of times) {
+        while (k < acts.length && (acts[k] as { t: number }).t <= t) {
+          const a = acts[k++] as { t: number; json: string };
+          stepTo(a.t);
+          now = a.t;
+          if (!pulse.act(a.json)) throw new Error(`${s.id}: Pulse rejected ${a.json}`);
+        }
+        stepTo(t);
+        now = t;
+        pulseAt.set(t, pulse.pull());
+      }
+    } catch (e) {
+      if (/rejected/.test(String(e))) throw e;
+      pulseAbortedS = Math.round(reached);
     }
   }
   const rows: OracleRow[] = [];
@@ -125,7 +140,8 @@ export async function runOracle(s: OracleScenario, pulse: PulseOracle | null): P
     const pv = c.metric === 'delta' ? p1 - p0 : p1;
     if (!r.measurable) rows.push({ scenario: s.id, id: c.id, ours: Number.NaN, pulse: pv, expected: 'n/m', grade: 'green', note: `ours not measurable: ${r.unsupported[0]?.reason ?? ''}` });
     else if (!pulse) rows.push({ scenario: s.id, id: c.id, ours, pulse: Number.NaN, expected: 'skipped', grade: 'green', note: 'PME_PULSE_DIR not set' });
+    else if (pulseAbortedS !== null && c.atS > pulseAbortedS) rows.push({ scenario: s.id, id: c.id, ours, pulse: Number.NaN, expected: 'n/a', grade: 'yellow', note: `Pulse aborted after ${pulseAbortedS} s (wasm abort); no Pulse value at ${c.atS} s` });
     else rows.push({ scenario: s.id, id: c.id, ours, pulse: pv, ...judge(c, ours, pv) });
   }
-  return { rows, oursMeasurable: r.measurable };
+  return { rows, oursMeasurable: r.measurable, pulseAbortedS };
 }
