@@ -15,6 +15,7 @@ const SLOW = [
   'test/engine/hemo-nibp.test.ts',
   'test/engine/circ-sanity-*.test.ts',
   'test/engine/pk-acceptance-*.test.ts',
+  'test/engine/endo-acceptance.test.ts', // Stage 7e: MH, glucose and sepsis scenarios (sim-hours)
   'test/engine/blood-stage3-recheck.test.ts', // Stage 7c: four desaturations + a 70 min OLV run
   'test/engine/blood-sanity-*.test.ts', // Stage 7c: 2 h haemorrhage/transfusion and acid–base scenarios
   'test/engine/blood-hyperk.test.ts', // Stage 7c: 30 min succinylcholine/calcium/insulin and salbutamol scenarios

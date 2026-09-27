@@ -3461,7 +3461,7 @@ git push origin stage-7e-endocrine-thermal
 **Interfaces:**
 - Consumes: the wired engine (Tasks 12–13); helpers `rig3`, `ev3`, `run`, `vent`, `numSeries`, `stateSeries`, `beatsIn`, `mean`, `ADULT` (`test/helpers/resp.ts`, Stage 3 — read-only); 7g's `drug`/`infusion` events; 7c's `labs` event.
 
-- [ ] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-acceptance.test.ts`
+- [x] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-acceptance.test.ts`
 
 The bands are the tables' (R45: §7 check 21 for MH, §5c for the stimulus and cortisol, §5e for sepsis); a miss stays `it.fails` with its number. The one `it.fails` below is the prototype's measured miss (Q-7e-5).
 
@@ -3605,18 +3605,18 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Add the file to the SLOW set** — in `packages/engine-core/vite.config.ts`, after `  'test/engine/pk-acceptance-*.test.ts',` add:
+- [x] **Step 2: Add the file to the SLOW set** — in `packages/engine-core/vite.config.ts`, after `  'test/engine/pk-acceptance-*.test.ts',` add:
 
 ```ts
   'test/engine/endo-acceptance.test.ts', // Stage 7e: MH, glucose and sepsis scenarios (sim-hours)
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-acceptance.test.ts`
 Expected: PASS (6 + 1 expected failure). Prototype console: `MH: EtCO2 40/48/63/84/102 at 0/5/10/15/20 min; core +1.17 °C at 15 min; HR 75 → 141; K 6`; `dantrolene, fixed MV: EtCO2 peak 110 at +6.0 min`; `dantrolene + MV×2: HR 141 → 129/121 at +15/+20 min; core 39.78` (the `it.fails`); `stimulus: HR 75.1 → 93.8 (+24.8 %)`; `hypoglycaemia: glucose 55 mg/dL, HR 75 → 103`; `sepsis MANUAL: HR 120, core 38.76, glucose 167`. If an assertion misses, R45 applies: find the MECHANISM within the tables' ranges, never widen the band; if none exists, turn that `it` into `it.fails` with the measured number and report it. If the `it.fails` starts passing, make it `it` and record the number.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/endo-acceptance.test.ts packages/engine-core/vite.config.ts
