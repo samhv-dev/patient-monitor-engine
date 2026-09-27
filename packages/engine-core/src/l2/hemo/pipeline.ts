@@ -12,7 +12,7 @@ import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
 import type { DeviceAction } from '../../types.ts'; // Stage 7a
-import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, StateVar } from '../../types.ts';
+import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, RhythmId, RhythmOpts, StateVar } from '../../types.ts';
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
@@ -26,6 +26,7 @@ import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadN
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
+import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
@@ -62,6 +63,7 @@ export function circProfileOf(profile: PatientProfile | undefined): CircProfile 
 export interface RhythmView {
   id: string;
   records: readonly EngineEvent[];
+  opts?: RhythmOpts; // FU-2: for the state event's effective rate
 }
 
 export interface HemoCtx {
@@ -402,7 +404,9 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     values.pawp = hs.circOut.pPv;
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
   }
-  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags });
+  const rid = ctx.rhythm.id as RhythmId; // FU-2 (G-FU1 item 6): controllers follow engine-initiated rhythm changes
+  const rhythm = { id: rid, rateBpm: Math.round(effectiveRateBpm(rid, ctx.rhythm.opts ?? {}, rampValue(ctx.hr, t)) * 10) / 10 };
+  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags, rhythm });
   // Stage 7a: the 1 Hz circulation summary (tables §2.1 step 5, §3)
   const lb = c.beats[c.beats.length - 1];
   const svRvMean = c.beats.length ? c.beats.reduce((a, b) => a + b.svRv, 0) / c.beats.length : 0;

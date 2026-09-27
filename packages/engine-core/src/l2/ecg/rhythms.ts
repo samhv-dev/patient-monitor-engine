@@ -1,7 +1,7 @@
 // Rhythm table (brief §5; research 03 §1.5). Each rhythm is a configuration of the two clocks (atria,
 // ventricle), the AV node, an optional ventricular/junctional focus, a continuous generator (VF) and an
 // optional implanted pacemaker. `hr` (the L1 target) drives the rate named in `rateDrives`.
-import type { RhythmGroup, RhythmId } from '../../types.ts';
+import type { RhythmGroup, RhythmId, RhythmOpts } from '../../types.ts';
 import type { BeatTemplateId as TemplateId } from './beat-templates.ts';
 
 export type AtrialMode = 'sinus' | 'ectopic' | 'multifocal' | 'flutter' | 'fib' | 'none';
@@ -108,3 +108,20 @@ export const RHYTHM_IDS = Object.keys(RHYTHMS) as RhythmId[];
 export const DEFAULT_DISSOCIATED_ATRIAL_BPM = DISSOCIATED_ATRIAL_BPM;
 /** Flutter atrial rate default (brief §5: 250–350). */
 export const DEFAULT_FLUTTER_ATRIAL_BPM = 300;
+
+/**
+ * FU-2 (G-FU1 item 6): the rate the hr ramp drives when it reads `hr` — rate-driven rhythms clamp it to their range
+ * (as rhythmRate does), so it is the ventricular rate where every beat conducts, but the hr-driven ATRIAL (sinus) rate
+ * for the 2:1, high-grade and Mobitz blocks (their conducted ventricular rate is lower); flutter conducts its atrial
+ * rate at the ratio (variable counts as 3:1, as the engine's startRate); arrest rhythms and VF run at 0. Published on
+ * the 1 Hz `state` event.
+ */
+export function effectiveRateBpm(id: RhythmId, opts: RhythmOpts, hr: number): number {
+  const d = RHYTHMS[id];
+  if (d.atria === 'flutter') {
+    const r = opts.ratio ?? 2;
+    return (opts.atrialRateBpm ?? DEFAULT_FLUTTER_ATRIAL_BPM) / (r === 'variable' ? 3 : r);
+  }
+  if (d.rateDrives === 'none') return 0;
+  return Math.min(d.rateRange[1], Math.max(d.rateRange[0], hr));
+}

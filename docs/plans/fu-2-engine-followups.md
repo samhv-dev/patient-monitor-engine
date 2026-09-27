@@ -1560,7 +1560,7 @@ git push
   `rhythm?: { id: RhythmId; rateBpm: number }` (engine `HemoEvent`); `RhythmView.opts?: RhythmOpts`. Task 7 consumes
   the field.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/engine/state-rhythm.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/engine/state-rhythm.test.ts`:
 
 ```ts
 // FU-2 item 4 (G-FU1 item 6): the 1 Hz `state` event carries the running rhythm (id + effective rate), so controllers
@@ -1612,12 +1612,12 @@ describe('state event rhythm (FU-2 item 4)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/state-rhythm.test.ts`
 Expected: FAIL — `effectiveRateBpm is not a function` / `does not provide an export named 'effectiveRateBpm'`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/ecg/rhythms.ts`, find:
 
@@ -1738,7 +1738,7 @@ and replace with:
   hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags, rhythm });
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/state-rhythm.test.ts test/engine/hemo-engine.test.ts test/engine/engine-seams.test.ts test/engine/defib-engine.test.ts
@@ -1748,7 +1748,7 @@ npx -y pnpm@9.15.9 typecheck
 Expected: 3 new tests pass; the existing state-event and defib tests pass; the whole workspace typechecks (the
 renderer, demo and controller read `state` without the new optional field).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/rhythms.ts packages/engine-core/src/types-hemo.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/state-rhythm.test.ts docs/plans/fu-2-engine-followups.md
