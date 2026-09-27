@@ -23,6 +23,7 @@ import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
 import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
+import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
 import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
@@ -54,10 +55,20 @@ export interface RespCtx {
   hemo: HemoState;
   rhythm: RhythmView;
   hr: RampState;
+  /** Stage 7c: what the gas step reads from the blood (absent → Stage 3 behaviour, byte-identical). */
+  blood?: BloodView;
+}
+
+/** Stage 7c: the blood's ODC context, a CO factor (blood-volume fallback without Stage 7a) and extra CO2 (mL/min). */
+export interface BloodView {
+  odc: OdcCtx;
+  coFactor: number;
+  co2LoadMlMin: number;
 }
 
 export interface RespState {
   vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
+  evlwiExtra?: number; // Stage 7c: lung water from the blood's COP/capillary leak, mL/kg above the conditions' (G7b ruling 8)
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
   pat: GasPatient;
@@ -158,7 +169,7 @@ export function respBreathU(rs: RespState, t: number): number {
 
 /** Stage 7b: re-resolve the lung from its condition specs, the bronchospasm multiplier and the mainstem state. */
 export function applyLungSpecs(rs: RespState): void {
-  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent);
+  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0); // Stage 7c: + lung water
   const ls = rs.lung;
   ls.lp = r.lp;
   ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
@@ -210,12 +221,17 @@ export function respPleural(rs: RespState, t: number): number {
   return p + Math.max(0, lp.pPtx - rs.circPtx);
 }
 
-/** Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). */
-function metabolic(rs: RespState, t: number): number {
+/**
+ * Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). Stage 7c: exported for
+ * the blood's VO2 demand; the `gas` argument is Stage 7e's (its plan replaces this body with separate O2/CO2
+ * factors) and is ignored until then.
+ */
+export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
+  void gas; // Stage 7c: reserved for Stage 7e
   return tempFactor(rs.temp.tc) * mhFactor(rs.temp, t, MH_VCO2_FACTOR) * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
 }
 
-function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number): O2Inputs {
+function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: BloodView): O2Inputs { // Stage 7c: blood
   const a = rs.driver.airway;
   const open = a === 'patent' || a === 'apnoea' || a === 'disconnected' || a === 'bronchospasm' || a === 'endobronchial';
   const ga = rs.temp.anaesthesia === 'general';
@@ -224,6 +240,7 @@ function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number): O2Input
     massFlowFio2: vaLpm > 0 || !open ? null : preoxActive(rs.driver, t) ? (rs.driver.preox as { fio2: number }).fio2 : 0.21,
     qLpm: rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg, vo2: rs.pat.vo2 * metabolic(rs, t), shunt: Math.min(0.9, rs.shunt + extraShunt(rs)),
     paco2: rs.co2.pf, tempC: rs.temp.tc, frcMl: ga ? rs.pat.frcGaMl : rs.pat.frcMl, bloodL: rs.pat.bloodL,
+    ...(blood ? { odc: blood.odc } : {}), // Stage 7c
   };
 }
 
@@ -239,7 +256,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const h = ctx.hemo;
   const d = rs.driver;
   checkDrive(d, t);
-  rs.coRatio = cardiacOutput(h, t) / CO_REF_LPM;
+  rs.coRatio = (cardiacOutput(h, t) / CO_REF_LPM) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
   // temperature at 1 Hz; MANUAL tempCore target places the model (plan decision 2)
   if (rs.gasK % 10 === 0) {
     const tc = l1Target(l1, 'tempCore', t);
@@ -250,12 +267,12 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     stepTemp(rs.temp, t, 1);
     tempNumStep(rs.num.temp, rs.temp.sites, rs.tempSite, 1);
   }
-  const vco2 = rs.pat.vco2 * metabolic(rs, t);
+  const vco2 = rs.pat.vco2 * metabolic(rs, t) + (ctx.blood?.co2LoadMlMin ?? 0); // Stage 7c: bicarbonate CO2
   // Stage 7b: the lung module's 10 Hz step (recruitment, HPV, perfusion, CO2 mix, O2 stores) before the CO2 store.
   // Executor deviation (Task 14): it runs BEFORE the MANUAL etco2 calibration, so the calibration at t = 0 already
   // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
   const va0 = alveolarVentilation(d, t, deadSpace(rs));
-  const x = o2Inputs(rs, l1, t, va0);
+  const x = o2Inputs(rs, l1, t, va0, ctx.blood); // Stage 7c: blood
   const ga = rs.temp.anaesthesia === 'general';
   rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
   const side = circSideFlows(h);
@@ -263,6 +280,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
     vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), volatileMac: 0, sideFlow: side,
     qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
+    ...(x.odc ? { odc: x.odc } : {}), // Stage 7c (E-7c-1): the blood's ODC reaches SaO2/PaO2 truth
   }, GAS_DT_S);
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
   rs.circPtx = circPtx(h); // Stage 7b (Task 26)
@@ -294,7 +312,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const spT = l1Target(l1, 'spo2', t);
   if (spT !== rs.seen.spo2) {
     rs.seen.spo2 = spT;
-    const x = o2Inputs(rs, l1, t, Math.max(0.3, nominalVa(rs, l1, t)));
+    const x = o2Inputs(rs, l1, t, Math.max(0.3, nominalVa(rs, l1, t)), ctx.blood); // Stage 7c
     rs.shunt = Math.max(0, solveShunt(x, spT / 100) - extraShunt(rs));
     const ss = o2Steady({ ...x, shunt: rs.shunt + extraShunt(rs) }, rs.shunt + extraShunt(rs));
     if (ss && (va > 0 || rs.gasK === 0)) Object.assign(rs.o2, ss);
@@ -309,7 +327,8 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const pinned = l1.pinned.includes('spo2');
   const sa = pinned ? spT / 100 : rs.o2.sa; // M5: an instructor pin on spo2 disables autoDesat
   const piM = piNumeric(h.num.pleth, t);
-  const siteSa = delayStep(rs.delay, sa, siteDelay(h.pleth.site, rs.coRatio, piM.value), GAS_DT_S);
+  const shownSa = ctx.blood && !pinned ? pulseOxApparent(sa, ctx.blood.odc) : sa; // Stage 7c: what the oximeter reads (dyshaemoglobins)
+  const siteSa = delayStep(rs.delay, shownSa, siteDelay(h.pleth.site, rs.coRatio, piM.value), GAS_DT_S);
   stepSpo2(rs.num.spo2, {
     siteSa, probe: h.pleth.state, lastFootT: h.num.pleth.feet[h.num.pleth.feet.length - 1] ?? -1e12,
     pi: piM.value, cuffOnLimb: sameLimbCuff(h), cpr: h.cpr.active,

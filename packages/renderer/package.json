@@ -16,5 +16,8 @@
     "@pme/controller": "workspace:*",
     "@pme/engine-core": "workspace:*",
     "@pme/skins": "workspace:*"
+  },
+  "devDependencies": {
+    "happy-dom": "20.14.5"
   }
 }

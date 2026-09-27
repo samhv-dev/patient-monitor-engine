@@ -10,9 +10,14 @@ import { runPk, yieldNow } from '../helpers/pk.ts';
 
 const ev = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
 const inf = (drugId: string, rate: number) => ({ kind: 'infusion', drugId, rate, unit: 'mcg/kg/min' });
-/** % MAP change at 20 min of an infusion started at 120 s (1310–1320 s vs 100–120 s). */
+/**
+ * % MAP change at 20 min of an infusion started at 120 s (1310–1320 s vs 100–120 s). Stage 7c (R51 addendum 15, ruling 3):
+ * the rig ventilates at RR 20 (was 12), which holds PaCO2 38–39 mmHg for the whole run. At RR 12 (VT 500, PEEP 5) the
+ * awake patient's VCO2 196 mL/min meets an alveolar ventilation of 2.82 L/min (Stage 3's calibrated dead space, NR-7g-3):
+ * PaCO2 43 → 57 mmHg in 22 min WITH OR WITHOUT 7c — the rig, not 7c; once 7c's pH is live, 7g's acidosisFactor sees it.
+ */
 async function mapRise(drugId: string, rate: number): Promise<number> {
-  const r = await runPk({}, [[120, inf(drugId, rate)]], 1320);
+  const r = await runPk({}, [[120, inf(drugId, rate)]], 1320, 11, { rr: 20 });
   return 100 * (r.map(1310, 1320) / r.map(100, 120) - 1);
 }
 function coMean(evs: EngineEvent[], a: number, b: number): number {
@@ -79,9 +84,14 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
   it.skipIf(!('blood' in (createEngine({ seed: 1 }).snapshot().state as { st: object }).st))(
     'acidosis through the engine (7c on main): the pk context reads 7c’s pH and scales the phenylephrine SVR rise by acidosisFactor(pH)',
     async () => {
-      const run = async (acid: boolean) => {
+      // Stage 7c (R51 addendum 15): ruling 3 — this PD rig ventilates at RR 20 (was 12): at RR 12 the BASE run was itself
+      // acidotic (PaCO2 → 57, pH 7.27, acidosisFactor 0.68), so the ratio measured AF(6.84)/AF(7.27) = 0.59 instead of
+      // AF(pH). Ruling 4 — the ratio is asserted with hbfRel pinned to 1 (7c's test seam) so both runs clear phenylephrine
+      // alike; the second assertion documents the flow-scaled (live hbfRel) ratio.
+      const run = async (acid: boolean, pinned = true) => {
         const e = createEngine({ seed: 8, mode: 'modeled' });
-        e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
+        if (pinned) (e as unknown as { st: { blood: { pinHbfRel?: number } } }).st.blood.pinHbfRel = 1;
+        e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 20, vtMl: 500, peep: 5 } }));
         if (acid) e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'metabolic', ketoacidsMmolL: 20, overS: 60 } })); // 7c's event
         e.dispatch(cmd({ type: 'applyEvent', event: inf('phenylephrine', 0.5), atTick: 300 * 50 }));
         for (let t = 60; t <= 1500; t += 60) {
@@ -97,6 +107,10 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
       expect(acid.ph).toBeLessThan(7.3); // else raise ketoacidsMmolL: the test must reach real acidaemia
       expect(acid.rise / base.rise).toBeGreaterThan(acidosisFactor(acid.ph) * 0.95);
       expect(acid.rise / base.rise).toBeLessThan(acidosisFactor(acid.ph) * 1.05);
+      const liveBase = await run(false, false);
+      const liveAcid = await run(true, false);
+      console.log(`engine acidosis, hbfRel live: SVR-rise ratio ${(liveAcid.rise / liveBase.rise).toFixed(3)} vs pinned ${(acid.rise / base.rise).toFixed(3)}`);
+      expect(liveAcid.rise / liveBase.rise).toBeGreaterThanOrEqual(acid.rise / base.rise - 1e-9); // lower hepatic flow → never less phenylephrine
     },
     900_000,
   );

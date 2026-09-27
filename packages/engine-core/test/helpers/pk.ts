@@ -1,15 +1,20 @@
 import { createEngine } from '../../src/engine.ts';
-import type { EngineEvent, PatientProfile } from '../../src/types.ts';
+import type { EngineEvent, MonitorEngine, PatientProfile } from '../../src/types.ts';
 import { cmd } from './hemo.ts';
 
 export const yieldNow = () => new Promise((r) => setImmediate(r));
 
-/** MODELED, ventilated engine; events at times (s); advances minute by minute with a yield (CI rule). */
-export async function runPk(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number, seed = 11) {
+/**
+ * MODELED, ventilated engine; events at times (s); advances minute by minute with a yield (CI rule). Stage 7c (R51
+ * addendum 15): `opts.rr` overrides the ventilator rate (normocapnic PD rigs); `opts.setup` runs before the first advance
+ * (the hbfRel test seam).
+ */
+export async function runPk(patient: PatientProfile, events: [number, Record<string, unknown>][], tEnd: number, seed = 11, opts: { rr?: number; setup?: (e: MonitorEngine) => void } = {}) {
   const e = createEngine({ seed, mode: 'modeled', patient: { ...patient, sensors: { abp: 'connected' } } });
   const ev: EngineEvent[] = [];
   e.on((x) => ev.push(x));
-  e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
+  e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: opts.rr ?? 12, vtMl: 500, peep: 5 } }));
+  opts.setup?.(e);
   const rejected: string[] = [];
   for (const [t, event] of events) {
     const r = e.dispatch(cmd({ type: 'applyEvent', event, atTick: Math.round(t * 50) }));

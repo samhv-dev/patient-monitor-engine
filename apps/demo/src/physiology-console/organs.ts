@@ -93,6 +93,12 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   // 7g PK machinery: compartment amounts, gamma doses and bolus times per drug, the per-tick dose log, the pending
   // and grid-due boluses, the last PD concentrations and the desflurane MAC history (the bus concentrations stay visible)
   'pk.drugs.*.x', 'pk.drugs.*.doses', 'pk.drugs.*.bolusTimes', 'pk.bus.doses', 'pk.lastC', 'pk.due', 'pk.pending', 'pk.macPrev',
+  // 7c blood machinery: solute AMOUNTS and set points (the concentrations are blood.out), the profile scaling and the
+  // compartments' reference copy, running infusions/bleeds, pH-solver scratch, the Stage 3 view (a copy of core.odc),
+  // what the engine already pushed into Modifiers, the resting-CO latch, volume bookkeeping, queues and the test seam
+  'blood.core.so', 'blood.core.pat', 'blood.core.fl.ref', 'blood.core.fl.flows', 'blood.core.ab.iter', 'blood.core.ab.residual',
+  'blood.core.k1Hz', 'blood.core.ecf0', 'blood.core.phNonOrg', 'blood.core.doses', 'blood.view', 'blood.ecg', 'blood.rest',
+  'blood.circNetMl', 'blood.labs', 'blood.cold', 'blood.keto', 'blood.events', 'blood.lung.pCap', 'blood.pinHbfRel',
   // 7d organ machinery: the ICP beat times, 1 s numeric accumulators, the last organ view (a copy of other stages'
   // truths), the effects bookkeeping, the event queue, the 4 s MAP/CVP means and the reference CO; the brain's osmotic
   // dose list and herniation timer; the kidney's 10 min urine bins, its calibration constants and the TGF state

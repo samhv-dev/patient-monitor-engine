@@ -69,6 +69,7 @@ import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // 
 import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
 import { betaVenousUnits } from './l2/circ/venous.ts'; // FU-2
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts'; // Stage 7c
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
 import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organChannelActive, rebaselineOrgans, validateOrgansCommand, type OrganChannel, type OrgansCtx, type OrgansState } from './l2/organs/pipeline.ts'; // Stage 7d
@@ -108,6 +109,7 @@ interface PipelineState {
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
   resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
+  blood: BloodState; // Stage 7c: fluids, acid–base, electrolytes, O2 delivery, labs
   pk: PkState; // Stage 7g
   pkHooks: RhythmHookState; // Stage 7g
   organs: OrgansState; // Stage 7d: brain, kidney, liver
@@ -236,6 +238,7 @@ class Engine implements MonitorEngine {
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
+      blood: createBloodState(opts.patient), // Stage 7c
       pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
       pkHooks: createHookState(), // Stage 7g
       organs: createOrgansState(opts.patient, l1), // Stage 7d
@@ -340,6 +343,7 @@ class Engine implements MonitorEngine {
       data.st.organs = createOrgansState(undefined, data.st.l1); // Stage 7d: pre-7d snapshots
       rebaselineOrgans(data.st.organs, this.organsCtx(data.st));
     }
+    data.st.blood ??= createBloodState(undefined); // Stage 7c: pre-7c snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -527,7 +531,9 @@ class Engine implements MonitorEngine {
       holdRate(ps, req7g.id, false); // FU-2: an engine-initiated sinus rate belongs to the reflex
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view)
+    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
+    this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const resp = ps.resp; // Stage 3
     advanceOrgans(ps.organs, this.organsCtx(ps), Math.floor(end / 4), (ch, m, v) => this.organWrite(ch, m, v)); // Stage 7d: after pk/resp/blood/endo, before the haemodynamics
     advanceHemo(
@@ -561,6 +567,7 @@ class Engine implements MonitorEngine {
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
+    this.st.blood.events = keep(this.st.blood.events); // Stage 7c
     this.st.pk.out = keep(this.st.pk.out); // Stage 7g
     this.st.organs.out = keep(this.st.organs.out); // Stage 7d
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
@@ -628,6 +635,8 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const organs = validateOrgansCommand(cmd); // Stage 7d: after pk (and 7f's neuro), before blood/endo/Stage 3 — its own ids only (null otherwise)
     if (organs !== null) return organs;
+    const blood = validateBloodCommand(cmd); // Stage 7c (after 7g — which owns `drug` — and before Stage 3, whose `condition` rejects unknown ids)
+    if (blood !== null) return blood;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
     if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
@@ -684,6 +693,7 @@ class Engine implements MonitorEngine {
       this.syncOrganBuffers(); // Stage 7d
       return;
     }
+    if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
       return;
@@ -738,6 +748,21 @@ class Engine implements MonitorEngine {
     const skin = this.dev.alarms.profile.skin;
     if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
     return this.hrAvgCache.avg;
+  }
+
+  /**
+   * Stage 7c (plan decision 9): push the CHANGE of the blood's ECG K (incl. succinylcholine, calcium stabilisation) and
+   * of its iCa QTc effect since the last push into Modifiers — never overwrite an instructor's setModifiers value.
+   */
+  private pushBloodEcg(ps: PipelineState): void {
+    const tg = bloodEcgTargets(ps.blood);
+    const a = ps.blood.ecg;
+    if (Math.abs(tg.k - a.k) < 0.05 && Math.abs(tg.qtc - a.qtc) < 2) return;
+    ps.mods = mergeModifiers(ps.mods, {
+      k: Math.min(10, Math.max(1.5, ps.mods.k + tg.k - a.k)),
+      qtc: Math.min(650, Math.max(300, ps.mods.qtc + tg.qtc - a.qtc)),
+    });
+    ps.blood.ecg = tg;
   }
 
   /** Make the lane buffers match the current lanes (new leads start empty). */

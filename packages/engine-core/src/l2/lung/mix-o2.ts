@@ -4,6 +4,7 @@
 // the store's fraction by their steady-state V/Q difference; low-V/Q units (vqLow) respond to FiO2, true shunt does
 // not. Arterial content = flow-weighted end-capillary contents + shunt at mixed-venous content (Stage 3's blood pool).
 import { content, odc, po2ForContent } from '../gas/o2.ts';
+import type { OdcCtx } from '../blood/odc.ts'; // Stage 7c (exception E-7c-1)
 import { BLOOD_VENOUS_FRACTION, MASS_FLOW_DEFICIT_ML_MIN, PB_MMHG, PH2O_MMHG, RQ } from '../gas/params.ts';
 import { VQ_LOW } from './params.ts';
 
@@ -28,14 +29,16 @@ export interface O2LungInputs {
   bloodL: number;
   dl: number[]; // diffusion factor per side
   coRatio: number;
+  /** Stage 7c (E-7c-1): the blood's Hb, pH, 2,3-DPG, COHb, MetHb for every content/ODC call (absent → Stage 3's patient). */
+  odc?: OdcCtx;
 }
 
 /** End-capillary content with West's diffusion equilibration (tables §4.5): only dl < 1 or high CO matters. */
 function endCap(pAO2: number, cv: number, x: O2LungInputs, dl: number): number {
-  if (dl >= 1 && x.coRatio <= 1.5) return content(pAO2, x.tempC, x.paco2);
-  const pv = po2ForContent(cv, x.tempC, x.paco2);
+  if (dl >= 1 && x.coRatio <= 1.5) return content(pAO2, x.tempC, x.paco2, x.odc);
+  const pv = po2ForContent(cv, x.tempC, x.paco2, x.odc);
   const k = 5.5 * dl * Math.min(1, 1 / Math.max(0.3, x.coRatio)); // equilibrium by 0.25 of a 0.75 s transit at dl 1
-  return content(pAO2 - (pAO2 - pv) * Math.exp(-k), x.tempC, x.paco2);
+  return content(pAO2 - (pAO2 - pv) * Math.exp(-k), x.tempC, x.paco2, x.odc);
 }
 
 /** Steady-state alveolar O2 fraction of a unit with ventilation va (L/min) and flow q, given Cv (bisection). */
@@ -45,7 +48,7 @@ function faSteady(va: number, q: number, fio2: number, faco2: number, cv: number
   let hi = Math.max(0.02, fio2);
   for (let i = 0; i < 24; i++) {
     const f = (lo + hi) / 2;
-    const up = q * (content(f * PI_DRY, x.tempC, x.paco2) - cv); // mL/min
+    const up = q * (content(f * PI_DRY, x.tempC, x.paco2, x.odc) - cv); // mL/min
     const rhs = fio2 - (1 / RQ - 1) * faco2 - up / (va * 1000);
     if (rhs > f) lo = f;
     else hi = f;
@@ -104,7 +107,7 @@ export function stepO2Lung(st: O2LungState, x: O2LungInputs, dtS: number): void 
       q += qu;
     }
     const ql = x.qLow[s] as number;
-    const cl = content(low[s] as number, x.tempC, x.paco2);
+    const cl = content(low[s] as number, x.tempC, x.paco2, x.odc);
     uptake += ql * (cl - st.cv);
     caNum += ql * cl;
     q += ql;
@@ -121,6 +124,6 @@ export function stepO2Lung(st: O2LungState, x: O2LungInputs, dtS: number): void 
   const ca = caNum / Math.max(1e-6, q);
   const vv = BLOOD_VENOUS_FRACTION * x.bloodL;
   st.cv = Math.max(0, st.cv + ((q * (ca - st.cv) - x.vo2) / vv) * dt);
-  st.pao2 = po2ForContent(ca, x.tempC, x.paco2);
-  st.sa = odc(st.pao2, x.tempC, x.paco2);
+  st.pao2 = po2ForContent(ca, x.tempC, x.paco2, x.odc);
+  st.sa = odc(st.pao2, x.tempC, x.paco2, x.odc);
 }
