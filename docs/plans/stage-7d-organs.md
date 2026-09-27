@@ -2184,7 +2184,7 @@ git push origin stage-7d-organs
   - `createOrgansState(profile, l1)`, `rebaselineOrgans(os, ctx: OrganSources)`, `advanceOrgans(os, ctx, mEnd, write)` (observes `pk.bus.doses` once per call), `validateOrgansCommand(cmd): string | undefined | null` (null = not ours; never a drug), `applyOrgansCommand(os, cmd, t): boolean`, `organChannelActive(os, ch)`
   - `effects.ts`: `EffectsState`, `createEffects()`, `applyOrganEffects(e, brain, ctx, t)`, `SBP_SHARE` 1.3, `DBP_SHARE` 0.85, `CUSH_SVR_GAIN` 1.2
 
-- [ ] **Step 1: Write the failing effects test** — `packages/engine-core/test/l2/organs/effects.test.ts`
+- [x] **Step 1: Write the failing effects test** — `packages/engine-core/test/l2/organs/effects.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2238,7 +2238,7 @@ describe('brain → body effects (decision 4)', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing pipeline test** — `packages/engine-core/test/l2/organs/pipeline.test.ts`
+- [x] **Step 2: Write the failing pipeline test** — `packages/engine-core/test/l2/organs/pipeline.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2336,12 +2336,12 @@ describe('organ pipeline', () => {
 });
 ```
 
-- [ ] **Step 3: Run both to verify they fail**
+- [x] **Step 3: Run both to verify they fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/effects.test.ts test/l2/organs/pipeline.test.ts`
 Expected: FAIL — cannot find `src/l2/organs/effects.ts` / `pipeline.ts`.
 
-- [ ] **Step 4: Implement `packages/engine-core/src/l2/organs/effects.ts`**
+- [x] **Step 4: Implement `packages/engine-core/src/l2/organs/effects.ts`**
 
 ```ts
 // Stage 7d: the brain's effects on the rest of the body (plan decision 4) — the Cushing surge and bradycardia, and
@@ -2424,7 +2424,7 @@ export function applyOrganEffects(e: EffectsState, b: BrainState, ctx: EffectsCt
 
 Note: with the default L1 targets (120/80) the effects test expects `c.sbp` 172 (120 + 1.3·40) — `l1Target` reads the ramp, so `createL1State()` defaults apply.
 
-- [ ] **Step 5: Implement `packages/engine-core/src/l2/organs/pipeline.ts`**
+- [x] **Step 5: Implement `packages/engine-core/src/l2/organs/pipeline.ts`**
 
 ```ts
 // Stage 7d organ pipeline (plan "Architecture"): one plain-data OrgansState in the engine's PipelineState, advanced
@@ -2760,12 +2760,12 @@ export function applyOrgansCommand(os: OrgansState, cmd: Command, _t: number): b
 }
 ```
 
-- [ ] **Step 6: Run the tests and the typecheck**
+- [x] **Step 6: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (types 1, inputs 5, effects 2, pipeline 5). `hemo.lines.abp.sensor` is 7a's line state on `main` (`LineState.sensor`); read it, never edit `l2/hemo/**`.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/organs packages/engine-core/test/l2/organs docs/plans/stage-7d-organs.md
