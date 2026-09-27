@@ -3838,7 +3838,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: `EndoEvent` (Task 1).
 - Produces: `mountEndoPanel(host: HTMLElement, opts: { instructor: boolean }): { update(e: EndoEvent): void; destroy(): void }` — glucose (mmol/L and mg/dL, `data-level` amber < 3.9, red < 3.0, amber > 10) and, only when `instructor` is true, the stress index, epinephrine, cortisol, MH activity, peripheral temperature and the shivering/sweating/vasoconstriction flags. Skins never mount it with `instructor: true`.
 
-- [ ] **Step 1: Write the failing test** `packages/renderer/test/endo-panel.test.ts` (the renderer's DOM tests use `happy-dom`, as 7c's `lab-panel.test.ts` does)
+- [x] **Step 1: Write the failing test** `packages/renderer/test/endo-panel.test.ts` (the renderer's DOM tests use `happy-dom`, as 7c's `lab-panel.test.ts` does)
 
 ```ts
 // @vitest-environment happy-dom
@@ -3864,9 +3864,9 @@ describe('endo panel', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** — `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/endo-panel.test.ts` — Expected: FAIL (`Failed to resolve import "../src/endo-panel.ts"`).
+- [x] **Step 2: Run it** — `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/endo-panel.test.ts` — Expected: FAIL (`Failed to resolve import "../src/endo-panel.ts"`).
 
-- [ ] **Step 3: Implement** `packages/renderer/src/endo-panel.ts`
+- [x] **Step 3: Implement** `packages/renderer/src/endo-panel.ts`
 
 ```ts
 // Stage 7e endo panel: glucose for everyone; the stress/hormone block for the instructor view only (plan decision 15).
@@ -3901,9 +3901,9 @@ and append to `packages/renderer/src/index.ts`:
 export { mountEndoPanel } from './endo-panel.ts'; // Stage 7e
 ```
 
-- [ ] **Step 4: Run** `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/endo-panel.test.ts && npx -y pnpm@9.15.9 --filter @pme/renderer typecheck` — Expected: PASS.
+- [x] **Step 4: Run** `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/endo-panel.test.ts && npx -y pnpm@9.15.9 --filter @pme/renderer typecheck` — Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/renderer/src/endo-panel.ts packages/renderer/test/endo-panel.test.ts packages/renderer/src/index.ts
