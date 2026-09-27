@@ -132,4 +132,14 @@ describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
     stepThermal(c, 1, 1);
     expect(c.depth).toBeCloseTo(0.7, 9);
   });
+
+  it('test seam pinCoreTemp (R51 addendum 18, like 7c pinHbfRel): the core stays at the pinned value under GA; unset → the heat balance runs', () => {
+    const p = ga();
+    p.pinCoreTemp = 36.8;
+    run(p, 0, 3600);
+    expect(p.tc).toBe(36.8);
+    const u = ga();
+    run(u, 0, 3600);
+    expect(u.tc).toBeLessThan(36.0);
+  });
 });

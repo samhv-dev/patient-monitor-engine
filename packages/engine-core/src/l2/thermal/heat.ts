@@ -86,6 +86,8 @@ export interface ThermalState {
   extraX: number; // endocrine/condition metabolic heat multiplier (1 = none), written by 7e's endo core
   dantE: number; // Stage 7g's dantrolene effect `bus.metabolic.dantroleneE` (0–1), written by 7e's pipeline every pass
   out: ThermalOut;
+  /** Test-only seam (R51 addendum 18, like 7c's `pinHbfRel`): when set, the core is held at this value (°C). */
+  pinCoreTemp?: number;
 }
 
 const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
@@ -164,6 +166,7 @@ export function stepThermal(st: ThermalState, t: number, dtS: number): void {
   st.out = o;
   const flux = o.kcp * (st.tc - st.tp);
   st.tc += ((o.metabolicW + o.shiverW + o.mhW - flux - o.respW + o.ivW) / st.capCore) * dtS;
+  if (st.pinCoreTemp !== undefined) st.tc = st.pinCoreTemp; // test seam (addendum 18)
   st.tp += ((flux - o.dryW - o.evapW - o.sweatW + o.warmW) / st.capPer) * dtS;
   for (const s of Object.keys(SITES) as TempSite[]) {
     const p = SITES[s];
