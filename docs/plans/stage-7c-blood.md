@@ -938,7 +938,7 @@ git push origin stage-7c-blood
 - Consumes: Task 2 constants, `BloodPatient`, `Composition`.
 - Produces: `Flow {rate (mL/min), until (s; 1e9 = until changed), leftMl? (bolus volume still to run), comp | null}`, `FluidState {vp, visf, vicf, hbG, albG, colloidG, ref, flows, kfMult, sigma, anaesthesia, jFilt, refill}`, `landis(tp)`, `rbcMl`, `bloodMl`, `hbOf`, `albGL`, `ecfMl`, `copPlasma`, `createFluids(pat, albumin)`, `starling(f)`, `stepFluids(f, t, dtS, osmRatio, elimMlMin?) → {bledMl, bledPlasmaMl, elimMl, given[]}` (`elimMlMin` = 7d's urine, replacing the fixed elimination).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/fluids.test.ts`:
 
@@ -1016,12 +1016,12 @@ describe('fluid compartments (tables §5b.4; annex B1 tissue branch)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fluids.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/fluids.ts`:
 
@@ -1159,12 +1159,12 @@ export function stepFluids(f: FluidState, t: number, dtS: number, osmRatio: numb
 
 Constants were fitted by a 108-point sweep (plan decision 5). If a band test misses by a little after a merge, re-check `KF_ML_MIN_MMHG`, `CISF_PER_ML`, `K_EL_AWAKE` against the sweep's winner (2.0 / 0.02 / 0.03) before touching anything else.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fluids.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/fluids.ts packages/engine-core/test/l2/blood/fluids.test.ts
