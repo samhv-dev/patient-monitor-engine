@@ -3514,7 +3514,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: `organsRig` (Task 12); Stage 3's `thermal` and `ventilation` events; MANUAL `setTarget`.
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-htn.test.ts`
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-htn.test.ts`
 
 ```ts
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -3586,12 +3586,12 @@ describe('tables §7 check 18 through the engine (MANUAL, 75 y HTN, cbfLL 75, GA
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-htn.test.ts`
 Expected: PASS (3 tests, ≈ 30 s). **Prototype:** baseline GA CBF 0.66 (MAP 113 at the 140/80 profile); 90/52 → site MAP **64.7**, CPP 53 (CVP ≈ 12 under PEEP is the venous floor), CBF **0.62×**; RR 40 → PaCO2 25 crossed at ≈ 3 min: **0.376×**, PbtO2 **13.8**; 100/60 + RR 14 → PaCO2 35 crossed at MAP **81**: **0.81×**. These bands are the tables' (R45): the pure model's 0.42× hypocapnic value (CVP 6) is in the Deviations, the engine's is inside 0.35–0.40. If the premise assertions (MAP 62–68, 77–84) fail on your base because 7a's MANUAL tracker moved, choose the targets that give those site MAPs and record them — do not move the CBF bands.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/organs-htn.test.ts docs/plans/stage-7d-organs.md
