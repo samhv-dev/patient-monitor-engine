@@ -4480,7 +4480,7 @@ git push origin stage-7c-blood
 - Consumes: `createBloodState`, `advanceBlood`, the engine.
 - Produces: the CPU, determinism and drift rows of the gate note. Test-after (measurement task).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-budget.test.ts`:
 
@@ -4538,12 +4538,12 @@ describe('7c budget, determinism, 24 h', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-budget.test.ts`
 Expected: PASS. Prototype: blood CPU **0.0005–0.0013 ms per 20 ms tick** (budget 0.1; the pH bisection is 14 iterations + a 1 Hz second solve); identical `labs` hash for the same seed and script; 24 h at a steady PaCO2: no drift in pH (< 0.005), HCO3, K, Na, lactate, Hb. The ENGINE's 24 h run with the blood inside is Stage 3's `test/engine/resp-longrun.test.ts` (it now carries the blood; it must still pass unchanged — an engine-level 24 h blood test exceeded the 300 s CI budget in the prototype, so this task steps the blood directly).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-budget.test.ts
