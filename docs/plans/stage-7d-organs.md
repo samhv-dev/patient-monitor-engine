@@ -302,7 +302,7 @@ git push -u origin stage-7d-organs
   - `bloodCore(blood: unknown): { liver?: number; renal?: RenalSeam } | null` and `type RenalSeam = { uopMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } }` (mL/h, mmol/h — 7c's seam, addendum 14)
   - constants `GA_PROP_CE` 1.5, `GA_MAC` 0.5, `GA_KETAMINE` 0.5, `GA_CMRO2` 0.85, `PE_NE_EQ` 0.1, `ALPHA_E_FULL` 0.3, `ALPHA_NEED_MAP` 75, `ALPHA_EXCESS_MAP` 90 (all [ENG])
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/organs/inputs.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/organs/inputs.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -371,12 +371,12 @@ describe('organ input adapter', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/inputs.test.ts`
 Expected: FAIL — cannot find `src/l2/organs/inputs.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/organs/inputs.ts`**
+- [x] **Step 3: Implement `packages/engine-core/src/l2/organs/inputs.ts`**
 
 ```ts
 // Stage 7d organ input adapter (plan decision 16, R51 addendum 14): everything the brain, kidney and liver read,
@@ -538,12 +538,12 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
 }
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/inputs.test.ts`
 Expected: PASS (5 tests; prototype on 7a + 7b + 7g). If a duck-typed name differs on your base (7c/7e/7f merged with another name than addendum 14's), STOP and report it — the names are binding (R51 addendum 14); do not guess another path.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/organs/inputs.ts packages/engine-core/test/l2/organs/inputs.test.ts docs/plans/stage-7d-organs.md
