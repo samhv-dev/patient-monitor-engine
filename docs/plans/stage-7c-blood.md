@@ -734,7 +734,7 @@ git push origin stage-7c-blood
 **Interfaces:**
 - Produces: `PH_MIN` 6.5, `PH_MAX` 7.9 (audit A13), `CO2_SOL` 0.0307, `Chem {sid, albGL, piMmolL, hb}`, `AcidBase {ph, hco3, be, atot, iter, atBound, residual}`, `hco3Of(ph, pco2)`, `chargeResidual(ph, pco2, chem)`, `baseExcess(ph, hco3)`, `solvePh(pco2, chem)`, `anionGap(na, cl, hco3)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/acid-base.test.ts`:
 
@@ -810,12 +810,12 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1; audit 
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/acid-base.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/acid-base.ts`:
 
@@ -916,12 +916,12 @@ export function anionGap(na: number, cl: number, hco3: number): number {
 
 Never copy Pulse's defects (audit never-copy list): SID is an INPUT recomputed by the caller every step (Task 6 `sidOf`), albumin and phosphate are inputs, the search is bracketed, and a bracket miss is reported (`atBound`, `residual`) — HCO3 is always `hco3Of(ph, pco2)`, never a residual sink.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/acid-base.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/acid-base.ts packages/engine-core/test/l2/blood/acid-base.test.ts
