@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:15 (after the sixth cap: 7c gate, 8a, FU-2 executing; 7e fixer running; 7d/7f plans ready).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:50 (7c gate, 8a, FU-2 executing; 7e plan ready; 7d/7f plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -15,7 +15,7 @@
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x console #16) | — |
 | 7c blood/acid–base | `stage-7c-blood` (worktree `../scratch/wt-stage-7c`), 23/26 tasks pushed | gate task running (fresh executor after the sixth cap) | gate + PR, then orchestrator gate + merge |
 | 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
-| 7e endocrine/thermal | plan rewrite in progress (`docs/plans/stage-7e-endocrine-thermal.md`; header done, task audit resumed by a fresh fixer) | addendum 16 names | execute after 7c AND 7d merge |
+| 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-2 engine follow-ups | `fu-2-engine-followups` (plan fixed, 12 tasks; worktree `../scratch/wt-fu2`) | executing (started 2026-09-27 07:15) | resume from first unticked task |
