@@ -3275,7 +3275,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Produces: `WaveLaneId` gains `'icp'` with `WAVE_STYLE.icp = { label: 'ICP', color: '#ffffff', range: [0, 40] }` (125 Hz, 25 mm/s); `formatIcp(icp, cpp) → {main, sub, status}`, `formatPbto2(p) → {main, status}`, `formatUop(uop, cumMl?, weightKg?) → {main, sub, status}` (OLIGURIA below 0.5 mL/kg/h when the weight is given).
 
-- [ ] **Step 1: Write the failing test** — `packages/renderer/test/numerics-organs.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/renderer/test/numerics-organs.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3303,12 +3303,12 @@ describe('organ tiles', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/numerics-organs.test.ts`
 Expected: FAIL — cannot find `src/numerics-organs.ts`.
 
-- [ ] **Step 3: Implement** — `packages/renderer/src/numerics-organs.ts`
+- [x] **Step 3: Implement** — `packages/renderer/src/numerics-organs.ts`
 
 ```ts
 // Stage 7d numeric tiles: ICP (mean) with CPP, PbtO2, urine output (mL/h over 60 min, cumulative). Pure formatters
@@ -3347,12 +3347,12 @@ Then the maps over the grown unions (each line marked `// Stage 7d`; every one i
   - `packages/renderer/src/skin-plan.ts`: in `WAVE_CHANNEL` after the line ending `RESP: 'resp', CO2: 'co2',` add `  ICP: 'icp', // Stage 7d`; replace `const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP' };` with `const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP', ICP: 'ICP' }; // Stage 7d: ICP` (the skins' IBP scale tables carry an `ICP` row); replace `const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP' }; // Stage 3: co2, resp` with `const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // Stage 3: co2, resp; Stage 7d: icp`.
   - `packages/renderer/src/index.ts`: after `export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3` add `export { formatIcp, formatPbto2, formatUop } from './numerics-organs.ts'; // Stage 7d`.
 
-- [ ] **Step 4: Run the renderer suite and typecheck**
+- [x] **Step 4: Run the renderer suite and typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer test && npx -y pnpm@9.15.9 typecheck`
 Expected: PASS (prototype: renderer 69 tests; whole-repo typecheck clean).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/renderer docs/plans/stage-7d-organs.md
