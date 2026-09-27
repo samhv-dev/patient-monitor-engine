@@ -93,10 +93,12 @@ $('induction').addEventListener('click', () => {
     void ev({ kind: 'stimulus', intensity: 0 });
     void ev({ kind: 'airwayDevice', device: 'ett' });
     void ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 });
-    void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 3, fgfLpm: 6 }); // 7g's vaporiser (R51 §4); over-pressure for the wash-in
-    log('ventilator, sevoflurane dial 3 % (FGF 6 L/min)');
+    // 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, Ali's call): 3 % on top of the propofol read DI 30
+    // at 13 min (gate 7f); 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
+    void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 6 });
+    log('ventilator, sevoflurane dial 2 % (FGF 6 L/min)');
   });
-  at(1200, () => { void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 6 }); void ev({ kind: 'stimulus', intensity: 1 }); log('incision (stimulus 1, held)'); });
+  at(1200, () => { void ev({ kind: 'stimulus', intensity: 1 }); log('incision (stimulus 1, held)'); });
 });
 $('reverse').addEventListener('click', () => { void drug('sugammadex', 2, 'mg/kg'); log('sugammadex 2 mg/kg'); });
 $('neo').addEventListener('click', () => { void drug('neostigmine', 0.05, 'mg/kg'); log('neostigmine 0.05 mg/kg'); });
