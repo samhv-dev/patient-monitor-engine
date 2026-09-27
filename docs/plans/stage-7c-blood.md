@@ -1539,7 +1539,7 @@ git push origin stage-7c-blood
 - Consumes: `DO2_CRIT_ML_KG_MIN`, `K_ANAER`, `K_LAC_PER_H`, `NORMAL`, `REGIONAL_*`.
 - Produces: `O2Out {cao2, do2, vo2, demand, deficit, er, svo2}`, `o2Delivery(coLpm, co0Lpm, cao2, demand, weightKg, demandRel = 1)` (regional q = CO/CO0 ÷ demandRel), `stepLactate(lacMmol, vLacL, deficit, hbfRel, liver, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/oxygen.test.ts`:
 
@@ -1572,12 +1572,12 @@ describe('oxygen delivery and lactate (tables §5b.3, §5.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/oxygen.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/oxygen.ts`:
 
@@ -1624,12 +1624,12 @@ export function stepLactate(lacMmol: number, vLacL: number, deficit: number, hbf
 
 
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/oxygen.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/oxygen.ts packages/engine-core/test/l2/blood/oxygen.test.ts
