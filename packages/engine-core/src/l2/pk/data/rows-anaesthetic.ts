@@ -2,7 +2,7 @@
 // Sources: tables §6.1/§6.3 (T6.x), research 03 §8.6 (R03), Miller 10e (M10 ch. N p. M), labels, papers as named.
 import { FENTANYL_KE0, SUFENTANIL_KE0 } from '../models.ts';
 import { ELEVELD_CE50_AGE_K } from '../pd.ts';
-import type { DrugRow } from '../row.ts';
+import type { DrugRow, PdEffect } from '../row.ts';
 
 /**
  * Opioid haemodynamic EC50s [ENG]: tables §6.3 give only the size (HR −10–20 %, SVR −5–15 %) with no concentration.
@@ -15,6 +15,17 @@ const OPIOID_HEMO_SRC = 'haemodynamic EC50 [ENG]: typical clinical Ce ÷ T5d pot
 const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, refRate?: number, tauOnS?: number, tauOffS?: number): DrugRow['pk'] => ({
   kind: 'gamma', refDose, perKg, tpS, t10S, ...(refRate !== undefined ? { refRate, tauOnS: tauOnS ?? 300, tauOffS: tauOffS ?? 600 } : {}),
 });
+
+/**
+ * Volatile depression of the sympathetic HR arm of the baroreflex (7a `gvHr`, the term propofol's row carries), per MAC,
+ * linear: HR arm ×(1 − 1.0·MAC) → gone by 1 MAC (combine floor 0.05). Direction: Kotrly 1984 (isoflurane: pressor
+ * baroslope falls progressively to 1.0 and 1.5 MAC), Muzi & Ebert 1995 (cardiac baroslopes equally diminished with
+ * isoflurane and desflurane). Size [ENG], fit target: Ebert, Muzi & Lopatka 1995 — sevoflurane 0.41–1.24 MAC lowers
+ * MAP with NO change in HR and lower sympathetic nerve activity (tables T6.3 "HR ~"); the rig's HR at 0.96 MAC is
+ * 75 vs 73 awake (was 93.5 with `gv` alone). Cross-check: the phenylephrine reflex HR drop falls to ≈ 0.4× awake,
+ * Nagasaki 2001 (sevoflurane 2 % / isoflurane 1.3 %: pressor BRS −50–60 %). FU-3 item 3 (R-7f-9).
+ */
+const VOLATILE_GVHR: PdEffect = { target: 'gvHr', emax: -1, ec50: 1, linear: true };
 
 export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
@@ -107,7 +118,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'sevoflurane', name: 'Sevoflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'sevoflurane' },
     pd: [
       { target: 'svr', emax: -0.2, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true },
-      { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true },
+      { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true },
     ],
     cns: { cmro2PerMac: 0.25, cbfDirect: [0.04, 0.17] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.25·MAC), direct CBF +4 % / +17 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.80 % at 40 y (Mapleson; label 2.1, Q52); maintenance 0.8–1.3 MAC', onset: 'FA/FI 0.85 at 30 min (Yasuda 1991); b/g 0.65 (M10 ch. 19 p. 427)',
@@ -117,7 +128,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'isoflurane', name: 'Isoflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'isoflurane' },
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
-      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 },
+      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'bronchodilation', emax: 1, ec50: 0.5 },
     ],
     cns: { cmro2PerMac: 0.3, cbfDirect: [0.19, 0.72] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.3·MAC), direct CBF +19 % / +72 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.17 % at 40 y', onset: 'FA/FI 0.73 at 30 min; b/g 1.46', ir: '?', src: 'T6.3; Mapleson 1996; M10 ch. 19 p. 427', tag: 'TXT',
@@ -126,7 +137,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'desflurane', name: 'Desflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'desflurane' },
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
-      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'cbfVaso', emax: 0.3, ec50: 1, linear: true },
+      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'cbfVaso', emax: 0.3, ec50: 1, linear: true },
     ],
     cns: { cmro2: 0.5 },
     doses: 'MAC 6.6 % at 40 y', onset: 'FA/FI 0.90 at 30 min; sympathetic surge on a rapid rise above 1 MAC (Task 15)', ir: '?', src: 'T6.3; Mapleson 1996', tag: 'TXT',
