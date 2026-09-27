@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 04:40 (7x merged; 7c and 8a executing; FU-2 review + 7e fixer running; 7d/7f plans ready).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 05:00 (7x merged; 7c and 8a executing; FU-2 fixer + 7e fixer running).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -18,7 +18,7 @@
 | 7e endocrine/thermal | plan under rewrite (`docs/plans/stage-7e-endocrine-thermal.md`; R50 verdict INCOMPLETE — pre-R51; fixer running per addendum 16) | must observe 7g's bus; V0 sign; seam test; bands restored | execute after 7c AND 7d merge |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-2 engine follow-ups | plan written (`docs/plans/fu-2-engine-followups.md`, 11 tasks; R50 review running) | items 1–5, 7–9; item 6 goes to the 7d executor; exceptions E-FU2-1..4 approved | execute after review (on main, parallel to 7c); then 7d |
+| FU-2 engine follow-ups | plan under fix (`docs/plans/fu-2-engine-followups.md`, 11→12 tasks; R50 review READY WITH FIXES F1–F6 + AF rate control) | exceptions E-FU2-1..6 | execute after fix (on main, parallel to 7c); 7d after 7c AND FU-2 |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 29 boxes unticked | resumed 2026-09-27 04:25 by a fresh executor after the permission-prompt stall | resume from first unticked task; merge main before gate |
 | 8 validation/release | not started | waits for all | write plan |
