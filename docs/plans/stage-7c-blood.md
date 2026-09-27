@@ -593,7 +593,7 @@ git push origin stage-7c-blood
 **Interfaces:**
 - Produces: `OdcCtx {hb, ph, dpgMmolL, cohb, methb}`, `ODC_DEFAULT`, `p50(ctx, pco2, tempC)`, `hillN(ctx)`, `satDB(po2, pco2, tempC, ctx)` (functional saturation 0–1), `contentDB(po2, pco2, tempC, ctx)` (mL/L), `pulseOxApparent(s, ctx)` (Task 14 uses it).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/odc.test.ts`:
 
@@ -630,12 +630,12 @@ describe('Dash–Bassingthwaighte ODC (tables §5b.3; audit #6/A14)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/odc.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/odc.ts`:
 
@@ -713,12 +713,12 @@ export function pulseOxApparent(s: number, ctx: OdcCtx): number {
 
 The file header is the annex §E Apache header (R34) naming Pulse 4.3.2, commit e8a3649, `Saturation.cpp` 931–1053; Task 25 checks it.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/odc.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/odc.ts packages/engine-core/test/l2/blood/odc.test.ts
