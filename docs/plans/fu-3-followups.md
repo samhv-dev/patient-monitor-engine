@@ -462,7 +462,7 @@ its fix is on main, Step 1 passes and Steps 2–4 are skipped. Measured on `d525
 0.87 at 100 min, hepatic flow 0.20–0.27, GFR 0 from minute 45; on 7f alone (no 7d kidney) the same rig reached 0.93 at
 85 min only because the renal clearance was neutral. Ventilated: TOF 0 at 90.1 s, TOFR ≥ 0.9 at 78.5 min.
 
-- [ ] **Step 1: Check the base**
+- [x] **Step 1: Check the base**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-engine.test.ts -t "rocuronium 0.6"`
 Expected: **PASS is the expected outcome on any base containing 7d** (verified by the R50 review on main + 7d: the E-7d-4
@@ -471,7 +471,7 @@ needed* and do NOT edit the file. Only if Step 1 FAILS (a base without 7d's fix;
 `TypeError: actual value must be number or bigint, received "undefined"` at `expect(back && back.t / 60)`) apply Step
 2, which matches 7d's own RR 18 wording.
 
-- [ ] **Step 2 (only if Step 1 failed): Ventilate the rig** — `packages/engine-core/test/engine/neuro-engine.test.ts`, find:
+- [x] *(not needed — Step 1 passed)* **Step 2 (only if Step 1 failed): Ventilate the rig** — `packages/engine-core/test/engine/neuro-engine.test.ts`, find:
 
 ```ts
     expect(e.dispatch(drug('rocuronium', 0.6, 'mg/kg')).accepted).toBe(true);
@@ -489,9 +489,9 @@ replace with:
     await run(e, 100 * 60);
 ```
 
-- [ ] **Step 3 (only if Step 2 was applied): Run it** — same command as Step 1. Expected: PASS (1 passed, 8 skipped).
+- [x] *(not needed)* **Step 3 (only if Step 2 was applied): Run it** — same command as Step 1. Expected: PASS (1 passed, 8 skipped).
 
-- [ ] **Step 4 (only if Step 2 was applied): Commit**
+- [x] *(not needed)* **Step 4 (only if Step 2 was applied): Commit**
 
 ```bash
 git add packages/engine-core/test/engine/neuro-engine.test.ts
@@ -530,7 +530,7 @@ T1 90 %): EC50 1040 γ 4: 0.62 / 6.63 / 12.37 (1.2 s of slack); EC50 1100 γ 4.5
 `l2/pk/nmb.test.ts` onset < 1.5 | 0.43 | 1.23, duration 6–9 | 7.2 | 8.3, het ratio 1.5–2.5 | 1.7 | 1.71, hom 240–480
 min | 310.6 | 282. No per-tick cost (constants only; `pkSystem` is cached by value).
 
-- [ ] **Step 1 — the failing test (already in the tree, pre-declared by 7f).** Nothing to write: the test exists as
+- [x] **Step 1 — the failing test (already in the tree, pre-declared by 7f).** Nothing to write: the test exists as
 `it.fails('[FU-3 item 1] succinylcholine 1 mg/kg: block by ~1 min, T1 10 % at ~7.1 min, 90 % at ~10.9 min (label), no
 fade', ...)` in `packages/engine-core/test/l2/neuro/nmb-course.test.ts`. Flip it to `it` FIRST so the run shows the real
 numbers, then implement. Find (verbatim, anchored on content — do not use line numbers):
@@ -556,7 +556,7 @@ Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/
 Expected FAIL before the implementation: `expected 0.16666666666666666 to be greater than 0.6` (onset), i.e. the
 pre-declared 0.17 / 5.37 / 12.68 min.
 
-- [ ] **Step 2 — the PK re-fit.** In `packages/engine-core/src/l2/pk/nmb.ts`, find:
+- [x] **Step 2 — the PK re-fit.** In `packages/engine-core/src/l2/pk/nmb.ts`, find:
 
 ```ts
 /**
@@ -584,7 +584,7 @@ Replace with:
 export const SUCCINYLCHOLINE: PerKgPk = { v1: 0.038, v2: 0, v3: 0, cl1: 0.037, cl2: 0, cl3: 0, ke0: [0.1475, 0.236] };
 ```
 
-- [ ] **Step 3 — the homozygous multiplier.** Same file, find:
+- [x] **Step 3 — the homozygous multiplier.** Same file, find:
 
 ```ts
  * the phenotypes' DURATIONS (Sux-label; Lee 2009: heterozygous ×2, homozygous 4–8 h) but no enzyme-activity value,
@@ -605,7 +605,7 @@ Replace with:
 export const PCHE_CL_MULT = { normal: 1, het: 0.5, hom: 0.011 } as const;
 ```
 
-- [ ] **Step 4 — 7g's fitting copy of the PD.** Same file, find:
+- [x] **Step 4 — 7g's fitting copy of the PD.** Same file, find:
 
 ```ts
   succinylcholine: { thumb: { ec50: 200, gamma: 4 }, dia: { ec50: 340, gamma: 4 } }, // effect-site fit, not a plasma EC50 [ENG]
@@ -617,7 +617,7 @@ Replace with:
   succinylcholine: { thumb: { ec50: 1160, gamma: 6 }, dia: { ec50: 2007, gamma: 6 } }, // FU-3 item 1: Roy 2002 measured 734 ± 211 ng/mL at the effect site [P]; 1160 = the nearest value that holds the §5d label course on the paper's CL/V1 [ENG fit], dia ×1.73
 ```
 
-- [ ] **Step 5 — 7f's mirrored PD row (EXCEPTION CANDIDATE).** In `packages/engine-core/src/l2/neuro/nmb.ts`, find:
+- [x] **Step 5 — 7f's mirrored PD row (EXCEPTION CANDIDATE).** In `packages/engine-core/src/l2/neuro/nmb.ts`, find:
 
 ```ts
  * Succinylcholine keeps 7g's effect-site value: its onset/duration miss is 7g's ke0 (FU-3 item 1), never fitted here.
@@ -643,7 +643,7 @@ Replace with:
   succinylcholine: { ec50Thumb: 1160, ec50Dia: 1160 * DIA_EC50_RATIO, gamma: 6, depolarising: true }, // [FU-3 item 1: 7g's re-fitted effect-site value on Roy 2002's CL/V1 (measured EC50 734 ± 211 ng/mL [P]); holds onset 0.73 / T1 10 % 6.98 / 90 % 11.98 min]
 ```
 
-- [ ] **Step 6 — the row's source string.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts`, find:
+- [x] **Step 6 — the row's source string.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts`, find:
 
 ```ts
     doses: '1–1.5 mg/kg (ED95 0.51–0.63, M10 ch. 24 p. 677)', onset: 'block ≈ 1 min; T1 10 % 7.1 min, 90 % 10.9 (label); K +0.5 (7c)', ir: '?', src: `Sux label; Lee 2009; ${SUCCINYLCHOLINE.cl1} L/kg/min`, tag: 'P' },
@@ -655,7 +655,7 @@ Replace with:
     doses: '1–1.5 mg/kg (ED95 0.51–0.63, M10 ch. 24 p. 677)', onset: 'block ≈ 1 min; T1 10 % 7.1 min, 90 % 10.9 (label); K +0.5 (7c)', ir: '?', src: `Sux label; Lee 2009; Roy 2002 CL ${SUCCINYLCHOLINE.cl1} L/kg/min`, tag: 'P' },
 ```
 
-- [ ] **Step 7 — run.**
+- [x] **Step 7 — run.**
 ```
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/neuro
 CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/neuro-scenarios.test.ts
@@ -663,7 +663,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/n
 Expected PASS: engine-core `test/l2/pk` 79/79 and `test/l2/neuro` (incl. `nmb-course.test.ts` 8/8, `reversal.test.ts`
 6/6); controller 6/6.
 
-- [ ] **Step 8 — commit**
+- [x] **Step 8 — commit**
 
 ```bash
 git add packages/engine-core/src/l2/pk/nmb.ts packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts packages/engine-core/src/l2/neuro/nmb.ts packages/engine-core/test/l2/neuro/nmb-course.test.ts
@@ -699,7 +699,7 @@ pair (Eleveld DJ et al., Anesth Analg 2007;104:582: rocuronium 0.6 + sugammadex 
 roc 1.2 + sgx 0.75: 0.997 → 0.419 · roc 1.2 + sgx 1.0: 1.000 → 0.695 · sugammadex 2 / 4 / 16 mg/kg reversal 2.12 / 2.23
 / 1.80 min (bands 1.5–3 / 2.1–4.3 / 0.8–2; unchanged).
 
-- [ ] **Step 1: Record the evidence in the pre-declared test**
+- [x] **Step 1: Record the evidence in the pre-declared test**
 
 In `packages/engine-core/test/l2/neuro/reversal.test.ts`, find (verbatim):
 
@@ -733,7 +733,7 @@ Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/
 Expected PASS: 6/6 (the `it.fails` still fails internally, as declared; reversal bands 2 mg/kg 2.12, 4 mg/kg 2.23,
 16 mg/kg 1.80 min unchanged).
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add packages/engine-core/test/l2/neuro/reversal.test.ts
@@ -774,7 +774,7 @@ Nagasaki 2001 (BRS −50–60 % at sevoflurane 2 %). Alternatives (sevoflurane 2
 98.4 → 81.2 · 31 sibling files / 167 tests: every logged number identical except MAC fraction 0.775 → 0.776 (40 y) and
 0.946 → 0.948 (80 y).
 
-- [ ] **Step 1: Flip the pre-declared test.** In `packages/engine-core/test/engine/neuro-circ.test.ts` find (verbatim):
+- [x] **Step 1: Flip the pre-declared test.** In `packages/engine-core/test/engine/neuro-circ.test.ts` find (verbatim):
 
 ```ts
   // R-7f-9 (→ 7g, circulation PD; R51 addendum 8): measured on the merged base at 0.98 MAC (dial 2.5 %) the HR falls
@@ -798,7 +798,7 @@ replace with:
 
 The test body and criterion (`expect(awake).toBeGreaterThan(3); expect(anaes).toBeLessThan(0.8 * awake);`) are unchanged (R45).
 
-- [ ] **Step 2: Run — expect FAIL.**
+- [x] **Step 2: Run — expect FAIL.**
 
 ```
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-circ.test.ts
@@ -807,7 +807,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/ne
 Expected: `reflex HR drop: awake 12.0, sevoflurane 25.5 bpm`, `AssertionError: expected 25.483333333333334 to be less
 than 9.560000000000002`; 1 failed | 1 passed (the propofol test: `MAP 94.6 → nadir 85.3 (0.903); DI nadir 46`).
 
-- [ ] **Step 3: Implement.** In `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`:
+- [x] **Step 3: Implement.** In `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`:
 
 3a. find
 
@@ -882,7 +882,7 @@ replace with
 
 (Each find string occurs exactly once in the file at d525eed.)
 
-- [ ] **Step 4: Run — expect PASS.**
+- [x] **Step 4: Run — expect PASS.**
 
 ```
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-circ.test.ts
@@ -897,7 +897,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/ci
 CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/neuro-scenarios.test.ts
 ```
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```
 git add packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts packages/engine-core/test/engine/neuro-circ.test.ts
@@ -942,7 +942,7 @@ MAP 65 / hypocapnia unchanged (64.39 / 0.667 / 0.374 / PbtO2 13.96) · unit test
 LVEDP 46.1 before and after (`it.fails`) · 59 sibling files / 238 tests green (all organs-*, circ-*, hemo-acceptance,
 hemo-nibp, every MANUAL `setTarget` user, `test/l2/circ`, `test/l2/hemo`, hemo-/circ-longrun).
 
-- [ ] **Step 1: Write the failing unit test** — create `packages/engine-core/test/l2/circ/manual-ischaemia.test.ts`:
+- [x] **Step 1: Write the failing unit test** — create `packages/engine-core/test/l2/circ/manual-ischaemia.test.ts`:
 
 ```ts
 // FU-3 item 4 (G7d follow-through 2): in MANUAL the tracker's LV Emax is held against the ischaemia present while it
@@ -984,7 +984,7 @@ describe('MANUAL held LV Emax against coronary ischaemia (FU-3 item 4)', () => {
 });
 ```
 
-- [ ] **Step 2: Flip the pre-declared check-18 test** — in `packages/engine-core/test/engine/organs-htn.test.ts`:
+- [x] **Step 2: Flip the pre-declared check-18 test** — in `packages/engine-core/test/engine/organs-htn.test.ts`:
 
 Find (verbatim, `test/engine/organs-htn.test.ts`):
 
@@ -1011,7 +1011,7 @@ Replace with:
   it('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 %', () => {
 ```
 
-- [ ] **Step 3: Run — expect FAIL**
+- [x] **Step 3: Run — expect FAIL**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/manual-ischaemia.test.ts test/engine/organs-htn.test.ts
@@ -1022,7 +1022,7 @@ Expected: 2 failed. `manual-ischaemia.test.ts` "recovery above the tracked kIsch
 and MAP ≈ 80": `expected 125.26748199405434 to be less than 84` (logged `mapRec: 125.267…, recovered: 0.885…`). The unit
 file also fails to typecheck until Step 4 (`kIschRef` does not exist on `man`).
 
-- [ ] **Step 4: Implement** — `packages/engine-core/src/l2/circ/model.ts` (anchor by content; do not touch the
+- [x] **Step 4: Implement** — `packages/engine-core/src/l2/circ/model.ts` (anchor by content; do not touch the
 `stepBaro`/`gv` line):
 
 Find (verbatim, `src/l2/circ/model.ts`):
@@ -1123,7 +1123,7 @@ Replace with:
         c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 };
 ```
 
-- [ ] **Step 5: Run — expect PASS**
+- [x] **Step 5: Run — expect PASS**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/manual-ischaemia.test.ts test/engine/organs-htn.test.ts
@@ -1133,7 +1133,7 @@ npx -y pnpm@9.15.9 -r typecheck
 Expected: 6 passed; logged check-18 numbers `mapLow 64.386, low 0.6667, hypo 0.3744, pbto2 13.963, mapRec 81.133,
 recovered 0.8369` (checks 1 and 2 bit-identical to the base: the reference only differs after a hold). Typecheck clean.
 
-- [ ] **Step 6: Record defect 1 as `it.fails` (R45)** — create `packages/engine-core/test/engine/circ-manual-ischaemia.test.ts`:
+- [x] **Step 6: Record defect 1 as `it.fails` (R45)** — create `packages/engine-core/test/engine/circ-manual-ischaemia.test.ts`:
 
 ```ts
 // FU-3 item 4 (G7d follow-through 2, tables §7 check 18 rig): 7a's MANUAL tracker narrows pulse pressure by lowering LV
@@ -1196,7 +1196,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/ci
 
 Expected: 1 passed (as `it.fails`), log `FU-3 item 4: after 90/52 kIsch min 0.200, LVEDP (last 2 min) 46.1, MAP 64.4`.
 
-- [ ] **Step 7: Siblings** (all MANUAL set-and-hold users, the organs engine tests, 7a circ tests):
+- [x] **Step 7: Siblings** (all MANUAL set-and-hold users, the organs engine tests, 7a circ tests):
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/l2/hemo test/engine/circ-arrest.test.ts test/engine/circ-beats.test.ts test/engine/circ-events.test.ts test/engine/circ-manual-contractility.test.ts test/engine/circ-manual-ischaemia.test.ts test/engine/circ-manual.test.ts test/engine/circ-modeled.test.ts test/engine/circ-pipeline.test.ts test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts test/engine/circ-stage2-recheck.test.ts test/engine/circ-teaching.test.ts test/engine/hemo-acceptance.test.ts test/engine/hemo-engine.test.ts test/engine/hemo-nibp.test.ts test/engine/hemo-vf.test.ts test/engine/organs-alarm.test.ts test/engine/organs-wiring.test.ts test/engine/organs-htn.test.ts test/engine/organs-tbi.test.ts test/engine/organs-tbi-treatment.test.ts test/engine/organs-renal.test.ts test/engine/organs-curves.test.ts test/engine/pacer-engine.test.ts test/engine/stage3-alarms-engine.test.ts test/engine/engine-commands.test.ts test/engine/alarms-engine.test.ts test/engine/hr-skin-averaging.test.ts test/engine/resp-engine.test.ts test/engine/resp-oxygen.test.ts test/engine/resp-airway.test.ts test/engine/resp-coupling.test.ts test/engine/neuro-spont.test.ts test/engine/circ-rate-rule.test.ts
@@ -1214,7 +1214,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run --no-file-para
 Expected: all pass; `circ-longrun` prints `circulation … ms per tick` ≤ 0.3 (write the measured figure into the gate
 note). Task 4 changes one multiplication in the control step, so no per-tick change is expected.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/l2/circ/manual-ischaemia.test.ts packages/engine-core/test/engine/circ-manual-ischaemia.test.ts packages/engine-core/test/engine/organs-htn.test.ts packages/engine-core/vite.config.ts
@@ -1310,7 +1310,7 @@ files green. Validation t25 (rocuronium, never ventilated for 29 min) now arrest
 1 s before and after (Q-FU3-16a).
 Before Step 5's `engine.ts` edit run `git fetch origin && git merge origin/main` (R51 §7; 7e edits `engine.ts`).
 
-- [ ] **Step 1: write the failing engine test** `packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts`:
+- [x] **Step 1: write the failing engine test** `packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts`:
 
 ```ts
 // FU-3 item 16: the MODELED asphyxial sequence — an apnoeic paralysed adult on room air desaturates, becomes
@@ -1528,9 +1528,9 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
 });
 ```
 
-- [ ] **Step 2: add it to the SLOW list** (`packages/engine-core/vite.config.ts`; the find/replace is the last block of Step 5).
+- [x] **Step 2: add it to the SLOW list** (`packages/engine-core/vite.config.ts`; the find/replace is the last block of Step 5).
 
-- [ ] **Step 3: run it — expect FAIL (3 of 4)**
+- [x] **Step 3: run it — expect FAIL (3 of 4)**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-hypoxic-arrest.test.ts`
 Expected (measured on 71d9f89 with the first draft's three tests; the E-FU3-10 test fails the same way, no arrest):
@@ -1545,7 +1545,7 @@ MANUAL: SaO2 < 60 % at 1.97 min; HR < 40 never; arrest none
 Tests 3 failed | 1 passed (4)
 ```
 
-- [ ] **Step 4: write the unit test** `packages/engine-core/test/l2/circ/hypoxic-arrest.test.ts`:
+- [x] **Step 4: write the unit test** `packages/engine-core/test/l2/circ/hypoxic-arrest.test.ts`:
 
 ```ts
 // FU-3 item 16 unit tests: the O2 content in the coronary supply (coronary.ts) and the arrest request
@@ -1618,7 +1618,7 @@ describe('FU-3 item 16: the arrest request', () => {
 
 (It fails to import before Step 5: `hypoxic-arrest.ts` does not exist, `TAU_HYP_S` is not exported.)
 
-- [ ] **Step 5: implement.** Create `packages/engine-core/src/l2/circ/hypoxic-arrest.ts`:
+- [x] **Step 5: implement.** Create `packages/engine-core/src/l2/circ/hypoxic-arrest.ts`:
 
 ```ts
 // FU-3 item 16: asphyxial (hypoxaemic) arrest in MODELED mode. The coronary step (coronary.ts) carries the arterial
@@ -1961,7 +1961,7 @@ replace with:
   'test/engine/circ-hypoxic-arrest.test.ts', // FU-3 item 16: four 15–20 sim-min asphyxia runs
 ```
 
-- [ ] **Step 5b: E-FU3-9 (7b) — no ejection, no new arterial blood.** Write the unit test first, create
+- [x] **Step 5b: E-FU3-9 (7b) — no ejection, no new arterial blood.** Write the unit test first, create
 `packages/engine-core/test/l2/lung/arterial-hold.test.ts` (the first fixer's prototype, verbatim; 2 tests):
 
 ```ts
@@ -2078,7 +2078,7 @@ fixer's prototype: `arterial-hold` 2/2, `mix-o2` 3/3). These two edits were re-d
 behaviour (its source diff was not kept): if the engine test's post-arrest numbers in Step 6 differ from R-1's (SaO2
 max 0.33 %, PP ≤ 0.33 mmHg), stop and report rather than adjust.
 
-- [ ] **Step 5c: E-FU3-10 (7f) — the brainstem-perfusion gate on the MODELED drive. UNPROTOTYPED: prototype first.**
+- [x] **Step 5c: E-FU3-10 (7f) — the brainstem-perfusion gate on the MODELED drive. UNPROTOTYPED: prototype first.**
 The blocks below are derived from the real code (`origin/main` + `origin/stage-7d-organs`; 7e's branch does not touch
 `l2/neuro/spont.ts`, and its `l2/resp/pipeline.ts`/`engine.ts` edits are on other lines — checked) but were never run.
 Procedure (R45): apply them, run the unit test and the engine test's E-FU3-10 `it`; if the band (RR numeric 0 or `--`,
@@ -2325,7 +2325,7 @@ Run `… vitest run test/l2/neuro/ test/engine/circ-hypoxic-arrest.test.ts` and 
 step (band met → numbers into the E-FU3-10 title; not met → `it.fails` with the numbers, R45).
 
 
-- [ ] **Step 6: run — expect PASS**
+- [x] **Step 6: run — expect PASS**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-hypoxic-arrest.test.ts test/l2/circ/ test/l2/lung/ test/l2/neuro/`
 Expected (first fixer's prototype for everything but the E-FU3-10 line):
@@ -2340,7 +2340,7 @@ test/l2/circ/: Test Files 19 passed, Tests 74 passed | 1 skipped (the new unit f
 Onsets must be unchanged by Steps 5b/5c (2.02 / +2.55 / +7.77 min; MANUAL 1.97 min). Typecheck:
 `npx -y pnpm@9.15.9 -r typecheck` → exit 0.
 
-- [ ] **Step 7: sibling runs** (all green on the prototype, see §5; the lung, neuro and organs lines are added for
+- [x] **Step 7: sibling runs** (all green on the prototype, see §5; the lung, neuro and organs lines are added for
 E-FU3-9/10 — E-FU3-9 changes every zero-output state, E-FU3-10 every MODELED patient with CBF < 20 %):
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/lung test/l2/neuro test/l2/resp test/engine/lung-gas.test.ts test/engine/lung-capno.test.ts test/engine/lung-external.test.ts test/engine/lung-wiring.test.ts test/engine/resp-engine.test.ts test/engine/resp-airway.test.ts test/engine/resp-coupling.test.ts test/engine/organs-wiring.test.ts test/engine/organs-alarm.test.ts test/engine/blood-sanity-haem.test.ts test/engine/circ-modeled.test.ts test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts test/engine/hemo-acceptance.test.ts test/engine/hemo-engine.test.ts test/engine/truth-event.test.ts test/engine/pk-bus.test.ts test/engine/pk-wiring.test.ts test/engine/lung-circ.test.ts test/engine/neuro-circ.test.ts test/engine/neuro-spont.test.ts test/engine/neuro-engine.test.ts test/engine/resp-oxygen.test.ts test/engine/blood-sanity-acid.test.ts test/engine/circ-rate-rule.test.ts test/engine/defib-engine.test.ts test/engine/circ-arrest.test.ts test/engine/cpr-etco2.test.ts test/engine/hemo-vf.test.ts test/engine/blood-oxygen.test.ts test/engine/engine-seams.test.ts test/engine/state-rhythm.test.ts test/engine/device-determinism.test.ts test/engine/alarms-engine.test.ts test/engine/stage3-alarms-engine.test.ts test/engine/circ-events.test.ts test/engine/circ-teaching.test.ts`
 and serially `… vitest run --no-file-parallelism test/engine/blood-stage3-recheck.test.ts test/engine/neuro-acceptance.test.ts test/engine/pk-acceptance-pd.test.ts test/engine/pk-acceptance-scen.test.ts test/engine/organs-tbi.test.ts test/engine/organs-tbi-treatment.test.ts test/engine/organs-renal.test.ts test/engine/lung-unilateral.test.ts test/engine/af-rate-control.test.ts`.
@@ -2361,7 +2361,7 @@ If an organs/TBI rig breathes spontaneously in MODELED through a CBF < 20 % epis
 (correct physiology for a brainstem without perfusion); if such a test goes red, stop and report the numbers — do not
 change its band or its rig without a ruling.
 
-- [ ] **Step 8: commit** (one commit; the message names each exception so the gate note can map lines to them)
+- [x] **Step 8: commit** (one commit; the message names each exception so the gate note can map lines to them)
 
 ```bash
 git add packages/engine-core/src/l2/circ/hypoxic-arrest.ts packages/engine-core/src/l2/circ/coronary.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/l2/lung/mix-o2.ts packages/engine-core/src/l2/lung/lung.ts packages/engine-core/src/l2/neuro/spont.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/vite.config.ts packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts packages/engine-core/test/l2/circ/hypoxic-arrest.test.ts packages/engine-core/test/l2/lung/arterial-hold.test.ts packages/engine-core/test/l2/neuro/brainstem-gate.test.ts
@@ -2405,7 +2405,7 @@ FU-2 `circ-rate-rule` 6/6 with "AAI 70 MODELED: phenylephrine 70.0 → 70.0; ble
 
 Before Step 6 (the `engine.ts` edit) run `git fetch origin && git merge origin/main` (R51 §7).
 
-- [ ] **Step 1: Write the failing test** — create `packages/engine-core/test/engine/pacer-sensing.test.ts`:
+- [x] **Step 1: Write the failing test** — create `packages/engine-core/test/engine/pacer-sensing.test.ts`:
 
 ```ts
 // FU-3 item 5 (Q-FU2-10): an atrial-sensing pacemaker (AAI, DDD) is INHIBITED by intrinsic atrial activity faster than
@@ -2529,7 +2529,7 @@ and replace with:
 ```
 
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pacer-sensing.test.ts`
 Expected: FAIL, 4 failed —
@@ -2538,7 +2538,7 @@ Expected: FAIL, 4 failed —
 - DDD conducted: A spikes > 0 (d525eed probe: 101 A / 100 V spikes, all 100 beats `paced`)
 - MANUAL AAI: `expected 30 to be less than or equal to 3` (hr 90 window: 60.0/min, 55 A spikes)
 
-- [ ] **Step 3: The lower rate** — in `packages/engine-core/src/l2/ecg/rhythm-state.ts`, find:
+- [x] **Step 3: The lower rate** — in `packages/engine-core/src/l2/ecg/rhythm-state.ts`, find:
 
 ```ts
   /** The L1 'hr' target at time t (bpm, unclamped). */
@@ -2588,7 +2588,7 @@ export function pacerLowerRate(st: RhythmState, t: number, ctx: RhythmCtx): numb
 }
 ```
 
-- [ ] **Step 4: The pacer's escape interval** — in `packages/engine-core/src/l2/ecg/pacing.ts`, find:
+- [x] **Step 4: The pacer's escape interval** — in `packages/engine-core/src/l2/ecg/pacing.ts`, find:
 
 ```ts
 import { HOOKS, NEVER, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
@@ -2620,7 +2620,7 @@ function interval(st: RhythmState, t: number, ctx: RhythmCtx): number {
 }
 ```
 
-- [ ] **Step 5: The intrinsic atrial rate** — in `packages/engine-core/src/l2/ecg/atria.ts`, find:
+- [x] **Step 5: The intrinsic atrial rate** — in `packages/engine-core/src/l2/ecg/atria.ts`, find:
 
 ```ts
 import { HOOKS, NEVER, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
@@ -2659,7 +2659,7 @@ and replace with:
 }
 ```
 
-- [ ] **Step 6: Feed the held rate (engine.ts, exception candidate)** — in `packages/engine-core/src/engine.ts`, find:
+- [x] **Step 6: Feed the held rate (engine.ts, exception candidate)** — in `packages/engine-core/src/engine.ts`, find:
 
 ```ts
 function rhythmCtx(ps: PipelineState): RhythmCtx {
@@ -2695,7 +2695,7 @@ and replace with:
   if (id === 'aflutter') {
 ```
 
-- [ ] **Step 7: Run the test to verify it passes**
+- [x] **Step 7: Run the test to verify it passes**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/pacer-sensing.test.ts`
 Expected: PASS, 4 tests; logs:
@@ -2707,7 +2707,7 @@ FU-3 DDD conducted bleed 180–240 s: rate 96.3, beats 96, A spikes 0, V spikes 
 FU-3 MANUAL AAI 60: 60.0/min, 35 beats, 35 A spikes; hr 90: 90.4/min, 83 beats, 0 A spikes; hr 50: 60.0/min, 55 beats, 55 A spikes
 ```
 
-- [ ] **Step 8: Siblings + typecheck**
+- [x] **Step 8: Siblings + typecheck**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg test/l3/qrs-pacing.test.ts test/l3/defib-pacer test/engine/pacer-engine.test.ts test/engine/circ-rate-rule.test.ts test/l2/circ/rate-rule.test.ts test/engine/engine-seams.test.ts test/engine/engine-commands.test.ts test/engine/alarms-engine.test.ts test/engine/pacer-sensing.test.ts`
 Expected: 48 files, 253 tests pass (Stage 5 `s5/pacing.test.ts` 10/10; `s5/library.test.ts` 39/39 incl. the seed-42/43
@@ -2715,7 +2715,7 @@ determinism hashes through DDD; FU-2 `circ-rate-rule` 6/6 with `FU-2 AAI 70 MODE
 70.0 → 91.2` unchanged). Then `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/monitor-core-4b.test.ts`
 (5/5) and `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/rhythm-state.ts packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/src/l2/ecg/pacing.ts packages/engine-core/src/engine.ts packages/engine-core/vite.config.ts packages/engine-core/test/engine/pacer-sensing.test.ts
@@ -2763,7 +2763,7 @@ Philips discloses 6.8 s, range 6.4–7.2) · af-rate-control esmolol 26.7 → 24
 
 Before Step 6 (the `engine.ts` edit) run `git fetch origin && git merge origin/main` (R51 §7).
 
-- [ ] **Step 1: Write the failing engine test** — create `packages/engine-core/test/engine/hr-af-numeric.test.ts`:
+- [x] **Step 1: Write the failing engine test** — create `packages/engine-core/test/engine/hr-af-numeric.test.ts`:
 
 ```ts
 // FU-3 item 6 (Q-FU2-11): the HR numeric in MANUAL AF against the TRUE mean ventricular rate (60 × beats / elapsed
@@ -2876,7 +2876,7 @@ describe('HR numeric in MANUAL AF vs the true mean ventricular rate (FU-3 item 6
 });
 ```
 
-- [ ] **Step 2: Write the failing unit test** — `packages/engine-core/test/l3/hr.test.ts` — find:
+- [x] **Step 2: Write the failing unit test** — `packages/engine-core/test/l3/hr.test.ts` — find:
 ```ts
   it('keeps only the last 12 RR', () => {
 ```
@@ -2892,7 +2892,7 @@ replace with:
   it('keeps only the last 12 RR', () => {
 ```
 
-- [ ] **Step 3: Re-pin philips-like's step series** — `packages/engine-core/test/engine/hr-skin-averaging.test.ts` — find:
+- [x] **Step 3: Re-pin philips-like's step series** — `packages/engine-core/test/engine/hr-skin-averaging.test.ts` — find:
 ```ts
   it('philips-like is unchanged: 60, 67, 75, 86, 100, 120 … (trimmed mean of 12 RR)', () => {
     expect(stepSeries('philips-like')).toEqual([60, 67, 75, 86, 100, 120, 120, 120, 120]);
@@ -2907,7 +2907,7 @@ replace with:
   });
 ```
 
-- [ ] **Step 4: Add the file to the SLOW list** — `packages/engine-core/vite.config.ts` — find:
+- [x] **Step 4: Add the file to the SLOW list** — `packages/engine-core/vite.config.ts` — find:
 ```ts
   'test/engine/af-rate-control.test.ts', // FU-2: AF rate control (13–22 sim-min each)
 ```
@@ -2917,7 +2917,7 @@ replace with:
   'test/engine/hr-af-numeric.test.ts', // FU-3: HR numeric vs the true AF rate (11 runs of 400 sim-s)
 ```
 
-- [ ] **Step 5: Run, expect FAIL**
+- [x] **Step 5: Run, expect FAIL**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hr-af-numeric.test.ts test/engine/hr-skin-averaging.test.ts test/l3/hr.test.ts
@@ -2928,7 +2928,7 @@ Expected: 3 failed | 10 passed (13) —
 `FU-3 (Q-FU2-11): hrMeasure's method argument …` → `expected 80 to be 77` (typecheck also reports the extra argument).
 The detector/generator, saadat-like, mindray-like and sinus tests PASS before the fix (they are the controls).
 
-- [ ] **Step 6: Implement** — the exact blocks:
+- [x] **Step 6: Implement** — the exact blocks:
 
 `packages/engine-core/src/engine.ts` — find:
 ```ts
@@ -3011,7 +3011,7 @@ replace with:
   else if (method === 'dropMaxMin' && rrs.length >= 4) {
 ```
 
-- [ ] **Step 7: Run, expect PASS**
+- [x] **Step 7: Run, expect PASS**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hr-af-numeric.test.ts test/engine/hr-skin-averaging.test.ts test/l3 test/engine/engine-rate-sweep.test.ts test/engine/alarms-engine.test.ts test/engine/engine-commands.test.ts
@@ -3022,7 +3022,7 @@ Expected: 27 files / 137 tests pass; 2 files / 8 tests pass (amiodarone stays `i
 `FU-3 philips-like afib 100: true 97.64 (489 beats, 489 detected R), monitor 97.93 (+0.29 %)`, 130 → 130.69
 (+0.76 %), 145 → 146.92 (+0.45 %).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add packages/engine-core/src/l3/hr.ts packages/engine-core/src/engine.ts packages/engine-core/vite.config.ts packages/engine-core/test/engine/hr-af-numeric.test.ts packages/engine-core/test/engine/hr-skin-averaging.test.ts packages/engine-core/test/l3/hr.test.ts
@@ -3076,7 +3076,7 @@ Red&Yell", *Configuration Guide* p. 96) would change the count, not the level (Q
 `CVP_M_HIGH` at 27, 37, 47, 57 s `it.fails` · CVP target 18 at 120 s: raised at 122 s (philips-like) and 127 s
 (saadat-like), never on the four skins without a CVP limit — 6 `it` · file 6.5 s wall.
 
-- [ ] **Step 1: Write the evidence test** — create `packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts`:
+- [x] **Step 1: Write the evidence test** — create `packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts`:
 
 ```ts
 // FU-3 item 7 (G8a calibration queue row 7) — evidence, decided: the ALARM DEFAULT is right and the 7a MANUAL CVP under
@@ -3164,7 +3164,7 @@ describe('MANUAL CVP under positive-pressure ventilation (FU-3 item 7)', () => {
 });
 ```
 
-- [ ] **Step 2: Add it to the SLOW list** — `packages/engine-core/vite.config.ts`, find (Task 4's entry):
+- [x] **Step 2: Add it to the SLOW list** — `packages/engine-core/vite.config.ts`, find (Task 4's entry):
 
 ```ts
   'test/engine/circ-manual-ischaemia.test.ts', // FU-3 item 4: the check-18 rig to MAP 65 (9 sim-min)
@@ -3177,7 +3177,7 @@ and replace with:
   'test/engine/circ-manual-cvp-peep.test.ts', // FU-3 item 7: 8 soak-patient runs of 300 sim-s each
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-manual-cvp-peep.test.ts`
 Expected: 8 passed (the two `it.fails` fail internally as declared). Logs:
@@ -3196,7 +3196,7 @@ FU-3 zoll-like CVP 18: raises at []
 If 7e (merged before this plan) moved the MANUAL CVP, record the new step and soak numbers in the two titles and the
 gate note (R45: titles carry the measurement; the criteria stay).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/circ-manual-cvp-peep.test.ts packages/engine-core/vite.config.ts
@@ -3234,7 +3234,7 @@ modify; after 7e lands run `git grep -n uopMlH -- packages apps` (expected: only
 carries 2.55 mL/h; over 10 min body water equals 7c's own fallback within 0.37 mL (a whole-urine seam would be 10.55
 mL short) · `test/l2/{blood,organs,renal}` 97/97.
 
-- [ ] **Step 1: Write the failing test** — in `packages/engine-core/test/l2/organs/pipeline.test.ts`, 
+- [x] **Step 1: Write the failing test** — in `packages/engine-core/test/l2/organs/pipeline.test.ts`, 
 find:
 
 ```ts
@@ -3306,14 +3306,14 @@ and replace with:
 
 (The existing `it` keeps `uopMlH` until Step 4 — Step 1 adds only the import and the new `it`, which uses the new name.)
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/pipeline.test.ts`
 Expected: FAIL — `seam uopAboveBasalMlH on the real 7c …`: `TypeError: actual value must be number or bigint, received
 "undefined"` (the seam still carries `uopMlH`); the other 5 tests pass.
 
 
-- [ ] **Step 3: Rename the field in 7c's type and reader** — in `packages/engine-core/src/l2/blood/core.ts`, 
+- [x] **Step 3: Rename the field in 7c's type and reader** — in `packages/engine-core/src/l2/blood/core.ts`, 
 find:
 
 ```ts
@@ -3399,7 +3399,7 @@ and replace with:
     expect(bloodMl(a.fl) + a.fl.visf).toBeCloseTo(4807 + 11356, -1); // at rest the fixed elimination removes nothing
 ```
 
-- [ ] **Step 4: Rename it in 7d's type and writer** — in `packages/engine-core/src/l2/organs/inputs.ts`, 
+- [x] **Step 4: Rename it in 7d's type and writer** — in `packages/engine-core/src/l2/organs/inputs.ts`, 
 find:
 
 ```ts
@@ -3499,7 +3499,7 @@ and replace with:
   });
 ```
 
-- [ ] **Step 5: Run the tests and check no reader is left**
+- [x] **Step 5: Run the tests and check no reader is left**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs test/l2/blood test/l2/renal && git grep -n uopMlH -- packages apps && npx -y pnpm@9.15.9 -r typecheck`
 Expected: PASS — 20 files, 97 tests (prototype); the grep prints exactly one line, the rename note in `core.ts`'s JSDoc;
@@ -3507,7 +3507,7 @@ typecheck clean. Measured by the new test (70 kg, CO 5.25): kidney UOP 72.55 mL/
 `uopAboveBasalMlH` 2.55 mL/h; over 10 min 7c's body water falls 0.37 mL with the seam, 0 with 7c's own fallback
 (|Δ| 0.37 < 2); a whole-urine seam (the pre-7d-fix meaning) falls 10.55 mL (probe, not committed).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/core.ts packages/engine-core/src/l2/organs/inputs.ts packages/engine-core/src/l2/organs/pipeline.ts packages/engine-core/test/l2/blood/core.test.ts packages/engine-core/test/l2/organs/pipeline.test.ts
@@ -3553,7 +3553,7 @@ event id such as `rvInfarct` is now REJECTED by the schema (`circProfileOf` sile
 profile (band elderly, cfr 1.4, betaBlock 0.8, lvedpTarget 18, `lungSpecs` pregnancy, `organs.conds` tbi); controller
 schema 21, builtins 6, neuro-scenarios 6, runner 18, view 4, replay 4, probability 6, host-scenario 6 green.
 
-- [ ] **Step 1: Write the failing test** — create `packages/controller/test/scenario/profile.test.ts`:
+- [x] **Step 1: Write the failing test** — create `packages/controller/test/scenario/profile.test.ts`:
 
 ```ts
 // FU-3 item 9 (G8a ruling, FU-3 addition 9; R22): `patient.profile` in pme-scenario/1 is optional (every existing
@@ -3638,7 +3638,7 @@ describe('engineOptionsOf: the scenario patient → the engine at t = 0', () => 
 });
 ```
 
-- [ ] **Step 2: Run it — expect FAIL**
+- [x] **Step 2: Run it — expect FAIL**
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/profile.test.ts`
 
@@ -3647,7 +3647,7 @@ throwing stub `engineOptionsOf`: **11 failed | 1 passed** (only "is optional: ev
 passes before the change — all 11 scenario files in `scenarios/` validate on d525eed; the schema rejects `patient.profile`
 as `unexpected property "profile"`).
 
-- [ ] **Step 3: Implement** — create `packages/controller/src/scenario/patient.ts`:
+- [x] **Step 3: Implement** — create `packages/controller/src/scenario/patient.ts`:
 
 ```ts
 // The scenario's patient body → the engine's creation options (brief §7.4; R22; FU-3 item 9). A pme-scenario/1
@@ -3803,14 +3803,14 @@ export { engineOptionsOf } from './patient.ts';
 
 
 
-- [ ] **Step 4: Run — expect PASS**
+- [x] **Step 4: Run — expect PASS**
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/profile.test.ts test/scenario/schema.test.ts test/scenario/builtins.test.ts test/scenario/neuro-scenarios.test.ts test/scenario/runner.test.ts test/scenario/host-scenario.test.ts`
 
 Expected (measured): profile 12/12, schema 21/21, builtins 6/6, neuro-scenarios 6/6, runner 18/18, host-scenario 6/6.
 `npx -y pnpm@9.15.9 -r typecheck` clean.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add packages/controller/scenarios/pme-scenario-1.schema.json packages/controller/src/scenario/patient.ts packages/controller/src/scenario/types.ts packages/controller/src/scenario/index.ts packages/controller/test/scenario/profile.test.ts
@@ -3862,7 +3862,7 @@ suites: `profile-docs` + the rewritten 8a `sanity-docs` test 14 passed on a 7e b
 
 Before Step 1 run `git fetch origin && git merge origin/main` (7e must be on the branch for t16).
 
-- [ ] **Step 0: Precondition — is 7e's `condition sepsis` on the base?** (R50 finding 2, ruling R-3)
+- [x] **Step 0: Precondition — is 7e's `condition sepsis` on the base?** (R50 finding 2, ruling R-3)
 
 ```bash
 git grep -q "'sepsis'" -- packages/engine-core/src/l2/endo && echo "7e present" || echo "7e ABSENT"
@@ -3873,7 +3873,7 @@ Step 3b — t16 keeps its `patient`/actions edit in `sanity-docs.ts` but its row
 `it.fails` with the measured refusal in its title, and it flips back to `it` when 7e lands (tick the line "t16
 restored" in the gate note then). No band, tolerance or document row changes either way.
 
-- [ ] **Step 1: Write the failing tests** — create `packages/validation/test/segments/profile-docs.test.ts`:
+- [x] **Step 1: Write the failing tests** — create `packages/validation/test/segments/profile-docs.test.ts`:
 
 ```ts
 // FU-3 item 9 (G8a ruling, FU-3 addition 9): the ten documents Stage 8a listed as NOT MEASURABLE (gate note
@@ -3909,7 +3909,7 @@ describe('profile documents run on their own patient (FU-3 item 9)', { timeout: 
 and replace 8a's NOT-MEASURABLE test in `packages/validation/test/segments/sanity-docs.test.ts` (the two
 `sanity-docs.test.ts` blocks under "Modify" in Step 3 — apply them now, before the implementation).
 
-- [ ] **Step 2: Run — expect FAIL**
+- [x] **Step 2: Run — expect FAIL**
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/profile-docs.test.ts test/segments/sanity-docs.test.ts`
 
@@ -3917,7 +3917,7 @@ Expected (measured): **11 failed | 3 passed** — each of the ten documents: `ex
 with `type: "patient profile"`, reason e.g. `conditions ["aorticStenosis","cad3v","htn"]: not expressible in
 pme-scenario/1 until the R22 profile schema lands`; the structural test: `expected [] to deeply equal [ 't10-as-cad-propofol', …(7) ]`.
 
-- [ ] **Step 3: Implement** (find/replace, verbatim):
+- [x] **Step 3: Implement** (find/replace, verbatim):
 
 **Modify `packages/validation/src/segments/run.ts`**
 
@@ -4150,7 +4150,7 @@ Replace with:
 
 
 
-- [ ] **Step 3b (only if Step 0 printed "7e ABSENT"): pin t16 as an expected failure** — in the file created in
+- [x] *(applied while 7e was absent; removed after 7e merged, `a6bf4f0`)* **Step 3b (only if Step 0 printed "7e ABSENT"): pin t16 as an expected failure** — in the file created in
 Step 1, `packages/validation/test/segments/profile-docs.test.ts`, find:
 
 ```ts
@@ -4180,7 +4180,7 @@ describe('profile documents run on their own patient (FU-3 item 9)', { timeout: 
 Step 4's expectation then reads **14 passed** of which t16 as an expected failure (the log line prints the refusal —
 copy it into the gate note).
 
-- [ ] **Step 4: Run — expect PASS**
+- [x] **Step 4: Run — expect PASS**
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/segments/profile-docs.test.ts test/segments/sanity-docs.test.ts`
 
@@ -4192,7 +4192,7 @@ d525eed + prototype + origin/stage-7e-endocrine-thermal `ba2d3ac` (3 union confl
 1 passed, 18 s. Then the siblings: `… exec vitest run test/segments/run.test.ts test/segments/gate-docs.test.ts
 test/segments/grade.test.ts test/report test/oracle` → 12 + 6 passed (7 skipped: Pulse absent) (measured).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```
 git add packages/validation/src/segments/run.ts packages/validation/src/segments/types.ts packages/validation/suites/sanity/sanity-docs.ts packages/validation/test/segments/profile-docs.test.ts packages/validation/test/segments/sanity-docs.test.ts
@@ -4237,7 +4237,7 @@ agree, lactate +0.50 vs +0.06 (expect-differ D2, now INSIDE tolerance 0.5 → pi
 BE −0.70 vs −0.01 still differs, Na agrees; O10b K −0.90 vs −0.11 still differs; O13b ΔNa +1.00 vs +1.63 (was −2.00;
 the row stays excluded). Without the variable, or with a bad path, the oracle tests skip cleanly (3 passed, 4 skipped).
 
-- [ ] **Step 1: One loader and one variable for the stage oracles** — edits in three files, then one delete.
+- [x] **Step 1: One loader and one variable for the stage oracles** — edits in three files, then one delete.
 
 
 In `packages/validation/src/oracle/compare.ts`, 
@@ -4445,7 +4445,7 @@ and replace with:
 Then delete the second loader: `git rm packages/validation/src/oracle/pulse-runner.ts`.
 
 
-- [ ] **Step 2: Create `packages/validation/src/oracle/blood-scenarios.ts`** (7c's `scratch/7c-oracle/blood-scenarios.ts` with the harness moved in from its test; loads nothing itself):
+- [x] **Step 2: Create `packages/validation/src/oracle/blood-scenarios.ts`** (7c's `scratch/7c-oracle/blood-scenarios.ts` with the harness moved in from its test; loads nothing itself):
 
 
 ```ts
@@ -4587,7 +4587,7 @@ export async function runBloodOracle(sc: BloodOracleScenario, pulse: Pick<PulseO
 ```
 
 
-- [ ] **Step 3: Create `packages/validation/test/oracle-blood.test.ts`**:
+- [x] **Step 3: Create `packages/validation/test/oracle-blood.test.ts`**:
 
 
 ```ts
@@ -4625,14 +4625,14 @@ describe.skipIf(!DIR)('Pulse oracle, blood (annex §D; PME_PULSE_DIR=…/researc
 ```
 
 
-- [ ] **Step 4: Run the always-run rules and the skip path**
+- [x] **Step 4: Run the always-run rules and the skip path**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts test/oracle.test.ts test/oracle-renal.test.ts test/oracle && npx -y pnpm@9.15.9 -r typecheck`
 Expected: PASS — `oracle-blood` 2 passed + 4 skipped (no `PME_PULSE_DIR`), `oracle-renal` 1 passed + 1 skipped,
 `oracle.test.ts` skipped, `test/oracle/oracle.test.ts` (8a) unchanged; typecheck clean. `git grep -n PULSE_ORACLE_DIR -- packages .github`
 prints nothing.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/validation/src/oracle/blood-scenarios.ts packages/validation/test/oracle-blood.test.ts packages/validation/src/oracle/compare.ts packages/validation/test/oracle.test.ts packages/validation/test/oracle-renal.test.ts
@@ -4642,7 +4642,7 @@ git push
 (`git rm` in Step 1 already staged the deletion of `pulse-runner.ts`.)
 
 
-- [ ] **Step 6: Write the failing baseline test** — in `packages/validation/test/oracle-blood.test.ts`, 
+- [x] **Step 6: Write the failing baseline test** — in `packages/validation/test/oracle-blood.test.ts`, 
 find:
 
 ```ts
@@ -4702,14 +4702,14 @@ const DIR = pulseDir();
 ```
 
 
-- [ ] **Step 7: Run it to verify it fails**
+- [x] **Step 7: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts`
 Expected: FAIL — `O13b: our baseline is the panel BEFORE the bicarbonate dose …`: `AssertionError: expected 143 to be
 close to 140, received difference is 3` (the baseline panel is post-dose). ≈ 0.7 s; no Pulse needed (a flat stub).
 
 
-- [ ] **Step 8: Dispatch our actions when the loop reaches them** — in `packages/validation/src/oracle/blood-scenarios.ts`, 
+- [x] **Step 8: Dispatch our actions when the loop reaches them** — in `packages/validation/src/oracle/blood-scenarios.ts`, 
 find:
 
 ```ts
@@ -4778,7 +4778,7 @@ and replace with:
 ```
 
 
-- [ ] **Step 9: Run it to verify it passes, then commit**
+- [x] **Step 9: Run it to verify it passes, then commit**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts test/oracle.test.ts test/oracle-renal.test.ts test/oracle`
 Expected: PASS — 9 passed, 11 skipped (4 files; the Pulse-bound ones skip without `PME_PULSE_DIR`).
@@ -4790,7 +4790,7 @@ git push
 ```
 
 
-- [ ] **Step 10: Document the one variable** — in `docs/validation/README.md`, 
+- [x] **Step 10: Document the one variable** — in `docs/validation/README.md`, 
 find:
 
 ````markdown
@@ -4838,7 +4838,7 @@ git commit -m "docs(validation): PME_PULSE_DIR is the one Pulse variable and mus
 git push
 ```
 
-- [ ] **Step 11: Run the blood oracle once against the local Pulse build (slow — alone, in the background)**
+- [x] **Step 11: Run the blood oracle once against the local Pulse build (slow — alone, in the background)**
 
 Pulse 4.3.2 wasm lives OUTSIDE the repo at `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/research/pulse-spike/web/`
 (`pulse.js`, `pulse.wasm`, `pulse.data`; 8a's gate note ran its oracle with `PME_PULSE_DIR` pointing there). Never
@@ -4868,7 +4868,7 @@ the direction of Pulse's (+1.00 vs +1.63): the fix works; the row stays `exclude
 `Bicarbonate` substance bolus is not comparable with our NaHCO3).
 
 
-- [ ] **Step 12: Pin per-row verdicts; the two drifted expected-disagreement rows are recorded as `fail` (R45; R50
+- [x] **Step 12: Pin per-row verdicts; the two drifted expected-disagreement rows are recorded as `fail` (R45; R50
 finding 4, ruling R-5)** — the local Pulse run (Step 11) prints two `expect-differ` rows that now land INSIDE Pulse's
 tolerance. Rows and tolerances stay as 7c wrote them. The test stays an ordinary `it` per scenario and asserts every
 row's `channel:verdict` against a recorded map that carries the two drifted rows as `fail` with their numbers in the
@@ -4940,7 +4940,7 @@ describe.skipIf(!DIR)('Pulse oracle, blood (annex §D; PME_PULSE_DIR=…/researc
 ```
 
 
-- [ ] **Step 13: Run and commit**
+- [x] **Step 13: Run and commit**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts && npx -y pnpm@9.15.9 --filter @pme/validation typecheck`
 Expected: PASS without Pulse (3 passed, 4 skipped; also with `PME_PULSE_DIR=/nonexistent`: `pulseDir()` checks the
@@ -5030,7 +5030,7 @@ only the two tile colours (+18 lines); screenshots at sim ≈ 460 s show NMT "0/
 tiles with 7f's sample values; running the 4a e2e rewrites 7 committed PNGs — restore them (`git checkout --
 docs/gates/stage-4a`) unless the gate decides otherwise.
 
-- [ ] **Step 1: Write the failing skins test**
+- [x] **Step 1: Write the failing skins test**
 
 In `packages/skins/test/neuro-tiles.test.ts`, find:
 
@@ -5079,13 +5079,13 @@ describe('FU-3 item 11 (R-7f-6): NMT and BFA tiles on the anaesthesia skins', ()
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/neuro-tiles.test.ts`
 Expected: FAIL, 2 tests — `expected [ 'HR', 'ART', 'NIBP', 'SpO2', …(2) ] to include 'NMT'` and
 `expected undefined to be 'SR'` (the 7f test in the same file passes).
 
-- [ ] **Step 3: Write the failing renderer test**
+- [x] **Step 3: Write the failing renderer test**
 
 Create `packages/renderer/test/neuro-tiles.test.ts` with exactly:
 
@@ -5177,12 +5177,12 @@ describe('DeviceUI draws the NMT and BFA tiles (philips-like, saadat-like)', () 
 });
 ```
 
-- [ ] **Step 4: Run it to verify it fails**
+- [x] **Step 4: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/neuro-tiles.test.ts`
 Expected: FAIL — the file does not load: `Failed to load url ../src/numerics-neuro.ts`.
 
-- [ ] **Step 5: Implement the formatters and the tile drawing**
+- [x] **Step 5: Implement the formatters and the tile drawing**
 
 Create `packages/renderer/src/numerics-neuro.ts` with exactly:
 
@@ -5288,7 +5288,7 @@ Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/neuro-
 Expected: the 3 formatter tests PASS; the 3 `DeviceUI` tests still FAIL (`expected null not to be null`,
 `expected undefined to be ''`, `expected undefined to be '38'`) — no skin declares the tiles yet.
 
-- [ ] **Step 6: Declare the tiles on the two skins**
+- [x] **Step 6: Declare the tiles on the two skins**
 
 In `packages/skins/src/data/skins/philips-like.json`, find:
 
@@ -5376,7 +5376,7 @@ and replace with:
     "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]" },
 ```
 
-- [ ] **Step 7: Regenerate the resolved-skin snapshots and check they only gained the two tile colours**
+- [x] **Step 7: Regenerate the resolved-skin snapshots and check they only gained the two tile colours**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run -u test/resolve.test.ts`
 Expected: `Snapshots 9 updated`, `Tests 27 passed`. Then `git diff --stat packages/skins/test/__snapshots__` shows
@@ -5385,13 +5385,13 @@ Expected: `Snapshots 9 updated`, `Tests 27 passed`. Then `git diff --stat packag
 projector-light/ecg-grid theme re-mappings `#737373`, `#767676`, `#0073D7`, `#0076DE`). Any `-` line means main moved:
 stop and look.
 
-- [ ] **Step 8: Run the packages to verify they pass**
+- [x] **Step 8: Run the packages to verify they pass**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run` — Expected: PASS, 18 files / 173 tests.
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run` — Expected: PASS, 23 files / 76 tests
 (≈ 8 s; renderer budget 30 s, CI amendment 3).
 
-- [ ] **Step 9: The 7f page on either skin, and the screenshot script**
+- [x] **Step 9: The 7f page on either skin, and the screenshot script**
 
 In `apps/demo/src/stage7f.ts`, find:
 
@@ -5457,7 +5457,7 @@ committed pair with `mkdir -p docs/gates/fu-3` and the same two commands with ou
 is expected a little higher (the shots above ran before Task 14; the propofol still dominates at 7.7 min) — record
 the value the gate run prints.
 
-- [ ] **Step 10: Typecheck and commit**
+- [x] **Step 10: Typecheck and commit**
 
 Run: `npx -y pnpm@9.15.9 -r typecheck` — Expected: clean.
 
@@ -5506,7 +5506,7 @@ table; five machinery keys internal); console e2e (Chromium) CO2 tile `---` → 
 at 13 / 18 / 25 / 30 sim-min 31 / 30 / 32 / 35 → 38 / 39 / 41 / 42; the 7f screenshot script passes, 7 PNGs ≤ 60 KB,
 the maintenance shot reads DI 37 (was 30) — the committed 7f gate PNGs are NOT regenerated.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/demo/src/physiology-console/lung-labels.test.ts` with exactly:
 
@@ -5640,7 +5640,7 @@ and replace with:
   it('every preset starts an engine with the invasive lines connected', () => {
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/physiology-console`
 Expected: FAIL, 27 of 141 tests (114 pass):
@@ -5653,7 +5653,7 @@ Expected: FAIL, 27 of 141 tests (114 pass):
 - `model.test.ts` 1 — `"organs.iap": "other"` received vs `"kidney"` expected;
 - `actions.test.ts` 1 — `adult: expected { abp: 'connected', …(4) } to match object { co2: 'on' }`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `apps/demo/src/physiology-console/meta.ts`, find:
 
@@ -5818,12 +5818,12 @@ and replace with:
 const SENSORS: PatientProfile['sensors'] = { abp: 'connected', cvp: 'connected', pap: 'connected', spo2: 'on', nibp: 'on', co2: 'on' };
 ```
 
-- [ ] **Step 4: Run them to verify they pass**
+- [x] **Step 4: Run them to verify they pass**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run`
 Expected: PASS, 9 files / 141 tests (≈ 11 s).
 
-- [ ] **Step 5: The console e2e — CO2 reads at rest**
+- [x] **Step 5: The console e2e — CO2 reads at rest**
 
 In `apps/demo/e2e/physiology-console.e2e.ts`, find:
 
@@ -5846,7 +5846,7 @@ Without the `actions.ts` change the new line fails: `expect(locator).toHaveText(
 The test rewrites `docs/gates/stage-7x/*.jpg` (9 files): restore them (`git checkout -- docs/gates/stage-7x`) unless
 the gate wants the console evidence refreshed (the refreshed `rest-left.jpg` shows the CO2 tile at 36).
 
-- [ ] **Step 6: The 7f demo's maintenance dial (item 12)**
+- [x] **Step 6: The 7f demo's maintenance dial (item 12)**
 
 In `apps/demo/src/stage7f.ts`, find:
 
@@ -5873,7 +5873,7 @@ Check: `(cd apps/demo && npx vite --port 4861 --strictPort &)` then
 (see Numbers). The committed 7f gate PNGs are NOT regenerated by this task (the gate task decides; the depth index
 in `7f-sevo-maintenance.png` moves from 30 to 37).
 
-- [ ] **Step 7: Typecheck and commit**
+- [x] **Step 7: Typecheck and commit**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/demo typecheck` — Expected: clean.
 
@@ -5899,7 +5899,7 @@ git push
 - Consumes: Task 13's `apps/demo/scripts/fu3-neuro-tiles-shots.mjs` (headless system Chrome; `?skin=` on the 7f page).
 - Produces: two PNGs ≤ 60 KB, the gate note, the PR.
 
-- [ ] **Step 1: Merge main and run everything**
+- [x] **Step 1: Merge main and run everything**
 
 ```bash
 git fetch origin && git merge origin/main
@@ -5928,7 +5928,7 @@ stage merged meanwhile (7d, 7e), re-run the FU-3 engine tests and record any num
 If the CI `build` job's headless WebKit times out on an e2e that FU-3 changed (`physiology-console.e2e.ts` is already
 Chromium-only since G7x), skip WebKit in that file with the G7g comment and record it in the gate note.
 
-- [ ] **Step 2: Evidence screenshots (Chromium only)**
+- [x] **Step 2: Evidence screenshots (Chromium only)**
 
 ```bash
 (cd apps/demo && npx vite --port 4861 --strictPort > <scratchpad>/fu-3-followups/vite.log 2>&1 &)
@@ -5946,7 +5946,7 @@ Expected console lines (integrated prototype, after Task 14's 2 % dial):
 `saadat-like {"simT":461.3,"nmt":"NMT\nTOF\n0/4\nPTC 0","bfa":"BFA\n40\nBS% 0"}`; PNGs 49.3 / 50.1 KB. Look at both images: the NMT and BFA tiles are in the skin's tile grid, drawn by
 the renderer (not the demo's DOM panel).
 
-- [ ] **Step 3: Write `docs/gates/fu-3.md`** with these sections, filled with YOUR measured numbers:
+- [x] **Step 3: Write `docs/gates/fu-3.md`** with these sections, filled with YOUR measured numbers:
   1. *What shipped* — one row per task (0–14): item, mechanism, files, tests; the exceptions E-FU3-0…10, in numeric
      order, with the lines each touched; Task 0 applied or not (expected: not needed, `rr: 18` already on main + 7d).
   2. *Numbers vs bands* — the "Prototype results" table re-measured: before/after for every row, band, pass/`it.fails`;
@@ -5972,7 +5972,7 @@ the renderer (not the demo's DOM panel).
      (amiodarone), and the calibration rows the profile documents produced.
   7. *Test counts* — per package, fast/slow split, e2e list.
 
-- [ ] **Step 4: Commit, push, open the PR (do NOT merge)**
+- [x] **Step 4: Commit, push, open the PR (do NOT merge)**
 
 ```bash
 git add docs/gates/fu-3.md docs/gates/fu-3 docs/plans/fu-3-followups.md
