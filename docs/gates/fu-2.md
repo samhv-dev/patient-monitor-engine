@@ -111,8 +111,9 @@ Deviations: none in code. Every code block was applied as written; every anchor 
 merged when this branch was gated, so no re-anchoring was needed). `grep -n "ps.hr = " engine.ts` lists exactly one
 write without a `holdRate` call after it — the MODELED `requestHr` callback — so no sibling `ps.hr` write needed an
 extra call. Process notes: (a) the full `test:e2e` regenerates other stages' evidence images; those were reverted,
-not committed. (b) `fu2.e2e.ts` does not skip WebKit (the plan's conditional rule); if the CI `build` job's
-headless WebKit times out on it, add the plan's `test.skip(... 'webkit' ...)` line.
+not committed. (b) `fu2.e2e.ts` skips WebKit (the plan's conditional G7g rule): on the PR's first CI run
+(36294420648) Chromium passed it (47.6 s) but headless WebKit wrote a JPEG over 60 KB (its font rendering) and then
+closed the page on the retries; the plan's `test.skip(... 'webkit' ...)` line was added after `let base = '';`.
 
 ## 5. For the orchestrator / Ali
 
