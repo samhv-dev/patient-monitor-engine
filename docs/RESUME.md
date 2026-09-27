@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 15:20 (7d slow job re-running after an RPC flake; 7e finishing Task 20 after 7d; FU-3 plan being written).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 17:30 (7d slow job fails deterministically — CI fixer in the 7d worktree; 7e executor killed by the 8th cap, relaunch after 7d merges; FU-3 plan under fixer after its R50 review).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,10 +13,10 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a, 7f | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18; 7f #21) | — |
-| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`), head e0c602f (main+7f, seam fixes, E-7d-4 rig) | build green; test-slow re-run after a Vitest RPC flake (142/142 tests passed) | merge when the re-run is green; then 7e re-merges main |
-| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), Tasks 1–19 done and pushed, 7f hand-overs done | Task 20 resumed after addendum 18 (pin temperature in 7g's Eleveld rig E-7e-2; warm 7f's 6 h rig E-7e-3); waits for 7d to merge, then gate + PR | orchestrator gate + merge |
+| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`), head e0c602f (main+7f, seam fixes, E-7d-4 rig) | build green; `test-slow` fails DETERMINISTICALLY (2 runs, 142/142 tests pass, one unhandled `Timeout calling "onTaskUpdate"`); Opus CI fixer pinpointing the trigger in `../scratch/wt-stage-7d` (CI=1 slow set + timestamped setup file), fix = yield, push to `stage-7d-organs` | merge when the slow job is green on the fixed head; then relaunch 7e |
+| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), Tasks 1–19 done and pushed, 7f hand-overs done | executor KILLED by the 8th cap (17:00) while polling for 7d; addendum-18 rig fixes (E-7e-2 pin temperature, E-7e-3 warm the 6 h rig) were done — verify on the branch; Task 20 left: merge main after 7d lands, full e2e, fast/slow split, gate note, PR | relaunch a fresh executor when PR #19 merges; orchestrator gate + merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-3 follow-ups | plan written (`docs/plans/fu-3-followups.md`, 16 tasks, untracked; backup in `../scratch/plans-backup/`); R50 review running since 15:35 | 16 items incl. hypoxic bradycardia/arrest (Task 5) (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
+| FU-3 follow-ups | plan written (`docs/plans/fu-3-followups.md`, 16 tasks, untracked; backup in `../scratch/plans-backup/`); R50 review APPROVE WITH FIXES (17:15; 9 findings, top: Task 5 arrested patient re-saturates — hold `cor.hyp`/SA depression while pulseless, test the 6–10 min post-arrest window); fixer running since 17:30, review at `<scratchpad>/fu-3-review/review.md` | 16 items incl. hypoxic bradycardia/arrest (Task 5) (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8 validation/release | not started | waits for all | write plan |
 
