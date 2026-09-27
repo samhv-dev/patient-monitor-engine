@@ -4869,7 +4869,7 @@ git push origin stage-7c-blood
 **Interfaces:**
 - Produces: one NOTICES row per ported module (R34) in the Pulse-derived table, `N-P##` scheme (R51 addendum 14): **N-P08** Figge/Stewart (`acid-base.ts`), **N-P09** Dash–Bassingthwaighte with the CO coupling as ported (`odc.ts`), **N-P23** tissue-fluid topology + Landis–Pappenheimer (`fluids.ts`). ICRP-89's hepatic share (`params.ts HBF_FRAC`) reuses 7a's **N-P10**; the Pulse oracle reuses **N-062**; the Kitware/BioGears NOTICE paragraph is already there (7a). If N-P23 is taken on `origin/main` when you merge, take the next free N-P id and update `fluids.ts`'s header to match (the header test reads it). No `N-1xx` rows (7c's N-100…N-104 range stays unused: no dataset rows).
 
-- [ ] **Step 1: Header test**
+- [x] **Step 1: Header test**
 
 `packages/engine-core/test/l2/blood/headers.test.ts`:
 
@@ -4903,7 +4903,7 @@ describe('R34: ported files carry the Apache header and a NOTICES row', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/headers.test.ts` → FAIL (no NOTICES rows yet).
 
-- [ ] **Step 2: NOTICES rows**
+- [x] **Step 2: NOTICES rows**
 
 Insert these three rows into the Pulse-derived table of `NOTICES.md` (the one headed `| ID | Item | Source | Licence class | How used | Added on |`), directly after the `| N-P16 |` row (7a's; anchor by content):
 
@@ -4914,15 +4914,15 @@ Insert these three rows into the Pulse-derived table of `NOTICES.md` (the one he
 ```
 (Replace `2026-09-27` with the commit date. Keep the table's six-column format; `scripts/check-notices.ts` only governs `N-###` rows of vendored files, so the header test below is what enforces these.)
 
-- [ ] **Step 3: Licence text**
+- [x] **Step 3: Licence text**
 
 On the 7a + 7b + 7g main `LICENSES/` holds only `fast-uri-3.1.8.txt`: `cp node_modules/typescript/LICENSE.txt LICENSES/Apache-2.0.txt` (TypeScript ships the verbatim Apache License 2.0; check the first line reads "Apache License" / "Version 2.0, January 2004"). If another stage added an Apache-2.0 text meanwhile, point the rows at it instead.
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/headers.test.ts` → PASS; `npx -y pnpm@9.15.9 check-notices` → OK.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add NOTICES.md LICENSES/Apache-2.0.txt packages/engine-core/test/l2/blood/headers.test.ts
