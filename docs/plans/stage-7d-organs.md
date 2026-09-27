@@ -3143,7 +3143,7 @@ git push origin stage-7d-organs
 - Consumes: the `icpMean`/`cpp` measurements (Task 11). The skins already carry an `ICP` limit (saadat-like adult 0–10, paediatric/neonatal 0–4: brief §6.8 Appendix 1).
 - Produces: alarm ids `ICP_HIGH`, `ICP_LOW`, `CPP_LOW`, `CPP_HIGH` through the existing limit loop (no new alarm code).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/engine/organs-alarm.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/engine/organs-alarm.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3170,24 +3170,24 @@ describe('ICP alarm (brief §6.8 Appendix 1 limits)', { timeout: 300_000 }, () =
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-alarm.test.ts`
 Expected: FAIL — `LIMIT_KEYS.ICP` is undefined.
 
-- [ ] **Step 3: Add the rows** — in `LIMIT_KEYS` after `CVP_M: { numeric: 'cvpMean', label: 'CVP', upper: 'CVP MEAN' },` add
+- [x] **Step 3: Add the rows** — in `LIMIT_KEYS` after `CVP_M: { numeric: 'cvpMean', label: 'CVP', upper: 'CVP MEAN' },` add
 
 ```ts
   ICP: { numeric: 'icpMean', label: 'ICP', upper: 'ICP MEAN' }, // Stage 7d (skins carry ICP limits, brief §6.8)
   CPP: { numeric: 'cpp', label: 'CPP', upper: 'CPP' }, // Stage 7d (no factory limit: inert until a limit is set)
 ```
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-alarm.test.ts test/l3`
 Expected: PASS, and the existing alarm tests still pass. If the `enable` action takes a different `param` form on your base, use the one `test/l3/alarms/*.test.ts` uses for `CVP_M`.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l3/alarms/profile.ts packages/engine-core/test/engine/organs-alarm.test.ts docs/plans/stage-7d-organs.md

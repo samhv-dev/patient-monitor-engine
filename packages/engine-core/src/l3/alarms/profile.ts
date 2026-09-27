@@ -15,6 +15,8 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
   ART_D: { numeric: 'abpDia', label: 'ABPd', upper: 'ART DIA' },
   ART_M: { numeric: 'abpMean', label: 'ABPm', upper: 'ART MEAN' },
   CVP_M: { numeric: 'cvpMean', label: 'CVP', upper: 'CVP MEAN' },
+  ICP: { numeric: 'icpMean', label: 'ICP', upper: 'ICP MEAN' }, // Stage 7d (skins carry ICP limits, brief §6.8)
+  CPP: { numeric: 'cpp', label: 'CPP', upper: 'CPP' }, // Stage 7d (no factory limit: inert until a limit is set)
   PAP_S: { numeric: 'papSys', label: 'PAPs', upper: 'PAP SYS' },
   PAP_D: { numeric: 'papDia', label: 'PAPd', upper: 'PAP DIA' },
   PAP_M: { numeric: 'papMean', label: 'PAPm', upper: 'PAP MEAN' },
