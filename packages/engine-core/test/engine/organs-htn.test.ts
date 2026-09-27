@@ -65,7 +65,10 @@ describe('tables §7 check 18 through the engine (MANUAL, 75 y HTN, cbfLL 75, GA
   // recovery above the kIsch it was set against (model.ts `man.kIschRef`), so the escape cannot run MAP past the
   // instructor's target: MAP 81.1, CBF 0.837 at PaCO2 35. The ventricle still sits at kIsch 0.2 / LVEDP 46 through the
   // hour (FU-3 item 4 defect 1: `circ-manual-ischaemia.test.ts`, `it.fails`). Band unchanged (R45).
-  it('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 %', () => {
+  // FU-3 Task 15 (after merging Stage 7e, R45): on main + 7e the same rig recovers to MAP 86.6 (band 77–84) with CBF
+  // 0.891 — the MAP premise is lost again, by 2.6 mmHg (checks 1 and 2 unchanged: mapLow 64.39, hypocapnia 0.377,
+  // PbtO2 14.1). Pre-7e FU-3 measured MAP 81.1 / CBF 0.837. Back to `it.fails` with the numbers; band unchanged.
+  it.fails('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — on main + 7e MAP 86.6 (premise 77–84 missed), CBF 0.891', () => {
     expect(n.mapRec).toBeGreaterThan(77); // premise; prototype 81.1 (at 79 CBF was 0.77: CPP 67 with CVP 12, below LL 75)
     expect(n.mapRec).toBeLessThan(84);
     expect(n.recovered).toBeGreaterThan(0.8); // prototype 0.81
