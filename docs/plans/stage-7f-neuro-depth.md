@@ -1746,7 +1746,7 @@ git push
 **Interfaces:**
 - Produces: `NeuroOutputs { mapSetShiftMmHg; cmro2Mult; pupilMm; antinoc; nmb; thermoDepth }`, `neuroOutputs(x)`. Consumers: 7d (`cmro2Mult`, request R-7f-3), 7e (`antinoc`, `nmb`, `thermoDepth`, mirrored on `NeuroState`'s top level by Task 11 because 7e reads `ps.neuro.{antinoc, nmb, thermoDepth}` — R51 §6, the 7e plan's Requests). Nothing for 7a (R51 addendum 8: the anaesthetic baroreflex blunting is 7g's circulation PD).
 
-- [ ] **Step 1: Write the test** `packages/engine-core/test/l2/neuro/outputs.test.ts`:
+- [x] **Step 1: Write the test** `packages/engine-core/test/l2/neuro/outputs.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1771,9 +1771,9 @@ describe('neuro outputs (decision 9)', () => {
 });
 ```
 
-- [ ] **Step 2: Run both; expect PASS** — `… exec vitest run test/l2/neuro/outputs.test.ts test/l2/neuro/depth-drive.test.ts` (`outputs.test.ts` 2, `depth-drive.test.ts` all 16).
+- [x] **Step 2: Run both; expect PASS** — `… exec vitest run test/l2/neuro/outputs.test.ts test/l2/neuro/depth-drive.test.ts` (`outputs.test.ts` 2, `depth-drive.test.ts` all 16).
 
-- [ ] **Step 3: `packages/engine-core/src/l2/neuro/outputs.ts`** (exact, as created in Task 1):
+- [x] **Step 3: `packages/engine-core/src/l2/neuro/outputs.ts`** (exact, as created in Task 1):
 
 ```ts
 // What the anaesthetic state hands to the other systems (scope 7f-2; each consumer reads it when present).
@@ -1810,7 +1810,7 @@ export function neuroOutputs(x: { diRaw: number; opioidFentEq: number; antinoc: 
 }
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/neuro/outputs.test.ts
