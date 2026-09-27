@@ -17,17 +17,15 @@ function doc(o: {
   mode?: 'manual' | 'modeled'; patient?: Record<string, unknown>; baseline?: Record<string, number>;
   actions: Array<{ t: number; command: DocCommand }>; segments: Segment[];
 }): ValidationDoc {
-  // Stage 7 profile fields (conditions, pregnancyWeeks) are not in pme-scenario/1 yet: they travel in `notes` and in
-  // `profile` until the R22 profile schema lands; `profile` makes the document not measurable (the runner would
-  // otherwise grade the default patient: first full run, t15 RV infarct read CVP 4.4 / MAP 92, the healthy adult).
-  const { conditions, pregnancyWeeks, ...patient } = (o.patient ?? {}) as Record<string, unknown>;
-  const profile = [conditions ? `conditions ${JSON.stringify(conditions)}` : '', pregnancyWeeks ? `pregnancy ${String(pregnancyWeeks)} weeks` : ''].filter(Boolean).join('; ');
+  // The R22 profile rides in `patient.profile` (FU-3 item 9): chronic conditions (7a/7d) and lung conditions (7b,
+  // pregnancy) build the engine; acute ones (RV infarct, sepsis, a growing haematoma) are t = 0 actions. Before, such
+  // documents were not measurable (the first 8a run graded t15 RV infarct on the healthy adult: CVP 4.4 / MAP 92).
   return {
     schema: 'pme-validation/1', id: o.id, title: o.title, seed: 1, durationS: o.durationS,
-    ...(o.requires ? { requires: o.requires } : {}), ...(profile ? { profile } : {}),
+    ...(o.requires ? { requires: o.requires } : {}),
     scenario: {
-      schema: 'pme-scenario/1', id: `val-${o.id}`, title: o.title, ...(o.mode ? { mode: o.mode } : {}), ...(profile ? { notes: `R22 profile: ${profile}` } : {}),
-      patient: { ...ADULT, sensors: SENSORS, baseline: { hr: 75, sbp: 120, dbp: 70, ...o.baseline }, ...patient },
+      schema: 'pme-scenario/1', id: `val-${o.id}`, title: o.title, ...(o.mode ? { mode: o.mode } : {}),
+      patient: { ...ADULT, sensors: SENSORS, baseline: { hr: 75, sbp: 120, dbp: 70, ...o.baseline }, ...o.patient },
       initialState: 'run', states: [{ id: 'run', notes: o.source }],
     },
     actions: o.actions,
@@ -112,14 +110,14 @@ export const SANITY_DOCS: ValidationDoc[] = [
   // --- tables §7 checks 10–25 (Stage 7) -----------------------------------------------------------------------
   doc({
     id: 't10-as-cad-propofol', title: 'AS + CAD + HTN, propofol 1.5 mg/kg', source: `${T7} 10`, durationS: 360, mode: 'modeled', requires: ['7a', '7g'],
-    patient: { ageY: 75, conditions: ['aorticStenosis', 'cad3v', 'htn'] }, baseline: { sbp: 150, dbp: 80 },
+    patient: { ageY: 75, profile: { conditions: [{ id: 'as', grade: 'severe' }, { id: 'cad', grade: 'severe' }, { id: 'htn' }] } }, baseline: { sbp: 150, dbp: 80 },
     actions: [at(60, ev({ kind: 'drug', drugId: 'propofol', dose: 1.5, unit: 'mg/kg' })), at(210, ev({ kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg' }))],
     segments: [base(), seg('2min', 175, 185, rng('map', 'state:map', 'mean', 60, 65, `${T7} 10: MAP 103 → 60–65 at 2 min`)),
       seg('rescue', 210, 300, gt('map-rescued', 'state:map', 'max', 85, `${T7} 10: phenylephrine → MAP ≥ 85 within 90 s`))],
   }),
   doc({
     id: 't11-chronic-mr-fluid', title: 'Chronic MR + 1.5 L crystalloid', source: `${T7} 11`, durationS: 2700, mode: 'modeled', requires: ['7a', '7b', '7c'],
-    patient: { conditions: ['mitralRegurgitationChronic'] },
+    patient: { profile: { conditions: [{ id: 'mr', grade: 'severe', severity: 0.4 }] } }, // severe, severity < 0.5 = 7a's chronic big LA
     actions: [at(60, ev({ kind: 'fluid', fluid: 'crystalloid', volumeMl: 1500, overS: 1800 }))],
     segments: [seg('late', 1200, 1560, gt('pawp', 'state:pawp', 'mean', 25, `${T7} 11: PCWP 15 → > 25 by 15–25 min`)),
       seg('oedema', 1800, 2400, rng('spo2', 'state:spo2', 'mean', 89, 92, `${T7} 11: SpO2 96 → 89–92`))],
@@ -143,13 +141,12 @@ export const SANITY_DOCS: ValidationDoc[] = [
   }),
   doc({
     id: 't15-rv-infarct', title: 'RV infarct (inferior STEMI, Ees_RV ×0.35)', source: `${T7} 15`, durationS: 300, mode: 'modeled', requires: ['7a'],
-    patient: { conditions: ['rvInfarct'] },
-    actions: [],
+    actions: [at(0, ev({ kind: 'condition', id: 'rvInfarct', severity: 1 }))],
     segments: [seg('rest', 120, 300, rng('cvp', 'state:cvp', 'mean', 14, 18, `${T7} 15: CVP 14–18`), rng('pawp', 'state:pawp', 'mean', 8, 12, `${T7} 15: PCWP 8–12`), rng('map', 'state:map', 'mean', 60, 70, `${T7} 15: MAP 60–70`))],
   }),
   doc({
     id: 't16-septic-shock-warm', title: 'Septic shock, warm phase', source: `${T7} 16`, durationS: 600, mode: 'modeled', requires: ['7f'],
-    patient: { conditions: ['sepsisWarm'] }, actions: [],
+    actions: [at(0, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' }))],
     segments: [seg('warm', 300, 600, rng('map', 'state:map', 'mean', 55, 60, `${T7} 16: MAP 55–60`), rng('hr', 'state:hr', 'mean', 115, 130, `${T7} 16: HR 115–130`))],
   }),
   doc({
@@ -159,23 +156,23 @@ export const SANITY_DOCS: ValidationDoc[] = [
   }),
   doc({
     id: 't17b-class3-bb', title: 'Class III haemorrhage, chronic β-blocker', source: `${T7} 17b`, durationS: 1800, mode: 'modeled', requires: ['7a', '7c', '7g'],
-    patient: { conditions: ['betaBlockerChronic'] },
+    patient: { profile: { conditions: [{ id: 'betaBlocked' }] } },
     actions: [at(60, ev({ kind: 'bleed', volumeMl: 1750, overS: 600 }))],
     segments: [seg('late', 900, 1800, rng('hr', 'state:hr', 'mean', 80, 95, `${T7} 17b: HR 80–95`), rng('sbp', 'state:sbp', 'mean', 65, 80, `${T7} 17b: SBP 65–80`))],
   }),
   doc({
     id: 't18-htn-hypocapnia-cbf', title: 'Hypertensive 75 y at MAP 65, PaCO2 40 → 25', source: `${T7} 18`, durationS: 600, mode: 'modeled', requires: ['7d'],
-    patient: { ageY: 75, conditions: ['htn'] }, actions: [at(120, ev({ kind: 'ventilation', source: 'ventilator', rr: 24, vtMl: 600, fio2: 0.5, peep: 5 }))],
+    patient: { ageY: 75, profile: { conditions: [{ id: 'htn' }] } }, actions: [at(120, ev({ kind: 'ventilation', source: 'ventilator', rr: 24, vtMl: 600, fio2: 0.5, peep: 5 }))],
     segments: [seg('hypocapnia', 400, 600, rng('etco2', 'numeric:etco2', 'mean', 20, 28, `${T7} 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [ENG]`))],
   }),
   doc({
     id: 't19-tbi-haematoma', title: 'TBI, expanding haematoma', source: `${T7} 19`, durationS: 1800, mode: 'modeled', requires: ['7d'],
-    patient: { conditions: ['tbiHaematoma'] }, actions: [],
+    patient: { profile: { conditions: [{ id: 'tbi', severity: 1 }] } }, actions: [at(0, ev({ kind: 'brain', massRateMlPerMin: 1 }))],
     segments: [seg('cushing', 1200, 1800, lt('hr', 'state:hr', 'min', 60, `${T7} 19: HR 80 → 45–55 at CPP < 40`))],
   }),
   doc({
     id: 't20-low-flow-oliguria', title: 'Low-flow oliguria, dobutamine', source: `${T7} 20`, durationS: 3600, mode: 'modeled', requires: ['7d', '7g'],
-    patient: { conditions: ['hfref'] }, actions: [at(600, ev({ kind: 'drug', drugId: 'dobutamine', dose: 5, unit: 'mcg/kg/min' }))],
+    patient: { profile: { conditions: [{ id: 'hfref' }] } }, actions: [at(600, ev({ kind: 'drug', drugId: 'dobutamine', dose: 5, unit: 'mcg/kg/min' }))],
     segments: [seg('on-dobutamine', 1800, 3600, rng('map', 'state:map', 'mean', 68, 76, `${T7} 20: MAP 72 on dobutamine`))],
   }),
   doc({
@@ -187,13 +184,13 @@ export const SANITY_DOCS: ValidationDoc[] = [
   }),
   doc({
     id: 't22-term-spinal', title: 'Term pregnancy, spinal, supine', source: `${T7} 22`, durationS: 600, mode: 'modeled', requires: ['7a', '7f'],
-    patient: { ageY: 30, sex: 'F', pregnancyWeeks: 39 }, baseline: { sbp: 125, dbp: 75 },
+    patient: { ageY: 30, sex: 'F', profile: { lungConditions: [{ id: 'pregnancy', severity: 1 }] } }, baseline: { sbp: 125, dbp: 75 }, // 39 wk = term
     actions: [at(60, ev({ kind: 'neuraxial', level: 'T4' }))],
     segments: [seg('3-5min', 240, 360, rng('map', 'state:map', 'mean', 60, 65, `${T7} 22: MAP 90 → 60–65 in 3–5 min`))],
   }),
   doc({
     id: 't23-term-apnoea', title: 'Term pregnancy, GA apnoea after preoxygenation', source: `${T7} 23`, durationS: 600, requires: ['7b'],
-    patient: { ageY: 30, sex: 'F', weightKg: 80, heightCm: 165, pregnancyWeeks: 39 },
+    patient: { ageY: 30, sex: 'F', weightKg: 80, heightCm: 165, profile: { lungConditions: [{ id: 'pregnancy', severity: 1 }] } }, // 39 wk = term
     actions: [at(0, ev({ kind: 'thermal', anaesthesia: 'general' })), at(0, ev({ kind: 'preoxygenate', fio2: 1, durationS: 180 })), at(180, ev({ kind: 'airway', state: 'apnoea' }))],
     segments: [seg('apnoea', 180, 600, rng('t90', 'state:spo2', 'firstTBelow', 150, 240, `${T7} 23: SpO2 90 % at 2.5–4 min`, { threshold: 90 }))],
   }),
