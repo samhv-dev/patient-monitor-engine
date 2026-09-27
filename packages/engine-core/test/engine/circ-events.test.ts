@@ -14,19 +14,30 @@ describe('circulation clinical events', () => {
     expect(r.accepted).toBe(false);
     expect(r.reason).toMatch(/unknown drug/);
   });
-  it('a 500 mL bleed over 60 s removes 500 mL from the circulation', () => {
+  // Re-specified by Stage 7c (R51 addendum 15, ruling 1): with the blood on main the bleed event removes 500 mL but the
+  // capillary refill (Starling, plan 7c decision 5) returns a few mL during the 65 s — correct physiology, so the
+  // circulation no longer loses exactly 500 mL (measured 497.4 mL: refill 2.6 mL). The property tested is now the
+  // haemorrhage ACCOUNTING — the event removes exactly 500.0 mL — and the volume balance: circulation loss = 500 − refill.
+  it('a 500 mL bleed over 60 s removes 500.0 mL; the circulation loses 500 − capillary refill', () => {
     const { e } = rig();
     e.advanceTo(5);
-    const vol = () => {
-      const c = (e.snapshot().state as { st: { hemo: { circ: { s: number[]; p: Parameters<typeof totalVolume>[1] } } } }).st.hemo.circ;
-      return totalVolume(c.s, c.p);
-    };
-    const v0 = vol();
-    e.dispatch(ev({ kind: 'bleed', volumeMl: 500, overS: 60 }));
-    e.advanceTo(70);
+    type St = { hemo: { circ: { s: number[]; p: Parameters<typeof totalVolume>[1] } }; blood: { core: { bledMl: number }; circNetMl: number } };
+    const st = () => (e.snapshot().state as { st: St }).st;
     // the whole circulating volume incl. the arterial capacitor (the plan's s[4..] sum missed the arterial change the
     // MANUAL tracker makes while defending the pressure targets)
-    expect(v0 - vol()).toBeCloseTo(500, 0);
+    const vol = () => totalVolume(st().hemo.circ.s, st().hemo.circ.p);
+    const v0 = vol();
+    const bled0 = st().blood.core.bledMl;
+    const net0 = st().blood.circNetMl;
+    e.dispatch(ev({ kind: 'bleed', volumeMl: 500, overS: 60 }));
+    e.advanceTo(70);
+    const bled = st().blood.core.bledMl - bled0;
+    const refill = st().blood.circNetMl - net0 + bled; // everything the blood returned besides the bleed
+    console.log(`circ-events bleed: event ${bled.toFixed(2)} mL, refill ${refill.toFixed(2)} mL, circulation −${(v0 - vol()).toFixed(2)} mL`);
+    expect(bled).toBeCloseTo(500, 1);
+    expect(refill).toBeGreaterThan(0);
+    expect(refill).toBeLessThan(10);
+    expect(v0 - vol()).toBeCloseTo(500 - refill, 0);
   });
   it('tamponade raises CVP; tension pneumothorax raises CVP and lowers ABP', () => {
     const { e } = rig({ sensors: { cvp: 'connected' } });

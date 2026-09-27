@@ -3356,7 +3356,7 @@ git push origin stage-7c-blood
 - Consumes: `advanceBlood`, `applyBloodCommand`, `createBloodState`, `validateBloodCommand` (Task 11).
 - Produces: `PipelineState.blood`; the blood validator runs after 7g's (which owns every `drug` event) and BEFORE Stage 3's (so `condition burns|dka` are not rejected by Stage 3, and 7a's conditions fall through); `advanceBlood` runs after `advancePk` and `advanceResp` on the same 62.5 Hz → 10 Hz grid with `ctx.pk = ps.pk`; `blood.events` (`labs`, `labResult`) is flushed like the other outputs; `restore()` fills `blood` for pre-7c snapshots. Test helpers `MAN`, `cmd`, `evB`, `st(e)` (incl. `hemo`, `pk`), `rigB`, `runTo`, `labsAt`, `circVolumeMl`, `circCoLpm`. The R45 `it.fails` records in the 7a/7b/7g tests listed under Step 5.
 
-- [ ] **Step 1: Write the helpers and the failing test**
+- [x] **Step 1: Write the helpers and the failing test**
 
 `packages/engine-core/test/helpers/blood.ts`:
 
@@ -3471,11 +3471,11 @@ describe('Stage 7c commands and labs (plan decisions 11, 13)', { timeout: 300_00
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-commands.test.ts` → FAIL (7a's own handler accepts `fluid: 'lemonade'`, Stage 3 rejects `condition burns`, no `labs` events, no `st(e).blood`).
 
-- [ ] **Step 3: Implement** (the ECG push, `pushBloodEcg`, is Task 16; add its call and method there — here apply every edit below EXCEPT the `this.pushBloodEcg(ps);` line inside the advance insert and the `pushBloodEcg` method block)
+- [x] **Step 3: Implement** (the ECG push, `pushBloodEcg`, is Task 16; add its call and method there — here apply every edit below EXCEPT the `this.pushBloodEcg(ps);` line inside the advance insert and the `pushBloodEcg` method block)
 
 **First `git fetch origin && git merge --no-edit origin/main`** (R51 §7). Every insert follows the chain order of the Global Constraints: if 7f/7d/7e merged, the blood's validator/apply/advance lines go in their chain position (validate/apply after 7g's pk and any 7f neuro / 7d organs lines, before 7e's endo and Stage 3's; advance after `advanceResp`, before any 7e/7d advance and before `advanceHemo`), not blindly at the literal find text. All edits are additive: no existing line is re-typed except the one `advanceResp(` call, which gains the `blood` field (R51 §7).
 
@@ -3585,7 +3585,7 @@ Replace with:
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
 ```
 
-- [ ] **Step 4: Run the test, then the sibling suites, then the whole engine-core suite**
+- [x] **Step 4: Run the test, then the sibling suites, then the whole engine-core suite**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-commands.test.ts` → PASS. Prototype: `7a present: circuit −1668 mL, blood bvRel 0.653, CO 6.09 → 2.90 L/min, CO0 5.54`.
 
@@ -3692,7 +3692,7 @@ Replace with:
 
 Re-run the sibling command above → every file passes (the six records now pass as expected failures). Then the whole suite: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run` → all pass. Prototype (all of this plan applied, CI long-run horizon): **207 files, 891 tests passed, 1 skipped** (pre-existing). **Timing note:** `test/engine/engine-commands.test.ts`'s two per-tick tone tests run close to Vitest's 5 s default on a loaded Mac with OR without the blood. If they time out, run them alone; if they still fail, compare against a main-only run before touching anything — the blood costs ≈ 0.001 ms per tick.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/test/helpers/blood.ts packages/engine-core/test/engine/blood-commands.test.ts packages/engine-core/test/engine/circ-events.test.ts packages/engine-core/test/engine/lung-circ.test.ts packages/engine-core/test/engine/lung-unilateral.test.ts packages/engine-core/test/engine/pk-acceptance-pd.test.ts packages/engine-core/test/engine/pk-acceptance-pk.test.ts

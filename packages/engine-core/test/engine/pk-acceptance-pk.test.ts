@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { cp, pkStep, pkSystem, zeroState } from '../../src/l2/pk/compartment.ts';
 import { eleveldPropofol, mintoRemifentanil, schniderPropofol } from '../../src/l2/pk/models.ts';
+import type { MonitorEngine } from '../../src/types.ts';
 import { runPk } from '../helpers/pk.ts';
 
 describe('7g acceptance — PK through the engine', () => {
+  // Stage 7c (R51 addendum 15, ruling 4): with the blood on main 7g's high-extraction clearance follows 7c's live hepatic
+  // flow (blood.out.hbfRel), which is correct behaviour. The equality is asserted with hbfRel pinned to 1 through 7c's
+  // test-only seam (`blood.pinHbfRel`); the second assertion documents the flow-scaled value.
   it('Eleveld 2 mg/kg in the engine equals the standalone model to 1e-9 (the engine adds no PK error)', async () => {
     const pat = { ageY: 35, weightKg: 70, heightCm: 170, sex: 'M' as const };
-    const r = await runPk(pat, [[60, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]], 300);
+    const dose: [number, Record<string, unknown>][] = [[60, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]];
+    const pin = (e: MonitorEngine) => {
+      const b = (e as unknown as { st: { blood?: { pinHbfRel?: number } } }).st.blood;
+      if (b) b.pinHbfRel = 1;
+    };
+    const r = await runPk(pat, dose, 300, 11, { setup: pin });
     const row = r.drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!;
     const p = eleveldPropofol({ ageY: 35, weightKg: 70, heightCm: 170, sex: 'm' });
     const s = pkSystem(p, 0.1);
@@ -15,6 +24,11 @@ describe('7g acceptance — PK through the engine', () => {
     for (let k = 0; k < 1800; k++) x = pkStep(s, x, 0);
     expect(row.ce).toBeCloseTo(x[3]!, 6);
     expect(row.cp).toBeCloseTo(cp(p, x), 6);
+    // flow-scaled (hbfRel live): propofol lowers CO, so hepatic flow and clearance fall and Ce runs above the standalone value
+    const live = (await runPk(pat, dose, 300)).drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!;
+    console.log(`Eleveld Ce at 3 min: standalone ${x[3]!.toFixed(4)}, engine hbfRel pinned ${row.ce.toFixed(4)}, live ${live.ce.toFixed(4)}`);
+    expect(live.ce).toBeGreaterThan(x[3]!);
+    expect(live.ce).toBeLessThan(1.1 * x[3]!);
   }, 300_000);
   it('TCI induction propofol Ce 4 (Eleveld) + remifentanil Ce 3 (Minto): targets reached in < 3 min and held', async () => {
     const r = await runPk({ ageY: 45, weightKg: 80, heightCm: 178, sex: 'M' }, [

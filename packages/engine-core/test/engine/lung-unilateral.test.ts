@@ -5,18 +5,22 @@ import { ev3, rig3, stateSeries } from '../helpers/resp.ts';
 
 type LS = Extract<EngineEvent, { type: 'lungState' }>;
 const adult = { ageY: 55, weightKg: 70, heightCm: 175, sex: 'M' as const };
-const vent = (fio2: number, vtMl = 490) => ev3({ kind: 'ventilation', source: 'ventilator', rr: 14, vtMl, peep: 5, ie: 2, fio2 });
+const vent = (fio2: number, vtMl = 490, rr = 14) => ev3({ kind: 'ventilation', source: 'ventilator', rr, vtMl, peep: 5, ie: 2, fio2 });
 async function run(e: { advanceTo: (t: number) => void }, from: number, to: number) {
   for (let t = from + 60; t <= to; t += 60) { e.advanceTo(t); await new Promise((res) => setImmediate(res)); }
 }
 
 describe('unilateral states (R43, catalogue §15, §22, §23)', { timeout: 300_000 }, () => {
+  // Stage 7c (R51 addendum 15, ruling 2): the rig ventilates toward normocapnia — RR 18 before isolation (PaCO2 40.5 at
+  // 10 min) and RR 40 at VT 350 during OLV (PaCO2 45 at 5 min, 47 at 10, 51 at 60 min). At RR 14 the awake patient went
+  // 47 → 122 mmHg (pH 7.01), and with 7c's live pH the Bohr shift moved the nadir to 46.6 min. RR alone cannot hold 38–45
+  // at VT 350 in this awake rig (Stage 3's calibrated dead space, NR-7g-3); RR 40 is the closest. Bands unchanged.
   it('OLV at FiO2 0.5: SaO2 nadir 88–96 % 4–12 min after isolation, then recovers ≥ 1 % by 60 min; left-lung flow ≤ 0.3', async () => {
     const r = rig3({ patient: adult });
-    r.e.dispatch(vent(0.5));
+    r.e.dispatch(vent(0.5, 490, 18));
     await run(r.e, 0, 600);
     r.e.dispatch(ev3({ kind: 'lungCondition', id: 'olv', severity: 1, side: 'L' }));
-    r.e.dispatch(vent(0.5, 350));
+    r.e.dispatch(vent(0.5, 350, 40));
     await run(r.e, 600, 4200);
     const sa = stateSeries(r.ev, 'spo2', 600);
     const nadir = sa.reduce((m, p) => (p[1] < m[1] ? p : m), [0, 101] as [number, number]);

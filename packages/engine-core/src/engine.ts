@@ -67,6 +67,7 @@ import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, 
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
+import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts'; // Stage 7c
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
 
@@ -104,6 +105,7 @@ interface PipelineState {
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
   resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
+  blood: BloodState; // Stage 7c: fluids, acid–base, electrolytes, O2 delivery, labs
   pk: PkState; // Stage 7g
   pkHooks: RhythmHookState; // Stage 7g
 }
@@ -222,6 +224,7 @@ class Engine implements MonitorEngine {
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
+      blood: createBloodState(opts.patient), // Stage 7c
       pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
       pkHooks: createHookState(), // Stage 7g
     };
@@ -319,6 +322,7 @@ class Engine implements MonitorEngine {
     const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
     data.st.pkHooks ??= createHookState(); // Stage 7g
+    data.st.blood ??= createBloodState(undefined); // Stage 7c: pre-7c snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -487,7 +491,8 @@ class Engine implements MonitorEngine {
       ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view)
+    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
@@ -520,6 +525,7 @@ class Engine implements MonitorEngine {
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
+    this.st.blood.events = keep(this.st.blood.events); // Stage 7c
     this.st.pk.out = keep(this.st.pk.out); // Stage 7g
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
@@ -580,6 +586,8 @@ class Engine implements MonitorEngine {
     if (dev !== null) return dev;
     const pkV = validatePkCommand(cmd, this.st.pk); // Stage 7g: every library drug event is 7g's (R51 §3) — an error is final, ok = accepted
     if (pkV !== null) return pkV;
+    const blood = validateBloodCommand(cmd); // Stage 7c (after 7g — which owns `drug` — and before Stage 3, whose `condition` rejects unknown ids)
+    if (blood !== null) return blood;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
     if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
@@ -631,6 +639,7 @@ class Engine implements MonitorEngine {
       return;
     }
     if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
+    if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
       return;
