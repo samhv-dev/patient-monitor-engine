@@ -13,20 +13,8 @@ const PROFILE_DOCS = [
 /** A command no stage implements yet (decision 8), by document: `neuraxial` (spinal level) has no owner in 7a–7g. */
 const STILL_REFUSED: Record<string, RegExp> = { 't22-term-spinal': /^applyEvent neuraxial$/ };
 
-/** FU-3 Task 11 Step 3b (R50 review finding 2): this base has no 7e `condition sepsis`, so t16 is an expected failure
- * with the measured refusal in its title. When 7e lands: delete this constant and the `it.fails`, and restore
- * `it.each(PROFILE_DOCS)` (t16 then runs like the other nine). */
-const WAITS_FOR_7E = 't16-septic-shock-warm';
 describe('profile documents run on their own patient (FU-3 item 9)', { timeout: 900_000 }, () => {
-  it.fails(`${WAITS_FOR_7E}: needs 7e condition sepsis — measured unsupported: [{ t: 0.1, type: "applyEvent condition", reason: "condition sepsis arrives in Stage 7" }]`, async () => {
-    const d = SANITY_DOCS.find((x) => x.id === WAITS_FOR_7E);
-    if (!d) throw new Error(`no document ${WAITS_FOR_7E}`);
-    const r = await runValidationDoc(d);
-    console.log(`${WAITS_FOR_7E} unsupported: ${JSON.stringify(r.unsupported)}`);
-    expect(r.unsupported).toEqual([]);
-    expect(r.measurable).toBe(true);
-  });
-  it.each(PROFILE_DOCS.filter((x) => x !== WAITS_FOR_7E))('%s: no "patient profile" refusal; every target graded', async (id) => {
+  it.each(PROFILE_DOCS)('%s: no "patient profile" refusal; every target graded', async (id) => {
     const d = SANITY_DOCS.find((x) => x.id === id);
     if (!d) throw new Error(`no document ${id}`);
     const r = await runValidationDoc(d);
