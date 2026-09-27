@@ -312,6 +312,8 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const cOwned = Math.abs(cT - 1) > 1e-9;
   if (cOwned || hs.circ.man.eesRvF !== 1) hs.circ.man.eesRvF = cT;
   if (cOwned) hs.circ.man.eesF = cT;
+  // FU-3 item 4: while the tracker owns LV Emax it is set against the current ischaemia; the hold keeps that reference
+  hs.circ.man.kIschRef = cOwned ? 1 : tr.pActive ? hs.circ.cor.kIsch : hs.circ.man.kIschRef;
   if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
   if (b.ref) {
     // the hold test uses ≈ 8-beat averages so ventilator-driven beat-to-beat swings (PPV) do not keep it running
@@ -692,14 +694,14 @@ export function applyHemoCommand(
         c.baro = createBaro(hs.lastSite.map, c.baro.cpLp); // no step on entry (brief §4.9): the reflexes start at rest
         c.base.rSys = c.man.rSys ?? c.base.rSys; // the MANUAL solution becomes the model's baseline
         c.base.v0Sv += c.man.dV0;
-        c.base.eesLv *= c.man.eesF;
+        c.base.eesLv *= c.man.eesF * Math.min(1, c.man.kIschRef / Math.max(1e-6, c.ext.kIsch)); // FU-3 item 4: the delivered Emax
         c.base.eesRv *= c.man.eesRvF;
         if (c.man.pvr !== null) {
           const f = c.man.pvr / ((c.base.pvrL * c.base.pvrR) / (c.base.pvrL + c.base.pvrR));
           c.base.pvrL *= f;
           c.base.pvrR *= f;
         }
-        c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null };
+        c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 };
       } else {
         setL1Target(l1, 'sbp', t, Math.round(hs.lastSite.sbp)); // freeze outputs as targets
         setL1Target(l1, 'dbp', t, Math.round(hs.lastSite.dbp));
