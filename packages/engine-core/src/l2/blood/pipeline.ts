@@ -32,6 +32,15 @@ export interface BloodState {
   lung: { pCap: number; evlwi: number };
   /** Output events (`labs`, `labResult`) waiting for the engine's flush. */
   events: EngineEvent[];
+  /**
+   * R51 addendum 15 (5): the resting-CO reference. `coLp` low-passes the circuit's CO (gas-model flow units) from 7a's
+   * `ref.co` until `latched` (settle window over, or the first perturbation); then it is CO0 for hbfRel and lactate.
+   */
+  rest: { coLp: number; latched: boolean };
+  /** Cumulative blood-volume change pushed into 7a's circuit, mL (R51 addendum 15 (1): refill = circNetMl + core.bledMl). */
+  circNetMl: number;
+  /** TEST-ONLY seam (R51 addendum 15 (4)): when set, the published `out.hbfRel` is pinned to it (7g tests). */
+  pinHbfRel?: number;
 }
 
 export interface BloodCtx {
@@ -41,12 +50,12 @@ export interface BloodCtx {
   pk?: unknown; // Stage 7g's PkState (duck-typed: `bus.doses`, `bus.metabolic.kShift`); absent → 7c's own drug fallback
 }
 
-/** Create the blood for a profile. CO0 is re-read from 7a's resting reference every pass (advanceBlood). */
+/** Create the blood for a profile. With 7a present CO0 becomes the circuit's settled resting CO (advanceBlood, addendum 15). */
 export function createBloodState(profile: PatientProfile | undefined): BloodState {
   const core = createBloodCore(profile, CI_LPM_PER_KG * gasPatient(profile).effKg, NORMAL.paco2);
   return {
     k: 0, core, out: core.out, view: { odc: { ...core.odc }, coFactor: 1, co2LoadMlMin: 0 }, labs: [], cold: [], keto: null,
-    ecg: { k: 0, qtc: 0 }, lung: { pCap: 8, evlwi: 0 }, events: [],
+    ecg: { k: 0, qtc: 0 }, lung: { pCap: 8, evlwi: 0 }, events: [], rest: { coLp: 0, latched: false }, circNetMl: 0,
   };
 }
 
@@ -68,15 +77,27 @@ function labInputs(rs: RespState, t: number): LabInputs {
 // --- Stage 7g observer (R51 §3; R50 F1/F2) ------------------------------------------------------------------------
 /** The part of 7g's DoseLogEntry 7c reads; `concentrationPct` is 7d's optional field for hypertonic saline (R51 addendum 14). */
 export interface DoseLike { agent: string; amount: number; amountUnit: string; t: number; concentrationPct?: number }
-interface BusLike { doses: DoseLike[]; kShift: number }
+interface BusLike { doses: DoseLike[]; kShift: number; active: boolean }
 
 /** 7g's bus (duck-typed), or null when 7g is absent. */
 export function pkBus(pk: unknown): BusLike | null {
   const b = (pk as { bus?: { doses?: unknown; metabolic?: { kShift?: unknown } } } | null | undefined)?.bus;
   if (!b || !Array.isArray(b.doses)) return null;
   const k = b.metabolic?.kShift;
-  return { doses: b.doses as DoseLike[], kShift: typeof k === 'number' && Number.isFinite(k) ? k : 0 };
+  const n = (o: unknown) => (o && typeof o === 'object' ? Object.keys(o).length : 0);
+  const x = b as { agents?: unknown; volatiles?: unknown };
+  // `active`: any agent or volatile on 7g's bus — a drug already perturbs the circulation (R51 addendum 15 (5))
+  return { doses: b.doses as DoseLike[], kShift: typeof k === 'number' && Number.isFinite(k) ? k : 0, active: n(x.agents) + n(x.volatiles) > 0 };
 }
+
+/**
+ * Resting-CO reference (R51 addendum 15 (5)) [ENG]: the circuit's running resting CO sits −13…+25 % from 7a's
+ * stabilised `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional
+ * lactate threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from
+ * `ref.co` and latches at 120 s, or at the first perturbation (a volume/chemistry command or a 7g drug).
+ */
+export const CO0_SETTLE_S = 120;
+export const CO0_TAU_S = 20;
 
 /** Hypertonic saline runs in over this time when 7g's log gives no duration [ENG]. */
 export const HTS_OVER_MIN = 15;
@@ -129,8 +150,11 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
   const bus = pkBus(ctx.pk);
   const c = bs.core;
   if (bus) observeDoses(bs, bus.doses);
-  // CO0 in the gas model's flow units (coRatio × CI × effKg): 7a's stabilised resting CO (R50 F4)
-  if (circ?.ref) c.co0 = (circ.ref.co / CO_REF_LPM) * CI_LPM_PER_KG * rs.pat.effKg;
+  // CO0 in the gas model's flow units (coRatio × CI × effKg): the circuit's settled resting CO, starting from 7a's
+  // stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone
+  const settling = circ?.ref !== undefined && !bs.rest.latched;
+  if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = (circ.ref.co / CO_REF_LPM) * CI_LPM_PER_KG * rs.pat.effKg;
+  if (settling && bus && (bus.active || bus.doses.length > 0)) bs.rest.latched = true;
   const pPv = pulmCapPressure(ctx.hemo);
   while (bs.k * BLOOD_DT_S <= tEnd + 1e-9) {
     const t = bs.k * BLOOD_DT_S;
@@ -138,16 +162,22 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     if (bs.keto && t < bs.keto.until) c.so.keto += bs.keto.rate * BLOOD_DT_S;
     const bv0 = bloodMl(c.fl);
     const coLpm = rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg;
+    if (settling && !bs.rest.latched) {
+      bs.rest.coLp += (coLpm - bs.rest.coLp) * (BLOOD_DT_S / CO0_TAU_S);
+      if (t >= CO0_SETTLE_S) bs.rest.latched = true;
+    }
+    if (circ?.ref) c.co0 = bs.rest.coLp;
     const mo2 = metabolic(rs, t, 'o2');
     stepBloodCore(c, {
       t, coLpm, paco2: rs.co2.pf, pao2: rs.o2.pao2, tempC: rs.temp.tc, vo2Demand: rs.pat.vo2 * mo2, demandRel: mo2,
       ...(bus ? { kShiftExt: bus.kShift } : {}),
     }, BLOOD_DT_S);
-    bs.out = c.out;
+    bs.out = bs.pinHbfRel === undefined ? c.out : { ...c.out, hbfRel: bs.pinHbfRel }; // test seam (addendum 15 (4))
     const bvRatio = c.out.bvRel;
     const kChem = chemistryContractility(c.ab.ph, c.out.iCa);
     if (circ) {
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
+      bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
     for (const u of bs.cold) if (t < u.until) rs.temp.tc -= u.cPerS * BLOOD_DT_S; // unwarmed units (decision 16)
@@ -238,6 +268,13 @@ export function validateBloodCommand(cmd: Command): string | undefined | null {
 
 /** Apply hook: true when the command was a Stage 7c command. `t` is the sim time; `rs` for lab snapshots. */
 export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: RespState): boolean {
+  const ok = applyBloodEvent(bs, cmd, t, rs);
+  // any accepted command except a blood draw perturbs the patient: the resting-CO reference stops settling (addendum 15 (5))
+  if (ok && cmd.type === 'applyEvent' && (cmd.event as { kind: string }).kind !== 'lab') bs.rest.latched = true;
+  return ok;
+}
+
+function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState): boolean {
   if (cmd.type !== 'applyEvent') return false;
   const c = bs.core;
   const w = c.pat.weightKg;

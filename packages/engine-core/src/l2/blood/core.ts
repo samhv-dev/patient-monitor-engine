@@ -59,9 +59,10 @@ export interface BloodCore {
   burns: number;
   liver: number; // 7d writes liverFn·tempF (function only, R51 addendum 14); hepatic FLOW is 7c's hbfRel, applied once
   renal: RenalSeam | null; // 7d fills it (null = fixed elimination)
-  co0: number; // reference CO (L/min): 7a's resting reference `circ.ref.co` (pipeline), else CI × weight
+  co0: number; // reference CO (L/min): the circuit's settled resting CO, from 7a's `ref.co` (pipeline, addendum 15), else CI × weight
   ecf0: number;
   k1Hz: number; // next 1 Hz solve time
+  bledMl: number; // haemorrhage accounting: cumulative volume removed by bleed events, mL (R51 addendum 15 (1))
   out: BloodOut;
 }
 
@@ -83,7 +84,7 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   return {
     pat, fl, so, ab: solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb }), phNonOrg: ph0,
     o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
-    co0, ecf0: e0, k1Hz: 0,
+    co0, ecf0: e0, k1Hz: 0, bledMl: 0,
     out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1, dkaSeverity: 0 },
   };
 }
@@ -110,6 +111,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const ecfBefore = ecfMl(fl);
   const rn = bc.renal;
   const r = stepFluids(fl, x.t, dtS, osmEcf(c0) > 0 ? 290 / osmEcf(c0) : 1, rn ? Math.max(0, rn.uopMlH) / 60 : undefined);
+  bc.bledMl += r.bledMl;
   if (r.bledPlasmaMl > 0) removePlasma(so, r.bledPlasmaMl, ecfBefore, c0);
   if (rn) {
     // 7d's urine: each solute at the kidney's own rate (mmol/h)
