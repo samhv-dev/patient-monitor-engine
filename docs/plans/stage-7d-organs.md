@@ -1702,7 +1702,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: Task 8. Produces: `RenalInputs` {map, cvp, iap, coLpm, bvRel, albuminGL, anaesthesia, pawExcessCmH2O, alphaExcess, sepsis, furoCe?}, `RenalParams`, `RenalState` (`rbf`, `gfr`, `ang`, `vNh`, `furoE`, `mannitolG`, `uopMlMin`, `cumMl`, `bagMl`, `bladderMl`, `catheter`, `bins`, `akiStage`, `timeScale`, `p.gfrSet`, `p.weightKg`), `volumeFactor(bvRel)`, `eabv(inp, co0)`, `createRenal(inp, weightKg, aki?)` (calibrated on the healthy reference, settled at `inp`), `stepRenal(s, inp, dt)`, `uopOver(s, minutes)` (mL/kg/h), `giveFurosemide(s, mg)`, `giveMannitolRenal(s, g)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/renal/model.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/renal/model.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1803,12 +1803,12 @@ describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/model.test.ts`
 Expected: FAIL — Cannot find module `src/l2/renal/model.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/renal/model.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/renal/model.ts`** (exactly as prototyped)
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -1984,12 +1984,12 @@ export function giveMannitolRenal(s: RenalState, g: number): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/model.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (9 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/renal/model.ts packages/engine-core/test/l2/renal/model.test.ts docs/plans/stage-7d-organs.md
