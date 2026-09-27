@@ -22,6 +22,7 @@ export default defineConfig({
         'vent-link': page('vent-link'), // Stage V
         stage7a: page('stage7a'), // Stage 7a
         stage7g: page('stage7g'), // Stage 7g
+        stage7f: page('stage7f'), // Stage 7f
         'physiology-console': page('physiology-console'), // Stage 7x
       },
     },

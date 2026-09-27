@@ -4214,7 +4214,7 @@ git push
 - Create: `apps/demo/stage7f.html`, `apps/demo/src/stage7f.ts`, `apps/demo/scripts/stage7f-shots.mjs`, `apps/demo/src/physiology-console/organs-neuro.test.ts`
 - Modify: `apps/demo/vite.config.ts` (one input), `apps/demo/index.html` (one link), `apps/demo/src/physiology-console/organs.ts` (7x's `INTERNAL_PREFIXES`: one additive block, its own commit — Step 7)
 
-- [ ] **Step 1: The page** `apps/demo/stage7f.html` (exact):
+- [x] **Step 1: The page** `apps/demo/stage7f.html` (exact):
 
 ```html
 <!doctype html>
@@ -4272,7 +4272,7 @@ git push
 </html>
 ```
 
-- [ ] **Step 2: The script** `apps/demo/src/stage7f.ts` (exact):
+- [x] **Step 2: The script** `apps/demo/src/stage7f.ts` (exact):
 
 ```ts
 // Stage 7f demo (R32 7f): TOF and depth tiles beside the monitor, the instructor "anaesthetic state" panel, and the
@@ -4394,9 +4394,9 @@ $('residual').addEventListener('click', () => {
 });
 ```
 
-- [ ] **Step 3: Register the page.** `apps/demo/vite.config.ts`: after `        stage7g: page('stage7g'), // Stage 7g` add `        stage7f: page('stage7f'), // Stage 7f`. `apps/demo/index.html`: after the Stage 7g list item (`      <li><a href="./stage7g.html">Stage 7g: …</a></li>`) add `      <li><a href="./stage7f.html">Stage 7f: neuromuscular block, TOF, anaesthetic depth, drive depression</a></li>`. Then `npx -y pnpm@9.15.9 -r typecheck` (prototype: clean).
+- [x] **Step 3: Register the page.** `apps/demo/vite.config.ts`: after `        stage7g: page('stage7g'), // Stage 7g` add `        stage7f: page('stage7f'), // Stage 7f`. `apps/demo/index.html`: after the Stage 7g list item (`      <li><a href="./stage7g.html">Stage 7g: …</a></li>`) add `      <li><a href="./stage7f.html">Stage 7f: neuromuscular block, TOF, anaesthetic depth, drive depression</a></li>`. Then `npx -y pnpm@9.15.9 -r typecheck` (prototype: clean).
 
-- [ ] **Step 4: Screenshot script** `apps/demo/scripts/stage7f-shots.mjs`:
+- [x] **Step 4: Screenshot script** `apps/demo/scripts/stage7f-shots.mjs`:
 
 ```js
 // Gate 7f screenshots (headless system Chrome). Usage: (cd apps/demo && npx vite preview --port 4817 --strictPort &) then
@@ -4447,9 +4447,9 @@ if (errors.length) {
 }
 ```
 
-- [ ] **Step 5: Build and look.** `npx -y pnpm@9.15.9 --filter demo build`, serve (`cd apps/demo && npx vite preview --port 4817 --strictPort &`), run the script, open every PNG (≤ 60 KB each; reduce the viewport if larger) and check: the TOF tile goes 4/4 → 0/4 within ~2 sim-min of rocuronium; the depth tile reads 40–50 in maintenance; the panel shows Ce values and "unconscious"; sugammadex brings the TOF tile to ≥ 90 %; remifentanil gives a flat CO2 trace with the apnoea mark in the log; the residual-block shot is taken ≥ 30 sim-min after rocuronium (the script waits on `window.__simT`) and shows a faded TOF (count 1–3 on 7g's PK, whose spontaneous TOFR 0.9 comes at ≈ 81 min) with weak, shallow breaths; the panel's MAC line shows the end-tidal and brain values separately. The script runs ≈ 12 minutes. Record what you saw in the gate note.
+- [x] **Step 5: Build and look.** `npx -y pnpm@9.15.9 --filter demo build`, serve (`cd apps/demo && npx vite preview --port 4817 --strictPort &`), run the script, open every PNG (≤ 60 KB each; reduce the viewport if larger) and check: the TOF tile goes 4/4 → 0/4 within ~2 sim-min of rocuronium; the depth tile reads 40–50 in maintenance; the panel shows Ce values and "unconscious"; sugammadex brings the TOF tile to ≥ 90 %; remifentanil gives a flat CO2 trace with the apnoea mark in the log; the residual-block shot is taken ≥ 30 sim-min after rocuronium (the script waits on `window.__simT`) and shows a faded TOF (count 1–3 on 7g's PK, whose spontaneous TOFR 0.9 comes at ≈ 81 min) with weak, shallow breaths; the panel's MAC line shows the end-tidal and brain values separately. The script runs ≈ 12 minutes. Record what you saw in the gate note.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add apps/demo/stage7f.html apps/demo/src/stage7f.ts apps/demo/scripts/stage7f-shots.mjs apps/demo/vite.config.ts apps/demo/index.html

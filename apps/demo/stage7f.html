@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 7f: neuromuscular block and anaesthetic depth</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      .row { display: flex; gap: 12px; max-width: 1240px; }
+      #monitor { height: 620px; flex: 1; border: 1px solid #333; }
+      .tiles { width: 220px; display: flex; flex-direction: column; gap: 8px; }
+      .tile { border: 1px solid #333; padding: 6px 10px; font-variant-numeric: tabular-nums; }
+      .tile .lab { font-size: 12px; opacity: 0.8; }
+      .tile .big { font-size: 40px; line-height: 1.1; }
+      .tile .sub { font-size: 13px; }
+      .twitch { display: inline-block; width: 18px; margin-right: 4px; background: currentColor; vertical-align: bottom; }
+      .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 10px 0; max-width: 1240px; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; }
+      legend { color: #888; }
+      button, select, input { font: inherit; }
+      #panel { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; max-width: 1240px; }
+      #log { font: 12px ui-monospace, monospace; white-space: pre; color: #fc8; max-height: 120px; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <div id="monitor"></div>
+      <div class="tiles">
+        <div class="tile" id="tofTile"><div class="lab">NMT (TOF)</div><div class="big" id="tofBig">--</div><div class="sub" id="tofSub">stimulator off</div><div id="tw" style="height:44px"></div></div>
+        <div class="tile" id="diTile"><div class="lab">DEPTH (BIS-like)</div><div class="big" id="diBig">--</div><div class="sub" id="diSub">SR --</div></div>
+        <div class="tile" id="aaTile"><div class="lab">AGENT</div><div class="big" id="macBig">--</div><div class="sub" id="aaSub">Et --</div></div>
+      </div>
+    </div>
+    <div class="controls">
+      <fieldset><legend>Scripted</legend>
+        <button id="induction">Induction: fentanyl → propofol → rocuronium → intubate → sevo</button>
+        <button id="reverse">Sugammadex 2 mg/kg</button>
+        <button id="neo">Neostigmine 0.05 mg/kg</button>
+        <button id="remi">Remifentanil apnoea</button>
+        <button id="residual">Residual block at extubation</button>
+      </fieldset>
+      <fieldset><legend>Devices</legend>
+        <button id="tofStart">TOF every 15 s</button> <button id="ptc">PTC</button> <button id="depthOn">Depth monitor</button>
+      </fieldset>
+      <fieldset><legend>Speed</legend>
+        <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4" selected>×4</option></select>
+      </fieldset>
+    </div>
+    <div id="panel"></div>
+    <div id="log"></div>
+    <script type="module" src="./src/stage7f.ts"></script>
+  </body>
+</html>
