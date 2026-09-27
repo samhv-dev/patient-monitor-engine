@@ -24,3 +24,4 @@ export { formatIcp, formatPbto2, formatUop } from './numerics-organs.ts'; // Sta
 export { formatBfa, formatNmt, modulePresent, MODULE_TILES } from './numerics-neuro.ts'; // FU-3 item 11
 export { createDrugPanel, type DrugPanel } from './drug-panel.ts'; // Stage 7g
 export { LAB_ROWS, labFlag, mountLabPanel } from './lab-panel.ts'; // Stage 7c
+export { mountEndoPanel } from './endo-panel.ts'; // Stage 7e

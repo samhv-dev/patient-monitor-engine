@@ -11,9 +11,15 @@ describe('7g acceptance — PK through the engine', () => {
   it('Eleveld 2 mg/kg in the engine equals the standalone model to 1e-9 (the engine adds no PK error)', async () => {
     const pat = { ageY: 35, weightKg: 70, heightCm: 170, sex: 'M' as const };
     const dose: [number, Record<string, unknown>][] = [[60, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]];
-    const pin = (e: MonitorEngine) => {
+    const pinHbf = (e: MonitorEngine) => {
       const b = (e as unknown as { st: { blood?: { pinHbfRel?: number } } }).st.blood;
       if (b) b.pinHbfRel = 1;
+    };
+    // R51 addendum 18: with 7e + 7f the anaesthetised core cools by redistribution and 7g's −5 %/°C clearance acts;
+    // the equality holds at pinned conditions, so the core is pinned at normothermia too (7e's test seam pinCoreTemp)
+    const pin = (e: MonitorEngine) => {
+      pinHbf(e);
+      (e as unknown as { st: { resp: { temp: { pinCoreTemp?: number } } } }).st.resp.temp.pinCoreTemp = 36.8;
     };
     const r = await runPk(pat, dose, 300, 11, { setup: pin });
     const row = r.drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!;
@@ -24,6 +30,14 @@ describe('7g acceptance — PK through the engine', () => {
     for (let k = 0; k < 1800; k++) x = pkStep(s, x, 0);
     expect(row.ce).toBeCloseTo(x[3]!, 6);
     expect(row.cp).toBeCloseTo(cp(p, x), 6);
+    // temperature-scaled (hbfRel pinned, core free): the core is 36.65 °C at 240 s and the hypothermic clearance
+    // (−5 %/°C) leaves Ce 2.996568, 0.02 % above the standalone model (addendum 18: documents the live temperature term)
+    const cool = await runPk(pat, dose, 300, 11, { setup: pinHbf });
+    const coolCe = cool.drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!.ce;
+    const tc = (cool.e.snapshot().state as { st: { resp: { temp: { tc: number } } } }).st.resp.temp.tc;
+    console.log(`Eleveld Ce at 3 min with the core free: ${coolCe.toFixed(6)} (core ${tc.toFixed(2)} °C at 300 s; standalone ${x[3]!.toFixed(6)})`);
+    expect(coolCe).toBeCloseTo(2.996568, 5);
+    expect(coolCe).toBeGreaterThan(x[3]!);
     // flow-scaled (hbfRel live): propofol lowers CO, so hepatic flow and clearance fall and Ce runs above the standalone value
     const live = (await runPk(pat, dose, 300)).drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!;
     console.log(`Eleveld Ce at 3 min: standalone ${x[3]!.toFixed(4)}, engine hbfRel pinned ${row.ce.toFixed(4)}, live ${live.ce.toFixed(4)}`);

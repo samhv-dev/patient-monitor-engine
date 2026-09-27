@@ -28,7 +28,7 @@ const KEEP_OUT = new Set(['blood.out']);
  * Sub-trees skipped by their full path: configuration and reference copies, not live physiology — the alarm profile
  * (≈ 2.3 KB of limits and labels) and 7a's copies of the profile parameters (the live ones are `hemo.circ.p`).
  */
-const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref']);
+const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env']); // Stage 7e: its input copy, profile and heat calibration
 /** Paths are only built as deep as the deepest SKIP_PATH entry, so the walk stays a leaf copy below that. */
 const SKIP_PATH_DEPTH = Math.max(...[...SKIP_PATH].map((p) => p.split('.').length));
 

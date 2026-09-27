@@ -3,8 +3,8 @@
 // PK (R51 §1) and consumes no drug or vaporiser event: it observes 7g's accepted doses on `bus.doses`. Plain JSON-safe
 // data throughout (look-ahead clone, snapshots).
 // `stimulus` is Stage 7e's event (R51 addenda 12, 17: `{ kind: 'stimulus', intensity: 0–2 }`, held until the next one):
-// 7f OBSERVES it (apply returns false) and maps intensity → its 0–1 depth stimulus (STIM_FULL). Until 7e merges, 7f's
-// validator is its TEMPORARY OWNER (one marked block the 7e executor deletes). 7e's two outputs 7f reads are duck-typed
+// 7f OBSERVES it (apply returns false) and maps intensity → its 0–1 depth stimulus (STIM_FULL). 7e validates it (7f's
+// temporary validator was deleted when 7e merged, R-7f-4). 7e's two outputs 7f reads are duck-typed
 // seams with neutral fallbacks (NeuroEnv.neuroglycopenia, NeuroEnv.macF).
 //   step: doses (bus.doses) → bus (bus.ts) → NMB block + TOF (nmb.ts, neostigmine.ts, interactions.ts) → depth
 //         (depth.ts) → drive (drive.ts: ns.resp is the hook Stage 3/7b read) → outputs (outputs.ts; ns.antinoc/nmb/
@@ -105,14 +105,6 @@ export function validateNeuroCommand(cmd: Command): string | undefined | null {
   if (cmd.type !== 'applyEvent') return null;
   const ev = cmd.event as NeuroClinicalEvent | { kind: string };
   switch (ev.kind) {
-    // --- Stage 7f TEMPORARY OWNER of `stimulus` (R51 addendum 17) — the Stage 7e executor DELETES this case: 7e's
-    // validateEndoCommand then validates the one shape (same messages). 7f only observes it (apply returns false). ---
-    case 'stimulus': {
-      const i = (ev as { intensity?: number }).intensity;
-      if (i === undefined) return 'intensity is required';
-      return Number.isFinite(i) && i >= 0 && i <= 2 ? undefined : 'intensity must be a finite number in 0–2';
-    }
-    // --- end TEMPORARY OWNER ---
     case 'airwayDevice': {
       const a = ev as Extract<NeuroClinicalEvent, { kind: 'airwayDevice' }>;
       return ['none', 'ett', 'sga'].includes(a.device) ? undefined : 'device must be none, ett or sga';

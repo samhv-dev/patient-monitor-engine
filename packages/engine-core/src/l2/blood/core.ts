@@ -132,7 +132,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const hbfRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0) ** HBF_EXP);
   const ef = effects(bc, x.t);
   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
-  const drug = INSULIN_K_SHIFT * ef.ins + beta;
+  const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
   const kSet = so.set.k - 4.0 * (bc.phNonOrg - so.set.ph) + drug; // Q45
   stepSolutes(so, ecfMl(fl), dtS, kSet, hbfRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
   // 3. oxygen delivery → lactate
