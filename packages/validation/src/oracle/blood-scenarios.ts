@@ -92,20 +92,27 @@ export async function runBloodOracle(sc: BloodOracleScenario, pulse: Pick<PulseO
   const e = createEngine({ seed: 1, mode: 'modeled', patient: { ageY: 44, sex: 'M', weightKg: 77.1, heightCm: 180, baseline: { hr: 72 } } });
   const ev: Extract<EngineEvent, { type: 'labs' }>[] = [];
   e.on((x) => { if (x.type === 'labs') ev.push(x); }, ['labs']);
-  for (const o of sc.ours) e.dispatch({ id: `o${o.tS}`, issuedBy: 'oracle', type: 'applyEvent', event: o.event as never, atTick: o.tS * 50 });
   const pulseAt = new Map<number, Record<string, number>>();
   const bvAt = new Map<number, number>();
   const bvOurs = () => {
     const s = e.snapshot().state as { st: { blood: { core: { fl: { vp: number; hbG: number } } } } };
     return s.st.blood.core.fl.vp + 3 * s.st.blood.core.fl.hbG; // plasma + RBC (MCHC 0.33 g/mL)
   };
+  // Both engines take their actions when the loop reaches them, AFTER the baseline read at `baselineS` (FU-3 item 10:
+  // 7c's copy dispatched ours up front with atTick = tS × 50, so tick 3000 applied the dose before our 60 s panel —
+  // O13b baseline Na 143 post-dose vs 140 — while Pulse's baseline was pre-dose).
   const acts = [...sc.pulse].sort((a, b) => a.tS - b.tS);
+  const mine = [...sc.ours].sort((a, b) => a.tS - b.tS);
   let t = 0;
   for (const at of [sc.baselineS, sc.compareAtS]) {
     while (t < at) {
       while (acts.length && acts[0]!.tS <= t) {
         const a = acts.shift()!;
         if (!pulse.act(a.json)) throw new Error(`${sc.id}: Pulse rejected ${a.json}`);
+      }
+      while (mine.length && mine[0]!.tS <= t) {
+        const o = mine.shift()!; // atTick is clamped to the next tick when our engine already stands at tS
+        e.dispatch({ id: `o${o.tS}`, issuedBy: 'oracle', type: 'applyEvent', event: o.event as never, atTick: o.tS * 50 });
       }
       pulse.step(50);
       t += 1;
