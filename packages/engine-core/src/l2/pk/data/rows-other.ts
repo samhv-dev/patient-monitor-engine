@@ -40,7 +40,7 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'furosemide', name: 'Furosemide', cls: 'diuretic', amountUnit: 'mg', pk: gammaPk(20, false, 900, 7200), pd: [{ target: 'v0Frac', emax: 0.06, ec50: 1 }],
     doses: '10–40 mg IV', onset: 'venodilation within 5–15 min (modelled); diuresis 5–30 min (7d owns urine)', ir: '?', src: '[TXT]; 7d plan Task 11', tag: 'TXT' },
   { id: 'mannitol', name: 'Mannitol 20 %', cls: 'osmotic', amountUnit: 'mg', pk: blood, pd: [], doses: '0.25–1 g/kg over 15–20 min', onset: 'ICP −25 % over 15–30 min (7d scenario 19)', ir: '?', src: 'tables §7 19; 7c/7d', tag: 'TXT' },
-  { id: 'hypertonicSaline', name: 'Hypertonic saline 3 %/7.5 %', cls: 'osmotic', amountUnit: 'mL', pk: blood, pd: [], doses: '3 %: 2–5 mL/kg; 7.5 %: 250 mL', onset: 'Na ↑ and ICP ↓ over 5–15 min (7c/7d)', ir: '?', src: '[TXT]', tag: 'TXT' },
+  { id: 'hypertonicSaline', name: 'Hypertonic saline 3 %/7.5 %/23.4 %', cls: 'osmotic', amountUnit: 'mL', pk: blood, pd: [], doses: '3 %: 2–5 mL/kg; 7.5 %: 250 mL; 23.4 %: 30 mL (event concentrationPct, default 3 — Stage 7d E-7d-1)', onset: 'Na ↑ and ICP ↓ over 5–15 min (7c/7d)', ir: '?', src: '[TXT]', tag: 'TXT' },
   // --- antagonists ---
   { id: 'naloxone', name: 'Naloxone', cls: 'opioidAntagonist', amountUnit: 'mg', pk: gammaPk(0.1, false, 120, 3600), pd: [],
     antagonises: { cls: 'opioid', ec50: 0.5, emax: 0.98 },

@@ -208,6 +208,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   }
   const d = ev as Extract<PkClinicalEvent, { kind: 'drug' }>;
   if (!(Number.isFinite(d.dose) && d.dose >= 0)) return 'dose must be ≥ 0';
+  if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4'; // Stage 7d E-7d-1
   const isRate = d.unit.includes('/min') || d.unit.includes('/h');
   if (row.pk.kind === 'blood' && (isRate || d.infusion)) return bloodBolusOnly;
   if (!isRate && d.dose === 0) return 'dose must be > 0';
@@ -233,7 +234,8 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   const row = DRUGS[ev.drugId] as DrugRow;
   const d = inst(pk, row.id);
   const w = pk.patient.weightKg;
-  const logDose = (amount: number) => pk.pending.push({ agent: row.id, mgPerKg: mgPerKgOf(row, amount, w), amount, amountUnit: row.amountUnit, t });
+  const pct = ev.kind === 'drug' && row.id === 'hypertonicSaline' ? (ev.concentrationPct ?? 3) : undefined; // Stage 7d E-7d-1
+  const logDose = (amount: number) => pk.pending.push({ agent: row.id, mgPerKg: mgPerKgOf(row, amount, w), amount, amountUnit: row.amountUnit, t, ...(pct !== undefined ? { concentrationPct: pct } : {}) });
   if (row.pk.kind === 'blood') {
     // 7c's chemistry (decision 10): validated as a bolus; 7g records and logs it, 7c's mass balance acts on bus.doses
     const e = ev as Extract<PkClinicalEvent, { kind: 'drug' }>;

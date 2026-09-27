@@ -3372,7 +3372,7 @@ git push origin stage-7d-organs
 - Consumes: `organsRig` (Task 12); 7g's `drug` event and `bus.doses` (the organ pipeline observes them, Task 11); Stage 3's `ventilation` event.
 - Produces: `PkClinicalEvent` `drug` gains `concentrationPct?: number` (hypertonic saline only: 3 | 7.5 | 23.4, default 3); `DoseLogEntry` gains `concentrationPct?: number` — 7c takes the sodium load and 7d the osmotic effect from the same entry.
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-tbi-treatment.test.ts`
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-tbi-treatment.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3466,12 +3466,12 @@ describe('check 19 treatments through the engine (drugs are 7g events; 7d observ
 });
 ```
 
-- [ ] **Step 2: Run it to verify the E-7d-1 tests fail**
+- [x] **Step 2: Run it to verify the E-7d-1 tests fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-tbi-treatment.test.ts`
 Expected: the `E-7d-1` test FAILS (7g accepts `concentrationPct 5` and logs no percentage, so the organs read 30 mL as 3 %: 31 mOsm, not 240); the hyperventilation, mannitol, 3 % HTS (the default) and head-up tests pass.
 
-- [ ] **Step 3: E-7d-1 in 7g's files** (exactly these three edits; nothing else in `l2/pk/**`):
+- [x] **Step 3: E-7d-1 in 7g's files** (exactly these three edits; nothing else in `l2/pk/**`):
   - `packages/engine-core/src/types-pk.ts`: replace
     `  | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number }`
     with
@@ -3491,12 +3491,12 @@ Expected: the `E-7d-1` test FAILS (7g accepts `concentrationPct 5` and logs no p
 ```
   - `packages/engine-core/src/l2/pk/data/rows-other.ts`, the `hypertonicSaline` row: change `name: 'Hypertonic saline 3 %/7.5 %'` to `name: 'Hypertonic saline 3 %/7.5 %/23.4 %'` and `doses: '3 %: 2–5 mL/kg; 7.5 %: 250 mL'` to `doses: '3 %: 2–5 mL/kg; 7.5 %: 250 mL; 23.4 %: 30 mL (event concentrationPct, default 3 — Stage 7d E-7d-1)'`.
 
-- [ ] **Step 4: Run the tests (and 7g's)**
+- [x] **Step 4: Run the tests (and 7g's)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-tbi-treatment.test.ts test/l2/pk test/engine/pk-*.test.ts`
 Expected: PASS (7g's own tests unchanged). **Prototype:** hyperventilation RR 30 — PaCO2 30 reached at ≈ 5 min (RR 24 only reached 31.6 in 15 min: Stage 3's CO2 stores), ICP **−28.2 %** there (tables −25–30 %); mannitol 1 g/kg — **−25.2 / −28.2 / −32.2 %** at 15 / 20 / 30 min, UOP 6.0 vs 1.7 mL/kg/h; HTS 3 % 250 mL — **−25.6 %** at 10 min; head-up — **−6.2** mmHg; 23.4 % 30 mL → 240 mOsm on the brain.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/organs-tbi-treatment.test.ts packages/engine-core/src/types-pk.ts packages/engine-core/src/l2/pk/pipeline.ts packages/engine-core/src/l2/pk/data/rows-other.ts docs/plans/stage-7d-organs.md
