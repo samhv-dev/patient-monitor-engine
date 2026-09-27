@@ -28,10 +28,11 @@ describe('engine pipeline', () => {
 
   it(`acceptance 11: no drift — after advanceTo(${LONGRUN_HOURS} h) latestSampleIndex(ecgII) = 500 × t + 50 (24 h locally, 6 h on CI)`, { timeout: 600_000 }, async () => {
     const e = createEngine({ seed: 11 });
-    // Advance one sim-hour at a time and yield between chunks: 24 h of synchronous ticks takes
-    // > 60 s on a 2-vCPU CI runner, which starves the Vitest worker's RPC ("Timeout calling onTaskUpdate").
-    for (let h = 1; h <= LONGRUN_HOURS; h++) {
-      e.advanceTo(h * 3_600);
+    // Advance one sim-minute at a time and yield between chunks (CI rule): a long synchronous stretch starves the
+    // Vitest worker's RPC on a 2-vCPU CI runner ("Timeout calling onTaskUpdate", 60 s). Per sim-hour was not
+    // enough: the first hour is a 13.8 s synchronous stretch locally (≈ 55 s on CI).
+    for (let m = 1; m <= LONGRUN_HOURS * 60; m++) {
+      e.advanceTo(m * 60);
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
     expect(e.now().tick).toBe(LONGRUN_HOURS * 180_000);

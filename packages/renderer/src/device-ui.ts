@@ -12,6 +12,7 @@ type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
 
 const UNIT: Partial<Record<TileParam, string>> = {
   HR: 'bpm', NIBP: 'mmHg', ART: 'mmHg', CVP: 'mmHg', PAP: 'mmHg', IBP1: 'mmHg', IBP2: 'mmHg', IBP3: 'mmHg', IBP4: 'mmHg', SpO2: '%', TEMP: '°C', RR: 'rpm', CO2: 'mmHg', ST: 'mV',
+  ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d
 };
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';

@@ -11,7 +11,7 @@ export type PkRoute = 'iv' | 'io' | 'im' | 'inh' | 'neb' | 'sc' | 'perineural' |
  * (target 0 stops), `vaporiser` (dial 0 closes it; N2O as a fraction of the fresh gas).
  */
 export type PkClinicalEvent =
-  | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number }
+  | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number } // concentrationPct: hypertonic saline 3 | 7.5 | 23.4 (default 3) — Stage 7d E-7d-1
   | { kind: 'infusion'; drugId: string; rate: number; unit: RateUnit; concentration?: { amount: number; unit: 'mg' | 'mcg' | 'units' | 'g'; perMl: number } }
   | { kind: 'tci'; drugId: string; model?: string; mode: 'plasma' | 'effect'; target: number; maxRateMlH?: number }
   | { kind: 'vaporiser'; agent: 'sevoflurane' | 'isoflurane' | 'desflurane'; dialPct: number; fgfLpm?: number; n2oFrac?: number };
@@ -36,7 +36,7 @@ export interface BusAgent {
 export interface BusVolatile { fet: number; brain: number; macAge: number; macFrac: number }
 
 /** One accepted bolus (decision 10): listed in `bus.doses` for exactly one engine advance pass. */
-export interface DoseLogEntry { agent: string; mgPerKg: number | null; amount: number; amountUnit: string; t: SimSeconds }
+export interface DoseLogEntry { agent: string; mgPerKg: number | null; amount: number; amountUnit: string; t: SimSeconds; concentrationPct?: number } // Stage 7d E-7d-1: hypertonic saline only (7c Na load, 7d osmotic ICP effect)
 
 /** What 7g publishes every 100 ms for the other modules (plan "Interfaces"). Plain data. */
 export interface DrugBus {

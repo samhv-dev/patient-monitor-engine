@@ -21,6 +21,12 @@ const SLOW = [
   'test/engine/circ-rate-rule.test.ts', // FU-2: MODELED rhythm-rate scenarios (2–4 sim-min each)
   'test/engine/af-rate-control.test.ts', // FU-2: AF rate control (13–22 sim-min each)
   'test/engine/neuro-*.test.ts', // Stage 7f: 100 sim-min rocuronium, 24 h maintenance, MODELED drive scenarios
+  'test/engine/organs-soak.test.ts', // Stage 7d: 24 h / 6 h organ drift run
+  'test/engine/organs-tbi.test.ts', // Stage 7d: check 19 (45 sim-min per mode)
+  'test/engine/organs-tbi-treatment.test.ts', // Stage 7d: check 19 treatments (paired 12–42 sim-min runs)
+  'test/engine/organs-htn.test.ts', // Stage 7d: check 18 (≈ 70 sim-min)
+  'test/engine/organs-renal.test.ts', // Stage 7d: haemorrhage and check 20 (2 sim-h each)
+  'test/engine/organs-curves.test.ts', // Stage 7d: curve acceptance (up to 2.5 sim-h)
 ];
 const set = process.env.PME_TEST_SET;
 

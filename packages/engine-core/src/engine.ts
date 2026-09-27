@@ -74,6 +74,7 @@ import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts'; // Stage 7c
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
+import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organChannelActive, rebaselineOrgans, validateOrgansCommand, type OrganChannel, type OrgansCtx, type OrgansState } from './l2/organs/pipeline.ts'; // Stage 7d
 import { pruneTruth } from './truth.ts'; // Stage 7x (R52)
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
@@ -114,6 +115,7 @@ interface PipelineState {
   pk: PkState; // Stage 7g
   pkHooks: RhythmHookState; // Stage 7g
   neuro: NeuroState; // Stage 7f: NMB, depth, drive depression (R32)
+  organs: OrgansState; // Stage 7d: brain, kidney, liver
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -243,8 +245,10 @@ class Engine implements MonitorEngine {
       pk: createPkState({ ...pkPatientOf(opts.patient), pche: pcheOf(opts.patient) }), // Stage 7g (+7f: cholinesterase phenotype for 7g's PK, R51 addendum 10)
       pkHooks: createHookState(), // Stage 7g
       neuro: createNeuroState(opts.patient, this.seed), // Stage 7f
+      organs: createOrgansState(opts.patient, l1), // Stage 7d
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined); // FU-2
+    rebaselineOrgans(this.st.organs, this.organsCtx(this.st)); // Stage 7d: calibrate on the pipelines' t = 0 truths
     this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
@@ -339,6 +343,10 @@ class Engine implements MonitorEngine {
     const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
     data.st.pkHooks ??= createHookState(); // Stage 7g
+    if (!data.st.organs) {
+      data.st.organs = createOrgansState(undefined, data.st.l1); // Stage 7d: pre-7d snapshots
+      rebaselineOrgans(data.st.organs, this.organsCtx(data.st));
+    }
     data.st.blood ??= createBloodState(undefined); // Stage 7c: pre-7c snapshots
     data.st.neuro ??= createNeuroState(undefined, this.seed); // Stage 7f: pre-7f snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
@@ -352,6 +360,7 @@ class Engine implements MonitorEngine {
     this.syncLaneBuffers();
     this.syncHemoBuffers(); // Stage 2
     this.syncRespBuffers(); // Stage 3
+    this.syncOrganBuffers(); // Stage 7d
     for (const b of this.bufs.values()) b.clear(); // the discarded timeline's samples are not history (review M4)
     const simT = this.now().simT;
     this.emit({ type: 'toneCancel', after: simT }); // a different timeline: every tone after now is void
@@ -460,6 +469,19 @@ class Engine implements MonitorEngine {
     };
   }
 
+  /** Stage 7d: what the organ pipeline reads (duck-typed 7c/7e/7f/7g state; absent modules are undefined). */
+  private organsCtx(ps: PipelineState): OrgansCtx {
+    const x = ps as unknown as { blood?: unknown; pk?: unknown; neuro?: unknown; endo?: unknown };
+    return {
+      l1: ps.l1, hemo: ps.hemo, resp: ps.resp, rhythm: ps.rhythm, blood: x.blood, pk: x.pk, neuro: x.neuro, endo: x.endo,
+      hrNow: (t) => rampValue(ps.hr, t),
+      setHr: (bpm, t) => {
+        ps.hr = retarget(ps.hr, t, bpm, { durationS: 1 });
+        holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // Stage 7d (G-FU2 sibling): an engine-initiated rate belongs to the reflex
+      },
+    };
+  }
+
   /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
   private advance(ps: PipelineState, end: number): void {
     if (end < ps.n) return;
@@ -525,6 +547,7 @@ class Engine implements MonitorEngine {
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const resp = ps.resp; // Stage 3
+    advanceOrgans(ps.organs, this.organsCtx(ps), Math.floor(end / 4), (ch, m, v) => this.organWrite(ch, m, v)); // Stage 7d: after pk/resp/blood/endo, before the haemodynamics
     advanceHemo(
       ps.hemo,
       {
@@ -559,6 +582,7 @@ class Engine implements MonitorEngine {
     this.st.blood.events = keep(this.st.blood.events); // Stage 7c
     this.st.pk.out = keep(this.st.pk.out); // Stage 7g
     this.st.neuro.out = keep(this.st.neuro.out); // Stage 7f
+    this.st.organs.out = keep(this.st.organs.out); // Stage 7d
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
   }
@@ -624,6 +648,8 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const neuro = validateNeuroCommand(cmd); // Stage 7f (after 7g: R51 §3 chain; null for every drug/vaporiser event)
     if (neuro !== null) return neuro;
+    const organs = validateOrgansCommand(cmd); // Stage 7d: after pk (and 7f's neuro), before blood/endo/Stage 3 — its own ids only (null otherwise)
+    if (organs !== null) return organs;
     const blood = validateBloodCommand(cmd); // Stage 7c (after 7g — which owns `drug` — and before Stage 3, whose `condition` rejects unknown ids)
     if (blood !== null) return blood;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
@@ -679,6 +705,10 @@ class Engine implements MonitorEngine {
     }
     if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
     if (applyNeuroCommand(ps.neuro, cmd, simT)) return; // Stage 7f (never a drug/vaporiser/stimulus event: 7g consumed those, 7e consumes stimulus)
+    if (applyOrgansCommand(ps.organs, cmd, simT)) {
+      this.syncOrganBuffers(); // Stage 7d
+      return;
+    }
     if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
@@ -795,6 +825,21 @@ class Engine implements MonitorEngine {
       this.bufs.set(ch, b);
     }
     b.write(m, v);
+  }
+
+  /** Stage 7d: write one 125 Hz icp sample; the buffer is created on the first write. */
+  private organWrite(ch: OrganChannel, m: number, v: number): void {
+    let b = this.bufs.get(ch);
+    if (!b) {
+      b = new RingBuffer(ICP_RATE, BUFFER_SECONDS);
+      this.bufs.set(ch, b);
+    }
+    b.write(m, v);
+  }
+
+  /** Stage 7d: the icp sensor 'off' has no trace. */
+  private syncOrganBuffers(): void {
+    if (!organChannelActive(this.st.organs, 'icp')) this.bufs.delete('icp');
   }
 
   /** Stage 3: the co2 sensor 'off' has no trace (brief §6.2). */
