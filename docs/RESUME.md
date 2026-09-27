@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 19:10 (7d MERGED; 7e Task 20 and FU-3 executors running; next gates: 7e PR, FU-3 PR).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 20:42 (7e Task 20 + FU-3 executors; V.1 + 8b plan writers; 4/4 slots).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -17,7 +17,8 @@
 | 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), Tasks 1–19 pushed | fresh executor launched 19:10 for Task 20: verify addendum-18 rigs, merge main (7d in), slow set + full e2e, gate note `docs/gates/stage-7e.md`, PR "Stage 7e: thermal, endocrine and system conditions" (no self-merge) | orchestrator gate + merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | `fu-3-followups` (worktree `../scratch/wt-fu-3`, branched from main after 7d; plan committed first) | executor launched 19:10: Tasks 0–15; E-FU3-10 prototyped first; t16 fallback while 7e absent; re-merges main when 7e lands before Task 15; PR "FU-3: engine follow-ups (items 1–16)" | orchestrator gate + merge |
-| V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
+| 8b release + IIFE embed | plan writer running since 20:42 (`docs/plans/stage-8b-release.md`) | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
+| V.1 ventilator follow-up | plan writer running since 20:42 (`docs/plans/stage-v1-ventilator-followup.md`, prototype in a scratch worktree) | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | R50 review → fixer if needed → executor when a slot frees |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
