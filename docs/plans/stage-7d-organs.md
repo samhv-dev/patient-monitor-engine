@@ -2984,7 +2984,7 @@ git push origin stage-7d-organs
 - Consumes: `applyOrganEffects` (Task 11) writes `driver.ataxia`, L1 `coupled` sbp/dbp and the HR request (MANUAL), or `circ.ext.rSysF` (MODELED, `ctx.l1.mode === 'modeled' && ext`); `organsRig` (Task 12) with `mode`.
 - Produces: `DriverState.ataxia?: number` (0–1): spontaneous breath period and VT jitter × (1 + 7·ataxia) (SD 5 % → 40 %), floor 0.3 instead of 0.7 while ataxic.
 
-- [ ] **Step 1: Write the failing ataxia test** — `packages/engine-core/test/l2/organs/ataxia.test.ts`
+- [x] **Step 1: Write the failing ataxia test** — `packages/engine-core/test/l2/organs/ataxia.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3010,7 +3010,7 @@ describe('ataxic breathing (Cushing, tables §5.1)', () => {
 ```
 (If `seedStream` lives elsewhere on your base, import it from where `src/l2/resp/pipeline.ts` imports it.)
 
-- [ ] **Step 2: Write the engine check-19 test** — `packages/engine-core/test/engine/organs-tbi.test.ts`
+- [x] **Step 2: Write the engine check-19 test** — `packages/engine-core/test/engine/organs-tbi.test.ts`
 
 ```ts
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -3102,12 +3102,12 @@ describe('tables §7 check 19 through the engine — MODELED (7a circulation and
 });
 ```
 
-- [ ] **Step 3: Run both to verify the ataxia test fails**
+- [x] **Step 3: Run both to verify the ataxia test fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/ataxia.test.ts test/engine/organs-tbi.test.ts`
 Expected: the ataxia test FAILS (`cv(1)` ≈ 0.05). The TBI file already passes (the effects are Task 11's; the MANUAL surge assertion is an `it.fails`); record what it prints.
 
-- [ ] **Step 4: Add the field to `src/l2/resp/driver.ts`**
+- [x] **Step 4: Add the field to `src/l2/resp/driver.ts`**
   - in `interface DriverState`, after `rng: Sfc32State;` add `ataxia?: number; // Stage 7d: Cushing ataxic breathing 0–1 (organs/effects.ts)`;
   - replace `vt = ctx.vt * Math.max(0.7, 1 + SPONT_JITTER * normal(d.rng));` with
     `vt = ctx.vt * Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia`
@@ -3115,7 +3115,7 @@ Expected: the ataxia test FAILS (`cv(1)` ≈ 0.05). The TBI file already passes 
     `period *= Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia`
   With `ataxia` absent or 0 both expressions are byte-identical to Stage 3's (same draws, same values).
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/organs/ataxia.test.ts test/engine/organs-tbi.test.ts`
 Expected: PASS (ataxia 1; TBI 5 incl. one `it.fails`). **Prototype (7a + 7b + 7g, ventilator RR 18/VT 500/FiO2 0.4, PaCO2 39.5):** MANUAL — MAP 86, ICP 20 at **11.1 min**, 40 at **24.5**, CPP < 60 at ICP **25.3**, HR → **48.2**, Cushing ΔMAP **+24** at 60 s; MODELED — MAP 96 (7a's adult targets 120/80), ICP 20 at **10.0**, 40 at **22.6**, CPP < 60 at ICP 34.6 (= MAP − 60), ΔMAP **+37**, HR 73 → **56** (−24 %). The two R49 engine findings were diagnosed as mechanisms, not bands:
@@ -3123,7 +3123,7 @@ Expected: PASS (ataxia 1; TBI 5 incl. one `it.fails`). **Prototype (7a + 7b + 7g
   - **Cushing MAP +65 → +111** (first draft): the coupled targets are exact (+1.3/+0.85 × ΔMAP) and Stage 3's `applyPawCoupling` does not rewrite them; two causes: (1) 7a's waveform MAP sits ≈ 0.45 of the pulse pressure above the diastolic at HR 48, so a 50 mmHg target read +54 — ΔMAP at full drive is now 40, the tables' band centre; (2) 7a's MANUAL per-beat tracker rings (a ≈ 10-beat cycle, ±20 mmHg) at HR 48 with the surged SVR because its steady-state R inverse assumes R·C ≪ RR — with `TRACK_ALPHA_R` 0.15 (prototype only; `l2/hemo/**` is not ours) the swing fell to ±4 and ΔMAP reached +29. That is FU-2 (R-7D-5a), so the MANUAL ΔMAP assertion is `it.fails` with its number. In MODELED the direct HR factor was the defect: `ext.hrF` 0.6 on top of `rSysF` gave HR 40 and ΔMAP +11; the baroreflex alone gives the bradycardia (Cushing's triad), so 7d writes `rSysF` only (gain 1.2 inside the 0.5–1.2 allowance: 0.8 gave +27).
   Record the printed numbers in the gate note; if the MANUAL surge passes on your base (FU-2 landed), flip `it.fails` to `it`.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/resp/driver.ts packages/engine-core/test/l2/organs/ataxia.test.ts packages/engine-core/test/engine/organs-tbi.test.ts docs/plans/stage-7d-organs.md
