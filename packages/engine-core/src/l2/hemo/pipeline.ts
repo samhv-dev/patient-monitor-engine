@@ -21,10 +21,9 @@ import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { DRUGS, type DrugId } from '../circ/drugs.ts'; // Stage 7a
 import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
-import { circCardiacOutput, circGiveDrug, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
+import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -41,7 +40,6 @@ const SPO2_SITES: readonly string[] = ['leftFinger', 'rightFinger', 'ear', 'fore
 const ABP_SITES: readonly string[] = ['leftRadial', 'rightRadial', 'femoral'];
 const NIBP_SITES: readonly string[] = ['rightArm', 'leftArm', 'leg'];
 if (H_S !== CIRC_H) throw new Error('hemo and circ steps differ');
-const DRUG_IDS = Object.keys(DRUGS) as DrugId[]; // Stage 7a
 
 /** Stage 7a: aortic root → radial transport delay as a 2 ms delay line (Stage 2 RADIAL_DELAY_S 0.045 → 22 steps). */
 export const RAD_DELAY_STEPS = 22;
@@ -591,13 +589,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
         if (c.quality !== undefined && !(c.quality >= 0 && c.quality <= 1.5)) return 'cpr quality must be 0–1.5';
         return undefined;
       }
-      // Stage 7a: drug, fluid, bleed and circulation conditions act on the circulation
-      if (ev.kind === 'drug') {
-        const d = cmd.event as { drugId: string; dose: number; unit: string };
-        if (!(DRUG_IDS as readonly string[]).includes(d.drugId)) return `drug ${d.drugId} is not implemented until Stage 7g`; // 'not implemented': scenarios keep it scenario-only (6b)
-        if (!(Number.isFinite(d.dose) && d.dose > 0)) return 'dose must be > 0';
-        return ['mcg', 'mg', 'mcg/kg', 'mg/kg'].includes(d.unit) ? undefined : 'unit must be mcg, mg, mcg/kg or mg/kg';
-      }
+      // Stage 7a: fluid, bleed and circulation conditions act on the circulation (drugs: Stage 7g, l2/pk)
       if (ev.kind === 'bleed' || ev.kind === 'fluid') {
         const b = cmd.event as { volumeMl?: number; overS?: number; rateMlPerMin?: number };
         if (b.rateMlPerMin !== undefined) return Number.isFinite(b.rateMlPerMin) && b.rateMlPerMin >= 0 && b.rateMlPerMin <= 2000 ? undefined : 'rateMlPerMin must be 0–2000';
@@ -721,13 +713,6 @@ export function applyHemoCommand(
         } else {
           hs.cpr.active = false;
         }
-        return true;
-      }
-      if (ev.kind === 'drug') {
-        const d = ev as unknown as { drugId: DrugId; dose: number; unit: string };
-        const w = hs.circ.weightKg;
-        const mg = d.unit === 'mcg' ? d.dose / 1000 : d.unit === 'mg' ? d.dose : d.unit === 'mcg/kg' ? (d.dose * w) / 1000 : d.dose * w;
-        circGiveDrug(hs.circ, d.drugId, mg);
         return true;
       }
       if (ev.kind === 'bleed' || ev.kind === 'fluid') {
