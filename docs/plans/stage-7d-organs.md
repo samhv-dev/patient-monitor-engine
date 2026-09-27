@@ -1476,7 +1476,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Produces: renal constants (incl. `RENAL_FLOW_FRAC` = 7a's `ICRP89_FLOW_FRACTIONS_M.kidneys`, `RENAL_REF_*`, `ANG_TAU_S`, `EABV_EXP`, `NH_TAU_*`, `MYOGENIC_MAX`, `FUROSEMIDE_EC50_REF`); `lpReab(p)`, `natriuresis(p, pRef)`, `RenalHaemo` {rbf, pgc, gfr}, `renalHaemo(pa, pv, k, rAff, effF, kfF, albuminGL, pb = P_BOWMAN)`, `tgfTarget(pa, pv, k, effF, kfF, albuminGL, gfrSet, pb = P_BOWMAN)`, `angiotensin(rpp, eabv)`, `effFactor(ang)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/renal/kidney.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/renal/kidney.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1516,12 +1516,12 @@ describe('ported renal haemodynamics (annex B2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/kidney.test.ts`
 Expected: FAIL — Cannot find module `src/l2/renal/kidney.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/renal/params.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/renal/params.ts`** (exactly as prototyped)
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -1605,7 +1605,7 @@ export const MANNITOL_ML_PER_G = 14; // obligate water per g excreted at urine o
 export const BLADDER_CAP_ML = 400; // Pulse PH/Renal 1549 (no catheter: auto-void)
 ```
 
-- [ ] **Step 4: Implement `packages/engine-core/src/l2/renal/kidney.ts`** (exactly as prototyped)
+- [x] **Step 4: Implement `packages/engine-core/src/l2/renal/kidney.ts`** (exactly as prototyped)
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -1678,12 +1678,12 @@ export const effFactor = (ang: number): number => 1 + ANG_GAIN * ang;
 export { R_AFF };
 ```
 
-- [ ] **Step 5: Run the tests and the typecheck**
+- [x] **Step 5: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/kidney.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (5 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/renal/params.ts packages/engine-core/src/l2/renal/kidney.ts packages/engine-core/test/l2/renal/kidney.test.ts docs/plans/stage-7d-organs.md
