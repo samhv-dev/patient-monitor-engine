@@ -45,6 +45,12 @@ describe('organ input adapter', () => {
     expect(bloodCore(blood)?.liver).toBe(1);
     expect(bloodCore(undefined)).toBeNull();
   });
+  it('7c created but not yet stepped (its `out` all zeros, the engine\'s t = 0 rebaseline): the fallbacks, not Hb 0 / albumin 0 (gate §10)', () => {
+    const blood = { core: { liver: 1 }, out: { hb: 0, albuminGL: 0, bvRel: 1, hbfRel: 1, lactate: 0, gluconate: 0 } };
+    const v = readOrganView({ ...base(), blood }, 0);
+    expect([v.blood, v.hb, v.albuminGL, v.bvRel, v.hbfRel, v.lactate]).toEqual([true, 14, 42, 1, null, null]);
+    expect(bloodCore(blood)?.liver).toBe(1); // the seam itself is live from t = 0
+  });
   it('7g/7f/7e present: CMRO2 (7f wins), cbfVaso, volatile MAC without N2O, hypnotic → GA, furosemide, α load, sepsis, doses', () => {
     const pk = {
       bus: {

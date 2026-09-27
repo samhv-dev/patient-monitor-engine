@@ -16,7 +16,7 @@ merged when this gate was run: every 7c field is read duck-typed with its neutra
   flickering off, not 7a's tracker. Check 19 MANUAL ΔMAP **+41.7** (band +30–50; was +24.3) — its `it.fails` is now `it`.
 - Two mechanisms added beyond the plan (§5, D-1 and D-2); one renderer fallback (D-3).
 - `it.fails` held with numbers: 4 (pure-model hypocapnic CBF; check 20 MODELED premise; check 20 MANUAL UOP;
-  mid-curve UOP) — §3.
+  mid-curve UOP) — §3; a fifth on the real 7c (check 18 recovery MAP premise, a 7a MANUAL item) — §10.
 
 ## 2. Acceptance numbers
 
@@ -93,6 +93,7 @@ Open (as planned): annex §D's MAP-60 premise (`CardiovascularMechanicsModificat
 | `test/engine/organs-renal.test.ts` check 20, MODELED `hfref` | rests at MAP 86.6, CO 5.61, UOP 0.670; dobutamine → CO 6.23 (+11 %), UOP 0.81 / 0.90 at 30 / 60 min | 7a: no low-output HFrEF profile in MODELED (R-7D-5c). |
 | `test/engine/organs-renal.test.ts` check 20, MANUAL contractility 0.3 (new, FU-2 item 7 made the premise reachable) | premise MAP 67.9, CO 3.35 ✓; UOP **0.067** (band 0.1–0.15); dobutamine CO +30 % ✓, UOP 0.244 at 30 min ✓, **0.342** at 60 min (band ≤ 0.3) | Calibration item Q-7D-c20: the kidney's effective-volume reference CO is max(0.08 L/min/kg, the start CO); the MANUAL adult starts above the model's 5.6 L/min, so CO 3.35 reads as a deeper low-output state (V at its floor) than the model's 3.5/5.6. Not re-tuned (R45). |
 | `test/engine/organs-curves.test.ts` UOP mid-curve | RPP 75.0 → UOP 0.793 vs the tables' linear 0.583 | Decision 8 (Pulse's reabsorption quadratic): calibration / Stage 8. |
+| `test/engine/organs-htn.test.ts` check 18 "restoring PaCO2 35 and MAP ≈ 80" (on the real 7c, §10) | MAP premise **125.3** (band 77–84); CBF 0.885 (> 0.8 ✓) | 7a: MANUAL ischaemic bistability under set-and-hold (§10 F3). |
 
 The plan's fourth `it.fails` (check 19 MANUAL Cushing ΔMAP) now passes — §4.
 
@@ -157,7 +158,7 @@ everywhere, scheduled or resistance-scaled gains) are therefore not needed.
 ## 7. 7c
 
 7c was not on `main` when this gate ran (open branch `stage-7c-blood`). The adapter's duck-typed names match 7c's
-source (above). **Not done:** re-running the adapter/engine tests against the real `blood.out.*` / `blood.core.renal`
+source (above). **Done since, in §10** (the integration on the real 7c). Original note: **not done:** re-running the adapter/engine tests against the real `blood.out.*` / `blood.core.renal`
 / `core.liver` fields — to do when 7c merges (the organ tests to watch: `organs-renal`, `organs-curves` lactate, the
 pipeline 7c-seam test, and 7g's `hepFnTemp` path which switches on once both `blood.core.liver` and `organs.liver`
 exist).
@@ -189,3 +190,61 @@ exist).
 | `cushing.jpg` (51 KB) | Mass 28 mL: Cushing — ART 162/106 (132), HR 49, ICP 78, CPP 54, drive 1.00, ABP alarm. |
 | `oliguria.jpg` (58 KB) | Adult, MANUAL bleed (volumeStatus 0.2, 85/50, HR 125): MAP 58, GFR 15, UOP 0.01 mL/kg/h, UO tile OLIGURIA. |
 | `uop-recovery.jpg` (53 KB) | 60 min after fluids (122/74, GFR 125): instantaneous UOP 0.64 mL/kg/h (recovering, neurohumoral washout τ 45 min); the rolling 1 h mean 0.32 still shows OLIGURIA. |
+
+## 10. On the real 7c (integration after merging main = 7a + 7b + 7g + 7x + FU-2 + 7c + 8a)
+
+After the merge, CI's slow job (run 36304683834) failed four 7d tests, because 7d's adapter read 7c's real fields for
+the first time. Diagnosis by instrumented runs (engine traces under the executor's scratchpad; a pre-7c worktree of this
+branch as the control). Fixes are inside 7d's partition (`l2/organs/**` and 7d's tests); **no 7c code changed** (no
+E-7d-3 was needed), no band widened.
+
+**F1 — the renal seam drained a resting patient (fails 1 and 4).** 7c's water/electrolyte balance has no intake term:
+its own fallback eliminates only blood volume ABOVE BV0 (`kEl · max(0, BV − BV0)`), i.e. it assumes the basal urine is
+replaced by a basal intake. Addendum 14's seam (`core.renal.uopMlH`, "urine REPLACES the fixed elimination") therefore
+removed the whole 1 mL/kg/h resting urine (and its Na/K/Cl) with nothing replacing it. Evidence, 6 h rest (MANUAL,
+70 kg): blood volume 0.9975 → 0.972, albumin 40.2 → 42.1, K 4.15 → 3.97, lactate creeping linearly 1.004 → 1.077; in the
+MAP sweep the volume deficit at rest (bvRel 0.995) kept angiotensin on (0.015 → efferent ×1.045), which went off at
+RPP > 110, while the diuresis raised albumin (π) at MAP 150 — the two terms (+3.4 %, +3.2 %) explain RBF +6.8 % exactly.
+*Fix* (`organs/pipeline.ts` `renalSeam`): the seam carries the urine ABOVE the basal turnover UOP0 = 1 mL/kg/h (tables
+`UOP0`) at the kidney's urine composition; below it the balance is neutral, as in 7c's fallback (no retention term).
+Gluconate (exogenous) is still excreted in full. A diuresis (pressure natriuresis, mannitol, furosemide) still leaves
+7c's body water. The unit test `test/l2/organs/pipeline.test.ts` is re-specified with this justification written in it
+(the property — 7d's urine is what leaves 7c's water — is unchanged; the seam's meaning changed with 7c present).
+
+**F2 — the organs were baselined on 7c's unstepped `out` (all tests; small).** 7c creates `out` as zeros and fills it
+on its first step, but the engine calls `rebaselineOrgans` at t = 0 before any blood step: the kidney's TGF was settled
+on albumin 0 (t = 0 RBF 380 mL/min, GFR 165) and the brain on Hb 0. *Fix* (`organs/inputs.ts` `bloodOut`): 7c's `out` is
+read only once Hb > 0; until then the fallbacks. New unit test in `test/l2/organs/inputs.test.ts`.
+
+**F3 — check 18 recovery (fail 3): a 7a MANUAL bistability, tipped by 7c's lung water.** The failing value is the MAP
+PREMISE (124.8 vs < 84), not CBF. In this 75 y HTN MANUAL rig 7a's tracker reaches MAP 65 with Ees ×2.06 and an
+ischaemic ventricle: `kIsch` at its 0.2 floor for 30 min, LVEDP 46–48 mmHg (also before 7c). At recovery the tracker
+reaches 100/60 with Ees ×2.5 (gMax) and goes to set-and-hold. With 7c present, the LVEDP of 46 builds lung water through
+7c's lung-water seam (G7b ruling 8: EVLWI +8.5 mL/kg over 45 min, shunt 0.013 → 0.12 — correct cardiogenic oedema);
+the changed lung lowers LVEDP ≈ 1.5 mmHg, the coronary supply/demand ratio crosses 7a's escape point (≈ 0.5), kIsch runs
+0.2 → 0.8 in ≈ 60 s and, with Ees held at ×2.5, MAP 81 → 125 before PaCO2 reaches 35. Controls: pinning 7c's
+`evlwiExtra` at 0 → kIsch stays 0.200, MAP 81.1 and CBF 0.84 at PaCO2 35 (passes); pinning 7c's `kChem` (alkalotic
+hypocalcaemia, 0.95 at PaCO2 18) or its volume pushes alone does not prevent the escape; setting the MAP target only
+when PaCO2 reaches 33 does not either (escape ≈ 100 s after MAP 80). Neither 7c's lung water nor 7d's brain is wrong,
+so the test stays as written and is `it.fails` with its number and this evidence (R45). **Request to 7a (FU-3 /
+calibration):** a MANUAL MAP target should not leave the ventricle at kIsch 0.2 with LVEDP 46 (the tracker raises Ees to
+lower MAP), and set-and-hold should not let an intrinsic recovery run the instructor's MAP 81 → 125.
+
+**F4 — lactate clearance rig (fail 2): the property is the same, the reported pool changed.** With 7c present the
+organs event reports 7c's lactate (addendum 14); the rig loaded only 7d's fallback pool, so the reported value never
+left 1.0 (1.008). The rig now loads 7c's pool (`blood.core.so.lac`) and still loads/asserts the fallback pool; band
+unchanged, justification in the test. 7c's clearance uses kLac × 7c's hbfRel × `core.liver` (= liverFn · tempF, written
+once by 7d — function only, flow once; verified: `core.liver` 0.980 at 36.8 °C, 7c's hbfRel ≈ 0.95–1.0 at rest).
+
+| Failure (CI 36304683834) | Band | Before | After | Status |
+|---|---|---|---|---|
+| organs-curves RBF over RPP 100 → 150 vs rest | ≤ 0.05 | 0.068 | **0.028** (RBF 909.6 / 904.5 / 935.2) | pass (F1) |
+| — UOP rest / U(150)/U(100) | 0.85–1.15 / 2.55–3.45 | — | 1.071 / **2.62** (1.204 → 3.151; RPP 97.1 / 141.8) | pass; the ratio is lower than the pre-7c 2.85 because the diuresis above basal now really lowers volume (vNh) |
+| organs-curves lactate at 30 min from 5 | 2.4–3.8 | 1.008 (wrong pool) | **3.020** (7c) / 2.994 (fallback) | pass (F4 rig) |
+| organs-htn check 18 recovery MAP premise | 77–84 | 124.8 | **125.3** (CBF 0.885) | `it.fails` (F3, 7a) |
+| organs-soak 6 h lactate drift (2 h → 6 h means) | ± 0.02 | 0.0925 | **0.0045** (1.0150 → 1.0195); ICP 9.94 → 9.96, UOP 1.071 → 1.067 | pass (F1) |
+
+Other 7d numbers on the real 7c (all in band): check 18 MAP 65 0.667× (MAP 64.4), PaCO2 25 0.374× / PbtO2 14.0;
+autoregulation A(CPP) 0.606 / 0.945 / 1.010 / 1.009 / 1.009 / 1.016; CO2 reactivity 0.0289; PVI +8.88 %; mid-curve UOP
+0.793 (`it.fails` as before); haemorrhage UOP 1.017 → 0.0017 + OLIGURIA → 0.789 at 90 min, 7c lactate 3.17 in the bleed
+(1.46 after fluids); check 20 MODELED 0.678 → 0.828 / 0.928 and MANUAL 0.067 → 0.217 / 0.312 (both `it.fails` as before).

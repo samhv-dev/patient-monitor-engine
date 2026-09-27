@@ -14,7 +14,7 @@ import { icpSample } from '../brain/wave.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createLiver, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
 import { createRenal, giveMannitolRenal, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
-import { OLIGURIA_ML_KG_H, RENAL_REF_CO_L_KG } from '../renal/params.ts';
+import { OLIGURIA_ML_KG_H, RENAL_REF_CO_L_KG, UOP0_ML_KG_H } from '../renal/params.ts';
 import { respBreathU, type RespState } from '../resp/pipeline.ts';
 import { applyOrganEffects, createEffects, type EffectsState } from './effects.ts';
 import { ALPHA_E_FULL, alphaExcess, bloodCore, readDrugView, readOrganView, type OrganDose, type OrganSources, type OrganView, type RenalSeam } from './inputs.ts';
@@ -158,13 +158,18 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
   return icpSample(os.brain.icp, os.brain.elast, pp, since, rr, respBreathU(rs, ts));
 }
 
-/** 7c's renal seam (R51 addendum 14): urine mL/h and excretion mmol/h (Na, K, Cl from fixed urine concentrations [ENG];
- *  gluconate filtered at GFR × 7c's plasma gluconate, 90 % excreted [ENG]). */
+/** 7c's renal seam (R51 addendum 14): the water (mL/h) and solutes (mmol/h) the urine takes out of 7c's body water. Na,
+ *  K, Cl from fixed urine concentrations [ENG]; gluconate filtered at GFR × 7c's plasma gluconate, 90 % excreted [ENG].
+ *  §10 of the 7d gate (on the real 7c): 7c's water and electrolyte balance has no intake term — its own fallback
+ *  eliminates only blood volume ABOVE BV0, i.e. it assumes the basal urine is replaced by a basal intake. So the seam
+ *  carries the urine ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition);
+ *  below it the balance is neutral, as in 7c's fallback (no retention term). Reporting the whole urine drained a resting
+ *  patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band ±0.02). */
 function renalSeam(s: RenalState, gluconate: number): RenalSeam {
-  const lH = (s.uopMlMin * 60) / 1000;
+  const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
   const na = lH * URINE_NA * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
   const k = lH * URINE_K;
-  return { uopMlH: s.uopMlMin * 60, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
+  return { uopMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
 }
 
 /** 7g's accepted boluses (R51 §3: 7d OBSERVES, never consumes): mannitol → brain water and osmotic diuresis; hypertonic

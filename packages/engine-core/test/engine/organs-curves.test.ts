@@ -93,13 +93,23 @@ describe('Stage 7d curves through the engine (MANUAL, awake adult)', { timeout: 
     console.log({ rpp, uop: r.last().kidney.uopMlKgH, uTables: uTables(rpp) });
     expect(r.last().kidney.uopMlKgH / uTables(rpp)).toBeLessThanOrEqual(1.15);
   });
-  it('lactate clearance (tables kLac t½ 20–60 min): the fallback pool from 5 mmol/L is 2.4–3.8 after 30 min (t½ 30 → 3.0)', async () => {
+  // Rig re-specified on the real 7c (gate §10), band unchanged: with 7c present the AUTHORITATIVE lactate is 7c's pool
+  // (R51 addendum 14: the organs event reports `blood.out.lactate`), cleared by 7c at kLac × 7c's hbfRel × the liver
+  // function 7d writes into `blood.core.liver`. The rig used to load only 7d's fallback pool, which 7c's report then
+  // hid (1.008 at 30 min: nothing had been loaded into the pool being reported). It now loads 7c's pool — the
+  // property (the whole-body clearance half-life through 7d's liver) is the same — and still checks the fallback pool.
+  it('lactate clearance (tables kLac t½ 20–60 min): 7c\'s pool (reported) and 7d\'s fallback pool from 5 mmol/L are 2.4–3.8 after 30 min (t½ 30 → 3.0)', async () => {
     const r = organsRig({ seed: 26, patient: { weightKg: 70 } });
     await r.run(60);
+    const bc = (r.e as unknown as { st: { blood: { core: { so: { lac: number }; out: { lactate: number } } } } }).st.blood.core;
+    bc.so.lac *= 5 / bc.out.lactate;
     organsOf(r).liver.lactate = 5;
     await r.run(1800);
-    console.log({ lactate30: r.last().liver.lactate });
-    expect(r.last().liver.lactate).toBeGreaterThanOrEqual(2.4);
-    expect(r.last().liver.lactate).toBeLessThanOrEqual(3.8);
+    const fallback = organsOf(r).liver.lactate;
+    console.log({ lactate30: r.last().liver.lactate, fallback30: fallback, liver: organsOf(r).liver.liverFn * organsOf(r).liver.tempF });
+    for (const l of [r.last().liver.lactate, fallback]) {
+      expect(l).toBeGreaterThanOrEqual(2.4);
+      expect(l).toBeLessThanOrEqual(3.8);
+    }
   });
 });

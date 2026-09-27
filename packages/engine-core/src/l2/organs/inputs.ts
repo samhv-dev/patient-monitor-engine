@@ -73,6 +73,14 @@ function bloodOf(blood: unknown): BloodLike | null {
   return b && ('core' in b || 'out' in b) ? (b as BloodLike) : null;
 }
 
+/** 7c's `out` once 7c has stepped, else undefined. §10 of the 7d gate: 7c creates `out` all zeros and fills it on its
+ *  first step, but the engine rebaselines the organs at t = 0 before any blood step, so the kidney's TGF was settled on
+ *  albumin 0 (RBF 380 mL/min at t = 0) and the brain on Hb 0. Hb 0 is not a patient: read the fallbacks until then. */
+function bloodOut(b: BloodLike | null): BloodLike['out'] {
+  const o = b?.out;
+  return o && num(o.hb, 0) > 0 ? o : undefined;
+}
+
 /** 7c's `core` (where 7d writes `liver` and `renal`), or null. */
 export function bloodCore(blood: unknown): BloodLike['core'] | null {
   return bloodOf(blood)?.core ?? null;
@@ -131,8 +139,9 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     : 0.6 + 0.4 * Math.min(1, Math.max(0, l1Value(ctx.l1, 'volumeStatus', t)));
   const paw = meanAirwayPressure(rs.driver, t, staticCompliance(rs.lung)); // Stage 7b: the lung module's compliance
   const drugs = readDrugView(ctx);
-  const hbf = b?.out?.hbfRel;
-  const lac = b?.out?.lactate;
+  const out = bloodOut(b);
+  const hbf = out?.hbfRel;
+  const lac = out?.lactate;
   return {
     map: site.map,
     pp: Math.max(0, site.sbp - site.dbp),
@@ -142,12 +151,12 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     pao2: rs.o2.pao2,
     sao2: rs.o2.sa,
     tempC: rs.temp.tc,
-    hb: num(b?.out?.hb, HB_DEFAULT),
-    albuminGL: num(b?.out?.albuminGL, ALBUMIN_DEFAULT),
-    bvRel: num(b?.out?.bvRel, bvFallback),
+    hb: num(out?.hb, HB_DEFAULT),
+    albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
+    bvRel: num(out?.bvRel, bvFallback),
     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,
-    gluconate: num(b?.out?.gluconate, 0),
+    gluconate: num(out?.gluconate, 0),
     anaesthesia: drugs.hypnotic && rs.temp.anaesthesia === 'none' ? 'general' : rs.temp.anaesthesia,
     pawExcessCmH2O: Math.max(0, paw - PAW_REF_CMH2O),
     drugs,

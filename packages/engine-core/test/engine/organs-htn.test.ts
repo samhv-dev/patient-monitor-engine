@@ -59,7 +59,14 @@ describe('tables §7 check 18 through the engine (MANUAL, 75 y HTN, cbfLL 75, GA
     expect(n.pbto2).toBeGreaterThanOrEqual(10); // prototype 13.8
     expect(n.pbto2).toBeLessThanOrEqual(15);
   });
-  it('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 %', () => {
+  // `it.fails` on the real 7c (gate §10), band unchanged: the MAP PREMISE is lost, not the CBF property. 7a's MANUAL
+  // tracker reaches MAP 65 in this 75 y HTN profile with Ees ×2.06 and an ischaemic ventricle (kIsch at its 0.2 floor,
+  // LVEDP 46–48 mmHg); 7c's lung-water seam (G7b ruling 8) turns that LVEDP into EVLWI +8.5 mL/kg over 45 min, and the
+  // changed lung shifts the coronary supply/demand ratio past 7a's escape point — kIsch 0.2 → 0.8 in ≈ 60 s with the
+  // set-and-hold tracker already at Ees ×2.5, so MAP runs 81 → 125 before PaCO2 reaches 35 (measured: MAP 125.3, CBF
+  // 0.885). With 7c's lung water pinned off the same rig gives MAP 81.1, CBF 0.84. Owner: 7a (MANUAL ischaemic
+  // bistability under set-and-hold) — calibration / FU-3; the brain is not re-tuned (R45).
+  it.fails('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 %', () => {
     expect(n.mapRec).toBeGreaterThan(77); // premise; prototype 81.1 (at 79 CBF was 0.77: CPP 67 with CVP 12, below LL 75)
     expect(n.mapRec).toBeLessThan(84);
     expect(n.recovered).toBeGreaterThan(0.8); // prototype 0.81

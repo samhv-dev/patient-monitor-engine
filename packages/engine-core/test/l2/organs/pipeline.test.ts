@@ -78,15 +78,26 @@ describe('organ pipeline', () => {
     expect(os.renal.furoE).toBeCloseTo(0.6, 6);
     expect(os.renal.uopMlMin / u0).toBeGreaterThan(5);
   });
-  it('7c present: writes liver function × temperature and the renal seam {uopMlH, excretion mmol/h}; reports 7c\'s lactate', () => {
+  // Re-specified on the real 7c (gate §10): 7c's balance has no intake term (its fallback eliminates only volume above
+  // BV0), so the seam carries the urine ABOVE the basal turnover UOP0 = 1 mL/kg/h; the whole urine drained a resting
+  // patient by 70 mL/h with nothing replacing it. The property is still "7d's urine is what leaves 7c's body water".
+  it('7c present: writes liver function × temperature and the renal seam (urine above the basal 1 mL/kg/h, excretion mmol/h); reports 7c\'s lactate', () => {
     const { os, ctx } = setup();
     const blood = { core: { liver: 1 } as Record<string, unknown>, out: { hb: 14, albuminGL: 42, bvRel: 1, hbfRel: 1, lactate: 2.5, gluconate: 1 } };
     advanceOrgans(os, { ...ctx, blood }, 125 * 2, () => {});
     expect(blood.core.liver).toBeCloseTo(os.liver.liverFn * os.liver.tempF, 9);
     const seam = blood.core.renal as { uopMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
-    expect(seam.uopMlH).toBeCloseTo(70, -1); // 1 mL/kg/h × 70 kg
+    expect(os.renal.uopMlMin * 60).toBeCloseTo(70, -1); // the kidney makes 1 mL/kg/h × 70 kg at rest …
+    expect(seam.uopMlH).toBeCloseTo(Math.max(0, os.renal.uopMlMin * 60 - 70), 9); // … and only the excess leaves 7c's water
+    expect(seam.uopMlH).toBeLessThan(10);
     expect(seam.excretion.na).toBeCloseTo((seam.uopMlH / 1000) * 100, 6);
-    expect(seam.excretion.gluconate).toBeGreaterThan(5); // GFR 7.5 L/h × 1 mmol/L × 0.9
+    expect(seam.excretion.gluconate).toBeGreaterThan(5); // GFR 7.5 L/h × 1 mmol/L × 0.9 (exogenous: no basal intake)
+    const pk = { bus: { agents: { furosemide: { brain: 1.5 } } } }; // a diuresis: the urine above basal is lost
+    advanceOrgans(os, { ...ctx, blood, pk }, 125 * 4, () => {});
+    const d = blood.core.renal as { uopMlH: number; excretion: { na: number } };
+    expect(d.uopMlH).toBeCloseTo(os.renal.uopMlMin * 60 - 70, 9);
+    expect(d.uopMlH).toBeGreaterThan(200);
+    expect(d.excretion.na).toBeCloseTo((d.uopMlH / 1000) * 100 * (1 + 0.5 * os.renal.furoE), 6);
     const ev = os.out.filter((e) => e.type === 'organs').pop() as Extract<EngineEvent, { type: 'organs' }>;
     expect(ev.liver.lactate).toBe(2.5);
   });
