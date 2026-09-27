@@ -4,6 +4,7 @@ import { resolveProfile } from '../../../src/l2/circ/profile.ts';
 import { initialState } from '../../../src/l2/circ/stabilise.ts';
 import { activationPeriodS } from '../../../src/l2/circ/activation.ts';
 import { H_S, P_PL0 } from '../../../src/l2/circ/params.ts';
+import { compliance } from '../../../src/l2/hemo/circulation.ts'; // FU-2 item 3
 
 const zero = () => 0;
 function drive(): CircDrive {
@@ -51,5 +52,11 @@ describe('circuit ODE', () => {
     for (const k of ['pRa', 'pRv', 'pPa', 'pPv', 'pLa', 'pLv'] as const) expect(b[k] - a[k]).toBeCloseTo(5, 9);
     expect(b.pSv).toBe(a.pSv); // extrathoracic
     expect(s[S.VSV]).toBeGreaterThan(0);
+  });
+
+  it('FU-2 item 3 (G7a NR-1): arterial compliance already rises as pressure falls — C(P) = C0·e^(−0.01(P − 95)), ×1.42 at 60 mmHg', () => {
+    expect(compliance(60) / compliance(95)).toBeCloseTo(Math.exp(0.35), 9);
+    expect(compliance(60)).toBeGreaterThan(compliance(80));
+    expect(compliance(80)).toBeGreaterThan(compliance(120));
   });
 });

@@ -1478,7 +1478,7 @@ unphysiological p0 70, p1 20 −8.0. Slower run-off does raise the pre-beat DBP 
 then fills a more compliant bed, so SBP barely moves; the missing physics is the elastance heart's filling through
 the pause (EDV +5 %), a calibration item.
 
-- [ ] **Step 1: Write the test** — in `packages/engine-core/test/l2/circ/circuit.test.ts`, find:
+- [x] **Step 1: Write the test** — in `packages/engine-core/test/l2/circ/circuit.test.ts`, find:
 
 ```ts
 import { H_S, P_PL0 } from '../../../src/l2/circ/params.ts';
@@ -1502,13 +1502,13 @@ and append, inside the `describe('circuit ODE', …)` block, after its last `it`
   });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/circuit.test.ts`
 Expected: PASS (this pins the existing mechanism; it documents rather than drives a change, so it passes at once —
 the one task in this plan without a red step, by D5).
 
-- [ ] **Step 3: Annotate the `it.fails`** — in `packages/engine-core/test/engine/hemo-acceptance.test.ts`, find:
+- [x] **Step 3: Annotate the `it.fails`** — in `packages/engine-core/test/engine/hemo-acceptance.test.ts`, find:
 
 ```ts
   // it.fails keeps CI green while flagging the gap; it starts failing (i.e. the band is met) once the ruling lands.
@@ -1530,12 +1530,12 @@ and replace with (the body and band stay exactly as they are):
   it.fails('5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9; FU-2 item 3)', () => {
 ```
 
-- [ ] **Step 4: Run it**
+- [x] **Step 4: Run it**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/hemo-acceptance.test.ts`
 Expected: PASS (all tests; 5c still fails its band and is reported as passed).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/circ/circuit.test.ts packages/engine-core/test/engine/hemo-acceptance.test.ts docs/plans/fu-2-engine-followups.md
