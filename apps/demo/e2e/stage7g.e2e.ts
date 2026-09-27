@@ -41,7 +41,8 @@ async function shots(page: Page, name: string) {
   await page.screenshot({ path: `${out}/${name}-panel.png`, clip: { x: 760, y: 0, width: 380, height: 560 } });
 }
 
-test('stage7g page: TCI induction, phenylephrine, sevo FGF 2 vs 0.5, adenosine on AVNRT, LAST → VF', async ({ page }) => {
+test('stage7g page: TCI induction, phenylephrine, sevo FGF 2 vs 0.5, adenosine on AVNRT, LAST → VF', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence run (5 scenarios, ~7 min): Chromium only — headless WebKit on the CI runner closed the page after 6.6 min (G7g)');
   test.setTimeout(900_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
