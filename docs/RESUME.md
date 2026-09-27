@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 05:15 (7c executor launched pending #15; 7g/7x CI running; 7d fixer + FU-2 writer running; 8a stalled on a permission prompt).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 06:10 (7d plan fixed; 7e review running; 7g #15 and 7x #16 CI rerunning with WebKit skips; 7c executor waits for #15; FU-2 plan in progress; 8a stalled on a permission prompt).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -14,8 +14,8 @@
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b | merged to main | DONE (Waves A + B; 7a PR #13; 7b PR #14) | — |
 | 7c blood/acid–base | `stage-7c-blood` (plan fixed, 26 tasks, verified on 7a+7b+7g; worktree `../scratch/wt-stage-7c`) | executor launched 2026-09-27 05:15, waits for #15 to merge, then executes; addendum 15 rules the six sibling tests | resume from first unticked task |
-| 7d brain/kidney/liver | plan ready (`docs/plans/stage-7d-organs.md`, R49; R50 review running) | needs FU-2 (NR-7g-5 rhythm-rate rule) before it executes | execute after 7c merges |
-| 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review pending) | patches 7a and 7c | execute after 7a AND 7c merge |
+| 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
+| 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review running) | patches 7a and 7c; must observe 7g's bus | fix per review; execute after 7c AND 7d merge |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
 | 7g drug PK/PD | `stage-7g-pkpd`, PR #15 (worktree `../scratch/wt-stage-7g`) | gate passed (G7g); main (7b) merged in by the orchestrator, CI rerunning | merge when both CI jobs are green |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
