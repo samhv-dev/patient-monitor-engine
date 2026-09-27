@@ -3106,7 +3106,7 @@ git push origin stage-7c-blood
 - Consumes: `BloodView` (Task 11), `pulseOxApparent` (Task 3).
 - Produces: with `ctx.blood` present the gas step uses the blood's ODC context — in Stage 3's MANUAL calibration (`O2Inputs.odc`) AND in 7b's two-store mixing point (`GasInputs.odc` → `O2LungInputs.odc`, exception E-7c-1) —, multiplies CO by `coFactor` (unit-rig fallback), adds `co2LoadMlMin` to VCO2, and feeds the SpO2 chain the oximeter's APPARENT saturation (not when the instructor pins `spo2`). With `ctx.blood` absent every number is byte-identical to the base.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/resp/blood-view.test.ts`:
 
@@ -3146,11 +3146,11 @@ describe('Stage 3 gas step reads the blood view (Stage 7c)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp/blood-view.test.ts` → FAIL (the view is ignored: the CO2 load and the CO factor change nothing). The test switches the view on 5 s after t = 0 on purpose: Stage 3's MANUAL EtCO2 calibration at t = 0 (which 7b runs after its lung step) would otherwise absorb a CO2 load present from the start by adding ventilation.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Eight edits in `resp/pipeline.ts` (7b replaced Stage 3's single-store O2 step with `lungGasStep`, so the old O2-step anchor of this plan no longer exists: the blood's ODC now reaches SaO2/PaO2 truth through 7b's mixing point, exception E-7c-1) and six in `lung/mix-o2.ts` + `lung/lung.ts`.
 
@@ -3334,11 +3334,11 @@ Replace with:
   }, dt);
 ```
 
-- [ ] **Step 4: Run the Stage 3 and 7b suites and the new test**
+- [x] **Step 4: Run the Stage 3 and 7b suites and the new test**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp test/l2/lung test/engine/resp-oxygen.test.ts test/engine/resp-engine.test.ts test/engine/resp-coupling.test.ts` → PASS (no view is passed by the engine yet, so every lung and gas number is the Task 13 one).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/l2/lung/mix-o2.ts packages/engine-core/src/l2/lung/lung.ts packages/engine-core/test/l2/resp/blood-view.test.ts
