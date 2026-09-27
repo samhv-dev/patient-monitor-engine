@@ -3919,7 +3919,7 @@ git push origin stage-7d-organs
 - Consumes: 7a's oracle (`packages/validation/src/oracle/{compare,pulse-runner,scenarios}.ts`: `compareRow`, `loadPulse`, `OracleRow`); Pulse's data requests (`research/pulse-spike/bench/drm_names.json` lists `UrineProductionRate(mL/min)`, not GFR/RBF).
 - Produces: `RENAL_ORACLE` (scenario O11), `RenalOracleRow`, `RenalOracleScenario`.
 
-- [ ] **Step 1: Write the scenario** — `packages/validation/src/oracle/renal-scenarios.ts`
+- [x] **Step 1: Write the scenario** — `packages/validation/src/oracle/renal-scenarios.ts`
 
 ```ts
 // Pulse oracle O11 (annex §D; tables §5.2): the kidney's response to haemorrhage. Pulse and our engine bleed the same
@@ -3959,7 +3959,7 @@ export const RENAL_ORACLE: RenalOracleScenario = {
 };
 ```
 
-- [ ] **Step 2: Write the test** — `packages/validation/test/oracle-renal.test.ts` (the data test always runs; the Pulse run is local-only, like O1–O5)
+- [x] **Step 2: Write the test** — `packages/validation/test/oracle-renal.test.ts` (the data test always runs; the Pulse run is local-only, like O1–O5)
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -4025,12 +4025,12 @@ describe.skipIf(!DIR)('Pulse oracle O11 — renal hypotension (set PULSE_ORACLE_
 });
 ```
 
-- [ ] **Step 3: Run it** (never together with the full suite: 7c gate rule)
+- [x] **Step 3: Run it** (never together with the full suite: 7c gate rule)
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-renal.test.ts && PULSE_ORACLE_DIR=$PWD/../../research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-renal.test.ts`
 Expected: the data test passes in CI (Pulse skipped); locally with Pulse all four rows pass (≈ 6 min). **Prototype (Pulse 4.3.2):** `uop abs @60 s` ours 1.163 vs Pulse 0.381 mL/min → expect-differ-ok (D12); `map Δ @1 h` −3.73 vs −1.04 → agree (±3); `uop Δ @1 h` −0.627 vs +0.329 → expect-differ-ok; `uop Δ @2 h` −0.630 vs +0.118 → expect-differ-ok (D-R1: Pulse's urine rises after a bleed). Annex §D's MAP-60 premise (`CardiovascularMechanicsModification`, SVR × 0.55) and Pulse's `rppZero` stay open in the gate note: 7a has no equivalent event and the action is unverified in the Node shim.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/validation/src/oracle/renal-scenarios.ts packages/validation/test/oracle-renal.test.ts docs/plans/stage-7d-organs.md
