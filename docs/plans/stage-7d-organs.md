@@ -2785,7 +2785,7 @@ git push origin stage-7d-organs
 - Consumes: Task 11 (`createOrgansState`, `rebaselineOrgans`, `advanceOrgans`, `validateOrgansCommand`, `applyOrgansCommand`, `organChannelActive`, `ICP_RATE`, `OrganChannel`, `OrgansState`).
 - Produces: `PipelineState.organs`; engine events `organs` and organ `measurement`s; channel `icp` (125 Hz, only while `attachSensor icp on`); the test helper `organsRig(opts: EngineOptions)` (incl. `mode: 'modeled'`) → `{ e, organs, hr, last(), send(body), run(seconds, each?) }` and `type OrgansRig`, used by Tasks 13 and 14–21.
 
-- [ ] **Step 1: Write the test helper** — `packages/engine-core/test/helpers/organs.ts`
+- [x] **Step 1: Write the test helper** — `packages/engine-core/test/helpers/organs.ts`
 
 ```ts
 // Stage 7d engine-test helpers: an engine with the organ event log, a command sender, and a minute-yielding runner
@@ -2833,7 +2833,7 @@ export function organsRig(opts: EngineOptions): OrgansRig {
 }
 ```
 
-- [ ] **Step 2: Write the failing wiring test** — `packages/engine-core/test/engine/organs-wiring.test.ts`
+- [x] **Step 2: Write the failing wiring test** — `packages/engine-core/test/engine/organs-wiring.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2883,12 +2883,12 @@ describe('Stage 7d engine wiring', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-wiring.test.ts`
 Expected: FAIL — no `organs` events (`r.organs.length` is 0).
 
-- [ ] **Step 4: Wire the engine** — edits to `packages/engine-core/src/engine.ts`, every line marked `// Stage 7d`. Inserts are placed by CHAIN ORDER (R51 §7, addendum 14), not by a literal line: 7c/7e/7f may have added their own lines around them since this plan was written — keep theirs, put 7d's where the order says. (Anchors below are `main` after 7a/7b/7g.)
+- [x] **Step 4: Wire the engine** — edits to `packages/engine-core/src/engine.ts`, every line marked `// Stage 7d`. Inserts are placed by CHAIN ORDER (R51 §7, addendum 14), not by a literal line: 7c/7e/7f may have added their own lines around them since this plan was written — keep theirs, put 7d's where the order says. (Anchors below are `main` after 7a/7b/7g.)
 
 1. After the import line `import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)` add:
 ```ts
@@ -2959,12 +2959,12 @@ import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organCh
 ```
 (The prototype applied edits 1–10 to 7g's branch with 7b merged: `tsc` clean; 7g's `pkCtx` now reads the published `organs.kidney.gfrRel` with no change on its side.)
 
-- [ ] **Step 5: Run the wiring test, then the whole engine-core suite**
+- [x] **Step 5: Run the wiring test, then the whole engine-core suite**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-wiring.test.ts && CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core test` (the 6 h horizon; the 24 h runs belong to Task 24's local gate)
 Expected: PASS; every pre-existing test still passes (the organ pipeline only READS other stages and writes L1 `coupled` sbp/dbp and the HR only while a Cushing surge is on). If a Stage 2/3 test that counts buffers or events now fails because of the extra `organs`/`measurement` events, filter that test's listener by type rather than changing the engine; list it in the gate note.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/test/helpers/organs.ts packages/engine-core/test/engine/organs-wiring.test.ts docs/plans/stage-7d-organs.md
