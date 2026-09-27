@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:05 (7g merged; 7c executing; 7x CI rerun after merging main; 7e fixer + FU-2 writer running; 8a stalled on a permission prompt).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:35 (7c executing; 7x CI rerun; FU-2 review + 7e fixer running; 8a stalled on a permission prompt).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -19,7 +19,7 @@
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | 7x physiology console | `stage-7x-physiology-console`, PR #16 (worktree `../scratch/wt-stage-7x`) | gate passed (G7x), CI green; main (7g) being merged in | merge when CI is green again |
-| FU-2 engine follow-ups | plan being written (`docs/plans/fu-2-engine-followups.md`) | (1) NR-7g-5 HIGH: rhythm-intrinsic rates must not be overridden by the circulation in MODELED (only sinus-family follows the HR set point); (2) β-agonist unstressed-volume mobilisation (dobutamine CO, NR-7g-2); (3) pressure-dependent arterial compliance (post-PVC, G7a NR-1); (4) rhythm field on the 1 Hz `state` event; (5) saadat 8 s HR averaging mapping | write plan; execute before 7d/7e |
+| FU-2 engine follow-ups | plan written (`docs/plans/fu-2-engine-followups.md`, 11 tasks; R50 review running) | items 1–5, 7–9; item 6 goes to the 7d executor; exceptions E-FU2-1..4 approved | execute after review (on main, parallel to 7c); then 7d |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 29 boxes unticked | STALLED since 2026-09-26 22:20 on an app permission prompt (`git -C` misread as destructive) — Ali allows the prompt or a fresh executor resumes | resume from first unticked task; merge main before gate |
 | 8 validation/release | not started | waits for all | write plan |
