@@ -37,7 +37,6 @@ export const GROUP_BY_PREFIX: Readonly<Record<string, GroupId>> = {
   // `brain { anaesthesia }` input belong to the brain
   'organs.brain': 'brain', 'organs.renal': 'kidney', 'organs.kidney': 'kidney', 'organs.liver': 'liver',
   'organs.sensors.icp': 'brain', 'organs.sensors.pbto2': 'brain', 'organs.sensors.urometer': 'kidney', 'organs.anaesEvent': 'brain',
-  'organs.iap': 'kidney', 'organs.conds': 'brain', // Stage 7d: intra-abdominal pressure (renal), the organ conditions (tbi/aki/hepaticFailure)
   'ev.organs.brain': 'brain', 'ev.organs.renal': 'kidney', 'ev.organs.kidney': 'kidney', 'ev.organs.liver': 'liver',
   // endocrine (7e): its own tree and event, its seams into 7c's blood and 7a's circulation multipliers
   endo: 'endocrine', 'ev.endo': 'endocrine', 'blood.endo': 'endocrine',
