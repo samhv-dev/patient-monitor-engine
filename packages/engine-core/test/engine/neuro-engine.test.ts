@@ -141,4 +141,22 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     };
     expect(await go()).toEqual(await go());
   });
+  it('snapshot/restore mid-block continues the TOF stream identically', async () => {
+    const mk = () => createEngine({ seed: 12, patient: { weightKg: 70 } });
+    const a = mk();
+    a.dispatch(cmd({ type: 'device', action: { device: 'tof', action: 'start' } } as Body));
+    a.dispatch(drug('rocuronium', 0.6, 'mg/kg'));
+    await run(a, 600);
+    const snap = a.snapshot();
+    const b = mk();
+    b.restore(snap);
+    const ta: string[] = [];
+    const tb: string[] = [];
+    a.on((x) => { if (x.type === 'tof') ta.push(JSON.stringify(x)); }, ['tof']);
+    b.on((x) => { if (x.type === 'tof') tb.push(JSON.stringify(x)); }, ['tof']);
+    await run(a, 900);
+    await run(b, 900);
+    expect(tb).toEqual(ta);
+    expect(ta.length).toBeGreaterThan(15);
+  });
 });

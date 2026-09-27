@@ -4161,7 +4161,7 @@ git push
 - Modify: `packages/engine-core/test/engine/neuro-engine.test.ts` (one snapshot test)
 - Modify (declared exception **E-7f-2**, a sibling test re-specified for a stated reason): `packages/engine-core/test/engine/circ-sanity-2.test.ts` (7a's; one constant + the first event of its two R23 runs)
 
-- [ ] **Step 1: Add the snapshot test** to `neuro-engine.test.ts` (inside its `describe`, after the determinism test):
+- [x] **Step 1: Add the snapshot test** to `neuro-engine.test.ts` (inside its `describe`, after the determinism test):
 
 ```ts
   it('snapshot/restore mid-block continues the TOF stream identically', async () => {
@@ -4186,7 +4186,7 @@ git push
 
 Run `… exec vitest run test/engine/neuro-engine.test.ts -t snapshot` → 1 passed (prototype).
 
-- [ ] **Step 2: E-7f-2 — keep 7a's R23 scenario's airway open.** Run `PME_TEST_SET=slow npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-2.test.ts`. Prototype: the pre-declared `it.fails('R23: the same run rescued with ephedrine 10 mg …')` now PASSES its assertion (so `it.fails` reports a failure): the AS + CAD patient breathes spontaneously through a natural airway, and since Tasks 11–13 propofol 1.5 mg/kg obstructs it (decision 12) — HR falls to 38–45, PAWP to 18–22, kIsch 0.86 at +3 min — a hypoxic bradycardia the circulation scenario never intended (the base without 7f: HR 74, kIsch 1.00). The scenario presumes induction with the airway managed, so both R23 runs get a supraglottic airway at t = 0 (7f's `airwayDevice` event; no ventilation change): after `const propofol = { kind: 'drug', drugId: 'propofol', dose: 1.5, unit: 'mg/kg', route: 'iv' };` add
+- [x] **Step 2: E-7f-2 — keep 7a's R23 scenario's airway open.** Run `PME_TEST_SET=slow npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-2.test.ts`. Prototype: the pre-declared `it.fails('R23: the same run rescued with ephedrine 10 mg …')` now PASSES its assertion (so `it.fails` reports a failure): the AS + CAD patient breathes spontaneously through a natural airway, and since Tasks 11–13 propofol 1.5 mg/kg obstructs it (decision 12) — HR falls to 38–45, PAWP to 18–22, kIsch 0.86 at +3 min — a hypoxic bradycardia the circulation scenario never intended (the base without 7f: HR 74, kIsch 1.00). The scenario presumes induction with the airway managed, so both R23 runs get a supraglottic airway at t = 0 (7f's `airwayDevice` event; no ventilation change): after `const propofol = { kind: 'drug', drugId: 'propofol', dose: 1.5, unit: 'mg/kg', route: 'iv' };` add
 
 ```ts
 // Stage 7f (E-7f-2): the R23 runs keep the airway open with a supraglottic device — since 7f, propofol obstructs an
@@ -4196,9 +4196,9 @@ const SGA: [number, Record<string, unknown>] = [0, { kind: 'airwayDevice', devic
 
 and in the two `it.fails('R23: …')` runs replace `[[60, propofol], [210,` with `[SGA, [60, propofol], [210,`. Re-run: 6 passed, the two R23 tests back to their base behaviour (prototype: ephedrine run HR 73–74, kIsch 0.99–1.00; both remain `it.fails` as 7a declared them, NR-2). Record E-7f-2 with these numbers in the gate note. If ANY other sibling test changes on your base, STOP and report it with the neuro state at that moment (R45) — do not re-specify it.
 
-- [ ] **Step 3: Run the whole engine-core suite** `npx -y pnpm@9.15.9 --filter @pme/engine-core test` (both sets; the slow set runs the three long-run files). Every Stage 3 respiratory test (driver, pipeline, apnoea, capnogram, RR), every Stage 7b/7c test and every Stage 7g test (`test/l2/pk/**`, `test/engine/pk-*.test.ts`) must pass unchanged: without drugs `ns.resp` is idle (`rrMult = vtMult = 1`, no obstruction, no cleft), so `driverCtx` returns exactly the Stage 3 values in MANUAL, and in MODELED the drive holds the resting pattern (Task 13: RR 15.2 vs 15.2). Prototype: fast set 211 files, 926 passed + 1 skipped; slow set (`PME_TEST_SET=slow`, 24 h locally) 27 files, 115 passed + the one E-7f-2 flip before Step 2 (after it: `circ-sanity-2` 6/6); `neuro-longrun` 24 h in 175 s If any Stage 3/7a/7b/7c/7g number moves (other than E-7f-2), STOP and report it (R45).
+- [x] **Step 3: Run the whole engine-core suite** `npx -y pnpm@9.15.9 --filter @pme/engine-core test` (both sets; the slow set runs the three long-run files). Every Stage 3 respiratory test (driver, pipeline, apnoea, capnogram, RR), every Stage 7b/7c test and every Stage 7g test (`test/l2/pk/**`, `test/engine/pk-*.test.ts`) must pass unchanged: without drugs `ns.resp` is idle (`rrMult = vtMult = 1`, no obstruction, no cleft), so `driverCtx` returns exactly the Stage 3 values in MANUAL, and in MODELED the drive holds the resting pattern (Task 13: RR 15.2 vs 15.2). Prototype: fast set 211 files, 926 passed + 1 skipped; slow set (`PME_TEST_SET=slow`, 24 h locally) 27 files, 115 passed + the one E-7f-2 flip before Step 2 (after it: `circ-sanity-2` 6/6); `neuro-longrun` 24 h in 175 s If any Stage 3/7a/7b/7c/7g number moves (other than E-7f-2), STOP and report it (R45).
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/neuro-engine.test.ts packages/engine-core/test/engine/circ-sanity-2.test.ts
