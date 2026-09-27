@@ -25,6 +25,15 @@ const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode'];
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */
 const OPIOID_U1 = 1.2;
 
+/** Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity
+ * under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + at05), (1.5, 1 + at15), extended
+ * with the upper slope (FU-2 item 8). */
+export function volatileCbfDirect(mac: number, direct: readonly [number, number]): number {
+  const [at05, at15] = direct;
+  if (!(mac > 0)) return 1;
+  return mac <= 0.5 ? 1 + (at05 * mac) / 0.5 : 1 + at05 + (at15 - at05) * (mac - 0.5);
+}
+
 export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugEffect; betaBlockAdd: number; bus: DrugBus } {
   const bus: DrugBus = structuredClone(DRUG_BUS_NEUTRAL);
   // 1. occupancy targets first (β-blockade feeds the β-agonist EC50 shift)
@@ -82,7 +91,11 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
     if (r.id === 'dantrolene') bus.metabolic.dantroleneE = hill(a.c, 1, 1);
     if (r.cls === 'ketamine') bus.cns.ketamineCe = a.c;
     if (r.cls === 'alpha2') bus.cns.dexmedCe = a.c;
-    if (r.cns?.cmro2) bus.cns.cmro2Mult *= 1 - hill(a.c / (hypC50 ?? 1), 1, r.cns.cmro2);
+    if (r.cns?.cmro2PerMac !== undefined) {
+      // FU-2 item 8 (tables §5.1): CMRO2 per MAC, and the DIRECT vasodilation beyond coupling (7d's NET CBF = direct × coupling)
+      bus.cns.cmro2Mult *= Math.max(0.5, 1 - r.cns.cmro2PerMac * a.c);
+      if (r.cns.cbfDirect) bus.cns.cbfVaso *= volatileCbfDirect(a.c, r.cns.cbfDirect);
+    } else if (r.cns?.cmro2) bus.cns.cmro2Mult *= 1 - hill(a.c / (hypC50 ?? 1), 1, r.cns.cmro2);
   }
   bus.cns.opioidCeRemiEq = remiEq;
   bus.cns.benzoCeMidazEq = midazEq;

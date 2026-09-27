@@ -1,6 +1,6 @@
 // Stage 2 public types (brief §7.2–§7.3), kept in their own file so parallel stages do not collide in
 // types.ts. types.ts adds `HemoCommandBody`, `NibpDeviceAction` and `HemoEvent` to its unions.
-import type { Ramp, SimSeconds, StateVar } from './types.ts';
+import type { Ramp, RhythmId, SimSeconds, StateVar } from './types.ts';
 
 /** Sensors named in brief §7.2 `attachSensor`. Stage 2 implements abp, cvp, pap, spo2 (pleth) and nibp. */
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp' | 'pv'; // Stage 7a: 'pv' = teaching channels
@@ -50,4 +50,5 @@ export type HemoEvent =
   | {
       type: 'state'; t: SimSeconds; tick: number; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
+      rhythm?: { id: RhythmId; rateBpm: number }; // FU-2 (G-FU1 item 6): the running rhythm, engine-initiated changes included
     }; // the brief §7.3 `alarm` event (NIBP INOP) is Stage 5's copy in types.ts

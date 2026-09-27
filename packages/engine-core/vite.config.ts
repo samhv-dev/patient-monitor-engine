@@ -15,6 +15,8 @@ const SLOW = [
   'test/engine/hemo-nibp.test.ts',
   'test/engine/circ-sanity-*.test.ts',
   'test/engine/pk-acceptance-*.test.ts',
+  'test/engine/circ-rate-rule.test.ts', // FU-2: MODELED rhythm-rate scenarios (2–4 sim-min each)
+  'test/engine/af-rate-control.test.ts', // FU-2: AF rate control (13–22 sim-min each)
 ];
 const set = process.env.PME_TEST_SET;
 

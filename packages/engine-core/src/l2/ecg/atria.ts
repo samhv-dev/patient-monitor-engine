@@ -35,11 +35,12 @@ const AF_MIN_REFRACTORY_S = 0.25; // RR_min 0.25–0.30 s (brief §4.1 AF fallba
 export const AV_NODE_ERP_S = 0.25;
 /**
  * AF rate calibration (Stage 1.1 review M1) [ENG]: pairs [target bpm, command bpm] — the command fed to the
- * threshold/refractory formulas that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13).
+ * threshold/refractory formulas that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13). FU-2
+ * (E-FU2-5) added the 135 and 145 knots (135 read +1.0 %, +2.1 % on seed 21, between the 130 and 140 knots).
  */
 const AF_RATE_CAL: ReadonlyArray<readonly [number, number]> = [
   [20, 30], [40, 45.1], [50, 51.8], [60, 59.1], [70, 68.8], [80, 79.1], [90, 89.0], [100, 101.5], [110, 110.1],
-  [120, 116.6], [130, 124.9], [140, 141.3], [150, 160.5], [160, 189.1], [170, 230.8], [180, 274.0],
+  [120, 116.6], [130, 124.9], [135, 131.2], [140, 141.3], [145, 151.5], [150, 160.5], [160, 189.1], [170, 230.8], [180, 274.0],
 ];
 
 export function atrialRate(st: RhythmState, d: RhythmDef, t: number, ctx: RhythmCtx): number {

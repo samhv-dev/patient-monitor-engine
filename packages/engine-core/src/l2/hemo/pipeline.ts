@@ -12,7 +12,7 @@ import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
 import type { DeviceAction } from '../../types.ts'; // Stage 7a
-import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, StateVar } from '../../types.ts';
+import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, RhythmId, RhythmOpts, StateVar } from '../../types.ts';
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
@@ -25,6 +25,8 @@ import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
+import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
+import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
@@ -61,6 +63,7 @@ export function circProfileOf(profile: PatientProfile | undefined): CircProfile 
 export interface RhythmView {
   id: string;
   records: readonly EngineEvent[];
+  opts?: RhythmOpts; // FU-2: for the state event's effective rate
 }
 
 export interface HemoCtx {
@@ -303,6 +306,12 @@ function manHoldInit(cvp: number, vs: number, pamT: number, sbp: number, dbp: nu
 function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const target = { sbp: l1Value(ctx.l1, 'sbp', b.t), dbp: l1Value(ctx.l1, 'dbp', b.t) };
   const tr = hs.manHold;
+  // FU-2 item 7: an instructor contractility (≠ 1) IS both ventricles' Emax factor; the tracker then holds MAP with the
+  // systemic resistance alone and pulse pressure (and CO) follow the heart — low output narrows PP, SVR rises (derived)
+  const cT = l1Value(ctx.l1, 'contractility', b.t);
+  const cOwned = Math.abs(cT - 1) > 1e-9;
+  if (cOwned || hs.circ.man.eesRvF !== 1) hs.circ.man.eesRvF = cT;
+  if (cOwned) hs.circ.man.eesF = cT;
   if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
   if (b.ref) {
     // the hold test uses ≈ 8-beat averages so ventilator-driven beat-to-beat swings (PPV) do not keep it running
@@ -316,7 +325,7 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   }
   hs.sys.g = hs.circ.man.eesF;
   hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
-  trackBeat(hs.sys, b, target, hs.circOut.pSv, CIRC_LIMITS, CIRC_LIMITS.gMax);
+  trackBeat(hs.sys, b, target, hs.circOut.pSv, cOwned ? { ...CIRC_LIMITS, gMin: cT, gMax: cT } : CIRC_LIMITS, cOwned ? cT : CIRC_LIMITS.gMax); // FU-2 item 7
   hs.circ.man.eesF = hs.sys.g;
   hs.circ.man.rSys = hs.sys.R;
 }
@@ -401,7 +410,9 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     values.pawp = hs.circOut.pPv;
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
   }
-  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags });
+  const rid = ctx.rhythm.id as RhythmId; // FU-2 (G-FU1 item 6): controllers follow engine-initiated rhythm changes
+  const rhythm = { id: rid, rateBpm: Math.round(effectiveRateBpm(rid, ctx.rhythm.opts ?? {}, rampValue(ctx.hr, t)) * 10) / 10 };
+  hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags, rhythm });
   // Stage 7a: the 1 Hz circulation summary (tables §2.1 step 5, §3)
   const lb = c.beats[c.beats.length - 1];
   const svRvMean = c.beats.length ? c.beats.reduce((a, b) => a + b.svRv, 0) / c.beats.length : 0;
@@ -489,7 +500,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       // SET-AND-HOLD: the volume and PVR trackers run when the instructor's target moves and stop once it is met
       // (±0.5 mmHg for 5 s); later perturbations (PEEP, bleeding, tamponade) then act on top — PEEP lowers CO as it
       // did under Stage 3's MANUAL coupling. The Ees/SVR pressure tracker below keeps defending SBP/DBP per beat.
-      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}`;
+      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}/${Math.round(l1Value(ctx.l1, 'contractility', t1) * 100)}`; // FU-2 item 7: contractility
       if (key !== tr.key) {
         tr.key = key;
         tr.pActive = true;
@@ -519,8 +530,8 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       }
     }
     if (ctx.l1.mode === 'modeled' && m % 12 === 0 && !ctx.l1.pinned.includes('hr') && ctx.requestHr) {
-      const want = hs.circ.hrModel; // Stage 7a MODELED: the reflexes drive the rhythm engine's rate
-      if (Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
+      const want = modeledHrRequest(hs.circ, ctx.rhythm.id, t1); // FU-2 (NR-7g-5): only the sinus node follows the reflex (AF conduction, AAI/DDD: bounded)
+      if (want !== null && Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
     }
     // Stage 7a: completed CircBeats → site beats (tracker, NIBP, pleth)
     for (const cb of hs.circ.beats) {
