@@ -4127,7 +4127,7 @@ git push origin stage-7c-blood
 - Consumes: `PatientProfile.blood {hb, cohb, methb}`, `pulseOxApparent` (Task 14), the lab panel.
 - Produces: tables §1.5 anaemia row ("SpO2 unchanged, DO2 ↓") and smoker/CO row (Q22) checks.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-oxygen.test.ts`:
 
@@ -4164,12 +4164,12 @@ describe('7c oxygen delivery and the oximeter', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-oxygen.test.ts`
 Expected: PASS. Prototype: COHb 25 %: displayed SpO2 99 while the co-oximeter SO2 is 74.8 %; MetHb 35 %: SpO2 ≈ 85; Hb 7: SaO2 unchanged, DO2 < 55 %, SvO2 lower — and NO lactate at normal flow (decision 6: regional dependence is a flow criterion). Test-after (sanity task).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-oxygen.test.ts
