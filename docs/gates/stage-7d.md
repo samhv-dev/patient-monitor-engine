@@ -299,7 +299,8 @@ ventilator RR 18, VT 500, FiO2 0.5, PEEP 5 before the dose, justification in the
 
 No other number moved: the other eight `neuro-engine` tests (sugammadex 2 mg/kg reversal, remifentanil, naloxone,
 stimulus, depth, succinylcholine, determinism, snapshot) pass unchanged — the sugammadex rig also runs apnoeic but its
-reversal (< 3.5 min at ≈ 10–20 min) finishes long before the kidney fails.
+reversal is given at TOF 2 (≈ 28 min in the apnoeic trace, gfrRel 0.93) and binds within 3.5 min, before the kidney
+fails at 36 min — and sugammadex binding does not depend on clearance.
 
 Runs on this head (local, shared machine): typecheck clean (whole repo); `CI=1 PME_TEST_SET=slow` engine-core
 **33 files / 142 tests green** (1,255 s); `CI=1 PME_TEST_SET=fast` engine-core **226 files, 986 passed / 1 skipped**.
