@@ -14,7 +14,7 @@ export interface Report {
   commit: string;
   engineVersion: string;
   options: { suites: string[]; seeds: number[]; maxWindows: number | null };
-  datasets: Array<{ id: SourceId; title: string; licence: string; attribution: string; windows: number }>;
+  datasets: Array<{ id: SourceId; title: string; licence: string; attribution: string; windows: number; unavailable?: string }>;
   morphology: MorphRow[];
   intervals: { ptbxl: number; engine: number } | null;
   segments: { docs: DocSummary[]; results: TargetResult[] };

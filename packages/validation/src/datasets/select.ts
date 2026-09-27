@@ -94,9 +94,14 @@ export async function fetchAll(cache: string): Promise<number> {
       n++;
     }
   }
-  for (const f of Object.values(PWDB_FILES)) {
-    await fetchZenodo(cache, PWDB_RECORD, f.file, f.md5);
-    n++;
+  try {
+    for (const f of Object.values(PWDB_FILES)) {
+      await fetchZenodo(cache, PWDB_RECORD, f.file, f.md5);
+      n++;
+    }
+  } catch (e) {
+    // Reported, not worked around (e.g. Zenodo refusing this network); `pnpm validate` then skips the PWDB band.
+    process.stderr.write(`PWDB not fetched: ${(e as Error).message}\n`);
   }
   return n;
 }

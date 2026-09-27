@@ -54,9 +54,16 @@ if (on('intervals')) {
   intervals = { ptbxl: ref.length, engine: engIv.length };
 }
 let morphology: Report['morphology'] = [];
+let pwdbUnavailable: string | null = null;
 if (on('morphology')) {
-  const pw = pwdbStats(new TextDecoder().decode(await fetchZenodo(cache, PWDB_RECORD, PWDB_FILES.indices.file, PWDB_FILES.indices.md5)), ['Radial']);
-  fills['pwdb-rise'] = { min: Math.min(...pw.map((p) => p.sysAfterFootMs[0])), max: Math.max(...pw.map((p) => p.sysAfterFootMs[2])) };
+  try {
+    const pw = pwdbStats(new TextDecoder().decode(await fetchZenodo(cache, PWDB_RECORD, PWDB_FILES.indices.file, PWDB_FILES.indices.md5)), ['Radial']);
+    fills['pwdb-rise'] = { min: Math.min(...pw.map((p) => p.sysAfterFootMs[0])), max: Math.max(...pw.map((p) => p.sysAfterFootMs[2])) };
+  } catch (e) {
+    // A refused download is reported, not worked around; the PWDB rise-time band then has no limits and is not graded.
+    pwdbUnavailable = (e as Error).message;
+    log(`PWDB not fetched (${pwdbUnavailable}); the pwdb-rise band is skipped`);
+  }
   const pairs = await measurePairs({ cache, seeds, onProgress: log, ...(maxWindows !== null ? { maxWindows } : {}) });
   if (on('intervals')) {
     // engine intervals join the morphology table as one pseudo-window (V5 bands are absolute: PTB-XL p10–p90)
@@ -111,7 +118,7 @@ const report: Report = {
   options: { suites, seeds, maxWindows },
   datasets: [
     { ...pick('vitaldb'), windows: windows('vitaldb') }, { ...pick('mghdb'), windows: windows('mghdb') },
-    { ...pick('pwdb'), windows: 0 }, { ...pick('ptbxl'), windows: intervals?.ptbxl ?? 0 },
+    { ...pick('pwdb'), windows: 0, ...(pwdbUnavailable ? { unavailable: pwdbUnavailable } : {}) }, { ...pick('ptbxl'), windows: intervals?.ptbxl ?? 0 },
   ],
   morphology, intervals, segments: { docs: summaries, results }, regression, determinism, oracle,
   wallS: (performance.now() - t0) / 1000,

@@ -33,4 +33,8 @@ describe('report writer', () => {
     const md = renderMarkdown(R);
     for (const s of ['# Validation report', '## Datasets and attribution', 'Lee HC et al.', '## Morphology', '| 🔴 | PPV | all |', '### Not measurable on this build', 'MODELED mode arrives in Stage 7', '## Waveform regression', '## Determinism (V9)', '## Pulse oracle', 'known Pulse disagreement D1', '## Calibration queue (R44)', 'Ali: decision']) expect(md).toContain(s);
   });
+  it('says when a dataset could not be fetched (the run goes on without it)', () => {
+    const d = { id: 'pwdb' as const, title: 'PWDB', licence: 'PDDL 1.0', attribution: 'Charlton PH et al.', windows: 0, unavailable: 'GET … → 403' };
+    expect(renderMarkdown({ ...R, datasets: [...R.datasets, d] })).toContain('| PWDB | PDDL 1.0 | 0 (not fetched: GET … → 403) |');
+  });
 });

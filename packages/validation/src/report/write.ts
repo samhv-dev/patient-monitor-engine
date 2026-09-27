@@ -34,7 +34,7 @@ export function renderMarkdown(r: Report): string {
   L.push(`**Summary:** ${dot.green} ${c.green} · ${dot.yellow} ${c.yellow} · ${dot.red} ${c.red} graded rows; ${nm.length} documents not measurable on this build; calibration queue ${q.length} rows. Gating failures: ${gatingFailures(r).length || 'none'}.`, '');
   L.push('Grades (R40): 🟢 inside the evidence band (or within 10 % of a point target); 🟡 misses by < 30 %; 🔴 misses by ≥ 30 % or not measured. Red gates the run; yellow is reported and queued for calibration (R44).', '');
   L.push('## Datasets and attribution', '', '| Dataset | Licence | Windows | Attribution |', '|---|---|---|---|');
-  for (const d of r.datasets) L.push(`| ${d.title} | ${d.licence} | ${d.windows} | ${d.attribution} |`);
+  for (const d of r.datasets) L.push(`| ${d.title} | ${d.licence} | ${d.windows}${d.unavailable ? ` (not fetched: ${d.unavailable})` : ''} | ${d.attribution} |`);
   L.push('', 'Raw records stay in the git-ignored cache; this report holds derived statistics only (brief §8).', '');
   L.push('## Morphology: recorded vs engine (brief §9 V1–V5)', '', 'Same metric code on both sides; engine runs matched to each recorded window (HR, BP, site, ventilator, EtCO2).', '');
   L.push('| | Band | Group | Recorded median [IQR] (n) | Engine median [IQR] (n) | KS D | W1 | Expected | Source |', '|---|---|---|---|---|---|---|---|---|');
