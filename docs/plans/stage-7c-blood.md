@@ -2284,7 +2284,7 @@ Replace with:
 - Consumes: Tasks 2–10; `RespState` (`co2.pf`, `o2.pao2`, `temp.tc`, `temp.anaesthesia`, `pat.vo2/vco2/effKg`, `coRatio`, `evlwiExtra`), `metabolic(rs, t, gas)`, `applyLungSpecs(rs)`, `CI_LPM_PER_KG`, `CO_REF_LPM`, `gasPatient`; 7g's `PkState.bus` (`doses: DoseLogEntry[]` `{agent, mgPerKg, amount, amountUnit, t}`, `metabolic.kShift`) by duck typing.
 - Produces: `BloodState {k, core, out: BloodOut, view, labs, cold, keto, ecg, lung {pCap, evlwi}, events: EngineEvent[]}`, `BloodCtx {resp, hemo, l1, pk?}`, `createBloodState(profile)`, `DoseLike`, `pkBus(pk) → {doses, kShift} | null`, `HTS_OVER_MIN` 15, `observeDoses(bs, doses)`, `advanceBlood(bs, ctx, tEnd)` (steps every `k·0.1 ≤ tEnd`), `bloodEcgTargets(bs) → {k: ΔK, qtc: ΔQTc}`, `qtcDeltaCa(iCa)`, `tdpRisk(qtc, mg, k)`, `validateBloodCommand(cmd) → string | undefined | null`, `applyBloodCommand(bs, cmd, t, rs) → boolean`; `BloodView {odc, coFactor, co2LoadMlMin}`, `RespCtx.blood?`, `RespState.evlwiExtra?`, exported `metabolic(rs, t, gas = 'co2')` in `resp/pipeline.ts`; `resolveLung(specs, ibwKg, rawEvent, evlwiAdd = 0)` in `lung/conditions.ts` (E-7c-1); `labPanel(bc, inputs, 'abg' | 'vbg')`, `LAB_TURNAROUND_S` 120, `PendingLab` in `labs.ts`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/pipeline.test.ts`:
 
@@ -2413,12 +2413,12 @@ describe('Stage 7g observer (R51 §3; R50 F1/F2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/pipeline.test.ts`
 Expected: FAIL (module missing).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/labs.ts`:
 
@@ -2803,11 +2803,11 @@ export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: R
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood` → PASS (all blood unit tests; the prototype prints `salbutamol K at 30 min: own 3.47, 7g kShift −0.8 3.57, 7g 0 4.18`). `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-engine.test.ts test/l2/lung` → PASS (the resp and lung edits are type-only or default to the old behaviour: `evlwiAdd` 0).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/pipeline.ts packages/engine-core/src/l2/blood/labs.ts packages/engine-core/test/l2/blood/pipeline.test.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/l2/lung/conditions.ts

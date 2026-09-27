@@ -23,6 +23,7 @@ import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
 import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
+import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
 import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
@@ -54,10 +55,20 @@ export interface RespCtx {
   hemo: HemoState;
   rhythm: RhythmView;
   hr: RampState;
+  /** Stage 7c: what the gas step reads from the blood (absent → Stage 3 behaviour, byte-identical). */
+  blood?: BloodView;
+}
+
+/** Stage 7c: the blood's ODC context, a CO factor (blood-volume fallback without Stage 7a) and extra CO2 (mL/min). */
+export interface BloodView {
+  odc: OdcCtx;
+  coFactor: number;
+  co2LoadMlMin: number;
 }
 
 export interface RespState {
   vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
+  evlwiExtra?: number; // Stage 7c: lung water from the blood's COP/capillary leak, mL/kg above the conditions' (G7b ruling 8)
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
   pat: GasPatient;
@@ -158,7 +169,7 @@ export function respBreathU(rs: RespState, t: number): number {
 
 /** Stage 7b: re-resolve the lung from its condition specs, the bronchospasm multiplier and the mainstem state. */
 export function applyLungSpecs(rs: RespState): void {
-  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent);
+  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0); // Stage 7c: + lung water
   const ls = rs.lung;
   ls.lp = r.lp;
   ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
@@ -210,8 +221,13 @@ export function respPleural(rs: RespState, t: number): number {
   return p + Math.max(0, lp.pPtx - rs.circPtx);
 }
 
-/** Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). */
-function metabolic(rs: RespState, t: number): number {
+/**
+ * Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). Stage 7c: exported for
+ * the blood's VO2 demand; the `gas` argument is Stage 7e's (its plan replaces this body with separate O2/CO2
+ * factors) and is ignored until then.
+ */
+export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
+  void gas; // Stage 7c: reserved for Stage 7e
   return tempFactor(rs.temp.tc) * mhFactor(rs.temp, t, MH_VCO2_FACTOR) * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
 }
 
