@@ -1948,7 +1948,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: nothing.
 - Produces: `type ThyroidState`, `interface ThyroidEffects { hrF; eesF; svrF; vo2F; setShiftC; betaSens }`, `thyroidEffects(state, storm)`; `interface ConditionEffects { hrF; svrF; eesF; dV0Frac; kfMult; vo2F; vasoResp; setShiftC; siF; extraSymp }`, `NEUTRAL_CONDITIONS`, `combine(list)` (shared with 7f), `interface ConditionState`, `createConditions()`, `stepConditions(c, mastB2, dtS)`, `conditionEffects(c)`, `SEPSIS_PHASES`, `ANAPH_ON_TAU_S`, `ANAPH_OFF_TAU_S`, `ANAPH_EPI_STABILISE`, `COND_TAU_S`. (No `erMax`, `lactateX`, `rawF`, `shuntAdd`: R50 F10/F12.)
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/conditions.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/conditions.test.ts`
 
 ```ts
 // System conditions (tables §5e) and thyroid (tables §5c).
@@ -2011,12 +2011,12 @@ describe('system conditions', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/conditions.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/endo/thyroid.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/endo/thyroid.ts`
 
 ```ts
 // Thyroid profiles and thyroid storm (tables §5c `hyperthyroid`; Klein 2007 [TXT]). Pulse has no thyroid (annex §5c).
@@ -2056,7 +2056,7 @@ export function thyroidEffects(state: ThyroidState, storm: number): ThyroidEffec
 }
 ```
 
-- [ ] **Step 4: Implement** `packages/engine-core/src/l2/endo/conditions.ts`
+- [x] **Step 4: Implement** `packages/engine-core/src/l2/endo/conditions.ts`
 
 ```ts
 // System-level conditions (tables §5e; R32 lists them under 7f — 7e implements them and 7f SHARES this interface,
@@ -2174,12 +2174,12 @@ export function conditionEffects(c: ConditionState): ConditionEffects {
 export const SEPSIS_PHASES = { sirs: 1, sepsis: 2, warm: 3, cold: 4 } as const;
 ```
 
-- [ ] **Step 5: Run the tests and the typecheck**
+- [x] **Step 5: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/conditions.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (4 tests), typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/endo/conditions.test.ts packages/engine-core/src/l2/endo/thyroid.ts packages/engine-core/src/l2/endo/conditions.ts
