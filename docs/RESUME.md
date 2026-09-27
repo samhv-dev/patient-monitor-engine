@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 09:00 (FU-2 merged; 7c gate, 8a, 7d executing; 7e/7f plans ready — 7f after 7c merges, 7e after 7c and 7d).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 09:20 (8a at PR #18 gate-passed; 7c gate and 7d executing; 7e/7f plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -18,9 +18,9 @@
 | 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
 | 7f NMB/depth | plan under fix (`docs/plans/stage-7f-neuro-depth.md`; re-review vs real 7g: INCOMPLETE — bus names, naloxone, stimulus, drive wiring; fixer running per addendum 17) | sux tests pre-declared `it.fails` (FU-3 item 1) | execute after FU-2 and 7c merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-3 engine follow-ups | list opened (rulings, addendum 17) | sux ke0/CL re-fit; neostigmine tail; AAI/DDD intrinsic beats; MANUAL AF HR over-read; amiodarone AV strength (Ali) | write plan after 7f lands |
+| FU-3 engine follow-ups | list (rulings, addendum 17 + G8a) | sux ke0/CL; neostigmine tail; AAI/DDD intrinsic beats; MANUAL AF HR over-read; amiodarone AV (Ali); sugammadex underdose recurarisation; volatile reflex blunting; CVP alarm default; scenario `patient.profile`; PWDB fetch | write plan after 7f lands |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
-| 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 6 boxes unticked | executing (fresh executor after the sixth cap; oracle O2 under diagnosis) | resume from first unticked task |
+| 8a validation harness | `stage-8a-validation`, PR #18 (worktree `../scratch/wt-stage-8a`) | all 24 tasks done, gate passed (G8a), CI running; 43-row calibration queue in `docs/validation/calibration-queue.md` | merge when CI is green; Ali: blind review bundle + Saadat bedside checklist + iPad/projector readings |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
