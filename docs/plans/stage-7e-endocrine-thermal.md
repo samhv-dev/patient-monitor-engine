@@ -3758,7 +3758,7 @@ git push origin stage-7e-endocrine-thermal
 **Interfaces:**
 - Consumes: `LONGRUN_HOURS`, `expectedIndex` (`test/helpers/longrun.ts`, CI rule amendment); `read62`, `rig3`, `run`, `stateSeries`, `ev3`, `ADULT` (`test/helpers/resp.ts`); `createEndoCore`, `NEUTRAL_ENDO_INPUTS`, `stepEndoCore`, `createThermal`, `stepThermal`.
 
-- [ ] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-longrun.test.ts`
+- [x] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-longrun.test.ts`
 
 ```ts
 // Stage 7e: determinism, CPU ≤ 0.05 ms per tick for the 7e work, long-run no-drift (24 h locally, 6 h on CI: the CI
@@ -3817,10 +3817,10 @@ describe('Stage 7e long-run', () => {
 });
 ```
 
-- [ ] **Step 2: Run** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-longrun.test.ts` (6 h), then locally without `CI` (24 h, alone on the machine; record the wall time in the gate note).
+- [x] **Step 2: Run** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-longrun.test.ts` (6 h), then locally without `CI` (24 h, alone on the machine; record the wall time in the gate note).
 Expected: PASS. Prototype: identical hashes; `7e CPU: 4.0 µs per simulated second = 0.08 µs per tick`; 6 h horizon exact, no drift.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/endo-longrun.test.ts
