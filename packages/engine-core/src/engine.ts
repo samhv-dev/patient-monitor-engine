@@ -499,6 +499,7 @@ class Engine implements MonitorEngine {
     }
     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
+    this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
@@ -698,6 +699,21 @@ class Engine implements MonitorEngine {
     const skin = this.dev.alarms.profile.skin;
     if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
     return this.hrAvgCache.avg;
+  }
+
+  /**
+   * Stage 7c (plan decision 9): push the CHANGE of the blood's ECG K (incl. succinylcholine, calcium stabilisation) and
+   * of its iCa QTc effect since the last push into Modifiers — never overwrite an instructor's setModifiers value.
+   */
+  private pushBloodEcg(ps: PipelineState): void {
+    const tg = bloodEcgTargets(ps.blood);
+    const a = ps.blood.ecg;
+    if (Math.abs(tg.k - a.k) < 0.05 && Math.abs(tg.qtc - a.qtc) < 2) return;
+    ps.mods = mergeModifiers(ps.mods, {
+      k: Math.min(10, Math.max(1.5, ps.mods.k + tg.k - a.k)),
+      qtc: Math.min(650, Math.max(300, ps.mods.qtc + tg.qtc - a.qtc)),
+    });
+    ps.blood.ecg = tg;
   }
 
   /** Make the lane buffers match the current lanes (new leads start empty). */

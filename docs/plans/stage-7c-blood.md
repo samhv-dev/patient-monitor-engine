@@ -3710,7 +3710,7 @@ git push origin stage-7c-blood
 - Consumes: `bloodEcgTargets` (Task 11), `mergeModifiers`.
 - Produces: `Modifiers.k` and `Modifiers.qtc` move by the blood's CHANGES only (plan decision 9); contractility goes to 7a's `ext.kChem` (Task 10/11, already wired in `advanceBlood`); `tdpRisk` is exported for 7g/rhythms (no rhythm is changed by 7c: `l2/ecg/**` is not ours).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/engine/blood-ecg.test.ts`:
 
@@ -3745,11 +3745,11 @@ describe('Stage 7c ECG hooks (plan decision 9)', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-ecg.test.ts` → FAIL (`mods.k` stays 4.2).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 First `git fetch origin && git merge --no-edit origin/main` (R51 §7: before every `engine.ts` edit). In the `advance` insert of Task 15, add after the `advanceBlood(...)` line:
 
@@ -3786,11 +3786,11 @@ Replace with:
   /** Make the lane buffers match the current lanes (new leads start empty). */
 ```
 
-- [ ] **Step 4: Run the ECG hook test and the Stage 5/5.1 ECG suites**
+- [x] **Step 4: Run the ECG hook test and the Stage 5/5.1 ECG suites**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-ecg.test.ts test/l2/ecg test/engine/engine-pipeline.test.ts` → PASS (at baseline the blood's K is constant, so no Stage 5 test sees a modifier change).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/test/engine/blood-ecg.test.ts
