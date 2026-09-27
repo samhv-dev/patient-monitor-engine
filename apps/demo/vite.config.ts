@@ -20,6 +20,7 @@ export default defineConfig({
         'stage6b-acls': page('stage6b-acls'),
         'vent-hamilton': page('vent-hamilton'), // Stage V
         'vent-link': page('vent-link'), // Stage V
+        stage7c: page('stage7c'), // Stage 7c
         stage7a: page('stage7a'), // Stage 7a
         stage7g: page('stage7g'), // Stage 7g
         'physiology-console': page('physiology-console'), // Stage 7x

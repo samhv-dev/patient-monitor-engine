@@ -21,3 +21,4 @@ export { draw12Lead, drawTrend, report12Size, PAPER, type TrendSeries } from './
 export { Overlays, drawMark, drawLeadOffDashes } from './overlays.ts';
 export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
 export { createDrugPanel, type DrugPanel } from './drug-panel.ts'; // Stage 7g
+export { LAB_ROWS, labFlag, mountLabPanel } from './lab-panel.ts'; // Stage 7c

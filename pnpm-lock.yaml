@@ -89,6 +89,10 @@ importers:
       '@pme/skins':
         specifier: workspace:*
         version: link:../skins
+    devDependencies:
+      happy-dom:
+        specifier: 20.14.5
+        version: 20.14.5
 
   packages/skins:
     dependencies:

@@ -4463,7 +4463,7 @@ describe.skipIf(!DIR)('Pulse oracle, blood (annex §D; PULSE_ORACLE_DIR=…/rese
 The O3b Na **fail** was a real 7c defect the oracle caught: elimination removed pure water, so every infusion concentrated Na. `core.ts` now removes the eliminated volume at the ECF composition (isotonic; 7d replaces it with the urine composition): Na +0.30 after 1 L saline (awake and GA), Cl +2.6, BE −1.6 (awake) / −1.1 (GA). The code in Tasks 5 and 9 above already contains the fix; the numbers of the engine sanity tasks were re-measured with it (Tasks 18–21 state them). Pulse's `Hemorrhage` field is `FlowRate` (7a's draft `Flow` is rejected — see Requests).
 
 
-> **Executor note (2026-09-27):** the executor brief puts `packages/validation/**` out of 7c's partition (Stage 8a owns it and has its own Node loader `pulse-node.ts`), so the three files above were run from an UNCOMMITTED copy and are kept outside the repo at `scratch/7c-oracle/` for 8a to adopt. Result on this branch (Pulse 4.3.2 wasm in Node, ≈ 38 min wall): 5 tests pass; every row prints `agree`, `expect-differ-ok` or `excluded` (numbers in `docs/gates/stage-7c.md`). Step 4's commit is therefore empty for this task.
+> **Executor note (2026-09-27):** the executor brief puts `packages/validation/**` out of 7c's partition (Stage 8a owns it and has its own Node loader `pulse-node.ts`), so the three files above were run from an UNCOMMITTED copy and are kept outside the repo at `scratch/7c-oracle/` for 8a to adopt. Result on this branch (Pulse 4.3.2 wasm in Node, ≈ 12 min wall): 5 tests pass; every row prints `agree`, `expect-differ-ok` or `excluded` (numbers in `docs/gates/stage-7c.md`). Step 4's commit is therefore empty for this task.
 
 - [x] **Step 4: Commit**
 
@@ -4563,7 +4563,7 @@ git push origin stage-7c-blood
 - Consumes: `LabPanel` (Task 1), `mountMonitor` (`pm.on`, `pm.dispatch`, `pm.setTimeScale`), the `labs`/`labResult` events (forwarded from the worker like every engine event).
 - Produces: `LAB_ROWS`, `labFlag(row, v)`, `mountLabPanel(el) → update(values, title)`; the demo page with four stories: haemorrhage → ABG at 30 min → 4 unwarmed RBC + 1 L RL → ABG; 2 L saline vs Plasma-Lyte vs Ringer's; succinylcholine in burns (`?burns=1`) → CaCl2 at 4 min → insulin–dextrose at 7 min; NaHCO3 50 mmol (EtCO2 transient).
 
-- [ ] **Step 1: Write the failing widget test**
+- [x] **Step 1: Write the failing widget test**
 
 `packages/renderer/test/lab-panel.test.ts`:
 
@@ -4590,7 +4590,7 @@ describe('lab panel widget', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/lab-panel.test.ts` → FAIL (module missing). (If the renderer's vitest config has no happy-dom, check `packages/renderer/package.json` devDependencies: happy-dom is N-009 and used by the controller; add it to the renderer's devDependencies with the same version if missing.)
 
-- [ ] **Step 2: Implement the widget**
+- [x] **Step 2: Implement the widget**
 
 `packages/renderer/src/lab-panel.ts`:
 
@@ -4646,7 +4646,7 @@ export { LAB_ROWS, labFlag, mountLabPanel } from './lab-panel.ts'; // Stage 7c
 
 Run the widget test → PASS.
 
-- [ ] **Step 3: The demo page**
+- [x] **Step 3: The demo page**
 
 `apps/demo/stage7c.html`:
 
@@ -4809,7 +4809,7 @@ $('storyBicarb').addEventListener('click', () => {
 In `apps/demo/vite.config.ts` find `        'vent-link': page('vent-link'), // Stage V` and add below it `        stage7c: page('stage7c'), // Stage 7c`. In `apps/demo/index.html` add below the Stage 3 link:
 `      <li><a href="./stage7c.html">Stage 7c: blood, acid–base, electrolytes, O2 delivery (labs, ABG)</a></li>`
 
-- [ ] **Step 4: Screenshots script**
+- [x] **Step 4: Screenshots script**
 
 `apps/demo/scripts/stage7c-shots.mjs`:
 
@@ -4850,11 +4850,11 @@ if (errors.length) console.error('page errors:', errors);
 await b.close();
 ```
 
-- [ ] **Step 5: Build, run the page, take the screenshots**
+- [x] **Step 5: Build, run the page, take the screenshots**
 
 `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build` → exit 0 (prototype: demo build OK, `stage7c` chunk emitted). Then `(cd apps/demo && npx vite preview --port 4817 --strictPort &)` and `node apps/demo/scripts/stage7c-shots.mjs http://localhost:4817 docs/gates/stage-7c` (≈ 35 min wall; system Chrome headless — never the desktop Browser pane, which throttles rAF). Open each PNG and check: the live panel shows lactate and BE moving; the ABG panel shows the draw time and a 120 s later result time; the ECG in the hyperkalaemia shot is visibly wider/peaked; no page errors. Keep PNGs ≤ 60 KB (crop or reduce the viewport if not).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/renderer/src/lab-panel.ts packages/renderer/test/lab-panel.test.ts packages/renderer/src/index.ts apps/demo/stage7c.html apps/demo/src/stage7c.ts apps/demo/scripts/stage7c-shots.mjs apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-7c/*.png

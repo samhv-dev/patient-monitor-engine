@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 7c: blood, acid–base and electrolytes</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      .wrap { display: flex; gap: 12px; align-items: flex-start; }
+      #monitor { height: 600px; width: 900px; border: 1px solid #333; }
+      .pme-lab-panel table { border-collapse: collapse; font: 13px ui-monospace, monospace; min-width: 230px; }
+      .pme-lab-panel caption { color: #888; text-align: left; padding-bottom: 4px; }
+      .pme-lab-panel th { text-align: left; color: #aaa; font-weight: normal; padding: 1px 8px 1px 0; }
+      .pme-lab-panel td { padding: 1px 6px; }
+      .pme-lab-panel tr.high td, .pme-lab-panel tr.low td { color: #ff5c5c; }
+      .controls { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 10px 0; max-width: 1400px; }
+      fieldset { border: 1px solid #333; padding: 6px 10px; }
+      legend { color: #888; }
+      button, select { font: inherit; }
+      #log { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div id="monitor"></div>
+      <div id="labs"></div>
+      <div id="abg"></div>
+    </div>
+    <div class="controls">
+      <fieldset><legend>Stories</legend>
+        <button id="storyBleed">Haemorrhage → transfusion</button>
+        <select id="fluid"><option value="saline">0.9 % saline</option><option value="balanced">Plasma-Lyte</option><option value="rl">Ringer's lactate</option></select>
+        <button id="storySaline">2 L crystalloid</button>
+        <button id="storySux">Sux in burns → Ca → insulin</button>
+        <button id="storyBicarb">NaHCO3 50 mmol</button>
+      </fieldset>
+      <fieldset><legend>Lab</legend><button id="sendAbg">Send ABG</button></fieldset>
+      <fieldset><legend>Speed</legend>
+        <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select>
+      </fieldset>
+    </div>
+    <div id="log"></div>
+    <script type="module" src="./src/stage7c.ts"></script>
+  </body>
+</html>
