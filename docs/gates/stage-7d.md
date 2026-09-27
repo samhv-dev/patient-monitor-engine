@@ -148,6 +148,8 @@ everywhere, scheduled or resistance-scaled gains) are therefore not needed.
   7.5, 23.4; default 3) and copied into the dose log; the HTS row text names 23.4 %. 7g's tests unchanged (84 unit,
   34 engine pass).
 - **E-7d-2** applied (Task 1): the controller's scenario driver skips `icp/pbto2/urometer` sensors.
+- **E-7d-4** applied (§11, test-only): 7f's rocuronium spontaneous-recovery rig (`neuro-engine.test.ts`) ventilates the
+  paralysed patient (RR 18, VT 500, FiO2 0.5, PEEP 5); band 55–95 min unchanged. No 7g or 7f source changed.
 - G-FU2 sibling: `organsCtx.setHr` calls `holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false)` after its
   `ps.hr` write.
 - Requests R-7D-2 (7c seams/names) — names verified against the 7c branch source (`blood.out.{hb, albuminGL, bvRel,
@@ -254,3 +256,51 @@ green (736 s); `CI=1 PME_TEST_SET=fast` 213 files, 908 passed / 1 skipped; `CI=1
 / 1 skipped** (241 files), controller 197, skins 170, renderer 70, ventilator 88, audio 58, validation 94 (+7 skipped),
 demo 115 — all green. 7d `it.fails` now 5 (§3). The merge of `origin/main` (8a) had one conflict, the stage7a e2e
 WebKit-skip comment (both sides skip; main's wording kept).
+
+## 11. On 7f (integration after merging main = … + 7c + 8a + 7f; CI slow run 36310537280)
+
+**Failure.** `neuro-engine` "rocuronium 0.6 mg/kg … spontaneous TOFR ≥ 90 % at 55–95 min": TOF 0 was reached, but no
+train after 600 s read count 4 with ratio ≥ 0.9 within the 100 min run (last ratio 0.87 at 100 min).
+
+**The seam is correct.** Traced every 30 s through the engine (seed 3, the 7f rig): `organs.kidney.gfrRel` 1.000 at
+t = 0, 1.09 → 0.87 → 1.0 over the first 4 min (no low or zero early value — the §10 "7c `out` only once Hb > 0" guard
+holds), `blood.core.liver` 0.980 from the first step (liverFn 1 · tempF at 36.8 °C), `hepFnTemp` true, so 7g's
+`clFactor` for rocuronium (hepatic 0.7, renal 0.3) = 0.7 · 0.98 + 0.3 · gfrRel · temp = 0.98 — the hepatic share is
+scaled once by `core.liver`, the renal share once by `gfrRel`, flow (`hbfRel`) only for high-extraction rows. No double
+scaling.
+
+**Root cause: the rig, not the seam.** The rig gives rocuronium 0.6 mg/kg and never ventilates. The paralysed patient is
+apnoeic for the whole run: SaO2 0.58 at 2 min, 0.00 from 4 min; PaCO2 56 → 124 (20 min) → 273 (60 min); 7c's pH 7.28 →
+6.56; MAP 96 → 64 (30 min) → 46 (40–80 min), sinus throughout. 7d's kidney does what a kidney does in that shock:
+GFR 105 at MAP 63, 40 at MAP 57, **0 from 36 min** (RBF 214 → 169). Rocuronium loses its renal 30 %: `clFactor`
+0.98 → 0.87 → **0.69** from 36 min, and the recovery that took 75–80 min at factor ≈ 1 no longer arrives by 100 min.
+On main without 7d `pkCtx.renal` is the neutral 1, so the same asphyxiated patient kept a normal-kidney clearance —
+that is why 7f's number looked right there. Confirmation: forcing `pkCtx.renal = 1` on the 7d + 7f tree (rig
+unchanged) gives TOFR 0.9 at 78.5 min; ventilating the rig (tree unchanged) gives 78.5 min with gfrRel 0.98–1.01 and
+MAP 95 throughout. Anuria prolonging rocuronium is correct physiology (reduced renal clearance ≈ one third), but the
+band is sourced for SPONTANEOUS recovery in a normally perfused, ventilated patient (R51 addendum 17), not for an
+asphyxial arrest-in-waiting.
+
+**Fix (E-7d-4, test-only, band unchanged; precedent: addendum 15 item 2 "a real OLV patient is ventilated to
+normocapnia", E-7f-2 the airway for 7a's R23 runs):** the rig ventilates the paralysed patient — `ventilation`
+ventilator RR 18, VT 500, FiO2 0.5, PEEP 5 before the dose, justification in the test. RR 18 chosen by measurement
+(this tree, 40 min): RR 12 → PaCO2 57.6 / pH 7.27, RR 14 → 50.3, RR 16 → 44.5, **RR 18 → pH 7.40** (normocapnia). No
+7d, 7g or 7f source changed. New seam test in 7d's partition (`organs-wiring`): at rest the published gfrRel reaches
+7g's rocuronium clearance (gfrRel 0.964, factor 0.98 at 5 min) and an AKI kidney (condition `aki` 1) lowers it once
+(gfrRel 0.405, factor 0.81; floor = the hepatic share 0.69).
+
+| Rocuronium 0.6 mg/kg (seed 3, train every 15 s) | Band | Before (7d + 7f, rig apnoeic) | After (rig ventilated) | main without 7d (apnoeic rig) |
+|---|---|---|---|---|
+| TOF 0 | < 135 s | 1.50 min | **1.50 min** | 1.50 min |
+| first twitch back (count ≥ 1 after 10 min) | — | 22.0 min | 22.0 min | 21.8 min |
+| TOFR ≥ 0.9 | 55–95 min | never (0.87 at 100 min) | **78.5 min** | 75.5 min on today's main (the 7f gate recorded 80.7) |
+| rocuronium `clFactor` | — | 0.98 → 0.69 from 36 min | 0.98–0.99 | 1.00 (neutral seam) |
+| gfrRel / MAP at 60 min | — | 0.00 / 46 | 1.00 / 95 | — / 46 |
+
+No other number moved: the other eight `neuro-engine` tests (sugammadex 2 mg/kg reversal, remifentanil, naloxone,
+stimulus, depth, succinylcholine, determinism, snapshot) pass unchanged — the sugammadex rig also runs apnoeic but its
+reversal (< 3.5 min at ≈ 10–20 min) finishes long before the kidney fails.
+
+Runs on this head (local, shared machine): typecheck clean (whole repo); `CI=1 PME_TEST_SET=slow` engine-core
+**33 files / 142 tests green** (1,255 s); `CI=1 PME_TEST_SET=fast` engine-core **226 files, 986 passed / 1 skipped**.
+7d `it.fails` still 5 (§3). No band widened.
