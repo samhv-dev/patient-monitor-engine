@@ -1910,7 +1910,7 @@ git push
 - Produces: `MOVING_AVERAGE_DEFAULT_S = 8`; `hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: string;
   windowDefault?: number | null } }): HrAveraging | undefined`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/engine-core/test/engine/hr-skin-averaging.test.ts`:
 
@@ -1977,14 +1977,14 @@ and append, inside the `describe('HR averaging option (E-4a-2)', …)` block aft
   });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/hr-averaging.test.ts test/engine/hr-skin-averaging.test.ts`
 Expected: FAIL — saadat-like reads `[60, 67, 75, 86, 100, 120, 120, 120, 120]` (the trimmed mean, same as
 philips-like; the "before" numbers of the gate note) and `hrAveragingOf` returns `undefined` for the moving-average
 cases; philips-like passes.
 
-- [ ] **Step 3: Implement** — in `packages/engine-core/src/l3/hr.ts`, find:
+- [x] **Step 3: Implement** — in `packages/engine-core/src/l3/hr.ts`, find:
 
 ```ts
 /** The skin's HR averaging option, or undefined (the default method). */
@@ -2011,7 +2011,7 @@ export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: st
 }
 ```
 
-- [ ] **Step 4: Run them to verify they pass**
+- [x] **Step 4: Run them to verify they pass**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/hr-skin-averaging.test.ts test/engine/alarms-engine.test.ts
@@ -2021,7 +2021,7 @@ npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck
 Expected: PASS — saadat-like `[64, 71, 78, 85, 92, 99, 106, 113, 120]` (settles at +10 s, was +7 s), philips-like
 unchanged; the rest of `test/l3` and the alarm-engine tests pass.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l3/hr.ts packages/engine-core/test/l3/hr-averaging.test.ts packages/engine-core/test/engine/hr-skin-averaging.test.ts docs/plans/fu-2-engine-followups.md
