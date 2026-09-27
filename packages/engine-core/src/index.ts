@@ -14,6 +14,7 @@ export { capture12, LAYOUT_3X4, CAPTURE_S, type Capture12 } from './l3/capture12
 export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store.ts'; // Stage 4b
 export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'; // Stage 4b
 export * from './types-resp.ts'; // Stage 3
+export type * from './types-organs.ts'; // Stage 7d
 export * from './types-lung.ts'; // Stage 7b
 export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.ts'; // Stage 7b
 export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b

@@ -4,6 +4,7 @@
 import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
+import type { OrganCommandBody, OrganNumericId, OrgansEvent } from './types-organs.ts'; // Stage 7d
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
 import type { DrugsEvent, PkClinicalEvent } from './types-pk.ts'; // Stage 7g
@@ -14,10 +15,12 @@ export type SimSeconds = number;
 export type ChannelId =
   | 'ecgI' | 'ecgII' | 'ecgIII' | 'aVR' | 'aVL' | 'aVF' | 'V1' | 'V2' | 'V3' | 'V4' | 'V5' | 'V6'
   | 'vcgX' | 'vcgY' | 'vcgZ' | 'abp' | 'cvp' | 'pap' | 'pleth' | 'co2' | 'resp'
-  | TeachingChannel; // Stage 7a
+  | TeachingChannel // Stage 7a
+  | 'icp'; // Stage 7d
 export type NumericId =
   | 'hr' | 'pr' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
-  | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc';
+  | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc'
+  | OrganNumericId; // Stage 7d
 export type StateVar =
   | 'hr' | 'sbp' | 'dbp' | 'cvp' | 'papSys' | 'papDia' | 'pawp' | 'spo2' | 'pi' | 'rr' | 'vt' | 'etco2' | 'fio2'
   | 'shunt' | 'tempCore' | 'contractility' | 'svr' | 'k' | 'qtc' | 'volumeStatus' | 'paceThresholdMa';
@@ -92,6 +95,7 @@ export type Command = CommandBase &
     | { type: 'applyEvent'; event: CircClinicalEvent } // Stage 7a
     | { type: 'applyEvent'; event: PkClinicalEvent } // Stage 7g
     | RespCommandBody // Stage 3 (types-resp.ts)
+    | OrganCommandBody // Stage 7d (types-organs.ts)
     | LungCommandBody // Stage 7b (types-lung.ts)
   );
 
@@ -136,7 +140,8 @@ export type EngineEvent =
   | DeviceEvent // Stage 4b (types-device.ts)
   | RespEvent // Stage 3 (types-resp.ts)
   | CircEvent // Stage 7a (types-circ.ts)
-  | DrugsEvent; // Stage 7g (types-pk.ts)
+  | DrugsEvent // Stage 7g (types-pk.ts)
+  | OrgansEvent; // Stage 7d (types-organs.ts)
 
 export type EngineEventType = EngineEvent['type'];
 
