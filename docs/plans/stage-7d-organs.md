@@ -3828,7 +3828,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: `organsRig` (Task 12), `advanceOrgans`/`OrgansCtx`/`OrgansState` (Task 11), `LONGRUN_HOURS`/`LONGRUN_S`/`expectedIndex` from `test/helpers/longrun.ts` (CI rule amendment).
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-soak.test.ts`
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-soak.test.ts`
 
 ```ts
 // Stage 7d soak. CI rule: the long-run horizon is test/helpers/longrun.ts (24 h locally, 6 h on the 2-vCPU CI runner).
@@ -3895,12 +3895,12 @@ describe('Stage 7d soak', () => {
 });
 ```
 
-- [ ] **Step 2: Run it** — locally the 24 h horizon (record the wall time), then as CI does:
+- [x] **Step 2: Run it** — locally the 24 h horizon (record the wall time), then as CI does:
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-soak.test.ts && CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-soak.test.ts`
 Expected: PASS. **Prototype:** determinism ✓; organ pipeline alone **0.00097 ms**/tick; 24 h locally (275 s wall): means ICP 9.97 → 9.89, hourly UOP 1.074 → 1.079, lactate 0.906 → 0.901; `latestSampleIndex('icp')` = 125·t + 12 (the 100 ms look-ahead, as `abp`). The first 2 h are excluded on purpose: 7a's CO rises 5.6 → 6.4 L/min in the first hour, so the fallback lactate pool (τ ≈ 40 min) and the neurohumoral factor (washout 45 min) settle (0.99 → 0.91, 1.02 → 1.05); single samples are not used for drift (one sample moves UOP ≈ 2 %/mmHg of MAP noise).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/organs-soak.test.ts docs/plans/stage-7d-organs.md
