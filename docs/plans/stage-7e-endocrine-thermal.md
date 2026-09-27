@@ -276,7 +276,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: nothing (pure).
 - Produces: every constant in `params.ts` (Stage 3 names unchanged: `HEAT_CAP_J_KG_C`, `CORE_FRACTION`, `M_AWAKE_W_70`, `PERIPH_GRADIENT_C`, `AMBIENT_C`, `GA_KCP`, `GA_M`, `NEURAXIAL_KCP`, `NEURAXIAL_H`, `VASOCONSTRICT_C`, `VASOCONSTRICT_KCP`, `MH_ONSET_S`, `MH_VCO2_FACTOR`, `SENSOR_TAU_S`; new: `THR_*`, `W_VASO_*`, `T_NORMAL`, `SUMMIT_W_PER_KG075`, `SHIVER_SPAN_C`, `SHIVER_MAX_X`, `SWEAT_W_PER_C`, `SWEAT_MAX_W_70`, `EMERGE_TAU_S`, `MH_HEAT_X` (8), `MH_VO2_FACTOR`, `MH_RELAX_TAU_S`, `DANT_GAIN`); `interface Thresholds { vaso; vasoW; shiver; sweat }`, `thresholds(depth: number, setShiftC: number): Thresholds`, `vasoDilation(tc, thr): number`, `shiverW(tc, thr, m0, effKg, nmb): number`, `sweatW(tc, thr, effKg): number`.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/thresholds.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/thresholds.test.ts`
 
 ```ts
 // Stage 7e thresholds and effectors (tables §5c; annex B3 Pulse shivering/sweat forms).
@@ -319,12 +319,12 @@ describe('thermoregulatory thresholds', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/thresholds.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/thermal/params.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/thermal/params.ts`
 
 ```ts
 // Stage 7e thermoregulation constants (tables §5c; research 09 §7; annex B3). The Stage 3 heat-model constants move
@@ -387,7 +387,7 @@ export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrole
 export const DANT_GAIN = 1.6;
 ```
 
-- [ ] **Step 4: Implement** `packages/engine-core/src/l2/thermal/thresholds.ts`
+- [x] **Step 4: Implement** `packages/engine-core/src/l2/thermal/thresholds.ts`
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -453,12 +453,12 @@ export function sweatW(tc: number, thr: Thresholds, effKg: number): number {
 }
 ```
 
-- [ ] **Step 5: Run the tests and the typecheck**
+- [x] **Step 5: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/thresholds.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (4 tests), typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/thermal/thresholds.test.ts packages/engine-core/src/l2/thermal/params.ts packages/engine-core/src/l2/thermal/thresholds.ts
