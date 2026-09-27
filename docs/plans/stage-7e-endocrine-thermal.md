@@ -4237,7 +4237,7 @@ git push origin stage-7e-endocrine-thermal
 - Create: `docs/gates/stage-7e.md`
 - Modify: `docs/plans/stage-7e-endocrine-thermal.md` (ticks)
 
-- [ ] **Step 1: Merge main, full run** (alone on the machine)
+- [x] **Step 1: Merge main, full run** (alone on the machine)
 
 ```bash
 git fetch origin && git merge --no-edit origin/main
@@ -4246,7 +4246,7 @@ PME_TEST_SET=fast CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core test 2>&1 | 
 ```
 Expected: all green except the recorded items (Q-7e-8 child desaturation if still open; the `it.fails` of Tasks 14–15 count as passing). Record the test counts per package and both CI sets' counts.
 
-- [ ] **Step 2: Write `docs/gates/stage-7e.md`** with exactly these sections, every number measured on the branch (copy the console lines the tests print):
+- [x] **Step 2: Write `docs/gates/stage-7e.md`** with exactly these sections, every number measured on the branch (copy the console lines the tests print):
 
 ```markdown
 # Gate 7e — endocrine, glucose–insulin, thyroid, thermoregulation (MH), system conditions
@@ -4294,7 +4294,7 @@ docs/gates/stage-7e/mh-20min.png, mh-dantrolene-20min.png, hypothermia-60min.png
 Groups/INTERNAL/SKIP added (Task 19) — or "7x absent".
 ```
 
-- [ ] **Step 3: Tick every box of this plan in the branch copy, commit, push**
+- [x] **Step 3: Tick every box of this plan in the branch copy, commit, push**
 
 ```bash
 git add docs/gates/stage-7e.md docs/plans/stage-7e-endocrine-thermal.md
@@ -4302,7 +4302,7 @@ git commit -m "docs(gates): Stage 7e gate note — acceptance numbers, R45 misse
 git push origin stage-7e-endocrine-thermal
 ```
 
-- [ ] **Step 4: Open the PR** (do NOT merge)
+- [x] **Step 4: Open the PR** (do NOT merge)
 
 ```bash
 gh pr create --base main --head stage-7e-endocrine-thermal --title "Stage 7e: endocrine stress response, glucose–insulin, thyroid, thermoregulation (MH), system conditions" --body "$(cat <<'EOF2'
