@@ -1984,7 +1984,7 @@ git push origin stage-7c-blood
 - Consumes: `l1Target`, `L1State` (Stage 2/3 `l1/state.ts`).
 - Produces: `CircLike {t, vol[], ext, ref?: {co}}`, `circOf(hemo)`, `pushCircVolume(c, dMl, dtS)` (`until` = `t + dtS − 1 µs`), `setCircChemistry(c, k)` (writes `ext.kChem` unconditionally, R50 F3), `volumeCoFactor(bvRatio)`, `applyL1Fallback(l1, t, bvRatio, kChem)` (unit rigs without a circuit), `chemistryContractility(ph, iCa)`, `pulmCapPressure(hemo)` (7a's `circOut.pPv` or null), `LW_GAIN`, `LW_TAU_MIN`, `lungWaterStep(w, pCap, cop, kfMult, sigmaRel, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/circ-adapter.test.ts`:
 
@@ -2041,12 +2041,12 @@ describe('circulation adapter (plan decision 10)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/circ-adapter.test.ts`
 Expected: FAIL (module missing).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/circ-adapter.ts`:
 
@@ -2139,11 +2139,11 @@ export function lungWaterStep(w: number, pCap: number, cop: number, kfMult: numb
 
 Check 7a's real state shape on your base: `grep -n "vol: VolumeEvent\[\]\|kChem?\|ref: Stabilised" packages/engine-core/src/l2/circ/model.ts` must show `vol` (`VolumeEvent {rate mL/s, until}`), the optional `kChem` in `ext` and `ref`; `grep -n "pPv" packages/engine-core/src/l2/circ/circuit.ts` must show `CircOut.pPv`. If 7a renamed any of them, change ONLY `circOf`/`CircLike`/`pulmCapPressure` to match and note it in the gate note. The lung-water constants are [ENG, Q25]: steady state W = 10 mL/kg for 10 mmHg above the threshold (tables §4.5 then gives shunt +0.21 and compliance ×0.6 at EVLWI 17), most of it within the hour.
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/circ-adapter.test.ts` → PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/circ-adapter.ts packages/engine-core/test/l2/blood/circ-adapter.test.ts
