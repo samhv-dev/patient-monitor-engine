@@ -13,7 +13,7 @@ import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmS
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
-import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrState } from './l3/hr.ts';
+import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // FU-1 (E-4a-2): data-only dependency (R30)
 import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
@@ -523,7 +523,8 @@ class Engine implements MonitorEngine {
         }
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, this.hrAveraging()) } }); // FU-1: skin averaging
+          const hra = this.hrAveraging();
+          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, hra.avg, hra.method) } }); // FU-1/FU-3: the skin's averaging
         }
       },
     );
@@ -788,12 +789,18 @@ class Engine implements MonitorEngine {
     this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
   }
 
-  /** FU-1 (E-4a-2): the active skin's optional `hr.averaging`, cached per skin id (a skin switch picks it up). */
-  private hrAvgCache: { skin: string; avg: HrAveraging | undefined } | null = null;
-  private hrAveraging(): HrAveraging | undefined {
+  /**
+   * FU-1 (E-4a-2): the active skin's optional `hr.averaging`, and (FU-3, Q-FU2-11) its 12-RR method — philips-like's
+   * disclosed plain mean, the IEC-default trimmed mean otherwise — cached per skin id (a skin switch picks them up).
+   */
+  private hrAvgCache: { skin: string; avg: HrAveraging | undefined; method: HrMethod } | null = null;
+  private hrAveraging(): { avg: HrAveraging | undefined; method: HrMethod } {
     const skin = this.dev.alarms.profile.skin;
-    if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
-    return this.hrAvgCache.avg;
+    if (this.hrAvgCache?.skin !== skin) {
+      const r = resolveSkin(skin);
+      this.hrAvgCache = { skin, avg: hrAveragingOf(r.skin), method: r.render.hrMethod.engine ?? 'dropMaxMin' };
+    }
+    return this.hrAvgCache;
   }
 
   /**

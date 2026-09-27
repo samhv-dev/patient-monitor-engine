@@ -5,6 +5,9 @@
 // The "up to 8 RR during PVC runs" rule needs arrhythmia classification and arrives in Stage 4.
 // FU-1 (E-4a-2): a skin may set `hr.averaging: { kind: 'beats' | 'seconds', n }` — the plain mean of the last n RR,
 // or of the RR ending in the last n seconds (at least the last 2). Without it the HR is computed as above.
+// FU-3 (Q-FU2-11): the method (trimmed or plain mean of 12) is the active skin's (`hrMeasure`'s `method`), not the
+// state's creation default: on AF's right-skewed RR the trimmed mean reads 3–5 % high at 130–145, and philips-like
+// discloses the plain mean (research 03 §1.12).
 import type { Measured } from '../types.ts';
 
 export type HrMethod = 'dropMaxMin' | 'mean12';
@@ -66,8 +69,11 @@ export function hrOnQrs(st: HrState, tR: number): void {
   st.lastR = tR;
 }
 
-/** The HR numeric at time t (call once per second); `avg` is the skin's optional averaging (FU-1). */
-export function hrMeasure(st: HrState, t: number, avg?: HrAveraging): Measured {
+/**
+ * The HR numeric at time t (call once per second); `avg` is the skin's optional averaging (FU-1), `method` the
+ * skin's 12-RR method (FU-3; defaults to the state's).
+ */
+export function hrMeasure(st: HrState, t: number, avg?: HrAveraging, method: HrMethod = st.method): Measured {
   if (st.lastR >= 0 && t - st.lastR >= ASYSTOLE_S) return { value: 0, flag: 'valid', at: t };
   if (avg) return averaged(st, t, avg);
   const rrs = st.rrs;
@@ -75,7 +81,7 @@ export function hrMeasure(st: HrState, t: number, avg?: HrAveraging): Measured {
   const last3 = rrs.slice(-3);
   let sel: number[];
   if (last3.length === 3 && last3.every((rr) => rr > SLOW_RR_S)) sel = rrs.slice(-4);
-  else if (st.method === 'dropMaxMin' && rrs.length >= 4) {
+  else if (method === 'dropMaxMin' && rrs.length >= 4) {
     const sorted = [...rrs].sort((a, b) => a - b);
     sel = sorted.slice(1, -1);
   } else sel = rrs;
