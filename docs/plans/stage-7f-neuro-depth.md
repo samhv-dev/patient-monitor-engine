@@ -1983,7 +1983,7 @@ git push
 - Consumes: every module above; 7g's `DrugBus` and `DRUG_BUS_NEUTRAL` (`src/types-pk.ts`); `StimulusEvent` (Task 1); `seedStream` (`src/rng/sfc32.ts`; the stream name `'neuro-tof'` is new and does not shift any existing stream); the rig (Task 3) for the naloxone test.
 - Produces: `NEURO_DT_S` 0.1, `FASC_FROM_S` 25, `FASC_TO_S` 45, `MH_VOLATILE_MAC` 0.1, `STIM_FULL` 1.5, `NeuroEnv { tempC; mechanical; neuroglycopenia?; macF? }`, `NeuroState` (fields listed in the file; `resp: NeuroResp` is the hook, `outputs: NeuroOutputs`, top-level `antinoc`/`nmb`/`thermoDepth` for 7e, `doseSeenT`, `stim { intensity; level }`, `last { tof; thumb; dia; d; x }`, `fasc`/`emgBase` for the engine), `createNeuroState(profile, seed)`, `validateNeuroCommand(cmd)` (reason | undefined | null — null for every `drug` and `vaporiser` event; validates `stimulus` only inside the TEMPORARY OWNER block, decision 17), `applyNeuroCommand(ns, cmd, t)` (true = consumed; false for `stimulus` (observed) and for everything that is not 7f's), `fasciculating(ns, t)`, `stepNeuroTo(ns, tEnd, env, bus)`. There is no PK field in `NeuroState` and no PK stepping (R51 §1).
 
-- [ ] **Step 1: Write the failing test** (exact; concentrations come from a bus fixture — R51: 7f tests construct the bus — except the naloxone test, which drives 7g's real PK through the rig; if Task 1 Step 1 printed "7E ALREADY MERGED", omit the test marked `[temporary owner until 7e]`):
+- [x] **Step 1: Write the failing test** (exact; concentrations come from a bus fixture — R51: 7f tests construct the bus — except the naloxone test, which drives 7g's real PK through the rig; if Task 1 Step 1 printed "7E ALREADY MERGED", omit the test marked `[temporary owner until 7e]`):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2135,9 +2135,9 @@ describe('neuro pipeline', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** (unresolved import).
+- [x] **Step 2: Run; expect FAIL** (unresolved import).
 
-- [ ] **Step 3: Implement** (exact):
+- [x] **Step 3: Implement** (exact):
 
 ```ts
 // Stage 7f pipeline (R32): the neuro state, its commands, and the 10 Hz step the engine runs inside advance() AFTER
@@ -2450,9 +2450,9 @@ export function stepNeuroTo(ns: NeuroState, tEnd: number, env: NeuroEnv, bus: Dr
 }
 ```
 
-- [ ] **Step 4: Run; expect PASS** (13 tests; 12 if 7e merged first) and `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck` clean. If 7e merged first: delete the `case 'stimulus'` block between the `TEMPORARY OWNER` markers in `validateNeuroCommand` (7e's validator owns it), keep the observing `case 'stimulus'` in `applyNeuroCommand`. The naloxone test is the F2 regression guard: without the division in `readBus` it fails (`back` NaN).
+- [x] **Step 4: Run; expect PASS** (13 tests; 12 if 7e merged first) and `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck` clean. If 7e merged first: delete the `case 'stimulus'` block between the `TEMPORARY OWNER` markers in `validateNeuroCommand` (7e's validator owns it), keep the observing `case 'stimulus'` in `applyNeuroCommand`. The naloxone test is the F2 regression guard: without the division in `readBus` it fails (`back` NaN).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/neuro/pipeline.ts packages/engine-core/test/l2/neuro/pipeline.test.ts
