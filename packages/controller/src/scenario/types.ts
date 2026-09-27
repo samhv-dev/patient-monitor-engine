@@ -1,7 +1,7 @@
 // `pme-scenario/1` document types (DESIGN-BRIEF §7.4). The JSON Schema in scenarios/pme-scenario-1.schema.json is
 // the contract; these types mirror it. Commands in a document carry no id/issuedBy/atTick/stageGroup: the driver
 // stamps them, and every onExit+onEnter list runs as ONE stage group (one tick, "stage then commit", brief §4.9).
-import type { Ramp, StateVar } from '@pme/engine-core';
+import type { BloodProfile, LungConditionSpec, NeuroProfile, ProfileCondition, Ramp, StateVar } from '@pme/engine-core';
 import type { ClinicalEvent, ModelInput, SensorId } from '../protocol.ts';
 
 export type Op = '<' | '<=' | '>' | '>=' | '==' | '!=';
@@ -65,6 +65,19 @@ export interface ScenarioPatient {
   baseline?: Partial<Record<StateVar, number>>;
   rhythm?: { id: string; opts?: Record<string, unknown> };
   sensors?: Partial<Record<SensorId, string>>;
+  /** Stage 7f's neuro block and Stage 7c's blood block (in the schema since 7f), passed to the engine as they are. */
+  neuro?: NeuroProfile;
+  blood?: BloodProfile;
+  /** R22 patient profile (FU-3 item 9): the engine's PatientProfile `conditions` and `lungConditions`, 1:1. */
+  profile?: ScenarioProfile;
+}
+
+/** Chronic conditions of the body (fixed at engine creation). Acute events stay applyEvent commands. */
+export interface ScenarioProfile {
+  /** 7a circulation (hfref, hfpef, htn, as, ar, mr, ms, tr, cad, betaBlocked, rvFailure, ph) and 7d organs (tbi, hepaticFailure, aki). */
+  conditions?: ProfileCondition[];
+  /** 7b lung catalogue conditions; pregnancy is `{ id: 'pregnancy', severity }` (term = 1). */
+  lungConditions?: LungConditionSpec[];
 }
 
 /** An authored jump point shown in the timeline; choosing it is a `goto` to `state`. */
