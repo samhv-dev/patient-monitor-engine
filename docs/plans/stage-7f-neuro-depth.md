@@ -716,7 +716,7 @@ git push
 - Consumes: `readBus`, `NmbAgent`, `NMB_AGENTS` (Task 2); the rig (Task 3); `neoEc50Mult` from Task 5 is imported by the helper — **create `src/l2/neuro/neostigmine.ts` now from Task 5 Step 3 verbatim** (its own test comes in Task 5).
 - Produces: `NmbPd { ec50Thumb; ec50Dia; gamma; depolarising }`, `NMB_PD`, `DIA_EC50_RATIO` 1.73, `TOF_THRESH`, `TOFR_EXP`, `PTC_LO` 0.01, `PTC_HI` 0.03, `hillBlock(ce, ec50, gamma)`, `siteBlock(ce, site: 'thumb' | 'dia', ec50Mult) → { b; nd; dep }`, `TofReading { t1; count; ratio; ptc; twitches }`, `tofFrom(b, ndShare, phase2)`, `phase2Fraction(cumMgPerKg)`; re-exports `NmbAgent`, `NMB_AGENTS`; test helper `ONE`, `NmbPoint { tof; dia }`, `readNmb(bus, ec50?)`, `untilTof(r, pred, maxMin, ec50?)`, `t1Course(r, min, ec50?)`, `onsetMin(t1)` (max block, decision 3), `recoveryMin(t1, level)`.
 
-- [ ] **Step 1: Write the failing tests.** `packages/engine-core/test/l2/neuro/nmb.test.ts`:
+- [x] **Step 1: Write the failing tests.** `packages/engine-core/test/l2/neuro/nmb.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -927,9 +927,9 @@ describe('NMB time course on 7g\'s PK', { timeout: 120_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run both; expect FAIL** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/nmb.test.ts test/l2/neuro/nmb-course.test.ts` → "Failed to resolve import …/nmb.ts".
+- [x] **Step 2: Run both; expect FAIL** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/nmb.test.ts test/l2/neuro/nmb-course.test.ts` → "Failed to resolve import …/nmb.ts".
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/neuro/nmb.ts` (exact):
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/neuro/nmb.ts` (exact):
 
 ```ts
 // Neuromuscular block PD (tables §5d; 7f owns it, R51 §2). Effect-site concentration (ng/mL, 7g's PK via bus.ts) →
@@ -1033,9 +1033,9 @@ export function phase2Fraction(cumMgPerKg: number): number {
 }
 ```
 
-- [ ] **Step 4: Run the PD test; expect PASS** — `… exec vitest run test/l2/neuro/nmb.test.ts` → 5 passed.
+- [x] **Step 4: Run the PD test; expect PASS** — `… exec vitest run test/l2/neuro/nmb.test.ts` → 5 passed.
 
-- [ ] **Step 5: Confirm the [ENG] EC50s against 7g's PK.** The values in Step 3 were fitted in the prototype on the merged base; this scratch run re-checks them on YOUR base (a later 7g/FU change could move them). Create `packages/engine-core/test/l2/neuro/nmb-fit.scratch.test.ts` (exact; run it, read the console, DELETE it — never commit):
+- [x] **Step 5: Confirm the [ENG] EC50s against 7g's PK.** The values in Step 3 were fitted in the prototype on the merged base; this scratch run re-checks them on YOUR base (a later 7g/FU change could move them). Create `packages/engine-core/test/l2/neuro/nmb-fit.scratch.test.ts` (exact; run it, read the console, DELETE it — never commit):
 
 ```ts
 // Throw-away fit of 7f's NMB EC50/γ against 7g's PK (R51 §5). Prints max block / T1 10 % / T1 25 % / T1 90 % /
@@ -1080,9 +1080,9 @@ Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro
 - If no value in range meets a band, keep the closest, mark the row `[ENG, band missed: <band> measured <value>]`, list it under "needs a ruling" in the gate note. Never widen a band.
 - Delete the scratch file: `rm packages/engine-core/test/l2/neuro/nmb-fit.scratch.test.ts`.
 
-- [ ] **Step 6: Run the course test** — `… exec vitest run test/l2/neuro/nmb.test.ts test/l2/neuro/nmb-course.test.ts` → nmb 5 passed; nmb-course 8: **7 pass + 1 pre-declared `it.fails` that must report as passing-as-expected** (`[FU-3 item 1] succinylcholine …`). Prototype numbers: rocuronium 0.6 → TOF 0 1.32 / T1 25 % 30.0 / TOFR 0.9 80.7 min; 1.2 → 0.58 / 62.9; vecuronium 3.03 / 25.2; cisatracurium 2.48 / 42.4; cholinesterase het T1 90 % 17.4 min, hom 6.09 h; succinylcholine (FU-3) 0.17 / 5.37 / 12.68.
+- [x] **Step 6: Run the course test** — `… exec vitest run test/l2/neuro/nmb.test.ts test/l2/neuro/nmb-course.test.ts` → nmb 5 passed; nmb-course 8: **7 pass + 1 pre-declared `it.fails` that must report as passing-as-expected** (`[FU-3 item 1] succinylcholine …`). Prototype numbers: rocuronium 0.6 → TOF 0 1.32 / T1 25 % 30.0 / TOFR 0.9 80.7 min; 1.2 → 0.58 / 62.9; vecuronium 3.03 / 25.2; cisatracurium 2.48 / 42.4; cholinesterase het T1 90 % 17.4 min, hom 6.09 h; succinylcholine (FU-3) 0.17 / 5.37 / 12.68.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git status --short packages/engine-core/test/l2/neuro/ # the scratch fit file must be gone
