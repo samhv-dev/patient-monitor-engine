@@ -63,6 +63,9 @@ import {
   type RespChannel,
   type RespState,
 } from './l2/resp/pipeline.ts'; // Stage 3
+import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
+import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
+import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
@@ -101,6 +104,8 @@ interface PipelineState {
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
   resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
+  pk: PkState; // Stage 7g
+  pkHooks: RhythmHookState; // Stage 7g
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -217,6 +222,8 @@ class Engine implements MonitorEngine {
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
+      pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
+      pkHooks: createHookState(), // Stage 7g
     };
     this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
@@ -310,6 +317,8 @@ class Engine implements MonitorEngine {
     // Exact replay is promised only on the same build and the same filter design (review L10).
     if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
     const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
+    data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
+    data.st.pkHooks ??= createHookState(); // Stage 7g
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -404,6 +413,28 @@ class Engine implements MonitorEngine {
     this.dirtyFromN = Number.POSITIVE_INFINITY;
   }
 
+  /** Stage 7g: the PK/PD context read from the other modules (duck-typed; neutral when a module is absent). */
+  private pkCtx(ps: PipelineState): PkCtx {
+    const circ = (ps.hemo as { circ?: CircModelState }).circ;
+    const resp = ps.resp as unknown as { vaLpm?: number; pat?: { frcGaMl?: number }; temp?: { tc?: number } };
+    const blood = (ps as unknown as { blood?: { out?: { hbfRel?: number }; core?: { liver?: number; ab?: { ph?: number } } } }).blood;
+    const organs = (ps as unknown as { organs?: { kidney?: { gfrRel?: number } } }).organs;
+    const cond = (ps as unknown as { cond?: { vasoResp?: number } }).cond;
+    return {
+      ...NEUTRAL_PK_CTX,
+      coLpm: circ ? circCardiacOutput(circ) : NEUTRAL_PK_CTX.coLpm,
+      vaLpm: resp.vaLpm ?? NEUTRAL_PK_CTX.vaLpm,
+      frcL: (resp.pat?.frcGaMl ?? 2100) / 1000,
+      tempC: resp.temp?.tc ?? 37,
+      ph: blood?.core?.ab?.ph ?? 7.4,
+      hepFlow: blood?.out?.hbfRel ?? 1,
+      hepFn: blood?.core?.liver ?? 1,
+      renal: organs?.kidney?.gfrRel ?? 1,
+      betaBlockC: circ?.prof.betaBlockC ?? 0,
+      vasoResp: cond?.vasoResp ?? 1,
+    };
+  }
+
   /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
   private advance(ps: PipelineState, end: number): void {
     if (end < ps.n) return;
@@ -444,6 +475,18 @@ class Engine implements MonitorEngine {
         }
       },
     );
+    advancePk(ps.pk, this.pkCtx(ps), end / ECG_RATE); // Stage 7g: drugs first, every consumer reads this instant's effects
+    const circ7g = (ps.hemo as { circ?: CircModelState }).circ; // Stage 7g
+    if (circ7g) {
+      circ7g.ext.drug = ps.pk.fx;
+      circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
+    }
+    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g
+    if (req7g) {
+      // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
+      ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
+      applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
+    }
     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
     const resp = ps.resp; // Stage 3
     advanceHemo(
@@ -477,6 +520,7 @@ class Engine implements MonitorEngine {
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
+    this.st.pk.out = keep(this.st.pk.out); // Stage 7g
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
   }
@@ -534,6 +578,8 @@ class Engine implements MonitorEngine {
     if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
     const dev = validateDeviceCommand(this.dev, cmd); // Stage 4b
     if (dev !== null) return dev;
+    const pkV = validatePkCommand(cmd, this.st.pk); // Stage 7g: every library drug event is 7g's (R51 §3) — an error is final, ok = accepted
+    if (pkV !== null) return pkV;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
     if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
@@ -584,6 +630,7 @@ class Engine implements MonitorEngine {
       for (const e of devOut) this.emit(e);
       return;
     }
+    if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
       return;

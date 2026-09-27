@@ -21,7 +21,7 @@ describe('clinical commands', () => {
     expect(describeCommand(probe)).toBe('sensor spo2 off');
   });
 
-  it('a plain host forwards applyEvent to the engine, which rejects it as not implemented', async () => {
+  it('a plain host forwards applyEvent to the engine, which accepts a library drug (Stage 7g)', async () => {
     const host = manualHost();
     const hub = createInProcessHub();
     const hs = new HostSession({ session: 'CLN234', target: host, stateIntervalMs: 0 });
@@ -30,8 +30,6 @@ describe('clinical commands', () => {
     cleanup.push(() => s.close(), () => hs.close());
     await waitFor(() => s.hostOnline);
     const r = await s.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' } });
-    expect(r.accepted).toBe(false);
-    // Stage 7a: the engine now owns drug events and rejects the drugs that arrive with 7g (still 'not implemented')
-    expect(r.reason).toBe('drug epinephrine is not implemented until Stage 7g');
+    expect(r.accepted).toBe(true); // Stage 7g: every library drug is modelled (l2/pk)
   });
 });

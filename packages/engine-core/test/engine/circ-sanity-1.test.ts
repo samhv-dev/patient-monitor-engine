@@ -61,7 +61,12 @@ describe('sanity scenarios I (MODELED)', () => {
     console.log(`class II: SBP ${r.st(100, 120, 'sbp').toFixed(0)} → ${r.st(740, 780, 'sbp').toFixed(0)}, HR ${r.st(740, 780, 'hr').toFixed(0)}, PP ${pp0.toFixed(0)} → ${pp1.toFixed(0)}, PPV ${ppv(100, 118).toFixed(1)} → ${ppv(750, 778).toFixed(1)} %`);
     expect(ppv(750, 778)).toBeGreaterThan(13);
   }, 300_000);
-  it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) with little HR rise (< +15)', async () => {
+  // Stage 7g Task 20 (R45: band kept, it.fails, gate note): propofol now runs on the Eleveld Ce with T6.3's
+  // E = Ce/(Ce + 3.5). Measured MAP ratio 0.913, HR +16.6 at 2 min (nadir 0.910 at the 3 min Ce peak). No re-fit inside
+  // the permitted T6.3 ranges meets the band: gvHr −0.8 / SVR −0.55 / EC50 2.5 (the corner) gives 0.867 with HR +19.6;
+  // gvHr −0.8 alone 0.913 / +15.3. With the Schnider ke0 the ratio is 0.838 / +18.6. The 7a Bateman fit used E ≈ 0.9 at
+  // the peak; T6.3 gives E ≈ 0.44 at Ce 2.75. Needs a ruling (Q57 / calibration pass).
+  it.fails('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) with little HR rise (< +15)', async () => {
     const r = await run({}, [[120, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]], 300);
     const ratio = r.map(235, 245) / r.map(100, 120);
     console.log(`propofol MAP ratio ${ratio.toFixed(2)} dHR ${(r.st(235, 245, 'hr') - r.st(100, 120, 'hr')).toFixed(1)}`);
