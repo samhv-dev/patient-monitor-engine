@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { join } from 'node:path';
 import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { compareRow } from '../src/oracle/compare.ts';
-import { loadPulse } from '../src/oracle/pulse-runner.ts';
+import { loadPulse, pulseDir } from '../src/oracle/pulse-node.ts';
 import { RENAL_ORACLE } from '../src/oracle/renal-scenarios.ts';
-import type { OracleRow } from '../src/oracle/scenarios.ts';
 
-const DIR = process.env.PULSE_ORACLE_DIR;
+const DIR = pulseDir();
 const KG = 77.1; // Pulse StandardMale
 const PULSE_KEYS = { uop: 'UrineProductionRate(mL/min)', map: 'MeanArterialPressure(mmHg)' } as const;
 
@@ -20,10 +18,10 @@ describe('O11 scenario data', () => {
   });
 });
 
-describe.skipIf(!DIR)('Pulse oracle O11 — renal hypotension (set PULSE_ORACLE_DIR=…/research/pulse-spike/web)', () => {
+describe.skipIf(!DIR)('Pulse oracle O11 — renal hypotension (set PME_PULSE_DIR=…/research/pulse-spike/web)', () => {
   it('O11', async () => {
     const sc = RENAL_ORACLE;
-    const p = await loadPulse(DIR as string, join(DIR as string, '../bench/drm_names.json'));
+    const p = await loadPulse(DIR as string);
     const e = createEngine({ seed: 1, mode: 'modeled', patient: { ageY: 44, sex: 'M', weightKg: KG, heightCm: 180, baseline: { hr: 72 } } });
     const ev: EngineEvent[] = [];
     e.on((x) => ev.push(x), ['organs']);
@@ -39,7 +37,7 @@ describe.skipIf(!DIR)('Pulse oracle O11 — renal hypotension (set PULSE_ORACLE_
         t += 1;
         if (t % 60 === 0) await new Promise((r) => setImmediate(r));
       }
-      pulseAt[at] = p.read();
+      pulseAt[at] = p.pull();
       e.advanceTo(at);
     }
     const ours = (at: number, k: keyof typeof PULSE_KEYS) => {
@@ -52,7 +50,7 @@ describe.skipIf(!DIR)('Pulse oracle O11 — renal hypotension (set PULSE_ORACLE_
       const k = PULSE_KEYS[row.channel];
       const o = row.metric === 'abs' ? ours(row.atS, row.channel) : ours(row.atS, row.channel) - ours(sc.baselineS, row.channel);
       const pv = row.metric === 'abs' ? pulseAt[row.atS]![k]! : pulseAt[row.atS]![k]! - pulseAt[sc.baselineS]![k]!;
-      const verdict = compareRow(o, pv, row as unknown as OracleRow); // compareRow reads tol/expect only
+      const verdict = compareRow(o, pv, row);
       console.log(`O11 ${row.channel} ${row.metric} @${row.atS}s: ours ${o.toFixed(3)} pulse ${pv.toFixed(3)} → ${verdict}${row.note ? ` (${row.note})` : ''}`);
       verdicts.push(verdict);
     }
