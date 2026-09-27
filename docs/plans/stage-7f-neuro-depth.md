@@ -3112,7 +3112,7 @@ git push
 **Interfaces:**
 - Produces: `TileParam` gains `'NMT' | 'BFA'`; `ColorKey` gains `'NMT'` (`'BFA'` exists); `TILE_NUMERICS.NMT = { numerics: ['tofRatio','tofCount','ptc'], limits: [] }`, `TILE_NUMERICS.BFA = { numerics: ['di','sr'], limits: [] }`.
 
-- [ ] **Step 1: Write the failing test** `packages/skins/test/neuro-tiles.test.ts`:
+- [x] **Step 1: Write the failing test** `packages/skins/test/neuro-tiles.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3128,13 +3128,13 @@ describe('Stage 7f tile fields (decision 14)', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** (`npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/neuro-tiles.test.ts`).
+- [x] **Step 2: Run; expect FAIL** (`npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/neuro-tiles.test.ts`).
 
-- [ ] **Step 3: Implement.** `packages/skins/src/types.ts`: in `COLOR_KEYS` after `'BFA', 'AGENTS',` add a line `  'NMT', // Stage 7f: neuromuscular transmission (TOF) tile`; replace the `TILE_PARAMS` line's `'CO2', 'ST'] as const;` with `'CO2', 'ST', 'NMT', 'BFA'] as const; // Stage 7f: NMT, BFA`. `packages/skins/src/resolve.ts`: in `TILE_COLOR_KEY` after `SpO2: 'SpO2', TEMP: 'TEMP', RR: 'RESP', CO2: 'CO2', ST: 'ST',` add `  NMT: 'NMT', BFA: 'BFA', // Stage 7f`. `packages/renderer/src/alarm-view.ts`: in `TILE_NUMERICS` after the `ST:` entry add `  NMT: { numerics: ['tofRatio', 'tofCount', 'ptc'], limits: [] }, // Stage 7f` and `  BFA: { numerics: ['di', 'sr'], limits: [] }, // Stage 7f`. `apps/demo/src/stage4a/screen.ts`: in `SAMPLE` after `ST: { v: '0.1' },` add `  NMT: { v: '92%', x: 'TOF 4/4' }, BFA: { v: '45', x: 'SR 0' }, // Stage 7f`. No skin JSON needs a value (the colour keys are optional; the demo falls back).
+- [x] **Step 3: Implement.** `packages/skins/src/types.ts`: in `COLOR_KEYS` after `'BFA', 'AGENTS',` add a line `  'NMT', // Stage 7f: neuromuscular transmission (TOF) tile`; replace the `TILE_PARAMS` line's `'CO2', 'ST'] as const;` with `'CO2', 'ST', 'NMT', 'BFA'] as const; // Stage 7f: NMT, BFA`. `packages/skins/src/resolve.ts`: in `TILE_COLOR_KEY` after `SpO2: 'SpO2', TEMP: 'TEMP', RR: 'RESP', CO2: 'CO2', ST: 'ST',` add `  NMT: 'NMT', BFA: 'BFA', // Stage 7f`. `packages/renderer/src/alarm-view.ts`: in `TILE_NUMERICS` after the `ST:` entry add `  NMT: { numerics: ['tofRatio', 'tofCount', 'ptc'], limits: [] }, // Stage 7f` and `  BFA: { numerics: ['di', 'sr'], limits: [] }, // Stage 7f`. `apps/demo/src/stage4a/screen.ts`: in `SAMPLE` after `ST: { v: '0.1' },` add `  NMT: { v: '92%', x: 'TOF 4/4' }, BFA: { v: '45', x: 'SR 0' }, // Stage 7f`. No skin JSON needs a value (the colour keys are optional; the demo falls back).
 
-- [ ] **Step 4: Run** `npx -y pnpm@9.15.9 -r typecheck` and `npx -y pnpm@9.15.9 --filter @pme/skins --filter @pme/renderer test`; expect PASS (prototype on the merged base: skins 169 incl. this test, renderer 67; the demo's `SAMPLE` record typechecks).
+- [x] **Step 4: Run** `npx -y pnpm@9.15.9 -r typecheck` and `npx -y pnpm@9.15.9 --filter @pme/skins --filter @pme/renderer test`; expect PASS (prototype on the merged base: skins 169 incl. this test, renderer 67; the demo's `SAMPLE` record typechecks).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/skins/src/types.ts packages/skins/src/resolve.ts packages/renderer/src/alarm-view.ts apps/demo/src/stage4a/screen.ts packages/skins/test/neuro-tiles.test.ts
