@@ -3609,7 +3609,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: `organsRig` (Task 12); MANUAL `setTarget` (`volumeStatus`, `sbp`, `dbp`, `hr`); 7a's `hfref` condition (MODELED); 7g's dobutamine infusion; `cardiacOutput` (read only).
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-renal.test.ts`
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-renal.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3672,12 +3672,12 @@ describe('kidney through the engine', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-renal.test.ts`
 Expected: PASS (2 tests, one `it.fails`; ≈ 32 s). **Prototype:** rest UOP 1.02; volumeStatus 0.2 (MAP ≈ 60): **0.003** and the OLIGURIA flag; fluids → **0.69** at 90 min; lactate (fallback pool) 1.27 at the bleed's end. Check 20: MODELED `hfref` severity 1 rests at MAP **87**, CO **5.6**, UOP **0.67**; dobutamine 5 µg/kg/min → CO 6.4, UOP 0.84 at 60 min — the premise is not reachable on this base (Deviations, R-7D-5b/c); the kidney's check-20 numbers are Task 9's. When 7a gains a low-output HFrEF profile, flip the `it.fails` and record the numbers.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/organs-renal.test.ts docs/plans/stage-7d-organs.md
