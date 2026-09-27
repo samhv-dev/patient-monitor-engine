@@ -13,7 +13,7 @@ import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmS
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
-import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrState } from './l3/hr.ts';
+import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrMethod, type HrState } from './l3/hr.ts';
 import { resolveSkin } from '@pme/skins'; // FU-1 (E-4a-2): data-only dependency (R30)
 import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
@@ -165,7 +165,11 @@ function tcpPulseAnnouncements(records: readonly EngineEvent[], from: number, to
 function rhythmCtx(ps: PipelineState): RhythmCtx {
   // Stage 7e: the endocrine/fever HR factor scales only the sinus node (FU-2 rate rule, NR-7g-5); exactly 1 at rest
   const endoF = SINUS_FAMILY.has(ps.rhythm.id) ? ps.endoHrF : 1;
-  return { hrAt: (t) => rampValue(ps.hr, t) * endoF, mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
+  return {
+    hrAt: (t) => rampValue(ps.hr, t) * endoF,
+    pacerLowerAt: (t) => rampValue(ps.hemo.circ.hrSet ?? ps.hr, t), // FU-3 (Q-FU2-10): the held rate is a pacer's lower rate
+    mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps), // Stage 5.1: breath
+  };
 }
 
 /** FU-2 (NR-7g-5): record the rate just written to ps.hr for MODELED mode's rate rule (explicit = the instructor's own rate). */
@@ -176,6 +180,7 @@ function holdRate(ps: PipelineState, rhythmId: string, explicit: boolean): void 
 /** hr truth when a rhythm starts: RhythmOpts.rateBpm, else the rhythm default (flutter: atrial/ratio). */
 function startRate(id: RhythmId, opts: RhythmOpts): number {
   if (opts.rateBpm !== undefined) return opts.rateBpm;
+  if (opts.pacer?.ratePpm !== undefined && RHYTHMS[id].rateDrives === 'pacer') return opts.pacer.ratePpm; // FU-3: a programmed lower rate
   if (id === 'aflutter') {
     const r = opts.ratio ?? 2;
     return (opts.atrialRateBpm ?? DEFAULT_FLUTTER_ATRIAL_BPM) / (r === 'variable' ? 3 : r);
@@ -535,7 +540,8 @@ class Engine implements MonitorEngine {
         }
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, this.hrAveraging()) } }); // FU-1: skin averaging
+          const hra = this.hrAveraging();
+          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, hra.avg, hra.method) } }); // FU-1/FU-3: the skin's averaging
         }
       },
     );
@@ -560,7 +566,7 @@ class Engine implements MonitorEngine {
       tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
     }, ps.pk.bus);
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3 }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's)
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const endoCtx = { l1: ps.l1, hemo: ps.hemo, resp: ps.resp, ps }; // Stage 7e: after 7c's blood, before 7d's organs and the haemodynamics
@@ -579,6 +585,12 @@ class Engine implements MonitorEngine {
         pIt: (t) => respPleural(resp, t), // Stage 7a
         requestHr: (bpm) => {
           ps.hr = constantRamp(bpm); // Stage 7a: MODELED mode drives the rhythm engine's rate
+        },
+        requestRhythm: (id, opts) => {
+          // FU-3 item 16: the MODELED hypoxaemic arrest, applied exactly as 7g's rhythm requests
+          ps.hr = constantRamp(startRate(id, opts));
+          holdRate(ps, id, false);
+          applyRhythm(ps.rhythm, id, opts, end / ECG_RATE, true, rhythmCtx(ps));
         },
       },
       Math.floor(end / 4),
@@ -805,12 +817,18 @@ class Engine implements MonitorEngine {
     this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
   }
 
-  /** FU-1 (E-4a-2): the active skin's optional `hr.averaging`, cached per skin id (a skin switch picks it up). */
-  private hrAvgCache: { skin: string; avg: HrAveraging | undefined } | null = null;
-  private hrAveraging(): HrAveraging | undefined {
+  /**
+   * FU-1 (E-4a-2): the active skin's optional `hr.averaging`, and (FU-3, Q-FU2-11) its 12-RR method — philips-like's
+   * disclosed plain mean, the IEC-default trimmed mean otherwise — cached per skin id (a skin switch picks them up).
+   */
+  private hrAvgCache: { skin: string; avg: HrAveraging | undefined; method: HrMethod } | null = null;
+  private hrAveraging(): { avg: HrAveraging | undefined; method: HrMethod } {
     const skin = this.dev.alarms.profile.skin;
-    if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
-    return this.hrAvgCache.avg;
+    if (this.hrAvgCache?.skin !== skin) {
+      const r = resolveSkin(skin);
+      this.hrAvgCache = { skin, avg: hrAveragingOf(r.skin), method: r.render.hrMethod.engine ?? 'dropMaxMin' };
+    }
+    return this.hrAvgCache;
   }
 
   /**

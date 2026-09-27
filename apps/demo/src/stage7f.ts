@@ -8,7 +8,7 @@ import { mountMonitor } from '@pme/renderer';
 type Body = Command extends infer C ? (C extends Command ? Omit<C, 'id' | 'issuedBy'> : never) : never;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const pm = mountMonitor($('monitor'), {
-  skin: 'philips-like',
+  skin: new URLSearchParams(location.search).get('skin') ?? 'philips-like', // FU-3 item 11: ?skin=saadat-like for the tile shots
   engine: { seed: 17, patient: { ageY: 45, weightKg: 70, heightCm: 172, sex: 'M', sensors: { spo2: 'on', co2: 'on', abp: 'connected' } } },
   lanes: ['ecgII'],
   waves: ['abp', 'pleth', 'co2', 'resp'],
@@ -93,10 +93,12 @@ $('induction').addEventListener('click', () => {
     void ev({ kind: 'stimulus', intensity: 0 });
     void ev({ kind: 'airwayDevice', device: 'ett' });
     void ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 });
-    void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 3, fgfLpm: 6 }); // 7g's vaporiser (R51 §4); over-pressure for the wash-in
-    log('ventilator, sevoflurane dial 3 % (FGF 6 L/min)');
+    // 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, Ali's call): 3 % on top of the propofol read DI 30
+    // at 13 min (gate 7f); 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
+    void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 6 });
+    log('ventilator, sevoflurane dial 2 % (FGF 6 L/min)');
   });
-  at(1200, () => { void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 6 }); void ev({ kind: 'stimulus', intensity: 1 }); log('incision (stimulus 1, held)'); });
+  at(1200, () => { void ev({ kind: 'stimulus', intensity: 1 }); log('incision (stimulus 1, held)'); });
 });
 $('reverse').addEventListener('click', () => { void drug('sugammadex', 2, 'mg/kg'); log('sugammadex 2 mg/kg'); });
 $('neo').addEventListener('click', () => { void drug('neostigmine', 0.05, 'mg/kg'); log('neostigmine 0.05 mg/kg'); });

@@ -8,7 +8,7 @@ import { rampValue, type RampState } from '../../l1/ramp.ts';
 import { createNibpState, nibpCommand, nibpNextIn, nibpOnPulse, nibpStep, AUTO_INTERVALS_MIN, type NibpOut, type NibpState } from '../../l3/nibp/nibp.ts';
 import { createWaveNumerics, numericsStep, piNumeric, pressureNumerics, prNumeric, type WaveNumerics } from '../../l3/pressure-numerics/numerics.ts';
 import { prSource } from '../../l3/pulse/detector.ts';
-import type { Sfc32State, StreamName } from '../../rng/sfc32.ts';
+import { uniform, type Sfc32State, type StreamName } from '../../rng/sfc32.ts'; // FU-3 item 16: uniform
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
 import type { DeviceAction } from '../../types.ts'; // Stage 7a
@@ -21,11 +21,12 @@ import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
+import { SAO2_REF, stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF)
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
+import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
 import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -80,6 +81,7 @@ export interface HemoCtx {
    */
   pItExternal?: (t: number) => number | undefined;
   requestHr?: (bpm: number) => void; // Stage 7a: MODELED mode drives the rhythm engine's rate (Task 15)
+  requestRhythm?: (id: RhythmId, opts: RhythmOpts) => void; // FU-3 item 16: MODELED hypoxaemic arrest switches the rhythm
 }
 
 export interface SiteBeatStat {
@@ -312,6 +314,8 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const cOwned = Math.abs(cT - 1) > 1e-9;
   if (cOwned || hs.circ.man.eesRvF !== 1) hs.circ.man.eesRvF = cT;
   if (cOwned) hs.circ.man.eesF = cT;
+  // FU-3 item 4: while the tracker owns LV Emax it is set against the current ischaemia; the hold keeps that reference
+  hs.circ.man.kIschRef = cOwned ? 1 : tr.pActive ? hs.circ.cor.kIsch : hs.circ.man.kIschRef;
   if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
   if (b.ref) {
     // the hold test uses ≈ 8-beat averages so ventilator-driven beat-to-beat swings (PPV) do not keep it running
@@ -372,8 +376,17 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const c = hs.circ;
   c.chemo = { sao2: l1Value(ctx.l1, 'spo2', t) / 100, paco2: l1Value(ctx.l1, 'etco2', t) + 5 }; // Task 19 chemoreflex inputs
   c.cor.eesF = c.kLv;
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR));
+  const pulseless = ctx.rhythm.opts?.pulseless === true; // FU-3 item 16
+  const hyp0 = c.cor.hyp;
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1); // FU-3 item 16: O2 content in the supply (MODELED)
+  // FU-3 item 16 (R50 review finding 1): a pulseless heart is not reperfused, so its hypoxic depression (and the
+  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless
+  if (pulseless) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
+  if (ctx.l1.mode === 'modeled' && ctx.requestRhythm) {
+    const req = hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, rampValue(ctx.hr, t), () => uniform(ctx.rng.outcome)); // FU-3 item 16
+    if (req) ctx.requestRhythm(req.id, req.opts);
+  }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
   if (Math.abs(nxt - hs.stApplied) >= 0.01) {
     hs.stPatch = { ischaemicDepressionMv: nxt };
@@ -692,14 +705,14 @@ export function applyHemoCommand(
         c.baro = createBaro(hs.lastSite.map, c.baro.cpLp); // no step on entry (brief §4.9): the reflexes start at rest
         c.base.rSys = c.man.rSys ?? c.base.rSys; // the MANUAL solution becomes the model's baseline
         c.base.v0Sv += c.man.dV0;
-        c.base.eesLv *= c.man.eesF;
+        c.base.eesLv *= c.man.eesF * Math.min(1, c.man.kIschRef / Math.max(1e-6, c.ext.kIsch)); // FU-3 item 4: the delivered Emax
         c.base.eesRv *= c.man.eesRvF;
         if (c.man.pvr !== null) {
           const f = c.man.pvr / ((c.base.pvrL * c.base.pvrR) / (c.base.pvrL + c.base.pvrR));
           c.base.pvrL *= f;
           c.base.pvrR *= f;
         }
-        c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null };
+        c.man = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 };
       } else {
         setL1Target(l1, 'sbp', t, Math.round(hs.lastSite.sbp)); // freeze outputs as targets
         setL1Target(l1, 'dbp', t, Math.round(hs.lastSite.dbp));

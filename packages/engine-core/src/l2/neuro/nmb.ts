@@ -25,13 +25,15 @@ export const DIA_EC50_RATIO = 1.73;
 /**
  * EC50 (ng/mL) and Hill γ, fitted on 7g's PK (R51 §5; Task 4 Step 5). Rocuronium: tables §5d (Plaud 1995 [P]; γ 4.8
  * [VERIFY]). Vecuronium, cisatracurium, succinylcholine [ENG]; "max block" = the stimulator plateau (decision 3).
- * Succinylcholine keeps 7g's effect-site value: its onset/duration miss is 7g's ke0 (FU-3 item 1), never fitted here.
+ * Succinylcholine keeps 7g's effect-site value: FU-3 item 1 re-fitted it in `l2/pk/nmb.ts` (EC50 200 → 1160, γ 4 → 6)
+ * together with the paper's CL/V1, because no (V1, CL, ke0) triple holds the §5d label course at EC50 200/γ 4 on a
+ * clearance within Roy 2002's measured 37 ± 7 mL·min⁻¹·kg⁻¹; this row mirrors 7g's numbers, it does not fit them.
  */
 export const NMB_PD: Record<NmbAgent, NmbPd> = {
   rocuronium: { ec50Thumb: 823, ec50Dia: 1424, gamma: 4.8, depolarising: false },
   vecuronium: { ec50Thumb: 158, ec50Dia: 158 * DIA_EC50_RATIO, gamma: 4, depolarising: false }, // [ENG, fitted on 7g's PK: max block 3.03 / T1 25 % 25.2 min]
   cisatracurium: { ec50Thumb: 230, ec50Dia: 230 * DIA_EC50_RATIO, gamma: 6.9, depolarising: false }, // [ENG, 7g's value, meets on 7g's PK: max block 2.48 / T1 25 % 42.4 min]
-  succinylcholine: { ec50Thumb: 200, ec50Dia: 200 * DIA_EC50_RATIO, gamma: 4, depolarising: true }, // [ENG, 7g's effect-site value; band missed: onset 0.17 / T1 10 % 5.37 min — FU-3 item 1]
+  succinylcholine: { ec50Thumb: 1160, ec50Dia: 1160 * DIA_EC50_RATIO, gamma: 6, depolarising: true }, // [FU-3 item 1: 7g's re-fitted effect-site value on Roy 2002's CL/V1 (measured EC50 734 ± 211 ng/mL [P]); holds onset 0.73 / T1 10 % 6.98 / 90 % 11.98 min]
 };
 
 export const TOF_THRESH = [0.03, 0.1, 0.2, 0.25] as const;

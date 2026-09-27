@@ -29,6 +29,10 @@ export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 export const CO_TAU_S = 4;
 export const PESP_MAX = 0.5;
 export const PESP_PREMATURE = 0.8;
+/** FU-3 item 16: sinus-rate loss per unit of the hypoxic myocardial deficit `cor.hyp` [ENG, fitted: HR < 40 held within 6 min of SaO2 < 60 %, before the arrest]. */
+export const G_SA = 1.5;
+/** FU-3 item 16: floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [ENG]. */
+export const K_HYP_MIN = 0.02;
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -81,8 +85,11 @@ export interface CircModelState {
   lastEjT: number;
   qFwd: number; // LPF (τ CO_TAU_S) of the forward aortic-valve + LVAD flow, mL/s: CO for beats AND compressions
   mapSetPinned: boolean;
-  /** MANUAL tracker outputs (Task 14; neutral in MODELED): LV Emax ×, systemic R (null = base), venous V0 +, RV Emax ×, PVR (null = base). */
-  man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null };
+  /**
+   * MANUAL tracker outputs (Task 14; neutral in MODELED): LV Emax ×, systemic R (null = base), venous V0 +, RV Emax ×,
+   * PVR (null = base); kIschRef (FU-3 item 4) = the coronary kIsch the tracker's LV Emax was set against (1 = none).
+   */
+  man: { eesF: number; rSys: number | null; dV0: number; eesRvF: number; pvr: number | null; kIschRef: number };
   lastVentT: number; // R45(a): last ventricular depolarisation (perfused or not)
   rrRef: number; // R45(a): running normal RR, s
   pespNext: number; // R45(a): Emax boost for the next beat
@@ -111,7 +118,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -161,7 +168,7 @@ export interface CircEnv {
   modeled: boolean; // reflexes and the HR request run only in MODELED mode
 }
 
-const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null } as const;
+const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 } as const;
 const zero = () => 0;
 export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
 
@@ -213,14 +220,19 @@ function control(m: CircModelState, env: CircEnv): void {
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
   p.vFluid = base.vFluid + m.ext.vFluid;
   const kc = x.kChem ?? 1;
-  m.kLv = b.eesF * de.ees * m.ext.kLv * m.ext.kIsch * man.eesF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
+  // FU-3 item 4: in MANUAL the tracker's LV Emax was set against the ischaemia present while it tracked (kIschRef):
+  // new ischaemia below that level still acts on top of the held picture, but recovery above it does not raise the
+  // delivered contractility past what the instructor's pressures were built on (MODELED: kIschRef 1, kIsch as is)
+  const kHyp = env.modeled ? Math.max(K_HYP_MIN, 1 - m.cor.hyp) : 1; // FU-3 item 16: hypoxic myocardial depression (both ventricles)
+  m.kLv = b.eesF * de.ees * m.ext.kLv * Math.min(m.ext.kIsch, man.kIschRef) * man.eesF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp; // Stage 7g: β-blockade blunts the surge
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
-  p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc; // atrial active elastance (7c kChem)
-  p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc;
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0)) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp; // Stage 7g: β-blockade blunts the surge
+  p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc * kHyp; // atrial active elastance (7c kChem; FU-3 item 16 kHyp)
+  p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
+  const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp) : 1; // FU-3 item 16: hypoxic SA-node depression
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);

@@ -3,7 +3,7 @@
 // later stage owns them ("arrives in Stage 7", "not implemented") make the document NOT MEASURABLE on this build
 // (decision 8): it is listed, not graded, and does not gate.
 import { createEngine, type Command, type EngineEvent } from '@pme/engine-core';
-import { BUILTIN_SCENARIOS, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
+import { BUILTIN_SCENARIOS, engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
 import { gradeTarget } from './grade.ts';
 import { SeriesStore } from './series.ts';
 import type { TargetResult, Unsupported, ValidationDoc } from './types.ts';
@@ -24,23 +24,15 @@ export interface DocRun {
 
 export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   const t0 = performance.now();
-  if (doc.profile) {
-    const unsupported = [{ t: 0, type: 'patient profile', reason: `${doc.profile}: not expressible in pme-scenario/1 until the R22 profile schema lands` }];
-    return { doc, measurable: false, unsupported, results: [], store: new SeriesStore(), wallMs: performance.now() - t0, notes: [] };
-  }
   const raw = typeof doc.scenario === 'string' ? BUILTIN_SCENARIOS[doc.scenario] : doc.scenario;
   if (raw === undefined) throw new Error(`${doc.id}: no built-in scenario ${String(doc.scenario)}`);
   const v = validateScenario(raw);
   if (!v.ok) throw new Error(`${doc.id}: invalid scenario: ${v.errors.join('; ')}`);
-  // The body (age, size, sex, age band, baseline) is fixed when the engine is created — a scenario's setup batch only
-  // sends rhythm, targets and sensors (Stage 6b runner.start), so the host builds its engine from `patient` first
-  // (measured while planning: without this a 4-year-old desaturated like a room-air adult, 47 s instead of ≈ 160 s).
-  const p = v.doc.patient ?? {};
-  const engine = createEngine({
-    seed: doc.seed ?? 1,
-    patient: { ...(p.ageY !== undefined ? { ageY: p.ageY } : {}), ...(p.weightKg !== undefined ? { weightKg: p.weightKg } : {}), ...(p.heightCm !== undefined ? { heightCm: p.heightCm } : {}), ...(p.sex ? { sex: p.sex } : {}), ...(p.baseline ? { baseline: p.baseline } : {}) },
-    device: { ...(p.ageBand ? { ageBand: p.ageBand } : {}), ...(v.doc.device?.skin ? { skin: v.doc.device.skin } : {}) },
-  });
+  // The body (age, size, sex, age band, baseline, and the R22 profile: conditions, lung conditions incl. pregnancy) is
+  // fixed when the engine is created — a scenario's setup batch only sends rhythm, targets and sensors (Stage 6b
+  // runner.start), so the host builds its engine from `patient` first (measured while planning: without this a
+  // 4-year-old desaturated like a room-air adult, 47 s instead of ≈ 160 s). FU-3 item 9: one mapping, the controller's.
+  const engine = createEngine(engineOptionsOf(v.doc, doc.seed ?? 1));
   const store = new SeriesStore();
   const unsupported: Unsupported[] = [];
   const listeners = new Set<(e: EngineEvent) => void>();

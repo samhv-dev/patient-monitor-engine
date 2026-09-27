@@ -20,8 +20,19 @@ npx -y pnpm@9.15.9 --filter @pme/validation datasets:fetch        # download wha
 npx -y pnpm@9.15.9 validate                                        # everything (≈ 30–60 min)
 npx -y pnpm@9.15.9 validate --quick                                # 4 recorded windows, fewer seeds (≈ 5 min)
 npx -y pnpm@9.15.9 validate --suites sanity,gates                  # a subset
-PME_PULSE_DIR=../research/pulse-spike/web npx -y pnpm@9.15.9 validate --suites oracle
+PME_PULSE_DIR=$PWD/../research/pulse-spike/web npx -y pnpm@9.15.9 validate --suites oracle
 npx -y pnpm@9.15.9 validate --rebaseline                           # rewrite waveform baselines + golden hashes (review the diff!)
+```
+
+`PME_PULSE_DIR` must be ABSOLUTE (`$PWD/…`): pnpm runs the package from `packages/validation`, so a relative path
+does not resolve and the oracle is skipped as if unset. It is the only Pulse variable (the stage oracles' old
+`PULSE_ORACLE_DIR` is retired, FU-3). The per-stage Pulse oracles are vitest files that skip without it; they are slow
+(≈ 40 min for the blood rows), so run them alone, locally:
+
+```bash
+PME_PULSE_DIR=$PWD/../research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle.test.ts        # 7a O1–O5
+PME_PULSE_DIR=$PWD/../research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-renal.test.ts  # 7d O11
+PME_PULSE_DIR=$PWD/../research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts  # 7c O2b/O3b/O10b/O13b
 ```
 
 `PME_DATASET_CACHE` moves the cache (default `packages/validation/datasets/cache/`, git-ignored). Raw records never

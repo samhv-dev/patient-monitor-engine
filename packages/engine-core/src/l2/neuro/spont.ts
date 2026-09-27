@@ -17,6 +17,18 @@ export const WINTER_SLOPE = 1.5;
 export const WINTER_OFFSET = 8;
 /** Spontaneous Ti/Ttot (Stage 3 driver's SPONT_TI_FRACTION 0.38). */
 const TI_FRAC = 0.38;
+/**
+ * FU-3 item 16 (E-FU3-10, orchestrator ruling 2026-09-27): brainstem-perfusion gate. After the circulation stops,
+ * agonal gasps persist for seconds to ≈ 2 min, then apnoea; after the circulation returns the drive comes back over
+ * minutes (Clark JJ et al., Ann Emerg Med 1992;21:1464–1467; Bobrow BJ et al., Circulation 2008;118:2550–2554) [P].
+ * The gate closes when 7d's CBF is below BRAINSTEM_CBF_MIN or there is no flow at all (pulseless / CO 0).
+ */
+export const BRAINSTEM_CBF_MIN = 0.2; // CBF < 20 % of rest (the ruling's threshold) [ENG]
+export const GASP_ONSET_S = 30; // unperfused for > 30 s → gasps only [ENG, ruling]
+export const GASP_END_S = 120; // gasps fade to apnoea by 2 min [ENG, ruling]
+export const GASP_RR = 6; // gasp rate ceiling (/min) [ENG, ruling "RR ≤ 6"]
+export const GASP_VT_FRAC = 0.3; // gasp VT ceiling × the resting VT ("small VT") [ENG]
+export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once perfused [ENG, ruling "1–3 min"]
 
 export interface SpontDrive {
   rr: number; // < 0: not yet evaluated (driverCtx falls back to the rr/vt targets)
@@ -26,6 +38,8 @@ export interface SpontDrive {
   paco2Rest: number; // resting PaCO2 of the MANUAL etco2 calibration (NaN until it runs)
   paco2Set: number;
   nextT: number;
+  anoxS?: number; // FU-3 item 16 (E-FU3-10): seconds without brainstem perfusion (absent while perfused)
+  gate?: number; // FU-3 item 16 (E-FU3-10): 0 → 1 while the drive reopens after an anoxic spell (absent = open)
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -55,6 +69,8 @@ export interface SpontInputs {
   complianceMl: number; // mL/cmH2O
   resistance: number; // cmH2O·s/L
   neuro?: NeuroResp;
+  noFlow?: boolean; // FU-3 item 16 (E-FU3-10): no circulation (pulseless rhythm or cardiac output 0)
+  cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
 }
 
 export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
@@ -71,6 +87,24 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   let { rr, vt } = out;
   if (strength < DIAPH_APNOEA) rr = vt = 0;
   else if (n) vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
+  // FU-3 item 16 (E-FU3-10): brainstem-perfusion gate
+  const unperfused = x.noFlow === true || (x.cbfRel !== undefined && x.cbfRel < BRAINSTEM_CBF_MIN);
+  if (unperfused) s.anoxS = (s.anoxS ?? 0) + SPONT_DT_S;
+  else if (s.anoxS !== undefined) {
+    if (s.anoxS > GASP_ONSET_S) s.gate = 0; // a gasping or apnoeic brainstem recovers over GATE_REOPEN_S
+    delete s.anoxS;
+  }
+  const anox = s.anoxS ?? 0;
+  if (anox > GASP_ONSET_S) {
+    const fade = Math.max(0, 1 - (anox - GASP_ONSET_S) / (GASP_END_S - GASP_ONSET_S));
+    rr = Math.min(rr, GASP_RR * fade);
+    vt = Math.min(vt, GASP_VT_FRAC * x.vt0 * fade);
+    if (fade <= 0) rr = vt = 0;
+  } else if (s.gate !== undefined) {
+    if (!unperfused) s.gate = Math.min(1, s.gate + SPONT_DT_S / GATE_REOPEN_S);
+    rr *= s.gate;
+    if (s.gate >= 1) delete s.gate;
+  }
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;

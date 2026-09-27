@@ -95,6 +95,9 @@ export interface RhythmState {
 export interface RhythmCtx {
   /** The L1 'hr' target at time t (bpm, unclamped). */
   hrAt(t: number): number;
+  /** FU-3 (Q-FU2-10): an implanted pacemaker's programmed lower rate at t (bpm, unclamped) — the rate held for the
+   * rhythm (the engine's held rate); absent = hrAt. MODELED AAI/DDD run hr = max(lower rate, reflex rate) above it. */
+  pacerLowerAt?(t: number): number;
   mods: Modifiers;
   rng: Record<StreamName, Sfc32State>;
   hrv: HrvPhase;
@@ -114,6 +117,16 @@ export function def(st: RhythmState): RhythmDef {
 export function rhythmRate(st: RhythmState, t: number, ctx: RhythmCtx): number {
   const d = RHYTHMS[st.id];
   return clamp(ctx.hrAt(t), d.rateRange[0], d.rateRange[1]);
+}
+
+/**
+ * FU-3 (Q-FU2-10): the pacemaker's lower rate at t (bpm): PacerOpts.ratePpm, else the held rate (ctx.pacerLowerAt,
+ * else hr), clamped to the rhythm's range. The pacer's escape interval is 60 / this; an 'hr' above it is the
+ * intrinsic atrial rate of an atrial-sensing pacer (atria.ts atrialRate), which inhibits it.
+ */
+export function pacerLowerRate(st: RhythmState, t: number, ctx: RhythmCtx): number {
+  const d = RHYTHMS[st.id];
+  return st.opts.pacer?.ratePpm ?? clamp(ctx.pacerLowerAt?.(t) ?? ctx.hrAt(t), d.rateRange[0], d.rateRange[1]);
 }
 
 export function pushPending(st: RhythmState, p: PendingV): void {

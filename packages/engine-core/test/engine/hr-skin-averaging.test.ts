@@ -24,7 +24,9 @@ describe('saadat-like 8 s HR averaging (FU-2 item 5)', () => {
   it('saadat-like: 64, 71, 78, 85, 92, 99, 106, 113, 120 at +2 … +10 s (8 s moving average)', () => {
     expect(stepSeries('saadat-like')).toEqual([64, 71, 78, 85, 92, 99, 106, 113, 120]);
   });
-  it('philips-like is unchanged: 60, 67, 75, 86, 100, 120 … (trimmed mean of 12 RR)', () => {
-    expect(stepSeries('philips-like')).toEqual([60, 67, 75, 86, 100, 120, 120, 120, 120]);
+  // FU-3 item 6 (Q-FU2-11): philips-like now runs its declared plain mean of 12 RR (it ran the trimmed mean until FU-3:
+  // 60, 67, 75, 86, 100, 120 … settled at +7 s); the plain mean needs all 12 RR at the new rate: settled at +8 s.
+  it('philips-like: 63, 69, 76, 85, 96, 111, 120 … (plain mean of 12 RR, its disclosed method)', () => {
+    expect(stepSeries('philips-like')).toEqual([63, 69, 76, 85, 96, 111, 120, 120, 120]);
   });
 });

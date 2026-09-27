@@ -48,11 +48,9 @@ export interface ValidationDoc {
   /** Timed actions on top of the scenario: commands (as in a scenario document) or manual transition triggers. */
   actions?: Array<{ t: number; command?: DocCommand; trigger?: string }>;
   segments: Segment[];
-  /** Informational: the stages whose modules the document needs (e.g. ["7a", "7g"]). */
+  /** Informational: the stages whose modules the document needs (e.g. ["7a", "7g"]). The patient profile (R22:
+   *  conditions, pregnancy) rides in the scenario's `patient.profile` (FU-3 item 9). */
   requires?: string[];
-  /** A patient profile (Stage 7 conditions, pregnancy) that pme-scenario/1 cannot carry yet (R22). Present → the
-   *  document is NOT MEASURABLE: run on the default patient it would grade the wrong patient. */
-  profile?: string;
 }
 
 export type Grade = 'green' | 'yellow' | 'red';

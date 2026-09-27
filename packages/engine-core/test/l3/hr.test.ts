@@ -28,6 +28,13 @@ describe('l3/hr', () => {
     expect(hrMeasure(m.st, m.t).value).toBe(Math.round(60 / ((10 * 0.75 + 0.3 + 1.5) / 12)));
   });
 
+  it("FU-3 (Q-FU2-11): hrMeasure's method argument (the active skin's) overrides the state's creation default", () => {
+    const { st, t } = feed([...Array(10).fill(0.75), 0.3, 1.5]); // a 'dropMaxMin' state
+    expect(hrMeasure(st, t).value).toBe(80);
+    expect(hrMeasure(st, t, undefined, 'mean12').value).toBe(Math.round(60 / ((10 * 0.75 + 0.3 + 1.5) / 12)));
+    expect(hrMeasure(st, t, undefined, 'dropMaxMin').value).toBe(80);
+  });
+
   it('keeps only the last 12 RR', () => {
     const { st } = feed([...Array(20).fill(1), ...Array(12).fill(0.5)]);
     expect(st.rrs).toEqual(Array(12).fill(0.5));

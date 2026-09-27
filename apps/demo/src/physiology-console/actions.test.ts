@@ -44,6 +44,18 @@ describe('rail command builders', () => {
     expect(r.accepted).toBe(false);
     expect(r.reason).toBeTruthy();
   });
+  it('7x.1 (FU-3 item 12): every preset starts with the CO2 sidestream line attached, so EtCO2 reads at rest', () => {
+    for (const p of A.PRESETS) {
+      expect(p.profile.sensors, p.id).toMatchObject({ co2: 'on' });
+      const e = createEngine({ seed: 1, mode: 'modeled', patient: p.profile });
+      let et: number | null | undefined;
+      e.on((x) => {
+        if (x.type === 'measurement' && x.values.etco2) et = x.values.etco2.value;
+      });
+      e.advanceTo(20);
+      expect(et, p.id).toBeGreaterThan(20);
+    }
+  });
   it('every preset starts an engine with the invasive lines connected', () => {
     for (const p of A.PRESETS) {
       expect(() => createEngine({ seed: 1, mode: 'modeled', patient: p.profile }), p.id).not.toThrow();

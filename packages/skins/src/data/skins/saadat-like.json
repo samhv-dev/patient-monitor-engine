@@ -24,6 +24,7 @@
     "RESP": "#F0F030", "CO2": "#F0F030", "AWRR": "#F0F030",
     "TEMP": "#00F0F0",
     "BFA": "#F0F0F0",
+    "NMT": "#F0F0F0",
     "AGENTS": "#F0F030",
     "ICP": "#F0F0F0", "PbtO2": "#00F0F0", "UO": "#F0F000"
   },
@@ -42,7 +43,9 @@
       [
         { "param": "SpO2", "extras": ["PI", "PR"] },
         { "param": "TEMP", "extras": ["T2", "DT"] },
-        { "param": "RR" }
+        { "param": "RR" },
+        { "param": "NMT", "extras": ["TOF", "PTC"] },
+        { "param": "BFA", "extras": ["BS%", "SQI", "EMG"] }
       ]
     ],
     "menuRegion": "wave-area-bottom",
@@ -223,12 +226,13 @@
     "colors.AWRR": { "tag": "measured", "source": "research/06 §3.2; brief §6.8" },
     "colors.TEMP": { "tag": "measured", "source": "research/06 §3.2 (M p.309); brief §6.8" },
     "colors.BFA": { "tag": "assumed", "source": "research/06 §5; brief §6.8", "note": "from the Alvand screenshot" },
+    "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: no NMT module in research/06; the B9 white (as BFA) chosen" },
     "colors.AGENTS": { "tag": "unverified", "source": "research/06 §3.2; brief §6.8", "note": "not in the manual" },
     "colorBinding": { "tag": "documented", "source": "research/06 §3.2 (M p.308); brief §3.8" },
     "ecgColorLocked": { "tag": "documented", "source": "research/06 §3.2 (M p.40, 308); brief §3.8" },
     "layout.waveAreaFraction": { "tag": "measured", "source": "research/06 §3.1 F1" },
     "layout.lanes": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §5" },
-    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2" },
+    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]" },
     "layout.menuRegion": { "tag": "documented", "source": "research/06 §3.1 F4; brief §3.8" },
     "layout.header": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2" },
     "layout.messageBars": { "tag": "documented", "source": "research/06 §3.1 F1-F2 (M p.36)" },

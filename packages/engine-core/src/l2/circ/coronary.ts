@@ -17,6 +17,14 @@ export const TAU_ISCH_DOWN_S = 20; // (Q32)
 export const TAU_ISCH_UP_S = 60; // (Q32)
 export const ST_LAG_S = 45; // 30–60 s (tables §3 stLag)
 export const IVR_S = 0.06; // isovolumic relaxation after aortic closure [ENG]
+/** FU-3 item 16: the resting arterial saturation the O2-content ratio is taken against (the chemoreflex's resting 0.97). */
+export const SAO2_REF = 0.97;
+/**
+ * FU-3 item 16: time constant of the hypoxic myocardial depression while the O2 supply deficit stands [ENG, fitted
+ * to the asphyxial arrest window: loss of aortic pulsations 9.5 ± 1.4 min (swine, Varvarousi 2011) and 11.4 ± 2.4 min
+ * (dogs, DeBehnke 1995) after the airway is occluded on room air].
+ */
+export const TAU_HYP_S = 150;
 
 export interface CoronaryState {
   ref: Stabilised['ref'];
@@ -27,16 +35,22 @@ export interface CoronaryState {
   ischT: number; // seconds with δ > 0.1
   stMv: number;
   eesF: number; // current contractility multiplier seen by the demand term (set by the caller)
+  hyp: number; // FU-3 item 16: the hypoxic share of the deficit, filtered as kIsch (0–1; MODELED only, 0 in MANUAL)
 }
 
 export function createCoronary(ref: Stabilised['ref']): CoronaryState {
   const rr = 60 / ref.hr;
   const tsys = 0.37 + IVR_S; // resting emergent valve closure ≈ 0.37 s after onset at HR 70 (prototype)
-  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1 };
+  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0 };
 }
 
-/** One step of dt seconds using the most recent beat(s). `cfr` from the profile; `hr` current rate. */
-export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number): void {
+/**
+ * One step of dt seconds using the most recent beat(s). `cfr` from the profile; `hr` current rate. `o2Rel` (FU-3
+ * item 16, MODELED only): arterial O2 content ÷ its resting value — myocardial O2 delivery is coronary flow × CaO2 and
+ * the resting heart already extracts ≈ 70 % of it, so a content fall is a supply fall only the flow reserve can
+ * offset (Guyton & Hall, coronary circulation [TXT]); 1 = the flow-only supply of R23.
+ */
+export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1): void {
   const b = beats[beats.length - 1];
   if (!b) return;
   const r = c.ref;
@@ -45,10 +59,15 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   const dtf = Math.max(0.05, (rr - tsys) / rr);
   const cpp = b.aoDia - b.lvedp;
   const cpp0 = r.dbp - r.lvedp;
-  const supply = cfr * Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0);
+  const flow = cfr * Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0);
   const demand = (hr / r.hr) * (Math.max(20, b.lvsp) / r.lvsp) * Math.sqrt(Math.max(0.1, c.eesF)) * Math.cbrt(Math.max(10, b.lvedv) / r.lvedv);
-  c.ratio = supply / Math.max(0.05, demand);
+  c.ratio = (flow * o2Rel) / Math.max(0.05, demand);
   c.delta = Math.max(0, 1 - c.ratio);
+  // FU-3 item 16: the hypoxaemic share of the deficit (δ weighted by the content loss 1 − o2Rel), rising with the
+  // myocardium's hypoxic tolerance TAU_HYP_S and recovering as kIsch does (τ_up)
+  const dHyp = c.delta * (1 - o2Rel);
+  c.hyp += (dHyp - c.hyp) * (1 - Math.exp(-dt / (dHyp > c.hyp ? TAU_HYP_S : TAU_ISCH_UP_S)));
+  if (c.hyp < 5e-4) c.hyp = 0;
   const target = Math.max(0.2, 1 - G_ISCH * c.delta);
   const tau = target < c.kIsch ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S;
   c.kIsch += (target - c.kIsch) * (1 - Math.exp(-dt / tau));

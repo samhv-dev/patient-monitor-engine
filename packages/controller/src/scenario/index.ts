@@ -7,3 +7,4 @@ export { replayRunLog, runLog, type ScenarioRunLog } from './replay.ts';
 export { ScenarioDriver, type ScenarioDriverOptions } from './driver.ts';
 export { RHYTHM_STAND_INS, resolveRhythm, type StandIn } from './standins.ts';
 export { BUILTIN_SCENARIOS, BUILTIN_CATALOGUE } from './builtins.ts';
+export { engineOptionsOf } from './patient.ts';

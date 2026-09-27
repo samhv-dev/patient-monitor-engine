@@ -31,6 +31,11 @@ export interface O2LungInputs {
   coRatio: number;
   /** Stage 7c (E-7c-1): the blood's Hb, pH, 2,3-DPG, COHb, MetHb for every content/ODC call (absent → Stage 3's patient). */
   odc?: OdcCtx;
+  /**
+   * FU-3 item 16 (E-FU3-9): nothing is ejected (cardiac output 0), so no blood leaves the lungs for the arteries — the
+   * alveolar stores and the venous store still step, PaO2/SaO2 hold their last values. Absent/false: the 7b mixing point.
+   */
+  arterialHold?: boolean;
 }
 
 /** End-capillary content with West's diffusion equilibration (tables §4.5): only dl < 1 or high CO matters. */
@@ -124,6 +129,7 @@ export function stepO2Lung(st: O2LungState, x: O2LungInputs, dtS: number): void 
   const ca = caNum / Math.max(1e-6, q);
   const vv = BLOOD_VENOUS_FRACTION * x.bloodL;
   st.cv = Math.max(0, st.cv + ((q * (ca - st.cv) - x.vo2) / vv) * dt);
+  if (x.arterialHold) return; // FU-3 item 16 (E-FU3-9): no ejection, no new arterial blood — PaO2/SaO2 hold
   st.pao2 = po2ForContent(ca, x.tempC, x.paco2, x.odc);
   st.sa = odc(st.pao2, x.tempC, x.paco2, x.odc);
 }

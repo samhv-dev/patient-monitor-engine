@@ -90,7 +90,49 @@
           "type": "object",
           "propertyNames": { "$ref": "#/definitions/sensorId" },
           "additionalProperties": { "type": "string" }
-        }
+        },
+        "profile": { "$ref": "#/definitions/profile" }
+      }
+    },
+    "profile": {
+      "description": "R22 patient profile (FU-3 item 9), fixed when the host creates the engine and mapped 1:1 onto the engine's PatientProfile: `conditions` (7a circulation: hfref, hfpef, htn, as, ar, mr, ms, tr, cad, betaBlocked, rvFailure, ph; 7d organs: tbi, hepaticFailure, aki) and `lungConditions` (7b catalogue; pregnancy = `pregnancy`, term = severity 1). Acute events (rvInfarct, tamponade, pe, tensionPtx, sepsis, a growing haematoma) are applyEvent commands, not profile.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conditions": { "type": "array", "items": { "$ref": "#/definitions/profileCondition" } },
+        "lungConditions": { "type": "array", "items": { "$ref": "#/definitions/lungCondition" } }
+      }
+    },
+    "profileCondition": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "enum": ["hfref", "hfpef", "htn", "as", "ar", "mr", "ms", "tr", "cad", "betaBlocked", "rvFailure", "ph", "tbi", "hepaticFailure", "aki"] },
+        "grade": { "type": "string" },
+        "severity": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "id": { "const": "as" } } }, "then": { "properties": { "grade": { "enum": ["mild", "moderate", "severe", "critical"] } } } },
+        { "if": { "properties": { "id": { "const": "ms" } } }, "then": { "properties": { "grade": { "enum": ["mild", "moderate", "severe", "verySevere"] } } } },
+        { "if": { "properties": { "id": { "enum": ["mr", "ar", "tr"] } } }, "then": { "properties": { "grade": { "enum": ["mild", "moderate", "severe"] } } } },
+        { "if": { "properties": { "id": { "const": "cad" } } }, "then": { "properties": { "grade": { "enum": ["none", "stable", "severe", "recentMI"] } } } }
+      ]
+    },
+    "lungCondition": {
+      "type": "object",
+      "required": ["id", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": ["ph", "bronchospasm", "asthma", "anaphylaxis", "copd", "ards", "ild", "ssc", "chestWall", "obesity", "pneumonia",
+                   "atelectasis", "pulmOedema", "effusion", "ptxSimple", "ptxTension", "haemothorax", "pe", "fatEmbolism", "vae",
+                   "aspiration", "olv", "endobronchial", "bpf", "airwayObstruction", "cf", "nmWeakness", "diaphragmParalysis",
+                   "pregnancy", "neonatalRds", "covidPneumonitis", "smokeInhalation"]
+        },
+        "severity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "side": { "enum": ["L", "R"] },
+        "recruitFrac": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
     "state": {

@@ -6,6 +6,7 @@ import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp } from './numerics-hemo.ts';
+import { formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts'; // FU-3 item 11
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
 type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -13,6 +14,7 @@ type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
 const UNIT: Partial<Record<TileParam, string>> = {
   HR: 'bpm', NIBP: 'mmHg', ART: 'mmHg', CVP: 'mmHg', PAP: 'mmHg', IBP1: 'mmHg', IBP2: 'mmHg', IBP3: 'mmHg', IBP4: 'mmHg', SpO2: '%', TEMP: '°C', RR: 'rpm', CO2: 'mmHg', ST: 'mV',
   ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d
+  NMT: 'TOF', // FU-3 item 11 (the depth index has no unit)
 };
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';
@@ -171,7 +173,10 @@ export class DeviceUI {
       const v = this.values;
       let main = g.noValue;
       let sub = '';
+      tile.el.style.display = modulePresent(p, v, t) ? '' : 'none'; // FU-3 item 11: NMT/BFA only while the module publishes
       if (p === 'HR') main = this.dev?.hrDashes ? g.hrUnavailable : this.text(v.hr);
+      else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue)); // FU-3 item 11
+      else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue)); // FU-3 item 11
       else if (p === 'NIBP') {
         const n = formatNibp(this.nibpEv, this.nibpLast);
         main = n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;

@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { join } from 'node:path';
 import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { compareRow } from '../src/oracle/compare.ts';
-import { loadPulse } from '../src/oracle/pulse-runner.ts';
+import { loadPulse, pulseDir } from '../src/oracle/pulse-node.ts';
 import { ORACLE_SCENARIOS } from '../src/oracle/scenarios.ts';
 
-const DIR = process.env.PULSE_ORACLE_DIR;
+const DIR = pulseDir();
 const PULSE_KEYS = { hr: 'HeartRate(1/min)', map: 'MeanArterialPressure(mmHg)', co: 'CardiacOutput(L/min)', cvp: 'MeanCentralVenousPressure(mmHg)', pcwp: 'PulmonaryCapillariesWedgePressure(mmHg)' } as const;
 
-describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PULSE_ORACLE_DIR=…/research/pulse-spike/web)', () => {
+describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PME_PULSE_DIR=…/research/pulse-spike/web)', () => {
   for (const sc of ORACLE_SCENARIOS) {
     it(`${sc.id}`, async () => {
-      const p = await loadPulse(DIR as string, join(DIR as string, '../bench/drm_names.json'));
+      const p = await loadPulse(DIR as string);
       const e = createEngine({ seed: 1, mode: 'modeled', patient: { ageY: 44, sex: 'M', weightKg: 77.1, heightCm: 180, baseline: { hr: 72 } } });
       const ev: EngineEvent[] = [];
       e.on((x) => ev.push(x));
@@ -26,7 +25,7 @@ describe.skipIf(!DIR)('Pulse oracle O1–O5 (annex §D; set PULSE_ORACLE_DIR=…
           t += 1;
           if (t % 60 === 0) await new Promise((r) => setImmediate(r));
         }
-        pulseAt[at] = p.read();
+        pulseAt[at] = p.pull();
         e.advanceTo(at);
       }
       const ours = (at: number, k: keyof typeof PULSE_KEYS) => {

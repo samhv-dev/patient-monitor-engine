@@ -38,6 +38,9 @@ export const GROUP_BY_PREFIX: Readonly<Record<string, GroupId>> = {
   'organs.brain': 'brain', 'organs.renal': 'kidney', 'organs.kidney': 'kidney', 'organs.liver': 'liver',
   'organs.sensors.icp': 'brain', 'organs.sensors.pbto2': 'brain', 'organs.sensors.urometer': 'kidney', 'organs.anaesEvent': 'brain',
   'ev.organs.brain': 'brain', 'ev.organs.renal': 'kidney', 'ev.organs.kidney': 'kidney', 'ev.organs.liver': 'liver',
+  // 7x.1: the intra-abdominal pressure is a kidney input (7d renalIn); the condition list goes by the organ each id
+  // drives (tbi → brain params, aki → kidney, hepaticFailure → liver); the profile's other ids are inputs (controls)
+  'organs.iap': 'kidney', 'organs.conds': 'controls', 'organs.conds.tbi': 'brain', 'organs.conds.aki': 'kidney', 'organs.conds.hepaticFailure': 'liver',
   // endocrine (7e): its own tree and event, its seams into 7c's blood and 7a's circulation multipliers
   endo: 'endocrine', 'ev.endo': 'endocrine', 'blood.endo': 'endocrine',
   'hemo.circ.ext.endoHrF': 'endocrine', 'hemo.circ.ext.endoSvrF': 'endocrine', 'hemo.circ.ext.endoEesF': 'endocrine', 'hemo.circ.ext.endoDV0Frac': 'endocrine',
@@ -85,6 +88,8 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   'hemo.pul', 'hemo.wedge', 'hemo.stPatch', 'hemo.stApplied', 'hemo.pv', 'hemo.pla', 'hemo.pvOn', 'hemo.beatT', 'hemo.abpSite',
   'resp.num', 'resp.sampler', 'resp.beats', 'resp.delay', 'resp.seen', 'resp.gasK', 'resp.lungKey', 'resp.co2Sensor', 'resp.tempSensor',
   'resp.tempSite', 'resp.shownCo2',
+  // 7b lung machinery (7x.1): the parameter-cache key, the step time, the gas-step counter and the breath timestamps
+  'resp.lungCore', 'resp.lungT', 'resp.lung.nGas', 'resp.lung.tInsp', 'resp.lung.tExp0',
   // 7a circulation: activation schedules and the coronary reference copy (the live parameters are hemo.circ.p)
   'hemo.circ.vent', 'hemo.circ.atria', 'hemo.circ.beats', 'hemo.circ.opens', 'hemo.circ.cor.ref',
   // rhythm scheduler internals (the rhythm id stays visible)
