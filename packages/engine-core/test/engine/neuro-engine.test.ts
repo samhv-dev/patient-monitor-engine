@@ -24,6 +24,11 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     const tofs: Extract<EngineEvent, { type: 'tof' }>[] = [];
     e.on((x) => { if (x.type === 'tof') tofs.push(x); }, ['tof']);
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'tof', action: 'start', intervalS: 15 } } as Body)).accepted).toBe(true);
+    // E-7d-4 (rig fix, band unchanged): a paralysed patient is ventilated to normocapnia. Left apnoeic, this rig reached
+    // SaO2 0 by 4 min, PaCO2 270 / pH 6.56 and MAP 46 by 60 min; once 7d's kidney exists that shock is anuric (GFR 0
+    // from 36 min), rocuronium's 30 % renal clearance goes with it (7g clFactor 0.98 → 0.69) and TOFR 0.9 never came
+    // within the run — correct physiology for an asphyxiated patient, not the spontaneous-recovery premise of the band.
+    e.dispatch(ev({ kind: 'ventilation', source: 'ventilator', rr: 18, vtMl: 500, fio2: 0.5, peep: 5 }));
     expect(e.dispatch(drug('rocuronium', 0.6, 'mg/kg')).accepted).toBe(true);
     await run(e, 100 * 60);
     const zero = tofs.find((x) => x.count === 0);

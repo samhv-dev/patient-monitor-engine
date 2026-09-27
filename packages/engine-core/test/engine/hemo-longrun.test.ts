@@ -37,10 +37,11 @@ describe('Stage 2 determinism and drift', () => {
 
   it(`no drift at 125 Hz: after advanceTo(${LONGRUN_HOURS} h) latestSampleIndex(abp) = latestSampleIndex(pleth) = 125 × t + 12 (24 h locally, 6 h on CI)`, { timeout: 600_000 }, async () => {
     const e = createEngine({ seed: 11, patient: { sensors: { abp: 'connected' } } });
-    // Same pattern as the ECG 24 h test on main: one sim-hour at a time, yielding between chunks, so the
-    // ≈ 65 s run does not starve the Vitest worker's RPC on a 2-vCPU CI runner ("Timeout calling onTaskUpdate").
-    for (let h = 1; h <= LONGRUN_HOURS; h++) {
-      e.advanceTo(h * 3_600);
+    // One sim-minute at a time, yielding between chunks (CI rule), so the run never starves the Vitest worker's
+    // RPC on a 2-vCPU CI runner ("Timeout calling onTaskUpdate"). Per sim-hour was not enough: the first hour is a
+    // 15.4 s synchronous stretch locally (≈ 60 s on CI) and tripped the 60 s RPC timeout with Stage 7d's organs.
+    for (let m = 1; m <= LONGRUN_HOURS * 60; m++) {
+      e.advanceTo(m * 60);
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
     expect(e.latestSampleIndex('abp')).toBe(expectedIndex(125, 12));

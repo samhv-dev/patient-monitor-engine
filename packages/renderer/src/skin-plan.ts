@@ -53,8 +53,9 @@ export const LEAD_LABEL: Record<LeadId, string> = {
 /** Skin wave lanes → engine channels (IBP1–3 are the ART/CVP/PAP lines of Stage 2; IBP4 has no line yet). */
 const WAVE_CHANNEL: Partial<Record<LaneId, ChannelId | null>> = {
   PLETH: 'pleth', ART: 'abp', CVP: 'cvp', PAP: 'pap', IBP1: 'abp', IBP2: 'cvp', IBP3: 'pap', IBP4: null, RESP: 'resp', CO2: 'co2',
+  ICP: 'icp', // Stage 7d
 };
-const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP' };
+const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP', ICP: 'ICP' }; // Stage 7d: ICP
 /** Engine filter-command value for a skin band: the exact engine mode, else 'band:<lo>-<hi>' (E-4a-1). */
 export function filterModeFor(band: readonly [number, number]): EcgFilterMode {
   const f = engineFilterFor(band);
@@ -81,7 +82,7 @@ export interface LaneOverride {
   lanes?: readonly LeadId[];
   waves?: readonly WaveLaneId[];
 }
-const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP' }; // Stage 3: co2, resp
+const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // Stage 3: co2, resp; Stage 7d: icp
 
 export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride): RenderPlan {
   const s = r.skin;
@@ -105,7 +106,7 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
     const range: [number, number] | null =
-      id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : [0, 150];
+      id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // Stage 7d: a skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id };
   });
   return {

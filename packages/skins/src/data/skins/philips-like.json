@@ -8,7 +8,7 @@
     "ECG": "#00FF00", "HR": "#00FF00", "ST": "#00FF00", "PVC": "#00FF00",
     "SpO2": "#00FFFF", "PLETH": "#00FFFF", "PR": "#00FFFF", "PI": "#00FFFF",
     "NIBP": "#FF4040",
-    "ART": "#FF4040", "CVP": "#00FFFF", "PAP": "#FFFF00", "ICP": "#FF00FF",
+    "ART": "#FF4040", "CVP": "#00FFFF", "PAP": "#FFFF00", "ICP": "#FF00FF", "PbtO2": "#00FFFF", "UO": "#FFFF00",
     "RESP": "#FFFF00", "CO2": "#FFFF00", "AWRR": "#FFFF00",
     "TEMP": "#00FF00"
   },

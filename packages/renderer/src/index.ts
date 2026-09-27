@@ -20,6 +20,7 @@ export { DeviceUI, flashCss } from './device-ui.ts';
 export { draw12Lead, drawTrend, report12Size, PAPER, type TrendSeries } from './views.ts';
 export { Overlays, drawMark, drawLeadOffDashes } from './overlays.ts';
 export { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
+export { formatIcp, formatPbto2, formatUop } from './numerics-organs.ts'; // Stage 7d
 export { createDrugPanel, type DrugPanel } from './drug-panel.ts'; // Stage 7g
 export { LAB_ROWS, labFlag, mountLabPanel } from './lab-panel.ts'; // Stage 7c
 export { mountEndoPanel } from './endo-panel.ts'; // Stage 7e

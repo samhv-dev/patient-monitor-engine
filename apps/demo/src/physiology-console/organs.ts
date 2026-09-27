@@ -107,6 +107,12 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   // Stage 7f neuro machinery: the TOF stimulator's schedule/PRNG, the last step's inputs and PD scratch, flags, dose
   // bookkeeping and the fasciculation save (the published antinoc/nmb/thermoDepth, resp hook and outputs stay visible)
   'neuro.tof', 'neuro.last', 'neuro.flags', 'neuro.fasc', 'neuro.emgBase', 'neuro.doseSeenT', 'neuro.diShown', 'resp.spont.nextT',
+  // 7d organ machinery: the ICP beat times, 1 s numeric accumulators, the last organ view (a copy of other stages'
+  // truths), the effects bookkeeping, the event queue, the 4 s MAP/CVP means and the reference CO; the brain's osmotic
+  // dose list and herniation timer; the kidney's 10 min urine bins, its calibration constants and the TGF state
+  'organs.beats', 'organs.num', 'organs.view', 'organs.fx', 'organs.out', 'organs.lp', 'organs.co0', 'organs.weightKg',
+  'organs.brain.osm', 'organs.brain.lowCppS', 'organs.brain.p', 'organs.renal.bins', 'organs.renal.binAcc', 'organs.renal.binT', 'organs.renal.p',
+  'organs.renal.oliguriaS', 'organs.renal.rAff', 'organs.liver.weightKg',
 ];
 const prefixRe = (list: readonly string[]) =>
   new RegExp(`^(${list.map((p) => p.replace(/\./g, '\\.').replace(/\*/g, '[^.]+')).join('|')})(\\.|$)`);

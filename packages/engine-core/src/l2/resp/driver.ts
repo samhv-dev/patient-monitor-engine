@@ -74,6 +74,7 @@ export interface DriverState {
   gastricN: number;
   ext: ExtDrive | null;
   rng: Sfc32State;
+  ataxia?: number; // Stage 7d: Cushing ataxic breathing 0–1 (organs/effects.ts)
 }
 
 export interface DriverCtx {
@@ -140,12 +141,12 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   } else {
     if (ctx.rr < 1) return { c: null, period: 0.5 };
     rr = ctx.rr;
-    vt = ctx.vt * Math.max(0.7, 1 + SPONT_JITTER * normal(d.rng));
+    vt = ctx.vt * Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia
     ti = 0;
   }
   let period = 60 / rr;
   if (!mech) {
-    period *= Math.max(0.7, 1 + SPONT_JITTER * normal(d.rng));
+    period *= Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia
     ti = SPONT_TI_FRACTION * period;
   }
   const sev = d.severity;

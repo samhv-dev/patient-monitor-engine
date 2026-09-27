@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 14:50 (7d CI on the final tree; 7e executing; FU-3 plan being written — item 16 hypoxic arrest added).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 19:05 (7d MERGED, PR #19; 7e and FU-3 executors launching on main).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,10 +13,10 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a, 7f | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18; 7f #21) | — |
-| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`), head e0c602f (main+7f, seam fixes, E-7d-4 rig) | CI running | merge when green; then 7e re-merges main |
-| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), 65/133 boxes | executing (fresh executor after the seventh cap; merges 7d when it lands) | resume from first unticked task |
+| 7d brain/kidney/liver | MERGED 2026-09-27 19:02 (PR #19, head 9075aff; CI amendment 4: per-minute yields in hemo-longrun + engine-pipeline) | G7d + follow-throughs 1–4 in the rulings file | done |
+| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), Tasks 1–19 done and pushed, 7f hand-overs done | executor KILLED by the 8th cap (17:00) while polling for 7d; addendum-18 rig fixes (E-7e-2 pin temperature, E-7e-3 warm the 6 h rig) were done — verify on the branch; Task 20 left: merge main after 7d lands, full e2e, fast/slow split, gate note, PR | relaunch a fresh executor when PR #19 merges; orchestrator gate + merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-3 follow-ups | plan being written (`docs/plans/fu-3-followups.md`; prototyping on main + 7d + 7f) | 15 items (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
+| FU-3 follow-ups | plan written (`docs/plans/fu-3-followups.md`, 16 tasks, untracked; backup in `../scratch/plans-backup/`); R50 review APPROVE WITH FIXES (17:15; 9 findings, top: Task 5 arrested patient re-saturates — hold `cor.hyp`/SA depression while pulseless, test the 6–10 min post-arrest window); first fixer stopped by a classifier mid-script (plan untouched; its Task 5 prototype stands: hold `cor.hyp` while pulseless + E-FU3-9 `arterialHold`; new ruling E-FU3-10 brainstem-anoxia gate on 7f's drive); FIXED 18:13 (6,288 lines; 138 unique find blocks; E-FU3-9 + E-FU3-10 added, E-FU3-10 unprototyped); executor launches when PR #19 merges, re-merges main when 7e lands; review at `<scratchpad>/fu-3-review/review.md` | 16 items incl. hypoxic bradycardia/arrest (Task 5) (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8 validation/release | not started | waits for all | write plan |
 
