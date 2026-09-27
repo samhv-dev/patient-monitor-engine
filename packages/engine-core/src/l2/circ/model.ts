@@ -11,6 +11,7 @@ import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
+import type { RampState } from '../../l1/ramp.ts'; // FU-2
 
 // hot-loop locals (imported bindings are getters under the vitest transform) [perf]
 const L_H = H_S;
@@ -66,6 +67,8 @@ export interface CircModelState {
   boluses: Bolus[];
   vol: VolumeEvent[];
   hrModel: number; // bpm the reflex/drugs ask the rhythm engine for (MODELED)
+  /** FU-2 (NR-7g-5): the rate the instructor or the rhythm set (rate-rule.ts); null = the reflex owns a sinus-family rate. */
+  hrSet: RampState | null;
   ctlNext: number;
   mapSum: number;
   mapN: number;
@@ -104,7 +107,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   const st = stabilise(prof);
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
-    vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
+    vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
     ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
