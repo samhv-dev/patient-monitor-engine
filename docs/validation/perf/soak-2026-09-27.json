@@ -1,0 +1,507 @@
+{
+ "date": "2026-09-27T04:13:38.410Z",
+ "frames60": {
+  "n": 3601,
+  "p50": 16.7,
+  "p95": 16.7,
+  "p99": 16.8,
+  "bins": {
+   "<17": 3601,
+   "17-20": 0,
+   "20-34": 0,
+   "34-50": 0,
+   ">=50": 0
+  }
+ },
+ "frames30": {
+  "n": 3600,
+  "p50": 16.7,
+  "p95": 16.7,
+  "p99": 16.8,
+  "bins": {
+   "<17": 3600,
+   "17-20": 0,
+   "20-34": 0,
+   "34-50": 0,
+   ">=50": 0
+  }
+ },
+ "soak": {
+  "minutes": 60,
+  "simT": 3601.224,
+  "heapMb": [
+   [
+    0,
+    5.8
+   ],
+   [
+    1,
+    7.61
+   ],
+   [
+    2,
+    7.13
+   ],
+   [
+    3,
+    7.67
+   ],
+   [
+    4,
+    7.04
+   ],
+   [
+    5,
+    7.05
+   ],
+   [
+    6,
+    7.64
+   ],
+   [
+    7,
+    7.06
+   ],
+   [
+    8,
+    7.6
+   ],
+   [
+    9,
+    7.09
+   ],
+   [
+    10,
+    7.08
+   ],
+   [
+    11,
+    7.08
+   ],
+   [
+    12,
+    7.09
+   ],
+   [
+    13,
+    7.09
+   ],
+   [
+    14,
+    7.62
+   ],
+   [
+    15,
+    7.08
+   ],
+   [
+    16,
+    7.08
+   ],
+   [
+    17,
+    7.75
+   ],
+   [
+    18,
+    7.07
+   ],
+   [
+    19,
+    7.07
+   ],
+   [
+    20,
+    7.08
+   ],
+   [
+    21,
+    7.1
+   ],
+   [
+    22,
+    7.06
+   ],
+   [
+    23,
+    7.07
+   ],
+   [
+    24,
+    7.08
+   ],
+   [
+    25,
+    7.07
+   ],
+   [
+    26,
+    7.62
+   ],
+   [
+    27,
+    7.65
+   ],
+   [
+    28,
+    7.07
+   ],
+   [
+    29,
+    7.07
+   ],
+   [
+    30,
+    7.06
+   ],
+   [
+    31,
+    7.06
+   ],
+   [
+    32,
+    7.07
+   ],
+   [
+    33,
+    7.08
+   ],
+   [
+    34,
+    7.59
+   ],
+   [
+    35,
+    7.07
+   ],
+   [
+    36,
+    7.1
+   ],
+   [
+    37,
+    7.09
+   ],
+   [
+    38,
+    7.07
+   ],
+   [
+    39,
+    7.08
+   ],
+   [
+    40,
+    7.06
+   ],
+   [
+    41,
+    7.07
+   ],
+   [
+    42,
+    7.62
+   ],
+   [
+    43,
+    7.65
+   ],
+   [
+    44,
+    7.08
+   ],
+   [
+    45,
+    7.11
+   ],
+   [
+    46,
+    7.07
+   ],
+   [
+    47,
+    7.08
+   ],
+   [
+    48,
+    7.63
+   ],
+   [
+    49,
+    7.64
+   ],
+   [
+    50,
+    7.64
+   ],
+   [
+    51,
+    7.09
+   ],
+   [
+    52,
+    7.08
+   ],
+   [
+    53,
+    7.08
+   ],
+   [
+    54,
+    7.6
+   ],
+   [
+    55,
+    7.64
+   ],
+   [
+    56,
+    7.64
+   ],
+   [
+    57,
+    7.64
+   ],
+   [
+    58,
+    7.09
+   ],
+   [
+    59,
+    7.08
+   ],
+   [
+    60,
+    7.65
+   ]
+  ],
+  "growthMbFromMinute5": 0.6,
+  "alarms": [
+   {
+    "t": 1,
+    "id": "ART_D_LOW",
+    "state": "raised"
+   },
+   {
+    "t": 1.02,
+    "id": "EtCO2_LOW",
+    "state": "raised"
+   },
+   {
+    "t": 27,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 37,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 47,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 57,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 182,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 337,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 347,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 522,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 647,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 657,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 667,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 677,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1222,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1347,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1357,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1367,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1377,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1453.02,
+    "id": "EtCO2_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1622,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1632,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1727,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1892,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 1902,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2077,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2282,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2292,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2587,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2627,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2902,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2912,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2922,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2942,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 2952,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3057,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3077,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3332,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3427,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3437,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3457,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3467,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3477,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3487,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   },
+   {
+    "t": 3517,
+    "id": "CVP_M_HIGH",
+    "state": "raised"
+   }
+  ]
+ }
+}

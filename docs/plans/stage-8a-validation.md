@@ -5961,7 +5961,7 @@ git add packages/validation/baselines
 git commit -m "chore(validation): rebaseline waveforms and golden hashes after merging main" || true
 ```
 
-- [ ] **Step 3: The first full run with the oracle (≈ 30–45 min on the Mac). Every command from the worktree root**
+- [x] **Step 3: The first full run with the oracle (≈ 30–45 min on the Mac). Every command from the worktree root**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation datasets:fetch
@@ -5971,23 +5971,23 @@ tail -3 /tmp/pme-8a-validate.log
 
 Expected: `report: …/docs/validation/report.md — N queued, M gating`. A non-zero exit is EXPECTED on the first run (the planning prototype already showed red rows: PPV/SPV, notch kind). Red rows are the calibration queue's content, not harness failures — do not loosen any band. Harness failures (exceptions, NaN rows that should have data, a suite that produced nothing) are fixed before continuing.
 
-- [ ] **Step 4: The 60-minute soak and frame histograms (≈ 65 min), plus the 600 s tick bench**
+- [x] **Step 4: The 60-minute soak and frame histograms (≈ 65 min), plus the 600 s tick bench**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test -c playwright.validation.config.ts
 npx -y pnpm@9.15.9 --filter @pme/validation perf:ticks --seconds 600
 ```
 
-- [ ] **Step 5: Full clean-state check (the CI rule: no dataset needed by the unit tests). Expected: exit 0 everywhere; `@pme/validation` unit tests < 60 s in total**
+- [x] **Step 5: Full clean-state check (the CI rule: no dataset needed by the unit tests). Expected: exit 0 everywhere; `@pme/validation` unit tests < 60 s in total**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
 ```
 
-- [ ] **Step 6: Write `docs/gates/stage-8a.md`** — the gate note, in the house format of `docs/gates/stage-3.md`: gate question ("Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand Ali a calibration queue he can act on?"); a table with every number: dataset counts (VitalDB cases/windows, MGH/MF records, PWDB subjects, PTB-XL records), each morphology row (recorded vs engine median, KS, W1, grade), the sanity and gate documents (graded / not measurable, with the refusing command), regression (channels red after the merge and why), determinism runs, oracle rows with the wasm hash, soak (heap per minute, growth, sim-time ratio, alarms), frame histograms, tick percentiles; the calibration-queue count by suite; the review kit and bedside page status ("ready; Ali to run at the gate" — the blind review and bedside check are HUMAN steps, not executor steps); deviations from this plan; partition statement (no file under `packages/engine-core`, `packages/renderer/src`, `packages/controller/src`, `packages/skins` changed: `git diff --stat origin/main -- packages/engine-core packages/renderer/src packages/controller/src packages/skins` prints nothing); licence statement (no raw record committed: `git ls-files | grep -Ei '\.(vital|dat|hea|atr)$'` prints nothing).
+- [x] **Step 6: Write `docs/gates/stage-8a.md`** — the gate note, in the house format of `docs/gates/stage-3.md`: gate question ("Does the harness measure what the brief §9 asks, identically on recorded and generated signals, and does its report hand Ali a calibration queue he can act on?"); a table with every number: dataset counts (VitalDB cases/windows, MGH/MF records, PWDB subjects, PTB-XL records), each morphology row (recorded vs engine median, KS, W1, grade), the sanity and gate documents (graded / not measurable, with the refusing command), regression (channels red after the merge and why), determinism runs, oracle rows with the wasm hash, soak (heap per minute, growth, sim-time ratio, alarms), frame histograms, tick percentiles; the calibration-queue count by suite; the review kit and bedside page status ("ready; Ali to run at the gate" — the blind review and bedside check are HUMAN steps, not executor steps); deviations from this plan; partition statement (no file under `packages/engine-core`, `packages/renderer/src`, `packages/controller/src`, `packages/skins` changed: `git diff --stat origin/main -- packages/engine-core packages/renderer/src packages/controller/src packages/skins` prints nothing); licence statement (no raw record committed: `git ls-files | grep -Ei '\.(vital|dat|hea|atr)$'` prints nothing).
 
-- [ ] **Step 7: Commit the report, gate note and plan ticks; push**
+- [x] **Step 7: Commit the report, gate note and plan ticks; push**
 
 ```bash
 git add docs/validation docs/gates/stage-8a.md docs/plans/stage-8a-validation.md
