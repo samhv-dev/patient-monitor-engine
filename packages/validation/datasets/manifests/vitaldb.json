@@ -1,0 +1,1871 @@
+{
+ "schema": "pme-dataset-manifest/1",
+ "source": "vitaldb",
+ "createdAt": "2026-09-27T01:01:28.669Z",
+ "selection": "selectCandidates(clinical_data.csv, 64) → first cases with findWindows() ≥ 1 (plan Task 4/6, decision 2)",
+ "files": {
+  "clinical_data.csv": "7d6edb471e5eee3fde75e417084240c97bdbf6eff41cbd61e5dace44f1585ecf",
+  "vital_files/1885.vital": "f209ddf12451fc0b901a196526586b466a66a415fefc73f6b941161ecc8fad90",
+  "vital_files/3101.vital": "6afedb4fed860092be8cebeebb12463685c8720a566cc7a4874853c5dc40a9eb",
+  "vital_files/1341.vital": "b592d394113e3b782eb73da5d78f4af1acaaf67afb9d34a094a9dc358570e6cd",
+  "vital_files/3519.vital": "433de0d165b4feb8c0262bb352084500d35ef42db5a91decb7f4d5d2a399fe1f",
+  "vital_files/1907.vital": "6d5b02862964d9b62b20fbb50ebd6022a2fad366b189d3147d894a16430d73de",
+  "vital_files/1316.vital": "3e23082e199aeb2e383d077d83191881b03cd5da4ff4740fceb1e3bb54ac736b",
+  "vital_files/0051.vital": "7f78e9d41dae05806b5ff8b040dca5a2417e0260176a9c375b517c9f4b49f330",
+  "vital_files/1202.vital": "cc4b4bea9cd3fe5b82b3754a6cf0b5c5ca520bd8bf587ae895b84a0bab36507f",
+  "vital_files/0007.vital": "4f9d70ee77838189fa49777e5087a7cce277db8a1f5c1d79364f35be8e817493",
+  "vital_files/0016.vital": "10bb43bd414f26da4b14271f3bf1bc32bcde86ccef7e47265d6e2c0b0332531e",
+  "vital_files/0827.vital": "8a8f6d8bd9fdc67fe9fbd83fe80173c11aaa2deb304247bf16ff34e232b2aa31",
+  "vital_files/0013.vital": "bf104b761c639f1bd1efdfb0ca463034d6f9f18251603559fc8759470dbc494e",
+  "vital_files/0005.vital": "163281f01ab2ff9127ddbf1e1ccf5d714de47b945bfac6a1ba25a3af43ecb711",
+  "vital_files/0001.vital": "742a1ab3342e21daa99135b74f7511f815e72f9a2b4eec8900babb156aa84a45",
+  "vital_files/5659.vital": "ed9aa04d110238b882e5b59cb6287be27b77d0d78b07460ceb69f466f7c12b25",
+  "vital_files/2624.vital": "d0697b65ed828cfe36821cd877e2ceebe07e1f5e5e3a3c22305601e4284b4f5e",
+  "vital_files/1327.vital": "ca5ed3b939bb8b9d776ad859ef6d878ac21ba5b6d81340973a994b95db0f12ed",
+  "vital_files/4214.vital": "f435a9b823702a5e52fc065da60811d1e3dceddc7c4976268a0e33704eb10c16",
+  "vital_files/0119.vital": "ac1e3e1c5321f62bf60d6b78c94ac03a864bbaa402ea24b503e14d3bbf9acd7d",
+  "vital_files/1286.vital": "19aad7ca278848560443e424e603c4d77d974dec06fd6ef3a6cf013dd3a6c9a3",
+  "vital_files/3398.vital": "e42d21c4e3367d43bbf3609a2ba093f529b6e77ede9fc98ebe76d336680b701a",
+  "vital_files/0026.vital": "229dec1428eabdf0d855ed282ee8dba4bd3a2d5ee5a453ce093ee8280ff753f7",
+  "vital_files/1320.vital": "fd625d8c2f1d17a7fa0ee589cb285be3a6e9b0ecdaadc8e25f695dfc50e9523c",
+  "vital_files/0028.vital": "ecc671adf9905dd46be28524eb1ff1efa78ee12682e7019564dae20d79091554",
+  "vital_files/0387.vital": "2115615817dfe34ebcfd83c9180433a7dfe131bcbf16036525cc546c055d88b6",
+  "vital_files/0004.vital": "d6f7e6a50ce7ca0f59e69d54edb7ba599cf5ffc3f3f134d41a9dfe7f8e0c916b",
+  "vital_files/5860.vital": "9c2980dcf0f632309b3261129900b18442e4dd51e0551851b08b84d17bbf1988",
+  "vital_files/4530.vital": "09da231255b924fdceb49b651133f503707699cc81b2af2e6d54c19160cbfd5e",
+  "vital_files/2282.vital": "a9ba1ceca480d2a60210b4a8c2dcffb3680df38ced886fa77bb581ef305768ec",
+  "vital_files/4683.vital": "dd8eacf91b5f7a8687f2084d84881d59dbf217e2268c4f3780c6b87308bd5268",
+  "vital_files/0103.vital": "7c014ec5e6cef1b1b248ee2efa83d8ff6332ad47750b2e9730521b31815ec357",
+  "vital_files/0180.vital": "c1eabe54fd87733b2f676341539bd11935ff5bbb2a6f227ac92938c7976a1294",
+  "vital_files/1350.vital": "97d17cea27a6346dd25a675ff7e395c4cb9d540cdba974ad831e3feaa81c5876",
+  "vital_files/0022.vital": "a595bbbe6eabb0c269ac994b9f4aed7304bcaa05eb4a373b2fa6e9444b5f0eb2",
+  "vital_files/0031.vital": "f7ea1d3fd7df21195c3c78abd3d4c4d3794cbd57783d3e073bf14b71368f1dcc",
+  "vital_files/1800.vital": "9232b498dc696deac06b2f34cdd6434859edffc2e54c99a5b4b8d139ec3f0f2d",
+  "vital_files/0046.vital": "722ff305394a49ffb88dee076169821045550bada64966a0dc5802607385dda3",
+  "vital_files/0521.vital": "c589eeb512c359265b91e96cbbf4153a8f3f30573ef56946d9b63f4db259a8a5",
+  "vital_files/0010.vital": "5ff301f9236a4308993ee35e4c6a0df195f4b051a4e2ffb4a95c85c00d60d053",
+  "vital_files/5226.vital": "1fd2d95b27e04c8f46fe83b07fe28ddd0459723781774e570b1abc5c9ccca628"
+ },
+ "windows": [
+  {
+   "source": "vitaldb",
+   "record": "1885",
+   "fromS": 4636,
+   "toS": 4936,
+   "site": "femoral",
+   "hr": 112,
+   "sbp": 151,
+   "dbp": 87,
+   "etco2": 33,
+   "vent": {
+    "rr": 14,
+    "vtMl": 379.9999952316284,
+    "peep": 0
+   },
+   "ageY": 26,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1885",
+   "fromS": 4936,
+   "toS": 5236,
+   "site": "femoral",
+   "hr": 103.5,
+   "sbp": 147.5,
+   "dbp": 87,
+   "etco2": 33,
+   "vent": {
+    "rr": 14,
+    "vtMl": 379.9999952316284,
+    "peep": 0
+   },
+   "ageY": 26,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3101",
+   "fromS": 3859,
+   "toS": 4159,
+   "site": "femoral",
+   "hr": 78,
+   "sbp": 95,
+   "dbp": 45,
+   "etco2": 31,
+   "vent": {
+    "rr": 10,
+    "vtMl": 460.00000834465027,
+    "peep": 7
+   },
+   "ageY": 22,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3101",
+   "fromS": 4159,
+   "toS": 4459,
+   "site": "femoral",
+   "hr": 82,
+   "sbp": 107,
+   "dbp": 53,
+   "etco2": 31,
+   "vent": {
+    "rr": 10,
+    "vtMl": 460.00000834465027,
+    "peep": 7
+   },
+   "ageY": 22,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1341",
+   "fromS": 2185,
+   "toS": 2485,
+   "site": "femoral",
+   "hr": 95,
+   "sbp": 109.5,
+   "dbp": 60,
+   "etco2": 38,
+   "vent": {
+    "rr": 10,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 52,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1341",
+   "fromS": 2485,
+   "toS": 2785,
+   "site": "femoral",
+   "hr": 93,
+   "sbp": 129,
+   "dbp": 80,
+   "etco2": 41,
+   "vent": {
+    "rr": 10,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 52,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3519",
+   "fromS": 5640,
+   "toS": 5940,
+   "site": "femoral",
+   "hr": 113,
+   "sbp": 116,
+   "dbp": 53,
+   "etco2": 34,
+   "vent": {
+    "rr": 15,
+    "vtMl": 419.99998688697815,
+    "peep": 5
+   },
+   "ageY": 68,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3519",
+   "fromS": 5940,
+   "toS": 6240,
+   "site": "femoral",
+   "hr": 111,
+   "sbp": 117,
+   "dbp": 54,
+   "etco2": 34,
+   "vent": {
+    "rr": 15,
+    "vtMl": 419.99998688697815,
+    "peep": 5
+   },
+   "ageY": 68,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1907",
+   "fromS": 1970,
+   "toS": 2270,
+   "site": "femoral",
+   "hr": 115,
+   "sbp": 120,
+   "dbp": 49,
+   "etco2": 36,
+   "vent": {
+    "rr": 12,
+    "vtMl": 400.0000059604645,
+    "peep": 0
+   },
+   "ageY": 84,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1907",
+   "fromS": 2270,
+   "toS": 2570,
+   "site": "femoral",
+   "hr": 115,
+   "sbp": 126,
+   "dbp": 53,
+   "etco2": 36,
+   "vent": {
+    "rr": 12,
+    "vtMl": 400.0000059604645,
+    "peep": 0
+   },
+   "ageY": 84,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1316",
+   "fromS": 1590,
+   "toS": 1890,
+   "site": "femoral",
+   "hr": 125,
+   "sbp": 86,
+   "dbp": 54.5,
+   "etco2": 40,
+   "vent": {
+    "rr": 18,
+    "vtMl": 400.0000059604645,
+    "peep": 5
+   },
+   "ageY": 68,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1316",
+   "fromS": 1950,
+   "toS": 2250,
+   "site": "femoral",
+   "hr": 126,
+   "sbp": 79.5,
+   "dbp": 54,
+   "etco2": 38,
+   "vent": {
+    "rr": 18,
+    "vtMl": 400.0000059604645,
+    "peep": 5
+   },
+   "ageY": 68,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0051",
+   "fromS": 3023,
+   "toS": 3323,
+   "site": "radial",
+   "hr": 62,
+   "sbp": 125,
+   "dbp": 76,
+   "etco2": 34,
+   "vent": {
+    "rr": 13,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 36,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0051",
+   "fromS": 3323,
+   "toS": 3623,
+   "site": "radial",
+   "hr": 61,
+   "sbp": 129,
+   "dbp": 78,
+   "etco2": 34,
+   "vent": {
+    "rr": 13,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 36,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1202",
+   "fromS": 2983,
+   "toS": 3283,
+   "site": "radial",
+   "hr": 61,
+   "sbp": 121,
+   "dbp": 68,
+   "etco2": 33,
+   "vent": {
+    "rr": 15,
+    "vtMl": 319.9999928474426,
+    "peep": 5
+   },
+   "ageY": 57,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Incomplete right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1202",
+   "fromS": 3283,
+   "toS": 3583,
+   "site": "radial",
+   "hr": 59,
+   "sbp": 121,
+   "dbp": 69,
+   "etco2": 33,
+   "vent": {
+    "rr": 15,
+    "vtMl": 319.9999928474426,
+    "peep": 5
+   },
+   "ageY": 57,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Incomplete right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0007",
+   "fromS": 4017,
+   "toS": 4317,
+   "site": "radial",
+   "hr": 66,
+   "sbp": 123,
+   "dbp": 70,
+   "etco2": 37,
+   "vent": {
+    "rr": 9,
+    "vtMl": 360.00001430511475,
+    "peep": 5
+   },
+   "ageY": 52,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0007",
+   "fromS": 4317,
+   "toS": 4617,
+   "site": "radial",
+   "hr": 73,
+   "sbp": 126,
+   "dbp": 69,
+   "etco2": 38,
+   "vent": {
+    "rr": 10,
+    "vtMl": 360.00001430511475,
+    "peep": 5
+   },
+   "ageY": 52,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0016",
+   "fromS": 3175,
+   "toS": 3475,
+   "site": "radial",
+   "hr": 75,
+   "sbp": 123.5,
+   "dbp": 65,
+   "etco2": 35,
+   "vent": {
+    "rr": 17,
+    "vtMl": 370.0000047683716,
+    "peep": 0
+   },
+   "ageY": 57,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0016",
+   "fromS": 8935,
+   "toS": 9235,
+   "site": "radial",
+   "hr": 86,
+   "sbp": 102,
+   "dbp": 53,
+   "etco2": 41,
+   "vent": {
+    "rr": 16,
+    "vtMl": 419.99998688697815,
+    "peep": 4
+   },
+   "ageY": 57,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0827",
+   "fromS": 2765,
+   "toS": 3065,
+   "site": "radial",
+   "hr": 51,
+   "sbp": 105,
+   "dbp": 57,
+   "etco2": 34,
+   "vent": {
+    "rr": 19,
+    "vtMl": 259.99999046325684,
+    "peep": 5
+   },
+   "ageY": 69,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Premature supraventricular and ventricular complexes, Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0827",
+   "fromS": 3065,
+   "toS": 3365,
+   "site": "radial",
+   "hr": 50,
+   "sbp": 98,
+   "dbp": 52,
+   "etco2": 34,
+   "vent": {
+    "rr": 19,
+    "vtMl": 259.99999046325684,
+    "peep": 5
+   },
+   "ageY": 69,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Premature supraventricular and ventricular complexes, Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0013",
+   "fromS": 3317,
+   "toS": 3617,
+   "site": "radial",
+   "hr": 72,
+   "sbp": 94,
+   "dbp": 49,
+   "etco2": 33,
+   "vent": {
+    "rr": 15,
+    "vtMl": 409.9999964237213,
+    "peep": 4
+   },
+   "ageY": 67,
+   "sex": "F",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0013",
+   "fromS": 3737,
+   "toS": 4037,
+   "site": "radial",
+   "hr": 66,
+   "sbp": 94,
+   "dbp": 49,
+   "etco2": 36,
+   "vent": {
+    "rr": 12,
+    "vtMl": 409.9999964237213,
+    "peep": 4
+   },
+   "ageY": 67,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0005",
+   "fromS": 3191,
+   "toS": 3491,
+   "site": "radial",
+   "hr": 85,
+   "sbp": 103,
+   "dbp": 59,
+   "etco2": 37,
+   "vent": {
+    "rr": 16,
+    "vtMl": 550.000011920929,
+    "peep": 0
+   },
+   "ageY": 66,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Left anterior fascicular block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0005",
+   "fromS": 10151,
+   "toS": 10451,
+   "site": "radial",
+   "hr": 90,
+   "sbp": 92,
+   "dbp": 53,
+   "etco2": 35,
+   "vent": {
+    "rr": 12,
+    "vtMl": 550.000011920929,
+    "peep": 0
+   },
+   "ageY": 66,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "preop:Left anterior fascicular block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0001",
+   "fromS": 2568,
+   "toS": 2868,
+   "site": "radial",
+   "hr": 105,
+   "sbp": 181,
+   "dbp": 82,
+   "etco2": 32,
+   "vent": {
+    "rr": 10,
+    "vtMl": 479.99998927116394,
+    "peep": 0
+   },
+   "ageY": 77,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0001",
+   "fromS": 4248,
+   "toS": 4548,
+   "site": "radial",
+   "hr": 58,
+   "sbp": 96,
+   "dbp": 43,
+   "etco2": 30,
+   "vent": {
+    "rr": 10,
+    "vtMl": 449.99998807907104,
+    "peep": 0
+   },
+   "ageY": 77,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5659",
+   "fromS": 3888,
+   "toS": 4188,
+   "site": "femoral",
+   "hr": 66,
+   "sbp": 143,
+   "dbp": 79,
+   "etco2": 36,
+   "vent": {
+    "rr": 10,
+    "vtMl": 460.00000834465027,
+    "peep": 5
+   },
+   "ageY": 21,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5659",
+   "fromS": 4188,
+   "toS": 4488,
+   "site": "femoral",
+   "hr": 68,
+   "sbp": 146,
+   "dbp": 78,
+   "etco2": 34,
+   "vent": {
+    "rr": 15,
+    "vtMl": 460.00000834465027,
+    "peep": 5
+   },
+   "ageY": 21,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "2624",
+   "fromS": 3465,
+   "toS": 3765,
+   "site": "femoral",
+   "hr": 66,
+   "sbp": 144,
+   "dbp": 79,
+   "etco2": 35.5,
+   "vent": {
+    "rr": 12,
+    "vtMl": 409.9999964237213,
+    "peep": 5
+   },
+   "ageY": 53,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "2624",
+   "fromS": 4845,
+   "toS": 5145,
+   "site": "femoral",
+   "hr": 70,
+   "sbp": 123.5,
+   "dbp": 69.5,
+   "etco2": 34,
+   "vent": {
+    "rr": 14,
+    "vtMl": 460.00000834465027,
+    "peep": 5
+   },
+   "ageY": 53,
+   "sex": "F",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1327",
+   "fromS": 3427,
+   "toS": 3727,
+   "site": "femoral",
+   "hr": 89.5,
+   "sbp": 110,
+   "dbp": 65,
+   "etco2": 32,
+   "vent": {
+    "rr": 12,
+    "vtMl": 449.99998807907104,
+    "peep": 0
+   },
+   "ageY": 55,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1327",
+   "fromS": 4087,
+   "toS": 4387,
+   "site": "femoral",
+   "hr": 86,
+   "sbp": 91,
+   "dbp": 54,
+   "etco2": 31,
+   "vent": {
+    "rr": 12,
+    "vtMl": 449.99998807907104,
+    "peep": 0
+   },
+   "ageY": 55,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4214",
+   "fromS": 2343,
+   "toS": 2643,
+   "site": "femoral",
+   "hr": 78,
+   "sbp": 134,
+   "dbp": 68,
+   "etco2": 39,
+   "vent": {
+    "rr": 15,
+    "vtMl": 319.9999928474426,
+    "peep": 0
+   },
+   "ageY": 70,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4214",
+   "fromS": 2703,
+   "toS": 3003,
+   "site": "femoral",
+   "hr": 76,
+   "sbp": 107,
+   "dbp": 54,
+   "etco2": 36,
+   "vent": {
+    "rr": 15,
+    "vtMl": 319.9999928474426,
+    "peep": 0
+   },
+   "ageY": 70,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0119",
+   "fromS": 3241,
+   "toS": 3541,
+   "site": "radial",
+   "hr": 97,
+   "sbp": 116,
+   "dbp": 65,
+   "etco2": 42,
+   "vent": {
+    "rr": 16,
+    "vtMl": 500,
+    "peep": 5
+   },
+   "ageY": 22,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0119",
+   "fromS": 3541,
+   "toS": 3841,
+   "site": "radial",
+   "hr": 97,
+   "sbp": 114,
+   "dbp": 64,
+   "etco2": 42,
+   "vent": {
+    "rr": 16,
+    "vtMl": 519.9999809265137,
+    "peep": 5
+   },
+   "ageY": 22,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1286",
+   "fromS": 3192,
+   "toS": 3492,
+   "site": "radial",
+   "hr": 68,
+   "sbp": 98,
+   "dbp": 51,
+   "etco2": 33,
+   "vent": {
+    "rr": 16,
+    "vtMl": 360.00001430511475,
+    "peep": 0
+   },
+   "ageY": 63,
+   "sex": "F",
+   "tags": [
+    "hypotension",
+    "preop:Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1286",
+   "fromS": 4212,
+   "toS": 4512,
+   "site": "radial",
+   "hr": 79,
+   "sbp": 101,
+   "dbp": 49,
+   "etco2": 33,
+   "vent": {
+    "rr": 16,
+    "vtMl": 360.00001430511475,
+    "peep": 5
+   },
+   "ageY": 63,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3398",
+   "fromS": 3596,
+   "toS": 3896,
+   "site": "radial",
+   "hr": 65,
+   "sbp": 116,
+   "dbp": 52,
+   "etco2": 34,
+   "vent": {
+    "rr": 16,
+    "vtMl": 379.9999952316284,
+    "peep": 0
+   },
+   "ageY": 62,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "3398",
+   "fromS": 3896,
+   "toS": 4196,
+   "site": "radial",
+   "hr": 61,
+   "sbp": 131,
+   "dbp": 61,
+   "etco2": 35,
+   "vent": {
+    "rr": 15,
+    "vtMl": 379.9999952316284,
+    "peep": 0
+   },
+   "ageY": 62,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0026",
+   "fromS": 3682,
+   "toS": 3982,
+   "site": "radial",
+   "hr": 55,
+   "sbp": 133,
+   "dbp": 72,
+   "etco2": 31,
+   "vent": {
+    "rr": 12,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 64,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0026",
+   "fromS": 4102,
+   "toS": 4402,
+   "site": "radial",
+   "hr": 59,
+   "sbp": 117,
+   "dbp": 60,
+   "etco2": 30,
+   "vent": {
+    "rr": 12,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 64,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1320",
+   "fromS": 6365,
+   "toS": 6665,
+   "site": "radial",
+   "hr": 127,
+   "sbp": 133,
+   "dbp": 79,
+   "etco2": 32,
+   "vent": {
+    "rr": 15,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 70,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation with rapid ventricular response",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1320",
+   "fromS": 9905,
+   "toS": 10205,
+   "site": "radial",
+   "hr": 122,
+   "sbp": 100,
+   "dbp": 62,
+   "etco2": 31,
+   "vent": {
+    "rr": 12,
+    "vtMl": 370.0000047683716,
+    "peep": 5
+   },
+   "ageY": 70,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation with rapid ventricular response",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0028",
+   "fromS": 3582,
+   "toS": 3882,
+   "site": "radial",
+   "hr": 72,
+   "sbp": 95,
+   "dbp": 49,
+   "etco2": 23,
+   "vent": {
+    "rr": 14,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 67,
+   "sex": "F",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0028",
+   "fromS": 5142,
+   "toS": 5442,
+   "site": "radial",
+   "hr": 71,
+   "sbp": 100,
+   "dbp": 48,
+   "etco2": 36,
+   "vent": {
+    "rr": 14,
+    "vtMl": 259.99999046325684,
+    "peep": 5
+   },
+   "ageY": 67,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0387",
+   "fromS": 3531,
+   "toS": 3831,
+   "site": "radial",
+   "hr": 117,
+   "sbp": 105.5,
+   "dbp": 54,
+   "etco2": 34,
+   "vent": {
+    "rr": 14,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 80,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0387",
+   "fromS": 3951,
+   "toS": 4251,
+   "site": "radial",
+   "hr": 110,
+   "sbp": 95,
+   "dbp": 52,
+   "etco2": 32,
+   "vent": {
+    "rr": 14,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 80,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "preop:Atrial fibrillation",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0004",
+   "fromS": 3122,
+   "toS": 3422,
+   "site": "radial",
+   "hr": 67,
+   "sbp": 122,
+   "dbp": 62,
+   "etco2": 35,
+   "vent": {
+    "rr": 13,
+    "vtMl": 409.9999964237213,
+    "peep": 5
+   },
+   "ageY": 74,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0004",
+   "fromS": 4502,
+   "toS": 4802,
+   "site": "radial",
+   "hr": 65,
+   "sbp": 98.5,
+   "dbp": 49,
+   "etco2": 33,
+   "vent": {
+    "rr": 13,
+    "vtMl": 409.9999964237213,
+    "peep": 5
+   },
+   "ageY": 74,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5860",
+   "fromS": 4263,
+   "toS": 4563,
+   "site": "femoral",
+   "hr": 70,
+   "sbp": 136,
+   "dbp": 77,
+   "etco2": 33,
+   "vent": {
+    "rr": 10,
+    "vtMl": 550.000011920929,
+    "peep": 5
+   },
+   "ageY": 39,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5860",
+   "fromS": 16263,
+   "toS": 16563,
+   "site": "femoral",
+   "hr": 88,
+   "sbp": 90,
+   "dbp": 53,
+   "etco2": 34,
+   "vent": {
+    "rr": 11,
+    "vtMl": 550.000011920929,
+    "peep": 5
+   },
+   "ageY": 39,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4530",
+   "fromS": 4788,
+   "toS": 5088,
+   "site": "femoral",
+   "hr": 66,
+   "sbp": 126,
+   "dbp": 60,
+   "etco2": 35,
+   "vent": {
+    "rr": 14,
+    "vtMl": 319.9999928474426,
+    "peep": 5
+   },
+   "ageY": 54,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4530",
+   "fromS": 5088,
+   "toS": 5388,
+   "site": "femoral",
+   "hr": 65,
+   "sbp": 121,
+   "dbp": 58,
+   "etco2": 35,
+   "vent": {
+    "rr": 14,
+    "vtMl": 319.9999928474426,
+    "peep": 5
+   },
+   "ageY": 54,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "2282",
+   "fromS": 4517,
+   "toS": 4817,
+   "site": "femoral",
+   "hr": 79,
+   "sbp": 138,
+   "dbp": 83,
+   "etco2": 38,
+   "vent": {
+    "rr": 14,
+    "vtMl": 360.00001430511475,
+    "peep": 0
+   },
+   "ageY": 56,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "2282",
+   "fromS": 4817,
+   "toS": 5117,
+   "site": "femoral",
+   "hr": 81,
+   "sbp": 126,
+   "dbp": 75,
+   "etco2": 39,
+   "vent": {
+    "rr": 16,
+    "vtMl": 360.00001430511475,
+    "peep": 0
+   },
+   "ageY": 56,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4683",
+   "fromS": 1778,
+   "toS": 2078,
+   "site": "femoral",
+   "hr": 81,
+   "sbp": 90,
+   "dbp": 51,
+   "etco2": 38,
+   "vent": {
+    "rr": 19,
+    "vtMl": 509.99999046325684,
+    "peep": 10
+   },
+   "ageY": 73,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "4683",
+   "fromS": 2318,
+   "toS": 2618,
+   "site": "femoral",
+   "hr": 83,
+   "sbp": 134,
+   "dbp": 66,
+   "etco2": 37,
+   "vent": {
+    "rr": 19,
+    "vtMl": 509.99999046325684,
+    "peep": 10
+   },
+   "ageY": 73,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0103",
+   "fromS": 2501,
+   "toS": 2801,
+   "site": "radial",
+   "hr": 63,
+   "sbp": 125,
+   "dbp": 67,
+   "etco2": 33,
+   "vent": {
+    "rr": 16,
+    "vtMl": 349.9999940395355,
+    "peep": 5
+   },
+   "ageY": 35,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0103",
+   "fromS": 2861,
+   "toS": 3161,
+   "site": "radial",
+   "hr": 64,
+   "sbp": 117,
+   "dbp": 61,
+   "etco2": 33,
+   "vent": {
+    "rr": 15,
+    "vtMl": 349.9999940395355,
+    "peep": 5
+   },
+   "ageY": 35,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0180",
+   "fromS": 2320,
+   "toS": 2620,
+   "site": "radial",
+   "hr": 73,
+   "sbp": 156,
+   "dbp": 91.5,
+   "etco2": 33,
+   "vent": {
+    "rr": 14,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 37,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0180",
+   "fromS": 2620,
+   "toS": 2920,
+   "site": "radial",
+   "hr": 74,
+   "sbp": 152,
+   "dbp": 90,
+   "etco2": 33,
+   "vent": {
+    "rr": 14,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 37,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1350",
+   "fromS": 3502,
+   "toS": 3802,
+   "site": "radial",
+   "hr": 69,
+   "sbp": 137,
+   "dbp": 77,
+   "etco2": 39,
+   "vent": {
+    "rr": 16,
+    "vtMl": 340.0000035762787,
+    "peep": 0
+   },
+   "ageY": 42,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Left posterior fascicular block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1350",
+   "fromS": 3802,
+   "toS": 4102,
+   "site": "radial",
+   "hr": 65,
+   "sbp": 136,
+   "dbp": 73,
+   "etco2": 42,
+   "vent": {
+    "rr": 16,
+    "vtMl": 340.0000035762787,
+    "peep": 0
+   },
+   "ageY": 42,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Left posterior fascicular block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0022",
+   "fromS": 2581,
+   "toS": 2881,
+   "site": "radial",
+   "hr": 76,
+   "sbp": 142.5,
+   "dbp": 77,
+   "etco2": 38,
+   "vent": {
+    "rr": 13,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 53,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0022",
+   "fromS": 2881,
+   "toS": 3181,
+   "site": "radial",
+   "hr": 77,
+   "sbp": 149,
+   "dbp": 81,
+   "etco2": 38,
+   "vent": {
+    "rr": 13,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 53,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0031",
+   "fromS": 3292,
+   "toS": 3592,
+   "site": "radial",
+   "hr": 73.5,
+   "sbp": 102,
+   "dbp": 63,
+   "etco2": 33,
+   "vent": {
+    "rr": 17,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 58,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0031",
+   "fromS": 3592,
+   "toS": 3892,
+   "site": "radial",
+   "hr": 69,
+   "sbp": 107,
+   "dbp": 64.5,
+   "etco2": 35,
+   "vent": {
+    "rr": 17,
+    "vtMl": 300.00001192092896,
+    "peep": 5
+   },
+   "ageY": 58,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1800",
+   "fromS": 1911,
+   "toS": 2211,
+   "site": "radial",
+   "hr": 65,
+   "sbp": 158,
+   "dbp": 81,
+   "etco2": 33,
+   "vent": {
+    "rr": 10,
+    "vtMl": 479.99998927116394,
+    "peep": 5
+   },
+   "ageY": 75,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation with rapid ventricular response",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "1800",
+   "fromS": 2211,
+   "toS": 2511,
+   "site": "radial",
+   "hr": 62.5,
+   "sbp": 168,
+   "dbp": 83,
+   "etco2": 33,
+   "vent": {
+    "rr": 10,
+    "vtMl": 479.99998927116394,
+    "peep": 5
+   },
+   "ageY": 75,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation with rapid ventricular response",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0046",
+   "fromS": 3618,
+   "toS": 3918,
+   "site": "radial",
+   "hr": 79,
+   "sbp": 112,
+   "dbp": 54,
+   "etco2": 37,
+   "vent": {
+    "rr": 16,
+    "vtMl": 280.0000011920929,
+    "peep": 5
+   },
+   "ageY": 75,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0046",
+   "fromS": 4038,
+   "toS": 4338,
+   "site": "radial",
+   "hr": 79,
+   "sbp": 123,
+   "dbp": 61,
+   "etco2": 37,
+   "vent": {
+    "rr": 16,
+    "vtMl": 280.0000011920929,
+    "peep": 5
+   },
+   "ageY": 75,
+   "sex": "F",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0521",
+   "fromS": 3015,
+   "toS": 3315,
+   "site": "radial",
+   "hr": 104,
+   "sbp": 136,
+   "dbp": 65,
+   "etco2": 38,
+   "vent": {
+    "rr": 15,
+    "vtMl": 349.9999940395355,
+    "peep": 5
+   },
+   "ageY": 82,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "preop:Atrial fibrillation, Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0521",
+   "fromS": 4995,
+   "toS": 5295,
+   "site": "radial",
+   "hr": 107,
+   "sbp": 96,
+   "dbp": 45,
+   "etco2": 33,
+   "vent": {
+    "rr": 14,
+    "vtMl": 379.9999952316284,
+    "peep": 5
+   },
+   "ageY": 82,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "preop:Atrial fibrillation, Right bundle branch block",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0010",
+   "fromS": 3057,
+   "toS": 3357,
+   "site": "radial",
+   "hr": 82,
+   "sbp": 121,
+   "dbp": 84,
+   "etco2": 36,
+   "vent": {
+    "rr": 15,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 72,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "0010",
+   "fromS": 6057,
+   "toS": 6357,
+   "site": "radial",
+   "hr": 73,
+   "sbp": 106,
+   "dbp": 53,
+   "etco2": 33,
+   "vent": {
+    "rr": 15,
+    "vtMl": 449.99998807907104,
+    "peep": 5
+   },
+   "ageY": 72,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "radial"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5226",
+   "fromS": 3315,
+   "toS": 3615,
+   "site": "femoral",
+   "hr": 111,
+   "sbp": 100,
+   "dbp": 45,
+   "etco2": 33,
+   "vent": {
+    "rr": 12,
+    "vtMl": 400.0000059604645,
+    "peep": 0
+   },
+   "ageY": 69,
+   "sex": "M",
+   "tags": [
+    "hypotension",
+    "femoral"
+   ]
+  },
+  {
+   "source": "vitaldb",
+   "record": "5226",
+   "fromS": 5235,
+   "toS": 5535,
+   "site": "femoral",
+   "hr": 102,
+   "sbp": 100,
+   "dbp": 53,
+   "etco2": 31,
+   "vent": {
+    "rr": 13,
+    "vtMl": 400.0000059604645,
+    "peep": 0
+   },
+   "ageY": 69,
+   "sex": "M",
+   "tags": [
+    "stable",
+    "femoral"
+   ]
+  }
+ ],
+ "rejected": [
+  {
+   "record": "4556",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "0146",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "0055",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "1610",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "3569",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "1835",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "0056",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "0012",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  },
+  {
+   "record": "3942",
+   "reason": "no window with ECG II + ART + PLETH + CO2 ≥ 99 % present, plausible ART, IPPV, stable HR"
+  }
+ ]
+}
