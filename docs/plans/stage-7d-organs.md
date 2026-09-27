@@ -922,7 +922,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: Task 3 constants `CUSH_*`. Produces: `CushingState` {lowS, okS, active, drive}, `createCushing()`, `stepCushing(c, cppBase, gap, dt)` (gap = MAP_head − ICP now; `Infinity` disables the second trigger), `cushingDMap(c)` (mmHg, 40·drive), `cushingHrFactor(c)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/cushing.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/cushing.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -962,12 +962,12 @@ describe('Cushing response (tables §5.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/cushing.test.ts`
 Expected: FAIL — Cannot find module `src/l2/brain/cushing.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/brain/cushing.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/brain/cushing.ts`** (exactly as prototyped)
 
 ```ts
 // Cushing response (tables §5.1): brainstem ischaemia when CPP — computed on the PRE-SURGE MAP, so the response
@@ -1008,12 +1008,12 @@ export const cushingDMap = (c: CushingState): number => CUSH_DMAP * c.drive;
 export const cushingHrFactor = (c: CushingState): number => 1 - CUSH_HR_DROP * c.drive;
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/cushing.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (3 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/brain/cushing.ts packages/engine-core/test/l2/brain/cushing.test.ts docs/plans/stage-7d-organs.md
