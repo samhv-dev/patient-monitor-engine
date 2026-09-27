@@ -846,7 +846,7 @@ AF ventricular response answer to rate control. Before this task a rate-control 
 +1.6 %, amiodarone +8.8 %: the drugs' hypotension drives the reflex's AV term up), because nothing reads the bus's
 `avNodeBlock` except the adenosine hook — which is also why the hook must stop reading the combined block (E-FU2-7).
 
-- [ ] **Step 1: Write the failing mapping test** — in `packages/engine-core/test/l2/ecg/rhythm-atrial.test.ts`, find:
+- [x] **Step 1: Write the failing mapping test** — in `packages/engine-core/test/l2/ecg/rhythm-atrial.test.ts`, find:
 
 ```ts
   it('afib beats carry k_rhythm 0.8 × f_fill(RR) and short RRs lose ejection (brief §4.8)', () => {
@@ -866,13 +866,13 @@ and replace with:
   it('afib beats carry k_rhythm 0.8 × f_fill(RR) and short RRs lose ejection (brief §4.8)', () => {
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg/rhythm-atrial.test.ts`
 Expected: FAIL — `target 135, got 137.9` (130 → 131.0, 140 → 141.4 and 145 → 146.1 are inside ±2 %; the MONITOR's
 "+4 % at 140" of the old Q-FU2-5 is its HR numeric on an irregular rhythm, not the mapping — D12).
 
-- [ ] **Step 3: Re-fit the mapping** — in `packages/engine-core/src/l2/ecg/atria.ts`, find:
+- [x] **Step 3: Re-fit the mapping** — in `packages/engine-core/src/l2/ecg/atria.ts`, find:
 
 ```ts
  * threshold/refractory formulas that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13).
@@ -897,13 +897,13 @@ const AF_RATE_CAL: ReadonlyArray<readonly [number, number]> = [
 
 (The two commands were interpolated from the measured command→rate curve on seeds 11–13: 135 → 135.4, 145 → 145.1.)
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg`
 Expected: PASS — the new `it` (seed 21: 131.0 / 137.0 / 141.4 / 146.3) and the Stage 1.1 M1 test (±5 % over 40–180);
 every other `test/l2/ecg` test unchanged.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/ecg/atria.ts packages/engine-core/test/l2/ecg/rhythm-atrial.test.ts docs/plans/fu-2-engine-followups.md

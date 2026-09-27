@@ -30,6 +30,14 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     }
   });
 
+  it('FU-2 (E-FU2-5): afib mean ventricular rate within ±2 % at 130, 135, 140 and 145 bpm (knots at 135 and 145)', () => {
+    for (const hr of [130, 135, 140, 145]) {
+      const { beats } = runRhythm('afib', 600, { hr, seed: 21 }); // not a calibration seed (11–13)
+      const got = 60 / mean(diffs(beats.map((b) => b.t)));
+      expect(Math.abs(got - hr) / hr, `target ${hr}, got ${got.toFixed(1)}`).toBeLessThan(0.02);
+    }
+  });
+
   it('afib beats carry k_rhythm 0.8 × f_fill(RR) and short RRs lose ejection (brief §4.8)', () => {
     const { beats } = runRhythm('afib', 300, { hr: 130, seed: 2 });
     const ks = beats.map((b) => b.mech.kSV);
