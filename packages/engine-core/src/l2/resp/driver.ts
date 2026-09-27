@@ -83,6 +83,10 @@ export interface DriverCtx {
   fio2: number; // L1 fio2 (room air 0.21 by default)
   etco2: number; // current true EtCO2 (gastric washout height)
   complianceMl: number;
+  /** Stage 7f: complete upper-airway obstruction of spontaneous breaths (sedation / residual block, natural airway). */
+  obstructed?: boolean;
+  /** Stage 7f: own diaphragmatic effort during mechanical breaths while a block wears off (curare cleft). */
+  cleft?: number;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -149,8 +153,14 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   const c: Cycle = {
     seq: d.seq, t0: t, ti, te: period - ti, vt, kind: src === 'bvm' ? 'bvm' : mech ? 'mech' : 'spont', mech,
     exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: mech ? 'mech' : 'spont',
-    severity: sev, cleft: mech ? d.cleft : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
+    severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
+  if (!mech && ctx.obstructed && d.airway === 'patent') { // Stage 7f: sedation/residual-block obstruction (plan decision 12)
+    c.exch = false;
+    c.sampled = 'none';
+    c.vt = 0;
+    c.effort = 1;
+  }
   switch (d.airway) {
     case 'obstructed': // efforts without flow (spontaneous) or a kinked tube (mechanical)
       c.exch = false;

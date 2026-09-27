@@ -41,7 +41,7 @@
     "sensorId": { "enum": ["ecg", "spo2", "nibp", "abp", "cvp", "pap", "co2", "temp"] },
     "eventKind": {
       "enum": ["drug", "fluid", "bleed", "airway", "ventilation", "preoxygenate", "cpr", "defib", "pacer", "line",
-               "surgical", "condition"]
+               "surgical", "condition", "stimulus", "airwayDevice", "neuroProfile", "vaporiser"]
     },
     "ramp": {
       "type": "object",
@@ -62,6 +62,19 @@
         "weightKg": { "type": "number", "exclusiveMinimum": 0, "maximum": 300 },
         "heightCm": { "type": "number", "exclusiveMinimum": 0, "maximum": 250 },
         "ageBand": { "enum": ["adult", "paediatric", "neonatal"] },
+        "neuro": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "nm": { "enum": ["normal", "myasthenia", "lambertEaton", "burn", "denervation"] },
+            "cholinesterase": { "enum": ["normal", "heterozygous", "homozygous"] },
+            "mhSusceptible": { "type": "boolean" },
+            "mgMmolL": { "type": "number", "minimum": 0.3, "maximum": 6 }
+          }
+        },
+        "blood": {
+          "type": "object", "additionalProperties": { "type": "number" },
+          "properties": { "burns": { "type": "number", "minimum": 0, "maximum": 1 } }
+        },
         "baseline": {
           "type": "object",
           "propertyNames": { "$ref": "#/definitions/stateVar" },
@@ -237,7 +250,7 @@
             "type": { "const": "device" }, "$comment": { "type": "string" },
             "action": {
               "type": "object", "required": ["device", "action"],
-              "properties": { "device": { "enum": ["nibp", "alarm", "ecg", "display"] }, "action": { "type": "string" } }
+              "properties": { "device": { "enum": ["nibp", "alarm", "ecg", "display", "tof", "depth"] }, "action": { "type": "string" } }
             }
           },
           "required": ["action"], "additionalProperties": false

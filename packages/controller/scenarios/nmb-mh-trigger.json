@@ -1,0 +1,132 @@
+{
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "schema": "pme-scenario/1",
+  "id": "nmb-mh-trigger",
+  "title": "[draft] Malignant hyperthermia after succinylcholine and sevoflurane",
+  "notes": "MH-susceptible patient (undisclosed family history): succinylcholine for intubation and sevoflurane maintenance. EtCO2 climbs despite ventilation, tachycardia, masseter rigidity, then temperature. Treat: stop volatile, hyperventilate with 100 % O2, dantrolene 2.5 mg/kg (7e). 7f only marks the trigger (mhTrigger); the crisis is Stage 3's condition mh, modelled by 7e (R51 §6), scripted here at induction.",
+  "seed": 11,
+  "patient": {
+    "ageY": 45,
+    "sex": "M",
+    "weightKg": 70,
+    "heightCm": 172,
+    "ageBand": "adult",
+    "baseline": {
+      "hr": 72,
+      "sbp": 128,
+      "dbp": 76
+    },
+    "rhythm": {
+      "id": "sinus"
+    },
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "co2": "on"
+    },
+    "neuro": {
+      "mhSusceptible": true
+    }
+  },
+  "initialState": "induction",
+  "states": [
+    {
+      "id": "induction",
+      "label": "Induction",
+      "onEnter": [
+        {
+          "type": "device",
+          "action": {
+            "device": "tof",
+            "action": "start",
+            "intervalS": 15
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "succinylcholine",
+            "dose": 1.5,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "fio2": 0.5,
+            "peep": 5
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "vaporiser",
+            "agent": "sevoflurane",
+            "dialPct": 2.5,
+            "fgfLpm": 6
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "mh",
+            "severity": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "stop",
+          "label": "Volatile stopped",
+          "to": "treated",
+          "when": {
+            "manual": {
+              "label": "Stop volatile, dantrolene"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treated",
+      "label": "Treated",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "vaporiser",
+            "agent": "sevoflurane",
+            "dialPct": 0,
+            "fgfLpm": 6
+          }
+        }
+      ],
+      "transitions": []
+    }
+  ]
+}

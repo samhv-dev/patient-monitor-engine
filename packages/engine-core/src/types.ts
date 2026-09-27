@@ -10,6 +10,7 @@ import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, 
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
 import type { DrugsEvent, PkClinicalEvent } from './types-pk.ts'; // Stage 7g
 import type { TruthEvent } from './types-truth.ts'; // Stage 7x
+import type { NeuroCommandBody, NeuroDeviceAction, NeuroEvent, NeuroNumericId, NeuroProfile } from './types-neuro.ts'; // Stage 7f
 
 export type Tick = number; // integer; 1 tick = 20 ms of sim time
 export type SimSeconds = number;
@@ -21,6 +22,7 @@ export type ChannelId =
 export type NumericId =
   | 'hr' | 'pr' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
   | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc'
+  | NeuroNumericId // Stage 7f
   | OrganNumericId; // Stage 7d
 export type StateVar =
   | 'hr' | 'sbp' | 'dbp' | 'cvp' | 'papSys' | 'papDia' | 'pawp' | 'spo2' | 'pi' | 'rr' | 'vt' | 'etco2' | 'fio2'
@@ -51,6 +53,7 @@ export interface PatientProfile {
   blood?: BloodProfile; // Stage 7c: baseline blood chemistry (tables §1.1, §5b)
   conditions?: ProfileCondition[]; // Stage 7a (R22): e.g. [{ id: 'as', grade: 'severe' }]
   lungConditions?: LungConditionSpec[]; // Stage 7b: catalogue conditions on the patient (R36)
+  neuro?: NeuroProfile; // Stage 7f: neuromuscular profile, cholinesterase, MH susceptibility, Mg
 }
 
 export interface EngineOptions {
@@ -81,7 +84,8 @@ export type DeviceAction =
   | NibpDeviceAction // Stage 2
   | AlarmDeviceAction // Stage 4b
   | MonitorDeviceAction // Stage 4b
-  | CircDeviceAction; // Stage 7a
+  | CircDeviceAction // Stage 7a
+  | NeuroDeviceAction; // Stage 7f
 
 /** 'monitor' 0.5–40 Hz + notch, 'diagnostic' 0.05–150 Hz, or any skin band 'band:<lo>-<hi>' (Stage 4b, request E-4a-1). */
 export type EcgFilterMode = 'monitor' | 'diagnostic' | `band:${number}-${number}`;
@@ -100,6 +104,7 @@ export type Command = CommandBase &
     | BloodCommandBody // Stage 7c (types-blood.ts)
     | OrganCommandBody // Stage 7d (types-organs.ts)
     | LungCommandBody // Stage 7b (types-lung.ts)
+    | NeuroCommandBody // Stage 7f (types-neuro.ts)
   );
 
 export type DispatchResult = { accepted: boolean; tick: Tick; reason?: string };
@@ -145,6 +150,7 @@ export type EngineEvent =
   | CircEvent // Stage 7a (types-circ.ts)
   | DrugsEvent // Stage 7g (types-pk.ts)
   | BloodEvent // Stage 7c (types-blood.ts)
+  | NeuroEvent // Stage 7f (types-neuro.ts)
   | OrgansEvent; // Stage 7d (types-organs.ts)
 
 export type EngineEventType = EngineEvent['type'];

@@ -21,6 +21,7 @@ export const COLOR_KEYS = [
   'ECG', 'HR', 'ST', 'PVC', 'SpO2', 'PLETH', 'PR', 'PI', 'NIBP', 'ART', 'CVP', 'PAP', 'ICP',
   'PbtO2', 'UO', // Stage 7d
   'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'AWRR', 'TEMP', 'BFA', 'AGENTS',
+  'NMT', // Stage 7f: neuromuscular transmission (TOF) tile
 ] as const;
 export type ColorKey = (typeof COLOR_KEYS)[number];
 /** Colour keys every skin must define (the rest are optional). */
@@ -28,7 +29,7 @@ export const REQUIRED_COLOR_KEYS = ['ECG', 'HR', 'SpO2', 'PLETH', 'NIBP', 'RESP'
 
 export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'ICP'] as const; // Stage 7d: ICP
 export type LaneId = (typeof LANE_IDS)[number];
-export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'ICP', 'PbtO2', 'UO'] as const; // Stage 7d: ICP, PbtO2, UO
+export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'NMT', 'BFA', 'ICP', 'PbtO2', 'UO'] as const; // Stage 7f: NMT, BFA; Stage 7d: ICP, PbtO2, UO
 export type TileParam = (typeof TILE_PARAMS)[number];
 export const PAGE_KINDS = ['standard', 'multiEcg', 'dualSpo2', 'ibp', 'bigNumber', 'pump'] as const;
 export type PageKind = (typeof PAGE_KINDS)[number];
