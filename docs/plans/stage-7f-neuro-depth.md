@@ -3023,7 +3023,7 @@ git push
 - Consumes: 7g's circulation PD (its `DrugEffect` into 7a's `control()` via `circ.ext.drug`, incl. the volatile `gv` −0.3/MAC), FU-2's MODELED rate rule (the `sinus` rhythm is in `SINUS_FAMILY`, so the reflex drives HR), 7f's `anaesthesia` event (Tasks 11–12).
 - Produces: nothing (integration evidence for the gate note).
 
-- [ ] **Step 1: Write the test** `packages/engine-core/test/engine/neuro-circ.test.ts` (exact):
+- [x] **Step 1: Write the test** `packages/engine-core/test/engine/neuro-circ.test.ts` (exact):
 
 ```ts
 // One `drug` command, two consumers (R51 §2): 7g's circulation PD moves the MAP (through 7a), 7f's PD moves the depth
@@ -3091,9 +3091,9 @@ describe('7f and the circulation (R51 §2, addendum 8)', { timeout: 300_000 }, (
 });
 ```
 
-- [ ] **Step 2: Run** — `… exec vitest run test/engine/neuro-circ.test.ts` → 2 passed, one of them the pre-declared `it.fails` **R-7f-9** (prototype on the merged base: at 0.98 MAC sevoflurane, dial 2.5 %, the phenylephrine 100 µg reflex drop is 25.4 bpm vs 11.9 awake — the sevoflurane hypotension (MAP 86 vs 96) has already driven HR to 93, so the reflex operates on its steep limb and 7g's `gv` −0.3 does not show; propofol 2 mg/kg: MAP 94.6 → 85.4 (0.903, 7g's open NR-7g-1), DI nadir 46). This task adds no production code: both paths already exist (7g's circulation PD; Tasks 11–12). If the propofol MAP does not fall at all, check that 7g consumed the event (`dispatch(…).accepted` and `ps.pk.drugs.propofol`) and STOP and report. 7f adds no baroreflex factor (addendum 8): never fix R-7f-9 in 7f. The MAP band itself (60–80 % at 2 min) is 7g's own acceptance (NR-7g-1); 7f checks only that both paths ran from one command. Record the drop ratio and the MAP nadir in the gate note.
+- [x] **Step 2: Run** — `… exec vitest run test/engine/neuro-circ.test.ts` → 2 passed, one of them the pre-declared `it.fails` **R-7f-9** (prototype on the merged base: at 0.98 MAC sevoflurane, dial 2.5 %, the phenylephrine 100 µg reflex drop is 25.4 bpm vs 11.9 awake — the sevoflurane hypotension (MAP 86 vs 96) has already driven HR to 93, so the reflex operates on its steep limb and 7g's `gv` −0.3 does not show; propofol 2 mg/kg: MAP 94.6 → 85.4 (0.903, 7g's open NR-7g-1), DI nadir 46). This task adds no production code: both paths already exist (7g's circulation PD; Tasks 11–12). If the propofol MAP does not fall at all, check that 7g consumed the event (`dispatch(…).accepted` and `ps.pk.drugs.propofol`) and STOP and report. 7f adds no baroreflex factor (addendum 8): never fix R-7f-9 in 7f. The MAP band itself (60–80 % at 2 min) is 7g's own acceptance (NR-7g-1); 7f checks only that both paths ran from one command. Record the drop ratio and the MAP nadir in the gate note.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/neuro-circ.test.ts
