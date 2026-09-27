@@ -563,7 +563,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Produces: `params.ts` constants (names as below, used by Tasks 4–7, 11); `icpOfVolume(dV, icp0, pvi)`, `volumeOfIcp(icp, icp0, pvi)`, `elastance(icp, pvi)`, `csfDisplacementRate(icp, disp, icp0, rOut, reserve?)` (mL/min).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/mechanics.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/mechanics.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -590,12 +590,12 @@ describe('Monro–Kellie mechanics (tables §5.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/mechanics.test.ts`
 Expected: FAIL — Cannot find module `src/l2/brain/mechanics.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/brain/params.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/brain/params.ts`** (exactly as prototyped)
 
 ```ts
 // Stage 7d brain constants (tables §5.1; R26). Every number cites its tables row or is [ENG] with the prototype
@@ -679,7 +679,7 @@ export const TBI_AR_LOSS = 0.7; // autoregulation index 1 → 0.3 (impaired, not
 export const TBI_RESERVE_DROP = 20;
 ```
 
-- [ ] **Step 4: Implement `packages/engine-core/src/l2/brain/mechanics.ts`** (exactly as prototyped)
+- [x] **Step 4: Implement `packages/engine-core/src/l2/brain/mechanics.ts`** (exactly as prototyped)
 
 ```ts
 // Monro–Kellie craniospinal mechanics (tables §5.1): ICP = ICP0·10^(ΔV/PVI) over the change of intracranial volume
@@ -714,12 +714,12 @@ export function csfDisplacementRate(icp: number, disp: number, icp0: number, rOu
 }
 ```
 
-- [ ] **Step 5: Run the tests and the typecheck**
+- [x] **Step 5: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/mechanics.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (3 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/brain/params.ts packages/engine-core/src/l2/brain/mechanics.ts packages/engine-core/test/l2/brain/mechanics.test.ts docs/plans/stage-7d-organs.md
