@@ -41,6 +41,7 @@ export const GROUP_BY_PREFIX: Readonly<Record<string, GroupId>> = {
   // endocrine (7e): its own tree and event, its seams into 7c's blood and 7a's circulation multipliers
   endo: 'endocrine', 'ev.endo': 'endocrine', 'blood.endo': 'endocrine',
   'hemo.circ.ext.endoHrF': 'endocrine', 'hemo.circ.ext.endoSvrF': 'endocrine', 'hemo.circ.ext.endoEesF': 'endocrine', 'hemo.circ.ext.endoDV0Frac': 'endocrine',
+  'blood.core.endoKShift': 'endocrine', 'blood.core.endoGlucoseMgDl': 'endocrine', cond: 'endocrine', // Stage 7e seams (R51 addendum 16)
   // neuro (7f), drugs (7g)
   neuro: 'neuro', 'ev.anaesthesia': 'neuro', 'ev.tof': 'neuro', 'ev.neuroMark': 'neuro',
   pk: 'drugs', pkHooks: 'drugs', 'ev.drugs': 'drugs',
@@ -93,6 +94,10 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   // 7g PK machinery: compartment amounts, gamma doses and bolus times per drug, the per-tick dose log, the pending
   // and grid-due boluses, the last PD concentrations and the desflurane MAC history (the bus concentrations stay visible)
   'pk.drugs.*.x', 'pk.drugs.*.doses', 'pk.drugs.*.bolusTimes', 'pk.bus.doses', 'pk.lastC', 'pk.due', 'pk.pending', 'pk.macPrev',
+  // 7e machinery: ECG-delta and seam bookkeeping, integrator internals, the heat model's calibration and effector state
+  'endo.ecg', 'endo.kfMult', 'endo.lungSev', 'endo.core.hormones.cortDrive', 'endo.core.glucose.x', 'endo.core.glucose.gutMg',
+  'endo.core.glucose.gut2Mg', 'endo.core.glucose.egpDef', 'endo.core.glucose.basalExoUuMin', 'endo.core.cond.sepsis.tauS',
+  'resp.temp.capCore', 'resp.temp.capPer', 'resp.temp.k0', 'resp.temp.h', 'resp.temp.warmLag', 'resp.temp.vent', 'resp.temp.shiverShift',
   // 7c blood machinery: solute AMOUNTS and set points (the concentrations are blood.out), the profile scaling and the
   // compartments' reference copy, running infusions/bleeds, pH-solver scratch, the Stage 3 view (a copy of core.odc),
   // what the engine already pushed into Modifiers, the resting-CO latch, volume bookkeeping, queues and the test seam
