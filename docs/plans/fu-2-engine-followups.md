@@ -1771,7 +1771,7 @@ git push
 - Produces: `StateEvent.rhythm?: { id: RhythmId; rateBpm: number }` on the wire type; `ControllerSession.rhythm` set
   from every engine `state` event that carries it.
 
-- [ ] **Step 1: Write the failing test** — `packages/controller/test/panel/controls-follow-shock.dom.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/controller/test/panel/controls-follow-shock.dom.test.ts`:
 
 ```ts
 // @vitest-environment happy-dom
@@ -1824,13 +1824,13 @@ describe('controls follow an engine-initiated rhythm change (FU-2 item 4)', () =
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/controls-follow-shock.dom.test.ts`
 Expected: FAIL — `timed out waiting for session rhythm` (the outcome assertion before it passes: the shock drew
 `asystole`; asystole emits no `rhythmSegment` and no command, so the session still says `vfCoarse`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/controller/src/protocol.ts`, find:
 
@@ -1878,7 +1878,7 @@ and replace with:
 
 (the `else if (e.type === 'rhythmSegment')` line that follows stays as it is).
 
-- [ ] **Step 4: Run it to verify it passes; the FU-1 follow tests still pass**
+- [x] **Step 4: Run it to verify it passes; the FU-1 follow tests still pass**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/panel/controls-follow-shock.dom.test.ts test/panel/controls-follow.dom.test.ts test/session
@@ -1887,7 +1887,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller typecheck
 
 Expected: PASS — the new test (≈ 150 ms) and every FU-1 follow/session test.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/controller/src/protocol.ts packages/controller/src/session/controller-session.ts packages/controller/test/panel/controls-follow-shock.dom.test.ts docs/plans/fu-2-engine-followups.md
