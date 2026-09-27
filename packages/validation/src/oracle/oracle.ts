@@ -15,7 +15,9 @@ export interface OracleScenario {
   title: string;
   durationS: number;
   pulseActions: Array<{ t: number; json: string }>;
-  ours: { actions: Array<{ t: number; command: DocCommand }>; requires?: string[] };
+  /** `mode: 'modeled'` for scenarios that compare Stage 7 physiology: in MANUAL the targets stay put and a bleed or a
+   *  drug moves nothing (measured: O2/O4 deltas exactly 0). O1 and O-VF stay MANUAL (baseline targets; see O-VF). */
+  ours: { actions: Array<{ t: number; command: DocCommand }>; requires?: string[]; mode?: 'modeled' };
   compare: Compare[];
 }
 
@@ -38,7 +40,7 @@ export const ORACLE: OracleScenario[] = [
   {
     id: 'O2', title: 'Haemorrhage (Pulse RightLeg severity 0.8; ours 1100 mL over 10 min), observe 30 min', durationS: 1800,
     pulseActions: [{ t: 0, json: '{"AnyAction":[{"PatientAction":{"Hemorrhage":{"Compartment":"RightLeg","Severity":{"Scalar0To1":{"Value":0.8}}}}}]}' }],
-    ours: { actions: [{ t: 0, command: ev({ kind: 'bleed', volumeMl: 1100, overS: 600 }) }], requires: ['7a', '7c'] },
+    ours: { actions: [{ t: 0, command: ev({ kind: 'bleed', volumeMl: 1100, overS: 600 }) }], requires: ['7a', '7c'], mode: 'modeled' },
     compare: [
       { id: 'hr-delta', ours: 'state:hr', pulse: 'HeartRate(1/min)', atS: 600, metric: 'delta', tolPct: 20, expect: agree },
       { id: 'map-delta', ours: 'state:map', pulse: 'MeanArterialPressure(mmHg)', atS: 600, metric: 'delta', tolPct: 20, expect: agree },
@@ -48,7 +50,7 @@ export const ORACLE: OracleScenario[] = [
   {
     id: 'O4', title: 'Propofol bolus (Pulse 150 mg; ours 2 mg/kg)', durationS: 900,
     pulseActions: [{ t: 60, json: '{"AnyAction":[{"PatientAction":{"SubstanceBolus":{"AdministrationRoute":"Intravenous","Substance":"Propofol","Concentration":{"ScalarMassPerVolume":{"Value":10.0,"Unit":"mg/mL"}},"Dose":{"ScalarVolume":{"Value":15.0,"Unit":"mL"}}}}}]}' }],
-    ours: { actions: [{ t: 60, command: ev({ kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg' }) }], requires: ['7g'] },
+    ours: { actions: [{ t: 60, command: ev({ kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg' }) }], requires: ['7g'], mode: 'modeled' },
     compare: [
       { id: 'map-delta', ours: 'state:map', pulse: 'MeanArterialPressure(mmHg)', atS: 180, metric: 'delta', tolPct: 15, expect: agree },
       { id: 'hr-150s', ours: 'state:hr', pulse: 'HeartRate(1/min)', atS: 210, metric: 'abs', tolPct: 10, expect: { kind: 'expect-differ', id: 'D8', op: '<', value: 58 } },
@@ -87,7 +89,7 @@ export function judge(c: Compare, ours: number, pulse: number): { grade: Grade; 
 export function oursDoc(s: OracleScenario): ValidationDoc {
   return {
     schema: 'pme-validation/1', id: `oracle-${s.id}`, title: s.title, seed: 1, durationS: s.durationS, ...(s.ours.requires ? { requires: s.ours.requires } : {}),
-    scenario: { schema: 'pme-scenario/1', id: `oracle-${s.id}`, title: s.title, patient: STANDARD_MALE, initialState: 'run', states: [{ id: 'run' }] },
+    scenario: { schema: 'pme-scenario/1', id: `oracle-${s.id}`, title: s.title, ...(s.ours.mode ? { mode: s.ours.mode } : {}), patient: STANDARD_MALE, initialState: 'run', states: [{ id: 'run' }] },
     actions: s.ours.actions, segments: [],
   };
 }
