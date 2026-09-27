@@ -1361,7 +1361,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Produces: `icpSample(icpMean, elast, pp, sinceR, rr, u)`, `p2p1(elast)`, `beatShape`, `beatShapeArea`, constants `P_DELAY_S`, `P_SIGMA_S`, `PULSE_VOL_ML`, `RESP_VOL_ML`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/wave.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/wave.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1405,12 +1405,12 @@ describe('ICP waveform (tables §5.1, Q39)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/wave.test.ts`
 Expected: FAIL — Cannot find module `src/l2/brain/wave.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/brain/wave.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/brain/wave.ts`** (exactly as prototyped)
 
 ```ts
 // ICP waveform (tables §5.1 "ICP waveform", Q39): three Gaussians per perfused beat — P1 percussion (arterial),
@@ -1451,12 +1451,12 @@ export function icpSample(icpMean: number, elast: number, pp: number, sinceR: nu
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/wave.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (2 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/brain/wave.ts packages/engine-core/test/l2/brain/wave.test.ts docs/plans/stage-7d-organs.md
