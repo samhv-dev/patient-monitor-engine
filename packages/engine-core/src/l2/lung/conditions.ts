@@ -51,10 +51,11 @@ export interface Resolved {
 
 /**
  * Resolve condition specs for a patient of `ibwKg`. `rawEvent` = Stage 3 bronchospasm airway multiplier (1 = none).
+ * `evlwiAdd` = Stage 7c's lung water from the blood (mL/kg above the conditions' EVLWI; G7b ruling 8, E-7c-1).
  * Sided conditions (decision 13): 'affected' effects act on the chosen side; 'both' crs/raw are whole-system
  * multipliers converted onto that side, vdAlv/vqLow adds go to that side ÷ its share, global keys stay global.
  */
-export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, rawEvent = 1): Resolved {
+export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, rawEvent = 1, evlwiAdd = 0): Resolved {
   const sides: Acc[] = [fresh(), fresh()];
   const g = fresh();
   const blocked: LungSide[] = [];
@@ -103,8 +104,8 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
   const crsH = HEALTHY.crs * w;
   const ccwH = HEALTHY.ccw * w;
   // lung water (tables §4.5, Q25): shunt +0.03 per mL/kg above 10; lung compliance ×(1 − 0.04·(EVLWI − 7)₊) ≥ 0.5; R ×(1 + 0.03·(EVLWI − 7)₊)
-  const ew = Math.max(0, g.evlwi - 7);
-  const water = { c: Math.max(0.5, 1 - 0.04 * ew), r: 1 + 0.03 * ew, shunt: 0.03 * Math.max(0, g.evlwi - 10) };
+  const ew = Math.max(0, g.evlwi + evlwiAdd - 7); // Stage 7c: + the blood's lung water (E-7c-1)
+  const water = { c: Math.max(0.5, 1 - 0.04 * ew), r: 1 + 0.03 * ew, shunt: 0.03 * Math.max(0, g.evlwi + evlwiAdd - 10) };
   for (let k = 0; k < 2; k++) {
     const a = sides[k] as Acc;
     const sp = lp.side[k]!;

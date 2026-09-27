@@ -5,10 +5,10 @@ import { content, o2Steady, odc, po2ForContent, solveShunt, stepO2, type O2Input
 const x: O2Inputs = { vaLpm: 4.4, fio2: 0.21, massFlowFio2: null, qLpm: 5.25, vo2: 245, shunt: 0.03, paco2: 40, tempC: 37, frcMl: 2100, bloodL: 4.9 };
 
 describe('O2 model', () => {
-  it('Severinghaus ODC: P50 ≈ 26.8 mmHg, 90 % near 58 mmHg; hypothermia shifts it left', () => {
+  it('Dash–Bassingthwaighte ODC (Stage 7c; was Severinghaus): P50 ≈ 26.8 mmHg, 90 % near 58–61 mmHg; hypothermia shifts it left', () => {
     expect(odc(26.8)).toBeCloseTo(0.5, 2);
-    expect(odc(58)).toBeGreaterThan(0.89);
-    expect(odc(58)).toBeLessThan(0.91);
+    expect(odc(58)).toBeGreaterThan(0.885);
+    expect(odc(61)).toBeLessThan(0.91);
     expect(odc(40, 33)).toBeGreaterThan(odc(40, 37));
     expect(po2ForContent(content(80))).toBeCloseTo(80, 3);
   });
@@ -30,5 +30,11 @@ describe('O2 model', () => {
     };
     expect(run(null)).toBeLessThan(0.9); // room air, 90 s
     expect(run(1)).toBeGreaterThan(run(null));
+  });
+  it('Stage 7c: the ODC context carries Hb, pH and CO (defaults reproduce Stage 3)', () => {
+    expect(content(100)).toBeCloseTo(13.4 * 14 * odc(100) + 3, 6);
+    const acid = { hb: 14, ph: 7.2, dpgMmolL: 4.65, cohb: 0, methb: 0 };
+    expect(odc(40, 37, 40, acid)).toBeLessThan(odc(40) - 0.05); // Bohr
+    expect(content(100, 37, 40, { hb: 7, ph: 7.4, dpgMmolL: 4.65, cohb: 0, methb: 0 })).toBeLessThan(0.52 * content(100));
   });
 });

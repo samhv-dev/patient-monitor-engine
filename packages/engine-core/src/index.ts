@@ -19,6 +19,7 @@ export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.t
 export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b
 export { ventReference, type VentReference } from './l2/lung/vent-reference.ts'; // Stage 7b
 export * from './types-vent-link.ts'; // Stage V
+export * from './types-blood.ts'; // Stage 7c
 export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 export type * from './types-circ.ts'; // Stage 7a
 export type * from './types-pk.ts'; // Stage 7g

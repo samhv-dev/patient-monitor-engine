@@ -93,6 +93,12 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   // 7g PK machinery: compartment amounts, gamma doses and bolus times per drug, the per-tick dose log, the pending
   // and grid-due boluses, the last PD concentrations and the desflurane MAC history (the bus concentrations stay visible)
   'pk.drugs.*.x', 'pk.drugs.*.doses', 'pk.drugs.*.bolusTimes', 'pk.bus.doses', 'pk.lastC', 'pk.due', 'pk.pending', 'pk.macPrev',
+  // 7c blood machinery: solute AMOUNTS and set points (the concentrations are blood.out), the profile scaling and the
+  // compartments' reference copy, running infusions/bleeds, pH-solver scratch, the Stage 3 view (a copy of core.odc),
+  // what the engine already pushed into Modifiers, the resting-CO latch, volume bookkeeping, queues and the test seam
+  'blood.core.so', 'blood.core.pat', 'blood.core.fl.ref', 'blood.core.fl.flows', 'blood.core.ab.iter', 'blood.core.ab.residual',
+  'blood.core.k1Hz', 'blood.core.ecf0', 'blood.core.phNonOrg', 'blood.core.doses', 'blood.view', 'blood.ecg', 'blood.rest',
+  'blood.circNetMl', 'blood.labs', 'blood.cold', 'blood.keto', 'blood.events', 'blood.lung.pCap', 'blood.pinHbfRel',
   // Stage 7f neuro machinery: the TOF stimulator's schedule/PRNG, the last step's inputs and PD scratch, flags, dose
   // bookkeeping and the fasciculation save (the published antinoc/nmb/thermoDepth, resp hook and outputs stay visible)
   'neuro.tof', 'neuro.last', 'neuro.flags', 'neuro.fasc', 'neuro.emgBase', 'neuro.doseSeenT', 'neuro.diShown', 'resp.spont.nextT',

@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 10:05 (7c gate relaunched; 7d, 7f executing; 8a #18 CI rerun with the renderer budget fix).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 11:05 (8a #18, 7c #20, 7d #19 all gate-passed awaiting CI; 7f executing; 7e after 7c and 7d merge).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,8 +13,8 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2 | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17) | — |
-| 7c blood/acid–base | `stage-7c-blood` (worktree `../scratch/wt-stage-7c`), 23/26 tasks pushed | gate task relaunched 2026-09-27 10:05 (previous gate executor hung on a clobbered shared-scratchpad log) | gate + PR, then orchestrator gate + merge |
-| 7d brain/kidney/liver | `stage-7d-organs` (plan fixed, 24 tasks; worktree `../scratch/wt-stage-7d`) | executing (started 2026-09-27 09:00 on main with FU-2; merges 7c when it lands) | resume from first unticked task |
+| 7c blood/acid–base | `stage-7c-blood`, PR #20 (worktree `../scratch/wt-stage-7c`) | all 26 tasks done, gate passed (G7c), CI running | merge after 8a #18 (order: 8a → 7c → 7d), then launch 7e |
+| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`) | all 24 tasks done, gate passed (G7d), CI running | merge after 7c (merge main into the branch first), then 7e starts |
 | 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
 | 7f NMB/depth | `stage-7f-neuro-depth` (plan fixed vs real 7g, 20 tasks; worktree `../scratch/wt-stage-7f`) | executing (started 2026-09-27 09:25; merges 7c when it lands) | resume from first unticked task |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
