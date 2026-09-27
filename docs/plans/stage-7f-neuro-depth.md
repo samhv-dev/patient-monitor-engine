@@ -4499,9 +4499,9 @@ git push
 **Files:**
 - Create: `docs/gates/stage-7f.md`, `docs/gates/stage-7f/*.png`
 
-- [ ] **Step 1: Full gate run.** `git fetch origin && git merge origin/main` (R51 §7), then `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e` — all green (the pre-declared `it.fails` tests report as expected failures: `[FU-3 item 1]`, `[R-7f-7]`, `[R-7f-9]`).
+- [x] **Step 1: Full gate run.** `git fetch origin && git merge origin/main` (R51 §7), then `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e` — all green (the pre-declared `it.fails` tests report as expected failures: `[FU-3 item 1]`, `[R-7f-7]`, `[R-7f-9]`).
 
-- [ ] **Step 2: Write `docs/gates/stage-7f.md`** with these sections (fill every number from this branch's test runs; the prototype's are in the plan's "Prototype" table for comparison):
+- [x] **Step 2: Write `docs/gates/stage-7f.md`** with these sections (fill every number from this branch's test runs; the prototype's are in the plan's "Prototype" table for comparison):
 
 ```markdown
 # Gate 7f — neuromuscular block, anaesthetic depth, drive depression, anaesthetic state
@@ -4543,7 +4543,7 @@ git push
 - one line per PNG in docs/gates/stage-7f/ (what it shows, what to look at).
 ```
 
-- [ ] **Step 3: Open the PR**
+- [x] **Step 3: Open the PR**
 
 ```bash
 git add docs/gates/stage-7f.md docs/gates/stage-7f
