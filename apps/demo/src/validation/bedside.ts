@@ -26,7 +26,11 @@ const send = (body: Record<string, unknown>) => pm.dispatch({ id: `bedside-${++n
 
 /** Run an item's demo from the start snapshot; resolve with a text of what the engine measured. */
 async function runDemo(item: BedsideItem): Promise<string> {
-  await pm.restore(await start);
+  const snap = await start;
+  await pm.restore(snap);
+  // The restore rewinds the engine clock; `simT` only ever grows with events, so re-seed it from the snapshot's tick
+  // (20 ms) — otherwise t0 keeps the pre-restore time and every delay reads short (CI read 8.3 s for a 10 s alarm).
+  simT = snap.tick * 0.02;
   await new Promise((r) => setTimeout(r, 300));
   const t0 = simT;
   const events: EngineEvent[] = [];
