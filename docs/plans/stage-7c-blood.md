@@ -2824,7 +2824,7 @@ git push origin stage-7c-blood
 - Consumes: `labPanel`, `LAB_TURNAROUND_S` (Task 11), `createBloodCore`/`stepBloodCore` (Task 9).
 - Produces: the numbers the demo and the gate note quote. Test-after (it pins Task 11's `labs.ts`).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/l2/blood/labs.test.ts`:
 
@@ -2870,12 +2870,12 @@ describe('lab panel (plan decision 13)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/labs.test.ts`
 Expected: PASS (it pins Task 11's `labs.ts`; if a number misses, fix `labs.ts`, not the band: the bands are tables §5b normals).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/l2/blood/labs.test.ts
