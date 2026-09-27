@@ -1032,7 +1032,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: Tasks 3–5. Produces: `BrainParams`, `BrainInputs` {map, cvp, paco2, pao2, sao2, hb, tempC, drugs: BrainDrugs}, `BrainState` (fields as below; outputs `icp`, `cpp`, `mapHead`, `cbfRel`, `cbv`, `cmro2Rel`, `pbto2`, `sjvo2`, `elast`, `cush`, `herniated`; inputs set by commands: `mass`, `massRate`, `oedema`, `headUpDeg`, `osm`), `brainParams(conditions)`, `createBrain(p, inp)`, `stepBrain(b, inp, dt)`, `osmoticLoss(doses, t)`, `giveOsmotherapy(b, kind, mosm)`, `headUp(deg)`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/model.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/model.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1178,12 +1178,12 @@ describe('BrainModel', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/model.test.ts`
 Expected: FAIL — Cannot find module `src/l2/brain/model.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/brain/model.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/brain/model.ts`** (exactly as prototyped)
 
 ```ts
 // BrainModel (Stage 7d, tables §5.1): plain-data state stepped at 10 Hz from the circulation/gas truths.
@@ -1337,12 +1337,12 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
 export { cushingDMap, CPP_REF, NO_DRUGS };
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/model.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (8 tests, one of them `it.fails`: the model's hypocapnic CBF 0.417 at CVP 6 against the tables' 0.35–0.40 — Deviations; through the engine it is in band, Task 18); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/brain/model.ts packages/engine-core/test/l2/brain/model.test.ts docs/plans/stage-7d-organs.md
