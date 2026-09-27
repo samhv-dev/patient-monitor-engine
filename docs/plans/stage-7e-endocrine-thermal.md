@@ -3633,7 +3633,7 @@ git push origin stage-7e-endocrine-thermal
 **Interfaces:**
 - Consumes: 7a's MODELED engine (`mode: 'modeled'`), its `circ` 1 Hz event (`co`) and `state` values (`sbp`, `dbp`, `hr`, `cvp`); 7g's `epinephrine` drug event; the circ seam (Task 11 `writeCirc`).
 
-- [ ] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-circ-acceptance.test.ts`
+- [x] **Step 1: Write the tests** `packages/engine-core/test/engine/endo-circ-acceptance.test.ts`
 
 The restored tables §7 check 16 bands (R45: warm MAP 55–60, HR 115–130, CO 7–9, SVR 500–700; cold CO 3–4, SVR 1200–1500), one `it` per band on a shared run. Five are `it.fails` with the prototype's numbers (Q-7e-7): the mechanisms that would reach them are 7a's (Requests), not 7e's. The anaphylaxis window is the tables' "onset 1–10 min after an IV trigger" (the first version's 5 min was an [ENG] choice).
 
@@ -3731,18 +3731,18 @@ describe('Stage 7e × 7a (MODELED): anaphylaxis grade III (tables §5e)', { time
 });
 ```
 
-- [ ] **Step 2: Add the file to the SLOW set** — in `packages/engine-core/vite.config.ts`, after the line added in Task 14 add:
+- [x] **Step 2: Add the file to the SLOW set** — in `packages/engine-core/vite.config.ts`, after the line added in Task 14 add:
 
 ```ts
   'test/engine/endo-circ-acceptance.test.ts', // Stage 7e: MODELED sepsis warm → cold (2 sim-h)
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-circ-acceptance.test.ts`
 Expected: PASS (2 + 5 expected failures). Prototype console: `sepsis warm: MAP 61 HR 131 CO 5.0 SVR 866; cold: MAP 79 HR 79 CO 3.8 SVR 1510`; `anaphylaxis: MAP 94 → 62 at 10 min → 101 after 2 × 100 µg`. Mechanisms already tried inside the tables (keep them): warm SVR row 0.4 and cold 1.0 (tables 0.4–0.55 / 1.0–1.2), `vasoResp` scaling the catecholamine EXCESS (decision 8), the conditions' HR rows omitted in MODELED (decision 14; applying them gave HR 176). Before accepting any `it.fails`, try once more within the tables (e.g. warm V0 +10–15 %, extraSymp) and record each attempt's numbers in the gate note; never move a band. If an `it.fails` passes after main moved (e.g. FU-2 or 7a calibration landed), make it `it` and record the number.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/endo-circ-acceptance.test.ts packages/engine-core/vite.config.ts
