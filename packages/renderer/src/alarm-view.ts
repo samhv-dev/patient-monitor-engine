@@ -70,6 +70,9 @@ export const TILE_NUMERICS: Readonly<Record<TileParam, { numerics: NumericId[]; 
   RR: { numerics: ['rr'], limits: ['RR', 'AWRR'] },
   CO2: { numerics: ['etco2'], limits: ['EtCO2', 'EtCO2_pctV'] },
   ST: { numerics: ['stII'], limits: ['ST_mV'] },
+  ICP: { numerics: ['icpMean', 'cpp'], limits: ['ICP', 'CPP'] }, // Stage 7d
+  PbtO2: { numerics: ['pbto2'], limits: [] }, // Stage 7d
+  UO: { numerics: ['uop'], limits: [] }, // Stage 7d
 };
 
 export interface TileAlarmView {

@@ -3206,7 +3206,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Produces: `LaneId` gains `'ICP'`; `TileParam` gains `'ICP' | 'PbtO2' | 'UO'`; `ColorKey` gains `'PbtO2' | 'UO'` (`ICP` exists); `TILE_COLOR_KEY` maps the three tiles to their colour keys. Every new colour is covered by a provenance entry (saadat-like per key; philips-like's group `colors` entry covers it).
 
-- [ ] **Step 1: Write the failing test** — `packages/skins/test/organs-tiles.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/skins/test/organs-tiles.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3230,12 +3230,12 @@ describe('Stage 7d skin fields', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins exec vitest run test/organs-tiles.test.ts`
 Expected: FAIL — `LANE_IDS` does not contain `ICP`.
 
-- [ ] **Step 3: Extend the enums and the tile colour map** (each line marked `// Stage 7d`; on a merge conflict with 7f keep both stages' entries):
+- [x] **Step 3: Extend the enums and the tile colour map** (each line marked `// Stage 7d`; on a merge conflict with 7f keep both stages' entries):
   - `packages/skins/src/types.ts`: in `COLOR_KEYS`, after the line `  'ECG', 'HR', 'ST', 'PVC', 'SpO2', 'PLETH', 'PR', 'PI', 'NIBP', 'ART', 'CVP', 'PAP', 'ICP',` add the line `  'PbtO2', 'UO', // Stage 7d`; replace `export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2'] as const;` with `export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'ICP'] as const; // Stage 7d: ICP`; replace `export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST'] as const;` with `export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'ICP', 'PbtO2', 'UO'] as const; // Stage 7d: ICP, PbtO2, UO` (7f appends its own two params to the same list).
   - `packages/skins/src/resolve.ts`, `TILE_COLOR_KEY`: after the line `  SpO2: 'SpO2', TEMP: 'TEMP', RR: 'RESP', CO2: 'CO2', ST: 'ST',` add `  ICP: 'ICP', PbtO2: 'PbtO2', UO: 'UO', // Stage 7d`.
   - `apps/demo/src/stage4a/screen.ts`, `SAMPLE`: after the line ending `ST: { v: '0.1' },` add `  ICP: { v: '12', x: 'CPP 78' }, PbtO2: { v: '25' }, UO: { v: '70', x: 'Σ 540 mL' }, // Stage 7d`.
@@ -3243,7 +3243,7 @@ Expected: FAIL — `LANE_IDS` does not contain `ICP`.
     `  ICP: { numerics: ['icpMean', 'cpp'], limits: ['ICP', 'CPP'] }, // Stage 7d`, `  PbtO2: { numerics: ['pbto2'], limits: [] }, // Stage 7d`, `  UO: { numerics: ['uop'], limits: [] }, // Stage 7d` (one line each).
   - `packages/renderer/src/device-ui.ts`, `UNIT`: after the line ending `RR: 'rpm', CO2: 'mmHg', ST: 'mV',` add `  ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d`.
 
-- [ ] **Step 4: Colours and provenance** — `packages/skins/src/data/skins/saadat-like.json`: in `"colors"` change the last entry `"AGENTS": "#F0F030"` to `"AGENTS": "#F0F030",` and add the line `    "ICP": "#F0F0F0", "PbtO2": "#00F0F0", "UO": "#F0F000"`; in `"provenance"`, after the `"colors.ECG"` entry, add
+- [x] **Step 4: Colours and provenance** — `packages/skins/src/data/skins/saadat-like.json`: in `"colors"` change the last entry `"AGENTS": "#F0F030"` to `"AGENTS": "#F0F030",` and add the line `    "ICP": "#F0F0F0", "PbtO2": "#00F0F0", "UO": "#F0F000"`; in `"provenance"`, after the `"colors.ECG"` entry, add
 ```json
     "colors.ICP": { "tag": "eng", "source": "ENG", "note": "Stage 7d: no manual colour for ICP/PbtO2/UO; chosen for contrast (tables §5.1–5.2)" },
     "colors.PbtO2": { "tag": "eng", "source": "ENG", "note": "Stage 7d: no manual colour for ICP/PbtO2/UO; chosen for contrast (tables §5.1–5.2)" },
@@ -3251,12 +3251,12 @@ Expected: FAIL — `LANE_IDS` does not contain `ICP`.
 ```
   `packages/skins/src/data/skins/philips-like.json`: change `"ICP": "#FF00FF",` to `"ICP": "#FF00FF", "PbtO2": "#00FFFF", "UO": "#FFFF00",` (its group `"colors"` provenance entry covers the new keys). Run the skins contrast test; if a colour fails it, darken/lighten within the same hue.
 
-- [ ] **Step 5: Run the skins suite and the whole typecheck**
+- [x] **Step 5: Run the skins suite and the whole typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 typecheck`
 Expected: PASS (prototype: skins 170 tests, no snapshot change; whole-repo typecheck clean).
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/skins apps/demo/src/stage4a/screen.ts packages/renderer/src/alarm-view.ts packages/renderer/src/device-ui.ts docs/plans/stage-7d-organs.md

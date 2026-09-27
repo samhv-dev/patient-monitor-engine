@@ -153,6 +153,7 @@ export function laneColor(skin: Skin, lane: LaneId): string {
 const TILE_COLOR_KEY: Record<TileParam, string> = {
   HR: 'HR', NIBP: 'NIBP', ART: 'ART', CVP: 'CVP', PAP: 'PAP', IBP1: 'IBP1', IBP2: 'IBP2', IBP3: 'IBP3', IBP4: 'IBP4',
   SpO2: 'SpO2', TEMP: 'TEMP', RR: 'RESP', CO2: 'CO2', ST: 'ST',
+  ICP: 'ICP', PbtO2: 'PbtO2', UO: 'UO', // Stage 7d
 };
 
 function laneSweep(skin: Skin, lane: LaneId): number {

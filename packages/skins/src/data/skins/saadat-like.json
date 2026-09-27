@@ -24,7 +24,8 @@
     "RESP": "#F0F030", "CO2": "#F0F030", "AWRR": "#F0F030",
     "TEMP": "#00F0F0",
     "BFA": "#F0F0F0",
-    "AGENTS": "#F0F030"
+    "AGENTS": "#F0F030",
+    "ICP": "#F0F0F0", "PbtO2": "#00F0F0", "UO": "#F0F000"
   },
   "colorBinding": "byChannel",
   "ecgColorLocked": true,
@@ -202,6 +203,9 @@
     "chrome.grid": { "tag": "documented", "source": "research/06 §4.1", "note": "IBP grid OFF by default; no ECG grid seen" },
     "font": { "tag": "inferred", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "Arial-like regular; the stack is [ENG]" },
     "colors.ECG": { "tag": "measured", "source": "research/06 §3.2 (M p.308); brief §6.8" },
+    "colors.ICP": { "tag": "eng", "source": "ENG", "note": "Stage 7d: no manual colour for ICP/PbtO2/UO; chosen for contrast (tables §5.1–5.2)" },
+    "colors.PbtO2": { "tag": "eng", "source": "ENG", "note": "Stage 7d: no manual colour for ICP/PbtO2/UO; chosen for contrast (tables §5.1–5.2)" },
+    "colors.UO": { "tag": "eng", "source": "ENG", "note": "Stage 7d: no manual colour for ICP/PbtO2/UO; chosen for contrast (tables §5.1–5.2)" },
     "colors.HR": { "tag": "measured", "source": "research/06 §3.2 (M p.308); brief §6.8" },
     "colors.ST": { "tag": "measured", "source": "research/06 §3.2; brief §6.8" },
     "colors.PVC": { "tag": "measured", "source": "research/06 §3.2; brief §6.8" },

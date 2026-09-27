@@ -9,6 +9,7 @@ const SAMPLE: Record<TileParam, { v: string; x?: string }> = {
   HR: { v: '75' }, NIBP: { v: '121/82', x: '(98)' }, ART: { v: '120/80', x: '(93)' }, CVP: { v: '(8)' }, PAP: { v: '25/10', x: '(15)' },
   IBP1: { v: '120/80', x: '(93)' }, IBP2: { v: '(8)' }, IBP3: { v: '25/10' }, IBP4: { v: '(12)' },
   SpO2: { v: '97', x: 'PR 75  PI 3.1' }, TEMP: { v: '36.8', x: 'T2 37.4  DT 0.6' }, RR: { v: '15' }, CO2: { v: '36', x: 'FiCO2 0  AWRR 15' }, ST: { v: '0.1' },
+  ICP: { v: '12', x: 'CPP 78' }, PbtO2: { v: '25' }, UO: { v: '70', x: 'Σ 540 mL' }, // Stage 7d
 };
 const LAMP_COLOR: Record<string, string> = { 'red-flash': '#F00000', 'yellow-flash': '#F0F000', 'yellow-steady': '#F0F000', 'cyan-steady': '#00D0D0', off: '#333333' };
 
