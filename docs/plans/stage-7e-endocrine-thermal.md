@@ -796,7 +796,7 @@ git push origin stage-7e-endocrine-thermal
 
 Prototype numbers this task reproduces (70 kg, 21 °C, draped): unwarmed GA −0.93 °C at 30 min, −1.25 at 60, hour 2 −0.38; warmed nadir −0.90 °C, hour-3 +0.81 °C/h. **After Step 4, also run** `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/temp test/engine/resp-coupling.test.ts` — Stage 3's six heat tests and the 3.1 R39-7/MH engine tests must pass UNCHANGED.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/heat.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/heat.test.ts`
 
 ```ts
 // Stage 7e heat balance (R39-7 bands, research 09 §7; annex B3). The Stage 3 tests in test/l2/temp stay unchanged.
@@ -936,12 +936,12 @@ describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/heat.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/thermal/heat.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/thermal/heat.ts`
 
 ```ts
 // Stage 7e heat balance (annex B3 "Take the 2-node core/skin circuit + environment; Fix: GA thresholds, vasomotion as
@@ -1157,7 +1157,7 @@ export function upgradeThermal(st: ThermalState): ThermalState {
 }
 ```
 
-- [ ] **Step 4: Replace** `packages/engine-core/src/l2/temp/temp.ts` (E1)
+- [x] **Step 4: Replace** `packages/engine-core/src/l2/temp/temp.ts` (E1)
 
 ```ts
 // Stage 7e: the Stage 3 heat model now lives in `l2/thermal/**` (tables §5c, annex B3). This file keeps Stage 3's
@@ -1190,12 +1190,12 @@ export function mhFactor(st: TempState, t: number, max = MH_MAX_FACTOR): number 
 }
 ```
 
-- [ ] **Step 5: Run the tests and the typecheck**
+- [x] **Step 5: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/heat.test.ts test/l2/temp test/engine/resp-coupling.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (heat 9, temp 6 unchanged, resp-coupling unchanged), typecheck clean.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/thermal/heat.test.ts packages/engine-core/src/l2/thermal/heat.ts packages/engine-core/src/l2/temp/temp.ts
