@@ -3154,7 +3154,7 @@ git push
 - Consumes: 7f's event kinds (`airwayDevice`, `neuroProfile`) and 7e's `stimulus` (`{ kind: 'stimulus', intensity }`, decision 17; accepted through 7f's temporary-owner validator or 7e's) and devices (`tof`, `depth`); 7g's `drug` and `vaporiser` events (`{ kind: 'vaporiser', agent, dialPct, fgfLpm }`, R51 §4 — 7f's former `volatile` event no longer exists); 7c's `patient.blood` profile (`burns`, the succinylcholine potassium sensitivity); Stage 3's `condition mh` (MH is 7e's model, R51 §6).
 - Produces: six `[draft]` scenario files for Ali's review; the schema accepts them.
 
-- [ ] **Step 1: Write the failing test** `packages/controller/test/scenario/neuro-scenarios.test.ts` (exact):
+- [x] **Step 1: Write the failing test** `packages/controller/test/scenario/neuro-scenarios.test.ts` (exact):
 
 ```ts
 // Stage 7f scenarios: valid against the schema (event kinds stimulus/airwayDevice/neuroProfile, 7g's vaporiser, devices
@@ -3184,9 +3184,9 @@ describe('Stage 7f scenarios', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** (files missing).
+- [x] **Step 2: Run; expect FAIL** (files missing).
 
-- [ ] **Step 3: Schema.** In `pme-scenario-1.schema.json`: `eventKind.enum` gains `"stimulus", "airwayDevice", "neuroProfile"` after `"condition"`, and `"vaporiser"` if `grep -n '"vaporiser"' packages/controller/scenarios/pme-scenario-1.schema.json` finds nothing (the prototype base has none; never add `"volatile"`: that event was deleted by R51 §4; if 7e merged first and already added `"stimulus"`, do not add it twice); the `device` command's `device.enum` (prototype base: `["nibp", "alarm", "ecg", "display"]`) gains `"tof", "depth"`; in `patient.properties` after `"ageBand"` add (skip `"blood"` if 7c or another stage already declared it):
+- [x] **Step 3: Schema.** In `pme-scenario-1.schema.json`: `eventKind.enum` gains `"stimulus", "airwayDevice", "neuroProfile"` after `"condition"`, and `"vaporiser"` if `grep -n '"vaporiser"' packages/controller/scenarios/pme-scenario-1.schema.json` finds nothing (the prototype base has none; never add `"volatile"`: that event was deleted by R51 §4; if 7e merged first and already added `"stimulus"`, do not add it twice); the `device` command's `device.enum` (prototype base: `["nibp", "alarm", "ecg", "display"]`) gains `"tof", "depth"`; in `patient.properties` after `"ageBand"` add (skip `"blood"` if 7c or another stage already declared it):
 
 ```json
         "neuro": {
@@ -3206,7 +3206,7 @@ describe('Stage 7f scenarios', () => {
 
 (`blood` is 7c's `BloodProfile` — every field a number; only `burns`, which the succinylcholine scenario sets, is range-checked here.)
 
-- [ ] **Step 4: The six scenarios** (exact files; all `[draft]` for Ali's review):
+- [x] **Step 4: The six scenarios** (exact files; all `[draft]` for Ali's review):
 
 `packages/controller/scenarios/nmb-residual-block.json`
 ```json
@@ -3970,9 +3970,9 @@ describe('Stage 7f scenarios', () => {
 
 They are NOT added to `BUILTIN_SCENARIOS` (its test pins Stage 6b's five); adding them to the catalogue is the orchestrator's call after Ali's review.
 
-- [ ] **Step 5: Run; expect PASS** (6): `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/neuro-scenarios.test.ts`, then `npx -y pnpm@9.15.9 --filter @pme/controller test` (all green). The vaporiser dials are [ENG] inputs measured on 7g's circle model at FGF 6 L/min (2.5 % → end-tidal 1.00 MAC at 30 min, 40 y; 1.25 % ≈ 0.5 MAC, 0.9 % ≈ 0.35 MAC at 40–45 y); adjust a dial, not the scenario text, if the demo shows otherwise. `stimulus` is 7e's shape (intensity 1 = incision, held until the next stimulus event). The succinylcholine-in-a-burn scenario sets `patient.blood.burns` 0.4 so 7c's potassium rise runs (R-7f-5). Prototype: 6 passed; `--filter @pme/controller test` 203 passed.
+- [x] **Step 5: Run; expect PASS** (6): `npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario/neuro-scenarios.test.ts`, then `npx -y pnpm@9.15.9 --filter @pme/controller test` (all green). The vaporiser dials are [ENG] inputs measured on 7g's circle model at FGF 6 L/min (2.5 % → end-tidal 1.00 MAC at 30 min, 40 y; 1.25 % ≈ 0.5 MAC, 0.9 % ≈ 0.35 MAC at 40–45 y); adjust a dial, not the scenario text, if the demo shows otherwise. `stimulus` is 7e's shape (intensity 1 = incision, held until the next stimulus event). The succinylcholine-in-a-burn scenario sets `patient.blood.burns` 0.4 so 7c's potassium rise runs (R-7f-5). Prototype: 6 passed; `--filter @pme/controller test` 203 passed.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/controller/scenarios/pme-scenario-1.schema.json packages/controller/scenarios/nmb-*.json packages/controller/scenarios/depth-*.json packages/controller/test/scenario/neuro-scenarios.test.ts
