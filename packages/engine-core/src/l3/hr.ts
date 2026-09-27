@@ -19,9 +19,18 @@ export interface HrAveraging {
   n: number;
 }
 
-/** The skin's HR averaging option, or undefined (the default method). */
-export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging } }): HrAveraging | undefined {
-  return skin.hr.averaging;
+/** Window a skin declaring `method: 'moving-average-seconds'` uses when it names no `windowDefault` (s). */
+export const MOVING_AVERAGE_DEFAULT_S = 8;
+
+/**
+ * The skin's HR averaging option, or undefined (the default method). An explicit `averaging` wins; otherwise a skin
+ * that declares `method: 'moving-average-seconds'` (saadat-like) gets the time window it declares as its default
+ * (FU-2 item 5: saadat-like's 8 s).
+ */
+export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: string; windowDefault?: number | null } }): HrAveraging | undefined {
+  if (skin.hr.averaging) return skin.hr.averaging;
+  if (skin.hr.method === 'moving-average-seconds') return { kind: 'seconds', n: skin.hr.windowDefault ?? MOVING_AVERAGE_DEFAULT_S };
+  return undefined;
 }
 const SLOW_RR_S = 1.2;
 const ASYSTOLE_S = 4.0;

@@ -67,8 +67,11 @@ export interface PkState {
 export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
+  /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
+   * apply its own temperature term to the hepatic share again. */
+  hepFnTemp: boolean;
 }
-export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1 };
+export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false };
 
 export function pkPatientOf(p: PatientProfile | undefined): PkPatient {
   return {
@@ -136,13 +139,18 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
   }
 }
 
-/** Clearance factor from liver flow/function, kidney and temperature (decision 7), quantised to 1 % (cache hits). */
-function clFactor(row: DrugRow, ctx: PkCtx): number {
+/**
+ * Clearance factor from liver flow/function, kidney and temperature (decision 7), quantised to 1 % (cache hits).
+ * FU-2 item 9: temperature is applied once — when `hepFn` carries it (7d), the low-extraction hepatic share takes
+ * `hepFn` alone and 7g's own term scales the rest (flow-limited hepatic, renal, other).
+ */
+export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
   const r = row.elim?.renal ?? 0;
-  const organ = h * (row.elim?.highExtraction ? ctx.hepFlow : ctx.hepFn) + r * ctx.renal + Math.max(0, 1 - h - r);
   const temp = Math.max(0.5, 1 - 0.05 * Math.max(0, NORMOTHERMIA_C - ctx.tempC)); // [ENG] ≈ −5 %/°C below normothermia (M10 ch. 24 p. 698 direction)
-  return Math.round(organ * temp * 100) / 100;
+  const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
+  const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
+  return Math.round(organ * 100) / 100;
 }
 
 function params(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {

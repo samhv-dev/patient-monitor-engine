@@ -107,6 +107,7 @@ export type ExtraEvent =
   | {
       type: 'state'; t: SimSeconds; tick: Tick; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
+      rhythm?: { id: RhythmId; rateBpm: number }; // FU-2: the engine's running rhythm (absent from a host-synthesised state)
     }
   | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] };

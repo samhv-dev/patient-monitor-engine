@@ -111,7 +111,15 @@ describe('Stage 2 acceptance (engine level)', () => {
   // 1.5: −3): the arterial run-off through the 1.6 s compensatory pause (DBP 80 → 59–65) outweighs the extra stroke
   // volume an elastance LV can eject (diastasis keeps EDV +5 %). Stage 2 met the band only with FS_CARRY 0.75.
   // it.fails keeps CI green while flagging the gap; it starts failing (i.e. the band is met) once the ruling lands.
-  it.fails('5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs', () => {
+  // FU-2 item 3 (G7a NR-1, option b) measured the ruled mechanism: the circuit's arterial C(P) already rises as pressure
+  // falls (Stage 2's C0·e^(−0.01(P − 95))). A sourced Langewouters/Modelflow arctangent law (p0 = 76 − 0.89·age,
+  // p1 = 57 − 0.44·age at 40 y) gives −9.9 mmHg and moves five calibrated 7a/7g bands (PE CO, tamponade CO, R46 lung
+  // split, phenylephrine 1 µg/kg/min 29.5 %, pleth−radial foot 101 ms); the same law below 95 mmHg only gives −10.4 and
+  // still breaks the foot band (100.1 ms); below 80 or 70 mmHg only: −11.2 / −11.0; even an unphysiological p0 70,
+  // p1 20 reaches −8.0. Slower run-off raises the pre-beat DBP by 1.4–3 mmHg, but the ejection then fills a more
+  // compliant bed, so SBP barely moves. The mechanism cannot reach +8–15; the gap is the elastance heart's filling
+  // through the pause (EDV +5 %). C(P) stays Stage 2's; measured −10.9 (seed 5). Calibration pass (R44).
+  it.fails('5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9; FU-2 item 3)', () => {
     const { e, ev } = rig({ seed: 5, hrv: false });
     for (const t0 of [20, 35, 50, 65, 80, 95]) {
       e.advanceTo(t0);

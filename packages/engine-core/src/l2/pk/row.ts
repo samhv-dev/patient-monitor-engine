@@ -41,6 +41,11 @@ export interface CnsSpec {
   remiEq?: number; // × Ce → remifentanil-equivalent ng/mL (opioids)
   midazEq?: number; // × c → midazolam-equivalent (benzodiazepines)
   cmro2?: number; // fractional CMRO2 fall at uHyp = 1 (tables §5.1)
+  /** FU-2 item 8, volatiles: CMRO2 × max(0.5, 1 − cmro2PerMac·MAC) (tables §5.1 rows; replaces `cmro2`). */
+  cmro2PerMac?: number;
+  /** FU-2 item 8, volatiles: DIRECT CBF change at 0.5 and 1.5 MAC — the vasodilation beyond flow–metabolism coupling
+   * (Matta 1999 under an isoelectric EEG, tables §5.1); published as `cbfVaso`, and 7d's NET CBF = direct × coupling. */
+  cbfDirect?: readonly [number, number];
 }
 
 export interface DrugRow {

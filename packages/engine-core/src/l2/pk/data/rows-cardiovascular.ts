@@ -67,13 +67,13 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
   // unique V1 2.71, V2 0.69 L/kg, Q 0.175 L/kg/min (closed form: λ1 = ln2/2, λ2 = ln2/9 per min) [P-derived];
   // ke0 0.7 [ENG]. HR −10 % per 100 µg/kg/min, Emax −35 % (T6.2) → hr EC50 250 rate-eq.
   { id: 'esmolol', name: 'Esmolol', cls: 'betaBlocker', amountUnit: 'mcg', pk: { kind: 'perKg', conc: 'rateEq', pk: { v1: 2.71, v2: 0.69, v3: 0, cl1: 0.285, cl2: 0.175, cl3: 0, ke0: [0.7] } },
-    pd: [{ target: 'betaBlock', emax: 0.9, ec50: 100 }, { target: 'hr', emax: -0.35, ec50: 250 }, { target: 'ees', emax: -0.2, ec50: 250 }],
+    pd: [{ target: 'betaBlock', emax: 0.9, ec50: 100 }, { target: 'hr', emax: -0.35, ec50: 250 }, { target: 'ees', emax: -0.2, ec50: 250 }, { target: 'avNode', emax: 0.5, ec50: 150 }], // FU-2 E-FU2-6: AV-nodal block (AF rate control) [ENG]
     syringePerMl: 10000, doses: 'load 0.5 mg/kg over 1 min (peri-op 1 mg/kg over 30 s); 50–300 µg/kg/min', onset: 'distribution t½ 2 min, elimination t½ 9 min (label; the PK set reproduces both)', ir: '?', src: 'Esmolol label (CL 285 mL/kg/min, Vss 3.4 L/kg, t½ 2/9 min); T6.2; β occupancy [ENG]', tag: 'ENG' },
   { id: 'labetalol', name: 'Labetalol', cls: 'betaBlocker', amountUnit: 'mg', pk: gammaPk(10, false, 300, 14400),
-    pd: [{ target: 'betaBlock', emax: 0.6, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.25, ec50: 1 }],
+    pd: [{ target: 'betaBlock', emax: 0.6, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.25, ec50: 1 }, { target: 'avNode', emax: 0.4, ec50: 2 }], // FU-2 E-FU2-6 [ENG]
     doses: '5–20 mg IV, repeat', onset: 'onset 2–5 min, peak ≈ 5 min, 2–6 h', ir: '?', src: 'T6.2 [TXT], Q59; β occupancy [ENG]', tag: 'TXT' },
   { id: 'metoprolol', name: 'Metoprolol', cls: 'betaBlocker', amountUnit: 'mg', pk: gammaPk(2.5, false, 1200, 21600),
-    pd: [{ target: 'betaBlock', emax: 0.7, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }],
+    pd: [{ target: 'betaBlock', emax: 0.7, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'avNode', emax: 0.5, ec50: 2 }], // FU-2 E-FU2-6 [ENG]
     doses: '1–5 mg IV', onset: 'onset 2–5 min, peak 20 min (tpS 1200), 3–6 h', ir: '?', src: 'T6.2 [TXT], Q59; β occupancy [ENG]', tag: 'TXT' },
   { id: 'amiodarone', name: 'Amiodarone', cls: 'antiarrhythmic', amountUnit: 'mg', pk: gammaPk(150, false, 600, 7200),
     pd: [{ target: 'hr', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'avNode', emax: 0.3, ec50: 1 }],

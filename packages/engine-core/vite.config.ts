@@ -18,6 +18,8 @@ const SLOW = [
   'test/engine/blood-stage3-recheck.test.ts', // Stage 7c: four desaturations + a 70 min OLV run
   'test/engine/blood-sanity-*.test.ts', // Stage 7c: 2 h haemorrhage/transfusion and acid–base scenarios
   'test/engine/blood-hyperk.test.ts', // Stage 7c: 30 min succinylcholine/calcium/insulin and salbutamol scenarios
+  'test/engine/circ-rate-rule.test.ts', // FU-2: MODELED rhythm-rate scenarios (2–4 sim-min each)
+  'test/engine/af-rate-control.test.ts', // FU-2: AF rate control (13–22 sim-min each)
 ];
 const set = process.env.PME_TEST_SET;
 

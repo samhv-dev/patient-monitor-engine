@@ -3,7 +3,7 @@
 // (baroreflex, drugs, volume events, conditions) and per-beat truths. Stepped at 2 ms by the Stage 2 hemo pipeline
 // inside the 20 ms tick; everything is plain JSON-safe data (the engine clones it every tick for the look-ahead).
 import { activationPeriodS, pruneActivations, type Activation } from './activation.ts';
-import { createBaro, K_PP, stepBaro, type BaroState } from './baroreflex.ts';
+import { createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type BaroState } from './baroreflex.ts'; // FU-2 F4: V0_RECRUIT_MAX_ML_KG
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
@@ -11,6 +11,8 @@ import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
+import type { RampState } from '../../l1/ramp.ts'; // FU-2
+import { betaDV0Ml } from './venous.ts'; // FU-2
 
 // hot-loop locals (imported bindings are getters under the vitest transform) [perf]
 const L_H = H_S;
@@ -66,6 +68,8 @@ export interface CircModelState {
   boluses: Bolus[];
   vol: VolumeEvent[];
   hrModel: number; // bpm the reflex/drugs ask the rhythm engine for (MODELED)
+  /** FU-2 (NR-7g-5): the rate the instructor or the rhythm set (rate-rule.ts); null = the reflex owns a sinus-family rate. */
+  hrSet: RampState | null;
   ctlNext: number;
   mapSum: number;
   mapN: number;
@@ -96,6 +100,8 @@ export interface CircModelState {
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
     drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers
+    betaAgonistU?: number; // FU-2 (NR-7g-2): β-agonist venous potency units from the drug bus (venous.ts)
+    avNodeBlock?: number; // FU-2 (AF rate control): the drug bus's AV-nodal block 0–1 (rate-rule.ts)
   };
 }
 
@@ -104,7 +110,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   const st = stabilise(prof);
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
-    vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr,
+    vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
     ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
@@ -196,7 +202,10 @@ function control(m: CircModelState, env: CircEnv): void {
   const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
   const x = m.ext; // R48/R49 multipliers (default 1; endoDV0Frac default 0)
   p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * (x.endoSvrF ?? 1);
-  p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
+  const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
+  const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
+  const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, b.dV0 - dv0Beta); // FU-2 F4: reflex + β share one reservoir
+  p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + recruit + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split

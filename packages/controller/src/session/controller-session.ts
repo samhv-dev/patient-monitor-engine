@@ -56,7 +56,7 @@ export class ControllerSession {
   hostOnline = false;
   hostEngineVersion: string | null = null;
   bookmarks: string[] = [];
-  /** The host's current rhythm (FU-1): from `rhythmSegment` events and applied `setRhythm` commands; null until seen. */
+  /** The host's current rhythm (FU-1): from `rhythmSegment` events, applied `setRhythm` commands and (FU-2) the 1 Hz `state` event; null until seen. */
   rhythm: RhythmId | null = null;
   /** The host's scenario as seen from here (Stage 6b). */
   readonly scenario = new ScenarioView();
@@ -171,7 +171,10 @@ export class ControllerSession {
   private onEvent(e: WireEvent): void {
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t);
     this.scenario.onEvent(e);
-    if (e.type === 'state') this.state = e;
+    if (e.type === 'state') {
+      this.state = e;
+      if (e.rhythm) this.rhythm = e.rhythm.id; // FU-2: engine-initiated changes (shock outcome, drug conversion) too
+    }
     else if (e.type === 'rhythmSegment') this.rhythm = e.rhythm;
     else if (e.type === 'measurement') Object.assign(this.measurements, e.values);
     else if (e.type === 'alarm') this.addLog('alarm', `${e.priority} ${e.state}: ${e.text}`);

@@ -60,13 +60,24 @@ describe('HR averaging option (E-4a-2)', () => {
     expect(hrMeasure(st, 25, { kind: 'seconds', n: 8 }).value).toBe(0);
   });
 
-  it('skin field: optional, validated, and absent from every shipped skin (defaults unchanged)', () => {
-    for (const id of ['philips-like', 'saadat-like', 'zoll-like', 'ge-like', 'mindray-like', 'lifepak-like']) expect(hrAveragingOf(resolveSkin(id).skin)).toBeUndefined();
+  it('skin field: optional and validated; only saadat-like (declared moving average) averages by default (FU-2 item 5)', () => {
+    for (const id of ['philips-like', 'zoll-like', 'ge-like', 'mindray-like', 'lifepak-like']) expect(hrAveragingOf(resolveSkin(id).skin)).toBeUndefined();
+    expect(resolveSkin('saadat-like').skin.hr.method).toBe('moving-average-seconds');
+    expect(hrAveragingOf(resolveSkin('saadat-like').skin)).toEqual({ kind: 'seconds', n: 8 });
     const s = structuredClone(resolveSkin('philips-like').skin);
     (s.hr as { averaging?: HrAveraging }).averaging = { kind: 'seconds', n: 8 };
     expect(validate('skin', s).errors).toEqual([]);
     expect(hrAveragingOf(s)).toEqual({ kind: 'seconds', n: 8 });
     (s.hr as unknown as { averaging: unknown }).averaging = { kind: 'minutes', n: 8 };
     expect(validate('skin', s).errors.length).toBeGreaterThan(0);
+  });
+
+  it("FU-2 item 5: 'moving-average-seconds' maps to its declared windowDefault; an explicit averaging field wins", () => {
+    const hr = (over: Record<string, unknown>) => ({ hr: { method: 'moving-average-seconds', windowDefault: 8, ...over } });
+    expect(hrAveragingOf(hr({}))).toEqual({ kind: 'seconds', n: 8 });
+    expect(hrAveragingOf(hr({ windowDefault: 16 }))).toEqual({ kind: 'seconds', n: 16 });
+    expect(hrAveragingOf(hr({ windowDefault: null }))).toEqual({ kind: 'seconds', n: 8 });
+    expect(hrAveragingOf(hr({ averaging: { kind: 'beats', n: 4 } }))).toEqual({ kind: 'beats', n: 4 });
+    expect(hrAveragingOf({ hr: { method: 'trimmed-mean-12rr' } })).toBeUndefined();
   });
 });

@@ -2,6 +2,9 @@
 // applies the request through the rhythm engine's public applyRhythm (Stage 7g never edits l2/ecg/**).
 import type { RhythmId, RhythmOpts } from '../../types.ts';
 import { concOf, type PkState } from './pipeline.ts';
+import { DRUGS } from './data/drugs.ts'; // FU-2 (E-FU2-7)
+import { hill } from './pd.ts'; // FU-2 (E-FU2-7)
+import type { PdEffect } from './row.ts'; // FU-2 (E-FU2-7)
 
 export interface RhythmHookState {
   aden: { active: boolean; from: string; peak: number };
@@ -15,10 +18,15 @@ const NODE_DEPENDENT = ['svtAvnrt', 'svtAvrt'];
 const ATRIAL = ['afib', 'aflutter', 'atrialTach', 'mat'];
 const SINUS_GROUP = ['sinus', 'sinusBrady', 'sinusTachy', 'sinusArrhythmia'];
 
+/** FU-2 (E-FU2-7): adenosine's OWN AV-nodal block (its row's avNode entry). The β-blocker and amiodarone rows feed the
+ * bus's avNodeBlock too (AF rate control), and stacked rate control must never fire the adenosine pause/conversion. */
+const ADEN_AV = DRUGS.adenosine?.pd.find((e) => e.target === 'avNode') as PdEffect;
+const adenosineBlock = (pk: PkState) => hill(concOf(pk, 'adenosine'), ADEN_AV.ec50, ADEN_AV.emax, ADEN_AV.hill ?? 1);
+
 export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: RhythmId; pinned: boolean }, t: number): { id: RhythmId; opts: RhythmOpts } | null {
   void t;
   if (current.pinned) return null;
-  const block = pk.bus.avNodeBlock;
+  const block = adenosineBlock(pk); // FU-2 (E-FU2-7): was pk.bus.avNodeBlock
   // adenosine
   if (!hs.aden.active && block >= 0.5 && (NODE_DEPENDENT.includes(current.id) || ATRIAL.includes(current.id) || SINUS_GROUP.includes(current.id))) {
     hs.aden = { active: true, from: current.id, peak: block };
