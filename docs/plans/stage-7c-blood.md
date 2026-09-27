@@ -1181,7 +1181,7 @@ git push origin stage-7c-blood
 - Consumes: `NORMAL`, `MG_ION_FRAC`, `OSM0`, `Composition`.
 - Produces: `SoluteState` (amounts: na, k, cl, ca, mg, xa, keto, metab, citrate, osmOther, lac, kIcf, pi; `set {k, ca, mg, ph}`), `Conc`, `concOf(s, ecfMl, vLacL, ecf0Ml)`, `sidOf(conc, iCa)`, `osmEcf`, `createSolutes`, `addFluid`, `removePlasma`, `calibrateXa`, `stepSolutes(s, ecfMl, dtS, kSet, clearF, kUptake = 1)` (`clearF` = hepatic flow × function; `kUptake` divides the K τ), `ionisedCa(conc, ph)`, `osmRatio`, the τ constants (`K_TAU_MIN` 43, `CA_TAU_MIN` 15, `MG_TAU_MIN` 60, `CITRATE_TAU_MIN` 5, `METAB_TAU_MIN` 15, `OSM_OTHER_T12_MIN` 85) and `K_CIT` 0.09.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/solutes.test.ts`:
 
@@ -1233,12 +1233,12 @@ describe('solutes (tables §5b.1–5b.2; annex B1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/solutes.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/solutes.ts`:
 
@@ -1366,12 +1366,12 @@ export function osmRatio(c: Conc): number {
 
 
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/solutes.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/solutes.ts packages/engine-core/test/l2/blood/solutes.test.ts
