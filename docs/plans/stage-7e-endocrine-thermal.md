@@ -682,7 +682,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: `params.ts` (Task 2); in the test only, 7g's `gammaConc`/`gammaN` (`l2/pk/gamma.ts`) and `hill` (`l2/pk/pd.ts`) to reproduce `bus.metabolic.dantroleneE` exactly as 7g computes it (`l2/pk/combine.ts`: `hill(a.c, 1, 1)`; row `dantrolene` in `l2/pk/data/rows-other.ts`: gamma, ref 2.5 mg/kg, tp 600 s, t10 21 600 s).
 - Produces: `interface MhState { severity; t0; s? }` (Stage 3's `{ severity, t0 }` literal still type-checks), `mhActivity(mh: MhState | null, t): number`, `stepMh(mh: MhState | null, dantE: number, dtS: number): void`. No dantrolene PK here (R51 §1).
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/mh.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/mh.test.ts`
 
 ```ts
 // MH activity and dantrolene (tables §5.3, §7 check 21). Dantrolene's effect curve is Stage 7g's (R51 §1): the test
@@ -730,12 +730,12 @@ describe('MH and dantrolene (7g effect curve)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/mh.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/thermal/mh.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/thermal/mh.ts`
 
 ```ts
 // Malignant hyperthermia (tables §5.3 `mh`, `dantrolene`; §7 check 21; brief §4.6/§4.9). Pulse has no MH (annex §5.3
@@ -771,12 +771,12 @@ export function stepMh(mh: MhState | null, dantE: number, dtS: number): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/mh.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (3 tests), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/thermal/mh.test.ts packages/engine-core/src/l2/thermal/mh.ts
