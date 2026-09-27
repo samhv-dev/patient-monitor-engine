@@ -107,9 +107,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'sevoflurane', name: 'Sevoflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'sevoflurane' },
     pd: [
       { target: 'svr', emax: -0.2, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true },
-      { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'cbfVaso', emax: 0.2, ec50: 1, linear: true }, { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true },
+      { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true },
     ],
-    cns: { cmro2: 0.5 },
+    cns: { cmro2PerMac: 0.25, cbfDirect: [0.04, 0.17] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.25·MAC), direct CBF +4 % / +17 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.80 % at 40 y (Mapleson; label 2.1, Q52); maintenance 0.8–1.3 MAC', onset: 'FA/FI 0.85 at 30 min (Yasuda 1991); b/g 0.65 (M10 ch. 19 p. 427)',
     ir: '?', src: 'T6.3 (Malan 1995); T5d', tag: 'P',
   },
@@ -117,9 +117,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'isoflurane', name: 'Isoflurane', cls: 'volatile', amountUnit: 'mL', pk: { kind: 'volatile', agent: 'isoflurane' },
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
-      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'cbfVaso', emax: 0.4, ec50: 1, linear: true },
+      { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 },
     ],
-    cns: { cmro2: 0.5 },
+    cns: { cmro2PerMac: 0.3, cbfDirect: [0.19, 0.72] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.3·MAC), direct CBF +19 % / +72 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.17 % at 40 y', onset: 'FA/FI 0.73 at 30 min; b/g 1.46', ir: '?', src: 'T6.3; Mapleson 1996; M10 ch. 19 p. 427', tag: 'TXT',
   },
   {

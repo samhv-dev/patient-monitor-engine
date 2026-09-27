@@ -2196,7 +2196,7 @@ git push
   `bus.cns.cbfVaso` = the tables' DIRECT CBF factor (Matta 1999, beyond coupling; 1.17 / 1.72 at 1.5 MAC). NET CBF is
   7d's product: direct × its CMRO2 coupling (7f's `cmro2Mult` when present) — D10; Q-FU2-CBF is Ali's.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/volatile-cbf.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/volatile-cbf.test.ts`:
 
 ```ts
 // FU-2 item 8 (G7d R-7D-3, tables §5.1): the volatile's cerebral effect on 7g's bus — CMRO2 falls per MAC, and `cbfVaso`
@@ -2232,13 +2232,13 @@ describe('volatile CBF on the drug bus (FU-2 item 8)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/volatile-cbf.test.ts`
 Expected: FAIL — `volatileCbfDirect` is not exported (and, once it is, the old rows' linear `cbfVaso` gives 1.10/1.30
 sevoflurane and 1.20/1.60 isoflurane at 0.5/1.5 MAC, CMRO2 0.70 at 1.5 MAC for both).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/engine-core/src/l2/pk/row.ts`, find:
 
@@ -2330,7 +2330,7 @@ and replace with:
 
 (The desflurane and N2O rows are not touched — D10.)
 
-- [ ] **Step 4: Run it to verify it passes; 7g's suites are unchanged**
+- [x] **Step 4: Run it to verify it passes; 7g's suites are unchanged**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/engine/pk-bus.test.ts test/engine/pk-wiring.test.ts
@@ -2341,7 +2341,7 @@ Expected: `volatile-cbf.test.ts` 3 passed; every other `test/l2/pk` file and the
 16 files / 76 tests at this point — 7g's 14 files, Task 3's `av-node` and this one; the prototype's 17 / 79 includes
 Task 11's file).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/pk/row.ts packages/engine-core/src/l2/pk/combine.ts packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts packages/engine-core/test/l2/pk/volatile-cbf.test.ts docs/plans/fu-2-engine-followups.md
