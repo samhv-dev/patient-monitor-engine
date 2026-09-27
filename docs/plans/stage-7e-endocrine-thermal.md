@@ -1213,7 +1213,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: `heat.ts`, `mh.ts`, `params.ts`.
 - Produces: `interface ThermalMetabolic { vo2F; vco2F; mhActivity }`, `thermalMetabolic(st, t)`, `tempHrF(tc): number` (fever +12 %/°C above 37.5, bradycardia below 35 — NOT a β effect), `interface Cascade { hrF; clearanceF; macF; coagF; stage; shiverLevel }`, `cascade(st)`.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/metabolic.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/metabolic.test.ts`
 
 ```ts
 // Metabolic scaling and cascade outputs (tables §5c/§5.3).
@@ -1267,12 +1267,12 @@ describe('thermal metabolism and cascade', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/metabolic.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/thermal/metabolic.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/thermal/metabolic.ts`
 
 ```ts
 // Metabolic scaling and the hypothermia/hyperthermia cascade (tables §5c, §5.3 `q10`, `clearTemp`, `macFactor`;
@@ -1328,12 +1328,12 @@ export function cascade(st: ThermalState): Cascade {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (thermal 26), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/thermal/metabolic.test.ts packages/engine-core/src/l2/thermal/metabolic.ts
