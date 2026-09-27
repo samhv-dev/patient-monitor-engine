@@ -8,7 +8,7 @@ import { mountMonitor } from '@pme/renderer';
 type Body = Command extends infer C ? (C extends Command ? Omit<C, 'id' | 'issuedBy'> : never) : never;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const pm = mountMonitor($('monitor'), {
-  skin: 'philips-like',
+  skin: new URLSearchParams(location.search).get('skin') ?? 'philips-like', // FU-3 item 11: ?skin=saadat-like for the tile shots
   engine: { seed: 17, patient: { ageY: 45, weightKg: 70, heightCm: 172, sex: 'M', sensors: { spo2: 'on', co2: 'on', abp: 'connected' } } },
   lanes: ['ecgII'],
   waves: ['abp', 'pleth', 'co2', 'resp'],
