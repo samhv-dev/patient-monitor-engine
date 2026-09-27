@@ -2892,7 +2892,7 @@ git push origin stage-7c-blood
 - Consumes: `satDB`, `contentDB`, `OdcCtx` (Task 3).
 - Produces: `ODC_STAGE3` (Hb 14 = the old `HB_G_DL`, pH 7.4, DPG 4.65, no dyshaemoglobin); `odc(po2, tempC?, pco2?, ctx?)`, `content(…, ctx?)`, `po2ForContent(…, ctx?)`; `O2Inputs.odc?: OdcCtx` (absent → `ODC_STAGE3`). Every existing caller keeps compiling.
 
-- [ ] **Step 1: Change the unit test first**
+- [x] **Step 1: Change the unit test first**
 
 In `packages/engine-core/test/l2/gas/o2.test.ts` find:
 
@@ -2923,11 +2923,11 @@ Add at the end of the same `describe`:
   });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas/o2.test.ts` → FAIL (`odc(58)` is 0.891 on Severinghaus but the 4-argument calls do not compile/return the Bohr shift).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Find (exactly once in `packages/engine-core/src/l2/gas/o2.ts`):
 
@@ -3084,11 +3084,11 @@ Replace with:
 
 (If `HB_G_DL` becomes unused except in `ODC_STAGE3`, that is intended: it stays the no-blood default.)
 
-- [ ] **Step 4: Run the gas and Stage 3 oxygen tests**
+- [x] **Step 4: Run the gas and Stage 3 oxygen tests**
 
 `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas test/l2/lung test/engine/resp-oxygen.test.ts` → PASS. Note: 7b's `lung/mix-o2.ts` imports `content`/`odc`/`po2ForContent` from `gas/o2.ts`, so from this task on 7b's two O2 stores ALSO use Dash–Bassingthwaighte, with `ODC_STAGE3` (Hb 14, pH 7.40) until Task 14 passes the blood's context. Prototype, ODC swap without the blood view (7a + 7b + 7g base): preoxygenated 492 s, room air 43.0 s, child 134.0 s, obese 169 s (7b alone: child 133 s, G7b).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/gas/o2.ts packages/engine-core/test/l2/gas/o2.test.ts
