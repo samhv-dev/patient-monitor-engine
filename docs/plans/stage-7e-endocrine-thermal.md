@@ -1716,7 +1716,7 @@ git push origin stage-7e-endocrine-thermal
 
 Prototype: 24 h fasting drift 0.000; D50 25 g → 310 → < 130 by 60 min; insulin 7 U IV nadir 38 mg/dL at 23 min; 4 U/h → < 70 by 2 h; 75 g oral peak 178 at 61 min, 137 at 2 h; type 2 peak 243, 223 at 2 h; insulinopenia 140/212/322/410 at 1/2/4/8 h.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/glucose.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/glucose.test.ts`
 
 ```ts
 // Glucose–insulin (tables §5c Bergman minimal model; annex B3 Pulse secretion line).
@@ -1803,12 +1803,12 @@ describe('glucose–insulin minimal model', { timeout: 60_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/glucose.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/endo/glucose.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/endo/glucose.ts`
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -1925,12 +1925,12 @@ export function insulinInfusion(s: GlucoseState, unitsPerH: number): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/glucose.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (7 tests), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/endo/glucose.test.ts packages/engine-core/src/l2/endo/glucose.ts
