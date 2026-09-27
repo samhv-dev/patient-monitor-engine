@@ -99,6 +99,9 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   'blood.core.so', 'blood.core.pat', 'blood.core.fl.ref', 'blood.core.fl.flows', 'blood.core.ab.iter', 'blood.core.ab.residual',
   'blood.core.k1Hz', 'blood.core.ecf0', 'blood.core.phNonOrg', 'blood.core.doses', 'blood.view', 'blood.ecg', 'blood.rest',
   'blood.circNetMl', 'blood.labs', 'blood.cold', 'blood.keto', 'blood.events', 'blood.lung.pCap', 'blood.pinHbfRel',
+  // Stage 7f neuro machinery: the TOF stimulator's schedule/PRNG, the last step's inputs and PD scratch, flags, dose
+  // bookkeeping and the fasciculation save (the published antinoc/nmb/thermoDepth, resp hook and outputs stay visible)
+  'neuro.tof', 'neuro.last', 'neuro.flags', 'neuro.fasc', 'neuro.emgBase', 'neuro.doseSeenT', 'neuro.diShown', 'resp.spont.nextT',
 ];
 const prefixRe = (list: readonly string[]) =>
   new RegExp(`^(${list.map((p) => p.replace(/\./g, '\\.').replace(/\*/g, '[^.]+')).join('|')})(\\.|$)`);

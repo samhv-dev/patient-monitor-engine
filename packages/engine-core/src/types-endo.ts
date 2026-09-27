@@ -3,8 +3,8 @@
 // drug ids (R51 §3): dantrolene, dextrose, insulin and epinephrine are Stage 7g's library rows.
 import type { SimSeconds } from './types.ts';
 
-/** The ONE `stimulus` shape (R51 addendum 12): nociception 0 none … 1 incision … 1.5 laryngoscopy/sternotomy … 2 max. 7f observes it. */
-export type StimulusEvent = { kind: 'stimulus'; intensity: number };
+/** The ONE `stimulus` shape (R51 addendum 12) is declared in types-neuro.ts (7f merged first; the plan's Task 1 note): 7e consumes it, 7f observes it. */
+import type { StimulusEvent } from './types-neuro.ts';
 
 /** Brief §7.2 ClinicalEvent members Stage 7e implements. */
 export type EndoClinicalEvent =

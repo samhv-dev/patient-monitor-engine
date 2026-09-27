@@ -1,0 +1,90 @@
+{
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "schema": "pme-scenario/1",
+  "id": "nmb-sux-burn",
+  "title": "[draft] Succinylcholine in a burn patient",
+  "notes": "Day-10 burn (40 % TBSA) for dressing change under GA; rapid-sequence induction with succinylcholine 1.5 mg/kg: fasciculations, then (Stage 7c) potassium rises over 3–5 min — peaked T waves, widening QRS, then VF; rocuronium resistance (7f burn profile). Teaching: avoid succinylcholine 24–48 h after a burn; use rocuronium 1.2 mg/kg. The potassium rise is Stage 7c's (R51 §3), driven by patient.blood.burns (7c's succinylcholine sensitivity, 0–1).",
+  "seed": 11,
+  "patient": {
+    "ageY": 45,
+    "sex": "M",
+    "weightKg": 70,
+    "heightCm": 172,
+    "ageBand": "adult",
+    "baseline": {
+      "hr": 72,
+      "sbp": 128,
+      "dbp": 76
+    },
+    "rhythm": {
+      "id": "sinus"
+    },
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "co2": "on"
+    },
+    "neuro": {
+      "nm": "burn"
+    },
+    "blood": {
+      "burns": 0.4
+    }
+  },
+  "initialState": "rsi",
+  "states": [
+    {
+      "id": "rsi",
+      "label": "Rapid-sequence induction",
+      "onEnter": [
+        {
+          "type": "device",
+          "action": {
+            "device": "tof",
+            "action": "start",
+            "intervalS": 15
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "succinylcholine",
+            "dose": 1.5,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "calcium",
+          "label": "Calcium given",
+          "to": "treated",
+          "when": {
+            "manual": {
+              "label": "Calcium chloride 10 mL 10 %"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treated",
+      "label": "Treated",
+      "onEnter": [],
+      "transitions": []
+    }
+  ]
+}
