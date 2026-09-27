@@ -357,7 +357,7 @@ git push origin stage-7c-blood
 - Consumes: `PatientProfile` (incl. `blood?: BloodProfile`, Task 1).
 - Produces: `BLOOD_DT_S`, `MOLAR_MASS`, `mgdlToMmol`, `NORMAL`, `MG_ION_FRAC`, `MCHC_G_PER_ML`, the fluid-kinetic constants (`KF_ML_MIN_MMHG`, `SIGMA_PROTEIN`, `PC_PER_ML`, `CISF_PER_ML`, `LYMPH_GAIN`, `PI_ISF0`, `K_EL_AWAKE`, `K_EL_GA_FACTOR`, `ALB_RESTORE_TAU_MIN`, `OSM_TAU_MIN`, `OSM0`), the O2/lactate constants (`LACTATE_V_L_PER_KG`, `K_LAC_PER_H`, `K_ANAER`, `DO2_CRIT_ML_KG_MIN`, `ER_MAX`, `REGIONAL_FRAC`, `REGIONAL_FLOW_ON`, `REGIONAL_FLOW_FULL`, `HBF_FRAC`, `HBF_EXP`), `ageBandB`, `BloodPatient`, `bloodPatient(profile)`, `Composition`, `FLUIDS`/`FluidId`, `PRODUCTS`/`ProductId`, `storedK(days)`, `COLD_UNIT_C`, `COLLOID_T12_MIN`, `hypertonicSaline(pct) → Composition`, `MG_MMOL_PER_G` 4.06.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/params.test.ts`:
 
@@ -390,12 +390,12 @@ describe('7c constants and patient scaling (tables §1.1–1.3, §5b.4)', () => 
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/params.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/params.ts`:
 
@@ -572,12 +572,12 @@ export const COLLOID_T12_MIN = 150;
 
 
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/params.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/params.ts packages/engine-core/test/l2/blood/params.test.ts
