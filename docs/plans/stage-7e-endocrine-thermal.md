@@ -476,7 +476,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: nothing (pure).
 - Produces: constants `SIGMA`, `EMISSIVITY`, `F_RAD`, `AIR_SPEED_MS`, `SKIN_EVAP_W_70`, `PREP_EVAP_W_70`, `AIR_J_L_C`, `LATENT_J_MG`, `EXHALED_C`, `ROOM_RH`, `HME_RECOVERY`, `FORCED_AIR_C`, `FORCED_AIR_H`, `FORCED_AIR_TAU_S`, `FORCED_AIR_AREA`, `WATER_J_ML_C`, `STORED_BLOOD_C`; `bsaM2(w, h)`, `radiativeH(tp, ta)`, `convectiveH(airMs)`, `satMgL(tC)`, `interface Ventilation { veLpm; dryGas; hme }`, `respiratoryW(v, ta)`, `interface Envelope { bsa; rIns }`, `dryW(env, tp, ta, airMs, exposed)`, `calibrateInsulation(bsa, tp, ta, airMs, watts)`, `forcedAirW(env, tp)`, `infusionW(mlPerMin, tempC, tc)`, `interface IvFlowLike { rate; until; leftMl?; comp: { citrate? } | null }`, `ivInflow(flows, coldRunning, t, roomC): { mlPerMin; tempC }` (used by E-7e-1 in Task 13).
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/environment.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/thermal/environment.test.ts`
 
 ```ts
 // Environment heat exchange (annex B3; Pulse forms with consistent units).
@@ -529,12 +529,12 @@ describe('environment terms', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/environment.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/thermal/environment.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/thermal/environment.ts`
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -659,12 +659,12 @@ export function ivInflow(flows: readonly IvFlowLike[], coldRunning: boolean, t: 
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal/environment.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (6 tests), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/thermal/environment.test.ts packages/engine-core/src/l2/thermal/environment.ts
