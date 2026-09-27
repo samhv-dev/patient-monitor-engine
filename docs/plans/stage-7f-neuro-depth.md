@@ -4457,7 +4457,7 @@ git commit -m "feat(demo): stage7f — induction with TOF and depth tiles, sugam
 git push
 ```
 
-- [ ] **Step 7: The physiology console (G7x) — one additive commit.** Write `apps/demo/src/physiology-console/organs-neuro.test.ts` (exact):
+- [x] **Step 7: The physiology console (G7x) — one additive commit.** Write `apps/demo/src/physiology-console/organs-neuro.test.ts` (exact):
 
 ```ts
 import { describe, expect, it } from 'vitest';
