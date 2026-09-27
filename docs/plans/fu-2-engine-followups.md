@@ -2513,7 +2513,7 @@ git push
   `simT`, `timeScale`, `ready`); the page starts in MODELED by default.
 - Produces: three JPEG clips ≤ 60 KB; the gate note; the PR.
 
-- [ ] **Step 1: Write the evidence e2e** — `apps/demo/e2e/fu2.e2e.ts`:
+- [x] **Step 1: Write the evidence e2e** — `apps/demo/e2e/fu2.e2e.ts`:
 
 ```ts
 // FU-2 engine follow-ups: evidence screenshots for the gate note (docs/gates/fu-2.md) — MODELED rhythm-intrinsic
@@ -2577,7 +2577,7 @@ test('NR-7g-5 on the live MODELED page: SVT 180, sinus bradycardia 40 and AF 100
 });
 ```
 
-- [ ] **Step 2: Merge main and run everything**
+- [x] **Step 2: Merge main and run everything**
 
 ```bash
 git fetch origin && git merge origin/main
@@ -2604,7 +2604,7 @@ af-100}.jpg` (33–41 KB in the prototype). If a sibling stage merged meanwhile 
 and record any number that moved. The 24 h long-run horizon is the local requirement (run without `CI=1` on an idle
 machine once, and record the wall time).
 
-- [ ] **Step 3: Write `docs/gates/fu-2.md`** with these sections, filled with YOUR measured numbers:
+- [x] **Step 3: Write `docs/gates/fu-2.md`** with these sections, filled with YOUR measured numbers:
   1. *What shipped* — one row per item (1–5, 7–9, plus 1b AF rate control and the mapping re-fit): mechanism, files,
      tests, evidence (the File map above); the exceptions E-FU2-1…7 with the lines each touched; item 6: not planned,
      with the "Item 6: deferred" numbers.
@@ -2632,7 +2632,7 @@ machine once, and record the wall time).
      below their lower rate.
   8. *Test counts* — per package, fast/slow split, e2e list.
 
-- [ ] **Step 4: Commit, push, open the PR (do NOT merge)**
+- [x] **Step 4: Commit, push, open the PR (do NOT merge)**
 
 ```bash
 git add apps/demo/e2e/fu2.e2e.ts docs/gates/fu-2.md docs/gates/fu-2 docs/plans/fu-2-engine-followups.md
