@@ -1351,7 +1351,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: nothing outside the files.
 - Produces: all `params.ts` constants (incl. `G_SYMP_HR` 0.18, `CORT_TAU_S` 1.5 h, `SYMP_HYPOGLY_PER_MGDL` 0.06, `INS_K_PER_UU`, `MH_K_EFFLUX` 2.2, `EPI_EXO_PG_PER_RATE_EQ`); `interface HormoneState { symp; epi; epiExo; ne; cort; cortDrive }` (`epi` = ENDOGENOUS), `interface HormoneInputs { noxious; antinoc; extraSymp; glucoseMgDl; mapMmHg; sao2; paco2; cortResponse; epiExoPgMl }`, `createHormones()`, `adrenalDrive(h, x)`, `stepHormones(h, x, dtS)`; `interface BetaBlock { hr; c }`, `interface StressEffects { hrF; svrF; eesF; dV0Frac; egpF; siF; secF; kShift; vasoResp; bronchoDil; mastB2 }`, `stressEffects(h, bb: BetaBlock, cortResponse)`.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/hormones.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/hormones.test.ts`
 
 ```ts
 // Stress hormones and their effects (tables §5c; annex B3 Pulse basal concentrations/clearance).
@@ -1447,12 +1447,12 @@ describe('stress hormones', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/hormones.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/endo/params.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/endo/params.ts`
 
 ```ts
 // Stage 7e endocrine/metabolic constants (tables §5c, §5e; annex B3 "Take: insulin secretion line, epi/NE basal
@@ -1541,7 +1541,7 @@ export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activit
 export const EPI_EXO_PG_PER_RATE_EQ = 1e6 / 68.66;
 ```
 
-- [ ] **Step 4: Implement** `packages/engine-core/src/l2/endo/hormones.ts`
+- [x] **Step 4: Implement** `packages/engine-core/src/l2/endo/hormones.ts`
 
 ```ts
 // SPDX-License-Identifier: Apache-2.0
@@ -1623,7 +1623,7 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
 }
 ```
 
-- [ ] **Step 5: Implement** `packages/engine-core/src/l2/endo/effects.ts`
+- [x] **Step 5: Implement** `packages/engine-core/src/l2/endo/effects.ts`
 
 ```ts
 // Stress hormone → effect multipliers (tables §5c; Clutter 1980 thresholds [TXT]; slopes [ENG], Q48). Pure.
@@ -1691,12 +1691,12 @@ export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: numb
 }
 ```
 
-- [ ] **Step 6: Run the tests and the typecheck**
+- [x] **Step 6: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/hormones.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (7 tests; prototype: stimulus HR × 1.234 at 5 min, cortisol 999/1307/1465/1546/1588/1609 nmol/L at 1–6 h), typecheck clean.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/endo/hormones.test.ts packages/engine-core/src/l2/endo/params.ts packages/engine-core/src/l2/endo/hormones.ts packages/engine-core/src/l2/endo/effects.ts
