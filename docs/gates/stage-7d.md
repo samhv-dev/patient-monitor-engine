@@ -248,3 +248,9 @@ Other 7d numbers on the real 7c (all in band): check 18 MAP 65 0.667× (MAP 64.4
 autoregulation A(CPP) 0.606 / 0.945 / 1.010 / 1.009 / 1.009 / 1.016; CO2 reactivity 0.0289; PVI +8.88 %; mid-curve UOP
 0.793 (`it.fails` as before); haemorrhage UOP 1.017 → 0.0017 + OLIGURIA → 0.789 at 90 min, 7c lactate 3.17 in the bleed
 (1.46 after fluids); check 20 MODELED 0.678 → 0.828 / 0.928 and MANUAL 0.067 → 0.217 / 0.312 (both `it.fails` as before).
+
+Runs on this head (local, shared machine): typecheck clean (whole repo); `CI=1 PME_TEST_SET=slow` engine-core 28 files
+green (736 s); `CI=1 PME_TEST_SET=fast` 213 files, 908 passed / 1 skipped; `CI=1 pnpm -r test` engine-core **1030 passed
+/ 1 skipped** (241 files), controller 197, skins 170, renderer 70, ventilator 88, audio 58, validation 94 (+7 skipped),
+demo 115 — all green. 7d `it.fails` now 5 (§3). The merge of `origin/main` (8a) had one conflict, the stage7a e2e
+WebKit-skip comment (both sides skip; main's wording kept).
