@@ -3877,7 +3877,7 @@ git push origin stage-7c-blood
 - Consumes: the engine with the blood (Tasks 1–16), `test/helpers/blood.ts`.
 - Produces: tables §7 17a lactate and the massive-transfusion K/iCa numbers through the whole engine. Test-after (sanity task).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-sanity-haem.test.ts`:
 
@@ -3923,12 +3923,12 @@ describe('7c sanity I — haemorrhage and transfusion', { timeout: 300_000 }, ()
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-sanity-haem.test.ts`
 Expected: PASS. Prototype (7a's circuit carries the CO fall; CO0 = its `ref.co`; demand-normalised regional criterion 0.88 → 0.55): **17a lactate 3.5 at 30 min**, BE −1.6, Hb 14.1, pH 7.24 (the low-flow CO2 retention of Stage 3 adds a respiratory component); after 4 RBC + 1 L RL lactate 1.2 at 120 min, Hb 14.6, K 4.4, iCa 1.22. Massive transfusion: K 5.9, iCa 1.09, Hb 17.8 (RBC-only replacement concentrates Hb — a real teaching point for 1:1:1), core → 33.97 °C with 10 unwarmed units. Re-derivation history (R50 F4): with the old `co0 = 0.075 × kg` the same run gave 3.8; with CO0 = `ref.co` and the flow-only criterion (0.88 → 0.40) 3.8 but a routine MODELED propofol/remifentanil TCI crept to 1.49 in an hour; demand normalisation alone gave 2.9; the full-dependence point 0.55 restores 3.5 while the onset 0.88 keeps an awake MODELED + PEEP patient (CO/CO0 0.91) aerobic. If it misses on your base, the lever is `REGIONAL_FLOW_FULL` (decision 6) within Q41/Q42 — never the onset below the resting CO/CO0 spread (0.91–1.10) — record the values used.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-sanity-haem.test.ts
