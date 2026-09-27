@@ -4050,7 +4050,7 @@ git push origin stage-7d-organs
 - Consumes: `mountMonitor` with `waves: ['abp', 'icp', 'pleth', 'co2']` (Task 16's `icp` lane), `formatIcp`/`formatPbto2`/`formatUop` (Task 16), the engine's `organs` and `measurement` events (every engine event reaches `pm.on`), 7g's `drug`/`infusion`/`tci`/`vaporiser` events.
 - Produces: `window.__pme7d = { send, restart(tbi), simT(), organs(), timeScale(k), ready }` for the e2e spec.
 
-- [ ] **Step 1: The e2e spec (failing first)** — `apps/demo/e2e/stage7d.e2e.ts`
+- [x] **Step 1: The e2e spec (failing first)** — `apps/demo/e2e/stage7d.e2e.ts`
 
 ```ts
 // Stage 7d page: a CI smoke (check 19 starts, the ICP tile reads a rising ICP, no page errors) and, with PME_SHOTS=1,
@@ -4138,7 +4138,7 @@ test('stage7d gate screenshots (PME_SHOTS=1)', async ({ page }) => {
 
 Run: `npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage7d.e2e.ts` — Expected: FAIL (404: no `stage7d.html`).
 
-- [ ] **Step 2: The page** — `apps/demo/stage7d.html`
+- [x] **Step 2: The page** — `apps/demo/stage7d.html`
 
 ```html
 <!doctype html>
@@ -4196,7 +4196,7 @@ Run: `npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec pla
 </html>
 ```
 
-- [ ] **Step 3: The script** — `apps/demo/src/stage7d.ts`
+- [x] **Step 3: The script** — `apps/demo/src/stage7d.ts`
 
 ```ts
 // Stage 7d demo: the monitor with the ICP lane, an organ side panel (ICP/CPP, PbtO2, UOP tiles from the renderer's
@@ -4366,7 +4366,7 @@ start(TBI);
 
 In `apps/demo/vite.config.ts` after `        stage7g: page('stage7g'), // Stage 7g` add `        stage7d: page('stage7d'), // Stage 7d`.
 
-- [ ] **Step 4: The screenshot runner** — `apps/demo/scripts/stage7d-shots.mjs`
+- [x] **Step 4: The screenshot runner** — `apps/demo/scripts/stage7d-shots.mjs`
 
 ```js
 // apps/demo/scripts/stage7d-shots.mjs — Gate 7d screenshots: runs the stage7d e2e spec with PME_SHOTS=1 on headless
@@ -4381,10 +4381,10 @@ const r = spawnSync('npx', ['-y', 'pnpm@9.15.9', 'exec', 'playwright', 'test', '
 process.exit(r.status ?? 1);
 ```
 
-- [ ] **Step 5: Run** — `npx -y pnpm@9.15.9 --filter ./apps/demo typecheck && npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage7d.e2e.ts`, then `node apps/demo/scripts/stage7d-shots.mjs` (≈ 30 min wall at ×4) and check each PNG ≤ 60 KB (re-save smaller with a tighter clip if not).
+- [x] **Step 5: Run** — `npx -y pnpm@9.15.9 --filter ./apps/demo typecheck && npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage7d.e2e.ts`, then `node apps/demo/scripts/stage7d-shots.mjs` (≈ 30 min wall at ×4) and check each PNG ≤ 60 KB (re-save smaller with a tighter clip if not).
 Expected: the smoke passes (prototype 1.0 min), the screenshot test is skipped without `PME_SHOTS`; the shots run writes `docs/gates/stage-7d/{rest,icp-25-p2-over-p1,after-mannitol-15min,cushing,oliguria,uop-recovery}.png`. Look at them before the gate note: P2 > P1 on the ICP lane at ICP ≈ 25, MAP up and HR down in `cushing`, the UO tile red in `oliguria`.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add apps/demo/stage7d.html apps/demo/src/stage7d.ts apps/demo/e2e/stage7d.e2e.ts apps/demo/scripts/stage7d-shots.mjs apps/demo/vite.config.ts docs/gates/stage-7d docs/plans/stage-7d-organs.md
