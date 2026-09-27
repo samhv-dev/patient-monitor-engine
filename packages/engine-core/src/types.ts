@@ -4,6 +4,7 @@
 import type { HemoCommandBody, HemoEvent, NibpDeviceAction, SensorId } from './types-hemo.ts';
 import type { AlarmDeviceAction, AlarmLevel, DeviceClinicalEvent, DeviceEvent, MonitorDeviceAction } from './types-device.ts'; // Stage 4b
 import type { RespCommandBody, RespEvent } from './types-resp.ts'; // Stage 3
+import type { EndoClinicalEvent, EndoEvent, EndoProfileInput } from './types-endo.ts'; // Stage 7e
 import type { BloodCommandBody, BloodEvent, BloodProfile } from './types-blood.ts'; // Stage 7c
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
@@ -45,6 +46,7 @@ export interface PatientProfile {
   weightKg?: number; // Stage 3 (brief §7.4 patient.weightKg)
   heightCm?: number; // Stage 3: ideal body weight and obesity (plan decision 9)
   sex?: 'M' | 'F'; // Stage 3 (brief §7.4 patient.sex)
+  endo?: EndoProfileInput; // Stage 7e (types-endo.ts)
   blood?: BloodProfile; // Stage 7c: baseline blood chemistry (tables §1.1, §5b)
   conditions?: ProfileCondition[]; // Stage 7a (R22): e.g. [{ id: 'as', grade: 'severe' }]
   lungConditions?: LungConditionSpec[]; // Stage 7b: catalogue conditions on the patient (R36)
@@ -94,6 +96,7 @@ export type Command = CommandBase &
     | { type: 'applyEvent'; event: CircClinicalEvent } // Stage 7a
     | { type: 'applyEvent'; event: PkClinicalEvent } // Stage 7g
     | RespCommandBody // Stage 3 (types-resp.ts)
+    | { type: 'applyEvent'; event: EndoClinicalEvent } // Stage 7e (types-endo.ts)
     | BloodCommandBody // Stage 7c (types-blood.ts)
     | LungCommandBody // Stage 7b (types-lung.ts)
   );
@@ -140,7 +143,8 @@ export type EngineEvent =
   | RespEvent // Stage 3 (types-resp.ts)
   | CircEvent // Stage 7a (types-circ.ts)
   | DrugsEvent // Stage 7g (types-pk.ts)
-  | BloodEvent; // Stage 7c (types-blood.ts)
+  | BloodEvent // Stage 7c (types-blood.ts)
+  | EndoEvent; // Stage 7e (types-endo.ts)
 
 export type EngineEventType = EngineEvent['type'];
 
