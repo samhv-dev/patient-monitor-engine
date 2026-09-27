@@ -3,6 +3,7 @@
 import { complianceAt, pressureAt } from './venegas.ts';
 import { airwayFlow, createMech, mechSubstep, type MechParams, type MechState } from './mechanics.ts';
 import { createO2Lung, stepO2Lung, type O2LungState } from './mix-o2.ts';
+import type { OdcCtx } from '../blood/odc.ts'; // Stage 7c (E-7c-1)
 import { mixCo2, type Co2Mix } from './mix-co2.ts';
 import { CO2_SLOPE_BLOOD, K_TAU_II, MECH_H, N_UNITS, SIDE_SHARE, TAU_EXP_REF, TAU_II_MAX } from './params.ts';
 import { createHpv, perfusion, stepHpv, type HpvState, type Perfusion } from './perfusion.ts';
@@ -124,6 +125,8 @@ export interface GasInputs {
   sideFlow: number[] | null;
   /** Executor addition (Task 14): reference pulmonary flow (L/min, CO_ref); the CO2 mix never sees less. */
   qRef?: number;
+  /** Stage 7c (E-7c-1): the blood's ODC context, passed to the O2 mixing point (absent → Stage 3's patient). */
+  odc?: OdcCtx;
 }
 
 /** 10 Hz: recruitment, HPV, perfusion, CO2 mix, O2 stores. Rebuilds unit mechanics when aeration moves. */
@@ -202,6 +205,7 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   stepO2Lung(ls.o2, {
     va: x.va, vent, perf: perfU, vdAlv, qLow, qShunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2, blocked, vo2: x.vo2,
     paco2: x.paco2, pA: ls.co2.pA, tempC: x.tempC, frcSide, bloodL: x.bloodL, dl: lp.side.map((s) => s.dl), coRatio: x.coRatio,
+    ...(x.odc ? { odc: x.odc } : {}), // Stage 7c (E-7c-1)
   }, dt);
 }
 

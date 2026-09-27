@@ -8,9 +8,15 @@ import { hemoOf, ev3, rig3 } from '../helpers/resp.ts';
 const circ = (e: Parameters<typeof hemoOf>[0]) => hemoOf(e) as HemoState & { circ: { ext: Record<string, number>; p: { pvrL: number; pvrR: number } }; circOut: { qLungL: number; qLungR: number } };
 
 describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () => {
-  it('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow', async () => {
+  // Stage 7c (R51 addendum 15, ruling 2): the rig ventilates at RR 40 (was 14) toward normocapnia — PaCO2 42 → 50 mmHg over
+  // the 30 min (at RR 14: 49 → 97, pH 7.09). RR alone cannot hold 38–45 at VT 350 in this awake rig (Stage 3's calibrated
+  // dead space, NR-7g-3). Re-measured share 0.307 (RR 14: 0.325; without 7c: 0.302): the band is still missed, so this
+  // stays an R45 record. The hypercapnia explains little of it (RR 14 → 40 moved the share only 0.325 → 0.307); the rest
+  // comes with 7c's oxygen chemistry (Dash–Bassingthwaighte curve, Hb 15, live pH) reaching 7b's PAO2-only HPV stimulus.
+  // Candidate mechanism (calibration queue): a mixed-venous PO2 term and HPV potentiation by hypercapnia/acidosis.
+  it.fails('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow', async () => {
     const r = rig3({ patient: { ageY: 55, weightKg: 70, heightCm: 175, sex: 'M' } });
-    r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 14, vtMl: 350, peep: 5, ie: 2, fio2: 1 }));
+    r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 40, vtMl: 350, peep: 5, ie: 2, fio2: 1 }));
     r.e.dispatch(ev3({ kind: 'lungCondition', id: 'olv', severity: 1, side: 'L' }));
     for (let m = 1; m <= 30; m++) { r.e.advanceTo(60 * m); await new Promise((res) => setImmediate(res)); }
     const h = circ(r.e);

@@ -36,6 +36,14 @@ describe('organ grouping', () => {
     for (const p of ['pk.bus.agents.propofol.brain', 'pk.drugs.propofol.rate', 'pk.drugs.propofol.total', 'pk.drugs.x', 'pk.bus.cns.propCe', 'pk.vap.dialPct'])
       expect(isInternal(p), p).toBe(false);
   });
+  it('Stage 7c: the blood\'s chemistry block is visible in the Blood group; amounts, reference copies, solver scratch and queues are internal', () => {
+    for (const p of ['blood.out.k', 'blood.out.lactate', 'blood.out.hbfRel', 'blood.core.ab.ph', 'blood.core.o2.do2', 'blood.core.fl.vp', 'blood.core.bledMl', 'blood.lung.evlwi', 'blood.core.co0']) {
+      expect(isInternal(p), p).toBe(false);
+      expect(groupOf(p), p).toBe('blood');
+    }
+    for (const p of ['blood.core.so.na', 'blood.core.so.set.k', 'blood.core.pat.bvMl', 'blood.core.fl.ref.bv', 'blood.core.fl.flows.0.rate', 'blood.core.ab.iter', 'blood.core.ab.residual', 'blood.core.k1Hz', 'blood.core.ecf0', 'blood.core.phNonOrg', 'blood.core.doses.0.t0', 'blood.view.odc.hb', 'blood.ecg.k', 'blood.rest.coLp', 'blood.circNetMl', 'blood.labs.0.due', 'blood.cold.0.until', 'blood.keto.rate', 'blood.events.0.t', 'blood.lung.pCap', 'blood.pinHbfRel'])
+      expect(isInternal(p), p).toBe(true);
+  });
   it('marks within-beat and within-breath values as phase (sampled at 1 Hz they alias)', () => {
     for (const p of ['hemo.circOut.pLv', 'hemo.circOut.qAv', 'resp.lung.tidal.2', 'resp.lung.inInsp', 'resp.lung.pInsp']) expect(isPhase(p), p).toBe(true);
     for (const p of ['hemo.circ.p.rSys', 'resp.lung.peepTot', 'resp.lung.tidalSum', 'ev.circ.svr']) expect(isPhase(p), p).toBe(false);

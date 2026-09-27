@@ -13,7 +13,9 @@ import { fmt, run, snap } from './helpers.ts';
 const log = (tag: string, o: Record<string, number>) => { if (process.env.PRINT) console.log(`R36 ${tag}: ${fmt(o)}`); };
 
 describe('R36 demonstrations', { timeout: 300_000 }, () => {
-  it('every catalogue row is a link profile and starts cleanly (60 s, no rejected command)', async () => {
+  // 32 rows × 60 sim-s of a full engine (7a+7b+7c on main): ≈ 300 s on the shared CI runner (timed out at the 300 s
+  // default in PR #20's run); 900 s budget, the loop yields per row through run().
+  it('every catalogue row is a link profile and starts cleanly (60 s, no rejected command)', { timeout: 900_000 }, async () => {
     expect(Object.keys(PROFILES)).toHaveLength(LUNG_PATHOLOGIES.length);
     for (const row of LUNG_PATHOLOGIES) {
       const s = createLinkedSim({ profile: row.id });

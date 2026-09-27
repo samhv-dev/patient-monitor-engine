@@ -11,6 +11,11 @@ describe('pruneTruth', () => {
     expect(r.leaves).toBe(4);
     expect(r.truncated).toBe(false);
   });
+  it('Stage 7c: keeps blood.out — the published chemistry block, the one `out` that is physiology, not an event queue', () => {
+    const chem = { k: 4.2, lactate: 1 };
+    const st = { resp: { out: [{ type: 'x' }] }, blood: { out: chem, core: { out: chem, ab: { ph: 7.4 } }, events: [] } };
+    expect(pruneTruth(st).tree).toEqual({ resp: {}, blood: { out: { k: 4.2, lactate: 1 }, core: { ab: { ph: 7.4 } }, events: [] } });
+  });
   it('turns NaN and ±Infinity into strings so the tree stays JSON-exact', () => {
     const r = pruneTruth({ a: { x: Number.NaN, y: Number.POSITIVE_INFINITY, z: [1, Number.NEGATIVE_INFINITY] } });
     expect(r.tree).toEqual({ a: { x: 'NaN', y: 'Infinity', z: [1, '-Infinity'] } });
