@@ -5995,7 +5995,7 @@ git commit -m "docs(validation): first full validation report, calibration queue
 git push
 ```
 
-- [ ] **Step 8: Open the PR (do not merge). The body lists the gate numbers' headline, the calibration-queue size, the human steps left for Ali (blind review, bedside check, iPad perf) and ends with the attribution line**
+- [x] **Step 8: Open the PR (do not merge). The body lists the gate numbers' headline, the calibration-queue size, the human steps left for Ali (blind review, bedside check, iPad perf) and ends with the attribution line**
 
 ```bash
 gh pr create --base main --head stage-8a-validation --title "Stage 8a: validation harness (datasets, morphology metrics, segment validation, Pulse oracle, review kit, bedside checklist, perf gate)" --body "$(cat <<'BODY'
