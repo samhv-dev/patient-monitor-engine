@@ -2364,7 +2364,7 @@ git push
 - Produces: `PkCtx.hepFnTemp: boolean` (`NEUTRAL_PK_CTX.hepFnTemp = false`); `export function clFactor(row: DrugRow,
   ctx: PkCtx): number`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/clearance-temp.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/pk/clearance-temp.test.ts`:
 
 ```ts
 // FU-2 item 9: hepatic drug clearance is scaled by temperature exactly once — by 7g's own −5 %/°C term, or by the liver
@@ -2397,13 +2397,13 @@ describe('clearance temperature counted once (FU-2 item 9)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/clearance-temp.test.ts`
 Expected: FAIL — `clFactor` is not exported (with it exported but unchanged, the 7d case reads 0.50: temperature
 counted twice).
 
-- [ ] **Step 3: Implement** — in `packages/engine-core/src/l2/pk/pipeline.ts`, find:
+- [x] **Step 3: Implement** — in `packages/engine-core/src/l2/pk/pipeline.ts`, find:
 
 ```ts
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
@@ -2482,7 +2482,7 @@ and replace with:
 (If 7c or 7d landed first and already typed `ps.blood`/`ps.organs` without the casts, keep their form and add only the
 `hepFnTemp` line with the same two conditions.)
 
-- [ ] **Step 4: Run it to verify it passes; PK unchanged without 7d**
+- [x] **Step 4: Run it to verify it passes; PK unchanged without 7d**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/engine/pk-wiring.test.ts test/engine/pk-acceptance-pk.test.ts
@@ -2492,7 +2492,7 @@ npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck
 Expected: 3 new tests pass; every PK test passes unchanged (without 7d, `hepFnTemp` is false and `clFactor` returns
 exactly the old product: Eleveld engine = standalone, TTPE/CSHT, sugammadex bands).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/pk/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/test/l2/pk/clearance-temp.test.ts docs/plans/fu-2-engine-followups.md

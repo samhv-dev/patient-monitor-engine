@@ -432,7 +432,7 @@ class Engine implements MonitorEngine {
     const circ = (ps.hemo as { circ?: CircModelState }).circ;
     const resp = ps.resp as unknown as { vaLpm?: number; pat?: { frcGaMl?: number }; temp?: { tc?: number } };
     const blood = (ps as unknown as { blood?: { out?: { hbfRel?: number }; core?: { liver?: number; ab?: { ph?: number } } } }).blood;
-    const organs = (ps as unknown as { organs?: { kidney?: { gfrRel?: number } } }).organs;
+    const organs = (ps as unknown as { organs?: { kidney?: { gfrRel?: number }; liver?: unknown } }).organs;
     const cond = (ps as unknown as { cond?: { vasoResp?: number } }).cond;
     return {
       ...NEUTRAL_PK_CTX,
@@ -443,6 +443,7 @@ class Engine implements MonitorEngine {
       ph: blood?.core?.ab?.ph ?? 7.4,
       hepFlow: blood?.out?.hbfRel ?? 1,
       hepFn: blood?.core?.liver ?? 1,
+      hepFnTemp: blood?.core?.liver !== undefined && organs?.liver !== undefined, // FU-2 item 9: 7d's liverFn·tempF carries the temperature
       renal: organs?.kidney?.gfrRel ?? 1,
       betaBlockC: circ?.prof.betaBlockC ?? 0,
       vasoResp: cond?.vasoResp ?? 1,
