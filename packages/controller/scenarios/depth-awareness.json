@@ -1,0 +1,159 @@
+{
+  "$comment": "[draft] Stage 7f scenario; clinical content awaits Ali's review (R44).",
+  "schema": "pme-scenario/1",
+  "id": "depth-awareness",
+  "title": "[draft] Awareness under neuromuscular block",
+  "notes": "TIVA pump disconnected unnoticed after induction and rocuronium: propofol Ce falls, depth index rises above 60 while the patient is paralysed (TOF 0) — awareness. Clues: tachycardia, hypertension, rising index. Treat: propofol bolus, restart the infusion, consider benzodiazepine.",
+  "seed": 11,
+  "patient": {
+    "ageY": 45,
+    "sex": "M",
+    "weightKg": 70,
+    "heightCm": 172,
+    "ageBand": "adult",
+    "baseline": {
+      "hr": 72,
+      "sbp": 128,
+      "dbp": 76
+    },
+    "rhythm": {
+      "id": "sinus"
+    },
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "co2": "on"
+    }
+  },
+  "initialState": "tiva",
+  "states": [
+    {
+      "id": "tiva",
+      "label": "TIVA running",
+      "onEnter": [
+        {
+          "type": "device",
+          "action": {
+            "device": "tof",
+            "action": "start",
+            "intervalS": 15
+          }
+        },
+        {
+          "type": "device",
+          "action": {
+            "device": "depth",
+            "action": "on"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "fio2": 0.5,
+            "peep": 5
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 150,
+            "unit": "mcg/kg/min",
+            "route": "iv",
+            "infusion": true
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "remifentanil",
+            "dose": 0.1,
+            "unit": "mcg/kg/min",
+            "route": "iv",
+            "infusion": true
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "rocuronium",
+            "dose": 0.6,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "disconnect",
+          "label": "Line disconnects",
+          "to": "disconnected",
+          "when": {
+            "afterS": 600
+          }
+        }
+      ]
+    },
+    {
+      "id": "disconnected",
+      "label": "Propofol line disconnected",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 0,
+            "unit": "mcg/kg/min",
+            "route": "iv",
+            "infusion": true
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "fixed",
+          "label": "Propofol restarted",
+          "to": "fixed",
+          "when": {
+            "event": {
+              "kind": "drug",
+              "drugId": "propofol"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fixed",
+      "label": "Restarted",
+      "onEnter": [],
+      "transitions": []
+    }
+  ]
+}

@@ -5,6 +5,8 @@
 //   and the mean-airway-pressure coupling on cvp/sbp/dbp/volumeStatus).
 // Reads Stage 2's HemoState (CO, pleth feet, PI, cuff, CPR) and never writes it. All state is plain data.
 import { l1Target, setL1Target, type L1State } from '../../l1/state.ts';
+import type { NeuroResp } from '../neuro/drive.ts'; // Stage 7f
+import { createSpontDrive, stepSpontDrive, type SpontDrive } from '../neuro/spont.ts'; // Stage 7f: MODELED spontaneous drive
 import type { RampState } from '../../l1/ramp.ts';
 import { co2NumStep, co2Numerics, createCo2Num, type Co2Num } from '../../l3/co2-numerics/co2-numerics.ts';
 import { createImpNum, impedanceSample, impRr, impStep, type ImpNum } from '../../l3/resp/impedance.ts';
@@ -57,6 +59,8 @@ export interface RespCtx {
   hr: RampState;
   /** Stage 7c: what the gas step reads from the blood (absent → Stage 3 behaviour, byte-identical). */
   blood?: BloodView;
+  neuro?: NeuroResp; // Stage 7f: drug and NMB effects on spontaneous breathing
+  hco3?: number; // Stage 7f: 7c's blood.core.ab.hco3 for Winter's compensation (MODELED spontaneous drive)
 }
 
 /** Stage 7c: the blood's ODC context, a CO factor (blood-volume fallback without Stage 7a) and extra CO2 (mL/min). */
@@ -69,6 +73,7 @@ export interface BloodView {
 export interface RespState {
   vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
   evlwiExtra?: number; // Stage 7c: lung water from the blood's COP/capillary leak, mL/kg above the conditions' (G7b ruling 8)
+  spont?: SpontDrive; // Stage 7f: MODELED spontaneous drive (7b's drive/pti/fatigue + Winter's), absent in pre-7f snapshots
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
   pat: GasPatient;
@@ -133,8 +138,20 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
 }
 
 // --- helpers ----------------------------------------------------------------------------------------------
-function driverCtx(rs: RespState, l1: L1State, t: number): DriverCtx {
-  return { rr: l1Target(l1, 'rr', t), vt: l1Target(l1, 'vt', t), fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs) };
+function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
+  const n = neuro; // Stage 7f: the instructor's rr/vt × the drug/NMB multipliers (plan decision 7); apnoea → rr 0
+  const sp = modeledSpont(rs, l1) ? rs.spont : undefined; // Stage 7f: MODELED — the chemoreflex drive's own rr/vt (spont.ts)
+  return {
+    rr: sp ? sp.rr : n ? (n.apnoea ? 0 : l1Target(l1, 'rr', t) * n.rrMult) : l1Target(l1, 'rr', t),
+    vt: sp ? sp.vt : n ? l1Target(l1, 'vt', t) * n.vtMult : l1Target(l1, 'vt', t),
+    fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs),
+    obstructed: n ? n.obstruction >= 0.9 : false,
+    cleft: n && n.cleft > 0.15 ? n.cleft : 0,
+  };
+}
+/** Stage 7f: MODELED spontaneous breathing follows the chemoreflex drive once it has been evaluated. */
+function modeledSpont(rs: RespState, l1: L1State): boolean {
+  return l1.mode === 'modeled' && rs.driver.source === 'spontaneous' && (rs.spont?.rr ?? -1) >= 0;
 }
 function compliance(rs: RespState): number {
   return staticCompliance(rs.lung); // Stage 7b: the lung module (endobronchial ×0.5 now emerges from the mainstem block)
@@ -298,6 +315,15 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     }
     rs.co2.pf = pf;
     rs.co2.ps = pf;
+    (rs.spont ??= createSpontDrive()).paco2Rest = pf; // Stage 7f: the resting PaCO2 is the MODELED drive's set point
+  }
+  if (l1.mode === 'modeled' && d.source === 'spontaneous') { // Stage 7f: 7b's chemoreflex drive, 1 Hz (spont.ts)
+    const lp = rs.lung.lp;
+    stepSpontDrive((rs.spont ??= createSpontDrive()), {
+      t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
+      co2SlopeMult: lp.co2Slope, pMaxMult: lp.pMax, evlwi: 7 + (rs.evlwiExtra ?? 0), complianceMl: compliance(rs),
+      resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
+    });
   }
   const va = alveolarVentilation(d, t, deadSpace(rs));
   rs.vaLpm = va; // Stage 7g
@@ -405,7 +431,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     }
   }
   const tEnd = mEnd / RESP_RATE;
-  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd), tEnd + PLAN_AHEAD_S);
+  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd, ctx.neuro), tEnd + PLAN_AHEAD_S); // Stage 7f: neuro
   // Stage 7b: stamp newly planned cycles with the lung's expiratory τ and capnogram terms
   const ct = capnoTerms(rs.lung);
   for (const c of rs.driver.cycles) {

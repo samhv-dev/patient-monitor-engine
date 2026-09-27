@@ -65,6 +65,8 @@ import {
 } from './l2/resp/pipeline.ts'; // Stage 3
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
+import { applyNeuroCommand, createNeuroState, fasciculating, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f
+import { pcheOf } from './l2/neuro/bus.ts'; // Stage 7f
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
 import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
 import { betaVenousUnits } from './l2/circ/venous.ts'; // FU-2
@@ -111,6 +113,7 @@ interface PipelineState {
   blood: BloodState; // Stage 7c: fluids, acid–base, electrolytes, O2 delivery, labs
   pk: PkState; // Stage 7g
   pkHooks: RhythmHookState; // Stage 7g
+  neuro: NeuroState; // Stage 7f: NMB, depth, drive depression (R32)
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -237,8 +240,9 @@ class Engine implements MonitorEngine {
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
       blood: createBloodState(opts.patient), // Stage 7c
-      pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
+      pk: createPkState({ ...pkPatientOf(opts.patient), pche: pcheOf(opts.patient) }), // Stage 7g (+7f: cholinesterase phenotype for 7g's PK, R51 addendum 10)
       pkHooks: createHookState(), // Stage 7g
+      neuro: createNeuroState(opts.patient, this.seed), // Stage 7f
     };
     holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined); // FU-2
     this.syncCo2Sampler(); // R39-5
@@ -336,6 +340,7 @@ class Engine implements MonitorEngine {
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
     data.st.pkHooks ??= createHookState(); // Stage 7g
     data.st.blood ??= createBloodState(undefined); // Stage 7c: pre-7c snapshots
+    data.st.neuro ??= createNeuroState(undefined, this.seed); // Stage 7f: pre-7f snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -379,6 +384,7 @@ class Engine implements MonitorEngine {
       this.dirtyFromN = Math.min(this.dirtyFromN, firstN);
     }
     this.advance(this.st, this.tick * SAMPLES_PER_TICK);
+    this.syncNeuro(simT); // Stage 7f: fasciculation artefact on the committed state
     const stp = this.st.hemo.stPatch; // Stage 7a: coronary ST hook (R23) through the existing modifiers, committed state only
     if (stp) {
       this.st.mods = mergeModifiers(this.st.mods, stp);
@@ -509,7 +515,13 @@ class Engine implements MonitorEngine {
       holdRate(ps, req7g.id, false); // FU-2: an engine-initiated sinus rate belongs to the reflex
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view)
+    const src7f = ps.resp.driver.source; // Stage 7f: after 7g's pk (reads ps.pk.bus), before the breath driver (its hook shapes the next breaths)
+    const endo7f = (ps as unknown as { endo?: { core?: { out?: { neuroglycopenia?: number } }; cascade?: { macF?: number } } }).endo; // Stage 7f: 7e seams, duck-typed (neutral without 7e)
+    stepNeuroTo(ps.neuro, end / ECG_RATE, {
+      tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
+      neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
+    }, ps.pk.bus);
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3 }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const resp = ps.resp; // Stage 3
@@ -546,6 +558,7 @@ class Engine implements MonitorEngine {
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
     this.st.blood.events = keep(this.st.blood.events); // Stage 7c
     this.st.pk.out = keep(this.st.pk.out); // Stage 7g
+    this.st.neuro.out = keep(this.st.neuro.out); // Stage 7f
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
   }
@@ -609,6 +622,8 @@ class Engine implements MonitorEngine {
     if (dev !== null) return dev;
     const pkV = validatePkCommand(cmd, this.st.pk); // Stage 7g: every library drug event is 7g's (R51 §3) — an error is final, ok = accepted
     if (pkV !== null) return pkV;
+    const neuro = validateNeuroCommand(cmd); // Stage 7f (after 7g: R51 §3 chain; null for every drug/vaporiser event)
+    if (neuro !== null) return neuro;
     const blood = validateBloodCommand(cmd); // Stage 7c (after 7g — which owns `drug` — and before Stage 3, whose `condition` rejects unknown ids)
     if (blood !== null) return blood;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
@@ -663,6 +678,7 @@ class Engine implements MonitorEngine {
       return;
     }
     if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
+    if (applyNeuroCommand(ps.neuro, cmd, simT)) return; // Stage 7f (never a drug/vaporiser/stimulus event: 7g consumed those, 7e consumes stimulus)
     if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
@@ -704,6 +720,25 @@ class Engine implements MonitorEngine {
         }
         return;
       }
+    }
+  }
+
+  /**
+   * Stage 7f: the succinylcholine fasciculation EMG artefact on the ECG modifiers, saved and restored on the committed
+   * state only (the look-ahead is marked dirty). 7f touches no potassium (7c's, R51 §3/§6) and no circulation (7g's).
+   */
+  private syncNeuro(simT: number): void {
+    const ps = this.st;
+    const ns = ps.neuro;
+    const fasc = fasciculating(ns, simT);
+    if (fasc && ns.emgBase === null) {
+      ns.emgBase = ps.mods.artefact.emg;
+      ps.mods = mergeModifiers(ps.mods, { artefact: { emg: Math.max(ns.emgBase, 0.8) } });
+      this.dirtyFromN = Math.min(this.dirtyFromN, ps.n);
+    } else if (!fasc && ns.emgBase !== null) {
+      ps.mods = mergeModifiers(ps.mods, { artefact: { emg: ns.emgBase } });
+      ns.emgBase = null;
+      this.dirtyFromN = Math.min(this.dirtyFromN, ps.n);
     }
   }
 
