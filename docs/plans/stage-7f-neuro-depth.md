@@ -1641,9 +1641,9 @@ git push
 - Consumes: `NeuroInputs['vent']` (Task 2: `opioid` is already the remifentanil-equivalent at the ventilatory site, fentanyl weighted by `FENT_VENT_POT`, D-7f-3).
 - Produces: `REMI_VENT_C50` 0.92, `REMI_VENT_H` 1.25, `PROP_VENT_C50` 1170, `VOL_VENT_C50` 0.8, `MIDAZ_VENT_C50` 150, `SYNERGY` 0.5, `APNOEA_IN` 0.42, `APNOEA_OUT` 0.5, `DIAPH_WEAK` 0.3, `DIAPH_APNOEA` 0.05; `DriveInputs { vent; macVolatile; diaBlock; tofr; di; naturalAirway; wasApnoeic }`, `NeuroResp { opioidDep; hypnoticDep; totalDep; veRest; rrMult; vtMult; apnoea; pMaxMult; obstruction; nmbVtMult; cleft }`, `neuroResp(x)`. **Consumers:** Stage 3's `driverCtx` (Task 12: `rrMult`, `vtMult`, `apnoea`, `obstruction`, `cleft`), Stage 7b's MODELED drive through `spont.ts` (Task 13: `opioidDep`, `hypnoticDep`, `pMaxMult`, `nmbVtMult`, `obstruction`; `DIAPH_APNOEA`).
 
-- [ ] **Step 1: The test exists** (Task 7, including the cleft test). Run `… exec vitest run test/l2/neuro/depth-drive.test.ts -t "respiratory-drive"`; expect FAIL (no `drive.ts`, or the Task 7 stub).
+- [x] **Step 1: The test exists** (Task 7, including the cleft test). Run `… exec vitest run test/l2/neuro/depth-drive.test.ts -t "respiratory-drive"`; expect FAIL (no `drive.ts`, or the Task 7 stub).
 
-- [ ] **Step 2: Implement** `packages/engine-core/src/l2/neuro/drive.ts` (exact; it replaces any Task 7 stub):
+- [x] **Step 2: Implement** `packages/engine-core/src/l2/neuro/drive.ts` (exact; it replaces any Task 7 stub):
 
 ```ts
 // Respiratory-drive depression (tables §5d "Respiratory-drive depression" feeding §4.6) and the NMB ventilatory
@@ -1726,9 +1726,9 @@ export function neuroResp(x: DriveInputs): NeuroResp {
 }
 ```
 
-- [ ] **Step 3: Run; expect PASS** — `… exec vitest run test/l2/neuro/depth-drive.test.ts` → 16 passed (depth 8, drive 7, interactions 1).
+- [x] **Step 3: Run; expect PASS** — `… exec vitest run test/l2/neuro/depth-drive.test.ts` → 16 passed (depth 8, drive 7, interactions 1).
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/neuro/drive.ts
