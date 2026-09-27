@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 06:10 (7d plan fixed; 7e review running; 7g #15 and 7x #16 CI rerunning with WebKit skips; 7c executor waits for #15; FU-2 plan in progress; 8a stalled on a permission prompt).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 06:35 (7g merged; 7c executing; 7x merging main; 7e review + FU-2 plan running; 8a stalled on a permission prompt).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -12,14 +12,13 @@
 ## Stage status table (edit at every gate)
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b | merged to main | DONE (Waves A + B; 7a PR #13; 7b PR #14) | — |
-| 7c blood/acid–base | `stage-7c-blood` (plan fixed, 26 tasks, verified on 7a+7b+7g; worktree `../scratch/wt-stage-7c`) | executor launched 2026-09-27 05:15, waits for #15 to merge, then executes; addendum 15 rules the six sibling tests | resume from first unticked task |
+| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g | merged to main | DONE (7a PR #13; 7b PR #14; 7g PR #15) | — |
+| 7c blood/acid–base | `stage-7c-blood` (plan fixed, 26 tasks; worktree `../scratch/wt-stage-7c`) | executing (7g merged 06:35) | resume from first unticked task |
 | 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
 | 7e endocrine/thermal | plan ready (`docs/plans/stage-7e-endocrine-thermal.md`, R48; R50 review running) | patches 7a and 7c; must observe 7g's bus | fix per review; execute after 7c AND 7d merge |
 | 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
-| 7g drug PK/PD | `stage-7g-pkpd`, PR #15 (worktree `../scratch/wt-stage-7g`) | gate passed (G7g); main (7b) merged in by the orchestrator, CI rerunning | merge when both CI jobs are green |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| 7x physiology console | `stage-7x-physiology-console`, PR #16 (worktree `../scratch/wt-stage-7x`) | all 9 tasks done, gate passed (G7x), CI running | merge after #15 (merge main into the branch first if needed) |
+| 7x physiology console | `stage-7x-physiology-console`, PR #16 (worktree `../scratch/wt-stage-7x`) | gate passed (G7x), CI green; main (7g) being merged in | merge when CI is green again |
 | FU-2 engine follow-ups | plan being written (`docs/plans/fu-2-engine-followups.md`) | (1) NR-7g-5 HIGH: rhythm-intrinsic rates must not be overridden by the circulation in MODELED (only sinus-family follows the HR set point); (2) β-agonist unstressed-volume mobilisation (dobutamine CO, NR-7g-2); (3) pressure-dependent arterial compliance (post-PVC, G7a NR-1); (4) rhythm field on the 1 Hz `state` event; (5) saadat 8 s HR averaging mapping | write plan; execute before 7d/7e |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 29 boxes unticked | STALLED since 2026-09-26 22:20 on an app permission prompt (`git -C` misread as destructive) — Ali allows the prompt or a fresh executor resumes | resume from first unticked task; merge main before gate |
