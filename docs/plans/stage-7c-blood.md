@@ -3807,7 +3807,7 @@ git push origin stage-7c-blood
 - Consumes: Stage 3's `test/helpers/resp.ts` (`ADULT`, `desatTime`), the Stage 3/3.1 acceptance suites.
 - Produces: the numbers for the gate note's "Stage 3 re-check" table (every G3/G3.1 number re-measured with the blood in the engine).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-stage3-recheck.test.ts`:
 
@@ -3853,14 +3853,14 @@ describe('Stage 3 acceptance re-check with the blood', { timeout: 300_000 }, () 
 });
 ```
 
-- [ ] **Step 2: Run it and every Stage 3 / 3.1 acceptance suite**
+- [x] **Step 2: Run it and every Stage 3 / 3.1 acceptance suite**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-stage3-recheck.test.ts test/engine/resp-oxygen.test.ts test/engine/resp-capnogram.test.ts test/engine/resp-coupling.test.ts test/engine/resp-airway.test.ts test/engine/resp-longrun.test.ts test/engine/stage3-alarms-engine.test.ts test/l2/lung test/engine/lung-` (Stage 3/3.1 AND 7b's suites, R50 F7)
 Expected: PASS (7b's two OLV tests pass as the `it.fails` records of Task 15). Prototype, ODC through 7b's mixing point with the blood's Hb 15 and live pH: **preoxygenated 485 s, room air 41.0 s (R39-1 band 35–60), child 130.0 s (band 130–190: ON the lower edge — 7b alone 133 s, the ODC swap alone 134 s; Q34 calibration item), obese 169 s**; `RECHECK OLV: nadir 88.7 % at 46.6 min, fL 0.266, pH 7.01`; the R39-1 displayed-SpO2 test (5c) passes. The capnogram, CO2 kinetics, PPV, RR, temperature and MH numbers do not involve the blood (no bicarbonate given, COHb/MetHb 0, `coFactor` 1) and stay as in `docs/gates/stage-3.md`/`stage-3.1.md`/`stage-7b.md`.
 
 If a band is missed: the only 7c inputs to Stage 3/7b are the ODC context (Hb, pH), `coFactor`, `co2LoadMlMin` and `evlwiExtra` (0 at a normal PCWP). Do NOT retune Stage 3 or 7b; report the number (R45 rule) and check the pH first (`st(e).blood.core.ab.ph` should be 7.35–7.45 at rest). If the child time falls below 130.0 on your base, record it as `it.fails` in THIS file's assertion with the number, as Task 15 does, and report it.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-stage3-recheck.test.ts

@@ -15,6 +15,7 @@ const SLOW = [
   'test/engine/hemo-nibp.test.ts',
   'test/engine/circ-sanity-*.test.ts',
   'test/engine/pk-acceptance-*.test.ts',
+  'test/engine/blood-stage3-recheck.test.ts', // Stage 7c: four desaturations + a 70 min OLV run
 ];
 const set = process.env.PME_TEST_SET;
 
