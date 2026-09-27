@@ -2488,7 +2488,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: Tasks 1–10; `l1Value`/`createL1State` (`l1/state.ts`), `HemoState`, `RespState` and `applyLungSpecs` (`l2/resp/pipeline.ts`, 7b), `betaBlunt` (`l2/pk/pd.ts`, 7g), `Modifiers`/`defaultModifiers`. Names read (R51 addendum 16): `hemo.circ.{beats, ext, prof.betaBlock, prof.betaBlockC, prof.bloodVolumeMl, base.v0Sv}`, `ps.pk.{bus.doses, bus.agents.epinephrine.brain, bus.airway.bronchodilation, bus.metabolic.dantroleneE, bus.volatiles, betaBlockAdd, drugs.<id>.rate}`, `ps.blood.{out.dkaSeverity, core.so.keto, core.fl.{vp, visf, kfMult}}`, `ps.organs.liver.glucoseF`, `ps.neuro.{antinoc, nmb, thermoDepth}`.
 - Produces: `interface EndoState { core; k; noxious; weightKg; ecg; kfMult; lungSev; out }`, `interface EndoCtx { l1; hemo; resp; ps }`, `resolveEndoProfile(profile)`, `createEndoState(profile, weightKg)`, `advanceEndo(es, ctx, tEnd)`, `validateEndoCommand(cmd)`, `applyEndoCommand(es, rs, cmd, t)`; adapters `PkLike`, `pkOf(ps)`, `circOf(ctx)`, `pkActive(pk)`, `readEndoInputs(ctx, es, t)`, `observeDoses(es, pk)`, `readInfusions(es, pk)`, `preBlunt(target, b)`, `endoHr(es, betaBlockAdd, modeled)`, `writeCirc(ctx, es): number` (the MANUAL rhythm-clock factor; 1 in MODELED), `writeBlood(ps, es)`, `writeCond(ps, es)`, `writeLung(rs, es)`, `ecgDeltas(es, th, mods)`.
 
-- [ ] **Step 1: Write the failing tests** `packages/engine-core/test/l2/endo/adapters.test.ts`
+- [x] **Step 1: Write the failing tests** `packages/engine-core/test/l2/endo/adapters.test.ts`
 
 ```ts
 // Stage 7e adapters: fallbacks and the duck-typed seams (7a circ.ext, 7c blood.core, 7f neuro, 7d organs, 7g bus).
@@ -2618,7 +2618,7 @@ describe('Stage 7e adapters', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing tests** `packages/engine-core/test/l2/endo/pipeline.test.ts`
+- [x] **Step 2: Write the failing tests** `packages/engine-core/test/l2/endo/pipeline.test.ts`
 
 ```ts
 // Stage 7e pipeline: command validation/application and the 1 Hz endo event (engine-independent).
@@ -2706,12 +2706,12 @@ describe('Stage 7e pipeline', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/adapters.test.ts test/l2/endo/pipeline.test.ts`
 Expected: FAIL — `adapters.ts` / `pipeline.ts` do not exist.
 
-- [ ] **Step 4: Implement** `packages/engine-core/src/l2/endo/adapters.ts`
+- [x] **Step 4: Implement** `packages/engine-core/src/l2/endo/adapters.ts`
 
 ```ts
 // Stage 7e adapters: read the other modules' truths (duck-typed, each with a neutral fallback) and write the
@@ -2938,7 +2938,7 @@ export function ecgDeltas(es: EndoState, th: ThermalState, mods: Modifiers): Mod
 export type { L1State };
 ```
 
-- [ ] **Step 5: Implement** `packages/engine-core/src/l2/endo/pipeline.ts`
+- [x] **Step 5: Implement** `packages/engine-core/src/l2/endo/pipeline.ts`
 
 ```ts
 // Stage 7e pipeline: the per-pass endocrine/thermal work the engine calls after 7c's `advanceBlood` (R51 addendum 14
@@ -3084,12 +3084,12 @@ export function applyEndoCommand(es: EndoState, rs: RespState, cmd: Command, t: 
 }
 ```
 
-- [ ] **Step 6: Run the tests and the typecheck**
+- [x] **Step 6: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (endo 38: hormones 7, glucose 7, conditions 4, core 7, adapters 8, pipeline 5); typecheck clean.
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/endo/adapters.ts packages/engine-core/src/l2/endo/pipeline.ts packages/engine-core/test/l2/endo/adapters.test.ts packages/engine-core/test/l2/endo/pipeline.test.ts
