@@ -3,6 +3,7 @@ import { createL1State } from '../../../src/l1/state.ts';
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, pkBus, qtcDeltaCa, validateBloodCommand } from '../../../src/l2/blood/pipeline.ts';
 import { createRespState } from '../../../src/l2/resp/pipeline.ts';
 import type { Command } from '../../../src/types.ts';
+import { infusionW } from '../../../src/l2/thermal/environment.ts'; // Stage 7e (E-7e-1)
 
 const MAN = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
 const ev = (event: Record<string, unknown>) => ({ id: 'x', issuedBy: 't', type: 'applyEvent', event }) as Command;
@@ -72,12 +73,14 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
     expect(bs.out.dkaSeverity).toBeCloseTo(0.6, 2);
     expect(bs.out.ag).toBeGreaterThan(20); // the same drive that raises the anion gap
   });
-  it('an unwarmed unit cools the core by ≈ 0.25 °C', () => {
+  it('an unwarmed unit runs into the heat model at 4 °C: ≈ 0.25 °C of a 70 kg core (Stage 7e E-7e-1: physical IV heat term)', () => {
     const { bs, ctx, rs } = rig();
-    const t0 = rs.temp.tc;
     applyBloodCommand(bs, ev({ kind: 'transfusion', product: 'rbc', units: 1, overS: 300 }), 0, ctx.resp);
+    advanceBlood(bs, ctx, 100);
+    expect(rs.temp.iv).toEqual({ mlPerMin: 56, tempC: 4 }); // 280 mL over 300 s
+    expect((-infusionW(rs.temp.iv.mlPerMin, rs.temp.iv.tempC, 36.8) * 300) / rs.temp.capCore).toBeCloseTo(0.25, 1); // the heat step integrates it
     advanceBlood(bs, ctx, 301);
-    expect(t0 - rs.temp.tc).toBeCloseTo(0.25, 2);
+    expect(rs.temp.iv.mlPerMin).toBe(0);
   });
 });
 

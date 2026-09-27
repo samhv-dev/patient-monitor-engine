@@ -47,7 +47,7 @@ export function labPanel(bc: BloodCore, x: LabInputs, panel: 'abg' | 'vbg'): Lab
     ph: r(ph, 2), pco2: r(pco2, 0), po2: r(po2, 0), hco3: r(hco3, 1), be: r(be, 1),
     so2: r(100 * sFunc * (1 - dys), 1), cohb: r(100 * bc.odc.cohb, 1), methb: r(100 * bc.odc.methb, 1),
     lactate: r(o.lactate, 1), na: r(o.na, 0), k: r(o.k, 1), cl: r(o.cl, 0), iCa: r(o.iCa, 2), mg: r(o.mg, 2),
-    hb: r(o.hb, 1), glucose: NORMAL.glucoseMgDl, ag: r(o.ag, 0), osm: r(o.osm, 0),
+    hb: r(o.hb, 1), glucose: r((bc as { endoGlucoseMgDl?: number }).endoGlucoseMgDl ?? NORMAL.glucoseMgDl, 0), ag: r(o.ag, 0), osm: r(o.osm, 0),
   };
 }
 

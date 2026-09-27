@@ -27,12 +27,6 @@ describe('neuro pipeline', () => {
     expect(validateNeuroCommand(dev({ device: 'tof', action: 'start', intervalS: 5 }))).toMatch(/12–60/);
     expect(validateNeuroCommand(dev({ device: 'nibp', action: 'start' }))).toBeNull();
   });
-  // TEMPORARY OWNER (R51 addendum 17): the Stage 7e executor deletes this test together with the marked validator block
-  it('[temporary owner until 7e] stimulus is 7e\'s shape: intensity 0–2 required', () => {
-    expect(validateNeuroCommand(ev({ kind: 'stimulus', intensity: 1.5 }))).toBeUndefined();
-    expect(validateNeuroCommand(ev({ kind: 'stimulus', intensity: 3 }))).toMatch(/intensity/);
-    expect(validateNeuroCommand(ev({ kind: 'stimulus' }))).toMatch(/required/);
-  });
   it('stimulus is OBSERVED (apply false, 7e consumes it): intensity/1.5 → 7f\'s level, held until the next event', () => {
     const ns = createNeuroState({}, 1);
     expect(applyNeuroCommand(ns, ev({ kind: 'stimulus', intensity: 1 }), 0)).toBe(false);

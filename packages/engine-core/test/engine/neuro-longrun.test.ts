@@ -22,6 +22,9 @@ describe('Stage 7f long run', () => {
       if (x.type === 'tof') tofN++;
     }, ['anaesthesia', 'tof']);
     e.dispatch(ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }));
+    // R51 addendum 18: a real 6 h maintenance case is warmed; unwarmed, 7e's live hypothermic MAC reduction (core 34.3 °C,
+    // macF 0.867 at 6 h) takes DI to 30 — correct physiology, not what this no-drift check is about
+    e.dispatch(ev({ kind: 'thermal', warming: true }));
     e.dispatch(ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 6 }));
     e.dispatch(ev({ kind: 'drug', drugId: 'remifentanil', dose: 0.1, unit: 'mcg/kg/min', route: 'iv', infusion: true }));
     e.dispatch(cmd({ type: 'device', action: { device: 'tof', action: 'start', intervalS: 60 } }));

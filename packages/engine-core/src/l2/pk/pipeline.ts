@@ -247,7 +247,7 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   const refScale = row.pk.kind === 'gamma' ? row.pk.refDose * (row.pk.perKg ? w : 1) : 1;
   const setRate = (amountPerMin: number) => {
     if (row.pk.kind === 'gamma') d.infTarget = row.pk.refRate ? amountPerMin / (row.pk.refRate * (row.pk.perKg ? w : 1)) : 0;
-    else d.rate = amountPerMin;
+    d.rate = amountPerMin; // Stage 7e (E-7e-4): the ordered rate, gamma rows too (their PK never reads it; 7e reads insulin/dextrose here)
     d.rateUntil = NEVER;
   };
   if (ev.kind === 'tci') {
