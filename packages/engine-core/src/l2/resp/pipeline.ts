@@ -26,7 +26,8 @@ import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts'
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
 import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
-import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
+import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
+import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
 import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
@@ -222,13 +223,13 @@ export function respPleural(rs: RespState, t: number): number {
 }
 
 /**
- * Metabolic factor: temperature, MH and general anaesthesia (brief §4.3, §4.9 conditions). Stage 7c: exported for
- * the blood's VO2 demand; the `gas` argument is Stage 7e's (its plan replaces this body with separate O2/CO2
- * factors) and is ignored until then.
+ * Metabolic factor: temperature, general anaesthesia and (Stage 7e) shivering, MH (VO2 × 2.5 / VCO2 × 3 at activity 1)
+ * and the endocrine rate (thyroid, sepsis, hypermetabolic: `temp.extraX`). Stage 7c exports it for the blood's VO2
+ * demand; `gas` selects the O2 or CO2 factor (they differ in MH).
  */
 export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
-  void gas; // Stage 7c: reserved for Stage 7e
-  return tempFactor(rs.temp.tc) * mhFactor(rs.temp, t, MH_VCO2_FACTOR) * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
+  const m = thermalMetabolic(rs.temp, t); // Stage 7e
+  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
 }
 
 function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: BloodView): O2Inputs { // Stage 7c: blood
@@ -238,7 +239,7 @@ function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: 
   return {
     vaLpm, fio2: currentFio2(rs, l1, t),
     massFlowFio2: vaLpm > 0 || !open ? null : preoxActive(rs.driver, t) ? (rs.driver.preox as { fio2: number }).fio2 : 0.21,
-    qLpm: rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg, vo2: rs.pat.vo2 * metabolic(rs, t), shunt: Math.min(0.9, rs.shunt + extraShunt(rs)),
+    qLpm: rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg, vo2: rs.pat.vo2 * metabolic(rs, t, 'o2'), shunt: Math.min(0.9, rs.shunt + extraShunt(rs)),
     paco2: rs.co2.pf, tempC: rs.temp.tc, frcMl: ga ? rs.pat.frcGaMl : rs.pat.frcMl, bloodL: rs.pat.bloodL,
     ...(blood ? { odc: blood.odc } : {}), // Stage 7c
   };
@@ -264,6 +265,11 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       setCoreTarget(rs.temp, tc);
       rs.seen.tempCore = tc;
     }
+    // Stage 7e: the respiratory heat loss follows the actual ventilation; machine gas is dry, an HME is assumed unless
+    // `thermal7e { hme: false }` removed it
+    const mech = d.source === 'ventilator' || d.source === 'bvm' || d.source === 'external';
+    const nv = nominalRate(d, driverCtx(rs, l1, t));
+    rs.temp.vent = { veLpm: d.airway === 'apnoea' || d.source === 'none' ? 0 : (nv.rr * nv.vt) / 1000, dryGas: mech, hme: mech ? rs.temp.vent.hme || !rs.temp.vent.dryGas : false };
     stepTemp(rs.temp, t, 1);
     tempNumStep(rs.num.temp, rs.temp.sites, rs.tempSite, 1);
   }

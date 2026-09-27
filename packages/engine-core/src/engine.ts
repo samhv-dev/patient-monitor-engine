@@ -63,6 +63,11 @@ import {
   type RespChannel,
   type RespState,
 } from './l2/resp/pipeline.ts'; // Stage 3
+import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand, type EndoState } from './l2/endo/pipeline.ts'; // Stage 7e
+import { ecgDeltas, writeBlood, writeCirc, writeCond, writeLung } from './l2/endo/adapters.ts'; // Stage 7e
+import { upgradeThermal } from './l2/thermal/heat.ts'; // Stage 7e
+import { gasPatient } from './l2/gas/params.ts'; // Stage 7e
+import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7g-5): only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
@@ -108,6 +113,9 @@ interface PipelineState {
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
   resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
+  endo: EndoState; // Stage 7e: stress hormones, glucose–insulin, thyroid, conditions (the heat model lives in resp.temp)
+  endoHrF: number; // Stage 7e: HR factor on the rhythm clock in MANUAL (1 in MODELED: 7a takes circ.ext.endo*)
+  cond: { vasoResp: number }; // Stage 7e → 7g (R51 addendum 16): catecholamine responsiveness, mirrors endo.core.out.vasoResp
   blood: BloodState; // Stage 7c: fluids, acid–base, electrolytes, O2 delivery, labs
   pk: PkState; // Stage 7g
   pkHooks: RhythmHookState; // Stage 7g
@@ -150,7 +158,9 @@ function tcpPulseAnnouncements(records: readonly EngineEvent[], from: number, to
 }
 
 function rhythmCtx(ps: PipelineState): RhythmCtx {
-  return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
+  // Stage 7e: the endocrine/fever HR factor scales only the sinus node (FU-2 rate rule, NR-7g-5); exactly 1 at rest
+  const endoF = SINUS_FAMILY.has(ps.rhythm.id) ? ps.endoHrF : 1;
+  return { hrAt: (t) => rampValue(ps.hr, t) * endoF, mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
 }
 
 /** FU-2 (NR-7g-5): record the rate just written to ps.hr for MODELED mode's rate rule (explicit = the instructor's own rate). */
@@ -236,6 +246,9 @@ class Engine implements MonitorEngine {
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
+      endo: createEndoState(opts.patient, gasPatient(opts.patient).effKg), // Stage 7e
+      endoHrF: 1, // Stage 7e
+      cond: { vasoResp: 1 }, // Stage 7e
       blood: createBloodState(opts.patient), // Stage 7c
       pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
       pkHooks: createHookState(), // Stage 7g
@@ -335,6 +348,10 @@ class Engine implements MonitorEngine {
     const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
     data.st.pkHooks ??= createHookState(); // Stage 7g
+    data.st.endo ??= createEndoState(undefined, 70); // Stage 7e: pre-7e snapshots
+    data.st.endoHrF ??= 1; // Stage 7e
+    data.st.cond ??= { vasoResp: 1 }; // Stage 7e
+    data.st.resp.temp = upgradeThermal(data.st.resp.temp); // Stage 7e: Stage 3's TempState → ThermalState
     data.st.blood ??= createBloodState(undefined); // Stage 7c: pre-7c snapshots
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
@@ -512,6 +529,13 @@ class Engine implements MonitorEngine {
     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
+    const endoCtx = { l1: ps.l1, hemo: ps.hemo, resp: ps.resp, ps }; // Stage 7e: after 7c's blood, before 7d's organs and the haemodynamics
+    advanceEndo(ps.endo, endoCtx, Math.floor(end / 8) / RESP_RATE); // Stage 7e (1 Hz steps; 7g's doses every pass)
+    ps.endoHrF = writeCirc(endoCtx, ps.endo); // Stage 7e: MODELED → circ.ext.endo*; MANUAL → the rhythm-clock factor
+    writeBlood(ps, ps.endo); // Stage 7e → 7c (endogenous K, lab glucose, capillary leak)
+    writeCond(ps, ps.endo); // Stage 7e → 7g (ps.cond.vasoResp)
+    writeLung(ps.resp, ps.endo); // Stage 7e → 7b (lungCondition anaphylaxis)
+    ps.mods = ecgDeltas(ps.endo, ps.resp.temp, ps.mods); // Stage 7e: tempC / shivering deltas
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
@@ -546,6 +570,7 @@ class Engine implements MonitorEngine {
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
     this.st.blood.events = keep(this.st.blood.events); // Stage 7c
     this.st.pk.out = keep(this.st.pk.out); // Stage 7g
+    this.st.endo.out = keep(this.st.endo.out); // Stage 7e
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
   }
@@ -611,6 +636,8 @@ class Engine implements MonitorEngine {
     if (pkV !== null) return pkV;
     const blood = validateBloodCommand(cmd); // Stage 7c (after 7g — which owns `drug` — and before Stage 3, whose `condition` rejects unknown ids)
     if (blood !== null) return blood;
+    const endo = validateEndoCommand(cmd); // Stage 7e (after 7g/7f/7d/7c, before Stage 3: its condition ids and `stimulus`)
+    if (endo !== null) return endo;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
     if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
@@ -664,6 +691,7 @@ class Engine implements MonitorEngine {
     }
     if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
     if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
+    if (applyEndoCommand(ps.endo, ps.resp, cmd, simT)) return; // Stage 7e (after 7g/7f/7d/7c, before Stage 3)
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
       return;

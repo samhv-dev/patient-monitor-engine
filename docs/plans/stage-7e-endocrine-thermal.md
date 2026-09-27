@@ -3107,12 +3107,12 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: Task 11 (`advanceEndo`, `applyEndoCommand`, `createEndoState`, `validateEndoCommand`, `writeCirc`, `writeBlood`, `writeCond`, `writeLung`, `ecgDeltas`), Task 5 (`upgradeThermal`), Task 6 (`thermalMetabolic`), `gasPatient` (`l2/gas/params.ts`), FU-2's `SINUS_FAMILY` (`l2/circ/rate-rule.ts`), 7c's exported `metabolic(rs, t, gas = 'co2')`.
 - Produces: `PipelineState.endo: EndoState`, `PipelineState.endoHrF: number`, `PipelineState.cond: { vasoResp: number }` (7g's `pkCtx` already reads `ps.cond.vasoResp`); the engine emits `endo` events; the pre-7e snapshot upgrade in `restore()`.
 
-- [ ] **Step 1: Merge main, record the baseline**
+- [x] **Step 1: Merge main, record the baseline**
 
 Run: `git fetch origin && git merge --no-edit origin/main && CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core test 2>&1 | tail -5`
 Expected: all pass or the `it.fails` already on main (record "N passed"). Run it ALONE on the machine.
 
-- [ ] **Step 2: Write the failing test** `packages/engine-core/test/engine/endo-wiring.test.ts`
+- [x] **Step 2: Write the failing test** `packages/engine-core/test/engine/endo-wiring.test.ts`
 
 ```ts
 // Stage 7e engine wiring: neutral at rest, the 1 Hz endo event, the MANUAL rhythm-clock factor only on sinus-family
@@ -3188,7 +3188,7 @@ describe('Stage 7e engine wiring', { timeout: 300_000 }, () => {
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-wiring.test.ts`
 Expected: FAIL — no `endo` events (`expected [] to deeply equal [1, …, 10]`).
 
-- [ ] **Step 3: `engine.ts` edits** (merge `origin/main` first; each anchor occurs once on the prototype base; place by the chain order when a later stage moved a line)
+- [x] **Step 3: `engine.ts` edits** (merge `origin/main` first; each anchor occurs once on the prototype base; place by the chain order when a later stage moved a line)
 
 (a) After `} from './l2/resp/pipeline.ts'; // Stage 3` add (skip the `SINUS_FAMILY` line if FU-2 already imports it into `engine.ts`):
 ```ts
@@ -3244,7 +3244,7 @@ import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7
     if (applyEndoCommand(ps.endo, ps.resp, cmd, simT)) return; // Stage 7e (after 7g/7f/7d/7c, before Stage 3)
 ```
 
-- [ ] **Step 4: resp pipeline edits** (`packages/engine-core/src/l2/resp/pipeline.ts`, exception E2)
+- [x] **Step 4: resp pipeline edits** (`packages/engine-core/src/l2/resp/pipeline.ts`, exception E2)
 
 (a) Replace the import `import { createTemp, MH_VCO2_FACTOR, mhFactor, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';` by:
 ```ts
@@ -3274,7 +3274,7 @@ export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): 
     stepTemp(rs.temp, t, 1);
 ```
 
-- [ ] **Step 5: Run the wiring test, then the whole engine-core suite ALONE**
+- [x] **Step 5: Run the wiring test, then the whole engine-core suite ALONE**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-wiring.test.ts && CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core test 2>&1 | tail -12`
 Expected: `endo-wiring` 4 PASS; the suite = Step 1 + the 7e files, with exactly these known differences (prototype):
@@ -3282,7 +3282,7 @@ Expected: `endo-wiring` 4 PASS; the suite = Step 1 + the 7e files, with exactly 
 - `test/engine/pk-acceptance-pd.test.ts`: NO change expected. On the first prototype base its rig ran at RR 12 (PaCO2 → 57) and the "phenylephrine 0.25" `it.fails` flipped with 7e (+18.0 %, 7e's hypercapnic catecholamine drive); the 7c branch fixed the rig to RR 20 (PaCO2 38–39, addendum 15 item 3) and every phenylephrine row is a plain `it` there. If any pk-acceptance-pd row changes state with 7e, stop and report (it would mean 7e's catecholamine drive acts at normocapnia) — do not edit it.
 Any OTHER newly failing test beyond its band: stop and report (R45). Every Stage 3 thermal test (`test/l2/temp`, R39-7 and MH in `resp-coupling`) passes unchanged.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/test/engine/endo-wiring.test.ts
