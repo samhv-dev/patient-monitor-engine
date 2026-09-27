@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 23:38 (FU-3 MERGED; FU-4 plan writer; respiratory + monitor-fidelity audits running; V.1 + 8b READY; 3/4 slots).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 00:09 (FU-4 + FU-5 plan writers; respiratory audit; V.1 + 8b READY; order FU-4 → V.1 → 8b, FU-5 parallel; 3/4 slots).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -19,7 +19,8 @@
 | FU-3 follow-ups | MERGED 2026-09-27 23:36 (PR #23, head 26f5290) | G-FU3 + seven rulings in the rulings file (t25 ventilated → FU-4; escape-pacemaker hypoxia → FU-4 G7; oracle MODELED) | done |
 | 8b release + IIFE embed | plan FIXED 23:16 (3,749 lines, 43 unique blocks; licence texts in every dist; fresh validate report in Task 12) — READY; executor after FU-3 + FU-4 + V.1 merge; Ali: Q1 npm?, Q2 @pme scope, Q3 Pages, Q5 Zenodo DOI, Q8 1.0.0 vs rc.1 | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
 | FU-4 integration polish (R53) | AUDIT DONE (`../research/08-physiology-integration-audit.md`, 72 scenarios: nothing arrests; propofol ΔMAP −10 % healthy vs −16 % tamponade; gaps G1–G15); PLAN WRITER running since 21:57 (`docs/plans/fu-4-integration-polish.md`, builds on FU-3's branch) | then plan writer from the audit: state-dependent drug effects (propofol in tamponade → collapse), low-flow arrest pathway, tamponade–PEEP–anaesthetic coupling, scripted clinical scenario suite; forced-air set temperature; shots comments; test-slow split | audit → plan → R50 review → executor after FU-3 lands; v1.0 waits for it |
-| Audits (R53) | respiratory/airway audit → `../research/09-respiratory-integration-audit.md`; monitor-fidelity audit → `../research/10-monitor-fidelity-audit.md` (both running, read-only) | feed FU-4's review or an FU-5 plan | orchestrator reads, then plan |
+| Audits (R53) | haemodynamic →  DONE (feeds FU-4); monitor-fidelity →  DONE (feeds FU-5); respiratory/airway →  RUNNING | respiratory audit → FU-4 review input or an FU-6 plan | orchestrator reads, then plan |
+| FU-5 monitor fidelity (parallel with FU-4) | plan writer running since 2026-09-28 00:09 (; owns L3/renderer/skins/audio + L2 signal-quality lines) | SpO2/PI at low flow, one-condition-one-alarm + vendor latching, HR→PR fallback with leads off, NIBP floor, ART pulseless presentation, limit hysteresis, chained alarms, technical alarms, Silence semantics, unused skin settings, fidelity suite | R50 review → fixer → executor (parallel with FU-4; merge order by gate) |
 | V.1 ventilator follow-up | plan FIXED 23:13 (2,695 lines, 68 unique blocks; FiO2 0.21 oedema stays it.fails +0.7) — READY; executor after FU-4 merges | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | R50 review → fixer if needed → executor when a slot frees |
 | 8 validation/release | not started | waits for all | write plan |
 
