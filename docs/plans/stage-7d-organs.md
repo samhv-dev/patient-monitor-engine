@@ -3695,7 +3695,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: `organsRig` (Task 12), `autoregIntact`/`co2Factor` (Task 4), `ANURIA_ML_KG_H` (Task 8), `OrgansState.lp`/`iap` (Task 11); the `renal { iapMmHg }` event.
 
-- [ ] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-curves.test.ts` (each point ≤ 30 simulated minutes; the rig yields every minute)
+- [x] **Step 1: Write the test** — `packages/engine-core/test/engine/organs-curves.test.ts` (each point ≤ 30 simulated minutes; the rig yields every minute)
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3805,12 +3805,12 @@ describe('Stage 7d curves through the engine (MANUAL, awake adult)', { timeout: 
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-curves.test.ts`
 Expected: PASS (6 tests, one `it.fails`; ≈ 24 s). **Prototype:** A(CPP) matched within 0.01 at CPP 40/57/67/86/111/142 (plateau 0.98); CO2 slope **0.029**/mmHg over PaCO2 32–49; PVI **+8.9 %** per mL; UOP rest **1.07**, RPP 97 → **1.21**, RPP 144 → **3.44** (ratio 2.85), RBF within 1 %, IAP 25 at MAP 60 (RPP 38) → **0.010**; mid-curve RPP 75 → **0.79** vs the tables' 0.58 (decision 8, `it.fails`); lactate 5 → **2.79** at 30 min. The MANUAL MAP steps are reached through 7a's tracker, so each assertion uses the MEASURED CPP/RPP (and asserts the premise) rather than the target. The Cushing-threshold curve of the first draft is covered by Task 5 (29 s no / 31 s yes, both triggers) and Task 13 (engine onset).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/organs-curves.test.ts docs/plans/stage-7d-organs.md
