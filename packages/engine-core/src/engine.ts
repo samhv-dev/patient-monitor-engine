@@ -155,7 +155,11 @@ function tcpPulseAnnouncements(records: readonly EngineEvent[], from: number, to
 }
 
 function rhythmCtx(ps: PipelineState): RhythmCtx {
-  return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
+  return {
+    hrAt: (t) => rampValue(ps.hr, t),
+    pacerLowerAt: (t) => rampValue(ps.hemo.circ.hrSet ?? ps.hr, t), // FU-3 (Q-FU2-10): the held rate is a pacer's lower rate
+    mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps), // Stage 5.1: breath
+  };
 }
 
 /** FU-2 (NR-7g-5): record the rate just written to ps.hr for MODELED mode's rate rule (explicit = the instructor's own rate). */
@@ -166,6 +170,7 @@ function holdRate(ps: PipelineState, rhythmId: string, explicit: boolean): void 
 /** hr truth when a rhythm starts: RhythmOpts.rateBpm, else the rhythm default (flutter: atrial/ratio). */
 function startRate(id: RhythmId, opts: RhythmOpts): number {
   if (opts.rateBpm !== undefined) return opts.rateBpm;
+  if (opts.pacer?.ratePpm !== undefined && RHYTHMS[id].rateDrives === 'pacer') return opts.pacer.ratePpm; // FU-3: a programmed lower rate
   if (id === 'aflutter') {
     const r = opts.ratio ?? 2;
     return (opts.atrialRateBpm ?? DEFAULT_FLUTTER_ATRIAL_BPM) / (r === 'variable' ? 3 : r);

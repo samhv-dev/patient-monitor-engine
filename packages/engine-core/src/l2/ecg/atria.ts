@@ -6,7 +6,7 @@ import { sinusRR } from './hrv.ts';
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS, type AtrialMode, type RhythmDef } from './rhythms.ts';
 import { pWaveKernels } from './templates.ts';
 import { WPW_PR_MS } from './beat-templates.ts';
-import { HOOKS, NEVER, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
+import { HOOKS, NEVER, pacerLowerRate, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import { applyPMorphology, prDeltaMs } from './morphology/index.ts';
 import { onEctopic, onMultifocal } from './atria-ectopic.ts';
 
@@ -46,7 +46,15 @@ const AF_RATE_CAL: ReadonlyArray<readonly [number, number]> = [
 export function atrialRate(st: RhythmState, d: RhythmDef, t: number, ctx: RhythmCtx): number {
   if (d.atria === 'flutter') return st.opts.atrialRateBpm ?? DEFAULT_FLUTTER_ATRIAL_BPM;
   if (d.rateDrives === 'sinus') return rhythmRate(st, t, ctx);
-  return st.opts.atrialRateBpm ?? d.atrialDefaultBpm;
+  const base = st.opts.atrialRateBpm ?? d.atrialDefaultBpm;
+  // FU-3 (Q-FU2-10): under an atrial-sensing pacer (AAI, DDD) an hr above the lower rate is the intrinsic sinus rate
+  // (MODELED: the reflex overtaking the pacer; MANUAL: an instructor rate above PacerOpts.ratePpm). The sinus P is
+  // sensed and inhibits the atrial output (NASPE/BPEG code, Bernstein 2002); at or below the lower rate the pacer paces.
+  if (d.pacing === 'AAI' || d.pacing === 'DDD') {
+    const hr = rhythmRate(st, t, ctx);
+    if (hr > pacerLowerRate(st, t, ctx)) return Math.max(base, hr);
+  }
+  return base;
 }
 
 export function flutterRatio(st: RhythmState, s: Sfc32State): number {

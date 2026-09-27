@@ -7,7 +7,7 @@ import { RHYTHMS } from './rhythms.ts';
 import { applyPMorphology } from './morphology/index.ts';
 import { atrialRate, conductAt } from './atria.ts';
 import { pWaveKernels } from './templates.ts';
-import { HOOKS, NEVER, pushPending, rhythmRate, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
+import { HOOKS, NEVER, pacerLowerRate, pushPending, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import type { PacerFault } from '../../types.ts';
 
 export const DEFAULT_AV_DELAY_MS = 160; // DDD AV delay 120–200 ms (brief §5)
@@ -18,8 +18,9 @@ export interface PacerState {
   nextV: number;
 }
 
+/** Escape interval at the programmed lower rate (FU-3: never the hr above it, which is the intrinsic rate). */
 function interval(st: RhythmState, t: number, ctx: RhythmCtx): number {
-  return 60 / (st.opts.pacer?.ratePpm ?? rhythmRate(st, t, ctx));
+  return 60 / pacerLowerRate(st, t, ctx);
 }
 
 function faultHits(st: RhythmState, f: PacerFault, ctx: RhythmCtx): boolean {
