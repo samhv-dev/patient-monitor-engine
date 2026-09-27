@@ -41,7 +41,11 @@ export interface BloodOut {
   albGL: number; albuminGL: number; // albuminGL = albGL (the name 7d reads)
   ag: number; osm: number; cop: number; hbfRel: number;
   bvRel: number; // blood volume ÷ the profile's (7d)
+  dkaSeverity: number; // R51 addendum 16: ketoacid drive 0–1 (keto ÷ DKA_KETO_MMOL_L) that 7c applies; Stage 7e reads it
 }
+
+/** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity` (R51 addendum 16). */
+export const DKA_KETO_MMOL_L = 25;
 
 export interface BloodCore {
   pat: BloodPatient;
@@ -80,7 +84,7 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
     pat, fl, so, ab: solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb }), phNonOrg: ph0,
     o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
     co0, ecf0: e0, k1Hz: 0,
-    out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1 },
+    out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1, dkaSeverity: 0 },
   };
 }
 
@@ -151,6 +155,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
     na: c.na, k, kEcg: k - 0.5 * ef.caMem * Math.max(0, k - 5), cl: c.cl, iCa, mg: c.mg, lactate: c.lactate, hb: bc.odc.hb,
     albGL: chem.albGL, albuminGL: chem.albGL, ag: anionGap(c.na, c.cl, bc.ab.hco3), osm: osmEcf(c), cop: copPlasma(fl), hbfRel,
     bvRel: bloodMl(fl) / fl.ref.bv,
+    dkaSeverity: Math.min(1, Math.max(0, c.keto / DKA_KETO_MMOL_L)), // R51 addendum 16
   };
 }
 export type { Conc };

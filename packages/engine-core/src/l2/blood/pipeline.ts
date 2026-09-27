@@ -9,7 +9,7 @@ import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from '../gas/params.ts';
 import { applyLungSpecs, metabolic, type BloodView, type RespState } from '../resp/pipeline.ts';
 import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, volumeCoFactor } from './circ-adapter.ts';
-import { createBloodCore, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
+import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
 import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
 import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedK, type Composition, type FluidId, type ProductId } from './params.ts';
@@ -299,7 +299,7 @@ export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: R
     case 'condition': {
       const x = ev as { id: string; severity: number };
       if (x.id === 'burns') c.burns = x.severity;
-      else if (x.id === 'dka') c.so.keto = 25 * x.severity * (ecfMl(c.fl) / 1000); // established DKA: 25 mmol/L at 1 [ENG]
+      else if (x.id === 'dka') c.so.keto = DKA_KETO_MMOL_L * x.severity * (ecfMl(c.fl) / 1000); // established DKA: 25 mmol/L at 1 [ENG]
       else return false;
       return true;
     }

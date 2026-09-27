@@ -63,6 +63,15 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
     expect(qtcDeltaCa(0.9)).toBeCloseTo(20, 6);
     expect(qtcDeltaCa(1.2)).toBe(0);
   });
+  it('R51 addendum 16: blood.out.dkaSeverity (0–1) publishes the ketoacid drive 7c applies, for Stage 7e', () => {
+    const { bs, ctx } = rig();
+    advanceBlood(bs, ctx, 1);
+    expect(bs.out.dkaSeverity).toBe(0);
+    expect(applyBloodCommand(bs, ev({ kind: 'condition', id: 'dka', severity: 0.6 }), 1, ctx.resp)).toBe(true);
+    advanceBlood(bs, ctx, 2);
+    expect(bs.out.dkaSeverity).toBeCloseTo(0.6, 2);
+    expect(bs.out.ag).toBeGreaterThan(20); // the same drive that raises the anion gap
+  });
   it('an unwarmed unit cools the core by ≈ 0.25 °C', () => {
     const { bs, ctx, rs } = rig();
     const t0 = rs.temp.tc;
