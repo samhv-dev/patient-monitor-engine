@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 12:50 (7f at PR #21 gate-passed; 7d seam fix running; 7e executing; FU-3 plan pending 7d).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 13:10 (7d seam fixed, CI running; 7f #21 CI running; 7e executing; FU-3 plan pending 7d).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,7 +13,7 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18) | — |
-| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`) | gate passed on main-without-7c; on main+7c four 7d tests fail at the 7c seam — integration executor running (2026-09-27 12:20) | merge when the slow job is green |
+| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`) | 7c seam fixed (renal seam above-basal urine; lactate pool; t = 0 baseline; check-18 = 7a defect, `it.fails`); CI running | merge when green (7e/7f re-merge main after) |
 | 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), 65/133 boxes | executing (fresh executor after the seventh cap; merges 7d when it lands) | resume from first unticked task |
 | 7f NMB/depth | `stage-7f-neuro-depth`, PR #21 (worktree `../scratch/wt-stage-7f`) | all 20 tasks done, gate passed (G7f), CI running | merge when green (re-merge main if 7d lands first) |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
