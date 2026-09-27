@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 05:00 (7x merged; 7c and 8a executing; FU-2 fixer + 7e fixer running).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 08:25 (7c gate, 8a, FU-2 executing; 7f fixer running; 7d/7e plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,14 +13,15 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x console #16) | — |
-| 7c blood/acid–base | `stage-7c-blood` (plan fixed, 26 tasks; worktree `../scratch/wt-stage-7c`) | executing (7g merged 06:35) | resume from first unticked task |
+| 7c blood/acid–base | `stage-7c-blood` (worktree `../scratch/wt-stage-7c`), 23/26 tasks pushed | gate task running (fresh executor after the sixth cap) | gate + PR, then orchestrator gate + merge |
 | 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
-| 7e endocrine/thermal | plan under rewrite (`docs/plans/stage-7e-endocrine-thermal.md`; R50 verdict INCOMPLETE — pre-R51; fixer running per addendum 16) | must observe 7g's bus; V0 sign; seam test; bands restored | execute after 7c AND 7d merge |
-| 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
+| 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
+| 7f NMB/depth | plan under fix (`docs/plans/stage-7f-neuro-depth.md`; re-review vs real 7g: INCOMPLETE — bus names, naloxone, stimulus, drive wiring; fixer running per addendum 17) | sux tests pre-declared `it.fails` (FU-3 item 1) | execute after FU-2 and 7c merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-2 engine follow-ups | plan under fix (`docs/plans/fu-2-engine-followups.md`, 11→12 tasks; R50 review READY WITH FIXES F1–F6 + AF rate control) | exceptions E-FU2-1..6 | execute after fix (on main, parallel to 7c); 7d after 7c AND FU-2 |
+| FU-2 engine follow-ups | `fu-2-engine-followups` (plan fixed, 12 tasks; worktree `../scratch/wt-fu2`) | executing (started 2026-09-27 07:15) | resume from first unticked task |
+| FU-3 engine follow-ups | list opened (rulings, addendum 17) | sux ke0/CL re-fit; neostigmine tail; AAI/DDD intrinsic beats; MANUAL AF HR over-read; amiodarone AV strength (Ali) | write plan after 7f lands |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
-| 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 29 boxes unticked | resumed 2026-09-27 04:25 by a fresh executor after the permission-prompt stall | resume from first unticked task; merge main before gate |
+| 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 6 boxes unticked | executing (fresh executor after the sixth cap; oracle O2 under diagnosis) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
