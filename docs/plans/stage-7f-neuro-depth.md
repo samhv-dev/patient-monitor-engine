@@ -1379,7 +1379,7 @@ git push
 - Consumes: `FENT_EEG_POT` (Task 2); `ec50Multipliers` (Task 6, for the third describe).
 - Produces: `DI_E0` 93, `MAC_DI50` 0.876, `N2O_DI_W` 0.1, `OPIOID_W` 0.2, `REMI_EEG_EC50` 11.2, `MIDAZ_DI50` 300, `KET_DI_RISE` 15, `KET_C50` 800, `EMG_RISE` 15, `MAC_AWAKE` 0.33, `MAC_BAR` 1.6, `OPIOID_MAC_RMAX` 0.7, `OPIOID_MAC_K` 0.6, `REMI_MAC_POT` 1.25, `GLYCO_U` 1.2; `DepthInputs { ageY; ce; macPotent; macN2o; t1; stimulus; glyco? }` (`stimulus` 0–1 = 7e's intensity / STIM_FULL; `glyco` = 7e's neuroglycopenia, decision 19), `DepthOut { diRaw; sr; macFrac; macEff; hypnotic; conscious; stress; antinoc; hypEq; movement }`, `ce50Propofol(ageY)` (ng/mL), `locPropofol(ageY)`, `opioidFentEq(ce)`, `depth(x)`, `smoothDi(prev, raw, dt, tauS = 20)`. MAC(age) is NOT here: 7g publishes age-adjusted MAC fractions (Mapleson; 7g Task 8 tests it).
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/neuro/depth-drive.test.ts` (exact; Task 8 makes the second describe pass):
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/neuro/depth-drive.test.ts` (exact; Task 8 makes the second describe pass):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1519,9 +1519,9 @@ describe('interactions', () => {
 
 The file holds **16 tests**: depth 8, drive 7, interactions 1.
 
-- [ ] **Step 2: Run** `… exec vitest run test/l2/neuro/depth-drive.test.ts`; expect FAIL (unresolved imports).
+- [x] **Step 2: Run** `… exec vitest run test/l2/neuro/depth-drive.test.ts`; expect FAIL (unresolved imports).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/neuro/depth.ts` (exact):
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/neuro/depth.ts` (exact):
 
 ```ts
 // Anaesthetic depth (tables §5d "Anaesthetic depth"). Pure functions of brain effect-site concentrations (ng/mL, from
@@ -1620,9 +1620,9 @@ export function smoothDi(prev: number, raw: number, dt: number, tauS = 20): numb
 }
 ```
 
-- [ ] **Step 4: Run the depth describe; expect PASS** (8 tests): `… exec vitest run test/l2/neuro/depth-drive.test.ts -t "depth index"` (the file still fails to import `drive.ts` until Task 8: if Vitest refuses to run the file, create an empty `export {}` stub `src/l2/neuro/drive.ts` and delete it in Task 8 Step 2 — the exact file there replaces it). Also run `-t "interactions"` → 1 passed.
+- [x] **Step 4: Run the depth describe; expect PASS** (8 tests): `… exec vitest run test/l2/neuro/depth-drive.test.ts -t "depth index"` (the file still fails to import `drive.ts` until Task 8: if Vitest refuses to run the file, create an empty `export {}` stub `src/l2/neuro/drive.ts` and delete it in Task 8 Step 2 — the exact file there replaces it). Also run `-t "interactions"` → 1 passed.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/neuro/depth.ts packages/engine-core/test/l2/neuro/depth-drive.test.ts
