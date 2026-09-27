@@ -22,6 +22,8 @@ export const TRUTH_LIMITS = {
 const SKIP_TOP = new Set(['n', 'hrv', 'laneFilter', 'detFilter', 'qrs', 'hrm', 'detections', 'lanes', 'filterMode']);
 /** Keys skipped at any depth: event queues and PRNG state. */
 const SKIP_ANY = new Set(['out', 'rng']);
+/** Stage 7c: `blood.out` is the published chemistry block (Na, K, lactate, Hb…), not an event queue — kept (its twin `blood.core.out` is skipped). */
+const KEEP_OUT = new Set(['blood.out']);
 /**
  * Sub-trees skipped by their full path: configuration and reference copies, not live physiology — the alarm profile
  * (≈ 2.3 KB of limits and labels) and 7a's copies of the profile parameters (the live ones are `hemo.circ.p`).
@@ -88,7 +90,7 @@ export function pruneTruth(st: object, dev?: object): { tree: TruthTree; leaves:
     }
     const out: TruthTree = {};
     for (const [k, x] of Object.entries(v)) {
-      if (SKIP_ANY.has(k)) continue;
+      if (SKIP_ANY.has(k) && !(path && KEEP_OUT.has(`${path}.${k}`))) continue; // Stage 7c: KEEP_OUT
       const p = path && depth < SKIP_PATH_DEPTH ? `${path}.${k}` : '';
       if (p && SKIP_PATH.has(p)) continue;
       const w = walk(x, depth + 1, p);
