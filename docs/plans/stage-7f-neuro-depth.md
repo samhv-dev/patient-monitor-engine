@@ -555,7 +555,7 @@ git push
 - Consumes: 7g's `createPkState`, `applyPkCommand`, `advancePk`, `NEUTRAL_PK_CTX`, `PkState` (`src/l2/pk/pipeline.ts`), `PkPatient` (`src/l2/pk/covariates.ts`, incl. `pche`), `DrugBus`.
 - Produces (test helper): `ADULT: PkPatient`, `Rig { pk; tS; tempC }`, `rig(patch?)`, `give(r, drugId, dose, unit = 'mg/kg', infusion = false)`, `vaporiser(r, agent, dialPct, fgfLpm = 6, n2oFrac?)`, `tMin(r)`, `runTo(r, untilMin, each?)`, `until(r, pred, maxMin)` (minutes from now, NaN if never). Tasks 4–6 build every time-course test on it.
 
-- [ ] **Step 1: Write the contract test** `packages/engine-core/test/l2/neuro/pk-bus-contract.test.ts` (exact):
+- [x] **Step 1: Write the contract test** `packages/engine-core/test/l2/neuro/pk-bus-contract.test.ts` (exact):
 
 ```ts
 // The R51 bus fields 7f reads, produced by 7g's REAL pipeline. A failure here is a 7g gap: STOP and report it to the
@@ -630,9 +630,9 @@ describe('7g → 7f bus contract (R51 §2–3, addenda 9–10)', { timeout: 120_
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/pk-bus-contract.test.ts` → "Failed to resolve import ../../helpers/neuro.ts".
+- [x] **Step 2: Run; expect FAIL** — `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/pk-bus-contract.test.ts` → "Failed to resolve import ../../helpers/neuro.ts".
 
-- [ ] **Step 3: Create the rig** `packages/engine-core/test/helpers/neuro.ts` (exact):
+- [x] **Step 3: Create the rig** `packages/engine-core/test/helpers/neuro.ts` (exact):
 
 ```ts
 // Stage 7f test rig over Stage 7g's REAL PK (R51 §1: 7f has none). Drives 7g's pipeline without the engine on its
@@ -694,9 +694,9 @@ export function until(r: Rig, pred: (bus: DrugBus, tMin: number) => boolean, max
 }
 ```
 
-- [ ] **Step 4: Run; expect PASS** (6 tests; prototype: all 6 on the merged base). Any failure other than a typo in this task's two files is a 7g gap against R51: STOP and report the failing assertion and the measured value to the orchestrator (a request to 7g); do not edit 7g's files and do not continue to Task 4.
+- [x] **Step 4: Run; expect PASS** (6 tests; prototype: all 6 on the merged base). Any failure other than a typo in this task's two files is a 7g gap against R51: STOP and report the failing assertion and the measured value to the orchestrator (a request to 7g); do not edit 7g's files and do not continue to Task 4.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/helpers/neuro.ts packages/engine-core/test/l2/neuro/pk-bus-contract.test.ts
