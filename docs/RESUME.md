@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:35 (7c executing; 7x CI rerun; FU-2 review + 7e fixer running; 8a stalled on a permission prompt).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 04:18 (7c executing; 7x CI rerun; FU-2 review + 7e fixer running; 8a stalled on a permission prompt).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
