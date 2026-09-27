@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 14:50 (7d CI on the final tree; 7e executing; FU-3 plan being written — item 16 hypoxic arrest added).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 15:10 (7d CI on the final tree; 7e finishing Task 20 after 7d; FU-3 plan being written).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a, 7f | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18; 7f #21) | — |
 | 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`), head e0c602f (main+7f, seam fixes, E-7d-4 rig) | CI running | merge when green; then 7e re-merges main |
-| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), 65/133 boxes | executing (fresh executor after the seventh cap; merges 7d when it lands) | resume from first unticked task |
+| 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), Tasks 1–19 done and pushed, 7f hand-overs done | Task 20 resumed after addendum 18 (pin temperature in 7g's Eleveld rig E-7e-2; warm 7f's 6 h rig E-7e-3); waits for 7d to merge, then gate + PR | orchestrator gate + merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | plan being written (`docs/plans/fu-3-followups.md`; prototyping on main + 7d + 7f) | 15 items (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
