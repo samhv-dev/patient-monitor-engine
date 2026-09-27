@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { judge, ORACLE, runOracle, type Compare } from '../../src/oracle/oracle.ts';
+import type { DocCommand } from '@pme/controller/scenario';
+import { judge, ORACLE, runOracle, type Compare, type OracleScenario } from '../../src/oracle/oracle.ts';
 import { loadPulse, pulseDir } from '../../src/oracle/pulse-node.ts';
 
 const C = (expect: Compare['expect'], tolPct = 10): Compare => ({ id: 'x', ours: 'state:hr', pulse: 'HeartRate(1/min)', atS: 10, metric: 'abs', tolPct, expect });
@@ -16,7 +17,10 @@ describe('oracle comparator (annex §C)', () => {
     expect(judge(C(d1), 7.0, 7.1).grade).toBe('yellow');
   });
   it('our side not measurable → rows are n/m and never gate', { timeout: 60_000 }, async () => {
-    const r = await runOracle(ORACLE.find((s) => s.id === 'O4')!, null);
+    // O4 needed 7g when this was written; 7g is on main now, so the rejected command is a stand-in no stage implements.
+    const o4 = ORACLE.find((s) => s.id === 'O4')!;
+    const later: OracleScenario = { ...o4, durationS: 120, ours: { actions: [{ t: 10, command: { type: 'applyEvent', event: { kind: 'notAModelYet' } } as unknown as DocCommand }] } };
+    const r = await runOracle(later, null);
     expect(r.oursMeasurable).toBe(false);
     expect(r.rows.every((x) => x.expected === 'n/m' && x.grade === 'green')).toBe(true);
   });
