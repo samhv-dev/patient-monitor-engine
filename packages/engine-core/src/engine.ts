@@ -67,6 +67,7 @@ import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, 
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
 import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
+import { betaVenousUnits } from './l2/circ/venous.ts'; // FU-2
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
@@ -493,6 +494,7 @@ class Engine implements MonitorEngine {
     if (circ7g) {
       circ7g.ext.drug = ps.pk.fx;
       circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
+      circ7g.ext.betaAgonistU = betaVenousUnits(ps.pk.bus.agents); // FU-2 (NR-7g-2)
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
     }
     const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g

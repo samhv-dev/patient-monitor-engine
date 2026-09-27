@@ -1200,7 +1200,7 @@ git push
   recruitable reservoir: `recruit = max(−V0_RECRUIT_MAX_ML_KG · weightKg, b.dV0 − dv0Beta)` (F4). Epinephrine's and
   isoproterenol's β2 venodilation is out of scope (not listed in `BETA_V0_AGENTS`).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/circ/venous.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/circ/venous.test.ts`:
 
 ```ts
 // FU-2 item 2 (NR-7g-2): β-adrenergic mobilisation of unstressed venous volume (l2/circ/venous.ts).
@@ -1291,13 +1291,13 @@ describe('β venous mobilisation (NR-7g-2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/venous.test.ts`
 Expected: FAIL — `Failed to load url ../../../src/l2/circ/venous.ts`. (Once `venous.ts` exists, the F4 `it` fails
 alone until the clamp is in: the unclamped sum logs `+ dobutamine … 865 mL (cap 840)`.)
 
-- [ ] **Step 3: Implement** — create `packages/engine-core/src/l2/circ/venous.ts`:
+- [x] **Step 3: Implement** — create `packages/engine-core/src/l2/circ/venous.ts`:
 
 ```ts
 // FU-2 (NR-7g-2, G7g): β-adrenergic mobilisation of unstressed venous volume. β-stimulation shifts blood out of the
@@ -1431,7 +1431,7 @@ and replace with (the test body and its band stay exactly as they are):
 
 If your measured number differs from +11.8 (main moved), put YOUR number in the title and the comment.
 
-- [ ] **Step 4: Run it to verify it passes; the vasopressor bands hold**
+- [x] **Step 4: Run it to verify it passes; the vasopressor bands hold**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/venous.test.ts test/l2/circ/r48-r49-seams.test.ts
@@ -1446,7 +1446,7 @@ dobutamine `it.fails` still fails its band (logs `dobutamine 5: CO 11.8 %`) and 
 relation passes (`β-blocked 3.4 %`); circ-sanity 1 passes. If the free dobutamine rise ever reaches +20–40 %, the
 `it.fails` turns red: change it to `it` and record that in the gate note — do not touch the band.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/circ/venous.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/engine.ts packages/engine-core/test/l2/circ/venous.test.ts packages/engine-core/test/engine/pk-acceptance-pd.test.ts docs/plans/fu-2-engine-followups.md

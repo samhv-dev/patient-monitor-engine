@@ -3,7 +3,7 @@
 // (baroreflex, drugs, volume events, conditions) and per-beat truths. Stepped at 2 ms by the Stage 2 hemo pipeline
 // inside the 20 ms tick; everything is plain JSON-safe data (the engine clones it every tick for the look-ahead).
 import { activationPeriodS, pruneActivations, type Activation } from './activation.ts';
-import { createBaro, K_PP, stepBaro, type BaroState } from './baroreflex.ts';
+import { createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type BaroState } from './baroreflex.ts'; // FU-2 F4: V0_RECRUIT_MAX_ML_KG
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
@@ -12,6 +12,7 @@ import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
 import type { RampState } from '../../l1/ramp.ts'; // FU-2
+import { betaDV0Ml } from './venous.ts'; // FU-2
 
 // hot-loop locals (imported bindings are getters under the vitest transform) [perf]
 const L_H = H_S;
@@ -99,6 +100,7 @@ export interface CircModelState {
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
     drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers
+    betaAgonistU?: number; // FU-2 (NR-7g-2): β-agonist venous potency units from the drug bus (venous.ts)
     avNodeBlock?: number; // FU-2 (AF rate control): the drug bus's AV-nodal block 0–1 (rate-rule.ts)
   };
 }
@@ -200,7 +202,10 @@ function control(m: CircModelState, env: CircEnv): void {
   const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
   const x = m.ext; // R48/R49 multipliers (default 1; endoDV0Frac default 0)
   p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * (x.endoSvrF ?? 1);
-  p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + b.dV0 + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
+  const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
+  const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
+  const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, b.dV0 - dv0Beta); // FU-2 F4: reflex + β share one reservoir
+  p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + recruit + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split

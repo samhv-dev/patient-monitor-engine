@@ -47,7 +47,11 @@ describe('7g acceptance — vasopressor dose–response (tables §6.2)', () => {
   // Task 13's permitted re-fit (EC50 ×0.5–×2; ke0 is irrelevant at 20 min) reaches only +6.4 % at EC50 ×0.5 (Ees ×1.47,
   // SVR ×0.85, HR +19.5): 7a's circulation is venous-return limited, so contractility alone barely moves CO. Needs a
   // ruling (a β-agonist venous mechanism, e.g. unstressed-volume mobilisation, is not in the tables).
-  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +4.2)', async () => {
+  // FU-2 item 2 (NR-7g-2): the β venous term (l2/circ/venous.ts, Emax = the 12 mL/kg recruitable reservoir) lifts it to
+  // +11.8 % (β-blocked +3.4 %); circ level at rest +17 % (+7.6 % without the term). The rest of the gap is the reflexes
+  // returning about half of the mobilised volume (cardiopulmonary + arterial venous limbs) and the ventilated
+  // engine's lower venous-return reserve; reaching +20 % needs ≈ 730 mL at 5 µg/kg/min, beyond the ≈ 1 L reservoir.
+  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +11.8 with the FU-2 β venous term)', async () => {
     const free = await dobuRise({});
     console.log(`dobutamine 5: CO ${free.toFixed(1)} %`);
     expect(free).toBeGreaterThanOrEqual(20);
