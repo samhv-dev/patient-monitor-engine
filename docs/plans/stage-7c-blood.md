@@ -4187,7 +4187,7 @@ git push origin stage-7c-blood
 - Consumes: `loadPulse(dir, namesPath)` (`pulse-runner.ts`), the spike's `research/pulse-spike/web/{pulse.js,pulse.wasm,pulse.data}` and `research/pulse-spike/bench/drm_names.json` (outside the repo; never committed).
 - Produces: `BLOOD_ORACLE` (O2b 20 % haemorrhage, O3b 1 L saline, O10b insulin — glucose stubbed until 7e, O13b bicarbonate), `PULSE_BLOOD` (Pulse data-request names and unit conversions; K via 39.098 g/mol, D14), `compareBloodRow`, `installPulseNodeShim(dir)` (the spike's `pulse.js` is emscripten's WEB build; the shim poses as a Web Worker and serves the wasm/data from disk through `fetch`, so the oracle runs in Node without a rebuild — verified in the prototype: StandardMale loads, pH 7.417, BE +1.55, lactate 14.66 mg/dL = 1.65 mmol/L (D18), K 15.63 mg/dL = 4.0 true mmol/L (D14), Hb 14.96, BV 5491 mL).
 
-- [ ] **Step 1: The runner (only if `packages/validation/src/oracle/pulse-runner.ts` does not exist — on the 7a + 7b + 7g main it DOES exist (7a's Task 26, same exports `loadPulse(dir, namesPath?)`), so skip this step and use it)**
+- [x] **Step 1: The runner (only if `packages/validation/src/oracle/pulse-runner.ts` does not exist — on the 7a + 7b + 7g main it DOES exist (7a's Task 26, same exports `loadPulse(dir, namesPath?)`), so skip this step and use it)**
 
 `packages/validation/src/oracle/pulse-runner.ts`:
 
@@ -4244,7 +4244,7 @@ export async function loadPulse(dir: string, namesPath?: string): Promise<PulseH
 }
 ```
 
-- [ ] **Step 2: The shim, the scenarios and the test**
+- [x] **Step 2: The shim, the scenarios and the test**
 
 `packages/validation/src/oracle/pulse-node-shim.ts`:
 
@@ -4441,7 +4441,7 @@ describe.skipIf(!DIR)('Pulse oracle, blood (annex §D; PULSE_ORACLE_DIR=…/rese
 });
 ```
 
-- [ ] **Step 3: Run without the wasm (CI) and with it (local)**
+- [x] **Step 3: Run without the wasm (CI) and with it (local)**
 
 `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts` → 1 passed (the rules test), 4 skipped.
 `PULSE_ORACLE_DIR=/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/research/pulse-spike/web npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/oracle-blood.test.ts` → every row prints `agree`, `expect-differ-ok` or `excluded`. It is SLOW (prototype: 60 s simulated ≈ 21 s wall; the four scenarios ≈ 45–60 min): run it once, in the background, and paste the printed rows into the gate note. A `fail` on an `agree` row is a FINDING for the gate note, not a reason to retune our model (audit §4 "validation circularity"). If Pulse rejects an action (`act` returns false: e.g. no `Bicarbonate` substance bolus in its whitelist), mark that scenario's rows `exclude` with the reason — do not invent a substitute action.
@@ -4463,7 +4463,9 @@ describe.skipIf(!DIR)('Pulse oracle, blood (annex §D; PULSE_ORACLE_DIR=…/rese
 The O3b Na **fail** was a real 7c defect the oracle caught: elimination removed pure water, so every infusion concentrated Na. `core.ts` now removes the eliminated volume at the ECF composition (isotonic; 7d replaces it with the urine composition): Na +0.30 after 1 L saline (awake and GA), Cl +2.6, BE −1.6 (awake) / −1.1 (GA). The code in Tasks 5 and 9 above already contains the fix; the numbers of the engine sanity tasks were re-measured with it (Tasks 18–21 state them). Pulse's `Hemorrhage` field is `FlowRate` (7a's draft `Flow` is rejected — see Requests).
 
 
-- [ ] **Step 4: Commit**
+> **Executor note (2026-09-27):** the executor brief puts `packages/validation/**` out of 7c's partition (Stage 8a owns it and has its own Node loader `pulse-node.ts`), so the three files above were run from an UNCOMMITTED copy and are kept outside the repo at `scratch/7c-oracle/` for 8a to adopt. Result on this branch (Pulse 4.3.2 wasm in Node, ≈ 38 min wall): 5 tests pass; every row prints `agree`, `expect-differ-ok` or `excluded` (numbers in `docs/gates/stage-7c.md`). Step 4's commit is therefore empty for this task.
+
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/validation/src/oracle/blood-scenarios.ts packages/validation/src/oracle/pulse-node-shim.ts packages/validation/test/oracle-blood.test.ts
