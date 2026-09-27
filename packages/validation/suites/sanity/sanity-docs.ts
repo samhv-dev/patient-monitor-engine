@@ -17,13 +17,14 @@ function doc(o: {
   mode?: 'manual' | 'modeled'; patient?: Record<string, unknown>; baseline?: Record<string, number>;
   actions: Array<{ t: number; command: DocCommand }>; segments: Segment[];
 }): ValidationDoc {
-  // Stage 7 profile fields (conditions, pregnancyWeeks) are not in pme-scenario/1 yet: they travel in `notes` until
-  // the R22 profile schema lands, and the document says which stages it needs.
+  // Stage 7 profile fields (conditions, pregnancyWeeks) are not in pme-scenario/1 yet: they travel in `notes` and in
+  // `profile` until the R22 profile schema lands; `profile` makes the document not measurable (the runner would
+  // otherwise grade the default patient: first full run, t15 RV infarct read CVP 4.4 / MAP 92, the healthy adult).
   const { conditions, pregnancyWeeks, ...patient } = (o.patient ?? {}) as Record<string, unknown>;
   const profile = [conditions ? `conditions ${JSON.stringify(conditions)}` : '', pregnancyWeeks ? `pregnancy ${String(pregnancyWeeks)} weeks` : ''].filter(Boolean).join('; ');
   return {
     schema: 'pme-validation/1', id: o.id, title: o.title, seed: 1, durationS: o.durationS,
-    ...(o.requires ? { requires: o.requires } : {}),
+    ...(o.requires ? { requires: o.requires } : {}), ...(profile ? { profile } : {}),
     scenario: {
       schema: 'pme-scenario/1', id: `val-${o.id}`, title: o.title, ...(o.mode ? { mode: o.mode } : {}), ...(profile ? { notes: `R22 profile: ${profile}` } : {}),
       patient: { ...ADULT, sensors: SENSORS, baseline: { hr: 75, sbp: 120, dbp: 70, ...o.baseline }, ...patient },

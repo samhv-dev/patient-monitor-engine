@@ -1,6 +1,7 @@
 import { validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import { SANITY_DOCS } from '../../suites/sanity/sanity-docs.ts';
+import { runValidationDoc } from '../../src/segments/run.ts';
 
 describe('sanity documents (brief §4.9 + tables §7)', () => {
   it('cover checks 1–4, 6–9 and 10–25 with unique ids', () => {
@@ -19,5 +20,13 @@ describe('sanity documents (brief §4.9 + tables §7)', () => {
       expect(s.toS).toBeLessThanOrEqual(d.durationS);
       for (const t of s.targets) expect(t.source.length).toBeGreaterThan(5);
     }
+  });
+  it('a document whose patient profile pme-scenario/1 cannot carry is NOT MEASURABLE, never graded on the default patient', async () => {
+    const d = SANITY_DOCS.find((x) => x.id === 't16-septic-shock-warm');
+    expect(d?.profile).toBe('conditions ["sepsisWarm"]');
+    const r = await runValidationDoc(d as NonNullable<typeof d>);
+    expect(r.measurable).toBe(false);
+    expect(r.results).toEqual([]);
+    expect(r.unsupported[0]?.type).toBe('patient profile');
   });
 });

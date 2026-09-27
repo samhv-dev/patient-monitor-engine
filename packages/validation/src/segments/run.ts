@@ -24,6 +24,10 @@ export interface DocRun {
 
 export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   const t0 = performance.now();
+  if (doc.profile) {
+    const unsupported = [{ t: 0, type: 'patient profile', reason: `${doc.profile}: not expressible in pme-scenario/1 until the R22 profile schema lands` }];
+    return { doc, measurable: false, unsupported, results: [], store: new SeriesStore(), wallMs: performance.now() - t0, notes: [] };
+  }
   const raw = typeof doc.scenario === 'string' ? BUILTIN_SCENARIOS[doc.scenario] : doc.scenario;
   if (raw === undefined) throw new Error(`${doc.id}: no built-in scenario ${String(doc.scenario)}`);
   const v = validateScenario(raw);

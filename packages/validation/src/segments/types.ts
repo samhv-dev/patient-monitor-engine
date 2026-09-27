@@ -50,6 +50,9 @@ export interface ValidationDoc {
   segments: Segment[];
   /** Informational: the stages whose modules the document needs (e.g. ["7a", "7g"]). */
   requires?: string[];
+  /** A patient profile (Stage 7 conditions, pregnancy) that pme-scenario/1 cannot carry yet (R22). Present → the
+   *  document is NOT MEASURABLE: run on the default patient it would grade the wrong patient. */
+  profile?: string;
 }
 
 export type Grade = 'green' | 'yellow' | 'red';
