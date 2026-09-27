@@ -2009,7 +2009,7 @@ git push origin stage-7d-organs
 - Consumes: 7a's `ICRP89_FLOW_FRACTIONS_M` (`l2/circ/params.ts`, NOTICES N-P10).
 - Produces: `LiverInputs` {coLpm, co0Lpm, bvRel, alphaE, volatileMac, tempC, gfrRel, do2MlKgMin, hbfRel?}, `LiverState` {hbfRel, liverFn, tempF, glucoseF, kLacPerH, lactate, inr, failure, weightKg}, `createLiver(weightKg, inp, failure?)`, `stepLiver(s, inp, dt, prodMmolH?)`, `stepLactatePool(l, prod, k, vL, dtS)`, `hbfFactor(inp)`, `lacProdBasal()`, constants `K_LAC0_PER_H`, `HBF_FRAC` (= 0.255). (The well-stirred clearance of the first draft is gone: 7g computes drug clearance from 7c's `hbfRel` and the `blood.core.liver` function 7d writes; N-P11 is therefore not used.)
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/liver/liver.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/liver/liver.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2055,12 +2055,12 @@ describe('liver and lactate (tables §5.3)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/liver/liver.test.ts`
 Expected: FAIL — Cannot find module `src/l2/liver/liver.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/liver/liver.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/liver/liver.ts`** (exactly as prototyped)
 
 ```ts
 // Stage 7d liver and metabolism (tables §5.3; annex B2 "Hepatic (what exists)"). Pulse has NO hepatic model, so this
@@ -2154,12 +2154,12 @@ export function stepLiver(s: LiverState, inp: LiverInputs, dt: number, prodMmolH
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/liver/liver.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (4 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/liver/liver.ts packages/engine-core/test/l2/liver/liver.test.ts docs/plans/stage-7d-organs.md
