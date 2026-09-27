@@ -62,11 +62,10 @@ describe('NMB time course on 7g\'s PK', { timeout: 120_000 }, () => {
     expect(rec).toBeGreaterThan(40);
     expect(rec).toBeLessThan(50);
   });
-  // FU-3 item 1 (R51 addendum 17): 7g's succinylcholine ke0 0.15/min puts T1 ≤ 5 % at 0.17 min (clinical 45–90 s) and
-  // T1 10 % at 5.4 min; the re-fit is 7g's (ke0/CL), not 7f's EC50. Pre-declared `it.fails` with the numbers measured on
-  // 7g's PK at EC50 200/γ 4: onset 0.17, T1 10 % 5.37, T1 90 % 12.68 min. When FU-3 lands this starts passing, `it.fails`
-  // then fails, and the FU-3 executor turns it back into `it`.
-  it.fails('[FU-3 item 1] succinylcholine 1 mg/kg: block by ~1 min, T1 10 % at ~7.1 min, 90 % at ~10.9 min (label), no fade', () => {
+  // FU-3 item 1 (R51 addendum 17) is done: 7g re-fitted succinylcholine onto Roy 2002's CL 0.037 L/kg/min and
+  // V1 = CL/k = 0.038 L/kg with ke0 0.1475/0.236 and the effect-site EC50 1160 ng/mL, γ 6. Before: T1 ≤ 5 % at
+  // 0.17 min, T1 10 % 5.37, T1 90 % 12.68. After: 0.73 / 6.98 / 11.98 min — inside the label bands, so this is `it`.
+  it('[FU-3 item 1] succinylcholine 1 mg/kg: block by ~1 min, T1 10 % at ~7.1 min, 90 % at ~10.9 min (label), no fade', () => {
     const r = rig();
     give(r, 'succinylcholine', 1);
     const on = untilTof(r, (p) => p.tof.t1 <= 0.05, 3);

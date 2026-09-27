@@ -22,17 +22,26 @@ export const VECURONIUM: PerKgPk = { v1: 0.05, v2: 0.3, v3: 0, cl1: 0.0045, cl2:
 /** Cisatracurium: Hofmann elimination, CL ≈ 5 mL/kg/min organ-independent, Vss ≈ 0.15 L/kg [P label]; ke0 0.08 [ENG, fitted 0.15 mg/kg → 2.82 / 42.4 min]. */
 export const CISATRACURIUM: PerKgPk = { v1: 0.045, v2: 0.11, v3: 0, cl1: 0.0052, cl2: 0.009, cl3: 0, ke0: [0.08, 0.128] };
 /**
- * Succinylcholine: plasma-cholinesterase hydrolysis (plasma t½ ≈ 8 s) [TXT]; the block's duration is the slow diffusion
- * away from the junction (no cholinesterase there) → ke0 0.15 [ENG, fitted 1 mg/kg → onset 0.43 / T1 25 % at 7.2 min].
- * CL 0.2 L/kg/min with V1 0.04 L/kg is k10 5/min, plasma t½ ≈ 8 s [TXT]. Phenotypes: PCHE_CL_MULT below.
+ * Succinylcholine (FU-3 item 1 re-fit; R51 addendum 17). Roy JJ, Donati F, Boismenu D, Varin F, Anesthesiology 2002;
+ * 97:1082 "Concentration-effect relation of succinylcholine chloride during propofol anesthesia" (arterial sampling,
+ * n = 7): total body clearance 37 ± 7 mL·min⁻¹·kg⁻¹ and elimination rate constant 0.97 ± 0.30 /min [P], so
+ * CL 0.037 L/kg/min and V1 = CL/k = 0.037/0.97 = 0.038 L/kg [P, derived]. The pre-FU-3 values (CL 0.2 L/kg/min with
+ * V1 0.04 → k10 5/min, "plasma t½ ≈ 8 s") were 5× the measured elimination rate and put T1 ≤ 5 % at 0.17 min.
+ * ke0 0.1475 (thumb) / 0.236 (diaphragm, ×1.6 as for rocuronium 0.16 → 0.26, Plaud 1995) [ENG, fitted 1 mg/kg →
+ * T1 ≤ 5 % at 0.73 min, T1 10 % 6.98, T1 90 % 11.98 min against the label (§5d: block ~1 min, T1 10 % 7.1, 90 % 10.9)]:
+ * Roy's own ke0 0.058 ± 0.026 /min cannot reproduce the label recovery (effect-site t½ 12 min → T1 90 % ≈ 18–21 min),
+ * so ke0 stays a label fit and only CL/V1 are the paper's. Phenotypes: PCHE_CL_MULT below.
  */
-export const SUCCINYLCHOLINE: PerKgPk = { v1: 0.04, v2: 0, v3: 0, cl1: 0.2, cl2: 0, cl3: 0, ke0: [0.15, 0.24] };
+export const SUCCINYLCHOLINE: PerKgPk = { v1: 0.038, v2: 0, v3: 0, cl1: 0.037, cl2: 0, cl3: 0, ke0: [0.1475, 0.236] };
 /**
  * Plasma-cholinesterase clearance multipliers — the ONE value 7g and 7f use (R51 addendum 10). Tables §5d give
  * the phenotypes' DURATIONS (Sux-label; Lee 2009: heterozygous ×2, homozygous 4–8 h) but no enzyme-activity value,
- * so both multipliers are [ENG, fitted to those durations]: het 0.5 → 12 min (×1.7), hom 0.003 → 5.2 h.
+ * so both multipliers are [ENG, fitted to those durations]: het 0.5 → 14.2 min (×1.71), hom 0.011 → 4.7 h. FU-3 item 1
+ * re-fitted `hom` with the new CL: the multiplier scales 7g's clearance, so when CL fell from 0.2 to Roy's 0.037
+ * L/kg/min the old 0.003 became k10 0.0029/min (> 10 h block, outside the 4–8 h band); 0.011 restores k10 0.0107/min,
+ * i.e. the same residual hydrolysis rate the 0.003 × 0.2 pair encoded (0.015/min).
  */
-export const PCHE_CL_MULT = { normal: 1, het: 0.5, hom: 0.003 } as const;
+export const PCHE_CL_MULT = { normal: 1, het: 0.5, hom: 0.011 } as const;
 /**
  * Sugammadex: Vss 11–14 L, CL 88 mL/min, t½ 2 h (label) [P]; one compartment per kg. Two effect sites [thumb,
  * diaphragm] through which it reaches the junction and binds there (R51 §5): ke0 0.095 / 0.152 [ENG, fitted, D7:
@@ -46,7 +55,7 @@ export const NMB_PD = {
   rocuronium: { thumb: { ec50: 823, gamma: 4.8 }, dia: { ec50: 1424, gamma: 4.8 } },
   vecuronium: { thumb: { ec50: 150, gamma: 4.5 }, dia: { ec50: 255, gamma: 4.5 } },
   cisatracurium: { thumb: { ec50: 230, gamma: 6.9 }, dia: { ec50: 390, gamma: 6.9 } },
-  succinylcholine: { thumb: { ec50: 200, gamma: 4 }, dia: { ec50: 340, gamma: 4 } }, // effect-site fit, not a plasma EC50 [ENG]
+  succinylcholine: { thumb: { ec50: 1160, gamma: 6 }, dia: { ec50: 2007, gamma: 6 } }, // FU-3 item 1: Roy 2002 measured 734 ± 211 ng/mL at the effect site [P]; 1160 = the nearest value that holds the §5d label course on the paper's CL/V1 [ENG fit], dia ×1.73
 } as const;
 
 /** Molar masses (g/mol) of the salts as dosed: rocuronium bromide, vecuronium bromide, sugammadex sodium. */
