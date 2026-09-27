@@ -1102,7 +1102,7 @@ git push
 - Consumes: the rig (Task 3), `readNmb`/`untilTof` (Task 4); 7g's sugammadex binding in plasma (`bindSugammadex`) and at the effect sites (`bindSugammadexSites`, sugammadex effect-site ke0 0.095/0.152; R51 §5, deviation D-7f-2) and its neostigmine gamma row (`bus.nmb.achGain`).
 - Produces: `NEO_SMAX` 0.7, `NEO_G50` 0.3 (fitted, decision 5), `neoEc50Mult(achGain)`.
 
-- [ ] **Step 1: Write the tests.** `packages/engine-core/test/l2/neuro/neostigmine.test.ts`:
+- [x] **Step 1: Write the tests.** `packages/engine-core/test/l2/neuro/neostigmine.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1217,9 +1217,9 @@ describe('reversal (tables §5d Sgx/Neo rows)', { timeout: 180_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run** `… exec vitest run test/l2/neuro/neostigmine.test.ts test/l2/neuro/reversal.test.ts` → neostigmine 1 passed; reversal 6: **5 pass + 1 pre-declared `it.fails`** (`[R-7f-7] underdosed sugammadex`). Prototype on the merged base: sugammadex 2 mg/kg at TOF 2 → TOFR 0.9 in 2.12 min; 4 mg/kg at PTC → 2.23; 16 mg/kg → T1 10 % in 1.80; neostigmine 0.05 at TOF 2 → 18.3 min (NEO_G50 0.3); 0.07 at PTC → TOFR 0.35 at 10 min; the 0.5 mg/kg underdose peaks at 0.83 and never falls (R-7f-7). These are TARGETS on 7g's binding (R45): if a sugammadex band fails on your base, do NOT touch 7f's EC50s; record the measured time in the gate note under D-7f-2, send the orchestrator a request to 7g (its sugammadex effect-site ke0 0.095/0.152 or binding), and mark that test `it.fails` with the request id in its title. If a neostigmine band fails, re-fit `NEO_G50` within 0.3–1.2 only (`NEO_SMAX` fixed: it IS the ceiling); if none meets both neostigmine bands, keep 0.3, mark the TOF-2 test `it.fails` with the number and add a request for 7g's neostigmine tail (FU-3 item 2). The module, for reference:
+- [x] **Step 2: Run** `… exec vitest run test/l2/neuro/neostigmine.test.ts test/l2/neuro/reversal.test.ts` → neostigmine 1 passed; reversal 6: **5 pass + 1 pre-declared `it.fails`** (`[R-7f-7] underdosed sugammadex`). Prototype on the merged base: sugammadex 2 mg/kg at TOF 2 → TOFR 0.9 in 2.12 min; 4 mg/kg at PTC → 2.23; 16 mg/kg → T1 10 % in 1.80; neostigmine 0.05 at TOF 2 → 18.3 min (NEO_G50 0.3); 0.07 at PTC → TOFR 0.35 at 10 min; the 0.5 mg/kg underdose peaks at 0.83 and never falls (R-7f-7). These are TARGETS on 7g's binding (R45): if a sugammadex band fails on your base, do NOT touch 7f's EC50s; record the measured time in the gate note under D-7f-2, send the orchestrator a request to 7g (its sugammadex effect-site ke0 0.095/0.152 or binding), and mark that test `it.fails` with the request id in its title. If a neostigmine band fails, re-fit `NEO_G50` within 0.3–1.2 only (`NEO_SMAX` fixed: it IS the ceiling); if none meets both neostigmine bands, keep 0.3, mark the TOF-2 test `it.fails` with the number and add a request for 7g's neostigmine tail (FU-3 item 2). The module, for reference:
 
-- [ ] **Step 3: `packages/engine-core/src/l2/neuro/neostigmine.ts`** (exact):
+- [x] **Step 3: `packages/engine-core/src/l2/neuro/neostigmine.ts`** (exact):
 
 ```ts
 // Neostigmine's NMB effect (tables §5d Neo row: ceiling [P], peak ~10 min [TXT]; brief §4.9). The drug, its time
@@ -1240,7 +1240,7 @@ export function neoEc50Mult(achGain: number): number {
 }
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/neuro/reversal.test.ts packages/engine-core/test/l2/neuro/neostigmine.test.ts packages/engine-core/src/l2/neuro/neostigmine.ts
