@@ -1294,7 +1294,7 @@ CLI modules are ENTRY-ONLY (no "am I main" guard): under vite-node, `process.arg
 
 Measured while planning: `--select mghdb --limit 3` picked mgh001 (third-degree block), mgh002 (sinus), mgh003 (sinus tachycardia) in ≈ 1 min; VitalDB case files are 3–44 MB each and download at ≈ 0.2–1 MB/s from PhysioNet, so the full VitalDB selection (up to 64 candidates) takes 30–90 min — run it once, in the background, and commit the manifest.
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/datasets/manifest.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/datasets/manifest.test.ts`**
 
 ```ts
 // The committed manifests hold ids, times and hashes only (brief §8), and enough to match an engine run.
@@ -1320,11 +1320,11 @@ describe.each(['vitaldb', 'mghdb'] as const)('%s manifest', (source) => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (no module `manifest.ts`)**
+- [x] **Step 2: Run it. Expected: FAIL (no module `manifest.ts`)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/manifest.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/datasets/manifest.ts`**
+- [x] **Step 3: Write `packages/validation/src/datasets/manifest.ts`**
 
 ```ts
 // Committed manifests: which records and windows the harness uses, with the SHA-256 of each downloaded file.
@@ -1355,7 +1355,7 @@ export function writeManifest(m: Manifest): void {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/datasets/select.ts`**
+- [x] **Step 4: Write `packages/validation/src/datasets/select.ts`**
 
 ```ts
 // Manifest building (decision 2) and manifest-driven download. The command line is src/datasets/cli-fetch.ts.
@@ -1462,7 +1462,7 @@ export async function fetchAll(cache: string): Promise<number> {
 }
 ```
 
-- [ ] **Step 5: Write `packages/validation/src/datasets/cli-fetch.ts`**
+- [x] **Step 5: Write `packages/validation/src/datasets/cli-fetch.ts`**
 
 ```ts
 // `pnpm --filter @pme/validation datasets:fetch [--select vitaldb|mghdb] [--limit N]`
@@ -1492,7 +1492,7 @@ if (sel === 'vitaldb' || sel === 'mghdb') {
 }
 ```
 
-- [ ] **Step 6: Build the manifests (network; MGH/MF ≈ 5–10 min, VitalDB 30–90 min). Run VitalDB in the background and keep going with Task 7 meanwhile; come back for Step 7**
+- [x] **Step 6: Build the manifests (network; MGH/MF ≈ 5–10 min, VitalDB 30–90 min). Run VitalDB in the background and keep going with Task 7 meanwhile; come back for Step 7**
 
 ```bash
 mkdir -p packages/validation/datasets/manifests
@@ -1502,14 +1502,14 @@ nohup npx -y pnpm@9.15.9 --filter @pme/validation datasets:fetch --select vitald
 
 Expected (MGH/MF): `mghdb: 16 records, 16 windows, N rejected`. Expected (VitalDB, at the end of the log): `vitaldb: 40 records, 60–80 windows, N rejected`. If fewer than 40 records pass, keep what passed and write the number in the gate note (do not loosen `findWindows`).
 
-- [ ] **Step 7: When both manifests exist, run the test and check the manifests are small. Expected: PASS (6 tests); each file < 200 KB**
+- [x] **Step 7: When both manifests exist, run the test and check the manifests are small. Expected: PASS (6 tests); each file < 200 KB**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/datasets/manifest.test.ts
 ls -la packages/validation/datasets/manifests/
 ```
 
-- [ ] **Step 8: Commit (manifests hold ids, times, hashes and targets only — brief §8)**
+- [x] **Step 8: Commit (manifests hold ids, times, hashes and targets only — brief §8)**
 
 ```bash
 git add packages/validation/src/datasets/manifest.ts packages/validation/src/datasets/select.ts packages/validation/src/datasets/cli-fetch.ts packages/validation/test/datasets/manifest.test.ts packages/validation/datasets/manifests/
@@ -5641,7 +5641,7 @@ git push
 
 Measured while planning (M3 Mac, system Chrome): Node tick cost for an 8-channel monitor over 120 s: p50 **0.35 ms**, p95 0.41, p99 **0.58**, max 1.15 ms (budget: worker ≤ 6 ms per frame); heap +5.6 MB over 120 s with forced GC (trend store and event log filling — the soak decides). Browser, worker path: 60 fps p50/p95/p99 16.7/16.8/16.8 ms, 0 frames ≥ 20 ms over 60 s; `fps=30` keeps the 16.7 ms rAF (the renderer skips alternate frames internally), 0 long frames. A 2-min soak on the main-thread path: heap 5.34 → 6.14 → 5.49 MB, sim time 120.02 s (×1 held), raised alarms `ART_D_LOW`, `EtCO2_LOW` only (the default limits against this patient), no apnoea. The 60-min run is the gate number (scheduled workflow or by hand).
 
-- [ ] **Step 1: Write the failing test `packages/validation/test/perf/tick-bench.test.ts`**
+- [x] **Step 1: Write the failing test `packages/validation/test/perf/tick-bench.test.ts`**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -5657,11 +5657,11 @@ describe('worker tick cost (Node, same engine code)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it. Expected: FAIL (module missing)**
+- [x] **Step 2: Run it. Expected: FAIL (module missing)**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/perf/tick-bench.test.ts`
 
-- [ ] **Step 3: Write `packages/validation/src/perf/tick-bench.ts`**
+- [x] **Step 3: Write `packages/validation/src/perf/tick-bench.ts`**
 
 ```ts
 // Worker tick-time percentiles, measured in Node on the same engine code the worker runs (decision 14: the worker
@@ -5696,7 +5696,7 @@ export async function tickBench(simSeconds = 60, seed = 3): Promise<TickStats> {
 }
 ```
 
-- [ ] **Step 4: Write `packages/validation/src/perf/cli-ticks.ts` and set the `perf:ticks` script to `"NODE_OPTIONS=--expose-gc vite-node src/perf/cli-ticks.ts"`**
+- [x] **Step 4: Write `packages/validation/src/perf/cli-ticks.ts` and set the `perf:ticks` script to `"NODE_OPTIONS=--expose-gc vite-node src/perf/cli-ticks.ts"`**
 
 ```ts
 // Entry-only: pnpm --filter @pme/validation perf:ticks [--seconds 600] → docs/validation/perf/ticks.json
@@ -5713,20 +5713,20 @@ writeFileSync(join(dir, 'ticks.json'), `${JSON.stringify({ node: process.version
 console.log(JSON.stringify(s));
 ```
 
-- [ ] **Step 5: Run the test and the 600 s bench. Expected: PASS; `ticks.json` with p99 < 6 ms**
+- [x] **Step 5: Run the test and the 600 s bench. Expected: PASS; `ticks.json` with p99 < 6 ms**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/perf/tick-bench.test.ts
 npx -y pnpm@9.15.9 --filter @pme/validation perf:ticks --seconds 600
 ```
 
-- [ ] **Step 6: Add the page to `apps/demo/vite.config.ts` after the `'validation-bedside'` line:**
+- [x] **Step 6: Add the page to `apps/demo/vite.config.ts` after the `'validation-bedside'` line:**
 
 ```ts
         'validation-perf': page('validation-perf'), // Stage 8a
 ```
 
-- [ ] **Step 7: Write `apps/demo/validation-perf.html`**
+- [x] **Step 7: Write `apps/demo/validation-perf.html`**
 
 ```html
 <!doctype html>
@@ -5749,7 +5749,7 @@ npx -y pnpm@9.15.9 --filter @pme/validation perf:ticks --seconds 600
 </html>
 ```
 
-- [ ] **Step 8: Write `apps/demo/src/validation/perf.ts`**
+- [x] **Step 8: Write `apps/demo/src/validation/perf.ts`**
 
 ```ts
 // Performance gate page (BUILD-PLAN Stage 8 "Performance"): an 8-lane monitor (ECG II, V5, aVR, ABP, pleth, CVP, CO2,
@@ -5803,7 +5803,7 @@ setInterval(() => {
 (window as unknown as { __pmePerf: unknown }).__pmePerf = { frames, alarms, get simT() { return simT; }, fps, renderPath: pm.renderPath };
 ```
 
-- [ ] **Step 9: Write `playwright.validation.config.ts` (repo root)**
+- [x] **Step 9: Write `playwright.validation.config.ts` (repo root)**
 
 ```ts
 import { defineConfig, devices } from '@playwright/test';
@@ -5819,7 +5819,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 10: Write `apps/demo/e2e/validation-perf.soak.ts`**
+- [x] **Step 10: Write `apps/demo/e2e/validation-perf.soak.ts`**
 
 ```ts
 // Stage 8a performance gate (BUILD-PLAN Stage 8): (1) frame-time histograms at 60 and 30 fps on the worker path;
@@ -5899,7 +5899,7 @@ test('soak: heap growth ≤ 5 MB, no spurious apnoea alarm', async ({ page }) =>
 });
 ```
 
-- [ ] **Step 11: Write `docs/validation/perf/README.md`**
+- [x] **Step 11: Write `docs/validation/perf/README.md`**
 
 ```markdown
 # Performance gate (BUILD-PLAN Stage 8)
@@ -5914,14 +5914,14 @@ test('soak: heap growth ≤ 5 MB, no spurious apnoea alarm', async ({ page }) =>
 | Projector PC, 30 fps | `/validation-perf.html?fps=30` on the projector machine; same stats line | no frame ≥ 50 ms |
 ```
 
-- [ ] **Step 12: Typecheck, then a short soak to prove the harness (5 min). Expected: 3 passed; `docs/validation/perf/soak-<date>.json` written**
+- [x] **Step 12: Typecheck, then a short soak to prove the harness (5 min). Expected: 3 passed; `docs/validation/perf/soak-<date>.json` written**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo typecheck
 PW_SYSTEM_CHROME=1 PME_SOAK_MIN=5 npx -y pnpm@9.15.9 exec playwright test -c playwright.validation.config.ts
 ```
 
-- [ ] **Step 13: Commit (the short-soak JSON is not the gate number; do not commit it — the 60-min run in Task 24 is)**
+- [x] **Step 13: Commit (the short-soak JSON is not the gate number; do not commit it — the 60-min run in Task 24 is)**
 
 ```bash
 rm -f docs/validation/perf/soak-*.json
