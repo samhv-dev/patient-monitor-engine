@@ -252,6 +252,11 @@ export function advanceOrgans(os: OrgansState, ctx: OrgansCtx, mEnd: number, wri
     }
     os.k++;
   }
+  // FU-2 item 6 (the MANUAL "tracker ringing" at HR 48): Stage 3's gas step deletes L1 `coupled` sbp/dbp every 100 ms
+  // (its retired Paw coupling) and its 62.5 Hz grid can run a gas step one engine pass before the brain's 10 Hz step
+  // at the same time, so the haemodynamics saw the surge vanish for part of every 100 ms and 7a's per-beat tracker
+  // chased 110/72 ↔ 162/106. Re-assert the (idempotent) effects on every pass, after Stage 3 and before the haemodynamics.
+  if (os.k > 1) applyOrganEffects(os.fx, os.brain, ctx, tEnd);
   collectBeats(os, ctx.rhythm, tEnd);
   for (; os.m <= mEnd; os.m++) {
     const v = icpAt(os, ctx.resp, os.m / ICP_RATE);

@@ -53,11 +53,12 @@ describe('tables §7 check 19 through the engine — MANUAL', { timeout: 300_000
     expect(n.hrEnd).toBeGreaterThanOrEqual(45); // prototype 48.2
     expect(n.hrEnd).toBeLessThanOrEqual(55);
   });
-  // R45: NOT widened. Prototype +23 (+18 to +46 beat to beat): 7a's MANUAL per-beat tracker rings at HR 48 with the
-  // surged SVR (its steady-state R inverse assumes R·C ≪ RR); TRACK_ALPHA_R 0.15 instead of 0.5 gave +29 (±4) in the
-  // prototype. FU-2 item for 7a's owner (l2/hemo is outside 7d's partition); flip to `it` when it lands.
-  it.fails('Cushing surge: MAP +30–50 reached over 30–60 s (7a MANUAL tracker ringing, FU-2)', () => {
-    expect(n.dMap).toBeGreaterThanOrEqual(30);
+  // FU-2 item 6, diagnosed on the 7d branch: the "tracker ringing" (prototype +23, 99 ↔ 127 mmHg over ≈ 18 s) was not
+  // 7a's tracker: Stage 3's gas step deletes L1 `coupled` sbp/dbp every 100 ms and could run one engine pass before
+  // the brain's step at the same time, so the surge flickered off and the tracker chased 110/72 ↔ 162/106. The organ
+  // pipeline now re-asserts its effects on every pass (pipeline.ts): +41.7, MAP 129–136 beat to beat.
+  it('Cushing surge: MAP +30–50 reached over 30–60 s', () => {
+    expect(n.dMap).toBeGreaterThanOrEqual(30); // +41.7 (was +24.3 before the per-pass re-assertion)
     expect(n.dMap).toBeLessThanOrEqual(50);
   });
 });
