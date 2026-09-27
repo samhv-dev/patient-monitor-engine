@@ -244,4 +244,38 @@ Calibration rows the profile documents produced (Task 11 table): t10 MAP at 2 mi
 
 ## 7. Test counts (final head)
 
-@@COUNTS@@
+Final head (main + 7e + FU-3), the CI split run locally on a loaded machine (other executors at load 10–40):
+`pnpm install --frozen-lockfile` ✓; `pnpm typecheck` ✓ (22 s); `CI=1 PME_TEST_SET=fast pnpm test` ✓ (432 s);
+`CI=1 PME_TEST_SET=slow pnpm --filter @pme/engine-core test` ✓ (1,453 s); `pnpm build` ✓; `pnpm check-notices`: OK
+(3 governed files); `PW_SYSTEM_CHROME=1 pnpm test:e2e` ✓ (9.5 min). No unhandled errors in the final runs.
+
+| Package | Files | Tests |
+|---|---|---|
+| engine-core, fast set | 244 | 1,081 passed, 1 skipped |
+| engine-core, slow set | 41 | 183 passed |
+| audio | 10 | 58 |
+| skins | 18 | 173 |
+| ventilator | 14 | 88 |
+| controller | 37 | 215 |
+| renderer | 24 | 77 |
+| validation | 30 (+1 skipped) | 107 passed, 11 skipped (Pulse-bound oracles skip without `PME_PULSE_DIR`) |
+| demo | 9 | 141 |
+| e2e (system Chrome) | — | 31 passed, 1 skipped (`stage7d` gate screenshots, `PME_SHOTS=1`) |
+
+Pre-7e FU-3 head (for comparison): engine fast 230 files / 1,004 passed, 1 skipped; slow 38 / 165; validation 107
+passed / 11 skipped (t16 as the Step 3b `it.fails`); renderer 23 / 76 (7e adds one file); e2e 30 passed, 1 skipped.
+Local-only Pulse run of `oracle-blood.test.ts`: 7 passed (417 s). The e2e run rewrites earlier stages' committed gate
+images; they were restored (`git checkout -- docs/gates`), only `docs/gates/fu-3/` is new.
+
+**`it.fails` in FU-3's files (every one with its measured numbers in the title):**
+- `test/l2/neuro/reversal.test.ts` R-7f-7 — sugammadex 0.5 after rocuronium 1.2: peak 0.833 at +90 min (ideal-binder
+  ceiling 0.834), no fall (kept, evidence added).
+- `test/engine/circ-manual-ischaemia.test.ts` — Task 4 defect 1: kIsch 0.200, LVEDP 46.1 (new).
+- `test/engine/organs-htn.test.ts` check 18 recovery — MAP 86.6 (premise 77–84), CBF 0.891 on main + 7e (was `it`
+  pre-7e at 81.1 / 0.837).
+- `test/engine/circ-hypoxic-arrest.test.ts` — final HR ≤ 130 after the FiO2 1 reversal: 132.1 on main + 7e (126 pre-7e).
+- `test/engine/circ-manual-cvp-peep.test.ts` ×2 — PEEP 5 → 15 MANUAL CVP step 4.82 mmHg (band 2.2–3.7); soak CVP max
+  10.17, `CVP_M_HIGH` at 27, 37, 47, 57 s.
+- (Task 11's t16 `it.fails` existed from `cc67c8f` to `a6bf4f0` only; FU-2's amiodarone `it.fails` is untouched and
+  reads 13.4 %.)
+Flipped to `it`: succinylcholine course (Task 1), R-7f-9 volatile reflex (Task 3).
