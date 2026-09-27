@@ -32,15 +32,21 @@ async function runDemo(item: BedsideItem): Promise<string> {
   // (20 ms) — otherwise t0 keeps the pre-restore time and every delay reads short (CI read 8.3 s for a 10 s alarm).
   simT = snap.tick * 0.02;
   await new Promise((r) => setTimeout(r, 300));
-  const t0 = simT;
+  // t0 is the sim time the FIRST demo command actually applies at (the engine's DispatchResult tick × 20 ms), not the
+  // page's last-seen event time: the worker runs ahead of the 1 Hz events, so the latter read the delay 0.5–1.5 s short
+  // on the CI runner (8.3–8.8 s for the 10 s asystole alarm).
+  let t0 = simT;
   const events: EngineEvent[] = [];
   const off = pm.on((e) => events.push(e));
   let stepT = t0;
+  let first = true;
   for (const c of item.demo) {
     const { afterS, ...cmd } = c as { afterS?: number } & Record<string, unknown>;
     if (afterS) await new Promise((r) => setTimeout(r, afterS * 1000));
-    if (afterS) stepT = simT;
-    await send(cmd);
+    const r = await send(cmd);
+    const tCmd = r.tick * 0.02;
+    if (first) { t0 = tCmd; stepT = tCmd; first = false; }
+    if (afterS) stepT = tCmd;
   }
   const deadline = performance.now() + 90_000;
   const found = (): string | null => {
