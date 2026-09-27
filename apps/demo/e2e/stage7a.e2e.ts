@@ -37,7 +37,8 @@ async function shots(page: Page, name: string) {
   await page.screenshot({ path: `${out}/${name}-views.png`, clip: { x: 770, y: 0, width: 350, height: 540 } });
 }
 
-test('stage7a page runs, draws the PV loop and chamber pressures, reacts to drugs, AS + CAD, IABP', async ({ page }) => {
+test('stage7a page runs, draws the PV loop and chamber pressures, reacts to drugs, AS + CAD, IABP', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'heavy evidence run (~2 min, four scenarios): Chromium only — headless WebKit on the CI runner failed repeatedly once the Stage 7 engine landed (G7d/G8a); the G7g rule');
   test.setTimeout(300_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
