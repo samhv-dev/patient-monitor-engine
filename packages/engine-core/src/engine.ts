@@ -543,7 +543,7 @@ class Engine implements MonitorEngine {
       tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
     }, ps.pk.bus);
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3 }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's)
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const resp = ps.resp; // Stage 3
@@ -555,6 +555,12 @@ class Engine implements MonitorEngine {
         pIt: (t) => respPleural(resp, t), // Stage 7a
         requestHr: (bpm) => {
           ps.hr = constantRamp(bpm); // Stage 7a: MODELED mode drives the rhythm engine's rate
+        },
+        requestRhythm: (id, opts) => {
+          // FU-3 item 16: the MODELED hypoxaemic arrest, applied exactly as 7g's rhythm requests
+          ps.hr = constantRamp(startRate(id, opts));
+          holdRate(ps, id, false);
+          applyRhythm(ps.rhythm, id, opts, end / ECG_RATE, true, rhythmCtx(ps));
         },
       },
       Math.floor(end / 4),

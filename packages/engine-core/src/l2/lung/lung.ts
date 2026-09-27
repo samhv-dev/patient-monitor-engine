@@ -205,6 +205,7 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   stepO2Lung(ls.o2, {
     va: x.va, vent, perf: perfU, vdAlv, qLow, qShunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2, blocked, vo2: x.vo2,
     paco2: x.paco2, pA: ls.co2.pA, tempC: x.tempC, frcSide, bloodL: x.bloodL, dl: lp.side.map((s) => s.dl), coRatio: x.coRatio,
+    arterialHold: x.coRatio <= 0, // FU-3 item 16 (E-FU3-9): no ejection → the arteries receive no new blood
     ...(x.odc ? { odc: x.odc } : {}), // Stage 7c (E-7c-1)
   }, dt);
 }

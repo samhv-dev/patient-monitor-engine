@@ -29,6 +29,10 @@ export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 export const CO_TAU_S = 4;
 export const PESP_MAX = 0.5;
 export const PESP_PREMATURE = 0.8;
+/** FU-3 item 16: sinus-rate loss per unit of the hypoxic myocardial deficit `cor.hyp` [ENG, fitted: HR < 40 held within 6 min of SaO2 < 60 %, before the arrest]. */
+export const G_SA = 1.5;
+/** FU-3 item 16: floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [ENG]. */
+export const K_HYP_MIN = 0.02;
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -219,14 +223,16 @@ function control(m: CircModelState, env: CircEnv): void {
   // FU-3 item 4: in MANUAL the tracker's LV Emax was set against the ischaemia present while it tracked (kIschRef):
   // new ischaemia below that level still acts on top of the held picture, but recovery above it does not raise the
   // delivered contractility past what the instructor's pressures were built on (MODELED: kIschRef 1, kIsch as is)
-  m.kLv = b.eesF * de.ees * m.ext.kLv * Math.min(m.ext.kIsch, man.kIschRef) * man.eesF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
+  const kHyp = env.modeled ? Math.max(K_HYP_MIN, 1 - m.cor.hyp) : 1; // FU-3 item 16: hypoxic myocardial depression (both ventricles)
+  m.kLv = b.eesF * de.ees * m.ext.kLv * Math.min(m.ext.kIsch, man.kIschRef) * man.eesF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp; // Stage 7g: β-blockade blunts the surge
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc; // Stage 7g: β-blockade blunts the surge
-  p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc; // atrial active elastance (7c kChem)
-  p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc;
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0)) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp; // Stage 7g: β-blockade blunts the surge
+  p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc * kHyp; // atrial active elastance (7c kChem; FU-3 item 16 kHyp)
+  p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
+  const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp) : 1; // FU-3 item 16: hypoxic SA-node depression
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);

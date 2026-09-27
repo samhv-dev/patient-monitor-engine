@@ -61,6 +61,7 @@ export interface RespCtx {
   blood?: BloodView;
   neuro?: NeuroResp; // Stage 7f: drug and NMB effects on spontaneous breathing
   hco3?: number; // Stage 7f: 7c's blood.core.ab.hco3 for Winter's compensation (MODELED spontaneous drive)
+  cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel — the brainstem-perfusion gate on the MODELED drive
 }
 
 /** Stage 7c: the blood's ODC context, a CO factor (blood-volume fallback without Stage 7a) and extra CO2 (mL/min). */
@@ -323,6 +324,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
       co2SlopeMult: lp.co2Slope, pMaxMult: lp.pMax, evlwi: 7 + (rs.evlwiExtra ?? 0), complianceMl: compliance(rs),
       resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
+      noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
     });
   }
   const va = alveolarVentilation(d, t, deadSpace(rs));
