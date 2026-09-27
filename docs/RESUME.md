@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 07:50 (7c gate, 8a, FU-2 executing; 7e plan ready; 7d/7f plans ready).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 08:25 (7c gate, 8a, FU-2 executing; 7f fixer running; 7d/7e plans ready).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -16,9 +16,10 @@
 | 7c blood/acid–base | `stage-7c-blood` (worktree `../scratch/wt-stage-7c`), 23/26 tasks pushed | gate task running (fresh executor after the sixth cap) | gate + PR, then orchestrator gate + merge |
 | 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
 | 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
-| 7f NMB/depth | plan fixed to R51 (`docs/plans/stage-7f-neuro-depth.md`, 19 tasks) | consumes 7g bus only (R51); observes `stimulus` (add. 12) | execute after 7g merges |
+| 7f NMB/depth | plan under fix (`docs/plans/stage-7f-neuro-depth.md`; re-review vs real 7g: INCOMPLETE — bus names, naloxone, stimulus, drive wiring; fixer running per addendum 17) | sux tests pre-declared `it.fails` (FU-3 item 1) | execute after FU-2 and 7c merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-2 engine follow-ups | `fu-2-engine-followups` (plan fixed, 12 tasks; worktree `../scratch/wt-fu2`) | executing (started 2026-09-27 07:15) | resume from first unticked task |
+| FU-3 engine follow-ups | list opened (rulings, addendum 17) | sux ke0/CL re-fit; neostigmine tail; AAI/DDD intrinsic beats; MANUAL AF HR over-read; amiodarone AV strength (Ali) | write plan after 7f lands |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8a validation harness | `stage-8a-validation` (worktree `../scratch/wt-stage-8a`), 6 boxes unticked | executing (fresh executor after the sixth cap; oracle O2 under diagnosis) | resume from first unticked task |
 | 8 validation/release | not started | waits for all | write plan |
