@@ -1829,7 +1829,7 @@ git push
 - Consumes: `normal`, `Sfc32State` (`src/rng/sfc32.ts`), `TofReading` (Task 4), `EngineEvent` (Task 1 types).
 - Produces: `TOF_DEFAULT_INTERVAL_S` 15, `PTC_REPORT_S` 23, `TETANUS_LOCKOUT_S` 60, `AMG_SD` 0.02, `NEVER_T`, `TofDevice`, `createTofDevice(rng)`, `validateTofAction(action, intervalS)`, `tofAction(d, action, t, intervalS?)`, `tofStep(d, t, reading, out)`.
 
-- [ ] **Step 1: Write the failing test** (exact):
+- [x] **Step 1: Write the failing test** (exact):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1881,9 +1881,9 @@ describe('TOF stimulator (decision 13)', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** (unresolved import).
+- [x] **Step 2: Run; expect FAIL** (unresolved import).
 
-- [ ] **Step 3: Implement** (exact):
+- [x] **Step 3: Implement** (exact):
 
 ```ts
 // TOF stimulator "device" (scope 7f-1; plan decision 13): a train of four every `intervalS` (default 15 s, 12–60 s)
@@ -1962,9 +1962,9 @@ export function tofStep(d: TofDevice, t: number, r: TofReading, out: EngineEvent
 }
 ```
 
-- [ ] **Step 4: Run; expect PASS** (3 tests).
+- [x] **Step 4: Run; expect PASS** (3 tests).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/neuro/tof-device.ts packages/engine-core/test/l2/neuro/tof-device.test.ts
