@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 22:29 (FU-3 executing; FU-4 plan writer; V.1 + 8b plans under R50 review; 4/4 slots).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 22:51 (FU-3 executing; FU-4 plan writer; V.1 + 8b plan fixers; 4/4 slots; order FU-3 → FU-4 → V.1 → 8b).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -17,9 +17,9 @@
 | 7e endocrine/thermal | MERGED 2026-09-27 20:55 (PR #22, head 1d6f5a7) | G7e + four rulings in the rulings file; child-rig defect handed to V.1; FU-4 list opened | done |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | `fu-3-followups` (worktree `../scratch/wt-fu-3`, branched from main after 7d; plan committed first) | executor launched 19:10: Tasks 0–15; E-FU3-10 prototyped first; t16 fallback while 7e absent; re-merges main when 7e lands before Task 15; PR "FU-3: engine follow-ups (items 1–16)" | orchestrator gate + merge |
-| 8b release + IIFE embed | plan WRITTEN 22:29 (14 tasks; IIFE 485 → 254 KB gzip; licences OK); R50 review running | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
+| 8b release + IIFE embed | plan WRITTEN (14 tasks; IIFE 485 → 254 KB gzip); R50 APPROVE WITH FIXES (16 findings: LICENSES texts in every dist; fresh validate report in Task 12; draft PR after Task 2; docs-honesty gaps); fixer running since 22:51 | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
 | FU-4 integration polish (R53) | AUDIT DONE (`../research/08-physiology-integration-audit.md`, 72 scenarios: nothing arrests; propofol ΔMAP −10 % healthy vs −16 % tamponade; gaps G1–G15); PLAN WRITER running since 21:57 (`docs/plans/fu-4-integration-polish.md`, builds on FU-3's branch) | then plan writer from the audit: state-dependent drug effects (propofol in tamponade → collapse), low-flow arrest pathway, tamponade–PEEP–anaesthetic coupling, scripted clinical scenario suite; forced-air set temperature; shots comments; test-slow split | audit → plan → R50 review → executor after FU-3 lands; v1.0 waits for it |
-| V.1 ventilator follow-up | plan WRITTEN 22:28 (11 tasks; tension plateau 35.6 in band; child rig fixed: PaCO2 37.8, SaO2 0.97); R50 review running | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | R50 review → fixer if needed → executor when a slot frees |
+| V.1 ventilator follow-up | plan WRITTEN (11 tasks; tension plateau 35.6 in band; child rig fixed); R50 APPROVE WITH FIXES; fixer running since 22:51 (rulings in the rulings file: Ppeak it.fails, CPR guard, PE text, FU-4 order, Task 9 CI check) | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | R50 review → fixer if needed → executor when a slot frees |
 | 8 validation/release | not started | waits for all | write plan |
 
 ## The resume rule (for a human or a scheduled session)
