@@ -29,11 +29,15 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     };
     const lo = await ppv(0.05, true);
     const hi = await ppv(0.2, true);
-    expect(lo).toBeGreaterThanOrEqual(5);
-    expect(lo).toBeLessThanOrEqual(10);
-    expect(hi).toBeGreaterThanOrEqual(15);
-    expect(hi).toBeLessThanOrEqual(30);
-    expect(await ppv(0.2, false)).toBeLessThan(hi);
+    const sp = await ppv(0.2, false);
+    // Stage 7a re-specification (Stage 2 test 10's twin): PPV is EMERGENT from the pleural input (R-B, T_IT 0.65) and
+    // volumeStatus lowers the stressed volume (decision 9); the g_hyp factor is gone. Ventilated normovolaemic 3–12 %,
+    // hypovolaemia raises it; spontaneous breathing (small negative swings) stays smaller.
+    console.log(`M6 PPV ventilated ${lo.toFixed(1)} → ${hi.toFixed(1)} %, spontaneous ${sp.toFixed(1)} %`);
+    expect(lo).toBeGreaterThanOrEqual(3);
+    expect(lo).toBeLessThanOrEqual(12);
+    expect(hi).toBeGreaterThan(lo + 2);
+    expect(sp).toBeLessThan(hi);
   });
 
   it('RR three ways (impedance, capnogram, pleth) agree within 1/min in sinus on a ventilator at 14/min', async () => {
@@ -104,6 +108,7 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     const co15 = cardiacOutput(hemoOf(e), e.now().simT);
     const map15 = mean(numSeries(ev, 'abpMean', 680, 720).map(([, v]) => v));
     const cvp15 = mean(numSeries(ev, 'cvpMean', 680, 720).map(([, v]) => v));
+    console.log(`PEEP 5→15: CO ${co5.toFixed(2)}→${co15.toFixed(2)}, MAP ${map5.toFixed(1)}→${map15.toFixed(1)}, CVP ${cvp5.toFixed(1)}→${cvp15.toFixed(1)}`);
     expect(co15).toBeLessThan(0.92 * co5);
     expect(map15).toBeLessThan(map5 - 5);
     expect(cvp15 - cvp5).toBeGreaterThanOrEqual(0.3 * 0.7356 * 8);
@@ -126,12 +131,18 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 1);
     const ls = ev.filter((x): x is Extract<EngineEvent, { type: 'lungState' }> => x.type === 'lungState');
-    expect(ls[0]).toMatchObject({ t: 0, complianceMlPerCmH2O: 50, resistanceCmH2OPerLps: 10, effort: 1, autoPeepTendency: 0 });
+    // Stage 7b (plan decision 15): compliance comes from the lung module (healthy Crs 55, Pulse healthy 54 ± 10 %),
+    // no longer Stage 3's fixed 50 [ENG]; re-specified from the exact 50 to the module's healthy band.
+    expect(ls[0]).toMatchObject({ t: 0, resistanceCmH2OPerLps: 10, effort: 1, autoPeepTendency: 0 });
+    expect(ls[0]!.complianceMlPerCmH2O).toBeGreaterThanOrEqual(48);
+    expect(ls[0]!.complianceMlPerCmH2O).toBeLessThanOrEqual(60);
     expect(ls[0]!.frcMl).toBeGreaterThan(2000);
     e.dispatch(ev3({ kind: 'airway', state: 'bronchospasm', severity: 1 }));
-    await run(e, 2);
+    await run(e, 30); // Stage 7b: auto-PEEP (tendency = PEEPi/10, tables §4.3) is measured on the units, so it needs a few breaths
     const b = ev.filter((x): x is Extract<EngineEvent, { type: 'lungState' }> => x.type === 'lungState').pop()!;
-    expect(b.resistanceCmH2OPerLps).toBe(40);
+    // Stage 7b (plan decision 11, Q20 proposal): bronchospasm severity 1 raises airway R ×(1 + 5·sev^1.5) → 60 through the
+    // lung module (Stage 3's lungState reported ×4 = 40); auto-PEEP tendency is now PEEPi/10 measured on the units.
+    expect(b.resistanceCmH2OPerLps).toBe(60);
     expect(b.autoPeepTendency).toBeGreaterThan(0.5);
   });
 

@@ -674,6 +674,8 @@ Each condition is a time-varying bundle of the multipliers already defined. A sc
 
 ## 6. Drug PK/PD extensions (sub-stage 7g)
 
+**Implementation (7g):** values as coded live in `packages/engine-core/src/l2/pk/data/*.ts` and `l2/pk/nmb.ts`; deviations D1–D5, D7 and the fentanyl/sufentanil vent-ke0 item are in `docs/plans/stage-7g-pkpd.md`.
+
 **Base.** Brief §4.9's v1 drug set and research 03 §8.6 (direction of effect and onset/peak/duration) stay as they are. This section adds (a) which drugs get a **3-compartment PK model with an effect site**, (b) **dose–response** for the vasoactive infusions, and (c) per-MAC effects for the volatile agents. A drug's effect always acts through the multipliers already defined: `hrSet`, `eesLv/Rv`, `WK_R0`, `V0`, `pvr`, `G_v`, `co2Slope`, the depth index and NMB. So one dose moves every channel consistently.
 
 **Rule for a ke0.** A ke0 belongs to the PK model it was fitted with. Never pair Schnider's ke0 with Marsh's PK, or the reverse [Marsh-ke0 note; Roc ke0 range 0.08–0.25 by PK model].

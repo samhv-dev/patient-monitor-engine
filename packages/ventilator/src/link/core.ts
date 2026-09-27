@@ -44,6 +44,8 @@ export function linkTick(core: LinkCore, dt: number): Command[] {
     core.started = true;
     if (!core.recruit) out.push(mk(core, { type: 'setTarget', variable: 'shunt', value: core.profile.shunt }));
     for (const s of core.profile.standIn) out.push(mk(core, { type: 'setTarget', variable: s.variable, value: s.value, ramp: { durationS: s.rampS } }));
+    const cond = core.profile.condition; // Stage 7a: the engine's own circulation condition
+    if (cond) out.push(mk(core, { type: 'applyEvent', event: { kind: 'condition', id: cond.id, severity: cond.severity } }));
   }
   if (vs.circuit !== core.circuitSent) {
     core.circuitSent = vs.circuit;

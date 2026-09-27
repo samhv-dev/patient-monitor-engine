@@ -48,7 +48,7 @@ const overrideTol = (v: StateVar): number => (v === 'fio2' || v === 'shunt' ? 0.
 export type L1Var = Exclude<StateVar, 'hr'>;
 
 export interface L1State {
-  mode: 'manual';
+  mode: 'manual' | 'modeled'; // Stage 7a (Task 15 switches it)
   vars: Record<L1Var, RampState>;
   pinned: StateVar[];
   /** Stage 3: coupled truths (coupling rules and the gas/temperature models); absent → the ramp is the truth. */

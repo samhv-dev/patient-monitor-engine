@@ -60,7 +60,8 @@ for (const via of ['bc', 'relay', 'rtc'] as const) {
       const r = await g(remote, (w) => w.__pme6a.fire());
       expect((r as { accepted: boolean }).accepted).toBe(true);
     }
-    await page.waitForTimeout(3000);
+    // FU-1: poll until all 20 commands are visible instead of asserting after a fixed 3 s wait
+    await expect.poll(() => g(page, (w) => (w.__pme6a.timings as Array<{ visibleAt: number | null }>).filter((t) => t.visibleAt !== null).length), { timeout: 20_000 }).toBe(20);
     const v = await g(viewer, (w) => ({ status: w.__pme6a.sync.status, resyncs: w.__pme6a.sync.resyncs, lag: w.__pme6a.sync.lagS, drift: w.__pme6a.sync.beatDriftMs }));
     expect(v.status).toBe('synced');
     expect(v.drift).toBe(0);

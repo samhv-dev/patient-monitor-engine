@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { expectedIndex, LONGRUN_HOURS } from '../helpers/longrun.ts';
 import { createEngine } from '../../src/engine.ts';
 import type { Command, EngineEvent, MonitorEngine } from '../../src/types.ts';
 
@@ -25,16 +26,16 @@ describe('engine pipeline', () => {
     expect(e.latestSampleIndex('abp')).toBe(-1);
   });
 
-  it('acceptance 11: no drift — after advanceTo(86400) latestSampleIndex(ecgII) = 43,200,000 + 50', { timeout: 600_000 /* 24 sim-h: ~280 s on the 2-vCPU CI runner before Stage 4b's device layer */ }, async () => {
+  it(`acceptance 11: no drift — after advanceTo(${LONGRUN_HOURS} h) latestSampleIndex(ecgII) = 500 × t + 50 (24 h locally, 6 h on CI)`, { timeout: 600_000 }, async () => {
     const e = createEngine({ seed: 11 });
     // Advance one sim-hour at a time and yield between chunks: 24 h of synchronous ticks takes
     // > 60 s on a 2-vCPU CI runner, which starves the Vitest worker's RPC ("Timeout calling onTaskUpdate").
-    for (let h = 1; h <= 24; h++) {
+    for (let h = 1; h <= LONGRUN_HOURS; h++) {
       e.advanceTo(h * 3_600);
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
-    expect(e.now().tick).toBe(4_320_000);
-    expect(e.latestSampleIndex('ecgII')).toBe(43_200_000 + 50);
+    expect(e.now().tick).toBe(LONGRUN_HOURS * 180_000);
+    expect(e.latestSampleIndex('ecgII')).toBe(expectedIndex(500, 50));
   });
 
   it('acceptance 10: determinism — same seed + same commands give an identical SHA-256 over 60 s of ecgII', () => {

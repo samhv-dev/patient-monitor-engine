@@ -22,6 +22,7 @@
   },
   "limits": { "adult": null, "paed": null, "neo": null },
   "layout": { "badge": "LAYOUT UNVERIFIED" },
+  "alarms": { "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
   "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (GE sidestream 120 mL/min; R39-5)" },
@@ -36,6 +37,7 @@
     "limits.adult": { "tag": "unverified", "source": "brief §6.8", "note": "GE table not retrieved; not invented" },
     "limits.paed": { "tag": "unverified", "source": "brief §6.8" },
     "limits.neo": { "tag": "unverified", "source": "brief §6.8" },
-    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for GE; shown as unverified on screen" }
+    "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.1 (GE: cyan = low, yellow = medium, red = high; [S3])", "note": "hex and text colours [ENG]; FU-1 item 7" },
+    "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for GE; shown as unverified on screen. FU-1 item 7: still missing — the factory lane order and the numeric tile grid (research/05 §2.7 has neither); lanes/tiles are the inherited IEC default" }
   }
 }

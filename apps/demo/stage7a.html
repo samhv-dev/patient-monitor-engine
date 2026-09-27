@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stage 7a: circulation</title>
+  <style>
+    body { margin: 0; background: #000; color: #ddd; font: 13px system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1fr) 360px; height: 100vh; }
+    #monitor { min-height: 0; height: 100vh; }
+    aside { padding: 8px 10px; overflow: auto; border-left: 1px solid #333; }
+    fieldset { border: 1px solid #333; margin: 0 0 6px; padding: 4px 8px; }
+    legend { color: #888; }
+    label { display: block; margin: 2px 0; }
+    button { margin: 2px; font: inherit; }
+    canvas.view { display: block; width: 330px; height: 220px; background: #080808; border: 1px solid #333; margin: 4px 0; }
+    #diag { white-space: pre; font: 11px ui-monospace, monospace; color: #9c9; }
+  </style>
+</head>
+<body>
+  <div id="monitor"></div>
+  <aside>
+    <canvas id="pv" class="view" width="330" height="220"></canvas>
+    <canvas id="ch" class="view" width="330" height="220"></canvas>
+    <div id="diag"></div>
+    <fieldset><legend>Profile (restarts the patient)</legend>
+      <label>Preset <select id="preset">
+        <option value="adult">Adult 40 y 70 kg</option><option value="elderly">75 y HTN</option><option value="ascad">75 y AS + CAD + HTN</option>
+        <option value="hfref">HFrEF</option><option value="child">Child 6 y</option><option value="bb">β-blocked</option></select></label>
+      <label>AS <select id="as"><option value="">none</option><option>mild</option><option>moderate</option><option>severe</option><option>critical</option></select></label>
+      <label>MR <select id="mr"><option value="">none</option><option>mild</option><option>moderate</option><option>severe</option></select></label>
+      <label>AR <select id="ar"><option value="">none</option><option>mild</option><option>moderate</option><option>severe</option></select></label>
+      <label>HFrEF severity <input id="hf" type="range" min="0" max="1" step="0.1" value="0" /></label>
+      <label>CAD <select id="cad"><option value="">none</option><option value="stable">1–2 vessel</option><option value="severe">3-vessel/LM</option></select></label>
+      <label>Mode <select id="mode"><option value="modeled">MODELED</option><option value="manual">MANUAL</option></select></label>
+      <button id="restart">Restart patient</button>
+    </fieldset>
+    <fieldset><legend>Drugs</legend>
+      <button data-drug="phenylephrine,100,mcg">Phenylephrine 100 µg</button>
+      <button data-drug="ephedrine,10,mg">Ephedrine 10 mg</button>
+      <button data-drug="nitroglycerin,100,mcg">NTG 100 µg</button>
+      <button data-drug="esmolol,0.5,mg/kg">Esmolol 0.5 mg/kg</button>
+      <button data-drug="propofol,1.5,mg/kg">Propofol 1.5 mg/kg</button>
+    </fieldset>
+    <fieldset><legend>Events</legend>
+      <button id="bleed">Bleed 1 L / 10 min</button><button id="fluid">Fluid 500 mL / 5 min</button>
+      <button id="cpr">Toggle CPR</button><button id="vf">VF</button><button id="sinus">Sinus</button>
+      <button data-cond="tamponade">Tamponade</button><button data-cond="pe">Massive PE</button><button data-cond="tensionPtx">Tension PTX</button><button data-cond="rvInfarct">RV infarct</button>
+      <button id="peep">PEEP 5 ⇄ 15</button>
+    </fieldset>
+    <fieldset><legend>Devices</legend>
+      <button id="iabp">IABP 1:1 ⇄ 1:2 ⇄ off</button><button id="lvad">LVAD on/off</button>
+    </fieldset>
+  </aside>
+  <script type="module" src="./src/stage7a.ts"></script>
+</body>
+</html>

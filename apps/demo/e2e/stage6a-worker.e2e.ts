@@ -32,8 +32,12 @@ for (const worker of ['auto', 'off'] as const) {
       const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
       await sleep(1000);
       const a = await h.snapshot();
-      await sleep(1500);
-      const b = await h.snapshot();
+      // FU-1: poll the tick (≥ 1 s of sim time) instead of trusting a fixed 1.5 s wall-clock wait under load
+      let b = await h.snapshot();
+      for (const end = Date.now() + 15_000; b.tick <= a.tick + 50 && Date.now() < end; ) {
+        await sleep(250);
+        b = await h.snapshot();
+      }
       await h.restore(a);
       const c = await h.snapshot();
       let refused = '';

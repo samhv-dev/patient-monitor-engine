@@ -22,7 +22,7 @@ function run(secs: number, sensors: Record<string, string>) {
   const ctx: HemoCtx = { l1, hr: constantRamp(75), rhythm: { id: 'sinus', records: sinusRecords(secs) }, rng: createRngState(1), phi: 0 };
   const data: Record<HemoChannel, number[]> = { abp: [], cvp: [], pap: [], pleth: [] };
   advanceHemo(hs, ctx, secs * 125, (ch, m, v) => {
-    data[ch][m] = v;
+    if (ch in data) data[ch as HemoChannel][m] = v; // Stage 7a: the writer also carries the teaching channels
   });
   return { hs, data, l1 };
 }

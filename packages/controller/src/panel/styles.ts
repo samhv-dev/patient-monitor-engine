@@ -10,6 +10,7 @@ export const PANEL_CSS = `
 .pme-tabs{display:flex;border-bottom:1px solid #333}
 .pme-tabs button{flex:1;background:none;border:0;color:#aaa;padding:10px;min-height:44px;font:inherit}
 .pme-tabs button[aria-selected="true"]{color:#fff;box-shadow:inset 0 -2px #4af}
+.pme-panes{display:flex;flex-direction:column;flex:1;min-height:0}
 .pme-body{overflow:auto;flex:1;padding:8px 10px}
 .pme-section{margin:0 0 14px}
 .pme-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#8ab;margin:6px 0}

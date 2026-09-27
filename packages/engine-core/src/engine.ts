@@ -13,8 +13,9 @@ import { applyRhythm, createRhythmState, planUntil, type RhythmCtx, type RhythmS
 import { DEFAULT_FLUTTER_ATRIAL_BPM, RHYTHMS } from './l2/ecg/rhythms.ts';
 import { projectLead } from './l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterBand, filterSample, type Biquad } from './l3/ecg-filter.ts';
-import { createHrState, hrMeasure, hrOnQrs, type HrState } from './l3/hr.ts';
-import { createQrsState, qrsStep, type QrsState } from './l3/qrs.ts';
+import { createHrState, hrAveragingOf, hrMeasure, hrOnQrs, type HrAveraging, type HrState } from './l3/hr.ts';
+import { resolveSkin } from '@pme/skins'; // FU-1 (E-4a-2): data-only dependency (R30)
+import { createQrsState, PACE_LEAD_N, qrsPaceGate, qrsPacePulse, qrsStep, type QrsState } from './l3/qrs.ts';
 import { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 import { createRngState, type Sfc32State, type StreamName } from './rng/sfc32.ts';
 import {
@@ -42,6 +43,8 @@ import {
   applyHemoCommand,
   createHemoState,
   HEMO_CHANNELS,
+  HEMO_TEACHING, // Stage 7a
+  type HemoTeachingChannel, // Stage 7a
   hemoChannelActive,
   validateHemoCommand,
   type HemoChannel,
@@ -54,11 +57,15 @@ import {
   applyRespCommand,
   createRespState,
   respBreathU,
+  respPleural, // Stage 7a
   RESP_RATE,
   validateRespCommand,
   type RespChannel,
   type RespState,
 } from './l2/resp/pipeline.ts'; // Stage 3
+import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
+import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
+import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
@@ -97,6 +104,8 @@ interface PipelineState {
   l1: L1State; // Stage 2: PatientState targets and flags (brief §4.9)
   hemo: HemoState; // Stage 2: pressures, pleth, NIBP (brief §4.2–§4.5)
   resp: RespState; // Stage 3: breathing, gas exchange, SpO2/CO2/RR/temperature (brief §4.3–§4.7)
+  pk: PkState; // Stage 7g
+  pkHooks: RhythmHookState; // Stage 7g
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -120,6 +129,19 @@ const ECG_CHANNELS = new Set<ChannelId>([...LEAD_IDS, 'vcgX', 'vcgY', 'vcgZ']);
 /** Stage 5.1 (R-S3-3): the ECG's RSA, wander and QRS modulation follow Stage 3's breath driver. */
 function breathOf(ps: PipelineState): BreathClock {
   return cycleBreathClock((t) => lastCycleBefore(ps.resp.driver, t), fixedBreathClock(ps.hrv));
+}
+
+/** FU-1 (R-51-3): transcutaneous pacing pulses to announce to the QRS detector while generating samples
+ * [from, to]: key = the sample at which to announce (PACE_LEAD_N early), value = the pulse's sample. */
+function tcpPulseAnnouncements(records: readonly EngineEvent[], from: number, to: number): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const r of records) {
+    if (r.type !== 'marker' || r.kind !== 'paceSpike' || r.data?.tcp !== true) continue;
+    const n = Math.round(r.t * ECG_RATE);
+    const at = Math.max(from, n - PACE_LEAD_N);
+    if (n >= from && at <= to) out.set(at, n);
+  }
+  return out;
 }
 
 function rhythmCtx(ps: PipelineState): RhythmCtx {
@@ -161,7 +183,7 @@ class Engine implements MonitorEngine {
   private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
 
   constructor(opts: EngineOptions) {
-    if (opts.mode === 'modeled') throw new Error('MODELED mode arrives in Stage 7');
+    // Stage 7a: MODELED is accepted (the circulation's reflexes run)
     this.seed = (opts.seed ?? 1) >>> 0;
     const look = opts.lookaheadS ?? 0.1;
     this.lookTicks = Math.round((look * 1000) / TICK_MS);
@@ -181,6 +203,7 @@ class Engine implements MonitorEngine {
     const hrv = drawHrvPhase(rng.hrv);
     const ctx: RhythmCtx = { hrAt: (t) => rampValue(hr, t), mods, rng, hrv };
     const l1 = createL1State(opts.patient); // Stage 2
+    if (opts.mode === 'modeled') l1.mode = 'modeled'; // Stage 7a
     this.st = {
       n: 0,
       rng,
@@ -199,6 +222,8 @@ class Engine implements MonitorEngine {
       l1, // Stage 2
       hemo: createHemoState(opts.patient, l1, hr0), // Stage 2
       resp: createRespState(opts.patient, l1, this.seed), // Stage 3
+      pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
+      pkHooks: createHookState(), // Stage 7g
     };
     this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
@@ -292,6 +317,8 @@ class Engine implements MonitorEngine {
     // Exact replay is promised only on the same build and the same filter design (review L10).
     if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
     const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
+    data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
+    data.st.pkHooks ??= createHookState(); // Stage 7g
     if (data.mainsHz !== undefined && data.mainsHz !== this.mainsHz) {
       throw new Error(`snapshot was taken with ${data.mainsHz} Hz mains filtering, this engine uses ${this.mainsHz} Hz`);
     }
@@ -335,6 +362,12 @@ class Engine implements MonitorEngine {
       this.dirtyFromN = Math.min(this.dirtyFromN, firstN);
     }
     this.advance(this.st, this.tick * SAMPLES_PER_TICK);
+    const stp = this.st.hemo.stPatch; // Stage 7a: coronary ST hook (R23) through the existing modifiers, committed state only
+    if (stp) {
+      this.st.mods = mergeModifiers(this.st.mods, stp);
+      this.st.hemo.stPatch = null;
+      this.dirtyFromN = Math.min(this.dirtyFromN, this.st.n);
+    }
     let maxPostedN = -1;
     for (const p of this.posted.values()) maxPostedN = Math.max(maxPostedN, p.n);
     for (const d of this.st.detections) if (this.dirtyFromN < Infinity || d.n <= maxPostedN) this.committedDet.push(d);
@@ -380,6 +413,28 @@ class Engine implements MonitorEngine {
     this.dirtyFromN = Number.POSITIVE_INFINITY;
   }
 
+  /** Stage 7g: the PK/PD context read from the other modules (duck-typed; neutral when a module is absent). */
+  private pkCtx(ps: PipelineState): PkCtx {
+    const circ = (ps.hemo as { circ?: CircModelState }).circ;
+    const resp = ps.resp as unknown as { vaLpm?: number; pat?: { frcGaMl?: number }; temp?: { tc?: number } };
+    const blood = (ps as unknown as { blood?: { out?: { hbfRel?: number }; core?: { liver?: number; ab?: { ph?: number } } } }).blood;
+    const organs = (ps as unknown as { organs?: { kidney?: { gfrRel?: number } } }).organs;
+    const cond = (ps as unknown as { cond?: { vasoResp?: number } }).cond;
+    return {
+      ...NEUTRAL_PK_CTX,
+      coLpm: circ ? circCardiacOutput(circ) : NEUTRAL_PK_CTX.coLpm,
+      vaLpm: resp.vaLpm ?? NEUTRAL_PK_CTX.vaLpm,
+      frcL: (resp.pat?.frcGaMl ?? 2100) / 1000,
+      tempC: resp.temp?.tc ?? 37,
+      ph: blood?.core?.ab?.ph ?? 7.4,
+      hepFlow: blood?.out?.hbfRel ?? 1,
+      hepFn: blood?.core?.liver ?? 1,
+      renal: organs?.kidney?.gfrRel ?? 1,
+      betaBlockC: circ?.prof.betaBlockC ?? 0,
+      vasoResp: cond?.vasoResp ?? 1,
+    };
+  }
+
   /** Generate samples up to and including absolute ECG index `end` for pipeline state `ps`. */
   private advance(ps: PipelineState, end: number): void {
     if (end < ps.n) return;
@@ -392,11 +447,14 @@ class Engine implements MonitorEngine {
     const by = this.bufs.get('vcgY') as RingBuffer;
     const bz = this.bufs.get('vcgZ') as RingBuffer;
     const laneBufs = ps.lanes.map((l) => this.bufs.get(l) as RingBuffer);
+    const pacePulses = tcpPulseAnnouncements(ps.rhythm.records, ps.n, end); // FU-1 (R-51-3): QRS detector pace blanking
     generateEcg(
       ecgGenInputs({ ...ps, breath: breathOf(ps) }, this.mainsHz), // Stage 5.1 (R-S3-3)
       ps.n,
       end,
       (n, x, y, z) => {
+        const pulse = pacePulses.get(n);
+        if (pulse !== undefined) qrsPacePulse(ps.qrs, pulse); // FU-1 (R-51-3)
         bx.write(n, x);
         by.write(n, y);
         bz.write(n, z);
@@ -405,22 +463,41 @@ class Engine implements MonitorEngine {
           const v = filterSample(sections, ps.laneFilter[i] as number[], ecgFrontEnd(ps.mods, this.mainsHz, lead, n, projectLead(lead, x, y, z)));
           (laneBufs[i] as RingBuffer).write(n, v);
         }
-        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z))));
+        const det = qrsPaceGate(ps.qrs, ecgFrontEnd(ps.mods, this.mainsHz, DETECTION_LEAD, n, projectLead(DETECTION_LEAD, x, y, z))); // FU-1 (R-51-3)
+        const r = qrsStep(ps.qrs, filterSample(sections, ps.detFilter, det));
         if (r >= 0) {
           hrOnQrs(ps.hrm, r / ECG_RATE);
           ps.detections.push({ r, n });
         }
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t) } });
+          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, this.hrAveraging()) } }); // FU-1: skin averaging
         }
       },
     );
+    advancePk(ps.pk, this.pkCtx(ps), end / ECG_RATE); // Stage 7g: drugs first, every consumer reads this instant's effects
+    const circ7g = (ps.hemo as { circ?: CircModelState }).circ; // Stage 7g
+    if (circ7g) {
+      circ7g.ext.drug = ps.pk.fx;
+      circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
+    }
+    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g
+    if (req7g) {
+      // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
+      ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
+      applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
+    }
     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,
-      { l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t) }, // Stage 3: u
+      {
+        l1: ps.l1, hr: ps.hr, rhythm: ps.rhythm, rng: ps.rng, phi: ps.hrv.phi, u: (t) => respBreathU(resp, t), // Stage 3: u
+        pIt: (t) => respPleural(resp, t), // Stage 7a
+        requestHr: (bpm) => {
+          ps.hr = constantRamp(bpm); // Stage 7a: MODELED mode drives the rhythm engine's rate
+        },
+      },
       Math.floor(end / 4),
       (ch, m, v) => this.hemoWrite(ch, m, v),
     ); // Stage 2
@@ -443,6 +520,7 @@ class Engine implements MonitorEngine {
     this.st.out = keep(this.st.out);
     this.st.hemo.out = keep(this.st.hemo.out); // Stage 2
     this.st.resp.out = keep(this.st.resp.out); // Stage 3
+    this.st.pk.out = keep(this.st.pk.out); // Stage 7g
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
     return due;
   }
@@ -500,6 +578,8 @@ class Engine implements MonitorEngine {
     if (cmd.atTick !== undefined && !(Number.isInteger(cmd.atTick) && cmd.atTick >= 0)) return 'atTick must be a whole tick ≥ 0';
     const dev = validateDeviceCommand(this.dev, cmd); // Stage 4b
     if (dev !== null) return dev;
+    const pkV = validatePkCommand(cmd, this.st.pk); // Stage 7g: every library drug event is 7g's (R51 §3) — an error is final, ok = accepted
+    if (pkV !== null) return pkV;
     const resp = validateRespCommand(cmd); // Stage 3 (before Stage 2: attachSensor co2/temp)
     if (resp !== null) return resp;
     const hemo = validateHemoCommand(cmd, this.st.hemo); // Stage 2
@@ -550,6 +630,7 @@ class Engine implements MonitorEngine {
       for (const e of devOut) this.emit(e);
       return;
     }
+    if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3
       return;
@@ -596,6 +677,14 @@ class Engine implements MonitorEngine {
     this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
   }
 
+  /** FU-1 (E-4a-2): the active skin's optional `hr.averaging`, cached per skin id (a skin switch picks it up). */
+  private hrAvgCache: { skin: string; avg: HrAveraging | undefined } | null = null;
+  private hrAveraging(): HrAveraging | undefined {
+    const skin = this.dev.alarms.profile.skin;
+    if (this.hrAvgCache?.skin !== skin) this.hrAvgCache = { skin, avg: hrAveragingOf(resolveSkin(skin).skin) };
+    return this.hrAvgCache.avg;
+  }
+
   /** Make the lane buffers match the current lanes (new leads start empty). */
   private syncLaneBuffers(): void {
     const want = new Set<ChannelId>(this.st.lanes);
@@ -604,7 +693,7 @@ class Engine implements MonitorEngine {
   }
 
   /** Stage 2: write one 125 Hz sample; the buffer is created on the first write (brief §3.5 ring buffers). */
-  private hemoWrite(ch: HemoChannel, m: number, v: number): void {
+  private hemoWrite(ch: HemoChannel | HemoTeachingChannel, m: number, v: number): void {
     let b = this.bufs.get(ch);
     if (!b) {
       b = new RingBuffer(HEMO_RATE, BUFFER_SECONDS);
@@ -631,6 +720,7 @@ class Engine implements MonitorEngine {
   /** Stage 2: a channel whose sensor is 'none' has no trace, so its buffer is dropped (brief §6.2). */
   private syncHemoBuffers(): void {
     for (const ch of HEMO_CHANNELS) if (!hemoChannelActive(this.st.hemo, ch)) this.bufs.delete(ch);
+    if (!this.st.hemo.pvOn) for (const ch of HEMO_TEACHING) this.bufs.delete(ch); // Stage 7a
   }
 }
 

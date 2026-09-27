@@ -25,7 +25,9 @@ describe('respiratory pipeline', () => {
   it('validates and applies Stage 3 commands; leaves Stage 2 commands alone', () => {
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'airway', state: 'kinked' } }))).toMatch(/airway state/);
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', fio2: 0.1 } }))).toMatch(/fio2/);
-    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'condition', id: 'pe', severity: 1 } }))).toMatch(/Stage 7/);
+    // Stage 7a: pe/tamponade/tensionPtx/rvInfarct are circulation conditions (null = not a Stage 3 command); others still wait
+    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'condition', id: 'pe', severity: 1 } }))).toBeNull();
+    expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'condition', id: 'sepsis', severity: 1 } }))).toMatch(/Stage 7/);
     expect(validateRespCommand(c({ type: 'attachSensor', sensor: 'temp', state: 'on', site: 'rectal' }))).toBeUndefined();
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'line', line: 'abp', action: 'flush' } }))).toBeNull();
     const l1 = createL1State();

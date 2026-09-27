@@ -24,7 +24,7 @@ export * from './panel/controls.ts';
 export { StageBuffer } from './panel/staging.ts';
 export { RevealGesture, attachReveal, DEFAULT_REVEAL, type RevealOptions } from './panel/reveal.ts';
 export { renderControls, type ControlsHost, type ControlsView } from './panel/render-controls.ts';
-export { mountInstructorPanel, type PanelHandle, type PanelOptions } from './panel/panel.ts';
+export { mountInstructorPanel, type PanelHandle, type PanelOptions, type PanelTab, type PanelTabContext } from './panel/panel.ts';
 export { mountRemote, type RemoteHandle, type RemoteOptions, type Via } from './remote/remote-app.ts';
 // Scenario view + text only (no ajv): the runner, driver and validation are in '@pme/controller/scenario'.
 export { ScenarioView, type NextTransition } from './scenario/view.ts';

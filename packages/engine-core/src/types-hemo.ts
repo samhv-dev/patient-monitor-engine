@@ -3,7 +3,7 @@
 import type { Ramp, SimSeconds, StateVar } from './types.ts';
 
 /** Sensors named in brief §7.2 `attachSensor`. Stage 2 implements abp, cvp, pap, spo2 (pleth) and nibp. */
-export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
+export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp' | 'pv'; // Stage 7a: 'pv' = teaching channels
 /** Invasive-line sensor states (brief §6.2, CAE semantics). */
 export type LineSensorState = 'none' | 'atmosphere' | 'connected' | 'zeroing' | 'damped';
 export type PressureChannel = 'abp' | 'cvp' | 'pap';

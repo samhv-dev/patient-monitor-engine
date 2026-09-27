@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stage 7g: drug PK/PD</title>
+  <style>
+    body { margin: 0; background: #000; color: #ddd; font: 13px system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: 100vh; }
+    #monitor { min-height: 0; height: 100vh; }
+    aside { padding: 8px 10px; overflow: auto; border-left: 1px solid #333; }
+    fieldset { border: 1px solid #333; margin: 0 0 6px; padding: 4px 8px; }
+    legend { color: #888; }
+    button { margin: 2px; font: inherit; }
+    #depth { white-space: pre; font: 11px ui-monospace, monospace; color: #9c9; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <div id="monitor"></div>
+  <aside>
+    <div id="drugs"></div>
+    <div id="depth"></div>
+    <fieldset><legend>Induction</legend>
+      <button id="tci">TCI propofol Ce 4 + remifentanil Ce 3 (roc 0.6 at +180 s)</button>
+    </fieldset>
+    <fieldset><legend>Vasoactives</legend>
+      <button id="phe">Phenylephrine 100 µg</button><button id="ne">NE 0.1 µg/kg/min</button><button id="neStop">Stop NE</button>
+    </fieldset>
+    <fieldset><legend>Volatile</legend>
+      <button id="sevo2">Sevo 2 % / 2 L</button><button id="sevoLow">Sevo 2 % / 0.5 L</button><button id="vapOff">Vaporiser off</button>
+    </fieldset>
+    <fieldset><legend>Rhythm and toxicity</legend>
+      <button id="svt">SVT → adenosine 6 mg at +20 s</button>
+      <button id="last">Bupivacaine 225 mg IV</button><button id="lipid">Lipid 1.5 mL/kg + 0.25 mL/kg/min</button>
+    </fieldset>
+    <fieldset><legend>Reversal</legend>
+      <button id="sgx">Sugammadex 2 mg/kg</button><button id="nal">Naloxone 0.1 mg</button>
+    </fieldset>
+    <fieldset><legend>Patient</legend><button id="restart">Restart patient</button></fieldset>
+  </aside>
+  <script type="module" src="./src/stage7g.ts"></script>
+</body>
+</html>

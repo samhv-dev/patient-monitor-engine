@@ -60,11 +60,19 @@ export interface Vocabulary {
 }
 
 // Rhythm ids come from engine-core's RHYTHM_IDS (36 after Stage 5); an id without a label here is shown as
-// its id. Labels are display-only, so a new rhythm never breaks the controller build.
+// its id. Labels are display-only, so a new rhythm never breaks the controller build. FU-1: all 36 labelled.
 const RHYTHM_LABEL: Partial<Record<RhythmId, string>> = {
-  sinus: 'Sinus', sinusBrady: 'Sinus bradycardia', sinusTachy: 'Sinus tachycardia', afib: 'Atrial fibrillation',
-  aflutter: 'Atrial flutter', svtAvnrt: 'SVT (AVNRT)', avb1: '1st-degree AV block', avb2Mobitz1: '2nd-degree Mobitz I',
-  avb3Narrow: '3rd-degree, narrow escape', avb3Wide: '3rd-degree, wide escape', vtMono: 'Monomorphic VT', asystole: 'Asystole',
+  sinus: 'Sinus', sinusBrady: 'Sinus bradycardia', sinusTachy: 'Sinus tachycardia', sinusArrhythmia: 'Sinus arrhythmia',
+  sinusPause: 'Sinus pause / arrest', atrialTach: 'Atrial tachycardia', mat: 'Multifocal atrial tachycardia',
+  afib: 'Atrial fibrillation', aflutter: 'Atrial flutter', svtAvnrt: 'SVT (AVNRT)', svtAvrt: 'SVT (AVRT, orthodromic)',
+  wpwSinus: 'WPW (pre-excited sinus)', preexcitedAf: 'Pre-excited AF (WPW)', junctionalEscape: 'Junctional escape',
+  junctionalAccel: 'Accelerated junctional', junctionalTachy: 'Junctional tachycardia', avb1: '1st-degree AV block',
+  avb2Mobitz1: '2nd-degree Mobitz I', avb2Mobitz2: '2nd-degree Mobitz II', avb2to1: '2:1 AV block',
+  avbHighGrade: 'High-grade AV block', avb3Narrow: '3rd-degree, narrow escape', avb3Wide: '3rd-degree, wide escape',
+  idioventricular: 'Idioventricular rhythm', aivr: 'Accelerated idioventricular (AIVR)', vtMono: 'Monomorphic VT',
+  vtPoly: 'Polymorphic VT', torsades: 'Torsades de pointes', vfCoarse: 'Coarse VF', vfFine: 'Fine VF', asystole: 'Asystole',
+  pWaveAsystole: 'P-wave asystole', agonal: 'Agonal rhythm', pacedAAI: 'Paced (AAI)', pacedVVI: 'Paced (VVI)',
+  pacedDDD: 'Paced (DDD)',
 };
 
 /** What the Stage 1 engine accepts (engine.ts validate()). */
