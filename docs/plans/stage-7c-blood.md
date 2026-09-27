@@ -3945,7 +3945,7 @@ git push origin stage-7c-blood
 - Consumes: the engine with the blood; Stage 3's ventilator and CO2 model; Stage 5's `vfCoarse`.
 - Produces: annex D1/D3 numbers through the engine; the bicarbonate EtCO2 transient against a same-seed control.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-sanity-acid.test.ts`:
 
@@ -4029,12 +4029,12 @@ describe('7c sanity II — acid–base', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-sanity-acid.test.ts`
 Expected: PASS, with the annex-D3 saline test passing as an expected failure (`it.fails`, R45: prototype Cl +5, BE −2.0 against D3's +6–8 / −3 to −5 — albumin dilution offsets the chloride acidosis; the contrast test asserts saline BE ≥ 2 below Plasma-Lyte's). Prototype: saline Cl 109 (+5), BE −2.0 vs Plasma-Lyte Cl 103, BE +0.6 at 60 min; hyperventilation RR 12 → 24: pH 7.51; DKA 0.8: AG 27, HCO3 8.6, pH 7.09 (ventilator fixed — Winter's compensation is 7f's); bicarbonate ΔEtCO2 vs control 2.5 / 4.4 / **5.0** / 4.9 / 4.7 at 30 / 60 / 90 / 120 / 150 s, 1.9 at 15 min; untreated VF 30 min: lactate **8.6**, pH **6.88**, BE −7.3, PaCO2 131 (Stage 3's CO2 keeps rising with no pulmonary flow; the bracket is 6.5 now, and a root beyond it is reported `atBound`, never NaN). Test-after (sanity task).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-sanity-acid.test.ts
