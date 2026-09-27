@@ -4938,15 +4938,15 @@ git push origin stage-7c-blood
 - Create: `docs/gates/stage-7c.md`
 - Modify: `docs/plans/stage-7c-blood.md` (ticks)
 
-- [ ] **Step 1: Full gate run**
+- [x] **Step 1: Full gate run**
 
 `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 test && npx -y pnpm@9.15.9 build && npx -y pnpm@9.15.9 check-notices && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e` → all exit 0. If a Stage 2/5 timing test times out, re-run it alone and compare with a `main`-only run (Task 15 note) before concluding. Do NOT run the full suite while the Pulse oracle (Task 22) is running: in the prototype, a full run in parallel with the oracle failed seven wall-clock-sensitive Stage 1/2/3 tests (rate sweep, NIBP ×2, Clock, two determinism/tone tests) that pass on an idle machine.
 
-- [ ] **Step 2: Write `docs/gates/stage-7c.md`**
+- [x] **Step 2: Write `docs/gates/stage-7c.md`**
 
 Same shape as `docs/gates/stage-3.md`: the gate question ("Does the blood reproduce the tables' acid–base, electrolyte, fluid and O2-delivery behaviour — dynamic SID, bounded pH, lactate in shock, hyperchloraemia, hyperkalaemia with its ECG and treatments — observing 7g's drug doses with one K-shift source, feeding the ODC to 7b's mixing point — without moving any Stage 3/7a/7b/7g acceptance number out of its band except the six recorded ones, within 0.1 ms per tick?"); a Check | Result table with every number printed by Tasks 9, 12, 15, 17–23 (ODC points, solver iterations, respiratory compensation slopes, 1 L crystalloid retention, class III lactate/BE/Hb, transfusion, massive transfusion K/iCa/core temperature, saline vs balanced Cl/BE, DKA AG, hyperventilation pH, bicarbonate ΔEtCO2 curve, untreated VF lactate/pH/BE, hyperkalaemia K/QRS/Ca/insulin, salbutamol K at 30 min, COHb/MetHb SpO2 vs SO2, anaemia DO2, Stage 3/7b desaturation and OLV re-check, CPU per tick, determinism hash, 24 h drift, oracle rows with their D-numbers); a "Sibling tests recorded as `it.fails` (R45)" table (Task 15's six, with the numbers you measured and the ruling each needs); the Deviations list from this plan (still-open ones marked for Ali's R44 pass: Q25, Q41, Q42, Q44, Q45, Q46, Q47, the D3/ATLS/D1 BE items and the 0.2 per mmHg alkalosis slope); the screenshots; "Requests to other stages" (copy the plan's list, updated with what 7d/7e/7f expose if they merged meanwhile).
 
-- [ ] **Step 3: Tick the plan, commit, push, open the PR**
+- [x] **Step 3: Tick the plan, commit, push, open the PR**
 
 ```bash
 git add docs/gates/stage-7c.md docs/plans/stage-7c-blood.md
