@@ -3921,7 +3921,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: `mountMonitor`, `mountEndoPanel` (`@pme/renderer`); the engine's `endo` events through `MonitorHandle.on`; 7g's `drug`/`infusion`, 7c's `fluid`, Stage 3's `thermal`/`ventilation`/`condition mh` and 7e's events. Every scripted step is sent with `atTick` so it lands at its simulated time at any speed (0.25–4; GV-obs: no × 10).
 - Produces: `window.__pme7e = { start(scenario), send, simT(), endo(), timeScale(k), ready }` for the screenshot script and the e2e.
 
-- [ ] **Step 1: Write the e2e smoke** `apps/demo/e2e/stage7e.e2e.ts` (≈ 2.3 min at × 4: Chromium only, the G7g/G7x rule)
+- [x] **Step 1: Write the e2e smoke** `apps/demo/e2e/stage7e.e2e.ts` (≈ 2.3 min at × 4: Chromium only, the G7g/G7x rule)
 
 ```ts
 // Stage 7e page smoke: the MH scenario runs, the endo panel fills from the 1 Hz event, EtCO2/temperature move, the
@@ -3969,7 +3969,7 @@ test('stage7e page: MH crisis → endo panel, MH activity, epinephrine surge; da
 
 Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage7e.e2e.ts` — Expected: FAIL (404 / `__pme7e` never ready).
 
-- [ ] **Step 2: Write** `apps/demo/stage7e.html`
+- [x] **Step 2: Write** `apps/demo/stage7e.html`
 
 ```html
 <!doctype html>
@@ -4022,7 +4022,7 @@ Run: `PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage7e.e2e.ts` — E
 </html>
 ```
 
-- [ ] **Step 3: Write** `apps/demo/src/stage7e.ts`
+- [x] **Step 3: Write** `apps/demo/src/stage7e.ts`
 
 ```ts
 // Stage 7e demo: MH crisis with dantrolene, hypothermia under GA with warming and cold fluid, sepsis warm → cold
@@ -4130,13 +4130,13 @@ start('mh');
 };
 ```
 
-- [ ] **Step 4: Register the page** — in `apps/demo/vite.config.ts` `build.rollupOptions.input`, after `        stage7g: page('stage7g'), // Stage 7g` add `        stage7e: page('stage7e'), // Stage 7e`; in `apps/demo/index.html`, after the `stage7g.html` list item add:
+- [x] **Step 4: Register the page** — in `apps/demo/vite.config.ts` `build.rollupOptions.input`, after `        stage7g: page('stage7g'), // Stage 7g` add `        stage7e: page('stage7e'), // Stage 7e`; in `apps/demo/index.html`, after the `stage7g.html` list item add:
 
 ```html
       <li><a href="./stage7e.html">Stage 7e: endocrine, glucose, thermoregulation — MH, hypothermia, sepsis, hypoglycaemia</a></li>
 ```
 
-- [ ] **Step 5: Write** `apps/demo/scripts/stage7e-shots.mjs`
+- [x] **Step 5: Write** `apps/demo/scripts/stage7e-shots.mjs`
 
 ```js
 // Gate 7e screenshots (headless system Chrome). Usage: (cd apps/demo && npx vite preview --port 4817 --strictPort &) then
@@ -4175,9 +4175,9 @@ if (errors.length) console.error('page errors:', errors);
 await b.close();
 ```
 
-- [ ] **Step 6: Run** `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage7e.e2e.ts`, then the screenshots: `(cd apps/demo && npx vite preview --port 4817 --strictPort &) ; node apps/demo/scripts/stage7e-shots.mjs http://localhost:4817 docs/gates/stage-7e` (≈ 50 min wall, alone on the machine). Expected: e2e PASS (prototype 2.3 min); five PNGs, no page errors; open each and check the teaching moment named in the script's comments (prototype `mh-20min`: epinephrine 486 pg/mL, stress index 93, MH activity 1, sweating). Keep each PNG ≤ 200 KB (re-save with a smaller clip if larger).
+- [x] **Step 6: Run** `npx -y pnpm@9.15.9 typecheck && npx -y pnpm@9.15.9 build && PW_SYSTEM_CHROME=1 npx playwright test apps/demo/e2e/stage7e.e2e.ts`, then the screenshots: `(cd apps/demo && npx vite preview --port 4817 --strictPort &) ; node apps/demo/scripts/stage7e-shots.mjs http://localhost:4817 docs/gates/stage-7e` (≈ 50 min wall, alone on the machine). Expected: e2e PASS (prototype 2.3 min); five PNGs, no page errors; open each and check the teaching moment named in the script's comments (prototype `mh-20min`: epinephrine 486 pg/mL, stress index 93, MH activity 1, sweating). Keep each PNG ≤ 200 KB (re-save with a smaller clip if larger).
 
-- [ ] **Step 7: Commit and push**
+- [x] **Step 7: Commit and push**
 
 ```bash
 git add apps/demo/stage7e.html apps/demo/src/stage7e.ts apps/demo/scripts/stage7e-shots.mjs apps/demo/e2e/stage7e.e2e.ts apps/demo/vite.config.ts apps/demo/index.html docs/gates/stage-7e
