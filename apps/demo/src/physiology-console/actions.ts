@@ -8,7 +8,9 @@ import type { PatientProfile } from '@pme/engine-core';
 /** A Command without id/issuedBy/atTick (the page stamps those). */
 export type Body = { type: string } & Record<string, unknown>;
 
-const SENSORS: PatientProfile['sensors'] = { abp: 'connected', cvp: 'connected', pap: 'connected', spo2: 'on', nibp: 'on' };
+// 7x.1: the CO2 sampling line starts attached (sidestream, Stage 3's default sampler), so EtCO2 reads at rest; the
+// instructor's `attachSensor` command still detaches or re-attaches it
+const SENSORS: PatientProfile['sensors'] = { abp: 'connected', cvp: 'connected', pap: 'connected', spo2: 'on', nibp: 'on', co2: 'on' };
 const p = (x: PatientProfile): PatientProfile => ({ ...x, sensors: SENSORS });
 /** Stage 7a's demo profiles, with every invasive line connected so the monitor shows ABP/CVP/PAP. */
 export const PRESETS: ReadonlyArray<{ id: string; label: string; profile: PatientProfile }> = [

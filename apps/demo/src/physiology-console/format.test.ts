@@ -18,6 +18,7 @@ describe('metadata', () => {
     ['blood.core.out.tempC', '°C'], ['mods.tempC', '°C'], ['x.bloodTempC', '°C'], ['pk.bus.agents.rocuronium.cumulativeMgPerKg', 'mg/kg'],
     // curated: thermal model, model EtCO2, ECG potassium, NIBP and QTc numerics
     ['resp.temp.tc', '°C'], ['resp.etco2', 'mmHg'], ['mods.k', 'mmol/L'], ['mon.nibpSys', 'mmHg'], ['mon.nibpMean', 'mmHg'], ['mon.qtc', 'ms'],
+    ['organs.iap', 'mmHg'], // 7x.1
   ])('unit of %s is "%s" from the field name', (path, unit) => expect(metaOf(path).unit).toBe(unit));
   it('a sibling unit leaf names the unit of a number that has none in its name', () => {
     const tree = new Map<string, unknown>([
@@ -87,6 +88,11 @@ describe('formatting', () => {
     ['mods.k', 4.2, 4.35, 4.45, 'up'], // 0.2 mmol/L (2 % would be 0.08)
     ['blood.core.out.k', 4.2, 4.05, 3.95, 'down'],
     ['blood.core.out.lactate', 1, 1.2, 1.4, 'up'], // 0.3 mmol/L (2 % would be 0.02)
+    // 7x.1 (FU-3 item 12): BE and HCO3 1 mmol/L (2 % of a BE near 0 is nothing: every 0.001 flagged; of HCO3 24, 0.48)
+    ['blood.core.ab.be', 0, 0.8, 1.2, 'up'],
+    ['ev.labs.values.be', -2, -2.8, -3.2, 'down'],
+    ['blood.core.ab.hco3', 24, 23.2, 22.8, 'down'],
+    ['ev.labs.values.hco3', 24, 24.9, 25.1, 'up'],
   ] as const)('%s: absolute tolerance', (path, base, quiet, moved, dir) => {
     const m = metaOf(path);
     expect(changeDir(quiet, base, m)).toBeNull();

@@ -31,7 +31,7 @@ describe('ConsoleModel', () => {
     expect(groups).toMatchObject({
       'resp.lung.mech.cL': 'lungs', 'blood.core.ab.ph': 'blood', 'blood.core.out.k': 'blood', 'organs.brain.icp': 'brain',
       'organs.renal.gfr': 'kidney', 'organs.liver.lactate': 'liver', 'endo.core.glucose.g': 'endocrine', 'neuro.antinoc': 'neuro',
-      'pk.bus.cns.propCe': 'drugs', 'ecmo.flowLpm': 'other', 'organs.iap': 'other',
+      'pk.bus.cns.propCe': 'drugs', 'ecmo.flowLpm': 'other', 'organs.iap': 'kidney', // 7x.1: IAP is a kidney input
       'organs.kidney.gfrRel': 'kidney', 'organs.sensors.icp': 'brain', 'pk.bus.agents.propofol.brain': 'drugs',
     });
     expect(m.row('organs.renal.uopMlMin').meta.unit).toBe('mL/min');

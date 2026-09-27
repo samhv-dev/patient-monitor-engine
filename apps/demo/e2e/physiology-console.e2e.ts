@@ -50,6 +50,9 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
   await waitSim(page, 61);
   await expect(page.locator('details[data-group="circulation"] tr[data-path="ev.circ.svr"]')).toBeVisible();
   await expect(page.locator('details[data-group="monitor"] tr[data-path="mon.hr"] .v')).toHaveText(/^\d+$/);
+  // 7x.1 (FU-3 item 12): the CO2 sampling line starts attached, so the monitor's CO2 tile and mon.etco2 read at rest
+  await expect(page.locator('.pme-stile[data-param="CO2"] [data-pme="v"]')).toHaveText(/^\d+$/);
+  await expect(page.locator('details[data-group="monitor"] tr[data-path="mon.etco2"] .v')).toHaveText(/^\d+$/);
   await expect(page.locator('.pc-log li')).toHaveCount(0);
   // the truth tree crossed the worker boundary inside the monitor's event batches, pruned and under the 50 KB budget
   const path = await page.evaluate(() => (window as unknown as { __pmeConsole: Hook }).__pmeConsole.renderPath());

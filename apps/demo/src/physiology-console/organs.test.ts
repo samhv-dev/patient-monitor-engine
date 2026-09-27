@@ -14,7 +14,11 @@ describe('organ grouping', () => {
     ['organs.kidney.gfrRel', 'kidney'], ['ev.organs.kidney.uopMlMin', 'kidney'], ['organs.sensors.icp', 'brain'], ['organs.anaesEvent.propofolE', 'brain'],
     ['hemo.circ.ext.endoHrF', 'endocrine'], ['hemo.circ.ext.endoSvrF', 'endocrine'], ['blood.endo.glucoseMgDl', 'endocrine'], ['hemo.circ.ext.pPtx', 'circulation'],
     // unknown → other
-    ['ecmo.flowLpm', 'other'], ['organs.iap', 'other'], ['ev.somethingNew.x', 'other'],
+    ['ecmo.flowLpm', 'other'], ['ev.somethingNew.x', 'other'],
+    // 7x.1 (FU-3 item 12): 7d's intra-abdominal pressure is a kidney input; its condition list by the organ it drives
+    // (tbi → brain, aki → kidney, hepaticFailure → liver; the profile's other conditions are inputs: controls)
+    ['organs.iap', 'kidney'], ['organs.conds.tbi.severity', 'brain'], ['organs.conds.aki.severity', 'kidney'],
+    ['organs.conds.hepaticFailure.severity', 'liver'], ['organs.conds.htn.id', 'controls'],
   ])('%s → %s', (path, group) => expect(groupOf(path)).toBe(group));
   it('matches whole segments only', () => {
     expect(groupOf('hemodynamics.x')).toBe('other');
