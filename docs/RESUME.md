@@ -17,7 +17,7 @@
 | 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), 65/133 boxes | executing (fresh executor after the seventh cap; merges 7d when it lands) | resume from first unticked task |
 | 7f NMB/depth | `stage-7f-neuro-depth`, PR #21 (worktree `../scratch/wt-stage-7f`) | all 20 tasks done, gate passed (G7f), CI running | merge when green (re-merge main if 7d lands first) |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-3 follow-ups | plan NOT yet written (writer died in the seventh cap) | items in the rulings file (addendum 17, G8a, G7c, G7d, 7f fix) | write plan after 7d merges (its base); R50 review; execute after 7f and 7e land |
+| FU-3 follow-ups | plan being written (`docs/plans/fu-3-followups.md`; prototyping on main + 7d + 7f) | 15 items (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
 | V.1 ventilator follow-up | not started (G7b rulings 4+5+13) | absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP | write plan after 7c and 7d land |
 | 8 validation/release | not started | waits for all | write plan |
 
