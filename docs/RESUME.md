@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 13:40 (7f merged; 7d re-merging main; 7e executing; FU-3 plan being written).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 14:20 (7f merged; 7d 7g-clearance seam under diagnosis; 7e executing; FU-3 plan being written).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -13,7 +13,7 @@
 | Stage | Branch / PR | State | Next action |
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a, 7f | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18; 7f #21) | — |
-| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`) | seam fixed; main (7f) being merged in by the orchestrator; CI rerun | merge when green |
+| 7d brain/kidney/liver | `stage-7d-organs`, PR #19 (worktree `../scratch/wt-stage-7d`), main+7f merged | one 7f test fails on the combined tree (rocuronium recovery never arrives) — second integration executor running (14:20) | merge when the slow job is green |
 | 7e endocrine/thermal | `stage-7e-endocrine-thermal` (worktree `../scratch/wt-stage-7e`), 65/133 boxes | executing (fresh executor after the seventh cap; merges 7d when it lands) | resume from first unticked task |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | plan being written (`docs/plans/fu-3-followups.md`; prototyping on main + 7d + 7f) | 15 items (sux ke0; sugammadex underdose; volatile reflex; 7a MANUAL check-18; AAI/DDD beats; AF HR over-read; CVP alarm; renal seam rename; scenario `patient.profile`; 7c oracle files; NMT/BFA tiles; 7x.1; 7f demo dial) | R50 review; execute after 7d, 7f, 7e land |
