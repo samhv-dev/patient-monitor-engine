@@ -1646,7 +1646,7 @@ git push origin stage-7c-blood
 - Consumes: Tasks 2–8.
 - Produces: `BloodInputs {t, coLpm, paco2, pao2, tempC, vo2Demand, demandRel?, kShiftExt?}` (`kShiftExt` = 7g's `bus.metabolic.kShift`: when given, the only β2/insulin-row K shift), `RenalSeam {uopMlH, excretion {k, na, cl, gluconate}}` (mL/h, mmol/h), `BloodOut {na, k, kEcg, cl, iCa, mg, lactate, hb, albGL, albuminGL, ag, osm, cop, hbfRel, bvRel}`, `BloodCore {pat, fl, so, ab, phNonOrg, o2, odc, doses, burns, liver, renal: RenalSeam | null, co0, ecf0, k1Hz, out: BloodOut}`, `createBloodCore(profile, co0Lpm, paco2)`, `stepBloodCore(bc, inputs, dtS)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/core.test.ts`:
 
@@ -1792,12 +1792,12 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/core.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/core.ts`:
 
@@ -1962,12 +1962,12 @@ export type { Conc };
 
 The test uses the same 7a-absent CO fallback as `circ-adapter.ts` (Task 10) written inline, so this task does not depend on Task 10. The 24 h test yields hourly (CI rule).
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/core.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/core.ts packages/engine-core/test/l2/blood/core.test.ts
