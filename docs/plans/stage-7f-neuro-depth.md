@@ -1259,7 +1259,7 @@ git push
 - Consumes: the rig (Task 3), `untilTof` (Task 4).
 - Produces: `NmProfile = 'normal'|'myasthenia'|'lambertEaton'|'burn'|'denervation'`, `InteractionCtx { profile; volatileMac; mgMmolL; tempC }`, `ec50Multipliers(x) → Record<NmbAgent, number>`. 7f owns these multipliers (R51 §2: 7g's `bus.nmb.ec50Mult` is removed).
 
-- [ ] **Step 1: Write the test** `packages/engine-core/test/l2/neuro/interactions.test.ts` — the multipliers (unit) AND their clinical consequence on the rocuronium course on 7g's PK:
+- [x] **Step 1: Write the test** `packages/engine-core/test/l2/neuro/interactions.test.ts` — the multipliers (unit) AND their clinical consequence on the rocuronium course on 7g's PK:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1307,9 +1307,9 @@ describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect PASS** (3 tests; module from Task 1; prototype ratios on 7g's PK: 1 MAC ×1.42, 34 °C ×1.86, myasthenia ×3.71 — the 1 MAC ratio sits near its 1.45 bound): `… exec vitest run test/l2/neuro/interactions.test.ts`. The duration ratios are TARGETS on 7g's PK (R45): if one fails, report the measured ratio — do not change the multipliers' tables-derived sizes (the volatile and hypothermia sizes are [ENG]: record a proposed value in the gate note for the calibration pass instead).
+- [x] **Step 2: Run; expect PASS** (3 tests; module from Task 1; prototype ratios on 7g's PK: 1 MAC ×1.42, 34 °C ×1.86, myasthenia ×3.71 — the 1 MAC ratio sits near its 1.45 bound): `… exec vitest run test/l2/neuro/interactions.test.ts`. The duration ratios are TARGETS on 7g's PK (R45): if one fails, report the measured ratio — do not change the multipliers' tables-derived sizes (the volatile and hypothermia sizes are [ENG]: record a proposed value in the gate note for the calibration pass instead).
 
-- [ ] **Step 3: `packages/engine-core/src/l2/neuro/interactions.ts`** (exact, as created in Task 1):
+- [x] **Step 3: `packages/engine-core/src/l2/neuro/interactions.ts`** (exact, as created in Task 1):
 
 ```ts
 // NMB interactions and neuromuscular profiles (scope 7f-1; tables §5d, §1.5 [TXT]; sizes [ENG] unless cited). 7f owns
@@ -1360,7 +1360,7 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
 }
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/neuro/interactions.test.ts
