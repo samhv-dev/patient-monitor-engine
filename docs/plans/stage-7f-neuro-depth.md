@@ -305,7 +305,7 @@ git push -u origin stage-7f-neuro-depth
 - Consumes: 7g's `DrugBus`, `DRUG_BUS_NEUTRAL` (`src/types-pk.ts`) as merged (decision 1).
 - Produces: `NmbAgent`, `NMB_AGENTS`, `VolatileId` (`'sevoflurane' | 'isoflurane' | 'desflurane' | 'n2o'`), `VOLATILE_IDS`, `NeuroAgentId`, `FENT_EEG_POT` 1.6, `FENT_VENT_POT` 0.55 (D-7f-3), `MIDAZ_NG_PER_REF` 100, `KET_NG_PER_REF` 1500, `NeuroInputs { brain; vent; nmj; dia; suxCumMgPerKg; macPotent; macN2o; macEt; et: {fet, macAge}; achGain; opioidAntag }`, `readBus(bus)` (naloxone applied to the per-agent opioid sites, decision 20), `newDoses(bus, seenT)`, `pcheOf(profile)`; test helpers `busFixture(patch)` (patch keys `cns`, `nmb`, `antagonist`, `agents`, `doses`, `volatiles`), `opioid(brain, vent)`, `nmbAgent(nmj, dia, cumMgPerKg)`, `vol(macFrac, macAge)`, `dose(agent, mgPerKg, t)`.
 
-- [ ] **Step 1: Write the test helper and the failing test.** `packages/engine-core/test/helpers/neuro-bus.ts` (exact):
+- [x] **Step 1: Write the test helper and the failing test.** `packages/engine-core/test/helpers/neuro-bus.ts` (exact):
 
 ```ts
 // Stage 7f: a 7g DrugBus with chosen fields set (R51: tests that need concentrations build the bus directly). Every
@@ -410,9 +410,9 @@ describe('7f reads 7g\'s DrugBus (R51)', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect PASS** (the module exists since Task 1): `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/bus.test.ts` → 7 passed. A type error on `DrugBus['agents' | 'doses' | 'volatiles' | 'antagonist']` or on a helper's shape means 7g's bus differs from decision 1: STOP and report (Task 1 Step 1 should have caught it). The module's content, for reference and for Task 1 Step 4:
+- [x] **Step 2: Run; expect PASS** (the module exists since Task 1): `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/bus.test.ts` → 7 passed. A type error on `DrugBus['agents' | 'doses' | 'volatiles' | 'antagonist']` or on a helper's shape means 7g's bus differs from decision 1: STOP and report (Task 1 Step 1 should have caught it). The module's content, for reference and for Task 1 Step 4:
 
-- [ ] **Step 3: `packages/engine-core/src/l2/neuro/bus.ts`** (exact content)
+- [x] **Step 3: `packages/engine-core/src/l2/neuro/bus.ts`** (exact content)
 
 ```ts
 // Stage 7f's READER of Stage 7g's DrugBus (R51 §1–2). 7f has NO PK: every concentration it uses comes from
@@ -536,7 +536,7 @@ export function pcheOf(p: PatientProfile | undefined): 'normal' | 'het' | 'hom' 
 }
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add packages/engine-core/test/helpers/neuro-bus.ts packages/engine-core/test/l2/neuro/bus.test.ts
