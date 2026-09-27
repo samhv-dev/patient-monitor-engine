@@ -2197,7 +2197,7 @@ git push origin stage-7e-endocrine-thermal
 - Consumes: Tasks 6–9 (`tempHrF` from `thermal/metabolic.ts`).
 - Produces: `interface EndoProfile { diabetes; thyroid; adrenalInsufficiency }`, `DEFAULT_ENDO_PROFILE`, `glucoseProfile(p)`, `interface EndoInputs { noxious; antinoc; mapMmHg; sao2; paco2; tempC; mhActivity; liverF; weightKg; betaBlock; betaBlockC; epiExoPgMl; bronchoDilExt; dkaSeverity }`, `NEUTRAL_ENDO_INPUTS`, `interface EndoCore { profile; hormones; glucose; cond; x; out }`, `interface EndoOut` (`hrF`, `condHrF`, `feverHrF`, `feverHrFExcess`, `svrF`, `eesF`, `dV0Frac`, `vo2F`, `setShiftC`, `kShift`, `kfMult`, `vasoResp`, `anaphLung`, glucose/insulin/hormones, `symp`, `stressIndex`, `neuroglycopenia`, `stress`, `cond`), `createEndoCore(profile?, weightKg = 70)`, `stepEndoCore(c, x, dtS)`.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/core.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/l2/endo/core.test.ts`
 
 ```ts
 // The 1 Hz endocrine core (EndoOut) — resting identity, sepsis bundle, MH tachycardia, DKA (7c's severity), hypoglycaemia.
@@ -2281,12 +2281,12 @@ describe('endocrine core', { timeout: 60_000 }, () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/core.test.ts`
 Expected: FAIL — the module under test does not exist yet (`Failed to resolve import`).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/endo/core.ts`
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/endo/core.ts`
 
 ```ts
 // Stage 7e endocrine/metabolic core: one engine-independent 1 Hz step that combines stress hormones, glucose–insulin,
@@ -2465,12 +2465,12 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/core.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (7 tests), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/test/l2/endo/core.test.ts packages/engine-core/src/l2/endo/core.ts
