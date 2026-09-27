@@ -738,7 +738,7 @@ git push origin stage-7d-organs
 **Interfaces:**
 - Consumes: Task 3 constants. Produces: `BrainAnaesthesia` {propofolE, sevoMac, isoMac, ketamineE} and `NO_ANAESTHESIA` (the tables' per-agent vocabulary: fallback and tests), `BrainDrugs` {cmro2Mult, cbfVaso} and `NO_DRUGS` (what the model consumes; Task 11 fills it from 7f/7g), `drugsOf(a): BrainDrugs`, `tempCmro2(tempC)`, `autoregIntact(cpp, ll, ul)`, `autoreg(cpp, ll, ul, ar)`, `co2Factor(paco2, ref?, k?)`, `o2Factor(pao2)`, `cmro2Rel(a, tempC)`, `vasoDirect(a)`, `cbvRel(cbfRel)`, `caO2(hb, sao2, pao2)`, `brainOxygen(r, sao2, pao2) → {pbto2, sjvo2, oer}`.
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/flow.test.ts`
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/l2/brain/flow.test.ts`
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -784,12 +784,12 @@ describe('CBF factors (tables §5.1)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/flow.test.ts`
 Expected: FAIL — Cannot find module `src/l2/brain/flow.ts`.
 
-- [ ] **Step 3: Implement `packages/engine-core/src/l2/brain/flow.ts`** (exactly as prototyped)
+- [x] **Step 3: Implement `packages/engine-core/src/l2/brain/flow.ts`** (exactly as prototyped)
 
 ```ts
 // Cerebral blood flow, metabolism and brain oxygen (tables §5.1): CBF = CBF0·A(CPP)·C(PaCO2)·O(PaO2)·M, with M the
@@ -898,12 +898,12 @@ export function brainOxygen(r: number, sao2: number, pao2: number): { pbto2: num
 }
 ```
 
-- [ ] **Step 4: Run the tests and the typecheck**
+- [x] **Step 4: Run the tests and the typecheck**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/flow.test.ts && npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck`
 Expected: PASS (5 tests; the prototype numbers are quoted in the test comments); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/brain/flow.ts packages/engine-core/test/l2/brain/flow.test.ts docs/plans/stage-7d-organs.md
