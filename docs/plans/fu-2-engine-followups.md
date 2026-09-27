@@ -2044,7 +2044,7 @@ git push
   tracker holds), the tracker's g pinned to c (limits `gMin = gMax = c`), R alone re-solved; c = 1 ⇒ the unchanged
   Stage 7a path. `svr` stays derived (D9).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/engine/circ-manual-contractility.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/engine/circ-manual-contractility.test.ts`:
 
 ```ts
 // FU-2 item 7 (G7d R-7D-5b): in MANUAL an instructor `contractility` (≠ 1) is both ventricles' Emax factor. The
@@ -2103,13 +2103,13 @@ describe('MANUAL contractility acts through the trackers (FU-2 item 7)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-manual-contractility.test.ts`
 Expected: FAIL — contractility is ignored: CO at 0.5 equals CO at 1 (≈ 6.8 L/min), and the check-20 case reads CO
 ≈ 6.4 with MAP ≈ 55–60 (the tracker restores Ees and saturates R).
 
-- [ ] **Step 3: Implement** — in `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
+- [x] **Step 3: Implement** — in `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
 ```ts
 function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
@@ -2159,7 +2159,7 @@ and replace with:
 
 (If 7d landed first and added to this key, keep its additions and append the contractility term.)
 
-- [ ] **Step 4: Run it to verify it passes; the MANUAL bands are unchanged**
+- [x] **Step 4: Run it to verify it passes; the MANUAL bands are unchanged**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-manual-contractility.test.ts test/engine/circ-manual.test.ts test/engine/hemo-acceptance.test.ts test/engine/hemo-engine.test.ts test/l1 test/l2/hemo
@@ -2170,7 +2170,7 @@ Expected: the new file passes, logging `contractility 1 … CO 6.82, ABP 112/71 
 CO 4.74, ABP 102/77 (87), SVR 0.96`, `contractility 0.3 at 85/55, CVP 12: CO 3.28, ABP 76/62 (68)`; the 90/50 ramp
 tests (hemo-acceptance 3, circ-manual), the transducer test and the `svr is derived` rejections pass unchanged.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/circ-manual-contractility.test.ts docs/plans/fu-2-engine-followups.md

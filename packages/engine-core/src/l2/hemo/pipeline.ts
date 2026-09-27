@@ -306,6 +306,12 @@ function manHoldInit(cvp: number, vs: number, pamT: number, sbp: number, dbp: nu
 function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const target = { sbp: l1Value(ctx.l1, 'sbp', b.t), dbp: l1Value(ctx.l1, 'dbp', b.t) };
   const tr = hs.manHold;
+  // FU-2 item 7: an instructor contractility (≠ 1) IS both ventricles' Emax factor; the tracker then holds MAP with the
+  // systemic resistance alone and pulse pressure (and CO) follow the heart — low output narrows PP, SVR rises (derived)
+  const cT = l1Value(ctx.l1, 'contractility', b.t);
+  const cOwned = Math.abs(cT - 1) > 1e-9;
+  if (cOwned || hs.circ.man.eesRvF !== 1) hs.circ.man.eesRvF = cT;
+  if (cOwned) hs.circ.man.eesF = cT;
   if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
   if (b.ref) {
     // the hold test uses ≈ 8-beat averages so ventilator-driven beat-to-beat swings (PPV) do not keep it running
@@ -319,7 +325,7 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   }
   hs.sys.g = hs.circ.man.eesF;
   hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
-  trackBeat(hs.sys, b, target, hs.circOut.pSv, CIRC_LIMITS, CIRC_LIMITS.gMax);
+  trackBeat(hs.sys, b, target, hs.circOut.pSv, cOwned ? { ...CIRC_LIMITS, gMin: cT, gMax: cT } : CIRC_LIMITS, cOwned ? cT : CIRC_LIMITS.gMax); // FU-2 item 7
   hs.circ.man.eesF = hs.sys.g;
   hs.circ.man.rSys = hs.sys.R;
 }
@@ -494,7 +500,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       // SET-AND-HOLD: the volume and PVR trackers run when the instructor's target moves and stop once it is met
       // (±0.5 mmHg for 5 s); later perturbations (PEEP, bleeding, tamponade) then act on top — PEEP lowers CO as it
       // did under Stage 3's MANUAL coupling. The Ees/SVR pressure tracker below keeps defending SBP/DBP per beat.
-      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}`;
+      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}/${Math.round(l1Value(ctx.l1, 'contractility', t1) * 100)}`; // FU-2 item 7: contractility
       if (key !== tr.key) {
         tr.key = key;
         tr.pActive = true;
