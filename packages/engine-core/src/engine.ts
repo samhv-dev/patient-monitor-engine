@@ -517,7 +517,7 @@ class Engine implements MonitorEngine {
       tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
     }, ps.pk.bus);
-    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, neuro: ps.neuro.resp }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7f: neuro)
+    advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, neuro: ps.neuro.resp, hco3: (ps as unknown as { blood?: { core?: { ab?: { hco3?: number } } } }).blood?.core?.ab?.hco3 }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7f: neuro, HCO3 for Winter's — 7c's field, duck-typed until 7c is on main)
     const resp = ps.resp; // Stage 3
     advanceHemo(
       ps.hemo,

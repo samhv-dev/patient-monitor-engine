@@ -2744,7 +2744,7 @@ git push
 
 **Before editing `engine.ts` (R51 §7):** `git fetch origin && git merge origin/main` and re-run the suite, as in Task 12.
 
-- [ ] **Step 1: Write the failing tests.** `packages/engine-core/test/l2/neuro/spont.test.ts` (exact):
+- [x] **Step 1: Write the failing tests.** `packages/engine-core/test/l2/neuro/spont.test.ts` (exact):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2869,9 +2869,9 @@ describe('MODELED spontaneous drive through the engine', { timeout: 300_000 }, (
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** — `… exec vitest run test/l2/neuro/spont.test.ts test/engine/neuro-spont.test.ts` → "Failed to resolve import …/spont.ts" (the engine file: MODELED RR does not rise in acidosis — no drive yet).
+- [x] **Step 2: Run; expect FAIL** — `… exec vitest run test/l2/neuro/spont.test.ts test/engine/neuro-spont.test.ts` → "Failed to resolve import …/spont.ts" (the engine file: MODELED RR does not rise in acidosis — no drive yet).
 
-- [ ] **Step 3: Implement** `packages/engine-core/src/l2/neuro/spont.ts` (exact):
+- [x] **Step 3: Implement** `packages/engine-core/src/l2/neuro/spont.ts` (exact):
 
 ```ts
 // MODELED spontaneous breathing (G7b ruling 8, R51 addendum 17): Stage 7b's chemoreflex drive, work of breathing and
@@ -2957,7 +2957,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
 }
 ```
 
-- [ ] **Step 4: Wire it.** In `packages/engine-core/src/l2/resp/pipeline.ts`:
+- [x] **Step 4: Wire it.** In `packages/engine-core/src/l2/resp/pipeline.ts`:
 - after Task 12's `import type { NeuroResp } from '../neuro/drive.ts'; // Stage 7f` add `import { createSpontDrive, stepSpontDrive, type SpontDrive } from '../neuro/spont.ts'; // Stage 7f: MODELED spontaneous drive`;
 - in `interface RespCtx`, after `  neuro?: NeuroResp; // Stage 7f: …` add `  hco3?: number; // Stage 7f: 7c's blood.core.ab.hco3 for Winter's compensation (MODELED spontaneous drive)`;
 - in `interface RespState`, after `  evlwiExtra?: number; // Stage 7c: …` add `  spont?: SpontDrive; // Stage 7f: MODELED spontaneous drive (7b's drive/pti/fatigue + Winter's), absent in pre-7f snapshots`;
@@ -3001,9 +3001,9 @@ function modeledSpont(rs: RespState, l1: L1State): boolean {
 
 In `packages/engine-core/src/engine.ts`, add `hco3: ps.blood.core.ab.hco3` to Task 12's `advanceResp(` context — on the prototype base: `{ l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3 }`, comment `// Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's)`. (7c advances AFTER resp, so the drive reads the previous pass's HCO3 — 100 ms old.)
 
-- [ ] **Step 5: Run** `… exec vitest run test/l2/neuro/spont.test.ts test/engine/neuro-spont.test.ts` → spont 6, neuro-spont 4 passed (prototype: MODELED resting RR 15.2 / PaCO2 38.6 vs MANUAL 15.2 / 38.5; HCO3 13.6 → PaCO2 29.4, Winter's 28.5, VE 9.5 vs 7.6 L/min, RR 17.0 vs 15.2; remifentanil RR 4.0 vs 15.0, PaCO2 50.6; acidosis + remifentanil 0.1: PaCO2 38.4 vs 29.5). Then the MODELED suites of the other stages, which now breathe through the drive when spontaneous: `PME_TEST_SET=slow npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-*.test.ts test/engine/lung-*.test.ts test/engine/blood-sanity-*.test.ts test/engine/circ-rate-rule.test.ts` and the fast set `PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core test`. Prototype: fast set 926 passed + 1 skipped; slow set — see Task 18 Step 2 for the one sibling test 7f changes (E-7f-2: 7a's R23 runs, through 7f's natural-airway obstruction under propofol, not through the drive). Any OTHER Stage 3/7a/7b/7c/7g number that moves: STOP and report it (R45) with the drive's rr/vt/PaCO2 at that moment.
+- [x] **Step 5: Run** `… exec vitest run test/l2/neuro/spont.test.ts test/engine/neuro-spont.test.ts` → spont 6, neuro-spont 4 passed (prototype: MODELED resting RR 15.2 / PaCO2 38.6 vs MANUAL 15.2 / 38.5; HCO3 13.6 → PaCO2 29.4, Winter's 28.5, VE 9.5 vs 7.6 L/min, RR 17.0 vs 15.2; remifentanil RR 4.0 vs 15.0, PaCO2 50.6; acidosis + remifentanil 0.1: PaCO2 38.4 vs 29.5). Then the MODELED suites of the other stages, which now breathe through the drive when spontaneous: `PME_TEST_SET=slow npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-sanity-*.test.ts test/engine/lung-*.test.ts test/engine/blood-sanity-*.test.ts test/engine/circ-rate-rule.test.ts` and the fast set `PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core test`. Prototype: fast set 926 passed + 1 skipped; slow set — see Task 18 Step 2 for the one sibling test 7f changes (E-7f-2: 7a's R23 runs, through 7f's natural-airway obstruction under propofol, not through the drive). Any OTHER Stage 3/7a/7b/7c/7g number that moves: STOP and report it (R45) with the drive's rr/vt/PaCO2 at that moment.
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/neuro/spont.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/test/l2/neuro/spont.test.ts packages/engine-core/test/engine/neuro-spont.test.ts
