@@ -1387,7 +1387,7 @@ git push origin stage-7c-blood
 **Interfaces:**
 - Produces: `BloodDrugId` (same union as Task 1's, re-declared locally), `BLOOD_DRUGS`, `Dose {id, t0, amount}`, `bateman(tMin, ka, ke)`, `suxDeltaK(tMin, burns)`, `insulinEffect`, `salbutamolEffect`, `INSULIN_K_SHIFT` −1.0, `SALBUTAMOL_K_SHIFT` −1.0, `K_PUMP_GAIN` 1.5, `caMembrane`, `CA_MMOL_PER_G`, `BICARB_CO2_FRAC` 0.25, `MMOL_CO2_ML`, `bicarbCo2MlMin(doses, t)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `packages/engine-core/test/l2/blood/treatments.test.ts`:
 
@@ -1424,12 +1424,12 @@ describe('7c treatment curves (tables §5b.2)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/treatments.test.ts`
 Expected: FAIL: cannot resolve the module under test.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `packages/engine-core/src/l2/blood/treatments.ts`:
 
@@ -1517,12 +1517,12 @@ export function bicarbCo2MlMin(doses: readonly Dose[], t: number): number {
 
 
 
-- [ ] **Step 4: Run the test**
+- [x] **Step 4: Run the test**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/treatments.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core/src/l2/blood/treatments.ts packages/engine-core/test/l2/blood/treatments.test.ts
