@@ -25,6 +25,7 @@ import { stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
+import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
@@ -519,8 +520,8 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       }
     }
     if (ctx.l1.mode === 'modeled' && m % 12 === 0 && !ctx.l1.pinned.includes('hr') && ctx.requestHr) {
-      const want = hs.circ.hrModel; // Stage 7a MODELED: the reflexes drive the rhythm engine's rate
-      if (Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
+      const want = modeledHrRequest(hs.circ, ctx.rhythm.id, t1); // FU-2 (NR-7g-5): only the sinus node follows the reflex (AF conduction, AAI/DDD: bounded)
+      if (want !== null && Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
     }
     // Stage 7a: completed CircBeats → site beats (tracker, NIBP, pleth)
     for (const cb of hs.circ.beats) {

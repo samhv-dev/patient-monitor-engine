@@ -507,7 +507,7 @@ git push -u origin fu-2-engine-followups
   After this task, MODELED writes `ps.hr` only for a reflex-owned sinus-family rhythm (the reflex rate), AF (set rate ×
   AV drive) or AAI/DDD (max(lower rate, reflex rate)).
 
-- [ ] **Step 1: Write the failing test** — `packages/engine-core/test/engine/circ-rate-rule.test.ts`:
+- [x] **Step 1: Write the failing test** — `packages/engine-core/test/engine/circ-rate-rule.test.ts`:
 
 ```ts
 // FU-2 item 1 (NR-7g-5, G7g): in MODELED mode only the sinus node follows the circulation's HR set point; every other
@@ -591,14 +591,14 @@ describe('MODELED rate ownership (NR-7g-5)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-rate-rule.test.ts`
 Expected: FAIL — SVT reads ≈ 139.9 (the reflex's ≈ 69 clamped to the SVT range 140–280), sinus bradycardia ≈ 59
 (clamped to 59), VT ≈ 120, CHB ≈ 40, VVI ≈ 74.5, AF ≈ 78, AAI 70 on phenylephrine ≈ 61.3 (the bleed half, 91.3,
 passes already); the sinus-at-rest test passes already.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Merge main first (R51 §7): `git fetch origin && git merge origin/main`.
 
@@ -794,7 +794,7 @@ and replace with:
 ];
 ```
 
-- [ ] **Step 4: Run it to verify it passes, and the paths the rule must not change**
+- [x] **Step 4: Run it to verify it passes, and the paths the rule must not change**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-rate-rule.test.ts
@@ -809,7 +809,7 @@ the adenosine scenario (pause, then sinus ≤ 110), phenylephrine 100 µg (MAP +
 and 7g's wiring tests still pass. Then the fast set: `cd packages/engine-core && PME_TEST_SET=fast CI=1 npx vitest
 run; cd ../..` — green.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/engine.ts packages/engine-core/vite.config.ts packages/engine-core/test/engine/circ-rate-rule.test.ts docs/plans/fu-2-engine-followups.md

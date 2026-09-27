@@ -66,6 +66,7 @@ import {
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
+import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
@@ -149,6 +150,11 @@ function rhythmCtx(ps: PipelineState): RhythmCtx {
   return { hrAt: (t) => rampValue(ps.hr, t), mods: ps.mods, rng: ps.rng, hrv: ps.hrv, breath: breathOf(ps) }; // Stage 5.1: breath
 }
 
+/** FU-2 (NR-7g-5): record the rate just written to ps.hr for MODELED mode's rate rule (explicit = the instructor's own rate). */
+function holdRate(ps: PipelineState, rhythmId: string, explicit: boolean): void {
+  ps.hemo.circ.hrSet = heldRate(rhythmId, explicit, ps.hr);
+}
+
 /** hr truth when a rhythm starts: RhythmOpts.rateBpm, else the rhythm default (flutter: atrial/ratio). */
 function startRate(id: RhythmId, opts: RhythmOpts): number {
   if (opts.rateBpm !== undefined) return opts.rateBpm;
@@ -230,6 +236,7 @@ class Engine implements MonitorEngine {
       pk: createPkState(pkPatientOf(opts.patient)), // Stage 7g
       pkHooks: createHookState(), // Stage 7g
     };
+    holdRate(this.st, rhythmId, rhythmOpts.rateBpm !== undefined); // FU-2
     this.syncCo2Sampler(); // R39-5
     for (const ch of ['vcgX', 'vcgY', 'vcgZ', ...lanes] as ChannelId[]) this.bufs.set(ch, new RingBuffer(ECG_RATE, BUFFER_SECONDS));
     this.advance(this.st, 0);
@@ -491,6 +498,7 @@ class Engine implements MonitorEngine {
     if (req7g) {
       // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
       ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
+      holdRate(ps, req7g.id, false); // FU-2: an engine-initiated sinus rate belongs to the reflex
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3
@@ -559,16 +567,20 @@ class Engine implements MonitorEngine {
       },
       setRhythm: (id, opts) => {
         ps.hr = constantRamp(startRate(id, opts));
+        holdRate(ps, id, false); // FU-2: device outcomes (shock, ROSC) hand a sinus rate to the reflex
         applyRhythm(ps.rhythm, id, opts, simT, true, rhythmCtx(ps));
         dirty();
       },
       setHr: (value, ramp) => {
         ps.hr = retarget(ps.hr, simT, value, ramp);
+        holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // FU-2
         dirty();
       },
       setL1: (v, value, ramp) => {
-        if (v === 'hr') ps.hr = retarget(ps.hr, simT, value, ramp);
-        else setL1Target(ps.l1, v as L1Var, simT, value, ramp);
+        if (v === 'hr') {
+          ps.hr = retarget(ps.hr, simT, value, ramp);
+          holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // FU-2
+        } else setL1Target(ps.l1, v as L1Var, simT, value, ramp);
         dirty();
       },
     };
@@ -629,6 +641,7 @@ class Engine implements MonitorEngine {
     const ps = this.st;
     const setHr = (v: number, r?: Ramp) => {
       ps.hr = retarget(ps.hr, simT, v, r);
+      holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, true); // FU-2: the instructor's rate
     };
     const devOut: EngineEvent[] = []; // Stage 4b
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
@@ -648,10 +661,12 @@ class Engine implements MonitorEngine {
     switch (cmd.type) {
       case 'setTarget':
         ps.hr = retarget(ps.hr, simT, cmd.value, cmd.ramp);
+        holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, true); // FU-2: the instructor's rate
         return;
       case 'setRhythm': {
         const opts = cmd.opts ?? {};
         ps.hr = constantRamp(startRate(cmd.rhythm, opts));
+        holdRate(ps, cmd.rhythm, opts.rateBpm !== undefined); // FU-2
         const respect = cmd.respectRefractory ?? true;
         if (cmd.when === 'nextBeat') ps.rhythm.pendingSwitch = { id: cmd.rhythm, opts, respectRefractory: respect };
         else applyRhythm(ps.rhythm, cmd.rhythm, opts, simT, respect, rhythmCtx(ps));
