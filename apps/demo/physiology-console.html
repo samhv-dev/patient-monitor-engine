@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physiology console</title>
+  <style>
+    :root { --bg: #0b0d10; --panel: #12151a; --line: #232830; --text: #d7dce3; --dim: #7c8591; --up: #ffb347; --down: #5fc8ff; --diff: #d69cff; --ok: #6fd08c; --bad: #ff6b6b; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 12px/1.35 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+    button, select, input, textarea { font: inherit; color: var(--text); background: #1a1e25; border: 1px solid #2e3440; border-radius: 4px; padding: 2px 6px; }
+    button { cursor: pointer; } button:hover { border-color: #4b5566; } button:disabled { opacity: .4; cursor: default; }
+    input[type=number] { width: 58px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+    .pc-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; border-bottom: 1px solid var(--line); background: var(--panel); }
+    .pc-bar strong { font-size: 13px; margin-right: 4px; }
+    .pc-t { font: 600 14px ui-monospace, 'SF Mono', Menlo, monospace; min-width: 48px; text-align: right; }
+    .pc-sep { width: 1px; height: 18px; background: var(--line); margin: 0 2px; }
+    .pc-stats { margin-left: auto; color: var(--dim); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+    [data-id=filter] { width: 170px; }
+    .pc-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(520px, 42%) 1fr; }
+    .pc-left { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
+    .pc-monitor { height: 330px; flex: none; background: #000; }
+    .pc-rail { flex: none; padding: 4px 8px; overflow: auto; max-height: 45%; }
+    .pc-rail fieldset { border: 1px solid var(--line); border-radius: 4px; margin: 0 0 4px; padding: 3px 6px 5px; }
+    .pc-rail legend { color: var(--dim); padding: 0 4px; }
+    .pc-rail textarea { width: 100%; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; }
+    .pc-log { flex: 1; min-height: 60px; overflow: auto; margin: 0; padding: 4px 8px 8px 26px; border-top: 1px solid var(--line); font: 11px ui-monospace, 'SF Mono', Menlo, monospace; }
+    .pc-log li { padding: 1px 0; } .pc-log time { color: var(--dim); } .pc-log .rej { color: var(--bad); } .pc-log .ok span { color: var(--ok); }
+    .pc-log li[data-kind=mark] span { color: var(--dim); font-style: italic; } .pc-log .pending span { color: var(--dim); }
+    .pc-organs { overflow: auto; padding: 6px 10px 20px; columns: 400px 3; column-gap: 12px; }
+    .pc-sec { break-inside: avoid; margin: 0 0 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+    .pc-sec > summary { cursor: pointer; padding: 3px 8px; font-weight: 600; letter-spacing: .02em; }
+    .pc-count { color: var(--dim); font-weight: 400; margin-left: 6px; }
+    .pc-sec table { width: 100%; table-layout: fixed; border-collapse: collapse; font: 11.5px/1.3 ui-monospace, 'SF Mono', Menlo, monospace; }
+    .pc-sec td { padding: 1px 5px; border-top: 1px solid #1a1e25; white-space: nowrap; overflow: hidden; }
+    .pc-sec td.k { text-overflow: ellipsis; font-family: system-ui, sans-serif; }
+    .pc-sec td.v { width: 62px; } .pc-sec td.u { width: 66px; } .pc-sec td.b { width: 56px; } .pc-sec td.d { width: 56px; } .pc-sec td.s { width: 72px; }
+    .pc-sec .par { color: var(--dim); margin-left: 6px; font-size: 10.5px; }
+    .pc-sec td.v, .pc-sec td.b, .pc-sec td.d { text-align: right; }
+    .pc-sec td.u { color: var(--dim); font-size: 10.5px; } .pc-sec td.b { color: var(--dim); }
+    .pc-sec td.s { padding: 0 4px; } .pc-sec td.u { text-overflow: ellipsis; } .pc-sec canvas { display: block; width: 64px; height: 14px; }
+    tr.up td.v, tr.up td.d { color: var(--up); } tr.down td.v, tr.down td.d { color: var(--down); } tr.diff td.v { color: var(--diff); }
+    tr.up, tr.down, tr.diff { background: rgba(255,255,255,.035); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./src/physiology-console/main.ts"></script>
+</body>
+</html>

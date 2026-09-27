@@ -70,6 +70,7 @@ import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts'; // Stage 7c
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts'; // Stage 5.1 (R-S3-3)
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
+import { pruneTruth } from './truth.ts'; // Stage 7x (R52)
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -183,6 +184,7 @@ class Engine implements MonitorEngine {
   private readonly groupTicks = new Map<string, number>(); // Stage 2: stageGroup → tick (brief §4.9)
   private dev: DeviceState; // Stage 4b: alarms, defibrillator, pacer (brief §6.4–§6.5)
   private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
+  private readonly truthEvery: number; // Stage 7x (R52): ticks between truth events, 0 = off
 
   constructor(opts: EngineOptions) {
     // Stage 7a: MODELED is accepted (the circulation's reflexes run)
@@ -194,6 +196,9 @@ class Engine implements MonitorEngine {
     }
     this.mainsHz = opts.device?.mainsHz ?? 50;
     this.devOpts = opts.device;
+    const truthHz = opts.truthHz ?? 0; // Stage 7x (R52)
+    if (!(truthHz >= 0 && truthHz <= 2)) throw new RangeError(`truthHz must be 0–2, got ${truthHz}`);
+    this.truthEvery = truthHz > 0 ? Math.round(1000 / TICK_MS / truthHz) : 0;
     this.dev = createDevice(opts.device?.skin, opts.device?.ageBand); // Stage 4b (throws for an unknown skin)
     const rng = createRngState(this.seed);
     const rhythmId = opts.patient?.rhythm?.id ?? 'sinus';
@@ -380,6 +385,7 @@ class Engine implements MonitorEngine {
     const devOut: EngineEvent[] = []; // Stage 4b
     for (const e of stepDevice(this.dev, this.deviceHost(simT), this.flush(simT), devOut)) this.emit(e);
     for (const e of devOut) this.emit(e);
+    if (this.truthEvery > 0 && this.tick % this.truthEvery === 0) this.emit({ type: 'truth', t: simT, ...pruneTruth(this.st, this.dev) }); // Stage 7x (R52)
     if (speculate) this.speculate();
   }
 

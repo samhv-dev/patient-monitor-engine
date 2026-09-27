@@ -26,3 +26,5 @@ export type * from './types-pk.ts'; // Stage 7g
 export { DRUG_BUS_NEUTRAL } from './types-pk.ts'; // Stage 7g
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts'; // Stage 7g
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // Stage 7g (demo/controller drug pickers)
+export type * from './types-truth.ts'; // Stage 7x
+export { pruneTruth, TRUTH_LIMITS } from './truth.ts'; // Stage 7x
