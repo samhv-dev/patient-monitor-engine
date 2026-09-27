@@ -7,7 +7,7 @@ import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, temp
 import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
 import {
   CBF_LL, CBF_UL, CBV0_ML, CBV_EFF, CPP_REF, CSF_RESERVE_ML, HEAD_HEIGHT_CM, HEADUP_VOL_ML_30, HERNIATION_CPP, HERNIATION_S,
-  HTS_TAU_IN_MIN, HTS_TAU_OUT_MIN, HTN_LL_SHIFT, HTN_UL_SHIFT, ICP0, MANNITOL_TAU_IN_MIN, MANNITOL_TAU_OUT_MIN, MAP_BASE_TAU_S,
+  HTS_TAU_IN_MIN, HTS_TAU_OUT_MIN, HTN_LL_SHIFT, HTN_UL_SHIFT, ICP0, ICP_THRESHOLD, MANNITOL_TAU_IN_MIN, MANNITOL_TAU_OUT_MIN, MAP_BASE_TAU_S,
   MMHG_PER_CM_BLOOD, OSM_K_MOSM, OSM_VMAX_ML, PACO2_ADAPT_TAU_S, PVI, R_OUT, TAU_VASC_S, TBI_AR_LOSS, TBI_ICP0_RISE, TBI_PVI_DROP, TBI_RESERVE_DROP,
 } from './params.ts';
 
@@ -136,7 +136,11 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   // Cushing on the pre-surge MAP (frozen while active)
   if (b.cush.drive < 0.01) b.mapBase += (inp.map - b.mapBase) * (1 - Math.exp(-dt / MAP_BASE_TAU_S));
   const hu = headUp(b.headUpDeg);
-  stepCushing(b.cush, b.mapBase - MMHG_PER_CM_BLOOD * hu.hCm - b.icp, b.mapHead - b.icp, dt);
+  // Cushing is the response to INTRACRANIAL hypertension (tables §5.1 Cushing row): with the ICP at or below the
+  // treatment threshold neither trigger counts — a low CPP from systemic hypotension alone (a MANUAL SBP 45 shock, Stage 2
+  // NIBP acceptance 9) is the circulation's business, not a brainstem-compression surge [executor mechanism, gate note].
+  const raised = b.icp > ICP_THRESHOLD;
+  stepCushing(b.cush, raised ? b.mapBase - MMHG_PER_CM_BLOOD * hu.hCm - b.icp : Infinity, raised ? b.mapHead - b.icp : Infinity, dt);
   b.lowCppS = b.cpp <= HERNIATION_CPP ? b.lowCppS + dt : 0;
   if (b.lowCppS >= HERNIATION_S) b.herniated = true;
   b.cmro2Rel = inp.drugs.cmro2Mult * tempCmro2(inp.tempC);
