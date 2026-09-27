@@ -26,12 +26,14 @@ export interface BloodInputs {
 }
 
 /**
- * 7d's kidney (R51 addendum 14: `blood.core.renal = { uopMlH, excretion: { k, na, cl, gluconate } }`, rates per
- * hour). When 7d fills it, urine REPLACES the fixed volume-receptor elimination and its isotonic solute loss; `null`
- * (the default) = the fixed elimination (K_EL_AWAKE, GA ×0.2) until 7d.
+ * 7d's kidney (R51 addendum 14: `blood.core.renal = { uopAboveBasalMlH, excretion: { k, na, cl, gluconate } }`, rates
+ * per hour). When 7d fills it, the seam REPLACES the fixed volume-receptor elimination and its isotonic solute loss;
+ * `null` (the default) = the fixed elimination (K_EL_AWAKE, GA ×0.2) until 7d. The balance has no intake term, so the
+ * seam carries only the urine ABOVE the basal turnover (7d's UOP0, 1 mL/kg/h) — the basal urine is taken as replaced
+ * by a basal intake, as in the fallback (G7d follow-through 2; renamed from `uopMlH` in FU-3 item 8).
  */
 export interface RenalSeam {
-  uopMlH: number;
+  uopAboveBasalMlH: number; // mL/h, ≥ 0: urine above the basal 1 mL/kg/h (0 at a resting kidney)
   excretion: { k: number; na: number; cl: number; gluconate: number }; // mmol/h (gluconate: Plasma-Lyte's anion, decision 3)
 }
 
@@ -110,7 +112,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const c0 = concOf(so, ecfMl(fl), pat.vLacL, bc.ecf0);
   const ecfBefore = ecfMl(fl);
   const rn = bc.renal;
-  const r = stepFluids(fl, x.t, dtS, osmEcf(c0) > 0 ? 290 / osmEcf(c0) : 1, rn ? Math.max(0, rn.uopMlH) / 60 : undefined);
+  const r = stepFluids(fl, x.t, dtS, osmEcf(c0) > 0 ? 290 / osmEcf(c0) : 1, rn ? Math.max(0, rn.uopAboveBasalMlH) / 60 : undefined);
   bc.bledMl += r.bledMl;
   if (r.bledPlasmaMl > 0) removePlasma(so, r.bledPlasmaMl, ecfBefore, c0);
   if (rn) {

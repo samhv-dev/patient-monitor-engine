@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createL1State } from '../../../src/l1/state.ts';
+import { createBloodCore, stepBloodCore, type BloodCore } from '../../../src/l2/blood/core.ts';
+import { bloodMl } from '../../../src/l2/blood/fluids.ts';
 import { createHemoState } from '../../../src/l2/hemo/pipeline.ts';
 import { advanceOrgans, applyOrgansCommand, createOrgansState, rebaselineOrgans, validateOrgansCommand } from '../../../src/l2/organs/pipeline.ts';
 import { createRespState } from '../../../src/l2/resp/pipeline.ts';
@@ -86,19 +88,46 @@ describe('organ pipeline', () => {
     const blood = { core: { liver: 1 } as Record<string, unknown>, out: { hb: 14, albuminGL: 42, bvRel: 1, hbfRel: 1, lactate: 2.5, gluconate: 1 } };
     advanceOrgans(os, { ...ctx, blood }, 125 * 2, () => {});
     expect(blood.core.liver).toBeCloseTo(os.liver.liverFn * os.liver.tempF, 9);
-    const seam = blood.core.renal as { uopMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
+    const seam = blood.core.renal as { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
     expect(os.renal.uopMlMin * 60).toBeCloseTo(70, -1); // the kidney makes 1 mL/kg/h × 70 kg at rest …
-    expect(seam.uopMlH).toBeCloseTo(Math.max(0, os.renal.uopMlMin * 60 - 70), 9); // … and only the excess leaves 7c's water
-    expect(seam.uopMlH).toBeLessThan(10);
-    expect(seam.excretion.na).toBeCloseTo((seam.uopMlH / 1000) * 100, 6);
+    expect(seam.uopAboveBasalMlH).toBeCloseTo(Math.max(0, os.renal.uopMlMin * 60 - 70), 9); // … and only the excess leaves 7c's water
+    expect(seam.uopAboveBasalMlH).toBeLessThan(10);
+    expect(seam.excretion.na).toBeCloseTo((seam.uopAboveBasalMlH / 1000) * 100, 6);
     expect(seam.excretion.gluconate).toBeGreaterThan(5); // GFR 7.5 L/h × 1 mmol/L × 0.9 (exogenous: no basal intake)
     const pk = { bus: { agents: { furosemide: { brain: 1.5 } } } }; // a diuresis: the urine above basal is lost
     advanceOrgans(os, { ...ctx, blood, pk }, 125 * 4, () => {});
-    const d = blood.core.renal as { uopMlH: number; excretion: { na: number } };
-    expect(d.uopMlH).toBeCloseTo(os.renal.uopMlMin * 60 - 70, 9);
-    expect(d.uopMlH).toBeGreaterThan(200);
-    expect(d.excretion.na).toBeCloseTo((d.uopMlH / 1000) * 100 * (1 + 0.5 * os.renal.furoE), 6);
+    const d = blood.core.renal as { uopAboveBasalMlH: number; excretion: { na: number } };
+    expect(d.uopAboveBasalMlH).toBeCloseTo(os.renal.uopMlMin * 60 - 70, 9);
+    expect(d.uopAboveBasalMlH).toBeGreaterThan(200);
+    expect(d.excretion.na).toBeCloseTo((d.uopAboveBasalMlH / 1000) * 100 * (1 + 0.5 * os.renal.furoE), 6);
     const ev = os.out.filter((e) => e.type === 'organs').pop() as Extract<EngineEvent, { type: 'organs' }>;
     expect(ev.liver.lactate).toBe(2.5);
+  });
+  // FU-3 item 8 (G7d follow-through 2): the seam's field names its meaning — urine ABOVE the basal turnover. Pinned on
+  // the REAL 7c core: at rest the seam is ≈ 0 and 7c's body water keeps its basal urine exactly as its own fallback
+  // does (the basal 1 mL/kg/h is neither removed by the seam nor removed a second time by the fallback elimination).
+  it('seam uopAboveBasalMlH on the real 7c: ≈ 0 at resting UOP, body water after 10 min = 7c\'s fallback (basal urine not removed)', () => {
+    const { os, ctx } = setup();
+    const man = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
+    const seamed = createBloodCore(man, 5.25, 40);
+    const fallback = createBloodCore(man, 5.25, 40);
+    const water = (b: BloodCore): number => bloodMl(b.fl) + b.fl.visf;
+    const step = (b: BloodCore, t: number): void => stepBloodCore(b, { t, coLpm: 5.25, paco2: 40, pao2: 95, tempC: 37, vo2Demand: 208 }, 0.1);
+    step(seamed, 0);
+    step(fallback, 0);
+    const blood = { core: seamed, out: seamed.out };
+    rebaselineOrgans(os, { ...ctx, blood }); // the engine baselines the organs on 7c's stepped `out` (gate §10 F2)
+    advanceOrgans(os, { ...ctx, blood }, 125 * 2, () => {});
+    expect(os.renal.uopMlMin * 60).toBeCloseTo(70, -1); // the kidney makes its basal 1 mL/kg/h …
+    const seam = seamed.renal as { uopAboveBasalMlH: number };
+    expect(seam.uopAboveBasalMlH).toBeGreaterThanOrEqual(0);
+    expect(seam.uopAboveBasalMlH).toBeLessThan(10); // … and the seam carries only what is above it
+    const w0 = water(seamed);
+    for (let k = 1; k <= 6000; k++) {
+      step(seamed, k / 10);
+      step(fallback, k / 10);
+    }
+    expect(w0 - water(seamed)).toBeCloseTo(seam.uopAboveBasalMlH / 6, 0); // 10 min of the above-basal urine only
+    expect(Math.abs(water(seamed) - water(fallback))).toBeLessThan(2); // a whole-urine seam: 10.55 mL short (measured)
   });
 });

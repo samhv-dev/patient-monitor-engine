@@ -169,7 +169,7 @@ function renalSeam(s: RenalState, gluconate: number): RenalSeam {
   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
   const na = lH * URINE_NA * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
   const k = lH * URINE_K;
-  return { uopMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
+  return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
 }
 
 /** 7g's accepted boluses (R51 §3: 7d OBSERVES, never consumes): mannitol → brain water and osmotic diuresis; hypertonic

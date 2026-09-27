@@ -52,8 +52,9 @@ export interface DrugView {
   sepsis: number; // 0–1 from 7e's sepsis stage (1 SIRS → 0, 2 sepsis → 0.5, ≥ 3 septic shock → 1)
   doses: OrganDose[]; // this pass's `bus.doses` (mannitol, hypertonic saline; the rest are ignored)
 }
-/** 7c's seam 7d fills (R51 addendum 14): urine output and the renal excretion rates, mmol/h. */
-export type RenalSeam = { uopMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
+/** 7c's seam 7d fills (R51 addendum 14): the urine ABOVE the basal UOP0 (mL/h, G7d follow-through 2) and the renal
+ *  excretion rates, mmol/h. */
+export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
 type BloodLike = {
   core?: { liver?: number; renal?: RenalSeam };
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number };
