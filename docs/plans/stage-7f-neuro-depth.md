@@ -3990,7 +3990,7 @@ git push
 **Interfaces:**
 - Consumes: the engine wiring (Tasks 12–13), 7g's `vaporiser` event and PK, `createNeuroState`/`applyNeuroCommand`/`stepNeuroTo` (Task 11) and `busFixture`/`opioid`/`nmbAgent`/`vol` (Task 2) for the CPU measurement; `LONGRUN_HOURS`/`LONGRUN_S` (`test/helpers/longrun.ts`: 24 sim-h locally, 6 on CI — the CI rule amendment).
 
-- [ ] **Step 1: Write the tests.** `packages/engine-core/test/engine/neuro-acceptance.test.ts` (exact; ≈ 30 s, yields every sim-minute; it logs each measured number for the gate note):
+- [x] **Step 1: Write the tests.** `packages/engine-core/test/engine/neuro-acceptance.test.ts` (exact; ≈ 30 s, yields every sim-minute; it logs each measured number for the gate note):
 
 ```ts
 // Stage 7f acceptance through the engine (scope 7f-5): residual block at extubation, depth bands, emergence,
@@ -4143,9 +4143,9 @@ describe('Stage 7f long run', () => {
 });
 ```
 
-- [ ] **Step 2: Run; expect PASS** — `… exec vitest run test/engine/neuro-acceptance.test.ts test/engine/neuro-longrun.test.ts` (4 + 1). Prototype on the merged base: residual block VT 100 vs 500 mL (×0.20 — on 7g's PK the patient is still at TOF 1–2 at 32–35 min); sevoflurane dial 2.5 % → end-tidal MAC 1.00, displayed DI 44.0, emergence 7.0 min after the vaporiser is closed; neuro step 0.0003 ms per tick. The bands are targets (R45): if the residual-block VT is not < 0.75 × control, log `ps.neuro.last.tof` and `ps.neuro.resp.obstruction` at 32–35 min before touching any constant; if the measured end-tidal MAC is outside 0.9–1.1, change the `SEVO_1MAC` dial (record it), never the DI band; if the emergence time falls outside 5–12 min, report the measured value (the band is [ENG]: no tables row; the wash-out is 7g's volatile model, not 7f's to tune).
+- [x] **Step 2: Run; expect PASS** — `… exec vitest run test/engine/neuro-acceptance.test.ts test/engine/neuro-longrun.test.ts` (4 + 1). Prototype on the merged base: residual block VT 100 vs 500 mL (×0.20 — on 7g's PK the patient is still at TOF 1–2 at 32–35 min); sevoflurane dial 2.5 % → end-tidal MAC 1.00, displayed DI 44.0, emergence 7.0 min after the vaporiser is closed; neuro step 0.0003 ms per tick. The bands are targets (R45): if the residual-block VT is not < 0.75 × control, log `ps.neuro.last.tof` and `ps.neuro.resp.obstruction` at 32–35 min before touching any constant; if the measured end-tidal MAC is outside 0.9–1.1, change the `SEVO_1MAC` dial (record it), never the DI band; if the emergence time falls outside 5–12 min, report the measured value (the band is [ENG]: no tables row; the wash-out is 7g's volatile model, not 7f's to tune).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add packages/engine-core/test/engine/neuro-acceptance.test.ts packages/engine-core/test/engine/neuro-longrun.test.ts
