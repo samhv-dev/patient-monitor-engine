@@ -17,6 +17,7 @@ const SLOW = [
   'test/engine/pk-acceptance-*.test.ts',
   'test/engine/blood-stage3-recheck.test.ts', // Stage 7c: four desaturations + a 70 min OLV run
   'test/engine/blood-sanity-*.test.ts', // Stage 7c: 2 h haemorrhage/transfusion and acid–base scenarios
+  'test/engine/blood-hyperk.test.ts', // Stage 7c: 30 min succinylcholine/calcium/insulin and salbutamol scenarios
 ];
 const set = process.env.PME_TEST_SET;
 

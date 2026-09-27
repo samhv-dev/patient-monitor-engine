@@ -4051,7 +4051,7 @@ git push origin stage-7c-blood
 - Consumes: Stage 5's hyperkalaemia rendering from `Modifiers.k` (QRS widening, peaked T, sine wave at 8.5), Task 16's deltas.
 - Produces: the teaching sequence the demo shows, asserted on the `beat` events' `qrsMs`.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `packages/engine-core/test/engine/blood-hyperk.test.ts`:
 
@@ -4105,12 +4105,12 @@ describe('7c sanity III — hyperkalaemia after succinylcholine in burns', { tim
 });
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-hyperk.test.ts`
 Expected: PASS. Prototype (every drug through 7g's validator and `bus.doses`): **K 7.7 at 4 min; QRS 93 → 126 ms; CaCl2 → 93 ms within 3 min; insulin–dextrose K 7.2 → 4.3 in 30 min** (the sux pulse decays on its own τ 17.5 min while insulin lowers the set point; tables: insulin −0.6 to −1.0 on its own); **salbutamol 10 mg nebulised: K 4.28 → 3.74 (−0.54) at 30 min** against the no-dose control, 7g's kShift −0.78 (tables −0.5 to −1.0; R50 F13). Test-after (sanity task).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/blood-hyperk.test.ts
