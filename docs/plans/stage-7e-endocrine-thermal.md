@@ -3303,7 +3303,7 @@ git push origin stage-7e-endocrine-thermal
 
 Before editing: `git fetch origin && git merge --no-edit origin/main`. If 7c's executor already added an endogenous seam (`grep -n "endoKShift\|kShiftEndo" packages/engine-core/src/l2/blood/core.ts`) or a lab-glucose seam, or already publishes `rs.temp.iv`, keep 7c's line and use its name in `adapters.ts` instead of repeating the edit; say so in the gate note. The prototype verified each anchor below once on the fixed 7c plan's code.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/engine/endo-seams.test.ts`
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/engine/endo-seams.test.ts`
 
 ```ts
 // Stage 7e cross-stage seams at engine level (R51 addendum 16): 7c endogenous K term, lab glucose and the physical cold
@@ -3388,7 +3388,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-seams.test.ts`
 Expected: FAIL — at least the dextrose-infusion test (`pk.drugs.dextrose.rate` is 0: a gamma row, and the lab glucose stays 100) and the cold-IV test (7c's fixed −0.25 °C per unwarmed unit ignores the fluid warmer); the MH K test fails too when the acidosis term alone stays < 0.5 mmol/L.
 
-- [ ] **Step 2: E-7e-1 — 7c's cold-unit line → the physical IV heat term** (`packages/engine-core/src/l2/blood/pipeline.ts`)
+- [x] **Step 2: E-7e-1 — 7c's cold-unit line → the physical IV heat term** (`packages/engine-core/src/l2/blood/pipeline.ts`)
 
 After `import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';` add:
 ```ts
@@ -3400,14 +3400,14 @@ Replace the line `    for (const u of bs.cold) if (t < u.until) rs.temp.tc -= u.
 ```
 (`bs.cold` and its `filter` line stay: they flag that an unwarmed unit is running. `COLD_UNIT_C` becomes unused by the pipeline; leave the constant, 7c owns `params.ts`.)
 
-- [ ] **Step 3: E-7e-2 — the lab-panel glucose** (`packages/engine-core/src/l2/blood/labs.ts`, anchor `glucose: NORMAL.glucoseMgDl`)
+- [x] **Step 3: E-7e-2 — the lab-panel glucose** (`packages/engine-core/src/l2/blood/labs.ts`, anchor `glucose: NORMAL.glucoseMgDl`)
 
 Replace `hb: r(o.hb, 1), glucose: NORMAL.glucoseMgDl, ag:` by:
 ```ts
 hb: r(o.hb, 1), glucose: r((bc as { endoGlucoseMgDl?: number }).endoGlucoseMgDl ?? NORMAL.glucoseMgDl, 0), ag:
 ```
 
-- [ ] **Step 4: E-7e-3 — the endogenous K term** (`packages/engine-core/src/l2/blood/core.ts`)
+- [x] **Step 4: E-7e-3 — the endogenous K term** (`packages/engine-core/src/l2/blood/core.ts`)
 
 Replace `  const drug = INSULIN_K_SHIFT * ef.ins + beta;` by:
 ```ts
@@ -3415,7 +3415,7 @@ Replace `  const drug = INSULIN_K_SHIFT * ef.ins + beta;` by:
 ```
 (One K source per mechanism, R50 F2/F8: `beta` is 7g's exogenous `bus.metabolic.kShift`; 7e's term is endogenous only. The pump-gain factor `1 + K_PUMP_GAIN·|drug|` then also speeds the endogenous shifts.)
 
-- [ ] **Step 5: E-7e-4 — 7g records the ordered rate for gamma rows** (`packages/engine-core/src/l2/pk/pipeline.ts`, inside `const setRate = (amountPerMin: number) => {`)
+- [x] **Step 5: E-7e-4 — 7g records the ordered rate for gamma rows** (`packages/engine-core/src/l2/pk/pipeline.ts`, inside `const setRate = (amountPerMin: number) => {`)
 
 Replace `    else d.rate = amountPerMin;` by:
 ```ts
@@ -3423,7 +3423,7 @@ Replace `    else d.rate = amountPerMin;` by:
 ```
 (For gamma rows `stepOnce` never reads `d.rate`; the drug panel's `rate` column now shows the ordered rate instead of 0 — a side benefit.)
 
-- [ ] **Step 6: E-7e-5 — re-specify 7c's cold-unit unit test** (`packages/engine-core/test/l2/blood/pipeline.test.ts`)
+- [x] **Step 6: E-7e-5 — re-specify 7c's cold-unit unit test** (`packages/engine-core/test/l2/blood/pipeline.test.ts`)
 
 Add after the last import: `import { infusionW } from '../../../src/l2/thermal/environment.ts'; // Stage 7e (E-7e-1)`. Replace the test `it('an unwarmed unit cools the core by ≈ 0.25 °C', () => { … });` (it read the core after `advanceBlood` alone; the heat now enters through Stage 3's 1 Hz heat step) by:
 ```ts
@@ -3439,12 +3439,12 @@ Add after the last import: `import { infusionW } from '../../../src/l2/thermal/e
 ```
 The property is unchanged (one unit ≈ 0.25 °C of a 70 kg core); only where it is integrated moved. 7c's engine test "massive transfusion … unwarmed units cool the core" (> 1.5 °C) passes unchanged (prototype).
 
-- [ ] **Step 7: Run**
+- [x] **Step 7: Run**
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/engine-core typecheck && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-seams.test.ts test/l2/blood test/engine/blood-sanity-haem.test.ts test/engine/blood-commands.test.ts test/l2/pk test/engine/pk-acceptance-pk.test.ts`
 Expected: PASS (seams 5; every 7c/7g file as before).
 
-- [ ] **Step 8: Commit and push**
+- [x] **Step 8: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/blood/pipeline.ts packages/engine-core/src/l2/blood/labs.ts packages/engine-core/src/l2/blood/core.ts packages/engine-core/src/l2/pk/pipeline.ts packages/engine-core/test/l2/blood/pipeline.test.ts packages/engine-core/test/engine/endo-seams.test.ts

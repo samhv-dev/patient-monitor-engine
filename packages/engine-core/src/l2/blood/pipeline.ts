@@ -14,6 +14,7 @@ import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
 import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedK, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
+import { ivInflow } from '../thermal/environment.ts'; // Stage 7e (E-7e-1)
 
 export interface BloodState {
   k: number; // next step index (time k·0.1 s)
@@ -180,7 +181,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
       bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
-    for (const u of bs.cold) if (t < u.until) rs.temp.tc -= u.cPerS * BLOOD_DT_S; // unwarmed units (decision 16)
+    rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // Stage 7e (E-7e-1): IV fluids and unwarmed units as a physical heat term (replaces decision 16's −0.25 °C per unit)
     bs.cold = bs.cold.filter((u) => u.until > t);
     bs.view.odc = { ...c.odc };
     bs.view.coFactor = circ ? 1 : volumeCoFactor(bvRatio);
