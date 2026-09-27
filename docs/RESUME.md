@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 08:55 (FU-2 merged; 7c gate and 8a executing; 7d/7e/7f plans ready).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-27 09:00 (FU-2 merged; 7c gate, 8a, 7d executing; 7e/7f plans ready — 7f after 7c merges, 7e after 7c and 7d).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -14,7 +14,7 @@
 |---|---|---|---|
 | 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2 | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17) | — |
 | 7c blood/acid–base | `stage-7c-blood` (worktree `../scratch/wt-stage-7c`), 23/26 tasks pushed | gate task running (fresh executor after the sixth cap) | gate + PR, then orchestrator gate + merge |
-| 7d brain/kidney/liver | plan fixed to R51 add. 14 (`docs/plans/stage-7d-organs.md`, 24 tasks, verified on 7a+7b+7g; exceptions E-7d-1/2) | 4 known `it.fails`; FU-2 items 6–7 come from it | execute after 7c merges (worktree `../scratch/wt-stage-7d`, branch `stage-7d-organs`) |
+| 7d brain/kidney/liver | `stage-7d-organs` (plan fixed, 24 tasks; worktree `../scratch/wt-stage-7d`) | executing (started 2026-09-27 09:00 on main with FU-2; merges 7c when it lands) | resume from first unticked task |
 | 7e endocrine/thermal | plan rewritten to R51 (`docs/plans/stage-7e-endocrine-thermal.md`, 20 tasks; unit-level verified on main+7c, engine tasks 12–18 unverified) | addendum 16 names; 3 known `it.fails` | execute after 7c AND 7d merge (worktree `../scratch/wt-stage-7e`, branch `stage-7e-endocrine-thermal`) |
 | 7f NMB/depth | plan under fix (`docs/plans/stage-7f-neuro-depth.md`; re-review vs real 7g: INCOMPLETE — bus names, naloxone, stimulus, drive wiring; fixer running per addendum 17) | sux tests pre-declared `it.fails` (FU-3 item 1) | execute after FU-2 and 7c merge |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
