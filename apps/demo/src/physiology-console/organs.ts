@@ -37,6 +37,7 @@ export const GROUP_BY_PREFIX: Readonly<Record<string, GroupId>> = {
   // `brain { anaesthesia }` input belong to the brain
   'organs.brain': 'brain', 'organs.renal': 'kidney', 'organs.kidney': 'kidney', 'organs.liver': 'liver',
   'organs.sensors.icp': 'brain', 'organs.sensors.pbto2': 'brain', 'organs.sensors.urometer': 'kidney', 'organs.anaesEvent': 'brain',
+  'organs.iap': 'kidney', 'organs.conds': 'brain', // Stage 7d: intra-abdominal pressure (renal), the organ conditions (tbi/aki/hepaticFailure)
   'ev.organs.brain': 'brain', 'ev.organs.renal': 'kidney', 'ev.organs.kidney': 'kidney', 'ev.organs.liver': 'liver',
   // endocrine (7e): its own tree and event, its seams into 7c's blood and 7a's circulation multipliers
   endo: 'endocrine', 'ev.endo': 'endocrine', 'blood.endo': 'endocrine',
@@ -93,6 +94,12 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   // 7g PK machinery: compartment amounts, gamma doses and bolus times per drug, the per-tick dose log, the pending
   // and grid-due boluses, the last PD concentrations and the desflurane MAC history (the bus concentrations stay visible)
   'pk.drugs.*.x', 'pk.drugs.*.doses', 'pk.drugs.*.bolusTimes', 'pk.bus.doses', 'pk.lastC', 'pk.due', 'pk.pending', 'pk.macPrev',
+  // 7d organ machinery: the ICP beat times, 1 s numeric accumulators, the last organ view (a copy of other stages'
+  // truths), the effects bookkeeping, the event queue, the 4 s MAP/CVP means and the reference CO; the brain's osmotic
+  // dose list and herniation timer; the kidney's 10 min urine bins, its calibration constants and the TGF state
+  'organs.beats', 'organs.num', 'organs.view', 'organs.fx', 'organs.out', 'organs.lp', 'organs.co0', 'organs.weightKg',
+  'organs.brain.osm', 'organs.brain.lowCppS', 'organs.brain.p', 'organs.renal.bins', 'organs.renal.binAcc', 'organs.renal.binT', 'organs.renal.p',
+  'organs.renal.oliguriaS', 'organs.renal.rAff', 'organs.liver.weightKg',
 ];
 const prefixRe = (list: readonly string[]) =>
   new RegExp(`^(${list.map((p) => p.replace(/\./g, '\\.').replace(/\*/g, '[^.]+')).join('|')})(\\.|$)`);
