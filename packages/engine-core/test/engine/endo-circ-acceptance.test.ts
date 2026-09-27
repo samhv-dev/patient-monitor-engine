@@ -45,19 +45,19 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
   }, 900_000);
   // R45 misses (prototype, Q-7e-7): warm HR 131, MAP 61, CO 5.0, SVR 866; cold SVR 1510. 7a's baroreflex restores the
   // SVR the vasoplegia removed and nothing raises venous return (see Requests: 7a baroreflex × vasoResp, septic RVR).
-  it.fails('warm HR 115–130 (prototype 131)', () => {
+  it.fails('warm HR 115–130 (measured 131; Q-7e-7)', () => {
     expect(warm.hr).toBeGreaterThanOrEqual(115);
     expect(warm.hr).toBeLessThanOrEqual(130);
   });
-  it.fails('warm MAP 55–60 (prototype 61)', () => {
+  it.fails('warm MAP 55–60 (measured 61; Q-7e-7)', () => {
     expect(warm.map).toBeGreaterThanOrEqual(55);
     expect(warm.map).toBeLessThanOrEqual(60);
   });
-  it.fails('warm CO 7–9 L/min (prototype 5.0)', () => {
+  it.fails('warm CO 7–9 L/min (measured 5.0; Q-7e-7)', () => {
     expect(warm.co).toBeGreaterThanOrEqual(7);
     expect(warm.co).toBeLessThanOrEqual(9);
   });
-  it.fails('warm SVR 500–700 dyn·s/cm⁵ (prototype 866)', () => {
+  it.fails('warm SVR 500–700 dyn·s/cm⁵ (measured 861; Q-7e-7)', () => {
     expect(warm.svr).toBeGreaterThanOrEqual(500);
     expect(warm.svr).toBeLessThanOrEqual(700);
   });
@@ -65,7 +65,7 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
     expect(cold.co).toBeGreaterThanOrEqual(3);
     expect(cold.co).toBeLessThanOrEqual(4);
   });
-  it.fails('cold SVR 1200–1500 dyn·s/cm⁵ (prototype 1510)', () => {
+  it.fails('cold SVR 1200–1500 dyn·s/cm⁵ (measured 1507; Q-7e-7)', () => {
     expect(cold.svr).toBeGreaterThanOrEqual(1200);
     expect(cold.svr).toBeLessThanOrEqual(1500);
   });

@@ -64,7 +64,7 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
 
   // R45 miss (prototype: HR 121 at +20 min, core 39.8 °C): the fever term (× 1.27) and the hypercapnic epinephrine keep
   // the HR up; the tables' "HR normal" assumes active cooling, which 7e does not model (Q-7e-5). Not widened.
-  it.fails('MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21)', async () => {
+  it.fails('MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21; measured 129/121 at +15/+20 min, core 39.78 °C; Q-7e-5)', async () => {
     const ev = await mhDantrolene(true);
     const hr20 = hrAt(ev, t0 + 1140, t0 + 1200);
     const tc = stateSeries(ev, 'tempCore');
