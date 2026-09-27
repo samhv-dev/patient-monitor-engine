@@ -4191,16 +4191,16 @@ git push origin stage-7e-endocrine-thermal
 - Modify: `NOTICES.md` (two rows in the Pulse table), `apps/demo/src/physiology-console/organs.ts` (two additive blocks), `packages/engine-core/src/truth.ts` (the `SKIP_PATH` line)
 - Test: `npx -y pnpm@9.15.9 check-notices`; the console's own tests
 
-- [ ] **Step 1: Check the headers** — `head -7` of `src/l2/thermal/thresholds.ts`, `src/l2/thermal/environment.ts`, `src/l2/endo/hormones.ts`, `src/l2/endo/glucose.ts` must each start with `// SPDX-License-Identifier: Apache-2.0` and the "Portions derived from the Pulse Physiology Engine 4.3.2 (commit e8a3649)" sentence naming the Pulse file. No other 7e file carries it. `LICENSES/Apache-2.0.txt` exists (7a/7c added it; add it from annex §E only if it does not).
+- [x] **Step 1: Check the headers** — `head -7` of `src/l2/thermal/thresholds.ts`, `src/l2/thermal/environment.ts`, `src/l2/endo/hormones.ts`, `src/l2/endo/glucose.ts` must each start with `// SPDX-License-Identifier: Apache-2.0` and the "Portions derived from the Pulse Physiology Engine 4.3.2 (commit e8a3649)" sentence naming the Pulse file. No other 7e file carries it. `LICENSES/Apache-2.0.txt` exists (7a/7c added it; add it from annex §E only if it does not).
 
-- [ ] **Step 2: Add the rows** at the end of the `### Pulse Physiology Engine (Stage 7a onward)` table (6 columns; IDs must not repeat — 7a uses N-P06/07/10/16, 7c N-P08/09/23, 7d N-P19+; 7e takes N-P17 and N-P18). The claims are limited to what the four headed files contain:
+- [x] **Step 2: Add the rows** at the end of the `### Pulse Physiology Engine (Stage 7a onward)` table (6 columns; IDs must not repeat — 7a uses N-P06/07/10/16, 7c N-P08/09/23, 7d N-P19+; 7e takes N-P17 and N-P18). The claims are limited to what the four headed files contain:
 
 ```markdown
 | N-P17 | Energy/environment forms: summit metabolism 21·W^0.75 reached 1.8 °C below the shivering threshold; sweat evaporative gain 0.25·h_sw (218 W per °C above threshold); radiation h_r = 4εσ·0.73·T̄³; convection h_c = 10.3·v^0.6; respiratory sensible + latent heat loss — `packages/engine-core/src/l2/thermal/{thresholds,environment}.ts` | Derived from the Pulse Physiology Engine 4.3.2 (commit e8a3649), src/cpp/engine/common/system/physiology/EnergyModel.cpp and system/environment/EnvironmentModel.cpp, Copyright 2018-2025 Kitware, Inc. and Contributors, a fork of BioGears 6.1.1 (Copyright 2015 Applied Research Associates, Inc.); Apache License 2.0 (`LICENSES/Apache-2.0.txt`) | derived (Apache header in the files) | Forms re-expressed with consistent units (Pulse's environment resistances are "area/h", audit §5); the two-compartment core/periphery model, its 2/3 core split and 3.5 kJ/kg/°C are Stage 3's, not Pulse's 2-node circuit; the insulation is calibrated to Stage 3's awake balance; anaesthetic thresholds, vasomotion, MH, forced air, IV fluid and the summit/sweat caps are ours (annex B3) | 2026-09-27 |
 | N-P18 | Endocrine values and forms: basal plasma CONCENTRATIONS of epinephrine 0.034 µg/L (34 pg/mL) and norepinephrine 0.275 µg/L (275 pg/mL) and their clearances 68.66 / 55 mL/min/kg (Substances); the insulin synthesis line 5.357·G − 328.56 for G ≥ 80 mg/dL (shape only, normalised to the basal secretion) — `packages/engine-core/src/l2/endo/{hormones,glucose}.ts` | Derived from the Pulse Physiology Engine 4.3.2 (commit e8a3649), EndocrineModel.cpp and data/Data.xlsx (Substances: Epinephrine, Norepinephrine), Copyright 2018-2025 Kitware, Inc. and Contributors, a fork of BioGears 6.1.1; Apache License 2.0 | derived (Apache header in the files) | Pulse's basal RELEASE rates are not used. They are inconsistent for norepinephrine: 0.008974 µg/kg/min ÷ 55 mL/min/kg = 163 pg/mL at steady state against Pulse's own initial plasma 275 pg/mL (epinephrine is consistent: 0.00229 ÷ 68.66 = 33 vs 34 pg/mL); 7e uses the initial plasma value 275 pg/mL as its basal. Stress/nociception/hypoglycaemia/hypoxia drives, cortisol, the Bergman disposal, thyroid and the conditions are ours | 2026-09-27 |
 ```
 
-- [ ] **Step 3: The physiology console (7x follow-up, one additive commit)** — only if `apps/demo/src/physiology-console/organs.ts` exists on the branch (7x merged); otherwise write "7x absent" in the gate note.
+- [x] **Step 3: The physiology console (7x follow-up, one additive commit)** — only if `apps/demo/src/physiology-console/organs.ts` exists on the branch (7x merged); otherwise write "7x absent" in the gate note.
 
 (a) In `organs.ts`'s group map, after the line `  'hemo.circ.ext.endoHrF': 'endocrine', 'hemo.circ.ext.endoSvrF': 'endocrine', 'hemo.circ.ext.endoEesF': 'endocrine', 'hemo.circ.ext.endoDV0Frac': 'endocrine',` add:
 ```ts
@@ -4219,9 +4219,9 @@ const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.ba
 ```
 (`endo.core.out` and `resp.temp.out` are already hidden by the `out` key of `SKIP_ANY`; the effects stay visible through `hemo.circ.ext.endo*`, `cond.vasoResp`, `blood.core.endo*` and `endo.core.hormones/glucose/cond`.) Prototype (on `origin/stage-7x-physiology-console`): console tests 114 passed, `truth` tests 11 passed, typecheck clean.
 
-- [ ] **Step 4: Run** `npx -y pnpm@9.15.9 check-notices && npx -y pnpm@9.15.9 --filter demo exec vitest run src/physiology-console && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/truth.test.ts test/engine/truth-event.test.ts` — Expected: pass.
+- [x] **Step 4: Run** `npx -y pnpm@9.15.9 check-notices && npx -y pnpm@9.15.9 --filter demo exec vitest run src/physiology-console && npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/truth.test.ts test/engine/truth-event.test.ts` — Expected: pass.
 
-- [ ] **Step 5: Commit and push (two commits)**
+- [x] **Step 5: Commit and push (two commits)**
 
 ```bash
 git add NOTICES.md
