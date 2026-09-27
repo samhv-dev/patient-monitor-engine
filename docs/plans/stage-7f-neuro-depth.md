@@ -2475,7 +2475,7 @@ git push
 
 **Before editing `engine.ts` (R51 §7):** `git fetch origin && git merge origin/main`, run `npx -y pnpm@9.15.9 --filter @pme/engine-core test`, then place every insert below by the chain order (validate/apply: device → 7g pk → **7f neuro** → 7d → 7c → 7e → Stage 3 → hemo; advance: 7g pk → **7f neuro** → resp → blood → endo → organs → hemo — R51 addendum 14), re-anchoring on the merged lines rather than on any literal that no longer matches. The anchors quoted below are the prototype base's (5670fe5 + 7c + FU-2); each occurs once there. Record the anchors you used in the gate note.
 
-- [ ] **Step 1: Write the failing test** `packages/engine-core/test/engine/neuro-engine.test.ts` (exact; ≈ 25 s on a laptop, it yields every sim-minute; prototype: 8 passed):
+- [x] **Step 1: Write the failing test** `packages/engine-core/test/engine/neuro-engine.test.ts` (exact; ≈ 25 s on a laptop, it yields every sim-minute; prototype: 8 passed):
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2624,9 +2624,9 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
 });
 ```
 
-- [ ] **Step 2: Run; expect FAIL** (`device tof is not implemented until later stages` / no `tof` events): `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-engine.test.ts`.
+- [x] **Step 2: Run; expect FAIL** (`device tof is not implemented until later stages` / no `tof` events): `npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-engine.test.ts`.
 
-- [ ] **Step 3: Respiratory seams.** In `packages/engine-core/src/l2/resp/driver.ts`, in `interface DriverCtx`, after `  complianceMl: number;` add:
+- [x] **Step 3: Respiratory seams.** In `packages/engine-core/src/l2/resp/driver.ts`, in `interface DriverCtx`, after `  complianceMl: number;` add:
 
 ```ts
   /** Stage 7f: complete upper-airway obstruction of spontaneous breaths (sedation / residual block, natural airway). */
@@ -2669,7 +2669,7 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
   (if another stage changed `driverCtx`'s other fields, keep theirs and add the Stage 7f parts: the multipliers on `rr`/`vt` and the two new fields; the other `driverCtx(rs, l1, t)` call sites keep three arguments — the neuro multipliers shape only the planned cycles);
 - in `advanceResp` replace `  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd), tEnd + PLAN_AHEAD_S);` with `  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd, ctx.neuro), tEnd + PLAN_AHEAD_S); // Stage 7f: neuro`.
 
-- [ ] **Step 4: Engine** (`packages/engine-core/src/engine.ts`; merge `origin/main` first — see the note above the steps):
+- [x] **Step 4: Engine** (`packages/engine-core/src/engine.ts`; merge `origin/main` first — see the note above the steps):
   1. after `import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g` add
      `import { applyNeuroCommand, createNeuroState, fasciculating, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f` and `import { pcheOf } from './l2/neuro/bus.ts'; // Stage 7f`;
   2. `interface PipelineState`: after `  pkHooks: RhythmHookState; // Stage 7g` add `  neuro: NeuroState; // Stage 7f: NMB, depth, drive depression (R32)`;
@@ -2720,9 +2720,9 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
 
   In `packages/engine-core/vite.config.ts`, append to the `SLOW` list after its last entry (prototype base: FU-2's `'test/engine/af-rate-control.test.ts', …`): `  'test/engine/neuro-*.test.ts', // Stage 7f: 100 sim-min rocuronium, 24 h maintenance, MODELED drive scenarios`.
 
-- [ ] **Step 5: Run** the new test file and the Stage 3 and 7g suites: `… exec vitest run test/engine/neuro-engine.test.ts test/l2/resp test/l2/pk test/engine/pk-*.test.ts`; expect PASS (neuro-engine 8; the Stage 3 and 7g suites unchanged). Then `npx -y pnpm@9.15.9 -r typecheck`. (The MODELED spontaneous drive is Task 13; this task leaves MODELED spontaneous breathing at Stage 3's targets × 7f's multipliers.)
+- [x] **Step 5: Run** the new test file and the Stage 3 and 7g suites: `… exec vitest run test/engine/neuro-engine.test.ts test/l2/resp test/l2/pk test/engine/pk-*.test.ts`; expect PASS (neuro-engine 8; the Stage 3 and 7g suites unchanged). Then `npx -y pnpm@9.15.9 -r typecheck`. (The MODELED spontaneous drive is Task 13; this task leaves MODELED spontaneous breathing at Stage 3's targets × 7f's multipliers.)
 
-- [ ] **Step 6: Commit and push**
+- [x] **Step 6: Commit and push**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/l2/resp/pipeline.ts packages/engine-core/src/l2/resp/driver.ts packages/engine-core/vite.config.ts packages/controller/src/session/controller-session.ts packages/engine-core/test/engine/neuro-engine.test.ts

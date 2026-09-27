@@ -214,6 +214,7 @@ export function describe(c: WireCommand): string {
     case 'device':
       if (c.action.device === 'nibp') return `nibp ${c.action.action}${c.action.intervalMin !== undefined ? ` every ${c.action.intervalMin} min` : ''}`; // Stage 2
       if (c.action.device === 'iabp' || c.action.device === 'lvad') return `${c.action.device} ${c.action.action}`; // Stage 7a
+      if (c.action.device === 'tof' || c.action.device === 'depth') return `${c.action.device} ${c.action.action}${'intervalS' in c.action && c.action.intervalS !== undefined ? ` every ${c.action.intervalS} s` : ''}`; // Stage 7f
       return `${c.action.device} ${c.action.action} ${String(c.action.value ?? '')}${c.action.lane !== undefined ? ` lane ${c.action.lane}` : ''}`;
     case 'time':
       return `time ${c.action}${c.value !== undefined ? ` ${c.value}` : ''}`;

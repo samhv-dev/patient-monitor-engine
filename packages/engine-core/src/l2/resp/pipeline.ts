@@ -5,6 +5,7 @@
 //   and the mean-airway-pressure coupling on cvp/sbp/dbp/volumeStatus).
 // Reads Stage 2's HemoState (CO, pleth feet, PI, cuff, CPR) and never writes it. All state is plain data.
 import { l1Target, setL1Target, type L1State } from '../../l1/state.ts';
+import type { NeuroResp } from '../neuro/drive.ts'; // Stage 7f
 import type { RampState } from '../../l1/ramp.ts';
 import { co2NumStep, co2Numerics, createCo2Num, type Co2Num } from '../../l3/co2-numerics/co2-numerics.ts';
 import { createImpNum, impedanceSample, impRr, impStep, type ImpNum } from '../../l3/resp/impedance.ts';
@@ -54,6 +55,7 @@ export interface RespCtx {
   hemo: HemoState;
   rhythm: RhythmView;
   hr: RampState;
+  neuro?: NeuroResp; // Stage 7f: drug and NMB effects on spontaneous breathing
 }
 
 export interface RespState {
@@ -122,8 +124,15 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
 }
 
 // --- helpers ----------------------------------------------------------------------------------------------
-function driverCtx(rs: RespState, l1: L1State, t: number): DriverCtx {
-  return { rr: l1Target(l1, 'rr', t), vt: l1Target(l1, 'vt', t), fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs) };
+function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): DriverCtx {
+  const n = neuro; // Stage 7f: the instructor's rr/vt × the drug/NMB multipliers (plan decision 7); apnoea → rr 0
+  return {
+    rr: n ? (n.apnoea ? 0 : l1Target(l1, 'rr', t) * n.rrMult) : l1Target(l1, 'rr', t),
+    vt: n ? l1Target(l1, 'vt', t) * n.vtMult : l1Target(l1, 'vt', t),
+    fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs),
+    obstructed: n ? n.obstruction >= 0.9 : false,
+    cleft: n && n.cleft > 0.15 ? n.cleft : 0,
+  };
 }
 function compliance(rs: RespState): number {
   return staticCompliance(rs.lung); // Stage 7b: the lung module (endobronchial ×0.5 now emerges from the mainstem block)
@@ -386,7 +395,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     }
   }
   const tEnd = mEnd / RESP_RATE;
-  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd), tEnd + PLAN_AHEAD_S);
+  planCycles(rs.driver, driverCtx(rs, ctx.l1, tEnd, ctx.neuro), tEnd + PLAN_AHEAD_S); // Stage 7f: neuro
   // Stage 7b: stamp newly planned cycles with the lung's expiratory τ and capnogram terms
   const ct = capnoTerms(rs.lung);
   for (const c of rs.driver.cycles) {
