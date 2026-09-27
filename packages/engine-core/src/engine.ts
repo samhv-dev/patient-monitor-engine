@@ -493,6 +493,7 @@ class Engine implements MonitorEngine {
     if (circ7g) {
       circ7g.ext.drug = ps.pk.fx;
       circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
+      circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
     }
     const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g
     if (req7g) {

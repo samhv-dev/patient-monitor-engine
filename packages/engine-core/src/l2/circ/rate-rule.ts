@@ -2,7 +2,8 @@
 // circulation's HR set point (baroreflex, chemoreflex, drugs); every other pacemaker — ectopic atrial foci, the AF
 // junction, re-entry circuits, junctional and ventricular foci, escape rhythms, pacemakers — keeps its own rate and
 // the circulation follows IT. Two bounded exceptions: in AF the reflex modulates AV-nodal conduction, so the
-// ventricular response moves with sympathetic/vagal tone by a bounded fraction; an atrial-sensing pacemaker (AAI,
+// ventricular response moves with sympathetic/vagal tone by a bounded fraction, and falls with the drugs' AV-nodal
+// block (β-blockers, amiodarone, adenosine: the drug bus's avNodeBlock); an atrial-sensing pacemaker (AAI,
 // DDD) is inhibited when the intrinsic sinus runs faster than its lower rate, so the reflex can raise the rate above
 // the programmed lower rate but never pull it below. An explicit instructor rate on a sinus-family rhythm overrides
 // the reflex exactly as in MANUAL until a sinus-family rhythm is set without a rate.
@@ -44,7 +45,7 @@ export function modeledHrRequest(m: CircModelState, rhythmId: string, t: number)
   if (PACER_SENSING.has(rhythmId)) return Math.max(rampValue(m.hrSet, t), m.hrModel);
   if (AV_MODULATED.has(rhythmId)) {
     const drive = Math.min(1 + AV_MOD_MAX, Math.max(1 - AV_MOD_MAX, 1 + AV_GAIN * (m.hrModel / m.prof.hrRest - 1)));
-    return rampValue(m.hrSet, t) * drive;
+    return rampValue(m.hrSet, t) * drive * (1 - (m.ext.avNodeBlock ?? 0)); // AF rate control: the drugs' AV-nodal block
   }
   return null;
 }

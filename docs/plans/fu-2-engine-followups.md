@@ -911,7 +911,7 @@ git commit -m "fix(ecg): AF rate mapping knots at 135 and 145 bpm — ±2 % from
 git push
 ```
 
-- [ ] **Step 6: Write the failing rate-control tests** — create `packages/engine-core/test/l2/pk/av-node.test.ts`:
+- [x] **Step 6: Write the failing rate-control tests** — create `packages/engine-core/test/l2/pk/av-node.test.ts`:
 
 ```ts
 // FU-2 (AF rate control, E-FU2-6/E-FU2-7): the β-blocker rows feed the drug bus's AV-nodal block; the adenosine hook
@@ -1001,14 +1001,14 @@ describe('AF rate control through the AV node (FU-2, E-FU2-6)', () => {
 });
 ```
 
-- [ ] **Step 7: Run them to verify they fail**
+- [x] **Step 7: Run them to verify they fail**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/av-node.test.ts test/engine/af-rate-control.test.ts`
 Expected: FAIL — `av-node`: esmolol's block is 0 (no entry yet) and the stacked combination blocks only 0.2
 (amiodarone alone); `af-rate-control`: esmolol logs `136.3 → 138.4 (fall -1.6 %)` (AF speeds up). The amiodarone
 `it.fails` shows as passed (its band is not met: `fall -8.8 %`).
 
-- [ ] **Step 8: Implement**
+- [x] **Step 8: Implement**
 
 In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (E-FU2-6: append one entry per row, change nothing
 else), esmolol — find:
@@ -1158,7 +1158,7 @@ and replace with:
   'test/engine/af-rate-control.test.ts', // FU-2: AF rate control (13–22 sim-min each)
 ```
 
-- [ ] **Step 9: Run them to verify they pass; adenosine and the rate rule are unchanged**
+- [x] **Step 9: Run them to verify they pass; adenosine and the rate rule are unchanged**
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/circ/rate-rule.test.ts test/engine/af-rate-control.test.ts
@@ -1172,7 +1172,7 @@ reaches 20 %, turn it into `it` and record it in the gate note); the adenosine s
 and every `circ-rate-rule` number unchanged (AF 100 → 101.0, no drug on the bus). Then the fast set: `cd
 packages/engine-core && PME_TEST_SET=fast CI=1 npx vitest run; cd ../..` — green.
 
-- [ ] **Step 10: Commit and push**
+- [x] **Step 10: Commit and push**
 
 ```bash
 git add packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts packages/engine-core/src/l2/pk/hooks.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/circ/rate-rule.ts packages/engine-core/src/engine.ts packages/engine-core/vite.config.ts packages/engine-core/test/l2/pk/av-node.test.ts packages/engine-core/test/engine/af-rate-control.test.ts docs/plans/fu-2-engine-followups.md
