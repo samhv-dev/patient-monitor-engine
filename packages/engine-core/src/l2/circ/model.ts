@@ -30,6 +30,21 @@ export const CTL_DT = 0.1; // control layer at 10 Hz (tables §2.1 step 6)
 export const CO_TAU_S = 4;
 export const PESP_MAX = 0.5;
 export const PESP_PREMATURE = 0.8;
+/**
+ * FU-4 Task 17 (ruling 5 / review F14, attempt 1): MECHANICAL RESTITUTION — a beat's contractility recovers
+ * exponentially with the interval since the previous activation (the force–interval relation; research 03 §8.2/§8.3,
+ * AF "per-beat SV depends on preceding RR; pulse deficit for RR < ~350 ms", Annu Rev Med 1988, PubMed 3285783), so a
+ * beat that arrives EARLIER than the running normal RR is weaker as well as under-filled. Applied to supraventricular
+ * beats only (ventricular beats already carry the rhythm engine's k_rhythm) and only below the running normal RR, so
+ * every steady rhythm is unchanged. Recovery 1 − exp(−(RR − REST_ERP_S)/REST_TAU_S), normalised to the running RR [ENG
+ * sizes; fit: AF 150/min non-ejecting beats 10–20 %].
+ */
+export const REST_ERP_S = 0.2;
+export const REST_TAU_S = 0.06;
+function restitution(rr: number, rrRef: number): number {
+  const f = (x: number) => 1 - Math.exp(-Math.max(0, x - REST_ERP_S) / REST_TAU_S);
+  return rr >= 0.97 * rrRef ? 1 : f(rr) / Math.max(1e-6, f(rrRef)); // within 3 % of the running RR (steady rhythms, the EMA lag): exactly 1
+}
 /** FU-3 item 16: sinus-rate loss per unit of the hypoxic myocardial deficit `cor.hyp` [ENG, fitted: HR < 40 held within 6 min of SaO2 < 60 %, before the arrest]. */
 export const G_SA = 1.5;
 /** FU-3 item 16: floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [ENG]. */
@@ -158,6 +173,8 @@ export function circOnBeat(m: CircModelState, t: number, hr: number, origin: str
   // R45(a): prematurity → potentiation of the NEXT beat; normal intervals update the reference RR
   const boost = m.pespNext;
   m.pespNext = 0;
+  let restF = 1; // FU-4 Task 17: mechanical restitution of a premature supraventricular beat
+  if (m.lastVentT >= 0 && origin !== 'ventricular' && origin !== 'paced') restF = restitution(t - m.lastVentT, m.rrRef);
   if (m.lastVentT >= 0) {
     const q = (t - m.lastVentT) / m.rrRef;
     if (q < PESP_PREMATURE) m.pespNext = PESP_MAX * Math.min(1, (PESP_PREMATURE - q) / (PESP_PREMATURE - 0.4));
@@ -165,7 +182,7 @@ export function circOnBeat(m: CircModelState, t: number, hr: number, origin: str
   }
   m.lastVentT = t;
   if (!perfused) return;
-  const amp = (origin === 'ventricular' || origin === 'paced' ? DYSSYNC : 1) * Math.min(1, Math.max(0, eff)) * (1 + boost);
+  const amp = (origin === 'ventricular' || origin === 'paced' ? DYSSYNC : 1) * Math.min(1, Math.max(0, eff)) * (1 + boost) * restF;
   m.vent.push({ t0: t, T: activationPeriodS(Math.max(30, Math.min(250, hr))), amp, origin });
 }
 

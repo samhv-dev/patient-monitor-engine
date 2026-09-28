@@ -25,7 +25,10 @@ export const CO2_CS_PER_VCO2 = 55 / 200;
 export const CO2_KFS_PER_VCO2 = 18 / 200; // (mL/min/mmHg) per (mL/min)
 /** Low-flow compression exponent: EtCO2 ≈ PaCO2·min(1, CO/CO_ref)^0.6 (brief §4.4). */
 export const LOW_FLOW_EXP = 0.6;
-export const LOW_FLOW_TAU_S = 5; // "falls below 5 mmHg within a few breaths" after arrest [ENG]
+/** FU-4 G4 (orchestrator 2026-09-28): the arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s
+ * [ENG, fit: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6.
+ * The plan's first guess τ 40 gave 7.9 / 1.9 — a single exponential needs τ 51–101 s for both bands] (was 5 s). */
+export const LOW_FLOW_TAU_S = 70;
 
 export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
 /** Y-piece + HME on a ventilator or BVM: 50 mL adult, 1.5 mL/kg below 33 kg (neonatal circuits) [ENG]. */
