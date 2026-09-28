@@ -56,10 +56,14 @@ export function applyL1Fallback(l1: L1State, t: number, bvRatio: number, kChem: 
  * Chemistry → contractility (tables §5b.1 Q44, §5b.2 Q46): ×(1 − 1.5·(7.2 − pH)) below pH 7.2 (floor 0.3) and
  * ×min(1, (iCa/1.1)^1.5).
  */
-export function chemistryContractility(ph: number, iCa: number): number {
+export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2): number {
   const acid = ph < 7.2 ? Math.max(0.3, 1 - 1.5 * (7.2 - ph)) : 1;
-  return acid * Math.min(1, (iCa / 1.1) ** 1.5);
+  const kF = kEcg > K_CONTRACT ? Math.max(0.3, 1 - K_CONTRACT_SLOPE * (kEcg - K_CONTRACT)) : 1; // FU-4 G3
+  return acid * Math.min(1, (iCa / 1.1) ** 1.5) * kF;
 }
+/** FU-4 G3: severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
+export const K_CONTRACT = 8;
+export const K_CONTRACT_SLOPE = 0.2;
 
 // --- lung water (G7b ruling 8): the blood's COP and capillary leak → 7b's EVLWI key ---------------------------
 /** Pulmonary capillary pressure (mmHg): 7a's pulmonary venous pressure `circOut.pPv`, or null without a circuit. */
