@@ -34,6 +34,8 @@ import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
+import { chestWallPressure, unitPressure } from '../lung/mechanics.ts'; // FU-4 F3: the one-way valve's driving pressure
+import { PTX_DRAIN_TAU_S, PTX_VALVE_PER_CMH2O_S } from '../lung/params.ts'; // FU-4 F3
 import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
@@ -107,6 +109,10 @@ export interface RespState {
   mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
   circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
+  /** FU-4 F3: the tension pneumothorax's ACCUMULATED hemithorax pressure (mmHg) — what `lp.pPtx` delivers. */
+  ptxAcc: number;
+  /** FU-4 F3: the catalogue ceiling the accumulation climbs toward (mmHg, 0 = no pneumothorax). */
+  ptxCeil: number;
   out: EngineEvent[];
 }
 
@@ -133,7 +139,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     },
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
-    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0,
+    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
   };
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
   return rs;
@@ -195,6 +201,10 @@ export function respBreathU(rs: RespState, t: number): number {
 export function applyLungSpecs(rs: RespState): void {
   const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0); // Stage 7c: + lung water
   const ls = rs.lung;
+  // FU-4 F3: the catalogue value is the CEILING of the one-way-valve build-up, not the pressure itself. `lp.pPtx`
+  // keeps its name, place and unit and now delivers the accumulated pressure (0 at onset).
+  rs.ptxCeil = r.lp.pPtx;
+  r.lp.pPtx = Math.min(rs.ptxAcc, rs.ptxCeil);
   ls.lp = r.lp;
   ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
   ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
@@ -226,6 +236,33 @@ export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'
   if (u >= c.ti) return { mode: 'pressure', x: c.mech ? peep : 0 };
   if (c.mech) return { mode: 'flow', x: c.vt / Math.max(1e-3, c.ti) };
   return { mode: 'flow', x: ((c.vt * Math.PI) / (2 * c.ti)) * Math.sin((Math.PI * u) / c.ti) };
+}
+
+/**
+ * FU-4 F3 (ruling 1): one step of the tension pneumothorax's one-way valve. Air crosses while the alveolar pressure
+ * exceeds the pleural pressure, and the hemithorax's pressure–volume relation makes the rise slow as it approaches the
+ * catalogue ceiling. Under PPV the driving pressure is the whole inspiratory alveolar pressure, so the ceiling is
+ * reached in minutes; a spontaneously breathing patient's inspiration is negative at the alveolus and only the
+ * expiratory phase drives the valve, so it takes far longer — which is the clinical difference.
+ */
+export function ptxStep(rs: RespState, dt: number): void {
+  const ceil = rs.ptxCeil;
+  if (ceil <= 0) {
+    if (rs.ptxAcc > 0) rs.ptxAcc = Math.max(0, rs.ptxAcc - (rs.ptxAcc * dt) / PTX_DRAIN_TAU_S);
+    rs.lung.lp.pPtx = rs.ptxAcc;
+    return;
+  }
+  const ls = rs.lung;
+  const pcw = chestWallPressure(ls.mp, ls.mech);
+  let pAlv = -Infinity;
+  for (let u = 0; u < ls.mech.v.length; u++) pAlv = Math.max(pAlv, unitPressure(ls.mp, ls.mech, u, pcw));
+  const pPl = rs.ptxAcc / CMH2O_TO_MMHG; // the pleural pressure the valve works against, in cmH2O
+  const drive = Math.max(0, pAlv - pPl);
+  // one brake only: the valve itself. Once the pleural pressure reaches the PEAK alveolar pressure no more air can
+  // cross, so the pressure a tension pneumothorax reaches is bounded by the airway pressure — which is why it is a
+  // ventilated patient's emergency. The catalogue value is the ceiling that bound is clamped to.
+  if (drive > 0) rs.ptxAcc = Math.min(ceil, rs.ptxAcc + PTX_VALVE_PER_CMH2O_S * drive * dt);
+  ls.lp.pPtx = rs.ptxAcc;
 }
 
 /** Stage 7a seam: continuous pleural pressure (mmHg) for the circulation (audit R-B). */
@@ -468,6 +505,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const t = m / RESP_RATE;
     const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
     lungMechStep(rs.lung, ld.mode, ld.x, DT);
+    ptxStep(rs, DT); // FU-4 F3: the one-way valve fills the pleural space breath by breath
     while (rs.gasK * GAS_DT_S <= t + 1e-9) {
       gasStep(rs, ctx, rs.gasK * GAS_DT_S);
       rs.gasK++;

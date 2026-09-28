@@ -38,7 +38,8 @@ const SLOW = [
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
   'test/engine/circ-pulsus.test.ts', // FU-4 G6: two 10 sim-min spontaneous-breathing runs
   'test/engine/vagal-events.test.ts', // FU-4 G7: vagal-event runs of 5–10 sim-min
-  'test/engine/thermal-warmer.test.ts', // FU-4 item 1: three 60 sim-min warming runs
+  'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
+  'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
 ];
 const set = process.env.PME_TEST_SET;
