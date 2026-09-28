@@ -51,6 +51,41 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
     expect(out.some((o) => o.kind === 'failed' && o.text === 'NBP measurement failed')).toBe(true);
   });
 
+  it('FU-5 (audit M4): a narrow pulse pressure with an adequate MAP measures — 77/67 (PP 10), 81/63, 104/83', () => {
+    for (const b of [{ sbp: 77, dbp: 67, map: 70 }, { sbp: 81, dbp: 63, map: 69 }, { sbp: 104, dbp: 83, map: 90 }]) {
+      const { out } = run(b);
+      const done = out.find((o) => o.kind === 'phase' && o.phase === 'done') as Extract<NibpOut, { kind: 'phase' }> | undefined;
+      expect(done?.result).toBeDefined();
+      expect(Math.abs(done!.result!.map - b.map)).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it('FU-5: true shock still fails — MAP 13 / PP 3 (envelope peak < 0.3 mmHg) fails after 2 attempts', () => {
+    const { out } = run({ sbp: 15, dbp: 12, map: 13 });
+    expect(out.filter((o) => o.kind === 'phase' && o.phase === 'inflating')).toHaveLength(2);
+    expect(out.some((o) => o.kind === 'failed')).toBe(true);
+  });
+
+  it('FU-5: the skin cuff settings — initial inflation and a STAT series 30 s start to start (saadat-like)', () => {
+    const nb = createNibpState();
+    nb.cfg = { initial: 150, nextAbove: 30, statSpacingS: 30, statCount: 10, statWindowS: 300 };
+    const out: NibpOut[] = [];
+    nibpCommand(nb, 'stat', 0, undefined, out);
+    expect(nb.target).toBe(150);
+    const rng = seedStream(1, 'measurement');
+    const starts: number[] = [0];
+    let next = 0.3;
+    for (let t = 0; t < 120; t += 0.008) {
+      if (t >= next) { nibpOnPulse(nb, t, { sbp: 120, dbp: 80, map: 95 }, false, rng); next += 0.8; }
+      const before = nb.phase;
+      nibpStep(nb, t, 0.008, rng, out);
+      if (before !== 'inflating' && nb.phase === 'inflating') starts.push(t);
+    }
+    expect(starts.length).toBeGreaterThanOrEqual(4);
+    for (let i = 1; i < starts.length; i++) expect((starts[i] as number) - (starts[i - 1] as number)).toBeCloseTo(30, 1);
+    expect(nb.target).toBeGreaterThanOrEqual(140); // previous SYS + 30
+  });
+
   it('manual start cancels auto; stat repeats; cuff off rejects start', () => {
     const nb = createNibpState();
     const out: NibpOut[] = [];

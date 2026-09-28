@@ -95,6 +95,8 @@ export interface DeviceProfile {
   abpDisconnect: boolean;
   /** FU-5: the invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
   ibpFilterHz: number;
+  /** FU-5: the cuff settings of the skin (and age band): NibpState.cfg. */
+  nibp: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
 }
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */
@@ -180,5 +182,12 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     ibpStaticDisplay: s.ibp.staticDisplay,
     abpDisconnect: a.abpDisconnectDefault,
     ibpFilterHz: s.ibp.filterDefaultHz,
+    nibp: {
+      initial: s.nibp.initialInflation[band],
+      nextAbove: s.nibp.nextInflation === 'prevSys+30' ? 30 : 10,
+      statSpacingS: s.nibp.stat.spacingS,
+      statCount: s.nibp.stat.count,
+      statWindowS: s.nibp.stat.windowS,
+    },
   };
 }
