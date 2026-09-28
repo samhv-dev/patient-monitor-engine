@@ -48,11 +48,14 @@ export interface CircBeat {
   dur: number; // to the next beat
   origin?: string; // rhythm-engine origin of the beat (sinus, ventricular, paced, …)
   pItEd?: number; // FU-4 G1: intrathoracic pressure at end-diastole (LVEDP above is transmural)
+  rvsp?: number; // FU-4 G5: RV peak pressure, mmHg (absolute)
+  rvMean?: number; // FU-4 G5: RV mean pressure over the beat, mmHg (absolute) — the RV's intramural back-pressure
 }
 
 interface BeatAcc {
   t: number; sbp: number; dbp: number; sum: number; n: number; aoS: number; aoD: number; sv: number; svRv: number;
   edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number; origin?: string; pItEd: number;
+  rvsp: number; rvSum: number; // FU-4 G5
 }
 
 export interface VolumeEvent {
@@ -237,7 +240,7 @@ function control(m: CircModelState, env: CircEnv): void {
   // tables §3 "Effects": ischaemic diastolic stiffening, β_LV × (1 + 0.5·δ) — with δ taken from the filtered
   // contractility loss (kIsch = 1 − G_ISCH·δ), so LVEDP rises as the ischaemic spiral develops (R23)
   p.betaLv = base.betaLv * (1 + (0.5 * (1 - m.ext.kIsch)) / G_ISCH);
-  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp; // Stage 7g: β-blockade blunts the surge
+  m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp * (env.modeled ? m.cor.kIschRv : 1); // Stage 7g: β-blockade blunts the surge; FU-4 G5: RV ischaemia (MODELED)
   p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc * kHyp; // atrial active elastance (7c kChem; FU-3 item 16 kHyp)
   p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
   const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp) : 1; // FU-3 item 16: hypoxic SA-node depression
@@ -253,12 +256,13 @@ function closeBeat(m: CircModelState, t: number): void {
   m.beats.push({
     t: a.t, sbp: a.sbp, dbp: a.dbp, map: a.sum / a.n, aoSys: a.aoS, aoDia: a.aoD, sv: a.sv, svRv: a.svRv, lvedv: a.edv, lvesv: a.esv,
     lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t, origin: a.origin, pItEd: a.pItEd,
+    rvsp: a.rvsp, rvMean: a.rvSum / a.n, // FU-4 G5
   });
   if (m.beats.length > 16) m.beats.shift();
 }
 
 const newAcc = (t: number, edv: number, edp: number, pItEd: number): BeatAcc => ({
-  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0, pItEd,
+  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0, pItEd, rvsp: -Infinity, rvSum: 0,
 });
 
 /**
@@ -326,6 +330,8 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
       const v = m.s[S.VLV] as number;
       if (v < a.esv) a.esv = v;
       if (o.pLv > a.lvsp) a.lvsp = o.pLv;
+      if (o.pRv > a.rvsp) a.rvsp = o.pRv; // FU-4 G5
+      a.rvSum += o.pRv;
       if (a.prevQ <= 1 && o.qAv > 1 && a.open < 0) {
         a.open = m.t - a.t;
         m.lastEjT = m.t;

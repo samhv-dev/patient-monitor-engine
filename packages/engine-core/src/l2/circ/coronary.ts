@@ -77,12 +77,15 @@ export interface CoronaryState {
   eesF: number; // current contractility multiplier seen by the demand term (set by the caller)
   hyp: number; // FU-3 item 16: the hypoxic share of the deficit, filtered as kIsch (0–1; MODELED only, 0 in MANUAL)
   cpp: number; // FU-4 G4: the CPP the last step used (last beat's aortic diastolic − LVEDP, or the continuous no-beat value)
+  /** FU-4 G5: the RV's flow-share contractility factor (MODELED; 1 in MANUAL) and its resting reference (captured once). */
+  kIschRv: number;
+  rv0: { perf: number; rvsp: number } | null;
 }
 
 export function createCoronary(ref: Stabilised['ref']): CoronaryState {
   const rr = 60 / ref.hr;
   const tsys = 0.37 + IVR_S; // resting emergent valve closure ≈ 0.37 s after onset at HR 70 (prototype)
-  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0, cpp: ref.dbp - ref.lvedp };
+  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0, cpp: ref.dbp - ref.lvedp, kIschRv: 1, rv0: null };
 }
 
 /**
@@ -132,6 +135,19 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   const tau = target < c.kIsch ? (noBeat ? TAU_ISCH_ARREST_S : TAU_ISCH_DOWN_S) : TAU_ISCH_UP_S;
   c.kIsch += (target - c.kIsch) * (1 - Math.exp(-dt / tau));
   if (c.kIsch > 0.9995) c.kIsch = 1;
+  // FU-4 G5 (MODELED): the RV is perfused through systole AND diastole, driven by aortic mean − RV mean pressure; its
+  // demand follows RV pressure work (massive PE, RV infarct, PH crisis: the RV ischaemia spiral). The stabilised
+  // reference has no RV pressures: the first beat read is the resting reference [ENG].
+  if (modeled && b && !noBeat && b.rvsp !== undefined && b.rvMean !== undefined && Number.isFinite(b.rvsp)) {
+    const perf = b.map - b.rvMean;
+    c.rv0 ??= { perf, rvsp: b.rvsp };
+    const hrR = hr / r.hr;
+    const flowRv = cfr * Math.max(0, (perf - P_ZF) / Math.max(5, c.rv0.perf - P_ZF));
+    const demRv = D_BASAL + D_EC * hrR + (1 - D_BASAL - D_EC) * hrR * (Math.max(5, b.rvsp) / Math.max(5, c.rv0.rvsp));
+    const tRv = Math.max(K_ISCH_MIN, 1 - G_ISCH * Math.max(0, 1 - flowRv / Math.max(0.05, demRv)));
+    c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
+    if (c.kIschRv > 0.9995) c.kIschRv = 1;
+  }
   c.ischT = c.delta > 0.1 ? c.ischT + dt : 0;
   const stTarget = c.ischT >= ST_LAG_S ? -Math.min(0.3, c.delta) : 0;
   c.stMv += (stTarget - c.stMv) * (1 - Math.exp(-dt / (stTarget < c.stMv ? 15 : 60)));
