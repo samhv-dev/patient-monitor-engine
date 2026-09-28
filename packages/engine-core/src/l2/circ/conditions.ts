@@ -9,16 +9,25 @@ import type { CircModelState } from './model.ts';
 export type CircConditionId = 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct';
 export const CIRC_CONDITIONS: readonly CircConditionId[] = ['tamponade', 'pe', 'tensionPtx', 'rvInfarct'];
 export const TAMPONADE_ML = 250;
+/** FU-4 G6: the most pericardial fluid the accumulation integrates to [ENG: beyond Q29's acute 150–250 mL]. */
+export const TAMPONADE_MAX_ML = 500;
+/** FU-4 G6: optional fields of the tamponade condition — an absolute volume and an accumulation (− drainage) rate. */
+export interface TamponadeOpts {
+  volumeMl?: number;
+  rateMlPerMin?: number;
+}
 export const PE_MAX_FRAC = 0.8;
 export const PE_VASO = 1.0;
 export const PTX_MMHG = 20;
 export const RV_INFARCT_LOSS = 0.65;
 
-export function applyCircCondition(m: CircModelState, id: CircConditionId, severity: number): void {
+export function applyCircCondition(m: CircModelState, id: CircConditionId, severity: number, opts: TamponadeOpts = {}): void {
   const s = Math.min(1, Math.max(0, severity));
   switch (id) {
     case 'tamponade':
-      m.ext.vFluid = TAMPONADE_ML * s;
+      // FU-4 G6: an absolute volume (else 250 mL × severity, unchanged) and an optional accumulation/drainage rate
+      m.ext.vFluid = opts.volumeMl !== undefined ? Math.min(TAMPONADE_MAX_ML, Math.max(0, opts.volumeMl)) : TAMPONADE_ML * s;
+      m.ext.vFluidRate = (opts.rateMlPerMin ?? 0) / 60;
       return;
     case 'pe': {
       const phi = PE_MAX_FRAC * s;

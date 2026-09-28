@@ -641,8 +641,10 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
           : 'volumeMl must be 0–5000 with overS > 0';
       }
       if (ev.kind === 'condition') {
-        const c = cmd.event as { id: string; severity: number };
+        const c = cmd.event as { id: string; severity: number; volumeMl?: number; rateMlPerMin?: number };
         if (!(CIRC_CONDITIONS as readonly string[]).includes(c.id)) return null;
+        if (c.volumeMl !== undefined && !(Number.isFinite(c.volumeMl) && c.volumeMl >= 0 && c.volumeMl <= 500)) return 'volumeMl must be 0–500'; // FU-4 G6
+        if (c.rateMlPerMin !== undefined && !(Number.isFinite(c.rateMlPerMin) && c.rateMlPerMin >= -200 && c.rateMlPerMin <= 200)) return 'rateMlPerMin must be −200…200';
         return Number.isFinite(c.severity) && c.severity >= 0 && c.severity <= 1 ? undefined : 'severity must be 0–1';
       }
       return null;
@@ -768,8 +770,8 @@ export function applyHemoCommand(
         return true;
       }
       if (ev.kind === 'condition') {
-        const c = ev as unknown as { id: CircConditionId; severity: number };
-        applyCircCondition(hs.circ, c.id, c.severity);
+        const c = ev as unknown as { id: CircConditionId; severity: number; volumeMl?: number; rateMlPerMin?: number };
+        applyCircCondition(hs.circ, c.id, c.severity, { ...(c.volumeMl !== undefined ? { volumeMl: c.volumeMl } : {}), ...(c.rateMlPerMin !== undefined ? { rateMlPerMin: c.rateMlPerMin } : {}) }); // FU-4 G6
         return true;
       }
       return false;

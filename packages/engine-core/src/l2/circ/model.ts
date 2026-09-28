@@ -11,6 +11,7 @@ import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
+import { TAMPONADE_MAX_ML } from './conditions.ts'; // FU-4 G6 (type-only cycle: conditions.ts imports model.ts types only)
 import type { RampState } from '../../l1/ramp.ts'; // FU-2
 import { betaDV0Ml } from './venous.ts'; // FU-2
 
@@ -121,6 +122,7 @@ export interface CircModelState {
    */
   ext: {
     kLv: number; kRv: number; pvr: number; vFluid: number; pPtx: number; kIsch: number;
+    vFluidRate?: number; // FU-4 G6: pericardial fluid accumulation (+) or drainage (−), mL/s (conditions.ts)
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
@@ -241,6 +243,7 @@ function control(m: CircModelState, env: CircEnv): void {
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split
   p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
   p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
+  if (m.ext.vFluidRate) m.ext.vFluid = Math.min(TAMPONADE_MAX_ML, Math.max(0, m.ext.vFluid + m.ext.vFluidRate * CTL_DT)); // FU-4 G6
   p.vFluid = base.vFluid + m.ext.vFluid;
   const kc = x.kChem ?? 1;
   // FU-3 item 4: in MANUAL the tracker's LV Emax was set against the ischaemia present while it tracked (kIschRef):
