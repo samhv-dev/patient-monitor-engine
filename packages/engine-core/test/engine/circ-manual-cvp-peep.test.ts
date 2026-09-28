@@ -59,7 +59,7 @@ describe('MANUAL CVP under positive-pressure ventilation (FU-3 item 7)', () => {
     expect(d).toBeLessThanOrEqual(0.5 * step);
   });
 
-  it.fails('the 8a soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17, raises at 27–57 s)', { timeout: 120_000 }, async () => {
+  it.fails('the 8a soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; FU-5: no raise since the displayed 10 is not above the limit — was 27–57 s)', { timeout: 120_000 }, async () => {
     const s = soak('philips-like', 5);
     await run(s.e, 120);
     const v = cvpMeans(s.ev, 30, 120);

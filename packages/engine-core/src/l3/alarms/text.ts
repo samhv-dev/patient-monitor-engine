@@ -2,6 +2,7 @@
 // uppercase without asterisks, e.g. "HR TOO LOW", "%SPO2 LOW", "ECG ASYSTOLE"). Texts not quoted by a source are
 // [inferred] from those patterns.
 import type { AlarmLevel } from '../../types-device.ts';
+import type { NumericId } from '../../types.ts';
 import type { DeviceProfile, LimitDef } from './profile.ts';
 
 export type FixedAlarmId =
@@ -54,11 +55,17 @@ export function fixedText(p: DeviceProfile, id: FixedAlarmId, level: AlarmLevel,
   return `${technical ? '' : stars(level)}${IEC_TEXT[id]}`;
 }
 
-const fmt = (v: number): string => (Math.abs(v) >= 10 || Number.isInteger(v) ? String(Math.round(v)) : v.toFixed(1));
+/**
+ * FU-5 (audit M6): decimals of each numeric as its tile shows it (renderer device-ui: TEMP and ST one, the rest none).
+ * Limit alarms compare the value ROUNDED to these and print it so ("**Temp 35.9<36.0", never "**Temp 36<36").
+ */
+export const DISPLAY_DIGITS: Readonly<Partial<Record<NumericId, number>>> = { tempCore: 1, tempSite: 1, stII: 1 };
+export const displayDigits = (n: NumericId): number => DISPLAY_DIGITS[n] ?? 0;
 
 /** Limit alarm text: IEC-style `**HR 130>120`, Saadat-like `HR TOO HIGH` / `%SPO2 LOW`. */
 export function limitText(p: DeviceProfile, d: LimitDef, side: 'HIGH' | 'LOW', value: number): string {
   if (p.prefix === 'none') return d.numeric === 'spo2' ? `${d.upper} ${side}` : `${d.upper} TOO ${side}`;
   const lim = side === 'HIGH' ? (d.high as number) : (d.low as number);
-  return `${stars(d.level)}${d.label} ${fmt(value)}${side === 'HIGH' ? '>' : '<'}${fmt(lim)}`;
+  const dig = displayDigits(d.numeric);
+  return `${stars(d.level)}${d.label} ${value.toFixed(dig)}${side === 'HIGH' ? '>' : '<'}${lim.toFixed(dig)}`;
 }

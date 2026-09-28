@@ -3,7 +3,7 @@
 // Inputs are plain JSON-safe data the engine keeps up to date (observe* functions); buildConditions is pure.
 import type { EngineEvent, Measured, NumericId } from '../../types.ts';
 import { isEnabled, limitOf, type AlarmMgrState, type Condition } from './manager.ts';
-import { fixedText, limitText, type FixedAlarmId } from './text.ts';
+import { displayDigits, fixedText, limitText, type FixedAlarmId } from './text.ts';
 
 /** VF is recognised this long after it starts (a monitor needs a few seconds of analysis) [ENG]. */
 export const VF_CONFIRM_S = 3;
@@ -123,9 +123,10 @@ export function observeEvent(inp: AlarmInputs, e: EngineEvent): void {
   }
 }
 
+/** FU-5 (audit M14): only a VALID value alarms — a questionable one ("97?", motion, CPR, low perfusion) raises nothing. */
 function valid(inp: AlarmInputs, id: NumericId, t: number): number | null {
   const m = inp.measured[id];
-  if (!m || m.value === null || m.flag === 'invalid') return null;
+  if (!m || m.value === null || m.flag !== 'valid') return null;
   if (!id.startsWith('nibp') && t - m.at > STALE_S) return null;
   return m.value;
 }
@@ -154,8 +155,15 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const delayS = d.numeric === 'spo2' ? p.spo2DelayS : p.delayS;
     const c = { level: d.level, category: 'physiological' as const, delayS, numeric: d.numeric };
     const dd = src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }; // "**Pulse 130>120" / "PR TOO HIGH"
-    if (l.high !== null && v > l.high) out.push({ id: `${key}_HIGH`, text: limitText(p, dd, 'HIGH', v), ...c });
-    if (l.low !== null && v < l.low) out.push({ id: `${key}_LOW`, text: limitText(p, dd, 'LOW', v), ...c });
+    // FU-5 (audit M6): the DISPLAYED value against the limit, with one display unit of hysteresis — raised once it is
+    // beyond the limit, kept until it is back inside by a full unit (CVP hovering 9.6–10.4 at a limit of 10 raised
+    // `**CVP 10>10` 100 times in 11 min) [ENG, the vendors' hysteresis is not published]
+    const unit = 10 ** -displayDigits(d.numeric);
+    const dv = Math.round(v / unit) * unit;
+    const hi = `${key}_HIGH`;
+    const lo = `${key}_LOW`;
+    if (l.high !== null && (dv > l.high + 1e-9 || (holdingId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c });
+    if (l.low !== null && (dv < l.low - 1e-9 || (holdingId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c });
   }
   const spo2 = valid(inp, 'spo2', t);
   if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, 'physiological', DESAT_DELAY_S), numeric: 'spo2' });
