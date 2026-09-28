@@ -38,6 +38,10 @@ export const K_HAZARD_S = 120;
 /** Hypothermic VF hazard below this core temperature, per °C below it: 1/T_HAZARD_S per second (ERC 2021: VF risk < 28 °C) [ENG]. */
 export const T_HAZARD = 28;
 export const T_HAZARD_S = 600;
+/** FU-4 G8: hyperthermic VF hazard above this core temperature, per °C above it: 1/T_HOT_S per second (untreated MH:
+ * VF with hyperkalaemia and hyperthermia — Miller, MH chapter [TXT]) [ENG; Q6]. */
+export const T_HOT = 42;
+export const T_HOT_S = 300;
 /** VF share multipliers at an arrest's onset: per unit catecholamine inotropy, per mmol/L K above 6, per °C below 32 [ENG]. */
 export const VF_CAT = 2;
 export const VF_K = 0.5;
@@ -77,12 +81,12 @@ export function arrestStep(m: CircModelState, rhythmId: string, pulseless: boole
   m.noFlowS = m.mapNow < MAP_NO_FLOW ? m.noFlowS + dt : 0;
   if (Math.min(m.cor.kIsch, m.cor.kIschRv) <= K_ISCH_ARREST || m.noFlowS >= NO_FLOW_S) return onsetRhythm(u(), rhythmId, hrNow, vfShare(r), 'lowFlow');
   const lamK = Math.max(0, r.kEcg - K_HAZARD) / K_HAZARD_S;
-  const lamT = Math.max(0, T_HAZARD - r.tempC) / T_HAZARD_S;
+  const lamT = Math.max(0, T_HAZARD - r.tempC) / T_HAZARD_S + Math.max(0, r.tempC - T_HOT) / T_HOT_S; // FU-4 G12 cold, G8 hot
   const lam = (lamK + lamT) * dt;
   if (lam <= 0) return null;
   if (u() >= lam) return null;
   if (u() * (lamK + lamT) < lamK) return { id: u() < 0.5 ? 'vfCoarse' : 'asystole', opts: {}, cause: 'hyperkalaemia' };
-  return { id: 'vfCoarse', opts: {}, cause: 'hypothermia' };
+  return { id: 'vfCoarse', opts: {}, cause: r.tempC > T_HOT ? 'hyperthermia' : 'hypothermia' };
 }
 
 /** ROSC of an engine-declared organised arrest (PEA): the rhythm it came from, with a pulse, or null. */
