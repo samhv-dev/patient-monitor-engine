@@ -33,7 +33,12 @@ jobs:
   test-slow:
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
-    # cannot starve the Vitest worker RPC there.
+    # cannot starve the Vitest worker RPC there. FU-4 (D17): two file groups, one job each.
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [slow-a, slow-b]
+    name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -46,4 +51,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pme/engine-core test
         env:
-          PME_TEST_SET: slow
+          PME_TEST_SET: ${{ matrix.group }}

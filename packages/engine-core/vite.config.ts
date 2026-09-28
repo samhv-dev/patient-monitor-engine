@@ -36,12 +36,24 @@ const SLOW = [
   'test/engine/circ-hypoxic-arrest.test.ts', // FU-3 item 16: four 15–20 sim-min asphyxia runs
   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
+  'test/engine/clinical-suite.test.ts', // FU-4 Task 22: the clinical scenario suite (SLOW_A)
   'test/engine/circ-pulsus.test.ts', // FU-4 G6: two 10 sim-min spontaneous-breathing runs
   'test/engine/vagal-events.test.ts', // FU-4 G7: vagal-event runs of 5–10 sim-min
   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
 ];
+/**
+ * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
+ * runs both locally. SLOW_A: the multi-hour drift files, the engine pipeline, the organ soak and the FU-4 clinical suite;
+ * SLOW_B: every other SLOW entry. A new slow file joins SLOW (and, if it is a multi-hour run, SLOW_A).
+ */
+const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts'];
+// FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
+// glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
+// neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.
+// The set difference is therefore made by Vitest's own matcher, with SLOW_A as an `exclude` on the slow-b run.
+const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p));
 const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
@@ -57,5 +69,9 @@ export default defineConfig({
     testTimeout: 30_000,
     ...(set === 'fast' ? { exclude: ['**/node_modules/**', '**/dist/**', ...SLOW] } : {}),
     ...(set === 'slow' ? { include: SLOW, fileParallelism: false } : {}),
+    ...(set === 'slow-a' ? { include: SLOW_A, fileParallelism: false } : {}), // FU-4 (D17)
+    // FU-4 (R50 review F8): the groups MUST be disjoint — SLOW_A is excluded here by the same matcher that includes it
+    // above, so a file matching a SLOW_A glob (e.g. the 6 h neuro long run) runs in slow-a only, never in both jobs.
+    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A], fileParallelism: false } : {}),
   },
 });
