@@ -68,13 +68,10 @@ export const G_SA_K = 0.12;
 export const VAGAL_STIM_MS: Readonly<Record<string, number>> = { laryngoscopy: 300, oculocardiac: 600, peritoneal: 600 };
 export const VAGAL_STIM_PER_INTENSITY: Readonly<Record<string, boolean>> = { laryngoscopy: false, oculocardiac: true, peritoneal: true };
 export const VAGAL_STIM_FATIGUE_S = 120; // the reflex fades on sustained traction [ENG]
-/**
- * FU-4 G7 (Task 12 Step 3): the empty-ventricle (Bezold–Jarisch) bradycardia — the paradoxical slowing of severe
- * haemorrhage once the LV end-diastolic volume falls below ≈ 35 % of rest (Barcroft & Edholm 1945; Secher NH et al.,
- * Clin Physiol 1984) [P direction, ENG size and threshold]. MODELED only, × (1 − muscarinic occupancy).
- */
-export const BJ_EDV_FRAC = 0.35;
-export const BJ_MAX_MS = 800;
+// FU-4 G7 (Task 12 Step 3): the empty-ventricle (Bezold–Jarisch) term was prototyped (800 ms × (0.35 − EDV/rest)/0.35)
+// and NOT landed: it met nothing the ischaemic pre-arrest bradycardia (K_BRADY) does not already meet (class IV HR < 100
+// before the arrest), and by slowing the obstructed heart it lowered the myocardial demand enough to move the tension
+// pneumothorax's PEA from +10.45 to +16.75 min (band 3–10). Measured and withdrawn under R45; an open question.
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -259,11 +256,6 @@ function vagalEventMs(m: CircModelState): number {
   const v = m.vagalStim;
   return v ? v.ms * Math.exp(-Math.max(0, m.t - v.t0) / VAGAL_STIM_FATIGUE_S) : 0;
 }
-function bjMs(m: CircModelState): number {
-  const lb = m.beats[m.beats.length - 1];
-  if (!lb || !(m.ref.lvedv > 0)) return 0;
-  return (BJ_MAX_MS * Math.max(0, BJ_EDV_FRAC - lb.lvedv / m.ref.lvedv)) / BJ_EDV_FRAC;
-}
 
 function control(m: CircModelState, env: CircEnv): void {
   const map = m.mapN > 0 ? m.mapSum / m.mapN : m.baro.mapLp;
@@ -330,8 +322,8 @@ function control(m: CircModelState, env: CircEnv): void {
   // limb (`b.rrMs`) — an opioid bolus or neostigmine lengthens the cycle rather than scaling the rate, which is why an
   // anticholinergic abolishes it (7g already multiplies `vagalMs` by 1 − muscarinic occupancy) and why the bradycardia
   // is deeper in a patient whose rate is already low.
-  // FU-4 G7 (Task 12 Step 3): the stimulus-driven vagal event and the empty-ventricle reflex, same additive term, MODELED
-  const vStim = env.modeled ? vagalEventMs(m) + bjMs(m) : 0;
+  // FU-4 G7 (Task 12 Step 3): the stimulus-driven vagal event, the same additive term, MODELED only
+  const vStim = env.modeled ? vagalEventMs(m) : 0;
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000 + ((de.vagalMs ?? 0) + vStim * (1 - (de.muscBlock ?? 0))) / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);

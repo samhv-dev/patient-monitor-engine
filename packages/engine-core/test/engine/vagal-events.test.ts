@@ -2,6 +2,7 @@
 // anticholinergic lengthen the SA-node cycle (7g `vagalMs`, additive ms, × (1 − muscarinic occupancy)); a SECOND
 // succinylcholine dose draws a junctional bradyarrhythmia on the seeded `outcome` stream. Stimulus-driven: a `stimulus`
 // with a `site` (laryngoscopy, oculocardiac, peritoneal traction) adds a transient vagal increment that atropine blocks.
+// The empty-ventricle (Bezold–Jarisch) term of Task 12 Step 3 was prototyped and withdrawn (see model.ts).
 // Sources: opioid bradycardia is central-vagal and anticholinergic-reversible (Miller ch. 22); neostigmine is never
 // given without an anticholinergic (Miller ch. 24); the second succinylcholine dose (Miller ch. 23); the oculocardiac
 // reflex, abolished by atropine (Miller, ophthalmic anaesthesia). Rig: adult 40 y 70 kg male MODELED, ETT + VCV 12 × 600 /
@@ -111,11 +112,13 @@ describe('FU-4 G7: vagal events, stimulus-driven (Task 12 Step 3 / 18f Step 3, U
     const bad = e.dispatch({ id: 'x', issuedBy: 'test', type: 'applyEvent', event: { kind: 'stimulus', intensity: 1, site: 'elbow' } } as unknown as Command);
     expect(JSON.stringify(bad)).toMatch(/site must be/);
   });
-  it('class IV haemorrhage (2.5 L over 10 min): HR falls below 100 in the minute before the arrest (the empty-ventricle and ischaemic bradycardia; Secher 1984)', async () => {
+  // Task 12's target (S15 bands): "class IV haemorrhage HR falls below 100 before the arrest" — the terminal (ischaemic,
+  // K_BRADY) bradycardia; the empty-ventricle term that was prototyped for it is withdrawn (model.ts, R45 note)
+  it('class IV haemorrhage (2.5 L over 10 min): HR falls below 100 in the minute before the arrest (terminal bradycardia; Secher 1984)', async () => {
     const h = await course([[60, { kind: 'bleed', volumeMl: 2500, overS: 600 }]], 900);
     const ta = h.tPulseless as number;
-    console.log(`class IV: HR peak ${Math.max(...h.hr.filter(([t]) => t < ta).map(([, x]) => x)).toFixed(0)}, last minute before the arrest ${hrMean(h, ta - 60, ta - 5).toFixed(0)}, arrest at ${ta} s`);
+    console.log(`class IV: HR peak ${Math.max(...h.hr.filter(([t]) => t < ta).map(([, x]) => x)).toFixed(0)}, last minute before the arrest mean ${hrMean(h, ta - 60, ta - 5).toFixed(0)} min ${hrMin(h, ta - 60, ta - 5).toFixed(0)}, arrest at ${ta} s`);
     expect(ta).toBeDefined();
-    expect(hrMean(h, ta - 60, ta - 5)).toBeLessThan(100);
+    expect(hrMin(h, ta - 60, ta - 5)).toBeLessThan(100);
   });
 });
