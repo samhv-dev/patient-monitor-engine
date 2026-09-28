@@ -22,6 +22,10 @@ export interface DrugEffect {
   symp: number;
   /** FU-4 G2: × on the baroreflex set point (anaesthetic resetting to a lower pressure), 1 = none. */
   setF: number;
+  /** FU-4 G7: vagal RR increment, ms (opioids, anticholinesterases), already × (1 − muscBlock); 0 = none. */
+  vagalMs?: number;
+  /** FU-4 G7: muscarinic block 0–1 (atropine, glycopyrrolate): removes the vagal limb and every vagal event. */
+  muscBlock?: number;
 }
 
 interface DrugRow {
