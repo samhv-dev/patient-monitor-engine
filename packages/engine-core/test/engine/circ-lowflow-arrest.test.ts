@@ -16,18 +16,18 @@ type Body = Record<string, unknown>;
 let n = 0;
 const cmd = (c: Body) => ({ id: `lf${++n}`, issuedBy: 'test', ...c }) as unknown as Command;
 const ev = (event: Body) => cmd({ type: 'applyEvent', event });
-type St = { rhythm: { id: string; opts: { pulseless?: boolean } }; hemo: { circ: { mapNow: number; arrest: { cause: string } | null; cor: { cpp: number; kIsch: number } } } };
+type St = { rhythm: { id: string; opts: { pulseless?: boolean; rateBpm?: number } }; hemo: { circ: { mapNow: number; arrest: { cause: string; rate0?: number } | null; cor: { cpp: number; kIsch: number } } } };
 const stOf = (e: ReturnType<typeof createEngine>) => (e as unknown as { st: St }).st;
 const pulseless = (s: St) => s.rhythm.opts.pulseless === true || ['asystole', 'vfCoarse', 'vfFine'].includes(s.rhythm.id);
 
-interface Course { tArrest?: number; rhythm?: string; cause?: string; tMap30?: number; tMap25?: number; hrPeak: number; hrAtArrest?: number; tPulseBack?: number; cprCpp: number[]; pulselessS: number; cbfAfter?: number }
+interface Course { tArrest?: number; rhythm?: string; cause?: string; tMap30?: number; tMap25?: number; hrPeak: number; hrAtArrest?: number; tPulseBack?: number; cprCpp: number[]; pulselessS: number; cbfAfter?: number; tAgonal?: number; tAsystole?: number; decayedBeforeRosc?: boolean; rate0?: number; tEffective?: number; rateEff?: number; idEff?: string }
 async function run(mode: 'modeled' | 'manual', opts: { bleedMl?: number; cprAfterS?: number; endS: number }): Promise<Course> {
   const e = createEngine({ seed: 7, mode, patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected', cvp: 'connected', spo2: 'on' } } });
   const c: Course = { hrPeak: 0, cprCpp: [], pulselessS: 0 };
   let hr = 75;
   e.on((x: EngineEvent) => {
     if (x.type === 'measurement' && x.values.hr?.value != null) hr = x.values.hr.value;
-    if (x.type === 'circ' && c.tPulseBack === undefined && c.tArrest !== undefined && opts.cprAfterS !== undefined && x.t > c.tArrest + opts.cprAfterS + 5) c.cprCpp.push(x.cpp);
+    if (x.type === 'circ' && c.tPulseBack === undefined && c.tArrest !== undefined && opts.cprAfterS !== undefined && x.t > c.tArrest + opts.cprAfterS + 5) { c.cprCpp.push(x.cpp); if (c.tEffective === undefined && x.cpp >= 15) c.tEffective = x.t; }
   });
   e.dispatch(ev({ kind: 'airwayDevice', device: 'ett' }));
   e.dispatch(ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 }));
@@ -51,6 +51,17 @@ async function run(mode: 'modeled' | 'manual', opts: { bleedMl?: number; cprAfte
           e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'fluid', fluid: 'balanced', volumeMl: 2000, overS: 180 }, atTick: at }));
           e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'epinephrine', dose: 1, unit: 'mg', route: 'iv' }, atTick: at }));
         }
+      }
+    } else if (c.tPulseBack === undefined && pulseless(s)) {
+      // FU-4 F5: the decay of the untreated PEA (rate, then idioventricular, then asystole)
+      c.rate0 ??= s.hemo.circ.arrest?.rate0;
+      if (c.tAgonal === undefined && s.rhythm.id === 'agonal') c.tAgonal = t;
+      if (c.tAsystole === undefined && s.rhythm.id === 'asystole') c.tAsystole = t;
+      // decay once CPR has become effective (CoPP ≥ 15): the untreated minute before CPR, and the empty-thorax seconds
+      // before the fluid arrives, decay as an untreated PEA should
+      if (c.tEffective !== undefined) {
+        if (c.idEff === undefined) { c.idEff = s.rhythm.id; c.rateEff = s.rhythm.opts.rateBpm; }
+        else if (s.rhythm.id !== c.idEff || (s.rhythm.opts.rateBpm ?? 0) < (c.rateEff ?? 0) - 1) c.decayedBeforeRosc = true;
       }
     } else if (c.tPulseBack === undefined && !pulseless(s)) {
       c.tPulseBack = t;
@@ -89,6 +100,21 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
   // raising CoPP above Paradis's 15–25 is Paradis's own finding — plan D19). The pulse and the CoPP band are asserted
   // separately so the band stays a record (R45) while the ROSC side keeps its own assertion.
   const rosc = run('modeled', { bleedMl: 2500, cprAfterS: 60, endS: 1500 });
+  // FU-4 F5 (ruling 7): an untreated PEA decays — the rate, then idioventricular, then asystole (hazard mean 420 s from
+  // the idioventricular phase [ENG]); effective CPR + volume suspends it.
+  it('untreated exsanguination PEA reaches asystole within 15 min of the arrest, through the idioventricular phase', async () => {
+    const c = await run('modeled', { bleedMl: 3000, endS: 1800 });
+    console.log(`circ-lowflow-arrest decay: arrest ${c.tArrest} (${c.rhythm}), agonal ${c.tAgonal}, asystole ${c.tAsystole}`);
+    expect(c.tArrest).toBeDefined();
+    expect(c.tAgonal).toBeDefined();
+    expect(c.tAsystole).toBeDefined();
+    expect((c.tAsystole as number) - (c.tArrest as number)).toBeLessThanOrEqual(900);
+  }, 300_000);
+  it('with CPR + volume + adrenaline there is no decay from effective CPR (CoPP ≥ 15) to ROSC', async () => {
+    const c = await rosc;
+    expect(c.tPulseBack).toBeDefined();
+    expect(c.decayedBeforeRosc ?? false).toBe(false);
+  }, 300_000);
   it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 3 min (measured +113 s of CPR)', async () => {
     const c = await rosc;
     expect(c.tArrest).toBeDefined();

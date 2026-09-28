@@ -89,6 +89,45 @@ export function arrestStep(m: CircModelState, rhythmId: string, pulseless: boole
   return { id: 'vfCoarse', opts: {}, cause: r.tempC > T_HOT ? 'hyperthermia' : 'hypothermia' };
 }
 
+/**
+ * FU-4 F5 (ruling 7) — an untreated organised PEA DECAYS. Before this, an engine-declared PEA kept the organised
+ * rhythm at its onset rate for ever: measured "sinus" PEA 84 → 30/min over 5 min and then flat at 30/min for 20 min,
+ * with no idioventricular phase and no asystole unless the 2/30 onset draw produced one.
+ * The course: the rate follows the myocardial energy state `kIsch·(1 − hyp)` (the ROSC variable), then below
+ * `PEA_IDIO_M` the rhythm is requested as a slow wide idioventricular/agonal one, and from there asystole arrives as a
+ * hazard with a mean of `PEA_ASYSTOLE_MEAN_S` untreated. An effective CPP (≥ `CPP_ROSC`) suspends the whole decay,
+ * which is what makes good CPR worth doing.
+ * Sources: the three-phase model of cardiac arrest (Weisfeldt ML & Becker LB, JAMA 2002;288:3035–3038); the asphyxial
+ * PEA → asystole course FU-3 already cites (DeBehnke DJ et al. 1995; Varvarousi G et al. 2011/2015); ERC 2021 ALS
+ * (untreated PEA deteriorates to asystole). Thresholds and the hazard mean are [ENG].
+ */
+export const PEA_RATE_M_FULL = 0.4; // myocardial state at or above which the PEA keeps its onset rate
+export const PEA_RATE_MIN = 18; // slowest organised rate the decay drives the PEA to before the idioventricular phase
+export const PEA_IDIO_M = 0.04; // myocardial state below which the rhythm becomes a slow wide idioventricular one (BELOW
+// K_ISCH_ARREST 0.1, so the PEA has a rate-decay phase of its own before the idioventricular one)
+export const PEA_IDIO_RATE = 24;
+export const PEA_ASYSTOLE_MEAN_S = 420; // mean time from the idioventricular phase to asystole, untreated [ENG: 5–10 min]
+
+/**
+ * FU-4 F5: one 1 Hz step of the decay of an engine-declared organised PEA. Returns a rhythm request (a slower rate, the
+ * idioventricular rhythm, or asystole) or null. It goes through the caller's single `requestRhythm` path (E-FU3-8).
+ * `u` draws one uniform from the outcome stream.
+ */
+export function peaDecayStep(m: CircModelState, rhythmId: string, pulseless: boolean, cpp: number, u: () => number, dt: number): ArrestRequest | null {
+  const a = m.arrest;
+  if (!a) return null;
+  if (cpp >= CPP_ROSC) return null; // effective CPR suspends the decay (the ROSC path handles recovery)
+  if (rhythmId === 'agonal') {
+    // the idioventricular phase: asystole as a hazard with a mean of PEA_ASYSTOLE_MEAN_S
+    return u() < dt / PEA_ASYSTOLE_MEAN_S ? { id: 'asystole', opts: {}, cause: a.cause } : null;
+  }
+  if (!pulseless || NO_BEAT_RHYTHMS.has(rhythmId)) return null; // VF and asystole are not organised; a pulse ends it
+  const ms = m.cor.kIsch * (1 - m.cor.hyp);
+  if (ms < PEA_IDIO_M) return { id: 'agonal', opts: { pulseless: true, rateBpm: PEA_IDIO_RATE }, cause: a.cause };
+  const want = Math.round(Math.max(PEA_RATE_MIN, a.rate0 * Math.min(1, Math.max(0, ms / PEA_RATE_M_FULL))));
+  return want < a.rateNow - 1 ? { id: rhythmId as RhythmId, opts: { pulseless: true, rateBpm: want }, cause: a.cause } : null;
+}
+
 /** ROSC of an engine-declared organised arrest (PEA): the rhythm it came from, with a pulse, or null. */
 export function roscStep(m: CircModelState, rhythmId: string, pulseless: boolean, cpp: number, dt: number): { id: RhythmId; opts: RhythmOpts } | null {
   const a = m.arrest;
@@ -97,10 +136,13 @@ export function roscStep(m: CircModelState, rhythmId: string, pulseless: boolean
     m.arrest = null; // a pulse returned another way (shock, instructor)
     return null;
   }
-  if (NO_BEAT_RHYTHMS.has(rhythmId)) return null; // VF needs a shock; asystole stays (Q3)
+  // FU-4 F5: the idioventricular phase of the decay is reversible — effective CPR can bring it back to the organised
+  // rhythm it decayed FROM. VF still needs a shock and asystole still stays (Q3).
+  const idio = rhythmId === 'agonal';
+  if (NO_BEAT_RHYTHMS.has(rhythmId) && !idio) return null;
   const ok = cpp >= CPP_ROSC && m.cor.kIsch * (1 - m.cor.hyp) >= M_ROSC;
   a.roscS = ok ? a.roscS + dt : 0;
   if (a.roscS < ROSC_HOLD_S) return null;
   m.arrest = null;
-  return { id: rhythmId as RhythmId, opts: {} };
+  return { id: (idio ? a.from : rhythmId) as RhythmId, opts: {} };
 }

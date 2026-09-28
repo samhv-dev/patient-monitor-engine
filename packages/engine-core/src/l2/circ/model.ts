@@ -129,7 +129,7 @@ export interface CircModelState {
   /** FU-4 G4: mean radial pressure, low-passed (τ 2 s) at the 10 Hz control step in both modes — beats or none. */
   mapNow: number;
   /** FU-4 G1: the arrest this model declared (cause, time, the organised rhythm it came from), null while beating. */
-  arrest: { cause: string; t: number; from: string; roscS: number } | null;
+  arrest: { cause: string; t: number; from: string; roscS: number; rate0: number; rateNow: number } | null; // FU-4 F5: rate0/rateNow drive the PEA decay
   noFlowS: number; // FU-4 G1: seconds the continuous MAP has been below arrest.ts MAP_NO_FLOW
   saF: number; // FU-4 (G-FU3 ruling 1): the sinus-node factor of the last control step (MODELED; 1 in MANUAL) — the escape foci follow it
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)

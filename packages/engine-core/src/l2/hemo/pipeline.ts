@@ -27,7 +27,7 @@ import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircMode
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
-import { arrestStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1
+import { arrestStep, peaDecayStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1; F5: peaDecayStep
 import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -401,11 +401,20 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     const hx = ctx.l1.mode === 'modeled' ? hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, hrNow, u) : null; // FU-3 item 16
     const req = hx ? { ...hx, cause: 'hypoxia' } : arrestStep(c, ctx.rhythm.id, pulseless, hrNow, u, 1);
     if (req) {
-      c.arrest = { cause: req.cause, t, from: ctx.rhythm.id, roscS: 0 };
+      const r0 = req.opts.rateBpm ?? Math.round(Math.max(20, hrNow));
+      c.arrest = { cause: req.cause, t, from: ctx.rhythm.id, roscS: 0, rate0: r0, rateNow: r0 };
       ctx.requestRhythm(req.id, req.opts);
     } else {
       const back = roscStep(c, ctx.rhythm.id, pulseless, cppCont, 1);
       if (back) ctx.requestRhythm(back.id, back.opts);
+      else {
+        // FU-4 F5 (ruling 7): the untreated organised PEA decays — slower, then idioventricular, then asystole
+        const dec = peaDecayStep(c, ctx.rhythm.id, pulseless, cppCont, u, 1);
+        if (dec) {
+          if (c.arrest) c.arrest.rateNow = dec.opts.rateBpm ?? c.arrest.rateNow;
+          ctx.requestRhythm(dec.id, dec.opts);
+        }
+      }
     }
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;

@@ -1,7 +1,7 @@
 // FU-4 G1/G3/G12 (Task 6): the arrest state machine's decisions — declaration (flow share, no flow, hazards), the onset
 // draw (taken only when needed), and ROSC of an engine-declared organised arrest.
 import { describe, expect, it } from 'vitest';
-import { arrestStep, CPP_ROSC, K_ISCH_ARREST, MAP_NO_FLOW, M_ROSC, NO_FLOW_S, ROSC_HOLD_S, roscStep, vfShare } from '../../../src/l2/circ/arrest.ts';
+import { arrestStep, CPP_ROSC, K_ISCH_ARREST, MAP_NO_FLOW, M_ROSC, NO_FLOW_S, PEA_ASYSTOLE_MEAN_S, PEA_IDIO_M, PEA_IDIO_RATE, PEA_RATE_M_FULL, PEA_RATE_MIN, peaDecayStep, ROSC_HOLD_S, roscStep, vfShare } from '../../../src/l2/circ/arrest.ts';
 import { P_ASYSTOLE_ONSET, P_VF_ONSET } from '../../../src/l2/circ/hypoxic-arrest.ts';
 import { createCircModel } from '../../../src/l2/circ/model.ts';
 
@@ -63,7 +63,7 @@ describe('FU-4: arrest declaration', () => {
 describe('FU-4: ROSC of an engine-declared PEA', () => {
   it(`needs CPP ≥ ${CPP_ROSC} and kIsch·(1 − hyp) ≥ ${M_ROSC} held ${ROSC_HOLD_S} s; then the same rhythm with a pulse`, () => {
     const m = createCircModel();
-    m.arrest = { cause: 'lowFlow', t: 0, from: 'sinus', roscS: 0 };
+    m.arrest = { cause: 'lowFlow', t: 0, from: 'sinus', roscS: 0, rate0: 60, rateNow: 60 };
     m.cor.kIsch = 0.5;
     expect(roscStep(m, 'sinus', true, CPP_ROSC - 1, 1)).toBeNull();
     let back = null;
@@ -75,10 +75,49 @@ describe('FU-4: ROSC of an engine-declared PEA', () => {
   });
   it('VF waits for a shock; a pulse returned another way clears the record', () => {
     const m = createCircModel();
-    m.arrest = { cause: 'hyperkalaemia', t: 0, from: 'sinus', roscS: 0 };
+    m.arrest = { cause: 'hyperkalaemia', t: 0, from: 'sinus', roscS: 0, rate0: 60, rateNow: 60 };
     m.cor.kIsch = 1;
     for (let i = 0; i < 120; i++) expect(roscStep(m, 'vfCoarse', false, 40, 1)).toBeNull();
     expect(roscStep(m, 'sinus', false, 40, 1)).toBeNull();
+    expect(m.arrest).toBeNull();
+  });
+});
+
+describe('FU-4 F5: the PEA decays', () => {
+  const pea = (ms: number, rate0 = 60, rateNow = 60) => {
+    const m = createCircModel();
+    m.arrest = { cause: 'lowFlow', t: 0, from: 'sinus', roscS: 0, rate0, rateNow };
+    m.cor.kIsch = ms;
+    m.cor.hyp = 0;
+    return m;
+  };
+  it('the rate follows kIsch·(1 − hyp) below PEA_RATE_M_FULL and never goes below PEA_RATE_MIN', () => {
+    const u = () => 0.99;
+    expect(peaDecayStep(pea(PEA_RATE_M_FULL), 'sinus', true, 0, u, 1)).toBeNull(); // full state: the onset rate
+    const half = peaDecayStep(pea(PEA_RATE_M_FULL / 2), 'sinus', true, 0, u, 1);
+    expect(half?.id).toBe('sinus');
+    expect(half?.opts).toEqual({ pulseless: true, rateBpm: 30 });
+    const low = peaDecayStep(pea(0.05), 'sinus', true, 0, u, 1);
+    expect(low?.opts.rateBpm).toBe(PEA_RATE_MIN);
+  });
+  it(`below PEA_IDIO_M the rhythm becomes a pulseless idioventricular (agonal) one at ${PEA_IDIO_RATE}/min`, () => {
+    const r = peaDecayStep(pea(PEA_IDIO_M / 2), 'sinus', true, 0, () => 0.99, 1);
+    expect(r).toEqual({ id: 'agonal', opts: { pulseless: true, rateBpm: PEA_IDIO_RATE }, cause: 'lowFlow' });
+  });
+  it('from agonal, asystole is a hazard with mean PEA_ASYSTOLE_MEAN_S', () => {
+    const m = pea(0);
+    expect(peaDecayStep(m, 'agonal', true, 0, () => 0.5 / PEA_ASYSTOLE_MEAN_S, 1)?.id).toBe('asystole');
+    expect(peaDecayStep(m, 'agonal', true, 0, () => 2 / PEA_ASYSTOLE_MEAN_S, 1)).toBeNull();
+  });
+  it('an effective CPP (≥ CPP_ROSC) suspends the decay at every stage', () => {
+    expect(peaDecayStep(pea(0.1), 'sinus', true, CPP_ROSC, () => 0, 1)).toBeNull();
+    expect(peaDecayStep(pea(0), 'agonal', true, CPP_ROSC, () => 0, 1)).toBeNull();
+  });
+  it('roscStep from the idioventricular phase returns the rhythm the PEA decayed from', () => {
+    const m = pea(1);
+    let back = null;
+    for (let i = 0; i < ROSC_HOLD_S + 1 && !back; i++) back = roscStep(m, 'agonal', true, CPP_ROSC + 5, 1);
+    expect(back).toEqual({ id: 'sinus', opts: {} });
     expect(m.arrest).toBeNull();
   });
 });
