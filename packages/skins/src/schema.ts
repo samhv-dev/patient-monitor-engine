@@ -226,7 +226,7 @@ export const skinSchema: JsonSchema = {
       }),
     ),
     trend: obj({ style: en(['line', 'filled-area']), hours: num(1, 168) }),
-    glyphs: obj({ noValue: str, hrUnavailable: str, nibpFail: str, outOfRange: str, ibpPrUnavailable: str, questionable: str, inop: str }),
+    glyphs: obj({ noValue: str, hrUnavailable: str, nibpFail: str, questionable: str, inop: str }),
     provenance: provenanceSchema,
   }),
   allOf: [

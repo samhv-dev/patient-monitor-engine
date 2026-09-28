@@ -92,7 +92,7 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
   if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '' };
   const enabled = keys.some((k) => st.limits[k]?.enabled);
   const shown = r.skin.alarms.numericFlash ? visibleAlarms(st, r, t, pumpPage) : [];
-  const mine = shown.filter((a) => !a.acked && a.numeric !== undefined && spec.numerics.includes(a.numeric));
+  const mine = shown.filter((a) => !a.acked && a.category === 'physiological' && a.numeric !== undefined && spec.numerics.includes(a.numeric)); // FU-5: INOPs mark, not flash
   const flash = mine.length > 0 ? (Math.min(...mine.map((a) => a.level)) as 1 | 2 | 3) : null;
   const l = st.limits[keys[0] as string];
   const fmt = (v: number | null) => (v === null ? '--' : String(Math.round(v * 10) / 10));

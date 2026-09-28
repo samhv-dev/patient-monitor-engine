@@ -267,7 +267,7 @@ export interface Skin {
    * FU-5: `questionable` is appended to a questionable numeric ("97?"); `inop` replaces a numeric whose technical alarm
    * is active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
    */
-  glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; outOfRange: string; ibpPrUnavailable: string; questionable: string; inop: string };
+  glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; questionable: string; inop: string };
   provenance: Provenance;
 }
 

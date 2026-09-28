@@ -35,7 +35,7 @@
     "lanes": ["ECG1", "PLETH", "IBP1", "IBP2", "RESP"],
     "tiles": [
       [
-        { "param": "HR", "size": "large", "extras": ["PACE", "ST", "PVCs"] },
+        { "param": "HR", "size": "large", "extras": ["ST"] },
         { "param": "NIBP", "extras": ["MEAN", "PR"] },
         { "param": "IBP1", "extras": ["MEAN"] },
         { "param": "IBP2", "extras": ["MEAN"] }
@@ -45,7 +45,7 @@
         { "param": "TEMP", "extras": ["T2", "DT"] },
         { "param": "RR" },
         { "param": "NMT", "extras": ["TOF", "PTC"] },
-        { "param": "BFA", "extras": ["BS%", "SQI", "EMG"] }
+        { "param": "BFA", "extras": ["BS%"] }
       ]
     ],
     "menuRegion": "wave-area-bottom",
@@ -193,7 +193,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "filled-area", "hours": 96 },
-  "glyphs": { "noValue": "---", "hrUnavailable": "-?-", "nibpFail": "?", "outOfRange": "--", "ibpPrUnavailable": "---", "questionable": "?", "inop": "---" },
+  "glyphs": { "noValue": "---", "hrUnavailable": "-?-", "nibpFail": "?", "questionable": "?", "inop": "---" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
@@ -235,7 +235,7 @@
     "ecgColorLocked": { "tag": "documented", "source": "research/06 §3.2 (M p.40, 308); brief §3.8" },
     "layout.waveAreaFraction": { "tag": "measured", "source": "research/06 §3.1 F1" },
     "layout.lanes": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §5" },
-    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]. FU-5: IBP1's PPV extra removed — the engine has no PPV numeric and the B9's PPV is OFF by default (research/06 §4.1, M p.149–161)" },
+    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]. FU-5: IBP1's PPV extra removed — the engine has no PPV numeric and the B9's PPV is OFF by default (research/06 §4.1, M p.149–161); HR's PACE and PVCs and BFA's SQI and EMG extras removed — the engine publishes no pacer-status, PVC-count, SQI or EMG numeric (recorded here, research/06 §3.1 F1, §2)" },
     "layout.menuRegion": { "tag": "documented", "source": "research/06 §3.1 F4; brief §3.8" },
     "layout.header": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2" },
     "layout.messageBars": { "tag": "documented", "source": "research/06 §3.1 F1-F2 (M p.36)" },
@@ -329,8 +329,6 @@
     "glyphs.noValue": { "tag": "assumed", "source": "brief §6.2" },
     "glyphs.hrUnavailable": { "tag": "documented", "source": "research/06 §3.2 (M p.62, 66-67)" },
     "glyphs.nibpFail": { "tag": "documented", "source": "research/06 §3.2 (M p.129)" },
-    "glyphs.outOfRange": { "tag": "documented", "source": "research/06 §3.2" },
-    "glyphs.ibpPrUnavailable": { "tag": "documented", "source": "research/06 §3.2" },
     "glyphs.questionable": { "tag": "documented", "source": "brief §4.3, §6.1 ('97?')" },
     "glyphs.inop": { "tag": "assumed", "source": "brief §6.2 (dashes)", "note": "the B9 manual gives no INOP glyph for SpO2/IBP/temperature" }
   }

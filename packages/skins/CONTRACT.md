@@ -109,5 +109,14 @@ C.1.5); the Philips Alarm Reminder (factory default On, 3 min: a tone repeat for
 [S1] p. 135, 141 — decided as the vendor's default, not modelled; Stage 9 or a later FU); silencing some Philips INOPs
 switches the measurement off (TEMP/ABP NO TRANSDUCER, CO2 NO TUBING, [S2] p. 57, 62, 71) — not modelled. Removed by
 FU-5: saadat-like's IBP1 `PPV` tile
-extra (no PPV numeric; the B9's PPV is OFF by default, research/06 §4.1). Option lists (`*Options`, `autoIntervalsMin`,
-`ecg.filters`, `spo2.sensitivity`) are settings-menu data and do not claim a behaviour.
+extra (no PPV numeric; the B9's PPV is OFF by default, research/06 §4.1), its HR `PACE`/`PVCs` and BFA `SQI`/`EMG`
+extras (no such numerics); `glyphs.outOfRange` ("--") and `glyphs.ibpPrUnavailable` ("---", research/06 §3.2: no
+engine numeric leaves a device range the manuals give, and no tile shows an IBP pulse rate). Option lists
+(`*Options`, `autoIntervalsMin`, `ecg.filters`, `spo2.sensitivity`) and menu features (`alarms.alarmFreezeOption`,
+`alarms.recall`) are settings-menu data and do not claim a behaviour; `spo2.plethNormalized` is the renderer's pleth
+auto-scale, which every skin gets.
+
+Tile `extras` the renderer draws: `PR` (SpO2: the pleth rate; NIBP: the cuff's), `PI`, `AWRR`, `T2`, `DT`, `ST`;
+`MEAN` is the pressure tiles' own sub-line; NMT/BFA extras name their second readout (FU-3). The printed labels are
+research/11's glossary labels (R56): "PR", "PI" (perfusion index; the LVAD index is never "PI"), "awRR", "T2", "ΔT",
+"ST-II"; BFA's `BS%` (saadat-like) is the B9's alias of SR, the burst-suppression ratio.

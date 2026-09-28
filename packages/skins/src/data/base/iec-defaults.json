@@ -133,7 +133,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "line", "hours": 8 },
-  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "outOfRange": "---", "ibpPrUnavailable": "---", "questionable": "?", "inop": "---" },
+  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "questionable": "?", "inop": "---" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
