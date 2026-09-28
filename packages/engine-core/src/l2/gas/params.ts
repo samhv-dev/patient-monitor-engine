@@ -31,9 +31,31 @@ export const LOW_FLOW_EXP = 0.6;
 export const LOW_FLOW_TAU_S = 70;
 
 export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
-/** Y-piece + HME on a ventilator or BVM: 50 mL adult, 1.5 mL/kg below 33 kg (neonatal circuits) [ENG]. */
+/** FU-4 F4 / R1(a): the healthy resting PaCO2 every profile starts from (pregnancy 31 under R10). */
+export const PACO2_REST_MMHG = 40;
+/** Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG]. */
+export const APPARATUS_ADULT_ML = 50;
+/**
+ * FU-4 F4 / R1(c)(ii): below 33 kg the circuit is a PAEDIATRIC one — low-dead-space connectors and a paediatric/infant
+ * HME (manufacturers' stated internal volumes ≈ 1–3 mL infant, ≈ 6–10 mL paediatric [TXT: device IFUs]), so the
+ * apparatus scales ≈ 0.5 mL/kg [ENG]. Before this the adult rule's 1.5 mL/kg put 24 mL against a 4 y child's 112 mL
+ * breath (a third of it) and the child sat at PaCO2 62–76 on 7 mL/kg.
+ */
+export const APPARATUS_PAED_ML_PER_KG = 0.5;
+export const PAED_CIRCUIT_BELOW_KG = 33;
 export function apparatusDeadSpaceMl(weightKg: number): number {
-  return Math.min(50, 1.5 * weightKg);
+  return weightKg < PAED_CIRCUIT_BELOW_KG ? APPARATUS_PAED_ML_PER_KG * weightKg : APPARATUS_ADULT_ML;
+}
+/**
+ * FU-4 F4 / R1(c)(i): the ventilator's DEFAULT pattern for this patient (used when a `ventilation` command gives no
+ * rr/vtMl): lung-protective 7 mL/kg IBW (ARDSNet-era practice for every ventilated patient, 6–8 mL/kg PBW [TXT]) and
+ * an age-band rate chosen for normocapnia with the one physical dead space [ENG, fit: PaCO2 35–45 at 30 min, MODELED].
+ * Before this every patient, whatever their size, got the adult 12 × 500.
+ */
+export const VENT_VT_ML_PER_KG_IBW = 7;
+export const VENT_RR_BY_AGE: Record<AgeBand, number> = { neonate: 24, infant: 20, child: 17, adult: 12, elderly: 11 };
+export function ventDefaults(pat: Pick<GasPatient, 'ibwKg'>, ageY: number): { rr: number; vt: number } {
+  return { rr: VENT_RR_BY_AGE[ageBand(ageY)], vt: Math.round(VENT_VT_ML_PER_KG_IBW * pat.ibwKg) };
 }
 /**
  * FU-4 F4 / R1(b): an ETT or SGA BYPASSES the extrathoracic airway, so the apparatus does not simply add to the
@@ -101,6 +123,12 @@ export interface GasPatient {
   vco2: number; // awake mL/min = RQ·VO2
   bloodL: number;
   deadSpaceMl: number; // anatomical
+  /**
+   * FU-4 F4 / R1(a): the patient's OWN resting arterial CO2 (mmHg). In MODELED this is the drive's set point and the
+   * gas compartments' starting point, instead of a value back-calculated from L1's adult EtCO2 default of 36 plus a
+   * gradient — which made every MODELED patient, whatever their size, sit at an adult's displayed EtCO2.
+   */
+  paco2Rest: number;
   /** CO2 compartments (mL/mmHg) and exchange (mL/min/mmHg). */
   cf: number;
   cs: number;
@@ -132,6 +160,7 @@ export function gasPatient(p: PatientProfile | undefined): GasPatient {
     vo2, vco2: RQ * vo2,
     bloodL: (a.bv * eff) / 1000,
     deadSpaceMl: ANAT_DEAD_SPACE_ML_PER_KG * ibw,
+    paco2Rest: PACO2_REST_MMHG, // FU-4 F4 / R1(a) (pregnancy 31 when R10 lands)
     // anchored on the anaesthetised VCO2 (the apnoea data are from anaesthetised patients)
     cf: CO2_CF_PER_VCO2 * RQ * vo2 * GA_METABOLIC, cs: CO2_CS_PER_VCO2 * RQ * vo2 * GA_METABOLIC, kfs: CO2_KFS_PER_VCO2 * RQ * vo2 * GA_METABOLIC,
     complianceMl: 50 * (ibw / 70), // 50 mL/cmH2O intubated adult [ENG]; scales with size

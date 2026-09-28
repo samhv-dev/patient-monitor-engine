@@ -60,7 +60,13 @@ export const K_PP = 0.3;
  * relaxation-phase aortic pressure is set by intrinsic tone plus circulating catecholamines (Paradis 1990's CPP band).
  * Same signal as E-FU3-10's respiratory gate (7d `brain.cbfRel`), which closes at 0.2 [ENG thresholds].
  */
-export const CBF_REFLEX_FULL = 0.9;
+// FU-4 (Task 18d re-measure): FULL moved 0.9 → 0.6. At 0.9 any CBF fall that is NOT ischaemia withdrew the reflex —
+// hypocapnia (PaCO2 30: CBF ≈ 0.7), the autoregulated hypotension of warm sepsis, raised ICP — measured: warm-sepsis HR
+// 131 → 98 and MAP 56 → 45, the Cushing HR ratio 0.82 (band ≤ 0.8). The vasomotor centre fails on the way from the
+// electrical-failure threshold (≈ 15–25 mL/100 g/min, 0.3–0.5 of normal) to membrane failure (≈ 10, 0.2): Astrup J,
+// Siesjö BK, Symon L, Stroke 1981;12:723–725 [P]. CPR at 70 s (CBF 0.43): CoPP 24.7, RA relaxation 16.4 — still in
+// Paradis 15–25 (0.9 gave 23.3 / 15.8).
+export const CBF_REFLEX_FULL = 0.6;
 export const CBF_REFLEX_ZERO = 0.2;
 /** FU-4 F1(b): × on the delivered sympathetic output from brainstem perfusion (1 when 7d is absent). */
 export function brainstemOutF(cbfRel: number | undefined): number {

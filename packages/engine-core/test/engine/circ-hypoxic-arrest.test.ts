@@ -159,7 +159,7 @@ let asphyxiaRun: Promise<Course> | undefined;
 const asphyxiaCourse = (): Promise<Course> => (asphyxiaRun ??= asphyxia('modeled', false, 20 * 60, true));
 
 describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_000 }, () => {
-  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.29 %, PP 0.11 mmHg, rate 30, monitor HR 58/57.6 vs 58/57.7', async () => {
+  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole, FU-4 F5), monitor HR 0 vs 59/57.9; PEA at +6.90 min (TAU_HYP_S 360)', async () => {
     const c = await asphyxiaCourse();
     const sat = c.tSat60 ?? Number.NaN;
     const w = c.win;

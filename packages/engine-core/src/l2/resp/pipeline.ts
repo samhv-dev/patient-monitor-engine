@@ -26,7 +26,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -141,6 +141,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
     lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
   };
+  rs.driver.vent = { ...rs.driver.vent, ...ventDefaults(pat, profile?.ageY ?? 40) }; // FU-4 F4 / R1(c): per-patient ventilator defaults
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
   return rs;
 }
@@ -166,9 +167,11 @@ function compliance(rs: RespState): number {
 }
 function deadSpace(rs: RespState, l1?: L1State): number {
   const mech = rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none';
-  // FU-4 G11: the MANUAL EtCO2 fit (vdExtraMl, made for the resting pattern at t = 0) is not a MODELED ventilated
-  // patient's dead space — it carried 61 mL into every MODELED PPV run (VA 2.82 L/min and PaCO2 60 at 12 × 500)
-  const fit = mech && l1?.mode === 'modeled' ? 0 : rs.co2.vdExtraMl;
+  // FU-4 F4 / R1(a): the EtCO2 → dead-space fit belongs to MANUAL. It is an instructor's calibration of a DISPLAYED
+  // number, never a MODELED patient's anatomy, and in MODELED it inflated the dead space of every patient — including
+  // spontaneously breathing women, children and the elderly, who kept the adult RR 15 / VT 500 / EtCO2 36 fit
+  // (respiratory audit R1: 265 / 329 / 459 mL). G11 had removed it for MODELED + mechanical ventilation only.
+  const fit = l1?.mode === 'modeled' ? 0 : rs.co2.vdExtraMl;
   // FU-4 (FU-6 review ruling): the ONE physical dead space (anatomical − ETT bypass + apparatus); the artificial airway is
   // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
   return physicalDeadSpace(rs.pat, mech) + fit;
@@ -317,7 +320,11 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const h = ctx.hemo;
   const d = rs.driver;
   checkDrive(d, t);
-  rs.coRatio = (cardiacOutput(h, t) / CO_REF_LPM) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // FU-4 F4 (Task 18d, found by measurement): the ratio is to THIS patient's normal output (the module's own convention,
+  // Q = coRatio × CI_LPM_PER_KG × effKg), not to the adult 5.25 L/min — a 16 kg child at rest read 0.21 and an infant
+  // 0.10, so the low-flow CO2 compression (lowFlowFactor 0.40 / 0.24) treated every small patient as in low-flow
+  // shock: PaCO2 67 / 81 on 7 mL/kg, and the 7 kg infant crash (FU-6 Request 3). The 70 kg adult is bit-identical.
+  rs.coRatio = (cardiacOutput(h, t) / (CI_LPM_PER_KG * rs.pat.effKg)) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
   // temperature at 1 Hz; MANUAL tempCore target places the model (plan decision 2)
   if (rs.gasK % 10 === 0) {
     const tc = l1Target(l1, 'tempCore', t);
@@ -351,8 +358,18 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
   rs.circPtx = circPtx(h); // Stage 7b (Task 26)
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
+  // FU-4 F4 / R1(a): calibrate only in MANUAL; in MODELED the resting PaCO2 is the PATIENT's set point, not one derived
+  // from L1's adult EtCO2 default plus a gradient
   const etT = l1Target(l1, 'etco2', t);
-  if (etT !== rs.seen.etco2) {
+  if (l1.mode === 'modeled') {
+    if (rs.seen.etco2 !== etT) {
+      rs.seen.etco2 = etT;
+      rs.co2.vdExtraMl = 0;
+      const rest = rs.pat.paco2Rest;
+      if (!Number.isFinite(rs.co2.pf) || rs.co2.pf <= 0) { rs.co2.pf = rest; rs.co2.ps = rest; }
+      (rs.spont ??= createSpontDrive()).paco2Rest = rest;
+    }
+  } else if (etT !== rs.seen.etco2) {
     rs.seen.etco2 = etT;
     const n = nominalRate(d, driverCtx(rs, l1, t));
     rs.co2.flow = lowFlowFactor(rs.coRatio); // calibrate against the settled low-flow factor

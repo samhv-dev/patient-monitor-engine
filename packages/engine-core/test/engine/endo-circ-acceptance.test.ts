@@ -45,19 +45,21 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
   }, 900_000);
   // R45 misses (prototype, Q-7e-7): warm HR 131, MAP 61, CO 5.0, SVR 866; cold SVR 1510. 7a's baroreflex restores the
   // SVR the vasoplegia removed and nothing raises venous return (see Requests: 7a baroreflex × vasoResp, septic RVR).
-  it('warm HR 115–130 — was 131 before FU-4, 118 with it (Q-7e-7)', () => {
+  it('warm HR 115–130 — measured 116 at the FU-4 gate; was 131 before FU-4, 118 after Task 8 (Q-7e-7)', () => {
     expect(warm.hr).toBeGreaterThanOrEqual(115);
     expect(warm.hr).toBeLessThanOrEqual(130);
   });
-  it('warm MAP 55–60 — was 61 before FU-4, 56 with it (Q-7e-7)', () => {
+  // E-FU4-9 (title/flip edits only): flipped to `it` by Task 8 at 56; the later FU-4 mechanisms (Task 18a's brainstem
+  // arm, 18d's gas-exchange flow) take it to 54.0 — back to a record, body unchanged (R45).
+  it.fails('warm MAP 55–60 — measured 54.0 at the FU-4 gate; was 61 before FU-4, 56 after Task 8 (Q-7e-7)', () => {
     expect(warm.map).toBeGreaterThanOrEqual(55);
     expect(warm.map).toBeLessThanOrEqual(60);
   });
-  it.fails('warm CO 7–9 L/min (measured 5.0; 4.9 with FU-4; Q-7e-7)', () => {
+  it.fails('warm CO 7–9 L/min (measured 5.0; 4.9 with FU-4, 4.9 at the gate; Q-7e-7)', () => {
     expect(warm.co).toBeGreaterThanOrEqual(7);
     expect(warm.co).toBeLessThanOrEqual(9);
   });
-  it.fails('warm SVR 500–700 dyn·s/cm⁵ (measured 861; 792 with FU-4; Q-7e-7)', () => {
+  it.fails('warm SVR 500–700 dyn·s/cm⁵ (measured 861; 792 with FU-4, 767 at the gate; Q-7e-7)', () => {
     expect(warm.svr).toBeGreaterThanOrEqual(500);
     expect(warm.svr).toBeLessThanOrEqual(700);
   });

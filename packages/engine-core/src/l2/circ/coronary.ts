@@ -25,8 +25,11 @@ export const SAO2_REF = 0.97;
  * to the asphyxial arrest window: loss of aortic pulsations 9.5 ± 1.4 min (swine, Varvarousi 2011) and 11.4 ± 2.4 min
  * (dogs, DeBehnke 1995) after the airway is occluded on room air]. FU-4 (D3): re-fitted 150 → 260 s to the same window
  * once the R23 floor (0.2) no longer held the hypoxic, hypotensive heart up for ≈ 3 min (arrest +4.50 → +5.62 min).
+ * FU-4 (review F13, the scan the ruling requires, after Task 18d): circ-hypoxic-arrest's whole file passes for τ 220–500 s
+ * (150 → PEA +4.78 min, 200 → +4.93: below the 5–14 band; 600 → the post-arrest window misses), so the MIDDLE of the
+ * plateau is chosen: 360 s → PEA at +6.90 min (margins 1.90 / 7.10 min to the band edges; HR < 40 at +4.33, ≤ 6).
  */
-export const TAU_HYP_S = 260;
+export const TAU_HYP_S = 360;
 /**
  * FU-4 G1: floor of the ischaemic contractility factor in MODELED. The R23 floor 0.2 kept a no-flow heart beating at a
  * fifth of its contractility for ever (audit B7: MAP 13, SV 2 mL for 15 min); a myocardium without coronary flow stops
@@ -97,7 +100,12 @@ export interface CoronaryState {
 
 export function createCoronary(ref: Stabilised['ref']): CoronaryState {
   const rr = 60 / ref.hr;
-  const tsys = 0.37 + IVR_S; // resting emergent valve closure ≈ 0.37 s after onset at HR 70 (prototype)
+  // resting emergent valve closure ≈ 0.37 s after onset at HR 70 (prototype); FU-4 (found in Task 18d's infant/neonate
+  // measurement): systole shortens with the resting rate — Weissler's LVET slope −1.7 ms per beat/min (Weissler AM et
+  // al., Circulation 1968;37:149–159 [P]) — so a neonate's reference (HR 140: measured valve closure 0.25 s) no longer
+  // gets a NEGATIVE resting diastolic fraction (dtf0 −0.003 → the coronary flow ratio −331, kIsch 0.10 and a "low-flow"
+  // arrest of a healthy newborn at 47 s). At HR 70 the value is unchanged.
+  const tsys = Math.max(0.2, 0.37 - 0.0017 * (ref.hr - 70)) + IVR_S;
   return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0, cpp: ref.dbp - ref.lvedp, kIschRv: 1, rv0: null };
 }
 
