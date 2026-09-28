@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 05:22 (R54–R59 recorded: revised order FU-4 → V.1 → FU-6 (FU-5 ∥) → 7i → 7k → 7j → Stage 9 UI → 8b; coverage audits in idle slots; 4/4 slots).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 05:57 (FU-4 fixer, FU-5 + FU-6 writers, drug-interactions coverage run; 4/4 slots).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -17,7 +17,7 @@
 | 7e endocrine/thermal | MERGED 2026-09-27 20:55 (PR #22, head 1d6f5a7) | G7e + four rulings in the rulings file; child-rig defect handed to V.1; FU-4 list opened | done |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | MERGED 2026-09-27 23:36 (PR #23, head 26f5290) | G-FU3 + seven rulings in the rulings file (t25 ventilated → FU-4; escape-pacemaker hypoxia → FU-4 G7; oracle MODELED) | done |
-| Coverage audits (R54) | capability inventory + glossary draft + coverage-matrix design running since 2026-09-28 05:22 (→ `../research/11-capability-inventory-and-glossary.md`, `../research/12-coverage-matrix.md`) | remaining system audits (renal/hepatic/endocrine/neuro/thermal/drug-interaction/paediatric/obstetric/comorbidity/device) run in idle slots | → FU-7+ plans |
+| Coverage audits (R54) | inventory + glossary (294 entries; 40 % of labels non-clinical) + matrix (837 cells; 201 measured; 636 new in 10 runs; 181 blocked) DONE → `../research/11-…`, `12-…`; run 1 DRUG INTERACTIONS running since 2026-09-28 05:57 (→ `../research/14-audit-drug-interactions.md`) | next runs: blood/fluids → endocrine/thermal → neuro → renal/hepatic → comorbidity → devices → stimuli → paediatric → obstetric | each run → FU-7+ plan items |
 | 7i labs & coagulation (R58) | not started | CBC, chemistry, ABG/VBG, coagulation model, TEG/ROTEM panels, labs UI | plan after FU-6 |
 | 7k respiratory mechanics & volumes (R57) | not started | Ppeak/Pplat/PEEP/driving/transpulmonary, compliance/resistance, VD set, FRC/ERV/RV/TLC/VC/IC, FEV1/FVC; Ventilation panel; PFT device later | plan after FU-6 |
 | 7j obstetric physiology (R59) | not started | term-pregnancy physiology, fetus + CTG device, uterotonics, pre-eclampsia, PPH, AFE | plan after 7i |
