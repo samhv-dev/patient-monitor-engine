@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 11:17 (FU-4 EXECUTING; FU-7 writer; FU-5 + FU-6 reviews; cap 4).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 11:24 (R60: 7i + 7j deferred to v1.1; v1.0 order FU-4 → V.1 → FU-6 → FU-7 (FU-5 ∥) → 7k → Stage 9 → 8b; FU-4 executing).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -18,9 +18,9 @@
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | MERGED 2026-09-27 23:36 (PR #23, head 26f5290) | G-FU3 + seven rulings in the rulings file (t25 ventilated → FU-4; escape-pacemaker hypoxia → FU-4 G7; oracle MODELED) | done |
 | Coverage audits (R54) | inventory + glossary (294 entries; 40 % of labels non-clinical) + matrix (837 cells; 201 measured; 636 new in 10 runs; 181 blocked) DONE → `../research/11-…`, `12-…`; run 1 DRUG INTERACTIONS DONE (105 cells: 42 plausible / 53 not / 10 blocked; 37 new gaps → FU-7) → `../research/14-audit-drug-interactions.md`(→ `../research/14-audit-drug-interactions.md`) | next runs: blood/fluids → endocrine/thermal → neuro → renal/hepatic → comorbidity → devices → stimuli → paediatric → obstetric | each run → FU-7+ plan items |
-| 7i labs & coagulation (R58) | not started | CBC, chemistry, ABG/VBG, coagulation model, TEG/ROTEM panels, labs UI | plan after FU-6 |
+| 7i labs & coagulation (R58) | DEFERRED to v1.1 (R60, Ali) | CBC, chemistry, ABG/VBG, coagulation model, TEG/ROTEM panels, labs UI | plan after FU-6 |
 | 7k respiratory mechanics & volumes (R57) | not started | Ppeak/Pplat/PEEP/driving/transpulmonary, compliance/resistance, VD set, FRC/ERV/RV/TLC/VC/IC, FEV1/FVC; Ventilation panel; PFT device later | plan after FU-6 |
-| 7j obstetric physiology (R59) | not started | term-pregnancy physiology, fetus + CTG device, uterotonics, pre-eclampsia, PPH, AFE | plan after 7i |
+| 7j obstetric physiology (R59) | DEFERRED to v1.1 (R60, Ali) | term-pregnancy physiology, fetus + CTG device, uterotonics, pre-eclampsia, PPH, AFE | plan after 7i |
 | Stage 9 clinical UI + naming (R55, R56) | not started (benchmark study first → `../research/13-ui-benchmarks.md`, design brief) | navigation, IA, tokens, glossary labels everywhere | plan after the benchmark study; Ali tests after this stage |
 | 8b release + IIFE embed | plan FIXED 23:16 (3,749 lines, 43 unique blocks; licence texts in every dist; fresh validate report in Task 12) — READY; executor after FU-3 + FU-4 + V.1 merge; Ali: Q1 npm?, Q2 @pme scope, Q3 Pages, Q5 Zenodo DOI, Q8 1.0.0 vs rc.1 | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
 | FU-4 integration polish (R53) | plan FIXED (8,147 lines, 32 tasks; healthy propofol −23 %, class III + propofol MAP 30 no arrest, tamponade PEA, CPR CoPP 24–29, tension PTX PEA 8.2 min) | EXECUTOR running since 2026-09-28 11:17 (worktree `../scratch/wt-fu-4`, branch `fu-4-integration-polish`) | orchestrator gate + merge |
