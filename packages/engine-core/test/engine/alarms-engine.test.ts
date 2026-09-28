@@ -7,15 +7,20 @@ type Meas = Extract<EngineEvent, { type: 'measurement' }>;
 const hrAbove = (ev: EngineEvent[], v: number) => ev.find((x): x is Meas => x.type === 'measurement' && (x.values.hr?.value ?? 0) > v);
 
 describe('alarm engine in the engine', () => {
-  it('philips-like: HR above 120 raises **HR at the first displayed value over the limit (no added delay), medium', () => {
+  // FU-5 Task 9a, R45 re-statement (the orchestrator's ruling on the FU-5 plan's Open question 20: the vendor's alarm
+  // on-delay): was "at the first displayed value over the limit (no added delay)", the [ENG] 0 s of iec-defaults. The
+  // target is 130 (was 150): a rise to 150 crosses philips-like's EXTREME TACHY threshold 140 within the 3 s, and the
+  // live red alarm then supersedes HR HIGH (the FU-5 chain, D6) — the subject, the limit alarm's timing and priority,
+  // is unchanged.
+  it('philips-like: HR above 120 (target 130) raises **HR 3 s after the first displayed value over the limit (the IntelliVue system alarm delay "less than 3 seconds", IFU [S2] p. 28, 294; FU-5 Task 9a), medium', () => {
     const { e, ev } = devRig('philips-like');
     e.advanceTo(10);
-    e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 150 }));
+    e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 130 }));
     e.advanceTo(30);
     const first = hrAbove(ev, 120)!;
     const r = alarmsOf(ev, 'HR_HIGH', 'raised')[0]!;
-    expect(r.t - first.t).toBeGreaterThanOrEqual(0);
-    expect(r.t - first.t).toBeLessThanOrEqual(0.02 + 1e-9);
+    expect(r.t - first.t).toBeGreaterThanOrEqual(3 - 1e-9);
+    expect(r.t - first.t).toBeLessThanOrEqual(3 + 0.02 + 1e-9);
     expect(r).toMatchObject({ priority: 'medium', level: 2, category: 'physiological' });
     expect(r.text).toMatch(/^\*\*HR \d+>120$/);
   });
@@ -77,10 +82,12 @@ describe('alarm engine in the engine', () => {
     // R–R 0.41–0.45 s = 134–145/min around the 135 target; the truth, averaged over the first beats, not a device
     // defect) — so EXTREME TACHY (> 140) is raised at 3 s, held 5 s (EVENT_HOLD_S), and latched by philips-like (#H30)
     // once its condition ends. A latched alarm suppresses nothing (review ruling 2, [S2] IFU p. 97): HR HIGH is raised
-    // as soon as EXTREME TACHY's condition has ended, with no acknowledge (8 s in the prototype).
+    // as soon as EXTREME TACHY's condition has ended, with no acknowledge (8 s in the prototype). FU-5 Task 9a (R45
+    // re-measure, the orchestrator's ruling on Open question 20): after philips-like's 3 s alarm on-delay — 13 s
+    // measured (EXTREME TACHY's condition ends at 10 s after its 5 s clear delay, + 3 s); was ≤ 10 s.
     expect(alarmsOf(ev, 'EXTREME_TACHY', 'raised').map((a) => a.t)).toEqual([3]);
     expect(alarmsOf(ev, 'HR_HIGH', 'raised')).toHaveLength(1);
-    expect(alarmsOf(ev, 'HR_HIGH', 'raised')[0]!.t).toBeLessThanOrEqual(10);
+    expect(alarmsOf(ev, 'HR_HIGH', 'raised')[0]!.t).toBeLessThanOrEqual(13);
     e.dispatch(cmd({ type: 'device', action: { device: 'monitor', action: 'ageBand', value: 'paed' } }));
     e.advanceTo(30);
     expect(alarmsOf(ev, 'HR_HIGH', 'cleared')).toHaveLength(1);

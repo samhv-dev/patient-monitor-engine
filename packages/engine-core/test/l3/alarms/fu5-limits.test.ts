@@ -26,7 +26,8 @@ describe('FU-5 limit hygiene (suite 11)', () => {
       stepAlarms(s, t, buildConditions(s, inp, t), out);
     }
     const ev = out.filter((e): e is Extract<EngineEvent, { type: 'alarm' }> => e.type === 'alarm' && e.id === 'CVP_M_HIGH');
-    expect(ev.map((e) => [e.state, Math.round(e.t)])).toEqual([['raised', 60], ['cleared', 110]]);
+    // FU-5 Task 9a: raised after philips-like's 3 s on-delay (IntelliVue system alarm delay, [S2] p. 28, 294) — was 60 s
+    expect(ev.map((e) => [e.state, Math.round(e.t)])).toEqual([['raised', 63], ['cleared', 110]]);
     expect(ev[0]?.text).toBe('**CVP 11>10');
   });
 
