@@ -50,8 +50,9 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
     expect(warm.hr).toBeLessThanOrEqual(130);
   });
   // E-FU4-9 (title/flip edits only): flipped to `it` by Task 8 at 56; the later FU-4 mechanisms (Task 18a's brainstem
-  // arm, 18d's gas-exchange flow) take it to 54.0 — back to a record, body unchanged (R45).
-  it.fails('warm MAP 55–60 — measured 54.0 at the FU-4 gate; was 61 before FU-4, 56 after Task 8 (Q-7e-7)', () => {
+  // arm, 18d's gas-exchange flow) took it to 54.0; Task 18e's humoral arm (AVP/angiotensin answer the septic unloading)
+  // brings it back to 56 — flipped again, body unchanged (R45).
+  it('warm MAP 55–60 — measured 56 with the humoral arm (Task 18e); was 54.0 after Task 18d, 61 before FU-4, 56 after Task 8 (Q-7e-7)', () => {
     expect(warm.map).toBeGreaterThanOrEqual(55);
     expect(warm.map).toBeLessThanOrEqual(60);
   });

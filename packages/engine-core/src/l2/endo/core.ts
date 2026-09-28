@@ -33,6 +33,8 @@ export interface EndoInputs {
   noxious: number;
   antinoc: number;
   mapMmHg: number;
+  /** FU-4 F2(a): the patient's own mean-pressure set point (7a `baro.set`) — the humoral arm's unloading reference. */
+  mapSetMmHg: number;
   sao2: number;
   paco2: number;
   tempC: number; // core temperature (the fever HR term)
@@ -47,7 +49,7 @@ export interface EndoInputs {
 }
 
 export const NEUTRAL_ENDO_INPUTS: EndoInputs = {
-  noxious: 0, antinoc: 0, mapMmHg: 85, sao2: 0.97, paco2: 40, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
+  noxious: 0, antinoc: 0, mapMmHg: 85, mapSetMmHg: 85, sao2: 0.97, paco2: 40, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
   epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0,
 };
 
@@ -68,6 +70,10 @@ export interface EndoOut {
   svrF: number;
   eesF: number;
   dV0Frac: number; // + fraction of BLOOD VOLUME moved into the unstressed pool (+ = venodilation); 7a's sign is the opposite
+  /** FU-4 F2(a): the HUMORAL arm's venous recruitment, published on its own because it shares 7a's ONE unstressed-volume
+   * reservoir with the baroreflex and the β-agonists (FU-2 F4) — added to `dV0Frac` it would double-count the splanchnic
+   * bed. − = venoconstriction, as a fraction of blood volume. */
+  humDV0Frac: number;
   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
   setShiftC: number; // fever set point added to the thermal thresholds
   kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
@@ -129,9 +135,10 @@ function compose(c: EndoCore): EndoOut {
     // MANUAL: the fever tachycardia of a condition is already in its HR row, so the temperature term sees only the core
     // ABOVE the endocrine set-point shift (MH, exogenous heat, a MANUAL target) — prototype: counting it twice gave HR 153
     feverHrFExcess: tempHrF(x.tempC - setShiftC),
-    svrF: alpha(st.svrF) * th.svrF * cd.svrF,
+    svrF: alpha(st.svrF) * th.svrF * cd.svrF * st.humSvrF, // FU-4 F2(a): the humoral arm is outside alpha() (V1/AT1, not catecholamine-responsiveness-scaled)
     eesF: beta(st.eesF) * th.eesF * cd.eesF,
     dV0Frac: st.dV0Frac + cd.dV0Frac,
+    humDV0Frac: st.humDV0Frac, // FU-4 F2(a)
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
     kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity,
@@ -159,7 +166,7 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const cd = c.out.cond;
   stepHormones(c.hormones, {
     noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
-    glucoseMgDl: g.g, mapMmHg: x.mapMmHg, sao2: x.sao2, paco2: x.paco2,
+    glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
     cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);

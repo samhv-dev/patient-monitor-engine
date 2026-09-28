@@ -10,7 +10,7 @@
 import {
   CORT_BASAL, CORT_EC50, CORT_EGP_X, CORT_SI_LOSS, CORT_VASO_RESP, EPI_ALPHA_SVR, EPI_BASAL_PG_ML, EPI_BETA1_EES,
   EPI_BETA1_HR, EPI_BETA2_SVR, EPI_EC50_ALPHA, EPI_EC50_BETA1, EPI_EC50_BETA2, EPI_EC50_METAB, EPI_EGP_X, EPI_K_SHIFT,
-  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0,
+  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0, HUM_SVR, HUM_V0,
 } from './params.ts';
 import type { HormoneState } from './hormones.ts';
 
@@ -26,6 +26,11 @@ export interface StressEffects {
   vasoResp: number; // × catecholamine/vasopressor responsiveness (cortisol permissive effect)
   bronchoDil: number; // 0–1 β2 bronchodilation of endogenous + exogenous epinephrine
   mastB2: number; // 0–1 β2 mast-cell stabilisation by EXOGENOUS (7g) epinephrine — the anaphylaxis treatment (R51 addendum 16)
+  /** FU-4 F2(a): × systemic resistance from the HUMORAL arm alone (AVP V1 + AT1), reported separately so the tables'
+   * §7 neural bands stay unchanged and so an anaesthetic's `outF` can be seen not to act on it. */
+  humSvrF: number;
+  /** FU-4 F2(a): + fraction of blood volume recruited by the humoral arm (− = venoconstriction). */
+  humDV0Frac: number;
 }
 
 /** Stage 7a's profile β-blockade: fraction of the β1 chronotropic (`hr`) and inotropic (`c`) response removed. */
@@ -59,5 +64,9 @@ export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: numb
     vasoResp: (1 - CORT_VASO_RESP) + CORT_VASO_RESP * Math.min(1.5, cortResponse * (h.cort / CORT_BASAL)),
     bronchoDil: hill(all, EPI_EC50_BETA2),
     mastB2: hill(Math.max(0, h.epiExo), EPI_EC50_BETA2),
+    // FU-4 F2(a): V1/AT1 vasoconstriction is NOT scaled by `vasoResp` (catecholamine responsiveness) — vasopressin
+    // keeps working where catecholamines have failed, which is why it is used in vasoplegic shock
+    humSvrF: 1 + HUM_SVR * h.hum,
+    humDV0Frac: -HUM_V0 * h.hum,
   };
 }

@@ -84,7 +84,7 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
   const antinoc = num(n?.antinoc) && pkActive(pk) ? n.antinoc : flag;
   const prof = circOf(ctx)?.prof;
   return {
-    noxious: es.noxious, antinoc, mapMmHg: mapOf(ctx, t), sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
+    noxious: es.noxious, antinoc, mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
@@ -153,6 +153,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     const bv = circ?.prof?.bloodVolumeMl ?? 0;
     const v0 = circ?.base?.v0Sv ?? 0;
     ext.endoDV0Frac = v0 > 0 ? (-o.dV0Frac * bv) / v0 : 0;
+    ext.endoHumDV0Frac = o.humDV0Frac; // FU-4 F2(a): fraction of BLOOD VOLUME, into 7a's shared reservoir
     return 1;
   }
   if (ext && ext.endoHrF !== undefined) {
@@ -160,6 +161,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     ext.endoSvrF = 1;
     ext.endoEesF = 1;
     ext.endoDV0Frac = 0;
+    ext.endoHumDV0Frac = 0;
   }
   return ctx.l1.pinned.includes('hr') ? 1 : endoHr(es, bba, false);
 }

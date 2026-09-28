@@ -258,7 +258,13 @@ function control(m: CircModelState, env: CircEnv): void {
   p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * (x.endoSvrF ?? 1);
   const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
   const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
-  const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, b.dV0 - dv0Beta); // FU-2 F4: reflex + β share one reservoir
+  // FU-2 F4 + FU-4 F2(a): the baroreflex, the β-agonists and the HUMORAL arm all recruit from ONE splanchnic reservoir.
+  // Because the humoral arm is not scaled by `outF`, it holds part of that recruited volume when an anaesthetic
+  // suppresses the neural arm — which is the difference between "profound hypotension" and "instant PEA" in a bleeding
+  // patient (before this, propofol's `outF` returned the reflex's whole ≈ 840 mL recruitment at once, an acute bleed of
+  // the same size on top of the haemorrhage).
+  const humMl = (m.ext.endoHumDV0Frac ?? 0) * m.prof.bloodVolumeMl; // negative = recruited
+  const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, Math.min(b.dV0 - dv0Beta, humMl));
   p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + recruit + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));

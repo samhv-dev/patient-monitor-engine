@@ -82,3 +82,36 @@ export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activit
  * rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL) [ENG, units].
  */
 export const EPI_EXO_PG_PER_RATE_EQ = 1e6 / 68.66;
+
+/**
+ * FU-4 F2(a) — the HUMORAL arm of haemorrhage compensation (vasopressin / angiotensin II / adrenal), which an
+ * anaesthetic does NOT suppress. Before this the arterial baroreflex output was the engine's only compensation for
+ * blood loss, so propofol's `outF` removed ≈ 100 % of it and class III haemorrhage + 2 mg/kg arrested at +80 s.
+ * Schadt JC & Ludbrook J, Am J Physiol 1991;260:H305–H318 (the phases of the response to simple haemorrhage in
+ * conscious animals: an early neural phase, then a humoral phase over minutes carried by AVP and angiotensin II).
+ * The RAAS/AVP dependence of anaesthetised blood pressure is the ARB/ACE-inhibitor post-induction hypotension
+ * literature (Brabant SM et al., Anesth Analg 1999;89:1388–1392).
+ * Driven by baroreceptor UNLOADING (the fall of mean pressure below the patient's set point), not by nociception.
+ */
+export const HUM_ON_TAU_S = 150; // rise τ (Schadt & Ludbrook's humoral phase: minutes) [ENG within 120–300]
+export const HUM_OFF_TAU_S = 600; // decay τ — AVP and angiotensin outlast the stimulus [ENG]
+/**
+ * Saturating (hyperbolic) in unloading: drive = u / (u + EC50), u = the fall of mean pressure below the set point.
+ * The form matters. A patient who has been bleeding for fifteen minutes ALREADY carries vasopressin and angiotensin
+ * when you induce them, and that pre-existing tone is what the anaesthetic cannot take away; a threshold/sigmoid form
+ * that left the compensated class III patient with almost no humoral tone before induction could not catch the crash
+ * afterwards, because the arm's own τ is minutes (measured: it arrested at +75 s either way). The healthy patient
+ * starts at zero unloading, so the same curve gives them very little.
+ */
+export const HUM_EC50_MMHG = 30; // half-maximal humoral drive [ENG, fit: class III keeps its ATLS picture and does not arrest on 2 mg/kg]
+export const HUM_MAX = 1; // saturation of the arm
+/**
+ * FU-4 (Task 18e, found by the 7e wiring test): unloading below this is the resting pressure's own beat-to-beat and
+ * respiratory ripple around the set point, not a haemorrhage — without it the arm was never exactly neutral at rest
+ * (SVR × 1.0003 at 5 s: the healthy adult's continuous MAP sits 0.2–2.1 mmHg under its set point in the first seconds),
+ * which 7e's "neutral at rest" contract forbids [ENG; 3 mmHg against a class III unloading of ≈ 25–55 mmHg, so the
+ * compensated patient's pre-existing humoral tone is essentially unchanged].
+ */
+export const HUM_DEADBAND_MMHG = 3;
+export const HUM_SVR = 0.32; // × systemic resistance at full effect (AVP V1 + AT1) [ENG; 0.55 blunted Ali's tamponade collapse away]
+export const HUM_V0 = 0.30; // fraction of blood volume held in the SHARED unstressed reservoir at full effect [ENG; the term that keeps the bleeding patient alive through induction]

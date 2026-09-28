@@ -64,13 +64,26 @@ describe('sanity scenarios I (MODELED)', () => {
   // Stage 7g Task 20 measured MAP ratio 0.913, HR +16.6 (it.fails, Q57): T6.3's terms only scaled the baroreflex gain.
   // FU-4 G2 (Task 2): propofol suppresses the delivered sympathetic output and resets the set point (7g `symp`/`setF`) —
   // measured 0.72 / +3.0. The band is unchanged (R45).
-  it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) with little HR rise (< +15) — was 0.913 / +16.6 before FU-4', async () => {
-    const r = await run({}, [[120, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]], 300);
-    const ratio = r.map(235, 245) / r.map(100, 120);
-    console.log(`propofol MAP ratio ${ratio.toFixed(2)} dHR ${(r.st(235, 245, 'hr') - r.st(100, 120, 'hr')).toFixed(1)}`);
+  // FU-4 F2 (Task 18e, ruling 2 / D23): the humoral arm of haemorrhage compensation (AVP/angiotensin, which propofol does
+  // not suppress) answers the induction's own unloading, so the healthy fall is now 0.801 — 0.1 % above the band's
+  // upper edge. The two sourced targets (this band and "class III + 2 mg/kg does not arrest") pull against each other;
+  // the MAP side is split out as a record (Ali's Q1), the HR side is unchanged.
+  const propofol = (() => {
+    let p: Promise<{ ratio: number; dHr: number }> | undefined;
+    return () => (p ??= run({}, [[120, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' }]], 300).then((r) => {
+      const ratio = r.map(235, 245) / r.map(100, 120);
+      const dHr = r.st(235, 245, 'hr') - r.st(100, 120, 'hr');
+      console.log(`propofol MAP ratio ${ratio.toFixed(3)} dHR ${dHr.toFixed(1)}`);
+      return { ratio, dHr };
+    }));
+  })();
+  it('propofol 2 mg/kg: little HR rise (< +15) — was +16.6 before FU-4', async () => {
+    expect((await propofol()).dHr).toBeLessThan(15);
+  }, 300_000);
+  it.fails('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.801 with the humoral arm (Task 18e; 0.72 after Task 2, 0.913 before FU-4; Q1)', async () => {
+    const { ratio } = await propofol();
     expect(ratio).toBeGreaterThanOrEqual(0.6);
     expect(ratio).toBeLessThanOrEqual(0.8);
-    expect(r.st(235, 245, 'hr') - r.st(100, 120, 'hr')).toBeLessThan(15);
   }, 300_000);
   it('β-blocked 35 % haemorrhage: HR 75–95 (tables §7 17b; prototype 79)', async () => {
     const r = await run({ conditions: [{ id: 'betaBlocked' }] }, [[120, { kind: 'bleed', volumeMl: 1715, overS: 600 }]], 780);
