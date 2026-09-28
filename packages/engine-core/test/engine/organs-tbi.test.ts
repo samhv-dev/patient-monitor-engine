@@ -7,10 +7,12 @@ const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / Math.max(1, xs.le
 type Check19 = { paco2: number; map0: number; hr0: number; t20: number; t40: number; icpAtCpp60: number; dMap: number; hrEnd: number };
 
 /** Tables §7 check 19 script, run once per mode. RR 18 / VT 500: Stage 3's dead space (VD/VT ≈ 0.53, G7g NR-7g-3)
- *  needs it for PaCO2 ≈ 40 (at RR 12–14 PaCO2 drifted to 46–52 and pulled ICP 20 forward to 7.9–8.7 min: R49). */
+ *  needs it for PaCO2 ≈ 40 (at RR 12–14 PaCO2 drifted to 46–52 and pulled ICP 20 forward to 7.9–8.7 min: R49).
+ *  FU-4 G11 (E-FU4-8): MODELED ventilation no longer carries the MANUAL EtCO2 fit, so the MODELED rig needs RR 15 for the
+ *  same normocapnic premise (RR 18 gave PaCO2 35.6; RR 15 38.9); MANUAL keeps RR 18. Bands untouched. */
 async function check19(mode: 'manual' | 'modeled'): Promise<Check19> {
   const r = organsRig({ seed: 3, mode, patient: TBI });
-  r.send({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 18, vtMl: 500, fio2: 0.4, peep: 5 } });
+  r.send({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: mode === 'modeled' ? 15 : 18, vtMl: 500, fio2: 0.4, peep: 5 } });
   r.send({ type: 'attachSensor', sensor: 'icp', state: 'on' });
   await r.run(300);
   const map0 = mean(r.organs.slice(-60).map((o) => o.brain.mapHead));

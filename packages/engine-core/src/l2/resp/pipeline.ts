@@ -158,9 +158,12 @@ function modeledSpont(rs: RespState, l1: L1State): boolean {
 function compliance(rs: RespState): number {
   return staticCompliance(rs.lung); // Stage 7b: the lung module (endobronchial ×0.5 now emerges from the mainstem block)
 }
-function deadSpace(rs: RespState): number {
+function deadSpace(rs: RespState, l1?: L1State): number {
   const mech = rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none';
-  return rs.pat.deadSpaceMl + (mech ? apparatusDeadSpaceMl(rs.pat.weightKg) : 0) + rs.co2.vdExtraMl;
+  // FU-4 G11: the MANUAL EtCO2 fit (vdExtraMl, made for the resting pattern at t = 0) is not a MODELED ventilated
+  // patient's dead space — it carried 61 mL into every MODELED PPV run (VA 2.82 L/min and PaCO2 60 at 12 × 500)
+  const fit = mech && l1?.mode === 'modeled' ? 0 : rs.co2.vdExtraMl;
+  return rs.pat.deadSpaceMl + (mech ? apparatusDeadSpaceMl(rs.pat.weightKg) : 0) + fit;
 }
 function extraGradient(rs: RespState): number {
   return rs.driver.airway === 'bronchospasm' ? 8 * rs.driver.severity : 0; // Pa − Et widens with obstruction [ENG]
@@ -266,7 +269,7 @@ function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: 
 /** Nominal alveolar ventilation of the current settings (MANUAL calibration). */
 function nominalVa(rs: RespState, l1: L1State, t: number): number {
   const n = nominalRate(rs.driver, driverCtx(rs, l1, t));
-  return (n.rr * Math.max(0, n.vt - deadSpace(rs))) / 1000;
+  return (n.rr * Math.max(0, n.vt - deadSpace(rs, l1))) / 1000;
 }
 
 // --- 10 Hz gas step ----------------------------------------------------------------------------------------
@@ -295,7 +298,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // Stage 7b: the lung module's 10 Hz step (recruitment, HPV, perfusion, CO2 mix, O2 stores) before the CO2 store.
   // Executor deviation (Task 14): it runs BEFORE the MANUAL etco2 calibration, so the calibration at t = 0 already
   // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
-  const va0 = alveolarVentilation(d, t, deadSpace(rs));
+  const va0 = alveolarVentilation(d, t, deadSpace(rs, l1));
   const x = o2Inputs(rs, l1, t, va0, ctx.blood); // Stage 7c: blood
   const ga = rs.temp.anaesthesia === 'general';
   rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
@@ -333,7 +336,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
     });
   }
-  const va = alveolarVentilation(d, t, deadSpace(rs));
+  const va = alveolarVentilation(d, t, deadSpace(rs, l1));
   rs.vaLpm = va; // Stage 7g
   stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
   rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
@@ -389,14 +392,14 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     c.rr = breathing ? n.rr : 0;
     c.vt = breathing ? n.vt : 0;
   }
-  lungStateEvent(rs, t);
+  lungStateEvent(rs, t, l1);
   if (rs.gasK % 10 === 0 && rs.gasK > 0) emitSecond(rs, t);
 }
 
-function lungStateEvent(rs: RespState, t: number): void {
+function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   const d = rs.driver;
   const ev = lungStatePayload(rs.lung, {
-    deadSpaceMl: deadSpace(rs), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
+    deadSpaceMl: deadSpace(rs, l1), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
     effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
   }); // Stage 7b: absolute + per-lung fields (decision 15)
