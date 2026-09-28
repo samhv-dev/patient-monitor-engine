@@ -14,6 +14,10 @@ describe('7g acceptance — PK through the engine', () => {
     const pinHbf = (e: MonitorEngine) => {
       const b = (e as unknown as { st: { blood?: { pinHbfRel?: number } } }).st.blood;
       if (b) b.pinHbfRel = 1;
+      // FU-4 G10 (E-FU4-10, precedent E-7e-6): propofol's distribution now follows cardiac output (distFactor), and
+      // propofol lowers its own CO — the equality is a property under PINNED conditions, so the output ratio is pinned
+      // at 1 through 7g's test-only seam; the live run below documents the unpinned value.
+      (e as unknown as { st: { pk: { pinDistQ?: number } } }).st.pk.pinDistQ = 1;
     };
     // R51 addendum 18: with 7e + 7f the anaesthetised core cools by redistribution and 7g's −5 %/°C clearance acts;
     // the equality holds at pinned conditions, so the core is pinned at normothermia too (7e's test seam pinCoreTemp)

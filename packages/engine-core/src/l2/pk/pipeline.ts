@@ -34,6 +34,7 @@ export interface DrugInst {
   model: string | null; // propofol TCI model choice
   x: number[]; // compartment state (pk/nmb rows); [] for gamma/volatile/blood rows
   factor: number; // clearance factor the params were built with (quantised)
+  dist?: number; // FU-4 G10: cardiac-output ratio the distribution was built with (quantised; rows with flowDist)
   rate: number; // amount/min
   rateUntil: number; // s (NEVER = until changed)
   tci: { mode: 'plasma' | 'effect'; target: number; maxRate: number; next: number } | null;
@@ -58,6 +59,11 @@ export interface PkState {
   lastC: Record<string, number>; // last PD concentration per drug (panel, tests, hooks)
   desSurgeT: number; // desflurane sympathetic surge start (−NEVER: none)
   macPrev: number[]; // desflurane MAC over the last 60 s at 1 Hz
+  /** FU-4 G10 (review F12(3)): the cardiac-output ratio distFactor gave at the last advance (1 before any). */
+  distQ?: number;
+  /** FU-4 G10 (E-FU4-10): TEST-ONLY seam — pins the cardiac-output ratio (as `pinCoreTemp`/`pinHbfRel` do) so a rig can
+   * assert PK equality under pinned conditions. Never set by the engine. */
+  pinDistQ?: number;
   panelNext: number;
   dec: Record<string, number>; // decrement-from-now per running drug, min (Task 19)
   out: EngineEvent[];
@@ -66,6 +72,7 @@ export interface PkState {
 /** Context gathered by the engine each pass from the other modules (duck-typed; neutral when absent). */
 export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
+  coRefLpm?: number; // FU-4 G10: the circulation's resting output (the reference distFactor divides by)
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
   /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
    * apply its own temperature term to the hepatic share again. */
@@ -153,9 +160,23 @@ export function clFactor(row: DrugRow, ctx: PkCtx): number {
   return Math.round(organ * 100) / 100;
 }
 
+/** FU-4 G10: cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075
+ * L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps 7g's model. */
+/** FU-4 G10 (review F12(3)): resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation
+ * times, Guyton & Hall [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
+export const ARM_BRAIN_S = 12;
+export function distFactor(ctx: PkCtx, weightKg: number): number {
+  const q = ctx.coLpm / (ctx.coRefLpm ?? 0.075 * weightKg);
+  return Math.round(Math.min(1.5, Math.max(0.3, q)) * 20) / 20;
+}
+
 function params(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {
   const b = baseParams(pk, row, inst);
-  return b ? { ...b, k10: b.k10 * inst.factor } : null;
+  if (!b) return null;
+  const q = inst.dist ?? 1;
+  if (q === 1) return { ...b, k10: b.k10 * inst.factor };
+  const vF = 0.5 + 0.5 * q; // FU-4 G10: V1 × vF, CL2/CL3 × q, CL1 unchanged (D12)
+  return { ...b, v1: b.v1 * vF, k10: (b.k10 * inst.factor) / vF, k12: (b.k12 * q) / vF, k13: (b.k13 * q) / vF, k21: b.k21 * q, k31: b.k31 * q };
 }
 
 // --- commands ---------------------------------------------------------------------------------------------------
@@ -277,7 +298,11 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
       } else {
         d.total += amt;
         // the engine's committed pk state can trail the command time by < 1 step: the bolus lands on its own grid instant
-        if (t > pk.t + 1e-9) pk.due.push({ id: row.id, amt, t });
+        // FU-4 G10 (review F12(3)): a low output delays the onset by the arm-to-brain circulation time — a pure transit
+        // lag ARM_BRAIN_S·(1/q − 1) before the bolus reaches the central compartment. Not a slower ke0: cerebral flow is
+        // autoregulated in shock, and scaling ke0 by q lowered the peak (measured 0.87× at q 0.6) instead of delaying it.
+        const tIn = t + (row.flowDist ? ARM_BRAIN_S * (1 / (pk.distQ ?? 1) - 1) : 0);
+        if (tIn > pk.t + 1e-9) pk.due.push({ id: row.id, amt, t: tIn });
         else d.x[0] = (d.x[0] as number) + amt;
       }
     }
@@ -326,6 +351,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
     } else if (d.x.length) {
       const f = clFactor(row, ctx);
       if (f !== d.factor) d.factor = f;
+      if (row.flowDist) d.dist = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // FU-4 G10 (E-FU4-10: test pin)
       const p = params(pk, row, d) as PkParams;
       if (d.tci && t >= d.tci.next - 1e-9) {
         d.rate = tciRate(p, d.x, d.tci.mode, d.tci.target, d.tci.maxRate);
@@ -449,6 +475,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
  * consumer, so each dose is observed exactly once (decision 10, R51 §3).
  */
 export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
+  pk.distQ = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // FU-4 G10 (F12(3)): the bolus transit lag reads it
   pk.bus.doses = pk.pending;
   pk.pending = [];
   while (pk.t + PK_DT_S <= tEnd + 1e-9) {

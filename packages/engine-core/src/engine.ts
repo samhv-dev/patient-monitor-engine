@@ -66,7 +66,7 @@ import {
 import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand, type EndoState } from './l2/endo/pipeline.ts'; // Stage 7e
 import { ecgDeltas, writeBlood, writeCirc, writeCond, writeLung } from './l2/endo/adapters.ts'; // Stage 7e
 import { upgradeThermal } from './l2/thermal/heat.ts'; // Stage 7e
-import { gasPatient } from './l2/gas/params.ts'; // Stage 7e
+import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from './l2/gas/params.ts'; // Stage 7e; FU-4 G10: CI_LPM_PER_KG, CO_REF_LPM
 import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7g-5): only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
@@ -472,13 +472,17 @@ class Engine implements MonitorEngine {
   /** Stage 7g: the PK/PD context read from the other modules (duck-typed; neutral when a module is absent). */
   private pkCtx(ps: PipelineState): PkCtx {
     const circ = (ps.hemo as { circ?: CircModelState }).circ;
-    const resp = ps.resp as unknown as { vaLpm?: number; pat?: { frcGaMl?: number }; temp?: { tc?: number } };
-    const blood = (ps as unknown as { blood?: { out?: { hbfRel?: number }; core?: { liver?: number; ab?: { ph?: number } } } }).blood;
+    const resp = ps.resp as unknown as { vaLpm?: number; pat?: { frcGaMl?: number; effKg?: number }; temp?: { tc?: number } };
+    const blood = (ps as unknown as { blood?: { out?: { hbfRel?: number }; core?: { liver?: number; co0?: number; ab?: { ph?: number } } } }).blood;
     const organs = (ps as unknown as { organs?: { kidney?: { gfrRel?: number }; liver?: unknown } }).organs;
     const cond = (ps as unknown as { cond?: { vasoResp?: number } }).cond;
     return {
       ...NEUTRAL_PK_CTX,
       coLpm: circ ? circCardiacOutput(circ) : NEUTRAL_PK_CTX.coLpm,
+      // FU-4 G10 (review F12(1)): the SETTLED resting output distFactor divides by — 7c's latched co0 (the same reference
+      // its hbfRel uses, R51 addendum 15 #5), converted from gas-model units back to L/min; `circ.ref.co` sits −9…+10 %
+      // from where rigs settle and would move propofol's distribution in every healthy induction
+      ...(circ ? { coRefLpm: (blood?.core?.co0 ?? 0) > 0 && resp.pat?.effKg ? ((blood?.core?.co0 as number) * CO_REF_LPM) / (CI_LPM_PER_KG * resp.pat.effKg) : circ.ref.co } : {}),
       vaLpm: resp.vaLpm ?? NEUTRAL_PK_CTX.vaLpm,
       frcL: (resp.pat?.frcGaMl ?? 2100) / 1000,
       tempC: resp.temp?.tc ?? 37,

@@ -42,7 +42,7 @@ export const VOLATILE_SETF: PdEffect = { target: 'setF', emax: -0.1, ec50: 1, li
 export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
     id: 'propofol', name: 'Propofol', cls: 'hypnotic', amountUnit: 'mg', pk: { kind: 'model', model: 'eleveld' },
-    elim: { hepatic: 0.6, highExtraction: true },
+    elim: { hepatic: 0.6, highExtraction: true }, flowDist: true, // FU-4 G10
     // T6.3: E = Ce/(Ce + 3.5): SVR ×(1 − 0.45E), Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); gvHr −0.7 (7a fit, Cullen 1987) — refitted in Task 20
     pd: [
       { target: 'svr', emax: -0.45, ec50: 3.5 }, { target: 'ees', emax: -0.2, ec50: 3.5 }, { target: 'v0Frac', emax: 0.08, ec50: 3.5 },

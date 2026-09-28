@@ -57,6 +57,8 @@ export interface DrugRow {
   pk: PkSpec;
   /** elimination route fractions of CL (the rest organ-independent); hepatic high-extraction drugs follow liver FLOW */
   elim?: { hepatic?: number; highExtraction?: boolean; renal?: number };
+  /** FU-4 G10: the central volume and the fast distribution follow cardiac output (propofol; Kazama 2002). */
+  flowDist?: boolean;
   pd: PdEffect[];
   cns?: CnsSpec;
   /** default syringe concentration (amountUnit per mL) and pump limit — for mL/h and TCI */
