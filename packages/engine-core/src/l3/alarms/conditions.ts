@@ -66,6 +66,13 @@ export const AGONAL_RR_S = 2.5;
 export const EXTREME_CLEAR_S = 5;
 /** FU-5: the alarm is raised and live (not latched) or pending its delay — a hysteresis band applies. */
 const holdingId = (s: AlarmMgrState, id: string): boolean => (s.active[id] !== undefined && !s.active[id].latched) || s.pending[id] !== undefined;
+/**
+ * FU-5 Task 9a (the vendor alarm on-delay, ruling on the plan's Open question 20): a limit alarm's hysteresis band holds
+ * a RAISED, live alarm only. While the alarm is pending its on-delay the condition is the plain limit compare — "if the
+ * alarm condition is resolved within the delay time, the monitor does not present the alarm" ([S4] §10.6.5) — so a
+ * value back AT the limit ends the pending instead of raising "**HR 50<50" after the delay.
+ */
+const raisedLiveId = (s: AlarmMgrState, id: string): boolean => s.active[id] !== undefined && !s.active[id].latched;
 const RR_EMA = 0.2; // mean R-R for the Saadat-like pause ratio (brief §6.4.1 "R-R > 2.1× mean R-R") [ENG weight]
 
 export interface AlarmInputs {
@@ -194,8 +201,8 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const dv = Math.round(v / unit) * unit;
     const hi = `${key}_HIGH`;
     const lo = `${key}_LOW`;
-    if (l.high !== null && (dv > l.high + 1e-9 || (holdingId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c });
-    if (l.low !== null && (dv < l.low - 1e-9 || (holdingId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c });
+    if (l.high !== null && (dv > l.high + 1e-9 || (raisedLiveId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c });
+    if (l.low !== null && (dv < l.low - 1e-9 || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c });
   }
   const spo2 = valid(inp, 'spo2', t);
   if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, 'physiological', DESAT_DELAY_S), numeric: 'spo2' });

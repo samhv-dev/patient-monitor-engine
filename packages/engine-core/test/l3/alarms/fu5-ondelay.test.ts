@@ -82,4 +82,22 @@ describe('FU-5 Task 9a: the vendor alarm on-delay for limit alarms (ruling on Op
   it('characterisation: the same philips-like profile with no on-delay (the pre-ruling 0 s [ENG]) shows the 1–3 s blips the delay removes', () => {
     expect(blips(hover({ ...deviceProfile('philips-like'), delayS: 0 }, DIPS))).toEqual([1, 2, 3, 1, 2, 3]);
   });
+  it('mindray-like: the 6 s on-delay ([S4] §10.6.5) — HR 48 for 5.9 s raises nothing; HR 48 held raises `**HR 48<50` 6 s after the first displayed value below the limit; back at 50 within the delay resolves the pending (no hysteresis while pending)', () => {
+    const run = (hrAt: (t: number) => number, tEnd: number) => {
+      const s = createAlarmMgr(deviceProfile('mindray-like'));
+      const inp = createInputs();
+      const out: EngineEvent[] = [];
+      for (let k = 0; k <= tEnd / TICK; k++) {
+        const t = k * TICK;
+        if (k % 50 === 0) { observeQrs(inp, t); observeEvent(inp, meas(t, hrAt(t))); }
+        stepAlarms(s, t, buildConditions(s, inp, t), out);
+      }
+      return out.filter((e): e is Alarm => e.type === 'alarm' && e.id === 'HR_LOW');
+    };
+    expect(run((t) => (t >= 10 && t < 15.9 ? 48 : 60), 40)).toEqual([]);
+    expect(run((t) => (t >= 10 && t < 14 ? 48 : t >= 14 && t < 15 ? 50 : t >= 15 && t < 19 ? 48 : 60), 40)).toEqual([]);
+    const held = run((t) => (t >= 10 ? 48 : 60), 40);
+    expect(held.map((e) => [e.state, e.text])).toEqual([['raised', '**HR 48<50']]);
+    expect(held[0]!.t).toBeCloseTo(16, 1);
+  });
 });
