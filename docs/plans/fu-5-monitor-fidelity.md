@@ -608,11 +608,11 @@ Harness totals: 43 scenarios, ≈ 45 s wall; `EXIT 0`. The fidelity Vitest files
 
 **Files:** none (a check).
 
-- [ ] **Step 1: Base.** `git -C <repo> fetch origin && git -C <repo> log --oneline -1 origin/main`. The plan's blocks
+- [x] **Step 1: Base.** `git -C <repo> fetch origin && git -C <repo> log --oneline -1 origin/main`. The plan's blocks
   were checked on `4f4ce06` (FU-3 merged, research/10 delivered). If FU-4 has merged since, every block still applies
   EXCEPT possibly the shared-file ones listed in Global Constraints: apply them by their quoted anchors, keeping FU-4's
   lines, and note each re-anchor in the gate note.
-- [ ] **Step 2: Worktree and branch.**
+- [x] **Step 2: Worktree and branch.**
 
 ```bash
 git -C <repo> worktree add -b fu-5-monitor-fidelity <repo>/../scratch/wt-fu-5 origin/main
@@ -620,7 +620,7 @@ cd <repo>/../scratch/wt-fu-5 && npx -y pnpm@9.15.9 install --frozen-lockfile
 mkdir -p <scratchpad>/fu-5-monitor-fidelity
 ```
 
-- [ ] **Step 3: Anchors present** (each must print one line; a miss means the base moved — re-anchor, do not guess):
+- [x] **Step 3: Anchors present** (each must print one line; a miss means the base moved — re-anchor, do not guess):
 
 ```bash
 grep -n "const svRef = Math.max(1, bs.length >= 4" packages/engine-core/src/l2/hemo/pipeline.ts
@@ -631,7 +631,7 @@ grep -n "OSC_PER_PP: 0.05" packages/engine-core/src/l3/nibp/nibp.ts
 grep -n '"latching": true,' packages/skins/src/data/base/iec-defaults.json
 ```
 
-- [ ] **Step 4: The before-numbers** are recorded by Task 1 (its harness changes no behaviour, so its first report IS
+- [x] **Step 4: The before-numbers** are recorded by Task 1 (its harness changes no behaviour, so its first report IS
   the before state). Nothing is committed in this task.
 
 ### Task 1: The monitor-fidelity harness in the repo — `pnpm audit:monitor` (audit scripts; PROTOTYPED)
@@ -645,7 +645,7 @@ the 15 suite items' key numbers from the last run. It changes no behaviour: its 
 - Create: `scripts/audit-monitor/{hooks.mjs,runner.ts,scenarios.ts,report.ts,cli.ts}`
 - Modify: `package.json` (one script), `.gitignore` (one line)
 
-- [ ] **Step 1: Create the harness**
+- [x] **Step 1: Create the harness**
 
 **Create `scripts/audit-monitor/hooks.mjs`:**
 
@@ -1171,7 +1171,7 @@ console.log('\n' + report());
 ```
 
 
-- [ ] **Step 2: The script and the ignored output folder**
+- [x] **Step 2: The script and the ignored output folder**
 
 **Modify `package.json`** — find (exactly once):
 
@@ -1200,7 +1200,7 @@ coverage/
 ```
 
 
-- [ ] **Step 3: Run it — the before-numbers**
+- [x] **Step 3: Run it — the before-numbers**
 
 ```bash
 npx -y pnpm@9.15.9 audit:monitor > <scratchpad>/fu-5-monitor-fidelity/before.txt 2>&1   # ≈ 45 s, 43 scenarios
@@ -1214,7 +1214,7 @@ results [105/81(91)], 19 failed`; `G1-hover … HR_LOW 11× in 180 s; texts **CV
 15 s) ART_D_LOW EtCO2_LOW` on every ventilated run. The numbers must match to the second/unit (seed 7); a
 difference means the base moved — record it in the gate note and continue.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/audit-monitor package.json .gitignore
@@ -1253,7 +1253,7 @@ inflation, Alarm Source and "-?-" glyphs (wired by Tasks 3, 5, 8, 11).
   philips-like #H30)" and the 90 s mute test moved to zoll-like (the IEC default still mutes 90 s); alarm-view.test
   "IEC-style mute (zoll-like 90 s) … philips-like Silence acknowledges (no countdown)".
 
-- [ ] **Step 1: The skin types, schema and audio contract**
+- [x] **Step 1: The skin types, schema and audio contract**
 
 **Modify `packages/skins/src/types.ts`** — find (exactly once):
 
@@ -1353,7 +1353,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: The skin data (with provenance) and the contract note**
+- [x] **Step 2: The skin data (with provenance) and the contract note**
 
 **Modify `packages/skins/src/data/base/iec-defaults.json`** — find (exactly once):
 
@@ -1943,7 +1943,7 @@ replace with:
     "arrhythmia.pauseAlarm": { "tag": "documented", "source": "research/06 §4.3 (PAUSE among the arrhythmia alarms)" },
 ```
 
-- [ ] **Step 3: The skin test**
+- [x] **Step 3: The skin test**
 
 **Create `packages/skins/test/fu5-skins.test.ts`:**
 
@@ -2005,7 +2005,7 @@ describe('FU-5: alarm latching, silence and limits per vendor', () => {
 ```
 
 
-- [ ] **Step 4: The device profile, the entry's `sounding`, the manager**
+- [x] **Step 4: The device profile, the entry's `sounding`, the manager**
 
 **Modify `packages/engine-core/src/l3/alarms/profile.ts`** — find (exactly once):
 
@@ -2238,7 +2238,7 @@ replace with:
 ```
 
 
-- [ ] **Step 5: Tests — the latching/Silence cases and the R45 re-statements**
+- [x] **Step 5: Tests — the latching/Silence cases and the R45 re-statements**
 
 **Modify `packages/engine-core/test/l3/alarms/profile.test.ts`** — find (exactly once):
 
@@ -2462,7 +2462,7 @@ replace with:
 ```
 
 
-- [ ] **Step 6: Run**
+- [x] **Step 6: Run**
 
 ```bash
 (cd packages/skins && npx vitest run -u && git diff --stat test/__snapshots__)   # philips-like and mindray-like snapshots only
@@ -2478,7 +2478,7 @@ Expected: the snapshot diff touches only `philips-like` and `mindray-like` (sile
 ASYSTOLE latched; mindray-like/saadat-like latch nothing; philips-like Silence → `silencedUntil null`, ASYSTOLE acked,
 a new VFIB `sounding: true`; saadat-like mute until 122 s).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add packages/skins packages/engine-core/src packages/engine-core/test packages/renderer/test
@@ -2513,7 +2513,7 @@ device fields (the skin's SpO2/NIBP/filter/apnoea settings, the numerics' search
 `INTERNAL_PREFIXES`); skipping them takes the tree to 2 028 leaves (measured). The cap and the 50 KB budget are
 unchanged (R45: the tree is reduced, no band moves).
 
-- [ ] **Step 1: The pleth amplitude (E-FU5-1) and the oximeter's pulse input (E-FU5-2)**
+- [x] **Step 1: The pleth amplitude (E-FU5-1) and the oximeter's pulse input (E-FU5-2)**
 
 **Modify `packages/engine-core/src/l2/hemo/pipeline.ts`** — find (exactly once):
 
@@ -2558,7 +2558,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: Per-skin SpO2 averaging and update**
+- [x] **Step 2: Per-skin SpO2 averaging and update**
 
 **Modify `packages/engine-core/src/l3/spo2/spo2.ts`** — find (exactly once):
 
@@ -2699,7 +2699,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: The fidelity rig, the SLOW entry, suite item 1, the SpO2 unit test**
+- [x] **Step 3: The fidelity rig, the SLOW entry, suite item 1, the SpO2 unit test**
 
 **Create `packages/engine-core/test/helpers/monitor.ts`:**
 
@@ -2964,7 +2964,7 @@ describe('SpO2 per-skin averaging and update', () => {
 ```
 
 
-- [ ] **Step 4: The truth tree (E-FU5-7)**
+- [x] **Step 4: The truth tree (E-FU5-7)**
 
 **Modify `packages/engine-core/src/truth.ts`** — find (exactly once):
 
@@ -2979,7 +2979,7 @@ const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.ba
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -3000,7 +3000,7 @@ ladder PI 1.84 → 1.82 → 1.53 → 1.18 → 1.16 → 0.03 never rises as MAP f
 `resp-oxygen` rows (the displayed-SpO2 timing: `siteDelay` reads PI) and `l2/pleth` pass unchanged — measured on the
 prototype; if one moves, re-measure it and write the new number into its title (R45), never widen it.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
@@ -3032,7 +3032,7 @@ is the skin's (`ibp.filterDefaultHz`: Philips 12 Hz, Saadat 16 Hz; research/05 �
   (the stub's assertions go with the stub), `packages/engine-core/test/engine/hemo-engine.test.ts` (R45 re-statement:
   with the probe off `pr` is invalid and `prAbp` valid — was "falls back to the arterial line")
 
-- [ ] **Step 1: The numerics (fresh beats, pulsatile rule, search, re-pulse hysteresis)**
+- [x] **Step 1: The numerics (fresh beats, pulsatile rule, search, re-pulse hysteresis)**
 
 **Modify `packages/engine-core/src/l3/pressure-numerics/numerics.ts`** — find (exactly once):
 
@@ -3243,7 +3243,7 @@ export function piNumeric(wn: WaveNumerics, t: number): Measured {
 ```
 
 
-- [ ] **Step 2: Each pulse rate from its own source (E-FU5-3)**
+- [x] **Step 2: Each pulse rate from its own source (E-FU5-3)**
 
 **Modify `packages/engine-core/src/l3/pulse/detector.ts`** — find (exactly once):
 
@@ -3322,7 +3322,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: The skin's IBP display filter (E-FU5-4)**
+- [x] **Step 3: The skin's IBP display filter (E-FU5-4)**
 
 **Modify `packages/engine-core/src/l2/hemo/line.ts`** — find (exactly once):
 
@@ -3443,7 +3443,7 @@ replace with:
 ```
 
 
-- [ ] **Step 4: Tests**
+- [x] **Step 4: Tests**
 
 **Modify `packages/engine-core/test/l3/pulse/detector.test.ts`** — find (exactly once):
 
@@ -3590,7 +3590,7 @@ replace with:
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -3605,7 +3605,7 @@ before S/D return; `'keep'` keeps S/D/M of a flat line (span < 3 mmHg, `pulsatil
 S/D; 3.5 mmHg beats keep a static line static and a pulsatile line pulsatile (REPULSE_AMP_MMHG 4). `hemo-acceptance` (Stage 2's ART bands) is unchanged — the fresh-beat average equals the old one
 while beats come every < 6 s.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
@@ -3629,7 +3629,7 @@ through `NibpState.cfg` (absent = the old constants, so snapshots and unit rigs 
   `packages/engine-core/src/engine.ts` (`syncCo2Sampler`: the cuff settings)
 - Modify (tests): `packages/engine-core/test/l3/nibp/nibp.test.ts` (three new cases)
 
-- [ ] **Step 1: The envelope and the skin's cuff rules**
+- [x] **Step 1: The envelope and the skin's cuff rules**
 
 **Modify `packages/engine-core/src/l3/nibp/nibp.ts`** — find (exactly once):
 
@@ -3869,7 +3869,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: Tests**
+- [x] **Step 2: Tests**
 
 **Modify `packages/engine-core/test/l3/nibp/nibp.test.ts`** — find (exactly once):
 
@@ -3919,7 +3919,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: Run**
+- [x] **Step 3: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -3934,7 +3934,7 @@ acceptance 9) passes UNCHANGED: cycle 25–40 s; 100 sinus measurements bias ≤
 SBP 45 fails after 2 attempts. Measured alongside (not a test): AF 150 over 10 cuff readings bias SBP −1.5 / DBP −0.7
 mmHg (`origin/main` +1.7 / +3.6 over 9).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/engine-core
@@ -3960,7 +3960,7 @@ invalid; its INOP comes in Task 10).
   (`gasApneaS`), `packages/engine-core/src/engine.ts` (`syncCo2Sampler`: the apnoea times)
 - Modify (tests): `packages/engine-core/test/l3/resp/impedance.test.ts`, `packages/engine-core/test/l3/co2-numerics/co2-numerics.test.ts`
 
-- [ ] **Step 1: The detectors**
+- [x] **Step 1: The detectors**
 
 **Modify `packages/engine-core/src/l3/co2-numerics/co2-numerics.ts`** — find (exactly once):
 
@@ -4114,7 +4114,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: The resp pipeline (E-FU5-5), the profile and the engine**
+- [x] **Step 2: The resp pipeline (E-FU5-5), the profile and the engine**
 
 **Modify `packages/engine-core/src/l2/resp/pipeline.ts`** — find (exactly once):
 
@@ -4235,7 +4235,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: Tests**
+- [x] **Step 3: Tests**
 
 **Modify `packages/engine-core/test/l3/resp/impedance.test.ts`** — find (exactly once):
 
@@ -4296,7 +4296,7 @@ replace with:
 ```
 
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -4312,7 +4312,7 @@ Expected: all pass. impedance: with the beat times given, a 20 % ripple at the h
 8a's gate document `g3-disconnect-apnoea-alarm` (raised 15–22 s after the event) is unchanged (validation passes on the
 prototype).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core
@@ -4336,7 +4336,7 @@ skin's asystole time (saadat-like 10 s). The device profile learns the skin's HR
 - Modify (tests): `packages/engine-core/test/l3/hr.test.ts` (one case), `packages/engine-core/test/engine/alarms-engine.test.ts`
   (the leads-off test also asserts the HR is invalid)
 
-- [ ] **Step 1: HR history and asystole time**
+- [x] **Step 1: HR history and asystole time**
 
 **Modify `packages/engine-core/src/l3/hr.ts`** — find (exactly once):
 
@@ -4403,7 +4403,7 @@ export function hrMeasure(st: HrState, t: number, avg?: HrAveraging, method: HrM
 ```
 
 
-- [ ] **Step 2: The engine emits an invalid HR while the leads are off (E-FU5-6)**
+- [x] **Step 2: The engine emits an invalid HR while the leads are off (E-FU5-6)**
 
 **Modify `packages/engine-core/src/engine.ts`** — find (exactly once):
 
@@ -4425,7 +4425,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: The skin's HR source in the device profile**
+- [x] **Step 3: The skin's HR source in the device profile**
 
 **Modify `packages/engine-core/src/l3/alarms/profile.ts`** — find (exactly once):
 
@@ -4477,7 +4477,7 @@ const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 
 ```
 
 
-- [ ] **Step 4: Tests**
+- [x] **Step 4: Tests**
 
 **Modify `packages/engine-core/test/l3/hr.test.ts`** — find (exactly once):
 
@@ -4521,7 +4521,7 @@ replace with:
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -4532,7 +4532,7 @@ npx vitest run test/l3/hr.test.ts test/engine/alarms-engine.test.ts test/engine/
 Expected: all pass; `alarms-engine` "technical alarms on sensor detach" now also sees > 30 HR measurements during the
 leads-off spell, every one `{ value: null, flag: 'invalid' }` (was 0, valid).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
@@ -4574,7 +4574,7 @@ EXTREME BRADY/TACHY never alarmed although [S2] p. 89 lists them among the HR al
 - The alarm ids stay (`apnoea-co2`, `apnoea-resp`, `HR_HIGH` …): 8a's gate documents, the controller and the renderer
   key on them.
 
-- [ ] **Step 1: Conditions — HR source, extreme rates, one apnoea, PAUSE hold, the chain**
+- [x] **Step 1: Conditions — HR source, extreme rates, one apnoea, PAUSE hold, the chain**
 
 **Modify `packages/engine-core/src/l3/alarms/conditions.ts`** — find (exactly once):
 
@@ -4925,7 +4925,7 @@ replace with:
       pauseAlarm: ar.pauseAlarm,
 ```
 
-- [ ] **Step 2: The manager clears superseded alarms and holds event alarms**
+- [x] **Step 2: The manager clears superseded alarms and holds event alarms**
 
 **Modify `packages/engine-core/src/l3/alarms/manager.ts`** — find (exactly once):
 
@@ -5032,7 +5032,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: Absolute extreme limits, the APNEA text, the capnograph state on the host**
+- [x] **Step 3: Absolute extreme limits, the APNEA text, the capnograph state on the host**
 
 **Modify `packages/engine-core/src/l3/alarms/profile.ts`** — find (exactly once):
 
@@ -5136,7 +5136,7 @@ replace with:
 ```
 
 
-- [ ] **Step 4: Tests**
+- [x] **Step 4: Tests**
 
 **Modify `packages/engine-core/test/l3/alarms/stage3-hooks.test.ts`** — find (exactly once):
 
@@ -5380,7 +5380,7 @@ replace with:
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -5399,7 +5399,7 @@ mindray-like with no EXTREME BRADY/HR LOW (review ruling 6); PAUSE held ≥ 5 s.
 VTAC at the 5th ventricular beat (the latched VFIB suppresses nothing); the age band: EXTREME TACHY at 3 s, HR HIGH at
 8 s, no acknowledge.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
@@ -5425,7 +5425,7 @@ alarm. mindray-like gets its documented 6 s alarm delay ([S4] §10.6.5).
   10 is not above the limit 10, so the `CVP_M_HIGH` that used to be raised at 27–57 s is not — the assertion "no
   CVP_M_HIGH in 120 s" is unchanged); regenerate the skins snapshot
 
-- [ ] **Step 1: Texts with the tile's decimals; the displayed value and the hysteresis**
+- [x] **Step 1: Texts with the tile's decimals; the displayed value and the hysteresis**
 
 **Modify `packages/engine-core/src/l3/alarms/text.ts`** — find (exactly once):
 
@@ -5525,7 +5525,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: mindray-like's alarm delay**
+- [x] **Step 2: mindray-like's alarm delay**
 
 **Modify `packages/skins/src/data/skins/mindray-like.json`** — find (exactly once):
 
@@ -5556,7 +5556,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: Tests**
+- [x] **Step 3: Tests**
 
 **Modify `packages/engine-core/test/l3/alarms/text.test.ts`** — find (exactly once):
 
@@ -5634,7 +5634,7 @@ max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; FU-5: no raise since t
 ```
 
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -5649,7 +5649,7 @@ Expected: all pass. fu5-limits: CVP hovering 9.6–10.4 at a limit of 10 for 120
 neither `SpO2_LOW` nor DESAT. text: "**Temp 35.9<36.0", "**CVP 11>10". `alarms-engine` "raises **HR at the first
 displayed value over the limit (no added delay)" passes unchanged (the HR is an integer).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/engine-core packages/skins
@@ -5674,7 +5674,7 @@ can draw the INOP glyph (Task 11). While a zero runs, the arterial line publishe
 - Modify (tests): `packages/engine-core/test/l3/alarms/stage3-hooks.test.ts` (R45 re-statement: philips-like's CO2
   line text is the IntelliVue "CO2 OCCLUSION", was the inferred "CO2 LINE")
 
-- [ ] **Step 1: The ids and the vendors' texts**
+- [x] **Step 1: The ids and the vendors' texts**
 
 **Modify `packages/engine-core/src/l3/alarms/text.ts`** — find (exactly once):
 
@@ -5731,7 +5731,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: The conditions and their inputs**
+- [x] **Step 2: The conditions and their inputs**
 
 **Modify `packages/engine-core/src/l3/alarms/conditions.ts`** — find (exactly once):
 
@@ -5956,7 +5956,7 @@ replace with:
     if (sp) inp.spo2OkSince = sp.flag !== 'invalid' ? (inp.spo2OkSince ?? e.t) : null;
 ```
 
-- [ ] **Step 3: No arterial numerics while a zero runs (E-FU5-3)**
+- [x] **Step 3: No arterial numerics while a zero runs (E-FU5-3)**
 
 **Modify `packages/engine-core/src/l2/hemo/pipeline.ts`** — find (exactly once):
 
@@ -5976,7 +5976,7 @@ replace with:
 ```
 
 
-- [ ] **Step 4: Tests**
+- [x] **Step 4: Tests**
 
 **Modify `packages/engine-core/test/l3/alarms/stage3-hooks.test.ts`** — find (exactly once):
 
@@ -6086,7 +6086,7 @@ describe('FU-5 technical alarms (audit M8)', () => {
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -6103,7 +6103,7 @@ was on; `co2: 'occluded'` → CO2 OCCLUSION. Harness: `G2-probes: temp off (45 s
 {abpZero}; ART atmosphere (105 s) {abpDisconnect abpNonPulsatile}; CO2 occluded (145 s) {… co2Line}` (was `{-}`,
 `{ART_D_HIGH}`, three ART LOW alarms, `{-}`); `A5-pea … ART INOP yes` (was no).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/engine-core
@@ -6133,7 +6133,7 @@ does not flash the numeric. Declared settings nothing can draw are removed with 
   `packages/skins/src/data/skins/{philips-like,saadat-like}.json`, `packages/skins/CONTRACT.md`; regenerate the snapshot
 - Create: `packages/renderer/test/fu5-tiles.test.ts`
 
-- [ ] **Step 1: The DeviceUI tiles**
+- [x] **Step 1: The DeviceUI tiles**
 
 **Modify `packages/renderer/src/device-ui.ts`** — find (exactly once):
 
@@ -6343,7 +6343,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: An INOP marks its numeric, it does not flash it**
+- [x] **Step 2: An INOP marks its numeric, it does not flash it**
 
 **Modify `packages/renderer/src/alarm-view.ts`** — find (exactly once):
 
@@ -6358,7 +6358,7 @@ replace with:
 ```
 
 
-- [ ] **Step 3: The skins — extras the renderer draws, unmodellable settings removed, the contract**
+- [x] **Step 3: The skins — extras the renderer draws, unmodellable settings removed, the contract**
 
 **Modify `packages/skins/src/data/skins/philips-like.json`** — find (exactly once):
 
@@ -6501,7 +6501,7 @@ research/11's glossary labels (R56): "PR", "PI" (perfusion index; the LVAD index
 ```
 
 
-- [ ] **Step 4: The tile test**
+- [x] **Step 4: The tile test**
 
 **Create `packages/renderer/test/fu5-tiles.test.ts`:**
 
@@ -6587,7 +6587,7 @@ describe('FU-5 tiles', () => {
 ```
 
 
-- [ ] **Step 5: Run**
+- [x] **Step 5: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -6601,7 +6601,7 @@ under SpO2 NON-PULSAT.; leads off: philips-like `HR -?-`, saadat-like label `PR`
 NIBP "-?-" / "?", saadat-like NIBP "PR 72"; philips-like CO2 "awRR 12"; saadat-like TEMP "T2 36.2  ΔT 0.6", HR
 "ST-II -0.1", BFA "BS% 12" (glossary labels, D19).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/renderer packages/skins
@@ -6634,7 +6634,7 @@ own INOP field; and the audio bridge plays what the engine marks `sounding`. The
   (R45 re-statement: ge-like and mindray-like still inherit the IEC lanes and tiles; mindray-like's documented split
   alarm areas now differ — the test compared the whole `layout` object)
 
-- [ ] **Step 1: The bar view, the header DOM and the audio bridge**
+- [x] **Step 1: The bar view, the header DOM and the audio bridge**
 
 **Modify `packages/renderer/src/alarm-view.ts`** — find (exactly once):
 
@@ -6836,7 +6836,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2: mindray-like's split alarm areas; philips-like rotates every message**
+- [x] **Step 2: mindray-like's split alarm areas; philips-like rotates every message**
 
 **Modify `packages/skins/src/data/skins/mindray-like.json`** — find (exactly once):
 
@@ -6950,7 +6950,7 @@ replace with:
     "alarms.latching": {
 ```
 
-- [ ] **Step 3: Tests and the 4b e2e step**
+- [x] **Step 3: Tests and the 4b e2e step**
 
 **Modify `packages/renderer/test/alarm-view.test.ts`** — find (exactly once):
 
@@ -7108,7 +7108,7 @@ replace with:
 ```
 
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -7124,7 +7124,7 @@ live `**HR` wins over it; philips-like single bar alternates `***APNEA` / `ECG L
 a new ASYSTOLE after an acknowledge plays at once. stage4b-device e2e 6 passed (the philips-like Silence has no
 countdown and acknowledges VFIB; saadat-like and zoll-like keep their countdowns; the flash test's **HR at 130).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/renderer packages/skins apps/demo/e2e/stage4b-device.e2e.ts
@@ -7159,7 +7159,7 @@ B9 manual's 6 s at the 8 s window (research/06 §4.1) — the 8 s moving average
 change the Saadat averaging without Ali's stopwatch check. mindray-like's V-Tach run is now 6 PVCs ([S4] C.1.1.2):
 the tour's VTAC comes +1.94 s after VT 180 (philips-like +1.6 s).
 
-- [ ] **Step 1: Create the tests**
+- [x] **Step 1: Create the tests**
 
 **Create `packages/engine-core/test/engine/fidelity-arrest.test.ts`:**
 
@@ -7327,7 +7327,7 @@ describe('FU-5 fidelity 13: rhythm tour, one arrhythmia alarm at a time', () => 
 ```
 
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/fidelity-arrest.test.ts test/engine/fidelity-ecg.test.ts   # ≈ 26 s
@@ -7335,7 +7335,7 @@ cd packages/engine-core && npx vitest run test/engine/fidelity-arrest.test.ts te
 
 Expected: 18 passed (7 + 11). A failure is a regression of Tasks 2–12: find it, do not loosen the criterion (R45).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/fidelity-arrest.test.ts packages/engine-core/test/engine/fidelity-ecg.test.ts
@@ -7372,7 +7372,7 @@ the true radial pressure (SBP +10.8), and the CVP limit chatter outside the hove
 harness also shows 5 in A1, 7 in A5, 9 in C2 — review F8: "100 → 5 (A1); 87 → 11 (B1)"). The fidelity rig's rows
 gain the true radial S/D (`MonRow.sbp/dbp`) for the AF row.
 
-- [ ] **Step 1: Create the tests**
+- [x] **Step 1: Create the tests**
 
 **Create `packages/engine-core/test/engine/fidelity-resp.test.ts`:**
 
@@ -7614,7 +7614,7 @@ describe('FU-5 fidelity 15: a stable patient starts quietly', () => {
 ```
 
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 ```bash
 cd packages/engine-core && npx vitest run test/engine/fidelity-resp.test.ts test/engine/fidelity-nibp.test.ts test/engine/fidelity-alarms.test.ts   # ≈ 45 s
@@ -7622,7 +7622,7 @@ cd packages/engine-core && npx vitest run test/engine/fidelity-resp.test.ts test
 
 Expected: 19 passed (8 + 3 + 8).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add packages/engine-core/test/engine/fidelity-resp.test.ts packages/engine-core/test/engine/fidelity-nibp.test.ts packages/engine-core/test/engine/fidelity-alarms.test.ts
@@ -7640,7 +7640,7 @@ task proves the whole tree and records the AFTER numbers.
 **Files:** none unless a test moves (then: the test file only, per R45 — a re-measured number in the title, or
 `it.fails` with the number; never a widened band).
 
-- [ ] **Step 1: Everything, fast and slow**
+- [x] **Step 1: Everything, fast and slow**
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -7661,7 +7661,7 @@ leaves". The tick bench p50 stays < 2 ms locally (FU-5 adds `buildConditions`/`s
 number). A timing test can fail on a loaded machine (`truth-event` "< 0.2 ms per call"): re-run the file alone before
 treating it as a regression.
 
-- [ ] **Step 2: The after-report**
+- [x] **Step 2: The after-report**
 
 ```bash
 npx -y pnpm@9.15.9 audit:monitor > <scratchpad>/fu-5-monitor-fidelity/after.txt 2>&1
@@ -7671,7 +7671,7 @@ sed -n '/## Fidelity report/,$p' <scratchpad>/fu-5-monitor-fidelity/after.txt
 Expected: the "after" column of "Prototype results" (seed 7: to the unit). Copy `before.txt`'s and `after.txt`'s
 report sections into `docs/gates/fu-5/audit-report-before.txt` / `-after.txt` for the gate note (text files, small).
 
-- [ ] **Step 3: If FU-4 has merged meanwhile** (`git fetch origin && git log --oneline origin/main | grep -i "fu-4"`):
+- [x] **Step 3: If FU-4 has merged meanwhile** (`git fetch origin && git log --oneline origin/main | grep -i "fu-4"`):
   merge now (`git merge origin/main`, keep both sides in the shared files listed in Global Constraints), re-run Steps 1–2,
   and record in the gate note which fidelity numbers moved with the new truth (the bleed and Ali's case arrest in FU-4;
   the device criteria must still hold — they are about what the monitor shows, whatever the truth). Name these checks
@@ -7683,7 +7683,7 @@ report sections into `docs/gates/fu-5/audit-report-before.txt` / `-after.txt` fo
   baseline window t 30–60 s is the ventilated state) — if it fails, report it with the number (R45), never widen it;
   (c) FU-4's clinical suite must read the truth SaO2, not the displayed SpO2 with `?? -1` (R-FU5-10).
 
-- [ ] **Step 4: Commit** (only the report copies, and any R45 re-statement the run forced)
+- [x] **Step 4: Commit** (only the report copies, and any R45 re-statement the run forced)
 
 ```bash
 git add docs/gates/fu-5/audit-report-before.txt docs/gates/fu-5/audit-report-after.txt
@@ -7703,7 +7703,7 @@ evidence run, the G7g rule).
 **Files:**
 - Create: `apps/demo/e2e/fu5-fidelity.e2e.ts`
 
-- [ ] **Step 1: Create the test**
+- [x] **Step 1: Create the test**
 
 **Create `apps/demo/e2e/fu5-fidelity.e2e.ts`:**
 
@@ -7835,7 +7835,7 @@ for (const skin of ['philips-like', 'saadat-like']) {
 ```
 
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/fu5-fidelity.e2e.ts
@@ -7857,7 +7857,7 @@ APNEA. Item 5: the bar shows "ECG LEADS OFF"
 on `open()` or `page.goto` is the machine (three workers on a loaded Mac timed out 8 of 14 once): re-run with
 `--workers=1` before treating it as a failure.
 
-- [ ] **Step 3: Commit** (the test; the PNGs are committed by the gate task after inspection)
+- [x] **Step 3: Commit** (the test; the PNGs are committed by the gate task after inspection)
 
 ```bash
 git add apps/demo/e2e/fu5-fidelity.e2e.ts
@@ -7882,7 +7882,7 @@ has no alarm keys).
 **Files:**
 - Create: `apps/demo/e2e/fu5-latched.e2e.ts`
 
-- [ ] **Step 1: Create the test**
+- [x] **Step 1: Create the test**
 
 **Create `apps/demo/e2e/fu5-latched.e2e.ts`:**
 
@@ -7956,7 +7956,7 @@ for (const skin of ['philips-like', 'saadat-like']) {
 ```
 
 
-- [ ] **Step 2: Run**
+- [x] **Step 2: Run**
 
 ```bash
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/fu5-latched.e2e.ts
@@ -7976,7 +7976,7 @@ the 116 rows in which it is active (the rest are the live RR LOW's turn), up to 
 Compare with FU-3's `docs/gates/fu-3/fu3-neuro-tiles-philips-like.png` (the "before": a live-looking, audible
 "APNEA (RESP)" at the same sim time).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/demo/e2e/fu5-latched.e2e.ts
@@ -7992,7 +7992,7 @@ git push
 - Create: `docs/gates/fu-5.md`; `docs/gates/fu-5/*.png` (from Tasks 16–17), `docs/gates/fu-5/audit-report-{before,after}.txt` (Task 15)
 - Modify: this plan (tick the boxes)
 
-- [ ] **Step 1: Merge main and run everything**
+- [x] **Step 1: Merge main and run everything**
 
 ```bash
 git fetch origin && git merge origin/main          # FU-4 / V.1 may have landed: keep both sides (Global Constraints)
@@ -8018,7 +8018,7 @@ share in the gate note; if the `build` job exceeds 45 min, move the fu5 evidence
 (`test.skip(!process.env.PME_EVIDENCE, …)`, run locally for the gate with their PNGs committed), keep one smoke per
 skin on CI (suite 6), and record it as a deviation.
 
-- [ ] **Step 2: Write `docs/gates/fu-5.md`** with these sections (the FU-3 gate note is the model):
+- [x] **Step 2: Write `docs/gates/fu-5.md`** with these sections (the FU-3 gate note is the model):
   1. **Summary** — base, merge commits, counts (fast/slow/e2e/validation), `check-notices`, tick-bench p50.
   2. **Fidelity suite table** — the 15 items: criterion, source tag, before (Task 1's report), after (Task 15's), the
      test that asserts it (`fidelity-*.test.ts` names, `fu5-*.e2e.ts`). Every row must be green or listed in 4.
@@ -8080,7 +8080,7 @@ skin on CI (suite 6), and record it as a deviation.
      shows it (B10 = item 12's step times; C7/C9 = item 10's results; D5 = item 8). A10-B1/B3/D6 are FU-4's (their
      after-numbers move only with FU-4's truth) and A10-E5 is Stage 9's. The same table goes to the orchestrator for
      research/12's dated verdict column (R-FU5-7).
-- [ ] **Step 3: Commit the gate note and screenshots; open the PR (never merge)**
+- [x] **Step 3: Commit the gate note and screenshots; open the PR (never merge)**
 
 ```bash
 git add docs/gates/fu-5.md docs/gates/fu-5
