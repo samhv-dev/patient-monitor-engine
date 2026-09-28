@@ -28,8 +28,12 @@ export const SAO2_REF = 0.97;
  * FU-4 (review F13, the scan the ruling requires, after Task 18d): circ-hypoxic-arrest's whole file passes for τ 220–500 s
  * (150 → PEA +4.78 min, 200 → +4.93: below the 5–14 band; 600 → the post-arrest window misses), so the MIDDLE of the
  * plateau is chosen: 360 s → PEA at +6.90 min (margins 1.90 / 7.10 min to the band edges; HR < 40 at +4.33, ≤ 6).
+ * FU-4 gate (D3 (i)–(iii), after Tasks 18e–18g): the plateau MOVED — the whole file passes for τ 200–400 s (180 → PEA
+ * +4.83 min, below the band; 450 → the post-arrest window misses), so the middle is re-chosen: 300 s → PEA at +6.35 min
+ * (margins 1.35 / 7.65 min to the 5–14 band; HR < 40 at +3.00 min, margin 3.00 to ≤ 6). Scan: 180 ✗, 200 5.10, 220 5.83,
+ * 260 5.80, 300 6.35, 330 6.63, 360 6.98, 400 7.85, 450 ✗ (the same with and without the withdrawn Bezold–Jarisch term).
  */
-export const TAU_HYP_S = 360;
+export const TAU_HYP_S = 300;
 /**
  * FU-4 G1: floor of the ischaemic contractility factor in MODELED. The R23 floor 0.2 kept a no-flow heart beating at a
  * fifth of its contractility for ever (audit B7: MAP 13, SV 2 mL for 15 min); a myocardium without coronary flow stops
