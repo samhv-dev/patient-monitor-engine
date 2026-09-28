@@ -11,9 +11,9 @@
 // S11 → blood-k-rhythm (Task 7), S12 → circ-hypoxic-arrest (FU-3/Task 13), S15 → vagal-events (Tasks 12/18f: the
 // repeat-succinylcholine draw over seeds 7/8/9, none with atropine first), the tension pneumothorax's own course and
 // decompression → tension-ptx (Task 18c), the 7 kg infant → vent-infant (Task 18d).
-// The `it.fails` of this file (counted, R45): S2's MAP side, S4b, S5, S6a's percentage side, S8, S9's SaO2 side, S9's
+// The `it.fails` of this file (counted, R45): S2's MAP side, S4b, S5, S6a's percentage side, S9's SaO2 side, S9's
 // CVP/MAP side, S13, S14's MAP side, CPR alone after exsanguination, the 10-min VF kIsch row, the MANUAL floor row —
-// TWELVE here, plus S3 in circ-pulsus. S1b flipped to `it` (0.920). Every run yields once per sim-minute (CI amendment 4);
+// ELEVEN here, plus S3 in circ-pulsus. S1b (0.920) and S8 (+9.75 min) flipped to `it`. Every run yields once per sim-minute (CI amendment 4);
 // SLOW_A (Task 20).
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type PatientProfile } from '../../src/index.ts';
@@ -166,9 +166,9 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
     console.log(`S6b: peak Ce ratio ${ratio.toFixed(2)}`);
     expect(ratio).toBeGreaterThanOrEqual(1.3);
   });
-  // R45: Task 18c's one-way valve gives the minutes course (8.65 min on its own rig); Task 18e's humoral arm holds the
-  // obstructed patient longer — measured +10.67 min on this rig (tension-ptx.test: +10.45). Kept with the number.
-  it.fails('S8 tension pneumothorax (ventilated, one command), untreated: PEA within 3–10 min (the catalogue row: build-up 2–5 min, PEA ≈ 20–25 mmHg; measured +10.67 min)', async () => {
+  // R45: Task 18c's one-way valve gives the minutes course; flipped to `it` at the gate — +9.75 min once the
+  // empty-ventricle term was withdrawn (+10.67 with it; the tension-ptx.test rig, lungCondition side R: +10.45, it.fails)
+  it('S8 tension pneumothorax (ventilated, one command), untreated: PEA within 3–10 min (the catalogue row: build-up 2–5 min, PEA ≈ 20–25 mmHg; measured +9.75 min — was +10.67 with the withdrawn Bezold–Jarisch term)', async () => {
     const r = await scenario([[60, { kind: 'condition', id: 'tensionPtx', severity: 1 }]], 900);
     const a = arrestAt(r, 60);
     console.log(`S8: PEA at +${a !== undefined ? ((a - 60) / 60).toFixed(2) : '–'} min`);
