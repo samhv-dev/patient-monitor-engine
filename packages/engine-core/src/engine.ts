@@ -541,7 +541,12 @@ class Engine implements MonitorEngine {
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
           const hra = this.hrAveraging();
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, hra.avg, hra.method) } }); // FU-1/FU-3: the skin's averaging
+          // FU-5 (audit M3): with the leads off the ECG measures nothing — HR is invalid ("-?-"), never a valid 0 — and the
+          // RR history is dropped, so the beats after reconnection start a fresh average (no `HR 0<50` on reconnect)
+          const off = ps.mods.artefact.leadOff;
+          if (off) ps.hrm = createHrState(ps.hrm.method);
+          const hr = off ? { value: null, flag: 'invalid' as const, at: t } : hrMeasure(ps.hrm, t, hra.avg, hra.method, this.dev.alarms.profile.arrhythmia.asystoleS);
+          ps.out.push({ type: 'measurement', t, values: { hr } }); // FU-1/FU-3: the skin's averaging
         }
       },
     );

@@ -45,6 +45,17 @@ describe('l3/hr', () => {
     expect(hrMeasure(st, t).value).toBe(Math.round(60 / ((0.75 + 1.3 + 1.4 + 1.5) / 4)));
   });
 
+  it('FU-5 (audit M16): an R–R over 6 s restarts the history (no "3" after an asystole); the "0" follows the skin asystole time', () => {
+    const { st, t } = feed(Array(12).fill(0.8));
+    expect(hrMeasure(st, t + 9.9, undefined, 'dropMaxMin', 10).value).toBe(75); // saadat-like: still the rate before its 10 s
+    expect(hrMeasure(st, t + 10, undefined, 'dropMaxMin', 10).value).toBe(0);
+    hrOnQrs(st, t + 20); // the first beat after 20 s of asystole
+    expect(st.rrs).toEqual([]);
+    hrOnQrs(st, t + 20.75);
+    hrOnQrs(st, t + 21.5);
+    expect(hrMeasure(st, t + 21.6).value).toBe(80); // not a 4-RR average including the 20 s gap
+  });
+
   it('reads 0 after 4 s without a QRS; ignores RR < 200 ms', () => {
     const { st, t } = feed(Array(12).fill(1));
     expect(hrMeasure(st, t + 3.9).value).toBe(60);

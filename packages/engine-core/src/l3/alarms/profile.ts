@@ -34,6 +34,8 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
 export const BAROMETRIC_MMHG = 760;
 /** Skins whose HR reads dashes and whose HR alarms are off while the pacer runs (research/05 §2.6, LIFEPAK 15). */
 export const PACING_HR_DASHES: ReadonlySet<string> = new Set(['lifepak-like']);
+/** FU-5: skin `hr.autoPriority` entries → the pulse numeric that source publishes (the engine's IBP1 is the ABP line). */
+const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 'prAbp', SpO2: 'pr' };
 /** Apnoea time when the skin's limit table has none (brief §6.4 "apnoea (20 s)"). */
 export const APNEA_DEFAULT_S = 20;
 
@@ -87,6 +89,12 @@ export interface DeviceProfile {
   syncMarker: Skin['syncMarker'];
   nibpDoneTone: boolean;
   hrDashesWhilePacing: boolean;
+  /**
+   * FU-5 (audit M3, M11): the skin's HR source. 'AUTO': with no valid ECG heart rate the first valid pulse in `pulse`
+   * order (skin `hr.autoPriority`: ART/IBP1 → `prAbp`, SpO2 → `pr`) becomes the HR/alarm source; `relabel` is the tile
+   * label then (saadat-like "PR"; null = the HR tile keeps its glyph and the pulse stays in its own tile, philips-like).
+   */
+  hr: { source: 'ECG' | 'AUTO'; pulse: NumericId[]; relabel: string | null };
   /** Sidestream CO2 module of this skin (R39-5): transport delay and adult 10–90 % rise, both in s. */
   co2Sidestream: { delayS: number; riseS: number };
   /** FU-5: the skin's SpO2 averaging window and display update (skin `spo2.avgDefault`, 1 / `spo2.updateHz`), s. */
@@ -181,6 +189,11 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     syncMarker: s.syncMarker,
     nibpDoneTone: s.nibp.doneTone,
     hrDashesWhilePacing: PACING_HR_DASHES.has(r.skinId),
+    hr: {
+      source: s.hr.source === 'AUTO' ? 'AUTO' : 'ECG',
+      pulse: [...new Set(s.hr.autoPriority.map((k) => PULSE_SOURCE[k]).filter((k): k is NumericId => k !== undefined))],
+      relabel: s.hr.relabelNonEcgAs,
+    },
     co2Sidestream: { delayS: s.co2.sidestreamDelayS, riseS: s.co2.riseTimeMs / 1000 },
     spo2: { averagingS: s.spo2.avgDefault, updateS: 1 / s.spo2.updateHz },
     ibpStaticDisplay: s.ibp.staticDisplay,

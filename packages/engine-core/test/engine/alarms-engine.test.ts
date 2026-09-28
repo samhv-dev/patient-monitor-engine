@@ -93,6 +93,10 @@ describe('alarm engine in the engine', () => {
     expect(lo).toMatchObject({ category: 'technical', level: 3, priority: 'low', text: 'ECG CHECK LA/RA/LL' });
     expect(alarmsOf(ev, 'spo2SensorOff', 'raised')[0]).toMatchObject({ category: 'technical', level: 3 });
     expect(alarmsOf(ev, 'ASYSTOLE')).toEqual([]);
+    // FU-5 (audit M3): with the leads off the HR is not measured — invalid, never a valid "0"
+    const hr = ev.filter((x): x is Extract<EngineEvent, { type: 'measurement' }> => x.type === 'measurement' && x.t > 6 && x.values.hr !== undefined);
+    expect(hr.length).toBeGreaterThan(30);
+    expect(hr.every((x) => x.values.hr?.flag === 'invalid' && x.values.hr.value === null)).toBe(true);
     expect(ev.some((x) => x.type === 'alarm' && x.level === undefined)).toBe(false); // raw L2 flags are re-issued, not passed on
     e.dispatch(cmd({ type: 'attachSensor', sensor: 'ecg', state: 'on' }));
     e.advanceTo(45);
