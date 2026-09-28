@@ -79,7 +79,7 @@ export interface CoronaryState {
   cpp: number; // FU-4 G4: the CPP the last step used (last beat's aortic diastolic − LVEDP, or the continuous no-beat value)
   /** FU-4 G5: the RV's flow-share contractility factor (MODELED; 1 in MANUAL) and its resting reference (captured once). */
   kIschRv: number;
-  rv0: { perf: number; rvsp: number } | null;
+  rv0: { perf: number; rvsp: number; edv?: number } | null;
 }
 
 export function createCoronary(ref: Stabilised['ref']): CoronaryState {
@@ -140,10 +140,14 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   // reference has no RV pressures: the first beat read is the resting reference [ENG].
   if (modeled && b && !noBeat && b.rvsp !== undefined && b.rvMean !== undefined && Number.isFinite(b.rvsp)) {
     const perf = b.map - b.rvMean;
-    c.rv0 ??= { perf, rvsp: b.rvsp };
+    c.rv0 ??= { perf, rvsp: b.rvsp, ...(b.rvedv !== undefined && Number.isFinite(b.rvedv) ? { edv: b.rvedv } : {}) };
     const hrR = hr / r.hr;
     const flowRv = cfr * Math.max(0, (perf - P_ZF) / Math.max(5, c.rv0.perf - P_ZF));
-    const demRv = D_BASAL + D_EC * hrR + (1 - D_BASAL - D_EC) * hrR * (Math.max(5, b.rvsp) / Math.max(5, c.rv0.rvsp));
+    // FU-4 G6 (Task 11 Step 1b (b)): the RV's pressure work is WALL STRESS, RVSP × RVEDV^⅓ — the same Laplace term the LV
+    // demand carries (Suga 1990 [P]); with RVSP alone the dilating RV of a massive PE never became ischaemic in time
+    // (the spiral took 23 min, measured). The factor is 1 when the beat carries no RV volume (unit rigs).
+    const dil = c.rv0.edv !== undefined && b.rvedv !== undefined && Number.isFinite(b.rvedv) ? Math.cbrt(Math.max(10, b.rvedv) / Math.max(10, c.rv0.edv)) : 1;
+    const demRv = D_BASAL + D_EC * hrR + (1 - D_BASAL - D_EC) * hrR * (Math.max(5, b.rvsp) / Math.max(5, c.rv0.rvsp)) * dil;
     const tRv = Math.max(K_ISCH_MIN, 1 - G_ISCH * Math.max(0, 1 - flowRv / Math.max(0.05, demRv)));
     c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
     if (c.kIschRv > 0.9995) c.kIschRv = 1;

@@ -511,7 +511,8 @@ export const LUNG_CONDITIONS: readonly LungConditionData[] = [
     sided: false,
     grades: [{ name: 'low risk', severity: 0.33 }, { name: 'intermediate (RV dysfunction)', severity: 0.67 }, { name: 'high risk (massive)', severity: 1 }],
     effects: [
-      { key: 'pvr', op: 'mul', v: [[0, 1], [0.33, 1.375], [0.67, 1.808], [1, 3.25]], src: "§18 row 'Obstruction fraction' φ 0.2/0.35/0.6 via main §2.2 PVR×1/(1−φ)×(1+0.5φ) [ENG]; §33: ×3–5 high risk", tag: 'P', q: 'Q27' },
+      // FU-4 G6 (Task 11, D9): the PE's PVR has ONE source — 7a's φ mapping (circ/conditions.ts, PE_VASO 1.0), applied by the
+      // engine alias for either spelling of the PE event; this row keeps the gas-exchange and mechanics keys
       { key: 'vdAlv', op: 'add', v: [[0, 0], [0.33, 0.14], [0.67, 0.245], [1, 0.42]], src: "§18 row 'Alveolar dead space': φ × VA, VA ≈ 0.7 VT → 0.7φ [ENG conversion]; gap 5/10/15–25 (main §4.4)", tag: 'TXT' },
       { key: 'extraShunt', op: 'add', v: [[0, 0], [0.67, 0], [1, 0.1]], src: "§18 row 'Hypoxaemia mechanism': shunt +0.05–0.15 at φ ≥ 0.5 → 0.10 high risk (Dellinger 5e ch. 42 p. 673) [ENG]", tag: 'TXT' },
       { key: 'raw', op: 'mul', v: [[0, 1], [0.67, 1], [1, 1.2]], src: "§18 row 'Mechanics': ≈ normal; serotonin bronchoconstriction R ×1.2 in massive", tag: 'ENG' },

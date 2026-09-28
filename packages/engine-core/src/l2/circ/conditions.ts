@@ -2,7 +2,8 @@
 // conditions): each writes the CircModel's `ext` multipliers, which the 10 Hz control layer applies. Severity 0–1.
 //   tamponade   vFluid = 250 mL × severity (acute tamponade 150–250 mL, Q29)
 //   pe          φ = 0.8 × severity; PVR × 1/(1 − φ) × (1 + peVaso·φ), peVaso 0.5 (McIntyre–Sasahara; Q27)
-//   tensionPtx  pPtx = 20 mmHg × severity added to the pleural pressure (one side; 5–25 mmHg, Q28)
+//   tensionPtx  FU-4 G6: an alias of 7b's lungCondition ptxTension (engine aliases.ts) — the lungs' per-side pPtx is the
+//               one pleural source; `ext.pPtx` is no longer written (it stays 0 unless a test pokes it)
 //   rvInfarct   RV Emax × (1 − 0.65 × severity) (tables H8: Ees_RV × 0.35)
 import type { CircModelState } from './model.ts';
 
@@ -35,7 +36,7 @@ export function applyCircCondition(m: CircModelState, id: CircConditionId, sever
       return;
     }
     case 'tensionPtx':
-      m.ext.pPtx = PTX_MMHG * s;
+      void PTX_MMHG; // FU-4 G6: the engine routes this condition to 7b (aliases.ts); 7a keeps no second pleural source
       return;
     case 'rvInfarct':
       m.ext.kRv = 1 - RV_INFARCT_LOSS * s;

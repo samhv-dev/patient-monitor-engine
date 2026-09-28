@@ -70,6 +70,7 @@ import { gasPatient } from './l2/gas/params.ts'; // Stage 7e
 import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7g-5): only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
+import { obstructiveAlias } from './l2/circ/aliases.ts'; // FU-4 G6 (Task 11)
 import { applyNeuroCommand, createNeuroState, fasciculating, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f
 import { pcheOf } from './l2/neuro/bus.ts'; // Stage 7f
 import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
@@ -740,6 +741,16 @@ class Engine implements MonitorEngine {
     if (applyDeviceCommand(this.dev, cmd, this.deviceHost(simT), devOut)) {
       this.syncCo2Sampler(); // R39-5: a skin switch changes the sidestream module
       for (const e of devOut) this.emit(e);
+      return;
+    }
+    const alias = obstructiveAlias(cmd); // FU-4 G6 (Task 11): one PE event, one tension-PTX source — both owners, before the chain
+    if (alias) {
+      applyRespCommand(ps.resp, ps.l1, alias.lung, simT);
+      this.syncRespBuffers();
+      if (alias.circ) {
+        applyHemoCommand(ps.hemo, ps.l1, alias.circ, simT, setHr, ps.rng);
+        this.syncHemoBuffers();
+      }
       return;
     }
     if (applyPkCommand(ps.pk, cmd, simT)) return; // Stage 7g: consumes every drug/infusion/tci/vaporiser event (R51 §3)

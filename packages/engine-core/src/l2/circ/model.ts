@@ -57,12 +57,13 @@ export interface CircBeat {
   pItEd?: number; // FU-4 G1: intrathoracic pressure at end-diastole (LVEDP above is transmural)
   rvsp?: number; // FU-4 G5: RV peak pressure, mmHg (absolute)
   rvMean?: number; // FU-4 G5: RV mean pressure over the beat, mmHg (absolute) — the RV's intramural back-pressure
+  rvedv?: number; // FU-4 G6 (Task 11 Step 1b): RV end-diastolic volume, mL — the RV wall-stress term of its O2 demand
 }
 
 interface BeatAcc {
   t: number; sbp: number; dbp: number; sum: number; n: number; aoS: number; aoD: number; sv: number; svRv: number;
   edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number; origin?: string; pItEd: number;
-  rvsp: number; rvSum: number; // FU-4 G5
+  rvsp: number; rvSum: number; rvEdv: number; // FU-4 G5; Task 11 (b)
 }
 
 export interface VolumeEvent {
@@ -271,13 +272,13 @@ function closeBeat(m: CircModelState, t: number): void {
   m.beats.push({
     t: a.t, sbp: a.sbp, dbp: a.dbp, map: a.sum / a.n, aoSys: a.aoS, aoDia: a.aoD, sv: a.sv, svRv: a.svRv, lvedv: a.edv, lvesv: a.esv,
     lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t, origin: a.origin, pItEd: a.pItEd,
-    rvsp: a.rvsp, rvMean: a.rvSum / a.n, // FU-4 G5
+    rvsp: a.rvsp, rvMean: a.rvSum / a.n, rvedv: a.rvEdv, // FU-4 G5; Task 11 (b)
   });
   if (m.beats.length > 16) m.beats.shift();
 }
 
-const newAcc = (t: number, edv: number, edp: number, pItEd: number): BeatAcc => ({
-  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0, pItEd, rvsp: -Infinity, rvSum: 0,
+const newAcc = (t: number, edv: number, edp: number, pItEd: number, rvEdv = NaN): BeatAcc => ({
+  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0, pItEd, rvsp: -Infinity, rvSum: 0, rvEdv,
 });
 
 /**
@@ -317,7 +318,7 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     if (next) {
       closeBeat(m, next.t0);
       L_evaluate(m.s, m.t, m.p, d, o);
-      m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt, o.pIt);
+      m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt, o.pIt, m.s[S.VRV] as number);
       if (next.origin !== undefined) m.acc.origin = next.origin;
     }
     L_stepCirc(m.s, m.t, L_H, m.p, d);
