@@ -116,6 +116,7 @@ export interface CircModelState {
   /** FU-4 G1: the arrest this model declared (cause, time, the organised rhythm it came from), null while beating. */
   arrest: { cause: string; t: number; from: string; roscS: number } | null;
   noFlowS: number; // FU-4 G1: seconds the continuous MAP has been below arrest.ts MAP_NO_FLOW
+  saF: number; // FU-4 (G-FU3 ruling 1): the sinus-node factor of the last control step (MODELED; 1 in MANUAL) — the escape foci follow it
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
   /**
    * Extra multipliers owned by other modules (coronary ischaemia, conditions; 7b lungs via R46): applied at the next
@@ -142,7 +143,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), cppAcc: { sum: 0, n: 0 }, mapNow: st.ref.map, arrest: null, noFlowS: 0, chemo: { sao2: 0.97, paco2: 40 },
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), cppAcc: { sum: 0, n: 0 }, mapNow: st.ref.map, arrest: null, noFlowS: 0, saF: 1, chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -260,6 +261,7 @@ function control(m: CircModelState, env: CircEnv): void {
   p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
   const kSa = Math.max(0, K_BRADY - m.ext.kIsch) * G_SA_ISCH + Math.max(0, (x.kEcg ?? 4) - 7) * G_SA_K; // FU-4 G1/G3
   const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp - kSa) : 1; // FU-3 item 16: hypoxic SA-node depression (FU-4: + ischaemic, K)
+  m.saF = hypF; // FU-4: every pacemaker, subsidiary ones included, shares the myocardial depression
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);

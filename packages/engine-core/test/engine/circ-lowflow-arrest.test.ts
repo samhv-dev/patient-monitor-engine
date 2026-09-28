@@ -20,7 +20,7 @@ type St = { rhythm: { id: string; opts: { pulseless?: boolean } }; hemo: { circ:
 const stOf = (e: ReturnType<typeof createEngine>) => (e as unknown as { st: St }).st;
 const pulseless = (s: St) => s.rhythm.opts.pulseless === true || ['asystole', 'vfCoarse', 'vfFine'].includes(s.rhythm.id);
 
-interface Course { tArrest?: number; rhythm?: string; cause?: string; tMap30?: number; tMap25?: number; hrPeak: number; hrAtArrest?: number; tPulseBack?: number; cprCpp: number[]; pulselessS: number }
+interface Course { tArrest?: number; rhythm?: string; cause?: string; tMap30?: number; tMap25?: number; hrPeak: number; hrAtArrest?: number; tPulseBack?: number; cprCpp: number[]; pulselessS: number; cbfAfter?: number }
 async function run(mode: 'modeled' | 'manual', opts: { bleedMl?: number; cprAfterS?: number; endS: number }): Promise<Course> {
   const e = createEngine({ seed: 7, mode, patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected', cvp: 'connected', spo2: 'on' } } });
   const c: Course = { hrPeak: 0, cprCpp: [], pulselessS: 0 };
@@ -57,6 +57,7 @@ async function run(mode: 'modeled' | 'manual', opts: { bleedMl?: number; cprAfte
       e.dispatch(ev({ kind: 'cpr', active: false }));
     }
     if (pulseless(s)) c.pulselessS++;
+    if (c.tArrest !== undefined && t === c.tArrest + 60) c.cbfAfter = (e as unknown as { st: { organs: { brain: { cbfRel: number } } } }).st.organs.brain.cbfRel;
     if (t % 60 === 0) await new Promise((r) => setImmediate(r));
   }
   console.log(`${mode} bleed ${opts.bleedMl ?? 0}: ${JSON.stringify({ ...c, cprCpp: c.cprCpp.length ? [Math.min(...c.cprCpp), Math.max(...c.cprCpp)] : [] })}`);
@@ -75,6 +76,7 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
     expect((c.tArrest as number) - (c.tMap30 as number)).toBeLessThanOrEqual(900);
     expect(c.cause).toBe('lowFlow');
     expect(c.hrAtArrest as number).toBeLessThanOrEqual(0.6 * c.hrPeak);
+    expect(c.cbfAfter).toBeLessThan(0.2); // G-FU3 ruling 3: 7d reads the arrest's pressures (was 0.49–0.63 after a PEA)
   }, 300_000);
   it('class IV haemorrhage (MANUAL): the no-flow route arrests within 5 min of MAP < 25', async () => {
     const c = await run('manual', { bleedMl: 2500, endS: 1500 });

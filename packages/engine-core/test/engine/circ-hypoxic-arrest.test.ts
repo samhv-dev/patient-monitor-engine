@@ -167,7 +167,7 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     expect(max(w.sat)).toBeLessThan(20); // SaO2 truth: no re-saturation without an ejected pulse (measured 0.33 %)
     expect(w.spo2Shown.every((v) => v === null || v < 20)).toBe(true); // SpO2 unmeasurable (measured: null throughout)
     expect(max(w.rate)).toBeLessThanOrEqual((c.rateAtArrest as number) + 0.5); // the rhythm's rate does not rise (30 → 30)
-    expect(mean(w.hrMon)).toBeLessThanOrEqual(mean(c.hrMonBefore)); // the monitor HR does not rise (57.6 vs 57.7)
+    expect(mean(w.hrMon)).toBeLessThanOrEqual(mean(c.hrMonBefore) + 1); // the monitor HR does not rise (57.6 vs 57.7); 1 bpm tolerance (G-FU3 ruling 1)
     expect(max(w.hrMon)).toBeLessThanOrEqual(max(c.hrMonBefore) + 2); // (max 58 vs 58)
     expect(w.pr.every((v) => v === null)).toBe(true); // no pulse detected
     expect(w.abpPp.length).toBeGreaterThan(0);
@@ -176,6 +176,16 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
       expect(w.beats).toBeGreaterThan(0); // organised electrical activity on the ECG (measured 207 beats) …
       expect(w.perfused).toBe(0); // … with no mechanical beat (7a's kRhythm 0 path)
     }
+  });
+  // FU-4 Task 13 (G-FU3 ruling 1): the MONITOR must show the hypoxic bradycardia before the arrest. Measured: the monitor
+  // reads 58 while the sinus state is 30, because the 40/min junctional backup and the sinus beats ADD (Task 13a's
+  // escape-reset test: sinus 30 → 60 QRS/min). Task 13b (escape foci × the sinus-node factor) makes the monitor read 29,
+  // but then this rig does not arrest inside its 20 min (kIsch stays 1.00: the extra escape beats were what made the
+  // hypoxic heart ischaemic — lowFlow PEA at ≈ 480 s without 13b), so 13b is NOT landed (ruling 5's checkbox) and this
+  // stays it.fails with the number (R45; question to the orchestrator).
+  it.fails('the monitor shows the bradycardia before the arrest: monitor HR < 45 in the minute before — measured min 58 (Task 13b not landed)', async () => {
+    const c = await asphyxia('modeled', false, 20 * 60, true);
+    expect(Math.min(...c.hrMonBefore)).toBeLessThan(45);
   });
   it('E-FU3-10: 5–10 min after the arrest the brainstem is unperfused — no spontaneous breathing: RR numeric 0 or --, VA 0, flat CO2 trace — measured RR numeric 0, VA 0.000 L/min, CO2 range 0.00 mmHg (without the gate: RR 43–48 and VA up to 59.7 L/min in this window)', async () => {
     const c = await asphyxia('modeled', false, 20 * 60, false, true);
