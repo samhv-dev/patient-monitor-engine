@@ -17,7 +17,7 @@ merge of FU-4's head was measured separately, §6 (c)). Every number below was m
 | fast set (`CI=1 PME_TEST_SET=fast pnpm -r test`) | audio 58, skins 179, engine-core 250 files / 1 124 passed / 1 skipped, ventilator 88, controller 215, renderer 25 files / 85, validation 107 passed / 11 skipped, demo 141 — all green (Task 15 run on `186bcc8`). On the merged tree the same counts, except one ventilator timeout (`ports.test.ts` "monitor side", 5 s default) while the slow set ran beside it; 922 ms when re-run alone (unchanged package, load) |
 | slow set (engine-core, `CI=1 PME_TEST_SET=slow`) | 47 files / 238 tests passed on the merged tree (1 828 s, beside the fast set) and on `186bcc8` (1 483 s) — the six `fidelity-*` files (55 tests), `hemo-nibp`, `circ-hypoxic-arrest`, `circ-manual-cvp-peep` included |
 | `pnpm build` / `pnpm check-notices` | OK / `check-notices: OK (3 governed files)` |
-| e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e`) | E2E_RESULT |
+| e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e --workers=2`, system Chrome) | 39 passed, 1 skipped (`stage7d` gate screenshots, `PME_SHOTS=1`) in 16.6 min — the base's 32 + FU-5's 8 (6 `fu5-fidelity`, 2 `fu5-latched`); the run rewrote the other stages' committed evidence images, restored with `git checkout` |
 | tick bench (`packages/validation/test/perf/tick-bench.test.ts`) | passes; p50 0.50 / 0.54 / 0.62 ms, p95 0.61–0.89 ms over three runs (local bound 2 ms; load average ≈ 6) |
 | `pnpm audit:monitor` (43 scenarios, seed 7) | EXIT 0; the after-report (`fu-5/audit-report-after.txt`) is byte-identical between the pre-cap run and this executor's run |
 | `truth-event` | "future tree (12 drugs): 2031 leaves, 45 289 B" (plan: 2028 — Task 9a's pending on-delay state) |
@@ -59,20 +59,20 @@ asserts ≤ 1 LIVE lethal/extreme alarm.
 | NIBP at PP 10 (C3, 77/67) | FAILED | 80/56 (69) — MAP within ± 8 of the line (S/D vs the instructor's 77/67: `it.fails`) |
 | CVP chatter | A1 ×100, B1 ×87, A4/A6 ×39, C2 ×42 | A1 0, B1 4, A4/A6 1, C2 0; G1 hover 1 (at the limit itself 0) |
 | EXTREME BRADY in an agonal rhythm | review's merged FU-4 tree: A2 ×11, A1m ×7; mindray agonal ASYSTOLE ×15 | this branch: `fidelity-arrest` 4b ASYSTOLE ×1, EXTREME BRADY 0, HR LOW 0 on all three skins; harness A2/A1m EXTREME BRADY 0 (no arrest on this truth). Trial merge with FU-4 `e3eeb56`: A2 EXTREME BRADY ×3 (3.3 / 3.1 / 3.6 s cycles, each after the latched ASYSTOLE's condition ended), A1m ×1 — §6 (c) |
-| Latched APNEA visibility (philips-like) | two live alarms, no latching shown; FU-3's 7f run: a live-looking, audible "APNEA (RESP)" | harness (D1, `barView` every sim-second): latched APNEA on the bar in 104 of the 116 rows in which it is latched (185–300 s; the other 12 are the live `**RR 4<8`'s turns), never with the red lamp; e2e 7f run: live 182–184 s, latched 186–456 s (to the end of the run) |
+| Latched APNEA visibility (philips-like) | two live alarms, no latching shown; FU-3's 7f run: a live-looking, audible "APNEA (RESP)" | harness (D1, `barView` every sim-second): latched APNEA on the bar in 104 of the 116 rows in which it is latched (185–300 s; the other 12 are the live `**RR 4<8`'s turns), never with the red lamp; e2e 7f run: live 181–186 s, latched 188–457 s (to the end of the run; three runs: 182–184 / 186–456, 183–186 / 188–458, 181–186 / 188–457) |
 
 ## 3. Screenshots (`docs/gates/fu-5/`, Chromium / system Chrome, time × 4)
 
 | File | Bytes | Scale | Sim time | Shows |
 |---|---|---|---|---|
-| `fu5-lowflow-philips-like.png` | 31 947 | 0.7 | 330 s (3 L bleed over 180 s from 20 s) | SpO2 "-?-" (PR/PI "---"), ART "2/1 (1)" (the flat line kept, review ruling 3), EtCO2 1; SpO2 INOP active (asserted); the bar on `**CVP -1<0`'s turn |
-| `fu5-lowflow-saadat-like.png` | 39 142 | 0.7 | 330 s | SpO2 not a plain number; SpO2 INOP active |
-| `fu5-latched-apnoea-philips-like.png` | 42 544 | 0.7 | ≈ 160–190 s (apnoea 30–90 s) | "***APNEA" LATCHED: red text framed on the idle bar, lamp off, no tone, while the capnogram breathes |
-| `fu5-latched-apnoea-saadat-like.png` | 54 579 | 0.7 | ≈ 160 s | no APNEA on the bar (saadat-like does not latch) |
-| `fu5-leadsoff-philips-like.png` | 36 655 | 0.7 | ≈ 58–78 s | HR "-?-" with the leads off; ECG LEADS OFF rotated into the bar under the red APNEA (asserted) |
-| `fu5-leadsoff-saadat-like.png` | 52 296 | 0.7 | ≈ 58–78 s | the HR tile relabelled "PR 72"; "CO2 APNEA" on the bar's turn (ECG CHECK LA/RA/LL asserted in the rotation) |
-| `fu5-fu3-latched-philips-like.png` | 49 503 | 0.8 | 460 s (7f induction) | the FU-3 run on the FU-5 tree: the bar on the live yellow `**ABPs 89<90`'s turn — the latched APNEA alternates with it every 2 s to the end of the run (logged spans: live 182–184 s, latched 186–456 s) |
-| `fu5-fu3-latched-saadat-like.png` | 50 801 | 0.8 | 460 s | APNEA live 183–186 s, then nothing |
+| `fu5-lowflow-philips-like.png` | 32 647 | 0.7 | 330 s (3 L bleed over 180 s from 20 s) | SpO2 "-?-" (PR/PI "---"), ART "2/1 (1)" (the flat line kept and flashing, review ruling 3), HR 183, EtCO2 2; SpO2 INOP active (asserted); the bar on `**CVP -1<0`'s turn |
+| `fu5-lowflow-saadat-like.png` | 38 924 | 0.7 | 330 s | SpO2 not a plain number; SpO2 INOP active |
+| `fu5-latched-apnoea-philips-like.png` | 42 623 | 0.7 | ≈ 192–196 s (apnoea 30–90 s; after 8 s wall of sampling from 160 s) | "***APNEA" LATCHED: red text framed on the idle bar, lamp off, no tone, while the capnogram breathes |
+| `fu5-latched-apnoea-saadat-like.png` | 55 027 | 0.7 | ≈ 160 s | no APNEA on the bar (saadat-like does not latch) |
+| `fu5-leadsoff-philips-like.png` | 36 879 | 0.7 | ≈ 58–78 s | HR "-?-" with the leads off; ECG LEADS OFF rotated into the bar under the red APNEA (asserted) |
+| `fu5-leadsoff-saadat-like.png` | 52 394 | 0.7 | ≈ 58–78 s | the HR tile relabelled "PR 72"; "CO2 APNEA" on the bar's turn (ECG CHECK LA/RA/LL asserted in the rotation) |
+| `fu5-fu3-latched-philips-like.png` | 50 663 | 0.8 | 460 s (7f induction) | the FU-3 run on the FU-5 tree: the bar on the live yellow `**ABPs 89<90`'s turn — the latched APNEA alternates with it every 2 s to the end of the run (logged spans in the full run, click at sim 3.0 s: live 181–186 s, latched 188–457 s, bar at the end "**ABPm 69<70") |
+| `fu5-fu3-latched-saadat-like.png` | 51 370 | 0.8 | 460 s | APNEA live 183–184 s, then nothing (click at sim 1.0 s) |
 
 ![low flow, philips-like](fu-5/fu5-lowflow-philips-like.png)
 ![low flow, saadat-like](fu-5/fu5-lowflow-saadat-like.png)
@@ -143,7 +143,7 @@ The trial merge with FU-4 (§6 (c)) flips none of these.
   assertions, and "from sim 190 s" is anchored on the click (`tClick + 180 + 9`; the 7f script's times are relative
   to the click, `at(dt)` = `simT + dt`). The first run (two workers, loaded machine) failed philips-like's
   "every APNEA sample from 190 s is latched, never with the red lamp" without recording the samples; the unchanged
-  tree then passed twice (clicks at sim 1.1 s: live 182–184 s, latched 186–456 s) and in the full e2e run. The
+  tree then passed three times (clicks at sim 1.1, 1.1 and 3.0 s; spans in §2). The
   criterion is unchanged (identical to 190 at a click at 1 s).
 - **(c) FU-4 has not merged**, so Task 15 Step 3 / Task 18's merged-tree re-measure ran on a TRIAL merge of
   `origin/fu-4-integration-polish` `e3eeb56` (FU-4's Tasks 0–18d; 18e uncommitted there) in the executor's scratch —
