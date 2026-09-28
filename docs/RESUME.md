@@ -1,6 +1,6 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 09:59 (after the 10th cap: FU-4 fixer, FU-5 + FU-6 writers, drug-interactions run all relaunched as resumptions; 4/4 slots).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 10:50 (FU-4 fixer, FU-5 + FU-6 + FU-7 plan writers; cap 4, surge 5 on a fresh window; order FU-4 → V.1 → FU-6 → FU-7 → 7i → 7k → 7j → Stage 9 → 8b, FU-5 ∥).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -17,7 +17,7 @@
 | 7e endocrine/thermal | MERGED 2026-09-27 20:55 (PR #22, head 1d6f5a7) | G7e + four rulings in the rulings file; child-rig defect handed to V.1; FU-4 list opened | done |
 | FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
 | FU-3 follow-ups | MERGED 2026-09-27 23:36 (PR #23, head 26f5290) | G-FU3 + seven rulings in the rulings file (t25 ventilated → FU-4; escape-pacemaker hypoxia → FU-4 G7; oracle MODELED) | done |
-| Coverage audits (R54) | inventory + glossary (294 entries; 40 % of labels non-clinical) + matrix (837 cells; 201 measured; 636 new in 10 runs; 181 blocked) DONE → `../research/11-…`, `12-…`; run 1 DRUG INTERACTIONS killed by the 10th cap after groups A–D (scratch kept); relaunched 2026-09-28 09:59(→ `../research/14-audit-drug-interactions.md`) | next runs: blood/fluids → endocrine/thermal → neuro → renal/hepatic → comorbidity → devices → stimuli → paediatric → obstetric | each run → FU-7+ plan items |
+| Coverage audits (R54) | inventory + glossary (294 entries; 40 % of labels non-clinical) + matrix (837 cells; 201 measured; 636 new in 10 runs; 181 blocked) DONE → `../research/11-…`, `12-…`; run 1 DRUG INTERACTIONS DONE (105 cells: 42 plausible / 53 not / 10 blocked; 37 new gaps → FU-7) → `../research/14-audit-drug-interactions.md`(→ `../research/14-audit-drug-interactions.md`) | next runs: blood/fluids → endocrine/thermal → neuro → renal/hepatic → comorbidity → devices → stimuli → paediatric → obstetric | each run → FU-7+ plan items |
 | 7i labs & coagulation (R58) | not started | CBC, chemistry, ABG/VBG, coagulation model, TEG/ROTEM panels, labs UI | plan after FU-6 |
 | 7k respiratory mechanics & volumes (R57) | not started | Ppeak/Pplat/PEEP/driving/transpulmonary, compliance/resistance, VD set, FRC/ERV/RV/TLC/VC/IC, FEV1/FVC; Ventilation panel; PFT device later | plan after FU-6 |
 | 7j obstetric physiology (R59) | not started | term-pregnancy physiology, fetus + CTG device, uterotonics, pre-eclampsia, PPH, AFE | plan after 7i |
@@ -27,6 +27,7 @@
 | Audits (R53) | haemodynamic → `../research/08-physiology-integration-audit.md` DONE (→ FU-4); monitor-fidelity → `../research/10-monitor-fidelity-audit.md` DONE (→ FU-5); respiratory → `../research/09-respiratory-integration-audit.md` DONE (R1 → FU-4 G11; R2–R15 → FU-6) | all three audits done | — |
 | FU-5 monitor fidelity (parallel with FU-4) | plan PARTIAL (through Task 8) after the 10th cap; writer relaunched 2026-09-28 09:59 to finish it | SpO2/PI at low flow, one-condition-one-alarm + vendor latching, HR→PR fallback with leads off, NIBP floor, ART pulseless presentation, limit hysteresis, chained alarms, technical alarms, Silence semantics, unused skin settings, fidelity suite | R50 review → fixer → executor (parallel with FU-4; merge order by gate) |
 | FU-6 respiratory integration | plan NEARLY COMPLETE (Open questions in progress) after the 10th cap; writer relaunched 2026-09-28 09:59 to finish + verify | R2–R15 of the respiratory audit; 15-scenario suite; `pnpm run audit:respiratory` | R50 review → fixer → executor after V.1 merges |
+| FU-7 drug-layer integration (7g) | plan writer running since 2026-09-28 10:50 (`docs/plans/fu-7-drug-layer.md`) from research/14; R51 addenda 19–24 | onset curves, one hypnotic/opioid potency output, β-blockade state, stimulus surge, antiarrhythmic/shock probabilities, LAST additive, Mg/Ca/burn unified, second-gas, histamine, inert entries | R50 review → executor after FU-6 merges |
 | V.1 ventilator follow-up | plan FIXED 23:13 (2,695 lines, 68 unique blocks; FiO2 0.21 oedema stays it.fails +0.7) — READY; executor after FU-4 merges | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | R50 review → fixer if needed → executor when a slot frees |
 | 8 validation/release | not started | waits for all | write plan |
 
