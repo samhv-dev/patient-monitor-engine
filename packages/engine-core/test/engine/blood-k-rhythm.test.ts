@@ -5,7 +5,7 @@
 //   a K 9.5 profile arrests (VF or asystole) within 5 min;
 //   burns + succinylcholine 1.5 mg/kg: VF/asystole within 5 min of the dose (Miller, neuromuscular blockers; audit S11);
 //   CaCl2 1 g 60 s before the same dose: no arrest in 15 min.
-// Engine runs of 5–20 sim-min, one yield per sim-minute: SLOW_B (Task 19).
+// Engine runs of 5–20 sim-min, one yield per sim-minute: SLOW_B (Task 20).
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type PatientProfile } from '../../src/index.ts';
 

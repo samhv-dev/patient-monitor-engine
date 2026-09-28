@@ -8,7 +8,7 @@
 //     continuous relaxation-phase value (≥ 15 mmHg, Paradis 1990) — not the last beat's — and a pulse returns within
 //     3 min of the first compression;
 //   the healthy control: no arrest and no pulseless second in 25 min.
-// Multi-sim-minute runs, one yield per sim-minute (CI amendment 4): SLOW_A (Task 19).
+// Multi-sim-minute runs, one yield per sim-minute (CI amendment 4): SLOW_B (Task 20).
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent } from '../../src/index.ts';
 
