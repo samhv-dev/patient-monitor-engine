@@ -21,7 +21,7 @@ import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { SAO2_REF, stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF)
+import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS)
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
@@ -378,10 +378,16 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   c.cor.eesF = c.kLv;
   const pulseless = ctx.rhythm.opts?.pulseless === true; // FU-3 item 16
   const hyp0 = c.cor.hyp;
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1); // FU-3 item 16: O2 content in the supply (MODELED)
+  // FU-4 G4: with no beat to read (pulseless rhythm, or no beat for 3 s) the coronary step reads the arrest's own
+  // pressures — the relaxation-phase aortic − RA pressure accumulated at 2 ms (CPR's CPP, Paradis 1990)
+  const lb0 = c.beats[c.beats.length - 1];
+  const noBeat = pulseless || NO_BEAT_RHYTHMS.has(ctx.rhythm.id) || !lb0 || t - lb0.t > 3;
+  const cppCont = c.cppAcc.n > 0 ? c.cppAcc.sum / c.cppAcc.n : 0;
+  c.cppAcc = { sum: 0, n: 0 };
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1 } : undefined, ctx.l1.mode === 'modeled'); // FU-3 item 16: O2 content in the supply (MODELED); FU-4 G1/G4: the no-beat CPP, MODELED balance
   // FU-3 item 16 (R50 review finding 1): a pulseless heart is not reperfused, so its hypoxic depression (and the
-  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless
-  if (pulseless) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
+  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
+  if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
   if (ctx.l1.mode === 'modeled' && ctx.requestRhythm) {
     const req = hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, rampValue(ctx.hr, t), () => uniform(ctx.rng.outcome)); // FU-3 item 16
@@ -434,7 +440,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     type: 'circ', t, co: circCardiacOutput(c), sv: lb?.sv ?? 0, svRv: svRvMean, ef: lb ? (lb.lvedv - lb.lvesv) / Math.max(1, lb.lvedv) : 0,
     lvedv: lb?.lvedv ?? 0, lvesv: lb?.lvesv ?? 0, lvedp: lb?.lvedp ?? 0, lvsp: lb?.lvsp ?? 0,
     pmsf: ((c.s[4] as number) - c.p.v0Sv) / c.p.cSv, pvr: (c.p.pvrL * c.p.pvrR) / (c.p.pvrL + c.p.pvrR), svr: c.p.rSys,
-    cpp: lb ? lb.aoDia - lb.lvedp : 0, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch,
+    cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // FU-4 G4: the CPP the coronary step used
   };
   if (hs.iabp.on) ce.iabp = { ratio: hs.iabp.ratio, augmentation: hs.iabpAug };
   if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad), suction: hs.lvad.suction };

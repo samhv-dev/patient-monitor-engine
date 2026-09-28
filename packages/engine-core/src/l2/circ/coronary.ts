@@ -10,6 +10,7 @@
 // P_zf 15 mmHg and the CFR mapping are Q31 defaults; the tables' SEVR cross-check is informative only.
 import type { CircBeat } from './model.ts';
 import type { Stabilised } from './stabilise.ts';
+import { P_PL0 } from './params.ts'; // FU-4 G1: the resting pleural pressure (absolute CPP basis)
 
 export const P_ZF = 15; // mmHg (tables §3 pZf; Q31)
 export const G_ISCH = 1.5; // (Q32)
@@ -22,9 +23,48 @@ export const SAO2_REF = 0.97;
 /**
  * FU-3 item 16: time constant of the hypoxic myocardial depression while the O2 supply deficit stands [ENG, fitted
  * to the asphyxial arrest window: loss of aortic pulsations 9.5 ± 1.4 min (swine, Varvarousi 2011) and 11.4 ± 2.4 min
- * (dogs, DeBehnke 1995) after the airway is occluded on room air].
+ * (dogs, DeBehnke 1995) after the airway is occluded on room air]. FU-4 (D3): re-fitted 150 → 260 s to the same window
+ * once the R23 floor (0.2) no longer held the hypoxic, hypotensive heart up for ≈ 3 min (arrest +4.50 → +5.62 min).
  */
-export const TAU_HYP_S = 150;
+export const TAU_HYP_S = 260;
+/**
+ * FU-4 G1: floor of the ischaemic contractility factor in MODELED. The R23 floor 0.2 kept a no-flow heart beating at a
+ * fifth of its contractility for ever (audit B7: MAP 13, SV 2 mL for 15 min); a myocardium without coronary flow stops
+ * contracting within about a minute (Tennant & Wiggers 1935 [P]) — the floor is gone.
+ */
+export const K_ISCH_MIN = 0;
+/**
+ * FU-4 G1 (D6): MANUAL keeps R23's balance (floor 0.2, transmural CPP, pressure-work demand). Its set-and-hold tracker
+ * can hold an instructor pair with an ischaemic ventricle (FU-3 item 4 defect 1: the check-18 rig at 90/52 parks at
+ * kIsch 0.2 with LVEDP 46 — CPP ≈ 0 while the displayed MAP is 65), so a floorless spiral there would arrest a picture
+ * the instructor set; MANUAL arrests by NO FLOW instead (arrest.ts MAP_NO_FLOW). Revisit with Q-FU3-4a.
+ */
+export const K_ISCH_MIN_MANUAL = 0.2;
+/**
+ * FU-4 G1: time constant of the contractile loss while the heart is NOT beating (pulseless rhythm or no ejection): the
+ * no-flow myocardium keeps its capacity to resume through the "electrical phase" of VF, ≈ 4 min (Weisfeldt & Becker
+ * 2002, three-phase model [P]), so the loss is slower than the beating ischaemic heart's τ_down 20 s [ENG: τ 120 s puts
+ * kIsch at 0.13 after 4 min of no flow, below the arrest threshold — a shock then gives PEA, the circulatory phase].
+ */
+export const TAU_ISCH_ARREST_S = 120;
+/**
+ * FU-4 G1: myocardial O2 demand has a basal share (the arrested, non-beating heart: ≈ 15 % of the working MVO2) and an
+ * excitation–contraction share paid per beat whatever the load (the unloaded-contraction MVO2 of the PVA–MVO2
+ * relation: Suga 1990, Physiol Rev 70:247; Gibbs 1978) [P ranges, ENG split]; only the rest scales with pressure work.
+ * Without them a heart at HR 186 and LVSP 25 needed 40 % of its resting O2 and never became ischaemic (audit C4).
+ */
+export const D_BASAL = 0.15;
+export const D_EC = 0.2;
+/** FU-4 G1: myocardial O2 demand of a non-ejecting heart relative to rest (basal + E–C: VF, PEA, asystole under CPR) [ENG]. */
+export const DEMAND_ARREST = D_BASAL + D_EC;
+/** FU-4 G1/G4: rhythms with no mechanical systole (the pulseless flag marks PEA on organised rhythms). */
+export const NO_BEAT_RHYTHMS: ReadonlySet<string> = new Set(['asystole', 'pWaveAsystole', 'vfCoarse', 'vfFine', 'vtPoly', 'torsades', 'agonal']);
+/** FU-4 G1/G4: what the coronary step uses when the heart is not beating: the continuous CPP (Paradis's relaxation-phase
+ * aortic − right-atrial pressure, model.ts `cppAcc`) and the fraction of the cycle it perfuses (CPR relaxation, or 1). */
+export interface NoBeat {
+  cpp: number;
+  dtf: number;
+}
 
 export interface CoronaryState {
   ref: Stabilised['ref'];
@@ -36,31 +76,49 @@ export interface CoronaryState {
   stMv: number;
   eesF: number; // current contractility multiplier seen by the demand term (set by the caller)
   hyp: number; // FU-3 item 16: the hypoxic share of the deficit, filtered as kIsch (0–1; MODELED only, 0 in MANUAL)
+  cpp: number; // FU-4 G4: the CPP the last step used (last beat's aortic diastolic − LVEDP, or the continuous no-beat value)
 }
 
 export function createCoronary(ref: Stabilised['ref']): CoronaryState {
   const rr = 60 / ref.hr;
   const tsys = 0.37 + IVR_S; // resting emergent valve closure ≈ 0.37 s after onset at HR 70 (prototype)
-  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0 };
+  return { ref, dtf0: (rr - tsys) / rr, ratio: 1, delta: 0, kIsch: 1, ischT: 0, stMv: 0, eesF: 1, hyp: 0, cpp: ref.dbp - ref.lvedp };
 }
 
 /**
  * One step of dt seconds using the most recent beat(s). `cfr` from the profile; `hr` current rate. `o2Rel` (FU-3
  * item 16, MODELED only): arterial O2 content ÷ its resting value — myocardial O2 delivery is coronary flow × CaO2 and
  * the resting heart already extracts ≈ 70 % of it, so a content fall is a supply fall only the flow reserve can
- * offset (Guyton & Hall, coronary circulation [TXT]); 1 = the flow-only supply of R23.
+ * offset (Guyton & Hall, coronary circulation [TXT]); 1 = the flow-only supply of R23. FU-4: `noBeat` (no beat to
+ * read) supplies the continuous CPP and the perfused fraction of the cycle; `modeled` false keeps R23's balance (D6).
  */
-export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1): void {
+export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1, noBeat?: NoBeat, modeled = true): void {
   const b = beats[beats.length - 1];
-  if (!b) return;
+  if (!b && !noBeat) return;
   const r = c.ref;
-  const rr = 60 / Math.max(20, hr);
-  const tsys = b.avClose > 0 ? b.avClose + IVR_S : 0.6 * rr;
-  const dtf = Math.max(0.05, (rr - tsys) / rr);
-  const cpp = b.aoDia - b.lvedp;
-  const cpp0 = r.dbp - r.lvedp;
+  // FU-4 G1 (MODELED): CPP on the absolute LV end-diastolic pressure; MANUAL keeps R23's balance (K_ISCH_MIN_MANUAL)
+  const pl0 = modeled ? P_PL0 : 0;
+  const cpp0 = r.dbp - r.lvedp - pl0;
+  let cpp: number;
+  let dtf: number;
+  let demand: number;
+  if (noBeat || !b) {
+    // FU-4 G4: no beat to read — the arrest's own pressures (CPR relaxation phase, or the equalised circuit)
+    cpp = noBeat?.cpp ?? 0;
+    dtf = noBeat?.dtf ?? 1;
+    demand = DEMAND_ARREST;
+  } else {
+    const rr = 60 / Math.max(20, hr);
+    const tsys = b.avClose > 0 ? b.avClose + IVR_S : 0.6 * rr;
+    dtf = Math.max(0.05, (rr - tsys) / rr);
+    cpp = b.aoDia - b.lvedp - (modeled ? (b.pItEd ?? P_PL0) : 0); // FU-4 G1: aortic − ABSOLUTE LV end-diastolic pressure (PEEP, tension PTX raise it)
+    const hrR = hr / r.hr;
+    const ee = Math.sqrt(Math.max(0.1, c.eesF));
+    const work = hrR * (Math.max(20, b.lvsp) / r.lvsp) * ee * Math.cbrt(Math.max(10, b.lvedv) / r.lvedv);
+    demand = modeled ? D_BASAL + D_EC * hrR * ee + (1 - D_BASAL - D_EC) * work : work; // FU-4 G1: + basal, E–C shares
+  }
+  c.cpp = cpp;
   const flow = cfr * Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0);
-  const demand = (hr / r.hr) * (Math.max(20, b.lvsp) / r.lvsp) * Math.sqrt(Math.max(0.1, c.eesF)) * Math.cbrt(Math.max(10, b.lvedv) / r.lvedv);
   c.ratio = (flow * o2Rel) / Math.max(0.05, demand);
   c.delta = Math.max(0, 1 - c.ratio);
   // FU-3 item 16: the hypoxaemic share of the deficit (δ weighted by the content loss 1 − o2Rel), rising with the
@@ -68,8 +126,10 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   const dHyp = c.delta * (1 - o2Rel);
   c.hyp += (dHyp - c.hyp) * (1 - Math.exp(-dt / (dHyp > c.hyp ? TAU_HYP_S : TAU_ISCH_UP_S)));
   if (c.hyp < 5e-4) c.hyp = 0;
-  const target = Math.max(0.2, 1 - G_ISCH * c.delta);
-  const tau = target < c.kIsch ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S;
+  // FU-4 G1: kIsch carries the FLOW share of the deficit (the O2-content share is hyp's, FU-3); no floor in MODELED
+  const dIsch = Math.max(0, 1 - flow / Math.max(0.05, demand));
+  const target = Math.max(modeled ? K_ISCH_MIN : K_ISCH_MIN_MANUAL, 1 - G_ISCH * dIsch);
+  const tau = target < c.kIsch ? (noBeat ? TAU_ISCH_ARREST_S : TAU_ISCH_DOWN_S) : TAU_ISCH_UP_S;
   c.kIsch += (target - c.kIsch) * (1 - Math.exp(-dt / tau));
   if (c.kIsch > 0.9995) c.kIsch = 1;
   c.ischT = c.delta > 0.1 ? c.ischT + dt : 0;

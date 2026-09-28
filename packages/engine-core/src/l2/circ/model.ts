@@ -47,11 +47,12 @@ export interface CircBeat {
   avOpen: number; avClose: number; // s after onset (−1 = did not open)
   dur: number; // to the next beat
   origin?: string; // rhythm-engine origin of the beat (sinus, ventricular, paced, …)
+  pItEd?: number; // FU-4 G1: intrathoracic pressure at end-diastole (LVEDP above is transmural)
 }
 
 interface BeatAcc {
   t: number; sbp: number; dbp: number; sum: number; n: number; aoS: number; aoD: number; sv: number; svRv: number;
-  edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number; origin?: string;
+  edv: number; esv: number; edp: number; lvsp: number; open: number; close: number; prevQ: number; origin?: string; pItEd: number;
 }
 
 export interface VolumeEvent {
@@ -251,13 +252,13 @@ function closeBeat(m: CircModelState, t: number): void {
   if (!a || a.n < 5) return;
   m.beats.push({
     t: a.t, sbp: a.sbp, dbp: a.dbp, map: a.sum / a.n, aoSys: a.aoS, aoDia: a.aoD, sv: a.sv, svRv: a.svRv, lvedv: a.edv, lvesv: a.esv,
-    lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t, origin: a.origin,
+    lvedp: a.edp, lvsp: a.lvsp, avOpen: a.open, avClose: a.close, dur: t - a.t, origin: a.origin, pItEd: a.pItEd,
   });
   if (m.beats.length > 16) m.beats.shift();
 }
 
-const newAcc = (t: number, edv: number, edp: number): BeatAcc => ({
-  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0,
+const newAcc = (t: number, edv: number, edp: number, pItEd: number): BeatAcc => ({
+  t, sbp: -Infinity, dbp: Infinity, sum: 0, n: 0, aoS: -Infinity, aoD: Infinity, sv: 0, svRv: 0, edv, esv: edv, edp, lvsp: -Infinity, open: -1, close: -1, prevQ: 0, pItEd,
 });
 
 /**
@@ -297,7 +298,7 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     if (next) {
       closeBeat(m, next.t0);
       L_evaluate(m.s, m.t, m.p, d, o);
-      m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt);
+      m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt, o.pIt);
       if (next.origin !== undefined) m.acc.origin = next.origin;
     }
     L_stepCirc(m.s, m.t, L_H, m.p, d);

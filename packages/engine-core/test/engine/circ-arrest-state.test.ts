@@ -36,4 +36,12 @@ describe('FU-4 G4: the arrest reads its own pressures', () => {
     expect(r.cbf[110]).toBeLessThan(0.2);
     expect(r.cbf[240]).toBeGreaterThan(0.2);
   }, 120_000);
+  it('Task 4: the circ event CPP is the continuous one — < 10 mmHg in VF (was 79), ≥ 15 during compressions (Paradis 1990)', async () => {
+    const r = await vfCpr();
+    const vf = r.cpp(90, 120);
+    const cpr = r.cpp(150, 240);
+    console.log(`CPP rest ${r.cpp(30, 60).at(-1)?.toFixed(0)}, VF max ${Math.max(...vf).toFixed(1)}, CPR ${Math.min(...cpr).toFixed(1)}–${Math.max(...cpr).toFixed(1)}`);
+    expect(Math.max(...vf)).toBeLessThan(10);
+    expect(Math.min(...cpr)).toBeGreaterThanOrEqual(15);
+  }, 120_000);
 });
