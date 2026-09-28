@@ -821,6 +821,8 @@ class Engine implements MonitorEngine {
     this.st.resp.sampler.side = { ...p.co2Sidestream };
     this.st.resp.num.spo2.avgS = p.spo2.averagingS;
     this.st.resp.num.spo2.updS = p.spo2.updateS;
+    for (const wn of [this.st.hemo.num.abp, this.st.hemo.num.pap]) wn.staticDisplay = p.ibpStaticDisplay;
+    for (const ls of [this.st.hemo.lines.abp, this.st.hemo.lines.cvp, this.st.hemo.lines.pap]) ls.fHz = p.ibpFilterHz;
   }
 
   /**

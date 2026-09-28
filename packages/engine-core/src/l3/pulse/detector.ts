@@ -93,8 +93,3 @@ export function pulseRate(feet: readonly number[]): number | null {
   return 60 / (iv.reduce((a, b) => a + b, 0) / iv.length);
 }
 
-/** PR source rule stub (brief §6.1): pleth when the SpO2 probe is on, else the arterial line, else none. */
-export function prSource(spo2: 'on' | 'off' | 'motion', abpActive: boolean): 'pleth' | 'abp' | null {
-  if (spo2 === 'on') return 'pleth';
-  return abpActive ? 'abp' : null;
-}

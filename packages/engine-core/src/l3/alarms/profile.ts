@@ -89,6 +89,12 @@ export interface DeviceProfile {
   co2Sidestream: { delayS: number; riseS: number };
   /** FU-5: the skin's SpO2 averaging window and display update (skin `spo2.avgDefault`, 1 / `spo2.updateHz`), s. */
   spo2: { averagingS: number; updateS: number };
+  /** FU-5: how a static pressure is shown (skin `ibp.staticDisplay`: philips-like/IEC 'keep', saadat-like 'mean-only'). */
+  ibpStaticDisplay: 'keep' | 'mean-only';
+  /** FU-5: the arterial-line disconnect alarm is on (skin `alarms.abpDisconnectDefault`; saadat-like off). */
+  abpDisconnect: boolean;
+  /** FU-5: the invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
+  ibpFilterHz: number;
 }
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */
@@ -171,5 +177,8 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     hrDashesWhilePacing: PACING_HR_DASHES.has(r.skinId),
     co2Sidestream: { delayS: s.co2.sidestreamDelayS, riseS: s.co2.riseTimeMs / 1000 },
     spo2: { averagingS: s.spo2.avgDefault, updateS: 1 / s.spo2.updateHz },
+    ibpStaticDisplay: s.ibp.staticDisplay,
+    abpDisconnect: a.abpDisconnectDefault,
+    ibpFilterHz: s.ibp.filterDefaultHz,
   };
 }
