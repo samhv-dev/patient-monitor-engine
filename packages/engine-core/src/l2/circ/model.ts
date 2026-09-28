@@ -3,7 +3,7 @@
 // (baroreflex, drugs, volume events, conditions) and per-beat truths. Stepped at 2 ms by the Stage 2 hemo pipeline
 // inside the 20 ms tick; everything is plain JSON-safe data (the engine clones it every tick for the look-ahead).
 import { activationPeriodS, pruneActivations, type Activation } from './activation.ts';
-import { createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type BaroState } from './baroreflex.ts'; // FU-2 F4: V0_RECRUIT_MAX_ML_KG
+import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type BaroState } from './baroreflex.ts'; // FU-2 F4: V0_RECRUIT_MAX_ML_KG; FU-4 F1(b): brainstemOutF
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
@@ -143,8 +143,10 @@ export interface CircModelState {
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
+    endoHumDV0Frac?: number; // FU-4 F2(a) (7e): the humoral arm's venous recruitment, fraction of blood volume (− = venoconstriction)
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
     kEcg?: number; // FU-4 G3 (7c): the membrane-effective K (calcium-stabilised), mmol/L — sinus node and the arrest hazard
+    cbfRel?: number; // FU-4 F1(b) (7d): relative cerebral blood flow — the brainstem perfusion of the vasomotor centre
     tempC?: number; // FU-4 G12 (engine, from Stage 3/7e): core temperature for the hypothermic VF hazard
     drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers
     betaAgonistU?: number; // FU-2 (NR-7g-2): β-agonist venous potency units from the drug bus (venous.ts)
@@ -205,6 +207,7 @@ export interface CircEnv {
   pIt: (t: number) => number;
   cprCardiac: (t: number) => number;
   cprThoracic: (t: number) => number;
+  cprRelease: (t: number) => number;
   qVad: (lvp: number, aop: number) => number;
   qAortaSrc: (t: number) => number;
   modeled: boolean; // reflexes and the HR request run only in MODELED mode
@@ -212,7 +215,7 @@ export interface CircEnv {
 
 const NEUTRAL_MAN = { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 } as const;
 const zero = () => 0;
-export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
+export const RESTING_ENV: CircEnv = { pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, cprRelease: zero, qVad: () => 0, qAortaSrc: zero, modeled: true };
 
 /** Chemoreflex → circulation (B §4.9; tables §1.1). Hypoxic HR sign by age band; hypercapnic pressor response. */
 export function chemoFactors(c: { sao2: number; paco2: number }, band: string): { hrF: number; svrF: number } {
@@ -245,7 +248,7 @@ function control(m: CircModelState, env: CircEnv): void {
   }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF, brainF: brainstemOutF(m.ext.cbfRel) }, raTm)
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;
@@ -319,7 +322,7 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     return v;
   };
   const d: CircDrive = {
-    vent: m.vent, atria: m.atria, kLv: m.kLv, kRv: m.kRv, pIt, cprCardiac: env.cprCardiac, cprThoracic: env.cprThoracic,
+    vent: m.vent, atria: m.atria, kLv: m.kLv, kRv: m.kRv, pIt, cprCardiac: env.cprCardiac, cprThoracic: env.cprThoracic, cprRelease: env.cprRelease,
     qIn: 0, qVad: env.qVad, qAortaSrc: env.qAortaSrc,
   };
   while (m.t < tEnd - 1e-9) {

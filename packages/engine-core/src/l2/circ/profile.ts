@@ -6,7 +6,7 @@ import type { CircParams } from './circuit.ts';
 import {
   A_LV, A_RV, AVA_REF, BETA_LV, BETA_RV, BV_ML_KG_F, BV_ML_KG_M, C_PA, C_PV, C_SV, EES_LV, EES_RV, EMAX_LA, EMAX_RA, EMIN_LA,
   EMIN_RA, GORLIN_AV, GORLIN_MV, MVA_REF, PERI_A, PERI_LAMBDA, PVR, R_AV, R_MV, R_PV, R_PVLA, R_TV, R_VR, RIGHT_LUNG_FLOW, V0_LA,
-  V0_LV, V0_RA, V0_RV, Z_PA,
+  V0_LV, V0_RA, V0_RV, V_CPR_REF_FRAC, Z_PA,
 } from './params.ts';
 import { stenosisK } from './valves.ts';
 import { WK_R0 } from '../hemo/params.ts';
@@ -104,6 +104,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     cPa: C_PA * w, zPa: Z_PA / w, pvrL: PVR / w / (1 - RIGHT_LUNG_FLOW), pvrR: PVR / w / RIGHT_LUNG_FLOW, cPv: C_PV * w, rPvla: R_PVLA / w,
     tv: { r: R_TV / w, k: 0, eroa: 0 }, pv: { r: R_PV / w, k: 0, eroa: 0 }, mv: { r: R_MV / w, k: 0, eroa: 0 }, av: { r: R_AV / w, k: 0, eroa: 0 },
     periA: PERI_A, periLambda: PERI_LAMBDA / w, v0Peri: 0, vFluid: 0,
+    vCprRef: V_CPR_REF_FRAC * bvKg * pr.weightKg, // FU-4 F1(a)
   };
   const r: ResolvedProfile = {
     band, params: p, bloodVolumeMl: bvKg * pr.weightKg, stressedFrac: band === 'elderly' ? 0.22 : 0.25,

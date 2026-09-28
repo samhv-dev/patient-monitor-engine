@@ -55,15 +55,28 @@ export const TAU_ISCH_ARREST_S = 120;
  */
 export const D_BASAL = 0.15;
 export const D_EC = 0.2;
-/** FU-4 G1: myocardial O2 demand of a non-ejecting heart relative to rest (basal + E–C: VF, PEA, asystole under CPR) [ENG]. */
+/** FU-4 G1: myocardial O2 demand of a non-ejecting heart relative to rest (basal + E–C: PEA, asystole under CPR) [ENG]. */
 export const DEMAND_ARREST = D_BASAL + D_EC;
+/**
+ * FU-4 F1(d): FIBRILLATING myocardium is not an arrested one — every myofibril contracts continuously and
+ * asynchronously, so its MVO2 stays near the working heart's rather than at the basal + E–C share. Measured: with
+ * `DEMAND_ARREST` for VF too, CPR at CPP 22–29 repaid the whole debt and `kIsch` recovered 0.84 → 1.00 within 4 min,
+ * so a shock after 10 min of VF found a pristine myocardium and D2's three-phase rationale did not hold [ENG size;
+ * VF MVO2 reported at roughly half to all of the beating heart's: Suga 1990's PVA–MVO2 relation, the unloaded
+ * fibrillating preparations of Gibbs 1978].
+ */
+export const DEMAND_VF = 0.75;
 /** FU-4 G1/G4: rhythms with no mechanical systole (the pulseless flag marks PEA on organised rhythms). */
 export const NO_BEAT_RHYTHMS: ReadonlySet<string> = new Set(['asystole', 'pWaveAsystole', 'vfCoarse', 'vfFine', 'vtPoly', 'torsades', 'agonal']);
+/** FU-4 F1(d): the fibrillating subset of NO_BEAT_RHYTHMS — continuous asynchronous contraction, not an arrested heart. */
+export const VF_RHYTHMS: ReadonlySet<string> = new Set(['vfCoarse', 'vfFine', 'vtPoly', 'torsades']);
 /** FU-4 G1/G4: what the coronary step uses when the heart is not beating: the continuous CPP (Paradis's relaxation-phase
  * aortic − right-atrial pressure, model.ts `cppAcc`) and the fraction of the cycle it perfuses (CPR relaxation, or 1). */
 export interface NoBeat {
   cpp: number;
   dtf: number;
+  /** FU-4 F1(d): the non-beating rhythm is ventricular fibrillation (continuous asynchronous contraction). */
+  vf?: boolean;
 }
 
 export interface CoronaryState {
@@ -109,7 +122,7 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     // FU-4 G4: no beat to read — the arrest's own pressures (CPR relaxation phase, or the equalised circuit)
     cpp = noBeat?.cpp ?? 0;
     dtf = noBeat?.dtf ?? 1;
-    demand = DEMAND_ARREST;
+    demand = noBeat?.vf ? DEMAND_VF : DEMAND_ARREST; // FU-4 F1(d)
   } else {
     const rr = 60 / Math.max(20, hr);
     const tsys = b.avClose > 0 ? b.avClose + IVR_S : 0.6 * rr;

@@ -21,7 +21,7 @@ import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS)
+import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS; F1(d): VF_RHYTHMS)
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
@@ -29,7 +29,7 @@ import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
 import { arrestStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1
 import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
-import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
+import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
 export type HemoChannel = (typeof HEMO_CHANNELS)[number];
@@ -263,7 +263,10 @@ function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return {
     pIt: pleuralSource(ctx),
     cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
-    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
+    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t),
+    // FU-4 F1(c): incomplete recoil — a residual thoracic pressure on the venous side through the release phase
+    cprRelease: (t) => (hs.cpr.active ? CPR_THORACIC_7A * CPR_RELEASE_RESIDUAL * hs.cpr.quality : 0),
+    qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }
 
 /** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
@@ -385,7 +388,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const noBeat = pulseless || NO_BEAT_RHYTHMS.has(ctx.rhythm.id) || !lb0 || t - lb0.t > 3;
   const cppCont = c.cppAcc.n > 0 ? c.cppAcc.sum / c.cppAcc.n : 0;
   c.cppAcc = { sum: 0, n: 0 };
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1 } : undefined, ctx.l1.mode === 'modeled'); // FU-3 item 16: O2 content in the supply (MODELED); FU-4 G1/G4: the no-beat CPP, MODELED balance
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled'); // FU-3 item 16: O2 content in the supply (MODELED); FU-4 G1/G4: the no-beat CPP, MODELED balance
   // FU-3 item 16 (R50 review finding 1): a pulseless heart is not reperfused, so its hypoxic depression (and the
   // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
   if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);

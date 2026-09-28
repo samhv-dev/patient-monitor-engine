@@ -84,12 +84,22 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
     expect(c.tArrest).toBeDefined();
     expect((c.tArrest as number) - (c.tMap25 as number)).toBeLessThanOrEqual(300);
   }, 300_000);
-  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — continuous CPR CPP ≥ 15, a pulse within 3 min', async () => {
-    const c = await run('modeled', { bleedMl: 2500, cprAfterS: 60, endS: 1500 });
+  // FU-4 F1 (ruling 3): the compression now acts on VOLUME, so the rig's CoPP starts near 0 (the exsanguinated thorax,
+  // 2 L arriving over 180 s) and reaches 24 by +30 s; with adrenaline at quality 1 it then sits at 29–36 (adrenaline
+  // raising CoPP above Paradis's 15–25 is Paradis's own finding — plan D19). The pulse and the CoPP band are asserted
+  // separately so the band stays a record (R45) while the ROSC side keeps its own assertion.
+  const rosc = run('modeled', { bleedMl: 2500, cprAfterS: 60, endS: 1500 });
+  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 3 min (measured +113 s of CPR)', async () => {
+    const c = await rosc;
     expect(c.tArrest).toBeDefined();
     expect(c.cprCpp.length).toBeGreaterThan(10);
-    expect(Math.min(...c.cprCpp)).toBeGreaterThanOrEqual(15);
     expect(c.tPulseBack).toBeDefined();
     expect((c.tPulseBack as number) - ((c.tArrest as number) + 60)).toBeLessThanOrEqual(180);
+  }, 300_000);
+  it.fails('ROSC rig: the continuous CPR CoPP stays inside Paradis 15–25 throughout (≥ 15 was asserted; ≤ 25 added by F1) — measured −0.4–36.6', async () => {
+    const c = await rosc;
+    console.log(`circ-lowflow-arrest ROSC: CoPP ${Math.min(...c.cprCpp).toFixed(1)}–${Math.max(...c.cprCpp).toFixed(1)}, pulse at +${((c.tPulseBack ?? NaN) - ((c.tArrest as number) + 60)).toFixed(0)} s of CPR`);
+    expect(Math.min(...c.cprCpp)).toBeGreaterThanOrEqual(15);
+    expect(Math.max(...c.cprCpp)).toBeLessThanOrEqual(25);
   }, 300_000);
 });

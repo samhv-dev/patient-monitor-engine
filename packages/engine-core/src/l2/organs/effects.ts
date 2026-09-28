@@ -39,6 +39,7 @@ export function applyOrganEffects(e: EffectsState, b: BrainState, ctx: EffectsCt
   if (ctx.l1.mode === 'modeled' && ext) {
     // R51 addendum 14: never test for the key — 7a's ext initialiser omits the optional keys
     ext.rSysF = 1 + CUSH_SVR_GAIN * drive; // the bradycardia is the baroreflex's own answer (Cushing's triad): no hrF
+    ext.cbfRel = b.cbfRel; // FU-4 F1(b): brainstem perfusion — the vasomotor centre's own supply (E-FU3-10's signal)
     return;
   }
   if (ext && (ext.rSysF !== undefined || ext.hrF !== undefined)) {
