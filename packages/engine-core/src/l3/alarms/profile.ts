@@ -65,8 +65,10 @@ export interface DeviceProfile {
   pauseS: number | null;
   volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
-  /** Skin apnoea time (`apneaS`, brief §6.4 / §6.4.1; Stage 3 detectors run at a fixed 20 s, request R-4b-9); null = APNEA LIMIT OFF (preset). */
+  /** Skin apnoea time (`apneaS`, brief §6.4 / §6.4.1); FU-5: the impedance detector runs at it; null = APNEA LIMIT OFF (preset). */
   apneaS: number | null;
+  /** FU-5: the capnograph's apnoea time (skin `gasApneaS`, else `apneaS`; saadat-like 20 s vs RESP 10 s); null = OFF. */
+  gasApneaS: number | null;
   /** SpO2 desaturation threshold (%), level 1 (brief §6.4), or null. */
   desat: number | null;
   arrhythmia: {
@@ -145,6 +147,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
   const ar = s.arrhythmia;
   const desat = r.limits[band]?.SpO2_desat;
   const apnea = r.limits[band]?.apneaS;
+  const gasApnea = r.limits[band]?.gasApneaS;
   const apneaLimit = r.preset?.startState?.apneaLimit; // research/06 §3.1 F7: a real ICU had APNEA LIMIT OFF
   return {
     skin: id,
@@ -162,6 +165,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     limits: limitsFor(r, band),
     desat: typeof desat === 'number' ? desat : null,
     apneaS: apneaLimit === 'OFF' ? null : typeof apneaLimit === 'number' ? apneaLimit : typeof apnea === 'number' ? apnea : APNEA_DEFAULT_S,
+    gasApneaS: apneaLimit === 'OFF' ? null : typeof gasApnea === 'number' ? gasApnea : typeof apneaLimit === 'number' ? apneaLimit : typeof apnea === 'number' ? apnea : APNEA_DEFAULT_S,
     arrhythmia: {
       defaultOn: ar.defaultOn,
       asystoleS: band === 'neo' ? ar.asystoleS.neo : ar.asystoleS.adult,

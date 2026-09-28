@@ -824,6 +824,8 @@ class Engine implements MonitorEngine {
     for (const wn of [this.st.hemo.num.abp, this.st.hemo.num.pap]) wn.staticDisplay = p.ibpStaticDisplay;
     for (const ls of [this.st.hemo.lines.abp, this.st.hemo.lines.cvp, this.st.hemo.lines.pap]) ls.fHz = p.ibpFilterHz;
     this.st.hemo.nibp.cfg = { ...p.nibp };
+    if (p.apneaS !== null) this.st.resp.num.imp.apneaS = p.apneaS; // null (APNEA LIMIT OFF): the detector keeps its time, the alarm is off
+    if (p.gasApneaS !== null) this.st.resp.num.co2.apneaS = p.gasApneaS;
   }
 
   /**
