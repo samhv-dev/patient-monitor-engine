@@ -73,6 +73,10 @@ export interface BaroGains {
   weightScale: number; // W/70
   pinnedSet: boolean; // MAP_set pinned by the instructor: no resetting
   hrGain?: number; // × on the sympathetic HR arm only (drug depression of the chronotropic reflex)
+  /** FU-4 G2: × on the delivered sympathetic output (both limbs), after saturation — central sympatholysis (1 = none). */
+  outF?: number;
+  /** FU-4 G2: × on the set point the error is taken against (anaesthetic resetting; 1 = none). */
+  setF?: number;
 }
 
 export interface BaroOut {
@@ -94,17 +98,18 @@ const clampSat = (x: number) => Math.min(SYMP_SAT, Math.max(-SYMP_SAT, x));
 /** One 10 Hz step with the current mean arterial pressure; returns the effector factors. */
 export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number): BaroOut {
   b.mapLp += (map - b.mapLp) * (1 - Math.exp(-BARO_DT / MAP_TAU_S));
-  const e = b.set - b.mapLp;
+  const set = b.set * (g.setF ?? 1); // FU-4 G2: an anaesthetic resets the reflex to a lower pressure (Sellgren 1994)
+  const e = set - b.mapLp;
   b.q.push(e);
   b.q.shift();
   const eVag = b.q[b.q.length - 1 - Math.round(VAGAL_DELAY_S / BARO_DT)] as number;
   const eSym = b.q[0] as number;
   b.ev += (eVag - b.ev) * (1 - Math.exp(-BARO_DT / VAGAL_TAU_S));
   b.es += (eSym - b.es) * (1 - Math.exp(-BARO_DT / SYMP_TAU_S));
-  if (!g.pinnedSet && Math.abs(b.mapLp - b.set) > RESET_FRAC * b.set) {
+  if (!g.pinnedSet && Math.abs(b.mapLp - set) > RESET_FRAC * set) {
     b.offT += BARO_DT;
     if (b.offT >= RESET_HOLD_S) {
-      b.set += RESET_GAIN * (b.mapLp - b.set);
+      b.set += RESET_GAIN * (b.mapLp - set);
       b.offT = 0;
     }
   } else b.offT = 0;
@@ -117,12 +122,13 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
     ecp = Math.min(CP_CLAMP, Math.max(-CP_CLAMP, b.cpSet - b.cpLp));
   }
   const scp = g.gSymp * (ecp < 0 ? SYMP_WITHDRAW : 1);
+  const o = g.outF ?? 1; // FU-4 G2: the delivered sympathetic output, after each factor's saturation
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
-    hrF: 1 + clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
-    svrF: 1 + clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
-    eesF: 1 + clampSat(G_C * s * betaC * b.es),
-    dV0: Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
-    cSvF: 1 - clampSat(G_CSV * s * b.es) * 0.5,
+    hrF: 1 + o * clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
+    svrF: 1 + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
+    eesF: 1 + o * clampSat(G_C * s * betaC * b.es),
+    dV0: o * Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
+    cSvF: 1 - o * clampSat(G_CSV * s * b.es) * 0.5,
   };
 }

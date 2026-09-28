@@ -18,8 +18,8 @@ export interface PdContext {
   macBrain: number; // total age-adjusted MAC fraction (volatile model)
 }
 
-export const NEUTRAL_FX: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1 };
-const FX_TARGETS = ['hr', 'ees', 'svr', 'pvr', 'gv', 'gvHr'] as const;
+export const NEUTRAL_FX: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1, symp: 1, setF: 1 };
+const FX_TARGETS = ['hr', 'ees', 'svr', 'pvr', 'gv', 'gvHr', 'symp', 'setF'] as const; // FU-4 G2: symp, setF
 const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode'];
 
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */

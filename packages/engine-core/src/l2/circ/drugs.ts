@@ -14,6 +14,14 @@ export interface DrugEffect {
   pvr: number; // × on PVR
   gv: number; // × on the vagal and sympathetic reflex gains
   gvHr: number; // × on the sympathetic HR arm only (propofol depresses the baroreflex HR response most: Cullen 1987)
+  /**
+   * FU-4 G2: × on the central sympathetic OUTPUT (arterial and cardiopulmonary limbs, applied after the reflex
+   * saturation): anaesthetic sympatholysis (MSNA suppression), 1 = none. Unlike a gain scale, it lowers the ceiling of
+   * what the reflex can deliver, so a patient held up by a saturated reflex loses most (state-dependence).
+   */
+  symp: number;
+  /** FU-4 G2: × on the baroreflex set point (anaesthetic resetting to a lower pressure), 1 = none. */
+  setF: number;
 }
 
 interface DrugRow {
@@ -21,7 +29,7 @@ interface DrugRow {
   unit: 'mg' | 'mg/kg';
   tauOn: number;
   tauOff: number;
-  peak: Omit<DrugEffect, 'gv' | 'gvHr'> & { gv?: number; gvHr?: number }; // relative change at the peak of the reference dose (× − 1 or + frac)
+  peak: Omit<DrugEffect, 'gv' | 'gvHr' | 'symp' | 'setF'> & { gv?: number; gvHr?: number }; // relative change at the peak of the reference dose (× − 1 or + frac)
   betaMediated?: boolean; // hr/ees part is β-mediated (blunted by β-blockade)
   tachyphylaxis?: number;
 }
@@ -65,7 +73,7 @@ function bateman(t: number, on: number, off: number): number {
 
 /** Combined multipliers of every bolus at time t (β-mediated parts × (1 − betaBlock)). */
 export function drugEffect(list: readonly Bolus[], t: number, betaBlock: number): DrugEffect {
-  const e: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1 };
+  const e: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1, symp: 1, setF: 1 };
   for (const b of list) {
     const row = DRUGS[b.drug];
     const k = b.scale * bateman(t - b.t, row.tauOn, row.tauOff);

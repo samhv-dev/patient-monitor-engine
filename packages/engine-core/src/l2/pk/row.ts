@@ -11,7 +11,7 @@ export type DrugClass =
 
 /** Named engine inputs a drug can move (multipliers are "fraction change": the effect E adds to 1). */
 export type PdTarget =
-  | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' // → 7a DrugEffect
+  | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' | 'symp' | 'setF' // → 7a DrugEffect (FU-4 G2: symp, setF)
   | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain';
 
 export interface PdEffect {

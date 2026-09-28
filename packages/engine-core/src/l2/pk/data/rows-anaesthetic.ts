@@ -26,6 +26,18 @@ const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, ref
  * Nagasaki 2001 (sevoflurane 2 % / isoflurane 1.3 %: pressor BRS −50–60 %). FU-3 item 3 (R-7f-9).
  */
 const VOLATILE_GVHR: PdEffect = { target: 'gvHr', emax: -1, ec50: 1, linear: true };
+/**
+ * FU-4 G2: central sympatholysis — × on the DELIVERED sympathetic output (7a stepBaro `outF`, after the reflex
+ * saturation). Propofol near-abolishes MSNA at induction and inhibits it dose-dependently (Ebert 1992, Anesthesiology
+ * 76:725; Sellgren 1994, 80:534; Robinson 1997, 86:64; Ebert 2005, 103:20) [P direction]; size [ENG], fit targets:
+ * healthy 2 mg/kg MAP −25 to −40 % with HR ±10 (M10 ch. 21 p. 519) — Ce 3 µg/mL leaves 10 % of the output, Ce 1.5
+ * leaves 31 %. The set point resets toward lower pressure with it (Sellgren 1994) [ENG size −15 % at full effect].
+ */
+export const PROPOFOL_SYMP: PdEffect = { target: 'symp', emax: -1, ec50: 1.0, hill: 2 };
+export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0, hill: 2 };
+/** FU-4 G2: sevoflurane/isoflurane lower SNA with MAP and no HR change (Ebert, Muzi & Lopatka 1995, Anesthesiology 83:88) [ENG size, fit: 0.65 MAC MAP −10 to −20 %]. */
+export const VOLATILE_SYMP: PdEffect = { target: 'symp', emax: -0.5, ec50: 1, linear: true };
+export const VOLATILE_SETF: PdEffect = { target: 'setF', emax: -0.1, ec50: 1, linear: true };
 
 export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
@@ -35,6 +47,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [
       { target: 'svr', emax: -0.45, ec50: 3.5 }, { target: 'ees', emax: -0.2, ec50: 3.5 }, { target: 'v0Frac', emax: 0.08, ec50: 3.5 },
       { target: 'gv', emax: -0.6, ec50: 3.5 }, { target: 'gvHr', emax: -0.7, ec50: 3.5 },
+      PROPOFOL_SYMP, PROPOFOL_SETF, // FU-4 G2
     ],
     cns: { hypC50: 3.08, hypC50AgeK: ELEVELD_CE50_AGE_K, cmro2: 0.5 }, syringePerMl: 10, // T5d Ce50 3.08·e^(−0.00635(age − 35))
     doses: 'induction 1.5–2.5 mg/kg (ED50 LOC 1–1.5, M10 ch. 21 p. 516); TCI Ce 2–5 µg/mL; infusion 4–12 mg/kg/h',
@@ -119,6 +132,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [
       { target: 'svr', emax: -0.2, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true },
       { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true },
+      VOLATILE_SYMP, VOLATILE_SETF, // FU-4 G2
     ],
     cns: { cmro2PerMac: 0.25, cbfDirect: [0.04, 0.17] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.25·MAC), direct CBF +4 % / +17 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.80 % at 40 y (Mapleson; label 2.1, Q52); maintenance 0.8–1.3 MAC', onset: 'FA/FI 0.85 at 30 min (Yasuda 1991); b/g 0.65 (M10 ch. 19 p. 427)',
@@ -129,6 +143,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
       { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'bronchodilation', emax: 1, ec50: 0.5 },
+      VOLATILE_SYMP, VOLATILE_SETF, // FU-4 G2
     ],
     cns: { cmro2PerMac: 0.3, cbfDirect: [0.19, 0.72] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.3·MAC), direct CBF +19 % / +72 % at 0.5 / 1.5 MAC
     doses: 'MAC 1.17 % at 40 y', onset: 'FA/FI 0.73 at 30 min; b/g 1.46', ir: '?', src: 'T6.3; Mapleson 1996; M10 ch. 19 p. 427', tag: 'TXT',
