@@ -417,8 +417,9 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const flags = l1Flags(ctx.l1, t, ctx.hr, overrides(hs, t));
   if (ctx.l1.mode === 'modeled') {
     // Stage 7a: the model's truths, flagged 'modeled' unless the instructor pinned them (brief §4.9)
-    values.sbp = hs.lastSite.sbp;
-    values.dbp = hs.lastSite.dbp;
+    const flat = isArrested(hs, t); // FU-4 G4: no ejection for > 3 s — the pressure is the equalised circuit's, not the last beat's
+    values.sbp = flat ? hs.circ.mapNow : hs.lastSite.sbp;
+    values.dbp = flat ? hs.circ.mapNow : hs.lastSite.dbp;
     values.cvp = hs.circOut.pRa;
     values.pawp = hs.circOut.pPv;
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';

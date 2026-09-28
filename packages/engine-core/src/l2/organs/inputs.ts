@@ -144,7 +144,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
   const hbf = out?.hbfRel;
   const lac = out?.lactate;
   return {
-    map: site.map,
+    map: (hs as unknown as { circ?: { mapNow?: number } }).circ?.mapNow ?? site.map, // FU-4 G4: the circulation's current MAP (no beat during an arrest)
     pp: Math.max(0, site.sbp - site.dbp),
     cvp: hs.pv,
     coLpm: cardiacOutput(hs, t),

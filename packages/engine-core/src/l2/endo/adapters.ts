@@ -56,7 +56,9 @@ export function pkActive(pk: PkLike | undefined): boolean {
 }
 
 function mapOf(ctx: EndoCtx, t: number): number {
-  const beats = circOf(ctx)?.beats;
+  const c = circOf(ctx) as { beats?: { map: number }[]; mapNow?: number } | undefined;
+  if (c && typeof c.mapNow === 'number') return c.mapNow; // FU-4 G4: the current MAP, beats or none
+  const beats = c?.beats;
   const last = beats && beats.length ? beats[beats.length - 1] : undefined;
   if (last) return last.map;
   return (l1Value(ctx.l1, 'sbp', t) + 2 * l1Value(ctx.l1, 'dbp', t)) / 3;

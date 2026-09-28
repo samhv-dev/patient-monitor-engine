@@ -33,6 +33,8 @@ export const PESP_PREMATURE = 0.8;
 export const G_SA = 1.5;
 /** FU-3 item 16: floor of the hypoxic contractility factor 1 − cor.hyp (anoxic myocardium stops ejecting) [ENG]. */
 export const K_HYP_MIN = 0.02;
+/** FU-4 G4: the continuous MAP's averaging time constant (7d, 7e and the arrest's no-flow rule read it) [ENG]. */
+export const MAP_NOW_TAU_S = 2;
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -95,6 +97,10 @@ export interface CircModelState {
   pespNext: number; // R45(a): Emax boost for the next beat
   ref: Stabilised['ref']; // the stabilised resting reference (coronary demand, pulsatile sensing)
   cor: CoronaryState; // R23 coronary supply/demand (stepped at 1 Hz by the pipeline)
+  /** FU-4 G4: sum and count of the relaxation-phase aortic − RA pressure since the coronary step last read it (2 ms). */
+  cppAcc: { sum: number; n: number };
+  /** FU-4 G4: mean radial pressure, low-passed (τ 2 s) at the 10 Hz control step in both modes — beats or none. */
+  mapNow: number;
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
   /**
    * Extra multipliers owned by other modules (coronary ischaemia, conditions; 7b lungs via R46): applied at the next
@@ -118,7 +124,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), chemo: { sao2: 0.97, paco2: 40 },
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), cppAcc: { sum: 0, n: 0 }, mapNow: st.ref.map, chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -186,6 +192,7 @@ export function chemoFactors(c: { sao2: number; paco2: number }, band: string): 
 
 function control(m: CircModelState, env: CircEnv): void {
   const map = m.mapN > 0 ? m.mapSum / m.mapN : m.baro.mapLp;
+  m.mapNow += (map - m.mapNow) * (1 - Math.exp(-CTL_DT / MAP_NOW_TAU_S)); // FU-4 G4
   // R45(b): pulsatile sensing — the last three beats' pulse pressure relative to the resting one (K_PP)
   const lb = m.beats.slice(-3);
   const ppNow = lb.length ? lb.reduce((a, x) => a + x.sbp - x.dbp, 0) / lb.length : m.ref.sbp - m.ref.dbp;
@@ -297,6 +304,10 @@ export function stepCircModel(m: CircModelState, tEnd: number, env: CircEnv, o: 
     m.t += L_H;
     L_evaluate(m.s, m.t, m.p, d, o);
     m.qFwd += (Math.max(0, o.qAv) + o.qVad - m.qFwd) * (L_H / CO_TAU_S);
+    if (env.cprCardiac(m.t) <= 0) {
+      m.cppAcc.sum += o.pAo - o.pRa; // FU-4 G4: the coronary driving pressure outside compressions (Paradis 1990)
+      m.cppAcc.n++;
+    }
     if (o.qAv > 1 && env.cprCardiac(m.t) > 0) m.lastEjT = m.t; // a compression that ejects (beats set it below)
     m.mapSum += o.pRad;
     m.raTmSum += o.pRa - o.pIt - o.pPeri; // atrial stretch: transmural across the wall (pericardial pressure compresses)
