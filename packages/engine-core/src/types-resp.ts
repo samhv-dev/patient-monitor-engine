@@ -29,7 +29,7 @@ export type RespClinicalEvent =
   | { kind: 'preoxygenate'; fio2: number; durationS: number }
   | { kind: 'condition'; id: 'mh'; severity: number }
   /** Stage 3 extension (decision 8): anaesthetic thermal state, forced-air warming and ambient temperature. */
-  | { kind: 'thermal'; anaesthesia?: 'none' | 'general' | 'neuraxial'; warming?: boolean; ambientC?: number };
+  | { kind: 'thermal'; anaesthesia?: 'none' | 'general' | 'neuraxial'; warming?: boolean; ambientC?: number; warmAirC?: 32 | 38 | 43 }; // FU-4 item 1: blanket air temperature
 
 /** Command variants added in Stage 3 (brief §7.2). attachSensor co2/temp reuse Stage 2's attachSensor variant. */
 export type RespCommandBody =

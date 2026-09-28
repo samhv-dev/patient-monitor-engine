@@ -82,8 +82,8 @@ export function calibrateInsulation(bsa: number, tp: number, ta: number, airMs: 
 }
 
 /** Forced-air warming: heat INTO the periphery, W (the covered area's own dry loss is removed by the caller). */
-export function forcedAirW(env: Envelope, tp: number): number {
-  return FORCED_AIR_H * env.bsa * FORCED_AIR_AREA * (FORCED_AIR_C - tp);
+export function forcedAirW(env: Envelope, tp: number, airC = FORCED_AIR_C): number {
+  return FORCED_AIR_H * env.bsa * FORCED_AIR_AREA * (airC - tp); // FU-4 item 1: the blanket's set air temperature
 }
 
 /** An IV infusion at `tempC` (warmer: 37) removes heat from the core, W (negative = heat lost). */

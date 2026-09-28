@@ -544,6 +544,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     case 'thermal': {
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined && !['none', 'general', 'neuraxial'].includes(th.anaesthesia)) return 'anaesthesia must be none, general or neuraxial';
+      if (th.warmAirC !== undefined && ![32, 38, 43].includes(th.warmAirC)) return 'warmAirC must be 32, 38 or 43'; // FU-4 item 1
       return num('ambientC', th.ambientC, 5, 40);
     }
     // Stage 7b (plan decision 11)
@@ -639,6 +640,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined) rs.temp.anaesthesia = th.anaesthesia;
       if (th.warming !== undefined) rs.temp.warming = th.warming;
+      if (th.warmAirC !== undefined) rs.temp.warmAirC = th.warmAirC; // FU-4 item 1
       if (th.ambientC !== undefined) rs.temp.ta = th.ambientC;
       return true;
     }
