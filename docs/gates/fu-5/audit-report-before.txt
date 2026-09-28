@@ -1,0 +1,84 @@
+## Fidelity report (research/10 §13 suite items)
+ 1 low flow:
+  A1m-map-ladder: MAP < 30 from 788 s; +20 s SpO2 "99" PI 2.16 PR 162 INOP none; pleth ptp 140 % of baseline; SpO2 plain-valid 96 % of rows after; SpO2-valid-with-PR/PI-invalid rows 58
+  A2-ali-b7: MAP < 30 from 2348 s; +20 s SpO2 "99" PI 2.03 PR 145 INOP none; pleth ptp 133 % of baseline; SpO2 plain-valid 100 % of rows after; SpO2-valid-with-PR/PI-invalid rows 0
+ 2 PEA:
+  A5-pea: HR mean 90; PR invalid at +7 s, SpO2 at +12 s; ART shown valid in 10 of 87 rows; ART INOP no; ART low alarms cleared during PEA 3
+  A5-pea-mr: HR mean 90; PR invalid at +7 s, SpO2 at +12 s; ART shown valid in 10 of 87 rows; ART INOP no; ART low alarms cleared during PEA 0
+  A5-pea-sa: HR mean 90; PR invalid at +7 s, SpO2 at +12 s; ART shown valid in 10 of 87 rows; ART INOP no; ART low alarms cleared during PEA 0
+ 3 VF → CPR → ROSC:
+  A4-vf: VFIB at +3.0 s; other rate alarms raised during VF 10 (HR_HIGH); CPR SpO2 "99?", PR mean 110, EtCO2 21–23; NIBP 2 failed; at 420 s: VFIB(L) apnoea-co2(L)
+  A4-vf-mr: VFIB at +3.0 s; other rate alarms raised during VF 0; CPR SpO2 "99?", PR mean 110, EtCO2 21–22; NIBP 2 failed; at 420 s: VFIB(L) apnoea-co2(L) EXTREME_TACHY(L)
+  A4-vf-sa: VFIB at +3.0 s; other rate alarms raised during VF 0; CPR SpO2 "99?", PR mean 110, EtCO2 21–23; NIBP 2 failed; at 420 s: -
+ 4 asystole:
+  A6-asystole: ASYSTOLE at +4.1 s; HR_LOW/EXTREME_BRADY raised 60–150 s: 1
+  A6-asystole-mr: ASYSTOLE at +4.1 s; HR_LOW/EXTREME_BRADY raised 60–150 s: 0
+  A6-asystole-sa: ASYSTOLE at +10.1 s; HR_LOW/EXTREME_BRADY raised 60–150 s: 0
+ 5 leads off:
+  F1-leadsoff: HR shown during leads off {75,0} ("0" in 56 rows); HR alarms raised within 15 s of reconnect 1
+  F1-leadsoff-sa: HR shown during leads off {76,0} ("0" in 56 rows); HR alarms raised within 15 s of reconnect 0
+  F3-leadsoff-red: rows with the LEADS OFF INOP active beside a red APNEA 57 of 57 (visibility in the bar: renderer test)
+  F3-leadsoff-red-sa: rows with the LEADS OFF INOP active beside a red APNEA 57 of 57 (visibility in the bar: renderer test)
+ 6 apnoea 60 s:
+  D1-apnoea: APNEA raises for one apnoea 2 (136.7 raised apnoea-resp; 140.3 raised apnoea-co2); live alarm gone +5 s after ventilation resumed; at 300 s: apnoea-resp(L) apnoea-co2(L)
+  D1-apnoea-mr: APNEA raises for one apnoea 2 (136.7 raised apnoea-resp; 141.5 raised apnoea-co2); live alarm gone +6 s after ventilation resumed; at 300 s: apnoea-resp(L) apnoea-co2(L)
+  D1-apnoea-sa: APNEA raises for one apnoea 2 (136.7 raised apnoea-resp; 140.6 raised apnoea-co2); live alarm gone +5 s after ventilation resumed; at 300 s: -
+  F2-apnoea-ack: APNEA raises for one apnoea 2 (136.7 raised apnoea-resp; 140.3 raised apnoea-co2); live alarm gone +5 s after ventilation resumed; at 260 s: -
+ 7 impedance-only apnoea:
+  D4-apnoea-imp: RR(imp) shown {0,3,44,49,51,50,48,43}; HR {40–94}; APNEA active in 251 of 251 rows; RR alarms 1
+ 8 disconnect / oesophageal:
+  D2-disconnect: CO2 apnoea at +20.3 s after disconnect; EtCO2 < 5 at +24 s after oesophageal
+  G2-probes: temp off (45 s) {-}; ART zeroing (72 s) {ART_D_HIGH}; ART atmosphere (105 s) {ART_S_LOW ART_M_LOW ART_D_LOW}; CO2 occluded (145 s) {-}
+ 9 desaturation lag:
+  A8-desat-finger: SaO2 < 90 at 152 s, displayed at 174 s (lag 22 s); DESAT raised 216.0; lowest shown 0
+  A8e-desat-ear: SaO2 < 90 at 152 s, displayed at 164 s (lag 12 s); DESAT raised 206.0; lowest shown 0
+10 NIBP:
+  C3-lowpp: NIBP 0 results [], 1 failed
+  A1-map-ladder: NIBP 2 results [133/89(99) 75/47(60)], 3 failed
+  A1m-map-ladder: NIBP 1 results [105/81(91)], 19 failed
+  C2-af-nibp: NIBP 2 results [110/73(89) 111/75(89)], 0 failed
+  A2-ali-b7: NIBP 0 results [], 5 failed
+11 limit hygiene:
+  G1-hover: CVP_M_HIGH raised 0×, HR_LOW 11× in 180 s; texts **CVP 10>10 | **HR 49<50
+  A1-map-ladder        chatter ART_D_LOW×12 CVP_M_HIGH×100 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A1m-map-ladder       chatter nibp-failed×19 CVP_M_LOW×86 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A2-ali-b7            chatter CVP_M_HIGH×4 ART_S_LOW×5 ART_M_LOW×71 nibp-failed×5 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A4-vf                chatter CVP_M_HIGH×39 HR_HIGH×18 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A5-pea               chatter ART_D_LOW×4 CVP_M_HIGH×37 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A6-asystole          chatter CVP_M_HIGH×39 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A7-probe             chatter CVP_M_HIGH×73 ART_D_HIGH×24 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A8-desat-finger      chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  A8e-desat-ear        chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  B1-rhythms-mr        chatter PAUSE×10 | startup (t < 15 s) -
+  B1-rhythms           chatter CVP_M_HIGH×87 ART_D_HIGH×7 HR_LOW×8 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  B1a-rhythms-arrOn    chatter CVP_M_HIGH×87 ART_D_HIGH×7 HR_LOW×8 PAUSE×10 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  B2-step              chatter CVP_M_HIGH×32 HR_HIGH×6 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  B3-sinus30-modeled   chatter HR_LOW×23 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  C1-damp              chatter CVP_M_HIGH×49 ART_D_HIGH×11 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  C2-af-nibp           chatter CVP_M_HIGH×42 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  C3-lowpp             chatter CVP_M_HIGH×11 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  D1-apnoea            chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  D2-disconnect        chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  D3-induction         chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  D4-apnoea-imp        chatter - | startup (t < 15 s) ART_D_LOW
+  E1-temp              chatter ART_D_HIGH×17 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  F1-leadsoff          chatter CVP_M_HIGH×46 ART_D_HIGH×9 HR_HIGH×9 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  F2-apnoea-ack        chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  F3-leadsoff-red      chatter - | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  F4-silence-new       chatter CVP_M_HIGH×12 HR_HIGH×5 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+  G1-hover             chatter HR_LOW×11 | startup (t < 15 s) ART_D_LOW EtCO2_LOW CVP_M_HIGH
+  G2-probes            chatter CVP_M_HIGH×39 ART_D_HIGH×9 | startup (t < 15 s) ART_D_LOW EtCO2_LOW
+12 HR response:
+  B2-step: 80→120 8 s; 120→40 7 s; 40→80 11 s
+  B2-step-mr: 80→120 7 s; 120→40 7 s; 40→80 10 s
+  B2-step-sa: 80→120 10 s; 120→40 9 s; 40→80 10 s
+13 rhythm tour:
+  B1-rhythms: max arrhythmia alarms at once 1; VTAC at +1.6 s; PAUSE shown 0× (shortest – s)
+  B1a-rhythms-arrOn: max arrhythmia alarms at once 4; VTAC at +1.6 s; PAUSE shown 10× (shortest 0.0 s)
+  B1-rhythms-mr: max arrhythmia alarms at once 3; VTAC at +1.6 s; PAUSE shown 10× (shortest 0.0 s)
+  B1-rhythms-sa: max arrhythmia alarms at once 1; VTAC at +1.6 s; PAUSE shown 0× (shortest – s)
+14 silence:
+  F4-silence-new: at 66 s (VF raised during the silence): ASYSTOLE(L) apnoea-co2 VFIB CVP_M_HIGH ART_S_LOW ART_M_LOW ART_D_LOW EtCO2_LOW HR_HIGH; silence running true
+  F4-silence-new-mr: at 66 s (VF raised during the silence): ASYSTOLE(L) apnoea-co2 VFIB; silence running true
+  F4-silence-new-sa: at 66 s (VF raised during the silence): apnoea-co2 VFIB; silence running false
+15 startup: see "startup (t < 15 s)" under 11
