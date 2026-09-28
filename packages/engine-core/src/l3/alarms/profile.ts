@@ -79,8 +79,12 @@ export interface DeviceProfile {
     pause: { s: number } | { ratio: number };
     vtacRate: number;
     vtacCount: number;
+    /** FU-5: absolute extreme brady/tachy limits (skin limit table `HR_extremeBrady/Tachy`); null = HR limit ∓ 20. */
+    extreme: { brady: number | null; tachy: number | null };
     tachy: number | null;
     brady: number | null;
+    /** FU-5: the PAUSE alarm's factory switch (skin `arrhythmia.pauseAlarm`; mindray-like Off, [S4] App. C.1.1.2). */
+    pauseAlarm: boolean;
   };
   /** PVCs/min alarm threshold (brief §6.4 "PVCs/min (10)"). */
   arrhythmiaPvcPerMin: number;
@@ -108,6 +112,8 @@ export interface DeviceProfile {
   /** FU-5: the cuff settings of the skin (and age band): NibpState.cfg. */
   nibp: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
 }
+
+const numberOr = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */
 export const limitGroup = (key: string): string => {
@@ -180,8 +186,10 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
       pause: 'ratio' in ar.pause ? { ratio: ar.pause.ratio } : { s: band === 'neo' ? ar.pause.neoS : ar.pause.adultS },
       vtacRate: ar.vtac.rate,
       vtacCount: ar.vtac.count,
+      extreme: { brady: numberOr(r.limits[band]?.HR_extremeBrady), tachy: numberOr(r.limits[band]?.HR_extremeTachy) },
       tachy: ar.tachy,
       brady: ar.brady,
+      pauseAlarm: ar.pauseAlarm,
     },
     arrhythmiaPvcPerMin: ar.freqPvcPerMin,
     defib: s.defib ? structuredClone(s.defib) : null,

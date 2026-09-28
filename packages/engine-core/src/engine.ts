@@ -644,6 +644,7 @@ class Engine implements MonitorEngine {
       pulseless: ps.rhythm.opts.pulseless === true,
       spo2Probe: ps.hemo.pleth.state,
       leadsOff: ps.mods.artefact.leadOff,
+      co2: ps.resp.co2Sensor, // FU-5
       committedN: ps.n,
       vcgAt: (n) => {
         const x = bx.at(n);

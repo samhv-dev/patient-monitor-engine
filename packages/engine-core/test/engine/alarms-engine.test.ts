@@ -69,11 +69,18 @@ describe('alarm engine in the engine', () => {
     }
   });
 
-  it('age band switch: HR 140 is HIGH for an adult (50–120) and inside the paediatric window (75–160)', () => {
+  it('age band switch: HR 135 is HIGH for an adult (50–120; FU-5: below the 140 extreme-tachy threshold, which now alarms with arrhythmia analysis off) and inside the paediatric window (75–160)', () => {
     const { e, ev } = devRig('philips-like');
-    e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 140 }));
+    e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 135 }));
     e.advanceTo(20);
+    // FU-5: the first HR average reads 144 at 3 s — its four beats fall on the respiratory sinus-arrhythmia peak (truth
+    // R–R 0.41–0.45 s = 134–145/min around the 135 target; the truth, averaged over the first beats, not a device
+    // defect) — so EXTREME TACHY (> 140) is raised at 3 s, held 5 s (EVENT_HOLD_S), and latched by philips-like (#H30)
+    // once its condition ends. A latched alarm suppresses nothing (review ruling 2, [S2] IFU p. 97): HR HIGH is raised
+    // as soon as EXTREME TACHY's condition has ended, with no acknowledge (8 s in the prototype).
+    expect(alarmsOf(ev, 'EXTREME_TACHY', 'raised').map((a) => a.t)).toEqual([3]);
     expect(alarmsOf(ev, 'HR_HIGH', 'raised')).toHaveLength(1);
+    expect(alarmsOf(ev, 'HR_HIGH', 'raised')[0]!.t).toBeLessThanOrEqual(10);
     e.dispatch(cmd({ type: 'device', action: { device: 'monitor', action: 'ageBand', value: 'paed' } }));
     e.advanceTo(30);
     expect(alarmsOf(ev, 'HR_HIGH', 'cleared')).toHaveLength(1);

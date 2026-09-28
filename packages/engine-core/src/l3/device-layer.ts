@@ -65,6 +65,8 @@ export interface DeviceHost {
   pulseless: boolean;
   spo2Probe: 'on' | 'off' | 'motion';
   leadsOff: boolean;
+  /** FU-5: the capnograph's sensor state (the apnoea source while 'on'). */
+  co2: 'off' | 'warmup' | 'on' | 'occluded';
   /** First ECG sample index not yet committed. */
   committedN: number;
   /** One committed VCG sample (null when not held). */
@@ -290,6 +292,7 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   if (vf && inp.vfSince === null) inp.vfSince = t;
   if (!vf) inp.vfSince = null;
   inp.spo2Probe = host.spo2Probe;
+  inp.co2 = host.co2;
   inp.pacing = d.pacer.mode !== 'off';
   stepAlarms(d.alarms, t, buildConditions(d.alarms, inp, t), out);
   // device status on change and at 1 Hz

@@ -15,6 +15,10 @@ export interface Condition {
   /** Must hold continuously this long before the alarm is raised (s). */
   delayS: number;
   numeric?: NumericId;
+  /** FU-5: explained by a higher alarm (conditions.ts CHAIN): not raised, and an active entry clears without latching. */
+  suppressed?: boolean;
+  /** FU-5: once raised, the entry stays at least this long (an event alarm such as PAUSE; audit M13). */
+  holdS?: number;
 }
 
 export interface AlarmConfig {
@@ -36,6 +40,8 @@ export interface AlarmMgrState {
   pausedUntil: number | null;
   lastStatusT: number;
   dirty: boolean;
+  /** FU-5: alarm id → the time before which a raised event alarm is kept (Condition.holdS); absent in older snapshots. */
+  hold?: Record<string, number>;
 }
 
 export const LEVEL_PRIORITY: Readonly<Record<AlarmLevel, AlarmPriority>> = { 1: 'high', 2: 'medium', 3: 'low' };
@@ -209,7 +215,12 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     s.dirty = true;
   }
   const now = new Set<string>();
+  let superseded: Set<string> | null = null;
   for (const c of conds) {
+    if (c.suppressed) {
+      (superseded ??= new Set()).add(c.id);
+      continue;
+    }
     now.add(c.id);
     if (s.pausedUntil !== null) continue; // pause: nothing is raised (brief §6.4 "Pause stops all alarms")
     const e = s.active[c.id];
@@ -226,6 +237,7 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     delete s.pending[c.id];
     const entry: AlarmEntry = { id: c.id, level: c.level, category: c.category, text: c.text, since: t, latched: false, acked: false, sounding: true };
     if (c.numeric) entry.numeric = c.numeric;
+    if (c.holdS) (s.hold ??= {})[c.id] = t + c.holdS;
     s.active[c.id] = entry;
     if (s.silencedUntil !== null && p.silence.cancelOnNewAlarm) s.silencedUntil = null; // brief §6.4.1: any new alarm ends silence
     emitAlarm(out, t, entry, 'raised');
@@ -234,9 +246,13 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
   for (const id of Object.keys(s.pending)) if (!now.has(id)) delete s.pending[id];
   for (const [id, e] of Object.entries(s.active)) {
     if (now.has(id)) continue;
+    const gone = superseded?.has(id) === true; // FU-5: superseded by a higher alarm — cleared, never latched
+    const holdUntil = s.hold?.[id];
+    if (!gone && holdUntil !== undefined && t < holdUntil) continue;
+    if (s.hold && holdUntil !== undefined) delete s.hold[id];
     // FU-5: latching per vendor (skin `alarms.latching`): the message stays until acknowledged, the sound only under
     // audible latching; an acknowledged alarm whose condition ends clears ([S2] p. 40)
-    if (!e.acked && latchCovers(p.latching.visual, e)) {
+    if (!gone && !e.acked && latchCovers(p.latching.visual, e)) {
       if (!e.latched) {
         e.latched = true;
         e.sounding = latchCovers(p.latching.audible, e);

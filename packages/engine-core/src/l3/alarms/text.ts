@@ -23,7 +23,7 @@ const IEC_TEXT: Record<FixedAlarmId, string> = {
   spo2SensorOff: 'SpO2 SENSOR OFF', // brief §6.2
   'nibp-failed': 'NBP MEASUREMENT FAILED', // brief §6.3
   'apnoea-co2': 'APNEA', // brief §6.4 conditions; Stage 3's capnograph detector
-  'apnoea-resp': 'APNEA (RESP)', // Stage 3's impedance detector [inferred text, Stage 3's raw text]
+  'apnoea-resp': 'APNEA', // FU-5: one message whatever the source ([S2] IFU p. 41 "***APNEA" from CO2, Resp or AGM)
   co2Line: 'CO2 LINE', // brief §6.4 technical INOP "CO2 line" [inferred text]
 };
 

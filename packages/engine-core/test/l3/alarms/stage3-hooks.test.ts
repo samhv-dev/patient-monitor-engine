@@ -22,7 +22,7 @@ describe('Stage 3 alarm hooks (synthetic events)', () => {
     expect(deviceProfile('iran-icu-as-found').apneaS).toBeNull();
   });
 
-  it("Stage 3's apnoea flags are re-issued with the same ids, level 1 and the skin's text", () => {
+  it("FU-5 (audit M2): one apnoea raises ONE alarm with the source's id — the capnograph's while it measures, else the impedance's; level 1, the skin's text", () => {
     const m = createAlarmMgr(deviceProfile('philips-like'));
     const inp = createInputs();
     expect(ids(buildConditions(m, inp, 1))).not.toContain('apnoea-co2');
@@ -31,10 +31,12 @@ describe('Stage 3 alarm hooks (synthetic events)', () => {
     const out: EngineEvent[] = [];
     stepAlarms(m, 30, buildConditions(m, inp, 30), out);
     const a = out.filter((e): e is Extract<EngineEvent, { type: 'alarm' }> => e.type === 'alarm' && e.state === 'raised' && e.id.startsWith('apnoea'));
-    expect(a.map((x) => [x.id, x.level, x.priority, x.text]).sort()).toEqual([['apnoea-co2', 1, 'high', '***APNEA'], ['apnoea-resp', 1, 'high', '***APNEA (RESP)']]);
+    expect(a.map((x) => [x.id, x.level, x.priority, x.text])).toEqual([['apnoea-co2', 1, 'high', '***APNEA']]);
+    inp.co2 = 'off'; // no capnograph: the impedance is the source, same message
+    expect(buildConditions(m, inp, 31).filter((x) => x.id.startsWith('apnoea')).map((x) => [x.id, x.text])).toEqual([['apnoea-resp', '***APNEA']]);
+    inp.co2 = 'on';
     observeEvent(inp, raw(31, 'apnoea-co2', false));
-    expect(ids(buildConditions(m, inp, 31))).not.toContain('apnoea-co2');
-    expect(ids(buildConditions(m, inp, 31))).toContain('apnoea-resp');
+    expect(ids(buildConditions(m, inp, 31)).filter((x) => x.startsWith('apnoea'))).toEqual([]);
   });
 
   it('saadat-like: APNEA cannot be switched off (RESP APNEA, CO2 APNEA); APNEA LIMIT OFF (iran-icu-as-found) silences it', () => {
@@ -44,8 +46,10 @@ describe('Stage 3 alarm hooks (synthetic events)', () => {
     observeEvent(inp, raw(12, 'apnoea-resp', true));
     observeEvent(inp, raw(12, 'apnoea-co2', true));
     const c = buildConditions(m, inp, 12);
-    expect(c.find((x) => x.id === 'apnoea-resp')).toMatchObject({ level: 1, text: 'RESP APNEA' });
-    expect(c.find((x) => x.id === 'apnoea-co2')).toMatchObject({ level: 1, text: 'CO2 APNEA' });
+    expect(c.find((x) => x.id === 'apnoea-co2')).toMatchObject({ level: 1, text: 'CO2 APNEA' }); // CAPNO is the RR source
+    expect(ids(c)).not.toContain('apnoea-resp');
+    inp.co2 = 'off'; // RESP is the RR source (research/06 §4.1: CAPNO/RESP selects one)
+    expect(buildConditions(m, inp, 12).find((x) => x.id === 'apnoea-resp')).toMatchObject({ level: 1, text: 'RESP APNEA' });
     expect(ids(buildConditions(createAlarmMgr(deviceProfile('iran-icu-as-found')), inp, 12))).not.toContain('apnoea-resp');
   });
 
