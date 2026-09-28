@@ -23,8 +23,16 @@
     "filters": { "Monitor": [0.5, 40], "Ext. Monitor": [0.5, 150], "Filter": [0.5, 20], "Diag": [0.05, 150] },
     "filterDefault": "Monitor"
   },
-  "hr": { "method": "mean-12rr" },
-  "alarms": { "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2 },
+  "hr": { "method": "mean-12rr", "source": "AUTO" },
+  "spo2": { "avgOptions": [5, 10, 20], "avgDefault": 10, "updateHz": 0.5 },
+  "nibp": { "initialInflation": { "adult": 165, "paed": 130, "neo": 100 } },
+  "alarms": {
+    "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2,
+    "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
+    "pause": { "durationS": 120 },
+    "latching": { "visual": "red", "audible": "off" }
+  },
+  "glyphs": { "hrUnavailable": "-?-", "nibpFail": "-?-", "inop": "-?-" },
   "limits": {
     "adult": {
       "values": {
@@ -66,6 +74,15 @@
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },
     "hr.method": { "tag": "documented", "source": "brief §3.8 (Philips-like mean-12rr)" },
+    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with Ali" },
+    "spo2": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 66 (average 10 s); IFU [S2] p. 301 (display update typically 2 s); brief §4.3 (options 5/10/20)" },
+    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 303 (initial inflation 165 / 130 / 100 ± 15 mmHg)" },
+    "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 11, 32 (Silence acknowledges all active alarms and INOPs; new alarms are new)", "note": "replaces the ZOLL 90 s mute inherited from iec-defaults (audit M9, research/06 §6)" },
+    "alarms.pause": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 138 (Pause Alarms 1/2/3 min or infinite, default 2 min)" },
+    "alarms.latching": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 140 (#H30 OR option: Visual Latching Red, Audible Latching Off); IFU [S2] p. 39–40", "note": "INOPs and short yellow arrhythmia alarms never latch" },
+    "glyphs.hrUnavailable": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55 (LEADS OFF: the numeric shows -?-)" },
+    "glyphs.nibpFail": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 56 (NBP MEASURE FAILED: -?-)" },
+    "glyphs.inop": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55–62 ('Numeric is replaced by a -?-' for SpO2, pressure, temperature and CO2 INOPs)" },
     "alarms.repeatS": { "tag": "documented", "source": "research/05 §2.5 (ISO red 5/10/15 s, yellow 10/20/30 s); brief §6.4" },
     "alarms.lowPulses": { "tag": "documented", "source": "research/05 §2.5 (INOP: lower tone ×2); brief §6.4" },
     "limits.adult": { "tag": "documented", "source": "brief §6.8 (Philips factory); research/03 §8.10" },

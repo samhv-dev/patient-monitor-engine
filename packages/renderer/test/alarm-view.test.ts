@@ -29,11 +29,13 @@ describe('barView', () => {
     expect(barView(s, sa, 10)).toMatchObject({ text: 'ECG CHECK LA/RA/LL', bg: '#E0E0E0', lamp: 'off', countdownS: 120, countdownKind: 'silence' });
     expect(barView(s, sa, 10, true)).toMatchObject({ text: 'ECG ASYSTOLE', bg: '#F00000' });
   });
-  it('philips-like silence keeps the visuals (audio only), and same-level messages rotate every 2 s', () => {
+  it('IEC-style mute (zoll-like 90 s) keeps the visuals (audio only) with a countdown; philips-like Silence acknowledges (FU-5: no countdown); same-level messages rotate every 2 s', () => {
+    const zl = resolveSkin('zoll-like');
     const a2 = { ...asy, id: 'VFIB', text: '***VFIB/VTACH', since: 6 };
     const s = status({ active: [{ ...asy, text: '***ASYSTOLE' }, a2], silencedUntil: 100 });
-    expect(barView(s, ph, 12)).toMatchObject({ text: '***ASYSTOLE', bg: '#FF0000', fg: '#FFFFFF', countdownS: 88 });
-    expect(barView(s, ph, 14).text).toBe('***VFIB/VTACH');
+    expect(barView(s, zl, 12)).toMatchObject({ text: '***ASYSTOLE', bg: '#FF0000', fg: '#FFFFFF', countdownS: 88 });
+    expect(barView(s, zl, 14).text).toBe('***VFIB/VTACH');
+    expect(barView(status({ active: [{ ...asy, text: '***ASYSTOLE' }, a2] }), ph, 14)).toMatchObject({ text: '***VFIB/VTACH', countdownS: null });
   });
 });
 

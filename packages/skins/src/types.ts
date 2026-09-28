@@ -168,6 +168,7 @@ export interface Skin {
     updateHz: number;
   };
   nibp: {
+    /** Recorded, not modelled (FU-5): the engine's NIBP is command-driven and idle at power-on on every skin. */
     modeDefault: 'MANUAL' | 'AUTO';
     autoIntervalMin: number | null;
     autoIntervalsMin: number[];
@@ -184,6 +185,11 @@ export interface Skin {
     meanOnlyLabels: string[];
     /** Label → [low, mid, high] mmHg. */
     scales: Record<string, [number, number, number]>;
+    /**
+     * FU-5: a STATIC (non-pulsatile) pressure is shown with its systolic/diastolic/mean kept and only the pulse "-?-"
+     * ('keep', Philips IFU [S2] p. 57) or with the mean only ('mean-only', Saadat, research/06 §4.1).
+     */
+    staticDisplay: 'keep' | 'mean-only';
   };
   co2: {
     unit: 'mmHg' | 'kPa' | '%';
@@ -211,9 +217,21 @@ export interface Skin {
     factoryEnabled: boolean;
     alwaysOn: string[];
     alarmOffIcon: 'crossed-bell-red' | 'bell-off';
-    silence: { durationS: number; suppressesVisual: boolean; cancelOnNewAlarm: boolean; headerCountdown: boolean; technicalActsAsAck: boolean };
+    /**
+     * FU-5: `mode` 'mute' = Silence mutes for `durationS` (ZOLL, Saadat); 'acknowledge' = Silence acknowledges every
+     * active alarm and INOP, new alarms sound at once, no timer (`durationS` null; research/05 §6 [S2] Philips IntelliVue IFU p. 32, Mindray
+     * Alarm Reset [S4] §10.8).
+     */
+    silence: { mode: 'mute' | 'acknowledge'; durationS: number | null; suppressesVisual: boolean; cancelOnNewAlarm: boolean; headerCountdown: boolean; technicalActsAsAck: boolean };
     pause: { durationS: number } | null;
-    latching: boolean;
+    /**
+     * FU-5: what stays on screen (visual) and sounding (audible) after the condition ends, until acknowledged.
+     * 'lethal' = ASYSTOLE, VFIB, VTAC, EXTREME BRADY/TACHY; 'red' = every level-1 alarm; 'redYellow' = levels 1–2.
+     * Technical alarms (INOPs) never latch (research/05 §6 [S2] Philips IntelliVue IFU p. 40).
+     */
+    latching: { visual: 'off' | 'lethal' | 'red' | 'redYellow'; audible: 'off' | 'red' | 'redYellow' };
+    /** FU-5: the arterial-line disconnect alarm (static, mean < 10 mmHg) is ON by default (Philips [S2] p. 44; Saadat OFF). */
+    abpDisconnectDefault: boolean;
     delayS: number;
     spo2DelayS: number | null;
     alarmFreezeOption: boolean;
@@ -229,6 +247,8 @@ export interface Skin {
     tachy: number | null;
     brady: number | null;
     freqPvcPerMin: number;
+    /** FU-5: the PAUSE alarm's factory switch (Mindray: Off, [S4] App. C.1.1.2). */
+    pauseAlarm: boolean;
   };
   st: { defaultOn: boolean; isoMs: number; stMs: number; updateS: number };
   beep: { source: 'ECG' | 'PLETH' | 'HR_SOURCE'; defaultOn: boolean; volume: { min: number; max: number; default: number }; pitchMap: PitchMapId; baseHz: number };
@@ -243,7 +263,11 @@ export interface Skin {
   } | null;
   pacer: { rateDefault: number; rateRange: LimitPair; mADefault: number; mARange: LimitPair; mAStep: { up: number; down: number }; modeDefault: 'demand' | 'fixed'; pausePct: number | null } | null;
   trend: { style: 'line' | 'filled-area'; hours: number };
-  glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; outOfRange: string; ibpPrUnavailable: string };
+  /**
+   * FU-5: `questionable` is appended to a questionable numeric ("97?"); `inop` replaces a numeric whose technical alarm
+   * is active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
+   */
+  glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; outOfRange: string; ibpPrUnavailable: string; questionable: string; inop: string };
   provenance: Provenance;
 }
 

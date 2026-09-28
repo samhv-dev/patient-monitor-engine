@@ -67,3 +67,36 @@ ending in the last n seconds (at least 2); absent (every shipped skin) = the `hr
 `r.limits[band]` has inheritance applied. `r.approximateLimits[band]` lists the keys a band took from another band
 (saadat-like paediatric and neonatal HR, SpO2, RR and Temp), which the UI must mark approximate (brief §6.8).
 A `null` table or cell means "not published" and must never be filled with invented values.
+
+## FU-5: behaviour fields (monitor fidelity)
+
+- `alarms.latching` is `{ visual, audible }`: `'lethal'` (ASYSTOLE, VFIB, VTAC, EXTREME BRADY/TACHY), `'red'` (every
+  level-1 alarm), `'redYellow'` or `'off'`; audible `'off' | 'red' | 'redYellow'`. Technical alarms never latch.
+  iec-defaults `lethal`/`off` (FU-5 ruling: IEC 60601-1-8 convention), philips-like `red`/`off` (Configuration Guide
+  #H30), mindray-like and saadat-like `off`/`off`.
+- `alarms.silence.mode`: `'mute'` mutes for `durationS` (ZOLL 90 s, Saadat 120 s with visuals); `'acknowledge'`
+  acknowledges every active alarm, new alarms sound at once, `durationS` is `null` (Philips Silence, Mindray Alarm
+  Reset). `r.audio.alarm.silence.durationS` is 0 for acknowledge skins.
+- `glyphs.questionable` (suffix of a questionable numeric) and `glyphs.inop` (a numeric whose INOP is active).
+- Limit tables may carry `HR_extremeBrady` / `HR_extremeTachy` (absolute thresholds, mindray-like); without them the
+  extreme alarms are the HR limit ∓ 20 bpm clamped (Philips).
+- The engine reads `spo2.avgDefault`/`updateHz`, `hr.source`/`autoPriority`/`relabelNonEcgAs`, `nibp.initialInflation`,
+  `nextInflation`, `stat`, `ibp.filterDefaultHz`, `limits.*.apneaS`/`gasApneaS` and `arrhythmia.asystoleS`.
+- `ibp.staticDisplay`: a static (non-pulsatile) pressure keeps its systolic/diastolic/mean with only the pulse "-?-"
+  (`'keep'`, Philips IFU p. 57; the IEC default) or shows the mean only (`'mean-only'`, saadat-like).
+- `alarms.abpDisconnectDefault`: the arterial-line disconnect alarm (static, mean < 10 mmHg) is on by default
+  (Philips IFU p. 44; the IEC default) or off (saadat-like, research/06 §4.1).
+- `arrhythmia.pauseAlarm`: the PAUSE alarm's factory switch (mindray-like off, BeneVision N App. C.1.1.2).
+- `alarms.messageBar.rotateAll` (FU-5 Task 12): the single message bar rotates every unacknowledged message, live or
+  latched, every 2 s (philips-like, IFU p. 29–30), instead of the top level only.
+
+**Recorded, not modelled (kept as documented data — FU-5 review ruling 5: documented data is never deleted):**
+`nibp.modeDefault` and `nibp.autoIntervalMin` (the engine's NIBP is command-driven and idle at power-on on every
+skin; the vendors' defaults are Philips/IEC AUTO 15 min [brief §6.8], LIFEPAK auto OFF [research/05 §2.4], Saadat MANUAL
+[research/06 §4.1, M p.128], Mindray 15 min in other departments / 5 min in the OR with Start Mode Clock [S4] App.
+C.1.5); the Philips Alarm Reminder (factory default On, 3 min: a tone repeat for an acknowledged alarm still present,
+[S1] p. 135, 141 — decided as the vendor's default, not modelled; Stage 9 or a later FU); silencing some Philips INOPs
+switches the measurement off (TEMP/ABP NO TRANSDUCER, CO2 NO TUBING, [S2] p. 57, 62, 71) — not modelled. Removed by
+FU-5: saadat-like's IBP1 `PPV` tile
+extra (no PPV numeric; the B9's PPV is OFF by default, research/06 §4.1). Option lists (`*Options`, `autoIntervalsMin`,
+`ecg.filters`, `spo2.sensitivity`) are settings-menu data and do not claim a behaviour.

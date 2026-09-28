@@ -30,10 +30,11 @@ describe('alarm manager', () => {
     expect(r[0]).toMatchObject({ priority: 'medium', level: 2, category: 'physiological', text: '**SpO2 85<90' });
   });
 
-  it('IEC-style latching: a red alarm stays (latched) after its condition clears until acknowledged', () => {
+  it('IEC-style latching: a red alarm stays (latched, silent: visual-only latching on philips-like #H30) after its condition clears until acknowledged', () => {
     const s = createAlarmMgr(deviceProfile('philips-like'));
     run(s, 0, 2, (t) => (t < 1 ? [ASY] : []));
     expect(s.active.ASYSTOLE?.latched).toBe(true);
+    expect(s.active.ASYSTOLE?.sounding).toBe(false);
     const out: EngineEvent[] = [];
     applyAlarmAction(s, { device: 'alarm', action: 'ack' }, 2.1, out);
     expect(alarms(out, 'cleared').map((a) => a.id)).toEqual(['ASYSTOLE']);
@@ -76,8 +77,8 @@ describe('alarm manager', () => {
     expect(s.silencedUntil).toBeNull();
   });
 
-  it('IEC-style silence (90 s) is not ended by a new alarm', () => {
-    const s = createAlarmMgr(deviceProfile('philips-like'));
+  it('IEC-style mute silence (90 s, zoll-like) is not ended by a new alarm', () => {
+    const s = createAlarmMgr(deviceProfile('zoll-like'));
     run(s, 0, 1, () => [HR]);
     applyAlarmAction(s, { device: 'alarm', action: 'silence' }, 1, []);
     run(s, 1.02, 5, () => [HR, ASY]);
@@ -85,7 +86,7 @@ describe('alarm manager', () => {
   });
 
   it('pause (IEC-style 180 s) removes every alarm and raises nothing until it ends; Saadat-like rejects pause', () => {
-    const s = createAlarmMgr(deviceProfile('philips-like'));
+    const s = createAlarmMgr(deviceProfile('zoll-like'));
     run(s, 0, 1, () => [HR]);
     const out: EngineEvent[] = [];
     applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, out);

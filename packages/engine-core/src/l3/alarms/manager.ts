@@ -39,6 +39,19 @@ export interface AlarmMgrState {
 }
 
 export const LEVEL_PRIORITY: Readonly<Record<AlarmLevel, AlarmPriority>> = { 1: 'high', 2: 'medium', 3: 'low' };
+/**
+ * FU-5: the alarms visual latching 'lethal' keeps — the lethal arrhythmias (research/00 FU-5 ruling, IEC 60601-1-8
+ * convention: they latch visually until acknowledged; limit alarms do not latch). The set is Mindray's "High,
+ * unadjustable" arrhythmia group (research/05 §6 [S4] BeneVision N App. C.1.1.2: asystole, VF, V-Tach, extreme rates).
+ */
+export const LETHAL_ALARMS: ReadonlySet<string> = new Set(['ASYSTOLE', 'VFIB', 'VTAC', 'EXTREME_BRADY', 'EXTREME_TACHY']);
+
+/** FU-5: whether a latching mode covers an alarm. INOPs never latch (Philips IFU [S2] p. 40). */
+export function latchCovers(mode: 'off' | 'lethal' | 'red' | 'redYellow', e: Pick<AlarmEntry, 'id' | 'level' | 'category'>): boolean {
+  if (e.category === 'technical' || mode === 'off') return false;
+  if (mode === 'lethal') return LETHAL_ALARMS.has(e.id);
+  return mode === 'red' ? e.level === 1 : e.level <= 2;
+}
 const STATUS_EVERY_S = 1; // alarmStatus at 1 Hz besides every change (brief §3.4 "alarm changes") [ENG]
 
 export function defaultConfig(p: DeviceProfile): AlarmConfig {
@@ -111,17 +124,37 @@ export function validateAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction): str
   }
 }
 
+/** Acknowledge: latched alarms clear, live ones are marked acknowledged and fall silent (brief §6.4; [S2] p. 32). */
+function acknowledgeAll(s: AlarmMgrState, t: number, out: EngineEvent[]): void {
+  for (const [id, e] of Object.entries(s.active)) {
+    if (e.latched) {
+      delete s.active[id];
+      emitAlarm(out, t, e, 'cleared');
+    } else if (!e.acked) {
+      e.acked = true;
+      e.sounding = false;
+      emitAlarm(out, t, e, 'acked');
+    }
+  }
+}
+
 /** Apply a validated `device alarm` action at sim time t. */
 export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: number, out: EngineEvent[]): void {
   s.dirty = true;
   const p = s.profile;
   switch (a.action) {
     case 'silence': {
+      // FU-5: Philips' Silence and Mindray's Alarm Reset acknowledge every active alarm and INOP; there is no mute timer,
+      // so a new alarm sounds at once (research/05 §6 [S2] p. 11, 32; [S4] §10.8)
+      if (p.silence.mode === 'acknowledge') {
+        acknowledgeAll(s, t, out);
+        return;
+      }
       if (s.silencedUntil !== null) {
         s.silencedUntil = null; // pressing Silence again ends it (brief §6.4.1)
         return;
       }
-      s.silencedUntil = t + p.silence.durationS;
+      s.silencedUntil = t + (p.silence.durationS ?? 0);
       for (const e of Object.values(s.active)) {
         if (e.category === 'technical' && p.silence.technicalActsAsAck) {
           e.acked = true;
@@ -137,18 +170,9 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
       s.pending = {};
       return;
     }
-    case 'ack': {
-      for (const [id, e] of Object.entries(s.active)) {
-        if (e.latched) {
-          delete s.active[id];
-          emitAlarm(out, t, e, 'cleared');
-        } else if (!e.acked) {
-          e.acked = true;
-          emitAlarm(out, t, e, 'acked');
-        }
-      }
+    case 'ack':
+      acknowledgeAll(s, t, out);
       return;
-    }
     case 'setLimit': {
       const key = a.param as string;
       const cur = limitOf(s, key) as { low: number | null; high: number | null };
@@ -192,6 +216,7 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     if (e) {
       if (e.latched) {
         e.latched = false; // the condition came back while latched
+        e.sounding = !e.acked;
         s.dirty = true;
       }
       continue;
@@ -199,7 +224,7 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     const since = (s.pending[c.id] ??= t);
     if (t - since + 1e-9 < c.delayS) continue;
     delete s.pending[c.id];
-    const entry: AlarmEntry = { id: c.id, level: c.level, category: c.category, text: c.text, since: t, latched: false, acked: false };
+    const entry: AlarmEntry = { id: c.id, level: c.level, category: c.category, text: c.text, since: t, latched: false, acked: false, sounding: true };
     if (c.numeric) entry.numeric = c.numeric;
     s.active[c.id] = entry;
     if (s.silencedUntil !== null && p.silence.cancelOnNewAlarm) s.silencedUntil = null; // brief §6.4.1: any new alarm ends silence
@@ -209,10 +234,12 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
   for (const id of Object.keys(s.pending)) if (!now.has(id)) delete s.pending[id];
   for (const [id, e] of Object.entries(s.active)) {
     if (now.has(id)) continue;
-    // High-priority physiological alarms latch until acknowledged (brief §6.4 [ENG]); Saadat-like does not latch.
-    if (p.latching && e.level === 1 && e.category === 'physiological' && !e.acked) {
+    // FU-5: latching per vendor (skin `alarms.latching`): the message stays until acknowledged, the sound only under
+    // audible latching; an acknowledged alarm whose condition ends clears ([S2] p. 40)
+    if (!e.acked && latchCovers(p.latching.visual, e)) {
       if (!e.latched) {
         e.latched = true;
+        e.sounding = latchCovers(p.latching.audible, e);
         s.dirty = true;
       }
       continue;

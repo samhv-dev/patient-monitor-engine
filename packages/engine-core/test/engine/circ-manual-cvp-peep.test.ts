@@ -74,7 +74,7 @@ describe('MANUAL CVP under positive-pressure ventilation (FU-3 item 7)', () => {
       await run(s.e, 120);
       s.e.dispatch(cmd({ type: 'setTarget', variable: 'cvp', value: 18 }));
       await run(s.e, 300);
-      const hasLimit = skin === 'philips-like' || skin === 'saadat-like'; // 0–10 (Philips factory), −5–15 (Saadat M p. 302–306)
+      const hasLimit = skin === 'philips-like' || skin === 'saadat-like' || skin === 'mindray-like'; // 0–10 (Philips factory), −5–15 (Saadat M p. 302–306), 0–10 (FU-5: Mindray BeneVision N App. C.1)
       const r = raises(s.ev, 'CVP_M_HIGH');
       console.log(`FU-3 ${skin} CVP 18: raises at ${JSON.stringify(r.filter((t) => t >= 120))}`);
       expect(r.some((t) => t >= 120)).toBe(hasLimit);

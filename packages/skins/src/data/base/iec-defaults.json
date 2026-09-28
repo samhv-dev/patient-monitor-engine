@@ -82,6 +82,7 @@
     "filterDefaultHz": 12,
     "gridDefault": false,
     "scaleLines": "none",
+    "staticDisplay": "keep",
     "meanOnlyLabels": ["CVP"],
     "scales": { "ART": [0, 75, 150], "CVP": [0, 10, 20], "PAP": [0, 20, 40] }
   },
@@ -105,9 +106,10 @@
     "factoryEnabled": true,
     "alwaysOn": [],
     "alarmOffIcon": "bell-off",
-    "silence": { "durationS": 90, "suppressesVisual": false, "cancelOnNewAlarm": false, "headerCountdown": true, "technicalActsAsAck": false },
+    "silence": { "mode": "mute", "durationS": 90, "suppressesVisual": false, "cancelOnNewAlarm": false, "headerCountdown": true, "technicalActsAsAck": false },
     "pause": { "durationS": 180 },
-    "latching": true,
+    "latching": { "visual": "lethal", "audible": "off" },
+    "abpDisconnectDefault": true,
     "delayS": 0,
     "spo2DelayS": 10,
     "alarmFreezeOption": false,
@@ -122,7 +124,8 @@
     "vtac": { "rate": 100, "count": 5 },
     "tachy": null,
     "brady": null,
-    "freqPvcPerMin": 10
+    "freqPvcPerMin": 10,
+    "pauseAlarm": true
   },
   "st": { "defaultOn": false, "isoMs": -80, "stMs": 60, "updateS": 5 },
   "beep": { "source": "ECG", "defaultOn": true, "volume": { "min": 0, "max": 10, "default": 3 }, "pitchMap": "nellcor-like", "baseHz": 880 },
@@ -130,7 +133,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "line", "hours": 8 },
-  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "outOfRange": "---", "ibpPrUnavailable": "---" },
+  "glyphs": { "noValue": "---", "hrUnavailable": "---", "nibpFail": "---", "outOfRange": "---", "ibpPrUnavailable": "---", "questionable": "?", "inop": "---" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "brief §4.4; research/09 §5 (engine sidestream constants, Microstream-class; R39-5)" },
@@ -175,7 +178,7 @@
     "hr.autoPriority": { "tag": "eng", "source": "brief §6.1 [ENG]" },
     "hr.relabelNonEcgAs": { "tag": "documented", "source": "brief §3.8" },
     "spo2": { "tag": "eng", "source": "research/05 §2.4 [ENG]", "note": "refresh ≤1 s documented; averaging options [ENG]" },
-    "nibp.modeDefault": { "tag": "documented", "source": "brief §6.8 (NBP interval 15 min)" },
+    "nibp.modeDefault": { "tag": "documented", "source": "brief §6.8 (NBP interval 15 min)", "note": "FU-5: recorded, not modelled — the engine's NIBP is command-driven and idle at power-on on every skin" },
     "nibp.autoIntervalMin": { "tag": "documented", "source": "brief §6.8" },
     "nibp.autoIntervalsMin": { "tag": "eng", "source": "ENG" },
     "nibp.stat": { "tag": "documented", "source": "brief §3.8 (back-to-back for 300 s)", "note": "count cap [ENG]" },
@@ -183,6 +186,7 @@
     "nibp.nextInflation": { "tag": "documented", "source": "brief §3.8" },
     "nibp.doneTone": { "tag": "documented", "source": "research/05 §2.4 (Philips 'Done Tone')" },
     "ibp": { "tag": "documented", "source": "research/05 §2.1-2.2 (ABP 150 scale, 12 Hz filter)", "note": "CVP/PAP scales and 40 Hz option [ENG]" },
+    "ibp.staticDisplay": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 57 (<Pressure> NON-PULSATILE: 'Pulse numeric is displayed with -?-'; systolic, diastolic and mean stay)" },
     "co2": { "tag": "documented", "source": "research/05 §2.2 (scale 40 mmHg); research/00 R12" },
     "alarms.levels": { "tag": "documented", "source": "brief §6.4" },
     "alarms.levelNames": { "tag": "documented", "source": "brief §3.8" },
@@ -196,7 +200,8 @@
     "alarms.alarmOffIcon": { "tag": "eng", "source": "brief §3.8 [ENG]" },
     "alarms.silence": { "tag": "documented", "source": "brief §6.4 (silence 90 s, audio only)" },
     "alarms.pause": { "tag": "documented", "source": "brief §6.4 (pause 3 min)" },
-    "alarms.latching": { "tag": "eng", "source": "brief §6.4 [ENG]" },
+    "alarms.latching": { "tag": "assumed", "source": "research/10 §11 (M2); research/00 FU-5 ruling (IEC 60601-1-8 convention where the vendor research is silent)", "note": "lethal arrhythmias latch visually until acknowledged; audio stops when the condition ends; limit alarms and INOPs do not latch" },
+    "alarms.abpDisconnectDefault": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 44 (***<Press> DISCONNECT: non-pulsatile, mean continuously < 10 mmHg)" },
     "alarms.delayS": { "tag": "eng", "source": "brief §6.4 [ENG]" },
     "alarms.spo2DelayS": { "tag": "documented", "source": "brief §6.4" },
     "alarms.alarmFreezeOption": { "tag": "documented", "source": "brief §3.8" },
@@ -206,6 +211,7 @@
     "arrhythmia.asystoleS": { "tag": "documented", "source": "brief §6.4; research/05 §2.2" },
     "arrhythmia.asystoleAltS": { "tag": "documented", "source": "brief §6.4" },
     "arrhythmia.pause": { "tag": "documented", "source": "brief §6.4" },
+    "arrhythmia.pauseAlarm": { "tag": "documented", "source": "brief §6.4 (pause alarm on with arrhythmia analysis)" },
     "arrhythmia.vtac": { "tag": "documented", "source": "brief §6.4" },
     "arrhythmia.tachy": { "tag": "documented", "source": "brief §6.4 (limit-relative, no absolute)" },
     "arrhythmia.brady": { "tag": "documented", "source": "brief §6.4 (limit-relative, no absolute)" },
@@ -220,6 +226,7 @@
     "defib": { "tag": "documented", "source": "brief §6.5", "note": "bedside monitors carry none" },
     "pacer": { "tag": "documented", "source": "brief §6.5" },
     "trend": { "tag": "documented", "source": "brief §6.7 (8 h, line)" },
-    "glyphs": { "tag": "documented", "source": "brief §6.2 (dashes)" }
+    "glyphs": { "tag": "documented", "source": "brief §6.2 (dashes)" },
+    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3, §6.1 ('97?' questionable SpO2); research/06 §3.2" }
   }
 }

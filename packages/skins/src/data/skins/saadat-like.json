@@ -37,7 +37,7 @@
       [
         { "param": "HR", "size": "large", "extras": ["PACE", "ST", "PVCs"] },
         { "param": "NIBP", "extras": ["MEAN", "PR"] },
-        { "param": "IBP1", "extras": ["MEAN", "PPV"] },
+        { "param": "IBP1", "extras": ["MEAN"] },
         { "param": "IBP2", "extras": ["MEAN"] }
       ],
       [
@@ -124,6 +124,7 @@
     "filterDefaultHz": 16,
     "gridDefault": false,
     "scaleLines": "dotted-upper-mid-lower",
+    "staticDisplay": "mean-only",
     "meanOnlyLabels": ["CVP", "LAP", "RAP"],
     "scales": {
       "ART": [40, 120, 200], "IBP": [-20, 90, 200], "PAP": [-10, 35, 80], "CVP": [-10, 10, 30],
@@ -150,9 +151,10 @@
     "factoryEnabled": false,
     "alwaysOn": ["ASYSTOLE", "VFIB", "VTAC", "APNEA"],
     "alarmOffIcon": "crossed-bell-red",
-    "silence": { "durationS": 120, "suppressesVisual": true, "cancelOnNewAlarm": true, "headerCountdown": true, "technicalActsAsAck": true },
+    "silence": { "mode": "mute", "durationS": 120, "suppressesVisual": true, "cancelOnNewAlarm": true, "headerCountdown": true, "technicalActsAsAck": true },
     "pause": null,
-    "latching": false,
+    "latching": { "visual": "off", "audible": "off" },
+    "abpDisconnectDefault": false,
     "delayS": 1,
     "spo2DelayS": null,
     "alarmFreezeOption": true,
@@ -182,7 +184,8 @@
     "vtac": { "rate": 120, "count": 5 },
     "tachy": 120,
     "brady": 50,
-    "freqPvcPerMin": 10
+    "freqPvcPerMin": 10,
+    "pauseAlarm": true
   },
   "st": { "defaultOn": false, "isoMs": -80, "stMs": 110, "updateS": 5 },
   "beep": { "source": "HR_SOURCE", "defaultOn": true, "volume": { "min": 1, "max": 7, "default": 1 }, "pitchMap": "none", "baseHz": 880 },
@@ -190,7 +193,7 @@
   "defib": null,
   "pacer": null,
   "trend": { "style": "filled-area", "hours": 96 },
-  "glyphs": { "noValue": "---", "hrUnavailable": "-?-", "nibpFail": "?", "outOfRange": "--", "ibpPrUnavailable": "---" },
+  "glyphs": { "noValue": "---", "hrUnavailable": "-?-", "nibpFail": "?", "outOfRange": "--", "ibpPrUnavailable": "---", "questionable": "?", "inop": "---" },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Masimo ISA sidestream module; R39-5)" },
@@ -232,7 +235,7 @@
     "ecgColorLocked": { "tag": "documented", "source": "research/06 §3.2 (M p.40, 308); brief §3.8" },
     "layout.waveAreaFraction": { "tag": "measured", "source": "research/06 §3.1 F1" },
     "layout.lanes": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §5" },
-    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]" },
+    "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]. FU-5: IBP1's PPV extra removed — the engine has no PPV numeric and the B9's PPV is OFF by default (research/06 §4.1, M p.149–161)" },
     "layout.menuRegion": { "tag": "documented", "source": "research/06 §3.1 F4; brief §3.8" },
     "layout.header": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2" },
     "layout.messageBars": { "tag": "documented", "source": "research/06 §3.1 F1-F2 (M p.36)" },
@@ -263,7 +266,7 @@
     "ecg.laneLabel": { "tag": "documented", "source": "research/06 §3.2 (M p.38); brief §3.8" },
     "hr": { "tag": "documented", "source": "research/06 §4.1 (M p.65-67); brief §3.8" },
     "spo2": { "tag": "documented", "source": "research/06 §4.1 (M p.108-113, 302)" },
-    "nibp.modeDefault": { "tag": "documented", "source": "research/06 §4.1 (M p.128)" },
+    "nibp.modeDefault": { "tag": "documented", "source": "research/06 §4.1 (M p.128)", "note": "FU-5: recorded, not modelled (the engine's NIBP is command-driven)" },
     "nibp.autoIntervalMin": { "tag": "documented", "source": "research/06 §4.1", "note": "MANUAL mode: no auto interval" },
     "nibp.autoIntervalsMin": { "tag": "documented", "source": "research/06 §4.1 (M p.131)" },
     "nibp.stat": { "tag": "documented", "source": "research/06 §4.1 (M p.131-133); brief §3.8" },
@@ -271,6 +274,7 @@
     "nibp.nextInflation": { "tag": "documented", "source": "research/06 §4.1; brief §3.8" },
     "nibp.doneTone": { "tag": "unverified", "source": "research/06 §4.1", "note": "no NIBP-done tone described" },
     "ibp": { "tag": "documented", "source": "research/06 §3.2 (M p.304-305); research/06 §4.1 (M p.149-161)" },
+    "ibp.staticDisplay": { "tag": "documented", "source": "research/06 §4.1 (static pressure: SYS/DIA hidden, a larger mean shown)" },
     "co2.unit": { "tag": "documented", "source": "research/06 §4.1 (M p.270); research/00 R12" },
     "co2.scale": { "tag": "documented", "source": "research/06 §3.2 (M p.305)" },
     "co2.scaleUnit": { "tag": "documented", "source": "research/06 §3.2 (M p.305)" },
@@ -291,7 +295,9 @@
     "alarms.silence": { "tag": "documented", "source": "research/06 §4.2 (M p.38-39, 44, 50); brief §6.4.1" },
     "alarms.pause": { "tag": "documented", "source": "brief §6.4.1; research/06 §4.2", "note": "Audio Pause key has no function" },
     "alarms.latching": { "tag": "unverified", "source": "research/06 §4.2; brief §6.4.1", "note": "manual implies non-latching" },
+    "alarms.silence.mode": { "tag": "documented", "source": "research/06 §4.2 (M p.38-39, 50: Silence mutes audio and visual for 120 s)" },
     "alarms.delayS": { "tag": "documented", "source": "research/06 §4.2 (M p.50)", "note": "'less than 1 s'" },
+    "alarms.abpDisconnectDefault": { "tag": "documented", "source": "research/06 §4.1 (ART catheter-disconnect alarm, level 1, OFF by default)" },
     "alarms.spo2DelayS": { "tag": "unverified", "source": "research/06 §4.2", "note": "not stated beyond averaging" },
     "alarms.alarmFreezeOption": { "tag": "documented", "source": "research/06 §4.2 (M p.49)", "note": "default not stated [unverified]" },
     "alarms.recall": { "tag": "documented", "source": "research/06 §4.2 (M p.238-239, 276)" },
@@ -308,6 +314,7 @@
     "arrhythmia.tachy": { "tag": "documented", "source": "research/06 §4.3" },
     "arrhythmia.brady": { "tag": "documented", "source": "research/06 §4.3" },
     "arrhythmia.freqPvcPerMin": { "tag": "documented", "source": "research/06 §4.3" },
+    "arrhythmia.pauseAlarm": { "tag": "documented", "source": "research/06 §4.3 (PAUSE among the arrhythmia alarms)" },
     "st": { "tag": "documented", "source": "research/06 §4.1 (M p.86-92, 266)" },
     "beep.source": { "tag": "documented", "source": "research/06 §4.1 (M p.66-67); brief §3.6" },
     "beep.defaultOn": { "tag": "documented", "source": "research/06 §4.1 (M p.67, 302)", "note": "BEAT VOLUME factory 1" },
@@ -323,6 +330,8 @@
     "glyphs.hrUnavailable": { "tag": "documented", "source": "research/06 §3.2 (M p.62, 66-67)" },
     "glyphs.nibpFail": { "tag": "documented", "source": "research/06 §3.2 (M p.129)" },
     "glyphs.outOfRange": { "tag": "documented", "source": "research/06 §3.2" },
-    "glyphs.ibpPrUnavailable": { "tag": "documented", "source": "research/06 §3.2" }
+    "glyphs.ibpPrUnavailable": { "tag": "documented", "source": "research/06 §3.2" },
+    "glyphs.questionable": { "tag": "documented", "source": "brief §4.3, §6.1 ('97?')" },
+    "glyphs.inop": { "tag": "assumed", "source": "brief §6.2 (dashes)", "note": "the B9 manual gives no INOP glyph for SpO2/IBP/temperature" }
   }
 }

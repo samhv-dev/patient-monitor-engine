@@ -56,10 +56,12 @@ export interface DeviceProfile {
   /** Preset per-parameter switches by limit-key group ('HR', 'NIBP', 'SpO2', …) over factoryEnabled (brief §6.9). */
   switches: Record<string, boolean>;
   alwaysOn: string[];
-  latching: boolean;
+  /** FU-5: visual / audible latching per vendor (skin `alarms.latching`; manager.ts `latchCovers`). */
+  latching: Skin['alarms']['latching'];
   delayS: number;
   spo2DelayS: number;
-  silence: { durationS: number; suppressesVisual: boolean; cancelOnNewAlarm: boolean; technicalActsAsAck: boolean };
+  /** FU-5: `mode` 'acknowledge' = Silence acknowledges (Philips, Mindray); 'mute' = timed mute (`durationS`). */
+  silence: { mode: 'mute' | 'acknowledge'; durationS: number | null; suppressesVisual: boolean; cancelOnNewAlarm: boolean; technicalActsAsAck: boolean };
   pauseS: number | null;
   volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
@@ -141,10 +143,10 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     factoryEnabled: a.factoryEnabled,
     switches: { ...(r.preset?.alarmSwitches ?? {}) },
     alwaysOn: [...a.alwaysOn],
-    latching: a.latching,
+    latching: { ...a.latching },
     delayS: a.delayS,
     spo2DelayS: a.spo2DelayS ?? a.delayS,
-    silence: { durationS: a.silence.durationS, suppressesVisual: a.silence.suppressesVisual, cancelOnNewAlarm: a.silence.cancelOnNewAlarm, technicalActsAsAck: a.silence.technicalActsAsAck },
+    silence: { mode: a.silence.mode, durationS: a.silence.durationS, suppressesVisual: a.silence.suppressesVisual, cancelOnNewAlarm: a.silence.cancelOnNewAlarm, technicalActsAsAck: a.silence.technicalActsAsAck },
     pauseS: a.pause ? a.pause.durationS : null,
     volume: { ...a.volume },
     limits: limitsFor(r, band),
