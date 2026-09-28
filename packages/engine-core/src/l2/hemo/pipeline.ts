@@ -488,10 +488,16 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       const c = hs.circ;
       if (c.opens.length > 0 && !hs.cpr.active) {
         const bs = c.beats;
-        const svRef = Math.max(1, bs.length >= 4 ? bs.reduce((a, b) => a + b.sv, 0) / bs.length : (c.ref.sv || 70));
+        // FU-5 (E-FU5-1, audit M1): SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a
+        // running mean of the last 16 beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
+        // In MODELED, vasoconstriction (systemic R above rest) lowers PI too [ENG exponent 0.5]; the factor is never above 1
+        // and is 1 in MANUAL (FU-5 review ruling 1: an uncapped factor made PI rise as the MANUAL tracker lowered SVR, and
+        // fall after propofol; the vasodilated finger waits for FU-4's cutaneous tone, R-FU5-9).
+        const svRef = Math.max(1, c.ref.sv || 70);
+        const tone = ctx.l1.mode === 'modeled' ? Math.min(1, Math.max(0.25, Math.sqrt(c.base.rSys / c.p.rSys))) : 1;
         const lb = bs[bs.length - 1];
         const lvet = lb && lb.avClose > lb.avOpen ? lb.avClose - lb.avOpen : 0.3;
-        for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * op.sv) / svRef, lvet, c.p.rSys);
+        for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * op.sv) / svRef, lvet, c.p.rSys);
       }
       c.opens.length = 0;
       hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers

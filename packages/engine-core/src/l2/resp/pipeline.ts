@@ -364,7 +364,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const shownSa = ctx.blood && !pinned ? pulseOxApparent(sa, ctx.blood.odc) : sa; // Stage 7c: what the oximeter reads (dyshaemoglobins)
   const siteSa = delayStep(rs.delay, shownSa, siteDelay(h.pleth.site, rs.coRatio, piM.value), GAS_DT_S);
   stepSpo2(rs.num.spo2, {
-    siteSa, probe: h.pleth.state, lastFootT: h.num.pleth.feet[h.num.pleth.feet.length - 1] ?? -1e12,
+    siteSa, probe: h.pleth.state, lastFootT: h.num.pleth.beats[h.num.pleth.beats.length - 1]?.t ?? -1e12, // FU-5 (E-FU5-2): a completed pulse
     pi: piM.value, cuffOnLimb: sameLimbCuff(h), cpr: h.cpr.active,
   }, t);
   // coupled truths (brief §4.9: the `state` event shows truth; flags show 'override' when it departs from target)

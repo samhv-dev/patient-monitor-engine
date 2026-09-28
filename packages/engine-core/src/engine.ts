@@ -812,9 +812,15 @@ class Engine implements MonitorEngine {
     }
   }
 
-  /** R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). */
+  /**
+   * R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). FU-5: so do the other
+   * device settings a skin declares (SpO2 averaging/update, …), applied on creation, restore and skin switch.
+   */
   private syncCo2Sampler(): void {
-    this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
+    const p = this.dev.alarms.profile;
+    this.st.resp.sampler.side = { ...p.co2Sidestream };
+    this.st.resp.num.spo2.avgS = p.spo2.averagingS;
+    this.st.resp.num.spo2.updS = p.spo2.updateS;
   }
 
   /**

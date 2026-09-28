@@ -87,6 +87,8 @@ export interface DeviceProfile {
   hrDashesWhilePacing: boolean;
   /** Sidestream CO2 module of this skin (R39-5): transport delay and adult 10–90 % rise, both in s. */
   co2Sidestream: { delayS: number; riseS: number };
+  /** FU-5: the skin's SpO2 averaging window and display update (skin `spo2.avgDefault`, 1 / `spo2.updateHz`), s. */
+  spo2: { averagingS: number; updateS: number };
 }
 
 /** Limit-key group a per-parameter switch acts on: 'NIBP_S' → 'NIBP', 'ART_M' → 'ART', 'HR' → 'HR'. */
@@ -168,5 +170,6 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     nibpDoneTone: s.nibp.doneTone,
     hrDashesWhilePacing: PACING_HR_DASHES.has(r.skinId),
     co2Sidestream: { delayS: s.co2.sidestreamDelayS, riseS: s.co2.riseTimeMs / 1000 },
+    spo2: { averagingS: s.spo2.avgDefault, updateS: 1 / s.spo2.updateHz },
   };
 }

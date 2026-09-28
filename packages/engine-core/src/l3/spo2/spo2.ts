@@ -5,7 +5,10 @@
 import type { Measured } from '../../types.ts';
 
 export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [ENG]
-/** Masimo-SET-like default of the first skin (saadat-like, R13/R14): average 8 s, update 1 s (brief §4.3, §6.1). */
+/**
+ * Masimo-SET-like default of the first skin (saadat-like, R13/R14): average 8 s, update 1 s (brief §4.3, §6.1). FU-5: a
+ * skin's `spo2.avgDefault` / `updateHz` replace it through `Spo2State.avgS/updS` (philips-like 10 s / 2 s).
+ */
 export const SPO2_PROFILE = { averagingS: 8, updateS: 1 } as const;
 export const SPO2_STEP_S = 0.1;
 export const PULSE_HOLD_S = 4; // no pleth foot for 4 s → value held, questionable [ENG]
@@ -16,7 +19,7 @@ export const LOW_PERF_SLOWDOWN = 2; // low perfusion doubles the averaging windo
 export interface Spo2Inputs {
   siteSa: number; // SaO2 at the probe site (0–1)
   probe: 'on' | 'off' | 'motion';
-  lastFootT: number; // last detected pleth foot (s), −Infinity if none
+  lastFootT: number; // end of the last COMPLETED pleth pulse (s), −Infinity if none (FU-5: one lone foot is not a pulse)
   pi: number | null; // measured PI (%), null when invalid
   cuffOnLimb: boolean; // same-limb NIBP cuff inflated: hold the value (brief §4.3 artefacts)
   cpr: boolean;
@@ -30,6 +33,9 @@ export interface Spo2State {
   nextUpdate: number;
   validSince: number; // time the pulse returned after an invalid spell (averaging must refill); 1e12 = invalid now
   bias: number; // per-patient device offset (%)
+  /** FU-5: the active skin's averaging window and display update (s); absent = SPO2_PROFILE. */
+  avgS?: number;
+  updS?: number;
 }
 
 export function createSpo2(sa0: number, bias: number): Spo2State {
@@ -45,11 +51,12 @@ export function stepSpo2(st: Spo2State, x: Spo2Inputs, t: number): void {
   st.lag += (x.siteSa * 100 - st.lag) * (1 - Math.exp(-SPO2_STEP_S / SPO2_LAG_TAU_S));
   const v = Math.min(100, Math.max(0, st.lag + deviceBias(st.lag, st.bias)));
   const lowPerf = x.pi !== null && x.pi < LOW_PERF_PI;
-  const win = Math.round((SPO2_PROFILE.averagingS * (lowPerf ? LOW_PERF_SLOWDOWN : 1)) / SPO2_STEP_S);
+  const avgS = st.avgS ?? SPO2_PROFILE.averagingS;
+  const win = Math.round((avgS * (lowPerf ? LOW_PERF_SLOWDOWN : 1)) / SPO2_STEP_S);
   st.ring.push(v);
   while (st.ring.length > win) st.ring.shift();
   if (t + 1e-9 < st.nextUpdate) return;
-  st.nextUpdate = t + SPO2_PROFILE.updateS;
+  st.nextUpdate = t + (st.updS ?? SPO2_PROFILE.updateS);
   const noPulse = t - x.lastFootT;
   if (x.probe === 'off') {
     st.shown = null;
@@ -69,7 +76,7 @@ export function stepSpo2(st: Spo2State, x: Spo2Inputs, t: number): void {
     return;
   }
   if (st.validSince === 1e12) st.validSince = t;
-  if (t - st.validSince < SPO2_PROFILE.averagingS) return; // the average refills after a pulse returns (ROSC)
+  if (t - st.validSince < avgS) return; // the average refills after a pulse returns (ROSC)
   st.shown = Math.round(st.ring.reduce((a, b) => a + b, 0) / st.ring.length);
   st.flag = x.probe === 'motion' || x.cpr || lowPerf ? 'questionable' : 'valid';
 }
