@@ -32,6 +32,31 @@ export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
 export function apparatusDeadSpaceMl(weightKg: number): number {
   return Math.min(50, 1.5 * weightKg);
 }
+/**
+ * FU-4 F4 / R1(b): an ETT or SGA BYPASSES the extrathoracic airway, so the apparatus does not simply add to the
+ * anatomical dead space — it REPLACES the part of it the tube bypasses. Of the 2.2 mL/kg IBW anatomical dead space,
+ * about 1.0–1.2 mL/kg IBW is extrathoracic (mouth, pharynx, larynx: Nunn's Applied Respiratory Physiology ch. 8) [TXT];
+ * an intubated patient loses that and gains the device's internal volume plus the Y-piece and HME.
+ * Before this, intubation ADDED 50 mL with no credit for the bypassed upper airway (man 265 mL, woman 329, 4 y child 459
+ * with the MANUAL fit — respiratory audit R1).
+ */
+export const ETT_BYPASS_ML_PER_KG = 1.1;
+/** Floor of the anatomical share left behind an artificial airway (fraction of the anatomical value) [ENG]. */
+export const ETT_BYPASS_FLOOR_FRAC = 0.3;
+/**
+ * FU-4 (orchestrator ruling from the FU-6 review, 2026-09-28): THE physical series dead space (mL) for this patient and
+ * airway — anatomical 2.2 mL/kg IBW, minus the extrathoracic share an artificial airway bypasses
+ * (ETT_BYPASS_ML_PER_KG × IBW, floored at 30 % of the anatomical value), plus the airway device's apparatus volume.
+ * CONTRACT: never the MANUAL EtCO2 fit (`co2.vdExtraMl`), never alveolar dead space (7b's V/Q mixing owns that). Every
+ * engine consumer that needs a series dead space uses THIS function — gas exchange (`resp/pipeline.ts` `deadSpace()` =
+ * this + the MANUAL fit), the capnogram's phase-I washout and the console's "Dead space" label (via the lung-state
+ * event) — so no stage computes its own (FU-6 had measured 204 mL against FU-4's 127 mL for the same 70 kg rig).
+ */
+export function physicalDeadSpace(pat: Pick<GasPatient, 'deadSpaceMl' | 'ibwKg' | 'weightKg'>, artificialAirway: boolean): number {
+  if (!artificialAirway) return pat.deadSpaceMl;
+  const anat = Math.max(ETT_BYPASS_FLOOR_FRAC * pat.deadSpaceMl, pat.deadSpaceMl - ETT_BYPASS_ML_PER_KG * pat.ibwKg);
+  return anat + apparatusDeadSpaceMl(pat.weightKg);
+}
 export const MASS_FLOW_DEFICIT_ML_MIN = 20; // apnoeic mass flow ≈ VO2 − ~20 mL/min (research 03 §3.5)
 export const BLOOD_VENOUS_FRACTION = 0.75; // venous share of blood volume, the O2 buffer [ENG]
 export const CO_REF_LPM = 5.25; // Stage 2's SV_REF 70 mL × 75 bpm: CO ratio reference [ENG]

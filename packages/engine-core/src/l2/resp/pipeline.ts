@@ -26,7 +26,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -163,7 +163,9 @@ function deadSpace(rs: RespState, l1?: L1State): number {
   // FU-4 G11: the MANUAL EtCO2 fit (vdExtraMl, made for the resting pattern at t = 0) is not a MODELED ventilated
   // patient's dead space — it carried 61 mL into every MODELED PPV run (VA 2.82 L/min and PaCO2 60 at 12 × 500)
   const fit = mech && l1?.mode === 'modeled' ? 0 : rs.co2.vdExtraMl;
-  return rs.pat.deadSpaceMl + (mech ? apparatusDeadSpaceMl(rs.pat.weightKg) : 0) + fit;
+  // FU-4 (FU-6 review ruling): the ONE physical dead space (anatomical − ETT bypass + apparatus); the artificial airway is
+  // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
+  return physicalDeadSpace(rs.pat, mech) + fit;
 }
 function extraGradient(rs: RespState): number {
   return rs.driver.airway === 'bronchospasm' ? 8 * rs.driver.severity : 0; // Pa − Et widens with obstruction [ENG]

@@ -14,7 +14,9 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
   // stays an R45 record. The hypercapnia explains little of it (RR 14 → 40 moved the share only 0.325 → 0.307); the rest
   // comes with 7c's oxygen chemistry (Dash–Bassingthwaighte curve, Hb 15, live pH) reaching 7b's PAO2-only HPV stimulus.
   // Candidate mechanism (calibration queue): a mixed-venous PO2 term and HPV potentiation by hypercapnia/acidosis.
-  it.fails('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow', async () => {
+  // FU-4 (the one physical dead space, ETT bypass credit — FU-6 review ruling): the ventilated rig's dead space falls
+  // 154 + 50 + fit → 77 + 50 + fit, and the share is now inside the band (measured 0.294). Band unchanged (R45).
+  it('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow — was 0.307 before FU-4', async () => {
     const r = rig3({ patient: { ageY: 55, weightKg: 70, heightCm: 175, sex: 'M' } });
     r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 40, vtMl: 350, peep: 5, ie: 2, fio2: 1 }));
     r.e.dispatch(ev3({ kind: 'lungCondition', id: 'olv', severity: 1, side: 'L' }));
