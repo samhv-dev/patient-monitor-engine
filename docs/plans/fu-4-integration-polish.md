@@ -637,6 +637,19 @@ neostigmine 0.05 mg/kg at **1.0**; the 4 y child reaches only **3.06** for the s
      stand-in stays; if Ali rules for MANUAL physiology later, that is a request V.1 can take up.
   4. The 7x console labels (Task 19) are unit rules by field suffix, so V.1's new `pleuralCmH2O` fields get cmH₂O
      without another console edit.
+- **FU-6 (respiratory integration) — ONE dead-space function (orchestrator ruling from the FU-6 review, 2026-09-28,
+  binding on Tasks 15/18d).** FU-4 EXPORTS the physical series dead space from the gas module and every engine consumer
+  uses it (gas exchange through `resp/pipeline.ts` `deadSpace()`, the capnogram's washout, the console's "VD" label);
+  FU-6's capnogram physics calls it instead of computing its own (the review measured FU-6's 204 mL against FU-4's
+  127 mL for the 70 kg ventilated rig). Signature and contract (landed in Task 18d, `l2/gas/params.ts`):
+  ```ts
+  /** Physical series dead space (mL) for this patient and airway: anatomical 2.2 mL/kg IBW, minus the extrathoracic
+   *  share an artificial airway bypasses (ETT_BYPASS_ML_PER_KG × IBW, floored at 30 % of the anatomical value), plus
+   *  the airway device's apparatus volume — never the MANUAL EtCO2 fit, never alveolar dead space. */
+  export function physicalDeadSpace(pat: Pick<GasPatient, 'deadSpaceMl' | 'ibwKg' | 'weightKg'>, artificialAirway: boolean): number
+  ```
+  `resp/pipeline.ts`'s gas-exchange dead space is `physicalDeadSpace(rs.pat, mech) + fit` (the fit is the MANUAL
+  calibration only; 0 in MODELED after Task 18d).
 - **FU-5 (monitor fidelity; parallel; orchestrator update 2026-09-28):** FU-5 owns L3, the renderer, skins, audio and
   the L2 signal-quality lines (the pleth amplitude in `l2/hemo/pipeline.ts` — the `addPlethPulse(… op.sv / svRef …)`
   line — SpO2 validity and PI). FU-4 therefore does NOT touch `l3/spo2/**`: the audit's G14 (SpO2 98–99 % at MAP 13;
