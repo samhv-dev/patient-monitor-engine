@@ -27,8 +27,8 @@ await scenario('mh', 60 + 20 * 60, 'mh-20min'); // EtCO2 > 100, core > 38.5, HR 
 await p.click('#dant');
 await waitSim((await simT()) + 20 * 60);
 await shot('mh-dantrolene-20min'); // EtCO2 falling; HR still ≈ 120 (no active cooling: the it.fails of Q-7e-5)
-await scenario('hypo', 3600, 'hypothermia-60min'); // core ≈ 35.5, vasoconstricted, Tp shown
+await scenario('hypo', 3600, 'hypothermia-60min'); // core ≈ 35.5 — above the GA vasoconstriction threshold (34.8 °C), so NOT yet constricted; Tp shown
 await scenario('sepsis', 3600, 'sepsis-cold'); // cold phase: low CO/ABP, narrow PP
-await scenario('gluc', 3600, 'hypoglycaemia-60min'); // HR ↑, GLU < 3.5 mmol/L (red)
+await scenario('gluc', 3600, 'hypoglycaemia-60min'); // HR ↑, GLU amber below 3.5 mmol/L, red below 3.0
 if (errors.length) console.error('page errors:', errors);
 await b.close();
