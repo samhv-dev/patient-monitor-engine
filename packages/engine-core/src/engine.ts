@@ -557,6 +557,7 @@ class Engine implements MonitorEngine {
       circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
       circ7g.ext.betaAgonistU = betaVenousUnits(ps.pk.bus.agents); // FU-2 (NR-7g-2)
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
+      circ7g.ext.tempC = ps.resp.temp.tc; // FU-4 G12: core temperature for the hypothermic (and G8 hyperthermic) arrest hazard
     }
     const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g
     if (req7g) {

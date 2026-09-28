@@ -36,6 +36,10 @@ export const THR_SWEAT_GA = 38.0; // tables §5c GA [P]
 /** Pulse PH/Energy 608–624: summit metabolism 21·W^0.75 W, reached 1.8 °C below the shivering threshold (linear). */
 export const SUMMIT_W_PER_KG075 = 21;
 export const SHIVER_SPAN_C = 1.8;
+/** FU-4 G12: shivering fades out between SHIVER_STOP_C + SHIVER_STOP_SPAN_C and SHIVER_STOP_C core (moderate
+ * hypothermia abolishes it: Danzl & Pozos, NEJM 1994;331:1756 [TXT]) [ENG span]. */
+export const SHIVER_STOP_C = 30;
+export const SHIVER_STOP_SPAN_C = 2;
 /** Tables §5c: shivering VO2 × 2–3 typical, × 5 maximum — the Pulse summit (≈ × 6.3 at 70 kg) is capped here. */
 export const SHIVER_MAX_X = 5;
 /** Pulse PH/Energy 668–679: sweat evaporative heat 0.25·h_sw = 0.25 × 0.20833 kcal/K/s = 218 W per °C above threshold. */
