@@ -39,6 +39,30 @@ describe('barView', () => {
   });
 });
 
+describe('FU-5 barView: latched style, INOP visibility (audit M2, M3)', () => {
+  const vf = { ...asy, id: 'VFIB', text: '***VFIB/VTACH', since: 6 };
+  it('a latched alarm keeps its message in the latched style (level colour as text, lamp off); under a live yellow it stays in the rotation (philips-like rotates every message, [S2] p. 29–30; review ruling 4) or on top (other skins), never hidden', () => {
+    const s = status({ active: [{ ...vf, latched: true }] });
+    expect(barView(s, ph, 12)).toMatchObject({ text: '***VFIB/VTACH', latched: true, lamp: 'off', fg: '#FF0000' });
+    const both = status({ active: [{ ...vf, latched: true }, { ...hr, text: '**HR 130>120' }] });
+    expect(barView(both, ph, 12)).toMatchObject({ text: '***VFIB/VTACH', latched: true, lamp: 'yellow-flash' }); // the lamp from the live yellow
+    expect(barView(both, ph, 14)).toMatchObject({ text: '**HR 130>120', latched: false, lamp: 'yellow-flash' });
+    const zo = resolveSkin('zoll-like'); // IEC default: lethal alarms latch; the top level rotates, a latched red is the top
+    expect([12, 14, 16].map((t) => barView(both, zo, t).text)).toEqual(['***VFIB/VTACH', '***VFIB/VTACH', '***VFIB/VTACH']);
+  });
+  it('single bar (philips-like): LEADS OFF rotates in with a red alarm every 2 s, the lamp stays red', () => {
+    const s = status({ active: [{ ...asy, id: 'apnoea-co2', text: '***APNEA' }, { ...leads, text: 'ECG LEADS OFF' }] });
+    expect(barView(s, ph, 12)).toMatchObject({ text: '***APNEA', lamp: 'red-flash' });
+    expect(barView(s, ph, 14)).toMatchObject({ text: 'ECG LEADS OFF', lamp: 'red-flash' });
+  });
+  it('split layout (mindray-like, [S4] §3.6): the INOP has its own field beside the physiological bar', () => {
+    const mr = resolveSkin('mindray-like');
+    const b = barView(status({ active: [{ ...asy, id: 'apnoea-co2', text: '***APNEA' }, { ...leads, text: 'ECG LEADS OFF' }] }), mr, 14);
+    expect(b.text).toBe('***APNEA');
+    expect(b.inop?.text).toBe('ECG LEADS OFF');
+  });
+});
+
 describe('tileAlarmView', () => {
   it('limits shown only when ON; crossed bell when OFF; flash level from the alarm on its numeric', () => {
     expect(tileAlarmView('HR', status({ active: [hr] }), sa, 10)).toEqual({ flash: 2, bellOff: false, limits: '50–150' });

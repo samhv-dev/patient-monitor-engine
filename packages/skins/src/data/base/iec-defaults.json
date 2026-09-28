@@ -100,7 +100,8 @@
       "idle": { "bg": "#000000", "fg": "#FFFFFF" },
       "acknowledged": { "bg": "#404040", "fg": "#FFFFFF" },
       "prefix": "asterisks",
-      "rotate": true
+      "rotate": true,
+      "rotateAll": false
     },
     "numericFlash": true,
     "factoryEnabled": true,

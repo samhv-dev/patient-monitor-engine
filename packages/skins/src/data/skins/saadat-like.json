@@ -145,7 +145,8 @@
       "idle": { "bg": "#E0E0E0", "fg": "#000000" },
       "acknowledged": { "bg": "#E0E0E0", "fg": "#000000" },
       "prefix": "none",
-      "rotate": true
+      "rotate": true,
+      "rotateAll": false
     },
     "numericFlash": true,
     "factoryEnabled": false,

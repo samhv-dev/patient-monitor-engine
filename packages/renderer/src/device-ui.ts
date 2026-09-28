@@ -32,6 +32,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;font-size:15px;box-sizing:border-box}',
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
+    '.pme-bar.latched{outline:2px solid currentColor;outline-offset:-2px}', // FU-5: the latched style (text in the level colour, framed)
+    '.pme-inop{max-width:40%;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden}',
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
     '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
@@ -82,6 +84,7 @@ export class DeviceUI {
   private dev: DeviceStatus | null = null;
   private readonly lamp: HTMLDivElement;
   private readonly bar: HTMLDivElement;
+  private readonly inop: HTMLSpanElement;
   private readonly cd: HTMLSpanElement;
   private readonly allOff: HTMLSpanElement;
   private readonly devEl: HTMLSpanElement;
@@ -95,11 +98,12 @@ export class DeviceUI {
     this.header = doc.createElement('div');
     this.header.className = 'pme-hdr';
     this.header.innerHTML =
-      '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-cd" data-pme="cd"></span>' +
+      '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-inop" data-pme="inop"></span><span class="pme-cd" data-pme="cd"></span>' +
       '<span class="pme-dev" data-pme="dev"></span><span data-pme="alloff"></span><span class="pme-badge" data-pme="badge"></span><span data-pme="date"></span>';
     const q = <T extends HTMLElement>(k: string) => this.header.querySelector(`[data-pme="${k}"]`) as T;
     this.lamp = q('lamp');
     this.bar = q('bar');
+    this.inop = q('inop');
     this.cd = q('cd');
     this.allOff = q('alloff');
     this.devEl = q('dev');
@@ -273,6 +277,12 @@ export class DeviceUI {
     this.bar.textContent = b.text;
     this.bar.style.background = b.bg;
     this.bar.style.color = b.fg;
+    this.bar.className = `pme-bar${b.latched ? ' latched' : ''}`;
+    this.bar.dataset.latched = String(b.latched);
+    this.inop.textContent = b.inop?.text ?? '';
+    this.inop.style.display = b.inop ? '' : 'none';
+    this.inop.style.background = b.inop?.bg ?? '';
+    this.inop.style.color = b.inop?.fg ?? '';
     const lampColor = b.lamp.startsWith('red') ? '#F00000' : b.lamp.startsWith('yellow') ? '#F0F000' : b.lamp.startsWith('cyan') ? '#00D0D0' : 'transparent';
     this.lamp.style.background = lampColor;
     this.lamp.style.border = `1px solid ${this.r.skin.chrome.divider}`;

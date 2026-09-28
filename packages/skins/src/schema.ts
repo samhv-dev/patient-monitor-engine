@@ -75,7 +75,7 @@ const alarms = obj(
     soundProfile: en(SOUND_PROFILES),
     volume: obj({ min: int(0, 10), max: int(1, 10), default: int(0, 10) }),
     lamp: obj({ L1: lamp, L2: lamp, L3: lamp, flashHz: obj({ L1: num(0.1, 5), L2: num(0.1, 5) }), duty: num(0.2, 0.6) }),
-    messageBar: obj({ L1: barColors, L2: barColors, L3: barColors, idle: barColors, acknowledged: barColors, prefix: en(['asterisks', 'none']), rotate: bool }),
+    messageBar: obj({ L1: barColors, L2: barColors, L3: barColors, idle: barColors, acknowledged: barColors, prefix: en(['asterisks', 'none']), rotate: bool, rotateAll: bool }),
     numericFlash: bool,
     factoryEnabled: bool,
     alwaysOn: arr(str),

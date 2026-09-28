@@ -49,11 +49,22 @@ test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ pa
     await page.waitForTimeout(1500);
     await page.locator('#monitor').screenshot({ path: resolve(out, `${skin}--raised.png`) });
     await send(page, { type: 'device', action: { device: 'alarm', action: 'silence' } });
-    await expect(page.locator('.pme-cd')).toContainText(/\d+s/, { timeout: 3000 });
+    // FU-5: philips-like Silence acknowledges — no countdown, new alarms sound ([S2] IFU p. 32); the others mute with a countdown
+    if (skin === 'philips-like') await page.waitForTimeout(1500);
+    else await expect(page.locator('.pme-cd')).toContainText(/\d+s/, { timeout: 3000 });
     await page.waitForTimeout(1000);
     await page.locator('#monitor').screenshot({ path: resolve(out, `${skin}--silenced.png`) });
     if (skin === 'saadat-like') await expect(page.locator('.pme-bar')).toHaveText(''); // silence hides the visual (brief §6.4.1)
-    else await expect(page.locator('.pme-bar')).toContainText(/VFIB/); // IEC-style: audio only
+    else if (skin === 'philips-like') {
+      // FU-5: Silence ACKNOWLEDGED the VFIB (still active, silent, no timer); the single bar now leads with the live alarms
+      // raised since (in VF: ABP NON-PULSATILE, SpO2 NON-PULSAT., the ABP limits — Task 12: live before acknowledged)
+      const st = await page.evaluate(() => {
+        const ev = (window as unknown as { __pme4b: Hook }).__pme4b.events.filter((e) => e.type === 'alarmStatus');
+        const s = ev[ev.length - 1] as unknown as { silencedUntil: number | null; active: Array<{ id: string; acked: boolean }> };
+        return { silencedUntil: s.silencedUntil, vf: s.active.find((x) => x.id === 'VFIB') ?? null };
+      });
+      expect(st).toMatchObject({ silencedUntil: null, vf: { acked: true } });
+    } else await expect(page.locator('.pme-bar')).toContainText(/VFIB/); // IEC-style: audio only
   }
   expect(errors).toEqual([]);
 });
@@ -61,7 +72,9 @@ test('live monitor per skin: alarm bar idle, raised (VF), silenced', async ({ pa
 test('flash rates: high 2.0 Hz, medium 0.6 Hz, 50 % duty (computed CSS)', async ({ page }) => {
   test.setTimeout(60_000);
   await open(page, 'philips-like');
-  await send(page, { type: 'setTarget', variable: 'hr', value: 150 });
+  // FU-5: HR 150 is above philips-like's extreme-tachy threshold (120 + 20, [S1] p. 50), which now alarms red with
+  // arrhythmia analysis off ([S2] IFU p. 89) and supersedes **HR; 130 keeps the medium-priority HR HIGH this test flashes
+  await send(page, { type: 'setTarget', variable: 'hr', value: 130 });
   await expect(page.locator('.pme-bar')).toContainText(/\*\*HR/, { timeout: 15_000 });
   const l2 = await page.locator('.pme-lamp').evaluate((e) => getComputedStyle(e).animationDuration);
   expect(parseFloat(l2)).toBeCloseTo(1 / 0.6, 3);

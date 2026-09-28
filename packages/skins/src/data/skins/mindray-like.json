@@ -18,7 +18,7 @@
     "filterDefault": "Monitor",
     "gainLabel": "mm-per-mV"
   },
-  "layout": { "badge": "LAYOUT UNVERIFIED" },
+  "layout": { "badge": "LAYOUT UNVERIFIED", "messageBars": "split-technical-physiological" },
   "alarms": {
     "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } },
     "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
@@ -84,6 +84,7 @@
     "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min); research/05 §6 [S4] Mindray BeneVision N Operator's Manual §39.4.2 (Pause Time default 2 min)" },
     "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §10.8 (Alarm Reset: tone off, message marked √, a new alarm sounds again; research/05 source)" },
     "alarms.latching": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §39.4.3 (latching per priority, default Unselected = non-latching)" },
+    "layout.messageBars": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §3.6 (technical alarm information area beside the physiological alarm information area)" },
     "alarms.delayS": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §10.6.5, §39.4.6 (Alarm Delay 6 s for continuously measured parameters; not applied to apnoea and ST)", "note": "FU-5 (audit M6): the engine applies it to every limit alarm except SpO2 (spo2DelayS)" },
     "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.5 (initial inflation 160 / 140 / 90 mmHg)" },
     "arrhythmia.asystoleS": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1.2 (Asystole Delay 5 s, all categories)" },

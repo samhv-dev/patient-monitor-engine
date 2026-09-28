@@ -30,8 +30,21 @@ function rig(profile: AlarmSoundProfile) {
   return { bridge, played, run };
 }
 const entry = (id: string, level: 1 | 2 | 3, acked = false) => ({ id, level, category: 'physiological' as const, text: id, since: 0, latched: false, acked });
-const st = (t: number, active: ReturnType<typeof entry>[], silencedUntil: number | null = null): AlarmStatus => ({
+const st = (t: number, active: Array<ReturnType<typeof entry> & { sounding?: boolean }>, silencedUntil: number | null = null): AlarmStatus => ({
   type: 'alarmStatus', t, skin: 'x', ageBand: 'adult', active, silencedUntil, pausedUntil: null, limits: {}, allOff: false, arrhythmiaAnalysis: false, volume: 5,
+});
+
+describe('FU-5 alarm audio bridge: the engine decides what sounds', () => {
+  it('a latched alarm under visual-only latching is silent (`sounding: false`); a new alarm after an acknowledge sounds at once', () => {
+    const r = rig(IEC_STYLE);
+    r.bridge.onStatus(st(0, [{ ...entry('VFIB', 1), latched: true, sounding: false }]));
+    r.run(5);
+    expect(r.played).toEqual([]);
+    r.bridge.onStatus(st(5, [{ ...entry('VFIB', 1, true), sounding: false }, { ...entry('ASYSTOLE', 1), sounding: true }])); // no silence timer (acknowledge skins)
+    r.run(6.5);
+    expect(r.played.length).toBeGreaterThan(0);
+    expect(r.played.every((p) => p.id.startsWith('alarm:ASYSTOLE:'))).toBe(true);
+  });
 });
 
 describe('alarm audio bridge', () => {

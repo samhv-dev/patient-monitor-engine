@@ -31,7 +31,8 @@
     "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
     "pause": { "durationS": 120 },
     "delayS": 3, "spo2DelayS": 10,
-    "latching": { "visual": "red", "audible": "off" }
+    "latching": { "visual": "red", "audible": "off" },
+    "messageBar": { "rotateAll": true }
   },
   "glyphs": { "hrUnavailable": "-?-", "nibpFail": "-?-", "inop": "-?-" },
   "limits": {
@@ -82,6 +83,7 @@
     "alarms.delayS": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue MP40–90 IFU §3 Alarms (p. 28: \"Alarms are indicated after the alarm delay time. This is made up of the system delay time plus the trigger delay time for the individual measurement\") and §32 Monitor Performance Specifications (p. 294: Alarm signal, System delay \"less than 3 seconds\")", "note": "FU-5 Task 9a (orchestrator ruling on the plan's Open question 20): the vendor's alarm ON-DELAY for the limit alarms — a delay before raising, never a hold that suppresses. Philips publishes no configurable on-delay for HR/pressure limit alarms (the configuration guide [S1] has alarm delays for SpO2 only); the documented system delay bound is used (3 s), the measurement's trigger delay being the engine's own averaging. It removes the 1–3 s HR HIGH blips of an HR hovering on the extreme-tachy threshold (harness A2, A8)." },
     "alarms.spo2DelayS": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide Rel. J p. 66 (SpO2 High Alarm Delay 10 sec, Low Alarm Delay 10 sec, Desat Delay 20 sec; SmartAlarmDelay Off)", "note": "the same 10 s as iec-defaults (brief §6.4), set here with the Philips source (FU-5 Task 9a)" },
     "alarms.pause": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 138 (Pause Alarms 1/2/3 min or infinite, default 2 min)" },
+    "alarms.messageBar.rotateAll": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 29–30 (all active alarm messages are shown in the alarm status area in succession; the message changes every two seconds) and p. 40 (a visually latched alarm stays active)", "note": "FU-5 review ruling 4: a latched red stays in the rotation under a live yellow" },
     "alarms.latching": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 140 (#H30 OR option: Visual Latching Red, Audible Latching Off); IFU [S2] p. 39–40", "note": "INOPs and short yellow arrhythmia alarms never latch" },
     "glyphs.hrUnavailable": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55 (LEADS OFF: the numeric shows -?-)" },
     "glyphs.nibpFail": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 56 (NBP MEASURE FAILED: -?-)" },
