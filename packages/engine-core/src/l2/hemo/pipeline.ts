@@ -393,7 +393,10 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   }
   const v: Partial<Record<NumericId, Measured>> = {};
   if (lineActive(hs.lines.abp)) {
-    const p = pressureNumerics(hs.num.abp, t);
+    // FU-5 (audit M8): a zero in progress measures the atmosphere — no numerics, the ABP ZEROING INOP instead
+    const zeroing = hs.lines.abp.sensor === 'zeroing' || t < hs.lines.abp.zeroUntil;
+    const none: Measured = { value: null, flag: 'invalid', at: t };
+    const p = zeroing ? { sys: none, dia: none, mean: none, pulsatile: false } : pressureNumerics(hs.num.abp, t);
     v.abpSys = p.sys;
     v.abpDia = p.dia;
     v.abpMean = p.mean;

@@ -2,6 +2,8 @@
 // sees — displayed numerics, QRS detections, beat classes, sensor states — turned into this tick's true conditions.
 // Inputs are plain JSON-safe data the engine keeps up to date (observe* functions); buildConditions is pure.
 import type { EngineEvent, Measured, NumericId } from '../../types.ts';
+import type { LineSensorState } from '../../types-hemo.ts';
+import { LOW_PERF_PI } from '../spo2/spo2.ts';
 import { isEnabled, limitOf, type AlarmMgrState, type Condition } from './manager.ts';
 import { displayDigits, fixedText, limitText, type FixedAlarmId } from './text.ts';
 
@@ -35,9 +37,25 @@ export const CHAIN: Readonly<Record<string, readonly string[]>> = {
   EXTREME_BRADY: ['HR_LOW', 'BRADY'],
   'apnoea-co2': ['RR_LOW', 'AWRR_LOW', 'EtCO2_LOW', 'EtCO2_pctV_LOW'],
   'apnoea-resp': ['RR_LOW', 'AWRR_LOW'],
+  abpDisconnect: ['ART_S_LOW', 'ART_M_LOW', 'ART_D_LOW'],
 };
 /** FU-5 (audit M13): an event arrhythmia alarm (PAUSE) stays at least this long once raised [ENG]. */
 export const EVENT_HOLD_S = 5;
+/** FU-5: the oximeter is still acquiring (averaging window + update) this long after its probe went on [ENG]. */
+export const SPO2_SEARCH_S = 15;
+/**
+ * FU-5: LOW PERF is raised once PI < 0.3 (LOW_PERF_PI: "below 0.3 is marginal", research/05 §6 [S2] IFU p. 120) has held
+ * this long, and cleared at PI ≥ LOW_PERF_CLEAR_PI or after this long at PI ≥ 0.3 (PI hovering at 0.3 flickered the
+ * INOP 7 times in the 3 L bleed) [ENG].
+ */
+export const LOW_PERF_DELAY_S = 5;
+export const LOW_PERF_CLEAR_PI = 0.4;
+/** FU-5: SpO2 NON-PULSAT. clears only after a valid SpO2 for this long [ENG]. */
+export const NONPULS_CLEAR_S = 2;
+/** FU-5: an arterial pressure non-pulsatile with a mean below this is a disconnection ([S2] IFU p. 44: 10 mmHg). */
+export const DISCONNECT_MMHG = 10;
+/** FU-5: "continuously less than 10 mmHg" ([S2] p. 44) — for this long [ENG]. */
+export const DISCONNECT_DELAY_S = 5;
 /**
  * FU-5 (review ruling 6): an R–R at least this long keeps a standing ASYSTOLE — agonal is < 20/min (R–R ≥ 3 s,
  * research/03 §1.5), less half a second for the detector's timing of a wide complex (2.9 s measured between agonal
@@ -72,13 +90,23 @@ export interface AlarmInputs {
   extremeSeen?: Record<string, number>;
   /** FU-5: the capnograph's state — while 'on' it is the respiratory (apnoea) source, else the impedance. */
   co2: 'off' | 'warmup' | 'on' | 'occluded';
+  /** FU-5: the arterial line's transducer state ('zeroing' also while a zero is running). */
+  abp: LineSensorState;
+  /** FU-5: temperature probe state, and whether it was ever on (a probe never attached raises nothing). */
+  temp: 'off' | 'on';
+  tempSeen: boolean;
+  /** FU-5: when the SpO2 probe last went on (s): the oximeter acquires for SPO2_SEARCH_S before an INOP. */
+  spo2OnSince: number;
+  /** FU-5: since when PI has been ≥ LOW_PERF_PI / the SpO2 not invalid (the INOPs' clear hysteresis); null = not now. */
+  piOkSince?: number | null;
+  spo2OkSince?: number | null;
 }
 
 export function createInputs(t0 = 0): AlarmInputs {
   return {
     measured: {}, lastQrsT: null, meanRR: null, ecgOnSince: t0, leadsOff: false, vfSince: null,
     vt: { count: 0, firstT: 0, lastT: -1e9 }, pvcTimes: [], spo2Probe: 'on', nibpFailed: false, pacing: false,
-    apnoeaFlags: [], co2Line: false, co2: 'on',
+    apnoeaFlags: [], co2Line: false, co2: 'on', abp: 'none', temp: 'on', tempSeen: false, spo2OnSince: t0,
   };
 }
 
@@ -98,6 +126,10 @@ export function observeQrs(inp: AlarmInputs, tR: number): void {
 export function observeEvent(inp: AlarmInputs, e: EngineEvent): void {
   if (e.type === 'measurement') {
     for (const [k, m] of Object.entries(e.values)) if (m) inp.measured[k as NumericId] = m;
+    const pi = e.values.pi;
+    if (pi) inp.piOkSince = pi.value !== null && pi.flag !== 'invalid' && pi.value >= LOW_PERF_PI ? (inp.piOkSince ?? e.t) : null;
+    const sp = e.values.spo2;
+    if (sp) inp.spo2OkSince = sp.flag !== 'invalid' ? (inp.spo2OkSince ?? e.t) : null;
   } else if (e.type === 'beat') {
     const vent = e.origin === 'ventricular' && e.template !== 'pvc';
     if (e.template === 'pvc') {
@@ -229,8 +261,38 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
   // one RR source, research/06 §4.1).
   const apnoeaSrc = inp.co2 === 'on' ? 'apnoea-co2' : 'apnoea-resp';
   if (p.apneaS !== null && inp.apnoeaFlags.includes(apnoeaSrc)) out.push(fixed(apnoeaSrc, 1, 'physiological'));
-  if (inp.co2Line) out.push(fixed('co2Line', 3, 'technical'));
+  if (inp.co2Line || inp.co2 === 'occluded') out.push({ ...fixed('co2Line', 3, 'technical'), numeric: 'etco2' });
   if (inp.spo2Probe === 'off') out.push(fixed('spo2SensorOff', 3, 'technical'));
+  // FU-5 (audit M8): the technical alarms real monitors raise from the signals themselves ([S2] IFU p. 44, 53–61;
+  // research/06 §4.2); `numeric` marks the value the INOP replaces ("-?-") in the tile
+  if (inp.spo2Probe === 'on' && t - inp.spo2OnSince >= SPO2_SEARCH_S) {
+    const m = inp.measured.spo2;
+    const pi = inp.measured.pi;
+    // clear hysteresis (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5; review F7): NON-PULSAT. holds until
+    // the SpO2 has been valid NONPULS_CLEAR_S; LOW PERF until PI ≥ LOW_PERF_CLEAR_PI, or ≥ LOW_PERF_PI for
+    // LOW_PERF_DELAY_S — and through a PI that is momentarily invalid (no fresh pulse for a few seconds) while the SpO2
+    // is still shown [ENG]: LOW PERF was raised/cleared 7 times in 1–2 s cycles at the end of the 3 L bleed
+    const okFor = (since: number | null | undefined, s0: number) => since !== null && since !== undefined && t - since >= s0;
+    const nonPuls = (m !== undefined && m.flag === 'invalid') || (holdingId(s, 'spo2NonPulsatile') && !okFor(inp.spo2OkSince, NONPULS_CLEAR_S));
+    const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
+    const lowPerf = piV !== null ? piV < LOW_PERF_PI || (holdingId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : holdingId(s, 'spo2LowPerf');
+    if (nonPuls) out.push({ ...fixed('spo2NonPulsatile', 3, 'technical'), numeric: 'spo2' });
+    else if (lowPerf) out.push({ ...fixed('spo2LowPerf', 3, 'technical', LOW_PERF_DELAY_S), numeric: 'spo2' });
+  }
+  if (inp.abp === 'zeroing') out.push({ ...fixed('abpZero', 3, 'technical'), numeric: 'abpMean' });
+  else if (inp.abp !== 'none') {
+    const mean = valid(inp, 'abpMean', t);
+    const keep = p.ibpStaticDisplay === 'keep';
+    if (mean !== null && (inp.measured.abpSys?.flag === 'invalid' || inp.measured.prAbp?.flag === 'invalid')) {
+      // a static pressure (the non-pulsatile rule, pressure-numerics): the INOP marks the pulse ('keep': S/D/M stay,
+      // [S2] p. 57 "Pulse numeric is displayed with -?-") or the hidden S/D ('mean-only', Saadat); the red disconnect
+      // below 10 mmHg where the skin has it on (saadat-like: OFF by default, research/06 §4.1). The engine raises the
+      // INOP whatever the pulse source [ENG]; an IntelliVue raises it only for the pressure selected as the pulse source
+      out.push({ ...fixed('abpNonPulsatile', 3, 'technical'), numeric: keep ? 'prAbp' : 'abpSys' });
+      if (p.abpDisconnect && mean < DISCONNECT_MMHG) out.push({ ...fixed('abpDisconnect', 1, 'physiological', DISCONNECT_DELAY_S), numeric: 'abpMean' });
+    }
+  }
+  if (inp.temp === 'off' && inp.tempSeen) out.push({ ...fixed('tempProbeOff', 3, 'technical'), numeric: 'tempCore' });
   if (inp.nibpFailed) out.push(fixed('nibp-failed', 3, 'technical'));
   return chain(out, s);
 }

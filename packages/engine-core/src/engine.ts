@@ -645,6 +645,8 @@ class Engine implements MonitorEngine {
       spo2Probe: ps.hemo.pleth.state,
       leadsOff: ps.mods.artefact.leadOff,
       co2: ps.resp.co2Sensor, // FU-5
+      abp: ps.hemo.lines.abp.sensor === 'connected' && simT < ps.hemo.lines.abp.zeroUntil ? 'zeroing' : ps.hemo.lines.abp.sensor,
+      temp: ps.resp.tempSensor,
       committedN: ps.n,
       vcgAt: (n) => {
         const x = bx.at(n);

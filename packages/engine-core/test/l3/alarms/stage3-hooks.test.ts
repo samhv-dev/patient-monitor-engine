@@ -54,7 +54,7 @@ describe('Stage 3 alarm hooks (synthetic events)', () => {
   });
 
   it('CO2 line INOP from the raw flag, level 3 technical', () => {
-    for (const [skin, text] of [['philips-like', 'CO2 LINE'], ['saadat-like', 'CO2 CHECK LINE']] as const) {
+    for (const [skin, text] of [['philips-like', 'CO2 OCCLUSION'], ['saadat-like', 'CO2 CHECK LINE']] as const) { // FU-5: the Philips text ([S2] p. 53)
       const m = createAlarmMgr(deviceProfile(skin));
       const inp = createInputs();
       observeEvent(inp, raw(10, 'co2Line', true));
