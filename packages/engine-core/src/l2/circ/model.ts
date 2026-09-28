@@ -35,6 +35,12 @@ export const G_SA = 1.5;
 export const K_HYP_MIN = 0.02;
 /** FU-4 G4: the continuous MAP's averaging time constant (7d, 7e and the arrest's no-flow rule read it) [ENG]. */
 export const MAP_NOW_TAU_S = 2;
+/** FU-4 G1/G7: the ischaemic SA node slows once the LV flow share falls below K_BRADY (pre-arrest, "terminal" bradycardia
+ * of decompensating shock) by G_SA_ISCH per unit of kIsch below it [ENG: HR at the arrest ≤ 60 % of its shock peak]. */
+export const K_BRADY = 0.5;
+export const G_SA_ISCH = 1.2;
+/** FU-4 G3: sinus-rate depression per mmol/L of the membrane-effective K above 7 (hyperkalaemic sinus bradycardia) [ENG]. */
+export const G_SA_K = 0.12;
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -105,6 +111,9 @@ export interface CircModelState {
   cppAcc: { sum: number; n: number };
   /** FU-4 G4: mean radial pressure, low-passed (τ 2 s) at the 10 Hz control step in both modes — beats or none. */
   mapNow: number;
+  /** FU-4 G1: the arrest this model declared (cause, time, the organised rhythm it came from), null while beating. */
+  arrest: { cause: string; t: number; from: string; roscS: number } | null;
+  noFlowS: number; // FU-4 G1: seconds the continuous MAP has been below arrest.ts MAP_NO_FLOW
   chemo: { sao2: number; paco2: number }; // chemoreflex inputs (written at 1 Hz by the pipeline from L1 truths)
   /**
    * Extra multipliers owned by other modules (coronary ischaemia, conditions; 7b lungs via R46): applied at the next
@@ -116,6 +125,8 @@ export interface CircModelState {
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
+    kEcg?: number; // FU-4 G3 (7c): the membrane-effective K (calcium-stabilised), mmol/L — sinus node and the arrest hazard
+    tempC?: number; // FU-4 G12 (engine, from Stage 3/7e): core temperature for the hypothermic VF hazard
     drug?: DrugEffect; betaBlockAdd?: number; // Stage 7g: the PK/PD layer's multipliers
     betaAgonistU?: number; // FU-2 (NR-7g-2): β-agonist venous potency units from the drug bus (venous.ts)
     avNodeBlock?: number; // FU-2 (AF rate control): the drug bus's AV-nodal block 0–1 (rate-rule.ts)
@@ -128,7 +139,7 @@ export function createCircModel(profile: CircProfile = DEFAULT_PROFILE): CircMod
   return {
     prof, weightKg: profile.weightKg, base: st.params, p: structuredClone(st.params), s: st.s, t: 0,
     vent: [], atria: [], kLv: 1, kRv: 1, baro: createBaro(st.ref.map, st.ref.cvp - P_PL0), boluses: [], vol: [], hrModel: prof.targets.hr, hrSet: null,
-    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), cppAcc: { sum: 0, n: 0 }, mapNow: st.ref.map, chemo: { sao2: 0.97, paco2: 40 },
+    ctlNext: 0, mapSum: 0, mapN: 0, raTmSum: 0, acc: null, beats: [], opens: [], lastEjT: 0, qFwd: st.ref.co / 0.06, mapSetPinned: false, man: { eesF: 1, rSys: null, dV0: 0, eesRvF: 1, pvr: null, kIschRef: 1 }, lastVentT: -1, rrRef: 60 / prof.targets.hr, pespNext: 0, ref: st.ref, cor: createCoronary(st.ref), cppAcc: { sum: 0, n: 0 }, mapNow: st.ref.map, arrest: null, noFlowS: 0, chemo: { sao2: 0.97, paco2: 40 },
     ext: { kLv: 1, kRv: 1, pvr: 1, vFluid: 0, pPtx: 0, kIsch: 1 },
   };
 }
@@ -243,7 +254,8 @@ function control(m: CircModelState, env: CircEnv): void {
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp * (env.modeled ? m.cor.kIschRv : 1); // Stage 7g: β-blockade blunts the surge; FU-4 G5: RV ischaemia (MODELED)
   p.emaxRa = base.eminRa + (base.emaxRa - base.eminRa) * kc * kHyp; // atrial active elastance (7c kChem; FU-3 item 16 kHyp)
   p.emaxLa = base.eminLa + (base.emaxLa - base.eminLa) * kc * kHyp;
-  const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp) : 1; // FU-3 item 16: hypoxic SA-node depression
+  const kSa = Math.max(0, K_BRADY - m.ext.kIsch) * G_SA_ISCH + Math.max(0, (x.kEcg ?? 4) - 7) * G_SA_K; // FU-4 G1/G3
+  const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp - kSa) : 1; // FU-3 item 16: hypoxic SA-node depression (FU-4: + ischaemic, K)
   const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);

@@ -206,10 +206,9 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     expect(c.hrAfter.at(-1)?.[1] ?? 0).toBeGreaterThanOrEqual(60);
   });
   // R45 (executor, FU-3 Task 15, after merging Stage 7e): the [ENG] "no runaway rebound" bound was met before 7e
-  // (final HR 126) and is missed on main + 7e (final HR 132.1: 7e's endocrine stress response to the asphyxia adds to
-  // the sinus rate after the reoxygenation). The criterion is unchanged; it is kept apart so the reversal time, the
-  // no-arrest and the HR ≥ 60 assertions above stay enforced (the R-5 reasoning).
-  it.fails('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — measured 132.1 on main + 7e (126 before 7e)', async () => {
+  // (final HR 126) and missed on main + 7e (132.1). FU-4 (Tasks 4–6): met again — 74.4. The criterion is unchanged;
+  // it is kept apart so the reversal time, the no-arrest and the HR ≥ 60 assertions above stay enforced (R-5).
+  it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — was 132.1 on main + 7e, 74.4 with FU-4', async () => {
     const c = await reversalCourse();
     console.log(`reversal: HR at the end ${c.hrAfter.at(-1)?.[1].toFixed(1)}`);
     expect(c.hrAfter.at(-1)?.[1] ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(130); // [ENG] sanity: no runaway rebound

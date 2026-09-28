@@ -27,6 +27,7 @@ import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircMode
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
+import { arrestStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1
 import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
 import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
@@ -389,9 +390,20 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
   if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
-  if (ctx.l1.mode === 'modeled' && ctx.requestRhythm) {
-    const req = hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, rampValue(ctx.hr, t), () => uniform(ctx.rng.outcome)); // FU-3 item 16
-    if (req) ctx.requestRhythm(req.id, req.opts);
+  if (ctx.requestRhythm) {
+    // FU-4 G1 (D5, D6): FU-3's hypoxic declaration first (MODELED), then the low-flow / no-flow / hazard declaration
+    // (both modes); an engine-declared PEA regains its pulse through roscStep. One requestRhythm path (E-FU3-8).
+    const u = () => uniform(ctx.rng.outcome);
+    const hrNow = rampValue(ctx.hr, t);
+    const hx = ctx.l1.mode === 'modeled' ? hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, hrNow, u) : null; // FU-3 item 16
+    const req = hx ? { ...hx, cause: 'hypoxia' } : arrestStep(c, ctx.rhythm.id, pulseless, hrNow, u, 1);
+    if (req) {
+      c.arrest = { cause: req.cause, t, from: ctx.rhythm.id, roscS: 0 };
+      ctx.requestRhythm(req.id, req.opts);
+    } else {
+      const back = roscStep(c, ctx.rhythm.id, pulseless, cppCont, 1);
+      if (back) ctx.requestRhythm(back.id, back.opts);
+    }
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
   if (Math.abs(nxt - hs.stApplied) >= 0.01) {
