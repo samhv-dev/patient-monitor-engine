@@ -7,6 +7,7 @@
 import type { L1State } from '../../l1/state.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import type { EndoClinicalEvent } from '../../types-endo.ts';
+import { VAGAL_SITES } from '../../types-neuro.ts'; // FU-4 G7: the stimulus's optional vagal site
 import type { HemoState } from '../hemo/pipeline.ts';
 import type { RespState } from '../resp/pipeline.ts';
 import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
@@ -86,6 +87,8 @@ export function validateEndoCommand(cmd: Command): string | undefined | null {
   switch (ev.kind) {
     case 'stimulus': {
       const i = (ev as { intensity?: number }).intensity;
+      const site = (ev as { site?: string }).site; // FU-4 G7: the optional vagal site (7a observes it)
+      if (site !== undefined && !(VAGAL_SITES as readonly string[]).includes(site)) return `site must be ${VAGAL_SITES.join(', ')}`;
       return i === undefined ? 'intensity is required' : range('intensity', i, 0, 2);
     }
     case 'meal':

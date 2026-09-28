@@ -57,6 +57,24 @@ export const K_BRADY = 0.5;
 export const G_SA_ISCH = 1.2;
 /** FU-4 G3: sinus-rate depression per mmol/L of the membrane-effective K above 7 (hyperkalaemic sinus bradycardia) [ENG]. */
 export const G_SA_K = 0.12;
+/**
+ * FU-4 G7 (Task 12 Step 3, Task 18f Step 3): the STIMULUS-driven vagal reflexes — laryngoscopy, the oculocardiac reflex
+ * (traction on the extra-ocular muscles, pressure on the globe) and peritoneal/mesenteric traction — add a vagal RR
+ * increment at the SA node, the same additive ms term as the drug bus's `vagalMs`, and × (1 − muscarinic occupancy)
+ * so that atropine or glycopyrrolate given first abolishes them (Miller, ophthalmic anaesthesia: bradycardia or
+ * asystole on traction, abolished by atropine; the reflex FATIGUES on sustained or repeated traction) [P direction].
+ * Sizes [ENG]: laryngoscopy 300 ms, oculocardiac and peritoneal traction 600 ms × the stimulus intensity; fatigue τ.
+ */
+export const VAGAL_STIM_MS: Readonly<Record<string, number>> = { laryngoscopy: 300, oculocardiac: 600, peritoneal: 600 };
+export const VAGAL_STIM_PER_INTENSITY: Readonly<Record<string, boolean>> = { laryngoscopy: false, oculocardiac: true, peritoneal: true };
+export const VAGAL_STIM_FATIGUE_S = 120; // the reflex fades on sustained traction [ENG]
+/**
+ * FU-4 G7 (Task 12 Step 3): the empty-ventricle (Bezold–Jarisch) bradycardia — the paradoxical slowing of severe
+ * haemorrhage once the LV end-diastolic volume falls below ≈ 35 % of rest (Barcroft & Edholm 1945; Secher NH et al.,
+ * Clin Physiol 1984) [P direction, ENG size and threshold]. MODELED only, × (1 − muscarinic occupancy).
+ */
+export const BJ_EDV_FRAC = 0.35;
+export const BJ_MAX_MS = 800;
 
 /** Per-beat truths published by the model (tables §2.1 step 5). */
 export interface CircBeat {
@@ -101,6 +119,8 @@ export interface CircModelState {
   boluses: Bolus[];
   vol: VolumeEvent[];
   hrModel: number; // bpm the reflex/drugs ask the rhythm engine for (MODELED)
+  /** FU-4 G7: the stimulus-driven vagal event (engine observer → `circVagalStimulus`); absent until a site is seen. */
+  vagalStim?: { t0: number; ms: number } | null;
   /** FU-2 (NR-7g-5): the rate the instructor or the rhythm set (rate-rule.ts); null = the reflex owns a sinus-family rate. */
   hrSet: RampState | null;
   ctlNext: number;
@@ -229,6 +249,22 @@ export function chemoFactors(c: { sao2: number; paco2: number }, band: string): 
   return { hrF: hrF * (1 + hcap), svrF: 1 + hcap };
 }
 
+/** FU-4 G7: the engine's stimulus observer (7e consumes the event; 7a only sees the site). A stimulus without a site, or
+ * intensity 0, ends the vagal event — the stimulus holds until the next one (addendum 12). */
+export function circVagalStimulus(m: CircModelState, site: string | undefined, intensity: number, t: number): void {
+  const ms = site === undefined ? 0 : (VAGAL_STIM_MS[site] ?? 0) * (VAGAL_STIM_PER_INTENSITY[site] ? intensity : 1);
+  m.vagalStim = ms > 0 && intensity > 0 ? { t0: t, ms } : null;
+}
+function vagalEventMs(m: CircModelState): number {
+  const v = m.vagalStim;
+  return v ? v.ms * Math.exp(-Math.max(0, m.t - v.t0) / VAGAL_STIM_FATIGUE_S) : 0;
+}
+function bjMs(m: CircModelState): number {
+  const lb = m.beats[m.beats.length - 1];
+  if (!lb || !(m.ref.lvedv > 0)) return 0;
+  return (BJ_MAX_MS * Math.max(0, BJ_EDV_FRAC - lb.lvedv / m.ref.lvedv)) / BJ_EDV_FRAC;
+}
+
 function control(m: CircModelState, env: CircEnv): void {
   const map = m.mapN > 0 ? m.mapSum / m.mapN : m.baro.mapLp;
   m.mapNow += (map - m.mapNow) * (1 - Math.exp(-CTL_DT / MAP_NOW_TAU_S)); // FU-4 G4
@@ -245,10 +281,12 @@ function control(m: CircModelState, env: CircEnv): void {
   if (d7) {
     de.hr *= d7.hr; de.ees *= d7.ees; de.svr *= d7.svr; de.v0Frac += d7.v0Frac; de.pvr *= d7.pvr; de.gv *= d7.gv; de.gvHr *= d7.gvHr;
     de.symp *= d7.symp ?? 1; de.setF *= d7.setF ?? 1; // FU-4 G2
+    de.vagalMs = (de.vagalMs ?? 0) + (d7.vagalMs ?? 0); // FU-4 G7/F10: the vagal RR increment is ADDITIVE (ms), already × (1 − muscarinic occupancy) by 7g
+    de.muscBlock = d7.muscBlock ?? 0; // FU-4 G7: muscarinic occupancy — blocks the vagal limb and the stimulus/empty-ventricle events
   }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv, gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF, brainF: brainstemOutF(m.ext.cbfRel) }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF, brainF: brainstemOutF(m.ext.cbfRel) }, raTm)
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;
@@ -288,7 +326,13 @@ function control(m: CircModelState, env: CircEnv): void {
   const kSa = Math.max(0, K_BRADY - m.ext.kIsch) * G_SA_ISCH + Math.max(0, (x.kEcg ?? 4) - 7) * G_SA_K; // FU-4 G1/G3
   const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp - kSa) : 1; // FU-3 item 16: hypoxic SA-node depression (FU-4: + ischaemic, K)
   m.saF = hypF; // FU-4: every pacemaker, subsidiary ones included, shares the myocardial depression
-  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000; // Stage 7g: β-blockade blunts the surge
+  // FU-4 G7/F10: the drug bus's VAGAL RR increment is additive at the SA node, exactly like the baroreflex's vagal
+  // limb (`b.rrMs`) — an opioid bolus or neostigmine lengthens the cycle rather than scaling the rate, which is why an
+  // anticholinergic abolishes it (7g already multiplies `vagalMs` by 1 − muscarinic occupancy) and why the bradycardia
+  // is deeper in a patient whose rate is already low.
+  // FU-4 G7 (Task 12 Step 3): the stimulus-driven vagal event and the empty-ventricle reflex, same additive term, MODELED
+  const vStim = env.modeled ? vagalEventMs(m) + bjMs(m) : 0;
+  const rr = 60 / (m.prof.hrRest * b.hrF * de.hr * ch.hrF * (x.hrF ?? 1) * betaBlunt(x.endoHrF ?? 1, x.betaBlockAdd ?? 0) * hypF) + b.rrMs / 1000 + ((de.vagalMs ?? 0) + vStim * (1 - (de.muscBlock ?? 0))) / 1000; // Stage 7g: β-blockade blunts the surge
   m.hrModel = Math.min(m.prof.hrMax, Math.max(30, 60 / rr));
   m.boluses = pruneBoluses(m.boluses, m.t);
   m.vol = m.vol.filter((v) => v.until > m.t);

@@ -35,6 +35,18 @@ const VOLATILE_GVHR: PdEffect = { target: 'gvHr', emax: -1, ec50: 1, linear: tru
  */
 export const PROPOFOL_SYMP: PdEffect = { target: 'symp', emax: -1, ec50: 1.0, hill: 2 };
 export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0, hill: 2 };
+/**
+ * FU-4 G7/F10: opioid VAGOTONIA. A large opioid bolus causes bradycardia through a central vagal (nucleus
+ * ambiguus/vagal nucleus) mechanism, not through a negative chronotropic action on the node — which is why atropine or
+ * glycopyrrolate abolishes it and why it is worse in a patient with high resting vagal tone (M10 ch. 22: opioids cause
+ * a centrally mediated bradycardia; Reitan 1978 for fentanyl's vagal mechanism) [P direction, ENG size].
+ * Units: `ec50` is the drug's own effect-site concentration in ng/mL, as the other opioid rows use; `emax` is
+ * milliseconds added to the cycle length at full effect.
+ * Fit target: fentanyl 10 µg/kg → HR into the 40s–50s without an anticholinergic (before: 74 → 68).
+ */
+export const FENTANYL_VAGAL: PdEffect = { target: 'vagalMs', emax: Number(globalThis.process?.env?.PME_VAG_EMAX ?? 420), ec50: Number(globalThis.process?.env?.PME_VAG_F ?? 4) };
+export const REMIFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: Number(globalThis.process?.env?.PME_VAG_EMAX ?? 420), ec50: Number(globalThis.process?.env?.PME_VAG_R ?? 6) };
+export const SUFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 0.5 };
 /** FU-4 G2: sevoflurane/isoflurane lower SNA with MAP and no HR change (Ebert, Muzi & Lopatka 1995, Anesthesiology 83:88) [ENG size, fit: 0.65 MAC MAP −10 to −20 %]. */
 export const VOLATILE_SYMP: PdEffect = { target: 'symp', emax: -0.5, ec50: 1, linear: true };
 export const VOLATILE_SETF: PdEffect = { target: 'setF', emax: -0.1, ec50: 1, linear: true };
@@ -97,7 +109,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // vent site: tables give no fentanyl ventilatory ke0 → the brain ke0 [ENG] (deviations list)
     id: 'fentanyl', name: 'Fentanyl', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'shafer', ventKe0: FENTANYL_KE0 },
     elim: { hepatic: 1, highExtraction: true },
-    pd: [{ target: 'hr', emax: -0.25, ec50: 2 }, { target: 'svr', emax: -0.15, ec50: 2 }, { target: 'v0Frac', emax: 0.03, ec50: 2 }],
+    pd: [{ target: 'hr', emax: -0.25, ec50: 2 }, { target: 'svr', emax: -0.15, ec50: 2 }, { target: 'v0Frac', emax: 0.03, ec50: 2 }, FENTANYL_VAGAL],
     cns: { remiEq: 1.6 }, syringePerMl: 50,
     doses: '1–3 µg/kg analgesia; 5–10 µg/kg blunting; plasma 15–30 ng/mL as sole agent (M10 ch. 22 Table 22.7)',
     onset: 'TTPE 3.6 min; CSHT rises steeply (M10 ch. 22 p. 588)',
@@ -106,7 +118,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
     // vent site ke0 0.92/min: Bouillon 2003 ventilatory ke0 (T5d "ke0 for CO2 0.92/min") [P]; R51 §2
     id: 'remifentanil', name: 'Remifentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'minto', ventKe0: 0.92 },
-    pd: [{ target: 'hr', emax: -0.25, ec50: 3 }, { target: 'svr', emax: -0.15, ec50: 3 }, { target: 'v0Frac', emax: 0.03, ec50: 3 }],
+    pd: [{ target: 'hr', emax: -0.25, ec50: 3 }, { target: 'svr', emax: -0.15, ec50: 3 }, { target: 'v0Frac', emax: 0.03, ec50: 3 }, REMIFENTANIL_VAGAL],
     cns: { remiEq: 1 }, syringePerMl: 50,
     doses: '0.05–0.5 µg/kg/min; TCI Ce 2–8 ng/mL; bolus 0.5–1 µg/kg', onset: 'TTPE ≈ 1.4–1.6 min; CSHT ≈ 3 min, context-independent',
     ir: '?', src: `Minto 1997; Bouillon 2003 (ventilation C50 0.92, ke0 0.92); Kapila 1995; ${OPIOID_HEMO_SRC}`, tag: 'P',
@@ -114,7 +126,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
     id: 'sufentanil', name: 'Sufentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'gepts', ventKe0: SUFENTANIL_KE0 }, // vent = brain ke0 [ENG]
     elim: { hepatic: 1, highExtraction: true },
-    pd: [{ target: 'hr', emax: -0.25, ec50: 0.25 }, { target: 'svr', emax: -0.15, ec50: 0.25 }],
+    pd: [{ target: 'hr', emax: -0.25, ec50: 0.25 }, { target: 'svr', emax: -0.15, ec50: 0.25 }, SUFENTANIL_VAGAL],
     cns: { remiEq: 12 }, syringePerMl: 5,
     doses: '0.1–0.5 µg/kg; plasma 5–10 ng/mL as sole agent (M10 Table 22.7)', onset: 'TTPE 5.6 min (Shafer & Varvel 1991)',
     ir: '?', src: `Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [ENG, Q59]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',

@@ -73,7 +73,7 @@ import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/ho
 import { obstructiveAlias } from './l2/circ/aliases.ts'; // FU-4 G6 (Task 11)
 import { applyNeuroCommand, createNeuroState, fasciculating, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f
 import { pcheOf } from './l2/neuro/bus.ts'; // Stage 7f
-import { circCardiacOutput, type CircModelState } from './l2/circ/model.ts'; // Stage 7g
+import { circCardiacOutput, circVagalStimulus, type CircModelState } from './l2/circ/model.ts'; // Stage 7g; FU-4 G7: the stimulus observer
 import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
 import { betaVenousUnits } from './l2/circ/venous.ts'; // FU-2
 import { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
@@ -559,11 +559,11 @@ class Engine implements MonitorEngine {
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
       circ7g.ext.tempC = ps.resp.temp.tc; // FU-4 G12: core temperature for the hypothermic (and G8 hyperthermic) arrest hazard
     }
-    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE); // Stage 7g
+    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE, ps.rng.outcome); // Stage 7g (FU-4 G7: the repeat-sux draw uses the `outcome` stream)
     if (req7g) {
       // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
       ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
-      holdRate(ps, req7g.id, false); // FU-2: an engine-initiated sinus rate belongs to the reflex
+      holdRate(ps, req7g.id, req7g.hold ?? false); // FU-2: an engine-initiated sinus rate belongs to the reflex (FU-4 G7: a vagal event's own rate is held)
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
     const src7f = ps.resp.driver.source; // Stage 7f: after 7g's pk (reads ps.pk.bus), before the breath driver (its hook shapes the next breaths)
@@ -765,6 +765,10 @@ class Engine implements MonitorEngine {
       return;
     }
     if (applyBloodCommand(ps.blood, cmd, simT, ps.resp)) return; // Stage 7c
+    if (cmd.type === 'applyEvent' && (cmd.event as { kind: string }).kind === 'stimulus') {
+      const sv = cmd.event as { intensity: number; site?: string }; // FU-4 G7 (E-FU4-7): 7a observes the vagal site before 7e consumes the stimulus
+      circVagalStimulus(ps.hemo.circ, sv.site, sv.intensity, simT);
+    }
     if (applyEndoCommand(ps.endo, ps.resp, cmd, simT)) return; // Stage 7e (after 7g/7f/7d/7c, before Stage 3)
     if (applyRespCommand(ps.resp, ps.l1, cmd, simT)) {
       this.syncRespBuffers(); // Stage 3

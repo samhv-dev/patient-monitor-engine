@@ -297,6 +297,7 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
         d.bolusTimes.push(t);
       } else {
         d.total += amt;
+        d.bolusTimes.push(t); // FU-4 G7: every bolus is recorded, not only the gamma rows' (the repeat-sux hook reads it)
         // the engine's committed pk state can trail the command time by < 1 step: the bolus lands on its own grid instant
         // FU-4 G10 (review F12(3)): a low output delays the onset by the arm-to-brain circulation time — a pure transit
         // lag ARM_BRAIN_S·(1/q − 1) before the bolus reaches the central compartment. Not a slower ke0: cerebral flow is
