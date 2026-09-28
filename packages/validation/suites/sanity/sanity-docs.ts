@@ -201,7 +201,22 @@ export const SANITY_DOCS: ValidationDoc[] = [
   })),
   doc({
     id: 't25-rocuronium-sugammadex', title: 'Rocuronium 0.6 mg/kg → sugammadex 2 mg/kg at T2', source: `${T7} 25`, durationS: 2400, mode: 'modeled', requires: ['7f', '7g'],
-    actions: [at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' })), at(1800, ev({ kind: 'drug', drugId: 'sugammadex', dose: 2, unit: 'mg/kg' }))],
+    // FU-4 (G-FU3 ruling 4): ventilated from induction as clinically done; spontaneous breathing is allowed back with the reversal
+    actions: [at(0, ev({ kind: 'airwayDevice', device: 'ett' })), at(0, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 })),
+      at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' })), at(1800, ev({ kind: 'drug', drugId: 'sugammadex', dose: 2, unit: 'mg/kg' })),
+      at(1800, ev({ kind: 'ventilation', source: 'spontaneous' }))],
     segments: [seg('recovery', 1800, 2400, rng('rr-back', 'state:rr', 'firstTAbove', 60, 240, `${T7} 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]`, { threshold: 4 }))],
+  }),
+  doc({
+    // FU-4 (G-FU3 ruling 4): the stress document — the same paralysis NEVER ventilated must end in an arrest (FU-3 Task 5,
+    // FU-4 Tasks 4–6): an unventilated paralysed adult on room air arrests 5–14 min after SaO2 < 60 % (DeBehnke 1995;
+    // Varvarousi 2011) — SBP below 30 within 5–20 min of the dose
+    id: 't25-apnoea', title: 'Rocuronium 0.6 mg/kg, never ventilated: asphyxial arrest', source: `${T7} 25 (stress); FU-3 item 16`, durationS: 1800, mode: 'modeled', requires: ['7f', '7g'],
+    // FU-4 (measured, recorded as a deviation): the helper's default baseline sends `setTarget hr 75`, which in MODELED
+    // HOLDS the rate (FU-2 rate rule: the instructor's rate) — the asphyxial bradycardia then cannot happen and the
+    // paralysed patient did not arrest in 29 min. The stress document leaves the rate to the reflex (pressures only).
+    patient: { baseline: { sbp: 120, dbp: 70 } },
+    actions: [at(60, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg' }))],
+    segments: [seg('arrest', 60, 1800, rng('sbp-collapse', 'state:sbp', 'firstTBelow', 300, 1200, 'asphyxial arrest 5–20 min after the dose [P: DeBehnke 1995; Varvarousi 2011]', { threshold: 30 }))],
   }),
 ];
