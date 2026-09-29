@@ -86,6 +86,13 @@ export const MASS_FLOW_DEFICIT_ML_MIN = 20; // apnoeic mass flow ≈ VO2 − ~20
 export const BLOOD_VENOUS_FRACTION = 0.75; // venous share of blood volume, the O2 buffer [ENG]
 export const CO_REF_LPM = 5.25; // Stage 2's SV_REF 70 mL × 75 bpm: CO ratio reference [ENG]
 export const CI_LPM_PER_KG = 0.075; // Q for gas exchange = CO ratio × 0.075 L/min/kg × effective weight [ENG]
+/**
+ * Stage V.1 (E-V1-1): the CO-ratio reference is the PATIENT's own resting flow, CI_LPM_PER_KG × effective weight
+ * (= CO_REF_LPM 5.25 at 70 kg). Dividing a 16 kg child's 1.3 L/min by the adult 5.25 read as a low-flow state.
+ */
+export function coRefLpm(p: { effKg: number }): number {
+  return CI_LPM_PER_KG * p.effKg;
+}
 
 export type AgeBand = 'neonate' | 'infant' | 'child' | 'adult' | 'elderly';
 export function ageBand(ageY: number): AgeBand {

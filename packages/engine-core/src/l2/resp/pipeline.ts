@@ -26,7 +26,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, CO_REF_LPM, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -324,7 +324,9 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // Q = coRatio × CI_LPM_PER_KG × effKg), not to the adult 5.25 L/min — a 16 kg child at rest read 0.21 and an infant
   // 0.10, so the low-flow CO2 compression (lowFlowFactor 0.40 / 0.24) treated every small patient as in low-flow
   // shock: PaCO2 67 / 81 on 7 mL/kg, and the 7 kg infant crash (FU-6 Request 3). The 70 kg adult is bit-identical.
-  rs.coRatio = (cardiacOutput(h, t) / (CI_LPM_PER_KG * rs.pat.effKg)) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // V.1 (E-V1-1): the patient's own resting-flow reference; during CPR the adult one, because cardiacOutput() returns
+  // an ADULT-absolute compression flow (SV_REF 70 mL × CPR_SV_FRAC) — a child's CPR keeps its low-flow ratio
+  rs.coRatio = (cardiacOutput(h, t) / (h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat))) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
   // temperature at 1 Hz; MANUAL tempCore target places the model (plan decision 2)
   if (rs.gasK % 10 === 0) {
     const tc = l1Target(l1, 'tempCore', t);
