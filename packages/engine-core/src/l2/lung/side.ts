@@ -27,6 +27,8 @@ export interface LungParams {
   ccw: number; // mL/cmH2O
   rTube: number; // cmH2O·s/L
   extraShunt: number; // extrapulmonary / extra true shunt, fraction of CO
+  /** Stage V.1 (E-V1-2): the part of extraShunt that is alveolar flooding (lung water) — PEEP relieves it (tables §4.5). */
+  waterShunt: number;
   frcMult: number;
   ibwKg: number;
   /** Values the lung module only passes on (7a, 7f): */
@@ -49,7 +51,7 @@ export function healthyParams(ibwKg = 70): LungParams {
     cL: cL * sh, aerRef: 1, rLung: rLungTot / sh, rawExp: 1.2, fSlow: 0, tauSlowS: 0.5, atel: 0, consol: 0,
     pOpen: 40, tauRecS: 2.6, vqLow: 0.02, vdAlv: 0.075, dl: 1, hpv: 0.5, perf: 1,
   }));
-  return { side, ccw, rTube: R_TUBE / w, extraShunt: 0, frcMult: 1, ibwKg, pvr: 1, tIt: 0.4, pPtx: 0, leakFrac: 0, co2Slope: 1, pMax: 1 };
+  return { side, ccw, rTube: R_TUBE / w, extraShunt: 0, waterShunt: 0, frcMult: 1, ibwKg, pvr: 1, tIt: 0.4, pPtx: 0, leakFrac: 0, co2Slope: 1, pMax: 1 };
 }
 
 /**
