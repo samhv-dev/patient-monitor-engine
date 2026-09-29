@@ -115,12 +115,16 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
     expect(c.tPulseBack).toBeDefined();
     expect(c.decayedBeforeRosc ?? false).toBe(false);
   }, 300_000);
-  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 3 min (measured +113 s of CPR)', async () => {
+  // FU-8 (E-FU8-9, orchestrator ruling 3): RE-STATED. The 3-min wording was a measurement, not a sourced band (FU-4's
+  // own plan called it arbitrary and proposed 4 min): +113/+119 s came from the suction artefact that drained the
+  // chambers to negative volumes. With the outflow limiter CPR cannot perfuse an empty heart until the 2 L are in
+  // (+180 s); the pulse follows ≈ 80 s later (CoPP 0.2 → 22.6)
+  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 5 min (measured +260 s of CPR after FU-8 A19, the outflow limiter; +119 s on the suction artefact before)', async () => {
     const c = await rosc;
     expect(c.tArrest).toBeDefined();
     expect(c.cprCpp.length).toBeGreaterThan(10);
     expect(c.tPulseBack).toBeDefined();
-    expect((c.tPulseBack as number) - ((c.tArrest as number) + 60)).toBeLessThanOrEqual(180);
+    expect((c.tPulseBack as number) - ((c.tArrest as number) + 60)).toBeLessThanOrEqual(300);
   }, 300_000);
   it.fails('ROSC rig: the continuous CPR CoPP stays inside Paradis 15–25 throughout (≥ 15 was asserted; ≤ 25 added by F1) — measured −0.4–36.6', async () => {
     const c = await rosc;

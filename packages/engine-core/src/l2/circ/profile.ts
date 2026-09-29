@@ -2,7 +2,7 @@
 // blood volume, chamber and vessel scaling, arterial stiffness, baroreflex gain, MAP set point and resting HR;
 // conditions (HFrEF, HFpEF, HTN, valve grades, CAD grade, β-blockade) apply multipliers in list order. The result
 // is the base CircParams plus the targets the stabiliser tunes to (tables A19). Pure, deterministic, plain data.
-import type { CircParams } from './circuit.ts';
+import { V_EMPTY_ML, type CircParams } from './circuit.ts';
 import {
   A_LV, A_RV, AVA_REF, BETA_LV, BETA_RV, BV_ML_KG_F, BV_ML_KG_M, C_PA, C_PV, C_SV, EES_LV, EES_RV, EMAX_LA, EMAX_RA, EMIN_LA,
   EMIN_RA, GORLIN_AV, GORLIN_MV, MVA_REF, PERI_A, PERI_LAMBDA, PVR, R_AV, R_MV, R_PV, R_PVLA, R_TV, R_VR, RIGHT_LUNG_FLOW, V0_LA,
@@ -124,6 +124,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     tv: { r: R_TV / w, k: 0, eroa: 0 }, pv: { r: R_PV / w, k: 0, eroa: 0 }, mv: { r: R_MV / w, k: 0, eroa: 0 }, av: { r: R_AV / w, k: 0, eroa: 0 },
     periA: PERI_A, periLambda: PERI_LAMBDA / w, v0Peri: 0, vFluid: 0,
     vCprRef: V_CPR_REF_FRAC * bvKg * pr.weightKg, // FU-4 F1(a)
+    vEmpty: V_EMPTY_ML * w, // FU-8 (F6): the outflow limiter scales with the heart (0.25 mL in a 3.5 kg neonate)
   };
   const r: ResolvedProfile = {
     band, params: p, bloodVolumeMl: bvKg * pr.weightKg, stressedFrac: band === 'elderly' ? 0.22 : 0.25,
