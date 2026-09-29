@@ -320,8 +320,18 @@ New:
       CPR + 2 L + adrenaline after exsanguination no longer regains a pulse (was +105 s). Cause: `cbfRel` falls below
       0.6 in non-arrest states (induction hypotension, class III), so the factor is not ischaemia-only. Side moves:
       healthy S1 0.762 (−24 %), S2 −18.5 %, S14 −26.0 % (into band), 10-min VF kIsch max 0.86 (into band).
-    A withdrawal index that reads true no-flow (e.g. the arrest state or the coronary/systemic flow share, not CBF) is
-    the remaining candidate — for the orchestrator.
+    - *(3) Withdrawal by the TRUE no-flow index* (the orchestrator's last prototype) — the same patch driven by the
+      declared arrest state, ramped over the declaration's own `NO_FLOW_S` (1 in every perfusing state): (a) met — CPR
+      alone, no pulse in 10 min, CoPP 2.9–3.5; (c) met — no pulse without fluid; (b) VF + CPR CoPP 24.8 → 31.5 after
+      adrenaline (unchanged; a commanded VF declares no engine arrest); (d) every perfusing row bit-identical (S1 0.784,
+      S2 −14.3 %, S14 −22.9 %, S4a +165 s, S4b, S5, S6a nadir 26.6 without arrest, S6b 1.83, S8 +9.75 min, S9, S10,
+      S13 25.1–28.8, S16, the MANUAL rows); the class IV ROSC rig (CPR 60 s after the arrest) still regains a pulse
+      (+119 s, was +113). **It fails the strict (d)**: after FULL exsanguination, CPR + 2 L (over 300 s) + adrenaline
+      1 mg from 720 s no longer regains a pulse within 10 min (was +105 s) — without the humoral recruitment, 2 L is
+      not enough to refill the pool.
+    **Ruled final (orchestrator, 2026-09-29): three mechanisms prototyped and failed; item 23 stays OPEN with its
+    `it.fails` (pulse at +175 s of CPR alone) and goes to the calibration queue.** Patches in the executor's scratch:
+    `gfu41-clamp.patch`, `gfu41-ischaemic-withdrawal.patch`, `gfu41-arrest-withdrawal.patch`.
 24. **The Bezold–Jarisch term** (Task 12 Step 3) withdrawn: it delays obstructive-shock arrests (PTX +16.75 min). Wanted
     at all, and if so gated how?
 25. **Validation baselines hold the MODELED rate** (`setTarget hr` in every sanity document's patient block): a held
