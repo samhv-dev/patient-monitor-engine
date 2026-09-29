@@ -4,7 +4,7 @@ Branch `fu-4-integration-polish`, cut from `origin/main` after FU-3 (PR #23). Pl
 (Tasks 0–24, with the R50 review's Phase 2, Tasks 18a–18g), executed in order across four executors (three usage-cap
 resumptions); one commit per task (plus the plan's WIP and R45 follow-ups), pushed after each. `origin/main` was merged
 five times (the last at `4fe5a7a`); every merge brought docs only (`docs/RESUME.md`). **FU-5, V.1, FU-6 and 8b had not
-landed** at the gate, so no stop and no FU-5 re-run was needed; `truth.ts` SKIP_PATH is FU-4's alone
+landed on `main`** at the gate (FU-5's merge-first ruling: §9b); `truth.ts` SKIP_PATH is FU-4's alone
 (`hemo.circ.acc`, `hemo.circ.cppAcc`). Every number below was measured on this branch (seed 7 unless stated) unless
 marked "plan" or "prototype".
 
@@ -318,6 +318,21 @@ New:
 27. **7c water balance:** the resting 24 h drift (bvRel −0.5 %, Hb +0.08) behind the soak lactate.
 28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled.
 
+## 9b. FU-5 (PR #24) — the orchestrator's merge-first ruling, NOT executed on this branch
+
+The orchestrator ruled at the gate that FU-5 merges first and that this branch merge `origin/fu-5-monitor-fidelity`
+(`d1a2175`) before the PR, keep both sides (`truth.ts` SKIP_PATH = the union), meet FU-5's four fidelity tests that
+failed on FU-5's trial merge, re-run FU-5's `fidelity-*` slow files and `pnpm audit:monitor`, and record FU-5's
+low-flow screenshot's yellow "**CVP -1<0" (the negative chamber volumes of the exsanguination rig, noted in 18a) for the
+calibration queue. **The merge of the FU-5 branch was refused by this session's permission system**, so none of that
+was done here; the branch's base is `origin/main` at `4fe5a7a`'s merge (docs only). What the next step inherits, as
+ruled: (1) EXTREME BRADY cycling every 3.3 s after a latched ASYSTOLE in Ali's tamponade case, and a 1 s SpO2 LOW PERF
+cycle in the 3 L bleed — fix only on FU-5's L2 signal-quality / L3 alarm side (the `agonal` rate below the asystole
+threshold declared as asystole; LOW PERF hysteresis), else `it.fails` with the cycle counts under an "FU-5 follow-up"
+list; (2) the PEA HR reading 4.3 off the electrical rate (the PEA now decays) and the ear-probe desaturation lag 13 s vs
+12 s — R45 re-statements under a declared exception with one sentence of reason; (3) the "CVP -1" row to the
+calibration queue. Once `#24` is on `main`, `git merge origin/main` brings all of it.
+
 ## 10. Verification (at `4fe5a7a` + the S8 flip `93808e7`)
 
 - `pnpm typecheck` (all packages, apps/demo): clean.
@@ -329,7 +344,9 @@ New:
 - Disjointness gate (Task 20, `PME_TEST_SET=slow-a|slow-b|slow npx vitest list --filesOnly`, with the suite file present):
   `comm -12 a b` printed **nothing**; **10 + 39 = 49** files (before the suite existed: 9 + 39 = 48). CI walls: not yet
   measured (the PR's first run records them; D17 estimate ≈ 35 min each).
-- e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e`): ⟨E2E⟩; the FU-4 smoke alone: 1 passed (3.5 min).
+- e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e`, Chrome, 630 s): 27 passed, 1 skipped (stage7d shots), 5 failed — the IIFE
+  smoke (2) and stage6a-worker (3) need the built bundle; after `pnpm build` (as CI runs it) those 5 pass → **32 passed,
+  1 skipped**. The FU-4 smoke: passed (3.5 min).
 - `check-notices`: OK (3 governed files). `audit:physiology`: 79 scenarios → `audit-after.md`.
 - tick-bench (local, 120 s, loaded machine): **p50 0.56 ms**, p95 0.92, p99 1.31 (CI bound 6 ms; the fast-set test passed).
 - Local 24 h: pk-longrun propofol Ce 2.5058 (its `it.fails` holds); organs-soak lactate drift 0.0141 (band 0.02);
