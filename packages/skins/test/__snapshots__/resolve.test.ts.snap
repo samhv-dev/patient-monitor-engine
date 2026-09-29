@@ -1948,8 +1948,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
       "profile": "iec-style",
       "repeatS": {},
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,
@@ -1970,9 +1970,204 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     },
   },
   "limits": {
-    "adult": null,
-    "neo": null,
-    "paed": null,
+    "adult": {
+      "ART_D": [
+        50,
+        90,
+      ],
+      "ART_M": [
+        70,
+        110,
+      ],
+      "ART_S": [
+        90,
+        160,
+      ],
+      "CVP_M": [
+        0,
+        10,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        50,
+        120,
+      ],
+      "HR_extremeBrady": 35,
+      "HR_extremeTachy": 160,
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        0,
+        16,
+      ],
+      "PAP_M": [
+        0,
+        20,
+      ],
+      "PAP_S": [
+        10,
+        35,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        20,
+        60,
+      ],
+      "ART_M": [
+        35,
+        70,
+      ],
+      "ART_S": [
+        55,
+        90,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        30,
+        45,
+      ],
+      "HR": [
+        100,
+        200,
+      ],
+      "HR_extremeBrady": 60,
+      "HR_extremeTachy": 220,
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        30,
+        100,
+      ],
+      "SpO2": [
+        90,
+        95,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 15,
+    },
+    "paed": {
+      "ART_D": [
+        40,
+        70,
+      ],
+      "ART_M": [
+        50,
+        90,
+      ],
+      "ART_S": [
+        70,
+        120,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        75,
+        160,
+      ],
+      "HR_extremeBrady": 50,
+      "HR_extremeTachy": 180,
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
   },
   "render": {
     "background": "#000000",
@@ -2063,8 +2258,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
       "profile": "iec-style",
       "repeatS": {},
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,
@@ -2085,9 +2280,204 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     },
   },
   "limits": {
-    "adult": null,
-    "neo": null,
-    "paed": null,
+    "adult": {
+      "ART_D": [
+        50,
+        90,
+      ],
+      "ART_M": [
+        70,
+        110,
+      ],
+      "ART_S": [
+        90,
+        160,
+      ],
+      "CVP_M": [
+        0,
+        10,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        50,
+        120,
+      ],
+      "HR_extremeBrady": 35,
+      "HR_extremeTachy": 160,
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        0,
+        16,
+      ],
+      "PAP_M": [
+        0,
+        20,
+      ],
+      "PAP_S": [
+        10,
+        35,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        20,
+        60,
+      ],
+      "ART_M": [
+        35,
+        70,
+      ],
+      "ART_S": [
+        55,
+        90,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        30,
+        45,
+      ],
+      "HR": [
+        100,
+        200,
+      ],
+      "HR_extremeBrady": 60,
+      "HR_extremeTachy": 220,
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        30,
+        100,
+      ],
+      "SpO2": [
+        90,
+        95,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 15,
+    },
+    "paed": {
+      "ART_D": [
+        40,
+        70,
+      ],
+      "ART_M": [
+        50,
+        90,
+      ],
+      "ART_S": [
+        70,
+        120,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        75,
+        160,
+      ],
+      "HR_extremeBrady": 50,
+      "HR_extremeTachy": 180,
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
   },
   "render": {
     "background": "#FFF8F4",
@@ -2183,8 +2573,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
       "profile": "iec-style",
       "repeatS": {},
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,
@@ -2205,9 +2595,204 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot min
     },
   },
   "limits": {
-    "adult": null,
-    "neo": null,
-    "paed": null,
+    "adult": {
+      "ART_D": [
+        50,
+        90,
+      ],
+      "ART_M": [
+        70,
+        110,
+      ],
+      "ART_S": [
+        90,
+        160,
+      ],
+      "CVP_M": [
+        0,
+        10,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        50,
+        120,
+      ],
+      "HR_extremeBrady": 35,
+      "HR_extremeTachy": 160,
+      "NIBP_D": [
+        50,
+        90,
+      ],
+      "NIBP_M": [
+        60,
+        110,
+      ],
+      "NIBP_S": [
+        90,
+        160,
+      ],
+      "PAP_D": [
+        0,
+        16,
+      ],
+      "PAP_M": [
+        0,
+        20,
+      ],
+      "PAP_S": [
+        10,
+        35,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
+    "neo": {
+      "ART_D": [
+        20,
+        60,
+      ],
+      "ART_M": [
+        35,
+        70,
+      ],
+      "ART_S": [
+        55,
+        90,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        30,
+        45,
+      ],
+      "HR": [
+        100,
+        200,
+      ],
+      "HR_extremeBrady": 60,
+      "HR_extremeTachy": 220,
+      "NIBP_D": [
+        20,
+        60,
+      ],
+      "NIBP_M": [
+        25,
+        70,
+      ],
+      "NIBP_S": [
+        40,
+        90,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        30,
+        100,
+      ],
+      "SpO2": [
+        90,
+        95,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 15,
+    },
+    "paed": {
+      "ART_D": [
+        40,
+        70,
+      ],
+      "ART_M": [
+        50,
+        90,
+      ],
+      "ART_S": [
+        70,
+        120,
+      ],
+      "CVP_M": [
+        0,
+        4,
+      ],
+      "EtCO2": [
+        25,
+        50,
+      ],
+      "HR": [
+        75,
+        160,
+      ],
+      "HR_extremeBrady": 50,
+      "HR_extremeTachy": 180,
+      "NIBP_D": [
+        40,
+        70,
+      ],
+      "NIBP_M": [
+        50,
+        90,
+      ],
+      "NIBP_S": [
+        70,
+        120,
+      ],
+      "PAP_D": [
+        -4,
+        4,
+      ],
+      "PAP_M": [
+        12,
+        26,
+      ],
+      "PAP_S": [
+        24,
+        60,
+      ],
+      "RR": [
+        8,
+        30,
+      ],
+      "SpO2": [
+        90,
+        100,
+      ],
+      "SpO2_desat": 80,
+      "TEMP": [
+        35,
+        38,
+      ],
+      "apneaS": 20,
+    },
   },
   "render": {
     "background": "#FFFFFF",
@@ -2301,8 +2886,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
         "L2": 20,
       },
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,
@@ -2598,8 +3183,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
         "L2": 20,
       },
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,
@@ -2900,8 +3485,8 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
         "L2": 20,
       },
       "silence": {
-        "cancelOnNewAlarm": false,
-        "durationS": 90,
+        "cancelOnNewAlarm": true,
+        "durationS": 0,
       },
       "volume": {
         "default": 5,

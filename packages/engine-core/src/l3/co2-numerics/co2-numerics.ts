@@ -18,6 +18,8 @@ export interface Co2Num {
   edges: number[]; // rising-edge times, last 7
   breaths: Array<{ t: number; et: number; fi: number }>;
   apnoea: boolean;
+  /** FU-5: the skin's gas-apnoea time (skin `limits.*.gasApneaS`, else `apneaS`), s; absent = GAS_APNOEA_S. */
+  apneaS?: number;
 }
 
 export function createCo2Num(): Co2Num {
@@ -53,7 +55,7 @@ export function co2NumStep(st: Co2Num, t: number, x: number, dt: number): 'breat
     }
   }
   const last = st.edges[st.edges.length - 1] ?? 0; // the timer starts at power-on
-  if (!st.apnoea && t - last > GAS_APNOEA_S && !st.high) {
+  if (!st.apnoea && t - last > (st.apneaS ?? GAS_APNOEA_S) && !st.high) {
     st.apnoea = true;
     return 'apnoea';
   }
@@ -61,6 +63,9 @@ export function co2NumStep(st: Co2Num, t: number, x: number, dt: number): 'breat
 }
 
 export function co2Numerics(st: Co2Num, t: number, shownNow: number): { etco2: Measured; imco2: Measured; awrr: Measured } {
+  // FU-5 (audit M14): until two breaths are detected the capnograph has measured nothing whole — not a valid EtCO2 of 0
+  // (which raised `**etCO2 0<30` at power-on on every run), nor the partly sampled first breath (`**etCO2 13<30`) [ENG]
+  if (st.edges.length < 2 && !st.apnoea) return { etco2: { value: null, flag: 'invalid', at: t }, imco2: { value: null, flag: 'invalid', at: t }, awrr: { value: null, flag: 'invalid', at: t } };
   const recent = st.breaths.filter((b) => b.t >= t - ETCO2_WINDOW_S);
   const et = recent.length > 0 ? Math.max(...recent.map((b) => b.et)) : Math.max(0, shownNow);
   const fi = recent.length > 0 ? Math.min(...recent.map((b) => b.fi)) : Math.max(0, shownNow);

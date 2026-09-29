@@ -546,7 +546,12 @@ class Engine implements MonitorEngine {
         if (n > 0 && n % ECG_RATE === 0) {
           const t = n / ECG_RATE;
           const hra = this.hrAveraging();
-          ps.out.push({ type: 'measurement', t, values: { hr: hrMeasure(ps.hrm, t, hra.avg, hra.method) } }); // FU-1/FU-3: the skin's averaging
+          // FU-5 (audit M3): with the leads off the ECG measures nothing — HR is invalid ("-?-"), never a valid 0 — and the
+          // RR history is dropped, so the beats after reconnection start a fresh average (no `HR 0<50` on reconnect)
+          const off = ps.mods.artefact.leadOff;
+          if (off) ps.hrm = createHrState(ps.hrm.method);
+          const hr = off ? { value: null, flag: 'invalid' as const, at: t } : hrMeasure(ps.hrm, t, hra.avg, hra.method, this.dev.alarms.profile.arrhythmia.asystoleS);
+          ps.out.push({ type: 'measurement', t, values: { hr } }); // FU-1/FU-3: the skin's averaging
         }
       },
     );
@@ -645,6 +650,9 @@ class Engine implements MonitorEngine {
       pulseless: ps.rhythm.opts.pulseless === true,
       spo2Probe: ps.hemo.pleth.state,
       leadsOff: ps.mods.artefact.leadOff,
+      co2: ps.resp.co2Sensor, // FU-5
+      abp: ps.hemo.lines.abp.sensor === 'connected' && simT < ps.hemo.lines.abp.zeroUntil ? 'zeroing' : ps.hemo.lines.abp.sensor,
+      temp: ps.resp.tempSensor,
       committedN: ps.n,
       vcgAt: (n) => {
         const x = bx.at(n);
@@ -832,9 +840,20 @@ class Engine implements MonitorEngine {
     }
   }
 
-  /** R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). */
+  /**
+   * R39-5: the capnograph's sidestream delay/rise come from the active skin (research 09 §5). FU-5: so do the other
+   * device settings a skin declares (SpO2 averaging/update, …), applied on creation, restore and skin switch.
+   */
   private syncCo2Sampler(): void {
-    this.st.resp.sampler.side = { ...this.dev.alarms.profile.co2Sidestream };
+    const p = this.dev.alarms.profile;
+    this.st.resp.sampler.side = { ...p.co2Sidestream };
+    this.st.resp.num.spo2.avgS = p.spo2.averagingS;
+    this.st.resp.num.spo2.updS = p.spo2.updateS;
+    for (const wn of [this.st.hemo.num.abp, this.st.hemo.num.pap]) wn.staticDisplay = p.ibpStaticDisplay;
+    for (const ls of [this.st.hemo.lines.abp, this.st.hemo.lines.cvp, this.st.hemo.lines.pap]) ls.fHz = p.ibpFilterHz;
+    this.st.hemo.nibp.cfg = { ...p.nibp };
+    if (p.apneaS !== null) this.st.resp.num.imp.apneaS = p.apneaS; // null (APNEA LIMIT OFF): the detector keeps its time, the alarm is off
+    if (p.gasApneaS !== null) this.st.resp.num.co2.apneaS = p.gasApneaS;
   }
 
   /**

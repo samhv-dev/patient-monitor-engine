@@ -13,6 +13,7 @@ const SLOW = [
   'test/engine/lung-copd.test.ts',
   'test/engine/resp-coupling.test.ts',
   'test/engine/hemo-nibp.test.ts',
+  'test/engine/fidelity-*.test.ts', // FU-5: monitor-fidelity scenarios (up to 45 sim-min each)
   'test/engine/circ-sanity-*.test.ts',
   'test/engine/pk-acceptance-*.test.ts',
   'test/engine/endo-acceptance.test.ts', // Stage 7e: MH, glucose and sepsis scenarios (sim-hours)

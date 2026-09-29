@@ -21,7 +21,7 @@ export type ChannelId =
   | TeachingChannel // Stage 7a
   | 'icp'; // Stage 7d
 export type NumericId =
-  | 'hr' | 'pr' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
+  | 'hr' | 'pr' | 'prAbp' | 'spo2' | 'pi' | 'abpSys' | 'abpDia' | 'abpMean' | 'cvpMean' | 'papSys' | 'papDia' | 'papMean'
   | 'nibpSys' | 'nibpDia' | 'nibpMean' | 'etco2' | 'imco2' | 'awrr' | 'rr' | 'tempCore' | 'tempSite' | 'stII' | 'qtc'
   | NeuroNumericId // Stage 7f
   | OrganNumericId; // Stage 7d

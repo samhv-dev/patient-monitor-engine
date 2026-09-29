@@ -1,0 +1,70 @@
+// FU-5: the FU-3 gate screenshot reproduced and fixed (G-FU3 ruling 7; research/10 §0 item 2). FU-3's evidence run
+// (apps/demo/scripts/fu3-neuro-tiles-shots.mjs: the 7f page, the induction script, sim ≈ 460 s) showed a red,
+// live-looking, audible "APNEA (RESP)" on philips-like while the ventilator breathed. After FU-5: one apnoea raised one
+// "***APNEA" (the capnograph is the RR source), and once ventilation resumed it is shown LATCHED — framed, lamp off,
+// silent — per the IntelliVue #H30 setting (research/05 §6 [S1] p. 135–136, [S2] p. 40); saadat-like does not latch.
+// Chromium only (≈ 2 min of wall time per skin at × 4).
+import { mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { expect, test, type Page } from '@playwright/test';
+import { createServer, type ViteDevServer } from 'vite';
+
+let vite: ViteDevServer;
+let base = '';
+const out = resolve(import.meta.dirname, '../../../docs/gates/fu-5');
+test.use({ viewport: { width: 1000, height: 660 }, deviceScaleFactor: 0.8 });
+test.beforeAll(async () => {
+  vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
+  await vite.listen();
+  const addr = vite.httpServer?.address();
+  base = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`;
+  mkdirSync(out, { recursive: true });
+});
+test.afterAll(async () => vite?.close());
+
+const simT = (page: Page) => page.evaluate(() => (window as unknown as { __simT?: number }).__simT ?? 0);
+
+for (const skin of ['philips-like', 'saadat-like']) {
+  test(`FU-3 screenshot, fixed (${skin}): the induction apnoea raises one APNEA, never "APNEA (RESP)"; after ventilation it is latched and stays in the message rotation (philips-like) or cleared, per vendor`, async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'heavy evidence run: Chromium only (G7g rule)');
+    test.setTimeout(420_000);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto(`${base}/stage7f.html?skin=${skin}`);
+    await expect.poll(() => simT(page), { timeout: 30_000 }).toBeGreaterThan(1);
+    const tClick = await simT(page); // the script's times are relative to the click (≈ 1–5 s: later on a loaded machine)
+    await page.click('#induction'); // propofol at sim +120 s (apnoea), BVM at +180 s, ventilator at +330 s (× 4)
+    const seen: Array<{ t: number; text: string; latched: string | null; lamp: string | null }> = [];
+    while ((await simT(page)) < 460) {
+      const bar = page.locator('.pme-bar');
+      seen.push({ t: await simT(page), text: await bar.innerText(), latched: await bar.getAttribute('data-latched'), lamp: await page.locator('.pme-lamp').getAttribute('data-lamp') });
+      await page.waitForTimeout(400);
+    }
+    // the gate note quotes these spans (sim s; logged before the assertions so a failing run records them too): when the APNEA was live, when latched, and the bar at the end
+    const span = (f: (s: (typeof seen)[number]) => boolean) => {
+      const x = seen.filter(f).map((s) => s.t);
+      return x.length ? `${x[0]!.toFixed(0)}–${x[x.length - 1]!.toFixed(0)} s` : 'none';
+    };
+    console.log(`[fu5-latched ${skin}] click at sim ${tClick.toFixed(1)} s; APNEA live ${span((s) => /APNEA/.test(s.text) && s.latched !== 'true')}; latched ${span((s) => /APNEA/.test(s.text) && s.latched === 'true')}; bar at the end "${seen[seen.length - 1]?.text ?? ''}"`);
+    expect(seen.filter((s) => /APNEA \(RESP\)/.test(s.text)).map((s) => s.t)).toEqual([]);
+    expect(new Set(seen.filter((s) => /APNEA/.test(s.text)).map((s) => s.text)).size).toBeLessThanOrEqual(1);
+    expect(seen.some((s) => /APNEA/.test(s.text) && s.latched !== 'true')).toBe(true); // the induction apnoea did alarm
+    // once the bag breathes (from sim 180 s; the capnograph sees breaths by ≈ 186 s), an APNEA on the bar is the latched
+    // one — framed, never with the red lamp; philips-like rotates every unacknowledged message every 2 s (review ruling 4,
+    // [S2] IFU p. 29–30), so the latched APNEA stays in the rotation beside a live yellow ABP limit alarm until the end of
+    // the run (before the fix the live yellow took the single bar from ≈ 195 s); saadat-like does not latch (live
+    // ≈ 182–187 s, then nothing)
+    // anchored on the click: the bag from tClick + 180 s, so "from sim 190 s" is tClick + 189 s (the executor's first run,
+    // two workers on a loaded machine, failed the fixed 190 on philips-like; the same tree passed alone)
+    const tBag = tClick + 180;
+    const after = seen.filter((s) => s.t >= tBag + 9 && /APNEA/.test(s.text));
+    if (skin === 'philips-like') {
+      expect(after.length).toBeGreaterThan(0);
+      expect(after.every((s) => s.latched === 'true' && s.lamp !== 'red-flash')).toBe(true);
+      expect(after.some((s) => s.t >= 440)).toBe(true); // still in the rotation at the end of the run
+    } else expect(after).toEqual([]);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: resolve(out, `fu5-fu3-latched-${skin}.png`), clip: { x: 0, y: 0, width: 1000, height: 650 } });
+    expect(errors).toEqual([]);
+  });
+}

@@ -5,6 +5,7 @@
 // targets), never by editing L2.
 import { uniform, type Sfc32State } from '../rng/sfc32.ts';
 import type { AgeBand, DeviceClinicalEvent } from '../types-device.ts';
+import type { LineSensorState } from '../types-hemo.ts';
 import type { Command, EngineEvent, ModifiersPatch, Ramp, RhythmId, RhythmOpts, StateVar } from '../types.ts';
 import { buildConditions, createInputs, observeEvent, observeQrs, type AlarmInputs } from './alarms/conditions.ts';
 import { applyAlarmAction, createAlarmMgr, setProfile, stepAlarms, validateAlarmAction, type AlarmMgrState } from './alarms/manager.ts';
@@ -65,6 +66,11 @@ export interface DeviceHost {
   pulseless: boolean;
   spo2Probe: 'on' | 'off' | 'motion';
   leadsOff: boolean;
+  /** FU-5: the capnograph's sensor state (the apnoea source while 'on'). */
+  co2: 'off' | 'warmup' | 'on' | 'occluded';
+  /** FU-5: the arterial transducer ('zeroing' while a zero runs) and the temperature probe. */
+  abp: LineSensorState;
+  temp: 'off' | 'on';
   /** First ECG sample index not yet committed. */
   committedN: number;
   /** One committed VCG sample (null when not held). */
@@ -289,7 +295,12 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   const vf = VF_RHYTHMS.has(host.rhythmId);
   if (vf && inp.vfSince === null) inp.vfSince = t;
   if (!vf) inp.vfSince = null;
+  if (inp.spo2Probe === 'off' && host.spo2Probe !== 'off') inp.spo2OnSince = t; // FU-5: the oximeter starts acquiring
   inp.spo2Probe = host.spo2Probe;
+  inp.co2 = host.co2;
+  inp.abp = host.abp;
+  inp.temp = host.temp;
+  if (host.temp === 'on') inp.tempSeen = true;
   inp.pacing = d.pacer.mode !== 'off';
   stepAlarms(d.alarms, t, buildConditions(d.alarms, inp, t), out);
   // device status on change and at 1 Hz

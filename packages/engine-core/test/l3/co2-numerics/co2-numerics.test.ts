@@ -21,4 +21,10 @@ describe('CO2 numerics', () => {
     expect(apnoeaAt - 47).toBeLessThanOrEqual(20.1);
     expect(co2Numerics(st, 80, 2).awrr.value).toBe(0);
   });
+
+  it('FU-5 (M14): until two breaths are detected EtCO2 is invalid — not a valid 0, nor the partly sampled first breath', () => {
+    const st = createCo2Num();
+    for (let m = 0; m < 62.5 * 3; m++) co2NumStep(st, m / 62.5, 0, 1 / 62.5);
+    expect(co2Numerics(st, 3, 0).etco2).toMatchObject({ value: null, flag: 'invalid' });
+  });
 });

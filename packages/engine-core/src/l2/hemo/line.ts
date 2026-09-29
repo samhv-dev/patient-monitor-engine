@@ -19,6 +19,16 @@ import {
 } from './params.ts';
 
 export const DISPLAY_FILTER: readonly Biquad[] = [lowpass(DISPLAY_FILTER_HZ, HEMO_RATE)];
+const FILTERS = new Map<number, readonly Biquad[]>([[DISPLAY_FILTER_HZ, DISPLAY_FILTER]]);
+/** FU-5 (E-FU5-4): the display low-pass of a skin's IBP filter setting (skin `ibp.filterDefaultHz`: Philips 12, Saadat 16). */
+export function displayFilter(hz: number = DISPLAY_FILTER_HZ): readonly Biquad[] {
+  let f = FILTERS.get(hz);
+  if (!f) {
+    f = [lowpass(hz, HEMO_RATE)];
+    FILTERS.set(hz, f);
+  }
+  return f;
+}
 export const LINE_SENSOR_STATES: readonly LineSensorState[] = ['none', 'atmosphere', 'connected', 'zeroing', 'damped'];
 
 export interface LineState {
@@ -33,6 +43,8 @@ export interface LineState {
   x: number; // transducer output (mmHg)
   v: number; // its derivative
   f: number[]; // display filter state
+  /** FU-5: the display filter corner (Hz) of the active skin; absent = DISPLAY_FILTER_HZ (12). */
+  fHz?: number;
 }
 
 export function createLineState(sensor: LineSensorState = 'none'): LineState {
@@ -93,15 +105,16 @@ export function stepTransducer(ls: LineState, u0: number, u1: number, h: number)
 
 /** The displayed sample: transducer output through the 12 Hz display filter. */
 export function displaySample(ls: LineState): number {
-  return filterSample(DISPLAY_FILTER, ls.f, ls.x);
+  return filterSample(displayFilter(ls.fHz), ls.f, ls.x);
 }
 
 /** Put the transducer and display filter at rest on pressure p (no connection transient). */
 export function settleLine(ls: LineState, p: number): void {
   ls.x = p;
   ls.v = 0;
-  ls.f = createFilterState(DISPLAY_FILTER);
-  for (let i = 0; i < 64; i++) filterSample(DISPLAY_FILTER, ls.f, p);
+  const f = displayFilter(ls.fHz);
+  ls.f = createFilterState(f);
+  for (let i = 0; i < 64; i++) filterSample(f, ls.f, p);
 }
 
 /** attachSensor for abp / cvp / pap (brief §6.2). 'zeroing' returns to 'connected' after ZERO_S. */
