@@ -54,4 +54,10 @@ export interface LungStateExt {
   leakFraction: number;
   autoPeepCmH2O: number;
   conditions: LungConditionSpec[];
+  /**
+   * Stage V.1 (G7b rulings 4+5+13): pressure of the pleural space ABOVE normal, cmH2O — the lungs' own pPtx
+   * (pneumothorax, effusion, haemothorax) max-combined with 7a's tension-pneumothorax `ext.pPtx`, as the heart sees
+   * it (respPleural). The ventilator's single compartment must re-open the lung against it (packages/ventilator).
+   */
+  pleuralCmH2O: number;
 }

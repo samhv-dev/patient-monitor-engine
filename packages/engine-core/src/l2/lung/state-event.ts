@@ -4,6 +4,7 @@ import type { LungConditionSpec, LungStateExt, LungStateLung } from '../../types
 import { staticCompliance, shuntFraction, type LungState } from './lung.ts';
 import { complianceAt } from './venegas.ts';
 import { SIDE_SHARE } from './params.ts';
+import { CMH2O_TO_MMHG } from '../gas/params.ts'; // Stage V.1
 
 const r2 = (x: number) => Math.round(x * 100) / 100;
 
@@ -14,7 +15,7 @@ export interface LungStateCore {
 
 export function lungStatePayload(
   ls: LungState,
-  x: { deadSpaceMl: number; frcMl: number; effort: number; peep: number; baseShunt: number; specs: LungConditionSpec[] },
+  x: { deadSpaceMl: number; frcMl: number; effort: number; peep: number; baseShunt: number; specs: LungConditionSpec[]; pleuralMmHg: number },
 ): LungStateCore & LungStateExt {
   const lp = ls.lp;
   const gs = lp.side.map((s) => 1 / s.rLung);
@@ -53,5 +54,6 @@ export function lungStatePayload(
     leakFraction: r2(lp.leakFrac),
     autoPeepCmH2O: Math.round(autoPeep * 10) / 10,
     conditions: x.specs.map((s) => ({ ...s })),
+    pleuralCmH2O: Math.round((x.pleuralMmHg / CMH2O_TO_MMHG) * 10) / 10, // Stage V.1
   };
 }

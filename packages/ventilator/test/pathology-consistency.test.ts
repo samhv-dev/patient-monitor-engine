@@ -15,6 +15,7 @@ describe('Stage V catalogue numbers come from the engine lung data (Stage 7b Tas
       const r = ventReference({ id: m.id as never, severity: m.severity, ...(m.side ? { side: m.side } : {}) }, pbw);
       expect(row.complianceMl.value).toBeCloseTo(r.crs, 0);
       expect(row.rInsp.value).toBeCloseTo(r.rInsp, 0);
+      expect(row.pleuralCmH2O).toBe(r.pleuralCmH2O); // Stage V.1: the pleural pressure is generated too
       expect(row.complianceMl.lo).toBeLessThanOrEqual(row.complianceMl.value);
       expect(row.complianceMl.hi).toBeGreaterThanOrEqual(row.complianceMl.value);
     }

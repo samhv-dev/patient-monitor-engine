@@ -43,6 +43,7 @@ function onEvent(e: EngineEvent) {
   if (pending && simT >= pending.at) {
     post({ patch: pending.demo.step });
     for (const t of pending.demo.engineStep ?? []) void pm?.dispatch({ id: `demo-${t.variable}-${simT}`, issuedBy: 'vent-link', type: 'setTarget', variable: t.variable, value: t.value, ...(t.rampS ? { ramp: { durationS: t.rampS } } : {}) });
+    (pending.demo.engineEvents ?? []).forEach((event, i) => void pm?.dispatch({ id: `demo-ev${i}-${simT}`, issuedBy: 'vent-link', type: 'applyEvent', event } as Parameters<MonitorHandle['dispatch']>[0])); // Stage V.1
     pending = null;
   }
   const f = (k: string, d = 0) => (last[k] === undefined ? '--' : (last[k] as number).toFixed(d));

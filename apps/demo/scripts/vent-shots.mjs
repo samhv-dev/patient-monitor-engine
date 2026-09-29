@@ -6,7 +6,7 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'vite';
 
 const root = resolve(import.meta.dirname, '..');
-const out = resolve(root, '../../docs/gates/stage-V');
+const out = resolve(root, '../../docs/gates', process.argv[2] ?? 'stage-V'); // Stage V.1: `node apps/demo/scripts/vent-shots.mjs stage-v1`
 mkdirSync(out, { recursive: true });
 const vite = await createServer({ root, configFile: resolve(root, 'vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();

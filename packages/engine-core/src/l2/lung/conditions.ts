@@ -7,6 +7,8 @@ import { healthyParams, type LungParams } from './side.ts';
 
 const GLOBAL: readonly EffectKey[] = ['ccw', 'frc', 'pvr', 'tIt', 'pPtx', 'leakFrac', 'co2Slope', 'pMax', 'extraShunt', 'evlwi'];
 const SIDE_ADD: readonly EffectKey[] = ['atel', 'consol', 'vqLow', 'vdAlv'];
+/** Stage V.1 (E-V1-2): conditions whose extraShunt the data mark "lung-water shunt" (§13 pulmonary oedema, §21 aspiration pneumonitis). */
+const WATER_SHUNT_IDS: readonly string[] = ['pulmOedema', 'aspiration'];
 
 export function conditionData(id: string): LungConditionData | undefined {
   return LUNG_CONDITIONS.find((c) => c.id === id);
@@ -59,6 +61,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
   const sides: Acc[] = [fresh(), fresh()];
   const g = fresh();
   const blocked: LungSide[] = [];
+  let waterAdd = 0; // Stage V.1 (E-V1-2)
   for (const spec of specs) {
     const d = conditionData(spec.id);
     if (!d || !(spec.severity > 0)) continue;
@@ -71,6 +74,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
     const local: Acc[] = [fresh(), fresh()];
     for (const e of d.effects) {
       const v = effectValue(e, s);
+      if (e.key === 'extraShunt' && e.op === 'add' && WATER_SHUNT_IDS.includes(d.id)) waterAdd += v; // Stage V.1 (E-V1-2)
       if (GLOBAL.includes(e.key)) { apply(g, e.key, e.op, v); continue; }
       if (!d.sided) { apply(local[0] as Acc, e.key, e.op, v); apply(local[1] as Acc, e.key, e.op, v); }
       else if (e.where === 'affected') apply(local[si] as Acc, e.key, e.op, v);
@@ -136,6 +140,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
   if (whole > 0.7) for (const sp of lp.side) { const f = 0.7 / whole; sp.atel *= f; sp.consol *= f; sp.aerRef = Math.max(0.05, 1 - sp.atel - sp.consol); }
   lp.ccw = ccwH * g.ccw;
   lp.extraShunt = Math.min(0.6, g.extraShunt + water.shunt);
+  lp.waterShunt = Math.min(lp.extraShunt, waterAdd + water.shunt); // Stage V.1 (E-V1-2)
   lp.frcMult = g.frc;
   lp.pvr = g.pvr;
   lp.tIt = g.tIt;
