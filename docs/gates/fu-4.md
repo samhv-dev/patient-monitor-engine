@@ -147,8 +147,8 @@ AS+CAD, HFrEF, class I–III (incl. + propofol and + sevoflurane), PEEP, pressor
 
 ## 4. The `it.fails` list
 
-`docs/gates/fu-4/it-fails.md` lists all **56** `it.fails` in the repository with file:line and the measured number;
-**36 are FU-4's** (added or re-titled with a new number). FU-4's flips (`it.fails` → `it`): circ-sanity-1 propofol
+`docs/gates/fu-4/it-fails.md` lists all **66** expected failures in the repository (65 `it.fails` + 1 Playwright
+`test.fail`) with file:line and the measured number; **40 are FU-4's** (incl. FU-5's cross-branch pins, E-FU4-20) (added or re-titled with a new number). FU-4's flips (`it.fails` → `it`): circ-sanity-1 propofol
 (Task 2; back to `it.fails` in 18e at 0.801, HR side kept as `it`); `pk-bus` VA > 3 L/min (Task 15); FU-3's final HR ≤
 130 (Task 6); the 7e sepsis rows warm HR, warm MAP (flipped, back to `it.fails` at 54.0 in 18d, flipped again at 56 in
 18e) and cold SVR (Task 15, E-FU4-9); lung-circ OLV share (15b); 5b-child and the blood re-check child (18d); S1b and
@@ -187,7 +187,8 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
 - **E-FU4-17** `neuro-spont.test.ts` reference re-derived (criterion unchanged). Used.
 - **E-FU4-19 (new, orchestrator ruling G-FU4-1 final, 2026-09-29)** `clinical-suite.test.ts`: the 2 L full-exsanguination
   ROSC row becomes an `it.fails` with its number (none in 10 min; was +105 s), the threshold a measurement. Used.
-- **E-FU4-20 (new, orchestrator ruling at the FU-4 gate, 2026-09-29)** FU-5's `fidelity-arrest.test.ts` (the PEA HR
+- **E-FU4-20 (new, orchestrator ruling at the FU-4 gate, 2026-09-29)** FU-5's `fu5-latched.e2e.ts` (both skins pinned
+  as expected failures — no induction APNEA after FU-4; found at the gate, beyond the four ruled), `fidelity-arrest.test.ts` (the PEA HR
   re-stated against the electrical rate; the static-S/D spread split out), `fidelity-lowflow.test.ts` (three short-cycle
   guards split out as `it.fails`), `fidelity-resp.test.ts` (ear lag 5–12 → 5–13 s, declared). Used.
 - **E-FU4-18** (FU-6's Request 3) `l2/ecg/rhythm-engine.ts` 236–263 (`finiteOr`, `nonFiniteIsLoud`) and 282–295 (the
@@ -400,26 +401,33 @@ bleed, and the audit's Ali rig shows CVP −2 to −4 mmHg after the arrest — 
 exsanguination rig noted in 18a (RA −37 mL in VF, RV to −676 mL on the empty-thorax CPR rig): the circuit's linear
 compliances allow negative volume/pressure where a collapsed vein would hold ≈ 0.
 
-## 10. Verification (at `4fe5a7a` + the S8 flip `93808e7`)
+## 10. Verification — final, on the merged tree (FU-5 in; 18e-fix in)
 
-- `pnpm typecheck` (all packages, apps/demo): clean.
-- Fast set, all packages (`CI=1 PME_TEST_SET=fast pnpm test`, 454 s wall): engine-core **259 files / 1 149 passed, 1
-  skipped**; controller 37 / 215; renderer 24 / 77; skins 18 / 173; audio 10 / 58; ventilator 14 / 88 (incl. the R36
+At `d1656ab` (merge `b13837c` + FU-5 items `7975074` + truth flip `aa1f755` + e2e pin `d1656ab`):
+- `pnpm install --frozen-lockfile`, `pnpm build`, `pnpm typecheck` (all packages, apps/demo): clean.
+- Fast set, all packages (`CI=1 PME_TEST_SET=fast pnpm test`, 355 s wall): engine-core **265 files / 1 192 passed, 1
+  skipped**; controller 37 / 215; renderer 25 / 85; skins 19 / 179; audio 10 / 58; ventilator 14 / 88 (incl. the R36
   sweep, 900 s budget); validation 30 files (+1 skipped) / 107 passed, 11 skipped (incl. tick-bench); apps/demo 9 / 141.
-- `SLOW_A` (serial, CI=1, 769 s wall): 10 files / 55 tests — 54 passed and S8 failed as an `it.fails` whose band was
-  now met (+9.75 min); flipped to `it` in `93808e7`; the whole group re-run at `3455bee`: **10 files / 55 passed** (495 s wall). `SLOW_B` (726 s wall): **39 files / 192 passed**.
-- Disjointness gate (Task 20, `PME_TEST_SET=slow-a|slow-b|slow npx vitest list --filesOnly`, with the suite file present):
-  `comm -12 a b` printed **nothing**; **10 + 39 = 49** files (before the suite existed: 9 + 39 = 48). CI walls: not yet
-  measured (the PR's first run records them; D17 estimate ≈ 35 min each).
-- e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e`, Chrome, 630 s): 27 passed, 1 skipped (stage7d shots), 5 failed — the IIFE
-  smoke (2) and stage6a-worker (3) need the built bundle; after `pnpm build` (as CI runs it) those 5 pass → **32 passed,
-  1 skipped**. The FU-4 smoke: passed (3.5 min).
-- `check-notices`: OK (3 governed files). `audit:physiology`: 79 scenarios → `audit-after.md`.
-- tick-bench (local, 120 s, loaded machine): **p50 0.56 ms**, p95 0.92, p99 1.31 (CI bound 6 ms; the fast-set test passed).
-- Local 24 h: pk-longrun propofol Ce 2.5058 (its `it.fails` holds); organs-soak lactate drift 0.0141 (band 0.02);
-  hemo-longrun 24 h passed (234 s wall); **organs-soak 24 h: lactate drift 0.0141 passes, hourly UOP drift 2.68 % fails
-  the ±2 % band locally** (the CI 6 h horizon passes in SLOW_A) — the same slow water-balance loss as the lactate
-  (item 27); recorded, not fitted.
+  (The first fast run on the merged tree had one failure: truth-event's 12-drug leaf-cap `it.fails` now PASSED — FU-5's
+  SKIP_PATH entries take the tree to 2 041 leaves — flipped to `it`, R45.)
+- `SLOW_A` (serial, CI=1, at `7975074`, 711 s): **10 files / 56 passed** (the suite now 29 rows incl. the volume
+  measurement). `SLOW_B` (929 s): **45 files / 251 passed** (FU-5's six `fidelity-*` files included).
+- Disjointness gate (`PME_TEST_SET=slow-a|slow-b|slow npx vitest list --filesOnly`): `comm -12` printed **nothing**;
+  **10 + 45 = 55** files.
+- FU-5's `fidelity-*` alone (§9b): 58 passed. `pnpm audit:monitor`: 43 scenarios, EXIT 0 (§9b).
+- e2e as CI (`CI=1 pnpm test:e2e`, bundled Chromium 1243 + WebKit 2359, after `pnpm build`, 837 s): 57 passed, 21
+  skipped (Chromium-only heavy runs on WebKit, the stage7d shots), 4 failed → handled: `fu5-latched` ×2 pinned as expected
+  failures (E-FU4-20, FU-5 follow-up: no induction APNEA — FU-4 delays the propofol apnoea ≈ 4 s, VA 0 at 172 vs 168 s,
+  so the CO2 apnoea delay does not elapse before the script's BVM at +180 s); `stage6a-latency` and `stage6a` "host +
+  remote + viewer over rtc" fail identically on **`main` (16cdf79)** with the local bundled Chromium (WebRTC session
+  never comes online) — environmental, not this branch; they passed with system Chrome earlier (32 passed, 1 skipped).
+  The FU-4 smoke passed on both runs.
+- `audit:physiology` (79 scenarios, EXIT 0) → `audit-after.md`: the four-patient table and every arrest time unchanged by
+  18e-fix and the merge; only post-arrest nadirs deepened (tamponade min MAP 19 → 14, PE 16 → 12 — the withdrawn humoral
+  tone after the arrest).
+- tick-bench (local, 120 s): **p50 0.52 ms**, p95 0.65, p99 0.80 (CI bound 6 ms).
+- `check-notices`: OK. Local 24 h (earlier head, unchanged since): hemo-longrun passed; pk-longrun Ce 2.5058 (`it.fails`
+  holds); organs-soak lactate 0.0141 passes, **UOP drift 2.68 % fails locally** (CI 6 h passes; item 27, calibration queue).
 - Validation documents: t25-rocuronium-sugammadex `rr-back` 0.0 red (unchanged); t25-apnoea `sbp-collapse` 524 s green.
 
 ## 11. Evidence screenshots (`docs/gates/fu-4/`, headless system Chrome, 1280 × 640 at scale 0.6, each ≤ 60 KB)
