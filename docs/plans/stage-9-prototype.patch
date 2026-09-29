@@ -2655,10 +2655,10 @@ index 0000000..4ddb4d5
 +}
 diff --git a/apps/demo/src/app/panel/devices.ts b/apps/demo/src/app/panel/devices.ts
 new file mode 100644
-index 0000000..baaa4ea
+index 0000000..c1f140a
 --- /dev/null
 +++ b/apps/demo/src/app/panel/devices.ts
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,77 @@
 +// Devices & alarms (research/13 §4.3 item 6). The alarm list mirrors the monitor in the SKIN's colours, steady (the
 +// monitor flashes; its mirror must not pull the instructor's eye), with the priority as a marker and a word as well
 +// (IEC 60601-1-8; research/13-ui-design-references rules 3, 4). Silence and pause show the IEC 60417 bell-cancel /
@@ -2695,11 +2695,15 @@ index 0000000..baaa4ea
 +
 +  // ---- sensors ----
 +  const host = link.host;
-+  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : true]));
-+  const sensors = h('div', { class: 'toggles' }, ...CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
++  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : false]));
++  const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
 +    attached.set(s, on);
 +    void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
-+  })));
++  }));
++  // A Remote does not know which sensors are attached (the engine does not report it yet, R-S9-6): its toggles start
++  // with no pressed state, and the first tap attaches the sensor (R50 review F14).
++  if (!host) for (const b of toggles) b.removeAttribute('aria-pressed');
++  const sensors = h('div', { class: 'toggles' }, ...toggles);
 +
 +  // ---- NIBP ----
 +  const interval = select('Automatic interval', [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']], '0', (v) =>
@@ -2729,7 +2733,8 @@ index 0000000..baaa4ea
 +    announced = new Set(act.map((x) => x.id));
 +  });
 +
-+  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'), sensors, h('h3', {}, 'NIBP'), nibp);
++  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
++    host ? null : h('p', { class: 'hint' }, 'On a remote the sensors show no state until you set them: the monitor does not report which are attached yet.'), sensors, h('h3', {}, 'NIBP'), nibp);
 +}
 diff --git a/apps/demo/src/app/panel/drugs.ts b/apps/demo/src/app/panel/drugs.ts
 new file mode 100644
@@ -5727,12 +5732,13 @@ index 0000000..e31ba61
 +}
 diff --git a/apps/demo/src/app/views/validate.ts b/apps/demo/src/app/views/validate.ts
 new file mode 100644
-index 0000000..8837d52
+index 0000000..04f2eea
 --- /dev/null
 +++ b/apps/demo/src/app/views/validate.ts
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,32 @@
 +// Validate (research/13 §4.7): the three Stage 8a tools as tabs in the bench theme. They are internal pages with their
-+// own engines (the performance page measures one monitor alone), so they load only when their tab opens.
++// own engines, so they load only when their tab opens. The performance check measures ONE monitor alone by design, so
++// it opens in a new tab rather than in a frame next to this session's running monitor (R50 review F13).
 +import { h, tabs } from '../ui.ts';
 +import type { View } from '../shell.ts';
 +
@@ -5750,7 +5756,11 @@ index 0000000..8837d52
 +    enter: (sub) => {
 +      if (!t) {
 +        t = tabs('Validation tools', PAGES.map(([id, label, src, hint]) => ({
-+          id, label, render: () => h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint), h('iframe', { class: 'iframe', title: label, src: `./${src}` })),
++          id, label, render: () => id === 'perf'
++            ? h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint),
++              h('p', {}, 'It measures one monitor on its own, so it runs in a separate tab while this session keeps its patient.'),
++              h('a', { class: 'btn primary', href: `./${src}`, target: '_blank', rel: 'noopener' }, 'Open the performance check in a new tab'))
++            : h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint), h('iframe', { class: 'iframe', title: label, src: `./${src}` })),
 +        })), 'bedside', (id) => history.replaceState(null, '', `#/validate/${id}`));
 +        el.append(h('div', { class: 'page wide' }, h('h1', { id: 'val-h' }, 'Validate'), t.el));
 +      }

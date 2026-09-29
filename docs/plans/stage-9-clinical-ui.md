@@ -214,8 +214,10 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   each row's tooltip button is named after the row ("About Cp (Propofol)").
 - **D17 — Ventilator = the Stage V cockpit (`vent-hamilton.html`) in an iframe, linked to THIS session's monitor** with
   the Stage V BroadcastChannel port (`attachMonitorToLink`), re-attached on every remount (`AppSession.onMount`).
-- **D18 — Validate = the three Stage 8a pages as lazily loaded iframes** in bench tabs (they keep their own engines;
-  the performance page measures one monitor alone by design).
+- **D18 — Validate = the Stage 8a tools in bench tabs:** the bedside checklist and the blind review as lazily loaded
+  iframes (they keep their own engines); the performance check opens in a NEW TAB from its tab, because it measures one
+  monitor alone by design and a frame next to this session's running monitor would change what it measures (R50
+  review F13).
 - **D19 — Developer lists every stage page (new tab, so the session keeps running), the tools, and the evidence pages
   FU-4/6/7 add (`fu4.html`, `fu6.html`, `fu7.html`), each shown only if the server has it (HEAD check).** There are no
   "audit pages": the FU-4/6/7 audits are CLI scripts (`pnpm run audit:physiology`), named as such.
@@ -339,7 +341,8 @@ documents (the app loads all 11 itself, R-S9-2).
 - **R-S9-5 → 8b (release):** the user guide's chapters follow the app's views and use `docs/gates/stage-9/*.png`; the
   README's first link is the app (`index.html`), the stage pages move to a "Developer" section.
 - **R-S9-6 → engine/controller:** a sensor-state map in the 1 Hz `state` event, so a Remote shows which sensors are
-  attached (today the Devices tab shows its own last command).
+  attached. Until then the host's Devices tab shows its own last command and a Remote's sensor toggles start with no
+  pressed state, with one line saying the monitor does not report them yet (R50 review F14).
 - **R-S9-7 → FU-4/V.1/FU-6/FU-7 labels:** new truth leaves (`lp.waterShunt`, `pleuralCmH2O`, `resp.gaLvl`, `resp.bd`,
   `neuro.resp.loc`, `neuro.resp.pain`, `neuro.resp.hvrDep`, `resp.driver.vent.pmax`, `resp.palvObs`, the FU-7
   `pk.bus.cns.*` equivalents) get glossary entries in `GLOSSARY_S9` at Task 0 with the labels those plans proposed, so
@@ -475,15 +478,67 @@ grep -n "stage1Vocabulary\|manualLabel" packages/controller/src/index.ts package
 - [ ] **Step 5: New truth leaves → glossary keys (R56; Requests R-S9-3, R-S9-7).** On the merged base, list every
   truth path the console shows that the glossary will not name:
 
-```bash
-(cd apps/demo && npx vite --port 4899 --strictPort > <scratchpad>/stage-9-clinical-ui/vite-t0.log 2>&1 &)
-# open http://localhost:4899/physiology-console.html for 70 s, press JSON, save it as <scratchpad>/stage-9-clinical-ui/console.json
-pkill -f "vite --port 4899"
+Both steps are scripted (R50 review F15: an agent executor has no manual browser). Save the two scratch scripts
+below under `<scratchpad>/stage-9-clinical-ui/` (they are NOT repository files; run them from the worktree root, they
+resolve Playwright and Vite from `apps/demo`). The dump:
+
+```js
+// Task 0 Step 5 (R50 review F15): open the 7x physiology console, let it run for 70 s, save its JSON export.
+// Run from the worktree root: node <scratchpad>/stage-9-clinical-ui/console-dump.mjs http://127.0.0.1:4899 <out.json> [seconds]
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+const req = createRequire(resolve('apps/demo/package.json')); // @playwright/test as the repo installs it
+const { chromium } = req('@playwright/test');
+const [base, out, secs = '70'] = process.argv.slice(2);
+if (!base || !out) throw new Error('usage: console-dump.mjs <base url> <out.json> [seconds]');
+const b = await chromium.launch(process.env.PW_SYSTEM_CHROME ? { channel: 'chrome' } : {});
+const p = await b.newPage();
+await p.goto(`${base}/physiology-console.html`);
+await p.waitForFunction(() => window.__pmeConsole?.ready === true);
+await p.waitForTimeout(Number(secs) * 1000);
+const [dl] = await Promise.all([p.waitForEvent('download'), p.click('[data-act=json]')]);
+await dl.saveAs(out);
+await b.close();
+console.log(`saved ${out}`);
 ```
 
-Then (Task 2, once `glossary.ts` exists) run `node --experimental-strip-types` on a one-off scratch script that
-loads `console.json` and prints each path whose `labelOf(path)` is null and whose group is not an internal one (the
-7x `isInternal`). For each 7k mechanics/volume path (ΔP, Ppeak, PL, Pes, Cdyn, auto-PEEP, VD/VT, ERV, RV, TLC, VC,
+The check (needs `glossary.ts`, so it runs at Task 2 Step 4, after Step 2 has created the file):
+
+```js
+// Task 0 Step 5 (R50 review F15): every truth path in a console dump that the glossary does not label, grouped by the
+// console's organ group, so the executor can add the 7k mechanics keys and the R-S9-7 labels. Vite loads the app's
+// glossary module the way the app does (TypeScript, workspace packages).
+// Run from the worktree root: node <scratchpad>/stage-9-clinical-ui/labels-check.mjs <console.json> > <scratchpad>/stage-9-clinical-ui/unlabelled.txt
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+const req = createRequire(resolve('apps/demo/package.json'));
+const { createServer } = req('vite');
+const dump = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+const vite = await createServer({ root: resolve('apps/demo'), configFile: resolve('apps/demo/vite.config.ts'), server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
+const g = await vite.ssrLoadModule('/src/app/glossary.ts');
+const byGroup = new Map();
+for (const [path, v] of Object.entries(dump.values)) {
+  if (g.labelOf(path) !== null) continue;
+  byGroup.set(v.group, [...(byGroup.get(v.group) ?? []), path]);
+}
+for (const [group, paths] of byGroup) console.log(`## ${group} (${paths.length})\n${paths.join('\n')}\n`);
+console.log(`labelled ${Object.keys(dump.values).length - [...byGroup.values()].flat().length} of ${Object.keys(dump.values).length}`);
+await vite.close();
+```
+
+```bash
+(cd apps/demo && npx vite --port 4899 --strictPort > <scratchpad>/stage-9-clinical-ui/vite-t0.log 2>&1 &)
+until curl -s -o /dev/null http://127.0.0.1:4899/; do sleep 1; done
+node <scratchpad>/stage-9-clinical-ui/console-dump.mjs http://127.0.0.1:4899 <scratchpad>/stage-9-clinical-ui/console.json 70
+pkill -f "vite --port 4899"
+# at Task 2 Step 4, once glossary.ts exists:
+node <scratchpad>/stage-9-clinical-ui/labels-check.mjs <scratchpad>/stage-9-clinical-ui/console.json > <scratchpad>/stage-9-clinical-ui/unlabelled.txt
+```
+
+The check prints the unlabelled paths by console group and a "labelled N of M" line (prototype on `origin/main`
+`776ebb5`, 12 s run: 246 of 1,586; most of the rest are model internals and stay so, research/11 §5.16 rule 5). For
+each 7k mechanics/volume path (ΔP, Ppeak, PL, Pes, Cdyn, auto-PEEP, VD/VT, ERV, RV, TLC, VC,
 IC, FEV₁/FVC, τE) ADD the path to the `keys` of the matching research/11 §5.6 entry in `glossary-data.ts` (entries
 146–170 by label); for the FU-4/V.1/FU-6/FU-7 leaves listed in R-S9-7 add `GLOSSARY_S9` entries numbered from 300 with
 the label the owning plan proposed, a full name, unit and "—" normal. Record every addition in
@@ -4686,7 +4741,7 @@ git push
 - Create: `apps/demo/src/app/panel/patient.ts`
 - Create: `apps/demo/src/app/panel/log.ts`
 
-**Why:** D10 (steady alarm mirror in skin colours with marker and word and in GLOSSARY words, the monitor's text as the tooltip — R50 review F4; silence/pause countdowns, one assertive announcement per new high alarm), D11 (sensors attach per channel), NIBP; the patient card with MODELED/MANUAL and a confirmed restart that says what resets; the debrief log with filters, notes, bookmarks and CSV/JSON export.
+**Why:** D10 (steady alarm mirror in skin colours with marker and word and in GLOSSARY words, the monitor's text as the tooltip — R50 review F4; silence/pause countdowns, one assertive announcement per new high alarm), D11 (sensors attach per channel; on a Remote, which cannot know the sensors' state until R-S9-6, the toggles start with no pressed state and one line says so — R50 review F14), NIBP; the patient card with MODELED/MANUAL and a confirmed restart that says what resets; the debrief log with filters, notes, bookmarks and CSV/JSON export.
 
 - [ ] **Step 1: Create `apps/demo/src/app/alarms.ts`**
 
@@ -4813,11 +4868,15 @@ export function devicesTab(c: PanelCtx): HTMLElement {
 
   // ---- sensors ----
   const host = link.host;
-  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : true]));
-  const sensors = h('div', { class: 'toggles' }, ...CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
+  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : false]));
+  const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
     attached.set(s, on);
     void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
-  })));
+  }));
+  // A Remote does not know which sensors are attached (the engine does not report it yet, R-S9-6): its toggles start
+  // with no pressed state, and the first tap attaches the sensor (R50 review F14).
+  if (!host) for (const b of toggles) b.removeAttribute('aria-pressed');
+  const sensors = h('div', { class: 'toggles' }, ...toggles);
 
   // ---- NIBP ----
   const interval = select('Automatic interval', [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']], '0', (v) =>
@@ -4847,7 +4906,8 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     announced = new Set(act.map((x) => x.id));
   });
 
-  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'), sensors, h('h3', {}, 'NIBP'), nibp);
+  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
+    host ? null : h('p', { class: 'hint' }, 'On a remote the sensors show no state until you set them: the monitor does not report which are attached yet.'), sensors, h('h3', {}, 'NIBP'), nibp);
 }
 ```
 
@@ -6125,7 +6185,7 @@ git push
 - Create: `apps/demo/src/app/views/dev.ts`
 - Create: `apps/demo/src/app/views/settings.ts`
 
-**Why:** D17 (the Stage V cockpit linked to this session's monitor, re-attached on remount), D18 (8a tools as lazy iframes), D19 (every stage page, the tools and the evidence pages the server has), D20 (the site profile form with export and import). If Task 0 Step 3 found new pages in the old `index.html`, add them to `TOOLS` or `EVIDENCE` here.
+**Why:** D17 (the Stage V cockpit linked to this session's monitor, re-attached on remount), D18 (8a tools as lazy iframes; the performance check in a new tab, R50 review F13), D19 (every stage page, the tools and the evidence pages the server has), D20 (the site profile form with export and import). If Task 0 Step 3 found new pages in the old `index.html`, add them to `TOOLS` or `EVIDENCE` here.
 
 - [ ] **Step 1: Create `apps/demo/src/app/views/vent.ts`**
 
@@ -6170,7 +6230,8 @@ export function ventView(session: AppSession): View {
 
 ```ts
 // Validate (research/13 §4.7): the three Stage 8a tools as tabs in the bench theme. They are internal pages with their
-// own engines (the performance page measures one monitor alone), so they load only when their tab opens.
+// own engines, so they load only when their tab opens. The performance check measures ONE monitor alone by design, so
+// it opens in a new tab rather than in a frame next to this session's running monitor (R50 review F13).
 import { h, tabs } from '../ui.ts';
 import type { View } from '../shell.ts';
 
@@ -6188,7 +6249,11 @@ export function validateView(): View {
     enter: (sub) => {
       if (!t) {
         t = tabs('Validation tools', PAGES.map(([id, label, src, hint]) => ({
-          id, label, render: () => h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint), h('iframe', { class: 'iframe', title: label, src: `./${src}` })),
+          id, label, render: () => id === 'perf'
+            ? h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint),
+              h('p', {}, 'It measures one monitor on its own, so it runs in a separate tab while this session keeps its patient.'),
+              h('a', { class: 'btn primary', href: `./${src}`, target: '_blank', rel: 'noopener' }, 'Open the performance check in a new tab'))
+            : h('div', { class: 'framed' }, h('p', { class: 'hint' }, hint), h('iframe', { class: 'iframe', title: label, src: `./${src}` })),
         })), 'bedside', (id) => history.replaceState(null, '', `#/validate/${id}`));
         el.append(h('div', { class: 'page wide' }, h('h1', { id: 'val-h' }, 'Validate'), t.el));
       }
