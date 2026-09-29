@@ -10,6 +10,7 @@ import {
 } from './params.ts';
 import { stenosisK } from './valves.ts';
 import { WK_R0 } from '../hemo/params.ts';
+import { sizeWeightKg } from '../body-size.ts';
 
 export type AgeBand = 'neonate' | 'infant' | 'child' | 'adolescent' | 'adult' | 'elderly';
 export type ConditionId = 'hfref' | 'hfpef' | 'htn' | 'as' | 'ar' | 'mr' | 'ms' | 'tr' | 'cad' | 'betaBlocked' | 'rvFailure' | 'ph';
@@ -23,6 +24,8 @@ export interface CircProfile {
   ageY: number;
   sex: 'M' | 'F';
   weightKg: number;
+  /** FU-8 (C4): height, for the body-size rule (l2/body-size.ts); absent = the band's default height. */
+  heightCm?: number;
   conditions: CircCondition[];
 }
 
@@ -97,8 +100,13 @@ export const DEFAULT_PROFILE: CircProfile = { ageY: 40, sex: 'M', weightKg: 70, 
 export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfile {
   const band = ageBand(pr.ageY);
   const b = BAND[band];
-  const w = pr.weightKg / 70; // tables §2.2: volumes/compliances ×W/70, resistances and elastances ×70/W
-  const bvKg = pr.sex === 'F' && (band === 'adult' || band === 'elderly') ? BV_ML_KG_F : b.bv;
+  // FU-8 (C4, research/19; R50 F1, ruling 1): ONE continuous body-size rule (l2/body-size.ts, Lemmens-indexed, anchored
+  // on the default 70 kg adult). Before, the circulation was sized on the total weight (127 kg / 175 cm: CO × 1.85,
+  // BV 8.89 L = 70 mL/kg) while blood/gas held 6.5 L; tables §1.3: resting CO × 1.35 at BMI ≥ 40.
+  const sizeKg = sizeWeightKg(band, pr.weightKg, pr.heightCm);
+  const w = sizeKg / 70; // tables §2.2: volumes/compliances ×W/70, resistances and elastances ×70/W
+  // per kg of ACTUAL weight: the band's blood volume per kg of SIZE weight × the size weight ÷ the weight
+  const bvKg = ((pr.sex === 'F' && (band === 'adult' || band === 'elderly') ? BV_ML_KG_F : b.bv) * sizeKg) / pr.weightKg;
   const lvScale = pr.sex === 'F' ? 0.9 : 1; // tables §1.2 LV size
   const p: CircParams = {
     eesLv: EES_LV / (w * lvScale), v0Lv: V0_LV * w, aLv: A_LV, betaLv: BETA_LV / (w * lvScale),

@@ -56,6 +56,7 @@ export function circProfileOf(profile: PatientProfile | undefined): CircProfile 
     ageY: profile?.ageY ?? DEFAULT_PROFILE.ageY,
     sex: profile?.sex ?? DEFAULT_PROFILE.sex,
     weightKg: profile?.weightKg ?? DEFAULT_PROFILE.weightKg,
+    ...(profile?.heightCm !== undefined ? { heightCm: profile.heightCm } : {}), // FU-8 (C4): the body-size rule
     conditions: (profile?.conditions ?? []).filter((c) => known.includes(c.id)).map((c) => ({ ...c, id: c.id as ConditionId })),
   };
 }
