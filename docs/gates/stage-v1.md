@@ -31,13 +31,15 @@ before/after · 5 per-profile table · 6 screenshots · 7 `it.fails` · 8 deviat
 | Check | Result |
 |---|---|
 | `pnpm typecheck` (whole repo; the ventilator's now covers `scripts/`) | clean |
-| `CI=1 PME_TEST_SET=fast pnpm test` (CI's main job, every package) | engine-core 267 files / **1,200 passed**, 1 skipped (FU-4 gate: 265 / 1,192; V.1 adds `resp-child-rest` 3 + `v1-lung-seams` 4 + `lung-state` 1); ventilator 16 / **94** (plan 94); controller 37 / 215; renderer 25 / 85; validation 30 / 107 (+1 file / 11 skipped); audio 10 / 58; skins 19 / 179; demo 9 / **141** |
-| `CI=1 PME_TEST_SET=slow-a` (engine-core) | SLOW_A_RESULT |
-| `CI=1 PME_TEST_SET=slow-b` (engine-core) | SLOW_B_RESULT |
-| `pnpm build`, `pnpm check-notices` | BUILD_RESULT |
-| `CI=1 pnpm test:e2e` (Playwright's own Chromium + WebKit) | E2E_RESULT |
-| tick bench (`packages/validation/test/perf/tick-bench.test.ts`) | TICK_RESULT |
+| `CI=1 PME_TEST_SET=fast pnpm test` (CI's main job, every package; before the gate's two fixes) | engine-core 267 files / **1,200 passed**, 1 skipped (FU-4 gate: 265 / 1,192; V.1 adds `resp-child-rest` 3 + `v1-lung-seams` 4 + `lung-state` 1); ventilator 16 / **94** (plan 94); controller 37 / 215; renderer 25 / 85; validation 30 / 107 (+1 file / 11 skipped); audio 10 / 58; skins 19 / 179; demo 9 / **141** |
+| `CI=1 PME_TEST_SET=fast pnpm test` again on the FINAL code (quiet machine) | engine-core 267 / **1,200 passed**, 1 skipped; ventilator 16 / **95** (94 + the link-race test); controller 37 / 215; renderer 25 / 85; validation 30 / 107 (+11 skipped); audio 10 / 58; skins 19 / 179; demo 140 / 141 — the one red is FU-3's `actions.test.ts` "every preset starts with the CO2 sidestream line" at 5.8 s vs Vitest's 5 s default under the parallel run. Alone, alternating A/B × 3: branch 3.1–3.9 s, main 3.5–4.3 s (no V.1 slowdown; this machine runs it near its limit either way); the demo suite alone: **141 / 141**. An earlier engine-only re-run, with the sanity suite and slow-b sharing the cores, also had one timing red (`truth-event.test.ts` 1.85 ms vs CI's 1 ms; alone 5/5) |
+| `CI=1 PME_TEST_SET=slow-a` (engine-core) | final code: **10 files / 55 passed** (53 min on this loaded 4-vCPU machine; the first run, with the 7c line, 10 / 55 in 40 min). 55 tests are listed on main too (`vitest list`) |
+| `CI=1 PME_TEST_SET=slow-b` (engine-core) | final code: **45 files / 251 passed** (88 min loaded). The first run, WITH the 7c line: 250 / 251 — `neuro-engine.test.ts`'s `it.fails` "propofol nadir < 52" passed unexpectedly (50), which led to the 7c withdrawal (§8) |
+| `pnpm build`, `pnpm check-notices` | build OK (twice, the second on the final code); check-notices OK (3 governed files); no NOTICES rows added |
+| `CI=1 pnpm test:e2e` (Playwright's own Chromium + WebKit, final code) | **61 passed, 21 skipped, 0 failed, 0 flaky**, 23.2 min. Chromium 38 ✓ + 2 expected failures (FU-4's `fu5-latched` `test.fail`, E-FU4-20) + 1 skip; WebKit 21 ✓ + 20 skipped (Chromium-only evidence runs). `vent-link` passes on both (WebKit skips the linked page, as on main). The run rewrote 80 files under `docs/gates` (not V.1's); restored with `git checkout -- docs/gates` |
+| tick bench (`packages/validation/test/perf/tick-bench.test.ts`) | passes under `CI=1` (< 6 ms). Idle, 3 × 10 s: p50 **2.43–2.95 ms** (p99 5.4–6.6) on this branch vs **2.23–2.72 ms** (p99 4.8–6.3) on main on the same cloud machine — ≈ +0.2 ms; FU-4's 0.52 ms was a local Mac. (This machine's p50 is above the test's non-CI 2 ms bound on main as well.) |
 | `it.fails` in the repo (same grep on main and here) | 64 → **66** (§7) |
+| After the final `git merge origin/main` (`4491ad5`, docs only) | `pnpm typecheck` clean (8 packages); `CI=1 PME_TEST_SET=fast` engine-core 267 / **1,200 passed**, 1 skipped |
 
 ## 1. Tension pneumothorax (G7b ruling 5; calibration row "tension-ptx ventilator plateau (until V.1)")
 
@@ -76,8 +78,8 @@ was applied in Task 1 and **withdrawn at the gate** (§8): it changed propofol's
 
 | (4 y, 16 kg, RR 24, VT 130, room air, GA, MANUAL) | plan "before" | main (FU-4) | V.1 |
 |---|---|---|---|
-| true SaO2 60–180 s | 0.33–0.47 | — | **mean 97.03 %, min 95.69 %** |
-| PaCO2 (fast compartment) | 94 | — | **37.8** |
+| true SaO2 60–180 s | 0.33–0.47 | mean 97.03 %, min 95.69 % (Task 1's failing run, before V.1's code) | **mean 97.03 %, min 95.69 %** |
+| PaCO2 (fast compartment) | 94 | 37.8 | **37.8** |
 | preoxygenated child to SaO2 90 % | 128 s (`it.fails`) | 155 s (`it`) | **155.0 s** (130–190) |
 | 70 kg rigs: preox / room air / obese 127 kg | 485 / 41.0 / 169 s | same | **485 / 41.0 / 169 s** (bit-identical at 70 kg) |
 | child in CPR: coRatio | 0.293 | **1.283** | **0.293** |
@@ -86,8 +88,8 @@ was applied in Task 1 and **withdrawn at the gate** (§8): it changed propofol's
 gas model differs from main only DURING CPR, where every patient now uses the adult 5.25 L/min. For a 70 kg effective
 weight that is bit-identical; for another adult it moves coRatio by effKg/70 (e.g. 67.6 kg: −3.4 %). FU-3's
 validation documents for the non-70 kg patients (sanity suite, same command before and after, `--out` in scratch; the
-"V.1" column was measured with the 7c line still in place, a superset of the final change, and re-run on the final code
-in VALIDATE_FINAL):
+"V.1" column was measured with the 7c line still in place, a superset of the final change, and re-run on the final code,
+where it is again row-for-row identical to main):
 
 | Document | main | V.1 | Band |
 |---|---|---|---|
@@ -270,12 +272,11 @@ massive-PE rig was re-measured on FU-4's version (§4); (c) FU-3 item 7 did not 
   before the field existed. (FU-4 had already fixed the `lp.pPtx` unit to mmHg.) The PE demo's comment and watch string
   state FU-4's alias (PVR ×9.0; measured EtCO2 36 → 22.7, MAP 105.7 → 97.3 in MANUAL) instead of the plan's
   "PVR ×3.25, MAP −3.4".
-- **Task 8 e2e — intermittent failure, recorded, not root-caused.** In 1 of 5 local Chromium runs, `vent-link.e2e.ts`
+- **Task 8 e2e — one intermittent failure, before the link fix.** In 1 of 5 local Chromium runs, `vent-link.e2e.ts`
   "two-way link, disconnection, COPD demonstration" read auto-PEEP **4.67** (> 6 expected) at page sim 200 s; the other
-  4 runs passed, and main passed its one run. A fresh-page probe of the same COPD demo reads auto-PEEP 7.72 from sim
-  120 s, with lungState C 70, R 30, R_exp 49, EFL eflK 0.61, identical to the link test. Hypothesis (unproven): the
-  absolute read makes a late lungState, or the ventilator page lagging the engine after the disconnection segment,
-  visible where the relative read was immune. The full e2e result is in §0.
+  4 runs passed. A fresh-page probe of the same COPD demo reads auto-PEEP 7.72 from sim 120 s (lungState C 70, R 30,
+  R_exp 49, EFL eflK 0.61, identical to the link test). The COPD click is a demo switch, so the likely cause is the
+  link race below; after that fix the full e2e passed with 0 retries (§0).
 - **Task 10 screenshots** — `vent-shots.mjs` launches `channel: 'chrome'` (system Chrome), which this machine does not
   have; the screenshots were taken with a scratch copy that launches Playwright's own Chromium (not committed).
 - **Task 10 — link race fixed in `packages/ventilator/src/link/port.ts`** (V.1's package, not in the plan's file map;
@@ -347,6 +348,8 @@ at FiO2 0.4, +1.0 at FiO2 0.21); "PH crisis EtCO2 on the band edge (+5.0 vs ≥ 
    propofol 2 mg/kg nadir, which is 72 on main.
 3. CPR compression flow should scale with the patient (Decision 25; still adult-absolute in `gas/coupling.ts`).
 4. Anaphylaxis in MANUAL link profiles; `writeLung` must not remove a profile-owned spec (Decision 23) — the stand-in stays.
-5. The intermittent COPD e2e reading (§8).
+5. The link race fixed in `port.ts` (§8) was on main as well: every combined-page session that switched demos before
+   this branch could silently lose the ventilator. It is worth a line in the release notes for anyone who evaluated
+   the page on main; the COPD e2e reading of §8 is attributed to it (not re-seen in 1 full e2e + 8-switch probe after).
 6. The tension link profile sits near its bands' lower edges at 90 s (plateau 26.0 vs 25, ΔP 21.0 vs 20) because the
    pleural pressure is still building. The value keeps rising (the valve reaches ≈ 20–21 cmH2O by 5–10 min).
