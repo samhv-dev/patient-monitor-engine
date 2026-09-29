@@ -22,5 +22,165 @@
   "sys": "BRN",
   "owner": "7d brain",
   "wallS": 37.9
+ },
+ "NN-25b": {
+  "id": "NN-25b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "PL dMap = 36.3 in [30, 50] [research/12 NN-25 / tables §7 check 19 and §5.1: Cushing MAP +30–50 over 30–60 s]",
+   "TW hrDropPct = -12.5 above [-40, -20] [tables §5.1 Cushing: HR −20–40 % (check 19: HR 80 → 45–55)]"
+  ],
+  "values": {
+   "cushOnMin": 29.2,
+   "dMap": 36.3,
+   "hr0": 73,
+   "hrEnd": 63.9,
+   "hrDropPct": -12.5
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated",
+  "state": "expanding haematoma 1 mL/min",
+  "intv": "Cushing response at CPP < 40: MAP ↑, HR ↓",
+  "sys": "BRN, CIRC",
+  "owner": "7d cushing.ts / 7a",
+  "wallS": 34.9
+ },
+ "NN-25c": {
+  "id": "NN-25c",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR herniated = false (expected true) [research/12 NN-25: untreated expanding haematoma → herniation (tables §5.1; BTF)]"
+  ],
+  "values": {
+   "herniated": false,
+   "herniationMin": null,
+   "cppMin": 4.6,
+   "pupil": 4,
+   "mapEnd": 145.5,
+   "hrEnd": 65,
+   "rhythms": "5s sinus"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated",
+  "state": "expanding haematoma 1 mL/min, untreated 45 min",
+  "intv": "herniation",
+  "sys": "BRN, CIRC, RHY",
+  "owner": "7d brain",
+  "wallS": 0
+ },
+ "NN-26a": {
+  "id": "NN-26a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW dIcpPctAtPaco2_30 = -14.4 above [-30, -25] [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]"
+  ],
+  "values": {
+   "icpPre": 25.3,
+   "tPaco2_30Min": 0.3,
+   "dIcpPctAtPaco2_30": -14.4,
+   "dIcpPct10min": -46.8,
+   "paco2At10": 19
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP (mass)",
+  "intv": "hyperventilation (RR 12 → 30) until PaCO2 30",
+  "sys": "BRN, LUNG",
+  "owner": "7d brain",
+  "wallS": 89.5
+ },
+ "NN-26b": {
+  "id": "NN-26b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dIcpPctMin20_40 = -28.9 in [-30, -25] [research/12 NN-26: mannitol 0.5 g/kg ICP −25–30 % at 20–40 min (BTF; Miller neuro; tables §5.1 mannitol row)]"
+  ],
+  "values": {
+   "icpPre": 25.3,
+   "dIcpPctMin20_40": -28.9,
+   "dIcpPctAt30": -28.1,
+   "tNadirMin": 40.7
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "mannitol 0.5 g/kg: ICP at 20–40 min",
+  "sys": "BRN, KID",
+  "owner": "7d brain (osmotherapy)",
+  "wallS": 45.3
+ },
+ "NN-26c": {
+  "id": "NN-26c",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS dIcpPctMin20_40 = -31.3 below [-30, -25] [research/12 NN-26: HTS similar to mannitol (BTF; Miller neuro) — the mannitol band −25–30 %]"
+  ],
+  "values": {
+   "dIcpPctMin20_40": -31.3,
+   "dIcpPctAt10": -26,
+   "dNaMax": 3.2
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "3 % saline 250 mL: ICP (similar to mannitol)",
+  "sys": "BRN, BLD",
+  "owner": "7d brain (osmotherapy)",
+  "wallS": 45.3
+ },
+ "NN-26d": {
+  "id": "NN-26d",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS dIcp = -7.5 below [-7, -5] [research/12 NN-26: head-up 30° ICP −5–7 mmHg (BTF); tables §5.1 −5.6 (−3 to −8; HeadUp-meta 2024)]"
+  ],
+  "values": {
+   "dIcp": -7.5,
+   "dCpp": -1.8,
+   "dMap": 0
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "head-up 30°: ICP and CPP",
+  "sys": "BRN",
+  "owner": "7d brain",
+  "wallS": 45.2
+ },
+ "NN-26e": {
+  "id": "NN-26e",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dIcpMin = -7.95 (sign -1, beyond 1) [research/12 NN-26: propofol lowers ICP (CMRO2–CBF coupling; Miller neuro) — direction]",
+   "PL dCppMin = -11.39 (sign -1, beyond 5) [research/12 NN-26: with CPP risk (MAP falls more than ICP; BTF CPP 60–70) — direction]"
+  ],
+  "values": {
+   "dIcpMin": -7.95,
+   "dCppMin": -11.39,
+   "dMapMin": -18.45,
+   "cppNadir": 58.88
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "propofol 1.5 mg/kg bolus: ICP ↓ with CPP risk",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain / 7g",
+  "dirOnly": true,
+  "wallS": 48.1
  }
 }

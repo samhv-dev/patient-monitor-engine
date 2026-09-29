@@ -9,7 +9,7 @@ import {
 } from './spec.ts';
 
 const T = 300;
-const SEVO: Record<string, number> = { '0.3': 0.65, '0.5': 1.08, '1.0': 2.16, '1.5': 3.24, '2.0': 4.3 }; // dial % at FGF 6 → brain MAC at 25 min
+const SEVO: Record<string, number> = { '0.3': 0.65, '0.5': 1.08, '1.0': 2.16, '1.5': 3.35, '2.0': 4.3 }; // dial % at FGF 6 → brain MAC at 25 min
 const firstRow = (rows: Row[], t0: number, f: (r: Row) => boolean): Row | undefined => rows.find((r) => (r.t as number) >= t0 && f(r));
 
 // ---- NN-15 propofol TCI staircase ---------------------------------------------------------------------------------
@@ -84,6 +84,7 @@ add({
   measure: (R) => { const s = R.s!.rows; const mb = avg(s, 'macBrain', TS17 - 60, TS17); const me = avg(s, 'macEff', TS17 - 60, TS17); return m({ macReductionPct: r1f(100 * (1 - mb / me)), ceRemi: r1f(avg(s, 'ce_remifentanil', TS17 - 60, TS17)), moveProp: Number.isFinite(markAfter(R.p!, 'movement', TS17)), movePropRemi: Number.isFinite(markAfter(R.pr!, 'movement', TS17)) }); },
   expect: [
     { m: 'macReductionPct', lo: 60, hi: 70, src: 'research/12 NN-17: remifentanil reduces MAC up to 60–70 % (Lang 1996 Anesthesiology 85:721); tables §5d macOpioid −30 to −70 %' },
+    { m: 'moveProp', event: true, src: 'control arm: propofol alone at Ce 3 µg/mL does not prevent movement to incision (Smith 1994 Anesthesiology 81:820: propofol Cp50 for skin incision 15.2 µg/mL without opioid; Miller IV anaesthetics)' },
     { m: 'movePropRemi', event: false, src: 'research/12 NN-17: movement to incision suppressed by remifentanil + propofol (Lang 1996; Miller)' },
   ],
   owner: '7f depth.ts',
@@ -238,8 +239,11 @@ const fenI = (nal: boolean) => AW([[1, A.spont(0.5), 'spontaneous FiO2 0.5 (face
 add({
   id: 'NN-23a', tier: 'P1', ctx: 'X-A awake, spontaneous, FiO2 0.5', state: 'fentanyl 5 µg/kg: apnoea', intv: 'naloxone 0.1 mg × 2 (2 min apart): time to breathing', sys: 'LUNG, NEU',
   arms: { i: fenI(true), c: fenI(false) },
-  measure: (R) => { const i = R.i!.rows; const ve0 = avg(i, 'veSp', T - 120, T); return m({ ve0: r1f(ve0), apnoeaAtNal: v(i, 'apnoea', TN) as unknown as number, veAtNal: r1f(v(i, 'veSp', TN)), breathMin: afterMin(i, TN, (r) => (r.veSp as number) >= 0.5 * ve0), breathMark: markAfter(R.i!, 'breathing', TN), ctlBreathMin: afterMin(R.c!.rows, TN, (r) => (r.veSp as number) >= 0.5 * ve0) }); },
-  expect: [{ m: 'breathMin', lo: 1, hi: 2, invert: true, src: 'research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)' }],
+  measure: (R) => { const i = R.i!.rows; const ve0 = avg(i, 'veSp', T - 120, T); return m({ ve0: r1f(ve0), apnoeicBeforeNal: i.some((r) => (r.t as number) > T && (r.t as number) <= TN && r.apnoea === true), veMinBeforeNal: r1f(mn(i, 'veSp', T, TN)), veAtNal: r1f(v(i, 'veSp', TN)), breathMin: afterMin(i, TN, (r) => (r.veSp as number) >= 0.5 * ve0), breathMark: markAfter(R.i!, 'breathing', TN), ctlBreathMin: afterMin(R.c!.rows, TN, (r) => (r.veSp as number) >= 0.5 * ve0) }); },
+  expect: [
+    { m: 'apnoeicBeforeNal', event: true, src: 'research/12 NN-23 premise: fentanyl 5 µg/kg makes an awake adult apnoeic (Miller, opioids)' },
+    { m: 'breathMin', lo: 1, hi: 2, invert: true, src: 'research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)' },
+  ],
   owner: '7g naloxone row / 7f drive.ts',
 });
 add({

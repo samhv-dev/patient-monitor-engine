@@ -20,25 +20,25 @@ add({
   arms: { i: haem },
   measure: (R) => { const i = R.i!.rows; return m({ icp0: r1f(v(i, 'icp', TH)), paco2: r1f(v(i, 'paco2', TH)), t20Min: afterMin(i, TH, (r) => (r.icp as number) >= 20), t40Min: afterMin(i, TH, (r) => (r.icp as number) >= 40), icpAtCpp60: r1f((i.find((r) => (r.t as number) > TH && (r.cppBr as number) < 60)?.icp as number) ?? NaN) }); },
   expect: [
-    { m: 't20Min', lo: 10, hi: 15, src: 'research/12 NN-25 / tables §7 check 19: ICP 12 → 20 by ~10–15 min' },
-    { m: 't40Min', lo: 20, hi: 25, src: 'research/12 NN-25 / tables §7 check 19: → 40 by ~20–25 min' },
+    { m: 't20Min', lo: 10, hi: 15, invert: true, src: 'research/12 NN-25 / tables §7 check 19: ICP 12 → 20 by ~10–15 min' },
+    { m: 't40Min', lo: 20, hi: 25, invert: true, src: 'research/12 NN-25 / tables §7 check 19: → 40 by ~20–25 min' },
   ],
   owner: '7d brain',
 });
 add({
   id: 'NN-25b', tier: 'P1', ctx: 'TBI intubated', state: 'expanding haematoma 1 mL/min', intv: 'Cushing response at CPP < 40: MAP ↑, HR ↓', sys: 'BRN, CIRC',
   arms: { i: haem, c: haemCtl },
-  measure: (R) => { const i = R.i!.rows; const tc = firstT(i, TH, (r) => r.cushOn === true); const map0 = avg(i, 'map', TH - 60, TH); const hr0 = avg(i, 'hr', TH - 60, TH); return m({ cushOnMin: r1f((tc - TH) / 60), dMap: Number.isFinite(tc) ? r1f(avg(i, 'map', tc + 50, tc + 70) - map0) : NaN, hr0: r1f(hr0), hrEnd: r1f(avg(i, 'hr', TH + 2550, TH + 2700)), hrDropPct: r1f(100 * (avg(i, 'hr', TH + 2550, TH + 2700) / hr0 - 1)) }); },
+  measure: (R) => { const i = R.i!.rows; const tc = firstT(i, TH, (r) => r.cushOn === true); const map0 = avg(i, 'map', TH - 60, TH); const hr0 = avg(i, 'hr', TH - 60, TH); return m({ cushOnMin: r1f((tc - TH) / 60), dMap: Number.isFinite(tc) ? r1f(avg(i, 'map', tc + 50, tc + 70) - map0) : NaN, hr0: r1f(hr0), hrSurge: Number.isFinite(tc) ? r1f(avg(i, 'hr', tc + 50, tc + 70)) : NaN, hrDropPct: Number.isFinite(tc) ? r1f(100 * (avg(i, 'hr', tc + 50, tc + 70) / hr0 - 1)) : NaN, hrNadir5Pct: Number.isFinite(tc) ? r1f(100 * (mn(i, 'hr', tc, tc + 300) / hr0 - 1)) : NaN, hrAt40Pct: r1f(100 * (avg(i, 'hr', TH + 2370, TH + 2400) / hr0 - 1)) }); },
   expect: [
     { m: 'dMap', lo: 30, hi: 50, src: 'research/12 NN-25 / tables §7 check 19 and §5.1: Cushing MAP +30–50 over 30–60 s' },
-    { m: 'hrDropPct', lo: -40, hi: -20, src: 'tables §5.1 Cushing: HR −20–40 % (check 19: HR 80 → 45–55)' },
+    { m: 'hrDropPct', lo: -40, hi: -20, src: 'tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP' },
   ],
   owner: '7d cushing.ts / 7a',
 });
 add({
   id: 'NN-25c', tier: 'P1', ctx: 'TBI intubated', state: 'expanding haematoma 1 mL/min, untreated 45 min', intv: 'herniation', sys: 'BRN, CIRC, RHY',
   arms: { i: haem },
-  measure: (R) => { const i = R.i!.rows; const th = firstT(i, TH, (r) => r.herniated === true); return m({ herniated: Number.isFinite(th), herniationMin: r1f((th - TH) / 60), cppMin: mn(i, 'cppBr', TH, TH + 2700), pupil: v(i, 'pupil', TH + 2700), mapEnd: r1f(v(i, 'map', TH + 2700)), hrEnd: r1f(v(i, 'hr', TH + 2700)), rhythms: R.i!.rhythms.map(([t, x]) => `${t}s ${x}`).join(',') }); },
+  measure: (R) => { const i = R.i!.rows; const th = firstT(i, TH, (r) => r.herniated === true); return m({ herniated: Number.isFinite(th), herniationMin: r1f((th - TH) / 60), cppMin: mn(i, 'cppBr', TH, TH + 2700), icpMax: r1f(mx(i, 'icp', TH, TH + 2700)), lowCppLongestS: longestRun(i, TH, (r) => (r.cppBr as number) <= 10), pupil: v(i, 'pupil', TH + 2700), mapEnd: r1f(v(i, 'map', TH + 2700)), hrEnd: r1f(v(i, 'hr', TH + 2700)), rhythms: R.i!.rhythms.map(([t, x]) => `${t}s ${x}`).join(',') }); },
   expect: [{ m: 'herniated', event: true, src: 'research/12 NN-25: untreated expanding haematoma → herniation (tables §5.1; BTF)' }],
   owner: '7d brain',
 });
@@ -48,12 +48,16 @@ const TX = 1200;
 const MASS: Step = [60, A.brain({ massMl: 17.5 }), 'haematoma 17.5 mL (ICP ≈ 25)'];
 const icp25 = (steps: Step[], tEnd = TX + 2700) => tbiArm([MASS, ...steps], tEnd);
 const icpCtl = icp25([]);
+/** Longest continuous run (s) after t0 in which pred holds, on the sample grid. */
+const longestRun = (rows: Row[], t0: number, f: (r: Row) => boolean): number => { let best = 0, cur = 0, last = NaN; for (const r of rows) { if ((r.t as number) <= t0) continue; if (f(r)) { cur += Number.isFinite(last) ? (r.t as number) - last : 0; best = Math.max(best, cur); } else cur = 0; last = r.t as number; } return best; };
 const pctAt = (i: Row[], c: Row[], t: number) => r1f(100 * (v(i, 'icp', t) / v(c, 'icp', t) - 1));
 add({
-  id: 'NN-26a', tier: 'P1', ctx: 'TBI, ICP 25', state: 'raised ICP (mass)', intv: 'hyperventilation (RR 12 → 30) until PaCO2 30', sys: 'BRN, LUNG',
-  arms: { i: icp25([[TX, A.vent({ rr: 30, vtMl: 500, fio2: 0.4, peep: 5 }), 'RR 30']]), c: icpCtl },
-  measure: (R) => { const i = R.i!.rows; const t30 = firstT(i, TX, (r) => (r.paco2 as number) <= 30); return m({ icpPre: r1f(v(i, 'icp', TX)), tPaco2_30Min: r1f((t30 - TX) / 60), dIcpPctAtPaco2_30: pctAt(i, R.c!.rows, t30), dIcpPct10min: pctAt(i, R.c!.rows, TX + 600), paco2At10: r1f(v(i, 'paco2', TX + 600)) }); },
-  expect: [{ m: 'dIcpPctAtPaco2_30', lo: -30, hi: -25, src: 'research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)' }],
+  id: 'NN-26a', tier: 'P1', ctx: 'TBI, ICP 25', state: 'raised ICP (mass)', intv: 'hyperventilation to a sustained PaCO2 ≈ 30 (RR 12 → 16)', sys: 'BRN, LUNG',
+  // resume fix (2026-09-29): the first rig (RR 30, read when PaCO2 first crossed 30) read ICP 18 s after the change,
+  // before the τ 10 s vascular response and the CBV followed (−14 %); at RR 30 PaCO2 then fell to 19 (−47 % at 10 min).
+  arms: { i: icp25([[TX, A.vent({ rr: 16, vtMl: 500, fio2: 0.4, peep: 5 }), 'RR 16']]), c: icpCtl, hv: icp25([[TX, A.vent({ rr: 30, vtMl: 500, fio2: 0.4, peep: 5 }), 'RR 30']]) },
+  measure: (R) => { const i = R.i!.rows; return m({ icpPre: r1f(v(i, 'icp', TX)), paco2At2: r1f(v(i, 'paco2', TX + 120)), paco2At10: r1f(v(i, 'paco2', TX + 600)), dIcpPctAt2: pctAt(i, R.c!.rows, TX + 120), dIcpPctAt10: pctAt(i, R.c!.rows, TX + 600), dCbfPctAt10: r1f(100 * (v(i, 'cbf', TX + 600) / v(R.c!.rows, 'cbf', TX + 600) - 1)), rr30Paco2At10: r1f(v(R.hv!.rows, 'paco2', TX + 600)), rr30DIcpPctAt10: pctAt(R.hv!.rows, R.c!.rows, TX + 600) }); },
+  expect: [{ m: 'dIcpPctAt2', lo: -30, hi: -25, src: 'research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)' }],
   owner: '7d brain',
 });
 add({

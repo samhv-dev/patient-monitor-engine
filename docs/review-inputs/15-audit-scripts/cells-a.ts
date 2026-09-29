@@ -41,7 +41,7 @@ add({
   arms: { i: roc06 },
   measure: (R) => { const i = R.i!.rows; return m({ t1_25Min: tT1(i, T, 0.25), tofr09Min: afterMin(i, T + 600, tofRecovered) + 10, diaRecMin: afterMin(i, T + 300, (r) => (r.blockDia as number) < 0.1) + 5 }); },
   expect: [
-    { m: 't1_25Min', lo: 30, hi: 40, invert: true, src: 'research/12 NN-01 (T1 25 % at 30–40 min); tables §5d / §7 check 25: 31 min (Roc-label); Naguib' },
+    { m: 't1_25Min', lo: 30, hi: 40, src: 'research/12 NN-01 (T1 25 % at 30–40 min); tables §5d / §7 check 25: 31 min (Roc-label); Naguib' },
   ],
   owner: '7f nmb.ts / 7g roc PK',
 });
@@ -54,7 +54,7 @@ add({
   expect: [
     { m: 'diaAt60', lo: 0.9, hi: 1, src: 'research/12 NN-02: intubating conditions at 60 s (Miller NMB) — laryngeal/diaphragm block ≥ 90 % (tables §5d: larynx/diaphragm drive the airway)' },
     { m: 'tMaxBlockS', lo: 51, hi: 69, invert: true, src: 'tables §5d roc 1.2 mg/kg max block 1.0 min (Roc-label; ±15 % tables §7 convention)' },
-    { m: 't1_25Min', lo: 57, hi: 77, invert: true, src: 'tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)' },
+    { m: 't1_25Min', lo: 57, hi: 77, src: 'tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)' },
   ],
   owner: '7f nmb.ts / 7g roc PK',
 });
@@ -75,7 +75,7 @@ add({
   measure: (R) => { const i = R.i!.rows; const onset = i.filter((r) => (r.t as number) > T && (r.t as number) < T + 60 && (r.tofC as number) === 4); return m({ tTof0S: tTof0(i, T), t1_10Min: tT1(i, T, 0.1), t1_90Min: tT1(i, T, 0.9), minTofrOnset: onset.length ? Math.min(...onset.map((r) => r.tofR as number)) : NaN }); },
   expect: [
     { m: 'tTof0S', lo: 45, hi: 75, invert: true, src: 'research/12 NN-03 onset 60 s (Miller NMB); tables §5d block ~1 min (Sux-label)' },
-    { m: 't1_90Min', lo: 8, hi: 10, invert: true, src: 'research/12 NN-03 T1 90 % at 8–10 min (Miller NMB); the tables §5d label value is 10.9 min (Sux-label) — both quoted' },
+    { m: 't1_90Min', lo: 8, hi: 10, src: 'research/12 NN-03 T1 90 % at 8–10 min (Miller NMB); the tables §5d label value is 10.9 min (Sux-label) — both quoted' },
     { m: 'minTofrOnset', lo: 0.9, hi: 1, src: 'tables §5d: succinylcholine phase I, no fade, TOFR ≈ 1 at any T1' },
   ],
   owner: '7f nmb.ts / 7g sux PK',
@@ -93,14 +93,14 @@ add({
   id: 'NN-04a', tier: 'P1', ctx: 'X-A TIVA vent · plasma cholinesterase heterozygous (`neuro.cholinesterase`)', state: 'heterozygous atypical cholinesterase', intv: 'succinylcholine 1 mg/kg: block duration (T1 90 %)', sys: 'NEU, PK',
   arms: { i: tiva([sux(1)], T + 3600, { neuro: { cholinesterase: 'heterozygous' } }, 5), n: sux1 },
   measure: (R) => m({ t1_90Min: tT1(R.i!.rows, T, 0.9), t1_90NormalMin: tT1(R.n!.rows, T, 0.9), ratio: r1f(tT1(R.i!.rows, T, 0.9) / tT1(R.n!.rows, T, 0.9)) }),
-  expect: [{ m: 't1_90Min', lo: 20, hi: 30, invert: true, src: 'research/12 NN-04 (heterozygous 20–30 min; Miller); tables §5d "heterozygous ×2" (Lee 2009)' }],
+  expect: [{ m: 't1_90Min', lo: 20, hi: 30, src: 'research/12 NN-04 (heterozygous 20–30 min; Miller); tables §5d "heterozygous ×2" (Lee 2009)' }],
   owner: '7g PK (PCHE_CL_MULT)',
 });
 add({
   id: 'NN-04b', tier: 'P1', ctx: 'X-A TIVA vent · cholinesterase homozygous atypical', state: 'homozygous atypical cholinesterase', intv: 'succinylcholine 1 mg/kg: block duration (T1 90 %)', sys: 'NEU, PK',
   arms: { i: tiva([sux(1)], T + 10 * 3600, { neuro: { cholinesterase: 'homozygous' } }, 60) },
   measure: (R) => { const i = R.i!.rows; return m({ t1_90H: r1f(tT1(i, T, 0.9) / 60), t1_10H: r1f(tT1(i, T, 0.1) / 60), phase2Fade: mn(i.filter((r) => (r.tofC as number) === 4), 'tofR', T, T + 36000) }); },
-  expect: [{ m: 't1_90H', lo: 4, hi: 8, invert: true, src: 'research/12 NN-04 (homozygous 4–8 h; Miller); tables §5d "homozygous 4–8 h" (Sux-label; Lee 2009)' }],
+  expect: [{ m: 't1_90H', lo: 4, hi: 8, src: 'research/12 NN-04 (homozygous 4–8 h; Miller); tables §5d "homozygous 4–8 h" (Sux-label; Lee 2009)' }],
   owner: '7g PK (PCHE_CL_MULT)',
 });
 

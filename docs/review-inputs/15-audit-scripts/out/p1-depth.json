@@ -208,5 +208,142 @@
   "sys": "NEU",
   "owner": "7f depth.ts",
   "wallS": 26.3
+ },
+ "NN-18b": {
+  "id": "NN-18b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMapPct = 8.2 (sign 1, beyond 5) [research/12 NN-18: MAP ↑ (sympathomimetic; Miller IV anaesthetics: arterial pressure and HR rise ≈ 20–30 %) — direction, beyond 5 %]",
+   "PL dHrPct = 10.1 (sign 1, beyond 5) [research/12 NN-18: HR ↑ (Miller) — direction, beyond 5 %]"
+  ],
+  "values": {
+   "dMapPct": 8.2,
+   "dHrPct": 10.1,
+   "dMapMinPct": 0.8
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "ketamine 1 mg/kg: HR and MAP rise vs control",
+  "sys": "CIRC",
+  "owner": "7g circulation PD (ketamine) / FU-7 T9",
+  "dirOnly": true,
+  "wallS": 24.3
+ },
+ "NN-18c": {
+  "id": "NN-18c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL apnoea = false (expected false) [research/12 NN-18: drive preserved; no apnoea at 1 mg/kg (Miller IV anaesthetics)]",
+   "PL veMinPct = -18.3 (quiet, tol ±25) [research/12 NN-18: minimal respiratory depression (Miller) — quiet ±25 % (direction-only tolerance)]"
+  ],
+  "values": {
+   "apnoea": false,
+   "veMinPct": -18.3,
+   "paco2Max": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "ketamine 1 mg/kg: ventilatory drive preserved",
+  "sys": "LUNG, NEU",
+  "owner": "7f drive.ts",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-21a": {
+  "id": "NN-21a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW macEtAtEmergence = 0.18 below [0.3, 0.4] [research/12 NN-21: eyes open at end-tidal 0.3–0.4 MAC (MAC-awake; Katoh 1993; tables §5d macAwake 0.33, 0.22–0.34)]"
+  ],
+  "values": {
+   "macEtAtEmergence": 0.18,
+   "macBrainAtEmergence": 0.33,
+   "macBrainAtOff": 1.05
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "sevoflurane 1 MAC for 1 h",
+  "intv": "vaporiser off (FGF 6): end-tidal MAC at emergence",
+  "sys": "NEU",
+  "owner": "7f depth.ts / 7g volatile.ts",
+  "wallS": 73.6
+ },
+ "NN-21b": {
+  "id": "NN-21b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL emerged = true (expected true) [research/12 NN-21: emergence follows washout (Miller inhaled agents: sevoflurane eye opening ≈ 5–15 min after 1 MAC at high FGF) — direction/event; time reported for Ali]"
+  ],
+  "values": {
+   "emergenceMin": 7.7,
+   "emerged": true,
+   "diAtEmergence": 80
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "sevoflurane 1 MAC for 1 h",
+  "intv": "vaporiser off: time to emergence (washout)",
+  "sys": "NEU, PK",
+  "owner": "7g volatile.ts",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-23a": {
+  "id": "NN-23a",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS breathMin = 0.2 below [1, 2] (lower = stronger/faster) [research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)]"
+  ],
+  "values": {
+   "ve0": 6.1,
+   "apnoeaAtNal": null,
+   "veAtNal": 2.3,
+   "breathMin": 0.2,
+   "breathMark": 0,
+   "ctlBreathMin": 4.5
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake, spontaneous, FiO2 0.5",
+  "state": "fentanyl 5 µg/kg: apnoea",
+  "intv": "naloxone 0.1 mg × 2 (2 min apart): time to breathing",
+  "sys": "LUNG, NEU",
+  "owner": "7g naloxone row / 7f drive.ts",
+  "wallS": 150.7
+ },
+ "NN-23b": {
+  "id": "NN-23b",
+  "verdict": "MI",
+  "auto": "MI",
+  "notes": [
+   "WR renarc = false (expected true) [research/12 NN-23: renarcotisation — fentanyl 5 µg/kg outlasts naloxone (Miller, opioids)]",
+   "MI renarcMin: not a finite number (NaN) [research/12 NN-23: renarcotisation at 30–60 min (naloxone duration 30–45 min; Miller)]"
+  ],
+  "values": {
+   "renarcMin": null,
+   "renarc": false,
+   "veMinAfter": 5,
+   "ve0": 6.1,
+   "antOpAt30": 2.44
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake, spontaneous, FiO2 0.5",
+  "state": "fentanyl 5 µg/kg reversed by naloxone",
+  "intv": "renarcotisation after naloxone wears off",
+  "sys": "LUNG, NEU",
+  "owner": "7g naloxone row",
+  "wallS": 0
  }
 }

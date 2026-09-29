@@ -111,5 +111,46 @@
   "sys": "NEU",
   "owner": "7f nmb.ts / 7g sux PK",
   "wallS": 0
+ },
+ "NN-03c": {
+  "id": "NN-03c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dKPeak = 0.5 in [0.43, 0.58] [research/12 NN-03 (K +0.5, Miller NMB); tables §5c \"Succinylcholine K rise +0.5\" (B §4.9) — ±15 %]"
+  ],
+  "values": {
+   "dKPeak": 0.5,
+   "tPeakMin": 4
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised",
+  "intv": "succinylcholine 1 mg/kg: plasma K⁺ rise vs control",
+  "sys": "BLD",
+  "owner": "7c treatments.ts",
+  "wallS": 23.5
+ },
+ "NN-04a": {
+  "id": "NN-04a",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS t1_90Min = 18.1 below [20, 30] (lower = stronger/faster) [research/12 NN-04 (heterozygous 20–30 min; Miller); tables §5d \"heterozygous ×2\" (Lee 2009)]"
+  ],
+  "values": {
+   "t1_90Min": 18.1,
+   "t1_90NormalMin": 12,
+   "ratio": 1.5
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent · plasma cholinesterase heterozygous (`neuro.cholinesterase`)",
+  "state": "heterozygous atypical cholinesterase",
+  "intv": "succinylcholine 1 mg/kg: block duration (T1 90 %)",
+  "sys": "NEU, PK",
+  "owner": "7g PK (PCHE_CL_MULT)",
+  "wallS": 48.5
  }
 }
