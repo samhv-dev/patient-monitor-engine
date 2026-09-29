@@ -74,6 +74,8 @@ export interface EndoOut {
    * reservoir with the baroreflex and the β-agonists (FU-2 F4) — added to `dV0Frac` it would double-count the splanchnic
    * bed. − = venoconstriction, as a fraction of blood volume. */
   humDV0Frac: number;
+  /** FU-4 G-FU4-1: the humoral arm's own × on SVR (already inside `svrF`), published so 7a can withdraw its EFFECT under no-flow ischaemia. */
+  humSvrF: number;
   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
   setShiftC: number; // fever set point added to the thermal thresholds
   kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
@@ -139,6 +141,7 @@ function compose(c: EndoCore): EndoOut {
     eesF: beta(st.eesF) * th.eesF * cd.eesF,
     dV0Frac: st.dV0Frac + cd.dV0Frac,
     humDV0Frac: st.humDV0Frac, // FU-4 F2(a)
+    humSvrF: st.humSvrF, // FU-4 G-FU4-1
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
     kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity,

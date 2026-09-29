@@ -11,6 +11,7 @@ import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
+import { NO_FLOW_S } from './arrest.ts'; // FU-4 G-FU4-1: the declaration's no-flow window (type-only cycle: arrest.ts imports model.ts types only)
 import { TAMPONADE_MAX_ML } from './conditions.ts'; // FU-4 G6 (type-only cycle: conditions.ts imports model.ts types only)
 import type { RampState } from '../../l1/ramp.ts'; // FU-2
 import { betaDV0Ml } from './venous.ts'; // FU-2
@@ -161,6 +162,7 @@ export interface CircModelState {
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
     endoHumDV0Frac?: number; // FU-4 F2(a) (7e): the humoral arm's venous recruitment, fraction of blood volume (− = venoconstriction)
+    endoHumSvrF?: number; // FU-4 G-FU4-1 (7e): the humoral arm's × on SVR, already inside endoSvrF
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
     kEcg?: number; // FU-4 G3 (7c): the membrane-effective K (calcium-stabilised), mmol/L — sinus node and the arrest hazard
     cbfRel?: number; // FU-4 F1(b) (7d): relative cerebral blood flow — the brainstem perfusion of the vasomotor centre
@@ -285,7 +287,16 @@ function control(m: CircModelState, env: CircEnv): void {
   const base = m.base;
   const man = env.modeled ? NEUTRAL_MAN : m.man; // Stage 7a Task 14: the MANUAL tracker's solution
   const x = m.ext; // R48/R49 multipliers (default 1; endoDV0Frac default 0)
-  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * (x.endoSvrF ?? 1);
+  // FU-4 gate finding G-FU4-1 (orchestrator ruling, third mechanism): the humoral arm's EFFECT at the vessel is
+  // withdrawn in the PULSELESS state — under arrest AVP/angiotensin are not delivered to the vascular smooth muscle and
+  // hypoxic, acidotic muscle stops responding (ischaemic vasoplegia). The index is the arrest state itself (non-null
+  // only once the arrest is declared; every perfusing state, induction hypotension and class III included, keeps 1 —
+  // bit-identical), ramped over the declaration's own no-flow window NO_FLOW_S; ROSC restores it. The hormone level
+  // (7e `h.hum`) is untouched. No new constant.
+  const humF = env.modeled && m.arrest ? Math.max(0, 1 - (m.t - m.arrest.t) / NO_FLOW_S) : 1;
+  const hsv = x.endoHumSvrF ?? 1;
+  const endoSvr = humF === 1 || hsv === 1 ? (x.endoSvrF ?? 1) : ((x.endoSvrF ?? 1) / hsv) * (1 + (hsv - 1) * humF);
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr;
   const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
   const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
   // FU-2 F4 + FU-4 F2(a): the baroreflex, the β-agonists and the HUMORAL arm all recruit from ONE splanchnic reservoir.
@@ -293,7 +304,7 @@ function control(m: CircModelState, env: CircEnv): void {
   // suppresses the neural arm — which is the difference between "profound hypotension" and "instant PEA" in a bleeding
   // patient (before this, propofol's `outF` returned the reflex's whole ≈ 840 mL recruitment at once, an acute bleed of
   // the same size on top of the haemorrhage).
-  const humMl = (m.ext.endoHumDV0Frac ?? 0) * m.prof.bloodVolumeMl; // negative = recruited
+  const humMl = (m.ext.endoHumDV0Frac ?? 0) * m.prof.bloodVolumeMl * humF; // negative = recruited; × the ischaemic withdrawal (G-FU4-1)
   const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, Math.min(b.dV0 - dv0Beta, humMl));
   p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + recruit + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;

@@ -12,8 +12,8 @@
 // repeat-succinylcholine draw over seeds 7/8/9, none with atropine first), the tension pneumothorax's own course and
 // decompression → tension-ptx (Task 18c), the 7 kg infant → vent-infant (Task 18d).
 // The `it.fails` of this file (counted, R45): S2's MAP side, S4b, S5, S6a's percentage side, S9's SaO2 side, S9's
-// CVP/MAP side, S13, S14's MAP side, CPR alone after exsanguination, the 10-min VF kIsch row, the MANUAL floor row —
-// ELEVEN here, plus S3 in circ-pulsus. S1b (0.920) and S8 (+9.75 min) flipped to `it`. Every run yields once per sim-minute (CI amendment 4);
+// CVP/MAP side, S13, S14's MAP side, the 2 L full-exsanguination ROSC row (E-FU4-19), the 10-min VF kIsch row, the
+// MANUAL floor row — ELEVEN here, plus S3 in circ-pulsus. S1b (0.920), S8 (+9.75 min) and CPR alone (G-FU4-1) flipped. Every run yields once per sim-minute (CI amendment 4);
 // SLOW_A (Task 20).
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type PatientProfile } from '../../src/index.ts';
@@ -251,33 +251,47 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
 
 describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { timeout: 600_000 }, () => {
   // full exsanguination (3 L over 10 min) → PEA; the arrest time is found by the run itself
-  async function exsang(cpr: 'none' | 'alone' | 'full', tEnd: number): Promise<{ rows: Row[]; tArrest?: number; tCpr?: number }> {
+  async function exsang(cpr: 'none' | 'alone' | 'full', tEnd: number, fluidMl = 2000): Promise<{ rows: Row[]; tArrest?: number; tCpr?: number }> {
     const probe = await scenario([[60, { kind: 'bleed', volumeMl: 3000, overS: 600 }]], 900);
     const tArrest = arrestAt(probe, 60);
     if (cpr === 'none' || tArrest === undefined) return { rows: probe, tArrest };
     const tCpr = Math.max(tArrest + 60, 720); // FULL exsanguination: the 3 L are out at 660 s (18b: CPR into a still-bleeding patient restores a pulse)
     const steps: Step[] = [[60, { kind: 'bleed', volumeMl: 3000, overS: 600 }], [tCpr, { kind: 'cpr', active: true, rate: 110, quality: 0.8 }]];
-    if (cpr === 'full') steps.push([tCpr, { kind: 'fluid', fluid: 'balanced', volumeMl: 2000, overS: 300 }], [tCpr, drug('epinephrine', 1, 'mg')]);
+    if (cpr === 'full') steps.push([tCpr, { kind: 'fluid', fluid: 'balanced', volumeMl: fluidMl, overS: 300 }], [tCpr, drug('epinephrine', 1, 'mg')]);
     return { rows: await scenario(steps, tEnd), tArrest, tCpr };
   }
-  // R45 — a CONFLICT between two rulings, recorded, not fitted away: Task 18e's humoral arm (unsuppressed by brainstem
-  // ischaemia or by the arrest) keeps recruiting unstressed volume into the stressed pool (HUM_V0 × blood volume, the
-  // shared reservoir), so the "empty" thorax refills and CPR alone restores a pulse at +175 s. A/B on this rig: HUM_V0 0
-  // → no pulse in 10 min, CoPP 3.1–3.4 (ruling 3's picture). Open question for the orchestrator (the humoral arm has no
-  // flow dependence: hormones need a circulation to be secreted and delivered).
-  it.fails('CPR alone after full exsanguination (3 L): no pulse in 10 min of standard-quality CPR (an empty heart cannot be pumped; ruling 3) — measured pulse at +175 s of CPR (HUM_V0 0: never)', async () => {
+  // FU-4 gate finding G-FU4-1 (orchestrator ruling, final): the humoral arm's effect is withdrawn in the declared
+  // arrest (model.ts) — before that, the unsuppressed humoral venous term let CPR alone restore a pulse at +175 s.
+  // Flipped to `it` (was `it.fails`, pulse at +175 s); measured after the fix: no pulse, CoPP 2.9–3.5.
+  it('CPR alone after full exsanguination (3 L): no pulse in 10 min of standard-quality CPR (an empty heart cannot be pumped; ruling 3) — was a pulse at +175 s before G-FU4-1', async () => {
     const { rows, tArrest, tCpr } = await exsang('alone', 1800);
     const w = win(rows, (tCpr as number) + 5, (tCpr as number) + 600);
     console.log(`CPR alone: arrest ${tArrest} s, CPR from ${tCpr} s; pulse regained ${w.find((x) => !x.pulseless)?.t ?? 'never'}; CoPP ${minOf(w, 'cpp').toFixed(1)}–${Math.max(...w.map((x) => x.cpp)).toFixed(1)}`);
     expect(tArrest).toBeDefined();
     expect(w.every((x) => x.pulseless)).toBe(true);
   });
-  it('CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression (ruling 3)', async () => {
+  // E-FU4-19 (orchestrator ruling G-FU4-1 final, 2026-09-29): this was the executor's own measured expectation from
+  // ruling 3, not a sourced band; with the humoral effect withdrawn in the arrest, 2 L no longer refills a COMPLETE 3 L
+  // bleed-out. Kept as a record with its number; the sourced ROSC-with-volume assertion is circ-lowflow-arrest's class IV
+  // rig (2 L + adrenaline 60 s after the arrest: pulse at +119 s). The volume threshold is measured below (Ali: A-new).
+  it.fails('CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min after G-FU4-1 (was +105 s)', async () => {
     const { rows, tCpr } = await exsang('full', 1800);
     const back = win(rows, tCpr as number, (tCpr as number) + 600).find((x) => !x.pulseless);
     console.log(`CPR + 2 L + adrenaline: pulse at +${back ? back.t - (tCpr as number) : '–'} s`);
     expect(back).toBeDefined();
     expect((back as Row).t - (tCpr as number)).toBeLessThanOrEqual(240);
+  });
+  // A MEASUREMENT, not a band (orchestrator ruling G-FU4-1 final): the volume at which a complete 3 L bleed-out regains a
+  // pulse under CPR + adrenaline 1 mg, the volume given over 300 s from the first compression — for Ali's question A-new.
+  it('measurement: after a complete 3 L bleed-out, CPR + adrenaline + 2 / 2.5 / 3 / 3.5 L over 300 s — time to a pulse per volume (recorded, no band; Ali A-new)', async () => {
+    const out: string[] = [];
+    for (const ml of [2000, 2500, 3000, 3500]) {
+      const { rows, tCpr } = await exsang('full', 1800, ml);
+      const back = win(rows, tCpr as number, (tCpr as number) + 600).find((x) => !x.pulseless);
+      out.push(`${ml / 1000} L: ${back ? `pulse at +${back.t - (tCpr as number)} s` : 'no pulse in 10 min'}`);
+      expect(tCpr).toBeDefined();
+    }
+    console.log(`exsanguination volume threshold: ${out.join('; ')}`);
   });
   // R45 (Task 18a's residual): 0.56 at 70 s, but the flow share recovers as CoPP settles above 25 — max 0.91 (end 0.87)
   it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.91)', async () => {

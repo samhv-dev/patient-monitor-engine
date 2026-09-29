@@ -154,6 +154,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     const v0 = circ?.base?.v0Sv ?? 0;
     ext.endoDV0Frac = v0 > 0 ? (-o.dV0Frac * bv) / v0 : 0;
     ext.endoHumDV0Frac = o.humDV0Frac; // FU-4 F2(a): fraction of BLOOD VOLUME, into 7a's shared reservoir
+    ext.endoHumSvrF = o.humSvrF; // FU-4 G-FU4-1: the humoral share of endoSvrF (7a withdraws its effect under ischaemia)
     return 1;
   }
   if (ext && ext.endoHrF !== undefined) {
@@ -162,6 +163,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     ext.endoEesF = 1;
     ext.endoDV0Frac = 0;
     ext.endoHumDV0Frac = 0;
+    ext.endoHumSvrF = 1;
   }
   return ctx.l1.pinned.includes('hr') ? 1 : endoHr(es, bba, false);
 }
