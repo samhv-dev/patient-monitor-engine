@@ -12,6 +12,7 @@ import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureCha
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
 import type { DeviceAction } from '../../types.ts'; // Stage 7a
 import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, RhythmId, RhythmOpts, StateVar } from '../../types.ts';
+import type { ModifiersPatch } from '../ecg/api-types.ts'; // FU-8 (DV-23a): the CPR artefact through the ST seam
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
@@ -102,7 +103,7 @@ export interface HemoState {
   circOut: CircOut; // Stage 7a: algebraic outputs at the last 2 ms step
   radQ: number[]; // Stage 7a: radial delay line (RAD_DELAY_STEPS + 1 values)
   beatT: number; // Stage 7a: onset time of the last CircBeat turned into a site beat
-  stPatch: { ischaemicDepressionMv: number } | null; // Stage 7a: ST modifier patch for the engine to apply (R23)
+  stPatch: ModifiersPatch | null; // Stage 7a: ST modifier patch for the engine to apply (R23); FU-8: + the CPR artefact
   stApplied: number; // Stage 7a: the ischaemic ST depression last handed to the ECG, mV
   iabp: IabpState; // Stage 7a: intra-aortic balloon pump (R28, tables §8.1)
   iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
@@ -458,7 +459,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
   if (Math.abs(nxt - hs.stApplied) >= 0.01) {
-    hs.stPatch = { ischaemicDepressionMv: nxt };
+    hs.stPatch = { ...hs.stPatch, ischaemicDepressionMv: nxt };
     hs.stApplied = nxt;
   }
   const v: Partial<Record<NumericId, Measured>> = {};
@@ -837,6 +838,16 @@ export function applyHemoCommand(
           hs.cpr = { active: true, rate: c.rate ?? 110, quality: c.quality ?? CPR_QUALITY_DEFAULT, nextT: was ? hs.cpr.nextT : t };
         } else {
           hs.cpr.active = false;
+        }
+        // FU-8 (research/20 DV-23a, gap V7): one clinical act, one command — the compressions put their artefact on the
+        // ECG at the compression rate, deeper with the quality (brief §4.1: depth 0–1 → 0.2–2 mV), and take it off when
+        // they stop (only an artefact this pipeline set: an instructor's own `artefact.cpr` is left alone)
+        if (hs.cpr.active) {
+          hs.stPatch = { ...hs.stPatch, artefact: { cpr: { rateCpm: hs.cpr.rate, depth: Math.min(1, hs.cpr.quality) } } };
+          hs.cprArt = true;
+        } else if (hs.cprArt) {
+          hs.stPatch = { ...hs.stPatch, artefact: { cpr: null } };
+          hs.cprArt = false;
         }
         return true;
       }
