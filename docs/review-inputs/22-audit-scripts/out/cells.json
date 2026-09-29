@@ -259,7 +259,7 @@
   "notes": [
    "TW beNadir = -0.064 above [-20, -10] [ATLS 10e table 3-1: class IV base deficit ≤ −10 mmol/L]",
    "PL lactPeak = 7.119 in [4, 12] [class IV shock: lactate > 4 mmol/L (ATLS 10e; tables §7 17a gives 3–5 for class III)]",
-   "HAND TW (automatic TW): lactate reaches 7.1 but BE never falls below 0: citrate is not an anion in the strong-ion difference (solutes.ts:44 sidOf), so each FFP unit (Na 165, Cl 75) adds a ≈ 90 mEq/L strong-ion excess at once instead of after hepatic citrate metabolism; stored RBC carry no lactate or acid. The same bleed WITHOUT products reaches lactate 5.9 at BE −3.6 with PaCO2 38 → 53 at fixed ventilation: the class IV acidosis is mostly respiratory"
+   "HAND TW (automatic TW): lactate reaches 7.1 but BE never falls below 0: citrate is not an anion in the strong-ion difference (solutes.ts:37–38 sidOf), so each FFP unit (Na 165, Cl 75) adds a ≈ 90 mEq/L strong-ion excess at once instead of after hepatic citrate metabolism; stored RBC carry no lactate or acid. The same bleed WITHOUT products reaches lactate 5.9 at BE −3.6 with PaCO2 38 → 53 at fixed ventilation: the class IV acidosis is mostly respiratory"
   ],
   "values": {
    "bePre": -0.06,
@@ -758,7 +758,7 @@
   "notes": [
    "TS svo2Low = 84.3 above [30, 65] [SvO2 < 65 % in low output / haemorrhagic shock (Rivers 2001 NEJM 345:1368; Vincent & De Backer 2013 NEJM 369:1726)]",
    "TS svo2Normal = 85.7 above [70, 85] [normal SvO2 70–80 % under GA (Miller 10e ch. 36)]",
-   "HAND WR (automatic TS): SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:25–31, REGIONAL_* in params.ts) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)"
+   "HAND WR (automatic TS): SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:24–27, REGIONAL_* in params.ts:65–67) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)"
   ],
   "values": {
    "svo2Low": 84.3,
@@ -807,7 +807,7 @@
    "TW ecgKProfile = 4.2 below [6.2, 6.8] [the ECG reads the patient's plasma K (brief §5 electrolytes; UK Renal Association 2023: K ≥ 6.5 is ECG-significant)]",
    "PL ecgKAcutePeak = 6.478 in [6, 7] [the same K reached acutely shows on the ECG (7c plan decision 9)]",
    "PL arrestAny = false (expected false) [K 6.5: peaked T, arrhythmia uncommon (UK RA 2023; Mattu 2000 Am J Emerg Med 18:721)]",
-   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 6.48), but the PROFILE patient with the same plasma K 6.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
+   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 6.48), but the PROFILE patient with the same plasma K 6.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:209–211) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
   ],
   "values": {
    "kProfile": 6.491,
@@ -841,7 +841,7 @@
    "TW ecgKProfile = 4.2 below [7.2, 7.8] [the ECG reads the plasma K (brief §5)]",
    "TW qrsProfile = 93 below [110, 180] [K 7–8: P flattening, QRS widening (Mattu 2000; Stage 5.1 morphology: QRS +20–100 % from K 7)]",
    "PL qrsAcutePeak = 121 in [110, 180] [as above, acute rise (Mattu 2000)]",
-   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 7.48), but the PROFILE patient with the same plasma K 7.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
+   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 7.48), but the PROFILE patient with the same plasma K 7.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:209–211) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
   ],
   "values": {
    "kProfile": 7.491,
@@ -1178,7 +1178,7 @@
   "notes": [
    "WR dEvlwiSepsis = 0 (expected sign 1) [capillary leak: a fluid load raises extravascular lung water in sepsis (Sakka 2002 Chest 122:2080; tables §5e)]",
    "WR dPao2Sepsis = 15 (expected sign -1) [lung water lowers PaO2 at fixed FiO2 (tables §5e; research/12 BF-20)]",
-   "HAND WR (automatic WR): the same 30 mL/kg gives +1.7 mL/kg lung water in a HEALTHY patient and 0 in septic shock (kfMult 2.6), and PaO2 RISES 15 mmHg: 7c's lung-water step filters only above the oedema threshold σ·COP − 2 (circ-adapter.ts:74–79) and nothing lowers σ in sepsis (7e writes kfMult only, endo/adapters.ts:173–181), so a leak without high pulmonary venous pressure makes no lung water"
+   "HAND WR (automatic WR): the same 30 mL/kg gives +1.7 mL/kg lung water in a HEALTHY patient and 0 in septic shock (kfMult 2.6), and PaO2 RISES 15 mmHg: 7c's lung-water step filters only above the oedema threshold σ·COP − 2 (circ-adapter.ts:80–81) and nothing lowers σ in sepsis (7e writes kfMult only, endo/adapters.ts:173–181), so a leak without high pulmonary venous pressure makes no lung water"
   ],
   "values": {
    "kf": 2.594,
@@ -1294,7 +1294,7 @@
   "auto": "TS",
   "notes": [
    "TS cop = 8.655 below [11, 17] (lower = stronger/faster) [Weil 1979 Crit Care Med 7:113 / Mangialardi 2000 J Trauma 48:37 (COP ≈ 12–16 mmHg at albumin 20 g/L; normal 22–25)]",
-   "HAND TS (automatic TS): COP 8.7 mmHg at albumin 20 g/L: total protein is taken as 1.6 × albumin (fluids.ts:48–51), so the globulins (≈ 25–30 g/L, a third of normal COP) fall with the albumin; the lung-oedema threshold drops to PAWP 6.7"
+   "HAND TS (automatic TS): COP 8.7 mmHg at albumin 20 g/L: total protein is taken as 1.6 × albumin (fluids.ts:53–54), so the globulins (≈ 25–30 g/L, a third of normal COP) fall with the albumin; the lung-oedema threshold drops to PAWP 6.7"
   ],
   "values": {
    "cop": 8.655,
@@ -1316,7 +1316,7 @@
   "auto": "TW",
   "notes": [
    "TW dAg = -0.041 above [-6.5, -3.5] [Figge 1998 Crit Care Med 26:1807 (AG falls 2.5 mmol/L per 10 g/L albumin fall)]",
-   "HAND IN (automatic TW): a PROFILE albumin of 20 g/L gives the normal AG (11.8) and BE 0, because createBloodCore solves the unmeasured anions to hold HCO3 24.4 (core.ts:66–73) and so absorbs the albumin charge; the SAME hypoalbuminaemia reached by dilution (BF-01a, albumin −10.6) lowers the AG by 3.7 as Figge predicts — one state, two answers"
+   "HAND IN (automatic TW): a PROFILE albumin of 20 g/L gives the normal AG (11.8) and BE 0, because createBloodCore solves the unmeasured anions to hold HCO3 24.4 (core.ts:78–84) and so absorbs the albumin charge; the SAME hypoalbuminaemia reached by dilution (BF-01a, albumin −10.6) lowers the AG by 3.7 as Figge predicts — one state, two answers"
   ],
   "values": {
    "ag": 11.846,
@@ -1380,7 +1380,7 @@
   "auto": "WR",
   "notes": [
    "WR dPaco2 = -0.06 below [5, 9] [Javaheri 1982 / \"Boston rules\": PaCO2 +0.7 per 1 mmol/L HCO3 rise (+7 ± 2 for HCO3 34)]",
-   "HAND WR (automatic WR): PaCO2 38.8 at HCO3 34 (pH 7.55): the chemoreflex set point moves only DOWN for metabolic acidosis (spont.ts:5–8, \"metabolic alkalosis is not compensated (v1)\"), so there is no compensatory hypoventilation"
+   "HAND WR (automatic WR): PaCO2 38.8 at HCO3 34 (pH 7.55): the chemoreflex set point moves only DOWN for metabolic acidosis (spont.ts:7 and paco2SetPoint at :55, \"metabolic alkalosis is not compensated (v1)\"), so there is no compensatory hypoventilation"
   ],
   "values": {
    "paco2": 38.815,
@@ -1523,7 +1523,7 @@
   "auto": "TS",
   "notes": [
    "TS ecgK = 4.2 above [2.2, 2.8] [K 2.5: U waves, T flattening, ST depression (Mattu 2000; Stage 5.1 morphology from K < 3.5)]",
-   "HAND WR (automatic TS): the ECG shows K 4.2 for a plasma K of 2.5: bloodEcgTargets pushes only the CHANGE from the profile set point (blood/pipeline.ts:210, engine.ts:855–866), so a profile hypo/hyperkalaemia never reaches the ECG; no ectopy mechanism exists either"
+   "HAND WR (automatic TS): the ECG shows K 4.2 for a plasma K of 2.5: bloodEcgTargets pushes only the CHANGE from the profile set point (blood/pipeline.ts:209–211, engine.ts:857–866), so a profile hypo/hyperkalaemia never reaches the ECG; no ectopy mechanism exists either"
   ],
   "values": {
    "k": 2.493,
@@ -1546,7 +1546,7 @@
   "auto": "WR",
   "notes": [
    "WR dMin = 0 (expected sign 1) [hypokalaemia potentiates and prolongs non-depolarising block (Miller 10e ch. 27; research/12 BF-09)]",
-   "HAND MI (automatic WR): identical T1 25 % time at K 2.5 and 4.2: ec50Multipliers reads volatile MAC, Mg (from the neuro profile), temperature and the nm profile, never plasma K (neuro/interactions.ts:23–47)"
+   "HAND MI (automatic WR): identical T1 25 % time at K 2.5 and 4.2: ec50Multipliers reads volatile MAC, Mg (from the neuro profile), temperature and the nm profile, never plasma K (neuro/interactions.ts:23–45)"
   ],
   "values": {
    "t25LowK": 35.7,
@@ -1683,7 +1683,7 @@
   "auto": "TS",
   "notes": [
    "TS ratio60 = 1 above [0.4, 0.65] [COHb t½ 74 ± 25 min on FiO2 1.0 (Weaver 2000 Chest 117:801): 60 min → 0.4–0.65 of the start]",
-   "HAND MI (automatic TS): COHb is a static profile fraction (odc.cohb set once in createBloodCore, core.ts:60): 30 % at 0 and at 60 min on FiO2 1.0 — no CO uptake/elimination kinetics (audit 09 A09-G3, R11 still open)"
+   "HAND MI (automatic TS): COHb is a static profile fraction (odc.cohb set once in createBloodCore, core.ts:77): 30 % at 0 and at 60 min on FiO2 1.0 — no CO uptake/elimination kinetics (audit 09 A09-G3, R11 still open)"
   ],
   "values": {
    "cohb0": 30,

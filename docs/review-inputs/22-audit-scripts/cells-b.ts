@@ -39,7 +39,7 @@ for (const [id, K, band] of [['BF-07a', 6.5, 'peaked T only'], ['BF-07b', 7.5, '
     expect, owner: 'FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2)', fu4: true,
     hand: { verdict: 'WR', why: id === 'BF-07c'
       ? 'the acute rise to 8.5 draws a sine wave (QRS 253 ms) in sinus rhythm at MAP 95 for 15 min with no VF, asystole or block (FU-4 G3 pending: K acts on morphology only); the PROFILE patient with K 8.5 shows a normal ECG (ecgK 4.2, QRS 93) because only the change from the profile set point reaches the ECG (F2, new)'
-      : `the acute rise shows on the ECG (ecgK ${K - 0.02}), but the PROFILE patient with the same plasma K ${K} shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)` } });
+      : `the acute rise shows on the ECG (ecgK ${K - 0.02}), but the PROFILE patient with the same plasma K ${K} shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:209–211) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)` } });
 }
 
 // ---- BF-08: hyperkalaemia 7.5 — calcium, insulin–dextrose, salbutamol, bicarbonate, furosemide --------------------------

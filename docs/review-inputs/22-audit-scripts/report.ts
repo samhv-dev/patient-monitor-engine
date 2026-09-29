@@ -17,7 +17,20 @@ const FAM: [string, string[]][] = [
 const GAP: Record<string, string> = {};
 const put = (g: string, ids: string[]) => { for (const i of ids) GAP[i] = GAP[i] ? `${GAP[i]}, ${g}` : g; };
 // gap ids of §3 (filled from the graded store)
-put('F1', ['BF-02a', 'BF-02b', 'BF-04', 'BF-01a']);
+put('F1', ['BF-01a', 'BF-01b', 'BF-02a', 'BF-02b', 'BF-04', 'BF-14', 'BF-20b']);
+put('F2', ['BF-07a', 'BF-07b', 'BF-07c', 'BF-08a', 'BF-09a']);
+put('F3', ['BF-29b']);
+put('F4', ['BF-20a', 'BF-20b']);
+put('F5', ['BF-05a', 'BF-05d']);
+put('F6', ['BF-08d']);
+put('F7', ['BF-16b']);
+put('F8', ['BF-22a', 'BF-22b']);
+put('F9', ['BF-15b']);
+put('F10', ['BF-09b']);
+put('F11', ['BF-11b']);
+put('F12', ['BF-07c', 'BF-18a', 'BF-18b', 'BF-19', 'BF-32b', 'BF-M2']);
+put('F13', ['BF-21c', 'BF-22c', 'BF-15a', 'BF-23']);
+put('7i', ['BF-05e', 'BF-24', 'BF-25a', 'BF-25b', 'BF-25c', 'BF-25d', 'BF-25e', 'BF-26a', 'BF-26b', 'BF-26c', 'BF-26d', 'BF-27a', 'BF-27b', 'BF-27c', 'BF-28a', 'BF-28b', 'BF-31']);
 const esc = (x: string) => x.replace(/\|/g, '/');
 const counts: Record<string, number> = {};
 for (const r of Object.values(s)) counts[r.verdict] = (counts[r.verdict] ?? 0) + 1;
