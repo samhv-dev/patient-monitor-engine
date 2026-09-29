@@ -2,7 +2,7 @@
 // the `scenario load` commandApplied (sticky, so late joiners get it), the current state from `scenario` events,
 // pause state from `scenario pause/resume`. ControllerSession owns one, so the panel and the remote share it.
 import type { AppliedResolution, WireEvent } from '../protocol.ts';
-import { describeTransition, manualLabel } from './describe.ts';
+import { describeTransition, manualLabel, type Labeller } from './describe.ts';
 import type { ScenarioDoc, ScenarioState } from './types.ts';
 
 export interface NextTransition {
@@ -78,9 +78,11 @@ export class ScenarioView {
     return Math.max(0, end - this.enteredT - this.pausedTotal);
   }
 
-  next(): NextTransition[] {
+  /** FU-8 (R-S9-2): `lx` prints clinical words for engine ids (the host's glossary); states default to their labels. */
+  next(lx: Labeller = {}): NextTransition[] {
+    const state = lx.state ?? ((id: string) => this.stateLabel(id));
     return (this.current()?.transitions ?? []).map((t) => ({
-      id: t.id, to: t.to, label: t.label ?? t.id, text: describeTransition(t), manual: manualLabel(t.when),
+      id: t.id, to: t.to, label: t.label ?? t.id, text: describeTransition(t, { ...lx, state }), manual: manualLabel(t.when),
     }));
   }
 

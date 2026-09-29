@@ -97,7 +97,9 @@ export function renderControls(parent: HTMLElement, vocab: Vocabulary, host: Con
       const rel = el(doc, 'button', { type: 'button', 'data-action': 'release' }, 'Release');
       const modeled = opts.mode === 'modeled';
       pin.disabled = rel.disabled = !modeled;
-      if (!modeled) pin.title = rel.title = 'Pin and release need MODELED mode (Stage 7)';
+      // FU-8 (Stage 9 R-S9-2, R50 review F9): the gating is 6a's deliberate choice — in MANUAL every value is already
+      // the instructor's, so there is nothing to pin; the old tooltip blamed a missing Stage 7 that has landed
+      if (!modeled) pin.title = rel.title = 'Pin and release hold a MODELED value; in MANUAL every value is already yours';
       pin.addEventListener('click', () => host.submit(pinCommand(spec, Number(val.value), ramp()), `pin.${spec.id}`));
       rel.addEventListener('click', () => host.submit(releaseCommand(spec, ramp()), `pin.${spec.id}`));
       r.append(pin, rel);
