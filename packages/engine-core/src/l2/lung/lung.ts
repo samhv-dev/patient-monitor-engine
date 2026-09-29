@@ -152,7 +152,7 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   // plan decision 7: "the CPR kinetics are untouched").
   const qO2 = Math.max(0.05, x.q);
   const qCo2 = Math.max(qO2, x.qRef ?? 0);
-  const extra = Math.min(0.6, x.baseShunt + lp.extraShunt);
+  const extra = Math.min(0.6, x.baseShunt + extraShuntAt(lp, ls.peepTot)); // Stage V.1 (E-V1-2)
   const qp = qO2 * (1 - extra);
   const f = x.sideFlow ? x.sideFlow.map((v) => v / Math.max(1e-6, x.sideFlow![0]! + x.sideFlow![1]!)) : ls.perf.f;
   const perfU = [0, 0, 0, 0];
@@ -210,9 +210,18 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   }, dt);
 }
 
+/**
+ * Stage V.1 (E-V1-2): the extra shunt at the current total PEEP. Its lung-water part (flooded alveoli: pulmonary
+ * oedema, aspiration pneumonitis, 7c's lung water) is relieved by PEEP ×(1 − 0.04·PEEP) (tables §4.5, catalogue §13
+ * "PEEP / CPAP response strong"; the data row's own rule, not applied until V.1 retired the link's interim shunt).
+ */
+export function extraShuntAt(lp: LungParams, peepTot: number): number {
+  return lp.extraShunt - lp.waterShunt * Math.min(1, 0.04 * Math.max(0, peepTot));
+}
+
 /** True shunt fraction now (for lungState and the `shunt` coupled truth). */
 export function shuntFraction(ls: LungState, baseShunt: number): number {
-  const extra = Math.min(0.6, baseShunt + ls.lp.extraShunt);
+  const extra = Math.min(0.6, baseShunt + extraShuntAt(ls.lp, ls.peepTot));
   const f = ls.perf.f;
   return Math.min(0.9, extra + (1 - extra) * ((f[0] as number) * (ls.perf.shunt[0] as number) + (f[1] as number) * (ls.perf.shunt[1] as number)));
 }

@@ -17,6 +17,8 @@ export interface VentConfig {
   airwayClosure: boolean; openPressure: number; recruitedVol: number; stressIdx: boolean; stressB: number;
   uip: boolean; uipThresh: number; reverseTrig: boolean; entrainRatio: '1:1' | '1:2' | '1:3';
   efl: boolean; eflSeverity: 'mild' | 'moderate' | 'severe' | 'custom'; pcrit: number; eflK: number; peepStent: number;
+  /** Stage V.1: pleural-space pressure above normal (cmH2O) from the patient engine's lungState (tension pneumothorax). */
+  pleural: number;
   cardiac: boolean; hr: number; variability: boolean; varPct: number;
   showPmus: boolean; showP01: boolean; sweepSec: number;
   /** Hamilton-style name shown in the header when several names share one engine mode (HAMILTON_MODES). */

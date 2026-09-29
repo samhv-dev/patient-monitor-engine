@@ -10,6 +10,10 @@ export const num = (ev: EngineEvent[], id: NumericId, t0: number, t1: number): n
 export const truth = (ev: EngineEvent[], v: StateVar, t0: number, t1: number): number[] =>
   ev.flatMap((x) => (x.type === 'state' && x.t >= t0 && x.t <= t1 && x.values[v] !== undefined ? [x.values[v] as number] : []));
 export const co = (s: LinkedSim): number => cardiacOutput((s.engine.snapshot().state as { st: { hemo: HemoState } }).st.hemo, s.now());
+/** Stage V.1: PCWP = 7a's pulmonary venous pressure, the `pawp` truth (hemo pipeline: values.pawp = circOut.pPv; wedge = pPv). */
+export const pcwp = (s: LinkedSim): number => (s.engine.snapshot().state as { st: { hemo: HemoState } }).st.hemo.circOut.pPv;
+/** Stage V.1: the engine's lungState shunt now (the 7b lungs' own, absolute). */
+export const lungShunt = (s: LinkedSim): number => (s.events.filter((e) => e.type === 'lungState').at(-1) as { shunt: number } | undefined)?.shunt ?? Number.NaN;
 /** Advance to t one sim-minute at a time, yielding between chunks (CI rule, G2). */
 export async function run(s: LinkedSim, t: number): Promise<void> {
   while (s.now() < t - 1e-9) {

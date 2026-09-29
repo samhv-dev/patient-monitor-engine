@@ -54,7 +54,7 @@ test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({
   // vent → engine: the monitor counts the ventilator's 14/min
   await expect.poll(() => last(page, 'awrr'), { timeout: 30_000 }).toBe(14);
   // engine → vent: lungState arrived
-  expect(await vent<boolean>(page, '(v) => v.core.lung.ref !== null')).toBe(true);
+  expect(await vent<boolean>(page, '(v) => v.core.lung.last !== null')).toBe(true); // Stage V.1: lungState read as absolute
   // disconnection: ventilator alarm, then EtCO2 0 on the monitor
   await page.click('#disc');
   // On a slow runner the minute-volume-low alarm can win the banner first; both are valid consequences of a

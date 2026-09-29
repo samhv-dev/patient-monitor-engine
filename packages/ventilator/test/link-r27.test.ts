@@ -1,8 +1,8 @@
 // R27 two-way link, in process (lockstep): the ventilator's settings move SpO2, EtCO2, ABP and CVP through the
 // patient engine within physiological time constants. Numbers printed with PRINT=1 feed docs/gates/stage-V.md.
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createLinkedSim } from '../src/index.ts';
-import { fmt, run, snap } from './helpers.ts';
+import { fmt, lungShunt, pcwp, run, snap } from './helpers.ts';
 
 const log = (tag: string, o: Record<string, number>) => { if (process.env.PRINT) console.log(`LINK ${tag}: ${fmt(o)}`); };
 
@@ -74,7 +74,11 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
 
   // NEEDS A RULING (Stage 7b gate note): on main (7a) the SpO2 fall 60 s after PEEP 15 → 5 was 98 → 94.6 (−3.4); with 7b's
   // two O2 stores it is 98 → 95.0 (−3.0), exactly at the band edge (> 3). Main before 7a: −5. it.fails keeps CI green and flags it.
-  it.fails('ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5', async () => {
+  // Stage V.1 (G7b ruling 4+5+13): the interim link recruitment (logistic PEEP → shunt, τ 40/10 s) is retired; the 7b lungs
+  // recruit on their own (R46: PEEP alone −20 % shunt, de-recruitment τ 2 min), so the band — fitted to the interim curve —
+  // is further away: SpO2 95.0 → 97.0 at PEEP 15 (+2.0 vs ≥ 5) and 97.0 60 s after PEEP 5 (0 vs > 3; plan prototype +1.5 / 0.0). Stays it.fails (R45);
+  // calibration row "ARDS link band: re-derive from 7b's recruitment" (orchestrator ruling (V.1 review) 2).
+  it.fails('ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the 7b lungs)', async () => {
     const s = createLinkedSim({ profile: 'ards-moderate', vent: { vt: 420, pmax: 45, fio2: 60 } });
     await run(s, 180);
     const a = snap(s, 150, 180);
@@ -90,21 +94,45 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
     expect(c.spo2).toBeLessThan(b.spo2 - 3);
   });
 
-  // NEEDS A RULING NR-3 (docs/gates/stage-7a.md): heart–lung interaction is emergent on the Stage 7a circulation
-  // (pleural input, T_IT 0.65) instead of Stage 3's MANUAL Paw coupling; measured: COPD auto-PEEP 9.9 → MAP −9.4 (CO −12 %);
-  // oedema (70 y, no HF condition in the profile) PEEP 5 → 12: SpO2 +3, CO 4.65 → 4.66. it.fails keeps CI green and flags it.
-  // Stage 7b: tried giving the link profile 7a's `hfref` (moderate): PEEP 5 → 12 still leaves CO 5.08 vs 4.99 needed —
-  // stays it.fails, deferred (gate note, NR-3)
-  it.fails('cardiogenic oedema PEEP 5 → 12: SpO2 rises and CO falls', async () => {
-    const s = createLinkedSim({ profile: 'oedema-cardiogenic' });
-    await run(s, 180);
-    const a = snap(s, 150, 180);
-    s.set({ peep: 12 });
-    await run(s, 360);
-    const b = snap(s, 330, 360);
-    log('hf peep5', a); log('hf peep12', b);
-    expect(b.spo2 - a.spo2).toBeGreaterThanOrEqual(2);
-    expect(b.co).toBeLessThan(0.97 * a.co);
+  // Stage V.1 (G7b ruling 4+5+13, NR-3): re-specified to SpO2 rise + PCWP fall — PEEP need not lower CO in HFrEF (the
+  // CO-fall band was wrong). The profile now carries 7a's hfref (moderate) and the 7b lungs' pulmOedema; the rise in
+  // oxygenation is the lung-water shunt's own PEEP response (tables §4.5, E-V1-2), PCWP is 7a's pawp truth. The runs
+  // happen in beforeAll so that a crash fails the block instead of letting an it.fails pass silently (R50 review).
+  // Orchestrator ruling (V.1 review) 3: the FiO2 0.21 variant is measured too; neither reaches +2 (R45: it.fails).
+  describe('cardiogenic oedema PEEP 5 → 12 (Stage V.1)', () => {
+    type HfSnap = ReturnType<typeof snap> & { pcwp: number; shunt: number };
+    const hf = new Map<number, { a: HfSnap; b: HfSnap }>();
+    const oedema = async (fio2: number) => {
+      const s = createLinkedSim({ profile: 'oedema-cardiogenic', vent: { fio2 } });
+      await run(s, 150);
+      const pa = pcwp(s);
+      await run(s, 180);
+      const a = { ...snap(s, 150, 180), pcwp: (pa + pcwp(s)) / 2, shunt: lungShunt(s) };
+      s.set({ peep: 12 });
+      await run(s, 330);
+      const pb = pcwp(s);
+      await run(s, 360);
+      const b = { ...snap(s, 330, 360), pcwp: (pb + pcwp(s)) / 2, shunt: lungShunt(s) };
+      log(`hf${fio2} peep5`, a); log(`hf${fio2} peep12`, b);
+      return { a, b };
+    };
+    beforeAll(async () => {
+      hf.set(40, await oedema(40));
+      hf.set(21, await oedema(21));
+    }, 300_000);
+    it('the lung-water shunt falls ≥ 25 % and PCWP falls (FiO2 0.4; the shunt fall is a mechanism check of E-V1-2, not a clinical band)', () => {
+      const { a, b } = hf.get(40)!;
+      expect(b.shunt).toBeLessThanOrEqual(0.75 * a.shunt);
+      expect(b.pcwp).toBeLessThan(a.pcwp);
+    });
+    it.fails('FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the 7b oedema shunt does not desaturate)', () => {
+      const { a, b } = hf.get(40)!;
+      expect(b.spo2 - a.spo2).toBeGreaterThanOrEqual(2);
+    });
+    it.fails('room air (FiO2 0.21): SpO2 rises ≥ 2 (measured SpO2 94.0 → 95.0, SaO2 94.9 → 95.5: shunt 0.15 → 0.10 moves SpO2 by 1)', () => {
+      const { a, b } = hf.get(21)!;
+      expect(b.spo2 - a.spo2).toBeGreaterThanOrEqual(2);
+    });
   });
 
   it('disconnection: capnogram < 1 mmHg within 4 s, EtCO2 numeric 0 within 14 s (10 s peak window after the last breath), ventilator Disconnection alarm within one breath', async () => {

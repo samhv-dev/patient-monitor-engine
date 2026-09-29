@@ -4,6 +4,7 @@
 // side's lung compliance and airway count, in series with the whole (shared) chest wall and the tube.
 import type { LungConditionSpec } from '../../types-lung.ts';
 import { resolveLung } from './conditions.ts';
+import { CMH2O_TO_MMHG } from '../gas/params.ts'; // Stage V.1
 
 export interface VentReference {
   crs: number; // static respiratory-system compliance, mL/cmH2O
@@ -12,6 +13,7 @@ export interface VentReference {
   nonAerated: number; // whole-lung non-aerated fraction (volume-weighted)
   extraShunt: number;
   vdAlv: number; // volume-weighted unperfused fraction of alveolar ventilation
+  pleuralCmH2O: number; // Stage V.1: the condition's pleural-space pressure above normal (lp.pPtx), cmH2O
 }
 
 export function ventReference(spec: LungConditionSpec, pbwKg = 70): VentReference {
@@ -29,6 +31,6 @@ export function ventReference(spec: LungConditionSpec, pbwKg = 70): VentReferenc
   return {
     crs: 1 / (1 / cL + 1 / lp.ccw), rInsp, rExp: rInsp * Math.max(s0.rawExp, s1.rawExp),
     nonAerated: 0.45 * (s0.atel + s0.consol) + 0.55 * (s1.atel + s1.consol), extraShunt: lp.extraShunt,
-    vdAlv: 0.45 * s0.vdAlv + 0.55 * s1.vdAlv,
+    vdAlv: 0.45 * s0.vdAlv + 0.55 * s1.vdAlv, pleuralCmH2O: Math.round((lp.pPtx / CMH2O_TO_MMHG) * 10) / 10,
   };
 }

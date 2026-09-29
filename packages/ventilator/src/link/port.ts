@@ -99,6 +99,7 @@ export const MAX_AHEAD_TICKS = 75;
 export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): () => void {
   let offset: number | null = null;
   let learning = false;
+  let gen = 0; // Stage V.1: bumped by a ventilator restart; results of commands sent before it are stale
   let lastTick = -1;
   let allowed = -Infinity;
   let engTick = 0;
@@ -115,14 +116,18 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
       if (m.tick < lastTick) {
         offset = null;
         allowed = -Infinity;
+        learning = false; // Stage V.1: a probe still in flight belongs to the old ventilator — relearn from this one
+        gen++;
       }
       lastTick = m.tick;
       for (const c of m.cmds) {
         const at = offset === null ? undefined : m.tick + offset;
         const probe = offset === null && !learning;
         if (probe) learning = true;
+        const g = gen;
         void Promise.resolve(mon.dispatch(at === undefined ? c : { ...c, atTick: at })).then((r) => {
           if (!r.accepted) onRejected(c, r.reason);
+          else if (g !== gen) return; // Stage V.1: learnt from the ventilator before a restart — never install it
           else if (probe) {
             offset = r.tick - m.tick + LEAD_TICKS;
             learning = false;

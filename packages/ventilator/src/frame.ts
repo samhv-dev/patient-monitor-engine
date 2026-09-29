@@ -3,6 +3,7 @@
 // Pause and inspiratory hold count as inspiration (Ti includes the pause, as a ventilator reports it).
 import type { VentFrameExt } from '@pme/engine-core';
 import type { VentState } from './types.ts';
+import { pleuralOpening } from './mechanics.ts';
 
 /** The R27 frame: Stage 3's VentFrame + Stage V's optional alveolar pressure and mode (engine-core types-vent-link.ts). */
 export type LinkFrame = VentFrameExt & { palvCmH2O: number; mode: string };
@@ -13,7 +14,9 @@ export function toVentFrame(vs: VentState, mode: string): LinkFrame {
   const insp = !open && (vs.hold === 'insp' || (vs.hold === null && p.phase !== 'exp'));
   return {
     pawCmH2O: p.Paw,
-    palvCmH2O: open ? 0 : p.Palv,
+    // Stage V.1: without the pleural opening pressure — the engine already adds that pleural pressure to the heart
+    // (respPleural), so transmitting it again through T_IT·Palv would count it twice
+    palvCmH2O: open ? 0 : p.Palv - pleuralOpening(vs.cfg, p.V),
     flowLps: open ? 0 : p.Q,
     volumeMl: open ? 0 : Math.max(0, p.V - p.breathVstart),
     fio2: vs.cfg.fio2 / 100,
