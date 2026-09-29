@@ -415,6 +415,23 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
   if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
+  // FU-8 (research/20 DV-01b, gap V1; MODELED; orchestrator ruling OQ3): every pulseless ELECTRICAL rhythm (PEA) carries
+  // the arrest state. Only the engine's own declaration used to create it, so a PEA made by a shock (the defibrillator's
+  // `pea` outcome) or set by the instructor never decayed and never regained a pulse (0 of 11 shock-PEAs under 8 min of
+  // CPR at CoPP 27–28, myocardial state 1.00). A new organised pulseless rhythm with no arrest state enters one at its
+  // onset (a different organised one takes over the onset rate). An instructor-selected VF does NOT gain it in v1.0 —
+  // that moved FU-4's CPR rows (a sinus selected after 4 min of VF with CPR re-arrested at +10 s); MANUAL keeps the
+  // instructor's rhythm (Q9).
+  const rKey = `${ctx.rhythm.id}|${pulseless}`;
+  if (ctx.l1.mode === 'modeled' && rKey !== hs.arrestKey) {
+    hs.arrestKey = rKey;
+    const id = ctx.rhythm.id;
+    if (pulseless && !NO_BEAT_RHYTHMS.has(id)) {
+      const r0 = ctx.rhythm.opts?.rateBpm ?? Math.round(Math.max(20, rampValue(ctx.hr, t)));
+      if (!c.arrest) c.arrest = { cause: 'pulseless', t, from: id, roscS: 0, rate0: r0, rateNow: r0 };
+      else if (c.arrest.from !== id) Object.assign(c.arrest, { from: id, roscS: 0, rate0: r0, rateNow: r0 });
+    }
+  }
   if (ctx.requestRhythm) {
     // FU-4 G1 (D5, D6): FU-3's hypoxic declaration first (MODELED), then the low-flow / no-flow / hazard declaration
     // (both modes); an engine-declared PEA regains its pulse through roscStep. One requestRhythm path (E-FU3-8).
