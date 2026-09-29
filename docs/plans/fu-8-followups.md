@@ -581,7 +581,7 @@ sequence and once on `origin/main` `0fd5397`, except one CHAINED block, which ed
 BOTH lists, so the files run in slow-a only (slow-b ran 37.6 of its 40 min at the FU-4 gate). A glob that matches
 nothing yet is harmless.
 
-- [ ] **Step 1 — worktree and branch.**
+- [x] **Step 1 — worktree and branch.**
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -591,7 +591,7 @@ cd ../scratch/wt-fu-8 && npx -y pnpm@9.15.9 install --frozen-lockfile
 git log --oneline -1   # expect 0fd5397 or later; record it in the gate note
 ```
 
-- [ ] **Step 2 — the before-numbers (scratch logs under `<scratchpad>/fu-8-followups/`).**
+- [x] **Step 2 — the before-numbers (scratch logs under `<scratchpad>/fu-8-followups/`).**
 
 ```bash
 mkdir -p <scratchpad>/fu-8-followups
@@ -603,7 +603,7 @@ Expected (as the plan's "Prototype results", seed 7): A2's alarm log raises `ART
 A7 shows PI 8.21 at 181–185 s; `fidelity-lowflow` 9 tests pass with its 5 `it.fails`; `circ-hypoxic-arrest` 8 pass
 (asphyxial PEA at +6.35 min). If a number differs, a merged stage moved it: record the new number, re-anchor, go on.
 
-- [ ] **Step 3 — the SLOW_A glob.**
+- [x] **Step 3 — the SLOW_A glob.**
 
 In `packages/engine-core/vite.config.ts`, find:
 
@@ -635,7 +635,7 @@ const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline
 Check the split: `cd packages/engine-core && CI=1 PME_TEST_SET=slow-b npx -y pnpm@9.15.9 exec vitest list | grep -c fu8`
 → 0 once the files exist (Tasks A1–A13).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -657,7 +657,7 @@ R50 review F6: a live text must never print a false inequality — the clear hys
 unit INSIDE the limit, and the first draft printed `**ABPs 90<90`, `**ABPd 90>90`, `**CVP 10>10` there. A condition the
 band alone holds is marked `held`; the entry keeps its last violating text.
 
-- [ ] **Step 1 — failing tests first.**
+- [x] **Step 1 — failing tests first.**
 
 Create `packages/engine-core/test/l3/alarms/fu8-live-text.test.ts`:
 
@@ -754,7 +754,7 @@ Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/a
 `setLimit` test and the F6 test FAIL (text `**ABPm 66<70`; `**ABPm 55<70`; `held` undefined); the latched-text test
 passes.
 
-- [ ] **Step 2 — the text follows the value.**
+- [x] **Step 2 — the text follows the value.**
 
 In `packages/engine-core/src/l3/alarms/manager.ts`, find:
 
@@ -833,12 +833,12 @@ Replace with:
     if (l.low !== null && (under || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c, ...(under ? {} : { held: true }) });
 ```
 
-- [ ] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/alarms test/engine/fu8-alarm-text.test.ts` → all pass (prototype: 12 files, 60
+- [x] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/alarms test/engine/fu8-alarm-text.test.ts` → all pass (prototype: 12 files, 60
 tests); the engine test logs `470 rows with ART_M_LOW; worst text/tile gap 0 mmHg` and exactly one `raised` event. Then
 `npx -y pnpm@9.15.9 run audit:monitor A2-ali-b7`: no `cleared` text of the form `X<X` / `X>X` (the review's
 `**ABPs 90<90`, `**ABPd 90>90`, `**CVP 10>10`).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -862,7 +862,7 @@ complexes re-open > 100 ms after the close (`fidelity 4b` raised EXTREME BRADY a
 LOW PERF: the clear hysteresis held a PENDING INOP (`holdingId` counts `pending`), so one PI dip to 0.30 at 596 s raised
 LOW PERF at 601 s and it cleared at 602 s — FU-5 Task 9a's on-delay rule, applied to the INOP.
 
-- [ ] **Step 1 — failing test (R50 review F5: it must fail on main).**
+- [x] **Step 1 — failing test (R50 review F5: it must fail on main).**
 
 Create `packages/engine-core/test/engine/fu8-agonal-qrs.test.ts`:
 
@@ -911,7 +911,7 @@ describe('FU-8 A2 (F3): one QRS per agonal complex', () => {
 (measured on origin/main 7ffaba4 — the first draft's "HR > 25/min" assertion passed on main, the review's F5). The
 double detection shows as the numeric flipping between a reading and "-?-", not as a high reading.
 
-- [ ] **Step 2 — the detector.**
+- [x] **Step 2 — the detector.**
 
 In `packages/engine-core/src/l3/qrs.ts`, find:
 
@@ -954,7 +954,7 @@ Replace with:
         st.lastQrsMax = Math.max(st.lastQrsMax, st.humpMax);
 ```
 
-- [ ] **Step 3 — the agonal hold and LOW PERF.**
+- [x] **Step 3 — the agonal hold and LOW PERF.**
 
 In `packages/engine-core/src/l3/alarms/conditions.ts`, find:
 
@@ -1023,7 +1023,7 @@ Replace with:
     const lowPerf = piV !== null ? piV < LOW_PERF_PI || (raisedLiveId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : raisedLiveId(s, 'spo2LowPerf');
 ```
 
-- [ ] **Step 4 — flip the three E-FU4-20 pins (E-FU8-1).** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fidelity-lowflow.test.ts` first: the three
+- [x] **Step 4 — flip the three E-FU4-20 pins (E-FU8-1).** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fidelity-lowflow.test.ts` first: the three
 `it.fails` must now report "Expect test to fail" (they pass). Then:
 
 In `packages/engine-core/test/engine/fidelity-lowflow.test.ts`, find:
@@ -1065,12 +1065,12 @@ Replace with:
   it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
 ```
 
-- [ ] **Step 5 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/fidelity-lowflow.test.ts test/engine/fidelity-arrest.test.ts test/engine/fidelity-ecg.test.ts test/engine/fidelity-alarms.test.ts test/engine/fu8-agonal-qrs.test.ts`
+- [x] **Step 5 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/fidelity-lowflow.test.ts test/engine/fidelity-arrest.test.ts test/engine/fidelity-ecg.test.ts test/engine/fidelity-alarms.test.ts test/engine/fu8-agonal-qrs.test.ts`
 → all pass (prototype: l3 + fidelity 190 tests; `fu8 A2: 53 agonal complexes; HR samples 269, invalid 34, flips 16` once A6 is in
 too (the review measured the same); the remaining flips are the HR "0" ↔ "-?-" display question, Task A25 / W18). The QRS
 detector's own suites (`test/l3/qrs.test.ts`, `qrs-pacing.test.ts`) are unchanged and green.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1088,7 +1088,7 @@ file), `packages/engine-core/src/l3/pressure-numerics/numerics.ts` (`numericsSte
 the restarted detector's zero-filled history put its first foot BEFORE the restart, so the first "clean" beat still
 averaged artefact samples (PI 4.49 → 2.34 over 5 s with the first half of the fix alone).
 
-- [ ] **Step 1 — failing test.**
+- [x] **Step 1 — failing test.**
 
 Create `packages/engine-core/test/engine/fu8-motion-pi.test.ts`:
 
@@ -1119,7 +1119,7 @@ describe('FU-8 A3 (F5): the PI and PR restart when motion ends', () => {
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-motion-pi.test.ts` → FAILS (PI 8.21 at 182 s).
 
-- [ ] **Step 2 — the fix.**
+- [x] **Step 2 — the fix.**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
@@ -1152,11 +1152,11 @@ Replace with:
   if (p < 0 || p < (wn.first ?? 0) || f - p < 25 || f - p > RING - 16 || m - p >= RING) return null;
 ```
 
-- [ ] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-motion-pi.test.ts test/l3/pressure-numerics test/engine/fidelity-arrest.test.ts test/engine/fidelity-nibp.test.ts`
+- [x] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-motion-pi.test.ts test/l3/pressure-numerics test/engine/fidelity-arrest.test.ts test/engine/fidelity-nibp.test.ts`
 → pass; the log reads `rest PI 1.85 PR 75; after motion PI 1.95 1.99 2.00 1.91 …`. `audit:monitor A7-probe` rows 181–185:
 PI `--`, 1.95, 1.99, 1.91 (was 8.21 ×4).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1177,7 +1177,7 @@ the latching the test exists for was not exercised (pinned `test.fail`, E-FU4-20
 scenario's timing or the alarm"; the alarm is right (an apnoea shorter than its delay raises nothing), so the timing
 moves: a 90 s apnoeic interval after propofol, rocuronium still at +180 s.
 
-- [ ] **Step 1 — the page parameter.**
+- [x] **Step 1 — the page parameter.**
 
 In `apps/demo/src/stage7f.ts`, find:
 
@@ -1210,7 +1210,7 @@ Replace with:
   at(BVM_AT_S, () => void ev({ kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 }));
 ```
 
-- [ ] **Step 2 — the e2e.**
+- [x] **Step 2 — the e2e.**
 
 In `apps/demo/e2e/fu5-latched.e2e.ts`, find:
 
@@ -1284,13 +1284,13 @@ Replace with:
     const tBag = tClick + BVM_AT;
 ```
 
-- [ ] **Step 3 — verify (Chromium only, ≈ 5 min).** `npx -y pnpm@9.15.9 build && CI=1 npx playwright test apps/demo/e2e/fu5-latched.e2e.ts --project=chromium`
+- [x] **Step 3 — verify (Chromium only, ≈ 5 min).** `npx -y pnpm@9.15.9 build && CI=1 npx playwright test apps/demo/e2e/fu5-latched.e2e.ts --project=chromium`
 → 2 passed (webkit skips, the heavy-evidence rule). Record the logged spans (`APNEA live … latched …`) in the gate note;
 the two PNGs under `docs/gates/fu-5/` are re-written by the run — commit them only if the gate note quotes them,
 otherwise `git checkout -- docs/gates`.
 Prototype (Chromium, 3.9 min): philips-like APNEA live 191–216 s, latched 217–457 s (in the rotation at the end); saadat-like live 188–215 s, then none.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1316,7 +1316,7 @@ design; every other rhythm's hash is untouched and the darwin-only rule stays). 
 draw per beat as before, so no other RNG stream shifts. FU-4's PEA decay requests `agonal` at 24/min, clamped to the
 rhythm's 20: its idioventricular phase now runs at ≈ 18.8/min (the asystole hazard is per second, unchanged).
 
-- [ ] **Step 1 — failing test.**
+- [x] **Step 1 — failing test.**
 
 Create `packages/engine-core/test/engine/fu8-agonal-rate.test.ts`:
 
@@ -1346,7 +1346,7 @@ describe('FU-8 A6: the agonal rhythm runs at its rate', () => {
 });
 ```
 
-- [ ] **Step 2 — the rate.**
+- [x] **Step 2 — the rate.**
 
 In `packages/engine-core/src/l2/ecg/foci-ventricular.ts`, find:
 
@@ -1377,7 +1377,7 @@ Replace with:
   st.focusNextT = t + Math.max(AGONAL_RR_MIN_S, (60 / rhythmRate(st, t, ctx)) * (1 + AGONAL_RR_CV * (2 * uniform(ctx.rng.ectopy) - 1)));
 ```
 
-- [ ] **Step 3 — the fixture entry (E-FU8-6).** Recompute the agonal hash on darwin (the fixture's platform):
+- [x] **Step 3 — the fixture entry (E-FU8-6).** Recompute the agonal hash on darwin (the fixture's platform):
 `fnv(JSON.stringify(runRhythm('agonal', 60, { seed: 7 }).st.records))` → prototype `d9075744`.
 
 In `packages/engine-core/test/l2/ecg/nan-guard.test.ts`, find:
@@ -1392,10 +1392,10 @@ Replace with:
 const FIXTURE: Record<string, string> = {"sinus":"51b630bc","sinusBrady":"a6442a4c","sinusTachy":"6adb8b9f","sinusArrhythmia":"53084148","sinusPause":"fe934c89","atrialTach":"aa806f26","mat":"0bb8bad0","afib":"e44bcd91","aflutter":"a25cf05f","svtAvnrt":"4f07b590","svtAvrt":"cb153dc0","wpwSinus":"931149c9","preexcitedAf":"83ca6f9d","junctionalEscape":"5f277786","junctionalAccel":"b958fb55","junctionalTachy":"4d081563","avb1":"dff23667","avb2Mobitz1":"c4f36488","avb2Mobitz2":"7b3c2874","avb2to1":"744fce1c","avbHighGrade":"dc1c8c93","avb3Narrow":"dda3f2a9","avb3Wide":"3126ade7","idioventricular":"db89ed8d","aivr":"a8f563c4","vtMono":"2648f677","vtPoly":"286c8063","torsades":"32fbd05e","vfCoarse":"49de5d33","vfFine":"afa83bdc","asystole":"741638a5","pWaveAsystole":"73e78d5f","agonal":"d9075744","pacedAAI":"4b99dc53","pacedVVI":"2b5c59f1","pacedDDD":"291a270e"};
 ```
 
-- [ ] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-agonal-rate.test.ts test/l2/ecg test/engine/fidelity-arrest.test.ts test/engine/circ-lowflow-arrest.test.ts`
+- [x] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-agonal-rate.test.ts test/l2/ecg test/engine/fidelity-arrest.test.ts test/engine/circ-lowflow-arrest.test.ts`
 → pass (`agonal 6/min → 5.8`, `12 → 11.6`, `18 → 17.0`; fidelity 4b "ASYSTOLE raised once" holds only with Task A2 in).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1420,7 +1420,7 @@ publish WHICH agent, so the tile label is the glossary's generic EtAA (#30) and 
 per-agent labels/colours wait for an agent-id output (listed for Stage 9's glossary work). `qtc` and `tempSite` (T2)
 are left: T2 is already an extra, and a QTc tile is a layout choice (Waiting on Ali).
 
-- [ ] **Step 1 — skins.**
+- [x] **Step 1 — skins.**
 
 In `packages/skins/src/types.ts`, find:
 
@@ -1531,7 +1531,7 @@ Replace with:
 Regenerate the snapshot and check its diff is ONLY the AGENTS tile/colour lines (prototype: 9 insertions):
 `cd packages/skins && npx -y pnpm@9.15.9 exec vitest run -u test/resolve.test.ts && git diff --stat test/__snapshots__`.
 
-- [ ] **Step 2 — renderer.**
+- [x] **Step 2 — renderer.**
 
 In `packages/renderer/src/alarm-view.ts`, find:
 
@@ -1708,10 +1708,10 @@ Replace with:
 };
 ```
 
-- [ ] **Step 3 — verify.** `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/renderer test && npx -y pnpm@9.15.9 -r typecheck`
+- [x] **Step 3 — verify.** `npx -y pnpm@9.15.9 --filter @pme/skins test && npx -y pnpm@9.15.9 --filter @pme/renderer test && npx -y pnpm@9.15.9 -r typecheck`
 → skins 179, renderer 89 (prototype), typecheck clean (the demo's `Record<TileParam, …>` needs the AGENTS sample).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1776,11 +1776,11 @@ Replace with:
       akiStage: os.renal.akiStage,
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-oliguria.test.ts test/engine/organs- test/l2/organs test/l2/renal` → pass (15 files /
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-oliguria.test.ts test/engine/organs- test/l2/organs test/l2/renal` → pass (15 files /
 61 tests on the prototype; `first OLIGURIA flag 1200 s (1 h 0.49 mL/kg/h)`). Run the new test BEFORE the edit first:
 it fails at 508 s.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1921,10 +1921,10 @@ Replace with:
 function measure(leads: Record<LeadId, Float32Array>, r: readonly number[]): Capture12['measurements'] {
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/fu8-capture12-arrest.test.ts test/l3/capture12.test.ts && npx -y pnpm@9.15.9 --filter @pme/renderer test`
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/fu8-capture12-arrest.test.ts test/l3/capture12.test.ts && npx -y pnpm@9.15.9 --filter @pme/renderer test`
 → pass (the renderer's 12-lead view test reads `measurements` only through the paper header).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -1984,7 +1984,7 @@ and S8's 5 s margin at this commit. The FiO2 1 reversal (HR ≥ 60 after oxygena
 scanned τ except 220/230, where it is 34–36 s: a threshold effect, not a mechanism — the rate reaches 58/min at +9 s and
 crosses 60 only as the hypoxic SA-node depression `cor.hyp` 0.31 unwinds with τ_up; within the file's 3-min band).
 
-- [ ] **Step 1 — tests.**
+- [x] **Step 1 — tests.**
 
 Create `packages/engine-core/test/engine/fu8-coronary.test.ts`:
 
@@ -2046,7 +2046,7 @@ describe('FU-8 A11 (C2): ST depression follows the ischaemia', () => {
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-coronary.test.ts -t "A10"` → the first test FAILS (kIsch 0, arrest), the `it.fails` holds.
 
-- [ ] **Step 2 — the supply and the demand.**
+- [x] **Step 2 — the supply and the demand.**
 
 In `packages/engine-core/src/l2/circ/coronary.ts`, find:
 
@@ -2159,7 +2159,7 @@ Replace with:
   const flow = cfr * (beatFlow ?? Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0));
 ```
 
-- [ ] **Step 3 — the τ re-fit (E-FU8-4) and the rig length.** Repeat the joint scan on the executor's tree at 200, 220,
+- [x] **Step 3 — the τ re-fit (E-FU8-4) and the rig length.** Repeat the joint scan on the executor's tree at 200, 220,
 235, 250 and 260 s: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-hypoxic-arrest.test.ts` AND `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/clinical-suite.test.ts -t S8`
 each time; record both times per value in the gate note. If 235 passes both, keep it; if the plateau moved, take the
 middle of the values where BOTH pass (never an edge value) and record the margins; if no value passes both, keep 300,
@@ -2227,14 +2227,14 @@ Replace with:
     const c = await asphyxia('modeled', false, 24 * 60, false, true);
 ```
 
-- [ ] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/fu8-coronary.test.ts -t "A10" test/engine/circ- test/engine/clinical-suite.test.ts test/engine/af- test/engine/fidelity-lowflow.test.ts`
+- [x] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/fu8-coronary.test.ts -t "A10" test/engine/circ- test/engine/clinical-suite.test.ts test/engine/af- test/engine/fidelity-lowflow.test.ts`
 → pass. Prototype: coronary unit tests green; clinical suite unchanged but S8 (+9.92 min at this commit); `fu8 A10: AF 150
 kIsch min 0.89, arrest false`; asphyxia `arrest (PEA (sinus)) at +11.2 min`, reversal `HR ≥ 60 after 0.12 min (7.0 s)`.
 Re-run the CM cells: `cd ../research/19-audit-scripts && CM_OUT=<scratchpad>/fu-8-followups/cm.json PME_ENGINE=<wt>/packages/engine-core/src/index.ts ./run.sh cli.ts CM-15c CM-15b CM-05b CM-04a`
 → CM-15c kIschMin40 ≈ 0.85–0.9 (was 0), no arrest in either arm (was agonal +15.5 min); CM-15b no arrest. Paste the rows
 into the gate note beside research/19's column (research/12 §7).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -2272,11 +2272,11 @@ Replace with:
   const stTarget = dF > ST_DEFICIT_MIN ? -Math.min(0.3, dF) : 0;
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-coronary.test.ts test/l2/circ` → pass: `fu8 A11: CAD HR 130 kIsch min 0.67, ST min
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-coronary.test.ts test/l2/circ` → pass: `fu8 A11: CAD HR 130 kIsch min 0.67, ST min
 -0.214 mV` at this commit (0.69 / −0.200 once Task A13 sizes the 80 kg rig on 74.8 kg; before: 0.65 / 0.00); healthy 65 y at 130: no ST. At HR 110 the filtered deficit is 0.10 — on the threshold,
 no ST (research/19 CM-04a stays WR: the size is Ali's Q6).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -2450,11 +2450,11 @@ Replace with:
   if (band === 'elderly') r.targets = { sbp: 140, dbp: 80, hr: b.hr, cvp: 5 };
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-body-size.test.ts -t "A12" test/l2/circ test/engine/organs-htn.test.ts test/engine/circ-manual-ischaemia.test.ts test/engine/resp-child`
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-body-size.test.ts -t "A12" test/l2/circ test/engine/organs-htn.test.ts test/engine/circ-manual-ischaemia.test.ts test/engine/resp-child`
 → pass: neonate MAP 64 (was 82–89), CO 0.31 L/min (was 0.15); infant 62 (98–105), 0.60 (0.47); child 79 (100–105);
 ventilated neonate HR 152 (199–214). Then the whole fast set (paediatric respiratory rigs live there).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -2602,12 +2602,12 @@ Replace with:
     conditions: (profile?.conditions ?? []).filter((c) => known.includes(c.id)).map((c) => ({ ...c, id: c.id as ConditionId })),
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-body-size.test.ts test/l2/circ test/engine/circ-` → pass: `fu8 A13: BV 6600 mL, CO 7.09
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-body-size.test.ts test/l2/circ test/engine/circ-` → pass: `fu8 A13: BV 6600 mL, CO 7.09
 vs 5.34 (× 1.33)` (origin/main: 8 890 mL, × 1.85); `M 175 cm, 91.5 → 92.5 kg: BV 5602 → 5633 mL, SV 79.1 → 79.6 mL`;
 `F 160 cm, 76 → 77.5 kg: BV 4335 → 4377 mL, SV 63.7 → 64.9 mL`. Then the fast set (Stage 3's obese apnoea rigs read the
 gas side only; the 80 kg rigs of `test/l2/circ/stabilise.test.ts` stay inside their bands — prototype: fast set green).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -2687,10 +2687,10 @@ function unknownKeys(name: string, o: object, known: ReadonlySet<string>): strin
 function numReason(name: string, v: number | undefined, lo: number, hi: number): string | undefined {
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/setrhythm-opts.test.ts` then the whole fast set (every rhythm command in the repo's
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/setrhythm-opts.test.ts` then the whole fast set (every rhythm command in the repo's
 tests, scenarios and demos passes the new check — prototype: 268 files green) and `npx -y pnpm@9.15.9 --filter @pme/controller test`.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -2952,10 +2952,10 @@ Replace with:
     expect(texts(panel, '.pme-scn-next li')).toEqual(['Start VF now Start VF now: any of (after 60 s in state; button "Start VF now") → Coarse VF']);
 ```
 
-- [ ] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/controller test && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
+- [x] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/controller test && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 → 222 passed (prototype), clean.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -3167,10 +3167,10 @@ describe('FU-8 (Stage 9 R-S9-4): the scenario card fields and the endocrine prof
 });
 ```
 
-- [ ] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/controller test && npx -y pnpm@9.15.9 --filter @pme/validation test`
+- [x] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/controller test && npx -y pnpm@9.15.9 --filter @pme/validation test`
 → pass (the validation package's documents validate with warnings only).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -3274,10 +3274,10 @@ Replace with:
       this.lastIndex = Math.max(-1, endIdx - 1 - back);
 ```
 
-- [ ] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/renderer test` → 89 passed (prototype); the monitor e2e (Task G) shows no
+- [x] **Verify.** `npx -y pnpm@9.15.9 --filter @pme/renderer test` → 89 passed (prototype); the monitor e2e (Task G) shows no
 blank lane after a Monitor ↔ Instructor switch once Stage 9 lands (a Stage 9 check, not FU-8's).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -3378,10 +3378,10 @@ Replace with:
     }
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-ph-grade.test.ts test/l2/circ` → pass: `PVR mild 2.9, moderate 4.7, severe 9.6, none 4.7 WU`
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-ph-grade.test.ts test/l2/circ` → pass: `PVR mild 2.9, moderate 4.7, severe 9.6, none 4.7 WU`
 (prototype; before: 4.7 at every grade). mPAP mild 24, moderate 35, severe 57 mmHg (probe, CO 5.3 / 5.3 / 4.9 L/min).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -3426,7 +3426,7 @@ only below the unstressed volume).
   pumped the to-and-fro volume against a tense pericardium from negative volumes.
 - research/20 DV-02a: cerebral flow under CPR 0.71 → 0.44 of normal, CPR CO 1.5 → 1.21 L/min (Task A24 records it).
 
-- [ ] **Step 1 — failing tests.**
+- [x] **Step 1 — failing tests.**
 
 Create `packages/engine-core/test/engine/fu8-negative-volume.test.ts`:
 
@@ -3532,7 +3532,7 @@ describe('FU-8 A19 (research/20 DV-04a): CPR on a tamponaded heart', () => {
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-negative-volume.test.ts` → the two volume tests and DV-04a FAIL (`min chamber volume -274 mL, min
 displayed CVP -3.5 mmHg`; tamponade CPR MAP ≈ 154, 11.9 L/min); the neonate test passes.
 
-- [ ] **Step 2 — the limiter and the floors.**
+- [x] **Step 2 — the limiter and the floors.**
 
 In `packages/engine-core/src/l2/circ/circuit.ts`, find:
 
@@ -3678,7 +3678,7 @@ Replace with:
   };
 ```
 
-- [ ] **Step 3 — the declared rows (E-FU8-9).** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-lowflow-arrest.test.ts test/engine/hemo-acceptance.test.ts test/engine/clinical-suite.test.ts`
+- [x] **Step 3 — the declared rows (E-FU8-9).** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-lowflow-arrest.test.ts test/engine/hemo-acceptance.test.ts test/engine/clinical-suite.test.ts`
 first: the ROSC row fails at ≈ +260 s, and the two pins report "Expect test to fail". Then:
 
 In `packages/engine-core/test/engine/circ-lowflow-arrest.test.ts`, find:
@@ -3749,13 +3749,13 @@ Replace with:
   it('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before)', async () => {
 ```
 
-- [ ] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-negative-volume.test.ts test/engine/circ- test/engine/clinical-suite.test.ts test/engine/hemo-acceptance.test.ts test/engine/vent-infant.test.ts test/engine/fidelity-`
+- [x] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-negative-volume.test.ts test/engine/circ- test/engine/clinical-suite.test.ts test/engine/hemo-acceptance.test.ts test/engine/vent-infant.test.ts test/engine/fidelity-`
 → pass. Prototype (the A19 commit's tree): `fu8 A19: min chamber volume 11 mL, min displayed CVP -0.1 mmHg`, neonate CO
 0.311 L/min; `circ-lowflow-arrest ROSC: CoPP 0.2–22.6, pulse at +260 s`; `VF + CPR 10 min: kIsch max 0.89`; S13
 24.9–28.0; S8 +9.75 min; S4a +170 s; DV-04a `tamponade CPR MAP 20, forward 0.57 L/min`. Then the whole fast set
 (prototype: green) and `npx -y pnpm@9.15.9 run audit:monitor A2-ali-b7` (no `**CVP -…<0`).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -3794,7 +3794,7 @@ assisted systole −15.4 → −19.1 (TS: the tables' ≈ −5, W26 to Ali), MAN
 0.05 L/min (TW), PAWP −8.7 → −21.3 % (in band); DV-14d late-deflation EDP +4.1 → +16.6. The IABP trigger in arrest, its
 alarms and the console in arrest are 7h's (research/20 V10).
 
-- [ ] **Step 1 — failing tests.**
+- [x] **Step 1 — failing tests.**
 
 Create `packages/engine-core/test/l2/circ/fu8-iabp-volume.test.ts`:
 
@@ -3922,7 +3922,7 @@ describe('FU-8 A20: the IABP helps the heart it supports', () => {
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/fu8-iabp-volume.test.ts test/engine/fu8-iabp.test.ts` → FAIL: the volume test (net ≈ +30 mL; the
 second has no `iabpSchedule`), DV-13d (arrest with the balloon, CoPP 43 < 55), DV-M5 (+283 ms).
 
-- [ ] **Step 2 — the balloon (devices.ts).**
+- [x] **Step 2 — the balloon (devices.ts).**
 
 In `packages/engine-core/src/l2/circ/devices.ts`, find:
 
@@ -4026,7 +4026,7 @@ Replace with:
   return d.volumeMl * (halfSine(t - d.inflateAt, IABP_INFLATE_S) - halfSine(t - d.deflateAt, IABP_DEFLATE_S) + prev);
 ```
 
-- [ ] **Step 3 — the pipeline: the valve's events, the schedule, the augmented diastole.** (The four state fields are
+- [x] **Step 3 — the pipeline: the valve's events, the schedule, the augmented diastole.** (The four state fields are
 all added here; Tasks A21–A23 use `arrestKey`, `cprArt` and `av.qLung`.)
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
@@ -4150,7 +4150,7 @@ Replace with:
         hs.radQ.push(o.pRad);
 ```
 
-- [ ] **Step 4 — the supply reads the augmented diastole (coronary.ts; chained on Task A10's lines).**
+- [x] **Step 4 — the supply reads the augmented diastole (coronary.ts; chained on Task A10's lines).**
 
 In `packages/engine-core/src/l2/circ/coronary.ts`, find:
 
@@ -4196,14 +4196,14 @@ Replace with:
         const cp = aoDiaOf(x) - ed.lvedp - (ed.pItEd ?? P_PL0);
 ```
 
-- [ ] **Step 5 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/fu8-iabp.test.ts test/engine/circ- test/engine/fu8-coronary.test.ts`
+- [x] **Step 5 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/fu8-iabp.test.ts test/engine/circ- test/engine/fu8-coronary.test.ts`
 → pass: `fu8 A20 DV-13d: arrest control false, IABP false; CoPP control 55.1, IABP 66.9`; `DV-M5: deflation -113 ms`
 (18 cycles).
 The existing `test/l2/circ/iabp.test.ts` (7a) is unchanged and green (`iabpOnBeat` keeps its signature, now through
 `iabpSchedule` with the R wave as the opening). Re-run the DV cells into the gate note:
 `cd ../research/20-audit-scripts && DV_OUT=<scratchpad>/fu-8-followups/dv.json PME_ENGINE=<wt>/packages/engine-core/src/index.ts ./run.sh cli.ts DV-13a DV-13b DV-13c DV-13d DV-14a DV-14c DV-14d DV-15a DV-M5`.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -4232,7 +4232,7 @@ onset (the VF clock covers the VF, as FU-7's Task 12 already reads it). MANUAL k
 **Measured (DV-01b, 40 seeds):** PEA regains a pulse 0 % → 100 % (11 of 11), `peaArrestDeclared` false → true. No FU-4 row
 moves (S13 24.9–28.0, the 10-min VF kIsch 0.89, DV-22a's EtCO2 jump — all as after Task A19).
 
-- [ ] **Step 1 — failing tests.**
+- [x] **Step 1 — failing tests.**
 
 Create `packages/engine-core/test/engine/fu8-pulseless-arrest.test.ts`:
 
@@ -4315,7 +4315,7 @@ describe('FU-8 A21: every pulseless state carries the arrest state', () => {
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-pulseless-arrest.test.ts` → all three FAIL (no arrest state, no pulse, no decay).
 
-- [ ] **Step 2 — the arrest state.**
+- [x] **Step 2 — the arrest state.**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
@@ -4348,13 +4348,13 @@ Replace with:
   if (ctx.requestRhythm) {
 ```
 
-- [ ] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-pulseless-arrest.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/fidelity-arrest.test.ts test/engine/arrest-etco2.test.ts`
+- [x] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-pulseless-arrest.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/fidelity-arrest.test.ts test/engine/arrest-etco2.test.ts`
 → pass: `fu8 A21 shock-PEA: sinus(pulseless) → sinus; arrest state from 124; pulse at 201`; `instructor PEA + CPR: …
 pulse at 141`; `untreated instructor PEA: sinus(pulseless) → agonal(pulseless) → asystole`; S13 24.9–28.0 and
 `VF + CPR 10 min: kIsch max 0.89` unchanged. Then DV-01b: `./run.sh cli.ts DV-01b DV-01c DV-22a` → `peaRegains true`,
 `peaArrestDeclared true` (FU-7 Task 0 Step 6c's pass condition), DV-22a unmoved.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -4396,7 +4396,7 @@ both on main it divides the child's own CPR flow by the ADULT reference (coRatio
 FU-6's anchor (FU-6 T2), so FU-8 does not edit it: **handed to FU-6** (make it `coRefLpm(rs.pat)` for both cases when it
 edits that line), and Task G records the child's CPR coRatio on the merged tree.
 
-- [ ] **Step 1 — failing tests.**
+- [x] **Step 1 — failing tests.**
 
 Create `packages/engine-core/test/engine/fu8-cpr.test.ts`:
 
@@ -4497,7 +4497,7 @@ describe('FU-8 A22: EtCO2 under CPR follows the blood the compressions move thro
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr.test.ts` → the bled-out test FAILS (EtCO2 17.4); VF CPR passes.
 
-- [ ] **Step 2 — the gas exchange reads the circulation.**
+- [x] **Step 2 — the gas exchange reads the circulation.**
 
 In `packages/engine-core/src/l2/gas/coupling.ts`, find:
 
@@ -4555,7 +4555,7 @@ Replace with:
   if (hs.cpr.active) return Math.max(0, hs.av.qLung) * 0.06;
 ```
 
-- [ ] **Step 3 — the declared rows (E-FU8-10).** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/arrest-etco2.test.ts test/engine/cpr-etco2.test.ts` →
+- [x] **Step 3 — the declared rows (E-FU8-10).** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/arrest-etco2.test.ts test/engine/cpr-etco2.test.ts` →
 the arrest-etco2 pin reports "Expect test to fail" (18.0) and the two R39-2 rows fail with the numbers above. Then:
 
 In `packages/engine-core/test/engine/arrest-etco2.test.ts`, find:
@@ -4604,11 +4604,11 @@ Replace with:
   it.fails('ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 after FU-8', async () => {
 ```
 
-- [ ] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr.test.ts test/engine/arrest-etco2.test.ts test/engine/cpr-etco2.test.ts test/engine/clinical-suite.test.ts test/engine/resp- test/engine/circ-`
+- [x] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr.test.ts test/engine/arrest-etco2.test.ts test/engine/cpr-etco2.test.ts test/engine/clinical-suite.test.ts test/engine/resp- test/engine/circ-`
 → pass: `fu8 A22: VF CPR EtCO2 16.8`, `bled-out CPR EtCO2 7.2`; `child CPR flow 0.30 L/min = 19 mL/kg/min`. FU-6's two tests that import `cardiacOutput`
 (`blood-anaemia-co`, the RS suite) call it outside CPR, where it is unchanged. DV cells: `./run.sh cli.ts DV-02b DV-02c DV-03 DV-04a`.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -4629,7 +4629,7 @@ two commands, and a scenario that starts CPR showed a clean VF trace (research/1
 set it at their rate with depth = quality (capped at 1) and clear it when they stop — only an artefact this pipeline set;
 an instructor's own `artefact.cpr` is left alone.
 
-- [ ] **Step 1 — failing test.**
+- [x] **Step 1 — failing test.**
 
 Create `packages/engine-core/test/engine/fu8-cpr-artefact.test.ts`:
 
@@ -4664,7 +4664,7 @@ describe('FU-8 A23: the compressions put their artefact on the ECG', () => {
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr-artefact.test.ts` → FAILS (`artefact.cpr` stays null under CPR).
 
-- [ ] **Step 2 — the coupling.**
+- [x] **Step 2 — the coupling.**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
@@ -4733,10 +4733,10 @@ Replace with:
       }
 ```
 
-- [ ] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr-artefact.test.ts test/l2/ecg test/engine/hemo- test/engine/clinical-suite.test.ts`
+- [x] **Step 3 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr-artefact.test.ts test/l2/ecg test/engine/hemo- test/engine/clinical-suite.test.ts`
 → pass. `npx -y pnpm@9.15.9 run audit:monitor` on any CPR scenario shows the compression waves on lead II at 110/min.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -4822,10 +4822,10 @@ describe('FU-8 A24: cerebral blood flow under CPR (research/20 DV-02a, gap V8)',
 });
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr-brain.test.ts` → 2 passed (`fu8 A24: VF CPR CBF 0.450`; the `it.fails` holds).
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-cpr-brain.test.ts` → 2 passed (`fu8 A24: VF CPR CBF 0.450`; the `it.fails` holds).
 Before Task A19 the first test fails (0.71).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -4924,7 +4924,7 @@ t = 0; the 70 kg adult unchanged. 7c's `hbfRel` and lactate reference (`co0`) st
 170 cm adult has effKg 67.6, so FU-4 F4 had moved its reference; now 51 again. Everything else green on the prototype:
 fast set, slow-a (+ the known macOS `pk-longrun` red), slow-b, validation 107 + 11 skipped, demo 141, controller 223.
 
-- [ ] **Step 1 — failing test.**
+- [x] **Step 1 — failing test.**
 
 Create `packages/engine-core/test/engine/fu8-propofol-ref.test.ts`:
 
@@ -4969,7 +4969,7 @@ describe('FU-8 A28: the drug model\'s resting-output reference', () => {
 
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-propofol-ref.test.ts` → the child FAILS (`fu8 A28: child q 0.204` on origin/main); the adult passes.
 
-- [ ] **Step 2 — both lines together.**
+- [x] **Step 2 — both lines together.**
 
 In `packages/engine-core/src/engine.ts`, find:
 
@@ -5040,7 +5040,7 @@ Replace with:
   if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = circ.ref.co;
 ```
 
-- [ ] **Step 3 — the flipped pin (E-FU8-12).** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-engine.test.ts` → "Expect test to fail" (nadir 51). Then:
+- [x] **Step 3 — the flipped pin (E-FU8-12).** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/neuro-engine.test.ts` → "Expect test to fail" (nadir 51). Then:
 
 In `packages/engine-core/test/engine/neuro-engine.test.ts`, find:
 
@@ -5057,11 +5057,11 @@ Replace with:
   it('propofol 2 mg/kg: depth-index nadir < 52 — measured 52 after FU-4 F4 (51 before), 51 after FU-8 A28', async () => {
 ```
 
-- [ ] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-propofol-ref.test.ts test/engine/neuro-engine.test.ts test/l2/blood test/l2/pk test/engine/pk- test/engine/blood-`
+- [x] **Step 4 — verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-propofol-ref.test.ts test/engine/neuro-engine.test.ts test/l2/blood test/l2/pk test/engine/pk- test/engine/blood-`
 → pass (`fu8 A28: child q 0.935`); then the fast set, slow-b (`neuro-engine` lives there) and
 `npx -y pnpm@9.15.9 --filter @pme/validation test`.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
@@ -5130,10 +5130,10 @@ Replace with:
   return {
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-pe-profile.test.ts test/engine/circ- test/l2/circ` → pass (`fu8 A29: ext.pvr 9.00, mean
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-pe-profile.test.ts test/engine/circ- test/l2/circ` → pass (`fu8 A29: ext.pvr 9.00, mean
 PA 62.9 mmHg`; origin/main 1.00 / 18.1). V.1's link-profile tests re-measure at FU-8's gate once V.1 is on main.
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 cd <repo>/../scratch/wt-fu-8
