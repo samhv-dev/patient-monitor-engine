@@ -95,11 +95,26 @@ export function iabpStop(d: IabpState, t: number): void {
 export const LVAD_RPM = 5400;
 export const LVAD_KH = 0.45; // mL/s per mmHg of (P_ao − P_LV) [ENG HQ slope]
 export const LVAD_SUCTION_ML = 40; // LV volume below which the inflow cannula sucks (tables §8.2) [ENG]
+/**
+ * FU-8 (Task A26; research/20 DV-17, gap V9): the inflow depends on filling. The tables' 40 mL is the collapse volume of
+ * a normal adult LV (resting EDV ≈ LVAD_REF_EDV_ML); a dilated LV collapses onto the cannula at a larger volume, so the
+ * collapse volume scales with the LV's own resting EDV. Above it the inflow falls smoothly over LVAD_INFLOW_MARGIN of
+ * the collapse volume (the LV wall approaching the inlet), to LVAD_SUCTION_FLOW at and below it (the old suction
+ * factor). Before, a 1.5 L bleed in the HFrEF rig (resting EDV 197 mL) lowered the pump flow only 4.04 → 3.70 L/min
+ * and never sucked: the LV emptied to 73 mL, far above an absolute 40 mL [ENG: anchor, margin].
+ */
+export const LVAD_REF_EDV_ML = 120;
+export const LVAD_INFLOW_MARGIN = 0.25;
+export const LVAD_SUCTION_FLOW = 0.3;
+/** FU-8 (A26): the chance of a PVC per supraventricular beat while suction stands (suction-induced ectopy) [ENG]. */
+export const LVAD_SUCTION_PVC_P = 0.2;
 
 export interface LvadState extends CircuitDevice {
   kind: 'lvad';
   rpm: number;
   suction: boolean;
+  /** FU-8 (A26): a suction event since the last console read (the 1 Hz numerics), not only at the read's instant. */
+  suctionSeen: boolean;
   qMin: number;
   qMax: number;
   qSum: number;
@@ -107,16 +122,23 @@ export interface LvadState extends CircuitDevice {
 }
 
 export function createLvad(): LvadState {
-  return { kind: 'lvad', on: false, rpm: LVAD_RPM, suction: false, qMin: Infinity, qMax: -Infinity, qSum: 0, n: 0 };
+  return { kind: 'lvad', on: false, rpm: LVAD_RPM, suction: false, suctionSeen: false, qMin: Infinity, qMax: -Infinity, qSum: 0, n: 0 };
 }
 
-/** Pump flow LV → aorta (mL/s) at LV pressure pLv, aortic pressure pAo and LV volume vLv (mL). */
-export function lvadFlow(d: LvadState, pLv: number, pAo: number, vLv: number): number {
+/**
+ * Pump flow LV → aorta (mL/s) at LV pressure pLv, aortic pressure pAo, LV volume vLv (mL) and the LV's resting EDV
+ * lvSizeMl (FU-8 A26: the collapse volume scales with it; default the normal adult LV, i.e. the tables' 40 mL).
+ */
+export function lvadFlow(d: LvadState, pLv: number, pAo: number, vLv: number, lvSizeMl = LVAD_REF_EDV_ML): number {
   if (!d.on) return 0;
   const q0 = 0.022 * d.rpm - 30;
   let q = Math.max(0, q0 - LVAD_KH * (pAo - pLv));
-  d.suction = vLv < LVAD_SUCTION_ML;
-  if (d.suction) q *= 0.3;
+  const vCol = (LVAD_SUCTION_ML * lvSizeMl) / LVAD_REF_EDV_ML;
+  const x = (vLv - vCol) / (LVAD_INFLOW_MARGIN * vCol);
+  const f = x >= 1 ? 1 : x <= 0 ? 0 : x * x * (3 - 2 * x); // smooth: no step in the flow as the wall nears the inlet
+  d.suction = vLv < vCol;
+  if (d.suction) d.suctionSeen = true;
+  q *= LVAD_SUCTION_FLOW + (1 - LVAD_SUCTION_FLOW) * f;
   d.qMin = Math.min(d.qMin, q);
   d.qMax = Math.max(d.qMax, q);
   d.qSum += q;
@@ -125,9 +147,10 @@ export function lvadFlow(d: LvadState, pLv: number, pAo: number, vLv: number): n
 }
 
 /** Console numerics over the interval since the last call (flow L/min, PI, power W), then reset the window. */
-export function lvadNumerics(d: LvadState): { flowLpm: number; pi: number; powerW: number } {
+export function lvadNumerics(d: LvadState): { flowLpm: number; pi: number; powerW: number; suction: boolean } {
   const mean = d.n > 0 ? d.qSum / d.n : 0;
-  const out = { flowLpm: mean * 0.06, pi: mean > 0 ? ((d.qMax - d.qMin) / mean) * 10 : 0, powerW: 0.8 + mean * 0.06 * 0.7 };
+  const out = { flowLpm: mean * 0.06, pi: mean > 0 ? ((d.qMax - d.qMin) / mean) * 10 : 0, powerW: 0.8 + mean * 0.06 * 0.7, suction: d.suctionSeen || d.suction };
+  d.suctionSeen = false;
   d.qMin = Infinity;
   d.qMax = -Infinity;
   d.qSum = 0;

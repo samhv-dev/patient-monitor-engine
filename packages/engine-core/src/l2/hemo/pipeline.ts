@@ -22,7 +22,7 @@ import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
 import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS; F1(d): VF_RHYTHMS)
-import { createIabp, createLvad, iabpFlow, iabpSchedule, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a (FU-8: iabpSchedule)
+import { createIabp, createLvad, iabpFlow, iabpSchedule, iabpStop, LVAD_SUCTION_PVC_P, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a (FU-8: iabpSchedule)
 import { CO_TAU_S, circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a (FU-8: CO_TAU_S)
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
@@ -118,6 +118,7 @@ export interface HemoState {
   arrestKey: string;
   /** FU-8 (research/20 DV-23a): the CPR compression artefact this pipeline put on the ECG (cleared when CPR stops). */
   cprArt: boolean;
+  lvadPvc: boolean; // FU-8 (A26): this pipeline set the suction ectopy
   lvad: LvadState; // Stage 7a: continuous-flow LVAD (R28, tables §8.2)
   pvOn: boolean; // Stage 7a: teaching channels on
   /**
@@ -172,7 +173,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
   return {
     m: 0,
-    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, av: { ej: false, openT: -1, closeT: -1, sum: 0, n: 0, mean: NaN, off: NaN, qLung: circ.ref.co / 0.06 }, arrestKey: '', cprArt: false, lvad: createLvad(), pvOn: false,
+    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, av: { ej: false, openT: -1, closeT: -1, sum: 0, n: 0, mean: NaN, off: NaN, qLung: circ.ref.co / 0.06 }, arrestKey: '', cprArt: false, lvadPvc: false, lvad: createLvad(), pvOn: false,
     // the volume tracker starts only if the instructor's initial CVP differs from the stabilised profile by > 1 mmHg
     // (the L1 default 6 vs a stabilised 5 is not an instruction) (see HemoState.manHold)
     manHold: manHoldInit(cvp, l1Value(l1, 'volumeStatus', 0), pad + (pas - pad) / 3, sbp, dbp),
@@ -278,7 +279,8 @@ function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
     cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t),
     // FU-4 F1(c): incomplete recoil — a residual thoracic pressure on the venous side through the release phase
     cprRelease: (t) => (hs.cpr.active ? CPR_THORACIC_7A * CPR_RELEASE_RESIDUAL * hs.cpr.quality : 0),
-    qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
+    // FU-8 (A26): the LVAD's collapse volume scales with the LV's own resting EDV
+    qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number, hs.circ.ref.lvedv), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }
 
 /** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
@@ -513,7 +515,19 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // FU-4 G4: the CPP the coronary step used
   };
   if (hs.iabp.on) ce.iabp = { ratio: hs.iabp.ratio, augmentation: hs.iabpAug };
-  if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad), suction: hs.lvad.suction };
+  if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad) }; // FU-8 (A26): suction = any event in the second
+  // FU-8 (A26; research/20 V9): the suction event's consumer — ventricular ectopy while the LV wall sits on the inlet
+  // (suction-induced PVCs), through the same one-shot modifier seam as the ST and CPR artefact (R23; A23). Cleared when a
+  // second passes without suction or the pump stops (only ectopy this pipeline set; while it stands it replaces an
+  // instructor's own PVC setting — recorded)
+  const sucking = ce.lvad?.suction === true;
+  if (sucking && !hs.lvadPvc) {
+    hs.stPatch = { ...hs.stPatch, pvc: { probability: LVAD_SUCTION_PVC_P, pattern: 'single' } };
+    hs.lvadPvc = true;
+  } else if (!sucking && hs.lvadPvc) {
+    hs.stPatch = { ...hs.stPatch, pvc: null };
+    hs.lvadPvc = false;
+  }
   hs.out.push(ce);
   if (hs.nibp.phase === 'idle') {
     const next = nibpNextIn(hs.nibp, t);
