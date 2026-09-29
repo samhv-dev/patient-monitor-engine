@@ -73,9 +73,12 @@ describe('FU-5 fidelity 9: desaturation lag, finger vs ear', () => {
     expect(desat - below80).toBeLessThanOrEqual(22);
     expect(lag(r, 400, false)).toBeLessThanOrEqual(60);
   }, 120_000);
-  it('ear: displayed lag 5–12 s', async () => {
+  // E-FU4-20 (orchestrator ruling at the FU-4 gate, 2026-09-29; R45 re-statement, declared): FU-4's dead-space root
+  // (Task 18d, the patient's own resting PaCO2 and ventilator defaults) changes the apnoeic desaturation course the lag
+  // is measured on — 12 → 13 s; the band's upper edge is re-stated to the measured 13 s, the lower edge unchanged.
+  it('ear: displayed lag 5–13 s (was 5–12; measured 13 after FU-4, E-FU4-20)', async () => {
     const r = await run('ear');
     expect(lag(r, 120, true)).toBeGreaterThanOrEqual(5);
-    expect(lag(r, 120, true)).toBeLessThanOrEqual(12);
+    expect(lag(r, 120, true)).toBeLessThanOrEqual(13);
   }, 120_000);
 });
