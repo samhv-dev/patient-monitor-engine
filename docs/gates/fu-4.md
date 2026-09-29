@@ -422,6 +422,9 @@ At `d1656ab` (merge `b13837c` + FU-5 items `7975074` + truth flip `aa1f755` + e2
   measurement). `SLOW_B` (929 s): **45 files / 251 passed** (FU-5's six `fidelity-*` files included).
 - Disjointness gate (`PME_TEST_SET=slow-a|slow-b|slow npx vitest list --filesOnly`): `comm -12` printed **nothing**;
   **10 + 45 = 55** files.
+- **CI on PR #25 at `74a11d3`: all green** — build (unit + e2e on bundled Chromium + WebKit, the stage6a rtc tests pass
+  there) 42.2 min; `test-slow (slow-a)` **21.6 min**; `test-slow (slow-b)` **37.6 min** (both under D17's 40 min; slow-b
+  is the one to rebalance first if it grows — FU-5's six fidelity files joined it).
 - FU-5's `fidelity-*` alone (§9b): 58 passed. `pnpm audit:monitor`: 43 scenarios, EXIT 0 (§9b).
 - e2e as CI (`CI=1 pnpm test:e2e`, bundled Chromium 1243 + WebKit 2359, after `pnpm build`, 837 s): 57 passed, 21
   skipped (Chromium-only heavy runs on WebKit, the stage7d shots), 4 failed → handled: `fu5-latched` ×2 pinned as expected
