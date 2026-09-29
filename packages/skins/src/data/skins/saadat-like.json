@@ -45,7 +45,8 @@
         { "param": "TEMP", "extras": ["T2", "DT"] },
         { "param": "RR" },
         { "param": "NMT", "extras": ["TOF", "PTC"] },
-        { "param": "BFA", "extras": ["BS%"] }
+        { "param": "BFA", "extras": ["BS%"] },
+        { "param": "AGENTS" }
       ]
     ],
     "menuRegion": "wave-area-bottom",
@@ -231,7 +232,7 @@
     "colors.TEMP": { "tag": "measured", "source": "research/06 §3.2 (M p.309); brief §6.8" },
     "colors.BFA": { "tag": "assumed", "source": "research/06 §5; brief §6.8", "note": "from the Alvand screenshot" },
     "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: no NMT module in research/06; the B9 white (as BFA) chosen" },
-    "colors.AGENTS": { "tag": "unverified", "source": "research/06 §3.2; brief §6.8", "note": "not in the manual" },
+    "colors.AGENTS": { "tag": "unverified", "source": "research/06 §3.2; brief §6.8", "note": "not in the manual. FU-8 (A10-E5): now drawn — the AGENTS module tile (EtAA %, MAC) at the foot of column 2, shown only while an agent is measured [ENG layout]" },
     "colorBinding": { "tag": "documented", "source": "research/06 §3.2 (M p.308); brief §3.8" },
     "ecgColorLocked": { "tag": "documented", "source": "research/06 §3.2 (M p.40, 308); brief §3.8" },
     "layout.waveAreaFraction": { "tag": "measured", "source": "research/06 §3.1 F1" },

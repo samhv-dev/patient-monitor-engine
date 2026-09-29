@@ -6,7 +6,7 @@ import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp } from './numerics-hemo.ts';
-import { formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts'; // FU-3 item 11
+import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts'; // FU-3 item 11; FU-8 AGENTS
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
 type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
@@ -15,6 +15,7 @@ const UNIT: Partial<Record<TileParam, string>> = {
   HR: 'bpm', NIBP: 'mmHg', ART: 'mmHg', CVP: 'mmHg', PAP: 'mmHg', IBP1: 'mmHg', IBP2: 'mmHg', IBP3: 'mmHg', IBP4: 'mmHg', SpO2: '%', TEMP: '°C', RR: 'rpm', CO2: 'mmHg', ST: 'mV',
   ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d
   NMT: 'TOF', // FU-3 item 11 (the depth index has no unit)
+  AGENTS: '%', // FU-8 (A10-E5)
 };
 /** FU-5: skin `hr.autoPriority` entries → the pulse numeric each publishes (engine profile.ts PULSE_SOURCE). */
 const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 'prAbp', SpO2: 'pr' };
@@ -217,6 +218,7 @@ export class DeviceUI {
       else if (x === 'PR') out.push(`PR ${this.text(v.pr)}`);
       else if (x === 'PI') out.push(`PI ${this.text(v.pi, 1)}`);
       else if (x === 'AWRR') out.push(`awRR ${this.text(v.awrr)}`);
+      else if (x === 'IMCO2') out.push(`${this.r.skin.id === 'philips-like' ? 'imCO2' : 'FiCO2'} ${this.text(v.imco2)}`); // FU-8 (A10-E5): glossary #16
       else if (x === 'T2') out.push(`T2 ${this.text(v.tempSite, 1)}`);
       else if (x === 'ST') out.push(`ST-II ${this.text(v.stII, 1)}`); // research/11 glossary #22 (the lead-II ST numeric)
       else if (x === 'DT') {
@@ -242,6 +244,10 @@ export class DeviceUI {
       if (p === 'HR') ({ main, label } = this.hrTile()); // FU-5 (M3)
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue)); // FU-3 item 11
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue)); // FU-3 item 11
+      else if (p === 'AGENTS') {
+        ({ main, sub } = formatAgents(v, g.noValue)); // FU-8 (A10-E5)
+        label = 'EtAA';
+      }
       else if (p === 'NIBP') {
         const n = formatNibp(this.nibpEv, this.nibpLast);
         // FU-5 (audit M11): a failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)

@@ -764,6 +764,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#F0F030",
       "BFA": "#F0F0F0",
       "HR": "#00F000",
       "IBP1": "#E08080",
@@ -1197,6 +1198,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#777709",
       "BFA": "#737373",
       "HR": "#008600",
       "IBP1": "#D03E3E",
@@ -1625,6 +1627,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot ira
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#7A7A09",
       "BFA": "#767676",
       "HR": "#008A00",
       "IBP1": "#D14545",
@@ -3154,6 +3157,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "lineWidth": 1.75,
     "numericWeight": 600,
     "tileColors": {
+      "AGENTS": "#FFFF00",
       "ART": "#FF4040",
       "BFA": "#9AD0FF",
       "CO2": "#FFFF00",
@@ -3456,6 +3460,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "lineWidth": 1.75,
     "numericWeight": 600,
     "tileColors": {
+      "AGENTS": "#777700",
       "ART": "#E80000",
       "BFA": "#0073D7",
       "CO2": "#777700",
@@ -3753,6 +3758,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot phi
     "lineWidth": 1.75,
     "numericWeight": 600,
     "tileColors": {
+      "AGENTS": "#7A7A00",
       "ART": "#EE0000",
       "BFA": "#0076DE",
       "CO2": "#7A7A00",
@@ -4188,6 +4194,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#F0F030",
       "BFA": "#F0F0F0",
       "HR": "#00F000",
       "IBP1": "#E08080",
@@ -4629,6 +4636,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#777709",
       "BFA": "#737373",
       "HR": "#008600",
       "IBP1": "#D03E3E",
@@ -5065,6 +5073,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
     "lineWidth": 1.5,
     "numericWeight": 400,
     "tileColors": {
+      "AGENTS": "#7A7A09",
       "BFA": "#767676",
       "HR": "#008A00",
       "IBP1": "#D14545",

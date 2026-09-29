@@ -64,9 +64,10 @@ describe('FU-5 tiles', () => {
 
   it('extras under the research/11 glossary labels: CO2 awRR (philips-like); TEMP T2 and ΔT, HR ST-II, BFA BS% (saadat-like)', () => {
     const ph = mount('philips-like');
-    ph.ui.onEvent(meas(20, { etco2: m(36, 20), awrr: m(12, 20) }));
+    // FU-8 (A10-E5, E-FU8-3): the philips-like CO2 tile also prints the inspired CO2 under Philips' word, imCO2
+    ph.ui.onEvent(meas(20, { etco2: m(36, 20), awrr: m(12, 20), imco2: m(0, 20) }));
     ph.ui.paint(20);
-    expect([ph.q('CO2', 'v'), ph.q('CO2', 's')]).toEqual(['36', 'awRR 12']);
+    expect([ph.q('CO2', 'v'), ph.q('CO2', 's')]).toEqual(['36', 'awRR 12  imCO2 0']);
     const sa = mount('saadat-like');
     sa.ui.onEvent(meas(20, { tempCore: m(36.8, 20), tempSite: m(36.2, 20) }));
     sa.ui.paint(20);

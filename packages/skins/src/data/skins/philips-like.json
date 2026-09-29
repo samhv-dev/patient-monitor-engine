@@ -11,12 +11,12 @@
     "ART": "#FF4040", "CVP": "#00FFFF", "PAP": "#FFFF00", "ICP": "#FF00FF", "PbtO2": "#00FFFF", "UO": "#FFFF00",
     "RESP": "#FFFF00", "CO2": "#FFFF00", "AWRR": "#FFFF00",
     "TEMP": "#00FF00",
-    "NMT": "#E0E0E0", "BFA": "#9AD0FF"
+    "NMT": "#E0E0E0", "BFA": "#9AD0FF", "AGENTS": "#FFFF00"
   },
   "layout": {
     "tiles": [
-      [{ "param": "HR", "size": "large" }, { "param": "ART", "extras": ["MEAN"] }, { "param": "NIBP", "extras": ["MEAN"] }, { "param": "NMT", "extras": ["TOF", "PTC"] }],
-      [{ "param": "SpO2", "extras": ["PR", "PI"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR"] }, { "param": "TEMP" }, { "param": "BFA", "extras": ["SR"] }]
+      [{ "param": "HR", "size": "large" }, { "param": "ART", "extras": ["MEAN"] }, { "param": "NIBP", "extras": ["MEAN"] }, { "param": "NMT", "extras": ["TOF", "PTC"] }, { "param": "AGENTS" }],
+      [{ "param": "SpO2", "extras": ["PR", "PI"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR", "IMCO2"] }, { "param": "TEMP" }, { "param": "BFA", "extras": ["SR"] }]
     ]
   },
   "ecg": {
@@ -72,6 +72,7 @@
     "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
     "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no NMT row; the Stage 7f demo's tile colour (apps/demo/src/stage7f.ts) kept" },
     "colors.BFA": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no BIS/depth row; the Stage 7f demo's tile colour (apps/demo/src/stage7f.ts) kept" },
+    "colors.AGENTS": { "tag": "documented", "source": "research/05 §2.1 [S1] GM/AGM tables", "note": "FU-8 (A10-E5): SEV yellow; the IntelliVue colours each agent (HAL red, ISO magenta, ENF orange, SEV yellow, DES cyan) — one tile colour until the engine publishes the agent id" },
     "layout.tiles": { "tag": "eng", "source": "iec-defaults layout.tiles; research/05 §2.7 (numerics in tiles on the right)", "note": "FU-3 item 11: the IEC default grid plus an NMT tile (TOF ratio %, count, PTC) and a BFA tile (depth index, SR) at the foot of the columns; research/05 documents no IntelliVue NMT/BIS tile layout. Both are module tiles, drawn only while the stimulator / depth monitor publishes. FU-5: the SpO2 tile shows the perfusion indicator beside the pulse (research/05 §6 [S2] IFU p. 120 'Perf')" },
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },

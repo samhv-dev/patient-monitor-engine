@@ -29,7 +29,7 @@ export const REQUIRED_COLOR_KEYS = ['ECG', 'HR', 'SpO2', 'PLETH', 'NIBP', 'RESP'
 
 export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'ICP'] as const; // Stage 7d: ICP
 export type LaneId = (typeof LANE_IDS)[number];
-export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'NMT', 'BFA', 'ICP', 'PbtO2', 'UO'] as const; // Stage 7f: NMT, BFA; Stage 7d: ICP, PbtO2, UO
+export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'NMT', 'BFA', 'ICP', 'PbtO2', 'UO', 'AGENTS'] as const; // Stage 7f: NMT, BFA; Stage 7d: ICP, PbtO2, UO; FU-8 (A10-E5): AGENTS
 export type TileParam = (typeof TILE_PARAMS)[number];
 export const PAGE_KINDS = ['standard', 'multiEcg', 'dualSpo2', 'ibp', 'bigNumber', 'pump'] as const;
 export type PageKind = (typeof PAGE_KINDS)[number];
@@ -45,7 +45,8 @@ export type PitchMapId = (typeof PITCH_MAPS)[number];
 export interface TileSpec {
   param: TileParam;
   size?: 'large' | 'normal';
-  /** Secondary values drawn in the tile ('PI', 'PR', 'T2', 'DT', 'EtCO2', 'FiCO2', 'AWRR', 'PPV', 'MEAN'). */
+  /** Secondary values drawn in the tile ('PI', 'PR', 'T2', 'DT', 'EtCO2', 'FiCO2', 'AWRR', 'PPV', 'MEAN'; FU-8: 'IMCO2' — the
+   * inspired minimum CO2 under the vendor's word, imCO2 on Philips, FiCO2 elsewhere, research/11 glossary #16). */
   extras?: string[];
 }
 export interface PumpPage {
