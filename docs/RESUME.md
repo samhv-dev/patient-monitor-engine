@@ -45,6 +45,8 @@ A stage is STALLED if all three hold: (a) its plan on its branch has unticked `-
 
 ## Executor brief template
 
+> Never run a command that reads standard input (e.g. a bare `cat > file` without a heredoc) — it hangs forever as an orphaned background task (two such probes had to be stopped by hand, 2026-09-28 and 2026-09-30).
+
 > Local e2e: Playwright's own Chromium 1243 + WebKit 2359 are installed (2026-09-29); run `pnpm test:e2e` as CI does (both projects). `PW_SYSTEM_CHROME=1` is only a fallback if the cache is ever cleared.
 
 > Scratch files under `<scratchpad>/<branch>/` only (the session scratchpad is shared; bare filenames collide). Bound every background wait (≤ 10 min per `until` loop, re-check the process or mtime).
