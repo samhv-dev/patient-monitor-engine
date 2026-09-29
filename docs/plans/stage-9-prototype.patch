@@ -41,10 +41,10 @@ index 0000000..85a7220
 +}
 diff --git a/apps/demo/e2e/stage9-app.e2e.ts b/apps/demo/e2e/stage9-app.e2e.ts
 new file mode 100644
-index 0000000..357e87a
+index 0000000..8ce92da
 --- /dev/null
 +++ b/apps/demo/e2e/stage9-app.e2e.ts
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,81 @@
 +// Stage 9: one document, one engine session. Switching views never restarts the engine (sim time keeps rising, the
 +// monitor host element is the same node), the scenario deep link still works, and a Remote in another page of the same
 +// browser pairs by code and moves the host's patient.
@@ -85,6 +85,21 @@ index 0000000..357e87a
 +  expect(await bg()).toBe(saadat);
 +  await page.locator('[data-view="start"]').getByRole('combobox', { name: 'Monitor', exact: true }).selectOption('mindray-like');
 +  await expect.poll(bg).toBe(mindray);
++});
++
++test('learner controls: off by default, switched on per scenario, logged as learner actions (ruling 4)', async ({ page }) => {
++  await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 1500 });
++  await go(page, '#/monitor');
++  await expect(page.locator('.learner-strip')).toBeHidden();
++  await go(page, '#/teach');
++  await page.click('[role=tab][data-tab=scenario]');
++  await page.getByRole('button', { name: 'Learner controls on the monitor' }).click();
++  await go(page, '#/monitor');
++  await expect(page.locator('.learner-strip')).toBeVisible();
++  await page.locator('.learner-strip').getByRole('button', { name: 'Charge 200 J' }).click();
++  await go(page, '#/teach');
++  await page.click('[role=tab][data-tab=log]');
++  await expect(page.locator('.log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
 +});
 +
 +test('a remote pairs by code and changes the host patient', async ({ page, context }) => {
@@ -792,10 +807,10 @@ index 0000000..bd9cbb7
 +}
 diff --git a/apps/demo/src/app/app.css b/apps/demo/src/app/app.css
 new file mode 100644
-index 0000000..7fedc21
+index 0000000..804c24f
 --- /dev/null
 +++ b/apps/demo/src/app/app.css
-@@ -0,0 +1,427 @@
+@@ -0,0 +1,431 @@
 +/* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
 +   colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
 +   (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
@@ -909,10 +924,11 @@ index 0000000..7fedc21
 +.view { grid-area: view; min-width: 0; min-height: 0; overflow: auto; background: var(--bezel-0); }
 +.view[hidden] { display: none; }
 +.main:not([data-route='start']):not([data-route='monitor']):not([data-route='teach']):not([data-route='vent']) > .stage { display: none; }
-+.main[data-route='monitor'] > .view { display: none; }
++.main[data-route='monitor'] > .view:not([data-view='monitor']) { display: none; }
 +
 +.main[data-route='start'] { grid-template: 'view stage' minmax(0, 1fr) / minmax(440px, 1fr) minmax(0, 1.25fr); }
-+.main[data-route='monitor'] { grid-template: 'stage' minmax(0, 1fr) / minmax(0, 1fr); }
++.main[data-route='monitor'] { grid-template: 'stage' minmax(0, 1fr) 'view' auto / minmax(0, 1fr); }
++.main[data-route='monitor'] > .view[data-view='monitor'] { overflow: visible; }
 +.main[data-route='teach'] { grid-template: 'bar bar' auto 'stage view' minmax(0, 1fr) / minmax(0, 1fr) var(--panel-w); }
 +.main[data-route='teach'] > .sessionbar, .main.hostless[data-route='remote'] > .sessionbar:not([hidden]) { display: flex; }
 +.main.hostless[data-route='remote'] { grid-template: 'bar' auto 'view' minmax(0, 1fr) / minmax(0, 1fr); }
@@ -1223,24 +1239,29 @@ index 0000000..7fedc21
 +  .states li[aria-current='step'] { min-height: 44px; }
 +}
 +.start .setup .actions { position: sticky; bottom: 0; background: var(--bezel-1); padding: var(--s-3) 0; margin-bottom: calc(-1 * var(--s-4)); border-top: 1px solid var(--line); z-index: 2; }
++/* learner controls under the learner monitor (orchestrator ruling 4): hidden unless switched on for the scenario */
++.learner-strip { display: flex; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--bezel-1); border-top: 1px solid var(--line); }
++.learner-strip[hidden] { display: none; }
 diff --git a/apps/demo/src/app/cards.ts b/apps/demo/src/app/cards.ts
 new file mode 100644
-index 0000000..129134b
+index 0000000..cc1002b
 --- /dev/null
 +++ b/apps/demo/src/app/cards.ts
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,17 @@
 +// The scenario card (research/13 brief §7 "Scenario card"; TrainingMonitor's catalogue, CAE/REALITi objectives): title,
 +// draft flag, the learner-facing story, category, patient, duration and objectives. Used by Start and the Scenario tab.
 +import type { ScenarioCard } from './scenarios.ts';
++import { drugWords } from './glossary.ts';
 +import { h } from './ui.ts';
 +
 +/** Scenario card: title, story, patient, duration, objectives (research/13 §4.3; CAE/REALITi checklists). */
 +export function scenarioCard(c: ScenarioCard, extra?: HTMLElement): HTMLElement {
-+  return h('article', { class: 'card scard', 'aria-label': c.title },
-+    h('div', { class: 'scard-head' }, h('h3', {}, c.title), c.draft ? h('span', { class: 'tag', title: 'Not yet reviewed clinically' }, 'Draft') : null),
-+    h('p', {}, c.story),
++  // scenario text names drugs in the site's set (orchestrator ruling 5): "adrenaline" or "epinephrine"
++  return h('article', { class: 'card scard', 'aria-label': drugWords(c.title) },
++    h('div', { class: 'scard-head' }, h('h3', {}, drugWords(c.title)), c.draft ? h('span', { class: 'tag', title: 'Not yet reviewed clinically' }, 'Draft') : null),
++    h('p', {}, drugWords(c.story)),
 +    h('p', { class: 'meta' }, [c.category, c.patient, c.minutes ? `about ${c.minutes} min` : ''].filter(Boolean).join(', ')),
-+    c.objectives.length ? h('ul', { class: 'objectives', 'aria-label': 'Learning objectives' }, ...c.objectives.map((o) => h('li', {}, o))) : null,
++    c.objectives.length ? h('ul', { class: 'objectives', 'aria-label': 'Learning objectives' }, ...c.objectives.map((o) => h('li', {}, drugWords(o)))) : null,
 +    extra ?? null,
 +  );
 +}
@@ -1293,10 +1314,10 @@ index 0000000..2f71d6d
 +}
 diff --git a/apps/demo/src/app/copy.test.ts b/apps/demo/src/app/copy.test.ts
 new file mode 100644
-index 0000000..ad24093
+index 0000000..8131a7f
 --- /dev/null
 +++ b/apps/demo/src/app/copy.test.ts
-@@ -0,0 +1,52 @@
+@@ -0,0 +1,58 @@
 +// The UX-copy rules as tests: scenario cards, trigger text and log lines never show an engine id, a build-stage or a
 +// ruling number (research/13 brief; R56).
 +import { describe, expect, it } from 'vitest';
@@ -1305,6 +1326,8 @@ index 0000000..ad24093
 +import { LIBRARY } from './scenarios.ts';
 +import { SCENARIO_META } from './scenario-meta.ts';
 +import { transitionText } from './triggers.ts';
++import { LEARNER_ACTIONS } from '../stage6b/actions.ts';
++import { drugWords } from './glossary.ts';
 +
 +/** camelCase or dotted engine ids ("etco2", "vfCoarse", "mon.hr"), build stages and rulings. */
 +const LEAK = /\b(?!(?:mmHg|cmH|pH|mEq|kPa|iCa|mOsm|mL|dL|mA|awRR)\b)[a-z]+[A-Z][A-Za-z]*\b|\b[a-z]+\.[a-z]+\b|\bStage \d|\b7[a-k]\b|\bR\d{2}\b|\b(etco2|spo2|fio2|sbp|dbp|hr|rosc|vf)\b/;
@@ -1348,24 +1371,29 @@ index 0000000..ad24093
 +    expect(lines).toContain('Norepinephrine 0.1 µg/kg/min infusion started');
 +    expect(lines).toContain('Rhythm: Coarse VF');
 +  });
++  it('learner controls read clinically in either drug-name set (rulings 4 and 5)', () => {
++    for (const a of LEARNER_ACTIONS) expect(drugWords(a.label), a.id).not.toMatch(LEAK);
++    expect(LEARNER_ACTIONS.map((a) => a.label)).toContain('Epinephrine 1 mg');
++  });
 +});
 diff --git a/apps/demo/src/app/describe.ts b/apps/demo/src/app/describe.ts
 new file mode 100644
-index 0000000..955ea60
+index 0000000..d7c2fb8
 --- /dev/null
 +++ b/apps/demo/src/app/describe.ts
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,124 @@
 +// One clinical line per command, for the instructor log, toasts and the Remote (research/13 brief §7 "Toast": the same
 +// verb as the button). Engine ids never reach these lines: targets through the glossary, drugs by the library's name,
 +// conditions and rhythms by their catalogue labels.
 +import { DRUGS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 +import { unitText } from './drugs.ts';
++import { drugName } from './glossary.ts';
 +import { showVital, vitalLabel, vitalOf } from './vitals.ts';
 +import { rhythmLabel } from './rhythms.ts';
 +
 +type Any = Record<string, unknown>;
 +const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
-+const drug = (id: unknown): string => DRUGS[String(id)]?.name ?? 'Drug';
++const drug = (id: unknown): string => (DRUGS[String(id)] ? drugName(String(id)) : 'Drug'); // the site's name set (ruling 5)
 +const over = (s: unknown): string => {
 +  const n = num(s);
 +  if (!(n > 0)) return '';
@@ -1480,14 +1508,15 @@ index 0000000..955ea60
 +}
 diff --git a/apps/demo/src/app/drugs.ts b/apps/demo/src/app/drugs.ts
 new file mode 100644
-index 0000000..3156cc8
+index 0000000..4ef23c8
 --- /dev/null
 +++ b/apps/demo/src/app/drugs.ts
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,93 @@
 +// The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own library
 +// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for Ali's
 +// review (brief Q6: "start from the 7g library's ranges; Ali reviews one table before Stage 9 code").
 +import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
++import { drugName } from './glossary.ts';
 +
 +export interface DrugPreset {
 +  bolus?: Array<[number, DoseUnit]>;
@@ -1532,7 +1561,8 @@ index 0000000..3156cc8
 +
 +export interface DrugItem {
 +  id: string;
-+  name: string;
++  /** The display name in the site's set (glossary `DRUG_NAMES`, orchestrator ruling 5): read at use, not stored. */
++  readonly name: string;
 +  cls: string;
 +  /** The unit the engine's library doses this drug in (mg, mcg, units, mmol, mL). */
 +  amountUnit: string;
@@ -1558,7 +1588,7 @@ index 0000000..3156cc8
 +
 +export const DRUG_LIST: readonly DrugItem[] = Object.values(DRUGS)
 +  .filter((r) => r.cls !== 'placeholder')
-+  .map((r) => ({ id: r.id, name: r.name, cls: r.cls, amountUnit: r.amountUnit, preset: PRESETS[r.id] ?? {} }))
++  .map((r) => ({ id: r.id, get name() { return drugName(r.id); }, cls: r.cls, amountUnit: r.amountUnit, preset: PRESETS[r.id] ?? {} }))
 +  .sort((a, b) => a.name.localeCompare(b.name));
 +
 +/** Search by name, id or another name ("noradr" finds norepinephrine). */
@@ -1577,10 +1607,10 @@ index 0000000..3156cc8
 +}
 diff --git a/apps/demo/src/app/glossary-data.ts b/apps/demo/src/app/glossary-data.ts
 new file mode 100644
-index 0000000..435e77f
+index 0000000..f23d8e8
 --- /dev/null
 +++ b/apps/demo/src/app/glossary-data.ts
-@@ -0,0 +1,372 @@
+@@ -0,0 +1,401 @@
 +// R56 clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-
 +// and-glossary.md §5, 294 entries, generated 2026-09-28 by the Stage 9 plan writer from the workspace research file; edits
 +// go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
@@ -1857,7 +1887,7 @@ index 0000000..435e77f
 +  { n: 255, s: '5.11', keys: ["ev.organs.liver.liverFn"], label: "Liver function", name: "Liver synthetic/metabolic function index (model)", unit: "0–1", normal: "1", convention: "engine; label as MELD/Child–Pugh-like only when the labs exist" },
 +  { n: 256, s: '5.11', keys: ["ev.endo.glucoseMmolL", "ev.endo.glucoseMgDl"], label: "Glucose", name: "Blood glucose (truth)", unit: "mmol/L (mg/dL)", normal: "3.9–7.8", convention: "all" },
 +  { n: 257, s: '5.11', keys: ["ev.endo.insulinUuMl"], label: "Insulin", name: "Plasma insulin", unit: "µU/mL (mU/L)", normal: "fasting 2–20", other: "Preg ↑ (insulin resistance)", convention: "chemistry" },
-+  { n: 258, s: '5.11', keys: ["ev.endo.epinephrinePgMl"], label: "Adrenaline", name: "Plasma adrenaline (epinephrine)", unit: "pg/mL", normal: "< 50–100 at rest", convention: "chemistry" },
++  { n: 258, s: '5.11', keys: ["ev.endo.epinephrinePgMl"], label: "Adrenaline", name: "Plasma adrenaline", unit: "pg/mL", normal: "< 50–100 at rest", convention: "chemistry" },
 +  { n: 259, s: '5.11', keys: ["ev.endo.norepinephrinePgMl"], label: "Noradrenaline", name: "Plasma noradrenaline", unit: "pg/mL", normal: "100–400 at rest", convention: "chemistry" },
 +  { n: 260, s: '5.11', keys: ["ev.endo.cortisolNmolL"], label: "Cortisol", name: "Plasma cortisol", unit: "nmol/L", normal: "140–690 (morning)", other: "Preg ↑", convention: "chemistry" },
 +  { n: 261, s: '5.11', keys: ["ev.endo.stressIndex"], label: "Stress response", name: "Surgical stress index (model; instructor)", unit: "0–1", normal: "0", convention: "engine" },
@@ -1953,15 +1983,46 @@ index 0000000..435e77f
 + * screen may show them under one label and Explore shows one row. Every other pair of entries must differ in label.
 + */
 +export const SAME_AS: Readonly<Record<number, number>> = { 233: 31, 234: 32, 256: 193 };
++
++/**
++ * Drug display names (orchestrator ruling 5 on the R50 review: drug names join the glossary, R56). One row per drug of
++ * the 7g library (placeholders without PD excluded), generated once from its `DRUGS` names and edited by hand from now
++ * on. `uk` is the name the site's "adrenaline / noradrenaline" set shows; the set is a site-profile option, default
++ * "epinephrine / norepinephrine" (Ali's open question Q13). A drug a later stage adds shows its library name until it
++ * gets a row here.
++ */
++export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>> = {
++  adenosine: { name: "Adenosine" }, amiodarone: { name: "Amiodarone" }, atropine: { name: "Atropine" },
++  bupivacaine: { name: "Bupivacaine" }, calciumChloride: { name: "Calcium chloride 10 %" }, calciumGluconate: { name: "Calcium gluconate 10 %" },
++  cisatracurium: { name: "Cisatracurium" }, dantrolene: { name: "Dantrolene" }, desflurane: { name: "Desflurane" },
++  dexmedetomidine: { name: "Dexmedetomidine" }, dextrose: { name: "Dextrose 50 %" }, dobutamine: { name: "Dobutamine" },
++  dopamine: { name: "Dopamine" }, ephedrine: { name: "Ephedrine" }, epinephrine: { name: "Epinephrine", uk: "Adrenaline" },
++  esmolol: { name: "Esmolol" }, etomidate: { name: "Etomidate" }, fentanyl: { name: "Fentanyl" },
++  flumazenil: { name: "Flumazenil" }, furosemide: { name: "Furosemide" }, glycopyrrolate: { name: "Glycopyrrolate" },
++  hydralazine: { name: "Hydralazine" }, hypertonicSaline: { name: "Hypertonic saline 3 %/7.5 %/23.4 %" }, insulin: { name: "Insulin (regular)" },
++  insulinDextrose: { name: "Insulin + dextrose" }, isoflurane: { name: "Isoflurane" }, ketamine: { name: "Ketamine" },
++  labetalol: { name: "Labetalol" }, lidocaine: { name: "Lidocaine" }, lipidEmulsion: { name: "Lipid emulsion 20 %" },
++  magnesium: { name: "Magnesium sulfate" }, mannitol: { name: "Mannitol 20 %" }, metoprolol: { name: "Metoprolol" },
++  midazolam: { name: "Midazolam" }, milrinone: { name: "Milrinone" }, morphine: { name: "Morphine" },
++  naloxone: { name: "Naloxone" }, neostigmine: { name: "Neostigmine" }, nitroglycerin: { name: "Nitroglycerin" },
++  n2o: { name: "Nitrous oxide" }, norepinephrine: { name: "Norepinephrine", uk: "Noradrenaline" }, phenylephrine: { name: "Phenylephrine" },
++  propofol: { name: "Propofol" }, remifentanil: { name: "Remifentanil" }, rocuronium: { name: "Rocuronium" },
++  ropivacaine: { name: "Ropivacaine" }, salbutamol: { name: "Salbutamol (IV/neb)" }, sevoflurane: { name: "Sevoflurane" },
++  sodiumBicarbonate: { name: "Sodium bicarbonate 8.4 %" }, succinylcholine: { name: "Succinylcholine" }, sufentanil: { name: "Sufentanil" },
++  sugammadex: { name: "Sugammadex" }, thiopental: { name: "Thiopental" }, vasopressin: { name: "Vasopressin" },
++  vecuronium: { name: "Vecuronium" },
++};
 diff --git a/apps/demo/src/app/glossary.test.ts b/apps/demo/src/app/glossary.test.ts
 new file mode 100644
-index 0000000..1b6121a
+index 0000000..a63b455
 --- /dev/null
 +++ b/apps/demo/src/app/glossary.test.ts
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,87 @@
 +import { describe, expect, it } from 'vitest';
 +import { KEY_LABELS } from './glossary-data.ts';
-+import { ALL_ENTRIES, canon, describeEntry, entry, labelOf, lookup, nameOf, rowKey, shortLabel, STATE_VAR_ENTRY, unitOf } from './glossary.ts';
++import { ALL_ENTRIES, canon, describeEntry, drugName, drugWords, entry, labelOf, lookup, nameOf, rowKey, setDrugNames, shortLabel, STATE_VAR_ENTRY, unitOf } from './glossary.ts';
++import { DRUGS } from '@pme/engine-core';
++import { DRUG_NAMES } from './glossary-data.ts';
 +import { VITALS } from './vitals.ts';
 +
 +describe('R56 glossary', () => {
@@ -2018,6 +2079,22 @@ index 0000000..1b6121a
 +    expect(labelOf('resp.temp.sites.nasopharyngeal')).toBe('Tnaso');
 +    expect(labelOf('pk.bus.cns.loc')).toBeNull(); // '*' key: Model internals
 +  });
++  it('drug names come from the glossary, in the site\'s set (orchestrator ruling 5)', () => {
++    for (const d of Object.values(DRUGS)) if (d.cls !== 'placeholder') expect(DRUG_NAMES[d.id], d.id).toBeDefined();
++    expect(drugName('norepinephrine')).toBe('Norepinephrine'); // default set: epinephrine / norepinephrine
++    expect(labelOf('ev.endo.norepinephrinePgMl')).toBe('Norepinephrine'); // the plasma level follows the drug's name
++    setDrugNames('uk');
++    try {
++      expect(drugName('epinephrine')).toBe('Adrenaline');
++      expect(drugName('propofol')).toBe('Propofol');
++      expect(labelOf('ev.endo.epinephrinePgMl')).toBe('Adrenaline');
++      expect(drugWords('Give epinephrine after the second shock')).toBe('Give adrenaline after the second shock');
++    } finally {
++      setDrugNames('us');
++    }
++    expect(drugWords('Give adrenaline after the second shock')).toBe('Give epinephrine after the second shock');
++    expect(nameOf(entry(259))).toBe('Plasma norepinephrine');
++  });
 +  it('shows clinical units and names only (no notes written for the model authors)', () => {
 +    for (const e of ALL_ENTRIES) {
 +      expect(unitOf(e), `unit of ${e.n}`).not.toMatch(/engine|\(/);
@@ -2030,15 +2107,15 @@ index 0000000..1b6121a
 +});
 diff --git a/apps/demo/src/app/glossary.ts b/apps/demo/src/app/glossary.ts
 new file mode 100644
-index 0000000..59839e7
+index 0000000..3b63430
 --- /dev/null
 +++ b/apps/demo/src/app/glossary.ts
-@@ -0,0 +1,136 @@
+@@ -0,0 +1,159 @@
 +// The R56 glossary at run time: engine key → clinical label, long name, unit and adult normal range. Every label the app
 +// shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the DOM of a
 +// clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
 +import { DRUGS, type StateVar } from '@pme/engine-core';
-+import { GLOSSARY, GLOSSARY_S9, KEY_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
++import { DRUG_NAMES, GLOSSARY, GLOSSARY_S9, KEY_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
 +
 +export type { GlossaryEntry } from './glossary-data.ts';
 +export const ALL_ENTRIES: readonly GlossaryEntry[] = [...GLOSSARY_S9, ...GLOSSARY]; // S9 first: its split rows win the exact keys
@@ -2081,9 +2158,9 @@ index 0000000..59839e7
 + */
 +export function shortLabel(e: GlossaryEntry): string {
 +  const fixed = SHORT[e.n];
-+  if (fixed) return fixed;
++  if (fixed) return drugWords(fixed);
 +  const s = strip(e.label);
-+  return (byShort.get(s)?.size ?? 1) > 1 ? e.label : s;
++  return drugWords((byShort.get(s)?.size ?? 1) > 1 ? e.label : s);
 +}
 +
 +export interface Lookup {
@@ -2137,8 +2214,31 @@ index 0000000..59839e7
 +  return l && labelOf(path) !== null ? `${canon(l.e.n)}|${l.side}${KEY_LABELS[path] ?? KEY_LABELS[l.key] ?? ''}|${l.caps.join('.')}` : null;
 +}
 +
-+/** A drug's display name (the 7g library's name). */
-+export const drugName = (id: string): string => DRUGS[id]?.name ?? 'Drug';
++// ---- drug names (orchestrator ruling 5): one display set for the whole app, chosen in the site profile ----
++export type DrugNameSet = 'us' | 'uk';
++let nameSet: DrugNameSet = 'us';
++/** Choose the display set: 'us' = "epinephrine / norepinephrine" (default), 'uk' = "adrenaline / noradrenaline". */
++export const setDrugNames = (set: DrugNameSet): void => void (nameSet = set);
++export const drugNameSet = (): DrugNameSet => nameSet;
++
++/** A drug's display name in the site's set (glossary `DRUG_NAMES`; the 7g library's name for a drug without a row). */
++export function drugName(id: string): string {
++  const row = DRUG_NAMES[id];
++  if (row) return nameSet === 'uk' && row.uk ? row.uk : row.name;
++  return DRUGS[id]?.name ?? 'Drug';
++}
++
++/** The two names of each drug that has a second one, in both directions, case kept ("adrenaline" ↔ "epinephrine"). */
++const PAIRS: Array<[string, string]> = Object.values(DRUG_NAMES).filter((r) => r.uk).map((r) => [r.name, r.uk as string]);
++/** Free text (a scenario objective, a learner button, a glossary label) in the site's set of drug names. */
++export function drugWords(text: string): string {
++  let out = text;
++  for (const [us, uk] of PAIRS) {
++    const [from, to] = nameSet === 'uk' ? [us, uk] : [uk, us];
++    out = out.replace(new RegExp(`\\b${from}\\b`, 'g'), to).replace(new RegExp(`\\b${from.toLowerCase()}\\b`, 'g'), to.toLowerCase());
++  }
++  return out;
++}
 +
 +/** research/11 annotates some cells for the model's authors ("(engine fraction)", "engine 552 mL/min…: check the
 + *  definition"); a screen shows the clinical part only. */
@@ -2147,7 +2247,7 @@ index 0000000..59839e7
 +export const unitOf = (e: GlossaryEntry): string => (e.unit === '—' ? '' : e.unit.replace(/\s*\([^)]*\)/g, '').trim());
 +/** The unit with its clinical notes, for the tooltip (author notes about the model removed). */
 +export const unitNoteOf = (e: GlossaryEntry): string => (e.unit === '—' ? '' : e.unit.replace(authorNote, '').trim());
-+export const nameOf = (e: GlossaryEntry): string => e.name.replace(authorNote, '').trim();
++export const nameOf = (e: GlossaryEntry): string => drugWords(e.name.replace(authorNote, '').trim());
 +
 +/** Tooltip text: long name, unit and normal range. */
 +export function describeEntry(e: GlossaryEntry): string {
@@ -2170,6 +2270,43 @@ index 0000000..59839e7
 +  'ev.organs.brain.cbf': 50, 'ev.organs.brain.cmro2': 3.3, 'ev.organs.liver.hbfRel': 1.5, 'ev.state.values.fio2': 100, 'l1.coupled.fio2': 100,
 +  'ev.lungState.atelectasisFrac': 100, 'ev.lungState.vqAdmixture': 100, 'mon.tofRatio': 1,
 +};
+diff --git a/apps/demo/src/app/learner.ts b/apps/demo/src/app/learner.ts
+new file mode 100644
+index 0000000..d345fa2
+--- /dev/null
++++ b/apps/demo/src/app/learner.ts
+@@ -0,0 +1,31 @@
++// Learner controls (orchestrator ruling 4 on the R50 review; brief Q12): the Stage 6b "Learner:" bar as a strip under
++// the learner's monitor. OFF by default; the instructor switches it on for the running scenario (Scenario tab), or a
++// scenario's card meta does (`learnerControls`); loading another scenario or restarting the patient switches it off.
++// Each button is what the team at the bedside does (charge, shock, CPR, a drug); it goes through the same link as the
++// instructor's commands and is logged as a learner action. The actions are the 6b runner's own list (imported).
++import { LEARNER_ACTIONS, type LearnerAction } from '../stage6b/actions.ts';
++import { describeCommand } from './describe.ts';
++import { drugWords } from './glossary.ts';
++import type { Link } from './link.ts';
++import { button, h, toast } from './ui.ts';
++
++/** A learner button's label in the site's drug names ("Epinephrine 1 mg" or "Adrenaline 1 mg"). */
++export const learnerLabel = (a: LearnerAction): string => drugWords(a.label);
++
++export function learnerStrip(link: Link): HTMLElement {
++  const el = h('div', { class: 'learner-strip', role: 'toolbar', 'aria-label': 'Learner controls' });
++  for (const a of LEARNER_ACTIONS) {
++    let on = false; // CPR is a toggle
++    const b = button(learnerLabel(a), async () => {
++      const cmd = { type: 'applyEvent', event: a.off && on ? a.off : a.event };
++      const r = await link.send(cmd as never, 'learner');
++      if (r.accepted && a.off) {
++        on = !on;
++        b.textContent = on ? 'Stop CPR' : learnerLabel(a);
++      }
++      toast(r.accepted ? describeCommand(cmd) : 'Not done (see the log)');
++    }, 'small');
++    el.append(b);
++  }
++  return el;
++}
 diff --git a/apps/demo/src/app/link.ts b/apps/demo/src/app/link.ts
 new file mode 100644
 index 0000000..91f8107
@@ -2290,19 +2427,21 @@ index 0000000..91f8107
 +}
 diff --git a/apps/demo/src/app/main.ts b/apps/demo/src/app/main.ts
 new file mode 100644
-index 0000000..388fae2
+index 0000000..bd8d2a1
 --- /dev/null
 +++ b/apps/demo/src/app/main.ts
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,120 @@
 +// The app (research/13 brief §4–§5): one document, one engine session for every view. A document opened at
 +// #/remote is a Remote instead: it pairs to a monitor on another device and never starts an engine.
 +import './app.css';
 +import { attachReveal, RevealGesture } from '@pme/controller';
 +import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 +import { alarmLine } from './alarms.ts';
++import { setDrugNames } from './glossary.ts';
 +import { Link } from './link.ts';
 +import { PATIENT_PRESETS } from './patients.ts';
 +import { hrefOf, parseRoute } from './router.ts';
++import { SCENARIO_META } from './scenario-meta.ts';
 +import { scenarioById, type ScenarioCard } from './scenarios.ts';
 +import { AppSession } from './session.ts';
 +import { mountSessionBar } from './sessionbar.ts';
@@ -2320,6 +2459,7 @@ index 0000000..388fae2
 +import { ventView } from './views/vent.ts';
 +
 +const site = loadSite();
++setDrugNames(site.drugNames); // one set of drug names on every screen (orchestrator ruling 5)
 +const q = new URLSearchParams(location.search);
 +const hostless = parseRoute(location.hash).id === 'remote';
 +const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless });
@@ -2356,12 +2496,13 @@ index 0000000..388fae2
 +      return false;
 +    }
 +    link.note(`Scenario loaded: ${c.title}`, 'scenario');
++    session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // off unless the case asks (ruling 4)
 +    return true;
 +  };
 +  const weightKg = () => session.spec.weightKg;
 +
 +  shell.add(startView({ session, site, loadScenario }));
-+  shell.add(monitorView(shell.stage));
++  shell.add(monitorView(shell.stage, { session, link }));
 +  const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
 +  shell.add(teach);
 +  shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
@@ -3143,18 +3284,19 @@ index 0000000..e4064ce
 +}
 diff --git a/apps/demo/src/app/panel/scenario.ts b/apps/demo/src/app/panel/scenario.ts
 new file mode 100644
-index 0000000..1d4c0fb
+index 0000000..f641a8c
 --- /dev/null
 +++ b/apps/demo/src/app/panel/scenario.ts
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,115 @@
 +// Scenario (research/13 §4.3 item 1; the simulator sweep's top patterns 4 and 5): before a run, the library as cards
 +// (story, patient, duration, objectives) filtered by category; during a run, the state strip with the current state
 +// highlighted, time in state, the next triggers in clinical words with countdowns, manual triggers as buttons,
 +// hold/resume, jump (confirmed), bookmarks that restore the physiology, and an objectives checklist for the debrief.
 +import { LIBRARY, cardOf, type ScenarioCard } from '../scenarios.ts';
 +import { CATEGORIES } from '../scenario-meta.ts';
++import { drugWords } from '../glossary.ts';
 +import { countdown, transitionText } from '../triggers.ts';
-+import { button, clock, confirmDialog, h, setText, toast } from '../ui.ts';
++import { button, clock, confirmDialog, h, setText, toast, toggle } from '../ui.ts';
 +import { scenarioCard } from '../cards.ts';
 +import { bookmark } from '../commands.ts';
 +import type { PanelCtx } from './ctx.ts';
@@ -3185,6 +3327,16 @@ index 0000000..1d4c0fb
 +  const library = h('section', { 'aria-label': 'Scenario library' }, h('h3', {}, 'Scenario library'), chips, cards);
 +
 +  // ---- run view ----
++  // learner controls under the learner monitor: off by default, on for this run (host only; orchestrator ruling 4)
++  const host = link.host;
++  const learnerToggle = host
++    ? toggle('Learner controls on the monitor', host.learner, (on) => {
++        host.setLearner(on);
++        link.note(on ? 'Learner controls shown on the monitor' : 'Learner controls hidden', 'system');
++      }, 'small')
++    : null;
++  host?.onLearner((on) => learnerToggle?.set(on));
++  const learnerRow = learnerToggle ? h('div', { class: 'row' }, learnerToggle, h('span', { class: 'hint' }, 'Charge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.')) : null;
 +  const title = h('h3', {});
 +  const story = h('p', { class: 'hint' });
 +  const strip = h('ol', { class: 'states', 'aria-label': 'Scenario states' });
@@ -3197,6 +3349,7 @@ index 0000000..1d4c0fb
 +    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((run.hidden = true), (library.hidden = false)), 'ghost small')), story,
 +    strip,
 +    h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
++    learnerRow,
 +    h('h3', {}, 'What happens next'), next,
 +    h('h3', {}, 'Objectives'), objectives,
 +    h('h3', {}, 'Bookmarks'), marks,
@@ -3216,12 +3369,13 @@ index 0000000..1d4c0fb
 +    if (docV !== sv.docVersion) {
 +      docV = sv.docVersion;
 +      const card = cardOf(doc);
-+      setText(title, card.title);
-+      setText(story, card.story);
++      setText(title, drugWords(card.title));
++      setText(story, drugWords(card.story));
 +      objectives.replaceChildren(...card.objectives.map((o, i) => {
 +        const id = `obj-${i}`;
-+        const box = h('input', { type: 'checkbox', id, onchange: () => box.checked && link.note(`Objective met: ${o}`, 'marker') });
-+        return h('li', {}, h('label', { class: 'check', for: id }, box, o));
++        const words = drugWords(o);
++        const box = h('input', { type: 'checkbox', id, onchange: () => box.checked && link.note(`Objective met: ${words}`, 'marker') });
++        return h('li', {}, h('label', { class: 'check', for: id }, box, words));
 +      }));
 +    }
 +    strip.replaceChildren(...doc.states.map((s) => {
@@ -3861,10 +4015,10 @@ index 0000000..d429c06
 +}
 diff --git a/apps/demo/src/app/scenario-meta.ts b/apps/demo/src/app/scenario-meta.ts
 new file mode 100644
-index 0000000..70d5976
+index 0000000..6b59d21
 --- /dev/null
 +++ b/apps/demo/src/app/scenario-meta.ts
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,89 @@
 +// What a scenario card shows before a case is loaded (research/13 §4.3; TrainingMonitor's categorised catalogue; CAE and
 +// REALITi objectives checklists). `pme-scenario/1` carries the title, the notes and the patient; the category, the
 +// learner-facing story, the expected duration and the objectives live here until the schema gains them (request to
@@ -3878,6 +4032,9 @@ index 0000000..70d5976
 +  minutes: number;
 +  story: string;
 +  objectives: string[];
++  /** Show the learner controls under the monitor when this scenario loads (orchestrator ruling 4). Default off; no
++   *  built-in case turns them on yet — the instructor switches them on per run in the Scenario tab. */
++  learnerControls?: boolean;
 +}
 +
 +export const SCENARIO_META: Readonly<Record<string, ScenarioMeta>> = {
@@ -3996,10 +4153,10 @@ index 0000000..51c64b6
 +export const scenarioById = (id: string): ScenarioCard | undefined => LIBRARY.find((c) => c.id === id);
 diff --git a/apps/demo/src/app/session.ts b/apps/demo/src/app/session.ts
 new file mode 100644
-index 0000000..a2a16ac
+index 0000000..7ce3de0
 --- /dev/null
 +++ b/apps/demo/src/app/session.ts
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,263 @@
 +// ONE engine session per app document (research/13 brief §5). It owns the monitor (mountMonitor, the renderer's worker
 +// path, the skin's device UI — FU-5's, untouched), the Stage 6a HostSession (the in-process hub for this page's panel,
 +// BroadcastChannel for a paired Remote, relay/WebRTC with ?relay=) and the Stage 6b ScenarioDriver. Switching views
@@ -4059,6 +4216,9 @@ index 0000000..a2a16ac
 +  theme: string;
 +  timeScale = 1;
 +  paused = false;
++  /** Learner controls under the learner monitor (orchestrator ruling 4): off by default, on per scenario. */
++  learner = false;
++  private readonly learnerFns = new Set<(on: boolean) => void>();
 +  /** Latest engine events the shell reads (alarm mirror, defib, drugs). */
 +  last: Partial<Record<EngineEvent['type'], EngineEvent>> = {};
 +  soundOn = false;
@@ -4126,6 +4286,18 @@ index 0000000..a2a16ac
 +    return () => void this.appFns.delete(fn);
 +  }
 +
++  /** Show or hide the learner controls; every Monitor view and Scenario tab follows. */
++  setLearner(on: boolean): void {
++    this.learner = on;
++    for (const fn of this.learnerFns) fn(on);
++  }
++
++  onLearner(fn: (on: boolean) => void): () => void {
++    this.learnerFns.add(fn);
++    fn(this.learner);
++    return () => void this.learnerFns.delete(fn);
++  }
++
 +  /** Called after every (re)mount with the new monitor (the ventilator link re-attaches to it). */
 +  onMount(fn: (m: MonitorHandle) => void): () => void {
 +    this.mountFns.add(fn);
@@ -4177,6 +4349,7 @@ index 0000000..a2a16ac
 +    this.spec = start.spec;
 +    this.mode = start.mode;
 +    this.driver.runner = null;
++    this.setLearner(false); // a new patient starts without learner controls (ruling 4)
 +    this.mount(start.seed ?? 7);
 +    this.panel.note(`Patient restarted: ${start.mode.toUpperCase()}`);
 +  }
@@ -4486,18 +4659,19 @@ index 0000000..2e29cf1
 +
 diff --git a/apps/demo/src/app/site.test.ts b/apps/demo/src/app/site.test.ts
 new file mode 100644
-index 0000000..f3ae9bd
+index 0000000..559c9fc
 --- /dev/null
 +++ b/apps/demo/src/app/site.test.ts
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,17 @@
 +import { describe, expect, it } from 'vitest';
 +import { DEFAULT_SITE, gas, parseSite } from './site.ts';
 +
 +describe('site profile', () => {
 +  it('keeps known values and replaces anything else with the default', () => {
-+    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true })).toEqual({
-+      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true,
++    expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk' })).toEqual({
++      schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk',
 +    });
++    expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses (ruling 5)
 +    expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon' })).toEqual(DEFAULT_SITE);
 +    expect(parseSite(null)).toEqual(DEFAULT_SITE);
 +  });
@@ -4508,10 +4682,10 @@ index 0000000..f3ae9bd
 +});
 diff --git a/apps/demo/src/app/site.ts b/apps/demo/src/app/site.ts
 new file mode 100644
-index 0000000..d53b43c
+index 0000000..208112b
 --- /dev/null
 +++ b/apps/demo/src/app/site.ts
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,69 @@
 +// The site profile (research/13 P11, Laerdal's profile vs scenario split): which monitor the room shows, its theme and
 +// alarm defaults, and the shell's units and speed. It belongs to the room, not to a case, so loading a scenario never
 +// changes it. Stored per browser (a convenience, research/13 brief §5) and exportable as one JSON file.
@@ -4531,6 +4705,9 @@ index 0000000..d53b43c
 +  gasUnit: 'mmHg' | 'kPa';
 +  /** New patients start with the sensors off: the learner attaches them and traces appear only then (Laerdal). */
 +  sensorsOff: boolean;
++  /** Drug names on every screen (orchestrator ruling 5; Ali's open question Q13): 'us' "epinephrine / norepinephrine"
++   *  (default), 'uk' "adrenaline / noradrenaline". */
++  drugNames: 'us' | 'uk';
 +}
 +
 +/** Monitor choices, in the words the Settings and Start screens use. */
@@ -4543,9 +4720,11 @@ index 0000000..d53b43c
 +  { id: 'zoll-like', label: 'Zoll-style defibrillator', hint: 'Monitor-defibrillator' },
 +  { id: 'lifepak-like', label: 'LIFEPAK-style defibrillator', hint: 'Monitor-defibrillator' },
 +];
++/** The drug-name sets, in the words the Settings screen uses (orchestrator ruling 5). */
++export const DRUG_NAME_SETS: ReadonlyArray<[SiteProfile['drugNames'], string]> = [['us', 'Epinephrine, norepinephrine'], ['uk', 'Adrenaline, noradrenaline']];
 +export const THEMES: ReadonlyArray<[SiteProfile['theme'], string]> = [['', 'Dark'], ['projector-light', 'Projector (light)'], ['ecg-grid', 'ECG paper grid']];
 +
-+export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false };
++export const DEFAULT_SITE: SiteProfile = { schema: 'pme-site/1', skin: 'saadat-like', theme: '', fps: 60, panel: 'split', gasUnit: 'mmHg', sensorsOff: false, drugNames: 'us' };
 +
 +export function parseSite(raw: unknown): SiteProfile {
 +  const o = (raw && typeof raw === 'object' ? raw : {}) as Partial<SiteProfile>;
@@ -4558,6 +4737,7 @@ index 0000000..d53b43c
 +    panel: o.panel === 'drawer' ? 'drawer' : 'split',
 +    gasUnit: o.gasUnit === 'kPa' ? 'kPa' : 'mmHg',
 +    sensorsOff: o.sensorsOff === true,
++    drugNames: o.drugNames === 'uk' ? 'uk' : 'us',
 +  };
 +}
 +
@@ -4763,7 +4943,7 @@ index 0000000..bb36312
 +});
 diff --git a/apps/demo/src/app/triggers.ts b/apps/demo/src/app/triggers.ts
 new file mode 100644
-index 0000000..23e99d4
+index 0000000..adfa9fa
 --- /dev/null
 +++ b/apps/demo/src/app/triggers.ts
 @@ -0,0 +1,58 @@
@@ -4772,7 +4952,7 @@ index 0000000..23e99d4
 +// panel's copy of the same grammar with glossary labels and state names.
 +import { DRUGS, type StateVar } from '@pme/engine-core';
 +import type { ScenarioDoc, Transition, When } from '@pme/controller';
-+import { labelOf } from './glossary.ts';
++import { drugName, labelOf } from './glossary.ts';
 +import { SENSORS } from './describe.ts';
 +import { vitalLabel, vitalOf } from './vitals.ts';
 +
@@ -4797,7 +4977,7 @@ index 0000000..23e99d4
 +  if ('event' in w) {
 +    const e = w.event;
 +    if (e.kind === 'defib') return e.action === 'shock' ? `a shock${e.minJ ? ` of at least ${e.minJ} J` : ''}` : e.action === 'charge' ? 'the defibrillator charged' : 'a defibrillator action';
-+    if (e.kind === 'drug') return `${e.drugId ? DRUGS[String(e.drugId)]?.name ?? 'a drug' : 'a drug'} given${e.minDose ? ` (at least ${e.minDose})` : ''}`;
++    if (e.kind === 'drug') return `${e.drugId && DRUGS[String(e.drugId)] ? drugName(String(e.drugId)) : 'a drug'} given${e.minDose ? ` (at least ${e.minDose})` : ''}`;
 +    if (e.kind === 'cpr') return e.active === false ? 'CPR stopped' : 'CPR started';
 +    if (e.kind === 'fluid') return `fluid given${e.minVolumeMl ? ` (at least ${e.minVolumeMl} mL)` : ''}`;
 +    if (e.kind === 'pacer') return `pacing${e.minMa ? ` at ${e.minMa} mA or more` : ''}`;
@@ -5359,23 +5539,30 @@ index 0000000..fd1aca8
 +}
 diff --git a/apps/demo/src/app/views/monitor.ts b/apps/demo/src/app/views/monitor.ts
 new file mode 100644
-index 0000000..daa20fa
+index 0000000..e7985f0
 --- /dev/null
 +++ b/apps/demo/src/app/views/monitor.ts
-@@ -0,0 +1,14 @@
-+// Monitor (research/13 §4.2): the learner's full-screen monitor. Nothing of the instructor shows; `i`, five taps in the
+@@ -0,0 +1,21 @@
++// Monitor (research/13 §4.2): the learner's full-screen monitor, with the learner controls strip under it only when the
++// instructor has switched it on for this scenario (orchestrator ruling 4). Nothing of the instructor shows; `i`, five taps in the
 +// top-left corner or a three-finger hold open the instructor view (the Stage 6a reveal gestures), and a quiet strip
 +// appears at the top edge only on pointer hover or keyboard focus.
++import { learnerStrip } from '../learner.ts';
++import type { Link } from '../link.ts';
 +import { hrefOf } from '../router.ts';
++import type { AppSession } from '../session.ts';
 +import { button, h } from '../ui.ts';
 +import type { View } from '../shell.ts';
 +
-+export function monitorView(stage: HTMLElement): View {
++export function monitorView(stage: HTMLElement, o: { session: AppSession; link: Link }): View {
 +  const full = button('Full screen', () => void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()), 'small');
 +  const strip = h('div', { class: 'reveal', role: 'toolbar', 'aria-label': 'Monitor view' },
 +    h('a', { class: 'btn small', href: hrefOf('teach') }, 'Instructor view'), full, h('a', { class: 'btn small ghost', href: hrefOf('start') }, 'Start'));
 +  stage.append(strip);
-+  return { id: 'monitor', el: h('section', { 'aria-labelledby': 'mon-h' }, h('h1', { id: 'mon-h', class: 'sr-only' }, 'Learner monitor')) };
++  // the learner controls strip under the monitor: hidden unless the instructor switched it on (ruling 4)
++  const learner = learnerStrip(o.link);
++  o.session.onLearner((on) => (learner.hidden = !on));
++  return { id: 'monitor', el: h('section', { 'aria-labelledby': 'mon-h' }, h('h1', { id: 'mon-h', class: 'sr-only' }, 'Learner monitor'), learner) };
 +}
 diff --git a/apps/demo/src/app/views/remote.ts b/apps/demo/src/app/views/remote.ts
 new file mode 100644
@@ -5458,16 +5645,17 @@ index 0000000..9940b3f
 +}
 diff --git a/apps/demo/src/app/views/settings.ts b/apps/demo/src/app/views/settings.ts
 new file mode 100644
-index 0000000..da9c7a9
+index 0000000..a793e95
 --- /dev/null
 +++ b/apps/demo/src/app/views/settings.ts
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,65 @@
 +// Settings (research/13 §4.8, P11): the room's site profile — monitor, screen, frame rate, where the instructor works,
 +// gas units, sensors-off start — exportable as one file for the next room, plus the shortcut sheet.
 +import { shortcutsDialog } from '../commands.ts';
 +import type { AppSession } from '../session.ts';
 +import { applySkinAlarmColours } from '../shell.ts';
-+import { MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
++import { setDrugNames } from '../glossary.ts';
++import { DRUG_NAME_SETS, MONITORS, parseSite, saveSite, THEMES, type SiteProfile } from '../site.ts';
 +import { button, download, h, seg, select, toast } from '../ui.ts';
 +import type { View } from '../shell.ts';
 +
@@ -5490,6 +5678,11 @@ index 0000000..da9c7a9
 +  });
 +  const panel = seg<SiteProfile['panel']>('Instructor panel on wide screens', [['split', 'Beside the monitor'], ['drawer', 'Over the monitor (drawer)']], site.panel, (v) => ((site.panel = v), save()));
 +  const gas = seg<SiteProfile['gasUnit']>('Gas pressures in tables', [['mmHg', 'mmHg'], ['kPa', 'kPa']], site.gasUnit, (v) => ((site.gasUnit = v), save()));
++  const names = seg<SiteProfile['drugNames']>('Drug names', [...DRUG_NAME_SETS], site.drugNames, (v) => {
++    site.drugNames = v;
++    setDrugNames(v);
++    save('Saved: drug names change as each screen redraws');
++  });
 +  const sensors = h('input', { type: 'checkbox', id: 'set-sensors', onchange: () => ((site.sensorsOff = sensors.checked), save()) });
 +  sensors.checked = site.sensorsOff;
 +  const file = h('input', { type: 'file', accept: 'application/json', class: 'sr-only', id: 'set-import', onchange: async () => {
@@ -5497,6 +5690,7 @@ index 0000000..da9c7a9
 +    if (!f) return;
 +    try {
 +      Object.assign(site, parseSite(JSON.parse(await f.text())));
++      setDrugNames(site.drugNames);
 +      save('Site profile imported');
 +      skin();
 +    } catch {
@@ -5507,7 +5701,7 @@ index 0000000..da9c7a9
 +    h('h1', { id: 'set-h' }, 'Settings'),
 +    h('p', { class: 'lede' }, 'These settings belong to this room and this browser. A scenario never changes them.'),
 +    h('h2', {}, 'Monitor'), h('div', { class: 'grid2' }, mon.el, theme.el),
-+    h('h2', {}, 'Display'), field('Frame rate', fps), field('Instructor panel on wide screens', panel), field('Gas pressures in tables', gas),
++    h('h2', {}, 'Display'), field('Frame rate', fps), field('Instructor panel on wide screens', panel), field('Gas pressures in tables', gas), field('Drug names', names),
 +    h('h2', {}, 'New patients'), h('label', { class: 'check', for: 'set-sensors' }, sensors, 'Start with the sensors off (traces appear when they are attached)'),
 +    h('h2', {}, 'Language'), h('p', {}, 'English. The monitor labels follow the clinical glossary; other languages can be added later.'),
 +    h('h2', {}, 'Site profile'),
