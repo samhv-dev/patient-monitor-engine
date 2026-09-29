@@ -230,8 +230,13 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
     if (c.kIschRv > 0.9995) c.kIschRv = 1;
   }
-  c.ischT = c.delta > 0.1 ? c.ischT + dt : 0;
-  const stTarget = c.ischT >= ST_LAG_S ? -Math.min(0.3, c.delta) : 0;
+  // FU-8 (C2, research/19): ST follows the SAME filtered flow deficit that drives kIsch — (1 − kIsch)/G_ISCH, the
+  // deficit low-passed with τ 20 s — instead of a continuous-seconds timer on the instantaneous δ that reset on any
+  // beat-to-beat dip (3-vessel CAD at HR 110: δ 0–0.27, longest run above 0.1 3 s, ST never appeared while kIsch fell
+  // to 0.80). The 45 s lag (tables §3 stLag 30–60 s) is kIsch's τ 20 s plus the ST filter below. `ischT` is kept for
+  // older snapshots and no longer read.
+  const dF = (1 - c.kIsch) / G_ISCH;
+  const stTarget = dF > ST_DEFICIT_MIN ? -Math.min(0.3, dF) : 0;
   c.stMv += (stTarget - c.stMv) * (1 - Math.exp(-dt / (stTarget < c.stMv ? 15 : 60)));
 }
 
