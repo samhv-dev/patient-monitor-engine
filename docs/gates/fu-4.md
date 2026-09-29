@@ -389,7 +389,10 @@ extreme-rate clear logic in `l3/alarms/conditions.ts` — not a one-constant cha
 After the handling: **fidelity files 58 tests, all green** (`--no-file-parallelism`, CI=1).
 
 **FU-5 follow-up list:** the four pinned rows above (EXTREME BRADY in the decaying PEA ×2 rigs, LOW PERF 1 s cycle,
-PEA static S/D spread 6).
+PEA static S/D spread 6), plus **`fu5-latched.e2e.ts` (both skins)**, found in the e2e run: no induction APNEA at all
+after FU-4 (the propofol apnoea starts ≈ 4 s later, VA 0 at 172 vs 168 s, and the capnograph's apnoea delay does not
+elapse before the stage7f script's BVM at +180 s) — pinned with `test.fail` under E-FU4-20; the fix is the scenario's
+timing or the alarm (FU-5's). And truth-event's leaf-cap `it.fails` flipped (2 041 leaves with FU-5's SKIP_PATH).
 
 **`pnpm audit:monitor` on the merged tree (43 scenarios, EXIT 0):** low flow — A1m SpO2 "99?" PI 0.20 LOW PERF, A2
 (Ali) "99?" PI 0.14; PEA HR mean 93 (all three skins), PR invalid +7 s, SpO2 +12 s; VF → CPR PR 110, EtCO2 14–20;
