@@ -68,7 +68,12 @@ export const GRADES = {
   ar: { mild: 0.08, moderate: 0.18, severe: 0.32 },
   tr: { mild: 0.1, moderate: 0.25, severe: 0.45 },
   cad: { none: 3.5, stable: 2.0, severe: 1.4, recentMI: 1.4 },
+  ph: { mild: 3, moderate: 5, severe: 10 }, // FU-8 (C8): PVR in Wood units (tables §1.5; ESC/ERS 2022)
 } as const;
+/** FU-8 (C8): the resting circuit's total PVR in Wood units (PVR 0.1 mmHg·s/mL × 1000/60). */
+const PVR_REST_WU = (PVR * 1000) / 60;
+/** FU-8 (C8): RV Ees multiplier by PH grade (tables §1.5: × 1.3 / 1.6 / 2.0, adapted hypertrophy). */
+const PH_EES_RV: Record<string, number> = { mild: 1.3, moderate: 1.6, severe: 2.0 };
 /** LV stiffness multiplier by AS grade (tables §1.5 Q15: β ×1.0 / 1.3 / 1.6 / 2.0). */
 const AS_BETA: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.6, critical: 2.0 };
 /**
@@ -218,10 +223,16 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
     case 'rvFailure':
       p.eesRv *= lerp(0.5);
       return;
-    case 'ph': // PVR 3/5/10 WU by grade (tables §1.5), RV Ees ×1.3–2
-      p.pvrL *= lerp(3);
-      p.pvrR *= lerp(3);
-      p.eesRv *= lerp(1.6);
+    case 'ph': {
+      // PVR 3/5/10 WU by grade (tables §1.5), RV Ees ×1.3–2. FU-8 (research/19 C8): the grade was ignored — PVR × 3 and
+      // RV Ees × 1.6 at every grade (measured 5.9 WU for "severe"); the multipliers are now the grade's WU over the
+      // resting circuit's PVR (0.1 mmHg·s/mL = 1.67 WU). No grade = moderate, the old behaviour.
+      const g = (c.grade ?? 'moderate') as keyof typeof GRADES.ph;
+      const m = GRADES.ph[g] / PVR_REST_WU;
+      p.pvrL *= lerp(m);
+      p.pvrR *= lerp(m);
+      p.eesRv *= lerp(PH_EES_RV[g] ?? 1.6);
       return;
+    }
   }
 }
