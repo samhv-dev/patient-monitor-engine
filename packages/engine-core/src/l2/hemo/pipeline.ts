@@ -812,6 +812,9 @@ export function applyHemoCommand(
         return true;
       }
       if (sensor === 'spo2') {
+        // FU-8 (F5, G-FU5 ruling 2): when a motion episode ends the oximeter restarts its pulse search — the pulses
+        // detected on the artefact leave the PI/PR average (they held PI 8.21 and PR 81 for 5–9 s after the motion)
+        if (hs.pleth.state === 'motion' && state !== 'motion') Object.assign(hs.num.pleth, { beats: [], feet: [], n: -1 });
         setPlethSensor(hs.pleth, state as PlethState['state'], spo2Site(site), rng.artefact);
         return true;
       }
