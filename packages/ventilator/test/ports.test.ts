@@ -65,6 +65,6 @@ describe('link ports', () => {
     const gaps = scheduled.slice(10).map((t, i, a) => (i ? t - (a[i - 1] as number) : 1));
     expect(Math.max(...gaps)).toBe(1); // one frame per engine tick, in order
     expect(d.simT() - e.now().simT).toBeLessThanOrEqual(MAX_AHEAD_TICKS * 0.02 + 0.1);
-    expect(d.core.lung.ref).not.toBeNull(); // lungState arrived
+    expect(d.core.lung.last).not.toBeNull(); // lungState arrived
   });
 });

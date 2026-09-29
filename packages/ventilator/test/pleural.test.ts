@@ -1,7 +1,7 @@
 // Stage V.1 (G7b ruling 5): the ventilator's single compartment sees the pleural pressure. A tension pneumothorax
 // collapses the lung at end-expiration once the pleural pressure passes PEEP; every breath must re-open it first.
 import { describe, expect, it } from 'vitest';
-import { advanceVent, createVent, pleuralOpening, PPL_REST_CMH2O, toVentFrame } from '../src/index.ts';
+import { advanceVent, createVent, LUNG_PATHOLOGIES, pleuralOpening, PPL_REST_CMH2O, referenceRun, toVentFrame } from '../src/index.ts';
 import { P_PL0 } from '../../engine-core/src/l2/circ/params.ts';
 import { CMH2O_TO_MMHG } from '../../engine-core/src/l2/gas/params.ts';
 
@@ -27,5 +27,18 @@ describe('pleural opening pressure (Stage V.1, G7b ruling 5)', () => {
     // the engine adds the pleural pressure to the heart itself (respPleural): T_IT·Palv must not carry it twice
     const f = toVentFrame(vs, 'VC');
     expect(f.palvCmH2O).toBeCloseTo(vs.p.Palv - pleuralOpening(vs.cfg, vs.p.V), 9);
+  });
+});
+
+// Orchestrator ruling (V.1 review 1): tables H6 "Ppeak +10–20" is [TXT] and governs over the catalogue §16 [ENG] tag.
+// The opening pressure on top of 7b's tension crs ×0.5 (chosen before the ventilator saw the pleural pressure, as a
+// stand-in for this very Ppeak rise) overshoots by 1.6 → calibration-queue row "tension Ppeak vs crs ×0.5" (R45).
+describe('tension pneumothorax Ppeak rise (tables H6 [TXT], catalogue §16)', () => {
+  it.fails('reference run: Ppeak rises 10–20 cmH2O over the normal row (measured +21.6: 45.4 vs 23.8)', () => {
+    const peak = (id: string) => { const { sig } = referenceRun(LUNG_PATHOLOGIES.find((r) => r.id === id)!); return sig.plateau + sig.peakMinusPlateau; };
+    const d = peak('pneumothorax-tension') - peak('normal');
+    if (process.env.PRINT) console.log(`R36 tension Ppeak rise ${d.toFixed(1)} (${peak('pneumothorax-tension').toFixed(1)} vs ${peak('normal').toFixed(1)})`);
+    expect(d).toBeGreaterThanOrEqual(10);
+    expect(d).toBeLessThanOrEqual(20);
   });
 });

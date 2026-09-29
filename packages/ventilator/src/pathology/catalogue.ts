@@ -30,6 +30,8 @@ export interface LungPathology {
   recruitP50?: number;
   signature: { plateau: Band; drivingPressure: Band; autoPeep: Band; peakMinusPlateau: Band };
   ref?: { vtMl?: number; rr?: number; peep?: number; pbwKg?: number; flowLpm?: number };
+  /** Stage V.1: pleural-space pressure above normal (cmH2O), generated from the engine's pPtx (ventReference). */
+  pleuralCmH2O?: number;
   wired: Partial<Record<'mechanics' | 'shunt' | 'deadSpace' | 'diffusion' | 'pvr' | 'hpv', Wired>>;
   monitor: string;
   pitfall: string;
@@ -390,7 +392,9 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(18, 10, 25), rInsp: b(14, 10, 18), rExp: b(14, 10, 18), autoPeepTendency: 0,
     shunt: b(0.3, 0.2, 0.45), deadSpaceFraction: b(0.45, 0.35, 0.6), diffusionFactor: 1, pvrMultiplier: b(1.5, 1, 2.5), hpvSensitivity: 1,
     recruitability: 'none',
-    signature: { plateau: b(32, 18.7, 50), drivingPressure: b(27, 13.7, 45), autoPeep: NO_AP, peakMinusPlateau: b(14, 9.7, 18) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note) // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note) // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    // Stage V.1 (G7b ruling 5): plateau and ΔP back to the authored clinical bands — the ventilator now re-opens the lung
+    // against the engine's pleural pressure (mechanics.ts pleuralOpening); peak − plateau keeps 7b's widening (R_insp 9.8)
+    signature: { plateau: b(32, 25, 50), drivingPressure: b(27, 20, 45), autoPeep: NO_AP, peakMinusPlateau: b(14, 9.7, 18) },
     wired: { ...W_STD, pvr: 'stage7a' }, monitor: 'Airway pressures climb breath by breath, SpO2 falls, then BP collapses with a high CVP (obstructive shock).',
     pitfall: 'Treated as "hypotension and hypoxaemia" without examining the chest — a framing error; decompress before imaging.',
     sources: [{ field: 'pitfall', src: 'Miller 10e pdf p. 142: "provides supportive care for hypotension and hypoxemia without further evaluation, delaying the diagnosis and treatment of tension pneumothorax."' }, { field: 'signature', src: S_MECH }],
@@ -485,7 +489,10 @@ const AUTHORED: readonly LungPathology[] = [
 // ventilator-facing text and signature bands. Values are regenerated at load from the engine's own reference run at
 // the row's PBW (ventReference: resolved Crs and Rinsp, mainstem block included); bands widen to
 // include them. Rows the engine does not map, and the neonatal row (the engine data is adult-frame until R22's
-// neonatal profile), keep their authored numbers.
+// neonatal profile), keep their authored numbers. Stage V.1: the pleural pressure is generated too, and the fields the
+// link profile's `lungConditions` now put into the engine (shunt, PVR, HPV) are wired 'engine-now'.
+const NOW = (w: LungPathology['wired']): LungPathology['wired'] =>
+  Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v === 'stage7a' || v === 'stage7b' ? 'engine-now' : v]));
 const widen = (bd: Band, v: number): Band => ({ value: v, lo: Math.min(bd.lo, v), hi: Math.max(bd.hi, v) });
 export const LUNG_PATHOLOGIES: readonly LungPathology[] = AUTHORED.map((row) => {
   const m = VENT_ROW_MAP[row.id];
@@ -498,6 +505,7 @@ export const LUNG_PATHOLOGIES: readonly LungPathology[] = AUTHORED.map((row) => 
     complianceMl: widen(row.complianceMl, r1(r.crs)), rInsp: widen(row.rInsp, r1(r.rInsp)), rExp: widen(row.rExp, r1(r.rExp)),
     shunt: widen(row.shunt, Math.round((r.nonAerated + r.extraShunt) * 100) / 100),
     deadSpaceFraction: widen(row.deadSpaceFraction, Math.round((0.3 + (r.vdAlv - 0.075)) * 100) / 100),
-    wired: { ...row.wired, mechanics: 'vent', deadSpace: 'engine-now', diffusion: 'engine-now' },
+    pleuralCmH2O: r.pleuralCmH2O,
+    wired: { ...NOW(row.wired), mechanics: 'vent', deadSpace: 'engine-now', diffusion: 'engine-now' },
   };
 });

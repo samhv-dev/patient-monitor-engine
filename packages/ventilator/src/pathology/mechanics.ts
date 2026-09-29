@@ -3,16 +3,15 @@
 // with a custom factor (eflK = rInsp/rExp) and no PEEP stenting, so R_exp is exactly the row's value.
 import { advanceVent, createVent } from '../vent.ts';
 import type { VentConfig, VentState } from '../types.ts';
+import { lungMechanics } from '../lung-input.ts';
 import type { RecruitParams } from '../link/recruit.ts';
 import { REF_SETTINGS, type LungPathology } from './catalogue.ts';
 
+/** The row's lung as the ventilator's single compartment — the same mapping lungState uses (lung-input.ts). */
 export function mechanicsToVent(row: LungPathology): Partial<VentConfig> {
-  const ri = row.rInsp.value;
-  const re = row.rExp.value;
-  const efl = re > ri * 1.05;
   return {
-    compliance: row.complianceMl.value, resistance: ri, airwayClosure: false, uip: false, stressIdx: false,
-    efl, eflSeverity: efl ? 'custom' : 'moderate', eflK: efl ? ri / re : 0.35, peepStent: efl ? 0 : 40,
+    airwayClosure: false, uip: false, stressIdx: false,
+    ...lungMechanics({ compliance: row.complianceMl.value, rInsp: row.rInsp.value, rExp: row.rExp.value, pleural: row.pleuralCmH2O ?? 0 }),
   };
 }
 
