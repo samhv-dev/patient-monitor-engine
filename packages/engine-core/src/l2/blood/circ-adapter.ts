@@ -26,6 +26,15 @@ export function pushCircVolume(c: CircLike, dMl: number, dtS: number): void {
   c.vol.push({ rate: dMl / dtS, until: c.t + dtS - 1e-6 });
 }
 
+/**
+ * FU-6 R11 (E-FU6-4): blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6
+ * (Weiskopf 1998 JAMA 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; 7a's optional `ext.viscF`.
+ */
+export const VISC_EXP = 0.6;
+export function setCircViscosity(c: CircLike, hbRel: number): void {
+  c.ext.viscF = Math.max(0.2, hbRel) ** VISC_EXP;
+}
+
 /** 7a present: the chemistry contractility multiplier (7a's optional `ext.kChem`, written unconditionally; R50 F3). */
 export function setCircChemistry(c: CircLike, k: number): void {
   c.ext.kChem = k;

@@ -8,7 +8,7 @@ import type { BloodClinicalEvent, BloodDrugId } from '../../types-blood.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from '../gas/params.ts';
 import { applyLungSpecs, metabolic, type BloodView, type RespState } from '../resp/pipeline.ts';
-import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, volumeCoFactor } from './circ-adapter.ts';
+import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, setCircViscosity, volumeCoFactor } from './circ-adapter.ts';
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
 import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
@@ -180,6 +180,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
       bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
+      if (ctx.l1.mode === 'modeled') setCircViscosity(circ, c.odc.hb / c.pat.hbRef); // FU-6 R11 (MODELED: MANUAL's trackers own SVR)
       circ.ext.kEcg = c.out.kEcg; // FU-4 G3: the membrane-effective K for the sinus node and the arrest hazard (7a arrest.ts)
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
     rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // Stage 7e (E-7e-1): IV fluids and unwarmed units as a physical heat term (replaces decision 16's −0.25 °C per unit)
