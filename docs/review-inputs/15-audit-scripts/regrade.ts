@@ -3,6 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { CELLS } from './spec.ts';
 import './cells-a.ts'; import './cells-b.ts'; import './cells-c.ts'; import './cells-m.ts';
+import './hand.ts';
 import { grade } from './grade.ts';
 const file = process.argv[2] ?? new URL('./out/cells.json', import.meta.url).pathname;
 const s = JSON.parse(readFileSync(file, 'utf8')) as Record<string, any>;

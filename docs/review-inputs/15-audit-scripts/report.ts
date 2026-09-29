@@ -18,6 +18,23 @@ export const FAM: [string, string[]][] = [
 export const GAP: Record<string, string> = {};
 const put = (g: string, ids: string[]) => { for (const i of ids) GAP[i] = GAP[i] ? `${GAP[i]}, ${g}` : g; };
 // gap ids of §3 (filled from the graded store)
+put('N1', ['NN-17a']);
+put('N2', ['NN-20a', 'NN-20b']);
+put('N3', ['NN-19c']);
+put('N4', ['NN-06a', 'NN-07']);
+put('N5', ['NN-02', 'NN-04a', 'NN-05b', 'NN-05c']);
+put('N6', ['NN-23a', 'NN-23b']);
+put('N7', ['NN-15b', 'NN-15c']);
+put('N8', ['NN-21a']);
+put('N9', ['NN-25c']);
+put('N10', ['NN-26f']);
+put('N11', ['NN-26g']);
+put('N12', ['NN-30a', 'NN-30b', 'NN-31']);
+put('N13', ['NN-14', 'NN-03a']);
+put('N14', ['NN-25b']);
+put('N15', ['NN-08b', 'NN-28b']);
+put('N16', ['NN-31', 'NN-32']);
+put('owned', ['NN-08a', 'NN-08b', 'NN-09', 'NN-10', 'NN-19a', 'NN-19b', 'NN-23a', 'NN-24']);
 const esc = (x: string) => x.replace(/\|/g, '/');
 const counts: Record<string, number> = {};
 for (const r of Object.values(s)) counts[r.verdict] = (counts[r.verdict] ?? 0) + 1;

@@ -48,6 +48,6 @@ export function grade(cell: Cell, values: Record<string, number | boolean | stri
   }
   if (!cell.expect.length) v = 'NM';
   const auto = v;
-  if (cell.hand) { notes.push(`HAND ${cell.hand.verdict} (automatic ${v}): ${cell.hand.why}`); v = cell.hand.verdict; }
+  if (cell.hand) { const hv = cell.hand.verdict || v; notes.push(`HAND ${hv} (automatic ${v}): ${cell.hand.why}`); v = hv; }
   return { id: cell.id, verdict: v, auto, notes, values, rejected };
 }

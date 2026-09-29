@@ -6,7 +6,8 @@
   "notes": [
    "TS tTof0S = 74 below [90, 120] (lower = stronger/faster) [research/12 NN-01: TOF 0 at 1.5–2 min (Naguib)]",
    "PL tMaxBlockS = 120 in [92, 124] [tables §5d / §7 check 25: rocuronium 0.6 max block 1.8 min (Roc-label; ±15 %)]",
-   "PL devLagS = 6 in [0, 15] [DEV: the TOF stimulator (15 s trains) reports count 0 within one train of the truth (research/12 §2.2)]"
+   "PL devLagS = 6 in [0, 15] [DEV: the TOF stimulator (15 s trains) reports count 0 within one train of the truth (research/12 §2.2)]",
+   "HAND TS (automatic TS): Confirmed against the design wording only: TOF count 0 (T1 < 3 %) comes at 74 s, but the labelled quantity — time to MAXIMUM block — is 120 s against 1.8 min ± 15 % (PL). The design reads \"TOF 0\" as maximum block; TOF 0 necessarily precedes it. Definition, not a mechanism (Q1)."
   ],
   "values": {
    "tTof0S": 74,
@@ -53,7 +54,8 @@
   "notes": [
    "PL diaAt60 = 1 in [0.9, 1] [research/12 NN-02: intubating conditions at 60 s (Miller NMB) — laryngeal/diaphragm block ≥ 90 % (tables §5d: larynx/diaphragm drive the airway)]",
    "PL tMaxBlockS = 52 in [51, 69] [tables §5d roc 1.2 mg/kg max block 1.0 min (Roc-label; ±15 % tables §7 convention)]",
-   "TS t1_25Min = 94.6 above [57, 77] [tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)]"
+   "TS t1_25Min = 94.6 above [57, 77] [tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)]",
+   "HAND TS (automatic TS): Onset right (max block 52 s; diaphragm 100 % at 60 s); clinical duration 94.6 min against the label 67 min — the dose–duration relation is too steep: roc 0.6 gives 35.5 min (label 31), roc 1.2 gives 94.6 (label 67). N5."
   ],
   "values": {
    "diaAt60": 1,
@@ -99,7 +101,8 @@
   "notes": [
    "PL tTof0S = 50 in [45, 75] [research/12 NN-03 onset 60 s (Miller NMB); tables §5d block ~1 min (Sux-label)]",
    "TS t1_90Min = 12 above [8, 10] [research/12 NN-03 T1 90 % at 8–10 min (Miller NMB); the tables §5d label value is 10.9 min (Sux-label) — both quoted]",
-   "PL minTofrOnset = 1 in [0.9, 1] [tables §5d: succinylcholine phase I, no fade, TOFR ≈ 1 at any T1]"
+   "PL minTofrOnset = 1 in [0.9, 1] [tables §5d: succinylcholine phase I, no fade, TOFR ≈ 1 at any T1]",
+   "HAND TS (automatic TS): T1 90 % at 12.0 min: TS (block too long) against the design 8–10 min (Miller), inside the label 10.9 min ± 15 % (9.3–12.5) that FU-3 fitted (7f nmb.ts NMB_PD succinylcholine comment: 11.98 min). A source conflict for Ali (Q2), not a mechanism."
   ],
   "values": {
    "tTof0S": 50,
@@ -144,7 +147,8 @@
   "auto": "TS",
   "notes": [
    "TS diCe4 = 37 below [40, 60] (lower = stronger/faster) [research/12 NN-15: depth index 40–60 at Ce 3–5 µg/mL (Eleveld BIS 2024 Ce50 3.08·e^(−0.00635(age−35)); BIS manual general-anaesthesia range 40–60)]",
-   "PL mapFallCe8vsCe2 = -9.4 (sign -1, beyond 3) [research/12 NN-15: MAP falls with Ce (Eleveld; Miller IV anaesthetics) — direction]"
+   "PL mapFallCe8vsCe2 = -9.4 (sign -1, beyond 3) [research/12 NN-15: MAP falls with Ce (Eleveld; Miller IV anaesthetics) — direction]",
+   "HAND TS (automatic TS): DI 37 at Ce 4 (band 40–60) and 24.7 at Ce 6: the tables' Eleveld form DI = 93·(1 − U^γ/(U^γ + 1)) has Emax = E0, so the index crosses 40 at Ce ≈ 3.6 and 30 at Ce ≈ 5.0 (neuro/depth.ts:67–75). N7."
   ],
   "values": {
    "diCe2": 63,
@@ -171,7 +175,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS ceAtSr = 5.03 below [6, 8] (lower = stronger/faster) [research/12 NN-15: burst suppression from Ce ≈ 6–8 µg/mL (Eleveld; BIS manual; tables §5d \"burst suppression DI < 20–30\")]"
+   "TS ceAtSr = 5.03 below [6, 8] (lower = stronger/faster) [research/12 NN-15: burst suppression from Ce ≈ 6–8 µg/mL (Eleveld; BIS manual; tables §5d \"burst suppression DI < 20–30\")]",
+   "HAND TS (automatic TS): SR > 0 from Ce 5.03 (band 6–8): SR is derived from the same index (SR = (30 − DI)/25, neuro/depth.ts:76), so it inherits NN-15b's curve. N7."
   ],
   "values": {
    "ceAtSr": 5.03,
@@ -267,7 +272,8 @@
   "notes": [
    "PL macReductionPct = 65.4 in [60, 70] [research/12 NN-17: remifentanil reduces MAC up to 60–70 % (Lang 1996 Anesthesiology 85:721); tables §5d macOpioid −30 to −70 %]",
    "WR moveProp = false (expected true) [control arm: propofol alone at Ce 3 µg/mL does not prevent movement to incision (Smith 1994 Anesthesiology 81:820: propofol Cp50 for skin incision 15.2 µg/mL without opioid; Miller IV anaesthetics)]",
-   "PL movePropRemi = false (expected false) [research/12 NN-17: movement to incision suppressed by remifentanil + propofol (Lang 1996; Miller)]"
+   "PL movePropRemi = false (expected false) [research/12 NN-17: movement to incision suppressed by remifentanil + propofol (Lang 1996; Miller)]",
+   "HAND WR (automatic WR): MAC reduction 65 % (PL) but the CONTROL fails: propofol Ce 3 alone abolishes movement to incision. neuro/depth.ts:83,87 counts propofol as MAC-equivalents by its BIS Ce50 (2.98 µg/mL at 40 y), while the immobility C50 is ≈ 15 µg/mL (Smith 1994). N1."
   ],
   "values": {
    "macReductionPct": 65.4,
@@ -357,7 +363,8 @@
   "auto": "PL",
   "notes": [
    "PL dMap = 36.3 in [30, 50] [research/12 NN-25 / tables §7 check 19 and §5.1: Cushing MAP +30–50 over 30–60 s]",
-   "PL hrDropPct = -26 in [-40, -20] [tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP]"
+   "PL hrDropPct = -26 in [-40, -20] [tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP]",
+   "HAND PL (automatic PL): PL after the surge-window read (HR −26 %); the 40-min value is −19.4 % because in MODELED the bradycardia is left to the baroreflex (organs/effects.ts:41 \"no hrF\")."
   ],
   "values": {
    "cushOnMin": 29.2,
@@ -382,7 +389,8 @@
   "verdict": "WR",
   "auto": "WR",
   "notes": [
-   "WR herniated = false (expected true) [research/12 NN-25: untreated expanding haematoma → herniation (tables §5.1; BTF)]"
+   "WR herniated = false (expected true) [research/12 NN-25: untreated expanding haematoma → herniation (tables §5.1; BTF)]",
+   "HAND WR (automatic WR): No herniation in 45 min: ICP rises to 140 mmHg while the Cushing surge (MAP 145) keeps CPP above 10 except for ≤ 20 s at a time; herniation needs CPP ≤ 10 for 60 s CONTINUOUSLY (brain/model.ts:144–145). Pupils stay 4 mm (no unilateral dilatation), no apnoea, no terminal bradycardia/asystole. N9."
   ],
   "values": {
    "herniated": false,
@@ -409,7 +417,8 @@
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW dIcpPctAt2 = -9.3 above [-30, -25] [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]"
+   "TW dIcpPctAt2 = -9.3 above [-30, -25] [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]",
+   "HAND TW (automatic TW): The ICP response per mmHg is close: −16.9 % at PaCO2 31.6 (10 min, −6.9 mmHg) = 2.4 %/mmHg against 2.5–3.0 implied by check 19; the 2-min read (−9.3 %) was taken at PaCO2 34.6, because RR 16 lowers PaCO2 over minutes (at RR 30 PaCO2 reaches 19 and ICP −47 %). Minor (TW by a small margin)."
   ],
   "values": {
    "icpPre": 25.3,
@@ -457,7 +466,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS dIcpPctMin20_40 = -31.3 below [-30, -25] [research/12 NN-26: HTS similar to mannitol (BTF; Miller neuro) — the mannitol band −25–30 %]"
+   "TS dIcpPctMin20_40 = -31.3 below [-30, -25] [research/12 NN-26: HTS similar to mannitol (BTF; Miller neuro) — the mannitol band −25–30 %]",
+   "HAND TS (automatic TS): −31.3 % against the mannitol band −25–30 %: marginal; inside the 7d test's own HTS band (−20–40 % at 10 min)."
   ],
   "values": {
    "dIcpPctMin20_40": -31.3,
@@ -478,7 +488,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS dIcp = -7.5 below [-7, -5] [research/12 NN-26: head-up 30° ICP −5–7 mmHg (BTF); tables §5.1 −5.6 (−3 to −8; HeadUp-meta 2024)]"
+   "TS dIcp = -7.5 below [-7, -5] [research/12 NN-26: head-up 30° ICP −5–7 mmHg (BTF); tables §5.1 −5.6 (−3 to −8; HeadUp-meta 2024)]",
+   "HAND TS (automatic TS): −7.5 mmHg against the design −5–7: marginal; inside the tables' range −3 to −8 (meta-analysis mean −5.6)."
   ],
   "values": {
    "dIcp": -7.5,
@@ -569,7 +580,8 @@
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW macEtAtEmergence = 0.18 below [0.3, 0.4] [research/12 NN-21: eyes open at end-tidal 0.3–0.4 MAC (MAC-awake; Katoh 1993; tables §5d macAwake 0.33, 0.22–0.34)]"
+   "TW macEtAtEmergence = 0.18 below [0.3, 0.4] [research/12 NN-21: eyes open at end-tidal 0.3–0.4 MAC (MAC-awake; Katoh 1993; tables §5d macAwake 0.33, 0.22–0.34)]",
+   "HAND TW (automatic TW): End-tidal MAC at eye opening 0.18 (brain 0.33 = MAC-awake): 7f applies MAC-awake to the BRAIN fraction and the brain lags Et by minutes at FGF 6, so the gas monitor reads ≈ half the taught value at emergence. N8."
   ],
   "values": {
    "macEtAtEmergence": 0.18,
@@ -613,7 +625,8 @@
   "auto": "TS",
   "notes": [
    "PL apnoeicBeforeNal = true (expected true) [research/12 NN-23 premise: fentanyl 5 µg/kg makes an awake adult apnoeic (Miller, opioids)]",
-   "TS breathMin = 0.2 below [1, 2] (lower = stronger/faster) [research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)]"
+   "TS breathMin = 0.2 below [1, 2] (lower = stronger/faster) [research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)]",
+   "HAND TS (automatic TS): Naloxone restores VE ≥ 50 % in 12 s (band 1–2 min): 7g gamma rows have zero-slope onset. FU-7 Task 2 moves naloxone to ≈ 40 s — still faster than this design's 1–2 min (Q6). Premise: the 7f apnoea flag is set, but VE stays 2.3 L/min (38 %) — fentanyl 5 µg/kg is not apnoeic in the flow (D-7f-3, FENT_VENT_POT 0.55; FU-7 Task 7 owns the one apnoea truth)."
   ],
   "values": {
    "ve0": 6.1,
@@ -631,15 +644,17 @@
   "intv": "naloxone 0.1 mg × 2 (2 min apart): time to breathing",
   "sys": "LUNG, NEU",
   "owner": "7g naloxone row / 7f drive.ts",
-  "wallS": 152.5
+  "wallS": 152.5,
+  "known": "FU-7 T2"
  },
  "NN-23b": {
   "id": "NN-23b",
-  "verdict": "MI",
+  "verdict": "WR",
   "auto": "MI",
   "notes": [
    "WR renarc = false (expected true) [research/12 NN-23: renarcotisation — fentanyl 5 µg/kg outlasts naloxone (Miller, opioids)]",
-   "MI renarcMin: not a finite number (null) [research/12 NN-23: renarcotisation at 30–60 min (naloxone duration 30–45 min; Miller)]"
+   "MI renarcMin: not a finite number (null) [research/12 NN-23: renarcotisation at 30–60 min (naloxone duration 30–45 min; Miller)]",
+   "HAND WR (automatic MI): No renarcotisation in 100 min: VE ≥ 5.0 L/min throughout; naloxone's gamma row keeps an antagonist multiplier of 2.44 at 30 min (rows-other.ts:45, 3600 s tail) while fentanyl 5 µg/kg's ventilatory Ce has fallen below its (0.55×-weakened, D-7f-3) C50. N6 (Q6/Q7)."
   ],
   "values": {
    "renarcMin": null,
@@ -682,7 +697,8 @@
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW t1_90Min = 18.1 below [20, 30] [research/12 NN-04 (heterozygous 20–30 min; Miller); tables §5d \"heterozygous ×2\" (Lee 2009)]"
+   "TW t1_90Min = 18.1 below [20, 30] [research/12 NN-04 (heterozygous 20–30 min; Miller); tables §5d \"heterozygous ×2\" (Lee 2009)]",
+   "HAND TW (automatic TW): Heterozygous block 18.1 min = 1.5 × normal (12.0); the tables say ×2 (≈ 24 min) and Miller 20–30 min. 7g PCHE_CL_MULT het 0.5 halves clearance but duration scales less than clearance on a steep Hill. N5."
   ],
   "values": {
    "t1_90Min": 18.1,
@@ -745,7 +761,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS tofr09Min = 2 below [2.1, 4.3] (lower = stronger/faster) [research/12 NN-05 (≈ 3 min; Naguib); tables §5d: sugammadex 4 mg/kg at 1–2 PTC, TOFR 0.9 median 2.7 min, IQR 2.1–4.3 (Sgx-label)]"
+   "TS tofr09Min = 2 below [2.1, 4.3] (lower = stronger/faster) [research/12 NN-05 (≈ 3 min; Naguib); tables §5d: sugammadex 4 mg/kg at 1–2 PTC, TOFR 0.9 median 2.7 min, IQR 2.1–4.3 (Sgx-label)]",
+   "HAND TS (automatic TS): TOFR 0.9 in 2.0 min against the label IQR 2.1–4.3 (median 2.7): marginally fast; sugammadex binding is instantaneous in plasma and the recovery is roc ke0-limited (N5)."
   ],
   "values": {
    "ptcAtDose": 1,
@@ -767,7 +784,8 @@
   "auto": "TW",
   "notes": [
    "TW t1_10Min = 1.9 above [1, 1.4] (lower = stronger/faster) [tables §5d: sugammadex 16 mg/kg 3 min after roc 1.2, T1 10 % ≈ 1.2 min (Sgx-label; ±15 %)]",
-   "TW tofr09Min = 2.2 above [1.3, 1.7] (lower = stronger/faster) [research/12 NN-05 (TOFR 0.9 at ≈ 1.5 min; Naguib; ±15 %)]"
+   "TW tofr09Min = 2.2 above [1.3, 1.7] (lower = stronger/faster) [research/12 NN-05 (TOFR 0.9 at ≈ 1.5 min; Naguib; ±15 %)]",
+   "HAND TW (automatic TW): Sugammadex 16 mg/kg 3 min after roc 1.2: T1 10 % at 1.9 min (label 1.2), TOFR 0.9 at 2.2 min (Naguib ≈ 1.5). The effect-site washout after instant plasma binding runs at the thumb ke0 0.16/min (t½ 4.4 min): too slow for the immediate-reversal label. N5."
   ],
   "values": {
    "t1_10Min": 1.9,
@@ -788,7 +806,8 @@
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW tofr09Min = 30.3 above [5, 15] (lower = stronger/faster) [research/12 NN-06 (TOFR 0.9 in 10–15 min from TOF 4; Fuchs-Buder; Kopman); tables §5d neostigmine onset 1–3 min, peak ~10 min]"
+   "TW tofr09Min = 30.3 above [5, 15] (lower = stronger/faster) [research/12 NN-06 (TOFR 0.9 in 10–15 min from TOF 4; Fuchs-Buder; Kopman); tables §5d neostigmine onset 1–3 min, peak ~10 min]",
+   "HAND TW (automatic TW): Confirmed: from TOF-count-4 reappearance (TOFR 0.03, T1 0.25) neostigmine 50 µg/kg reaches TOFR 0.9 at 30.3 min (spontaneous: > 40 min). Two terms stack: the ceiling multiplier NEO_SMAX 0.7 (EC50 × ≤ 1.7, neuro/neostigmine.ts:12) and TOFR = T1^2.5 (neuro/nmb.ts TOFR_EXP), which needs T1 0.96 for TOFR 0.9. N4."
   ],
   "values": {
    "tofCAtDose": 4,
@@ -834,7 +853,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS prolongPct = 60.8 above [20, 30] [research/12 NN-09: duration +20–30 % under a volatile (Miller NMB; tables §5d interactions [TXT direction])]"
+   "TS prolongPct = 60.8 above [20, 30] [research/12 NN-09: duration +20–30 % under a volatile (Miller NMB; tables §5d interactions [TXT direction])]",
+   "HAND TS (automatic TS): Sevoflurane 0.8 MAC prolongs rocuronium +60.8 % against the design +20–30 % (Miller); FU-7 Task 14 (DI-51) re-sizes the `1 + 0.5·MAC` divisor against 25–80 % — 60.8 would pass FU-7 and fail this design (Q3)."
   ],
   "values": {
    "macBrainAtDose": 0.79,
@@ -849,7 +869,8 @@
   "intv": "rocuronium 0.6 mg/kg: clinical duration under sevoflurane vs TIVA",
   "sys": "NEU",
   "owner": "7f interactions.ts",
-  "wallS": 161.1
+  "wallS": 161.1,
+  "known": "FU-7 T14"
  },
  "NN-26f": {
   "id": "NN-26f",
@@ -857,7 +878,8 @@
   "auto": "WR",
   "notes": [
    "WR dIcp2vs1 = -3.8 (expected sign 1) [research/12 NN-26: sevoflurane above 1 MAC raises ICP (direct vasodilation; Matta 1999 Anesthesiology 91:677; Miller neuro) — direction]",
-   "WR dCbf2vs1 = -0.161 (expected sign 1) [research/12 NN-26: … and CBF (Matta 1999: MCA velocity +4 % at 0.5, +17 % at 1.5 MAC) — direction]"
+   "WR dCbf2vs1 = -0.161 (expected sign 1) [research/12 NN-26: … and CBF (Matta 1999: MCA velocity +4 % at 0.5, +17 % at 1.5 MAC) — direction]",
+   "HAND WR (automatic WR): Sevoflurane 2 MAC LOWERS ICP (−3.8) and CBF (−0.16) against 1 MAC. Two causes: (1) organs/inputs.ts:98–99 takes 7f's CMRO2 (outputs.ts:26: 1 − 0.4·anaes, 0.45 once DI < 30) but 7g's direct vasodilation, which pk/combine.ts:97–98 derived against 7g's own gentler per-MAC CMRO2 — so volatile CBF is over-coupled (healthy CBF 0.48 of awake at 0.9 MAC); (2) TBI's pressure-passive CBF follows the MAP fall (84 → 71). N10."
   ],
   "values": {
    "mac1": 0.961,
@@ -885,7 +907,8 @@
   "verdict": "WR",
   "auto": "WR",
   "notes": [
-   "WR dIcpMax = 4.59 (quiet, tol ±2) [research/12 NN-26: ketamine does not raise ICP when ventilated (BTF; Himmelseher & Durieux 2005 A&A 101:524; Miller neuro) — quiet ±2 mmHg]"
+   "WR dIcpMax = 4.59 (quiet, tol ±2) [research/12 NN-26: ketamine does not raise ICP when ventilated (BTF; Himmelseher & Durieux 2005 A&A 101:524; Miller neuro) — quiet ±2 mmHg]",
+   "HAND WR (automatic WR): Ketamine raises ICP +4.6 mmHg (CBF +16 %) under controlled ventilation: the direct vasodilation +40 % at full effect (brain/flow.ts vasoDirect; 7g cbfVaso) acts with no hypnotic CMRO2 fall (7f's DI stays high, so cmro2Mult ≈ 1). N11."
   ],
   "values": {
    "dIcpMax": 4.59,
@@ -904,16 +927,20 @@
  },
  "NN-27a": {
   "id": "NN-27a",
-  "verdict": "TW",
+  "verdict": "PL",
   "auto": "TW",
   "notes": [
-   "TW cbfLowRel = 0.898 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
+   "TW cbfLowRel = 0.898 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]",
+   "HAND PL (automatic TW): CBF 0.898 includes a PaCO2 rise 39.1 → 45.3 (low-flow dead space at fixed ventilation; CO2 factor 1 + 0.03·6.2 = 1.186); pressure alone gives 0.898/1.186 = 0.76, inside 0.6–0.8 — and equal to the autoregulation curve (CPP 60.8 on the HTN lower limit 75: 0.78). The MODELED rig cannot hold PaCO2 constant through a bleed; the 7d MANUAL test measures 0.62."
   ],
   "values": {
    "mapBase": 105.9,
    "paco2Base": 39.1,
    "mapLow": 66.9,
    "cppLow": 60.8,
+   "paco2Low": 45.3,
+   "icpLow": 6.1,
+   "cvpLow": 3.5,
    "cbfLowRel": 0.898
   },
   "rejected": [],
@@ -923,7 +950,7 @@
   "intv": "CBF from pressure alone",
   "sys": "BRN, CIRC",
   "owner": "7d brain",
-  "wallS": 44.2
+  "wallS": 41.6
  },
  "NN-27b": {
   "id": "NN-27b",
@@ -931,7 +958,8 @@
   "auto": "TS",
   "notes": [
    "TS cbfHypoRel = 0.33799999999999997 below [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
-   "PL pbto2 = 10.8 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
+   "PL pbto2 = 10.8 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]",
+   "HAND TS (automatic TS): CBF 0.338 against 0.35–0.40 (marginal) at PaCO2 25 with MAP falling to 54 during the hyperventilation; PbtO2 10.8 in band."
   ],
   "values": {
    "tPaco2_25Min": 3.5,
@@ -1001,7 +1029,8 @@
   "auto": "WR",
   "notes": [
    "WR dMapEarlyPct = -1.2 (expected sign 1) [research/12 NN-19: early MAP rise (peripheral α2B vasoconstriction) (Miller; Ebert 2000 Anesthesiology 93:382) — direction]",
-   "PL dMapLatePct = -5.3 (sign -1, beyond 3) [research/12 NN-19: later MAP fall (central sympatholysis) (Miller; Ebert 2000) — direction]"
+   "PL dMapLatePct = -5.3 (sign -1, beyond 3) [research/12 NN-19: later MAP fall (central sympatholysis) (Miller; Ebert 2000) — direction]",
+   "HAND WR (automatic WR): No early pressor (−1.2 %): the row has no α2B arm (rows-anaesthetic.ts:104–106 \"not modelled in v1\"); FU-7 Task 17 Step 3 adds it (DI-60)."
   ],
   "values": {
    "dMapEarlyPct": -1.2,
@@ -1015,14 +1044,16 @@
   "sys": "CIRC",
   "owner": "7g circulation PD (α2)",
   "dirOnly": true,
-  "wallS": 86.8
+  "wallS": 86.8,
+  "known": "FU-7 T17 Step 3"
  },
  "NN-19b": {
   "id": "NN-19b",
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW dHrMinPct = -4.3 (sign -1, beyond 5) [research/12 NN-19: bradycardia (Miller; Ebert 2000: HR −10–20 %) — direction, beyond 5 %]"
+   "TW dHrMinPct = -4.3 (sign -1, beyond 5) [research/12 NN-19: bradycardia (Miller; Ebert 2000: HR −10–20 %) — direction, beyond 5 %]",
+   "HAND TW (automatic TW): HR −4.3 % against −10–20 %: the row's HR/SVR emax −0.3 at EC50 1 reaches ≈ −15 % open-loop but the baroreflex restores most of it; the central sympatholysis is FU-4's `symp` field (FU-7 \"Requests → FU-4\" item 1)."
   ],
   "values": {
    "dHrMinPct": -4.3
@@ -1035,7 +1066,8 @@
   "sys": "CIRC",
   "owner": "7g circulation PD (α2)",
   "dirOnly": true,
-  "wallS": 0
+  "wallS": 0,
+  "known": "FU-7 → FU-4 request 1"
  },
  "NN-19c": {
   "id": "NN-19c",
@@ -1043,7 +1075,8 @@
   "auto": "WR",
   "notes": [
    "WR dDiMin = 0 (expected sign -1) [research/12 NN-19: sedation — the processed-EEG index falls (Miller; Ebert 2000: BIS ≈ 70 at Cp 0.7–1.2 ng/mL) — direction, beyond 10 points]",
-   "PL apnoea = false (expected false) [research/12 NN-19: drive preserved (Miller; Belleville 1992)]"
+   "PL apnoea = false (expected false) [research/12 NN-19: drive preserved (Miller; Belleville 1992)]",
+   "HAND WR (automatic WR): No sedation at all: DI unchanged (Δ 0), consciousness kept. 7g publishes bus.cns.dexmedCe (pk/combine.ts:94) but 7f reads it nowhere (neuro/bus.ts readBus; neuro/depth.ts DepthInputs), and FU-7 Task 3's hypPropEq lists no dexmedetomidine hypC50. N3."
   ],
   "values": {
    "dexCe": 1,
@@ -1067,7 +1100,8 @@
   "verdict": "WR",
   "auto": "WR",
   "notes": [
-   "WR hypox = false (expected true) [research/12 NN-20: the combination causes hypoxaemia (SpO2 < 90 %) on air (Bailey 1990 Anesthesiology 73:826: 92 % hypoxaemic, 50 % apnoeic with midazolam 0.05 + fentanyl 2 µg/kg)]"
+   "WR hypox = false (expected true) [research/12 NN-20: the combination causes hypoxaemia (SpO2 < 90 %) on air (Bailey 1990 Anesthesiology 73:826: 92 % hypoxaemic, 50 % apnoeic with midazolam 0.05 + fentanyl 2 µg/kg)]",
+   "HAND WR (automatic WR): Midazolam 0.05 mg/kg + fentanyl 1 µg/kg in an 80 y on air: SpO2 nadir 94 %, no apnoea, no obstruction. N2."
   ],
   "values": {
    "spo2Min": 94,
@@ -1090,7 +1124,8 @@
   "auto": "WR",
   "notes": [
    "WR synergy = -15.8 (expected sign 1) [research/12 NN-20: synergistic (more than additive) drive depression (Bailey 1990) — direction]",
-   "WR obstrMax = 0 below [0.05, 1] [research/12 NN-20: upper-airway obstruction under sedation (Bailey 1990; tables §4.6 uaCollapse)]"
+   "WR obstrMax = 0 below [0.05, 1] [research/12 NN-20: upper-airway obstruction under sedation (Bailey 1990; tables §4.6 uaCollapse)]",
+   "HAND WR (automatic WR): Obstruction 0 (confirmed WR): the sedation share needs DI < 60 or an opioid drive depression > 0.3 (neuro/drive.ts:66), neither reached. The \"synergy\" item is not a valid test in a closed loop (the CO2 rise re-drives breathing, so VE falls do not add); the drive formula itself is supra-multiplicative (drive.ts:59–61). N2."
   ],
   "values": {
    "veDropCombo": 35.4,
@@ -1162,7 +1197,8 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS wakeMin = 0.1 below [1, 2] (lower = stronger/faster) [research/12 NN-24: flumazenil reverses benzodiazepine sedation in 1–2 min (Miller)]"
+   "TS wakeMin = 0.1 below [1, 2] (lower = stronger/faster) [research/12 NN-24: flumazenil reverses benzodiazepine sedation in 1–2 min (Miller)]",
+   "HAND TS (automatic TS): Flumazenil wakes the patient in 6 s (band 1–2 min): zero-slope onset (FU-7 Task 2). No resedation in 80 min after midazolam 0.1 mg/kg."
   ],
   "values": {
    "unconsciousAtFlu": true,
@@ -1178,14 +1214,16 @@
   "intv": "flumazenil 0.5 mg: time to consciousness; resedation",
   "sys": "NEU",
   "owner": "7g flumazenil row / 7f depth.ts",
-  "wallS": 135.1
+  "wallS": 135.1,
+  "known": "FU-7 T2"
  },
  "NN-07": {
   "id": "NN-07",
-  "verdict": "WR",
+  "verdict": "MI",
   "auto": "WR",
   "notes": [
-   "WR dTofrMin = 0.07 (expected sign -1) [research/12 NN-07: neostigmine given after full recovery can cause a small fade/weakness (Miller NMB; Caldwell 1995; Herbstreit 2010 genioglossus) — direction only]"
+   "WR dTofrMin = 0.07 (expected sign -1) [research/12 NN-07: neostigmine given after full recovery can cause a small fade/weakness (Miller NMB; Caldwell 1995; Herbstreit 2010 genioglossus) — direction only]",
+   "HAND MI (automatic WR): No paradoxical weakness: neostigmine only raises the non-depolariser EC50 (neuro/neostigmine.ts:16), so at full recovery TOFR rises +0.07. The excess-acetylcholine (desensitisation/depolarising) block has no term. N4 (P2)."
   ],
   "values": {
    "tofRAtDose": 0.9,
@@ -1207,7 +1245,8 @@
   "verdict": "PL",
   "auto": "PL",
   "notes": [
-   "PL obstr = 0.465 in [0.05, 1] [research/12 NN-08: residual block (TOFR < 0.9) impairs pharyngeal function and upper-airway patency (Eriksson 1997 Anesthesiology 87:1035; Eikermann 2003) — obstruction present]"
+   "PL obstr = 0.465 in [0.05, 1] [research/12 NN-08: residual block (TOFR < 0.9) impairs pharyngeal function and upper-airway patency (Eriksson 1997 Anesthesiology 87:1035; Eikermann 2003) — obstruction present]",
+   "HAND PL (automatic PL): Obstruction 0.47 at TOFR 0.61 awake: present (PL). FU-6 Task 5 Step 5 adds the arousal factor that lowers the awake share (Eikermann 2003) — re-measure there."
   ],
   "values": {
    "tofRAtExt": 0.61,
@@ -1223,33 +1262,37 @@
   "intv": "extubation with residual block: upper-airway obstruction",
   "sys": "NEU, AIR",
   "owner": "7f drive.ts (obstruction) → FU-6 airway",
-  "wallS": 157.2
+  "wallS": 157.2,
+  "known": "FU-6 T5 Step 5"
  },
  "NN-08b": {
   "id": "NN-08b",
-  "verdict": "NE",
-  "auto": "NE",
+  "verdict": "MI",
+  "auto": "TW",
   "notes": [
-   "command rejected: {\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1; {\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1"
+   "TW hvrRatio = 1.05 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-08: partial block (TOFR 0.7) blunts the hypoxic ventilatory response by ≈ 30 % (Eriksson 1993 Anesthesiology 78:693; carotid-body nicotinic receptors) — ratio 0.7 ± 15 %]",
+   "HAND MI (automatic TW): The hypoxic ventilatory response is identical with and without residual block (ΔVE 2.5 vs 2.4 L/min, ratio 1.05): the carotid-body term has no NMB input (lung/drive.ts:27–35). FU-6 Task 10 adds HVR_NMB_EMAX / HVR_NMB_TOFR_LO. Also: a hypoxic GAS (FiO2 < 0.21) is not expressible — the challenge used a shunt (N15)."
   ],
   "values": {
-   "dVeBlock": 0,
-   "dVeNoBlock": 0,
-   "hvrRatio": null,
-   "spo2Block": 96,
-   "spo2NoBlock": 96
+   "dVeBlock": 2.5,
+   "dVeNoBlock": 2.4,
+   "hvrRatio": 1.05,
+   "spo2Block": 90.8,
+   "spo2NoBlock": 91,
+   "pao2Block": 61,
+   "pao2NoBlock": 60.4,
+   "paco2Block": 42.6,
+   "paco2NoBlock": 40.9
   },
-  "rejected": [
-   "{\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1",
-   "{\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1"
-  ],
+  "rejected": [],
   "tier": "P2",
   "ctx": "X-A",
   "state": "extubated awake at TOFR ≈ 0.6",
   "intv": "hypoxic challenge (shunt; FiO2 < 0.21 is not expressible): hypoxic ventilatory response vs no block",
   "sys": "LUNG, NEU",
   "owner": "7b drive.ts (carotid body) / FU-6",
-  "wallS": 156.1
+  "wallS": 326.7,
+  "known": "FU-6 T10"
  },
  "NN-10": {
   "id": "NN-10",
@@ -1257,7 +1300,8 @@
   "auto": "WR",
   "notes": [
    "WR dOnsetS = 0 (expected sign -1) [research/12 NN-10: magnesium shortens onset (tables §5d; 7f interactions; Fuchs-Buder 1995 BJA 74:405 [vecuronium])]",
-   "TW dDurMin = 0.2 (sign 1, beyond 1) [research/12 NN-10: magnesium prolongs duration (tables §5d; Kussman 1997 BJA 79:122 [rocuronium])]"
+   "TW dDurMin = 0.2 (sign 1, beyond 1) [research/12 NN-10: magnesium prolongs duration (tables §5d; Kussman 1997 BJA 79:122 [rocuronium])]",
+   "HAND WR (automatic WR): MgSO4 4 g raises plasma Mg to 1.92 mmol/L but changes neither onset (0 s) nor duration (+0.2 min): 7f reads only the profile field (neuro/pipeline.ts:186). FU-7 Task 14 Step 1 (DI-90) owns it."
   ],
   "values": {
    "mgPlasma": 1.92,
@@ -1272,7 +1316,8 @@
   "sys": "NEU, BLD",
   "owner": "7f interactions.ts ← 7c plasma Mg",
   "dirOnly": true,
-  "wallS": 137.7
+  "wallS": 137.7,
+  "known": "FU-7 T14"
  },
  "NN-11a": {
   "id": "NN-11a",
@@ -1297,15 +1342,15 @@
  },
  "NN-11b": {
   "id": "NN-11b",
-  "verdict": "MI",
-  "auto": "MI",
+  "verdict": "PL",
+  "auto": "PL",
   "notes": [
-   "MI ratio: not a finite number (null) [research/12 NN-11: succinylcholine ED95 ×2.6 in myasthenia (Eisenkraft 1988 Anesthesiology 69:760; Miller NMB; ±15 %)]"
+   "PL ratio = 2.545 in [2.2, 3] [research/12 NN-11: succinylcholine ED95 ×2.6 in myasthenia (Eisenkraft 1988 Anesthesiology 69:760; Miller NMB; ±15 %)]"
   ],
   "values": {
-   "ed95": null,
+   "ed95": 1.8971,
    "ed95Normal": 0.7455,
-   "ratio": null
+   "ratio": 2.545
   },
   "rejected": [],
   "tier": "P2",
@@ -1314,7 +1359,7 @@
   "intv": "succinylcholine dose ladder 0.1/0.2/0.3/0.5/0.8/1.2/2/3 mg/kg: ED95 vs normal",
   "sys": "NEU",
   "owner": "7f interactions.ts",
-  "wallS": 134.8
+  "wallS": 182
  },
  "NN-12": {
   "id": "NN-12",
@@ -1414,16 +1459,17 @@
   "verdict": "PL",
   "auto": "PL",
   "notes": [
-   "PL dCbfPct = 81.3 (sign 1, beyond 10) [research/12 NN-28: CBF rises steeply below PaO2 50 (Miller neurophysiology; tables §5.1 O(): ×2 at PaO2 30) — direction, beyond 10 %]"
+   "PL dCbfPct = 41.5 (sign 1, beyond 10) [research/12 NN-28: CBF rises steeply below PaO2 50 (Miller neurophysiology; tables §5.1 O(): ×2 at PaO2 30) — direction, beyond 10 %]"
   ],
   "values": {
    "pao2Ctl": 96.9,
-   "pao2Ards07": 58.7,
-   "pao2Ards10": 52.8,
-   "paco2Hyp": 51.7,
-   "dCbfPct": 81.3,
-   "dIcp": 3.6,
-   "sjvo2": 67.3
+   "pao2Ards07": 56.4,
+   "pao2Ards10": 50.6,
+   "paco2Hyp": 39.4,
+   "paco2Ctl": 36.8,
+   "dCbfPct": 41.5,
+   "dIcp": 1.9,
+   "sjvo2": 64
   },
   "rejected": [],
   "tier": "P2",
@@ -1433,7 +1479,7 @@
   "sys": "BRN, LUNG",
   "owner": "7d flow.ts",
   "dirOnly": true,
-  "wallS": 58.2
+  "wallS": 57.5
  },
  "NN-29a": {
   "id": "NN-29a",
@@ -1491,11 +1537,12 @@
  },
  "NN-30a": {
   "id": "NN-30a",
-  "verdict": "WR",
+  "verdict": "MI",
   "auto": "WR",
   "notes": [
    "PL seizureFirst = true (expected true) [research/12 NN-30: CNS toxicity (seizure) precedes cardiovascular collapse (ASRA 2020 LAST advisory; AAGBI 2010)]",
-   "WR dCmro2Seizure = 0 (expected sign 1) [research/12 NN-31 context: a seizure raises CMRO2 (Miller neurophysiology: +200–300 % in status) — direction]"
+   "WR dCmro2Seizure = 0 (expected sign 1) [research/12 NN-31 context: a seizure raises CMRO2 (Miller neurophysiology: +200–300 % in status) — direction]",
+   "HAND MI (automatic WR): The seizure flag rises at 30 s, before the CV effect (46 s): order right. But the seizure has no physiology — CMRO2 unchanged, lactate +0.2, no apnoea/hypoxaemia: bus.cns.seizure is read by no system (pk/pipeline.ts:413,442). N12."
   ],
   "values": {
    "seizureS": 30,
@@ -1520,7 +1567,8 @@
   "verdict": "WR",
   "auto": "WR",
   "notes": [
-   "WR collapse = false (expected true) [research/12 NN-30: CV collapse / VF after a large IV bupivacaine dose (ASRA 2020; AAGBI 2010; tables LAST_THRESHOLDS cv 4 µg/mL)]"
+   "WR collapse = false (expected true) [research/12 NN-30: CV collapse / VF after a large IV bupivacaine dose (ASRA 2020; AAGBI 2010; tables LAST_THRESHOLDS cv 4 µg/mL)]",
+   "HAND WR (automatic WR): Bupivacaine 2 mg/kg peaks at 8.0 µg/mL but the CV effect reaches 0.75: MAP −18 %, a 40/min sinus bradycardia, no VF — VF needs cvE ≥ 0.9 (pk/hooks.ts:93); there is no Na-channel conduction slowing (QRS widening) and the Ees −70 % arm is at EC50 4 on a Hill of 2. N12."
   ],
   "values": {
    "mapMin": 77.784,
@@ -1631,5 +1679,29 @@
   "owner": "7d brain in MANUAL",
   "dirOnly": true,
   "wallS": 18.9
+ },
+ "NN-14": {
+  "id": "NN-14",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL fall = 0.42 in [0.1, 1] [research/12 NN-14: after an under-dose TOFR falls again within 10–30 min (Naguib; Eleveld 2005 A&A 101:758: TOFR 0.7 → 0.3)]",
+   "HAND PL (automatic PL): TOFR 1.0 → 0.58 after the under-dose (PL), but NO recurarisation mark: the one-shot flag was already spent at the ROCURONIUM ONSET, 19 s after the first dose (neuro/pipeline.ts:224–226: `recovered` is true at baseline TOF 4/1.0, so the onset fade fires the mark). Seen in every first NMB dose of this run (NN-03a 328 s, NN-22a 617 s). N13 (DEV/event)."
+  ],
+  "values": {
+   "tofrPeak": 1,
+   "peakMin": 8.4,
+   "tofrLowAfter": 0.58,
+   "fall": 0.42,
+   "recurMark": null
+  },
+  "rejected": [],
+  "tier": "P3",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.9 mg/kg, deep block at 42 min",
+  "intv": "sugammadex 0.5 mg/kg (under-dose): recurarisation",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 83.1
  }
 }

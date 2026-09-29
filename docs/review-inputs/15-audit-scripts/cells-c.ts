@@ -119,7 +119,7 @@ const c18 = { patient: XEH, dt: 5, tEnd: 3000, steps: [[1, A.device('ett'), 'ETT
 add({
   id: 'NN-27a', tier: 'P1', ctx: 'X-E 75 y + HTN (cbfLL 75), TIVA, VCV 13 × 500', state: 'GA at MAP ≈ 65 (haemorrhage as the pure pressure change)', intv: 'CBF from pressure alone', sys: 'BRN, CIRC',
   arms: { i: c18 },
-  measure: (R) => { const i = R.i!.rows; const b = avg(i, 'cbf', T27L - 60, T27L); return m({ mapBase: r1f(avg(i, 'map', T27L - 60, T27L)), paco2Base: r1f(avg(i, 'paco2', T27L - 60, T27L)), mapLow: r1f(avg(i, 'map', T27H - 60, T27H)), cppLow: r1f(avg(i, 'cppBr', T27H - 60, T27H)), cbfLowRel: r1f(100 * avg(i, 'cbf', T27H - 60, T27H) / b) / 100 }); },
+  measure: (R) => { const i = R.i!.rows; const b = avg(i, 'cbf', T27L - 60, T27L); return m({ mapBase: r1f(avg(i, 'map', T27L - 60, T27L)), paco2Base: r1f(avg(i, 'paco2', T27L - 60, T27L)), mapLow: r1f(avg(i, 'map', T27H - 60, T27H)), cppLow: r1f(avg(i, 'cppBr', T27H - 60, T27H)), paco2Low: r1f(avg(i, 'paco2', T27H - 60, T27H)), icpLow: r1f(avg(i, 'icp', T27H - 60, T27H)), cvpLow: r1f(avg(i, 'cvp', T27H - 60, T27H)), cbfLowRel: r1f(100 * avg(i, 'cbf', T27H - 60, T27H) / b) / 100 }); },
   expect: [{ m: 'cbfLowRel', lo: 0.6, hi: 0.8, invert: true, src: 'research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone' }],
   owner: '7d brain',
 });

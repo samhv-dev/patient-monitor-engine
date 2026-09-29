@@ -14,6 +14,7 @@ import './cells-a.ts';
 import './cells-b.ts';
 import './cells-c.ts';
 import './cells-m.ts';
+import './hand.ts';
 import { grade, type Graded } from './grade.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
