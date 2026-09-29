@@ -59,10 +59,10 @@ export function createLung(lp: LungParams, frcGaMl: number, fa0: number, cv0: nu
  * flow: an inspiration starts when flow turns positive (flow mode: x > 0; pressure mode: > 50 mL/s, Stage 3's frame
  * threshold) and ends when it stops being positive outside a hold.
  */
-export function lungMechStep(ls: LungState, mode: 'flow' | 'pressure' | 'closed', x: number, dt: number): void {
+export function lungMechStep(ls: LungState, mode: 'flow' | 'pressure' | 'closed', x: number, dt: number, pLimit = Infinity): void { // FU-6 R7: pLimit
   const n = Math.max(1, Math.round(dt / MECH_H));
   for (let i = 0; i < n; i++) {
-    mechSubstep(ls.mp, ls.mech, mode, x, dt / n);
+    mechSubstep(ls.mp, ls.mech, mode, x, dt / n, pLimit); // FU-6 R7
     ls.t += dt / n;
     const insp = mode === 'flow' ? x > 0 : mode === 'closed' ? ls.inInsp : airwayFlow(ls.mech) > 50;
     if (insp && !ls.inInsp) {

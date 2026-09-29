@@ -15,6 +15,11 @@ export const SPONT_TI_FRACTION = 0.38; // spontaneous I:E ≈ 1:1.6 [ENG]
 export const SPONT_JITTER = 0.05; // breath-to-breath SD of period and VT, spontaneous [ENG]
 export const GASTRIC_BREATHS = 5; // oesophageal: breaths with gastric CO2 before the trace is flat [ENG, < 6]
 export const EXP_TAU_S = 0.5; // passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O)
+/**
+ * FU-6 R7: the volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory
+ * default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG]; above it the breath is pressure-limited.
+ */
+export const VCV_PMAX_DEFAULT = 40;
 /** JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). */
 export const NEVER = 1e12;
 
@@ -78,7 +83,7 @@ export interface DriverState {
   source: VentSource | 'external';
   airway: AirwayState;
   severity: number;
-  vent: { rr: number; vt: number; peep: number; ie: number };
+  vent: { rr: number; vt: number; peep: number; ie: number; pmax?: number }; // FU-6 R7: pmax absent = VCV_PMAX_DEFAULT
   fico2: number;
   cleft: number;
   preox: { fio2: number; until: number } | null;

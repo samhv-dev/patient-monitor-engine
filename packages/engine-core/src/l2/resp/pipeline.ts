@@ -41,7 +41,7 @@ import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
-  onVentFrame, planCycles, preoxActive, pruneCycles, replan, type DriverCtx, type DriverState,
+  onVentFrame, planCycles, preoxActive, pruneCycles, replan, VCV_PMAX_DEFAULT, alveolarFraction, type DriverCtx, type DriverState,
 } from './driver.ts';
 
 export const RESP_CHANNELS = ['co2', 'resp'] as const satisfies readonly ChannelId[];
@@ -282,7 +282,7 @@ export function inductionFactor(pat: GasPatient): number {
  * inspiration are flow sources (the driver's volume curve); expiration returns to PEEP (ventilator) or 0; a
  * recruitment manoeuvre holds its pressure; external frames: Task 19.
  */
-export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'; x: number } {
+export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'; x: number; pLimit?: number } { // FU-6 R7: pLimit
   const d = rs.driver;
   const peep = d.source === 'ventilator' ? d.vent.peep : d.source === 'external' && d.ext ? d.ext.peep : 0;
   if (rs.recruit && t < rs.recruit.until) return { mode: 'pressure', x: rs.recruit.p };
@@ -295,7 +295,11 @@ export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'
   if (!c || !c.exch || t >= c.cutAt || !(c.vt > 0)) return { mode: 'pressure', x: peep };
   const u = t - c.t0;
   if (u >= c.ti) return { mode: 'pressure', x: c.mech ? peep : 0 };
-  if (c.mech) return { mode: 'flow', x: c.vt / Math.max(1e-3, c.ti) };
+  if (c.mech) {
+    // FU-6 R7: volume control is a flow source limited at Pmax — the mechanics hold the airway AT Pmax in any sub-step
+    // where the set flow would push it above (lung/mechanics.ts mechSubstep pLimit)
+    return { mode: 'flow', x: c.vt / Math.max(1e-3, c.ti), pLimit: d.source === 'ventilator' ? (d.vent.pmax ?? VCV_PMAX_DEFAULT) : Infinity };
+  }
   return { mode: 'flow', x: ((c.vt * Math.PI) / (2 * c.ti)) * Math.sin((Math.PI * u) / c.ti) };
 }
 
@@ -623,7 +627,18 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const m = rs.m;
     const t = m / RESP_RATE;
     const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
-    lungMechStep(rs.lung, ld.mode, ld.x, DT);
+    const wasInsp = rs.lung.inInsp;
+    lungMechStep(rs.lung, ld.mode, ld.x, DT, ld.pLimit); // FU-6 R7: the VCV pressure limit
+    if (wasInsp && !rs.lung.inInsp && rs.driver.source === 'ventilator') {
+      // FU-6 R7: a pressure-limited breath delivers less than the set VT — the cycle carries what the lung received
+      const c = cycleAt(rs.driver, t);
+      const delivered = rs.lung.tidal.reduce((a, b) => a + b, 0);
+      if (c && c.mech && c.exch && delivered < c.vt - 5) {
+        c.vt = delivered;
+        const f = alveolarFraction(delivered, physicalDeadSpace(rs.pat, true)); // FU-6 R5: the capnogram follows the delivered breath (a ventilator breath: artificial airway)
+        if (f < 1) c.alvFrac = f;
+      }
+    }
     ptxStep(rs, DT); // FU-4 F3: the one-way valve fills the pleural space breath by breath
     while (rs.gasK * GAS_DT_S <= t + 1e-9) {
       gasStep(rs, ctx, rs.gasK * GAS_DT_S);
@@ -687,7 +702,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
       const v = ev as Extract<RespClinicalEvent, { kind: 'ventilation' }>;
       if (!(SOURCES as readonly string[]).includes(v.source)) return `source must be one of ${SOURCES.join(', ')}`;
       return num('rr', v.rr, 1, 80) ?? num('vtMl', v.vtMl, 10, 1500) ?? num('fio2', v.fio2, 0.21, 1) ?? num('peep', v.peep, 0, 30)
-        ?? num('ie', v.ie, 0.5, 4) ?? num('fico2', v.fico2, 0, 30) ?? num('effort', v.effort, 0, 1);
+        ?? num('ie', v.ie, 0.5, 4) ?? num('fico2', v.fico2, 0, 30) ?? num('effort', v.effort, 0, 1) ?? num('pmax', v.pmax, 10, 80); // FU-6 R7
     }
     case 'preoxygenate': {
       const p = ev as Extract<RespClinicalEvent, { kind: 'preoxygenate' }>;
@@ -776,7 +791,11 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       d.source = v.source;
       d.ext = null;
       if (v.source === 'bvm') d.vent = { rr: v.rr ?? 10, vt: v.vtMl ?? 500, peep: 0, ie: v.ie ?? 2 };
-      if (v.source === 'ventilator') d.vent = { rr: v.rr ?? d.vent.rr, vt: v.vtMl ?? d.vent.vt, peep: v.peep ?? d.vent.peep, ie: v.ie ?? d.vent.ie };
+      if (v.source === 'ventilator') {
+        d.vent = { rr: v.rr ?? d.vent.rr, vt: v.vtMl ?? d.vent.vt, peep: v.peep ?? d.vent.peep, ie: v.ie ?? d.vent.ie };
+        const pmax = v.pmax ?? d.vent.pmax; // FU-6 R7 (absent = VCV_PMAX_DEFAULT; kept absent in snapshots that never set it)
+        if (pmax !== undefined) d.vent.pmax = pmax;
+      }
       if (v.source === 'spontaneous') {
         if (v.rr !== undefined) setL1Target(l1, 'rr', t, v.rr);
         if (v.vtMl !== undefined) setL1Target(l1, 'vt', t, v.vtMl);

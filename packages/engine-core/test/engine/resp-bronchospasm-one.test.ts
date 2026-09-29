@@ -5,9 +5,11 @@ import { describe, expect, it } from 'vitest';
 import { capnoAngles, mean, read62 } from '../helpers/resp.ts';
 import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
 
+// FU-6 F2: the three arms are compared UNLIMITED (pmax 80) — at the default Pmax 40 all three read 40.0 and the
+// equality would hold for any severity above the limit. The limit's own row is Task 9's `resp-bronchodilation` row.
 async function spasm(cmds: Array<Record<string, unknown>>) {
   const e = rig6();
-  await ventRig(e);
+  await ventRig(e, { pmax: 80 });
   await runTo(e, 300);
   for (const c of cmds) send(e, c);
   await runTo(e, 540);
