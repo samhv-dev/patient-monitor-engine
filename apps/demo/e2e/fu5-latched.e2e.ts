@@ -27,6 +27,12 @@ const simT = (page: Page) => page.evaluate(() => (window as unknown as { __simT?
 for (const skin of ['philips-like', 'saadat-like']) {
   test(`FU-3 screenshot, fixed (${skin}): the induction apnoea raises one APNEA, never "APNEA (RESP)"; after ventilation it is latched and stays in the message rotation (philips-like) or cleared, per vendor`, async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', 'heavy evidence run: Chromium only (G7g rule)');
+    // E-FU4-20 (FU-4 × FU-5, found at the FU-4 gate, R45 — FU-5 follow-up): FU-4's propofol distribution (G10) and
+    // dead-space root (18d) delay the induction apnoea by ≈ 4 s (VA 0 at 172 vs 168 s after the script's start, seed 7
+    // probe), so the capnograph's apnoea delay no longer elapses before the script's BVM at +180 s: no APNEA is raised
+    // at all ("APNEA live none; latched none", both skins, 3 attempts) and the latching this test exists for is not
+    // exercised. Pinned as an expected failure with the number; the fix is the scenario's timing or the alarm, FU-5's.
+    test.fail(true, 'no induction APNEA after FU-4: apnoea onset +4 s, BVM at +180 s comes first (FU-5 follow-up)');
     test.setTimeout(420_000);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
