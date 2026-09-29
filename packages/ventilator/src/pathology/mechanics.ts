@@ -4,7 +4,6 @@
 import { advanceVent, createVent } from '../vent.ts';
 import type { VentConfig, VentState } from '../types.ts';
 import { lungMechanics } from '../lung-input.ts';
-import type { RecruitParams } from '../link/recruit.ts';
 import { REF_SETTINGS, type LungPathology } from './catalogue.ts';
 
 /** The row's lung as the ventilator's single compartment — the same mapping lungState uses (lung-input.ts). */
@@ -13,13 +12,6 @@ export function mechanicsToVent(row: LungPathology): Partial<VentConfig> {
     airwayClosure: false, uip: false, stressIdx: false,
     ...lungMechanics({ compliance: row.complianceMl.value, rInsp: row.rInsp.value, rExp: row.rExp.value, pleural: row.pleuralCmH2O ?? 0 }),
   };
-}
-
-/** PEEP recruitment for the link (link/recruit.ts): shunt spans the row's band; none when not recruitable. */
-export function recruitOf(row: LungPathology): RecruitParams | null {
-  if (row.recruitability === 'none' || row.recruitP50 === undefined) return null;
-  const k = { high: 2, moderate: 2.5, low: 4 }[row.recruitability];
-  return { shuntMax: row.shunt.hi, shuntMin: row.shunt.lo, p50: row.recruitP50, k };
 }
 
 export interface Signature { plateau: number; drivingPressure: number; autoPeep: number; peakMinusPlateau: number }
