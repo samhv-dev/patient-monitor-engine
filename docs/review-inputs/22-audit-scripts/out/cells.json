@@ -1,0 +1,350 @@
+{
+ "BF-01a": {
+  "id": "BF-01a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "PL dCl = 5.445 in [3, 8] [Reid 2003 Clin Sci 104:17 (2 L saline in volunteers: Cl +5–7); Kellum/Stewart; research/12 BF-01 (Cl +5)]",
+   "TW dBE = -0.827 above [-4, -1] [Reid 2003; Scheingraber 1999 Anesthesiology 90:1265 (hyperchloraemic acidosis, dose-dependent); research/12 BF-01 (BE −2)]",
+   "HAND TW (automatic TW): Cl +5.4 is right, but the saline stays in the plasma (F1: no excretion of an expanded volume), so albumin falls 10.6 g/L; the lost albumin weak acid raises BE ≈ +3 (Figge) and offsets the hyperchloraemic fall to −0.8"
+  ],
+  "values": {
+   "dCl": 5.445,
+   "dBE": -0.827,
+   "dHco3": -1.042,
+   "dPh": 0.01,
+   "dNa": 0.715,
+   "dBE90": -1.571,
+   "dAg": -3.688,
+   "dAlb": -10.574
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "normovolaemic, GA",
+  "intv": "0.9 % saline 2 L over 60 min (read at the end of the infusion)",
+  "sys": "BLD",
+  "owner": "7c solutes.ts / 7d renal (F1)",
+  "wallS": 99.6
+ },
+ "BF-01b": {
+  "id": "BF-01b",
+  "verdict": "TS",
+  "auto": "WR",
+  "notes": [
+   "PL dCl = -0.75 (quiet, tol ±2) [Plasma-Lyte Cl 98: no hyperchloraemia (Reid 2003; Kellum)]",
+   "WR dBE = 1.377 (quiet, tol ±1) [balanced crystalloid: BE ≈ 0 (research/12 BF-01; Scheingraber 1999 RL arm)]",
+   "PL dBEvsSaline = 2.2 (sign 1, beyond 1) [balanced vs saline: BE higher by ≈ 2 (research/12 BF-01)]",
+   "HAND TS (automatic WR): BE +1.4 instead of ≈ 0: the direction a balanced fluid can take, but it comes from the same albumin dilution (−10.4 g/L, F1) that weakens BF-01a, not from the fluid's SID; the saline–balanced difference (+2.2) is right"
+  ],
+  "values": {
+   "dCl": -0.75,
+   "dBE": 1.377,
+   "dHco3": 0.814,
+   "dPh": 0.045,
+   "dNa": 0,
+   "dBE90": 0.94,
+   "dAg": -0.064,
+   "dAlb": -10.369,
+   "dBEvsSaline": 2.2
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "normovolaemic, GA",
+  "intv": "Plasma-Lyte 148 2 L over 60 min vs saline",
+  "sys": "BLD",
+  "owner": "7c solutes.ts / 7d renal (F1)",
+  "wallS": 0
+ },
+ "BF-02a": {
+  "id": "BF-02a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "TS retAwake30 = 0.53 above [0.2, 0.3] [Hahn 2010 Anesthesiology 113:470 (volume kinetics: 20–30 % of a crystalloid bolus intravascular 30 min after it ends, awake); research/12 BF-02]",
+   "WR gaMinusAwake = 0 (expected sign 1) [Hahn 2010; Norberg 2007 Anesthesiology 107:24 (anaesthesia cuts crystalloid elimination 50–80 %: more is retained)]",
+   "HAND WR (automatic WR): awake and GA retain the same 53 % at 30 min and 50 % at 90 min: with 7d present its urine replaces 7c's volume-receptor elimination (and 7c's GA ×0.2), but 7d's volume factor saturates at 1 for any expansion (renal/model.ts:49–54), so a litre of Ringer's raises urine by only 11–17 mL/h"
+  ],
+  "values": {
+   "retEndAwake": 0.74,
+   "retAwake30": 0.53,
+   "retEndGA": 0.74,
+   "retGA30": 0.53,
+   "gaMinusAwake": 0,
+   "dUopAwake": 17,
+   "dUopGA": 11,
+   "retAwake90": 0.5
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake spontaneous vs X-A GA vent",
+  "state": "normovolaemic",
+  "intv": "Ringer's lactate 1 L over 30 min: intravascular retention 30 min after the end",
+  "sys": "BLD KID",
+  "owner": "7d renal/model.ts volumeFactor (F1)",
+  "wallS": 177.7
+ },
+ "BF-02b": {
+  "id": "BF-02b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR hypoMinusGA = 0 (expected sign 1) [Drobin & Hahn 1999 Anesthesiology 90:81 (haemorrhage slows crystalloid elimination: retention rises); research/12 BF-02]",
+   "PL dMapHypo = 10 (sign 1, beyond 3) [a fluid bolus in class III raises MAP (ATLS 10e)]",
+   "HAND WR (automatic WR): retention after class III equals normovolaemic GA (0.53 both): the kidney excretes almost nothing above basal in either state (F1), so the context-sensitivity of volume kinetics cannot appear"
+  ],
+  "values": {
+   "retHypo30": 0.53,
+   "retGA30": 0.53,
+   "hypoMinusGA": 0,
+   "dMapHypo": 10,
+   "dCoHypo": 0.68,
+   "dHbHypo": -2.407
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class III (1500 mL / 10 min) vs normovolaemic GA",
+  "intv": "Ringer's lactate 1 L over 30 min: retention 30 min after the end",
+  "sys": "BLD CIRC",
+  "owner": "7d renal/model.ts volumeFactor (F1)",
+  "wallS": 100.8
+ },
+ "BF-03a": {
+  "id": "BF-03a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL effEnd = 0.99 in [0.8, 1] [research/12 BF-03 (80–100 %); Chappell 2008 Anesthesiology 109:723 (iso-oncotic colloid replacing blood loss stays ≈ 90 % intravascular; ≈ 40 % in normovolaemia)]",
+   "PL eff60 = 0.93 in [0.7, 1] [colloid persists at 60 min (gelatin t½ 2–3 h; albumin longer) (Chappell 2008; tables `t12Colloid`)]"
+  ],
+  "values": {
+   "effEnd": 0.99,
+   "eff60": 0.93,
+   "effRLEnd": 0.82,
+   "effRL60": 0.49,
+   "dCop": 1.804,
+   "dMap": 4
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class II (1000 mL / 10 min)",
+  "intv": "albumin 5 % 500 mL over 15 min: volume effect (Δ blood volume ÷ 500 mL)",
+  "sys": "BLD CIRC",
+  "owner": "7c fluids.ts",
+  "wallS": 153.3
+ },
+ "BF-03b": {
+  "id": "BF-03b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL effEnd = 0.94 in [0.8, 1] [research/12 BF-03 (80–100 %); Chappell 2008 Anesthesiology 109:723 (iso-oncotic colloid replacing blood loss stays ≈ 90 % intravascular; ≈ 40 % in normovolaemia)]",
+   "PL eff60 = 0.86 in [0.7, 1] [colloid persists at 60 min (gelatin t½ 2–3 h; albumin longer) (Chappell 2008; tables `t12Colloid`)]"
+  ],
+  "values": {
+   "effEnd": 0.94,
+   "eff60": 0.86,
+   "effRLEnd": 0.82,
+   "effRL60": 0.49,
+   "dCop": 0.039,
+   "dMap": 4
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class II (1000 mL / 10 min)",
+  "intv": "gelatin 4 % 500 mL over 15 min: volume effect (Δ blood volume ÷ 500 mL)",
+  "sys": "BLD CIRC",
+  "owner": "7c fluids.ts",
+  "wallS": 0
+ },
+ "BF-04": {
+  "id": "BF-04",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW dHb1h = 0.546 below [0.7, 1.3] [one RBC unit raises Hb ≈ 1 g/dL in a 70 kg adult (AABB Technical Manual; Wiesen 1994 Transfusion 34:32)]",
+   "HAND TW (automatic TW): Hb +0.55 at 1 h and 4 h: 191 of the unit's 280 mL stay in the circulation for hours (F1), so the red cells are diluted in an expanded blood volume instead of the unit's plasma being excreted"
+  ],
+  "values": {
+   "dHb1h": 0.546,
+   "dHb4h": 0.547,
+   "dBv1h": 191,
+   "dK": 0.05,
+   "dICa": -0.01
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "normovolaemic, Hb 15",
+  "intv": "1 u RBC (280 mL, Hct 0.6) over 30 min, 14 d, warmed; Hb at +1 h and +4 h",
+  "sys": "BLD",
+  "owner": "7d renal/model.ts volumeFactor (F1)",
+  "wallS": 193.2
+ },
+ "BF-05a": {
+  "id": "BF-05a",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS iCaNadir = 0.422 below [0.6, 0.95] (lower = stronger/faster) [Giancarelli 2016 J Surg Res 202:182 (hypocalcaemia in 97 % of massive transfusion; severe < 0.9 in about half); Ho & Leonard 2011 Anaesth Intensive Care 39:46 (iCa 0.6–0.8 above 1 u / 5 min without Ca)]"
+  ],
+  "values": {
+   "iCaPre": 1.21,
+   "iCaNadir": 0.422,
+   "tNadirS": 2400,
+   "citratePeak": 7.934,
+   "iCa30AfterEnd": 1.058
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV (2.1 L) + ongoing loss 4 L / 40 min",
+  "intv": "10 u RBC 35 d + 10 u FFP over 40 min (1 u / 2 min), no calcium: ionised Ca",
+  "sys": "BLD CIRC",
+  "owner": "7c solutes.ts (citrate)",
+  "wallS": 77
+ },
+ "BF-05b": {
+  "id": "BF-05b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dkPeak = 1.18 in [0.3, 2] [Aboudara 2008 J Trauma 64:S86 (K rises with rapid old units; hyperkalaemia in ≈ 30 % of massive transfusion); Raza 2015 Transfus Med 25:45 (supernatant K ≈ 1 mmol/L per storage day)]"
+  ],
+  "values": {
+   "kPre": 4.19,
+   "kPeak": 5.372,
+   "dkPeak": 1.18,
+   "k60AfterEnd": 4.063
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV + ongoing loss",
+  "intv": "10 u RBC 35 d stored, 1 u / 4 min: plasma K",
+  "sys": "BLD RHY",
+  "owner": "7c params.ts storedK",
+  "wallS": 0
+ },
+ "BF-05c": {
+  "id": "BF-05c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dTcold = -2.95 in [-3, -1.5] [Sessler 2008 Lancet 371:1791 (one unit of refrigerated blood lowers mean body temperature ≈ 0.25 °C: 10 u → ≈ −2.5 °C); ATLS 10e]"
+  ],
+  "values": {
+   "tPre": 36.325,
+   "tEndCold": 32.838,
+   "tEndWarm": 35.79,
+   "dTcold": -2.95
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV + ongoing loss",
+  "intv": "10 u RBC unwarmed (4 °C) vs warmed: core temperature",
+  "sys": "END BLD",
+  "owner": "7e thermal/environment.ts ivInflow",
+  "wallS": 0
+ },
+ "BF-05d": {
+  "id": "BF-05d",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW beNadir = -0.064 above [-20, -10] [ATLS 10e table 3-1: class IV base deficit ≤ −10 mmol/L]",
+   "PL lactPeak = 7.119 in [4, 12] [class IV shock: lactate > 4 mmol/L (ATLS 10e; tables §7 17a gives 3–5 for class III)]",
+   "HAND TW (automatic TW): lactate reaches 7.1 but BE never falls below 0: citrate is not an anion in the strong-ion difference (solutes.ts:44 sidOf), so each FFP unit (Na 165, Cl 75) adds a ≈ 90 mEq/L strong-ion excess at once instead of after hepatic citrate metabolism; stored RBC carry no lactate or acid. The same bleed WITHOUT products reaches lactate 5.9 at BE −3.6 with PaCO2 38 → 53 at fixed ventilation: the class IV acidosis is mostly respiratory"
+  ],
+  "values": {
+   "bePre": -0.06,
+   "beNadir": -0.064,
+   "lactPeak": 7.119,
+   "phNadir": 7.266,
+   "mapNadir": 49.184,
+   "coNadir": 1.777,
+   "arrest": false
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV (2.1 L in 10 min) + ongoing loss",
+  "intv": "the shock itself and its transfusion: base excess, lactate, pH",
+  "sys": "BLD CIRC",
+  "owner": "7c solutes.ts sidOf (citrate) / params.ts PRODUCTS",
+  "wallS": 0
+ },
+ "BF-05e": {
+  "id": "BF-05e",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation model: INR here is 7d liver-function only; fibrinogen, platelets and TEG/ROTEM absent (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "inrEnd": 1,
+   "albEnd": 31
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV + ongoing loss",
+  "intv": "≈ 1 blood volume replaced: dilutional coagulopathy (INR, fibrinogen, platelets)",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-06a": {
+  "id": "BF-06a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dICaPeak = 0.24 in [0.2, 0.3] [research/12 BF-06 (iCa +0.2–0.3 after 1 g CaCl2 = 6.8 mmol); Miller 10e ch. 47]"
+  ],
+  "values": {
+   "iCaBase": 0.894,
+   "dICaPeak": 0.24,
+   "dICa10": 0.12,
+   "dICa30": 0.03
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent, profile iCa 0.9",
+  "state": "hypocalcaemia iCa 0.9",
+  "intv": "calcium chloride 1 g IV: ionised Ca",
+  "sys": "BLD",
+  "owner": "7c pipeline.ts observeDoses",
+  "wallS": 51.2
+ },
+ "BF-06b": {
+  "id": "BF-06b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMapHypo = 7.17 (sign 1, beyond 2) [calcium restores contractility and tone in hypocalcaemia (Miller 10e ch. 47; research/12 BF-06 \"MAP ↑ in hypocalcaemia\")]",
+   "PL extra = 7.2 (sign 1, beyond 1) [the pressor effect of calcium is larger when iCa is low (state-dependence, R53)]"
+  ],
+  "values": {
+   "mapBaseHypo": 95,
+   "mapBaseNorm": 96,
+   "dMapHypo": 7.17,
+   "dMapNorm": 0,
+   "extra": 7.2,
+   "dCoHypo": 0.84
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent, profile iCa 0.9 vs normocalcaemic",
+  "state": "hypocalcaemia iCa 0.9",
+  "intv": "calcium chloride 1 g IV: MAP (state-dependence)",
+  "sys": "CIRC",
+  "owner": "7c circ-adapter.ts chemistryContractility",
+  "dirOnly": true,
+  "wallS": 0
+ }
+}

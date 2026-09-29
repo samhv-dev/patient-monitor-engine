@@ -3,7 +3,7 @@
 // arms (`i` = intervention, `c` = its control at the same sim time, plus reference arms), a `measure` over the arms'
 // rows, and `expect` items the grader turns into a verdict. Bands are PROPOSALS for Ali with their source
 // (research/12 §2.2) and are never widened to fit (R45).
-import { A, VENTED_GA, diffExtreme, maxOf, mean, minOf, r1, r2, r3, type Arm, type ArmResult, type Row, type Step } from './runner.ts';
+import { A, VENTED_GA, at, diffExtreme, maxOf, mean, minOf, r1, r2, r3, type Arm, type ArmResult, type Lab, type Row, type Step } from './runner.ts';
 
 export type Verdict = 'PL' | 'TW' | 'TS' | 'WR' | 'MI' | 'IN' | 'NE' | 'NM';
 export interface Expect {
@@ -39,6 +39,15 @@ export const HF = { ageY: 60, weightKg: 80, conditions: [{ id: 'hfref' }] };
 export const MRs = { ageY: 60, conditions: [{ id: 'mr', grade: 'severe' }] };
 export const COPD3 = { lungConditions: [{ id: 'copd', severity: 0.75 }] };
 export const blood = (b: Record<string, number>, extra: Record<string, unknown> = {}): Record<string, unknown> => ({ blood: b, ...extra });
+export const AKI = { conditions: [{ id: 'aki' }] };
+
+// ---- states ---------------------------------------------------------------------------------------------------------
+export const TB = 960; // after a 10-min bleed started at 60 s
+export const TS = 1260; // after the 7e sepsis ramp
+export const CL2: Step[] = [[60, A.bleed(1000, 600), 'bleed 1000 mL / 10 min (class II)']];
+export const CL3: Step[] = [[60, A.bleed(1500, 600), 'bleed 1500 mL / 10 min (class III)']];
+export const CL4: Step[] = [[60, A.bleed(2100, 600), 'bleed 2100 mL / 10 min (class IV, 43 % BV)']];
+export const SEPW: Step[] = [[60, A.cond('sepsis', 1, { phase: 'warm' }), 'septic shock warm']];
 
 // ---- rigs -----------------------------------------------------------------------------------------------------------
 /** Intubated, VCV 12 × 600, PEEP 5, FiO2 0.5, general anaesthesia flag (Stage 3 `thermal`). */
@@ -67,3 +76,13 @@ export const tOfMin = (rows: Row[], k: string, t0: number, t1: number): number =
 export const m = (x: Record<string, number | boolean | string>): Record<string, number | boolean | string> => x;
 export const rh = (R: { rhythms: [number, string][] }): string => R.rhythms.map(([t, id]) => `${t}s ${id}`).join(',') || 'unchanged';
 export const ratio = (a: number, b: number): number => r2(a / b);
+/** Value at the sample nearest t, rounded to 3 decimals. */
+export const v = (rows: Row[], k: string, t: number): number => r3(at(rows, k, t));
+/** i − c at the sample nearest t. */
+export const dAt = (i: Row[], c: Row[], k: string, t: number): number => r3(at(i, k, t) - at(c, k, t));
+/** The first lab result of a panel (optionally drawn at/after t0). */
+export const lab = (R: { labs: Lab[] }, panel: 'abg' | 'vbg', t0 = 0): Lab | undefined => R.labs.find((x) => x.panel === panel && x.drawnAt >= t0 - 1e-6);
+export const inf = (t: number, id: string, rate: number, unit: string): Step => [t, A.infusion(id, rate, unit), `${id} ${rate} ${unit}`];
+export const ven = (t: number, o: { rr?: number; vtMl?: number; peep?: number; fio2?: number }): Step => [t, A.vent(o), `VCV ${JSON.stringify(o)}`];
+/** A probe that should be REJECTED (NE cells): dispatches the raw event body so the rejection reason is recorded. */
+export const raw = (t: number, event: Record<string, unknown>, label: string): Step => [t, { type: 'applyEvent', event }, label];
