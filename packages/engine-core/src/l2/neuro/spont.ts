@@ -29,6 +29,13 @@ export const GASP_END_S = 120; // gasps fade to apnoea by 2 min [ENG, ruling]
 export const GASP_RR = 6; // gasp rate ceiling (/min) [ENG, ruling "RR ≤ 6"]
 export const GASP_VT_FRAC = 0.3; // gasp VT ceiling × the resting VT ("small VT") [ENG]
 export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once perfused [ENG, ruling "1–3 min"]
+/**
+ * FU-6 R3(a): the CO2 stimulus is partly CENTRAL (brain ECF PCO2, τ ≈ 60–150 s) and partly peripheral (carotid, fast):
+ * Dahan et al. 1990 J Physiol 423:615 (dynamic end-tidal forcing: central τ ≈ 100 s, peripheral share ≈ 0.3) [TXT;
+ * τ 90 s ENG]. The drive reads 0.3·PaCO2 + 0.7·Pc. At steady state Pc = PaCO2 (no change to any resting value).
+ */
+export const CENTRAL_TAU_S = 90;
+export const PERIPH_SHARE = 0.3;
 
 export interface SpontDrive {
   rr: number; // < 0: not yet evaluated (driverCtx falls back to the rr/vt targets)
@@ -40,6 +47,7 @@ export interface SpontDrive {
   nextT: number;
   anoxS?: number; // FU-3 item 16 (E-FU3-10): seconds without brainstem perfusion (absent while perfused)
   gate?: number; // FU-3 item 16 (E-FU3-10): 0 → 1 while the drive reopens after an anoxic spell (absent = open)
+  pc?: number; // FU-6 R3(a): central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -70,6 +78,7 @@ export interface SpontInputs {
   resistance: number; // cmH2O·s/L
   neuro?: NeuroResp;
   noFlow?: boolean; // FU-3 item 16 (E-FU3-10): no circulation (pulseless rhythm or cardiac output 0)
+  wakeMmHg?: number; // FU-6 F7: the patient's drawn wakefulness shift (resp pipeline; absent = WAKE_MMHG)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
 }
 
@@ -79,9 +88,12 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   if (Number.isNaN(s.paco2Rest)) s.paco2Rest = x.paco2;
   s.paco2Set = paco2SetPoint(s.paco2Rest, x.hco3);
   const n = x.neuro;
+  s.pc = (s.pc ?? x.paco2) + (x.paco2 - (s.pc ?? x.paco2)) * (1 - Math.exp(-SPONT_DT_S / CENTRAL_TAU_S)); // FU-6 R3(a)
   const out = drive({
-    paco2: x.paco2, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
+    paco2: PERIPH_SHARE * x.paco2 + (1 - PERIPH_SHARE) * s.pc, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
     opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0,
+    wakeMmHg: x.wakeMmHg, // FU-6 F7: this patient's drawn wakefulness shift
+    wake: n?.loc ?? 0, apnoeic: s.rr === 0, // FU-6 R3(a)
   }, s.fatigue);
   const strength = n?.pMaxMult ?? 1;
   let { rr, vt } = out;

@@ -20,6 +20,13 @@ export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [ENG]
 export const DIAPH_APNOEA = 0.05; // no effective breath below 5 % strength [ENG]
+/**
+ * FU-6 R3/R4 (E-FU6-2): loss of consciousness (depth.ts `hypnotic` level, ≥ 1 unconscious) as a 0–1 ramp over 0.6–1.0
+ * (fully 'unconscious' from the LOC C50 up) — what removes the wakefulness drive (R3) and makes the lungs
+ * "anaesthetised" (R4). [ENG ramp around depth.ts's LOC = 1]
+ */
+export const LOC_LO = 0.6;
+export const LOC_HI = 1.0;
 
 export interface DriveInputs {
   vent: { opioid: number; propofol: number; midazolam: number; ketamine: number }; // ng/mL(-eq), bus.ts
@@ -29,6 +36,7 @@ export interface DriveInputs {
   di: number; // raw depth index
   naturalAirway: boolean; // no tube / supraglottic device
   wasApnoeic: boolean;
+  hypnotic?: number; // FU-6: depth.ts consciousness level (≥ 1 unconscious); absent = awake
 }
 
 export interface NeuroResp {
@@ -43,6 +51,7 @@ export interface NeuroResp {
   obstruction: number; // 0–1 upper-airway obstruction (natural airway only); ≥ 0.9 = complete
   nmbVtMult: number; // VT factor from diaphragm weakness alone (Stage 7b's MODELED path multiplies its own VT by it)
   cleft: number; // 0–1 own diaphragmatic effort visible during mechanical breaths while a block wears off
+  loc: number; // FU-6 R3/R4: 0 awake … 1 unconscious (LOC_LO–LOC_HI ramp of the hypnotic level)
 }
 
 const hill = (x: number, h: number) => (x > 0 ? x ** h / (1 + x ** h) : 0);
@@ -61,6 +70,7 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   const veRest = opR * hyR * syn;
   const strength = 1 - x.diaBlock;
   const nmbVt = Math.max(0, Math.min(1, strength / DIAPH_WEAK));
+  const loc = Math.max(0, Math.min(1, ((x.hypnotic ?? 0) - LOC_LO) / (LOC_HI - LOC_LO)));
   let apnoea = x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
   if (strength < DIAPH_APNOEA) apnoea = true;
   // upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse)
@@ -71,7 +81,7 @@ export function neuroResp(x: DriveInputs): NeuroResp {
     opioidDep: dOp, hypnoticDep: dHyp, totalDep, veRest,
     rrMult: apnoea ? 0 : opR * hyR ** -0.6,
     vtMult: apnoea ? 0 : hyR ** 1.6 * syn * nmbVt * (1 - Math.min(0.9, obstruction)),
-    apnoea, pMaxMult: strength, obstruction, nmbVtMult: nmbVt,
+    apnoea, pMaxMult: strength, obstruction, nmbVtMult: nmbVt, loc,
     // the curare cleft is the sign of a PARTIAL block wearing off under mechanical ventilation (tables §5d)
     cleft: x.diaBlock > 0.05 ? Math.max(0, Math.min(1, strength * (1 - totalDep))) : 0,
   };

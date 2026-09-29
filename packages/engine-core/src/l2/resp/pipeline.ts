@@ -6,6 +6,7 @@
 // Reads Stage 2's HemoState (CO, pleth feet, PI, cuff, CPR) and never writes it. All state is plain data.
 import { l1Target, setL1Target, type L1State } from '../../l1/state.ts';
 import type { NeuroResp } from '../neuro/drive.ts'; // Stage 7f
+import { wakeShiftMmHg } from '../lung/drive.ts'; // FU-6 F7
 import { createSpontDrive, stepSpontDrive, type SpontDrive } from '../neuro/spont.ts'; // Stage 7f: MODELED spontaneous drive
 import type { RampState } from '../../l1/ramp.ts';
 import { co2NumStep, co2Numerics, createCo2Num, type Co2Num } from '../../l3/co2-numerics/co2-numerics.ts';
@@ -13,7 +14,7 @@ import { createImpNum, impedanceSample, impRr, impStep, type ImpNum } from '../.
 import { createSpo2, spo2Measured, stepSpo2, type Spo2State } from '../../l3/spo2/spo2.ts';
 import { createTempNum, tempMeasured, tempNumStep, type TempNum } from '../../l3/temp/temp-numerics.ts';
 import { piNumeric } from '../../l3/pressure-numerics/numerics.ts';
-import { normal, seedStream } from '../../rng/sfc32.ts';
+import { normal, seedStream, uniform } from '../../rng/sfc32.ts'; // FU-6 F7: uniform (the wake draw)
 import type { AirwayState, RespClinicalEvent, TempSite, VentSource } from '../../types-resp.ts';
 import type { VentFrameExt } from '../../types-vent-link.ts'; // Stage V
 import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfile } from '../../types.ts';
@@ -115,6 +116,9 @@ export interface RespState {
   /** FU-6 F6: onset (sim s, earlier by the spec's `ageMin`) of each smooth-muscle condition and the sim time the lung
    * was last resolved at (ages are read there); absent while no smooth-muscle condition is present (truth budget D16). */
   sm?: { onsetS: Record<string, number>; atS: number };
+  /** FU-6 F7: this patient's wakefulness shift (mmHg), drawn once from the 'resp-wake' stream (lung/drive.ts
+   * `wakeShiftMmHg`); absent in pre-FU-6 snapshots (= WAKE_MMHG). Out of truth (E-FU6-8): a patient constant. */
+  wakeMmHg?: number;
   mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
   circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
@@ -152,6 +156,9 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
   };
   rs.driver.vent = { ...rs.driver.vent, ...ventDefaults(pat, profile?.ageY ?? 40) }; // FU-4 F4 / R1(c): per-patient ventilator defaults
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
+  // FU-6 F7: ONE seeded draw per patient on its own stream (drawing it never shifts the 'resp' stream's SpO2 bias and
+  // breath jitter): whether and how long this patient is apnoeic after an induction dose (the Diprivan label's spread)
+  rs.wakeMmHg = wakeShiftMmHg(uniform(seedStream(seed, 'resp-wake')));
   return rs;
 }
 
@@ -434,6 +441,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     const lp = rs.lung.lp;
     stepSpontDrive((rs.spont ??= createSpontDrive()), {
       t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
+      wakeMmHg: rs.wakeMmHg, // FU-6 F7
       co2SlopeMult: lp.co2Slope, pMaxMult: lp.pMax, evlwi: 7 + (rs.evlwiExtra ?? 0), complianceMl: compliance(rs),
       resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
