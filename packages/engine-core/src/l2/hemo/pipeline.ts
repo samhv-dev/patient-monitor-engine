@@ -21,8 +21,8 @@ import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
 import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS; F1(d): VF_RHYTHMS)
-import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
-import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
+import { createIabp, createLvad, iabpFlow, iabpSchedule, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a (FU-8: iabpSchedule)
+import { CO_TAU_S, circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a (FU-8: CO_TAU_S)
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
@@ -106,6 +106,17 @@ export interface HemoState {
   stApplied: number; // Stage 7a: the ischaemic ST depression last handed to the ECG, mV
   iabp: IabpState; // Stage 7a: intra-aortic balloon pump (R28, tables §8.1)
   iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
+  /**
+   * FU-8 (research/20 DV-13d, DV-M5, DV-03): the aortic valve's own events at 2 ms — the last opening and closure (the
+   * balloon's pressure trigger), the aortic pressure summed over the running diastole (closure → opening), the last
+   * complete diastole's mean, and the unassisted (mean − minimum) offset — and the pulmonary blood flow (LPF τ CO_TAU_S,
+   * mL/s: the gas exchange's flow during CPR).
+   */
+  av: { ej: boolean; openT: number; closeT: number; sum: number; n: number; mean: number; off: number; qLung: number };
+  /** FU-8 (research/20 DV-01b): the rhythm key the arrest state last saw (a new pulseless rhythm enters the arrest state). */
+  arrestKey: string;
+  /** FU-8 (research/20 DV-23a): the CPR compression artefact this pipeline put on the ECG (cleared when CPR stops). */
+  cprArt: boolean;
   lvad: LvadState; // Stage 7a: continuous-flow LVAD (R28, tables §8.2)
   pvOn: boolean; // Stage 7a: teaching channels on
   /**
@@ -160,7 +171,7 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
   return {
     m: 0,
-    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, lvad: createLvad(), pvOn: false,
+    circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, av: { ej: false, openT: -1, closeT: -1, sum: 0, n: 0, mean: NaN, off: NaN, qLung: circ.ref.co / 0.06 }, arrestKey: '', cprArt: false, lvad: createLvad(), pvOn: false,
     // the volume tracker starts only if the instructor's initial CVP differs from the stabilised profile by > 1 mmHg
     // (the L1 default 6 vs a stabilised 5 is not an instruction) (see HemoState.manHold)
     manHold: manHoldInit(cvp, l1Value(l1, 'volumeStatus', 0), pad + (pas - pad) / 3, sbp, dbp),
@@ -283,10 +294,21 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   hs.siteBeats.push(beat);
   if (hs.siteBeats.length > 16) hs.siteBeats.shift();
   if (ejected) hs.lastEjT = cb.t + cb.avOpen;
+  // FU-8 (DV-13d): the running diastole's mean aortic pressure (closure → now), else the last complete one
+  const av = hs.av;
+  const diaMean = !av.ej && av.n > 0 ? av.sum / av.n : av.mean;
   if (hs.iabp.on) {
     hs.iabpAug = cb.aoSys;
-    iabpOnBeat(hs.iabp, cb.t + cb.dur, cb.dur, cb.avClose > 0 ? cb.avClose : 0.3); // pressure trigger: the last notch
-  }
+    // FU-8 (DV-M5): the pressure trigger reads the valve's own last closure and opening, carried one R–R ahead (the
+    // completed beat record's closure was the previous ejection's tail in a heart whose systole spills past the next R)
+    const notch = av.closeT >= 0 ? av.closeT : cb.t + (cb.avClose > 0 ? cb.avClose : 0.3);
+    const open = av.openT >= 0 ? av.openT : cb.t + Math.max(0, cb.avOpen);
+    iabpSchedule(hs.iabp, t, cb.dur, notch, open);
+    // FU-8 (DV-13d): under a balloon the beat's minimum is the post-deflation dip; the coronary step reads the
+    // augmented diastole instead — its mean less the unassisted (mean − minimum) offset, so an unassisted beat reads
+    // exactly its minimum
+    if (Number.isFinite(diaMean) && Number.isFinite(av.off)) (cb as CircBeat & { aoDiaEff?: number }).aoDiaEff = diaMean - av.off;
+  } else if (Number.isFinite(diaMean)) av.off = Number.isFinite(av.off) ? av.off + (diaMean - cb.aoDia - av.off) / 8 : diaMean - cb.aoDia;
   // Task 14 MANUAL tracker; frozen while a device reshapes the waveform (its targets describe the native heart)
   if (ctx.l1.mode !== 'modeled' && !hs.iabp.on && !hs.lvad.on) trackCircBeat(hs, ctx, beat);
   nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
@@ -514,6 +536,23 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         const pa0 = o.pPaRoot;
         const cv0 = o.pRa;
         stepCircModel(hs.circ, tb, env, o);
+        // FU-8: the aortic valve's events and the running diastole (DV-13d/M5); the pulmonary flow (DV-03)
+        const av = hs.av;
+        const ej = o.qAv > 1;
+        if (ej !== av.ej) {
+          if (ej) {
+            av.openT = tb;
+            if (av.n > 0) av.mean = av.sum / av.n;
+          } else av.closeT = tb;
+          av.ej = ej;
+          av.sum = 0;
+          av.n = 0;
+        }
+        if (!ej && av.closeT >= 0) {
+          av.sum += o.pAo;
+          av.n++;
+        }
+        av.qLung += (o.qLungL + o.qLungR - av.qLung) * (H_S / CO_TAU_S);
         hs.radQ.push(o.pRad);
         hs.radQ.shift();
         const pr1 = hs.radQ[0] as number;

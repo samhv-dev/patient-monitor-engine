@@ -23,6 +23,9 @@ export interface IabpState extends CircuitDevice {
   beatN: number;
   inflateAt: number;
   deflateAt: number;
+  /** FU-8 (DV-13d): the previous cycle, while its deflation is still owed (−1 = none). */
+  prevInflateAt?: number;
+  prevDeflateAt?: number;
 }
 
 export function createIabp(): IabpState {
@@ -32,21 +35,52 @@ export function createIabp(): IabpState {
 /**
  * A beat starting at beatT (R) with RR rr and the previous beat's aortic closure at avCloseS after its onset:
  * inflate at the dicrotic notch (beatT + avCloseS) + offset; deflate before the next R + offset. Every ratio-th beat.
+ * (The R wave stands in for the valve opening; the hemo pipeline uses `iabpSchedule` with the valve events.)
  */
 export function iabpOnBeat(d: IabpState, beatT: number, rr: number, avCloseS: number): void {
+  iabpSchedule(d, beatT, rr, beatT - rr + avCloseS, beatT - rr);
+}
+
+/**
+ * FU-8 (research/20 DV-13d, DV-M5; the tables' §8.1 pressure trigger): schedule the next balloon cycle at `now`, when a
+ * beat has completed. `notchT` / `openT` are the absolute times of the LAST aortic-valve closure and opening; each is
+ * carried forward by whole R–R intervals `rr` to the first one still to come: inflate at the next notch (+ offset),
+ * deflate so the balloon is empty IABP_DEFLATE_LEAD_S before the next opening (+ offset). Before, the schedule was
+ * built from the completed beat record (R + the record's own closure): in the MANUAL cardiogenic-shock rig, whose
+ * ejection starts ≈ 400 ms after R and spills into the next record, every "correctly timed" balloon deflated ≈ 270 ms
+ * AFTER the valve opened. A deflation still owed by the previous cycle is KEPT (brought forward to end before the new
+ * inflation if it had not begun): overwriting it left up to 40 mL in the aorta, 7 of 63 cycles a minute in the HFrEF +
+ * MI rig, and the patient arrested at +8.8 min. Every ratio-th beat.
+ */
+export function iabpSchedule(d: IabpState, now: number, rr: number, notchT: number, openT: number): void {
   if (!d.on) return;
   d.beatN++;
   if ((d.beatN - 1) % d.ratio !== 0) return;
-  d.inflateAt = beatT + avCloseS + d.inflateOffsetMs / 1000;
-  d.deflateAt = beatT + rr - IABP_DEFLATE_LEAD_S - IABP_DEFLATE_S + d.deflateOffsetMs / 1000;
+  const next = (x: number, t: number): number => (x > t ? x : x + rr * Math.ceil((t - x) / rr + 1e-9));
+  const inflateAt = Math.max(now, next(notchT, now) + d.inflateOffsetMs / 1000);
+  const deflateAt = next(openT, inflateAt) - IABP_DEFLATE_LEAD_S - IABP_DEFLATE_S + d.deflateOffsetMs / 1000;
+  if (deflateAt < inflateAt + IABP_INFLATE_S) return; // no diastole to fill this cycle
+  // an owed deflation is never later than just before the new inflation (and never earlier than now)
+  const owe = (defl: number): number => (now >= defl ? defl : Math.max(now, Math.min(defl, inflateAt - IABP_DEFLATE_S)));
+  if (d.inflateAt >= 0 && now >= d.inflateAt) {
+    // the current balloon has inflated: it becomes the previous cycle while its deflation is owed
+    const owed = now < d.deflateAt + IABP_DEFLATE_S;
+    d.prevInflateAt = owed ? d.inflateAt : -1;
+    d.prevDeflateAt = owed ? owe(d.deflateAt) : -1;
+  } else if ((d.prevInflateAt ?? -1) >= 0) {
+    d.prevDeflateAt = owe(d.prevDeflateAt as number); // a cycle that never inflated is dropped; an older owed one stays
+  }
+  d.inflateAt = inflateAt;
+  d.deflateAt = deflateAt;
 }
 
 const halfSine = (u: number, dur: number) => (u >= 0 && u < dur ? (Math.PI / (2 * dur)) * Math.sin((Math.PI * u) / dur) : 0);
 
-/** Balloon dV/dt (mL/s): + during inflation, − during deflation. */
+/** Balloon dV/dt (mL/s): + during inflation, − during deflation (the owed deflation of the previous cycle included). */
 export function iabpFlow(d: IabpState, t: number): number {
-  if (d.inflateAt < 0) return 0; // (a stopped pump still finishes the deflation it owes: volume is conserved)
-  return d.volumeMl * (halfSine(t - d.inflateAt, IABP_INFLATE_S) - halfSine(t - d.deflateAt, IABP_DEFLATE_S));
+  const prev = (d.prevInflateAt ?? -1) >= 0 ? halfSine(t - (d.prevInflateAt as number), IABP_INFLATE_S) - halfSine(t - (d.prevDeflateAt as number), IABP_DEFLATE_S) : 0;
+  if (d.inflateAt < 0) return d.volumeMl * prev; // (a stopped pump still finishes the deflation it owes: volume is conserved)
+  return d.volumeMl * (halfSine(t - d.inflateAt, IABP_INFLATE_S) - halfSine(t - d.deflateAt, IABP_DEFLATE_S) + prev);
 }
 
 /** Stop at time t: an inflated balloon deflates now; an inflation not yet begun is cancelled. */

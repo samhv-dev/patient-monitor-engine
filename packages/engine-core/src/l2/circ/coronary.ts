@@ -134,6 +134,9 @@ export function createCoronary(ref: Stabilised['ref']): CoronaryState {
  * offset (Guyton & Hall, coronary circulation [TXT]); 1 = the flow-only supply of R23. FU-4: `noBeat` (no beat to
  * read) supplies the continuous CPP and the perfused fraction of the cycle; `modeled` false keeps R23's balance (D6).
  */
+/** FU-8 (DV-13d): the beat's diastolic aortic pressure for the supply — the balloon-augmented value when one is set. */
+const aoDiaOf = (b: CircBeat): number => (b as CircBeat & { aoDiaEff?: number }).aoDiaEff ?? b.aoDia;
+
 export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1, noBeat?: NoBeat, modeled = true): void {
   const b = beats[beats.length - 1];
   if (!b && !noBeat) return;
@@ -154,7 +157,10 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     const rr = 60 / Math.max(20, hr);
     const tsys = b.avClose > 0 ? b.avClose + IVR_S : 0.6 * rr;
     dtf = Math.max(0.05, (rr - tsys) / rr);
-    cpp = b.aoDia - b.lvedp - (modeled ? (b.pItEd ?? P_PL0) : 0); // FU-4 G1: aortic − ABSOLUTE LV end-diastolic pressure (PEEP, tension PTX raise it)
+    // FU-8 (research/20 DV-13d): `aoDiaEff` (set by the hemo pipeline only while an IABP runs) is the augmented diastole
+    // read on the minimum's scale — under a balloon the beat's minimum is the post-deflation dip, and CoPP FELL 57.7 →
+    // 46.1 when the augmentation should raise it (a correctly timed 1:1 balloon arrested an HFrEF + MI heart at +8.8 min)
+    cpp = aoDiaOf(b) - b.lvedp - (modeled ? (b.pItEd ?? P_PL0) : 0); // FU-4 G1: aortic − ABSOLUTE LV end-diastolic pressure (PEEP, tension PTX raise it)
     // FU-8 (C3, research/19): an irregular rhythm is perfused beat by beat. Supply was read from the LAST beat alone,
     // so in AF 150 one short cycle — the next activation starting before the ventricle relaxed, "LVEDP" 60–115 mmHg,
     // CoPP < 0 — zeroed the supply for the whole second (123 of 240 samples), and a healthy 40 y heart went kIsch 0 →
@@ -180,7 +186,7 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
         // `lvedp` (the last beat's diastole is still running: its own, as before); aoDia is this beat's minimum, at
         // the same instant. A regular rhythm reads the same number either way.
         const ed = win[i + 1] ?? x;
-        const cp = x.aoDia - ed.lvedp - (ed.pItEd ?? P_PL0);
+        const cp = aoDiaOf(x) - ed.lvedp - (ed.pItEd ?? P_PL0);
         fSum += Math.max(0, (cp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (f / c.dtf0) * x.dur;
         cSum += cp * x.dur;
         dSum += x.dur;
