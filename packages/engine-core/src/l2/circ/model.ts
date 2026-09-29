@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, K_PVR_CO2, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -311,8 +311,10 @@ function control(m: CircModelState, env: CircEnv): void {
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split
-  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
-  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
+  // FU-6 R14: hypercapnic pulmonary vasoconstriction (not while the instructor pins PVR)
+  const co2F = man.pvr === null ? 1 + K_PVR_CO2 * Math.max(0, m.chemo.paco2 - 40) : 1;
+  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1) * co2F;
+  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1) * co2F;
   if (m.ext.vFluidRate) m.ext.vFluid = Math.min(TAMPONADE_MAX_ML, Math.max(0, m.ext.vFluid + m.ext.vFluidRate * CTL_DT)); // FU-4 G6
   p.vFluid = base.vFluid + m.ext.vFluid;
   const kc = x.kChem ?? 1;

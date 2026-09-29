@@ -96,6 +96,11 @@ export const T_IT = 0.65;
 export const CMH2O_TO_MMHG = 0.7356;
 /** Spontaneous inspiratory pleural swing, cmH2O (Stage 3 SPONT_PPL_CMH2O). */
 export const SPONT_SWING_CMH2O = 4;
+/**
+ * FU-6 R14 (E-FU6-3): hypercapnic pulmonary vasoconstriction — PVR × (1 + K·(PaCO2 − 40)₊), K 0.015/mmHg (Balanos 2003
+ * J Physiol; audit R14 "k ≈ 0.01–0.02 per mmHg") [ENG inside the sourced range]; PaCO2 from 7a's 1 Hz chemo input.
+ */
+export const K_PVR_CO2 = 0.015;
 
 // --- blood volume (tables §1.1; Lemmens 2006) ---
 export const BV_ML_KG_M = 70;
