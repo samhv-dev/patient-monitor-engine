@@ -49,6 +49,7 @@ Contents: 1 what shipped · 2 the clinical scenario table · 3 the audit before 
 | 21 | G-FU3 r4 | t25 ventilated; new stress document `t25-apnoea` | `validation/suites/sanity/sanity-docs.ts` | graded below |
 | 22 | item 10 | the clinical scenario suite (28 rows) | `test/engine/clinical-suite.test.ts` (SLOW_A) | §2 |
 | 23 | item 10 | `fu4.html` evidence page, 9 screenshots, Chromium smoke | `apps/demo/{fu4.html,src/fu4.ts,scripts/fu4-shots.mjs,e2e/fu4.e2e.ts}` | fu4.e2e |
+| 18e-fix | G-FU4-1 | the humoral arm's effect (venous + its SVR share, seam `ext.endoHumSvrF`) × (1 − (t − arrest.t)/`NO_FLOW_S`) in the declared arrest; bit-identical while perfusing | `l2/circ/model.ts`, `l2/endo/{core,adapters}.ts` | clinical-suite CPR-alone flipped; E-FU4-19 |
 | gate | D3 | `TAU_HYP_S` re-fit to the middle of the moved plateau, 360 → **300 s** | `coronary.ts` | circ-hypoxic-arrest |
 
 ## 2. The clinical scenario table (Task 22; audit rig: ETT, VCV 12 × 600, PEEP 5, FiO2 0.5; seed 7; truth values)
@@ -76,8 +77,8 @@ Contents: 1 what shipped · 2 the clinical scenario table · 3 the audit before 
 | S13 VF + CPR q 0.8 | CoPP 15–25 (Paradis 1990) | **25.1–28.8** (18a's 70 s point 23.3) | `it.fails` (drifts above 25 as CPR settles) | 6 |
 | S14 80 y HTN + propofol | MAP −30…−45 %, ΔHR ≤ 10 | **−22.9 %**, ΔHR −2 | HR pass; **MAP side `it.fails`** (18e; −31 % on the prototype) | |
 | S16 untreated MH | VF/asystole < 60 min, core ≤ 44 °C | VF (hyperthermia) **44.4 min at 42.3 °C** | pass (title now asserted — review F16) | |
-| CPR alone after full exsanguination (3 L) | no pulse in 10 min (ruling 3) | pulse at **+175 s** of CPR; HUM_V0 0 → never (CoPP 3.1–3.4) | `it.fails` — **conflict 18e × ruling 3** (§9 item 23) | |
-| CPR + 2 L + adrenaline after full exsanguination | pulse ≤ 4 min | **+105 s** | pass | 3b (class IV) |
+| CPR alone after full exsanguination (3 L) | no pulse in 10 min (ruling 3) | **no pulse**, CoPP 2.9–3.5 (was +175 s before 18e-fix) | **flipped** → `it` (G-FU4-1, §9 item 23) | |
+| CPR + 2 L + adrenaline after full exsanguination | pulse ≤ 4 min | none in 10 min (was +105 s); threshold 3 L → +180 s | `it.fails` (E-FU4-19; A-new) | 3b (class IV, +119 s) |
 | 10 min VF + CPR alone | kIsch < 0.9 | max **0.91**, end 0.87 | `it.fails` | |
 | MANUAL class III + propofol | no arrest 5 min, MAP < 50 | nadir **35.1**, none | pass | |
 | MANUAL tamponade + propofol 1 + 1 | no engine arrest, MAP ≥ 35 (D6) | min **49.6**, none | pass | |
@@ -89,7 +90,7 @@ Rows in their own files: S7 (circ-lowflow-arrest: class IV PEA at 645 s, HR 169 
 decompression (tension-ptx: PPV pPtx 7.7/15.7/19.4 mmHg at +10/+60/+240 s, PEA +10.45 min — the upper edge
 `it.fails`; spontaneous no PEA in 15 min; decompression MAP ≥ 65 at +6 s), the 7 kg infant (vent-infant: 20 × 49 mL,
 PaCO2 39.0–39.1, EtCO2 34.9, no non-finite value in 30 min, with the NaN guard loud). **The suite's `it.fails` count is
-eleven** (S2-MAP, S4b, S5, S6a band, S9 SaO2, S9 CVP/MAP, S13, S14-MAP, CPR-alone, VF kIsch, MANUAL floor) plus S3 in
+eleven** (S2-MAP, S4b, S5, S6a band, S9 SaO2, S9 CVP/MAP, S13, S14-MAP, the 2 L exsanguination ROSC, VF kIsch, MANUAL floor) plus S3 in
 circ-pulsus; the orchestrator's pre-count (S1b, S3, S4b, S5, S6a %, S9 SpO2) changed because S1b flipped and 18e/18a
 produced the new ones — every one carries its number.
 
@@ -183,6 +184,8 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
 - **E-FU4-15** `l2/circ/params.ts` 109–120 (CPR constants). `l2/hemo/params.ts` **unused**.
 - **E-FU4-16** `l2/lung/params.ts` 67 (valve constants), `RespState` `ptxAcc`/`ptxCeil`. Used.
 - **E-FU4-17** `neuro-spont.test.ts` reference re-derived (criterion unchanged). Used.
+- **E-FU4-19 (new, orchestrator ruling G-FU4-1 final, 2026-09-29)** `clinical-suite.test.ts`: the 2 L full-exsanguination
+  ROSC row becomes an `it.fails` with its number (none in 10 min; was +105 s), the threshold a measurement. Used.
 - **E-FU4-18** (FU-6's Request 3) `l2/ecg/rhythm-engine.ts` 236–263 (`finiteOr`, `nonFiniteIsLoud`) and 282–295 (the
   clamp in `planUntil`). Used; **no clamp fired** in any run of this gate (tests run loud).
 
@@ -252,7 +255,7 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
 | A08-I1 apnoea | hypoxic arrest | WR | asystole 910 s | **PL** |
 | A08-X VF + CPR | CoPP CPR-level | WR (79) | 25–29 (q 0.8), 33–34 with adrenaline | **PL** (slightly high; S13 `it.fails`) |
 | DV-02 CPR quality | CoPP 15–25 | NM | 25.1–28.8 | **TS** (small) |
-| DV-03 exsanguination, CPR alone | no pulse without volume | NM | pulse at +175 s | **WR** — 18e × ruling 3 (item 23) |
+| DV-03 exsanguination, CPR alone | no pulse without volume | NM | no pulse, CoPP 2.9–3.5 (18e-fix); with volume: 3 L → +180 s | **PL** (threshold: Ali A-new) |
 | DV-26 asphyxial arrest | oxygenation reverses bradycardia | NM | reversal 7.0 s (FU-3 rig) | PL |
 | A10-D6 VF EtCO2 | gradual decay | WR (37 → 1 in 20 s) | 14.5 / 6.6 at +60/+120 s | **PL** (CPR "by +2 min" `it.fails`) |
 | A10-B1 sinus 30 + escape | 40 QRS/min | WR | 60 | **WR** (Stage 5 AV concealment — not FU-4's) |
@@ -276,8 +279,7 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
 | A08-L-B6 / L-B0 MANUAL tamponade | — | WR | no engine arrest, MAP ≥ 49.6 (D6) | **visible, by design** (Q9) |
 
 Cells the audits marked wrong that FU-4 does NOT fix, named: A10-B1 (Stage 5 AV concealment), A08-D0/A09-G1a/c (the
-massive PE's hypoxaemia and RV failure — Ali's band, Q15; A09-G1d hyperventilation is FU-6's), DV-03 (the 18e × ruling-3
-conflict), A09-B7 and the MANUAL tracker floor (Q9, Q-FU3-4a), DI-13a/DI-25 (amiodarone and calcium have no shock /
+massive PE's hypoxaemia and RV failure — Ali's band, Q15; A09-G1d hyperventilation is FU-6's), A09-B7 and the MANUAL tracker floor (Q9, Q-FU3-4a), DI-13a/DI-25 (amiodarone and calcium have no shock /
 NMB path — DV/FU-7), DI-21 ketamine in sepsis (7g), A10 monitor cells (FU-5).
 
 ## 8. Glossary labels (research/11, R56)
@@ -304,7 +306,7 @@ papers' numbers still not extracted.
 class III nadir 26.6): Ali. **20** hyperkalaemia gaps (rate of rise, AV block, calcium generosity): Ali/Q5. **21** MANUAL
 18/10 → 65/30 (MAP 38): a test now. **22** the infant: fixed (18d) and guarded (18g).
 New:
-23. **The humoral arm vs ruling 3 — gate finding G-FU4-1, OPEN (the `it.fails` stays, with its number).** 18e's
+23. **The humoral arm vs ruling 3 — gate finding G-FU4-1, RESOLVED by the third mechanism (Task 18e-fix, `70207d0`).** 18e's
     venous term (HUM_V0 × BV in the shared reservoir) is not suppressed by the arrest, so after full exsanguination CPR
     alone restores a pulse at +175 s (HUM_V0 0: never, CoPP 3.1–3.4). The mechanism: the arrest withdraws the neural
     recruitment (brainstem), the unsuppressed humoral term holds the unstressed capacity at the 1 610 mL cap instead of
@@ -329,18 +331,35 @@ New:
       (+119 s, was +113). **It fails the strict (d)**: after FULL exsanguination, CPR + 2 L (over 300 s) + adrenaline
       1 mg from 720 s no longer regains a pulse within 10 min (was +105 s) — without the humoral recruitment, 2 L is
       not enough to refill the pool.
-    **Ruled final (orchestrator, 2026-09-29): three mechanisms prototyped and failed; item 23 stays OPEN with its
-    `it.fails` (pulse at +175 s of CPR alone) and goes to the calibration queue.** Patches in the executor's scratch:
-    `gfu41-clamp.patch`, `gfu41-ischaemic-withdrawal.patch`, `gfu41-arrest-withdrawal.patch`.
-24. **The Bezold–Jarisch term** (Task 12 Step 3) withdrawn: it delays obstructive-shock arrests (PTX +16.75 min). Wanted
-    at all, and if so gated how?
+    **Ruled final (orchestrator, 2026-09-29): LAND (3).** No hormone delivery and ischaemic vasoplegia exist only in
+    true no-flow; every perfusing row is bit-identical; the class IV volume + adrenaline resuscitation works (+119 s);
+    the one row it changes (a COMPLETE 3 L bleed-out regaining a pulse with 2 L at +105 s) was the executor's own
+    expectation from ruling 3, not a sourced band, and clinically optimistic. Landed as Task 18e-fix: CPR alone now
+    gives no pulse (CoPP 2.9–3.5; `it.fails` → `it`); the 2 L row is an `it.fails` under **E-FU4-19** with its number;
+    the volume threshold is a measurement (A-new below). Patches (1) and (2) stay in the executor's scratch.
+29. **A-new (Ali): after a complete 3 L bleed-out under CPR, how much volume plus adrenaline should regain a pulse, and
+    in how long?** Measured (seed 7, CPR q 0.8 and adrenaline 1 mg from 720 s, balanced fluid over 300 s):
+
+    | volume | pulse |
+    |---|---|
+    | 2 L | none in 10 min |
+    | 2.5 L | none in 10 min |
+    | 3 L | +180 s |
+    | 3.5 L | +170 s |
+
+    The sourced ROSC-with-volume assertion stays the class IV rig (2.5 L bled, 2 L + adrenaline 60 s after the arrest:
+    +119 s).
+24. **The Bezold–Jarisch term** (Task 12 Step 3) withdrawn: it delays obstructive-shock arrests (PTX +16.75 min).
+    **Ruled: stays withdrawn — "not modelled", calibration queue.**
 25. **Validation baselines hold the MODELED rate** (`setTarget hr` in every sanity document's patient block): a held
     instructor rate kept a paralysed, unventilated patient at SaO2 0 for 10 min without an arrest. Should MODELED
-    documents send HR targets, and should FU-3's hypoxic arrest act through a held rate?
+    documents send HR targets, and should FU-3's hypoxic arrest act through a held rate? **Ruled: accepted —
+    `t25-apnoea` carries no heart-rate target.**
 26. **TCI under low output** (pk-longrun): the pump's population model vs the flow-scaled patient (Ce 2.5065): a feature
-    to show, or should the TCI model see the same q?
-27. **7c water balance:** the resting 24 h drift (bvRel −0.5 %, Hb +0.08) behind the soak lactate.
-28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled.
+    to show, or should the TCI model see the same q? **Ruled: a feature; to Ali's list (review pack, drugs).**
+27. **7c water balance:** the resting 24 h drift (bvRel −0.5 %, Hb +0.08) behind the soak lactate (and the 24 h local UOP drift 2.68 %). **Ruled: calibration queue.**
+28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled. **Ruled: they stay pinned as `it.fails` with numbers (R45).** Ali's Q1 conflict (healthy −23 %
+    vs class III) is his — neither moves.
 
 ## 9b. FU-5 (PR #24) — the orchestrator's merge-first ruling, NOT executed on this branch
 
