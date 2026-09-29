@@ -1,0 +1,212 @@
+{
+ "NN-15a": {
+  "id": "NN-15a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL ceAtLoc = 2.02 in [2, 3] [research/12 NN-15: loss of consciousness at Ce 2–3 µg/mL (Eleveld; tables §6.1 Schnider LOC C50 2.35/1.8 µg/mL at 25/50 y)]"
+  ],
+  "values": {
+   "locS": 194,
+   "ceAtLoc": 2.02,
+   "consciousEndCe2": null,
+   "marks": "194s lossOfConsciousness, 340s emergence, 666s lossOfConsciousness, 707s apnoea"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "awake",
+  "intv": "propofol effect-site TCI 2 → 4 → 6 → 8 µg/mL (10 min each): Ce at loss of consciousness",
+  "sys": "NEU, PK",
+  "owner": "7f depth.ts",
+  "wallS": 31.5
+ },
+ "NN-15b": {
+  "id": "NN-15b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW diCe4 = 37 below [40, 60] [research/12 NN-15: depth index 40–60 at Ce 3–5 µg/mL (Eleveld BIS 2024 Ce50 3.08·e^(−0.00635(age−35)); BIS manual general-anaesthesia range 40–60)]",
+   "PL mapFallCe8vsCe2 = -9.4 (sign -1, beyond 3) [research/12 NN-15: MAP falls with Ce (Eleveld; Miller IV anaesthetics) — direction]"
+  ],
+  "values": {
+   "diCe2": 63,
+   "diCe4": 37,
+   "diCe6": 24.7,
+   "diCe8": 18,
+   "dMapCe2": -12.1,
+   "dMapCe4": -16.2,
+   "dMapCe6": -18.9,
+   "dMapCe8": -21.5,
+   "mapFallCe8vsCe2": -9.4
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "awake",
+  "intv": "propofol TCI staircase: DI at Ce 4 (steady) and MAP fall with Ce vs control",
+  "sys": "NEU, CIRC",
+  "owner": "7f depth.ts / 7g circulation PD",
+  "wallS": 27.7
+ },
+ "NN-15c": {
+  "id": "NN-15c",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW ceAtSr = 5.029999999999999 below [6, 8] [research/12 NN-15: burst suppression from Ce ≈ 6–8 µg/mL (Eleveld; BIS manual; tables §5d \"burst suppression DI < 20–30\")]"
+  ],
+  "values": {
+   "ceAtSr": 5.029999999999999,
+   "srCe6": 22,
+   "srCe8": 49,
+   "cmro2Ce8": 0.413
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "awake",
+  "intv": "propofol TCI staircase: burst suppression (SR > 0) from Ce ≈ 6–8",
+  "sys": "NEU, BRN",
+  "owner": "7f depth.ts",
+  "wallS": 0
+ },
+ "NN-16a": {
+  "id": "NN-16a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL move05 = true (expected true) [research/12 NN-16: at 0.5 MAC most patients move to incision (MAC definition: 50 % move at 1.0 MAC; Eger 1965; Miller inhaled agents)]",
+   "PL move15 = false (expected false) [research/12 NN-16: at 1.5 MAC (≈ MAC95 1.3) no movement to incision (Miller)]"
+  ],
+  "values": {
+   "mac05": 0.489,
+   "mac10": 0.97,
+   "mac15": 1.45,
+   "move05": true,
+   "move10": true,
+   "move15": false
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated, unparalysed",
+  "state": "sevoflurane 0.5 / 1.0 / 1.5 MAC (brain, 25 min)",
+  "intv": "incision (stimulus 1): movement",
+  "sys": "NEU",
+  "owner": "7f depth.ts (movement)",
+  "wallS": 64.2
+ },
+ "NN-16b": {
+  "id": "NN-16b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL di10 = 43 in [40, 45] [tables §5d: DI ≈ 40–45 at 1.0 MAC (range 35–50) [ENG calibration]; research/12 NN-16 \"DoA ↓\"]"
+  ],
+  "values": {
+   "di05": 70,
+   "di10": 43,
+   "di15": 30,
+   "mac10": 0.97,
+   "diAfterInc10": 53,
+   "diShownAfterInc10": null
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "sevoflurane 0.5 / 1.0 / 1.5 MAC",
+  "intv": "depth index before incision by MAC",
+  "sys": "NEU",
+  "owner": "7f depth.ts",
+  "wallS": 0
+ },
+ "NN-16c": {
+  "id": "NN-16c",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR sr15pos = false (expected true) [research/12 NN-16: suppression ratio > 0 at ≥ 1.5 MAC (Miller, inhaled agents: burst suppression at 1.5–2 MAC)]"
+  ],
+  "values": {
+   "mac15": 1.45,
+   "sr15": 0,
+   "mac20": 1.925,
+   "sr20": 31,
+   "sr15pos": false
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "sevoflurane 1.5 MAC",
+  "intv": "burst suppression at ≥ 1.5 MAC",
+  "sys": "NEU, BRN",
+  "owner": "7f depth.ts",
+  "wallS": 17.3
+ },
+ "NN-17a": {
+  "id": "NN-17a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL macReductionPct = 65.4 in [60, 70] [research/12 NN-17: remifentanil reduces MAC up to 60–70 % (Lang 1996 Anesthesiology 85:721); tables §5d macOpioid −30 to −70 %]",
+   "PL movePropRemi = false (expected false) [research/12 NN-17: movement to incision suppressed by remifentanil + propofol (Lang 1996; Miller)]"
+  ],
+  "values": {
+   "macReductionPct": 65.4,
+   "ceRemi": 6.8,
+   "moveProp": false,
+   "movePropRemi": false
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "propofol Ce 3; sevoflurane 1 MAC",
+  "intv": "remifentanil 0.2–0.3 µg/kg/min: MAC reduction and movement to incision",
+  "sys": "NEU",
+  "owner": "7f depth.ts",
+  "wallS": 50.9
+ },
+ "NN-17b": {
+  "id": "NN-17b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dDi = -2 (quiet, tol ±10) [research/12 NN-17: DoA barely changed by the opioid (Lang 1996); tables §5d \"opioids alone barely move the index\" — quiet ±10 (direction-only tolerance)]"
+  ],
+  "values": {
+   "dDi": -2,
+   "diProp": 46,
+   "dDiAfterInc": -2.2
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated",
+  "state": "propofol Ce 3",
+  "intv": "remifentanil 0.2 µg/kg/min: depth index barely changed (before stimulation)",
+  "sys": "NEU",
+  "owner": "7f depth.ts",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-18a": {
+  "id": "NN-18a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL diMin = 95 in [60, 100] [research/12 NN-18: the DoA index stays high under ketamine (paradox) (Miller IV anaesthetics; tables §5d \"ketamine ↑ DI\")]"
+  ],
+  "values": {
+   "diMin": 95,
+   "loc": true,
+   "marks": "309s lossOfConsciousness, 497s emergence"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "ketamine 1 mg/kg: depth index stays high (dissociation)",
+  "sys": "NEU",
+  "owner": "7f depth.ts",
+  "wallS": 26.3
+ }
+}

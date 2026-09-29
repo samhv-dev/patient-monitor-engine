@@ -1,0 +1,115 @@
+{
+ "NN-01a": {
+  "id": "NN-01a",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS tTof0S = 74 below [90, 120] (lower = stronger/faster) [research/12 NN-01 (TOF 0 at 1.5–2 min); tables §5d roc 0.6 max block 1.8 min (Roc-label); Naguib]",
+   "TS devTof0S = 80 below [90, 135] (lower = stronger/faster) [the stimulator reports count 0 within one 15 s train of the truth (research/12 §2.2 DEV grading)]"
+  ],
+  "values": {
+   "tTof0S": 74,
+   "devTof0S": 80,
+   "diaAt60": 0.9,
+   "thumbAt60": 0.94
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised (propofol Ce 3)",
+  "intv": "rocuronium 0.6 mg/kg: onset (TOF count 0)",
+  "sys": "NEU, DEV",
+  "owner": "7f nmb.ts / 7g roc PK",
+  "wallS": 101.5
+ },
+ "NN-01b": {
+  "id": "NN-01b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL t1_25Min = 35.5 in [30, 40] [research/12 NN-01 (T1 25 % at 30–40 min); tables §5d / §7 check 25: 31 min (Roc-label); Naguib]"
+  ],
+  "values": {
+   "t1_25Min": 35.5,
+   "tofr09Min": 116.1,
+   "diaRecMin": 37.1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised (propofol Ce 3)",
+  "intv": "rocuronium 0.6 mg/kg: clinical duration (T1 25 %) and spontaneous TOFR 0.9",
+  "sys": "NEU",
+  "owner": "7f nmb.ts / 7g roc PK",
+  "wallS": 0
+ },
+ "NN-02": {
+  "id": "NN-02",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "PL diaAt60 = 1 in [0.9, 1] [research/12 NN-02: intubating conditions at 60 s (Miller NMB) — laryngeal/diaphragm block ≥ 90 % (tables §5d: larynx/diaphragm drive the airway)]",
+   "TS tTof0S = 34 below [51, 69] (lower = stronger/faster) [tables §5d roc 1.2 mg/kg max block 1.0 min (Roc-label; ±15 % tables §7 convention)]",
+   "TW t1_25Min = 94.6 above [57, 77] (lower = stronger/faster) [tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)]"
+  ],
+  "values": {
+   "diaAt60": 1,
+   "thumbAt60": 1,
+   "tTof0S": 34,
+   "t1_25Min": 94.6
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised",
+  "intv": "rocuronium 1.2 mg/kg (RSI): intubating conditions at 60 s; duration",
+  "sys": "NEU",
+  "owner": "7f nmb.ts / 7g roc PK",
+  "wallS": 90.9
+ },
+ "NN-03a": {
+  "id": "NN-03a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL fascBeforeTof0 = true (expected true) [research/12 NN-03 (fasciculation; Miller NMB): fasciculations precede the block]"
+  ],
+  "values": {
+   "fascS": 25,
+   "fascBeforeTof0": true,
+   "marks": "325s fasciculation, 328s recurarisation"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised",
+  "intv": "succinylcholine 1 mg/kg: fasciculation before the block",
+  "sys": "NEU",
+  "owner": "7f pipeline.ts (marks)",
+  "wallS": 25
+ },
+ "NN-03b": {
+  "id": "NN-03b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "PL tTof0S = 50 in [45, 75] [research/12 NN-03 onset 60 s (Miller NMB); tables §5d block ~1 min (Sux-label)]",
+   "TW t1_90Min = 12 above [8, 10] (lower = stronger/faster) [research/12 NN-03 T1 90 % at 8–10 min (Miller NMB); the tables §5d label value is 10.9 min (Sux-label) — both quoted]",
+   "PL minTofrOnset = 1 in [0.9, 1] [tables §5d: succinylcholine phase I, no fade, TOFR ≈ 1 at any T1]"
+  ],
+  "values": {
+   "tTof0S": 50,
+   "t1_10Min": 7,
+   "t1_90Min": 12,
+   "minTofrOnset": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "anaesthetised",
+  "intv": "succinylcholine 1 mg/kg: onset, recovery T1 90 %, no fade (phase I)",
+  "sys": "NEU",
+  "owner": "7f nmb.ts / 7g sux PK",
+  "wallS": 0
+ }
+}

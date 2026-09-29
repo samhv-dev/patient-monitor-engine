@@ -1,0 +1,26 @@
+{
+ "NN-25a": {
+  "id": "NN-25a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL t20Min = 10.7 in [10, 15] [research/12 NN-25 / tables §7 check 19: ICP 12 → 20 by ~10–15 min]",
+   "PL t40Min = 23 in [20, 25] [research/12 NN-25 / tables §7 check 19: → 40 by ~20–25 min]"
+  ],
+  "values": {
+   "icp0": 12,
+   "paco2": 38.5,
+   "t20Min": 10.7,
+   "t40Min": 23,
+   "icpAtCpp60": 35.9
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI (severity 1) intubated, VCV 12 × 500",
+  "state": "expanding haematoma 1 mL/min",
+  "intv": "time course of ICP",
+  "sys": "BRN",
+  "owner": "7d brain",
+  "wallS": 37.9
+ }
+}
