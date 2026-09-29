@@ -12,6 +12,7 @@
     "build": "pnpm -r build",
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
     "audit:physiology": "node --experimental-strip-types --import ./scripts/audit-physiology/hooks.mjs scripts/audit-physiology/cli.ts",
+    "audit:respiratory": "node --experimental-strip-types --import ./scripts/audit-respiratory/hooks.mjs scripts/audit-respiratory/cli.ts",
     "test:e2e": "playwright test",
     "validate": "pnpm --filter @pme/validation validate",
     "relay": "pme-relay",
