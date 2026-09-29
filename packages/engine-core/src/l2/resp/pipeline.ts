@@ -460,6 +460,7 @@ function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
     deadSpaceMl: deadSpace(rs, l1), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
     effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
+    pleuralMmHg: Math.max(rs.lung.lp.pPtx, rs.circPtx), // Stage V.1: as respPleural combines them
   }); // Stage 7b: absolute + per-lung fields (decision 15)
   const key = JSON.stringify(ev);
   if (key === rs.lungKey) return;
