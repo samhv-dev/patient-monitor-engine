@@ -74,14 +74,20 @@ const AS_BETA: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.6,
  */
 const AS_EES: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.7, critical: 2.0 };
 
+/** FU-8 (C5): the stabiliser's resting MAP (radial) sits this far above the reflex set point — the adult default
+ * 120/80 (MAP 93.3) against 90 [ENG: kept so no adult row moves]. */
+export const TARGET_MAP_ABOVE_SET = 10 / 3;
+
 const BAND = {
-  // bvMlKg (M), MAP set, resting HR, vagal gain ms/mmHg, sympathetic ×, arterial compliance × (tables §1.1)
-  neonate: { bv: 87, map: 45, hr: 140, gv: 4, gs: 0.7, c: 1.0 },
-  infant: { bv: 78, map: 55, hr: 130, gv: 7, gs: 0.8, c: 1.0 },
-  child: { bv: 72, map: 68, hr: 100, gv: 12, gs: 1, c: 1.0 },
-  adolescent: { bv: 70, map: 80, hr: 75, gv: 17, gs: 1, c: 1.0 },
-  adult: { bv: BV_ML_KG_M, map: 90, hr: 70, gv: 15, gs: 1, c: 1.0 },
-  elderly: { bv: 62, map: 95, hr: 65, gv: 6.5, gs: 0.6, c: 0.5 },
+  // bvMlKg (M), MAP set, resting HR, vagal gain ms/mmHg, sympathetic ×, arterial compliance × (tables §1.1);
+  // pp: FU-8 (C5) the resting pulse pressure the stabiliser targets [TXT: PALS normal ranges — neonate 60–75/30–45,
+  // infant 72–104/37–56, child 86–120/42–80, adolescent 110–131/64–83 mmHg; adult 120/80; elderly 140/80, ISH]
+  neonate: { bv: 87, map: 45, hr: 140, gv: 4, gs: 0.7, c: 1.0, pp: 30 },
+  infant: { bv: 78, map: 55, hr: 130, gv: 7, gs: 0.8, c: 1.0, pp: 30 },
+  child: { bv: 72, map: 68, hr: 100, gv: 12, gs: 1, c: 1.0, pp: 35 },
+  adolescent: { bv: 70, map: 80, hr: 75, gv: 17, gs: 1, c: 1.0, pp: 40 },
+  adult: { bv: BV_ML_KG_M, map: 90, hr: 70, gv: 15, gs: 1, c: 1.0, pp: 40 },
+  elderly: { bv: 62, map: 95, hr: 65, gv: 6.5, gs: 0.6, c: 0.5, pp: 60 },
 } as const;
 
 const sev = (c: CircCondition): number => Math.min(1, Math.max(0, c.severity ?? 1));
@@ -108,12 +114,18 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
   };
   const r: ResolvedProfile = {
     band, params: p, bloodVolumeMl: bvKg * pr.weightKg, stressedFrac: band === 'elderly' ? 0.22 : 0.25,
-    targets: { sbp: 120, dbp: 80, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
+    // FU-8 (C5, research/19): the band's resting pressure is centred on the band's reflex set point, with the band's
+    // pulse pressure — ONE number per age band. Before, every band was tuned to 120/80 whatever its set point: a term
+    // neonate (set point 45) stabilised at MAP 93 and sat at 82–89 at 600 s (SV 1.1 mL, CO 0.15 L/min). The adult
+    // (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on Ali, plan D13).
+    targets: { sbp: b.map + TARGET_MAP_ABOVE_SET + (2 * b.pp) / 3, dbp: b.map + TARGET_MAP_ABOVE_SET - b.pp / 3, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
     hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0, betaBlockC: 0,
     lvedpTarget: 8,
     ageY: pr.ageY,
     tuneLvedp: false,
   };
+  // the elderly keep 140/80 (MAP 100 against the set point 95): 7d's check 18 (75 y HTN CBF plateau) is fitted to it,
+  // and the elderly resting pressure is research/19 C5's Ali question (plan "Waiting on Ali")
   if (band === 'elderly') r.targets = { sbp: 140, dbp: 80, hr: b.hr, cvp: 5 };
   let edvRef = 120 * w * lvScale; // mL, the EDV at which the EDPVR passes through the profile's LVEDP [ENG anchor]
   for (const c of pr.conditions) {
