@@ -340,7 +340,7 @@ calibration queue. Once `#24` is on `main`, `git merge origin/main` brings all o
   skipped**; controller 37 / 215; renderer 24 / 77; skins 18 / 173; audio 10 / 58; ventilator 14 / 88 (incl. the R36
   sweep, 900 s budget); validation 30 files (+1 skipped) / 107 passed, 11 skipped (incl. tick-bench); apps/demo 9 / 141.
 - `SLOW_A` (serial, CI=1, 769 s wall): 10 files / 55 tests — 54 passed and S8 failed as an `it.fails` whose band was
-  now met (+9.75 min); flipped to `it` in `93808e7` and re-run green. `SLOW_B` (726 s wall): **39 files / 192 passed**.
+  now met (+9.75 min); flipped to `it` in `93808e7`; the whole group re-run at `3455bee`: **10 files / 55 passed** (495 s wall). `SLOW_B` (726 s wall): **39 files / 192 passed**.
 - Disjointness gate (Task 20, `PME_TEST_SET=slow-a|slow-b|slow npx vitest list --filesOnly`, with the suite file present):
   `comm -12 a b` printed **nothing**; **10 + 39 = 49** files (before the suite existed: 9 + 39 = 48). CI walls: not yet
   measured (the PR's first run records them; D17 estimate ≈ 35 min each).
