@@ -1,7 +1,7 @@
 // `pme-scenario/1` document types (DESIGN-BRIEF §7.4). The JSON Schema in scenarios/pme-scenario-1.schema.json is
 // the contract; these types mirror it. Commands in a document carry no id/issuedBy/atTick/stageGroup: the driver
 // stamps them, and every onExit+onEnter list runs as ONE stage group (one tick, "stage then commit", brief §4.9).
-import type { BloodProfile, LungConditionSpec, NeuroProfile, ProfileCondition, Ramp, StateVar } from '@pme/engine-core';
+import type { BloodProfile, EndoProfileInput, LungConditionSpec, NeuroProfile, ProfileCondition, Ramp, StateVar } from '@pme/engine-core';
 import type { ClinicalEvent, ModelInput, SensorId } from '../protocol.ts';
 
 export type Op = '<' | '<=' | '>' | '>=' | '==' | '!=';
@@ -48,6 +48,8 @@ export interface Transition extends C {
 
 export interface ScenarioState extends C {
   id: string;
+  /** FU-8 (R-S9-4): the schema requires it in every document — the clinical name the panel, the remote and the
+   * transition text print; in-code objects built by hosts and tests may still omit it (the view falls back to the id). */
   label?: string;
   notes?: string;
   onEnter?: DocCommand[];
@@ -70,6 +72,8 @@ export interface ScenarioPatient {
   blood?: BloodProfile;
   /** R22 patient profile (FU-3 item 9): the engine's PatientProfile `conditions` and `lungConditions`, 1:1. */
   profile?: ScenarioProfile;
+  /** FU-8 (research/19 §5): Stage 7e's endocrine profile (diabetes, thyroid, adrenal insufficiency), 1:1. */
+  endo?: EndoProfileInput;
 }
 
 /** Chronic conditions of the body (fixed at engine creation). Acute events stay applyEvent commands. */
@@ -93,6 +97,11 @@ export interface ScenarioDoc extends C {
   id: string;
   title: string;
   notes?: string;
+  /** FU-8 (Stage 9 R-S9-4): library group, learner-facing story, objectives and expected minutes (all optional). */
+  category?: string;
+  story?: string;
+  objectives?: string[];
+  durationMin?: number;
   /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
   seed?: number;
   mode?: 'manual' | 'modeled';
