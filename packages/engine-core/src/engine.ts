@@ -719,6 +719,8 @@ class Engine implements MonitorEngine {
         if (cmd.when !== undefined && cmd.when !== 'now' && cmd.when !== 'nextBeat') return 'when must be now or nextBeat';
         const o = cmd.opts ?? {};
         return (
+          unknownKeys('opts', o, RHYTHM_OPT_KEYS) ?? // FU-8 (research/19 C12): an unknown option is refused, not dropped
+          unknownKeys('opts.pacer', o.pacer ?? {}, PACER_OPT_KEYS) ??
           numReason('opts.rateBpm', o.rateBpm, 0, 300) ??
           numReason('opts.atrialRateBpm', o.atrialRateBpm, 20, 400) ??
           numReason('opts.prMs', o.prMs, 80, 600) ??
@@ -940,6 +942,18 @@ class Engine implements MonitorEngine {
 }
 
 /** undefined, or a reason when `v` is present but not a finite number in [lo, hi]. */
+/**
+ * FU-8 (research/19 C12): the RhythmOpts / PacerOpts keys (l2/ecg/api-types.ts). `setRhythm` accepted any key and
+ * dropped the unknown ones — `pacedVVI` with `{ fault, faultRate }` at the top level was accepted and did nothing (the
+ * fault belongs under `opts.pacer`). Every key named here is read by the rhythm engine.
+ */
+const RHYTHM_OPT_KEYS: ReadonlySet<string> = new Set(['ratio', 'atrialRateBpm', 'prMs', 'groupSize', 'rateBpm', 'pulseless', 'pauseS', 'pauseEveryS', 'retroP', 'twistBeats', 'vfAmplitudeMv', 'autoAsystole', 'pacer']);
+const PACER_OPT_KEYS: ReadonlySet<string> = new Set(['ratePpm', 'avDelayMs', 'fault', 'faultRate', 'intrinsic']);
+function unknownKeys(name: string, o: object, known: ReadonlySet<string>): string | undefined {
+  const bad = Object.keys(o).filter((k) => !known.has(k));
+  return bad.length ? `${name}: unknown key${bad.length > 1 ? 's' : ''} ${bad.join(', ')} (known: ${[...known].join(', ')})` : undefined;
+}
+
 function numReason(name: string, v: number | undefined, lo: number, hi: number): string | undefined {
   if (v === undefined) return undefined;
   return Number.isFinite(v) && v >= lo && v <= hi ? undefined : `${name} must be a finite number in ${lo}–${hi}`;
