@@ -467,7 +467,7 @@ npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run > <scratchpad>/stage
 tail -4 <scratchpad>/stage-9-clinical-ui/base-*.log
 ```
 
-Expected: typecheck clean; demo and controller green (prototype base: demo 16 files / 141 tests before Stage 9's
+Expected: typecheck clean; demo and controller green (prototype base `776ebb5`: demo 9 files / 141 tests before Stage 9's
 tests, controller 37 files / 215 tests).
 
 - [ ] **Step 3: The four find blocks still match exactly once** (E-S9-1, E-S9-2 ×2, E-S9-3):
@@ -1776,7 +1776,7 @@ describe('R56 glossary', () => {
 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/glossary.test.ts
 ```
 
-Expected: 5 passed: unique numbers (≥ 299 entries), every entry the app names exists, `labelOf` gives HR / NIBP D / R VD alv / null for an internal path, every `KEY_LABELS` key resolves, the collision rulings hold (CPP cerebral, CoPP coronary, PI vs PI (LVAD), SR only #28, FO₂Hb, SaO₂), no label covers two quantities after every key's wildcards are filled (T1 vs TOF T1, SVR vs SVR (model), EtCO₂ vs EtCO₂ (true), Cp (Propofol) vs Cp (Rocuronium); ICP monitor and truth share one row key), no unit or name carries an author note.
+Expected: 6 passed: unique numbers (≥ 299 entries), every entry the app names exists, `labelOf` gives HR / NIBP D / R VD alv / null for an internal path, every `KEY_LABELS` key resolves, the collision rulings hold (CPP cerebral, CoPP coronary, PI vs PI (LVAD), SR only #28, FO₂Hb, SaO₂), no label covers two quantities after every key's wildcards are filled (T1 vs TOF T1, SVR vs SVR (model), EtCO₂ vs EtCO₂ (true), Cp (Propofol) vs Cp (Rocuronium); ICP monitor and truth share one row key), every 7g drug has a `DRUG_NAMES` row and the name set switches drug and plasma-catecholamine labels (D28), no unit or name carries an author note.
 
 - [ ] **Step 6: Commit and push**
 
@@ -3064,7 +3064,7 @@ describe('clinical copy', () => {
 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/copy.test.ts
 ```
 
-Expected: 3 passed: the library holds ≥ 11 documents, each with meta and no engine id/stage/ruling in title, story or objectives; every transition of every scenario reads without an engine id; 15 sample commands read clinically ("HR target 110 bpm over 30 s", "Norepinephrine 0.1 µg/kg/min infusion started", "Rhythm: Coarse VF").
+Expected: 4 passed: the learner buttons read clinically in either drug-name set (D27, D28); the library holds ≥ 11 documents, each with meta and no engine id/stage/ruling in title, story or objectives; every transition of every scenario reads without an engine id; 15 sample commands read clinically ("HR target 110 bpm over 30 s", "Norepinephrine 0.1 µg/kg/min infusion started", "Rhythm: Coarse VF").
 
 - [ ] **Step 8: Commit and push**
 
@@ -4187,7 +4187,7 @@ git push
 - Create: `apps/demo/src/app/cards.ts`
 - Create: `apps/demo/src/app/panel/vitals.ts`
 
-**Why:** The CAE pattern (D8) and REALITi's trend marker (D9): each target row shows the glossary label with its tooltip, the live value and unit, a stepper, Set (a pin in MODELED, a target in MANUAL), Return to model, a chip only when something is not "the model running normally" (dark cockpit), and a progress bar while an onset runs. The rhythm picker is grouped (D5 of the brief §7).
+**Why:** The CAE pattern (D8) and REALITi's trend marker (D9); "Set" waits for the monitor's first state and never pins a value the instructor did not choose (R50 review F7, see Task 21): each target row shows the glossary label with its tooltip, the live value and unit, a stepper, Set (a pin in MODELED, a target in MANUAL), Return to model, a chip only when something is not "the model running normally" (dark cockpit), and a progress bar while an onset runs. The rhythm picker is grouped (D5 of the brief §7).
 
 - [ ] **Step 1: Create `apps/demo/src/app/panel/ctx.ts`**
 
@@ -4296,7 +4296,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
   );
 
   // ---- target rows ----
-  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; release: HTMLButtonElement; bar: HTMLElement; seeded: boolean }> = [];
+  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; set: HTMLButtonElement; release: HTMLButtonElement; bar: HTMLElement; seeded: boolean }> = [];
   const groups = new Map<string, HTMLElement>();
   for (const s of VITALS) {
     let g = groups.get(s.group);
@@ -4318,7 +4318,14 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       h('div', { class: 'lbl' }, glossLabel(s.n), chip), h('span', { class: 'nowwrap' }, now, h('span', { class: 'unit' }, s.unit)),
       h('div', { class: 'edit' }, st.el, set, release), bar);
     g.append(row);
-    rows.push({ s, row, now, chip, st, release, bar, seeded: false });
+    const entry = { s, row, now, chip, st, set, release, bar, seeded: false };
+    // the first state seeds the stepper with the live value, unless the instructor has already typed or stepped one:
+    // a late first state must never overwrite what they chose (R50 review F7: the remote pinned the old value)
+    const touched = () => void (entry.seeded = true);
+    st.input.addEventListener('input', touched);
+    st.input.addEventListener('change', touched);
+    for (const b of st.el.querySelectorAll('button')) b.addEventListener('pointerdown', touched);
+    rows.push(entry);
   }
 
   const releaseAll = button('Return all to the model', () => {
@@ -4330,7 +4337,14 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
   c.onRefresh(() => {
     const st = link.ctl.state;
     const m = mode();
-    setText(modeNote, m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
+    // "Set" stages a pin in MODELED and a target in MANUAL, so it waits for the monitor's first state: a remote that has
+    // just connected does not know the mode yet, and staging a target where a pin was meant held nothing (R50 review F7)
+    const known = st !== null && st !== undefined;
+    for (const r of rows) {
+      r.set.disabled = !known;
+      r.release.disabled = !known;
+    }
+    setText(modeNote, !known ? 'Waiting for the monitor\'s state before a value can be set.' : m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
     releaseAll.hidden = m !== 'modeled';
     setText(rnow, link.ctl.rhythm ? rhythmLabel(link.ctl.rhythm) : '--');
     for (const r of rows) {
@@ -6809,7 +6823,7 @@ replace with:
 npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json && npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run && npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run && npx -y pnpm@9.15.9 --filter @pme/demo exec vite build > <scratchpad>/stage-9-clinical-ui/build.log 2>&1; tail -3 <scratchpad>/stage-9-clinical-ui/build.log
 ```
 
-Expected: typecheck clean; demo unit tests all green (prototype: 18 files, 173 tests); controller green; the build writes `dist/index.html` with the app.
+Expected: typecheck clean; demo unit tests all green (prototype on `776ebb5`: 21 files, 184 tests — 141 existing, 43 Stage 9); controller green; the build writes `dist/index.html` with the app.
 
 - [ ] **Step 6: Commit and push**
 
@@ -6850,7 +6864,7 @@ ruling, a NOTICES row and the licence text. Without the ruling this task is skip
 - Create: `apps/demo/e2e/stage9-app.e2e.ts`
 - Create: `apps/demo/e2e/stage9-glossary.e2e.ts`
 
-**Why:** Brief §11.3 (glossary lint on the rendered DOM) and the one-session guarantee of D2. The remote test reads the engine's own state (`control.hr === 'pinned'`) before it reads the session-bar badge, and gives the badge 10 s: the badge redraws at ≤ 2 Hz on a page that was in the background, and reading it first raced under two workers (R50 review F7). No retries are added; Task 25 runs this file three times under two workers. `stage9-support.ts` holds the shared server start, helpers and the in-page audits used by Tasks 21–24.
+**Why:** Brief §11.3 (glossary lint on the rendered DOM) and the one-session guarantee of D2. **R50 review F7:** the remote test failed under two workers. Chasing it found two real defects in the Vitals tab on a freshly connected remote, fixed in Task 9: (1) before the monitor's first `state` event the tab did not know the mode and "Set" staged a MANUAL target where a MODELED pin was meant (HR rose, nothing was held, the badge stayed "MODELED") — "Set" and "Return to model" now wait for the first state; (2) that first state seeded each stepper with the live value even after the instructor had typed one, so "Set" pinned the old value (HR stayed at 70) — seeding now never overwrites an edited value. The test also reads the engine's own state (`control.hr === 'pinned'`) before the session-bar badge and gives the badge 10 s (it redraws at ≤ 2 Hz on a page that was in the background). No retries are added; Task 25 runs this file three times under two workers, and the fixer ran it with the accessibility and glossary files under two workers four times in a row, all green. `stage9-support.ts` holds the shared server start, helpers and the in-page audits used by Tasks 21–24.
 
 - [ ] **Step 1: Create `apps/demo/e2e/stage9-support.ts`**
 

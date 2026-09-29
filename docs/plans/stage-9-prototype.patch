@@ -3405,10 +3405,10 @@ index 0000000..f641a8c
 +}
 diff --git a/apps/demo/src/app/panel/vitals.ts b/apps/demo/src/app/panel/vitals.ts
 new file mode 100644
-index 0000000..b310025
+index 0000000..c8e2e3d
 --- /dev/null
 +++ b/apps/demo/src/app/panel/vitals.ts
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,112 @@
 +// Vitals & rhythm (research/13 §4.3 item 2): one row per target — glossary label with its tooltip, the live value, a
 +// stepper in clinical units, and the model state as a chip (CAE Maestro's flags): MODELED (wave), held by the
 +// instructor (pin, accent), changing (progress bar under the row: REALITi's trend arc), forced by the model (override).
@@ -3440,7 +3440,7 @@ index 0000000..b310025
 +  );
 +
 +  // ---- target rows ----
-+  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; release: HTMLButtonElement; bar: HTMLElement; seeded: boolean }> = [];
++  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; set: HTMLButtonElement; release: HTMLButtonElement; bar: HTMLElement; seeded: boolean }> = [];
 +  const groups = new Map<string, HTMLElement>();
 +  for (const s of VITALS) {
 +    let g = groups.get(s.group);
@@ -3462,7 +3462,14 @@ index 0000000..b310025
 +      h('div', { class: 'lbl' }, glossLabel(s.n), chip), h('span', { class: 'nowwrap' }, now, h('span', { class: 'unit' }, s.unit)),
 +      h('div', { class: 'edit' }, st.el, set, release), bar);
 +    g.append(row);
-+    rows.push({ s, row, now, chip, st, release, bar, seeded: false });
++    const entry = { s, row, now, chip, st, set, release, bar, seeded: false };
++    // the first state seeds the stepper with the live value, unless the instructor has already typed or stepped one:
++    // a late first state must never overwrite what they chose (R50 review F7: the remote pinned the old value)
++    const touched = () => void (entry.seeded = true);
++    st.input.addEventListener('input', touched);
++    st.input.addEventListener('change', touched);
++    for (const b of st.el.querySelectorAll('button')) b.addEventListener('pointerdown', touched);
++    rows.push(entry);
 +  }
 +
 +  const releaseAll = button('Return all to the model', () => {
@@ -3474,7 +3481,14 @@ index 0000000..b310025
 +  c.onRefresh(() => {
 +    const st = link.ctl.state;
 +    const m = mode();
-+    setText(modeNote, m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
++    // "Set" stages a pin in MODELED and a target in MANUAL, so it waits for the monitor's first state: a remote that has
++    // just connected does not know the mode yet, and staging a target where a pin was meant held nothing (R50 review F7)
++    const known = st !== null && st !== undefined;
++    for (const r of rows) {
++      r.set.disabled = !known;
++      r.release.disabled = !known;
++    }
++    setText(modeNote, !known ? 'Waiting for the monitor\'s state before a value can be set.' : m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
 +    releaseAll.hidden = m !== 'modeled';
 +    setText(rnow, link.ctl.rhythm ? rhythmLabel(link.ctl.rhythm) : '--');
 +    for (const r of rows) {
