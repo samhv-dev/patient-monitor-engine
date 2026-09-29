@@ -65,7 +65,7 @@ export interface NeuroState {
 
 const IDLE_RESP: NeuroResp = {
   opioidDep: 0, hypnoticDep: 0, totalDep: 0, veRest: 1, rrMult: 1, vtMult: 1, apnoea: false, pMaxMult: 1, obstruction: 0, nmbVtMult: 1, cleft: 0,
-  loc: 0, // FU-6
+  loc: 0, pain: 0, hvrDep: 0, // FU-6
 };
 
 export function createNeuroState(profile: PatientProfile | undefined, seed: number): NeuroState {
@@ -199,7 +199,7 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   // drive
   const natural = ns.airway === 'none' || (ns.airway === 'auto' && !env.mechanical);
   const wasApnoeic = ns.resp.apnoea;
-  ns.resp = neuroResp({ vent: x.vent, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, hypnotic: d.hypnotic }); // FU-6: consciousness reaches the drive
+  ns.resp = neuroResp({ vent: x.vent, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive
   // outputs (7d, 7e)
   ns.outputs = neuroOutputs({ diRaw: d.diRaw, opioidFentEq: opioidFentEq(x.brain), antinoc: d.antinoc, thumbBlock: th.b, hypEq: d.hypEq });
   ns.antinoc = ns.outputs.antinoc;

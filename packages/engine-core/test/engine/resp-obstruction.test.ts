@@ -9,7 +9,7 @@ import { VT_MAX_ML_KG } from '../../src/l2/neuro/spont.ts';
 import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
 
 describe('FU-6 R3(b, c): obstruction is a load (was RR 41 at VT 200; RR 45 × 1.57 L in laryngospasm)', { timeout: 600_000 }, () => {
-  it('propofol 2 mg/kg, natural airway, room air: RR ≤ 30, VT < 100 mL within 60 s, SaO2 < 90 within 2 min (measured 25.3 / 44 s / 61 s; plan 18.1 / 50 s / 55 s R1-emulated)', async () => {
+  it('propofol 2 mg/kg, natural airway, room air: RR ≤ 30, VT < 100 mL within 60 s, SaO2 < 90 within 2 min (measured 24.0 / 44 s / 59 s; plan 18.1 / 50 s / 55 s R1-emulated)', async () => {
     const e = rig6();
     await runTo(e, 300);
     send(e, { kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' });
@@ -28,7 +28,7 @@ describe('FU-6 R3(b, c): obstruction is a load (was RR 41 at VT 200; RR 45 × 1.
     expect((tVt ?? Infinity) - 300).toBeLessThanOrEqual(60);
     expect((tSa ?? Infinity) - 300).toBeLessThanOrEqual(120);
   });
-  it('3 min of complete obstruction after propofol 1 mg/kg: RR rises ≤ 5/min, effort ≥ 2, neural VT ≤ ceiling; release: PaCO2 ≥ 38 (measured 14.9 → 19.5 / 4.83 / 39.7; plan 12.6 → 16.3 / 2.25 / ≥ 41 R1-emulated)', async () => {
+  it('3 min of complete obstruction after propofol 1 mg/kg: RR rises ≤ 5/min, effort ≥ 2, neural VT ≤ ceiling; release: PaCO2 ≥ 38 (measured 14.7 → 19.5 / 4.54 / 40.0; plan 12.6 → 16.3 / 2.25 / ≥ 41 R1-emulated)', async () => {
     const e = rig6();
     await runTo(e, 480);
     send(e, { kind: 'drug', drugId: 'propofol', dose: 1, unit: 'mg/kg', route: 'iv' });

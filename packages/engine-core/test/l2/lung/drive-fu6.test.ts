@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APNOEA_VE_IN, APNOEA_VE_OUT, drive, WAKE_MMHG, WAKE_QUANTILES, wakeShiftMmHg, type DriveInputs } from '../../../src/l2/lung/drive.ts';
+import { APNOEA_VE_IN, APNOEA_VE_OUT, drive, HVR_INDEP_VE, hypoxicFactor, WAKE_MMHG, WAKE_QUANTILES, wakeShiftMmHg, type DriveInputs } from '../../../src/l2/lung/drive.ts';
 import { seedStream, uniform } from '../../../src/rng/sfc32.ts';
 
 const X: DriveInputs = { paco2: 40, pao2: 100, paco2Set: 40, ve0: 6, co2SlopeMult: 1, opioidDep: 0, hypnoticDep: 0, pain: 0, evlwi: 7, vt0: 500, rr0: 12 };
@@ -17,6 +17,23 @@ describe('FU-6 R3(a): the wakefulness drive (D4)', () => {
     expect(drive(hyper).rr).toBeCloseTo(12 * Math.SQRT2, 6);
     expect(drive({ ...hyper, load: 1 }).rr).toBeCloseTo(12, 6);
     expect(drive({ ...hyper, load: 1 }).vt).toBeCloseTo(1000, 6);
+  });
+  it('R12: pain and the PE J-receptor drive add ventilation; hvrDep removes the hypoxic arm only', () => {
+    expect(drive({ ...X, pain: 1 }).ve).toBeCloseTo(6 * 1.3, 9); // PAIN_GAIN 0.3
+    expect(drive({ ...X, jDrive: 1 }).ve).toBeCloseTo(6 * 3.4, 9); // J_PE_VE_FRAC 2.4 of the resting VE, ADDED
+    expect(drive({ ...X, paco2: 30, jDrive: 1 }).ve).toBeCloseTo(6 * 2.4, 9); // non-chemical: persists below the CO2 threshold
+    expect(drive({ ...X, jDrive: 1 }).rr).toBeGreaterThan(drive({ ...X, paco2: 44 }).rr); // rapid shallow at the same VE (+J_PE_RR)
+    const hyp = { ...X, pao2: 50 };
+    expect(drive(hyp).ve).toBeGreaterThan(1.5 * drive(X).ve);
+    expect(drive({ ...hyp, hvrDep: 1 }).ve).toBeCloseTo(drive(X).ve, 9);
+  });
+  it('F9: hypoxia drives breathing BELOW the CO2 threshold — PaO2 50 with PaCO2 30 breathes on the hypoxic plateau', () => {
+    const low = { ...X, paco2: 30, pao2: 50 }; // B = 36 awake: the CO2 fan is 0
+    expect(drive({ ...X, paco2: 30 }).ve).toBe(0); // normoxic: apnoea below the threshold, as before
+    expect(drive(low).ve).toBeCloseTo(HVR_INDEP_VE * 6 * (hypoxicFactor(50) - 1), 9); // ≈ 3.06 L/min, 0.51 × resting
+    expect(drive({ ...low, wake: 1 }).ve).toBeGreaterThan(APNOEA_VE_IN * 6); // unconscious too (the plateau ignores B)
+    expect(drive({ ...low, hvrDep: 1 }).ve).toBe(0); // a fully depressed carotid body: apnoea again
+    expect(drive({ ...X, pao2: 50 }).ve).toBeCloseTo(6 * hypoxicFactor(50), 9); // above the threshold the fan governs: unchanged
   });
   it('apnoea below 10 % of resting VE, resuming above 15 % (hysteresis)', () => {
     const at = (ve: number) => 40 - 6 / 1.5 + ve / 1.5; // PaCO2 giving this chemo VE

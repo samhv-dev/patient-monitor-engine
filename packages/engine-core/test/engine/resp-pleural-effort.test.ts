@@ -6,7 +6,7 @@ import { CMH2O_TO_MMHG, P_PL0 } from '../../src/l2/circ/params.ts';
 import { fineWindow, rig6, runTo, send } from '../helpers/fu6.ts';
 
 describe('FU-6 R3(b): obstructed efforts reach the pleural space (was the resting value)', { timeout: 600_000 }, () => {
-  it('3 min of complete obstruction after propofol 1 mg/kg: pleural minimum ≥ 10 cmH2O below a resting breath (measured −32.5 vs −6.9 mmHg; plan −17.0 R1-emulated)', async () => {
+  it('3 min of complete obstruction after propofol 1 mg/kg: pleural minimum ≥ 10 cmH2O below a resting breath (measured −30.1 vs −6.9 mmHg; plan −17.0 R1-emulated)', async () => {
     const e = rig6();
     await runTo(e, 480);
     send(e, { kind: 'drug', drugId: 'propofol', dose: 1, unit: 'mg/kg', route: 'iv' });

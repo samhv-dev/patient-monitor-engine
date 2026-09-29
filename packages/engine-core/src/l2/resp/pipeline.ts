@@ -490,6 +490,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
       ibwKg: rs.pat.ibwKg, airwayObs: d.airway === 'obstructed' ? 1 : 0, // FU-6 R3(b), R3(c)
+      jDrive: Math.min(1, rs.lungSpecs.reduce((m, s) => (s.id === 'pe' ? Math.max(m, s.severity) : m), 0)), // FU-6 R12
     });
   }
   const va = alveolarVentilation(d, t, deadSpace(rs, l1));

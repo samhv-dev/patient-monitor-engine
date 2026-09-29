@@ -23,31 +23,32 @@ async function induce(propMgKg: number, pre?: Record<string, unknown>, seed = 7)
 }
 
 describe('FU-6 R3(a): induction apnoea (was none: RR 17–20 via SGA)', { timeout: 600_000 }, () => {
-  it('awake baseline unchanged; propofol 2 mg/kg alone, seed 7 (the modal draw): a short apnoea, 10–90 s (measured 32 s; plan 28 s, 42 s R1-emulated)', async () => {
+  it('awake baseline unchanged; propofol 2 mg/kg alone, seed 7 (the modal draw): a short apnoea, 10–90 s (measured 36 s; plan 28 s, 42 s R1-emulated)', async () => {
     const r = await induce(2);
     expect(Math.abs(r.pa299 - r.pa60)).toBeLessThan(1); // the central lag moves no resting value
     expect(r.apnoeaS).toBeGreaterThanOrEqual(10);
     expect(r.apnoeaS).toBeLessThanOrEqual(90);
   });
-  it('2.5 mg/kg is longer than 2 mg/kg (measured 42 vs 32 s; plan 44 vs 28 s)', async () => {
+  it('2.5 mg/kg is longer than 2 mg/kg (measured 50 vs 36 s; plan 44 vs 28 s)', async () => {
     expect((await induce(2.5)).apnoeaS).toBeGreaterThan((await induce(2)).apnoeaS);
   });
-  // R45: the opioid arms miss on the merged main (FU-4 R1 root + V.1). The opioid flattens the CO2-response slope
-  // (opioidDep ≈ 0.63 after fentanyl 2 µg/kg) but does not shift the apnoeic threshold, so the propofol apnoea barely
-  // lengthens; no constant names these bands as its fit target (WAKE_QUANTILES is fitted to the label's propofol-alone
-  // bands) — not tuned; calibration queue + Q-FU6-1 (gate note).
-  it.fails('an opioid prolongs it: fentanyl 2 µg/kg 60–240 s — measured 36 s (FU-6 R3a, band 60–240 s; plan 62 s)', async () => {
+  // R45: with Task 4 alone the opioid arms fell short (fentanyl 36 s, remifentanil 38 s: the opioid flattens the CO2
+  // slope, opioidDep ≈ 0.63, without shifting the threshold, and the undepressed hypoxic arm ended the apnoea on room
+  // air). Since Task 10 (R12: hvrDep — the opioid removes the hypoxic rescue) the apnoea ends only on CO2 at the
+  // flattened slope: fentanyl 411 s now OVERSHOOTS its 60–240 s band (it.fails with the number) and remifentanil 559 s
+  // meets its ≥ 90 s band (flipped). No constant names these bands as its fit target — not tuned; Q-FU6-1 (gate note).
+  it.fails('an opioid prolongs it: fentanyl 2 µg/kg 60–240 s — measured 411 s (FU-6 R3a/R12, band 60–240 s; 36 s before Task 10; plan 62 s)', async () => {
     const f = await induce(2, { kind: 'drug', drugId: 'fentanyl', dose: 2, unit: 'mcg/kg', route: 'iv' });
     expect(f.apnoeaS).toBeGreaterThanOrEqual(60);
     expect(f.apnoeaS).toBeLessThanOrEqual(240);
   });
-  it.fails('an opioid prolongs it: remifentanil 0.1 µg/kg/min ≥ 90 s — measured 38 s (FU-6 R3a, band ≥ 90 s; plan 124 s)', async () => {
+  it('an opioid prolongs it: remifentanil 0.1 µg/kg/min ≥ 90 s (measured 559 s; was 38 s before Task 10\'s hvrDep; plan 124 s)', async () => {
     const r = await induce(2, { kind: 'infusion', drugId: 'remifentanil', rate: 0.1, unit: 'mcg/kg/min' });
     expect(r.apnoeaS).toBeGreaterThanOrEqual(90);
   });
   // The label's inductions are given with supplemental oxygen: this row breathes FiO2 0.5 through the SGA, so the
   // apnoea ends on CO2 (on room air F9's hypoxic plateau ends a long apnoea at PaO2 ≈ 40–45 — seeds 6/12: 48 s, not 92 s)
-  it('F7 — probabilistic per the Diprivan label: seeds 1–20 on FiO2 0.5 give apnoea in 25–65 % (label 43 %), the mode 30–60 s, none > 180 s (measured 10/20, < 30 / 30–60 / > 60 s = 2 / 5 / 3, max 100 s; plan 8/20, 1 / 4 / 3, max 110 s)', async () => {
+  it('F7 — probabilistic per the Diprivan label: seeds 1–20 on FiO2 0.5 give apnoea in 25–65 % (label 43 %), the mode 30–60 s, none > 180 s (measured 10/20, < 30 / 30–60 / > 60 s = 1 / 5 / 4, max 114 s; plan 8/20, 1 / 4 / 3, max 110 s)', async () => {
     const d: number[] = [];
     for (let seed = 1; seed <= 20; seed++) d.push((await induce(2, { kind: 'ventilation', source: 'spontaneous', fio2: 0.5 }, seed)).apnoeaS);
     const ap = d.filter((x) => x > 0);

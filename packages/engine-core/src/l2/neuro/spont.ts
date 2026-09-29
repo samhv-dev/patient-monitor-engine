@@ -88,6 +88,7 @@ export interface SpontInputs {
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
   ibwKg?: number; // FU-6 R3(c): the VT ceiling's size (absent = 70)
   airwayObs?: number; // FU-6 R3(b): the airway event's obstruction (1 = `obstructed`: laryngospasm, foreign body)
+  jDrive?: number; // FU-6 R12: acute PE severity (the lung's `pe` spec) — J-receptor drive
 }
 
 export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
@@ -99,10 +100,11 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   s.pc = (s.pc ?? x.paco2) + (x.paco2 - (s.pc ?? x.paco2)) * (1 - Math.exp(-SPONT_DT_S / CENTRAL_TAU_S)); // FU-6 R3(a)
   const out = drive({
     paco2: PERIPH_SHARE * x.paco2 + (1 - PERIPH_SHARE) * s.pc, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
-    opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0,
+    opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: n?.pain ?? 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0, // FU-6 R12: pain
     wakeMmHg: x.wakeMmHg, // FU-6 F7: this patient's drawn wakefulness shift
     wake: n?.loc ?? 0, apnoeic: s.rr === 0, // FU-6 R3(a)
     load: Math.max(n?.obstruction ?? 0, x.airwayObs ?? 0), // FU-6 R3(b)
+    hvrDep: n?.hvrDep ?? 0, jDrive: x.jDrive ?? 0, // FU-6 R12
   }, s.fatigue);
   const strength = n?.pMaxMult ?? 1;
   let { rr, vt } = out;
