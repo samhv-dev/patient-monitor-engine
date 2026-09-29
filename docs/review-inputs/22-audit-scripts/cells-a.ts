@@ -242,7 +242,7 @@ add({ id: 'BF-24', tier: 'P1', ctx: 'X-A GA vent', state: 'class III bleeding', 
     arms, measure: (R) => m({ svo2Low: lab(R.lo!, 'vbg')?.values.so2 ?? NaN, svo2Normal: lab(R.n!, 'vbg')?.values.so2 ?? NaN, svo2Truth: v(R.lo!.rows, 'svo2', tL), lactLow: v(R.lo!.rows, 'lact', tL) }),
     expect: [{ m: 'svo2Low', lo: 30, hi: 65, src: 'SvO2 < 65 % in low output / haemorrhagic shock (Rivers 2001 NEJM 345:1368; Vincent & De Backer 2013 NEJM 369:1726)' },
       { m: 'svo2Normal', lo: 70, hi: 85, src: 'normal SvO2 70–80 % under GA (Miller 10e ch. 36)' }],
-    owner: '7c oxygen.ts o2Delivery (F3)', hand: { verdict: 'WR', why: 'SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:24–27, REGIONAL_* in params.ts:65–67) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)' } });
+    owner: '7c oxygen.ts o2Delivery (F3)', hand: { verdict: 'WR', why: 'SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:24–27, REGIONAL_* in params.ts:65–67) removes 62 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)' } });
 }
 
 // ---- BF-30: lab turnaround reflects the draw time -----------------------------------------------------------------------
