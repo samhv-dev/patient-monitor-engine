@@ -41,10 +41,10 @@ index 0000000..85a7220
 +}
 diff --git a/apps/demo/e2e/stage9-app.e2e.ts b/apps/demo/e2e/stage9-app.e2e.ts
 new file mode 100644
-index 0000000..f86a06a
+index 0000000..357e87a
 --- /dev/null
 +++ b/apps/demo/e2e/stage9-app.e2e.ts
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,66 @@
 +// Stage 9: one document, one engine session. Switching views never restarts the engine (sim time keeps rising, the
 +// monitor host element is the same node), the scenario deep link still works, and a Remote in another page of the same
 +// browser pairs by code and moves the host's patient.
@@ -104,9 +104,12 @@ index 0000000..f86a06a
 +  await remote.locator('[data-var=hr] button', { hasText: 'Set' }).click();
 +  await remote.click('.stagebar button.primary');
 +  await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.values.hr ?? 0), { timeout: 20_000 }).toBeGreaterThan(105);
++  // the engine's own state says HR is held before the badge is read (R50 review F7: the badge redraws at ≤ 2 Hz on a
++  // page that was in the background, so reading it first raced under two workers)
++  await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.control.hr ?? ''), { timeout: 10_000 }).toBe('pinned');
 +  await page.bringToFront(); // a background tab draws no frames, so its session bar waits until it is visible
 +  await go(page, '#/teach');
-+  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held');
++  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held', { timeout: 10_000 });
 +});
 diff --git a/apps/demo/e2e/stage9-glossary.e2e.ts b/apps/demo/e2e/stage9-glossary.e2e.ts
 new file mode 100644
@@ -5821,26 +5824,27 @@ index daa48a0..713ceb2 100644
    font:14px system-ui,sans-serif}
  .pme-drawer[data-open="true"]{transform:none}
 diff --git a/packages/controller/src/session/host-session.ts b/packages/controller/src/session/host-session.ts
-index df58174..48c9a1c 100644
+index df58174..9352bd1 100644
 --- a/packages/controller/src/session/host-session.ts
 +++ b/packages/controller/src/session/host-session.ts
-@@ -240,9 +240,8 @@ export class HostSession {
+@@ -240,9 +240,9 @@ export class HostSession {
      const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
      if (cmd.type === 'time') return this.time(cmd);
      if (cmd.type === 'scenario') return this.scenario(cmd);
 -    if (cmd.type === 'pin' || cmd.type === 'release' || cmd.type === 'setFactor' || cmd.type === 'setMode') {
 -      return reject(`${cmd.type} needs MODELED mode (Stage 7)`);
 -    }
-+    // Stage 9 (E-S9-2): pin/release/setFactor/setMode go to the engine, which validates them (7a implemented MODELED;
-+    // this guard predated it and refused every pin from a panel or a remote).
++    // Stage 9 (E-S9-2): pin, release and setMode go to the engine, which validates them (7a implemented MODELED; this
++    // guard predated it and refused every pin from a panel or a remote). setFactor reaches the engine too and is refused
++    // there with its own reason until the engine models factors.
      // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
      let c = cmd as Command;
      if (cmd.stageGroup) {
 diff --git a/packages/controller/test/session/host-session.test.ts b/packages/controller/test/session/host-session.test.ts
-index 60a25ec..11d513b 100644
+index 60a25ec..e45c460 100644
 --- a/packages/controller/test/session/host-session.test.ts
 +++ b/packages/controller/test/session/host-session.test.ts
-@@ -61,16 +61,15 @@ describe('HostSession', () => {
+@@ -61,19 +61,32 @@ describe('HostSession', () => {
      expect((applied as { resolved: AppliedResolution }).resolved.command).toMatchObject({ id: 'k1', atTick: ack.tick });
    });
  
@@ -5860,6 +5864,23 @@ index 60a25ec..11d513b 100644
      expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
    });
  
++  it('forwards pin, release and setMode to the engine; setFactor is refused by the engine itself (Stage 9 E-S9-2)', async () => {
++    const { command, of, events, host } = setup();
++    command({ type: 'pin', variable: 'hr', value: 90 });
++    command({ type: 'release', variable: 'all' });
++    command({ type: 'setMode', mode: 'modeled' });
++    command({ type: 'setFactor', input: 'contractility', factor: 1.5 });
++    await waitFor(() => of('ack').length === 4);
++    expect(of('ack').map((a) => [a.commandId, a.accepted])).toEqual([['k1', true], ['k2', true], ['k3', true], ['k4', false]]);
++    expect(of('ack')[3]!.reason).toMatch(/setFactor is not implemented/); // the engine's reason, not the removed guard's
++    expect(of('ack').map((a) => a.reason ?? '').join(' ')).not.toMatch(/needs MODELED/);
++    host.advance(2500); // the engine's own 1 Hz state event carries the mode it now runs
++    await waitFor(() => events().some((e) => e.type === 'state' && (e as { mode?: string }).mode === 'modeled'), 3000, 'a MODELED state event');
++  });
++
+   it('hands scenario load/goto/trigger to the Stage 6b hook when one is given', async () => {
+     const seen: string[] = [];
+     const { command, of } = setup({ scenario: (c) => (seen.push(c.action), { accepted: true, tick: 0 }) });
 diff --git a/packages/engine-core/src/l3/alarms/profile.ts b/packages/engine-core/src/l3/alarms/profile.ts
 index 9d161d0..9b9f5d4 100644
 --- a/packages/engine-core/src/l3/alarms/profile.ts

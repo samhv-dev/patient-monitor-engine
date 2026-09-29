@@ -61,8 +61,8 @@ delivered", "FU-5 plan FIXED", "CI amendment 4".
      background (brief §10: no blur over a canvas that changes every frame; the drawer still serves the stage6a/6b
      pages under Developer). Exception E-S9-3.
   2a. `packages/controller/src/session/host-session.ts` and `packages/controller/test/session/host-session.test.ts` —
-     the pre-7a guard that refused every pin/release/setFactor/setMode is removed and the one stub assertion follows
-     (a defect found while prototyping). Exception E-S9-2.
+     the pre-7a guard that refused every pin/release/setFactor/setMode is removed, the one stub assertion follows, and a
+     NEW test covers all four commands through the host (a defect found while prototyping). Exception E-S9-2.
   2b. Per-skin alarm wording (FU-5 R-FU5-6, orchestrator ruling 1 on the R50 review): the `alarms.wording` tables in
      `packages/skins/src/data/skins/{mindray,ge,zoll,lifepak}-like.json` (data), the optional field that lets the closed
      skin schema accept them (`packages/skins/src/{types,schema}.ts`, one field each) and the two lines that read them
@@ -272,8 +272,10 @@ mechanically from it and a script re-applied them (section "Self-review"). Patch
 
 **Defect found while prototyping (E-S9-2).** `packages/controller/src/session/host-session.ts` refuses every `pin`,
 `release`, `setFactor` and `setMode` from a panel or a remote with "needs MODELED mode (Stage 7)", a guard written
-before 7a implemented MODELED. The engine accepts all four (measured: `pin hr 112`, `pin spo2 85`, `pin sbp 90`,
-`release all` accepted on `f8b802d`). Without the fix the instructor cannot hold or return any value — the heart of the
+before 7a implemented MODELED. The engine validates and applies `pin`, `release` and `setMode` (measured: `pin hr 112`,
+`pin spo2 85`, `pin sbp 90`, `release all`, `setMode modeled` accepted); it does not model `setFactor` yet, so after
+the fix `setFactor` is still refused — by the engine, with its own reason ("command type setFactor is not implemented
+until later stages"), which is correct until the engine models factors (R50 review F8). Without the fix the instructor cannot hold or return any value — the heart of the
 CAE pattern. FU-4/FU-5 do not touch the file (checked on their branches). Task 7 removes the guard and changes the one
 existing assertion that pinned the stub (declared exception, below).
 
@@ -291,7 +293,9 @@ documents (the app loads all 11 itself, R-S9-2).
   `packages/controller/test/session/host-session.test.ts` — the test "acks rejections with the engine reason, and
   rejects MODELED-only and 6b-only commands" pinned the stub: its `pin` now expects `accepted: true` (the engine's own
   validation) and its title says so. Not a band (R45 concerns acceptance bands); it is a stale stub assertion. The
-  other three rejections in that test are unchanged.
+  other three rejections in that test are unchanged. A NEW test in the same file (R50 review F8) sends all four
+  commands through the host: `pin` and `release all` accepted, `setMode modeled` accepted and visible in the engine's
+  next `state` event, `setFactor` refused with the engine's own reason. APPROVED by the orchestrator (ruling 2).
 - **E-S9-3** (Task 19): `packages/controller/src/panel/styles.ts` — the 6a drawer's `background:#111c` +
   `backdrop-filter:blur(6px)` become an opaque `#111` (brief §10). No test reads the style.
 - **E-S9-4** (Task 7b; orchestrator ruling 1 on the R50 review, finding F3): Stage 9 takes FU-5's R-FU5-6 per-skin
@@ -317,7 +321,11 @@ documents (the app loads all 11 itself, R-S9-2).
   (brief §6.2) — skin data, Ali's call.
 - **R-S9-2 → controller (6a/6b owner):** `describe`/`describeTransition` print engine ids (`etco2 ≥ 20 → rosc`); the
   app keeps clinical copies (`describe.ts`, `triggers.ts`) — a label hook in the controller would remove the
-  duplication; and `BUILTIN_SCENARIOS` should register all 11 documents (today 5).
+  duplication; and `BUILTIN_SCENARIOS` should register all 11 documents (today 5). After E-S9-2 the host forwards `pin`
+  in either mode and the engine accepts it in MANUAL too, but the 6a drawer (`panel/render-controls.ts:100`, still
+  served under Developer) disables Pin/Release outside MODELED with the stale tooltip "Pin and release need MODELED
+  mode (Stage 7)", and `vocabulary.ts:18` says the same: update the tooltip, or keep the MANUAL gating as a deliberate
+  6a choice with a current tooltip. Stage 9 does not edit either file (R50 review F9).
 - **R-S9-3 → 7k (respiratory mechanics):** publish ΔP, Ppeak, PL, Cdyn, auto-PEEP, VD/VT, ERV/RV/TLC/VC/IC and the
   P–V / F–V loop data on truth paths, and add each path to the glossary's §5.6 entries (`keys`), so Explore →
   "Respiratory mechanics and volumes" fills and timed task 5 passes. Stage 9 Task 0 wires whatever 7k published.
@@ -3408,13 +3416,13 @@ git push
 
 ---
 
-### Task 7: E-S9-2 — the controller forwards pin, release, setFactor and setMode to the engine
+### Task 7: E-S9-2 — the controller forwards pin, release and setMode to the engine (setFactor is refused there)
 
 **Files:**
 - Modify: `packages/controller/src/session/host-session.ts` (delete the stale guard in `apply()`)
-- Modify: `packages/controller/test/session/host-session.test.ts` (the stub assertion becomes the engine's acceptance)
+- Modify: `packages/controller/test/session/host-session.test.ts` (the stub assertion becomes the engine's acceptance; a new test of all four commands)
 
-**Why:** Found while prototyping: the 6a `HostSession` refuses these four commands with "needs MODELED mode (Stage 7)", a guard older than 7a; the engine validates and accepts them (measured). Without this the instructor cannot hold a value or return it to the model from the panel or a remote. **Needs the orchestrator's approval (exception E-S9-2)** because it edits a 6a file and one existing assertion that pinned the stub.
+**Why:** Found while prototyping: the 6a `HostSession` refuses these four commands with "needs MODELED mode (Stage 7)", a guard older than 7a; the engine validates and applies `pin`, `release` and `setMode` (measured), and refuses `setFactor` with its own reason because it does not model factors yet. Without this the instructor cannot hold a value or return it to the model from the panel or a remote. Exception E-S9-2 (APPROVED by the orchestrator, ruling 2 on the R50 review): it edits a 6a file and one existing assertion that pinned the stub, and adds a test of all four commands (R50 review F8).
 
 - [ ] **Step 1: Edit `packages/controller/src/session/host-session.ts`** — delete the stale guard in `apply()`. Find (matches exactly once on `origin/main` `891d4d2`):
 
@@ -3427,11 +3435,12 @@ git push
 replace with:
 
 ```ts
-    // Stage 9 (E-S9-2): pin/release/setFactor/setMode go to the engine, which validates them (7a implemented MODELED;
-    // this guard predated it and refused every pin from a panel or a remote).
+    // Stage 9 (E-S9-2): pin, release and setMode go to the engine, which validates them (7a implemented MODELED; this
+    // guard predated it and refused every pin from a panel or a remote). setFactor reaches the engine too and is refused
+    // there with its own reason until the engine models factors.
 ```
 
-- [ ] **Step 2: Edit `packages/controller/test/session/host-session.test.ts`** — the stub assertion becomes the engine's acceptance. Find (matches exactly once on `origin/main` `891d4d2`):
+- [ ] **Step 2: Edit `packages/controller/test/session/host-session.test.ts`** — the stub assertion becomes the engine's acceptance, and a NEW test of all four commands follows it (R50 review F8). Find (matches exactly once on `origin/main` `891d4d2`):
 
 ```ts
   it('acks rejections with the engine reason, and rejects MODELED-only and 6b-only commands', async () => {
@@ -3462,6 +3471,20 @@ replace with:
     expect(of('ack')[0]!.reason).toMatch(/Stage 5/);
     expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
   });
+
+  it('forwards pin, release and setMode to the engine; setFactor is refused by the engine itself (Stage 9 E-S9-2)', async () => {
+    const { command, of, events, host } = setup();
+    command({ type: 'pin', variable: 'hr', value: 90 });
+    command({ type: 'release', variable: 'all' });
+    command({ type: 'setMode', mode: 'modeled' });
+    command({ type: 'setFactor', input: 'contractility', factor: 1.5 });
+    await waitFor(() => of('ack').length === 4);
+    expect(of('ack').map((a) => [a.commandId, a.accepted])).toEqual([['k1', true], ['k2', true], ['k3', true], ['k4', false]]);
+    expect(of('ack')[3]!.reason).toMatch(/setFactor is not implemented/); // the engine's reason, not the removed guard's
+    expect(of('ack').map((a) => a.reason ?? '').join(' ')).not.toMatch(/needs MODELED/);
+    host.advance(2500); // the engine's own 1 Hz state event carries the mode it now runs
+    await waitFor(() => events().some((e) => e.type === 'state' && (e as { mode?: string }).mode === 'modeled'), 3000, 'a MODELED state event');
+  });
 ```
 
 - [ ] **Step 3: Run**
@@ -3470,13 +3493,13 @@ replace with:
 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run
 ```
 
-Expected: controller 37 files, 215 tests pass (prototype, before FU-4…7k); the changed test expects `[false, true, false, false]`.
+Expected: controller 37 files, 216 tests pass (prototype on `origin/main` `776ebb5`, before FU-4, V.1, FU-6, FU-7, 7k); the changed test expects `[false, true, false, false]`; the new test: `pin`, `release all`, `setMode` accepted, a MODELED `state` event follows, `setFactor` refused with "setFactor is not implemented".
 
 - [ ] **Step 4: Commit and push**
 
 ```bash
 git add packages/controller/src/session/host-session.ts packages/controller/test/session/host-session.test.ts
-git commit -m "fix(controller): forward pin/release/setFactor/setMode to the engine — the pre-7a MODELED guard refused every pin (Stage 9 E-S9-2)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git commit -m "fix(controller): forward pin, release and setMode to the engine; setFactor is refused by the engine until it models factors — the pre-7a MODELED guard refused every pin (Stage 9 E-S9-2)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 git push
 ```
 
@@ -6521,7 +6544,7 @@ ruling, a NOTICES row and the licence text. Without the ruling this task is skip
 - Create: `apps/demo/e2e/stage9-app.e2e.ts`
 - Create: `apps/demo/e2e/stage9-glossary.e2e.ts`
 
-**Why:** Brief §11.3 (glossary lint on the rendered DOM) and the one-session guarantee of D2. `stage9-support.ts` holds the shared server start, helpers and the in-page audits used by Tasks 21–24.
+**Why:** Brief §11.3 (glossary lint on the rendered DOM) and the one-session guarantee of D2. The remote test reads the engine's own state (`control.hr === 'pinned'`) before it reads the session-bar badge, and gives the badge 10 s: the badge redraws at ≤ 2 Hz on a page that was in the background, and reading it first raced under two workers (R50 review F7). No retries are added; Task 25 runs this file three times under two workers. `stage9-support.ts` holds the shared server start, helpers and the in-page audits used by Tasks 21–24.
 
 - [ ] **Step 1: Create `apps/demo/e2e/stage9-support.ts`**
 
@@ -6767,9 +6790,12 @@ test('a remote pairs by code and changes the host patient', async ({ page, conte
   await remote.locator('[data-var=hr] button', { hasText: 'Set' }).click();
   await remote.click('.stagebar button.primary');
   await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.values.hr ?? 0), { timeout: 20_000 }).toBeGreaterThan(105);
+  // the engine's own state says HR is held before the badge is read (R50 review F7: the badge redraws at ≤ 2 Hz on a
+  // page that was in the background, so reading it first raced under two workers)
+  await expect.poll(() => page.evaluate(() => (window as unknown as App).__pmeApp.link.ctl.state?.control.hr ?? ''), { timeout: 10_000 }).toBe('pinned');
   await page.bringToFront(); // a background tab draws no frames, so its session bar waits until it is visible
   await go(page, '#/teach');
-  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held');
+  await expect(page.locator('.sessionbar .mode-badge')).toContainText('1 held', { timeout: 10_000 });
 });
 ```
 
@@ -7270,6 +7296,7 @@ CI=1 npx -y pnpm@9.15.9 test
 npx -y pnpm@9.15.9 build
 npx -y pnpm@9.15.9 check-notices
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 test:e2e
+for i in 1 2 3; do PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage9-app.e2e.ts --workers=2 || break; done   # R50 review F7: stable under load, no retries
 git status --short docs/gates   # the e2e rewrites earlier stages' committed evidence images: restore them
 git checkout -- $(git diff --name-only -- docs/gates | grep -v '^docs/gates/stage-9/')
 ```
