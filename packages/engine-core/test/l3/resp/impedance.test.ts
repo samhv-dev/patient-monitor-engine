@@ -37,6 +37,32 @@ describe('impedance respiration', () => {
     expect(alarm).toBeGreaterThan(25);
     expect(alarm).toBeLessThan(32);
   });
+  it('FU-5 (M10): with the beat times given, a 20 % ripple at the heart period is cardiac overlay — the apnoea is raised 20 s after the last breath and RR reads 0', () => {
+    const st = createImpNum();
+    const beats: number[] = [];
+    let apnoea = -1;
+    for (let m = 0; m < 62.5 * 90; m++) {
+      const t = m / 62.5;
+      if (beats.length === 0 || t - beats[beats.length - 1]! >= 0.75) beats.push(t);
+      const vol = t < 30 ? 250 * (1 - Math.cos((2 * Math.PI * t) / 4)) : 0;
+      if (impStep(st, t, impedanceSample(vol, t, beats.slice(-3), 0.2), 1 / 62.5, beats) === 'apnoea') apnoea = t;
+    }
+    expect(apnoea).toBeGreaterThan(45);
+    expect(apnoea).toBeLessThan(53);
+    expect(impRr(st, 90).value).toBe(0);
+  });
+  it('FU-5 (M11): the skin apnoea time — saadat-like RESP APNEA at 10 s', () => {
+    const st = createImpNum();
+    st.apneaS = 10;
+    let apnoea = -1;
+    for (let m = 0; m < 62.5 * 60; m++) {
+      const t = m / 62.5;
+      const vol = t < 30 ? 250 * (1 - Math.cos((2 * Math.PI * t) / 4)) : 0;
+      if (impStep(st, t, impedanceSample(vol, t, []), 1 / 62.5) === 'apnoea') apnoea = t;
+    }
+    expect(apnoea).toBeGreaterThan(38);
+    expect(apnoea).toBeLessThan(42);
+  });
   it('pleth-derived RR from the pulse-amplitude modulation', () => {
     const beats = Array.from({ length: 80 }, (_, i) => ({ t: i * 0.75, amp: 1 + 0.1 * Math.sin((2 * Math.PI * i * 0.75) / 5) }));
     expect(plethRr(beats, 60)).toBeCloseTo(12, 0);

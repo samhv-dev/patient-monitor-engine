@@ -7,9 +7,9 @@ describe('deviceProfile', () => {
     const p = deviceProfile('saadat-like');
     expect(p.factoryEnabled).toBe(false);
     expect(p.alwaysOn).toEqual(['ASYSTOLE', 'VFIB', 'VTAC', 'APNEA']);
-    expect(p.silence).toEqual({ durationS: 120, suppressesVisual: true, cancelOnNewAlarm: true, technicalActsAsAck: true });
+    expect(p.silence).toEqual({ mode: 'mute', durationS: 120, suppressesVisual: true, cancelOnNewAlarm: true, technicalActsAsAck: true });
     expect(p.pauseS).toBeNull();
-    expect(p.latching).toBe(false);
+    expect(p.latching).toEqual({ visual: 'off', audible: 'off' });
     expect(p.prefix).toBe('none');
     expect(p.arrhythmia.asystoleS).toBe(10);
     expect(p.arrhythmia.vtacRate).toBe(120);
@@ -20,7 +20,7 @@ describe('deviceProfile', () => {
     expect(p.pacer).toBeNull();
   });
 
-  it('philips-like: limits by age band (HR 50–120 / 75–160 / 100–200), desat 80, 4 s / 3 s asystole, 90 s silence, 180 s pause', () => {
+  it('philips-like: limits by age band (HR 50–120 / 75–160 / 100–200), desat 80, 4 s / 3 s asystole, Silence = acknowledge, 120 s pause (FU-5: IntelliVue [S1]/[S2])', () => {
     expect(deviceProfile('philips-like', 'adult').limits.HR).toMatchObject({ low: 50, high: 120, level: 2 });
     expect(deviceProfile('philips-like', 'paed').limits.HR).toMatchObject({ low: 75, high: 160 });
     const neo = deviceProfile('philips-like', 'neo');
@@ -29,10 +29,9 @@ describe('deviceProfile', () => {
     const a = deviceProfile('philips-like');
     expect(a.desat).toBe(80);
     expect(a.arrhythmia.asystoleS).toBe(4);
-    expect(a.silence.durationS).toBe(90);
-    expect(a.silence.suppressesVisual).toBe(false);
-    expect(a.pauseS).toBe(180);
-    expect(a.latching).toBe(true);
+    expect(a.silence).toMatchObject({ mode: 'acknowledge', durationS: null, suppressesVisual: false });
+    expect(a.pauseS).toBe(120);
+    expect(a.latching).toEqual({ visual: 'red', audible: 'off' });
     expect(a.prefix).toBe('asterisks');
   });
 

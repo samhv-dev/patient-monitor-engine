@@ -1,6 +1,7 @@
 // Engine alarm state → alarm sound (request E-4a-3; brief §6.4, §6.4.1): the `alarmStatus` event is the single
 // source; the bridge raises and clears alarms on the 4a AlarmSounder (which sounds only the highest priority,
-// ties first raised) and mirrors the engine's silence/pause. Acknowledged alarms are silent.
+// ties first raised) and mirrors the engine's silence/pause. Acknowledged alarms are silent. FU-5: so are latched
+// alarms under visual-only latching — the engine's `sounding` flag decides (absent in older events: not acknowledged).
 import type { AlarmLevel } from '@pme/audio';
 import type { AlarmStatus } from './alarm-view.ts';
 
@@ -29,7 +30,7 @@ export class AlarmAudioBridge {
   onStatus(st: AlarmStatus): void {
     const t = st.t;
     const want = new Map<string, AlarmLevel>();
-    for (const a of st.active) if (!a.acked) want.set(a.id, a.level);
+    for (const a of st.active) if (a.sounding ?? !a.acked) want.set(a.id, a.level);
     for (const id of this.audible.keys()) if (!want.has(id)) this.sounder.clear(id, t);
     for (const [id, level] of want) if (this.audible.get(id) !== level) this.sounder.raise(id, level, t);
     this.audible = want;

@@ -16,15 +16,25 @@
   "layout": {
     "tiles": [
       [{ "param": "HR", "size": "large" }, { "param": "ART", "extras": ["MEAN"] }, { "param": "NIBP", "extras": ["MEAN"] }, { "param": "NMT", "extras": ["TOF", "PTC"] }],
-      [{ "param": "SpO2", "extras": ["PR"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR"] }, { "param": "TEMP" }, { "param": "BFA", "extras": ["SR"] }]
+      [{ "param": "SpO2", "extras": ["PR", "PI"] }, { "param": "CO2", "extras": ["EtCO2", "AWRR"] }, { "param": "TEMP" }, { "param": "BFA", "extras": ["SR"] }]
     ]
   },
   "ecg": {
     "filters": { "Monitor": [0.5, 40], "Ext. Monitor": [0.5, 150], "Filter": [0.5, 20], "Diag": [0.05, 150] },
     "filterDefault": "Monitor"
   },
-  "hr": { "method": "mean-12rr" },
-  "alarms": { "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2 },
+  "hr": { "method": "mean-12rr", "source": "AUTO" },
+  "spo2": { "avgOptions": [5, 10, 20], "avgDefault": 10, "updateHz": 0.5 },
+  "nibp": { "initialInflation": { "adult": 165, "paed": 130, "neo": 100 } },
+  "alarms": {
+    "repeatS": { "L1": 10, "L2": 20 }, "lowPulses": 2,
+    "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
+    "pause": { "durationS": 120 },
+    "delayS": 3, "spo2DelayS": 10,
+    "latching": { "visual": "red", "audible": "off" },
+    "messageBar": { "rotateAll": true }
+  },
+  "glyphs": { "hrUnavailable": "-?-", "nibpFail": "-?-", "inop": "-?-" },
   "limits": {
     "adult": {
       "values": {
@@ -62,10 +72,22 @@
     "colors": { "tag": "documented", "source": "research/05 §2.1 (IntelliVue factory colour names); brief §6.8", "note": "hex values are [ENG] renderings of the colour names; NBP red (magenta in some profiles)" },
     "colors.NMT": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no NMT row; the Stage 7f demo's tile colour (apps/demo/src/stage7f.ts) kept" },
     "colors.BFA": { "tag": "eng", "source": "ENG", "note": "FU-3 item 11: research/05 §2.1 has no BIS/depth row; the Stage 7f demo's tile colour (apps/demo/src/stage7f.ts) kept" },
-    "layout.tiles": { "tag": "eng", "source": "iec-defaults layout.tiles; research/05 §2.7 (numerics in tiles on the right)", "note": "FU-3 item 11: the IEC default grid plus an NMT tile (TOF ratio %, count, PTC) and a BFA tile (depth index, SR) at the foot of the columns; research/05 documents no IntelliVue NMT/BIS tile layout. Both are module tiles, drawn only while the stimulator / depth monitor publishes" },
+    "layout.tiles": { "tag": "eng", "source": "iec-defaults layout.tiles; research/05 §2.7 (numerics in tiles on the right)", "note": "FU-3 item 11: the IEC default grid plus an NMT tile (TOF ratio %, count, PTC) and a BFA tile (depth index, SR) at the foot of the columns; research/05 documents no IntelliVue NMT/BIS tile layout. Both are module tiles, drawn only while the stimulator / depth monitor publishes. FU-5: the SpO2 tile shows the perfusion indicator beside the pulse (research/05 §6 [S2] IFU p. 120 'Perf')" },
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Philips Monitor/Ext. Monitor/Filter/Diag)" },
     "ecg.filterDefault": { "tag": "documented", "source": "research/05 §2.2; brief §6.8" },
     "hr.method": { "tag": "documented", "source": "brief §3.8 (Philips-like mean-12rr)" },
+    "hr.source": { "tag": "documented", "source": "research/05 §6 [S1] Philips IntelliVue Configuration Guide Rel. J p. 50–51 (Alarms Source default Auto, all profiles)", "note": "FU-5: no valid ECG heart rate and a pulse source present → the pulse becomes the ALARM source (IFU [S2] p. 108: HR/Pulse limits shared, arrhythmia and ECG HR alarms off; Configuration Guide [S1] p. 50 Alarms Source default Auto); the HR numeric keeps -?- (IFU p. 55 LEADS OFF) and the pulse stays in its own tile (relabelNonEcgAs null, inherited) — audit Q4, confirm with Ali" },
+    "spo2": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 66 (average 10 s); IFU [S2] p. 301 (display update typically 2 s); brief §4.3 (options 5/10/20)" },
+    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 303 (initial inflation 165 / 130 / 100 ± 15 mmHg)" },
+    "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 11, 32 (Silence acknowledges all active alarms and INOPs; new alarms are new)", "note": "replaces the ZOLL 90 s mute inherited from iec-defaults (audit M9, research/06 §6)" },
+    "alarms.delayS": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue MP40–90 IFU §3 Alarms (p. 28: \"Alarms are indicated after the alarm delay time. This is made up of the system delay time plus the trigger delay time for the individual measurement\") and §32 Monitor Performance Specifications (p. 294: Alarm signal, System delay \"less than 3 seconds\")", "note": "FU-5 Task 9a (orchestrator ruling on the plan's Open question 20): the vendor's alarm ON-DELAY for the limit alarms — a delay before raising, never a hold that suppresses. Philips publishes no configurable on-delay for HR/pressure limit alarms (the configuration guide [S1] has alarm delays for SpO2 only); the documented system delay bound is used (3 s), the measurement's trigger delay being the engine's own averaging. It removes the 1–3 s HR HIGH blips of an HR hovering on the extreme-tachy threshold (harness A2, A8)." },
+    "alarms.spo2DelayS": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide Rel. J p. 66 (SpO2 High Alarm Delay 10 sec, Low Alarm Delay 10 sec, Desat Delay 20 sec; SmartAlarmDelay Off)", "note": "the same 10 s as iec-defaults (brief §6.4), set here with the Philips source (FU-5 Task 9a)" },
+    "alarms.pause": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 138 (Pause Alarms 1/2/3 min or infinite, default 2 min)" },
+    "alarms.messageBar.rotateAll": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 29–30 (all active alarm messages are shown in the alarm status area in succession; the message changes every two seconds) and p. 40 (a visually latched alarm stays active)", "note": "FU-5 review ruling 4: a latched red stays in the rotation under a live yellow" },
+    "alarms.latching": { "tag": "documented", "source": "research/05 §6 [S1] Philips Configuration Guide p. 135–136, 140 (#H30 OR option: Visual Latching Red, Audible Latching Off); IFU [S2] p. 39–40", "note": "INOPs and short yellow arrhythmia alarms never latch" },
+    "glyphs.hrUnavailable": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55 (LEADS OFF: the numeric shows -?-)" },
+    "glyphs.nibpFail": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 56 (NBP MEASURE FAILED: -?-)" },
+    "glyphs.inop": { "tag": "documented", "source": "research/05 §6 [S2] Philips IntelliVue IFU p. 55–62 ('Numeric is replaced by a -?-' for SpO2, pressure, temperature and CO2 INOPs)" },
     "alarms.repeatS": { "tag": "documented", "source": "research/05 §2.5 (ISO red 5/10/15 s, yellow 10/20/30 s); brief §6.4" },
     "alarms.lowPulses": { "tag": "documented", "source": "research/05 §2.5 (INOP: lower tone ×2); brief §6.4" },
     "limits.adult": { "tag": "documented", "source": "brief §6.8 (Philips factory); research/03 §8.10" },

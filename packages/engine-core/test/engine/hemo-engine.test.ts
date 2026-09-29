@@ -74,6 +74,7 @@ describe('engine + Stage 2 pipeline wiring', () => {
     expect(Math.max(...read(e, 'pleth', 12, 20))).toBe(0);
     const m = ev.find((x) => x.type === 'measurement' && x.t === 20 && 'pi' in x.values) as Extract<EngineEvent, { type: 'measurement' }>;
     expect(m.values.pi?.flag).toBe('invalid');
-    expect(m.values.pr?.flag).toBe('valid'); // falls back to the arterial line
+    expect(m.values.pr?.flag).toBe('invalid'); // FU-5 (audit M12): PR is the oximeter's own rate — no arterial fallback in the SpO2 tile
+    expect(m.values.prAbp?.flag).toBe('valid'); // the arterial line's rate is its own numeric
   });
 });

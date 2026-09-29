@@ -16,6 +16,8 @@ const UNIT: Partial<Record<TileParam, string>> = {
   ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d
   NMT: 'TOF', // FU-3 item 11 (the depth index has no unit)
 };
+/** FU-5: skin `hr.autoPriority` entries → the pulse numeric each publishes (engine profile.ts PULSE_SOURCE). */
+const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 'prAbp', SpO2: 'pr' };
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';
 
@@ -30,6 +32,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;font-size:15px;box-sizing:border-box}',
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
+    '.pme-bar.latched{outline:2px solid currentColor;outline-offset:-2px}', // FU-5: the latched style (text in the level colour, framed)
+    '.pme-inop{max-width:40%;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden}',
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
     '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
@@ -57,6 +61,7 @@ export function deviceText(d: DeviceStatus | null): string {
 interface Tile {
   spec: TileSpec;
   el: HTMLDivElement;
+  label: HTMLSpanElement;
   value: HTMLDivElement;
   sub: HTMLDivElement;
   bell: HTMLSpanElement;
@@ -74,10 +79,12 @@ export class DeviceUI {
   private values: Partial<Record<NumericId, Measured>> = {};
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
+  private nibpPr: number | null = null; // FU-5: the cuff's pulse rate (the NIBP tile's PR extra)
   private status: AlarmStatus | null = null;
   private dev: DeviceStatus | null = null;
   private readonly lamp: HTMLDivElement;
   private readonly bar: HTMLDivElement;
+  private readonly inop: HTMLSpanElement;
   private readonly cd: HTMLSpanElement;
   private readonly allOff: HTMLSpanElement;
   private readonly devEl: HTMLSpanElement;
@@ -91,11 +98,12 @@ export class DeviceUI {
     this.header = doc.createElement('div');
     this.header.className = 'pme-hdr';
     this.header.innerHTML =
-      '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-cd" data-pme="cd"></span>' +
+      '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-inop" data-pme="inop"></span><span class="pme-cd" data-pme="cd"></span>' +
       '<span class="pme-dev" data-pme="dev"></span><span data-pme="alloff"></span><span class="pme-badge" data-pme="badge"></span><span data-pme="date"></span>';
     const q = <T extends HTMLElement>(k: string) => this.header.querySelector(`[data-pme="${k}"]`) as T;
     this.lamp = q('lamp');
     this.bar = q('bar');
+    this.inop = q('inop');
     this.cd = q('cd');
     this.allOff = q('alloff');
     this.devEl = q('dev');
@@ -134,10 +142,10 @@ export class DeviceUI {
         el.dataset.param = spec.param;
         el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
         el.style.fontFamily = r.render.fontStack;
-        el.innerHTML = `<div class="h"><span>${spec.param}</span><span data-pme="bell"></span><span class="u">${UNIT[spec.param] ?? ''}</span></div><div class="lim"><span data-pme="lim"></span></div><div class="v" data-pme="v"></div><div class="s" data-pme="s"></div>`;
+        el.innerHTML = `<div class="h"><span data-pme="lbl">${spec.param}</span><span data-pme="bell"></span><span class="u">${UNIT[spec.param] ?? ''}</span></div><div class="lim"><span data-pme="lim"></span></div><div class="v" data-pme="v"></div><div class="s" data-pme="s"></div>`;
         const v = el.querySelector('[data-pme="v"]') as HTMLDivElement;
         v.style.fontWeight = String(r.render.numericWeight);
-        this.tileList.push({ spec, el, value: v, sub: el.querySelector('[data-pme="s"]') as HTMLDivElement, bell: el.querySelector('[data-pme="bell"]') as HTMLSpanElement, lim: el.querySelector('[data-pme="lim"]') as HTMLSpanElement });
+        this.tileList.push({ spec, el, label: el.querySelector('[data-pme="lbl"]') as HTMLSpanElement, value: v, sub: el.querySelector('[data-pme="s"]') as HTMLDivElement, bell: el.querySelector('[data-pme="bell"]') as HTMLSpanElement, lim: el.querySelector('[data-pme="lim"]') as HTMLSpanElement });
         c.append(el);
       }
       this.tiles.append(c);
@@ -150,7 +158,10 @@ export class DeviceUI {
     if (e.type === 'measurement') {
       Object.assign(this.values, e.values);
       if (e.values.nibpSys?.value != null) this.nibpLast = { sys: e.values.nibpSys.value, dia: e.values.nibpDia?.value ?? 0, map: e.values.nibpMean?.value ?? 0, at: e.t };
-    } else if (e.type === 'nibp') this.nibpEv = e;
+    } else if (e.type === 'nibp') {
+      this.nibpEv = e;
+      if (e.result) this.nibpPr = e.result.pr;
+    }
     else if (e.type === 'alarmStatus') this.status = e;
     else if (e.type === 'deviceStatus') this.dev = e;
   }
@@ -161,8 +172,61 @@ export class DeviceUI {
     this.paintTiles(t);
   }
 
-  private text(m: Measured | undefined, digits = 0): string {
-    return m && m.value !== null && m.flag !== 'invalid' ? m.value.toFixed(digits) : this.r.skin.glyphs.noValue;
+  /**
+   * A numeric as the tile prints it. FU-5 (audit M1, M8): a questionable value carries the skin's mark ("97?", brief
+   * §4.3, research/06 §3.2); an invalid one whose technical alarm is active shows the skin's INOP glyph ("-?-", [S2]
+   * IFU p. 55–62); otherwise the no-value dashes.
+   */
+  private text(m: Measured | undefined, digits = 0, id?: NumericId): string {
+    const g = this.r.skin.glyphs;
+    if (m && m.value !== null && m.flag !== 'invalid') return m.value.toFixed(digits) + (m.flag === 'questionable' ? g.questionable : '');
+    return id !== undefined && this.status?.active.some((a) => a.category === 'technical' && a.numeric === id) ? g.inop : g.noValue;
+  }
+
+  /**
+   * FU-5 (audit M3): the HR tile. The ECG rate; with the leads off an AUTO skin that relabels shows the first valid pulse
+   * of its priority list under that label (saadat-like "PR", research/06 §4.1); otherwise the skin's HR-unavailable
+   * glyph (philips-like "-?-", [S2] IFU p. 55 — the pulse stays in its own tile). Never a "0".
+   */
+  private hrTile(): { main: string; label: string } {
+    const g = this.r.skin.glyphs;
+    if (this.dev?.hrDashes) return { main: g.hrUnavailable, label: 'HR' };
+    const hr = this.values.hr;
+    if (hr && hr.value !== null && hr.flag !== 'invalid') return { main: this.text(hr), label: 'HR' };
+    if (!this.status?.active.some((a) => a.id === 'ecgLeadsOff')) return { main: g.noValue, label: 'HR' };
+    const h = this.r.skin.hr;
+    if (h.source === 'AUTO' && h.relabelNonEcgAs) {
+      for (const k of h.autoPriority) {
+        const src = PULSE_SOURCE[k];
+        const m = src ? this.values[src] : undefined;
+        if (m && m.value !== null && m.flag === 'valid') return { main: this.text(m), label: h.relabelNonEcgAs };
+      }
+    }
+    return { main: g.hrUnavailable, label: 'HR' };
+  }
+
+  /**
+   * FU-5 (audit M11): the skin's tile extras ("PR 76", "PI 1.6", "awRR 12", "T2 36.4", "ΔT 0.4", "ST-II -0.1"). MEAN is the
+   * pressure tiles' own sub-line and NMT/BFA extras are drawn by their formatters (FU-3).
+   */
+  private extras(spec: TileSpec): string {
+    const v = this.values;
+    const out: string[] = [];
+    for (const x of spec.extras ?? []) {
+      if (x === 'PR' && spec.param === 'NIBP') out.push(`PR ${this.nibpPr ?? this.r.skin.glyphs.noValue}`);
+      else if (x === 'PR') out.push(`PR ${this.text(v.pr)}`);
+      else if (x === 'PI') out.push(`PI ${this.text(v.pi, 1)}`);
+      else if (x === 'AWRR') out.push(`awRR ${this.text(v.awrr)}`);
+      else if (x === 'T2') out.push(`T2 ${this.text(v.tempSite, 1)}`);
+      else if (x === 'ST') out.push(`ST-II ${this.text(v.stII, 1)}`); // research/11 glossary #22 (the lead-II ST numeric)
+      else if (x === 'DT') {
+        const a = v.tempCore;
+        const b = v.tempSite;
+        const ok = a && b && a.value !== null && b.value !== null && a.flag !== 'invalid' && b.flag !== 'invalid';
+        out.push(`ΔT ${ok ? Math.abs((a.value as number) - (b.value as number)).toFixed(1) : this.r.skin.glyphs.noValue}`);
+      }
+    }
+    return out.join('  ');
   }
 
   private paintTiles(t: number): void {
@@ -173,20 +237,27 @@ export class DeviceUI {
       const v = this.values;
       let main = g.noValue;
       let sub = '';
+      let label: string = p;
       tile.el.style.display = modulePresent(p, v, t) ? '' : 'none'; // FU-3 item 11: NMT/BFA only while the module publishes
-      if (p === 'HR') main = this.dev?.hrDashes ? g.hrUnavailable : this.text(v.hr);
+      if (p === 'HR') ({ main, label } = this.hrTile()); // FU-5 (M3)
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue)); // FU-3 item 11
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue)); // FU-3 item 11
       else if (p === 'NIBP') {
         const n = formatNibp(this.nibpEv, this.nibpLast);
-        main = n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;
+        // FU-5 (audit M11): a failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)
+        main = this.nibpEv?.phase === 'failed' ? g.nibpFail : n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;
         sub = `${n.sub === '(---)' ? '' : n.sub} ${n.status}`.trim();
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);
         main = `${this.text(s)}/${this.text(d)}`;
         sub = `(${this.text(m)})`;
-      } else if (TILE_NUMERICS[p].numerics.length === 1) main = this.text(v[TILE_NUMERICS[p].numerics[0] as NumericId], p === 'TEMP' || p === 'ST' ? 1 : 0);
-      if (p === 'SpO2') sub = `PR ${this.text(v.pr)}  PI ${this.text(v.pi, 1)}`;
+      } else if (TILE_NUMERICS[p].numerics.length === 1) {
+        const id = TILE_NUMERICS[p].numerics[0] as NumericId;
+        main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
+      }
+      const extra = this.extras(tile.spec); // FU-5 (M11): was a hard-coded "PR … PI …" on SpO2 only
+      if (extra) sub = sub ? `${sub}  ${extra}` : extra;
+      tile.label.textContent = label;
       tile.value.textContent = main;
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
       tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
@@ -206,6 +277,12 @@ export class DeviceUI {
     this.bar.textContent = b.text;
     this.bar.style.background = b.bg;
     this.bar.style.color = b.fg;
+    this.bar.className = `pme-bar${b.latched ? ' latched' : ''}`;
+    this.bar.dataset.latched = String(b.latched);
+    this.inop.textContent = b.inop?.text ?? '';
+    this.inop.style.display = b.inop ? '' : 'none';
+    this.inop.style.background = b.inop?.bg ?? '';
+    this.inop.style.color = b.inop?.fg ?? '';
     const lampColor = b.lamp.startsWith('red') ? '#F00000' : b.lamp.startsWith('yellow') ? '#F0F000' : b.lamp.startsWith('cyan') ? '#00D0D0' : 'transparent';
     this.lamp.style.background = lampColor;
     this.lamp.style.border = `1px solid ${this.r.skin.chrome.divider}`;

@@ -13,7 +13,8 @@
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
     "test:e2e": "playwright test",
     "validate": "pnpm --filter @pme/validation validate",
-    "relay": "pme-relay"
+    "relay": "pme-relay",
+    "audit:monitor": "node --experimental-strip-types --import ./scripts/audit-monitor/hooks.mjs scripts/audit-monitor/cli.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

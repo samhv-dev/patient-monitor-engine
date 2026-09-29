@@ -19,13 +19,16 @@ describe('FU-1 item 7: ge-like / mindray-like layout data', () => {
     expect(tagOf('mindray-like', 'alarms.numericStyle')).toBe('documented');
   });
 
-  it('lane order and tile grid are NOT documented for either, so both keep the badge and the IEC default layout', () => {
+  it('lane order and tile grid are NOT documented for either, so both keep the badge and the IEC default lanes and tiles (FU-5: mindray-like documents split alarm areas)', () => {
     for (const id of ['ge-like', 'mindray-like']) {
       const s = resolveSkin(id).skin;
       expect(s.layout.badge).toBe('LAYOUT UNVERIFIED');
       expect(s.provenance['layout.badge']?.note).toMatch(/lane order and the numeric tile grid/);
       expect(s.provenance['layout.lanes']).toBeUndefined(); // no vendor source: the IEC default is inherited
     }
-    expect(resolveSkin('ge-like').skin.layout).toEqual(resolveSkin('mindray-like').skin.layout); // both inherit it
+    const ge = resolveSkin('ge-like').skin.layout;
+    const mr = resolveSkin('mindray-like').skin.layout;
+    expect([mr.lanes, mr.tiles]).toEqual([ge.lanes, ge.tiles]); // both inherit them
+    expect([ge.messageBars, mr.messageBars]).toEqual(['single-under-header', 'split-technical-physiological']); // [S4] §3.6
   });
 });

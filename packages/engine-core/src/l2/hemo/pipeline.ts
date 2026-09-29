@@ -7,7 +7,6 @@ import { l1Flags, l1Value, pinVar, releaseVar, setL1Target, STATE_SCHEMA, STATE_
 import { rampValue, type RampState } from '../../l1/ramp.ts';
 import { createNibpState, nibpCommand, nibpNextIn, nibpOnPulse, nibpStep, AUTO_INTERVALS_MIN, type NibpOut, type NibpState } from '../../l3/nibp/nibp.ts';
 import { createWaveNumerics, numericsStep, piNumeric, pressureNumerics, prNumeric, type WaveNumerics } from '../../l3/pressure-numerics/numerics.ts';
-import { prSource } from '../../l3/pulse/detector.ts';
 import { uniform, type Sfc32State, type StreamName } from '../../rng/sfc32.ts'; // FU-3 item 16: uniform
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
 import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
@@ -394,10 +393,16 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   }
   const v: Partial<Record<NumericId, Measured>> = {};
   if (lineActive(hs.lines.abp)) {
-    const p = pressureNumerics(hs.num.abp, t);
+    // FU-5 (audit M8): a zero in progress measures the atmosphere — no numerics, the ABP ZEROING INOP instead
+    const zeroing = hs.lines.abp.sensor === 'zeroing' || t < hs.lines.abp.zeroUntil;
+    const none: Measured = { value: null, flag: 'invalid', at: t };
+    const p = zeroing ? { sys: none, dia: none, mean: none, pulsatile: false } : pressureNumerics(hs.num.abp, t);
     v.abpSys = p.sys;
     v.abpDia = p.dia;
     v.abpMean = p.mean;
+    // FU-5 (E-FU5-3): the arterial line's own pulse rate ("Pulse (ABP)"), invalid while non-pulsatile ([S2] p. 57:
+    // "Pulse numeric is displayed with -?-")
+    v.prAbp = p.pulsatile ? prNumeric(hs.num.abp, t) : { value: null, flag: 'invalid', at: t };
   }
   if (lineActive(hs.lines.pap)) {
     const p = pressureNumerics(hs.num.pap, t);
@@ -406,8 +411,8 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     v.papMean = p.mean;
   }
   if (lineActive(hs.lines.cvp)) v.cvpMean = { value: hs.num.cvpAvg, flag: 'valid', at: t };
-  const src = prSource(hs.pleth.state, lineActive(hs.lines.abp));
-  v.pr = src === 'pleth' ? prNumeric(hs.num.pleth, t) : src === 'abp' ? prNumeric(hs.num.abp, t) : { value: null, flag: 'invalid', at: t };
+  // FU-5 (E-FU5-3, audit M12): PR is the oximeter's pulse rate only — the SpO2 tile never shows an arterial-line rate
+  v.pr = hs.pleth.state === 'on' ? prNumeric(hs.num.pleth, t) : { value: null, flag: 'invalid', at: t };
   v.pi = hs.pleth.state === 'on' ? piNumeric(hs.num.pleth, t) : { value: null, flag: 'invalid', at: t };
   hs.out.push({ type: 'measurement', t, values: v });
 
@@ -488,10 +493,16 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       const c = hs.circ;
       if (c.opens.length > 0 && !hs.cpr.active) {
         const bs = c.beats;
-        const svRef = Math.max(1, bs.length >= 4 ? bs.reduce((a, b) => a + b.sv, 0) / bs.length : (c.ref.sv || 70));
+        // FU-5 (E-FU5-1, audit M1): SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a
+        // running mean of the last 16 beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
+        // In MODELED, vasoconstriction (systemic R above rest) lowers PI too [ENG exponent 0.5]; the factor is never above 1
+        // and is 1 in MANUAL (FU-5 review ruling 1: an uncapped factor made PI rise as the MANUAL tracker lowered SVR, and
+        // fall after propofol; the vasodilated finger waits for FU-4's cutaneous tone, R-FU5-9).
+        const svRef = Math.max(1, c.ref.sv || 70);
+        const tone = ctx.l1.mode === 'modeled' ? Math.min(1, Math.max(0.25, Math.sqrt(c.base.rSys / c.p.rSys))) : 1;
         const lb = bs[bs.length - 1];
         const lvet = lb && lb.avClose > lb.avOpen ? lb.avClose - lb.avOpen : 0.3;
-        for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * op.sv) / svRef, lvet, c.p.rSys);
+        for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * op.sv) / svRef, lvet, c.p.rSys);
       }
       c.opens.length = 0;
       hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers

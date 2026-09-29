@@ -10,6 +10,14 @@ export const IMP_THRESHOLD = 0.35; // fraction of the recent breath amplitude [E
 export const IMP_FLOOR = 0.08; // absolute floor (ripple 0.1 exceeds it once breaths vanish) [ENG]
 export const IMP_APNOEA_S = 20; // impedance apnoea 20 s (Philips; saadat 10 s) (brief §4.4)
 export const IMP_INTERVALS = 6;
+/**
+ * FU-5 (audit M10): an impedance cycle whose period is within this fraction of the heart's RR is CARDIAC OVERLAY and is
+ * neither counted nor allowed to reset the apnoea timer — the Philips Auto detection mode "adjusts the detection level …
+ * depending on the presence of cardiac artifact" (research/05 §6 [S2] p. 111–113) [ENG fraction].
+ */
+export const CARDIAC_MATCH = 0.1;
+/** FU-5: a candidate cycle is counted as a breath when no cycle followed it within this many heart periods [ENG]. */
+export const CONFIRM_RR = 1.5;
 
 export interface ImpNum {
   mean: number; // high-pass state
@@ -18,6 +26,12 @@ export interface ImpNum {
   peak: number;
   edges: number[];
   apnoea: boolean;
+  /** FU-5: the skin's impedance apnoea time (skin `limits.*.apneaS`), s; absent = IMP_APNOEA_S. */
+  apneaS?: number;
+  /** FU-5: time of the last detected cycle of any kind (breath or cardiac overlay). */
+  lastAny?: number;
+  /** FU-5: a cycle that is a breath unless the next one follows it at the heart's period (cardiac overlay). */
+  cand?: number;
 }
 
 export function createImpNum(): ImpNum {
@@ -38,23 +52,41 @@ export function impedanceSample(volMl: number, t: number, beats: readonly number
   return volMl / 500 + ripple * r;
 }
 
-export function impStep(st: ImpNum, t: number, x: number, dt: number): 'apnoea' | 'resumed' | null {
+/** FU-5: a confirmed breath at time tb (the detector's edge list, the end of an apnoea). */
+function countBreath(st: ImpNum, tb: number): 'resumed' | null {
+  st.edges.push(tb);
+  if (st.edges.length > IMP_INTERVALS + 1) st.edges.shift();
+  if (!st.apnoea) return null;
+  st.apnoea = false;
+  return 'resumed';
+}
+
+/** `beats` (FU-5): mechanical beat times, newest last — when given, cycles at the heart's period are cardiac overlay. */
+export function impStep(st: ImpNum, t: number, x: number, dt: number, beats?: readonly number[]): 'apnoea' | 'resumed' | null {
   st.mean += (x - st.mean) * (1 - Math.exp(-dt / IMP_HP_TAU_S));
   const y = x - st.mean;
   st.amp = Math.max(Math.abs(y) * 2, st.amp * Math.exp(-dt / 8));
   const thr = Math.max(IMP_FLOOR, IMP_THRESHOLD * st.amp * 0.5);
   let ev: 'apnoea' | 'resumed' | null = null;
+  const n = beats?.length ?? 0;
+  const rrHeart = n >= 2 ? (beats?.[n - 1] as number) - (beats?.[n - 2] as number) : 0;
   if (!st.high && y > thr) {
     st.high = true;
-    st.edges.push(t);
-    if (st.edges.length > IMP_INTERVALS + 1) st.edges.shift();
-    if (st.apnoea) {
-      st.apnoea = false;
-      ev = 'resumed';
+    // FU-5 (M10): a cycle one heart period after the previous one is cardiac overlay, and so was that previous one;
+    // any other cycle is a breath CANDIDATE, counted once the next cycle does not follow it at the heart's period
+    if (st.lastAny !== undefined && rrHeart > 0 && Math.abs(t - st.lastAny - rrHeart) <= CARDIAC_MATCH * rrHeart) st.cand = undefined;
+    else {
+      if (st.cand !== undefined) ev = countBreath(st, st.cand) ?? ev;
+      st.cand = t;
     }
+    st.lastAny = t;
   } else if (st.high && y < 0) st.high = false;
+  if (st.cand !== undefined && (rrHeart <= 0 || t - st.cand > CONFIRM_RR * rrHeart)) {
+    ev = countBreath(st, st.cand) ?? ev; // no heart rate (beats not given): counted at once, as before FU-5
+    st.cand = undefined;
+  }
   const last = st.edges[st.edges.length - 1] ?? 0; // the timer starts at power-on
-  if (!st.apnoea && t - last > IMP_APNOEA_S) {
+  if (!st.apnoea && st.cand === undefined && t - last > (st.apneaS ?? IMP_APNOEA_S)) {
     st.apnoea = true;
     ev = 'apnoea';
   }

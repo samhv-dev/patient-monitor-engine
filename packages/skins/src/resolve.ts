@@ -220,7 +220,7 @@ function audioContract(skin: Skin): AudioContract {
       repeatS: { ...(skin.alarms.repeatS ?? {}) },
       lowPulses: skin.alarms.lowPulses ?? null,
       volume: { ...skin.alarms.volume },
-      silence: { durationS: skin.alarms.silence.durationS, cancelOnNewAlarm: skin.alarms.silence.cancelOnNewAlarm },
+      silence: { durationS: skin.alarms.silence.durationS ?? 0, cancelOnNewAlarm: skin.alarms.silence.cancelOnNewAlarm }, // FU-5: 0 = acknowledge (no mute)
     },
   };
 }

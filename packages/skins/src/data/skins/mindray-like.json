@@ -18,8 +18,45 @@
     "filterDefault": "Monitor",
     "gainLabel": "mm-per-mV"
   },
-  "layout": { "badge": "LAYOUT UNVERIFIED" },
-  "alarms": { "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
+  "layout": { "badge": "LAYOUT UNVERIFIED", "messageBars": "split-technical-physiological" },
+  "alarms": {
+    "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } },
+    "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
+    "latching": { "visual": "off", "audible": "off" },
+    "delayS": 6
+  },
+  "nibp": { "autoIntervalMin": 15, "initialInflation": { "adult": 160, "paed": 140, "neo": 90 } },
+  "hr": { "source": "AUTO" },
+  "arrhythmia": { "asystoleS": { "adult": 5, "neo": 5 }, "vtac": { "rate": 130, "count": 6 }, "pauseAlarm": false },
+  "limits": {
+    "adult": {
+      "values": {
+        "HR": [50, 120], "HR_extremeBrady": 35, "HR_extremeTachy": 160, "SpO2": [90, 100], "SpO2_desat": 80,
+        "NIBP_S": [90, 160], "NIBP_M": [60, 110], "NIBP_D": [50, 90],
+        "ART_S": [90, 160], "ART_M": [70, 110], "ART_D": [50, 90],
+        "CVP_M": [0, 10], "PAP_S": [10, 35], "PAP_M": [0, 20], "PAP_D": [0, 16],
+        "RR": [8, 30], "apneaS": 20, "EtCO2": [25, 50], "TEMP": [35, 38]
+      }
+    },
+    "paed": {
+      "values": {
+        "HR": [75, 160], "HR_extremeBrady": 50, "HR_extremeTachy": 180, "SpO2": [90, 100], "SpO2_desat": 80,
+        "NIBP_S": [70, 120], "NIBP_M": [50, 90], "NIBP_D": [40, 70],
+        "ART_S": [70, 120], "ART_M": [50, 90], "ART_D": [40, 70],
+        "CVP_M": [0, 4], "PAP_S": [24, 60], "PAP_M": [12, 26], "PAP_D": [-4, 4],
+        "RR": [8, 30], "apneaS": 20, "EtCO2": [25, 50], "TEMP": [35, 38]
+      }
+    },
+    "neo": {
+      "values": {
+        "HR": [100, 200], "HR_extremeBrady": 60, "HR_extremeTachy": 220, "SpO2": [90, 95], "SpO2_desat": 80,
+        "NIBP_S": [40, 90], "NIBP_M": [25, 70], "NIBP_D": [20, 60],
+        "ART_S": [55, 90], "ART_M": [35, 70], "ART_D": [20, 60],
+        "CVP_M": [0, 4], "PAP_S": [24, 60], "PAP_M": [12, 26], "PAP_D": [-4, 4],
+        "RR": [30, 100], "apneaS": 15, "EtCO2": [30, 45], "TEMP": [35, 38]
+      }
+    }
+  },
   "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
   "provenance": {
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
@@ -41,9 +78,20 @@
     "colors.TEMP": { "tag": "assumed", "source": "research/05 §2.1", "note": "varies" },
     "sweep.resp": { "tag": "documented", "source": "research/05 §2.2 (Mindray 6.25-50, Resp adds 3 mm/s)" },
     "ecg.filters": { "tag": "documented", "source": "research/05 §2.2 (Mindray Diagnostic/Monitor/Surgical/ST); brief §6.8" },
-    "ecg.filterDefault": { "tag": "eng", "source": "ENG", "note": "Mindray default mode not retrieved" },
+    "ecg.filterDefault": { "tag": "eng", "source": "ENG", "note": "Mindray default mode not retrieved. FU-5: [S4] Mindray BeneVision N Operator's Manual App. C.1.1.1 gives the filter by department (OR: Surgery, CCU: Diagnostic, other departments: Monitor) — 'Monitor' is the other-department default" },
+    "hr.source": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1.1 and C.1.3 (HR/PR Alarm Source Auto)", "note": "FU-5: with the leads off the pulse becomes the alarm source; the HR tile keeps its label (relabelNonEcgAs null, inherited) and the pulse stays in the SpO2 tile" },
     "ecg.gainLabel": { "tag": "documented", "source": "research/05 §2.2 (mm/mV steps)" },
-    "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min)" },
+    "alarms.pause": { "tag": "documented", "source": "research/06 §6 (Mindray pause 2 min); research/05 §6 [S4] Mindray BeneVision N Operator's Manual §39.4.2 (Pause Time default 2 min)" },
+    "alarms.silence": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §10.8 (Alarm Reset: tone off, message marked √, a new alarm sounds again; research/05 source)" },
+    "alarms.latching": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §39.4.3 (latching per priority, default Unselected = non-latching)" },
+    "layout.messageBars": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §3.6 (technical alarm information area beside the physiological alarm information area)" },
+    "alarms.delayS": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual §10.6.5, §39.4.6 (Alarm Delay 6 s for continuously measured parameters; not applied to apnoea and ST)", "note": "FU-5 (audit M6): the engine applies it to every limit alarm except SpO2 (spo2DelayS)" },
+    "nibp.initialInflation": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.5 (initial inflation 160 / 140 / 90 mmHg)" },
+    "arrhythmia.asystoleS": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1.2 (Asystole Delay 5 s, all categories)" },
+    "arrhythmia.vtac": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1.2 (V-Tach Rate 130 adult, V-Tach PVCs 6)", "note": "paed 130 / neo 160 not modelled per band" },
+    "arrhythmia.pauseAlarm": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1.2 (Pause: alarm switch Off, priority Low)", "note": "FU-5: the other yellow arrhythmia switches the engine models are not per-alarm (Tachy/Brady Off here — the engine's mindray-like has no BRADY/TACHY; PVCs/min is CCU On / other departments Off — recorded, the engine keeps it with arrhythmia analysis)" },
+    "nibp.autoIntervalMin": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.5 (Interval: OR 5 min, NICU 30 min, other departments 15 min; Start Mode Clock)", "note": "FU-5: 15 min (other departments) equals the inherited value; recorded, not modelled" },
+    "limits": { "tag": "documented", "source": "research/05 §6 [S4] Mindray BeneVision N Operator's Manual App. C.1.1–C.1.13 (factory alarm limits: ECG, SpO2, Resp, Temp, NIBP, IBP, CO2); FU-5", "note": "replaces the inherited null table (audit M11: no parameter alarm on mindray-like); Extreme Brady/Tachy are absolute here, limit-relative on the IEC skins" },
     "alarms.messageBar": { "tag": "documented", "source": "research/05 §2.4-2.5 (white on red, black on yellow, black on cyan)", "note": "hex [ENG]" },
     "alarms.numericStyle": { "tag": "documented", "source": "research/05 §2.4 (Mindray alarmed numeric: text in a flashing red / yellow / cyan box)" },
     "layout.badge": { "tag": "eng", "source": "ENG", "note": "gate G4a: lane/tile layout not retrieved for Mindray; shown as unverified on screen. FU-1 item 7: still missing — the factory lane order and the numeric tile grid (research/05 §2.7 has neither); lanes/tiles are the inherited IEC default" }

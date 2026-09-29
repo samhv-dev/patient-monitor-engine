@@ -89,7 +89,7 @@ export interface RespState {
   coRatio: number;
   seen: { spo2: number; etco2: number; shunt: number; tempCore: number }; // last targets acted on
   sampler: SamplerState;
-  co2Sensor: 'off' | 'warmup' | 'on';
+  co2Sensor: 'off' | 'warmup' | 'on' | 'occluded'; // FU-5: 'occluded' = the sampling line is blocked (CO2 OCCLUSION INOP)
   warmUntil: number;
   tempSensor: 'off' | 'on';
   tempSite: TempSite;
@@ -364,7 +364,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const shownSa = ctx.blood && !pinned ? pulseOxApparent(sa, ctx.blood.odc) : sa; // Stage 7c: what the oximeter reads (dyshaemoglobins)
   const siteSa = delayStep(rs.delay, shownSa, siteDelay(h.pleth.site, rs.coRatio, piM.value), GAS_DT_S);
   stepSpo2(rs.num.spo2, {
-    siteSa, probe: h.pleth.state, lastFootT: h.num.pleth.feet[h.num.pleth.feet.length - 1] ?? -1e12,
+    siteSa, probe: h.pleth.state, lastFootT: h.num.pleth.beats[h.num.pleth.beats.length - 1]?.t ?? -1e12, // FU-5 (E-FU5-2): a completed pulse
     pi: piM.value, cuffOnLimb: sameLimbCuff(h), cpr: h.cpr.active,
   }, t);
   // coupled truths (brief §4.9: the `state` event shows truth; flags show 'override' when it departs from target)
@@ -414,7 +414,7 @@ function lungStateEvent(rs: RespState, t: number): void {
 function emitSecond(rs: RespState, t: number): void {
   const v: Partial<Record<NumericId, Measured>> = { spo2: spo2Measured(rs.num.spo2, t) };
   if (rs.co2Sensor === 'on') Object.assign(v, co2Numerics(rs.num.co2, t, rs.shownCo2));
-  else if (rs.co2Sensor === 'warmup') for (const k of ['etco2', 'imco2', 'awrr'] as const) v[k] = { value: null, flag: 'invalid', at: t };
+  else if (rs.co2Sensor === 'warmup' || rs.co2Sensor === 'occluded') for (const k of ['etco2', 'imco2', 'awrr'] as const) v[k] = { value: null, flag: 'invalid', at: t };
   v.rr = impRr(rs.num.imp, t);
   v.tempCore = tempMeasured(rs.num.temp.t1, rs.tempSensor === 'on', t);
   v.tempSite = tempMeasured(rs.num.temp.t2, rs.tempSensor === 'on', t);
@@ -482,7 +482,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     }
     const imp = impedanceSample(chestVolume(rs.driver, t), t, rs.beats);
     write('resp', m, imp);
-    const ie = impStep(rs.num.imp, t, imp, DT);
+    const ie = impStep(rs.num.imp, t, imp, DT, rs.beats); // FU-5 (E-FU5-5): cardiac-overlay rejection
     if (ie === 'apnoea') alarm(rs, t, 'apnoea-resp', true, 'APNEA (RESP)');
     else if (ie === 'resumed') alarm(rs, t, 'apnoea-resp', false, 'APNEA (RESP)');
   }
@@ -505,7 +505,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
   }
   if (cmd.type === 'attachSensor') {
     if (cmd.sensor === 'co2') {
-      if (!['off', 'warmup', 'on'].includes(cmd.state)) return 'co2 state must be off, warmup or on';
+      if (!['off', 'warmup', 'on', 'occluded'].includes(cmd.state)) return 'co2 state must be off, warmup, on or occluded';
       return cmd.sampling === undefined || cmd.sampling === 'sidestream' || cmd.sampling === 'mainstream' ? undefined : 'sampling must be sidestream or mainstream';
     }
     if (cmd.sensor === 'temp') {
@@ -576,7 +576,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
   if (cmd.type === 'attachSensor') {
     if (cmd.sensor === 'co2') {
       if (cmd.sampling) rs.sampler.mode = cmd.sampling;
-      rs.co2Sensor = cmd.state === 'warmup' ? 'warmup' : cmd.state === 'on' ? 'on' : 'off';
+      rs.co2Sensor = cmd.state === 'warmup' ? 'warmup' : cmd.state === 'on' ? 'on' : cmd.state === 'occluded' ? 'occluded' : 'off';
       rs.warmUntil = t + CO2_WARMUP_S;
       return true;
     }

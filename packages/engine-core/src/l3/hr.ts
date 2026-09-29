@@ -37,6 +37,11 @@ export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: st
 }
 const SLOW_RR_S = 1.2;
 const ASYSTOLE_S = 4.0;
+/**
+ * FU-5 (audit M16): an R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the
+ * first beats after it are not averaged with it (the HR read "3" for a second after an asystole) [ENG, 10 bpm].
+ */
+export const RESET_RR_S = 6;
 const MIN_RR_S = 0.2; // shorter intervals are double counts and are ignored
 
 export interface HrState {
@@ -56,6 +61,12 @@ export function hrOnQrs(st: HrState, tR: number): void {
   if (st.lastR >= 0) {
     const rr = tR - st.lastR;
     if (rr < MIN_RR_S) return;
+    if (rr > RESET_RR_S) {
+      st.rrs = [];
+      st.long = { rr: [], end: [] };
+      st.lastR = tR;
+      return;
+    }
     st.rrs.push(rr);
     if (st.rrs.length > HR_WINDOW) st.rrs.shift();
     const h = (st.long ??= { rr: [], end: [] });
@@ -71,10 +82,11 @@ export function hrOnQrs(st: HrState, tR: number): void {
 
 /**
  * The HR numeric at time t (call once per second); `avg` is the skin's optional averaging (FU-1), `method` the
- * skin's 12-RR method (FU-3; defaults to the state's).
+ * skin's 12-RR method (FU-3; defaults to the state's), `asystoleS` the skin's asystole time (FU-5: saadat-like reads 0
+ * at its 10 s alarm, not 6 s before it).
  */
-export function hrMeasure(st: HrState, t: number, avg?: HrAveraging, method: HrMethod = st.method): Measured {
-  if (st.lastR >= 0 && t - st.lastR >= ASYSTOLE_S) return { value: 0, flag: 'valid', at: t };
+export function hrMeasure(st: HrState, t: number, avg?: HrAveraging, method: HrMethod = st.method, asystoleS = ASYSTOLE_S): Measured {
+  if (st.lastR >= 0 && t - st.lastR >= asystoleS) return { value: 0, flag: 'valid', at: t };
   if (avg) return averaged(st, t, avg);
   const rrs = st.rrs;
   if (rrs.length < 2) return { value: null, flag: 'invalid', at: t };

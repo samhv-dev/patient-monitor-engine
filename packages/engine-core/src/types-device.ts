@@ -59,6 +59,11 @@ export interface AlarmEntry {
   /** The condition is gone but the alarm is latched (brief §6.4). */
   latched: boolean;
   acked: boolean;
+  /**
+   * FU-5: the alarm sound plays — raised and not acknowledged, and while latched only under the skin's AUDIBLE latching
+   * (philips-like #H30: visual only). Absent in pre-FU-5 events: read as `!acked`.
+   */
+  sounding?: boolean;
 }
 
 /** Brief §6.4 alarm-limit table as the device layer uses it: parameter key → [low, high] (null = no limit). */
