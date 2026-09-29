@@ -5,10 +5,10 @@
 | 80 y hypertensive | 122 | 68 | 4.70 | -26.2 | -21 % | 80 s | -1 | -0.25 | 96 | no |
 | AS + CAD + HTN 75 y | 117 | 67 | 5.28 | -25.1 | -21 % | 80 s | -0 | -0.23 | 92 | no |
 | HFrEF 60 y | 87 | 70 | 5.47 | -18.2 | -21 % | 90 s | 2 | -0.43 | 69 | no |
-| tamponade 1 (250 mL) | 89 | 104 | 3.11 | -70.6 | -79 % | 190 s | -61 | -3.06 | 19 | t+170 s sinus |
+| tamponade 1 (250 mL) | 89 | 104 | 3.11 | -75.5 | -85 % | 250 s | -63 | -3.05 | 14 | t+170 s sinus |
 | hypovolaemia (−1.5 L) | 83 | 117 | 3.05 | -56.8 | -68 % | 55 s | -29 | -1.49 | 27 | no |
-| massive PE (φ 0.8) | 76 | 127 | 2.74 | -60.2 | -79 % | 80 s | -38 | -2.75 | 16 | t+60 s sinus |
-| tension PTX (7b, R) | 49 | 130 | 0.82 | -2.0 | -8 % | 250 s | 0 | 0.00 | 25 | t+10 s asystole |
+| massive PE (φ 0.8) | 76 | 127 | 2.74 | -64.0 | -84 % | 175 s | -45 | -2.76 | 12 | t+60 s sinus |
+| tension PTX (7b, R) | 49 | 130 | 0.82 | -1.3 | -6 % | 80 s | 0 | 0.00 | 22 | t+10 s asystole |
 | septic shock warm | 85 | 157 | 5.22 | -31.2 | -38 % | 85 s | -59 | -0.30 | 50 | no |
 | MANUAL healthy (vs pre-dose) | 107 | 75 | 6.57 | -22.8 | -21 % | 195 s | 0 | -0.34 | 84 | no |
 | MANUAL hypovolaemia | 53 | 80 | 3.23 | -19.4 | -35 % | 260 s | 5 | -0.43 | 35 | no |
@@ -88,4 +88,3 @@
 | L-C1-bleed-prop2 | – | – |  | – | – | 60 s bleed 1500 mL / 600 s; 960 s propofol 2 mg/kg |
 | L-C4-bleed2500 | 640 s | sinus (PEA) | lowFlow | 550 s | 82 | 60 s bleed 2500 mL / 600 s |
 | X1-vf-cpr | 305 s | vfCoarse |  | – | 73 | 300 s VF; 330 s CPR; 450 s adrenaline 1 mg |
-EXIT 0

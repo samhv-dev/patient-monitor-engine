@@ -3,9 +3,9 @@
 Branch `fu-4-integration-polish`, cut from `origin/main` after FU-3 (PR #23). Plan: `docs/plans/fu-4-integration-polish.md`
 (Tasks 0–24, with the R50 review's Phase 2, Tasks 18a–18g), executed in order across four executors (three usage-cap
 resumptions); one commit per task (plus the plan's WIP and R45 follow-ups), pushed after each. `origin/main` was merged
-five times (the last at `4fe5a7a`); every merge brought docs only (`docs/RESUME.md`). **FU-5, V.1, FU-6 and 8b had not
-landed on `main`** at the gate (FU-5's merge-first ruling: §9b); `truth.ts` SKIP_PATH is FU-4's alone
-(`hemo.circ.acc`, `hemo.circ.cppAcc`). Every number below was measured on this branch (seed 7 unless stated) unless
+six times: five brought docs only (`docs/RESUME.md`); the sixth, at the gate (`b13837c`), brought **FU-5 (PR #24)**,
+merged first by the orchestrator's ruling — SKIP_PATH is the union and FU-5's cross-branch items are in §9b. V.1,
+FU-6 and 8b had not landed. Every number below was measured on this branch (seed 7 unless stated) unless
 marked "plan" or "prototype".
 
 The plan's 129 step boxes are ticked; a tick means the step was executed and measured — the steps that were measured
@@ -50,6 +50,7 @@ Contents: 1 what shipped · 2 the clinical scenario table · 3 the audit before 
 | 22 | item 10 | the clinical scenario suite (28 rows) | `test/engine/clinical-suite.test.ts` (SLOW_A) | §2 |
 | 23 | item 10 | `fu4.html` evidence page, 9 screenshots, Chromium smoke | `apps/demo/{fu4.html,src/fu4.ts,scripts/fu4-shots.mjs,e2e/fu4.e2e.ts}` | fu4.e2e |
 | 18e-fix | G-FU4-1 | the humoral arm's effect (venous + its SVR share, seam `ext.endoHumSvrF`) × (1 − (t − arrest.t)/`NO_FLOW_S`) in the declared arrest; bit-identical while perfusing | `l2/circ/model.ts`, `l2/endo/{core,adapters}.ts` | clinical-suite CPR-alone flipped; E-FU4-19 |
+| gate | FU-5 | merged `origin/main` (FU-5, #24): SKIP_PATH union; FU-5's cross-branch fidelity items (§9b) | `truth.ts`; FU-5's `fidelity-*` tests (E-FU4-20) | fidelity 58 green |
 | gate | D3 | `TAU_HYP_S` re-fit to the middle of the moved plateau, 360 → **300 s** | `coronary.ts` | circ-hypoxic-arrest |
 
 ## 2. The clinical scenario table (Task 22; audit rig: ETT, VCV 12 × 600, PEEP 5, FiO2 0.5; seed 7; truth values)
@@ -186,6 +187,9 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
 - **E-FU4-17** `neuro-spont.test.ts` reference re-derived (criterion unchanged). Used.
 - **E-FU4-19 (new, orchestrator ruling G-FU4-1 final, 2026-09-29)** `clinical-suite.test.ts`: the 2 L full-exsanguination
   ROSC row becomes an `it.fails` with its number (none in 10 min; was +105 s), the threshold a measurement. Used.
+- **E-FU4-20 (new, orchestrator ruling at the FU-4 gate, 2026-09-29)** FU-5's `fidelity-arrest.test.ts` (the PEA HR
+  re-stated against the electrical rate; the static-S/D spread split out), `fidelity-lowflow.test.ts` (three short-cycle
+  guards split out as `it.fails`), `fidelity-resp.test.ts` (ear lag 5–12 → 5–13 s, declared). Used.
 - **E-FU4-18** (FU-6's Request 3) `l2/ecg/rhythm-engine.ts` 236–263 (`finiteOr`, `nonFiniteIsLoud`) and 282–295 (the
   clamp in `planUntil`). Used; **no clamp fired** in any run of this gate (tests run loud).
 
@@ -361,20 +365,40 @@ New:
 28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled. **Ruled: they stay pinned as `it.fails` with numbers (R45).** Ali's Q1 conflict (healthy −23 %
     vs class III) is his — neither moves.
 
-## 9b. FU-5 (PR #24) — the orchestrator's merge-first ruling, NOT executed on this branch
+## 9b. FU-5 (PR #24) — merged in, and its cross-branch items (orchestrator rulings at the gate, 2026-09-29)
 
-The orchestrator ruled at the gate that FU-5 merges first and that this branch merge `origin/fu-5-monitor-fidelity`
-(`d1a2175`) before the PR, keep both sides (`truth.ts` SKIP_PATH = the union), meet FU-5's four fidelity tests that
-failed on FU-5's trial merge, re-run FU-5's `fidelity-*` slow files and `pnpm audit:monitor`, and record FU-5's
-low-flow screenshot's yellow "**CVP -1<0" (the negative chamber volumes of the exsanguination rig, noted in 18a) for the
-calibration queue. **The merge of the FU-5 branch was refused by this session's permission system**, so none of that
-was done here; the branch's base is `origin/main` at `4fe5a7a`'s merge (docs only). What the next step inherits, as
-ruled: (1) EXTREME BRADY cycling every 3.3 s after a latched ASYSTOLE in Ali's tamponade case, and a 1 s SpO2 LOW PERF
-cycle in the 3 L bleed — fix only on FU-5's L2 signal-quality / L3 alarm side (the `agonal` rate below the asystole
-threshold declared as asystole; LOW PERF hysteresis), else `it.fails` with the cycle counts under an "FU-5 follow-up"
-list; (2) the PEA HR reading 4.3 off the electrical rate (the PEA now decays) and the ear-probe desaturation lag 13 s vs
-12 s — R45 re-statements under a declared exception with one sentence of reason; (3) the "CVP -1" row to the
-calibration queue. Once `#24` is on `main`, `git merge origin/main` brings all of it.
+FU-5 merged to `main` first (`16cdf79`); this branch merged `origin/main` at `b13837c`: one conflict, `truth.ts`
+SKIP_PATH, resolved as the **union** (FU-4's `hemo.circ.acc`, `hemo.circ.cppAcc` + FU-5's `hemo.num`, `resp.num`,
+`hemo.nibp`); every other file auto-merged (`engine.ts`, `hemo/pipeline.ts`, `resp/pipeline.ts`, `vite.config.ts`,
+`package.json`, `.gitignore`). FU-5's `fidelity-*` files on the merged tree first ran 4 failed / 51 passed — the four
+the FU-5 executor had measured — and were then handled as ruled (`7975074`, **E-FU4-20**):
+
+| FU-5 test | measured on the merged tree | ruling | now |
+|---|---|---|---|
+| fidelity-lowflow, Ali's case: no red cycle < 5 s | EXTREME BRADY ×3 (948 s +3.3, 989 s +3.1, 1000 s +3.6) — the decaying PEA at ≈ 18/min (R–R 3.3 s) | small L3 fix or pin | **pinned** `it.fails` (FU-5 follow-up) |
+| fidelity-lowflow, 3 L bleed: no technical cycle < 5 s | SpO2 LOW PERF ×1 (601 s, 1.0 s) | small L2/L3 fix or pin | **pinned** `it.fails` (FU-5 follow-up) |
+| fidelity-lowflow, 3 L bleed: no red cycle < 5 s (masked before by the technical one) | EXTREME BRADY ×1 (956 s, 3.6 s) | as above | **pinned** `it.fails` (FU-5 follow-up) |
+| fidelity-arrest PEA: HR = the electrical rate ± 3 | HR 94.3 vs the commanded 90 (4.3 off); the ELECTRICAL rate is 94.7 — FU-4's continuous MAP reaches 7e, whose stress response scales the MANUAL sinus clock (endoHrF 1.085), rate 91 → 98 | R45 re-statement | asserted against the measured electrical rate (the title's own criterion) |
+| fidelity-arrest PEA: static S/D spread ≤ 5 (masked before by the HR one) | 27/21 (6) at 6 samples | — (found here) | **pinned** `it.fails` (FU-5 follow-up) |
+| fidelity-resp ear desaturation lag 5–12 s | 13 s (FU-4's dead-space root changes the apnoeic course) | R45 re-statement | band re-stated 5–13 s, declared |
+
+The small FU-5-side fixes were not made: EXTREME BRADY cycles at the decaying PEA's own R–R (3.3 s < `AGONAL_RR_S`
+territory, before ASYSTOLE ever latches), so the fix is a change to FU-5's agonal/asystole declaration or its
+extreme-rate clear logic in `l3/alarms/conditions.ts` — not a one-constant change, so it is left to FU-5 as ruled.
+After the handling: **fidelity files 58 tests, all green** (`--no-file-parallelism`, CI=1).
+
+**FU-5 follow-up list:** the four pinned rows above (EXTREME BRADY in the decaying PEA ×2 rigs, LOW PERF 1 s cycle,
+PEA static S/D spread 6).
+
+**`pnpm audit:monitor` on the merged tree (43 scenarios, EXIT 0):** low flow — A1m SpO2 "99?" PI 0.20 LOW PERF, A2
+(Ali) "99?" PI 0.14; PEA HR mean 93 (all three skins), PR invalid +7 s, SpO2 +12 s; VF → CPR PR 110, EtCO2 14–20;
+asystole alarm +4.1/+5.1/+10.1 s (philips/mindray/saadat), no HR_LOW/EXTREME_BRADY; desaturation lag finger 23 s,
+ear 13 s; chatter: nibp-failed ×13 (A1m) and ×5 (Ali, no pressure to measure), CVP_M_HIGH ×4 (rhythm tours),
+EXTREME_TACHY ×4 (mindray tour), PAUSE ×7 (arrhythmia on), HR_HIGH ×5 (step).
+**Calibration queue (recorded, not fixed):** FU-5's low-flow screenshot shows a yellow **"**CVP -1<0"** during the 3 L
+bleed, and the audit's Ali rig shows CVP −2 to −4 mmHg after the arrest — the negative chamber volumes of the
+exsanguination rig noted in 18a (RA −37 mL in VF, RV to −676 mL on the empty-thorax CPR rig): the circuit's linear
+compliances allow negative volume/pressure where a collapsed vein would hold ≈ 0.
 
 ## 10. Verification (at `4fe5a7a` + the S8 flip `93808e7`)
 
