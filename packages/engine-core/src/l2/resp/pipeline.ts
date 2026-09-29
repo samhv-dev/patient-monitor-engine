@@ -473,7 +473,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const side = circSideFlows(h);
   lungGasStep(rs.lung, {
     va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
-    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), volatileMac: 0, sideFlow: side,
+    vo2: x.vo2, vco2, paco2: rs.co2.pf, tempC: x.tempC, bloodL: x.bloodL, coRatio: rs.coRatio, ga, indFactor: inductionFactor(rs.pat), hpvInhibit: ctx.hpvInhibit ?? 0, sideFlow: side, // FU-6 R13
     qRef: CI_LPM_PER_KG * rs.pat.effKg, // Stage 7b: reference flow for the CO2 mix (low flow stays Stage 3's φ)
     ...(x.odc ? { odc: x.odc } : {}), // Stage 7c (E-7c-1): the blood's ODC reaches SaO2/PaO2 truth
   }, GAS_DT_S);

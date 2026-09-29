@@ -120,7 +120,7 @@ export interface GasInputs {
   coRatio: number;
   ga: boolean;
   indFactor: number;
-  volatileMac: number;
+  hpvInhibit: number; // FU-6 R13: 7g's bus.hpvInhibit (0–1)
   /** 7a adapter: measured per-lung flows (L/min) when the circulation exists, else null (fallback split). */
   sideFlow: number[] | null;
   /** Executor addition (Task 14): reference pulmonary flow (L/min, CO_ref); the CO2 mix never sees less. */
@@ -144,7 +144,7 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
     ls.mp = mechParams(lp, aer, blocked);
   }
   const sidePao2 = ls.o2.fa.map((f) => f * 713);
-  ls.perf = perfusion(lp.side, non, sidePao2, ls.hpv, x.volatileMac);
+  ls.perf = perfusion(lp.side, non, sidePao2, ls.hpv, x.hpvInhibit);
   stepHpv(ls.hpv, ls.perf.hypoxic, dt);
   // flows. Executor deviation (Task 14): the O2 side uses the actual flow floored at 0.05 L/min (arrest: q = 0 gave
   // 0/0 = NaN in both mixes); the CO2 mix sees at least the reference flow `qRef`, so a low cardiac output does not
