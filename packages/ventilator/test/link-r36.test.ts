@@ -24,7 +24,9 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
     }
   });
 
-  it('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (RV signature waits for 7a)', async () => {
+  // Orchestrator ruling (V.1 review) 7: the profile now carries 7b's `ph` lungs on 7a's right heart; EtCO2 +5.0 sits on
+  // the band edge (+6.8 in the plan's prototype, +6.0 on main before V.1) — calibration row. If a merge takes it below +5 → it.fails with the numbers (R45).
+  it('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (V.1 on the 7b `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row)', async () => {
     const s = createLinkedSim({ profile: 'pulmonary-hypertension' });
     await run(s, 180);
     const a = snap(s, 150, 180);
@@ -37,20 +39,41 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
     expect(a.map - b.map).toBeGreaterThanOrEqual(8);
   });
 
-  it('tension pneumothorax: plateau rises ≥ 10 cmH2O, SpO2 falls ≥ 4, MAP falls ≥ 20 with CVP rising ≥ 5', async () => {
+  // Stage V.1 (G7b rulings 4+5+13): the tension is the engine's own lung condition — ptxTension replaces ptxSimple;
+  // its pleural pressure reaches 7a through respPleural and the ventilator through lungState.pleuralCmH2O. The
+  // compliance patch, the MANUAL shunt 0.3 and 7a's tensionPtx stand-in are retired.
+  it('tension pneumothorax: plateau rises ≥ 10 cmH2O into the catalogue band 25–50, SpO2 falls ≥ 4, MAP falls ≥ 20 with CVP rising ≥ 5', async () => {
     const s = createLinkedSim({ profile: 'pneumothorax-simple', vent: { pmax: 60 } });
     await run(s, 120);
     const a = snap(s, 90, 120);
-    s.set({ compliance: 18, resistance: 14 });
-    standIn(s, 'pneumothorax-tension');
-    s.send({ type: 'setTarget', variable: 'shunt', value: 0.3 });
+    s.send({ type: 'applyEvent', event: { kind: 'lungCondition', id: 'ptxSimple', severity: 0 } });
+    s.send({ type: 'applyEvent', event: { kind: 'lungCondition', id: 'ptxTension', severity: 0.8 } });
     await run(s, 240);
     const b = snap(s, 210, 240);
     log('ptx simple', a); log('ptx tension', b);
     expect(b.plat - a.plat).toBeGreaterThanOrEqual(10);
+    expect(b.plat).toBeGreaterThanOrEqual(25);
+    expect(b.plat).toBeLessThanOrEqual(50);
     expect(a.spo2 - b.spo2).toBeGreaterThanOrEqual(4);
     expect(a.map - b.map).toBeGreaterThanOrEqual(20);
     expect(b.cvp - a.cvp).toBeGreaterThanOrEqual(5);
+  });
+
+  // On FU-4's tree the lungs' tension builds its pleural pressure through F3's one-way valve toward the catalogue ceiling
+  // (0.8 × 25 mmHg = 27.2 cmH2O): 17.5 cmH2O at 90 s (the plan's step model had 27.2 at once) — the plateau is inside
+  // the band from the pressure built so far (gate note §1, §8).
+  it('tension-pneumothorax profile (G7b ruling 5, calibration row "tension-ptx ventilator plateau"): plateau 25–50, ΔP 20–45 on the engine\'s lungs (90 s: plateau 26.0, ΔP 21.0, pleural 17.5 building toward 27.2)', async () => {
+    const s = createLinkedSim({ profile: 'pneumothorax-tension', vent: { pmax: 60 } });
+    await run(s, 90);
+    const m = s.vs.p.measured;
+    const ls = [...s.events].reverse().find((e) => e.type === 'lungState') as { pleuralCmH2O?: number } | undefined;
+    if (process.env.PRINT) console.log(`R36 tension profile: plat ${m.PLAT.toFixed(1)} ΔP ${(m.PLAT - s.vs.cfg.peep).toFixed(1)} pip ${m.PIP.toFixed(1)} C ${s.vs.cfg.compliance} pleural ${ls?.pleuralCmH2O}`);
+    expect(ls?.pleuralCmH2O).toBeGreaterThan(5.44 + s.vs.cfg.peep); // above PEEP: the lung is re-opened each breath
+    expect(ls?.pleuralCmH2O).toBeLessThanOrEqual(27.2 + 0.05); // the catalogue ceiling (0.8 × 25 mmHg)
+    expect(m.PLAT).toBeGreaterThanOrEqual(25);
+    expect(m.PLAT).toBeLessThanOrEqual(50);
+    expect(m.PLAT - s.vs.cfg.peep).toBeGreaterThanOrEqual(20);
+    expect(m.PLAT - s.vs.cfg.peep).toBeLessThanOrEqual(45);
   });
 
   // NEEDS A RULING NR-3: the PE stand-in is now Stage 7a's own condition (φ 0.6): CO −8 %, EtCO2 unchanged — the EtCO2 fall
