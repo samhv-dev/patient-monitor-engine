@@ -144,8 +144,11 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   accent (periwinkle `#8C9BFF` dark / `#3A4FD9` light) marks instructor-controlled state only. Alarm colours are NOT
   shell tokens: `applySkinAlarmColours` copies the active skin's `alarms.messageBar` L1–L3 into `--alarm-*` and swaps
   the text to black or white when the skin's pair is under 4.5:1 (research/13-ui-design-references rule 9: black text
-  on bright red). The `.bench` class sets `color`/`background` itself (a computed colour inherited from `body` would
-  otherwise keep the dark theme's text — found in the prototype).
+  on bright red). `AppSession.setSkin` applies them on EVERY skin or theme change, wherever it comes from (Start,
+  Settings, an imported profile), so the mirror never keeps an old skin's colours (R50 review F5; an e2e changes the
+  monitor on Start and compares `--alarm-high-bg` with the new skin's `messageBar.L1.bg`). The `.bench` class sets
+  `color`/`background` itself (a computed colour inherited from `body` would otherwise keep the dark theme's text —
+  found in the prototype).
 - **D6 — System fonts by default.** `--font-ui: system-ui, …`, `--font-num` = the UI face with `tabular-nums`,
   `--font-mono: ui-monospace, …`. IBM Plex Sans/Mono and B612 (SIL OFL 1.1) are NOT shipped until Ali answers Q7; if
   he approves, Task 21 adds the WOFF2 files, the `@font-face` block, the NOTICES row and `LICENSES/OFL-1.1.txt`
@@ -165,7 +168,13 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
 - **D10 — Alarm mirror, steady:** skin colours, `!!!`/`!!`/`!` marker plus the word (High/Medium/Low), latched and
   acknowledged states in words, silence/pause countdowns in words; new high alarms announced once through an
   `aria-live="assertive"` region in the instructor view only; nothing in the shell flashes (brief §6.4; references
-  rules 3, 4, 7). The top-bar alarm count uses the same colours and shows the top message.
+  rules 3, 4, 7). The top-bar alarm count uses the same colours and shows the top message. **Glossary words outside
+  the monitor frame (R50 review F4; research/11 §5.16 rules 1–2):** the mirror line is built by `app/alarms.ts` from the
+  alarm's id and numeric — the glossary label of the numeric plus "high"/"low" ("ART S low"), or a fixed alarm in plain
+  words ("ART: no pulsatile pressure", "Asystole") — never the vendor's text ("**ABPs 21<90"); the monitor's own text
+  is the row's tooltip ("On the monitor: …", marked `data-vendor-title`, which the glossary scan skips because it quotes
+  the device). An alarm id the table does not know keeps the monitor's text without its stars and is listed in the gate
+  note (`alarmLine(…).known === false`) — today every device-layer id is known.
 - **D11 — Sensors attach before traces appear (Laerdal; sweep top-8 #7):** Start's "Start with the sensors off" (a
   site default) builds the patient with every monitoring sensor off; Devices & alarms has one toggle per sensor
   (`attachSensor`), and the log records each attach.
@@ -222,8 +231,14 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   rendered colours, a focusable element without a visible focus indicator, a missing `main`/`h1`, or horizontal page
   scroll. The glossary test (`e2e/stage9-glossary.e2e.ts`) fails on any raw engine id in the text, `aria-label` or
   `title` of a clinical view.
-- **D23 — Frame gate with the whole shell:** the app records `requestAnimationFrame` intervals (`__pmeApp.frames`, the
-  method of `validation-perf.html`), measured with the instructor panel open.
+- **D23 — Frame gate with the whole shell, on the brief's load (R50 review F6):** the app records `requestAnimationFrame`
+  intervals (`__pmeApp.frames`, the method of `validation-perf.html`), measured with the instructor panel open on the
+  8-lane `validation-perf` load: `?load=perf8` mounts the performance page's own layout and patient (ECG II, V5, aVR,
+  ABP, pleth, CVP, CO2, resp; ventilated; NIBP every 3 min; `AppSession` `PERF8`) inside the shell instead of the site's
+  skin. Four rows (1920×1080 and 1280×800 at 60 and 30 fps) plus a 20-minute soak at 1920×1080 60 fps (`--soak 1200`,
+  gated on the worst 60 s window as well). The metric is the MAIN thread's frame intervals, as in 8a: the renderer draws
+  in its worker and exposes no worker frame statistics, so the site's 30 fps cap does not show in it — the gate note
+  says so rather than reading the 30 fps rows as proof that the worker drew at 30.
 - **D24 — The 6a drawer's `backdrop-filter: blur(6px)` is removed** (the one controller edit), for the stage6a/6b pages
   still served under Developer; the app's own drawer is opaque from the start (brief §10).
 - **D25 — Shortcuts** (brief §9, ignored while typing): `i` monitor ↔ instructor (the 6a reveal, also 5 taps top-left
@@ -2816,7 +2831,7 @@ import { SCENARIO_META } from './scenario-meta.ts';
 import { transitionText } from './triggers.ts';
 
 /** camelCase or dotted engine ids ("etco2", "vfCoarse", "mon.hr"), build stages and rulings. */
-const LEAK = /\b(?!(?:mmHg|cmH|pH|mEq|kPa|iCa|mOsm|mL|dL|mA)\b)[a-z]+[A-Z][A-Za-z]*\b|\b[a-z]+\.[a-z]+\b|\bStage \d|\b7[a-k]\b|\bR\d{2}\b|\b(etco2|spo2|fio2|sbp|dbp|hr|rosc|vf)\b/;
+const LEAK = /\b(?!(?:mmHg|cmH|pH|mEq|kPa|iCa|mOsm|mL|dL|mA|awRR)\b)[a-z]+[A-Z][A-Za-z]*\b|\b[a-z]+\.[a-z]+\b|\bStage \d|\b7[a-k]\b|\bR\d{2}\b|\b(etco2|spo2|fio2|sbp|dbp|hr|rosc|vf)\b/;
 
 describe('clinical copy', () => {
   it('the library holds every scenario document and every card has meta written for learners', () => {
@@ -2886,7 +2901,7 @@ git push
 - Create: `apps/demo/src/app/staging.ts`
 - Create: `apps/demo/src/app/staging.test.ts`
 
-**Interfaces:** `AppSession` (`code`, `host`, `driver`, `panel`, `panelTransport`, `monitor`, `spec`, `mode`, `live`, `onEvent`, `onMount`, `simNow`, `send`, `setTimeScale`, `setPaused`, `setSkin`, `enableSound`, `restart`, `loadScenario`, `destroy`); `Link` (`ctl`, `host`, `alarms`, `device`, `log`, `ramps`, `send`, `note`, `onChange`, `alarmSummary`), `logCsv`; `Staging` (`submit`, `commit`, `discard`, `autoApply`, `transitionS`, `lines`).
+**Interfaces:** `AppSession` (`code`, `host`, `driver`, `panel`, `panelTransport`, `monitor`, `spec`, `mode`, `live`, `onEvent`, `onMount`, `simNow`, `send`, `setTimeScale`, `setPaused`, `setSkin` (also applies the skin's alarm colours, R50 review F5), `enableSound`, `restart`, `loadScenario`, `destroy`; option `load: 'perf8'` mounts `PERF8`, the Stage 8a 8-lane performance load, for the frame gate, R50 review F6); `Link` (`ctl`, `host`, `alarms`, `device`, `log`, `ramps`, `send`, `note`, `onChange`, `alarmSummary`), `logCsv`; `Staging` (`submit`, `commit`, `discard`, `autoApply`, `transitionS`, `lines`).
 
 **Why:** `AppSession` (D2) owns the monitor, the 6a host session and the 6b driver; `restart`/`loadScenario` remount behind a stable `HostTarget`; `onMount` lets the ventilator link re-attach. `Link` (D3) is what every panel talks to: the controller session plus a tap of the same transport (alarmStatus/deviceStatus), onset ramps for the trend markers (D9) and the clinical log with CSV export. `Staging` (D7) keeps one entry per control and commits them as one stage group with one onset.
 
@@ -2907,6 +2922,7 @@ import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } f
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { ageBandOf, profileOf, type PatientSpec } from './patients.ts';
+import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
 export interface SessionStart {
@@ -2916,6 +2932,21 @@ export interface SessionStart {
 }
 
 const TICK_S = 0.02;
+
+/**
+ * The Stage 8a performance load (`validation-perf.html`, review F6): 8 lanes — ECG II, V5, aVR, ABP, pleth, CVP, CO2,
+ * resp — on the renderer's own layout, a ventilated patient with NIBP every 3 min. Selected with `?load=perf8`, so the
+ * frame gate measures the brief's load with the whole shell mounted and the panel open. The engine options and the two
+ * commands are the performance page's own, plus the app's 1 Hz truth for Explore.
+ */
+export const PERF8 = {
+  engine: { seed: 11, truthHz: 1, patient: { baseline: { hr: 78, sbp: 124, dbp: 72 }, sensors: { ecg: 'on', spo2: 'on', abp: 'connected', cvp: 'connected', co2: 'on', nibp: 'on' } } },
+  view: { lanes: ['ecgII', 'V5', 'aVR'], waves: ['abp', 'pleth', 'cvp', 'co2', 'resp'], nibp: true, temp: true },
+  commands: [
+    { type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 } },
+    { type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 3 } },
+  ],
+} as const;
 /** How far the sim clock estimate may run past the last engine event before it waits for the next one [ENG]. */
 const EST_CAP_S = 1.5;
 
@@ -2949,8 +2980,12 @@ export class AppSession {
   private readonly pollTimer: ReturnType<typeof setInterval>;
   private readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null }) {
+  /** `?load=perf8`: mount the Stage 8a performance layout instead of the site's skin (the frame gate, review F6). */
+  private readonly perf8: boolean;
+
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null }) {
     this.el = el;
+    this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
     this.mode = start.mode;
     this.skin = o.skin;
@@ -3032,9 +3067,12 @@ export class AppSession {
     else this.monitor?.resume();
   }
 
+  /** Change the monitor's skin or theme. The shell's alarm mirror follows at once, wherever the change came from
+   *  (Start, Settings, an imported site profile): the mirror always shows the monitor's colours (review F5, D5). */
   async setSkin(skin: string, theme: string): Promise<void> {
     this.skin = skin;
     this.theme = theme;
+    applySkinAlarmColours(skin, theme);
     await this.monitor?.setSkin(skin, theme ? { theme } : {});
   }
 
@@ -3082,6 +3120,11 @@ export class AppSession {
   }
 
   private mount(seed: number): void {
+    if (this.perf8) {
+      this.mountWith({ ...PERF8.engine, patient: { ...PERF8.engine.patient, baseline: { ...PERF8.engine.patient.baseline }, sensors: { ...PERF8.engine.patient.sensors } } } as never);
+      PERF8.commands.forEach((c, i) => void this.monitor?.dispatch({ id: `perf8-${i}`, issuedBy: 'perf', ...c } as never));
+      return;
+    }
     const patient = profileOf(this.spec);
     this.mountWith({ seed, mode: this.mode, patient, truthHz: 1, device: { ageBand: ageBandOf(this.spec) } });
   }
@@ -3093,7 +3136,8 @@ export class AppSession {
     this.lastT = 0;
     this.lastWall = performance.now();
     this.last = {};
-    const m = mountMonitor(this.el, { skin: this.skin, ...(this.theme ? { theme: this.theme } : {}), engine });
+    const look = this.perf8 ? { ...PERF8.view, lanes: [...PERF8.view.lanes], waves: [...PERF8.view.waves] } : { skin: this.skin, ...(this.theme ? { theme: this.theme } : {}) };
+    const m = mountMonitor(this.el, { ...look, engine } as Parameters<typeof mountMonitor>[1]);
     this.monitor = m;
     this.offMon = m.on((e) => {
       const t = (e as { t?: unknown }).t;
@@ -3843,18 +3887,22 @@ export class Shell {
  * black (research/13-ui-design-references rule 9: black text on bright red).
  */
 export function applySkinAlarmColours(skin: string, theme: string): void {
-  let bar: { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string } } | null = null;
-  try {
-    bar = resolveSkin(skin, theme ? { theme } : {}).skin.alarms.messageBar;
-  } catch {
-    bar = null;
-  }
+  const bar = skinAlarmBar(skin, theme);
   if (!bar) return;
   const s = document.documentElement.style;
   const levels: Array<['high' | 'medium' | 'low', { bg: string; fg: string }]> = [['high', bar.L1], ['medium', bar.L2], ['low', bar.L3]];
   for (const [k, c] of levels) {
     s.setProperty(`--alarm-${k}-bg`, c.bg);
     s.setProperty(`--alarm-${k}-fg`, contrast(c.fg, c.bg) >= 4.5 ? c.fg : contrast('#000000', c.bg) >= contrast('#ffffff', c.bg) ? '#000000' : '#ffffff');
+  }
+}
+
+/** The active skin's message-bar colours (L1–L3), or null for an unknown skin. */
+export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string } } | null {
+  try {
+    return resolveSkin(skin, theme ? { theme } : {}).skin.alarms.messageBar;
+  } catch {
+    return null;
   }
 }
 
@@ -4567,13 +4615,101 @@ git push
 ### Task 13: Instructor panel, part 5: Devices & alarms, Patient and Log
 
 **Files:**
+- Create: `apps/demo/src/app/alarms.ts`
+- Create: `apps/demo/src/app/alarms.test.ts`
 - Create: `apps/demo/src/app/panel/devices.ts`
 - Create: `apps/demo/src/app/panel/patient.ts`
 - Create: `apps/demo/src/app/panel/log.ts`
 
-**Why:** D10 (steady alarm mirror in skin colours with marker and word, silence/pause countdowns, one assertive announcement per new high alarm), D11 (sensors attach per channel), NIBP; the patient card with MODELED/MANUAL and a confirmed restart that says what resets; the debrief log with filters, notes, bookmarks and CSV/JSON export.
+**Why:** D10 (steady alarm mirror in skin colours with marker and word and in GLOSSARY words, the monitor's text as the tooltip — R50 review F4; silence/pause countdowns, one assertive announcement per new high alarm), D11 (sensors attach per channel), NIBP; the patient card with MODELED/MANUAL and a confirmed restart that says what resets; the debrief log with filters, notes, bookmarks and CSV/JSON export.
 
-- [ ] **Step 1: Create `apps/demo/src/app/panel/devices.ts`**
+- [ ] **Step 1: Create `apps/demo/src/app/alarms.ts`**
+
+```ts
+// The instructor's alarm mirror in glossary words (R50 review F4; research/11 §5.16 rules 1 and 2). The monitor prints
+// its vendor's own text ("**ABPs 21<90", "ABP NON-PULSATILE", "%SPO2 LOW") inside its frame; outside the frame — the
+// panel's alarm list and the top-bar count — the same alarm is worded from the glossary: the parameter's clinical
+// label and the condition in plain words. The monitor's text stays available as the row's tooltip. No DOM here.
+import type { AlarmEntry } from '@pme/engine-core';
+import { labelOf } from './glossary.ts';
+
+/** Fixed (non-limit) alarms of the device layer (engine-core l3/alarms `FixedAlarmId`), in clinical words. */
+export const FIXED_ALARM_WORDS: Readonly<Record<string, string>> = {
+  ASYSTOLE: 'Asystole',
+  VFIB: 'Ventricular fibrillation or tachycardia',
+  VTAC: 'Ventricular tachycardia',
+  EXTREME_BRADY: 'Extreme bradycardia',
+  EXTREME_TACHY: 'Extreme tachycardia',
+  BRADY: 'Bradycardia',
+  TACHY: 'Tachycardia',
+  PAUSE: 'Pause in the ECG',
+  PVCS: 'Frequent PVCs',
+  DESAT: 'Desaturation',
+  ecgLeadsOff: 'ECG leads off',
+  spo2SensorOff: 'SpO₂ probe off',
+  'nibp-failed': 'NIBP measurement failed',
+  'apnoea-co2': 'Apnoea (no CO₂ breaths)',
+  'apnoea-resp': 'Apnoea (no impedance breaths)',
+  co2Line: 'CO₂ sampling line blocked',
+  spo2NonPulsatile: 'SpO₂: no pulse detected',
+  spo2LowPerf: 'SpO₂: low perfusion',
+  abpNonPulsatile: 'ART: no pulsatile pressure',
+  abpDisconnect: 'ART: line disconnected',
+  abpZero: 'ART: zeroing',
+  tempProbeOff: 'T1: probe off',
+};
+
+/** Numerics whose glossary label is not `mon.<numeric>` (the pulse rate from the arterial line). */
+const NUMERIC_LABEL: Readonly<Record<string, string>> = { prAbp: 'PR (ART)' };
+
+/**
+ * The mirror line for one alarm: "ART S low", "SpO₂ low", "Asystole". An alarm the table does not know keeps the
+ * monitor's text (`known: false`), so nothing is hidden; the gate note lists any such id (review F4).
+ */
+export function alarmLine(a: Pick<AlarmEntry, 'id' | 'text' | 'numeric'>): { text: string; known: boolean } {
+  const fixed = FIXED_ALARM_WORDS[a.id];
+  if (fixed) return { text: fixed, known: true };
+  const side = /_(HIGH|LOW)$/.exec(a.id)?.[1];
+  if (a.numeric && side) {
+    const label = NUMERIC_LABEL[a.numeric] ?? labelOf(`mon.${a.numeric}`);
+    if (label) return { text: `${label} ${side === 'HIGH' ? 'high' : 'low'}`, known: true };
+  }
+  return { text: a.text.replace(/^\*+/, ''), known: false };
+}
+```
+
+- [ ] **Step 2: Create `apps/demo/src/app/alarms.test.ts`**
+
+```ts
+// R50 review F4: the alarm mirror speaks glossary words, never the vendor's aliases.
+import { describe, expect, it } from 'vitest';
+import type { NumericId } from '@pme/engine-core';
+import { alarmLine, FIXED_ALARM_WORDS } from './alarms.ts';
+
+describe('alarm mirror wording', () => {
+  it('limit alarms: the glossary label of the numeric and the side', () => {
+    expect(alarmLine({ id: 'ART_S_LOW', text: '**ABPs 21<90', numeric: 'abpSys' })).toEqual({ text: 'ART S low', known: true });
+    expect(alarmLine({ id: 'SpO2_LOW', text: '%SPO2 LOW', numeric: 'spo2' })).toEqual({ text: 'SpO₂ low', known: true });
+    expect(alarmLine({ id: 'NIBP_S_HIGH', text: '**NBPs 190>160', numeric: 'nibpSys' }).text).toBe('NIBP S high');
+    expect(alarmLine({ id: 'EtCO2_HIGH', text: '**etCO2 50>45', numeric: 'etco2' }).text).toBe('EtCO₂ high');
+    expect(alarmLine({ id: 'TEMP_LOW', text: '**Temp 35.9<36.0', numeric: 'tempCore' }).text).toBe('T1 low');
+  });
+  it('every limit numeric the device layer watches has a glossary label', () => {
+    const numerics: NumericId[] = ['hr', 'spo2', 'nibpSys', 'nibpDia', 'nibpMean', 'abpSys', 'abpDia', 'abpMean', 'cvpMean', 'icpMean', 'cpp', 'papSys', 'papDia', 'papMean', 'rr', 'awrr', 'etco2', 'tempCore', 'tempSite', 'stII', 'prAbp'];
+    for (const n of numerics) expect(alarmLine({ id: `X_HIGH`, text: 'vendor', numeric: n }).known, n).toBe(true);
+  });
+  it('fixed alarms in clinical words; the vendor alias never reaches the mirror', () => {
+    expect(alarmLine({ id: 'abpNonPulsatile', text: 'ABP NON-PULSATILE' }).text).toBe('ART: no pulsatile pressure');
+    expect(alarmLine({ id: 'DESAT', text: '***DESAT' }).text).toBe('Desaturation');
+    for (const w of Object.values(FIXED_ALARM_WORDS)) expect(w).not.toMatch(/\bABP\b|NBP|etCO2|\*/);
+  });
+  it('an unknown alarm keeps the monitor text without its stars, flagged', () => {
+    expect(alarmLine({ id: 'somethingNew', text: '**NEW THING' })).toEqual({ text: 'NEW THING', known: false });
+  });
+});
+```
+
+- [ ] **Step 3: Create `apps/demo/src/app/panel/devices.ts`**
 
 ```ts
 // Devices & alarms (research/13 §4.3 item 6). The alarm list mirrors the monitor in the SKIN's colours, steady (the
@@ -4582,6 +4718,7 @@ git push
 // alarm-inhibit meaning in words with a countdown. Sensors attach and detach per channel (Laerdal: traces appear only
 // once attached).
 import type { SensorId } from '@pme/engine-core';
+import { alarmLine } from '../alarms.ts';
 import { describeCommand, SENSORS } from '../describe.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
@@ -4627,9 +4764,10 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     const act = a?.active ?? [];
     list.replaceChildren(...[...act].sort((x, y) => x.level - y.level).map((x) => {
       const lv = LEVEL_NAME[x.level];
-      return h('li', { 'data-level': lv },
+      // glossary words outside the monitor frame (review F4); the monitor's own text is the tooltip
+      return h('li', { 'data-level': lv, title: `On the monitor: ${x.text}`, 'data-vendor-title': '' },
         h('span', { class: 'pri', 'data-level': lv }, `${LEVEL_MARK[x.level]} ${lv[0]?.toUpperCase()}${lv.slice(1)}`),
-        h('span', {}, x.text, x.latched ? h('span', { class: 'muted' }, ' (latched)') : null),
+        h('span', {}, alarmLine(x).text, x.latched ? h('span', { class: 'muted' }, ' (latched)') : null),
         h('span', { class: 'num muted' }, x.acked ? 'acknowledged' : clock(x.since)));
     }));
     if (!act.length) list.replaceChildren(h('li', { class: 'none' }, a?.allOff ? 'All alarms are off on this monitor' : 'No active alarms'));
@@ -4640,7 +4778,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     if (a?.allOff) parts.push('Alarms off (the monitor was found this way)');
     setText(status, parts.join('. ') || 'Alarm sound on');
     const highs = act.filter((x) => x.level === 1 && !announced.has(x.id));
-    if (highs.length) setText(live, `High priority alarm: ${highs.map((x) => x.text).join(', ')}`);
+    if (highs.length) setText(live, `High priority alarm: ${highs.map((x) => alarmLine(x).text).join(', ')}`);
     announced = new Set(act.map((x) => x.id));
   });
 
@@ -4648,7 +4786,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
 }
 ```
 
-- [ ] **Step 2: Create `apps/demo/src/app/panel/patient.ts`**
+- [ ] **Step 4: Create `apps/demo/src/app/panel/patient.ts`**
 
 ```ts
 // Patient (research/13 §4.9): the one patient card — who the patient is, MODELED or MANUAL, and "Restart patient",
@@ -4692,7 +4830,7 @@ export function patientTab(c: PanelCtx): HTMLElement {
 }
 ```
 
-- [ ] **Step 3: Create `apps/demo/src/app/panel/log.ts`**
+- [ ] **Step 5: Create `apps/demo/src/app/panel/log.ts`**
 
 ```ts
 // Log (research/13 §4.3 item 8): the debrief view — every instructor, learner, scenario and alarm event with the sim
@@ -4735,19 +4873,21 @@ export function logTab(c: PanelCtx): HTMLElement {
 }
 ```
 
-- [ ] **Step 4: Run**
+- [ ] **Step 6: Run**
 
 ```bash
-npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json
+npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/alarms.test.ts && npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json
 ```
 
-Expected: typecheck clean.
+Expected: 4 passed (limit alarms read "ART S low", "SpO₂ low", "NIBP S high", "EtCO₂ high", "T1 low"; every limit
+numeric of the device layer has a glossary label; fixed alarms in plain words with no vendor alias; an unknown id keeps
+the monitor text, flagged); typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [ ] **Step 7: Commit and push**
 
 ```bash
-git add apps/demo/src/app/panel/devices.ts apps/demo/src/app/panel/patient.ts apps/demo/src/app/panel/log.ts
-git commit -m "feat(app): Devices & alarms, Patient and Log tabs" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
+git add apps/demo/src/app/alarms.ts apps/demo/src/app/alarms.test.ts apps/demo/src/app/panel/devices.ts apps/demo/src/app/panel/patient.ts apps/demo/src/app/panel/log.ts
+git commit -m "feat(app): Devices & alarms (alarm mirror in glossary words), Patient and Log tabs" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 git push
 ```
 
@@ -6066,8 +6206,8 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     toast(msg);
   };
   const skin = () => {
-    if (session) void session.setSkin(site.skin, site.theme);
-    applySkinAlarmColours(site.skin, site.theme);
+    if (session) void session.setSkin(site.skin, site.theme); // the session applies the alarm colours (review F5)
+    else applySkinAlarmColours(site.skin, site.theme);
     document.documentElement.dataset.theme = site.theme === 'projector-light' ? 'bench' : '';
   };
   const mon = select('Monitor', MONITORS.map((m) => [m.id, m.label]), site.skin, (v) => ((site.skin = v), skin(), save()));
@@ -6146,13 +6286,14 @@ git push
 import './app.css';
 import { attachReveal, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
+import { alarmLine } from './alarms.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
 import { hrefOf, parseRoute } from './router.ts';
 import { scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
-import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell } from './shell.ts';
+import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar } from './shell.ts';
 import { loadSite } from './site.ts';
 import { button, h, setText, throttle, toast } from './ui.ts';
 import { devView } from './views/dev.ts';
@@ -6190,7 +6331,7 @@ if (hostless) {
 } else {
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session') });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null });
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
@@ -6219,7 +6360,7 @@ if (hostless) {
   mountSessionBar(shell.bar, link);
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
-  const alarm = h('button', { type: 'button', class: 'alarm-count', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
+  const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
   const sound = button('Sound off', () => void session.enableSound().then(() => ((sound.textContent = 'Sound on'), sound.setAttribute('aria-pressed', 'true'))), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
   const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
@@ -6227,7 +6368,9 @@ if (hostless) {
   const drawAlarm = throttle(() => {
     const s = link.alarmSummary;
     alarm.dataset.level = s.level ? LEVEL_NAME[s.level] : 'none';
-    setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${s.top.text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? 'Alarms off' : 'No alarms');
+    setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? 'Alarms off' : 'No alarms');
+    if (s.top) alarm.title = `On the monitor: ${s.top.text}`; // the vendor's words, outside the glossary scan (review F4)
+    else alarm.removeAttribute('title');
     alarm.setAttribute('aria-label', s.level ? `${s.n} active alarm${s.n > 1 ? 's' : ''}, highest ${LEVEL_NAME[s.level]} priority: show alarms` : 'No active alarms: show alarms');
   }, 500);
   link.onChange(drawAlarm);
@@ -6252,7 +6395,7 @@ if (hostless) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar } });
 }
 ```
 
@@ -6425,7 +6568,7 @@ export const EXPLORE = ['overview', 'haemodynamics', 'respiratory', 'gas', 'bloo
 export function scanEngineIds(page: Page, extraIds: readonly string[]): Promise<string[]> {
   return page.evaluate((ids) => {
     const idSet = new Set(ids);
-    const leak = /\b(?!(?:mmHg|cmH|pH|mEq|kPa|iCa|mOsm|eGFR|mL|dL|mA|sO)\b)[a-z]+[A-Z][A-Za-z0-9]*\b|\b(?!a\.u\b)[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9.]*\b|\bStage \d|\bR\d{2}\b/;
+    const leak = /\b(?!(?:mmHg|cmH|pH|mEq|kPa|iCa|mOsm|eGFR|mL|dL|mA|sO|awRR)\b)[a-z]+[A-Z][A-Za-z0-9]*\b|\b(?!a\.u\b)[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9.]*\b|\bStage \d|\bR\d{2}\b/;
     const skip = (el: Element | null): boolean => !!el?.closest('.stage, iframe, .internals, code, [data-view="dev"], [hidden], dialog:not([open])');
     const hits: string[] = [];
     const check = (s: string, where: string) => {
@@ -6445,6 +6588,7 @@ export function scanEngineIds(page: Page, extraIds: readonly string[]): Promise<
     for (const el of document.querySelectorAll('[aria-label], [title], [placeholder]')) {
       if (skip(el)) continue;
       for (const a of ['aria-label', 'title', 'placeholder']) {
+        if (a === 'title' && el.hasAttribute('data-vendor-title')) continue; // quotes the monitor's own text (review F4)
         const v = el.getAttribute(a);
         if (v) check(v, `${el.tagName.toLowerCase()}[${a}]`);
       }
@@ -6595,6 +6739,17 @@ test('the scenario deep link loads the case into the instructor view', async ({ 
   await expect(page.locator('.sessionbar .scen')).toContainText('Witnessed VF in PACU', { timeout: 10_000 });
 });
 
+test('changing the monitor on Start updates the mirrored alarm colours (review F5)', async ({ page }) => {
+  await openApp(page, base, '#/');
+  const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--alarm-high-bg').trim().toUpperCase());
+  const skinBg = (id: string) => page.evaluate((s) => (window as unknown as { __pmeApp: { skinAlarmBar(id: string): { L1: { bg: string } } } }).__pmeApp.skinAlarmBar(s).L1.bg.toUpperCase(), id);
+  const [saadat, mindray] = [await skinBg('saadat-like'), await skinBg('mindray-like')];
+  expect(saadat).not.toBe(mindray); // the two skins' high-priority reds differ, so the check can fail
+  expect(await bg()).toBe(saadat);
+  await page.locator('[data-view="start"]').getByRole('combobox', { name: 'Monitor', exact: true }).selectOption('mindray-like');
+  await expect.poll(bg).toBe(mindray);
+});
+
 test('a remote pairs by code and changes the host patient', async ({ page, context }) => {
   await openApp(page, base, '#/', { warmMs: 2000 });
   await go(page, '#/remote');
@@ -6665,7 +6820,7 @@ test('no engine id reaches a clinical view', async ({ page }) => {
 PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/stage9-app.e2e.ts apps/demo/e2e/stage9-glossary.e2e.ts
 ```
 
-Expected: 4 passed (prototype: session 7–10 s, deep link 1.5–2.6 s, remote 5 s, glossary 28–30 s). A glossary hit names the view, the element and the offending token: fix the string (glossary or copy), never widen the pattern except for a real unit abbreviation.
+Expected: 5 passed (app 4 — one session across views, the deep link, the Start monitor change that moves the mirrored alarm colours (R50 review F5), the paired remote; glossary 1). A glossary hit names the view, the element and the offending token: fix the string (glossary or copy), never widen the pattern except for a real unit abbreviation.
 
 - [ ] **Step 5: Commit and push**
 
@@ -6856,7 +7011,7 @@ git push
 - Create: `apps/demo/e2e/stage9-shots.e2e.ts`
 - Create: `apps/demo/scripts/stage9-frames.mjs`
 
-**Why:** Brief §11.1 and §11.5: 14 views × 4 sizes as indexed PNGs ≤ 60 KB (no dependency: `stage9-png8.ts`), and the Stage 8a frame intervals with the shell mounted and the panel open (D23).
+**Why:** Brief §11.1 and §11.5: 14 views × 4 sizes as indexed PNGs ≤ 60 KB (no dependency: `stage9-png8.ts`), and the Stage 8a frame intervals with the shell mounted and the panel open, on the 8-lane `validation-perf` load (`?load=perf8`) with a soak mode (D23, R50 review F6).
 
 - [ ] **Step 1: Create `apps/demo/e2e/stage9-png8.ts`**
 
@@ -7018,38 +7173,62 @@ for (const [w, h, touch] of SIZES) {
 - [ ] **Step 3: Create `apps/demo/scripts/stage9-frames.mjs`**
 
 ```js
-// Stage 9 gate: the Stage 8a frame-interval gate with the whole app shell mounted and the instructor panel open
-// (research/13 brief §10: p95 < 25 ms at 60 fps, < 50 ms at 30 fps). Same method as validation-perf.html: main-thread
-// requestAnimationFrame intervals, 10 s warm-up, then a 60 s window. System Chrome, headless.
-// Run: node apps/demo/scripts/stage9-frames.mjs http://127.0.0.1:<port>   (a Vite dev server on apps/demo)
+// Stage 9 gate: the Stage 8a frame-interval gate with the whole app shell mounted and the instructor panel open, on the
+// brief's load — the 8-lane `validation-perf` layout (`?load=perf8`, review F6) — at p95 < 25 ms (60 fps) and < 50 ms
+// (30 fps). Same method as validation-perf.html: main-thread requestAnimationFrame intervals, 10 s warm-up, then a
+// window. The metric is the MAIN thread's frame intervals, as in 8a: the renderer draws the sweep in its worker and
+// exposes no worker frame statistics, so the site's 30 fps cap (which acts on the worker's drawing) does not show here —
+// the 30 fps rows prove the shell stays inside the 30 fps budget, not that the worker drew at 30 (gate note, review F6).
+// Run: node apps/demo/scripts/stage9-frames.mjs http://127.0.0.1:<port> [seconds]        four rows (1920×1080, 1280×800 × 60, 30 fps)
+//      node apps/demo/scripts/stage9-frames.mjs http://127.0.0.1:<port> --soak 1200      the 20-min soak, 1920×1080 at 60 fps
+// A Vite dev server on apps/demo; system Chrome with PW_SYSTEM_CHROME=1, else Playwright's bundled Chromium.
 import { chromium } from '@playwright/test';
 
-const [base, secs = '60'] = process.argv.slice(2);
-if (!base) throw new Error('usage: stage9-frames.mjs <base url> [seconds]');
-const b = await chromium.launch({ channel: 'chrome' });
+const args = process.argv.slice(2);
+const base = args[0];
+if (!base) throw new Error('usage: stage9-frames.mjs <base url> [seconds] | --soak <seconds>');
+const soakAt = args.indexOf('--soak');
+const soak = soakAt > 0 ? Number(args[soakAt + 1] ?? 1200) : 0;
+const secs = soak || Number(args[1] ?? 60);
+const b = await chromium.launch(process.env.PW_SYSTEM_CHROME ? { channel: 'chrome' } : {});
 const rows = [];
-for (const [w, h] of [[1920, 1080], [1280, 800]]) {
-  for (const fps of [60, 30]) {
-    const ctx = await b.newContext({ viewport: { width: w, height: h } });
-    const p = await ctx.newPage();
-    await p.addInitScript((fps) => localStorage.setItem('pme.site', JSON.stringify({ fps })), fps);
-    await p.goto(`${base}/#/teach`);
-    await p.waitForFunction(() => '__pmeApp' in window);
-    await p.evaluate(() => window.__pmeApp.teach.panel.select('vitals'));
-    await p.waitForTimeout(10_000);
-    await p.evaluate(() => window.__pmeApp.frames.splice(0));
-    await p.waitForTimeout(Number(secs) * 1000);
-    const r = await p.evaluate(() => {
-      const f = [...window.__pmeApp.frames].sort((a, b) => a - b);
-      const q = (x) => +(f[Math.floor(x * (f.length - 1))] ?? 0).toFixed(1);
-      return { n: f.length, p50: q(0.5), p95: q(0.95), p99: q(0.99), max: +(f[f.length - 1] ?? 0).toFixed(1) };
-    });
-    const path = await p.evaluate(() => window.__pmeApp.session.monitor.renderPath);
-    const row = { viewport: `${w}×${h}`, fps, path, ...r, gate: fps === 60 ? r.p95 < 25 : r.p95 < 50 };
-    rows.push(row);
-    console.log(JSON.stringify(row));
-    await ctx.close();
-  }
+const runs = soak ? [[1920, 1080, 60]] : [[1920, 1080, 60], [1920, 1080, 30], [1280, 800, 60], [1280, 800, 30]];
+for (const [w, h, fps] of runs) {
+  const ctx = await b.newContext({ viewport: { width: w, height: h } });
+  const p = await ctx.newPage();
+  await p.addInitScript((fps) => localStorage.setItem('pme.site', JSON.stringify({ fps })), fps);
+  await p.goto(`${base}/?load=perf8#/teach`);
+  await p.waitForFunction(() => '__pmeApp' in window);
+  await p.evaluate(() => window.__pmeApp.teach.panel.select('vitals'));
+  await p.waitForTimeout(10_000);
+  await p.evaluate(() => window.__pmeApp.frames.splice(0));
+  await p.waitForTimeout(secs * 1000);
+  const r = await p.evaluate(() => {
+    const all = [...window.__pmeApp.frames];
+    const q = (arr, x) => {
+      const f = [...arr].sort((a, b) => a - b);
+      return +(f[Math.floor(x * (f.length - 1))] ?? 0).toFixed(1);
+    };
+    // the worst 60 s window (a soak must not degrade): split the intervals by their running sum
+    let acc = 0;
+    let win = [];
+    let worst = 0;
+    for (const d of all) {
+      win.push(d);
+      acc += d;
+      if (acc >= 60_000) {
+        worst = Math.max(worst, q(win, 0.95));
+        win = [];
+        acc = 0;
+      }
+    }
+    return { n: all.length, p50: q(all, 0.5), p95: q(all, 0.95), p99: q(all, 0.99), max: +Math.max(...all).toFixed(1), worstMinuteP95: worst || q(all, 0.95) };
+  });
+  const path = await p.evaluate(() => window.__pmeApp.session.monitor.renderPath);
+  const row = { load: 'perf8', viewport: `${w}×${h}`, fps, secs, path, ...r, gate: fps === 60 ? r.p95 < 25 && r.worstMinuteP95 < 25 : r.p95 < 50 && r.worstMinuteP95 < 50 };
+  rows.push(row);
+  console.log(JSON.stringify(row));
+  await ctx.close();
 }
 await b.close();
 if (rows.some((r) => !r.gate)) process.exitCode = 1;
@@ -7103,11 +7282,15 @@ before it is treated as a regression.
 
 ```bash
 (cd apps/demo && npx vite --port 4862 --strictPort > <scratchpad>/stage-9-clinical-ui/vite-frames.log 2>&1 &)
-node apps/demo/scripts/stage9-frames.mjs http://localhost:4862 60 | tee <scratchpad>/stage-9-clinical-ui/frames.jsonl
+PW_SYSTEM_CHROME=1 node apps/demo/scripts/stage9-frames.mjs http://localhost:4862 60 | tee <scratchpad>/stage-9-clinical-ui/frames.jsonl
+PW_SYSTEM_CHROME=1 node apps/demo/scripts/stage9-frames.mjs http://localhost:4862 --soak 1200 | tee -a <scratchpad>/stage-9-clinical-ui/frames.jsonl   # 20 min: run in the background, wait with an until loop
 pkill -f "vite --port 4862"
 ```
 
-Expected: four rows, every `gate: true` (p95 < 25 ms at 60 fps, < 50 ms at 30 fps); prototype p95 16.7 ms in all four.
+Expected: four rows and one soak row, every `gate: true` (p95 < 25 ms at 60 fps, < 50 ms at 30 fps, and the worst
+60 s window inside the same limit), each with `load: "perf8"` (the brief's 8-lane load, R50 review F6). Record in the
+gate note that the metric is the main thread's frame intervals, as in 8a: the worker's own frame rate is not exposed,
+so the 30 fps rows show that the shell stays inside the 30 fps budget, not that the worker drew at 30.
 Add the iPad Safari manual run (brief §10): open the app on an iPad on the LAN, Instructor view, panel open, Low Power
 Mode on for 2 min, read `__pmeApp.frames` p95 from Safari's Web Inspector console, record it (or "not run: no iPad on
 the bench").
@@ -7123,9 +7306,11 @@ the bench").
      DevTools "Emulate vision deficiencies": deuteranopia and protanopia on Instructor and Explore — look, and say
      whether any meaning is carried by colour alone), the token contrast table from `tokens.test.ts`.
   4. *Glossary* — the glossary e2e result; the additions made at Task 0/2 (for Ali's review, R56); the count of
-     Explore rows with a clinical label vs "Model internals" per section.
+     Explore rows with a clinical label vs "Model internals" per section; `SHORT` and `SAME_AS` (for Ali's review);
+     any alarm id the mirror did not know (`alarmLine(…).known === false`, D10) — none expected.
   5. *Five timed tasks* — the automated times, and Ali's own times if he ran them (target < 30 s each without help).
-  6. *Frame gate* — the four rows (+ iPad).
+  6. *Frame gate* — the four rows and the 20-minute soak on the 8-lane load (+ iPad), with the sentence on what the
+     metric measures (D23).
   7. *Decisions* D1–D26 one line each; *Deviations* from this plan and why; *Requests* R-S9-1…7 with their status.
   8. *Open questions* Q1–Q15 (below) with Ali's answers where given.
   9. *Test counts* — per package, e2e list.
