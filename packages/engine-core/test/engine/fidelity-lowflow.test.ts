@@ -53,10 +53,12 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     const contradictions = rows.filter((r) => r.t >= 10 && validShown(r.m.spo2) && (!validShown(r.m.pr) || !validShown(r.m.pi)));
     expect(contradictions.map((r) => r.t)).toEqual([]);
   }, 120_000);
-  it.fails('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 1 (SpO2 LOW PERF at 601 s, 1.0 s) after FU-4 (was LOW PERF ×7 at 1–2 s before FU-5)', async () => {
+  // FU-8 (Task A2, E-FU8-1): flipped — the LOW PERF clear hysteresis no longer holds a PENDING INOP (was 1 cycle, 601 s, 1.0 s)
+  it('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 0 after FU-8 (1: SpO2 LOW PERF at 601 s, 1.0 s, after FU-4; LOW PERF ×7 at 1–2 s before FU-5)', async () => {
     expect(shortCycles((await bleedRun()).alarms, 3, 5)).toEqual([]);
   }, 120_000);
-  it.fails('MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 1 (EXTREME BRADY at 956 s, 3.6 s: the decaying PEA) after FU-4 (FU-5 follow-up)', async () => {
+  // FU-8 (Task A2, E-FU8-1): flipped — one QRS per agonal complex; the agonal ASYSTOLE hold counts complexes, not detections
+  it('MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (1: EXTREME BRADY at 956 s, 3.6 s, after FU-4)', async () => {
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
@@ -70,7 +72,8 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
     expect(shortCycles(alarms, 3, 5)).toEqual([]);
   }, 120_000);
-  it.fails("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 3 EXTREME BRADY cycles (948 s +3.3, 989 s +3.1, 1000 s +3.6: the decaying PEA at ≈ 18/min) after FU-4 (FU-5 follow-up)", async () => {
+  // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
+  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
     expect(shortCycles((await aliRun()).alarms, 1, 5)).toEqual([]); // after FU-4's arrest this is the agonal EXTREME BRADY guard (Task 18)
   }, 120_000);
 });
