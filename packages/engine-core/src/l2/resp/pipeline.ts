@@ -26,11 +26,11 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { CI_LPM_PER_KG, CO_REF_LPM, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
-import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
+import { resolveLung, SMOOTH_MUSCLE } from '../lung/conditions.ts'; // Stage 7b; FU-6 F6: SMOOTH_MUSCLE
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
@@ -65,6 +65,11 @@ export interface RespCtx {
   neuro?: NeuroResp; // Stage 7f: drug and NMB effects on spontaneous breathing
   hco3?: number; // Stage 7f: 7c's blood.core.ab.hco3 for Winter's compensation (MODELED spontaneous drive)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel — the brainstem-perfusion gate on the MODELED drive
+  /** FU-6: 7g's bus (R51: the lung reads PD outputs, never PK) — bronchodilation B (R2) and HPV inhibition (R13), 0–1. */
+  bronchoDil?: number;
+  hpvInhibit?: number;
+  /** FU-6 R2: 7e is writing the anaphylaxis lung condition with its own β2 relief (endo.lungSev > 0). */
+  anaphEndo?: boolean;
 }
 
 /** Stage 7c: the blood's ODC context, a CO factor (blood-volume fallback without Stage 7a) and extra CO2 (mL/min). */
@@ -106,6 +111,11 @@ export interface RespState {
   lung: LungState;
   lungSpecs: LungConditionSpec[];
   rawEvent: number; // bronchospasm airway multiplier (Q20)
+  bd?: number; // FU-6 R2: the bronchodilation state B the lung was last resolved with (absent = 0; truth budget D16)
+  bdExempt?: string[]; // FU-6 R2: condition ids whose relief their owner applies (7e's anaphylaxis); absent = none
+  /** FU-6 F6: onset (sim s, earlier by the spec's `ageMin`) of each smooth-muscle condition and the sim time the lung
+   * was last resolved at (ages are read there); absent while no smooth-muscle condition is present (truth budget D16). */
+  sm?: { onsetS: Record<string, number>; atS: number };
   mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
   circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
@@ -201,8 +211,25 @@ export function respBreathU(rs: RespState, t: number): number {
 }
 
 /** Stage 7b: re-resolve the lung from its condition specs, the bronchospasm multiplier and the mainstem state. */
+/** FU-6 F6: each smooth-muscle condition's age (min) at the last re-resolve — the non-reversible share grows with it. */
+function smAges(rs: RespState): Record<string, number> {
+  const out: Record<string, number> = {};
+  const sm = rs.sm;
+  if (sm) for (const [id, t0] of Object.entries(sm.onsetS)) out[id] = Math.max(0, (sm.atS - t0) / 60);
+  return out;
+}
+
+/** FU-6 F6: stamp each new smooth-muscle condition's onset (now − its `ageMin`), forget ended ones. */
+function syncSmOnset(rs: RespState, t: number): void {
+  const specs = rs.lungSpecs.filter((s) => SMOOTH_MUSCLE[s.id] !== undefined);
+  if (!specs.length) { delete rs.sm; return; }
+  const sm = (rs.sm ??= { onsetS: {}, atS: t });
+  for (const s of specs) sm.onsetS[s.id] ??= t - 60 * (s.ageMin ?? 0);
+  for (const id of Object.keys(sm.onsetS)) if (!specs.some((s) => s.id === id)) delete sm.onsetS[id];
+}
+
 export function applyLungSpecs(rs: RespState): void {
-  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0); // Stage 7c: + lung water
+  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0, rs.bd ?? 0, rs.bdExempt ?? [], smAges(rs)); // Stage 7c: + lung water; FU-6 R2: B (F6: ages)
   const ls = rs.lung;
   // FU-4 F3: the catalogue value is the CEILING of the one-way-valve build-up, not the pressure itself. `lp.pPtx`
   // keeps its name, place and unit and now delivers the accumulated pressure (0 at onset).
@@ -326,7 +353,21 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // shock: PaCO2 67 / 81 on 7 mL/kg, and the 7 kg infant crash (FU-6 Request 3). The 70 kg adult is bit-identical.
   // V.1 (E-V1-1): the patient's own resting-flow reference; during CPR the adult one, because cardiacOutput() returns
   // an ADULT-absolute compression flow (SV_REF 70 mL × CPR_SV_FRAC) — a child's CPR keeps its low-flow ratio
-  rs.coRatio = (cardiacOutput(h, t) / (h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat))) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // FU-8 A22 hand-off (executor instruction (a)): CPR flow scales with the patient's size too, so the CPR case uses the
+  // same per-patient reference as the perfusing case (was `h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat)`, V.1 E-V1-1)
+  rs.coRatio = (cardiacOutput(h, t) / coRefLpm(rs.pat)) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // FU-6 R2: airway smooth muscle follows 7g's bronchodilation (re-resolved when B moves by ≥ 0.01, as 7e's writeLung does)
+  const bd = Math.min(1, Math.max(0, ctx.bronchoDil ?? 0));
+  const exempt = ctx.anaphEndo ? ['anaphylaxis'] : [];
+  syncSmOnset(rs, t); // FU-6 F6: the attack ages; under a bronchodilator the lung is re-resolved once a sim-minute for it
+  if (Math.abs(bd - (rs.bd ?? 0)) >= 0.01 || (bd === 0 && (rs.bd ?? 0) > 0) || exempt.length !== (rs.bdExempt ?? []).length
+    || (bd > 0 && rs.sm !== undefined && t - rs.sm.atS >= 60)) {
+    if (rs.sm) rs.sm.atS = t;
+    if (bd > 0 || rs.bd !== undefined) rs.bd = bd; // absent until a bronchodilator acts (truth budget, D16)
+    if (exempt.length) rs.bdExempt = exempt;
+    else delete rs.bdExempt;
+    applyLungSpecs(rs);
+  }
   // temperature at 1 Hz; MANUAL tempCore target places the model (plan decision 2)
   if (rs.gasK % 10 === 0) {
     const tc = l1Target(l1, 'tempCore', t);
@@ -610,7 +651,8 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
       const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
       if (!(LUNG_CONDITION_IDS as readonly string[]).includes(c.id)) return `lungCondition id must be one of ${LUNG_CONDITION_IDS.join(', ')}`;
       if (c.side !== undefined && c.side !== 'L' && c.side !== 'R') return "side must be 'L' or 'R'";
-      return num('severity', c.severity, 0, 1) ?? num('recruitFrac', c.recruitFrac, 0, 1) ?? (c.severity === undefined ? 'severity is required' : undefined);
+      return num('severity', c.severity, 0, 1) ?? num('recruitFrac', c.recruitFrac, 0, 1) ?? num('ageMin', c.ageMin, 0, 1440) // FU-6 F6
+        ?? (c.severity === undefined ? 'severity is required' : undefined);
     }
     case 'mainstem': {
       const m = ev as Extract<LungClinicalEvent, { kind: 'mainstem' }>;
@@ -705,11 +747,15 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
     case 'lungCondition': {
       const c = ev as Extract<LungClinicalEvent, { kind: 'lungCondition' }>;
       const same = (s: { id: string; side?: string }) => s.id === c.id && (s.side ?? null) === (c.side ?? null);
-      const next = { id: c.id, severity: c.severity, ...(c.side ? { side: c.side } : {}), ...(c.recruitFrac !== undefined ? { recruitFrac: c.recruitFrac } : {}) };
+      const next = { id: c.id, severity: c.severity, ...(c.side ? { side: c.side } : {}), ...(c.recruitFrac !== undefined ? { recruitFrac: c.recruitFrac } : {}), ...(c.ageMin !== undefined ? { ageMin: c.ageMin } : {}) };
       const i = rs.lungSpecs.findIndex(same);
       if (c.severity <= 0) rs.lungSpecs = rs.lungSpecs.filter((s) => !same(s));
       else if (i >= 0) rs.lungSpecs[i] = next;
       else rs.lungSpecs.push(next);
+      // FU-6 F6: a re-sent condition keeps its onset (the same attack) unless the event states its age
+      if (c.ageMin !== undefined && rs.sm) delete rs.sm.onsetS[c.id];
+      syncSmOnset(rs, t);
+      if (rs.sm) rs.sm.atS = t;
       applyLungSpecs(rs);
       return true;
     }

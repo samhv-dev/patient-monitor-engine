@@ -18,11 +18,13 @@ export interface LungConditionSpec {
   side?: LungSide;
   /** Fraction of the condition's non-aerated lung that is recruitable (catalogue §6: high 0.5, low 0.15). */
   recruitFrac?: number;
+  /** FU-6 F6: the attack's age when sent, min (0–1440): a slow-onset (hours-old) smooth-muscle attack reverses less. */
+  ageMin?: number;
 }
 
 /** applyEvent kinds added in Stage 7b (plan decision 11). */
 export type LungClinicalEvent =
-  | { kind: 'lungCondition'; id: LungConditionId; severity: number; side?: LungSide; recruitFrac?: number }
+  | { kind: 'lungCondition'; id: LungConditionId; severity: number; side?: LungSide; recruitFrac?: number; ageMin?: number }
   | { kind: 'mainstem'; ventilated: 'both' | 'left' | 'right' }
   | { kind: 'recruit'; pressureCmH2O: number; durationS: number };
 

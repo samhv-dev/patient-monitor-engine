@@ -26,7 +26,10 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', pk: blood, pd: [], doses: '10 U insulin + 25 g dextrose', onset: 'K −0.6 to −1.0 mmol/L at 60 min (7c)', ir: '?', src: '7c plan decision 7', tag: 'TXT' },
   { id: 'magnesium', name: 'Magnesium sulfate', cls: 'electrolyte', amountUnit: 'mg', shared: 'blood', elim: { renal: 1 },
     pk: { kind: 'perKg', conc: 'plain', pk: { v1: 0.3, v2: 0, v3: 0, cl1: 0.0015, cl2: 0, cl3: 0, ke0: [0.5] } },
-    pd: [{ target: 'svr', emax: -0.3, ec50: 60 }],
+    // FU-6 R2 (E-FU6-1): airway smooth-muscle relaxation (calcium antagonism) — an adjunct in severe bronchospasm/asthma;
+    // modest (IV MgSO4 2 g: FEV1 and admission benefit in severe acute asthma, Kew 2014 Cochrane CD010909) [ENG: Emax
+    // 0.35 at the SVR row's EC50 → B ≈ 0.2 after 2 g]
+    pd: [{ target: 'svr', emax: -0.3, ec50: 60 }, { target: 'bronchodilation', emax: 0.35, ec50: 60 }],
     doses: '2 g over 1–2 min (TdP); 40–50 mg/kg (analgesia, bronchospasm); concentration = rise over baseline, mg/L', onset: 'TdP termination within minutes; vecuronium ED50 −25 % after 40 mg/kg (M10 ch. 24 p. 698)', ir: '?', src: 'T6.2; M10 ch. 24', tag: 'TXT' },
   { id: 'salbutamol', name: 'Salbutamol (IV/neb)', cls: 'betaAgonist', amountUnit: 'mcg', shared: 'blood', pk: gammaPk(250, false, 600, 7200),
     pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],

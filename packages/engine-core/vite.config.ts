@@ -35,6 +35,7 @@ const SLOW = [
   'test/engine/circ-manual-ischaemia.test.ts', // FU-3 item 4: the check-18 rig to MAP 65 (9 sim-min)
   'test/engine/circ-manual-cvp-peep.test.ts', // FU-3 item 7: 8 soak-patient runs of 300 sim-s each
   'test/engine/circ-hypoxic-arrest.test.ts', // FU-3 item 16: four 15–20 sim-min asphyxia runs
+  'test/engine/resp-bronchodilation.test.ts', // FU-6 R2: eight 30 sim-min bronchospasm arms
   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
   'test/engine/clinical-suite.test.ts', // FU-4 Task 22: the clinical scenario suite (SLOW_A)
@@ -49,7 +50,12 @@ const SLOW = [
  * runs both locally. SLOW_A: the multi-hour drift files, the engine pipeline, the organ soak and the FU-4 clinical suite;
  * SLOW_B: every other SLOW entry. A new slow file joins SLOW (and, if it is a multi-hour run, SLOW_A).
  */
-const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts'];
+const SLOW_A = [
+  'test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts',
+  // FU-6 (executor instruction, 2026-09-29): every new FU-6 slow file joins SLOW_A — slow-b ran within 2.4 min of its
+  // 40 min limit at G-FU4 — so each FU-6 entry is listed in SLOW (above) AND here, and the slow-b filter leaves it out.
+  'test/engine/resp-bronchodilation.test.ts',
+];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
 // neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.
