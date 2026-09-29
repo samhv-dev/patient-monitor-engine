@@ -1,4 +1,4 @@
-<!-- cells 14 {"TW":3,"TS":2,"WR":2,"PL":6,"NE":1} -->
+<!-- cells 35 {"TW":4,"TS":2,"WR":3,"PL":15,"NE":11} -->
 
 ### 2.1 Crystalloids and colloids (P1)
 
@@ -28,32 +28,32 @@
 
 | cell | tier | context · state → intervention | measured (control-subtracted unless named) | graded items: value vs expected [source] | verdict | gap · owner |
 |---|---|---|---|---|---|---|
-| BF-13a | | (not in store) | | | | |
-| BF-13b | | (not in store) | | | | |
-| BF-13c | | (not in store) | | | | |
-| BF-16a | | (not in store) | | | | |
-| BF-16b | | (not in store) | | | | |
-| BF-17a | | (not in store) | | | | |
-| BF-17b | | (not in store) | | | | |
-| BF-17c | | (not in store) | | | | |
-| BF-29a | | (not in store) | | | | |
-| BF-29b | | (not in store) | | | | |
-| BF-30 | | (not in store) | | | | |
+| BF-13a | P1 | X-A GA vent (fixed minute ventilation) · class IV shock, lactic acidosis → sodium bicarbonate 1 mmol/kg: PaCO2 and EtCO2 | phBefore 7.298; lactBefore 3.68; dPaco2Peak 5.81; dEtco2Peak 3.18; dPaco2At20 1.737 | PL: dPaco2Peak = 5.81 in [3, 10] [Hindman 1990 Anesthesiology 72:1064 (bicarbonate generates CO2: PaCO2 rises at fixed ventilation); Cooper 1990 Ann Intern Med 112:492] | **PL** | — · 7c treatments.ts bicarbCo2MlMin |
+| BF-13b | P1 | X-A GA vent · class IV shock, lactic acidosis → sodium bicarbonate 1 mmol/kg: ionised Ca | iCaBefore 1.251; dICa -0.04 | PL: dICa = -0.04 in [-0.15, -0.03] [Cooper 1990 Ann Intern Med 112:492 (bicarbonate lowered ionised calcium in lactic acidosis)] | **PL** | — · 7c solutes.ts ionisedCa |
+| BF-13c | P1 | X-A GA vent · class IV shock, lactic acidosis → sodium bicarbonate 1 mmol/kg: pH (peak and 30 min) | dPhPeak 0.07; tPeakS 5; dPh30 0.081; dHco3 4.199; dNa 1.929; dLact30 -0.512 | PL: dPhPeak = 0.07 in [0.03, 0.15] [Cooper 1990 Ann Intern Med 112:492 (a small pH rise, no haemodynamic benefit); Miller 10e ch. 47] | **PL** | — · 7c |
+| BF-16a | P1 | X-A GA vent · acute respiratory acidosis → VCV RR 12 → 6 for 30 min: ΔHCO3 per 10 mmHg ΔPaCO2 | paco2 60.238; dPaco2 25.7; dHco3 2.85; hco3Per10 1.11; ph 7.256; dK 0.273 | PL: hco3Per10 = 1.11 in [0.5, 1.5] [Brackett, Cohen & Schwartz 1965 NEJM 272:6 (acute: HCO3 +1 per 10 mmHg PaCO2; "Boston rules")] | **PL** | — · 7c acid-base.ts |
+| BF-16b | P1 | COPD GOLD 3 (lung copd 0.75) awake spontaneous, room air · chronic hypercapnia (the COPD profile) → baseline: HCO3 against PaCO2 (renal compensation) | paco2Copd 45.067; hco3Copd 25.024; phCopd 7.357; dPaco2 6.2; hco3Per10 1.25 | PL: dPaco2 = 6.2 in [5, 15] [GOLD 3 chronic hypercapnia PaCO2 45–55 (tables §1.5 copd; research/12 CM-07)]<br>TW: hco3Per10 = 1.25 below [3, 4.5] [Brackett 1965 / Schwartz 1965 (chronic: HCO3 +3.5 per 10 mmHg PaCO2; "Boston rules")]<br>HAND TW (automatic TW): the COPD profile raises PaCO2 to 45 but leaves the HCO3 at the acute-buffer value (25.0, pH 7.36): the chronic renal compensation of a chronic lung state is not set when the profile is built (7c createBloodCore calibrates HCO3 to the profile's 24.4 unless blood.hco3 is given) | **TW** | — · 7b copd profile → 7c HCO3 (F7) |
+| BF-17a | P1 | X-A GA vent · acute respiratory alkalosis → VCV 18 × 600 for 30 min (PaCO2 ≈ 25): ionised Ca per +0.1 pH | paco2 23.507; dPh 0.13; dICa -0.065; iCaPer01 -0.05 | PL: iCaPer01 = -0.05 in [-0.06, -0.03] [Fogh-Andersen 1981 Clin Chem 27:1264 / Wang 2002 (iCa falls ≈ 0.04–0.05 mmol/L per 0.1 pH rise)] | **PL** | — · 7c solutes.ts ionisedCa |
+| BF-17b | P1 | X-A GA vent · acute respiratory alkalosis → VCV 18 × 600 for 30 min: plasma K per +0.1 pH | dPh 0.13; dK -0.212; kPer01 -0.16; dK40 -0.278 | PL: kPer01 = -0.16 in [-0.4, -0.1] [Adrogué & Madias 1981 Am J Med 71:456 (respiratory acid–base disorders move K only 0.1–0.4 mmol/L per 0.1 pH, less than mineral acidosis)] | **PL** | — · 7c core.ts kSet (phNonOrg) |
+| BF-17c | P1 | X-A GA vent · acute respiratory alkalosis → VCV 18 × 600 for 30 min: cerebral blood flow | paco2 23.507; cbfPct -36.3; dIcp -1.59 | PL: cbfPct = -36.3 in [-50, -25] [CBF −2–4 %/mmHg PaCO2 (Miller 10e ch. 11); tables §7 check 18 (≈ −35–40 % at PaCO2 25)] | **PL** | — · 7d brain |
+| BF-29a | P1 | X-A GA vent · low cardiac output (2 L bleed, CO ≈ half) → ABG + VBG drawn together: venous–arterial PCO2 gap (vs the same draw at normal CO) | coLow 2.168; gapLow 17; gapNormal 6; vbgPhLow 7.22; abgPhLow 7.33 | PL: gapLow = 17 in [6, 20] [Mallat 2016 Ann Intensive Care 6:10 / Cuschieri 2005 Intensive Care Med 31:818 (Pv–aCO2 > 6 mmHg marks low flow)]<br>PL: gapNormal = 6 in [2, 6] [normal Pv–aCO2 gap 2–6 mmHg (Mallat 2016)] | **PL** | — · 7c labs.ts |
+| BF-29b | P1 | X-A GA vent · low cardiac output (2 L bleed) → VBG: venous O2 saturation | svo2Low 84.3; svo2Normal 85.7; svo2Truth 84.287; lactLow 2.825 | TS: svo2Low = 84.3 above [30, 65] [SvO2 < 65 % in low output / haemorrhagic shock (Rivers 2001 NEJM 345:1368; Vincent & De Backer 2013 NEJM 369:1726)]<br>TS: svo2Normal = 85.7 above [70, 85] [normal SvO2 70–80 % under GA (Miller 10e ch. 36)]<br>HAND WR (automatic TS): SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:25–31, REGIONAL_* in params.ts) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature) | **WR** | — · 7c oxygen.ts o2Delivery (F3) |
+| BF-30 | P1 | X-A GA vent · normal, then NaHCO3 100 mmol 5 s after the draw → ABG drawn at 420 s (default turnaround): the result shows the draw-time values | resultAtS 540; drawnAtS 420; hco3Result 24.1; hco3TruthAtDraw 24.1; hco3TruthAtResult 30.5; matchesDraw true | PL: matchesDraw = true (expected true) [a blood gas reports the sample at its draw time; the analyser adds only a delay (7c plan decision 13)] | **PL** | — · 7c labs.ts |
 
 ### 2.4 Coagulation (P1, 7i: not expressible)
 
 | cell | tier | context · state → intervention | measured (control-subtracted unless named) | graded items: value vs expected [source] | verdict | gap · owner |
 |---|---|---|---|---|---|---|
-| BF-24 | | (not in store) | | | | |
-| BF-25a | | (not in store) | | | | |
-| BF-25b | | (not in store) | | | | |
-| BF-25c | | (not in store) | | | | |
-| BF-25d | | (not in store) | | | | |
-| BF-25e | | (not in store) | | | | |
-| BF-26a | | (not in store) | | | | |
-| BF-26b | | (not in store) | | | | |
-| BF-26c | | (not in store) | | | | |
-| BF-26d | | (not in store) | | | | |
+| BF-24 | P1 | X-A GA vent · class III bleeding → tranexamic acid 1 g: fibrinolysis (LY30) | dMap 0; dHb 0 | TXA is a 7g placeholder row (accepted, no PD); no fibrinolysis, LY30 or bleeding-rate term (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-25a | P1 | X-A GA vent · dilution ≈ 1.5 BV; 33 °C + pH 7.1 → INR/PT and aPTT | hbEnd 11.093; albEnd 17.607; inrEnd 1 | no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-25b | P1 | X-A GA vent · dilution ≈ 1.5 BV; 33 °C + pH 7.1 → fibrinogen < 1.5 g/L | hbEnd 11.093; albEnd 17.607; inrEnd 1 | no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-25c | P1 | X-A GA vent · dilution ≈ 1.5 BV; 33 °C + pH 7.1 → platelets < 100 | hbEnd 11.093; albEnd 17.607; inrEnd 1 | no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-25d | P1 | X-A GA vent · dilution ≈ 1.5 BV; 33 °C + pH 7.1 → ROTEM CT / A10 (EXTEM, FIBTEM) | hbEnd 11.093; albEnd 17.607; inrEnd 1 | no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-25e | P1 | X-A GA vent · dilution ≈ 1.5 BV; 33 °C + pH 7.1 → hypothermia 33 °C + pH 7.1 worsening clotting | hbEnd 11.093; albEnd 17.607; inrEnd 1 | no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1) | **NE** | — · 7i |
+| BF-26a | P1 | X-A GA vent · coagulopathy (dilutional) → fibrinogen concentrate 4 g: targeted correction by FIBTEM/EXTEM | — | no coagulation model to correct (7i); fibrinogen concentrate 4 g is not in the library | **NE** | — · 7i |
+| BF-26b | P1 | X-A GA vent · coagulopathy (dilutional) → cryoprecipitate 10 u: targeted correction by FIBTEM/EXTEM | — | no coagulation model to correct (7i); cryoprecipitate 10 u is not in the library | **NE** | — · 7i |
+| BF-26c | P1 | X-A GA vent · coagulopathy (dilutional) → PCC 25 IU/kg: targeted correction by FIBTEM/EXTEM | — | no coagulation model to correct (7i); PCC 25 IU/kg is not in the library | **NE** | — · 7i |
+| BF-26d | P1 | X-A GA vent · coagulopathy (dilutional) → platelets 1 pool targeted by EXTEM A10: targeted correction by FIBTEM/EXTEM | — | no coagulation model to correct (7i); platelets 1 pool targeted by EXTEM A10 is accepted as volume only | **NE** | — · 7i |
 
 ### 2.5 Hyperkalaemia and its treatment (P1)
 

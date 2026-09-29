@@ -346,5 +346,457 @@
   "owner": "7c circ-adapter.ts chemistryContractility",
   "dirOnly": true,
   "wallS": 0
+ },
+ "BF-13a": {
+  "id": "BF-13a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dPaco2Peak = 5.81 in [3, 10] [Hindman 1990 Anesthesiology 72:1064 (bicarbonate generates CO2: PaCO2 rises at fixed ventilation); Cooper 1990 Ann Intern Med 112:492]"
+  ],
+  "values": {
+   "phBefore": 7.298,
+   "lactBefore": 3.68,
+   "dPaco2Peak": 5.81,
+   "dEtco2Peak": 3.18,
+   "dPaco2At20": 1.737
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent (fixed minute ventilation)",
+  "state": "class IV shock, lactic acidosis",
+  "intv": "sodium bicarbonate 1 mmol/kg: PaCO2 and EtCO2",
+  "sys": "BLD LUNG",
+  "owner": "7c treatments.ts bicarbCo2MlMin",
+  "wallS": 51.5
+ },
+ "BF-13b": {
+  "id": "BF-13b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dICa = -0.04 in [-0.15, -0.03] [Cooper 1990 Ann Intern Med 112:492 (bicarbonate lowered ionised calcium in lactic acidosis)]"
+  ],
+  "values": {
+   "iCaBefore": 1.251,
+   "dICa": -0.04
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV shock, lactic acidosis",
+  "intv": "sodium bicarbonate 1 mmol/kg: ionised Ca",
+  "sys": "BLD",
+  "owner": "7c solutes.ts ionisedCa",
+  "wallS": 0
+ },
+ "BF-13c": {
+  "id": "BF-13c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dPhPeak = 0.07 in [0.03, 0.15] [Cooper 1990 Ann Intern Med 112:492 (a small pH rise, no haemodynamic benefit); Miller 10e ch. 47]"
+  ],
+  "values": {
+   "dPhPeak": 0.07,
+   "tPeakS": 5,
+   "dPh30": 0.081,
+   "dHco3": 4.199,
+   "dNa": 1.929,
+   "dLact30": -0.512
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class IV shock, lactic acidosis",
+  "intv": "sodium bicarbonate 1 mmol/kg: pH (peak and 30 min)",
+  "sys": "BLD",
+  "owner": "7c",
+  "wallS": 0
+ },
+ "BF-16a": {
+  "id": "BF-16a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL hco3Per10 = 1.11 in [0.5, 1.5] [Brackett, Cohen & Schwartz 1965 NEJM 272:6 (acute: HCO3 +1 per 10 mmHg PaCO2; \"Boston rules\")]"
+  ],
+  "values": {
+   "paco2": 60.238,
+   "dPaco2": 25.7,
+   "dHco3": 2.85,
+   "hco3Per10": 1.11,
+   "ph": 7.256,
+   "dK": 0.273
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "acute respiratory acidosis",
+  "intv": "VCV RR 12 → 6 for 30 min: ΔHCO3 per 10 mmHg ΔPaCO2",
+  "sys": "BLD LUNG",
+  "owner": "7c acid-base.ts",
+  "wallS": 25.8
+ },
+ "BF-16b": {
+  "id": "BF-16b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "PL dPaco2 = 6.2 in [5, 15] [GOLD 3 chronic hypercapnia PaCO2 45–55 (tables §1.5 copd; research/12 CM-07)]",
+   "TW hco3Per10 = 1.25 below [3, 4.5] [Brackett 1965 / Schwartz 1965 (chronic: HCO3 +3.5 per 10 mmHg PaCO2; \"Boston rules\")]",
+   "HAND TW (automatic TW): the COPD profile raises PaCO2 to 45 but leaves the HCO3 at the acute-buffer value (25.0, pH 7.36): the chronic renal compensation of a chronic lung state is not set when the profile is built (7c createBloodCore calibrates HCO3 to the profile's 24.4 unless blood.hco3 is given)"
+  ],
+  "values": {
+   "paco2Copd": 45.067,
+   "hco3Copd": 25.024,
+   "phCopd": 7.357,
+   "dPaco2": 6.2,
+   "hco3Per10": 1.25
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "COPD GOLD 3 (lung copd 0.75) awake spontaneous, room air",
+  "state": "chronic hypercapnia (the COPD profile)",
+  "intv": "baseline: HCO3 against PaCO2 (renal compensation)",
+  "sys": "BLD LUNG",
+  "owner": "7b copd profile → 7c HCO3 (F7)",
+  "wallS": 22.2
+ },
+ "BF-17a": {
+  "id": "BF-17a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL iCaPer01 = -0.05 in [-0.06, -0.03] [Fogh-Andersen 1981 Clin Chem 27:1264 / Wang 2002 (iCa falls ≈ 0.04–0.05 mmol/L per 0.1 pH rise)]"
+  ],
+  "values": {
+   "paco2": 23.507,
+   "dPh": 0.13,
+   "dICa": -0.065,
+   "iCaPer01": -0.05
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "acute respiratory alkalosis",
+  "intv": "VCV 18 × 600 for 30 min (PaCO2 ≈ 25): ionised Ca per +0.1 pH",
+  "sys": "BLD",
+  "owner": "7c solutes.ts ionisedCa",
+  "wallS": 34.4
+ },
+ "BF-17b": {
+  "id": "BF-17b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL kPer01 = -0.16 in [-0.4, -0.1] [Adrogué & Madias 1981 Am J Med 71:456 (respiratory acid–base disorders move K only 0.1–0.4 mmol/L per 0.1 pH, less than mineral acidosis)]"
+  ],
+  "values": {
+   "dPh": 0.13,
+   "dK": -0.212,
+   "kPer01": -0.16,
+   "dK40": -0.278
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "acute respiratory alkalosis",
+  "intv": "VCV 18 × 600 for 30 min: plasma K per +0.1 pH",
+  "sys": "BLD",
+  "owner": "7c core.ts kSet (phNonOrg)",
+  "wallS": 0
+ },
+ "BF-17c": {
+  "id": "BF-17c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL cbfPct = -36.3 in [-50, -25] [CBF −2–4 %/mmHg PaCO2 (Miller 10e ch. 11); tables §7 check 18 (≈ −35–40 % at PaCO2 25)]"
+  ],
+  "values": {
+   "paco2": 23.507,
+   "cbfPct": -36.3,
+   "dIcp": -1.59
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "acute respiratory alkalosis",
+  "intv": "VCV 18 × 600 for 30 min: cerebral blood flow",
+  "sys": "BRN",
+  "owner": "7d brain",
+  "wallS": 0
+ },
+ "BF-24": {
+  "id": "BF-24",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "TXA is a 7g placeholder row (accepted, no PD); no fibrinolysis, LY30 or bleeding-rate term (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "dMap": 0,
+   "dHb": 0
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "class III bleeding",
+  "intv": "tranexamic acid 1 g: fibrinolysis (LY30)",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 23.4
+ },
+ "BF-25a": {
+  "id": "BF-25a",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "hbEnd": 11.093,
+   "albEnd": 17.607,
+   "inrEnd": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "dilution ≈ 1.5 BV; 33 °C + pH 7.1",
+  "intv": "INR/PT and aPTT",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 24
+ },
+ "BF-25b": {
+  "id": "BF-25b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "hbEnd": 11.093,
+   "albEnd": 17.607,
+   "inrEnd": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "dilution ≈ 1.5 BV; 33 °C + pH 7.1",
+  "intv": "fibrinogen < 1.5 g/L",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-25c": {
+  "id": "BF-25c",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "hbEnd": 11.093,
+   "albEnd": 17.607,
+   "inrEnd": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "dilution ≈ 1.5 BV; 33 °C + pH 7.1",
+  "intv": "platelets < 100",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-25d": {
+  "id": "BF-25d",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "hbEnd": 11.093,
+   "albEnd": 17.607,
+   "inrEnd": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "dilution ≈ 1.5 BV; 33 °C + pH 7.1",
+  "intv": "ROTEM CT / A10 (EXTEM, FIBTEM)",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-25e": {
+  "id": "BF-25e",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation factors, fibrinogen, platelets or viscoelastic tests; INR is 7d liver function only (7i, R58/R60 v1.1)"
+  ],
+  "values": {
+   "hbEnd": 11.093,
+   "albEnd": 17.607,
+   "inrEnd": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "dilution ≈ 1.5 BV; 33 °C + pH 7.1",
+  "intv": "hypothermia 33 °C + pH 7.1 worsening clotting",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-26a": {
+  "id": "BF-26a",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation model to correct (7i); fibrinogen concentrate 4 g is not in the library"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"fibrinogen\",\"dose\":4,\"unit\":\"g\",\"route\":\"iv\"}: unknown drug fibrinogen"
+  ],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "coagulopathy (dilutional)",
+  "intv": "fibrinogen concentrate 4 g: targeted correction by FIBTEM/EXTEM",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 2.2
+ },
+ "BF-26b": {
+  "id": "BF-26b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation model to correct (7i); cryoprecipitate 10 u is not in the library"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"transfusion\",\"product\":\"cryo\",\"units\":10,\"overS\":600}: product must be one of rbc, ffp, platelets, wholeBlood"
+  ],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "coagulopathy (dilutional)",
+  "intv": "cryoprecipitate 10 u: targeted correction by FIBTEM/EXTEM",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 2.3
+ },
+ "BF-26c": {
+  "id": "BF-26c",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation model to correct (7i); PCC 25 IU/kg is not in the library"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"pcc\",\"dose\":25,\"unit\":\"units/kg\",\"route\":\"iv\"}: unknown drug pcc"
+  ],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "coagulopathy (dilutional)",
+  "intv": "PCC 25 IU/kg: targeted correction by FIBTEM/EXTEM",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 2.2
+ },
+ "BF-26d": {
+  "id": "BF-26d",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no coagulation model to correct (7i); platelets 1 pool targeted by EXTEM A10 is accepted as volume only"
+  ],
+  "values": {},
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "coagulopathy (dilutional)",
+  "intv": "platelets 1 pool targeted by EXTEM A10: targeted correction by FIBTEM/EXTEM",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 2.2
+ },
+ "BF-29a": {
+  "id": "BF-29a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL gapLow = 17 in [6, 20] [Mallat 2016 Ann Intensive Care 6:10 / Cuschieri 2005 Intensive Care Med 31:818 (Pv–aCO2 > 6 mmHg marks low flow)]",
+   "PL gapNormal = 6 in [2, 6] [normal Pv–aCO2 gap 2–6 mmHg (Mallat 2016)]"
+  ],
+  "values": {
+   "coLow": 2.168,
+   "gapLow": 17,
+   "gapNormal": 6,
+   "vbgPhLow": 7.22,
+   "abgPhLow": 7.33
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "low cardiac output (2 L bleed, CO ≈ half)",
+  "intv": "ABG + VBG drawn together: venous–arterial PCO2 gap (vs the same draw at normal CO)",
+  "sys": "BLD DEV",
+  "owner": "7c labs.ts",
+  "wallS": 19
+ },
+ "BF-29b": {
+  "id": "BF-29b",
+  "verdict": "WR",
+  "auto": "TS",
+  "notes": [
+   "TS svo2Low = 84.3 above [30, 65] [SvO2 < 65 % in low output / haemorrhagic shock (Rivers 2001 NEJM 345:1368; Vincent & De Backer 2013 NEJM 369:1726)]",
+   "TS svo2Normal = 85.7 above [70, 85] [normal SvO2 70–80 % under GA (Miller 10e ch. 36)]",
+   "HAND WR (automatic TS): SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:25–31, REGIONAL_* in params.ts) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)"
+  ],
+  "values": {
+   "svo2Low": 84.3,
+   "svo2Normal": 85.7,
+   "svo2Truth": 84.287,
+   "lactLow": 2.825
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "low cardiac output (2 L bleed)",
+  "intv": "VBG: venous O2 saturation",
+  "sys": "BLD DEV",
+  "owner": "7c oxygen.ts o2Delivery (F3)",
+  "wallS": 0
+ },
+ "BF-30": {
+  "id": "BF-30",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL matchesDraw = true (expected true) [a blood gas reports the sample at its draw time; the analyser adds only a delay (7c plan decision 13)]"
+  ],
+  "values": {
+   "resultAtS": 540,
+   "drawnAtS": 420,
+   "hco3Result": 24.1,
+   "hco3TruthAtDraw": 24.1,
+   "hco3TruthAtResult": 30.5,
+   "matchesDraw": true
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "normal, then NaHCO3 100 mmol 5 s after the draw",
+  "intv": "ABG drawn at 420 s (default turnaround): the result shows the draw-time values",
+  "sys": "BLD DEV",
+  "owner": "7c labs.ts",
+  "wallS": 5.6
  }
 }

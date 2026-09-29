@@ -180,22 +180,22 @@ add({ id: 'BF-16b', tier: 'P1', ctx: 'COPD GOLD 3 (lung copd 0.75) awake spontan
   },
   expect: [{ m: 'dPaco2', lo: 5, hi: 15, src: 'GOLD 3 chronic hypercapnia PaCO2 45–55 (tables §1.5 copd; research/12 CM-07)' },
     { m: 'hco3Per10', lo: 3, hi: 4.5, src: 'Brackett 1965 / Schwartz 1965 (chronic: HCO3 +3.5 per 10 mmHg PaCO2; "Boston rules")' }],
-  owner: '7c profile / 7b copd' });
+  owner: '7b copd profile → 7c HCO3 (F7)', hand: { verdict: 'TW', why: 'the COPD profile raises PaCO2 to 45 but leaves the HCO3 at the acute-buffer value (25.0, pH 7.36): the chronic renal compensation of a chronic lung state is not set when the profile is built (7c createBloodCore calibrates HCO3 to the profile\'s 24.4 unless blood.hco3 is given)' } });
 
 // ---- BF-17: hyperventilation to PaCO2 ≈ 25 ------------------------------------------------------------------------------
 {
-  const arms = { i: G([ven(T, { rr: 20, vtMl: 700 })], T + 2400), c: G([], T + 2400) };
+  const arms = { i: G([ven(T, { rr: 18 })], T + 2400), c: G([], T + 2400) }; // resume fix: 20 × 700 overshot to PaCO2 16
   const at = T + 1800;
   const base = (R: Record<string, { rows: Row[] }>) => ({ dPh: v(R.i!.rows, 'ph', at) - v(R.c!.rows, 'ph', at), paco2: v(R.i!.rows, 'paco2', at) });
-  add({ id: 'BF-17a', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 20 × 700 for 30 min (PaCO2 ≈ 25): ionised Ca per +0.1 pH', sys: 'BLD',
+  add({ id: 'BF-17a', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 18 × 600 for 30 min (PaCO2 ≈ 25): ionised Ca per +0.1 pH', sys: 'BLD',
     arms, measure: (R) => { const b = base(R); const di = dAt(R.i!.rows, R.c!.rows, 'iCa', at); return m({ paco2: b.paco2, dPh: Math.round(b.dPh * 1000) / 1000, dICa: di, iCaPer01: Math.round((0.1 * di) / b.dPh * 1000) / 1000 }); },
     expect: [{ m: 'iCaPer01', lo: -0.06, hi: -0.03, src: 'Fogh-Andersen 1981 Clin Chem 27:1264 / Wang 2002 (iCa falls ≈ 0.04–0.05 mmol/L per 0.1 pH rise)' }],
     owner: '7c solutes.ts ionisedCa' });
-  add({ id: 'BF-17b', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 20 × 700 for 30 min: plasma K per +0.1 pH', sys: 'BLD',
+  add({ id: 'BF-17b', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 18 × 600 for 30 min: plasma K per +0.1 pH', sys: 'BLD',
     arms, measure: (R) => { const b = base(R); const dk = dAt(R.i!.rows, R.c!.rows, 'k', at); return m({ dPh: Math.round(b.dPh * 1000) / 1000, dK: dk, kPer01: Math.round((0.1 * dk) / b.dPh * 100) / 100, dK40: dAt(R.i!.rows, R.c!.rows, 'k', T + 2400) }); },
     expect: [{ m: 'kPer01', lo: -0.4, hi: -0.1, src: 'Adrogué & Madias 1981 Am J Med 71:456 (respiratory acid–base disorders move K only 0.1–0.4 mmol/L per 0.1 pH, less than mineral acidosis)' }],
     owner: '7c core.ts kSet (phNonOrg)' });
-  add({ id: 'BF-17c', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 20 × 700 for 30 min: cerebral blood flow', sys: 'BRN',
+  add({ id: 'BF-17c', tier: 'P1', ctx: 'X-A GA vent', state: 'acute respiratory alkalosis', intv: 'VCV 18 × 600 for 30 min: cerebral blood flow', sys: 'BRN',
     arms, measure: (R) => m({ paco2: base(R).paco2, cbfPct: Math.round((100 * (v(R.i!.rows, 'cbf', at) - v(R.c!.rows, 'cbf', at))) / v(R.c!.rows, 'cbf', at) * 10) / 10, dIcp: dAt(R.i!.rows, R.c!.rows, 'icp', at) }),
     expect: [{ m: 'cbfPct', lo: -50, hi: -25, src: 'CBF −2–4 %/mmHg PaCO2 (Miller 10e ch. 11); tables §7 check 18 (≈ −35–40 % at PaCO2 25)' }],
     owner: '7d brain' });
@@ -242,17 +242,20 @@ add({ id: 'BF-24', tier: 'P1', ctx: 'X-A GA vent', state: 'class III bleeding', 
     arms, measure: (R) => m({ svo2Low: lab(R.lo!, 'vbg')?.values.so2 ?? NaN, svo2Normal: lab(R.n!, 'vbg')?.values.so2 ?? NaN, svo2Truth: v(R.lo!.rows, 'svo2', tL), lactLow: v(R.lo!.rows, 'lact', tL) }),
     expect: [{ m: 'svo2Low', lo: 30, hi: 65, src: 'SvO2 < 65 % in low output / haemorrhagic shock (Rivers 2001 NEJM 345:1368; Vincent & De Backer 2013 NEJM 369:1726)' },
       { m: 'svo2Normal', lo: 70, hi: 85, src: 'normal SvO2 70–80 % under GA (Miller 10e ch. 36)' }],
-    owner: '7c labs.ts / oxygen.ts' });
+    owner: '7c oxygen.ts o2Delivery (F3)', hand: { verdict: 'WR', why: 'SvO2 RISES from 77 to 84 % as CO falls 4.6 → 2.1 L/min while lactate climbs to 3.6: the regional supply-dependence term (oxygen.ts:25–31, REGIONAL_* in params.ts) removes 57 % of VO2 (203 → 78 mL/min) at a DO2 still at the critical 6 mL/kg/min instead of letting extraction rise to ER_MAX; venous saturation and lactate contradict each other (a septic, not a haemorrhagic, signature)' } });
 }
 
 // ---- BF-30: lab turnaround reflects the draw time -----------------------------------------------------------------------
-add({ id: 'BF-30', tier: 'P1', ctx: 'X-A GA vent', state: 'ongoing bleed 1 L / 10 min from 300 s', intv: 'ABG drawn at 420 s (default turnaround): the result shows the draw-time values', sys: 'BLD DEV',
-  arms: { i: G([bl(T, 1000, 600), [420, A.lab('abg'), 'ABG at 420 s']], 900, XA, { dt: 5 }) },
+// resume fix: the first version drew during a bleed, but Hb had not changed by the result time (not discriminating). Now a
+// bicarbonate bolus 5 s after the draw moves HCO3 at once, so the result must show the PRE-bolus value.
+add({ id: 'BF-30', tier: 'P1', ctx: 'X-A GA vent', state: 'normal, then NaHCO3 100 mmol 5 s after the draw', intv: 'ABG drawn at 420 s (default turnaround): the result shows the draw-time values', sys: 'BLD DEV',
+  arms: { i: G([[420, A.lab('abg'), 'ABG at 420 s'], d(425, 'sodiumBicarbonate', 100, 'mmol')], 900, XA, { dt: 5 }) },
   measure: (R) => {
     const L = lab(R.i!, 'abg');
-    const hbRes = L?.values.hb ?? NaN;
-    return m({ resultAtS: L?.t ?? NaN, drawnAtS: L?.drawnAt ?? NaN, hbResult: hbRes, hbTruthAtDraw: Math.round(v(R.i!.rows, 'hb', 420) * 10) / 10, hbTruthAtResult: Math.round(v(R.i!.rows, 'hb', L?.t ?? 540) * 10) / 10,
-      matchesDraw: Math.abs(hbRes - v(R.i!.rows, 'hb', 420)) <= 0.1, lactResult: L?.values.lactate ?? NaN });
+    const res = L?.values.hco3 ?? NaN;
+    const tr = L?.t ?? 540;
+    return m({ resultAtS: Math.round(L?.t ?? NaN), drawnAtS: Math.round(L?.drawnAt ?? NaN), hco3Result: res, hco3TruthAtDraw: Math.round(v(R.i!.rows, 'hco3', 415) * 10) / 10, hco3TruthAtResult: Math.round(v(R.i!.rows, 'hco3', tr) * 10) / 10,
+      matchesDraw: Math.abs(res - v(R.i!.rows, 'hco3', 415)) <= 0.3 && Math.abs(res - v(R.i!.rows, 'hco3', tr)) > 1 });
   },
   expect: [{ m: 'matchesDraw', event: true, src: 'a blood gas reports the sample at its draw time; the analyser adds only a delay (7c plan decision 13)' }],
   owner: '7c labs.ts' });
