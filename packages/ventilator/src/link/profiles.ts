@@ -6,9 +6,8 @@
 //                same engine data) plus the row's reference settings when it has its own (neonate, OLV).
 //  • `standIn` — engine targets set at link start that STAND IN for physiology no stage models yet (vasoplegia in
 //                anaphylaxis, RV outflow air lock in air embolism). Massive PE and tension pneumothorax no longer
-//                send 7a's circulation condition: the lung condition is the one event (FU-4 G6's engine alias applies
-//                7a's `pe` at the same severity — the one PE PVR source; `ptxTension` builds its pleural pressure
-//                through FU-4 F3's one-way valve) (V.1).
+//                send 7a's circulation condition: the lung condition is the one event (V.1; `ptxTension` builds its
+//                pleural pressure through FU-4 F3's one-way valve; the PE's PVR: see CIRC_CONDITIONS below).
 import type { LungConditionSpec, PatientProfile, StateVar } from '@pme/engine-core';
 import { VENT_ROW_MAP } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
@@ -44,9 +43,10 @@ const shock = (sbp: number, dbp: number, cvp: number, hr: number): StandIn[] =>
   ([['sbp', sbp], ['dbp', dbp], ['cvp', cvp], ['hr', hr]] as const).map(([variable, value]) => ({ variable, value, rampS: 20 }));
 /**
  * 7a's own circulation condition for massive PE (φ 0.6, PE_VASO 1.0: PVR ×4.0). Stage V.1: NO profile sends it any
- * more — the profile sends the lung `pe` (severity 1) only; since FU-4 G6 (engine aliases.ts) either spelling applies
- * BOTH owners, 7a's φ mapping being the one PE PVR source (lung `pe` 1 → 7a `pe` 1: φ 0.8, PVR ×9.0) and the lungs
- * the dead space and shunt. Kept for the R36 massive-PE test, whose rig NR-3 closed (it sends both spellings,
+ * more — the profile sends the lung `pe` (severity 1) only. Since FU-4 G6 a DISPATCHED `pe` of either spelling applies
+ * BOTH owners (engine aliases.ts: 7a's φ mapping is the one PE PVR source, the lungs the dead space and shunt), but a
+ * profile's `lungConditions` are set at creation and never pass through that alias, so this profile's PE carries no
+ * PVR rise at all (measured V.1 gate note §5; request for the next follow-up). Kept for the R36 massive-PE test, whose rig NR-3 closed (it sends both spellings,
  * each aliased to both owners). Tension pneumothorax: the lungs' `ptxTension` pPtx reaches 7a through respPleural.
  */
 export interface CircConditionStandIn { id: 'pe' | 'tensionPtx'; severity: number }
