@@ -144,7 +144,10 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   accent (periwinkle `#8C9BFF` dark / `#3A4FD9` light) marks instructor-controlled state only. Alarm colours are NOT
   shell tokens: `applySkinAlarmColours` copies the active skin's `alarms.messageBar` L1–L3 into `--alarm-*` and swaps
   the text to black or white when the skin's pair is under 4.5:1 (research/13-ui-design-references rule 9: black text
-  on bright red). `AppSession.setSkin` applies them on EVERY skin or theme change, wherever it comes from (Start,
+  on bright red). Red outside the alarm mirror is used only for the destructive button INSIDE a confirm dialog
+  (brief §6.2): the Patient tab's "Restart patient" is a secondary button (its dialog carries the danger styling), and
+  errors are strong text with ⚠ and the word "Error", never alarm red (R50 review F11; references rule 1).
+  `AppSession.setSkin` applies them on EVERY skin or theme change, wherever it comes from (Start,
   Settings, an imported profile), so the mirror never keeps an old skin's colours (R50 review F5; an e2e changes the
   monitor on Start and compares `--alarm-high-bg` with the new skin's `messageBar.L1.bg`). The `.bench` class sets
   `color`/`background` itself (a computed colour inherited from `body` would otherwise keep the dark theme's text —
@@ -165,7 +168,8 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   held value and "Return all to the model".
 - **D9 — Trend markers (REALITi's progress arc):** a 3 px accent progress bar under a parameter while its onset runs,
   from the commanded duration and sim time (`Link.ramps`); it disappears at 100 %.
-- **D10 — Alarm mirror, steady:** skin colours, `!!!`/`!!`/`!` marker plus the word (High/Medium/Low), latched and
+- **D10 — Alarm mirror, steady:** skin colours, the skin's priority marks (`***`/`**`/`*` where the monitor prints
+  asterisks, else `!!!`/`!!`/`!` — R50 review F12) plus the word (High/Medium/Low), latched and
   acknowledged states in words, silence/pause countdowns in words; new high alarms announced once through an
   `aria-live="assertive"` region in the instructor view only; nothing in the shell flashes (brief §6.4; references
   rules 3, 4, 7). The top-bar alarm count uses the same colours and shows the top message. **Glossary words outside
@@ -229,8 +233,9 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
   view and fails on a visible control under 24×24 px (44×44 in the instructor panel and remote), an input/select/
   textarea without an accessible name, text below 4.5:1 (3:1 for ≥ 24 px or bold ≥ 18.66 px) computed from the
   rendered colours, a focusable element without a visible focus indicator, a missing `main`/`h1`, or horizontal page
-  scroll. The glossary test (`e2e/stage9-glossary.e2e.ts`) fails on any raw engine id in the text, `aria-label` or
-  `title` of a clinical view.
+  scroll. The glossary test (`e2e/stage9-glossary.e2e.ts`) fails on any raw engine id in the text, `aria-label`,
+  `title` or `placeholder` of a clinical view, including a Remote document (its join form and every tab of a remote
+  joined by code — R50 review F10). Placeholders are written out ("For example AGD5YJ", never "e.g.").
 - **D23 — Frame gate with the whole shell, on the brief's load (R50 review F6):** the app records `requestAnimationFrame`
   intervals (`__pmeApp.frames`, the method of `validation-perf.html`), measured with the instructor panel open on the
   8-lane `validation-perf` load: `?load=perf8` mounts the performance page's own layout and patient (ECG II, V5, aVR,
@@ -879,7 +884,9 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .unitsel { width: auto; min-width: 9ch; }
 .refused { color: var(--text-muted); font-style: italic; }
 .alarms li.none { color: var(--text-muted); }
-.error { color: var(--danger); min-height: 1.2em; margin: 0; }
+/* errors are not alarms: strong text with an icon and the word "Error", never alarm red (R50 review F11; rule 1) */
+.error { color: var(--text-strong); min-height: 1.2em; margin: 0; }
+.error:not(:empty)::before { content: '⚠ '; }
 .mono, code { font-family: var(--font-mono); font-size: 0.92em; }
 .url { word-break: break-all; color: var(--text-strong); }
 .pair { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-5); align-items: center; }
@@ -3798,10 +3805,11 @@ git push
 
 **Files:**
 - Create: `apps/demo/src/app/shell.ts`
+- Create: `apps/demo/src/app/shell.dom.test.ts`
 
 **Interfaces:** `Shell` (`root`, `main`, `stage`, `monitorHost`, `bar`, `right`, `route`, `add(view)`, `onRoute`, `start`, `show`), `View`, `NAV`, `applySkinAlarmColours`, `LEVEL_MARK`, `LEVEL_NAME`.
 
-**Why:** One frame for every view (brief §4, §7 "App shell"); the stage never leaves the DOM; a narrow screen gets a Menu dialog instead of a clipped nav (D21). `applySkinAlarmColours` mirrors the active skin's message-bar colours with the black-text rule on bright red (D5). Priority is always marker + word too (`LEVEL_MARK`, `LEVEL_NAME`).
+**Why:** One frame for every view (brief §4, §7 "App shell"); the stage never leaves the DOM; a narrow screen gets a Menu dialog instead of a clipped nav (D21). `applySkinAlarmColours` mirrors the active skin's message-bar colours with the black-text rule on bright red (D5) and its priority marks (`LEVEL_MARK`: asterisks where the monitor prints them, R50 review F12). Priority is always marker + word too (`LEVEL_MARK`, `LEVEL_NAME`). `skinAlarmBar` exposes a skin's bar for the e2e of F5.
 
 - [ ] **Step 1: Create `apps/demo/src/app/shell.ts`**
 
@@ -3905,13 +3913,16 @@ export class Shell {
 }
 
 /**
- * Mirror the active skin's alarm colours into the shell (brief §6.2: alarm colours are never shell tokens; the panel's
- * alarm list and the top-bar count read what the monitor shows). White text on a bright red below 4.5:1 switches to
- * black (research/13-ui-design-references rule 9: black text on bright red).
+ * Mirror the active skin's alarm colours AND priority marks into the shell (brief §6.2: alarm colours are never shell
+ * tokens; the panel's alarm list and the top-bar count read what the monitor shows). White text on a bright red below
+ * 4.5:1 switches to black (research/13-ui-design-references rule 9: black text on bright red). A skin whose messages
+ * carry asterisks gets `***`/`**`/`*`; a skin without marks (saadat-like) keeps `!!!`/`!!`/`!`, because the mirror must
+ * still code priority by a mark as well as colour and word (rule 4; R50 review F12).
  */
 export function applySkinAlarmColours(skin: string, theme: string): void {
   const bar = skinAlarmBar(skin, theme);
   if (!bar) return;
+  Object.assign(LEVEL_MARK, bar.prefix === 'asterisks' ? { 1: '***', 2: '**', 3: '*' } : { 1: '!!!', 2: '!!', 3: '!' });
   const s = document.documentElement.style;
   const levels: Array<['high' | 'medium' | 'low', { bg: string; fg: string }]> = [['high', bar.L1], ['medium', bar.L2], ['low', bar.L3]];
   for (const [k, c] of levels) {
@@ -3921,7 +3932,7 @@ export function applySkinAlarmColours(skin: string, theme: string): void {
 }
 
 /** The active skin's message-bar colours (L1–L3), or null for an unknown skin. */
-export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string } } | null {
+export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string }; prefix: 'asterisks' | 'none' } | null {
   try {
     return resolveSkin(skin, theme ? { theme } : {}).skin.alarms.messageBar;
   } catch {
@@ -3930,23 +3941,54 @@ export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: 
 }
 
 export const LEVEL_NAME: Readonly<Record<1 | 2 | 3, 'high' | 'medium' | 'low'>> = { 1: 'high', 2: 'medium', 3: 'low' };
-/** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). */
-export const LEVEL_MARK: Readonly<Record<1 | 2 | 3, string>> = { 1: '!!!', 2: '!!', 3: '!' };
+/** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). The marks
+ *  follow the active skin (`applySkinAlarmColours`): the mirror shows the monitor's own marks (R50 review F12). */
+export const LEVEL_MARK: Record<1 | 2 | 3, string> = { 1: '!!!', 2: '!!', 3: '!' };
 
 ```
 
-- [ ] **Step 2: Run**
+- [ ] **Step 2: Create `apps/demo/src/app/shell.dom.test.ts`**
 
-```bash
-npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json
+```ts
+// @vitest-environment happy-dom
+// The alarm mirror follows the active skin: its colours (D5, R50 review F5) and its priority marks (R50 review F12).
+import { describe, expect, it } from 'vitest';
+import { applySkinAlarmColours, LEVEL_MARK, skinAlarmBar } from './shell.ts';
+
+const v = (k: string) => document.documentElement.style.getPropertyValue(k).toUpperCase();
+
+describe('skin alarm mirror', () => {
+  it('copies the skin L1–L3 colours and its priority marks', () => {
+    applySkinAlarmColours('mindray-like', '');
+    expect(v('--alarm-high-bg')).toBe(skinAlarmBar('mindray-like')?.L1.bg.toUpperCase());
+    expect(v('--alarm-medium-bg')).toBe(skinAlarmBar('mindray-like')?.L2.bg.toUpperCase());
+    expect(LEVEL_MARK).toEqual({ 1: '***', 2: '**', 3: '*' }); // IEC-style skins print asterisks
+    applySkinAlarmColours('saadat-like', '');
+    expect(v('--alarm-high-bg')).toBe(skinAlarmBar('saadat-like')?.L1.bg.toUpperCase());
+    expect(LEVEL_MARK).toEqual({ 1: '!!!', 2: '!!', 3: '!' }); // no marks on the monitor: the mirror still marks
+  });
+  it('white on a bright red below 4.5:1 turns black (rule 9)', () => {
+    applySkinAlarmColours('philips-like', '');
+    const bar = skinAlarmBar('philips-like');
+    expect(bar).not.toBeNull();
+    expect(['#FFFFFF', '#000000']).toContain(v('--alarm-high-fg'));
+  });
+});
 ```
 
-Expected: typecheck clean (the frame is exercised by Task 21's e2e).
-
-- [ ] **Step 3: Commit and push**
+- [ ] **Step 3: Run**
 
 ```bash
-git add apps/demo/src/app/shell.ts
+npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/shell.dom.test.ts && npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json
+```
+
+Expected: 2 passed (mindray-like: its L1/L2 colours and `***`/`**`/`*`; saadat-like: its colours and `!!!`/`!!`/`!`;
+the white-on-red rule); typecheck clean (the frame itself is exercised by Task 21's e2e).
+
+- [ ] **Step 4: Commit and push**
+
+```bash
+git add apps/demo/src/app/shell.ts apps/demo/src/app/shell.dom.test.ts
 git commit -m "feat(app): app frame with view switcher, session bar region, the persistent monitor stage and skin alarm colours" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"
 git push
 ```
@@ -4835,7 +4877,7 @@ export function patientTab(c: PanelCtx): HTMLElement {
         host.restart({ spec: host.spec, mode: host.mode });
         link.note('Patient restarted', 'system');
         toast('Patient restarted');
-      }, 'danger')
+      }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling (R50 review F11)
     : null;
   const edit = host ? h('a', { class: 'btn ghost', href: '#/' }, 'Change the patient on the Start screen') : h('p', { class: 'hint' }, 'The patient is chosen on the monitor screen.');
   c.onRefresh(() => {
@@ -5853,7 +5895,7 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
 
   // ---- a Remote device ----
   const status = h('p', { class: 'status-pill', role: 'status' }, 'Not connected');
-  const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'e.g. AGD5YJ' });
+  const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'For example AGD5YJ' });
   codeIn.inp.value = hashParam('code') ?? '';
   const err = h('p', { class: 'error', role: 'alert' });
   const holder = h('div', { class: 'remote-panel' });
@@ -5866,7 +5908,7 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
   function connect(raw: string): void {
     const code = normalizeSessionCode(raw);
     if (!code) {
-      setText(err, 'The code has 6 letters and digits, as shown on the monitor.');
+      setText(err, 'Error: the code has 6 letters and digits, as shown on the host screen under Remote.');
       return;
     }
     const relay = new URLSearchParams(location.search).get('relay');
@@ -6803,8 +6845,9 @@ test('a remote pairs by code and changes the host patient', async ({ page, conte
 
 ```ts
 // R56: every visible string in a clinical view comes from the glossary or the copy pass. This walks every view, every
-// instructor tab and every Explore section and fails on any raw engine id in the text, aria-labels, titles or
-// placeholders (the monitor interior, iframes, Explore's collapsed "Model internals" and Developer are exempt).
+// instructor tab, every Explore section and a Remote document (its join form and every tab) and fails on any raw
+// engine id in the text, aria-labels, titles or placeholders (the monitor interior, iframes, Explore's collapsed
+// "Model internals", Developer and titles that quote the monitor's own alarm text are exempt).
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { EXPLORE, go, openApp, scanEngineIds, startVite, TABS, tab } from './stage9-support.ts';
@@ -6835,6 +6878,20 @@ test('no engine id reaches a clinical view', async ({ page }) => {
   for (const r of ['#/', '#/monitor', '#/remote', '#/settings', '#/validate', '#/vent']) {
     await go(page, r);
     await scan(r);
+  }
+  // a Remote document (R50 review F10): the join form, then every tab of a remote joined by code
+  const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+  const join = await page.context().newPage();
+  await join.goto(`${base}/#/remote`);
+  await join.waitForFunction(() => '__pmeApp' in window);
+  hits.push(...(await scanEngineIds(join, IDS)).map((h) => `remote join form → ${h}`));
+  await join.close();
+  const remote = await page.context().newPage();
+  await remote.goto(`${base}/#/remote?code=${code}`);
+  await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 10_000 });
+  for (const t of TABS) {
+    await tab(remote, t);
+    hits.push(...(await scanEngineIds(remote, IDS)).map((h) => `remote ${t} → ${h}`));
   }
   expect(hits).toEqual([]);
 });

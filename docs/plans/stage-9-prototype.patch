@@ -113,13 +113,14 @@ index 0000000..357e87a
 +});
 diff --git a/apps/demo/e2e/stage9-glossary.e2e.ts b/apps/demo/e2e/stage9-glossary.e2e.ts
 new file mode 100644
-index 0000000..d2cc531
+index 0000000..66e3851
 --- /dev/null
 +++ b/apps/demo/e2e/stage9-glossary.e2e.ts
-@@ -0,0 +1,36 @@
+@@ -0,0 +1,51 @@
 +// R56: every visible string in a clinical view comes from the glossary or the copy pass. This walks every view, every
-+// instructor tab and every Explore section and fails on any raw engine id in the text, aria-labels, titles or
-+// placeholders (the monitor interior, iframes, Explore's collapsed "Model internals" and Developer are exempt).
++// instructor tab, every Explore section and a Remote document (its join form and every tab) and fails on any raw
++// engine id in the text, aria-labels, titles or placeholders (the monitor interior, iframes, Explore's collapsed
++// "Model internals", Developer and titles that quote the monitor's own alarm text are exempt).
 +import { expect, test } from '@playwright/test';
 +import type { ViteDevServer } from 'vite';
 +import { EXPLORE, go, openApp, scanEngineIds, startVite, TABS, tab } from './stage9-support.ts';
@@ -150,6 +151,20 @@ index 0000000..d2cc531
 +  for (const r of ['#/', '#/monitor', '#/remote', '#/settings', '#/validate', '#/vent']) {
 +    await go(page, r);
 +    await scan(r);
++  }
++  // a Remote document (R50 review F10): the join form, then every tab of a remote joined by code
++  const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
++  const join = await page.context().newPage();
++  await join.goto(`${base}/#/remote`);
++  await join.waitForFunction(() => '__pmeApp' in window);
++  hits.push(...(await scanEngineIds(join, IDS)).map((h) => `remote join form → ${h}`));
++  await join.close();
++  const remote = await page.context().newPage();
++  await remote.goto(`${base}/#/remote?code=${code}`);
++  await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 10_000 });
++  for (const t of TABS) {
++    await tab(remote, t);
++    hits.push(...(await scanEngineIds(remote, IDS)).map((h) => `remote ${t} → ${h}`));
 +  }
 +  expect(hits).toEqual([]);
 +});
@@ -777,10 +792,10 @@ index 0000000..bd9cbb7
 +}
 diff --git a/apps/demo/src/app/app.css b/apps/demo/src/app/app.css
 new file mode 100644
-index 0000000..9dc5b08
+index 0000000..7fedc21
 --- /dev/null
 +++ b/apps/demo/src/app/app.css
-@@ -0,0 +1,425 @@
+@@ -0,0 +1,427 @@
 +/* Stage 9 app shell: "bezel and screen" (research/13 brief §6). The monitor is the screen — true black, the skin's own
 +   colours, untouched. Everything else is the bezel: graphite, quiet, colour only for state. One instructor accent
 +   (periwinkle) marks what the instructor controls; alarm colours are never shell tokens (they come from the skin).
@@ -1159,7 +1174,9 @@ index 0000000..9dc5b08
 +.unitsel { width: auto; min-width: 9ch; }
 +.refused { color: var(--text-muted); font-style: italic; }
 +.alarms li.none { color: var(--text-muted); }
-+.error { color: var(--danger); min-height: 1.2em; margin: 0; }
++/* errors are not alarms: strong text with an icon and the word "Error", never alarm red (R50 review F11; rule 1) */
++.error { color: var(--text-strong); min-height: 1.2em; margin: 0; }
++.error:not(:empty)::before { content: '⚠ '; }
 +.mono, code { font-family: var(--font-mono); font-size: 0.92em; }
 +.url { word-break: break-all; color: var(--text-strong); }
 +.pair { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-5); align-items: center; }
@@ -3076,7 +3093,7 @@ index 0000000..56657e5
 +}
 diff --git a/apps/demo/src/app/panel/patient.ts b/apps/demo/src/app/panel/patient.ts
 new file mode 100644
-index 0000000..11188eb
+index 0000000..e4064ce
 --- /dev/null
 +++ b/apps/demo/src/app/panel/patient.ts
 @@ -0,0 +1,39 @@
@@ -3103,7 +3120,7 @@ index 0000000..11188eb
 +        host.restart({ spec: host.spec, mode: host.mode });
 +        link.note('Patient restarted', 'system');
 +        toast('Patient restarted');
-+      }, 'danger')
++      }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling (R50 review F11)
 +    : null;
 +  const edit = host ? h('a', { class: 'btn ghost', href: '#/' }, 'Change the patient on the Start screen') : h('p', { class: 'hint' }, 'The patient is chosen on the monitor screen.');
 +  c.onRefresh(() => {
@@ -4295,12 +4312,42 @@ index 0000000..3b53683
 +    clearInterval(iv);
 +  };
 +}
+diff --git a/apps/demo/src/app/shell.dom.test.ts b/apps/demo/src/app/shell.dom.test.ts
+new file mode 100644
+index 0000000..b93be48
+--- /dev/null
++++ b/apps/demo/src/app/shell.dom.test.ts
+@@ -0,0 +1,24 @@
++// @vitest-environment happy-dom
++// The alarm mirror follows the active skin: its colours (D5, R50 review F5) and its priority marks (R50 review F12).
++import { describe, expect, it } from 'vitest';
++import { applySkinAlarmColours, LEVEL_MARK, skinAlarmBar } from './shell.ts';
++
++const v = (k: string) => document.documentElement.style.getPropertyValue(k).toUpperCase();
++
++describe('skin alarm mirror', () => {
++  it('copies the skin L1–L3 colours and its priority marks', () => {
++    applySkinAlarmColours('mindray-like', '');
++    expect(v('--alarm-high-bg')).toBe(skinAlarmBar('mindray-like')?.L1.bg.toUpperCase());
++    expect(v('--alarm-medium-bg')).toBe(skinAlarmBar('mindray-like')?.L2.bg.toUpperCase());
++    expect(LEVEL_MARK).toEqual({ 1: '***', 2: '**', 3: '*' }); // IEC-style skins print asterisks
++    applySkinAlarmColours('saadat-like', '');
++    expect(v('--alarm-high-bg')).toBe(skinAlarmBar('saadat-like')?.L1.bg.toUpperCase());
++    expect(LEVEL_MARK).toEqual({ 1: '!!!', 2: '!!', 3: '!' }); // no marks on the monitor: the mirror still marks
++  });
++  it('white on a bright red below 4.5:1 turns black (rule 9)', () => {
++    applySkinAlarmColours('philips-like', '');
++    const bar = skinAlarmBar('philips-like');
++    expect(bar).not.toBeNull();
++    expect(['#FFFFFF', '#000000']).toContain(v('--alarm-high-fg'));
++  });
++});
 diff --git a/apps/demo/src/app/shell.ts b/apps/demo/src/app/shell.ts
 new file mode 100644
-index 0000000..1b6bff1
+index 0000000..2e29cf1
 --- /dev/null
 +++ b/apps/demo/src/app/shell.ts
-@@ -0,0 +1,127 @@
+@@ -0,0 +1,131 @@
 +// The app frame (research/13 brief §4, §7 "App shell / top bar"): top bar with the view switcher and the always-visible
 +// state (alarm count in the skin's colours, sound, remote code), the session bar, the monitor region ("stage") that
 +// never leaves the DOM, and one section per view. A route change only re-places regions by CSS grid areas and toggles
@@ -4400,13 +4447,16 @@ index 0000000..1b6bff1
 +}
 +
 +/**
-+ * Mirror the active skin's alarm colours into the shell (brief §6.2: alarm colours are never shell tokens; the panel's
-+ * alarm list and the top-bar count read what the monitor shows). White text on a bright red below 4.5:1 switches to
-+ * black (research/13-ui-design-references rule 9: black text on bright red).
++ * Mirror the active skin's alarm colours AND priority marks into the shell (brief §6.2: alarm colours are never shell
++ * tokens; the panel's alarm list and the top-bar count read what the monitor shows). White text on a bright red below
++ * 4.5:1 switches to black (research/13-ui-design-references rule 9: black text on bright red). A skin whose messages
++ * carry asterisks gets `***`/`**`/`*`; a skin without marks (saadat-like) keeps `!!!`/`!!`/`!`, because the mirror must
++ * still code priority by a mark as well as colour and word (rule 4; R50 review F12).
 + */
 +export function applySkinAlarmColours(skin: string, theme: string): void {
 +  const bar = skinAlarmBar(skin, theme);
 +  if (!bar) return;
++  Object.assign(LEVEL_MARK, bar.prefix === 'asterisks' ? { 1: '***', 2: '**', 3: '*' } : { 1: '!!!', 2: '!!', 3: '!' });
 +  const s = document.documentElement.style;
 +  const levels: Array<['high' | 'medium' | 'low', { bg: string; fg: string }]> = [['high', bar.L1], ['medium', bar.L2], ['low', bar.L3]];
 +  for (const [k, c] of levels) {
@@ -4416,7 +4466,7 @@ index 0000000..1b6bff1
 +}
 +
 +/** The active skin's message-bar colours (L1–L3), or null for an unknown skin. */
-+export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string } } | null {
++export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: string }; L2: { bg: string; fg: string }; L3: { bg: string; fg: string }; prefix: 'asterisks' | 'none' } | null {
 +  try {
 +    return resolveSkin(skin, theme ? { theme } : {}).skin.alarms.messageBar;
 +  } catch {
@@ -4425,8 +4475,9 @@ index 0000000..1b6bff1
 +}
 +
 +export const LEVEL_NAME: Readonly<Record<1 | 2 | 3, 'high' | 'medium' | 'low'>> = { 1: 'high', 2: 'medium', 3: 'low' };
-+/** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). */
-+export const LEVEL_MARK: Readonly<Record<1 | 2 | 3, string>> = { 1: '!!!', 2: '!!', 3: '!' };
++/** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). The marks
++ *  follow the active skin (`applySkinAlarmColours`): the mirror shows the monitor's own marks (R50 review F12). */
++export const LEVEL_MARK: Record<1 | 2 | 3, string> = { 1: '!!!', 2: '!!', 3: '!' };
 +
 diff --git a/apps/demo/src/app/site.test.ts b/apps/demo/src/app/site.test.ts
 new file mode 100644
@@ -5323,7 +5374,7 @@ index 0000000..daa20fa
 +}
 diff --git a/apps/demo/src/app/views/remote.ts b/apps/demo/src/app/views/remote.ts
 new file mode 100644
-index 0000000..cb5d391
+index 0000000..9940b3f
 --- /dev/null
 +++ b/apps/demo/src/app/views/remote.ts
 @@ -0,0 +1,73 @@
@@ -5365,7 +5416,7 @@ index 0000000..cb5d391
 +
 +  // ---- a Remote device ----
 +  const status = h('p', { class: 'status-pill', role: 'status' }, 'Not connected');
-+  const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'e.g. AGD5YJ' });
++  const codeIn = input('Session code', { maxlength: 8, autocapitalize: 'characters', autocomplete: 'off', inputmode: 'text', placeholder: 'For example AGD5YJ' });
 +  codeIn.inp.value = hashParam('code') ?? '';
 +  const err = h('p', { class: 'error', role: 'alert' });
 +  const holder = h('div', { class: 'remote-panel' });
@@ -5378,7 +5429,7 @@ index 0000000..cb5d391
 +  function connect(raw: string): void {
 +    const code = normalizeSessionCode(raw);
 +    if (!code) {
-+      setText(err, 'The code has 6 letters and digits, as shown on the monitor.');
++      setText(err, 'Error: the code has 6 letters and digits, as shown on the host screen under Remote.');
 +      return;
 +    }
 +    const relay = new URLSearchParams(location.search).get('relay');
