@@ -14,6 +14,13 @@
 | BF-05e | P1 | ≈ 1 blood volume replaced: dilutional coagulopathy (INR, fibrinogen, platelets) | **NE** | 7i |
 | BF-06a | P1 | calcium chloride 1 g IV: ionised Ca | **PL** | 7c pipeline.ts observeDoses |
 | BF-06b | P1 | calcium chloride 1 g IV: MAP (state-dependence) | **PL** | 7c circ-adapter.ts chemistryContractility |
+| BF-07a | P1 | none — the state itself (peaked T only) | **WR** (FU-4 pending) | FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2) |
+| BF-07b | P1 | none — the state itself (P flattening, QRS widening) | **WR** (FU-4 pending) | FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2) |
+| BF-07c | P1 | none — the state itself (sine wave → VF/asystole) | **WR** (FU-4 pending) | FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2) |
+| BF-08a | P1 | calcium chloride 1 g: ECG reversal without lowering K | **WR** (FU-4 pending) | 7c pipeline.ts bloodEcgTargets (F2) / FU-4 G3 |
+| BF-08b | P1 | insulin 10 U + dextrose 25 g: K at 30 and 60 min | **PL** | 7c treatments.ts |
+| BF-08c | P1 | salbutamol 10 mg nebulised: K at 30 and 60 min; HR | **PL** | 7g salbutamol kShift / 7c |
+| BF-08d | P1 | sodium bicarbonate 50 mmol (K at 60 min); furosemide 40 mg (K at 3 h) | **TW** | 7d organs/pipeline.ts renalSeam (F6) |
 | BF-13a | P1 | sodium bicarbonate 1 mmol/kg: PaCO2 and EtCO2 | **PL** | 7c treatments.ts bicarbCo2MlMin |
 | BF-13b | P1 | sodium bicarbonate 1 mmol/kg: ionised Ca | **PL** | 7c solutes.ts ionisedCa |
 | BF-13c | P1 | sodium bicarbonate 1 mmol/kg: pH (peak and 30 min) | **PL** | 7c |
@@ -35,3 +42,5 @@
 | BF-29a | P1 | ABG + VBG drawn together: venous–arterial PCO2 gap (vs the same draw at normal CO) | **PL** | 7c labs.ts |
 | BF-29b | P1 | VBG: venous O2 saturation | **WR** | 7c oxygen.ts o2Delivery (F3) |
 | BF-30 | P1 | ABG drawn at 420 s (default turnaround): the result shows the draw-time values | **PL** | 7c labs.ts |
+| BF-M1 | P1 | Ringer's lactate 1 L over 30 min (MODELED twin BF-02b) | **PL** | Q9 (MANUAL physiology) |
+| BF-M2 | P1 | the state (MODELED twin BF-07c): ECG and arrest | **PL** (FU-4 pending) | Q9 / FU-4 G3 |

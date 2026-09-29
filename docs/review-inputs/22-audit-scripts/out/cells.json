@@ -798,5 +798,250 @@
   "sys": "BLD DEV",
   "owner": "7c labs.ts",
   "wallS": 5.6
+ },
+ "BF-07a": {
+  "id": "BF-07a",
+  "verdict": "WR",
+  "auto": "TW",
+  "notes": [
+   "TW ecgKProfile = 4.2 below [6.2, 6.8] [the ECG reads the patient's plasma K (brief §5 electrolytes; UK Renal Association 2023: K ≥ 6.5 is ECG-significant)]",
+   "PL ecgKAcutePeak = 6.478 in [6, 7] [the same K reached acutely shows on the ECG (7c plan decision 9)]",
+   "PL arrestAny = false (expected false) [K 6.5: peaked T, arrhythmia uncommon (UK RA 2023; Mattu 2000 Am J Emerg Med 18:721)]",
+   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 6.48), but the PROFILE patient with the same plasma K 6.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
+  ],
+  "values": {
+   "kProfile": 6.491,
+   "ecgKProfile": 4.2,
+   "qrsProfile": 93,
+   "kAcutePeak": 6.485,
+   "ecgKAcutePeak": 6.478,
+   "qrsAcutePeak": 93,
+   "mapMinAcute": 94.858,
+   "hrMinAcute": 72,
+   "arrestAny": false,
+   "malignantAny": false,
+   "rhythmsAcute": "5s sinus",
+   "rhythmsProfile": "5s sinus"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "hyperkalaemia 6.5 (profile blood.k 6.5; acute: burns 0.3 + succinylcholine 1.5 mg/kg)",
+  "intv": "none — the state itself (peaked T only)",
+  "sys": "BLD RHY CIRC",
+  "owner": "FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2)",
+  "fu4": true,
+  "wallS": 18.1
+ },
+ "BF-07b": {
+  "id": "BF-07b",
+  "verdict": "WR",
+  "auto": "TW",
+  "notes": [
+   "TW ecgKProfile = 4.2 below [7.2, 7.8] [the ECG reads the plasma K (brief §5)]",
+   "TW qrsProfile = 93 below [110, 180] [K 7–8: P flattening, QRS widening (Mattu 2000; Stage 5.1 morphology: QRS +20–100 % from K 7)]",
+   "PL qrsAcutePeak = 121 in [110, 180] [as above, acute rise (Mattu 2000)]",
+   "HAND WR (automatic TW): the acute rise shows on the ECG (ecgK 7.48), but the PROFILE patient with the same plasma K 7.5 shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)"
+  ],
+  "values": {
+   "kProfile": 7.491,
+   "ecgKProfile": 4.2,
+   "qrsProfile": 93,
+   "kAcutePeak": 7.487,
+   "ecgKAcutePeak": 7.45,
+   "qrsAcutePeak": 121,
+   "mapMinAcute": 94.805,
+   "hrMinAcute": 72,
+   "arrestAny": false,
+   "malignantAny": false,
+   "rhythmsAcute": "5s sinus",
+   "rhythmsProfile": "5s sinus"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "hyperkalaemia 7.5 (profile blood.k 7.5; acute: burns 0.467 + succinylcholine 1.5 mg/kg)",
+  "intv": "none — the state itself (P flattening, QRS widening)",
+  "sys": "BLD RHY CIRC",
+  "owner": "FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2)",
+  "fu4": true,
+  "wallS": 15.5
+ },
+ "BF-07c": {
+  "id": "BF-07c",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "TW ecgKProfile = 4.2 below [8.2, 8.8] [the ECG reads the plasma K (brief §5)]",
+   "PL qrsAcutePeak = 253 in [140, 300] [K ≥ 8: sine wave (Mattu 2000; Stage 5.1: complete at 8.5)]",
+   "WR malignantAny = false (expected true) [research/12 BF-07: VF/asystole/conduction block from K 8–9 (UK RA 2023; ERC 2021 special circumstances)]",
+   "HAND WR (automatic WR): the acute rise to 8.5 draws a sine wave (QRS 253 ms) in sinus rhythm at MAP 95 for 15 min with no VF, asystole or block (FU-4 G3 pending: K acts on morphology only); the PROFILE patient with K 8.5 shows a normal ECG (ecgK 4.2, QRS 93) because only the change from the profile set point reaches the ECG (F2, new)"
+  ],
+  "values": {
+   "kProfile": 8.491,
+   "ecgKProfile": 4.2,
+   "qrsProfile": 93,
+   "kAcutePeak": 8.483,
+   "ecgKAcutePeak": 8.456,
+   "qrsAcutePeak": 253,
+   "mapMinAcute": 94.616,
+   "hrMinAcute": 73,
+   "arrestAny": false,
+   "malignantAny": false,
+   "rhythmsAcute": "5s sinus",
+   "rhythmsProfile": "5s sinus"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "hyperkalaemia 8.5 (profile blood.k 8.5; acute: burns 0.633 + succinylcholine 1.5 mg/kg)",
+  "intv": "none — the state itself (sine wave → VF/asystole)",
+  "sys": "BLD RHY CIRC",
+  "owner": "FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2)",
+  "fu4": true,
+  "wallS": 16.4
+ },
+ "BF-08a": {
+  "id": "BF-08a",
+  "verdict": "WR",
+  "auto": "TW",
+  "notes": [
+   "PL dK5min = -0.003 (quiet, tol ±0.15) [calcium stabilises the membrane without lowering K (UK Renal Association 2023)]",
+   "TW dQrsCa3min = -9 (sign -1, beyond 10) [calcium narrows the QRS within 1–3 min (UK RA 2023; research/12 BF-08)]",
+   "TW ecgKProfileAfterCa = 3.072 below [3.5, 7.6] [calcium must not push the ECG into hypokalaemic morphology (a quiet check on the displayed K)]",
+   "HAND WR (automatic TW): in the PROFILE hyperkalaemic patient, calcium drives the displayed ECG K from 4.2 to 3.1 — the monitor shows HYPOkalaemic morphology (U waves) in a patient with K 7.5 (F2); the acute arm is graded on the QRS"
+  ],
+  "values": {
+   "dK5min": -0.003,
+   "ecgKProfileBase": 4.2,
+   "ecgKProfileAfterCa": 3.072,
+   "qrsAcuteNoCa": 102,
+   "qrsAcuteCa": 93,
+   "dQrsCa3min": -9,
+   "kAcute": 7.109,
+   "ecgKAcuteCa": 6.268
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent",
+  "state": "hyperkalaemia 7.5 (profile; and acute sux + burns)",
+  "intv": "calcium chloride 1 g: ECG reversal without lowering K",
+  "sys": "RHY BLD",
+  "owner": "7c pipeline.ts bloodEcgTargets (F2) / FU-4 G3",
+  "fu4": true,
+  "wallS": 292.1
+ },
+ "BF-08b": {
+  "id": "BF-08b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dK60 = -0.927 in [-1, -0.6] [insulin–dextrose: K −0.6 to −1.0 mmol/L at 30–60 min (UK Renal Association 2023; research/12 BF-08)]"
+  ],
+  "values": {
+   "dK30": -0.636,
+   "dK60": -0.927,
+   "dGluMin": 0
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent, profile K 7.5",
+  "state": "hyperkalaemia 7.5",
+  "intv": "insulin 10 U + dextrose 25 g: K at 30 and 60 min",
+  "sys": "BLD",
+  "owner": "7c treatments.ts",
+  "wallS": 0
+ },
+ "BF-08c": {
+  "id": "BF-08c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dK30 = -0.635 in [-1, -0.5] [nebulised salbutamol 10–20 mg: K −0.5 to −1.0 within 30 min (UK RA 2023; Allon 1989 Ann Intern Med 110:426)]"
+  ],
+  "values": {
+   "dK30": -0.635,
+   "dK60": -0.747,
+   "dHrMax": 27
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent, profile K 7.5",
+  "state": "hyperkalaemia 7.5",
+  "intv": "salbutamol 10 mg nebulised: K at 30 and 60 min; HR",
+  "sys": "BLD CIRC",
+  "owner": "7g salbutamol kShift / 7c",
+  "wallS": 0
+ },
+ "BF-08d": {
+  "id": "BF-08d",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "PL dKBicarb60 = -0.154 in [-0.4, 0] [bicarbonate alone barely lowers K without acidosis (Blumberg 1988 Am J Med 85:507; UK RA 2023: not first line)]",
+   "TW dKFuro3h = -0.014 (sign -1, beyond 0.1) [loop diuretic: kaliuresis over hours if the kidney works (UK RA 2023)]",
+   "HAND TW (automatic TW): furosemide raises urine by 173 mL/h but K falls only 0.01 in 3 h: the seam excretes K at a FIXED urine concentration (organs/pipeline.ts:168–172), independent of plasma K, aldosterone or the loop diuretic, while the lost water concentrates the rest"
+  ],
+  "values": {
+   "dKBicarb60": -0.154,
+   "dKFuro3h": -0.014,
+   "dUopFuro": 173
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent, profile K 7.5 (normal pH)",
+  "state": "hyperkalaemia 7.5 without acidosis",
+  "intv": "sodium bicarbonate 50 mmol (K at 60 min); furosemide 40 mg (K at 3 h)",
+  "sys": "BLD KID",
+  "owner": "7d organs/pipeline.ts renalSeam (F6)",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "BF-M1": {
+  "id": "BF-M1",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMap = 29 (sign 1, beyond 2) [a fluid bolus raises MAP in hypovolaemia (non-reflex physiology; audit 08 Q9)]"
+  ],
+  "values": {
+   "mapBase": 53,
+   "dMap": 29,
+   "dHr": -3,
+   "dCvp": 3.026
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent MANUAL",
+  "state": "class III (1500 mL / 10 min)",
+  "intv": "Ringer's lactate 1 L over 30 min (MODELED twin BF-02b)",
+  "sys": "CIRC",
+  "owner": "Q9 (MANUAL physiology)",
+  "dirOnly": true,
+  "wallS": 43.7
+ },
+ "BF-M2": {
+  "id": "BF-M2",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL qrsPeak = 253 (sign 1, beyond 120) [the K ECG morphology is physiology, shown in MANUAL too (QRS > 120 at K 8.5; Mattu 2000)]"
+  ],
+  "values": {
+   "kPeak": 8.48,
+   "qrsPeak": 253,
+   "rhythms": "5s sinus",
+   "arrest": false
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A GA vent MANUAL",
+  "state": "acute hyperkalaemia ≈ 8.5 (burns 0.633 + succinylcholine)",
+  "intv": "the state (MODELED twin BF-07c): ECG and arrest",
+  "sys": "RHY BLD",
+  "owner": "Q9 / FU-4 G3",
+  "fu4": true,
+  "dirOnly": true,
+  "wallS": 7.9
  }
 }

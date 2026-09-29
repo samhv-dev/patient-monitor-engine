@@ -36,7 +36,10 @@ for (const [id, K, band] of [['BF-07a', 6.5, 'peaked T only'], ['BF-07b', 7.5, '
       malignantAny: [R.p!, R.a!].some((x) => x.rows.some((r) => (r.t as number) > T && malignant(r))),
       rhythmsAcute: rhythmsOf(R.a!) || 'sinus', rhythmsProfile: rhythmsOf(R.p!) || 'sinus',
     }),
-    expect, owner: 'FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets)', fu4: true });
+    expect, owner: 'FU-4 G3 (+ 7c pipeline.ts bloodEcgTargets, F2)', fu4: true,
+    hand: { verdict: 'WR', why: id === 'BF-07c'
+      ? 'the acute rise to 8.5 draws a sine wave (QRS 253 ms) in sinus rhythm at MAP 95 for 15 min with no VF, asystole or block (FU-4 G3 pending: K acts on morphology only); the PROFILE patient with K 8.5 shows a normal ECG (ecgK 4.2, QRS 93) because only the change from the profile set point reaches the ECG (F2, new)'
+      : `the acute rise shows on the ECG (ecgK ${K - 0.02}), but the PROFILE patient with the same plasma K ${K} shows a normal ECG (ecgK 4.2, QRS 93): bloodEcgTargets pushes only kEcg − set point (blood/pipeline.ts:210) into a Modifiers.k that starts at 4.2 (modifiers.ts:16) — the displayed ECG contradicts the plasma K (F2, new)` } });
 }
 
 // ---- BF-08: hyperkalaemia 7.5 — calcium, insulin–dextrose, salbutamol, bicarbonate, furosemide --------------------------
@@ -55,13 +58,15 @@ for (const [id, K, band] of [['BF-07a', 6.5, 'peaked T only'], ['BF-07b', 7.5, '
   add({ id: 'BF-08a', tier: 'P1', ctx: 'X-A GA vent', state: 'hyperkalaemia 7.5 (profile; and acute sux + burns)', intv: 'calcium chloride 1 g: ECG reversal without lowering K', sys: 'RHY BLD',
     arms, measure: (R) => m({
       dK5min: dAt(R.ca!.rows, R.cc!.rows, 'k', T + 300), ecgKProfileBase: v(R.cc!.rows, 'ecgK', T), ecgKProfileAfterCa: mn(R.ca!.rows, 'ecgK', T, T + 600),
-      qrsAcuteNoCa: v(R.acc!.rows, 'qrs', T + 420), qrsAcuteCa: v(R.aca!.rows, 'qrs', T + 420), dQrsCa3min: Math.round(v(R.aca!.rows, 'qrs', T + 420) - v(R.acc!.rows, 'qrs', T + 420)),
-      kAcute: v(R.acc!.rows, 'k', T + 420), ecgKAcuteCa: v(R.aca!.rows, 'ecgK', T + 420),
+      // resume fix: read at 2 min after the calcium (T + 360), while the succinylcholine K pulse is still near its peak
+      qrsAcuteNoCa: v(R.acc!.rows, 'qrs', T + 360), qrsAcuteCa: v(R.aca!.rows, 'qrs', T + 360), dQrsCa3min: Math.round(v(R.aca!.rows, 'qrs', T + 360) - v(R.acc!.rows, 'qrs', T + 360)),
+      kAcute: v(R.acc!.rows, 'k', T + 360), ecgKAcuteCa: v(R.aca!.rows, 'ecgK', T + 360),
     }),
     expect: [{ m: 'dK5min', quiet: true, tol: 0.15, src: 'calcium stabilises the membrane without lowering K (UK Renal Association 2023)' },
       { m: 'dQrsCa3min', dir: -1, tol: 10, src: 'calcium narrows the QRS within 1–3 min (UK RA 2023; research/12 BF-08)' },
       { m: 'ecgKProfileAfterCa', lo: 3.5, hi: 7.6, src: 'calcium must not push the ECG into hypokalaemic morphology (a quiet check on the displayed K)' }],
-    owner: '7c pipeline.ts bloodEcgTargets / FU-4 G3', fu4: true });
+    owner: '7c pipeline.ts bloodEcgTargets (F2) / FU-4 G3', fu4: true,
+    hand: { verdict: 'WR', why: 'in the PROFILE hyperkalaemic patient, calcium drives the displayed ECG K from 4.2 to 3.1 — the monitor shows HYPOkalaemic morphology (U waves) in a patient with K 7.5 (F2); the acute arm is graded on the QRS' } });
   add({ id: 'BF-08b', tier: 'P1', ctx: 'X-A GA vent, profile K 7.5', state: 'hyperkalaemia 7.5', intv: 'insulin 10 U + dextrose 25 g: K at 30 and 60 min', sys: 'BLD',
     arms, measure: (R) => m({ dK30: dAt(R.ins!.rows, R.c60!.rows, 'k', T + 1800), dK60: dAt(R.ins!.rows, R.c60!.rows, 'k', T + 3600), dGluMin: dMin(R.ins!.rows, R.c60!.rows, 'glu', T, T + 3600) }),
     expect: [{ m: 'dK60', lo: -1.0, hi: -0.6, src: 'insulin–dextrose: K −0.6 to −1.0 mmol/L at 30–60 min (UK Renal Association 2023; research/12 BF-08)' }],
@@ -74,6 +79,6 @@ for (const [id, K, band] of [['BF-07a', 6.5, 'peaked T only'], ['BF-07b', 7.5, '
     arms, measure: (R) => m({ dKBicarb60: dAt(R.hc!.rows, R.c60!.rows, 'k', T + 3600), dKFuro3h: dAt(R.fu!.rows, R.fc!.rows, 'k', T + L), dUopFuro: Math.round(mx(R.fu!.rows, 'uop', T, T + 3600) - v(R.fc!.rows, 'uop', T + 1800)) }),
     expect: [{ m: 'dKBicarb60', lo: -0.4, hi: 0, src: 'bicarbonate alone barely lowers K without acidosis (Blumberg 1988 Am J Med 85:507; UK RA 2023: not first line)' },
       { m: 'dKFuro3h', dir: -1, tol: 0.1, src: 'loop diuretic: kaliuresis over hours if the kidney works (UK RA 2023)' }],
-    dirOnly: true, owner: '7c / 7d renal excretion' });
+    dirOnly: true, owner: '7d organs/pipeline.ts renalSeam (F6)', hand: { verdict: 'TW', why: 'furosemide raises urine by 173 mL/h but K falls only 0.01 in 3 h: the seam excretes K at a FIXED urine concentration (organs/pipeline.ts:168–172), independent of plasma K, aldosterone or the loop diuretic, while the lost water concentrates the rest' } });
 }
 export { AW, XA };
