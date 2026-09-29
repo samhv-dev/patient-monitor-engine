@@ -1125,7 +1125,7 @@
   "notes": [
    "WR synergy = -15.8 (expected sign 1) [research/12 NN-20: synergistic (more than additive) drive depression (Bailey 1990) — direction]",
    "WR obstrMax = 0 below [0.05, 1] [research/12 NN-20: upper-airway obstruction under sedation (Bailey 1990; tables §4.6 uaCollapse)]",
-   "HAND WR (automatic WR): Obstruction 0 (confirmed WR): the sedation share needs DI < 60 or an opioid drive depression > 0.3 (neuro/drive.ts:66), neither reached. The \"synergy\" item is not a valid test in a closed loop (the CO2 rise re-drives breathing, so VE falls do not add); the drive formula itself is supra-multiplicative (drive.ts:59–61). N2."
+   "HAND WR (automatic WR): Obstruction 0 (confirmed WR): the sedation share needs DI < 60 or an opioid drive depression > 0.3 (neuro/drive.ts:68), neither reached. The \"synergy\" item is not a valid test in a closed loop (the CO2 rise re-drives breathing, so VE falls do not add); the drive formula itself is supra-multiplicative (neuro/drive.ts:57–61). N2."
   ],
   "values": {
    "veDropCombo": 35.4,
