@@ -182,5 +182,149 @@
   "owner": "7d brain / 7g",
   "dirOnly": true,
   "wallS": 48.1
+ },
+ "NN-26f": {
+  "id": "NN-26f",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dIcp2vs1 = -3.8 (expected sign 1) [research/12 NN-26: sevoflurane above 1 MAC raises ICP (direct vasodilation; Matta 1999 Anesthesiology 91:677; Miller neuro) — direction]",
+   "WR dCbf2vs1 = -0.161 (expected sign 1) [research/12 NN-26: … and CBF (Matta 1999: MCA velocity +4 % at 0.5, +17 % at 1.5 MAC) — direction]"
+  ],
+  "values": {
+   "mac1": 0.961,
+   "mac2": 1.9040000000000001,
+   "icp1": 16.1,
+   "icp2": 12.2,
+   "icpCtl": 25.3,
+   "dIcp2vs1": -3.8,
+   "dCbf2vs1": -0.161,
+   "map1": 83.8,
+   "map2": 70.7
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "sevoflurane 1 vs 2 MAC: CBF and ICP",
+  "sys": "BRN",
+  "owner": "7d flow.ts / 7g cbfVaso",
+  "dirOnly": true,
+  "wallS": 95.4
+ },
+ "NN-26g": {
+  "id": "NN-26g",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dIcpMax = 4.59 (quiet, tol ±2) [research/12 NN-26: ketamine does not raise ICP when ventilated (BTF; Himmelseher & Durieux 2005 A&A 101:524; Miller neuro) — quiet ±2 mmHg]"
+  ],
+  "values": {
+   "dIcpMax": 4.59,
+   "dCbfMax": 0.16,
+   "dMapMax": 6.17
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25, ventilated",
+  "state": "raised ICP",
+  "intv": "ketamine 1 mg/kg: no ICP rise under controlled ventilation",
+  "sys": "BRN",
+  "owner": "7d flow.ts / 7g cbfVaso",
+  "dirOnly": true,
+  "wallS": 46.9
+ },
+ "NN-27a": {
+  "id": "NN-27a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW cbfLowRel = 0.9009999999999999 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
+  ],
+  "values": {
+   "mapBase": 105.6,
+   "paco2Base": 33,
+   "mapLow": 69.5,
+   "cppLow": 64,
+   "cbfLowRel": 0.9009999999999999
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN (cbfLL 75), TIVA, VCV 13 × 500",
+  "state": "GA at MAP ≈ 65 (haemorrhage as the pure pressure change)",
+  "intv": "CBF from pressure alone",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain",
+  "wallS": 41.5
+ },
+ "NN-27b": {
+  "id": "NN-27b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW cbfHypoRel = 0.478 above [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
+   "PL pbto2 = 12.6 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
+  ],
+  "values": {
+   "tPaco2_25Min": 0.6,
+   "cbfHypoRel": 0.478,
+   "pbto2": 12.6,
+   "pbto2Base": 22.6,
+   "mapAt": 57.1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN, TIVA",
+  "state": "GA at MAP ≈ 65",
+  "intv": "hyperventilation PaCO2 40 → 25: CBF and PbtO2",
+  "sys": "BRN, LUNG",
+  "owner": "7d brain",
+  "wallS": 0
+ },
+ "NN-M1": {
+  "id": "NN-M1",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMapCe8 = -32.8 (sign -1, beyond 3) [research/12 NN-15 in MANUAL: the drug still lowers MAP (Q9 open: direction only)]"
+  ],
+  "values": {
+   "dMapCe2": -17.6,
+   "dMapCe8": -32.8,
+   "diCe4": 37
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated, MANUAL",
+  "state": "awake",
+  "intv": "propofol TCI 2 → 4 → 6 → 8 µg/mL: MAP falls with Ce (twin of NN-15b)",
+  "sys": "CIRC, NEU",
+  "owner": "7g PD in MANUAL (Q9)",
+  "dirOnly": true,
+  "wallS": 59.9
+ },
+ "NN-M2": {
+  "id": "NN-M2",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMap = 32.4 (sign 1, beyond 10) [tables §7 check 19 in MANUAL (the 7d MANUAL test measured +41.7) — direction]",
+   "PL hrDropPct = -39.9 (sign -1, beyond 10) [tables §7 check 19 in MANUAL — direction]"
+  ],
+  "values": {
+   "t20Min": 9.2,
+   "cushOnMin": 30.2,
+   "dMap": 32.4,
+   "hrDropPct": -39.9
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated, VCV 13 × 500, MANUAL",
+  "state": "expanding haematoma 1 mL/min",
+  "intv": "Cushing: MAP ↑, HR ↓ (twin of NN-25b)",
+  "sys": "BRN, CIRC",
+  "owner": "7d cushing.ts in MANUAL",
+  "dirOnly": true,
+  "wallS": 36.1
  }
 }

@@ -123,7 +123,7 @@
   "values": {
    "locS": 194,
    "ceAtLoc": 2.02,
-   "consciousEndCe2": null,
+   "consciousEndCe2": "true",
    "marks": "194s lossOfConsciousness, 340s emergence, 666s lossOfConsciousness, 707s apnoea"
   },
   "rejected": [],
@@ -133,7 +133,7 @@
   "intv": "propofol effect-site TCI 2 → 4 → 6 → 8 µg/mL (10 min each): Ce at loss of consciousness",
   "sys": "NEU, PK",
   "owner": "7f depth.ts",
-  "wallS": 31.5
+  "wallS": 31.7
  },
  "NN-15b": {
   "id": "NN-15b",
@@ -168,10 +168,10 @@
   "verdict": "TS",
   "auto": "TS",
   "notes": [
-   "TS ceAtSr = 5.029999999999999 below [6, 8] (lower = stronger/faster) [research/12 NN-15: burst suppression from Ce ≈ 6–8 µg/mL (Eleveld; BIS manual; tables §5d \"burst suppression DI < 20–30\")]"
+   "TS ceAtSr = 5.03 below [6, 8] (lower = stronger/faster) [research/12 NN-15: burst suppression from Ce ≈ 6–8 µg/mL (Eleveld; BIS manual; tables §5d \"burst suppression DI < 20–30\")]"
   ],
   "values": {
-   "ceAtSr": 5.029999999999999,
+   "ceAtSr": 5.03,
    "srCe6": 22,
    "srCe8": 49,
    "cmro2Ce8": 0.413
@@ -196,7 +196,7 @@
   "values": {
    "mac05": 0.489,
    "mac10": 0.97,
-   "mac15": 1.45,
+   "mac15": 1.5,
    "move05": true,
    "move10": true,
    "move15": false
@@ -208,7 +208,7 @@
   "intv": "incision (stimulus 1): movement",
   "sys": "NEU",
   "owner": "7f depth.ts (movement)",
-  "wallS": 64.2
+  "wallS": 64.4
  },
  "NN-16b": {
   "id": "NN-16b",
@@ -220,7 +220,7 @@
   "values": {
    "di05": 70,
    "di10": 43,
-   "di15": 30,
+   "di15": 29,
    "mac10": 0.97,
    "diAfterInc10": 53,
    "diShownAfterInc10": null
@@ -236,17 +236,17 @@
  },
  "NN-16c": {
   "id": "NN-16c",
-  "verdict": "WR",
-  "auto": "WR",
+  "verdict": "PL",
+  "auto": "PL",
   "notes": [
-   "WR sr15pos = false (expected true) [research/12 NN-16: suppression ratio > 0 at ≥ 1.5 MAC (Miller, inhaled agents: burst suppression at 1.5–2 MAC)]"
+   "PL sr15pos = true (expected true) [research/12 NN-16: suppression ratio > 0 at ≥ 1.5 MAC (Miller, inhaled agents: burst suppression at 1.5–2 MAC)]"
   ],
   "values": {
-   "mac15": 1.45,
-   "sr15": 0,
+   "mac15": 1.5,
+   "sr15": 4,
    "mac20": 1.925,
    "sr20": 31,
-   "sr15pos": false
+   "sr15pos": true
   },
   "rejected": [],
   "tier": "P1",
@@ -255,7 +255,7 @@
   "intv": "burst suppression at ≥ 1.5 MAC",
   "sys": "NEU, BRN",
   "owner": "7f depth.ts",
-  "wallS": 17.3
+  "wallS": 17.6
  },
  "NN-17a": {
   "id": "NN-17a",
@@ -279,7 +279,7 @@
   "intv": "remifentanil 0.2–0.3 µg/kg/min: MAC reduction and movement to incision",
   "sys": "NEU",
   "owner": "7f depth.ts",
-  "wallS": 50.9
+  "wallS": 51
  },
  "NN-17b": {
   "id": "NN-17b",
@@ -599,15 +599,16 @@
  },
  "NN-23a": {
   "id": "NN-23a",
-  "verdict": "MI",
-  "auto": "MI",
+  "verdict": "TS",
+  "auto": "TS",
   "notes": [
-   "MI apnoeicBeforeNal: absent [research/12 NN-23 premise: fentanyl 5 µg/kg makes an awake adult apnoeic (Miller, opioids)]",
+   "PL apnoeicBeforeNal = true (expected true) [research/12 NN-23 premise: fentanyl 5 µg/kg makes an awake adult apnoeic (Miller, opioids)]",
    "TS breathMin = 0.2 below [1, 2] (lower = stronger/faster) [research/12 NN-23: naloxone reverses opioid apnoea in 1–2 min (Miller, opioids)]"
   ],
   "values": {
    "ve0": 6.1,
-   "apnoeaAtNal": null,
+   "apnoeicBeforeNal": true,
+   "veMinBeforeNal": 2.3,
    "veAtNal": 2.3,
    "breathMin": 0.2,
    "breathMark": 0,
@@ -620,7 +621,7 @@
   "intv": "naloxone 0.1 mg × 2 (2 min apart): time to breathing",
   "sys": "LUNG, NEU",
   "owner": "7g naloxone row / 7f drive.ts",
-  "wallS": 150.7
+  "wallS": 152.5
  },
  "NN-23b": {
   "id": "NN-23b",
@@ -686,5 +687,487 @@
   "sys": "NEU, PK",
   "owner": "7g PK (PCHE_CL_MULT)",
   "wallS": 48.5
+ },
+ "NN-04b": {
+  "id": "NN-04b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL t1_90H = 6 in [4, 8] [research/12 NN-04 (homozygous 4–8 h; Miller); tables §5d \"homozygous 4–8 h\" (Sux-label; Lee 2009)]"
+  ],
+  "values": {
+   "t1_90H": 6,
+   "t1_10H": 4.8,
+   "phase2Fade": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent · cholinesterase homozygous atypical",
+  "state": "homozygous atypical cholinesterase",
+  "intv": "succinylcholine 1 mg/kg: block duration (T1 90 %)",
+  "sys": "NEU, PK",
+  "owner": "7g PK (PCHE_CL_MULT)",
+  "wallS": 438.1
+ },
+ "NN-05a": {
+  "id": "NN-05a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL tofr09Min = 1.9 in [1.9, 2.5] [research/12 NN-05 (≈ 2 min; Naguib); tables §5d / §7 check 25: TOFR 0.9 median 2.2 min after sugammadex 2 mg/kg at T2 (Sgx-label; ±15 %)]"
+  ],
+  "values": {
+   "tofCAtDose": 2,
+   "tofr09Min": 1.9,
+   "recur": null
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 2 reappearing",
+  "intv": "sugammadex 2 mg/kg at T2: time to TOFR 0.9",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 50.5
+ },
+ "NN-05b": {
+  "id": "NN-05b",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS tofr09Min = 2 below [2.1, 4.3] (lower = stronger/faster) [research/12 NN-05 (≈ 3 min; Naguib); tables §5d: sugammadex 4 mg/kg at 1–2 PTC, TOFR 0.9 median 2.7 min, IQR 2.1–4.3 (Sgx-label)]"
+  ],
+  "values": {
+   "ptcAtDose": 1,
+   "tofCAtDose": 0,
+   "tofr09Min": 2
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, deep block PTC 1–2",
+  "intv": "sugammadex 4 mg/kg at PTC 1–2: time to TOFR 0.9",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 43.9
+ },
+ "NN-05c": {
+  "id": "NN-05c",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW t1_10Min = 1.9 above [1, 1.4] (lower = stronger/faster) [tables §5d: sugammadex 16 mg/kg 3 min after roc 1.2, T1 10 % ≈ 1.2 min (Sgx-label; ±15 %)]",
+   "TW tofr09Min = 2.2 above [1.3, 1.7] (lower = stronger/faster) [research/12 NN-05 (TOFR 0.9 at ≈ 1.5 min; Naguib; ±15 %)]"
+  ],
+  "values": {
+   "t1_10Min": 1.9,
+   "tofr09Min": 2.2,
+   "diaAt5": 0
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 1.2 (RSI), 3 min",
+  "intv": "sugammadex 16 mg/kg 3 min after roc 1.2 (immediate reversal)",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 28.5
+ },
+ "NN-06a": {
+  "id": "NN-06a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW tofr09Min = 30.3 above [5, 15] (lower = stronger/faster) [research/12 NN-06 (TOFR 0.9 in 10–15 min from TOF 4; Fuchs-Buder; Kopman); tables §5d neostigmine onset 1–3 min, peak ~10 min]"
+  ],
+  "values": {
+   "tofCAtDose": 4,
+   "tofRAtDose": 0.03,
+   "tofr09Min": 30.3,
+   "tofr09CtlMin": null,
+   "dHrMax": 13
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 4 (fade)",
+  "intv": "neostigmine 50 µg/kg + glycopyrrolate 10 µg/kg at TOF 4: TOFR 0.9",
+  "sys": "NEU, CIRC",
+  "owner": "7f neostigmine.ts / 7g gamma row",
+  "wallS": 122.1
+ },
+ "NN-06b": {
+  "id": "NN-06b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL recovered15 = false (expected false) [research/12 NN-06: from TOF 1 neostigmine cannot reach TOFR 0.9 in 10–15 min (ceiling; Fuchs-Buder; Kopman); tables §5d \"cannot reverse from TOF count < 2\"]"
+  ],
+  "values": {
+   "tofCAtDose": 1,
+   "tofRAt15": 0.62,
+   "tofRAt15Ctl": 0.07,
+   "recovered15": false,
+   "tofr09Min": null
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 1",
+  "intv": "neostigmine 50 µg/kg + glycopyrrolate at TOF 1: ceiling (no TOFR 0.9 in 15 min)",
+  "sys": "NEU",
+  "owner": "7f neostigmine.ts",
+  "wallS": 53.2
+ },
+ "NN-09": {
+  "id": "NN-09",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS prolongPct = 60.8 above [20, 30] [research/12 NN-09: duration +20–30 % under a volatile (Miller NMB; tables §5d interactions [TXT direction])]"
+  ],
+  "values": {
+   "macBrainAtDose": 0.79,
+   "t1_25SevoMin": 59,
+   "t1_25TivaMin": 36.7,
+   "prolongPct": 60.8
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A vent",
+  "state": "sevoflurane ≈ 1 MAC (15 min) vs TIVA",
+  "intv": "rocuronium 0.6 mg/kg: clinical duration under sevoflurane vs TIVA",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "wallS": 161.1
+ },
+ "NN-26f": {
+  "id": "NN-26f",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dIcp2vs1 = -3.8 (expected sign 1) [research/12 NN-26: sevoflurane above 1 MAC raises ICP (direct vasodilation; Matta 1999 Anesthesiology 91:677; Miller neuro) — direction]",
+   "WR dCbf2vs1 = -0.161 (expected sign 1) [research/12 NN-26: … and CBF (Matta 1999: MCA velocity +4 % at 0.5, +17 % at 1.5 MAC) — direction]"
+  ],
+  "values": {
+   "mac1": 0.961,
+   "mac2": 1.9040000000000001,
+   "icp1": 16.1,
+   "icp2": 12.2,
+   "icpCtl": 25.3,
+   "dIcp2vs1": -3.8,
+   "dCbf2vs1": -0.161,
+   "map1": 83.8,
+   "map2": 70.7
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP",
+  "intv": "sevoflurane 1 vs 2 MAC: CBF and ICP",
+  "sys": "BRN",
+  "owner": "7d flow.ts / 7g cbfVaso",
+  "dirOnly": true,
+  "wallS": 95.4
+ },
+ "NN-26g": {
+  "id": "NN-26g",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dIcpMax = 4.59 (quiet, tol ±2) [research/12 NN-26: ketamine does not raise ICP when ventilated (BTF; Himmelseher & Durieux 2005 A&A 101:524; Miller neuro) — quiet ±2 mmHg]"
+  ],
+  "values": {
+   "dIcpMax": 4.59,
+   "dCbfMax": 0.16,
+   "dMapMax": 6.17
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25, ventilated",
+  "state": "raised ICP",
+  "intv": "ketamine 1 mg/kg: no ICP rise under controlled ventilation",
+  "sys": "BRN",
+  "owner": "7d flow.ts / 7g cbfVaso",
+  "dirOnly": true,
+  "wallS": 46.9
+ },
+ "NN-27a": {
+  "id": "NN-27a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW cbfLowRel = 0.9009999999999999 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
+  ],
+  "values": {
+   "mapBase": 105.6,
+   "paco2Base": 33,
+   "mapLow": 69.5,
+   "cppLow": 64,
+   "cbfLowRel": 0.9009999999999999
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN (cbfLL 75), TIVA, VCV 13 × 500",
+  "state": "GA at MAP ≈ 65 (haemorrhage as the pure pressure change)",
+  "intv": "CBF from pressure alone",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain",
+  "wallS": 41.5
+ },
+ "NN-27b": {
+  "id": "NN-27b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW cbfHypoRel = 0.478 above [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
+   "PL pbto2 = 12.6 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
+  ],
+  "values": {
+   "tPaco2_25Min": 0.6,
+   "cbfHypoRel": 0.478,
+   "pbto2": 12.6,
+   "pbto2Base": 22.6,
+   "mapAt": 57.1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN, TIVA",
+  "state": "GA at MAP ≈ 65",
+  "intv": "hyperventilation PaCO2 40 → 25: CBF and PbtO2",
+  "sys": "BRN, LUNG",
+  "owner": "7d brain",
+  "wallS": 0
+ },
+ "NN-M1": {
+  "id": "NN-M1",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMapCe8 = -32.8 (sign -1, beyond 3) [research/12 NN-15 in MANUAL: the drug still lowers MAP (Q9 open: direction only)]"
+  ],
+  "values": {
+   "dMapCe2": -17.6,
+   "dMapCe8": -32.8,
+   "diCe4": 37
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A intubated, ventilated, MANUAL",
+  "state": "awake",
+  "intv": "propofol TCI 2 → 4 → 6 → 8 µg/mL: MAP falls with Ce (twin of NN-15b)",
+  "sys": "CIRC, NEU",
+  "owner": "7g PD in MANUAL (Q9)",
+  "dirOnly": true,
+  "wallS": 59.9
+ },
+ "NN-M2": {
+  "id": "NN-M2",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMap = 32.4 (sign 1, beyond 10) [tables §7 check 19 in MANUAL (the 7d MANUAL test measured +41.7) — direction]",
+   "PL hrDropPct = -39.9 (sign -1, beyond 10) [tables §7 check 19 in MANUAL — direction]"
+  ],
+  "values": {
+   "t20Min": 9.2,
+   "cushOnMin": 30.2,
+   "dMap": 32.4,
+   "hrDropPct": -39.9
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated, VCV 13 × 500, MANUAL",
+  "state": "expanding haematoma 1 mL/min",
+  "intv": "Cushing: MAP ↑, HR ↓ (twin of NN-25b)",
+  "sys": "BRN, CIRC",
+  "owner": "7d cushing.ts in MANUAL",
+  "dirOnly": true,
+  "wallS": 36.1
+ },
+ "NN-19a": {
+  "id": "NN-19a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dMapEarlyPct = -1.2 (expected sign 1) [research/12 NN-19: early MAP rise (peripheral α2B vasoconstriction) (Miller; Ebert 2000 Anesthesiology 93:382) — direction]",
+   "PL dMapLatePct = -5.3 (sign -1, beyond 3) [research/12 NN-19: later MAP fall (central sympatholysis) (Miller; Ebert 2000) — direction]"
+  ],
+  "values": {
+   "dMapEarlyPct": -1.2,
+   "dMapLatePct": -5.3
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "dexmedetomidine 1 µg/kg over 10 min: biphasic MAP (↑ then ↓)",
+  "sys": "CIRC",
+  "owner": "7g circulation PD (α2)",
+  "dirOnly": true,
+  "wallS": 86.8
+ },
+ "NN-19b": {
+  "id": "NN-19b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW dHrMinPct = -4.3 (sign -1, beyond 5) [research/12 NN-19: bradycardia (Miller; Ebert 2000: HR −10–20 %) — direction, beyond 5 %]"
+  ],
+  "values": {
+   "dHrMinPct": -4.3
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "dexmedetomidine: bradycardia",
+  "sys": "CIRC",
+  "owner": "7g circulation PD (α2)",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-19c": {
+  "id": "NN-19c",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dDiMin = 0 (expected sign -1) [research/12 NN-19: sedation — the processed-EEG index falls (Miller; Ebert 2000: BIS ≈ 70 at Cp 0.7–1.2 ng/mL) — direction, beyond 10 points]",
+   "PL apnoea = false (expected false) [research/12 NN-19: drive preserved (Miller; Belleville 1992)]"
+  ],
+  "values": {
+   "dexCe": 1,
+   "dDiMin": 0,
+   "consciousAll": true,
+   "apnoea": false,
+   "veMinPct": -5.4
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "awake",
+  "intv": "dexmedetomidine: rousable sedation (DI falls, consciousness kept) and drive preserved",
+  "sys": "NEU, LUNG",
+  "owner": "7f depth.ts ← 7g bus.cns.dexmedCe",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-20a": {
+  "id": "NN-20a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR hypox = false (expected true) [research/12 NN-20: the combination causes hypoxaemia (SpO2 < 90 %) on air (Bailey 1990 Anesthesiology 73:826: 92 % hypoxaemic, 50 % apnoeic with midazolam 0.05 + fentanyl 2 µg/kg)]"
+  ],
+  "values": {
+   "spo2Min": 94,
+   "spo2Ctl": 96,
+   "hypox": false,
+   "apnoea": false
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-E 80 y awake, spontaneous, air",
+  "state": "procedural sedation",
+  "intv": "midazolam 0.05 mg/kg + fentanyl 1 µg/kg: desaturation on air",
+  "sys": "LUNG, NEU",
+  "owner": "7f drive.ts (synergy) / FU-6",
+  "wallS": 48.9
+ },
+ "NN-20b": {
+  "id": "NN-20b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR synergy = -15.8 (expected sign 1) [research/12 NN-20: synergistic (more than additive) drive depression (Bailey 1990) — direction]",
+   "WR obstrMax = 0 below [0.05, 1] [research/12 NN-20: upper-airway obstruction under sedation (Bailey 1990; tables §4.6 uaCollapse)]"
+  ],
+  "values": {
+   "veDropCombo": 35.4,
+   "veDropMid": 20.8,
+   "veDropFent": 30.4,
+   "synergy": -15.8,
+   "obstrMax": 0
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-E 80 y awake, spontaneous, air",
+  "state": "procedural sedation",
+  "intv": "midazolam + fentanyl: synergistic drive depression and airway obstruction",
+  "sys": "LUNG, NEU, AIR",
+  "owner": "7f drive.ts",
+  "dirOnly": true,
+  "wallS": 49.5
+ },
+ "NN-22a": {
+  "id": "NN-22a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL awareRisk = true (expected true) [research/12 NN-22: paralysed + light anaesthesia + stimulus = awareness risk (NAP5 2014)]",
+   "PL diMax = 83 in [60, 100] [research/12 NN-22: DoA > 60 (NAP5)]",
+   "PL moved = false (expected false) [research/12 NN-22: no movement — paralysed (NAP5)]"
+  ],
+  "values": {
+   "mac": 0.29,
+   "diMax": 83,
+   "awareRisk": true,
+   "conscious": true,
+   "moved": false,
+   "awarenessMark": "617s recurarisation, 647s awareness, 663s apnoea, 1592s breathing"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A intubated, ventilated, paralysed (roc 0.6)",
+  "state": "sevoflurane 0.3 MAC (light)",
+  "intv": "incision (stimulus 1): awareness flags, DI, no movement",
+  "sys": "NEU",
+  "owner": "7f depth.ts",
+  "wallS": 26.8
+ },
+ "NN-22b": {
+  "id": "NN-22b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMap = 12.67 (sign 1, beyond 5) [research/12 NN-22: MAP ↑ with the stimulus under light anaesthesia (NAP5: tachycardia/hypertension are the signs of awareness) — direction, beyond 5 mmHg]",
+   "PL dHr = 10 (sign 1, beyond 5) [research/12 NN-22: HR ↑ (NAP5) — direction, beyond 5 /min]"
+  ],
+  "values": {
+   "dMap": 12.67,
+   "dHr": 10
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A intubated, ventilated, paralysed",
+  "state": "sevoflurane 0.3 MAC",
+  "intv": "incision: HR and MAP rise vs no stimulus",
+  "sys": "CIRC, END",
+  "owner": "7e stress / 7a",
+  "dirOnly": true,
+  "wallS": 26.6
+ },
+ "NN-24": {
+  "id": "NN-24",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS wakeMin = 0.1 below [1, 2] (lower = stronger/faster) [research/12 NN-24: flumazenil reverses benzodiazepine sedation in 1–2 min (Miller)]"
+  ],
+  "values": {
+   "unconsciousAtFlu": true,
+   "wakeMin": 0.1,
+   "ctlWakeMin": 8.6,
+   "resedationMin": null,
+   "dDi": 24
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, FiO2 0.5",
+  "state": "midazolam 0.1 mg/kg (unconscious)",
+  "intv": "flumazenil 0.5 mg: time to consciousness; resedation",
+  "sys": "NEU",
+  "owner": "7g flumazenil row / 7f depth.ts",
+  "wallS": 135.1
  }
 }

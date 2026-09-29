@@ -114,7 +114,8 @@ add({
 
 // ---- NN-27 tables §7 check 18 (MODELED): 75 y HTN under GA at MAP 65, then PaCO2 25 ---------------------------------
 const T27L = 600, T27H = 1500;
-const c18 = { patient: XEH, dt: 5, tEnd: 3000, steps: [[1, A.device('ett'), 'ETT'], ventT(13, 0.25), tci(1, 'propofol', 3), [T27L, A.bleed(1400, 300), 'bleed 1400 mL / 5 min (MAP → 65)'], [T27H, A.vent({ rr: 40, vtMl: 500, fio2: 0.25, peep: 5 }), 'RR 40']] as Step[] };
+// resume fix (2026-09-29): the first rig (RR 13, bleed 1400 mL) missed the premise — PaCO2 33, MAP 69.5 (CBF 0.90).
+const c18 = { patient: XEH, dt: 5, tEnd: 3000, steps: [[1, A.device('ett'), 'ETT'], ventT(10, 0.25), tci(1, 'propofol', 3), [T27L, A.bleed(1500, 300), 'bleed 1500 mL / 5 min (MAP → 65)'], [T27H, A.vent({ rr: 40, vtMl: 500, fio2: 0.25, peep: 5 }), 'RR 40']] as Step[] };
 add({
   id: 'NN-27a', tier: 'P1', ctx: 'X-E 75 y + HTN (cbfLL 75), TIVA, VCV 13 × 500', state: 'GA at MAP ≈ 65 (haemorrhage as the pure pressure change)', intv: 'CBF from pressure alone', sys: 'BRN, CIRC',
   arms: { i: c18 },

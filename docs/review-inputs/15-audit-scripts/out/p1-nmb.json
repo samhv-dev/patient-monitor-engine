@@ -152,5 +152,158 @@
   "sys": "NEU, PK",
   "owner": "7g PK (PCHE_CL_MULT)",
   "wallS": 48.5
+ },
+ "NN-04b": {
+  "id": "NN-04b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL t1_90H = 6 in [4, 8] [research/12 NN-04 (homozygous 4–8 h; Miller); tables §5d \"homozygous 4–8 h\" (Sux-label; Lee 2009)]"
+  ],
+  "values": {
+   "t1_90H": 6,
+   "t1_10H": 4.8,
+   "phase2Fade": 1
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent · cholinesterase homozygous atypical",
+  "state": "homozygous atypical cholinesterase",
+  "intv": "succinylcholine 1 mg/kg: block duration (T1 90 %)",
+  "sys": "NEU, PK",
+  "owner": "7g PK (PCHE_CL_MULT)",
+  "wallS": 438.1
+ },
+ "NN-05a": {
+  "id": "NN-05a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL tofr09Min = 1.9 in [1.9, 2.5] [research/12 NN-05 (≈ 2 min; Naguib); tables §5d / §7 check 25: TOFR 0.9 median 2.2 min after sugammadex 2 mg/kg at T2 (Sgx-label; ±15 %)]"
+  ],
+  "values": {
+   "tofCAtDose": 2,
+   "tofr09Min": 1.9,
+   "recur": null
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 2 reappearing",
+  "intv": "sugammadex 2 mg/kg at T2: time to TOFR 0.9",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 50.5
+ },
+ "NN-05b": {
+  "id": "NN-05b",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS tofr09Min = 2 below [2.1, 4.3] (lower = stronger/faster) [research/12 NN-05 (≈ 3 min; Naguib); tables §5d: sugammadex 4 mg/kg at 1–2 PTC, TOFR 0.9 median 2.7 min, IQR 2.1–4.3 (Sgx-label)]"
+  ],
+  "values": {
+   "ptcAtDose": 1,
+   "tofCAtDose": 0,
+   "tofr09Min": 2
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, deep block PTC 1–2",
+  "intv": "sugammadex 4 mg/kg at PTC 1–2: time to TOFR 0.9",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 43.9
+ },
+ "NN-05c": {
+  "id": "NN-05c",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW t1_10Min = 1.9 above [1, 1.4] (lower = stronger/faster) [tables §5d: sugammadex 16 mg/kg 3 min after roc 1.2, T1 10 % ≈ 1.2 min (Sgx-label; ±15 %)]",
+   "TW tofr09Min = 2.2 above [1.3, 1.7] (lower = stronger/faster) [research/12 NN-05 (TOFR 0.9 at ≈ 1.5 min; Naguib; ±15 %)]"
+  ],
+  "values": {
+   "t1_10Min": 1.9,
+   "tofr09Min": 2.2,
+   "diaAt5": 0
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 1.2 (RSI), 3 min",
+  "intv": "sugammadex 16 mg/kg 3 min after roc 1.2 (immediate reversal)",
+  "sys": "NEU",
+  "owner": "7g sugammadex binding / 7f",
+  "wallS": 28.5
+ },
+ "NN-06a": {
+  "id": "NN-06a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW tofr09Min = 30.3 above [5, 15] (lower = stronger/faster) [research/12 NN-06 (TOFR 0.9 in 10–15 min from TOF 4; Fuchs-Buder; Kopman); tables §5d neostigmine onset 1–3 min, peak ~10 min]"
+  ],
+  "values": {
+   "tofCAtDose": 4,
+   "tofRAtDose": 0.03,
+   "tofr09Min": 30.3,
+   "tofr09CtlMin": null,
+   "dHrMax": 13
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 4 (fade)",
+  "intv": "neostigmine 50 µg/kg + glycopyrrolate 10 µg/kg at TOF 4: TOFR 0.9",
+  "sys": "NEU, CIRC",
+  "owner": "7f neostigmine.ts / 7g gamma row",
+  "wallS": 122.1
+ },
+ "NN-06b": {
+  "id": "NN-06b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL recovered15 = false (expected false) [research/12 NN-06: from TOF 1 neostigmine cannot reach TOFR 0.9 in 10–15 min (ceiling; Fuchs-Buder; Kopman); tables §5d \"cannot reverse from TOF count < 2\"]"
+  ],
+  "values": {
+   "tofCAtDose": 1,
+   "tofRAt15": 0.62,
+   "tofRAt15Ctl": 0.07,
+   "recovered15": false,
+   "tofr09Min": null
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6, TOF count 1",
+  "intv": "neostigmine 50 µg/kg + glycopyrrolate at TOF 1: ceiling (no TOFR 0.9 in 15 min)",
+  "sys": "NEU",
+  "owner": "7f neostigmine.ts",
+  "wallS": 53.2
+ },
+ "NN-09": {
+  "id": "NN-09",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS prolongPct = 60.8 above [20, 30] [research/12 NN-09: duration +20–30 % under a volatile (Miller NMB; tables §5d interactions [TXT direction])]"
+  ],
+  "values": {
+   "macBrainAtDose": 0.79,
+   "t1_25SevoMin": 59,
+   "t1_25TivaMin": 36.7,
+   "prolongPct": 60.8
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-A vent",
+  "state": "sevoflurane ≈ 1 MAC (15 min) vs TIVA",
+  "intv": "rocuronium 0.6 mg/kg: clinical duration under sevoflurane vs TIVA",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "wallS": 161.1
  }
 }
