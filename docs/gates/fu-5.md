@@ -5,7 +5,7 @@ Branch `fu-5-monitor-fidelity` from `origin/main` `90468dd` (FU-3 merged; `4f4ce
 **Task 9a** — the orchestrator's ruling on the plan's Open question 20 (the vendor ALARM ON-DELAY, never a suppressing
 hold), executed between Tasks 9 and 10 (Deviation (a)). One commit per task, pushed after each; Tasks 0–14 by the first
 executor, Tasks 15–18 re-done from the top by the resuming executor after the 12th cap. `origin/main` was merged at the
-gate (`b8487b4`: `docs/RESUME.md` only — **FU-4 has not merged**, so Task 15 Step 3 did not trigger on `main`; a TRIAL
+gate (`b8487b4`, then again after CI; `docs/RESUME.md` only — **FU-4 has not merged**, so Task 15 Step 3 did not trigger on `main`; a TRIAL
 merge of FU-4's head was measured separately, §6 (c)). Every number below was measured on this branch unless marked
 "plan" or "trial".
 
@@ -18,6 +18,7 @@ merge of FU-4's head was measured separately, §6 (c)). Every number below was m
 | slow set (engine-core, `CI=1 PME_TEST_SET=slow`) | 47 files / 238 tests passed on the merged tree (1 828 s, beside the fast set) and on `186bcc8` (1 483 s) — the six `fidelity-*` files (55 tests), `hemo-nibp`, `circ-hypoxic-arrest`, `circ-manual-cvp-peep` included |
 | `pnpm build` / `pnpm check-notices` | OK / `check-notices: OK (3 governed files)` |
 | e2e (`PW_SYSTEM_CHROME=1 pnpm test:e2e --workers=2`, system Chrome) | 39 passed, 1 skipped (`stage7d` gate screenshots, `PME_SHOTS=1`) in 16.6 min — the base's 32 + FU-5's 8 (6 `fu5-fidelity`, 2 `fu5-latched`); the run rewrote the other stages' committed evidence images, restored with `git checkout` |
+| PR #24 CI on `9d32ba0` | `build` PASS in 39 min 03 s (inside ruling 10's 45 min, so the fu5 evidence tests stay on CI — no `PME_EVIDENCE` gate); its e2e share 18.4 min (80 tests over Chromium + WebKit, 60 passed, the rest the WebKit/`PME_SHOTS` skips); `test-slow` PASS in 1 h 12 min 26 s (47 files, inside the 90 min cap; was 47–52 min before FU-5 — the six fidelity files and main's growth) |
 | tick bench (`packages/validation/test/perf/tick-bench.test.ts`) | passes; p50 0.50 / 0.54 / 0.62 ms, p95 0.61–0.89 ms over three runs (local bound 2 ms; load average ≈ 6) |
 | `pnpm audit:monitor` (43 scenarios, seed 7) | EXIT 0; the after-report (`fu-5/audit-report-after.txt`) is byte-identical between the pre-cap run and this executor's run |
 | `truth-event` | "future tree (12 drugs): 2031 leaves, 45 289 B" (plan: 2028 — Task 9a's pending on-delay state) |
