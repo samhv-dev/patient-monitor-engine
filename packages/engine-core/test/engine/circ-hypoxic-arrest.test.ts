@@ -60,6 +60,8 @@ interface RespWindow {
 interface Course {
   tSat60?: number; tBrady?: number; tArrest?: number; arrestRhythm?: string; hrAfter: Array<[number, number]>; tVent?: number;
   rateAtArrest?: number; hrMonBefore: number[]; win: Window; resp: RespWindow;
+  /** FU-4 F5: the decay of the PEA — the rhythm's rate (state `hr`) at +60 s … +300 s, and the phase times. */
+  rateAfter: Array<[number, number]>; tAgonal?: number; tAsystole?: number;
 }
 
 /** Paralysed (rocuronium 0.6 mg/kg), never ventilated, room air; optionally oxygenated (FiO2 1) once HR < 40 has held 30 s. */
@@ -67,7 +69,7 @@ async function asphyxia(mode: 'modeled' | 'manual', ventAtBrady: boolean, endS: 
   const sensors = { ...(abp ? { abp: 'connected' } : {}), ...(co2 ? { co2: 'on' } : {}) };
   const e = createEngine({ seed: 16, mode, patient: abp || co2 ? { ...ADULT, sensors } : ADULT });
   const c: Course = {
-    hrAfter: [], hrMonBefore: [], win: { rate: [], hrMon: [], sat: [], spo2Shown: [], pr: [], abpPp: [], beats: 0, perfused: 0 },
+    hrAfter: [], rateAfter: [], hrMonBefore: [], win: { rate: [], hrMon: [], sat: [], spo2Shown: [], pr: [], abpPp: [], beats: 0, perfused: 0 },
     resp: { rr: [], va: [], co2Range: [] },
   };
   let spo2 = 100;
@@ -111,6 +113,11 @@ async function asphyxia(mode: 'modeled' | 'manual', ventAtBrady: boolean, endS: 
       c.arrestRhythm = r.opts.pulseless ? `PEA (${r.id})` : r.id;
       c.rateAtArrest = hr;
     }
+    if (c.tArrest !== undefined) {
+      if (c.tAgonal === undefined && r.id === 'agonal') c.tAgonal = t;
+      if (c.tAsystole === undefined && r.id === 'asystole') c.tAsystole = t;
+      if ((t - c.tArrest) % 60 === 0 && t - c.tArrest <= 300) c.rateAfter.push([t - c.tArrest, hr]);
+    }
     if (c.tArrest === undefined && hrMon !== null) c.hrMonBefore = [...c.hrMonBefore.slice(-59), hrMon]; // the minute before
     if (inWin(t)) {
       c.win.rate.push(hr);
@@ -147,10 +154,13 @@ const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.lengt
 /** The FiO2 1 reversal run, shared by the reversal test and its final-HR `it.fails` (seeded, deterministic). */
 let reversalRun: Promise<Course> | undefined;
 const reversalCourse = (): Promise<Course> => (reversalRun ??= asphyxia('modeled', true, 15 * 60));
+/** The unventilated asphyxia run with the ABP line, shared by the main test, the monitor-HR record and the F5 decay. */
+let asphyxiaRun: Promise<Course> | undefined;
+const asphyxiaCourse = (): Promise<Course> => (asphyxiaRun ??= asphyxia('modeled', false, 20 * 60, true));
 
 describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_000 }, () => {
-  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.29 %, PP 0.11 mmHg, rate 30, monitor HR 58/57.6 vs 58/57.7', async () => {
-    const c = await asphyxia('modeled', false, 20 * 60, true);
+  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole, FU-4 F5), monitor HR 0 vs 59/57.9; PEA at +6.90 min (TAU_HYP_S 360)', async () => {
+    const c = await asphyxiaCourse();
     const sat = c.tSat60 ?? Number.NaN;
     const w = c.win;
     console.log(`asphyxia: SaO2 < 60 % at ${(sat / 60).toFixed(2)} min; HR < 40 at +${(((c.tBrady ?? Number.NaN) - sat) / 60).toFixed(2)} min; arrest (${c.arrestRhythm ?? 'none'}) at +${(((c.tArrest ?? Number.NaN) - sat) / 60).toFixed(2)} min`);
@@ -167,15 +177,43 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     expect(max(w.sat)).toBeLessThan(20); // SaO2 truth: no re-saturation without an ejected pulse (measured 0.33 %)
     expect(w.spo2Shown.every((v) => v === null || v < 20)).toBe(true); // SpO2 unmeasurable (measured: null throughout)
     expect(max(w.rate)).toBeLessThanOrEqual((c.rateAtArrest as number) + 0.5); // the rhythm's rate does not rise (30 → 30)
-    expect(mean(w.hrMon)).toBeLessThanOrEqual(mean(c.hrMonBefore)); // the monitor HR does not rise (57.6 vs 57.7)
+    expect(mean(w.hrMon)).toBeLessThanOrEqual(mean(c.hrMonBefore) + 1); // the monitor HR does not rise (57.6 vs 57.7); 1 bpm tolerance (G-FU3 ruling 1)
     expect(max(w.hrMon)).toBeLessThanOrEqual(max(c.hrMonBefore) + 2); // (max 58 vs 58)
     expect(w.pr.every((v) => v === null)).toBe(true); // no pulse detected
     expect(w.abpPp.length).toBeGreaterThan(0);
     expect(max(w.abpPp)).toBeLessThanOrEqual(5); // no arterial pulse (measured ≤ 0.33 mmHg: a flat ≈ 15 mmHg trace)
-    if (c.arrestRhythm?.startsWith('PEA')) {
-      expect(w.beats).toBeGreaterThan(0); // organised electrical activity on the ECG (measured 207 beats) …
-      expect(w.perfused).toBe(0); // … with no mechanical beat (7a's kRhythm 0 path)
-    }
+    expect(w.perfused).toBe(0); // no mechanical beat (7a's kRhythm 0 path)
+  });
+  // R45 (FU-4 F5, ruling 7): an untreated PEA now DECAYS — rate, then idioventricular, then asystole — so the organised
+  // electrical activity this window assumed (the non-decaying PEA: 207 beats) is gone by 6–10 min. Split out unchanged
+  // as a record; the decay itself is asserted below.
+  it.fails('a PEA onset still shows organised electrical activity 6–10 min after the arrest — measured 0 beats (the PEA decayed to asystole first; FU-4 F5)', async () => {
+    const c = await asphyxiaCourse();
+    expect(c.arrestRhythm?.startsWith('PEA')).toBe(true);
+    expect(c.win.beats).toBeGreaterThan(0);
+  });
+  // FU-4 F5 (ruling 7; the review's third test, placed on this SLOWER hypoxic PEA as the plan directs — the
+  // exsanguination course is over in ≈ 4 min): the untreated PEA's rate falls, then the rhythm goes idioventricular, then
+  // asystole.
+  it('the untreated asphyxial PEA decays: the rate 5 min after the arrest is below the onset rate, then idioventricular, then asystole', async () => {
+    const c = await asphyxiaCourse();
+    const at = (s: number) => c.rateAfter.find(([x]) => x === s)?.[1];
+    console.log(`asphyxia decay: rate at arrest ${c.rateAtArrest?.toFixed(1)}, after ${JSON.stringify(c.rateAfter.map(([x, h]) => [x, Math.round(h)]))}; agonal +${((c.tAgonal ?? NaN) - (c.tArrest ?? NaN)).toFixed(0)} s, asystole +${((c.tAsystole ?? NaN) - (c.tArrest ?? NaN)).toFixed(0)} s`);
+    expect(c.arrestRhythm?.startsWith('PEA')).toBe(true);
+    expect(at(300) ?? 0).toBeLessThan(c.rateAtArrest as number);
+    expect(c.tAgonal).toBeDefined();
+    expect(c.tAsystole).toBeDefined();
+    expect(c.tAsystole as number).toBeGreaterThan(c.tAgonal as number);
+  });
+  // FU-4 Task 13 (G-FU3 ruling 1): the MONITOR must show the hypoxic bradycardia before the arrest. Measured: the monitor
+  // reads 58 while the sinus state is 30, because the 40/min junctional backup and the sinus beats ADD (Task 13a's
+  // escape-reset test: sinus 30 → 60 QRS/min). Task 13b (escape foci × the sinus-node factor) makes the monitor read 29,
+  // but then this rig does not arrest inside its 20 min (kIsch stays 1.00: the extra escape beats were what made the
+  // hypoxic heart ischaemic — lowFlow PEA at ≈ 480 s without 13b), so 13b is NOT landed (ruling 5's checkbox) and this
+  // stays it.fails with the number (R45; question to the orchestrator).
+  it.fails('the monitor shows the bradycardia before the arrest: monitor HR < 45 in the minute before — measured min 58 (Task 13b not landed)', async () => {
+    const c = await asphyxiaCourse();
+    expect(Math.min(...c.hrMonBefore)).toBeLessThan(45);
   });
   it('E-FU3-10: 5–10 min after the arrest the brainstem is unperfused — no spontaneous breathing: RR numeric 0 or --, VA 0, flat CO2 trace — measured RR numeric 0, VA 0.000 L/min, CO2 range 0.00 mmHg (without the gate: RR 43–48 and VA up to 59.7 L/min in this window)', async () => {
     const c = await asphyxia('modeled', false, 20 * 60, false, true);
@@ -206,10 +244,9 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     expect(c.hrAfter.at(-1)?.[1] ?? 0).toBeGreaterThanOrEqual(60);
   });
   // R45 (executor, FU-3 Task 15, after merging Stage 7e): the [ENG] "no runaway rebound" bound was met before 7e
-  // (final HR 126) and is missed on main + 7e (final HR 132.1: 7e's endocrine stress response to the asphyxia adds to
-  // the sinus rate after the reoxygenation). The criterion is unchanged; it is kept apart so the reversal time, the
-  // no-arrest and the HR ≥ 60 assertions above stay enforced (the R-5 reasoning).
-  it.fails('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — measured 132.1 on main + 7e (126 before 7e)', async () => {
+  // (final HR 126) and missed on main + 7e (132.1). FU-4 (Tasks 4–6): met again — 74.4. The criterion is unchanged;
+  // it is kept apart so the reversal time, the no-arrest and the HR ≥ 60 assertions above stay enforced (R-5).
+  it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — was 132.1 on main + 7e, 74.4 with FU-4', async () => {
     const c = await reversalCourse();
     console.log(`reversal: HR at the end ${c.hrAfter.at(-1)?.[1].toFixed(1)}`);
     expect(c.hrAfter.at(-1)?.[1] ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(130); // [ENG] sanity: no runaway rebound

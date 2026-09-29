@@ -26,7 +26,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { apparatusDeadSpaceMl, CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, tempFactor, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, CO_REF_LPM, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -34,6 +34,8 @@ import { resolveLung } from '../lung/conditions.ts'; // Stage 7b
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
+import { chestWallPressure, unitPressure } from '../lung/mechanics.ts'; // FU-4 F3: the one-way valve's driving pressure
+import { PTX_DRAIN_TAU_S, PTX_VALVE_PER_CMH2O_S } from '../lung/params.ts'; // FU-4 F3
 import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
@@ -107,6 +109,10 @@ export interface RespState {
   mainstemCmd: Mainstem | null; // explicit `mainstem` command or Stage 3 endobronchial airway; null = from conditions
   recruit: { p: number; until: number } | null; // sustained-inflation manoeuvre in progress
   circPtx: number; // Stage 7b (Task 26): 7a's own ext.pPtx (mmHg), read at 10 Hz, for the max-combined pleural pressure
+  /** FU-4 F3: the tension pneumothorax's ACCUMULATED hemithorax pressure (mmHg) — what `lp.pPtx` delivers. */
+  ptxAcc: number;
+  /** FU-4 F3: the catalogue ceiling the accumulation climbs toward (mmHg, 0 = no pneumothorax). */
+  ptxCeil: number;
   out: EngineEvent[];
 }
 
@@ -133,8 +139,9 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     },
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
-    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0,
+    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
   };
+  rs.driver.vent = { ...rs.driver.vent, ...ventDefaults(pat, profile?.ageY ?? 40) }; // FU-4 F4 / R1(c): per-patient ventilator defaults
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
   return rs;
 }
@@ -158,9 +165,16 @@ function modeledSpont(rs: RespState, l1: L1State): boolean {
 function compliance(rs: RespState): number {
   return staticCompliance(rs.lung); // Stage 7b: the lung module (endobronchial ×0.5 now emerges from the mainstem block)
 }
-function deadSpace(rs: RespState): number {
+function deadSpace(rs: RespState, l1?: L1State): number {
   const mech = rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none';
-  return rs.pat.deadSpaceMl + (mech ? apparatusDeadSpaceMl(rs.pat.weightKg) : 0) + rs.co2.vdExtraMl;
+  // FU-4 F4 / R1(a): the EtCO2 → dead-space fit belongs to MANUAL. It is an instructor's calibration of a DISPLAYED
+  // number, never a MODELED patient's anatomy, and in MODELED it inflated the dead space of every patient — including
+  // spontaneously breathing women, children and the elderly, who kept the adult RR 15 / VT 500 / EtCO2 36 fit
+  // (respiratory audit R1: 265 / 329 / 459 mL). G11 had removed it for MODELED + mechanical ventilation only.
+  const fit = l1?.mode === 'modeled' ? 0 : rs.co2.vdExtraMl;
+  // FU-4 (FU-6 review ruling): the ONE physical dead space (anatomical − ETT bypass + apparatus); the artificial airway is
+  // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
+  return physicalDeadSpace(rs.pat, mech) + fit;
 }
 function extraGradient(rs: RespState): number {
   return rs.driver.airway === 'bronchospasm' ? 8 * rs.driver.severity : 0; // Pa − Et widens with obstruction [ENG]
@@ -190,6 +204,10 @@ export function respBreathU(rs: RespState, t: number): number {
 export function applyLungSpecs(rs: RespState): void {
   const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0); // Stage 7c: + lung water
   const ls = rs.lung;
+  // FU-4 F3: the catalogue value is the CEILING of the one-way-valve build-up, not the pressure itself. `lp.pPtx`
+  // keeps its name, place and unit and now delivers the accumulated pressure (0 at onset).
+  rs.ptxCeil = r.lp.pPtx;
+  r.lp.pPtx = Math.min(rs.ptxAcc, rs.ptxCeil);
   ls.lp = r.lp;
   ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
   ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
@@ -221,6 +239,33 @@ export function lungDrive(rs: RespState, t: number): { mode: 'flow' | 'pressure'
   if (u >= c.ti) return { mode: 'pressure', x: c.mech ? peep : 0 };
   if (c.mech) return { mode: 'flow', x: c.vt / Math.max(1e-3, c.ti) };
   return { mode: 'flow', x: ((c.vt * Math.PI) / (2 * c.ti)) * Math.sin((Math.PI * u) / c.ti) };
+}
+
+/**
+ * FU-4 F3 (ruling 1): one step of the tension pneumothorax's one-way valve. Air crosses while the alveolar pressure
+ * exceeds the pleural pressure, and the hemithorax's pressure–volume relation makes the rise slow as it approaches the
+ * catalogue ceiling. Under PPV the driving pressure is the whole inspiratory alveolar pressure, so the ceiling is
+ * reached in minutes; a spontaneously breathing patient's inspiration is negative at the alveolus and only the
+ * expiratory phase drives the valve, so it takes far longer — which is the clinical difference.
+ */
+export function ptxStep(rs: RespState, dt: number): void {
+  const ceil = rs.ptxCeil;
+  if (ceil <= 0) {
+    if (rs.ptxAcc > 0) rs.ptxAcc = Math.max(0, rs.ptxAcc - (rs.ptxAcc * dt) / PTX_DRAIN_TAU_S);
+    rs.lung.lp.pPtx = rs.ptxAcc;
+    return;
+  }
+  const ls = rs.lung;
+  const pcw = chestWallPressure(ls.mp, ls.mech);
+  let pAlv = -Infinity;
+  for (let u = 0; u < ls.mech.v.length; u++) pAlv = Math.max(pAlv, unitPressure(ls.mp, ls.mech, u, pcw));
+  const pPl = rs.ptxAcc / CMH2O_TO_MMHG; // the pleural pressure the valve works against, in cmH2O
+  const drive = Math.max(0, pAlv - pPl);
+  // one brake only: the valve itself. Once the pleural pressure reaches the PEAK alveolar pressure no more air can
+  // cross, so the pressure a tension pneumothorax reaches is bounded by the airway pressure — which is why it is a
+  // ventilated patient's emergency. The catalogue value is the ceiling that bound is clamped to.
+  if (drive > 0) rs.ptxAcc = Math.min(ceil, rs.ptxAcc + PTX_VALVE_PER_CMH2O_S * drive * dt);
+  ls.lp.pPtx = rs.ptxAcc;
 }
 
 /** Stage 7a seam: continuous pleural pressure (mmHg) for the circulation (audit R-B). */
@@ -266,7 +311,7 @@ function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: 
 /** Nominal alveolar ventilation of the current settings (MANUAL calibration). */
 function nominalVa(rs: RespState, l1: L1State, t: number): number {
   const n = nominalRate(rs.driver, driverCtx(rs, l1, t));
-  return (n.rr * Math.max(0, n.vt - deadSpace(rs))) / 1000;
+  return (n.rr * Math.max(0, n.vt - deadSpace(rs, l1))) / 1000;
 }
 
 // --- 10 Hz gas step ----------------------------------------------------------------------------------------
@@ -275,7 +320,11 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const h = ctx.hemo;
   const d = rs.driver;
   checkDrive(d, t);
-  rs.coRatio = (cardiacOutput(h, t) / CO_REF_LPM) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // FU-4 F4 (Task 18d, found by measurement): the ratio is to THIS patient's normal output (the module's own convention,
+  // Q = coRatio × CI_LPM_PER_KG × effKg), not to the adult 5.25 L/min — a 16 kg child at rest read 0.21 and an infant
+  // 0.10, so the low-flow CO2 compression (lowFlowFactor 0.40 / 0.24) treated every small patient as in low-flow
+  // shock: PaCO2 67 / 81 on 7 mL/kg, and the 7 kg infant crash (FU-6 Request 3). The 70 kg adult is bit-identical.
+  rs.coRatio = (cardiacOutput(h, t) / (CI_LPM_PER_KG * rs.pat.effKg)) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
   // temperature at 1 Hz; MANUAL tempCore target places the model (plan decision 2)
   if (rs.gasK % 10 === 0) {
     const tc = l1Target(l1, 'tempCore', t);
@@ -295,7 +344,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // Stage 7b: the lung module's 10 Hz step (recruitment, HPV, perfusion, CO2 mix, O2 stores) before the CO2 store.
   // Executor deviation (Task 14): it runs BEFORE the MANUAL etco2 calibration, so the calibration at t = 0 already
   // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
-  const va0 = alveolarVentilation(d, t, deadSpace(rs));
+  const va0 = alveolarVentilation(d, t, deadSpace(rs, l1));
   const x = o2Inputs(rs, l1, t, va0, ctx.blood); // Stage 7c: blood
   const ga = rs.temp.anaesthesia === 'general';
   rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
@@ -309,8 +358,18 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   writeCircPvr(h, rs.lung.perf.pvrMult, rs.lung.lp.pvr); // Stage 7b: per-lung + global lung PVR (7a R46 seams, duck-typed)
   rs.circPtx = circPtx(h); // Stage 7b (Task 26)
   // MANUAL etco2 target → physiological dead space that holds it at the current settings (decision 2)
+  // FU-4 F4 / R1(a): calibrate only in MANUAL; in MODELED the resting PaCO2 is the PATIENT's set point, not one derived
+  // from L1's adult EtCO2 default plus a gradient
   const etT = l1Target(l1, 'etco2', t);
-  if (etT !== rs.seen.etco2) {
+  if (l1.mode === 'modeled') {
+    if (rs.seen.etco2 !== etT) {
+      rs.seen.etco2 = etT;
+      rs.co2.vdExtraMl = 0;
+      const rest = rs.pat.paco2Rest;
+      if (!Number.isFinite(rs.co2.pf) || rs.co2.pf <= 0) { rs.co2.pf = rest; rs.co2.ps = rest; }
+      (rs.spont ??= createSpontDrive()).paco2Rest = rest;
+    }
+  } else if (etT !== rs.seen.etco2) {
     rs.seen.etco2 = etT;
     const n = nominalRate(d, driverCtx(rs, l1, t));
     rs.co2.flow = lowFlowFactor(rs.coRatio); // calibrate against the settled low-flow factor
@@ -333,7 +392,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
     });
   }
-  const va = alveolarVentilation(d, t, deadSpace(rs));
+  const va = alveolarVentilation(d, t, deadSpace(rs, l1));
   rs.vaLpm = va; // Stage 7g
   stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
   rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
@@ -389,14 +448,14 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     c.rr = breathing ? n.rr : 0;
     c.vt = breathing ? n.vt : 0;
   }
-  lungStateEvent(rs, t);
+  lungStateEvent(rs, t, l1);
   if (rs.gasK % 10 === 0 && rs.gasK > 0) emitSecond(rs, t);
 }
 
-function lungStateEvent(rs: RespState, t: number): void {
+function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   const d = rs.driver;
   const ev = lungStatePayload(rs.lung, {
-    deadSpaceMl: deadSpace(rs), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
+    deadSpaceMl: deadSpace(rs, l1), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
     effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
   }); // Stage 7b: absolute + per-lung fields (decision 15)
@@ -463,6 +522,7 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const t = m / RESP_RATE;
     const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
     lungMechStep(rs.lung, ld.mode, ld.x, DT);
+    ptxStep(rs, DT); // FU-4 F3: the one-way valve fills the pleural space breath by breath
     while (rs.gasK * GAS_DT_S <= t + 1e-9) {
       gasStep(rs, ctx, rs.gasK * GAS_DT_S);
       rs.gasK++;
@@ -539,6 +599,7 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     case 'thermal': {
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined && !['none', 'general', 'neuraxial'].includes(th.anaesthesia)) return 'anaesthesia must be none, general or neuraxial';
+      if (th.warmAirC !== undefined && ![32, 38, 43].includes(th.warmAirC)) return 'warmAirC must be 32, 38 or 43'; // FU-4 item 1
       return num('ambientC', th.ambientC, 5, 40);
     }
     // Stage 7b (plan decision 11)
@@ -634,6 +695,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       const th = ev as Extract<RespClinicalEvent, { kind: 'thermal' }>;
       if (th.anaesthesia !== undefined) rs.temp.anaesthesia = th.anaesthesia;
       if (th.warming !== undefined) rs.temp.warming = th.warming;
+      if (th.warmAirC !== undefined) rs.temp.warmAirC = th.warmAirC; // FU-4 item 1
       if (th.ambientC !== undefined) rs.temp.ta = th.ambientC;
       return true;
     }

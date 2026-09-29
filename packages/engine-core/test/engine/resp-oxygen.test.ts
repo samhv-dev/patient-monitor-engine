@@ -24,8 +24,12 @@ describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure
   // desaturates 2 s earlier (130 s on main): 7e's heat model cools this child ~0.03 °C less in the first minutes
   // (≈ 1 s via tempFactor) and its catecholamine drive acts on this rig's resting hypercapnia (PaCO2 94 at FiO2 0.21,
   // present on main) (≈ 1 s). Band unchanged; calibration item.
-  it.fails('5b-child. children 2–5 y 160 ± 30 s: measured 128 s vs 130–190 with Stage 7e (Q-7e-8; 130 s on main)', async () => {
+  // FU-4 F4 (Task 18d): the "resting hypercapnia (PaCO2 94 at FiO2 0.21)" of this rig was Stage 3's CO2 low-flow factor
+  // reading the child's cardiac output against the ADULT 5.25 L/min (coRatio 0.21 → elimination × 0.40); with the
+  // ratio to the patient's own output the child desaturates at 155 s. Band unchanged (R45).
+  it('5b-child. children 2–5 y 160 ± 30 s — measured 155 s; was 128 s with Stage 7e (Q-7e-8; 130 s on main)', async () => {
     const child = await desatTime({ ageY: 4, weightKg: 16, baseline: { rr: 24, vt: 130 } }, true);
+    console.log(`resp-oxygen 5b-child: ${child} s`);
     expect(child).toBeGreaterThanOrEqual(130);
     expect(child).toBeLessThanOrEqual(190);
   });

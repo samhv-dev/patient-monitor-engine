@@ -18,12 +18,17 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
   { id: 'sugammadex', name: 'Sugammadex', cls: 'nmbReversal', amountUnit: 'mg', pk: { kind: 'nmb', agent: 'sugammadex' }, elim: { renal: 1 }, pd: [],
     doses: '2 mg/kg at T2; 4 mg/kg at 1–2 PTC; 16 mg/kg immediate (M10 ch. 24 pp. 728–731)', onset: 'TOFR 0.9 in 2.2 / 2.7 min; 16 mg/kg T1 10 % in 1.2 min (label)', ir: '?', src: `Sgx label; V ${SUGAMMADEX.v1} L/kg`, tag: 'P' },
   { id: 'neostigmine', name: 'Neostigmine', cls: 'anticholinesterase', amountUnit: 'mg', pk: gammaPk(0.05, true, 600, 3600), elim: { renal: 0.5 },
-    pd: [{ target: 'achGain', emax: 3, ec50: 1 }, { target: 'hr', emax: -0.5, ec50: 1 }],
+    // FU-4 G7/F10: neostigmine's bradycardia is muscarinic — the reason it is never given without an
+    // anticholinergic. `ec50` is neostigmine's own effect-site concentration in the row's units (mg-equivalent Ce, as
+    // its `achGain` row uses); `emax` is ms added to the cycle length at full effect [ENG size, P direction].
+    pd: [{ target: 'achGain', emax: 3, ec50: 1 }, { target: 'hr', emax: -0.5, ec50: 1 }, { target: 'vagalMs', emax: 500, ec50: 1 }],
     doses: '0.03–0.07 mg/kg, max 5 mg (with glycopyrrolate 0.2 mg per 1 mg)', onset: 'onset 1–3 min, peak ≈ 10 min; ceiling from TOF < 2 (7f; M10 ch. 24 p. 716)', ir: '?', src: 'Neo label; BJAEd 2020; T5d', tag: 'P' },
   { id: 'glycopyrrolate', name: 'Glycopyrrolate', cls: 'anticholinergic', amountUnit: 'mg', pk: gammaPk(0.2, false, 180, 10800),
-    pd: [{ target: 'hr', emax: 0.3, ec50: 1 }], doses: '0.2–0.4 mg', onset: 'onset 2–3 min, duration 2–4 h; HR +10–20', ir: '?', src: 'T6.2; brief §4.9', tag: 'TXT' },
+    // FU-4 G7/F10: muscarinic occupancy 0–1 — 7g multiplies every `vagalMs` by (1 − occupancy), so an anticholinergic
+    // given first abolishes the opioid and neostigmine bradycardias. ec50 in mg-equivalent Ce [ENG].
+    pd: [{ target: 'hr', emax: 0.3, ec50: 1 }, { target: 'muscarinic', emax: 1, ec50: 0.35 }], doses: '0.2–0.4 mg', onset: 'onset 2–3 min, duration 2–4 h; HR +10–20', ir: '?', src: 'T6.2; brief §4.9', tag: 'TXT' },
   { id: 'atropine', name: 'Atropine', cls: 'anticholinergic', amountUnit: 'mg', pk: gammaPk(0.5, false, 60, 5400),
-    pd: [{ target: 'hr', emax: 0.6, ec50: 1 }], doses: '0.5–1 mg (child 0.02 mg/kg); arrest per ALS', onset: 'onset < 1 min, duration 30–60 min; HR +20–40 scaled by vagal tone (T6.2)', ir: '?', src: 'T6.2; R03 §8.6', tag: 'TXT' },
+    pd: [{ target: 'hr', emax: 0.6, ec50: 1 }, { target: 'muscarinic', emax: 1, ec50: 0.3 }], doses: '0.5–1 mg (child 0.02 mg/kg); arrest per ALS', onset: 'onset < 1 min, duration 30–60 min; HR +20–40 scaled by vagal tone (T6.2)', ir: '?', src: 'T6.2; R03 §8.6', tag: 'TXT' },
   // --- vasoactives (decision 4: rate-equivalent Ce, EC50 µg/kg/min) ---
   { id: 'phenylephrine', name: 'Phenylephrine', cls: 'alpha1', amountUnit: 'mcg', pk: vaso(0.04, 0.035, 1.2),
     pd: [{ target: 'svr', emax: 1, ec50: 0.25, catecholamine: true }, { target: 'pvr', emax: 0.15, ec50: 0.25, catecholamine: true }, { target: 'v0Frac', emax: -0.045, ec50: 0.25, catecholamine: true }],

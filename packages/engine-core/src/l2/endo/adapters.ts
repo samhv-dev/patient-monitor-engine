@@ -56,7 +56,9 @@ export function pkActive(pk: PkLike | undefined): boolean {
 }
 
 function mapOf(ctx: EndoCtx, t: number): number {
-  const beats = circOf(ctx)?.beats;
+  const c = circOf(ctx) as { beats?: { map: number }[]; mapNow?: number } | undefined;
+  if (c && typeof c.mapNow === 'number') return c.mapNow; // FU-4 G4: the current MAP, beats or none
+  const beats = c?.beats;
   const last = beats && beats.length ? beats[beats.length - 1] : undefined;
   if (last) return last.map;
   return (l1Value(ctx.l1, 'sbp', t) + 2 * l1Value(ctx.l1, 'dbp', t)) / 3;
@@ -82,7 +84,7 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
   const antinoc = num(n?.antinoc) && pkActive(pk) ? n.antinoc : flag;
   const prof = circOf(ctx)?.prof;
   return {
-    noxious: es.noxious, antinoc, mapMmHg: mapOf(ctx, t), sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
+    noxious: es.noxious, antinoc, mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
@@ -151,6 +153,8 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     const bv = circ?.prof?.bloodVolumeMl ?? 0;
     const v0 = circ?.base?.v0Sv ?? 0;
     ext.endoDV0Frac = v0 > 0 ? (-o.dV0Frac * bv) / v0 : 0;
+    ext.endoHumDV0Frac = o.humDV0Frac; // FU-4 F2(a): fraction of BLOOD VOLUME, into 7a's shared reservoir
+    ext.endoHumSvrF = o.humSvrF; // FU-4 G-FU4-1: the humoral share of endoSvrF (7a withdraws its effect under ischaemia)
     return 1;
   }
   if (ext && ext.endoHrF !== undefined) {
@@ -158,6 +162,8 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     ext.endoSvrF = 1;
     ext.endoEesF = 1;
     ext.endoDV0Frac = 0;
+    ext.endoHumDV0Frac = 0;
+    ext.endoHumSvrF = 1;
   }
   return ctx.l1.pinned.includes('hr') ? 1 : endoHr(es, bba, false);
 }

@@ -11,7 +11,8 @@ export type DrugClass =
 
 /** Named engine inputs a drug can move (multipliers are "fraction change": the effect E adds to 1). */
 export type PdTarget =
-  | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' // → 7a DrugEffect
+  | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' | 'symp' | 'setF' // → 7a DrugEffect (FU-4 G2: symp, setF)
+  | 'vagalMs' | 'muscarinic' // FU-4 G7: vagal RR increment (ms, additive) and muscarinic block (occupancy 0–1)
   | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain';
 
 export interface PdEffect {
@@ -56,6 +57,8 @@ export interface DrugRow {
   pk: PkSpec;
   /** elimination route fractions of CL (the rest organ-independent); hepatic high-extraction drugs follow liver FLOW */
   elim?: { hepatic?: number; highExtraction?: boolean; renal?: number };
+  /** FU-4 G10: the central volume and the fast distribution follow cardiac output (propofol; Kazama 2002). */
+  flowDist?: boolean;
   pd: PdEffect[];
   cns?: CnsSpec;
   /** default syringe concentration (amountUnit per mL) and pump limit — for mL/h and TCI */

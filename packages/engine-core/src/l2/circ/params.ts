@@ -106,9 +106,23 @@ export const V0_ART = 600;
 // --- CPR (B §4.2; R39-2) ---
 /** Direct cardiac compression: chamber pressure added per unit quality, mmHg [ENG; plan 60 (not prototyped) → 35 in the
  * engine: 60 gave SBP 95 / DBP 40 / CO 3.5 L/min at quality 0.8; 35/35 gives 73/16 and CO 2.1 (quality 1: 91/21, 2.5)]. */
-export const CPR_CARDIAC_MMHG = 35;
+export const CPR_CARDIAC_MMHG = 24; // FU-4 F1: re-fitted with the volume factor, the release residual and the brainstem withdrawal (was 35)
 /** Thoracic-pump pressure on every intrathoracic compartment and the aortic root per unit quality [ENG; plan 30 → 35]. */
-export const CPR_THORACIC_MMHG = 35;
+export const CPR_THORACIC_MMHG = 24; // FU-4 F1: re-fitted with F1(a)/(c) (was 35)
+/**
+ * FU-4 F1(a): a compression DISPLACES blood — it is not a pressure source. The pressure it generates scales with the
+ * intrathoracic stressed volume it has to displace, so an empty thorax generates none (the exsanguinated heart gets no
+ * CPP from compressions alone). Reference stressed intrathoracic volume ≈ 8 % of blood volume (measured resting:
+ * adult 382 mL / BV 4 900, woman 370 / 3 900, 4 y child 89 / 1 152) [ENG].
+ */
+export const V_CPR_REF_FRAC = 0.08;
+/**
+ * FU-4 F1(c): the chest does not fully recoil between compressions — a residual intrathoracic pressure stays on the
+ * collapsible venous side (RA and the pulmonary compartments) through the decompression phase, which is why Paradis
+ * 1990 measured RA relaxation pressures of 15–25 mmHg rather than the ≈ 2 mmHg a full release gives. Fraction of the
+ * thoracic-pump amplitude retained during release [ENG, fit to Paradis's RA relaxation band].
+ */
+export const CPR_RELEASE_RESIDUAL = 0.65;
 
 // --- integration ---
 export const H_S = 0.002; // RK4 step (R42; Stage 2 H_S)

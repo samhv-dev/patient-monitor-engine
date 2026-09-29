@@ -175,11 +175,12 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     }, BLOOD_DT_S);
     bs.out = bs.pinHbfRel === undefined ? c.out : { ...c.out, hbfRel: bs.pinHbfRel }; // test seam (addendum 15 (4))
     const bvRatio = c.out.bvRel;
-    const kChem = chemistryContractility(c.ab.ph, c.out.iCa);
+    const kChem = chemistryContractility(c.ab.ph, c.out.iCa, c.out.kEcg); // FU-4 G3: + K
     if (circ) {
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
       bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
+      circ.ext.kEcg = c.out.kEcg; // FU-4 G3: the membrane-effective K for the sinus node and the arrest hazard (7a arrest.ts)
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
     rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // Stage 7e (E-7e-1): IV fluids and unwarmed units as a physical heat term (replaces decision 16's −0.25 °C per unit)
     bs.cold = bs.cold.filter((u) => u.until > t);
@@ -207,7 +208,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
 
 /** ECG targets the engine pushes as deltas: K for Modifiers.k, ΔQTc for Modifiers.qtc. */
 export function bloodEcgTargets(bs: BloodState): { k: number; qtc: number } {
-  return { k: bs.core.out.kEcg - bs.core.so.set.k, qtc: qtcDeltaCa(bs.core.out.iCa) };
+  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
 }
 
 // --- commands ----------------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@ import { compliance } from '../../../src/l2/hemo/circulation.ts'; // FU-2 item 3
 
 const zero = () => 0;
 function drive(): CircDrive {
-  return { vent: [], atria: [], kLv: 1, kRv: 1, pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qIn: 0, qVad: () => 0, qAortaSrc: zero };
+  return { vent: [], atria: [], kLv: 1, kRv: 1, pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, cprRelease: zero, qIn: 0, qVad: () => 0, qAortaSrc: zero };
 }
 
 describe('circuit ODE', () => {

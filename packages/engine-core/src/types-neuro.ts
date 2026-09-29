@@ -24,7 +24,13 @@ export interface NeuroProfile {
  * (stress hormones); 7f OBSERVES it (apply returns false) for its antinociception/movement/EMG terms. If 7e's
  * types-endo.ts lands after this file, 7e imports this type instead of declaring its own (the 7e plan's Task 1 note).
  */
-export type StimulusEvent = { kind: 'stimulus'; intensity: number };
+export type StimulusEvent = { kind: 'stimulus'; intensity: number; site?: VagalSite };
+/**
+ * FU-4 G7 (Tasks 12, 18f): the ONE optional field the stimulus gains (addendum 12: one shape) — where the stimulus is,
+ * for the reflexes that are VAGAL rather than nociceptive. 7e still consumes the event; 7a only observes the site.
+ */
+export type VagalSite = 'laryngoscopy' | 'oculocardiac' | 'peritoneal';
+export const VAGAL_SITES: readonly VagalSite[] = ['laryngoscopy', 'oculocardiac', 'peritoneal'];
 
 /** Brief §7.2 ClinicalEvent members Stage 7f validates (`stimulus` only until 7e lands: decision 17). */
 export type NeuroClinicalEvent =

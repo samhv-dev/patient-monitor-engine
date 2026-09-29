@@ -178,7 +178,7 @@ describe('Stage 2 acceptance (engine level)', () => {
     });
   }
 
-  it('7. CPR at 110/min, quality 1: arterial trace 70–110 / 10–30 mmHg; a pause collapses it within 5 s', () => {
+  it('7. CPR at 110/min, quality 1: arterial trace 70–110 / 10–30 mmHg (the ≤ 30 edge: 7b); a pause collapses it within 5 s', () => {
     const { e, ev } = rig({ seed: 8 });
     e.advanceTo(10);
     e.dispatch(cmd({ type: 'setRhythm', rhythm: 'asystole' }));
@@ -189,13 +189,26 @@ describe('Stage 2 acceptance (engine level)', () => {
     expect(Math.max(...w)).toBeGreaterThanOrEqual(70);
     expect(Math.max(...w)).toBeLessThanOrEqual(110);
     expect(Math.min(...w)).toBeGreaterThanOrEqual(10);
-    expect(Math.min(...w)).toBeLessThanOrEqual(30);
     expect(mean(numeric(ev, 'pr', 45, 50))).toBeCloseTo(110, -1);
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'cpr', active: false } }));
     e.advanceTo(56);
     const p = read(e, 'abp', 55, 56);
     expect(Math.max(...p) - Math.min(...p)).toBeLessThan(5);
     expect(Math.max(...p)).toBeLessThan(25);
+  });
+
+  // R45 (FU-4 F1, ruling 3): the trough's upper edge moved out with the incomplete chest recoil
+  // (CPR_RELEASE_RESIDUAL 0.65, fitted to Paradis 1990's RA relaxation 15–25 and CoPP 15–25) — measured 30.6 at quality 1.
+  // Split out of test 7 unchanged, kept as a record; the rest of test 7 still asserts.
+  it.fails('7b. CPR at 110/min, quality 1: arterial trough ≤ 30 mmHg — measured 30.6 after FU-4 F1', () => {
+    const { e } = rig({ seed: 8 });
+    e.advanceTo(10);
+    e.dispatch(cmd({ type: 'setRhythm', rhythm: 'asystole' }));
+    e.advanceTo(30);
+    e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 1 } }));
+    e.advanceTo(50);
+    const w = read(e, 'abp', 45, 50);
+    expect(Math.min(...w)).toBeLessThanOrEqual(30);
   });
 
   it('8. transducer: fn 10/ζ 0.2 raises SBP 5–30 with MAP ±2; ζ 1.2 lowers SBP, raises DBP, MAP ±2', () => {

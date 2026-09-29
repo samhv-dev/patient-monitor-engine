@@ -20,14 +20,15 @@ import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './
 import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
 import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
 import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { SAO2_REF, stepCoronary, stPatchOf } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF)
+import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS; F1(d): VF_RHYTHMS)
 import { createIabp, createLvad, iabpFlow, iabpOnBeat, iabpStop, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a
 import { circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a
 import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
 import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
 import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
+import { arrestStep, peaDecayStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1; F5: peaDecayStep
 import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
-import { CPR_CARDIAC_MMHG, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
+import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
 export type HemoChannel = (typeof HEMO_CHANNELS)[number];
@@ -261,7 +262,10 @@ function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return {
     pIt: pleuralSource(ctx),
     cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
-    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t), qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
+    cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t),
+    // FU-4 F1(c): incomplete recoil — a residual thoracic pressure on the venous side through the release phase
+    cprRelease: (t) => (hs.cpr.active ? CPR_THORACIC_7A * CPR_RELEASE_RESIDUAL * hs.cpr.quality : 0),
+    qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }
 
 /** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
@@ -377,14 +381,40 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   c.cor.eesF = c.kLv;
   const pulseless = ctx.rhythm.opts?.pulseless === true; // FU-3 item 16
   const hyp0 = c.cor.hyp;
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1); // FU-3 item 16: O2 content in the supply (MODELED)
+  // FU-4 G4: with no beat to read (pulseless rhythm, or no beat for 3 s) the coronary step reads the arrest's own
+  // pressures — the relaxation-phase aortic − RA pressure accumulated at 2 ms (CPR's CPP, Paradis 1990)
+  const lb0 = c.beats[c.beats.length - 1];
+  const noBeat = pulseless || NO_BEAT_RHYTHMS.has(ctx.rhythm.id) || !lb0 || t - lb0.t > 3;
+  const cppCont = c.cppAcc.n > 0 ? c.cppAcc.sum / c.cppAcc.n : 0;
+  c.cppAcc = { sum: 0, n: 0 };
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled'); // FU-3 item 16: O2 content in the supply (MODELED); FU-4 G1/G4: the no-beat CPP, MODELED balance
   // FU-3 item 16 (R50 review finding 1): a pulseless heart is not reperfused, so its hypoxic depression (and the
-  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless
-  if (pulseless) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
+  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
+  if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
-  if (ctx.l1.mode === 'modeled' && ctx.requestRhythm) {
-    const req = hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, rampValue(ctx.hr, t), () => uniform(ctx.rng.outcome)); // FU-3 item 16
-    if (req) ctx.requestRhythm(req.id, req.opts);
+  if (ctx.requestRhythm) {
+    // FU-4 G1 (D5, D6): FU-3's hypoxic declaration first (MODELED), then the low-flow / no-flow / hazard declaration
+    // (both modes); an engine-declared PEA regains its pulse through roscStep. One requestRhythm path (E-FU3-8).
+    const u = () => uniform(ctx.rng.outcome);
+    const hrNow = rampValue(ctx.hr, t);
+    const hx = ctx.l1.mode === 'modeled' ? hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, hrNow, u) : null; // FU-3 item 16
+    const req = hx ? { ...hx, cause: 'hypoxia' } : arrestStep(c, ctx.rhythm.id, pulseless, hrNow, u, 1);
+    if (req) {
+      const r0 = req.opts.rateBpm ?? Math.round(Math.max(20, hrNow));
+      c.arrest = { cause: req.cause, t, from: ctx.rhythm.id, roscS: 0, rate0: r0, rateNow: r0 };
+      ctx.requestRhythm(req.id, req.opts);
+    } else {
+      const back = roscStep(c, ctx.rhythm.id, pulseless, cppCont, 1);
+      if (back) ctx.requestRhythm(back.id, back.opts);
+      else {
+        // FU-4 F5 (ruling 7): the untreated organised PEA decays — slower, then idioventricular, then asystole
+        const dec = peaDecayStep(c, ctx.rhythm.id, pulseless, cppCont, u, 1);
+        if (dec) {
+          if (c.arrest) c.arrest.rateNow = dec.opts.rateBpm ?? c.arrest.rateNow;
+          ctx.requestRhythm(dec.id, dec.opts);
+        }
+      }
+    }
   }
   const nxt = stPatchOf(c.cor)?.ischaemicDepressionMv ?? 0;
   if (Math.abs(nxt - hs.stApplied) >= 0.01) {
@@ -422,8 +452,9 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   const flags = l1Flags(ctx.l1, t, ctx.hr, overrides(hs, t));
   if (ctx.l1.mode === 'modeled') {
     // Stage 7a: the model's truths, flagged 'modeled' unless the instructor pinned them (brief §4.9)
-    values.sbp = hs.lastSite.sbp;
-    values.dbp = hs.lastSite.dbp;
+    const flat = isArrested(hs, t); // FU-4 G4: no ejection for > 3 s — the pressure is the equalised circuit's, not the last beat's
+    values.sbp = flat ? hs.circ.mapNow : hs.lastSite.sbp;
+    values.dbp = flat ? hs.circ.mapNow : hs.lastSite.dbp;
     values.cvp = hs.circOut.pRa;
     values.pawp = hs.circOut.pPv;
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
@@ -438,7 +469,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     type: 'circ', t, co: circCardiacOutput(c), sv: lb?.sv ?? 0, svRv: svRvMean, ef: lb ? (lb.lvedv - lb.lvesv) / Math.max(1, lb.lvedv) : 0,
     lvedv: lb?.lvedv ?? 0, lvesv: lb?.lvesv ?? 0, lvedp: lb?.lvedp ?? 0, lvsp: lb?.lvsp ?? 0,
     pmsf: ((c.s[4] as number) - c.p.v0Sv) / c.p.cSv, pvr: (c.p.pvrL * c.p.pvrR) / (c.p.pvrL + c.p.pvrR), svr: c.p.rSys,
-    cpp: lb ? lb.aoDia - lb.lvedp : 0, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch,
+    cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // FU-4 G4: the CPP the coronary step used
   };
   if (hs.iabp.on) ce.iabp = { ratio: hs.iabp.ratio, augmentation: hs.iabpAug };
   if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad), suction: hs.lvad.suction };
@@ -633,8 +664,10 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
           : 'volumeMl must be 0–5000 with overS > 0';
       }
       if (ev.kind === 'condition') {
-        const c = cmd.event as { id: string; severity: number };
+        const c = cmd.event as { id: string; severity: number; volumeMl?: number; rateMlPerMin?: number };
         if (!(CIRC_CONDITIONS as readonly string[]).includes(c.id)) return null;
+        if (c.volumeMl !== undefined && !(Number.isFinite(c.volumeMl) && c.volumeMl >= 0 && c.volumeMl <= 500)) return 'volumeMl must be 0–500'; // FU-4 G6
+        if (c.rateMlPerMin !== undefined && !(Number.isFinite(c.rateMlPerMin) && c.rateMlPerMin >= -200 && c.rateMlPerMin <= 200)) return 'rateMlPerMin must be −200…200';
         return Number.isFinite(c.severity) && c.severity >= 0 && c.severity <= 1 ? undefined : 'severity must be 0–1';
       }
       return null;
@@ -760,8 +793,8 @@ export function applyHemoCommand(
         return true;
       }
       if (ev.kind === 'condition') {
-        const c = ev as unknown as { id: CircConditionId; severity: number };
-        applyCircCondition(hs.circ, c.id, c.severity);
+        const c = ev as unknown as { id: CircConditionId; severity: number; volumeMl?: number; rateMlPerMin?: number };
+        applyCircCondition(hs.circ, c.id, c.severity, { ...(c.volumeMl !== undefined ? { volumeMl: c.volumeMl } : {}), ...(c.rateMlPerMin !== undefined ? { rateMlPerMin: c.rateMlPerMin } : {}) }); // FU-4 G6
         return true;
       }
       return false;

@@ -1,9 +1,11 @@
 // Stress hormones and their effects (tables §5c; annex B3 Pulse basal concentrations/clearance).
 import { describe, expect, it } from 'vitest';
 import { stressEffects } from '../../../src/l2/endo/effects.ts';
+import { HUM_DEADBAND_MMHG, HUM_EC50_MMHG, HUM_OFF_TAU_S, HUM_ON_TAU_S, HUM_SVR, HUM_V0 } from '../../../src/l2/endo/params.ts';
+import { NEUTRAL_ENDO_INPUTS } from '../../../src/l2/endo/core.ts';
 import { createHormones, stepHormones, type HormoneInputs } from '../../../src/l2/endo/hormones.ts';
 
-const REST: HormoneInputs = { noxious: 0, antinoc: 0, extraSymp: 0, glucoseMgDl: 100, mapMmHg: 85, sao2: 0.97, paco2: 40, cortResponse: 1, epiExoPgMl: 0 };
+const REST: HormoneInputs = { noxious: 0, antinoc: 0, extraSymp: 0, glucoseMgDl: 100, mapSetMmHg: 85, mapMmHg: 85, sao2: 0.97, paco2: 40, cortResponse: 1, epiExoPgMl: 0 };
 const NO_BB = { hr: 0, c: 0 };
 
 function stimulus(antinoc: number): number[] {
@@ -87,5 +89,42 @@ describe('stress hormones', () => {
     expect(blocked.eesF).toBeLessThan(free.eesF);
     expect(blocked.kShift).toBeCloseTo(free.kShift, 12);
     expect(free.kShift).toBeLessThan(-0.3);
+  });
+});
+
+describe('FU-4 F2(a): the humoral arm of haemorrhage compensation', () => {
+  it('at rest h.hum stays 0 and the humoral outputs are neutral', () => {
+    const h = createHormones();
+    for (let s = 0; s < 600; s++) stepHormones(h, REST, 1);
+    expect(h.hum).toBe(0);
+    const fx = stressEffects(h, NO_BB, 1);
+    expect(fx.humSvrF).toBe(1);
+    expect(fx.humDV0Frac).toBeCloseTo(0, 12);
+  });
+  it('a 25 mmHg unloading (beyond the 3 mmHg deadband) drives it toward 25/(25 + EC50) with τ on, and it decays with τ off', () => {
+    const h = createHormones();
+    const x = { ...REST, mapMmHg: REST.mapSetMmHg - 25 - HUM_DEADBAND_MMHG };
+    const tgt = 25 / (25 + HUM_EC50_MMHG);
+    for (let s = 0; s < HUM_ON_TAU_S; s++) stepHormones(h, x, 1);
+    expect(h.hum).toBeCloseTo(tgt * (1 - Math.exp(-1)), 2);
+    for (let s = 0; s < 10 * HUM_ON_TAU_S; s++) stepHormones(h, x, 1);
+    expect(h.hum).toBeCloseTo(tgt, 3);
+    const on = h.hum;
+    for (let s = 0; s < HUM_OFF_TAU_S; s++) stepHormones(h, REST, 1);
+    expect(h.hum).toBeCloseTo(on * Math.exp(-1), 2);
+  });
+  it('stressEffects publishes humSvrF = 1 + HUM_SVR·hum and humDV0Frac = −HUM_V0·hum, unchanged when vasoResp falls (vasoplegia)', () => {
+    const h = createHormones();
+    h.hum = 0.5;
+    const normal = stressEffects(h, NO_BB, 1);
+    const insufficient = stressEffects(h, NO_BB, 0.3); // cortisol-poor: catecholamine responsiveness down
+    expect(normal.humSvrF).toBeCloseTo(1 + HUM_SVR * 0.5, 12);
+    expect(normal.humDV0Frac).toBeCloseTo(-HUM_V0 * 0.5, 12);
+    expect(insufficient.vasoResp).toBeLessThan(normal.vasoResp);
+    expect(insufficient.humSvrF).toBe(normal.humSvrF);
+    expect(insufficient.humDV0Frac).toBe(normal.humDV0Frac);
+  });
+  it('NEUTRAL_ENDO_INPUTS carries the set point equal to its MAP (no unloading, so no existing number moves)', () => {
+    expect(NEUTRAL_ENDO_INPUTS.mapSetMmHg).toBe(NEUTRAL_ENDO_INPUTS.mapMmHg);
   });
 });

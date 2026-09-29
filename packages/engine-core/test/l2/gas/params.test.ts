@@ -20,7 +20,8 @@ describe('gas patient scaling', () => {
     expect(ageBand(4)).toBe('child');
     expect(c.frcGaMl).toBeCloseTo(128, 0);
     expect(c.vo2).toBeCloseTo(80, 0);
-    expect(apparatusDeadSpaceMl(3.5)).toBeCloseTo(5.25, 6);
+    expect(apparatusDeadSpaceMl(3.5)).toBeCloseTo(1.75, 6); // FU-4 F4 R1(c)(ii): paediatric circuit 0.5 mL/kg below 33 kg (was the adult rule's 1.5 mL/kg → 5.25)
+    expect(apparatusDeadSpaceMl(70)).toBe(50);
   });
   it('VO2/VCO2 fall 7.5 %/°C below 37 °C', () => {
     expect(tempFactor(36)).toBeCloseTo(0.925, 6);

@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { Command, EngineEvent, NumericId, PatientProfile } from '../src/types.ts';
-import type { NeuroClinicalEvent, NeuroEvent, StimulusEvent } from '../src/types-neuro.ts';
+import type { NeuroClinicalEvent, NeuroEvent, StimulusEvent, VagalSite } from '../src/types-neuro.ts';
 
 describe('Stage 7f public types', () => {
   it('commands, events, numerics and the profile accept the neuro members; drug/vaporiser events stay 7g\'s', () => {
@@ -14,6 +14,6 @@ describe('Stage 7f public types', () => {
     expectTypeOf<Extract<NeuroEvent, { type: 'tof' }>['ratio']>().toEqualTypeOf<number | null>();
     expectTypeOf<Extract<NeuroEvent, { type: 'anaesthesia' }>['block']>().toEqualTypeOf<{ thumb: number; dia: number }>();
     expectTypeOf<NeuroClinicalEvent['kind']>().toEqualTypeOf<'stimulus' | 'airwayDevice' | 'neuroProfile'>();
-    expectTypeOf<StimulusEvent>().toEqualTypeOf<{ kind: 'stimulus'; intensity: number }>(); // 7e's shape (R51 addenda 12, 17)
+    expectTypeOf<StimulusEvent>().toEqualTypeOf<{ kind: 'stimulus'; intensity: number; site?: VagalSite }>(); // 7e's shape (R51 addenda 12, 17); FU-4 G7 (Task 12): + the optional vagal site
   });
 });

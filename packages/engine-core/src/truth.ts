@@ -28,7 +28,7 @@ const KEEP_OUT = new Set(['blood.out']);
  * Sub-trees skipped by their full path: configuration and reference copies, not live physiology — the alarm profile
  * (≈ 2.3 KB of limits and labels) and 7a's copies of the profile parameters (the live ones are `hemo.circ.p`).
  */
-const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env', 'hemo.num', 'resp.num', 'hemo.nibp']); // Stage 7e: its input copy, profile and heat calibration; FU-5: the monitor's numerics machinery and the cuff (device state; the console hides them as internal)
+const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env', 'hemo.circ.acc', 'hemo.circ.cppAcc', 'hemo.num', 'resp.num', 'hemo.nibp']); // Stage 7e: its input copy, profile and heat calibration; FU-4 (E-FU4-3): the in-progress beat and CPP accumulators; FU-5: the monitor's numerics machinery and the cuff (device state; the console hides them as internal)
 /** Paths are only built as deep as the deepest SKIP_PATH entry, so the walk stays a leaf copy below that. */
 const SKIP_PATH_DEPTH = Math.max(...[...SKIP_PATH].map((p) => p.split('.').length));
 

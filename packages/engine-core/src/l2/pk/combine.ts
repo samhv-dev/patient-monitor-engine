@@ -18,9 +18,9 @@ export interface PdContext {
   macBrain: number; // total age-adjusted MAC fraction (volatile model)
 }
 
-export const NEUTRAL_FX: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1 };
-const FX_TARGETS = ['hr', 'ees', 'svr', 'pvr', 'gv', 'gvHr'] as const;
-const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode'];
+export const NEUTRAL_FX: DrugEffect = { hr: 1, ees: 1, svr: 1, v0Frac: 0, pvr: 1, gv: 1, gvHr: 1, symp: 1, setF: 1, vagalMs: 0, muscBlock: 0 };
+const FX_TARGETS = ['hr', 'ees', 'svr', 'pvr', 'gv', 'gvHr', 'symp', 'setF'] as const; // FU-4 G2: symp, setF
+const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode', 'muscarinic']; // FU-4 G7: muscarinic block (atropine, glycopyrrolate)
 
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */
 const OPIOID_U1 = 1.2;
@@ -37,7 +37,7 @@ export function volatileCbfDirect(mac: number, direct: readonly [number, number]
 export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugEffect; betaBlockAdd: number; bus: DrugBus } {
   const bus: DrugBus = structuredClone(DRUG_BUS_NEUTRAL);
   // 1. occupancy targets first (β-blockade feeds the β-agonist EC50 shift)
-  const occ: Record<string, number> = { betaBlock: 0, avNode: 0 };
+  const occ: Record<string, number> = { betaBlock: 0, avNode: 0, muscarinic: 0 };
   for (const a of actives)
     for (const e of a.row.pd)
       if (OCCUPANCY.includes(e.target)) occ[e.target] = 1 - (1 - (occ[e.target] as number)) * (1 - Math.max(0, hill(a.c, e.ec50, e.emax, e.hill ?? 1)));
@@ -74,6 +74,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
       const k = target as (typeof FX_TARGETS)[number];
       fx[k] *= Math.max(0.05, 1 + E);
     } else if (target === 'v0Frac') fx.v0Frac += E;
+    else if (target === 'vagalMs') fx.vagalMs = (fx.vagalMs ?? 0) + E; // FU-4 G7: additive RR increment (ms)
     else other[target] = (other[target] ?? 0) + E;
   }
   // 3. the CNS summaries (7d, demo); 7f computes its own PD from the per-agent Ce the pipeline adds (Task 15)
@@ -110,5 +111,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   bus.metabolic.glucoseDelta = other.glucose ?? 0;
   bus.cns.cbfVaso *= 1 + (other.cbfVaso ?? 0);
   bus.avNodeBlock = occ.avNode as number;
+  fx.muscBlock = occ.muscarinic as number; // FU-4 G7
+  fx.vagalMs = (fx.vagalMs ?? 0) * (1 - fx.muscBlock); // an anticholinergic blocks every vagal RR increment at the SA node
   return { fx, betaBlockAdd: occ.betaBlock as number, bus };
 }

@@ -10,7 +10,7 @@ export type CircClinicalEvent =
     }
   | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood'; volumeMl: number; overS: number }
   | { kind: 'bleed'; rateMlPerMin?: number; volumeMl?: number; overS?: number }
-  | { kind: 'condition'; id: 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct'; severity: number };
+  | { kind: 'condition'; id: 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct'; severity: number; volumeMl?: number; rateMlPerMin?: number }; // FU-4 G6: tamponade volume / accumulation
 
 /** R28 device modules on the circuit (tables §8.1–§8.2). */
 export type CircDeviceAction =

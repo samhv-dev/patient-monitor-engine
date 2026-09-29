@@ -13,7 +13,7 @@
 // 36.9 / 36.0). Linear in d between the awake and GA rows, extrapolated for d > 1 (propofol/volatile thresholds fall
 // linearly with concentration, Sessler) and clamped to [0, 1.5].
 import {
-  SHIVER_MAX_X, SHIVER_SPAN_C, SUMMIT_W_PER_KG075, SWEAT_MAX_W_70, SWEAT_W_PER_C, THR_SHIVER_AWAKE, THR_SHIVER_GA,
+  SHIVER_MAX_X, SHIVER_SPAN_C, SHIVER_STOP_C, SHIVER_STOP_SPAN_C, SUMMIT_W_PER_KG075, SWEAT_MAX_W_70, SWEAT_W_PER_C, THR_SHIVER_AWAKE, THR_SHIVER_GA,
   THR_SWEAT_AWAKE, THR_SWEAT_GA, THR_VASO_AWAKE, VASOCONSTRICT_C, W_VASO_AWAKE, W_VASO_GA,
 } from './params.ts';
 
@@ -51,7 +51,8 @@ export function shiverW(tc: number, thr: Thresholds, m0: number, effKg: number, 
   const deficit = thr.shiver - tc;
   if (deficit <= 0) return 0;
   const summit = Math.min(SUMMIT_W_PER_KG075 * effKg ** 0.75, SHIVER_MAX_X * m0);
-  return Math.max(0, summit - m0) * Math.min(1, deficit / SHIVER_SPAN_C) * (1 - Math.min(1, Math.max(0, nmb)));
+  const stop = Math.min(1, Math.max(0, (tc - SHIVER_STOP_C) / SHIVER_STOP_SPAN_C)); // FU-4 G12: gone below 30 °C
+  return Math.max(0, summit - m0) * Math.min(1, deficit / SHIVER_SPAN_C) * (1 - Math.min(1, Math.max(0, nmb))) * stop;
 }
 
 /** Sweat evaporative heat loss, W (Pulse PH/Energy 668–679 gain, capped for draped skin [ENG]). */

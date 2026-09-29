@@ -18,7 +18,9 @@ describe('Stage 3 acceptance re-check with the blood', { timeout: 300_000 }, () 
     expect(obese / 60).toBeLessThanOrEqual(3.7);
   });
   // Stage 7e (E-7e-5, R45, Q-7e-8): the child assertion moved to its own expected failure (see resp-oxygen 5b-child).
-  it.fails('desaturation, child 2–5 y 160 ± 30 s: measured 128 s vs 130–190 with Stage 7e (Q-7e-8; 130 s on main)', async () => {
+  // FU-4 F4 (Task 18d): met again once Stage 3's CO2 low-flow factor reads the child's OWN cardiac output (see
+  // resp-oxygen 5b-child). Band unchanged (R45).
+  it('desaturation, child 2–5 y 160 ± 30 s — measured 155 s; was 128 s with Stage 7e (Q-7e-8; 130 s on main)', async () => {
     const child = await desatTime({ ageY: 4, weightKg: 16, baseline: { rr: 24, vt: 130 } }, true);
     console.log(`RECHECK child ${child.toFixed(1)} s`);
     expect(child).toBeGreaterThanOrEqual(130);

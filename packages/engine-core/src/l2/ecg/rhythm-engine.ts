@@ -232,18 +232,42 @@ export interface ClockSource {
 }
 const EXTRA_CLOCKS: ClockSource[] = [pacerClock, tcpClock, vfClock, leadOffClock];
 
+/**
+ * FU-4 (E-FU4-18, FU-6's Request 3; D26): a non-finite scheduled time is a physiology bug upstream (a rate of 0/NaN
+ * reaching `60 / rate`), and the guard is deliberately ASYMMETRIC. In tests (Vitest sets `NODE_ENV=test`) it THROWS
+ * with the value, the clock it came from and the sim time, so the bug is found; everywhere else (the demo, a relay) it
+ * clamps that clock to one second after the last planned instant (the 60/min default interval), keeps running and
+ * warns ONCE per rhythm state, so an operator never loses the session. Inert when every value is finite (one
+ * `Number.isFinite` per scheduled event, as before).
+ */
+export const NON_FINITE_FALLBACK_S = 1;
+const warnedNonFinite = new WeakSet<RhythmState>();
+export const nonFiniteIsLoud = (): boolean => (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.NODE_ENV === 'test';
+/** The shared helper: `value` if finite; otherwise throw (tests) or warn once and return `fallback` (demo). */
+export function finiteOr(st: RhythmState, value: number, fallback: number, field: string, t: number): number {
+  if (Number.isFinite(value)) return value;
+  const msg = `rhythm ${st.id}: next event time is ${value} (${field}, sim t ${t.toFixed(3)} s)`;
+  if (nonFiniteIsLoud()) throw new RangeError(msg);
+  if (!warnedNonFinite.has(st)) {
+    warnedNonFinite.add(st);
+    console.warn(`[pme] ${msg} — clamped to ${fallback.toFixed(3)} s; this is a physiology bug upstream (reported once per engine)`);
+  }
+  return fallback;
+}
+
 HOOKS.activate = activateVentricle;
 HOOKS.apply = applyRhythm;
 
 /** Process every internal rhythm event with time ≤ T. */
 export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
+  let tPrev = st.planT; // FU-4 (E-FU4-18): the last instant processed — the clamp's reference
   for (let guard = 0; guard < 1_000_000; guard++) {
     const d = RHYTHMS[st.id];
-    const tA = d.atria === 'none' ? NEVER : st.atria.nextT;
-    const tP = st.pending.length > 0 ? (st.pending[0] as PendingV).t : NEVER;
-    const tF = d.focus === 'none' ? NEVER : st.focusNextT;
-    const tE = d.escape === 'none' ? NEVER : st.escapeNextT;
-    const tJ = d.av === 'integrateFire' ? junctionSpontT(st, ctx) : NEVER;
+    let tA = d.atria === 'none' ? NEVER : st.atria.nextT;
+    let tP = st.pending.length > 0 ? (st.pending[0] as PendingV).t : NEVER;
+    let tF = d.focus === 'none' ? NEVER : st.focusNextT;
+    let tE = d.escape === 'none' ? NEVER : st.escapeNextT;
+    let tJ = d.av === 'integrateFire' ? junctionSpontT(st, ctx) : NEVER;
     let tX = NEVER;
     let src: ClockSource | null = null;
     for (const c of EXTRA_CLOCKS) {
@@ -253,10 +277,21 @@ export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
         src = c;
       }
     }
-    const t = Math.min(tA, tP, tF, tE, tJ, tX);
+    let t = Math.min(tA, tP, tF, tE, tJ, tX);
     // A NaN/Infinity rate would otherwise make every clock NaN and spin to the guard on every tick (review M5).
-    if (!Number.isFinite(t)) throw new RangeError(`rhythm ${st.id}: next event time is ${t}`);
+    // FU-4 (E-FU4-18): loud in tests, clamped per clock in the demo — the stored clocks take the fallback instant, a
+    // derived one (the junction, the extra clocks) is skipped for this pass.
+    if (!Number.isFinite(t)) {
+      const fb = tPrev + NON_FINITE_FALLBACK_S;
+      if (!Number.isFinite(tA)) tA = st.atria.nextT = finiteOr(st, tA, fb, 'atria.nextT', tPrev);
+      if (!Number.isFinite(tP)) tP = (st.pending[0] as PendingV).t = finiteOr(st, tP, fb, 'pending ventricular activation', tPrev);
+      if (!Number.isFinite(tF)) tF = st.focusNextT = finiteOr(st, tF, fb, 'focusNextT', tPrev);
+      if (!Number.isFinite(tE)) tE = st.escapeNextT = finiteOr(st, tE, fb, 'escapeNextT', tPrev);
+      if (!Number.isFinite(tJ)) tJ = finiteOr(st, tJ, NEVER, 'junction spontaneous time', tPrev);
+      t = Math.min(tA, tP, tF, tE, tJ, tX); // an extra clock never wins with NaN (`tc < tX` is false), so tX is finite
+    }
     if (t > T) break;
+    tPrev = t;
     if (t === tA) onAtrial(st, t, ctx);
     else if (t === tJ) fireJunction(st, t, ctx);
     else if (t === tP) activateVentricle(st, st.pending.shift() as PendingV, ctx);

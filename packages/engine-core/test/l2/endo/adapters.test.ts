@@ -64,7 +64,7 @@ describe('Stage 7e adapters', () => {
     const cm = circ();
     const c = ctx({}, { circ: cm }, 'modeled');
     expect(writeCirc(c, es)).toBe(1);
-    expect(cm.ext).toEqual({ endoHrF: 1, endoSvrF: 1, endoEesF: 1, endoDV0Frac: -0 });
+    expect(cm.ext).toEqual({ endoHrF: 1, endoSvrF: 1, endoEesF: 1, endoDV0Frac: -0, endoHumDV0Frac: -0, endoHumSvrF: 1 }); // FU-4 F2(a) + G-FU4-1: the humoral arm's own keys
     es.core.out = { ...es.core.out, hrF: 1.6, svrF: 0.5, eesF: 0.9, dV0Frac: 0.12 };
     writeCirc(c, es);
     expect(cm.ext.endoSvrF).toBe(0.5);

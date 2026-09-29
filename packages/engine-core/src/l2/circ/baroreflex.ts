@@ -53,6 +53,26 @@ export const V0_RECRUIT_MAX_ML_KG = 12;
  * same mean, a narrower pulse pressure unloads them. The reflex senses MAP + K_PP·(PP − PP_set) [ENG].
  */
 export const K_PP = 0.3;
+/**
+ * FU-4 F1(b): brainstem perfusion of the vasomotor centre. The neural arm is intact while cerebral flow is at or above
+ * `CBF_REFLEX_FULL` of normal and gone once it falls to `CBF_REFLEX_ZERO`; between them it fails linearly. During an
+ * arrest the reflex therefore withdraws instead of holding SVR at its ceiling for the whole resuscitation, and the
+ * relaxation-phase aortic pressure is set by intrinsic tone plus circulating catecholamines (Paradis 1990's CPP band).
+ * Same signal as E-FU3-10's respiratory gate (7d `brain.cbfRel`), which closes at 0.2 [ENG thresholds].
+ */
+// FU-4 (Task 18d re-measure): FULL moved 0.9 → 0.6. At 0.9 any CBF fall that is NOT ischaemia withdrew the reflex —
+// hypocapnia (PaCO2 30: CBF ≈ 0.7), the autoregulated hypotension of warm sepsis, raised ICP — measured: warm-sepsis HR
+// 131 → 98 and MAP 56 → 45, the Cushing HR ratio 0.82 (band ≤ 0.8). The vasomotor centre fails on the way from the
+// electrical-failure threshold (≈ 15–25 mL/100 g/min, 0.3–0.5 of normal) to membrane failure (≈ 10, 0.2): Astrup J,
+// Siesjö BK, Symon L, Stroke 1981;12:723–725 [P]. CPR at 70 s (CBF 0.43): CoPP 24.7, RA relaxation 16.4 — still in
+// Paradis 15–25 (0.9 gave 23.3 / 15.8).
+export const CBF_REFLEX_FULL = 0.6;
+export const CBF_REFLEX_ZERO = 0.2;
+/** FU-4 F1(b): × on the delivered sympathetic output from brainstem perfusion (1 when 7d is absent). */
+export function brainstemOutF(cbfRel: number | undefined): number {
+  if (cbfRel === undefined || !Number.isFinite(cbfRel)) return 1;
+  return Math.min(1, Math.max(0, (cbfRel - CBF_REFLEX_ZERO) / (CBF_REFLEX_FULL - CBF_REFLEX_ZERO)));
+}
 
 export interface BaroState {
   set: number;
@@ -73,6 +93,16 @@ export interface BaroGains {
   weightScale: number; // W/70
   pinnedSet: boolean; // MAP_set pinned by the instructor: no resetting
   hrGain?: number; // × on the sympathetic HR arm only (drug depression of the chronotropic reflex)
+  /** FU-4 G2: × on the delivered sympathetic output (both limbs), after saturation — central sympatholysis (1 = none). */
+  outF?: number;
+  /** FU-4 G2: × on the set point the error is taken against (anaesthetic resetting; 1 = none). */
+  setF?: number;
+  /**
+   * FU-4 F1(b): × on the delivered sympathetic output from BRAINSTEM PERFUSION. The vasomotor centre is itself
+   * perfused: once cerebral flow collapses the neural arm fails and arrest SVR falls to intrinsic × circulating
+   * catecholamines, instead of a reflex that stays saturated through the whole arrest (1 = intact).
+   */
+  brainF?: number;
 }
 
 export interface BaroOut {
@@ -94,17 +124,18 @@ const clampSat = (x: number) => Math.min(SYMP_SAT, Math.max(-SYMP_SAT, x));
 /** One 10 Hz step with the current mean arterial pressure; returns the effector factors. */
 export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number): BaroOut {
   b.mapLp += (map - b.mapLp) * (1 - Math.exp(-BARO_DT / MAP_TAU_S));
-  const e = b.set - b.mapLp;
+  const set = b.set * (g.setF ?? 1); // FU-4 G2: an anaesthetic resets the reflex to a lower pressure (Sellgren 1994)
+  const e = set - b.mapLp;
   b.q.push(e);
   b.q.shift();
   const eVag = b.q[b.q.length - 1 - Math.round(VAGAL_DELAY_S / BARO_DT)] as number;
   const eSym = b.q[0] as number;
   b.ev += (eVag - b.ev) * (1 - Math.exp(-BARO_DT / VAGAL_TAU_S));
   b.es += (eSym - b.es) * (1 - Math.exp(-BARO_DT / SYMP_TAU_S));
-  if (!g.pinnedSet && Math.abs(b.mapLp - b.set) > RESET_FRAC * b.set) {
+  if (!g.pinnedSet && Math.abs(b.mapLp - set) > RESET_FRAC * set) {
     b.offT += BARO_DT;
     if (b.offT >= RESET_HOLD_S) {
-      b.set += RESET_GAIN * (b.mapLp - b.set);
+      b.set += RESET_GAIN * (b.mapLp - set);
       b.offT = 0;
     }
   } else b.offT = 0;
@@ -117,12 +148,13 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
     ecp = Math.min(CP_CLAMP, Math.max(-CP_CLAMP, b.cpSet - b.cpLp));
   }
   const scp = g.gSymp * (ecp < 0 ? SYMP_WITHDRAW : 1);
+  const o = (g.outF ?? 1) * (g.brainF ?? 1); // FU-4 G2 + F1(b): the delivered output, after each factor's saturation
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
-    hrF: 1 + clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
-    svrF: 1 + clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
-    eesF: 1 + clampSat(G_C * s * betaC * b.es),
-    dV0: Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
-    cSvF: 1 - clampSat(G_CSV * s * b.es) * 0.5,
+    hrF: 1 + o * clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
+    svrF: 1 + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
+    eesF: 1 + o * clampSat(G_C * s * betaC * b.es),
+    dV0: o * Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
+    cSvF: 1 - o * clampSat(G_CSV * s * b.es) * 0.5,
   };
 }

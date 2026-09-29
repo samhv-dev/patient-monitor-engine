@@ -17,9 +17,9 @@ describe('Stage 7g bus', () => {
     expect(st.pk.bus.volatiles.n2o!.macFrac).toBeGreaterThan(0.3);
     expect(st.pk.bus.cns.macBrain).toBeGreaterThan(1.1);
   }, 300_000);
-  // R45: band missed, kept as it.fails. Measured 2.818 L/min (constant from 60 s): Stage 3's VT 500 − anatomical 154 −
-  // apparatus − its calibrated vdExtraMl 61 at RR 12 → VD/VT 0.53. 7g stores the value, it does not own it (gate note).
-  it.fails('Stage 3 alveolar ventilation at VT 500 × 12 exceeds 3 L/min (measured 2.82)', () => {
+  // Was it.fails at 2.818 L/min: Stage 3's VT 500 − anatomical 154 − apparatus − the MANUAL EtCO2 fit vdExtraMl 61 at RR 12
+  // (VD/VT 0.53). FU-4 G11: MODELED mechanical ventilation drops the MANUAL fit — measured 3.55. Band unchanged (R45).
+  it('Stage 3 alveolar ventilation at VT 500 × 12 exceeds 3 L/min — was 2.82 before FU-4 G11', () => {
     const e = createEngine({ seed: 3, mode: 'modeled', patient: { ageY: 40 } });
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
     e.advanceTo(60);

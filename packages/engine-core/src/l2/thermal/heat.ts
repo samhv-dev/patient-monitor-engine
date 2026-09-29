@@ -69,6 +69,7 @@ export interface ThermalState {
   anaesthesia: 'none' | 'general' | 'neuraxial';
   warming: boolean; // forced air
   warmLag: number; // 0–1 delivered fraction of the forced-air power (first-order, τ FORCED_AIR_TAU_S)
+  warmAirC?: number; // FU-4 item 1: the blanket's set air temperature, °C (absent = FORCED_AIR_C 43)
   mh: MhState | null;
   sites: Record<TempSite, number>;
   // --- Stage 7e ---
@@ -147,7 +148,7 @@ function balance(st: ThermalState, t: number): ThermalOut {
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
     respW: respiratoryW(st.vent, st.ta),
     evapW: SKIN_EVAP_W_70 * (st.effKg / 70) * ex.evapX,
-    warmW: st.warmLag > 0 ? forcedAirW(env, st.tp) * st.warmLag : 0,
+    warmW: st.warmLag > 0 ? forcedAirW(env, st.tp, st.warmAirC) * st.warmLag : 0,
     ivW: infusionW(st.iv.mlPerMin, st.fluidWarmer ? 37 : st.iv.tempC, st.tc),
   };
 }

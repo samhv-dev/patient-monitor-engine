@@ -48,6 +48,8 @@ export interface CircParams {
   cPa: number; zPa: number; pvrL: number; pvrR: number; cPv: number; rPvla: number;
   tv: Valve; pv: Valve; mv: Valve; av: Valve;
   periA: number; periLambda: number; v0Peri: number; vFluid: number;
+  /** FU-4 F1(a): reference resting intrathoracic stressed volume the compression works against, mL. */
+  vCprRef: number;
 }
 
 /** Time-dependent inputs for one integration interval (built per tick by the model; not stored). */
@@ -59,6 +61,8 @@ export interface CircDrive {
   pIt: (t: number) => number; // pleural pressure, mmHg
   cprCardiac: (t: number) => number; // direct compression on the four chambers, mmHg
   cprThoracic: (t: number) => number; // thoracic pump on intrathoracic compartments and the aortic root, mmHg
+  /** FU-4 F1(c): thoracic pressure retained on the VENOUS side through the release phase, mmHg (0 outside CPR). */
+  cprRelease: (t: number) => number;
   qIn: number; // net volume in (+ fluid, − bleed), mL/s, into the systemic veins
   qVad: (lvp: number, aop: number) => number; // LV → aorta device flow (LVAD), mL/s
   qAortaSrc: (t: number) => number; // volume source in the aorta (IABP dV/dt), mL/s
@@ -99,21 +103,45 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
     d.memoAa = aa;
   }
   const pit = d.pIt(t);
-  const cc = d.cprCardiac(t);
-  const ct = d.cprThoracic(t);
   const vlv = s[10] as number;
   const vrv = s[6] as number;
+  let cc = d.cprCardiac(t);
+  let ct = d.cprThoracic(t);
+  let cr = 0;
+  if (cc > 0 || ct > 0 || (cr = d.cprRelease(t)) > 0) {
+    // FU-4 F1(a): a compression displaces blood. The pressure it generates scales with the intrathoracic stressed
+    // volume available to displace, so an exsanguinated thorax generates no aortic pressure and no CPP.
+    const vStr =
+      Math.max(0, vlv - p.v0Lv) + Math.max(0, vrv - p.v0Rv) +
+      Math.max(0, (s[5] as number) - p.v0Ra) + Math.max(0, (s[9] as number) - p.v0La) +
+      Math.max(0, s[7] as number) + Math.max(0, s[8] as number);
+    const f = Math.min(1, vStr / p.vCprRef);
+    cc *= f;
+    ct *= f;
+    cr *= f;
+  }
   const peri = Math.max(0, p.periA * (Math.exp(p.periLambda * (vlv + vrv + p.vFluid - p.v0Peri)) - 1));
+  // FU-4 F1(c): incomplete chest recoil leaves a residual pressure on the collapsible venous side (RA, pulmonary bed)
+  // through the release phase; the stiff pressurised aorta is not held up by it, so the Ao − RA gradient narrows to
+  // the Paradis 1990 band instead of the ≈ 46 the full release gave.
   const ext = pit + ct + peri; // external pressure on the chambers (thoracic pump acts on everything intrathoracic)
+  const extV = ext + cr; // venous/right-heart side: + the retained release pressure
   const dl = vlv - p.v0Lv;
   const dr = vrv - p.v0Rv;
   const pLv = a * p.eesLv * d.kLv * dl + (1 - a) * p.aLv * (Math.exp(p.betaLv * dl) - 1) + ext + cc;
   const pRv = a * p.eesRv * d.kRv * dr + (1 - a) * p.aRv * (Math.exp(p.betaRv * dr) - 1) + ext + cc;
-  const pRa = (p.eminRa + aa * (p.emaxRa - p.eminRa)) * ((s[5] as number) - p.v0Ra) + ext + cc;
-  const pLa = (p.eminLa + aa * (p.emaxLa - p.eminLa)) * ((s[9] as number) - p.v0La) + ext + cc;
+  // FU-4 F1(c): while the chest is being compressed the thin-walled right heart and great veins are a Starling
+  // resistor — they collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks
+  // the intrathoracic pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not
+  // the ≈ 4 an uncollapsed chamber gives). Outside CPR the transmural pressure is free, as every calibrated CVP rig
+  // expects.
+  const traRa = (p.eminRa + aa * (p.emaxRa - p.eminRa)) * ((s[5] as number) - p.v0Ra);
+  const traLa = (p.eminLa + aa * (p.emaxLa - p.eminLa)) * ((s[9] as number) - p.v0La);
+  const pRa = (cr > 0 ? Math.max(0, traRa) : traRa) + extV + cc;
+  const pLa = (cr > 0 ? Math.max(0, traLa) : traLa) + extV + cc;
   const pSv = ((s[4] as number) - p.v0Sv) / p.cSv;
-  const pPa = (s[7] as number) / p.cPa + pit + ct;
-  const pPv = (s[8] as number) / p.cPv + pit + ct;
+  const pPa = (s[7] as number) / p.cPa + pit + ct + cr;
+  const pPv = (s[8] as number) / p.cPv + pit + ct + cr;
   const pc = s[0] as number;
   const ql = s[1] as number;
   const qVad = d.qVad(pLv, pc);

@@ -80,7 +80,7 @@ function solve(r: ResolvedProfile): Stabilised {
   let vent: Activation[] = [];
   let atria: Activation[] = [];
   const d: CircDrive = {
-    vent, atria, kLv: 1, kRv: 1, pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, qIn: 0, qVad: () => 0, qAortaSrc: zero,
+    vent, atria, kLv: 1, kRv: 1, pIt: () => P_PL0, cprCardiac: zero, cprThoracic: zero, cprRelease: zero, qIn: 0, qVad: () => 0, qAortaSrc: zero,
   };
   const o = createOut();
   const start = { rSys: p.rSys, cArt: p.cArt, v0Sv: p.v0Sv, aLv: p.aLv };

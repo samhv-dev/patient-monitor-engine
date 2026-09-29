@@ -66,7 +66,7 @@ const LUNG: Entry[] = [
   ['co2.riseIII', 'Capnogram phase III rise', 'mmHg', 1], ['co2.faCo2', 'FACO₂', '%', 2, 100],
   ['lp.ccw', 'Chest-wall compliance', 'mL/cmH₂O', 0], ['lp.rTube', 'Tube resistance', 'cmH₂O/L/s', 1], ['lp.extraShunt', 'Extrapulmonary shunt', '%', 1, 100],
   ['lp.frcMult', 'FRC multiplier', '×', 2], ['lp.ibwKg', 'Ideal body weight', 'kg', 0], ['lp.pvr', 'PVR multiplier (conditions)', '×', 2],
-  ['lp.tIt', 'Airway→pleura transmission', '', 2], ['lp.pPtx', 'Pneumothorax pressure', 'cmH₂O', 1], ['lp.leakFrac', 'Airway leak', '%', 0, 100],
+  ['lp.tIt', 'Airway→pleura transmission', '', 2], ['lp.pPtx', 'Pneumothorax pressure', 'mmHg', 1], ['lp.leakFrac', 'Airway leak', '%', 0, 100],
   ['lp.co2Slope', 'Capnogram slope multiplier', '×', 2], ['lp.pMax', 'Inspiratory strength multiplier', '×', 2],
   ['mp.ccw', 'Chest-wall compliance (units)', 'mL/cmH₂O', 0], ['mp.rTube', 'Tube resistance (units)', 'cmH₂O/L/s', 1, 1000],
   // per side (#): state, then the resolved parameters

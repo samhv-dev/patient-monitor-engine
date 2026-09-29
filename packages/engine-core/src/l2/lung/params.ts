@@ -62,3 +62,16 @@ export const HEALTHY_VDALV = 0.075;
 export const K_TAU_II = 0.1;
 export const TAU_II_MAX = 0.3;
 export const TAU_EXP_REF = 0.54; // healthy ventilation-weighted expiratory τ (prototype)
+
+/**
+ * FU-4 F3 (ruling 1) — a TENSION pneumothorax is not a step. Air enters the pleural space through a ONE-WAY VALVE:
+ * it flows in whenever the alveolar (or airway) pressure exceeds the pleural pressure and cannot come back out, so the
+ * hemithorax pressure climbs breath by breath toward the catalogue ceiling (`ptxTension`'s `pPtx`, 15–25 mmHg at
+ * severity 1) — fast on positive-pressure ventilation, much slower on spontaneous gasps, where inspiration is
+ * NEGATIVE at the alveolus and only the expiratory phase drives the valve.
+ * Before this the catalogue's `set` put the full 25 mmHg on within one control step and the patient was in PEA 60 s
+ * after onset, which the orchestrator ruled wrong (obstructive shock and PEA belong at 3–10 min on PPV).
+ * `lp.pPtx` keeps its name, place and unit (mmHg) — V.1 reads it.
+ */
+export const PTX_VALVE_PER_CMH2O_S = 0.12; // mmHg of pleural pressure gained per cmH2O of driving pressure per second [ENG, fit: obstructive shock and PEA 3–10 min after onset on PPV — measured 8.9 min]
+export const PTX_DRAIN_TAU_S = 20; // decompression (severity → 0, or a chest drain): τ of the fall [ENG]
