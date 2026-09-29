@@ -19,6 +19,8 @@ export interface Condition {
   suppressed?: boolean;
   /** FU-5: once raised, the entry stays at least this long (an event alarm such as PAUSE; audit M13). */
   holdS?: number;
+  /** FU-8 (R50 F6): kept only by a clear hysteresis — the value is not beyond the limit; the entry keeps its last text. */
+  held?: boolean;
 }
 
 export interface AlarmConfig {
@@ -228,6 +230,14 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
       if (e.latched) {
         e.latched = false; // the condition came back while latched
         e.sounding = !e.acked;
+        s.dirty = true;
+      }
+      // FU-8 (F1, G-FU4 2026-09-29): the message carries the value NOW — "the message shows **SpO2 94<96 (deviation
+      // and limit)" (research/05 §2.4, [S2]). The text was frozen at the raise: `**ABPm 66<70` stood while the mean
+      // fell to 19 in Ali's tamponade PEA, and `**ABPm 252>110` 13 s after ROSC while the mean was back near 120. A
+      // condition only the clear hysteresis holds keeps the last violating text (R50 F6: no `**ABPs 90<90`)
+      if (e.text !== c.text && c.held !== true) {
+        e.text = c.text;
         s.dirty = true;
       }
       continue;

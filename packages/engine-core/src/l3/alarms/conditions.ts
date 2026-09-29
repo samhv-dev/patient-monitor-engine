@@ -193,7 +193,8 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     if (v === null || !l) continue;
     const delayS = d.numeric === 'spo2' ? p.spo2DelayS : p.delayS;
     const c = { level: d.level, category: 'physiological' as const, delayS, numeric: d.numeric };
-    const dd = src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }; // "**Pulse 130>120" / "PR TOO HIGH"
+    // FU-8 (Task A1): the text prints the limit in force (a `setLimit` edits `l`; the profile's `d` keeps the default)
+    const dd = { ...(src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }), low: l.low, high: l.high }; // "**Pulse 130>120" / "PR TOO HIGH"
     // FU-5 (audit M6): the DISPLAYED value against the limit, with one display unit of hysteresis — raised once it is
     // beyond the limit, kept until it is back inside by a full unit (CVP hovering 9.6–10.4 at a limit of 10 raised
     // `**CVP 10>10` 100 times in 11 min) [ENG, the vendors' hysteresis is not published]
@@ -201,8 +202,12 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const dv = Math.round(v / unit) * unit;
     const hi = `${key}_HIGH`;
     const lo = `${key}_LOW`;
-    if (l.high !== null && (dv > l.high + 1e-9 || (raisedLiveId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c });
-    if (l.low !== null && (dv < l.low - 1e-9 || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c });
+    // FU-8 (R50 F6): a condition kept only by the clear hysteresis (the value back AT the limit) is `held` — the manager
+    // keeps its last violating text (`**ABPs 90<90`, `**CVP 10>10` were printed through the band)
+    const over = l.high !== null && dv > l.high + 1e-9;
+    const under = l.low !== null && dv < l.low - 1e-9;
+    if (l.high !== null && (over || (raisedLiveId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c, ...(over ? {} : { held: true }) });
+    if (l.low !== null && (under || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c, ...(under ? {} : { held: true }) });
   }
   const spo2 = valid(inp, 'spo2', t);
   if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, 'physiological', DESAT_DELAY_S), numeric: 'spo2' });
