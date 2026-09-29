@@ -29,6 +29,11 @@ export const WAKE_MMHG = 8;
 export const APNOEA_VE_IN = 0.1;
 export const APNOEA_VE_OUT = 0.15;
 /**
+ * FU-6 R3(b): inspiratory muscle pressure of a resting breath, cmH2O (VT/Crs + R·V' ≈ 500/100 + 2 ≈ 7–8 [ENG]). Against a
+ * closed airway the whole effort shows in the pleural space: effort × 8, up to P_MAX (Mueller; laryngospasm −20 to −50).
+ */
+export const PMUS_REST_CMH2O = 8;
+/**
  * FU-6 F7 (Orchestrator ruling (FU-6 review), 2026-09-28): induction apnoea is PROBABILISTIC, as in patients. The
  * Diprivan label (propofol 2–2.5 mg/kg, unpremedicated adults): apnoea < 30 s in 7 %, 30–60 s in 24 %, > 60 s in 12 % —
  * 43 % overall, the modal apnoea 30–60 s. The patient-to-patient spread of the wakefulness shift (and of the CO2

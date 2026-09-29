@@ -47,6 +47,8 @@ export interface Cycle {
   tauE?: number;
   lungTauII?: number;
   lungRiseIII?: number;
+  /** FU-6 R3(b): the part of the inspiratory muscle pressure (cmH2O) spent against an obstructed upper airway. */
+  pmus?: number;
 }
 
 export interface ExtDrive {
@@ -88,6 +90,10 @@ export interface DriverCtx {
   obstructed?: boolean;
   /** Stage 7f: own diaphragmatic effort during mechanical breaths while a block wears off (curare cleft). */
   cleft?: number;
+  /** FU-6 R3(b): obstructed-effort pleural swing of the next spontaneous breath (cmH2O; resp pipeline). */
+  pmusObs?: number;
+  /** FU-6 R3(b): the same for a complete airway obstruction (the `obstructed` airway state, 7f's complete obstruction). */
+  pmusFull?: number;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -157,7 +163,9 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
     exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: spasm > 0.02 ? 'shark' : mech ? 'mech' : 'spont',
     severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
+  if (!mech && (ctx.pmusObs ?? 0) > 0) c.pmus = ctx.pmusObs; // FU-6 R3(b)
   if (!mech && ctx.obstructed && d.airway === 'patent') { // Stage 7f: sedation/residual-block obstruction (plan decision 12)
+    c.pmus = ctx.pmusFull ?? c.pmus; // FU-6 R3(b)
     c.exch = false;
     c.sampled = 'none';
     c.vt = 0;
@@ -169,6 +177,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
       c.sampled = 'none';
       c.vt = 0;
       c.effort = mech ? 0 : 1;
+      if (!mech) c.pmus = ctx.pmusFull ?? 0; // FU-6 R3(b): the whole effort against the closed airway
       break;
     case 'disconnected': // spontaneous: room air through the open tube; mechanical: nothing reaches the patient
       c.sampled = 'none';

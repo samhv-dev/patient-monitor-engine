@@ -6,7 +6,7 @@
 // Reads Stage 2's HemoState (CO, pleth feet, PI, cuff, CPR) and never writes it. All state is plain data.
 import { l1Target, setL1Target, type L1State } from '../../l1/state.ts';
 import type { NeuroResp } from '../neuro/drive.ts'; // Stage 7f
-import { wakeShiftMmHg } from '../lung/drive.ts'; // FU-6 F7
+import { P_MAX_CMH2O, PMUS_REST_CMH2O, wakeShiftMmHg } from '../lung/drive.ts'; // FU-6 R3(b); F7: wakeShiftMmHg
 import { createSpontDrive, stepSpontDrive, type SpontDrive } from '../neuro/spont.ts'; // Stage 7f: MODELED spontaneous drive
 import type { RampState } from '../../l1/ramp.ts';
 import { co2NumStep, co2Numerics, createCo2Num, type Co2Num } from '../../l3/co2-numerics/co2-numerics.ts';
@@ -20,7 +20,7 @@ import type { VentFrameExt } from '../../types-vent-link.ts'; // Stage V
 import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfile } from '../../types.ts';
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { cardiacOutput } from '../gas/coupling.ts';
-import { pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a
+import { obstructedSwingMmHg, pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a; FU-6 R3(b): NPPE input
 import { CMH2O_TO_MMHG, P_PL0, T_IT } from '../circ/params.ts'; // Stage 7b (Task 26)
 import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
 import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
@@ -83,6 +83,7 @@ export interface BloodView {
 export interface RespState {
   vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
   evlwiExtra?: number; // Stage 7c: lung water from the blood's COP/capillary leak, mL/kg above the conditions' (G7b ruling 8)
+  palvObs?: number; // FU-6 R3(b): 10 s mean alveolar pressure of obstructed efforts, mmHg (≤ 0; absent = 0) — 7c's NPPE input
   spont?: SpontDrive; // Stage 7f: MODELED spontaneous drive (7b's drive/pti/fatigue + Winter's), absent in pre-7f snapshots
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
@@ -172,7 +173,14 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
     fio2: l1Target(l1, 'fio2', t), etco2: rs.etco2, complianceMl: compliance(rs),
     obstructed: n ? n.obstruction >= 0.9 : false,
     cleft: n && n.cleft > 0.15 ? n.cleft : 0,
+    ...obstructedEffort(rs, n), // FU-6 R3(b)
   };
+}
+/** FU-6 R3(b): the pleural swing of an effort against an obstructed airway (partial: × obstruction; complete: all). */
+function obstructedEffort(rs: RespState, n?: NeuroResp): { pmusObs: number; pmusFull: number } {
+  const cap = P_MAX_CMH2O * (n?.pMaxMult ?? 1) * rs.lung.lp.pMax * (rs.spont?.fatigue ?? 1);
+  const full = Math.min(cap, PMUS_REST_CMH2O * (rs.spont?.effort ?? 1));
+  return { pmusObs: full * Math.min(1, n?.obstruction ?? 0), pmusFull: full };
 }
 /** Stage 7f: MODELED spontaneous breathing follows the chemoreflex drive once it has been evaluated. */
 function modeledSpont(rs: RespState, l1: L1State): boolean {
@@ -450,6 +458,11 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   }
   const va = alveolarVentilation(d, t, deadSpace(rs, l1));
   rs.vaLpm = va; // Stage 7g
+  const palvNow = -obstructedSwingMmHg(d, t); // FU-6 R3(b): alveolar ≈ pleural during a no-flow effort
+  if (palvNow < 0 || rs.palvObs !== undefined) {
+    rs.palvObs = (rs.palvObs ?? 0) + (palvNow - (rs.palvObs ?? 0)) * (GAS_DT_S / 10);
+    if (rs.palvObs > -0.01 && palvNow === 0) delete rs.palvObs;
+  }
   stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs) }, GAS_DT_S);
   rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)

@@ -190,7 +190,9 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     c.doses = c.doses.filter((d) => t - d.t0 < 6 * 3600); // every effect is < 1 % after 6 h
     if (pPv !== null) {
       // lung water (G7b ruling 8): 10 s filter on the pulmonary venous pressure; 7b re-resolves at ≥ 0.25 mL/kg change
-      bs.lung.pCap += (pPv - bs.lung.pCap) * (BLOOD_DT_S / 10);
+      // FU-6 R3(b) (E-FU6-4): obstructed efforts lower the alveolar (≈ interstitial) pressure, so the capillary
+      // TRANSMURAL pressure rises by it — negative-pressure pulmonary oedema through the same Starling step
+      bs.lung.pCap += (pPv - (rs.palvObs ?? 0) - bs.lung.pCap) * (BLOOD_DT_S / 10);
       bs.lung.evlwi = lungWaterStep(bs.lung.evlwi, bs.lung.pCap, c.out.cop, c.fl.kfMult, c.fl.sigma / SIGMA_PROTEIN, BLOOD_DT_S);
       if (Math.abs(bs.lung.evlwi - (rs.evlwiExtra ?? 0)) >= 0.25) {
         rs.evlwiExtra = bs.lung.evlwi;
