@@ -36,6 +36,11 @@ export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once 
  */
 export const CENTRAL_TAU_S = 90;
 export const PERIPH_SHARE = 0.3;
+/**
+ * FU-6 R3(c): the tidal-volume ceiling of the chemical drive — VT plateaus at 50–60 % of the vital capacity (Hey et al.
+ * 1966 Respir Physiol 1:193), VC ≈ 60–70 mL/kg IBW → 35 mL/kg IBW, × fatigue (weakness stays nmbVtMult's) [ENG size].
+ */
+export const VT_MAX_ML_KG = 35;
 
 export interface SpontDrive {
   rr: number; // < 0: not yet evaluated (driverCtx falls back to the rr/vt targets)
@@ -48,6 +53,7 @@ export interface SpontDrive {
   anoxS?: number; // FU-3 item 16 (E-FU3-10): seconds without brainstem perfusion (absent while perfused)
   gate?: number; // FU-3 item 16 (E-FU3-10): 0 → 1 while the drive reopens after an anoxic spell (absent = open)
   pc?: number; // FU-6 R3(a): central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
+  effort?: number; // FU-6 R3(b): the neural inspiratory effort relative to rest (neural VT / resting VT); absent = 1
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -80,6 +86,8 @@ export interface SpontInputs {
   noFlow?: boolean; // FU-3 item 16 (E-FU3-10): no circulation (pulseless rhythm or cardiac output 0)
   wakeMmHg?: number; // FU-6 F7: the patient's drawn wakefulness shift (resp pipeline; absent = WAKE_MMHG)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
+  ibwKg?: number; // FU-6 R3(c): the VT ceiling's size (absent = 70)
+  airwayObs?: number; // FU-6 R3(b): the airway event's obstruction (1 = `obstructed`: laryngospasm, foreign body)
 }
 
 export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
@@ -94,9 +102,13 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0,
     wakeMmHg: x.wakeMmHg, // FU-6 F7: this patient's drawn wakefulness shift
     wake: n?.loc ?? 0, apnoeic: s.rr === 0, // FU-6 R3(a)
+    load: Math.max(n?.obstruction ?? 0, x.airwayObs ?? 0), // FU-6 R3(b)
   }, s.fatigue);
   const strength = n?.pMaxMult ?? 1;
   let { rr, vt } = out;
+  // FU-6 R3(c): the neural VT has a ceiling; the effort is what the patient MAKES, the delivered VT what gets through
+  vt = Math.min(vt, VT_MAX_ML_KG * (x.ibwKg ?? 70) * s.fatigue); // weakness is nmbVtMult's (below), not counted twice
+  s.effort = rr > 0 && x.vt0 > 0 ? vt / x.vt0 : 0;
   if (strength < DIAPH_APNOEA) rr = vt = 0;
   else if (n) vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
   // FU-3 item 16 (E-FU3-10): brainstem-perfusion gate

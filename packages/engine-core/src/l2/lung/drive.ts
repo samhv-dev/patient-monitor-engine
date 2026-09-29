@@ -61,6 +61,7 @@ export interface DriveInputs {
   wake?: number; // FU-6 R3(a): 0 awake … 1 unconscious (the wakefulness drive lost); absent = awake
   wakeMmHg?: number; // FU-6 F7: this patient's drawn wakefulness shift (wakeShiftMmHg); absent = WAKE_MMHG
   apnoeic?: boolean; // FU-6 R3(a): the last evaluation was apnoeic (hysteresis)
+  load?: number; // FU-6 R3(b): 0–1 inspiratory (upper-airway) obstruction the effort works against; absent = 0
 }
 export interface DriveOut { ve: number; rr: number; vt: number }
 
@@ -78,7 +79,10 @@ export function drive(x: DriveInputs, fatigue = 1): DriveOut {
   if (ve <= Math.max(0.2, (x.apnoeic ? APNOEA_VE_OUT : APNOEA_VE_IN) * x.ve0)) return { ve: 0, rr: 0, vt: 0 }; // FU-6 R3(a)
   // split: opioids slow the rate, hypnotics shrink the tidal volume; fatigue → rapid shallow
   const rrF = (1 - 0.7 * x.opioidDep) * (1 + 0.5 * x.hypnoticDep) * (1 + 0.6 * (1 - fatigue));
-  const rr = Math.max(4, Math.min(45, x.rr0 * rrF * Math.sqrt(ve / x.ve0) + J_RR_PER_EVLWI * Math.max(0, x.evlwi - 10)));
+  // FU-6 R3(b): against an inspiratory load the extra drive goes into effort (VT), not rate — load compensation
+  // (Zechman, Hall & Hull 1957 J Appl Physiol 10:356: resistive loading slows RR and deepens the breath)
+  const q = ve / x.ve0; // a depressed drive slows the rate as before; only the RISE is suppressed by the load
+  const rr = Math.max(4, Math.min(45, x.rr0 * rrF * (q < 1 ? Math.sqrt(q) : q ** (0.5 * (1 - (x.load ?? 0)))) + J_RR_PER_EVLWI * Math.max(0, x.evlwi - 10)));
   return { ve, rr, vt: (ve * 1000) / rr };
 }
 

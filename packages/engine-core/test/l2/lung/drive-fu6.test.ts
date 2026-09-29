@@ -12,6 +12,12 @@ describe('FU-6 R3(a): the wakefulness drive (D4)', () => {
     const b = 40 - 6 / 1.5 + WAKE_MMHG; // 44
     expect(drive({ ...X, wake: 1, paco2: b + 2 }).ve).toBeCloseTo(1.5 * 2, 9);
   });
+  it('R3(b): against a complete load the extra drive goes into VT, not rate (Zechman 1957)', () => {
+    const hyper = { ...X, paco2: 44 }; // VE doubles
+    expect(drive(hyper).rr).toBeCloseTo(12 * Math.SQRT2, 6);
+    expect(drive({ ...hyper, load: 1 }).rr).toBeCloseTo(12, 6);
+    expect(drive({ ...hyper, load: 1 }).vt).toBeCloseTo(1000, 6);
+  });
   it('apnoea below 10 % of resting VE, resuming above 15 % (hysteresis)', () => {
     const at = (ve: number) => 40 - 6 / 1.5 + ve / 1.5; // PaCO2 giving this chemo VE
     expect([APNOEA_VE_IN, APNOEA_VE_OUT]).toEqual([0.1, 0.15]);

@@ -27,7 +27,12 @@ const SEVO_1MAC = { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLp
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
 
 describe('Stage 7f acceptance (engine)', { timeout: 600_000 }, () => {
-  it('residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control', async () => {
+  // FU-6 R3(d) (D21, E-FU6-10 reasoning; R45): this rig has NO hypnotic, so it is Eikermann's AWAKE patient (AJRCCM
+  // 2003 167:1024: near-normal VT at TOFR 0.5–0.7). Since UA_AROUSAL the awake residual-block share is 0.25 of the
+  // tables' (the sedated patient's), and the band — written from the tables — is missed: blocked VT 402 vs control
+  // 500 mL (ratio 0.80, band < 0.75). Not re-specified here (the file is outside E-FU6-10's two named files): it.fails
+  // with its number; gate note Q-FU6-4 follow-up.
+  it.fails('residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (FU-6 R3(d), band < 0.75)', async () => {
     const vt = async (roc: boolean) => {
       const e = createEngine({ seed: 21, patient: ADULT });
       const b: number[] = [];

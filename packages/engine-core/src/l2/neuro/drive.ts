@@ -27,6 +27,14 @@ export const DIAPH_APNOEA = 0.05; // no effective breath below 5 % strength [ENG
  */
 export const LOC_LO = 0.6;
 export const LOC_HI = 1.0;
+/**
+ * FU-6 R3(d) (Q-FU6-4 ruled, D21): the share of a residual block's upper-airway obstruction that survives full
+ * WAKEFULNESS. An awake patient defends his airway with phasic dilator (genioglossus) tone, so the same TOFR obstructs
+ * him far less than the sedated patient of the parameter tables §4.6 `uaCollapse` row: Eikermann et al. 2003 AJRCCM
+ * 167:1024 — awake volunteers at TOFR 0.5–0.7 keep a near-normal VT while upper-airway dilator function is measurably
+ * impaired (so the load is small, not absent). [ENG 0.25; fit target: the awake rows of E-FU6-10.]
+ */
+export const UA_AROUSAL = 0.25;
 
 export interface DriveInputs {
   vent: { opioid: number; propofol: number; midazolam: number; ketamine: number }; // ng/mL(-eq), bus.ts
@@ -74,7 +82,10 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   let apnoea = x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
   if (strength < DIAPH_APNOEA) apnoea = true;
   // upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse)
-  const residual = Math.max(0, Math.min(1, (0.9 - x.tofr) / 0.4)) * 0.8;
+  // FU-6 R3(d) (D21): arousal scales the RESIDUAL-BLOCK share between UA_AROUSAL (awake, Eikermann 2003) and 1
+  // (unconscious — the tables' own value); the sedation arm below is untouched, and a complete-obstruction event
+  // (`airway: 'obstructed'`, Task 5's `airwayObs`) is unaffected because it does not come through this term.
+  const residual = Math.max(0, Math.min(1, (0.9 - x.tofr) / 0.4)) * 0.8 * (UA_AROUSAL + (1 - UA_AROUSAL) * loc);
   const sedation = x.di < 60 || dOp > 0.3 ? Math.max(0, Math.min(1, (60 - x.di) / 20 + (dOp > 0.3 ? 0.5 : 0))) : 0;
   const obstruction = x.naturalAirway ? Math.max(residual, sedation) : 0;
   return {

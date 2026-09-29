@@ -102,13 +102,21 @@ describe('respiratory-drive depression (tables §5d)', () => {
     const indep = 1 - (1 - vent({ propofol: 1000 }).totalDep) * (1 - vent({ opioid: 1 }).totalDep);
     expect(both).toBeGreaterThan(indep);
   });
-  it('NMB: diaphragm 97 % blocked → apnoea; 50 % → full VT; residual TOFR 0.6 with a natural airway → partial obstruction', () => {
+  // FU-6 R3(d), E-FU6-10 (Orchestrator ruling (FU-6 review), 2026-09-28; Q-FU6-4 / D21): the tables §4.6 `uaCollapse`
+  // row is the SEDATED patient and KEEPS its bands on the unconscious arm; the awake arm follows Eikermann 2003 AJRCCM
+  // 167:1024 (near-normal VT at TOFR 0.5–0.7 with impaired dilator function). Re-specified, not widened: both
+  // quantities are still asserted, on both arms, and the awake values are the formula's (0.8·0.75·UA_AROUSAL scaling).
+  it('NMB: diaphragm 97 % blocked → apnoea; 50 % → full VT; residual TOFR 0.6 with a natural airway → the tables\' obstruction when unconscious, a small load with a near-normal VT when awake (Eikermann 2003; E-FU6-10, the awake row was > 0.4 — measured 0.150)', () => {
     const base = { vent: V0, macVolatile: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false };
     expect(neuroResp({ ...base, diaBlock: 0.97 }).apnoea).toBe(true);
     expect(neuroResp({ ...base, diaBlock: 0.5 }).vtMult).toBeCloseTo(1, 5);
-    const ob = neuroResp({ ...base, diaBlock: 0.1, tofr: 0.6, naturalAirway: true });
+    const ob = neuroResp({ ...base, diaBlock: 0.1, tofr: 0.6, naturalAirway: true, hypnotic: 1 }); // unconscious: the tables' patient
     expect(ob.obstruction).toBeGreaterThan(0.4);
     expect(ob.vtMult).toBeLessThan(0.6);
+    const aw = neuroResp({ ...base, diaBlock: 0.1, tofr: 0.6, naturalAirway: true }); // awake: dilator tone compensates
+    expect(aw.obstruction).toBeGreaterThan(0.1); // a LOAD the drive sees (Step 3's `load`), not zero
+    expect(aw.obstruction).toBeLessThan(0.2);
+    expect(aw.vtMult).toBeGreaterThan(0.8); // near-normal VT (Eikermann 2003)
   });
   it('curare cleft only while a partial block wears off: none unparalysed, none at full block, visible at 60 % diaphragm block', () => {
     const base = { vent: V0, macVolatile: 0, tofr: 1, di: 42, naturalAirway: false, wasApnoeic: false };
