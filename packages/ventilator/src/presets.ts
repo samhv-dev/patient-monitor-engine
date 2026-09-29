@@ -7,7 +7,7 @@ export const DEFAULT_CONFIG: VentConfig = {
   sex: '', height: 170, compliance: 50, resistance: 10, spont: false, spontRate: 16, pmus: 6, responsiveness: 80,
   pmusRise: 0.30, pmusHold: 0.05, pmusDecay: 0.40, riseShape: 'smoothstep', decayShape: 'halfcos', pmusOffset: 0.0,
   airwayClosure: false, openPressure: 0, recruitedVol: 0, stressIdx: false, stressB: 1.0, uip: false, uipThresh: 28,
-  reverseTrig: false, entrainRatio: '1:1', efl: false, eflSeverity: 'moderate', pcrit: 6, eflK: 0.35, peepStent: 40,
+  reverseTrig: false, entrainRatio: '1:1', efl: false, eflSeverity: 'moderate', pcrit: 6, eflK: 0.35, peepStent: 40, pleural: 0,
   cardiac: false, hr: 75, variability: false, varPct: 8, showPmus: false, showP01: false, sweepSec: 12,
   modeLabel: null,
   sigh: false, trc: false, trcPct: 100, apneaTime: 20, backup: true, backupRate: 12,

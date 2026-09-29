@@ -39,7 +39,24 @@ export function recoilPressure(c: VentConfig, v: number): number {
     const f = clamp(v / 700, 0.001, 1.2);
     p *= Math.pow(f, c.stressB - 1);
   }
-  return p;
+  return p + pleuralOpening(c, v);
+}
+
+/** 7a's resting pleural pressure P_PL0 −4 mmHg (Smith 2004) in cmH2O: the lung stays open while Ppl < PEEP. */
+export const PPL_REST_CMH2O = 4 / 0.7356;
+/** Volume over which a collapsed lung re-opens (v1.9's airway-closure default recruited volume, 150 mL). */
+export const PLEURAL_OPEN_ML = 150;
+/**
+ * Stage V.1 (G7b ruling 5): with the pleural space above normal by `c.pleural`, the end-expiratory pleural pressure
+ * (P_PL0 + pleural) exceeds the alveolar pressure (PEEP) by E = pleural − 5.44 − PEEP; the lung is then collapsed at
+ * end-expiration and every breath must first raise the alveolar pressure by E (the v1.9 opening shape over 150 mL)
+ * before tidal volume enters. E = 0 for every reference scenario (pleural 0) and for an effusion or a haemothorax at
+ * their default size once PEEP ≥ 3 (the lung only loses volume); a 3 L haemothorax (8.2 cmH2O) at ZEEP gives E 2.76 —
+ * the same physics, kept [ENG] (plan Decision 1). The expiratory hold reads set PEEP: the collapsed units are closed off.
+ */
+export function pleuralOpening(c: VentConfig, v: number): number {
+  const e = c.pleural - PPL_REST_CMH2O - c.peep;
+  return c.pleural > 0 && e > 0 ? e * Math.sqrt(clamp(v / PLEURAL_OPEN_ML, 0, 1)) : 0;
 }
 
 const EFL_SEVERITY = { mild: 1.8, moderate: 3.0, severe: 5.0 } as const;
