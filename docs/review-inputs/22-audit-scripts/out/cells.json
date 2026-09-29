@@ -1043,5 +1043,249 @@
   "fu4": true,
   "dirOnly": true,
   "wallS": 7.9
+ },
+ "BF-12": {
+  "id": "BF-12",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dNa45 = 6.917 in [4, 7] [research/12 BF-12 (Na +4–6); Adrogué & Madias 2000 NEJM 342:1581 formula: (1283 − 140)/(42 + 1) × 0.25 = +6.6]"
+  ],
+  "values": {
+   "dNa45": 6.917,
+   "dNaPeak": 9.8,
+   "dNa2h": 6.916,
+   "dOsm45": 13.835,
+   "dBv45": 555,
+   "dIcp": -2.19
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "normovolaemic",
+  "intv": "7.5 % saline 250 mL (7g hypertonicSaline, runs over 15 min): Na 30 min after the end",
+  "sys": "BLD BRN",
+  "owner": "7c pipeline.ts observeDoses",
+  "wallS": 89.6
+ },
+ "BF-14": {
+  "id": "BF-14",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW dBE = -3.796 above [-8, -4] [Scheingraber 1999 Anesthesiology 90:1265 (saline 30 mL/kg/h × 2 h: BE ≈ −7, Cl ≈ 115); research/12 BF-14 (BE −5)]",
+   "PL dCl = 11.447 in [6, 12] [Scheingraber 1999 (Cl 105 → 115)]",
+   "HAND TW (automatic TW): Cl +11.4 is right, but 3.4 of the 5 L are still intravascular at the end (F1): Hb falls 15 → 8.8 and albumin −14 g/L, and the lost albumin weak acid offsets the chloride acidosis (BE −3.8 vs ≈ −7); extra lung water 9.5 mL/kg in a healthy patient"
+  ],
+  "values": {
+   "dBE": -3.796,
+   "dCl": 11.447,
+   "dPh": -0.041,
+   "dAlb": -14.007,
+   "dHb": -6.19,
+   "retained": 3378,
+   "evlwiExtra": 9.481
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "normovolaemic, GA",
+  "intv": "0.9 % saline 5 L over 2 h (≈ 36 mL/kg/h): BE and Cl at the end",
+  "sys": "BLD",
+  "owner": "7d renal/model.ts volumeFactor (F1)",
+  "wallS": 91.6
+ },
+ "BF-18a": {
+  "id": "BF-18a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dHr = -1 below [10, 20] [Weiskopf 1998 JAMA 279:217 (awake isovolaemic haemodilution: HR rises linearly as Hb falls; research/12 BF-18 +10–20 at Hb 7)]",
+   "HAND WR (automatic WR): HR −1 bpm at Hb 6.7 with DO2 −50 % and SvO2 57 %: no chemoreceptor/sympathetic or viscosity path from Hb to the circulation (audit 09 R11, still open)"
+  ],
+  "values": {
+   "hbEnd": 6.718,
+   "dBv": 234,
+   "dHr": -1,
+   "dMap": 2
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake spontaneous, room air",
+  "state": "acute isovolaemic haemodilution to Hb ≈ 7",
+  "intv": "exchange 3.7 L blood for albumin 5 % over 60 min: heart rate",
+  "sys": "CIRC BLD",
+  "owner": "7a / 7c (anaemia → CO)",
+  "known": "audit 09 R11",
+  "wallS": 62.7
+ },
+ "BF-18b": {
+  "id": "BF-18b",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW coPct = 10.7 below [20, 60] [Weiskopf 1998 JAMA 279:217 (CI 2.9 → 4.8 L/min/m² at Hb 5, linear: ≈ +45 % at Hb 7; research/12 BF-18 \"CO ↑\")]",
+   "HAND TW (automatic TW): CO +10.7 % (expected ≈ +45 %) comes only from the albumin volume (+234 mL blood volume): Hb itself does not act on CO (R11)"
+  ],
+  "values": {
+   "coPct": 10.7,
+   "do2Pct": -49.6,
+   "svo2": 56.829,
+   "svo2Ctl": 75.58,
+   "lact": 0.966,
+   "svrPct": -3.7
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake spontaneous, room air",
+  "state": "acute isovolaemic haemodilution to Hb ≈ 7",
+  "intv": "the same exchange: cardiac output, DO2, SvO2",
+  "sys": "CIRC BLD",
+  "owner": "7a / 7c (anaemia → CO)",
+  "known": "audit 09 R11",
+  "wallS": 0
+ },
+ "BF-19": {
+  "id": "BF-19",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR coPct = -7.4 below [10, 40] [Messmer 1975 / Habler & Messmer 1997 (ANH to Hct 25–30: CO rises by lower viscosity and venous return, DO2 kept)]",
+   "TS do2Pct = -32.2 below [-15, 5] [DO2 maintained during ANH down to Hct ≈ 25 % (Habler 1997; research/12 BF-19)]",
+   "HAND WR (automatic WR): CO FALLS 7 % during ANH under GA and DO2 falls 32 %: no viscosity/venous-return or sympathetic response to haemodilution (R11); ANH as taught (DO2 kept by CO) cannot be shown"
+  ],
+  "values": {
+   "hbEnd": 10.803,
+   "coPct": -7.4,
+   "do2Pct": -32.2,
+   "dHr": -1,
+   "svo2": 79.895
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "acute normovolaemic haemodilution (ANH)",
+  "intv": "exchange 1.5 L blood for albumin 5 % over 30 min (Hb 15 → ≈ 11): DO2 kept by CO",
+  "sys": "CIRC BLD",
+  "owner": "7a / 7c (anaemia → CO)",
+  "known": "audit 09 R11",
+  "wallS": 31.4
+ },
+ "BF-20a": {
+  "id": "BF-20a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dEvlwiSepsis = 0 (expected sign 1) [capillary leak: a fluid load raises extravascular lung water in sepsis (Sakka 2002 Chest 122:2080; tables §5e)]",
+   "WR dPao2Sepsis = 15 (expected sign -1) [lung water lowers PaO2 at fixed FiO2 (tables §5e; research/12 BF-20)]",
+   "HAND WR (automatic WR): the same 30 mL/kg gives +1.7 mL/kg lung water in a HEALTHY patient and 0 in septic shock (kfMult 2.6), and PaO2 RISES 15 mmHg: 7c's lung-water step filters only above the oedema threshold σ·COP − 2 (circ-adapter.ts:74–79) and nothing lowers σ in sepsis (7e writes kfMult only, endo/adapters.ts:173–181), so a leak without high pulmonary venous pressure makes no lung water"
+  ],
+  "values": {
+   "kf": 2.594,
+   "dEvlwiSepsis": 0,
+   "dEvlwiHealthy": 1.734,
+   "dPao2Sepsis": 15,
+   "dPao2Healthy": 9,
+   "dVisfSepsis": 1296,
+   "dVisfHealthy": 1019
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, FiO2 0.5",
+  "state": "septic shock warm (7e sepsis 1: kfMult × leak)",
+  "intv": "0.9 % saline 30 mL/kg over 30 min: lung water and PaO2 (vs the same load healthy)",
+  "sys": "LUNG BLD",
+  "owner": "7e adapters.ts writeBlood → 7c lungWaterStep (F4)",
+  "wallS": 162
+ },
+ "BF-20b": {
+  "id": "BF-20b",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "PL dMapPeak = 9.17 in [3, 15] [fluid bolus in septic shock: MAP +5–10 mmHg (Glassford 2014 Crit Care 18:696)]",
+   "TS keptFrac = 1.11 above [0, 0.5] [the MAP gain dissipates within 60 min (Glassford 2014; Nunes 2014 Ann Intensive Care 4:25)]",
+   "HAND TS (automatic TS): the MAP gain is still +10 mmHg an hour after the bolus (kept 111 %): the expanded volume is neither excreted (F1) nor lost fast enough to the leaky interstitium (+1.3 L ISF), so the bolus acts like a durable volume expansion"
+  ],
+  "values": {
+   "mapBase": 78,
+   "dMapPeak": 9.17,
+   "dMap60After": 10.1,
+   "keptFrac": 1.11,
+   "dCoPeak": 2.02
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "septic shock warm",
+  "intv": "30 mL/kg saline: MAP gain at the end and 60 min later (transient)",
+  "sys": "CIRC",
+  "owner": "7d renal volumeFactor (F1) / 7c fluids.ts leak (F4)",
+  "wallS": 0
+ },
+ "BF-21a": {
+  "id": "BF-21a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL pawpPeakHF = 26 in [25, 40] [tables §7 check 11 (HFrEF/MR + 1.5 L: PAWP 15 → > 25); research/12 BF-21]"
+  ],
+  "values": {
+   "pawpBaseHF": 13,
+   "pawpPeakHF": 26,
+   "pawpBaseMR": 19,
+   "pawpPeakMR": 32
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "HFrEF 60 y 80 kg (and severe MR 60 y) awake, room air",
+  "state": "compensated HFrEF / chronic severe MR",
+  "intv": "0.9 % saline 1.5 L over 30 min: PAWP",
+  "sys": "CIRC",
+  "owner": "7a circ / 7c",
+  "wallS": 137.4
+ },
+ "BF-21b": {
+  "id": "BF-21b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL evlwiExtraHF = 3.857 in [3, 15] [tables §7 check 11 (EVLWI > 10 mL/kg from a normal ≈ 7: Sakka 2002 Chest 122:2080)]"
+  ],
+  "values": {
+   "evlwiExtraHF": 3.857,
+   "evlwiExtraMR": 7.799,
+   "copEnd": 14.655
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "HFrEF awake",
+  "state": "compensated HFrEF",
+  "intv": "1.5 L saline: extravascular lung water (7c extra EVLWI above the 7b baseline ≈ 7 mL/kg)",
+  "sys": "LUNG",
+  "owner": "7c circ-adapter.ts lungWaterStep",
+  "wallS": 0
+ },
+ "BF-21c": {
+  "id": "BF-21c",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW spo2MinHF = 95 above [89, 92] (lower = stronger/faster) [tables §7 check 11 (SpO2 96 → 89–92)]"
+  ],
+  "values": {
+   "spo2BaseHF": 96,
+   "spo2MinHF": 95,
+   "spo2MinMR": 92,
+   "rrMaxHF": 17.218
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "HFrEF awake, room air",
+  "state": "compensated HFrEF",
+  "intv": "1.5 L saline: SpO2",
+  "sys": "LUNG DEV",
+  "owner": "7b lung water → gas exchange",
+  "wallS": 0
  }
 }

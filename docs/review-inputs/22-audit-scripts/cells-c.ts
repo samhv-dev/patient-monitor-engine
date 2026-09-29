@@ -22,7 +22,7 @@ add({ id: 'BF-14', tier: 'P2', ctx: 'X-A GA vent', state: 'normovolaemic, GA', i
   measure: (R) => m({ dBE: dAt(R.i!.rows, R.c!.rows, 'be', T + 2 * H), dCl: dAt(R.i!.rows, R.c!.rows, 'cl', T + 2 * H), dPh: dAt(R.i!.rows, R.c!.rows, 'ph', T + 2 * H), dAlb: dAt(R.i!.rows, R.c!.rows, 'alb', T + 2 * H), dHb: dAt(R.i!.rows, R.c!.rows, 'hb', T + 2 * H), retained: Math.round(v(R.i!.rows, 'bv', T + 2 * H) - v(R.c!.rows, 'bv', T + 2 * H)), evlwiExtra: v(R.i!.rows, 'evlwi', T + 2 * H) }),
   expect: [{ m: 'dBE', lo: -8, hi: -4, src: 'Scheingraber 1999 Anesthesiology 90:1265 (saline 30 mL/kg/h × 2 h: BE ≈ −7, Cl ≈ 115); research/12 BF-14 (BE −5)' },
     { m: 'dCl', lo: 6, hi: 12, src: 'Scheingraber 1999 (Cl 105 → 115)' }],
-  owner: '7c solutes.ts / 7d renal' });
+  owner: '7d renal/model.ts volumeFactor (F1)', hand: { verdict: 'TW', why: 'Cl +11.4 is right, but 3.4 of the 5 L are still intravascular at the end (F1): Hb falls 15 → 8.8 and albumin −14 g/L, and the lost albumin weak acid offsets the chloride acidosis (BE −3.8 vs ≈ −7); extra lung water 9.5 mL/kg in a healthy patient' } });
 
 // ---- BF-18 / BF-19: acute isovolaemic anaemia (awake) and ANH (GA) -----------------------------------------------------
 {
@@ -33,17 +33,17 @@ add({ id: 'BF-14', tier: 'P2', ctx: 'X-A GA vent', state: 'normovolaemic, GA', i
   add({ id: 'BF-18a', tier: 'P2', ctx: 'X-A awake spontaneous, room air', state: 'acute isovolaemic haemodilution to Hb ≈ 7', intv: 'exchange 3.7 L blood for albumin 5 % over 60 min: heart rate', sys: 'CIRC BLD',
     arms, measure: (R) => m({ hbEnd: v(R.i!.rows, 'hb', te), dBv: Math.round(v(R.i!.rows, 'bv', te) - v(R.c!.rows, 'bv', te)), dHr: Math.round(v(R.i!.rows, 'hr', te) - v(R.c!.rows, 'hr', te)), dMap: Math.round(v(R.i!.rows, 'map', te) - v(R.c!.rows, 'map', te)) }),
     expect: [{ m: 'dHr', lo: 10, hi: 20, src: 'Weiskopf 1998 JAMA 279:217 (awake isovolaemic haemodilution: HR rises linearly as Hb falls; research/12 BF-18 +10–20 at Hb 7)' }],
-    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11' });
+    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11', hand: { verdict: 'WR', why: 'HR −1 bpm at Hb 6.7 with DO2 −50 % and SvO2 57 %: no chemoreceptor/sympathetic or viscosity path from Hb to the circulation (audit 09 R11, still open)' } });
   add({ id: 'BF-18b', tier: 'P2', ctx: 'X-A awake spontaneous, room air', state: 'acute isovolaemic haemodilution to Hb ≈ 7', intv: 'the same exchange: cardiac output, DO2, SvO2', sys: 'CIRC BLD',
     arms, measure: (R) => m({ coPct: pct(v(R.i!.rows, 'co', te), v(R.c!.rows, 'co', te)), do2Pct: pct(v(R.i!.rows, 'do2', te), v(R.c!.rows, 'do2', te)), svo2: v(R.i!.rows, 'svo2', te), svo2Ctl: v(R.c!.rows, 'svo2', te), lact: v(R.i!.rows, 'lact', te), svrPct: pct(v(R.i!.rows, 'svr', te), v(R.c!.rows, 'svr', te)) }),
     expect: [{ m: 'coPct', lo: 20, hi: 60, src: 'Weiskopf 1998 JAMA 279:217 (CI 2.9 → 4.8 L/min/m² at Hb 5, linear: ≈ +45 % at Hb 7; research/12 BF-18 "CO ↑")' }],
-    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11' });
+    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11', hand: { verdict: 'TW', why: 'CO +10.7 % (expected ≈ +45 %) comes only from the albumin volume (+234 mL blood volume): Hb itself does not act on CO (R11)' } });
   add({ id: 'BF-19', tier: 'P2', ctx: 'X-A GA vent', state: 'acute normovolaemic haemodilution (ANH)', intv: 'exchange 1.5 L blood for albumin 5 % over 30 min (Hb 15 → ≈ 11): DO2 kept by CO', sys: 'CIRC BLD',
     arms: { i: G(ex(1500, 1800), T + 2400, XA, { dt: 10 }), c: G([], T + 2400, XA, { dt: 10 }) },
     measure: (R) => m({ hbEnd: v(R.i!.rows, 'hb', T + 2100), coPct: pct(v(R.i!.rows, 'co', T + 2100), v(R.c!.rows, 'co', T + 2100)), do2Pct: pct(v(R.i!.rows, 'do2', T + 2100), v(R.c!.rows, 'do2', T + 2100)), dHr: Math.round(v(R.i!.rows, 'hr', T + 2100) - v(R.c!.rows, 'hr', T + 2100)), svo2: v(R.i!.rows, 'svo2', T + 2100) }),
     expect: [{ m: 'coPct', lo: 10, hi: 40, src: 'Messmer 1975 / Habler & Messmer 1997 (ANH to Hct 25–30: CO rises by lower viscosity and venous return, DO2 kept)' },
       { m: 'do2Pct', lo: -15, hi: 5, src: 'DO2 maintained during ANH down to Hct ≈ 25 % (Habler 1997; research/12 BF-19)' }],
-    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11' });
+    owner: '7a / 7c (anaemia → CO)', known: 'audit 09 R11', hand: { verdict: 'WR', why: 'CO FALLS 7 % during ANH under GA and DO2 falls 32 %: no viscosity/venous-return or sympathetic response to haemodilution (R11); ANH as taught (DO2 kept by CO) cannot be shown' } });
 }
 
 // ---- BF-20: septic capillary leak and 30 mL/kg ------------------------------------------------------------------------
@@ -56,12 +56,12 @@ add({ id: 'BF-14', tier: 'P2', ctx: 'X-A GA vent', state: 'normovolaemic, GA', i
       dVisfSepsis: Math.round(v(R.i!.rows, 'visf', TS + 1800 + H) - v(R.c!.rows, 'visf', TS + 1800 + H)), dVisfHealthy: Math.round(v(R.ri!.rows, 'visf', TS + 1800 + H) - v(R.rc!.rows, 'visf', TS + 1800 + H)) }),
     expect: [{ m: 'dEvlwiSepsis', dir: 1, tol: 1, src: 'capillary leak: a fluid load raises extravascular lung water in sepsis (Sakka 2002 Chest 122:2080; tables §5e)' },
       { m: 'dPao2Sepsis', dir: -1, tol: 5, src: 'lung water lowers PaO2 at fixed FiO2 (tables §5e; research/12 BF-20)' }],
-    owner: '7c circ-adapter.ts lungWaterStep / 7b' });
+    owner: '7e adapters.ts writeBlood → 7c lungWaterStep (F4)', hand: { verdict: 'WR', why: 'the same 30 mL/kg gives +1.7 mL/kg lung water in a HEALTHY patient and 0 in septic shock (kfMult 2.6), and PaO2 RISES 15 mmHg: 7c\'s lung-water step filters only above the oedema threshold σ·COP − 2 (circ-adapter.ts:74–79) and nothing lowers σ in sepsis (7e writes kfMult only, endo/adapters.ts:173–181), so a leak without high pulmonary venous pressure makes no lung water' } });
   add({ id: 'BF-20b', tier: 'P2', ctx: 'X-A GA vent', state: 'septic shock warm', intv: '30 mL/kg saline: MAP gain at the end and 60 min later (transient)', sys: 'CIRC',
     arms, measure: (R) => { const p = dMax(R.i!.rows, R.c!.rows, 'map', TS, TS + 1800); const l = dAt(R.i!.rows, R.c!.rows, 'map', TS + 1800 + H); return m({ mapBase: Math.round(v(R.c!.rows, 'map', TS)), dMapPeak: p, dMap60After: Math.round(l * 10) / 10, keptFrac: Math.round((l / p) * 100) / 100, dCoPeak: dMax(R.i!.rows, R.c!.rows, 'co', TS, TS + 1800) }); },
     expect: [{ m: 'dMapPeak', lo: 3, hi: 15, src: 'fluid bolus in septic shock: MAP +5–10 mmHg (Glassford 2014 Crit Care 18:696)' },
       { m: 'keptFrac', lo: 0, hi: 0.5, src: 'the MAP gain dissipates within 60 min (Glassford 2014; Nunes 2014 Ann Intensive Care 4:25)' }],
-    owner: '7c fluids.ts (leak) / 7d renal' });
+    owner: '7d renal volumeFactor (F1) / 7c fluids.ts leak (F4)', hand: { verdict: 'TS', why: 'the MAP gain is still +10 mmHg an hour after the bolus (kept 111 %): the expanded volume is neither excreted (F1) nor lost fast enough to the leaky interstitium (+1.3 L ISF), so the bolus acts like a durable volume expansion' } });
 }
 
 // ---- BF-21: 1.5 L crystalloid in HFrEF and severe MR (awake) -----------------------------------------------------------
@@ -79,7 +79,7 @@ add({ id: 'BF-14', tier: 'P2', ctx: 'X-A GA vent', state: 'normovolaemic, GA', i
     owner: '7c circ-adapter.ts lungWaterStep' });
   add({ id: 'BF-21c', tier: 'P2', ctx: 'HFrEF awake, room air', state: 'compensated HFrEF', intv: '1.5 L saline: SpO2', sys: 'LUNG DEV',
     arms, measure: (R) => m({ spo2BaseHF: v(R.hc!.rows, 'spo2', T), spo2MinHF: mn(R.h!.rows, 'spo2', T, W), spo2MinMR: mn(R.r!.rows, 'spo2', T, W), rrMaxHF: mx(R.h!.rows, 'rrSp', T, W) }),
-    expect: [{ m: 'spo2MinHF', lo: 89, hi: 92, src: 'tables §7 check 11 (SpO2 96 → 89–92)' }],
+    expect: [{ m: 'spo2MinHF', lo: 89, hi: 92, invert: true, src: 'tables §7 check 11 (SpO2 96 → 89–92)' }],
     owner: '7b lung water → gas exchange' });
 }
 
