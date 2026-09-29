@@ -84,6 +84,7 @@ export interface RespState {
   vaLpm?: number; // Stage 7g: alveolar ventilation of the last gas step (volatile uptake)
   evlwiExtra?: number; // Stage 7c: lung water from the blood's COP/capillary leak, mL/kg above the conditions' (G7b ruling 8)
   palvObs?: number; // FU-6 R3(b): 10 s mean alveolar pressure of obstructed efforts, mmHg (≤ 0; absent = 0) — 7c's NPPE input
+  gaLvl?: number; // FU-6 R4: the anaesthetised-lung state 0 awake … 1 anaesthetised (absent until first anaesthetised)
   spont?: SpontDrive; // Stage 7f: MODELED spontaneous drive (7b's drive/pti/fatigue + Winter's), absent in pre-7f snapshots
   m: number; // next 62.5 Hz sample index
   gasK: number; // next gas step (time gasK·0.1 s)
@@ -338,18 +339,33 @@ export function respPleural(rs: RespState, t: number): number {
  */
 export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
   const m = thermalMetabolic(rs.temp, t); // Stage 7e
-  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (rs.temp.anaesthesia === 'general' ? GA_METABOLIC : 1);
+  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (1 - (1 - GA_METABOLIC) * gaLevel(rs)); // FU-6 R4
+}
+
+/**
+ * FU-6 R4: "anaesthetised lungs" follow the anaesthetic state. Loss of consciousness or a paralysed diaphragm drops
+ * FRC by loss of inspiratory muscle tone within minutes of induction (Hedenstierna & Edmark, BJA 2010;104:16 — FRC
+ * −0.4–0.5 L, atelectasis within 5 min; Westbrook 1973 J Appl Physiol 34:81), and VO2 falls ~15 %. The `thermal`
+ * event's `anaesthesia: 'general'` stays an explicit override (1). τ 20 s on (FRC falls within the first minute),
+ * 300 s off [ENG].
+ */
+export const GA_TAU_ON_S = 20;
+export const GA_TAU_OFF_S = 300;
+export function gaLevel(rs: RespState): number {
+  return rs.temp.anaesthesia === 'general' ? 1 : (rs.gaLvl ?? 0);
+}
+function frcNow(rs: RespState): number {
+  return rs.pat.frcMl + (rs.pat.frcGaMl - rs.pat.frcMl) * gaLevel(rs);
 }
 
 function o2Inputs(rs: RespState, l1: L1State, t: number, vaLpm: number, blood?: BloodView): O2Inputs { // Stage 7c: blood
   const a = rs.driver.airway;
   const open = a === 'patent' || a === 'apnoea' || a === 'disconnected' || a === 'bronchospasm' || a === 'endobronchial';
-  const ga = rs.temp.anaesthesia === 'general';
   return {
     vaLpm, fio2: currentFio2(rs, l1, t),
     massFlowFio2: vaLpm > 0 || !open ? null : preoxActive(rs.driver, t) ? (rs.driver.preox as { fio2: number }).fio2 : 0.21,
     qLpm: rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg, vo2: rs.pat.vo2 * metabolic(rs, t, 'o2'), shunt: Math.min(0.9, rs.shunt + extraShunt(rs)),
-    paco2: rs.co2.pf, tempC: rs.temp.tc, frcMl: ga ? rs.pat.frcGaMl : rs.pat.frcMl, bloodL: rs.pat.bloodL,
+    paco2: rs.co2.pf, tempC: rs.temp.tc, frcMl: frcNow(rs), bloodL: rs.pat.bloodL, // FU-6 R4
     ...(blood ? { odc: blood.odc } : {}), // Stage 7c
   };
 }
@@ -375,6 +391,11 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // FU-8 A22 hand-off (executor instruction (a)): CPR flow scales with the patient's size too, so the CPR case uses the
   // same per-patient reference as the perfusing case (was `h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat)`, V.1 E-V1-1)
   rs.coRatio = (cardiacOutput(h, t) / coRefLpm(rs.pat)) * (ctx.blood?.coFactor ?? 1); // Stage 7c: blood-volume fallback
+  // FU-6 R4: the anaesthetised-lung state relaxes toward max(unconscious, diaphragm block)
+  const gaT = Math.max(ctx.neuro?.loc ?? 0, 1 - (ctx.neuro?.pMaxMult ?? 1));
+  const gaTau = gaT > (rs.gaLvl ?? 0) ? GA_TAU_ON_S : GA_TAU_OFF_S;
+  const gaNext = (rs.gaLvl ?? 0) + (gaT - (rs.gaLvl ?? 0)) * (1 - Math.exp(-GAS_DT_S / gaTau));
+  if (gaNext > 1e-4 || rs.gaLvl !== undefined) rs.gaLvl = gaNext; // absent until first anaesthetised (truth budget, D16)
   // FU-6 R2: airway smooth muscle follows 7g's bronchodilation (re-resolved when B moves by ≥ 0.01, as 7e's writeLung does)
   const bd = Math.min(1, Math.max(0, ctx.bronchoDil ?? 0));
   const exempt = ctx.anaphEndo ? ['anaphylaxis'] : [];
@@ -408,8 +429,8 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   // sees the profile's own mixing-point ratios (g, e) rather than the healthy defaults.
   const va0 = alveolarVentilation(d, t, deadSpace(rs, l1));
   const x = o2Inputs(rs, l1, t, va0, ctx.blood); // Stage 7c: blood
-  const ga = rs.temp.anaesthesia === 'general';
-  rs.lung.frcGaMl = ga ? rs.pat.frcGaMl : rs.pat.frcMl;
+  const ga = gaLevel(rs) >= 0.5; // FU-6 R4: induction atelectasis once anaesthetised
+  rs.lung.frcGaMl = frcNow(rs);
   const side = circSideFlows(h);
   lungGasStep(rs.lung, {
     va: va0, q: side ? (side[0] as number) + (side[1] as number) : x.qLpm, baseShunt: x.shunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2,
@@ -524,7 +545,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
 function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   const d = rs.driver;
   const ev = lungStatePayload(rs.lung, {
-    deadSpaceMl: deadSpace(rs, l1), frcMl: rs.temp.anaesthesia === 'general' ? rs.pat.frcGaMl : rs.pat.frcMl,
+    deadSpaceMl: deadSpace(rs, l1), frcMl: frcNow(rs), // FU-6 R4
     effort: d.source === 'spontaneous' ? 1 : d.cleft, peep: d.source === 'ventilator' ? d.vent.peep : d.ext ? d.ext.peep : 0,
     baseShunt: Math.min(0.9, rs.shunt + extraShunt(rs)), specs: rs.lungSpecs,
     pleuralMmHg: Math.max(rs.lung.lp.pPtx, rs.circPtx), // Stage V.1: as respPleural combines them
