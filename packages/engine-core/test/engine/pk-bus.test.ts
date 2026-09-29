@@ -22,6 +22,10 @@ describe('Stage 7g bus', () => {
   it('Stage 3 alveolar ventilation at VT 500 × 12 exceeds 3 L/min — was 2.82 before FU-4 G11', () => {
     const e = createEngine({ seed: 3, mode: 'modeled', patient: { ageY: 40 } });
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
+    // FU-6 R9 (E-FU6-7): paralysed — an unparalysed patient triggers extra breaths since FU-6, which would "pass" this
+    // dead-space check for the wrong reason (FU-4's R1 is what flips it). 1.2 mg/kg: the diaphragm is below the 5 %
+    // trigger strength by 40 s (measured: 0.6 mg/kg still triggers at 60 s, strength 0.12 → VA 3.86)
+    e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' } }));
     e.advanceTo(60);
     expect(stOf(e).resp.vaLpm).toBeGreaterThan(3);
   }, 300_000);

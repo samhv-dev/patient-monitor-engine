@@ -65,8 +65,9 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
   const t0 = 300 + 20 * 60;
 
   // R45 (FU-4, the one physical dead space — as the MH row above): the lower alveolar dead-space load washes the CO2
-  // out sooner after dantrolene — measured peak at +4.0 min (band 5–10, asserted from 4.5 min). Kept as a record.
-  it.fails('MH + dantrolene 2.5 mg/kg at 20 min (7g), fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21) — measured +4.0 min after FU-4\'s dead-space root', async () => {
+  // out sooner after dantrolene — measured peak at +4.0 min (band 5–10, asserted from 4.5 min). FU-6: the peak is at
+  // +5.0 min (EtCO2 91) on the FU-6 branch at Task 11 — the pre-declared it.fails is met, flipped (R45).
+  it('MH + dantrolene 2.5 mg/kg at 20 min (7g), fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21) — was +4.0 min after FU-4\'s dead-space root, +5.0 with FU-6', async () => {
     const ev = await mhDantrolene(false);
     const et = (a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
     let peak = t0;

@@ -56,6 +56,8 @@ export interface Cycle {
   pmus?: number;
   /** FU-6 R5: share of the alveolar plateau the sampled expirate reaches (absent = 1): alveolarFraction(VT, VDs). */
   alvFrac?: number;
+  /** FU-6 R9: the patient coughs against this mechanical breath (bucking). */
+  buck?: boolean;
 }
 
 /**
@@ -113,6 +115,10 @@ export interface DriverCtx {
   pmusFull?: number;
   /** FU-6 R5: series dead space (anatomical + apparatus, mL) for the sampled plateau; absent = full plateau. */
   vdSeriesMl?: number;
+  /** FU-6 R9: the MODELED drive's own rate while on the ventilator (assist-control trigger); absent/0 = none. */
+  triggerRr?: number;
+  /** FU-6 R9: the patient bucks (light, unparalysed, stimulated). */
+  buck?: boolean;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -161,7 +167,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   let vt: number;
   let ti: number;
   if (mech) {
-    rr = src === 'bvm' ? Math.max(4, d.vent.rr) : d.vent.rr;
+    rr = src === 'bvm' ? Math.max(4, d.vent.rr) : Math.max(d.vent.rr, ctx.triggerRr ?? 0); // FU-6 R9: assist-control
     vt = d.vent.vt;
     ti = 60 / rr / (1 + d.vent.ie);
   } else {
@@ -183,6 +189,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
     severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
   if (!mech && (ctx.pmusObs ?? 0) > 0) c.pmus = ctx.pmusObs; // FU-6 R3(b)
+  if (mech && src === 'ventilator' && ctx.buck) c.buck = true; // FU-6 R9
   if (ctx.vdSeriesMl !== undefined) {
     const f = alveolarFraction(c.vt, ctx.vdSeriesMl); // FU-6 R5
     if (f < 1) c.alvFrac = f;
@@ -196,6 +203,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   }
   switch (d.airway) {
     case 'obstructed': // efforts without flow (spontaneous) or a kinked tube (mechanical)
+      if (mech && src === 'ventilator') break; // FU-6 R9: a kinked tube is a resistance (pipeline), pressure-limited at Pmax
       c.exch = false;
       c.sampled = 'none';
       c.vt = 0;

@@ -23,6 +23,8 @@ export interface MechState {
   q: number[]; // mL/s into each unit (last sub-step)
   paw: number; // airway-opening pressure, cmH2O (relative to atmosphere)
   pcar: number; // carina pressure
+  /** FU-6 R9: active respiratory-muscle pressure on the chest wall, cmH2O (+ expiratory: a cough/buck); absent = 0. */
+  pMus?: number;
 }
 
 export function createMech(): MechState {
@@ -47,7 +49,7 @@ export function chestWallPressure(mp: MechParams, ms: MechState): number {
 // FU-6 R7: `pLimit` (cmH2O; default none) makes a 'flow' sub-step pressure-limited — a VCV Pmax: if forcing `x` would put
 // the airway opening above pLimit, this sub-step holds the airway AT pLimit instead (what a ventilator's Pmax does)
 export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'pressure' | 'closed', x: number, h = MECH_H, pLimit = Infinity): void {
-  const pcw = chestWallPressure(mp, ms);
+  const pcw = chestWallPressure(mp, ms) + (ms.pMus ?? 0); // FU-6 R9: a cough raises every unit's alveolar pressure
   let gSum = 0;
   let gp = 0;
   const pa = [0, 0, 0, 0];

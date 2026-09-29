@@ -176,6 +176,9 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
     cleft: n && n.cleft > 0.15 ? n.cleft : 0,
     ...obstructedEffort(rs, n), // FU-6 R3(b)
     vdSeriesMl: physicalDeadSpace(rs.pat, rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none'), // FU-6 R5: ONE dead space — FU-4's physical VD, not a second expression
+    // FU-6 R9: assist-control and bucking — the MODELED drive runs on the ventilator too (gasStep)
+    triggerRr: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && (rs.spont?.rr ?? 0) > 0 ? (rs.spont as SpontDrive).rr : 0,
+    buck: l1.mode === 'modeled' && rs.driver.source === 'ventilator' && !!n && n.pMaxMult > 0.5 && n.loc < 0.5 && n.pain > 0.2,
   };
 }
 /** FU-6 R3(b): the pleural swing of an effort against an obstructed airway (partial: × obstruction; complete: all). */
@@ -201,6 +204,21 @@ function deadSpace(rs: RespState, l1?: L1State): number {
   // FU-4 (FU-6 review ruling): the ONE physical dead space (anatomical − ETT bypass + apparatus); the artificial airway is
   // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
   return physicalDeadSpace(rs.pat, mech) + fit;
+}
+/**
+ * FU-6 R9: a kinked tube multiplies the tube resistance by 1 + (KINK_R_MULT − 1)·severity — a complete kink (severity 1)
+ * × 150, so a 40 cmH2O Pmax moves ≤ 20 % of the set VT [ENG, fit target RS9 "VT ≤ 20 % delivered"; partial kinks scale].
+ */
+export const KINK_R_MULT = 150;
+/** FU-6 R9: bucking — an expiratory muscle pressure (cmH2O) over the first BUCK_S of a mechanical inspiration [ENG; McCool 2006 Chest 129:48S]. */
+export const BUCK_CMH2O = 30;
+export const BUCK_S = 0.5;
+/** FU-6 R9: the cough pressure of a bucking breath at time t (cmH2O, ≥ 0). */
+function buckPressure(rs: RespState, t: number): number {
+  const c = cycleAt(rs.driver, t);
+  if (!c || !c.buck) return 0;
+  const u = t - c.t0;
+  return u < BUCK_S ? BUCK_CMH2O * Math.sin((Math.PI * u) / BUCK_S) : 0;
 }
 /**
  * FU-6 R5 — ONE dead space (Orchestrator ruling (FU-6 review), 2026-09-28, blocker F1). The series dead space the
@@ -266,6 +284,7 @@ export function applyLungSpecs(rs: RespState): void {
   // keeps its name, place and unit and now delivers the accumulated pressure (0 at onset).
   rs.ptxCeil = r.lp.pPtx;
   r.lp.pPtx = Math.min(rs.ptxAcc, rs.ptxCeil);
+  if (rs.driver.airway === 'obstructed' && rs.driver.source === 'ventilator') r.lp.rTube *= 1 + (KINK_R_MULT - 1) * Math.min(1, rs.driver.severity); // FU-6 R9: kinked tube
   ls.lp = r.lp;
   ls.mainstem = rs.mainstemCmd ?? (r.blocked.includes('L') ? 'right' : r.blocked.includes('R') ? 'left' : 'both');
   ls.mp = mechParams(r.lp, ls.aer, blockedSides(ls.mainstem));
@@ -344,7 +363,7 @@ export function respPleural(rs: RespState, t: number): number {
   const base = pleuralPressureMmHg(d, t, compliance(rs));
   let p = P_PL0 + k * (base - P_PL0);
   if (d.source === 'ventilator') p += k * T_IT * Math.max(0, rs.lung.peepTot - d.vent.peep) * CMH2O_TO_MMHG;
-  return p + Math.max(0, lp.pPtx - rs.circPtx);
+  return p + Math.max(0, lp.pPtx - rs.circPtx) + (rs.lung.mech.pMus ?? 0) * CMH2O_TO_MMHG; // FU-6 R9: a cough raises the intrathoracic pressure
 }
 
 /**
@@ -481,7 +500,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.co2.ps = pf;
     (rs.spont ??= createSpontDrive()).paco2Rest = pf; // Stage 7f: the resting PaCO2 is the MODELED drive's set point
   }
-  if (l1.mode === 'modeled' && d.source === 'spontaneous') { // Stage 7f: 7b's chemoreflex drive, 1 Hz (spont.ts)
+  if (l1.mode === 'modeled' && (d.source === 'spontaneous' || d.source === 'ventilator')) { // Stage 7f: 7b's chemoreflex drive, 1 Hz (spont.ts); FU-6 R9: also on the ventilator (triggering)
     const lp = rs.lung.lp;
     stepSpontDrive((rs.spont ??= createSpontDrive()), {
       t, paco2: rs.co2.pf, pao2: rs.o2.pao2, hco3: ctx.hco3 ?? 24, rr0: l1Target(l1, 'rr', t), vt0: l1Target(l1, 'vt', t),
@@ -629,6 +648,9 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const t = m / RESP_RATE;
     const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
     const wasInsp = rs.lung.inInsp;
+    const pb = buckPressure(rs, t); // FU-6 R9
+    if (pb > 0) rs.lung.mech.pMus = pb;
+    else delete rs.lung.mech.pMus;
     lungMechStep(rs.lung, ld.mode, ld.x, DT, ld.pLimit); // FU-6 R7: the VCV pressure limit
     if (wasInsp && !rs.lung.inInsp && rs.driver.source === 'ventilator') {
       // FU-6 R7: a pressure-limited breath delivers less than the set VT — the cycle carries what the lung received
@@ -805,6 +827,7 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
       if (v.fico2 !== undefined) d.fico2 = v.fico2;
       if (v.effort !== undefined) d.cleft = v.effort;
       withdraw(replan(d, t, true, true));
+      if (d.airway === 'obstructed') applyLungSpecs(rs); // FU-6 R9: a kink belongs to the ventilator's tube
       return true;
     }
     case 'preoxygenate': {

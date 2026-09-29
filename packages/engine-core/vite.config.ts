@@ -43,6 +43,7 @@ const SLOW = [
   'test/engine/resp-ga-state.test.ts', // FU-6 R4: three apnoea runs of 19 sim-min and a 40 sim-min ventilated run
   'test/engine/resp-vcv-pmax.test.ts', // FU-6 R7: two 10 sim-min near-fatal bronchospasm runs
   'test/engine/resp-drive-fu6.test.ts', // FU-6 R12: a 32 sim-min stimulus run and a 20 sim-min PE run
+  'test/engine/resp-trigger.test.ts', // FU-6 R9: three ≤ 7 sim-min ventilator runs
   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
   'test/engine/clinical-suite.test.ts', // FU-4 Task 22: the clinical scenario suite (SLOW_A)
@@ -69,6 +70,7 @@ const SLOW_A = [
   'test/engine/resp-ga-state.test.ts',
   'test/engine/resp-vcv-pmax.test.ts',
   'test/engine/resp-drive-fu6.test.ts',
+  'test/engine/resp-trigger.test.ts',
 ];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h

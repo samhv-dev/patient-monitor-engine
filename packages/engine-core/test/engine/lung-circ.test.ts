@@ -32,6 +32,12 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
       const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 65, weightKg: 70, heightCm: 175, sex: 'M', lungConditions: [{ id: 'copd', severity: 0.75 }], sensors: { co2: 'on' } } });
       const r = { e };
       r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr, vtMl: 560, peep: 5, ie: 2, fio2: 0.4 }));
+      // FU-6 R9 (E-FU6-7): a paralysed patient, as ventilated COPD is — since FU-6 an unparalysed, undrugged patient
+      // triggers the ventilator at his own rate, which lifted the RR-10 arm's auto-PEEP (MAP difference 1.91 < 2).
+      // FU-6 executor (merged main): 0.6 mg/kg still let the RR-10 arm trigger before onset (37 breaths in 3 min, MAP
+      // difference 1.83); D19's ventRig paralysis (1.2 mg/kg + 0.6 mg/kg/h) gives 2.06 — the plan's rig, re-derived
+      r.e.dispatch(ev3({ kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' }));
+      r.e.dispatch(ev3({ kind: 'infusion', drugId: 'rocuronium', rate: 0.6, unit: 'mg/kg/h' }));
       for (let m = 1; m <= 3; m++) { r.e.advanceTo(60 * m); await new Promise((res) => setImmediate(res)); }
       const h = hemoOf(r.e);
       const b = h.siteBeats.slice(-10);
