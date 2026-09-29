@@ -19,6 +19,8 @@ export interface Co2Inputs {
   cs: number;
   kfs: number;
   extraGradient: number; // added Pa − Et (bronchospasm) mmHg
+  /** FU-6 R8: inspired PCO2 (mmHg) of the gas the breaths bring (rebreathing, exhausted absorber); absent = 0. */
+  pico2?: number;
 }
 
 /** min(1, CO/CO_ref)^0.6 (brief §4.4 low-flow compression). */
@@ -38,7 +40,7 @@ export function stepCo2(st: Co2State, x: Co2Inputs, dtS: number): void {
   const target = lowFlowFactor(x.coRatio);
   st.flow += (target - st.flow) * (1 - Math.exp(-dtS / LOW_FLOW_TAU_S));
   const dt = dtS / 60;
-  const elim = (st.flow * x.vaLpm * st.pf) / K_CO2;
+  const elim = (st.flow * x.vaLpm * (st.pf - (x.pico2 ?? 0))) / K_CO2; // FU-6 R8: VA·(PACO2 − PICO2)/0.863 (Nunn ch. 7)
   const ex = x.kfs * (st.pf - st.ps);
   // low flow: CO2 the blood does not carry away stays in the tissues (slow compartment) → ROSC washout [ENG]
   st.pf = Math.max(0, st.pf + ((st.flow * x.vco2 - elim - ex) / x.cf) * dt);
