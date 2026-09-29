@@ -171,6 +171,9 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const sens = profile?.sensors ?? {};
   const spo2 = sens.spo2 === 'off' || sens.spo2 === 'motion' ? sens.spo2 : 'on';
   const circ = createCircModel(circProfileOf(profile)); // Stage 7a
+  // FU-8 (A29; V.1 gate note §10 item 1): FU-4 G6's alias (aliases.ts) for a PROFILE — a lung condition the circulation
+  // also owns applies to both, as a dispatched event does: a profile's massive PE carried the lungs' dead space and no PVR
+  for (const lc of profile?.lungConditions ?? []) if (lc.id === 'pe') applyCircCondition(circ, 'pe', lc.severity);
   return {
     m: 0,
     circ, circOut: createOut(), radQ: new Array<number>(RAD_DELAY_STEPS + 1).fill(circ.s[0] as number), beatT: -1, stPatch: null, stApplied: 0, iabp: createIabp(), iabpAug: 0, av: { ej: false, openT: -1, closeT: -1, sum: 0, n: 0, mean: NaN, off: NaN, qLung: circ.ref.co / 0.06 }, arrestKey: '', cprArt: false, lvadPvc: false, lvad: createLvad(), pvOn: false,
