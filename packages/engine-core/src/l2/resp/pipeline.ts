@@ -27,7 +27,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { CI_LPM_PER_KG, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -373,7 +373,12 @@ export function respPleural(rs: RespState, t: number): number {
  */
 export function metabolic(rs: RespState, t: number, gas: 'o2' | 'co2' = 'co2'): number {
   const m = thermalMetabolic(rs.temp, t); // Stage 7e
-  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (1 - (1 - GA_METABOLIC) * gaLevel(rs)); // FU-6 R4
+  return tempFactor(rs.temp.tc) * (gas === 'o2' ? m.vo2F : m.vco2F) * rs.temp.extraX * (1 - (1 - GA_METABOLIC) * gaLevel(rs)) * (1 + PREG_VO2_TERM * pregnancy(rs)); // FU-6 R4, R10
+}
+
+/** FU-6 R10: pregnancy severity (the `pregnancy` lung condition, 0–1). */
+export function pregnancy(rs: RespState): number {
+  return Math.min(1, rs.lungSpecs.reduce((m, s) => (s.id === 'pregnancy' ? Math.max(m, s.severity) : m), 0));
 }
 
 /**
@@ -509,6 +514,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
       ibwKg: rs.pat.ibwKg, airwayObs: d.airway === 'obstructed' ? 1 : 0, // FU-6 R3(b), R3(c)
+      setShift: PREG_PACO2_SHIFT_MMHG * pregnancy(rs), // FU-6 R10: progesterone
       jDrive: Math.min(1, rs.lungSpecs.reduce((m, s) => (s.id === 'pe' ? Math.max(m, s.severity) : m), 0)), // FU-6 R12
     });
   }

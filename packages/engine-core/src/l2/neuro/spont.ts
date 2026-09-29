@@ -87,6 +87,7 @@ export interface SpontInputs {
   wakeMmHg?: number; // FU-6 F7: the patient's drawn wakefulness shift (resp pipeline; absent = WAKE_MMHG)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
   ibwKg?: number; // FU-6 R3(c): the VT ceiling's size (absent = 70)
+  setShift?: number; // FU-6 R10: mmHg subtracted from the resting set point (pregnancy's progesterone drive)
   airwayObs?: number; // FU-6 R3(b): the airway event's obstruction (1 = `obstructed`: laryngospasm, foreign body)
   jDrive?: number; // FU-6 R12: acute PE severity (the lung's `pe` spec) — J-receptor drive
 }
@@ -95,7 +96,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   if (x.t + 1e-9 < s.nextT) return;
   s.nextT = x.t + SPONT_DT_S;
   if (Number.isNaN(s.paco2Rest)) s.paco2Rest = x.paco2;
-  s.paco2Set = paco2SetPoint(s.paco2Rest, x.hco3);
+  s.paco2Set = paco2SetPoint(s.paco2Rest - (x.setShift ?? 0), x.hco3); // FU-6 R10: the pregnancy set point
   const n = x.neuro;
   s.pc = (s.pc ?? x.paco2) + (x.paco2 - (s.pc ?? x.paco2)) * (1 - Math.exp(-SPONT_DT_S / CENTRAL_TAU_S)); // FU-6 R3(a)
   const out = drive({
