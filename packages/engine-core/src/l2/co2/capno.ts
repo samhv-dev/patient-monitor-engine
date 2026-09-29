@@ -64,7 +64,7 @@ function shapeOf(c: Cycle) {
 /** Plateau-end level of a cycle (what its expiration ends at). */
 function level(c: Cycle, x: CapnoCtx): number {
   if (c.sampled === 'gastric') return c.gastric;
-  return c.sampled === 'alveolar' ? x.etco2 : 0;
+  return c.sampled === 'alveolar' ? x.etco2 * (c.alvFrac ?? 1) : 0; // FU-6 R5: no plateau below the dead space
 }
 
 /** Airway CO2 at the end of cycle c (for the next inspiration's downstroke and for apnoea decay). */

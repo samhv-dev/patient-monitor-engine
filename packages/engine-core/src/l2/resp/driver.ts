@@ -49,6 +49,18 @@ export interface Cycle {
   lungRiseIII?: number;
   /** FU-6 R3(b): the part of the inspiratory muscle pressure (cmH2O) spent against an obstructed upper airway. */
   pmus?: number;
+  /** FU-6 R5: share of the alveolar plateau the sampled expirate reaches (absent = 1): alveolarFraction(VT, VDs). */
+  alvFrac?: number;
+}
+
+/**
+ * FU-6 R5: the mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; Kodali 2013
+ * Anesthesiology 118:192 — breaths below the dead space show a small or absent plateau). The first CO2 appears at 0.6 of
+ * the series dead space (axial mixing), a full plateau at 1.4× [ENG ramp; fit target RS3 and "normal breaths unchanged"].
+ */
+export function alveolarFraction(vtMl: number, vdSeriesMl: number): number {
+  if (!(vdSeriesMl > 0)) return 1;
+  return Math.min(1, Math.max(0, (vtMl - 0.6 * vdSeriesMl) / (0.8 * vdSeriesMl)));
 }
 
 export interface ExtDrive {
@@ -94,6 +106,8 @@ export interface DriverCtx {
   pmusObs?: number;
   /** FU-6 R3(b): the same for a complete airway obstruction (the `obstructed` airway state, 7f's complete obstruction). */
   pmusFull?: number;
+  /** FU-6 R5: series dead space (anatomical + apparatus, mL) for the sampled plateau; absent = full plateau. */
+  vdSeriesMl?: number;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -164,6 +178,10 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
     severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
   if (!mech && (ctx.pmusObs ?? 0) > 0) c.pmus = ctx.pmusObs; // FU-6 R3(b)
+  if (ctx.vdSeriesMl !== undefined) {
+    const f = alveolarFraction(c.vt, ctx.vdSeriesMl); // FU-6 R5
+    if (f < 1) c.alvFrac = f;
+  }
   if (!mech && ctx.obstructed && d.airway === 'patent') { // Stage 7f: sedation/residual-block obstruction (plan decision 12)
     c.pmus = ctx.pmusFull ?? c.pmus; // FU-6 R3(b)
     c.exch = false;

@@ -175,6 +175,7 @@ function driverCtx(rs: RespState, l1: L1State, t: number, neuro?: NeuroResp): Dr
     obstructed: n ? n.obstruction >= 0.9 : false,
     cleft: n && n.cleft > 0.15 ? n.cleft : 0,
     ...obstructedEffort(rs, n), // FU-6 R3(b)
+    vdSeriesMl: physicalDeadSpace(rs.pat, rs.driver.source !== 'spontaneous' && rs.driver.source !== 'none'), // FU-6 R5: ONE dead space — FU-4's physical VD, not a second expression
   };
 }
 /** FU-6 R3(b): the pleural swing of an effort against an obstructed airway (partial: × obstruction; complete: all). */
@@ -201,6 +202,16 @@ function deadSpace(rs: RespState, l1?: L1State): number {
   // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
   return physicalDeadSpace(rs.pat, mech) + fit;
 }
+/**
+ * FU-6 R5 — ONE dead space (Orchestrator ruling (FU-6 review), 2026-09-28, blocker F1). The series dead space the
+ * sampled expirate must wash out is the same PHYSICAL dead space the gas exchange uses: FU-4's exported
+ * `physicalDeadSpace(rs.pat, mechanical)` (anatomical with the artificial airway's bypass credited, `ETT_BYPASS_ML_PER_KG` 1.1 mL/kg
+ * IBW floored at 30 %, + the apparatus) — NEVER the MANUAL EtCO2 fit `co2.vdExtraMl`, which is a display calibration
+ * and not gas (a 3.5 kg neonate on the adult MANUAL defaults carries a ≈ 400 mL fit), and never a second expression of
+ * FU-6's own: the `seriesDeadSpace` this plan first wrote returned 204 mL (154 + 50) for the 70 kg ventilated rig while
+ * FU-4's `alveolarVentilation` used 127 mL (154 − 77 + 50), so the plateau was computed against a washout volume the
+ * gas exchange did not have.
+ */
 // FU-6 R6: the Stage 3 bronchospasm gradient (+8·sev) and shunt (+0.05·sev) are retired — the airway event is an alias
 // of the lung condition, whose dead space (vdAlv) and low-V/Q admixture carry the gap and the desaturation once.
 function extraGradient(_rs: RespState): number {
