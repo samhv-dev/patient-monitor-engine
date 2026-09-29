@@ -1,0 +1,1412 @@
+diff --git a/packages/engine-core/src/engine.ts b/packages/engine-core/src/engine.ts
+index dbff3b9..313e75d 100644
+--- a/packages/engine-core/src/engine.ts
++++ b/packages/engine-core/src/engine.ts
+@@ -574,7 +574,7 @@ class Engine implements MonitorEngine {
+     const src7f = ps.resp.driver.source; // Stage 7f: after 7g's pk (reads ps.pk.bus), before the breath driver (its hook shapes the next breaths)
+     const endo7f = (ps as unknown as { endo?: { core?: { out?: { neuroglycopenia?: number } }; cascade?: { macF?: number } } }).endo; // Stage 7f: 7e seams, duck-typed (neutral without 7e)
+     stepNeuroTo(ps.neuro, end / ECG_RATE, {
+-      tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
++      tempC: ps.resp.temp.tc, kMmolL: ps.blood.out.k > 0 ? ps.blood.out.k : undefined, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm', // FU-9 F10: 7c's K (0 before its first step)
+       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
+     }, ps.pk.bus);
+     advanceResp(ps.resp, { l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
+diff --git a/packages/engine-core/src/l2/blood/core.ts b/packages/engine-core/src/l2/blood/core.ts
+index d287d9f..4d377a3 100644
+--- a/packages/engine-core/src/l2/blood/core.ts
++++ b/packages/engine-core/src/l2/blood/core.ts
+@@ -5,7 +5,7 @@ import { albGL, bloodMl, createFluids, ecfMl, hbOf, stepFluids, copPlasma, type
+ import { contentDB, type OdcCtx } from './odc.ts';
+ import { o2Delivery, stepLactate, type O2Out } from './oxygen.ts';
+ import { bloodPatient, HBF_EXP, NORMAL, type BloodPatient } from './params.ts';
+-import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
++import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, K_TBK_MMOL, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
+ import { caMembrane, insulinEffect, INSULIN_K_SHIFT, K_PUMP_GAIN, salbutamolEffect, SALBUTAMOL_K_SHIFT, suxDeltaK, type Dose } from './treatments.ts';
+ 
+ export interface BloodInputs {
+@@ -46,6 +46,9 @@ export interface BloodOut {
+   dkaSeverity: number; // R51 addendum 16: ketoacid drive 0–1 (keto ÷ DKA_KETO_MMOL_L) that 7c applies; Stage 7e reads it
+ }
+ 
++/** FU-9 F7: chronic renal compensation of a chronic hypercapnia, mmol/L HCO3 per mmHg PaCO2 above 40 (tables §5b.1). */
++export const CHRONIC_HCO3_PER_MMHG = 0.35;
++
+ /** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity` (R51 addendum 16). */
+ export const DKA_KETO_MMOL_L = 25;
+ 
+@@ -75,16 +78,24 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
+   const e0 = ecfMl(fl);
+   const so = createSolutes({ na: b.na ?? NORMAL.na, k: b.k ?? NORMAL.k, cl: b.cl ?? NORMAL.cl, iCa: b.iCa ?? NORMAL.iCa, mg: b.mg ?? NORMAL.mg, lactate: b.lactate ?? NORMAL.lactate }, e0, pat.vLacL, pat.icfMl);
+   const odc: OdcCtx = { hb: pat.hb, ph: 7.4, dpgMmolL: b.dpgMmolL ?? NORMAL.dpgMmolL, cohb: b.cohb ?? 0, methb: b.methb ?? 0 };
+-  // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row)
+-  const hco3 = b.hco3 ?? NORMAL.hco3;
+-  const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * NORMAL.paco2));
++  // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row).
++  // FU-9 F8: without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its
++  // weak-acid deficit — the Figge picture (low AG, mild alkalosis) that the same albumin reached by dilution shows
++  // (Figge 1998 Crit Care Med 26:1807; Fencl 2000 AJRCCM 162:2246); a given profile HCO3 is honoured as measured.
++  // FU-9 F7: a chronic hypercapnic profile (resting PaCO2 above 40) starts with its chronic renal compensation, +0.35
++  // mmol/L HCO3 per mmHg (tables §5b.1 "chronic (profile only): +0.35–0.4 per mmHg … set by the profile"; Brackett 1965,
++  // Schwartz 1965), calibrated at that PaCO2; a given profile HCO3 is honoured
++  const hco3 = b.hco3 ?? NORMAL.hco3 + CHRONIC_HCO3_PER_MMHG * Math.max(0, paco2 - NORMAL.paco2);
++  const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * Math.max(NORMAL.paco2, paco2)));
+   const c = concOf(so, e0, pat.vLacL, e0);
+   const alb = albGL(fl);
+-  const sidNeed = hco3 + alb * (0.123 * ph0 - 0.631) + c.pi * (0.309 * ph0 - 0.469) + ((1.43 * pat.hb) / 3) * (ph0 - 7.4);
++  const albCal = b.hco3 === undefined ? NORMAL.albGL : alb;
++  const sidNeed = hco3 + albCal * (0.123 * ph0 - 0.631) + c.pi * (0.309 * ph0 - 0.469) + ((1.43 * pat.hb) / 3) * (ph0 - 7.4);
+   calibrateXa(so, e0, sidOf(c, ionisedCa(c, ph0)), sidNeed);
+-  so.set.ph = ph0;
++  const ab = solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb });
++  so.set.ph = albCal === alb ? ph0 : ab.ph; // the K reference is the patient's own resting pH
+   return {
+-    pat, fl, so, ab: solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb }), phNonOrg: ph0,
++    pat, fl, so, ab, phNonOrg: so.set.ph,
+     o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
+     co0, ecf0: e0, k1Hz: 0, bledMl: 0,
+     out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1, dkaSeverity: 0 },
+@@ -133,8 +144,13 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void
+   const ef = effects(bc, x.t);
+   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
+   const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
+-  const kSet = so.set.k - 4.0 * (bc.phNonOrg - so.set.ph) + drug; // Q45
+-  stepSolutes(so, ecfMl(fl), dtS, kSet, hbfRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
++  // Q45; FU-9 F6: the set point follows the total-body K — an external K loss (or gain) is shared by the cells instead of
++  // being refilled from an unlimited store: plasma K falls 1 mmol/L per K_TBK_MMOL of total-body deficit (Sterns 1981)
++  const kSet = so.set.k + (so.kIcf + so.k - (so.set.kIcf + so.set.k * (bc.ecf0 / 1000))) / K_TBK_MMOL - 4.0 * (bc.phNonOrg - so.set.ph) + drug;
++  // FU-9 F5: citrate and acetate are metabolised by the liver AND by muscle/kidney (Kramer 2003 Crit Care Med 31:2450),
++  // so their clearance follows whole-body flow (CO/CO0), not the splanchnic (CO/CO0)² that lactate's hepatic uptake uses
++  const flowRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0));
++  stepSolutes(so, ecfMl(fl), dtS, kSet, flowRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
+   // 3. oxygen delivery → lactate
+   bc.odc.hb = hbOf(fl);
+   bc.odc.ph = bc.ab.ph;
+diff --git a/packages/engine-core/src/l2/blood/fluids.ts b/packages/engine-core/src/l2/blood/fluids.ts
+index f936794..3f17b75 100644
+--- a/packages/engine-core/src/l2/blood/fluids.ts
++++ b/packages/engine-core/src/l2/blood/fluids.ts
+@@ -10,7 +10,7 @@
+ // Compartments (tables §5b.4): plasma Vp, interstitium Visf, cells Vicf (mL); red cells as Hb mass (g, MCHC 1/3 g/mL).
+ // Starling exchange, plasma → interstitium (mL/min):
+ //   J = Kf·kfMult·[ΔPc − Pisf − σ·((πp − πp0) − (πisf − πisf0))]      ΔPc = PC_PER_ML·(V_blood − V_blood0)
+-//   πp = Landis–Pappenheimer(TP), TP = 1.6·(albumin + colloid) g/dL   Pisf = ΔVisf/(C·Visf0)   πisf = πisf0·Visf0/Visf
++//   πp = Landis–Pappenheimer(TP), TP = albumin + globulins + 1.6·colloid g/dL (FU-9 F8)   Pisf = ΔVisf/(C·Visf0)   πisf = πisf0·Visf0/Visf
+ //   lymph (extra) = LYMPH_GAIN·max(−2, Pisf)                          elimination = kEl·max(0, V_blood − V_blood0)
+ import { ALB_RESTORE_TAU_MIN, CISF_PER_ML, COLLOID_T12_MIN, K_EL_AWAKE, K_EL_GA_FACTOR, KF_ML_MIN_MMHG, LYMPH_GAIN, MCHC_G_PER_ML, OSM_TAU_MIN, PC_PER_ML, PI_ISF0, SIGMA_PROTEIN, type BloodPatient, type Composition } from './params.ts';
+ 
+@@ -28,6 +28,7 @@ export interface FluidState {
+   vicf: number;
+   hbG: number; // haemoglobin mass
+   albG: number; // plasma albumin mass
++  globG: number; // plasma globulin mass (g) — FU-9 F8: constant unless bled or given, so it dilutes but never follows albumin
+   colloidG: number; // synthetic colloid (albumin-equivalent) mass
+   ref: { vp: number; visf: number; vicf: number; bv: number; pi0: number; albGL: number };
+   flows: Flow[];
+@@ -49,15 +50,21 @@ export const bloodMl = (f: FluidState): number => f.vp + rbcMl(f);
+ export const hbOf = (f: FluidState): number => (100 * f.hbG) / bloodMl(f); // g/dL
+ export const albGL = (f: FluidState): number => (1000 * f.albG) / f.vp;
+ export const ecfMl = (f: FluidState): number => f.vp + f.visf;
+-/** Plasma colloid osmotic pressure (mmHg): TP (g/dL) = 1.6·(albumin + colloid) (annex B1: total protein = 1.6·albumin). */
++/**
++ * Plasma colloid osmotic pressure (mmHg), Landis–Pappenheimer on total protein TP (g/dL) = albumin + globulins +
++ * 1.6·colloid. FU-9 F8: the globulins (24 g/L at the normal albumin 40, so the normal TP 64 = annex B1's 1.6·albumin and
++ * COP 22.4 are unchanged) are their own mass: hypoalbuminaemia no longer takes a third of the COP with it (albumin
++ * 20 g/L → COP 13, Weil 1979 Crit Care Med 7:113: 12–16 mmHg). Synthetic colloid keeps its albumin-equivalent × 1.6.
++ */
++export const GLOBULIN_GL = 24;
+ export function copPlasma(f: FluidState): number {
+-  return landis((1.6 * 100 * (f.albG + f.colloidG)) / f.vp);
++  return landis((100 * (f.albG + f.globG + 1.6 * f.colloidG)) / f.vp);
+ }
+ 
+ export function createFluids(p: BloodPatient, albumin: number): FluidState {
+   const albG = (albumin * p.plasmaMl) / 1000;
+   const f: FluidState = {
+-    vp: p.plasmaMl, visf: p.isfMl, vicf: p.icfMl, hbG: (p.hb * p.bvMl) / 100, albG, colloidG: 0,
++    vp: p.plasmaMl, visf: p.isfMl, vicf: p.icfMl, hbG: (p.hb * p.bvMl) / 100, albG, globG: (GLOBULIN_GL * p.plasmaMl) / 1000, colloidG: 0,
+     ref: { vp: p.plasmaMl, visf: p.isfMl, vicf: p.icfMl, bv: p.bvMl, pi0: 0, albGL: albumin },
+     flows: [], kfMult: 1, sigma: SIGMA_PROTEIN, anaesthesia: false, jFilt: 0, refill: 0,
+   };
+@@ -65,6 +72,17 @@ export function createFluids(p: BloodPatient, albumin: number): FluidState {
+   return f;
+ }
+ 
++/**
++ * FU-9 F4: the protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of
++ * the extra hydraulic conductance and most of the protein flux (two-pore theory: Rippe & Haraldsson 1994 Physiol Rev
++ * 74:163), so the non-reflected share (1 − σ) grows with the same factor as Kf: σ = 1 − (1 − σ0)·kfMult, floor
++ * SIGMA_LEAK_FLOOR [ENG]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6) → 0.74; kfMult 3 → 0.7.
++ */
++export const SIGMA_LEAK_FLOOR = 0.3;
++export function leakSigma(kfMult: number): number {
++  return Math.max(SIGMA_LEAK_FLOOR, 1 - (1 - SIGMA_PROTEIN) * Math.max(1, kfMult));
++}
++
+ /** Plasma ↔ interstitium exchange J (mL/min, positive = filtration out of plasma) and extra lymph (mL/min). */
+ export function starling(f: FluidState): { j: number; lymph: number; pisf: number } {
+   const dPc = PC_PER_ML * (bloodMl(f) - f.ref.bv);
+@@ -97,6 +115,7 @@ export function stepFluids(f: FluidState, t: number, dtS: number, osmRatio: numb
+       bledPlasma += out * (1 - hct);
+       f.hbG -= (out * hct) * MCHC_G_PER_ML;
+       f.albG -= (f.albG / f.vp) * out * (1 - hct);
++      f.globG -= (f.globG / f.vp) * out * (1 - hct);
+       f.colloidG -= (f.colloidG / f.vp) * out * (1 - hct);
+       f.vp -= out * (1 - hct);
+     } else {
+@@ -105,6 +124,7 @@ export function stepFluids(f: FluidState, t: number, dtS: number, osmRatio: numb
+       f.vp += ml * (1 - c.hct);
+       f.hbG += ml * c.hct * MCHC_G_PER_ML;
+       f.albG += (c.albGL * ml * (1 - c.hct)) / 1000;
++      f.globG += (c.globGL * ml * (1 - c.hct)) / 1000;
+       f.colloidG += (c.colloidGL * ml) / 1000;
+       given.push({ ml, comp: c });
+     }
+diff --git a/packages/engine-core/src/l2/blood/oxygen.ts b/packages/engine-core/src/l2/blood/oxygen.ts
+index 7fc4821..b759753 100644
+--- a/packages/engine-core/src/l2/blood/oxygen.ts
++++ b/packages/engine-core/src/l2/blood/oxygen.ts
+@@ -1,9 +1,14 @@
+ // Oxygen delivery and lactate (tables §5b.3 caO2/do2/svo2 rows; §5.3 lactate, critical DO2, erMax, kAnaer rows).
+ //   CaO2 = 13.4·Hb·SaO2·(1 − COHb − MetHb) + 0.03·PaO2   (mL/L)       DO2 = CO·CaO2 (mL/min)
+-//   VO2 = demand − deficit;  deficit = max(global, regional)
++//   VO2 = demand − global: extraction rises first, VO2 becomes supply-dependent only below DO2crit
++//     (FU-9 F3: Cain 1977 J Appl Physiol 42:228; Shibutani 1983 Crit Care Med 11:640; Vincent & De Backer 2013 NEJM
++//     369:1726 — SvO2 falls with CO in haemorrhage before VO2 does)
++//   lactate deficit = max(global, regional)
+ //     global   = demand·(1 − DO2/DO2crit)                        below DO2crit (6 mL/kg/min) [TXT, Q42]
+ //     regional = demand·REGIONAL_FRAC·clamp((0.88 − q)/(0.88 − 0.40)),  q = (CO/CO0)/(demand/demand0)   [ENG, Q41/Q42]
+ //       (flow relative to what the current metabolism needs: under GA flow and VO2 fall together without redistribution)
++//       — the regional term is heterogeneous splanchnic dysoxia: it makes lactate but does not lower the whole-body VO2
++//       (the other beds extract more), so it is not subtracted from VO2 (FU-9 F3)
+ //   lactate: V·dL/dt = P0 + kAnaer·deficit − kLac·hbfRel·L·V                  (P0 = kLac·L0·V: steady at 1.0)
+ import { DO2_CRIT_ML_KG_MIN, K_ANAER, K_LAC_PER_H, NORMAL, REGIONAL_FLOW_FULL, REGIONAL_FLOW_ON, REGIONAL_FRAC } from './params.ts';
+ 
+@@ -12,7 +17,7 @@ export interface O2Out {
+   do2: number; // mL/min
+   vo2: number; // mL/min (actual)
+   demand: number;
+-  deficit: number;
++  deficit: number; // the LACTATE deficit (mL O2/min): max(global, regional) — FU-9 F3: VO2 is demand − global only
+   er: number; // extraction ratio VO2/DO2
+   svo2: number; // 0–1 (mixed venous, from content)
+ }
+@@ -24,7 +29,7 @@ export function o2Delivery(coLpm: number, co0Lpm: number, cao2: number, demand:
+   const q = coLpm / Math.max(0.1, co0Lpm) / Math.max(0.3, demandRel);
+   const regional = demand * REGIONAL_FRAC * Math.min(1, Math.max(0, (REGIONAL_FLOW_ON - q) / (REGIONAL_FLOW_ON - REGIONAL_FLOW_FULL)));
+   const deficit = Math.min(demand, Math.max(global, regional));
+-  const vo2 = demand - deficit;
++  const vo2 = demand - Math.min(demand, global); // FU-9 F3: extraction rises first; VO2 is supply-dependent only below DO2crit
+   return { do2, vo2, demand, deficit, er: do2 > 0 ? vo2 / do2 : 1 };
+ }
+ 
+diff --git a/packages/engine-core/src/l2/blood/params.ts b/packages/engine-core/src/l2/blood/params.ts
+index bd9d741..753c74f 100644
+--- a/packages/engine-core/src/l2/blood/params.ts
++++ b/packages/engine-core/src/l2/blood/params.ts
+@@ -128,12 +128,13 @@ export interface Composition {
+   metab: number; // acetate (metabolised to bicarbonate, τ 15 min)
+   xa: number; // gluconate: an unmeasured anion here (renal excretion is 7d's) [ENG]
+   albGL: number; // true albumin g/L (oncotic AND acid–base)
++  globGL: number; // globulins g/L (oncotic only; plasma products carry the plasma's) — FU-9 F8
+   colloidGL: number; // synthetic colloid, albumin-equivalent oncotic g/L
+   osmOther: number; // non-Na effective osmoles (glycine) mOsm/L
+   hct: number; // red-cell volume fraction
+   citrate: number; // mmol/L
+ }
+-const Z: Composition = { na: 0, k: 0, cl: 0, ca: 0, mg: 0, lactate: 0, metab: 0, xa: 0, albGL: 0, colloidGL: 0, osmOther: 0, hct: 0, citrate: 0 };
++const Z: Composition = { na: 0, k: 0, cl: 0, ca: 0, mg: 0, lactate: 0, metab: 0, xa: 0, albGL: 0, globGL: 0, colloidGL: 0, osmOther: 0, hct: 0, citrate: 0 };
+ export const FLUIDS = {
+   saline: { ...Z, na: 154, cl: 154 }, // 0.9 % NaCl
+   rl: { ...Z, na: 130, k: 4, cl: 109, ca: 1.35, lactate: 28 }, // Ringer's lactate / Hartmann's
+@@ -155,9 +156,9 @@ export const MG_MMOL_PER_G = 4.06;
+ /** Blood products per UNIT (tables §5b.4): volume mL and contents. Citrate ≈ 3 g (15.6 mmol) per unit [TXT, Q46]. */
+ export const PRODUCTS = {
+   rbc: { ml: 280, comp: { ...Z, na: 150, cl: 150, hct: 0.6, citrate: 15.6 / 0.28 } },
+-  ffp: { ml: 250, comp: { ...Z, na: 165, k: 4, cl: 75, albGL: 40, citrate: 15.6 / 0.25 } },
+-  platelets: { ml: 250, comp: { ...Z, na: 150, cl: 100, albGL: 40, citrate: 8 / 0.25 } },
+-  wholeBlood: { ml: 500, comp: { ...Z, na: 150, k: 4, cl: 100, albGL: 40, hct: 0.4, citrate: 15.6 / 0.5 } },
++  ffp: { ml: 250, comp: { ...Z, na: 165, k: 4, cl: 75, albGL: 40, globGL: 24, citrate: 15.6 / 0.25 } },
++  platelets: { ml: 250, comp: { ...Z, na: 150, cl: 100, albGL: 40, globGL: 24, citrate: 8 / 0.25 } },
++  wholeBlood: { ml: 500, comp: { ...Z, na: 150, k: 4, cl: 100, albGL: 40, globGL: 24, hct: 0.4, citrate: 15.6 / 0.5 } },
+ } as const;
+ export type ProductId = keyof typeof PRODUCTS;
+ /** Stored-blood supernatant K ≈ storage days mmol/L (tables `kUnit`, StoredK), in the non-cell volume [TXT]. */
+diff --git a/packages/engine-core/src/l2/blood/pipeline.ts b/packages/engine-core/src/l2/blood/pipeline.ts
+index df5149f..3ffa8f3 100644
+--- a/packages/engine-core/src/l2/blood/pipeline.ts
++++ b/packages/engine-core/src/l2/blood/pipeline.ts
+@@ -53,7 +53,8 @@ export interface BloodCtx {
+ 
+ /** Create the blood for a profile. With 7a present CO0 becomes the circuit's settled resting CO (advanceBlood, addendum 15). */
+ export function createBloodState(profile: PatientProfile | undefined): BloodState {
+-  const core = createBloodCore(profile, CI_LPM_PER_KG * gasPatient(profile).effKg, NORMAL.paco2);
++  const gp = gasPatient(profile);
++  const core = createBloodCore(profile, CI_LPM_PER_KG * gp.effKg, gp.paco2Rest); // FU-9 F7: the patient's own resting PaCO2
+   return {
+     k: 0, core, out: core.out, view: { odc: { ...core.odc }, coFactor: 1, co2LoadMlMin: 0 }, labs: [], cold: [], keto: null,
+     ecg: { k: 0, qtc: 0 }, lung: { pCap: 8, evlwi: 0 }, events: [], rest: { coLp: 0, latched: false }, circNetMl: 0,
+diff --git a/packages/engine-core/src/l2/blood/solutes.ts b/packages/engine-core/src/l2/blood/solutes.ts
+index c5586da..8b12f7a 100644
+--- a/packages/engine-core/src/l2/blood/solutes.ts
++++ b/packages/engine-core/src/l2/blood/solutes.ts
+@@ -16,7 +16,7 @@ export interface SoluteState {
+   lac: number; // lactate amount in its distribution volume
+   kIcf: number; // cellular K pool (mmol)
+   pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG]
+-  set: { k: number; ca: number; mg: number; ph: number }; // homeostatic set points (mmol/L; pH of the K reference)
++  set: { k: number; ca: number; mg: number; ph: number; kIcf: number }; // homeostatic set points (mmol/L; pH of the K reference; FU-9 F6: the cellular K pool, mmol)
+ }
+ 
+ export interface Conc {
+@@ -33,9 +33,14 @@ export function concOf(s: SoluteState, ecfMl: number, vLacL: number, ecf0Ml: num
+   };
+ }
+ 
+-/** Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − XA (tables §5b.1 "Stewart-lite"). */
++/**
++ * Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − 3·citrate − XA (tables §5b.1
++ * "Stewart-lite"). FU-9 F5: citrate is a strong trivalent anion until it is metabolised (Stewart/Fencl; Driscoll 1987),
++ * so a transfused unit's sodium does not alkalinise at once — its metabolism turns it into bicarbonate later.
++ */
++export const CITRATE_CHARGE = 3;
+ export function sidOf(c: Conc, iCa: number): number {
+-  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - c.xa;
++  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - CITRATE_CHARGE * c.citrate - c.xa;
+ }
+ 
+ /** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles. */
+@@ -47,7 +52,7 @@ export function createSolutes(p: { na: number; k: number; cl: number; iCa: numbe
+   const v = ecfMl / 1000;
+   return {
+     na: p.na * v, k: p.k * v, cl: p.cl * v, ca: p.iCa * v, mg: p.mg * v, xa: 0, keto: 0, metab: 0, citrate: 0, osmOther: 0,
+-    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4 },
++    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4, kIcf: 140 * (icfMl / 1000) },
+   };
+ }
+ 
+@@ -80,6 +85,9 @@ export function calibrateXa(s: SoluteState, ecfMl: number, sidNow: number, sidTa
+ 
+ /** Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. */
+ export const K_TAU_MIN = 43; // 50 % of a K load into cells in 30 min (tables `vK`) [ENG]
++/** FU-9 F6: total-body K per mmol/L of plasma K — a 200–400 mmol deficit lowers plasma K ≈ 1 mmol/L (Sterns RH et al.
++ *  Medicine 1981;60:339–354) [TXT, midpoint]; the Na/K-ATPase set point follows it (core.ts kSet). */
++export const K_TBK_MMOL = 300;
+ export const CA_TAU_MIN = 15; // ionised Ca returns to its set point (bone/protein buffer, PTH) [ENG, Q46]
+ export const MG_TAU_MIN = 60; // Mg load distributes into cells/bone [ENG]
+ export const CITRATE_TAU_MIN = 5; // hepatic citrate clearance at normal hepatic flow (tables `citrateUnit`) [TXT]
+diff --git a/packages/engine-core/src/l2/brain/model.ts b/packages/engine-core/src/l2/brain/model.ts
+index 1e0acf5..f2eb4ec 100644
+--- a/packages/engine-core/src/l2/brain/model.ts
++++ b/packages/engine-core/src/l2/brain/model.ts
+@@ -8,7 +8,7 @@ import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
+ import {
+   CBF_LL, CBF_UL, CBV0_ML, CBV_EFF, CPP_REF, CSF_RESERVE_ML, HEAD_HEIGHT_CM, HEADUP_VOL_ML_30, HERNIATION_CPP, HERNIATION_S,
+   HTS_TAU_IN_MIN, HTS_TAU_OUT_MIN, HTN_LL_SHIFT, HTN_UL_SHIFT, ICP0, ICP_THRESHOLD, MANNITOL_TAU_IN_MIN, MANNITOL_TAU_OUT_MIN, MAP_BASE_TAU_S,
+-  MMHG_PER_CM_BLOOD, OSM_K_MOSM, OSM_VMAX_ML, PACO2_ADAPT_TAU_S, PVI, R_OUT, TAU_VASC_S, TBI_AR_LOSS, TBI_ICP0_RISE, TBI_PVI_DROP, TBI_RESERVE_DROP,
++  MMHG_PER_CM_BLOOD, OSM_K_MOSM, OSM_VMAX_ML, OSM_WATER_ML_PER_MOSM, PACO2_ADAPT_TAU_S, PVI, R_OUT, TAU_VASC_S, TBI_AR_LOSS, TBI_ICP0_RISE, TBI_PVI_DROP, TBI_RESERVE_DROP,
+ } from './params.ts';
+ 
+ export interface BrainParams {
+@@ -22,6 +22,7 @@ export interface BrainInputs {
+   hb: number; // g/dL
+   tempC: number;
+   drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: 7f/7g, or the INTERIM fallback)
++  osm?: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (absent/null without 7c)
+ }
+ export interface BrainState {
+   t: number;
+@@ -30,6 +31,8 @@ export interface BrainState {
+   oedema: number; // mL
+   csfDisp: number; // mL displaced
+   osm: OsmDose[];
++  osm0?: number; // FU-9 F11: the patient's own resting plasma osmolality (latched on the first reading)
++  osmWater?: number; // FU-9 F11: brain water gained from a fall in plasma osmolality, mL
+   headUpDeg: number;
+   g: number; // cerebrovascular conductance, CBF-relative per mmHg CPP
+   paco2Ref: number;
+@@ -106,7 +109,7 @@ function solve(b: BrainState, inp: BrainInputs, dt: number): void {
+   const hu = headUp(b.headUpDeg);
+   b.mapHead = inp.map - MMHG_PER_CM_BLOOD * hu.hCm;
+   const cvpHead = inp.cvp - MMHG_PER_CM_BLOOD * hu.hCm;
+-  const fixedV = b.mass + b.oedema - b.csfDisp - osmoticLoss(b.osm, b.t) - hu.volMl;
++  const fixedV = b.mass + b.oedema - b.csfDisp - osmoticLoss(b.osm, b.t) + (b.osmWater ?? 0) - hu.volMl;
+   let icp = b.icp;
+   let cbf = b.cbfRel;
+   for (let i = 0; i < 6; i++) {
+@@ -129,6 +132,12 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
+   b.mass = Math.max(0, b.mass + (b.massRate * dt) / 60);
+   b.csfDisp = Math.max(0, b.csfDisp + (csfDisplacementRate(b.icp, b.csfDisp, b.p.icp0, b.p.rOut, b.p.csfReserve) * dt) / 60);
+   b.paco2Ref += (inp.paco2 - b.paco2Ref) * (dt / PACO2_ADAPT_TAU_S);
++  if (typeof inp.osm === 'number' && Number.isFinite(inp.osm) && inp.osm > 0) {
++    // FU-9 F11: hypo-osmolar brain swelling (the fall only; osmotherapy's rise is the dose term)
++    b.osm0 ??= inp.osm;
++    const target = OSM_WATER_ML_PER_MOSM * Math.max(0, b.osm0 - inp.osm);
++    b.osmWater = (b.osmWater ?? 0) + (target - (b.osmWater ?? 0)) * (1 - Math.exp(-dt / (HTS_TAU_IN_MIN * 60)));
++  }
+   // conductance relaxes toward the one that gives the target CBF at the current CPP (dynamic autoregulation)
+   const gT = targetCbf(b, inp, b.cpp) / Math.max(1, b.cpp);
+   b.g += (gT - b.g) * (1 - Math.exp(-dt / TAU_VASC_S));
+diff --git a/packages/engine-core/src/l2/brain/params.ts b/packages/engine-core/src/l2/brain/params.ts
+index 3153b6b..72251be 100644
+--- a/packages/engine-core/src/l2/brain/params.ts
++++ b/packages/engine-core/src/l2/brain/params.ts
+@@ -53,6 +53,14 @@ export const HTS_TAU_IN_MIN = 7; // onset 5–10 min, longer than mannitol (tabl
+ export const HTS_TAU_OUT_MIN = 240;
+ export const MANNITOL_MOSM_PER_G = 1000 / 182.17; // 5.49 mOsm/g
+ export const NACL_MOSM_PER_G = 2000 / 58.44; // 34.2 mOsm/g
++/**
++ * FU-9 F11: brain water follows a FALL in plasma effective osmolality (7c `blood.out.osm`) — acute hyponatraemia swells
++ * the brain (Hahn 2006 BJA 96:8; Adrogué & Madias 2000 NEJM 342:1581). The gain is the osmotherapy calibration's own:
++ * OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg)
++ * = 0.145 mL per mOsm/kg [ENG, derived]; it moves with HTS_TAU_IN_MIN (the barrier's water equilibration). Only the fall
++ * is read: a rise from hypertonic saline is already the dose-driven osmotherapy term (no double count).
++ */
++export const OSM_WATER_ML_PER_MOSM = (OSM_VMAX_ML * (384 / (384 + OSM_K_MOSM))) / (384 / 14);
+ // Cushing (tables §5.1: CPP < 40 for > 30 s → MAP +30–50 over 30–60 s, HR −20–40 %, ataxic breathing [TXT shape, ENG numbers])
+ export const CUSH_CPP = 40;
+ export const CUSH_GAP = 10; // second trigger: ICP within 10 mmHg of MAP_head (tables §5.1 Cushing row)
+diff --git a/packages/engine-core/src/l2/endo/adapters.ts b/packages/engine-core/src/l2/endo/adapters.ts
+index 38b3fdb..1ec6ace 100644
+--- a/packages/engine-core/src/l2/endo/adapters.ts
++++ b/packages/engine-core/src/l2/endo/adapters.ts
+@@ -9,6 +9,7 @@
+ //        `lungCondition anaphylaxis`; ECG modifier deltas (tempC → Osborn, shivering artefact).
+ import { l1Value, type L1State } from '../../l1/state.ts';
+ import type { Modifiers } from '../../types.ts';
++import { leakSigma } from '../blood/fluids.ts'; // FU-9 F4
+ import { betaBlunt } from '../pk/pd.ts';
+ import { applyLungSpecs, type RespState } from '../resp/pipeline.ts';
+ import { cascade } from '../thermal/metabolic.ts';
+@@ -38,7 +39,7 @@ type Circ = {
+ };
+ type BloodLike = {
+   out?: { dkaSeverity?: number };
+-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
++  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
+ };
+ 
+ const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+@@ -171,9 +172,9 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
+ /**
+  * 7c seams: the ENDOGENOUS K set-point term (`blood.core.endoKShift`, E-7e-3), the glucose for the lab panel
+  * (`blood.core.endoGlucoseMgDl`, E-7e-2) and the capillary leak (`blood.core.fl.kfMult`, R51 addendum 16; written
+- * only when 7e's value changes, so a resting 7e never overwrites another writer). `fl.sigma` is left to 7c: the
+- * tables give no septic/anaphylactic σ, and 7c's Starling form scales only pressure-driven filtration (gap, Requests).
+- * False without 7c.
++ * only when 7e's value changes, so a resting 7e never overwrites another writer) and, with it, the protein reflection
++ * coefficient `fl.sigma` = 7c's `leakSigma(kfMult)` (FU-9 F4: a leak without a high pulmonary venous pressure now makes
++ * lung water). False without 7c.
+  */
+ export function writeBlood(ps: object, es: EndoState): boolean {
+   const c = bloodOf(ps)?.core;
+@@ -183,6 +184,7 @@ export function writeBlood(ps: object, es: EndoState): boolean {
+   c.endoGlucoseMgDl = o.glucoseMgDl;
+   if (c.fl && o.kfMult !== es.kfMult) {
+     c.fl.kfMult = o.kfMult;
++    c.fl.sigma = leakSigma(o.kfMult); // FU-9 F4: the same leak lowers the protein reflection coefficient (lung water, Starling)
+     es.kfMult = o.kfMult;
+   }
+   return true;
+diff --git a/packages/engine-core/src/l2/gas/params.ts b/packages/engine-core/src/l2/gas/params.ts
+index 130d63d..21637bf 100644
+--- a/packages/engine-core/src/l2/gas/params.ts
++++ b/packages/engine-core/src/l2/gas/params.ts
+@@ -33,6 +33,23 @@ export const LOW_FLOW_TAU_S = 70;
+ export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
+ /** FU-4 F4 / R1(a): the healthy resting PaCO2 every profile starts from (pregnancy 31 under R10). */
+ export const PACO2_REST_MMHG = 40;
++/**
++ * FU-9 F7 (research/22 BF-16b, research/19 C7): a chronic retainer's own resting PaCO2 — tables §1.5 COPD `paco2Set`
++ * 40 / 40 / 45 / 55 mmHg at GOLD 1–4 (lung `copd` severity 0.25 / 0.5 / 0.75 / 1, linear between) [TXT]. It is the
++ * MODELED drive's set point and the gas compartments' start (as PACO2_REST_MMHG is), and 7c builds the profile's chronic
++ * renal compensation on it (blood/pipeline.ts createBloodState).
++ */
++export const COPD_PACO2_REST: readonly (readonly [number, number])[] = [[0.5, 40], [0.75, 45], [1, 55]];
++export function restingPaco2(p: PatientProfile | undefined): number {
++  const s = Math.min(1, Math.max(0, p?.lungConditions?.find((c) => c.id === 'copd')?.severity ?? 0));
++  const k = COPD_PACO2_REST;
++  for (let i = 1; i < k.length; i++) {
++    const [x0, y0] = k[i - 1] as readonly [number, number];
++    const [x1, y1] = k[i] as readonly [number, number];
++    if (s <= x1) return s <= x0 ? PACO2_REST_MMHG : y0 + ((s - x0) / (x1 - x0)) * (y1 - y0);
++  }
++  return (k[k.length - 1] as readonly [number, number])[1];
++}
+ /** Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG]. */
+ export const APPARATUS_ADULT_ML = 50;
+ /**
+@@ -160,7 +177,7 @@ export function gasPatient(p: PatientProfile | undefined): GasPatient {
+     vo2, vco2: RQ * vo2,
+     bloodL: (a.bv * eff) / 1000,
+     deadSpaceMl: ANAT_DEAD_SPACE_ML_PER_KG * ibw,
+-    paco2Rest: PACO2_REST_MMHG, // FU-4 F4 / R1(a) (pregnancy 31 when R10 lands)
++    paco2Rest: restingPaco2(p), // FU-4 F4 / R1(a) (pregnancy 31 when R10 lands); FU-9 F7: a COPD retainer's own set point
+     // anchored on the anaesthetised VCO2 (the apnoea data are from anaesthetised patients)
+     cf: CO2_CF_PER_VCO2 * RQ * vo2 * GA_METABOLIC, cs: CO2_CS_PER_VCO2 * RQ * vo2 * GA_METABOLIC, kfs: CO2_KFS_PER_VCO2 * RQ * vo2 * GA_METABOLIC,
+     complianceMl: 50 * (ibw / 70), // 50 mL/cmH2O intubated adult [ENG]; scales with size
+diff --git a/packages/engine-core/src/l2/neuro/interactions.ts b/packages/engine-core/src/l2/neuro/interactions.ts
+index cb3721f..235e5c6 100644
+--- a/packages/engine-core/src/l2/neuro/interactions.ts
++++ b/packages/engine-core/src/l2/neuro/interactions.ts
+@@ -44,3 +44,16 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
+   }
+   return { rocuronium: nd, vecuronium: nd, cisatracurium: nd, succinylcholine: dep };
+ }
++
++/**
++ * FU-9 F10: hypokalaemia potentiates a non-depolarising block — the hyperpolarised end-plate needs less antagonist to
++ * fail (Miller 10e ch. 27, "hypokalaemia enhances non-depolarising block"; Feldman 1963) — read from 7c's plasma K (ONE
++ * state, as FU-7 makes Mg and Ca). EC50 × (1 − HYPOK_SLOPE·(HYPOK_K − K)⁺), floor HYPOK_FLOOR [ENG size, Open question 9];
++ * 1 at K ≥ 3.5 and without 7c.
++ */
++export const HYPOK_K = 3.5;
++export const HYPOK_SLOPE = 0.15;
++export const HYPOK_FLOOR = 0.7;
++export function hypokalaemiaMult(kMmolL: number | undefined): number {
++  return kMmolL === undefined ? 1 : Math.max(HYPOK_FLOOR, 1 - HYPOK_SLOPE * Math.max(0, HYPOK_K - kMmolL));
++}
+diff --git a/packages/engine-core/src/l2/neuro/pipeline.ts b/packages/engine-core/src/l2/neuro/pipeline.ts
+index dc951da..951b59e 100644
+--- a/packages/engine-core/src/l2/neuro/pipeline.ts
++++ b/packages/engine-core/src/l2/neuro/pipeline.ts
+@@ -16,7 +16,7 @@ import type { NeuroClinicalEvent, NeuroDeviceAction, NeuroMarkKind, NeuroProfile
+ import { newDoses, NMB_AGENTS, readBus, VOLATILE_IDS, type NeuroAgentId, type NeuroInputs, type NmbAgent, type VolatileId } from './bus.ts';
+ import { phase2Fraction, siteBlock, tofFrom, type TofReading } from './nmb.ts';
+ import { neoEc50Mult } from './neostigmine.ts';
+-import { ec50Multipliers, type NmProfile } from './interactions.ts';
++import { ec50Multipliers, hypokalaemiaMult, type NmProfile } from './interactions.ts';
+ import { depth, opioidFentEq, smoothDi, type DepthOut } from './depth.ts';
+ import { neuroResp, type NeuroResp } from './drive.ts';
+ import { neuroOutputs, type NeuroOutputs } from './outputs.ts';
+@@ -33,6 +33,8 @@ export const STIM_FULL = 1.5;
+ 
+ export interface NeuroEnv {
+   tempC: number;
++  /** FU-9 F10: 7c's plasma K (`blood.out.k`, mmol/L); undefined without 7c (no hypokalaemic potentiation). */
++  kMmolL?: number;
+   mechanical: boolean;
+   /** Stage 7e `endo.core.out.neuroglycopenia` 0–1 (duck-typed by the engine; 0 without 7e). */
+   neuroglycopenia?: number;
+@@ -184,7 +186,7 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
+ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): void {
+   // NMB
+   const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: ns.profile.mgMmolL, tempC: env.tempC });
+-  const neo = neoEc50Mult(x.achGain);
++  const neo = neoEc50Mult(x.achGain) * hypokalaemiaMult(env.kMmolL); // FU-9 F10: hypokalaemia on the non-depolarisers
+   const mult: Record<NmbAgent, number> = { rocuronium: m.rocuronium * neo, vecuronium: m.vecuronium * neo, cisatracurium: m.cisatracurium * neo, succinylcholine: m.succinylcholine };
+   const th = siteBlock(x.nmj, 'thumb', mult);
+   const di = siteBlock(x.dia, 'dia', mult);
+diff --git a/packages/engine-core/src/l2/neuro/spont.ts b/packages/engine-core/src/l2/neuro/spont.ts
+index 4eeb0a5..8ba9271 100644
+--- a/packages/engine-core/src/l2/neuro/spont.ts
++++ b/packages/engine-core/src/l2/neuro/spont.ts
+@@ -4,7 +4,8 @@
+ // multipliers (driverCtx). Re-evaluated at 1 Hz on the gas grid; plain data (snapshots, look-ahead clone).
+ //   set point: the resting PaCO2 the MANUAL etco2 calibration placed (paco2Rest), lowered in metabolic acidosis to
+ //     Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from 7c's blood.core.ab.hco3
+-//     (24 without 7c → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8). Metabolic alkalosis is not compensated (v1).
++//     (24 without 7c → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic alkalosis by 0.7 mmHg per
++//     mmol/L of HCO3 above the patient's reference (FU-9 F9: Javaheri & Kazemi 1987 / the Boston rules), capped at 55 mmHg.
+ //   drive: 7b's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with 7f's opioidDep/hypnoticDep
+ //     (fixed-CO2 depression, decision 7); the resting pattern rr0/vt0 is the instructor's rr/vt target.
+ //   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
+@@ -51,8 +52,29 @@ export function winterPaco2(hco3: number): number {
+   return WINTER_SLOPE * hco3 + WINTER_OFFSET;
+ }
+ 
+-/** The chemoreflex set point: the resting PaCO2, lowered to Winter's value in metabolic acidosis only. */
+-export function paco2SetPoint(paco2Rest: number, hco3: number): number {
++/**
++ * FU-9 F9: metabolic alkalosis is compensated by hypoventilation — PaCO2 rises 0.7 mmHg per mmol/L HCO3 above normal
++ * (Javaheri S, Kazemi H. Am Rev Respir Dis 1987;136:1011; Narins & Emmett 1980 "Boston rules"), rarely beyond 55 mmHg
++ * (the hypoxaemic drive limits it). The reference is 7c's normal 24.4 plus the chronic renal compensation the patient's
++ * own resting PaCO2 implies (tables §5b.1: +0.35 per mmHg above 40), so a compensated chronic hypercapnic profile is not
++ * read as a metabolic alkalosis.
++ */
++export const ALK_SLOPE = 0.7;
++export const ALK_PACO2_MAX = 55;
++export const HCO3_REF = 24.4;
++export const CHRONIC_HCO3_PER_MMHG = 0.35;
++/** Acute CO2 buffering, mmol/L HCO3 per mmHg PaCO2 (Brackett, Cohen & Schwartz 1965 NEJM 272:6; 7c's own BF-16a 0.11–0.15). */
++export const ACUTE_HCO3_PER_MMHG = 0.1;
++/**
++ * The chemoreflex set point: the resting PaCO2, lowered to Winter's value in metabolic acidosis, raised in metabolic
++ * alkalosis (FU-9 F9). The alkalosis branch reads the METABOLIC bicarbonate — the measured HCO3 less the acute buffering
++ * of a PaCO2 above the resting value (`paco2`, default the resting value) — so an acute hypercapnia (opioids, dead space)
++ * is never read as a metabolic alkalosis that would lift the set point further; at rest the set point is unchanged.
++ */
++export function paco2SetPoint(paco2Rest: number, hco3: number, paco2 = paco2Rest): number {
++  const ref = HCO3_REF + CHRONIC_HCO3_PER_MMHG * Math.max(0, paco2Rest - 40);
++  const met = hco3 - ACUTE_HCO3_PER_MMHG * Math.max(0, paco2 - paco2Rest);
++  if (met > ref) return Math.max(paco2Rest, Math.min(ALK_PACO2_MAX, paco2Rest + ALK_SLOPE * (met - ref)));
+   return Math.min(paco2Rest, winterPaco2(hco3));
+ }
+ 
+@@ -77,7 +99,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
+   if (x.t + 1e-9 < s.nextT) return;
+   s.nextT = x.t + SPONT_DT_S;
+   if (Number.isNaN(s.paco2Rest)) s.paco2Rest = x.paco2;
+-  s.paco2Set = paco2SetPoint(s.paco2Rest, x.hco3);
++  s.paco2Set = paco2SetPoint(s.paco2Rest, x.hco3, x.paco2); // FU-9 F9: the metabolic HCO3 (acute buffering removed)
+   const n = x.neuro;
+   const out = drive({
+     paco2: x.paco2, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
+diff --git a/packages/engine-core/src/l2/organs/inputs.ts b/packages/engine-core/src/l2/organs/inputs.ts
+index e9dc576..f61f934 100644
+--- a/packages/engine-core/src/l2/organs/inputs.ts
++++ b/packages/engine-core/src/l2/organs/inputs.ts
+@@ -31,6 +31,7 @@ export interface OrganView {
+   map: number; pp: number; cvp: number; coLpm: number;
+   paco2: number; pao2: number; sao2: number; tempC: number;
+   hb: number; albuminGL: number; bvRel: number;
++  osm: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (null without 7c)
+   hbfRel: number | null; // 7c's hepatic flow ÷ baseline (null without 7c: the liver computes its fallback)
+   lactate: number | null; // 7c's lactate (null without 7c: the liver's fallback pool)
+   gluconate: number; // 7c's plasma gluconate, mmol/L (0 until 7c exposes it)
+@@ -56,8 +57,8 @@ export interface DrugView {
+  *  excretion rates, mmol/h. */
+ export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
+ type BloodLike = {
+-  core?: { liver?: number; renal?: RenalSeam };
+-  out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number };
++  core?: { liver?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number } }; // FU-9 F6: K and its set point
++  out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
+ };
+ 
+ const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+@@ -155,6 +156,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
+     hb: num(out?.hb, HB_DEFAULT),
+     albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
+     bvRel: num(out?.bvRel, bvFallback),
++    osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null, // FU-9 F11
+     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
+     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,
+     gluconate: num(out?.gluconate, 0),
+diff --git a/packages/engine-core/src/l2/organs/pipeline.ts b/packages/engine-core/src/l2/organs/pipeline.ts
+index f0bae1d..e7fbfe4 100644
+--- a/packages/engine-core/src/l2/organs/pipeline.ts
++++ b/packages/engine-core/src/l2/organs/pipeline.ts
+@@ -70,7 +70,7 @@ function brainDrugs(v: OrganView): BrainDrugs {
+   return v.anaesthesia === 'general' ? GA_FALLBACK : NO_DRUGS;
+ }
+ const brainIn = (v: OrganView): BrainInputs => ({
+-  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v),
++  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v), osm: v.osm, // FU-9 F11
+ });
+ const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
+   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
+@@ -91,7 +91,7 @@ function nominalView(l1: L1State, w: number): OrganView {
+   const dbp = l1Target(l1, 'dbp', 0);
+   return {
+     map: dbp + 0.4 * (sbp - dbp), pp: sbp - dbp, cvp: l1Target(l1, 'cvp', 0), coLpm: (5.6 * w) / 70, paco2: 40, pao2: 95, sao2: 0.97,
+-    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
++    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, osm: null, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
+     pawExcessCmH2O: 0, drugs: readDrugView({}), circ: false, blood: false,
+   };
+ }
+@@ -165,10 +165,15 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
+  *  carries the urine ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition);
+  *  below it the balance is neutral, as in 7c's fallback (no retention term). Reporting the whole urine drained a resting
+  *  patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band ±0.02). */
+-function renalSeam(s: RenalState, gluconate: number): RenalSeam {
++function renalSeam(s: RenalState, gluconate: number, kRel = 1): RenalSeam {
+   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
+   const na = lH * URINE_NA * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
+-  const k = lH * URINE_K;
++  // FU-9 F6: distal K secretion follows the plasma K (÷ the patient's own set point: at rest the basal excretion
++  // balances the basal intake) and the distal flow, sublinearly (Good & Wright 1979 Am J Physiol 236:F192; Young 1988
++  // Am J Physiol 255:F811) — so a loop diuretic's flow and a high K excrete more, and an oliguric kidney RETAINS the
++  // intake's K (negative: KCl kept, the AKI hyperkalaemia). Replaces URINE_K × the urine above basal.
++  const k0 = (UOP0_ML_KG_H * s.p.weightKg * URINE_K) / 1000; // mmol/h at the basal urine
++  const k = k0 * (kRel * Math.sqrt(Math.max(0, s.uopMlMin * 60) / (UOP0_ML_KG_H * s.p.weightKg)) - 1);
+   return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
+ }
+ 
+@@ -196,7 +201,9 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
+   stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // with 7c its pool is authoritative (decision 12)
+   if (core) {
+     core.liver = os.liver.liverFn * os.liver.tempF; // function only: 7c multiplies its own hbfRel (addendum 14)
+-    core.renal = renalSeam(os.renal, v.gluconate);
++    const kSet = core.so?.set?.k;
++    const kNow = core.out?.k;
++    core.renal = renalSeam(os.renal, v.gluconate, typeof kSet === 'number' && typeof kNow === 'number' && kSet > 0 ? kNow / kSet : 1); // FU-9 F6
+   }
+   if (os.num.accN > 0) {
+     os.num.sec.push(os.num.acc / os.num.accN);
+diff --git a/packages/engine-core/src/l2/renal/model.ts b/packages/engine-core/src/l2/renal/model.ts
+index f9452f8..3e4a254 100644
+--- a/packages/engine-core/src/l2/renal/model.ts
++++ b/packages/engine-core/src/l2/renal/model.ts
+@@ -10,7 +10,7 @@ import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './ki
+ import {
+   AKI_KF_LOSS, ALBUMIN0_G_L, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
+   EABV_EXP, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
+-  SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30,
++  SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
+ } from './params.ts';
+ 
+ export interface RenalInputs {
+@@ -53,6 +53,17 @@ export function volumeFactor(bvRel: number): number {
+   return Math.max(0.1, V_AT_15 - ((V_AT_15 - V_AT_30) * (loss - 0.15)) / 0.15);
+ }
+ 
++/**
++ * FU-9 F1: the expanded circulation is excreted. Atrial stretch (ANP) and ADH suppression raise the excreted fraction
++ * with the blood volume ABOVE the profile's (tables §5.2's V covers only depletion): × (1 + V_EXP_GAIN·(bvRel − 1)⁺),
++ * capped at V_EXP_MAX. It multiplies the same chain as V, so general anaesthesia (S_GA, lower CO → vNh) and a
++ * depleted patient (vNh < 1) retain more — Hahn's context-sensitive volume kinetics (Hahn 2010 Anesthesiology
++ * 113:470; Norberg 2007 Anesthesiology 107:24; Drobin & Hahn 1999 Anesthesiology 90:81). 1 at and below normovolaemia.
++ */
++export function expansionFactor(bvRel: number): number {
++  return Math.min(V_EXP_MAX, 1 + V_EXP_GAIN * Math.max(0, bvRel - 1));
++}
++
+ /** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
+  *  activates the same volume receptors as bleeding (tables §7 check 20: HFrEF oliguria at normal blood volume). The
+  *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*). */
+@@ -101,7 +112,7 @@ function tubularOutput(s: RenalState, inp: RenalInputs): number {
+   const stress = inp.anaesthesia === 'general' ? S_GA : 1;
+   const peep = PEEP_PER_10 ** (Math.max(0, inp.pawExcessCmH2O) / 10);
+   const ne = NE_EXCESS_PER_01 ** (Math.max(0, inp.alphaExcess) / 0.1);
+-  const fe = s.p.ef0 * natriuresis(inp.map, s.p.pRef) * stress * s.vNh * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
++  const fe = s.p.ef0 * natriuresis(inp.map, s.p.pRef) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
+   const mannitol = MANNITOL_ML_PER_G * MANNITOL_KE_PER_MIN * s.mannitolG * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
+   return Math.min(0.25 * s.gfr, s.gfr * fe) + mannitol;
+ }
+diff --git a/packages/engine-core/src/l2/renal/params.ts b/packages/engine-core/src/l2/renal/params.ts
+index fde8f5b..95a6fe8 100644
+--- a/packages/engine-core/src/l2/renal/params.ts
++++ b/packages/engine-core/src/l2/renal/params.ts
+@@ -56,6 +56,11 @@ export const ANG_TAU_S = 120;
+ export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
+ export const V_AT_15 = 0.5; // UOP factor at −15 % blood volume (tables V)
+ export const V_AT_30 = 0.2; // at −30 %
++/** FU-9 F1: excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [ENG]: fitted so 1 L of
++ *  Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; 7c's own fallback t½ 30 min,
++ *  tables `t12El`); capped at V_EXP_MAX × (≈ 15 mL/min peak diuresis, Hahn's volunteers). */
++export const V_EXP_GAIN = 90;
++export const V_EXP_MAX = 12;
+ export const EABV_EXP = 0.75; // effective volume = min(BV, (CO/CO0)^0.75) [ENG]: HFrEF (CO 3.5) → V 0.21, UOP 0.114 (tables check 20 0.1–0.15)
+ /** Neurohumoral (ADH/aldosterone) lag on V [ENG]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an
+  *  instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the
+diff --git a/packages/engine-core/test/engine/fu9-alkalosis.test.ts b/packages/engine-core/test/engine/fu9-alkalosis.test.ts
+new file mode 100644
+index 0000000..955f5da
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-alkalosis.test.ts
+@@ -0,0 +1,17 @@
++// FU-9 Task A7 (F9): metabolic alkalosis is compensated by hypoventilation (research/22 BF-15b). Rig = the BF runner's
++// awake, spontaneously breathing room-air patient (MODELED) with a profile HCO3 34, read at 30 min against X-A.
++import { describe, expect, it } from 'vitest';
++import { arm, MAN, st } from '../helpers/fu9.ts';
++
++describe('FU-9 F9: respiratory compensation of metabolic alkalosis (Javaheri 1987; the Boston rules)', { timeout: 300_000 }, () => {
++  it('HCO3 34: PaCO2 +5 to +9 above the normal patient (expected +7), pH below 7.55 (was PaCO2 −0.1, pH 7.55)', async () => {
++    const read = (e: Parameters<typeof st>[0]) => ({ paco2: st(e).resp.co2.pf, ph: st(e).blood.core.ab.ph, hco3: st(e).blood.core.ab.hco3 });
++    const [a] = await arm([], [1800], read, { ...MAN, blood: { hco3: 34 } });
++    const [n] = await arm([], [1800], read);
++    if (!a || !n) throw new Error('no sample');
++    console.log(`FU-9 F9: PaCO2 ${a.paco2.toFixed(1)} vs ${n.paco2.toFixed(1)}, pH ${a.ph.toFixed(3)}, HCO3 ${a.hco3.toFixed(1)}`);
++    expect(a.paco2 - n.paco2).toBeGreaterThanOrEqual(5);
++    expect(a.paco2 - n.paco2).toBeLessThanOrEqual(9);
++    expect(a.ph).toBeLessThan(7.55);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-copd.test.ts b/packages/engine-core/test/engine/fu9-copd.test.ts
+new file mode 100644
+index 0000000..d1d1355
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-copd.test.ts
+@@ -0,0 +1,21 @@
++// FU-9 Task B2 (F7): COPD GOLD 3 is a compensated retainer (research/22 BF-16b; research/19 CM-07a). Rig = the BF runner's
++// awake, spontaneously breathing room-air patient (MODELED) with lung `copd` 0.75, read at 30 min against X-A.
++import { describe, expect, it } from 'vitest';
++import { arm, MAN, st } from '../helpers/fu9.ts';
++
++describe('FU-9 F7: chronic hypercapnia with chronic renal compensation (tables §1.5; Brackett 1965)', { timeout: 300_000 }, () => {
++  it('COPD GOLD 3: PaCO2 43–52 (was 39.7), HCO3 +3 to +4.5 per 10 mmHg above X-A (was +1.3), pH 7.35–7.45', async () => {
++    const read = (e: Parameters<typeof st>[0]) => ({ paco2: st(e).resp.co2.pf, hco3: st(e).blood.core.ab.hco3, ph: st(e).blood.core.ab.ph });
++    const [c] = await arm([], [1800], read, { ...MAN, lungConditions: [{ id: 'copd', severity: 0.75 }] });
++    const [n] = await arm([], [1800], read);
++    if (!c || !n) throw new Error('no sample');
++    const per10 = (10 * (c.hco3 - n.hco3)) / (c.paco2 - n.paco2);
++    console.log(`FU-9 F7: COPD PaCO2 ${c.paco2.toFixed(1)} HCO3 ${c.hco3.toFixed(2)} pH ${c.ph.toFixed(3)}; X-A ${n.paco2.toFixed(1)} / ${n.hco3.toFixed(2)} → ${per10.toFixed(2)} per 10 mmHg`);
++    expect(c.paco2).toBeGreaterThanOrEqual(43);
++    expect(c.paco2).toBeLessThanOrEqual(52);
++    expect(per10).toBeGreaterThanOrEqual(3);
++    expect(per10).toBeLessThanOrEqual(4.5);
++    expect(c.ph).toBeGreaterThanOrEqual(7.35);
++    expect(c.ph).toBeLessThanOrEqual(7.45);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-kinetics.test.ts b/packages/engine-core/test/engine/fu9-kinetics.test.ts
+new file mode 100644
+index 0000000..81ccffc
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-kinetics.test.ts
+@@ -0,0 +1,42 @@
++// FU-9 Task A1 (F1): the kidney excretes an expanded circulation, context-sensitively (research/22 BF-02a/b, BF-04).
++// Rigs = the BF runner's: MODELED 40 y 70 kg man; "GA" = ETT + VCV 12 × 600, PEEP 5, FiO2 0.5 + the GA flag; Ringer's
++// lactate 1 L over 30 min from 300 s; retention = Δ blood volume against the same timeline without the fluid, ÷ 1000 mL,
++// 30 min after the end (3900 s). Class III: 1500 mL over 10 min from 60 s, the fluid at 960 s.
++import { describe, expect, it } from 'vitest';
++import { arm, bvMl, ev, GA_VENT, st, type Step } from '../helpers/fu9.ts';
++
++const RL: Step = [300, ev({ kind: 'fluid', fluid: 'rl', volumeMl: 1000, overS: 1800 })];
++const retention = async (base: Step[], fluid: Step, tRead: number): Promise<number> => {
++  const [i] = await arm([...base, fluid], [tRead], bvMl);
++  const [c] = await arm(base, [tRead], bvMl);
++  return ((i as number) - (c as number)) / 1000;
++};
++
++describe('FU-9 F1: crystalloid kinetics are context-sensitive (Hahn 2010; Norberg 2007; Drobin & Hahn 1999)', { timeout: 900_000 }, () => {
++  it('RL 1 L / 30 min, awake: 20–30 % intravascular 30 min after the end (was 0.52); GA retains ≥ 0.05 more (was +0.01)', async () => {
++    const awake = await retention([], RL, 3900);
++    const ga = await retention(GA_VENT, RL, 3900);
++    console.log(`FU-9 F1 retention 30 min after the end: awake ${awake.toFixed(2)}, GA ${ga.toFixed(2)}`);
++    expect(awake).toBeGreaterThanOrEqual(0.2);
++    expect(awake).toBeLessThanOrEqual(0.3);
++    expect(ga - awake).toBeGreaterThanOrEqual(0.05);
++  });
++  it('after class III (1500 mL), the same litre is retained ≥ 0.05 more than in normovolaemic GA (was 0.00)', async () => {
++    const bleed: Step = [60, ev({ kind: 'bleed', volumeMl: 1500, overS: 600 })];
++    const hypo = await retention([...GA_VENT, bleed], [960, RL[1]], 960 + 3600);
++    const ga = await retention(GA_VENT, RL, 3900);
++    console.log(`FU-9 F1 class III ${hypo.toFixed(2)} vs GA ${ga.toFixed(2)}`);
++    expect(hypo - ga).toBeGreaterThanOrEqual(0.05);
++  });
++  // R45: Wiesen 1994 / AABB: +1 g/dL per unit (band 0.7–1.3). Under GA the kidney keeps most of the unit's plasma for
++  // the first hour (S_GA, the ventilated CO below the renal reference): measured +0.66 at 1 h, +0.74 at 4 h (was +0.55).
++  it.fails('1 u RBC over 30 min under GA: Hb +0.7–1.3 g/dL at 1 h after the end — measured +0.66 (FU-9 F1; was +0.55)', async () => {
++    const at = [300 + 1800 + 3600];
++    const hb = (e: Parameters<typeof bvMl>[0]) => st(e).blood.out.hb;
++    const [i] = await arm([...GA_VENT, [300, ev({ kind: 'transfusion', product: 'rbc', units: 1, overS: 1800, warmed: true })]], at, hb);
++    const [c] = await arm(GA_VENT, at, hb);
++    const d = (i as number) - (c as number);
++    console.log(`FU-9 F1 1 u RBC: Hb +${d.toFixed(2)} at 1 h`);
++    expect(d).toBeGreaterThanOrEqual(0.7);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-leak.test.ts b/packages/engine-core/test/engine/fu9-leak.test.ts
+new file mode 100644
+index 0000000..013ffbf
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-leak.test.ts
+@@ -0,0 +1,34 @@
++// FU-9 Task A4 (F4): septic capillary leak reaches the lung water (research/22 BF-20a). Rig = the BF runner's GA vent;
++// 7e warm septic shock (`condition sepsis 1 warm`) at 60 s; 0.9 % saline 30 mL/kg (2100 mL) over 30 min at 1260 s; read
++// 60 min after the end (4860 s) against the same sepsis without the fluid.
++import { describe, expect, it } from 'vitest';
++import { arm, ev, GA_VENT, st, type Step } from '../helpers/fu9.ts';
++
++const SEPSIS: Step = [60, ev({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm' })];
++const LOAD: Step = [1260, ev({ kind: 'fluid', fluid: 'saline', volumeMl: 2100, overS: 1800 })];
++const read = (e: Parameters<typeof st>[0]) => ({ evlwi: st(e).blood.lung.evlwi, pao2: st(e).resp.o2.pao2, sigma: st(e).blood.core.fl.sigma, kf: st(e).blood.core.fl.kfMult });
++
++describe('FU-9 F4: a septic leak makes lung water at a normal PAWP (Sakka 2002; two-pore theory)', { timeout: 600_000 }, () => {
++  it('warm septic shock: σ falls with the leak (σ < 0.8) and 30 mL/kg raises extra EVLWI > 0.25 mL/kg (was 0.0)', async () => {
++    const [i] = await arm([...GA_VENT, SEPSIS, LOAD], [4860], read);
++    const [c] = await arm([...GA_VENT, SEPSIS], [4860], read);
++    if (!i || !c) throw new Error('no sample');
++    console.log(`FU-9 F4: kfMult ${c.kf.toFixed(2)}, σ ${c.sigma.toFixed(2)}, ΔEVLWI ${(i.evlwi - c.evlwi).toFixed(2)} mL/kg, ΔPaO2 ${(i.pao2 - c.pao2).toFixed(0)}`);
++    expect(c.sigma).toBeLessThan(0.8);
++    expect(i.evlwi - c.evlwi).toBeGreaterThan(0.25);
++  });
++  // R45 (research/22 §5 acceptance for 7e → 7c: "EVLWI ↑ and PaO2 ↓ more than healthy"): the septic lung makes water now,
++  // but less than the healthy lung under the same load (1.18 vs 2.56 mL/kg: the vasodilated septic patient's PAWP stays
++  // lower, and σ 0.70 still leaves a threshold of ≈ 15 mmHg), and PaO2 still RISES +13 (7b's lung-water → shunt coupling,
++  // F13a, is weak and the load raises CO/SvO2). Kept visible for Ali (Open question 3: the septic σ).
++  it.fails('warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +1.18 vs +2.57 mL/kg, PaO2 +13 (FU-9 F4)', async () => {
++    const [i] = await arm([...GA_VENT, SEPSIS, LOAD], [4860], read);
++    const [c] = await arm([...GA_VENT, SEPSIS], [4860], read);
++    const [hi] = await arm([...GA_VENT, LOAD], [4860], read);
++    const [hc] = await arm(GA_VENT, [4860], read);
++    if (!i || !c || !hi || !hc) throw new Error('no sample');
++    console.log(`FU-9 F4 vs healthy: ΔEVLWI ${(i.evlwi - c.evlwi).toFixed(2)} vs ${(hi.evlwi - hc.evlwi).toFixed(2)} mL/kg, ΔPaO2 ${(i.pao2 - c.pao2).toFixed(0)} vs ${(hi.pao2 - hc.pao2).toFixed(0)}`);
++    expect(i.evlwi - c.evlwi).toBeGreaterThan(hi.evlwi - hc.evlwi);
++    expect(i.pao2 - c.pao2).toBeLessThan(-5);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-osmolality.test.ts b/packages/engine-core/test/engine/fu9-osmolality.test.ts
+new file mode 100644
+index 0000000..dce59bc
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-osmolality.test.ts
+@@ -0,0 +1,30 @@
++// FU-9 Task A8 (F11): the brain follows a fall in plasma osmolality (research/22 BF-11b). Rig = the BF runner's awake
++// patient (TURP under spinal): 1.5 % glycine 3 L absorbed over 30 min from 300 s; read over 2.5 h against no absorption.
++import { describe, expect, it } from 'vitest';
++import { arm, ev, st } from '../helpers/fu9.ts';
++
++describe('FU-9 F11: hypo-osmolar brain swelling (Hahn 2006; Adrogué & Madias 2000)', { timeout: 600_000 }, () => {
++  it('glycine 3 L: Na ≈ 120, brain water gained and ICP above the control (was +0.07 max)', async () => {
++    const at = Array.from({ length: 30 }, (_, k) => 300 + 300 * (k + 1));
++    const read = (e: Parameters<typeof st>[0]) => {
++      const o = (st(e) as unknown as { organs: { brain: { icp: number; osmWater?: number } } }).organs.brain;
++      return { na: st(e).blood.out.na, osm: st(e).blood.out.osm, icp: o.icp, water: o.osmWater ?? 0 };
++    };
++    const i = await arm([[300, ev({ kind: 'fluid', fluid: 'glycine', volumeMl: 3000, overS: 1800 })]], at, read);
++    const c = await arm([], at, read);
++    const dIcp = Math.max(...i.map((r, k) => r.icp - (c[k]?.icp ?? r.icp)));
++    const water = Math.max(...i.map((r) => r.water));
++    console.log(`FU-9 F11: Na min ${Math.min(...i.map((r) => r.na)).toFixed(1)}, osm min ${Math.min(...i.map((r) => r.osm)).toFixed(1)}, brain water +${water.toFixed(2)} mL, ΔICP max +${dIcp.toFixed(2)}`);
++    expect(water).toBeGreaterThan(1);
++    expect(dIcp).toBeGreaterThan(0.2);
++  });
++  // R45 (research/22 BF-11b, dirOnly "beyond 1 mmHg"): the gain is the osmotherapy calibration's (0.145 mL per mOsm/kg);
++  // an ideal-osmometer brain (≈ 1.1 L of water) would gain ≈ 55 mL for −15 mOsm/kg. Open question 8.
++  it.fails('glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.24 (FU-9 F11)', async () => {
++    const at = Array.from({ length: 30 }, (_, k) => 300 + 300 * (k + 1));
++    const icp = (e: Parameters<typeof st>[0]) => (st(e) as unknown as { organs: { brain: { icp: number } } }).organs.brain.icp;
++    const i = await arm([[300, ev({ kind: 'fluid', fluid: 'glycine', volumeMl: 3000, overS: 1800 })]], at, icp);
++    const c = await arm([], at, icp);
++    expect(Math.max(...i.map((v, k) => v - (c[k] ?? v)))).toBeGreaterThanOrEqual(1);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-oxygen.test.ts b/packages/engine-core/test/engine/fu9-oxygen.test.ts
+new file mode 100644
+index 0000000..e36eb4b
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-oxygen.test.ts
+@@ -0,0 +1,18 @@
++// FU-9 Task A2 (F3): low flow raises O2 extraction before VO2 becomes supply-dependent (research/22 BF-29b). Rig = the
++// BF runner's GA vent (MODELED, 70 kg man); a 2 L bleed over 10 min from 60 s; read at 1200 s against no bleed.
++import { describe, expect, it } from 'vitest';
++import { arm, ev, GA_VENT, st } from '../helpers/fu9.ts';
++
++describe('FU-9 F3: SvO2 falls with cardiac output in haemorrhage (Rivers 2001; Vincent & De Backer 2013)', { timeout: 300_000 }, () => {
++  it('2 L bleed: 7c SvO2 < 65 % while lactate rises (was 77.8 % — the regional term cut VO2 instead); extraction ≥ 0.4', async () => {
++    const read = (e: Parameters<typeof st>[0]) => ({ ...st(e).blood.core.o2, lact: st(e).blood.out.lactate });
++    const [lo] = await arm([...GA_VENT, [60, ev({ kind: 'bleed', volumeMl: 2000, overS: 600 })]], [1200], read);
++    const [n] = await arm(GA_VENT, [1200], read);
++    if (!lo || !n) throw new Error('no sample');
++    console.log(`FU-9 F3: SvO2 ${(100 * lo.svo2).toFixed(1)} % (control ${(100 * n.svo2).toFixed(1)}), DO2 ${lo.do2.toFixed(0)}, VO2 ${lo.vo2.toFixed(0)}/${lo.demand.toFixed(0)}, ER ${lo.er.toFixed(2)}, lactate ${lo.lact.toFixed(2)} (control ${n.lact.toFixed(2)})`);
++    expect(lo.svo2).toBeLessThan(0.65);
++    expect(n.svo2).toBeGreaterThan(0.65);
++    expect(lo.lact).toBeGreaterThan(n.lact + 1);
++    expect(lo.er).toBeGreaterThanOrEqual(0.4); // below DO2crit VO2 is supply-dependent at ER = demand/DO2crit
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-potassium.test.ts b/packages/engine-core/test/engine/fu9-potassium.test.ts
+new file mode 100644
+index 0000000..5e066c1
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-potassium.test.ts
+@@ -0,0 +1,29 @@
++// FU-9 Task A6 (F6): renal K excretion follows plasma K and the loop diuretic's flow, and a renal loss is not refilled
++// from an unlimited cellular store (research/22 BF-08d). Rig = the BF runner's GA vent with a profile K 7.5 (normal pH);
++// furosemide 40 mg at 300 s; K 3 h later against the same patient without it.
++import { describe, expect, it } from 'vitest';
++import { arm, ev, GA_VENT, MAN, st } from '../helpers/fu9.ts';
++
++const HYPERK = { ...MAN, blood: { k: 7.5 } };
++const read = (e: Parameters<typeof st>[0]) => ({ k: st(e).blood.out.k, kIcf: st(e).blood.core.so.kIcf });
++
++describe('FU-9 F6: kaliuresis (Young 1988; Good & Wright 1979; UK Renal Association 2023)', { timeout: 600_000 }, () => {
++  it('furosemide 40 mg at K 7.5: K lower than the untreated patient at 3 h (was −0.002) and the cells share the loss', async () => {
++    const at = [300 + 3 * 3600];
++    const [f] = await arm([...GA_VENT, [300, ev({ kind: 'drug', drugId: 'furosemide', dose: 40, unit: 'mg', route: 'iv' })]], at, read, HYPERK);
++    const [c] = await arm(GA_VENT, at, read, HYPERK);
++    if (!f || !c) throw new Error('no sample');
++    console.log(`FU-9 F6: ΔK ${(f.k - c.k).toFixed(3)} at 3 h, cellular pool ${(f.kIcf - c.kIcf).toFixed(1)} mmol`);
++    expect(f.k).toBeLessThan(c.k - 0.02);
++    expect(f.kIcf).toBeLessThan(c.kIcf);
++  });
++  // R45 (research/22 BF-08d, dirOnly "beyond 0.1"): the band's size is Ali's (Open question 5). Under GA the diuresis is
++  // small (+150 mL/h at the peak), the kaliuresis ≈ 10 mmol against the untreated patient's retention, and 300 mmol of
++  // total-body K per mmol/L (Sterns 1981) turns that into −0.04; the alkalotic rig (pH 7.57) also holds K in the cells.
++  it.fails('furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.042 (FU-9 F6)', async () => {
++    const at = [300 + 3 * 3600];
++    const [f] = await arm([...GA_VENT, [300, ev({ kind: 'drug', drugId: 'furosemide', dose: 40, unit: 'mg', route: 'iv' })]], at, read, HYPERK);
++    const [c] = await arm(GA_VENT, at, read, HYPERK);
++    expect((f?.k ?? 0) - (c?.k ?? 0)).toBeLessThanOrEqual(-0.1);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-rocuronium.test.ts b/packages/engine-core/test/engine/fu9-rocuronium.test.ts
+new file mode 100644
+index 0000000..56d25c3
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-rocuronium.test.ts
+@@ -0,0 +1,21 @@
++// FU-9 Task B1 (F10): hypokalaemia prolongs rocuronium (research/22 BF-09b). Rig = the BF runner's GA vent, profile K 2.5
++// vs 4.2; rocuronium 0.6 mg/kg at 300 s; the time from the dose to T1 back at 25 % (7f's truth TOF).
++import { describe, expect, it } from 'vitest';
++import { arm, ev, GA_VENT, MAN, st } from '../helpers/fu9.ts';
++
++const t25 = async (k: number): Promise<number> => {
++  const at = Array.from({ length: 360 }, (_, i) => 600 + 10 * i); // 5–65 min after the dose, every 10 s
++  const t1 = await arm([...GA_VENT, [300, ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', route: 'iv' })]], at,
++    (e) => (st(e) as unknown as { neuro: { last: { tof: { t1: number } } } }).neuro.last.tof.t1, { ...MAN, blood: { k } });
++  const i = t1.findIndex((v) => v >= 0.25);
++  return i < 0 ? Number.POSITIVE_INFINITY : ((at[i] as number) - 300) / 60;
++};
++
++describe('FU-9 F10: hypokalaemia prolongs a non-depolarising block', { timeout: 600_000 }, () => {
++  it('rocuronium 0.6 mg/kg: T1 25 % later at K 2.5 than at 4.2 by ≥ 1 min (was identical, 35.7 min)', async () => {
++    const lo = await t25(2.5);
++    const n = await t25(4.2);
++    console.log(`FU-9 F10: T1 25 % at ${lo.toFixed(1)} min (K 2.5) vs ${n.toFixed(1)} min (K 4.2)`);
++    expect(lo - n).toBeGreaterThanOrEqual(1);
++  });
++});
+diff --git a/packages/engine-core/test/engine/fu9-transfusion.test.ts b/packages/engine-core/test/engine/fu9-transfusion.test.ts
+new file mode 100644
+index 0000000..6f35669
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu9-transfusion.test.ts
+@@ -0,0 +1,27 @@
++// FU-9 Task A3 (F5): citrate is an anion until it is metabolised and its clearance follows whole-body flow (research/22
++// BF-05a, BF-05d). Rig = the BF runner's: GA vent; class IV (2100 mL over 10 min from 60 s), then a further 4 L lost over
++// 40 min from 660 s while 10 u RBC (35 d, unwarmed) + 10 u FFP (warmed) run over the same 40 min, no calcium.
++import { describe, expect, it } from 'vitest';
++import { arm, ev, GA_VENT, st } from '../helpers/fu9.ts';
++
++describe('FU-9 F5: massive transfusion — the citrate load (Driscoll 1987; Giancarelli 2016; ATLS 10e)', { timeout: 600_000 }, () => {
++  it('iCa nadir 0.6–0.95 (was 0.30, the floor); BE ≤ −10 with lactate ≥ 4 (was BE −5.6); no arrest (was asystole at 2430 s)', async () => {
++    const t0 = 660;
++    const at = Array.from({ length: (t0 + 3000) / 30 }, (_, k) => 30 * (k + 1));
++    const rows = await arm([...GA_VENT,
++      [60, ev({ kind: 'bleed', volumeMl: 2100, overS: 600 })],
++      [t0, ev({ kind: 'bleed', volumeMl: 4000, overS: 2400 })],
++      [t0, ev({ kind: 'transfusion', product: 'rbc', units: 10, overS: 2400, storageDays: 35, warmed: false })],
++      [t0, ev({ kind: 'transfusion', product: 'ffp', units: 10, overS: 2400, warmed: true })],
++    ], at, (e) => ({ iCa: st(e).blood.out.iCa, be: st(e).blood.core.ab.be, lact: st(e).blood.out.lactate, pulseless: st(e).hemo.circ.arrest !== null }));
++    const iCa = Math.min(...rows.slice(t0 / 30).map((r) => r.iCa));
++    const be = Math.min(...rows.map((r) => r.be));
++    const lact = Math.max(...rows.map((r) => r.lact));
++    console.log(`FU-9 F5: iCa nadir ${iCa.toFixed(2)}, BE nadir ${be.toFixed(1)}, lactate peak ${lact.toFixed(1)}, arrest ${rows.some((r) => r.pulseless)}`);
++    expect(iCa).toBeGreaterThanOrEqual(0.6);
++    expect(iCa).toBeLessThanOrEqual(0.95);
++    expect(be).toBeLessThanOrEqual(-10);
++    expect(lact).toBeGreaterThanOrEqual(4);
++    expect(rows.some((r) => r.pulseless)).toBe(false);
++  });
++});
+diff --git a/packages/engine-core/test/helpers/fu9.ts b/packages/engine-core/test/helpers/fu9.ts
+new file mode 100644
+index 0000000..301b15d
+--- /dev/null
++++ b/packages/engine-core/test/helpers/fu9.ts
+@@ -0,0 +1,44 @@
++// FU-9 test helpers: the coverage-run-BF rigs (research/22 §1) through the real engine, read-only on the committed state.
++import { createEngine } from '../../src/engine.ts';
++import type { MonitorEngine, PatientProfile } from '../../src/types.ts';
++import { cmd, evB, MAN, st } from './blood.ts';
++
++export type Step = [number, Record<string, unknown>];
++/** BF "GA vent": ETT + VCV 12 × 600 mL, PEEP 5, FiO2 0.5 and the Stage 3 GA flag at t = 1 s (MODELED). */
++export const GA_VENT: Step[] = [
++  [1, { type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } }],
++  [1, { type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 } }],
++  [1, { type: 'applyEvent', event: { kind: 'thermal', anaesthesia: 'general' } }],
++];
++export const ev = (event: Record<string, unknown>): Record<string, unknown> => ({ type: 'applyEvent', event });
++
++/** Run a timeline to each sample time; `read` is called at every time in `at` (seconds), yielding once per sim-minute. */
++export async function arm<T>(steps: Step[], at: number[], read: (e: MonitorEngine) => T, patient: PatientProfile = MAN): Promise<T[]> {
++  const e = createEngine({ seed: 7, mode: 'modeled', patient });
++  const todo = [...steps].sort((a, b) => a[0] - b[0]);
++  const out: T[] = [];
++  for (const tS of [...at].sort((a, b) => a - b)) {
++    for (let t = Math.floor(e.now().simT / 60) * 60 + 60; t <= tS; t += 60) {
++      while (todo.length && (todo[0] as Step)[0] <= t) {
++        const [ts, body] = todo.shift() as Step;
++        e.advanceTo(Math.max(e.now().simT, ts));
++        const r = e.dispatch(cmd(body));
++        if (!r.accepted) throw new Error(`rejected ${JSON.stringify(body)}: ${r.reason}`);
++      }
++      e.advanceTo(t);
++      await new Promise((r) => setImmediate(r));
++    }
++    while (todo.length && (todo[0] as Step)[0] <= tS) {
++      const [ts, body] = todo.shift() as Step;
++      e.advanceTo(Math.max(e.now().simT, ts));
++      const r = e.dispatch(cmd(body));
++      if (!r.accepted) throw new Error(`rejected ${JSON.stringify(body)}: ${r.reason}`);
++    }
++    e.advanceTo(tS);
++    out.push(read(e));
++  }
++  return out;
++}
++/** 7c's blood volume (plasma + red cells), mL. */
++export const bvMl = (e: MonitorEngine): number => st(e).blood.core.fl.vp + st(e).blood.core.fl.hbG * 3;
++export { evB, MAN, st };
+diff --git a/packages/engine-core/test/l2/blood/core.test.ts b/packages/engine-core/test/l2/blood/core.test.ts
+index 945b06b..812ab31 100644
+--- a/packages/engine-core/test/l2/blood/core.test.ts
++++ b/packages/engine-core/test/l2/blood/core.test.ts
+@@ -47,15 +47,24 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
+     expect(bc.out.lactate).toBeLessThan(0.5 * lac40);
+     expect(bc.out.hb).toBeGreaterThan(13.5);
+   });
+-  it('massive transfusion, 10 units of 35-day blood in 30 min against a matched bleed: K ≥ 5.5; iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46)', () => {
++  const massive = () => {
+     const bc = createBloodCore(MAN, CO0, 40);
+     const u = PRODUCTS.rbc;
+     bc.fl.flows.push({ rate: (10 * u.ml) / 30, until: 1800, comp: { ...u.comp, k: storedK(35) } }, { rate: (10 * u.ml) / 30, until: 1800, comp: null });
+     run(bc, 0, 1800);
+-    const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [ENG])
++    return bc;
++  };
++  const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [ENG])
++  it('massive transfusion, 10 units of 35-day blood in 30 min against a matched bleed: K ≥ 5.5 (tables kUnit)', () => {
++    const bc = massive();
+     console.log(`core massive: K ${bc.out.k.toFixed(2)} iCa ${bc.out.iCa.toFixed(3)} (rule ${rule.toFixed(3)})`);
+     expect(bc.out.k).toBeGreaterThanOrEqual(5.5);
+-    expect(Math.abs(bc.out.iCa - rule)).toBeLessThanOrEqual(0.05);
++  });
++  // R45 (FU-9 F5, E-FU9-1): the citrate rule (tables citrateUnit, Q46) is a CHELATION rate; since citrate is an anion in
++  // the SID the same load also acidifies (pH ↓ raises iCa, −0.42 per unit pH), so the whole-blood iCa sits above the
++  // chelation-only rule. The chelation term itself is pinned in fu9-citrate.test.ts. Measured 1.090 vs 1.033 ± 0.05.
++  it.fails('massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.090 vs 1.033 (FU-9 F5)', () => {
++    expect(Math.abs(massive().out.iCa - rule)).toBeLessThanOrEqual(0.05);
+   });
+   const crystalloid2L = (id: 'saline' | 'balanced') => {
+     const bc = createBloodCore(MAN, CO0, 40);
+diff --git a/packages/engine-core/test/l2/blood/fu9-albumin.test.ts b/packages/engine-core/test/l2/blood/fu9-albumin.test.ts
+new file mode 100644
+index 0000000..798d135
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-albumin.test.ts
+@@ -0,0 +1,34 @@
++// FU-9 Task A5 (F8): COP from albumin AND globulins; a profile albumin keeps its weak-acid deficit (Figge).
++import { describe, expect, it } from 'vitest';
++import { createBloodCore, stepBloodCore } from '../../../src/l2/blood/core.ts';
++import { copPlasma, createFluids, GLOBULIN_GL } from '../../../src/l2/blood/fluids.ts';
++import { bloodPatient } from '../../../src/l2/blood/params.ts';
++
++const MAN = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
++const step = (bc: ReturnType<typeof createBloodCore>) => stepBloodCore(bc, { t: 0, coLpm: 5.25, paco2: 40, pao2: 95, tempC: 37, vo2Demand: 245 }, 0.1);
++
++describe('FU-9 F8: hypoalbuminaemia (Weil 1979; Figge 1998; Fencl 2000)', () => {
++  it('COP: 22.4 at albumin 40 (unchanged), 11–17 at albumin 20 (was 8.7), ≈ 15 at albumin 25 (CM-10c, was 11.5)', () => {
++    const p = bloodPatient(MAN);
++    expect(GLOBULIN_GL).toBe(24);
++    expect(copPlasma(createFluids(p, 40))).toBeCloseTo(22.35, 1);
++    const c20 = copPlasma(createFluids(p, 20));
++    const c25 = copPlasma(createFluids(p, 25));
++    console.log(`FU-9 F8 COP: albumin 20 → ${c20.toFixed(1)}, 25 → ${c25.toFixed(1)}`);
++    expect(c20).toBeGreaterThanOrEqual(11);
++    expect(c20).toBeLessThanOrEqual(17);
++    expect(c25).toBeGreaterThan(c20);
++  });
++  it('profile albumin 20 g/L without a profile HCO3: AG 3.5–6.5 lower than normal and BE > 0 (the dilution picture); with a profile HCO3 it is honoured', () => {
++    const n = createBloodCore(MAN, 5.25, 40);
++    const a = createBloodCore({ ...MAN, blood: { albuminGL: 20 } }, 5.25, 40);
++    const h = createBloodCore({ ...MAN, blood: { albuminGL: 20, hco3: 24.4 } }, 5.25, 40);
++    for (const bc of [n, a, h]) step(bc);
++    console.log(`FU-9 F8 AG: normal ${n.out.ag.toFixed(1)}, albumin 20 ${a.out.ag.toFixed(1)} (BE ${a.ab.be.toFixed(1)}), with HCO3 24.4 → ${h.ab.hco3.toFixed(1)}`);
++    expect(n.out.ag - a.out.ag).toBeGreaterThanOrEqual(3.5);
++    expect(n.out.ag - a.out.ag).toBeLessThanOrEqual(6.5);
++    expect(a.ab.be).toBeGreaterThan(0);
++    expect(h.ab.hco3).toBeCloseTo(24.4, 1);
++    expect(a.out.k).toBeCloseTo(4.2, 2); // the K reference is the patient's own resting pH
++  });
++});
+diff --git a/packages/engine-core/test/l2/blood/fu9-chronic.test.ts b/packages/engine-core/test/l2/blood/fu9-chronic.test.ts
+new file mode 100644
+index 0000000..e231de6
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-chronic.test.ts
+@@ -0,0 +1,26 @@
++// FU-9 Task B2 (F7): a COPD retainer starts at its own resting PaCO2 with its chronic renal compensation.
++import { describe, expect, it } from 'vitest';
++import { CHRONIC_HCO3_PER_MMHG, createBloodCore } from '../../../src/l2/blood/core.ts';
++import { gasPatient, PACO2_REST_MMHG, restingPaco2 } from '../../../src/l2/gas/params.ts';
++
++const MAN = { ageY: 65, sex: 'M' as const, weightKg: 70, heightCm: 175 };
++const copd = (severity: number) => ({ ...MAN, lungConditions: [{ id: 'copd' as const, severity }] });
++
++describe('FU-9 F7: chronic hypercapnia (tables §1.5, §5b.1; Brackett 1965)', () => {
++  it('resting PaCO2 by GOLD grade 40 / 40 / 45 / 55; a healthy patient 40', () => {
++    expect(restingPaco2(MAN)).toBe(PACO2_REST_MMHG);
++    expect(restingPaco2(copd(0.25))).toBe(40);
++    expect(restingPaco2(copd(0.5))).toBe(40);
++    expect(restingPaco2(copd(0.75))).toBeCloseTo(45, 9);
++    expect(restingPaco2(copd(1))).toBeCloseTo(55, 9);
++    expect(gasPatient(copd(0.75)).paco2Rest).toBeCloseTo(45, 9);
++  });
++  it('GOLD 3 at PaCO2 45: HCO3 +3.5 per 10 mmHg (26.15), pH ≥ 7.37; a profile HCO3 is honoured', () => {
++    const c = createBloodCore(copd(0.75), 5.25, 45);
++    expect(CHRONIC_HCO3_PER_MMHG).toBe(0.35);
++    expect(c.ab.hco3).toBeCloseTo(24.4 + 0.35 * 5, 1);
++    expect(c.ab.ph).toBeGreaterThanOrEqual(7.37);
++    expect(createBloodCore({ ...copd(0.75), blood: { hco3: 30 } }, 5.25, 45).ab.hco3).toBeCloseTo(30, 1);
++    expect(createBloodCore(MAN, 5.25, 40).ab.hco3).toBeCloseTo(24.4, 2);
++  });
++});
+diff --git a/packages/engine-core/test/l2/blood/fu9-citrate.test.ts b/packages/engine-core/test/l2/blood/fu9-citrate.test.ts
+new file mode 100644
+index 0000000..44ef35e
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-citrate.test.ts
+@@ -0,0 +1,38 @@
++// FU-9 Task A3 (F5): citrate is a strong trivalent anion until it is metabolised (Stewart/Fencl; Driscoll 1987).
++import { describe, expect, it } from 'vitest';
++import { createBloodCore, stepBloodCore } from '../../../src/l2/blood/core.ts';
++import { PRODUCTS } from '../../../src/l2/blood/params.ts';
++import { CITRATE_CHARGE, concOf, createSolutes, ionisedCa, K_CIT, sidOf } from '../../../src/l2/blood/solutes.ts';
++
++const ECF = 14000;
++const MAN = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
++
++describe('FU-9 F5: citrate in the strong-ion difference', () => {
++  it('1 mmol/L of free citrate lowers the apparent SID by 3 mEq/L', () => {
++    const s = createSolutes({ na: 140, k: 4.2, cl: 104, iCa: 1.2, mg: 0.85, lactate: 1 }, ECF, 42, 28000);
++    const c0 = concOf(s, ECF, 42, ECF);
++    s.citrate = 14; // 1 mmol/L
++    const c1 = concOf(s, ECF, 42, ECF);
++    expect(CITRATE_CHARGE).toBe(3);
++    expect(sidOf(c0, 1.2) - sidOf(c1, 1.2)).toBeCloseTo(3, 9);
++  });
++  it('4 FFP in 10 min at normal flow: BE FALLS while the citrate is present, then rises above the start as it is metabolised (early acidosis, late alkalosis)', () => {
++    const bc = createBloodCore(MAN, 5.25, 40);
++    const u = PRODUCTS.ffp;
++    bc.fl.flows.push({ rate: (4 * u.ml) / 10, until: 1e9, leftMl: 4 * u.ml, comp: u.comp });
++    const be: number[] = [];
++    for (let k = 0; k < 36000; k++) {
++      stepBloodCore(bc, { t: k / 10, coLpm: 5.25, paco2: 40, pao2: 95, tempC: 37, vo2Demand: 245 }, 0.1);
++      if (k === 6000 || k === 35999) be.push(bc.ab.be);
++    }
++    console.log(`FU-9 F5: 4 FFP → BE ${be[0]?.toFixed(2)} at 10 min, ${be[1]?.toFixed(2)} at 60 min`);
++    expect(be[0]).toBeLessThan(0);
++    expect(be[1]).toBeGreaterThan(1);
++  });
++  it('the chelation term is unchanged: iCa −K_CIT per mmol/L citrate at a fixed pH', () => {
++    const s = createSolutes({ na: 140, k: 4.2, cl: 104, iCa: 1.2, mg: 0.85, lactate: 1 }, ECF, 42, 28000);
++    const a = ionisedCa(concOf(s, ECF, 42, ECF), 7.4);
++    s.citrate = 14;
++    expect(a - ionisedCa(concOf(s, ECF, 42, ECF), 7.4)).toBeCloseTo(K_CIT, 9);
++  });
++});
+diff --git a/packages/engine-core/test/l2/blood/fu9-leak.test.ts b/packages/engine-core/test/l2/blood/fu9-leak.test.ts
+new file mode 100644
+index 0000000..7671d6e
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-leak.test.ts
+@@ -0,0 +1,33 @@
++// FU-9 Task A4 (F4): the capillary leak 7e writes also lowers the protein reflection coefficient (two-pore theory).
++import { describe, expect, it } from 'vitest';
++import { leakSigma, SIGMA_LEAK_FLOOR } from '../../../src/l2/blood/fluids.ts';
++import { SIGMA_PROTEIN } from '../../../src/l2/blood/params.ts';
++import { writeBlood } from '../../../src/l2/endo/adapters.ts';
++import { createEndoState } from '../../../src/l2/endo/pipeline.ts';
++import { lungWaterStep } from '../../../src/l2/blood/circ-adapter.ts';
++
++describe('FU-9 F4: septic leak → σ → lung water (Rippe & Haraldsson 1994; Sakka 2002)', () => {
++  it('leakSigma: 0.9 at kfMult 1, 0.74 at 2.6, 0.7 at 3, floor 0.3', () => {
++    expect(leakSigma(1)).toBeCloseTo(SIGMA_PROTEIN, 9);
++    expect(leakSigma(2.6)).toBeCloseTo(0.74, 9);
++    expect(leakSigma(3)).toBeCloseTo(0.7, 9);
++    expect(leakSigma(10)).toBe(SIGMA_LEAK_FLOOR);
++  });
++  it('7e writes σ with kfMult, only when kfMult changes', () => {
++    const es = createEndoState(undefined, 70);
++    const ps = { blood: { core: { fl: { kfMult: 1, sigma: SIGMA_PROTEIN } } as Record<string, unknown> } };
++    es.core.out = { ...es.core.out, kfMult: 3 };
++    writeBlood(ps, es);
++    expect((ps.blood.core.fl as { sigma: number }).sigma).toBeCloseTo(0.7, 9);
++  });
++  it('at PAWP 16 and COP 22 a normal lung makes no water (threshold 20); the septic σ (kfMult 3: threshold 15.1) does', () => {
++    let n = 0;
++    let s = 0;
++    for (let k = 0; k < 36000; k++) {
++      n = lungWaterStep(n, 16, 22, 1, 1, 0.1);
++      s = lungWaterStep(s, 16, 22, 3, leakSigma(3) / SIGMA_PROTEIN, 0.1);
++    }
++    expect(n).toBe(0);
++    expect(s).toBeGreaterThan(0);
++  });
++});
+diff --git a/packages/engine-core/test/l2/blood/fu9-oxygen.test.ts b/packages/engine-core/test/l2/blood/fu9-oxygen.test.ts
+new file mode 100644
+index 0000000..f1d01d9
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-oxygen.test.ts
+@@ -0,0 +1,18 @@
++// FU-9 Task A2 (F3): extraction rises before VO2 becomes supply-dependent; the regional term makes lactate only.
++import { describe, expect, it } from 'vitest';
++import { o2Delivery } from '../../../src/l2/blood/oxygen.ts';
++
++describe('FU-9 F3: O2 extraction before supply dependence (Cain 1977; Vincent & De Backer 2013)', () => {
++  it('CO 60 % of rest, DO2 above DO2crit: VO2 = demand (ER rises), the regional LACTATE deficit is still there', () => {
++    const d = o2Delivery(3.15, 5.25, 197, 245, 70); // DO2 621 > 420
++    expect(d.vo2).toBe(245);
++    expect(d.er).toBeCloseTo(245 / 621, 2);
++    expect(d.deficit).toBeGreaterThan(60);
++  });
++  it('below DO2crit VO2 falls in proportion (demand·DO2/DO2crit), so ER stays at demand/DO2crit', () => {
++    const d = o2Delivery(1.5, 5.25, 197, 245, 70); // DO2 296 < 420
++    expect(d.vo2).toBeCloseTo((245 * 296) / 420, 0);
++    expect(d.er).toBeCloseTo(245 / 420, 2);
++    expect(o2Delivery(0, 5.25, 197, 245, 70).vo2).toBe(0);
++  });
++});
+diff --git a/packages/engine-core/test/l2/blood/fu9-potassium.test.ts b/packages/engine-core/test/l2/blood/fu9-potassium.test.ts
+new file mode 100644
+index 0000000..43d3b38
+--- /dev/null
++++ b/packages/engine-core/test/l2/blood/fu9-potassium.test.ts
+@@ -0,0 +1,28 @@
++// FU-9 Task A6 (F6): the cellular K pool is finite — a renal K loss lowers plasma K (Sterns: 300 mmol per mmol/L) instead of
++// being refilled to the set point.
++import { describe, expect, it } from 'vitest';
++import { createBloodCore, stepBloodCore } from '../../../src/l2/blood/core.ts';
++
++const MAN = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
++
++describe('FU-9 F6: total-body K (Sterns 1981)', () => {
++  it('rest: K stays at the set point; 20 mmol lost in the urine over 1 h lowers K for hours and the cells share the loss', () => {
++    const run = (lossMmolH: number) => {
++      const bc = createBloodCore(MAN, 5.25, 40);
++      const kIcf0 = bc.so.kIcf;
++      bc.renal = { uopAboveBasalMlH: 0, excretion: { k: lossMmolH, na: 0, cl: 0, gluconate: 0 } };
++      for (let k = 0; k < 3 * 36000; k++) {
++        if (k === 36000 && bc.renal) bc.renal.excretion.k = 0; // the loss stops after 1 h; read 2 h later
++        stepBloodCore(bc, { t: k / 10, coLpm: 5.25, paco2: 40, pao2: 95, tempC: 37, vo2Demand: 245 }, 0.1);
++      }
++      return { k: bc.out.k, cells: bc.so.kIcf - kIcf0 };
++    };
++    const r = run(0);
++    const l = run(20);
++    console.log(`FU-9 F6: 20 mmol over 1 h, read 2 h later → K ${l.k.toFixed(3)} (rest ${r.k.toFixed(3)}), cells ${l.cells.toFixed(1)} mmol`);
++    expect(r.k).toBeCloseTo(4.2, 2);
++    expect(l.k).toBeLessThan(r.k - 0.05); // Sterns: 20 mmol ÷ K_TBK_MMOL 300 = −0.067 at equilibrium (measured −0.10 two hours on)
++    expect(l.k).toBeGreaterThan(r.k - 0.15);
++    expect(l.cells).toBeLessThan(-15); // most of the loss has come out of the cells (before FU-9 they refilled the ECF to set.k)
++  });
++});
+diff --git a/packages/engine-core/test/l2/brain/fu9-osmolality.test.ts b/packages/engine-core/test/l2/brain/fu9-osmolality.test.ts
+new file mode 100644
+index 0000000..a27c0ad
+--- /dev/null
++++ b/packages/engine-core/test/l2/brain/fu9-osmolality.test.ts
+@@ -0,0 +1,28 @@
++// FU-9 Task A8 (F11): brain water follows a FALL in plasma effective osmolality (the osmotherapy calibration's gain).
++import { describe, expect, it } from 'vitest';
++import { NO_DRUGS } from '../../../src/l2/brain/flow.ts';
++import { brainParams, createBrain, stepBrain, type BrainInputs } from '../../../src/l2/brain/model.ts';
++import { OSM_WATER_ML_PER_MOSM } from '../../../src/l2/brain/params.ts';
++
++const REST: BrainInputs = { map: 90, cvp: 6, paco2: 40, pao2: 100, sao2: 0.97, hb: 14, tempC: 37, drugs: NO_DRUGS, osm: 290 };
++const run = (osm: number, secs: number) => {
++  const b = createBrain(brainParams(), REST);
++  for (let k = 0; k < 600; k++) stepBrain(b, REST, 0.1);
++  const icp0 = b.icp;
++  for (let k = 0; k < secs * 10; k++) stepBrain(b, { ...REST, osm }, 0.1);
++  return { water: b.osmWater ?? 0, dIcp: b.icp - icp0 };
++};
++
++describe('FU-9 F11: hypo-osmolar brain swelling (Hahn 2006; Adrogué & Madias 2000)', () => {
++  it('gain = the osmotherapy calibration (0.145 mL per mOsm/kg); −15 mOsm/kg → ≈ 2.2 mL in 30 min and ICP up; a rise adds nothing', () => {
++    expect(OSM_WATER_ML_PER_MOSM).toBeCloseTo(0.1454, 3);
++    const lo = run(275, 1800);
++    console.log(`FU-9 F11 brain: osm −15 → water +${lo.water.toFixed(2)} mL, ICP +${lo.dIcp.toFixed(2)}`);
++    expect(lo.water).toBeCloseTo(15 * OSM_WATER_ML_PER_MOSM, 1);
++    expect(lo.dIcp).toBeGreaterThan(0);
++    expect(run(305, 1800).water).toBe(0);
++    const none = createBrain(brainParams(), { ...REST, osm: undefined });
++    for (let k = 0; k < 600; k++) stepBrain(none, { ...REST, osm: undefined }, 0.1);
++    expect(none.osmWater).toBeUndefined(); // without 7c nothing changes
++  });
++});
+diff --git a/packages/engine-core/test/l2/neuro/fu9-alkalosis.test.ts b/packages/engine-core/test/l2/neuro/fu9-alkalosis.test.ts
+new file mode 100644
+index 0000000..fde2c93
+--- /dev/null
++++ b/packages/engine-core/test/l2/neuro/fu9-alkalosis.test.ts
+@@ -0,0 +1,15 @@
++// FU-9 Task A7 (F9): the chemoreflex set point rises in metabolic alkalosis (0.7 mmHg per mmol/L HCO3, cap 55).
++import { describe, expect, it } from 'vitest';
++import { ALK_PACO2_MAX, paco2SetPoint } from '../../../src/l2/neuro/spont.ts';
++
++describe('FU-9 F9: respiratory compensation of metabolic alkalosis (Javaheri & Kazemi 1987)', () => {
++  it('HCO3 34 → set point +6.7; resting HCO3 24.4 → unchanged; acidosis still Winter; capped at 55', () => {
++    expect(paco2SetPoint(40, 34)).toBeCloseTo(40 + 0.7 * (34 - 24.4), 9);
++    expect(paco2SetPoint(40, 24.4)).toBe(40);
++    expect(paco2SetPoint(40, 15)).toBeCloseTo(30.5, 9);
++    expect(paco2SetPoint(40, 60)).toBe(ALK_PACO2_MAX);
++  });
++  it('a chronic hypercapnic set point (45) with its compensated HCO3 (24.4 + 0.35·5) is not read as alkalosis', () => {
++    expect(paco2SetPoint(45, 24.4 + 0.35 * 5)).toBe(45);
++  });
++});
+diff --git a/packages/engine-core/test/l2/neuro/fu9-hypokalaemia.test.ts b/packages/engine-core/test/l2/neuro/fu9-hypokalaemia.test.ts
+new file mode 100644
+index 0000000..3bf90de
+--- /dev/null
++++ b/packages/engine-core/test/l2/neuro/fu9-hypokalaemia.test.ts
+@@ -0,0 +1,13 @@
++// FU-9 Task B1 (F10): hypokalaemia potentiates the non-depolarisers through 7c's plasma K.
++import { describe, expect, it } from 'vitest';
++import { HYPOK_FLOOR, hypokalaemiaMult } from '../../../src/l2/neuro/interactions.ts';
++
++describe('FU-9 F10: hypokalaemic potentiation of non-depolarising block (Miller 10e ch. 27)', () => {
++  it('EC50 × 1 at K ≥ 3.5 and without 7c; × 0.85 at 2.5; floored', () => {
++    expect(hypokalaemiaMult(undefined)).toBe(1);
++    expect(hypokalaemiaMult(4.2)).toBe(1);
++    expect(hypokalaemiaMult(3.5)).toBe(1);
++    expect(hypokalaemiaMult(2.5)).toBeCloseTo(0.85, 9);
++    expect(hypokalaemiaMult(0.5)).toBe(HYPOK_FLOOR);
++  });
++});
+diff --git a/packages/engine-core/test/l2/renal/fu9-expansion.test.ts b/packages/engine-core/test/l2/renal/fu9-expansion.test.ts
+new file mode 100644
+index 0000000..226df25
+--- /dev/null
++++ b/packages/engine-core/test/l2/renal/fu9-expansion.test.ts
+@@ -0,0 +1,33 @@
++// FU-9 Task A1 (F1): the kidney excretes an EXPANDED circulation (ANP / ADH suppression), through the same chain that
++// already carries general anaesthesia (S_GA) and depletion (vNh), so GA and a bled patient retain more.
++import { describe, expect, it } from 'vitest';
++import { createRenal, expansionFactor, stepRenal, type RenalInputs, type RenalState } from '../../../src/l2/renal/model.ts';
++import { V_EXP_MAX } from '../../../src/l2/renal/params.ts';
++
++const W = 70;
++const BASE: RenalInputs = { map: 93, cvp: 5, iap: 0, coLpm: 5.6, bvRel: 1, albuminGL: 42, anaesthesia: 'none', pawExcessCmH2O: 0, alphaExcess: 0, sepsis: 0 };
++const mlKgH = (s: RenalState) => (s.uopMlMin * 60) / W;
++const hold = (inp: RenalInputs, secs: number): RenalState => {
++  const s = createRenal({ ...inp, bvRel: 1 }, W);
++  for (let i = 0; i < secs; i++) stepRenal(s, inp, 1);
++  return s;
++};
++
++describe('FU-9 F1: renal excretion of an expanded circulation (Hahn 2010; Norberg 2007; Drobin & Hahn 1999)', () => {
++  it('expansionFactor: 1 at and below normovolaemia, 1 + 90 per unit excess, capped', () => {
++    expect(expansionFactor(1)).toBe(1);
++    expect(expansionFactor(0.8)).toBe(1);
++    expect(expansionFactor(1.05)).toBeCloseTo(5.5, 9);
++    expect(expansionFactor(1.5)).toBe(V_EXP_MAX);
++  });
++  it('+5 % blood volume awake: UOP ≈ 5× basal within 10 min; general anaesthesia keeps the S_GA share; a normovolaemic kidney is unchanged', () => {
++    const up = { ...BASE, bvRel: 1.05 };
++    const awake = mlKgH(hold(up, 600));
++    const ga = mlKgH(hold({ ...up, anaesthesia: 'general' }, 600));
++    console.log(`FU-9 F1 renal: +5 % BV → ${awake.toFixed(2)} mL/kg/h awake, ${ga.toFixed(2)} under GA`);
++    expect(awake).toBeGreaterThan(4.5);
++    expect(awake).toBeLessThan(6.5);
++    expect(ga / awake).toBeCloseTo(0.6, 2); // S_GA
++    expect(mlKgH(hold(BASE, 600))).toBeCloseTo(1.0, 2);
++  });
++});
+diff --git a/packages/engine-core/vite.config.ts b/packages/engine-core/vite.config.ts
+index c2b3b9a..71b4cd4 100644
+--- a/packages/engine-core/vite.config.ts
++++ b/packages/engine-core/vite.config.ts
+@@ -38,6 +38,7 @@ const SLOW = [
+   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
+   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
+   'test/engine/clinical-suite.test.ts', // FU-4 Task 22: the clinical scenario suite (SLOW_A)
++  'test/engine/fu9-*.test.ts', // FU-9: blood/fluid/acid–base scenarios, 10–90 sim-min arms (SLOW_A, below)
+   'test/engine/circ-pulsus.test.ts', // FU-4 G6: two 10 sim-min spontaneous-breathing runs
+   'test/engine/vagal-events.test.ts', // FU-4 G7: vagal-event runs of 5–10 sim-min
+   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
+@@ -50,6 +51,7 @@ const SLOW = [
+  * SLOW_B: every other SLOW entry. A new slow file joins SLOW (and, if it is a multi-hour run, SLOW_A).
+  */
+ const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts'];
++SLOW_A.push('test/engine/fu9-*.test.ts'); // FU-9: slow-b ran 37.6 of its 40 min at the FU-4 gate (a separate line: other plans append to the literal)
+ // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
+ // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
+ // neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.
