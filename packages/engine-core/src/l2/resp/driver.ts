@@ -75,6 +75,7 @@ export interface DriverState {
   ext: ExtDrive | null;
   rng: Sfc32State;
   ataxia?: number; // Stage 7d: Cushing ataxic breathing 0–1 (organs/effects.ts)
+  spasm?: number; // FU-6 R6: shark-fin severity of the lung's smooth-muscle conditions after bronchodilation (resp pipeline)
 }
 
 export interface DriverCtx {
@@ -149,10 +150,11 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
     period *= Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia
     ti = SPONT_TI_FRACTION * period;
   }
-  const sev = d.severity;
+  const spasm = d.spasm ?? 0; // FU-6 R6: ONE bronchospasm — the lung's smooth-muscle state draws the shark fin
+  const sev = spasm > 0.02 ? spasm : d.severity;
   const c: Cycle = {
     seq: d.seq, t0: t, ti, te: period - ti, vt, kind: src === 'bvm' ? 'bvm' : mech ? 'mech' : 'spont', mech,
-    exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: mech ? 'mech' : 'spont',
+    exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: spasm > 0.02 ? 'shark' : mech ? 'mech' : 'spont',
     severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
   if (!mech && ctx.obstructed && d.airway === 'patent') { // Stage 7f: sedation/residual-block obstruction (plan decision 12)
@@ -184,10 +186,8 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
       c.gastric = ctx.etco2 * 0.45 * 0.6 ** d.gastricN; // [ENG] washout heights
       d.gastricN++;
       break;
-    case 'bronchospasm':
-      c.shape = 'shark';
-      c.vt = vt * (1 - 0.2 * sev); // [ENG] less volume behind the obstruction
-      break;
+    // FU-6 R6: 'bronchospasm' has no cycle rule of its own any more — the lung condition it aliases carries the
+    // resistance (the internal ventilator is a flow source; trapping emerges) and the shark fin (d.spasm above)
     case 'endobronchial':
       c.shape = 'bifid';
       break;
@@ -266,8 +266,8 @@ export function onVentFrame(d: DriverState, f: VentFrame, t: number): void {
     const exchange = d.airway !== 'disconnected' && d.airway !== 'obstructed' && d.airway !== 'oesophageal';
     d.cycles.push({
       seq: d.seq++, t0: t, ti: e.prevTi, te: e.prevTe, vt: 0, kind: 'mech', mech: true, exch: exchange,
-      sampled: exchange ? 'alveolar' : 'none', gastric: 0, effort: 0, shape: d.airway === 'bronchospasm' ? 'shark' : d.airway === 'endobronchial' ? 'bifid' : 'mech',
-      severity: d.severity, cleft: d.cleft, fio2: preoxActive(d, t) ? (d.preox as { fio2: number }).fio2 : f.fio2,
+      sampled: exchange ? 'alveolar' : 'none', gastric: 0, effort: 0, shape: (d.spasm ?? 0) > 0.02 ? 'shark' : d.airway === 'endobronchial' ? 'bifid' : 'mech',
+      severity: (d.spasm ?? 0) > 0.02 ? (d.spasm as number) : d.severity, cleft: d.cleft, fio2: preoxActive(d, t) ? (d.preox as { fio2: number }).fio2 : f.fio2,
       fico2: d.fico2, cutAt: NEVER, emitted: false,
     });
     e.inInsp = true;

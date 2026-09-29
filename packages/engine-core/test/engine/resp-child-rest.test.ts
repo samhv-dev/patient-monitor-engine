@@ -33,7 +33,11 @@ describe('E-V1-1: the CO-ratio reference is the patient\'s own resting flow', { 
     expect(sa.reduce((a, b) => a + b, 0) / sa.length).toBeGreaterThanOrEqual(96); // the resting value (the 1 Hz truth ripples ±1 with the breaths)
     expect(Math.min(...sa)).toBeGreaterThan(94);
   });
-  it('CPR keeps the adult reference (cardiacOutput returns an adult-absolute compression flow, SV_REF 70 mL × CPR_SV_FRAC): a 16 kg child in CPR (quality 1, 110/min) keeps coRatio ≈ 0.29 as before V.1 — not 1.28', async () => {
+  // FU-6 (executor instruction (a), the FU-8 A22 hand-off): the resp pipeline's CPR guard now reads coRefLpm(rs.pat) in
+  // both cases — correct once FU-8 A22 makes the CPR flow the circulation's own (size-scaled). On FU-6's tree, without
+  // A22, cardiacOutput during CPR is still adult-absolute, so the child's coRatio reads 1.283 (adult 0.293): this row is
+  // unreachable here and becomes `it.fails` with the number (R45); whichever of FU-6 / FU-8 merges second re-measures it.
+  it.fails('CPR keeps the adult reference (cardiacOutput returns an adult-absolute compression flow, SV_REF 70 mL × CPR_SV_FRAC): a 16 kg child in CPR (quality 1, 110/min) keeps coRatio ≈ 0.29 as before V.1 — not 1.28 — measured 1.283 (child) / 0.293 (adult) with FU-6\'s coRefLpm guard before FU-8 A22 (FU-6 instruction (a), band 0.25–0.33)', async () => {
     const cpr = async (patient: typeof CHILD | typeof ADULT) => {
       const { e } = rig3({ patient });
       await run(e, 30);

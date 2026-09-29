@@ -61,6 +61,26 @@ export function reversibleShare(frac: number, severity: number, ageMin = 0): num
 }
 
 /**
+ * FU-6 R6: the shark-fin capnogram's severity (0 = none) from the smooth-muscle conditions after bronchodilation —
+ * bronchospasm at its own (unclamped, 1.25 = the R39-6 near-fatal extreme) severity; the others at the bronchospasm
+ * severity with the same airway resistance (Stage 3's raw = 1 + 5·s^1.5 inverted). `ageMin` as `resolveLung` (F6).
+ */
+export function spasmSeverity(specs: readonly LungConditionSpec[], bd = 0, exempt: readonly string[] = [], ageMin: Readonly<Record<string, number>> = {}): number {
+  let out = 0;
+  for (const spec of specs) {
+    const sm = SMOOTH_MUSCLE[spec.id];
+    const d = conditionData(spec.id);
+    if (!sm?.shark || !d || !(spec.severity > 0)) continue;
+    const s = relaxed(spec, 'raw', spec.severity, bd, exempt, ageMin[spec.id] ?? 0);
+    if (spec.id === 'bronchospasm') { out = Math.max(out, s); continue; }
+    const raw = d.effects.find((e) => e.key === 'raw');
+    const m = raw ? effectValue(raw, Math.min(1, s)) : 1;
+    out = Math.max(out, (Math.max(0, m - 1) / 5) ** (2 / 3));
+  }
+  return out;
+}
+
+/**
  * Effective severity of `spec` for effect `key` under bronchodilation B (FU-6 R2); `exempt` ids keep their own.
  * `ageMin` = the attack's age in minutes (FU-6 F6; 0 = fresh).
  */
@@ -113,14 +133,15 @@ export interface Resolved {
 }
 
 /**
- * Resolve condition specs for a patient of `ibwKg`. `rawEvent` = Stage 3 bronchospasm airway multiplier (1 = none).
- * `bronchoDil` = FU-6 R2's bronchodilation state B (0 = none); `bdExempt` = condition ids whose owner already applies
- * the relief (7e's anaphylaxis write-back); `smAgeMin` = each smooth-muscle condition's age in minutes (FU-6 F6).
+ * Resolve condition specs for a patient of `ibwKg`. `bronchoDil` = FU-6 R2's bronchodilation state B (0 = none; the
+ * Stage 3 airway multiplier `rawEvent` it replaced is retired: the airway `bronchospasm` event is an alias of the lung
+ * condition, FU-6 R6); `bdExempt` = condition ids whose owner already applies the relief (7e's anaphylaxis);
+ * `smAgeMin` = each smooth-muscle condition's age in minutes (FU-6 F6).
  * `evlwiAdd` = Stage 7c's lung water from the blood (mL/kg above the conditions' EVLWI; G7b ruling 8, E-7c-1).
  * Sided conditions (decision 13): 'affected' effects act on the chosen side; 'both' crs/raw are whole-system
  * multipliers converted onto that side, vdAlv/vqLow adds go to that side ÷ its share, global keys stay global.
  */
-export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, rawEvent = 1, evlwiAdd = 0, bronchoDil = 0, bdExempt: readonly string[] = [], smAgeMin: Readonly<Record<string, number>> = {}): Resolved {
+export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, evlwiAdd = 0, bronchoDil = 0, bdExempt: readonly string[] = [], smAgeMin: Readonly<Record<string, number>> = {}): Resolved {
   const sides: Acc[] = [fresh(), fresh()];
   const g = fresh();
   const blocked: LungSide[] = [];
@@ -186,7 +207,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
     sp.atel = a.atel * scale;
     sp.consol = a.consol * scale;
     sp.aerRef = Math.max(0.05, 1 - sp.atel - sp.consol);
-    sp.rLung = Math.max(0.5, (HEALTHY.raw * a.raw * rawEvent * water.r - R_TUBE)) / w / share;
+    sp.rLung = Math.max(0.5, (HEALTHY.raw * a.raw * water.r - R_TUBE)) / w / share; // FU-6 R6: no Stage 3 multiplier
     sp.rawExp = a.rawExp;
     sp.fSlow = a.fSlow;
     sp.tauSlowS = Math.max(0.2, a.tauSlowS);

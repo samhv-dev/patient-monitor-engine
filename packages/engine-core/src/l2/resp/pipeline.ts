@@ -30,7 +30,7 @@ import { CI_LPM_PER_KG, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRAD
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
-import { resolveLung, SMOOTH_MUSCLE } from '../lung/conditions.ts'; // Stage 7b; FU-6 F6: SMOOTH_MUSCLE
+import { resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // Stage 7b; FU-6 F6: SMOOTH_MUSCLE; R6: spasmSeverity
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
@@ -110,7 +110,6 @@ export interface RespState {
   // Stage 7b: the lung module (R43) and what configures it
   lung: LungState;
   lungSpecs: LungConditionSpec[];
-  rawEvent: number; // bronchospasm airway multiplier (Q20)
   bd?: number; // FU-6 R2: the bronchodilation state B the lung was last resolved with (absent = 0; truth budget D16)
   bdExempt?: string[]; // FU-6 R2: condition ids whose relief their owner applies (7e's anaphylaxis); absent = none
   /** FU-6 F6: onset (sim s, earlier by the spec's `ageMin`) of each smooth-muscle condition and the sim time the lung
@@ -149,7 +148,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     },
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
-    lungSpecs: [...(profile?.lungConditions ?? [])], rawEvent: 1, mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
+    lungSpecs: [...(profile?.lungConditions ?? [])], mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
   };
   rs.driver.vent = { ...rs.driver.vent, ...ventDefaults(pat, profile?.ageY ?? 40) }; // FU-4 F4 / R1(c): per-patient ventilator defaults
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
@@ -186,12 +185,13 @@ function deadSpace(rs: RespState, l1?: L1State): number {
   // taken to be present exactly when the apparatus is (the resp module has no airway-device seam of its own — Task 18d)
   return physicalDeadSpace(rs.pat, mech) + fit;
 }
-function extraGradient(rs: RespState): number {
-  return rs.driver.airway === 'bronchospasm' ? 8 * rs.driver.severity : 0; // Pa − Et widens with obstruction [ENG]
+// FU-6 R6: the Stage 3 bronchospasm gradient (+8·sev) and shunt (+0.05·sev) are retired — the airway event is an alias
+// of the lung condition, whose dead space (vdAlv) and low-V/Q admixture carry the gap and the desaturation once.
+function extraGradient(_rs: RespState): number {
+  return 0;
 }
-function extraShunt(rs: RespState): number {
-  const a = rs.driver.airway;
-  return a === 'bronchospasm' ? 0.05 * rs.driver.severity : 0; // research 03 §8.7 [ENG]; Stage 7b: endobronchial shunt emerges (mainstem block)
+function extraShunt(_rs: RespState): number {
+  return 0; // Stage 7b: endobronchial shunt emerges (mainstem block)
 }
 function currentFio2(rs: RespState, l1: L1State, t: number): number {
   const d = rs.driver;
@@ -229,7 +229,11 @@ function syncSmOnset(rs: RespState, t: number): void {
 }
 
 export function applyLungSpecs(rs: RespState): void {
-  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.rawEvent, rs.evlwiExtra ?? 0, rs.bd ?? 0, rs.bdExempt ?? [], smAges(rs)); // Stage 7c: + lung water; FU-6 R2: B (F6: ages)
+  const ages = smAges(rs); // FU-6 F6
+  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.evlwiExtra ?? 0, rs.bd ?? 0, rs.bdExempt ?? [], ages); // Stage 7c: + lung water; FU-6 R2: B (F6: ages)
+  const spasm = spasmSeverity(rs.lungSpecs, rs.bd ?? 0, rs.bdExempt ?? [], ages); // FU-6 R6: the shark fin follows the lung
+  if (spasm > 0) rs.driver.spasm = spasm;
+  else delete rs.driver.spasm;
   const ls = rs.lung;
   // FU-4 F3: the catalogue value is the CEILING of the one-way-valve build-up, not the pressure itself. `lp.pPtx`
   // keeps its name, place and unit and now delivers the accumulated pressure (0 at onset).
@@ -699,11 +703,16 @@ export function applyRespCommand(rs: RespState, l1: L1State, cmd: Command, t: nu
     case 'airway': {
       const a = ev as Extract<RespClinicalEvent, { kind: 'airway' }>;
       if (a.state === 'oesophageal' && d.airway !== 'oesophageal') d.gastricN = 0;
+      const prevAirway = d.airway; // FU-6 R6
       d.airway = a.state;
       d.severity = a.severity ?? 1;
-      // Stage 7b: endobronchial is a mainstem block (its shunt/compliance emerge); bronchospasm raises airway R (Q20)
+      // Stage 7b: endobronchial is a mainstem block (its shunt/compliance emerge)
       rs.mainstemCmd = a.state === 'endobronchial' ? 'right' : rs.mainstemCmd === 'right' ? null : rs.mainstemCmd;
-      rs.rawEvent = a.state === 'bronchospasm' ? 1 + 5 * Math.min(1, d.severity) ** 1.5 : 1;
+      // FU-6 R6: ONE bronchospasm — the airway event is an alias of lungCondition bronchospasm (the same resistance, dead
+      // space, V/Q and capnogram whichever command started it; 1–1.25 stays the R39-6 near-fatal capnogram extreme)
+      const rest = rs.lungSpecs.filter((s) => !(s.id === 'bronchospasm' && s.side === undefined));
+      if (a.state === 'bronchospasm') rs.lungSpecs = [...rest, { id: 'bronchospasm', severity: d.severity }];
+      else if (prevAirway === 'bronchospasm') rs.lungSpecs = rest;
       applyLungSpecs(rs);
       withdraw(replan(d, t, LOSS.includes(a.state), false));
       return true;

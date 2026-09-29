@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveLung, reversibleShare, SMOOTH_MUSCLE } from '../../../src/l2/lung/conditions.ts';
 
-const R = (id: string, s: number, bd = 0, exempt: string[] = []) => resolveLung([{ id: id as never, severity: s }], 70, 1, 0, bd, exempt).lp;
+const R = (id: string, s: number, bd = 0, exempt: string[] = []) => resolveLung([{ id: id as never, severity: s }], 70, 0, bd, exempt).lp;
 const rL = (lp: ReturnType<typeof R>) => lp.side.map((x) => x.rLung);
 const near = (a: number[], b: number[]) => a.forEach((x, i) => expect(x).toBeCloseTo(b[i] as number, 9));
 
@@ -31,7 +31,7 @@ describe('FU-6 R2: one airway-smooth-muscle state (D1)', () => {
     expect(reversibleShare(0.85, 1, 15)).toBeGreaterThanOrEqual(0.95 * 0.85); // every fresh arm of this plan (0.963)
     expect(reversibleShare(0.85, 1.25, 0)).toBeCloseTo(0.85 * 0.4, 12); // near-fatal: oedema and plugging
     expect(reversibleShare(0.7, 1, 720)).toBeLessThanOrEqual(0.35 * 0.7); // a 12 h slow-onset attack
-    const aged = resolveLung([{ id: 'asthma', severity: 1 }], 70, 1, 0, 1, [], { asthma: 720 }).lp;
+    const aged = resolveLung([{ id: 'asthma', severity: 1 }], 70, 0, 1, [], { asthma: 720 }).lp;
     expect(rL(aged)[0]).toBeGreaterThan(rL(R('asthma', 1, 1))[0] as number); // less relaxed than a fresh attack
   });
 });
