@@ -41,9 +41,22 @@ for (const skin of ['philips-like', 'saadat-like']) {
     const tClick = await simT(page); // the script's times are relative to the click (≈ 1–5 s: later on a loaded machine)
     await page.click('#induction'); // propofol at sim +120 s (apnoea), BVM at +BVM_AT s (FU-8), ventilator at +330 s (× 4)
     const seen: Array<{ t: number; text: string; latched: string | null; lamp: string | null }> = [];
+    // FU-8 (gate, E-FU8-5): one sample = ONE page read. The four values were read in four round-trips, so on a loaded
+    // runner the bar's 2 s message rotation could fall between them and pair the latched APNEA's text with the next
+    // (live yellow) message's `data-latched` — the gate run's first philips-like attempt read "APNEA live" up to 308 s
+    // with the latched APNEA in the rotation throughout (it passed on retry)
     while ((await simT(page)) < 460) {
-      const bar = page.locator('.pme-bar');
-      seen.push({ t: await simT(page), text: await bar.innerText(), latched: await bar.getAttribute('data-latched'), lamp: await page.locator('.pme-lamp').getAttribute('data-lamp') });
+      seen.push(
+        await page.evaluate(() => {
+          const bar = document.querySelector<HTMLElement>('.pme-bar');
+          return {
+            t: (window as unknown as { __simT?: number }).__simT ?? 0,
+            text: bar?.innerText ?? '',
+            latched: bar?.getAttribute('data-latched') ?? null,
+            lamp: document.querySelector('.pme-lamp')?.getAttribute('data-lamp') ?? null,
+          };
+        }),
+      );
       await page.waitForTimeout(400);
     }
     // the gate note quotes these spans (sim s; logged before the assertions so a failing run records them too): when the APNEA was live, when latched, and the bar at the end
