@@ -41,10 +41,10 @@ index 0000000..85a7220
 +}
 diff --git a/apps/demo/e2e/stage9-app.e2e.ts b/apps/demo/e2e/stage9-app.e2e.ts
 new file mode 100644
-index 0000000..3f05494
+index 0000000..6a454fd
 --- /dev/null
 +++ b/apps/demo/e2e/stage9-app.e2e.ts
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,52 @@
 +// Stage 9: one document, one engine session. Switching views never restarts the engine (sim time keeps rising, the
 +// monitor host element is the same node), the scenario deep link still works, and a Remote in another page of the same
 +// browser pairs by code and moves the host's patient.
@@ -81,7 +81,9 @@ index 0000000..3f05494
 +  await go(page, '#/remote');
 +  const code = await page.evaluate(() => (window as unknown as App).__pmeApp.session.code);
 +  await expect(page.locator('.bigcode')).toHaveText(code);
-+  await expect(page.locator('.qr svg')).toBeVisible();
++  // version 1.0: same browser only; no relay → no QR code, and the page says so (review F2, ruling 6)
++  await expect(page.locator('.qr')).toHaveCount(0);
++  await expect(page.locator('.pair-note')).toContainText('this browser only');
 +  const remote = await context.newPage();
 +  await remote.goto(`${base}/#/remote?code=${code}`);
 +  await expect(remote.locator('.status-pill')).toHaveText(`Connected to ${code}`, { timeout: 10_000 });
@@ -1431,10 +1433,10 @@ index 0000000..3156cc8
 +}
 diff --git a/apps/demo/src/app/glossary-data.ts b/apps/demo/src/app/glossary-data.ts
 new file mode 100644
-index 0000000..ca0d1d5
+index 0000000..435e77f
 --- /dev/null
 +++ b/apps/demo/src/app/glossary-data.ts
-@@ -0,0 +1,352 @@
+@@ -0,0 +1,372 @@
 +// R56 clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-
 +// and-glossary.md §5, 294 entries, generated 2026-09-28 by the Stage 9 plan writer from the workspace research file; edits
 +// go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
@@ -1752,7 +1754,8 @@ index 0000000..ca0d1d5
 +
 +/**
 + * Stage 9 additions (Ali reviews them with the glossary, R56): labels the instructor controls need that research/11 does
-+ * not list as a monitored quantity. Numbered from 295 so research/11's numbers stay stable.
++ * not list as a monitored quantity. Numbers 295–299 are these five; entries added at Task 0/2 (the labels of the truth
++ * leaves FU-4, V.1, FU-6, FU-7 and 7k add) start at 300. research/11's numbers 1–294 never change.
 + */
 +export const GLOSSARY_S9: readonly GlossaryEntry[] = [
 +  { n: 295, s: 'S9', keys: [], label: 'BP', name: 'Arterial blood pressure target (systolic / diastolic): what ART and NIBP read', unit: 'mmHg', normal: '90–140 / 60–90' },
@@ -1786,16 +1789,35 @@ index 0000000..ca0d1d5
 +  'hemo.circ.p.eesLv': 'Ees LV', 'hemo.circ.p.eesRv': 'Ees RV', 'hemo.circ.p.v0Sv': 'Vu', 'hemo.circ.p.cSv': 'Cv',
 +  'hemo.circOut.qLungL': 'Q̇ L lung', 'hemo.circOut.qLungR': 'Q̇ R lung', 'hemo.circ.baro.es': 'Sympathetic tone', 'hemo.circ.baro.ev': 'Vagal tone',
 +  'ev.state.values.contractility': 'Contractility (×)', 'ev.state.values.volumeStatus': 'Volume status (×)',
++  // pattern keys (the key string as written in `keys`): one entry, several quantities per drug or site
++  'ev.drugs.drugs.<id>.rate': 'Infusion rate', 'ev.drugs.drugs.<id>.tci': 'TCI target',
++  'pk.bus.agents.<id>.nmj': 'Ce NMJ', 'pk.bus.agents.<id>.dia': 'Ce diaphragm', 'pk.bus.agents.<id>.vent': 'Ce ventilatory',
++  // a '*' key names several quantities under one label: only the paths named here get a clinical label (review F1)
++  'resp.temp.sites.oesophageal': 'Toes', 'resp.temp.sites.nasopharyngeal': 'Tnaso', 'resp.temp.sites.tympanic': 'Ttymp',
++  'resp.temp.sites.bladder': 'Tblad', 'resp.temp.sites.rectal': 'Trect', 'resp.temp.sites.axilla': 'Taxil',
 +};
++
++/**
++ * Stage 9 (review F1): the screen label where research/11's label, shortened, would name two different quantities.
++ * "T1" is both the core temperature (19) and the first twitch of the train-of-four (263); "UO" is mL/h (34) and
++ * mL/kg/h (245). Reviewed by Ali with the glossary.
++ */
++export const SHORT: Readonly<Record<number, string>> = { 245: 'UO/kg', 263: 'TOF T1' };
++
++/**
++ * Stage 9 (review F1): entries that are the same quantity as another entry (the truth copy of a monitor value), so a
++ * screen may show them under one label and Explore shows one row. Every other pair of entries must differ in label.
++ */
++export const SAME_AS: Readonly<Record<number, number>> = { 233: 31, 234: 32, 256: 193 };
 diff --git a/apps/demo/src/app/glossary.test.ts b/apps/demo/src/app/glossary.test.ts
 new file mode 100644
-index 0000000..b10e7fa
+index 0000000..1b6121a
 --- /dev/null
 +++ b/apps/demo/src/app/glossary.test.ts
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,69 @@
 +import { describe, expect, it } from 'vitest';
 +import { KEY_LABELS } from './glossary-data.ts';
-+import { ALL_ENTRIES, describeEntry, entry, labelOf, lookup, nameOf, STATE_VAR_ENTRY, unitOf } from './glossary.ts';
++import { ALL_ENTRIES, canon, describeEntry, entry, labelOf, lookup, nameOf, rowKey, shortLabel, STATE_VAR_ENTRY, unitOf } from './glossary.ts';
 +import { VITALS } from './vitals.ts';
 +
 +describe('R56 glossary', () => {
@@ -1824,6 +1846,34 @@ index 0000000..b10e7fa
 +    expect(labelOf('ev.labs.values.so2')).toBe('FO₂Hb');
 +    expect(labelOf('resp.o2.sa')).toBe('SaO₂');
 +  });
++  it('never gives two different quantities the same label (review F1; research/11 §5.16 rule 3)', () => {
++    // every key of every entry, with its wildcards filled in: both sides, two drugs, any segment
++    const fill = (k: string): string[] =>
++      k.includes('#') ? [...fill(k.replace('#', '0')), ...fill(k.replace('#', '1'))]
++        : /<[a-z]+>/.test(k) ? [...fill(k.replace(/<[a-z]+>/, 'propofol')), ...fill(k.replace(/<[a-z]+>/, 'rocuronium'))]
++          : k.includes('*') ? [...fill(k.replace('*', 'x')), ...fill(k.replace('*', 'y'))] : [k];
++    const byLabel = new Map<string, Set<string>>();
++    for (const e of ALL_ENTRIES) for (const k of e.keys) for (const p of fill(k)) {
++      const l = labelOf(p);
++      if (l === null) continue; // a '*' path without its own label is a model internal
++
++      byLabel.set(l, (byLabel.get(l) ?? new Set()).add(rowKey(p) as string));
++    }
++    const shared = [...byLabel].filter(([, keys]) => keys.size > 1); // one label, two quantities
++    expect(shared.map(([l, keys]) => `${l}: ${[...keys].join(' / ')}`)).toEqual([]);
++    expect(shortLabel(entry(19))).toBe('T1'); // core temperature
++    expect(shortLabel(entry(263))).toBe('TOF T1'); // first twitch
++    expect(labelOf('hemo.circ.p.rSys')).toBe('SVR (model)');
++    expect(labelOf('ev.circ.svr')).toBe('SVR');
++    expect(labelOf('resp.etco2')).toBe('EtCO₂ (true)');
++    expect(labelOf('ev.drugs.drugs.propofol.cp')).toBe('Cp (Propofol)');
++    expect(labelOf('pk.bus.agents.rocuronium.nmj')).toBe('Ce NMJ (Rocuronium)');
++    expect(canon(233)).toBe(31); // ICP truth = ICP monitor: one row in Explore
++    expect(rowKey('mon.icpMean')).toBe(rowKey('ev.organs.brain.icp'));
++    expect(rowKey('mon.etco2')).not.toBe(rowKey('resp.etco2'));
++    expect(labelOf('resp.temp.sites.nasopharyngeal')).toBe('Tnaso');
++    expect(labelOf('pk.bus.cns.loc')).toBeNull(); // '*' key: Model internals
++  });
 +  it('shows clinical units and names only (no notes written for the model authors)', () => {
 +    for (const e of ALL_ENTRIES) {
 +      expect(unitOf(e), `unit of ${e.n}`).not.toMatch(/engine|\(/);
@@ -1836,28 +1886,34 @@ index 0000000..b10e7fa
 +});
 diff --git a/apps/demo/src/app/glossary.ts b/apps/demo/src/app/glossary.ts
 new file mode 100644
-index 0000000..bb214b5
+index 0000000..59839e7
 --- /dev/null
 +++ b/apps/demo/src/app/glossary.ts
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,136 @@
 +// The R56 glossary at run time: engine key → clinical label, long name, unit and adult normal range. Every label the app
 +// shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the DOM of a
 +// clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
-+import type { StateVar } from '@pme/engine-core';
-+import { GLOSSARY, GLOSSARY_S9, KEY_LABELS, type GlossaryEntry } from './glossary-data.ts';
++import { DRUGS, type StateVar } from '@pme/engine-core';
++import { GLOSSARY, GLOSSARY_S9, KEY_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
 +
 +export type { GlossaryEntry } from './glossary-data.ts';
 +export const ALL_ENTRIES: readonly GlossaryEntry[] = [...GLOSSARY_S9, ...GLOSSARY]; // S9 first: its split rows win the exact keys
 +
 +const byN = new Map(ALL_ENTRIES.map((e) => [e.n, e]));
 +const exact = new Map<string, GlossaryEntry>();
-+const patterns: Array<{ re: RegExp; e: GlossaryEntry }> = [];
++const patterns: Array<{ re: RegExp; e: GlossaryEntry; key: string; kinds: string[] }> = [];
 +for (const e of ALL_ENTRIES) {
 +  for (const k of e.keys) {
-+    if (/[#*<]/.test(k)) patterns.push({ re: new RegExp(`^${k.replace(/\./g, '\\.').replace(/#/g, '(\\d+)').replace(/\*|<[a-z]+>/g, '[^.]+')}$`), e });
-+    else if (!exact.has(k)) exact.set(k, e);
++    if (/[#*<]/.test(k)) {
++      // one capture per wildcard, in order: '#' a side index, '*' any segment, '<id>'/'<agent>' a drug or agent id
++      const kinds = [...k.matchAll(/#|\*|<[a-z]+>/g)].map((m) => m[0]);
++      patterns.push({ re: new RegExp(`^${k.replace(/\./g, '\\.').replace(/#/g, '(\\d+)').replace(/\*|<[a-z]+>/g, '([^.]+)')}$`), e, key: k, kinds });
++    } else if (!exact.has(k)) exact.set(k, e);
 +  }
 +}
++
++/** The entry number a quantity is filed under: a truth copy of a monitor value counts as the monitor entry (F1). */
++export const canon = (n: number): number => SAME_AS[n] ?? n;
 +
 +/** The glossary entry by its research/11 number. Throws on an unknown number (a typo is a bug). */
 +export function entry(n: number): GlossaryEntry {
@@ -1866,31 +1922,79 @@ index 0000000..bb214b5
 +  return e;
 +}
 +
-+/** The label a screen shows: the glossary label up to its first parenthesis ("T1 (Tcore)" → "T1"). */
-+export const shortLabel = (e: GlossaryEntry): string => e.label.replace(/\s*\(.*$/, '').trim() || e.label;
++const strip = (label: string): string => label.replace(/\s*\(.*$/, '').trim() || label;
++/** Shortened label → the distinct quantities (canonical entry numbers) that would show it. */
++const byShort = new Map<string, Set<number>>();
++for (const e of ALL_ENTRIES) {
++  const s = SHORT[e.n] ?? strip(e.label);
++  byShort.set(s, (byShort.get(s) ?? new Set()).add(canon(e.n)));
++}
++
++/**
++ * The label a screen shows. The glossary label loses its parenthesis only when what is left names one quantity
++ * ("T1 (Tcore)" → "T1", "ART M (MAP)" → "ART M"); a qualifier that tells two quantities apart stays ("SVR (model)",
++ * "EtCO₂ (true)", "RR (spont)"); SHORT overrides where research/11's own label is shared ("TOF T1"). Review F1.
++ */
++export function shortLabel(e: GlossaryEntry): string {
++  const fixed = SHORT[e.n];
++  if (fixed) return fixed;
++  const s = strip(e.label);
++  return (byShort.get(s)?.size ?? 1) > 1 ? e.label : s;
++}
 +
 +export interface Lookup {
 +  e: GlossaryEntry;
 +  /** "L " / "R " for per-side keys, else "". */
 +  side: string;
++  /** The key as written in the glossary (a pattern key keeps its wildcards). */
++  key: string;
++  /** The segments the wildcards matched, in order ('' for an exact key). */
++  caps: string[];
++  /** The drug or agent a '<id>'/'<agent>' wildcard matched, when the 7g library knows it. */
++  drug: string | null;
 +}
 +
 +/** Glossary entry for a truth path, or null (then the path is a model internal and stays out of clinical views). */
 +export function lookup(path: string): Lookup | null {
 +  const e = exact.get(path);
-+  if (e) return { e, side: '' };
++  if (e) return { e, side: '', key: path, caps: [], drug: null };
 +  for (const p of patterns) {
 +    const m = p.re.exec(path);
-+    if (m) return { e: p.e, side: p.e.keys.some((k) => k.includes('#')) && m[1] !== undefined ? `${m[1] === '0' ? 'L' : 'R'} ` : '' };
++    if (!m) continue;
++    const caps = m.slice(1).map((x) => x ?? '');
++    const sideAt = p.kinds.indexOf('#');
++    const idAt = p.kinds.findIndex((k) => k.startsWith('<'));
++    const side = sideAt >= 0 ? `${caps[sideAt] === '0' ? 'L' : 'R'} ` : '';
++    const id = idAt >= 0 ? (caps[idAt] ?? '') : '';
++    return { e: p.e, side, key: p.key, caps, drug: id && DRUGS[id] ? id : null };
 +  }
 +  return null;
 +}
 +
-+/** The label for a truth path ("R CL", "SvO₂", "NIBP D"), or null. A multi-quantity entry uses its per-key label. */
++/**
++ * The label for a truth path ("R CL", "SvO₂", "NIBP D", "Cp (Propofol)"), or null. A multi-quantity entry uses its
++ * per-key label; a per-drug path names the drug, so two drugs' concentrations never share a label (review F1).
++ */
 +export function labelOf(path: string): string | null {
 +  const l = lookup(path);
-+  return l ? `${l.side}${KEY_LABELS[path] ?? shortLabel(l.e)}` : null;
++  if (!l) return null;
++  // a '*' wildcard cannot tell its quantities apart: without a per-path label the path stays a model internal
++  if (l.key.includes('*') && KEY_LABELS[path] === undefined) return null;
++  const base = KEY_LABELS[path] ?? KEY_LABELS[l.key] ?? shortLabel(l.e);
++  return `${l.side}${base}${l.drug ? ` (${drugName(l.drug)})` : ''}`;
 +}
++
++/**
++ * One key per distinct quantity for a list that must not repeat a value (Explore): the canonical entry, the per-key
++ * label and the wildcard segments. Two copies of one quantity (monitor and truth) share a key; two quantities never do.
++ */
++export function rowKey(path: string): string | null {
++  const l = lookup(path);
++  return l && labelOf(path) !== null ? `${canon(l.e.n)}|${l.side}${KEY_LABELS[path] ?? KEY_LABELS[l.key] ?? ''}|${l.caps.join('.')}` : null;
++}
++
++/** A drug's display name (the 7g library's name). */
++export const drugName = (id: string): string => DRUGS[id]?.name ?? 'Drug';
 +
 +/** research/11 annotates some cells for the model's authors ("(engine fraction)", "engine 552 mL/min…: check the
 + *  definition"); a screen shows the clinical part only. */
@@ -2158,6 +2262,92 @@ index 0000000..909da7c
 +  // e2e hook: the engine ids the glossary test must never find in a clinical view
 +  const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
 +  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds } });
++}
+diff --git a/apps/demo/src/app/pairing.test.ts b/apps/demo/src/app/pairing.test.ts
+new file mode 100644
+index 0000000..7a9f59a
+--- /dev/null
++++ b/apps/demo/src/app/pairing.test.ts
+@@ -0,0 +1,27 @@
++import { describe, expect, it } from 'vitest';
++import { pairingOf, pairingUrl } from './pairing.ts';
++
++const at = (href: string) => {
++  const u = new URL(href);
++  return { origin: u.origin, hostname: u.hostname, pathname: u.pathname, search: u.search };
++};
++
++describe('remote pairing (review F2, ruling 6)', () => {
++  it('without a relay: same browser only, no QR code', () => {
++    const p = pairingOf('AGD5YJ', at('http://127.0.0.1:5173/'));
++    expect(p).toMatchObject({ url: 'http://127.0.0.1:5173/#/remote?code=AGD5YJ', relay: null, qr: false });
++    expect(p.note).toMatch(/this browser only/);
++    expect(pairingOf('AGD5YJ', at('http://192.168.1.20:5173/')).qr).toBe(false); // a LAN address alone is not enough
++  });
++  it('with a relay: the QR code only on an address another device can reach', () => {
++    const lan = pairingOf('AGD5YJ', at('http://192.168.1.20:5173/?relay=ws://192.168.1.20:8787'));
++    expect(lan.qr).toBe(true);
++    expect(lan.url).toBe('http://192.168.1.20:5173/?relay=ws%3A%2F%2F192.168.1.20%3A8787#/remote?code=AGD5YJ');
++    for (const host of ['localhost', '127.0.0.1']) {
++      const p = pairingOf('AGD5YJ', at(`http://${host}:5173/?relay=ws://localhost:8787`));
++      expect(p.qr, host).toBe(false);
++      expect(p.note).toMatch(/this computer only/);
++    }
++    expect(pairingUrl('X8N9HH', at('http://10.0.0.5/app/'))).toBe('http://10.0.0.5/app/#/remote?code=X8N9HH');
++  });
++});
+diff --git a/apps/demo/src/app/pairing.ts b/apps/demo/src/app/pairing.ts
+new file mode 100644
+index 0000000..59a5133
+--- /dev/null
++++ b/apps/demo/src/app/pairing.ts
+@@ -0,0 +1,47 @@
++// How the host offers a Remote (review F2; orchestrator ruling 6). Version 1.0 pairs a Remote in the SAME browser only:
++// the default transport is a BroadcastChannel, which never leaves the browser profile. A tablet on the network needs
++// the Stage 6a relay (?relay=ws://…) and a network address the tablet can reach; that path is a version 1.1 feature,
++// so without a relay the host shows no QR code and says so. No DOM here: the host view and its test read the result.
++
++export interface PairingLocation {
++  origin: string;
++  hostname: string;
++  pathname: string;
++  search: string;
++}
++
++export interface Pairing {
++  /** The address a Remote opens: this page at #/remote with the code (and the relay, when one is configured). */
++  url: string;
++  relay: string | null;
++  /** Show the QR code: only with a relay and an address another device can reach. */
++  qr: boolean;
++  /** One sentence for the host, in plain words. */
++  note: string;
++}
++
++/** Loopback hosts: an address on them works on this computer only. */
++const LOOPBACK = /^(localhost|127\.\d+\.\d+\.\d+|\[?::1\]?|0\.0\.0\.0)$/i;
++
++export function pairingUrl(code: string, loc: PairingLocation): string {
++  const relay = new URLSearchParams(loc.search).get('relay');
++  return `${loc.origin}${loc.pathname}${relay ? `?relay=${encodeURIComponent(relay)}` : ''}#/remote?code=${code}`;
++}
++
++export function pairingOf(code: string, loc: PairingLocation): Pairing {
++  const relay = new URLSearchParams(loc.search).get('relay');
++  const url = pairingUrl(code, loc);
++  if (!relay) {
++    return {
++      url, relay: null, qr: false,
++      note: 'In this version the remote works in this browser only: open it in a new window or tab on this computer. Pairing a tablet over the network needs the relay server and comes in version 1.1.',
++    };
++  }
++  if (LOOPBACK.test(loc.hostname)) {
++    return {
++      url, relay, qr: false,
++      note: 'This address works on this computer only. Open the app by its network address (for example http://192.168.1.20:5173/?relay=…) so a tablet can reach it.',
++    };
++  }
++  return { url, relay, qr: true, note: 'Network pairing through the relay is a preview of version 1.1. Scan the code with a tablet on the same network.' };
 +}
 diff --git a/apps/demo/src/app/panel/airway.ts b/apps/demo/src/app/panel/airway.ts
 new file mode 100644
@@ -4468,10 +4658,10 @@ index 0000000..53aede5
 +});
 diff --git a/apps/demo/src/app/ui.ts b/apps/demo/src/app/ui.ts
 new file mode 100644
-index 0000000..450c399
+index 0000000..7cb3d7b
 --- /dev/null
 +++ b/apps/demo/src/app/ui.ts
-@@ -0,0 +1,274 @@
+@@ -0,0 +1,275 @@
 +// The app's small component set (research/13 brief §7), plain DOM, no library: element builder, buttons, segmented
 +// control, numeric stepper with unit, glossary tooltip, confirm dialog (native <dialog>), toasts. Every input gets a
 +// label; every control is ≥ the --target size from app.css.
@@ -4517,10 +4707,11 @@ index 0000000..450c399
 +document.addEventListener('keydown', (e) => e.key === 'Escape' && hideTip());
 +document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.('.tip') && hideTip());
 +
-+/** "ⓘ" button that shows a glossary entry's long name, unit and normal range. */
-+export function tip(e: GlossaryEntry): HTMLButtonElement {
++/** "ⓘ" button that shows a glossary entry's long name, unit and normal range. `label` names the button after the row
++ *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name (review F1). */
++export function tip(e: GlossaryEntry, label = shortLabel(e)): HTMLButtonElement {
 +  const text = `${e.label}\n${describeEntry(e)}`;
-+  const b = h('button', { type: 'button', class: 'tip', 'aria-label': `About ${shortLabel(e)}` }, 'ⓘ');
++  const b = h('button', { type: 'button', class: 'tip', 'aria-label': `About ${label}` }, 'ⓘ');
 +  b.addEventListener('mouseenter', () => showTip(b, text));
 +  b.addEventListener('mouseleave', hideTip);
 +  b.addEventListener('focus', () => showTip(b, text));
@@ -4804,10 +4995,10 @@ index 0000000..8901dfe
 +}
 diff --git a/apps/demo/src/app/views/explore.ts b/apps/demo/src/app/views/explore.ts
 new file mode 100644
-index 0000000..93d843f
+index 0000000..fd1aca8
 --- /dev/null
 +++ b/apps/demo/src/app/views/explore.ts
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,137 @@
 +// Explore physiology (research/13 §4.5; R56): the Stage 7x console's data, re-presented for residents in the light
 +// bench theme. Every row is labelled from the glossary (label, tooltip with the full name, unit and adult normal) and
 +// grouped by organ; a change from the baseline is marked with an arrow and a tint, not colour alone. Values the
@@ -4817,7 +5008,7 @@ index 0000000..93d843f
 +import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 +import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
 +import type { GroupId } from '../../physiology-console/organs.ts';
-+import { DISPLAY_SCALE, entry, labelOf, lookup, shortLabel, unitOf } from '../glossary.ts';
++import { DISPLAY_SCALE, entry, labelOf, lookup, rowKey, shortLabel, unitOf } from '../glossary.ts';
 +import { hrefOf } from '../router.ts';
 +import type { AppSession } from '../session.ts';
 +import type { SiteProfile } from '../site.ts';
@@ -4899,15 +5090,21 @@ index 0000000..93d843f
 +      if (s.gloss) return !!l && s.gloss.includes(l.e.s);
 +      return s.groups.includes(r.group);
 +    });
-+    const clinical = rows.filter((r) => !!lookup(r.path) && !r.internal && typeof r.value !== 'object');
-+    // one row per clinical label: the same quantity often arrives from the monitor and from the truth tree
++    const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && typeof r.value !== 'object');
++    // one row per quantity (review F1): the monitor and the truth copy of one value share a row key; two different
++    // quantities never do, even when research/11 gives them similar labels
 +    const seen = new Set<string>();
-+    body.replaceChildren(...clinical.filter((r) => (!changedOnly || r.dir) && !seen.has(labelOf(r.path) ?? '') && seen.add(labelOf(r.path) ?? '')).map((r) => {
++    const once = (r: Row) => {
++      const k = rowKey(r.path) ?? r.path;
++      return !seen.has(k) && !!seen.add(k);
++    };
++    body.replaceChildren(...clinical.filter((r) => (!changedOnly || r.dir) && once(r)).map((r) => {
 +      const l = lookup(r.path);
 +      const d = displayOf(r);
 +      const e = l?.e;
++      const label = labelOf(r.path) ?? '';
 +      return h('tr', r.dir ? { 'data-dir': r.dir } : {},
-+        h('th', { scope: 'row', class: 'l' }, h('span', { class: 'lbl' }, h('b', {}, labelOf(r.path) ?? ''), e ? tip(e) : null)),
++        h('th', { scope: 'row', class: 'l' }, h('span', { class: 'lbl' }, h('b', {}, label), e ? tip(e, label) : null)),
 +        h('td', { class: 'v num' }, d.value), h('td', { class: 'u' }, d.unit), h('td', { class: 'n' }, e?.normal && e.normal !== '—' ? e.normal : ''),
 +        h('td', { class: 'd num' }, r.dir ? d.delta : ''));
 +    }));
@@ -4961,44 +5158,42 @@ index 0000000..daa20fa
 +}
 diff --git a/apps/demo/src/app/views/remote.ts b/apps/demo/src/app/views/remote.ts
 new file mode 100644
-index 0000000..021ef48
+index 0000000..cb5d391
 --- /dev/null
 +++ b/apps/demo/src/app/views/remote.ts
-@@ -0,0 +1,75 @@
-+// Remote (research/13 §4.4): on the host screen, how to pair (the code, a QR of the pairing link, "open here"); on a
-+// tablet or phone opened at #/remote, the instructor panel alone, joined by the 6-letter code over the Stage 6a
-+// transports (BroadcastChannel in the same browser; the relay when the link carries ?relay=). The Remote never runs an
-+// engine: it sends commands and reads state, as the 6a remote does.
+@@ -0,0 +1,73 @@
++// Remote (research/13 §4.4): on the host screen, how to pair (the code, "open here", and a QR code only where another
++// device can use it); in a window opened at #/remote, the instructor panel alone, joined by the 6-letter code over the
++// Stage 6a transports (BroadcastChannel in the same browser; the relay when the link carries ?relay=). Version 1.0 is
++// same-browser only (review F2, orchestrator ruling 6): tablet pairing over the relay is version 1.1. The Remote never
++// runs an engine: it sends commands and reads state, as the 6a remote does.
 +import { ControllerSession, createBroadcastChannelTransport, createWebSocketTransport, normalizeSessionCode, type ManagedTransport } from '@pme/controller';
 +import { Link } from '../link.ts';
 +import { mountPanel } from '../panel/panel.ts';
++import { pairingOf } from '../pairing.ts';
 +import { qrSvg } from '../qr.ts';
 +import { mountSessionBar } from '../sessionbar.ts';
 +import type { SiteProfile } from '../site.ts';
 +import { button, h, input, setText, throttle } from '../ui.ts';
 +import type { View } from '../shell.ts';
 +
-+export function pairingUrl(code: string, loc: Location = location): string {
-+  const relay = new URLSearchParams(loc.search).get('relay');
-+  return `${loc.origin}${loc.pathname}${relay ? `?relay=${encodeURIComponent(relay)}` : ''}#/remote?code=${code}`;
-+}
-+
 +const hashParam = (k: string): string | null => new URLSearchParams(location.hash.split('?')[1] ?? '').get(k);
 +
 +export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLElement; code?: string }): View {
 +  if (!o.hostless) {
 +    const code = o.code ?? '';
-+    const url = pairingUrl(code);
++    const p = pairingOf(code, location);
 +    const el = h('section', { 'aria-labelledby': 'rm-h' }, h('div', { class: 'page narrow' },
-+      h('h1', { id: 'rm-h' }, 'Pair a tablet as the remote'),
-+      h('p', { class: 'lede' }, 'Run the case from a tablet or phone while the room watches this monitor. Both devices must reach this computer on the same network.'),
++      h('h1', { id: 'rm-h' }, 'Pair a remote'),
++      h('p', { class: 'lede' }, 'Run the case from a second window while the room watches this monitor. The remote shows the instructor panel alone.'),
++      h('p', { class: 'hint pair-note', role: 'note' }, p.note),
 +      h('div', { class: 'pair' },
-+        h('div', { class: 'qr', role: 'img', 'aria-label': 'QR code of the pairing link' }, qrSvg(url, 200)),
++        p.qr ? h('div', { class: 'qr', role: 'img', 'aria-label': 'QR code of the pairing link' }, qrSvg(p.url, 200)) : null,
 +        h('div', {},
-+          h('p', {}, 'Scan the code with the tablet, or open this address and enter the code:'),
-+          h('p', { class: 'mono url' }, url),
++          h('p', {}, p.qr ? 'Scan the code with the tablet, or open this address and enter the code:' : 'Open the remote here, or enter this code in a remote window:'),
++          p.relay ? h('p', { class: 'mono url' }, p.url) : null,
 +          h('p', { class: 'bigcode', 'aria-label': `Code ${code.split('').join(' ')}` }, code),
-+          h('div', { class: 'actions' }, button('Open the remote in a new window', () => window.open(url, 'pme-remote', 'width=520,height=900'))))),
++          h('div', { class: 'actions' }, button('Open the remote in a new window', () => window.open(p.url, 'pme-remote', 'width=520,height=900'))))),
 +    ));
 +    return { id: 'remote', el };
 +  }
@@ -5012,7 +5207,7 @@ index 0000000..021ef48
 +  const join = h('form', { class: 'setup narrow', onsubmit: (e: Event) => {
 +    e.preventDefault();
 +    connect(codeIn.inp.value);
-+  } }, h('h1', {}, 'Instructor remote'), h('p', { class: 'lede' }, 'Enter the 6-letter code shown on the monitor under Remote, or scan its QR code.'), codeIn.el, err, h('div', { class: 'actions' }, button('Connect', () => connect(codeIn.inp.value), 'primary')));
++  } }, h('h1', {}, 'Instructor remote'), h('p', { class: 'lede' }, 'Enter the 6-letter code the host screen shows under Remote.'), codeIn.el, err, h('div', { class: 'actions' }, button('Connect', () => connect(codeIn.inp.value), 'primary')));
 +  const el = h('section', { 'aria-label': 'Remote' }, join, holder);
 +
 +  function connect(raw: string): void {
@@ -5106,7 +5301,7 @@ index 0000000..a9d6ac5
 +const field = (label: string, control: HTMLElement) => h('div', { class: 'field' }, h('span', {}, label), control);
 diff --git a/apps/demo/src/app/views/start.ts b/apps/demo/src/app/views/start.ts
 new file mode 100644
-index 0000000..800aedb
+index 0000000..8f38949
 --- /dev/null
 +++ b/apps/demo/src/app/views/start.ts
 @@ -0,0 +1,174 @@
@@ -5251,7 +5446,7 @@ index 0000000..800aedb
 +    h('div', { class: 'actions' },
 +      button('Open the instructor view', () => void go('teach'), 'primary'),
 +      button('Open the learner monitor', () => void go('monitor')),
-+      h('a', { class: 'btn ghost', href: hrefOf('remote') }, 'Pair a tablet as the remote'),
++      h('a', { class: 'btn ghost', href: hrefOf('remote') }, 'Open a remote'),
 +    ),
 +  );
 +
@@ -5503,3 +5698,199 @@ index 60a25ec..11d513b 100644
      expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
    });
  
+diff --git a/packages/engine-core/src/l3/alarms/profile.ts b/packages/engine-core/src/l3/alarms/profile.ts
+index 9d161d0..9b9f5d4 100644
+--- a/packages/engine-core/src/l3/alarms/profile.ts
++++ b/packages/engine-core/src/l3/alarms/profile.ts
+@@ -54,6 +54,8 @@ export interface DeviceProfile {
+   ageBand: AgeBand;
+   /** 'asterisks' → IEC-style `***HR 130>120`; 'none' → Saadat-like `HR TOO HIGH` (brief §6.4, §6.4.1). */
+   prefix: 'asterisks' | 'none';
++  /** Stage 9 (E-S9-4, R-FU5-6): the skin's own words for fixed alarm texts (skin `alarms.wording.texts`); absent = IEC. */
++  texts?: Readonly<Partial<Record<string, string>>>;
+   factoryEnabled: boolean;
+   /** Preset per-parameter switches by limit-key group ('HR', 'NIBP', 'SpO2', …) over factoryEnabled (brief §6.9). */
+   switches: Record<string, boolean>;
+@@ -142,7 +144,7 @@ function limitsFor(r: ResolvedSkin, band: AgeBand): Record<string, LimitDef> {
+     const scale = key.endsWith('_pctV') ? BAROMETRIC_MMHG / 100 : 1;
+     out[key] = {
+       numeric: k.numeric,
+-      label: k.label,
++      label: r.skin.alarms.wording?.limitLabels?.[key] ?? k.label, // Stage 9 (E-S9-4): the skin's own label
+       upper: k.upper,
+       low: v[0] * scale,
+       high: v[1] * scale,
+@@ -167,6 +169,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
+     skin: id,
+     ageBand: band,
+     prefix: a.messageBar.prefix,
++    texts: { ...(a.wording?.texts ?? {}) },
+     factoryEnabled: a.factoryEnabled,
+     switches: { ...(r.preset?.alarmSwitches ?? {}) },
+     alwaysOn: [...a.alwaysOn],
+diff --git a/packages/engine-core/src/l3/alarms/text.ts b/packages/engine-core/src/l3/alarms/text.ts
+index e5a51a5..2ee38ab 100644
+--- a/packages/engine-core/src/l3/alarms/text.ts
++++ b/packages/engine-core/src/l3/alarms/text.ts
+@@ -66,7 +66,7 @@ const stars = (level: AlarmLevel): string => '*'.repeat(4 - level);
+ 
+ export function fixedText(p: DeviceProfile, id: FixedAlarmId, level: AlarmLevel, technical: boolean): string {
+   if (p.prefix === 'none') return SAADAT_TEXT[id];
+-  return `${technical ? '' : stars(level)}${IEC_TEXT[id]}`;
++  return `${technical ? '' : stars(level)}${p.texts?.[id] ?? IEC_TEXT[id]}`; // Stage 9 (E-S9-4): the skin's wording first
+ }
+ 
+ /**
+diff --git a/packages/engine-core/test/l3/alarms/stage9-wording.test.ts b/packages/engine-core/test/l3/alarms/stage9-wording.test.ts
+new file mode 100644
+index 0000000..e3551bc
+--- /dev/null
++++ b/packages/engine-core/test/l3/alarms/stage9-wording.test.ts
+@@ -0,0 +1,26 @@
++// Stage 9 (E-S9-4, FU-5 R-FU5-6): mindray-, ge-, zoll- and lifepak-like print their own words for the arterial line
++// and the temperature probe ("ART", "T1", "EtCO2"); philips-like keeps the IEC table's Philips aliases and saadat-like
++// its own texts. Wording only: the level and the prefix stay the skin's.
++import { describe, expect, it } from 'vitest';
++import { deviceProfile } from '../../../src/l3/alarms/profile.ts';
++import { fixedText, limitText } from '../../../src/l3/alarms/text.ts';
++
++describe('per-skin alarm wording (Stage 9 E-S9-4)', () => {
++  it.each(['mindray-like', 'ge-like', 'zoll-like', 'lifepak-like'])('%s: ART and T1 in fixed and limit texts', (skin) => {
++    const p = deviceProfile(skin);
++    expect(fixedText(p, 'abpNonPulsatile', 3, true)).toBe('ART NON-PULSATILE');
++    expect(fixedText(p, 'abpDisconnect', 1, false)).toBe('***ART DISCONNECT');
++    expect(fixedText(p, 'abpZero', 3, true)).toBe('ART ZEROING');
++    expect(fixedText(p, 'tempProbeOff', 3, true)).toBe('T1 NO TRANSDUCER');
++    expect(fixedText(p, 'VFIB', 1, false)).toBe('***VFIB/VTACH'); // ids without a skin word keep the IEC table
++    const art = p.limits.ART_S;
++    if (art) expect(limitText(p, art, 'LOW', 21)).toBe(`**ART S 21<${(art.low as number).toFixed(0)}`);
++  });
++  it('philips-like keeps the Philips aliases; saadat-like keeps its own texts', () => {
++    const ph = deviceProfile('philips-like');
++    expect(fixedText(ph, 'abpNonPulsatile', 3, true)).toBe('ABP NON-PULSATILE');
++    expect(fixedText(ph, 'tempProbeOff', 3, true)).toBe('TEMP NO TRANSDUCER');
++    expect(ph.limits.ART_S?.label).toBe('ABPs');
++    expect(fixedText(deviceProfile('saadat-like'), 'abpNonPulsatile', 3, true)).toBe('IBP1 STATIC PRESSURE');
++  });
++});
+diff --git a/packages/skins/src/data/skins/ge-like.json b/packages/skins/src/data/skins/ge-like.json
+index e5e67ea..607f672 100644
+--- a/packages/skins/src/data/skins/ge-like.json
++++ b/packages/skins/src/data/skins/ge-like.json
+@@ -22,9 +22,10 @@
+   },
+   "limits": { "adult": null, "paed": null, "neo": null },
+   "layout": { "badge": "LAYOUT UNVERIFIED" },
+-  "alarms": { "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
++  "alarms": { "wording": { "texts": { "abpNonPulsatile": "ART NON-PULSATILE", "abpDisconnect": "ART DISCONNECT", "abpZero": "ART ZEROING", "tempProbeOff": "T1 NO TRANSDUCER" }, "limitLabels": { "ART_S": "ART S", "ART_D": "ART D", "ART_M": "ART M", "EtCO2": "EtCO2", "EtCO2_pctV": "EtCO2", "TEMP": "T1" } }, "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } } },
+   "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
+   "provenance": {
++    "alarms.wording": { "tag": "inferred", "source": "research/11 §5.16 rule 2 and §5.1 conventions (GE/Mr/Dr/NK/Sa \"ART\", GE/Mr/Sa \"EtCO₂\" and \"T1\"; Philips keeps ABP/etCO2/Temp); FU-5 R-FU5-6, Stage 9 E-S9-4" },
+     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (GE sidestream 120 mL/min; R39-5)" },
+     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (GE sidestream 120 mL/min; R39-5)" },
+     "colors": { "tag": "assumed", "source": "research/05 §2.1 (GE: per-label colours configurable)", "note": "no GE factory colour table retrieved" },
+diff --git a/packages/skins/src/data/skins/lifepak-like.json b/packages/skins/src/data/skins/lifepak-like.json
+index 66256ef..840cf52 100644
+--- a/packages/skins/src/data/skins/lifepak-like.json
++++ b/packages/skins/src/data/skins/lifepak-like.json
+@@ -27,7 +27,9 @@
+   "defib": { "energyAdultJ": 200, "energyPaedJ": 50, "aedSequenceJ": [200, 300, 360], "chargeTimeS": { "200": 7, "360": 10 }, "readyTimeoutS": 60, "toneSet": "lifepak-like" },
+   "pacer": { "rateDefault": 60, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 10 }, "modeDefault": "demand", "pausePct": 25 },
+   "co2": { "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
++  "alarms": { "wording": { "texts": { "abpNonPulsatile": "ART NON-PULSATILE", "abpDisconnect": "ART DISCONNECT", "abpZero": "ART ZEROING", "tempProbeOff": "T1 NO TRANSDUCER" }, "limitLabels": { "ART_S": "ART S", "ART_D": "ART D", "ART_M": "ART M", "EtCO2": "EtCO2", "EtCO2_pctV": "EtCO2", "TEMP": "T1" } } },
+   "provenance": {
++    "alarms.wording": { "tag": "inferred", "source": "research/11 §5.16 rule 2 and §5.1 conventions (GE/Mr/Dr/NK/Sa \"ART\", GE/Mr/Sa \"EtCO₂\" and \"T1\"; Philips keeps ABP/etCO2/Temp); FU-5 R-FU5-6, Stage 9 E-S9-4" },
+     "co2.sidestreamDelayS": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+     "co2.riseTimeMs": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+     "colors": { "tag": "assumed", "source": "research/05 §2.1", "note": "conventional parameter colours; no LIFEPAK factory table retrieved" },
+diff --git a/packages/skins/src/data/skins/mindray-like.json b/packages/skins/src/data/skins/mindray-like.json
+index 6153c36..b9bc770 100644
+--- a/packages/skins/src/data/skins/mindray-like.json
++++ b/packages/skins/src/data/skins/mindray-like.json
+@@ -20,6 +20,7 @@
+   },
+   "layout": { "badge": "LAYOUT UNVERIFIED", "messageBars": "split-technical-physiological" },
+   "alarms": {
++    "wording": { "texts": { "abpNonPulsatile": "ART NON-PULSATILE", "abpDisconnect": "ART DISCONNECT", "abpZero": "ART ZEROING", "tempProbeOff": "T1 NO TRANSDUCER" }, "limitLabels": { "ART_S": "ART S", "ART_D": "ART D", "ART_M": "ART M", "EtCO2": "EtCO2", "EtCO2_pctV": "EtCO2", "TEMP": "T1" } },
+     "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } },
+     "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
+     "latching": { "visual": "off", "audible": "off" },
+@@ -59,6 +60,7 @@
+   },
+   "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
+   "provenance": {
++    "alarms.wording": { "tag": "inferred", "source": "research/11 §5.16 rule 2 and §5.1 conventions (GE/Mr/Dr/NK/Sa \"ART\", GE/Mr/Sa \"EtCO₂\" and \"T1\"; Philips keeps ABP/etCO2/Temp); FU-5 R-FU5-6, Stage 9 E-S9-4" },
+     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
+     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
+     "colors.ECG": { "tag": "documented", "source": "research/05 §2.1 (ECG 'normally green')" },
+diff --git a/packages/skins/src/data/skins/zoll-like.json b/packages/skins/src/data/skins/zoll-like.json
+index 0b2f22d..2639093 100644
+--- a/packages/skins/src/data/skins/zoll-like.json
++++ b/packages/skins/src/data/skins/zoll-like.json
+@@ -22,12 +22,13 @@
+   "sweep": { "co2": { "options": [3.13, 6.25, 12.5], "default": 6.25 } },
+   "ecg": { "gainOptions": [0.125, 0.25, 0.5, 1, 2, 4, "AUTO"], "gainDefault": 1, "gainLabel": "cm-per-mV" },
+   "beep": { "defaultOn": false },
+-  "alarms": { "repeatS": { "L1": 15, "L2": 30, "L3": null } },
++  "alarms": { "wording": { "texts": { "abpNonPulsatile": "ART NON-PULSATILE", "abpDisconnect": "ART DISCONNECT", "abpZero": "ART ZEROING", "tempProbeOff": "T1 NO TRANSDUCER" }, "limitLabels": { "ART_S": "ART S", "ART_D": "ART D", "ART_M": "ART M", "EtCO2": "EtCO2", "EtCO2_pctV": "EtCO2", "TEMP": "T1" } }, "repeatS": { "L1": 15, "L2": 30, "L3": null } },
+   "syncMarker": "r-above",
+   "defib": { "energyAdultJ": 120, "energyPaedJ": 50, "aedSequenceJ": null, "chargeTimeS": null, "readyTimeoutS": 60, "toneSet": "zoll-like" },
+   "pacer": { "rateDefault": 70, "rateRange": [30, 180], "mADefault": 0, "mARange": [0, 140], "mAStep": { "up": 10, "down": 5 }, "modeDefault": "demand", "pausePct": null },
+   "co2": { "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
+   "provenance": {
++    "alarms.wording": { "tag": "inferred", "source": "research/11 §5.16 rule 2 and §5.1 conventions (GE/Mr/Dr/NK/Sa \"ART\", GE/Mr/Sa \"EtCO₂\" and \"T1\"; Philips keeps ABP/etCO2/Temp); FU-5 R-FU5-6, Stage 9 E-S9-4" },
+     "co2.sidestreamDelayS": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+     "co2.riseTimeMs": { "tag": "assumed", "source": "research/09 §5; R39-5 fallback", "note": "the skin research does not record this vendor's CO2 sampling technology; mainstream would be 0 s / 55 ms" },
+     "colors": { "tag": "assumed", "source": "research/05 §2.1 (ZOLL: user-configurable colour, black background)", "note": "conventional parameter colours; no ZOLL factory table retrieved" },
+diff --git a/packages/skins/src/schema.ts b/packages/skins/src/schema.ts
+index 3041480..dd2ff22 100644
+--- a/packages/skins/src/schema.ts
++++ b/packages/skins/src/schema.ts
+@@ -93,6 +93,7 @@ const alarms = obj(
+     repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),
+     lowPulses: en([1, 2]),
+     numericStyle: en(['flash-text', 'flash-box']),
++    wording: obj({}, { texts: record(str, '^[A-Za-z0-9_-]+$'), limitLabels: record(str) }), // Stage 9 (E-S9-4)
+   },
+ );
+ 
+diff --git a/packages/skins/src/types.ts b/packages/skins/src/types.ts
+index 5b4c2be..dfa81c9 100644
+--- a/packages/skins/src/types.ts
++++ b/packages/skins/src/types.ts
+@@ -211,6 +211,12 @@ export interface Skin {
+     volume: { min: number; max: number; default: number };
+     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
+     messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** FU-5: rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
++    /**
++     * Stage 9 (E-S9-4, FU-5 R-FU5-6): the vendor's own words for alarm texts, where they differ from the IEC table's
++     * Philips aliases — `texts` by fixed alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key
++     * ('ART_S', 'TEMP', …). Wording only: levels, timing and latching are unchanged. Absent = the IEC table.
++     */
++    wording?: { texts?: Partial<Record<string, string>>; limitLabels?: Partial<Record<string, string>> };
+     numericFlash: boolean;
+     /** How an alarmed numeric flashes: the text ('flash-text', default) or a level-coloured box ('flash-box', Mindray-like). */
+     numericStyle?: 'flash-text' | 'flash-box';
+diff --git a/packages/skins/test/stage9-wording.test.ts b/packages/skins/test/stage9-wording.test.ts
+new file mode 100644
+index 0000000..ae85e92
+--- /dev/null
++++ b/packages/skins/test/stage9-wording.test.ts
+@@ -0,0 +1,17 @@
++// Stage 9 (E-S9-4, FU-5 R-FU5-6): the per-skin alarm wording is skin data, validated by the closed schema and sourced
++// like every other skin field; philips-like and saadat-like carry none (their texts are the ones FU-5 tested).
++import { describe, expect, it } from 'vitest';
++import { resolveSkin } from '../src/index.ts';
++
++describe('alarm wording (Stage 9 E-S9-4)', () => {
++  it.each(['mindray-like', 'ge-like', 'zoll-like', 'lifepak-like'])('%s: ART / T1 / EtCO2 words, sourced', (id) => {
++    const r = resolveSkin(id);
++    expect(r.skin.alarms.wording?.texts).toMatchObject({ abpNonPulsatile: 'ART NON-PULSATILE', tempProbeOff: 'T1 NO TRANSDUCER' });
++    expect(r.skin.alarms.wording?.limitLabels).toMatchObject({ ART_S: 'ART S', TEMP: 'T1', EtCO2: 'EtCO2' });
++    expect(r.provenance['alarms.wording']?.source).toMatch(/research\/11 §5\.16/);
++  });
++  it('philips-like and saadat-like keep their own texts (no wording table)', () => {
++    expect(resolveSkin('philips-like').skin.alarms.wording).toBeUndefined();
++    expect(resolveSkin('saadat-like').skin.alarms.wording).toBeUndefined();
++  });
++});
