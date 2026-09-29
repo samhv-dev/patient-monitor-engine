@@ -304,10 +304,24 @@ papers' numbers still not extracted.
 class III nadir 26.6): Ali. **20** hyperkalaemia gaps (rate of rise, AV block, calcium generosity): Ali/Q5. **21** MANUAL
 18/10 → 65/30 (MAP 38): a test now. **22** the infant: fixed (18d) and guarded (18g).
 New:
-23. **The humoral arm vs ruling 3 (orchestrator).** 18e's venous term (HUM_V0 × BV in the shared reservoir) is not
-    suppressed by the arrest or by brainstem ischaemia, so after full exsanguination CPR alone refills the thorax and
-    restores a pulse at +175 s (HUM_V0 0: never, CoPP 3.1–3.4). A flow dependence of the humoral arm (hormones need a
-    circulation to be secreted and delivered) is the candidate mechanism — not prototyped here.
+23. **The humoral arm vs ruling 3 — gate finding G-FU4-1, OPEN (the `it.fails` stays, with its number).** 18e's
+    venous term (HUM_V0 × BV in the shared reservoir) is not suppressed by the arrest, so after full exsanguination CPR
+    alone restores a pulse at +175 s (HUM_V0 0: never, CoPP 3.1–3.4). The mechanism: the arrest withdraws the neural
+    recruitment (brainstem), the unsuppressed humoral term holds the unstressed capacity at the 1 610 mL cap instead of
+    2 450, so venous pressure stays less negative and CPR restores venous return. **Two ruled mechanisms were prototyped
+    and both failed** (patches kept in the executor's scratch, not committed):
+    - *(1) Finite pool* — the humoral share clamped to the unstressed volume the pool still holds: never binds (the
+      venous reservoir still holds 0.8–1.5 L after a 3 L bleed; the humoral share ≤ ≈ 890 mL). Pulse still at +175 s.
+    - *(2) Ischaemic withdrawal of the humoral EFFECT* — venous and arterial humoral effect × the neural arm's own
+      `brainstemOutF(cbfRel)`: meets (a) — CPR alone, no pulse in 10 min (CoPP 2.9–3.1, the 18a picture) — and (c)
+      exsanguination PEA + CPR + adrenaline × 2 without fluid, no pulse (without it: pulse at 825 s); (b) VF + CPR:
+      CoPP 24.3 → 31.6 after adrenaline (unchanged: 24.8 → 31.5). But it **breaks two sourced targets**: class III +
+      propofol 2 mg/kg ARRESTS at +90 s, nadir 3.2 (the ruling-2 target it was built for: no arrest, nadir 26.6), and
+      CPR + 2 L + adrenaline after exsanguination no longer regains a pulse (was +105 s). Cause: `cbfRel` falls below
+      0.6 in non-arrest states (induction hypotension, class III), so the factor is not ischaemia-only. Side moves:
+      healthy S1 0.762 (−24 %), S2 −18.5 %, S14 −26.0 % (into band), 10-min VF kIsch max 0.86 (into band).
+    A withdrawal index that reads true no-flow (e.g. the arrest state or the coronary/systemic flow share, not CBF) is
+    the remaining candidate — for the orchestrator.
 24. **The Bezold–Jarisch term** (Task 12 Step 3) withdrawn: it delays obstructive-shock arrests (PTX +16.75 min). Wanted
     at all, and if so gated how?
 25. **Validation baselines hold the MODELED rate** (`setTarget hr` in every sanity document's patient block): a held
