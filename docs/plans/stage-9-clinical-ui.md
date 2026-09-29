@@ -2,10 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> STATUS (2026-09-28, plan writer, resumed after the 12th cap cut-off): COMPLETE, NOT YET REVIEWED (R50 review
-> pending). Every block was prototyped on `origin/main` `891d4d2` (code of `bab4b72`) and re-applied mechanically to a
-> clean tree (Self-review). Executes after FU-4, FU-5, V.1, FU-6, FU-7 and 7k merge; exceptions E-S9-1/2/3 need the
-> orchestrator's approval.
+> STATUS (2026-09-29, plan fixer after the R50 review): REVIEWED (APPROVE WITH FIXES) AND FIXED. All 17 findings
+> (F1–F17) and the orchestrator's rulings 1–6 are applied; every block was re-prototyped on `origin/main` `776ebb5`
+> (FU-5 merged) and the whole plan was re-applied mechanically to a clean tree and tested (Prototype results,
+> Self-review); it also applies with no problem on `0fd5397` (FU-4 merged). Executes after FU-4, FU-5, V.1, FU-6,
+> FU-7 and 7k merge. E-S9-1, E-S9-2 and E-S9-3 are APPROVED; **E-S9-4 (Task 7b) needs the orchestrator's
+> re-confirmation** (ruling 1 said "skin JSON data only"; a working form needs one optional schema field and three
+> reading lines in the engine's alarm-text code — see Exceptions).
 
 **Goal:** Turn the 25-page demo into ONE professional product page for Ali's course (R55): a Start screen, the learner
 Monitor, the Instructor view (monitor + tabbed panel with a session bar, staged changes, pin/return-to-model), a paired
@@ -270,27 +273,35 @@ the "Prototype results" notes), `design:accessibility-review` (WCAG 2.2 AA pass:
 - **D29 — Version 1.0 limits accepted by the orchestrator (rulings 3 and 6):** the sweep restarts after a Monitor ↔
   Instructor switch (R-S9-1a); the Remote is same-browser only (D15). The gate note and the user guide state both.
 
-## Prototype results (base `origin/main` `f8b802d` = code of `bab4b72`, before FU-4…7k; scratch worktree)
+## Prototype results (plan applied to a clean `origin/main` `0fd5397` — FU-4 and FU-5 merged, before V.1, FU-6, FU-7, 7k; re-measured after the R50 review fixes, 2026-09-29)
 
-Every file in this plan was written and run in a scratch worktree on that base; the create blocks below are copied
-mechanically from it and a script re-applied them (section "Self-review"). Patch:
-`projects/patient-monitor-engine/scratch/plans-backup/stage-9-prototype.patch`; screenshots:
-`scratch/plans-backup/stage-9-prototype-shots/` (56 PNGs).
+Every file in this plan was written and run in a scratch worktree on `origin/main` `776ebb5` (FU-5 merged); the create
+blocks are copied mechanically from it, and `stage-9-verify.py` re-applied the whole plan to a clean `776ebb5` and to a
+clean `0fd5397` (FU-4 merged since): "created 69, edited 17, problems 0" on both. The numbers below are from the
+plan-applied `0fd5397` tree. Patch: `docs/plans/stage-9-prototype.patch` (the plan-applied tree against `776ebb5`; it
+applies unchanged to `0fd5397`); screenshots: `docs/plans/stage-9-prototype-shots/` (56 PNGs, re-taken on the
+plan-applied tree). Browser: Playwright's bundled Chromium 1243 headless in a cloud container without a GPU (the
+container's network blocks the Playwright CDN, so the build came from Google's Chrome for Testing bucket through
+Playwright's download-host override; system Chrome is not installed there, hence `PW_SYSTEM_CHROME` unset). WebKit could
+not be installed there: the WebKit run of F16 is Task 21/22's to do and record.
 
 | What | Result |
 |---|---|
-| App shell: Start → Monitor → Instructor → every view | renders at 1280×800, 1440×900, 1920×1080, 1180×820 and 820×1180; no page error; one engine session: the monitor node is the same object after visiting 6 views and sim time kept rising (`stage9-app.e2e.ts`, 3/3 pass) |
-| Scenario deep link `?scenario=acls-vf-witnessed` | loads the case, opens the instructor view, session bar reads "Witnessed VF in PACU: Stable in PACU 00:18" |
-| Remote (second page, same browser, by code) | "Connected to <code>", HR held at 112 from the remote → host HR > 105 within 20 s, host badge "MODELED, 1 held" — only after E-S9-2 (below) |
-| Glossary test (`stage9-glossary.e2e.ts`) | 0 engine ids in 8 tabs, 12 Explore sections and 6 other views, after the copy fixes it found ("e.g." placeholder; `a.u.` and `sO₂` added as allowed unit tokens) |
-| Accessibility audit (`stage9-a11y.e2e.ts`) | 0 findings at 1280×800 and at 820×1180 touch (44 px panel targets), after fixes it found: checkboxes 20 → 24 px, touch sizes for small buttons/segments/state strip, missing h1 in Instructor/Monitor, `summary` names |
-| Unit tests (`src/app/*.test.ts`) | 9 files, 32 tests pass (router 8, glossary 4, tokens 3, components 4, QR 3, staging 2, site 2, patients 3, copy 3); demo package 18 files, 173 tests |
-| Existing tests | demo 141/141 unchanged (173 with Stage 9's), controller 37 files 215/215 after E-S9-2; `stage6a.e2e.ts` and `stage6b.e2e.ts` pass with the opaque drawer |
-| Five timed tasks (`stage9-tasks.e2e.ts`, automated through the visible UI) | hold SpO₂ 85 % then return: 2.6–3.6 s; load ACLS VF: 0.9–1.7 s; noradrenaline 0.1 µg/kg/min: 0.8–0.9 s; silence + bookmark: 0.7–0.8 s; compliance: found (Cstat 54 mL/cmH₂O); driving pressure: NOT found — no ΔP truth path before 7k (Request R-S9-3; the test stays red until 7k is on the base, which the stage order guarantees) |
-| Frame gate, shell mounted, instructor panel open (`scripts/stage9-frames.mjs`, system Chrome headless, worker-raf path) | 1920×1080 60 fps: n 3,586, p50 16.7, **p95 16.7**, p99 16.8, max 100.0 ms; 1920×1080 30 fps: n 3,600, p95 16.7, max 33.3; 1280×800 60 fps: n 3,600, p95 16.7, max 33.3; 1280×800 30 fps: n 3,599, p95 16.7, max 33.4 — all inside 8a's p95 < 25 / < 50 ms |
-| Screenshot matrix (`stage9-shots.e2e.ts`) | 14 views × 4 sizes = 56 indexed PNGs, 21–59 KB (largest `instructor-drugs-1920x1080` 59.1 KB at scale 0.75) |
-| QR pairing code | decoded by macOS CoreImage at versions 1, 4, 6, 8, 10 (the pairing URL is version 4) |
-| Ventilator view | the Stage V cockpit drives this session's patient: 393 external-drive frames, 37 clocks and 8 lungState messages in 8 s on the link channel |
+| Plan applied to a clean `origin/main` | `0fd5397` (and `776ebb5`): created 69, edited 17, problems 0; `pnpm install --frozen-lockfile` OK; `pnpm typecheck` clean in all 8 packages |
+| App shell: Start → Monitor → Instructor → every view | renders at 1280×800, 1920×1080, 1180×820 and 820×1180 (the 56 shots); no page error; one engine session: the monitor node is the same object after visiting 6 views and sim time kept rising |
+| `stage9-app.e2e.ts` (5 tests), run together with the accessibility and glossary files under two workers | one session, the deep link, the Start monitor change that moves the mirrored alarm colours (F5), the learner controls strip (ruling 4), the paired remote (F7: after the two Vitals-tab fixes, see Task 21): **8/8 passed in each of three runs** (55–57 s each); four more green runs on `776ebb5` |
+| Remote (second page, same browser, by code) | "Connected to <code>", HR held at 112 from the remote → host HR > 105, `control.hr` "pinned", host badge "MODELED, 1 held" — only after E-S9-2; the host shows no QR code without a relay and says pairing is same-browser in v1.0 (F2, ruling 6) |
+| Glossary test (`stage9-glossary.e2e.ts`) | 0 engine ids in 8 tabs, 12 Explore sections, 6 other views, the Remote join form and every tab of a remote joined by code (F10) |
+| Label collisions (`glossary.test.ts`) | no label covers two quantities after every key's wildcards are filled (F1): T1 / TOF T1, SVR / SVR (model), EtCO₂ / EtCO₂ (true), RR / RR (spont), Cp (Propofol) / Cp (Rocuronium); ICP monitor and truth share one row |
+| Accessibility audit (`stage9-a11y.e2e.ts`) | **0 findings** at 1280×800 and at 820×1180 touch (44 px panel targets) |
+| Unit tests | `src/app`: 12 files, 43 tests (router 8, glossary 6, alarms 4, copy 4, tokens 3, components 4, QR 3, patients 3, staging 2, site 2, pairing 2, shell 2); **demo package 21 files, 184 tests** (141 existing unchanged); **controller 37 files, 216 tests** (215 existing after E-S9-2's one changed assertion + the new E-S9-2 test, F8); skins 20 files, 184 tests; engine-core fast set 266 files, 1,197 passed, 1 skipped (E-S9-4's reader and its new test inside; FU-4's tests included) |
+| Existing e2e | `stage6a` 3, `stage6b` 1 and `stage4b-device` 6 pass with the opaque drawer and E-S9-4's wording |
+| Five timed tasks (`stage9-tasks.e2e.ts`, through the visible UI) | hold SpO₂ 85 % then return: 2.6 s; load ACLS VF: 1.0 s; norepinephrine 0.1 µg/kg/min: 0.8 s; silence + bookmark: 0.7 s; compliance found (Cstat); driving pressure NOT found — no ΔP truth path before 7k (R-S9-3; the test fails at that line until 7k is on the base, as designed) |
+| Frame gate, shell mounted, panel open, **8-lane `validation-perf` load** (`?load=perf8`, F6; bundled Chromium headless, worker-raf path, 10 s warm-up, 60 s windows) | 1920×1080 60 fps: n 3,601, p50 16.7, **p95 16.8**, p99 16.8, max 33.4 ms; 1920×1080 30 fps: n 3,599, p95 16.7, max 50.0; 1280×800 60 fps: n 3,601, p95 16.7, max 16.8; 1280×800 30 fps: n 3,597, p95 16.7, max 50.0 — all inside 8a's p95 < 25 / < 50 ms. **20-minute soak** at 1920×1080 60 fps: n 71,976, p95 16.7, p99 16.8, max 66.7, worst 60 s window p95 16.8 — gate passed (on `776ebb5` too: p95 16.7, worst minute 16.8). The metric is the main thread's frame intervals, as in 8a: the "30 fps" rows still count ≈ 3,600 frames a minute because the site's cap acts on the worker's drawing, which the renderer does not expose; a GPU-less container says little about a real laptop or iPad |
+| Screenshot matrix (`stage9-shots.e2e.ts`) | 14 views × 4 sizes = 56 indexed PNGs, 18–59 KB (largest `ventilator-1280x800` 58.9 KB), all ≤ 60 KB; `docs/gates` restored after every e2e run |
+| Task 0's scripts (F15) | `console-dump.mjs` saved the console JSON from a 12 s run; `labels-check.mjs` printed the unlabelled paths by group: 246 of 1,586 paths labelled (most of the rest are model internals, rule 5) |
+| QR pairing code | the encoder is unchanged; decoded by macOS CoreImage at versions 1, 4, 6, 8, 10 in the first prototype |
+| Ventilator view | the Stage V cockpit drives this session's patient (first prototype: 393 external-drive frames, 37 clocks and 8 lungState messages in 8 s on the link channel); not re-measured |
 
 **Defect found while prototyping (E-S9-2).** `packages/controller/src/session/host-session.ts` refuses every `pin`,
 `release`, `setFactor` and `setMode` from a panel or a remote with "needs MODELED mode (Stage 7)", a guard written
@@ -7761,21 +7772,25 @@ Report: commits, test counts, the gate numbers, deviations, anything undone. Sto
   keyboard, colour-blind-safe status (Tasks 1, 3, 22); responsive 1280×800, 1920×1080, iPad landscape/portrait
   (D21, Task 24); frame gate with the panel open and no blur over the canvas (Tasks 19, 24, 25); every string through
   the glossary or the copy pass (Tasks 2, 5, 21); scenario cards with description, objectives and current state
-  (Tasks 4, 10); sensors attach before traces appear (D11); no new dependency; stage pages kept.
+  (Tasks 4, 10); sensors attach before traces appear (D11); no new dependency; stage pages kept; the learner controls
+  strip (D27) and one drug-name set per site (D28) from the orchestrator's rulings.
 - **Design skills used:** `frontend-design`, `design:design-critique`, `design:accessibility-review`, `design:ux-copy`
   (see Decisions; each changed the prototype: the quiet chips, the sticky Start actions, the Menu dialog, 24/44 px
   targets, the h1s, dialogs whose buttons name their outcome, the empty states).
-- **Find-block check (mechanical).** The four existing-file blocks (E-S9-1 `apps/demo/index.html`, E-S9-2
-  `host-session.ts` + its test, E-S9-3 `styles.ts`) each match EXACTLY ONCE on `origin/main` `891d4d2` (code of
-  `bab4b72`), and replacing them reproduces the prototype files byte for byte (`scratch/plans-backup/stage-9-verify.py`,
-  result: "created 61, edited 4, problems 0" on `891d4d2`). None of the four files is touched by `origin/fu-4-integration-polish` or
-  `origin/fu-5-monitor-fidelity`, nor by the FU-4, FU-6, FU-7 or V.1 plans (their file maps checked).
+- **Find-block check (mechanical).** The 17 edit blocks on existing files (E-S9-1 `apps/demo/index.html`; E-S9-2
+  `host-session.ts` and its test; E-S9-3 `styles.ts`; E-S9-4 the two skins source files, the four skin JSONs and the
+  engine's `l3/alarms/{profile,text}.ts`) each match EXACTLY ONCE on `origin/main` `776ebb5`, and applying every block
+  of the plan reproduces the prototype files byte for byte (`docs/plans/stage-9-verify.py`: "created 69, edited 17,
+  problems 0") on `776ebb5`, and again on `0fd5397` (FU-4 merged): no file the plan creates or edits was touched by FU-4.
+  None of the E-S9-1…4 files is named by the FU-6 or FU-7 plans.
 - **Create blocks.** Every create block was extracted from the plan by the same script and compared with the prototype
-  file: identical. On the plan-applied tree (a clean `891d4d2` + every block, installed offline): demo typecheck clean,
-  demo 18 files / 173 tests, controller 37 / 215, e2e `stage9-app` 3, `stage9-glossary` 1, `stage9-a11y` 2 and
-  `stage6a` pass; `stage9-tasks` passes tasks 1–4 and stops at the ΔP line (no 7k on that base, as designed).
+  file: identical. The numbers in "Prototype results" are from the plan-applied tree, not the prototype worktree.
+- **R50 review.** F1–F17 fixed as the review writes them; rulings 1–6 applied (E-S9-4 and R-S9-8, E-S9-2's test and
+  wording, the sweep limit, the learner strip, the drug-name set, the same-browser Remote). Open: E-S9-4's form needs
+  the orchestrator's re-confirmation; WebKit (F16) and a real-tablet check are for the executor.
 - **Placeholders.** None in code. Two data tables are drafts by design and flagged for Ali (drug presets Q6, scenario
   card copy Q15); the glossary additions of Task 0/2 are listed in the gate note.
 - **Known limits.** Timed task 5 depends on 7k's ΔP path (R-S9-3; red on a base without 7k — the stage order puts 7k
-  first). The sweep clears on a monitor resize (R-S9-1). A Remote shows the sensor toggles' last command, not the
-  engine's sensor state (R-S9-6). The iPad Safari frame run is manual.
+  first). The sweep restarts after a Monitor ↔ Instructor switch (R-S9-1a, accepted for v1.0 by ruling 3). The Remote
+  pairs in the same browser only (ruling 6). A Remote's sensor toggles start with no pressed state until R-S9-6. The
+  frame metric is the main thread's (D23). The iPad Safari frame run is manual.
