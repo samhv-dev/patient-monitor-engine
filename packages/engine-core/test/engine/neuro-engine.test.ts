@@ -125,8 +125,9 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
   // R45 (FU-4 F4, Task 18d): the upper edge moved by one integer step when Stage 3's gas-exchange flow became the
   // patient's own cardiac output (coRatio against CI_LPM_PER_KG × effKg instead of the adult 5.25 L/min; this 70 kg /
   // 170 cm adult's reference falls 5.25 → 5.07 L/min) — measured nadir 52 (51 before). Split out of the test above
-  // unchanged, kept as a record.
-  it.fails('propofol 2 mg/kg: depth-index nadir < 52 — measured 52 after FU-4 F4 (51 before)', async () => {
+  // unchanged, kept as a record. FU-8 (E-FU8-12, Task A28): flipped — 7c's co0 now starts in L/min and the drug model
+  // reads it as is, so this non-70 kg adult's propofol reference is its own resting output again: nadir 51
+  it('propofol 2 mg/kg: depth-index nadir < 52 — measured 52 after FU-4 F4 (51 before), 51 after FU-8 A28', async () => {
     const e = createEngine({ seed: 6, patient: ADULT });
     const an: Extract<EngineEvent, { type: 'anaesthesia' }>[] = [];
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
