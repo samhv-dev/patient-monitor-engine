@@ -17,7 +17,10 @@ the 7a PE/tension stand-ins are gone. The tension row's reference plateau is 35.
 tension link profile reads plateau 26.0 / ΔP 21.0 at 90 s: that is inside the bands but near their lower edge, because
 FU-4 F3 now builds the pleural pressure breath by breath (17.5 cmH2O at 90 s, heading for the 27.2 ceiling). Every
 R27/R36 test passes or is an `it.fails` whose title holds this tree's numbers. The Stage 3 child rests at PaCO2 37.8
-and SaO2 97.0 %: FU-4 F4 had already landed the ratio change, and V.1 adds the CPR guard, `coRefLpm()` and the 7c units.
+and SaO2 97.0 %: FU-4 F4 had already landed the ratio change, and V.1 adds `coRefLpm()` and the CPR guard. E-V1-1's 7c
+line was withdrawn at the gate because it changed propofol's pharmacokinetics through a stale FU-4 conversion (§2, §8).
+The gate also found and fixed a pre-existing link race that silently dropped every ventilator frame after a demo
+switch on the combined page (§8).
 
 Contents: 0 gate numbers · 1 tension pneumothorax · 2 the child (E-V1-1) · 3 oedema and ARDS · 4 every link test
 before/after · 5 per-profile table · 6 screenshots · 7 `it.fails` · 8 deviations and re-anchorings · 9 exceptions ·
@@ -65,9 +68,11 @@ combination V.1 keeps (as `respPleural` does) always reads the lungs' value.
 ## 2. The Stage 3 child (E-V1-1; Q-7e-8 CLOSED)
 
 FU-4 F4 (`e3eeb56`, Task 18d) had already made the gas model's coRatio the patient's own (`CI_LPM_PER_KG × effKg`) and
-flipped both Q-7e-8 child tests to `it` (155 s). V.1 lands the rest of E-V1-1: `coRefLpm()` (`gas/params.ts`), the
-**CPR guard** (on FU-4's tree, a 16 kg child in CPR, quality 1 at 110/min, read coRatio **1.283**, a normal-flow
-capnogram; with the guard it reads **0.293 = the adult's 0.293**), and the 7c resting-CO line in the same units.
+flipped both Q-7e-8 child tests to `it` (155 s). V.1 lands `coRefLpm()` (`gas/params.ts`) and the **CPR guard**. On
+FU-4's tree a 16 kg child in CPR (quality 1, 110/min) read coRatio **1.283**, a normal-flow capnogram; with the guard it
+reads **0.293 = the adult's 0.293**. The plan's third part, 7c's resting-CO line in the same units (`blood/pipeline.ts`),
+was applied in Task 1 and **withdrawn at the gate** (§8): it changed propofol's distribution through FU-4 G10's
+`engine.ts` conversion.
 
 | (4 y, 16 kg, RR 24, VT 130, room air, GA, MANUAL) | plan "before" | main (FU-4) | V.1 |
 |---|---|---|---|
@@ -77,10 +82,12 @@ capnogram; with the guard it reads **0.293 = the adult's 0.293**), and the 7c re
 | 70 kg rigs: preox / room air / obese 127 kg | 485 / 41.0 / 169 s | same | **485 / 41.0 / 169 s** (bit-identical at 70 kg) |
 | child in CPR: coRatio | 0.293 | **1.283** | **0.293** |
 
-**Non-70 kg adults shift (Decision 11).** The guard changes nothing outside CPR, and the 7c line changes only the start
-of 7c's settling resting CO for effKg ≠ 70 (`bs.rest.coLp` starts at `ref.co` instead of `ref.co × effKg/70`; it
-low-passes toward the same CO either way). FU-3's validation documents for the non-70 kg patients (sanity suite, same
-command before and after, `--out` in scratch):
+**Non-70 kg patients (Decision 11).** Outside CPR, `coRefLpm(pat)` equals FU-4 F4's divisor exactly, so the final V.1
+gas model differs from main only DURING CPR, where every patient now uses the adult 5.25 L/min. For a 70 kg effective
+weight that is bit-identical; for another adult it moves coRatio by effKg/70 (e.g. 67.6 kg: −3.4 %). FU-3's
+validation documents for the non-70 kg patients (sanity suite, same command before and after, `--out` in scratch; the
+"V.1" column was measured with the 7c line still in place, a superset of the final change, and re-run on the final code
+in VALIDATE_FINAL):
 
 | Document | main | V.1 | Band |
 |---|---|---|---|
@@ -133,7 +140,45 @@ Columns: reference run plateau / ΔP / auto-PEEP / peak − plateau | linked pla
 (relative) and carried no engine lung condition.
 
 ```
-PROFILES_BLOCK
+PROBE normal ref 13.9/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0.02 pleural 0 | SpO2 99.0 EtCO2 35.7 MAP 105.3 CVP 9.4 | CO 6.74
+PROBE bronchospasm ref 16.6/8.9/2.7/27.9 | linked plat 16.8 PIP 44.7 autoPEEP 2.7 | lungState C 55 R 28 Rexp 43 shunt 0.01 pleural 0 | SpO2 98.2 EtCO2 36.0 MAP 95.2 CVP 11.4 | CO 6.66
+PROBE anaphylaxis-bronchospasm ref 17.8/8.9/3.8/33.1 | linked plat 18.0 PIP 50.9 autoPEEP 3.9 | lungState C 55 R 33 Rexp 53 shunt 0.01 pleural 0 | SpO2 96.0 EtCO2 35.3 MAP 43.7 CVP 9.2 | CO 4.99
+PROBE copd-gold-1-2 ref 14.0/8.3/0.7/15.4 | linked plat 14.3 PIP 29.2 autoPEEP 0.7 | lungState C 58 R 15 Rexp 23 shunt 0.01 pleural 0 | SpO2 98.4 EtCO2 36.0 MAP 94.9 CVP 11.6 | CO 6.64
+PROBE copd-gold-3-4 ref 15.8/6.9/4.0/29.9 | linked plat 16.1 PIP 46.0 autoPEEP 4.1 | lungState C 71 R 30 Rexp 49 shunt 0 pleural 0 | SpO2 96.2 EtCO2 36.0 MAP 102.5 CVP 12.1 | CO 5.09
+PROBE cystic-fibrosis ref 15.8/9.9/0.9/19.9 | linked plat 16.1 PIP 35.9 autoPEEP 0.9 | lungState C 49 R 20 Rexp 28 shunt 0.04 pleural 0 | SpO2 97.5 EtCO2 36.7 MAP 95.0 CVP 10.4 | CO 6.63
+PROBE tube-obstruction ref 17.0/8.9/3.1/41.9 | linked plat 17.3 PIP 59.2 autoPEEP 3.2 | lungState C 55 R 42 Rexp 47 shunt 0.02 pleural 0 | SpO2 99.0 EtCO2 35.7 MAP 95.2 CVP 11.6 | CO 6.67
+PROBE tracheal-obstruction ref 15.6/8.9/1.7/29.9 | linked plat 15.9 PIP 45.7 autoPEEP 1.8 | lungState C 55 R 30 Rexp 35 shunt 0.02 pleural 0 | SpO2 99.0 EtCO2 35.7 MAP 107.1 CVP 10.8 | CO 6.77
+PROBE smoke-co ref 16.0/8.9/2.1/25.0 | linked plat 16.2 PIP 41.1 autoPEEP 2.1 | lungState C 55 R 25 Rexp 38 shunt 0.01 pleural 0 | SpO2 96.6 EtCO2 37.0 MAP 107.7 CVP 11.1 | CO 6.87
+PROBE ards-mild ref 17.3/12.3/0.0/11.8 | linked plat 17.5 PIP 29.4 autoPEEP 0.0 | lungState C 40 R 12 Rexp 14 shunt 0.23 pleural 0 | SpO2 95.0 EtCO2 37.6 MAP 95.9 CVP 7.9 | CO 6.26
+PROBE ards-moderate ref 19.0/14.0/0.0/11.8 | linked plat 19.3 PIP 31.1 autoPEEP 0.0 | lungState C 35 R 12 Rexp 14 shunt 0.31 pleural 0 | SpO2 92.2 EtCO2 37.8 MAP 93.7 CVP 8.1 | CO 5.63
+PROBE ards-severe-recruitable ref 21.3/16.3/0.0/11.8 | linked plat 21.1 PIP 32.9 autoPEEP 0.0 | lungState C 31 R 12 Rexp 14 shunt 0.39 pleural 0 | SpO2 89.0 EtCO2 38.8 MAP 91.4 CVP 8.1 | CO 5.52
+PROBE ards-severe-nonrecruitable ref 21.3/16.3/0.0/11.8 | linked plat 21.7 PIP 33.5 autoPEEP 0.0 | lungState C 30 R 12 Rexp 14 shunt 0.42 pleural 0 | SpO2 88.0 EtCO2 38.6 MAP 91.4 CVP 8.1 | CO 5.52
+PROBE fibrosis-ild ref 20.3/15.3/0.0/12.8 | linked plat 20.6 PIP 33.4 autoPEEP 0.0 | lungState C 32 R 13 Rexp 16 shunt 0.06 pleural 0 | SpO2 98.0 EtCO2 36.0 MAP 95.0 CVP 8.3 | CO 6.56
+PROBE scleroderma ref 18.7/13.7/0.0/11.5 | linked plat 18.9 PIP 30.7 autoPEEP 0.0 | lungState C 36 R 12 Rexp 14 shunt 0.04 pleural 0 | SpO2 98.0 EtCO2 36.0 MAP 94.4 CVP 10.7 | CO 6.59
+PROBE chest-wall-restriction ref 19.6/14.6/0.0/9.8 | linked plat 20.2 PIP 30.0 autoPEEP 0.0 | lungState C 33 R 10 Rexp 12 shunt 0.07 pleural 0 | SpO2 98.5 EtCO2 36.0 MAP 93.2 CVP 11.6 | CO 6.56
+PROBE obesity-ohs ref 19.9/14.9/0.0/13.6 | linked plat 20.2 PIP 34.0 autoPEEP 0.0 | lungState C 33 R 14 Rexp 17 shunt 0.06 pleural 0 | SpO2 99.0 EtCO2 35.3 MAP 88.6 CVP 10.3 | CO 11.53
+PROBE pneumonia-lobar ref 15.6/10.5/0.1/12.0 | linked plat 15.9 PIP 27.8 autoPEEP 0.1 | lungState C 46 R 12 Rexp 15 shunt 0.21 pleural 0 | SpO2 95.8 EtCO2 36.8 MAP 105.5 CVP 9.7 | CO 6.71
+PROBE atelectasis ref 15.9/10.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0.02 pleural 0 | SpO2 99.0 EtCO2 35.7 MAP 105.3 CVP 9.4 | CO 6.74
+PROBE oedema-cardiogenic ref 16.9/11.9/0.1/13.3 | linked plat 17.3 PIP 31.1 autoPEEP 0.1 | lungState C 41 R 14 Rexp 16 shunt 0.15 pleural 0 | SpO2 97.0 EtCO2 36.7 MAP 102.5 CVP 8.8 | CO 5.74
+PROBE oedema-noncardiogenic ref 16.9/11.9/0.1/13.3 | linked plat 17.3 PIP 31.1 autoPEEP 0.1 | lungState C 41 R 14 Rexp 16 shunt 0.15 pleural 0 | SpO2 97.0 EtCO2 36.6 MAP 105.7 CVP 9.8 | CO 6.72
+PROBE aspiration ref 16.9/11.6/0.3/14.8 | linked plat 17.2 PIP 32.1 autoPEEP 0.3 | lungState C 42 R 15 Rexp 23 shunt 0.18 pleural 0 | SpO2 95.9 EtCO2 37.0 MAP 106.2 CVP 10.2 | CO 6.73
+PROBE covid-pneumonitis ref 19.0/14.0/0.0/9.8 | linked plat 19.3 PIP 29.1 autoPEEP 0.0 | lungState C 35 R 10 Rexp 12 shunt 0.35 pleural 0 | SpO2 91.5 EtCO2 37.7 MAP 94.9 CVP 9.7 | CO 6.62
+PROBE pulmonary-hypertension ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0.01 pleural 0 | SpO2 99.0 EtCO2 35.8 MAP 93.8 CVP 9.4 | CO 6.29
+PROBE pe-massive ref 14.0/8.9/0.1/11.9 | linked plat 14.2 PIP 26.1 autoPEEP 0.1 | lungState C 55 R 12 Rexp 14 shunt 0.1 pleural 0 | SpO2 97.3 EtCO2 36.7 MAP 105.6 CVP 9.5 | CO 6.25 | lungs pvr 1 7a ext.pvr 1
+PROBE pe-submassive ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0 pleural 0 | SpO2 99.0 EtCO2 36.3 MAP 105.3 CVP 9.5 | CO 6.72
+PROBE fat-embolism ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0 pleural 0 | SpO2 99.0 EtCO2 36.0 MAP 95.3 CVP 9.4 | CO 6.56
+PROBE air-embolism ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0 pleural 0 | SpO2 99.0 EtCO2 36.0 MAP 68.3 CVP 15.6 | CO 8.58
+PROBE pleural-effusion ref 15.8/10.7/0.0/9.9 | linked plat 15.9 PIP 25.8 autoPEEP 0.0 | lungState C 46 R 10 Rexp 12 shunt 0.12 pleural 1.5 | SpO2 97.9 EtCO2 37.0 MAP 95.1 CVP 10.6 | CO 6.65
+PROBE pneumothorax-simple ref 15.8/10.7/0.0/9.9 | linked plat 16.1 PIP 26.0 autoPEEP 0.0 | lungState C 45 R 10 Rexp 12 shunt 0.16 pleural 0 | SpO2 96.9 EtCO2 37.0 MAP 105.4 CVP 9.5 | CO 6.72
+PROBE pneumothorax-tension ref 35.6/30.6/0.0/9.8 | linked plat 26.0 PIP 35.9 autoPEEP 0.0 | lungState C 35 R 10 Rexp 12 shunt 0.41 pleural 17.5 | SpO2 89.4 EtCO2 39.0 MAP 93.5 CVP 20.9 | CO 6.36
+PROBE haemothorax ref 15.8/10.7/0.0/9.9 | linked plat 16.1 PIP 26.0 autoPEEP 0.0 | lungState C 45 R 10 Rexp 12 shunt 0.12 pleural 4.1 | SpO2 97.9 EtCO2 37.0 MAP 95.0 CVP 12.5 | CO 6.67
+PROBE one-lung-ventilation ref 15.4/10.1/0.3/23.8 | linked plat 15.3 PIP 27.1 autoPEEP 0.0 | lungState C 34 R 12 Rexp 14 shunt 0.02 pleural 0 | SpO2 90.7 EtCO2 44.0 MAP 95.1 CVP 9.2 | CO 6.55
+PROBE endobronchial ref 19.3/14.2/0.0/14.7 | linked plat 19.7 PIP 29.5 autoPEEP 0.0 | lungState C 34 R 10 Rexp 12 shunt 0.02 pleural 0 | SpO2 91.7 EtCO2 38.5 MAP 105.5 CVP 9.7 | CO 6.69
+PROBE bronchopleural-fistula ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0.02 pleural 0 | SpO2 99.0 EtCO2 35.7 MAP 105.3 CVP 9.4 | CO 6.74
+PROBE neuromuscular-weakness ref 14.5/9.5/0.0/9.9 | linked plat 14.8 PIP 24.7 autoPEEP 0.0 | lungState C 51 R 10 Rexp 12 shunt 0.08 pleural 0 | SpO2 98.0 EtCO2 36.0 MAP 105.3 CVP 9.4 | CO 6.74
+PROBE diaphragm-paralysis ref 14.0/8.9/0.0/9.9 | linked plat 14.1 PIP 24.0 autoPEEP 0.0 | lungState C 55 R 10 Rexp 12 shunt 0.05 pleural 0 | SpO2 98.5 EtCO2 36.0 MAP 105.3 CVP 9.4 | CO 6.74
+PROBE pregnancy ref 19.2/14.2/0.0/14.5 | linked plat 19.3 PIP 34.2 autoPEEP 0.1 | lungState C 35 R 15 Rexp 18 shunt 0.04 pleural 0 | SpO2 99.0 EtCO2 36.0 MAP 90.6 CVP 11.1 | CO 7.40
+PROBE neonatal-rds ref 15.0/10.0/0.0/5.6 | linked plat 20.4 PIP 43.0 autoPEEP 0.4 | lungState C 1 R 233 Rexp 280 shunt 0.33 pleural 0 | SpO2 44.3 EtCO2 84.5 MAP 34.1 CVP 8.2 | CO 0.29
 ```
 
 **Massive PE — no PVR at all in the profile (known deviation, request).** Decision 7 expected the profile's lung `pe`
@@ -152,7 +197,23 @@ before and after, waiting for R22 (§8).
 
 ## 6. Screenshots (`docs/gates/stage-v1/*.jpg`)
 
-SHOTS_BLOCK
+Nine JPEGs, 48.8–59.7 KB, from `vent-shots.mjs stage-v1` at ×4, each taken after its demo's settle time plus 60–180 s.
+They were taken with a scratch copy that launches Playwright's own Chromium (§8), after the link offset fix; the first
+set, taken before that fix, showed the monitor in apnoea during the PH and tension demos (§8).
+
+- `demo-tension.jpg` (tension 0.8 sent 90 s before): ventilator Ppeak **36** (red), VTE 500, Pmean 14; monitor ABP
+  **82/60 (66)**, CVP trace high with the CVP 11>10 alarm, SpO2 **89**, EtCO2 34, awRR 13. The plan's prototype showed
+  Ppeak 46, ABP 41/35 and SpO2 89 at the same point; on FU-4's tree the pleural pressure is still building 90 s after
+  onset (§1), so the pressures are lower and the obstructive shock is still developing.
+- `demo-pe.jpg` (lung `pe` 1 sent 90 s before; FU-4's alias applies 7a's `pe` 1): EtCO2 **23** with the yellow
+  **etCO2 24<30** alarm, awRR 14; airway pressures unchanged (Ppeak 26, as before the step); SpO2 98; ABP 124/83 (97) —
+  MANUAL targets hold the pressure (§4).
+- `demo-ph.jpg`: PEEP 15, RR 8 — EtCO2 40, CVP 11>10 alarm, ABP 106/72 (83).
+- `demo-hf.jpg`: PEEP 12 — the ventilator's Pmax alarm at 35 with VTE 484 (the same pressure limit main's link test
+  shows: PIP 35, VTE 485.6), SpO2 98, EtCO2 37.
+- `demo-copd.jpg`: RR 20 — the ventilator's Intrinsic PEEP alarm, Ppeak 53, VTE 562; ABP 115/78 (97), EtCO2 31.
+- `demo-ards.jpg`: PEEP 15, FiO2 60 — SpO2 96, Ppeak 39.
+- `demo-fibrosis.jpg`, `hamilton.jpg`, `combined.jpg`: unchanged in content from Stage V.
 
 ## 7. `it.fails`
 
@@ -217,6 +278,28 @@ massive-PE rig was re-measured on FU-4's version (§4); (c) FU-3 item 7 did not 
   visible where the relative read was immune. The full e2e result is in §0.
 - **Task 10 screenshots** — `vent-shots.mjs` launches `channel: 'chrome'` (system Chrome), which this machine does not
   have; the screenshots were taken with a scratch copy that launches Playwright's own Chromium (not committed).
+- **Task 10 — link race fixed in `packages/ventilator/src/link/port.ts`** (V.1's package, not in the plan's file map;
+  commit `7ef0c4f`, regression test in `test/ports.test.ts`). The first screenshot set showed the monitor in
+  ***APNEA with EtCO2 0 and SpO2 28–32 during the PH and tension demos while the ventilator breathed 500 mL. The
+  engine was rejecting every frame: "externalDrive atTick must be a whole tick ≥ 0". Instrumented cause: a demo switch
+  remounts the engine and reloads the ventilator page. The OLD ventilator's last frame (tick ≈ 3000) became the monitor
+  side's offset probe; the NEW ventilator (tick 1) reset the offset while the probe was in flight; the probe's late
+  result then installed offset 1 − 3000 + 5, so every later frame carried a negative `atTick`. This predates V.1:
+  instrumented on clean main, 5 of 6 demo switches lost the link (only COPD recovered). It is also the most likely
+  cause of the intermittent COPD e2e failure above. Fix: a restart clears the in-flight probe and bumps a generation,
+  and results from before the restart are ignored. The same six-plus-two demo probe afterwards: 8 of 8 switches linked,
+  0 rejected frames.
+- **Task 1's 7c line withdrawn at the gate** (commit `78e32d9`; blocks Task 1 #7–#8 reverted to main's text). slow-b
+  flagged it: `neuro-engine.test.ts`'s `it.fails` "propofol 2 mg/kg: depth-index nadir < 52 — measured 52 after FU-4
+  F4" started PASSING (nadir 50). The chain: V.1's 7c line puts `co0`'s START in true L/min; with a dose at t = 0, 7c
+  latches `co0` at that start; FU-4 G10's propofol reference (`engine.ts:485`) still converts `co0` with
+  `× CO_REF_LPM / (CI_LPM_PER_KG × effKg)`, i.e. 7c's pre-F4 units. On main the two unit errors cancel at t = 0; with
+  V.1's line they do not. Measured (propofol 2 mg/kg at t = 0, seed 6, depth-index nadir, main → with the 7c line):
+  70 kg/170 cm adult (effKg 67.6) **52 → 50**; 16 kg child **72 → 49** (distribution factor at 30 s 0.90 → 0.21);
+  80 kg pregnant **56 → 54**. V.1 may not change drug behaviour (R51; Decision 11 had expected only "units stay
+  consistent"), and the proper fix is both lines together (7c's start AND the `engine.ts` reference = `co0` in L/min),
+  outside V.1's files, so the 7c line is back to main's and the pair is a request (§10). Task 1's numbers are unchanged
+  without it (14/14; child 155.0 s; CPR 0.293 = 0.293), and the `it.fails` holds again (nadir 52).
 - Commit trailers name the executing model (Opus 5.5), as the brief allows.
 
 **Known deviations (unchanged by V.1):** the neonatal RDS profile is broken before and after (SpO2 44.3, MAP 34 at
@@ -226,15 +309,16 @@ the massive-PE profile carries no PVR (§5; this replaces Decision 7's "×3.25, 
 
 ## 9. Exceptions
 
-- **E-V1-1** (Stage 3/7c): `l2/gas/params.ts` `coRefLpm`; `l2/resp/pipeline.ts` the `rs.coRatio` line with its CPR
-  guard and one import; `l2/blood/pipeline.ts` the `rest.coLp` line and one import; new `test/engine/resp-child-rest.test.ts`.
-  The two Q-7e-8 `it.fails` were already flipped by FU-4.
+- **E-V1-1** (Stage 3): `l2/gas/params.ts` `coRefLpm`; `l2/resp/pipeline.ts` the `rs.coRatio` line with its CPR
+  guard and one import; new `test/engine/resp-child-rest.test.ts`. The 7c part (`l2/blood/pipeline.ts`) was applied and
+  withdrawn (§8); the two Q-7e-8 `it.fails` had already been flipped by FU-4.
 - **E-V1-2** (7b): `l2/lung/side.ts` `waterShunt`; `l2/lung/conditions.ts` (`WATER_SHUNT_IDS`, `waterAdd`);
   `l2/lung/lung.ts` `extraShuntAt` (in the O2 step and `shuntFraction`). Side effect: every ventilated MODELED patient
   with 7c lung water now gets the PEEP benefit — correct physiology.
 - **E-V1-3** (7b): `types-lung.ts` `pleuralCmH2O`; `l2/lung/state-event.ts`; `l2/lung/vent-reference.ts`; one argument
   in `l2/resp/pipeline.ts` `lungStateEvent`; one test in `test/engine/lung-state.test.ts`; new `test/l2/lung/v1-lung-seams.test.ts`.
-- Outside the partition: `apps/demo/src/physiology-console/meta.ts` (one label row, §8).
+- Outside the partition: `apps/demo/src/physiology-console/meta.ts` (one label row, §8). Inside V.1's package but not in
+  the plan's file map: `packages/ventilator/src/link/port.ts` + `test/ports.test.ts` (the link race, §8).
 - **T_IT·PEEP residual (Decision 2, [ENG]):** while the lung is collapsed at end-expiration, `P_PL0 + T_IT·PEEP` still
   reaches the heart (≈ 2.4 mmHg at PEEP 5), although a collapsed lung transmits no PEEP. Recorded, not modelled.
 
@@ -252,12 +336,15 @@ at FiO2 0.4, +1.0 at FiO2 0.21); "PH crisis EtCO2 on the band edge (+5.0 vs ≥ 
 
 **Requests / open items (none blocks this gate):**
 1. **Massive-PE profile has no PVR** (§5): FU-4 G6's alias does not apply to a profile's `lungConditions`.
-2. **Pre-existing FU-4 finding, propofol's distribution reference for non-70 kg patients.** `engine.ts:485` (FU-4
-   G10) converts 7c's `co0` with `× CO_REF_LPM / (CI_LPM_PER_KG × effKg)`, which assumes 7c's pre-F4 units. Since
-   FU-4 F4, `co0` settles in true L/min, so a resting 16 kg child's distribution factor q = CO/ref reads **0.22–0.23 on
-   main and on V.1 alike** (70 kg adult 0.97–0.99; pregnancy 80 kg 0.91–0.94). This shrinks propofol's V1 and CL2/CL3 in
-   children. V.1's E-V1-1 leaves it unchanged (it moves only the start of 7c's settling; measured identical within
-   0.01). The fix — the pk reference is `co0` itself — belongs to `engine.ts`/7g, outside V.1.
+2. **Pre-existing FU-4 inconsistency: propofol's distribution reference for non-70 kg patients (needs one owner and one
+   fix).** `engine.ts:485` (FU-4 G10) converts 7c's `co0` with `× CO_REF_LPM / (CI_LPM_PER_KG × effKg)`, which assumes
+   7c's pre-F4 units. But since FU-4 F4, `co0` low-passes toward the true L/min unless a drug latches it first. On main,
+   therefore, a drug given at t = 0 sees a consistent reference (the two errors cancel), while one given later sees
+   q = CO/ref ≈ effKg/70. Measured on main, dose at 5 s or 120 s, read 60 s later: 16 kg child q **0.22–0.23**, 70 kg
+   adult 0.97–0.99, 80 kg pregnant 0.91–0.94. This shrinks propofol's V1 and CL2/CL3 in children given propofol after
+   the first seconds. The fix is both lines together — 7c's `rest.coLp` start in L/min (V.1's withdrawn line) and the
+   `engine.ts` reference = `co0` — owned by 7g/FU-4, outside V.1. It will move the t = 0 numbers in §8, e.g. the child's
+   propofol 2 mg/kg nadir, which is 72 on main.
 3. CPR compression flow should scale with the patient (Decision 25; still adult-absolute in `gas/coupling.ts`).
 4. Anaphylaxis in MANUAL link profiles; `writeLung` must not remove a profile-owned spec (Decision 23) — the stand-in stays.
 5. The intermittent COPD e2e reading (§8).
