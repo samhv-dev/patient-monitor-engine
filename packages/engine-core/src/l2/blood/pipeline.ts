@@ -6,7 +6,7 @@
 import type { L1State } from '../../l1/state.ts';
 import type { BloodClinicalEvent, BloodDrugId } from '../../types-blood.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { CI_LPM_PER_KG, coRefLpm, gasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from '../gas/params.ts';
 import { applyLungSpecs, metabolic, type BloodView, type RespState } from '../resp/pipeline.ts';
 import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, volumeCoFactor } from './circ-adapter.ts';
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
@@ -154,7 +154,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
   // CO0 in the gas model's flow units (coRatio × CI × effKg): the circuit's settled resting CO, starting from 7a's
   // stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone
   const settling = circ?.ref !== undefined && !bs.rest.latched;
-  if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = (circ.ref.co / coRefLpm(rs.pat)) * CI_LPM_PER_KG * rs.pat.effKg; // V.1 (E-V1-1)
+  if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = (circ.ref.co / CO_REF_LPM) * CI_LPM_PER_KG * rs.pat.effKg;
   if (settling && bus && (bus.active || bus.doses.length > 0)) bs.rest.latched = true;
   const pPv = pulmCapPressure(ctx.hemo);
   while (bs.k * BLOOD_DT_S <= tEnd + 1e-9) {
