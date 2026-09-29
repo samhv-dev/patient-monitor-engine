@@ -771,10 +771,10 @@ baroreceptor input (`mapNow`), FU-3's E-FU3-9 arterial hold and E-FU3-10 brainst
 
 **Files:** none (a check).
 
-- [ ] **Step 1: FU-3 has merged.** `git -C <repo> fetch origin && git -C <repo> log --oneline -1 origin/main` must show
+- [x] **Step 1: FU-3 has merged.** `git -C <repo> fetch origin && git -C <repo> log --oneline -1 origin/main` must show
   FU-3's merge ("Merge pull request … fu-3-followups"). If it has not merged, STOP and report (this plan's anchors are
   FU-3's lines).
-- [ ] **Step 2: Worktree and branch.**
+- [x] **Step 2: Worktree and branch.**
 
 ```bash
 git -C <repo> worktree add -b fu-4-integration-polish <repo>/../scratch/wt-fu-4 origin/main
@@ -782,7 +782,7 @@ cd <repo>/../scratch/wt-fu-4 && npx -y pnpm@9.15.9 install --frozen-lockfile
 mkdir -p <scratchpad>/fu-4-integration-polish
 ```
 
-- [ ] **Step 3: FU-3 anchors present** (each must print at least one line):
+- [x] **Step 3: FU-3 anchors present** (each must print at least one line):
 
 ```bash
 grep -n "export const TAU_HYP_S = 150;" packages/engine-core/src/l2/circ/coronary.ts
@@ -792,7 +792,7 @@ grep -n "requestRhythm: (id, opts) => {" packages/engine-core/src/engine.ts
 grep -n "kIschRef: 1 }" packages/engine-core/src/l2/circ/model.ts
 ```
 
-- [ ] **Step 4: Baseline suites** (record the counts and the `it.fails` list — `grep -rn "it.fails" packages apps` — in
+- [x] **Step 4: Baseline suites** (record the counts and the `it.fails` list — `grep -rn "it.fails" packages apps` — in
   `<scratchpad>/fu-4-integration-polish/base.txt`; the plan writer's base had 41 slow files / 183 tests):
 
 ```bash
@@ -819,7 +819,7 @@ re-check the process.)
 **Prototype:** the ported runner ran all 79 scenarios on the prototype tree in ≈ 7 min wall (M-series, Node 26), wrote
 `results/*.json`, and printed the matrix and the arrest table quoted in "Prototype results".
 
-- [ ] **Step 1: Create the files** (exact contents below).
+- [x] **Step 1: Create the files** (exact contents below).
 
 #### Create `scripts/audit-physiology/hooks.mjs`
 
@@ -1308,7 +1308,7 @@ e.dispatch({ id: 'a', issuedBy: 'x', type: 'applyEvent', event: { kind: 'drug', 
 for (const t of [120, 240, 360]) { e.advanceTo(t); console.log(`sux burns t${t}: K ${e.st.blood.out.k.toFixed(2)} mods.k ${e.st.mods.k.toFixed(2)} rhythm ${e.st.rhythm.id} kChem ${e.st.hemo.circ.ext.kChem.toFixed(2)}`); }
 ```
 
-- [ ] **Step 2: The script and the ignore rule.**
+- [x] **Step 2: The script and the ignore rule.**
 
 #### Modify `package.json`
 
@@ -1340,7 +1340,7 @@ packages/validation/datasets/cache/
 .audit-physiology/
 ```
 
-- [ ] **Step 3: Run the BEFORE audit** (≈ 7 min; background + `until` loop) and keep its report:
+- [x] **Step 3: Run the BEFORE audit** (≈ 7 min; background + `until` loop) and keep its report:
 
 ```bash
 PME_AUDIT_OUT=<scratchpad>/fu-4-integration-polish/audit-before npx -y pnpm@9.15.9 run audit:physiology \
@@ -1352,7 +1352,7 @@ Expected (identical to the audit on 9f864b3 — FU-3 does not move these rows): 
 tamponade −16 %, hypovolaemia −25 %, and no row in the arrest table except `X1-vf-cpr` (commanded VF) and `I1-apnoea`
 (FU-3's asphyxial PEA at 1 065 s).
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add scripts/audit-physiology package.json .gitignore docs/gates/fu-4/audit-before.md
@@ -1394,7 +1394,7 @@ haemorrhage unchanged (no anaesthetic). circ-sanity-1 (seed 11, VT 500 rig): MAP
 spontaneously breathing through an SGA: 155/85 → 126/72, kIsch 1.00, S/D 1.16 — the R23 spiral needs DBP ≈ 45; NR-2
 stands). neuro-circ (FU-3's R-7f-9 flip) stays green.
 
-- [ ] **Step 1: Write the failing unit test** `packages/engine-core/test/l2/circ/sympathetic-output.test.ts`:
+- [x] **Step 1: Write the failing unit test** `packages/engine-core/test/l2/circ/sympathetic-output.test.ts`:
 
 #### Create `packages/engine-core/test/l2/circ/sympathetic-output.test.ts`
 
@@ -1453,7 +1453,7 @@ describe('FU-4 G2: sympathetic output suppression and resetting (baroreflex)', (
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/sympathetic-output.test.ts` —
 expected FAIL (no `outF`/`setF`, `fx.symp` undefined).
 
-- [ ] **Step 2: 7g — the two PD targets.**
+- [x] **Step 2: 7g — the two PD targets.**
 
 #### Modify `packages/engine-core/src/l2/pk/row.ts`
 
@@ -1556,7 +1556,7 @@ replace with:
     ],
 ```
 
-- [ ] **Step 3: 7a — the effect type and its default.**
+- [x] **Step 3: 7a — the effect type and its default.**
 
 #### Modify `packages/engine-core/src/l2/circ/drugs.ts`
 
@@ -1608,7 +1608,7 @@ replace with:
 
 (The A11 sentence in this file's header stays true for the 7a Bateman rows; the anaesthetic reset is 7g's `setF`.)
 
-- [ ] **Step 4: 7a — the baroreflex applies them.**
+- [x] **Step 4: 7a — the baroreflex applies them.**
 
 #### Modify `packages/engine-core/src/l2/circ/baroreflex.ts`
 
@@ -1719,7 +1719,7 @@ replace with:
 hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF }, raTm)
 ```
 
-- [ ] **Step 5: Run the unit test** (PASS) and the circulation siblings:
+- [x] **Step 5: Run the unit test** (PASS) and the circulation siblings:
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/l2/pk test/engine/circ-sanity-1.test.ts test/engine/circ-sanity-2.test.ts test/engine/neuro-circ.test.ts
@@ -1728,7 +1728,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ t
 Expected: `test/l2/circ` and `test/l2/pk` green; circ-sanity-1's propofol `it.fails` now FAILS as an expected failure
 (its body passes: "propofol MAP ratio 0.72 dHR 3.0"); circ-sanity-2 unchanged; neuro-circ green.
 
-- [ ] **Step 6: Flip the pre-declared test.**
+- [x] **Step 6: Flip the pre-declared test.**
 
 #### Modify `packages/engine-core/test/engine/circ-sanity-1.test.ts`
 
@@ -1752,11 +1752,11 @@ replace with:
   it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) with little HR rise (< +15) — was 0.913 / +16.6 before FU-4', async () => {
 ```
 
-- [ ] **Step 7: Audit re-measure** — `PME_AUDIT_OUT=<scratchpad>/fu-4-integration-polish/audit-t2 npx -y pnpm@9.15.9 run
+- [x] **Step 7: Audit re-measure** — `PME_AUDIT_OUT=<scratchpad>/fu-4-integration-polish/audit-t2 npx -y pnpm@9.15.9 run
   audit:physiology A1 A2 B0 B2 C0 C1 J3 J4 K-ascad K-hfref D0 K-pe A0` → the matrix rows above (before Tasks 4–6 the
   tamponade/hypovolaemia rows show the MAP falls without the arrests).
 
-- [ ] **Step 8: Commit and push.**
+- [x] **Step 8: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/pk packages/engine-core/src/l2/circ/{drugs,baroreflex,model}.ts packages/engine-core/test/l2/circ/sympathetic-output.test.ts packages/engine-core/test/engine/circ-sanity-1.test.ts
@@ -1794,7 +1794,7 @@ beat's 96 for 7d/7e); brain CBF rel 1.0 → **< 0.2 in VF** (was 1.00–1.49) �
 unchanged to 3 decimals (mapLow 64.28 vs 64.39, CBF 0.667 vs 0.666 — the organs' MAP source moved from the beat mean to
 the 2 s time mean); `truth-event` future tree back under the cap.
 
-- [ ] **Step 1: Write the failing test.**
+- [x] **Step 1: Write the failing test.**
 
 #### Create `packages/engine-core/test/engine/circ-arrest-state.test.ts`
 
@@ -1842,7 +1842,7 @@ describe('FU-4 G4: the arrest reads its own pressures', () => {
 
 Run it: expected FAIL (`mapNow` undefined; CBF 1.0 in VF).
 
-- [ ] **Step 2: 7a — the continuous MAP and the CPP accumulator.**
+- [x] **Step 2: 7a — the continuous MAP and the CPP accumulator.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -1922,7 +1922,7 @@ replace with:
 (Without CPR `cprCardiac` returns 0 at once; the accumulator is read and reset by Task 4's coronary step — until then it
 only grows, bounded by a double's range for years of sim time.)
 
-- [ ] **Step 3: 7d and 7e read it (E-FU4-2).**
+- [x] **Step 3: 7d and 7e read it (E-FU4-2).**
 
 #### Modify `packages/engine-core/src/l2/organs/inputs.ts`
 
@@ -1958,7 +1958,7 @@ replace with:
   if (last) return last.map;
 ```
 
-- [ ] **Step 4: 7x's truth tree (E-FU4-3).**
+- [x] **Step 4: 7x's truth tree (E-FU4-3).**
 
 #### Modify `packages/engine-core/src/truth.ts`
 
@@ -1974,7 +1974,7 @@ replace with:
 const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env', 'hemo.circ.acc', 'hemo.circ.cppAcc']); // Stage 7e: its input copy, profile and heat calibration; FU-4 (E-FU4-3): the in-progress beat and CPP accumulators
 ```
 
-- [ ] **Step 5b (UNPROTOTYPED): the `state` event's MODELED SBP/DBP during an arrest.** `emitSecond` reports the last
+- [x] **Step 5b (UNPROTOTYPED): the `state` event's MODELED SBP/DBP during an arrest.** `emitSecond` reports the last
   site beat's SBP/DBP as MODELED truth — in VF or PEA that is the beat before the arrest (the controllers' BP and 8a's
   `state:sbp` series). With no ejection for > 3 s (`isArrested`, which the `overrides()` flags already use) report the
   circuit's continuous MAP for both.
@@ -1999,7 +1999,7 @@ replace with:
   Run `test/engine/hemo-vf.test.ts`, `test/engine/circ-arrest.test.ts`, `test/engine/state-rhythm.test.ts` and
   `packages/controller` tests; a sibling that pinned the stale value is reported, not re-tuned.
 
-- [ ] **Step 5: Run** the new test (PASS), then the siblings that read these values:
+- [x] **Step 5: Run** the new test (PASS), then the siblings that read these values:
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/circ-arrest-state.test.ts test/engine/truth-event.test.ts test/l2/organs test/l2/endo test/engine/organs-htn.test.ts test/engine/organs-tbi.test.ts test/engine/endo-circ-acceptance.test.ts test/engine/organs-renal.test.ts
@@ -2008,7 +2008,7 @@ cd apps/demo && npx vitest run src/physiology-console && cd ../..
 
 Expected: all green, with the numbers recorded by the gate (check 18: mapLow 64.3, CBF 0.667, hypocapnia 0.377).
 
-- [ ] **Step 6: Commit and push.**
+- [x] **Step 6: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/src/l2/organs/inputs.ts packages/engine-core/src/l2/endo/adapters.ts packages/engine-core/src/truth.ts packages/engine-core/test/engine/circ-arrest-state.test.ts
@@ -2045,7 +2045,7 @@ PEA at +60 s; check-18 (MANUAL) unchanged (R23 balance); FU-3's asphyxia: TAU_HY
 **260 → +5.62 min**, HR < 40 at +3.43, post-arrest window, E-FU3-10 and the 7.0 s reversal unchanged; FU-3's "final HR
 ≤ 130" `it.fails` now passes (74.4; flipped in Task 6).
 
-- [ ] **Step 1: Write the failing unit test.**
+- [x] **Step 1: Write the failing unit test.**
 
 #### Create `packages/engine-core/test/l2/circ/coronary-arrest.test.ts`
 
@@ -2112,7 +2112,7 @@ describe('FU-4 G1: coronary myocardial state', () => {
 });
 ```
 
-- [ ] **Step 2: The coronary step.**
+- [x] **Step 2: The coronary step.**
 
 #### Modify `packages/engine-core/src/l2/circ/coronary.ts`
 
@@ -2284,7 +2284,7 @@ replace with:
   const tau = target < c.kIsch ? (noBeat ? TAU_ISCH_ARREST_S : TAU_ISCH_DOWN_S) : TAU_ISCH_UP_S;
 ```
 
-- [ ] **Step 3: The beat records the pleural pressure at end-diastole.**
+- [x] **Step 3: The beat records the pleural pressure at end-diastole.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -2355,7 +2355,7 @@ replace with:
       m.acc = newAcc(next.t0, m.s[S.VLV] as number, o.pLv - o.pIt, o.pIt);
 ```
 
-- [ ] **Step 4: The pipeline feeds the no-beat branch and publishes the step's CPP.**
+- [x] **Step 4: The pipeline feeds the no-beat branch and publishes the step's CPP.**
 
 #### Modify `packages/engine-core/src/l2/hemo/pipeline.ts`
 
@@ -2409,7 +2409,7 @@ replace with:
     cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // FU-4 G4: the CPP the coronary step used
 ```
 
-- [ ] **Step 5: The CPP test** (appended to Task 3's file).
+- [x] **Step 5: The CPP test** (appended to Task 3's file).
 
 #### Modify `packages/engine-core/test/engine/circ-arrest-state.test.ts`
 
@@ -2437,7 +2437,7 @@ replace with:
 });
 ```
 
-- [ ] **Step 6: Run** the unit test, `test/l2/circ`, the arrest-state test, FU-3's engine test and the R23 pair:
+- [x] **Step 6: Run** the unit test, `test/l2/circ`, the arrest-state test, FU-3's engine test and the R23 pair:
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/circ-arrest-state.test.ts test/engine/circ-hypoxic-arrest.test.ts test/engine/circ-sanity-2.test.ts test/engine/circ-manual-ischaemia.test.ts test/engine/organs-htn.test.ts
@@ -2447,7 +2447,7 @@ Expected: green except FU-3's "final HR ≤ 130" `it.fails`, which now passes it
 Step 6 (until then it reports as a failing expected-failure: that is the signal, not a regression). If FU-3's
 asphyxial arrest lands outside 5–14 min, re-run D3's scan (150/220/260/300/360) and record it; never move the band.
 
-- [ ] **Step 7: Commit and push.**
+- [x] **Step 7: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/{coronary,model}.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/l2/circ/coronary-arrest.test.ts packages/engine-core/test/engine/circ-arrest-state.test.ts
@@ -2478,7 +2478,7 @@ at 1 015 s · tamponade 1 + propofol 2 mg/kg: PEA at +190 s (both flow shares fa
 the same dose reached MAP 44 and did not arrest) · healthy/AS + CAD/HFrEF propofol: no
 arrest, `kIschRv` 1.00 · MANUAL untouched.
 
-- [ ] **Step 1: Write the failing unit test.**
+- [x] **Step 1: Write the failing unit test.**
 
 #### Create `packages/engine-core/test/l2/circ/rv-coronary.test.ts`
 
@@ -2519,7 +2519,7 @@ describe('FU-4 G5: RV coronary balance', () => {
 });
 ```
 
-- [ ] **Step 2: The RV balance.**
+- [x] **Step 2: The RV balance.**
 
 #### Modify `packages/engine-core/src/l2/circ/coronary.ts`
 
@@ -2669,14 +2669,14 @@ replace with:
   m.kRv = b.eesF * de.ees * m.ext.kRv * man.eesRvF * betaBlunt(x.endoEesF ?? 1, x.betaBlockAdd ?? 0) * kc * kHyp * (env.modeled ? m.cor.kIschRv : 1); // Stage 7g: β-blockade blunts the surge; FU-4 G5: RV ischaemia (MODELED)
 ```
 
-- [ ] **Step 3: Run** `test/l2/circ` and the circulation engine siblings (`circ-sanity-2` H5/H7/H8 must stay green —
+- [x] **Step 3: Run** `test/l2/circ` and the circulation engine siblings (`circ-sanity-2` H5/H7/H8 must stay green —
   they measure at 2 min, before the RV spiral of a massive PE develops):
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/circ-sanity-2.test.ts test/engine/lung-circ.test.ts test/engine/circ-modeled.test.ts
 ```
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/{coronary,model}.ts packages/engine-core/test/l2/circ/rv-coronary.test.ts
@@ -2716,7 +2716,7 @@ elderly, AS + CAD, HFrEF inductions: none · ROSC probe: PEA at 695 s, CPR + 2 L
 850 s, MAP 84 at 935 s; CPR alone → pulse at 850 s too (the CPR model's CPP 42–52 is generous: Q13) · the four-test
 engine file green; FU-3's "final HR ≤ 130" body passes (74.4).
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 #### Create `packages/engine-core/test/l2/circ/arrest.test.ts`
 
@@ -2905,7 +2905,7 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
 });
 ```
 
-- [ ] **Step 2: The state machine.**
+- [x] **Step 2: The state machine.**
 
 #### Create `packages/engine-core/src/l2/circ/arrest.ts`
 
@@ -3014,7 +3014,7 @@ export function roscStep(m: CircModelState, rhythmId: string, pulseless: boolean
 }
 ```
 
-- [ ] **Step 3: 7a state, types and the pre-arrest bradycardia.**
+- [x] **Step 3: 7a state, types and the pre-arrest bradycardia.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -3094,7 +3094,7 @@ replace with:
   const hypF = env.modeled ? Math.max(0.05, 1 - G_SA * m.cor.hyp - kSa) : 1; // FU-3 item 16: hypoxic SA-node depression (FU-4: + ischaemic, K)
 ```
 
-- [ ] **Step 4: The pipeline runs it in both modes.**
+- [x] **Step 4: The pipeline runs it in both modes.**
 
 #### Modify `packages/engine-core/src/l2/hemo/pipeline.ts`
 
@@ -3143,7 +3143,7 @@ replace with:
 (FU-3's "MANUAL never calls it" in `hypoxic-arrest.ts`'s header stays true for the hypoxic path; the MANUAL route
 added here is the no-flow rule. In MANUAL the engine-initiated rhythm reaches the controllers as FU-2 made 7g's do.)
 
-- [ ] **Step 5: SLOW entry.**
+- [x] **Step 5: SLOW entry.**
 
 #### Modify `packages/engine-core/vite.config.ts`
 
@@ -3160,7 +3160,7 @@ replace with:
   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
 ```
 
-- [ ] **Step 6: Flip FU-3's pre-declared test** (its band is met now that the bleed-free reoxygenated heart is not
+- [x] **Step 6: Flip FU-3's pre-declared test** (its band is met now that the bleed-free reoxygenated heart is not
   held at the R23 floor: measured final HR 74.4).
 
 #### Modify `packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts`
@@ -3184,7 +3184,7 @@ replace with:
   it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — was 132.1 on main + 7e, 74.4 with FU-4', async () => {
 ```
 
-- [ ] **Step 7: Run** the unit test, the engine file (≈ 3 min), FU-3's file, the defibrillator/CPR/VF siblings:
+- [x] **Step 7: Run** the unit test, the engine file (≈ 3 min), FU-3's file, the defibrillator/CPR/VF siblings:
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/circ-lowflow-arrest.test.ts test/engine/circ-hypoxic-arrest.test.ts test/engine/defib-engine.test.ts test/engine/hemo-vf.test.ts test/engine/circ-arrest.test.ts test/engine/cpr-etco2.test.ts test/engine/device-determinism.test.ts test/l2/ecg/s5/library.test.ts
@@ -3194,10 +3194,10 @@ Expected: green. The engine file logs the four courses (prototype: control 0 pul
 MAP < 30 at 645 s, HR 91 of peak 184; MANUAL arrest 640 s, MAP < 25 at 575–600 s; ROSC 90 s after the first
 compression, CPR CPP 42–53).
 
-- [ ] **Step 8: Audit** — `npx -y pnpm@9.15.9 run audit:physiology` (all, ≈ 7 min) and compare its arrest table with
+- [x] **Step 8: Audit** — `npx -y pnpm@9.15.9 run audit:physiology` (all, ≈ 7 min) and compare its arrest table with
   "Prototype results"; a row that differs by more than 60 s or changes its onset rhythm is reported, not tuned.
 
-- [ ] **Step 9: Commit and push.**
+- [x] **Step 9: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/{arrest,model}.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/vite.config.ts packages/engine-core/test/l2/circ/arrest.test.ts packages/engine-core/test/engine/circ-lowflow-arrest.test.ts packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts
@@ -3229,7 +3229,7 @@ Mechanism and thresholds: D7 (Q5).
 asystole by 1 200 s · CaCl2 1 g at 240 s then sux: **no arrest** in 15 min (kEcg held below 8.5 by `caMem`) · the
 Stage 5 electrolyte morphology tests (`setModifiers k`) and 7c's K tests unchanged.
 
-- [ ] **Step 1: Write the failing test.**
+- [x] **Step 1: Write the failing test.**
 
 #### Create `packages/engine-core/test/engine/blood-k-rhythm.test.ts`
 
@@ -3299,7 +3299,7 @@ describe('FU-4 G3: hyperkalaemia on the ECG, the pump and the rhythm', () => {
 });
 ```
 
-- [ ] **Step 2: 7c.**
+- [x] **Step 2: 7c.**
 
 #### Modify `packages/engine-core/src/l2/blood/circ-adapter.ts`
 
@@ -3375,7 +3375,7 @@ replace with:
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
 ```
 
-- [ ] **Step 3: Run** the new test and 7c's/Stage 5's K siblings:
+- [x] **Step 3: Run** the new test and 7c's/Stage 5's K siblings:
 
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-k-rhythm.test.ts test/engine/blood-hyperk.test.ts test/engine/blood-ecg.test.ts test/l2/blood test/l2/ecg
@@ -3383,7 +3383,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/bl
 
 Expected: green (prototype numbers above). `blood-ecg.test.ts` pins deltas from a NORMAL-K profile — unchanged.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/blood/{circ-adapter,pipeline}.ts packages/engine-core/vite.config.ts packages/engine-core/test/engine/blood-k-rhythm.test.ts
@@ -3414,7 +3414,7 @@ warm MAP 55–60, cold SVR 1200–1500); warm CO 7–9 and warm SVR 500–700 st
 mechanism is Q-7e-7's, calibration pass). The cause is the combination (G2 does not act — no anaesthetic; G11's
 lower PaCO2 removes the hypercapnic pressor term; G1's demand shares) — recorded, not tuned.
 
-- [ ] **Step 1: The hyperthermic hazard (UNPROTOTYPED — measure S16 after it; if MH does not arrest before 43 °C /
+- [x] **Step 1: The hyperthermic hazard (UNPROTOTYPED — measure S16 after it; if MH does not arrest before 43 °C /
   pH 6.6 within the S16 window, S16 becomes `it.fails` with the numbers).**
 
 #### Modify `packages/engine-core/src/l2/circ/arrest.ts`
@@ -3461,7 +3461,7 @@ replace with:
   return { id: 'vfCoarse', opts: {}, cause: r.tempC > T_HOT ? 'hyperthermia' : 'hypothermia' };
 ```
 
-- [ ] **Step 2: Flip the three sepsis rows that are now in band; re-title the two that stay.**
+- [x] **Step 2: Flip the three sepsis rows that are now in band; re-title the two that stay.**
 
 #### Modify `packages/engine-core/test/engine/endo-circ-acceptance.test.ts`
 
@@ -3525,11 +3525,11 @@ replace with:
   it('cold SVR 1200–1500 dyn·s/cm⁵ — was 1507 before FU-4, 1444 with it (Q-7e-7)', () => {
 ```
 
-- [ ] **Step 3: Run** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/arrest.test.ts
+- [x] **Step 3: Run** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ/arrest.test.ts
   test/engine/endo-circ-acceptance.test.ts test/engine/endo-acceptance.test.ts` (≈ 3 min): green; the log line reads
   "sepsis warm: MAP 56 HR 118 CO 4.9 SVR 792; cold: MAP 75 HR 74 CO 3.8 SVR 1444" (± 1). If a flipped row misses by
   the executor's run, restore its `it.fails` with the new number (R45) and report.
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/arrest.ts packages/engine-core/test/engine/endo-circ-acceptance.test.ts
@@ -3563,7 +3563,7 @@ before 500 mL (emergent through Tasks 4–6; record the volume at the arrest); f
 draining 50 mL raises MAP by ≥ 15 mmHg within 1 min (Spodick 2003: small drainage, large effect). Missed → `it.fails`
 with the numbers.
 
-- [ ] **Step 1: Write the test** (unit rig on the circulation; `advance()` steps the model at 2 ms like the Stage 2
+- [x] **Step 1: Write the test** (unit rig on the circulation; `advance()` steps the model at 2 ms like the Stage 2
   pipeline does; the MODELED environment of `RESTING_ENV` keeps the reflexes on).
 
 #### Create `packages/engine-core/test/l2/circ/tamponade-dynamics.test.ts`
@@ -3628,7 +3628,7 @@ describe('FU-4 G6: tamponade dynamics', () => {
 });
 ```
 
-- [ ] **Step 2: The state and its integration.**
+- [x] **Step 2: The state and its integration.**
 
 #### Modify `packages/engine-core/src/l2/circ/conditions.ts`
 
@@ -3768,10 +3768,10 @@ replace with:
   | { kind: 'condition'; id: 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct'; severity: number; volumeMl?: number; rateMlPerMin?: number }; // FU-4 G6: tamponade volume / accumulation
 ```
 
-- [ ] **Step 3: Run** the test and `test/l2/circ`, `test/engine/circ-sanity-2.test.ts` (H7 unchanged). If `model.ts` →
+- [x] **Step 3: Run** the test and `test/l2/circ`, `test/engine/circ-sanity-2.test.ts` (H7 unchanged). If `model.ts` →
   `conditions.ts` creates an import cycle at runtime (conditions.ts imports `CircModelState` as a TYPE only, so it should
   not), move `TAMPONADE_MAX_ML` into `params.ts` and import it from there in both files.
-- [ ] **Step 4: Commit and push** (`feat(circ): tamponade accumulates and drains (FU-4 G6)`, trailer as always).
+- [x] **Step 4: Commit and push** (`feat(circ): tamponade accumulates and drains (FU-4 G6)`, trailer as always).
 
 ### Task 10: G6 (b) — pulsus paradoxus: measure, then the swing that grows with the breath (7a pleural; UNPROTOTYPED)
 
@@ -3786,7 +3786,7 @@ interdependence through the shared pericardium (`circuit.ts`: `ext = pit + ct + 
 fluid). The spontaneous pleural swing is a fixed 4 cmH2O × ΔV/VT (`pleural.ts:21`) whatever the breath's size, so
 a larger, dyspnoeic breath never swings more. Step 1 measures which half is short.
 
-- [ ] **Step 1: Measure** (a probe, not committed): B0s (`pnpm run audit:physiology B0s`) plus the same run with the
+- [x] **Step 1: Measure** (a probe, not committed): B0s (`pnpm run audit:physiology B0s`) plus the same run with the
   swing poked to 8 and 12 cmH2O (edit `SPONT_SWING_CMH2O` locally, revert). Record the SBP swing (`dSbp` column), the
   RV and LV end-diastolic volume swing. If 8 cmH2O already gives ≥ 10 mmHg, the interdependence is right and the swing
   is the defect → Step 2. If not, the interdependence is short: stop, record, and leave S3 as `it.fails` (Q2 for Ali).
@@ -3804,7 +3804,7 @@ bigger* (the respiratory drive does not see low CO, and `l2/neuro/**` is outside
 - **In both cases S3 joins the suite's `it.fails` list with its number** — the review found S3 missing from the "six
   `it.fails`" count, so the count becomes SEVEN (S1b, S3, S4b, S5, S8, S9, S13) minus whatever Tasks 18a/18c flip
   (S8 and S13 flip, so the landed list is S1b, S3, S4b, S5, S9 until Task 11's step fixes S9).
-- [ ] **Step 2: The swing scales with the breath** — ΔV over the patient's resting tidal volume (7 mL/kg × effective
+- [x] **Step 2: The swing scales with the breath** — ΔV over the patient's resting tidal volume (7 mL/kg × effective
   weight, the Stage 3 resting pattern [ENG]) instead of over the breath's own VT, so a resting breath keeps 4 cmH2O and
   a 1.5× breath swings 6.
 
@@ -3855,11 +3855,11 @@ replace with:
   'test/engine/circ-pulsus.test.ts', // FU-4 G6: two 10 sim-min spontaneous-breathing runs
 ```
 
-- [ ] **Step 3: The test** — severe tamponade (severity 1), MODELED, spontaneous breathing (no ventilator), 10 min:
+- [x] **Step 3: The test** — severe tamponade (severity 1), MODELED, spontaneous breathing (no ventilator), 10 min:
   beat-to-beat SBP max − min over each breath ≥ 10 mmHg (pulsus paradoxus, Spodick 2003) in the last 2 min; the
   healthy control < 5 mmHg. Write it as the audit runner's `dSbp` over 6 s windows (`circ-pulsus.test.ts`, one yield per
   sim-minute, SLOW_B). If ≥ 10 is not reached: `it.fails` with the number, S3 likewise, Q2.
-- [ ] **Step 4: Run** `test/l2/circ`, the new test, `test/engine/resp-*.test.ts`, `test/engine/neuro-spont.test.ts`,
+- [x] **Step 4: Run** `test/l2/circ`, the new test, `test/engine/resp-*.test.ts`, `test/engine/neuro-spont.test.ts`,
   `test/engine/lung-*.test.ts` (spontaneous breathing shapes the pleural input of every MODELED run); commit and push
   (`feat(circ): the spontaneous pleural swing grows with the breath — pulsus paradoxus in tamponade (FU-4 G6)`).
 
@@ -3908,7 +3908,7 @@ S9's picture (the bands above, with the SpO2 side per Ali); `condition tensionPt
 (`condition pe 0.75`: mPAP 30–45, CO −10 %) and the lung-circ PE/PTX tests stay green; 8a's sanity document t12 (PE)
 is re-run and reported (its EtCO2 row may move — dead space now joins it).
 
-- [ ] **Step 1: The alias map.**
+- [x] **Step 1: The alias map.**
 
 #### Create `packages/engine-core/src/l2/circ/aliases.ts`
 
@@ -3938,7 +3938,7 @@ export function obstructiveAlias(cmd: Command): AliasPair | null {
 }
 ```
 
-- [ ] **Step 2: The engine applies both, before the chain (E-FU4-7).** Run `git fetch origin && git merge origin/main`
+- [x] **Step 2: The engine applies both, before the chain (E-FU4-7).** Run `git fetch origin && git merge origin/main`
   first (R51 §7).
 
 #### Modify `packages/engine-core/src/engine.ts`
@@ -3981,7 +3981,7 @@ import { obstructiveAlias } from './l2/circ/aliases.ts'; // FU-4 G6 (Task 11)
 (Validation is unchanged: each spelling is validated by its own stage before `apply`; the alias carries the same
 severity. The alias pre-step sits after the device layer and before 7g — neither consumes these events.)
 
-- [ ] **Step 3: 7a stops writing its own pleural pressure; the catalogue's PE row stops writing PVR.**
+- [x] **Step 3: 7a stops writing its own pleural pressure; the catalogue's PE row stops writing PVR.**
 
 #### Modify `packages/engine-core/src/l2/circ/conditions.ts`
 
@@ -4029,10 +4029,10 @@ replace with:
       // engine alias for either spelling of the PE event; this row keeps the gas-exchange and mechanics keys
 ```
 
-- [ ] **Step 4: The test** (`obstructive-aliases.test.ts`, engine, 3 sim-min runs: fast set): the two PE spellings at
+- [x] **Step 4: The test** (`obstructive-aliases.test.ts`, engine, 3 sim-min runs: fast set): the two PE spellings at
   severity 1 → identical `hemo.circ.ext.pvr`, `resp.lung.lp` dead space/shunt fields (read the state with `e.st`), and
   the tension spellings → identical `resp.lung.lp.pPtx` and `hemo.circ.ext.pPtx` 0; S9's picture after 3 min.
-- [ ] **Step 5: Run** the new test, `test/l2/circ/conditions.test.ts` (unchanged: it calls `applyCircCondition` directly),
+- [x] **Step 5: Run** the new test, `test/l2/circ/conditions.test.ts` (unchanged: it calls `applyCircCondition` directly),
   `test/engine/circ-events.test.ts` (its tensionPtx dispatch is still accepted), `test/engine/lung-*.test.ts`,
   `test/engine/circ-sanity-2.test.ts`, `packages/ventilator` tests (the link profiles), and regenerate the lung data doc
   the way Stage 7b's README says (`docs/…/stage-v-lung-pathology-data.md` is V.1's — do NOT regenerate it here; note it
@@ -4066,7 +4066,7 @@ succinylcholine dose at +5 min → junctional escape 40–50/min or a sinus paus
 oculocardiac stimulus → HR −20 % or a pause while it lasts, none after atropine; class IV haemorrhage HR falls below
 100 before the arrest (with Task 6's `K_BRADY`: prototype 91). Every PD number [ENG]; `it.fails` with numbers if missed.
 
-- [ ] **Step 1: 7g — the targets and the occupancy.**
+- [x] **Step 1: 7g — the targets and the occupancy.**
 
 #### Modify `packages/engine-core/src/l2/pk/row.ts`
 
@@ -4172,22 +4172,22 @@ replace with:
 }
 ```
 
-- [ ] **Step 2: The rows** (sizes [ENG], fit targets in S15): fentanyl `{ target: 'vagalMs', emax: 350, ec50: 4, hill: 2 }`,
+- [x] **Step 2: The rows** (sizes [ENG], fit targets in S15): fentanyl `{ target: 'vagalMs', emax: 350, ec50: 4, hill: 2 }`,
   remifentanil `ec50: 6`, sufentanil `ec50: 0.5`; neostigmine `{ target: 'vagalMs', emax: 450, ec50: 1 }`; atropine
   `{ target: 'muscarinic', emax: 0.95, ec50: 0.4 }`, glycopyrrolate `{ target: 'muscarinic', emax: 0.9, ec50: 0.5 }` —
   appended to each row's `pd` array (the executor writes the edits against the rows' current text; each row's `pd:` line
   is unique by its drug id).
-- [ ] **Step 3: 7a applies them; the stimulus vagal event; Bezold–Jarisch.** In `control()` (MODELED only):
+- [x] **Step 3: 7a applies them; the stimulus vagal event; Bezold–Jarisch.** In `control()` (MODELED only):
   `rr += ((de.vagalMs ?? 0) + vagalEvent(m) + bj(m)) / 1000`, the vagal baroreflex gain × (1 − `muscBlock`), where
   `vagalEvent` is the stimulus-driven increment (`m.vagalStim = { until, ms }`, 600 ms × intensity for oculocardiac and
   peritoneal traction, 300 ms for laryngoscopy [ENG]) × (1 − `muscBlock`), and `bj` = 800 ms × max(0, 0.35 − LVEDV/ref)/0.35
   (the empty-ventricle reflex below 35 % of the resting EDV [ENG]). The engine observes `stimulus` with a `site` before
   7e consumes it (`circVagalStimulus(ps.hemo.circ, site, intensity, simT)`); 7e validates `site ∈ {laryngoscopy,
   oculocardiac, peritoneal}`.
-- [ ] **Step 4: The second succinylcholine dose** (7g hook): `RhythmHookState.sux = { n, lastT, until, from }`; a
+- [x] **Step 4: The second succinylcholine dose** (7g hook): `RhythmHookState.sux = { n, lastT, until, from }`; a
   succinylcholine entry in `pk.bus.doses` within 600 s of the previous one and `muscBlock < 0.5` returns
   `junctionalEscape` at 45/min for 60 s, then the rhythm it came from.
-- [ ] **Step 5: Tests** (`vagal-events.test.ts`): the S15 bands above; atropine first abolishes each. Run the pk and
+- [x] **Step 5: Tests** (`vagal-events.test.ts`): the S15 bands above; atropine first abolishes each. Run the pk and
   circ siblings (`pk-acceptance-*`, `neuro-*`, `circ-sanity-1` phenylephrine band and class II haemorrhage must stay
   green — the BJ threshold is below class III's EDV). Commit and push (`feat(pk,circ): vagal events — opioids,
   neostigmine, repeat succinylcholine, oculocardiac and peritoneal traction; atropine blocks them (FU-4 G7)`).
@@ -4265,7 +4265,7 @@ while the state reads 30); every FU-3 band unchanged (the post-arrest monitor-HR
 before — G-FU3 ruling 1); class IV haemorrhage — `organs.brain.cbfRel` < 0.2 within 60 s of the PEA (ruling 3); and the
 13a unit values above (40 / 50 / never the sum).
 
-- [ ] **Step 1: Stage 5's hook (E-FU4-11).**
+- [x] **Step 1: Stage 5's hook (E-FU4-11).**
 
 #### Modify `packages/engine-core/src/l2/ecg/rhythm-state.ts`
 
@@ -4300,7 +4300,7 @@ replace with:
   return d.rateDrives === 'escape' ? rhythmRate(st, t, ctx) : d.backupEscapeBpm * (ctx.automaticityAt?.(t) ?? 1); // FU-4: depressed escape foci
 ```
 
-- [ ] **Step 2: 7a publishes the factor; the engine passes it.**
+- [x] **Step 2: 7a publishes the factor; the engine passes it.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -4357,7 +4357,7 @@ replace with:
     automaticityAt: () => ps.hemo.circ.saF ?? 1, // FU-4 (G-FU3 ruling 1): hypoxic/ischaemic depression of the escape foci
 ```
 
-- [ ] **Step 3: The FU-3 criteria (ruling 1) and 7d's CBF after the arrest (ruling 3).**
+- [x] **Step 3: The FU-3 criteria (ruling 1) and 7d's CBF after the arrest (ruling 3).**
 
 #### Modify `packages/engine-core/test/engine/circ-hypoxic-arrest.test.ts`
 
@@ -4414,7 +4414,7 @@ replace with:
     if (c.tArrest !== undefined && t === c.tArrest + 60) c.cbfAfter = (e as unknown as { st: { organs: { brain: { cbfRel: number } } } }).st.organs.brain.cbfRel;
 ```
 
-- [ ] **Step 4: Run** `test/l2/ecg`, the Stage 5 library and device tests (Stage 5 rhythms with no circulation context are
+- [x] **Step 4: Run** `test/l2/ecg`, the Stage 5 library and device tests (Stage 5 rhythms with no circulation context are
   unchanged: the accessor is absent → 1), FU-3's file and the low-flow file:
 
 ```bash
@@ -4423,7 +4423,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/ecg te
 
   If an FU-3 band moves, record it and do not tune (R45); if the monitor still does not show < 45, the escape is not the
   only floor — find the other one (the HR numeric's own averaging on a 30/min rhythm) and report it.
-- [ ] **Step 5: Commit and push** (`feat(circ,ecg): hypoxic/ischaemic myocardium depresses the escape foci — the monitor shows the pre-arrest bradycardia (FU-4, G-FU3 rulings 1 and 3)`).
+- [x] **Step 5: Commit and push** (`feat(circ,ecg): hypoxic/ischaemic myocardium depresses the escape foci — the monitor shows the pre-arrest bradycardia (FU-4, G-FU3 rulings 1 and 3)`).
 
 
 ### Task 14: G10 — propofol's distribution follows cardiac output (7g; UNPROTOTYPED)
@@ -4587,7 +4587,7 @@ replace with:
     // T6.3: E = Ce/(Ce + 3.5): SVR ×(1 − 0.45E), Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); gvHr −0.7 (7a fit, Cullen 1987) — refitted in Task 20
 ```
 
-- [ ] **Test** (`flow-distribution.test.ts`, unit, on `advancePk` with a `PkCtx` whose `coLpm` is 5.25 vs 3.1): peak Ce
+- [x] **Test** (`flow-distribution.test.ts`, unit, on `advancePk` with a `PkCtx` whose `coLpm` is 5.25 vs 3.1): peak Ce
   ratio ≥ 1.3; resting q = 1 exactly; 7g's "Eleveld in the engine equals the standalone model to 1e-9" (E-7e-6 rig)
   must stay green — its rig pins temperature; if its CO is not the reference, pin `coLpm` in that rig too (a test-only
   seam like `pinCoreTemp`, E-FU4-10) and record it. Run `test/l2/pk`, `test/engine/pk-*.test.ts`, the 7f NMB/depth
@@ -4762,13 +4762,13 @@ replace with:
   r.send({ type: 'attachSensor', sensor: 'icp', state: 'on' });
 ```
 
-- [ ] **Run** `CI=1 … vitest run test/engine/pk-bus.test.ts test/engine/organs-tbi.test.ts test/engine/neuro-spont.test.ts
+- [x] **Run** `CI=1 … vitest run test/engine/pk-bus.test.ts test/engine/organs-tbi.test.ts test/engine/neuro-spont.test.ts
   test/engine/lung-*.test.ts test/engine/resp-*.test.ts test/engine/pk-acceptance-pd.test.ts`, then the whole slow set
   (≈ 20 min, background): every long MODELED ventilated run moves a little (the hypercapnic pressor term is gone). A band
   that moves out is reported with its numbers (R45), not re-tuned; a rig that compensated the old dead space the way
   check 19 did is re-derived under E-FU4-8 with its old/new RR in the gate note. Then the audit (`pnpm run
   audit:physiology`) — record the matrix again.
-- [ ] **Commit and push** (`fix(resp): MODELED ventilation drops the MANUAL EtCO2 fit from its dead space — 12 × 500 PaCO2 60 → 48.5 (FU-4 G11)`).
+- [x] **Commit and push** (`fix(resp): MODELED ventilation drops the MANUAL EtCO2 fit from its dead space — 12 × 500 PaCO2 60 → 48.5 (FU-4 G11)`).
 
 ### Task 16: G12 — hypothermia: shivering stops below 30–32 °C; the core temperature reaches the arrest hazard (7e thermal E-FU4-5, engine E-FU4-7; hazard wiring PROTOTYPED, shivering UNPROTOTYPED)
 
@@ -4845,7 +4845,7 @@ replace with:
   return Math.max(0, summit - m0) * Math.min(1, deficit / SHIVER_SPAN_C) * (1 - Math.min(1, Math.max(0, nmb))) * stop;
 ```
 
-- [ ] **Test** (`shiver-cutoff.test.ts`, unit on `shiverW`): 33 °C awake → > 0; 31 °C → half of the uncut value; 29.5 °C
+- [x] **Test** (`shiver-cutoff.test.ts`, unit on `shiverW`): 33 °C awake → > 0; 31 °C → half of the uncut value; 29.5 °C
   → 0. Run `test/l2/thermal`, `test/engine/endo-*.test.ts` (7e's cold rows stop above 32 °C and are unchanged), the
   audit's G4/G4b. Commit and push (`feat(thermal,circ): shivering stops in moderate hypothermia; core temperature
   reaches the arrest hazard (FU-4 G12)`).
@@ -4865,7 +4865,7 @@ expected course [the audit's expectation; the capnography literature on arrest o
 beats do not eject; the pulse deficit of AF at that rate is ≈ 10–20 % of beats [the audit's reading of the AF
 pulse-deficit literature, TXT]. (The pulse-oximeter dropout at MAP 13 — the audit's G14 — is FU-5's: see Requests.)
 
-- [ ] **Step 1: the EtCO2 time constant** — τ 5 → 40 s [ENG, fit: VF on the ventilated audit rig without CPR, EtCO2 at
+- [x] **Step 1: the EtCO2 time constant** — τ 5 → 40 s [ENG, fit: VF on the ventilated audit rig without CPR, EtCO2 at
   60 s 10–20 mmHg and at 120 s 3–10]. CPR's steady values (`cpr-etco2`, R39-2) must not move (they are steady states).
 
 #### Modify `packages/engine-core/src/l2/gas/params.ts`
@@ -4884,11 +4884,11 @@ replace with:
 export const LOW_FLOW_TAU_S = 40;
 ```
 
-- [ ] **Step 2: the test** (`arrest-etco2.test.ts`): ventilated rig (ETT, 12 × 600), commanded VF at 60 s, no CPR:
+- [x] **Step 2: the test** (`arrest-etco2.test.ts`): ventilated rig (ETT, 12 × 600), commanded VF at 60 s, no CPR:
   EtCO2 at +60 s in 10–20 and at +120 s in 3–10; with CPR q 0.8 from +30 s the R39-2 steady 17–23 by +2 min.
   Run `test/engine/cpr-etco2.test.ts`, `test/engine/resp-capnogram.test.ts`, `test/engine/lung-capno.test.ts`, FU-3's
   asphyxia file (its CO2-trace assertions are post-arrest) — a band that moves is reported (R45).
-- [ ] **Step 3: the AF pulse deficit (investigate first).** Measure on MODELED AF at 150/min (`setRhythm afib`, 5 min):
+- [x] **Step 3: the AF pulse deficit (investigate first).** Measure on MODELED AF at 150/min (`setRhythm afib`, 5 min):
   the share of beats with `avOpen < 0`, their preceding RR, and the LV EDV of the non-ejecting beats. The candidate
   mechanism is the short-RR beat's filling (7a's beat-to-beat Frank–Starling with the Stage 2 minimum-opening rule) —
   compare the non-ejecting share with the pulse-deficit literature (≈ 10–20 % at 150); change the mechanism only with a
@@ -4907,7 +4907,7 @@ this is a task with a target, and `it.fails` needs TWO recorded attempts.**
 - **Target 10–20 % non-ejecting beats at 150/min.**
 - `it.fails` **only after two sourced mechanism attempts, each recorded with its measured number** in the gate note.
   One attempt is not a finding.
-- [ ] **Step 4: Commit and push** (`fix(gas): arrest EtCO2 falls over minutes, not seconds (FU-4 G4)`; plus the AF
+- [x] **Step 4: Commit and push** (`fix(gas): arrest EtCO2 falls over minutes, not seconds (FU-4 G4)`; plus the AF
   finding).
 
 ### Task 18: item 1 — forced-air warming at a set air temperature (7e thermal + Stage 3 command, E-FU4-5; UNPROTOTYPED)
@@ -5030,7 +5030,7 @@ replace with:
   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: three 60 sim-min warming runs
 ```
 
-- [ ] **Test** (`thermal-warmer.test.ts`, engine, 3 × 60 sim-min under GA, one yield per sim-minute → SLOW_B): the order
+- [x] **Test** (`thermal-warmer.test.ts`, engine, 3 × 60 sim-min under GA, one yield per sim-minute → SLOW_B): the order
   unwarmed < 38 °C < 43 °C at 60 min; 43 and absent identical. Run `test/l2/thermal`, `test/engine/endo-*.test.ts`,
   `test/engine/neuro-longrun.test.ts` (E-7e-7's warmed rig). Commit and push (`feat(thermal): forced-air warming at a set air temperature (FU-4 item 1)`).
 
@@ -5105,14 +5105,14 @@ adrenaline raising CPP is Paradis's own finding); **exsanguination PEA + CPR alo
 CPR + 2 L + adrenaline: ROSC at 220 s after CPR starts. The brainstem arm is visible in the sweep: as `cbfRel` falls
 0.76 → 0.22, `Rsys ÷ base` falls 1.49 → 1.04 — the loop converges instead of sitting at its ceiling.
 
-- [ ] **Step 1: measure before changing anything** (the review's Step 1, already done once; re-run it after the edits
+- [x] **Step 1: measure before changing anything** (the review's Step 1, already done once; re-run it after the edits
   as the after-measurement). `scripts/audit-physiology/zz-probe-cpr.ts`-style probe: advance in 10 ms steps and split
   `circOut.pAo`/`circOut.pRa` by compression vs relaxation phase (`cprPressure(hs.cpr, t) > 0.02`), on two rigs —
   commanded `vfCoarse` + CPR q 0.8, and exsanguinated PEA + CPR alone. Record relaxation Ao, relaxation RA, their
   difference, compression Ao mean/peak, `cor.cpp`, `kIsch`, `Rsys ÷ base`, `es`, `cbfRel`, the chamber volumes and the
   venous reservoir. Paste the table into the gate note. **Do not change a constant before this table exists.**
 
-- [ ] **Step 2: the four mechanism parts.**
+- [x] **Step 2: the four mechanism parts.**
 
 #### Modify `packages/engine-core/src/l2/circ/params.ts`
 
@@ -5709,7 +5709,7 @@ function drive(): CircDrive {
 }
 ```
 
-- [ ] **Step 3: the tests the ruling names.**
+- [x] **Step 3: the tests the ruling names.**
   - **S13 (clinical suite) flips to `it`** with the band it already carries, 15–25 (Paradis 1990). This is not a band
     change (R45): the band was already in S13's title; only the `it.fails` marker and the measured number go.
   - **New, clinical suite:** "CPR alone after full exsanguination (3 L, no volume given): NO pulse in 10 min" —
@@ -5723,7 +5723,7 @@ function drive(): CircDrive {
     CPP is Paradis's own finding).
   - **`circ-lowflow-arrest`'s ROSC assertion gains an upper bound of 25** on the CPR CPP (it asserted only ≥ 15, which
     is why the 43–52 error passed).
-- [ ] **Step 4: re-measure what CPR feeds.** `cpr-etco2` (R39-2) and FU-3's reversal window; the audit's X1 row; the
+- [x] **Step 4: re-measure what CPR feeds.** `cpr-etco2` (R39-2) and FU-3's reversal window; the audit's X1 row; the
   `tick-bench` p50 (the volume factor is one sum per 2 ms sub-step only while CPR runs). Record all four in the gate
   note. Run `test/l2/circ`, `test/engine/circ-*`, `test/engine/cpr-*`. Commit and push
   (`fix(circ): CPR compression acts on volume; brainstem withdrawal; Paradis CPP band (FU-4 F1, ruling 3)`).
@@ -5759,7 +5759,7 @@ asystole course FU-3 already cites) [P]; ERC 2021 ALS [P]. Thresholds and the ha
 (deliberately BELOW `K_ISCH_ARREST` 0.1, so the PEA has a rate-decay phase of its own first), `PEA_IDIO_RATE` 24,
 `PEA_ASYSTOLE_MEAN_S` 420.
 
-- [ ] **Step 1: the decay step.**
+- [x] **Step 1: the decay step.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -5956,19 +5956,19 @@ replace with:
     for (let i = 0; i < 120; i++) expect(roscStep(m, 'vfCoarse', false, 40, 1)).toBeNull();
 ```
 
-- [ ] **Step 2: the unit tests** (append a `describe('FU-4 F5: the PEA decays')` block to
+- [x] **Step 2: the unit tests** (append a `describe('FU-4 F5: the PEA decays')` block to
   `test/l2/circ/arrest.test.ts`, using `createCircModel()` and a fixed `u`): the rate falls with `kIsch·(1 − hyp)` and
   never below `PEA_RATE_MIN`; `ms < PEA_IDIO_M` returns `agonal` with `pulseless: true`; from `agonal`, `u` below
   `dt / PEA_ASYSTOLE_MEAN_S` returns `asystole` and above it returns null; `cpp ≥ CPP_ROSC` returns null at every
   stage; `roscStep` from `agonal` returns `a.from`.
-- [ ] **Step 3: the engine tests.**
+- [x] **Step 3: the engine tests.**
   - `circ-lowflow-arrest`: **"untreated exsanguination PEA reaches asystole within 15 min"** (measured 260 s after the
     idioventricular phase at this seed; the hazard mean is 420 s, so the course is ≈ 2–12 min across seeds) and
     **"with CPR + volume there is no decay before ROSC"**.
   - **The review's third test, "the PEA rate at 5 min < the rate at onset", cannot be asserted on this rig** and must
     not be forced onto it: the whole exsanguination course is over in 4.3 min. It belongs on the SLOWER hypoxic/apnoea
     PEA of `circ-hypoxic-arrest`. Put it there, with the rig named in the title.
-- [ ] **Step 4: re-measure** FU-3's apnoea course (I1) and the arrest table of the audit; record the new rhythm
+- [x] **Step 4: re-measure** FU-3's apnoea course (I1) and the arrest table of the audit; record the new rhythm
   sequence in the gate note. Commit and push (`feat(circ): the untreated PEA decays to asystole (FU-4 F5, ruling 7)`).
 
 ### Task 18c: a tension pneumothorax builds per breath through a one-way valve (7b, E-FU4-16; ruling 1 / review F3; PROTOTYPED)
@@ -6013,7 +6013,7 @@ spontaneous expiratory phase drives the valve too); what is much slower is the *
 spontaneous patient's venous return is not also being impeded by positive-pressure inspiration. The review's "slower
 when spontaneous" holds for the outcome, not for the filling rate.
 
-- [ ] **Step 1: the valve.**
+- [x] **Step 1: the valve.**
 
 #### Modify `packages/engine-core/src/l2/lung/params.ts`
 
@@ -6196,18 +6196,18 @@ replace with:
       gasStep(rs, ctx, rs.gasK * GAS_DT_S);
 ```
 
-- [ ] **Step 2: keep the instantaneous path for scenarios that want a step.** The catalogue row keeps its `pPtx` value
+- [x] **Step 2: keep the instantaneous path for scenarios that want a step.** The catalogue row keeps its `pPtx` value
   (now the ceiling) and a scenario that wants the old behaviour sets `rs.ptxAcc` to the ceiling directly (or the row
   carries a `rateMmHgPerMin` lead, as the review asked). Document which of the two the executor chose in the gate note;
   do not remove the option.
-- [ ] **Step 3: the tests** (`test/engine/tension-ptx.test.ts`; add it to the `SLOW` list in
+- [x] **Step 3: the tests** (`test/engine/tension-ptx.test.ts`; add it to the `SLOW` list in
   `packages/engine-core/vite.config.ts` beside the other FU-4 entries, which puts it in SLOW_B by Task 20's rule — and
   check the file header's group label matches, review F16; one yield per sim-minute): (i) PPV — pPtx rises
   monotonically and PEA arrives between 3 and 10 min after onset; (ii) spontaneous, same severity — no PEA in 15 min and
   the MAP course is slower than (i); (iii) decompression at 4 min — MAP ≥ 65 within 1 min and `lp.pPtx` decays with
   `PTX_DRAIN_TAU_S`. **S8 flips from `it.fails` to `it`** in the clinical suite (the band is unchanged; only the
   measured number in the title goes, with a "was PEA +60 s" clause — R45).
-- [ ] **Step 4: re-measure and hand on.** The audit's E1/E2 rows; the V.1 request list gains "the ventilator follows the
+- [x] **Step 4: re-measure and hand on.** The audit's E1/E2 rows; the V.1 request list gains "the ventilator follows the
   accumulated `pPtx` through `pleuralCmH2O`" (V.1 plan l. 121 already anticipates it). Run `test/l2/lung`,
   `test/engine/lung-*`, `test/engine/vent-*`. Commit and push
   (`feat(lung): a tension pneumothorax builds through a one-way valve (FU-4 F3, ruling 1)`).
@@ -6244,7 +6244,7 @@ Sources: Nunn's Applied Respiratory Physiology ch. 8 (anatomical dead space ≈ 
 extrathoracic; an artificial airway bypasses that part) [TXT]; the apparatus volumes are the existing
 `apparatusDeadSpaceMl` [ENG].
 
-- [ ] **Step 1: (a) calibrate only in MANUAL and take the resting PaCO2 from the patient; (b) the ETT bypass credit.**
+- [x] **Step 1: (a) calibrate only in MANUAL and take the resting PaCO2 from the patient; (b) the ETT bypass credit.**
 
 #### Modify `packages/engine-core/src/l2/gas/params.ts`
 
@@ -6421,7 +6421,7 @@ replace with:
 The review's expectation "≈ 2.2 mL/kg + apparatus" is met exactly for spontaneous patients; ventilated adults land at
 1.8–2.0 mL/kg. `pk-bus`'s "VA at 12 × 500 exceeds 3 L/min" flip holds with room to spare (VA 4.5 L/min, PaCO2 38.5).
 
-- [ ] **Step 2: R1(c) — per-patient resting pattern and ventilator defaults.** NOT prototyped (it changes L1's
+- [x] **Step 2: R1(c) — per-patient resting pattern and ventilator defaults.** NOT prototyped (it changes L1's
   `rr`/`vt`/`etco2` defaults, which are Stage 1's), and the measurement above hands the executor two concrete items it
   must settle rather than guess:
   - (i) the man on the default VCV **12 × 600 is now mildly HYPOcapnic** (PaCO2 32, pH 7.48). With an honest dead space
@@ -6433,7 +6433,7 @@ The review's expectation "≈ 2.2 mL/kg + apparatus" is met exactly for spontane
   - State explicitly in the gate note which demo and ventilator presets change, and re-run every rig that uses the
     defaults. If L1's defaults cannot be derived per profile without moving Stage 1 bands, land (i) and (ii) as the
     ventilator/demo presets only and record the L1 default change as a question — do NOT widen a Stage 1 band.
-- [ ] **Step 2b: FU-6's Request 3 — the 7 kg infant that CRASHES the engine (added 2026-09-28).** On today's main a
+- [x] **Step 2b: FU-6's Request 3 — the 7 kg infant that CRASHES the engine (added 2026-09-28).** On today's main a
   **7 kg infant on an ETT with volume control crashes the engine at 240 s** — `"rhythm sinus: next event time is NaN"` —
   because the MANUAL EtCO2 calibration gives that infant ≈ **400 mL** of dead space (an adult's fit on a 7 kg patient),
   so PaCO2 climbs without bound until a downstream term becomes NaN. This task's root fix is what must make that infant
@@ -6443,12 +6443,12 @@ The review's expectation "≈ 2.2 mL/kg + apparatus" is met exactly for spontane
   for 30 sim-min, EtCO2 within 5 of PaCO2, and NO NaN in any published numeric** (assert `Number.isFinite` over the
   whole run, not only at the end). Record the infant's VD (anatomical → ETT credit → apparatus) in the gate note beside
   the table above. The guard that makes the failure loud instead of fatal is **Task 18g**.
-- [ ] **Step 3: the airway seam, named honestly.** The prototype applies the ETT credit exactly when the apparatus is
+- [x] **Step 3: the airway seam, named honestly.** The prototype applies the ETT credit exactly when the apparatus is
   present (`mech`), because the resp module has **no airway-device seam of its own** (the device lives on 7f's
   `ns.airway`). An intubated but SPONTANEOUSLY breathing patient therefore does not yet get the credit. The clean fix is
   an `rs.airwayDevice` (or adding `airway` to the `NeuroResp` seam); it is listed here as the task's own follow-up and
   must appear in the gate note as a known limit, not be left silent.
-- [ ] **Step 4: re-measure everything the dead space moves.** `neuro-spont` (re-reference under **E-FU4-17**, criterion
+- [x] **Step 4: re-measure everything the dead space moves.** `neuro-spont` (re-reference under **E-FU4-17**, criterion
   unchanged), E-FU4-8's TBI rig RR (AGAIN — 12 × 500 now sits near PaCO2 38–42), `lung-circ`'s OLV `it.fails`,
   `cpr-etco2`, D3's `TAU_HYP_S` scan (Task 4's step), the audit's `probe-va` table with the woman and the ventilated
   child rows added, and every long ventilated run. Run `test/engine/neuro-*`, `test/engine/lung-*`,
@@ -6525,7 +6525,7 @@ Ali's tamponade collapse away** (tamponade + 2 mg/kg −53 %, no arrest, B7 push
   targets pull against each other**, so S1b and S6a's percentage side stay `it.fails` with these numbers and go to Ali
   as Q1. Do not fit one by breaking the other, and do not widen either band (R45).
 
-- [ ] **Step 1: the arm.**
+- [x] **Step 1: the arm.**
 
 #### Modify `packages/engine-core/src/l2/endo/params.ts`
 
@@ -6939,15 +6939,15 @@ const REST: HormoneInputs = { noxious: 0, antinoc: 0, extraSymp: 0, glucoseMgDl:
 const NO_BB = { hr: 0, c: 0 };
 ```
 
-- [ ] **Step 2: the unit tests** (append to `test/l2/endo/hormones.test.ts`): at rest `h.hum` stays 0; a 25 mmHg
+- [x] **Step 2: the unit tests** (append to `test/l2/endo/hormones.test.ts`): at rest `h.hum` stays 0; a 25 mmHg
   unloading drives it to ≈ `25/(25+30)` with τ 150 s and decays with τ 600 s; `stressEffects` gives
   `humSvrF = 1 + HUM_SVR·hum` and `humDV0Frac = −HUM_V0·hum`; **the humoral outputs do not change when `vasoResp` falls**
   (the vasoplegia property); `NEUTRAL_ENDO_INPUTS` keeps every existing test's numbers.
-- [ ] **Step 3: the suite rows.** S6a gains the "arrest is not the rule" side — **"class III haemorrhage + propofol
+- [x] **Step 3: the suite rows.** S6a gains the "arrest is not the rule" side — **"class III haemorrhage + propofol
   2 mg/kg: no PEA within 5 min"** as `it` (met), while its percentage side stays `it.fails` with the measured −24 % /
   nadir 28.7 and a pointer to Q1. Add the MANUAL counterpart row (`MAP 35.5, no arrest`). S1b stays `it.fails` with
   −24 %.
-- [ ] **Step 4: re-measure after Task 14 (mandatory ordering).** Re-run the whole propofol matrix, Ali's B7 timeline, the
+- [x] **Step 4: re-measure after Task 14 (mandatory ordering).** Re-run the whole propofol matrix, Ali's B7 timeline, the
   class III course, the tamponade rows and the sepsis rows, with Task 14's `distFactor` in. Re-run `test/l2/endo`,
   `test/engine/endo-*`, `test/engine/circ-sanity-1.test.ts`, `test/engine/circ-sanity-2.test.ts`. Record the before/after
   matrix in the gate note. Commit and push
@@ -7011,7 +7011,7 @@ SHALLOWER (128 → 90) where children are clinically MORE vagally sensitive — 
 fix with the vagal constant; (iii) glycopyrrolate 0.4 mg blunts rather than abolishes the neostigmine bradycardia
 (occupancy < 1 at that dose), which is clinically right, so the "abolished" assertion belongs on the opioid rig.
 
-- [ ] **Step 1: the PD rows** (Task 12's `vagalMs`/`muscarinic` targets in `row.ts`/`combine.ts`/`drugs.ts` are already
+- [x] **Step 1: the PD rows** (Task 12's `vagalMs`/`muscarinic` targets in `row.ts`/`combine.ts`/`drugs.ts` are already
   landed by Task 12; these are the rows that use them).
 
 #### Modify `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`
@@ -7146,7 +7146,7 @@ replace with:
   { id: 'phenylephrine', name: 'Phenylephrine', cls: 'alpha1', amountUnit: 'mcg', pk: vaso(0.04, 0.035, 1.2),
 ```
 
-- [ ] **Step 2: the dropped field, the missing bolus times and the held rate — the three defects.**
+- [x] **Step 2: the dropped field, the missing bolus times and the held rate — the three defects.**
 
 #### Modify `packages/engine-core/src/l2/circ/model.ts`
 
@@ -7349,7 +7349,7 @@ replace with:
     }
 ```
 
-- [ ] **Step 3: the STIMULUS-driven vagal events stay Task 12's, and are named here so they are not lost.** The code
+- [x] **Step 3: the STIMULUS-driven vagal events stay Task 12's, and are named here so they are not lost.** The code
   above covers the DRUG-driven events (opioid bolus, neostigmine without an anticholinergic, repeat succinylcholine).
   Task 12's remaining prose — 7a's `control()` vagal terms for a surgical stimulus, the stimulus observer with the new
   `site` field, and `circVagalStimulus` — is UNPROTOTYPED and must be written with the same discipline before Task 12 is
@@ -7357,13 +7357,13 @@ replace with:
   additive ms term, `circVagalStimulus` is defined in `model.ts` (the review found it undefined), and it must be
   × (1 − muscarinic occupancy) like the drug path so that atropine abolishes a laryngoscopy bradycardia too. Sites and
   sizes are [ENG]; record the measured HR fall per site.
-- [ ] **Step 4: the tests** (`test/engine/vagal-events.test.ts`, SLOW_B, one yield per sim-minute, clinical titles from
+- [x] **Step 4: the tests** (`test/engine/vagal-events.test.ts`, SLOW_B, one yield per sim-minute, clinical titles from
   the glossary in `research/11`): fentanyl 10 µg/kg → HR nadir ≤ 55 and `> 40` (no arrest); the same after
   glycopyrrolate → nadir within 5 of control; remifentanil 3 µg/kg → nadir ≤ 58; neostigmine 0.05 mg/kg alone → nadir
   ≤ 50; **S15: repeat succinylcholine over 3 seeds → ≥ 1 seed shows a junctional escape (`junctionalEscape`) and 0 seeds
   do with atropine first**; a separate unit test over ≥ 20 seeds asserts the paediatric RATE exceeds the adult rate.
   Add the file to SLOW_B in `vite.config.ts` (Task 20's split) — the entry already exists from Task 12's step.
-- [ ] **Step 5: re-measure and record.** The audit's H1/H1b/H2/H3/A9 rows (the table above), the `tick-bench` p50 (one
+- [x] **Step 5: re-measure and record.** The audit's H1/H1b/H2/H3/A9 rows (the table above), the `tick-bench` p50 (one
   addition per control step), and 7f's NMB tests (`bolusTimes` now records every row's boluses — check nothing else
   reads it; `tachy()` reads it for gamma rows only). Run `test/l2/pk`, `test/engine/pk-*`, `test/engine/neuro-*`,
   `test/engine/circ-sanity-*`. Commit and push
@@ -7394,16 +7394,16 @@ because the physiology bug then never gets found. So the guard is deliberately *
 alongside E-FU4-11's escape-timer work. No rhythm behaviour changes when every value is finite, and that is the first
 test.
 
-- [ ] **Step 1: find every place a time is derived from physiology.** Grep for `next event time`, `Number.isNaN`,
+- [x] **Step 1: find every place a time is derived from physiology.** Grep for `next event time`, `Number.isNaN`,
   `escapeNextT`, `60 /` in `l2/ecg/**` and `l2/circ/arrest.ts`; list them in the gate note before editing.
-- [ ] **Step 2: one shared helper** (e.g. `finiteOr(value, fallback, field, t)`) so the behaviour is identical at every
+- [x] **Step 2: one shared helper** (e.g. `finiteOr(value, fallback, field, t)`) so the behaviour is identical at every
   call site and testable once. It must be branch-free on the hot path (a `Number.isFinite` check per scheduled event is
   free; do not build a logging framework).
-- [ ] **Step 3: the tests.** (i) with a finite rate, every rhythm's scheduled instants are byte-identical to before the
+- [x] **Step 3: the tests.** (i) with a finite rate, every rhythm's scheduled instants are byte-identical to before the
   guard (a regression fixture, so the guard is provably inert); (ii) an injected NaN rate **throws in the test
   environment** with the field name in the message; (iii) with the test flag off, the same injection clamps, keeps
   stepping for 60 s and warns exactly once.
-- [ ] **Step 4: run the infant rig of Task 18d Step 2b with the guard's test mode ON** — it must pass without the guard
+- [x] **Step 4: run the infant rig of Task 18d Step 2b with the guard's test mode ON** — it must pass without the guard
   ever firing, which is the proof that the dead-space root fix, not the guard, is what saved the infant. Commit and push
   (`fix(ecg): a non-finite scheduled time is loud in tests and clamped in the demo (FU-6 request 3)`).
 
@@ -7414,7 +7414,7 @@ test.
 - Investigate, then modify only what the finding names (declare the file in the gate note): the 24 h `organs-soak`
   lactate drift (the APNEA latch moved to FU-5)
 
-- [ ] **Step 1: the two wrong comments (G7e ruling 4).**
+- [x] **Step 1: the two wrong comments (G7e ruling 4).**
 
 #### Modify `apps/demo/scripts/stage7e-shots.mjs`
 
@@ -7442,7 +7442,7 @@ replace with:
 await scenario('gluc', 3600, 'hypoglycaemia-60min'); // HR ↑, GLU amber below 3.5 mmol/L, red below 3.0
 ```
 
-- [ ] **Step 2: console units (orchestrator note item 3).** `lp.pPtx` is mmHg (7b's catalogue: "pPtx 15–25 mmHg"), not
+- [x] **Step 2: console units (orchestrator note item 3).** `lp.pPtx` is mmHg (7b's catalogue: "pPtx 15–25 mmHg"), not
   cmH₂O. The suffix rules already give V.1's future `…CmH2O` fields cmH₂O and `…MmHg` fields mmHg; at execution, list the
   explicit `LUNG` rows (`grep -n "'lp\.\|'mp\.\|'mech\." apps/demo/src/physiology-console/meta.ts`) against each field's
   unit in its source comment (`packages/engine-core/src/l2/lung/params.ts`, `mechanics.ts`, `types-lung.ts`) and fix
@@ -7462,13 +7462,13 @@ replace with:
 ['lp.pPtx', 'Pneumothorax pressure', 'mmHg', 1],
 ```
 
-- [ ] **Step 3: the latched "APNEA (RESP)" alarm** — moved to FU-5 (monitor fidelity owns L3 alarms; orchestrator update
+- [x] **Step 3: the latched "APNEA (RESP)" alarm** — moved to FU-5 (monitor fidelity owns L3 alarms; orchestrator update
   2026-09-28); see Requests.
-- [ ] **Step 4: the 24 h `organs-soak` lactate drift 0.0271 vs ±0.02 (local 24 h; CI's 6 h passes; predates FU-3).** Run
+- [x] **Step 4: the 24 h `organs-soak` lactate drift 0.0271 vs ±0.02 (local 24 h; CI's 6 h passes; predates FU-3).** Run
   the soak locally with lactate logged hourly; decide between a real slow drift (a tiny imbalance in 7c's production vs
   7d's hepatic clearance — find the term and fix it where it lives, E-FU4-14) and a rest-state offset (then pin it: the
   test's own band stays, the finding goes to the gate note). Never widen ±0.02.
-- [ ] **Step 5: Commit and push** (`chore: stage7e-shots comments, console units, soak lactate (FU-4 item 2, housekeeping)`).
+- [x] **Step 5: Commit and push** (`chore: stage7e-shots comments, console units, soak lactate (FU-4 item 2, housekeeping)`).
 
 
 ### Task 20: item 3 — `test-slow` split into two file groups (CI; D17)
@@ -7580,7 +7580,7 @@ replace with:
           PME_TEST_SET: ${{ matrix.group }}
 ```
 
-- [ ] **GATE, not a check (orchestrator ruling (FU-4 review), 2026-09-28 — review F8).** The local comparison is a
+- [x] **GATE, not a check (orchestrator ruling (FU-4 review), 2026-09-28 — review F8).** The local comparison is a
   blocking gate with a printed result, because the first version of this split was NOT disjoint and nobody noticed:
   ```sh
   cd packages/engine-core
@@ -7592,12 +7592,12 @@ replace with:
   ```
   Paste both commands' output into the gate note. The measured pre-fix state was **10 + 35 files for a 44-file union**,
   with `neuro-longrun.test.ts` (the 6 h run) in both jobs.
-- [ ] **Record each group's CI wall and rebalance BEFORE the gate.** If either group exceeds **40 min** on CI, move
+- [x] **Record each group's CI wall and rebalance BEFORE the gate.** If either group exceeds **40 min** on CI, move
   files between the groups and re-run the disjointness gate. (Estimate: local 1 242 s × the ≈ 2.7 CI/local ratio
   measured on PR #22 ≈ 35 min — and that estimate does NOT yet include this plan's new slow files: `circ-pulsus`,
   `vagal-events`, `thermal-warmer` (3 × 60 sim-min), `tension-ptx` and the clinical suite.) Record the walls in the gate
   note either way.
-- [ ] If branch protection names the old `test-slow` check, the ORCHESTRATOR updates it (report it in the PR body).
+- [x] If branch protection names the old `test-slow` check, the ORCHESTRATOR updates it (report it in the PR body).
   Commit and push (`ci: split test-slow into two disjoint file groups (FU-4 item 3, review F8)`).
 
 ### Task 21: validation t25 is ventilated as clinically done; `t25-apnoea` expects the arrest (8a data; G-FU3 ruling 4; UNPROTOTYPED)
@@ -7640,7 +7640,7 @@ replace with:
 ];
 ```
 
-- [ ] **Notes for the executor.** `ventilation { source: 'spontaneous' }` must be accepted by Stage 3's validator (check;
+- [x] **Notes for the executor.** `ventilation { source: 'spontaneous' }` must be accepted by Stage 3's validator (check;
   if the spelling differs, use the one `validateRespCommand` accepts). `state:sbp` reads the `state` event, which after
   Task 3 Step 5b carries the circuit's MAP (not the last beat) during an arrest — without that step the collapse would
   never be read. Run `npx -y pnpm@9.15.9 --filter @pme/validation test` and the sanity suite; record both documents'
@@ -7895,7 +7895,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
 });
 ```
 
-- [ ] **Run** (≈ 8–10 min; background + `until`): `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run
+- [x] **Run** (≈ 8–10 min; background + `until`): `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run
   test/engine/clinical-suite.test.ts > <scratchpad>/fu-4-integration-polish/suite.log 2>&1`; apply the R45 procedure;
   commit and push (`test(engine): the FU-4 clinical scenario suite S1–S16 (item 10)`).
 
@@ -7936,7 +7936,7 @@ replace with:
         fu4: page('fu4'), // FU-4 evidence page (Task 23)
 ```
 
-- [ ] Write the page, the script and the e2e (UNPROTOTYPED — the executor writes them against `stage7e.ts`/
+- [x] Write the page, the script and the e2e (UNPROTOTYPED — the executor writes them against `stage7e.ts`/
   `stage7e-shots.mjs`/`stage7e.e2e.ts`, which they copy in shape); run `PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec
   playwright test apps/demo/e2e/fu4.e2e.ts`; take the shots; inspect each (the orchestrator will); commit and push
   (`feat(demo): FU-4 evidence page, screenshots and smoke (item 10)`).
@@ -7945,12 +7945,12 @@ replace with:
 
 **Files:** `docs/gates/fu-4.md` (new), `docs/gates/fu-4/**` (shots, `audit-before.md`, `audit-after.md`), this plan (ticks).
 
-- [ ] **Step 1:** `git fetch origin && git merge origin/main`. **Orchestrator ruling (FU-4 review), 2026-09-28 (review
+- [x] **Step 1:** `git fetch origin && git merge origin/main`. **Orchestrator ruling (FU-4 review), 2026-09-28 (review
   F9):** stop and report if **V.1, FU-6 or 8b** have landed (not only V.1 and 8b) — the order is FU-4 → V.1 → FU-6 → 8b.
   **FU-5 landing is EXPECTED, not a stop:** it runs in parallel and owns L3, the renderer, skins, audio and the L2
   signal-quality lines of `hemo/pipeline.ts`. After a merge that brings FU-5 in, **re-run the clinical suite and
   `audit:physiology`** and record every number that moved in the gate note.
-- [ ] **Step 2: Full verification** (background + `until` loops of ≤ 10 min):
+- [x] **Step 2: Full verification** (background + `until` loops of ≤ 10 min):
 
 ```bash
 npx -y pnpm@9.15.9 typecheck
@@ -7966,7 +7966,7 @@ sed -n '/^## Propofol/,$p' <scratchpad>/fu-4-integration-polish/audit-after.txt 
 
   Also: validation `tick-bench` p50 (must stay < 6 ms on CI; record the local value), the R36 sweep (900 s budget) in
   `packages/ventilator`, and a 24 h local `hemo-longrun`/`organs-soak` (LONGRUN_HOURS local) with wall times.
-- [ ] **Step 3: The gate note** `docs/gates/fu-4.md`, in FU-3's format: (1) what shipped (task, gap, mechanism, files,
+- [x] **Step 3: The gate note** `docs/gates/fu-4.md`, in FU-3's format: (1) what shipped (task, gap, mechanism, files,
   tests); (2) the clinical scenario table — S1…S16 with band, measured value, verdict, source, and the screenshot for the
   scenarios Task 23 shot; (3) the audit matrix and arrest table before → after (`audit-before.md`, `audit-after.md`);
   (4) the `it.fails` list — every `it.fails` in the repo with its number (`grep -rn "it.fails" packages apps`), marking
@@ -7976,7 +7976,7 @@ sed -n '/^## Propofol/,$p' <scratchpad>/fu-4-integration-polish/audit-after.txt 
   that had to be re-anchored, every band that moved, every rig re-derived); (7) open questions (the list below, updated
   with the measured numbers, and each of items 13–18 marked RULED with its task); (8) the evidence screenshots, each
   ≤ 60 KB.
-- [ ] **Step 3b: the two things the gate note must now show (orchestrator ruling (FU-4 review), 2026-09-28, with
+- [x] **Step 3b: the two things the gate note must now show (orchestrator ruling (FU-4 review), 2026-09-28, with
   R54/R56).**
   - **The coverage-matrix cells FU-4 fills.** `research/12-coverage-matrix.md` is the standing definition of "linked
     physiology" (R54), and each stage's gate must show its part of it. List, with the measured verdict per cell, the
@@ -7992,7 +7992,7 @@ sed -n '/^## Propofol/,$p' <scratchpad>/fu-4-integration-polish/audit-after.txt 
     with its collision rulings: cerebral perfusion pressure = **CPP**, coronary = **CoPP** (so the CPR work's numbers are
     CoPP rows, and the cerebral ones stay CPP), SpO2 perfusion index = PI, sinus rhythm is spelled "Sinus", respiratory
     rate = RR and the R–R interval = RRI. State in the gate note which labels this stage introduced.
-- [ ] **Step 4: Commit, push, open the PR** — title **"FU-4: integration polish — sympatholysis, emergent arrest,
+- [x] **Step 4: Commit, push, open the PR** — title **"FU-4: integration polish — sympatholysis, emergent arrest,
   hyperkalaemia, obstructive shock, clinical scenario suite"**; body: summary per gap, the scenario table, the
   before → after matrix, the `it.fails` flips, the exceptions, the open questions, the CI split note (branch protection
   may name the old `test-slow` check), and the line `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
