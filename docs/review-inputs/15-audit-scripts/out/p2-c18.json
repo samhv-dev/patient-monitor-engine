@@ -1,0 +1,49 @@
+{
+ "NN-27a": {
+  "id": "NN-27a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW cbfLowRel = 0.898 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
+  ],
+  "values": {
+   "mapBase": 105.9,
+   "paco2Base": 39.1,
+   "mapLow": 66.9,
+   "cppLow": 60.8,
+   "cbfLowRel": 0.898
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN (cbfLL 75), TIVA, VCV 13 × 500",
+  "state": "GA at MAP ≈ 65 (haemorrhage as the pure pressure change)",
+  "intv": "CBF from pressure alone",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain",
+  "wallS": 44.2
+ },
+ "NN-27b": {
+  "id": "NN-27b",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS cbfHypoRel = 0.33799999999999997 below [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
+   "PL pbto2 = 10.8 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
+  ],
+  "values": {
+   "tPaco2_25Min": 3.5,
+   "cbfHypoRel": 0.33799999999999997,
+   "pbto2": 10.8,
+   "pbto2Base": 25.6,
+   "mapAt": 53.9
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "X-E 75 y + HTN, TIVA",
+  "state": "GA at MAP ≈ 65",
+  "intv": "hyperventilation PaCO2 40 → 25: CBF and PbtO2",
+  "sys": "BRN, LUNG",
+  "owner": "7d brain",
+  "wallS": 0
+ }
+}

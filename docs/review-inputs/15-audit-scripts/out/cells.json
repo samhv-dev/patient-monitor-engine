@@ -1,16 +1,18 @@
 {
  "NN-01a": {
   "id": "NN-01a",
-  "verdict": "MI",
-  "auto": "MI",
+  "verdict": "TS",
+  "auto": "TS",
   "notes": [
    "TS tTof0S = 74 below [90, 120] (lower = stronger/faster) [research/12 NN-01: TOF 0 at 1.5–2 min (Naguib)]",
-   "MI tMaxBlockS: absent [tables §5d / §7 check 25: rocuronium 0.6 max block 1.8 min (Roc-label; ±15 %)]",
-   "MI devLagS: absent [DEV: the TOF stimulator (15 s trains) reports count 0 within one train of the truth (research/12 §2.2)]"
+   "PL tMaxBlockS = 120 in [92, 124] [tables §5d / §7 check 25: rocuronium 0.6 max block 1.8 min (Roc-label; ±15 %)]",
+   "PL devLagS = 6 in [0, 15] [DEV: the TOF stimulator (15 s trains) reports count 0 within one train of the truth (research/12 §2.2)]"
   ],
   "values": {
    "tTof0S": 74,
+   "tMaxBlockS": 120,
    "devTof0S": 80,
+   "devLagS": 6,
    "diaAt60": 0.9,
    "thumbAt60": 0.94
   },
@@ -21,7 +23,7 @@
   "intv": "rocuronium 0.6 mg/kg: onset (TOF count 0)",
   "sys": "NEU, DEV",
   "owner": "7f nmb.ts / 7g roc PK",
-  "wallS": 101.5
+  "wallS": 107.4
  },
  "NN-01b": {
   "id": "NN-01b",
@@ -46,17 +48,18 @@
  },
  "NN-02": {
   "id": "NN-02",
-  "verdict": "MI",
-  "auto": "MI",
+  "verdict": "TS",
+  "auto": "TS",
   "notes": [
    "PL diaAt60 = 1 in [0.9, 1] [research/12 NN-02: intubating conditions at 60 s (Miller NMB) — laryngeal/diaphragm block ≥ 90 % (tables §5d: larynx/diaphragm drive the airway)]",
-   "MI tMaxBlockS: absent [tables §5d roc 1.2 mg/kg max block 1.0 min (Roc-label; ±15 % tables §7 convention)]",
+   "PL tMaxBlockS = 52 in [51, 69] [tables §5d roc 1.2 mg/kg max block 1.0 min (Roc-label; ±15 % tables §7 convention)]",
    "TS t1_25Min = 94.6 above [57, 77] [tables §5d roc 1.2 mg/kg clinical duration 67 min (Roc-label; ±15 %)]"
   ],
   "values": {
    "diaAt60": 1,
    "thumbAt60": 1,
    "tTof0S": 34,
+   "tMaxBlockS": 52,
    "t1_25Min": 94.6
   },
   "rejected": [],
@@ -66,7 +69,7 @@
   "intv": "rocuronium 1.2 mg/kg (RSI): intubating conditions at 60 s; duration",
   "sys": "NEU",
   "owner": "7f nmb.ts / 7g roc PK",
-  "wallS": 90.9
+  "wallS": 93.8
  },
  "NN-03a": {
   "id": "NN-03a",
@@ -350,18 +353,20 @@
  },
  "NN-25b": {
   "id": "NN-25b",
-  "verdict": "TW",
-  "auto": "TW",
+  "verdict": "PL",
+  "auto": "PL",
   "notes": [
    "PL dMap = 36.3 in [30, 50] [research/12 NN-25 / tables §7 check 19 and §5.1: Cushing MAP +30–50 over 30–60 s]",
-   "TW hrDropPct = -12.5 above [-40, -20] [tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP]"
+   "PL hrDropPct = -26 in [-40, -20] [tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP]"
   ],
   "values": {
    "cushOnMin": 29.2,
    "dMap": 36.3,
    "hr0": 73,
-   "hrEnd": 63.9,
-   "hrDropPct": -12.5
+   "hrSurge": 54,
+   "hrDropPct": -26,
+   "hrNadir5Pct": -27.4,
+   "hrAt40Pct": -19.4
   },
   "rejected": [],
   "tier": "P1",
@@ -370,7 +375,7 @@
   "intv": "Cushing response at CPP < 40: MAP ↑, HR ↓",
   "sys": "BRN, CIRC",
   "owner": "7d cushing.ts / 7a",
-  "wallS": 34.9
+  "wallS": 76.3
  },
  "NN-25c": {
   "id": "NN-25c",
@@ -383,6 +388,8 @@
    "herniated": false,
    "herniationMin": null,
    "cppMin": 4.6,
+   "icpMax": 140.5,
+   "lowCppLongestS": 20,
    "pupil": 4,
    "mapEnd": 145.5,
    "hrEnd": 65,
@@ -399,17 +406,20 @@
  },
  "NN-26a": {
   "id": "NN-26a",
-  "verdict": "MI",
-  "auto": "MI",
+  "verdict": "TW",
+  "auto": "TW",
   "notes": [
-   "MI dIcpPctAt2: absent [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]"
+   "TW dIcpPctAt2 = -9.3 above [-30, -25] [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]"
   ],
   "values": {
    "icpPre": 25.3,
-   "tPaco2_30Min": 0.3,
-   "dIcpPctAtPaco2_30": -14.4,
-   "dIcpPct10min": -46.8,
-   "paco2At10": 19
+   "paco2At2": 34.6,
+   "paco2At10": 31.6,
+   "dIcpPctAt2": -9.3,
+   "dIcpPctAt10": -16.9,
+   "dCbfPctAt10": -17.4,
+   "rr30Paco2At10": 19,
+   "rr30DIcpPctAt10": -46.8
   },
   "rejected": [],
   "tier": "P1",
@@ -418,7 +428,7 @@
   "intv": "hyperventilation to a sustained PaCO2 ≈ 30 (RR 12 → 16)",
   "sys": "BRN, LUNG",
   "owner": "7d brain",
-  "wallS": 89.5
+  "wallS": 138.6
  },
  "NN-26b": {
   "id": "NN-26b",
@@ -897,14 +907,14 @@
   "verdict": "TW",
   "auto": "TW",
   "notes": [
-   "TW cbfLowRel = 0.9009999999999999 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
+   "TW cbfLowRel = 0.898 above [0.6, 0.8] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: CBF ≈ 70 % (±15 %) of the anaesthetised baseline from pressure alone]"
   ],
   "values": {
-   "mapBase": 105.6,
-   "paco2Base": 33,
-   "mapLow": 69.5,
-   "cppLow": 64,
-   "cbfLowRel": 0.9009999999999999
+   "mapBase": 105.9,
+   "paco2Base": 39.1,
+   "mapLow": 66.9,
+   "cppLow": 60.8,
+   "cbfLowRel": 0.898
   },
   "rejected": [],
   "tier": "P1",
@@ -913,22 +923,22 @@
   "intv": "CBF from pressure alone",
   "sys": "BRN, CIRC",
   "owner": "7d brain",
-  "wallS": 41.5
+  "wallS": 44.2
  },
  "NN-27b": {
   "id": "NN-27b",
-  "verdict": "TW",
-  "auto": "TW",
+  "verdict": "TS",
+  "auto": "TS",
   "notes": [
-   "TW cbfHypoRel = 0.478 above [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
-   "PL pbto2 = 12.6 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
+   "TS cbfHypoRel = 0.33799999999999997 below [0.35, 0.4] (lower = stronger/faster) [research/12 NN-27 / tables §7 check 18: ≈ 35–40 % after hypocapnia]",
+   "PL pbto2 = 10.8 in [10, 15] [tables §7 check 18: PbtO2 25 → 10–15 (below the 20 threshold)]"
   ],
   "values": {
-   "tPaco2_25Min": 0.6,
-   "cbfHypoRel": 0.478,
-   "pbto2": 12.6,
-   "pbto2Base": 22.6,
-   "mapAt": 57.1
+   "tPaco2_25Min": 3.5,
+   "cbfHypoRel": 0.33799999999999997,
+   "pbto2": 10.8,
+   "pbto2Base": 25.6,
+   "mapAt": 53.9
   },
   "rejected": [],
   "tier": "P1",
@@ -1169,5 +1179,457 @@
   "sys": "NEU",
   "owner": "7g flumazenil row / 7f depth.ts",
   "wallS": 135.1
+ },
+ "NN-07": {
+  "id": "NN-07",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dTofrMin = 0.07 (expected sign -1) [research/12 NN-07: neostigmine given after full recovery can cause a small fade/weakness (Miller NMB; Caldwell 1995; Herbstreit 2010 genioglossus) — direction only]"
+  ],
+  "values": {
+   "tofRAtDose": 0.9,
+   "dTofrMin": 0.07,
+   "dT1Min": 0.03
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent",
+  "state": "roc 0.6 fully recovered (TOFR ≥ 0.9)",
+  "intv": "neostigmine 50 µg/kg + glycopyrrolate at full recovery",
+  "sys": "NEU",
+  "owner": "7f neostigmine.ts",
+  "dirOnly": true,
+  "wallS": 225.1
+ },
+ "NN-08a": {
+  "id": "NN-08a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL obstr = 0.465 in [0.05, 1] [research/12 NN-08: residual block (TOFR < 0.9) impairs pharyngeal function and upper-airway patency (Eriksson 1997 Anesthesiology 87:1035; Eikermann 2003) — obstruction present]"
+  ],
+  "values": {
+   "tofRAtExt": 0.61,
+   "consciousAtExt": null,
+   "obstr": 0.465,
+   "obstrCtl": 0,
+   "dSpo2": -1.7
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A",
+  "state": "extubated awake at TOFR ≈ 0.6 (roc 0.6, no reversal)",
+  "intv": "extubation with residual block: upper-airway obstruction",
+  "sys": "NEU, AIR",
+  "owner": "7f drive.ts (obstruction) → FU-6 airway",
+  "wallS": 157.2
+ },
+ "NN-08b": {
+  "id": "NN-08b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "command rejected: {\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1; {\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1"
+  ],
+  "values": {
+   "dVeBlock": 0,
+   "dVeNoBlock": 0,
+   "hvrRatio": null,
+   "spo2Block": 96,
+   "spo2NoBlock": 96
+  },
+  "rejected": [
+   "{\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1",
+   "{\"kind\":\"ventilation\",\"source\":\"spontaneous\",\"fio2\":0.12}: fio2 must be a finite number in 0.21–1"
+  ],
+  "tier": "P2",
+  "ctx": "X-A",
+  "state": "extubated awake at TOFR ≈ 0.6",
+  "intv": "hypoxic challenge (shunt; FiO2 < 0.21 is not expressible): hypoxic ventilatory response vs no block",
+  "sys": "LUNG, NEU",
+  "owner": "7b drive.ts (carotid body) / FU-6",
+  "wallS": 156.1
+ },
+ "NN-10": {
+  "id": "NN-10",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dOnsetS = 0 (expected sign -1) [research/12 NN-10: magnesium shortens onset (tables §5d; 7f interactions; Fuchs-Buder 1995 BJA 74:405 [vecuronium])]",
+   "TW dDurMin = 0.2 (sign 1, beyond 1) [research/12 NN-10: magnesium prolongs duration (tables §5d; Kussman 1997 BJA 79:122 [rocuronium])]"
+  ],
+  "values": {
+   "mgPlasma": 1.92,
+   "dOnsetS": 0,
+   "dDurMin": 0.2
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent",
+  "state": "MgSO4 4 g IV over 10 min",
+  "intv": "rocuronium 0.6 mg/kg after magnesium: onset and duration vs no magnesium",
+  "sys": "NEU, BLD",
+  "owner": "7f interactions.ts ← 7c plasma Mg",
+  "dirOnly": true,
+  "wallS": 137.7
+ },
+ "NN-11a": {
+  "id": "NN-11a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL ratio = 0.363 in [0.1, 0.5] [research/12 NN-11: rocuronium ED95 ×0.1–0.5 in myasthenia (Miller NMB; tables §1.5/§5d)]"
+  ],
+  "values": {
+   "ed95": 0.0831,
+   "ed95Normal": 0.2289,
+   "ratio": 0.363
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent · neuro.nm myasthenia",
+  "state": "myasthenia gravis",
+  "intv": "rocuronium dose ladder 0.05/0.1/0.15/0.2/0.3/0.45 mg/kg: ED95 vs normal",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "wallS": 130.9
+ },
+ "NN-11b": {
+  "id": "NN-11b",
+  "verdict": "MI",
+  "auto": "MI",
+  "notes": [
+   "MI ratio: not a finite number (null) [research/12 NN-11: succinylcholine ED95 ×2.6 in myasthenia (Eisenkraft 1988 Anesthesiology 69:760; Miller NMB; ±15 %)]"
+  ],
+  "values": {
+   "ed95": null,
+   "ed95Normal": 0.7455,
+   "ratio": null
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent · neuro.nm myasthenia",
+  "state": "myasthenia gravis",
+  "intv": "succinylcholine dose ladder 0.1/0.2/0.3/0.5/0.8/1.2/2/3 mg/kg: ED95 vs normal",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "wallS": 134.8
+ },
+ "NN-12": {
+  "id": "NN-12",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL rocRatioM1 = -0.637 (sign -1, beyond 0.1) [research/12 NN-12: Lambert–Eaton is sensitive to non-depolarisers (Miller NMB) — direction only]",
+   "PL suxRatioM1 = -0.495 (sign -1, beyond 0.1) [research/12 NN-12: Lambert–Eaton is sensitive to succinylcholine (Miller NMB) — direction only]"
+  ],
+  "values": {
+   "rocRatio": 0.363,
+   "suxRatio": 0.505,
+   "rocRatioM1": -0.637,
+   "suxRatioM1": -0.495
+  },
+  "rejected": [],
+  "tier": "P3",
+  "ctx": "X-A TIVA vent · neuro.nm lambertEaton",
+  "state": "Lambert–Eaton",
+  "intv": "rocuronium and succinylcholine dose ladders: ED95 vs normal",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "dirOnly": true,
+  "wallS": 131.8
+ },
+ "NN-13a": {
+  "id": "NN-13a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL shortening = 0.51 (sign 1, beyond 0.1) [research/12 NN-13: burns > 48 h → resistance to non-depolarisers: higher dose needed, shorter duration (Martyn 1992 Anesthesiology 76:822; tables §5d EC50 ×2.5 [TXT]) — direction only (1 − duration ratio > 0)]"
+  ],
+  "values": {
+   "peakBlock": 0.97,
+   "peakBlockNormal": 1,
+   "durRatio": 0.49,
+   "shortening": 0.51,
+   "tTof0S": null,
+   "tTof0NormalS": 74
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent · burns > 48 h (`neuro.nm burn` + `blood.burns 1`)",
+  "state": "major burn",
+  "intv": "rocuronium 0.6 mg/kg: resistance (peak block, duration) vs normal",
+  "sys": "NEU",
+  "owner": "7f interactions.ts",
+  "dirOnly": true,
+  "wallS": 49.3
+ },
+ "NN-13b": {
+  "id": "NN-13b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dKPeak = 6.5 in [5, 7] [research/12 NN-13 / tables §5c \"Succinylcholine K rise: burns, denervation > 72 h +5–7\" (B §4.9) — the upper end of the literature (Gronert 1975: up to +5–10)]"
+  ],
+  "values": {
+   "dKPeak": 6.5,
+   "kPeak": 10.688,
+   "rhythms": "5s sinus,525s vfCoarse,1115s asystole",
+   "events": "i:5s sinus→525s vfCoarse→1115s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA vent · burns > 48 h",
+  "state": "major burn",
+  "intv": "succinylcholine 1 mg/kg: K⁺ rise vs control",
+  "sys": "BLD, RHY",
+  "owner": "7c treatments.ts",
+  "wallS": 38
+ },
+ "NN-28a": {
+  "id": "NN-28a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL slopePctPerMmHg = 3.1100000000000003 in [2, 4] [research/12 NN-28: CBF 2–4 %/mmHg PaCO2 in the 20–80 range (Miller, neurophysiology); tables §5.1 kCO2 0.02–0.04]"
+  ],
+  "values": {
+   "paco2": "15.7/23.2/36.7/49.8/65.8",
+   "cbf": "0.272/0.327/0.565/0.795/1.078",
+   "icp": "4.2/4.7/6.5/8.3/10.5",
+   "slopePctPerMmHg": 3.1100000000000003
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, VCV × 500",
+  "state": "GA",
+  "intv": "PaCO2 ≈ 20 → 80 by respiratory rate (RR 30 / 20 / 12 / 8 / 5)",
+  "sys": "BRN",
+  "owner": "7d flow.ts",
+  "wallS": 92.4
+ },
+ "NN-28b": {
+  "id": "NN-28b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dCbfPct = 81.3 (sign 1, beyond 10) [research/12 NN-28: CBF rises steeply below PaO2 50 (Miller neurophysiology; tables §5.1 O(): ×2 at PaO2 30) — direction, beyond 10 %]"
+  ],
+  "values": {
+   "pao2Ctl": 96.9,
+   "pao2Ards07": 58.7,
+   "pao2Ards10": 52.8,
+   "paco2Hyp": 51.7,
+   "dCbfPct": 81.3,
+   "dIcp": 3.6,
+   "sjvo2": 67.3
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, VCV 12 × 500",
+  "state": "GA",
+  "intv": "hypoxaemia (FiO2 0.1): CBF rises below PaO2 50",
+  "sys": "BRN, LUNG",
+  "owner": "7d flow.ts",
+  "dirOnly": true,
+  "wallS": 58.2
+ },
+ "NN-29a": {
+  "id": "NN-29a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL cbf0 = true (expected true) [research/12 NN-29: CBF 0 in untreated VF (FU-4 G4)]",
+   "PL dPbto2 = -47.7 (sign -1, beyond 10) [research/12 NN-29: PbtO2 falling in arrest — direction, beyond 10 mmHg]",
+   "PL sjvo2Min = 25 in [0, 30] [research/12 NN-29: SjvO2 → 0 in no-flow (stagnant venous blood desaturates) — ≤ 30 % direction-only bound]"
+  ],
+  "values": {
+   "cbfMin": 0,
+   "pbto2Pre": 47.7,
+   "pbto2End": 0,
+   "dPbto2": -47.7,
+   "sjvo2Pre": 70.2,
+   "sjvo2Min": 25,
+   "cbf0": true,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus→690s agonal→840s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated",
+  "state": "VF untreated 5 min",
+  "intv": "brain in no-flow: CBF, PbtO2, SjvO2",
+  "sys": "BRN",
+  "owner": "7d brain (flow.ts brainOxygen)",
+  "wallS": 18.7
+ },
+ "NN-29b": {
+  "id": "NN-29b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL hyperaemia = 1.089 (sign 1, beyond 0.1) [research/12 NN-29: reactive hyperaemia after ROSC (then delayed hypoperfusion) (Miller neurophysiology; Sterz 1990) — direction, beyond +10 %]"
+  ],
+  "values": {
+   "roscUntreated": false,
+   "cbfCprMean": 0.639,
+   "rosc": true,
+   "mapPost": 147.1,
+   "cbfPeakRel": 2.089,
+   "hyperaemia": 1.089,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus | u:5s sinus→305s vfCoarse→605s sinus→690s agonal→840s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated",
+  "state": "VF 5 min → ROSC (instructor sinus)",
+  "intv": "post-ROSC cerebral hyperaemia",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain (post-ischaemic flow)",
+  "dirOnly": true,
+  "wallS": 41.9
+ },
+ "NN-30a": {
+  "id": "NN-30a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "PL seizureFirst = true (expected true) [research/12 NN-30: CNS toxicity (seizure) precedes cardiovascular collapse (ASRA 2020 LAST advisory; AAGBI 2010)]",
+   "WR dCmro2Seizure = 0 (expected sign 1) [research/12 NN-31 context: a seizure raises CMRO2 (Miller neurophysiology: +200–300 % in status) — direction]"
+  ],
+  "values": {
+   "seizureS": 30,
+   "cvS": 46,
+   "seizureFirst": true,
+   "cPeak": 7.959999999999999,
+   "dCmro2Seizure": 0,
+   "dLactate": 0.22000000000000003,
+   "events": "i:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "accidental IV bupivacaine 2 mg/kg (LAST)",
+  "intv": "CNS toxicity: seizure first, and its physiology",
+  "sys": "NEU, BRN, LUNG",
+  "owner": "7g LAST_THRESHOLDS; seizure physiology: FU-7 (research/12 blocker \"no seizure state\")",
+  "wallS": 52
+ },
+ "NN-30b": {
+  "id": "NN-30b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR collapse = false (expected true) [research/12 NN-30: CV collapse / VF after a large IV bupivacaine dose (ASRA 2020; AAGBI 2010; tables LAST_THRESHOLDS cv 4 µg/mL)]"
+  ],
+  "values": {
+   "mapMin": 77.784,
+   "dMapMinPct": -18.4,
+   "cvEMax": 0.748,
+   "qrsNote": "no QRS readout in this runner",
+   "arrest": false,
+   "collapse": false,
+   "rhythms": "2s sinus,360s sinusBrady",
+   "events": "i:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "IV bupivacaine 2 mg/kg",
+  "intv": "cardiovascular toxicity: collapse / ventricular arrhythmia",
+  "sys": "CIRC, RHY",
+  "owner": "7g LAST / 7a",
+  "wallS": 0
+ },
+ "NN-30c": {
+  "id": "NN-30c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dCvE = -0.2 (sign -1, beyond 0.05) [research/12 NN-30: lipid rescue lowers the cardiotoxic effect (lipid sink; ASRA 2020; AAGBI 2010) — direction]"
+  ],
+  "values": {
+   "dMapMin": -0.21,
+   "dMapMax": 6.49,
+   "dMapAt5": 1.7,
+   "dCvE": -0.2,
+   "dPlasma": 0,
+   "events": "i:2s sinus→360s sinusBrady | c:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "IV bupivacaine 2 mg/kg",
+  "intv": "lipid emulsion 20 % 1.5 mL/kg at +1 min vs no lipid",
+  "sys": "CIRC, PK",
+  "owner": "7g lipid row",
+  "dirOnly": true,
+  "wallS": 26.4
+ },
+ "NN-31": {
+  "id": "NN-31",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no seizure state: the only seizure is 7g's LAST bus flag (`bus.cns.seizure`), read by nothing (research/11 §2.8; research/12 §5.3 blockers). Expected: CMRO2 ↑ 200–300 %, SpO2 ↓, lactate ↑, ICP ↑ (Miller neurophysiology). Owner: FU-7 (missing mechanisms)"
+  ],
+  "values": {
+   "rejected": 2
+  },
+  "rejected": [
+   "{\"kind\":\"condition\",\"id\":\"statusEpilepticus\",\"severity\":1}: condition statusEpilepticus arrives in Stage 7",
+   "{\"kind\":\"condition\",\"id\":\"seizure\",\"severity\":1}: condition seizure arrives in Stage 7"
+  ],
+  "tier": "P3",
+  "ctx": "X-A",
+  "state": "status epilepticus",
+  "intv": "condition probe (seizure state)",
+  "sys": "BRN, LUNG, BLD",
+  "owner": "FU-7 (seizure state)",
+  "wallS": 3.5
+ },
+ "NN-32": {
+  "id": "NN-32",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no opioid chest-wall rigidity mechanism (research/12 §5.3 blockers); the probe measures Crs unchanged. Expected: Crs ↓, VT ↓ on bag-mask, ventilation difficult until NMB (Miller, opioids). Owner: FU-7"
+  ],
+  "values": {
+   "dCrs": 0,
+   "apnoea": true
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake → bag-mask",
+  "state": "awake",
+  "intv": "remifentanil 2 µg/kg rapid bolus: chest-wall rigidity probe",
+  "sys": "LUNG, AIR",
+  "owner": "FU-7 (opioid rigidity)",
+  "wallS": 22.3
+ },
+ "NN-M3": {
+  "id": "NN-M3",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL cbf0 = true (expected true) [research/12 NN-29 in MANUAL: no flow in VF (arrest cell; FU-4 G4)]"
+  ],
+  "values": {
+   "cbfMin": 0,
+   "cbf0": true,
+   "dPbto2": -49.1,
+   "cbfAfter": 0.895,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated, MANUAL",
+  "state": "VF untreated 5 min",
+  "intv": "brain in no-flow (twin of NN-29a)",
+  "sys": "BRN",
+  "owner": "7d brain in MANUAL",
+  "dirOnly": true,
+  "wallS": 18.9
  }
 }

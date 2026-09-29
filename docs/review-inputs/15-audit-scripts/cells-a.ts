@@ -170,7 +170,8 @@ export const TR06 = 4950; // roc 0.6 at 300 → TOFR 0.6 at 4950 s in the contro
 const ext = (withRoc: boolean, hypoxic: boolean) => ({
   patient: XA, dt: 5, tEnd: TR06 + 1500,
   steps: [[1, A.device('ett'), 'ETT'], [1, A.vent(), 'VCV'], [1, A.tci('propofol', 3), 'TCI 3'], ...(withRoc ? [roc(0.6)] : []), [TR06 - 600, A.tci('propofol', 0), 'TCI off (wake-up)'],
-    [TR06, A.device('none'), 'extubated'], [TR06, A.spont(0.21), 'spontaneous on air'], ...(hypoxic ? [[TR06 + 600, A.spont(0.12), 'hypoxic challenge FiO2 0.12']] : [])] as any,
+    [TR06, A.device('none'), 'extubated'], [TR06, A.spont(0.21), 'spontaneous on air'], ...(hypoxic ? [[TR06 + 600, A.lung('ards', 0.6), 'hypoxic challenge: shunt (ARDS 0.6) on air']] : [])] as any,
+  // resume fix (2026-09-29): a hypoxic gas (FiO2 0.12) is rejected ("fio2 must be … 0.21–1"), so the challenge is a shunt
 });
 add({
   id: 'NN-08a', tier: 'P2', ctx: 'X-A', state: 'extubated awake at TOFR ≈ 0.6 (roc 0.6, no reversal)', intv: 'extubation with residual block: upper-airway obstruction', sys: 'NEU, AIR',
@@ -180,9 +181,9 @@ add({
   owner: '7f drive.ts (obstruction) → FU-6 airway',
 });
 add({
-  id: 'NN-08b', tier: 'P2', ctx: 'X-A', state: 'extubated awake at TOFR ≈ 0.6', intv: 'hypoxic challenge FiO2 0.12: hypoxic ventilatory response vs no block', sys: 'LUNG, NEU',
+  id: 'NN-08b', tier: 'P2', ctx: 'X-A', state: 'extubated awake at TOFR ≈ 0.6', intv: 'hypoxic challenge (shunt; FiO2 < 0.21 is not expressible): hypoxic ventilatory response vs no block', sys: 'LUNG, NEU',
   arms: { i: ext(true, true), c: ext(false, true), i0: ext(true, false), c0: ext(false, false) },
-  measure: (R) => { const w0 = TR06 + 900, w1 = TR06 + 1500; const hvr = (a: Row[], b: Row[]) => avg(a, 'veSp', w0, w1) - avg(b, 'veSp', w0, w1); const hi = hvr(R.i!.rows, R.i0!.rows); const hc = hvr(R.c!.rows, R.c0!.rows); return m({ dVeBlock: r1f(hi), dVeNoBlock: r1f(hc), hvrRatio: r1f(100 * hi / hc) / 100, spo2Block: r1f(avg(R.i!.rows, 'spo2', w0, w1)), spo2NoBlock: r1f(avg(R.c!.rows, 'spo2', w0, w1)) }); },
+  measure: (R) => { const w0 = TR06 + 900, w1 = TR06 + 1500; const pao2B = avg(R.i!.rows, 'pao2', w0, w1), pao2C = avg(R.c!.rows, 'pao2', w0, w1); const hvr = (a: Row[], b: Row[]) => avg(a, 'veSp', w0, w1) - avg(b, 'veSp', w0, w1); const hi = hvr(R.i!.rows, R.i0!.rows); const hc = hvr(R.c!.rows, R.c0!.rows); return m({ dVeBlock: r1f(hi), dVeNoBlock: r1f(hc), hvrRatio: r1f(100 * hi / hc) / 100, spo2Block: r1f(avg(R.i!.rows, 'spo2', w0, w1)), spo2NoBlock: r1f(avg(R.c!.rows, 'spo2', w0, w1)), pao2Block: r1f(pao2B), pao2NoBlock: r1f(pao2C), paco2Block: r1f(avg(R.i!.rows, 'paco2', w0, w1)), paco2NoBlock: r1f(avg(R.c!.rows, 'paco2', w0, w1)) }); },
   expect: [{ m: 'hvrRatio', lo: 0.6, hi: 0.8, invert: true, src: 'research/12 NN-08: partial block (TOFR 0.7) blunts the hypoxic ventilatory response by ≈ 30 % (Eriksson 1993 Anesthesiology 78:693; carotid-body nicotinic receptors) — ratio 0.7 ± 15 %' }],
   owner: '7b drive.ts (carotid body) / FU-6',
 });
@@ -212,7 +213,7 @@ add({
 
 // ---- NN-11/12 myasthenia and Lambert–Eaton: ED95 by peak block over a dose ladder ---------------------------------
 const LAD_ROC = [0.05, 0.1, 0.15, 0.2, 0.3, 0.45];
-const LAD_SUX = [0.1, 0.2, 0.3, 0.5, 0.8, 1.2];
+const LAD_SUX = [0.1, 0.2, 0.3, 0.5, 0.8, 1.2, 2, 3]; // resume fix: 2 and 3 mg/kg added (the myasthenic ED95 lay above 1.2)
 const ladder = (drug: 'rocuronium' | 'succinylcholine', doses: number[], nm: string): Record<string, ReturnType<typeof G>> =>
   Object.fromEntries(doses.map((x) => [`${nm}${x}`, tiva([d(T, drug, x, 'mg/kg')], T + 600, nm === 'normal' ? XA : { neuro: { nm } }, 5)]));
 /** ED95 (mg/kg) by log-linear interpolation of the peak thumb block across the ladder. */

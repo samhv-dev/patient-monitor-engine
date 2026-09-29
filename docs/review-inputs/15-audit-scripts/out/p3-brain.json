@@ -1,0 +1,54 @@
+{
+ "NN-28b": {
+  "id": "NN-28b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dCbfPct = 81.3 (sign 1, beyond 10) [research/12 NN-28: CBF rises steeply below PaO2 50 (Miller neurophysiology; tables §5.1 O(): ×2 at PaO2 30) — direction, beyond 10 %]"
+  ],
+  "values": {
+   "pao2Ctl": 96.9,
+   "pao2Ards07": 58.7,
+   "pao2Ards10": 52.8,
+   "paco2Hyp": 51.7,
+   "dCbfPct": 81.3,
+   "dIcp": 3.6,
+   "sjvo2": 67.3
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, VCV 12 × 500",
+  "state": "GA",
+  "intv": "hypoxaemia (FiO2 0.1): CBF rises below PaO2 50",
+  "sys": "BRN, LUNG",
+  "owner": "7d flow.ts",
+  "dirOnly": true,
+  "wallS": 58.2
+ },
+ "NN-29b": {
+  "id": "NN-29b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL hyperaemia = 1.089 (sign 1, beyond 0.1) [research/12 NN-29: reactive hyperaemia after ROSC (then delayed hypoperfusion) (Miller neurophysiology; Sterz 1990) — direction, beyond +10 %]"
+  ],
+  "values": {
+   "roscUntreated": false,
+   "cbfCprMean": 0.639,
+   "rosc": true,
+   "mapPost": 147.1,
+   "cbfPeakRel": 2.089,
+   "hyperaemia": 1.089,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus | u:5s sinus→305s vfCoarse→605s sinus→690s agonal→840s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated",
+  "state": "VF 5 min → ROSC (instructor sinus)",
+  "intv": "post-ROSC cerebral hyperaemia",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain (post-ischaemic flow)",
+  "dirOnly": true,
+  "wallS": 41.9
+ }
+}

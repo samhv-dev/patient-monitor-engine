@@ -1,0 +1,323 @@
+{
+ "NN-25b": {
+  "id": "NN-25b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMap = 36.3 in [30, 50] [research/12 NN-25 / tables §7 check 19 and §5.1: Cushing MAP +30–50 over 30–60 s]",
+   "PL hrDropPct = -26 in [-40, -20] [tables §5.1 Cushing: HR −20–40 % with the surge (check 19: HR 80 → 45–55) — read over the same 50–70 s window as the MAP]"
+  ],
+  "values": {
+   "cushOnMin": 29.2,
+   "dMap": 36.3,
+   "hr0": 73,
+   "hrSurge": 54,
+   "hrDropPct": -26,
+   "hrNadir5Pct": -27.4,
+   "hrAt40Pct": -19.4
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated",
+  "state": "expanding haematoma 1 mL/min",
+  "intv": "Cushing response at CPP < 40: MAP ↑, HR ↓",
+  "sys": "BRN, CIRC",
+  "owner": "7d cushing.ts / 7a",
+  "wallS": 76.3
+ },
+ "NN-25c": {
+  "id": "NN-25c",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR herniated = false (expected true) [research/12 NN-25: untreated expanding haematoma → herniation (tables §5.1; BTF)]"
+  ],
+  "values": {
+   "herniated": false,
+   "herniationMin": null,
+   "cppMin": 4.6,
+   "icpMax": 140.5,
+   "lowCppLongestS": 20,
+   "pupil": 4,
+   "mapEnd": 145.5,
+   "hrEnd": 65,
+   "rhythms": "5s sinus"
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI intubated",
+  "state": "expanding haematoma 1 mL/min, untreated 45 min",
+  "intv": "herniation",
+  "sys": "BRN, CIRC, RHY",
+  "owner": "7d brain",
+  "wallS": 0
+ },
+ "NN-26a": {
+  "id": "NN-26a",
+  "verdict": "TW",
+  "auto": "TW",
+  "notes": [
+   "TW dIcpPctAt2 = -9.3 above [-30, -25] [research/12 NN-26 (ICP −25 %); tables §7 check 19: hyperventilation to PaCO2 30, ICP −25–30 % in 1–2 min (BTF; Miller neuro)]"
+  ],
+  "values": {
+   "icpPre": 25.3,
+   "paco2At2": 34.6,
+   "paco2At10": 31.6,
+   "dIcpPctAt2": -9.3,
+   "dIcpPctAt10": -16.9,
+   "dCbfPctAt10": -17.4,
+   "rr30Paco2At10": 19,
+   "rr30DIcpPctAt10": -46.8
+  },
+  "rejected": [],
+  "tier": "P1",
+  "ctx": "TBI, ICP 25",
+  "state": "raised ICP (mass)",
+  "intv": "hyperventilation to a sustained PaCO2 ≈ 30 (RR 12 → 16)",
+  "sys": "BRN, LUNG",
+  "owner": "7d brain",
+  "wallS": 138.6
+ },
+ "NN-28a": {
+  "id": "NN-28a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL slopePctPerMmHg = 3.1100000000000003 in [2, 4] [research/12 NN-28: CBF 2–4 %/mmHg PaCO2 in the 20–80 range (Miller, neurophysiology); tables §5.1 kCO2 0.02–0.04]"
+  ],
+  "values": {
+   "paco2": "15.7/23.2/36.7/49.8/65.8",
+   "cbf": "0.272/0.327/0.565/0.795/1.078",
+   "icp": "4.2/4.7/6.5/8.3/10.5",
+   "slopePctPerMmHg": 3.1100000000000003
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, VCV × 500",
+  "state": "GA",
+  "intv": "PaCO2 ≈ 20 → 80 by respiratory rate (RR 30 / 20 / 12 / 8 / 5)",
+  "sys": "BRN",
+  "owner": "7d flow.ts",
+  "wallS": 92.4
+ },
+ "NN-28b": {
+  "id": "NN-28b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "command rejected: {\"kind\":\"ventilation\",\"source\":\"ventilator\",\"rr\":12,\"vtMl\":500,\"peep\":5,\"fio2\":0.1}: fio2 must be a finite number in 0.21–1"
+  ],
+  "values": {
+   "pao2": 292.4,
+   "dCbfPct": 0,
+   "dIcp": 0,
+   "sjvo2": 68.9
+  },
+  "rejected": [
+   "{\"kind\":\"ventilation\",\"source\":\"ventilator\",\"rr\":12,\"vtMl\":500,\"peep\":5,\"fio2\":0.1}: fio2 must be a finite number in 0.21–1"
+  ],
+  "tier": "P2",
+  "ctx": "X-A TIVA, VCV 12 × 500",
+  "state": "GA",
+  "intv": "hypoxaemia (FiO2 0.1): CBF rises below PaO2 50",
+  "sys": "BRN, LUNG",
+  "owner": "7d flow.ts",
+  "dirOnly": true,
+  "wallS": 36.2
+ },
+ "NN-29a": {
+  "id": "NN-29a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL cbf0 = true (expected true) [research/12 NN-29: CBF 0 in untreated VF (FU-4 G4)]",
+   "PL dPbto2 = -47.7 (sign -1, beyond 10) [research/12 NN-29: PbtO2 falling in arrest — direction, beyond 10 mmHg]",
+   "PL sjvo2Min = 25 in [0, 30] [research/12 NN-29: SjvO2 → 0 in no-flow (stagnant venous blood desaturates) — ≤ 30 % direction-only bound]"
+  ],
+  "values": {
+   "cbfMin": 0,
+   "pbto2Pre": 47.7,
+   "pbto2End": 0,
+   "dPbto2": -47.7,
+   "sjvo2Pre": 70.2,
+   "sjvo2Min": 25,
+   "cbf0": true,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus→690s agonal→840s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated",
+  "state": "VF untreated 5 min",
+  "intv": "brain in no-flow: CBF, PbtO2, SjvO2",
+  "sys": "BRN",
+  "owner": "7d brain (flow.ts brainOxygen)",
+  "wallS": 18.7
+ },
+ "NN-29b": {
+  "id": "NN-29b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR hyperaemia = -1 (expected sign 1) [research/12 NN-29: reactive hyperaemia after ROSC (then delayed hypoperfusion) (Miller neurophysiology; Sterz 1990) — direction, beyond +10 %]"
+  ],
+  "values": {
+   "rosc": false,
+   "mapPost": 12.3,
+   "cbfPeakRel": 0,
+   "hyperaemia": -1,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus→690s agonal→840s asystole"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated",
+  "state": "VF 5 min → ROSC (instructor sinus)",
+  "intv": "post-ROSC cerebral hyperaemia",
+  "sys": "BRN, CIRC",
+  "owner": "7d brain (post-ischaemic flow)",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "NN-30a": {
+  "id": "NN-30a",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "PL seizureFirst = true (expected true) [research/12 NN-30: CNS toxicity (seizure) precedes cardiovascular collapse (ASRA 2020 LAST advisory; AAGBI 2010)]",
+   "WR dCmro2Seizure = 0 (expected sign 1) [research/12 NN-31 context: a seizure raises CMRO2 (Miller neurophysiology: +200–300 % in status) — direction]"
+  ],
+  "values": {
+   "seizureS": 30,
+   "cvS": 46,
+   "seizureFirst": true,
+   "cPeak": 7.959999999999999,
+   "dCmro2Seizure": 0,
+   "dLactate": 0.22000000000000003,
+   "events": "i:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "accidental IV bupivacaine 2 mg/kg (LAST)",
+  "intv": "CNS toxicity: seizure first, and its physiology",
+  "sys": "NEU, BRN, LUNG",
+  "owner": "7g LAST_THRESHOLDS; seizure physiology: FU-7 (research/12 blocker \"no seizure state\")",
+  "wallS": 52
+ },
+ "NN-30b": {
+  "id": "NN-30b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR collapse = false (expected true) [research/12 NN-30: CV collapse / VF after a large IV bupivacaine dose (ASRA 2020; AAGBI 2010; tables LAST_THRESHOLDS cv 4 µg/mL)]"
+  ],
+  "values": {
+   "mapMin": 77.784,
+   "dMapMinPct": -18.4,
+   "cvEMax": 0.748,
+   "qrsNote": "no QRS readout in this runner",
+   "arrest": false,
+   "collapse": false,
+   "rhythms": "2s sinus,360s sinusBrady",
+   "events": "i:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "IV bupivacaine 2 mg/kg",
+  "intv": "cardiovascular toxicity: collapse / ventricular arrhythmia",
+  "sys": "CIRC, RHY",
+  "owner": "7g LAST / 7a",
+  "wallS": 0
+ },
+ "NN-30c": {
+  "id": "NN-30c",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dCvE = -0.2 (sign -1, beyond 0.05) [research/12 NN-30: lipid rescue lowers the cardiotoxic effect (lipid sink; ASRA 2020; AAGBI 2010) — direction]"
+  ],
+  "values": {
+   "dMapMin": -0.21,
+   "dMapMax": 6.49,
+   "dMapAt5": 1.7,
+   "dCvE": -0.2,
+   "dPlasma": 0,
+   "events": "i:2s sinus→360s sinusBrady | c:2s sinus→360s sinusBrady"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake, spontaneous, air",
+  "state": "IV bupivacaine 2 mg/kg",
+  "intv": "lipid emulsion 20 % 1.5 mL/kg at +1 min vs no lipid",
+  "sys": "CIRC, PK",
+  "owner": "7g lipid row",
+  "dirOnly": true,
+  "wallS": 26.4
+ },
+ "NN-31": {
+  "id": "NN-31",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no seizure state: the only seizure is 7g's LAST bus flag (`bus.cns.seizure`), read by nothing (research/11 §2.8; research/12 §5.3 blockers). Expected: CMRO2 ↑ 200–300 %, SpO2 ↓, lactate ↑, ICP ↑ (Miller neurophysiology). Owner: FU-7 (missing mechanisms)"
+  ],
+  "values": {
+   "rejected": 2
+  },
+  "rejected": [
+   "{\"kind\":\"condition\",\"id\":\"statusEpilepticus\",\"severity\":1}: condition statusEpilepticus arrives in Stage 7",
+   "{\"kind\":\"condition\",\"id\":\"seizure\",\"severity\":1}: condition seizure arrives in Stage 7"
+  ],
+  "tier": "P3",
+  "ctx": "X-A",
+  "state": "status epilepticus",
+  "intv": "condition probe (seizure state)",
+  "sys": "BRN, LUNG, BLD",
+  "owner": "FU-7 (seizure state)",
+  "wallS": 3.5
+ },
+ "NN-32": {
+  "id": "NN-32",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no opioid chest-wall rigidity mechanism (research/12 §5.3 blockers); the probe measures Crs unchanged. Expected: Crs ↓, VT ↓ on bag-mask, ventilation difficult until NMB (Miller, opioids). Owner: FU-7"
+  ],
+  "values": {
+   "dCrs": 0,
+   "apnoea": true
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake → bag-mask",
+  "state": "awake",
+  "intv": "remifentanil 2 µg/kg rapid bolus: chest-wall rigidity probe",
+  "sys": "LUNG, AIR",
+  "owner": "FU-7 (opioid rigidity)",
+  "wallS": 22.3
+ },
+ "NN-M3": {
+  "id": "NN-M3",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL cbf0 = true (expected true) [research/12 NN-29 in MANUAL: no flow in VF (arrest cell; FU-4 G4)]"
+  ],
+  "values": {
+   "cbfMin": 0,
+   "cbf0": true,
+   "dPbto2": -49.1,
+   "cbfAfter": 0.895,
+   "events": "i:5s sinus→305s vfCoarse→605s sinus"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A TIVA, ventilated, MANUAL",
+  "state": "VF untreated 5 min",
+  "intv": "brain in no-flow (twin of NN-29a)",
+  "sys": "BRN",
+  "owner": "7d brain in MANUAL",
+  "dirOnly": true,
+  "wallS": 18.9
+ }
+}

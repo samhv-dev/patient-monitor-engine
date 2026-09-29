@@ -146,8 +146,14 @@ add({
 });
 add({
   id: 'NN-28b', tier: 'P2', ctx: 'X-A TIVA, VCV 12 × 500', state: 'GA', intv: 'hypoxaemia (FiO2 0.1): CBF rises below PaO2 50', sys: 'BRN, LUNG',
-  arms: { i: G([tci(1, 'propofol', 3), [600, A.vent({ fio2: 0.1 }), 'FiO2 0.10']], 1500, XA, { dt: 10 }), c: G([tci(1, 'propofol', 3)], 1500, XA, { dt: 10 }) },
-  measure: (R) => m({ pao2: r1f(avg(R.i!.rows, 'pao2', 1200, 1500)), dCbfPct: r1f(100 * (avg(R.i!.rows, 'cbf', 1200, 1500) / avg(R.c!.rows, 'cbf', 1200, 1500) - 1)), dIcp: r1f(avg(R.i!.rows, 'icp', 1200, 1500) - avg(R.c!.rows, 'icp', 1200, 1500)), sjvo2: r1f(avg(R.i!.rows, 'sjvo2', 1200, 1500)) }),
+  // resume fix (2026-09-29): the first rig (ventilator FiO2 0.10) was rejected — "fio2 must be a finite number in
+  // 0.21–1"; hypoxaemia is made instead by shunt: FiO2 0.21 + lung condition ARDS at two severities.
+  arms: {
+    i: G([tci(1, 'propofol', 3), [600, A.vent({ fio2: 0.21, rr: 20 }), 'FiO2 0.21, RR 20 (normocapnia)'], [600, A.lung('ards', 0.7), 'ARDS 0.7']], 1500, XA, { dt: 10 }),
+    j: G([tci(1, 'propofol', 3), [600, A.vent({ fio2: 0.21, rr: 20 }), 'FiO2 0.21, RR 20'], [600, A.lung('ards', 1), 'ARDS 1.0']], 1500, XA, { dt: 10 }),
+    c: G([tci(1, 'propofol', 3), [600, A.vent({ fio2: 0.21 }), 'FiO2 0.21']], 1500, XA, { dt: 10 }),
+  },
+  measure: (R) => { const w = (k: string, key: string) => avg(R[k]!.rows, key, 1200, 1500); const hyp = w('j', 'pao2') < w('i', 'pao2') ? 'j' : 'i'; return m({ pao2Ctl: r1f(w('c', 'pao2')), pao2Ards07: r1f(w('i', 'pao2')), pao2Ards10: r1f(w('j', 'pao2')), paco2Hyp: r1f(w(hyp, 'paco2')), paco2Ctl: r1f(w('c', 'paco2')), dCbfPct: r1f(100 * (w(hyp, 'cbf') / w('c', 'cbf') - 1)), dIcp: r1f(w(hyp, 'icp') - w('c', 'icp')), sjvo2: r1f(w(hyp, 'sjvo2')) }); },
   expect: [{ m: 'dCbfPct', dir: 1, tol: 10, src: 'research/12 NN-28: CBF rises steeply below PaO2 50 (Miller neurophysiology; tables §5.1 O(): ×2 at PaO2 30) — direction, beyond 10 %' }],
   dirOnly: true,
   owner: '7d flow.ts',
@@ -170,8 +176,11 @@ add({
 });
 add({
   id: 'NN-29b', tier: 'P2', ctx: 'X-A TIVA, ventilated', state: 'VF 5 min → ROSC (instructor sinus)', intv: 'post-ROSC cerebral hyperaemia', sys: 'BRN, CIRC',
-  arms: { i: vf() },
-  measure: (R) => { const i = R.i!.rows; const pre = avg(i, 'cbf', TVF - 60, TVF); return m({ rosc: !i.some((r) => (r.t as number) > TROSC + 60 && (r.t as number) <= TROSC + 300 && (r.pulseless === true || r.noEject === true)), mapPost: r1f(avg(i, 'map', TROSC + 60, TROSC + 300)), cbfPeakRel: r1f(100 * mx(i, 'cbf', TROSC, TROSC + 600) / pre) / 100, hyperaemia: r1f(100 * (mx(i, 'cbf', TROSC, TROSC + 600) / pre - 1)) / 100 }); },
+  // resume fix (2026-09-29): after 5 min of UNTREATED VF the instructor's sinus gave no pulse (MAP 12 → agonal 690 s →
+  // asystole 840 s), so the hyperaemia question could not be asked; the graded arm is TREATED: CPR from +1 min,
+  // adrenaline 1 mg at +3 min, sinus at +5 min (FU-4's "VF + CPR + adrenaline → ROSC").
+  arms: { i: G([tci(1, 'propofol', 3), [TVF, A.rhythm('vfCoarse'), 'VF'], [TVF + 60, A.cpr({ active: true, quality: 1 }), 'CPR'], d(TVF + 180, 'epinephrine', 1, 'mg'), [TROSC, A.cpr({ active: false }), 'CPR stop'], [TROSC, A.rhythm('sinus'), 'sinus (ROSC)']], TROSC + 900, XA, { dt: 5 }), u: vf() },
+  measure: (R) => { const i = R.i!.rows; const pre = avg(i, 'cbf', TVF - 60, TVF); return m({ roscUntreated: !R.u!.rows.some((r) => (r.t as number) > TROSC + 60 && (r.t as number) <= TROSC + 300 && (r.pulseless === true || r.noEject === true)), cbfCprMean: r1f(100 * avg(i, 'cbf', TVF + 90, TROSC) / pre) / 100, rosc: !i.some((r) => (r.t as number) > TROSC + 60 && (r.t as number) <= TROSC + 300 && (r.pulseless === true || r.noEject === true)), mapPost: r1f(avg(i, 'map', TROSC + 60, TROSC + 300)), cbfPeakRel: r1f(100 * mx(i, 'cbf', TROSC, TROSC + 600) / pre) / 100, hyperaemia: r1f(100 * (mx(i, 'cbf', TROSC, TROSC + 600) / pre - 1)) / 100 }); },
   expect: [{ m: 'hyperaemia', dir: 1, tol: 0.1, src: 'research/12 NN-29: reactive hyperaemia after ROSC (then delayed hypoperfusion) (Miller neurophysiology; Sterz 1990) — direction, beyond +10 %' }],
   dirOnly: true,
   owner: '7d brain (post-ischaemic flow)',
