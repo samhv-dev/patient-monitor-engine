@@ -64,7 +64,7 @@ const LUNG: Entry[] = [
   ['o2.pao2', 'PaO₂ (lung)', 'mmHg', 0], ['o2.sa', 'SaO₂ (lung)', '%', 1, 100], ['o2.cv', 'CvO₂', 'mL/L', 0],
   ['co2.pv', 'PvCO₂', 'mmHg', 1], ['co2.g', 'EtCO₂/PaCO₂', '', 2], ['co2.e', 'CO₂ elimination efficiency', '', 2],
   ['co2.riseIII', 'Capnogram phase III rise', 'mmHg', 1], ['co2.faCo2', 'FACO₂', '%', 2, 100],
-  ['lp.ccw', 'Chest-wall compliance', 'mL/cmH₂O', 0], ['lp.rTube', 'Tube resistance', 'cmH₂O/L/s', 1], ['lp.extraShunt', 'Extrapulmonary shunt', '%', 1, 100],
+  ['lp.ccw', 'Chest-wall compliance', 'mL/cmH₂O', 0], ['lp.rTube', 'Tube resistance', 'cmH₂O/L/s', 1], ['lp.extraShunt', 'Extrapulmonary shunt', '%', 1, 100], ['lp.waterShunt', 'Lung-water shunt, PEEP-responsive', '%', 1, 100], // Stage V.1 (E-V1-2; plan Decision 24)
   ['lp.frcMult', 'FRC multiplier', '×', 2], ['lp.ibwKg', 'Ideal body weight', 'kg', 0], ['lp.pvr', 'PVR multiplier (conditions)', '×', 2],
   ['lp.tIt', 'Airway→pleura transmission', '', 2], ['lp.pPtx', 'Pneumothorax pressure', 'mmHg', 1], ['lp.leakFrac', 'Airway leak', '%', 0, 100],
   ['lp.co2Slope', 'Capnogram slope multiplier', '×', 2], ['lp.pMax', 'Inspiratory strength multiplier', '×', 2],

@@ -39,7 +39,8 @@ export function mountHamiltonUi(d: VentDriver): { stop(): void } {
   let pendingMode: string | null = null;
   let sheetTab: 'basic' | 'more' | 'apnea' = 'basic';
   const M = () => P.shown ?? P.measured;
-  /** The drawer edits the patient's lung: it becomes the lungState base (link/core.ts patchVent). */
+  /** The drawer edits the lung before the first lungState and the stand-alone lung (link/core.ts patchVent); linked, lungState
+   *  overwrites C, R, flow limitation and pleural pressure every second (Stage V.1) — the base keeps the patient's own effort. */
   const syncBase = () => { d.core.lung.base = lungBaseOf(S); };
   const isSpontMode = () => S.mode === 'PSV' || S.mode === 'PAV';
   const vcTi = () => S.vt / 1000 / Math.max(0.05, S.vcFlow / 60);
@@ -463,8 +464,11 @@ export function mountHamiltonUi(d: VentDriver): { stop(): void } {
       pr.append(b);
     });
     L.append(el('div', { style: 'font-size:12px;color:var(--numlab);margin-bottom:6px' }, 'Presets'), pr);
-    L.append(dSld('compliance', 'Compliance', 10, 90, 1, 'ml/cmH₂O', undefined, () => (S.compliance >= 40 ? 'Normal' : S.compliance >= 25 ? 'Reduced' : 'Severely reduced')));
-    L.append(dSld('resistance', 'Resistance', 5, 50, 1, 'cmH₂O/l/s', undefined, () => (S.resistance <= 15 ? 'Normal' : S.resistance <= 25 ? 'Elevated' : 'High')));
+    // Stage V.1: linked, the monitor's lungState IS the lung (absolute) — a slider edit would last only until the next one
+    const linked = d.core.lung.last !== null;
+    const lungSld = (f: HTMLElement) => { if (linked) { const i = f.querySelector('input') as HTMLInputElement; i.disabled = true; i.title = 'Linked: the patient monitor’s lung (lungState)'; } return f; };
+    L.append(lungSld(dSld('compliance', 'Compliance', 10, 90, 1, 'ml/cmH₂O', undefined, () => (S.compliance >= 40 ? 'Normal' : S.compliance >= 25 ? 'Reduced' : 'Severely reduced'))));
+    L.append(lungSld(dSld('resistance', 'Resistance', 5, 50, 1, 'cmH₂O/l/s', undefined, () => (S.resistance <= 15 ? 'Normal' : S.resistance <= 25 ? 'Elevated' : 'High'))));
     const tau = (S.resistance * S.compliance) / 1000;
     L.append(el('div', { class: 'dfld' }, el('div', { class: 'lab' }, el('span', {}, `Time Constant τ: ${tau.toFixed(2)} s`)), el('div', { class: 'status', style: 'color:var(--numlab)' }, `95% equilibration ${(3 * tau).toFixed(2)} s`)));
     L.append(el('div', { class: 'hr' }), dTog('airwayClosure', 'Airway Closure'));
@@ -473,8 +477,9 @@ export function mountHamiltonUi(d: VentDriver): { stop(): void } {
     if (S.stressIdx) L.append(dSld('stressB', 'Stress Index', 0.7, 1.4, 0.01, '', (v) => v.toFixed(2), () => (S.stressB < 0.9 ? 'SI<0.9 concave' : S.stressB > 1.1 ? 'SI>1.1 convex' : 'SI 0.9–1.1 normal')));
     L.append(el('div', { class: 'hr' }), dTog('reverseTrig', 'Reverse Triggering'), dTog('spont', 'Spontaneous Breathing'));
     if (S.spont) L.append(dSld('spontRate', 'Spont. Rate', 6, 40, 1, '/min'), dSld('pmus', 'Peak Effort (Pmus)', 0, 20, 0.5, 'cmH₂O', (v) => v.toFixed(1)), dSld('responsiveness', 'Responsiveness', 0, 100, 5, '%'));
-    R.append(el('h3', {}, 'Advanced'), dTog('efl', 'Expiratory Flow Limitation'));
-    if (S.efl) R.append(dSld('pcrit', 'Critical Closing P', 2, 15, 1, 'cmH₂O'), dSld('peepStent', 'PEEP Stenting', 0, 100, 5, '%'));
+    // Stage V.1: lungState also sets efl/eflK/peepStent (lungMechanics) — disabled while linked, as C and R are
+    R.append(el('h3', {}, 'Advanced'), lungSld(dTog('efl', 'Expiratory Flow Limitation')));
+    if (S.efl) R.append(dSld('pcrit', 'Critical Closing P', 2, 15, 1, 'cmH₂O'), lungSld(dSld('peepStent', 'PEEP Stenting', 0, 100, 5, '%')));
     R.append(dTog('cardiac', 'Cardiac Oscillations'));
     if (S.cardiac) R.append(dSld('hr', 'Heart Rate', 40, 140, 1, 'bpm'));
     R.append(dTog('variability', 'Natural Variability'));
