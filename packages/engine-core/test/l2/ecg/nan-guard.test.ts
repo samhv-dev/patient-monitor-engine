@@ -32,10 +32,18 @@ describe('FU-4 18g: the non-finite scheduled-time guard', () => {
   const env = process.env.NODE_ENV;
   afterEach(() => { process.env.NODE_ENV = env; vi.restoreAllMocks(); });
 
-  it('is inert with finite rates: every rhythm schedules byte-identically to the pre-guard fixture', () => {
+  // The fixture was recorded on darwin-arm64 (a36578f, before the guard); the schedules are platform-dependent in the
+  // last float bits (CI's Linux runner hashes preexcitedAf as 53cb9098 — measured on PR #25), so the byte-identity is
+  // asserted where it was recorded, and everywhere the guard is proven inert by never firing (in the test environment
+  // it throws) and by every scheduled instant being finite.
+  it('is inert with finite rates: every rhythm schedules byte-identically to the pre-guard fixture (darwin, where recorded); the guard never fires', () => {
     const ids = Object.keys(RHYTHMS) as RhythmId[];
     expect(Object.keys(FIXTURE).sort()).toEqual([...ids].sort());
-    for (const id of ids) expect([id, fnv(JSON.stringify(runRhythm(id, 60, { seed: 7 }).st.records))]).toEqual([id, FIXTURE[id]]);
+    for (const id of ids) {
+      const recs = runRhythm(id, 60, { seed: 7 }).st.records; // would throw here if the guard fired (NODE_ENV=test)
+      expect(recs.every((r) => Number.isFinite((r as { t: number }).t))).toBe(true);
+      if (process.platform === 'darwin') expect([id, fnv(JSON.stringify(recs))]).toEqual([id, FIXTURE[id]]);
+    }
   });
   it('throws in the test environment with the value, the clock and the sim time', () => {
     expect(nonFiniteIsLoud()).toBe(true);

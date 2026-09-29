@@ -147,8 +147,8 @@ AS+CAD, HFrEF, class I–III (incl. + propofol and + sevoflurane), PEEP, pressor
 
 ## 4. The `it.fails` list
 
-`docs/gates/fu-4/it-fails.md` lists all **66** expected failures in the repository (65 `it.fails` + 1 Playwright
-`test.fail`) with file:line and the measured number; **40 are FU-4's** (incl. FU-5's cross-branch pins, E-FU4-20) (added or re-titled with a new number). FU-4's flips (`it.fails` → `it`): circ-sanity-1 propofol
+`docs/gates/fu-4/it-fails.md` lists all **65** expected failures in the repository (64 `it.fails` + 1 Playwright
+`test.fail`) with file:line and the measured number; **39 are FU-4's** (incl. FU-5's cross-branch pins, E-FU4-20) (added or re-titled with a new number). FU-4's flips (`it.fails` → `it`): circ-sanity-1 propofol
 (Task 2; back to `it.fails` in 18e at 0.801, HR side kept as `it`); `pk-bus` VA > 3 L/min (Task 15); FU-3's final HR ≤
 130 (Task 6); the 7e sepsis rows warm HR, warm MAP (flipped, back to `it.fails` at 54.0 in 18d, flipped again at 56 in
 18e) and cold SVR (Task 15, E-FU4-9); lung-circ OLV share (15b); 5b-child and the blood re-check child (18d); S1b and
@@ -158,7 +158,7 @@ circ-hypoxic-arrest organised activity 6–10 min after (0 beats: decayed) and m
 13b not landed); circ-lowflow-arrest ROSC CoPP −0.4–36.6; circ-pulsus 3.1; circ-sanity-1 0.801; the eleven suite rows
 (§2); endo-acceptance MH EtCO2 54 and dantrolene +4.0 min; endo-circ warm CO 4.9 and SVR 767; hemo-acceptance CPR
 trough 30.6; neuro-engine DI 52; obstructive-aliases SBP 92.8 (18e), CVP 11.5, MAP 78.4, SaO2 97.3; organs-tbi-treatment
-ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)**; tension-ptx +10.45 min; truth-event
+ICP drop 30.5 %; tension-ptx +10.45 min; truth-event
 2 101 leaves; escape-reset 60 QRS/min (twice); flow-distribution 1.29.
 
 ## 5. Exceptions (all *approved by the orchestrator 2026-09-28*)
@@ -212,10 +212,15 @@ ICP drop 30.5 %; **pk-longrun propofol Ce 2.5065 at 6 h (2.5058 at 24 h locally)
   validated by 7e; `VAGAL_SITES` exported from `types-neuro.ts` (the type test `types-neuro.test.ts` updated for the one
   optional field). The glycopyrrolate-first criterion is "no bradycardia against the undrugged HR" (81 vs 73), as the
   opioid rig's; the residual −10 % from glycopyrrolate's own HR is recorded.
-- **18f × Task 14 — pk-longrun:** remifentanil's vagal row lowers HR/CO under TCI and the flow-dependent propofol
-  distribution puts Ce at 2.5065 (6 h) / 2.5058 (24 h local) against 2.5 ± 0.005: split out as `it.fails` (a pinned
-  `pinDistQ` would be E-FU4-10 extended, not approved).
+- **18f × Task 14 — pk-longrun (corrected at CI):** on macOS arm64 the 6 h run gives propofol Ce 2.5065 (24 h 2.5058)
+  against 2.5 ± 0.005, so it was split out as an `it.fails`; the PR's Linux CI measured **2.4987** — in band, so the
+  `it.fails` itself failed there. The split is REVERTED (the test is back to its pre-FU-4 form, `it`); the macOS
+  numbers are a last-float-bits platform divergence of a 6 h chaotic run, not a physiological TCI offset. Locally on
+  macOS this one slow-a assertion is red by 0.0015; CI (the gate platform) is green.
 - **18f** `pk/pipeline.ts` find block re-anchored (Task 14 had inserted the transit-lag comment below the anchor).
+- **18g (corrected at CI):** the nan-guard byte-identity fixture was recorded on darwin; Linux hashes preexcitedAf as
+  53cb9098 (platform float bits), so the fixture is asserted on darwin and, everywhere, the guard never fires and every
+  scheduled instant is finite.
 - **18g:** the clamp reference is the last processed instant + 1 s (a `planT`-based reference looped at one instant
   and exhausted memory in the first prototype).
 - **Task 21 — `t25-apnoea` carries pressures only in its baseline:** the helper's default `setTarget hr 75` HOLDS the
@@ -360,8 +365,8 @@ New:
     instructor rate kept a paralysed, unventilated patient at SaO2 0 for 10 min without an arrest. Should MODELED
     documents send HR targets, and should FU-3's hypoxic arrest act through a held rate? **Ruled: accepted —
     `t25-apnoea` carries no heart-rate target.**
-26. **TCI under low output** (pk-longrun): the pump's population model vs the flow-scaled patient (Ce 2.5065): a feature
-    to show, or should the TCI model see the same q? **Ruled: a feature; to Ali's list (review pack, drugs).**
+26. **TCI under low output** (pk-longrun) — **WITHDRAWN at CI:** the "over-delivery" (Ce 2.5065) was macOS-only; Linux CI
+    measures 2.4987 (in band). The earlier ruling (a feature, Ali's list) no longer has a finding behind it.
 27. **7c water balance:** the resting 24 h drift (bvRel −0.5 %, Hb +0.08) behind the soak lactate (and the 24 h local UOP drift 2.68 %). **Ruled: calibration queue.**
 28. **Stage 3's low-flow unit bands vs the orchestrator's arrest-EtCO2 update** (Task 17): two `it.fails` until ruled. **Ruled: they stay pinned as `it.fails` with numbers (R45).** Ali's Q1 conflict (healthy −23 %
     vs class III) is his — neither moves.
@@ -429,8 +434,7 @@ At `d1656ab` (merge `b13837c` + FU-5 items `7975074` + truth flip `aa1f755` + e2
   18e-fix and the merge; only post-arrest nadirs deepened (tamponade min MAP 19 → 14, PE 16 → 12 — the withdrawn humoral
   tone after the arrest).
 - tick-bench (local, 120 s): **p50 0.52 ms**, p95 0.65, p99 0.80 (CI bound 6 ms).
-- `check-notices`: OK. Local 24 h (earlier head, unchanged since): hemo-longrun passed; pk-longrun Ce 2.5058 (`it.fails`
-  holds); organs-soak lactate 0.0141 passes, **UOP drift 2.68 % fails locally** (CI 6 h passes; item 27, calibration queue).
+- `check-notices`: OK. Local 24 h (earlier head, unchanged since): hemo-longrun passed; pk-longrun Ce 2.5058 (macOS; CI 2.4987 — see §6); organs-soak lactate 0.0141 passes, **UOP drift 2.68 % fails locally** (CI 6 h passes; item 27, calibration queue).
 - Validation documents: t25-rocuronium-sugammadex `rr-back` 0.0 red (unchanged); t25-apnoea `sbp-collapse` 524 s green.
 
 ## 11. Evidence screenshots (`docs/gates/fu-4/`, headless system Chrome, 1280 × 640 at scale 0.6, each ≤ 60 KB)
