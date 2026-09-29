@@ -1,0 +1,2 @@
+# Review inputs (snapshot for a cloud review session, 2026-09-29)
+This branch exists only so a cloud session can review `docs/plans/stage-9-clinical-ui.md`. It carries the plan, its prototype patch, 56 prototype screenshots, the four in-flight plans it must fit (FU-4, FU-5, FU-6, FU-7), a snapshot of the research files it cites (`research/`), and the orchestrator rulings it must honour (`rulings-excerpt.md`). It is never merged. The review is written to `docs/review-inputs/stage-9-review.md` and pushed to this branch.
