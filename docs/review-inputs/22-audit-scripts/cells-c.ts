@@ -88,12 +88,12 @@ add({ id: 'BF-14', tier: 'P2', ctx: 'X-A GA vent', state: 'normovolaemic, GA', i
   const arms = { i: G([d(T, 'propofol', 2, 'mg/kg')], T + 600, { blood: { albuminGL: 20 } }), c: G([d(T, 'propofol', 2, 'mg/kg')], T + 600) };
   add({ id: 'BF-22a', tier: 'P2', ctx: 'X-A GA vent, profile albumin 20 g/L', state: 'hypoalbuminaemia', intv: 'baseline: plasma COP and the lung-oedema threshold (COP − 2)', sys: 'BLD LUNG',
     arms, measure: (R) => m({ cop: v(R.i!.rows, 'cop', T - 10), copNormal: v(R.c!.rows, 'cop', T - 10), oedemaThreshold: Math.round((v(R.i!.rows, 'cop', T - 10) - 2) * 10) / 10 }),
-    expect: [{ m: 'cop', lo: 11, hi: 17, src: 'Weil 1979 Crit Care Med 7:113 / Mangialardi 2000 J Trauma 48:37 (COP ≈ 12–16 mmHg at albumin 20 g/L; normal 22–25)' }],
-    owner: '7c fluids.ts copPlasma' });
+    expect: [{ m: 'cop', lo: 11, hi: 17, invert: true, src: 'Weil 1979 Crit Care Med 7:113 / Mangialardi 2000 J Trauma 48:37 (COP ≈ 12–16 mmHg at albumin 20 g/L; normal 22–25)' }],
+    owner: '7c fluids.ts copPlasma (F8)', hand: { verdict: 'TS', why: 'COP 8.7 mmHg at albumin 20 g/L: total protein is taken as 1.6 × albumin (fluids.ts:48–51), so the globulins (≈ 25–30 g/L, a third of normal COP) fall with the albumin; the lung-oedema threshold drops to PAWP 6.7' } });
   add({ id: 'BF-22b', tier: 'P2', ctx: 'X-A GA vent, profile albumin 20 g/L', state: 'hypoalbuminaemia', intv: 'baseline: anion gap and base excess (Figge)', sys: 'BLD',
     arms, measure: (R) => m({ ag: v(R.i!.rows, 'ag', T - 10), agNormal: v(R.c!.rows, 'ag', T - 10), dAg: dAt(R.i!.rows, R.c!.rows, 'ag', T - 10), dBE: dAt(R.i!.rows, R.c!.rows, 'be', T - 10), dHco3: dAt(R.i!.rows, R.c!.rows, 'hco3', T - 10) }),
     expect: [{ m: 'dAg', lo: -6.5, hi: -3.5, src: 'Figge 1998 Crit Care Med 26:1807 (AG falls 2.5 mmol/L per 10 g/L albumin fall)' }],
-    owner: '7c core.ts createBloodCore (calibrateXa)' });
+    owner: '7c core.ts createBloodCore (calibrateXa) (F8)', hand: { verdict: 'IN', why: 'a PROFILE albumin of 20 g/L gives the normal AG (11.8) and BE 0, because createBloodCore solves the unmeasured anions to hold HCO3 24.4 (core.ts:66–73) and so absorbs the albumin charge; the SAME hypoalbuminaemia reached by dilution (BF-01a, albumin −10.6) lowers the AG by 3.7 as Figge predicts — one state, two answers' } });
   add({ id: 'BF-22c', tier: 'P2', ctx: 'X-A GA vent, profile albumin 20 g/L', state: 'hypoalbuminaemia', intv: 'propofol 2 mg/kg: free (unbound) drug fraction and effect', sys: 'PK',
     arms, measure: (R) => m({ dMapPct: pct(mn(R.i!.rows, 'map', T, T + 600), mn(R.c!.rows, 'map', T, T + 600)), cePropMaxLowAlb: mx(R.i!.rows, 'c_propofol', T, T + 600), cePropMaxNormal: mx(R.c!.rows, 'c_propofol', T, T + 600) }),
     expect: [{ m: 'freeFraction', lo: 1.2, hi: 3, src: 'free fraction of highly bound drugs rises in hypoalbuminaemia (Miller 10e ch. 20; research/12 BF-22)' }],
@@ -108,7 +108,7 @@ add({ id: 'BF-15b', tier: 'P2', ctx: 'X-A awake spontaneous, room air, profile H
   arms: { i: AW([], 1800, { blood: { hco3: 34 } }, { dt: 10 }), c: AW([], 1800, XA, { dt: 10 }) },
   measure: (R) => m({ paco2: v(R.i!.rows, 'paco2', 1800), ph: v(R.i!.rows, 'ph', 1800), hco3: v(R.i!.rows, 'hco3', 1800), dPaco2: dAt(R.i!.rows, R.c!.rows, 'paco2', 1800), dVe: dAt(R.i!.rows, R.c!.rows, 'veSp', 1800), iCa: v(R.i!.rows, 'iCa', 1800), k: v(R.i!.rows, 'k', 1800) }),
   expect: [{ m: 'dPaco2', lo: 5, hi: 9, src: 'Javaheri 1982 / "Boston rules": PaCO2 +0.7 per 1 mmol/L HCO3 rise (+7 ± 2 for HCO3 34)' }],
-  owner: '7f neuro/spont.ts (Winter shift only for acidosis)' });
+  owner: '7f neuro/spont.ts (F9)', hand: { verdict: 'WR', why: 'PaCO2 38.8 at HCO3 34 (pH 7.55): the chemoreflex set point moves only DOWN for metabolic acidosis (spont.ts:5–8, "metabolic alkalosis is not compensated (v1)"), so there is no compensatory hypoventilation' } });
 
 // ---- BF-27 / BF-28 / BF-31: coagulation and temperature correction (7i) — NE with probes ------------------------------
 {
@@ -130,17 +130,18 @@ add({ id: 'BF-15b', tier: 'P2', ctx: 'X-A awake spontaneous, room air, profile H
 // ---- BF-09: hypokalaemia 2.5 -------------------------------------------------------------------------------------------
 {
   const P = { blood: { k: 2.5 } };
-  const roc = (p: Record<string, unknown>) => G([[1, { type: 'device', action: { kind: 'tofStart', intervalS: 15 } }, 'TOF'], d(T, 'rocuronium', 0.6, 'mg/kg')], T + 3600, p, { dt: 10 });
+  // resume fix: no device command (it was rejected); the 1 Hz anaesthesia truth event carries T1/TOF without one
+  const roc = (p: Record<string, unknown>) => G([d(T, 'rocuronium', 0.6, 'mg/kg')], T + 3600, p, { dt: 10 });
   const arms = { i: roc(P), c: roc(XA) };
   const t25 = (rows: Row[]) => Math.round(firstAt(rows, T + 300, (r) => (r.t1 as number) >= 0.25) / 6) / 10 + 5;
   add({ id: 'BF-09a', tier: 'P2', ctx: 'X-A GA vent, profile K 2.5', state: 'hypokalaemia 2.5', intv: 'the state: ECG (U waves, T flattening) and ectopy', sys: 'RHY BLD',
     arms, measure: (R) => m({ k: v(R.i!.rows, 'k', T), ecgK: v(R.i!.rows, 'ecgK', T), qrs: v(R.i!.rows, 'qrs', T), rhythms: R.i!.rhythms.map(([t, id]) => `${t}s ${id}`).join(',') }),
     expect: [{ m: 'ecgK', lo: 2.2, hi: 2.8, src: 'K 2.5: U waves, T flattening, ST depression (Mattu 2000; Stage 5.1 morphology from K < 3.5)' }],
-    owner: '7c pipeline.ts bloodEcgTargets (profile K)', hand: { verdict: 'WR', why: 'the ECG shows K 4.2 for a plasma K of 2.5: bloodEcgTargets pushes only the CHANGE from the profile set point (blood/pipeline.ts:210, engine.ts:855–866), so a profile hypo/hyperkalaemia never reaches the ECG; no ectopy mechanism exists either' } });
+    owner: '7c pipeline.ts bloodEcgTargets (F2)', hand: { verdict: 'WR', why: 'the ECG shows K 4.2 for a plasma K of 2.5: bloodEcgTargets pushes only the CHANGE from the profile set point (blood/pipeline.ts:210, engine.ts:855–866), so a profile hypo/hyperkalaemia never reaches the ECG; no ectopy mechanism exists either' } });
   add({ id: 'BF-09b', tier: 'P2', ctx: 'X-A GA vent, profile K 2.5', state: 'hypokalaemia 2.5', intv: 'rocuronium 0.6 mg/kg: clinical duration (T1 25 %) vs normokalaemia', sys: 'NEU',
     arms, measure: (R) => { const a = t25(R.i!.rows); const b = t25(R.c!.rows); return m({ t25LowK: a, t25Normal: b, dMin: Math.round((a - b) * 10) / 10 }); },
     expect: [{ m: 'dMin', dir: 1, tol: 1, src: 'hypokalaemia potentiates and prolongs non-depolarising block (Miller 10e ch. 27; research/12 BF-09)' }],
-    owner: '7f neuro/interactions.ts (no K term)' });
+    owner: '7f neuro/interactions.ts (F10)', hand: { verdict: 'MI', why: 'identical T1 25 % time at K 2.5 and 4.2: ec50Multipliers reads volatile MAC, Mg (from the neuro profile), temperature and the nm profile, never plasma K (neuro/interactions.ts:23–47)' } });
 }
 
 // ---- BF-10: hypomagnesaemia and torsades → MgSO4 2 g --------------------------------------------------------------------
@@ -184,7 +185,7 @@ add({ id: 'BF-15b', tier: 'P2', ctx: 'X-A awake spontaneous, room air, profile H
   add({ id: 'BF-32b', tier: 'P2', ctx: 'X-A awake spontaneous, FiO2 1.0', state: 'CO poisoning, COHb 30 %', intv: 'normobaric O2 for 60 min: COHb elimination', sys: 'BLD',
     arms, measure: (R) => { const L = R.i!.labs.filter((x) => x.panel === 'abg'); const a = L[0]?.values.cohb ?? NaN; const b = L[1]?.values.cohb ?? NaN; return m({ cohb0: a, cohb60: b, ratio60: Math.round((b / a) * 100) / 100 }); },
     expect: [{ m: 'ratio60', lo: 0.4, hi: 0.65, src: 'COHb t½ 74 ± 25 min on FiO2 1.0 (Weaver 2000 Chest 117:801): 60 min → 0.4–0.65 of the start' }],
-    owner: '7c odc.ts / 3 gas (no CO kinetics)', known: 'audit 09 R11' });
+    owner: '7c odc.ts / 3 gas (no CO kinetics)', known: 'audit 09 R11', hand: { verdict: 'MI', why: 'COHb is a static profile fraction (odc.cohb set once in createBloodCore, core.ts:60): 30 % at 0 and at 60 min on FiO2 1.0 — no CO uptake/elimination kinetics (audit 09 A09-G3, R11 still open)' } });
 }
 
 // ---- BF-23: methaemoglobinaemia (P3) ------------------------------------------------------------------------------------

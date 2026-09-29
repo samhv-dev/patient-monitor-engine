@@ -1287,5 +1287,440 @@
   "sys": "LUNG DEV",
   "owner": "7b lung water → gas exchange",
   "wallS": 0
+ },
+ "BF-22a": {
+  "id": "BF-22a",
+  "verdict": "TS",
+  "auto": "TS",
+  "notes": [
+   "TS cop = 8.655 below [11, 17] (lower = stronger/faster) [Weil 1979 Crit Care Med 7:113 / Mangialardi 2000 J Trauma 48:37 (COP ≈ 12–16 mmHg at albumin 20 g/L; normal 22–25)]",
+   "HAND TS (automatic TS): COP 8.7 mmHg at albumin 20 g/L: total protein is taken as 1.6 × albumin (fluids.ts:48–51), so the globulins (≈ 25–30 g/L, a third of normal COP) fall with the albumin; the lung-oedema threshold drops to PAWP 6.7"
+  ],
+  "values": {
+   "cop": 8.655,
+   "copNormal": 22.353,
+   "oedemaThreshold": 6.7
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile albumin 20 g/L",
+  "state": "hypoalbuminaemia",
+  "intv": "baseline: plasma COP and the lung-oedema threshold (COP − 2)",
+  "sys": "BLD LUNG",
+  "owner": "7c fluids.ts copPlasma (F8)",
+  "wallS": 14.2
+ },
+ "BF-22b": {
+  "id": "BF-22b",
+  "verdict": "IN",
+  "auto": "TW",
+  "notes": [
+   "TW dAg = -0.041 above [-6.5, -3.5] [Figge 1998 Crit Care Med 26:1807 (AG falls 2.5 mmol/L per 10 g/L albumin fall)]",
+   "HAND IN (automatic TW): a PROFILE albumin of 20 g/L gives the normal AG (11.8) and BE 0, because createBloodCore solves the unmeasured anions to hold HCO3 24.4 (core.ts:66–73) and so absorbs the albumin charge; the SAME hypoalbuminaemia reached by dilution (BF-01a, albumin −10.6) lowers the AG by 3.7 as Figge predicts — one state, two answers"
+  ],
+  "values": {
+   "ag": 11.846,
+   "agNormal": 11.886,
+   "dAg": -0.041,
+   "dBE": 0.05,
+   "dHco3": 0.043
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile albumin 20 g/L",
+  "state": "hypoalbuminaemia",
+  "intv": "baseline: anion gap and base excess (Figge)",
+  "sys": "BLD",
+  "owner": "7c core.ts createBloodCore (calibrateXa) (F8)",
+  "wallS": 0
+ },
+ "BF-22c": {
+  "id": "BF-22c",
+  "verdict": "MI",
+  "auto": "MI",
+  "notes": [
+   "MI freeFraction: absent [free fraction of highly bound drugs rises in hypoalbuminaemia (Miller 10e ch. 20; research/12 BF-22)]"
+  ],
+  "values": {
+   "dMapPct": 0,
+   "cePropMaxLowAlb": 3.054,
+   "cePropMaxNormal": 3.053
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile albumin 20 g/L",
+  "state": "hypoalbuminaemia",
+  "intv": "propofol 2 mg/kg: free (unbound) drug fraction and effect",
+  "sys": "PK",
+  "owner": "7g (no protein binding)",
+  "wallS": 0
+ },
+ "BF-15a": {
+  "id": "BF-15a",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no gastric/alkali-loss event; the state exists only as a profile HCO3 (research/12 §5.10 \"P 2\")"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"fluidLoss\",\"type\":\"gastric\",\"volumeMl\":2000,\"overS\":3600}: command type applyEvent is not implemented until later stages"
+  ],
+  "tier": "P2",
+  "ctx": "X-A awake",
+  "state": "metabolic alkalosis from vomiting / NG loss",
+  "intv": "the state: an alkali-gaining (H+ and Cl loss) event",
+  "sys": "BLD",
+  "owner": "FU-7 (7c event)",
+  "wallS": 2.3
+ },
+ "BF-15b": {
+  "id": "BF-15b",
+  "verdict": "WR",
+  "auto": "WR",
+  "notes": [
+   "WR dPaco2 = -0.06 below [5, 9] [Javaheri 1982 / \"Boston rules\": PaCO2 +0.7 per 1 mmol/L HCO3 rise (+7 ± 2 for HCO3 34)]",
+   "HAND WR (automatic WR): PaCO2 38.8 at HCO3 34 (pH 7.55): the chemoreflex set point moves only DOWN for metabolic acidosis (spont.ts:5–8, \"metabolic alkalosis is not compensated (v1)\"), so there is no compensatory hypoventilation"
+  ],
+  "values": {
+   "paco2": 38.815,
+   "ph": 7.553,
+   "hco3": 33.826,
+   "dPaco2": -0.06,
+   "dVe": 0.015,
+   "iCa": 1.123,
+   "k": 4.183
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake spontaneous, room air, profile HCO3 34",
+  "state": "metabolic alkalosis HCO3 34 (profile proxy)",
+  "intv": "baseline: compensatory hypoventilation",
+  "sys": "LUNG BLD",
+  "owner": "7f neuro/spont.ts (F9)",
+  "wallS": 21.5
+ },
+ "BF-27a": {
+  "id": "BF-27a",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no heparin or protamine in the library, no ACT (7i, R58/R60 v1.1)"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"heparin\",\"dose\":300,\"unit\":\"units/kg\",\"route\":\"iv\"}: unknown drug heparin",
+   "{\"kind\":\"drug\",\"drugId\":\"protamine\",\"dose\":3,\"unit\":\"mg/kg\",\"route\":\"iv\"}: unknown drug protamine"
+  ],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "cardiac-surgery anticoagulation",
+  "intv": "ACT > 480 s after heparin 300 u/kg",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 7.4
+ },
+ "BF-27b": {
+  "id": "BF-27b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no heparin or protamine in the library, no ACT (7i, R58/R60 v1.1)"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"heparin\",\"dose\":300,\"unit\":\"units/kg\",\"route\":\"iv\"}: unknown drug heparin",
+   "{\"kind\":\"drug\",\"drugId\":\"protamine\",\"dose\":3,\"unit\":\"mg/kg\",\"route\":\"iv\"}: unknown drug protamine"
+  ],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "cardiac-surgery anticoagulation",
+  "intv": "protamine: systemic hypotension",
+  "sys": "COAG CIRC",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-27c": {
+  "id": "BF-27c",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no heparin or protamine in the library, no ACT (7i, R58/R60 v1.1)"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"heparin\",\"dose\":300,\"unit\":\"units/kg\",\"route\":\"iv\"}: unknown drug heparin",
+   "{\"kind\":\"drug\",\"drugId\":\"protamine\",\"dose\":3,\"unit\":\"mg/kg\",\"route\":\"iv\"}: unknown drug protamine"
+  ],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "cardiac-surgery anticoagulation",
+  "intv": "protamine: pulmonary hypertension (type III reaction)",
+  "sys": "COAG CIRC",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-28a": {
+  "id": "BF-28a",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no DIC state or coagulation readouts (7i, R58/R60 v1.1)"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"condition\",\"id\":\"dic\",\"severity\":1}: condition dic arrives in Stage 7"
+  ],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "sepsis / AFE → DIC",
+  "intv": "platelets ↓, fibrinogen ↓",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 2.1
+ },
+ "BF-28b": {
+  "id": "BF-28b",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "no DIC state or coagulation readouts (7i, R58/R60 v1.1)"
+  ],
+  "values": {},
+  "rejected": [
+   "{\"kind\":\"condition\",\"id\":\"dic\",\"severity\":1}: condition dic arrives in Stage 7"
+  ],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "sepsis / AFE → DIC",
+  "intv": "D-dimer ↑, microvascular bleeding",
+  "sys": "COAG",
+  "owner": "7i",
+  "wallS": 0
+ },
+ "BF-31": {
+  "id": "BF-31",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "the lab panel has no patient-temperature field or corrected values (7i, R58)"
+  ],
+  "values": {
+   "labKeys": "ph,pco2,po2,hco3,be,so2,cohb,methb,lactate,na,k,cl,iCa,mg,hb,glucose,ag,osm"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent",
+  "state": "core 32 °C",
+  "intv": "ABG reported α-stat (37 °C) vs temperature-corrected (pH-stat)",
+  "sys": "BLD DEV",
+  "owner": "7i",
+  "wallS": 3.5
+ },
+ "BF-09a": {
+  "id": "BF-09a",
+  "verdict": "WR",
+  "auto": "TS",
+  "notes": [
+   "TS ecgK = 4.2 above [2.2, 2.8] [K 2.5: U waves, T flattening, ST depression (Mattu 2000; Stage 5.1 morphology from K < 3.5)]",
+   "HAND WR (automatic TS): the ECG shows K 4.2 for a plasma K of 2.5: bloodEcgTargets pushes only the CHANGE from the profile set point (blood/pipeline.ts:210, engine.ts:855–866), so a profile hypo/hyperkalaemia never reaches the ECG; no ectopy mechanism exists either"
+  ],
+  "values": {
+   "k": 2.493,
+   "ecgK": 4.2,
+   "qrs": 93,
+   "rhythms": "10s sinus"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile K 2.5",
+  "state": "hypokalaemia 2.5",
+  "intv": "the state: ECG (U waves, T flattening) and ectopy",
+  "sys": "RHY BLD",
+  "owner": "7c pipeline.ts bloodEcgTargets (F2)",
+  "wallS": 51
+ },
+ "BF-09b": {
+  "id": "BF-09b",
+  "verdict": "MI",
+  "auto": "WR",
+  "notes": [
+   "WR dMin = 0 (expected sign 1) [hypokalaemia potentiates and prolongs non-depolarising block (Miller 10e ch. 27; research/12 BF-09)]",
+   "HAND MI (automatic WR): identical T1 25 % time at K 2.5 and 4.2: ec50Multipliers reads volatile MAC, Mg (from the neuro profile), temperature and the nm profile, never plasma K (neuro/interactions.ts:23–47)"
+  ],
+  "values": {
+   "t25LowK": 35.7,
+   "t25Normal": 35.7,
+   "dMin": 0
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile K 2.5",
+  "state": "hypokalaemia 2.5",
+  "intv": "rocuronium 0.6 mg/kg: clinical duration (T1 25 %) vs normokalaemia",
+  "sys": "NEU",
+  "owner": "7f neuro/interactions.ts (F10)",
+  "wallS": 0
+ },
+ "BF-10a": {
+  "id": "BF-10a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL convertedS = 110 in [5, 300] [MgSO4 2 g terminates torsades within minutes (ERC 2021 ALS; research/12 BF-10)]"
+  ],
+  "values": {
+   "rhythmsI": "5s sinus,305s torsades,470s sinus",
+   "rhythmsC": "5s sinus,305s torsades",
+   "convertedS": 110,
+   "events": "i:5s sinus→305s torsades→470s sinus | c:5s sinus→305s torsades"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile Mg 0.5",
+  "state": "hypomagnesaemia with torsades de pointes",
+  "intv": "magnesium sulfate 2 g over 2 min: termination",
+  "sys": "RHY CIRC",
+  "owner": "7g hooks.ts",
+  "wallS": 22.5
+ },
+ "BF-10b": {
+  "id": "BF-10b",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL dMg15 = 0.452 in [0.3, 0.8] [2 g MgSO4 = 8.1 mmol into ≈ 14 L ECF → +0.58, then redistribution (Miller 10e ch. 47; research/12 BF-10)]"
+  ],
+  "values": {
+   "mgBase": 0.5,
+   "dMg15": 0.452,
+   "dMgPeak": 0.58,
+   "events": "i:5s sinus→305s torsades→470s sinus | c:5s sinus→305s torsades"
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A GA vent, profile Mg 0.5",
+  "state": "hypomagnesaemia",
+  "intv": "magnesium sulfate 2 g: plasma Mg at 15 min",
+  "sys": "BLD",
+  "owner": "7c pipeline.ts observeDoses",
+  "dirOnly": true,
+  "wallS": 0
+ },
+ "BF-11a": {
+  "id": "BF-11a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL naMin = 119.487 in [115, 125] [TURP syndrome: 3 L glycine absorbed → Na ≈ 120 (Hahn 2006 BJA 96:8; research/12 RH-23)]"
+  ],
+  "values": {
+   "naMin": 119.487,
+   "naEnd": 119.487,
+   "osmEnd": 281.433,
+   "osm2h": 275.263,
+   "dMapPeak": 11.37,
+   "dHrMin": -7
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake (TURP under spinal)",
+  "state": "glycine 1.5 % absorption 3 L in 30 min",
+  "intv": "the state: plasma Na and osmolality",
+  "sys": "BLD CIRC",
+  "owner": "7c fluids.ts / solutes.ts",
+  "wallS": 116.3
+ },
+ "BF-11b": {
+  "id": "BF-11b",
+  "verdict": "MI",
+  "auto": "TW",
+  "notes": [
+   "TW dIcpMax = 0.08 (sign 1, beyond 1) [hypo-osmolality swells the brain: confusion, seizures, raised ICP (Hahn 2006; Barash TURP syndrome)]",
+   "HAND MI (automatic TW): the brain model reads only mannitol/hypertonic-saline doses (brain/model.ts:81–95), never plasma osmolality or Na, so hyponatraemic brain swelling and its CNS signs do not exist"
+  ],
+  "values": {
+   "dIcp2h": 0.02,
+   "dIcpMax": 0.08,
+   "osm2h": 275.263
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake",
+  "state": "glycine absorption 3 L",
+  "intv": "the same: CNS signs (brain water, ICP, consciousness)",
+  "sys": "BRN NEU",
+  "owner": "7d brain/model.ts (reads osmotherapy only)",
+  "wallS": 0
+ },
+ "BF-32a": {
+  "id": "BF-32a",
+  "verdict": "PL",
+  "auto": "PL",
+  "notes": [
+   "PL spo2 = 97 in [94, 100] [Barker & Tremper 1987 Anesthesiology 66:677 (SpO2 ≈ HbO2 + COHb: the oximeter over-reads)]",
+   "PL cao2Ratio = 0.7 in [0.6, 0.8] [COHb 30 % removes ≈ 30 % of the O2-carrying Hb (Hampson 2012 AJRCCM 186:1095)]"
+  ],
+  "values": {
+   "spo2": 97,
+   "so2Fractional": 67.5,
+   "cohb0": 30,
+   "cao2Ratio": 0.7,
+   "lact": 1.014
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake spontaneous",
+  "state": "CO poisoning, COHb 30 % (profile)",
+  "intv": "pulse oximetry vs co-oximetry; O2 content",
+  "sys": "DEV BLD",
+  "owner": "7c odc.ts / FU-5 pulse oximetry",
+  "wallS": 48.3
+ },
+ "BF-32b": {
+  "id": "BF-32b",
+  "verdict": "MI",
+  "auto": "TS",
+  "notes": [
+   "TS ratio60 = 1 above [0.4, 0.65] [COHb t½ 74 ± 25 min on FiO2 1.0 (Weaver 2000 Chest 117:801): 60 min → 0.4–0.65 of the start]",
+   "HAND MI (automatic TS): COHb is a static profile fraction (odc.cohb set once in createBloodCore, core.ts:60): 30 % at 0 and at 60 min on FiO2 1.0 — no CO uptake/elimination kinetics (audit 09 A09-G3, R11 still open)"
+  ],
+  "values": {
+   "cohb0": 30,
+   "cohb60": 30,
+   "ratio60": 1
+  },
+  "rejected": [],
+  "tier": "P2",
+  "ctx": "X-A awake spontaneous, FiO2 1.0",
+  "state": "CO poisoning, COHb 30 %",
+  "intv": "normobaric O2 for 60 min: COHb elimination",
+  "sys": "BLD",
+  "owner": "7c odc.ts / 3 gas (no CO kinetics)",
+  "known": "audit 09 R11",
+  "wallS": 0
+ },
+ "BF-23": {
+  "id": "BF-23",
+  "verdict": "NE",
+  "auto": "NE",
+  "notes": [
+   "methylene blue is not in the library and MetHb has no kinetics (static profile fraction)"
+  ],
+  "values": {
+   "spo2": 84,
+   "sao2": 99.807,
+   "pao2": 270
+  },
+  "rejected": [
+   "{\"kind\":\"drug\",\"drugId\":\"methyleneBlue\",\"dose\":2,\"unit\":\"mg/kg\",\"route\":\"iv\"}: unknown drug methyleneBlue"
+  ],
+  "tier": "P3",
+  "ctx": "X-A awake spontaneous, FiO2 0.5",
+  "state": "methaemoglobinaemia 30 % (profile)",
+  "intv": "methylene blue 2 mg/kg",
+  "sys": "BLD DEV",
+  "owner": "FU-7 (drug) / 7c odc.ts",
+  "wallS": 5.5
  }
 }
