@@ -41,7 +41,9 @@ if (want('3')) {
   await p.click('#resus'); await waitPulse(tA + 60 + 600); await waitSim((await simT()) + 20); await shot('3b-classIV-rosc');
 }
 if (want('4')) { await start('ptx'); await waitPulseless(20 * 60); await p.waitForTimeout(1500); await shot('4-tension-ptx-pea'); }
-if (want('5')) { await start('burns'); await waitSim(300 + 200); await shot('5a-burns-sux-sine'); await waitPulseless(20 * 60); await waitSim((await simT()) + 10); await shot('5b-burns-sux-vf'); }
+// FU-8 (Task G, E-FU8-8; I-08): the sine-wave shot waits to +215 s after the sux — 10 s before the measured VF at +225 s,
+// when K has passed 8.5 and the ECG is a sine wave (at +200 s it still showed sinus at MAP 90)
+if (want('5')) { await start('burns'); await waitSim(300 + 215); await shot('5a-burns-sux-sine'); await waitPulseless(20 * 60); await waitSim((await simT()) + 10); await shot('5b-burns-sux-vf'); }
 if (want('6')) { await start('vf'); await waitSim(150); await shot('6-vf-cpr'); }
 if (want('7')) { await start('pe'); await waitPulseless(25 * 60); await p.waitForTimeout(1500); await shot('7-pe-propofol-pea'); }
 if (errors.length) console.error('page errors:', errors);
