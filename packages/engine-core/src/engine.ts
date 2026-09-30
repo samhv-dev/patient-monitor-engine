@@ -571,7 +571,10 @@ class Engine implements MonitorEngine {
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
       circ7g.ext.tempC = ps.resp.temp.tc; // FU-4 G12: core temperature for the hypothermic (and G8 hyperthermic) arrest hazard
     }
-    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE, ps.rng.outcome); // Stage 7g (FU-4 G7: the repeat-sux draw uses the `outcome` stream)
+    // FU-7 (addendum 23; ruling 5): the hook needs to know whether the rhythm PERFUSES (the device host's own definition,
+    // plus FU-4's arrest state) and the `outcome` stream for its hazards (FU-4 18f passes the same stream)
+    const pulseless7g = ps.rhythm.opts.pulseless === true || ((circ7g as { arrest?: unknown } | undefined)?.arrest ?? null) !== null;
+    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false, pulseless: pulseless7g }, end / ECG_RATE, ps.rng.outcome); // Stage 7g (FU-4 G7: the repeat-sux draw uses the `outcome` stream)
     if (req7g) {
       // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
       ps.hr = constantRamp(startRate(req7g.id, req7g.opts));

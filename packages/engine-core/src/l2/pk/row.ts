@@ -18,7 +18,10 @@ export type PdTarget =
    * `extraSymp`, so β-blockade blunts its β1 share and catecholamine depletion weakens it, instead of multiplying 7a. */
   | 'sympDrive'
   /** FU-7 (addendum 22): an ADDED antinociception (IV lidocaine's airway-reflex blunting) → 7f's `antinoc`, 0–0.6. */
-  | 'antinocAdd';
+  | 'antinocAdd'
+  /** FU-7 (addendum 23): class-weighted antiarrhythmic occupancy 0–1 → `bus.rhythm.antiarrhythmicU`, read by the
+   * conversion hooks and by the shock outcome (Task 12). */
+  | 'antiarrhythmic';
 
 export interface PdEffect {
   target: PdTarget;

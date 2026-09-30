@@ -98,8 +98,22 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
     onset: 'onset 1–3 min, peak 5–7 min, duration 15–30 min; nausea and hyperglycaemia are expected',
     ir: '?', src: 'ACMT β-blocker-toxicity guidance; AHA 2010 toxicology (glucagon 3–10 mg); T6.2 sizes [ENG]', tag: 'ENG' },
   { id: 'amiodarone', name: 'Amiodarone', cls: 'antiarrhythmic', amountUnit: 'mg', pk: gammaPk(150, false, 600, 7200),
-    pd: [{ target: 'hr', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'avNode', emax: 0.3, ec50: 1 }],
+    // FU-7 (addendum 23): antiarrhythmic occupancy — ec50 one 150 mg reference dose (conversion hazards; shock success)
+    pd: [{ target: 'hr', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'avNode', emax: 0.3, ec50: 1 }, { target: 'antiarrhythmic', emax: 1, ec50: 1 }],
     doses: '150 mg over 10 min; arrest 300 mg then 150 mg', onset: 'acute effects over 10–60 min; QTc +20–40 ms [ENG]; raises AF→sinus conversion (Stage 5 hook, Task 16)', ir: '?', src: 'T6.2 antiarrhythmic paragraph', tag: 'TXT' },
+  // FU-7 (addendum 23): procainamide — PROCAMIO's comparator (67 % VT termination at 40 min vs amiodarone 25 %), with the
+  // hypotension that limits it. Gamma row: peak 10 min after a 10 mg/kg load over 20 min, 10 % at 4 h [label].
+  { id: 'procainamide', name: 'Procainamide', cls: 'antiarrhythmic', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 14400),
+    pd: [{ target: 'antiarrhythmic', emax: 1, ec50: 1 }, { target: 'svr', emax: -0.25, ec50: 1 }, { target: 'ees', emax: -0.15, ec50: 1 }, { target: 'avNode', emax: 0.2, ec50: 1 }],
+    doses: '10 mg/kg IV over 20 min (max 17 mg/kg), stop on hypotension or QRS widening > 50 %',
+    onset: 'effect during the infusion, peak ≈ 10 min after it; QRS and QT widen (label)',
+    ir: '?', src: 'PROCAMIO (Ortiz 2017); label; sizes [ENG]', tag: 'ENG' },
+  // FU-7 (D13, DI-15): verapamil — AV-nodal block with vasodilation; in PRE-EXCITED AF it is the classic hazard
+  // (blocking the node favours the accessory pathway: Step 4's rule), and it is contraindicated there (ALS).
+  { id: 'verapamil', name: 'Verapamil', cls: 'antiarrhythmic', amountUnit: 'mg', pk: gammaPk(5, false, 300, 7200),
+    pd: [{ target: 'avNode', emax: 0.7, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'hr', emax: -0.15, ec50: 1 }],
+    doses: '2.5–5 mg IV over 2 min, repeat to 20 mg (SVT rate control)', onset: 'onset 1–2 min, peak 3–5 min, 30–60 min',
+    ir: '?', src: 'label; T6.2 [TXT]; sizes [ENG]', tag: 'ENG' },
   { id: 'adenosine', name: 'Adenosine', cls: 'adenosine', amountUnit: 'mg', pk: gammaPk(6 / 70, true, 15, 30),
     pd: [{ target: 'avNode', emax: 1, ec50: 0.42, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 1 }],
     doses: '6 mg rapid push + flush, then 12 mg (central line: half)', onset: 'AV block 3–10 s, 10–30 s after the push (R03 §8.6; brief §4.9); plasma t½ < 10 s', ir: '?', src: 'R03 §8.6; decision 11 (E 0.85 at 6 mg / 70 kg, 0.59 at 3 mg, 0.96 at 12 mg)', tag: 'ENG' },

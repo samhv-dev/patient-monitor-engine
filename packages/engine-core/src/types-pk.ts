@@ -69,6 +69,8 @@ export interface DrugBus {
   metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number };
   last: { cnsE: number; cvE: number };
   avNodeBlock: number; // adenosine/β/Ca-channel AV-nodal effect 0–1
+  /** FU-7 (addendum 23): potency-weighted antiarrhythmic occupancy (amiodarone, lidocaine, procainamide), 0–1. */
+  rhythm: { antiarrhythmicU: number };
 }
 
 export const DRUG_BUS_NEUTRAL: DrugBus = {
@@ -83,6 +85,7 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0 },
   last: { cnsE: 0, cvE: 0 },
   avNodeBlock: 0,
+  rhythm: { antiarrhythmicU: 0 }, // FU-7 (addendum 23)
 };
 
 export interface DrugPanelRow {

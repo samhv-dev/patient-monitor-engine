@@ -163,6 +163,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   bus.metabolic.glucoseDelta = other.glucose ?? 0;
   bus.cns.cbfVaso *= 1 + (other.cbfVaso ?? 0);
   bus.avNodeBlock = occ.avNode as number;
+  bus.rhythm = { antiarrhythmicU: Math.min(1, Math.max(0, other.antiarrhythmic ?? 0)) }; // FU-7 (addendum 23)
   fx.muscBlock = occ.muscarinic as number; // FU-4 G7
   fx.vagalMs = (fx.vagalMs ?? 0) * (1 - fx.muscBlock); // an anticholinergic blocks every vagal RR increment at the SA node
   return { fx, betaBlockAdd: occ.betaBlock as number, bus };

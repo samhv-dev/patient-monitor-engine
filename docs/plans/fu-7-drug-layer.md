@@ -4595,7 +4595,7 @@ anything, and adenosine in pre-excited AF (DI-14c) cannot accelerate the accesso
 - Each hazard is scaled by the drug's own occupancy `u = hill(c, ec50)` from its `antiarrhythmic` PD entry, so a
   sub-therapeutic level converts nothing.
 
-- [ ] **Step 1 — the occupancy output (real blocks, review F13).** In `packages/engine-core/src/l2/pk/row.ts`, find
+- [x] **Step 1 — the occupancy output (real blocks, review F13).** In `packages/engine-core/src/l2/pk/row.ts`, find
 (Task 10's line):
 
 ```ts
@@ -4656,7 +4656,7 @@ Replace with:
 ```
 
 (The hooks keep their per-drug view through `concOf(pk, id)`, as they already do for adenosine and magnesium.)
-- [ ] **Step 2 — the rows.** amiodarone (`data/rows-cardiovascular.ts`) gains
+- [x] **Step 2 — the rows.** amiodarone (`data/rows-cardiovascular.ts`) gains
 `{ target: 'antiarrhythmic', emax: 1, ec50: 1 }` (ec50 = one 150 mg reference dose); lidocaine (`data/rows-other.ts`)
 gains `{ target: 'antiarrhythmic', emax: 0.6, ec50: 3 }` (3 µg/mL, the antiarrhythmic plasma range 1.5–5, M10 ch. 25);
 a NEW procainamide row:
@@ -4682,7 +4682,7 @@ and a NEW verapamil row (DI-15's teaching hazard; D13):
     ir: '?', src: 'label; T6.2 [TXT]; sizes [ENG]', tag: 'ENG' },
 ```
 
-- [ ] **Step 3 — the conversion hazards, on FU-4's 18f signature with a NUMBERED fallback (review F6; Orchestrator
+- [x] **Step 3 — the conversion hazards, on FU-4's 18f signature with a NUMBERED fallback (review F6; Orchestrator
 ruling (FU-7 review) 5; D18).** The blocks below match the signature on `origin/main` AND on
 `origin/fu-4-integration-polish` up to b675248 (18f not landed: `rhythmRequest(pk, hs, current, t)` returning
 `{ id, opts } | null`), and their replacement IS 18f's signature plus FU-7's `pulseless`:
@@ -4826,7 +4826,7 @@ Replace with:
 
 (`circ7g` is the MODELED circulation the preceding lines already use; in MANUAL it is undefined and the rhythm's own
 `pulseless` option decides.)
-- [ ] **Step 5 — the test.** Create `test/l2/pk/antiarrhythmic.test.ts` with a deterministic seed and a pinned
+- [x] **Step 5 — the test.** Create `test/l2/pk/antiarrhythmic.test.ts` with a deterministic seed and a pinned
 `outcomeRng`: (1) the hazard constants reproduce their trial numbers (`1 − e^{−λ·T}` equals 0.25 / 0.67 / 0.20 / 0.25
 to 1e-9); (2) with amiodarone at full occupancy, 200 repeated 1 s evaluations convert VT in **20–35 %** of 200 seeded
 runs (PROCAMIO's 25 % at 40 min scaled to the window — assert the empirical share against the analytic one within
@@ -4844,11 +4844,11 @@ AF case a **control arm** (same rhythm, no antiarrhythmic, no shock) asserting `
 window as a precondition, title the case "(AF rig guarded: C3 pending)", and list it with its measured control-arm
 `kIsch` in the gate note §5. The conversion shares are never re-fitted to a failing heart: if a guarded control arm
 cannot hold 0.9, the case becomes an `it.fails` naming C3 / FU-8 Part A.
-- [ ] **Step 6 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-61 DI-13a DI-14c DI-15 DI-13b DI-14a DI-14b DI-54`
+- [x] **Step 6 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-61 DI-13a DI-14c DI-15 DI-13b DI-14a DI-14b DI-54`
 (DI-15 added, review F20: verapamil + the accessory-pathway rule are the reason verapamil joins — NE → PL).
 Expected: DI-61 **MI → PL** (either drug converts a share), DI-14c **MI → PL** (acceleration), DI-13a stays **MI until
 Task 12** (the shock term is there, not here — the gate note says so), DI-13b/14a/14b/54 unchanged (regression).
-- [ ] **Step 7 — commit.** `feat(7g): antiarrhythmic conversion hazards and the pre-excited-AF hazard (R51 addendum 23)`, push.
+- [x] **Step 7 — commit.** `feat(7g): antiarrhythmic conversion hazards and the pre-excited-AF hazard (R51 addendum 23)`, push.
 
 ---
 
