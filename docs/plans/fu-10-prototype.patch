@@ -1,0 +1,998 @@
+diff --git a/packages/engine-core/src/l2/blood/core.ts b/packages/engine-core/src/l2/blood/core.ts
+index d287d9f..7213832 100644
+--- a/packages/engine-core/src/l2/blood/core.ts
++++ b/packages/engine-core/src/l2/blood/core.ts
+@@ -133,6 +133,9 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void
+   const ef = effects(bc, x.t);
+   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
+   const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
++  // FU-10 E7 (E-FU10-2): Stage 7e's ketogenesis from the insulin deficit enters 7c's ketoacid pool, which 7c owns: the
++  // acidaemia, the anion gap, `out.dkaSeverity` and the Kussmaul drive then all emerge as they do for `condition dka`
++  so.keto += Math.max(0, (bc as { endoKetoMmolMin?: number }).endoKetoMmolMin ?? 0) * (dtS / 60);
+   const kSet = so.set.k - 4.0 * (bc.phNonOrg - so.set.ph) + drug; // Q45
+   stepSolutes(so, ecfMl(fl), dtS, kSet, hbfRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
+   // 3. oxygen delivery → lactate
+diff --git a/packages/engine-core/src/l2/endo/adapters.ts b/packages/engine-core/src/l2/endo/adapters.ts
+index 38b3fdb..0c26f32 100644
+--- a/packages/engine-core/src/l2/endo/adapters.ts
++++ b/packages/engine-core/src/l2/endo/adapters.ts
+@@ -16,11 +16,11 @@ import { mhActivity } from '../thermal/mh.ts';
+ import type { ThermalState } from '../thermal/heat.ts';
+ import type { EndoInputs } from './core.ts';
+ import { dextroseBolus, dextroseInfusion, insulinBolus, insulinInfusion } from './glucose.ts';
+-import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ } from './params.ts';
++import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ, ETOM_SUPPR_REF_MG_KG, INSDEX_DEXTROSE_G_PER_UNIT } from './params.ts';
+ import type { EndoCtx, EndoState } from './pipeline.ts';
+ 
+ type Neuro = { antinoc?: number; nmb?: number; thermoDepth?: number };
+-type DoseLike = { agent: string; amount: number; amountUnit: string };
++type DoseLike = { agent: string; amount: number; amountUnit: string; mgPerKg?: number | null };
+ type Bus = {
+   agents?: Record<string, { brain?: number } | undefined>;
+   volatiles?: Record<string, { macFrac?: number } | undefined>;
+@@ -38,7 +38,8 @@ type Circ = {
+ };
+ type BloodLike = {
+   out?: { dkaSeverity?: number };
+-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
++  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number }; o2?: { vo2?: number; demand?: number };
++    endoKShift?: number; endoGlucoseMgDl?: number; endoKetoMmolMin?: number };
+ };
+ 
+ const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+@@ -74,11 +75,19 @@ function dkaOf(blood: BloodLike | undefined): number {
+   return Math.min(1, Math.max(0, keto / ((fl.vp + fl.visf) / 1000) / 25));
+ }
+ 
++/** FU-10 E2: 7c's delivered O2 fraction (`vo2 / demand`); 1 without 7c or at zero demand. */
++export function o2Fraction(blood: BloodLike | undefined): number {
++  const o = blood?.core?.o2;
++  if (!o || !num(o.vo2) || !num(o.demand) || o.demand <= 0) return 1;
++  return Math.min(1, Math.max(0, o.vo2 / o.demand));
++}
++
+ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInputs {
+   const th = ctx.resp.temp;
+   const n = (ctx.ps as { neuro?: Neuro }).neuro;
+   const pk = pkOf(ctx.ps);
+   th.depthIn = num(n?.thermoDepth) ? n.thermoDepth : null;
++  th.o2F = o2Fraction(bloodOf(ctx.ps)); // FU-10 E2: the aerobic-heat limit
+   th.nmb = num(n?.nmb) ? n.nmb : 0;
+   const flag = th.anaesthesia === 'general' ? ANTINOC_GA_FALLBACK * Math.min(1, th.depth) : 0;
+   const antinoc = num(n?.antinoc) && pkActive(pk) ? n.antinoc : flag;
+@@ -97,12 +106,20 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
+ /**
+  * 7g's accepted boluses (`bus.doses`, each listed for exactly one engine pass, R51 §3) → the glucose model: dextrose
+  * (7g amount unit mg) and insulin (units). Called once per engine pass. `bus.metabolic.glucoseDelta` is NOT used (7e
+- * owns glucose).
++ * owns glucose). FU-10 E8: 7c's `insulinDextrose` row (the hyperkalaemia treatment; its K⁺ curve stays 7c's) is the same
++ * insulin and dextrose to the glucose model — 10 units with 25 g, i.e. INSDEX_DEXTROSE_G_PER_UNIT per unit given.
+  */
+ export function observeDoses(es: EndoState, pk: PkLike | undefined): void {
+   for (const d of pk?.bus?.doses ?? []) {
+     if (d.agent === 'dextrose') dextroseBolus(es.core.glucose, d.amountUnit === 'mg' ? d.amount / 1000 : d.amount, es.weightKg);
+     else if (d.agent === 'insulin' && d.amountUnit === 'units') insulinBolus(es.core.glucose, d.amount, es.weightKg);
++    else if (d.agent === 'etomidate') { // FU-10 E10: 11β-hydroxylase suppression for hours after one induction dose
++      const perKg = d.amountUnit === 'mg/kg' ? d.amount : d.amountUnit === 'mg' ? d.amount / es.weightKg : 0;
++      if (perKg > 0) es.core.etomSuppr = Math.min(1, (es.core.etomSuppr ?? 0) + perKg / ETOM_SUPPR_REF_MG_KG);
++    } else if (d.agent === 'insulinDextrose' && d.amountUnit === 'units') { // FU-10 E8
++      insulinBolus(es.core.glucose, d.amount, es.weightKg);
++      dextroseBolus(es.core.glucose, d.amount * INSDEX_DEXTROSE_G_PER_UNIT, es.weightKg);
++    }
+   }
+ }
+ 
+@@ -181,6 +198,7 @@ export function writeBlood(ps: object, es: EndoState): boolean {
+   const o = es.core.out;
+   c.endoKShift = o.kShift;
+   c.endoGlucoseMgDl = o.glucoseMgDl;
++  c.endoKetoMmolMin = o.ketoMmolMin; // FU-10 E7: ketogenesis from the insulin deficit — 7c integrates it into its pool
+   if (c.fl && o.kfMult !== es.kfMult) {
+     c.fl.kfMult = o.kfMult;
+     es.kfMult = o.kfMult;
+diff --git a/packages/engine-core/src/l2/endo/core.ts b/packages/engine-core/src/l2/endo/core.ts
+index 565c50e..f4356e9 100644
+--- a/packages/engine-core/src/l2/endo/core.ts
++++ b/packages/engine-core/src/l2/endo/core.ts
+@@ -9,6 +9,8 @@ import { stressEffects, type StressEffects } from './effects.ts';
+ import { createGlucose, stepGlucose, type GlucoseState } from './glucose.ts';
+ import { createHormones, stepHormones, type HormoneState } from './hormones.ts';
+ import {
++  AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S, HYPEROSM_FROM_MGDL, HYPEROSM_K_PER_MGDL, KETO_K_EFFLUX, KETO_MMOL_MIN_MAX,
++  PYROGEN_SET_REF_C, PYROGEN_W_70,
+   EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
+   SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
+ } from './params.ts';
+@@ -16,15 +18,17 @@ import { thyroidEffects, type ThyroidState } from './thyroid.ts';
+ 
+ export interface EndoProfile {
+   diabetes: 'none' | 'type1' | 'type2';
++  /** FU-10 E7: type 1 only — false omits the long-acting basal insulin (insulin-deficient: ketogenesis, K⁺ efflux). */
++  basalInsulin: boolean;
+   thyroid: ThyroidState;
+   adrenalInsufficiency: boolean;
+ }
+ 
+-export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false };
++export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true };
+ 
+ /** Resolved per-profile glucose parameters (tables §5c SI diabetic 1–3e-4 → × 0.3; type 2 fasting ≈ 8 mmol/L). */
+ export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: number; glucagon: number; basalExo: boolean } {
+-  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: true };
++  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: p.basalInsulin !== false }; // FU-10 E7
+   if (p.diabetes === 'type2') return { gb: 144, si: 0.3, beta: 1, glucagon: 1, basalExo: false };
+   return { gb: 100, si: 1, beta: 1, glucagon: 1, basalExo: false };
+ }
+@@ -59,6 +63,8 @@ export interface EndoCore {
+   glucose: GlucoseState;
+   cond: ConditionState;
+   x: EndoInputs; // the last inputs (compose reads the β-block, temperature, MH and 7g's bronchodilation from them)
++  /** FU-10 E10: 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
++  etomSuppr?: number;
+   out: EndoOut;
+ }
+ 
+@@ -78,7 +84,11 @@ export interface EndoOut {
+   humSvrF: number;
+   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
+   setShiftC: number; // fever set point added to the thermal thresholds
++  /** FU-10 E11: pyrogenic heat production, W — a direct heat source the anaesthetised patient cannot switch off. */
++  pyrogenW: number;
+   kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
++  /** FU-10 E7: ketoacid production from the INSULIN DEFICIT, mmol/min → 7c's ketoacid pool (`blood.core.endoKetoMmolMin`). */
++  ketoMmolMin: number;
+   kfMult: number; // → 7c `blood.core.fl.kfMult`
+   vasoResp: number; // → `ps.cond.vasoResp` (7g)
+   anaphLung: number; // 7b `lungCondition anaphylaxis` severity (0–1; grade/5 relieved by β2 bronchodilation)
+@@ -103,19 +113,31 @@ export function createEndoCore(profile: EndoProfile = DEFAULT_ENDO_PROFILE, weig
+     glucose.iExo = IB_UU_ML;
+   }
+   const c: EndoCore = {
+-    profile, hormones: createHormones(), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg }, out: null as unknown as EndoOut,
++    profile, hormones: createHormones(cortBasalF(profile)), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg },
++    etomSuppr: 0, out: null as unknown as EndoOut,
+   };
+   c.out = compose(c);
+   return c;
+ }
+ 
++/**
++ * FU-10 E10/E13: the adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile (as before) and, on top
++ * of it, suppressed by an 11β-hydroxylase inhibitor the patient has had (etomidate: `etomSuppr`, 0–1).
++ */
++export function cortResponseOf(c: EndoCore): number {
++  return (c.profile.adrenalInsufficiency ? 0.5 : 1) * Math.max(0, 1 - ETOM_SUPPR_MAX * Math.min(1, Math.max(0, c.etomSuppr ?? 0)));
++}
++
++/** FU-10 E13: the × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
++export const cortBasalF = (p: EndoProfile): number => (p.adrenalInsufficiency ? AI_CORT_BASAL_F : 1);
++
+ /** β2 bronchodilation of endogenous + 7g epinephrine and 7g's other β2 agonists (independent effects combine). */
+ const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.max(0, b)));
+ 
+ function compose(c: EndoCore): EndoOut {
+   const p = c.profile;
+   const x = c.x;
+-  const cortResponse = p.adrenalInsufficiency ? 0.5 : 1;
++  const cortResponse = cortResponseOf(c);
+   const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponse);
+   const th = thyroidEffects(p.thyroid, c.cond.storm.cur);
+   const cd = conditionEffects(c.cond);
+@@ -144,7 +166,15 @@ function compose(c: EndoCore): EndoOut {
+     humSvrF: st.humSvrF, // FU-4 G-FU4-1
+     vo2F: th.vo2F * cd.vo2F,
+     setShiftC,
+-    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity,
++    // FU-10 E11: the inflammatory/thyrotoxic heat source, sized by the same set-point shift the rows already declare
++    pyrogenW: PYROGEN_W_70 * (x.weightKg / 70) * Math.min(1, Math.max(0, setShiftC / PYROGEN_SET_REF_C)),
++    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity
++      // FU-10 E7: insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
++      // high at presentation despite a total-body deficit) — the two DKA causes the old K path had no term for.
++      // The instructor's `dka` condition (7c's severity) IS insulinopenia, so it carries the same efflux even though the
++      // patient's own insulin is normal — without this DKA presented HYPOkalaemic (research/14 ET-23c)
++      + KETO_K_EFFLUX * Math.max(g.egpDef, Math.min(1, Math.max(0, x.dkaSeverity))) + HYPEROSM_K_PER_MGDL * Math.max(0, g.g - HYPEROSM_FROM_MGDL),
++    ketoMmolMin: KETO_MMOL_MIN_MAX * g.egpDef * (x.weightKg / 70),
+     kfMult: cd.kfMult,
+     vasoResp: vr,
+     anaphLung: 0.8 * c.cond.anaph.mediator * (1 - 0.6 * bd), // mediator 0.75 (grade III) → 7b severity 0.6 (its grade III)
+@@ -167,13 +197,15 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
+   const g = c.glucose;
+   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
+   const cd = c.out.cond;
++  // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
++  if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
+   stepHormones(c.hormones, {
+     noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
+     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
+-    cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
++    cortResponse: cortResponseOf(c), cortBasalF: cortBasalF(c.profile), epiExoPgMl: x.epiExoPgMl,
+   }, dtS);
+   stepConditions(c.cond, c.out.stress.mastB2, dtS);
+-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1);
++  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponseOf(c));
+   const gp = glucoseProfile(c.profile);
+   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
+   stepGlucose(g, {
+diff --git a/packages/engine-core/src/l2/endo/effects.ts b/packages/engine-core/src/l2/endo/effects.ts
+index c8a5680..d6c211a 100644
+--- a/packages/engine-core/src/l2/endo/effects.ts
++++ b/packages/engine-core/src/l2/endo/effects.ts
+@@ -10,7 +10,7 @@
+ import {
+   CORT_BASAL, CORT_EC50, CORT_EGP_X, CORT_SI_LOSS, CORT_VASO_RESP, EPI_ALPHA_SVR, EPI_BASAL_PG_ML, EPI_BETA1_EES,
+   EPI_BETA1_HR, EPI_BETA2_SVR, EPI_EC50_ALPHA, EPI_EC50_BETA1, EPI_EC50_BETA2, EPI_EC50_METAB, EPI_EGP_X, EPI_K_SHIFT,
+-  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0, HUM_SVR, HUM_V0,
++  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0, HUM_SVR, HUM_V0, CORT_SVR_PERMISSIVE,
+ } from './params.ts';
+ import type { HormoneState } from './hormones.ts';
+ 
+@@ -54,7 +54,8 @@ export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: numb
+   const co = hill(h.cort - CORT_BASAL, CORT_EC50);
+   return {
+     hrF: (1 + G_SYMP_HR * h.symp * kHr) * (1 + EPI_BETA1_HR * b1 * kHr),
+-    svrF: (1 + G_SYMP_SVR * h.symp) * (1 + EPI_BETA2_SVR * b2) * (1 + EPI_ALPHA_SVR * al),
++    // FU-10 E13: cortisol's permissive effect on resting vascular tone, below basal only
++    svrF: (1 + G_SYMP_SVR * h.symp) * (1 + EPI_BETA2_SVR * b2) * (1 + EPI_ALPHA_SVR * al) * (1 - CORT_SVR_PERMISSIVE * Math.max(0, 1 - h.cort / CORT_BASAL)),
+     eesF: (1 + G_SYMP_EES * h.symp * kC) * (1 + EPI_BETA1_EES * b1 * kC),
+     dV0Frac: -G_SYMP_V0 * h.symp,
+     egpF: (1 + EPI_EGP_X * me) * (1 + CORT_EGP_X * co),
+diff --git a/packages/engine-core/src/l2/endo/hormones.ts b/packages/engine-core/src/l2/endo/hormones.ts
+index 79dccd1..8b707be 100644
+--- a/packages/engine-core/src/l2/endo/hormones.ts
++++ b/packages/engine-core/src/l2/endo/hormones.ts
+@@ -43,12 +43,14 @@ export interface HormoneInputs {
+   sao2: number; // 0–1
+   paco2: number; // mmHg
+   cortResponse: number; // 1 normal, 0.5 adrenal insufficiency / etomidate (tables)
++  /** FU-10 E13: × on the BASAL cortisol target (adrenal insufficiency: a resting deficit, not only a blunted rise). */
++  cortBasalF?: number;
+   epiExoPgMl: number; // 7g's epinephrine as plasma pg/mL (0 without 7g)
+   mapSetMmHg: number; // FU-4 F2(a): the patient's own mean-pressure set point — the humoral arm's unloading reference
+ }
+ 
+-export function createHormones(): HormoneState {
+-  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0 };
++export function createHormones(cortBasalF = 1): HormoneState {
++  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL * cortBasalF, cortDrive: 0 };
+ }
+ 
+ /** Adrenal (humoral) drive: stress activity plus the metabolic emergencies the baroreflex does not cover. */
+@@ -81,6 +83,6 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
+   h.ne = neSs + (h.ne - neSs) * Math.exp(-kN * dtS);
+   // cortisol: the drive is surgical stress (noxious, not blunted by anaesthesia — Desborough 2000) + adrenal drive
+   h.cortDrive = Math.min(2, x.noxious + 0.3 * drive);
+-  const cSs = CORT_BASAL * (1 + CORT_GAIN * h.cortDrive * x.cortResponse);
++  const cSs = CORT_BASAL * (x.cortBasalF ?? 1) * (1 + CORT_GAIN * h.cortDrive * x.cortResponse); // FU-10 E13: the basal deficit
+   h.cort = cSs + (h.cort - cSs) * Math.exp(-dtS / CORT_TAU_S);
+ }
+diff --git a/packages/engine-core/src/l2/endo/params.ts b/packages/engine-core/src/l2/endo/params.ts
+index a79aefc..44c1ffe 100644
+--- a/packages/engine-core/src/l2/endo/params.ts
++++ b/packages/engine-core/src/l2/endo/params.ts
+@@ -51,12 +51,45 @@ export const CORT_EC50 = 400; // nmol/L above basal for its metabolic effects
+ export const CORT_SI_LOSS = 0.8; // insulin resistance: SI × 0.42 at cortisol 1500 (tables stress SI × 0.3–0.5)
+ export const CORT_EGP_X = 0.3; // gluconeogenesis
+ export const CORT_VASO_RESP = 0.3; // vasopressor responsiveness (adrenal insufficiency: ×0.5 of cortisol) [TXT]
++/**
++ * FU-10 E13 — untreated adrenal insufficiency is a BASAL deficit, not only a blunted stress rise: the resting cortisol
++ * is low, so the permissive support of vascular tone is already missing before any stress (Annane D et al., Crit Care
++ * Med 2017;45:2078 / Intensive Care Med 2017 (the glucocorticoid-deficiency guidelines: vasopressor-dependent
++ * hypotension reversed by hydrocortisone); Miller 10e ch. 35). Before FU-10 `cortResponse` 0.5 halved only the stress
++ * RISE, so the resting patient was exactly normal (research/14 ET-15a). [ENG size: a basal cortisol at half normal,
++ * the same fraction the stress response already carried.]
++ */
++export const AI_CORT_BASAL_F = 0.5;
++/**
++ * FU-10 E13 — cortisol is PERMISSIVE for vascular tone: below the basal level the vessels lose part of their resting
++ * resistance (the vasoplegia of glucocorticoid deficiency; Annane 2017). × on SVR = 1 − CORT_SVR_PERMISSIVE · (1 −
++ * cortisol/basal), applied BELOW basal only (a high cortisol does not raise SVR: the receptor is saturated) [ENG size:
++ * the ET-15a target is a lower resting/post-induction MAP that a vasopressor answers poorly].
++ */
++export const CORT_SVR_PERMISSIVE = 0.25;
++/**
++ * FU-10 E10 — one induction dose of etomidate inhibits 11β-hydroxylase, so the adrenal cannot make cortisol for hours
++ * (Wagner RL, White PF et al., NEJM 1984;310:1415; Absalom A, Pledger D, Kong A, Anaesthesia 1999;54:861 [VERIFY]).
++ * The suppression follows the dose with a first-order recovery (t½ chosen inside the sources' 6–12 h) and multiplies the
++ * adrenal's cortisol RESPONSE (`cortResponse`), so the resting level is untouched and the surgical rise is blunted.
++ * ETOM_SUPPR_MAX at the 0.3 mg/kg reference dose [ENG: the ET-34 target is cortisol ≤ 0.8 × propofol's at 4 h].
++ */
++export const ETOM_SUPPR_MAX = 0.6;
++export const ETOM_SUPPR_REF_MG_KG = 0.3;
++export const ETOM_SUPPR_T12_S = 8 * 3600;
+ 
+ // --- glucose–insulin (Bergman minimal model, tables §5c; Pulse secretion line annex B3) --------------------------
+ export const GB_MGDL = 100; // 5.5 mmol/L
+ export const SG_PER_MIN = 0.026;
+ export const SI_PER_MIN_PER_UU = 8.3e-4; // per µU/mL
+-export const P2_PER_MIN = 0.025;
++/**
++ * FU-10 E12: the remote-insulin rate constant of the minimal model. 0.025/min put the nadir of an IV insulin bolus at
++ * 13 min (research/14 ET-20a; the insulin-tolerance test puts it at 20–30 min, research/12 at 40–60). Bergman's own
++ * estimates in normal subjects are ≈ 0.01–0.02/min (Bergman RN, Phillips LS, Cobelli C, J Clin Invest 1981;68:1456
++ * [VERIFY]) — the slower remote compartment is the mechanism, not a bigger dose or a smaller SI. SI is re-anchored so
++ * the steady-state action SI·(I − Ib) is unchanged (SI_PER_MIN_PER_UU is the same; only the LAG moves).
++ */
++export const P2_PER_MIN = 0.016;
+ export const VG_DL_KG = 1.7;
+ export const IB_UU_ML = 10; // basal insulin ≈ 60 pmol/L [TXT]
+ export const INS_N_PER_MIN = 0.14; // plasma insulin t½ ≈ 5 min [TXT]
+@@ -76,12 +109,44 @@ export const GUT_BIOAVAIL = 0.7; // hepatic first-pass uptake ≈ 30 % [TXT]
+ export const EGP_INSULIN_SUPP = 2; // hepatic output × (1 + 2·insulin deficit fraction): insulinopenia → 400+ mg/dL over hours [ENG]
+ export const EGP_DEFICIT_TAU_S = 3 * 3600; // the insulinopenic rise of hepatic output builds over hours (glucagon, gluconeogenesis) [ENG]
+ export const INS_K_PER_UU = -0.03; // SECRETED insulin above basal drives K into cells: −0.3 mmol/L per +10 µU/mL [ENG]; exogenous insulin is 7g's kShift
++/**
++ * FU-10 E7 — ketogenesis from the insulin DEFICIT. 7e's glucose model already integrates the deficit as `egpDef` (0–1,
++ * τ 3 h: the insulinopenic release of hepatic output); unrestrained lipolysis and hepatic ketogenesis follow the same
++ * deficit, so the ketoacid production rate is KETO_MMOL_MIN_MAX · egpDef per 70 kg, delivered to 7c's ketoacid pool.
++ * Size [ENG]: 25 mmol/L of ketoacids in ≈ 17 L of ECF is 7c's established DKA (`DKA_KETO_MMOL_L`), and omitted basal
++ * insulin in type 1 produces ketosis (β-hydroxybutyrate > 3 mmol/L) within hours (JBDS-IP perioperative diabetes 2023;
++ * JBDS DKA 2023; Kitabchi AE et al., Diabetes Care 2009;32:1335) — 0.5 mmol/min at a full deficit reaches ≈ 3 mmol/L in
++ * ≈ 100 min and the established pool in ≈ 8 h.
++ */
++export const KETO_MMOL_MIN_MAX = 0.5;
++/**
++ * FU-10 E11 — a fever is an added HEAT SOURCE, not only a raised set point. An anaesthetised, vasodilated patient
++ * cannot defend a set point (no shivering, no vasoconstriction), so on main a septic or thyrotoxic patient under GA at
++ * 21 °C stayed at 36.6–36.9 °C (research/14 ET-12, ET-13a) while the tables ask for 38.5–41 °C. Pyrogens (and thyroid
++ * hormone) raise heat production directly: prostaglandin-driven thermogenesis in sepsis (Miller 10e ch. 46: fever raises
++ * VO2 10–13 %/°C) and the uncoupled metabolism of thyrotoxicosis. PYROGEN_W_70: watts added at a full condition (sepsis
++ * severity 1 / storm 1) for a 70 kg patient [ENG; fit target: a febrile core 38.5–41 °C under GA in a 21 °C theatre —
++ * the metabolic vo2F rows already carry their own heat, this is what is left]. Scaled by body size like every heat term.
++ */
++export const PYROGEN_W_70 = 120;
++/** FU-10 E11: the set-point shift at which the pyrogenic heat is full (the sepsis/storm rows' own shift) [ENG]. */
++export const PYROGEN_SET_REF_C = 2;
++/** FU-10 E7: the insulin deficit shifts K OUT of the cells (Kitabchi 2009: insulinopenia is one of DKA's two causes of
++ * hyperkalaemia) — mmol/L of K set point at a full deficit [ENG: with the hyperosmolar term, DKA presents ≥ healthy]. */
++export const KETO_K_EFFLUX = 1.4;
++/** FU-10 E7: hyperosmolar hyperglycaemia is the other (water leaves the cells with K): mmol/L of K set point per mg/dL
++ * of glucose above HYPEROSM_FROM_MGDL [ENG; Kitabchi 2009]. */
++export const HYPEROSM_K_PER_MGDL = 0.002;
++export const HYPEROSM_FROM_MGDL = 200;
+ export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with 7c's acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG]
+ /**
+  * 7g's epinephrine concentration is a RATE EQUIVALENT (µg/kg/min, the infusion that would hold it). Its plasma level is
+  * rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL) [ENG, units].
+  */
+ export const EPI_EXO_PG_PER_RATE_EQ = 1e6 / 68.66;
++/** FU-10 E8: 7c's `insulinDextrose` row is dosed in insulin units with 25 g dextrose per 10 units (the row's regimen;
++ * UK Renal Association 2020 / JBDS: 10 units soluble insulin in 50 mL 50 % glucose) [TXT]. */
++export const INSDEX_DEXTROSE_G_PER_UNIT = 2.5;
+ 
+ /**
+  * FU-4 F2(a) — the HUMORAL arm of haemorrhage compensation (vasopressin / angiotensin II / adrenal), which an
+diff --git a/packages/engine-core/src/l2/endo/pipeline.ts b/packages/engine-core/src/l2/endo/pipeline.ts
+index b6b4311..6a359f6 100644
+--- a/packages/engine-core/src/l2/endo/pipeline.ts
++++ b/packages/engine-core/src/l2/endo/pipeline.ts
+@@ -11,6 +11,7 @@ import { VAGAL_SITES } from '../../types-neuro.ts'; // FU-4 G7: the stimulus's o
+ import type { HemoState } from '../hemo/pipeline.ts';
+ import type { RespState } from '../resp/pipeline.ts';
+ import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
++import { mhFromExposure, type MhExposure } from '../thermal/mh.ts';
+ import { observeDoses, pkOf, readEndoInputs, readInfusions } from './adapters.ts';
+ import { SEPSIS_PHASES } from './conditions.ts';
+ import { createEndoCore, DEFAULT_ENDO_PROFILE, stepEndoCore, type EndoCore, type EndoProfile } from './core.ts';
+@@ -24,10 +25,12 @@ export interface EndoState {
+   k: number; // next 1 Hz step index (time k s)
+   noxious: number;
+   weightKg: number;
++  ageY: number; // FU-10 E6: written into the heat model's `ageY` (the thresholds fall with age; Stage 3 owns `resp`)
+   ecg: { tempC: number; shiver: number }; // last values pushed as ECG modifier deltas
+   kfMult: number; // last capillary-leak multiplier written into 7c
+   lungSev: number; // last 7b anaphylaxis severity written
+   cascade: Cascade; // cascade(th) at the last 1 Hz step: 7f reads endo.cascade.macF (R-7f-8)
++  mhAuto?: boolean; // FU-10 E1: the MH state was started by the patient's triggers (absent = not yet)
+   out: EngineEvent[];
+ }
+ 
+@@ -45,7 +48,7 @@ export function resolveEndoProfile(profile: PatientProfile | undefined): EndoPro
+ 
+ export function createEndoState(profile: PatientProfile | undefined, weightKg: number): EndoState {
+   return {
+-    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ecg: { tempC: 0, shiver: 0 },
++    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ageY: profile?.ageY ?? 40, ecg: { tempC: 0, shiver: 0 },
+     kfMult: 1, lungSev: 0, cascade: { ...NEUTRAL_CASCADE }, out: [],
+   };
+ }
+@@ -54,14 +57,23 @@ export function createEndoState(profile: PatientProfile | undefined, weightKg: n
+ export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
+   const th = ctx.resp.temp;
+   const pk = pkOf(ctx.ps);
++  th.ageY = es.ageY; // FU-10 E6: the patient's age reaches the thermoregulatory thresholds (Stage 3 creates the state)
+   observeDoses(es, pk);
+   th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // Stage 7g's dantrolene effect → the MH suppression (thermal/mh.ts)
++  // FU-10 E1: an MH-susceptible patient's triggers (7f's exposure times) start the MH state 7e owns (R51 §6)
++  const mhx = (ctx.ps as { neuro?: { mhExposure?: MhExposure } }).neuro?.mhExposure;
++  if (mhx) {
++    const r = mhFromExposure(th.mh, mhx, es.mhAuto === true, tEnd);
++    th.mh = r.mh;
++    es.mhAuto = r.owned;
++  }
+   for (; es.k <= tEnd + 1e-9; es.k++) {
+     const t = es.k;
+     readInfusions(es, pk);
+     stepEndoCore(es.core, readEndoInputs(ctx, es, t), 1);
+     const o = es.core.out;
+     th.extraX = o.vo2F; // endocrine metabolic heat (thyroid, sepsis, hypermetabolic)
++    th.pyrogenW = o.pyrogenW; // FU-10 E11: the pyrogenic heat source (a fever the anaesthetised patient cannot defend)
+     th.feverShift = o.setShiftC;
+     es.cascade = cascade(th); // R-7f-8: 7f's hypothermic MAC reduction reads macF
+     es.out.push({
+diff --git a/packages/engine-core/src/l2/neuro/pipeline.ts b/packages/engine-core/src/l2/neuro/pipeline.ts
+index dc951da..bda9bea 100644
+--- a/packages/engine-core/src/l2/neuro/pipeline.ts
++++ b/packages/engine-core/src/l2/neuro/pipeline.ts
+@@ -60,6 +60,9 @@ export interface NeuroState {
+   flags: { conscious: boolean; aware: boolean; moved: boolean; recovered: boolean; recurarised: boolean; mhMarked: boolean };
+   fasc: { from: number; to: number };
+   emgBase: number | null; // ECG EMG artefact before fasciculations (engine)
++  /** FU-10 E1: when an MH-susceptible patient was first exposed to each trigger (s) — read by Stage 7e, which owns MH
++   * (R51 §6) and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. */
++  mhExposure?: { sux?: number; volatile?: number };
+   out: EngineEvent[];
+ }
+ 
+@@ -174,9 +177,12 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
+   for (const d of doses) {
+     if (d.agent !== 'succinylcholine') continue;
+     ns.fasc = { from: d.t + FASC_FROM_S, to: d.t + FASC_TO_S };
+-    if (ns.profile.mhSusceptible && !ns.flags.mhMarked) {
+-      mark(ns, d.t, 'mhTrigger');
+-      ns.flags.mhMarked = true;
++    if (ns.profile.mhSusceptible) {
++      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t }; // FU-10 E1: 7e reads it
++      if (!ns.flags.mhMarked) {
++        mark(ns, d.t, 'mhTrigger');
++        ns.flags.mhMarked = true;
++      }
+     }
+   }
+ }
+@@ -205,9 +211,12 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
+   ns.nmb = ns.outputs.nmb;
+   ns.thermoDepth = ns.outputs.thermoDepth;
+   // MH exposure to a potent volatile: a mark only (MH is 7e's, R51 §6)
+-  if (ns.profile.mhSusceptible && !ns.flags.mhMarked && x.macPotent > MH_VOLATILE_MAC) {
+-    mark(ns, t, 'mhTrigger');
+-    ns.flags.mhMarked = true;
++  if (ns.profile.mhSusceptible && x.macPotent > MH_VOLATILE_MAC && ns.mhExposure?.volatile === undefined) {
++    ns.mhExposure = { ...ns.mhExposure, volatile: t }; // FU-10 E1: 7e reads it
++    if (!ns.flags.mhMarked) {
++      mark(ns, t, 'mhTrigger');
++      ns.flags.mhMarked = true;
++    }
+   }
+   // marks
+   if (ns.flags.conscious && !d.conscious) mark(ns, t, 'lossOfConsciousness');
+diff --git a/packages/engine-core/src/l2/thermal/heat.ts b/packages/engine-core/src/l2/thermal/heat.ts
+index 0376f0f..d4f3230 100644
+--- a/packages/engine-core/src/l2/thermal/heat.ts
++++ b/packages/engine-core/src/l2/thermal/heat.ts
+@@ -14,8 +14,8 @@ import {
+ } from './environment.ts';
+ import { mhActivity, stepMh, type MhState } from './mh.ts';
+ import {
+-  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_HEAT_X, NEURAXIAL_H,
+-  NEURAXIAL_KCP, PERIPH_GRADIENT_C, T_NORMAL, VASOCONSTRICT_KCP,
++  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_HEAT_X, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
++  NEURAXIAL_SHIVER_SHIFT_C, PERIPH_GRADIENT_C, T_NORMAL, VASOCONSTRICT_KCP,
+ } from './params.ts';
+ import { shiverW, sweatW, thresholds, vasoDilation, type Thresholds } from './thresholds.ts';
+ 
+@@ -65,6 +65,7 @@ export interface ThermalState {
+   h: number; // Stage 3's lumped loss conductance at calibration (kept for reference; not used by the step)
+   m0: number; // basal metabolic heat W at the set point
+   effKg: number;
++  ageY: number; // FU-10 E6: the thermoregulatory thresholds fall with age (Kurz 1993)
+   env: Envelope;
+   anaesthesia: 'none' | 'general' | 'neuraxial';
+   warming: boolean; // forced air
+@@ -85,6 +86,12 @@ export interface ThermalState {
+   iv: { mlPerMin: number; tempC: number }; // IV fluid entering the core: 7c writes it every 100 ms (E-7e-1, `ivInflow`)
+   fluidWarmer: boolean; // IV fluid warmed to 37 °C
+   extraX: number; // endocrine/condition metabolic heat multiplier (1 = none), written by 7e's endo core
++  /** FU-10 E11: pyrogenic heat, W — a direct source (sepsis, SIRS, thyroid storm) the anaesthetised patient cannot
++   * switch off, written by 7e's endo core beside `extraX`. It is heat only: VO2/VCO2 stay the rows' `vo2F`. */
++  pyrogenW: number;
++  /** FU-10 E2: the fraction of the O2 demand actually consumed (7c `o2.vo2 / o2.demand`), written by 7e every pass.
++   * Aerobic muscle heat (MH, shivering) cannot exceed the oxygen it burns, so the core stops rising when flow stops. */
++  o2F: number;
+   dantE: number; // Stage 7g's dantrolene effect `bus.metabolic.dantroleneE` (0–1), written by 7e's pipeline every pass
+   out: ThermalOut;
+   /** Test-only seam (R51 addendum 18, like 7c's `pinHbfRel`): when set, the core is held at this value (°C). */
+@@ -93,7 +100,7 @@ export interface ThermalState {
+ 
+ const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
+ 
+-export function createThermal(tCore: number, effKg: number, heightCm = 175): ThermalState {
++export function createThermal(tCore: number, effKg: number, heightCm = 175, ageY = 40): ThermalState {
+   const m0 = M_AWAKE_W_70 * (effKg / 70);
+   const tp = tCore - PERIPH_GRADIENT_C;
+   const sites = {} as Record<TempSite, number>;
+@@ -104,25 +111,32 @@ export function createThermal(tCore: number, effKg: number, heightCm = 175): The
+   const st: ThermalState = {
+     tc: tCore, tp, ta: AMBIENT_C,
+     capCore: HEAT_CAP_J_KG_C * effKg * CORE_FRACTION, capPer: HEAT_CAP_J_KG_C * effKg * (1 - CORE_FRACTION),
+-    k0: (m0 - resp) / PERIPH_GRADIENT_C, h: m0 / (tp - AMBIENT_C), m0, effKg,
++    k0: (m0 - resp) / PERIPH_GRADIENT_C, h: m0 / (tp - AMBIENT_C), m0, effKg, ageY,
+     env: { bsa, rIns: calibrateInsulation(bsa, tp, AMBIENT_C, AIR_SPEED_MS, m0 - resp - evap) },
+     anaesthesia: 'none', warming: false, warmLag: 0, mh: null, sites,
+     depth: 0, depthIn: null, setShift: tCore - T_NORMAL, feverShift: 0, nmb: 0, shiverShift: 0, airMs: AIR_SPEED_MS, exposure: 'draped',
+-    vent: awakeVent(effKg), iv: { mlPerMin: 0, tempC: AMBIENT_C }, fluidWarmer: false, extraX: 1, dantE: 0, out: zeroOut(),
++    vent: awakeVent(effKg), iv: { mlPerMin: 0, tempC: AMBIENT_C }, fluidWarmer: false, extraX: 1, pyrogenW: 0, o2F: 1, dantE: 0, out: zeroOut(),
+   };
+   st.out = balance(st, 0);
+   return st;
+ }
+ 
+-/** Current thresholds (depth, set point; the shivering-only shift applied). */
++/** Current thresholds (depth, set point; the shivering-only shifts applied: drugs, and a neuraxial block — FU-10 E3). */
+ export function currentThresholds(st: ThermalState): Thresholds {
+-  const thr = thresholds(st.depth, st.setShift + st.feverShift);
+-  return { ...thr, shiver: thr.shiver + st.shiverShift };
++  const thr = thresholds(st.depth, st.setShift + st.feverShift, st.ageY);
++  return { ...thr, shiver: thr.shiver + st.shiverShift + (st.anaesthesia === 'neuraxial' ? NEURAXIAL_SHIVER_SHIFT_C : 0) };
+ }
+ 
++/** FU-10 E2: the delivered fraction of the O2 demand (1 without 7c, clamped to [0, 1]). */
++const o2Frac = (st: ThermalState): number => Math.min(1, Math.max(0, st.o2F ?? 1));
++
++/** FU-10 E3: the fraction of the effectors (vasomotor tone, shivering) a neuraxial block abolishes; 0 otherwise. */
++const blocked = (st: ThermalState): number => (st.anaesthesia === 'neuraxial' ? NEURAXIAL_BLOCK_FRAC : 0);
++
+ function kcp(st: ThermalState, tc: number, thr: Thresholds): { k: number; f: number } {
+-  if (st.anaesthesia === 'neuraxial') return { k: st.k0 * NEURAXIAL_KCP, f: 1 }; // no vasoconstriction below the block
+-  const f = vasoDilation(tc, thr);
++  // FU-10 E3: below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
++  const b = blocked(st);
++  const f = b + (1 - b) * vasoDilation(tc, thr);
+   return { k: st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f), f };
+ }
+ 
+@@ -141,9 +155,10 @@ function balance(st: ThermalState, t: number): ThermalOut {
+   const warmArea = FORCED_AIR_AREA * st.warmLag;
+   return {
+     vasoF: f, kcp: k,
+-    metabolicW: basalW(st) + st.m0 * (st.extraX - 1),
+-    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb),
+-    mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t),
++    metabolicW: basalW(st) + st.m0 * (st.extraX - 1) + Math.max(0, st.pyrogenW ?? 0), // FU-10 E11: the pyrogenic source
++    // FU-10 E2: both are AEROBIC muscle heat — limited by the oxygen the circulation delivers (`o2F`, 1 when 7c is absent)
++    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)) * o2Frac(st), // FU-10 E3: no shivering below a block
++    mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t) * o2Frac(st),
+     sweatW: sweatW(st.tc, thr, st.effKg),
+     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
+     respW: respiratoryW(st.vent, st.ta),
+@@ -156,9 +171,10 @@ function balance(st: ThermalState, t: number): ThermalOut {
+ /** One step of dtS seconds (≤ 1 s). */
+ export function stepThermal(st: ThermalState, t: number, dtS: number): void {
+   // depth = max(7f's thermoDepth, the Stage 3 `thermal` flag's depth) (R51 addendum 16): a Stage 3 scenario that sets
+-  // anaesthesia 'general' without drugs keeps its R39-7 course after 7f lands. Neuraxial: the thresholds of a sedated
+-  // patient (decision 4: Stage 3's "no plateau" keeps shivering out of hour 8).
+-  const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'none' ? 0 : 1);
++  // anaesthesia 'general' without drugs keeps its R39-7 course after 7f lands. Neuraxial (FU-10 E3): no central depth of
++  // its own — the block acts on the effectors below it (kcp, shivering) and lowers the shivering threshold; sedation
++  // reaches the thresholds through 7f's depth.
++  const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'general' ? 1 : 0);
+   // induction is fast (drug onset); emergence follows the elimination of the agent (τ EMERGE_TAU_S) [ENG]
+   st.depth = target >= st.depth ? target : target + (st.depth - target) * Math.exp(-dtS / EMERGE_TAU_S);
+   st.warmLag += ((st.warming ? 1 : 0) - st.warmLag) * (1 - Math.exp(-dtS / FORCED_AIR_TAU_S));
+@@ -207,9 +223,9 @@ export function setCoreTarget(st: ThermalState, tCore: number): void {
+  */
+ export function upgradeThermal(st: ThermalState): ThermalState {
+   if ((st as Partial<ThermalState>).env !== undefined) return st;
+-  const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70);
++  const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70, 175, st.ageY ?? 40);
+   return {
+     ...fresh, tc: st.tc, tp: st.tp, ta: st.ta, anaesthesia: st.anaesthesia, warming: st.warming, mh: st.mh, sites: st.sites,
+-    depth: st.anaesthesia === 'none' ? 0 : 1,
++    depth: st.anaesthesia === 'general' ? 1 : 0, // FU-10 E3: a neuraxial block has no central depth
+   };
+ }
+diff --git a/packages/engine-core/src/l2/thermal/mh.ts b/packages/engine-core/src/l2/thermal/mh.ts
+index 4404674..f980e63 100644
+--- a/packages/engine-core/src/l2/thermal/mh.ts
++++ b/packages/engine-core/src/l2/thermal/mh.ts
+@@ -6,7 +6,7 @@
+ // MH_RELAX_TAU_S (Ca²⁺ re-sequestration and cell recovery take minutes, tables "VCO2 excess decays τ 10–20 min"), so it
+ // creeps back up as 7g's curve wanes (recrudescence). Without dantrolene s stays undefined and a(t) is exactly Stage
+ // 3's MH factor ramp.
+-import { DANT_GAIN, MH_ONSET_S, MH_RELAX_TAU_S } from './params.ts';
++import { DANT_GAIN, MH_ONSET_S, MH_PROFILE_SEVERITY, MH_RELAX_TAU_S, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_S } from './params.ts';
+ 
+ export interface MhState {
+   severity: number; // 0–1
+@@ -21,6 +21,32 @@ export function mhActivity(mh: MhState | null, t: number): number {
+   return mh.severity * r * (mh.s ?? 1);
+ }
+ 
++/** FU-10 E1: an MH-susceptible patient's trigger exposure (7f `ps.neuro.mhExposure`, times in s). */
++export interface MhExposure {
++  sux?: number;
++  volatile?: number;
++}
++
++/** FU-10 E1: the MH onset time the exposure implies (the earliest trigger + its latency), or null (not exposed). */
++export function mhOnsetT(x: MhExposure | undefined): number | null {
++  const ts = [x?.sux !== undefined ? x.sux + MH_SUX_LATENCY_S : Infinity, x?.volatile !== undefined ? x.volatile + MH_VOLATILE_LATENCY_S : Infinity];
++  const t0 = Math.min(...ts);
++  return Number.isFinite(t0) ? t0 : null;
++}
++
++/**
++ * FU-10 E1: start (or bring forward) the MH of a susceptible patient from its triggers. `owned` = the triggers already
++ * started it (not the instructor's `condition mh`): until its onset a later, faster trigger may bring it forward; an
++ * instructor's MH is never overridden, and an MH the instructor cleared (`condition mh 0`) is not restarted.
++ */
++export function mhFromExposure(mh: MhState | null, x: MhExposure | undefined, owned: boolean, t: number): { mh: MhState | null; owned: boolean } {
++  const t0 = mhOnsetT(x);
++  if (t0 === null) return { mh, owned };
++  if (mh === null && !owned) return { mh: { severity: MH_PROFILE_SEVERITY, t0 }, owned: true };
++  if (mh !== null && owned && t < mh.t0 && t0 < mh.t0) return { mh: { ...mh, t0 }, owned };
++  return { mh, owned };
++}
++
+ /** 1 Hz (or any dt ≤ 1 s) update of the suppression state from 7g's dantrolene effect `dantE` (0–1). */
+ export function stepMh(mh: MhState | null, dantE: number, dtS: number): void {
+   if (!mh) return;
+diff --git a/packages/engine-core/src/l2/thermal/params.ts b/packages/engine-core/src/l2/thermal/params.ts
+index 7995699..c471840 100644
+--- a/packages/engine-core/src/l2/thermal/params.ts
++++ b/packages/engine-core/src/l2/thermal/params.ts
+@@ -11,10 +11,20 @@ export const PERIPH_GRADIENT_C = 4.3; // awake core − periphery at 21 °C ambi
+ export const AMBIENT_C = 21; // operating theatre [ENG]
+ export const GA_KCP = 3; // k_cp × 2–4 once vasodilated (brief §4.6)
+ export const GA_M = 0.8; // metabolic heat −15–20 % under GA
+-export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG]
++export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG] — FU-10 E3: no longer read (NEURAXIAL_BLOCK_FRAC)
+ export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more heat [ENG]
+ export const VASOCONSTRICT_C = 34.8; // GA vasoconstriction logistic centre (tables 34.5 ± 0.2; plateau 34.6–34.8) [ENG]
+ export const VASOCONSTRICT_KCP = 0.5; // k_cp × once constricted [ENG]
++/**
++ * FU-10 E3 — neuraxial thermoregulation (Sessler DI, Anesthesiology 2000;92:578 and Lancet 2008;371:1791; Kurz A,
++ * Sessler DI et al., Anesthesiology 1993;79:1193 [VERIFY]): the block abolishes vasoconstriction AND shivering below
++ * its level only; centrally the patient keeps an unsedated patient's thresholds except that shivering starts ≈ 0.5 °C
++ * lower (the warm, vasodilated legs are "felt" as warm). Redistribution is then ≈ half of general anaesthesia's
++ * (Matsukawa T et al., Anesthesiology 1995;83:961: epidural −0.8 °C in hour 1 [VERIFY]). Sedation adds 7f's depth.
++ * NEURAXIAL_BLOCK_FRAC: the fraction of the vasomotor/shivering effector mass below a T10 block [ENG: legs + lower trunk ≈ ½].
++ */
++export const NEURAXIAL_BLOCK_FRAC = 0.5;
++export const NEURAXIAL_SHIVER_SHIFT_C = -0.5;
+ export const MH_ONSET_S = 900; // MH reaches its full activity over 15 min (tables 5–30 min) [ENG]
+ export const MH_VCO2_FACTOR = 3; // VCO2 × 3 at activity 1 (tables × 2–5; × 5 passes the 150 mmHg EtCO2 limit) [ENG]
+ export const SENSOR_TAU_S = 5; // probe time constant < 10 s (research 03 §6.1)
+@@ -27,6 +37,24 @@ export const THR_VASO_AWAKE = 36.9; // tables §5c awake vasoconstriction thresh
+ export const W_VASO_AWAKE = 0.1 / Math.log(4); // 0.0721 °C [ENG: reproduces Stage 3's awake k0 exactly]
+ export const W_VASO_GA = 0.1; // Stage 3's logistic width [ENG]
+ export const T_NORMAL = 36.8; // the default core the thresholds are written for (L1 tempCore default)
++/**
++ * FU-10 E5 — the depth the THRESHOLDS read is capped at the GA row. Before FU-10 `thresholds()` extrapolated the
++ * awake → GA line to depth 1.5 (2.1 °C per depth unit), so 2 % sevoflurane (thermoDepth 1.06) put the vasoconstriction
++ * threshold at 34.55 °C and the plateau at 6.2 h; the tables' and Sessler's GA row IS the row for ordinary clinical
++ * anaesthesia (vasoconstriction 34.5 ± 0.2 °C, the plateau at 3–4 h: Sessler DI, Anesthesiology 2000;92:578–596; Kurz A,
++ * Plattner O, Sessler DI et al., Anesthesiology 1993;79:465). A deeper anaesthetic lowering the threshold further is a
++ * concentration–threshold slope no source in the tables gives, so it is not extrapolated (R45; calibration queue).
++ */
++export const THR_DEPTH_MAX = 1;
++/**
++ * FU-10 E6 — age lowers both thermoregulatory thresholds: ≈ 1 °C lower from 60 to 80 y under general anaesthesia
++ * (Kurz A, Plattner O, Sessler DI et al., Anesthesiology 1993;79:465 [VERIFY]; Frank SM et al., Anesthesiology
++ * 1992;77:252). Linear between THR_AGE_FROM_Y and THR_AGE_TO_Y, applied to the vasoconstriction and shivering
++ * thresholds only (the sweating threshold has no sourced age term).
++ */
++export const THR_AGE_FROM_Y = 60;
++export const THR_AGE_TO_Y = 80;
++export const THR_AGE_SHIFT_C = -1;
+ 
+ // --- shivering and sweating (tables §5c; annex B3 Pulse forms) ---------------------------------------------
+ export const THR_SHIVER_AWAKE = 36.0; // tables §5c [TXT]; Pulse 36.8 (differs +0.8, annex)
+@@ -60,3 +88,16 @@ export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrole
+  * 5 mg/kg (E 0.67) → 0 (tables "repeat to response: average 5 mg/kg") [ENG, fitted in the prototype].
+  */
+ export const DANT_GAIN = 1.6;
++/**
++ * FU-10 E1 — MH from its triggers in a susceptible patient (7f publishes the exposure times; the MH state is 7e's).
++ * Onset latency after each trigger: succinylcholine starts the hypermetabolism at once (the Stage 3 ramp then reaches
++ * full activity over MH_ONSET_S, so EtCO2 doubles ≈ 14 min after the dose); a volatile alone starts it later. Direction:
++ * Visoiu M, Young MC, Wieland K, Brandom BW, Anesth Analg 2014;118:388–396 (North American MH Registry, 477 cases: onset
++ * is shorter after succinylcholine with every volatile; without succinylcholine sevoflurane is faster than isoflurane or
++ * desflurane); Larach MG et al., Anesth Analg 2010;110:498–507 (clinical presentation) [VERIFY the medians]. Magnitudes
++ * [ENG]: 0 s with succinylcholine; 20 min for a volatile alone (inside the ET report's 10–60 min). Severity 1 = the
++ * fulminant course of the instructor's `condition mh 1` (Ali Q2: fixed vs a seeded draw; fulminant vs abortive).
++ */
++export const MH_SUX_LATENCY_S = 0;
++export const MH_VOLATILE_LATENCY_S = 1200;
++export const MH_PROFILE_SEVERITY = 1;
+diff --git a/packages/engine-core/src/l2/thermal/thresholds.ts b/packages/engine-core/src/l2/thermal/thresholds.ts
+index c0bfa93..f28cbd8 100644
+--- a/packages/engine-core/src/l2/thermal/thresholds.ts
++++ b/packages/engine-core/src/l2/thermal/thresholds.ts
+@@ -13,6 +13,7 @@
+ // 36.9 / 36.0). Linear in d between the awake and GA rows, extrapolated for d > 1 (propofol/volatile thresholds fall
+ // linearly with concentration, Sessler) and clamped to [0, 1.5].
+ import {
++  THR_AGE_FROM_Y, THR_AGE_SHIFT_C, THR_AGE_TO_Y, THR_DEPTH_MAX,
+   SHIVER_MAX_X, SHIVER_SPAN_C, SHIVER_STOP_C, SHIVER_STOP_SPAN_C, SUMMIT_W_PER_KG075, SWEAT_MAX_W_70, SWEAT_W_PER_C, THR_SHIVER_AWAKE, THR_SHIVER_GA,
+   THR_SWEAT_AWAKE, THR_SWEAT_GA, THR_VASO_AWAKE, VASOCONSTRICT_C, W_VASO_AWAKE, W_VASO_GA,
+ } from './params.ts';
+@@ -26,13 +27,23 @@ export interface Thresholds {
+ 
+ const lerp = (a: number, b: number, d: number) => a + (b - a) * d;
+ 
+-/** Thresholds at depth d with every threshold shifted by `setShiftC` (fever raises the set point). */
+-export function thresholds(depth: number, setShiftC: number): Thresholds {
+-  const d = Math.min(1.5, Math.max(0, depth));
++/** FU-10 E6: the age shift of the cold-defence thresholds, °C (0 up to 60 y, THR_AGE_SHIFT_C from 80 y; linear). */
++export function ageShiftC(ageY: number): number {
++  const f = Math.min(1, Math.max(0, (ageY - THR_AGE_FROM_Y) / (THR_AGE_TO_Y - THR_AGE_FROM_Y)));
++  return THR_AGE_SHIFT_C * f;
++}
++
++/**
++ * Thresholds at depth d with every threshold shifted by `setShiftC` (fever raises the set point) and the cold-defence
++ * thresholds by the patient's age (FU-10 E6). The depth is capped at the GA row (FU-10 E5, THR_DEPTH_MAX).
++ */
++export function thresholds(depth: number, setShiftC: number, ageY = 40): Thresholds {
++  const d = Math.min(THR_DEPTH_MAX, Math.max(0, depth));
++  const age = ageShiftC(ageY);
+   return {
+-    vaso: lerp(THR_VASO_AWAKE, VASOCONSTRICT_C, d) + setShiftC,
+-    vasoW: lerp(W_VASO_AWAKE, W_VASO_GA, Math.min(1, d)),
+-    shiver: lerp(THR_SHIVER_AWAKE, THR_SHIVER_GA, d) + setShiftC,
++    vaso: lerp(THR_VASO_AWAKE, VASOCONSTRICT_C, d) + setShiftC + age,
++    vasoW: lerp(W_VASO_AWAKE, W_VASO_GA, d),
++    shiver: lerp(THR_SHIVER_AWAKE, THR_SHIVER_GA, d) + setShiftC + age,
+     sweat: lerp(THR_SWEAT_AWAKE, THR_SWEAT_GA, d) + setShiftC,
+   };
+ }
+diff --git a/packages/engine-core/src/types-endo.ts b/packages/engine-core/src/types-endo.ts
+index 092d399..31ec6b9 100644
+--- a/packages/engine-core/src/types-endo.ts
++++ b/packages/engine-core/src/types-endo.ts
+@@ -46,6 +46,9 @@ export type EndoEvent = {
+ /** PatientProfile.endo (optional; defaults: no diabetes, euthyroid, normal adrenals). β-blockade is 7a's profile. */
+ export interface EndoProfileInput {
+   diabetes?: 'none' | 'type1' | 'type2';
++  /** FU-10 E7: type 1 only — `false` OMITS the long-acting basal insulin (the missed-dose case: ketosis within hours).
++   * Default `true` (the profile as it behaved before FU-10). FU-8 A16 carries it into `pme-scenario/1`. */
++  basalInsulin?: boolean;
+   thyroid?: 'normal' | 'hypo' | 'hyper';
+   adrenalInsufficiency?: boolean;
+ }
+diff --git a/packages/engine-core/test/engine/fu10-mh-trigger.test.ts b/packages/engine-core/test/engine/fu10-mh-trigger.test.ts
+new file mode 100644
+index 0000000..71747af
+--- /dev/null
++++ b/packages/engine-core/test/engine/fu10-mh-trigger.test.ts
+@@ -0,0 +1,30 @@
++// FU-10 Task A1 (E1; research/14 ET-10a): an MH-susceptible patient given its triggers develops MH by itself — 7f
++// publishes the exposure times, 7e starts the MH state it owns with the trigger's onset latency. Rig = the ET drug GA with
++// succinylcholine (VCV 12 × 600, fixed minute ventilation), no instructor action.
++import { describe, expect, it } from 'vitest';
++import { firstT, GA, rows, st, VENTED } from '../helpers/fu10.ts';
++
++const read = (e: Parameters<Parameters<typeof rows>[3]>[0], endo: Parameters<Parameters<typeof rows>[3]>[1]) => ({
++  etco2: st(e).resp.etco2 as number, mh: endo?.mhActivity ?? 0, tc: st(e).resp.temp.tc as number,
++});
++const MHS = { neuro: { mhSusceptible: true } };
++
++describe('FU-10 E1: MH from its triggers (MHAUS; Larach 1994/2010; Visoiu 2014)', { timeout: 600_000 }, () => {
++  it('susceptible + succinylcholine + sevoflurane at 300 s: EtCO2 doubles within 10–30 min of the triggers (was: never, 29–30 for 90 min)', async () => {
++    const r = await rows([...VENTED, ...GA(300, 'sux')], 300 + 40 * 60, 10, read, MHS);
++    const base = r.find((x) => x.t === 290)!.etco2;
++    const tD = firstT(r, 300, (x) => x.etco2 >= 2 * base);
++    console.log(`FU-10 E1 sux: EtCO2 base ${base.toFixed(1)}, doubled at +${((tD - 300) / 60).toFixed(1)} min, MH activity ${r.at(-1)!.mh} at +40 min, core ${r.at(-1)!.tc.toFixed(2)} °C`);
++    expect(tD - 300).toBeGreaterThanOrEqual(10 * 60);
++    expect(tD - 300).toBeLessThanOrEqual(30 * 60);
++  });
++  it('a volatile alone starts it later than succinylcholine does (Visoiu 2014), and a patient who is not susceptible never gets it', async () => {
++    const vol = await rows([...VENTED, ...GA(300, 'roc')], 300 + 60 * 60, 30, read, MHS);
++    const ctl = await rows([...VENTED, ...GA(300, 'sux')], 300 + 60 * 60, 30, read);
++    const on = firstT(vol, 300, (x) => x.mh > 0.05);
++    console.log(`FU-10 E1 volatile alone: MH activity > 0.05 at +${((on - 300) / 60).toFixed(1)} min; not susceptible: max activity ${Math.max(...ctl.map((x) => x.mh))}`);
++    expect(on - 300).toBeGreaterThan(10 * 60);
++    expect(on - 300).toBeLessThanOrEqual(60 * 60);
++    expect(Math.max(...ctl.map((x) => x.mh))).toBe(0);
++  });
++});
+diff --git a/packages/engine-core/test/helpers/fu10.ts b/packages/engine-core/test/helpers/fu10.ts
+new file mode 100644
+index 0000000..d800fc1
+--- /dev/null
++++ b/packages/engine-core/test/helpers/fu10.ts
+@@ -0,0 +1,57 @@
++// FU-10 test helpers: the coverage-run-ET rigs (research/14 §1) through the real engine, read-only on the committed
++// state. Seed 7, MODELED, the 40 y 70 kg 175 cm man unless a test says otherwise. Yields once per simulated minute.
++import { createEngine } from '../../src/engine.ts';
++import type { EngineEvent, MonitorEngine, PatientProfile } from '../../src/types.ts';
++import { cmd, MAN } from './blood.ts';
++
++export type Step = [number, Record<string, unknown>];
++export const ev = (event: Record<string, unknown>): Record<string, unknown> => ({ type: 'applyEvent', event });
++export const drug = (drugId: string, dose: number, unit: string): Record<string, unknown> => ev({ kind: 'drug', drugId, dose, unit, route: 'iv' });
++/** ETT + VCV 12 × 600 mL, PEEP 5, FiO2 0.5 at t = 1 s (the ET runner's `VENTED`). */
++export const VENTED: Step[] = [
++  [1, ev({ kind: 'airwayDevice', device: 'ett' })],
++  [1, ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 })],
++];
++/** The ET "drug GA": propofol 2 mg/kg + rocuronium 0.6 (or succinylcholine 1.5) mg/kg + sevoflurane 2 % FGF 2 at t. */
++export const GA = (t: number, nmb: 'roc' | 'sux' | 'none' = 'roc'): Step[] => [
++  [t, drug('propofol', 2, 'mg/kg')],
++  ...(nmb === 'none' ? [] : [[t, nmb === 'sux' ? drug('succinylcholine', 1.5, 'mg/kg') : drug('rocuronium', 0.6, 'mg/kg')] as Step]),
++  [t, ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2, n2oFrac: 0 })],
++];
++/** Stage 3's GA flag (the rigs where depth is irrelevant). */
++export const FLAG: Step = [1, ev({ kind: 'thermal', anaesthesia: 'general' })];
++export type Endo = Extract<EngineEvent, { type: 'endo' }>;
++/** White-box committed state (tests only). */
++// eslint-disable-next-line @typescript-eslint/no-explicit-any
++export const st = (e: MonitorEngine): any => (e as unknown as { st: unknown }).st;
++
++/** Run the timeline to `tEnd`, calling `read` every `dt` s with the engine and the latest `endo` event. */
++export async function rows<T>(steps: Step[], tEnd: number, dt: number, read: (e: MonitorEngine, endo: Endo | null) => T,
++  patient: PatientProfile = MAN, mode: 'modeled' | 'manual' = 'modeled'): Promise<(T & { t: number })[]> {
++  const e = createEngine({ seed: 7, mode, patient: { ...MAN, ...patient } });
++  let endo: Endo | null = null;
++  e.on((m) => { if (m.type === 'endo') endo = m; }, ['endo']);
++  const todo = [...steps].sort((a, b) => a[0] - b[0]);
++  const out: (T & { t: number })[] = [];
++  let lastYield = 0;
++  for (let t = dt; t <= tEnd + 1e-9; t += dt) {
++    while (todo.length && (todo[0] as Step)[0] < t) {
++      const [ts, body] = todo.shift() as Step;
++      e.advanceTo(Math.max(e.now().simT, ts));
++      const r = e.dispatch(cmd(body));
++      if (!r.accepted) throw new Error(`rejected ${JSON.stringify(body)}: ${r.reason}`);
++    }
++    let now = e.now().simT;
++    while (now < t) {
++      now = Math.min(t, now + 60);
++      e.advanceTo(now);
++      if (now - lastYield >= 60) { lastYield = now; await new Promise((r) => setImmediate(r)); }
++    }
++    out.push({ ...read(e, endo), t });
++  }
++  return out;
++}
++/** The first sample time at or after t0 where `pred` holds (NaN if none). */
++export const firstT = <R extends { t: number }>(rs: R[], t0: number, pred: (r: R) => boolean): number => rs.find((r) => r.t >= t0 && pred(r))?.t ?? NaN;
++/** The sample nearest t. */
++export const at = <R extends { t: number }>(rs: R[], t: number): R => rs.reduce((b, r) => (Math.abs(r.t - t) < Math.abs(b.t - t) ? r : b));
+diff --git a/packages/engine-core/test/l2/endo/core.test.ts b/packages/engine-core/test/l2/endo/core.test.ts
+index 434b246..862a844 100644
+--- a/packages/engine-core/test/l2/endo/core.test.ts
++++ b/packages/engine-core/test/l2/endo/core.test.ts
+@@ -4,7 +4,7 @@ import { createEndoCore, NEUTRAL_ENDO_INPUTS, stepEndoCore } from '../../../src/
+ import { insulinInfusion } from '../../../src/l2/endo/glucose.ts';
+ 
+ const X = NEUTRAL_ENDO_INPUTS;
+-const T1 = { diabetes: 'type1', thyroid: 'normal', adrenalInsufficiency: false } as const;
++const T1 = { diabetes: 'type1', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true } as const; // FU-10 E7: the basal insulin can now be omitted
+ 
+ describe('endocrine core', { timeout: 60_000 }, () => {
+   it('rest: every haemodynamic/metabolic multiplier is exactly 1 for 24 h (Stage 1–3 outputs untouched)', () => {
+diff --git a/packages/engine-core/test/l2/neuro/pipeline.test.ts b/packages/engine-core/test/l2/neuro/pipeline.test.ts
+index 0e70bcc..38ac984 100644
+--- a/packages/engine-core/test/l2/neuro/pipeline.test.ts
++++ b/packages/engine-core/test/l2/neuro/pipeline.test.ts
+@@ -113,6 +113,7 @@ describe('neuro pipeline', () => {
+     stepNeuroTo(ns, 60, ENV, bus); // the same log read again: nothing new
+     expect(kinds(ns).filter((k) => k === 'fasciculation')).toHaveLength(1);
+     expect(kinds(ns).filter((k) => k === 'mhTrigger')).toHaveLength(1);
++    expect(ns.mhExposure).toEqual({ sux: 0 }); // FU-10 E1: the exposure time 7e turns into MH
+     expect('kRiseMmolL' in ns.outputs).toBe(false);
+   });
+   it('publishes the 7e fields ps.neuro.{antinoc, nmb, thermoDepth}: neutral awake; 1 MAC + fentanyl 2 ng/mL + full block', () => {
+diff --git a/packages/engine-core/test/l2/temp/temp.test.ts b/packages/engine-core/test/l2/temp/temp.test.ts
+index 4a69d87..b788ede 100644
+--- a/packages/engine-core/test/l2/temp/temp.test.ts
++++ b/packages/engine-core/test/l2/temp/temp.test.ts
+@@ -34,13 +34,18 @@ describe('two-compartment heat model', () => {
+     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
+   });
+ 
+-  it('neuraxial: smaller redistribution and no plateau (still falling below 34.5 °C in hour 8)', () => {
++  // FU-10 E3 (E-FU10-3, research/14 ET-04): "no plateau" meant no VASOCONSTRICTION plateau — the block abolishes the
++  // legs' vasoconstriction, so the core keeps falling through the GA plateau's hours; it now stops only where shivering
++  // ABOVE the block starts, below the lowered shivering threshold (35.5 °C; Kurz 1993). Before FU-10 the neuraxial state
++  // took the GA thresholds (shivering 33.5 °C) and fell to 33.47 °C at 8 h with no shivering; now 35.22 °C, shivering.
++  it('neuraxial: smaller redistribution, no vasoconstriction plateau; the fall stops only below the lowered shivering threshold', () => {
+     const st = createTemp(36.8, 70);
+     st.anaesthesia = 'neuraxial';
+     const tc = run(st, 0, 8 * 3600);
+     expect(36.8 - tc[59]!).toBeLessThan(1.0);
+-    expect(tc[419]! - tc[479]!).toBeGreaterThan(0.1); // still falling in hour 8, where GA has plateaued
+-    expect(tc[479]!).toBeLessThan(34.5);
++    expect(tc[59]! - tc[119]!).toBeGreaterThanOrEqual(0.3); // hour 2: still the linear phase (0.50 °C/h)
++    expect(tc[479]!).toBeLessThan(35.5); // below the shivering threshold 36.0 − 0.5
++    expect(st.out.shiverW).toBeGreaterThan(0); // shivering above the block defends it
+   });
+ 
+   it('forced-air warming adds +0.5–1 °C/h against the GA linear phase', () => {
+diff --git a/packages/engine-core/test/l2/thermal/fu10-mh-exposure.test.ts b/packages/engine-core/test/l2/thermal/fu10-mh-exposure.test.ts
+new file mode 100644
+index 0000000..21d1fb1
+--- /dev/null
++++ b/packages/engine-core/test/l2/thermal/fu10-mh-exposure.test.ts
+@@ -0,0 +1,27 @@
++// FU-10 Task A1 (E1): the onset of MH from a susceptible patient's triggers (7e thermal/mh.ts).
++import { describe, expect, it } from 'vitest';
++import { mhActivity, mhFromExposure, mhOnsetT } from '../../../src/l2/thermal/mh.ts';
++import { MH_PROFILE_SEVERITY, MH_SUX_LATENCY_S, MH_VOLATILE_LATENCY_S } from '../../../src/l2/thermal/params.ts';
++
++describe('FU-10 E1: MH onset from the trigger exposure (Visoiu 2014: sooner after succinylcholine)', () => {
++  it('the onset is the earliest trigger plus its latency; no exposure, no onset', () => {
++    expect(mhOnsetT(undefined)).toBeNull();
++    expect(mhOnsetT({})).toBeNull();
++    expect(mhOnsetT({ sux: 300 })).toBe(300 + MH_SUX_LATENCY_S);
++    expect(mhOnsetT({ volatile: 300 })).toBe(300 + MH_VOLATILE_LATENCY_S);
++    expect(mhOnsetT({ volatile: 100, sux: 600 })).toBe(Math.min(100 + MH_VOLATILE_LATENCY_S, 600 + MH_SUX_LATENCY_S));
++  });
++  it('starts the Stage 3 MH state once; a later succinylcholine brings a pending volatile onset forward', () => {
++    const a = mhFromExposure(null, { volatile: 100 }, false, 120);
++    expect(a.owned).toBe(true);
++    expect(a.mh).toEqual({ severity: MH_PROFILE_SEVERITY, t0: 100 + MH_VOLATILE_LATENCY_S });
++    expect(mhActivity(a.mh, 200)).toBe(0); // latent
++    const b = mhFromExposure(a.mh, { volatile: 100, sux: 400 }, a.owned, 400);
++    expect(b.mh?.t0).toBe(400 + MH_SUX_LATENCY_S);
++  });
++  it('never overrides the instructor: an instructor MH is kept, and an MH the instructor cleared is not restarted', () => {
++    const instr = { severity: 0.5, t0: 50 };
++    expect(mhFromExposure(instr, { sux: 10 }, false, 60)).toEqual({ mh: instr, owned: false });
++    expect(mhFromExposure(null, { sux: 10 }, true, 900)).toEqual({ mh: null, owned: true });
++  });
++});
+diff --git a/packages/engine-core/test/l2/thermal/fu10-neuraxial.test.ts b/packages/engine-core/test/l2/thermal/fu10-neuraxial.test.ts
+new file mode 100644
+index 0000000..9b019bc
+--- /dev/null
++++ b/packages/engine-core/test/l2/thermal/fu10-neuraxial.test.ts
+@@ -0,0 +1,47 @@
++// FU-10 Task A2 (E3; research/14 ET-04): a neuraxial block has its own thermoregulation — the effectors below the block
++// are abolished (vessels dilated, no shivering), the central thresholds are an unsedated patient's except shivering
++// ≈ 0.5 °C lower (Kurz 1993; Sessler 2000/2008), so redistribution is about half of GA's (Matsukawa 1995).
++import { describe, expect, it } from 'vitest';
++import { createThermal, currentThresholds, stepThermal } from '../../../src/l2/thermal/heat.ts';
++import { THR_SHIVER_AWAKE, THR_VASO_AWAKE } from '../../../src/l2/thermal/params.ts';
++
++const course = (an: 'general' | 'neuraxial', hours: number) => {
++  const st = createThermal(36.8, 70);
++  st.anaesthesia = an;
++  const tc: number[] = [];
++  let shivC = NaN;
++  for (let s = 1; s <= hours * 3600; s++) {
++    stepThermal(st, s, 1);
++    if (s % 60 === 0) tc.push(st.tc);
++    if (Number.isNaN(shivC) && st.out.shiverW > 1) shivC = st.tc;
++  }
++  return { st, tc, shivC };
++};
++
++describe('FU-10 E3: neuraxial thermoregulation (Sessler 2000/2008; Kurz 1993; Matsukawa 1995)', () => {
++  it('no central depth: the awake vasoconstriction threshold, the shivering threshold 0.5 °C lower', () => {
++    const st = createThermal(36.8, 70);
++    st.anaesthesia = 'neuraxial';
++    stepThermal(st, 1, 1);
++    expect(st.depth).toBe(0);
++    const thr = currentThresholds(st);
++    expect(thr.vaso).toBeCloseTo(THR_VASO_AWAKE, 6);
++    expect(thr.shiver).toBeCloseTo(THR_SHIVER_AWAKE - 0.5, 6);
++  });
++  it('hour-1 redistribution −0.5 to −1.1 °C (Matsukawa 1995: −0.8 ± 0.3), less than GA; shivering starts at ≈ 35.5 °C', () => {
++    const n = course('neuraxial', 3);
++    const g = course('general', 1);
++    console.log(`FU-10 E3: hour 1 neuraxial −${(36.8 - n.tc[59]!).toFixed(2)} vs GA −${(36.8 - g.tc[59]!).toFixed(2)} °C; shivering from ${n.shivC.toFixed(2)} °C`);
++    expect(36.8 - n.tc[59]!).toBeGreaterThanOrEqual(0.5);
++    expect(36.8 - n.tc[59]!).toBeLessThanOrEqual(1.1);
++    expect(36.8 - n.tc[59]!).toBeLessThan(36.8 - g.tc[59]!);
++    expect(n.shivC).toBeGreaterThan(35.3);
++    expect(n.shivC).toBeLessThan(35.6);
++  });
++  // R45: research/12's "about half of GA" is 0.62 on the heat model (0.64 in the ET rig: −0.76 vs −1.19 °C) while the
++  // absolute fall matches Matsukawa's −0.8 — the block fraction (0.5, T10) and NEURAXIAL_H are [ENG]; not tuned (Ali Q3).
++  it.fails('redistribution about half of the GA fall: ratio 0.4–0.6 (research/12 ET-04) — measured 0.62', () => {
++    const r = (36.8 - course('neuraxial', 1).tc[59]!) / (36.8 - course('general', 1).tc[59]!);
++    expect(r).toBeLessThanOrEqual(0.6);
++  });
++});
