@@ -1137,14 +1137,14 @@ DV_OUT=<scratchpad>/fu-7-task0/dv-cells.json PME_ENGINE=<wt>/packages/engine-cor
 assigns 18 of those cells to 7g/FU-7; the gate must show them moving. Copying the scripts into the repo makes the run a
 first-class regression (R54: "for each gate the owner runs the cells and pastes the report rows into its gate note").
 
-- [ ] **Step 1 — copy, do not rewrite.** From the repo root:
+- [x] **Step 1 — copy, do not rewrite.** From the repo root:
 ```
 mkdir -p scripts/audit-drugs
 cp ../research/14-audit-scripts/*.ts ../research/14-audit-scripts/hooks.mjs scripts/audit-drugs/
 ```
 Do NOT copy `out/` (the run store). Do NOT edit any band, any `expect` entry, any `hand` verdict or any `known` field:
 the bands are Ali's proposals (R45). The only edits allowed in this task are Steps 2–3.
-- [ ] **Step 2 — the engine path and the output folder.** In `scripts/audit-drugs/runner.ts`, find:
+- [x] **Step 2 — the engine path and the output folder.** In `scripts/audit-drugs/runner.ts`, find:
 
 ```ts
 const ENGINE = process.env.PME_ENGINE ?? join(HERE, 'wt/packages/engine-core/src/index.ts');
@@ -1172,7 +1172,7 @@ const OUT = process.env.PME_AUDIT_OUT ?? join(HERE, '../../.audit-drugs');
 
 and make the same substitution in `report.ts` and `ledger.ts` if they join `'out'` (grep first; keep their existing
 file names inside the folder).
-- [ ] **Step 3 — the script and the ignore.** In the root `package.json`, find (FU-6's line; if FU-6's script is absent,
+- [x] **Step 3 — the script and the ignore.** In the root `package.json`, find (FU-6's line; if FU-6's script is absent,
 anchor on `"audit:physiology"` instead and put `audit:drugs` after it):
 
 ```json
@@ -1195,7 +1195,7 @@ node --experimental-strip-types scripts/audit-drugs/report.ts > docs/gates/fu-7/
 Expected: the verdicts of research/14 §2 for the FU-4/FU-6-independent cells, and MOVED verdicts for the cells FU-4 and
 FU-6 already fixed (DI-01a/b, 46–49, 78, 79, 34, 58, 22, 37a/b, 62, 17, 66, 84, M1–M3 are FU-4's; DI-40 is FU-6's).
 Record both in the gate note; a cell whose FU-4/FU-6 fix did NOT land is reported, not fixed here.
-- [ ] **Step 5 — a typecheck guard.** `npx -y pnpm@9.15.9 -r typecheck` must stay clean (the scripts are outside the
+- [x] **Step 5 — a typecheck guard.** `npx -y pnpm@9.15.9 -r typecheck` must stay clean (the scripts are outside the
 workspace packages; if the root `tsconfig` picks them up, add `scripts/audit-drugs` to its `exclude` exactly as
 `scripts/audit-physiology` is handled).
 - [ ] **Step 6 — commit.** `git add -A && git commit -m "chore(fu-7): adopt the drug-interaction audit as pnpm run audit:drugs"`

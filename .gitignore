@@ -8,5 +8,6 @@ coverage/
 playwright-report/
 test-results/
 .audit-respiratory/
+.audit-drugs/
 packages/validation/datasets/cache/
 .audit-physiology/
