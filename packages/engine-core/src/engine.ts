@@ -675,6 +675,23 @@ class Engine implements MonitorEngine {
         return Number.isNaN(x) ? null : [x, by.at(n), bz.at(n)];
       },
       outcomeRng: ps.rng.outcome,
+      shockState: () => ({
+        antiarrhythmicU: (ps.pk.bus as { rhythm?: { antiarrhythmicU?: number } }).rhythm?.antiarrhythmicU ?? 0,
+        kEcg: (ps as unknown as { blood?: { out?: { kEcg?: number } } }).blood?.out?.kEcg,
+        ph: (ps as unknown as { blood?: { core?: { ab?: { ph?: number } } } }).blood?.core?.ab?.ph,
+        // DV amendment: the CONTINUOUS no-beat CoPP only (hemo/pipeline.ts `cppCont` → cor.cpp while no beat is read),
+        // never a beat's aoDia − LVEDP, which an IABP's post-deflation dip distorts (research/20 DV-13d)
+        cppMmHg: (() => {
+          const c = (ps.hemo as unknown as { circ?: { cor?: { cpp?: number }; beats?: { t: number }[] } }).circ;
+          const lb = c?.beats?.[c.beats.length - 1];
+          return ps.rhythm.opts.pulseless === true || !lb || simT - lb.t > 3 ? c?.cor?.cpp : undefined;
+        })(),
+        arrestS: (() => {
+          const a = (ps.hemo as unknown as { circ?: { arrest?: { t?: number } | null } }).circ?.arrest;
+          return a && typeof a.t === 'number' ? Math.max(0, simT - a.t) : undefined;
+        })(),
+        tempC: (ps.resp as { temp?: { tc?: number } }).temp?.tc, // DV amendment: core temperature (FU-4 G12 reads the same)
+      }), // FU-7 (addendum 23): every field duck-typed — 7c, 7a/FU-4, 7g and Stage 3 all publish them already
       l1: (v) => (v === 'hr' ? rampValue(ps.hr, simT) : l1Value(ps.l1, v as L1Var, simT)),
       setModifiers: (patch) => {
         ps.mods = mergeModifiers(ps.mods, patch);

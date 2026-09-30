@@ -4982,7 +4982,7 @@ shocks as well as a fresh one.
 All factors are `[ENG]` COMBINATIONS of sourced directions; each is one named constant with its citation, and the gate
 note lists them for Ali's calibration pass.
 
-- [ ] **Step 0 — the re-sourced base table (DV amendment (a)).** In `packages/engine-core/src/l3/defib-pacer/outcome.ts`,
+- [x] **Step 0 — the re-sourced base table (DV amendment (a)).** In `packages/engine-core/src/l3/defib-pacer/outcome.ts`,
 find:
 
 ```ts
@@ -5047,7 +5047,7 @@ Replace with:
 - The stale `persistent 0.3` wording in research/20's DV-01a hand note is the audit's own record; FU-7 does not edit
   it. The gate note re-grades DV-01a from the seeded arm (Step 7a).
 
-- [ ] **Step 1 — the context.** In `packages/engine-core/src/l3/defib-pacer/outcome.ts`, find:
+- [x] **Step 1 — the context.** In `packages/engine-core/src/l3/defib-pacer/outcome.ts`, find:
 
 ```ts
 export interface ShockContext {
@@ -5144,7 +5144,7 @@ export function cardioversionSinus(c: ShockContext): number {
 }
 ```
 
-- [ ] **Step 2 — the probabilities.** Find:
+- [x] **Step 2 — the probabilities.** Find:
 
 ```ts
     if (c.energyJ < LOW_ENERGY_FRACTION * c.defaultJ) {
@@ -5188,7 +5188,7 @@ Replace with:
   }
 ```
 
-- [ ] **Step 3 — the device layer fills it.** In `packages/engine-core/src/l3/device-layer.ts`, find:
+- [x] **Step 3 — the device layer fills it.** In `packages/engine-core/src/l3/device-layer.ts`, find:
 
 ```ts
     outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak }, rng);
@@ -5220,7 +5220,7 @@ Replace with:
 }
 ```
 
-- [ ] **Step 4 — the engine provides it (E-FU7-7).** In `packages/engine-core/src/engine.ts`, in the object the device
+- [x] **Step 4 — the engine provides it (E-FU7-7).** In `packages/engine-core/src/engine.ts`, in the object the device
 host is built from (the one carrying `outcomeRng`, `rhythmId`, `setRhythm`), find:
 
 ```ts
@@ -5269,7 +5269,7 @@ Replace with:
     - **V2, a running IABP:** its dip enters `cppCont` while it keeps inflating.
 
   The prototype (below) typechecked this accessor clean.
-- [ ] **Step 5 — the test.** Create `packages/engine-core/test/l3/shock-state.test.ts`:
+- [x] **Step 5 — the test.** Create `packages/engine-core/test/l3/shock-state.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -5351,7 +5351,7 @@ describe('shock outcome — DV amendment (research/20 DV-01a, DV-24a/b, DV-06a�
 });
 ```
 
-- [ ] **Step 6 — sugammadex's missing hazard (DI-45, MI; the same file family).** `rows-cardiovascular.ts`: the
+- [x] **Step 6 — sugammadex's missing hazard (DI-45, MI; the same file family).** `rows-cardiovascular.ts`: the
 sugammadex row has `pd: []`. Add the recognised (rare) bradycardia as a deterministic PD entry — NOT a random event —
 because a teaching simulator must be able to show it on demand, and mark the anaphylaxis as 7e's condition:
 
@@ -5375,7 +5375,7 @@ case becomes an `it.fails` naming C3 / FU-8 Part A. Prefer the unit-level `Shock
 carry the same assertion, since it has no rhythm and therefore no exposure to C3.
 (DV amendment: the new cardioversion curve is asserted at unit level in Step 5, which is not exposed to C3. The DV-06a
 whole-engine arms shock after **40 s** of AF, inside the 5-minute guard.)
-- [ ] **Step 7 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/device`
+- [x] **Step 7 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/device`
 (FU-5's tests must stay green) and `npx -y pnpm@9.15.9 run audit:drugs DI-13a DI-45`. Expected: DI-13a **MI → PL**
 (amiodarone now reaches the outcome) and DI-45 **MI → PL** (the bradycardia exists).
 - [ ] **Step 7a — ROSC end to end, and the DV guard cells (DV amendment (f), research/20 §4 finding 5 and §7).**

@@ -15,7 +15,11 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
     doses: '0.15–0.2 mg/kg (ED95 0.04)', onset: 'max block 2–3 min, duration ≈ 45 min; Hofmann elimination (T5d, Q50)', ir: '?', src: `Cis label; ${CISATRACURIUM.cl1} L/kg/min`, tag: 'P' },
   { id: 'succinylcholine', name: 'Succinylcholine', cls: 'depolariser', amountUnit: 'mcg', pk: { kind: 'nmb', agent: 'succinylcholine' }, pd: [], shared: 'blood',
     doses: '1–1.5 mg/kg (ED95 0.51–0.63, M10 ch. 24 p. 677)', onset: 'block ≈ 1 min; T1 10 % 7.1 min, 90 % 10.9 (label); K +0.5 (7c)', ir: '?', src: `Sux label; Lee 2009; Roy 2002 CL ${SUCCINYLCHOLINE.cl1} L/kg/min`, tag: 'P' },
-  { id: 'sugammadex', name: 'Sugammadex', cls: 'nmbReversal', amountUnit: 'mg', pk: { kind: 'nmb', agent: 'sugammadex' }, elim: { renal: 1 }, pd: [],
+  { id: 'sugammadex', name: 'Sugammadex', cls: 'nmbReversal', amountUnit: 'mg', pk: { kind: 'nmb', agent: 'sugammadex' }, elim: { renal: 1 },
+    // FU-7 (DI-45): marked bradycardia is a recognised sugammadex reaction (MHRA/EMA; M10 ch. 24 pp. 728–731). Modelled
+    // as a dose-related vagal fall at the high (16 mg/kg) end [ENG: no incidence-vs-dose source exists]; the anaphylaxis
+    // is 7e's `condition anaphylaxis`, dispatched by the instructor, not a drug row.
+    pd: [{ target: 'hr', emax: -0.25, ec50: 12 }],
     doses: '2 mg/kg at T2; 4 mg/kg at 1–2 PTC; 16 mg/kg immediate (M10 ch. 24 pp. 728–731)', onset: 'TOFR 0.9 in 2.2 / 2.7 min; 16 mg/kg T1 10 % in 1.2 min (label)', ir: '?', src: `Sgx label; V ${SUGAMMADEX.v1} L/kg`, tag: 'P' },
   // FU-7 (H9): t½β 77 min, 181 min in renal failure (Cronnelly 1979 Anesthesiology 51:222; M10 ch. 24)
   { id: 'neostigmine', name: 'Neostigmine', cls: 'anticholinesterase', amountUnit: 'mg', pk: gammaPk(0.05, true, 600, 3600), elim: { renal: 0.5, t12S: 4620 },
