@@ -2298,10 +2298,10 @@ Step 1 converts it to remifentanil-equivalents, `× FENT_VENT_POT`) and 7f's own
 fallback. The first draft's EEG-weighted twin (`1.25 × opioidCeRemiEq` at both sites) is gone — it also doubled
 fentanyl's MAC reduction and antinociception (D16), which the second fixer measured in Task 10's fentanyl arm.
 
-- [ ] **Step 1 — verify the output against the two consumers.** With Task 3 applied, run
+- [x] **Step 1 — verify the output against the two consumers.** With Task 3 applied, run
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/potency-outputs.test.ts test/l2/neuro/pk-bus-contract.test.ts`
 Expected: green (the prototype's `pk-bus-contract` 6 tests passed unchanged).
-- [ ] **Step 2 — the per-agent potency table for the gate note.** Write `<scratchpad>/fu-7-drug-layer/opioid-potency.ts`
+- [x] **Step 2 — the per-agent potency table for the gate note.** Write `<scratchpad>/fu-7-drug-layer/opioid-potency.ts`
 (a scratch script, not committed) that prints, for fentanyl 2 µg/kg, remifentanil 1 µg/kg, sufentanil 0.2 µg/kg and
 morphine 0.1 mg/kg at their peaks: `agents[id].brain`, `agents[id].vent`, `cns.opioidCeRemiEq`, `cns.opioidCeFentEq`,
 `cns.opioidVentFentEq`, and 7f's `readBus().vent.opioid`. Paste the table into the gate note §3. Expected shape: for
@@ -2309,7 +2309,7 @@ fentanyl alone `opioidCeFentEq` = the fentanyl brain Ce and `opioidVentFentEq` =
 equals `opioidVentFentEq × 0.55` for every row, and equals 7f's pre-FU-7 sum for fentanyl and remifentanil (the rows
 that move are sufentanil and morphine: their EEG weights 12 / 1.5 at the brain site are replaced by 5 / 0.8 at the
 ventilatory site — D16).
-- [ ] **Step 3 — commit.** `test(7g): verify the opioid-potency output against both consumers (R51 addendum 20)`, push.
+- [x] **Step 3 — commit.** `test(7g): verify the opioid-potency output against both consumers (R51 addendum 20)`, push.
 
 ---
 
