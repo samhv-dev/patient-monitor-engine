@@ -10,7 +10,7 @@
 //   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × 7b's condition pMax (fatigue comes sooner in a weak patient).
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
-import { brainstemOutF } from '../circ/baroreflex.ts'; // FU-6 gate G-FU6-2: FU-4's brainstem-ischaemia withdrawal
+import { NO_FLOW_S } from '../circ/arrest.ts'; // FU-6 gate G-FU6-2: the arrest declaration's no-flow window
 import { DIAPH_APNOEA, type NeuroResp } from './drive.ts';
 
 export const SPONT_DT_S = 1;
@@ -54,6 +54,7 @@ export interface SpontDrive {
   anoxS?: number; // FU-3 item 16 (E-FU3-10): seconds without brainstem perfusion (absent while perfused)
   gate?: number; // FU-3 item 16 (E-FU3-10): 0 → 1 while the drive reopens after an anoxic spell (absent = open)
   pc?: number; // FU-6 R3(a): central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
+  plS?: number; // FU-6 G-FU6-2: seconds pulseless (absent while there is a pulse)
   effort?: number; // FU-6 R3(b): the neural inspiratory effort relative to rest (neural VT / resting VT); absent = 1
 }
 
@@ -85,6 +86,7 @@ export interface SpontInputs {
   resistance: number; // cmH2O·s/L
   neuro?: NeuroResp;
   noFlow?: boolean; // FU-3 item 16 (E-FU3-10): no circulation (pulseless rhythm or cardiac output 0)
+  pulseless?: boolean; // FU-6 G-FU6-2: the engine's pulseless determination (pulseless flag or a no-beat rhythm)
   wakeMmHg?: number; // FU-6 F7: the patient's drawn wakefulness shift (resp pipeline; absent = WAKE_MMHG)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
   ibwKg?: number; // FU-6 R3(c): the VT ceiling's size (absent = 70)
@@ -133,11 +135,13 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     rr *= s.gate;
     if (s.gate >= 1) delete s.gate;
   }
-  // FU-6 gate G-FU6-2 (orchestrator ruling on PR #28): the inspiratory effort follows the brainstem — it withdraws with
-  // FU-4's brainstem-ischaemia factor (the one that withdraws the vasomotor reflex: full at CBF ≥ 0.6, none at ≤ 0.2), so
-  // a pulseless patient in CPR (CBF 0.3–0.4) does not out-breathe, and so does not trigger, the ventilator. Agonal
-  // gasping stays FU-3's gate above; nothing else is modelled.
-  rr *= brainstemOutF(x.cbfRel);
+  // FU-6 gate G-FU6-2 (orchestrator final ruling on PR #28): the patient's inspiratory effort — spontaneous and
+  // ventilator-triggering — is withdrawn while the circulation is PULSELESS (the engine's own determination: a pulseless
+  // rhythm flag or a no-beat rhythm, which covers an instructor-commanded VF without an arrest state), ramped to zero
+  // over the arrest declaration's NO_FLOW_S window and restored when the circulation returns. No new constant.
+  if (x.pulseless) s.plS = (s.plS ?? 0) + SPONT_DT_S;
+  else if (s.plS !== undefined) delete s.plS;
+  if (s.plS !== undefined) rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;

@@ -28,10 +28,7 @@ const fresh = () => {
 };
 
 describe('FU-3 item 16: brainstem-perfusion gate on the MODELED drive (E-FU3-10)', () => {
-  // FU-6 gate G-FU6-2 (orchestrator ruling on PR #28, R45): the effort now follows FU-4's brainstem-ischaemia withdrawal
-  // (brainstemOutF: × 0 at CBF ≤ 0.2, × 0.125 at 0.25, full from 0.6), so a CBF-gated run is no longer identical to the
-  // ungated one, and below 0.2 the gasps are withdrawn too (the ruling: agonal gasping is not modelled). it.fails.
-  it.fails('perfused (cbfRel ≥ 0.2, flow present): bit-identical to the ungated drive, no gate fields written — not since G-FU6-2 (rate × brainstemOutF = 0 at CBF 0.2)', () => {
+  it('perfused (cbfRel ≥ 0.2, flow present): bit-identical to the ungated drive, no gate fields written', () => {
     const a = fresh();
     const b = fresh();
     run(a, 0, 120, {});
@@ -57,10 +54,7 @@ describe('FU-3 item 16: brainstem-perfusion gate on the MODELED drive (E-FU3-10)
     }
     expect(ref[200]?.[1] ?? 0).toBeGreaterThan(GASP_RR); // the ungated hypercapnic drive breathes fast
   });
-  // FU-6 gate G-FU6-2 (orchestrator ruling on PR #28, R45): the effort now follows FU-4's brainstem-ischaemia withdrawal
-  // (brainstemOutF: × 0 at CBF ≤ 0.2, × 0.125 at 0.25, full from 0.6), so a CBF-gated run is no longer identical to the
-  // ungated one, and below 0.2 the gasps are withdrawn too (the ruling: agonal gasping is not modelled). it.fails.
-  it.fails('7d CBF below 20 % closes the gate exactly as no flow does; 25 % does not — not since G-FU6-2 (CBF 0.1: no gasps; 0.25: rate × 0.125)', () => {
+  it('7d CBF below 20 % closes the gate exactly as no flow does; 25 % does not', () => {
     const noFlow = run(fresh(), 0, 200, { noFlow: true });
     expect(run(fresh(), 0, 200, { cbfRel: 0.1 })).toEqual(noFlow);
     expect(run(fresh(), 0, 200, { cbfRel: 0.25 })).toEqual(run(fresh(), 0, 200, {}));

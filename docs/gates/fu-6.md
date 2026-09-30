@@ -119,7 +119,7 @@ and SpO₂ lag 22 s (band 20); `link-parity` bronchospasm (link VT 238 vs 476).
 
 **Other files, R45 applied by the executor (not in the plan's lists — deviations, §6):** `neuro-acceptance` residual
 block VT ratio 0.80 (band < 0.75; the rig has no hypnotic = Eikermann's awake patient, D21); `organs-tbi` MODELED
-Cushing HR ratio 0.803 (0.801 after the fix round; ≤ 0.80; the MAP half stays `it`); ~~`arrest-etco2` 15.9~~ back to `it` at 17.9 (G-FU6-2);
+Cushing HR ratio 0.803 (≤ 0.80; the MAP half stays `it`); ~~`arrest-etco2` 15.9~~ back to `it` at 17.9 (G-FU6-2);
 `tension-ptx` decompression at +4 min finds a pulseless patient (PEA at +3.87 min; +3.75 after the fix round); `lung-circ` COPD MAP direction 1.79
 (> 2; the CO half −15 % stays `it`); ~~`fu8-pea-resus` and `circ-lowflow-arrest`'s two ROSC rows~~ back to `it` (G-FU6-1: pulse at +260 / +264 s); `neuro-engine` propofol DI nadir 52 (< 52); `resp-child-rest` adult CPR coRatio 0.363
 (0.25–0.33).
@@ -194,34 +194,30 @@ depression (RS5b, 7f/7g).
 
 ### Fix round (orchestrator gate on PR #28, findings G-FU6-1..3)
 
-- **G-FU6-1 — RESOLVED (viscosity fades with flow).** Blood is shear-thinning (Chien 1970 *Science* 168:977; Merrill
+- **G-FU6-1 — RESOLVED, accepted (viscosity fades with flow).** Blood is shear-thinning (Chien 1970 *Science* 168:977; Merrill
   1969 *Physiol Rev* 49:863): `setCircViscosity` now scales the factor's effect by the patient's flow ratio `coRatio`
   (the one the low-flow CO₂ code reads) — full at 1.0 (resting output), none at 0.3 (CPR-level flow, the 25–33 % band);
   two anchors, `VISC_FLOW_FULL` / `VISC_FLOW_NONE`. The class IV resuscitation regains a pulse again, inside FU-8's
   ≤ 300 s: `fu8-pea-resus` **+260 s** of CPR (agonal → sinus), `circ-lowflow-arrest` ROSC **+264 s** — all three rows
   back to `it`. The anaemia rows keep their numbers (Hb 5: HR 70 → 103, CO 5.76 → 6.93, lactate 1.00).
-- **G-FU6-2 — PARTLY RESOLVED, residual declared.** As ruled, the spontaneous effort (rate) is multiplied by FU-4's
-  `brainstemOutF(cbfRel)` (full at CBF ≥ 0.6, zero at ≤ 0.2) — no CPR flag. Triggered breaths in the arrest rig (VF,
-  CPR q 0.8, set 10/min): **141 → 108 in 9 min**; none in the first 5 min of CPR. The residual: under CPR q 0.8 the
-  cerebral flow climbs 0.28 → 0.48 while PaCO₂ rises 40 → 53, so the factor is 0.2–0.7 and the drive out-paces the set
-  rate from ≈ +6 min (11–15/min). New row `resp-trigger` "pulseless … no triggered breath" is `it.fails` with 108.
-  Zero would need either the arrest-state index (FU-4 G-FU4-1's `humF`, which withdraws with the declared arrest) or a
-  lower withdrawal band — a ruling. Re-measured rigs: `arrest-etco2` CPR mean EtCO₂ **17.9** (was 15.9; 17.5 on main) →
-  back to `it`; `tension-ptx` PEA at +3.75 min (decompression row stays `it.fails`); `organs-tbi` MODELED Cushing HR
-  ratio 0.801 (58.5/73.0; stays `it.fails`) — both trigger before any arrest (normal CBF), so the brainstem factor does
-  not change them.
-- **G-FU6-3 — DIAGNOSED, not triggering; RS1 stays `it.fails`.** The RS1 rig is paralysed (rocuronium 1.2 mg/kg): 12
+- **G-FU6-2 — RESOLVED (final ruling).** The patient's inspiratory effort (spontaneous and ventilator-triggering) is
+  withdrawn while the circulation is PULSELESS — the engine's own determination (`rhythm.opts.pulseless` or a no-beat
+  rhythm, `NO_BEAT_RHYTHMS`, which covers a commanded VF with no arrest state) — ramped to zero over the arrest
+  declaration's `NO_FLOW_S` (60 s) and restored when the circulation returns; no new constant. The interim cerebral-flow
+  factor (`brainstemOutF` on the rate) is reverted, and FU-3's two `brainstem-gate` rows hold again as `it`.
+  `resp-trigger` "no triggered breath while pulseless": **90 machine breaths in 9 min of CPR at 10/min** (was 141) → `it`.
+  Re-measured rigs: `arrest-etco2` CPR mean EtCO₂ **18.3** (`it`); tension PTX PEA +3.72 min (decompression row stays
+  `it.fails`); TBI Cushing HR ratio 0.803 (stays `it.fails`; it triggers before any arrest); `circ-hypoxic-arrest`,
+  `cpr-etco2`, `fu8-pea-resus` (+260 s), `circ-lowflow-arrest` (+264 s) green. **Side effect:** `clinical-suite` "10 min of
+  VF with CPR: kIsch < 0.9" reads **1.00** — that rig is not ventilated, so with the effort withdrawn the patient is
+  apnoeic through the whole CPR (on 82104cc FU-3's reopened drive breathed for it); not the viscosity fade (Hb normal,
+  viscF ≈ 1). Kept `it.fails` with 1.00.
+- **G-FU6-3 — DIAGNOSED, not triggering; RS1 stays `it.fails` — ACCEPTED as declared (final ruling).** The RS1 rig is paralysed (rocuronium 1.2 mg/kg): 12
   breaths in its last minute, spontaneous rate 0 — no triggers. The cause is R4's anaesthetised-lung state: `gaLvl` → 1
   under propofol lowers VCO₂ by 15 % (GA_METABOLIC). Same rig with `gaLvl` held at 0: PaCO₂ **37.4** (V̇A 4.36 L/min
   either way) vs **32.2** with it. The ruled 38.5 default (FU-4 Q10) was set without an anaesthetic VCO₂ reduction;
   whether 12 × 7 mL/kg should now be the default under GA, or GA_METABOLIC's size (0.85, applied by FU-6 to every
   anaesthetic) should change, is Ali's (§7 calibration row).
-- **Fix-round side effects (R45, it.fails with numbers):** `clinical-suite` "10 min of VF with CPR: kIsch < 0.9" measured
-  **0.912** (0.89 after FU-8; not bisected between G-FU6-1 and -2); FU-3's two `brainstem-gate` unit rows that asserted
-  the CBF-gated drive is identical to the ungated one at CBF 0.2/0.25 — no longer true by the ruling (rate × 0 at 0.2,
-  × 0.125 at 0.25; the gasps below 0.2 are withdrawn too, the ruling's "agonal gasping is not modelled").
-  `circ-hypoxic-arrest`, `cpr-etco2`, `circ-sanity-2` green. Fast set: engine 1228 tests, all packages green; slow-a
-  167 green after the kIsch row; slow-b 252 green.
 - **Rigs with an awake, unparalysed patient on the internal ventilator** (TBI Cushing, tension PTX) still breathe over it
   before any arrest — physiologically right; the rigs' premise is FU-4's/7d's to restate.
 - **NEW — pre-existing on origin/main, surfaced by the suite:** severe COPD at RR 30 arrests (PEEPtot 23.2, CO 0) and a

@@ -52,15 +52,9 @@ describe('FU-6 R9: kink, triggering, bucking (was Paw = PEEP; set RR only)', { t
     expect(b.peak).toBeGreaterThanOrEqual(rest.peak + 15);
   });
   // G-FU6-2 (orchestrator gate ruling on PR #28): a PULSELESS patient does not trigger the ventilator — the inspiratory
-  // effort follows the brainstem and goes to zero with FU-4's brainstem-ischaemia withdrawal (brainstemOutF, the factor
-  // that withdraws the reflex). Rig: arrest-etco2's (undrugged, unparalysed, VCV 12 × 600), VF at 60 s, CPR q 0.8 from
+  // effort is withdrawn while pulseless (ramped over NO_FLOW_S, the final ruling). Rig: arrest-etco2's (undrugged, unparalysed, VCV 12 × 600), VF at 60 s, CPR q 0.8 from
   // 90 s with the ventilator at 10/min. Was 14–19 triggered breaths/min during CPR (arrest-etco2 mean EtCO2 17.5 → 15.9).
-  // R45 (executor, G-FU6-2 fix round): the ruled mechanism (the effort × FU-4's brainstemOutF) removes most of the
-  // triggering (141 → 108 breaths in 9 min; none in the first 5 min of CPR) but not all: under CPR q 0.8 the cerebral
-  // flow climbs 0.28 → 0.48 while PaCO2 rises 40 → 53, so the factor is 0.2–0.7 and the drive out-paces the set 10/min
-  // from ≈ +6 min (11–15/min). Zero would need the arrest-state index (FU-4 G-FU4-1's humF) or lower thresholds — a
-  // ruling, gate note §8.
-  it.fails('pulseless (VF, then CPR q 0.8): no triggered breath — the ventilator delivers its set rate — measured 108 breaths in 9 min at a set 10/min (141 before the brainstem factor) (G-FU6-2)', async () => {
+  it('pulseless (VF, then CPR q 0.8): no triggered breath — the ventilator delivers its set rate (was 141 breaths in 9 min at 10/min)', async () => {
     const e = rig6();
     const breaths: number[] = [];
     e.on((x) => { if (x.type === 'breath') breaths.push(x.t); }, ['breath']);

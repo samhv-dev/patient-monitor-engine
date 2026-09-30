@@ -21,6 +21,7 @@ import type { ChannelId, Command, EngineEvent, NumericId, Measured, PatientProfi
 import { airwayCo2, createSampler, CO2_RATE, sampleCo2, type CapnoCtx, type SamplerState } from '../co2/capno.ts';
 import { cardiacOutput } from '../gas/coupling.ts';
 import { obstructedSwingMmHg, pleuralPressureMmHg } from '../circ/pleural.ts'; // Stage 7a; FU-6 R3(b): NPPE input
+import { NO_BEAT_RHYTHMS } from '../circ/coronary.ts'; // FU-6 G-FU6-2: the engine's no-beat rhythms
 import { CMH2O_TO_MMHG, P_PL0, T_IT } from '../circ/params.ts'; // Stage 7b (Task 26)
 import { HEALTHY } from '../../../data/lung-pathology.ts'; // Stage 7b (Task 26)
 import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co2State } from '../gas/co2.ts'; // Stage 7b: etco2Mixed
@@ -513,6 +514,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
       co2SlopeMult: lp.co2Slope, pMaxMult: lp.pMax, evlwi: 7 + (rs.evlwiExtra ?? 0), complianceMl: compliance(rs),
       resistance: lp.rTube + 1 / lp.side.reduce((g, sd) => g + 1 / Math.max(0.1, sd.rLung), 0), neuro: ctx.neuro,
       noFlow: ctx.rhythm.opts?.pulseless === true || rs.coRatio <= 0, cbfRel: ctx.cbfRel, // FU-3 item 16 (E-FU3-10)
+      pulseless: ctx.rhythm.opts?.pulseless === true || NO_BEAT_RHYTHMS.has(ctx.rhythm.id), // FU-6 G-FU6-2
       ibwKg: rs.pat.ibwKg, airwayObs: d.airway === 'obstructed' ? 1 : 0, // FU-6 R3(b), R3(c)
       setShift: PREG_PACO2_SHIFT_MMHG * pregnancy(rs), // FU-6 R10: progesterone
       jDrive: Math.min(1, rs.lungSpecs.reduce((m, s) => (s.id === 'pe' ? Math.max(m, s.severity) : m), 0)), // FU-6 R12
