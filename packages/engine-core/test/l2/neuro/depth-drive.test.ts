@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { depth } from '../../../src/l2/neuro/depth.ts';
+import { depth, KET_EQ_PROP, MIDAZ_EQ_PROP } from '../../../src/l2/neuro/depth.ts'; // FU-7 (E-FU7-9)
 import { neuroResp } from '../../../src/l2/neuro/drive.ts';
 import { ec50Multipliers } from '../../../src/l2/neuro/interactions.ts';
 
 const C0 = { propofol: 0, remifentanil: 0, fentanyl: 0, midazolam: 0, ketamine: 0 };
-const di = (ce: Partial<typeof C0>, mac: { potent?: number; n2o?: number } = {}, ageY = 40, t1 = 0, stimulus = 0) =>
-  depth({ ageY, ce: { ...C0, ...ce }, macPotent: mac.potent ?? 0, macN2o: mac.n2o ?? 0, t1, stimulus });
+// FU-7 (addendum 20, E-FU7-9): the hypnotic POTENCY OUTPUT is 7g's; this helper computes it from the per-agent
+// concentrations at the ratios 7g's rows carry (review F10: depth.ts's MIDAZ_EQ_PROP / KET_EQ_PROP are derived from them).
+const di = (ce: Partial<typeof C0>, mac: { potent?: number; n2o?: number } = {}, ageY = 40, t1 = 0, stimulus = 0) => {
+  const c = { ...C0, ...ce };
+  const hypPropEq = c.propofol + MIDAZ_EQ_PROP * c.midazolam + KET_EQ_PROP * c.ketamine;
+  return depth({ ageY, ce: c, macPotent: mac.potent ?? 0, macN2o: mac.n2o ?? 0, t1, stimulus,
+    hypPropEq, dissoc: hypPropEq > 0 ? (KET_EQ_PROP * c.ketamine) / hypPropEq : 0 });
+};
 const V0 = { opioid: 0, propofol: 0, midazolam: 0, ketamine: 0 };
 const vent = (v: Partial<typeof V0>, macVolatile = 0) =>
   neuroResp({ vent: { ...V0, ...v }, macVolatile, diaBlock: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false });

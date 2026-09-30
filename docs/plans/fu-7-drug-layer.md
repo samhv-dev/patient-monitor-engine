@@ -2335,7 +2335,7 @@ ventilatory site — D16).
 +10 s / +20 s, awakening at 360 s / 195 s (bands 240–900 / 150–600 ✓), apnoea marks at +14 s / +21 s. `depth-drive`'s
 ketamine case (index > 93 AND unconscious) passes through D3's EEG weight: index **98**, `conscious` false.
 
-- [ ] **Step 1 — the reader.** In `packages/engine-core/src/l2/neuro/bus.ts`, find:
+- [x] **Step 1 — the reader.** In `packages/engine-core/src/l2/neuro/bus.ts`, find:
 
 ```ts
 export interface NeuroInputs {
@@ -2448,7 +2448,7 @@ import { FENT_VENT_REMI_EQ } from '../pk/pd.ts'; // FU-7 (D16)
 export type NmbAgent
 ```
 
-- [ ] **Step 2 — depth.** In `packages/engine-core/src/l2/neuro/depth.ts`, find:
+- [x] **Step 2 — depth.** In `packages/engine-core/src/l2/neuro/depth.ts`, find:
 
 ```ts
 export const KET_DI_RISE = 15; // index points at full ketamine effect [ENG: "ketamine ↑ DI (paradox)"]
@@ -2577,7 +2577,7 @@ Replace with:
   const hypEq = macEff + hyp / ce50Propofol(x.ageY) / (1 - red); // MAC-equivalents (FU-7: the hypnotic equivalent)
 ```
 
-- [ ] **Step 3 — the pipeline passes them.** In `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
+- [x] **Step 3 — the pipeline passes them.** In `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
 
 ```ts
   const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0 });
@@ -2590,7 +2590,7 @@ Replace with:
     hypPropEq: x.hypPropEq, opioidFentEqIn: x.opioidFentEq, dissoc: x.dissoc }); // FU-7 (addendum 20)
 ```
 
-- [ ] **Step 4 — the fixtures (E-FU7-9; three tests fail without this, and NO band changes).** Measured in the
+- [x] **Step 4 — the fixtures (E-FU7-9; three tests fail without this, and NO band changes).** Measured in the
 prototype before the fixture update: `depth-drive` "ketamine raises the index" (a `DepthInputs` built by hand),
 `pipeline` "propofol 3 µg/mL → loss of consciousness" and "publishes the 7e fields …" (a `busFixture` that sets
 `cns.propCe` but not the equivalent → the reader published 0 and the fallback could not fire). Both fixtures now
@@ -2672,7 +2672,7 @@ import { depth, KET_EQ_PROP, MIDAZ_EQ_PROP } from '../../../src/l2/neuro/depth.t
 No band, title or expectation in either file changes (R45). Run:
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/l2/pk test/l2/endo test/l2/circ`
 Expected (prototype): **55 files / 272 passed, 1 skipped**.
-- [ ] **Step 5 — the new test.** Create `packages/engine-core/test/l2/neuro/hypnotic-equivalent.test.ts`:
+- [x] **Step 5 — the new test.** Create `packages/engine-core/test/l2/neuro/hypnotic-equivalent.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2709,7 +2709,7 @@ describe('hypnotic equivalent (R51 addendum 20)', () => {
 });
 ```
 
-- [ ] **Step 6 — the engine cell.** `npx -y pnpm@9.15.9 run audit:drugs DI-69 DI-02 DI-77 DI-72`.
+- [x] **Step 6 — the engine cell.** `npx -y pnpm@9.15.9 run audit:drugs DI-69 DI-02 DI-77 DI-72`.
 Expected (first writer): thiopental LOC +10 s / awakening 360 s; etomidate +20 s / 195 s; ketamine LOC 20 s; propofol
 unchanged (60 / 440 s); DI-02 co-induction −8 DI points (PL); DI-77 MAC reduction 0.61 (PL); DI-72 flumazenil +12.
 With Task 2 Step 2b and D16/D19 on main + FU-4 e3eeb56 (third fixer, "Prototype — second fixer"): thiopental +10 s /
@@ -2717,7 +2717,7 @@ With Task 2 Step 2b and D16/D19 on main + FU-4 e3eeb56 (third fixer, "Prototype 
 DI-72 +13. **Recorded deviation (D20, pinned):**
 ketamine's LOC stays earlier than the audit's ≥ 30 s (the 60 s peak cannot give both LOC ≥ 30 s and emergence in
 10–20 min); emergence is asserted in band. Report the numbers; do not re-fit `tpS`.
-- [ ] **Step 7 — commit.** `feat(7f): depth reads 7g's ONE hypnotic and ONE opioid potency output (R51 addendum 20, E-FU7-1)`, push.
+- [x] **Step 7 — commit.** `feat(7f): depth reads 7g's ONE hypnotic and ONE opioid potency output (R51 addendum 20, E-FU7-1)`, push.
 
 ---
 

@@ -194,7 +194,8 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   // depth
   // 7e's hypothermic MAC reduction (cascade macF: the same brain tension is a larger MAC fraction) and neuroglycopenia
   const macF = Math.max(0.3, env.macF ?? 1);
-  const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0 });
+  const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0,
+    hypPropEq: x.hypPropEq, opioidFentEqIn: x.opioidFentEq, dissoc: x.dissoc }); // FU-7 (addendum 20)
   ns.diShown = smoothDi(ns.diShown, d.diRaw, NEURO_DT_S);
   // drive
   const natural = ns.airway === 'none' || (ns.airway === 'auto' && !env.mechanical);
