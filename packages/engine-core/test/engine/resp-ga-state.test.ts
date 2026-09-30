@@ -27,12 +27,12 @@ describe('FU-6 R4: anaesthetised lungs follow the anaesthetic state (was a hidde
     expect(m).toBeGreaterThanOrEqual(6.5);
     expect(m).toBeLessThanOrEqual(9.5);
   });
-  it('obese 127 kg: 2–3.5 min (measured 2.85; plan 2.83; was 3.33)', async () => {
+  it('obese 127 kg: 2–3.5 min (measured 2.77 under FU-8’s continuous body-size rule; 2.85 before the FU-8 merge; plan 2.83; was 3.33)', async () => {
     const m = await apnoea90({ ...ADULT6, weightKg: 127 });
     expect(m).toBeGreaterThanOrEqual(2);
     expect(m).toBeLessThanOrEqual(3.5);
   });
-  it.fails('child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.33 on the merged main (3.50 on the prototype; was 7.83); FU-6 Task 17 re-measures', async () => {
+  it.fails('child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.38 on the tree merged with FU-8 (3.33 before it; 3.50 on the prototype; was 7.83); FU-6 Task 17 re-measures', async () => {
     const m = await apnoea90({ ageY: 4, weightKg: 16, heightCm: 102, sex: 'M' });
     expect(m).toBeGreaterThanOrEqual(2);
     expect(m).toBeLessThanOrEqual(3.2);

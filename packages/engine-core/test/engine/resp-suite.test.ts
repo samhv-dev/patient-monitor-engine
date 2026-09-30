@@ -56,7 +56,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
       expect(g.vdvt).toBeLessThanOrEqual(0.4);
     }
   });
-  it('RS2 preoxygenated apnoea to SaO2 90 %: adult 6.5–9.5, obese 2–3.5 (measured 7.95 / 2.87)', async () => {
+  it('RS2 preoxygenated apnoea to SaO2 90 %: adult 6.5–9.5, obese 2–3.5 (measured 7.95 / 2.77 with FU-8’s body-size rule; 2.87 before the FU-8 merge)', async () => {
     const a = await apnoea90(ADULT6);
     const o = await apnoea90({ ...ADULT6, weightKg: 127 });
     row('RS2', { adult: +a.toFixed(2), obese: +o.toFixed(2) });
@@ -65,7 +65,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(o).toBeGreaterThanOrEqual(2);
     expect(o).toBeLessThanOrEqual(3.5);
   });
-  it.fails('RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.33) (FU-6 R10 / R4; 7j, FU-4 R1 owners)', async () => {
+  it.fails('RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.38) (FU-6 R10 / R4; 7j, FU-4 R1 owners)', async () => {
     const p = await apnoea90({ ageY: 30, sex: 'F', weightKg: 70, heightCm: 165, lungConditions: [{ id: 'pregnancy', severity: 1 }] });
     const c = await apnoea90({ ageY: 4, sex: 'M', weightKg: 16, heightCm: 102 });
     row('RS2b', { pregnancy: +p.toFixed(2), child: +c.toFixed(2) });
