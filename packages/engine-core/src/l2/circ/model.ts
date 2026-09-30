@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, P_PL0 } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, K_PVR_CO2, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -164,6 +164,7 @@ export interface CircModelState {
     endoHumDV0Frac?: number; // FU-4 F2(a) (7e): the humoral arm's venous recruitment, fraction of blood volume (− = venoconstriction)
     endoHumSvrF?: number; // FU-4 G-FU4-1 (7e): the humoral arm's × on SVR, already inside endoSvrF
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
+    viscF?: number; // FU-6 R11 (7c): blood-viscosity factor on the systemic resistance, default 1
     kEcg?: number; // FU-4 G3 (7c): the membrane-effective K (calcium-stabilised), mmol/L — sinus node and the arrest hazard
     cbfRel?: number; // FU-4 F1(b) (7d): relative cerebral blood flow — the brainstem perfusion of the vasomotor centre
     tempC?: number; // FU-4 G12 (engine, from Stage 3/7e): core temperature for the hypothermic VF hazard
@@ -296,7 +297,7 @@ function control(m: CircModelState, env: CircEnv): void {
   const humF = env.modeled && m.arrest ? Math.max(0, 1 - (m.t - m.arrest.t) / NO_FLOW_S) : 1;
   const hsv = x.endoHumSvrF ?? 1;
   const endoSvr = humF === 1 || hsv === 1 ? (x.endoSvrF ?? 1) : ((x.endoSvrF ?? 1) / hsv) * (1 + (hsv - 1) * humF);
-  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr;
+  p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr * (x.viscF ?? 1); // FU-6 R11: viscosity
   const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
   const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
   // FU-2 F4 + FU-4 F2(a): the baroreflex, the β-agonists and the HUMORAL arm all recruit from ONE splanchnic reservoir.
@@ -310,8 +311,10 @@ function control(m: CircModelState, env: CircEnv): void {
   p.cSv = base.cSv * b.cSvF;
   const pvrF = man.pvr === null ? 1 : man.pvr / ((base.pvrL * base.pvrR) / (base.pvrL + base.pvrR));
   const lung = m.ext.pvrLung ?? 1; // R46 (7b): per-lung PVR multipliers on the per-lung flow split
-  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1);
-  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1);
+  // FU-6 R14: hypercapnic pulmonary vasoconstriction (not while the instructor pins PVR)
+  const co2F = man.pvr === null ? 1 + K_PVR_CO2 * Math.max(0, m.chemo.paco2 - 40) : 1;
+  p.pvrL = base.pvrL * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungL ?? 1) * co2F;
+  p.pvrR = base.pvrR * de.pvr * m.ext.pvr * pvrF * lung * (m.ext.pvrLungR ?? 1) * co2F;
   if (m.ext.vFluidRate) m.ext.vFluid = Math.min(TAMPONADE_MAX_ML, Math.max(0, m.ext.vFluid + m.ext.vFluidRate * CTL_DT)); // FU-4 G6
   p.vFluid = base.vFluid + m.ext.vFluid;
   const kc = x.kChem ?? 1;

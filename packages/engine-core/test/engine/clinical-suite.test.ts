@@ -295,7 +295,11 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   });
   // R45 (Task 18a's residual): 0.56 at 70 s, but the flow share recovered as CoPP settled above 25 — max 0.91 (end 0.87).
   // FU-8 (E-FU8-9): flipped by the outflow limiter (A19): max 0.89
-  it('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before)', async () => {
+  // R45 (FU-6 final ruling G-FU6-2): this rig is NOT ventilated (no airway, spontaneous source). With the patient's effort
+  // withdrawn while pulseless it stays apnoeic through the whole CPR (on 82104cc FU-3's reopened drive breathed for it),
+  // and the kIsch maximum reads 1.00 (0.89 after FU-8, 0.912 with the interim brainstem factor). Not the viscosity fade
+  // (Hb normal: viscF ≈ 1). it.fails with the number.
+  it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before) — measured 1.00 after FU-6 G-FU6-2 (the unventilated rig is apnoeic while pulseless)', async () => {
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'setRhythm', rhythm: 'vfCoarse', atTick: 60 * 50 } as unknown as Command);
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);

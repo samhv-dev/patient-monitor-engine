@@ -25,6 +25,8 @@ export type RespClinicalEvent =
       fico2?: number;
       /** Stage 3 extension: 0–1 spontaneous diaphragmatic effort during mechanical breaths (curare cleft). */
       effort?: number;
+      /** FU-6 R7: the ventilator's pressure limit in volume control, cmH2O (10–80; default VCV_PMAX_DEFAULT 40). */
+      pmax?: number;
     }
   | { kind: 'preoxygenate'; fio2: number; durationS: number }
   | { kind: 'condition'; id: 'mh'; severity: number }

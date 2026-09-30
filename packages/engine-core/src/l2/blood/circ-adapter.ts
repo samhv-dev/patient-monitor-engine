@@ -26,6 +26,25 @@ export function pushCircVolume(c: CircLike, dMl: number, dtS: number): void {
   c.vol.push({ rate: dMl / dtS, until: c.t + dtS - 1e-6 });
 }
 
+/**
+ * FU-6 R11 (E-FU6-4): blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6
+ * (Weiskopf 1998 JAMA 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; 7a's optional `ext.viscF`.
+ */
+export const VISC_EXP = 0.6;
+/**
+ * FU-6 gate G-FU6-1 (orchestrator ruling on PR #28): blood is SHEAR-THINNING — at the very low shear rates of CPR and
+ * no-flow states its apparent viscosity rises (Chien S, Science 1970;168:977–979; Merrill EW, Physiol Rev 1969;49:863),
+ * so haemodilution's resistance reduction does not hold there. The factor fades with the patient's own flow ratio (the
+ * resp pipeline's `coRatio`, the one the low-flow CO2 code reads): full effect at the resting output (1.0), none at
+ * CPR-level flow (0.3 — CPR delivers 25–33 % of normal output, the CPR coRatio band). Two anchors, no other constant.
+ */
+export const VISC_FLOW_FULL = 1.0;
+export const VISC_FLOW_NONE = 0.3;
+export function setCircViscosity(c: CircLike, hbRel: number, flowRatio = 1): void {
+  const fade = Math.min(1, Math.max(0, (flowRatio - VISC_FLOW_NONE) / (VISC_FLOW_FULL - VISC_FLOW_NONE)));
+  c.ext.viscF = 1 + (Math.max(0.2, hbRel) ** VISC_EXP - 1) * fade;
+}
+
 /** 7a present: the chemistry contractility multiplier (7a's optional `ext.kChem`, written unconditionally; R50 F3). */
 export function setCircChemistry(c: CircLike, k: number): void {
   c.ext.kChem = k;

@@ -13,6 +13,72 @@ export const P_MAX_CMH2O = 90; // 80–100
 export const FATIGUE_TAU_S = 45 * 60;
 export const PAIN_GAIN = 0.3; // +20–40 % at noxious 1, not anaesthetised [ENG]
 export const J_RR_PER_EVLWI = 1.5; // RR +4–10 at EVLWI > 10 → +1.5/min per mL/kg above 10 [ENG]
+/**
+ * FU-6 R3(a): the wakefulness drive. Awake, breathing continues below the resting PaCO2 (Fink 1961 J Appl Physiol
+ * 16:15); unconscious it stops a few mmHg below the ANAESTHETISED resting PaCO2 (Nunn 9e ch. 5: apnoeic threshold
+ * 0.3–0.5 kPa below it; anaesthetised resting PaCO2 45–50). Loss of consciousness therefore raises the threshold B by
+ * WAKE_MMHG (B = set − VE0/S = set − 5 awake → set + 3 unconscious) [ENG size, directions sourced; sourced range
+ * 7–10 (threshold 2–5 mmHg above the awake resting PaCO2); fit target: test/engine/resp-induction.test.ts bands].
+ */
+export const WAKE_MMHG = 8;
+/**
+ * FU-6 R3(a): a neural drive below 10 % of the resting VE produces no breath (apnoea); breathing resumes above 15 %
+ * (hysteresis, as 7f's MANUAL APNOEA_IN/OUT 0.42/0.5 of resting VE) [ENG]. Was an absolute 0.2 L/min, which a
+ * depressed drive never reached: the RR floor of 4/min kept VE at 0.4–0.9 L/min after propofol + opioid.
+ */
+export const APNOEA_VE_IN = 0.1;
+export const APNOEA_VE_OUT = 0.15;
+/**
+ * FU-6 R3(b): inspiratory muscle pressure of a resting breath, cmH2O (VT/Crs + R·V' ≈ 500/100 + 2 ≈ 7–8 [ENG]). Against a
+ * closed airway the whole effort shows in the pleural space: effort × 8, up to P_MAX (Mueller; laryngospasm −20 to −50).
+ */
+export const PMUS_REST_CMH2O = 8;
+/**
+ * FU-6 R12: J-receptor / pulmonary-vascular-receptor drive in acute PE — a NON-CHEMICAL ventilation term ADDED to the
+ * chemoreflex (it persists below the CO2 threshold, which is why the awake PE patient is hypocapnic: PaCO2 30–35 —
+ * ESC 2019 PE guideline; West, pathophysiology), with a rapid shallow pattern (J-receptor tachypnoea, like EVLWI's).
+ * A MULTIPLIER on the chemical drive cannot do it: measured while writing (×1.8) RR 19.2 / PaCO2 38.2, and analytically
+ * S(1+J)(P − B) = k/P keeps P above the threshold B ≈ 35 for any J. Massive PE doubles to triples the minute
+ * ventilation (its alveolar dead space ≈ 0.5 halves the CO2 elimination). [ENG J_PE_VE_FRAC 2.4 of the resting VE and
+ * J_PE_RR 4/min at severity 1; fit target RS13 "RR ≥ 25, PaCO2 ≤ 35 on air" — measured 27.2 / 30.0, VE 18 L/min;
+ * 2.0/6 gave 27.6 / 34.8 (no margin), 0.8/8 gave 28.7 / 39.1 (rapid shallow breaths feed the dead space)]
+ */
+export const J_PE_VE_FRAC = 2.4;
+export const J_PE_RR = 4;
+/**
+ * FU-6 F9 (Orchestrator ruling (FU-6 review), 2026-09-28): hypoxia drives breathing BELOW the CO2 threshold. The carotid
+ * body's drive is not only a gain on the CO2 error: at a PCO2 under the apnoeic threshold a hypoxic subject's CO2
+ * response does not fall to zero but flattens onto a PO2-dependent PLATEAU (the "dog-leg" of Nielsen & Smith 1952 Acta
+ * Physiol Scand 24:293; Lumb, Nunn's Applied Respiratory Physiology 8e ch. 5), so a hypoxaemic patient whose PaCO2 sits
+ * under the (post-induction, raised) threshold still breathes. The plateau is HVR_INDEP_VE × resting VE × (H(PaO2) − 1),
+ * depressed by hvrDep exactly like the multiplicative arm, and the chemical drive is max(fan, plateau): above the
+ * threshold the fan is larger, so every existing hypoxic-response band is unchanged; at normoxia the plateau is
+ * < 0.02 × resting VE (below the apnoea threshold). [ENG 0.5; fit target: the unit row "PaO2 50 / PaCO2 30 breathes,
+ * ≈ 0.5 × resting VE awake" and Task 10's engine row (a post-induction apnoea on air ends on hypoxia, not on CO2)]
+ */
+export const HVR_INDEP_VE = 0.5;
+/**
+ * FU-6 F7 (Orchestrator ruling (FU-6 review), 2026-09-28): induction apnoea is PROBABILISTIC, as in patients. The
+ * Diprivan label (propofol 2–2.5 mg/kg, unpremedicated adults): apnoea < 30 s in 7 %, 30–60 s in 24 %, > 60 s in 12 % —
+ * 43 % overall, the modal apnoea 30–60 s. The patient-to-patient spread of the wakefulness shift (and of the CO2
+ * sensitivity and hypnotic sensitivity it stands in for) is ONE seeded draw per patient: u ~ U(0, 1) from the engine's
+ * own 'resp-wake' stream (resp pipeline, `createRespState`) → this quantile table → the patient's shift in mmHg
+ * [ENG knots; fit target: the label's bands, measured on the 20-seed row of test/engine/resp-induction.test.ts].
+ * u < 0.57 → no apnoea (the drive stays above its raised threshold); 0.57–0.64 → < 30 s; 0.64–0.88 → 30–60 s (the
+ * mode, ≈ 45 s at its middle); 0.88–1 → > 60 s. Without a draw (unit tests, pre-FU-6 snapshots) WAKE_MMHG applies.
+ * Re-fitted by the FU-6 executor on the merged main (FU-4 R1 root + V.1), the sweep on the 20-seed row's rig (SGA,
+ * FiO2 0.5, propofol 2 mg/kg, seed 7 with the shift pinned): 0 s up to 7.3 mmHg, 30 s at 8.2, 60 s at 10.0, 110 s at
+ * 13.3 (the plan's R1-emulated knots were 6.6 / 8.4 / 11 / 14.5).
+ */
+export const WAKE_QUANTILES: ReadonlyArray<readonly [number, number]> = [[0, 2], [0.57, 7.3], [0.64, 8.2], [0.88, 10.0], [1, 13.3]];
+export function wakeShiftMmHg(u: number): number {
+  let [u0, w0] = WAKE_QUANTILES[0] as readonly [number, number];
+  for (const [u1, w1] of WAKE_QUANTILES.slice(1)) {
+    if (u <= u1) return w0 + ((w1 - w0) * (Math.max(u0, u) - u0)) / (u1 - u0);
+    [u0, w0] = [u1, w1];
+  }
+  return w0;
+}
 
 export interface DriveInputs {
   paco2: number; pao2: number; paco2Set: number; ve0: number; // resting PaCO2 and VE (L/min)
@@ -21,6 +87,12 @@ export interface DriveInputs {
   pain: number; // 0–1
   evlwi: number;
   vt0: number; rr0: number; // resting pattern
+  wake?: number; // FU-6 R3(a): 0 awake … 1 unconscious (the wakefulness drive lost); absent = awake
+  wakeMmHg?: number; // FU-6 F7: this patient's drawn wakefulness shift (wakeShiftMmHg); absent = WAKE_MMHG
+  apnoeic?: boolean; // FU-6 R3(a): the last evaluation was apnoeic (hysteresis)
+  load?: number; // FU-6 R3(b): 0–1 inspiratory (upper-airway) obstruction the effort works against; absent = 0
+  hvrDep?: number; // FU-6 R12: depression of the hypoxic response (0–1); absent = 0
+  jDrive?: number; // FU-6 R12: J-/vascular-receptor drive (acute PE severity 0–1); absent = 0
 }
 export interface DriveOut { ve: number; rr: number; vt: number }
 
@@ -31,14 +103,21 @@ export function hypoxicFactor(pao2: number): number {
 /** Minute ventilation and its split. Returns rr 0 (apnoea) when the CO2 drive is below threshold. */
 export function drive(x: DriveInputs, fatigue = 1): DriveOut {
   const s = CO2_SLOPE * x.co2SlopeMult;
-  const b = x.paco2Set - x.ve0 / s;
-  const chem = Math.max(0, s * (x.paco2 - b)) * hypoxicFactor(x.pao2);
-  let ve = chem * (1 - x.opioidDep) * (1 - x.hypnoticDep) * fatigue;
+  const b = x.paco2Set - x.ve0 / s + (x.wakeMmHg ?? WAKE_MMHG) * (x.wake ?? 0); // FU-6 R3(a); F7: the patient's draw
+  const hvrKeep = 1 - (x.hvrDep ?? 0); // FU-6 R12: the anaesthetics depress the hypoxic arm first
+  const fan = Math.max(0, s * (x.paco2 - b)) * (1 + (hypoxicFactor(x.pao2) - 1) * hvrKeep);
+  const chem = Math.max(fan, HVR_INDEP_VE * x.ve0 * (hypoxicFactor(x.pao2) - 1) * hvrKeep); // FU-6 F9: the hypoxic plateau below the CO2 threshold
+  // FU-6 R12: the PE J-receptor drive is ADDED (non-chemical: it persists below the CO2 threshold), depressed like the rest
+  const jd = Math.min(1, x.jDrive ?? 0);
+  let ve = (chem + J_PE_VE_FRAC * x.ve0 * jd) * (1 - x.opioidDep) * (1 - x.hypnoticDep) * fatigue;
   if (ve > 0) ve *= 1 + PAIN_GAIN * x.pain;
-  if (ve <= 0.2) return { ve: 0, rr: 0, vt: 0 };
+  if (ve <= Math.max(0.2, (x.apnoeic ? APNOEA_VE_OUT : APNOEA_VE_IN) * x.ve0)) return { ve: 0, rr: 0, vt: 0 }; // FU-6 R3(a)
   // split: opioids slow the rate, hypnotics shrink the tidal volume; fatigue → rapid shallow
   const rrF = (1 - 0.7 * x.opioidDep) * (1 + 0.5 * x.hypnoticDep) * (1 + 0.6 * (1 - fatigue));
-  const rr = Math.max(4, Math.min(45, x.rr0 * rrF * Math.sqrt(ve / x.ve0) + J_RR_PER_EVLWI * Math.max(0, x.evlwi - 10)));
+  // FU-6 R3(b): against an inspiratory load the extra drive goes into effort (VT), not rate — load compensation
+  // (Zechman, Hall & Hull 1957 J Appl Physiol 10:356: resistive loading slows RR and deepens the breath)
+  const q = ve / x.ve0; // a depressed drive slows the rate as before; only the RISE is suppressed by the load
+  const rr = Math.max(4, Math.min(45, x.rr0 * rrF * (q < 1 ? Math.sqrt(q) : q ** (0.5 * (1 - (x.load ?? 0)))) + J_RR_PER_EVLWI * Math.max(0, x.evlwi - 10) + J_PE_RR * jd)); // FU-6 R12: PE tachypnoea
   return { ve, rr, vt: (ve * 1000) / rr };
 }
 

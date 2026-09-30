@@ -69,7 +69,9 @@ describe('FU-4 G6: the one-command massive-PE picture at 3 min (S9 sides, truth 
   }, 120_000);
   // R45 (FU-4 F2, Task 18e): the humoral arm now answers the PE's baroreceptor unloading as it answers a haemorrhage
   // (AVP/angiotensin, unsuppressed) — SBP at 3 min 88.7 → 92.8. Split out of the test above unchanged, kept as a record.
-  it.fails('SBP < 90 at 3 min (massive PE: sustained SBP < 90) — measured 92.8 with the humoral arm (88.7 before it)', async () => {
+  // FU-6 (R45 flip, executor at the gate): with FU-6 the SBP at 3 min is 84.6 — the pre-declared it.fails is met
+  // (not bisected to one task; the PE row now also drives breathing, R12, and the viscosity/PVR terms act, R11/R14).
+  it('SBP < 90 at 3 min (massive PE: sustained SBP < 90) — was 92.8 with the humoral arm (88.7 before it), 84.6 with FU-6', async () => {
     expect((await pe()).sbp).toBeLessThan(90);
   }, 120_000);
   it.fails('CVP ≥ 15 mmHg — measured 11.5 (RV wall-stress demand added, Task 11 Step 1b)', async () => {

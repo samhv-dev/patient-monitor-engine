@@ -104,6 +104,13 @@ export function ageBand(ageY: number): AgeBand {
 
 /** VO2 and CO2 production fall 15–20 % under GA (brief §4.3, research 03 §4.4). */
 export const GA_METABOLIC = 0.85;
+/**
+ * FU-6 R10: term pregnancy — progesterone lowers the chemoreflex set point to PaCO2 28–32 (≈ −9 mmHg) and VO2 rises
+ * 20–33 % (Hegewald & Crapo 2011 Clin Chest Med 32:1; McClelland, Bogod & Hardman 2009 Anaesthesia 64:371). Both scale
+ * with the `pregnancy` lung condition's severity (0.33 / 0.67 / 1 by trimester) [TXT sizes at term; linear ENG].
+ */
+export const PREG_PACO2_SHIFT_MMHG = 9;
+export const PREG_VO2_TERM = 0.2;
 /** FRC awake supine 30 mL/kg (brief §4.3). */
 export const FRC_AWAKE_ML_KG = 30;
 /**

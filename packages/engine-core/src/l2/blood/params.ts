@@ -92,6 +92,7 @@ export interface BloodPatient {
   weightKg: number;
   bvMl: number; // blood volume
   hb: number; // g/dL
+  hbRef: number; // FU-6 R11: the band's sex-normal Hb (g/dL), the viscosity reference
   plasmaMl: number;
   isfMl: number;
   icfMl: number;
@@ -118,7 +119,7 @@ export function bloodPatient(p: PatientProfile | undefined): BloodPatient {
   const tbw = (female ? 0.5 : 0.6) * w * 1000;
   const ecf = tbw / 3;
   const plasma = bv * (1 - hct);
-  return { weightKg: w, bvMl: bv, hb, plasmaMl: plasma, isfMl: Math.max(0.5 * ecf, ecf - plasma), icfMl: (2 * tbw) / 3, vLacL: LACTATE_V_L_PER_KG * w, vo2Rest: 3.5 * w };
+  return { weightKg: w, bvMl: bv, hb, hbRef: female ? b.hbF : b.hbM, plasmaMl: plasma, isfMl: Math.max(0.5 * ecf, ecf - plasma), icfMl: (2 * tbw) / 3, vLacL: LACTATE_V_L_PER_KG * w, vo2Rest: 3.5 * w };
 }
 
 /** Composition of fluids and blood products, per litre (or per unit where stated). mmol/L unless noted [TXT]. */

@@ -128,12 +128,15 @@ describe('neuro pipeline', () => {
     expect(ns.thermoDepth).toBeGreaterThan(1);
     expect(ns.thermoDepth).toBeLessThanOrEqual(1.5);
   });
-  it('residual block with a natural airway → obstruction; with a tube → none', () => {
+  // FU-6 R3(d), E-FU6-10 (Q-FU6-4 / D21): this fixture has NO hypnotic, so it is Eikermann's AWAKE patient — the
+  // tables' > 0.3 belongs to the sedated one (kept on `depth-drive`'s unconscious arm). Was > 0.3; measured 0.151.
+  it('residual block with a natural airway → a small awake obstruction (Eikermann 2003; E-FU6-10, was > 0.3); with a tube → none', () => {
     const a = createNeuroState({}, 1);
     give(a, ev({ kind: 'airwayDevice', device: 'none' }), 0);
     const bus = busFixture({ agents: { rocuronium: nmbAgent(605, 605, 0.6) } }); // thumb T1 ≈ 0.81 → TOFR ≈ 0.6
     stepNeuroTo(a, 5, ENV, bus);
-    expect(a.resp.obstruction).toBeGreaterThan(0.3);
+    expect(a.resp.obstruction).toBeGreaterThan(0.1);
+    expect(a.resp.obstruction).toBeLessThan(0.25);
     give(a, ev({ kind: 'airwayDevice', device: 'ett' }), 5);
     stepNeuroTo(a, 6, ENV, bus);
     expect(a.resp.obstruction).toBe(0);

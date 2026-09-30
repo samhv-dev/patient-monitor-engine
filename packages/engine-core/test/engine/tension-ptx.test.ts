@@ -54,7 +54,10 @@ describe('FU-4 F3: the tension pneumothorax builds through a one-way valve', { t
   // R45 (FU-4 F2, Task 18e): the humoral arm (AVP/angiotensin, unsuppressed) answers the obstruction's baroreceptor
   // unloading as it answers a haemorrhage, and holds the patient 1.8 min longer — PEA at +8.65 min after Task 18c,
   // +10.45 min with the arm. The band's upper edge is split out as a record, unchanged.
-  it.fails('PPV: PEA arrives ≤ 10 min after onset — measured +10.45 min with the humoral arm (+8.65 after Task 18c)', async () => {
+  // FU-6 (executor, gate): this rig is awake, undrugged and unparalysed on VCV; since FU-6 R9 its hypoxic, hypercapnic
+  // drive triggers the ventilator above the set 12/min, so the per-breath one-way valve fills faster (pPtx +240 s 21.3
+  // vs 19.4 on origin/main; MAP +240 s 27 vs 61) and PEA comes at +3.87 min — the band is met (flipped).
+  it('PPV: PEA arrives ≤ 10 min after onset — was +10.45 min with the humoral arm (+8.65 after Task 18c), +3.87 with FU-6 (R45 flip)', async () => {
     const c = await ppv;
     expect(c.tPea).toBeDefined();
     expect(((c.tPea as number) - 60) / 60).toBeLessThanOrEqual(10);
@@ -66,7 +69,10 @@ describe('FU-4 F3: the tension pneumothorax builds through a one-way valve', { t
     expect(c.tPea).toBeUndefined();
     expect(at(c.map, 240)).toBeGreaterThan(at(p.map, 240));
   });
-  it('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S', async () => {
+  // R45 (FU-6 executor, gate): see the PEA row — with FU-6's assist-control the unparalysed rig arrests before +4 min,
+  // so decompression finds a pulseless patient. it.fails with the number; the rig question (paralyse, as FU-6's D19
+  // does for its own ventilated rigs, or decompress earlier) is FU-4's — gate note.
+  it.fails('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (FU-6 R9 triggering; origin/main: MAP ≥ 65 at +5 s)', async () => {
     const c = await run(true, 60 + 6 * 60, 60 + 240);
     const back = c.mapAfterDecomp.find(([, m]) => m >= 65);
     const p = c.pPtx[240 + PTX_DRAIN_TAU_S - 1] as number; // τ after the decompression

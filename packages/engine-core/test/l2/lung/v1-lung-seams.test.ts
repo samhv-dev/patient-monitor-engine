@@ -32,7 +32,7 @@ describe('E-V1-2: the lung-water part of the extra shunt falls with PEEP ×(1 �
     }
   });
   it('7c\'s lung water (EVLWI above 10 mL/kg) is water shunt too', () => {
-    const { lp } = resolveLung([], 70, 1, 6); // EVLWI 7 + 6 = 13 → +0.09
+    const { lp } = resolveLung([], 70, 6); // EVLWI 7 + 6 = 13 → +0.09 (FU-6 R6: the Stage 3 `rawEvent` argument is retired)
     expect(lp.waterShunt).toBeCloseTo(0.09, 6);
     expect(extraShuntAt(lp, 10)).toBeCloseTo(0.09 * 0.6, 6);
   });

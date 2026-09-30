@@ -10,6 +10,7 @@
 //   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × 7b's condition pMax (fatigue comes sooner in a weak patient).
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
+import { NO_FLOW_S } from '../circ/arrest.ts'; // FU-6 gate G-FU6-2: the arrest declaration's no-flow window
 import { DIAPH_APNOEA, type NeuroResp } from './drive.ts';
 
 export const SPONT_DT_S = 1;
@@ -29,6 +30,18 @@ export const GASP_END_S = 120; // gasps fade to apnoea by 2 min [ENG, ruling]
 export const GASP_RR = 6; // gasp rate ceiling (/min) [ENG, ruling "RR ≤ 6"]
 export const GASP_VT_FRAC = 0.3; // gasp VT ceiling × the resting VT ("small VT") [ENG]
 export const GATE_REOPEN_S = 120; // the drive reopens linearly over 2 min once perfused [ENG, ruling "1–3 min"]
+/**
+ * FU-6 R3(a): the CO2 stimulus is partly CENTRAL (brain ECF PCO2, τ ≈ 60–150 s) and partly peripheral (carotid, fast):
+ * Dahan et al. 1990 J Physiol 423:615 (dynamic end-tidal forcing: central τ ≈ 100 s, peripheral share ≈ 0.3) [TXT;
+ * τ 90 s ENG]. The drive reads 0.3·PaCO2 + 0.7·Pc. At steady state Pc = PaCO2 (no change to any resting value).
+ */
+export const CENTRAL_TAU_S = 90;
+export const PERIPH_SHARE = 0.3;
+/**
+ * FU-6 R3(c): the tidal-volume ceiling of the chemical drive — VT plateaus at 50–60 % of the vital capacity (Hey et al.
+ * 1966 Respir Physiol 1:193), VC ≈ 60–70 mL/kg IBW → 35 mL/kg IBW, × fatigue (weakness stays nmbVtMult's) [ENG size].
+ */
+export const VT_MAX_ML_KG = 35;
 
 export interface SpontDrive {
   rr: number; // < 0: not yet evaluated (driverCtx falls back to the rr/vt targets)
@@ -40,6 +53,9 @@ export interface SpontDrive {
   nextT: number;
   anoxS?: number; // FU-3 item 16 (E-FU3-10): seconds without brainstem perfusion (absent while perfused)
   gate?: number; // FU-3 item 16 (E-FU3-10): 0 → 1 while the drive reopens after an anoxic spell (absent = open)
+  pc?: number; // FU-6 R3(a): central (brain) PCO2 the drive reads, mmHg (absent = PaCO2)
+  plS?: number; // FU-6 G-FU6-2: seconds pulseless (absent while there is a pulse)
+  effort?: number; // FU-6 R3(b): the neural inspiratory effort relative to rest (neural VT / resting VT); absent = 1
 }
 
 export function createSpontDrive(): SpontDrive {
@@ -70,21 +86,35 @@ export interface SpontInputs {
   resistance: number; // cmH2O·s/L
   neuro?: NeuroResp;
   noFlow?: boolean; // FU-3 item 16 (E-FU3-10): no circulation (pulseless rhythm or cardiac output 0)
+  pulseless?: boolean; // FU-6 G-FU6-2: the engine's pulseless determination (pulseless flag or a no-beat rhythm)
+  wakeMmHg?: number; // FU-6 F7: the patient's drawn wakefulness shift (resp pipeline; absent = WAKE_MMHG)
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel (absent without 7d)
+  ibwKg?: number; // FU-6 R3(c): the VT ceiling's size (absent = 70)
+  setShift?: number; // FU-6 R10: mmHg subtracted from the resting set point (pregnancy's progesterone drive)
+  airwayObs?: number; // FU-6 R3(b): the airway event's obstruction (1 = `obstructed`: laryngospasm, foreign body)
+  jDrive?: number; // FU-6 R12: acute PE severity (the lung's `pe` spec) — J-receptor drive
 }
 
 export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   if (x.t + 1e-9 < s.nextT) return;
   s.nextT = x.t + SPONT_DT_S;
   if (Number.isNaN(s.paco2Rest)) s.paco2Rest = x.paco2;
-  s.paco2Set = paco2SetPoint(s.paco2Rest, x.hco3);
+  s.paco2Set = paco2SetPoint(s.paco2Rest - (x.setShift ?? 0), x.hco3); // FU-6 R10: the pregnancy set point
   const n = x.neuro;
+  s.pc = (s.pc ?? x.paco2) + (x.paco2 - (s.pc ?? x.paco2)) * (1 - Math.exp(-SPONT_DT_S / CENTRAL_TAU_S)); // FU-6 R3(a)
   const out = drive({
-    paco2: x.paco2, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
-    opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0,
+    paco2: PERIPH_SHARE * x.paco2 + (1 - PERIPH_SHARE) * s.pc, pao2: x.pao2, paco2Set: s.paco2Set, ve0: (x.rr0 * x.vt0) / 1000, co2SlopeMult: x.co2SlopeMult,
+    opioidDep: n?.opioidDep ?? 0, hypnoticDep: n?.hypnoticDep ?? 0, pain: n?.pain ?? 0, evlwi: x.evlwi, vt0: x.vt0, rr0: x.rr0, // FU-6 R12: pain
+    wakeMmHg: x.wakeMmHg, // FU-6 F7: this patient's drawn wakefulness shift
+    wake: n?.loc ?? 0, apnoeic: s.rr === 0, // FU-6 R3(a)
+    load: Math.max(n?.obstruction ?? 0, x.airwayObs ?? 0), // FU-6 R3(b)
+    hvrDep: n?.hvrDep ?? 0, jDrive: x.jDrive ?? 0, // FU-6 R12
   }, s.fatigue);
   const strength = n?.pMaxMult ?? 1;
   let { rr, vt } = out;
+  // FU-6 R3(c): the neural VT has a ceiling; the effort is what the patient MAKES, the delivered VT what gets through
+  vt = Math.min(vt, VT_MAX_ML_KG * (x.ibwKg ?? 70) * s.fatigue); // weakness is nmbVtMult's (below), not counted twice
+  s.effort = rr > 0 && x.vt0 > 0 ? vt / x.vt0 : 0;
   if (strength < DIAPH_APNOEA) rr = vt = 0;
   else if (n) vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
   // FU-3 item 16 (E-FU3-10): brainstem-perfusion gate
@@ -105,6 +135,13 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     rr *= s.gate;
     if (s.gate >= 1) delete s.gate;
   }
+  // FU-6 gate G-FU6-2 (orchestrator final ruling on PR #28): the patient's inspiratory effort — spontaneous and
+  // ventilator-triggering — is withdrawn while the circulation is PULSELESS (the engine's own determination: a pulseless
+  // rhythm flag or a no-beat rhythm, which covers an instructor-commanded VF without an arrest state), ramped to zero
+  // over the arrest declaration's NO_FLOW_S window and restored when the circulation returns. No new constant.
+  if (x.pulseless) s.plS = (s.plS ?? 0) + SPONT_DT_S;
+  else if (s.plS !== undefined) delete s.plS;
+  if (s.plS !== undefined) rr *= Math.max(0, 1 - s.plS / NO_FLOW_S);
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;

@@ -24,7 +24,11 @@ describe('MODELED spontaneous drive (7b drive/pti/fatigue + Winter\'s, G7b rulin
     stepSpontDrive(s, X);
     stepSpontDrive(s, { ...X, t: 0.5, paco2: 50 });
     expect(s.ve).toBeCloseTo(6, 6);
+    // FU-6 R3(a) (E-FU6-7): the drive reads 0.3·PaCO2 + 0.7·central PCO2 (τ 90 s) — the step answers 30 % at once and
+    // the full CO2 slope at steady state (the band 6 + 1.5·4 is unchanged)
     stepSpontDrive(s, { ...X, t: 1, paco2: 44 });
+    expect(s.ve).toBeCloseTo(6 + 1.5 * 4 * (0.3 + 0.7 * (1 - Math.exp(-1 / 90))), 6);
+    for (let t = 2; t <= 1800; t++) stepSpontDrive(s, { ...X, t, paco2: 44 });
     expect(s.ve).toBeCloseTo(6 + 1.5 * 4, 6);
   });
   it('metabolic acidosis (HCO3 15): at PaCO2 40 the drive is ≈ 2.4× resting VE (set point 30.5)', () => {

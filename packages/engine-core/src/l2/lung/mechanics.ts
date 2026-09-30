@@ -23,6 +23,8 @@ export interface MechState {
   q: number[]; // mL/s into each unit (last sub-step)
   paw: number; // airway-opening pressure, cmH2O (relative to atmosphere)
   pcar: number; // carina pressure
+  /** FU-6 R9: active respiratory-muscle pressure on the chest wall, cmH2O (+ expiratory: a cough/buck); absent = 0. */
+  pMus?: number;
 }
 
 export function createMech(): MechState {
@@ -44,8 +46,10 @@ export function chestWallPressure(mp: MechParams, ms: MechState): number {
  * One sub-step. mode 'flow': `x` = total inspiratory flow (mL/s) forced through the tube; 'pressure': `x` = airway
  * opening pressure (cmH2O); 'closed': no flow at the airway (units still redistribute: pendelluft).
  */
-export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'pressure' | 'closed', x: number, h = MECH_H): void {
-  const pcw = chestWallPressure(mp, ms);
+// FU-6 R7: `pLimit` (cmH2O; default none) makes a 'flow' sub-step pressure-limited — a VCV Pmax: if forcing `x` would put
+// the airway opening above pLimit, this sub-step holds the airway AT pLimit instead (what a ventilator's Pmax does)
+export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'pressure' | 'closed', x: number, h = MECH_H, pLimit = Infinity): void {
+  const pcw = chestWallPressure(mp, ms) + (ms.pMus ?? 0); // FU-6 R9: a cough raises every unit's alveolar pressure
   let gSum = 0;
   let gp = 0;
   const pa = [0, 0, 0, 0];
@@ -58,8 +62,11 @@ export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'press
     gp += (g[u] as number) * (pa[u] as number);
   }
   let pc: number;
-  if (mode === 'flow') pc = gSum > 0 ? (x + gp) / gSum : 0;
-  else if (mode === 'pressure') pc = (x / mp.rTube + gp) / (1 / mp.rTube + gSum);
+  let limited = false; // FU-6 R7
+  if (mode === 'flow') {
+    pc = gSum > 0 ? (x + gp) / gSum : 0;
+    if (pc + mp.rTube * x > pLimit) { limited = true; pc = (pLimit / mp.rTube + gp) / (1 / mp.rTube + gSum); }
+  } else if (mode === 'pressure') pc = (x / mp.rTube + gp) / (1 / mp.rTube + gSum);
   else pc = gSum > 0 ? gp / gSum : 0;
   let qt = 0;
   for (let u = 0; u < N_UNITS; u++) {
@@ -69,7 +76,7 @@ export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'press
     qt += q;
   }
   ms.pcar = pc;
-  ms.paw = mode === 'pressure' ? x : pc + mp.rTube * qt;
+  ms.paw = limited ? pLimit : mode === 'pressure' ? x : pc + mp.rTube * qt; // FU-6 R7
 }
 
 /** Total flow at the airway opening, mL/s. */

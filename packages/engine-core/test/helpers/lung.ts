@@ -42,7 +42,7 @@ export function runRig(r: LungRig, seconds: number, onGas?: (r: LungRig) => void
       const va = (Math.max(0, v.vt - VD_ML) * v.rr) / 1000;
       lungGasStep(r.ls, {
         va, q: CI_LPM_PER_KG * PAT.effKg, baseShunt: r.baseShunt, fio2: v.fio2, massFlowFio2: null, vo2: PAT.vo2 * GA_METABOLIC,
-        vco2, paco2: r.co2.pf, tempC: 37, bloodL: PAT.bloodL, coRatio: 1, ga: true, indFactor: 1, volatileMac: 0, sideFlow: null,
+        vco2, paco2: r.co2.pf, tempC: 37, bloodL: PAT.bloodL, coRatio: 1, ga: true, indFactor: 1, hpvInhibit: 0, sideFlow: null,
       }, 0.1);
       stepCo2(r.co2, { vaLpm: va * r.ls.co2.e, vco2, coRatio: 1, cf: PAT.cf, cs: PAT.cs, kfs: PAT.kfs, extraGradient: 0 }, 0.1);
       nextGas += 0.1;
