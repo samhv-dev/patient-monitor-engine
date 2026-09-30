@@ -121,7 +121,7 @@ the plan's +9.92)**; from A19 on it is **+9.83** (plan +9.75), at the gate +9.83
 | class IV ROSC, CPR + 2 L + adrenaline (`circ-lowflow-arrest`) | +119 s (band ≤ 180) | **+260 s** at A19, **+265 s** from A22 | +260 s | A19 | RE-STATED ≤ 300 s (E-FU8-9, ruling 3) |
 | 7b CPR trough ≤ 30 (`hemo-acceptance`) | `it.fails`, 30.6 | **25.2** | 25.2 | A19 | pin FLIPS |
 | exsanguination volume + adrenaline (E-FU4-19 measurement) | 3 L +180 s, 3.5 L +170 s | **no pulse at 2 / 2.5 / 3 / 3.5 L** in 10 min | none | A19 | measurement (W7) |
-| FU-4 page, class IV + "CPR + 2 L + adrenaline" (`fu4-shots` scenario 3) | ROSC (3b shot) | **no pulse in 600 s**: agonal → asystole 91 s into CPR | — (not in the plan) | A19 (+A6) | display; 3b NOT re-taken (deviation 5) |
+| FU-4 page, class IV + "CPR + 2 L + adrenaline" (`fu4-shots` scenario 3) | ROSC ≈ +120 s of CPR (organised PEA seen at 644 s) | at `018b071`: no pulse, agonal → asystole 93 s into CPR; **after the G-FU8A-1 fix: pulse at +260 s of CPR** (engine rig `fu8-pea-resus`: PEA seen 750 s, CPR 810 s, pulse 1070 s, agonal → sinus; page: pulse 1072 s) | — (not in the plan) | A19; fixed in the decay (G-FU8A-1) | passing; 3b re-taken |
 | asphyxial PEA (`circ-hypoxic-arrest`, 5–14 min) | +6.35 min | **+11.17 min** | +11.2 | A10 | passing; title re-stated (E-FU8-4) |
 | asphyxia FiO2 1 reversal | 7 s | **7 s** | 7 s | A10 | passing |
 | asphyxial PEA decay: agonal / asystole after the arrest | +2 / +75 s | **+76 / +149 s** | +76 / +149 | A6, A10 | passing |
@@ -198,8 +198,9 @@ edit its property (child ≈ adult) will need re-stating by FU-6 too (child 0.30
 - `a19-tamponade-cpr-arterial.png` — tamponade PEA + CPR q 0.8 (+90 s): ART 38/17 (24).
 - `a23-vf-cpr-artefact-lead-ii.png` — VF + CPR q 1 at 130 s: the compression artefact on lead II.
 - `docs/gates/fu-4/5a-burns-sux-sine.png` re-taken with E-FU8-8 (+215 s): wide peaked hyperkalaemic complexes at MAP 85,
-  6 s before VF (VF at +222 s on this tree, the plan said +225). **3b not re-taken** (deviation 5); the latched APNEA
-  presentation D2 describes is shown by the A4 pair.
+  6 s before VF (VF at +222 s on this tree, the plan said +225). **3b re-taken after the G-FU8A-1 fix** (scale 0.55, 55 KB,
+  `SHOT_SCALE` added to `fu4-shots.mjs`, default 0.6 unchanged): pulse back at 1072 s, sinus 122, ART 133/82 (101); the bar
+  now shows `***EXTREME TACHY` (post-adrenaline) — the latched APNEA presentation D2 describes is shown by the A4 pair.
 
 ## 8. Deviations from the plan
 
@@ -208,9 +209,19 @@ edit its property (child ≈ adult) will need re-stating by FU-6 too (child 0.30
 2. **A22: V.1's `resp-child-rest` guard test pinned `it.fails`** — proposed E-FU8-13 (§6).
 3. **A22's quality-map title** carries the measured 20.5 (plan 20.4) for quality 0.5.
 4. **A27 fixed `l1/ramp.ts`**, not the MANUAL tracker in `hemo/pipeline.ts` (§5): the measured cause.
-5. **FU-4 3b not re-taken**: the FU-4 page's class IV "CPR + 2 L + adrenaline" (started 60 s after the page sees the
-   agonal PEA) regains no pulse in 600 s on this tree — the agonal rhythm decays to asystole 91 s into CPR, before the
-   A19 ROSC time (+260 s) — so there is no ROSC to photograph; the original 3b was restored. Declared as a moved row (§4).
+5. **RESOLVED (gate finding G-FU8A-1).** At `018b071` the FU-4 page's class IV "CPR + 2 L + adrenaline" (started 60 s after
+   the page sees the agonal PEA) ended in asystole 93 s into CPR. Cause: **A19** — compressions can no longer empty a
+   heart that holds no blood, so after the exsanguination the continuous CoPP rose 3 → 15 mmHg only over ≈ 130 s while
+   the 2 L went in, and the PEA decay, paused only at CoPP ≥ CPP_ROSC (15, FU-4 ruling 7), ran the agonal phase's
+   asystole hazard through the refill (before FU-8 the suction artefact gave CoPP ≥ 15 within 36 s). A6 (the hazard is
+   per second), A21 (the engine declared this arrest itself) and A22 (gas side) do not enter. Fix (`l2/circ/arrest.ts`
+   `peaDecayStep`): the decay also pauses while CPR runs, the net infusion is positive and the coronary zero-flow gap
+   P_ZF − CoPP is closing (CoPP above its own low-pass at the coronary filter's TAU_ISCH_DOWN_S, Q32); P_ZF = CPP_ROSC,
+   so below it no coronary flow exists and this gap is the only ischaemia index that can improve. No constant changed.
+   Scenario 3: pulse at +260 s of CPR (engine rig) / 1072 s on the page. Unit rigs unchanged: class IV ROSC +265 s,
+   asphyxial decay +76 / +149 s untreated, shock-made PEA pulse at 201 s, instructor PEA + CPR 141 s, S8 +9.83 min, S13
+   24.9–28.0, CPR alone after exsanguination no pulse, the volume thresholds none up to 3.5 L; engine fast set 271 files
+   green; the affected files + every `fu8-*` 56 files / 274 passed. New test `fu8-pea-resus` (fails on `018b071`).
 6. **The CM/DV cells** (research/19 §9, research/20 §9) were not run: their scripts are outside the repository (§0).
 7. **Slow-group times are contended** (§0); **tick bench** compared base vs FU-8 on the same container (§0), not against
    the FU-4 gate's Mac 0.52 ms. The validation package's local tick bound (p50 < 2 ms without `CI`) fails on this
@@ -225,8 +236,8 @@ edit its property (child ≈ adult) will need re-stating by FU-6 too (child 0.30
 - **FU-7 Task 0:** re-anchor on FU-8 Part A as listed; additionally `l2/circ/devices.ts`/`l2/hemo/pipeline.ts` (A26 LVAD
   lines) and `l1/ramp.ts` (A27). AF quiet band stays `it.fails` at 0.89 (guard path). Arrest-state precondition (6c)
   holds (shock-made PEA: pulse at 201 s).
-- **W7:** no pulse at 2 / 2.5 / 3 / 3.5 L; the class IV ROSC +265 s; the FU-4 page's class IV resuscitation no longer
-  gets a pulse (asystole 91 s into CPR).
+- **W7:** no pulse at 2 / 2.5 / 3 / 3.5 L; the class IV ROSC +265 s; the FU-4 page's class IV resuscitation regains a
+  pulse at +260 s of CPR after the G-FU8A-1 fix (it had ended in asystole 93 s into CPR at `018b071`).
 - **W12:** neonate 0.31 L/min = 89 mL/kg/min at the gate (MAP 64), infant 61 / 0.58, child 77 / 1.64.
 - **W18 (A25):** unchanged — 34 invalid samples / 16 flips.
 - **W20:** EXTREME BRADY 947.0 s, ASYSTOLE 1096.9 s.

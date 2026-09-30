@@ -10,7 +10,8 @@ const want = (k) => only === null || only.has(k);
 mkdirSync(out, { recursive: true });
 const b = await chromium.launch({ channel: 'chrome' });
 // deviceScaleFactor 0.6 (the stage7f-shots precedent): at 1.0 the first shots were 83–88 KB, at 0.7 62 KB (> 60 KB)
-const ctx = await b.newContext({ viewport: { width: 1280, height: 640 }, deviceScaleFactor: 0.6 });
+// FU-8 (G-FU8A-1): SHOT_SCALE re-takes a shot that lands over 60 KB at a smaller scale (default 0.6, unchanged)
+const ctx = await b.newContext({ viewport: { width: 1280, height: 640 }, deviceScaleFactor: Number(process.env.SHOT_SCALE ?? 0.6) });
 const p = await ctx.newPage();
 const errors = [];
 p.on('pageerror', (e) => errors.push(String(e)));

@@ -454,7 +454,9 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
       if (back) ctx.requestRhythm(back.id, back.opts);
       else {
         // FU-4 F5 (ruling 7): the untreated organised PEA decays — slower, then idioventricular, then asystole
-        const dec = peaDecayStep(c, ctx.rhythm.id, pulseless, cppCont, u, 1);
+        let netIn = 0; // FU-8 (G-FU8A-1): the net volume going in now (fluid minus bleed), mL/s
+        for (const v of c.vol) if (v.until > t) netIn += v.rate;
+        const dec = peaDecayStep(c, ctx.rhythm.id, pulseless, cppCont, u, 1, { cpr: hs.cpr.active, netInMlS: netIn });
         if (dec) {
           if (c.arrest) c.arrest.rateNow = dec.opts.rateBpm ?? c.arrest.rateNow;
           ctx.requestRhythm(dec.id, dec.opts);
