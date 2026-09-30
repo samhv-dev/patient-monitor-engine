@@ -73,6 +73,10 @@ export interface DriveInputs {
   /** FU-7 (addendum 20): 7g's propofol-equivalent hypnotic Ce at the VENTILATORY site, ng/mL — every hypnotic in ONE
    * input (thiopental and etomidate depress breathing too); replaces the per-agent propofol/midazolam/ketamine terms. */
   hypVentPropEq?: number;
+  /** FU-7 (D7): the MODELED chemoreflex's committed spontaneous rate (`resp.spont.rr`, FU-6's relative threshold puts
+   * it at 0 for apnoea). Present in MODELED whatever the ventilator is doing (FU-6 evaluates `spont` for the trigger
+   * while ventilated); when present it IS the apnoea truth. */
+  spontRr?: number;
   /** FU-7 (review F2): the benzodiazepine share of `hypVentPropEq` (7g's `cns.benzoShare`), 0–1 — the per-class α. */
   benzoShare?: number;
   macVolatile: number; // brain MAC fraction of the potent volatiles (N2O excluded)
@@ -139,8 +143,11 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   // the hypoxic arm too) and dMid is gone (its share is inside hypC). HVR_PROP_C50 = 3 × PROP_VENT_C50 (FU-6 F3b) and the
   // volatile, opioid and NMB factors are FU-6's, unchanged — propofol's own hvrDep is identical by construction.
   const hvrDep = 1 - (1 - HVR_VOL_EMAX * hill(x.macVolatile / HVR_VOL_C50, 1)) * (1 - hill(hypC / HVR_PROP_C50, 1.5)) * (1 - dOp) * (1 - hvrNmb);
-  let apnoea = x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
-  if (strength < DIAPH_APNOEA) apnoea = true;
+  // FU-7 (D7): ONE truth. In MODELED the chemoreflex decides whether the patient breathes (FU-6's relative threshold
+  // puts `resp.spont.rr` at 0), so the flag and the `apnoea` neuro mark read it; the drug-derived hysteresis stays for
+  // MANUAL, where there is no chemoreflex. research/14 DI-89: the flag was set for 255 s at VE 8.4 L/min.
+  let apnoea = x.spontRr !== undefined ? x.spontRr <= 0 : x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
+  if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block)
   // upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse)
   // FU-6 R3(d) (D21): arousal scales the RESIDUAL-BLOCK share between UA_AROUSAL (awake, Eikermann 2003) and 1
   // (unconscious — the tables' own value); the sedation arm below is untouched, and a complete-obstruction event

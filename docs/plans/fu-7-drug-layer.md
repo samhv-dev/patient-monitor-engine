@@ -2964,7 +2964,7 @@ required. After FU-6 the MODELED chemoreflex returns `rr = 0` at its own relativ
 executor runs Step 4's bands and, if a band is missed, keeps the test as `it.fails` **with the measured number in the
 title** and records it in the gate note. It does not widen a band and does not reintroduce an absolute VE threshold.
 
-- [ ] **Step 1 — the input.** In `packages/engine-core/src/l2/neuro/drive.ts` (after the field Task 6 added; a real
+- [x] **Step 1 — the input.** In `packages/engine-core/src/l2/neuro/drive.ts` (after the field Task 6 added; a real
 block, review F13), find:
 
 ```ts
@@ -2981,7 +2981,7 @@ Replace with:
   spontRr?: number;
 ```
 
-- [ ] **Step 2 — the flag.** In `neuroResp`, find the flag computation (pre-FU-6 text; on the merged tree FU-6 may have
+- [x] **Step 2 — the flag.** In `neuroResp`, find the flag computation (pre-FU-6 text; on the merged tree FU-6 may have
 moved the `strength` line — re-anchor on `wasApnoeic`):
 
 ```ts
@@ -2999,7 +2999,7 @@ Replace with:
   if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block)
 ```
 
-- [ ] **Step 3 — the pipeline reads Stage 3's committed rate.** `stepNeuroTo` runs BEFORE `advanceResp` in the chain
+- [x] **Step 3 — the pipeline reads Stage 3's committed rate.** `stepNeuroTo` runs BEFORE `advanceResp` in the chain
 (R51 §7), so the value it reads is the previous pass's committed rate — one pass (≤ 8 ms of sim time at the resp grid)
 old, which is the same staleness FU-3's `cbfRel` accepted (E-FU3-10). In `packages/engine-core/src/l2/neuro/pipeline.ts`
 (`NeuroEnv`; review F13), find:
@@ -3052,7 +3052,7 @@ Replace with:
 (Review F11: the earlier draft read the rate only while `resp.driver.source === 'spontaneous'`, so a ventilated
 MODELED patient kept the drug-derived flag and 7e/7b consumers of the mark saw two definitions depending on the driver.)
 
-- [ ] **Step 4 — the tests and their bands.** Create `packages/engine-core/test/engine/drug-apnoea.test.ts` with an
+- [x] **Step 4 — the tests and their bands.** Create `packages/engine-core/test/engine/drug-apnoea.test.ts` with an
 engine rig (adult 40 y, 70 kg, no airway device, spontaneous, FiO₂ as each case states), yielding **once per
 sim-minute**, in the SLOW_B group:
   1. **"the apnoea flag never contradicts the breathing (DI-89)"** — propofol 2 mg/kg + remifentanil 1 µg/kg at 300 s,
@@ -3074,13 +3074,13 @@ sim-minute**, in the SLOW_B group:
      12 × 600, FiO₂ 0.5), remifentanil 1 µg/kg at 300 s: at every sample `neuro.resp.apnoea === (resp.spont.rr === 0)`
      (0 s of disagreement), the flag is true while the committed rate is 0, and false again once effort returns (the
      trigger is visible: `resp.spont.rr > 0`). Measured before F11's fix: the ventilated arm kept the drug-derived flag.
-- [ ] **Step 5 — run and record.**
+- [x] **Step 5 — run and record.**
 `CI=1 PME_TEST_SET=slow-b npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/drug-apnoea.test.ts`
 Any missed band → `it.fails` with the number in the title + a gate-note row. Expected problem areas, named in advance:
 case 2 depends on FU-6's `APNOEA_VE_IN` 0.1 × `ve0` and on fentanyl's ventilatory weight `FENT_VENT_REMI_EQ` 0.55
 (D16; 7f's `FENT_VENT_POT` aliases it) — if fentanyl 5 µg/kg still breathes, report the VE and the two constants and
 leave the test `it.fails`; do NOT change the weight (it is FU-6-calibrated and D-7f-3's declared deviation).
-- [ ] **Step 6 — commit.** `fix(7f): the apnoea flag is the chemoreflex's own state (research/14 DI-89, D7)`, push.
+- [x] **Step 6 — commit.** `fix(7f): the apnoea flag is the chemoreflex's own state (research/14 DI-89, D7)`, push.
 
 ---
 

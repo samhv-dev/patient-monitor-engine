@@ -578,6 +578,9 @@ class Engine implements MonitorEngine {
     stepNeuroTo(ps.neuro, end / ECG_RATE, {
       tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
+      // FU-7 (D7; review F11): the chemoreflex's committed rate is the respiratory-effort truth WHATEVER the ventilator is
+      // doing — the apnoeic patient is the one being ventilated. MODELED only; `rr < 0` = not yet evaluated.
+      spontRr: ps.l1.mode === 'modeled' && (ps.resp.spont?.rr ?? -1) >= 0 ? ps.resp.spont?.rr : undefined,
     }, ps.pk.bus);
     advanceResp(ps.resp, {
       l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,

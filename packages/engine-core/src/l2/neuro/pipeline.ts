@@ -38,6 +38,9 @@ export interface NeuroEnv {
   neuroglycopenia?: number;
   /** Stage 7e `cascade(th).macF` — MAC requirement × (−5 %/°C below 37; tables §5.3); 1 without 7e (request R-7f-8). */
   macF?: number;
+  /** FU-7 (D7): `resp.spont.rr` as committed by the previous pass (MODELED only — spontaneous OR ventilated; undefined
+   * in MANUAL and before the drive has run once). */
+  spontRr?: number;
 }
 
 export interface NeuroState {
@@ -200,7 +203,7 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   // drive
   const natural = ns.airway === 'none' || (ns.airway === 'auto' && !env.mechanical);
   const wasApnoeic = ns.resp.apnoea;
-  ns.resp = neuroResp({ vent: x.vent, hypVentPropEq: x.hypVentPropEq, benzoShare: x.benzoShare, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive; FU-7 (addendum 20): the hypnotic equivalent and its benzodiazepine share
+  ns.resp = neuroResp({ vent: x.vent, hypVentPropEq: x.hypVentPropEq, benzoShare: x.benzoShare, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, spontRr: env.spontRr, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive; FU-7 (addendum 20; D7): the hypnotic equivalent, its benzodiazepine share and the chemoreflex's committed rate
   // outputs (7d, 7e)
   ns.outputs = neuroOutputs({ diRaw: d.diRaw, opioidFentEq: opioidFentEq(x.brain), antinoc: d.antinoc, thumbBlock: th.b, hypEq: d.hypEq });
   ns.antinoc = ns.outputs.antinoc;
