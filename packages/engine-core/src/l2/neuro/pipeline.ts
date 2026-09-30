@@ -41,6 +41,10 @@ export interface NeuroEnv {
   /** FU-7 (D7): `resp.spont.rr` as committed by the previous pass (MODELED only — spontaneous OR ventilated; undefined
    * in MANUAL and before the drive has run once). */
   spontRr?: number;
+  /** FU-7 (addendum 24 / audit D12): 7c's `blood.out.mg` / `blood.out.iCa` (mmol/L) — ONE magnesium and ONE calcium
+   * state; undefined without 7c (the profile's mgMmolL is then the fallback). */
+  mgMmolL?: number;
+  iCaMmolL?: number;
 }
 
 export interface NeuroState {
@@ -189,7 +193,9 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
 
 function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): void {
   // NMB
-  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: ns.profile.mgMmolL, tempC: env.tempC });
+  // FU-7 (addendum 24 / audit D12): ONE magnesium state and ONE calcium state — 7c's blood, with the profile as the
+  // baseline when 7c is absent (`env.mgMmolL`/`env.iCaMmolL` are duck-typed in engine.ts's neuro context).
+  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC });
   const neo = neoEc50Mult(x.achGain);
   const mult: Record<NmbAgent, number> = { rocuronium: m.rocuronium * neo, vecuronium: m.vecuronium * neo, cisatracurium: m.cisatracurium * neo, succinylcholine: m.succinylcholine };
   const th = siteBlock(x.nmj, 'thumb', mult);

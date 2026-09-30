@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { depth, KET_EQ_PROP, MIDAZ_EQ_PROP } from '../../../src/l2/neuro/depth.ts'; // FU-7 (E-FU7-9)
 import { neuroResp } from '../../../src/l2/neuro/drive.ts';
-import { ec50Multipliers } from '../../../src/l2/neuro/interactions.ts';
+import { ec50Multipliers, VOL_NMB_K } from '../../../src/l2/neuro/interactions.ts'; // FU-7 (E-FU7-10)
 
 const C0 = { propofol: 0, remifentanil: 0, fentanyl: 0, midazolam: 0, ketamine: 0 };
 // FU-7 (addendum 20, E-FU7-9): the hypnotic POTENCY OUTPUT is 7g's; this helper computes it from the per-agent
@@ -135,9 +135,10 @@ describe('respiratory-drive depression (tables §5d)', () => {
 describe('interactions', () => {
   it('1 MAC volatile lowers non-depolariser EC50 by ~33 %; Mg 2 mmol/L by ~23 %; myasthenia ×0.3, sux resistant', () => {
     const N = { profile: 'normal' as const, volatileMac: 0, mgMmolL: 0.9, tempC: 37 };
+    // FU-7 (E-FU7-10): the same re-sized constant (was 0.62–0.72, the 0.5 divisor's band) — DI-51's duration band is the
+    // acceptance property and lives in interactions.test.ts
     const v = ec50Multipliers({ ...N, volatileMac: 1 });
-    expect(v.rocuronium).toBeGreaterThan(0.62);
-    expect(v.rocuronium).toBeLessThan(0.72);
+    expect(v.rocuronium).toBeCloseTo(1 / (1 + VOL_NMB_K), 6);
     expect(v.succinylcholine).toBe(1);
     expect(ec50Multipliers({ ...N, mgMmolL: 2 }).rocuronium).toBeCloseTo(1 / 1.3, 5);
     const mg = ec50Multipliers({ ...N, profile: 'myasthenia' });

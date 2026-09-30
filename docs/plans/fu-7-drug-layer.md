@@ -5578,7 +5578,7 @@ DI-37c (IN): the nm profile `burn`/`denervation` changes rocuronium sensitivity 
 (+0.5 vs the expected +3–7 mmol/L), because only `blood.burns` drives 7c's surge. DI-51 (TS): 1 MAC sevoflurane prolongs
 rocuronium by **+127 %** against 25–80 % (the [ENG] divisor `1 + 0.5·MAC` acts on a steep Hill).
 
-- [ ] **Step 1 — magnesium and calcium from the blood.** In `packages/engine-core/src/l2/neuro/interactions.ts`, find:
+- [x] **Step 1 — magnesium and calcium from the blood.** In `packages/engine-core/src/l2/neuro/interactions.ts`, find:
 
 ```ts
 export interface InteractionCtx {
@@ -5634,7 +5634,7 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
   const mg = 1 / (1 + (0.3 * Math.max(0, x.mgMmolL - 1)) / ca);
 ```
 
-- [ ] **Step 2 — the pipeline passes them.** In `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
+- [x] **Step 2 — the pipeline passes them.** In `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
 
 ```ts
   const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: ns.profile.mgMmolL, tempC: env.tempC });
@@ -5767,7 +5767,7 @@ Replace with:
 ```ts
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk, neuroProfile: ps.neuro.profile }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo (FU-7: 7f's profile, addendum 24)
 ```
-- [ ] **Step 3 — the succinylcholine K⁺ surge reads the nm profile (E-FU7-4).** In
+- [x] **Step 3 — the succinylcholine K⁺ surge reads the nm profile (E-FU7-4).** In
 the surge is `suxDeltaK(tMin, bc.burns)` in `packages/engine-core/src/l2/blood/treatments.ts` (`peak = 0.5 + 6·burns`),
 called once from `l2/blood/core.ts`. ONE new input, ONE call-site change, no second path. In `treatments.ts`, find:
 
@@ -5813,7 +5813,7 @@ Replace with:
   nmUpreg?: number;
   liver: number;
 ```
-- [ ] **Step 4 — the tests (and E-FU7-10, restated here — review F14, ruling 6).** The existing 1 MAC case asserts the
+- [x] **Step 4 — the tests (and E-FU7-10, restated here — review F14, ruling 6).** The existing 1 MAC case asserts the
 implementation constant `EC50 × 0.67` (the old divisor 1/(1 + 0.5)); with 0.18 it is `× 0.85`. That re-statement is an
 edit to an existing assertion, so it is declared as **E-FU7-10**: the case keeps its title, asserts the new divisor's
 value with the old one in a trailing "was × 0.67" clause, and the ACCEPTANCE property moves to the sourced DURATION
@@ -5915,9 +5915,9 @@ Then the new cases. Add to `test/l2/neuro/interactions.test.ts`:
   3. 1 MAC sevoflurane prolongs the T1 25 % time by **25–80 %** (DI-51's TS band, now the acceptance band);
   4. the nm profile `denervation` raises the succinylcholine ΔK⁺ to **3–7 mmol/L** (DI-37c) and `normal` keeps
      **0.3–0.8** (the existing 7c band — a regression guard).
-- [ ] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-25 DI-90 DI-37c DI-37d DI-51 DI-50 DI-53`.
+- [x] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-25 DI-90 DI-37c DI-37d DI-51 DI-50 DI-53`.
 Expected: DI-90 **IN → PL**, DI-25 **MI → PL**, DI-37c **IN → PL**, DI-51 **TS → PL**, DI-50/53/37d unchanged.
-- [ ] **Step 6 — commit.** `fix(7f,7c): one state each for magnesium, calcium and receptor upregulation (R51 addendum 24)`, push.
+- [x] **Step 6 — commit.** `fix(7f,7c): one state each for magnesium, calcium and receptor upregulation (R51 addendum 24)`, push.
 
 ---
 

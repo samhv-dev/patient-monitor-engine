@@ -589,12 +589,13 @@ class Engine implements MonitorEngine {
       // FU-7 (D7; review F11): the chemoreflex's committed rate is the respiratory-effort truth WHATEVER the ventilator is
       // doing — the apnoeic patient is the one being ventilated. MODELED only; `rr < 0` = not yet evaluated.
       spontRr: ps.l1.mode === 'modeled' && (ps.resp.spont?.rr ?? -1) >= 0 ? ps.resp.spont?.rr : undefined,
+      mgMmolL: ps.blood.out.mg > 0 ? ps.blood.out.mg : undefined, iCaMmolL: ps.blood.out.iCa > 0 ? ps.blood.out.iCa : undefined, // FU-7 (addendum 24): ONE Mg and Ca state (0 before 7c's first step)
     }, ps.pk.bus);
     advanceResp(ps.resp, {
       l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
       bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, // FU-6 R2/R13 (E-FU6-6): 7g's PD outputs; 7e's own anaphylaxis relief
     }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
-    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
+    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk, neuroProfile: ps.neuro.profile }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo (FU-7: 7f's profile, addendum 24)
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const endoCtx = { l1: ps.l1, hemo: ps.hemo, resp: ps.resp, ps }; // Stage 7e: after 7c's blood, before 7d's organs and the haemodynamics
     advanceEndo(ps.endo, endoCtx, Math.floor(end / 8) / RESP_RATE); // Stage 7e (1 Hz steps; 7g's doses every pass)

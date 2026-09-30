@@ -63,6 +63,7 @@ const SLOW = [
   'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population (SLOW_A)
   'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms (SLOW_A)
   'test/engine/stimulus-surge.test.ts', // FU-7 Task 10: ≈ 40 ventilated arms of 10–60 sim-min (SLOW_A)
+  'test/engine/fu7-nmb-one-state.test.ts', // FU-7 Task 14: two 140 sim-min rocuronium arms + four 15 sim-min sux arms (SLOW_A)
 ];
 /**
  * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
@@ -94,6 +95,7 @@ const SLOW_A = [
   'test/engine/drug-apnoea.test.ts',
   'test/engine/cat-reserve-engine.test.ts',
   'test/engine/stimulus-surge.test.ts',
+  'test/engine/fu7-nmb-one-state.test.ts',
 ];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
