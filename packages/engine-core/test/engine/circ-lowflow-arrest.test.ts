@@ -113,7 +113,7 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
   // R45 (FU-6 executor, merging second): on the tree merged with FU-8 Part A no pulse returns in this class IV rig — FU-6
   // R11's viscosity term lowers the SVR of the diluted blood (2.5 L bleed + 2 L crystalloid) and the CPR coronary
   // perfusion with it (the same scenario as fu8-pea-resus: viscF held at 1 → pulse at +308 s of CPR). it.fails; gate note.
-  it('with CPR + volume + adrenaline there is no decay from effective CPR (CoPP ≥ 15) to ROSC — measured: no ROSC on the FU-6 + FU-8 tree (FU-6 R11 viscosity)', async () => {
+  it('with CPR + volume + adrenaline there is no decay from effective CPR (CoPP ≥ 15) to ROSC — met again after G-FU6-1 (was: no ROSC with FU-6 R11 viscosity before the flow fade)', async () => {
     const c = await rosc;
     expect(c.tPulseBack).toBeDefined();
     expect(c.decayedBeforeRosc ?? false).toBe(false);
@@ -124,7 +124,7 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
   // (+180 s); the pulse follows ≈ 80 s later (CoPP 0.2 → 22.6)
   // R45 (FU-6 executor, merging second): on the tree merged with FU-8 Part A no pulse returns in this class IV rig — FU-6
   // R45: see the row above — no pulse (FU-6 R11 viscosity × FU-8 A19's outflow limiter). it.fails with the finding.
-  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 5 min (measured +260 s of CPR after FU-8 A19, the outflow limiter; +119 s on the suction artefact before) — measured: no pulse on the FU-6 + FU-8 tree (FU-6 R11 viscosity)', async () => {
+  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 5 min (measured +260 s of CPR after FU-8 A19, the outflow limiter; +119 s on the suction artefact before) — +264 s after G-FU6-1 (was: no pulse before the flow fade)', async () => {
     const c = await rosc;
     expect(c.tArrest).toBeDefined();
     expect(c.cprCpp.length).toBeGreaterThan(10);

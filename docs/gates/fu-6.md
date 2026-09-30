@@ -221,7 +221,7 @@ depression (RS5b, 7f/7g).
   the CBF-gated drive is identical to the ungated one at CBF 0.2/0.25 — no longer true by the ruling (rate × 0 at 0.2,
   × 0.125 at 0.25; the gasps below 0.2 are withdrawn too, the ruling's "agonal gasping is not modelled").
   `circ-hypoxic-arrest`, `cpr-etco2`, `circ-sanity-2` green. Fast set: engine 1228 tests, all packages green; slow-a
-  167 green after the kIsch row.
+  167 green after the kIsch row; slow-b 252 green.
 - **Rigs with an awake, unparalysed patient on the internal ventilator** (TBI Cushing, tension PTX) still breathe over it
   before any arrest — physiologically right; the rigs' premise is FU-4's/7d's to restate.
 - **NEW — pre-existing on origin/main, surfaced by the suite:** severe COPD at RR 30 arrests (PEEPtot 23.2, CO 0) and a

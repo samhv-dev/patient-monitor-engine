@@ -58,7 +58,7 @@ describe('FU-8 G-FU8A-1: the PEA decay pauses while the resuscitation refills an
   // Measured diagnosis (scratch, seed 7): viscF held at 1 → pulse at 1118 s (+308 s of CPR); the rig paralysed
   // (rocuronium 1.2 + 0.6/h, no FU-6 R9 triggering) → pulse at 994 s. it.fails with the numbers; the interaction
   // (viscosity under CPR / haemodilution) is an open question for the orchestrator in the FU-6 gate note.
-  it('FU-4 page scenario 3 (class IV, CPR + 2 L + adrenaline 60 s after the page sees the PEA): a pulse returns within 10 min of CPR and the rhythm never reaches asystole (FU-8 head 018b071: asystole at 903 s, 93 s into CPR, no pulse) — measured on the FU-6 merge: asystole again, pulse never (pulseless 750 s, CPR from 810 s) — FU-6 R11 viscosity (with viscF held at 1: pulse at 1118 s, +308 s)', async () => {
+  it('FU-4 page scenario 3 (class IV, CPR + 2 L + adrenaline 60 s after the page sees the PEA): a pulse returns within 10 min of CPR and the rhythm never reaches asystole (FU-8 head 018b071: asystole at 903 s, 93 s into CPR, no pulse) — pulse at +260 s after G-FU6-1 (was: asystole, no pulse, with FU-6 R11 viscosity before the flow fade)', async () => {
     const r = await scenario3();
     console.log(`fu8 G-FU8A-1: pulseless at ${r.tA} s, CPR from ${r.tResus} s, pulse at ${r.tPulse ?? 'never'} s (+${r.tPulse !== null ? r.tPulse - r.tResus : '–'} s of CPR); rhythms ${r.seen.join(' → ')}`);
     expect(r.seen).not.toContain('asystole');
