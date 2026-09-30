@@ -431,9 +431,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const lip = pk.drugs.lipidEmulsion;
   if (lip) lipid = hill(siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c, 1, 0.5);
   const freeF = (1 + 2 * Math.max(0, 7.4 - ctx.ph)) * (1 - lipid);
-  let cnsE = 0;
-  let cvE = 0;
-  let seizure = false;
+  // FU-7 (addendum 24): potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
+  let uCns = 0;
+  let uCv = 0;
+  let uSeiz = 0;
   const agents: Record<string, BusAgent> = {};
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
@@ -444,9 +445,12 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       c *= freeF;
       const th = LAST_THRESHOLDS[row.id];
       if (th) {
-        cnsE = Math.max(cnsE, hill(c, th.cns, 1, 3));
-        cvE = Math.max(cvE, hill(c, th.cv, 1, 3));
-        seizure ||= c >= th.seizure;
+        // FU-7 (addendum 24 / audit D14): local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice
+        // advisory; M10 ch. 25: the doses share one maximum). The fractional sums replace the per-agent maximum, and each
+        // is fed to the SAME Hill as before, so a sole agent at its threshold gives exactly the pre-FU-7 effect.
+        uCns += c / th.cns;
+        uCv += c / th.cv;
+        uSeiz += c / th.seizure;
       }
     }
     pk.lastC[d.id] = c;
@@ -459,6 +463,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       ...(row.id === 'rocuronium' || row.id === 'vecuronium' ? { sgxBoundFrac: d.total > 0 ? Math.min(1, d.bound / d.total) : 0 } : {}),
     };
   }
+  // FU-7 (addendum 24): one Hill per endpoint on the summed fractions (h 3, as each agent had)
+  const cnsE = hill(uCns, 1, 1, 3);
+  const cvE = hill(uCv, 1, 1, 3);
+  const seizure = uSeiz >= 1;
   const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain }); // FU-7 (addendum 21)
   // desflurane sympathetic surge on a rapid rise above 1 MAC (T6.3): HR +25 %, SVR +20 % over 2–4 min [TXT]
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {

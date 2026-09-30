@@ -5479,7 +5479,7 @@ whole-engine arms shock after **40 s** of AF, inside the 5-minute guard.)
 bupivacaine 100 mg adds nothing (DI-23: CNS effect 0.9 vs 0.9). ASRA 2020 and Miller ch. 25 treat local-anaesthetic
 toxicity as additive between agents — the clinical rule that the doses share one maximum.
 
-- [ ] **Step 1 — the fractional-threshold sum.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
+- [x] **Step 1 — the fractional-threshold sum.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
 
 ```ts
     if (row.cls === 'localAnaesthetic') {
@@ -5545,16 +5545,16 @@ Replace with:
 
 (The `bus.last = { cnsE, cvE }` and `bus.cns.seizure = seizure` lines below are unchanged. Note for the executor: this
 block's find text includes Task 8's edit, so Task 13 MUST run after Task 8.)
-- [ ] **Step 2 — the test.** In `test/l2/pk/interactions-misc.test.ts` (new file, header comment naming Tasks 13–18):
+- [x] **Step 2 — the test.** In `test/l2/pk/interactions-misc.test.ts` (new file, header comment naming Tasks 13–18):
   1. a sole agent at its CNS threshold gives exactly `hill(1, 1, 1, 3)` = 0.5 (the pre-FU-7 value — a REGRESSION guard);
   2. lidocaine at 0.5 × its threshold PLUS bupivacaine at 0.5 × its threshold gives the same effect as either at 1.0 ×
      (additivity, ASRA 2020);
   3. the seizure flag fires on the SUM (0.6 + 0.6 of two agents' seizure thresholds), not on either alone;
   4. the existing LAST acceptance test (`pk-acceptance-pd.test.ts`, bupivacaine 225 mg → VF; lipid ×0.68) is unchanged.
-- [ ] **Step 3 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-23 DI-24`. Expected: DI-23 **TW → PL**
+- [x] **Step 3 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-23 DI-24`. Expected: DI-23 **TW → PL**
 (`cnsExcess` > 0), DI-24 unchanged (PL: the lipid sink and the VF course must not move — if they do, the Hill's exponent
 was changed, which this task does not do).
-- [ ] **Step 4 — commit.** `fix(7g): local-anaesthetic toxicity is additive by potency-weighted dose (R51 addendum 24)`, push.
+- [x] **Step 4 — commit.** `fix(7g): local-anaesthetic toxicity is additive by potency-weighted dose (R51 addendum 24)`, push.
 
 ---
 
