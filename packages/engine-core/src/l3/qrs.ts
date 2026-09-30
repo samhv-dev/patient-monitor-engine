@@ -18,6 +18,14 @@ const HUMP_MAX_N = 100; // a hump longer than 200 ms is closed anyway
 const SILENCE_DECAY_N = 750; // after 1.5 s without a QRS, SPK halves each further 1.5 s (search-back stand-in) [ENG]
 const T_WINDOW_N = 300; // humps within 600 ms of the last R ... [ENG, after Pan–Tompkins' 360 ms T-wave rule]
 const T_RATIO = 0.5; // ... and below half the last QRS hump are T waves, not QRS
+/**
+ * FU-8 (F3, G-FU4 2026-09-29): a hump that starts within this many samples of the previous detection's close is the
+ * SAME wide complex rising again (its MWI dipped below FINAL_FRACTION and re-crossed the threshold), not a new QRS.
+ * Measured on origin/main 0fd5397: the agonal complex (QRS ≈ 300 ms) closed and re-opened 2–56 ms later, a second
+ * detection 0.14–0.24 s after the first; in every other library rhythm the next hump starts ≥ 136 ms after the previous
+ * close (vtPoly 220/min 136 ms; VT 250/min 146; torsades 148; AF 180/min 166; sinus tachycardia 200/min 188) [ENG].
+ */
+const SAME_COMPLEX_N = 50; // 100 ms
 const FINAL_FRACTION = 0.6; // a hump is closed when the MWI falls below 60% of its maximum [ENG, latency]
 /**
  * Pace-pulse rejection (R-51-3): after a transcutaneous pacing pulse the detection lead is held at its pre-pulse
@@ -198,8 +206,13 @@ export function qrsStep(st: QrsState, xIn: number): number {
     if (mwi < FINAL_FRACTION * st.humpMax || n - st.humpStart > HUMP_MAX_N) {
       st.inHump = false;
       const tWave = st.lastR >= 0 && st.humpStart - st.lastR < T_WINDOW_N && st.humpMax < T_RATIO * st.lastQrsMax;
+      const sameComplex = !tWave && st.lastDetN >= 0 && st.humpStart - st.lastDetN < SAME_COMPLEX_N;
       if (tWave) {
         st.npk = 0.125 * st.humpMax + 0.875 * st.npk;
+      } else if (sameComplex) {
+        // FU-8 (F3): the second phase of the complex just detected — the complex ends here, no new R
+        st.lastDetN = n;
+        st.lastQrsMax = Math.max(st.lastQrsMax, st.humpMax);
       } else {
         const r = findR(st, st.humpStart - LOOKBACK_N, n);
         st.spk = Math.max(SPK_FLOOR, 0.125 * st.humpMax + 0.875 * st.spk);

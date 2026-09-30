@@ -4,7 +4,8 @@ import { validateScenario } from '../../src/scenario/validate.ts';
 
 const base = () => ({
   schema: 'pme-scenario/1', id: 'x', title: 'X', initialState: 'a',
-  states: [{ id: 'a', transitions: [{ id: 't1', to: 'b', when: { afterS: 5 } }] }, { id: 'b' }],
+  // FU-8 (R-S9-4, E-FU8-2): the fixture's states carry labels — an unlabelled state is now a validation warning
+  states: [{ id: 'a', label: 'A', transitions: [{ id: 't1', to: 'b', when: { afterS: 5 } }] }, { id: 'b', label: 'B' }],
 }) as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 const errs = (d: unknown) => {
   const r = validateScenario(d);
@@ -59,5 +60,17 @@ describe('validateScenario', () => {
     d.states[0].transitions[0].probability = 2;
     d.states[0].onEnter = [{ type: 'nope' }];
     expect(errs(d)).toHaveLength(2);
+  });
+});
+
+describe('FU-8 (Stage 9 R-S9-4): the scenario card fields and the endocrine profile', () => {
+  it('accepts category, story, objectives, durationMin and patient.endo; warns on an unlabelled state', () => {
+    const d = base();
+    Object.assign(d, { category: 'Induction', story: 'A 58-year-old for a laparotomy.', objectives: ['Recognise hypotension'], durationMin: 15 });
+    d.patient = { endo: { diabetes: 'type2' } };
+    expect(validateScenario(d)).toMatchObject({ ok: true, warnings: [] });
+    delete d.states[1].label;
+    expect(validateScenario(d)).toMatchObject({ ok: true, warnings: ['/states/1/label: state "b" has no label (its id is shown)'] });
+    expect(errs({ ...base(), durationMin: 0 }).join()).toMatch(/durationMin/);
   });
 });

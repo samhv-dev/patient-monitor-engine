@@ -43,13 +43,14 @@ const SLOW = [
   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
+  'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
 ];
 /**
  * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
  * runs both locally. SLOW_A: the multi-hour drift files, the engine pipeline, the organ soak and the FU-4 clinical suite;
  * SLOW_B: every other SLOW entry. A new slow file joins SLOW (and, if it is a multi-hour run, SLOW_A).
  */
-const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts'];
+const SLOW_A = ['test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts', 'test/engine/fu8-*.test.ts']; // FU-8: its files join slow-a
 // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
 // neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.

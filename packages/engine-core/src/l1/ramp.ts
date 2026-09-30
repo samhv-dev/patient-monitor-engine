@@ -30,7 +30,10 @@ function shape(curve: RampState['curve'], u: number): number {
 
 export function rampValue(r: RampState, t: number): number {
   const start = r.t0 + r.delayS;
-  if (t <= start) return r.from;
+  // FU-8 (Task A27; research/20 DV-M3): a zero-duration step takes effect AT its start. With `t <= start` a step read at
+  // its own instant returned `from`, so "set, then ramp from here" at one instant (the device layer's post-ROSC pressure:
+  // 50 % of the target, back to 100 % over 30–120 s) retargeted from the OLD value and the ramp ran 120 → 120
+  if (t < start || (t === start && r.durationS > 0)) return r.from;
   if (r.durationS <= 0 || t >= start + r.durationS) return r.to;
   return r.from + (r.to - r.from) * shape(r.curve, (t - start) / r.durationS);
 }

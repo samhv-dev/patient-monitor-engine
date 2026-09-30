@@ -10,7 +10,12 @@ const POLY_AXIS_KEEP = 0.7; // mean reversion per beat: stationary SD 0.15/√(1
 const TORSADES_RR_CV = 0.05; // [ENG]
 const TORSADES_AXIS_RAD = 0.35; // axis wobble ±20° over a twist [ENG]
 const AGONAL_RR_MIN_S = 3; // agonal < 20/min, irregular (research 03 §1.5)
-const AGONAL_RR_SPAN_S = 4.5;
+/**
+ * FU-8 (review pack, rhythm R33 "the agonal rhythm ignores its rate setting"): the R–R is 60 / the rhythm's rate
+ * (rateBpm 4–20, default 12) ± this fraction, uniform — irregular, never faster than AGONAL_RR_MIN_S [ENG]. Before:
+ * 3 + 4.5·U s whatever the rate (mean 11.4/min; 8/min on the pack's strip).
+ */
+const AGONAL_RR_CV = 0.25;
 const AGONAL_DECAY_S = 120; // decaying amplitude [ENG]
 
 function jitter(ctx: RhythmCtx, s: number): number {
@@ -45,5 +50,5 @@ export function onTorsades(st: RhythmState, t: number, ctx: RhythmCtx): void {
 export function onAgonal(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const scale = Math.max(0.25, Math.exp(-(t - st.startT) / AGONAL_DECAY_S));
   pushPending(st, { t, origin: 'ventricular', template: 'agonal', prMs: null, pvc: false, coupling: 0, bypass: true, scale });
-  st.focusNextT = t + AGONAL_RR_MIN_S + AGONAL_RR_SPAN_S * uniform(ctx.rng.ectopy);
+  st.focusNextT = t + Math.max(AGONAL_RR_MIN_S, (60 / rhythmRate(st, t, ctx)) * (1 + AGONAL_RR_CV * (2 * uniform(ctx.rng.ectopy) - 1)));
 }

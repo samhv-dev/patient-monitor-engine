@@ -67,6 +67,9 @@ export function validateScenario(input: unknown, opts: ValidateOptions = {}): Va
   doc.states.forEach((s, i) => {
     if (stateIds.has(s.id)) errors.push(`/states/${i}/id: duplicate state id "${s.id}"`);
     else stateIds.set(s.id, i);
+    // FU-8 (Stage 9 R-S9-4): the panel, the remote and the transition text print the state's label — a document
+    // without one shows the learner an engine id. A warning, not an error: minimal and test documents stay valid.
+    if (s.label === undefined) warnings.push(`/states/${i}/label: state "${s.id}" has no label (its id is shown)`);
   });
   if (!stateIds.has(doc.initialState)) errors.push(`/initialState: no state "${doc.initialState}"`);
   const transitionIds = new Set<string>();

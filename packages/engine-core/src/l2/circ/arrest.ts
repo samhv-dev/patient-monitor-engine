@@ -14,7 +14,7 @@
 // Every draw uses the engine's `outcome` stream and is taken only when a hazard is non-zero or an arrest is declared,
 // so runs without them keep every stream untouched.
 import type { RhythmId, RhythmOpts } from '../../types.ts';
-import { NO_BEAT_RHYTHMS } from './coronary.ts';
+import { NO_BEAT_RHYTHMS, P_ZF, TAU_ISCH_DOWN_S } from './coronary.ts';
 import { P_ASYSTOLE_ONSET, P_VF_ONSET } from './hypoxic-arrest.ts';
 import type { CircModelState } from './model.ts';
 
@@ -113,10 +113,31 @@ export const PEA_ASYSTOLE_MEAN_S = 420; // mean time from the idioventricular ph
  * idioventricular rhythm, or asystole) or null. It goes through the caller's single `requestRhythm` path (E-FU3-8).
  * `u` draws one uniform from the outcome stream.
  */
-export function peaDecayStep(m: CircModelState, rhythmId: string, pulseless: boolean, cpp: number, u: () => number, dt: number): ArrestRequest | null {
+export function peaDecayStep(
+  m: CircModelState,
+  rhythmId: string,
+  pulseless: boolean,
+  cpp: number,
+  u: () => number,
+  dt: number,
+  resus?: { cpr: boolean; netInMlS: number },
+): ArrestRequest | null {
   const a = m.arrest;
   if (!a) return null;
+  // FU-8 (gate finding G-FU8A-1): the perfusion pressure's own trend, low-passed with the coronary filter's time
+  // constant (coronary.ts TAU_ISCH_DOWN_S, tables Q32)
+  const cppLp = a.cppLp ?? cpp;
+  a.cppLp = cppLp + (cpp - cppLp) * (1 - Math.exp(-dt / TAU_ISCH_DOWN_S));
   if (cpp >= CPP_ROSC) return null; // effective CPR suspends the decay (the ROSC path handles recovery)
+  // FU-8 (G-FU8A-1; FU-4 ruling 7): so does a resuscitation that is refilling an empty heart. Since Task A19 the
+  // compressions cannot empty chambers that hold no blood, so after an exsanguination the continuous CoPP starts near 0
+  // and reaches CPP_ROSC only as the fluid goes in (FU-4 page scenario 3: 3 → 15 mmHg over ≈ 130 s of CPR + 2 L); below
+  // the coronary zero-flow pressure P_ZF (= CPP_ROSC) there is no coronary flow, so the ischaemia index the model can see
+  // improving is the zero-flow gap P_ZF − CoPP shrinking. While CPR runs, volume is going in (net infusion > 0) and that
+  // gap is closing (CoPP above its own low-pass), the decay pauses: on 018b071 the agonal rhythm's asystole hazard ran
+  // through the refill and the case ended in asystole at +93 s of CPR (before FU-8 the suction artefact gave CoPP ≥ 15
+  // within 36 s). A plateau below P_ZF (CPR that is not refilling a heart, e.g. into a tamponade) lets it run again.
+  if (resus?.cpr && resus.netInMlS > 0 && cpp < P_ZF && cpp > cppLp) return null;
   if (rhythmId === 'agonal') {
     // the idioventricular phase: asystole as a hazard with a mean of PEA_ASYSTOLE_MEAN_S
     return u() < dt / PEA_ASYSTOLE_MEAN_S ? { id: 'asystole', opts: {}, cause: a.cause } : null;

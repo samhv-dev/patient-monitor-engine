@@ -22,28 +22,41 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => vite?.close());
 
+/** FU-8 (F4): the bag's start in the induction script, sim s after the click (stage7f.ts `?bvmAt=`). */
+const BVM_AT = 210;
 const simT = (page: Page) => page.evaluate(() => (window as unknown as { __simT?: number }).__simT ?? 0);
 
 for (const skin of ['philips-like', 'saadat-like']) {
   test(`FU-3 screenshot, fixed (${skin}): the induction apnoea raises one APNEA, never "APNEA (RESP)"; after ventilation it is latched and stays in the message rotation (philips-like) or cleared, per vendor`, async ({ page, browserName }) => {
     test.skip(browserName === 'webkit', 'heavy evidence run: Chromium only (G7g rule)');
-    // E-FU4-20 (FU-4 × FU-5, found at the FU-4 gate, R45 — FU-5 follow-up): FU-4's propofol distribution (G10) and
-    // dead-space root (18d) delay the induction apnoea by ≈ 4 s (VA 0 at 172 vs 168 s after the script's start, seed 7
-    // probe), so the capnograph's apnoea delay no longer elapses before the script's BVM at +180 s: no APNEA is raised
-    // at all ("APNEA live none; latched none", both skins, 3 attempts) and the latching this test exists for is not
-    // exercised. Pinned as an expected failure with the number; the fix is the scenario's timing or the alarm, FU-5's.
-    test.fail(true, 'no induction APNEA after FU-4: apnoea onset +4 s, BVM at +180 s comes first (FU-5 follow-up)');
+    // E-FU4-20 (FU-4 × FU-5): FU-4's propofol distribution (G10) and dead-space root (18d) delay the induction apnoea by
+    // ≈ 4 s, so the capnograph's apnoea delay no longer elapsed before the script's BVM at +180 s (no APNEA at all,
+    // pinned `test.fail`). FU-8 (F4, E-FU8-5): the SCENARIO's timing is the fix — the page's `?bvmAt=210` starts the bag
+    // 30 s later (a 90 s apnoeic interval after propofol, rocuronium still at +180 s); the alarm rules are unchanged.
     test.setTimeout(420_000);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(`${base}/stage7f.html?skin=${skin}`);
+    await page.goto(`${base}/stage7f.html?skin=${skin}&bvmAt=${BVM_AT}`);
     await expect.poll(() => simT(page), { timeout: 30_000 }).toBeGreaterThan(1);
     const tClick = await simT(page); // the script's times are relative to the click (≈ 1–5 s: later on a loaded machine)
-    await page.click('#induction'); // propofol at sim +120 s (apnoea), BVM at +180 s, ventilator at +330 s (× 4)
+    await page.click('#induction'); // propofol at sim +120 s (apnoea), BVM at +BVM_AT s (FU-8), ventilator at +330 s (× 4)
     const seen: Array<{ t: number; text: string; latched: string | null; lamp: string | null }> = [];
+    // FU-8 (gate, E-FU8-5): one sample = ONE page read. The four values were read in four round-trips, so on a loaded
+    // runner the bar's 2 s message rotation could fall between them and pair the latched APNEA's text with the next
+    // (live yellow) message's `data-latched` — the gate run's first philips-like attempt read "APNEA live" up to 308 s
+    // with the latched APNEA in the rotation throughout (it passed on retry)
     while ((await simT(page)) < 460) {
-      const bar = page.locator('.pme-bar');
-      seen.push({ t: await simT(page), text: await bar.innerText(), latched: await bar.getAttribute('data-latched'), lamp: await page.locator('.pme-lamp').getAttribute('data-lamp') });
+      seen.push(
+        await page.evaluate(() => {
+          const bar = document.querySelector<HTMLElement>('.pme-bar');
+          return {
+            t: (window as unknown as { __simT?: number }).__simT ?? 0,
+            text: bar?.innerText ?? '',
+            latched: bar?.getAttribute('data-latched') ?? null,
+            lamp: document.querySelector('.pme-lamp')?.getAttribute('data-lamp') ?? null,
+          };
+        }),
+      );
       await page.waitForTimeout(400);
     }
     // the gate note quotes these spans (sim s; logged before the assertions so a failing run records them too): when the APNEA was live, when latched, and the bar at the end
@@ -62,7 +75,7 @@ for (const skin of ['philips-like', 'saadat-like']) {
     // ≈ 182–187 s, then nothing)
     // anchored on the click: the bag from tClick + 180 s, so "from sim 190 s" is tClick + 189 s (the executor's first run,
     // two workers on a loaded machine, failed the fixed 190 on philips-like; the same tree passed alone)
-    const tBag = tClick + 180;
+    const tBag = tClick + BVM_AT;
     const after = seen.filter((s) => s.t >= tBag + 9 && /APNEA/.test(s.text));
     if (skin === 'philips-like') {
       expect(after.length).toBeGreaterThan(0);

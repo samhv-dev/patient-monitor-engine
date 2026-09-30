@@ -28,7 +28,7 @@ export { mountInstructorPanel, type PanelHandle, type PanelOptions, type PanelTa
 export { mountRemote, type RemoteHandle, type RemoteOptions, type Via } from './remote/remote-app.ts';
 // Scenario view + text only (no ajv): the runner, driver and validation are in '@pme/controller/scenario'.
 export { ScenarioView, type NextTransition } from './scenario/view.ts';
-export { describeWhen, describeTransition, manualLabel } from './scenario/describe.ts';
+export { describeWhen, describeTransition, manualLabel, type Labeller } from './scenario/describe.ts'; // FU-8: Labeller (R-S9-2)
 export type { ScenarioDoc, ScenarioState, Transition, When, DocCommand } from './scenario/types.ts';
 
 import { createBroadcastChannelTransport } from './transport/broadcast-channel.ts';

@@ -17,6 +17,7 @@ export function engineOptionsOf(doc: ScenarioDoc, seed = 1): EngineOptions {
     ...(p.baseline ? { baseline: p.baseline } : {}),
     ...(p.blood ? { blood: p.blood } : {}),
     ...(p.neuro ? { neuro: p.neuro } : {}),
+    ...(p.endo ? { endo: p.endo } : {}), // FU-8 (research/19 §5): 7e's endocrine profile
     ...(pr.conditions ? { conditions: pr.conditions } : {}),
     ...(pr.lungConditions ? { lungConditions: pr.lungConditions } : {}),
   };

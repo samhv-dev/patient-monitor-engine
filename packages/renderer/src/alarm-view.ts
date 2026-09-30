@@ -102,6 +102,7 @@ export const TILE_NUMERICS: Readonly<Record<TileParam, { numerics: NumericId[]; 
   ST: { numerics: ['stII'], limits: ['ST_mV'] },
   NMT: { numerics: ['tofRatio', 'tofCount', 'ptc'], limits: [] }, // Stage 7f
   BFA: { numerics: ['di', 'sr'], limits: [] }, // Stage 7f
+  AGENTS: { numerics: ['etAa', 'mac'], limits: [] }, // FU-8 (A10-E5)
   ICP: { numerics: ['icpMean', 'cpp'], limits: ['ICP', 'CPP'] }, // Stage 7d
   PbtO2: { numerics: ['pbto2'], limits: [] }, // Stage 7d
   UO: { numerics: ['uop'], limits: [] }, // Stage 7d
