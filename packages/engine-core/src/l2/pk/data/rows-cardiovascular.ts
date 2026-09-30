@@ -13,6 +13,18 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
     doses: '0.1 mg/kg (ED95 0.043)', onset: 'max block 3–5 min, duration 25–30 min (label; M10 Table 24.5 41–44)', ir: '?', src: `Vec label; ${VECURONIUM.cl1} L/kg/min`, tag: 'P' },
   { id: 'cisatracurium', name: 'Cisatracurium', cls: 'nmb', amountUnit: 'mcg', pk: { kind: 'nmb', agent: 'cisatracurium' }, pd: [],
     doses: '0.15–0.2 mg/kg (ED95 0.04)', onset: 'max block 2–3 min, duration ≈ 45 min; Hofmann elimination (T5d, Q50)', ir: '?', src: `Cis label; ${CISATRACURIUM.cl1} L/kg/min`, tag: 'P' },
+  // FU-7 (addendum 24): atracurium — histamine release on a fast bolus (M10 ch. 24: transient hypotension and flushing,
+  // dose- and rate-dependent; cisatracurium does not). Hofmann elimination as cisatracurium; potency ED95 0.25 mg/kg.
+  { id: 'atracurium', name: 'Atracurium', cls: 'nmb', amountUnit: 'mcg', pk: { kind: 'nmb', agent: 'cisatracurium' },
+    pd: [{ target: 'histamine', emax: 0.7, ec50: 400 }],
+    doses: '0.5 mg/kg (2×ED95 0.25); infusion 5–10 µg/kg/min', onset: 'max block 2–3 min, duration 20–35 min (label); v1: histamine release only — NO neuromuscular block (7f models four NMB agents)',
+    ir: '?', src: 'label; M10 ch. 24 (histamine release); PK shared with cisatracurium [ENG, Q: its own set]', tag: 'ENG' },
+  // FU-7 (addendum 24): mivacurium — the shortest-acting benzylisoquinolinium, the strongest histamine releaser of the
+  // three, hydrolysed by plasma cholinesterase (so the cholinesterase phenotypes prolong it as they do succinylcholine).
+  { id: 'mivacurium', name: 'Mivacurium', cls: 'nmb', amountUnit: 'mcg', pk: { kind: 'nmb', agent: 'succinylcholine' },
+    pd: [{ target: 'histamine', emax: 0.9, ec50: 250 }],
+    doses: '0.2 mg/kg (2.5×ED95 0.08); infusion 4–10 µg/kg/min', onset: 'max block 2–3 min, duration 15–20 min (label); v1: histamine release only — NO neuromuscular block (7f models four NMB agents)',
+    ir: '?', src: 'label; M10 ch. 24; PK shared with succinylcholine [ENG, Q: its own set]', tag: 'ENG' },
   { id: 'succinylcholine', name: 'Succinylcholine', cls: 'depolariser', amountUnit: 'mcg', pk: { kind: 'nmb', agent: 'succinylcholine' }, pd: [], shared: 'blood',
     doses: '1–1.5 mg/kg (ED95 0.51–0.63, M10 ch. 24 p. 677)', onset: 'block ≈ 1 min; T1 10 % 7.1 min, 90 % 10.9 (label); K +0.5 (7c)', ir: '?', src: `Sux label; Lee 2009; Roy 2002 CL ${SUCCINYLCHOLINE.cl1} L/kg/min`, tag: 'P' },
   { id: 'sugammadex', name: 'Sugammadex', cls: 'nmbReversal', amountUnit: 'mg', pk: { kind: 'nmb', agent: 'sugammadex' }, elim: { renal: 1 },

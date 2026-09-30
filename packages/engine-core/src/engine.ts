@@ -569,6 +569,7 @@ class Engine implements MonitorEngine {
       circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
       circ7g.ext.betaAgonistU = betaVenousUnits(ps.pk.bus.agents); // FU-2 (NR-7g-2)
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
+      circ7g.ext.histamine = ps.pk.bus.airway.histamine; // FU-7 (addendum 24 / audit D15): histamine release acts on 7a
       circ7g.ext.tempC = ps.resp.temp.tc; // FU-4 G12: core temperature for the hypothermic (and G8 hyperthermic) arrest hazard
     }
     // FU-7 (addendum 23; ruling 5): the hook needs to know whether the rhythm PERFUSES (the device host's own definition,
@@ -594,6 +595,7 @@ class Engine implements MonitorEngine {
     advanceResp(ps.resp, {
       l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
       bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, // FU-6 R2/R13 (E-FU6-6): 7g's PD outputs; 7e's own anaphylaxis relief
+      histamine: ps.pk.bus.airway.histamine, // FU-7 (addendum 24, E-FU7-5): the drug-driven bronchoconstriction
     }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
     advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk, neuroProfile: ps.neuro.profile }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo (FU-7: 7f's profile, addendum 24)
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)

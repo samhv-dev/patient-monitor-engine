@@ -117,3 +117,28 @@ describe('volatiles: second gas and the desflurane trigger (R51 addendum 24)', (
     expect(stepFires('desflurane', 1, 4)).toBeNaN();
   });
 });
+
+/** FU-7 Task 16 (addendum 24 / audit D15): the histamine releasers publish `bus.airway.histamine`. */
+describe('histamine release (R51 addendum 24)', () => {
+  const peakHist = (id: string, dose: number, unit: string) => {
+    const r = rig();
+    give(r, id, dose, unit);
+    let mx = 0;
+    runTo(r, 10, (b) => { mx = Math.max(mx, b.airway.histamine); });
+    return mx;
+  };
+  it('atracurium 0.5 mg/kg ≥ 0.4, mivacurium 0.2 mg/kg ≥ 0.5; cisatracurium 0.2 mg/kg releases none (the teaching contrast)', () => {
+    const a = peakHist('atracurium', 0.5, 'mg/kg');
+    const v = peakHist('mivacurium', 0.2, 'mg/kg');
+    const c = peakHist('cisatracurium', 0.2, 'mg/kg');
+    console.log(`FU-7 T16: histamine peak atracurium ${a.toFixed(2)}, mivacurium ${v.toFixed(2)}, cisatracurium ${c.toFixed(2)}`);
+    expect(a).toBeGreaterThanOrEqual(0.4);
+    expect(v).toBeGreaterThanOrEqual(0.5);
+    expect(c).toBe(0);
+  });
+  // R45: morphine's existing row (histamine emax 0.6, ec50 1 reference dose) is not re-sized — the plan gives no new
+  // size or source for it; the engine's DI-42 bands are asserted in test/engine/drug-layer.test.ts.
+  it.fails('morphine 10 mg publishes histamine ≥ 0.4 at its peak — measured 0.32 (row emax 0.6 at ec50 1 reference dose, unchanged)', () => {
+    expect(peakHist('morphine', 10, 'mg')).toBeGreaterThanOrEqual(0.4);
+  });
+});

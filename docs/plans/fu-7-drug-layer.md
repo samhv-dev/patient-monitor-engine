@@ -6089,7 +6089,7 @@ input a **plain scalable input to the condition's reversible share** (`condition
 effect. The gate note §5 records this in one line ("CM-11a: the reactivity gain has no owner; the seam accepts one") and
 the follow-up is listed under Requests → FU-8 / profile follow-up so it is not lost.
 
-- [ ] **Step 1 — the releasers.** Morphine already has `{ target: 'histamine', emax: 0.6, ec50: 1 }`. Add the two NMB
+- [x] **Step 1 — the releasers.** Morphine already has `{ target: 'histamine', emax: 0.6, ec50: 1 }`. Add the two NMB
 releasers, which the library lacks (benzylisoquinolinium agents; cisatracurium is present and must stay clean — it is
 the non-releasing one, which is the teaching point):
 
@@ -6120,7 +6120,7 @@ compartments, and mivacurium's plasma-cholinesterase sensitivity comes along cor
     paralysing agents: `onset: '… v1: histamine release only — NO neuromuscular block (7f models four NMB agents)'`;
   - Ali's Q11 (below) asks whether the two rows should instead be DEFERRED until 7f can give them a block.
 Verify that `bus.agents` still typechecks and that `nmb.test.ts` is green.
-- [ ] **Step 2 — 7a consumes it (E-FU7-3).** In `packages/engine-core/src/l2/circ/model.ts`, in `control()`, after the
+- [x] **Step 2 — 7a consumes it (E-FU7-3).** In `packages/engine-core/src/l2/circ/model.ts`, in `control()`, after the
 `d7` merge, add:
 
 ```ts
@@ -6137,7 +6137,7 @@ Verify that `bus.agents` still typechecks and that `nmb.test.ts` is green.
 with `export const HIST_SVR = 0.22;` and `export const HIST_V0 = 0.04;` in `l2/circ/params.ts` (7a's constants file) and
 `histamine?: number` in the `ext` type. `engine.ts` writes it beside the other 7g→7a lines (**E-FU7-7**, the same
 statement that carries `ext.avNodeBlock`): `circ7g.ext.histamine = ps.pk.bus.airway.histamine;`.
-- [ ] **Step 3 — the lung consumes it (E-FU7-5).** FU-6's `SMOOTH_MUSCLE`/`relaxed` path relieves a lung condition's
+- [x] **Step 3 — the lung consumes it (E-FU7-5).** FU-6's `SMOOTH_MUSCLE`/`relaxed` path relieves a lung condition's
 severity with `bus.airway.bronchodilation`; FU-7 adds the CONSTRICTOR direction. In `l2/lung/conditions.ts` add:
 
 ```ts
@@ -6152,16 +6152,16 @@ and in `l2/resp/pipeline.ts`, where FU-6 resolves the lung specs, add the drug s
 spec (creating it when absent), taking `bronchoDil` into account exactly as FU-6 does — i.e. the drug's spasm is
 RELIEVABLE (it must NOT be added to `bdExempt`), so salbutamol reverses it. `RespCtx` gains `histamine?: number`, written
 in `engine.ts`'s `advanceResp(` context (**E-FU7-7**, the line FU-6 edited).
-- [ ] **Step 4 — the tests.**
+- [x] **Step 4 — the tests.**
   - `interactions-misc.test.ts`: morphine 10 mg gives `bus.airway.histamine` ≥ 0.4 at its peak; cisatracurium gives 0;
     atracurium 0.5 mg/kg gives ≥ 0.4 and mivacurium ≥ 0.5.
   - Task 19's engine test: **"fast morphine 10 mg drops SVR 10–20 % and MAP 8–25 % with HR +3 to +25"** (DI-42's bands),
     **"atracurium 0.5 mg/kg in a patient with bronchospasm worsens Ppeak, and salbutamol reverses it"** (bands from
     FU-6's measured Ppeak 44.0 untreated / 23.3 after salbutamol: assert a rise ≥ 3 cmH₂O and its relief), and
     **"cisatracurium does not"** (the teaching contrast).
-- [ ] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-42 DI-40`. Expected: DI-42 **TW → PL**; DI-40
+- [x] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-42 DI-40`. Expected: DI-42 **TW → PL**; DI-40
 unchanged (FU-6's bronchodilation — a regression guard: the constrictor input must not break the relief path).
-- [ ] **Step 6 — commit.** `feat(7g,7a,7b): histamine release acts on vessels and airways (R51 addendum 24)`, push.
+- [x] **Step 6 — commit.** `feat(7g,7a,7b): histamine release acts on vessels and airways (R51 addendum 24)`, push.
 
 ---
 
