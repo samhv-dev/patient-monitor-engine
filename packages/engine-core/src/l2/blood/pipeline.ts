@@ -181,7 +181,7 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
       bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
-      if (ctx.l1.mode === 'modeled') setCircViscosity(circ, c.odc.hb / c.pat.hbRef); // FU-6 R11 (MODELED: MANUAL's trackers own SVR)
+      if (ctx.l1.mode === 'modeled') setCircViscosity(circ, c.odc.hb / c.pat.hbRef, rs.coRatio); // FU-6 R11 (MODELED: MANUAL's trackers own SVR); G-FU6-1: fades with flow
       circ.ext.kEcg = c.out.kEcg; // FU-4 G3: the membrane-effective K for the sinus node and the arrest hazard (7a arrest.ts)
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
     rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // Stage 7e (E-7e-1): IV fluids and unwarmed units as a physical heat term (replaces decision 16's −0.25 °C per unit)

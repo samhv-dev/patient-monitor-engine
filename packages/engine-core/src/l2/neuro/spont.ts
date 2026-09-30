@@ -10,6 +10,7 @@
 //   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × 7b's condition pMax (fatigue comes sooner in a weak patient).
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
+import { brainstemOutF } from '../circ/baroreflex.ts'; // FU-6 gate G-FU6-2: FU-4's brainstem-ischaemia withdrawal
 import { DIAPH_APNOEA, type NeuroResp } from './drive.ts';
 
 export const SPONT_DT_S = 1;
@@ -132,6 +133,11 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
     rr *= s.gate;
     if (s.gate >= 1) delete s.gate;
   }
+  // FU-6 gate G-FU6-2 (orchestrator ruling on PR #28): the inspiratory effort follows the brainstem — it withdraws with
+  // FU-4's brainstem-ischaemia factor (the one that withdraws the vasomotor reflex: full at CBF ≥ 0.6, none at ≤ 0.2), so
+  // a pulseless patient in CPR (CBF 0.3–0.4) does not out-breathe, and so does not trigger, the ventilator. Agonal
+  // gasping stays FU-3's gate above; nothing else is modelled.
+  rr *= brainstemOutF(x.cbfRel);
   s.rr = rr;
   s.vt = vt;
   s.ve = (rr * vt) / 1000;

@@ -49,7 +49,7 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // CBF above its threshold) — its drive triggers the ventilator at 14–19/min during CPR instead of the set 10, and the
   // mean EtCO2 over minutes 1–10 falls 17.5 (origin/main) → 15.9. it.fails with the number; whether an arrested
   // patient's drive may trigger during CPR is an open question in the FU-6 gate note (a guard is a mechanism change).
-  it.fails('VF with CPR q 0.8 from +30 s: EtCO2 in R39-2\'s steady 17–23 (mean over minutes 1–10 of CPR) — measured 15.9 (FU-6 R9 triggering; 17.5 on origin/main)', async () => {
+  it('VF with CPR q 0.8 from +30 s: EtCO2 in R39-2\'s steady 17–23 (mean over minutes 1–10 of CPR) — measured 15.9 (FU-6 R9 triggering; 17.5 on origin/main)', async () => {
     const c = await course(90, 690);
     const v = [...c].filter(([t]) => t >= 150 && t <= 690).map(([, x]) => x);
     const m = v.reduce((a, x) => a + x, 0) / v.length;

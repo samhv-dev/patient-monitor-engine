@@ -119,10 +119,9 @@ and SpO₂ lag 22 s (band 20); `link-parity` bronchospasm (link VT 238 vs 476).
 
 **Other files, R45 applied by the executor (not in the plan's lists — deviations, §6):** `neuro-acceptance` residual
 block VT ratio 0.80 (band < 0.75; the rig has no hypnotic = Eikermann's awake patient, D21); `organs-tbi` MODELED
-Cushing HR ratio 0.803 (≤ 0.80; the MAP half stays `it`); `arrest-etco2` CPR mean EtCO₂ 15.9 (17–23; 17.5 on main);
-`tension-ptx` decompression at +4 min finds a pulseless patient (PEA at +3.87 min); `lung-circ` COPD MAP direction 1.79
-(> 2; the CO half −15 % stays `it`); `fu8-pea-resus` (FU-8) and `circ-lowflow-arrest`'s two ROSC rows (FU-4): no pulse
-in the class IV resuscitation; `neuro-engine` propofol DI nadir 52 (< 52); `resp-child-rest` adult CPR coRatio 0.363
+Cushing HR ratio 0.803 (0.801 after the fix round; ≤ 0.80; the MAP half stays `it`); ~~`arrest-etco2` 15.9~~ back to `it` at 17.9 (G-FU6-2);
+`tension-ptx` decompression at +4 min finds a pulseless patient (PEA at +3.87 min; +3.75 after the fix round); `lung-circ` COPD MAP direction 1.79
+(> 2; the CO half −15 % stays `it`); ~~`fu8-pea-resus` and `circ-lowflow-arrest`'s two ROSC rows~~ back to `it` (G-FU6-1: pulse at +260 / +264 s); `neuro-engine` propofol DI nadir 52 (< 52); `resp-child-rest` adult CPR coRatio 0.363
 (0.25–0.33).
 
 **Flips (pre-declared `it.fails` now met, titles keep "was …"):** `resp-induction` fentanyl + propofol apnoea 110 s
@@ -193,18 +192,38 @@ depression (RS5b, 7f/7g).
 
 ## 8. Open questions (merged-tree numbers)
 
-- **NEW — should an arrested / resuscitated patient's own drive trigger the ventilator?** Since R9 the MODELED drive runs
-  on the ventilator whenever FU-3's brainstem gate is open; under CPR q 0.8 the brainstem counts as perfused, so the
-  drive triggers 14–19/min during CPR (arrest-etco2 mean EtCO₂ 17.5 → 15.9). A guard (no trigger while pulseless / CPR
-  active) is a mechanism change FU-6 did not make without a ruling.
-- **NEW — rigs with an awake, unparalysed patient on the internal ventilator.** They now breathe over it (TBI Cushing,
-  tension PTX: PEA at +3.87 min, decompression too late). Physiologically right for an awake patient; the rigs' premise
-  (controlled ventilation) is FU-4's/7d's to restate (paralyse or sedate).
-- **NEW — viscosity under haemodilution and CPR (R11 × FU-8 A19).** The class IV resuscitation (FU-4 page scenario 3,
-  `fu8-pea-resus`, `circ-lowflow-arrest`) no longer regains a pulse: with viscF held at 1 the pulse returns at +308 s of
-  CPR; with FU-6's term the diluted blood's lower SVR keeps the CoPP down and the PEA decays to asystole. Options: limit
-  the viscosity factor to the perfusing circulation, a floor, or accept (then the demo scenario needs more adrenaline).
-  This is the most consequential FU-6 × FU-8 interaction for the demo pages.
+### Fix round (orchestrator gate on PR #28, findings G-FU6-1..3)
+
+- **G-FU6-1 — RESOLVED (viscosity fades with flow).** Blood is shear-thinning (Chien 1970 *Science* 168:977; Merrill
+  1969 *Physiol Rev* 49:863): `setCircViscosity` now scales the factor's effect by the patient's flow ratio `coRatio`
+  (the one the low-flow CO₂ code reads) — full at 1.0 (resting output), none at 0.3 (CPR-level flow, the 25–33 % band);
+  two anchors, `VISC_FLOW_FULL` / `VISC_FLOW_NONE`. The class IV resuscitation regains a pulse again, inside FU-8's
+  ≤ 300 s: `fu8-pea-resus` **+260 s** of CPR (agonal → sinus), `circ-lowflow-arrest` ROSC **+264 s** — all three rows
+  back to `it`. The anaemia rows keep their numbers (Hb 5: HR 70 → 103, CO 5.76 → 6.93, lactate 1.00).
+- **G-FU6-2 — PARTLY RESOLVED, residual declared.** As ruled, the spontaneous effort (rate) is multiplied by FU-4's
+  `brainstemOutF(cbfRel)` (full at CBF ≥ 0.6, zero at ≤ 0.2) — no CPR flag. Triggered breaths in the arrest rig (VF,
+  CPR q 0.8, set 10/min): **141 → 108 in 9 min**; none in the first 5 min of CPR. The residual: under CPR q 0.8 the
+  cerebral flow climbs 0.28 → 0.48 while PaCO₂ rises 40 → 53, so the factor is 0.2–0.7 and the drive out-paces the set
+  rate from ≈ +6 min (11–15/min). New row `resp-trigger` "pulseless … no triggered breath" is `it.fails` with 108.
+  Zero would need either the arrest-state index (FU-4 G-FU4-1's `humF`, which withdraws with the declared arrest) or a
+  lower withdrawal band — a ruling. Re-measured rigs: `arrest-etco2` CPR mean EtCO₂ **17.9** (was 15.9; 17.5 on main) →
+  back to `it`; `tension-ptx` PEA at +3.75 min (decompression row stays `it.fails`); `organs-tbi` MODELED Cushing HR
+  ratio 0.801 (58.5/73.0; stays `it.fails`) — both trigger before any arrest (normal CBF), so the brainstem factor does
+  not change them.
+- **G-FU6-3 — DIAGNOSED, not triggering; RS1 stays `it.fails`.** The RS1 rig is paralysed (rocuronium 1.2 mg/kg): 12
+  breaths in its last minute, spontaneous rate 0 — no triggers. The cause is R4's anaesthetised-lung state: `gaLvl` → 1
+  under propofol lowers VCO₂ by 15 % (GA_METABOLIC). Same rig with `gaLvl` held at 0: PaCO₂ **37.4** (V̇A 4.36 L/min
+  either way) vs **32.2** with it. The ruled 38.5 default (FU-4 Q10) was set without an anaesthetic VCO₂ reduction;
+  whether 12 × 7 mL/kg should now be the default under GA, or GA_METABOLIC's size (0.85, applied by FU-6 to every
+  anaesthetic) should change, is Ali's (§7 calibration row).
+- **Fix-round side effects (R45, it.fails with numbers):** `clinical-suite` "10 min of VF with CPR: kIsch < 0.9" measured
+  **0.912** (0.89 after FU-8; not bisected between G-FU6-1 and -2); FU-3's two `brainstem-gate` unit rows that asserted
+  the CBF-gated drive is identical to the ungated one at CBF 0.2/0.25 — no longer true by the ruling (rate × 0 at 0.2,
+  × 0.125 at 0.25; the gasps below 0.2 are withdrawn too, the ruling's "agonal gasping is not modelled").
+  `circ-hypoxic-arrest`, `cpr-etco2`, `circ-sanity-2` green. Fast set: engine 1228 tests, all packages green; slow-a
+  167 green after the kIsch row.
+- **Rigs with an awake, unparalysed patient on the internal ventilator** (TBI Cushing, tension PTX) still breathe over it
+  before any arrest — physiologically right; the rigs' premise is FU-4's/7d's to restate.
 - **NEW — pre-existing on origin/main, surfaced by the suite:** severe COPD at RR 30 arrests (PEEPtot 23.2, CO 0) and a
   disconnection does not release PEEPi (RS10/RS10b); ventilated `lungCondition pe 1` arrests within ≈ 2 min (RS13).
   Owners FU-4/V.1.

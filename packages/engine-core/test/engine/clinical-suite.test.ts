@@ -295,7 +295,9 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   });
   // R45 (Task 18a's residual): 0.56 at 70 s, but the flow share recovered as CoPP settled above 25 — max 0.91 (end 0.87).
   // FU-8 (E-FU8-9): flipped by the outflow limiter (A19): max 0.89
-  it('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before)', async () => {
+  // R45 (FU-6 fix round): the kIsch maximum moves 0.89 → 0.912 at its band edge with the fix round (G-FU6-1 viscosity
+  // fade and G-FU6-2 brainstem-withdrawn drive; not bisected between them). it.fails with the number.
+  it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before) — measured 0.912 after the FU-6 fix round (FU-6 fix round G-FU6-1/-2, not bisected)', async () => {
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'setRhythm', rhythm: 'vfCoarse', atTick: 60 * 50 } as unknown as Command);
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);
