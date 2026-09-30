@@ -53,7 +53,7 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     const contradictions = rows.filter((r) => r.t >= 10 && validShown(r.m.spo2) && (!validShown(r.m.pr) || !validShown(r.m.pi)));
     expect(contradictions.map((r) => r.t)).toEqual([]);
   }, 120_000);
-  it.fails('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 1 (SpO2 LOW PERF at 601 s, 1.0 s) after FU-4 (was LOW PERF ×7 at 1–2 s before FU-5)', async () => {
+  it('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — was 1 (SpO2 LOW PERF at 601 s, 1.0 s) after FU-4 (LOW PERF ×7 at 1–2 s before FU-5); 0 with FU-6 (R45 flip)', async () => {
     expect(shortCycles((await bleedRun()).alarms, 3, 5)).toEqual([]);
   }, 120_000);
   it.fails('MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 1 (EXTREME BRADY at 956 s, 3.6 s: the decaying PEA) after FU-4 (FU-5 follow-up)', async () => {
