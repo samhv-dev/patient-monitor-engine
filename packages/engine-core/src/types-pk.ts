@@ -46,6 +46,17 @@ export interface DrugBus {
   antagonist: { opioid: number; benzodiazepine: number }; // EC50 multipliers of the class (1 = no antagonist)
   cns: {
     propCe: number; opioidCeRemiEq: number; macBrain: number; ketamineCe: number; benzoCeMidazEq: number; dexmedCe: number;
+    /** FU-7 (addendum 20): the ONE hypnotic-potency output — propofol-equivalent brain Ce, µg/mL (every row with hypC50). */
+    hypPropEq: number;
+    /** FU-7 (addendum 20): the same, weighted by CnsSpec.ventShare — the ventilatory drive's hypnotic input. */
+    hypVentPropEq: number;
+    /** FU-7 (addendum 20): the ONE opioid-potency output — fentanyl-equivalent Ce, ng/mL, at the brain (MAC-reduction
+     * potency, `macRemiEq`) and the ventilatory site (`ventRemiEq`); fentanyl Ce X alone publishes X at both. */
+    opioidCeFentEq: number; opioidVentFentEq: number;
+    /** FU-7 (addendum 20): share of hypPropEq contributed by DISSOCIATIVE agents (ketamine), 0–1. */
+    dissoc: number;
+    /** FU-7 (review F2, ruling 2): share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
+    benzoShare: number;
     uHyp: number; uOpioid: number; uSurface: number; seizure: boolean; cmro2Mult: number; cbfVaso: number;
   };
   nmb: { achGain: number }; // neostigmine's acetylcholine gain (1 = none); 7f applies the ceiling
@@ -61,7 +72,7 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   volatiles: {},
   doses: [],
   antagonist: { opioid: 1, benzodiazepine: 1 },
-  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
+  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
   nmb: { achGain: 1 },
   airway: { bronchodilation: 0, histamine: 0 },
   hpvInhibit: 0,

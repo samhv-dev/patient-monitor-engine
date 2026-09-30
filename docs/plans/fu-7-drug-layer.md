@@ -1831,7 +1831,7 @@ and duration **195 s** (band 150–600), apnoea marks at +14 s and +21 s (both w
 `conscious` false (D3). Fitted [ENG]: `hypC50` 1 → **0.55** reference doses for thiopental and etomidate (an induction
 dose is ≈ 1.8 × the LOC-equivalent), the ONE number this task fits, with the awakening bands as its target.
 
-- [ ] **Step 1 — the bus fields.** In `packages/engine-core/src/types-pk.ts`, find:
+- [x] **Step 1 — the bus fields.** In `packages/engine-core/src/types-pk.ts`, find:
 
 ```ts
     propCe: number; opioidCeRemiEq: number; macBrain: number; ketamineCe: number; benzoCeMidazEq: number; dexmedCe: number;
@@ -1866,7 +1866,7 @@ Replace with:
   cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
 ```
 
-- [ ] **Step 2 — the row spec.** In `packages/engine-core/src/l2/pk/row.ts`, find:
+- [x] **Step 2 — the row spec.** In `packages/engine-core/src/l2/pk/row.ts`, find:
 
 ```ts
   /** FU-2 item 8, volatiles: CMRO2 × max(0.5, 1 − cmro2PerMac·MAC) (tables §5.1 rows; replaces `cmro2`). */
@@ -1890,7 +1890,7 @@ Replace with:
   ventRemiEq?: number;
 ```
 
-- [ ] **Step 3 — the sums and the publication.** In `packages/engine-core/src/l2/pk/combine.ts`, find:
+- [x] **Step 3 — the sums and the publication.** In `packages/engine-core/src/l2/pk/combine.ts`, find:
 
 ```ts
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */
@@ -2034,7 +2034,7 @@ export interface Active {
 }
 ```
 
-- [ ] **Step 4 — the ventilatory site reaches `combine`.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
+- [x] **Step 4 — the ventilatory site reaches `combine`.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
 
 ```ts
     pk.lastC[d.id] = c;
@@ -2048,7 +2048,7 @@ Replace with:
     actives.push({ row, c, ...(sc.vent !== undefined ? { vent: sc.vent } : {}) }); // FU-7 (addendum 20): the ventilatory site
 ```
 
-- [ ] **Step 5 — the rows.** In `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`, ketamine: find
+- [x] **Step 5 — the rows.** In `packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts`, ketamine: find
 
 ```ts
     pd: [{ target: 'hr', emax: 0.35, ec50: 1 }, { target: 'svr', emax: 0.4, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
@@ -2181,7 +2181,7 @@ Replace with:
     cns: { remiEq: 1.5, ventRemiEq: 0.8 },
 ```
 
-- [ ] **Step 6 — the test (shared with Task 4).** Create `packages/engine-core/test/l2/pk/potency-outputs.test.ts`:
+- [x] **Step 6 — the test (shared with Task 4).** Create `packages/engine-core/test/l2/pk/potency-outputs.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -2272,7 +2272,7 @@ describe('potency outputs (R51 addendum 20)', () => {
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk`
 Expected: 19 files pass (the second fixer ran `test/l2/pk` green with these fields and the rewritten cases).
-- [ ] **Step 7 — commit.** `feat(7g): publish ONE hypnotic-potency output with the dissociative flag (R51 addendum 20)`, push.
+- [x] **Step 7 — commit.** `feat(7g): publish ONE hypnotic-potency output with the dissociative flag (R51 addendum 20)`, push.
 
 ---
 

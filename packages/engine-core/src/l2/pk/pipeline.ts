@@ -428,7 +428,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       }
     }
     pk.lastC[d.id] = c;
-    actives.push({ row, c });
+    actives.push({ row, c, ...(sc.vent !== undefined ? { vent: sc.vent } : {}) }); // FU-7 (addendum 20): the ventilatory site
     agents[d.id] = {
       unit: concUnit(row), plasma: sc.plasma, brain: c,
       ...(sc.vent !== undefined ? { vent: sc.vent } : {}),

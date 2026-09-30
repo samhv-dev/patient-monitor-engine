@@ -1,7 +1,7 @@
 // Drug library I (Stage 7g Task 12): hypnotics, opioids, benzodiazepines, α2 agonist, volatiles. DATA only.
 // Sources: tables §6.1/§6.3 (T6.x), research 03 §8.6 (R03), Miller 10e (M10 ch. N p. M), labels, papers as named.
 import { FENTANYL_KE0, SUFENTANIL_KE0 } from '../models.ts';
-import { ELEVELD_CE50_AGE_K } from '../pd.ts';
+import { ELEVELD_CE50_AGE_K, FENT_VENT_REMI_EQ } from '../pd.ts';
 import type { DrugRow, PdEffect } from '../row.ts';
 
 /**
@@ -80,6 +80,11 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 2700, 0.01, 300, 900),
     elim: { hepatic: 0.9, t12S: 9540 }, // FU-7 (H9): t½β 2.5–2.8 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'hr', emax: 0.35, ec50: 1 }, { target: 'svr', emax: 0.4, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
+    // FU-7 (addendum 20): ketamine joins the ONE hypnotic-potency output. hypC50 0.8 reference doses [ENG]: 1.5 mg/kg
+    // (c ≈ 1 at the peak) is an induction dose (M10 ch. 21 p. 536: plasma 0.7–2.2 µg/mL for hypnosis), so the
+    // propofol-equivalent Ce at the peak ≈ 3.8 µg/mL. `dissociative` keeps the EEG/BIS behaviour and the airway
+    // reflexes (D3); `ventShare` 0.3 = minimal respiratory depression (T6.3).
+    cns: { hypC50: 0.8, dissociative: true, ventShare: 0.3 },
     doses: 'induction 1–2 mg/kg IV (M10 ch. 21 p. 536); analgesia 0.1–0.3 mg/kg; infusion 0.1–0.5 mg/kg/h',
     onset: 'onset 30–60 s, duration 10–15 min (R03 §8.6); plasma 0.7–2.2 µg/mL for hypnosis (M10 p. 536)',
     ir: '?', src: 'T6.3 (HR +15–20 %, SVR +15–25 % sympathetic; direct Ees ×0.9); M10 ch. 21', tag: 'TXT',
@@ -88,7 +93,11 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'etomidate', name: 'Etomidate', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(0.3, true, 60, 480),
     elim: { hepatic: 0.8, t12S: 14760 }, // FU-7 (H9): t½β 2.9–5.3 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.1, ec50: 1 }],
-    cns: { hypC50: 1, cmro2: 0.4 },
+    // FU-7 (addendum 20): hypC50 0.55 reference doses [ENG], fitted to the awakening time (duration 3–5 min after
+    // 0.3 mg/kg, M10 ch. 21 p. 541); at hypC50 1 the prototype woke the patient at 90 s. ventShare 0.7 (review F9)
+    // [ENG; fit target: apnoea after 0.3 mg/kg is brief or absent, less than an equipotent thiopental/propofol dose —
+    // M10 ch. 21 p. 541]. No hypC50AgeK (D19a): the elderly dose reduction is PHARMACOKINETIC (Arden 1986).
+    cns: { hypC50: 0.55, cmro2: 0.4, ventShare: 0.7 },
     doses: 'induction 0.2–0.3 mg/kg (M10 ch. 21 p. 541)', onset: 'onset 30–60 s, duration 3–5 min; cortisol response ×0.5 for 24 h (T6.3)',
     ir: '?', src: 'T6.3 (MAP −0–10 %); M10 ch. 21 Table 21.1', tag: 'TXT',
   },
@@ -96,7 +105,11 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'thiopental', name: 'Thiopental', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(4, true, 45, 900),
     elim: { hepatic: 1, t12S: 43200 }, // FU-7 (H9): t½β 7–17 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.4, ec50: 1 }, { target: 'ees', emax: -0.3, ec50: 1 }, { target: 'hr', emax: 0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.16, ec50: 1 }, { target: 'gv', emax: -0.8, ec50: 1 }],
-    cns: { hypC50: 1, cmro2: 0.55 },
+    // FU-7 (addendum 20): hypC50 0.55 reference doses [ENG], fitted to awakening 5–10 min after 4 mg/kg by
+    // redistribution (M10 ch. 21 Table 21.1); at hypC50 1 the prototype woke the patient at 140 s. No hypC50AgeK
+    // (D19a): the elderly need less thiopental because of a smaller initial distribution volume, with UNCHANGED brain
+    // sensitivity (Homer & Stanski 1985); 7f's LOC scale already gives ≈ 0.71 × the dose at 80 y.
+    cns: { hypC50: 0.55, cmro2: 0.55 },
     doses: 'induction 3–5 mg/kg', onset: 'onset 30 s, awakening 5–10 min (redistribution); t½ 7–17 h (M10 Table 21.1)',
     ir: '?', src: 'T6.3 (SVR −20 %, Ees −15 %, HR +10–15 %, V0 +8 %, reflex ×0.6)', tag: 'TXT',
   },
@@ -106,7 +119,10 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'midazolam', name: 'Midazolam', cls: 'benzodiazepine', amountUnit: 'mg', pk: gammaPk(0.05, true, 240, 3600, 0.001, 600, 1800),
     elim: { hepatic: 1, t12S: 7740 }, // FU-7 (H9): t½β 1.7–2.6 h (M10 ch. 21 Table 21.1); cirrhosis halves CL (MacGilchrist 1986)
     pd: [{ target: 'svr', emax: -0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.06, ec50: 1 }, { target: 'gv', emax: -0.4, ec50: 1 }],
-    cns: { midazEq: 1, hypC50: 4 },
+    // FU-7 (D19a; review F5): midazolam's age effect IS pharmacodynamic (increased brain sensitivity; M10 ch. 21: reduce
+    // the dose 20–50 % in the elderly). hypC50AgeK 0.008 [ENG; fit target: LOC dose at 80 y ≈ 0.5 × the 35-y dose
+    // through 7f's Schnider LOC scale — measured in "Prototype — second fixer"].
+    cns: { midazEq: 1, hypC50: 4, hypC50AgeK: 0.008 },
     doses: 'sedation 0.02–0.05 mg/kg; induction 0.05–0.15 mg/kg (M10 ch. 21 Table 21.7)', onset: 'T½ke0 2–3 min (M10 ch. 21 p. 532); peak 3–5 min; duration 30–60 min',
     ir: '?', src: 'T6.3 (SVR −10–15 %, V0 +3 %, reflex ×0.8); M10 ch. 21', tag: 'TXT',
   },
@@ -124,7 +140,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // shrinks fentanyl's central volume and clearance and ≈ doubles its concentrations (Egan 1999 Anesthesiology 91:156).
     elim: { hepatic: 1, highExtraction: true }, flowDist: true,
     pd: [{ target: 'hr', emax: -0.25, ec50: 2 }, { target: 'svr', emax: -0.15, ec50: 2 }, { target: 'v0Frac', emax: 0.03, ec50: 2 }, FENTANYL_VAGAL],
-    cns: { remiEq: 1.6 }, syringePerMl: 50,
+    // FU-7 (D16): EEG 1.6 (tables §5d), MAC reduction 0.8 (remifentanil 1.2 ≈ fentanyl 1.5 ng/mL, tables §5d — 7f's
+    // `opioidFentEq` scale), ventilation 0.55 (D-7f-3; Bouillon 2003: ventilatory C50 ≈ 1.7 vs remifentanil 0.92)
+    cns: { remiEq: 1.6, macRemiEq: 0.8, ventRemiEq: FENT_VENT_REMI_EQ }, syringePerMl: 50,
     doses: '1–3 µg/kg analgesia; 5–10 µg/kg blunting; plasma 15–30 ng/mL as sole agent (M10 ch. 22 Table 22.7)',
     onset: 'TTPE 3.6 min; CSHT rises steeply (M10 ch. 22 p. 588)',
     ir: '?', src: `Shafer 1990 PK; ke0 by TTPE (decision 2); T5d potency 1.6× remifentanil; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
@@ -133,7 +151,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // vent site ke0 0.92/min: Bouillon 2003 ventilatory ke0 (T5d "ke0 for CO2 0.92/min") [P]; R51 §2
     id: 'remifentanil', name: 'Remifentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'minto', ventKe0: 0.92 },
     pd: [{ target: 'hr', emax: -0.25, ec50: 3 }, { target: 'svr', emax: -0.15, ec50: 3 }, { target: 'v0Frac', emax: 0.03, ec50: 3 }, REMIFENTANIL_VAGAL],
-    cns: { remiEq: 1 }, syringePerMl: 50,
+    cns: { remiEq: 1, ventRemiEq: 1 }, syringePerMl: 50, // FU-7 (D16, ruling 4): the ventilatory unit, PINNED at 1.0
     doses: '0.05–0.5 µg/kg/min; TCI Ce 2–8 ng/mL; bolus 0.5–1 µg/kg', onset: 'TTPE ≈ 1.4–1.6 min; CSHT ≈ 3 min, context-independent',
     ir: '?', src: `Minto 1997; Bouillon 2003 (ventilation C50 0.92, ke0 0.92); Kapila 1995; ${OPIOID_HEMO_SRC}`, tag: 'P',
   },
@@ -141,7 +159,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'sufentanil', name: 'Sufentanil', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'gepts', ventKe0: SUFENTANIL_KE0 }, // vent = brain ke0 [ENG]
     elim: { hepatic: 1, highExtraction: true },
     pd: [{ target: 'hr', emax: -0.25, ec50: 0.25 }, { target: 'svr', emax: -0.15, ec50: 0.25 }, SUFENTANIL_VAGAL],
-    cns: { remiEq: 12 }, syringePerMl: 5,
+    // FU-7 (D16): ventilatory weight 5 [ENG; ≈ 9 × fentanyl's 0.55 — sufentanil's analgesic potency ratio to fentanyl,
+    // M10 ch. 22; no ventilatory C50 source]. MAC weight = remiEq (7f's pre-FU-7 scale, unchanged).
+    cns: { remiEq: 12, ventRemiEq: 5 }, syringePerMl: 5,
     doses: '0.1–0.5 µg/kg; plasma 5–10 ng/mL as sole agent (M10 Table 22.7)', onset: 'TTPE 5.6 min (Shafer & Varvel 1991)',
     ir: '?', src: `Gepts 1995 PK [VERIFY]; potency ×12 remifentanil [ENG, Q59]; ${OPIOID_HEMO_SRC}`, tag: 'VERIFY',
   },
@@ -149,7 +169,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     id: 'morphine', name: 'Morphine', cls: 'opioid', amountUnit: 'mg', pk: gammaPk(0.1, true, 1200, 14400),
     elim: { hepatic: 0.9, renal: 0.1, t12S: 9000 }, // FU-7 (H9): t½β 1.7–3.3 h (M10 ch. 22 Table 22.6) [VERIFY]
     pd: [{ target: 'svr', emax: -0.2, ec50: 1 }, { target: 'histamine', emax: 0.6, ec50: 1 }],
-    cns: { remiEq: 1.5 },
+    // FU-7 (D16): ventilatory weight 0.8 per 0.1 mg/kg reference dose [ENG; the row is in reference-dose units, fit
+    // target: breathing depressed like the equianalgesic ≈ 1–1.5 µg/kg fentanyl (0.55 × ≈ 1.5 ng/mL), M10 ch. 22].
+    cns: { remiEq: 1.5, ventRemiEq: 0.8 },
     doses: '0.05–0.15 mg/kg IV', onset: 'peak 15–30 min, duration 3–4 h (R03 §8.6); CL 15–30 mL/kg/min (M10 Table 22.6)',
     ir: '?', src: 'R03 §8.6; M10 ch. 22; remi-equivalent [ENG]', tag: 'TXT',
   },

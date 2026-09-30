@@ -44,6 +44,16 @@ export interface CnsSpec {
   cmro2?: number; // fractional CMRO2 fall at uHyp = 1 (tables §5.1)
   /** FU-2 item 8, volatiles: CMRO2 × max(0.5, 1 − cmro2PerMac·MAC) (tables §5.1 rows; replaces `cmro2`). */
   cmro2PerMac?: number;
+  /** FU-7 (addendum 20): a dissociative hypnotic (ketamine) — counted in `dissoc` for 7f's EEG/BIS rise and airway reflexes. */
+  dissociative?: boolean;
+  /** FU-7 (addendum 20): ventilatory potency relative to this row's hypnotic potency (1 = same; ketamine ≈ 0.3, T6.3). */
+  ventShare?: number;
+  /** FU-7 (D16; review F4): an opioid's MAC-reduction potency as remifentanil-equivalents per unit Ce, where it differs
+   * from the EEG weight `remiEq` (fentanyl 0.8 = remifentanil 1.2 ≈ fentanyl 1.5 ng/mL, tables §5d). Absent = `remiEq`. */
+  macRemiEq?: number;
+  /** FU-7 (D16; Orchestrator ruling (FU-7 review) 4): an opioid's VENTILATORY potency as remifentanil-equivalents per
+   * unit Ce at its ventilatory site (remifentanil 1.0 pinned; fentanyl 0.55, D-7f-3). Absent = `remiEq`. */
+  ventRemiEq?: number;
   /** FU-2 item 8, volatiles: DIRECT CBF change at 0.5 and 1.5 MAC — the vasodilation beyond flow–metabolism coupling
    * (Matta 1999 under an isoelectric EEG, tables §5.1); published as `cbfVaso`, and 7d's NET CBF = direct × coupling. */
   cbfDirect?: readonly [number, number];

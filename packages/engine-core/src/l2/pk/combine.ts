@@ -2,12 +2,13 @@
 // circulation PD is 7g's; NMB, depth-index, MAC-awake and ventilatory-drive PD are 7f's (it reads bus.agents).
 import type { DrugEffect } from '../circ/drugs.ts';
 import { DRUG_BUS_NEUTRAL, type DrugBus } from '../../types-pk.ts';
-import { acidosisFactor, competitiveEc50, hill, responseSurface } from './pd.ts';
+import { acidosisFactor, competitiveEc50, ELEVELD_CE50_AGE_K, FENT_VENT_REMI_EQ, hill, responseSurface } from './pd.ts';
 import type { DrugRow, PdTarget } from './row.ts';
 
 export interface Active {
   row: DrugRow;
   c: number; // PD concentration (row units): brain/effect-site Ce, rate-equivalent, or the gamma curve
+  vent?: number; // FU-7 (addendum 20): the row's SEPARATE ventilatory effect site (opioids), row units
 }
 
 export interface PdContext {
@@ -24,6 +25,10 @@ const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode', 'muscarinic']; //
 
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */
 const OPIOID_U1 = 1.2;
+/** FU-7 (addendum 20): propofol's hypnotic C50 at 35 y, µg/mL (Eleveld BIS 2024; the propofol-equivalent unit). */
+export const PROP_HYP_C50_REF = 3.08;
+/** FU-7 (addendum 20): remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). */
+export const FENT_PER_REMI = 1.25;
 
 /** Direct CBF factor of a volatile at `mac` — the vasodilation beyond flow–metabolism coupling (Matta 1999 MCA velocity
  * under an isoelectric EEG, tables §5.1) — piecewise linear through (0, 1), (0.5, 1 + at05), (1.5, 1 + at15), extended
@@ -80,14 +85,41 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   // 3. the CNS summaries (7d, demo); 7f computes its own PD from the per-agent Ce the pipeline adds (Task 15)
   let remiEq = 0;
   let midazEq = 0;
+  let hypEq = 0; // FU-7 (addendum 20): propofol-equivalent Ce, µg/mL
+  let hypEqDis = 0; // its dissociative share
+  let hypVentEq = 0; // FU-7: propofol-equivalent for the ventilatory drive (ventShare-weighted)
+  let hypVentBenzo = 0; // FU-7 (review F2): its benzodiazepine share — the drive's per-class α
+  let macRemiEq = 0; // FU-7 (D16): remifentanil-equivalent at MAC-reduction potency (the brain fentanyl-equivalent)
+  let ventRemiEq = 0; // FU-7 (D16): remifentanil-equivalent at the VENTILATORY site and potency (R51 §2; ruling 4)
+  // FU-7 (review F21): the Eleveld age factor is loop-invariant — ONE exponential per combine, not one per agent
+  const ageF = Math.exp(-ELEVELD_CE50_AGE_K * (ctx.ageY - 35));
   for (const a of actives) {
     const r = a.row;
     const c = conc(a);
     // Eleveld Ce50 age term (tables §5d; R51 addendum 11): C50(age) = C50(35)·e^(−k(age − 35))
     const hypC50 = r.cns?.hypC50 !== undefined ? r.cns.hypC50 * Math.exp(-(r.cns.hypC50AgeK ?? 0) * (ctx.ageY - 35)) : undefined;
     if (r.cls === 'hypnotic' && r.id === 'propofol') bus.cns.propCe = a.c;
-    if (hypC50 !== undefined) bus.cns.uHyp += a.c / hypC50;
-    if (r.cns?.remiEq) remiEq += c * r.cns.remiEq;
+    if (hypC50 !== undefined) {
+      // FU-7 (review F8): ONE antagonised hypnotic load — `uHyp` and the equivalent are the same sum in different units,
+      // so flumazenil moves the response surface 7d reads exactly as it moves the depth index (it used the raw a.c).
+      bus.cns.uHyp += c / hypC50;
+      // FU-7 (addendum 20): ONE hypnotic-potency output — the propofol Ce with the same hypnotic effect at this age.
+      // `hypC50` already carries the row's OWN age term (`hypC50AgeK`, D19a); ageF is propofol's (Eleveld), so
+      // propofol's own equivalent IS its Ce at every age. `c` is antagonist-divided (flumazenil), as for every target.
+      const eq = (c / hypC50) * PROP_HYP_C50_REF * ageF;
+      hypEq += eq;
+      hypVentEq += eq * (r.cns?.ventShare ?? 1);
+      if (r.cns?.dissociative) hypEqDis += eq;
+      if (r.cls === 'benzodiazepine') hypVentBenzo += eq * (r.cns?.ventShare ?? 1);
+    }
+    if (r.cns?.remiEq) {
+      remiEq += c * r.cns.remiEq;
+      macRemiEq += c * (r.cns.macRemiEq ?? r.cns.remiEq); // FU-7 (D16): MAC-reduction potency (fentanyl 0.8)
+      // FU-7 (D16; the first fixer's finding): the ventilatory site is antagonist-divided ONCE, here, like `c` — naloxone
+      // reverses the ventilatory site too; a row without a separate site falls back to the brain Ce.
+      const cv = a.vent !== undefined ? a.vent / competitiveEc50(1, antag.get(r.cls) ?? 0) : c;
+      ventRemiEq += cv * (r.cns.ventRemiEq ?? r.cns.remiEq);
+    }
     if (r.cns?.midazEq) midazEq += c * r.cns.midazEq;
     if (r.id === 'dantrolene') bus.metabolic.dantroleneE = hill(a.c, 1, 1);
     if (r.cls === 'ketamine') bus.cns.ketamineCe = a.c;
@@ -99,6 +131,15 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
     } else if (r.cns?.cmro2) bus.cns.cmro2Mult *= 1 - hill(a.c / (hypC50 ?? 1), 1, r.cns.cmro2);
   }
   bus.cns.opioidCeRemiEq = remiEq;
+  // FU-7 (addendum 20): the two potency outputs 7f's depth and drive read
+  bus.cns.hypPropEq = hypEq;
+  bus.cns.hypVentPropEq = hypVentEq;
+  bus.cns.dissoc = hypEq > 0 ? hypEqDis / hypEq : 0;
+  bus.cns.benzoShare = hypVentEq > 0 ? hypVentBenzo / hypVentEq : 0; // FU-7 (review F2)
+  // FU-7 (D16): TRUE fentanyl-equivalents, antagonist applied once (7f must not divide again): fentanyl Ce X alone
+  // publishes X at the brain (MAC potency: 1.25 × 0.8) and at the ventilatory site (÷ its ventilatory weight 0.55).
+  bus.cns.opioidCeFentEq = FENT_PER_REMI * macRemiEq;
+  bus.cns.opioidVentFentEq = ventRemiEq / FENT_VENT_REMI_EQ;
   bus.cns.benzoCeMidazEq = midazEq;
   bus.cns.macBrain = ctx.macBrain;
   bus.cns.uOpioid = remiEq / OPIOID_U1;
