@@ -30,6 +30,7 @@ export default defineConfig({
         stage7e: page('stage7e'), // Stage 7e
         stage7d: page('stage7d'), // Stage 7d
         'physiology-console': page('physiology-console'), // Stage 7x
+        fu6: page('fu6'), // FU-6
         fu4: page('fu4'), // FU-4 evidence page (Task 23)
       },
     },
