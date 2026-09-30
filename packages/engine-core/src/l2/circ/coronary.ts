@@ -17,6 +17,10 @@ export const G_ISCH = 1.5; // (Q32)
 export const TAU_ISCH_DOWN_S = 20; // (Q32)
 export const TAU_ISCH_UP_S = 60; // (Q32)
 export const ST_LAG_S = 45; // 30–60 s (tables §3 stLag)
+/** FU-8 (C2): ST depression appears once the filtered flow deficit exceeds this (the old instantaneous δ > 0.1 rule). */
+export const ST_DEFICIT_MIN = 0.1;
+/** FU-8 (C3): the MODELED coronary supply averages the beats that ended in this many seconds [ENG]. */
+export const COR_WIN_BEATS_S = 2;
 export const IVR_S = 0.06; // isovolumic relaxation after aortic closure [ENG]
 /** FU-3 item 16: the resting arterial saturation the O2-content ratio is taken against (the chemoreflex's resting 0.97). */
 export const SAO2_REF = 0.97;
@@ -32,8 +36,18 @@ export const SAO2_REF = 0.97;
  * +4.83 min, below the band; 450 → the post-arrest window misses), so the middle is re-chosen: 300 s → PEA at +6.35 min
  * (margins 1.35 / 7.65 min to the 5–14 band; HR < 40 at +3.00 min, margin 3.00 to ≤ 6). Scan: 180 ✗, 200 5.10, 220 5.83,
  * 260 5.80, 300 6.35, 330 6.63, 360 6.98, 400 7.85, 450 ✗ (the same with and without the withdrawn Bezold–Jarisch term).
+ * FU-8 (C3, plan Task A10; E-FU8-4, orchestrator ruling 2): those fits were made with the coronary supply read from the
+ * LAST beat, and the asphyxial bradycardia's escape pairs (R–R 1.5 s then 0.5 s) read as HR 110–130 → a 5 % diastolic
+ * fraction → flow 0.06 for whole seconds; the beat-by-beat supply removed that artefact and, at 300 s, the arrest (none
+ * in 20 min). FU-4's plateau rule, over BOTH tests the constant moves (this file, rig 24 min, and the clinical suite's
+ * S8 tension PTX, PEA ≤ 10 min): on the corrected supply the joint plateau is 220–250 s (S8 +10.00 min at 220, 9.92 at
+ * 230/240; the asphyxia file fails from 260: no arrest), and once the outflow limiter lands (Task A19) 175–257 s. The
+ * middle of the plateau that holds at every commit: 235 s → asphyxial PEA at +11.2 min after SaO2 < 60 % (margins 6.2 /
+ * 2.8 min to the 5–14 band), S8 at +9.75 min (+9.92 before A19). From the same start as the sources (the airway
+ * occlusion, 2.0 min before SaO2 < 60 %): ≈ 13.2 min — inside DeBehnke's 11.4 ± 2.4 min, above Varvarousi's 9.5 ± 1.4.
+ * Recorded for R44: no arrest at SaO2 ≈ 0 for τ ≥ 260 s, and S8's thin margin.
  */
-export const TAU_HYP_S = 300;
+export const TAU_HYP_S = 235;
 /**
  * FU-4 G1: floor of the ischaemic contractility factor in MODELED. The R23 floor 0.2 kept a no-flow heart beating at a
  * fifth of its contractility for ever (audit B7: MAP 13, SV 2 mL for 15 min); a myocardium without coronary flow stops
@@ -120,6 +134,9 @@ export function createCoronary(ref: Stabilised['ref']): CoronaryState {
  * offset (Guyton & Hall, coronary circulation [TXT]); 1 = the flow-only supply of R23. FU-4: `noBeat` (no beat to
  * read) supplies the continuous CPP and the perfused fraction of the cycle; `modeled` false keeps R23's balance (D6).
  */
+/** FU-8 (DV-13d): the beat's diastolic aortic pressure for the supply — the balloon-augmented value when one is set. */
+const aoDiaOf = (b: CircBeat): number => (b as CircBeat & { aoDiaEff?: number }).aoDiaEff ?? b.aoDia;
+
 export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: number, dt: number, hr: number, o2Rel = 1, noBeat?: NoBeat, modeled = true): void {
   const b = beats[beats.length - 1];
   if (!b && !noBeat) return;
@@ -130,6 +147,7 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
   let cpp: number;
   let dtf: number;
   let demand: number;
+  let beatFlow: number | null = null; // FU-8 (C3): the MODELED beat-by-beat flow term (cfr applied below)
   if (noBeat || !b) {
     // FU-4 G4: no beat to read — the arrest's own pressures (CPR relaxation phase, or the equalised circuit)
     cpp = noBeat?.cpp ?? 0;
@@ -139,14 +157,55 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     const rr = 60 / Math.max(20, hr);
     const tsys = b.avClose > 0 ? b.avClose + IVR_S : 0.6 * rr;
     dtf = Math.max(0.05, (rr - tsys) / rr);
-    cpp = b.aoDia - b.lvedp - (modeled ? (b.pItEd ?? P_PL0) : 0); // FU-4 G1: aortic − ABSOLUTE LV end-diastolic pressure (PEEP, tension PTX raise it)
+    // FU-8 (research/20 DV-13d): `aoDiaEff` (set by the hemo pipeline only while an IABP runs) is the augmented diastole
+    // read on the minimum's scale — under a balloon the beat's minimum is the post-deflation dip, and CoPP FELL 57.7 →
+    // 46.1 when the augmentation should raise it (a correctly timed 1:1 balloon arrested an HFrEF + MI heart at +8.8 min)
+    cpp = aoDiaOf(b) - b.lvedp - (modeled ? (b.pItEd ?? P_PL0) : 0); // FU-4 G1: aortic − ABSOLUTE LV end-diastolic pressure (PEEP, tension PTX raise it)
+    // FU-8 (C3, research/19): an irregular rhythm is perfused beat by beat. Supply was read from the LAST beat alone,
+    // so in AF 150 one short cycle — the next activation starting before the ventricle relaxed, "LVEDP" 60–115 mmHg,
+    // CoPP < 0 — zeroed the supply for the whole second (123 of 240 samples), and a healthy 40 y heart went kIsch 0 →
+    // agonal +15.5 min. MODELED: the flow is the duration-weighted mean over the beats of the last COR_WIN_BEATS_S
+    // seconds, each with its own diastolic fraction and CoPP; a beat without a diastole contributes nothing for its
+    // own duration only. With a single beat in the window (unit rigs, very slow rates) it reads exactly as before.
+    const tEnd = b.t + b.dur;
+    const win = modeled ? beats.filter((x) => x.t + x.dur > tEnd - COR_WIN_BEATS_S) : [];
     const hrR = hr / r.hr;
     const ee = Math.sqrt(Math.max(0.1, c.eesF));
-    const work = hrR * (Math.max(20, b.lvsp) / r.lvsp) * ee * Math.cbrt(Math.max(10, b.lvedv) / r.lvedv);
-    demand = modeled ? D_BASAL + D_EC * hrR * ee + (1 - D_BASAL - D_EC) * work : work; // FU-4 G1: + basal, E–C shares
+    const workOf = (x: CircBeat, hrRx: number): number => hrRx * (Math.max(20, x.lvsp) / r.lvsp) * ee * Math.cbrt(Math.max(10, x.lvedv) / r.lvedv);
+    let winDemand: number | null = null; // FU-8 (R50 review F9, orchestrator Q4): demand over the same window
+    if (win.length >= 2) {
+      let fSum = 0;
+      let cSum = 0;
+      let dSum = 0;
+      let wSum = 0;
+      for (let i = 0; i < win.length; i++) {
+        const x = win[i] as CircBeat;
+        const ts = x.avClose > 0 ? x.avClose + IVR_S : 0.6 * x.dur;
+        const f = Math.max(0.05, (x.dur - ts) / x.dur);
+        // the beat's OWN diastole ends where the next beat starts: its end-diastolic pressure is the next beat's
+        // `lvedp` (the last beat's diastole is still running: its own, as before); aoDia is this beat's minimum, at
+        // the same instant. A regular rhythm reads the same number either way.
+        const ed = win[i + 1] ?? x;
+        const cp = aoDiaOf(x) - ed.lvedp - (ed.pItEd ?? P_PL0);
+        fSum += Math.max(0, (cp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (f / c.dtf0) * x.dur;
+        cSum += cp * x.dur;
+        dSum += x.dur;
+        // FU-8 (Q4): each beat's own E–C coupling and pressure–volume work at its own rate, summed over the window —
+        // myocardial O2 use per unit time is the sum of the beats' energy (PVA per beat × beats; Suga H, Physiol Rev
+        // 1990;70:247–277), not the LAST beat's work × the mean rate: in AF 150 one strong post-pause beat read as the
+        // whole second's demand (a variance artefact: kIsch 0.84–0.92 while sinus 150 held 1.00)
+        const hx = 60 / Math.max(0.2, x.dur) / r.hr;
+        wSum += (D_BASAL + D_EC * hx * ee + (1 - D_BASAL - D_EC) * workOf(x, hx)) * x.dur;
+      }
+      beatFlow = fSum / dSum;
+      cpp = cSum / dSum;
+      winDemand = wSum / dSum;
+    }
+    const work = workOf(b, hrR);
+    demand = modeled ? (winDemand ?? D_BASAL + D_EC * hrR * ee + (1 - D_BASAL - D_EC) * work) : work; // FU-4 G1: + basal, E–C shares
   }
   c.cpp = cpp;
-  const flow = cfr * Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0);
+  const flow = cfr * (beatFlow ?? Math.max(0, (cpp - P_ZF) / Math.max(5, cpp0 - P_ZF)) * (dtf / c.dtf0));
   c.ratio = (flow * o2Rel) / Math.max(0.05, demand);
   c.delta = Math.max(0, 1 - c.ratio);
   // FU-3 item 16: the hypoxaemic share of the deficit (δ weighted by the content loss 1 − o2Rel), rising with the
@@ -177,8 +236,13 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
     if (c.kIschRv > 0.9995) c.kIschRv = 1;
   }
-  c.ischT = c.delta > 0.1 ? c.ischT + dt : 0;
-  const stTarget = c.ischT >= ST_LAG_S ? -Math.min(0.3, c.delta) : 0;
+  // FU-8 (C2, research/19): ST follows the SAME filtered flow deficit that drives kIsch — (1 − kIsch)/G_ISCH, the
+  // deficit low-passed with τ 20 s — instead of a continuous-seconds timer on the instantaneous δ that reset on any
+  // beat-to-beat dip (3-vessel CAD at HR 110: δ 0–0.27, longest run above 0.1 3 s, ST never appeared while kIsch fell
+  // to 0.80). The 45 s lag (tables §3 stLag 30–60 s) is kIsch's τ 20 s plus the ST filter below. `ischT` is kept for
+  // older snapshots and no longer read.
+  const dF = (1 - c.kIsch) / G_ISCH;
+  const stTarget = dF > ST_DEFICIT_MIN ? -Math.min(0.3, dF) : 0;
   c.stMv += (stTarget - c.stMv) * (1 - Math.exp(-dt / (stTarget < c.stMv ? 15 : 60)));
 }
 

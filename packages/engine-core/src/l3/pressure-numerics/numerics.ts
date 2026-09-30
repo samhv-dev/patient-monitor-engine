@@ -77,7 +77,9 @@ export function numericsStep(wn: WaveNumerics, m: number, x: number): BeatValues
   if (wn.feet.length > 10) wn.feet.shift();
   const p = wn.prevFoot;
   wn.prevFoot = f;
-  if (p < 0 || f - p < 25 || f - p > RING - 16 || m - p >= RING) return null;
+  // FU-8 (F5): a beat whose foot precedes this sampling run (the restarted detector's zero-filled history places the
+  // first foot before the restart) would average samples from before the gap — dropped
+  if (p < 0 || p < (wn.first ?? 0) || f - p < 25 || f - p > RING - 16 || m - p >= RING) return null;
   let mx = -Infinity;
   let mn = Infinity;
   let sum = 0;

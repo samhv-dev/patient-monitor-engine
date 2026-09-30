@@ -200,7 +200,8 @@ describe('Stage 2 acceptance (engine level)', () => {
   // R45 (FU-4 F1, ruling 3): the trough's upper edge moved out with the incomplete chest recoil
   // (CPR_RELEASE_RESIDUAL 0.65, fitted to Paradis 1990's RA relaxation 15–25 and CoPP 15–25) — measured 30.6 at quality 1.
   // Split out of test 7 unchanged, kept as a record; the rest of test 7 still asserts.
-  it.fails('7b. CPR at 110/min, quality 1: arterial trough ≤ 30 mmHg — measured 30.6 after FU-4 F1', () => {
+  // FU-8 (E-FU8-9): flipped by the outflow limiter (A19): an emptied chamber no longer holds the suction-drawn volume
+  it('7b. CPR at 110/min, quality 1: arterial trough ≤ 30 mmHg — measured 30.6 after FU-4 F1, 25.2 after FU-8', () => {
     const { e } = rig({ seed: 8 });
     e.advanceTo(10);
     e.dispatch(cmd({ type: 'setRhythm', rhythm: 'asystole' }));

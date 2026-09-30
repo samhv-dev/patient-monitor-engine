@@ -13,6 +13,10 @@
     "id": { "$ref": "#/definitions/id" },
     "title": { "type": "string", "minLength": 1 },
     "notes": { "type": "string" },
+    "category": { "type": "string", "minLength": 1, "description": "FU-8 (Stage 9 R-S9-4): the scenario library's group (e.g. 'ACLS', 'Induction', 'Neuromuscular')." },
+    "story": { "type": "string", "description": "FU-8 (R-S9-4): the learner-facing case text shown before the start (no engine words)." },
+    "objectives": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "FU-8 (R-S9-4): learning objectives, one per line." },
+    "durationMin": { "type": "number", "exclusiveMinimum": 0, "description": "FU-8 (R-S9-4): the expected run time in minutes." },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
     "patient": { "$ref": "#/definitions/patient" },
@@ -91,7 +95,13 @@
           "propertyNames": { "$ref": "#/definitions/sensorId" },
           "additionalProperties": { "type": "string" }
         },
-        "profile": { "$ref": "#/definitions/profile" }
+        "profile": { "$ref": "#/definitions/profile" },
+        "endo": {
+          "description": "FU-8 (research/19 §5, R-S9-4): Stage 7e's endocrine profile, passed to the engine's PatientProfile.endo 1:1.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "diabetes": { "enum": ["none", "type1", "type2"] }, "thyroid": { "enum": ["normal", "hypo", "hyper"] }, "adrenalInsufficiency": { "type": "boolean" } }
+        }
       }
     },
     "profile": {
@@ -141,7 +151,7 @@
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/definitions/id" },
-        "label": { "type": "string" },
+        "label": { "type": "string", "minLength": 1 },
         "notes": { "type": "string" },
         "$comment": { "$ref": "#/definitions/comment" },
         "onEnter": { "$ref": "#/definitions/commands" },

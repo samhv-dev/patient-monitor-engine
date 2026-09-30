@@ -211,7 +211,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   });
   // R45 (Task 18a): 23.8 at 70 s on the 18a rig, but the CoPP climbs as the CPR circulation settles — 25.1–28.8 over
   // 1–5 min of CPR alone here (the plan's quality-1 rig read 43–46 before 18a). Kept with the number (Q13's residual).
-  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 25.1–28.8)', async () => {
+  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 after FU-8 A19, 25.1–28.8 before)', async () => {
     // commanded VF is a setRhythm, not an applyEvent: its own engine
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     const cpp: number[] = [];
@@ -293,8 +293,9 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
     }
     console.log(`exsanguination volume threshold: ${out.join('; ')}`);
   });
-  // R45 (Task 18a's residual): 0.56 at 70 s, but the flow share recovers as CoPP settles above 25 — max 0.91 (end 0.87)
-  it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.91)', async () => {
+  // R45 (Task 18a's residual): 0.56 at 70 s, but the flow share recovered as CoPP settled above 25 — max 0.91 (end 0.87).
+  // FU-8 (E-FU8-9): flipped by the outflow limiter (A19): max 0.89
+  it('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before)', async () => {
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'setRhythm', rhythm: 'vfCoarse', atTick: 60 * 50 } as unknown as Command);
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);

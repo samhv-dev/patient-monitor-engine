@@ -15,7 +15,7 @@ export interface VarSpec {
   normal: number;
   /** setTarget accepts a ramp. */
   rampable: boolean;
-  /** pin/release apply (MODELED mode only, brief §4.9). */
+  /** pin/release apply (brief §4.9): the 6a drawer offers them in MODELED only (FU-8: in MANUAL every value is set). */
   pinnable: boolean;
 }
 

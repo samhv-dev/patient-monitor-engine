@@ -156,10 +156,12 @@ let reversalRun: Promise<Course> | undefined;
 const reversalCourse = (): Promise<Course> => (reversalRun ??= asphyxia('modeled', true, 15 * 60));
 /** The unventilated asphyxia run with the ABP line, shared by the main test, the monitor-HR record and the F5 decay. */
 let asphyxiaRun: Promise<Course> | undefined;
-const asphyxiaCourse = (): Promise<Course> => (asphyxiaRun ??= asphyxia('modeled', false, 20 * 60, true));
+// FU-8 (Task A10, E-FU8-4): the rig runs 24 min (was 20) — with the beat-by-beat coronary supply the arrest comes at
+// +11.2 min after SaO2 < 60 % (TAU_HYP_S 235), so the 6–10 min post-arrest window needs the longer run; no band moves
+const asphyxiaCourse = (): Promise<Course> => (asphyxiaRun ??= asphyxia('modeled', false, 24 * 60, true));
 
 describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_000 }, () => {
-  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole, FU-4 F5), monitor HR 0 vs 59/57.9; PEA at +6.90 min (TAU_HYP_S 360)', async () => {
+  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole, FU-4 F5), monitor HR 0 vs 59/57.9; PEA at +11.2 min (TAU_HYP_S 235, FU-8; +6.35 at 300 before)', async () => {
     const c = await asphyxiaCourse();
     const sat = c.tSat60 ?? Number.NaN;
     const w = c.win;
@@ -216,7 +218,7 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     expect(Math.min(...c.hrMonBefore)).toBeLessThan(45);
   });
   it('E-FU3-10: 5–10 min after the arrest the brainstem is unperfused — no spontaneous breathing: RR numeric 0 or --, VA 0, flat CO2 trace — measured RR numeric 0, VA 0.000 L/min, CO2 range 0.00 mmHg (without the gate: RR 43–48 and VA up to 59.7 L/min in this window)', async () => {
-    const c = await asphyxia('modeled', false, 20 * 60, false, true);
+    const c = await asphyxia('modeled', false, 24 * 60, false, true);
     const sat = c.tSat60 ?? Number.NaN;
     const r = c.resp;
     console.log(`E-FU3-10: arrest (${c.arrestRhythm ?? 'none'}) at +${(((c.tArrest ?? Number.NaN) - sat) / 60).toFixed(2)} min after SaO2 < 60 % (${(sat / 60).toFixed(2)} min); 5–10 min after it: RR numeric ${JSON.stringify([...new Set(r.rr)])}; VA max ${max(r.va).toFixed(3)} L/min; CO2 trace range max ${max(r.co2Range).toFixed(2)} mmHg`);

@@ -34,6 +34,21 @@ const L_V0_ART = V0_ART;
 const L_ZC_AO = ZC_AO;
 const L_valveFlow = valveFlow;
 
+/**
+ * FU-8 (F6, I-07; R50 F4, orchestrator ruling 3 — Option D): a compartment cannot give blood it does not hold. A flow
+ * OUT of a compartment is scaled by min(1, V / vEmpty) of that compartment's volume (chambers: absolute volume;
+ * pulmonary arteries/veins: stressed volume — below it the vessels collapse, West zone 1); the systemic veins and the
+ * atria collapse instead of holding a negative transmural pressure (floors in `evaluate`). Without it the passive
+ * pressures bottom out (EDPVR → −A, linear atria/pulmonary compliances) while the downstream pressure keeps falling, and
+ * a ≈ 3 mL/s forward leak ran the RV, LV and pulmonary bed to NEGATIVE volumes after an exsanguination arrest (VRV −273,
+ * VLV −62, VPA −1, VPV −6 mL; CVP −1 to −3.5 on the monitor). `vEmpty` is SIZE-SCALED (profile: 5 mL × W/70, i.e.
+ * 0.25 mL in a 3.5 kg neonate): an absolute 5 mL throttled small hearts (neonate CO 0.31 → 0.165 L/min) [ENG: V0_LV,
+ * the smallest volume a chamber can still eject from].
+ */
+export const V_EMPTY_ML = 5;
+const give = (q: number, vFrom: number, vTo: number, ve: number): number =>
+  q >= 0 ? q * Math.min(1, Math.max(0, vFrom / ve)) : q * Math.min(1, Math.max(0, vTo / ve));
+
 export const N_STATE = 11;
 export const S = { PC: 0, QL: 1, X: 2, XD: 3, VSV: 4, VRA: 5, VRV: 6, VPA: 7, VPV: 8, VLA: 9, VLV: 10 } as const;
 
@@ -50,6 +65,8 @@ export interface CircParams {
   periA: number; periLambda: number; v0Peri: number; vFluid: number;
   /** FU-4 F1(a): reference resting intrathoracic stressed volume the compression works against, mL. */
   vCprRef: number;
+  /** FU-8 (F6): the volume below which a compartment's outflow is throttled, mL (absent = V_EMPTY_ML; profile ×W/70). */
+  vEmpty?: number;
 }
 
 /** Time-dependent inputs for one integration interval (built per tick by the model; not stored). */
@@ -133,13 +150,14 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   // FU-4 F1(c): while the chest is being compressed the thin-walled right heart and great veins are a Starling
   // resistor — they collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks
   // the intrathoracic pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not
-  // the ≈ 4 an uncollapsed chamber gives). Outside CPR the transmural pressure is free, as every calibrated CVP rig
-  // expects.
+  // the ≈ 4 an uncollapsed chamber gives). FU-8 (F6): outside CPR too — an atrium below its unstressed volume, and the
+  // systemic veins below theirs, collapse instead of sucking (the transmural pressure is negative only then, so every
+  // calibrated CVP rig is unchanged).
   const traRa = (p.eminRa + aa * (p.emaxRa - p.eminRa)) * ((s[5] as number) - p.v0Ra);
   const traLa = (p.eminLa + aa * (p.emaxLa - p.eminLa)) * ((s[9] as number) - p.v0La);
-  const pRa = (cr > 0 ? Math.max(0, traRa) : traRa) + extV + cc;
-  const pLa = (cr > 0 ? Math.max(0, traLa) : traLa) + extV + cc;
-  const pSv = ((s[4] as number) - p.v0Sv) / p.cSv;
+  const pRa = Math.max(0, traRa) + extV + cc;
+  const pLa = Math.max(0, traLa) + extV + cc;
+  const pSv = Math.max(0, (s[4] as number) - p.v0Sv) / p.cSv;
   const pPa = (s[7] as number) / p.cPa + pit + ct + cr;
   const pPv = (s[8] as number) / p.cPv + pit + ct + cr;
   const pc = s[0] as number;
@@ -157,14 +175,21 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   o.pRad = pAo + (L_RADIAL_GAIN * 2 * L_RADIAL_ZETA * (s[3] as number)) / WR;
   o.pSv = pSv; o.pRa = pRa; o.pRv = pRv; o.pPa = pPa; o.pPaRoot = pPa + p.zPa * qPv; o.pPv = pPv; o.pLa = pLa; o.pLv = pLv;
   o.pPeri = peri; o.pIt = pit;
-  o.qAv = qAv; o.qPv = qPv;
-  o.qMv = L_valveFlow(p.mv, pLa - pLv);
-  o.qTv = L_valveFlow(p.tv, pRa - pRv);
-  o.qVr = dpv >= 0 ? dpv / p.rVr : dpv / (p.rVr * L_R_VR_BACK);
+  const ve = p.vEmpty ?? V_EMPTY_ML;
+  const vRa = s[5] as number;
+  const vRv = s[6] as number;
+  const vPa = s[7] as number;
+  const vPv = s[8] as number;
+  const vLa = s[9] as number;
+  o.qAv = give(qAv, vlv, Infinity, ve);
+  o.qPv = give(qPv, vRv, vPa, ve);
+  o.qMv = give(L_valveFlow(p.mv, pLa - pLv), vLa, vlv, ve);
+  o.qTv = give(L_valveFlow(p.tv, pRa - pRv), vRa, vRv, ve);
+  o.qVr = give(dpv >= 0 ? dpv / p.rVr : dpv / (p.rVr * L_R_VR_BACK), Infinity, vRa, ve);
   o.qSys = (pc - pSv) / p.rSys;
-  o.qLungL = (pPa - pPv) / p.pvrL;
-  o.qLungR = (pPa - pPv) / p.pvrR;
-  o.qPvla = (pPv - pLa) / p.rPvla;
+  o.qLungL = give((pPa - pPv) / p.pvrL, vPa, vPv, ve);
+  o.qLungR = give((pPa - pPv) / p.pvrR, vPa, vPv, ve);
+  o.qPvla = give((pPv - pLa) / p.rPvla, vPv, vLa, ve);
   o.qVad = qVad;
   o.aVent = a;
   o.aAtria = aa;

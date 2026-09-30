@@ -4,7 +4,6 @@
 //    this acts through L1 `coupled` truths on cvp/sbp/dbp/volumeStatus, which Stage 2's pipeline reads through
 //    l1Value (its M2 tracker then meets the coupled pressures).
 import { l1Target, type L1State } from '../../l1/state.ts';
-import { CPR_SV_FRAC, SV_REF_ML } from '../hemo/params.ts';
 import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
@@ -23,23 +22,16 @@ export function venousGradient(vs: number): number {
 }
 
 /**
- * Net forward flow of CPR vs compression quality, as the gas exchange sees it (R39-2, research 09 §2) [ENG, fitted]:
- * below guideline quality flow falls off steeply (quality^1.9), above it the gain is linear. With the low-flow
- * compression this gives EtCO2 ≈ 12 / 20 / 25 / 29 mmHg at quality 0.5 / 0.8 / 1.0 / 1.2 (10 breaths/min, minutes
- * 1–10). The pressure waveforms (Stage 2) keep scaling linearly with quality.
- */
-export const CPR_FLOW_EXP = 1.9;
-export const cprFlowFactor = (q: number): number => (q < 1 ? Math.max(0, q) ** CPR_FLOW_EXP : q);
-
-/**
  * CO (L/min) for the gas model. Stage 7a: from the circulation (beats and CPR compressions eject through it).
- * INTERIM during CPR: the gas exchange keeps Stage 3.1's R39-2 fit (flow ∝ quality^1.9), which the EtCO2 acceptance
- * (12 / 20 / 25 / 29 mmHg) was calibrated on, until 3.1 re-measures CPR EtCO2 against the emergent circulation CO
- * (R45 request; circulation CO 2.1 L/min at quality 0.8, 2.5 at 1.0).
+ * FU-8 (research/20 DV-03, DV-04a, gap V4; V.1's "CPR flow scaling" request): during CPR the gas exchange reads the
+ * circulation's PULMONARY blood flow (the hemo pipeline's 2 ms lung-bed flow, LPF τ CO_TAU_S), so EtCO2 follows the
+ * blood the compressions actually move through the lungs — and the patient's size. Before, it took Stage 3.1's interim
+ * quality fit (SV_REF·CPR_SV_FRAC·quality^1.9·rate, `cprFlowFactor`), blind to the circulation: a bled-out patient
+ * (CoPP 3.1) read EtCO2 17.4 and a tamponade 15.9, the same as VF with a full circulation.
  */
 export function cardiacOutput(hs: HemoState, t: number): number {
   void t;
-  if (hs.cpr.active) return (SV_REF_ML * CPR_SV_FRAC * cprFlowFactor(hs.cpr.quality) * hs.cpr.rate) / 1000;
+  if (hs.cpr.active) return Math.max(0, hs.av.qLung) * 0.06;
   return circCardiacOutput(hs.circ); // Stage 7a
 }
 

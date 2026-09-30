@@ -155,6 +155,7 @@ const TILE_COLOR_KEY: Record<TileParam, string> = {
   SpO2: 'SpO2', TEMP: 'TEMP', RR: 'RESP', CO2: 'CO2', ST: 'ST',
   NMT: 'NMT', BFA: 'BFA', // Stage 7f
   ICP: 'ICP', PbtO2: 'PbtO2', UO: 'UO', // Stage 7d
+  AGENTS: 'AGENTS', // FU-8 (A10-E5)
 };
 
 function laneSweep(skin: Skin, lane: LaneId): number {

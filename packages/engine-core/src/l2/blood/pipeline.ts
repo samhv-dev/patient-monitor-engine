@@ -6,7 +6,7 @@
 import type { L1State } from '../../l1/state.ts';
 import type { BloodClinicalEvent, BloodDrugId } from '../../types-blood.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from '../gas/params.ts';
+import { CI_LPM_PER_KG, gasPatient } from '../gas/params.ts';
 import { applyLungSpecs, metabolic, type BloodView, type RespState } from '../resp/pipeline.ts';
 import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, setCircViscosity, volumeCoFactor } from './circ-adapter.ts';
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
@@ -151,10 +151,11 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
   const bus = pkBus(ctx.pk);
   const c = bs.core;
   if (bus) observeDoses(bs, bus.doses);
-  // CO0 in the gas model's flow units (coRatio × CI × effKg): the circuit's settled resting CO, starting from 7a's
-  // stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone
+  // CO0 in L/min (coRatio × CI × effKg = the circuit's CO since FU-4 F4): the circuit's settled resting CO, starting from
+  // 7a's stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone. FU-8 (A28): the start
+  // was still in the pre-F4 gas units (× effKg/70), so a non-70 kg patient's co0 began off by that factor
   const settling = circ?.ref !== undefined && !bs.rest.latched;
-  if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = (circ.ref.co / CO_REF_LPM) * CI_LPM_PER_KG * rs.pat.effKg;
+  if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = circ.ref.co;
   if (settling && bus && (bus.active || bus.doses.length > 0)) bs.rest.latched = true;
   const pPv = pulmCapPressure(ctx.hemo);
   while (bs.k * BLOOD_DT_S <= tEnd + 1e-9) {

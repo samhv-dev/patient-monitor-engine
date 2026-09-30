@@ -228,7 +228,11 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
     kidney: {
       rbf: os.renal.rbf, gfr: os.renal.gfr, gfrRel: os.kidney.gfrRel, uopMlKgH: (os.renal.uopMlMin * 60) / os.weightKg, uop1hMlKgH: uopOver(os.renal, 60),
       cumMl: os.renal.cumMl, bagMl: os.renal.bagMl, bladderMl: os.renal.bladderMl,
-      oliguria: uopOver(os.renal, 60 / os.renal.timeScale) < OLIGURIA_ML_KG_H, akiStage: os.renal.akiStage,
+      // FU-8 (review pack "fires too early"; R-FU5-8): the flag needs at least one COMPLETED 10-min urine bin — with none,
+      // `uopOver` returned the instantaneous rate, which flagged a 1.75 L bleed at 508 s (before 10 min of urine had been
+      // collected), cleared it at 600 s (the first bin, 0.83 mL/kg/h) and flagged it again at 1200 s
+      oliguria: os.renal.bins.length >= 1 && uopOver(os.renal, 60 / os.renal.timeScale) < OLIGURIA_ML_KG_H,
+      akiStage: os.renal.akiStage,
     },
     liver: {
       hbfRel: os.liver.hbfRel, kLacPerH: os.liver.kLacPerH, lactate: v.lactate ?? os.liver.lactate, tempF: os.liver.tempF,

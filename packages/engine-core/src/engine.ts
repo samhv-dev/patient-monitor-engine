@@ -66,7 +66,7 @@ import {
 import { advanceEndo, applyEndoCommand, createEndoState, validateEndoCommand, type EndoState } from './l2/endo/pipeline.ts'; // Stage 7e
 import { ecgDeltas, writeBlood, writeCirc, writeCond, writeLung } from './l2/endo/adapters.ts'; // Stage 7e
 import { upgradeThermal } from './l2/thermal/heat.ts'; // Stage 7e
-import { CI_LPM_PER_KG, CO_REF_LPM, gasPatient } from './l2/gas/params.ts'; // Stage 7e; FU-4 G10: CI_LPM_PER_KG, CO_REF_LPM
+import { gasPatient } from './l2/gas/params.ts'; // Stage 7e
 import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7g-5): only the sinus node takes the endocrine HR factor
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
@@ -480,9 +480,11 @@ class Engine implements MonitorEngine {
       ...NEUTRAL_PK_CTX,
       coLpm: circ ? circCardiacOutput(circ) : NEUTRAL_PK_CTX.coLpm,
       // FU-4 G10 (review F12(1)): the SETTLED resting output distFactor divides by — 7c's latched co0 (the same reference
-      // its hbfRel uses, R51 addendum 15 #5), converted from gas-model units back to L/min; `circ.ref.co` sits −9…+10 %
-      // from where rigs settle and would move propofol's distribution in every healthy induction
-      ...(circ ? { coRefLpm: (blood?.core?.co0 ?? 0) > 0 && resp.pat?.effKg ? ((blood?.core?.co0 as number) * CO_REF_LPM) / (CI_LPM_PER_KG * resp.pat.effKg) : circ.ref.co } : {}),
+      // its hbfRel uses, R51 addendum 15 #5); `circ.ref.co` sits −9…+10 % from where rigs settle and would move propofol's
+      // distribution in every healthy induction. FU-8 (A28; V.1 gate note §10 item 2): co0 is in L/min since FU-4 F4 (7c
+      // now also STARTS it in L/min), so it is read as is — the old gas-unit conversion gave a drug dosed after the first
+      // seconds q = CO/ref ≈ effKg/70 (a 16 kg child 0.20: propofol's V1 and CL2/CL3 shrunk)
+      ...(circ ? { coRefLpm: (blood?.core?.co0 ?? 0) > 0 ? (blood?.core?.co0 as number) : circ.ref.co } : {}),
       vaLpm: resp.vaLpm ?? NEUTRAL_PK_CTX.vaLpm,
       frcL: (resp.pat?.frcGaMl ?? 2100) / 1000,
       tempC: resp.temp?.tc ?? 37,
@@ -722,6 +724,8 @@ class Engine implements MonitorEngine {
         if (cmd.when !== undefined && cmd.when !== 'now' && cmd.when !== 'nextBeat') return 'when must be now or nextBeat';
         const o = cmd.opts ?? {};
         return (
+          unknownKeys('opts', o, RHYTHM_OPT_KEYS) ?? // FU-8 (research/19 C12): an unknown option is refused, not dropped
+          unknownKeys('opts.pacer', o.pacer ?? {}, PACER_OPT_KEYS) ??
           numReason('opts.rateBpm', o.rateBpm, 0, 300) ??
           numReason('opts.atrialRateBpm', o.atrialRateBpm, 20, 400) ??
           numReason('opts.prMs', o.prMs, 80, 600) ??
@@ -943,6 +947,18 @@ class Engine implements MonitorEngine {
 }
 
 /** undefined, or a reason when `v` is present but not a finite number in [lo, hi]. */
+/**
+ * FU-8 (research/19 C12): the RhythmOpts / PacerOpts keys (l2/ecg/api-types.ts). `setRhythm` accepted any key and
+ * dropped the unknown ones — `pacedVVI` with `{ fault, faultRate }` at the top level was accepted and did nothing (the
+ * fault belongs under `opts.pacer`). Every key named here is read by the rhythm engine.
+ */
+const RHYTHM_OPT_KEYS: ReadonlySet<string> = new Set(['ratio', 'atrialRateBpm', 'prMs', 'groupSize', 'rateBpm', 'pulseless', 'pauseS', 'pauseEveryS', 'retroP', 'twistBeats', 'vfAmplitudeMv', 'autoAsystole', 'pacer']);
+const PACER_OPT_KEYS: ReadonlySet<string> = new Set(['ratePpm', 'avDelayMs', 'fault', 'faultRate', 'intrinsic']);
+function unknownKeys(name: string, o: object, known: ReadonlySet<string>): string | undefined {
+  const bad = Object.keys(o).filter((k) => !known.has(k));
+  return bad.length ? `${name}: unknown key${bad.length > 1 ? 's' : ''} ${bad.join(', ')} (known: ${[...known].join(', ')})` : undefined;
+}
+
 function numReason(name: string, v: number | undefined, lo: number, hi: number): string | undefined {
   if (v === undefined) return undefined;
   return Number.isFinite(v) && v >= lo && v <= hi ? undefined : `${name} must be a finite number in ${lo}–${hi}`;

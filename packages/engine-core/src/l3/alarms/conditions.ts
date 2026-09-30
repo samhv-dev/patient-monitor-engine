@@ -62,6 +62,8 @@ export const DISCONNECT_DELAY_S = 5;
  * beats generated 3 s apart) [ENG].
  */
 export const AGONAL_RR_S = 2.5;
+/** FU-8 (F3): two detections closer than this are one wide complex for the agonal hold (agonal QRS ≈ 300 ms) [ENG]. */
+export const SAME_COMPLEX_S = 0.35;
 /** FU-5 (review F9): a live extreme-rate alarm ends only after this long back inside its threshold [ENG]. */
 export const EXTREME_CLEAR_S = 5;
 /** FU-5: the alarm is raised and live (not latched) or pending its delay — a hysteresis band applies. */
@@ -80,6 +82,8 @@ export interface AlarmInputs {
   lastQrsT: number | null;
   /** FU-5: the QRS before `lastQrsT` (the last R–R, for the agonal arrest hold); absent in older snapshots. */
   prevQrsT?: number | null;
+  /** FU-8 (F3): the last detection counted as a new complex (a second detection within SAME_COMPLEX_S is not). */
+  countedQrsT?: number | null;
   meanRR: number | null;
   /** ECG leads on since (s); monitoring for asystole starts here. */
   ecgOnSince: number;
@@ -124,8 +128,13 @@ export function observeQrs(inp: AlarmInputs, tR: number): void {
     if (rr > 0.2) inp.meanRR = inp.meanRR === null ? rr : inp.meanRR + RR_EMA * (rr - inp.meanRR);
   }
   // the agonal hold's R–R skips a second detection inside the same wide complex (the detector fires twice, 0.12 s apart,
-  // on an agonal beat — measured), as the mean R–R above does
-  if (inp.lastQrsT === null || tR - inp.lastQrsT > 0.2) inp.prevQrsT = inp.lastQrsT;
+  // on an agonal beat — measured), as the mean R–R above does. FU-8 (F3): measured 0.14–0.24 s apart on origin/main
+  // 0fd5397, so a detection within SAME_COMPLEX_S of the last COUNTED one is the same complex; pairwise, so a real
+  // rhythm faster than 1/SAME_COMPLEX_S (VT ≥ 170/min) still counts every other beat and ends the hold
+  if (inp.lastQrsT === null || tR - (inp.countedQrsT ?? -Infinity) > SAME_COMPLEX_S) {
+    if (inp.countedQrsT !== undefined && inp.countedQrsT !== null) inp.prevQrsT = inp.countedQrsT;
+    inp.countedQrsT = tR;
+  }
   inp.lastQrsT = tR;
 }
 
@@ -193,7 +202,8 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     if (v === null || !l) continue;
     const delayS = d.numeric === 'spo2' ? p.spo2DelayS : p.delayS;
     const c = { level: d.level, category: 'physiological' as const, delayS, numeric: d.numeric };
-    const dd = src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }; // "**Pulse 130>120" / "PR TOO HIGH"
+    // FU-8 (Task A1): the text prints the limit in force (a `setLimit` edits `l`; the profile's `d` keeps the default)
+    const dd = { ...(src === d.numeric ? d : { ...d, label: 'Pulse', upper: 'PR' }), low: l.low, high: l.high }; // "**Pulse 130>120" / "PR TOO HIGH"
     // FU-5 (audit M6): the DISPLAYED value against the limit, with one display unit of hysteresis — raised once it is
     // beyond the limit, kept until it is back inside by a full unit (CVP hovering 9.6–10.4 at a limit of 10 raised
     // `**CVP 10>10` 100 times in 11 min) [ENG, the vendors' hysteresis is not published]
@@ -201,8 +211,12 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const dv = Math.round(v / unit) * unit;
     const hi = `${key}_HIGH`;
     const lo = `${key}_LOW`;
-    if (l.high !== null && (dv > l.high + 1e-9 || (raisedLiveId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c });
-    if (l.low !== null && (dv < l.low - 1e-9 || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c });
+    // FU-8 (R50 F6): a condition kept only by the clear hysteresis (the value back AT the limit) is `held` — the manager
+    // keeps its last violating text (`**ABPs 90<90`, `**CVP 10>10` were printed through the band)
+    const over = l.high !== null && dv > l.high + 1e-9;
+    const under = l.low !== null && dv < l.low - 1e-9;
+    if (l.high !== null && (over || (raisedLiveId(s, hi) && dv > l.high - unit + 1e-9))) out.push({ id: hi, text: limitText(p, dd, 'HIGH', dv), ...c, ...(over ? {} : { held: true }) });
+    if (l.low !== null && (under || (raisedLiveId(s, lo) && dv < l.low + unit - 1e-9))) out.push({ id: lo, text: limitText(p, dd, 'LOW', dv), ...c, ...(under ? {} : { held: true }) });
   }
   const spo2 = valid(inp, 'spo2', t);
   if (p.desat !== null && spo2 !== null && spo2 < p.desat && isEnabled(s, 'SpO2')) out.push({ ...fixed('DESAT', 1, 'physiological', DESAT_DELAY_S), numeric: 'spo2' });
@@ -282,7 +296,11 @@ export function buildConditions(s: AlarmMgrState, inp: AlarmInputs, t: number): 
     const okFor = (since: number | null | undefined, s0: number) => since !== null && since !== undefined && t - since >= s0;
     const nonPuls = (m !== undefined && m.flag === 'invalid') || (holdingId(s, 'spo2NonPulsatile') && !okFor(inp.spo2OkSince, NONPULS_CLEAR_S));
     const piV = pi && pi.value !== null && pi.flag !== 'invalid' ? pi.value : null;
-    const lowPerf = piV !== null ? piV < LOW_PERF_PI || (holdingId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : holdingId(s, 'spo2LowPerf');
+    // FU-8 (F3, E-FU4-20): the clear hysteresis holds a RAISED LOW PERF only — while the INOP is pending its
+    // LOW_PERF_DELAY_S the condition is the plain PI < LOW_PERF_PI, as for the limit alarms (FU-5 Task 9a, the vendor
+    // on-delay: a condition that resolves within the delay raises nothing). With the pending entry held by the band, a
+    // single PI dip to 0.30 at 596 s in the 3 L bleed raised LOW PERF at 601 s and cleared it 1.0 s later
+    const lowPerf = piV !== null ? piV < LOW_PERF_PI || (raisedLiveId(s, 'spo2LowPerf') && piV < LOW_PERF_CLEAR_PI && !okFor(inp.piOkSince, LOW_PERF_DELAY_S)) : raisedLiveId(s, 'spo2LowPerf');
     if (nonPuls) out.push({ ...fixed('spo2NonPulsatile', 3, 'technical'), numeric: 'spo2' });
     else if (lowPerf) out.push({ ...fixed('spo2LowPerf', 3, 'technical', LOW_PERF_DELAY_S), numeric: 'spo2' });
   }

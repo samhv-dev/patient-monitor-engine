@@ -3,6 +3,7 @@
 // a lead II rhythm strip, 25 mm/s, 10 mm/mV, with calibration pulses. Uses only the public MonitorEngine API.
 import { projectLeads } from '../../l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterSample, FILTER_BANDS } from '../ecg-filter.ts';
+import { createQrsState, qrsStep } from '../qrs.ts'; // FU-8: QRS_RATE = CAPTURE_RATE = 500 Hz
 import { LEAD_IDS, type LeadId, type MonitorEngine } from '../../types.ts';
 
 export const CAPTURE_S = 10;
@@ -49,12 +50,19 @@ export function capture12(e: MonitorEngine, endT: number = e.now().simT): Captur
   const fs = [createFilterState(sec), createFilterState(sec), createFilterState(sec)];
   const leads = Object.fromEntries(LEAD_IDS.map((l) => [l, new Float32Array(n)])) as Record<LeadId, Float32Array>;
   const tmp = new Float64Array(12);
+  // FU-8 (review pack: "asystole reads HR 120"): the R peaks are the monitor's own QRS detections (l3/qrs.ts) on lead
+  // II over the pre-roll and the window, not local maxima above 60 % of the strip's maximum — which found 93/min in
+  // asystole (noise), 25 in P-wave asystole (P waves) and 49/65 in coarse/fine VF
+  const qrs = createQrsState(0);
+  const rs: number[] = [];
   for (let i = 0; i < total; i++) {
     const x = filterSample(sec, fs[0] as number[], X[i] as number);
     const y = filterSample(sec, fs[1] as number[], Y[i] as number);
     const z = filterSample(sec, fs[2] as number[], Z[i] as number);
-    if (i < pre) continue;
     projectLeads(x, y, z, tmp);
+    const r = qrsStep(qrs, tmp[1] as number); // lead II (LEAD_IDS order I, II, III, …)
+    if (r >= pre) rs.push(r - pre);
+    if (i < pre) continue;
     for (let k = 0; k < 12; k++) (leads[LEAD_IDS[k] as LeadId] as Float32Array)[i - pre] = tmp[k] as number;
   }
   return {
@@ -66,26 +74,11 @@ export function capture12(e: MonitorEngine, endT: number = e.now().simT): Captur
     layout: { kind: '3x4', rows: LAYOUT_3X4, columnS: CAPTURE_S / 4, rhythmLead: 'ecgII' },
     paper: { mmPerS: 25, mmPerMv: 10 },
     cal: { mV: 1, ms: 200 },
-    measurements: measure(leads),
+    measurements: measure(leads, rs),
   };
 }
 
-/** R peaks on lead II: local maxima above 60 % of the strip's maximum, ≥ 250 ms apart [ENG]. */
-function rPeaks(x: Float32Array): number[] {
-  let mx = 0;
-  for (const v of x) mx = Math.max(mx, v);
-  const out: number[] = [];
-  for (let i = 1; i < x.length - 1; i++) {
-    const v = x[i] as number;
-    if (v < 0.6 * mx || v < (x[i - 1] as number) || v < (x[i + 1] as number)) continue;
-    if (out.length > 0 && i - (out[out.length - 1] as number) < 125) continue;
-    out.push(i);
-  }
-  return out;
-}
-
-function measure(leads: Record<LeadId, Float32Array>): Capture12['measurements'] {
-  const r = rPeaks(leads.ecgII);
+function measure(leads: Record<LeadId, Float32Array>, r: readonly number[]): Capture12['measurements'] {
   if (r.length < 2) return { hr: null, axisDeg: null };
   const hr = Math.round((60 * CAPTURE_RATE * (r.length - 1)) / ((r[r.length - 1] as number) - (r[0] as number)));
   let a1 = 0;

@@ -10,8 +10,12 @@ import { validateScenario } from '../../src/scenario/validate.ts';
 const all = (d: ScenarioDoc): DocCommand[] => d.states.flatMap((s) => [...(s.onEnter ?? []), ...(s.onExit ?? [])]);
 
 describe('built-in scenarios', () => {
-  it('lists the five Stage 6b scenarios', () => {
-    expect(BUILTIN_CATALOGUE.map((c) => c.id)).toEqual(['acls-vf-witnessed', 'acls-pea-hypovolaemia', 'acls-bradycardia-unstable', 'svt-adenosine', 'or-induction-hypotension']);
+  // FU-8 (Stage 9 R-S9-2, declared exception E-FU8-2): the list pin grows from the five Stage 6b documents to all eleven
+  it('lists the five Stage 6b scenarios and the six Stage 7f ones', () => {
+    expect(BUILTIN_CATALOGUE.map((c) => c.id)).toEqual([
+      'acls-vf-witnessed', 'acls-pea-hypovolaemia', 'acls-bradycardia-unstable', 'svt-adenosine', 'or-induction-hypotension',
+      'depth-awareness', 'depth-light-anaesthesia', 'depth-opioid-apnoea', 'nmb-mh-trigger', 'nmb-residual-block', 'nmb-sux-burn',
+    ]);
   });
 
   it.each(Object.keys(BUILTIN_SCENARIOS))('%s is valid, [draft], and runnable on this engine', (id) => {

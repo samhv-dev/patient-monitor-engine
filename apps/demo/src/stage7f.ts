@@ -14,6 +14,8 @@ const pm = mountMonitor($('monitor'), {
   waves: ['abp', 'pleth', 'co2', 'resp'],
 });
 pm.setTimeScale(4);
+/** FU-8 (F4): when the induction script starts bag ventilation (sim s after the click). */
+const BVM_AT_S = Number(new URLSearchParams(location.search).get('bvmAt') ?? 180);
 let n = 0;
 let simT = 0;
 const send = (c: Body) =>
@@ -86,7 +88,10 @@ $('induction').addEventListener('click', () => {
   void drug('fentanyl', 1.5, 'mcg/kg');
   log('fentanyl 1.5 µg/kg');
   at(120, () => { void drug('propofol', 2, 'mg/kg'); log('propofol 2 mg/kg'); });
-  at(180, () => { void drug('rocuronium', 0.6, 'mg/kg'); log('rocuronium 0.6 mg/kg'); void ev({ kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 }); });
+  at(180, () => { void drug('rocuronium', 0.6, 'mg/kg'); log('rocuronium 0.6 mg/kg'); });
+  // FU-8 (F4): the bag starts at +180 s (unchanged) unless `?bvmAt=` says later — the FU-5 latched-APNEA e2e waits for
+  // the induction apnoea to alarm (after FU-4 the apnoea starts ≈ 4 s later and the capnograph's 20 s never elapsed)
+  at(BVM_AT_S, () => void ev({ kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 }));
   // `stimulus` is Stage 7e's event (intensity 0–2, held until the next one; 7f observes it: R51 addenda 12, 17)
   at(300, () => { void ev({ kind: 'stimulus', intensity: 1.5 }); log('laryngoscopy + intubation (stimulus 1.5)'); });
   at(330, () => {

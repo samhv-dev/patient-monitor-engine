@@ -40,6 +40,10 @@ export type SampleSource = (from: number, out: Float32Array) => number;
 type Pt = { x: number; y: number }; // x unwrapped CSS px relative to lane start, y CSS px
 type Rect = [number, number, number, number]; // canvas CSS px
 
+/** FU-8 (R-S9-1a): the backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would
+ * start at the oldest sample instead of the one asked for [ENG margin]. */
+const BACKFILL_MAX_S = 100;
+
 export class SweepLane {
   cfg: LaneConfig;
   private dpr: number;
@@ -157,9 +161,12 @@ export class SweepLane {
     const endIdx = Math.floor(t * c.rate + 1e-9);
     const cursor = this.xOf(endIdx) % c.width;
     if (this.lastIndex < 0 || endIdx - this.lastIndex > (c.width / this.pxPerS) * c.rate) {
-      // First frame, or a jump longer than one lane (hidden tab): start clean one sample back.
+      // First frame, or a jump longer than one lane (hidden tab): start clean. FU-8 (Stage 9 R-S9-1a): redraw the last
+      // lane-width of samples (less the erase gap) in this frame, so a resize or a view change does not blank the sweep
+      // until the cursor has gone round once; the engine's buffer holds them (a read returns what it has).
       this.reset(ctx);
-      this.lastIndex = endIdx - 1;
+      const back = Math.min(Math.floor(((c.width - c.eraseGapPx) / this.pxPerS) * c.rate), BACKFILL_MAX_S * c.rate);
+      this.lastIndex = Math.max(-1, endIdx - 1 - back);
     }
     if (endIdx <= this.lastIndex) return cursor;
     const need = endIdx - this.lastIndex;

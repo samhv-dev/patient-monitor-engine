@@ -59,6 +59,7 @@ const SLOW = [
   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
+  'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
 ];
 /**
  * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
@@ -67,6 +68,7 @@ const SLOW = [
  */
 const SLOW_A = [
   'test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts', 'test/engine/clinical-suite.test.ts',
+  'test/engine/fu8-*.test.ts', // FU-8: its files join slow-a
   // FU-6 (executor instruction, 2026-09-29): every new FU-6 slow file joins SLOW_A — slow-b ran within 2.4 min of its
   // 40 min limit at G-FU4 — so each FU-6 entry is listed in SLOW (above) AND here, and the slow-b filter leaves it out.
   'test/engine/resp-bronchodilation.test.ts',

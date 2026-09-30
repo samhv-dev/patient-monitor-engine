@@ -57,9 +57,10 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
     expect(m).toBeGreaterThanOrEqual(17);
     expect(m).toBeLessThanOrEqual(23);
   });
-  // R45: the plan's "17–23 BY +2 min of CPR" is missed on this rig — measured 16.5 at τ 70 s (a dip, not the τ: 16.1 at
-  // +2.5 min with τ 60, 16.9 mean at τ 80). Kept as a record.
-  it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5)', async () => {
+  // R45: the plan's "17–23 BY +2 min of CPR" was missed on this rig — measured 16.5 at τ 70 s (a dip, not the τ: 16.1 at
+  // +2.5 min with τ 60, 16.9 mean at τ 80). FU-8 (E-FU8-10): flipped — the gas exchange reads the circulation's CPR
+  // pulmonary flow (A22), 18.0 at +2 min
+  it('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after)', async () => {
     const c = await course(90, 210);
     expect(c.get(210)!).toBeGreaterThanOrEqual(17);
   });
