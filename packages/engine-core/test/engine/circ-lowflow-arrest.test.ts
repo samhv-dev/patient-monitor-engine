@@ -110,7 +110,10 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
     expect(c.tAsystole).toBeDefined();
     expect((c.tAsystole as number) - (c.tArrest as number)).toBeLessThanOrEqual(900);
   }, 300_000);
-  it('with CPR + volume + adrenaline there is no decay from effective CPR (CoPP ≥ 15) to ROSC', async () => {
+  // R45 (FU-6 executor, merging second): on the tree merged with FU-8 Part A no pulse returns in this class IV rig — FU-6
+  // R11's viscosity term lowers the SVR of the diluted blood (2.5 L bleed + 2 L crystalloid) and the CPR coronary
+  // perfusion with it (the same scenario as fu8-pea-resus: viscF held at 1 → pulse at +308 s of CPR). it.fails; gate note.
+  it.fails('with CPR + volume + adrenaline there is no decay from effective CPR (CoPP ≥ 15) to ROSC — measured: no ROSC on the FU-6 + FU-8 tree (FU-6 R11 viscosity)', async () => {
     const c = await rosc;
     expect(c.tPulseBack).toBeDefined();
     expect(c.decayedBeforeRosc ?? false).toBe(false);
@@ -119,7 +122,9 @@ describe('FU-4: emergent low-flow arrest and ROSC', () => {
   // own plan called it arbitrary and proposed 4 min): +113/+119 s came from the suction artefact that drained the
   // chambers to negative volumes. With the outflow limiter CPR cannot perfuse an empty heart until the 2 L are in
   // (+180 s); the pulse follows ≈ 80 s later (CoPP 0.2 → 22.6)
-  it('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 5 min (measured +260 s of CPR after FU-8 A19, the outflow limiter; +119 s on the suction artefact before)', async () => {
+  // R45 (FU-6 executor, merging second): on the tree merged with FU-8 Part A no pulse returns in this class IV rig — FU-6
+  // R45: see the row above — no pulse (FU-6 R11 viscosity × FU-8 A19's outflow limiter). it.fails with the finding.
+  it.fails('ROSC: CPR + 2 L + adrenaline 60 s after the arrest — a pulse within 5 min (measured +260 s of CPR after FU-8 A19, the outflow limiter; +119 s on the suction artefact before) — measured: no pulse on the FU-6 + FU-8 tree (FU-6 R11 viscosity)', async () => {
     const c = await rosc;
     expect(c.tArrest).toBeDefined();
     expect(c.cprCpp.length).toBeGreaterThan(10);

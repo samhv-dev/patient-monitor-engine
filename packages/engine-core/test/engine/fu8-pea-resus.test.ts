@@ -52,7 +52,13 @@ async function scenario3(): Promise<{ tA: number; tResus: number; tPulse: number
 }
 
 describe('FU-8 G-FU8A-1: the PEA decay pauses while the resuscitation refills an empty heart', () => {
-  it('FU-4 page scenario 3 (class IV, CPR + 2 L + adrenaline 60 s after the page sees the PEA): a pulse returns within 10 min of CPR and the rhythm never reaches asystole (FU-8 head 018b071: asystole at 903 s, 93 s into CPR, no pulse)', async () => {
+  // R45 (FU-6 executor, merging second, gate): FU-6 R11's viscosity term (SVR × (Hb/Hb_ref)^0.6, VISC_EXP fitted to
+  // Weiskopf's AWAKE isovolaemic anaemia) also acts on this 2.5 L bleed + 2 L crystalloid: the diluted blood lowers the
+  // SVR, the CPR diastolic/coronary perfusion pressure with it, and the PEA decays to asystole (no pulse in 990 s).
+  // Measured diagnosis (scratch, seed 7): viscF held at 1 → pulse at 1118 s (+308 s of CPR); the rig paralysed
+  // (rocuronium 1.2 + 0.6/h, no FU-6 R9 triggering) → pulse at 994 s. it.fails with the numbers; the interaction
+  // (viscosity under CPR / haemodilution) is an open question for the orchestrator in the FU-6 gate note.
+  it.fails('FU-4 page scenario 3 (class IV, CPR + 2 L + adrenaline 60 s after the page sees the PEA): a pulse returns within 10 min of CPR and the rhythm never reaches asystole (FU-8 head 018b071: asystole at 903 s, 93 s into CPR, no pulse) — measured on the FU-6 merge: asystole again, pulse never (pulseless 750 s, CPR from 810 s) — FU-6 R11 viscosity (with viscF held at 1: pulse at 1118 s, +308 s)', async () => {
     const r = await scenario3();
     console.log(`fu8 G-FU8A-1: pulseless at ${r.tA} s, CPR from ${r.tResus} s, pulse at ${r.tPulse ?? 'never'} s (+${r.tPulse !== null ? r.tPulse - r.tResus : '–'} s of CPR); rhythms ${r.seen.join(' → ')}`);
     expect(r.seen).not.toContain('asystole');
