@@ -21,6 +21,8 @@ export interface PdEffect {
   ec50: number; // in the row's concentration unit (see PkSpec)
   hill?: number;
   beta?: boolean; // β-mediated: EC50 shifted by β-blocker occupancy (decision 7)
+  /** FU-7 (addendum 21): a β2 effect — occupied only by NON-SELECTIVE blockade (propranolol), not by a β1-selective drug. */
+  beta2?: boolean;
   catecholamine?: boolean; // efficacy × acidosisFactor(pH) × sepsis vasoResp
   linear?: boolean; // E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±|emax|·3
 }

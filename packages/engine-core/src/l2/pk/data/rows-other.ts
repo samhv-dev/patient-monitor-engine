@@ -32,7 +32,8 @@ export const OTHER_ROWS: DrugRow[] = [
     pd: [{ target: 'svr', emax: -0.3, ec50: 60 }, { target: 'bronchodilation', emax: 0.35, ec50: 60 }],
     doses: '2 g over 1–2 min (TdP); 40–50 mg/kg (analgesia, bronchospasm); concentration = rise over baseline, mg/L', onset: 'TdP termination within minutes; vecuronium ED50 −25 % after 40 mg/kg (M10 ch. 24 p. 698)', ir: '?', src: 'T6.2; M10 ch. 24', tag: 'TXT' },
   { id: 'salbutamol', name: 'Salbutamol (IV/neb)', cls: 'betaAgonist', amountUnit: 'mcg', shared: 'blood', pk: gammaPk(250, false, 600, 7200),
-    pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
+    // FU-7 (addendum 21): salbutamol is a β2 agonist — a cardioselective blocker does not blunt it (M10 ch. 14)
+    pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, beta2: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
     doses: '250 µg IV slowly; 10–20 mg nebulised for K', onset: 'K −1.4 at full effect (7c); HR +10–20 %', ir: '?', src: '7c decision 7; [TXT]', tag: 'TXT' },
   { id: 'insulin', name: 'Insulin (regular)', cls: 'metabolic', amountUnit: 'units', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
     pd: [{ target: 'glucose', emax: -120, ec50: 1 }, { target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U bolus; 0.05–0.1 U/kg/h', onset: 'IV onset 5–15 min, peak 30–60, 2–4 h (7e owns glucose)', ir: '?', src: '[TXT] placeholder for 7e', tag: 'TXT' },

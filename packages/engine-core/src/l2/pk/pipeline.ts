@@ -74,11 +74,13 @@ export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
   coRefLpm?: number; // FU-4 G10: the circulation's resting output (the reference distFactor divides by)
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
+  /** FU-7 (addendum 21): the 7a profile's β-receptor occupancy and its selectivity. */
+  betaOcc?: number; betaNonSel?: boolean;
   /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
    * apply its own temperature term to the hepatic share again. */
   hepFnTemp: boolean;
 }
-export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false };
+export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false, betaOcc: 0, betaNonSel: false };
 
 export function pkPatientOf(p: PatientProfile | undefined): PkPatient {
   return {
@@ -437,7 +439,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       ...(row.id === 'rocuronium' || row.id === 'vecuronium' ? { sgxBoundFrac: d.total > 0 ? Math.min(1, d.bound / d.total) : 0 } : {}),
     };
   }
-  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain });
+  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain }); // FU-7 (addendum 21)
   // desflurane sympathetic surge on a rapid rise above 1 MAC (T6.3): HR +25 %, SVR +20 % over 2–4 min [TXT]
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {
     pk.macPrev.push(macBrain);

@@ -3106,7 +3106,7 @@ task: ephedrine MAP rise healthy **7.8 → 13.4** (band 8–25 ✓ — with Task
 **3.6** with `betaNonSel`. The two items the occupancy alone does NOT reach are the ephedrine ratio (0.99 vs 0.3–0.7)
 and the unopposed-α reflex bradycardia (0 in both arms) — Step 6 and Q1.
 
-- [ ] **Step 1 — the profile fields.** In `packages/engine-core/src/l2/circ/profile.ts`, find:
+- [x] **Step 1 — the profile fields.** In `packages/engine-core/src/l2/circ/profile.ts`, find:
 
 ```ts
   betaBlock: number; // 0–1 fraction of the reflex β1 chronotropic gain removed (g_hs)
@@ -3156,7 +3156,7 @@ Replace with:
       r.betaOcc = 0.85 * s;
 ```
 
-- [ ] **Step 2 — the β2 tag.** In `packages/engine-core/src/l2/pk/row.ts`, find:
+- [x] **Step 2 — the β2 tag.** In `packages/engine-core/src/l2/pk/row.ts`, find:
 
 ```ts
   beta?: boolean; // β-mediated: EC50 shifted by β-blocker occupancy (decision 7)
@@ -3170,7 +3170,7 @@ Replace with:
   beta2?: boolean;
 ```
 
-- [ ] **Step 3 — the two occupancies.** In `packages/engine-core/src/l2/pk/combine.ts`, find:
+- [x] **Step 3 — the two occupancies.** In `packages/engine-core/src/l2/pk/combine.ts`, find:
 
 ```ts
 export interface PdContext {
@@ -3219,7 +3219,7 @@ Replace with:
       const ec50 = e.beta ? competitiveEc50(e.ec50, e.beta2 ? betaOcc2 : betaOcc) : e.ec50; // FU-7 (addendum 21)
 ```
 
-- [ ] **Step 4 — the context plumbing.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
+- [x] **Step 4 — the context plumbing.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
 
 ```ts
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
@@ -3271,7 +3271,7 @@ Replace with:
       betaNonSel: circ?.prof.betaNonSel ?? false,
 ```
 
-- [ ] **Step 5 — the β2 rows.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (adrenaline), find:
+- [x] **Step 5 — the β2 rows.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (adrenaline), find:
 
 ```ts
       { target: 'svr', emax: -0.1, ec50: 0.02, beta: true, catecholamine: true }, { target: 'svr', emax: 1.2, ec50: 0.2, catecholamine: true },
@@ -3298,7 +3298,7 @@ Replace with:
     pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, beta2: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
 ```
 
-- [ ] **Step 6 — the vagal-limb measurement (the item occupancy does NOT reach).** With Steps 1–5 applied, run
+- [x] **Step 6 — the vagal-limb measurement (the item occupancy does NOT reach).** With Steps 1–5 applied, run
 `npx -y pnpm@9.15.9 run audit:drugs DI-05 DI-41` twice: once as shipped (β1-selective) and once with a throwaway probe
 that sets `r.betaNonSel = true` in the profile (revert the probe afterwards — it is a measurement, not a change).
 Prototype result: pressor excess 2.0 → 3.6 %, `hrMinBB` **0 in both arms**, anaphylaxis ratio 0.93 → 0.95. Then measure
@@ -3308,7 +3308,7 @@ as ΔMAP** for ephedrine 10 mg in BOTH arms (healthy / β-blocked), so the gate 
 ratio lives in (CO coupling vs vascular). Write the numbers into the gate note and, if the reflex
 bradycardia needs a change in `l2/circ/baroreflex.ts` (`SYMP_WITHDRAW_HR` 0.1, `VAGAL_WITHDRAW_MS` 200), **report it to
 FU-4 — do not edit the file** (Requests → FU-4 item 2). The DI-05 test of Task 19 stays `it.fails` with the number.
-- [ ] **Step 7 — the unit test.** Create `packages/engine-core/test/l2/pk/beta-occupancy.test.ts`:
+- [x] **Step 7 — the unit test.** Create `packages/engine-core/test/l2/pk/beta-occupancy.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -3349,7 +3349,7 @@ describe('β-receptor occupancy (R51 addendum 21)', () => {
 });
 ```
 
-- [ ] **Step 8 — commit.** `feat(7g): chronic β-blockade as receptor occupancy with β1/β2 selectivity (R51 addendum 21)`, push.
+- [x] **Step 8 — commit.** `feat(7g): chronic β-blockade as receptor occupancy with β1/β2 selectivity (R51 addendum 21)`, push.
 
 ---
 

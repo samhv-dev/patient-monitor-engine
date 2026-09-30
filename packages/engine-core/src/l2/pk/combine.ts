@@ -14,6 +14,11 @@ export interface Active {
 export interface PdContext {
   ph: number;
   betaBlockC: number; // chronic β-blockade from the 7a profile (0–1)
+  /** FU-7 (addendum 21): the profile's β-receptor OCCUPANCY (`prof.betaOcc`) — the competitive dose-ratio input.
+   * Absent (an older caller) falls back to `betaBlockC`, i.e. the pre-FU-7 behaviour. */
+  betaOccProfile?: number;
+  /** FU-7 (addendum 21): the chronic blockade is non-selective (β2 rows are occupied too). */
+  betaNonSel?: boolean;
   vasoResp: number; // sepsis catecholamine responsiveness (7f/§5e), 1 = normal
   ageY: number;
   macBrain: number; // total age-adjusted MAC fraction (volatile model)
@@ -46,7 +51,11 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   for (const a of actives)
     for (const e of a.row.pd)
       if (OCCUPANCY.includes(e.target)) occ[e.target] = 1 - (1 - (occ[e.target] as number)) * (1 - Math.max(0, hill(a.c, e.ec50, e.emax, e.hill ?? 1)));
-  const betaOcc = 1 - (1 - (occ.betaBlock as number)) * (1 - ctx.betaBlockC);
+  // FU-7 (addendum 21): the DRUG occupancy and the PROFILE's own receptor occupancy combine competitively; β2 rows are
+  // occupied by a non-selective chronic blocker (and by every β-blocker DRUG row, which v1 does not tag by selectivity).
+  const occProfile = ctx.betaOccProfile ?? ctx.betaBlockC;
+  const betaOcc = 1 - (1 - (occ.betaBlock as number)) * (1 - occProfile);
+  const betaOcc2 = 1 - (1 - (occ.betaBlock as number)) * (1 - (ctx.betaNonSel ? occProfile : 0));
   // competitive class antagonists (naloxone, flumazenil): every member's concentration is divided by 1 + o/(1 − o)
   const antag = new Map<string, number>();
   for (const a of actives) {
@@ -60,7 +69,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   for (const a of actives)
     for (const e of a.row.pd) {
       if (OCCUPANCY.includes(e.target)) continue;
-      const ec50 = e.beta ? competitiveEc50(e.ec50, betaOcc) : e.ec50;
+      const ec50 = e.beta ? competitiveEc50(e.ec50, e.beta2 ? betaOcc2 : betaOcc) : e.ec50; // FU-7 (addendum 21)
       // one group per target, class and SIGN: epinephrine's β2 dilation and α constriction are separate mechanisms
       const key = `${e.target}|${a.row.cls}|${Math.sign(e.emax)}`;
       const g = byKey.get(key) ?? { u: 0, emax: 0, hill: e.hill ?? 1, cat: false, lin: e.linear === true };

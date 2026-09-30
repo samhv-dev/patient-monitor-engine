@@ -494,6 +494,8 @@ class Engine implements MonitorEngine {
       hepFnTemp: blood?.core?.liver !== undefined && organs?.liver !== undefined, // FU-2 item 9: 7d's liverFn·tempF carries the temperature
       renal: organs?.kidney?.gfrRel ?? 1,
       betaBlockC: circ?.prof.betaBlockC ?? 0,
+      betaOcc: circ?.prof.betaOcc ?? 0, // FU-7 (addendum 21): the profile's own β-receptor occupancy
+      betaNonSel: circ?.prof.betaNonSel ?? false,
       vasoResp: cond?.vasoResp ?? 1,
     };
   }

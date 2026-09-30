@@ -47,7 +47,9 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
   { id: 'epinephrine', name: 'Epinephrine', cls: 'mixedAdrenergic', amountUnit: 'mcg', pk: vaso(0.1, 0.05, 1.0),
     pd: [
       { target: 'hr', emax: 0.5, ec50: 0.05, beta: true, catecholamine: true }, { target: 'ees', emax: 0.6, ec50: 0.04, beta: true, catecholamine: true },
-      { target: 'svr', emax: -0.1, ec50: 0.02, beta: true, catecholamine: true }, { target: 'svr', emax: 1.2, ec50: 0.2, catecholamine: true },
+      // FU-7 (addendum 21): the β2 VASODILATOR arm is β2-tagged, so only NON-SELECTIVE blockade removes it and the α
+      // rise goes unopposed (M10 ch. 14; the anaphylaxis/β-blockade teaching case, DI-05/DI-41)
+      { target: 'svr', emax: -0.1, ec50: 0.02, beta: true, beta2: true, catecholamine: true }, { target: 'svr', emax: 1.2, ec50: 0.2, catecholamine: true },
       { target: 'v0Frac', emax: -0.05, ec50: 0.1, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.05 }, { target: 'kShift', emax: -0.5, ec50: 0.1 }, { target: 'glucose', emax: 40, ec50: 0.1 },
     ],
     syringePerMl: 16, doses: 'infusion 0.01–0.05 (β) / > 0.1 µg/kg/min (α); push-dose 10–20 µg; anaphylaxis 50–100 µg; arrest 1 mg', onset: 'onset 1 min, offset 2–3 min', ir: '?', src: 'Epi label; T6.2; T5e', tag: 'ENG' },
