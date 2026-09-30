@@ -3383,7 +3383,7 @@ ephedrine rise **12.8**, β-blocked ratio **0.99**, HR rise 1 / 4, DI-57 **8.0 /
 `surgeCat` 0 for ephedrine and ketamine; the small shifts from the b675248 column are FU-4's later commits. Table:
 "Prototype — second fixer".
 
-- [ ] **Step 1 — the target and the bus field.** In `packages/engine-core/src/l2/pk/row.ts`, find:
+- [x] **Step 1 — the target and the bus field.** In `packages/engine-core/src/l2/pk/row.ts`, find:
 
 ```ts
   | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain';
@@ -3439,7 +3439,7 @@ Replace with:
   bus.metabolic.kShift = other.kShift ?? 0;
 ```
 
-- [ ] **Step 2 — the two rows.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (ephedrine), find:
+- [x] **Step 2 — the two rows.** In `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (ephedrine), find:
 
 ```ts
     pd: [{ target: 'hr', emax: 0.24, ec50: 1, beta: true, catecholamine: true }, { target: 'ees', emax: 0.36, ec50: 1, beta: true, catecholamine: true }, { target: 'svr', emax: 0.24, ec50: 1, catecholamine: true }, { target: 'v0Frac', emax: -0.06, ec50: 1 }],
@@ -3471,7 +3471,7 @@ Replace with:
     pd: [{ target: 'sympDrive', emax: 2.2, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
 ```
 
-- [ ] **Step 3 — 7e reads it.** In `packages/engine-core/src/l2/endo/core.ts`, find:
+- [x] **Step 3 — 7e reads it.** In `packages/engine-core/src/l2/endo/core.ts`, find:
 
 ```ts
 export interface EndoInputs {
@@ -3522,7 +3522,7 @@ Replace with:
   epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0, sympDrug: 0,
 ```
 
-- [ ] **Step 4 — the catecholamine reserve (UNPROTOTYPED as a band; its code ran in the Task 10 prototype, see
+- [x] **Step 4 — the catecholamine reserve (UNPROTOTYPED as a band; its code ran in the Task 10 prototype, see
 "Prototype — Task 10"; the R45 procedure applies).** 7e gains ONE state: the releasable-noradrenaline store an indirect
 agent works through. Every edit is a find/replace block (review F13).
   - `packages/engine-core/src/l2/endo/params.ts`, find:
@@ -3614,7 +3614,7 @@ run in order.)
     (prototype −0.5 % without the reserve; with it the fall should deepen — record the number), DI-80 and DI-82 stay PL
     (ketamine in haemorrhage and the KETASED comparison must NOT become unstable: if either leaves its band, the reserve's
     τ_down is too fast — report and keep `it.fails`, do not widen).
-- [ ] **Step 5 — the unit test.** Add to `test/l2/pk/beta-occupancy.test.ts`:
+- [x] **Step 5 — the unit test.** Add to `test/l2/pk/beta-occupancy.test.ts`:
 
 ```ts
   it('ephedrine and ketamine publish a central drive instead of multiplying 7a (audit D4/D9)', () => {
@@ -3629,7 +3629,7 @@ run in order.)
   });
 ```
 
-- [ ] **Step 6 — glucagon (D13; UNPROTOTYPED).** Add ONE row to `data/rows-cardiovascular.ts`, after the β-blocker
+- [x] **Step 6 — glucagon (D13; UNPROTOTYPED).** Add ONE row to `data/rows-cardiovascular.ts`, after the β-blocker
 rows, because addendum 21 names it as the β-blocked anaphylaxis / β-blocker-overdose rescue: it raises myocardial cAMP
 DOWNSTREAM of the β receptor, so its `ees`/`hr` entries carry **no** `beta: true` flag — that is the whole teaching
 point.
@@ -3648,7 +3648,7 @@ Test in `test/l2/pk/beta-occupancy.test.ts`: at occupancy 0.95, dobutamine's `ee
 not (band: glucagon keeps ≥ 0.9 × its unblocked effect). Engine check: `audit:drugs DI-41` — record whether the
 anaphylaxis rescue ratio moves once glucagon is available (the cell itself gives adrenaline only; the gate note states
 that the cell needs a NEW arm, which Task 19 adds as an engine test rather than editing the audit's cell).
-- [ ] **Step 7 — commit.** `feat(7g): indirect sympathomimetics through 7e's central drive, catecholamine reserve, glucagon (R51 addenda 20–21)`, push.
+- [x] **Step 7 — commit.** `feat(7g): indirect sympathomimetics through 7e's central drive, catecholamine reserve, glucagon (R51 addenda 20–21)`, push.
 
 ---
 

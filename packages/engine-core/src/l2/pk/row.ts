@@ -13,7 +13,10 @@ export type DrugClass =
 export type PdTarget =
   | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' | 'symp' | 'setF' // → 7a DrugEffect (FU-4 G2: symp, setF)
   | 'vagalMs' | 'muscarinic' // FU-4 G7: vagal RR increment (ms, additive) and muscarinic block (occupancy 0–1)
-  | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain';
+  | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain'
+  /** FU-7 (addenda 20–21): an INDIRECT sympathomimetic's central drive (ephedrine, ketamine) — added to 7e's
+   * `extraSymp`, so β-blockade blunts its β1 share and catecholamine depletion weakens it, instead of multiplying 7a. */
+  | 'sympDrive';
 
 export interface PdEffect {
   target: PdTarget;

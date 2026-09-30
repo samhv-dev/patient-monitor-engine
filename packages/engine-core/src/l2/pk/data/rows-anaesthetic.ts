@@ -79,7 +79,11 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     // The 900 s it carried was the row's 10–15 min DURATION read as a 10 % time. tpS stays the sourced 1-min peak.
     id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 2700, 0.01, 300, 900),
     elim: { hepatic: 0.9, t12S: 9540 }, // FU-7 (H9): t½β 2.5–2.8 h (M10 ch. 21 Table 21.1)
-    pd: [{ target: 'hr', emax: 0.35, ec50: 1 }, { target: 'svr', emax: 0.4, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
+    // FU-7 (addendum 20 / audit D9): ketamine's pressor effect is INDIRECT (central sympathetic drive), so it is blunted
+    // by β-blockade and disappears when catecholamines are depleted (M10 ch. 21: the direct myocardial depression is then
+    // unmasked); the DIRECT Ees −0.2 stays. [ENG size; fit target: MAP +15–25 % replete (T6.3) — prototype +8.7 % —
+    // and a FALL in the catecholamine-depleted phase — prototype −0.5 %]
+    pd: [{ target: 'sympDrive', emax: 2.2, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
     // FU-7 (addendum 20): ketamine joins the ONE hypnotic-potency output. hypC50 0.8 reference doses [ENG]: 1.5 mg/kg
     // (c ≈ 1 at the peak) is an induction dose (M10 ch. 21 p. 536: plasma 0.7–2.2 µg/mL for hypnosis), so the
     // propofol-equivalent Ce at the peak ≈ 3.8 µg/mL. `dissociative` keeps the EEG/BIS behaviour and the airway

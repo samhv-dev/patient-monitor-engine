@@ -33,4 +33,21 @@ describe('β-receptor occupancy (R51 addendum 21)', () => {
     const b = combine([act('dobutamine', 10)], { ...CTX, betaOccProfile: 0.5 }).fx.ees;
     expect(a).toBeCloseTo(b, 9);
   });
+  it('ephedrine and ketamine publish a central drive instead of multiplying 7a (audit D4/D9)', () => {
+    // one reference dose sits at each row's EC50, so the Hill gives half of Emax (ephedrine 1.6 → 0.8, ketamine 2.2 → 1.1)
+    const e = combine([act('ephedrine', 1)], { ...CTX, betaOccProfile: 0 });
+    expect(e.bus.cns.sympDrive).toBeGreaterThan(0.5);
+    expect(e.fx.hr).toBeCloseTo(1, 6); // no direct chronotropy left on 7a
+    const k = combine([act('ketamine', 1)], { ...CTX, betaOccProfile: 0 });
+    expect(k.bus.cns.sympDrive).toBeGreaterThan(0.5);
+    expect(k.fx.hr).toBeCloseTo(1, 6); // ketamine's chronotropy is indirect too
+    expect(k.fx.ees).toBeLessThan(1); // the DIRECT myocardial depression stays
+  });
+  it('glucagon acts DOWNSTREAM of the β receptor: at occupancy 0.95 dobutamine collapses, glucagon keeps ≥ 0.9 × its effect (D13)', () => {
+    const dob = (occ: number) => combine([act('dobutamine', 10)], { ...CTX, betaOccProfile: occ }).fx.ees - 1;
+    const glu = (occ: number) => combine([act('glucagon', 1)], { ...CTX, betaOccProfile: occ }).fx.ees - 1;
+    expect(dob(0.95)).toBeLessThan(0.5 * dob(0));
+    expect(glu(0)).toBeGreaterThan(0);
+    expect(glu(0.95)).toBeGreaterThanOrEqual(0.9 * glu(0));
+  });
 });

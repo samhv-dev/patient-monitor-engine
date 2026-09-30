@@ -30,6 +30,8 @@ export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: 
 }
 
 export interface EndoInputs {
+  /** FU-7 (addenda 20–21): 7g's indirect-sympathomimetic drive (`pk.bus.cns.sympDrive`), 0–3; 0 without 7g. */
+  sympDrug?: number;
   noxious: number;
   antinoc: number;
   mapMmHg: number;
@@ -50,7 +52,7 @@ export interface EndoInputs {
 
 export const NEUTRAL_ENDO_INPUTS: EndoInputs = {
   noxious: 0, antinoc: 0, mapMmHg: 85, mapSetMmHg: 85, sao2: 0.97, paco2: 40, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
-  epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0,
+  epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0, sympDrug: 0,
 };
 
 export interface EndoCore {
@@ -88,6 +90,7 @@ export interface EndoOut {
   epiPgMl: number; // total plasma epinephrine (endogenous + 7g's)
   nePgMl: number;
   cortisolNmolL: number;
+  catReserve: number; // FU-7 (audit D9): 7e's releasable catecholamine store (0–1), scales 7g's indirect drive
   symp: number;
   stressIndex: number; // 0–100, instructor only
   neuroglycopenia: number; // 0–1 → 7f BIS/depth
@@ -155,6 +158,7 @@ function compose(c: EndoCore): EndoOut {
     nePgMl: h.ne,
     cortisolNmolL: h.cort,
     symp: h.symp,
+    catReserve: h.catReserve, // FU-7 (audit D9)
     stressIndex: Math.round(100 * (1 - Math.exp(-(h.symp + lg / 2) / 1.5))),
     neuroglycopenia: Math.min(1, Math.max(0, (NEUROGLYCOPENIA_MGDL + 10 - g.g) / 30)), // 0 at 60 mg/dL, 1 at 30
     stress: st,
@@ -168,7 +172,7 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
   const cd = c.out.cond;
   stepHormones(c.hormones, {
-    noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
+    noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve, // FU-7 (addenda 20–21)
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
     cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
   }, dtS);

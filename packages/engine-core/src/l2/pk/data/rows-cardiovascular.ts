@@ -39,7 +39,11 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
     syringePerMl: 100, doses: 'bolus 50–100 µg (label 40–100); infusion 10–35 µg/min (≈ 0.15–0.5 µg/kg/min); obstetric ED90 0.54 µg/kg/min',
     onset: 'bolus onset 30–60 s, peak 1–2 min, 5–10 min; infusion steady in ≈ 5 min', ir: '?', src: 'Phe label; Hengstmann 1982 (CL ≈ 2.1 L/min); T6.2 (Emax +100 %); EC50 0.25 [ENG, D1]', tag: 'ENG' },
   { id: 'ephedrine', name: 'Ephedrine', cls: 'mixedAdrenergic', amountUnit: 'mg', pk: gammaPk(10, false, 270, 3600), tachyphylaxis: 0.7,
-    pd: [{ target: 'hr', emax: 0.24, ec50: 1, beta: true, catecholamine: true }, { target: 'ees', emax: 0.36, ec50: 1, beta: true, catecholamine: true }, { target: 'svr', emax: 0.24, ec50: 1, catecholamine: true }, { target: 'v0Frac', emax: -0.06, ec50: 1 }],
+    // FU-7 (addendum 21): ephedrine is an INDIRECT sympathomimetic — most of its effect is released noradrenaline, so it
+    // enters 7e's central sympathetic drive (`sympDrive`), where chronic β-blockade removes the β1 share (7e applies
+    // `prof.betaBlock/betaBlockC`) and the α share remains; only its small DIRECT α arm stays on 7a.
+    // [ENG sizes; fit target: MAP +10–15 % after 10 mg (T6.2) — prototype 13.4 mmHg — and ×0.3–0.7 under β-blockade (Q1)]
+    pd: [{ target: 'sympDrive', emax: 1.6, ec50: 1 }, { target: 'svr', emax: 0.08, ec50: 1, catecholamine: true }, { target: 'v0Frac', emax: -0.06, ec50: 1 }],
     doses: '5–10 mg (label 5–25)', onset: 'onset ≈ 1 min, peak 4–5 min, ≈ 60 min; each repeat ×0.7 (tachyphylaxis)', ir: '?', src: 'Eph label; T6.2', tag: 'ENG' },
   { id: 'norepinephrine', name: 'Norepinephrine', cls: 'alpha1', amountUnit: 'mcg', pk: vaso(0.1, 0.03, 1.0),
     pd: [{ target: 'svr', emax: 1.5, ec50: 0.15, catecholamine: true }, { target: 'ees', emax: 0.25, ec50: 0.1, beta: true, catecholamine: true }, { target: 'v0Frac', emax: -0.1, ec50: 0.15, catecholamine: true }, { target: 'pvr', emax: 0.2, ec50: 0.15, catecholamine: true }],
@@ -86,6 +90,13 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
   { id: 'metoprolol', name: 'Metoprolol', cls: 'betaBlocker', amountUnit: 'mg', pk: gammaPk(2.5, false, 1200, 21600),
     pd: [{ target: 'betaBlock', emax: 0.7, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'avNode', emax: 0.5, ec50: 2 }], // FU-2 E-FU2-6 [ENG]
     doses: '1–5 mg IV', onset: 'onset 2–5 min, peak 20 min (tpS 1200), 3–6 h', ir: '?', src: 'T6.2 [TXT], Q59; β occupancy [ENG]', tag: 'TXT' },
+  // FU-7 (addendum 21): glucagon — the rescue when β receptors are occupied (β-blocker overdose, β-blocked anaphylaxis):
+  // it raises cAMP through the glucagon receptor, DOWNSTREAM of the β receptor, so its entries are NOT `beta`-shifted.
+  { id: 'glucagon', name: 'Glucagon', cls: 'metabolic', amountUnit: 'mg', pk: gammaPk(1, false, 420, 3600),
+    pd: [{ target: 'hr', emax: 0.2, ec50: 1 }, { target: 'ees', emax: 0.35, ec50: 1 }, { target: 'glucose', emax: 60, ec50: 1 }],
+    doses: '1–5 mg IV bolus, then 1–5 mg/h (β-blocker overdose: ACMT/AHA); 1 mg for hypoglycaemia',
+    onset: 'onset 1–3 min, peak 5–7 min, duration 15–30 min; nausea and hyperglycaemia are expected',
+    ir: '?', src: 'ACMT β-blocker-toxicity guidance; AHA 2010 toxicology (glucagon 3–10 mg); T6.2 sizes [ENG]', tag: 'ENG' },
   { id: 'amiodarone', name: 'Amiodarone', cls: 'antiarrhythmic', amountUnit: 'mg', pk: gammaPk(150, false, 600, 7200),
     pd: [{ target: 'hr', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'avNode', emax: 0.3, ec50: 1 }],
     doses: '150 mg over 10 min; arrest 300 mg then 150 mg', onset: 'acute effects over 10–60 min; QTc +20–40 ms [ENG]; raises AF→sinus conversion (Stage 5 hook, Task 16)', ir: '?', src: 'T6.2 antiarrhythmic paragraph', tag: 'TXT' },

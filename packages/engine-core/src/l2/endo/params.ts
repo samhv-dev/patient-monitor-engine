@@ -9,6 +9,14 @@ export const G_SYMP_SVR = 0.2; // SVR +15–25 % at sympStress 1 (tables)
 export const G_SYMP_EES = 0.15; // contractility [ENG]
 export const G_SYMP_V0 = 0.03; // venous unstressed volume −3 % of blood volume at 1 [ENG]
 export const SYMP_MAX = 3; // clamp
+/** FU-7 (audit D9): the releasable catecholamine store an INDIRECT sympathomimetic (ephedrine, ketamine) works through.
+ * It falls while the endogenous sympathetic drive is high (prolonged shock: the "cold" phase, reserpine-like depletion)
+ * and refills slowly. τ_down 20 min at symp 3, τ_up 2 h, floor 0.2 [ENG; direction: M10 ch. 21 (ketamine's depression is
+ * unmasked when catecholamines are exhausted), Levy 2018 (adrenergic hyporesponsiveness in prolonged septic shock)]. */
+export const CAT_RESERVE_TAU_DOWN_S = 1200;
+export const CAT_RESERVE_TAU_UP_S = 7200;
+export const CAT_RESERVE_FLOOR = 0.2;
+export const CAT_RESERVE_SYMP_REF = 3;
 /** Antinociception when 7f is absent: general anaesthesia alone blunts ≈ 60 % of the noxious response [ENG, Q48]. */
 export const ANTINOC_GA_FALLBACK = 0.6;
 

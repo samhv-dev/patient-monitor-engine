@@ -55,6 +55,8 @@ export interface DrugBus {
     opioidCeFentEq: number; opioidVentFentEq: number;
     /** FU-7 (addendum 20): share of hypPropEq contributed by DISSOCIATIVE agents (ketamine), 0–1. */
     dissoc: number;
+    /** FU-7 (addenda 20–21): an indirect sympathomimetic's central drive (ephedrine, ketamine) → 7e's `extraSymp`, 0–3. */
+    sympDrive: number;
     /** FU-7 (review F2, ruling 2): share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
     benzoShare: number;
     uHyp: number; uOpioid: number; uSurface: number; seizure: boolean; cmro2Mult: number; cbfVaso: number;
@@ -72,7 +74,7 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   volatiles: {},
   doses: [],
   antagonist: { opioid: 1, benzodiazepine: 1 },
-  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
+  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, sympDrive: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
   nmb: { achGain: 1 },
   airway: { bronchodilation: 0, histamine: 0 },
   hpvInhibit: 0,
