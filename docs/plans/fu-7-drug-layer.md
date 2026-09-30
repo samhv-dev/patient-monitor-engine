@@ -1008,17 +1008,17 @@ Data flow rules that keep this legible:
 **Why:** every block in this document was written against `origin/main` dba7fda, which carries none of FU-4, V.1, FU-6
 or FU-5. The Global Constraints table names the shared files and what each stage moved.
 
-- [ ] **Step 1 — the base is complete.** `git fetch origin && git log origin/main --oneline | head -40` must show the
+- [x] **Step 1 — the base is complete.** `git fetch origin && git log origin/main --oneline | head -40` must show the
 merge commits of **FU-4**, **V.1** and **FU-6**. If FU-6 is not merged, STOP and report (R53 order: FU-7 runs after
 FU-6; both touch the drive).
-- [ ] **Step 2 — branch and worktree.**
+- [x] **Step 2 — branch and worktree.**
 ```
 git -C <repo> fetch origin
 git -C <repo> worktree add -b fu-7-drug-layer scratch/wt-fu-7 origin/main
 cd scratch/wt-fu-7 && npx -y pnpm@9.15.9 install --frozen-lockfile
 npx -y pnpm@9.15.9 -r typecheck            # must be clean BEFORE any edit
 ```
-- [ ] **Step 3 — mechanical block check.** Write `<scratchpad>/fu-7-drug-layer/verify.py`: for every ``` ```ts ``` find
+- [x] **Step 3 — mechanical block check.** Write `<scratchpad>/fu-7-drug-layer/verify.py`: for every ``` ```ts ``` find
 block in this document (in task order), assert it appears EXACTLY ONCE in its task's named file; print every miss with
 its task and file. Run it in dry mode. For each miss: locate the same statement by its quoted comment or by the
 function it is inside, make the SAME change there, and record the re-anchoring in the gate note §8. **Never re-type a
@@ -1031,7 +1031,7 @@ gate note §8 records the list. After the second fixer every INTERFACE field tha
 Steps 2/3 `NeuroEnv.mgMmolL/iCaMmolL` and `nmUpreg`, Task 15 Step 1 `uptakeLpm`, Task 18 Step 2 `qtc`/`qtcMsAdd`); the
 remaining inserts are whole new rows (glucagon, procainamide, verapamil, nitroprusside, atracurium, mivacurium) and new
 test files, each named in its task.
-- [ ] **Step 4 — the three FU-6 structures Task 6 and Task 7 depend on.** Confirm on the merged tree:
+- [x] **Step 4 — the three FU-6 structures Task 6 and Task 7 depend on.** Confirm on the merged tree:
 `grep -n "LOC_LO\|APNOEA_VE_IN\|hvrDep" packages/engine-core/src/l2/neuro/drive.ts packages/engine-core/src/l2/lung/drive.ts`
 returns FU-6's constants, and `grep -n "s.rr === 0\|APNOEA_VE_OUT" packages/engine-core/src/l2/neuro/spont.ts
 packages/engine-core/src/l2/lung/drive.ts` shows the relative apnoea threshold. If any is absent, Tasks 6 and 7 stop and
@@ -1042,16 +1042,16 @@ seam update from the finished FU-6 plan). **List every consumer of a local that 
 (review F3 / ruling 3): on FU-6's tree `dMid` is read by the `hvrDep` line (Task 6 Step 1b edits it in the same pass)
 and `SYNERGY` by nothing after Step 1 (deleted, review F17); `grep -rn "SYNERGY\|dMid\|dKet" packages/engine-core/src
 packages/engine-core/test` must show no other reader. Task 6 preserves the NMB arm and adds no NMB term of its own.
-- [ ] **Step 5 — the FU-4 fields Tasks 8–10 build on.**
+- [x] **Step 5 — the FU-4 fields Tasks 8–10 build on.**
 `grep -n "symp\b\|setF\|outF\|betaBlockAdd" packages/engine-core/src/l2/pk/combine.ts packages/engine-core/src/l2/circ/model.ts`
 must show FU-4's `symp`/`setF` in `NEUTRAL_FX`/`FX_TARGETS` and the `stepBaro(` call's `outF`/`setF`. Record the exact
 `stepBaro(` line in the gate note: Task 10 appends ONE factor to its `setF` argument. Also record FU-4's `hooks.ts`
 signature (`grep -n "export function rhythmRequest" packages/engine-core/src/l2/pk/hooks.ts`): with 18f it carries
 `outcomeRng?` and returns `hold?`; without it Task 11 takes its numbered fallback (Step 3a–3d).
-- [ ] **Step 6 — record the baseline.** `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run`
+- [x] **Step 6 — record the baseline.** `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run`
 and `PME_TEST_SET=slow-a`, `slow-b`; `npx -y pnpm@9.15.9 -r typecheck`; save the counts to
 `docs/gates/fu-7/baseline.md`. Any RED test on the merged main before FU-7 touches anything is reported, not fixed.
-- [ ] **Step 6b — the AF precondition: FU-8 Part A's fix must be on the tree (CM amendment 2026-09-29, research/19
+- [x] **Step 6b — the AF precondition: FU-8 Part A's fix must be on the tree (CM amendment 2026-09-29, research/19
 finding 5 / gap C3; blocks Tasks 11, 12 and 19's AF rigs, not the rest of the plan).** research/19 §3 C3 found a P1
 engine defect: on a short cycle the beat accumulator reads the ventricle's end-diastolic pressure at the moment the next
 activation starts, i.e. mid-contraction (`circ/model.ts:396` → `circ/coronary.ts:142`), so in fast AF the coronary
@@ -1079,7 +1079,7 @@ symptoms and hypotension, not arrest; CFR 3.5, tables §3]. Record `kIschMin40`,
     pending)" and the gate note §5 lists every guarded case with its measured control-arm `kIsch`. A guarded rig that
     still cannot hold `kIsch` ≥ 0.9 inside 5 min makes its case an `it.fails` naming C3 / FU-8 Part A — the drug is not
     re-fitted against a failing heart and no band is widened (R45).
-- [ ] **Step 6c — the arrest-state precondition: FU-8 Part A's V1 fix (DV amendment 2026-09-29, research/20 DV-01b /
+- [x] **Step 6c — the arrest-state precondition: FU-8 Part A's V1 fix (DV amendment 2026-09-29, research/20 DV-01b /
 gap V1; blocks only Task 12's arrest-clock arm, not the rest of the plan).**
 
   *What V1 is.* On `origin/main` 3feee6f and 2c49d87, only the engine's own declaration creates `circ.arrest`
@@ -1116,7 +1116,7 @@ DV_OUT=<scratchpad>/fu-7-task0/dv-cells.json PME_ENGINE=<wt>/packages/engine-cor
       behaviour, not a new defect.
 
     The unit-level `shock-state.test.ts` cases pass `arrestS` directly and are unaffected.
-- [ ] **Step 7 — commit nothing.** Task 0 has no code. Proceed to Task 1.
+- [x] **Step 7 — commit nothing.** Task 0 has no code. Proceed to Task 1.
 
 ---
 
@@ -1236,7 +1236,7 @@ dantrolene/lipid/TXA/ondansetron/dexamethasone as their rows state. Adenosine (n
 **Prototype numbers:** the table in "Prototype results → Addendum 19". Every row's `t10` is reproduced within 1 s and
 `E(tp) = 1.000`; `test/l2/pk` 17 files / 79 tests pass unchanged.
 
-- [ ] **Step 1 — the chain.** In `packages/engine-core/src/l2/pk/gamma.ts`, find:
+- [x] **Step 1 — the chain.** In `packages/engine-core/src/l2/pk/gamma.ts`, find:
 
 ```ts
 export function gammaConc(doses: readonly GammaDose[], t: number, tpS: number, n: number): number {
@@ -1321,7 +1321,7 @@ export function chainShape(dtS: number, c: OnsetChain): number {
 }
 ```
 
-- [ ] **Step 2 — the one call site.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
+- [x] **Step 2 — the one call site.** In `packages/engine-core/src/l2/pk/pipeline.ts`, find:
 
 ```ts
       const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S)) + d.infC;
@@ -1337,7 +1337,7 @@ Replace with:
 construction. The pruning window in `stepOnce` still uses the gamma `n`; it is a bound on when a dose is discarded —
 the chain's tail is shorter than that bound for every row, verified in Step 3's last case.)
 
-- [ ] **Step 2b — three row data corrections (review F7; Orchestrator ruling (FU-7 review) 6; D19(b), D20).** The chain
+- [x] **Step 2b — three row data corrections (review F7; Orchestrator ruling (FU-7 review) 6; D19(b), D20).** The chain
 honours each row's `tpS`/`t10S` exactly, so a row whose datum was an ONSET time (not the effect peak) or a DURATION (not
 the 10 % time) must get its better-sourced datum (R45 permits a better-sourced datum; no band changes). In
 `packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts` (atropine), find:
@@ -1383,7 +1383,7 @@ Replace with:
     id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 2700, 0.01, 300, 900),
 ```
 
-- [ ] **Step 2c — the gamma rows follow liver and kidney function (RH amendment; research/13 H9 and RH-10a/c).**
+- [x] **Step 2c — the gamma rows follow liver and kidney function (RH amendment; research/13 H9 and RH-10a/c).**
 research/13 RH-12d: in `hepaticFailure` 0.8, midazolam's level at 60 min is **×1.00** of health. `clFactor` is applied
 only to compartment rows (`stepOnce`'s `else if (d.x.length)` branch), so hepatic failure, low hepatic flow, renal
 failure and hypothermia leave every gamma row unchanged — although most of them already carry an `elim` split. The fix
@@ -1611,7 +1611,7 @@ note §10 lists it beside DI-38 (NE) as a mechanism for a later drug-layer stage
 is unchanged. **Do not** proxy it by raising `renal` on the parent row: that would slow the parent's own decline,
 which is the wrong shape (M6G acts late, after the parent has fallen).
 
-- [ ] **Step 2d — fentanyl's distribution follows cardiac output (RH amendment; research/13 RH-15b).** Measured first
+- [x] **Step 2d — fentanyl's distribution follows cardiac output (RH amendment; research/13 RH-15b).** Measured first
 (`origin/main` 7954933 with Tasks 1–10 and 18 applied, RH runner read-only): class III vs normovolaemic after fentanyl
 2 µg/kg gives Ce **×1.10 at 10 min and ×1.19 at 30 min**. The hepatic flow term works (clearance factor 0.40 vs
 0.93), but fentanyl has no `flowDist`, so shock neither shrinks its central volume nor slows its distribution.
@@ -1647,7 +1647,7 @@ Measured on the same tree:
 Remifentanil and sufentanil are left as they are. Remifentanil's shock PK (Johnson 2001) is esterase-cleared and no
 audit cell measures sufentanil. Both are listed for the calibration queue.
 
-- [ ] **Step 2e — furosemide's onset and peak, verified against the label (RH amendment; research/13 RH-07a).** The
+- [x] **Step 2e — furosemide's onset and peak, verified against the label (RH amendment; research/13 RH-07a).** The
 FDA furosemide injection label (e.g. Hospira NDA 018667, 2016) says:
 - the onset of diuresis after IV administration is "within 5 minutes";
 - the peak effect occurs within the first half hour;
@@ -1670,7 +1670,7 @@ stage's response.
 **No row change.** The time-course remainder and the magnitude (+155 mL in 2 h against ≈ 1 L) are H1's (FU-9
 amendment). The gate note §5 carries RH-07a's before and after numbers.
 
-- [ ] **Step 3 — the test.** Create `packages/engine-core/test/l2/pk/onset-chain.test.ts`:
+- [x] **Step 3 — the test.** Create `packages/engine-core/test/l2/pk/onset-chain.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -1719,7 +1719,7 @@ describe('onset chain (R51 addendum 19)', () => {
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/onset-chain.test.ts test/l2/pk`
 Expected: 18 files / 84 tests pass (the five new cases plus the unchanged 79; the second fixer's count).
-- [ ] **Step 3b — the organ-function test (RH amendment, Step 2c).** Create `packages/engine-core/test/l2/pk/organ-decline.test.ts`:
+- [x] **Step 3b — the organ-function test (RH amendment, Step 2c).** Create `packages/engine-core/test/l2/pk/organ-decline.test.ts`:
 
 ```ts
 import { describe, expect, it } from 'vitest';

@@ -56,7 +56,11 @@ export interface DrugRow {
   amountUnit: AmountUnit;
   pk: PkSpec;
   /** elimination route fractions of CL (the rest organ-independent); hepatic high-extraction drugs follow liver FLOW */
-  elim?: { hepatic?: number; highExtraction?: boolean; renal?: number };
+  elim?: { hepatic?: number; highExtraction?: boolean; renal?: number;
+    /** FU-7 (research/13 H9), gamma rows only: the TERMINAL elimination half-life, s. The share of the effect curve's
+     * decline that clearance governs is min(1, (ln 2 / t12S) / chain ke); the rest is redistribution, which organ
+     * function does not change. Absent = the decline is organ-independent (the row keeps its curve). */
+    t12S?: number };
   /** FU-4 G10: the central volume and the fast distribution follow cardiac output (propofol; Kazama 2002). */
   flowDist?: boolean;
   pd: PdEffect[];

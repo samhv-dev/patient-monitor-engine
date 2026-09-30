@@ -11,7 +11,7 @@ import { decrementFromNowMin } from './csht.ts';
 import { DEFAULT_PK_PATIENT, type PkPatient } from './covariates.ts';
 import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
-import { gammaConc, gammaN, type GammaDose } from './gamma.ts';
+import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
 import { eleveldPropofol, geptsSufentanil, marshPropofol, mintoRemifentanil, schniderPropofol, shaferFentanyl } from './models.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
@@ -158,6 +158,15 @@ export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
   const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
   return Math.round(organ * 100) / 100;
+}
+
+/** FU-7 (research/13 H9): the decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the
+ * clearance-governed share of the chain's decline (ke, Task 2); f = clFactor. 1 without `elim.t12S` or a chain. */
+export function gammaDeclineRate(row: DrugRow, f: number): number {
+  const t12 = row.elim?.t12S;
+  if (row.pk.kind !== 'gamma' || !t12 || f === 1 || gammaN(row.pk.tpS, row.pk.t10S) >= ONSET_N_MIN) return 1;
+  const phi = Math.min(1, Math.LN2 / t12 / onsetChain(row.pk.tpS, row.pk.t10S).ke);
+  return 1 - phi * (1 - f);
 }
 
 /** FU-4 G10: cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075
@@ -330,7 +339,7 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
     case 'nmb':
       return { c: d.x[3] as number, plasma: p ? cp(p, d.x) : 0, nmj: d.x[3] as number, dia: d.x[4] as number };
     case 'gamma': {
-      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S)) + d.infC;
+      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S), row.pk.t10S) + d.infC; // FU-7 (addendum 19): zero-slope onset
       return { c, plasma: c };
     }
     default:
@@ -349,6 +358,11 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
       d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG bound]
+      // FU-7 (research/13 H9): organ function slows the ELIMINATION share of the decline — each dose past its peak ages at
+      // rate g (dose time moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution).
+      d.factor = clFactor(row, ctx);
+      const g = gammaDeclineRate(row, d.factor);
+      if (g !== 1) for (const x of d.doses) if (t - x.t > tpS) x.t += PK_DT_S * (1 - g);
     } else if (d.x.length) {
       const f = clFactor(row, ctx);
       if (f !== d.factor) d.factor = f;

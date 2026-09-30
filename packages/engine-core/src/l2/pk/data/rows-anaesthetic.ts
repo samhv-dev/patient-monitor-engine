@@ -74,8 +74,11 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     ir: '?', src: 'Eleveld 2018 (PK; BIS Ce50 3.08 with the age term, T5d/Q53); T6.3; M10 ch. 21', tag: 'P',
   },
   {
-    id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 900, 0.01, 300, 900),
-    elim: { hepatic: 0.9 },
+    // FU-7 (D20; the first fixer's finding): t10S 2700 s — the effect falls by REDISTRIBUTION (distribution t½ 11–16 min,
+    // M10 ch. 21 Table 21.1; emergence 10–20 min after 1–2 mg/kg), so 10 % of the peak is ≈ 3.3 × 13.5 min after it.
+    // The 900 s it carried was the row's 10–15 min DURATION read as a 10 % time. tpS stays the sourced 1-min peak.
+    id: 'ketamine', name: 'Ketamine', cls: 'ketamine', amountUnit: 'mg', pk: gammaPk(1.5, true, 60, 2700, 0.01, 300, 900),
+    elim: { hepatic: 0.9, t12S: 9540 }, // FU-7 (H9): t½β 2.5–2.8 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'hr', emax: 0.35, ec50: 1 }, { target: 'svr', emax: 0.4, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'bronchodilation', emax: 1, ec50: 1 }, { target: 'cbfVaso', emax: 0.4, ec50: 1 }],
     doses: 'induction 1–2 mg/kg IV (M10 ch. 21 p. 536); analgesia 0.1–0.3 mg/kg; infusion 0.1–0.5 mg/kg/h',
     onset: 'onset 30–60 s, duration 10–15 min (R03 §8.6); plasma 0.7–2.2 µg/mL for hypnosis (M10 p. 536)',
@@ -83,7 +86,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   },
   {
     id: 'etomidate', name: 'Etomidate', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(0.3, true, 60, 480),
-    elim: { hepatic: 0.8 },
+    elim: { hepatic: 0.8, t12S: 14760 }, // FU-7 (H9): t½β 2.9–5.3 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.1, ec50: 1 }],
     cns: { hypC50: 1, cmro2: 0.4 },
     doses: 'induction 0.2–0.3 mg/kg (M10 ch. 21 p. 541)', onset: 'onset 30–60 s, duration 3–5 min; cortisol response ×0.5 for 24 h (T6.3)',
@@ -91,15 +94,17 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   },
   {
     id: 'thiopental', name: 'Thiopental', cls: 'hypnotic', amountUnit: 'mg', pk: gammaPk(4, true, 45, 900),
-    elim: { hepatic: 1 },
+    elim: { hepatic: 1, t12S: 43200 }, // FU-7 (H9): t½β 7–17 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'svr', emax: -0.4, ec50: 1 }, { target: 'ees', emax: -0.3, ec50: 1 }, { target: 'hr', emax: 0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.16, ec50: 1 }, { target: 'gv', emax: -0.8, ec50: 1 }],
     cns: { hypC50: 1, cmro2: 0.55 },
     doses: 'induction 3–5 mg/kg', onset: 'onset 30 s, awakening 5–10 min (redistribution); t½ 7–17 h (M10 Table 21.1)',
     ir: '?', src: 'T6.3 (SVR −20 %, Ees −15 %, HR +10–15 %, V0 +8 %, reflex ×0.6)', tag: 'TXT',
   },
   {
-    id: 'midazolam', name: 'Midazolam', cls: 'benzodiazepine', amountUnit: 'mg', pk: gammaPk(0.05, true, 180, 3600, 0.001, 600, 1800),
-    elim: { hepatic: 1 },
+    // FU-7 (review F7, ruling 6): tpS 240 s — peak effect 3–5 min, t½ke0 2–3 min (M10 ch. 21 p. 532); 180 s sat at the
+    // fast edge and put the depth nadir 5 s before the 2–7 min band.
+    id: 'midazolam', name: 'Midazolam', cls: 'benzodiazepine', amountUnit: 'mg', pk: gammaPk(0.05, true, 240, 3600, 0.001, 600, 1800),
+    elim: { hepatic: 1, t12S: 7740 }, // FU-7 (H9): t½β 1.7–2.6 h (M10 ch. 21 Table 21.1); cirrhosis halves CL (MacGilchrist 1986)
     pd: [{ target: 'svr', emax: -0.24, ec50: 1 }, { target: 'v0Frac', emax: 0.06, ec50: 1 }, { target: 'gv', emax: -0.4, ec50: 1 }],
     cns: { midazEq: 1, hypC50: 4 },
     doses: 'sedation 0.02–0.05 mg/kg; induction 0.05–0.15 mg/kg (M10 ch. 21 Table 21.7)', onset: 'T½ke0 2–3 min (M10 ch. 21 p. 532); peak 3–5 min; duration 30–60 min',
@@ -107,7 +112,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   },
   {
     id: 'dexmedetomidine', name: 'Dexmedetomidine', cls: 'alpha2', amountUnit: 'mcg', pk: gammaPk(1, true, 900, 7200, 0.5 / 60, 900, 1800),
-    elim: { hepatic: 1 },
+    elim: { hepatic: 1, t12S: 9000 }, // FU-7 (H9): t½β 2–3 h (M10 ch. 21 Table 21.1)
     pd: [{ target: 'hr', emax: -0.3, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }],
     doses: 'load 1 µg/kg over 10 min, then 0.2–0.7 µg/kg/h', onset: 'peak 15 min after the load; t½ 2–3 h (M10 Table 21.1)',
     ir: '?', src: 'T6.3 (HR −10–20 %, SVR −10–20 % after the biphasic load; the transient rise of a fast load is not modelled in v1)', tag: 'TXT',
@@ -115,7 +120,9 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
     // vent site: tables give no fentanyl ventilatory ke0 → the brain ke0 [ENG] (deviations list)
     id: 'fentanyl', name: 'Fentanyl', cls: 'opioid', amountUnit: 'mcg', pk: { kind: 'model', model: 'shafer', ventKe0: FENTANYL_KE0 },
-    elim: { hepatic: 1, highExtraction: true },
+    // FU-7 (RH amendment, research/13 RH-15b): FU-4 G10's flow-dependent distribution, as propofol — haemorrhagic shock
+    // shrinks fentanyl's central volume and clearance and ≈ doubles its concentrations (Egan 1999 Anesthesiology 91:156).
+    elim: { hepatic: 1, highExtraction: true }, flowDist: true,
     pd: [{ target: 'hr', emax: -0.25, ec50: 2 }, { target: 'svr', emax: -0.15, ec50: 2 }, { target: 'v0Frac', emax: 0.03, ec50: 2 }, FENTANYL_VAGAL],
     cns: { remiEq: 1.6 }, syringePerMl: 50,
     doses: '1–3 µg/kg analgesia; 5–10 µg/kg blunting; plasma 15–30 ng/mL as sole agent (M10 ch. 22 Table 22.7)',
@@ -140,7 +147,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   },
   {
     id: 'morphine', name: 'Morphine', cls: 'opioid', amountUnit: 'mg', pk: gammaPk(0.1, true, 1200, 14400),
-    elim: { hepatic: 0.9, renal: 0.1 },
+    elim: { hepatic: 0.9, renal: 0.1, t12S: 9000 }, // FU-7 (H9): t½β 1.7–3.3 h (M10 ch. 22 Table 22.6) [VERIFY]
     pd: [{ target: 'svr', emax: -0.2, ec50: 1 }, { target: 'histamine', emax: 0.6, ec50: 1 }],
     cns: { remiEq: 1.5 },
     doses: '0.05–0.15 mg/kg IV', onset: 'peak 15–30 min, duration 3–4 h (R03 §8.6); CL 15–30 mL/kg/min (M10 Table 22.6)',
