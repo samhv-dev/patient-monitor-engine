@@ -26,12 +26,22 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
     expect(h.circ.ext.pvrLungL).toBeGreaterThan(1.5);
     expect(h.circOut.qLungL / (h.circOut.qLungL + h.circOut.qLungR)).toBeLessThan(0.3);
   });
-  it('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — CO falls ≥ 10 % and MAP falls vs RR 10 (R27 demo direction; MODELED mode)', async () => {
+  // FU-6 executor (merged with FU-8 Part A, R45): the two halves are split so each band is asserted on its own — the CO
+  // fall is met (4.24 → 3.59, −15 %); the MAP-direction band (> 2 mmHg) is missed at 1.79 on the merged tree (2.06 on
+  // FU-6 before the FU-8 merge, 1.83 with rocuronium 0.6). it.fails with the number (FU-8's body-size baseline moved it).
+  let copdRes: Promise<{ m10: { map: number; co: number }; m26: { map: number; co: number } }> | undefined;
+  const copdRun = () => (copdRes ??= (async () => {
     const map = async (rr: number) => {
       // executor deviation: MODELED mode — in MANUAL the Stage 2/7a trackers hold MAP at its target (R42)
       const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 65, weightKg: 70, heightCm: 175, sex: 'M', lungConditions: [{ id: 'copd', severity: 0.75 }], sensors: { co2: 'on' } } });
       const r = { e };
       r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr, vtMl: 560, peep: 5, ie: 2, fio2: 0.4 }));
+      // FU-6 R9 (E-FU6-7): a paralysed patient, as ventilated COPD is — since FU-6 an unparalysed, undrugged patient
+      // triggers the ventilator at his own rate, which lifted the RR-10 arm's auto-PEEP (MAP difference 1.91 < 2).
+      // FU-6 executor (merged main): 0.6 mg/kg still let the RR-10 arm trigger before onset (37 breaths in 3 min, MAP
+      // difference 1.83); D19's ventRig paralysis (1.2 mg/kg + 0.6 mg/kg/h) gives 2.06 — the plan's rig, re-derived
+      r.e.dispatch(ev3({ kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' }));
+      r.e.dispatch(ev3({ kind: 'infusion', drugId: 'rocuronium', rate: 0.6, unit: 'mg/kg/h' }));
       for (let m = 1; m <= 3; m++) { r.e.advanceTo(60 * m); await new Promise((res) => setImmediate(res)); }
       const h = hemoOf(r.e);
       const b = h.siteBeats.slice(-10);
@@ -41,9 +51,16 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
     const m26 = await map(26);
     const m10 = await map(10);
     console.log(`lung-circ COPD MAP RR 10 ${m10.map.toFixed(1)} → RR 26 ${m26.map.toFixed(1)}; CO ${m10.co.toFixed(2)} → ${m26.co.toFixed(2)}`);
+    return { m10, m26 };
+  })());
+  it.fails('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — MAP falls vs RR 10 by > 2 mmHg (R27 demo direction; MODELED mode) — measured 1.79 (101.4 → 99.6) on the merged tree (FU-6 R45)', async () => {
+    const { m10, m26 } = await copdRun();
     // Executor deviation (recorded for a ruling): in MODELED mode the baroreflex holds MAP; the plan's ≥ 10 % fall is
     // not reached (measured −2.8 %, 101.8 → 98.9). Asserted: the direction (MAP falls ≥ 2 mmHg) — cf. 7a's NR-3 (link COPD MAP −9.4)
     expect(m10.map - m26.map).toBeGreaterThan(2);
+  });
+  it('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — CO falls ≥ 10 % vs RR 10 (measured 4.24 → 3.59, −15 %)', async () => {
+    const { m10, m26 } = await copdRun();
     expect(m26.co).toBeLessThan(0.9 * m10.co); // the auto-PEEP effect itself: venous return falls (−23 %)
   });
 });

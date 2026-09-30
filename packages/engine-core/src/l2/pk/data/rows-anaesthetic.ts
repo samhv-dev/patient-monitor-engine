@@ -26,6 +26,13 @@ const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, ref
  * Nagasaki 2001 (sevoflurane 2 % / isoflurane 1.3 %: pressor BRS −50–60 %). FU-3 item 3 (R-7f-9).
  */
 const VOLATILE_GVHR: PdEffect = { target: 'gvHr', emax: -1, ec50: 1, linear: true };
+
+/**
+ * FU-6 R13 (E-FU6-1): volatile inhibition of hypoxic pulmonary vasoconstriction, 0.2 per MAC, linear — the sevoflurane
+ * row's value (Miller 10e ch. 49 p. 1538; catalogue §22: < 1 MAC inhibits HPV by ≈ 20 %; Slinger & Campos, Miller
+ * thoracic chapter), now on isoflurane and desflurane too.
+ */
+const VOLATILE_HPV: PdEffect = { target: 'hpvInhibit', emax: 0.2, ec50: 1, linear: true };
 /**
  * FU-4 G2: central sympatholysis — × on the DELIVERED sympathetic output (7a stepBaro `outF`, after the reflex
  * saturation). Propofol near-abolishes MSNA at induction and inhibits it dose-dependently (Ebert 1992, Anesthesiology
@@ -155,6 +162,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
       { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'bronchodilation', emax: 1, ec50: 0.5 },
+      VOLATILE_HPV, // FU-6 R13
       VOLATILE_SYMP, VOLATILE_SETF, // FU-4 G2
     ],
     cns: { cmro2PerMac: 0.3, cbfDirect: [0.19, 0.72] }, // FU-2 item 8: tables §5.1 (Matta 1999): CMRO2 ×(1 − 0.3·MAC), direct CBF +19 % / +72 % at 0.5 / 1.5 MAC
@@ -165,6 +173,7 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
     pd: [
       { target: 'svr', emax: -0.25, ec50: 1, linear: true }, { target: 'ees', emax: -0.1, ec50: 1, linear: true }, { target: 'hr', emax: 0.07, ec50: 1, linear: true },
       { target: 'v0Frac', emax: 0.03, ec50: 1, linear: true }, { target: 'gv', emax: -0.3, ec50: 1, linear: true }, VOLATILE_GVHR, { target: 'cbfVaso', emax: 0.3, ec50: 1, linear: true },
+      VOLATILE_HPV, // FU-6 R13 (no bronchodilation row: desflurane irritates the airway above 1 MAC — Goff 2000 Anesthesiology 93:404)
     ],
     cns: { cmro2: 0.5 },
     doses: 'MAC 6.6 % at 40 y', onset: 'FA/FI 0.90 at 30 min; sympathetic surge on a rapid rise above 1 MAC (Task 15)', ir: '?', src: 'T6.3; Mapleson 1996', tag: 'TXT',

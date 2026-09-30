@@ -39,6 +39,9 @@ const propofol = { kind: 'drug', drugId: 'propofol', dose: 1.5, unit: 'mg/kg', r
 // Stage 7f (E-7f-2): the R23 runs keep the airway open with a supraglottic device — since 7f, propofol obstructs an
 // unprotected natural airway (7f decision 12) and the hypoxic bradycardia would confound the ischaemia scenario.
 const SGA: [number, Record<string, unknown>] = [0, { kind: 'airwayDevice', device: 'sga' }];
+// FU-6 (E-FU6-7): oxygen through the SGA — since FU-6 R3 propofol produces induction apnoea and hypoventilation, and on
+// room air this 75 y patient reached SaO2 21 % (the confound this rig's comment excludes); FiO2 0.5 keeps SaO2 ≥ 97 %
+const O2: [number, Record<string, unknown>] = [0, { kind: 'ventilation', source: 'spontaneous', fio2: 0.5 }];
 
 describe('sanity scenarios II', () => {
   // NEEDS A RULING NR-2 (docs/gates/stage-7a.md; plan Task 25: keep it.fails and report). Measured (engine, MODELED):
@@ -47,7 +50,7 @@ describe('sanity scenarios II', () => {
   // R45(b) venous recruitment lower LVEDP (tables' worked example: DBP 45, LVEDP 25, S/D 0.78). Phenylephrine restores
   // 146/86, S/D 1.6, kIsch 0.98 within 90 s (the rescue half of R23 holds).
   it.fails('R23: AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it', async () => {
-    const r = await run(AS_CAD, [SGA, [60, propofol], [210, { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' }]], 420);
+    const r = await run(AS_CAD, [SGA, O2, [60, propofol], [210, { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' }]], 420);
     r.trace('AS+CAD phe', [55, 180, 205, 240, 270, 300, 360, 410]);
     expect(r.avg(170, 205, 'kIsch')).toBeLessThan(0.85); // falling contractility
     const st = r.ev.filter((x) => x.type === 'circ' && x.t > 170 && x.t < 210) as Circ[];
@@ -56,15 +59,22 @@ describe('sanity scenarios II', () => {
   }, 300_000);
   // NR-2: ephedrine leaves S/D 1.08 and kIsch 0.96–0.97 at +3 min (the deficit persists but stays shallow).
   it.fails('R23: the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min)', async () => {
-    const r = await run(AS_CAD, [SGA, [60, propofol], [210, { kind: 'drug', drugId: 'ephedrine', dose: 10, unit: 'mg', route: 'iv' }]], 420);
+    const r = await run(AS_CAD, [SGA, O2, [60, propofol], [210, { kind: 'drug', drugId: 'ephedrine', dose: 10, unit: 'mg', route: 'iv' }]], 420);
     r.trace('AS+CAD eph', [240, 300, 360, 410]);
     expect(r.avg(380, 420, 'kIsch')).toBeLessThan(0.95);
   }, 300_000);
   it('H7 tamponade: CVP ≈ PCWP within 5 mmHg, CO falls ≥ 15 %, HR rises', async () => {
     // severity 0.8 = 200 mL, the H7 volume (the plan's severity 1 = 250 mL gave PAWP − CVP 5.2)
-    const r = await run({}, [[60, { kind: 'condition', id: 'tamponade', severity: 0.8 }]], 180);
+    const r = await run({}, [[60, { kind: 'condition', id: 'tamponade', severity: 0.8 }]], 150);
+    // FU-6 (E-FU6-7): the band on the TIME-AVERAGED pressures (50 Hz) — the 1 Hz `state` samples alias against the
+    // breathing cycle (RA swings 4–27 mmHg in this rig): FU-6's central CO2 lag shifts the breathing phase (RR 15.5 →
+    // 15.2) and moved the SAMPLED difference 4.5 → 5.1 while the true mean RA stayed 13.5 mmHg (measured on both trees)
+    const o = () => (r.e as unknown as { st: { hemo: { circOut: { pRa: number; pPv: number } } } }).st.hemo.circOut;
+    let dSum = 0;
+    let n = 0;
+    for (let t = 150.02; t <= 180; t += 0.02) { r.e.advanceTo(t); dSum += o().pPv - o().pRa; n++; }
     r.trace('tamp', [55, 170]);
-    expect(Math.abs(r.st(150, 180, 'cvp') - r.st(150, 180, 'pawp'))).toBeLessThanOrEqual(5);
+    expect(Math.abs(dSum / n)).toBeLessThanOrEqual(5);
     expect(r.avg(150, 180, 'co')).toBeLessThan(0.85 * r.avg(30, 60, 'co'));
     expect(r.st(150, 180, 'hr')).toBeGreaterThan(r.st(30, 60, 'hr'));
   }, 300_000);

@@ -68,6 +68,17 @@ export interface BloodCore {
   out: BloodOut;
 }
 
+/**
+ * FU-6 R11 (E-FU6-4): COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1
+ * (Weaver 2009 NEJM 360:1217) [ENG exponent fit to both anchors]. No ongoing exposure (the profile sets the load).
+ */
+export const COHB_T_HALF_AIR_MIN = 320;
+export function cohbWashout(cohb: number, pao2: number, dtS: number): number {
+  if (!(cohb > 0)) return cohb;
+  const tHalfS = COHB_T_HALF_AIR_MIN * 60 * (95 / Math.max(20, pao2)) ** 0.8;
+  return cohb * Math.exp((-Math.LN2 * dtS) / tHalfS);
+}
+
 export function createBloodCore(profile: PatientProfile | undefined, co0: number, paco2: number): BloodCore {
   const pat = bloodPatient(profile);
   const b = profile?.blood ?? {};
@@ -137,6 +148,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   stepSolutes(so, ecfMl(fl), dtS, kSet, hbfRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
   // 3. oxygen delivery → lactate
   bc.odc.hb = hbOf(fl);
+  bc.odc.cohb = cohbWashout(bc.odc.cohb, x.pao2, dtS); // FU-6 R11
   bc.odc.ph = bc.ab.ph;
   const cao2 = contentDB(x.pao2, x.paco2, x.tempC, bc.odc);
   const d = o2Delivery(x.coLpm, bc.co0, cao2, x.vo2Demand, pat.weightKg, x.demandRel ?? x.vo2Demand / pat.vo2Rest);

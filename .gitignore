@@ -7,5 +7,6 @@ coverage/
 .DS_Store
 playwright-report/
 test-results/
+.audit-respiratory/
 packages/validation/datasets/cache/
 .audit-physiology/

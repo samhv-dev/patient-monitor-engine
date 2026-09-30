@@ -15,6 +15,11 @@ export const SPONT_TI_FRACTION = 0.38; // spontaneous I:E ≈ 1:1.6 [ENG]
 export const SPONT_JITTER = 0.05; // breath-to-breath SD of period and VT, spontaneous [ENG]
 export const GASTRIC_BREATHS = 5; // oesophageal: breaths with gastric CO2 before the trace is flat [ENG, < 6]
 export const EXP_TAU_S = 0.5; // passive expiration τ = R·C (10 cmH2O/L/s × 0.05 L/cmH2O)
+/**
+ * FU-6 R7: the volume-control pressure limit (cmH2O) when the command sets none — the anaesthesia-ventilator factory
+ * default Pmax/Plimit 40 (Dräger Primus, GE Aisys operator manuals) [ENG]; above it the breath is pressure-limited.
+ */
+export const VCV_PMAX_DEFAULT = 40;
 /** JSON-safe 'never' (snapshots travel as JSON: Infinity would become null). */
 export const NEVER = 1e12;
 
@@ -47,6 +52,22 @@ export interface Cycle {
   tauE?: number;
   lungTauII?: number;
   lungRiseIII?: number;
+  /** FU-6 R3(b): the part of the inspiratory muscle pressure (cmH2O) spent against an obstructed upper airway. */
+  pmus?: number;
+  /** FU-6 R5: share of the alveolar plateau the sampled expirate reaches (absent = 1): alveolarFraction(VT, VDs). */
+  alvFrac?: number;
+  /** FU-6 R9: the patient coughs against this mechanical breath (bucking). */
+  buck?: boolean;
+}
+
+/**
+ * FU-6 R5: the mixed-expirate share of a breath at the sampling site (Fowler 1948 single-breath washout; Kodali 2013
+ * Anesthesiology 118:192 — breaths below the dead space show a small or absent plateau). The first CO2 appears at 0.6 of
+ * the series dead space (axial mixing), a full plateau at 1.4× [ENG ramp; fit target RS3 and "normal breaths unchanged"].
+ */
+export function alveolarFraction(vtMl: number, vdSeriesMl: number): number {
+  if (!(vdSeriesMl > 0)) return 1;
+  return Math.min(1, Math.max(0, (vtMl - 0.6 * vdSeriesMl) / (0.8 * vdSeriesMl)));
 }
 
 export interface ExtDrive {
@@ -64,7 +85,7 @@ export interface DriverState {
   source: VentSource | 'external';
   airway: AirwayState;
   severity: number;
-  vent: { rr: number; vt: number; peep: number; ie: number };
+  vent: { rr: number; vt: number; peep: number; ie: number; pmax?: number }; // FU-6 R7: pmax absent = VCV_PMAX_DEFAULT
   fico2: number;
   cleft: number;
   preox: { fio2: number; until: number } | null;
@@ -75,6 +96,7 @@ export interface DriverState {
   ext: ExtDrive | null;
   rng: Sfc32State;
   ataxia?: number; // Stage 7d: Cushing ataxic breathing 0–1 (organs/effects.ts)
+  spasm?: number; // FU-6 R6: shark-fin severity of the lung's smooth-muscle conditions after bronchodilation (resp pipeline)
 }
 
 export interface DriverCtx {
@@ -87,6 +109,16 @@ export interface DriverCtx {
   obstructed?: boolean;
   /** Stage 7f: own diaphragmatic effort during mechanical breaths while a block wears off (curare cleft). */
   cleft?: number;
+  /** FU-6 R3(b): obstructed-effort pleural swing of the next spontaneous breath (cmH2O; resp pipeline). */
+  pmusObs?: number;
+  /** FU-6 R3(b): the same for a complete airway obstruction (the `obstructed` airway state, 7f's complete obstruction). */
+  pmusFull?: number;
+  /** FU-6 R5: series dead space (anatomical + apparatus, mL) for the sampled plateau; absent = full plateau. */
+  vdSeriesMl?: number;
+  /** FU-6 R9: the MODELED drive's own rate while on the ventilator (assist-control trigger); absent/0 = none. */
+  triggerRr?: number;
+  /** FU-6 R9: the patient bucks (light, unparalysed, stimulated). */
+  buck?: boolean;
 }
 
 export function createDriver(rng: Sfc32State): DriverState {
@@ -135,7 +167,7 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   let vt: number;
   let ti: number;
   if (mech) {
-    rr = src === 'bvm' ? Math.max(4, d.vent.rr) : d.vent.rr;
+    rr = src === 'bvm' ? Math.max(4, d.vent.rr) : Math.max(d.vent.rr, ctx.triggerRr ?? 0); // FU-6 R9: assist-control
     vt = d.vent.vt;
     ti = 60 / rr / (1 + d.vent.ie);
   } else {
@@ -149,13 +181,21 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
     period *= Math.max(d.ataxia ? 0.3 : 0.7, 1 + SPONT_JITTER * (1 + 7 * (d.ataxia ?? 0)) * normal(d.rng)); // Stage 7d: ataxia
     ti = SPONT_TI_FRACTION * period;
   }
-  const sev = d.severity;
+  const spasm = d.spasm ?? 0; // FU-6 R6: ONE bronchospasm — the lung's smooth-muscle state draws the shark fin
+  const sev = spasm > 0.02 ? spasm : d.severity;
   const c: Cycle = {
     seq: d.seq, t0: t, ti, te: period - ti, vt, kind: src === 'bvm' ? 'bvm' : mech ? 'mech' : 'spont', mech,
-    exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: mech ? 'mech' : 'spont',
+    exch: true, sampled: 'alveolar', gastric: 0, effort: mech ? vt / 500 : vt / 500, shape: spasm > 0.02 ? 'shark' : mech ? 'mech' : 'spont',
     severity: sev, cleft: mech ? Math.max(d.cleft, ctx.cleft ?? 0) : 0, fio2: fio2For(d, ctx, t, mech), fico2: d.fico2, cutAt: NEVER, emitted: false,
   };
+  if (!mech && (ctx.pmusObs ?? 0) > 0) c.pmus = ctx.pmusObs; // FU-6 R3(b)
+  if (mech && src === 'ventilator' && ctx.buck) c.buck = true; // FU-6 R9
+  if (ctx.vdSeriesMl !== undefined) {
+    const f = alveolarFraction(c.vt, ctx.vdSeriesMl); // FU-6 R5
+    if (f < 1) c.alvFrac = f;
+  }
   if (!mech && ctx.obstructed && d.airway === 'patent') { // Stage 7f: sedation/residual-block obstruction (plan decision 12)
+    c.pmus = ctx.pmusFull ?? c.pmus; // FU-6 R3(b)
     c.exch = false;
     c.sampled = 'none';
     c.vt = 0;
@@ -163,10 +203,12 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
   }
   switch (d.airway) {
     case 'obstructed': // efforts without flow (spontaneous) or a kinked tube (mechanical)
+      if (mech && src === 'ventilator') break; // FU-6 R9: a kinked tube is a resistance (pipeline), pressure-limited at Pmax
       c.exch = false;
       c.sampled = 'none';
       c.vt = 0;
       c.effort = mech ? 0 : 1;
+      if (!mech) c.pmus = ctx.pmusFull ?? 0; // FU-6 R3(b): the whole effort against the closed airway
       break;
     case 'disconnected': // spontaneous: room air through the open tube; mechanical: nothing reaches the patient
       c.sampled = 'none';
@@ -184,10 +226,8 @@ function makeCycle(d: DriverState, ctx: DriverCtx, t: number): { c: Cycle | null
       c.gastric = ctx.etco2 * 0.45 * 0.6 ** d.gastricN; // [ENG] washout heights
       d.gastricN++;
       break;
-    case 'bronchospasm':
-      c.shape = 'shark';
-      c.vt = vt * (1 - 0.2 * sev); // [ENG] less volume behind the obstruction
-      break;
+    // FU-6 R6: 'bronchospasm' has no cycle rule of its own any more — the lung condition it aliases carries the
+    // resistance (the internal ventilator is a flow source; trapping emerges) and the shark fin (d.spasm above)
     case 'endobronchial':
       c.shape = 'bifid';
       break;
@@ -266,8 +306,8 @@ export function onVentFrame(d: DriverState, f: VentFrame, t: number): void {
     const exchange = d.airway !== 'disconnected' && d.airway !== 'obstructed' && d.airway !== 'oesophageal';
     d.cycles.push({
       seq: d.seq++, t0: t, ti: e.prevTi, te: e.prevTe, vt: 0, kind: 'mech', mech: true, exch: exchange,
-      sampled: exchange ? 'alveolar' : 'none', gastric: 0, effort: 0, shape: d.airway === 'bronchospasm' ? 'shark' : d.airway === 'endobronchial' ? 'bifid' : 'mech',
-      severity: d.severity, cleft: d.cleft, fio2: preoxActive(d, t) ? (d.preox as { fio2: number }).fio2 : f.fio2,
+      sampled: exchange ? 'alveolar' : 'none', gastric: 0, effort: 0, shape: (d.spasm ?? 0) > 0.02 ? 'shark' : d.airway === 'endobronchial' ? 'bifid' : 'mech',
+      severity: (d.spasm ?? 0) > 0.02 ? (d.spasm as number) : d.severity, cleft: d.cleft, fio2: preoxActive(d, t) ? (d.preox as { fio2: number }).fio2 : f.fio2,
       fico2: d.fico2, cutAt: NEVER, emitted: false,
     });
     e.inInsp = true;

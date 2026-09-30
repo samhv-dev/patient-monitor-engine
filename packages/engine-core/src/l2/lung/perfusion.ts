@@ -37,15 +37,16 @@ export function stepHpv(st: HpvState, hypoxic: number[], dt: number): void {
 }
 
 /**
- * Side flows. `nonAer` = non-aerated fraction per side, `pao2` = each side's alveolar PO2, `volatileMac` inhibits
- * HPV ×(1 − 0.2·MAC) (Miller 10e ch. 49 p. 1538, catalogue §22).
+ * Side flows. `nonAer` = non-aerated fraction per side, `pao2` = each side's alveolar PO2, `hpvInhibit` (0–1, 7g's
+ * `bus.hpvInhibit`: volatiles 0.2 per MAC — Miller 10e ch. 49 p. 1538, catalogue §22 — and the nitrovasodilators)
+ * scales HPV ×(1 − hpvInhibit) (FU-6 R13: was a `volatileMac` input the pipeline wired to 0).
  */
-export function perfusion(sp: SideParams[], nonAer: number[], pao2: number[], st: HpvState, volatileMac: number): Perfusion {
+export function perfusion(sp: SideParams[], nonAer: number[], pao2: number[], st: HpvState, hpvInhibit: number): Perfusion {
   const g = [0, 0];
   const out: Perfusion = { f: [0, 0], pvrMult: [1, 1], shunt: [0, 0], hypoxic: [0, 0] };
   for (let s = 0; s < 2; s++) {
     const p = sp[s] as SideParams;
-    const act = Math.min(1.3, (st.a1[s] as number) + (st.a2[s] as number)) * Math.max(0, 1 - 0.2 * volatileMac);
+    const act = Math.min(1.3, (st.a1[s] as number) + (st.a2[s] as number)) * Math.max(0, 1 - hpvInhibit);
     const vaso = Math.max(0.05, 1 - p.hpv * act);
     const c = Math.min(1, ATEL_PERF * (nonAer[s] as number));
     const h = hpvStimulus(pao2[s] as number);

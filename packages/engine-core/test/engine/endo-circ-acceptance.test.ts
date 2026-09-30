@@ -34,6 +34,11 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
     const { e, ev } = rig();
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(vent(12));
+    // FU-6 R9 (E-FU6-7): the check-16 patient is anaesthetised AND paralysed — since FU-6 an unparalysed patient on the
+    // ventilator triggers at his own (septic, acidotic) drive: measured without this line warm MAP 54 / HR 115 / SVR 776,
+    // cold SVR 1454; with it 60 / 132 / 851 and 1510 (main 61 / 131 / 861 and 1507) — every Q-7e-7 it.fails unchanged
+    e.dispatch(ev3({ kind: 'drug', drugId: 'rocuronium', dose: 1.2, unit: 'mg/kg', route: 'iv' }));
+    e.dispatch(ev3({ kind: 'infusion', drugId: 'rocuronium', rate: 0.6, unit: 'mg/kg/h' }));
     await run(e, 120);
     e.dispatch(ev3({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm', rampS: 600 }));
     await run(e, 120 + 3600);
