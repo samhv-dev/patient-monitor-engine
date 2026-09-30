@@ -15,7 +15,7 @@ import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './ga
 import { eleveldPropofol, geptsSufentanil, marshPropofol, mintoRemifentanil, schniderPropofol, shaferFentanyl } from './models.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
-import type { DrugRow } from './row.ts';
+import type { DrugRow, PdTarget } from './row.ts';
 import { tciRate, TCI_DT_S } from './tci.ts';
 import { toAmount, toRate } from './units.ts';
 import { createVolatile, macForAge, macFraction, stepVolatile, type VolatileAgent, type VolatileState } from './volatile.ts';
@@ -70,12 +70,31 @@ export interface PkState {
 }
 
 /** Context gathered by the engine each pass from the other modules (duck-typed; neutral when absent). */
+/** FU-7 (R51 addendum 25): endogenous catecholamines act through 7g's OWN adrenergic rows — the same receptors, Loewe
+ * sums, β-occupancy shift and acidosis/vasopressor-responsiveness scaling as an injected dose. Circulatory targets only:
+ * endogenous adrenaline's metabolic effects stay 7e's (stressEffects), so nothing is counted twice. */
+const ENDO_CIRC_TARGETS: readonly PdTarget[] = ['hr', 'ees', 'svr', 'pvr', 'v0Frac'];
+const endoRow = (id: string): DrugRow | null => {
+  const r = DRUGS[id];
+  return r ? { ...r, id: `endo:${id}`, pd: r.pd.filter((e) => ENDO_CIRC_TARGETS.includes(e.target)) } : null;
+};
+const ENDO_NE = endoRow('norepinephrine');
+const ENDO_EPI = endoRow('epinephrine');
+function endoCatActives(cat: PkCtx['endoCat']): Active[] {
+  const out: Active[] = [];
+  if (cat && ENDO_NE && cat.ne > 0) out.push({ row: ENDO_NE, c: cat.ne });
+  if (cat && ENDO_EPI && cat.epi > 0) out.push({ row: ENDO_EPI, c: cat.epi });
+  return out;
+}
+
 export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
   coRefLpm?: number; // FU-4 G10: the circulation's resting output (the reference distFactor divides by)
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
   /** FU-7 (addendum 21): the 7a profile's β-receptor occupancy and its selectivity. */
   betaOcc?: number; betaNonSel?: boolean;
+  /** FU-7 (R51 addendum 25): 7e's nociceptive CIRCULATING catecholamines, rate-equivalents of 7g's own rows (MODELED). */
+  endoCat?: { ne: number; epi: number };
   /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
    * apply its own temperature term to the hepatic share again. */
   hepFnTemp: boolean;
@@ -350,7 +369,8 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 }
 
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
-  const actives: Active[] = [];
+  // FU-7 (R51 addendum 25): the surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
+  const actives: Active[] = endoCatActives(ctx.endoCat);
   let lipid = 0;
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;

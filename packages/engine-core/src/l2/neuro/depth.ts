@@ -47,6 +47,8 @@ export interface DepthInputs {
   opioidFentEqIn?: number;
   /** FU-7 (addendum 20): the dissociative share of `hypPropEq` (ketamine) — the EEG/BIS behaviour and kept airway reflexes. */
   dissoc?: number;
+  /** FU-7 (addendum 22): 7g's added antinociception (IV lidocaine), 0–0.6. */
+  antinocAdd?: number;
   macPotent: number; // brain, age-adjusted MAC fraction of the potent volatiles (7g)
   macN2o: number; // brain, N2O (7g)
   t1: number; // thumb first twitch 0–1 (EMG needs muscle)
@@ -63,6 +65,7 @@ export interface DepthOut {
   conscious: boolean;
   stress: number; // 0–1 sympathetic response to the stimulus after blunting
   antinoc: number; // 0–1 blunting of a noxious stimulus by opioid and hypnotic (7e: noxious × (1 − antinoc))
+  antinocOp: number; // FU-7 (R51 addendum 25): the OPIOID + lidocaine share only — 7e's catecholamine release reads this
   hypEq: number; // hypnotic MAC-equivalents (opioid-reduced MAC + propofol Ce/Ce50): movement, MAC-BAR, 7e's thermoregulatory depth
   movement: boolean;
 }
@@ -111,10 +114,13 @@ export function depth(x: DepthInputs): DepthOut {
   const bOp = fe / (fe + 2);
   const hypEq = macEff + hyp / ce50Propofol(x.ageY) / (1 - red); // MAC-equivalents (FU-7: the hypnotic equivalent)
   const bHyp = hypEq ** 3 / (hypEq ** 3 + 1); // 50 % blunting at 1 MAC-eq, 80 % at MAC-BAR 1.6 [ENG]
-  const antinoc = 1 - (1 - bOp) * (1 - bHyp);
+  // FU-7 (R51 addendum 25): the OPIOID + lidocaine share alone — the catecholamine RELEASE reads this, because a hypnotic
+  // does not abolish the humoral stress response (Desborough 2000) while opioids and IV lidocaine blunt it.
+  const antinocOp = 1 - (1 - bOp) * (1 - Math.min(0.6, Math.max(0, x.antinocAdd ?? 0)));
+  const antinoc = 1 - (1 - antinocOp) * (1 - bHyp); // the TOTAL blunting, unchanged in value and in every consumer
   const stress = Math.max(0, Math.min(1, x.stimulus * (1 - antinoc)));
   const movement = x.stimulus >= 0.3 && x.t1 > 0.25 && hypEq < 1; // MAC = 50 % move to incision: below 1 MAC-eq they move [ENG]
-  return { diRaw, sr, macFrac, macEff, hypnotic, conscious: hypnotic < 1, stress, antinoc, hypEq, movement };
+  return { diRaw, sr, macFrac, macEff, hypnotic, conscious: hypnotic < 1, stress, antinoc, antinocOp, hypEq, movement };
 }
 
 /** Displayed index: first-order smoothing τ 20 s (tables: 15–30 s device lag), stepped at dt. */

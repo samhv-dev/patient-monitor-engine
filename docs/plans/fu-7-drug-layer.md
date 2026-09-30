@@ -3691,7 +3691,7 @@ nociceptive set-point reset. So 7e keeps a SECOND first-order state `h.surge`, d
 `extraSymp` nor 7g's `sympDrive` can reach `surgeF` — by construction (they never enter `h.surge`), and Step 5's
 guard cases prove it in the engine.
 
-- [ ] **Step 1 — the nociceptive surge state and its set-point factor in 7e (PROTOTYPED, see "Prototype — Task 10").**
+- [x] **Step 1 — the nociceptive surge state and its set-point factor in 7e (PROTOTYPED, see "Prototype — Task 10").**
 In `packages/engine-core/src/l2/endo/params.ts`, find:
 
 ```ts
@@ -3865,7 +3865,7 @@ Replace with:
   }
 ```
 
-- [ ] **Step 1b — the surge's CIRCULATING catecholamines act through 7g's adrenergic rows (R51 addendum 25; PROTOTYPED
+- [x] **Step 1b — the surge's CIRCULATING catecholamines act through 7g's adrenergic rows (R51 addendum 25; PROTOTYPED
 by the second fixer on main + FU-4, "Prototype — second fixer").** The set-point reset alone cannot reach +20–30 mmHg
 after propofol, because FU-4's `outF` rightly caps what the reflex can deliver (the first fixer: +12.8). Laryngoscopy
 also releases catecholamines into the blood (Shribman 1987; Derbyshire 1983: plasma noradrenaline rises within a minute
@@ -4082,7 +4082,7 @@ Replace with:
       ...(circ ? { endoCat: (ps as unknown as { endo?: { core?: { out?: { surgeCat?: { ne: number; epi: number } } } } }).endo?.core?.out?.surgeCat ?? { ne: 0, epi: 0 } } : {}),
 ```
 
-- [ ] **Step 1c — the RELEASE is blunted by the opioid, not by the hypnotic (R51 addendum 25; PROTOTYPED).** Measured
+- [x] **Step 1c — the RELEASE is blunted by the opioid, not by the hypnotic (R51 addendum 25; PROTOTYPED).** Measured
 first without this step: fentanyl 3 µg/kg left only 0.06–0.08 of the response (band 0.2–0.7) whatever the release gain,
 because 7f's `antinoc` is dominated by its HYPNOTIC term once the opioid's MAC reduction multiplies into `hypEq`
 (propofol 2 mg/kg + fentanyl 3 µg/kg → `antinoc` ≈ 0.94, i.e. the anaesthetic itself abolishes the modelled surge). That
@@ -4256,7 +4256,7 @@ Replace with:
   const nox = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinocOp ?? x.antinoc)))));
 ```
 
-- [ ] **Step 2 — 7a defends it (PROTOTYPED).** In `packages/engine-core/src/l2/circ/model.ts`, find (7a's `ext` type):
+- [x] **Step 2 — 7a defends it (PROTOTYPED).** In `packages/engine-core/src/l2/circ/model.ts`, find (7a's `ext` type):
 
 ```ts
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
@@ -4286,7 +4286,7 @@ Replace with:
 (If FU-4's `setF` is absent on the merged tree the executor STOPS — the surge needs FU-4's path; it must not add a
 second set-point mechanism. If FU-4 later adds arguments to this call, re-anchor on `setF: de.setF` and change only
 that argument.)
-- [ ] **Step 3 — the blunting drugs (PROTOTYPED).** Three already act and one is new:
+- [x] **Step 3 — the blunting drugs (PROTOTYPED).** Three already act and one is new:
   - **opioids:** 7f's `antinoc` already multiplies 7e's `noxious` (`depth.ts`), so fentanyl 3 µg/kg before laryngoscopy
     lowers `symp`; the nociceptive `surge` reads the OPIOID + lidocaine share `antinocOp` (Step 1c, addendum 25 — a
     hypnotic does not abolish the catecholamine release). No further change; the test asserts the ratio (0.23 measured).
@@ -4398,7 +4398,7 @@ Replace with:
     pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }, { target: 'antinocAdd', emax: 0.35, ec50: 3 }],
     doses: 'antiarrhythmic 1–1.5 mg/kg;
 ```
-- [ ] **Step 4 — the stimulus chain check (PROTOTYPED).** Confirm with a scratch script that a `stimulus` intensity 1.5
+- [x] **Step 4 — the stimulus chain check (PROTOTYPED).** Confirm with a scratch script that a `stimulus` intensity 1.5
 raises `endo.core.out.surgeF` above 1 within 60 s and back toward 1 after the stimulus ends, and that
 `hemo.circ.baro.set × ext.surgeF` follows it. No new event, no second scale (addendum 12). **Prototype (main +
 FU-4, propofol 2 mg/kg at 240 s, stimulus 1.5 at 300–360 s):** `surgeF` > 1.01 at +5 s, peak **1.184**; residual
@@ -4410,7 +4410,7 @@ the opioid share `antinocOp`, so propofol no longer blunts it — `surgeF` > 1.0
 10 min after the stimulus ends (the state saturates the cap, so the 5-min residual is 0.064, not < 0.04 — reported, not a
 band); the release peaks at **0.019 µg/kg/min** noradrenaline- and **0.010** adrenaline-equivalent (plasma noradrenaline
 403 pg/mL after propofol, 504 awake).
-- [ ] **Step 5b — the ONE existing assertion Task 10 extends (E-FU7-10 c; review F14's rule applied).**
+- [x] **Step 5b — the ONE existing assertion Task 10 extends (E-FU7-10 c; review F14's rule applied).**
 `test/l2/endo/adapters.test.ts` asserts the EXACT key list 7e writes into `circ.ext` at rest; Step 1 adds `surgeF`. The
 title, the case and its meaning are kept — the expected object gains the NEUTRAL value. Find:
 
@@ -4424,7 +4424,7 @@ Replace with:
     expect(cm.ext).toEqual({ endoHrF: 1, endoSvrF: 1, endoEesF: 1, endoDV0Frac: -0, surgeF: 1 }); // FU-7 (E-FU7-10 c): at rest the nociceptive surge changes nothing
 ```
 
-- [ ] **Step 5 — the test and its bands.** Create `packages/engine-core/test/engine/stimulus-surge.test.ts` (SLOW_B,
+- [x] **Step 5 — the test and its bands.** Create `packages/engine-core/test/engine/stimulus-surge.test.ts` (SLOW_B,
 yields per sim-minute), rig = adult 40 y ventilated (the audit's rig). **The numbers per case are the THIRD fixer's,
 measured with the whole of Task 10 under R51 addendum 25 (Steps 1–1c: reset + circulating release + opioid-only release
 blunting, `SURGE_SET_PER_NOX` 0.25, `SURGE_NE_GAIN` 0.6) on `origin/main` + `origin/fu-4-integration-polish` e3eeb56 +
@@ -4525,7 +4525,7 @@ a band is met there, the case is written as `it`:**
      The `h.symp`-driven variant the review rejected, run by the first fixer: sepsis `surgeF` 1.06 (set +5.7 mmHg, MAP
      +4.7), anaphylaxis III 1.06 (+5.5), untreated MH **1.24 (set +22.9 mmHg, MAP +7.3)**, ephedrine 1.093 (+8.9),
      ketamine 1.124 (+11.8).
-- [ ] **Step 6 — the audit cell.** `npx -y pnpm@9.15.9 run audit:drugs DI-08 DI-04a DI-57 DI-21 DI-80`. Expected from
+- [x] **Step 6 — the audit cell.** `npx -y pnpm@9.15.9 run audit:drugs DI-08 DI-04a DI-57 DI-21 DI-80`. Expected from
 the third fixer's addendum-25 prototype: DI-08 (the audit's own rig and bands — see "Prototype — second fixer") with the
 labetalol `ratio` still outside 0.2–0.8 → the cell stays non-PL on that item; report both numbers; the cell's verdict is
 the worse item (research/12 §2.2), and the gate note names the mechanism (the release and the reset act through α).
@@ -4548,7 +4548,7 @@ remaining gap. The cell is a MEASUREMENT here, never a reason to move a constant
 
 The gate note §5 records the after numbers. The cortisol and glucose items (`cort4hF2` 1501, `dGlu2hF2` 1.28) must
 not move by more than 2 %, because the surge adds no cortisol path.
-- [ ] **Step 7 — commit.** `feat(7e): the stimulus sympathetic surge resets the baroreflex set point (R51 addendum 22)`, push.
+- [x] **Step 7 — commit.** `feat(7e): the stimulus sympathetic surge resets the baroreflex set point (R51 addendum 22)`, push.
 
 ---
 

@@ -16,7 +16,9 @@ export type PdTarget =
   | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain'
   /** FU-7 (addenda 20–21): an INDIRECT sympathomimetic's central drive (ephedrine, ketamine) — added to 7e's
    * `extraSymp`, so β-blockade blunts its β1 share and catecholamine depletion weakens it, instead of multiplying 7a. */
-  | 'sympDrive';
+  | 'sympDrive'
+  /** FU-7 (addendum 22): an ADDED antinociception (IV lidocaine's airway-reflex blunting) → 7f's `antinoc`, 0–0.6. */
+  | 'antinocAdd';
 
 export interface PdEffect {
   target: PdTarget;

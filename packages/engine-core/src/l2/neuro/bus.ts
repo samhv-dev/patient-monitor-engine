@@ -55,6 +55,8 @@ export interface NeuroInputs {
   opioidVentFentEq: number | undefined;
   /** FU-7 (addendum 20): the dissociative share of `hypPropEq` (ketamine), 0–1. */
   dissoc: number | undefined;
+  /** FU-7 (addendum 22): 7g's added antinociception (IV lidocaine), 0–0.6; 0 on a bus without it. */
+  antinocAdd: number;
   /** FU-7 (review F2, ruling 2): the benzodiazepine share of `hypVentPropEq`, 0–1 — the drive's per-class α. */
   benzoShare: number | undefined;
   /** Ventilatory drive inputs, ng/mL(-eq): `opioid` = remifentanil-equivalent at the opioid ventilatory site(s), naloxone applied. */
@@ -113,6 +115,7 @@ export function readBus(bus: DrugBus): NeuroInputs {
     opioidFentEq: num(bus.cns.opioidCeFentEq) ? bus.cns.opioidCeFentEq : undefined,
     opioidVentFentEq: num(bus.cns.opioidVentFentEq) ? bus.cns.opioidVentFentEq : undefined,
     dissoc: num(bus.cns.dissoc) ? bus.cns.dissoc : undefined,
+    antinocAdd: num(bus.cns.antinocAdd) ? bus.cns.antinocAdd : 0, // FU-7 (addendum 22)
     benzoShare: num(bus.cns.benzoShare) ? bus.cns.benzoShare : undefined,
     vent: {
       // a missing `vent` entry falls back to the brain site (never to zero: an opioid always depresses breathing)

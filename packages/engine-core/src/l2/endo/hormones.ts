@@ -25,6 +25,9 @@ import {
 
 export interface HormoneState {
   symp: number;
+  /** FU-7 (addendum 22; ruling 1): the NOCICEPTIVE share of the stress activity alone — noxious × (1 − antinoc), same
+   * onset/offset τ as `symp`, without `extraSymp`. It drives ONLY the set-point factor `surgeF` (effects.ts). */
+  surge: number;
   /** FU-4 F2(a): the humoral vasoconstrictor arm (AVP + angiotensin II), 0–1. Propofol does not suppress it. */
   hum: number;
   epi: number; // endogenous plasma epinephrine, pg/mL
@@ -39,6 +42,7 @@ export interface HormoneState {
 export interface HormoneInputs {
   noxious: number; // 0 none … 1 incision … 1.5 laryngoscopy/sternotomy (tables `noxious`)
   antinoc: number; // 0–1 antinociception (7f; fallback ANTINOC_GA_FALLBACK under GA)
+  antinocOp?: number; // FU-7 (R51 addendum 25): its OPIOID + lidocaine share — the nociceptive surge state reads this
   extraSymp: number; // MH, thyroid storm, sepsis, awareness … (0–3)
   glucoseMgDl: number;
   mapMmHg: number;
@@ -50,7 +54,7 @@ export interface HormoneInputs {
 }
 
 export function createHormones(): HormoneState {
-  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0, catReserve: 1 };
+  return { symp: 0, surge: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0, catReserve: 1 };
 }
 
 /** Adrenal (humoral) drive: stress activity plus the metabolic emergencies the baroreflex does not cover. */
@@ -68,6 +72,12 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
   const target = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinoc))) + x.extraSymp));
   const tau = target > h.symp ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S;
   h.symp += (target - h.symp) * (1 - Math.exp(-dtS / tau));
+  // FU-7 (addendum 22; Orchestrator ruling (FU-7 review) 1): the nociceptive surge — the SAME first-order law on the
+  // nociceptive term only. `?? 0` tolerates a snapshot written before FU-7 (the state is serialised).
+  // FU-7 (R51 addendum 25): the RELEASE is blunted by the opioid and by IV lidocaine, not by the hypnotic
+  const nox = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinocOp ?? x.antinoc)))));
+  const s0 = h.surge ?? 0;
+  h.surge = s0 + (nox - s0) * (1 - Math.exp(-dtS / (nox > s0 ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S)));
   // FU-7 (audit D9): the releasable store falls with sustained sympathetic drive and refills slowly (`?? 1`: a snapshot
   // written before FU-7 is replete)
   const rTarget = Math.max(CAT_RESERVE_FLOOR, 1 - (1 - CAT_RESERVE_FLOOR) * Math.min(1, h.symp / CAT_RESERVE_SYMP_REF));

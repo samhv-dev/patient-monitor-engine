@@ -158,6 +158,7 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
   bus.airway.histamine = Math.min(1, Math.max(0, other.histamine ?? 0));
   bus.hpvInhibit = Math.min(1, Math.max(0, other.hpvInhibit ?? 0));
   bus.cns.sympDrive = Math.max(0, other.sympDrive ?? 0); // FU-7 (addenda 20–21): the indirect sympathomimetic drive
+  bus.cns.antinocAdd = Math.min(0.6, Math.max(0, other.antinocAdd ?? 0)); // FU-7 (addendum 22): IV lidocaine
   bus.metabolic.kShift = other.kShift ?? 0;
   bus.metabolic.glucoseDelta = other.glucose ?? 0;
   bus.cns.cbfVaso *= 1 + (other.cbfVaso ?? 0);

@@ -496,6 +496,9 @@ class Engine implements MonitorEngine {
       betaBlockC: circ?.prof.betaBlockC ?? 0,
       betaOcc: circ?.prof.betaOcc ?? 0, // FU-7 (addendum 21): the profile's own β-receptor occupancy
       betaNonSel: circ?.prof.betaNonSel ?? false,
+      // FU-7 (R51 addendum 25): 7e's nociceptive catecholamine release (its previous 1 Hz pass — 7g runs first in the
+      // chain; the surge's 25 s onset τ makes the lag irrelevant). MODELED only: MANUAL's instructor owns the pressures.
+      ...(circ ? { endoCat: (ps as unknown as { endo?: { core?: { out?: { surgeCat?: { ne: number; epi: number } } } } }).endo?.core?.out?.surgeCat ?? { ne: 0, epi: 0 } } : {}),
       vasoResp: cond?.vasoResp ?? 1,
     };
   }

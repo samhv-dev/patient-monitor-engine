@@ -62,6 +62,7 @@ const SLOW = [
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
   'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population (SLOW_A)
   'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms (SLOW_A)
+  'test/engine/stimulus-surge.test.ts', // FU-7 Task 10: ≈ 40 ventilated arms of 10–60 sim-min (SLOW_A)
 ];
 /**
  * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
@@ -92,6 +93,7 @@ const SLOW_A = [
   // FU-7 (executor instruction, 2026-09-30): every new FU-7 slow file joins SLOW_A as well (slow-b ran 58 min at G-FU6).
   'test/engine/drug-apnoea.test.ts',
   'test/engine/cat-reserve-engine.test.ts',
+  'test/engine/stimulus-surge.test.ts',
 ];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus SLOW_A, and the difference cannot be taken by STRING comparison — the
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h

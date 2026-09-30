@@ -161,6 +161,7 @@ export interface CircModelState {
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
+    surgeF?: number; // FU-7 (addendum 22; ruling 1): 7e's NOCICEPTIVE set-point factor, multiplied into FU-4's setF
     endoHumDV0Frac?: number; // FU-4 F2(a) (7e): the humoral arm's venous recruitment, fraction of blood volume (− = venoconstriction)
     endoHumSvrF?: number; // FU-4 G-FU4-1 (7e): the humoral arm's × on SVR, already inside endoSvrF
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
@@ -281,7 +282,7 @@ function control(m: CircModelState, env: CircEnv): void {
   }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF, brainF: brainstemOutF(m.ext.cbfRel) }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF * (m.ext.surgeF ?? 1), brainF: brainstemOutF(m.ext.cbfRel) }, raTm) // FU-7 (addendum 22): the nociceptive surge rides FU-4's set-point path
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;

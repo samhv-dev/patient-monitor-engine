@@ -54,7 +54,9 @@ export const OTHER_ROWS: DrugRow[] = [
     doses: '0.2 mg, repeat to 1 mg', onset: 'onset 1–2 min, duration 45–60 min (resedation)', ir: '?', src: '[TXT]; decision 6', tag: 'TXT' },
   // --- local anaesthetics (LAST, decision 12) and lipid ---
   { id: 'lidocaine', name: 'Lidocaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.5, 1.0, 0.01, 0.05), elim: { hepatic: 1, highExtraction: true },
-    pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }],
+    // FU-7 (addendum 22): IV lidocaine blunts the airway-reflex / intubation pressor response (Lin 2016 meta-analysis)
+    // — an added antinociception on 7e's noxious input, not a sympatholysis [ENG size: emax 0.35 at 3 µg/mL].
+    pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }, { target: 'antinocAdd', emax: 0.35, ec50: 3 }],
     doses: 'antiarrhythmic 1–1.5 mg/kg; max 4.5 mg/kg plain / 7 with epinephrine (M10 ch. 25 Table 25.6: 350/500 mg)', onset: 'IV peak 1–2 min; seizures reported from 1.4 mg/kg in IVRA (M10 p. 755)', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'bupivacaine', name: 'Bupivacaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.25, 0.75, 0.008, 0.03), elim: { hepatic: 1 },
     pd: [{ target: 'ees', emax: -0.7, ec50: 4, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 4, hill: 2 }],
