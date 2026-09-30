@@ -1,0 +1,3 @@
+import { A, VENTED, runArm } from './runner.ts';
+const R = await runArm({ patient: { ageY: 65, weightKg: 80, conditions: [{ id: 'hfref' }, { id: 'cad', grade: 'recentMI' }] }, steps: [...VENTED, [400, A.iabp('start', { ratio: 1 })]], tEnd: 960, dt: 5 });
+for (const r of R.rows.filter((x) => (x.t as number) % 60 === 0 || ((x.t as number) > 840 && (x.t as number) % 10 === 0))) console.log(r.t, 'map', (r.map as number).toFixed(1), 'dbp', (r.dbp as number).toFixed(1), 'lvedp', (r.lvedp as number).toFixed(1), 'cpp', (r.cpp as number).toFixed(1), 'k', (r.kIsch as number).toFixed(2), 'sv', (r.sv as number).toFixed(1), 'pawp', (r.pawp as number).toFixed(1), 'cvp', (r.cvp as number).toFixed(1), 'hr', r.hr, 'lvedv', (r.lvedv as number).toFixed(0));
