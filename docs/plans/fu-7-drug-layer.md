@@ -5940,7 +5940,7 @@ N₂O). `stepVolatile` ALREADY computes that uptake (`u = q·λb/g·(FA − Fv)`
 F18: the first draft re-implemented it with an `s.fv` field that does not exist), so the term is EXPORTED, not written
 twice.
 
-- [ ] **Step 1 — the shared uptake (one computation, review F18).** In `packages/engine-core/src/l2/pk/volatile.ts`, find:
+- [x] **Step 1 — the shared uptake (one computation, review F18).** In `packages/engine-core/src/l2/pk/volatile.ts`, find:
 
 ```ts
 export function stepVolatile(s: VolatileState, env: VolatileEnv, dtS: number): void {
@@ -6019,7 +6019,7 @@ concentration effect (its FA/FI rising faster than a low-concentration agent's) 
 on VA — so Step 3's concentration-effect case is written as `it.fails` with its number if N₂O's FA/FI at 5 min does not
 already exceed sevoflurane's 30 % value (it may, from its low λb/g alone); the second-gas case is the target.
 
-- [ ] **Step 2 — the desflurane surge trigger.** In `pipeline.ts`, find:
+- [x] **Step 2 — the desflurane surge trigger.** In `pipeline.ts`, find:
 
 ```ts
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {
@@ -6046,7 +6046,7 @@ Replace with:
 
 (`macFraction` is the BRAIN (VRG) fraction — `volatile.ts` says so — which is why the old trigger never fired; the
 alveolar `fa` over `macForAge` is the end-tidal MAC the gas monitor shows, exactly as `bus.volatiles[…].fet/macAge`.)
-- [ ] **Step 3 — the tests.** Add to `interactions-misc.test.ts`:
+- [x] **Step 3 — the tests.** Add to `interactions-misc.test.ts`:
   1. **second gas:** with 66 % N₂O, sevoflurane 2 % reaches a HIGHER FA/FI at 5 min than in air — band **+0.03 to +0.15**
      (Epstein 1964 measured ≈ 10 % higher halothane uptake; M10 ch. 19 calls the effect "small but real") and N₂O's own
      FA/FI is unchanged within 1e-9 (a one-way term);
@@ -6054,11 +6054,11 @@ alveolar `fa` over `macForAge` is the end-tidal MAC the gas monitor shows, exact
   3. **desflurane surge:** a dial step 3 → 12 % at FGF 4 L/min fires the surge within **60 s** and the HR rise is
      **8–35 bpm** for **2–4 min** (T6.3); a sevoflurane step does NOT fire it (MAP falls instead — DI-70's PL item);
   4. a step that stays below 1 MAC does not fire it (the trigger's own condition).
-- [ ] **Step 4 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-19 DI-70 DI-87 DI-18 DI-77`.
+- [x] **Step 4 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-19 DI-70 DI-87 DI-18 DI-77`.
 Expected: DI-19 **MI → PL**, DI-70 **TW → PL**; DI-87 (emergence order) and DI-18/DI-77 unchanged — if the emergence
 times move by more than 10 %, the uptake term is too large: report and re-fit `uptakeLpm`'s scale, do not touch the
 emergence bands.
-- [ ] **Step 5 — commit.** `feat(7g): the second-gas effect and an end-tidal desflurane surge trigger (R51 addendum 24)`, push.
+- [x] **Step 5 — commit.** `feat(7g): the second-gas effect and an end-tidal desflurane surge trigger (R51 addendum 24)`, push.
 
 ---
 

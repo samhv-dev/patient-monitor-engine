@@ -18,7 +18,7 @@ import { hill, tachy } from './pd.ts';
 import type { DrugRow, PdTarget } from './row.ts';
 import { tciRate, TCI_DT_S } from './tci.ts';
 import { toAmount, toRate } from './units.ts';
-import { createVolatile, macForAge, macFraction, stepVolatile, type VolatileAgent, type VolatileState } from './volatile.ts';
+import { createVolatile, macForAge, macFraction, stepVolatile, uptakeLpm, type VolatileAgent, type VolatileState } from './volatile.ts';
 
 export const PK_DT_S = 0.1;
 const TACHY_WINDOW_S = 3600;
@@ -417,7 +417,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const volatiles: DrugBus['volatiles'] = {};
   if (pk.vap) {
     const env = { vaLpm: ctx.vaLpm, coLpm: ctx.coLpm, frcL: ctx.frcL, weightKg: pk.patient.weightKg };
-    stepVolatile(pk.vap.s, env, PK_DT_S);
+    // FU-7 (addendum 24): the second-gas effect. N2O's uptake augments the potent agent's effective alveolar
+    // ventilation (M10 ch. 19; Epstein 1964), so the potent agent is stepped with VA + U_N2O and N2O with VA.
+    const uN2o = Math.max(0, uptakeLpm(pk.vap.n2o, env.coLpm));
+    stepVolatile(pk.vap.s, { ...env, vaLpm: env.vaLpm + (env.vaLpm > 0 ? uN2o : 0) }, PK_DT_S);
     stepVolatile(pk.vap.n2o, env, PK_DT_S);
     for (const s of [pk.vap.s, pk.vap.n2o]) {
       const v: BusVolatile = { fet: 100 * s.fa, brain: 100 * s.vrg, macAge: macForAge(s.agent, pk.patient.ageY), macFrac: macFraction(s, pk.patient.ageY) };
@@ -470,9 +473,14 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain }); // FU-7 (addendum 21)
   // desflurane sympathetic surge on a rapid rise above 1 MAC (T6.3): HR +25 %, SVR +20 % over 2–4 min [TXT]
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {
-    pk.macPrev.push(macBrain);
+    // FU-7 (addendum 24 / DI-70): the surge is an AIRWAY-RECEPTOR reflex to the rate of rise of the INSPIRED/end-tidal
+    // fraction (Weiskopf 1994: a rapid increase in desflurane concentration, not a brain level, releases catecholamines),
+    // so the trigger reads the end-tidal MAC fraction, which a dial step moves within seconds. The brain-MAC trigger
+    // never fired: a 3 → 12 % step gave HR +1 bpm.
+    const etMac = (100 * pk.vap.s.fa) / macForAge(pk.vap.s.agent, pk.patient.ageY); // END-TIDAL (alveolar) MAC fraction
+    pk.macPrev.push(etMac);
     if (pk.macPrev.length > 60) pk.macPrev.shift();
-    if (macBrain > 1 && macBrain - (pk.macPrev[0] as number) > 0.3 && t - pk.desSurgeT > 600) pk.desSurgeT = t;
+    if (etMac > 1 && etMac - (pk.macPrev[0] as number) > 0.3 && t - pk.desSurgeT > 600) pk.desSurgeT = t;
   }
   const surge = t - pk.desSurgeT < 240 ? Math.sin((Math.PI * (t - pk.desSurgeT)) / 240) : 0;
   r.fx.hr *= 1 + 0.25 * surge;

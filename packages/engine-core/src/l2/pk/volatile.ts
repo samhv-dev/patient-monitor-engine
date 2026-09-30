@@ -5,7 +5,8 @@
 //   alveoli : VL·dFA/dt = VA·(FI − FA) − U,  U = Q·λb/g·(FA − Fv),  Fv = Σ q_i·F_i
 //   tissue i: V_i·λ_i/b·dF_i/dt = Q·q_i·(FA − F_i)                      (arterial tension = alveolar)
 // Stepped with forward Euler at 0.1 s: the fastest time constant (alveolar, ≈ 10–15 s) is ≥ 100 steps.
-// No concentration or second-gas effect (v1 simplification, decision 9).
+// FU-7 (addendum 24): the second-gas effect — N2O's uptake (`uptakeLpm`) augments the potent agent's effective
+// alveolar ventilation (pipeline.ts); N2O's own concentration effect is not modelled (its FA/FI is unchanged).
 
 export type VolatileAgent = 'sevoflurane' | 'isoflurane' | 'desflurane' | 'n2o';
 
@@ -48,13 +49,21 @@ export interface VolatileEnv {
   weightKg: number;
 }
 
+/** FU-7 (addendum 24; review F18): the agent's alveolar UPTAKE, L/min of gas — Q̇·λb/g·(FA − Fv) with Fv the
+ * flow-weighted mixed-venous tension of the three tissue groups. `stepVolatile` uses it; for N2O at 66 % it is
+ * ≈ 0.3–1 L/min in the first minutes, which concentrates the alveolar gas and draws in extra inspired volume — the
+ * concentration and second-gas effects (M10 ch. 19; Epstein 1964). For a potent agent it is negligible. */
+export function uptakeLpm(s: VolatileState, coLpm: number): number {
+  const fv = GROUPS.vrg.q * s.vrg + GROUPS.muscle.q * s.muscle + GROUPS.fat.q * s.fat;
+  return coLpm * AGENTS[s.agent].bg * (s.fa - fv);
+}
+
 export function stepVolatile(s: VolatileState, env: VolatileEnv, dtS: number): void {
   const a = AGENTS[s.agent];
   const w = env.weightKg / 70;
   const dt = dtS / 60;
   const q = env.coLpm;
-  const fv = GROUPS.vrg.q * s.vrg + GROUPS.muscle.q * s.muscle + GROUPS.fat.q * s.fat;
-  const u = q * a.bg * (s.fa - fv);
+  const u = uptakeLpm(s, q); // FU-7 (review F18): the ONE uptake computation
   const fi = s.fi + (dt * (s.fgf * (s.fd - s.fi) - u)) / CIRCUIT_L;
   const fa = s.fa + (dt * (env.vaLpm * (s.fi - s.fa) - u)) / Math.max(0.5, env.frcL);
   s.vrg += (dt * q * GROUPS.vrg.q * (s.fa - s.vrg)) / (GROUPS.vrg.v * w * a.vrg);

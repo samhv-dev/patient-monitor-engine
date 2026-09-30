@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { LAST_THRESHOLDS } from '../../../src/l2/pk/data/rows-other.ts';
 import { hill } from '../../../src/l2/pk/pd.ts';
-import { give, rig, runTo } from '../../helpers/neuro.ts';
+import { give, rig, runTo, vaporiser } from '../../helpers/neuro.ts';
 
 /** The largest fractional fall of 7g's HR multiplier over `min` minutes after a bolus. */
 function hrFall(drugId: string, dose: number, unit = 'mg/kg', min = 10): number {
@@ -65,5 +65,55 @@ describe('LAST additivity (R51 addendum 24)', () => {
     expect(Math.max(...bup.map((x) => x.uSeiz))).toBeLessThan(1);
     expect(lido.some((x) => x.seizure) || bup.some((x) => x.seizure)).toBe(false);
     expect(both.some((x) => x.seizure)).toBe(true);
+  });
+});
+
+/** FU-7 Task 15 (addendum 24): the second-gas effect and the end-tidal desflurane surge trigger. */
+describe('volatiles: second gas and the desflurane trigger (R51 addendum 24)', () => {
+  /** FA/FI of the potent agent and of N2O after `min` minutes of `agent` at `dial` % with `n2o` (fraction), FGF 6. */
+  function faFi(agent: 'sevoflurane' | 'desflurane', dial: number, n2o: number, min = 5) {
+    const r = rig();
+    vaporiser(r, agent, dial, 6, n2o);
+    runTo(r, min);
+    const v = r.pk.vap!;
+    return { potent: v.s.fa / v.s.fi, n2o: v.n2o.fi > 0 ? v.n2o.fa / v.n2o.fi : Number.NaN };
+  }
+  // R45 (Task 15 UNPROTOTYPED): the uptake-augmented ventilation is the plan's whole mechanism; no scale is fitted.
+  it.fails('second gas: 66 % N2O raises sevoflurane 2 %\'s FA/FI at 5 min by +0.03 to +0.15 (Epstein 1964; M10 ch. 19); N2O\'s own FA/FI is unchanged (a one-way term) — measured +0.021 (0.713 → 0.733), N2O unchanged', () => {
+    const air = faFi('sevoflurane', 2, 0).potent;
+    const withN2o = faFi('sevoflurane', 2, 0.66);
+    const n2oAlone = faFi('sevoflurane', 0, 0.66).n2o;
+    console.log(`FU-7 T15: sevoflurane FA/FI at 5 min air ${air.toFixed(3)} vs 66 % N2O ${withN2o.potent.toFixed(3)}; N2O FA/FI ${withN2o.n2o.toFixed(4)} (alone ${n2oAlone.toFixed(4)})`);
+    expect(withN2o.potent - air).toBeGreaterThanOrEqual(0.03);
+    expect(withN2o.potent - air).toBeLessThanOrEqual(0.15);
+    expect(withN2o.n2o).toBeCloseTo(n2oAlone, 9);
+  });
+  // Declared v1 scope (Task 15 Step 1): N2O's OWN concentration effect is not modelled — N2O stays on VA.
+  it.fails('concentration effect: 66 % N2O reaches a higher FA/FI at 5 min than 30 % N2O — measured 0.810 both (not modelled in v1)', () => {
+    const hi = faFi('sevoflurane', 0, 0.66).n2o;
+    const lo = faFi('sevoflurane', 0, 0.3).n2o;
+    console.log(`FU-7 T15: N2O FA/FI at 5 min 66 % ${hi.toFixed(4)} vs 30 % ${lo.toFixed(4)}`);
+    expect(hi).toBeGreaterThan(lo + 1e-6);
+  });
+  /** The first second the desflurane surge fires after a dial step at 300 s (NaN: never), and whether it fired at all. */
+  function stepFires(agent: 'sevoflurane' | 'desflurane', from: number, to: number): number {
+    const r = rig();
+    vaporiser(r, agent, from, 4);
+    runTo(r, 5);
+    vaporiser(r, agent, to, 4);
+    let fired = Number.NaN;
+    runTo(r, 10, (_b, tMin) => { if (Number.isNaN(fired) && r.pk.desSurgeT > 0 && r.pk.desSurgeT >= 300) fired = tMin * 60 - 300; });
+    return fired;
+  }
+  // R45: at FGF 4 the circuit washes in over minutes (FA/MAC 0.33 at +15 s, 0.59 at +60 s, 1.03 at +3 min), so when the
+  // end-tidal MAC crosses 1 its 60 s rise is ≈ 0.16, under the trigger's 0.3 — the surge never fires. Thresholds kept.
+  it.fails('a desflurane dial step 3 → 12 % at FGF 4 fires the surge within 60 s (the END-TIDAL trigger; DI-70: brain MAC never fired it) — measured: never within 5 min (end-tidal MAC 1.03 at +3 min, 60 s rise ≈ 0.16 < 0.3)', () => {
+    const s = stepFires('desflurane', 3, 12);
+    console.log(`FU-7 T15: desflurane 3 → 12 % surge fires at +${s} s`);
+    expect(s).toBeLessThanOrEqual(60);
+  });
+  it('a sevoflurane step does not fire it, and a desflurane step that stays below 1 MAC does not either', () => {
+    expect(stepFires('sevoflurane', 1, 6)).toBeNaN();
+    expect(stepFires('desflurane', 1, 4)).toBeNaN();
   });
 });
