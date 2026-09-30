@@ -2765,7 +2765,7 @@ miss on pre-FU-6 main). On the merged tree the executor:
 4. keeps `loc`, `pain`, `hvrDep` and every FU-6 output field; FU-7 adds no NMB term;
 5. if FU-6's structure makes this impossible (e.g. `dHyp` or `hvrDep` no longer exists), STOPS and reports.
 
-- [ ] **Step 1 — the surface.** In `packages/engine-core/src/l2/neuro/drive.ts` (review F17: the dead `SYNERGY` export
+- [x] **Step 1 — the surface.** In `packages/engine-core/src/l2/neuro/drive.ts` (review F17: the dead `SYNERGY` export
 is replaced by the two per-class constants, placed with the other constants — no import is added), find:
 
 ```ts
@@ -2864,7 +2864,7 @@ Replace with:
   const syn = 1; // the surface replaces the old product term (SYNERGY deleted, review F17)
 ```
 
-- [ ] **Step 1b — FU-6's `hvrDep` in the same pass (review F3; Orchestrator ruling (FU-7 review) 3; D17).** This block is
+- [x] **Step 1b — FU-6's `hvrDep` in the same pass (review F3; Orchestrator ruling (FU-7 review) 3; D17).** This block is
 FU-6's line (FU-6 plan Task 10, `drive.ts` Edit 4) — a DECLARED MISS on pre-FU-6 main, applied on the merged tree. Find:
 
 ```ts
@@ -2883,7 +2883,7 @@ Replace with:
 Then `grep -n "dMid\|dKet\|SYNERGY" packages/engine-core/src/l2/neuro/drive.ts` must print nothing (Task 0 Step 4's
 consumer list).
 
-- [ ] **Step 2 — the pipeline passes the equivalent and the benzodiazepine share.** In
+- [x] **Step 2 — the pipeline passes the equivalent and the benzodiazepine share.** In
 `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
 
 ```ts
@@ -2897,7 +2897,7 @@ Replace with:
 ```
 
 (On the merged tree this call also carries FU-6's `hypnotic: d.hypnotic` and `stress: d.stress` — keep them.)
-- [ ] **Step 3 — single-agent calibration is unchanged (the test that protects FU-6's fit).** Add to
+- [x] **Step 3 — single-agent calibration is unchanged (the test that protects FU-6's fit).** Add to
 `test/l2/neuro/hypnotic-equivalent.test.ts`:
 
 ```ts
@@ -2935,12 +2935,12 @@ describe('ventilatory response surface (R51 addendum 20, D4)', () => {
 });
 ```
 
-- [ ] **Step 4 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-03 DI-01d DI-71 DI-89`.
+- [x] **Step 4 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-03 DI-01d DI-71 DI-89`.
 Expected on the merged tree: DI-03 SpO₂ nadir 70–89 % and (with FU-6's relative threshold + Task 7) apnoea true;
 DI-01d apnoea 60–600 s; DI-71 and DI-89 move in Task 7. Record every number in the gate note; the per-class α values
 on main + FU-4 (pre-FU-6) are the reference: DI-03 **77 %** (VE −68.4 vs −40.7 / −16.6 %), DI-01d **380 s** (the single
 α 1.5 gave 500 s).
-- [ ] **Step 5 — commit.** `feat(7f): the ventilatory drive on 7g's hypnotic equivalent and the Greco surface (R51 addendum 20)`, push.
+- [x] **Step 5 — commit.** `feat(7f): the ventilatory drive on 7g's hypnotic equivalent and the Greco surface (R51 addendum 20)`, push.
 
 ---
 
