@@ -13,7 +13,11 @@ export const PERF_SHARE = [0.45, 0.55] as const;
 export const R_TUBE = 4; // cmH2O·s/L
 /** Chest-wall compliance (catalogue lead `ccw`; Behazin 2010 normal 223 → 200 rounded). */
 export const CCW_ML = 200;
-/** TLC and RV, mL/kg IBW (Pulse 4.3.2 standard patient: TLC 80, RV 16; audit 03 §1). */
+/**
+ * TLC and RV, mL/kg IBW (Pulse 4.3.2 standard patient: TLC 80, RV 16; audit 03 §1) — INTERNAL: the range of the unit
+ * P–V sigmoids (side.ts `mechParams`), not the patient's clinical TLC/RV. Stage 7k (R50 F5) owns those: `resp.volumes.tlc`
+ * and `.rv` (ECSC/Zapletal × pathology). Re-basing this range on them moves every mechanics number (Q-7k-6, v1.1).
+ */
 export const TLC_ML_KG = 80;
 export const RV_ML_KG = 16;
 /**
