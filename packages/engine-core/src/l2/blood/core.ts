@@ -145,7 +145,11 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   }
   for (const g of r.given) addFluid(so, g.ml, g.comp);
   // 2. homeostasis / transcellular shifts
-  const hbfRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0) ** HBF_EXP);
+  // FU-9 H3 (research/13): with 7d, hepatic flow = CO/CO0 × 7d's splanchnic/outflow factor (sympathetic, α-agonist,
+  // volatile, CVP/IAP); without 7d, the (CO/CO0)^HBF_EXP fallback
+  const coRel = Math.max(0, x.coLpm / bc.co0);
+  const hf = (bc as { hbfFactor?: number }).hbfFactor;
+  const hbfRel = Math.min(1.5, hf === undefined ? coRel ** HBF_EXP : coRel * hf);
   const ef = effects(bc, x.t);
   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
   const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux

@@ -136,6 +136,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
     e.dispatch(drug('propofol', 2, 'mg/kg'));
     await run(e, 180);
+    console.log(`neuro-engine propofol 2 mg/kg: depth-index nadir ${Math.min(...an.map((a) => a.di))}`);
     expect(Math.min(...an.map((a) => a.di))).toBeLessThan(52);
   });
   it('succinylcholine: 7g consumes the dose, 7f observes it (fasciculation mark); 7f leaves ECG potassium alone (7c owns it, R51 §3)', async () => {

@@ -12,7 +12,7 @@ import { brainParams, createBrain, giveOsmotherapy, stepBrain, type BrainInputs,
 import { BRAIN_DT_S, ICP_THRESHOLD, MANNITOL_MOSM_PER_G, NACL_MOSM_PER_G } from '../brain/params.ts';
 import { icpSample } from '../brain/wave.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
-import { createLiver, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
+import { createLiver, hbfFactor, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
 import { createRenal, expansionFactor, giveMannitolRenal, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
 import { OLIGURIA_ML_KG_H, RENAL_REF_CO_L_KG, UOP0_ML_KG_H } from '../renal/params.ts';
 import { respBreathU, type RespState } from '../resp/pipeline.ts';
@@ -82,6 +82,7 @@ function liverIn(os: OrgansState, v: OrganView): LiverInputs {
   return {
     coLpm: v.coLpm, co0Lpm: os.co0, bvRel: v.bvRel, alphaE: Math.min(1, v.drugs.alphaNe / ALPHA_E_FULL), volatileMac: v.drugs.volatileMac,
     tempC: v.tempC, gfrRel: os.kidney.gfrRel, do2MlKgMin: do2, ...(v.hbfRel !== null ? { hbfRel: v.hbfRel } : {}),
+    outflowMmHg: Math.max(v.cvp, os.iap), // FU-9 H3
   };
 }
 
@@ -204,6 +205,7 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
   stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // with 7c its pool is authoritative (decision 12)
   if (core) {
     core.liver = os.liver.liverFn * os.liver.tempF; // function only: 7c multiplies its own hbfRel (addendum 14)
+    core.hbfFactor = hbfFactor(liverIn(os, v)); // FU-9 H3: the splanchnic/outflow factor 7c multiplies with CO/CO0
     const naPl = core.out?.na;
     const natri = { share: 1 - 1 / expansionFactor(v.bvRel), naMmolL: typeof naPl === 'number' && naPl > 0 ? naPl : URINE_NA }; // FU-9 F1/R4
     const kSet = core.so?.set?.k;

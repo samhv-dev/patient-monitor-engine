@@ -58,7 +58,7 @@ export interface DrugView {
  *  excretion rates, mmol/h. */
 export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
 type BloodLike = {
-  core?: { liver?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number; na?: number } }; // FU-9 F6: K and its set point; R4: Na
+  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number; na?: number } }; // FU-9 F6/R4/H3
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
 };
 
