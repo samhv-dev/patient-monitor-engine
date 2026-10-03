@@ -212,6 +212,12 @@ export interface Skin {
     volume: { min: number; max: number; default: number };
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
     messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** FU-5: rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
+    /**
+     * Stage 9 (E-S9-4, FU-5 R-FU5-6): the vendor's own words for alarm texts, where they differ from the IEC table's
+     * Philips aliases — `texts` by fixed alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key
+     * ('ART_S', 'TEMP', …). Wording only: levels, timing and latching are unchanged. Absent = the IEC table.
+     */
+    wording?: { texts?: Partial<Record<string, string>>; limitLabels?: Partial<Record<string, string>> };
     numericFlash: boolean;
     /** How an alarmed numeric flashes: the text ('flash-text', default) or a level-coloured box ('flash-box', Mindray-like). */
     numericStyle?: 'flash-text' | 'flash-box';

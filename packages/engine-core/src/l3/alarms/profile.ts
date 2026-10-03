@@ -54,6 +54,8 @@ export interface DeviceProfile {
   ageBand: AgeBand;
   /** 'asterisks' → IEC-style `***HR 130>120`; 'none' → Saadat-like `HR TOO HIGH` (brief §6.4, §6.4.1). */
   prefix: 'asterisks' | 'none';
+  /** Stage 9 (E-S9-4, R-FU5-6): the skin's own words for fixed alarm texts (skin `alarms.wording.texts`); absent = IEC. */
+  texts?: Readonly<Partial<Record<string, string>>>;
   factoryEnabled: boolean;
   /** Preset per-parameter switches by limit-key group ('HR', 'NIBP', 'SpO2', …) over factoryEnabled (brief §6.9). */
   switches: Record<string, boolean>;
@@ -142,7 +144,7 @@ function limitsFor(r: ResolvedSkin, band: AgeBand): Record<string, LimitDef> {
     const scale = key.endsWith('_pctV') ? BAROMETRIC_MMHG / 100 : 1;
     out[key] = {
       numeric: k.numeric,
-      label: k.label,
+      label: r.skin.alarms.wording?.limitLabels?.[key] ?? k.label, // Stage 9 (E-S9-4): the skin's own label
       upper: k.upper,
       low: v[0] * scale,
       high: v[1] * scale,
@@ -167,6 +169,7 @@ export function deviceProfile(id: string, band: AgeBand = 'adult'): DeviceProfil
     skin: id,
     ageBand: band,
     prefix: a.messageBar.prefix,
+    texts: { ...(a.wording?.texts ?? {}) },
     factoryEnabled: a.factoryEnabled,
     switches: { ...(r.preset?.alarmSwitches ?? {}) },
     alwaysOn: [...a.alwaysOn],
