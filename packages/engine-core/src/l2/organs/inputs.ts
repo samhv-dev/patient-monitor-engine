@@ -8,7 +8,7 @@ import { cardiacOutput } from '../gas/coupling.ts';
 import type { HemoState } from '../hemo/pipeline.ts';
 import { staticCompliance } from '../lung/lung.ts';
 import { meanAirwayPressure } from '../resp/driver.ts';
-import type { RespState } from '../resp/pipeline.ts';
+import { metabolic, type RespState } from '../resp/pipeline.ts';
 
 export const HB_DEFAULT = 14; // Stage 3 HB_G_DL until 7c
 export const ALBUMIN_DEFAULT = 42; // g/L (annex B2 oncotic reference)
@@ -31,6 +31,7 @@ export interface OrganView {
   map: number; pp: number; cvp: number; coLpm: number;
   paco2: number; pao2: number; sao2: number; tempC: number;
   hb: number; albuminGL: number; bvRel: number;
+  demandRel: number; // FU-9 H1: Stage 3's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
   hbfRel: number | null; // 7c's hepatic flow ÷ baseline (null without 7c: the liver computes its fallback)
   lactate: number | null; // 7c's lactate (null without 7c: the liver's fallback pool)
   gluconate: number; // 7c's plasma gluconate, mmol/L (0 until 7c exposes it)
@@ -56,7 +57,7 @@ export interface DrugView {
  *  excretion rates, mmol/h. */
 export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
 type BloodLike = {
-  core?: { liver?: number; renal?: RenalSeam };
+  core?: { liver?: number; renal?: RenalSeam; out?: { na?: number } }; // FU-9 R4: the plasma Na an expansion natriuresis carries
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number };
 };
 
@@ -155,6 +156,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     hb: num(out?.hb, HB_DEFAULT),
     albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
     bvRel: num(out?.bvRel, bvFallback),
+    demandRel: metabolic(rs, t, 'o2'), // FU-9 H1
     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,
     gluconate: num(out?.gluconate, 0),

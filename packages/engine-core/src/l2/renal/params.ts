@@ -56,6 +56,13 @@ export const ANG_TAU_S = 120;
 export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
 export const V_AT_15 = 0.5; // UOP factor at −15 % blood volume (tables V)
 export const V_AT_30 = 0.2; // at −30 %
+/** FU-9 F1: excreted-fraction gain per unit blood-volume EXPANSION (ANP/ADH suppression) [ENG]: fitted so 1 L of
+ *  Ringer's over 30 min, awake, is 20–30 % intravascular 30 min after the end (Hahn 2010; 7c's own fallback t½ 30 min,
+ *  tables `t12El`); capped at V_EXP_MAX × (≈ 15 mL/min peak diuresis, Hahn's volunteers). */
+export const V_EXP_GAIN = 90;
+export const V_EXP_MAX = 12;
+/** FU-9 H1: symmetric low-pass of the effective volume before the neurohumoral lag, s [ENG] (research/13 H1: τ ≈ 60 s). */
+export const EABV_TAU_S = 60;
 export const EABV_EXP = 0.75; // effective volume = min(BV, (CO/CO0)^0.75) [ENG]: HFrEF (CO 3.5) → V 0.21, UOP 0.114 (tables check 20 0.1–0.15)
 /** Neurohumoral (ADH/aldosterone) lag on V [ENG]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an
  *  instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the

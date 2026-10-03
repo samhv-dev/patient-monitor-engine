@@ -13,7 +13,7 @@ import { BRAIN_DT_S, ICP_THRESHOLD, MANNITOL_MOSM_PER_G, NACL_MOSM_PER_G } from 
 import { icpSample } from '../brain/wave.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createLiver, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
-import { createRenal, giveMannitolRenal, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
+import { createRenal, expansionFactor, giveMannitolRenal, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
 import { OLIGURIA_ML_KG_H, RENAL_REF_CO_L_KG, UOP0_ML_KG_H } from '../renal/params.ts';
 import { respBreathU, type RespState } from '../resp/pipeline.ts';
 import { applyOrganEffects, createEffects, type EffectsState } from './effects.ts';
@@ -74,7 +74,7 @@ const brainIn = (v: OrganView): BrainInputs => ({
 });
 const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
-  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis,
+  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, // FU-9 H1
   ...(v.drugs.furoCe !== undefined ? { furoCe: v.drugs.furoCe } : {}),
 });
 function liverIn(os: OrgansState, v: OrganView): LiverInputs {
@@ -91,7 +91,7 @@ function nominalView(l1: L1State, w: number): OrganView {
   const dbp = l1Target(l1, 'dbp', 0);
   return {
     map: dbp + 0.4 * (sbp - dbp), pp: sbp - dbp, cvp: l1Target(l1, 'cvp', 0), coLpm: (5.6 * w) / 70, paco2: 40, pao2: 95, sao2: 0.97,
-    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
+    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, demandRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
     pawExcessCmH2O: 0, drugs: readDrugView({}), circ: false, blood: false,
   };
 }
@@ -165,9 +165,12 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
  *  carries the urine ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition);
  *  below it the balance is neutral, as in 7c's fallback (no retention term). Reporting the whole urine drained a resting
  *  patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band ±0.02). */
-function renalSeam(s: RenalState, gluconate: number): RenalSeam {
+function renalSeam(s: RenalState, gluconate: number, natriuresis = { share: 0, naMmolL: URINE_NA }): RenalSeam {
   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
-  const na = lH * URINE_NA * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
+  // FU-9 F1/R4: the expansion diuresis is NATRIURETIC (ANP): its share of the urine leaves at the plasma Na, not the
+  // basal urine's URINE_NA [ENG] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
+  const naUrine = natriuresis.share * natriuresis.naMmolL + (1 - natriuresis.share) * URINE_NA;
+  const na = lH * naUrine * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
   const k = lH * URINE_K;
   return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
 }
@@ -196,7 +199,9 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
   stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // with 7c its pool is authoritative (decision 12)
   if (core) {
     core.liver = os.liver.liverFn * os.liver.tempF; // function only: 7c multiplies its own hbfRel (addendum 14)
-    core.renal = renalSeam(os.renal, v.gluconate);
+    const naPl = core.out?.na;
+    const natri = { share: 1 - 1 / expansionFactor(v.bvRel), naMmolL: typeof naPl === 'number' && naPl > 0 ? naPl : URINE_NA }; // FU-9 F1/R4
+    core.renal = renalSeam(os.renal, v.gluconate, natri);
   }
   if (os.num.accN > 0) {
     os.num.sec.push(os.num.acc / os.num.accN);
