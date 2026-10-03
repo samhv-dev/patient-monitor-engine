@@ -61,17 +61,30 @@ describe('HostSession', () => {
     expect((applied as { resolved: AppliedResolution }).resolved.command).toMatchObject({ id: 'k1', atTick: ack.tick });
   });
 
-  it('acks rejections with the engine reason, and rejects MODELED-only and 6b-only commands', async () => {
+  it('acks rejections with the engine reason, forwards pin to the engine, and rejects 6b-only commands', async () => {
     const { command, of } = setup();
     command({ type: 'setTarget', variable: 'k', value: 5 }); // Stage 3 accepts spo2; k is Stage 5
-    command({ type: 'pin', variable: 'hr', value: 60 });
+    command({ type: 'pin', variable: 'hr', value: 60 }); // Stage 9 (E-S9-2): the engine validates pin since 7a
     command({ type: 'scenario', action: 'goto', target: 'vf' });
     command({ type: 'time', action: 'jump', value: 60 });
     await waitFor(() => of('ack').length === 4);
-    expect(of('ack').map((a) => a.accepted)).toEqual([false, false, false, false]);
+    expect(of('ack').map((a) => a.accepted)).toEqual([false, true, false, false]);
     expect(of('ack')[0]!.reason).toMatch(/Stage 5/);
-    expect(of('ack')[1]!.reason).toMatch(/MODELED/);
     expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
+  });
+
+  it('forwards pin, release and setMode to the engine; setFactor is refused by the engine itself (Stage 9 E-S9-2)', async () => {
+    const { command, of, events, host } = setup();
+    command({ type: 'pin', variable: 'hr', value: 90 });
+    command({ type: 'release', variable: 'all' });
+    command({ type: 'setMode', mode: 'modeled' });
+    command({ type: 'setFactor', input: 'contractility', factor: 1.5 });
+    await waitFor(() => of('ack').length === 4);
+    expect(of('ack').map((a) => [a.commandId, a.accepted])).toEqual([['k1', true], ['k2', true], ['k3', true], ['k4', false]]);
+    expect(of('ack')[3]!.reason).toMatch(/setFactor is not implemented/); // the engine's reason, not the removed guard's
+    expect(of('ack').map((a) => a.reason ?? '').join(' ')).not.toMatch(/needs MODELED/);
+    host.advance(2500); // the engine's own 1 Hz state event carries the mode it now runs
+    await waitFor(() => events().some((e) => e.type === 'state' && (e as { mode?: string }).mode === 'modeled'), 3000, 'a MODELED state event');
   });
 
   it('hands scenario load/goto/trigger to the Stage 6b hook when one is given', async () => {
