@@ -54,6 +54,7 @@ const SLOW = [
   'test/engine/circ-lowflow-arrest.test.ts', // FU-4 G1: four 25–30 sim-min haemorrhage/ROSC runs
   'test/engine/blood-k-rhythm.test.ts', // FU-4 G3: hyperkalaemia runs of 2–20 sim-min
   'test/engine/clinical-suite.test.ts', // FU-4 Task 22: the clinical scenario suite (SLOW_A)
+  'test/engine/fu9-*.test.ts', // FU-9: blood/fluid/acid–base/renal scenarios, 10–90 sim-min arms (SLOW_C)
   'test/engine/circ-pulsus.test.ts', // FU-4 G6: two 10 sim-min spontaneous-breathing runs
   'test/engine/vagal-events.test.ts', // FU-4 G7: vagal-event runs of 5–10 sim-min
   'test/engine/thermal-warmer.test.ts', // FU-4 item 1: four 60 sim-min warming runs
@@ -92,7 +93,14 @@ const SLOW_A = [
 // glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
 // neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.
 // The set difference is therefore made by Vitest's own matcher, with SLOW_A as an `exclude` on the slow-b run.
-const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p));
+/**
+ * FU-9 (CI amendment 5, R50 ruling R10): a third group. FU-9's engine files did not fit slow-a or slow-b (21.6 and 37.6
+ * of the ≈ 40 min each job is held to at the FU-4 gate), so slow-c takes them plus the slow-b files listed here, chosen
+ * by the per-file times of `PME_TEST_SET=slow` (docs/plans/fu-9-blood-fluids.md, File map). SLOW_B is SLOW minus SLOW_A
+ * minus SLOW_C by the same matcher as above; ci.yml's build job prints the three lists and fails on an overlap or a gap.
+ */
+const SLOW_C = ['test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts'];
+const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p));
 const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
@@ -111,6 +119,7 @@ export default defineConfig({
     ...(set === 'slow-a' ? { include: SLOW_A, fileParallelism: false } : {}), // FU-4 (D17)
     // FU-4 (R50 review F8): the groups MUST be disjoint — SLOW_A is excluded here by the same matcher that includes it
     // above, so a file matching a SLOW_A glob (e.g. the 6 h neuro long run) runs in slow-a only, never in both jobs.
-    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A], fileParallelism: false } : {}),
+    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C], fileParallelism: false } : {}),
+    ...(set === 'slow-c' ? { include: SLOW_C, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A], fileParallelism: false } : {}), // FU-9 (CI amendment 5)
   },
 });
