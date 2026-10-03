@@ -62,7 +62,9 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
     o.bar.hidden = false;
     const panel = mountPanel(link, { site: o.site, weightKg: () => link.ctl.scenario.doc?.patient?.weightKg ?? 70 });
     holder.append(panel.el);
-    const draw = throttle(() => setText(status, ctl.hostOnline ? `Connected to ${code}` : `Waiting for the monitor ${code}…`), 500);
+    // Connected once the host has answered the hello (its snapshot) OR once its 1 Hz state reaches this page: the state
+    // is all the panel needs (on a cold Vite start a remote once waited over 10 s for the snapshot answer).
+    const draw = throttle(() => setText(status, ctl.hostOnline || ctl.state ? `Connected to ${code}` : `Waiting for the monitor ${code}…`), 500);
     link.onChange(draw);
     draw();
     history.replaceState(null, '', `${location.pathname}${location.search}#/remote?code=${code}`);
