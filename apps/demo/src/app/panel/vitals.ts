@@ -29,9 +29,10 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
   );
 
   // ---- target rows ----
-  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; set: HTMLButtonElement; release: HTMLButtonElement; bar: HTMLElement; seeded: boolean }> = [];
+  const rows: Array<{ s: VitalSpec; row: HTMLElement; now: HTMLElement; chip: HTMLElement; st: Stepper; set: HTMLButtonElement; release: HTMLButtonElement; bar: HTMLElement; note: HTMLElement; seeded: boolean }> = [];
   const groups = new Map<string, HTMLElement>();
   for (const s of VITALS) {
+    if (s.notYet) continue; // the engine refuses every change to it today: no control that does nothing
     let g = groups.get(s.group);
     if (!g) groups.set(s.group, (g = h('div', { class: 'vgroup' }, h('h3', {}, s.group))));
     const now = h('span', { class: 'now num' });
@@ -39,7 +40,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
     const st = stepper({ label: `${shortOf(s)} target`, unit: s.unit, min: s.min, max: s.max, step: s.step, value: s.min, digits: s.digits });
     const set = button('Set', () => {
       const value = st.value / s.scale;
-      const cmd = (mode() === 'modeled' ? { type: 'pin', variable: s.v, value } : { type: 'setTarget', variable: s.v, value }) as never;
+      const cmd = (mode() === 'modeled' && !s.direct ? { type: 'pin', variable: s.v, value } : { type: 'setTarget', variable: s.v, value }) as never;
       staging.submit(cmd, `v-${s.v}`, describeCommand(cmd));
     });
     const release = button('Return to model', () => {
@@ -47,11 +48,13 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       staging.submit(cmd, `v-${s.v}`, describeCommand(cmd));
     }, 'ghost small');
     const bar = h('div', { class: 'progress', role: 'progressbar', 'aria-label': `${shortOf(s)} change in progress`, 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('i'));
+    // MODELED: the model computes this value and a hold would not move it (measured), so the row says how to change it
+    const note = h('p', { class: 'hint', hidden: true }, 'Follows the model: change it with drugs, fluids or bleeding, or switch to MANUAL.');
     const row = h('div', { class: 'param', 'data-var': s.v },
       h('div', { class: 'lbl' }, glossLabel(s.n), chip), h('span', { class: 'nowwrap' }, now, h('span', { class: 'unit' }, s.unit)),
-      h('div', { class: 'edit' }, st.el, set, release), bar);
+      h('div', { class: 'edit' }, st.el, set, release), note, bar);
     g.append(row);
-    const entry = { s, row, now, chip, st, set, release, bar, seeded: false };
+    const entry = { s, row, now, chip, st, set, release, bar, note, seeded: false };
     // the first state seeds the stepper with the live value, unless the instructor has already typed or stepped one:
     // a late first state must never overwrite what they chose (R50 review F7: the remote pinned the old value)
     const touched = () => void (entry.seeded = true);
@@ -74,8 +77,12 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
     // just connected does not know the mode yet, and staging a target where a pin was meant held nothing (R50 review F7)
     const known = st !== null && st !== undefined;
     for (const r of rows) {
-      r.set.disabled = !known;
+      const owned = !!r.s.modelOwned && m === 'modeled';
+      r.set.disabled = !known || owned;
       r.release.disabled = !known;
+      r.st.el.hidden = owned;
+      r.set.hidden = owned;
+      r.note.hidden = !owned;
     }
     setText(modeNote, !known ? 'Waiting for the monitor\'s state before a value can be set.' : m === 'modeled' ? 'MODELED: the body sets these values. Setting one holds it until you return it to the model.' : 'MANUAL: every value is what you set, with the onset chosen below.');
     releaseAll.hidden = m !== 'modeled';
@@ -95,7 +102,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       r.chip.className = `chip flag-${shown}`;
       r.chip.innerHTML = shown === 'pinned' ? PIN_SVG : shown === 'modeled' ? WAVE_SVG : '';
       r.chip.append(FLAG_TEXT[shown]);
-      r.release.hidden = !(m === 'modeled' && (flag === 'pinned' || flag === 'ramping'));
+      r.release.hidden = !(m === 'modeled' && !r.s.direct && (flag === 'pinned' || flag === 'ramping' || (flag === 'override' && !!r.s.modelOwned)));
       r.row.dataset.staged = String(staging.has(`v-${r.s.v}`));
       const ramp = link.ramps.get(r.s.v);
       const p = ramp ? Math.min(1, (link.simT - ramp.t0) / ramp.dur) : 1;
