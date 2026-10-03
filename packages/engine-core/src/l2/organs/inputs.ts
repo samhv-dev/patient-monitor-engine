@@ -31,6 +31,7 @@ export interface OrganView {
   map: number; pp: number; cvp: number; coLpm: number;
   paco2: number; pao2: number; sao2: number; tempC: number;
   hb: number; albuminGL: number; bvRel: number;
+  osm: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (null without 7c)
   demandRel: number; // FU-9 H1: Stage 3's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
   hbfRel: number | null; // 7c's hepatic flow ÷ baseline (null without 7c: the liver computes its fallback)
   lactate: number | null; // 7c's lactate (null without 7c: the liver's fallback pool)
@@ -58,7 +59,7 @@ export interface DrugView {
 export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
 type BloodLike = {
   core?: { liver?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number; na?: number } }; // FU-9 F6: K and its set point; R4: Na
-  out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number };
+  out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
 };
 
 const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
@@ -156,6 +157,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     hb: num(out?.hb, HB_DEFAULT),
     albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
     bvRel: num(out?.bvRel, bvFallback),
+    osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null, // FU-9 F11
     demandRel: metabolic(rs, t, 'o2'), // FU-9 H1
     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,

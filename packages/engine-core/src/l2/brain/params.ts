@@ -53,6 +53,14 @@ export const HTS_TAU_IN_MIN = 7; // onset 5–10 min, longer than mannitol (tabl
 export const HTS_TAU_OUT_MIN = 240;
 export const MANNITOL_MOSM_PER_G = 1000 / 182.17; // 5.49 mOsm/g
 export const NACL_MOSM_PER_G = 2000 / 58.44; // 34.2 mOsm/g
+/**
+ * FU-9 F11: brain water follows a FALL in plasma effective osmolality (7c `blood.out.osm`) — acute hyponatraemia swells
+ * the brain (Hahn 2006 BJA 96:8; Adrogué & Madias 2000 NEJM 342:1581). The gain is the osmotherapy calibration's own:
+ * OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg)
+ * = 0.145 mL per mOsm/kg [ENG, derived]; it moves with HTS_TAU_IN_MIN (the barrier's water equilibration). Only the fall
+ * is read: a rise from hypertonic saline is already the dose-driven osmotherapy term (no double count).
+ */
+export const OSM_WATER_ML_PER_MOSM = (OSM_VMAX_ML * (384 / (384 + OSM_K_MOSM))) / (384 / 14);
 // Cushing (tables §5.1: CPP < 40 for > 30 s → MAP +30–50 over 30–60 s, HR −20–40 %, ataxic breathing [TXT shape, ENG numbers])
 export const CUSH_CPP = 40;
 export const CUSH_GAP = 10; // second trigger: ICP within 10 mmHg of MAP_head (tables §5.1 Cushing row)

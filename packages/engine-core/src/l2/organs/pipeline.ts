@@ -70,7 +70,7 @@ function brainDrugs(v: OrganView): BrainDrugs {
   return v.anaesthesia === 'general' ? GA_FALLBACK : NO_DRUGS;
 }
 const brainIn = (v: OrganView): BrainInputs => ({
-  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v),
+  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v), osm: v.osm, // FU-9 F11
 });
 const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
@@ -91,7 +91,7 @@ function nominalView(l1: L1State, w: number): OrganView {
   const dbp = l1Target(l1, 'dbp', 0);
   return {
     map: dbp + 0.4 * (sbp - dbp), pp: sbp - dbp, cvp: l1Target(l1, 'cvp', 0), coLpm: (5.6 * w) / 70, paco2: 40, pao2: 95, sao2: 0.97,
-    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, demandRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
+    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, osm: null, demandRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
     pawExcessCmH2O: 0, drugs: readDrugView({}), circ: false, blood: false,
   };
 }
