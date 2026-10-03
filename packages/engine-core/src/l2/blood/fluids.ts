@@ -65,6 +65,18 @@ export function createFluids(p: BloodPatient, albumin: number): FluidState {
   return f;
 }
 
+/**
+ * FU-9 F4: the protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of
+ * the extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994
+ * Physiol Rev 74:163). That the non-reflected share (1 − σ) grows with the same factor as the whole Kf is an assumption
+ * [ENG]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [ENG]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6)
+ * → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — 7e's sepsis, anaphylaxis and burns alike.
+ */
+export const SIGMA_LEAK_FLOOR = 0.3;
+export function leakSigma(kfMult: number): number {
+  return Math.max(SIGMA_LEAK_FLOOR, 1 - (1 - SIGMA_PROTEIN) * Math.max(1, kfMult));
+}
+
 /** Plasma ↔ interstitium exchange J (mL/min, positive = filtration out of plasma) and extra lymph (mL/min). */
 export function starling(f: FluidState): { j: number; lymph: number; pisf: number } {
   const dPc = PC_PER_ML * (bloodMl(f) - f.ref.bv);
