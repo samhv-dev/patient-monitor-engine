@@ -54,9 +54,10 @@ for (const [w, h, touch] of SIZES) {
     }
     // the Remote as a phone/tablet sees it: a second page joined by the code
     const code = await page.evaluate(() => (window as unknown as { __pmeApp: { session: { code: string } } }).__pmeApp.session.code);
+    await go(page, '#/remote', 300); // the host shows its code while the remote joins (see stage9-glossary.e2e.ts)
     const remote = await ctx.newPage();
     await remote.goto(`${base}/#/remote?code=${code}`);
-    await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 10_000 });
+    await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 20_000 });
     await remote.waitForTimeout(1500);
     await save(remote, `remote-panel-${s}`, w);
     await ctx.close();

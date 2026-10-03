@@ -40,9 +40,13 @@ test('no engine id reaches a clinical view', async ({ page }) => {
   await join.waitForFunction(() => '__pmeApp' in window);
   hits.push(...(await scanEngineIds(join, IDS)).map((h) => `remote join form → ${h}`));
   await join.close();
+  // pair the way an instructor does: the host shows its Remote view (its code) while the remote joins. The host was
+  // last on the Ventilator view (its cockpit drives the patient at 50 Hz, the likely load); on the 2-vCPU CI runner the WebKit host
+  // answered no remote within 10 s (CI run 37136321632, 3 of 3 attempts; passes locally), every other remote test passed
+  await go(page, '#/remote');
   const remote = await page.context().newPage();
   await remote.goto(`${base}/#/remote?code=${code}`);
-  await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 10_000 });
+  await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 20_000 });
   for (const t of TABS) {
     await tab(remote, t);
     hits.push(...(await scanEngineIds(remote, IDS)).map((h) => `remote ${t} → ${h}`));
