@@ -129,8 +129,10 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
   // reads it as is, so this non-70 kg adult's propofol reference is its own resting output again: nadir 51
   // R45 (FU-6 executor, merging second): with FU-6 this undrugged natural-airway patient becomes apnoeic/obstructed after
   // propofol (FU-6 R3), which shifts the circulation the drug model reads; the nadir is 52 again — one integer step at
-  // the band edge. it.fails with the number.
-  it.fails('propofol 2 mg/kg: depth-index nadir < 52 — measured 52 after FU-4 F4 (51 before), 51 after FU-8 A28, 52 again with FU-6 (R45; the induction apnoea/obstruction on this natural-airway rig moves the CO and the propofol course)', async () => {
+  // the band edge. it.fails with the number. FU-9 Task A12 (H3) flips it (bisected: 52 at A11, 50 at A12): hepatic flow
+  // = CO/CO0 × 7d's factor, so propofol's flow-limited clearance under this rig is slightly lower and the nadir is back
+  // below 52.
+  it('propofol 2 mg/kg: depth-index nadir < 52 — measured 50 with FU-9 A12 (52 after FU-4 F4, 51 before, 51 after FU-8 A28, 52 again with FU-6)', async () => {
     const e = createEngine({ seed: 6, patient: ADULT });
     const an: Extract<EngineEvent, { type: 'anaesthesia' }>[] = [];
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
