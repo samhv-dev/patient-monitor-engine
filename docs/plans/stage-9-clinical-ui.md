@@ -10,6 +10,10 @@
 > re-confirmation** (ruling 1 said "skin JSON data only"; a working form needs one optional schema field and three
 > reading lines in the engine's alarm-text code — see Exceptions).
 
+> EXECUTED (2026-10-03, branch `stage-9-clinical-ui`): Tasks 0–19, 7b and 21–25 done, Task 20 skipped (no Q7
+> approval); see `docs/gates/stage-9.md`. The step boxes are left unticked on purpose: `stage-9-verify.py` and the
+> executor's applier find the blocks by the `- [ ] **Step` pattern.
+
 **Goal:** Turn the 25-page demo into ONE professional product page for Ali's course (R55): a Start screen, the learner
 Monitor, the Instructor view (monitor + tabbed panel with a session bar, staged changes, pin/return-to-model), a paired
 Remote, Explore physiology (the 7x console in a light theme with glossary labels, the 7k mechanics slot, the v1.1 labs

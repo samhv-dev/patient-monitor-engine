@@ -150,4 +150,16 @@ Orchestrator rulings 1–6 on the R50 review applied; E-S9-4 applied in its re-c
 
 ## 9. Test counts
 
-COUNTS_PLACEHOLDER
+On the tree merged with `origin/main` `9b405b9` (local, `CI=1`, while the 7k and FU-9 executors were also running on
+this machine):
+
+| Check | Result |
+|---|---|
+| `pnpm -r typecheck` | clean, 8 packages |
+| fast set, every package (`PME_TEST_SET=fast`) | engine-core 278 files / 1,232 passed, 1 skipped (incl. the new `stage9-wording` 5); audio 58; skins 184 (179 + 5 new); controller 224 (223 + E-S9-2's new test; one assertion changed); renderer 89; validation 107 (+ 11 skipped); demo 21 files / 184 (141 + 43 new); ventilator 96 of 97 — `ports.test.ts` "monitor side: frames replay…" hit its 5 s timeout under the machine's load (the package's run took 397 s); re-run alone: 3 / 3 passed. Stage 9 does not touch `packages/ventilator`. |
+| `pnpm build` | clean; `dist/index.html` is the app |
+| `pnpm check-notices` | OK (no new dependency) |
+| `CI=1 pnpm test:e2e` (Chromium + WebKit) | 82 passed, 28 skipped, **2 failed: `stage6a.e2e.ts` "host + remote + viewer over rtc" and `stage6a-latency.e2e.ts` (Chromium)** — local WebRTC, the same two FU-6's gate recorded on `origin/main` on this machine (they pass on CI). Every Stage 9 file passed: app 5 and glossary 1 and a11y 2 on both browsers; tasks 1 and shots 4 on Chromium (skipped on WebKit by design). 15.3 min. |
+| `stage9-app.e2e.ts` × 3 under two workers (R50 F7) | REPEAT_PLACEHOLDER |
+
+Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `stage9-tasks` (1), `stage9-shots` (4).
