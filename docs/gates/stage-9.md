@@ -148,11 +148,8 @@ worker drew at 30 (D23). iPad Safari run (brief §10): **not run — no iPad on 
   "remember the last view"; Shift shortcuts. Deviations from the plan: §1's three.
 - v1.0 limits accepted by the orchestrator: the sweep restarts after a Monitor ↔ Instructor switch (ruling 3); the
   Remote pairs in the same browser only (ruling 6).
-- Engine behaviour seen through the app (R51: not changed here; for FU-11 / Ali): "Return to model" on HR and SpO₂
-  hands the value back but the value stays where the instructor held it (HR 120 and SpO₂ 85 % still there 20–30 s after
-  the return in a healthy MODELED adult); holding ART S at 80 shows "Model override" and the model keeps its own
-  pressure. The Stage V cockpit (and the app's Ventilator view) drives the patient from its page's animation frames,
-  so a hidden or background window ventilates too slowly — keep it in front.
+- The Stage V cockpit (and the app's Ventilator view) drives the patient from its page's animation frames, so a hidden
+  or background window ventilates too slowly — keep it in front.
 - Requests: R-S9-1 (a) accepted for v1.0, (b)(c) open; R-S9-2 done by FU-8 Part A (Labeller, eleven built-ins,
   tooltip); R-S9-3 open (7k); R-S9-4 done by FU-8 Part A (schema fields; the documents do not use them yet);
   R-S9-5 → 8b; R-S9-6 open; R-S9-7 applied for V.1/FU-6 (entries 300–304), FU-7 pending; R-S9-8 → FU-5 follow-up.
@@ -178,3 +175,42 @@ this machine):
 | `stage9-app.e2e.ts` × 3 under two workers (R50 F7) | 3 / 3 runs green (5 passed each, 18.6–19.1 s), no retries |
 
 Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `stage9-tasks` (1), `stage9-shots` (4).
+
+## 10. Polish round (orchestrator gate on PR #29)
+
+1. **"Return to model" works (E-S9-5, engine).** Cause: the engine, not the controller — in MODELED a hold of HR
+   recorded the instructor's rate (`hemo.circ.hrSet`), so the reflex never asked for a rate again, and a hold of SpO₂
+   solved the shunt for the held value; `release` only dropped the flag. Fix (`engine.ts`, `l1/state.ts`; pin/release
+   semantics only, no physiology constant): a MODELED hold remembers the value's pre-hold target (`l1.preHold`) and a
+   release (one value or all) puts it back; a release of HR hands the rate to the reflex (`holdRate(…, false)`). Test
+   `engine-core/test/engine/stage9-release.test.ts` (3) — fails on `b496803` (HR 120.0 vs model 69.4; SpO₂ 84.7 vs 96.6),
+   passes now (HR and SpO₂ within ± 5 of an unpinned twin 30 s after the release; RR, PI and core temperature back to
+   their pre-hold values after "Return all"). Engine fast set 279 files / 1,235 passed, 1 skipped; controller 224.
+2. **Honest MODELED rows.** Measured (healthy adult, hold for 30 s): a hold moves **HR, SpO₂, PI, RR, VT, FiO₂, shunt,
+   core temperature, PA S and PA D**; the model keeps computing **ART S, ART D, CVP, PAWP and EtCO₂** (flag "Model
+   override", value unmoved) — in MODELED these rows show "Follows the model: change it with drugs, fluids or bleeding,
+   or switch to MANUAL." and no stepper or Set; **K⁺, QTc and SVR** are refused by the engine in both modes ("not
+   implemented until Stage 5", "derived") — their rows are not shown; the **pacing threshold** is always sent as a target
+   (the engine refuses a hold on it).
+3. **Bookmarks are markers only.** Measured through the app (ACLS VF: bookmark at 6 s, go to VF, return): HR and SpO₂
+   went back, but the ECG lane kept the VF trace, the pleth went flat and the session clock stopped at 00:18 (external
+   review F03–F05, F09). "Return here" is hidden; Bookmark (button, Shift+B) still logs a marker for the debrief. The
+   restore returns with the engineering-hardening plan (FU-11).
+4. **Pleth line after a view switch.** Not reproduced in a live Monitor ↔ Instructor switch at 1280×800 (FU-8's
+   backfill redraws the lanes cleanly). The line in `instructor-drugs-1180x820.png` sits about 1 s after a **scenario
+   load** (a new engine): it is the first pleth samples of the new patient, drawn by the renderer's backfill — not a
+   stale one-frame draw, and the renderer is outside Stage 9's partition. Left as is (it clears after one sweep).
+5. **Remote "Waiting for the monitor".** Warm: connected in < 0.5 s (measured). The cold-start wait (once, the first
+   page on a cold Vite server) was not reproduced and its cause is not isolated; the Remote now reads Connected as soon
+   as the host's 1 Hz state arrives, not only after the snapshot answer.
+6. **Stage 7k** (PR #30) had not merged when items 1–5 were pushed; the ΔP rows and timed task 5 wait for it.
+
+### Ali should not demo (what remains true)
+
+- Ventilator view in a hidden or background window (under-ventilates; keep it in front; its numbers settle after ≈ 60 s).
+- Bookmark restore (hidden in the app: markers only).
+- Explore → Respiratory mechanics: placeholder, no ΔP (until 7k merges).
+- Remote: same browser only; open it from the host's "Open the remote in a new window".
+- IBP lanes are empty until the arterial line is attached (Devices & alarms); the saadat-like monitor's idle alarm bar is
+  a bright slab and its alarms are off at power-on (skin data).
+- After "Load scenario" or "Restart patient" the waveforms restart (one sweep with a join on the pleth).
