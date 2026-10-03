@@ -6656,7 +6656,7 @@ with the hook documented).
 part. The audit's §4 table names the cells FU-7 owns; this task turns the ones a unit test cannot express into engine
 tests with their bands and sources, so a later stage cannot silently undo them.
 
-- [ ] **Step 1 — the engine test file.** Create `packages/engine-core/test/engine/drug-layer.test.ts`: one `describe`
+- [x] **Step 1 — the engine test file.** Create `packages/engine-core/test/engine/drug-layer.test.ts`: one `describe`
 per addendum, rigs as research/14 §1 (adult 40 y, 70 kg, 175 cm, male; ABP/CVP/PAP/SpO₂/CO₂/temp on; "vent" = ETT +
 VCV 12 × 600, PEEP 5, FiO₂ 0.5 from t = 1 s; interventions at t = 300 s, or 960 s after a 10-min bleed from 60 s), each
 case **yielding once per sim-minute**, every band carrying its source in the title:
@@ -6700,7 +6700,7 @@ case **yielding once per sim-minute**, every band carrying its source in the tit
      titled "(AF rig guarded: C3 pending)"; the gate note §5 lists each with its measured control-arm `kIsch`. A band is
      never re-fitted against a failing heart: a guarded arm that cannot hold 0.9 inside 5 min becomes an `it.fails`
      naming C3 / FU-8 Part A. When Step 6b PASSED, the arms run at their natural length and the gate note says so.
-- [ ] **Step 2 — the THREE slow entries, by whatever mechanism FU-4 landed (review F16).** FU-7 adds **three** files
+- [x] **Step 2 — the THREE slow entries, by whatever mechanism FU-4 landed (review F16).** FU-7 adds **three** files
 (the file map said "two" — corrected). On `origin/fu-4-integration-polish` (f576537, b675248) `vite.config.ts` still has
 ONE `SLOW` list, and the FU-6 R50 ruling 10 says `SLOW_B` is DERIVED from `SLOW` by FU-4's filter rather than listed.
 So, in this order:
@@ -6714,7 +6714,7 @@ So, in this order:
 ```
   2. Assert the groups stay DISJOINT and that each new file appears in exactly ONE selection (FU-4's 9th-cap ruling 6:
      `neuro-longrun` was in both), and record the mechanism and the three memberships in the gate note §7.
-- [ ] **Step 3 — the console (E-FU7-8).** `src/truth.ts`: add SKIP_PATH entries for the derived fields that would
+- [x] **Step 3 — the console (E-FU7-8).** `src/truth.ts`: add SKIP_PATH entries for the derived fields that would
 otherwise appear twice (`pk.bus.cns.hypVentPropEq`, `pk.bus.cns.opioidVentFentEq`). `apps/demo/src/physiology-console/meta.ts`:
 add the drug group's new rows with research/11 §5's clinical labels and units — "Propofol-equivalent effect-site
 concentration (Ce prop-eq, µg/mL)", "Fentanyl-equivalent effect-site concentration (Ce fent-eq, ng/mL)",
