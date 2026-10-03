@@ -145,7 +145,10 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
   const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
   const kSet = so.set.k - 4.0 * (bc.phNonOrg - so.set.ph) + drug; // Q45
-  stepSolutes(so, ecfMl(fl), dtS, kSet, hbfRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
+  // FU-9 F5: citrate and acetate are metabolised by the liver AND by muscle/kidney (Kramer 2003 Crit Care Med 31:2450),
+  // so their clearance follows whole-body flow (CO/CO0), not the splanchnic (CO/CO0)² that lactate's hepatic uptake uses
+  const flowRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0));
+  stepSolutes(so, ecfMl(fl), dtS, kSet, flowRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
   // 3. oxygen delivery → lactate
   bc.odc.hb = hbOf(fl);
   bc.odc.cohb = cohbWashout(bc.odc.cohb, x.pao2, dtS); // FU-6 R11

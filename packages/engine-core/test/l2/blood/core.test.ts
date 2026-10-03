@@ -47,15 +47,25 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     expect(bc.out.lactate).toBeLessThan(0.5 * lac40);
     expect(bc.out.hb).toBeGreaterThan(13.5);
   });
-  it('massive transfusion, 10 units of 35-day blood in 30 min against a matched bleed: K ≥ 5.5; iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46)', () => {
+  const massive = () => {
     const bc = createBloodCore(MAN, CO0, 40);
     const u = PRODUCTS.rbc;
     bc.fl.flows.push({ rate: (10 * u.ml) / 30, until: 1800, comp: { ...u.comp, k: storedK(35) } }, { rate: (10 * u.ml) / 30, until: 1800, comp: null });
     run(bc, 0, 1800);
-    const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [ENG])
+    return bc;
+  };
+  const rule = 1.2 - 0.1 * (10 / 30) * 5; // 1.67 units per 5 min → −0.17 (the rule read as a steady-state RATE effect [ENG])
+  it('massive transfusion, 10 units of 35-day blood in 30 min against a matched bleed: K ≥ 5.5 (tables kUnit)', () => {
+    const bc = massive();
     console.log(`core massive: K ${bc.out.k.toFixed(2)} iCa ${bc.out.iCa.toFixed(3)} (rule ${rule.toFixed(3)})`);
     expect(bc.out.k).toBeGreaterThanOrEqual(5.5);
-    expect(Math.abs(bc.out.iCa - rule)).toBeLessThanOrEqual(0.05);
+  });
+  // R45 (FU-9 F5, E-FU9-1; R50 ruling R1): the rule (tables citrateUnit, Q46) was fitted to a row that put 15.6 mmol of
+  // citrate in every RBC unit; a SAGM unit keeps ≈ 0.24 mmol (its residual CPD-plasma — params.ts), so 10 RBC units no
+  // longer chelate what the rule assumed. Main: 1.076 (margin 0.007); FU-9: 1.137. The chelation term itself is pinned in
+  // fu9-citrate.test.ts; massive-transfusion hypocalcaemia is carried by FFP/platelets (fu9-transfusion).
+  it.fails('massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.137 vs 1.033 (FU-9 F5; main 1.076)', () => {
+    expect(Math.abs(massive().out.iCa - rule)).toBeLessThanOrEqual(0.05);
   });
   const crystalloid2L = (id: 'saline' | 'balanced') => {
     const bc = createBloodCore(MAN, CO0, 40);

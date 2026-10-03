@@ -2,7 +2,7 @@
 // are amount / ECF volume (tables §5b.1–5b.2; annex B1 "Electrolytes: take the initial values … ours: K transcellular
 // shift, pH–K, citrate/iCa, Mg"). The strong-ion difference is recomputed from these every step (audit #5: DYNAMIC
 // SID), so lactate, saline chloride, ketoacids and sodium bicarbonate all move the pH by construction.
-import { MG_ION_FRAC, NORMAL, OSM0, type Composition } from './params.ts';
+import { CITRATE_CHARGE, MG_ION_FRAC, NORMAL, OSM0, type Composition } from './params.ts';
 
 export interface SoluteState {
   na: number; k: number; cl: number;
@@ -33,9 +33,14 @@ export function concOf(s: SoluteState, ecfMl: number, vLacL: number, ecf0Ml: num
   };
 }
 
-/** Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − XA (tables §5b.1 "Stewart-lite"). */
+/**
+ * Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − (3 − 2·K_CIT)·citrate − XA (tables
+ * §5b.1 "Stewart-lite"). FU-9 F5: citrate is a strong trivalent anion until it is metabolised (Stewart/Fencl; Driscoll
+ * 1987), so a transfused unit's sodium does not alkalinise at once — its metabolism turns it into bicarbonate later. The
+ * Ca it complexes (K_CIT per mmol, removed from iCa by `ionisedCa`) keeps its charge in the complex: counted once.
+ */
 export function sidOf(c: Conc, iCa: number): number {
-  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - c.xa;
+  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - (CITRATE_CHARGE - 2 * K_CIT) * c.citrate - c.xa;
 }
 
 /** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles. */
