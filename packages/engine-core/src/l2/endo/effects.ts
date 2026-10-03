@@ -50,7 +50,9 @@ export interface BetaBlock {
 const hill = (x: number, ec50: number) => (x <= 0 ? 0 : x / (x + ec50));
 const keep = (b: number) => 1 - Math.min(1, Math.max(0, b));
 
-export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: number): StressEffects {
+/** `cortExo` (FU-7, addendum 24): an exogenous glucocorticoid as cortisol-equivalent nmol/L above basal (7g's
+ * dexamethasone) — it joins the METABOLIC cortisol term only; `vasoResp` keeps reading endogenous cortisol. */
+export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: number, cortExo = 0): StressEffects {
   const kHr = keep(bb.hr);
   const kC = keep(bb.c);
   const endo = Math.max(0, h.epi - EPI_BASAL_PG_ML); // endogenous excess
@@ -64,7 +66,7 @@ export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: numb
   const b2 = hill(endoH, EPI_EC50_BETA2);
   const al = hill(endoH, EPI_EC50_ALPHA);
   const me = hill(all, EPI_EC50_METAB);
-  const co = hill(h.cort - CORT_BASAL, CORT_EC50);
+  const co = hill(h.cort + Math.max(0, cortExo) - CORT_BASAL, CORT_EC50); // FU-7 (addendum 24): + exogenous glucocorticoid
   return {
     hrF: (1 + G_SYMP_HR * h.symp * kHr) * (1 + EPI_BETA1_HR * b1 * kHr),
     svrF: (1 + G_SYMP_SVR * h.symp) * (1 + EPI_BETA2_SVR * b2) * (1 + EPI_ALPHA_SVR * al),

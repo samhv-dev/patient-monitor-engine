@@ -92,6 +92,8 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
     epiExoPgMl: (pk?.bus?.agents?.epinephrine?.brain ?? 0) * EPI_EXO_PG_PER_RATE_EQ,
+    // FU-7 (addendum 24 / DI-76): 7g's exogenous glucocorticoid (dexamethasone), duck-typed
+    cortExoNmolL: (pk?.bus as { metabolic?: { glucocorticoidNmolL?: number } } | undefined)?.metabolic?.glucocorticoidNmolL ?? 0,
     sympDrug: (pk?.bus as { cns?: { sympDrive?: number } } | undefined)?.cns?.sympDrive ?? 0, // FU-7 (addenda 20–21)
     bronchoDilExt: pk?.bus?.airway?.bronchodilation ?? 0,
     dkaSeverity: dkaOf(bloodOf(ctx.ps)),

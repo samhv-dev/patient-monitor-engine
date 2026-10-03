@@ -7,6 +7,12 @@ import { hill } from '../../../src/l2/pk/pd.ts';
 import { give, rig, runTo, vaporiser } from '../../helpers/neuro.ts';
 import { applyPkCommand } from '../../../src/l2/pk/pipeline.ts';
 import type { Command } from '../../../src/types.ts';
+import { NEUTRAL_FX } from '../../../src/l2/pk/combine.ts';
+import { advanceEndo, createEndoState } from '../../../src/l2/endo/pipeline.ts';
+import { bloodEcgTargets } from '../../../src/l2/blood/pipeline.ts';
+import { NORMAL } from '../../../src/l2/blood/params.ts';
+import { createL1State } from '../../../src/l1/state.ts';
+import { createThermal } from '../../../src/l2/thermal/heat.ts';
 
 /** The largest fractional fall of 7g's HR multiplier over `min` minutes after a bolus. */
 function hrFall(drugId: string, dose: number, unit = 'mg/kg', min = 10): number {
@@ -202,5 +208,95 @@ describe('inotrope / vasodilator sizes (R51 addendum 24)', () => {
     console.log(`FU-7 T17: esmolol 0.5 mg/kg fx.hr min ${lo.toFixed(3)}`);
     expect(1 - lo).toBeGreaterThanOrEqual(0.1);
     expect(1 - lo).toBeLessThanOrEqual(0.2);
+  });
+});
+
+/** FU-7 Task 18 (addendum 24; D12): the inert rows act (dexamethasone, ondansetron) or are documented (tranexamic acid). */
+describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook (R51 addendum 24)', () => {
+  /** 7g's real PK and 7e's real pipeline stepped together each second (7e reads `ps.pk`), 60 y / 70 kg. Returns glucose
+   * (mmol/L) and 7e's HR/SVR multipliers each minute, from the bolus at t = 0. */
+  function endoArm(diabetes: 'none' | 'type2', dexMg: number, min: number) {
+    const r = rig({ ageY: 60 });
+    const temp = createThermal(36.8, 70);
+    const resp = { temp, o2: { sa: 0.97 }, co2: { pf: 40 }, lungSpecs: [] } as never;
+    const es = createEndoState({ ageY: 60, sex: 'M', weightKg: 70, heightCm: 175, endo: { diabetes } } as never, 70);
+    const ctx = { l1: createL1State(), hemo: {} as never, resp, ps: { pk: r.pk } } as never;
+    if (dexMg > 0) give(r, 'dexamethasone', dexMg, 'mg');
+    const out: { glu: number; hrF: number; svrF: number }[] = [];
+    let k = 0;
+    runTo(r, min, () => {
+      advanceEndo(es, ctx, r.tS);
+      es.out.length = 0;
+      if (++k % 60 === 0) out.push({ glu: es.core.out.glucoseMmol, hrF: es.core.out.hrF, svrF: es.core.out.svrF });
+    });
+    return out;
+  }
+  const MGDL = 18.016;
+  it('dexamethasone 8 mg raises glucose 10–60 mg/dL within an hour (DI-76: Hans 2006; M10 ch. 47) and 7e\'s HR/SVR terms do not move', () => {
+    const dex = endoArm('none', 8, 60);
+    const none = endoArm('none', 0, 60);
+    const d = (dex.at(-1)!.glu - none.at(-1)!.glu) * MGDL;
+    console.log(`FU-7 T18: dexamethasone 8 mg glucose +${d.toFixed(1)} mg/dL at 60 min (non-diabetic)`);
+    expect(d).toBeGreaterThanOrEqual(10);
+    expect(d).toBeLessThanOrEqual(60);
+    for (let i = 0; i < dex.length; i++) {
+      expect(dex[i]!.hrF).toBeCloseTo(none[i]!.hrF, 3);
+      expect(dex[i]!.svrF).toBeCloseTo(none[i]!.svrF, 3);
+    }
+  });
+  /** Δ glucose (mmol/L) of the dexamethasone arm over its no-drug control, maximum over 4–8 h (ET-19's window); each
+   * arm is simulated once and shared by the two Step 4a cases. */
+  const memo: Partial<Record<'none' | 'type2', number>> = {};
+  const peak48 = (diabetes: 'none' | 'type2') => (memo[diabetes] ??= peak48Of(diabetes));
+  const peak48Of = (diabetes: 'none' | 'type2') => {
+    const dex = endoArm(diabetes, 8, 480);
+    const none = endoArm(diabetes, 0, 480);
+    let m = -Infinity;
+    for (let i = 239; i < dex.length; i++) m = Math.max(m, dex[i]!.glu - none[i]!.glu);
+    return m;
+  };
+  it('the DIABETIC arm (type 2) rises MORE than the non-diabetic arm on the same 8 mg dose (ET-19; PADDI, Corcoran 2021)', () => {
+    const t2 = peak48('type2');
+    const n = peak48('none');
+    console.log(`FU-7 T18 ET-19: dexamethasone 8 mg Δ max 4–8 h type 2 +${t2.toFixed(2)} vs non-diabetic +${n.toFixed(2)} mmol/L`);
+    expect(t2).toBeGreaterThan(n);
+  });
+  // R45 (Task 18 Step 4a, named in advance): 7e's glucose model (research/19 CM-09c) owns the remainder; the
+  // glucocorticoid Emax (4000) is fit to the healthy DI-76 band only and is not raised for this arm.
+  it.fails('diabetic dexamethasone peak +2–4 mmol/L at 4–8 h (PADDI): measured +1.83; non-diabetic +1.02', () => {
+    const t2 = peak48('type2');
+    expect(t2).toBeGreaterThanOrEqual(2);
+    expect(t2).toBeLessThanOrEqual(4);
+  });
+
+  it('ondansetron 4 mg adds 10–20 ms of QTc (FDA 2012) through 7c\'s ECG QTc delta; no rhythm or haemodynamic output', () => {
+    const r = rig();
+    give(r, 'ondansetron', 4, 'mg');
+    let peak = 0;
+    runTo(r, 30, (b) => {
+      peak = Math.max(peak, b.qtcMsAdd);
+      expect(b.rhythm.antiarrhythmicU).toBe(0);
+      expect(r.pk.fx).toEqual(NEUTRAL_FX);
+    });
+    const bs = { core: { out: { kEcg: NORMAL.k, iCa: NORMAL.iCa } } } as never;
+    const d = bloodEcgTargets(bs, peak).qtc - bloodEcgTargets(bs).qtc;
+    console.log(`FU-7 T18: ondansetron 4 mg QTc +${d.toFixed(1)} ms (peak 0–30 min)`);
+    expect(d).toBeGreaterThanOrEqual(10);
+    expect(d).toBeLessThanOrEqual(20);
+  });
+
+  it('tranexamic acid 1 g is QUIET until 7i (DI-73; R58): no 7g output moves, and its dose is logged for 7i to read', () => {
+    const r = rig();
+    give(r, 'tranexamicAcid', 1000, 'mg');
+    let logged = false;
+    runTo(r, 30, (b) => {
+      logged ||= b.doses.some((d) => d.agent === 'tranexamicAcid');
+      expect(r.pk.fx).toEqual(NEUTRAL_FX);
+      expect(r.pk.betaBlockAdd).toBe(0);
+      expect(b.qtcMsAdd).toBe(0);
+      expect(b.metabolic.glucocorticoidNmolL).toBe(0);
+      expect(b.metabolic.glucoseDelta).toBe(0);
+    });
+    expect(logged).toBe(true);
   });
 });

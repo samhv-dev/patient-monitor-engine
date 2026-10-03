@@ -21,7 +21,12 @@ export type PdTarget =
   | 'antinocAdd'
   /** FU-7 (addendum 23): class-weighted antiarrhythmic occupancy 0–1 → `bus.rhythm.antiarrhythmicU`, read by the
    * conversion hooks and by the shock outcome (Task 12). */
-  | 'antiarrhythmic';
+  | 'antiarrhythmic'
+  /** FU-7 (addendum 24 / DI-76): an exogenous GLUCOCORTICOID as cortisol-equivalent nmol/L above basal → 7e's cortisol
+   * metabolic term (insulin resistance, gluconeogenesis). */
+  | 'glucocorticoid'
+  /** FU-7 (addendum 24 / DI-76): an added QTc, ms → 7c's ECG QTc delta (`bloodEcgTargets`). */
+  | 'qtc';
 
 export interface PdEffect {
   target: PdTarget;

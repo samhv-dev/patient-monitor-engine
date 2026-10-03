@@ -66,11 +66,15 @@ export interface DrugBus {
   nmb: { achGain: number }; // neostigmine's acetylcholine gain (1 = none); 7f applies the ceiling
   airway: { bronchodilation: number; histamine: number };
   hpvInhibit: number;
-  metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number };
+  /** FU-7 (addendum 24): `glucocorticoidNmolL` = an exogenous glucocorticoid (dexamethasone) as cortisol-equivalent
+   * nmol/L above basal, read by 7e's cortisol metabolic term. */
+  metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number; glucocorticoidNmolL: number };
   last: { cnsE: number; cvE: number };
   avNodeBlock: number; // adenosine/β/Ca-channel AV-nodal effect 0–1
   /** FU-7 (addendum 23): potency-weighted antiarrhythmic occupancy (amiodarone, lidocaine, procainamide), 0–1. */
   rhythm: { antiarrhythmicU: number };
+  /** FU-7 (addendum 24 / DI-76): drug-added QTc, ms (ondansetron) — 7c adds it to its ECG QTc delta. */
+  qtcMsAdd: number;
 }
 
 export const DRUG_BUS_NEUTRAL: DrugBus = {
@@ -82,10 +86,11 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   nmb: { achGain: 1 },
   airway: { bronchodilation: 0, histamine: 0 },
   hpvInhibit: 0,
-  metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0 },
+  metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0, glucocorticoidNmolL: 0 },
   last: { cnsE: 0, cvE: 0 },
   avNodeBlock: 0,
   rhythm: { antiarrhythmicU: 0 }, // FU-7 (addendum 23)
+  qtcMsAdd: 0, // FU-7 (addendum 24)
 };
 
 export interface DrugPanelRow {

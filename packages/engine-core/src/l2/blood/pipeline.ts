@@ -227,8 +227,9 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
 }
 
 /** ECG targets the engine pushes as deltas: K for Modifiers.k, ΔQTc for Modifiers.qtc. */
-export function bloodEcgTargets(bs: BloodState): { k: number; qtc: number } {
-  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
+/** `qtcAdd` (FU-7, addendum 24): 7g's drug-added QTc, ms (ondansetron), added to the iCa term. */
+export function bloodEcgTargets(bs: BloodState, qtcAdd = 0): { k: number; qtc: number } {
+  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) + Math.max(0, qtcAdd) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
 }
 
 // --- commands ----------------------------------------------------------------------------------------------------

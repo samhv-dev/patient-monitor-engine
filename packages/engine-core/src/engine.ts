@@ -913,7 +913,7 @@ class Engine implements MonitorEngine {
    * of its iCa QTc effect since the last push into Modifiers — never overwrite an instructor's setModifiers value.
    */
   private pushBloodEcg(ps: PipelineState): void {
-    const tg = bloodEcgTargets(ps.blood);
+    const tg = bloodEcgTargets(ps.blood, (ps.pk.bus as { qtcMsAdd?: number }).qtcMsAdd ?? 0); // FU-7 (addendum 24): ondansetron's QTc
     const a = ps.blood.ecg;
     if (Math.abs(tg.k - a.k) < 0.05 && Math.abs(tg.qtc - a.qtc) < 2) return;
     ps.mods = mergeModifiers(ps.mods, {

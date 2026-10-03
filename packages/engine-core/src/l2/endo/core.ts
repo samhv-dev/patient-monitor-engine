@@ -49,6 +49,8 @@ export interface EndoInputs {
   betaBlock: number; // 7a `prof.betaBlock` (HR)
   betaBlockC: number; // 7a `prof.betaBlockC` (contractility)
   epiExoPgMl: number; // 7g epinephrine as plasma pg/mL
+  /** FU-7 (addendum 24 / DI-76): 7g's exogenous glucocorticoid, cortisol-equivalent nmol/L above basal (0 without 7g). */
+  cortExoNmolL?: number;
   bronchoDilExt: number; // 7g `bus.airway.bronchodilation` (0–1)
   dkaSeverity: number; // 7c (0–1)
 }
@@ -186,7 +188,7 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
     cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);
-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1);
+  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1, x.cortExoNmolL ?? 0); // FU-7 (addendum 24)
   const gp = glucoseProfile(c.profile);
   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
   stepGlucose(g, {

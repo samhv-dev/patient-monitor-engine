@@ -6352,7 +6352,7 @@ endogenous cortisol (insulin resistance `CORT_SI_LOSS`, gluconeogenesis `CORT_EG
 cortisol-equivalent above basal. Its permissive VASCULAR effect (hours) is not modelled in v1 (`vasoResp` keeps reading
 endogenous cortisol only), so the case "nothing else moves" holds by construction. Every edit below is a real block.
 
-- [ ] **Step 1 — the two new targets and bus fields (7g).** In `packages/engine-core/src/l2/pk/row.ts`, find (Task 11's
+- [x] **Step 1 — the two new targets and bus fields (7g).** In `packages/engine-core/src/l2/pk/row.ts`, find (Task 11's
 line):
 
 ```ts
@@ -6438,7 +6438,7 @@ Replace with:
   bus.qtcMsAdd = Math.max(0, other.qtc ?? 0); // FU-7 (addendum 24): ondansetron
 ```
 
-- [ ] **Step 1b — 7e reads the glucocorticoid (E-FU7-2).** In `packages/engine-core/src/l2/endo/effects.ts`, find:
+- [x] **Step 1b — 7e reads the glucocorticoid (E-FU7-2).** In `packages/engine-core/src/l2/endo/effects.ts`, find:
 
 ```ts
 export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: number): StressEffects {
@@ -6504,7 +6504,7 @@ Replace with:
     cortExoNmolL: (pk?.bus as { metabolic?: { glucocorticoidNmolL?: number } } | undefined)?.metabolic?.glucocorticoidNmolL ?? 0,
 ```
 
-- [ ] **Step 1c — the dexamethasone row.** In `packages/engine-core/src/l2/pk/data/rows-other.ts`, find:
+- [x] **Step 1c — the dexamethasone row.** In `packages/engine-core/src/l2/pk/data/rows-other.ts`, find:
 
 ```ts
   { id: 'dexamethasone', name: 'Dexamethasone', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(8, false, 3600, 86400), pd: [], doses: '4–8 mg', onset: 'no monitor effect in v1 (glucose ↑ is 7e)', ir: '?', src: 'placeholder', tag: 'TXT' },
@@ -6521,7 +6521,7 @@ Replace with:
   { id: 'dexamethasone', name: 'Dexamethasone', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(8, false, 3600, 86400), pd: [{ target: 'glucocorticoid', emax: 4000, ec50: 1 }], doses: '4–8 mg', onset: 'glucose +1–2 mmol/L over 1–2 h (Hans 2006); anti-emetic and anti-inflammatory effects are not modelled', ir: '?', src: 'Hans 2006; M10 ch. 47; size [ENG]', tag: 'ENG' },
 ```
 
-- [ ] **Step 2 — ondansetron's QTc.** In `packages/engine-core/src/l2/pk/data/rows-other.ts`, find:
+- [x] **Step 2 — ondansetron's QTc.** In `packages/engine-core/src/l2/pk/data/rows-other.ts`, find:
 
 ```ts
   { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [], doses: '4 mg', onset: 'no monitor effect in v1 (QTc prolongation not modelled)', ir: '?', src: 'placeholder', tag: 'TXT' },
@@ -6574,7 +6574,7 @@ Replace with:
     const tg = bloodEcgTargets(ps.blood, (ps.pk.bus as { qtcMsAdd?: number }).qtcMsAdd ?? 0); // FU-7 (addendum 24): ondansetron's QTc
 ```
 
-- [ ] **Step 3 — tranexamic acid keeps its hook (D12).** Change only the comment and the `onset` text. In
+- [x] **Step 3 — tranexamic acid keeps its hook (D12).** Change only the comment and the `onset` text. In
 `packages/engine-core/src/l2/pk/data/rows-other.ts`, find:
 
 ```ts
@@ -6589,7 +6589,7 @@ Replace with:
   { id: 'tranexamicAcid', name: 'Tranexamic acid', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 10800), pd: [], doses: '1 g over 10 min, then 1 g over 8 h', onset: 'antifibrinolytic: no monitor effect until 7i models coagulation (R58; CRASH-2 acts through bleeding)', ir: '?', src: 'CRASH-2; placeholder for 7i', tag: 'TXT' },
 ```
 
-- [ ] **Step 4 — the tests.** In `interactions-misc.test.ts`: (1) dexamethasone 8 mg raises glucose **10–60 mg/dL** within
+- [x] **Step 4 — the tests.** In `interactions-misc.test.ts`: (1) dexamethasone 8 mg raises glucose **10–60 mg/dL** within
 an hour (DI-76's band) and nothing else moves (HR, MAP quiet within tolerance); (2) ondansetron 4 mg adds **10–20 ms** of
 QTc and no rhythm change; (3) tranexamic acid 1 g leaves Hb, MAP and `bvRel` unchanged (a QUIET test that documents the
 7i hook, DI-73's PL); (4) sugammadex 16 mg/kg lowers HR 15–30 % and 4 mg/kg < 5 % (Task 12 Step 6).
@@ -6628,7 +6628,7 @@ MAP moves 0 in both arms at 1 h. So case (1) is `it`, and in Step 4a the compari
 non-diabetic +1.02"**, 0.17 short, with 7e's glucose model (CM-09c) as the owner of the remainder. The Emax stays at 4000.
 ET-19's own band carries [VERIFY magnitude] in research/14-coverage. So the gate note also puts the PADDI magnitude to
 Ali (Q16) before anyone treats 0.17 mmol/L as a defect.
-- [ ] **Step 5 — the cells.** Also run the CM diabetic cell as a regression guard (CM amendment, finding 8):
+- [x] **Step 5 — the cells.** Also run the CM diabetic cell as a regression guard (CM amendment, finding 8):
 `cd research/19-audit-scripts && CM_OUT=<scratchpad>/fu-7-task18/cells.json PME_ENGINE=<wt>/packages/engine-core/src/index.ts ./run.sh cli.ts CM-09c`
 — it is PL today (diabetic peak 11.1 vs healthy 7.6 mmol/L under surgical stress, no dexamethasone) and must stay PL:
 FU-7's glucocorticoid term must not move the stress-response glucose of a patient who received no steroid. Then
@@ -6639,7 +6639,7 @@ both numbers. Expected: DI-76's automatic grade
 **PL** (third fixer: glucose +11 mg/dL in the audit's window, HR 0) while its research/14 `hand` note keeps printing MI
 (Task 1 forbids editing it — the gate note §3 reports "automatic PL, hand MI stale"), DI-73 **PL** (unchanged, now
 with the hook documented).
-- [ ] **Step 6 — commit.** `feat(7g): dexamethasone glucose, ondansetron QTc, a documented TXA hook (R51 addendum 24)`, push.
+- [x] **Step 6 — commit.** `feat(7g): dexamethasone glucose, ondansetron QTc, a documented TXA hook (R51 addendum 24)`, push.
 
 ---
 
