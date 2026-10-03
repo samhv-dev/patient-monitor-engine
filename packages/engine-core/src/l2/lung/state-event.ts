@@ -13,6 +13,12 @@ export interface LungStateCore {
   shunt: number; deadSpaceMl: number; frcMl: number;
 }
 
+/** Stage 7k: THE bedside FRC (mL) — the gas the lungs hold at end-expiration: the patient's FRC (FU-6's awake →
+ * anaesthetised `frcNow`) × the conditions' FRC multiplier × the aerated share. lungState and the 7k volume set read it. */
+export function aeratedFrc(ls: LungState, frcMl: number): number {
+  return frcMl * ls.lp.frcMult * (SIDE_SHARE[0] * (ls.aer[0] as number) + SIDE_SHARE[1] * (ls.aer[1] as number));
+}
+
 export function lungStatePayload(
   ls: LungState,
   x: { deadSpaceMl: number; frcMl: number; effort: number; peep: number; baseShunt: number; specs: LungConditionSpec[]; pleuralMmHg: number },
@@ -41,7 +47,7 @@ export function lungStatePayload(
     autoPeepTendency: r2(Math.min(1, autoPeep / 10)), // tables §4.3: PEEPi/10 clamped 0–1
     shunt: r2(shuntFraction(ls, x.baseShunt)),
     deadSpaceMl: Math.round(x.deadSpaceMl),
-    frcMl: Math.round(x.frcMl * lp.frcMult * (0.45 * (ls.aer[0] as number) + 0.55 * (ls.aer[1] as number))),
+    frcMl: Math.round(aeratedFrc(ls, x.frcMl)), // Stage 7k: the one bedside FRC
     lungs,
     complianceSlowMlPerCmH2O: Math.round(cSlow),
     tauSlowS: r2(Math.max(lp.side[0]!.tauSlowS, lp.side[1]!.tauSlowS)),

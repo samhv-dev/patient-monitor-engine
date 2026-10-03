@@ -126,6 +126,11 @@ const BY_AGE: Record<AgeBand, { vo2: number; bv: number; frcGa: number; weight: 
   elderly: { vo2: 3.0, bv: 65, frcGa: 20, weight: 70, height: 170 },
 };
 
+/** Stage 7k (E-7k-3): the stature gasPatient assumes when the profile gives none (cm) — the 7k predicted volumes use the same. */
+export function defaultHeightCm(ageY = 40): number {
+  return BY_AGE[ageBand(ageY)].height;
+}
+
 export interface GasPatient {
   weightKg: number;
   ibwKg: number;
