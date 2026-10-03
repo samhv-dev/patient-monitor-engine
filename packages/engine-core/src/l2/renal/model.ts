@@ -28,6 +28,8 @@ export interface RenalInputs {
   furoCe?: number;
   /** FU-9 H1: the whole-body O2 demand ÷ rest (Stage 3's metabolic factor; GA 0.85, cold lower); absent → 1. */
   demandRel?: number;
+  /** FU-9 H2: haematocrit (7c's Hb × 3/100) for the renal plasma flow; absent → HCT_REF. */
+  hct?: number;
 }
 export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; aki: number; co0: number }
 export interface RenalState {
@@ -106,8 +108,8 @@ export function createRenal(inp: RenalInputs, weightKg: number, aki = 0): RenalS
   s.vNh = volumeFactor(ev);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  s.rAff = tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet, pb);
-  const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb);
+  s.rAff = tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet, pb, inp.hct);
+  const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
   s.pgc = h.pgc;
   s.gfr = h.gfr;
@@ -119,7 +121,10 @@ function tubularOutput(s: RenalState, inp: RenalInputs): number {
   const stress = inp.anaesthesia === 'general' ? S_GA : 1;
   const peep = PEEP_PER_10 ** (Math.max(0, inp.pawExcessCmH2O) / 10);
   const ne = NE_EXCESS_PER_01 ** (Math.max(0, inp.alphaExcess) / 0.1);
-  const fe = s.p.ef0 * natriuresis(inp.map, s.p.pRef) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
+  // FU-9 H4 (research/13): pressure natriuresis reads the renal PERFUSION pressure, MAP − max(CVP, IAP) (tables §5.2 U(RPP)),
+  // referred to the reference CVP so the awake UOP–MAP curve at CVP 5 is unchanged: venous congestion and intra-abdominal
+  // pressure now lower the urine (WSACS: oliguria from IAP 15)
+  const fe = s.p.ef0 * natriuresis(inp.map - pv(inp) + RENAL_REF_CVP, s.p.pRef) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
   const mannitol = MANNITOL_ML_PER_G * MANNITOL_KE_PER_MIN * s.mannitolG * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
   return Math.min(0.25 * s.gfr, s.gfr * fe) + mannitol;
 }
@@ -147,9 +152,9 @@ export function stepRenal(s: RenalState, inp: RenalInputs, dt: number): void {
   const effF = effFactor(s.ang);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * s.p.aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  const target = tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet, pb);
+  const target = tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet, pb, inp.hct);
   s.rAff += (target - s.rAff) * (1 - Math.exp(-dt / TGF_TAU_S));
-  const h = renalHaemo(inp.map, pvn, s.p.k, s.rAff, effF, kfF, inp.albuminGL, pb);
+  const h = renalHaemo(inp.map, pvn, s.p.k, s.rAff, effF, kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
   s.pgc = h.pgc;
   s.gfr = h.gfr;

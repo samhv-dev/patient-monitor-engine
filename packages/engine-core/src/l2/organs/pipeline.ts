@@ -74,7 +74,7 @@ const brainIn = (v: OrganView): BrainInputs => ({
 });
 const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
-  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, // FU-9 H1
+  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, hct: (3 * v.hb) / 100, // FU-9 H1, H2
   ...(v.drugs.furoCe !== undefined ? { furoCe: v.drugs.furoCe } : {}),
 });
 function liverIn(os: OrgansState, v: OrganView): LiverInputs {

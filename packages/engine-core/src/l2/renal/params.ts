@@ -27,7 +27,11 @@ export const R_AFF_MAX = (11.2 / 60) * MYOGENIC_MAX;
 /** TGF time constant: Pulse's 0.001-per-beat damping ≈ 60–90 s (annex B2 "Take") → 60 s. */
 export const TGF_TAU_S = 60;
 export const KF_PER_KIDNEY = 3.67647 * 2.0; // glomerular Lp·A, mL/min/mmHg (CFG 604–605)
-export const PI_GLOM0 = 32; // glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L
+export const PI_GLOM0 = 32; // glomerular oncotic pressure, mmHg (SET 1386–1389) at albumin 42 g/L — FU-9 H2: its MEAN at FF_REF
+/** FU-9 H2: the healthy reference's filtration fraction (GFR 125 ÷ RPF 952 × (1 − 0.45)) and haematocrit, where the mean
+ *  glomerular oncotic pressure equals PI_GLOM0 (the calibrated resting GFR is unchanged). */
+export const HCT_REF = 0.45;
+export const FF_REF = 125 / (952 * (1 - HCT_REF));
 export const ALBUMIN0_G_L = 42;
 /** Bowman's space pressure [ENG]: calibrated so the resting GFR is 125 mL/min (tables/annex reference 180 L/day;
  *  Pulse gives 147.5 L/day, D12). UOP is calibrated separately (ef0), so this only sets GFR and the filtration fraction. */
@@ -63,7 +67,7 @@ export const V_EXP_GAIN = 90;
 export const V_EXP_MAX = 12;
 /** FU-9 H1: symmetric low-pass of the effective volume before the neurohumoral lag, s [ENG] (research/13 H1: τ ≈ 60 s). */
 export const EABV_TAU_S = 60;
-export const EABV_EXP = 0.75; // effective volume = min(BV, (CO/CO0)^0.75) [ENG]: HFrEF (CO 3.5) → V 0.21, UOP 0.114 (tables check 20 0.1–0.15)
+export const EABV_EXP = 0.35; // effective volume = min(BV, (CO/(CO0·demandRel))^EXP) [ENG]: re-fitted (FU-9 H2/H4) to its own target, tables check 20 (HFrEF UOP 0.1–0.15, dobutamine 0.2–0.3): 0.75 → 0.35
 /** Neurohumoral (ADH/aldosterone) lag on V [ENG]: onset τ 2 min (ADH release is fast), washout τ 45 min. With an
  *  instantaneous V, dobutamine in check 20 gave 0.338 mL/kg/h at 30 min (tables 0.2–0.3 within 30–60 min); with the
  *  washout: 0.233 at 30 min, 0.284 at 60 min. Recovery after fluids is correspondingly gradual (class III → 0.53 at 60 min). */
