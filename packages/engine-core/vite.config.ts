@@ -99,7 +99,12 @@ const SLOW_A = [
  * by the per-file times of `PME_TEST_SET=slow` (docs/plans/fu-9-blood-fluids.md, File map). SLOW_B is SLOW minus SLOW_A
  * minus SLOW_C by the same matcher as above; ci.yml's build job prints the three lists and fails on an overlap or a gap.
  */
-const SLOW_C = ['test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts'];
+// FU-9 Gate (D19): re-split by the per-file times measured on the merged tree (slow-b 2183 s vs slow-c 1101 s summed,
+// contended Mac): organs-renal, blood-sanity-acid and pk-acceptance-pk (164 + 168 + 137 s) move from slow-b to slow-c.
+const SLOW_C = [
+  'test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts',
+  'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
+];
 const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p));
 const set = process.env.PME_TEST_SET;
 
