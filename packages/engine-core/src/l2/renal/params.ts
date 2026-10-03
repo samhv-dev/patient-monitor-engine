@@ -57,6 +57,9 @@ export const ANG_GAIN = 3;
 /** Angiotensin/efferent response time constant, s [ENG]: an instantaneous term followed 7a's second-to-second CO wobble
  *  (CO 4.9–5.6 in MODELED HFrEF) and swung GFR 27–211 mL/min within seconds; AngII's efferent effect builds over minutes. */
 export const ANG_TAU_S = 120;
+/** FU-9 H10: cold diuresis onset and gain per °C [ENG, Ali's Q] (Polderman 2009: direction). */
+export const COLD_ONSET_C = 35;
+export const COLD_DIURESIS_PER_C = 0.2;
 export const S_GA = 0.6; // surgical stress/ADH under GA, tables `S` [ENG] (0.4–0.8)
 export const V_AT_15 = 0.5; // UOP factor at −15 % blood volume (tables V)
 export const V_AT_30 = 0.2; // at −30 %

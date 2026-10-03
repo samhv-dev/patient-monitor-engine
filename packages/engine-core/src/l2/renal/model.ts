@@ -8,7 +8,7 @@
 // cumulative volume, KDIGO-style oliguria/AKI state and the excretion hooks for 7c. Plain JSON-safe state.
 import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './kidney.ts';
 import {
-  AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
+  AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, COLD_DIURESIS_PER_C, COLD_ONSET_C, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
   EABV_EXP, EABV_TAU_S, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
   R_AFF_MAX, R_AFF_MIN, SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
 } from './params.ts';
@@ -30,6 +30,8 @@ export interface RenalInputs {
   demandRel?: number;
   /** FU-9 H2: haematocrit (7c's Hb × 3/100) for the renal plasma flow; absent → HCT_REF. */
   hct?: number;
+  /** FU-9 H10: core temperature, °C; absent → 37. */
+  tempC?: number;
 }
 export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; aki: number; co0: number }
 export interface RenalState {
@@ -77,6 +79,15 @@ export function expansionFactor(bvRel: number): number {
  */
 function nephronTone(rAff: number, aki: number): number {
   return Math.min(R_AFF_MAX, Math.max(rAff, R_AFF_MIN * (1 + AKI_AFF_TONE * aki)));
+}
+
+/**
+ * FU-9 H10 (research/13): cold diuresis — below COLD_ONSET_C tubular Na reabsorption and ADH responsiveness fall and the
+ * excreted fraction rises (Polderman KH. Crit Care Med 2009;37:S186–S202) × (1 + COLD_DIURESIS_PER_C·(onset − T)⁺)
+ * [ENG, Ali's Q]: 33 °C → × 1.4.
+ */
+export function coldDiuresis(tempC = 37): number {
+  return 1 + COLD_DIURESIS_PER_C * Math.max(0, COLD_ONSET_C - tempC);
 }
 
 /** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
@@ -134,7 +145,7 @@ function tubularOutput(s: RenalState, inp: RenalInputs): number {
   // FU-9 H4 (research/13): pressure natriuresis reads the renal PERFUSION pressure, MAP − max(CVP, IAP) (tables §5.2 U(RPP)),
   // referred to the reference CVP so the awake UOP–MAP curve at CVP 5 is unchanged: venous congestion and intra-abdominal
   // pressure now lower the urine (WSACS: oliguria from IAP 15)
-  const fe = s.p.ef0 * natriuresis(inp.map - pv(inp) + RENAL_REF_CVP, s.p.pRef) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
+  const fe = s.p.ef0 * natriuresis(inp.map - pv(inp) + RENAL_REF_CVP, s.p.pRef) * coldDiuresis(inp.tempC) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
   const mannitol = MANNITOL_ML_PER_G * MANNITOL_KE_PER_MIN * s.mannitolG * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
   return Math.min(0.25 * s.gfr, s.gfr * fe) + mannitol;
 }
