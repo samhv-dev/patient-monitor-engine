@@ -16,7 +16,7 @@ export interface SoluteState {
   lac: number; // lactate amount in its distribution volume
   kIcf: number; // cellular K pool (mmol)
   pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG]
-  set: { k: number; ca: number; mg: number; ph: number }; // homeostatic set points (mmol/L; pH of the K reference)
+  set: { k: number; ca: number; mg: number; ph: number; kIcf: number }; // homeostatic set points (mmol/L; pH of the K reference; FU-9 F6: the cellular K pool, mmol)
 }
 
 export interface Conc {
@@ -52,7 +52,7 @@ export function createSolutes(p: { na: number; k: number; cl: number; iCa: numbe
   const v = ecfMl / 1000;
   return {
     na: p.na * v, k: p.k * v, cl: p.cl * v, ca: p.iCa * v, mg: p.mg * v, xa: 0, keto: 0, metab: 0, citrate: 0, osmOther: 0,
-    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4 },
+    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4, kIcf: 140 * (icfMl / 1000) },
   };
 }
 
@@ -85,6 +85,9 @@ export function calibrateXa(s: SoluteState, ecfMl: number, sidNow: number, sidTa
 
 /** Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. */
 export const K_TAU_MIN = 43; // 50 % of a K load into cells in 30 min (tables `vK`) [ENG]
+/** FU-9 F6: total-body K per mmol/L of plasma K — a 200–400 mmol deficit lowers plasma K ≈ 1 mmol/L (Sterns RH et al.
+ *  Medicine 1981;60:339–354) [TXT, midpoint]; the Na/K-ATPase set point follows it (core.ts kSet). */
+export const K_TBK_MMOL = 300;
 export const CA_TAU_MIN = 15; // ionised Ca returns to its set point (bone/protein buffer, PTH) [ENG, Q46]
 export const MG_TAU_MIN = 60; // Mg load distributes into cells/bone [ENG]
 export const CITRATE_TAU_MIN = 5; // hepatic citrate clearance at normal hepatic flow (tables `citrateUnit`) [TXT]

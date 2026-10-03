@@ -57,7 +57,7 @@ export interface DrugView {
  *  excretion rates, mmol/h. */
 export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
 type BloodLike = {
-  core?: { liver?: number; renal?: RenalSeam; out?: { na?: number } }; // FU-9 R4: the plasma Na an expansion natriuresis carries
+  core?: { liver?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number; na?: number } }; // FU-9 F6: K and its set point; R4: Na
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number };
 };
 
