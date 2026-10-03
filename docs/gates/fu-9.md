@@ -1,7 +1,7 @@
 # Gate note — FU-9 Parts A and C: blood, fluids, acid–base and kidney integration
 
 Branch `fu-9-blood-fluids`, from `origin/main` 176f702 (FU-3, FU-4, FU-5, V.1, FU-8 Part A and FU-6 merged), merged with
-`origin/main` at the gate (9b405b9: docs only since 176f702). Plan: `docs/plans/fu-9-blood-fluids.md` (written and verified
+`origin/main` at the gate, last at 1b8bdd3 (Stage 7k, PR #30, merged as 0eed975 — §2a; before it docs only). Plan: `docs/plans/fu-9-blood-fluids.md` (written and verified
 on 2473f0b; every block re-verified here, §6). Executor: one local session, Tasks A0, A0b, A1–A13, C0–C1 and this gate.
 **Part B (B0–B2: F10 hypokalaemic NMB potentiation, F7 COPD chronic hypercapnia) is NOT in this PR** — FU-7 has not merged
 (it is executing on `fu-7-drug-layer`); Part B becomes a later PR from the same plan, as the plan's Global Constraints
@@ -11,7 +11,8 @@ say. Measurements are seed 7 on this Mac (M-series, shared with two other local 
 
 - **Commits:** the plan; A0b (CI amendment 5); one commit per task A1–A13 and C1, each pushed; two test-only commits (the
   A12 flip on FU-6's title; the it.fails titles carrying the merged-tree numbers, plus a quoting fix); one declared R45
-  row in an FU-8 test (§5); the slow-group re-split by measured time (D19); two merges of `origin/main` (docs only).
+  row in an FU-8 test (§5) and one in 7g's `pk-longrun` (§7); the slow-group re-splits by measured time (D19, then the
+  four-group split from the CI per-file times, §2a); merges of `origin/main` (docs, then Stage 7k).
 - **Blocks:** the plan's 179 Part A + C blocks (find/replace and creates, in document order) were applied with a script
   that requires every find to match exactly once in the current state: **176 byte-exact, 3 re-anchored** (§6). No block
   needed a change of meaning.
@@ -27,13 +28,14 @@ say. Measurements are seed 7 on this Mac (M-series, shared with two other local 
 | `pnpm -r typecheck` | clean, 8 packages | — |
 | fast set, engine-core (`PME_TEST_SET=fast`) | **291 files / 1255 passed, 1 skipped, 0 errors** (main: 277 files) | 77 s |
 | fast set, other packages | audio 58, skins 179, controller 223, ventilator 97, renderer 89, validation 107 (+11 skipped), demo 141 — all green | — |
-| slow-a | 45 files: 44 green; **`pk-longrun` red on this Mac** — TCI propofol Ce 2.5098 vs 2.5 ± 0.005 at 6 h (main passes here; bisected: A8 pass, A9 2.5062, A12 2.5098 — §7); `fu8-body-size` green after its declared split (§5) | first pass 28 files 2465 s (killed, see below) + re-run 18 files 802 s; per-file sum ≈ 2950 s |
+| slow-a (the three-group layout) | 45 files: 44 green; **`pk-longrun` red** — TCI propofol Ce 2.5098 vs 2.5 ± 0.005 at 6 h, on this Mac AND on CI (2.50979; main passes; bisected: A8 pass, A9 2.5062, A12 2.5098) → declared `it.fails` (§7); `fu8-body-size` green after its declared split (§5) | first pass 28 files 2465 s (killed, see below) + re-run 18 files 802 s; per-file sum ≈ 2950 s |
 | slow-b (before the D19 re-split: 43 files) | **43 files / 226 tests green** | 2350 s (per-file sum 2183 s) |
 | slow-c (before the D19 re-split: 11 files) | **11 files / 47 tests green** (9 `fu9-*` + pk-acceptance-pd + endo-acceptance) | 1109 s (per-file sum 1101 s) |
-| disjointness step (A0b) after the re-split | slow 99 = slow-a 45 + slow-b 40 + slow-c 14; no overlap, no gap | — |
+| disjointness step (A0b), final four groups, merged with 7k | slow 100 = slow-a 28 + slow-b 38 + slow-c 15 + slow-d 19; no overlap, no gap | — |
+| after merging Stage 7k: engine fast | **293 files / 1275 passed, 1 skipped** | — |
 | `pnpm build` | clean | — |
 | `CI=1 pnpm test:e2e` (Chromium + WebKit) | **61 passed, 23 skipped, 2 failed**: `stage6a` rtc and `stage6a-latency` (Chromium) — the WebRTC pair that fails on this machine on main too (G-FU6: the same 61/23/2) | 15.2 min |
-| truth tree (`truth-event`, 7x's 2 100-leaf cap) | live tree 1335 → 1345 leaves (FU-9's new state keys); synthetic 12-drug tree 2052 → 2052; busy 58-drug tree capped as on main | — |
+| truth tree (`truth-event`, 7x's 2 100-leaf cap) | before 7k: live tree 1335 → 1345, 12-drug 2052 → 2052. **Merged with 7k: live 1358 (main) → 1368, synthetic 12-drug tree 2075 → 2075** (FU-9's ten new keys are not in the synthetic organ fixture) — under the cap, no `SKIP_PATH` change | — |
 | tick bench (`perf:ticks --seconds 60`, base vs branch alternating) | p50 main 0.575 / 0.562 / 0.553 ms, FU-9 0.567 / 0.562 / 0.566 ms (median 0.562 → 0.566, **+0.7 %**); p99 0.99 → 1.01 ms | — |
 
 Load notes, not FU-9's: the first all-package fast run (in parallel with the three slow groups, two coverage runners
@@ -43,10 +45,26 @@ main 0.6 s / 1.3 s). The first slow-a run was killed at 18:35 after 28 of 45 fil
 validation package's run died with exit 143 in the same minute); the remaining 17 files and the edited `fu8-body-size` were re-run
 serially on the gate head (`slow-a2`).
 
-**Slow-group times (CI amendment 5, D19).** Per-file sums on the merged tree (contended): slow-b 2183 s, slow-c 1101 s;
-slow-a ≈ 2950 s. slow-b was 58 min on CI at G-FU6, so the gate moved three slow-b files to slow-c by measured time
-(organs-renal 164 s, blood-sanity-acid 168 s, pk-acceptance-pk 137 s; one-literal edit of `SLOW_C`, its own commit):
-slow-b ≈ 1714 s, slow-c ≈ 1570 s by the same sums. The CI times of the three jobs on the PR head are the arbiter (§9).
+**Slow-group times (CI amendment 5, D19).** First re-split from the contended local sums (slow-b 2183 s, slow-c 1101 s):
+organs-renal, blood-sanity-acid and pk-acceptance-pk moved to slow-c. CI on that head (run 37135534941) then measured
+every file: **slow-a 4191 s of tests (job 70 min — over 40, as on PRs #29 and #30), slow-b 2425 s (41 min), slow-c
+2120 s (36 min)**; build 41 min.
+
+### 2a. The four-group split (CI per-file times) and the Stage 7k merge
+
+The CI slow set is 8 794 s of tests (with 7k's `resp-mechanics`, 58 s on PR #30's CI): three ≤ 40-min jobs cannot hold
+it (2 931 s each), so a fourth group `slow-d` was added (ci.yml matrix and the disjointness step print four lists).
+Projected from the CI per-file times:
+
+| group | files | CI sum | content |
+|---|---|---|---|
+| slow-a | 28 | 2224 s ≈ 37 min | the seven `*longrun*` files (1438 s), engine-pipeline, organs-soak, FU-8's `fu8-*` (385 s) |
+| slow-b | 38 | 2148 s ≈ 36 min | every other SLOW entry (vagal-events and thermal-warmer moved out) |
+| slow-c | 15 | 2257 s ≈ 38 min | FU-9's `fu9-*`, pk-acceptance-pd/pk, endo-acceptance, organs-renal, blood-sanity-acid, thermal-warmer |
+| slow-d | 19 | 2165 s ≈ 36 min | clinical-suite (467), resp-suite (426), FU-6's resp-*/lung-*/blood-anaemia-co files, 7k's resp-mechanics, vagal-events |
+
+Stage 7k's slow-list edit (resp-mechanics in SLOW and SLOW_A) merged cleanly and is kept in SLOW; its group is now
+slow-d. The CI result of this layout is in §9.
 
 ## 3. Findings: before → after (BF, RH and SP runners; `docs/gates/fu-9/{bf,rh,sp}-before-after.md`)
 
@@ -113,7 +131,8 @@ Added by FU-9 (Part A):
 | `fu9-mannitol` | 1 g/kg: osmolality +20–30 at 15 min | **+8.7** (BV +73 mL, Na −7.6) | +8.7 |
 
 Declared on an existing test (R45, §5): `fu8-body-size` "127 kg: resting CO ≤ 1.5 × the 70 kg adult" — **× 1.53** at
-the single 300 s sample (lean 4.85 vs 5.14 on main), × 1.38 as the 240–300 s mean on both trees.
+the single 300 s sample (lean 4.85 vs 5.14 on main), × 1.38 as the 240–300 s mean on both trees. And `pk-longrun` "TCI propofol
+effect site held at 2.5 ± 0.005" — **2.5098** (CI and Mac; main within the band; §7).
 
 Flipped `it.fails` → `it`: `neuro-engine` "propofol 2 mg/kg: depth-index nadir < 52" — **50** (bisected: 52 at A11, 50 at
 A12; H3's hepatic flow). The plan's second flip (`fidelity-lowflow` technical short cycle, A9) was already an `it` on
@@ -183,13 +202,13 @@ with `resolveProfile().bloodVolumeMl` holds for every adult 50–160 kg, M/F, wi
   (B2/B7 830 → 830, B6 1135 → 1135, I1 1220 → 1220). Two first-MAP < 30 samples move (B9 740 → 735, A9; I1 – → 1215).
 - E-FU9-2 / E-FU9-3: Part B, not executed.
 - **New, declared for a ruling:** the `fu8-body-size` CO-ratio edge (§5).
-- **`pk-longrun` (slow-a), declared — the CI run decides.** "6 h: TCI propofol + remifentanil + sevoflurane … targets
-  held": propofol Ce **2.5098** vs 2.5 ± 0.005 on this Mac (main 2.5, passes here). Bisected: A8 passes, **A9 2.5062**
-  (H2/H4: filtration equilibrium, `EABV_EXP` 0.35), A10–A11 2.5062, **A12 2.5098** (H3: hepatic flow = CO/CO₀ × 7d's
-  factor, sevoflurane ×0.8/MAC — propofol's flow-limited clearance falls, so the open-loop TCI's effect site drifts above
-  its target by 0.4 %). The plan records this test as G-FU4's known macOS red (2.5065 on 2473f0b, green on CI's Linux),
-  so it is NOT edited here: if CI's slow-a also reads it outside ± 0.005, the propofol line becomes an `it.fails` with
-  the CI number (R45, the TCI band unchanged) in a follow-up commit on this PR (§9).
+- **`pk-longrun`, declared (R45).** "6 h: TCI propofol + remifentanil + sevoflurane … targets held": propofol Ce
+  **2.5098** on CI (run 37135534941: 2.50979) and on this Mac vs 2.5 ± 0.005; main is within the band. Bisected: A8
+  passes, **A9 2.5062** (H2/H4), A10–A11 2.5062, **A12 2.5098** (H3: hepatic flow = CO/CO₀ × 7d's factor, sevoflurane
+  × 0.8/MAC — propofol's flow-limited clearance falls and the open-loop TCI, which runs 7g's own model, leaves the effect
+  site 0.4 % above target). The test now shares one memoised 6 h run between an `it` (sample clocks, remifentanil,
+  sevoflurane, finiteness) and an `it.fails` for the propofol line with the number; the band is unchanged. Whether TCI
+  should see the patient's hepatic flow is a 7g question for the orchestrator.
 - **Intermediate commits.** `blood-sanity-acid` ("saline Cl up > 4") reads Cl 106.8 (+2.8) at A1 alone (the expansion
   urine carries chloride) and 108.5 (+4.5 → lab 109) from A13 on; it is green on the gate head (slow-b). Probed only at
   main (109.4), A1 and A13.
