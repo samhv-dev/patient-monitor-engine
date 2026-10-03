@@ -6,6 +6,7 @@
 //
 // RenalModel (Stage 7d, tables §5.2): the algebraic kidney (kidney.ts) + tubular output → UOP, bladder/urometer,
 // cumulative volume, KDIGO-style oliguria/AKI state and the excretion hooks for 7c. Plain JSON-safe state.
+import { MANNITOL_MOSM_PER_G } from '../brain/params.ts'; // FU-9 H8
 import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './kidney.ts';
 import {
   AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, COLD_DIURESIS_PER_C, COLD_ONSET_C, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
@@ -32,6 +33,8 @@ export interface RenalInputs {
   hct?: number;
   /** FU-9 H10: core temperature, °C; absent → 37. */
   tempC?: number;
+  /** FU-9 H8: 7c's plasma mannitol amount, mmol (ONE pool); absent → the kidney's own depot (`mannitolG`, no 7c). */
+  mannitolMmol?: number;
 }
 export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; aki: number; co0: number }
 export interface RenalState {
@@ -90,6 +93,13 @@ export function coldDiuresis(tempC = 37): number {
   return 1 + COLD_DIURESIS_PER_C * Math.max(0, COLD_ONSET_C - tempC);
 }
 
+/** Mannitol excreted, g/min: first order at the renal clearance (t½ 2 h at the reference GFR), from 7c's plasma pool
+ *  (FU-9 H8) or, without 7c, the kidney's own depot. 7c removes the same amount through the seam. */
+export function mannitolExcretionGMin(s: RenalState, inp: RenalInputs): number {
+  const g = inp.mannitolMmol !== undefined ? inp.mannitolMmol / MANNITOL_MOSM_PER_G : s.mannitolG;
+  return MANNITOL_KE_PER_MIN * g * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
+}
+
 /** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
  *  activates the same volume receptors as bleeding (tables §7 check 20: HFrEF oliguria at normal blood volume). The
  *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*).
@@ -146,7 +156,7 @@ function tubularOutput(s: RenalState, inp: RenalInputs): number {
   // referred to the reference CVP so the awake UOP–MAP curve at CVP 5 is unchanged: venous congestion and intra-abdominal
   // pressure now lower the urine (WSACS: oliguria from IAP 15)
   const fe = s.p.ef0 * natriuresis(inp.map - pv(inp) + RENAL_REF_CVP, s.p.pRef) * coldDiuresis(inp.tempC) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
-  const mannitol = MANNITOL_ML_PER_G * MANNITOL_KE_PER_MIN * s.mannitolG * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
+  const mannitol = MANNITOL_ML_PER_G * mannitolExcretionGMin(s, inp); // FU-9 H8: from 7c's pool when present
   return Math.min(0.25 * s.gfr, s.gfr * fe) + mannitol;
 }
 

@@ -5,6 +5,7 @@ import { albGL, bloodMl, createFluids, ecfMl, hbOf, stepFluids, copPlasma, type 
 import { contentDB, type OdcCtx } from './odc.ts';
 import { o2Delivery, stepLactate, type O2Out } from './oxygen.ts';
 import { bloodPatient, HBF_EXP, NORMAL, type BloodPatient } from './params.ts';
+import { MANNITOL_KE_PER_MIN } from '../renal/params.ts'; // FU-9 H8: 7d's renal mannitol clearance, the fallback without 7d
 import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, K_TBK_MMOL, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
 import { caMembrane, insulinEffect, INSULIN_K_SHIFT, K_PUMP_GAIN, salbutamolEffect, SALBUTAMOL_K_SHIFT, suxDeltaK, type Dose } from './treatments.ts';
 
@@ -34,7 +35,7 @@ export interface BloodInputs {
  */
 export interface RenalSeam {
   uopAboveBasalMlH: number; // mL/h, ≥ 0: urine above the basal 1 mL/kg/h (0 at a resting kidney)
-  excretion: { k: number; na: number; cl: number; gluconate: number }; // mmol/h (gluconate: Plasma-Lyte's anion, decision 3)
+  excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number }; // mmol/h (gluconate: Plasma-Lyte's anion, decision 3; FU-9 H8: mannitol)
 }
 
 /** What other stages read (7g: hbfRel; 7d: hb, albuminGL, bvRel, lactate; 7b: cop). */
@@ -138,11 +139,13 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
     so.k = Math.max(0, so.k - rn.excretion.k * dtH);
     so.cl = Math.max(0, so.cl - rn.excretion.cl * dtH);
     so.xa -= rn.excretion.gluconate * dtH;
+    if (so.mannitol) so.mannitol = Math.max(0, so.mannitol - (rn.excretion.mannitol ?? 0) * dtH); // FU-9 H8: the kidney clears it
   } else if (r.elimMl > 0) {
     // eliminated volume leaves as ISOTONIC fluid at the ECF composition (a solute-free loss concentrates Na: the Pulse
     // oracle O3b caught Na +2.0 vs Pulse +0.9 after 1 L saline) [ENG until 7d's urine composition]
     removePlasma(so, r.elimMl, ecfBefore, c0);
   }
+  if (!rn && so.mannitol) so.mannitol *= Math.exp((-MANNITOL_KE_PER_MIN * dtS) / 60); // FU-9 H8: no 7d — the kidney's own t½ 2 h
   for (const g of r.given) addFluid(so, g.ml, g.comp);
   // 2. homeostasis / transcellular shifts
   // FU-9 H3 (research/13): with 7d, hepatic flow = CO/CO0 × 7d's splanchnic/outflow factor (sympathetic, α-agonist,

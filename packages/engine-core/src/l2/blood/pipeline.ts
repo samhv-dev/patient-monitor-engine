@@ -15,6 +15,7 @@ import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './l
 import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
 import { ivInflow } from '../thermal/environment.ts'; // Stage 7e (E-7e-1)
+import { MANNITOL_MOSM_PER_G } from '../brain/params.ts'; // FU-9 H8
 
 export interface BloodState {
   k: number; // next step index (time k·0.1 s)
@@ -135,6 +136,9 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
         break;
       case 'magnesium':
         c.so.mg += g * MG_MMOL_PER_G;
+        break;
+      case 'mannitol': // FU-9 H8: an effective ECF osmole in 7c's pool; 7d's kidney clears it from here
+        c.so.mannitol = (c.so.mannitol ?? 0) + g * MANNITOL_MOSM_PER_G;
         break;
       case 'hypertonicSaline':
         if (d.amountUnit === 'mL') c.fl.flows.push({ rate: d.amount / HTS_OVER_MIN, until: 1e9, leftMl: d.amount, comp: hypertonicSaline(d.concentrationPct ?? 3) });

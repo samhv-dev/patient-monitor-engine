@@ -33,6 +33,7 @@ export interface OrganView {
   hb: number; albuminGL: number; bvRel: number;
   osm: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (null without 7c)
   demandRel: number; // FU-9 H1: Stage 3's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
+  mannitolMmol: number | null; // FU-9 H8: 7c's plasma mannitol, mmol (null without 7c: the kidney's own depot)
   hbfRel: number | null; // 7c's hepatic flow ÷ baseline (null without 7c: the liver computes its fallback)
   lactate: number | null; // 7c's lactate (null without 7c: the liver's fallback pool)
   gluconate: number; // 7c's plasma gluconate, mmol/L (0 until 7c exposes it)
@@ -56,9 +57,9 @@ export interface DrugView {
 }
 /** 7c's seam 7d fills (R51 addendum 14): the urine ABOVE the basal UOP0 (mL/h, G7d follow-through 2) and the renal
  *  excretion rates, mmol/h. */
-export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number } };
+export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number } }; // FU-9 H8
 type BloodLike = {
-  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number } }; out?: { k?: number; na?: number } }; // FU-9 F6/R4/H3
+  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number }; mannitol?: number }; out?: { k?: number; na?: number } }; // FU-9 F6/R4/H3/H8
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
 };
 
@@ -159,6 +160,7 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     bvRel: num(out?.bvRel, bvFallback),
     osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null, // FU-9 F11
     demandRel: metabolic(rs, t, 'o2'), // FU-9 H1
+    mannitolMmol: b?.core ? (b.core.so?.mannitol ?? 0) : null, // FU-9 H8
     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,
     gluconate: num(out?.gluconate, 0),

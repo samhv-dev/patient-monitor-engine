@@ -13,6 +13,7 @@ export interface SoluteState {
   metab: number; // acetate/gluconate awaiting metabolism
   citrate: number; // free citrate (transfusion)
   osmOther: number; // glycine and other non-Na effective osmoles
+  mannitol?: number; // FU-9 H8: mannitol, mmol — an effective ECF osmole (absent = 0); cleared by 7d's kidney
   lac: number; // lactate amount in its distribution volume
   kIcf: number; // cellular K pool (mmol)
   pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG]
@@ -22,13 +23,14 @@ export interface SoluteState {
 export interface Conc {
   na: number; k: number; cl: number; iCaRaw: number; mg: number; xa: number; keto: number; metab: number;
   citrate: number; osmOther: number; lactate: number; pi: number;
+  mannitol: number; // FU-9 H8
 }
 
 export function concOf(s: SoluteState, ecfMl: number, vLacL: number, ecf0Ml: number): Conc {
   const v = ecfMl / 1000;
   return {
     na: s.na / v, k: s.k / v, cl: s.cl / v, iCaRaw: s.ca / v, mg: s.mg / v, xa: s.xa / v, keto: s.keto / v,
-    metab: s.metab / v, citrate: s.citrate / v, osmOther: s.osmOther / v, pi: s.pi / v,
+    metab: s.metab / v, citrate: s.citrate / v, osmOther: s.osmOther / v, pi: s.pi / v, mannitol: (s.mannitol ?? 0) / v,
     lactate: s.lac / (vLacL + (ecfMl - ecf0Ml) / 1000),
   };
 }
@@ -43,9 +45,9 @@ export function sidOf(c: Conc, iCa: number): number {
   return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - (CITRATE_CHARGE - 2 * K_CIT) * c.citrate - c.xa;
 }
 
-/** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles. */
+/** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles + mannitol. */
 export function osmEcf(c: Conc): number {
-  return 2 * c.na + 10 + c.osmOther;
+  return 2 * c.na + 10 + c.osmOther + c.mannitol; // FU-9 H8: mannitol is an effective ECF osmole
 }
 
 export function createSolutes(p: { na: number; k: number; cl: number; iCa: number; mg: number; lactate: number }, ecfMl: number, vLacL: number, icfMl: number): SoluteState {
@@ -75,6 +77,7 @@ export function addFluid(s: SoluteState, ml: number, c: Composition): void {
 export function removePlasma(s: SoluteState, plasmaMl: number, ecfMl: number, c: Conc): void {
   const f = plasmaMl / ecfMl;
   for (const k of ['na', 'k', 'cl', 'ca', 'mg', 'xa', 'keto', 'metab', 'citrate', 'osmOther', 'pi'] as const) s[k] -= s[k] * f;
+  if (s.mannitol) s.mannitol -= s.mannitol * f; // FU-9 H8
   s.lac -= c.lactate * (plasmaMl / 1000);
 }
 
