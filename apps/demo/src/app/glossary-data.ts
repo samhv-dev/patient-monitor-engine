@@ -324,6 +324,12 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 297, s: 'S9', keys: [], label: 'Onset', name: 'Time over which a change reaches its target', unit: 's', normal: '' },
   { n: 298, s: 'S9', keys: ['ev.state.values.contractility'], label: 'Contractility (×)', name: 'Instructor input in MANUAL mode: contractility as a multiple of the patient\'s baseline', unit: '× baseline', normal: '1' },
   { n: 299, s: 'S9', keys: ['ev.state.values.volumeStatus'], label: 'Volume status (×)', name: 'Instructor input in MANUAL mode: 1 = normal circulating volume, 0 = severe hypovolaemia', unit: '× baseline', normal: '1' },
+  // Task 0/2 (R-S9-7): truth leaves V.1 and FU-6 added, with the labels their plans proposed (for Ali's review)
+  { n: 300, s: 'S9', keys: ['resp.lung.lp.waterShunt'], label: 'Lung-water shunt', name: 'Lung-water shunt (PEEP-responsive part of the extra shunt)', unit: 'fraction', normal: '0' },
+  { n: 301, s: 'S9', keys: ['ev.lungState.pleuralCmH2O'], label: 'Ppl (extra)', name: 'Pleural pressure from an effusion, haemothorax or pneumothorax', unit: 'cmH₂O', normal: '0' },
+  { n: 302, s: 'S9', keys: ['neuro.resp.loc'], label: 'LOC', name: 'Loss of consciousness (its effect on the ventilatory drive)', unit: '0–1', normal: '0' },
+  { n: 303, s: 'S9', keys: ['neuro.resp.pain'], label: 'Nociceptive drive', name: 'Nociceptive (pain) drive to breathe', unit: '0–1', normal: '0' },
+  { n: 304, s: 'S9', keys: ['neuro.resp.hvrDep'], label: 'HVR depression', name: 'Hypoxic ventilatory response depression', unit: '0–1', normal: '0' },
 ];
 
 /**
