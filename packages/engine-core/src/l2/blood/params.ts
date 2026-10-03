@@ -14,6 +14,10 @@ export const NORMAL = {
   na: 140, k: 4.2, cl: 104, iCa: 1.2, mg: 0.85, lactate: 1.0, albGL: 40, piMmolL: 1.1, hco3: 24.4, paco2: 40,
   dpgMmolL: 4.65, glucoseMgDl: 100, ureaMmolL: 5,
 } as const;
+/** Chronic renal compensation of a chronic hypercapnia, mmol/L HCO3 per mmHg PaCO2 above 40 (tables §5b.1 "chronic
+ *  (profile only): +0.35–0.4 per mmHg"; Brackett/Schwartz 1965) — FU-9: ONE constant, read by 7f's set point (F9) and by
+ *  7c's profile calibration (F7). */
+export const CHRONIC_HCO3_PER_MMHG = 0.35;
 /** FU-9 F8: plasma globulins at the normal albumin, g/L — their own mass (fluids.ts `copPlasma`), carried by plasma products. */
 export const GLOBULIN_GL = 24;
 /** Ionised share of total Mg for the SID (≈ 0.6 of 0.85 mmol/L) [TXT]. */
