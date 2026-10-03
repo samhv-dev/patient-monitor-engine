@@ -79,4 +79,36 @@ describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
       expect(Math.abs(r.after - r.before)).toBeLessThanOrEqual(1);
     });
   });
+
+  describe('Task 17 Step 4a: nitroprusside in the failing ventricle (research/19 CM-06e rig)', () => {
+    /** hfref 60 y / 80 kg, ventilated; nitroprusside 1 µg/kg/min from 300 s for 20 min vs the same patient without it. */
+    async function hf(withSnp: boolean) {
+      const e = rig6({ ageY: 60, weightKg: 80, heightCm: 175, sex: 'M', conditions: [{ id: 'hfref' }] } as never, 'modeled', 7);
+      await runTo(e, 1);
+      send(e, { kind: 'airwayDevice', device: 'ett' });
+      send(e, { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 600, peep: 5, fio2: 0.5 });
+      const rows: { t: number; map: number; sv: number }[] = [];
+      let started = false;
+      await runTo(e, 1500, (u) => {
+        if (withSnp && u >= 300 && !started) { started = true; send(e, { kind: 'infusion', drugId: 'nitroprusside', rate: 1, unit: 'mcg/kg/min' }); }
+        const c = st6(e).hemo.circ;
+        const bs = c.beats.filter((b: { t: number }) => b.t > u - 6);
+        const avg = (k: string) => bs.reduce((a: number, b: Record<string, number>) => a + b[k]!, 0) / Math.max(1, bs.length);
+        rows.push({ t: u, map: avg('map'), sv: avg('sv') });
+      }, 5);
+      return rows;
+    }
+    // R45 (CM amendment, finding 2): the row's sizes are not raised to force it — the missing SV is the failing
+    // ventricle's afterload sensitivity, 7a's gap (research/19 C9).
+    it.fails('SV rises ≥ 8 % while MAP falls ≤ 15 % (Cohn & Franciosa 1977) — measured SV +1.2 %, MAP −12.8 % (hydralazine on the same rig: SV +0.1 %); 7a afterload sensitivity (research/19 C9)', async () => {
+      const i = await hf(true);
+      const c = await hf(false);
+      const w = i.filter((r) => r.t >= 300);
+      const sv = Math.max(...w.map((r) => (100 * (r.sv - c.find((x) => x.t === r.t)!.sv)) / c.find((x) => x.t === r.t)!.sv));
+      const map = Math.min(...w.map((r) => (100 * (r.map - c.find((x) => x.t === r.t)!.map)) / c.find((x) => x.t === r.t)!.map));
+      console.log(`FU-7 T17 CM-06e twin: nitroprusside in HFrEF SV +${sv.toFixed(1)} %, MAP ${map.toFixed(1)} %`);
+      expect(sv).toBeGreaterThanOrEqual(8);
+      expect(map).toBeGreaterThanOrEqual(-15);
+    });
+  });
 });

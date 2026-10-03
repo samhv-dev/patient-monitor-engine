@@ -133,7 +133,12 @@ export const ANAESTHETIC_ROWS: DrugRow[] = [
   {
     id: 'dexmedetomidine', name: 'Dexmedetomidine', cls: 'alpha2', amountUnit: 'mcg', pk: gammaPk(1, true, 900, 7200, 0.5 / 60, 900, 1800),
     elim: { hepatic: 1, t12S: 9000 }, // FU-7 (H9): t½β 2–3 h (M10 ch. 21 Table 21.1)
-    pd: [{ target: 'hr', emax: -0.3, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }],
+    pd: [{ target: 'hr', emax: -0.3, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 },
+      // FU-7 (addendum 24 / DI-60): the BIPHASIC response — a fast load's peripheral α2B vasoconstriction (MAP and SVR
+      // rise for 5–10 min) before the central sympatholysis dominates. EC50 0.35 reference doses = the concentration a
+      // 1 µg/kg load over 10 min passes through early [ENG; T6.3 "SVR +15 % during a fast load"; the row said "not
+      // modelled in v1"]. The LATE fall is FU-4's `symp` row (Requests → FU-4 item 1).
+      { target: 'svr', emax: 0.18, ec50: 0.35 }],
     doses: 'load 1 µg/kg over 10 min, then 0.2–0.7 µg/kg/h', onset: 'peak 15 min after the load; t½ 2–3 h (M10 Table 21.1)',
     ir: '?', src: 'T6.3 (HR −10–20 %, SVR −10–20 % after the biphasic load; the transient rise of a fast load is not modelled in v1)', tag: 'TXT',
   },

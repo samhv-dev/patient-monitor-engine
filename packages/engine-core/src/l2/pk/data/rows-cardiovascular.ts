@@ -80,14 +80,24 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
     pd: [{ target: 'ees', emax: 0.8, ec50: 7, beta: true, catecholamine: true }, { target: 'hr', emax: 0.25, ec50: 10, beta: true, catecholamine: true }, { target: 'svr', emax: -0.3, ec50: 10, beta: true, catecholamine: true }, { target: 'pvr', emax: -0.2, ec50: 10, beta: true, catecholamine: true }],
     syringePerMl: 2000, doses: '2–20 µg/kg/min', onset: 'onset 2 min, offset 2–5 min (t½ 2 min)', ir: '?', src: 'Dobu label (SBP +10–20, HR +5–15); T6.2', tag: 'ENG' },
   { id: 'milrinone', name: 'Milrinone', cls: 'pde3', amountUnit: 'mcg', pk: vaso(0.38, 0.0022, 0.3), elim: { renal: 0.8 },
-    pd: [{ target: 'ees', emax: 0.6, ec50: 0.5 }, { target: 'svr', emax: -0.6, ec50: 0.7, hill: 1.5 }, { target: 'hr', emax: 0.1, ec50: 0.5 }, { target: 'v0Frac', emax: 0.1, ec50: 0.5 }, { target: 'pvr', emax: -0.5, ec50: 0.5 }, { target: 'hpvInhibit', emax: 0.3, ec50: 0.5 }],
+    // FU-7 (addendum 24 / DI-11): ees ec50 0.5 → 0.4 and pvr −0.5 @ 0.5 → −0.6 @ 0.4 [ENG; fit target: label SVR −17/−21/−37 %
+    // at 0.375/0.5/0.75 µg/kg/min and CO +30 % at 0.5; DI-11 measured PVR −18.8 %, CO +9.2 % (bands −20–60 %, +10–45 %)]
+    pd: [{ target: 'ees', emax: 0.6, ec50: 0.4 }, { target: 'svr', emax: -0.6, ec50: 0.7, hill: 1.5 }, { target: 'hr', emax: 0.1, ec50: 0.5 }, { target: 'v0Frac', emax: 0.1, ec50: 0.5 }, { target: 'pvr', emax: -0.6, ec50: 0.4 }, { target: 'hpvInhibit', emax: 0.3, ec50: 0.5 }],
     syringePerMl: 200, doses: 'load 50 µg/kg over 10 min, then 0.375–0.75 µg/kg/min', onset: 't½ 2.3–2.4 h (CKD ×2–3); SVR −17/−21/−37 % at 0.375/0.5/0.75 (label)', ir: '?', src: 'Mil label; T6.2', tag: 'P' },
   { id: 'dopamine', name: 'Dopamine', cls: 'mixedAdrenergic', amountUnit: 'mcg', pk: vaso(0.2, 0.06, 0.35),
     pd: [{ target: 'hr', emax: 0.35, ec50: 8, beta: true, catecholamine: true }, { target: 'ees', emax: 0.4, ec50: 5, beta: true, catecholamine: true }, { target: 'svr', emax: 0.6, ec50: 15, hill: 2, catecholamine: true }],
     syringePerMl: 1600, doses: '2–20 µg/kg/min', onset: 'onset 2 min, offset 5 min', ir: '?', src: 'T6.2 [TXT], Q59', tag: 'TXT' },
   { id: 'nitroglycerin', name: 'Nitroglycerin', cls: 'vasodilator', amountUnit: 'mcg', pk: vaso(0.05, 0.2, 0.5),
-    pd: [{ target: 'v0Frac', emax: 0.25, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'pvr', emax: -0.4, ec50: 1 }, { target: 'hpvInhibit', emax: 1, ec50: 1 }],
+    // FU-7 (addendum 24 / DI-33): v0Frac emax 0.25 → 0.32 [ENG; fit target: label + T6.2 venous capacitance +10–15 % of the
+    // blood volume at 1 µg/kg/min — the preload-dependent RV infarct reads the venous term; DI-33 measured MAP −12.9 %]
+    pd: [{ target: 'v0Frac', emax: 0.32, ec50: 1 }, { target: 'svr', emax: -0.3, ec50: 1 }, { target: 'pvr', emax: -0.4, ec50: 1 }, { target: 'hpvInhibit', emax: 1, ec50: 1 }],
     syringePerMl: 200, doses: 'infusion 10–200 µg/min (≈ 0.15–3 µg/kg/min); bolus 50–100 µg; SL 400 µg', onset: 'onset 1–2 min, offset 5–10 min; venous > arterial', ir: '?', src: 'NTG label; T6.2 (V +10–15 % at 1 µg/kg/min, SVR ×0.85, PVR ×0.8)', tag: 'ENG' },
+  // FU-7 (addendum 24): sodium nitroprusside — the balanced arterial+venous dilator addendum 24 names. Rate-equivalent
+  // Ce as the other vasoactives (decision 4). Cyanide toxicity is NOT modelled in v1 (a note for 7i/Ali).
+  { id: 'nitroprusside', name: 'Sodium nitroprusside', cls: 'vasodilator', amountUnit: 'mcg', pk: vaso(0.05, 0.3, 1.2),
+    pd: [{ target: 'svr', emax: -0.6, ec50: 1 }, { target: 'v0Frac', emax: 0.12, ec50: 1 }, { target: 'pvr', emax: -0.3, ec50: 1 }, { target: 'hpvInhibit', emax: 0.8, ec50: 1 }],
+    syringePerMl: 200, doses: '0.3–3 µg/kg/min (max 10 for < 10 min)', onset: 'onset < 30 s, offset 1–2 min (label)',
+    ir: '?', src: 'SNP label (immediate onset, MAP falls 30–40 % at 1–3 µg/kg/min); T6.2 [TXT]; sizes [ENG]', tag: 'ENG' },
   { id: 'hydralazine', name: 'Hydralazine', cls: 'vasodilator', amountUnit: 'mg', pk: gammaPk(10, false, 900, 14400),
     pd: [{ target: 'svr', emax: -0.4, ec50: 1 }], doses: '5–20 mg IV', onset: 'onset 5–20 min, peak 10–20 min, 2–4 h; reflex tachycardia emerges', ir: '?', src: 'label [TXT]', tag: 'TXT' },
   // --- β-blockers and antiarrhythmics ---
@@ -98,7 +108,9 @@ export const CARDIOVASCULAR_ROWS: DrugRow[] = [
   // unique V1 2.71, V2 0.69 L/kg, Q 0.175 L/kg/min (closed form: λ1 = ln2/2, λ2 = ln2/9 per min) [P-derived];
   // ke0 0.7 [ENG]. HR −10 % per 100 µg/kg/min, Emax −35 % (T6.2) → hr EC50 250 rate-eq.
   { id: 'esmolol', name: 'Esmolol', cls: 'betaBlocker', amountUnit: 'mcg', pk: { kind: 'perKg', conc: 'rateEq', pk: { v1: 2.71, v2: 0.69, v3: 0, cl1: 0.285, cl2: 0.175, cl3: 0, ke0: [0.7] } },
-    pd: [{ target: 'betaBlock', emax: 0.9, ec50: 100 }, { target: 'hr', emax: -0.35, ec50: 250 }, { target: 'ees', emax: -0.2, ec50: 250 }, { target: 'avNode', emax: 0.5, ec50: 150 }], // FU-2 E-FU2-6: AV-nodal block (AF rate control) [ENG]
+    // FU-7 (addendum 24 / DI-07): hr ec50 250 → 150 [label: 0.5 mg/kg over 1 min peaks within 2 min; T6.2 HR −10–20 %;
+    // DI-07 measured −4 bpm]. The betaBlock occupancy entry is unchanged (Task 8 reads it).
+    pd: [{ target: 'betaBlock', emax: 0.9, ec50: 100 }, { target: 'hr', emax: -0.35, ec50: 150 }, { target: 'ees', emax: -0.2, ec50: 250 }, { target: 'avNode', emax: 0.5, ec50: 150 }], // FU-2 E-FU2-6: AV-nodal block (AF rate control) [ENG]
     syringePerMl: 10000, doses: 'load 0.5 mg/kg over 1 min (peri-op 1 mg/kg over 30 s); 50–300 µg/kg/min', onset: 'distribution t½ 2 min, elimination t½ 9 min (label; the PK set reproduces both)', ir: '?', src: 'Esmolol label (CL 285 mL/kg/min, Vss 3.4 L/kg, t½ 2/9 min); T6.2; β occupancy [ENG]', tag: 'ENG' },
   { id: 'labetalol', name: 'Labetalol', cls: 'betaBlocker', amountUnit: 'mg', pk: gammaPk(10, false, 300, 14400),
     pd: [{ target: 'betaBlock', emax: 0.6, ec50: 1 }, { target: 'hr', emax: -0.3, ec50: 1 }, { target: 'ees', emax: -0.2, ec50: 1 }, { target: 'svr', emax: -0.25, ec50: 1 }, { target: 'avNode', emax: 0.4, ec50: 2 }], // FU-2 E-FU2-6 [ENG]

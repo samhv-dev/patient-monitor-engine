@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { LAST_THRESHOLDS } from '../../../src/l2/pk/data/rows-other.ts';
 import { hill } from '../../../src/l2/pk/pd.ts';
 import { give, rig, runTo, vaporiser } from '../../helpers/neuro.ts';
+import { applyPkCommand } from '../../../src/l2/pk/pipeline.ts';
+import type { Command } from '../../../src/types.ts';
 
 /** The largest fractional fall of 7g's HR multiplier over `min` minutes after a bolus. */
 function hrFall(drugId: string, dose: number, unit = 'mg/kg', min = 10): number {
@@ -140,5 +142,65 @@ describe('histamine release (R51 addendum 24)', () => {
   // size or source for it; the engine's DI-42 bands are asserted in test/engine/drug-layer.test.ts.
   it.fails('morphine 10 mg publishes histamine ≥ 0.4 at its peak — measured 0.32 (row emax 0.6 at ec50 1 reference dose, unchanged)', () => {
     expect(peakHist('morphine', 10, 'mg')).toBeGreaterThanOrEqual(0.4);
+  });
+});
+
+/** FU-7 Task 17 (addendum 24): the re-fitted sizes and the new rows, read on 7g's own multipliers. */
+describe('inotrope / vasodilator sizes (R51 addendum 24)', () => {
+  let n = 0;
+  const ev = (event: Record<string, unknown>) => ({ id: `t17-${++n}`, issuedBy: 'test', type: 'applyEvent', event }) as unknown as Command;
+  /** fx.svr every second for `min` minutes after a dexmedetomidine 1 µg/kg load over 10 min. */
+  function dexSvr(min = 20): number[] {
+    const r = rig();
+    applyPkCommand(r.pk, ev({ kind: 'drug', drugId: 'dexmedetomidine', dose: 1, unit: 'mcg/kg', route: 'iv', overS: 600 }), 0);
+    const out: number[] = [];
+    runTo(r, min, () => { out.push(r.pk.fx.svr); });
+    return out;
+  }
+  // R45 (Task 17 UNPROTOTYPED): the plan's α2B entry (+0.18 at 0.35) never outweighs the row's own SVR −0.3 at 1 reference
+  // dose during the load, so there is no net early rise. Sizes as written; DI-60's early item stays open (Q to Ali).
+  it.fails('dexmedetomidine, the α2B arm: a fast load raises SVR early (5–10 min) and the rise then decays (DI-60; T6.3) — measured SVR × 0.994 at most', () => {
+    const svr = dexSvr();
+    const early = Math.max(...svr.slice(300, 600));
+    console.log(`FU-7 T17: dexmedetomidine SVR × early max ${early.toFixed(3)}, at 15 min ${svr[899]!.toFixed(3)}`);
+    expect(early).toBeGreaterThan(1);
+    expect(svr[899]!).toBeLessThan(early);
+  });
+  // Pre-declared as it.fails (Task 17 Step 4), but MET on this tree: the late fall comes from the row's own SVR −0.3 entry
+  // (FU-4's dexmedetomidine `symp` row, Requests → FU-4 item 1, has not landed) — written as `it` (R45).
+  it('dexmedetomidine: SVR is below baseline by 15 min (measured × 0.963; was pre-declared it.fails pending FU-4\'s symp row)', () => {
+    expect(dexSvr()[899]!).toBeLessThan(1);
+  });
+  /** Nitroprusside 1 µg/kg/min for 10 min, then stopped: the SVR reduction at 10 min and 2 min after stopping. */
+  const snp = () => {
+    const r = rig();
+    give(r, 'nitroprusside', 1, 'mcg/kg/min', true);
+    runTo(r, 10);
+    const ss = 1 - r.pk.fx.svr;
+    give(r, 'nitroprusside', 0, 'mcg/kg/min', true);
+    runTo(r, 12);
+    return { ss, left: 1 - r.pk.fx.svr };
+  };
+  it('nitroprusside: after it stops, its SVR effect is ≤ 25 % of the steady effect within 2 min (label: offset 1–2 min)', () => {
+    const x = snp();
+    console.log(`FU-7 T17: nitroprusside SVR −${(100 * x.ss).toFixed(4)} %, 2 min after stopping −${(100 * x.left).toFixed(1)} %`);
+    expect(x.left).toBeLessThanOrEqual(0.25 * x.ss);
+  });
+  // R45: the new row's steady state at 1 µg/kg/min is EXACTLY the band's lower edge (svr emax −0.6 × ½ at ec50 1), which the
+  // infusion approaches from below. Sizes as written (D13 row, [ENG]); the band is not moved.
+  it.fails('nitroprusside 1 µg/kg/min lowers SVR 30–50 % — measured −29.9999 % at 10 min (the steady state is the band edge −30 %)', () => {
+    const x = snp();
+    expect(x.ss).toBeGreaterThanOrEqual(0.3);
+    expect(x.ss).toBeLessThanOrEqual(0.5);
+  });
+  // R45: with the plan's ec50 150 the bolus's rate-equivalent Ce gives a 6.5 % direct fall (−4.2 % at ec50 250).
+  it.fails('esmolol 0.5 mg/kg: its direct HR multiplier falls 10–20 % at the peak (DI-07\'s band; T6.2) — measured 6.5 % (ec50 150; 4.2 % at 250)', () => {
+    const r = rig();
+    give(r, 'esmolol', 500, 'mcg/kg');
+    let lo = 1;
+    runTo(r, 5, () => { lo = Math.min(lo, r.pk.fx.hr); });
+    console.log(`FU-7 T17: esmolol 0.5 mg/kg fx.hr min ${lo.toFixed(3)}`);
+    expect(1 - lo).toBeGreaterThanOrEqual(0.1);
+    expect(1 - lo).toBeLessThanOrEqual(0.2);
   });
 });

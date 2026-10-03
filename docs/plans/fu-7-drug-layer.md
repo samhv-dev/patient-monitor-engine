@@ -5378,7 +5378,7 @@ whole-engine arms shock after **40 s** of AF, inside the 5-minute guard.)
 - [x] **Step 7 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/device`
 (FU-5's tests must stay green) and `npx -y pnpm@9.15.9 run audit:drugs DI-13a DI-45`. Expected: DI-13a **MI → PL**
 (amiodarone now reaches the outcome) and DI-45 **MI → PL** (the bradycardia exists).
-- [ ] **Step 7a — ROSC end to end, and the DV guard cells (DV amendment (f), research/20 §4 finding 5 and §7).**
+- [x] **Step 7a — ROSC end to end, and the DV guard cells (DV amendment (f), research/20 §4 finding 5 and §7).**
 
   *Why.* The physiology already does half the work:
   - a forced organised rhythm after 8 min of untreated VF re-arrests within 20 s (DV-01c, myocardial state 0.02);
@@ -5440,7 +5440,7 @@ whole-engine arms shock after **40 s** of AF, inside the 5-minute guard.)
      Both penalties are kept, because the bands are upper bounds and the draw is what the monitor shows. They must never
      be re-fitted against the drawn share alone. The gate note §5 lists drawn and effective for each arm.
   6. The rigs V2 (IABP) and V3 (tamponade CPR) are excluded from any CoPP fitting (Step 4 note).
-- [ ] **Step 8 — commit.** `feat(l3): shock success depends on drugs, potassium, pH, CPP, temperature, rhythm and energy, and the arrest clock; biphasic base termination (R51 addendum 23, research/20, E-FU7-6)`, push.
+- [x] **Step 8 — commit.** `feat(l3): shock success depends on drugs, potassium, pH, CPP, temperature, rhythm and energy, and the arrest clock; biphasic base termination (R51 addendum 23, research/20, E-FU7-6)`, push.
 
 **Prototype — DV amendment (2026-09-29, throwaway worktree on `origin/main` 2c49d87, removed after).**
 - Steps 0–5 were applied as written above, plus the Step 3 `rhythmId` line.
@@ -6202,13 +6202,13 @@ unchanged (FU-6's bronchodilation — a regression guard: the constrictor input 
   −10–20 %. Its HR/MAP sizes belong to FU-4's `symp` path (Requests → FU-4 item 1); what FU-7 adds is the α2B
   VASOCONSTRICTOR arm of a fast load, which is a peripheral effect and therefore 7g's.
 
-- [ ] **Step 1 — measure first, then fit (the order matters).** With Tasks 8–9 applied, run
+- [x] **Step 1 — measure first, then fit (the order matters).** With Tasks 8–9 applied, run
 `npx -y pnpm@9.15.9 run audit:drugs DI-57 DI-12 DI-32 DI-11 DI-33 DI-07 DI-60 DI-40` and write the numbers into the gate
 note as the "after addenda 20–21" column; for the volatile bronchodilation item also run FU-6's `X-bs-sevo` scenario
 (`npx -y pnpm@9.15.9 run audit:respiratory X-bs-sevo`) and record `rAw` and Ppeak before/after. Fit ONLY the rows still
 outside their bands. Every change below is
 `[ENG]` with its fit target in the comment; none changes a test band.
-- [ ] **Step 1a — dobutamine is measured on the MERGED tree before anything is fitted (CM amendment, finding 1).** The
+- [x] **Step 1a — dobutamine is measured on the MERGED tree before anything is fitted (CM amendment, finding 1).** The
 DI cells above are pre-FU-4. Run the CM audit's HFrEF inotrope cell as well:
 ```
 cd research/19-audit-scripts
@@ -6221,7 +6221,7 @@ row of Step 2 is applied and the task fails if `coPct` has left 20–45 (an over
 **If `coPct` is below 20**, apply Step 2's dobutamine bullet as written and report both numbers. Either way the
 `it.fails` in `test/engine/pk-acceptance-pd.test.ts` is re-measured in Step 4 on its OWN rig (a healthy patient, not
 HFrEF) and flipped only if that rig meets +20 % — CM-06d does not license the flip.
-- [ ] **Step 2 — the sizes (apply only what Step 1 requires).**
+- [x] **Step 2 — the sizes (apply only what Step 1 requires).**
   - **dobutamine (ONLY if Step 1a measured the HFrEF CO rise below 20 %; skipped entirely at +34.9 %):**
     `{ target: 'ees', emax: 0.8, ec50: 7, beta: true, catecholamine: true }` → `ec50: 5` (the `beta`/`catecholamine`
     flags are on the row on the merged main — `rows-cardiovascular.ts:54` at 66e3052 — and are NOT removed; the earlier
@@ -6285,14 +6285,14 @@ HFrEF) and flipped only if that rig meets +20 % — CM-06d does not license the 
       // FU-7 (FU-6 seam item 5; D23): volatile bronchodilation re-fitted — EC50 <value> MAC [ENG; fit target: airway
       // resistance −20–40 % at 1 MAC in FU-6's bronchospasm rig, with FU-6's "Ppeak −30 % at 0.79 MAC" case kept green]
 ```
-- [ ] **Step 3 — ephedrine's EC50, only if Step 1 says so.** If the repeat ratio is still below 0.4:
+- [x] **Step 3 — ephedrine's EC50, only if Step 1 says so.** If the repeat ratio is still below 0.4:
 `{ target: 'sympDrive', emax: 1.6, ec50: 1 }` → `ec50: 2.5` with
 ```ts
     // FU-7 (addendum 24 / DI-57): the EC50 is several reference doses, so the TACHYPHYLAXIS factor (0.7 per repeat, T6.2)
     // sets the repeat response instead of the Hill's saturation [ENG; fit target: repeat/first 0.4–0.95, prototype 0.54].
 ```
 and re-measure `pk-acceptance-pd.test.ts`'s "third dose ≤ 0.6 × the first" (it passed at 0.49 before; it must still pass).
-- [ ] **Step 4 — the tests (review F15: assert only what FU-7 can produce).** In `interactions-misc.test.ts`:
+- [x] **Step 4 — the tests (review F15: assert only what FU-7 can produce).** In `interactions-misc.test.ts`:
 (1) **the dexmedetomidine α2B arm ONLY** — a fast 1 µg/kg load raises SVR early (> 0 within 5–10 min) and that rise
 DECAYS as the concentration passes its EC50; the LATE fall is FU-4's `symp` row (Requests → FU-4 item 1), so it is
 written as a pre-declared `it.fails` titled with its measured number and the FU-4 request named ("… the crossing to a
@@ -6314,7 +6314,7 @@ lands short too the case is written as **`it.fails` with its measured number in 
 gate note §5 states both numbers side by side (hydralazine +3.5 %, nitroprusside <measured>) so the orchestrator can see
 whether the balanced dilator behaves better than the arteriolar one on the same failing ventricle; that comparison is
 the finding's deliverable, not a pass.
-- [ ] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-07 DI-11 DI-12 DI-32 DI-33 DI-57 DI-59 DI-60 DI-09 DI-10 DI-40`.
+- [x] **Step 5 — the cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-07 DI-11 DI-12 DI-32 DI-33 DI-57 DI-59 DI-60 DI-09 DI-10 DI-40`.
 Expected: DI-07 **TW → PL**, DI-11/12/32 improved (PL if 7a's venous response allows — otherwise reported with numbers),
 DI-33 **TW → PL**, DI-57 **PL**, DI-60 **MI → PL** on its early item (its HR item stays FU-4's), DI-09/10 unchanged,
 DI-40 (FU-6's cell) still PL after the volatile re-fit — a regression guard on the relief path.
@@ -6325,7 +6325,7 @@ overshoot fails the task); **CM-06e** re-measured and reported beside the new ni
 in band after the esmolol EC50 refit; **CM-15b** (0.5 mg/kg in AF 150, TW today) re-measured — and it is only
 interpretable once finding 4's AF defect has landed, so if FU-8 Part A is not on the tree the cell is reported as
 BLOCKED rather than graded (Task 0 Step 6b). Every before/after pair goes to the gate note §5.
-- [ ] **Step 6 — commit.** `fix(7g): re-fit the inotrope, vasodilator and tachyphylaxis sizes to their labels (R51 addendum 24)`, push.
+- [x] **Step 6 — commit.** `fix(7g): re-fit the inotrope, vasodilator and tachyphylaxis sizes to their labels (R51 addendum 24)`, push.
 
 ---
 
