@@ -561,7 +561,7 @@ changes elsewhere (the 4 807 → 4 900 mL blood volume); no verdict moves except
 
 **Files:** none changed (the plan is committed in Step 2).
 
-- [ ] **Step 1 — the worktree (R25: never the shared checkout).** From `projects/patient-monitor-engine/repo`:
+- [x] **Step 1 — the worktree (R25: never the shared checkout).** From `projects/patient-monitor-engine/repo`:
 
 ```
 git fetch origin
@@ -570,14 +570,14 @@ git worktree add -b fu-9-blood-fluids ../scratch/wt-fu-9 origin/main
 cd ../scratch/wt-fu-9 && npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 
-- [ ] **Step 2 — commit the plan** (it is untracked in the shared checkout): copy
+- [x] **Step 2 — commit the plan** (it is untracked in the shared checkout): copy
   `projects/patient-monitor-engine/repo/docs/plans/fu-9-blood-fluids.md` to the worktree's `docs/plans/`, then
 
 ```
 git add docs/plans/fu-9-blood-fluids.md && git commit -m "docs(plan): FU-9 blood, fluids and acid–base integration" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push -u origin fu-9-blood-fluids
 ```
 
-- [ ] **Step 3 — the runners and the before-numbers.** The runners live outside the repo
+- [x] **Step 3 — the runners and the before-numbers.** The runners live outside the repo
   (`projects/patient-monitor-engine/research/{22,13,21}-audit-scripts/`):
 
 ```
@@ -599,14 +599,14 @@ cd ../sp && PME_ENGINE=<worktree>/packages/engine-core/src/index.ts SP_OUT=out/b
   BF-22b AG −0.16; BF-29b SvO₂ 77.8; RH verdicts {PL 23, WR 12, TW 11, NE 8, TS 7, MI 1} with RH-01a 0.35, RH-03a no
   recovery bin, RH-06a IAP 15 0 %, RH-08a BV −2, RH-16 HBF +5.6 %; SP-08a–e all 0 (urine 22.2 vs 22.2 mL/h). A different
   number means main moved after this plan was written: record it in the gate note, do not tune.
-- [ ] **Step 4 — the physiology audit before, and its chaos envelope.** `PME_AUDIT_OUT=<scratchpad>/fu-9-blood-fluids/audit-before
+- [x] **Step 4 — the physiology audit before, and its chaos envelope.** `PME_AUDIT_OUT=<scratchpad>/fu-9-blood-fluids/audit-before
   npx -y pnpm@9.15.9 run audit:physiology > <scratchpad>/fu-9-blood-fluids/audit-before.md` (≈ 10 min). Expected (main
   `2473f0b`): B2/B7 PEA 830 s, B6 1130 s, B9 760 s, C1 no arrest (first MAP < 30 at 1000 s), C4 645 s, D0 1775 s, D1 720 s, D2 1350 s, E1/E2 665 s, F2 295 s, F4 2785 s, G2b 65 s, G3 645 s, G3b 525 s, I1 910 s, K-ptx 670 s; propofol matrix healthy −23 %, 80 y HTN −21 %, AS + CAD −21 %, HFrEF −21 %, septic pre-dose CO 5.22. Then the perturbation ensemble (R5; R50 F5) in a THROWAWAY copy of the worktree
   (`git worktree add --detach <scratchpad>/fu-9-blood-fluids/pert origin/main`, never this branch): for each δ in
   ±1e-5, ±1e-4, ±3.1476e-4, ±1e-3 mmHg, make `paco2SetPoint`'s last line `return Math.min(paco2Rest, winterPaco2(hco3)) + (δ);`
   and run `PME_ENGINE=<pert>/packages/engine-core/src/index.ts … audit:physiology D0-pe D2-pe-peep15 K-ptx`. Record the
   envelope (min–max arrest time per row) in the gate note. Measured by the fixer on `2473f0b`: D0 1770–1775 s, D2 1285–1355 s, K-ptx 665–685 s (δ = ±1e-5 … ±1e-3 mmHg; B2/B7, B6, I1 and C1 do not move under any δ).
-- [ ] **Step 5 — suites green on the base.** `npx -y pnpm@9.15.9 -r typecheck` and `CI=1 PME_TEST_SET=fast npx -y
+- [x] **Step 5 — suites green on the base.** `npx -y pnpm@9.15.9 -r typecheck` and `CI=1 PME_TEST_SET=fast npx -y
   pnpm@9.15.9 --filter @pme/engine-core exec vitest run` → pass. (On macOS `pk-longrun` in slow-a reads 2.5065 vs 2.5 ±
   0.005 on `2473f0b` — G-FU4's known macOS red; CI's Linux passes it. Not FU-9's.)
 
@@ -624,7 +624,7 @@ to at the FU-4 gate; FU-8's `fu8-*` files also join slow-a. Per-file times of `P
 serial): slow-a 1 026 s, slow-b 1 591 s. Decision D19. slow-c takes the `fu9-*` files and two slow-b files by time
 (pk-acceptance-pd 213 s, endo-acceptance 178 s). The prototype's slow-c ran in 868 s serial here.
 
-- [ ] **Step 1 — the config.**
+- [x] **Step 1 — the config.**
 
 In `packages/engine-core/vite.config.ts`, find:
 
@@ -716,7 +716,7 @@ replace with:
 ```
 
 
-- [ ] **Step 2 — the disjointness gate, locally** (the same commands the build job runs):
+- [x] **Step 2 — the disjointness gate, locally** (the same commands the build job runs):
 
 ```
 cd packages/engine-core
@@ -726,8 +726,8 @@ sort -u /tmp/fu9-slow-a.txt /tmp/fu9-slow-b.txt /tmp/fu9-slow-c.txt | diff /tmp/
 ```
 
   Expected on `2473f0b`: slow 55, slow-a 10, slow-b 43, slow-c 2 (after all FU-9 tasks: slow 66, slow-c 13).
-- [ ] **Step 3 — run slow-c once** (`CI=1 PME_TEST_SET=slow-c … vitest run`) → pass (the two moved files).
-- [ ] **Commit and push.**
+- [x] **Step 3 — run slow-c once** (`CI=1 PME_TEST_SET=slow-c … vitest run`) → pass (the two moved files).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core/vite.config.ts .github/workflows/ci.yml && git commit -m "ci: a third slow group slow-c with a printed disjointness gate (FU-9 CI amendment 5)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -758,7 +758,7 @@ draft's `it.fails` is now an `it`); GA hour-2 urine 0.57; after class III + 2 L,
 under GA; GA at demand 0.85 → 0.60 (0.49 at demand 1). BF-12 +7.08 (first draft) → +6.95 (PL) (R4). **FU-4 check:**
 `clinical-suite`, `circ-lowflow-arrest`, `organs-renal`, `organs-soak` pass; `audit:physiology` — see D13.
 
-- [ ] **Step 1 — the tests (they fail: no `expansionFactor`, no `demandRel`).**
+- [x] **Step 1 — the tests (they fail: no `expansionFactor`, no `demandRel`).**
 
 Create `packages/engine-core/test/helpers/fu9.ts`:
 
@@ -963,10 +963,10 @@ describe('FU-9 H1: an anaesthetised kidney is not oliguric at a normal MAP (rese
 ```
 
 
-- [ ] **Step 2 — run them; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-expansion.test.ts test/engine/fu9-kinetics.test.ts`
+- [x] **Step 2 — run them; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-expansion.test.ts test/engine/fu9-kinetics.test.ts`
   → the unit file fails to import `expansionFactor`; the engine file reads awake 0.52 / GA 0.53, class III − GA 0.00,
   RBC +0.55, GA hour-2 urine 0.35, no recovery bin ≥ 0.5.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/renal/params.ts`, find:
 
@@ -1254,12 +1254,12 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/l2/blood test/engine/fu9-kinetics.test.ts` → pass
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/l2/blood test/engine/fu9-kinetics.test.ts` → pass
   (kinetics: 5 `it` + 1 `it.fails`). Then `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/organs-renal.test.ts test/engine/organs-soak.test.ts
   test/engine/organs-curves.test.ts` → pass.
-- [ ] **Step 5 — BF and RH runners:** `BF-02 BF-04 BF-01 BF-12 BF-14 BF-20b BF-21` (A0 Step 3's command, `BF_OUT=out/<task>.json`) and `RH-01 RH-03 RH-17 RH-26`
+- [x] **Step 5 — BF and RH runners:** `BF-02 BF-04 BF-01 BF-12 BF-14 BF-20b BF-21` (A0 Step 3's command, `BF_OUT=out/<task>.json`) and `RH-01 RH-03 RH-17 RH-26`
   (A0 Step 3's RH command, `RH_OUT=out/<task>.json`) → the "Prototype results" rows for these cells.
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7d): the kidney excretes an expansion and reads the anaesthetised output against demand (FU-9 F1, H1)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -1278,7 +1278,7 @@ reaches 3.0 — the regional supply-dependence term, a lactate device, was subtr
 **Prototype numbers:** SvO₂ 77.8 → **55.8 %** (band 30–65), lactate unchanged. **FU-4 check:** 7c's SvO₂ is read only
 by the lab panel and the truth tree.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-oxygen.test.ts`:
 
@@ -1327,9 +1327,9 @@ describe('FU-9 F3: SvO2 falls with cardiac output in haemorrhage (Rivers 2001; V
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-oxygen.test.ts test/engine/fu9-oxygen.test.ts` → the unit test
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-oxygen.test.ts test/engine/fu9-oxygen.test.ts` → the unit test
   reads VO₂ 120 (not 245) at CO 60 %; the engine test reads SvO₂ 77.8 %.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/oxygen.ts`, find:
 
@@ -1385,10 +1385,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/engine/fu9-oxygen.test.ts test/engine/blood-oxygen.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/engine/fu9-oxygen.test.ts test/engine/blood-oxygen.test.ts
   test/engine/blood-sanity-haem.test.ts` → pass (17a class III lactate 3–5 at 30 min unchanged).
-- [ ] **Step 5 — BF runner:** `BF-29a BF-29b BF-18b BF-19` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-29a BF-29b BF-18b BF-19` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "fix(7c): VO2 is supply-dependent only below DO2crit; the regional term makes lactate (FU-9 F3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -1418,7 +1418,7 @@ D3). Unit: SID per mmol citrate 3 − 2·K_CIT; every product row 0–30 mEq/L; 
 10 FFP over 40 min → citrate 0.39 mmol/L, iCa 1.06, BE +4.3. **FU-4 check:** the arrest this task removes is BF-05d's
 (a citrate artefact); `blood-sanity-haem` (17a, K ≥ 5.5, iCa ≤ 1.12) passes.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-citrate.test.ts`:
 
@@ -1553,10 +1553,10 @@ replace with:
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-citrate.test.ts test/l2/blood/core.test.ts test/engine/fu9-transfusion.test.ts`
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-citrate.test.ts test/l2/blood/core.test.ts test/engine/fu9-transfusion.test.ts`
   → `CITRATE_CHARGE` missing; in `core.test.ts` the new `it.fails` is RED before Step 3 because on main the rule still
   holds (1.076, margin 0.007) — pre-declared; the engine test reads iCa 0.30 and an arrest.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/solutes.ts`, find:
 
@@ -1729,10 +1729,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/engine/fu9-transfusion.test.ts test/engine/blood-sanity-haem.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/engine/fu9-transfusion.test.ts test/engine/blood-sanity-haem.test.ts
   test/engine/blood-sanity-acid.test.ts test/engine/blood-hyperk.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-05 BF-01 BF-13 BF-14` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-05 BF-01 BF-13 BF-14` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "fix(7c): citrate in the SID net of its Ca complex; electroneutral sourced blood products (FU-9 F5, E-FU9-1)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -1755,7 +1755,7 @@ anaphylaxis and burns too).
 and PaO₂ ↓" is not met (+0.87 vs +1.85 mL/kg; PaO₂ +11 vs +5) → `it.fails` with those numbers (PaO₂ +12 in sepsis vs +6 healthy on the review's
 re-measure of the first draft — R50 F11; Open question 3). **FU-4 check:** see D13.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-leak.test.ts`:
 
@@ -1834,9 +1834,9 @@ describe('FU-9 F4: a septic leak makes lung water at a normal PAWP (Sakka 2002; 
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-leak.test.ts test/engine/fu9-leak.test.ts` → `leakSigma` missing;
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-leak.test.ts test/engine/fu9-leak.test.ts` → `leakSigma` missing;
   engine: σ stays 0.9, ΔEVLWI 0.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/fluids.ts`, find:
 
@@ -1921,10 +1921,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/endo test/engine/fu9-leak.test.ts test/engine/endo-circ-acceptance.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/endo test/engine/fu9-leak.test.ts test/engine/endo-circ-acceptance.test.ts
   test/engine/endo-acceptance.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-20a BF-20b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-20a BF-20b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7e,7c): a capillary leak lowers the protein reflection coefficient with Kf — septic lung water (FU-9 F4)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -1948,7 +1948,7 @@ dilution lowers it ≈ 4. Decision D5 (R2: scaled Nitta; R50 F8: the calibration
 25.2 (iso-oncotic, > 0.95 × 22.35); profile albumin 20: AG −4.9 (band −6.5 to −3.5). **FU-4 check:** every
 normal-albumin patient is bit-identical.
 
-- [ ] **Step 1 — the test.**
+- [x] **Step 1 — the test.**
 
 Create `packages/engine-core/test/l2/blood/fu9-albumin.test.ts`:
 
@@ -1995,8 +1995,8 @@ describe('FU-9 F8: hypoalbuminaemia (Weil 1979; Figge 1998; Fencl 2000)', () => 
 ```
 
 
-- [ ] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-albumin.test.ts` → `GLOBULIN_GL` missing (COP 8.7 at albumin 20).
-- [ ] **Step 3 — implement.**
+- [x] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-albumin.test.ts` → `GLOBULIN_GL` missing (COP 8.7 at albumin 20).
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/fluids.ts`, find:
 
@@ -2188,10 +2188,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/organs test/engine/blood-sanity-acid.test.ts` → pass (`fluids.test.ts`'s
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/organs test/engine/blood-sanity-acid.test.ts` → pass (`fluids.test.ts`'s
   22.4 at the normal albumin holds).
-- [ ] **Step 5 — BF runner:** `BF-22 BF-03 BF-18 BF-19 BF-21` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-22 BF-03 BF-18 BF-19 BF-21` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "fix(7c): COP by the scaled Nitta form; a profile albumin keeps its weak-acid deficit (FU-9 F8)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -2215,7 +2215,7 @@ R50 F7: what the profile-K reference does; R8: Open question 5).
 20 mmol lost over 1 h → K 4.100 two hours later (rest 4.200), cells −18.6 mmol. **FU-4 check:** `blood-k-rhythm`,
 `blood-hyperk`, `clinical-suite` pass.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-potassium.test.ts`:
 
@@ -2286,9 +2286,9 @@ describe('FU-9 F6: kaliuresis (Young 1988; Good & Wright 1979; UK Renal Associat
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-potassium.test.ts test/engine/fu9-potassium.test.ts`
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-potassium.test.ts test/engine/fu9-potassium.test.ts`
   → the unit test's K returns to 4.200 (cells refill); the engine test reads ΔK −0.002.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/core.ts`, find:
 
@@ -2412,10 +2412,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/organs test/l2/renal test/engine/fu9-potassium.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/organs test/l2/renal test/engine/fu9-potassium.test.ts
   test/engine/blood-hyperk.test.ts test/engine/blood-k-rhythm.test.ts test/engine/organs-soak.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-08 BF-05b BF-17b` (A0 Step 3's command, `BF_OUT=out/<task>.json`); `RH-07 RH-09` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-08 BF-05b BF-17b` (A0 Step 3's command, `BF_OUT=out/<task>.json`); `RH-07 RH-09` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "fix(7d,7c): kaliuresis follows plasma K and distal flow; the cellular K pool is finite (FU-9 F6)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -2440,7 +2440,7 @@ F6: the deadband and ONE constant).
 0.07), 24.40045 (7c at t = 0) → exactly 40, a compensated retainer (45, 26.15) → 45. **FU-4 check:** with the deadband a
 resting patient's set point is exactly unchanged, so A7 moves no `audit:physiology` row (D13).
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/neuro/fu9-alkalosis.test.ts`:
 
@@ -2486,9 +2486,9 @@ describe('FU-9 F9: respiratory compensation of metabolic alkalosis (Javaheri 198
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-alkalosis.test.ts test/engine/fu9-alkalosis.test.ts` →
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-alkalosis.test.ts test/engine/fu9-alkalosis.test.ts` →
   `ALK_PACO2_MAX` missing; engine PaCO₂ −0.1.
-- [ ] **Step 3 — implement** (merge origin/main first; if FU-6 has landed, the last block's find line carries its
+- [x] **Step 3 — implement** (merge origin/main first; if FU-6 has landed, the last block's find line carries its
   `setShift` — make the same change on the merged line given above).
 
 In `packages/engine-core/src/l2/blood/params.ts`, find:
@@ -2585,10 +2585,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/l2/blood test/engine/fu9-alkalosis.test.ts test/engine/neuro-spont.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/l2/blood test/engine/fu9-alkalosis.test.ts test/engine/neuro-spont.test.ts
   test/engine/circ-hypoxic-arrest.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-15b BF-16 BF-17` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-15b BF-16 BF-17` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7f): the chemoreflex set point rises in metabolic alkalosis, on 7c's reference (FU-9 F9)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -2612,7 +2612,7 @@ Decision D8.
 (Open question 8). Unit: −15 mOsm/kg → +2.15 mL in 30 min, ICP +0.18; a rise adds nothing. **FU-4 check:**
 `organs-tbi-treatment` (mannitol/HTS) passes.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/brain/fu9-osmolality.test.ts`:
 
@@ -2684,9 +2684,9 @@ describe('FU-9 F11: hypo-osmolar brain swelling (Hahn 2006; Adrogué & Madias 20
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/fu9-osmolality.test.ts test/engine/fu9-osmolality.test.ts` →
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain/fu9-osmolality.test.ts test/engine/fu9-osmolality.test.ts` →
   `OSM_WATER_ML_PER_MOSM` missing; engine: brain water 0, ΔICP +0.07.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/brain/params.ts`, find:
 
@@ -2844,10 +2844,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain test/l2/organs test/engine/fu9-osmolality.test.ts test/engine/organs-tbi.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/brain test/l2/organs test/engine/fu9-osmolality.test.ts test/engine/organs-tbi.test.ts
   test/engine/organs-tbi-treatment.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-11 BF-12` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-11 BF-12` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7d): hypo-osmolar brain swelling from 7c plasma osmolality (FU-9 F11)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -2875,7 +2875,7 @@ circulation half is H5, handed). Check 20 with `EABV_EXP` 0.35: 0.112 / 0.259 / 
 under GA: urine −12.5 % (≥ −5 %: `it`); −30 % or more → `it.fails`; SP-08a CO −10–30 % → `it.fails` (0.0 %, 7a's).
 RH-01c FF under GA 0.48 → 0.26 (PL); RH-06a IAP 15 −14 %.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/renal/fu9-filtration.test.ts`:
 
@@ -2986,10 +2986,10 @@ replace with:
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-filtration.test.ts test/l2/renal/model.test.ts test/engine/fu9-iap.test.ts`
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-filtration.test.ts test/l2/renal/model.test.ts test/engine/fu9-iap.test.ts`
   → low-flow GFR 125 and FF 0.48; IAP leaves the urine unchanged; the re-specified shock-start test already passes on
   main (GFR 0 < 25).
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/renal/params.ts`, find:
 
@@ -3203,12 +3203,12 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/engine/fu9-iap.test.ts test/engine/organs-renal.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/engine/fu9-iap.test.ts test/engine/organs-renal.test.ts
   test/engine/organs-curves.test.ts test/engine/fidelity-lowflow.test.ts` → pass (model.test.ts 9/9, check 20 on the
   re-fitted exponent; fidelity-lowflow's flipped `it`).
-- [ ] **Step 5 — RH and SP runners:** `RH-01c RH-02 RH-05 RH-06 RH-26 RH-27` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`); SP-08 (research/21's runner, the same
+- [x] **Step 5 — RH and SP runners:** `RH-01c RH-02 RH-05 RH-06 RH-26 RH-27` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`); SP-08 (research/21's runner, the same
   pattern with `SP_OUT`).
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7d): filtration equilibrium; natriuresis on the renal perfusion pressure (FU-9 H2, H4, E-FU9-4)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -3228,7 +3228,7 @@ restores GFR (aki 0.5 → 125; aki 1 → 51), and RBF RISES. Decision D15.
 **Prototype numbers:** aki 0.5 GFR 75, RBF 917; aki 1 GFR 22, RBF 865 (unit). RH-10a CKD-proxy rocuronium ×1.14 → ×1.40
 (PL); RH-09b's K excess at 3 h still ≈ health (7c returns K to its set point — TW, recorded).
 
-- [ ] **Step 1 — the test.**
+- [x] **Step 1 — the test.**
 
 Create `packages/engine-core/test/l2/renal/fu9-aki.test.ts`:
 
@@ -3252,8 +3252,8 @@ describe('FU-9 H6: `aki` severity is nephron loss (research/13 H6)', () => {
 ```
 
 
-- [ ] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-aki.test.ts` → aki 0.5 GFR 125.
-- [ ] **Step 3 — implement.**
+- [x] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-aki.test.ts` → aki 0.5 GFR 125.
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/renal/params.ts`, find:
 
@@ -3342,9 +3342,9 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/l2/pk test/engine/organs-renal.test.ts` → pass.
-- [ ] **Step 5 — RH runner:** `RH-09 RH-10 RH-11` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/l2/pk test/engine/organs-renal.test.ts` → pass.
+- [x] **Step 5 — RH runner:** `RH-09 RH-10 RH-11` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7d): the aki condition is nephron loss with afferent tone (FU-9 H6)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -3363,7 +3363,7 @@ git add -A packages/engine-core && git commit -m "feat(7d): the aki condition is
 
 **Prototype numbers:** unit 33 °C → × 1.4 of the excreted fraction; RH-20c +29 % (PL).
 
-- [ ] **Step 1 — the test.**
+- [x] **Step 1 — the test.**
 
 Create `packages/engine-core/test/l2/renal/fu9-cold.test.ts`:
 
@@ -3383,8 +3383,8 @@ describe('FU-9 H10: cold diuresis (Polderman 2009)', () => {
 ```
 
 
-- [ ] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-cold.test.ts` → `coldDiuresis` missing.
-- [ ] **Step 3 — implement.**
+- [x] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal/fu9-cold.test.ts` → `coldDiuresis` missing.
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/renal/params.ts`, find:
 
@@ -3475,9 +3475,9 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/engine/thermal-warmer.test.ts` → pass.
-- [ ] **Step 5 — RH runner:** `RH-20` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/renal test/l2/organs test/engine/thermal-warmer.test.ts` → pass.
+- [x] **Step 5 — RH runner:** `RH-20` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7d): cold diuresis below 35 °C (FU-9 H10)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -3500,7 +3500,7 @@ from CO² alone). Decision D17 (A3's citrate clearance reads CO/CO₀, not `hbfR
 **Prototype numbers:** unit — factor 1 at rest, × 0.8 at 1 MAC, × 0.6 in class III, × 0.9 at CVP 10, × 0.7 at IAP 20;
 7c hbfRel = 0.8 × 0.8 = 0.64. RH-16 −15.3 % (PL), RH-06d −26 % (PL), RH-02c HBF/CO 0.68 (PL).
 
-- [ ] **Step 1 — the test.**
+- [x] **Step 1 — the test.**
 
 Create `packages/engine-core/test/l2/blood/fu9-hepatic.test.ts`:
 
@@ -3566,8 +3566,8 @@ replace with:
 ```
 
 
-- [ ] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-hepatic.test.ts` → `hbfRel` 0.64 at CO 0.8 whatever the factor.
-- [ ] **Step 3 — implement.**
+- [x] **Step 2 — run; it fails.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-hepatic.test.ts` → `hbfRel` 0.64 at CO 0.8 whatever the factor.
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/liver/liver.ts`, find:
 
@@ -3689,10 +3689,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/liver test/l2/organs test/l2/pk test/engine/pk-acceptance-pk.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/liver test/l2/organs test/l2/pk test/engine/pk-acceptance-pk.test.ts
   test/engine/blood-sanity-haem.test.ts test/engine/neuro-engine.test.ts` → pass (the flipped nadir `it`).
-- [ ] **Step 5 — RH runner:** `RH-02c RH-06d RH-12 RH-13 RH-15 RH-16 RH-20` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — RH runner:** `RH-02c RH-06d RH-12 RH-13 RH-15 RH-16 RH-20` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7c,7d): hepatic flow is CO/CO0 x the splanchnic and outflow factor (FU-9 H3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -3717,7 +3717,7 @@ git add -A packages/engine-core && git commit -m "feat(7c,7d): hepatic flow is C
 question 12); unit — 15 min osm +8.5, Na −7.6, plasma +116 mL, 0.40–0.50 left at 2 h without 7d. RH-08a BV peak +114
 (PL), RH-08b extra urine 725 mL in 3 h (PL). **FU-4 check:** `organs-tbi-treatment` mannitol −25 % holds.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-mannitol.test.ts`:
 
@@ -3787,9 +3787,9 @@ describe('FU-9 H8: mannitol is a plasma osmole (research/13 RH-08)', { timeout: 
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-mannitol.test.ts test/engine/fu9-mannitol.test.ts` → the
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-mannitol.test.ts test/engine/fu9-mannitol.test.ts` → the
   engine test reads BV −2, Na +0.1, osmolality +0.2.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/blood/solutes.ts`, find:
 
@@ -4164,10 +4164,10 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/renal test/l2/organs test/l2/brain test/engine/fu9-mannitol.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/renal test/l2/organs test/l2/brain test/engine/fu9-mannitol.test.ts
   test/engine/organs-tbi-treatment.test.ts` → pass.
-- [ ] **Step 5 — RH runner:** `RH-08 RH-23` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — RH runner:** `RH-08 RH-23` (A0 Step 3's RH command, `RH_OUT=out/<task>.json`).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7c,7d): mannitol is a plasma osmole in 7c, cleared by the kidney (FU-9 H8)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -4553,10 +4553,10 @@ git add -A packages/engine-core && git commit -m "feat(7b-profile,7c): COPD reta
 
 ### Task C0: Part C base — FU-8 A13 merged
 
-- [ ] **Step 1.** `git fetch origin && git merge origin/main`; `git ls-files packages/engine-core/src/l2/body-size.ts` must
+- [x] **Step 1.** `git fetch origin && git merge origin/main`; `git ls-files packages/engine-core/src/l2/body-size.ts` must
   print the file (FU-8 A13), and `git grep -n "export function sizeWeightKg" -- packages/engine-core/src/l2/body-size.ts`
   one line. If not, stop Part C.
-- [ ] **Step 2 — Part C anchors** (each exactly one line):
+- [x] **Step 2 — Part C anchors** (each exactly one line):
 
 ```
 git grep -n -F "  let bvKg = female ? b.bvF : b.bvM;" -- packages/engine-core/src/l2/blood/params.ts
@@ -4564,7 +4564,7 @@ git grep -n -F " * Patient scaling. Blood volume by band (tables §1.1) and Lemm
 git grep -n -F "toBeCloseTo(4807 + 11356, -1)" -- packages/engine-core/test/l2/blood/core.test.ts
 ```
 
-- [ ] **Step 3 — FU-8's signature.** The fixer's prototype used `sizeWeightKg(band, weightKg, heightCm?)` as at `b23a3ea`;
+- [x] **Step 3 — FU-8's signature.** The fixer's prototype used `sizeWeightKg(band, weightKg, heightCm?)` as at `b23a3ea`;
   if FU-8's merged signature differs, call it with the same meaning (the Lemmens-indexed size weight of this band), and
   the new test's equality with `resolveProfile().bloodVolumeMl` is the arbiter.
 
@@ -4584,7 +4584,7 @@ Lemmens branch) and the circulation 4 900 (FU-8 A13's size weight). Decision D20
 default adult 4 900 mL, 127 kg / 175 cm 6 600 mL (52 mL/kg, tables 50–55); all 170 `test/l2` files pass. Moved BF rows:
 BF-21b 2.95 → 3.35 (TW → PL), BF-04 dHb1h 0.746 → 0.729, BF-18b CO +4.1 → +1.9 %, BF-19 −1.0 → −3.8 %, second decimals elsewhere; no other verdict moves.
 
-- [ ] **Step 1 — the tests** (the new file fails: 4 807 ≠ 4 900).
+- [x] **Step 1 — the tests** (the new file fails: 4 807 ≠ 4 900).
 
 In `packages/engine-core/test/l2/blood/core.test.ts`, find:
 
@@ -4698,7 +4698,7 @@ describe('FU-9 Part C: one blood volume for 7c and the circulation (FU-8 A13, Le
 ```
 
 
-- [ ] **Step 2 — implement.**
+- [x] **Step 2 — implement.**
 
 In `packages/engine-core/src/l2/blood/params.ts`, find:
 
@@ -4747,9 +4747,9 @@ replace with:
 ```
 
 
-- [ ] **Step 3 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/engine/blood-sanity-haem.test.ts test/engine/fu9-kinetics.test.ts` → pass.
-- [ ] **Step 4 — BF runner:** all cells (A0 Step 3's command, `BF_OUT=out/<task>.json`) against Part A + B's `after.json`: only the rows D20 names move.
-- [ ] **Commit and push.**
+- [x] **Step 3 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/engine/blood-sanity-haem.test.ts test/engine/fu9-kinetics.test.ts` → pass.
+- [x] **Step 4 — BF runner:** all cells (A0 Step 3's command, `BF_OUT=out/<task>.json`) against Part A + B's `after.json`: only the rows D20 names move.
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7c): blood volume on the one body-size rule (FU-9 Part C, FU-8 I-51)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -4761,8 +4761,8 @@ git add -A packages/engine-core && git commit -m "feat(7c): blood volume on the 
 
 **Files:** Create `docs/gates/fu-9.md`; tick this plan's boxes.
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main`, then `npx -y pnpm@9.15.9 install --frozen-lockfile`.
-- [ ] **Step 2 — suites** (bounded waits; logs under `<scratchpad>/fu-9-blood-fluids/`):
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main`, then `npx -y pnpm@9.15.9 install --frozen-lockfile`.
+- [x] **Step 2 — suites** (bounded waits; logs under `<scratchpad>/fu-9-blood-fluids/`):
 
 ```
 npx -y pnpm@9.15.9 -r typecheck
@@ -4779,20 +4779,20 @@ npx -y pnpm@9.15.9 build && CI=1 npx -y pnpm@9.15.9 test:e2e --project=chromium 
   `fu8-*` in slow-a — and, if a group passes ≈ 40 min, move a slow-b/slow-c file by name between SLOW_C's list and SLOW
   (a one-line edit of A0b's `SLOW_C` literal, committed separately) and re-run the disjointness step. The fixer measured on
   this Mac, serial: slow-a 1 026 s and slow-b 1 200 s (from `2473f0b`'s per-file times), slow-c 868 s.
-- [ ] **Step 3 — the BF, RH and SP matrices after.** As A0 Step 3 with `…_OUT=out/after.json`; then in each runner
+- [x] **Step 3 — the BF, RH and SP matrices after.** As A0 Step 3 with `…_OUT=out/after.json`; then in each runner
   `cp out/after.json out/cells.json && node --experimental-strip-types report.ts > out/matrix-after.md` (and the same for
   before.json). Expected: the "Prototype results" tables below, cell for cell (seed 7).
-- [ ] **Step 4 — FU-4's arrest behaviour, against the envelope (R5).** `PME_AUDIT_OUT=<scratchpad>/fu-9-blood-fluids/audit-after
+- [x] **Step 4 — FU-4's arrest behaviour, against the envelope (R5).** `PME_AUDIT_OUT=<scratchpad>/fu-9-blood-fluids/audit-after
   npx -y pnpm@9.15.9 run audit:physiology > <scratchpad>/fu-9-blood-fluids/audit-after.md`; `diff` the "## Arrests" and
   "## Propofol" tables with Task A0 Step 4. Expected (prototype, D13): inside the envelope D0 1775 → 1770, D2 1350 → 1305, K-ptx 670 → 675 and the tension-PTX propofol row t+10 → t+15 s; physiology (E-FU9-5, D13) B2/B7 830 → 825 s, B6 1130 → 1125, C1 first MAP < 30 1000 → 1005, I1 910 → 920; second decimals of the propofol matrix, the tamponade nadir 250 → 240 s (PEA t+170 → t+165), MANUAL hypovolaemia ΔCO −0.43 → −0.64, minimum HRs ±1–4; all other rows identical. The chaotic rows (D0, D2, K-ptx,
   and the tension-PTX propofol nadir time) pass when they lie inside A0 Step 4's ensemble envelope; any OTHER moved row
   stops the gate: report it with the task that moves it (`git stash` is forbidden — bisect by reverting single commits in
   a scratch worktree).
-- [ ] **Step 5 — gate note `docs/gates/fu-9.md`:** (1) scope and the inventory's decisions; (2) the BF/RH/SP before →
+- [x] **Step 5 — gate note `docs/gates/fu-9.md`:** (1) scope and the inventory's decisions; (2) the BF/RH/SP before →
   after tables (Step 3) with verdicts; (3) the `it.fails` list with numbers; (4) the audit diff (Step 4) and the ensemble
   envelope; (5) suites and the three slow groups' times; (6) exceptions E-FU9-1..4 as applied; (7) the Requests and Open
   questions of this plan, unchanged unless the executor measured a different number.
-- [ ] **Step 6 — PR** (never merged by the executor):
+- [x] **Step 6 — PR** (never merged by the executor):
 
 ```
 git add docs/gates/fu-9.md docs/plans/fu-9-blood-fluids.md && git commit -m "docs(gate): FU-9 gate note" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
