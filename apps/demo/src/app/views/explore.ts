@@ -2,7 +2,7 @@
 // bench theme. Every row is labelled from the glossary (label, tooltip with the full name, unit and adult normal) and
 // grouped by organ; a change from the baseline is marked with an arrow and a tint, not colour alone. Values the
 // glossary does not name are model internals: collapsed, with their engine keys, for the curious. The respiratory
-// mechanics section is the slot the mechanics stage fills; labs beyond the blood gas are placeholders until v1.1.
+// mechanics section shows Stage 7k's mechanics, dead-space and volume rows (loops to come); labs beyond the blood gas are placeholders until v1.1.
 import type { EngineEvent } from '@pme/engine-core';
 import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
@@ -21,14 +21,17 @@ interface Section {
   intro: string;
   /** Glossary sections whose rows belong here even if the console files them elsewhere. */
   gloss?: string[];
+  /** With `gloss`: this console group's labelled rows belong here too, listed first in the console's order (7k). */
+  withGroup?: GroupId;
   placeholder?: string;
 }
 
 export const SECTIONS: readonly Section[] = [
   { id: 'overview', title: 'At the bedside', groups: ['monitor'], intro: 'What the monitor shows, with the adult normal range beside each value.' },
   { id: 'haemodynamics', title: 'Heart and circulation', groups: ['circulation'], intro: 'Pressures, flows and resistances behind the monitor numbers: cardiac output, stroke volume, SVR, filling pressures.' },
-  { id: 'respiratory', title: 'Respiratory mechanics and volumes', groups: ['lungs'], gloss: ['5.6'], intro: 'Airway pressures, compliance and resistance, dead space and lung volumes.',
-    placeholder: 'Pressure–volume and flow–volume loops, driving and transpulmonary pressure and the full set of lung volumes arrive in a coming update. The values the model computes today are listed below.' },
+  { id: 'respiratory', title: 'Respiratory mechanics and volumes', groups: ['lungs'], gloss: ['5.6'], withGroup: 'mechanics',
+    intro: 'Airway pressures, compliance and resistance, dead space and lung volumes. Pressures, compliance and resistance are read from mechanical breaths: on a patient breathing alone they show —.',
+    placeholder: 'Pressure–volume and flow–volume loops arrive in a coming update.' },
   { id: 'gas', title: 'Gas exchange and oxygen delivery', groups: ['lungs'], gloss: ['5.4', '5.5'], intro: 'Shunt, oxygen content, delivery and consumption.' },
   { id: 'blood', title: 'Blood, acid–base and temperature', groups: ['blood'], intro: 'Blood gas, electrolytes, haemoglobin and temperature.' },
   { id: 'brain', title: 'Brain', groups: ['brain'], intro: 'Intracranial pressure, cerebral perfusion and oxygenation.' },
@@ -46,7 +49,7 @@ const displayOf = (r: Row): { value: string; unit: string; delta: string } => {
   const scale = DISPLAY_SCALE[r.path] ?? r.meta.scale;
   const m = { digits: r.meta.digits, scale } as { digits?: number; scale: number };
   const ref = typeof r.base === 'number' ? r.base : typeof r.value === 'number' ? r.value : 0;
-  return { value: fmtValue(r.value, m), unit: l ? unitOf(l.e) : r.meta.unit, delta: r.delta === null ? '' : fmtDelta(r.delta, m, ref) };
+  return { value: fmtValue(r.value, m), unit: (l ? unitOf(l.e) : '') || r.meta.unit, delta: r.delta === null ? '' : fmtDelta(r.delta, m, ref) };
 };
 
 export function exploreView(session: AppSession, site: SiteProfile): View {
@@ -86,10 +89,12 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     if (model.baseT === null && model.t >= 60) model.setBaseline();
     const rows = model.rows().filter((r) => {
       const l = lookup(r.path);
+      if (s.withGroup && r.group === s.withGroup) return true;
       if (s.gloss) return !!l && s.gloss.includes(l.e.s);
       return s.groups.includes(r.group);
     });
-    const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && typeof r.value !== 'object');
+    if (s.withGroup) rows.sort((a, b) => Number(b.group === s.withGroup) - Number(a.group === s.withGroup)); // stable: console order kept
+    const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && (r.value === null || typeof r.value !== 'object')); // null = not measured yet (—)
     // one row per quantity (review F1): the monitor and the truth copy of one value share a row key; two different
     // quantities never do, even when research/11 gives them similar labels
     const seen = new Set<string>();

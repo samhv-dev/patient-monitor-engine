@@ -17,7 +17,7 @@ describe('R56 glossary', () => {
   it('resolves truth paths, per-side paths and per-key labels', () => {
     expect(labelOf('mon.hr')).toBe('HR');
     expect(labelOf('mon.nibpDia')).toBe('NIBP D');
-    expect(labelOf('resp.lung.lp.side.1.vdAlv')).toBe('R VD alv');
+    expect(labelOf('resp.lung.lp.side.1.vdAlv')).toBe('R VD alv fraction');
     expect(labelOf('hemo.circ.someInternalGain')).toBeNull();
     for (const k of Object.keys(KEY_LABELS)) expect(lookup(k), k).not.toBeNull();
   });
