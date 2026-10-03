@@ -121,7 +121,22 @@ Ali's own timed run: not yet done.
 
 ## 6. Frame gate
 
-FRAMES_PLACEHOLDER
+`apps/demo/scripts/stage9-frames.mjs` against `vite` on this machine, bundled Chromium 1243 headless, the shell mounted,
+the instructor panel open, the 8-lane `validation-perf` load (`?load=perf8`), 10 s warm-up, worker-raf path:
+
+| Viewport | fps | n | p50 | p95 | p99 | max | worst 60 s p95 | gate |
+|---|---|---|---|---|---|---|---|---|
+| 1920×1080 | 60 | 3,601 | 16.7 | 16.8 | 16.8 | 16.8 | 16.8 | pass |
+| 1920×1080 | 30 | 3,601 | 16.7 | 16.7 | 16.8 | 16.8 | 16.7 | pass |
+| 1280×800 | 60 | 3,601 | 16.7 | 16.8 | 16.8 | 16.8 | 16.8 | pass |
+| 1280×800 | 30 | 3,601 | 16.7 | 16.8 | 16.8 | 16.8 | 16.8 | pass |
+| 1920×1080 soak, 20 min | 60 | 71,608 | 16.7 | 16.8 | 16.8 | **1,383.3** | 16.8 | pass |
+
+All inside 8a's p95 < 25 ms (60 fps) / < 50 ms (30 fps), and the soak's worst minute too. The soak's single 1.38 s
+interval is one stall while the 7k and FU-9 executors were running their test suites on the same machine; it moves no
+percentile. The metric is the MAIN thread's frame intervals, as in 8a: the renderer draws the sweep in its worker and
+exposes no worker frame statistics, so the 30 fps rows show that the shell stays inside the 30 fps budget, not that the
+worker drew at 30 (D23). iPad Safari run (brief §10): **not run — no iPad on the bench.**
 
 ## 7. Decisions, deviations, limits
 
@@ -160,6 +175,6 @@ this machine):
 | `pnpm build` | clean; `dist/index.html` is the app |
 | `pnpm check-notices` | OK (no new dependency) |
 | `CI=1 pnpm test:e2e` (Chromium + WebKit) | 82 passed, 28 skipped, **2 failed: `stage6a.e2e.ts` "host + remote + viewer over rtc" and `stage6a-latency.e2e.ts` (Chromium)** — local WebRTC, the same two FU-6's gate recorded on `origin/main` on this machine (they pass on CI). Every Stage 9 file passed: app 5 and glossary 1 and a11y 2 on both browsers; tasks 1 and shots 4 on Chromium (skipped on WebKit by design). 15.3 min. |
-| `stage9-app.e2e.ts` × 3 under two workers (R50 F7) | REPEAT_PLACEHOLDER |
+| `stage9-app.e2e.ts` × 3 under two workers (R50 F7) | 3 / 3 runs green (5 passed each, 18.6–19.1 s), no retries |
 
 Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `stage9-tasks` (1), `stage9-shots` (4).
