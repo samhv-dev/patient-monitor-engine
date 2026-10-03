@@ -42,6 +42,22 @@ const CURATED: Entry[] = [
   ['resp.shunt', 'Shunt', '%', 1, 100], ['ev.lungState.complianceMlPerCmH2O', 'Compliance', 'mL/cmH₂O', 0],
   ['ev.lungState.resistanceCmH2OPerLps', 'Resistance', 'cmH₂O/L/s', 1], ['ev.lungState.shunt', 'Shunt (lung)', '%', 1, 100],
   ['ev.lungState.deadSpaceMl', 'Dead space', 'mL', 0], ['ev.lungState.frcMl', 'FRC', 'mL', 0], ['resp.etco2', 'EtCO₂ (model)', 'mmHg', 1],
+  // Stage 7k (R57): the Ventilation panel "Respiratory mechanics and volumes" — glossary §5.6 labels (research/11)
+  ['resp.mechanics.ppeak', 'Ppeak', 'cmH₂O', 1], ['resp.mechanics.pplat', 'Pplat', 'cmH₂O', 1], ['resp.mechanics.peepTot', 'PEEPtot', 'cmH₂O', 1], ['resp.mechanics.peepi', 'PEEPi (auto-PEEP)', 'cmH₂O', 1], ['resp.mechanics.dp', 'ΔP', 'cmH₂O', 1],
+  ['resp.mechanics.cstat', 'Cstat', 'mL/cmH₂O', 0], ['resp.mechanics.cdyn', 'Cdyn', 'mL/cmH₂O', 0], ['resp.mechanics.rinsp', 'Rinsp', 'cmH₂O·s/L', 1],
+  ['resp.mechanics.vt', 'VT', 'mL', 0], ['resp.mechanics.flow', 'V̇insp', 'L/s', 2],
+  ['resp.mechanics.plEi', 'PL,ei', 'cmH₂O', 1], ['resp.mechanics.plEe', 'PL,ee', 'cmH₂O', 1],
+  // short Pes labels: the label column must keep "est." visible (R50 F14; glossary "Pes (estimate)")
+  ['resp.mechanics.pesEi', 'Pes,ei est.', 'cmH₂O', 1], ['resp.mechanics.pesEe', 'Pes,ee est.', 'cmH₂O', 1], ['resp.mechanics.elErs', 'EL/Ers', '', 2],
+  ['resp.vd.anat', 'VD anat', 'mL', 0], ['resp.vd.app', 'VD app', 'mL', 0], ['resp.vd.alv', 'VD alv', 'mL', 0], ['resp.vd.phys', 'VD phys', 'mL', 0],
+  ['resp.vd.vdvt', 'VD/VT', '%', 0, 100], ['resp.vd.peco2', 'PĒCO₂', 'mmHg', 1],
+  ['resp.volumes.frc', 'FRC', 'mL', 0], ['resp.volumes.tlc', 'TLC', 'mL', 0], ['resp.volumes.rv', 'RV', 'mL', 0], ['resp.volumes.vc', 'VC', 'mL', 0],
+  ['resp.volumes.frcSit', 'FRC (seated, PFT)', 'mL', 0], ['resp.volumes.erv', 'ERV', 'mL', 0], ['resp.volumes.ic', 'IC', 'mL', 0], ['resp.volumes.cc', 'CC', 'mL', 0],
+  ['resp.volumes.fvc', 'FVC', 'mL', 0], ['resp.volumes.fev1', 'FEV₁', 'mL', 0], ['resp.volumes.ratio', 'FEV₁/FVC', '%', 0, 100], ['resp.volumes.pef', 'PEF', 'L/min', 0, 0.06],
+  ['resp.volumes.fet', 'FET', 's', 1], ['resp.volumes.pattern', 'Spirometry pattern', ''],
+  ['resp.volumes.pred.tlc', 'TLC predicted', 'mL', 0], ['resp.volumes.pred.rv', 'RV predicted', 'mL', 0], ['resp.volumes.pred.frc', 'FRC (seated) predicted', 'mL', 0],
+  ['resp.volumes.pred.vc', 'VC predicted', 'mL', 0], ['resp.volumes.pred.fvc', 'FVC predicted', 'mL', 0], ['resp.volumes.pred.fev1', 'FEV₁ predicted', 'mL', 0],
+  ['resp.volumes.pred.ratio', 'FEV₁/FVC predicted', '%', 0, 100], ['resp.volumes.pred.pef', 'PEF predicted', 'L/min', 0, 0.06],
   // temperature (Stage 3 thermal model)
   ['resp.temp.tc', 'Core temp (model)', '°C', 2],
   // organs (7x.1): 7d's intra-abdominal pressure (the `renal` event's iapMmHg), a kidney input
@@ -58,7 +74,8 @@ const CURATED: Entry[] = [
  */
 const LUNG: Entry[] = [
   // whole lung: breath summary, gas exchange, the resolved global parameters
-  ['peepTot', 'Total PEEP', 'cmH₂O', 1], ['pInsp', 'End-inspiratory alveolar pressure', 'cmH₂O', 1], ['tauBar', 'Expiratory τ', 's', 2],
+  // Stage 7k (R56): "PEEPtot" is the expiratory-hold reading (resp.mechanics.peepTot, glossary #146); this is the model's mean alveolar value
+  ['peepTot', 'Mean end-expiratory alveolar pressure', 'cmH₂O', 1], ['pInsp', 'End-inspiratory alveolar pressure', 'cmH₂O', 1], ['tauBar', 'Expiratory τ', 's', 2],
   ['teS', 'Expiratory time', 's', 2], ['inInsp', 'In inspiration', ''], ['mainstem', 'Ventilated mainstem', ''], ['frcGaMl', 'FRC (anaesthetised)', 'mL', 0],
   ['mech.paw', 'Airway-opening pressure', 'cmH₂O', 1], ['mech.pcar', 'Carina pressure', 'cmH₂O', 1],
   ['o2.pao2', 'PaO₂ (lung)', 'mmHg', 0], ['o2.sa', 'SaO₂ (lung)', '%', 1, 100], ['o2.cv', 'CvO₂', 'mL/L', 0],
