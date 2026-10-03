@@ -76,7 +76,9 @@ export const NH_TAU_OFF_S = 2700;
 export const PEEP_PER_10 = 0.9; // × per 10 cmH2O mean-airway-pressure excess (tables PEEP row) [ENG]
 export const NE_EXCESS_PER_01 = 0.9; // × per 0.1 µg/kg/min α-agonist above need (tables D row) [ENG]
 export const SEPSIS_GFR_LOSS = 0.5; // Kf × (1 − 0.5·sepsis) (efferent dilation / microvascular) [ENG]; 7f writes sepsis
-export const AKI_KF_LOSS = 0.8; // condition aki severity 1 → Kf × 0.2 [ENG]
+export const AKI_KF_LOSS = 0.8; // condition aki severity 1 → Kf × 0.2 [ENG]; FU-9 H6: also the nephron share TGF defends
+/** FU-9 H6: intrinsic AKI's afferent tone — the afferent floor rises × (1 + AKI_AFF_TONE·aki) [ENG, Ali's Q]. */
+export const AKI_AFF_TONE = 1;
 // Diuretics (tables §5.2 has none; label-level [TXT], shape [ENG])
 export const FUROSEMIDE_EMAX = 9; // excreted fraction × (1 + 9·E): 40 mg → peak UOP ≈ 7× (≈ 8 mL/min)
 export const FUROSEMIDE_ED50_MG = 20; // own-depot path (no 7g): E = plasma mg/(mg + 20)

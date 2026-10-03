@@ -8,9 +8,9 @@
 // cumulative volume, KDIGO-style oliguria/AKI state and the excretion hooks for 7c. Plain JSON-safe state.
 import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './kidney.ts';
 import {
-  AKI_KF_LOSS, ALBUMIN0_G_L, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
+  AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
   EABV_EXP, EABV_TAU_S, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
-  SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
+  R_AFF_MAX, R_AFF_MIN, SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
 } from './params.ts';
 
 export interface RenalInputs {
@@ -69,6 +69,16 @@ export function expansionFactor(bvRel: number): number {
   return Math.min(V_EXP_MAX, 1 + V_EXP_GAIN * Math.max(0, bvRel - 1));
 }
 
+/**
+ * FU-9 H6 (research/13): `aki` severity is NEPHRON LOSS. The surviving nephrons' TGF defends only their own share of the
+ * filtration (target gfrSet × (1 − AKI_KF_LOSS·aki): at severity 1 GFR ≈ 25 mL/min, KDIGO G4–5 — Ali's Q), and intrinsic
+ * AKI's afferent vasoconstriction floors the afferent resistance at R_AFF_MIN × (1 + AKI_AFF_TONE·aki), so RBF falls
+ * instead of rising (the TGF of a single nephron no longer restores the kidney's GFR by dilating it). Kf × (1 − loss) as before.
+ */
+function nephronTone(rAff: number, aki: number): number {
+  return Math.min(R_AFF_MAX, Math.max(rAff, R_AFF_MIN * (1 + AKI_AFF_TONE * aki)));
+}
+
 /** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
  *  activates the same volume receptors as bleeding (tables §7 check 20: HFrEF oliguria at normal blood volume). The
  *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*).
@@ -108,7 +118,7 @@ export function createRenal(inp: RenalInputs, weightKg: number, aki = 0): RenalS
   s.vNh = volumeFactor(ev);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  s.rAff = tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet, pb, inp.hct);
+  s.rAff = nephronTone(tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * aki), pb, inp.hct), aki);
   const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
   s.pgc = h.pgc;
@@ -152,7 +162,7 @@ export function stepRenal(s: RenalState, inp: RenalInputs, dt: number): void {
   const effF = effFactor(s.ang);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * s.p.aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  const target = tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet, pb, inp.hct);
+  const target = nephronTone(tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * s.p.aki), pb, inp.hct), s.p.aki);
   s.rAff += (target - s.rAff) * (1 - Math.exp(-dt / TGF_TAU_S));
   const h = renalHaemo(inp.map, pvn, s.p.k, s.rAff, effF, kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
