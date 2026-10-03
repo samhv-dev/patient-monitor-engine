@@ -2,6 +2,7 @@
 // row, or [ENG] with the prototype number it was tuned to (plan "Prototype results"). Units: mmol/L, g/L albumin,
 // g/dL Hb, mL, mmHg, s (see the plan's Global Constraints).
 import type { PatientProfile } from '../../types.ts';
+import { sizeWeightKg } from '../body-size.ts'; // FU-9 Part C (R3): FU-8's one body-size rule
 
 export const BLOOD_DT_S = 0.1; // 10 Hz, with Stage 3's gas step (brief §3.2)
 
@@ -107,19 +108,18 @@ export interface BloodPatient {
 }
 
 /**
- * Patient scaling. Blood volume by band (tables §1.1) and Lemmens for adults (§1.3: 70/√(BMI/22) mL/kg of actual
- * weight, capped at the band value below BMI 22). TBW 0.6 (M) / 0.5 (F) L/kg; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct).
+ * Patient scaling. Blood volume by band (tables §1.1) on FU-8's ONE continuous body-size rule (`l2/body-size.ts`,
+ * Lemmens-indexed size weight anchored on the default adult — FU-9 Part C, R50 ruling R3; it replaces 7c's own capped
+ * Lemmens branch, so blood and circulation hold one volume: 4 900 mL at 70 kg / 175 cm, was 4 807). TBW 0.6 (M) / 0.5 (F)
+ * L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct).
  */
 export function bloodPatient(p: PatientProfile | undefined): BloodPatient {
   const band = ageBandB(p?.ageY ?? 40);
   const b = BAND[band];
   const female = p?.sex === 'F';
   const w = p?.weightKg ?? b.w;
-  const h = p?.heightCm ?? b.h;
-  const bmi = w / (h / 100) ** 2;
-  let bvKg = female ? b.bvF : b.bvM;
-  if ((band === 'adult' || band === 'elderly') && bmi > 22) bvKg = Math.min(bvKg, 70 / Math.sqrt(bmi / 22));
-  const bv = bvKg * w;
+  const bvKg = female ? b.bvF : b.bvM;
+  const bv = bvKg * sizeWeightKg(band, w, p?.heightCm);
   const hb = p?.blood?.hb ?? (female ? b.hbF : b.hbM);
   const hct = (hb * 3) / 100;
   const tbw = (female ? 0.5 : 0.6) * w * 1000;

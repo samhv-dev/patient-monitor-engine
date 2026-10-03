@@ -96,7 +96,7 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     b.renal = { uopAboveBasalMlH: 600, excretion: { k: 6, na: 60, cl: 60, gluconate: 0 } }; // 10 mL/min of urine, Na/Cl 100 mmol/L, K 10
     run(a, 0, 600);
     run(b, 0, 600);
-    expect(bloodMl(a.fl) + a.fl.visf).toBeCloseTo(4807 + 11356, -1); // at rest the fixed elimination removes nothing
+    expect(bloodMl(a.fl) + a.fl.visf).toBeCloseTo(4900 + 11305, -1); // at rest the fixed elimination removes nothing (FU-9 Part C: was 4807 + 11356)
     expect(bloodMl(a.fl) + a.fl.visf - (bloodMl(b.fl) + b.fl.visf)).toBeGreaterThan(80); // ≈ 100 mL of urine in 10 min
     expect(b.out.k).toBeLessThan(a.out.k - 0.02);
     expect(b.out.na).toBeGreaterThan(a.out.na); // hypotonic urine concentrates Na
