@@ -14,6 +14,8 @@ export const NORMAL = {
   na: 140, k: 4.2, cl: 104, iCa: 1.2, mg: 0.85, lactate: 1.0, albGL: 40, piMmolL: 1.1, hco3: 24.4, paco2: 40,
   dpgMmolL: 4.65, glucoseMgDl: 100, ureaMmolL: 5,
 } as const;
+/** FU-9 F8: plasma globulins at the normal albumin, g/L — their own mass (fluids.ts `copPlasma`), carried by plasma products. */
+export const GLOBULIN_GL = 24;
 /** Ionised share of total Mg for the SID (≈ 0.6 of 0.85 mmol/L) [TXT]. */
 export const MG_ION_FRAC = 0.6;
 
@@ -129,12 +131,13 @@ export interface Composition {
   metab: number; // acetate (metabolised to bicarbonate, τ 15 min)
   xa: number; // gluconate: an unmeasured anion here (renal excretion is 7d's) [ENG]
   albGL: number; // true albumin g/L (oncotic AND acid–base)
+  globGL: number; // globulins g/L (oncotic only; plasma products carry the plasma's) — FU-9 F8
   colloidGL: number; // synthetic colloid, albumin-equivalent oncotic g/L
   osmOther: number; // non-Na effective osmoles (glycine) mOsm/L
   hct: number; // red-cell volume fraction
   citrate: number; // mmol/L
 }
-const Z: Composition = { na: 0, k: 0, cl: 0, ca: 0, mg: 0, lactate: 0, metab: 0, xa: 0, albGL: 0, colloidGL: 0, osmOther: 0, hct: 0, citrate: 0 };
+const Z: Composition = { na: 0, k: 0, cl: 0, ca: 0, mg: 0, lactate: 0, metab: 0, xa: 0, albGL: 0, globGL: 0, colloidGL: 0, osmOther: 0, hct: 0, citrate: 0 };
 export const FLUIDS = {
   saline: { ...Z, na: 154, cl: 154 }, // 0.9 % NaCl
   rl: { ...Z, na: 130, k: 4, cl: 109, ca: 1.35, lactate: 28 }, // Ringer's lactate / Hartmann's
@@ -176,7 +179,7 @@ export const SAGM_NACL = 150;
 export const RBC_RESIDUAL_SHARE = 12 / 112;
 function anticoagulated(anti: { na: number; citrate: number }, share: number): Composition {
   const p = 1 - share;
-  return { ...Z, na: p * NORMAL.na + share * anti.na, k: p * NORMAL.k, cl: p * NORMAL.cl, albGL: p * NORMAL.albGL, citrate: share * anti.citrate };
+  return { ...Z, na: p * NORMAL.na + share * anti.na, k: p * NORMAL.k, cl: p * NORMAL.cl, albGL: p * NORMAL.albGL, globGL: p * GLOBULIN_GL, citrate: share * anti.citrate };
 }
 const CPD_PLASMA = anticoagulated(CPD, CPD_SHARE);
 const mix = (a: Composition, b: Composition, fb: number): Composition => {

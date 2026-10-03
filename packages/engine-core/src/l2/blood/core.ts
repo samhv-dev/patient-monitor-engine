@@ -86,16 +86,21 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   const e0 = ecfMl(fl);
   const so = createSolutes({ na: b.na ?? NORMAL.na, k: b.k ?? NORMAL.k, cl: b.cl ?? NORMAL.cl, iCa: b.iCa ?? NORMAL.iCa, mg: b.mg ?? NORMAL.mg, lactate: b.lactate ?? NORMAL.lactate }, e0, pat.vLacL, pat.icfMl);
   const odc: OdcCtx = { hb: pat.hb, ph: 7.4, dpgMmolL: b.dpgMmolL ?? NORMAL.dpgMmolL, cohb: b.cohb ?? 0, methb: b.methb ?? 0 };
-  // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row)
+  // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row).
+  // FU-9 F8: without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its
+  // weak-acid deficit — the Figge picture (low AG, mild alkalosis) that the same albumin reached by dilution shows
+  // (Figge 1998 Crit Care Med 26:1807; Fencl 2000 AJRCCM 162:2246); a given profile HCO3 is honoured as measured.
   const hco3 = b.hco3 ?? NORMAL.hco3;
   const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * NORMAL.paco2));
   const c = concOf(so, e0, pat.vLacL, e0);
   const alb = albGL(fl);
-  const sidNeed = hco3 + alb * (0.123 * ph0 - 0.631) + c.pi * (0.309 * ph0 - 0.469) + ((1.43 * pat.hb) / 3) * (ph0 - 7.4);
+  const albCal = b.hco3 === undefined && b.albuminGL !== undefined ? NORMAL.albGL : alb; // on the profile's fields, not floats (R50 F8)
+  const sidNeed = hco3 + albCal * (0.123 * ph0 - 0.631) + c.pi * (0.309 * ph0 - 0.469) + ((1.43 * pat.hb) / 3) * (ph0 - 7.4);
   calibrateXa(so, e0, sidOf(c, ionisedCa(c, ph0)), sidNeed);
-  so.set.ph = ph0;
+  const ab = solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb });
+  so.set.ph = albCal === alb ? ph0 : ab.ph; // the K reference is the patient's own resting pH
   return {
-    pat, fl, so, ab: solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb }), phNonOrg: ph0,
+    pat, fl, so, ab, phNonOrg: so.set.ph,
     o2: { cao2: 0, do2: 0, vo2: 0, demand: 0, deficit: 0, er: 0, svo2: 0.75 }, odc, doses: [], burns: b.burns ?? 0, liver: 1, renal: null,
     co0, ecf0: e0, k1Hz: 0, bledMl: 0,
     out: { na: 0, k: 0, kEcg: 0, cl: 0, iCa: 0, mg: 0, lactate: 0, hb: 0, albGL: 0, albuminGL: 0, ag: 0, osm: 0, cop: 0, hbfRel: 1, bvRel: 1, dkaSeverity: 0 },
