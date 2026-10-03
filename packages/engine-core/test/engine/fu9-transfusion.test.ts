@@ -24,9 +24,9 @@ describe('FU-9 F5: massive transfusion — the citrate load (Driscoll 1987; Gian
     expect(iCa).toBeLessThan(r[t0 / 30 - 1]!.iCa - 0.1);
   });
   // R45 (research/22 BF-05a/05d; R50 ruling R1): with electroneutral, sourced product rows the class IV + MTP picture
-  // is BE −0.1 (the dilution of albumin, a weak acid, offsets the shock lactate — the same Stewart offset as the saline
-  // cells, Open question 10) and iCa 0.955 (K_CIT, Q46, fitted to the old citrate-rich rows). Ali may overrule (OQ2).
-  it.fails('iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.955, BE −0.1 (FU-9 F5)', async () => {
+  // is BE −0.2 (the dilution of albumin, a weak acid, offsets the shock lactate — the same Stewart offset as the saline
+  // cells, Open question 10) and iCa 0.958 (K_CIT, Q46, fitted to the old citrate-rich rows). Ali may overrule (OQ2).
+  it.fails('iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.958, BE −0.2 (FU-9 F5)', async () => {
     const r = await rows();
     expect(Math.min(...r.slice(t0 / 30).map((x) => x.iCa))).toBeLessThanOrEqual(0.95);
     expect(Math.min(...r.map((x) => x.be))).toBeLessThanOrEqual(-10);

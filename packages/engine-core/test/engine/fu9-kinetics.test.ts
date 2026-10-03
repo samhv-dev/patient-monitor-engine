@@ -72,8 +72,8 @@ describe('FU-9 H1: an anaesthetised kidney is not oliguric at a normal MAP (rese
   });
   // R45 (research/13 RH-03a): ATLS's end point read as the 30–60 min mean. The joint calibration (D1) caps it: the GA
   // ceiling is S_GA × V(bvRel 0.97) ≈ 0.57 × 0.9, and vNh washes out with 7d's τ 45 min (tables check 20's own fit;
-  // τ 10–20 min gives 0.45–0.46 and breaks check 20). Measured 0.37 (RH-03a 0.38; main 0.23) — Ali's question (OQ11).
-  it.fails('class III, then RL 2 L: urine 30–60 min after the end ≥ 0.5 mL/kg/h — measured 0.37 (main 0.23)', async () => {
+  // τ 10–20 min gives 0.45–0.46 and breaks check 20). Measured 0.33 on the merged tree (plan's prototype 0.37; main 0.23) — Ali's question (OQ11).
+  it.fails('class III, then RL 2 L: urine 30–60 min after the end ≥ 0.5 mL/kg/h — measured 0.33 (main 0.23)', async () => {
     const u = await recovery();
     expect((((u[6] as number) - (u[3] as number)) / kg) * 2).toBeGreaterThanOrEqual(0.5);
   });

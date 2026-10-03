@@ -18,10 +18,10 @@ describe('FU-9 F4: a septic leak makes lung water at a normal PAWP (Sakka 2002; 
     expect(i.evlwi - c.evlwi).toBeGreaterThan(0.25);
   });
   // R45 (research/22 §5 acceptance for 7e → 7c: "EVLWI ↑ and PaO2 ↓ more than healthy"): the septic lung makes water now,
-  // but less than the healthy lung under the same load (0.87 vs 1.85 mL/kg: the vasodilated septic patient's PAWP stays
-  // lower, and σ 0.70 still leaves a threshold of ≈ 15 mmHg), and PaO2 still RISES +11 (7b's lung-water → shunt coupling,
+  // but less than the healthy lung under the same load (0.90 vs 1.68 mL/kg: the vasodilated septic patient's PAWP stays
+  // lower, and σ 0.70 still leaves a threshold of ≈ 15 mmHg), and PaO2 still RISES +10 (7b's lung-water → shunt coupling,
   // F13a, is weak and the load raises CO/SvO2). Kept visible for Ali (Open question 3: the septic σ).
-  it.fails('warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +0.87 vs +1.85 mL/kg, PaO2 +11 (FU-9 F4)', async () => {
+  it.fails('warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +0.90 vs +1.68 mL/kg, PaO2 +10 (FU-9 F4)', async () => {
     const { i, c } = await septic();
     const [hi] = await arm([...GA_VENT, LOAD], [4860], read);
     const [hc] = await arm(GA_VENT, [4860], read);

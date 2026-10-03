@@ -24,7 +24,7 @@ describe('FU-9 F11: hypo-osmolar brain swelling (Hahn 2006; Adrogué & Madias 20
   });
   // R45 (research/22 BF-11b, dirOnly "beyond 1 mmHg"): the gain is the osmotherapy calibration's (0.145 mL per mOsm/kg);
   // an ideal-osmometer brain (≈ 1.1 L of water) would gain ≈ 55 mL for −15 mOsm/kg. Open question 8.
-  it.fails('glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.29 (FU-9 F11)', async () => {
+  it.fails('glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.26 (FU-9 F11)', async () => {
     const { i, c } = await arms();
     expect(Math.max(...i.map((r, k) => r.icp - (c[k]?.icp ?? r.icp)))).toBeGreaterThanOrEqual(1);
   });
