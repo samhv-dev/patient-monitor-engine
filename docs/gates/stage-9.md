@@ -115,7 +115,7 @@ rehearsal should look once with deuteranopia emulation.
 | 1. Load the ACLS VF case | 0.8 s |
 | 2. Give norepinephrine 0.1 µg/kg/min | 0.9 s |
 | 4. Silence the alarm and bookmark | 0.8 s |
-| 5. Find the compliance and the driving pressure | Cstat found; **ΔP not found** — Stage 7k not merged (R-S9-3); expected failure |
+| 5. Find the compliance and the driving pressure | 0.9 s (after the 7k merge; before it, an expected failure) |
 
 Ali's own timed run: not yet done.
 
@@ -151,7 +151,7 @@ worker drew at 30 (D23). iPad Safari run (brief §10): **not run — no iPad on 
 - The Stage V cockpit (and the app's Ventilator view) drives the patient from its page's animation frames, so a hidden
   or background window ventilates too slowly — keep it in front.
 - Requests: R-S9-1 (a) accepted for v1.0, (b)(c) open; R-S9-2 done by FU-8 Part A (Labeller, eleven built-ins,
-  tooltip); R-S9-3 open (7k); R-S9-4 done by FU-8 Part A (schema fields; the documents do not use them yet);
+  tooltip); R-S9-3 done (7k merged; keys wired, polish round item 6); R-S9-4 done by FU-8 Part A (schema fields; the documents do not use them yet);
   R-S9-5 → 8b; R-S9-6 open; R-S9-7 applied for V.1/FU-6 (entries 300–304), FU-7 pending; R-S9-8 → FU-5 follow-up.
   R-FU5-9 declined on the record.
 
@@ -203,13 +203,29 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
 5. **Remote "Waiting for the monitor".** Warm: connected in < 0.5 s (measured). The cold-start wait (once, the first
    page on a cold Vite server) was not reproduced and its cause is not isolated; the Remote now reads Connected as soon
    as the host's 1 Hz state arrives, not only after the snapshot answer.
-6. **Stage 7k** (PR #30) had not merged when items 1–5 were pushed; the ΔP rows and timed task 5 wait for it.
+6. **Stage 7k merged (PR #30, main `0eed975`) and is merged here.** Glossary keys moved to 7k's truth leaves as its plan
+   requests: #125 VT + `resp.mechanics.vt`; #143 Ppeak, #144 Pplat, #146 PEEPtot, #147 PEEPi, #148 ΔP, #151 Cstat,
+   #152 Cdyn, #155 Rinsp → `resp.mechanics.*`; #149 "PL (Pes-based, direct)" (PL,ei / PL,ee) and #150 "Pes (estimate)"
+   with the per-context normals; #161–#165 → `resp.vd.*` (VD/VT in %); #166–#176 → `resp.volumes.*` (FVC and FEV₁ in
+   mL, FEV₁/FVC in %, as the console shows them). New entries for Ali's review: 305 "FRC (seated, PFT)", 306 "PĒCO₂",
+   307 "EL/Ers", 308 "V̇insp", 309 "FET", 310 "Spirometry pattern", 311 the eight "… predicted" rows (7k's N1–N7), and
+   312 "VD alv fraction" (the per-lung fraction that #163 used to name; `glossary.test.ts` now expects "R VD alv fraction").
+   The model's own `resp.lung.pInsp`, `resp.lung.peepTot`, `ev.lungState.*` compliance/resistance/dead space/FRC copies
+   are model internals now. Explore → "Respiratory mechanics and volumes" lists 7k's console group first (in its order),
+   then the other §5.6 rows; a value not measured yet (pressures on a spontaneous breath) shows "—", and the intro says
+   so; the placeholder keeps only the loops. **Timed task 5 passes** (0.9 s; the `test.fail` marker switched itself off).
+7. **CI failure on `2bb00d3`** (run 37136321632, `build` job; slow-a and slow-b green): `stage9-glossary.e2e.ts` on
+   **WebKit**, 3 of 3 attempts — the remote page joined by code stayed on "Waiting for the monitor" for 10 s. The host
+   had just been walked through every view and was on the Ventilator view (cockpit driving the patient at 50 Hz); on
+   the 2-vCPU runner WebKit's host answered too late (the same file passes locally on WebKit, and the other remote test,
+   with the host on its Remote view, passed on CI). Fix (robustness, not a skip): the test pairs the way an instructor
+   does — the host shows its Remote view while the remote joins — with 20 s to connect; `stage9-shots` does the same.
+   (The Chromium `stage9-tasks` "✘" in that log is the expected failure of task 5, counted as passed.)
 
 ### Ali should not demo (what remains true)
 
 - Ventilator view in a hidden or background window (under-ventilates; keep it in front; its numbers settle after ≈ 60 s).
 - Bookmark restore (hidden in the app: markers only).
-- Explore → Respiratory mechanics: placeholder, no ΔP (until 7k merges).
 - Remote: same browser only; open it from the host's "Open the remote in a new window".
 - IBP lanes are empty until the arterial line is attached (Devices & alarms); the saadat-like monitor's idle alarm bar is
   a bright slab and its alarms are off at power-on (skin data).
