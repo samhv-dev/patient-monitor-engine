@@ -64,7 +64,10 @@ export class Staging {
   }
 
   withRamp(c: CommandInput): CommandInput {
-    const rampable = c.type === 'setTarget' || c.type === 'pin' || c.type === 'release' || c.type === 'setFactor';
+    // Only the commands whose onset the engine honours carry one (measured on the merged base: a pin or a target ramps;
+    // a release hands the value back at once and setFactor is refused) — an onset the engine would ignore is never
+    // sent, so the log, the toast and the progress bar never promise a slow change that happens at once (external review F13).
+    const rampable = c.type === 'setTarget' || c.type === 'pin';
     return rampable && this.transitionS > 0 ? ({ ...c, ramp: { durationS: this.transitionS, curve: 'linear' } } as CommandInput) : c;
   }
 
