@@ -24,8 +24,8 @@ describe('organ grouping', () => {
     expect(groupOf('hemodynamics.x')).toBe('other');
     expect(groupOf('monitor.x')).toBe('other');
   });
-  it('has 14 groups ending with other', () => {
-    expect(GROUPS).toHaveLength(14);
+  it('has 15 groups ending with other (Stage 7k: "Respiratory mechanics and volumes")', () => {
+    expect(GROUPS).toHaveLength(15);
     expect(GROUPS.at(-1)?.id).toBe('other');
   });
   it('flags bookkeeping leaves as internal', () => {

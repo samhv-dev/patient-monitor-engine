@@ -7,6 +7,7 @@ export const GROUPS = [
   { id: 'circulation', title: 'Circulation' },
   { id: 'ecg', title: 'Rhythm & ECG' },
   { id: 'lungs', title: 'Lungs & gas exchange' },
+  { id: 'mechanics', title: 'Respiratory mechanics and volumes' }, // Stage 7k (R57): the Ventilation panel; Stage 9's Explore slot
   { id: 'blood', title: 'Blood, acid–base & temperature' },
   { id: 'brain', title: 'Brain' },
   { id: 'kidney', title: 'Kidney' },
@@ -31,6 +32,8 @@ export const GROUP_BY_PREFIX: Readonly<Record<string, GroupId>> = {
   hr: 'ecg', mods: 'ecg', rhythm: 'ecg', 'ev.beat': 'ecg', 'ev.rhythmSegment': 'ecg',
   // lungs (Stage 3 + 7b)
   resp: 'lungs', 'ev.lungState': 'lungs', 'ev.breath': 'lungs',
+  // Stage 7k (R57): per-breath mechanics, the dead-space set and the volume set
+  'resp.mechanics': 'mechanics', 'resp.vd': 'mechanics', 'resp.volumes': 'mechanics',
   // blood (7c) and temperature (Stage 3 thermal lives in resp.temp)
   blood: 'blood', 'resp.temp': 'blood', 'ev.labs': 'blood', 'ev.labResult': 'blood',
   // organs (7d): the `organs` event's summaries are brain/kidney/liver; the ICP sensor state and the interim
@@ -90,6 +93,8 @@ export const INTERNAL_PREFIXES: readonly string[] = [
   'resp.tempSite', 'resp.shownCo2',
   // 7b lung machinery (7x.1): the parameter-cache key, the step time, the gas-step counter and the breath timestamps
   'resp.lungCore', 'resp.lungT', 'resp.lung.nGas', 'resp.lung.tInsp', 'resp.lung.tExp0',
+  // Stage 7k: the forced-expiration unit parameters (the PFT device's loop data, not a clinical row)
+  'resp.volumes.fe', 'resp.mechanics.kind',
   // 7a circulation: activation schedules and the coronary reference copy (the live parameters are hemo.circ.p)
   'hemo.circ.vent', 'hemo.circ.atria', 'hemo.circ.beats', 'hemo.circ.opens', 'hemo.circ.cor.ref',
   // rhythm scheduler internals (the rhythm id stays visible)
