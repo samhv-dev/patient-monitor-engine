@@ -223,7 +223,7 @@ FU-9 has no IAP → circulation term — breath-phase sampling, R-FU9-8 owns the
 
 ## 9. CI
 
-PR opened on the gate head; the CI result (build, slow-a, slow-b, slow-c with their times) is recorded in the PR
-conversation and the executor's report. Stage 7k (PR #30) had not merged at the gate: if it lands first, the truth-tree
-12-drug count (7k: 2 075 of 2 100) is re-measured after merging it, and non-physiological internals go to `SKIP_PATH`
-(declared) rather than raising the cap.
+- Run 37135534941 (three-group head 51b848a): build pass 41 min, slow-b pass 41 min, slow-c pass 36 min, **slow-a fail
+  70 min** — `pk-longrun` propofol 2.50979 (§7), and the group's length (4191 s of tests).
+- The four-group head (this note's commit, merged with Stage 7k): the CI result is posted on the PR and in the executor's
+  report; this note is not re-pushed for it (a push restarts the hour-long run).
