@@ -582,6 +582,16 @@ inflated).**
 | `stage9-glossary.e2e.ts` | after the first merge | Chromium ✓, WebKit ✓ | |
 | tick bench (`tickBench(60)`, 3 runs, same load as main) | gate tree vs `origin/main` | p50 **0.91–1.13 ms** vs main 0.98–1.06 (load average 11–18 from other sessions); p99 4.9–5.4 vs 3.1–3.9. p50 is far under the 6 ms CI budget. | |
 
+**After the gate review (main add125f merged as 0972baa; conditions 2–3).**
+
+| check | result |
+|---|---|
+| typecheck | clean |
+| build | clean |
+| engine fast set | 304 files: 1,364 passed, 1 skipped. The truth-event wall clock read 1.19 ms at load average 52 from other sessions and 0.23 ms alone. |
+| audio / skins / renderer / controller / ventilator / validation / demo | 58 / 191 / 90 / 226 / 97 / 107 (+11 skipped) / 200, all green |
+| `stage9-app`, `stage9-glossary`, `showcase-clock`, `showcase-capnogram`, `showcase-events-layout` (Chromium + WebKit) | 20 passed |
+
 **Slow groups (finisher, cd26d5f).** FU-9's four groups each run about 36–37 min on CI. FU-7's seven slow files
 measured 1,578 s on the local slow-a run:
 
