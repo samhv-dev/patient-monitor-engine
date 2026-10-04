@@ -226,11 +226,51 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
    machine's load again; 3/3 alone; green on CI); Stage 9 e2e on Chromium + WebKit 17 passed, 1 skipped (tasks on WebKit
    by design); the 56 screenshots re-taken (all ≤ 60 KB).
 
+9. **CI, Linux WebKit, remote join** (runs 37135860205 … 37164182362; the first green-looking run 37133952802 failed it
+   too): `[webkit] › stage9-glossary.e2e.ts:16:1 › no engine id reaches a clinical view` — "Received string: \"Waiting
+   for the monitor E8U43H…\"", "Timeout: 20000ms", "41 × locator resolved to … Waiting for the monitor", 3 of 3
+   attempts (51.7 s each); in the same job `stage9-a11y` 820×1180 lost its page once ("Target page, context or browser
+   has been closed") and passed on retry. It is not the 7k merge or the engine change (it fails on every head since
+   the first). It does NOT reproduce on macOS WebKit or Chromium, also not under CDP CPU throttling ×6 or an 8-process
+   CPU hog (measured: the remote connects in ≈ 1 s), and the other remote test (host never visited Validate or the
+   Ventilator) passes on CI WebKit. What the failing walk alone does: it visits **Validate**, whose two tool frames each
+   run their own monitor engine and kept running in the hidden view, and the **Ventilator** cockpit. Changes (commit
+   4e54da7): Validate unloads its frames on leave (a hidden view does no work, D26); the remote repeats its hello every
+   2 s until the host answers; the test prints both sides' received-message counts, the host's stats, page errors and
+   crashes if it fails again — so a failure on the next run names its cause. **Not proven fixed until that CI run.**
+10. **Task 26 — showcase additions.**
+    - *Acute events* in the **Patient** tab (it is what happens to the patient; the Scenario tab is the script): 15 engine
+      conditions with clinical names and a tooltip — cardiac tamponade, tension pneumothorax, massive PE, anaphylaxis,
+      septic shock, malignant hyperthermia, RV infarction, thyroid storm, SIRS, hypermetabolic state, DKA, major burns,
+      TBI, acute liver failure, AKI — Mild / Moderate / Severe (0.33 / 0.67 / 1), Start and Stop, staged and committed
+      with the footer, logged ("Cardiac tamponade: severe"), shown in the session bar ("M 40 y 70 kg · Cardiac tamponade
+      (severe)") and in the Patient card. The engine accepts every one in MODELED and MANUAL (unit-tested); in MANUAL a
+      line says the vital signs stay what the instructor set. **Hyperkalaemia and myocardial ischaemia have no engine
+      command**: their rows say how to produce them (burns + succinylcholine; the "Aortic stenosis and CAD" patient; RV
+      infarction is in the list).
+    - *Five showcase cases* (`apps/demo/src/app/showcase/*.json`, pme-scenario/1 with category/story/objectives/
+      duration, not drafts, first in the library under "Showcase"): healthy induction; severe tamponade then induction;
+      class IV haemorrhage → PEA → CPR + 2 L + epinephrine; severe bronchospasm on the ventilator → salbutamol;
+      anaphylaxis → epinephrine. Each has manual buttons for the next step and also advances when the learner gives the
+      drug. All validate; loaded at ×4 none of their commands was refused; anaphylaxis falls to ART S 94 with HR 137
+      within a minute; the tamponade patient compensates at ART S ≈ 105, HR ≈ 94.
+    - *Short lung-condition names* through the glossary (`LUNG_LABELS`, "Pulmonary hypertension"); the catalogue's text is
+      the tooltip and the hint ("e.g." written out — the glossary e2e caught it).
+    - **Found on the way: the session bar offered ×8, which the host refuses ("scale must be 0.25–4")** — the control
+      now stops at ×4.
+    - Tests: `events.test.ts` (3), `showcase.test.ts` (1); e2e `stage9-events.e2e.ts` (Chromium): tamponade started from
+      the panel, propofol 2 mg/kg from Drugs & fluids, **pulseless 128 s (sim) later** at ×4. The rule is stroke volume
+      < 6 mL for 5 s: in the app's default adult the stroke volume settles on its 5.2 mL floor (no output), so fu4's
+      < 5 mL never fires there.
+
 ### Ali should not demo (what remains true)
 
 - Ventilator view in a hidden or background window (under-ventilates; keep it in front; its numbers settle after ≈ 60 s).
 - Bookmark restore (hidden in the app: markers only).
 - Remote: same browser only; open it from the host's "Open the remote in a new window".
-- IBP lanes are empty until the arterial line is attached (Devices & alarms); the saadat-like monitor's idle alarm bar is
-  a bright slab and its alarms are off at power-on (skin data).
+- IBP lanes are empty until the arterial line is attached (Devices & alarms; the showcase cases attach it); the
+  saadat-like monitor's idle alarm bar is a bright slab and its alarms are off at power-on (skin data).
 - After "Load scenario" or "Restart patient" the waveforms restart (one sweep with a join on the pleth).
+- Speed above ×4 (the host's limit).
+- Acute events started on a Remote are not shown on the host's session bar, and vice versa (the engine does not report
+  active conditions; each panel shows what it started).
