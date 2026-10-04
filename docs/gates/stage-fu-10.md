@@ -1,7 +1,7 @@
 # Gate note — FU-10 Part A: endocrine and thermal integration
 
 Branch `fu-10-endocrine-thermal`, from `origin/main` `bd5880b` (= `5559533`, FU-9 Parts A + C and Stage 9 merged, plus the
-RESUME commit), merged with `origin/main` `fecbdcc` (the showcase hotfix, PR #33, no engine file) at the gate. Plan:
+RESUME commit), merged with `origin/main` at the gate twice: `fecbdcc` (showcase hotfix, PR #33) and then `f29951b` (showcase kit #34, preset-test timeout #35). Neither touches an engine file; after the second merge, typecheck, the non-engine packages, build and notices were re-run green. Plan:
 `docs/plans/fu-10-endocrine-thermal.md` (written and verified on `1b8bdd3`; its new "Base drift" section lists what moved).
 Executor: one local session (Claude Opus 5.5), Tasks A0–A8 in order (A5 dropped, A8 its `it.fails` file only), one fresh-context
 review of the whole branch, one fix pass, this gate. **Part B (B0–B7) is NOT in this PR**: FU-7 (PR #32) has not merged.
