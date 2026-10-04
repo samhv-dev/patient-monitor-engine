@@ -33,6 +33,23 @@ export const LOW_FLOW_TAU_S = 70;
 export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
 /** FU-4 F4 / R1(a): the healthy resting PaCO2 every profile starts from (pregnancy 31 under R10). */
 export const PACO2_REST_MMHG = 40;
+/**
+ * FU-9 F7 (research/22 BF-16b, research/19 C7): a chronic retainer's own resting PaCO2 — tables §1.5 COPD `paco2Set`
+ * 40 / 40 / 45 / 55 mmHg at GOLD 1–4 (lung `copd` severity 0.25 / 0.5 / 0.75 / 1, linear between) [TXT]. It is the
+ * MODELED drive's set point and the gas compartments' start (as PACO2_REST_MMHG is), and 7c builds the profile's chronic
+ * renal compensation on it (blood/pipeline.ts createBloodState).
+ */
+export const COPD_PACO2_REST: readonly (readonly [number, number])[] = [[0.5, 40], [0.75, 45], [1, 55]];
+export function restingPaco2(p: PatientProfile | undefined): number {
+  const s = Math.min(1, Math.max(0, p?.lungConditions?.find((c) => c.id === 'copd')?.severity ?? 0));
+  const k = COPD_PACO2_REST;
+  for (let i = 1; i < k.length; i++) {
+    const [x0, y0] = k[i - 1] as readonly [number, number];
+    const [x1, y1] = k[i] as readonly [number, number];
+    if (s <= x1) return s <= x0 ? PACO2_REST_MMHG : y0 + ((s - x0) / (x1 - x0)) * (y1 - y0);
+  }
+  return (k[k.length - 1] as readonly [number, number])[1];
+}
 /** Y-piece + HME on a ventilator or BVM: 50 mL adult [ENG]. */
 export const APPARATUS_ADULT_ML = 50;
 /**
@@ -179,7 +196,7 @@ export function gasPatient(p: PatientProfile | undefined): GasPatient {
     vo2, vco2: RQ * vo2,
     bloodL: (a.bv * eff) / 1000,
     deadSpaceMl: ANAT_DEAD_SPACE_ML_PER_KG * ibw,
-    paco2Rest: PACO2_REST_MMHG, // FU-4 F4 / R1(a) (pregnancy 31 when R10 lands)
+    paco2Rest: restingPaco2(p), // FU-4 F4 / R1(a) (pregnancy 31 when R10 lands); FU-9 F7: a COPD retainer's own set point
     // anchored on the anaesthetised VCO2 (the apnoea data are from anaesthetised patients)
     cf: CO2_CF_PER_VCO2 * RQ * vo2 * GA_METABOLIC, cs: CO2_CS_PER_VCO2 * RQ * vo2 * GA_METABOLIC, kfs: CO2_KFS_PER_VCO2 * RQ * vo2 * GA_METABOLIC,
     complianceMl: 50 * (ibw / 70), // 50 mL/cmH2O intubated adult [ENG]; scales with size

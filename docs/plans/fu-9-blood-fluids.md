@@ -4390,7 +4390,7 @@ so COPD GOLD 3 is normocapnic (39.7, HCO₃ 24.35). Decision D9; the chronic con
 
 **Prototype numbers:** COPD GOLD 3 awake: PaCO₂ 44.1, HCO₃ 26.02, pH 7.383, +3.4 mmol/L HCO₃ per 10 mmHg (band 3–4.5); X-A unchanged.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-chronic.test.ts`:
 
@@ -4451,9 +4451,9 @@ describe('FU-9 F7: chronic hypercapnia with chronic renal compensation (tables �
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-chronic.test.ts test/engine/fu9-copd.test.ts` → `restingPaco2`
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-chronic.test.ts test/engine/fu9-copd.test.ts` → `restingPaco2`
   missing; engine PaCO₂ 39.7.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/gas/params.ts`, find:
 
@@ -4541,11 +4541,20 @@ import { bloodPatient, CHRONIC_HCO3_PER_MMHG, HBF_EXP, NORMAL, type BloodPatient
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/gas test/l2/resp test/l2/lung test/engine/fu9-copd.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/gas test/l2/resp test/l2/lung test/engine/fu9-copd.test.ts
   test/engine/lung-copd.test.ts test/engine/resp-coupling.test.ts` → pass; if a 7b/Stage 3 COPD test pinned a resting
   PaCO₂ of 40 for GOLD 3, it is re-pinned to the tables' 45 with the reason (tables §1.5), never widened.
-- [ ] **Step 5 — BF runner:** `BF-16b BF-15b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-16b BF-15b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+  Executed (4a1cc3f7 + B1 + B2): engine test COPD GOLD 3 PaCO₂ 43.9, HCO₃ 25.99, pH 7.385; X-A 39.0 / 24.26 → +3.52 per
+  10 mmHg (was 39.6 / 24.33 / 7.402, +1.30). GOLD 4 (probe) PaCO₂ 50.51, HCO₃ 29.15, pH 7.374 (was 40.72 / 24.49 / 7.392);
+  GOLD 2 unchanged (38.85). BF-16b hco3Per10 1.31 → **3.52** (PL), dPaco2 0.6 → **4.9** (band 5–15: TW by 0.1 — X-A now rests
+  at 39.0, the prototype's 44.14 is 43.92 here; not tuned, R44); verdict TW → TW. BF-15b dPaco2 +6.24 unchanged (PL).
+  Step 4: `test/l2/{blood,gas,resp,lung}` + fu9-copd + lung-copd + resp-coupling 59 files / 249 tests pass (one Vitest
+  RPC timeout under a load average of 143 on the shared Mac; the three engine files re-run serially: 11/11 pass). The other
+  engine files with a COPD profile (lung-capno/circ/commands/gas/state/wiring, resp-bronchodilation/mechanics/suite,
+  types-lung): one pre-declared `it.fails` flips — `lung-circ` "COPD GOLD 3 at RR 26 … MAP falls by > 2 mmHg": 1.79
+  (101.4 → 99.6) → **2.5 (102.0 → 99.5)**; it becomes `it` (R45: named here with both numbers; band unchanged).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7b-profile,7c): COPD retainers rest at their tables PaCO2 with chronic renal compensation (FU-9 F7, E-FU9-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
