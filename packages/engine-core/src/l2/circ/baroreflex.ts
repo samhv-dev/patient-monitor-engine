@@ -108,8 +108,10 @@ export interface BaroGains {
    * (0–1). At rest the delivered output is 1 and nothing changes; when an anaesthetic lowers the delivered output
    * (`outF` < 1) it removes this share of the RESTING tone too, not only the reflex response — so a patient whose
    * resting pressure depends on sympathetic tone (elderly, hypertensive, heart failure: MSNA rises with each) falls more.
-   * Removed in proportion to the DELIVERED output `o = outF × brainF`, so brainstem hypoperfusion withdraws it through the
-   * existing brainF path; the share itself is a profile constant (research/23 §6.3 note 4).
+   * Removed in proportion to the ANAESTHETIC's delivered-output factor `outF` only (plan D15's formula) — NOT `brainF`:
+   * research/23 §6.3 note 4 keeps the tonic level uncoupled from the perfusion state, and `brainF` reads `cbfRel`, which
+   * the GA flow–metabolism coupling lowers at a normal MAP (FU-9 H1 and F5 moved when `o = outF × brainF` was used, the
+   * prototype's line). The reflex RESPONSE keeps `o`. The share itself is a profile constant.
    * DECISION (research/23 §6.3 note 3): the venous effectors (`dV0`, `cSvF`) carry NO tonic share in FU-8 — only SVR and
    * contractility (as prototyped and agreed, A23). The resting venous tone is also sympathetically maintained, so a later
    * stage (FU-12's hub) that gives `dV0`/`cSvF` a tonic share ADDS a term here; it changes no FU-8 number by omission.
@@ -166,8 +168,8 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
     hrF: 1 + o * clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
-    svrF: 1 - (g.tonic ?? 0) * (1 - o) + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp), // FU-8 (C1): − the tonic share removed
-    eesF: 1 - TONIC_EES_SHARE * (g.tonic ?? 0) * (1 - o) + o * clampSat(G_C * s * betaC * b.es),
+    svrF: 1 - (g.tonic ?? 0) * (1 - (g.outF ?? 1)) + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp), // FU-8 (C1): − the tonic share the anaesthetic removes
+    eesF: 1 - TONIC_EES_SHARE * (g.tonic ?? 0) * (1 - (g.outF ?? 1)) + o * clampSat(G_C * s * betaC * b.es),
     dV0: o * Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
     cSvF: 1 - o * clampSat(G_CSV * s * b.es) * 0.5,
   };

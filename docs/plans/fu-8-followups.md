@@ -472,15 +472,25 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   tests that import `cardiacOutput` call it outside CPR, where it is unchanged; V.1's CPR guard is handed (below).
 - **E-FU8-12** (Task A28): `neuro-engine.test.ts` (7f; FU-4 F4's record) — "propofol 2 mg/kg: depth-index nadir < 52" flips
   (52 → 51): its 70 kg / 170 cm adult has effKg 67.6, and A28 gives it its own resting-output reference back.
-- **E-FU8B-1** (Task B4, executor 2026-10-04): four pre-declared `it.fails` FLIP to `it` (R45: pins flipping, titles re-stated
-  with before → after): `circ-sanity-1` "propofol 2 mg/kg: MAP ≈ 70 % at 2 min" (0.802 → 0.727); `clinical-suite` S2's MAP side
-  (−14.7 → −20.6 %), S4b (MAP 58.9 → 40.7, CO −17 → −35 %) and S14's MAP side (−22.6 → −44.5 %); the suite's header count
-  ELEVEN → EIGHT. No assertion changed.
+- **E-FU8B-1** (Task B4, executor 2026-10-04; final numbers after the gate revision below): three pre-declared `it.fails`
+  FLIP to `it` (R45: pins flipping, titles re-stated with before → after): `circ-sanity-1` "propofol 2 mg/kg: MAP ≈ 70 % at
+  2 min" (0.802 → 0.727); `clinical-suite` S2's MAP side (−14.7 → −19.7 %) and S14's MAP side (−22.6 → −42.2 %); the suite's
+  header count ELEVEN → NINE. S4b moves (58.9 / −17 % → 50.5 / −21 %) but stays an `it.fails` (its CO −25 % side). No
+  assertion changed.
 - **E-FU8B-2** (Task B4; the owner's ruling "A23 and the perfusion floor", 2026-10-04, and the orchestrator's brief): the
   `clinical-suite` row "S6a: class III haemorrhage + propofol 2 mg/kg does not arrest within 5 min" is no longer an acceptance
   criterion in either direction; it becomes a RECORD (logs nadir, seconds < 35 / < 30, minimum CoPP and kIsch, the arrest
   time; asserts only that the run completed). Before B4: no arrest, nadir 26.5; after: arrest at +90 s. The S6a percentage
   `it.fails` keeps failing; its title re-states the new number (nadir 2.7, −97 %).
+- **E-FU8B-3** (Task B4): `pk-longrun` (FU-9's declared `it.fails`, 6 h TCI propofol Ce 2.5 ± 0.005) flips: 2.5098 → 2.5021.
+- **E-FU8B-4** (Task B5): research/20 DV-08b (mapPaced 96 → 137) and DV-08c move against the plan line "DV-08a/08b
+  unchanged": the X-A ventilated rig has no sedation, so the paced patient feels 100 mA (capture unchanged).
+- **E-FU8B-5** (Task B3): `apps/demo/src/app/glossary-data.ts` entry 339 `hemo.circ.skinTone` (the brief assigns numbers
+  from 339; renumber at merge) — the plan's R56 line said FU-8 does not edit the glossary.
+- **E-FU8B-6** (Task B4, gate revision): the plan's `fu8-tonic` test is split — healthy in S1 and 80 y / HFrEF ≥ 5 points more
+  stay `it`; "untreated HTN 60 y ≥ 5 points more" becomes `it.fails` measured 4.96 points (−35.27 vs −30.31 %). Cause: the
+  tonic share is removed by `outF` only (see the B4 gate revision); with the prototype's `o = outF × brainF` it was 5.6 points
+  but FU-9's GA-kidney H1 (0.49 < 0.5 mL/kg/h) and massive-transfusion F5 ("no arrest" → arrest) rows broke through `cbfRel`.
 
 ## Handed to (items another plan owns, with the reason)
 
@@ -5881,6 +5891,17 @@ CM-03b −21.8 → −35.5 % (WR → PL), CM-05a −18.4 → −45.1 %, MAP at 2
 propofol −22.1 → −44.1 % (PL → TS, band −40…−20), etomidate −3.7 → −15.3 %. Class III + propofol (the old safeguard, now a
 record): nadir 26.4 → 2.5 mmHg; s < 35 113 → 808, s < 30 57 → 806; min CoPP 21.6 → 0.1; min kIsch 0.814 → 0.000; recovery →
 arrest at +86 s (pulseless sinus, agonal +240 s, asystole +390 s) — a CLIFF (MAP 38.7 at +30 s, 20.4 at +60, 8.0 at +90).
+**Gate revision (executor, 2026-10-04; commit "fix(circ): the tonic share follows the anaesthetic only"):** the full slow
+run on the B4 commit failed two FU-9 rows (slow-c): `fu9-kinetics` H1 "GA, normovolaemic: hour-2 urine 0.5–1 mL/kg/h"
+0.49 and `fu9-transfusion` F5 "no arrest" (an arrest; lactate 16.2, BE −14.2). Cause: the prototype's line removed the
+tonic share by `o = outF × brainF`, and `brainF` reads `cbfRel`, which the GA flow–metabolism coupling lowers at a normal
+MAP — i.e. the tonic level was coupled to the perfusion state, which research/23 §6.3 note 4 and the brief rule out, and
+plan D15's own formula writes `outF`. Ruling: remove it by `outF` only (the reflex response keeps `o`). After: H1 0.57,
+F5 no arrest (iCa 0.958, BE −0.2 as on main). Final numbers (replacing the table above where they differ): healthy −30.3,
+80 y −37.1, HTN 60 y −35.3, 80 y HTN −41.2, HFrEF −41.2, AS + CAD −38.4, PH −31.4 %; S1 0.702, S1b 0.868, S2 −19.7 (flips),
+S4b 50.5 / −21 % (stays `it.fails`), S14 −42.2 (flips), `pk-longrun` 2.5021 (flips); class III + propofol arrest at +89 s
+(nadir 2.5). DI-46 −40.8 (PL), DI-47 −42.0 (TS), DI-48 −39.9 (PL), DI-79 0.8 (WR); CM-01b −32.0 (PL), CM-03b −34.7 (PL),
+CM-05a −39.9 / 71.3 at 2 min (WR: ST), CM-06b −42.0 (TS). `fu8-tonic`'s HTN row → `it.fails` (E-FU8B-6).
 - [x] **Commit and push.**
 
 ```bash

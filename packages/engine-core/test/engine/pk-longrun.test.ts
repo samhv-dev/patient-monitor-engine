@@ -44,7 +44,7 @@ describe('Stage 7g long run', () => {
   // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
   // FU-8 B4 (E-FU8B-3): flipped — anaesthesia now removes the tonic sympathetic share, so this rig's cardiac output (and
   // with it FU-9's flow-limited hepatic clearance) sits where the open-loop TCI's own model expects it again.
-  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — back within the band after FU-8 B4 (2.5098 with FU-9; main within the band before FU-9)`, { timeout: 1_800_000 }, async () => {
+  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — back within the band after FU-8 B4 (measured 2.5021; 2.5098 with FU-9; main within the band before FU-9)`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;
     console.log(`pk-longrun ${LONGRUN_HOURS} h propofol Ce ${l.drugs.find((x) => x.id === 'propofol')!.ce.toFixed(4)}`);
