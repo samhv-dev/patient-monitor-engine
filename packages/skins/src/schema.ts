@@ -93,6 +93,7 @@ const alarms = obj(
     repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),
     lowPulses: en([1, 2]),
     numericStyle: en(['flash-text', 'flash-box']),
+    wording: obj({}, { texts: record(str, '^[A-Za-z0-9_-]+$'), limitLabels: record(str) }), // Stage 9 (E-S9-4)
   },
 );
 

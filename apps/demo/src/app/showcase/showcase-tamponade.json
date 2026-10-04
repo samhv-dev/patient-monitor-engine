@@ -1,0 +1,130 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-tamponade",
+  "title": "Severe tamponade, then induction",
+  "category": "Showcase",
+  "durationMin": 15,
+  "story": "A 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.",
+  "objectives": [
+    "Recognise tamponade physiology: low pressure, high CVP, tachycardia",
+    "Predict the effect of a standard induction dose",
+    "Treat PEA from tamponade: CPR and pericardial drainage"
+  ],
+  "notes": "Showcase case (Stage 9 Task 26): Ali's headline case; the fu4 page's tamponade run (tamponade 1, then propofol 2 mg/kg).",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 58,
+    "sex": "M",
+    "weightKg": 80,
+    "heightCm": 175,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on",
+      "cvp": "connected"
+    }
+  },
+  "initialState": "tamponade",
+  "states": [
+    {
+      "id": "tamponade",
+      "label": "Tamponade, compensating",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "propofolGiven",
+          "label": "Propofol given",
+          "to": "induced",
+          "when": {
+            "event": {
+              "kind": "drug",
+              "drugId": "propofol"
+            }
+          }
+        },
+        {
+          "id": "givePropofol",
+          "label": "Give propofol 2 mg/kg",
+          "to": "inducedByButton",
+          "when": {
+            "manual": {
+              "label": "Give propofol 2 mg/kg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "inducedByButton",
+      "label": "After induction: compensation lost",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "drain1",
+          "label": "Drain the pericardium",
+          "to": "drained",
+          "when": {
+            "manual": {
+              "label": "Drain the pericardium"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "induced",
+      "label": "After induction: compensation lost",
+      "transitions": [
+        {
+          "id": "drain2",
+          "label": "Drain the pericardium",
+          "to": "drained",
+          "when": {
+            "manual": {
+              "label": "Drain the pericardium"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "drained",
+      "label": "Pericardium drained",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 0
+          }
+        }
+      ]
+    }
+  ]
+}
