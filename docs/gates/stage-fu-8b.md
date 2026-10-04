@@ -165,10 +165,41 @@ propofol 1 none → 910 s; B2/B7 830 → 765 s; B6 1135 → 910 s; B9 760 → 74
   untreated-HTN row becomes `it.fails`, measured 4.96 points (−35.27 vs −30.31 %). See the gate revision in §2.
 - **E-FU8B-7.** Two FU-6 RS14 pins flip: `resp-inspired-co2` and `resp-suite` "FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10".
   EtCO2 goes from +5.98 to +6.1 and PaCO2 is +6.7. This anaesthetised rig's output moves with the tonic share.
-- **E-FU8B-8.** FU-7's `drug-apnoea` DI-89 "0 s of flag-while-breathing" becomes `it.fails`, measured **1 s**. At
-  t = 540 the first breath after the apnoea (4.1/min, VE 0.11) comes one sample before the flag clears at 541. This is an
-  edge offset of the flag, not breathing under a standing flag. I could not fix it inside Part B's files; it goes to
-  the FU-7 owner.
+- **E-FU8B-8 (revised after the gate condition).** I first pinned FU-7's DI-89 guard ("0 s of flag-while-breathing")
+  as an `it.fails`. The orchestrator did not approve that pin. The guard is a passing `it` again, through a correction to
+  the test's sampling only (`drug-apnoea.test.ts`); no engine file changed.
+  - **Bisect over the Part B commits (DI-89, contradicting samples):**
+
+    | Commit | Seconds |
+    |---|---|
+    | `4a1cc3f7` main, B1, B2 | 0 |
+    | `5e3cd9b2` B4 | **1** |
+    | B3, B5 and both fixes after it | 1 |
+
+    B4 moved it.
+  - **Trace at 20 ms, same rig.** Flag = `neuro.resp.apnoea`; rate = `resp.spont.rr` in /min.
+
+    | Instant | Main: flag | Main: rate | After B4: flag | After B4: rate |
+    |---|---|---|---|---|
+    | 539.00 | up | 0 | up | 0 |
+    | 540.00 (a 1 s sample) | up | 0 | **up** | **4.07** |
+    | 540.10 | — | — | down | 4.07 |
+    | 541.00 (a 1 s sample) | up | 0 | down | 4.07 |
+    | 541.02 | up | 4.08 | — | — |
+    | 541.10 | down | 4.08 | — | — |
+    | 542.00 (a 1 s sample) | down | 4.13 | — | — |
+
+    B4 shifts the chemoreflex's first committed rate after the apnoea from 541.02 to 540.00. That is exactly a 1 s
+    sample instant.
+  - **The signal that changes first is the committed rate (Stage 3).** The flag is 7f's reading of that rate.
+    - R51 fixes the chain order: 7f steps before Stage 3 within one engine pass, and 7f steps at 0.1 s.
+    - So the flag clears one 7f step (≤ 0.1 s) after the rate commits.
+    - On main the same 0.08 s lag is present but falls between samples.
+    - No breath is in progress under a standing flag: the first breath follows the commit.
+  - **Correction.** A contradicting sample is re-read one `NEURO_DT_S` later. It counts unless the flag is down then.
+    - What the test asserts is unchanged.
+    - Mutation check: a deliberately sticky flag (held while the rate is below 4.5/min) still fails the guard, with 9 s
+      of flag-while-breathing.
 - The plan's E-FU8-7 (`baroreflex.ts`, FU-4's file) applies as declared.
 
 ## 7. Showcase rehearsal (KIT-GATE.md procedure; final merged head `a531c739` = FU-8 Part B + main `cdf95a2c` incl. FU-9 Part B)
@@ -194,23 +225,25 @@ For the run sheet, if FU-8 Part B enters the showcase build:
 - **Induction:** the nadir is 6 mmHg deeper and the apnoea alarm about 4 s later.
 - **Other cases:** unchanged.
 
-## 8. Verification at the gate (final merged head `a531c739`: Part B + main `cdf95a2c`, FU-9 Part B merged)
+## 8. Verification at the gate (re-run after the gate condition; head `4ed0b729`, main `cdf95a2c` merged — `origin/main` unchanged since, FU-10 not merged yet)
 **Commands:**
 - `pnpm -r typecheck`: clean.
 - `pnpm build`: OK.
-- `check-notices`: OK (3 governed files).
+- `check-notices`: OK.
 
-**Engine `CI=1`, all six slow groups** (local wall time; machine shared with other executors):
+**Engine `CI=1`, all six slow groups** (local wall time):
 
 | Group | Files | Tests | Result | Wall time |
 |---|---|---|---|---|
-| fast | 308 | 1,372 + 1 skipped | pass | 88 s |
-| slow-a | 31 | 80 | pass | 719 s |
-| slow-b | 38 | 204 | pass | 624 s |
-| slow-c | 16 | 44 | pass | 854 s |
-| slow-d | 19 | 118 | pass | 752 s |
-| slow-e | 5 | 34 | pass | 555 s |
-| slow-f | 3 | 59 | pass | 491 s |
+| fast | 308 | 1,372 + 1 skipped | pass | 118 s |
+| slow-a | 31 | 80 | pass | 1,016 s |
+| slow-b | 38 | 204 | pass | 675 s |
+| slow-c | 16 | 44 | pass | 544 s |
+| slow-d | 19 | 118 | pass | 545 s |
+| slow-e | 5 | 34 | pass | 525 s |
+| slow-f | 3 | 59 | pass | 489 s |
+
+DI-89 is a passing `it`, logging one in-pass edge at 540 s.
 
 **Packages:**
 
@@ -223,43 +256,56 @@ For the run sheet, if FU-8 Part B enters the showcase build:
 | validation | 107 + 11 skipped | pass |
 | ventilator | 97 | pass |
 
-**End-to-end:** Stage 9 and the showcase e2e (`stage9-*`, `showcase-*`) on Chromium + WebKit: 30 passed, 6 skipped
-(the heavy shots run Chromium only). The rewritten stage-9 screenshots were reverted.
+**End-to-end:** Stage 9 + showcase e2e on Chromium + WebKit: 30 passed, 6 skipped (the screenshot rewrites were
+reverted).
 
-**Showcase rehearsal:** 12/12 (§7).
+**Showcase rehearsal** on a kit built from `4ed0b729`: 12/12. Per case:
 
-**Physiology audit** (`audit:physiology`, before = `4a1cc3f7`, after = the B4 final tree): see §3 and §5.
-
-**Slow-group placement.** The new slow files match `fu8-*`, so they are in slow-a:
-
-| File | Local time |
+| Case | Result |
 |---|---|
-| `fu8-tcp-pain` | 13.3 s |
-| `fu8-tonic` | 8.9 s |
-| `fu8-sensor-map` | 0.2 s |
+| Healthy induction | apnoea 62.5 s, nadir 65.6–65.7, CO2 tile 46 |
+| Anaphylaxis | 11.3 s |
+| Bronchospasm | 160/161 → 305 mL |
+| Tamponade | MAP < 40 at 73.9 / 74.0 s |
+| Haemorrhage | pulse lost at 10 min, ROSC after 4.3 min of CPR |
+| Clock | restarts |
 
-Together that is about 22 s locally, roughly 60 s on CI. slow-a locally went from 653 to 719 s, the latter including
-the merge.
+These are within run-to-run timing of §7. The apnoea alarm varies 59–62.5 s across runs, inside the 70 s check.
 
-**What the full runs found.** The first full run on the B4 commit failed FU-9 H1/F5 in slow-c, which led to the gate
-revision. The second run, on `ef79e74e`, failed RS14 ×2 in slow-d (pins flip, E-FU8B-7) and DI-89 in slow-f (pinned,
-E-FU8B-8). After these, every group is green.
+**Slow-group placement.** The new slow files match `fu8-*`, so they are in slow-a: `fu8-tcp-pain` 13.3 s,
+`fu8-tonic` 8.9 s, `fu8-sensor-map` 0.2 s locally.
 
-**The tick bench** (validation `tick-bench`): it failed once at load average 120–250 and passed in the final package
-run.
+**What the earlier full runs found:**
+- the first full run on the B4 commit: FU-9 H1/F5 in slow-c (→ the gate revision, `outF` only);
+- the second, on `ef79e74e`: RS14 ×2 in slow-d (pins flip, E-FU8B-7) and DI-89 in slow-f (→ the sampling correction,
+  E-FU8B-8 revised).
 
-**Main moves still to merge:**
-- **FU-10 Part A** (`origin/fu-10-endocrine-thermal`, not yet merged) brings glossary 339–347, a seventh group slow-g
-  and E-FU10-14. E-FU10-14 makes the `insulinDextrose` row's insulin lower K⁺ through 7g's insulin PD.
-- **B1's insulin change touches only the INFUSION reference** (`refRatePerKg` on the `insulin` row), not the bolus path
-  E-FU10-14 uses, so the two do not duplicate.
-- **Reconcile at the merge:**
-  - `insulinDextrose` keeps `gammaPk(10, false, …, 0.1/60)`. If an infusion of that combined row is meant to be
-    possible, it should take the same per-kg reference (`…, true`); otherwise B1 refuses nothing there, because the row
-    has an infusion reference.
-  - FU-10's `pk-longrun` returns that row to `it` as E-FU8B-3 does. Expect a textual conflict with the same outcome.
-  - Renumber glossary entry 339 to 348 if FU-10 lands first.
-  - Place `fu8-*` in whichever group CI amendment 6 assigns.
+**The tick bench** failed once under load average 120–250 and passed in every package run since.
+
+**When FU-10 Part A merges** (`origin/fu-10-endocrine-thermal`; still unmerged at this head):
+- renumber glossary entry 339 after FU-10's 347;
+- place `fu8-*` in its seven-group packing;
+- resolve `pk-longrun` to what is true on the merged tree, with the measured Ce in the title;
+- re-measure B1's insulin numbers.
+
+On B1 and E-FU10-14: B1 changes only the `insulin` row's INFUSION reference (`refRatePerKg`). E-FU10-14 moves the
+combined `insulinDextrose` bolus's K⁺ to 7g's insulin PD, so the two do not duplicate. `insulinDextrose` keeps the
+absolute infusion reference: if an infusion of the combined row is meant to be possible, it needs the same per-kg flag.
+
+## 8b. For the owner
+- **HFrEF propofol fall:** −41 to −42 %, beyond the −40…−20 band in DI-47 and CM-06b. This is a size question for the
+  A23 calibration pass.
+- **Awake transcutaneous pacing at 100 mA:** MAP 98 → 141.6, NE 275 → 608. This is a first [ENG] size (W25 (8)).
+  DV-08b's unsedated rig now reads a paced MAP of 137.
+- **Class III haemorrhage + propofol 2 mg/kg:** it now arrests at +89 s, and the course is a cliff. MAP goes 38.8 → 21.3
+  → 11.8 at +30/+60/+90 s; nadir 2.5; minimum CoPP 0.1. Before B4 the patient recovered from a nadir of 26.4.
+- **New arrests after B4 (physiology audit):**
+  - tamponade + propofol 1 mg/kg at 910 s;
+  - 80 y HTN with propofol 4 mg/kg + remifentanil 2 µg/kg at 410 s;
+  - class III + propofol 2 mg/kg at 1050 s.
+- **Showcase deltas:**
+  - **Induction:** MAP nadir 71.7 → 65.6; apnoea alarm 55 → 59 s.
+  - **Tamponade:** MAP < 40 at 74.7 s (was 112.7 s), and the patient is pulseless at 2 min after propofol.
 
 ## 9. Final review
 I dispatched a fresh reviewer (Opus) on the B1–B5 range. It found no Critical issues; I graded its findings as

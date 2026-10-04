@@ -492,8 +492,10 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   tonic share is removed by `outF` only (see the B4 gate revision); with the prototype's `o = outF × brainF` it was 5.6 points
   but FU-9's GA-kidney H1 (0.49 < 0.5 mL/kg/h) and massive-transfusion F5 ("no arrest" → arrest) rows broke through `cbfRel`.
 - **E-FU8B-7** (Task B4, gate): FU-6 RS14 pins flip in `resp-inspired-co2` and `resp-suite` (EtCO2 +5.98 → +6.1).
-- **E-FU8B-8** (Task B4, gate): FU-7 `drug-apnoea` DI-89 "0 s flag-while-breathing" → `it.fails`, measured 1 s (a one-sample
-  edge at the end of the apnoea, t 540/541).
+- **E-FU8B-8** (Task B4, gate; revised on the orchestrator's condition): FU-7 `drug-apnoea` DI-89 stays a passing `it`. Its
+  sampling re-reads a contradicting sample one `NEURO_DT_S` later. B4 moved the first post-apnoea rate commit onto a 1 s
+  sample (540.00); in R51's chain order, 7f (the flag) steps before Stage 3 (the rate) inside a pass. A sticky flag still
+  fails (mutation: 9 s). Test-only; the trace is in the gate note.
 
 ## Handed to (items another plan owns, with the reason)
 
