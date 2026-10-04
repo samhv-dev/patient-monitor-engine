@@ -13,6 +13,7 @@
 // 36.9 / 36.0). Linear in d between the awake and GA rows, extrapolated for d > 1 (propofol/volatile thresholds fall
 // linearly with concentration, Sessler) and clamped to [0, 1.5].
 import {
+  THR_AGE_FROM_Y, THR_AGE_SHIFT_C, THR_AGE_TO_Y, THR_DEPTH_MAX,
   SHIVER_MAX_X, SHIVER_SPAN_C, SHIVER_STOP_C, SHIVER_STOP_SPAN_C, SUMMIT_W_PER_KG075, SWEAT_MAX_W_70, SWEAT_W_PER_C, THR_SHIVER_AWAKE, THR_SHIVER_GA,
   THR_SWEAT_AWAKE, THR_SWEAT_GA, THR_VASO_AWAKE, VASOCONSTRICT_C, W_VASO_AWAKE, W_VASO_GA,
 } from './params.ts';
@@ -26,13 +27,23 @@ export interface Thresholds {
 
 const lerp = (a: number, b: number, d: number) => a + (b - a) * d;
 
-/** Thresholds at depth d with every threshold shifted by `setShiftC` (fever raises the set point). */
-export function thresholds(depth: number, setShiftC: number): Thresholds {
-  const d = Math.min(1.5, Math.max(0, depth));
+/** FU-10 E6: the age shift of the cold-defence thresholds, °C (0 up to 60 y, THR_AGE_SHIFT_C from 80 y; linear). */
+export function ageShiftC(ageY: number): number {
+  const f = Math.min(1, Math.max(0, (ageY - THR_AGE_FROM_Y) / (THR_AGE_TO_Y - THR_AGE_FROM_Y)));
+  return THR_AGE_SHIFT_C * f;
+}
+
+/**
+ * Thresholds at depth d with every threshold shifted by `setShiftC` (fever raises the set point) and the cold-defence
+ * thresholds by the patient's age in proportion to the depth (FU-10 E6). The depth is capped at the GA row (FU-10 E5).
+ */
+export function thresholds(depth: number, setShiftC: number, ageY = 40): Thresholds {
+  const d = Math.min(THR_DEPTH_MAX, Math.max(0, depth));
+  const age = ageShiftC(ageY) * d; // FU-10 E6 (R-6): under anaesthesia only
   return {
-    vaso: lerp(THR_VASO_AWAKE, VASOCONSTRICT_C, d) + setShiftC,
-    vasoW: lerp(W_VASO_AWAKE, W_VASO_GA, Math.min(1, d)),
-    shiver: lerp(THR_SHIVER_AWAKE, THR_SHIVER_GA, d) + setShiftC,
+    vaso: lerp(THR_VASO_AWAKE, VASOCONSTRICT_C, d) + setShiftC + age,
+    vasoW: lerp(W_VASO_AWAKE, W_VASO_GA, d),
+    shiver: lerp(THR_SHIVER_AWAKE, THR_SHIVER_GA, d) + setShiftC + age,
     sweat: lerp(THR_SWEAT_AWAKE, THR_SWEAT_GA, d) + setShiftC,
   };
 }

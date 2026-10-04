@@ -71,6 +71,9 @@ export interface NeuroState {
   flags: { conscious: boolean; aware: boolean; moved: boolean; recovered: boolean; recurarised: boolean; mhMarked: boolean };
   fasc: { from: number; to: number };
   emgBase: number | null; // ECG EMG artefact before fasciculations (engine)
+  /** FU-10 E1: when an MH-susceptible patient was first exposed to each trigger (s) — read by Stage 7e, which owns MH
+   * (R51 §6) and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. */
+  mhExposure?: { sux?: number; volatile?: number; volatileAgent?: string };
   out: EngineEvent[];
 }
 
@@ -186,9 +189,12 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
   for (const d of doses) {
     if (d.agent !== 'succinylcholine') continue;
     ns.fasc = { from: d.t + FASC_FROM_S, to: d.t + FASC_TO_S };
-    if (ns.profile.mhSusceptible && !ns.flags.mhMarked) {
-      mark(ns, d.t, 'mhTrigger');
-      ns.flags.mhMarked = true;
+    if (ns.profile.mhSusceptible) {
+      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t }; // FU-10 E1: 7e reads it
+      if (!ns.flags.mhMarked) {
+        mark(ns, d.t, 'mhTrigger');
+        ns.flags.mhMarked = true;
+      }
     }
   }
 }
@@ -221,9 +227,19 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   ns.nmb = ns.outputs.nmb;
   ns.thermoDepth = ns.outputs.thermoDepth;
   // MH exposure to a potent volatile: a mark only (MH is 7e's, R51 §6)
-  if (ns.profile.mhSusceptible && !ns.flags.mhMarked && x.macPotent > MH_VOLATILE_MAC) {
-    mark(ns, t, 'mhTrigger');
-    ns.flags.mhMarked = true;
+  if (ns.profile.mhSusceptible && x.macPotent > MH_VOLATILE_MAC && ns.mhExposure?.volatile === undefined) {
+    // FU-10 E1: 7e reads the time and the agent (the potent volatile with the largest end-tidal MAC fraction)
+    let agent = '';
+    let best = -1;
+    for (const [id, v] of Object.entries(x.et)) {
+      const f = id !== 'n2o' && v && v.macAge > 0 ? v.fet / v.macAge : -1;
+      if (f > best) { best = f; agent = id; }
+    }
+    ns.mhExposure = { ...ns.mhExposure, volatile: t, volatileAgent: agent };
+    if (!ns.flags.mhMarked) {
+      mark(ns, t, 'mhTrigger');
+      ns.flags.mhMarked = true;
+    }
   }
   // marks
   if (ns.flags.conscious && !d.conscious) mark(ns, t, 'lossOfConsciousness');

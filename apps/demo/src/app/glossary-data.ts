@@ -370,6 +370,16 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 336, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
   { n: 337, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
   { n: 338, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
+  // FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after FU-7's 338, for Ali's review)
+  { n: 339, s: 'S9', keys: ['resp.temp.ageY'], label: 'Age (thermoregulation)', name: 'Patient age as the thermoregulatory thresholds read it: the cold-defence thresholds fall with age under anaesthesia', unit: 'years', normal: '—' },
+  { n: 340, s: 'S9', keys: ['endo.ageY'], label: 'Age (endocrine)', name: 'Patient age as the endocrine model holds it', unit: 'years', normal: '—' },
+  { n: 341, s: 'S9', keys: ['endo.core.etomSuppr'], label: 'Etomidate adrenal suppression', name: 'Adrenal 11β-hydroxylase suppression left by etomidate: blunts the cortisol response, recovers over hours', unit: '0–1', normal: '0' },
+  { n: 342, s: 'S9', keys: ['endo.core.ketoDef'], label: 'Ketogenic insulin deficit', name: 'Insulin deficit that drives ketone production and moves potassium out of the cells', unit: '0–1', normal: '0' },
+  { n: 343, s: 'S9', keys: ['blood.core.endoKetoMmolMin'], label: 'Ketone production', name: 'Ketoacid production from insulin deficiency, into the ketoacid pool', unit: 'mmol/min', normal: '0' },
+  { n: 344, s: 'S9', keys: ['blood.core.endoKetoUtilPerMin'], label: 'Ketone utilisation', name: 'Insulin-dependent ketone utilisation: fraction of the ketoacid pool cleared per minute', unit: '/min', normal: '≈ 0.0004 at basal insulin' },
+  { n: 345, s: 'S9', keys: ['neuro.mhExposure.sux'], label: 'MH trigger: succinylcholine', name: 'When an MH-susceptible patient was first given succinylcholine', unit: 's', normal: 'never' },
+  { n: 346, s: 'S9', keys: ['neuro.mhExposure.volatile', 'neuro.mhExposure.volatileAgent'], label: 'MH trigger: volatile', name: 'When an MH-susceptible patient was first exposed to a volatile agent, and which agent', unit: 's', normal: 'never' },
+  { n: 347, s: 'S9', keys: ['endo.mhOwner'], label: 'MH source', name: 'Whether the malignant hyperthermia came from its triggers or from the instructor', unit: '', normal: '—' },
 ];
 
 /**
@@ -380,6 +390,8 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
   // Stage 7k (its plan's Requests → Stage 9): one label per truth path where an entry names two readings
   'resp.mechanics.plEi': 'PL,ei', 'resp.mechanics.plEe': 'PL,ee', 'resp.mechanics.pesEi': 'Pes,ei (est.)', 'resp.mechanics.pesEe': 'Pes,ee (est.)',
   'resp.mechanics.rinsp': 'Rinsp',
+  // FU-10: entry 346 names two readings
+  'neuro.mhExposure.volatile': 'MH trigger: volatile (time)', 'neuro.mhExposure.volatileAgent': 'MH trigger: volatile (agent)',
   'resp.volumes.pred.tlc': 'TLC predicted', 'resp.volumes.pred.rv': 'RV predicted', 'resp.volumes.pred.frc': 'FRC (seated) predicted', 'resp.volumes.pred.vc': 'VC predicted',
   'resp.volumes.pred.fvc': 'FVC predicted', 'resp.volumes.pred.fev1': 'FEV₁ predicted', 'resp.volumes.pred.ratio': 'FEV₁/FVC predicted', 'resp.volumes.pred.pef': 'PEF predicted',
   'mon.nibpSys': 'NIBP S', 'mon.nibpDia': 'NIBP D', 'mon.nibpMean': 'NIBP M',

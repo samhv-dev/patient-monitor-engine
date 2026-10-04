@@ -78,6 +78,32 @@ export const CORT_EC50 = 400; // nmol/L above basal for its metabolic effects
 export const CORT_SI_LOSS = 0.8; // insulin resistance: SI × 0.42 at cortisol 1500 (tables stress SI × 0.3–0.5)
 export const CORT_EGP_X = 0.3; // gluconeogenesis
 export const CORT_VASO_RESP = 0.3; // vasopressor responsiveness (adrenal insufficiency: ×0.5 of cortisol) [TXT]
+/**
+ * FU-10 E13 — untreated adrenal insufficiency is a BASAL deficit, not only a blunted stress rise: the resting cortisol
+ * is low, so the permissive support of vascular tone is already missing before any stress (Annane D et al., Crit Care
+ * Med 2017;45:2078 / Intensive Care Med 2017 (the glucocorticoid-deficiency guidelines: vasopressor-dependent
+ * hypotension reversed by hydrocortisone); Miller 10e ch. 35). Before FU-10 `cortResponse` 0.5 halved only the stress
+ * RISE, so the resting patient was exactly normal (research/14 ET-15a). [ENG size: a basal cortisol at half normal,
+ * the same fraction the stress response already carried.]
+ */
+export const AI_CORT_BASAL_F = 0.5;
+/**
+ * FU-10 E13 — cortisol is PERMISSIVE for vascular tone: below the basal level the vessels lose part of their resting
+ * resistance (the vasoplegia of glucocorticoid deficiency; Annane 2017). × on SVR = 1 − CORT_SVR_PERMISSIVE · (1 −
+ * cortisol/basal), applied BELOW basal only (a high cortisol does not raise SVR: the receptor is saturated) [ENG size:
+ * the ET-15a target is a lower resting/post-induction MAP that a vasopressor answers poorly].
+ */
+export const CORT_SVR_PERMISSIVE = 0.25;
+/**
+ * FU-10 E10 — one induction dose of etomidate inhibits 11β-hydroxylase, so the adrenal cannot make cortisol for hours
+ * (Wagner RL, White PF et al., NEJM 1984;310:1415; Absalom A, Pledger D, Kong A, Anaesthesia 1999;54:861 [VERIFY]).
+ * The suppression follows the dose with a first-order recovery (t½ chosen inside the sources' 6–12 h) and multiplies the
+ * adrenal's cortisol RESPONSE (`cortResponse`), so the resting level is untouched and the surgical rise is blunted.
+ * ETOM_SUPPR_MAX at the 0.3 mg/kg reference dose [ENG: the ET-34 target is cortisol ≤ 0.8 × propofol's at 4 h].
+ */
+export const ETOM_SUPPR_MAX = 0.6;
+export const ETOM_SUPPR_REF_MG_KG = 0.3;
+export const ETOM_SUPPR_T12_S = 8 * 3600;
 
 // --- glucose–insulin (Bergman minimal model, tables §5c; Pulse secretion line annex B3) --------------------------
 export const GB_MGDL = 100; // 5.5 mmol/L
@@ -103,12 +129,37 @@ export const GUT_BIOAVAIL = 0.7; // hepatic first-pass uptake ≈ 30 % [TXT]
 export const EGP_INSULIN_SUPP = 2; // hepatic output × (1 + 2·insulin deficit fraction): insulinopenia → 400+ mg/dL over hours [ENG]
 export const EGP_DEFICIT_TAU_S = 3 * 3600; // the insulinopenic rise of hepatic output builds over hours (glucagon, gluconeogenesis) [ENG]
 export const INS_K_PER_UU = -0.03; // SECRETED insulin above basal drives K into cells: −0.3 mmol/L per +10 µU/mL [ENG]; exogenous insulin is 7g's kShift
+/**
+ * FU-10 E7 (orchestrator ruling R-2) — a NET ketone rate. Production follows the CURRENT insulin deficit (lipolysis and
+ * hepatic ketogenesis respond within tens of minutes, so the deficit is smoothed with KETO_TAU_S, not with the 3-h
+ * `egpDef` of hepatic glucose output); utilisation is insulin-dependent: 7c's pool is cleared at a fractional rate
+ * KETO_UTIL_PER_MIN × the insulin action (insulin ÷ basal, saturating at KETO_UTIL_INS_MAX), so ketones fall once
+ * insulin is given and the ketoacidosis is treatable (JBDS DKA 2023 target: ketones falling ≥ 0.5 mmol/L/h on the
+ * fixed-rate infusion). Omitted basal insulin in type 1 produces ketosis within hours (JBDS-IP 2023; Kitabchi AE et al.,
+ * Diabetes Care 2009;32:1335). Sizes [ENG; fit targets: ketosis > 3 mmol/L within the first hours of omission, and the
+ * JBDS fall rate on the infusion]. 7c's established DKA (`DKA_KETO_MMOL_L` 25 mmol/L) is the pool's scale.
+ */
+export const KETO_MMOL_MIN_MAX = 0.5;
+export const KETO_TAU_S = 1800;
+export const KETO_UTIL_PER_MIN = 0.0004;
+export const KETO_UTIL_INS_MAX = 5;
+/** FU-10 E7: the insulin deficit shifts K OUT of the cells (Kitabchi 2009: insulinopenia is one of DKA's two causes of
+ * hyperkalaemia) — mmol/L of K set point at a full deficit [ENG: with the hyperosmolar term, DKA presents ≥ healthy]. */
+export const KETO_K_EFFLUX = 1.4;
+/** FU-10 E7: hyperosmolar hyperglycaemia is the other (water leaves the cells with K): mmol/L of K set point per mg/dL
+ * of glucose above HYPEROSM_FROM_MGDL, in the INSULIN-DEFICIENT patient only (× the deficit — review F17: a dextrose
+ * bolus given to a patient with insulin does not shift K out) [ENG; Kitabchi 2009]. */
+export const HYPEROSM_K_PER_MGDL = 0.002;
+export const HYPEROSM_FROM_MGDL = 200;
 export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with 7c's acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG]
 /**
  * 7g's epinephrine concentration is a RATE EQUIVALENT (µg/kg/min, the infusion that would hold it). Its plasma level is
  * rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL) [ENG, units].
  */
 export const EPI_EXO_PG_PER_RATE_EQ = 1e6 / 68.66;
+/** FU-10 E8: 7c's `insulinDextrose` row is dosed in insulin units with 25 g dextrose per 10 units (the row's regimen;
+ * UK Renal Association 2020 / JBDS: 10 units soluble insulin in 50 mL 50 % glucose) [TXT]. */
+export const INSDEX_DEXTROSE_G_PER_UNIT = 2.5;
 
 /**
  * FU-4 F2(a) — the HUMORAL arm of haemorrhage compensation (vasopressin / angiotensin II / adrenal), which an

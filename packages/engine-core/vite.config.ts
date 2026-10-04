@@ -61,6 +61,7 @@ const SLOW = [
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
+  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs, placed by CI per-file time (SLOW_A/C/D/F below; adrenal is slow-b)
   'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
   'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population
   'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms
@@ -71,78 +72,96 @@ const SLOW = [
   'test/engine/drug-layer-guards.test.ts', // FU-7 Task 19 case 7: the regression guards (split from drug-layer by time)
 ];
 /**
- * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
- * runs both locally. SLOW_A: the multi-hour drift files, the engine pipeline, the organ soak and the FU-4 clinical suite;
- * SLOW_B: every other SLOW entry. A new slow file joins SLOW (and, if it is a multi-hour run, SLOW_A).
+ * CI amendment 6 (FU-10 gate, orchestrator ruling): SEVEN slow groups, re-packed longest-first from the measured CI
+ * per-file times (the mean of FU-7's PR run 37199184387 and FU-10's PR #37 run 37217929016; FU-9 B's two new fu9 files
+ * ≈ 80 s each, estimated) so that every group is ≈ 33 min: 13 971 s of slow tests in all. The glob bundles stay whole
+ * (the long runs in A, fu8-* in D, fu9-* in C). slow-b is SLOW minus the other six by Vitest's own matcher (FU-4 R50 F8),
+ * and every group excludes every other, so the groups are disjoint by construction; ci.yml checks it. A new slow file
+ * joins SLOW and the group whose CI sum it fits (docs/gates/stage-fu-10.md §10 has the table).
  */
-const SLOW_A = [
-  // FU-9 Gate (CI amendment 5, re-split by the CI per-file times of PR #31, run 37135534941): the multi-hour drift runs
-  // (1438 s), the engine pipeline (196), the organ soak (207) and FU-8's files (385) — 2226 s ≈ 37 min.
-  'test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts',
-  'test/engine/fu8-*.test.ts', // FU-8: its files join slow-a
+const SLOW_A = [ // ≈ 2002 s on CI (33.4 min)
+  'test/engine/**/*longrun*.test.ts', // 1292 s,
+  'test/engine/resp-bronchodilation.test.ts', // 203 s,
+  'test/engine/resp-coupling.test.ts', // 147 s,
+  'test/engine/lung-unilateral.test.ts', // 93 s,
+  'test/engine/resp-ga-state.test.ts', // 71 s,
+  'test/engine/lung-hpv-volatile.test.ts', // 57 s,
+  'test/engine/cat-reserve-engine.test.ts', // 43 s,
+  'test/engine/organs-htn.test.ts', // 34 s,
+  'test/engine/resp-trigger.test.ts', // 26 s,
+  'test/engine/circ-sanity-2.test.ts', // 19 s,
+  'test/engine/pk-acceptance-scen.test.ts', // 16 s
 ];
-/**
- * FU-9 Gate (CI amendment 5): slow-a ran 70 min on CI (4191 s of tests) on PRs #29–#31 — FU-6's files had joined it
- * (executor instruction, 2026-09-29: slow-b was near its limit) and Stage 7k added one. Three groups cannot hold the
- * 8 794 s the slow set takes on the CI runner under 40 min each, so a FOURTH group takes the FU-4 clinical suite, FU-6's
- * respiratory files, Stage 7k's mechanics file and vagal-events: 2165 s ≈ 36 min. A new slow file joins SLOW and the
- * group whose CI sum it fits.
- */
-const SLOW_D = [
-  'test/engine/clinical-suite.test.ts', // FU-4 Task 22 (467 s on CI)
-  'test/engine/resp-suite.test.ts', // FU-6 Task 18 (426 s)
-  'test/engine/resp-bronchodilation.test.ts',
-  'test/engine/resp-bronchospasm-one.test.ts',
-  'test/engine/resp-induction.test.ts',
-  'test/engine/resp-obstruction.test.ts',
-  'test/engine/resp-pleural-effort.test.ts',
-  'test/engine/resp-ga-state.test.ts',
-  'test/engine/resp-vcv-pmax.test.ts',
-  'test/engine/resp-drive-fu6.test.ts',
-  'test/engine/resp-trigger.test.ts',
-  'test/engine/resp-inspired-co2.test.ts',
-  'test/engine/resp-pregnancy.test.ts',
-  'test/engine/blood-anaemia-co.test.ts',
-  'test/engine/lung-hpv-volatile.test.ts',
-  'test/engine/lung-r14.test.ts',
-  'test/engine/resp-child-baseline.test.ts',
-  'test/engine/resp-mechanics.test.ts', // Stage 7k (58 s)
-  'test/engine/vagal-events.test.ts', // FU-4 G7, from slow-b by time (140 s)
+const SLOW_C = [ // ≈ 1998 s on CI (33.3 min)
+  'test/engine/fu9-*.test.ts', // 1286 s,
+  'test/engine/pk-acceptance-pd.test.ts', // 229 s,
+  'test/engine/fu10-mh-trigger.test.ts', // 127 s,
+  'test/engine/organs-curves.test.ts', // 102 s,
+  'test/engine/resp-inspired-co2.test.ts', // 69 s,
+  'test/engine/blood-hyperk.test.ts', // 50 s,
+  'test/engine/resp-bronchospasm-one.test.ts', // 46 s,
+  'test/engine/fidelity-resp.test.ts', // 33 s,
+  'test/engine/resp-pregnancy.test.ts', // 25 s,
+  'test/engine/circ-sanity-1.test.ts', // 20 s,
+  'test/engine/resp-pleural-effort.test.ts', // 12 s
 ];
-// FU-4 (R50 review F8): SLOW_B is SLOW minus the other groups, and the difference cannot be taken by STRING comparison —
-// the glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
-// neuro long run, so the measured lists were 10 + 35 files for a 44-file union and that run executed in BOTH CI jobs.
-// The set difference is therefore made by Vitest's own matcher, with the other groups as an `exclude` on each run.
-/**
- * FU-9 (CI amendment 5, R50 ruling R10): slow-c takes FU-9's engine files plus the slow files listed here, chosen by
- * measured per-file time (docs/gates/fu-9.md §2); slow-b is SLOW minus SLOW_A, SLOW_C and SLOW_D by the same matcher.
- * ci.yml's build job prints the four lists and fails on an overlap or a gap. CI sums on PR #31: slow-b 2425 s →
- * 2149 s after this split (vagal-events → slow-d, thermal-warmer → slow-c); slow-c 2120 → 2256 s.
- */
-const SLOW_C = [
-  'test/engine/fu9-*.test.ts', 'test/engine/endo-acceptance.test.ts',
-  'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
-  'test/engine/thermal-warmer.test.ts', // FU-9 Gate: from slow-b by time (136 s)
+const SLOW_D = [ // ≈ 1993 s on CI (33.2 min)
+  'test/engine/stimulus-surge.test.ts', // 478 s,
+  'test/engine/clinical-suite.test.ts', // 460 s,
+  'test/engine/fu8-*.test.ts', // 313 s,
+  'test/engine/resp-induction.test.ts', // 254 s,
+  'test/engine/vagal-events.test.ts', // 141 s,
+  'test/engine/fu10-fever.test.ts', // 84 s,
+  'test/engine/hemo-nibp.test.ts', // 72 s,
+  'test/engine/resp-mechanics.test.ts', // 58 s,
+  'test/engine/organs-tbi.test.ts', // 46 s,
+  'test/engine/resp-drive-fu6.test.ts', // 36 s,
+  'test/engine/resp-obstruction.test.ts', // 24 s,
+  'test/engine/resp-child-baseline.test.ts', // 22 s,
+  'test/engine/circ-manual-ischaemia.test.ts', // 6 s
 ];
-/**
- * FU-7 gate (finisher, 2026-10-04): FU-7's seven slow files measured 1 578 s on the local slow-a run (drug-layer 1 018 s
- * before its split, drug-apnoea 331, stimulus-surge 144, fu7-nmb-one-state 59, cat-reserve-engine 14, fu7-volatile 12).
- * At the CI/local ratio of the FU-6 files (clinical-suite 467/170 s, resp-suite 426/160 s ≈ 2.7) that is ≈ 4 250 s on the
- * runner, and FU-9's four groups leave ≈ 800 s of room under 40 min — so two more groups, each ≈ 35 min by estimate:
- * slow-e = the regression guards (≈ 1 510 s) + stimulus-surge + the three small files; slow-f = drug-layer (≈ 1 240 s) +
- * drug-apnoea (≈ 890 s). The CI sums of the PR's first run replace these estimates in the gate note.
- */
-const SLOW_E = [
-  'test/engine/drug-layer-guards.test.ts', 'test/engine/stimulus-surge.test.ts', 'test/engine/fu7-nmb-one-state.test.ts',
-  'test/engine/cat-reserve-engine.test.ts', 'test/engine/fu7-volatile.test.ts',
+const SLOW_E = [ // ≈ 1998 s on CI (33.3 min)
+  'test/engine/drug-layer-guards.test.ts', // 1437 s,
+  'test/engine/blood-sanity-acid.test.ts', // 170 s,
+  'test/engine/neuro-engine.test.ts', // 107 s,
+  'test/engine/lung-r14.test.ts', // 78 s,
+  'test/engine/neuro-acceptance.test.ts', // 60 s,
+  'test/engine/circ-hypoxic-arrest.test.ts', // 49 s,
+  'test/engine/fu7-volatile.test.ts', // 42 s,
+  'test/engine/circ-manual-cvp-peep.test.ts', // 23 s,
+  'test/engine/af-rate-control.test.ts', // 21 s,
+  'test/engine/pacer-sensing.test.ts', // 11 s
 ];
-/**
- * FU-9 Part B: the `fu9-*` glob keeps B1/B2's two engine files (fu9-rocuronium, fu9-copd; ≈ 60 s local) in slow-c, which
- * summed 2 295 / 2 315 s of tests on PR #32's two CI runs (the heaviest group); pk-acceptance-pd (239 s on both) moves
- * from slow-c to slow-f (862 / 1 807 s) by measured time.
- */
-const SLOW_F = ['test/engine/drug-layer.test.ts', 'test/engine/drug-apnoea.test.ts', 'test/engine/pk-acceptance-pd.test.ts'];
-const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p) && !SLOW_E.includes(p) && !SLOW_F.includes(p));
+const SLOW_F = [ // ≈ 1995 s on CI (33.3 min)
+  'test/engine/drug-layer.test.ts', // 894 s,
+  'test/engine/drug-apnoea.test.ts', // 387 s,
+  'test/engine/fu7-nmb-one-state.test.ts', // 231 s,
+  'test/engine/thermal-warmer.test.ts', // 132 s,
+  'test/engine/organs-tbi-treatment.test.ts', // 93 s,
+  'test/engine/blood-sanity-haem.test.ts', // 70 s,
+  'test/engine/fidelity-lowflow.test.ts', // 56 s,
+  'test/engine/fidelity-ecg.test.ts', // 46 s,
+  'test/engine/resp-vcv-pmax.test.ts', // 30 s,
+  'test/engine/fidelity-arrest.test.ts', // 27 s,
+  'test/engine/circ-rate-rule.test.ts', // 21 s,
+  'test/engine/af-pulse-deficit.test.ts', // 8 s
+];
+const SLOW_G = [ // ≈ 1987 s on CI (33.1 min)
+  'test/engine/fu10-thresholds.test.ts', // 751 s,
+  'test/engine/fu10-adrenal.test.ts', // 390 s,
+  'test/engine/fu10-insulin-dextrose.test.ts', // 274 s,
+  'test/engine/engine-pipeline.test.ts', // 175 s,
+  'test/engine/blood-anaemia-co.test.ts', // 118 s,
+  'test/engine/lung-recruitment.test.ts', // 81 s,
+  'test/engine/blood-stage3-recheck.test.ts', // 69 s,
+  'test/engine/neuro-spont.test.ts', // 48 s,
+  'test/engine/hr-af-numeric.test.ts', // 37 s,
+  'test/engine/fidelity-alarms.test.ts', // 23 s,
+  'test/engine/lung-copd.test.ts', // 22 s
+];
+// slow-b (the remainder, ≈ 1998 s): every SLOW file not listed above
+const OTHERS = { A: SLOW_A, C: SLOW_C, D: SLOW_D, E: SLOW_E, F: SLOW_F, G: SLOW_G };
+const SLOW_B = SLOW.filter((p) => !Object.values(OTHERS).some((g) => g.includes(p)));
 const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
@@ -158,13 +177,12 @@ export default defineConfig({
     testTimeout: 30_000,
     ...(set === 'fast' ? { exclude: ['**/node_modules/**', '**/dist/**', ...SLOW] } : {}),
     ...(set === 'slow' ? { include: SLOW, fileParallelism: false } : {}),
-    ...(set === 'slow-a' ? { include: SLOW_A, fileParallelism: false } : {}), // FU-4 (D17)
-    // FU-4 (R50 review F8): the groups MUST be disjoint — SLOW_A is excluded here by the same matcher that includes it
-    // above, so a file matching a SLOW_A glob (e.g. the 6 h neuro long run) runs in slow-a only, never in both jobs.
-    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_E, ...SLOW_F], fileParallelism: false } : {}),
-    ...(set === 'slow-c' ? { include: SLOW_C, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_D], fileParallelism: false } : {}), // FU-9 (CI amendment 5)
-    ...(set === 'slow-d' ? { include: SLOW_D, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C], fileParallelism: false } : {}), // FU-9 Gate: the fourth group
-    ...(set === 'slow-e' ? { include: SLOW_E, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_F], fileParallelism: false } : {}), // FU-7 gate
-    ...(set === 'slow-f' ? { include: SLOW_F, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_E], fileParallelism: false } : {}), // FU-7 gate
+    // CI amendment 6: each group excludes every other group by the same matcher (disjoint by construction; FU-4 R50 F8)
+    ...(set && /^slow-[a-g]$/.test(set) ? (() => {
+      const own = set.slice(5).toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+      const groups = { ...OTHERS, B: SLOW_B };
+      const other = Object.entries(OTHERS).filter(([k]) => k !== own).flatMap(([, g]) => g);
+      return { include: groups[own], exclude: ['**/node_modules/**', '**/dist/**', ...other], fileParallelism: false };
+    })() : {}),
   },
 });

@@ -9,6 +9,8 @@ import { stressEffects, type StressEffects } from './effects.ts';
 import { createGlucose, stepGlucose, type GlucoseState } from './glucose.ts';
 import { createHormones, stepHormones, type HormoneState } from './hormones.ts';
 import {
+  AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S, HYPEROSM_FROM_MGDL, HYPEROSM_K_PER_MGDL, KETO_K_EFFLUX, KETO_MMOL_MIN_MAX,
+  KETO_TAU_S, KETO_UTIL_INS_MAX, KETO_UTIL_PER_MIN,
   EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
   SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
 } from './params.ts';
@@ -16,15 +18,17 @@ import { thyroidEffects, type ThyroidState } from './thyroid.ts';
 
 export interface EndoProfile {
   diabetes: 'none' | 'type1' | 'type2';
+  /** FU-10 E7: type 1 only — false omits the long-acting basal insulin (insulin-deficient: ketogenesis, K⁺ efflux). */
+  basalInsulin: boolean;
   thyroid: ThyroidState;
   adrenalInsufficiency: boolean;
 }
 
-export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false };
+export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true };
 
 /** Resolved per-profile glucose parameters (tables §5c SI diabetic 1–3e-4 → × 0.3; type 2 fasting ≈ 8 mmol/L). */
 export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: number; glucagon: number; basalExo: boolean } {
-  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: true };
+  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: p.basalInsulin !== false }; // FU-10 E7
   if (p.diabetes === 'type2') return { gb: 144, si: 0.3, beta: 1, glucagon: 1, basalExo: false };
   return { gb: 100, si: 1, beta: 1, glucagon: 1, basalExo: false };
 }
@@ -66,6 +70,10 @@ export interface EndoCore {
   glucose: GlucoseState;
   cond: ConditionState;
   x: EndoInputs; // the last inputs (compose reads the β-block, temperature, MH and 7g's bronchodilation from them)
+  /** FU-10 E10: 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
+  etomSuppr?: number;
+  /** FU-10 E7 (R-2): the ketogenic insulin deficit (0–1), the current deficit smoothed with KETO_TAU_S. */
+  ketoDef?: number;
   out: EndoOut;
 }
 
@@ -86,6 +94,10 @@ export interface EndoOut {
   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
   setShiftC: number; // fever set point added to the thermal thresholds
   kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
+  /** FU-10 E7: ketoacid production from the INSULIN DEFICIT, mmol/min → 7c's ketoacid pool (`blood.core.endoKetoMmolMin`). */
+  ketoMmolMin: number;
+  /** FU-10 E7 (R-2): insulin-dependent ketone utilisation, fraction of 7c's pool per minute (`blood.core.endoKetoUtilPerMin`). */
+  ketoUtilPerMin: number;
   kfMult: number; // → 7c `blood.core.fl.kfMult`
   vasoResp: number; // → `ps.cond.vasoResp` (7g)
   anaphLung: number; // 7b `lungCondition anaphylaxis` severity (0–1; grade/5 relieved by β2 bronchodilation)
@@ -115,11 +127,29 @@ export function createEndoCore(profile: EndoProfile = DEFAULT_ENDO_PROFILE, weig
     glucose.iExo = IB_UU_ML;
   }
   const c: EndoCore = {
-    profile, hormones: createHormones(), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg }, out: null as unknown as EndoOut,
+    profile, hormones: createHormones(cortBasalF(profile)), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg },
+    etomSuppr: 0, out: null as unknown as EndoOut,
   };
   c.out = compose(c);
   return c;
 }
+
+/**
+ * FU-10 E10/E13: the adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile (as before) and, on top
+ * of it, suppressed by an 11β-hydroxylase inhibitor the patient has had (etomidate: `etomSuppr`, 0–1).
+ */
+export function cortResponseOf(c: EndoCore): number {
+  return (c.profile.adrenalInsufficiency ? 0.5 : 1) * Math.max(0, 1 - ETOM_SUPPR_MAX * Math.min(1, Math.max(0, c.etomSuppr ?? 0)));
+}
+
+/** FU-10 E7: the insulinopenia that shifts K⁺ out of the cells — the patient's own (smoothed) insulin deficit, or the
+ * instructor's `dka` condition, which IS insulinopenia even though the profile's insulin is normal (research/14 ET-23c). */
+export function insulinopenia(c: EndoCore): number {
+  return Math.max(c.ketoDef ?? 0, Math.min(1, Math.max(0, c.x.dkaSeverity)));
+}
+
+/** FU-10 E13: the × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
+export const cortBasalF = (p: EndoProfile): number => (p.adrenalInsufficiency ? AI_CORT_BASAL_F : 1);
 
 /** β2 bronchodilation of endogenous + 7g epinephrine and 7g's other β2 agonists (independent effects combine). */
 const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.max(0, b)));
@@ -127,7 +157,7 @@ const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.
 function compose(c: EndoCore): EndoOut {
   const p = c.profile;
   const x = c.x;
-  const cortResponse = p.adrenalInsufficiency ? 0.5 : 1;
+  const cortResponse = cortResponseOf(c);
   const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponse);
   const th = thyroidEffects(p.thyroid, c.cond.storm.cur);
   const cd = conditionEffects(c.cond);
@@ -156,7 +186,14 @@ function compose(c: EndoCore): EndoOut {
     humSvrF: st.humSvrF, // FU-4 G-FU4-1
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
-    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity,
+    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity
+      // FU-10 E7: insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
+      // high at presentation despite a total-body deficit) — the two DKA causes the old K path had no term for.
+      // The instructor's `dka` condition (7c's severity) IS insulinopenia, so it carries the same efflux even though the
+      // patient's own insulin is normal — without this DKA presented HYPOkalaemic (research/14 ET-23c)
+      + insulinopenia(c) * (KETO_K_EFFLUX + HYPEROSM_K_PER_MGDL * Math.max(0, g.g - HYPEROSM_FROM_MGDL)),
+    ketoMmolMin: KETO_MMOL_MIN_MAX * (c.ketoDef ?? 0) * (x.weightKg / 70),
+    ketoUtilPerMin: KETO_UTIL_PER_MIN * Math.min(KETO_UTIL_INS_MAX, g.i / IB_UU_ML),
     kfMult: cd.kfMult,
     vasoResp: vr,
     anaphLung: 0.8 * c.cond.anaph.mediator * (1 - 0.6 * bd), // mediator 0.75 (grade III) → 7b severity 0.6 (its grade III)
@@ -182,13 +219,21 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const g = c.glucose;
   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
   const cd = c.out.cond;
+  // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
+  if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
+  // FU-10 E7 (R-2): the ketogenic deficit follows the CURRENT insulin deficit within tens of minutes — in a patient with
+  // NO β-cell reserve only (type 1). A pancreas that secretes less because glucose fell (after an insulin bolus) is not
+  // insulinopenic, and the instructor's `dka` pool is already the ketosis its suppression of secretion stands for (final
+  // review I1/I2: before this gate a non-diabetic made ketones and a K⁺ rebound after insulin, and `dka 1` grew unbounded)
+  const kd = glucoseProfile(c.profile).beta === 0 ? Math.max(0, 1 - g.i / IB_UU_ML) : 0;
+  c.ketoDef = kd + ((c.ketoDef ?? 0) - kd) * Math.exp(-dtS / KETO_TAU_S);
   stepHormones(c.hormones, {
     noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve, // FU-7 (addenda 20–21, 25)
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
-    cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
+    cortResponse: cortResponseOf(c), cortBasalF: cortBasalF(c.profile), epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);
-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1, x.cortExoNmolL ?? 0); // FU-7 (addendum 24)
+  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponseOf(c), x.cortExoNmolL ?? 0); // FU-7 (addendum 24) + FU-10 E10/E13
   const gp = glucoseProfile(c.profile);
   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
   stepGlucose(g, {
