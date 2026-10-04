@@ -4177,10 +4177,10 @@ git add -A packages/engine-core && git commit -m "feat(7c,7d): mannitol is a pla
 
 ### Task B0: Part B base — FU-7 merged
 
-- [ ] **Step 1.** `git fetch origin && git log --oneline origin/main | head` — FU-7's merge commit must be on main (and
+- [x] **Step 1.** `git fetch origin && git log --oneline origin/main | head` — FU-7's merge commit must be on main (and
   therefore FU-6's). If not, stop Part B (Global Constraints: Part A's Gate runs alone).
-- [ ] **Step 2.** `git merge origin/main` (no stash; resolve by content).
-- [ ] **Step 3 — Part B anchors.** Each must print exactly ONE line (the fixer checked them on `2473f0b` with FU-7 Task
+- [x] **Step 2.** `git merge origin/main` (no stash; resolve by content).
+- [x] **Step 3 — Part B anchors.** Each must print exactly ONE line (the fixer checked them on `2473f0b` with FU-7 Task
   14 Step 2's call line substituted, and against FU-7's Task 14 / E-FU7-7 blocks):
 
 ```
@@ -4915,3 +4915,32 @@ gh pr create --base main --head fu-9-blood-fluids --title "FU-9: blood, fluids a
   chronic-compensation constant, one renal unit rig (`test/helpers/fu9-renal.ts`) instead of four copies.
 - **Not verified here (the executor's):** FU-6/FU-7/FU-8 composition on their merged trees (their plans move); CI's Linux
   wall times (this Mac is faster: slow-b 37.6 min on CI vs 26.5 min here for the same files).
+
+---
+## Base drift (Part B executor, 2026-10-04, on `origin/main` 4a1cc3f7 — FU-7 #32, Stage 9 #29 and FU-9 Parts A + C #31 merged)
+
+Task B0 re-verified every Part B find block on the merged tree. Branch `fu-9b-blood-fluids` (worktree
+`scratch/wt-fu-9b`) was cut from 4a1cc3f7, so Step 2's merge was a no-op.
+
+- **Anchors (B0 Step 3):** all ten print exactly ONE line; the B1/B2 find blocks (multi-line ones included) match byte for
+  byte. FU-7 Task 14's merged call line in `neuro/pipeline.ts` (line 198) is the plan's call-line block verbatim; FU-7's
+  `InteractionCtx` ends on `tempC`, as the plan assumed; `ec50Multipliers` keeps the `let nd = vol * mg * cold;` line (FU-7
+  re-sized only the volatile divisor, `VOL_NMB_K` 0.18, and made Mg antagonised by iCa). A7's `CHRONIC_HCO3_PER_MMHG` is on
+  main (`blood/params.ts`, consumed by `neuro/spont.ts`), so B2's import resolves.
+- **Drifted placement 1 — `engine.ts` (E-FU9-2):** FU-7 gave 7c's electrolytes their OWN line in the `stepNeuroTo` context
+  (`mgMmolL: … iCaMmolL: …`, line 593), separate from the `tempC:` line the plan anchors on (line 588, still matching).
+  R6 ("K joins … beside Mg and iCa") is unambiguous, so `kMmolL` goes on FU-7's electrolyte line, same expression
+  (`ps.blood.out.k > 0 ? ps.blood.out.k : undefined`). Still ONE engine line (E-FU9-2 unchanged in size).
+- **Drifted placement 2 — `NeuroEnv` (neuro/pipeline.ts):** FU-7 added `mgMmolL?`/`iCaMmolL?` at the end of `NeuroEnv`;
+  `kMmolL?` sits after them instead of between `tempC` and `mechanical`. Same type, same doc line.
+- **Before-numbers moved by FU-7/Part A (recorded, not tuned):** rocuronium T1 25 % — engine test 36.0 / 36.0 min at K 2.5 /
+  4.2 (plan: 35.7 / 35.7), BF runner BF-09b 35.8 / 35.8 (dMin 0, WR). COPD awake at 30 min (engine test rig): GOLD 3
+  PaCO₂ 39.57, HCO₃ 24.33, pH 7.402, +1.30 per 10 mmHg vs X-A 39.0 / 24.26 (plan: 39.7, 24.35, +1.32); GOLD 4 PaCO₂ 40.72,
+  HCO₃ 24.49, pH 7.392; GOLD 2 38.85 / 24.24 / 7.408. BF runner BF-16b paco2Copd 39.57, hco3Copd 24.334, phCopd 7.402,
+  hco3Per10 1.31 (TW); BF-15b dPaco2 +6.24 (PL — Part A's F9 is merged).
+- **Slow groups (six since the FU-7 gate):** the `fu9-*` glob in `SLOW_C` keeps B1/B2's engine files in slow-c (every other
+  group excludes `SLOW_C`, so an `fu9-*` file cannot be listed elsewhere without changing A0b's matcher). slow-c summed
+  2 295 / 2 315 s of tests on PR #32's two CI runs — the heaviest group — so `pk-acceptance-pd` (239 s on both runs) moves
+  from `SLOW_C` to `SLOW_F` (862 / 1 807 s). `vite.config.ts` is not a Part B file in the File map; the move is the
+  executor brief's "place new slow files by measured time" and the Gate's "move a file by name" remedy.
+
