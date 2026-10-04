@@ -190,6 +190,13 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(dur).toBeLessThanOrEqual(600);
       expect(apnoeicWhileOut(r)).toBe(true);
     });
+    // R45 (FU-7 gate review, item O2): etomidate's onset was asserted nowhere. Its LOC is faster than one arm–brain
+    // circulation and faster than propofol's 54 s on the same rig — the onset order is inverted (Q23). Not slowed to fit.
+    it.fails('etomidate 0.3 mg/kg: unconscious within 20–60 s (M10 ch. 21 p. 541: one arm–brain circulation) — measured +16 s (propofol 2 mg/kg 54 s on the same rig)', async () => {
+      const r = await arm('e', 'etomidate', 0.3);
+      expect(loc(r)).toBeGreaterThanOrEqual(20);
+      expect(loc(r)).toBeLessThanOrEqual(60);
+    });
     it('ketamine 1.5 mg/kg: unconscious with a depth index > 60 (the dissociative paradox, D3) and emerging at 10–20 min (M10 Table 21.1; D20 measured 11.9)', async () => {
       const r = await arm('k', 'ketamine', 1.5);
       const out = r.rows.filter((x) => (x.t as number) > T && x.conscious === false);
