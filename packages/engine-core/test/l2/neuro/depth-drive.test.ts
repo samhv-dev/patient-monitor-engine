@@ -137,10 +137,15 @@ describe('respiratory-drive depression (tables §5d)', () => {
 });
 
 describe('interactions', () => {
-  it('1 MAC volatile lowers non-depolariser EC50 by ~33 %; Mg 2 mmol/L by ~23 %; myasthenia ×0.3, sux resistant', () => {
+  // R45 (FU-7 gate review, condition 2): the ORIGINAL band (0.62–0.72, the tables' ~33 %) is kept as written; FU-7
+  // Task 14 (E-FU7-10 b) re-sized VOL_NMB_K to 0.18 [ENG; fit target DI-51's engine duration], so it is a measured miss.
+  it.fails('1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)', () => {
+    const v = ec50Multipliers({ profile: 'normal', volatileMac: 1, mgMmolL: 0.9, tempC: 37 });
+    expect(v.rocuronium).toBeGreaterThan(0.62);
+    expect(v.rocuronium).toBeLessThan(0.72);
+  });
+  it('Mg 2 mmol/L lowers non-depolariser EC50 by ~23 %; myasthenia ×0.3, sux resistant; wiring: 1 MAC volatile multiplies it by 1 / (1 + VOL_NMB_K)', () => {
     const N = { profile: 'normal' as const, volatileMac: 0, mgMmolL: 0.9, tempC: 37 };
-    // FU-7 (E-FU7-10): the same re-sized constant (was 0.62–0.72, the 0.5 divisor's band) — DI-51's duration band is the
-    // acceptance property and lives in interactions.test.ts
     const v = ec50Multipliers({ ...N, volatileMac: 1 });
     expect(v.rocuronium).toBeCloseTo(1 / (1 + VOL_NMB_K), 6);
     expect(v.succinylcholine).toBe(1);

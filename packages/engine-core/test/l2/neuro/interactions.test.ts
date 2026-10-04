@@ -17,11 +17,15 @@ function rec25(ec50: number, tempC = 37): number {
 }
 
 describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
-  it('1 MAC volatile: EC50 × 0.67; rocuronium duration +20–45 %', () => {
-    // FU-7 (E-FU7-10 a): the divisor is re-sized to VOL_NMB_K (was × 0.67, i.e. 1/(1 + 0.5)). The duration band this case
-    // carried moves to the `it.fails` below with both measured numbers; the ENGINE cell DI-51 (+52.2 %) is the acceptance.
+  // R45 (FU-7 gate review, condition 2): the ORIGINAL assertion against the tables' size (× 0.67, i.e. 1/(1 + 0.5)) is
+  // kept as it was written. FU-7 Task 14 (E-FU7-10 a) re-sized the divisor to VOL_NMB_K 0.18 [ENG; fit target DI-51's
+  // engine duration +25–80 %], so the multiplier is now × 0.847 and this size is a measured miss.
+  it.fails('1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)', () => {
     const m = ec50Multipliers({ ...N, volatileMac: 1 }).rocuronium;
-    expect(m).toBeCloseTo(1 / (1 + VOL_NMB_K), 6);
+    expect(m).toBeCloseTo(1 / 1.5, 6);
+  });
+  it('wiring: 1 MAC volatile multiplies the non-depolariser EC50 by 1 / (1 + VOL_NMB_K) (× 0.847)', () => {
+    expect(ec50Multipliers({ ...N, volatileMac: 1 }).rocuronium).toBeCloseTo(1 / (1 + VOL_NMB_K), 6);
   });
   // FU-7 (E-FU7-10 a): the band is UNCHANGED and now carries its measured numbers. This neuro-only rig applies a fixed
   // EC50 multiplier without the volatile's own PK, so it reads far less than the engine: DI-51 (1.1 MAC, real PK) is
