@@ -28,7 +28,95 @@ at 2 min and systolic > 110 within 60 s of epinephrine; bronchospasm VTE rises �
 
 ---
 
-*Round 2, 2026-10-04: kit rebuilt from `main` **f29951b** (= add125f, the hotfix + kit merge, plus a RESUME-only
+## Round 3 — the FU-7 build (CURRENT showcase build)
+*2026-10-04: the sequence above was run exactly as written on a fresh detached checkout of `main` **4a1cc3f7** (FU-7
+merged, with the hotfix and round 2) at `scratch/wt-kit-rebuild`. `VERSION.txt`: `Commit: 4a1cc3f7f359…`. It finished
+without an error (`SEQ-EXIT 0`). App: 79 HTML/CSS/JS files, 28 pages; still 0 root-absolute URLs. `runtime/` is
+still empty. The evidence files in `results/` and `rehearsal/` are now round-3 files, except `multiwindow-*.json` and
+`multiwindow-*.jpg`, which are round 2 (the sequence does not run the multi-window check).*
+
+**All PASS, no case fails on the FU-7 build.**
+- Server checks: all 6 rows pass (ruby, perl, python3, node stand-in, and ruby and perl from a read-only image).
+- Sub-path: Healthy induction passes on WebKit (apnoea alarm 59.5 s, MAP 94.8 → 71.5, CO2 tile 46).
+- Rehearsal: the five cases and the second-load clock check pass on Chromium and WebKit, 14 of 14 tests.
+- Sound: passes on both browsers.
+- Videos: the recording runs pass 5 of 5.
+
+### Results per case and browser (sim time, ×4)
+| Case | Check | Chromium | WebKit | Round 2 (both) |
+|---|---|---|---|---|
+| Healthy induction | apnoea alarm after "Induce now" | 55.0 s | 55.0 s | 57.1 / 55.7 s |
+| | MAP baseline → nadir | 94.8 → 71.7 | 94.8 → 71.6 | 71.5 / 71.4 |
+| | CO2 tile after "Intubate and ventilate" | 45 at 7.3 s | 45 at 5.3 s | 46 at 5.8 / 6.2 s |
+| Anaphylaxis | HR ≈ 2 min in | 135 (ART 97/71) | 135 (96/70) | 135 |
+| | time to systolic > 110 after "Give epinephrine 100 µg" | 11.3 s | 11.4 s | 11.7 / 11.8 s |
+| | 2 min after epinephrine | 120/89, HR 114 | 121/88, HR 110 | 120/88, HR 111 |
+| Bronchospasm | VTE before → 3 min → 6 min | 162 → **304** → **368** | 161 → **305** → **368** | 162 → 367 → 379 |
+| | CO2 tile at 3 and 6 min | **40**, 40 | **40**, 40 | 36, 36–37 |
+| Tamponade | MAP < 40 after propofol | 112.7 s | 112.7 s | 112.6 / 113.1 s |
+| | apnoea alarm after propofol | 49 s | 42.7 s | 42.6 s both |
+| Haemorrhage | pulse lost ("IBP1 STATIC PRESSURE") | 10:03 | 10:03 | 10:03 |
+| | "SPO2 NO PULSE" | 10:40 | 10:40 | 10:40 |
+| | CPR pressed / systolic > 90 | 10:55 / 15:09 (4.3 min) | 10:55 / 15:09 (4.3 min) | same |
+| | 1 min after "Pulse back: stop CPR" | 132/89, HR 78, CO2 34 | 132/89, HR 78, CO2 34 | same |
+| Second load | clock | 02:04 → 00:05 → 00:36 | 02:05 → 00:03 → 00:36 | 02:02 → 00:04–05 |
+| All | console / page errors | none | none | none |
+
+What differs from round 2: only bronchospasm changes by more than run-to-run timing. Its recovery is slower: VTE at
+3 min is 304–305 instead of 367 mL, minute volume 4.3 instead of 5.1, and the CO2 tile reads 40 instead of 36. Every
+other difference is within 2 s of sim time or 1 unit, which is how far the button press moves between runs.
+
+### Numbers for the presenter's run sheet (FU-7 build; identical on both browsers unless two values are given)
+- **Bronchospasm**, the Ventilator view, read at "0" (10 s before **Give salbutamol 250 µg**, about 1:25 into the
+  case), then 3 min and 6 min after the button:
+
+  | | 0 min | 3 min | 6 min |
+  |---|---|---|---|
+  | VTE (ml) | 161–162 | 304–305 | 368 |
+  | ExpMinVol (l/min) | 2.3 | 4.3 | 5.2 |
+  | CO2 tile, EtCO2 (mmHg) | 32 | 40 | 40 |
+  | Ppeak (cmH₂O) | 35 | 35 | 35 |
+  | Pmean (cmH₂O) | 13 | 14 | 14 |
+
+  fTotal stays 14, and the "⚠ High pressure (Pmax)" banner stays on throughout.
+- **Healthy induction:**
+  - the apnoea alarm "CO2 APNEA" comes 55 s after **Induce now** (59.5 s in the sub-path run; a 70 s window is safe);
+  - the MAP nadir is 71.6–71.7, from a baseline of 94.8, at about 4 min;
+  - after **Intubate and ventilate** the CO2 tile reads 45 within 5–7 s.
+- **Anaphylaxis:** the systolic is above 110 within 11.3–11.4 s of **Give epinephrine 100 µg**, pressed 2 min into the
+  reaction (the reaction starts by itself 1 min after the load).
+- **Haemorrhage:**
+  - pulse loss ("IBP1 STATIC PRESSURE": arterial mean only) at **10:03**;
+  - **"SPO2 NO PULSE" at 10:40**;
+  - CPR pressed at 10:55 gives a systolic above 90 at **15:09**, after 4.3 min of CPR;
+  - one minute after **Pulse back: stop CPR**: 132/89, HR 78, CO2 34.
+
+### Early-CPR probes (FU-7 build)
+| Pressed (sim) | Chromium | WebKit |
+|---|---|---|
+| 10:25 (`SHOWCASE_CPR_AT=620`) | VFIB 10:33, no ROSC in 8 min (best 63), pulseless after stop | same |
+| 10:33.1 (WebKit) / 10:33.6 (Chromium) (`=628`, with the polling lag) | **ROSC: systolic > 90 after 4.2 min (14:47)**, no VFIB alarm, 1 min after stop 132/89 | no ROSC (best 63), asystole after stop |
+| 10:55 (default, 10 s after "SPO2 NO PULSE") | ROSC 4.3 min | ROSC 4.3 min |
+
+Across rounds 2 and 3 there is a **sharp edge at about 10:33.5**:
+- pressed at 10:33.1 or earlier: no ROSC (9 of 9 runs);
+- pressed at 10:33.6 or later: ROSC (every run).
+
+This may explain the independent run that reached ROSC when it pressed "early". The run-sheet cue stays the same:
+wait for "SPO2 NO PULSE" at 10:40.
+
+### Videos (round 3, replacing round 2; Chromium 1280×800, ×4, H.264, no audio)
+| File | Duration | Size |
+|---|---|---|
+| 1-healthy-induction.mp4 | 1 min 15 s | 3.3 MB |
+| 2-anaphylaxis.mp4 | 1 min 21 s | 3.7 MB |
+| 3-bronchospasm.mp4 | 2 min 04 s | 5.5 MB |
+| 4-haemorrhage-cpr.mp4 | 4 min 07 s | 10.2 MB |
+| 5-tamponade.mp4 | 43 s | 2.3 MB |
+
+---
+
+*Round 2 (superseded by round 3 above; kept for comparison), 2026-10-04: kit rebuilt from `main` **f29951b** (= add125f, the hotfix + kit merge, plus a RESUME-only
 commit) into `/Users/samhv/Desktop/Claude/_sandbox/pme-showcase/`; `VERSION.txt` says `Commit: f29951b8…`.
 Machine: Apple silicon, Darwin 27, /usr/bin/ruby 2.6.10 + WEBrick, /usr/bin/perl 5.34.1, Xcode installed,
 ffmpeg 9.0.1. Default Saadat-style monitor throughout (no skin switch). Labels per step: `RUN-STEPS.md`.*
