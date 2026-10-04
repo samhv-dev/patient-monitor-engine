@@ -60,7 +60,7 @@ describe('FU-7 D7: the apnoea flag is the chemoreflex\'s own state; the drug lay
 
   // R45 (Task 7 Step 5, named in advance): fentanyl 5 µg/kg still breathes on the merged tree. The weight is NOT changed —
   // FENT_VENT_REMI_EQ 0.55 (D16/D-7f-3, FU-6-calibrated) and FU-6's APNOEA_VE_IN 0.1 × ve0 are the two constants.
-  it.fails('fentanyl 5 µg/kg on room air stops breathing (DI-71): VE < 1 L/min for ≥ 60 s within 5 min, SpO2 nadir < 90 % — measured 0 s (VE nadir 2.27 L/min, −65 % of 6.45), SpO2 86; FENT_VENT_REMI_EQ 0.55, APNOEA_VE_IN 0.1', async () => {
+  it.fails('fentanyl 5 µg/kg on room air stops breathing (DI-71): VE < 1 L/min for ≥ 60 s within 5 min, SpO2 nadir < 90 % — measured 0 s (VE nadir 2.28 L/min, −65 % of 6.44), SpO2 86; FENT_VENT_REMI_EQ 0.55, APNOEA_VE_IN 0.1', async () => {
     const { rows } = await spontRig([drug('fentanyl', 5, 'mcg/kg')], T + 300);
     console.log(`FU-7 DI-71 fentanyl 5 µg/kg: apnoea ${apnoeaS(rows)} s in 5 min, SpO2 nadir ${minSpo2(rows)}, VE nadir ${minVe(rows).toFixed(2)} L/min`);
     expect(apnoeaS(rows)).toBeGreaterThanOrEqual(60);

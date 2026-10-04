@@ -58,7 +58,7 @@ describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
       expect(r.hr).toBeLessThanOrEqual(25);
     });
     // R45 (Task 16 UNPROTOTYPED): HIST_SVR 0.22 is the plan's size; the reflex tachycardia (+20.6) buffers the pressure.
-    it.fails('… and MAP by 8–25 % (T6.3; DI-42) — measured −5.6 % (SVR −10.2 %, HR +20.6: the reflex holds the pressure)', async () => {
+    it.fails('… and MAP by 8–25 % (T6.3; DI-42) — measured −6.7 % (SVR −10.8 %, HR +20.6: the reflex holds the pressure; −5.6 % before the FU-9 merge)', async () => {
       const r = await (mo ??= morphine());
       expect(r.map).toBeLessThanOrEqual(-8);
       expect(r.map).toBeGreaterThanOrEqual(-25);
@@ -386,7 +386,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     // R45 (Task 14 Step 5, reported there): the two Mg paths agree at EQUAL blood Mg (fu7-nmb unit test, 1e-9), but the
     // 60 mg/kg load peaks at 2.1 mmol/L in 7c's blood and falls through the block, so the drug arm prolongs less.
-    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (DI-90; M10 ch. 24 p. 698) — measured +12.0 % (blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
+    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (DI-90; M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the FU-9 merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
       const r = await mgArms();
       expect((100 * (r.drug - r.c)) / r.c).toBeGreaterThanOrEqual(20);
       expect((100 * (r.drug - r.c)) / r.c).toBeLessThanOrEqual(90);

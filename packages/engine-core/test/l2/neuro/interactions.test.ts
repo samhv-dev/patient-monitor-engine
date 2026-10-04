@@ -25,8 +25,8 @@ describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
   });
   // FU-7 (E-FU7-10 a): the band is UNCHANGED and now carries its measured numbers. This neuro-only rig applies a fixed
   // EC50 multiplier without the volatile's own PK, so it reads far less than the engine: DI-51 (1.1 MAC, real PK) is
-  // +49.7 % on the gate tree (third fixer: +52.2 %) — inside its 25–80 % band and PL — while the rig reads +13.4 %.
-  it.fails('1 MAC volatile: rocuronium duration +20–45 % (this rig +13.4 %; engine cell DI-51 +49.7 % on the gate tree — the plan\'s third fixer measured +52.2 % — band 25–80 %)', () => {
+  // +48.4 % on the gate tree (third fixer: +52.2 %) — inside its 25–80 % band and PL — while the rig reads +13.4 %.
+  it.fails('1 MAC volatile: rocuronium duration +20–45 % (this rig +13.4 %; engine cell DI-51 +48.4 % on the gate tree — the plan\'s third fixer measured +52.2 % — band 25–80 %)', () => {
     const ratio = rec25(ec50Multipliers({ ...N, volatileMac: 1 }).rocuronium) / rec25(1);
     expect(ratio).toBeGreaterThan(1.2);
     expect(ratio).toBeLessThan(1.45);

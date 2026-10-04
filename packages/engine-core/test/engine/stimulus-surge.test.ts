@@ -114,7 +114,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
     };
     // R45 (ET amendment): SURGE_NE_GAIN / SURGE_SET_PER_NOX are fitted to case 1 and not raised; the stimulus scale is 7e's
     // one shape (R51 addendum 12). The 0.7 mmHg remainder goes to the gate note §5 and Ali (Q17).
-    it.fails('no opioid: ΔMAP 20–30 mmHg (ET-16a band; Shribman 1987 via R51 addendum 25; Q17) — measured +19.3 (was +7.7)', async () => {
+    it.fails('no opioid: ΔMAP 20–30 mmHg (ET-16a band; Shribman 1987 via R51 addendum 25; Q17) — measured +19.1 on the gate tree (+19.3 before the FU-9 merge; was +7.7)', async () => {
       const x = await d(0);
       console.log(`FU-7 case 1c: incision, no opioid ΔMAP ${f1(x)}`);
       expect(x).toBeGreaterThanOrEqual(20);

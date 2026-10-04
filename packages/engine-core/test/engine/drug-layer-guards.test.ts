@@ -90,7 +90,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     // R45: NOT a regression — the pre-FU-7 baseline (b004289) overshoots the same way (audit DI-67 cePeak 3.1, graded TS
     // before FU-7; the guard list assumed PL). Reported for 7g's TCI controller, not fixed here.
-    it.fails('… without overshoot: Ce peak 2.99–3.01 (DI-67; 7g gate max 3.0005) — measured 3.132 (baseline b004289: 3.1, TS)', async () => {
+    it.fails('… without overshoot: Ce peak 2.99–3.01 (DI-67; 7g gate max 3.0005) — measured 3.110 on the gate tree (3.132 before the FU-9 merge; baseline b004289: 3.1, TS)', async () => {
       const peak = F7.mx((await tciArm()).rows, 'c_propofol', 60, 1800);
       expect(peak).toBeGreaterThanOrEqual(2.99);
       expect(peak).toBeLessThanOrEqual(3.01);
