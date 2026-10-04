@@ -29,9 +29,17 @@ describe('two-compartment heat model', () => {
     expect(rate).toBeGreaterThanOrEqual(0.3);
     expect(rate).toBeLessThanOrEqual(0.5);
     const last = tc.slice(-60); // hour 8: plateau
-    expect(Math.min(...last)).toBeGreaterThanOrEqual(34.5);
     expect(Math.max(...last)).toBeLessThanOrEqual(35.5);
     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
+  });
+
+  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the [ENG] 34.8 this
+  // band was fitted with) the GA heat model plateaus just below it — measured 34.37 °C in hour 8. Not tuned (R44).
+  it.fails('GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37', () => {
+    const st = createTemp(36.8, 70);
+    st.anaesthesia = 'general';
+    const tc = run(st, 0, 8 * 3600);
+    expect(Math.min(...tc.slice(-60))).toBeGreaterThanOrEqual(34.5);
   });
 
   // FU-10 E3 (E-FU10-3, research/14 ET-04): "no plateau" meant no VASOCONSTRICTION plateau — the block abolishes the

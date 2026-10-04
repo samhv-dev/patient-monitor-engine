@@ -65,6 +65,7 @@ export interface ThermalState {
   h: number; // Stage 3's lumped loss conductance at calibration (kept for reference; not used by the step)
   m0: number; // basal metabolic heat W at the set point
   effKg: number;
+  ageY: number; // FU-10 E6: the thermoregulatory thresholds fall with age (Kurz 1993)
   env: Envelope;
   anaesthesia: 'none' | 'general' | 'neuraxial';
   warming: boolean; // forced air
@@ -93,7 +94,7 @@ export interface ThermalState {
 
 const zeroOut = (): ThermalOut => ({ vasoF: 0, kcp: 0, metabolicW: 0, shiverW: 0, mhW: 0, sweatW: 0, dryW: 0, respW: 0, evapW: 0, warmW: 0, ivW: 0 });
 
-export function createThermal(tCore: number, effKg: number, heightCm = 175): ThermalState {
+export function createThermal(tCore: number, effKg: number, heightCm = 175, ageY = 40): ThermalState {
   const m0 = M_AWAKE_W_70 * (effKg / 70);
   const tp = tCore - PERIPH_GRADIENT_C;
   const sites = {} as Record<TempSite, number>;
@@ -104,7 +105,7 @@ export function createThermal(tCore: number, effKg: number, heightCm = 175): The
   const st: ThermalState = {
     tc: tCore, tp, ta: AMBIENT_C,
     capCore: HEAT_CAP_J_KG_C * effKg * CORE_FRACTION, capPer: HEAT_CAP_J_KG_C * effKg * (1 - CORE_FRACTION),
-    k0: (m0 - resp) / PERIPH_GRADIENT_C, h: m0 / (tp - AMBIENT_C), m0, effKg,
+    k0: (m0 - resp) / PERIPH_GRADIENT_C, h: m0 / (tp - AMBIENT_C), m0, effKg, ageY,
     env: { bsa, rIns: calibrateInsulation(bsa, tp, AMBIENT_C, AIR_SPEED_MS, m0 - resp - evap) },
     anaesthesia: 'none', warming: false, warmLag: 0, mh: null, sites,
     depth: 0, depthIn: null, setShift: tCore - T_NORMAL, feverShift: 0, nmb: 0, shiverShift: 0, airMs: AIR_SPEED_MS, exposure: 'draped',
@@ -117,7 +118,7 @@ export function createThermal(tCore: number, effKg: number, heightCm = 175): The
 /** Current thresholds (depth, set point; the drugs' shivering-only shift; a neuraxial block lowers both cold-defence
  * thresholds — FU-10 E3, ruling R-7). */
 export function currentThresholds(st: ThermalState): Thresholds {
-  const thr = thresholds(st.depth, st.setShift + st.feverShift);
+  const thr = thresholds(st.depth, st.setShift + st.feverShift, st.ageY);
   const nx = st.anaesthesia === 'neuraxial' ? NEURAXIAL_THR_SHIFT_C : 0;
   return { ...thr, vaso: thr.vaso + nx, shiver: thr.shiver + st.shiverShift + nx };
 }
@@ -214,7 +215,7 @@ export function setCoreTarget(st: ThermalState, tCore: number): void {
  */
 export function upgradeThermal(st: ThermalState): ThermalState {
   if ((st as Partial<ThermalState>).env !== undefined) return st;
-  const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70);
+  const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70, 175, st.ageY ?? 40);
   return {
     ...fresh, tc: st.tc, tp: st.tp, ta: st.ta, anaesthesia: st.anaesthesia, warming: st.warming, mh: st.mh, sites: st.sites,
     depth: st.anaesthesia === 'general' ? 1 : 0, // FU-10 E3: a neuraxial block has no central depth

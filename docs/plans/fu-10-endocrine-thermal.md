@@ -1012,7 +1012,7 @@ incision — and the draped no-wound arm is a recorded demonstration (R-5). No n
 constriction 0.7 °C below the centre (33.8 instead of 34.0 — the same property). **E-FU10-3 (Stage 3 GA test):** the
 hour-8 plateau's lower edge (≥ 34.5 °C) moves to an `it.fails` with its number; the rest of the test is unchanged.
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/l2/thermal/params.ts`, find:
 
@@ -1369,9 +1369,9 @@ Replace with:
     expect(Math.min(...tc.slice(-60))).toBeGreaterThanOrEqual(34.5);
   });```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/temp test/l2/endo test/engine/fu10-thresholds.test.ts test/engine/thermal-warmer.test.ts` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-01a ET-01b ET-02 ET-03a ET-03b ET-08a ET-09a ET-29`.
-- [ ] **Commit and push.** `git add -A packages/engine-core && git commit -m "fix(7e): the thermoregulatory thresholds stop at the tables' GA row and fall with age under anaesthesia (FU-10 E5, E6, E-FU10-3, E-FU10-10)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/temp test/l2/endo test/engine/fu10-thresholds.test.ts test/engine/thermal-warmer.test.ts` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-01a ET-01b ET-02 ET-03a ET-03b ET-08a ET-09a ET-29`.
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "fix(7e): the thermoregulatory thresholds stop at the tables' GA row and fall with age under anaesthesia (FU-10 E5, E6, E-FU10-3, E-FU10-10)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 

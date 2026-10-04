@@ -13,7 +13,10 @@ export const GA_KCP = 3; // k_cp × 2–4 once vasodilated (brief §4.6)
 export const GA_M = 0.8; // metabolic heat −15–20 % under GA
 export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG] — FU-10 E3: no longer read (NEURAXIAL_BLOCK_FRAC)
 export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more heat [ENG]
-export const VASOCONSTRICT_C = 34.8; // GA vasoconstriction logistic centre (tables 34.5 ± 0.2; plateau 34.6–34.8) [ENG]
+// FU-10 E5 (orchestrator ruling R-4, 2026-10-03): the parameter tables' own value (§5c GA vasoconstriction 34.5 ± 0.2 °C;
+// Sessler 2000) replaces the [ENG] 34.8 the Stage 3 plateau had been fitted with — the depth extrapolation (removed by
+// THR_DEPTH_MAX) had hidden the difference by reading 34.55 at sevoflurane's depth 1.06
+export const VASOCONSTRICT_C = 34.5; // GA vasoconstriction logistic centre [TXT: tables §5c]
 export const VASOCONSTRICT_KCP = 0.5; // k_cp × once constricted [ENG]
 /**
  * FU-10 E3 — neuraxial thermoregulation (Sessler DI, Anesthesiology 2000;92:578 and 2008;109:318; Kurz A, Sessler DI,
@@ -38,6 +41,26 @@ export const THR_VASO_AWAKE = 36.9; // tables §5c awake vasoconstriction thresh
 export const W_VASO_AWAKE = 0.1 / Math.log(4); // 0.0721 °C [ENG: reproduces Stage 3's awake k0 exactly]
 export const W_VASO_GA = 0.1; // Stage 3's logistic width [ENG]
 export const T_NORMAL = 36.8; // the default core the thresholds are written for (L1 tempCore default)
+/**
+ * FU-10 E5 — the depth the THRESHOLDS read is capped at the GA row. Before FU-10 `thresholds()` extrapolated the
+ * awake → GA line to depth 1.5 (2.1 °C per depth unit), so 2 % sevoflurane (thermoDepth 1.06) put the vasoconstriction
+ * threshold at 34.55 °C and the plateau at 6.2 h; the tables' and Sessler's GA row IS the row for ordinary clinical
+ * anaesthesia (vasoconstriction 34.5 ± 0.2 °C, the plateau at 3–4 h: Sessler DI, Anesthesiology 2000;92:578–596; Kurz A,
+ * Plattner O, Sessler DI et al., Anesthesiology 1993;79:465). A deeper anaesthetic lowering the threshold further is a
+ * concentration–threshold slope no source in the tables gives, so it is not extrapolated (R45; calibration queue).
+ */
+export const THR_DEPTH_MAX = 1;
+/**
+ * FU-10 E6 — under anaesthesia the cold-defence thresholds are lower in the elderly: vasoconstriction ≈ 1 °C lower at
+ * 60–80 y than at 30–50 y under isoflurane/N2O (Kurz A, Plattner O, Sessler DI et al., Anesthesiology 1993;79:465), and
+ * the shivering threshold likewise (Vassilieff N, Rosencher N, Sessler DI, Conseiller C, Anesthesiology 1995;83:1162,
+ * spinal anaesthesia). The shift is weighted by the thermoregulatory DEPTH (orchestrator ruling R-6): the sources
+ * measured it under anaesthesia, so the awake thresholds are unchanged. Linear in age between THR_AGE_FROM_Y and
+ * THR_AGE_TO_Y; no sourced age term for sweating.
+ */
+export const THR_AGE_FROM_Y = 60;
+export const THR_AGE_TO_Y = 80;
+export const THR_AGE_SHIFT_C = -1;
 
 // --- shivering and sweating (tables §5c; annex B3 Pulse forms) ---------------------------------------------
 export const THR_SHIVER_AWAKE = 36.0; // tables §5c [TXT]; Pulse 36.8 (differs +0.8, annex)

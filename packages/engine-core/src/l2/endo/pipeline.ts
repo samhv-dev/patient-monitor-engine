@@ -25,6 +25,7 @@ export interface EndoState {
   k: number; // next 1 Hz step index (time k s)
   noxious: number;
   weightKg: number;
+  ageY: number; // FU-10 E6: written into the heat model's `ageY` (the thresholds fall with age; Stage 3 owns `resp`)
   ecg: { tempC: number; shiver: number }; // last values pushed as ECG modifier deltas
   kfMult: number; // last capillary-leak multiplier written into 7c
   lungSev: number; // last 7b anaphylaxis severity written
@@ -47,7 +48,7 @@ export function resolveEndoProfile(profile: PatientProfile | undefined): EndoPro
 
 export function createEndoState(profile: PatientProfile | undefined, weightKg: number): EndoState {
   return {
-    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ecg: { tempC: 0, shiver: 0 },
+    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ageY: profile?.ageY ?? 40, ecg: { tempC: 0, shiver: 0 },
     kfMult: 1, lungSev: 0, cascade: { ...NEUTRAL_CASCADE }, out: [],
   };
 }
@@ -56,6 +57,7 @@ export function createEndoState(profile: PatientProfile | undefined, weightKg: n
 export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
   const th = ctx.resp.temp;
   const pk = pkOf(ctx.ps);
+  th.ageY = es.ageY; // FU-10 E6: the patient's age reaches the thermoregulatory thresholds (Stage 3 creates the state)
   observeDoses(es, pk);
   th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // Stage 7g's dantrolene effect → the MH suppression (thermal/mh.ts)
   // FU-10 E1: an MH-susceptible patient's triggers (7f's exposure times) start the MH state 7e owns (R51 §6)
