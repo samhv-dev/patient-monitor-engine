@@ -120,7 +120,7 @@ const SLOW_D = [
  * 2149 s after this split (vagal-events → slow-d, thermal-warmer → slow-c); slow-c 2120 → 2256 s.
  */
 const SLOW_C = [
-  'test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts',
+  'test/engine/fu9-*.test.ts', 'test/engine/endo-acceptance.test.ts',
   'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
   'test/engine/thermal-warmer.test.ts', // FU-9 Gate: from slow-b by time (136 s)
 ];
@@ -136,7 +136,12 @@ const SLOW_E = [
   'test/engine/drug-layer-guards.test.ts', 'test/engine/stimulus-surge.test.ts', 'test/engine/fu7-nmb-one-state.test.ts',
   'test/engine/cat-reserve-engine.test.ts', 'test/engine/fu7-volatile.test.ts',
 ];
-const SLOW_F = ['test/engine/drug-layer.test.ts', 'test/engine/drug-apnoea.test.ts'];
+/**
+ * FU-9 Part B: the `fu9-*` glob keeps B1/B2's two engine files (fu9-rocuronium, fu9-copd; ≈ 60 s local) in slow-c, which
+ * summed 2 295 / 2 315 s of tests on PR #32's two CI runs (the heaviest group); pk-acceptance-pd (239 s on both) moves
+ * from slow-c to slow-f (862 / 1 807 s) by measured time.
+ */
+const SLOW_F = ['test/engine/drug-layer.test.ts', 'test/engine/drug-apnoea.test.ts', 'test/engine/pk-acceptance-pd.test.ts'];
 const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p) && !SLOW_E.includes(p) && !SLOW_F.includes(p));
 const set = process.env.PME_TEST_SET;
 

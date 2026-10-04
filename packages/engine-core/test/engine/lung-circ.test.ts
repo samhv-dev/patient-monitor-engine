@@ -29,6 +29,8 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
   // FU-6 executor (merged with FU-8 Part A, R45): the two halves are split so each band is asserted on its own — the CO
   // fall is met (4.24 → 3.59, −15 %); the MAP-direction band (> 2 mmHg) is missed at 1.79 on the merged tree (2.06 on
   // FU-6 before the FU-8 merge, 1.83 with rocuronium 0.6). it.fails with the number (FU-8's body-size baseline moved it).
+  // FU-9 Part B (B2, F7): the GOLD 3 patient now rests at its tables PaCO2 45 with chronic HCO3 26 (was 40 / 24.4); the
+  // MAP-direction band is met — 2.5 mmHg (102.0 → 99.5; CO 4.61 → 3.50) vs 1.79 before — so the it.fails flips to it (R45).
   let copdRes: Promise<{ m10: { map: number; co: number }; m26: { map: number; co: number } }> | undefined;
   const copdRun = () => (copdRes ??= (async () => {
     const map = async (rr: number) => {
@@ -53,7 +55,7 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
     console.log(`lung-circ COPD MAP RR 10 ${m10.map.toFixed(1)} → RR 26 ${m26.map.toFixed(1)}; CO ${m10.co.toFixed(2)} → ${m26.co.toFixed(2)}`);
     return { m10, m26 };
   })());
-  it.fails('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — MAP falls vs RR 10 by > 2 mmHg (R27 demo direction; MODELED mode) — measured 1.79 (101.4 → 99.6) on the merged tree (FU-6 R45)', async () => {
+  it('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — MAP falls vs RR 10 by > 2 mmHg (R27 demo direction; MODELED mode) — measured 2.5 (102.0 → 99.5) with FU-9 F7 (was 1.79, it.fails)', async () => {
     const { m10, m26 } = await copdRun();
     // Executor deviation (recorded for a ruling): in MODELED mode the baroreflex holds MAP; the plan's ≥ 10 % fall is
     // not reached (measured −2.8 %, 101.8 → 98.9). Asserted: the direction (MAP falls ≥ 2 mmHg) — cf. 7a's NR-3 (link COPD MAP −9.4)
