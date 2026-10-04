@@ -14,6 +14,7 @@ completeness audit `docs/gates/fu-7/completeness.md`. PR #32.
   | 8981912 | b2a0292 | RESUME docs only |
   | cf6d27f | 90e4ee9 | Stage 7k, Stage 9 |
   | cd26d5f | bd5880b | FU-9 Parts A+C, PR #31 |
+  | 0972baa | add125f | showcase hotfix (#33), the preset-test timeout (#35), the showcase kit (#34) — after the gate review |
 
   The gate tree is this branch's head. Every "after" number below is measured on it unless a row says otherwise.
 
@@ -213,9 +214,20 @@ EEG-to-ventilatory ratios, not a disagreement between 7f and 7g.
 
 ## §4 `it.fails` list
 
-The repo had 91 `it.fails(` at the base and has 128 now. FU-7 touched 38: 36 new, 1 converted from `it`, and 1
-pre-existing one retitled. The measured number is in every title, and none was widened (R45). The table gives each
-gate-tree number; "plan" marks the ones the plan's "Expected `it.fails`" table pre-declared.
+The repo had 91 `it.fails(` at the base. Main has 104 after FU-9, and this branch has 144: FU-7 adds 40. The list
+below has 41 entries:
+- **35 new tests**, written as `it.fails`: #1–24, #26–35 and #41.
+- **5 previously passing assertions converted to `it.fails`**, each declared:
+  - #25, the rig rocuronium duration at 1 MAC (E-FU7-10 a);
+  - #36, ephedrine tachyphylaxis on the direct SVR term (Task 9 / R45);
+  - #38, the 7f propofol–remifentanil synergy (D15b);
+  - #39 and #40, the tables' 1 MAC EC50 size. These were restored after the gate review (condition 2) found that
+    E-FU7-10 a/b had turned them into self-comparisons under the old titles.
+- **1 pre-existing `it.fails` retitled** with its new number: #37.
+
+So the earlier "1 converted from `it`" was wrong: there were three conversions at the gate, and five now. The measured
+number is in every title, and none was widened (R45). The table gives each gate-tree number; "plan" marks the ones the
+plan's "Expected `it.fails`" table pre-declared.
 
 **engine/drug-apnoea**
 
@@ -279,12 +291,20 @@ gate-tree number; "plan" marks the ones the plan's "Expected `it.fails`" table p
 | 36 | engine/pk-acceptance-pd: ephedrine ×3 direct SVR tachyphylaxis | 0.040 / 0.010 / 0.005 |
 | 37 | engine/pk-acceptance-pd: dobutamine CO +20–40 % — pre-existing, plan, retitled | +13.6 % |
 | 38 | **l2/neuro/depth-drive: 7f "synergy", propofol 1 + remifentanil 1 (D15b)** | totalDep 0.735 = independent 0.735 |
+| 39 | **l2/neuro/interactions: 1 MAC volatile EC50 × 0.67 (tables §5d)** — converted, E-FU7-10 a | × 0.847 (`VOL_NMB_K` 0.18) |
+| 40 | **l2/neuro/depth-drive: 1 MAC volatile lowers the non-depolariser EC50 by ~33 %, 0.62–0.72 (tables §5d)** — converted, E-FU7-10 b | × 0.847, −15 % |
+| 41 | **engine/drug-layer: etomidate 0.3 mg/kg LOC 20–60 s (M10 ch. 21 p. 541)** — new, gate review O2 | +16 s (propofol 54 s on the same rig) |
 
 **Notes on the list**
 
 - **#36.** The pressor moved to `sympDrive` in Task 9. A companion `it` asserts the same tachyphylaxis on `sympDrive`
   (0.800 / 0.204 / 0.092). The suite was red on this case from ac12412 to 4d6ff5b.
 - **#38** is the finisher's, made under the D15b ruling. It was met at the old `SYNERGY` 0.5 and at α 0.3.
+- **#39 and #40** are class "re-sized constant". Task 14 re-sized `VOL_NMB_K` 0.5 → 0.18 [ENG], with DI-51's engine
+  duration as the fit target (+48.4 %, PL). The tables' EC50 size (Fodale 2006 via tables §5d) is now a measured miss.
+  The wiring is asserted by separately titled `it`s, so nothing is a self-comparison.
+- **#41** is class "onset order". With #8 it records that thiopental (10 s) and etomidate (16 s) lose consciousness
+  faster than propofol (54 s) on the same rig (Q23).
 - **Met although pre-declared as `it.fails`:**
   - DI-01c (excess −3.5 %), now an `it`;
   - the late dexmedetomidine SVR fall (×0.963), an `it`.
@@ -312,8 +332,12 @@ The scan ran on the merged tree, seed 7, with the resp-induction rig.
 **Result: α = 0 (additive).**
 - `VENT_ALPHA_BENZO` 1.5 is untouched.
 - Single agents are bit-identical (propofol alone 38 s in every row).
-- The same constant also scales the volatile–opioid term (one α for "the other non-benzodiazepine hypnotics and the
-  volatiles", D15); that term is now additive too.
+- The same constant also scales the volatile–opioid ventilatory term (one α for "the other non-benzodiazepine
+  hypnotics and the volatiles", D15), and α 0 zeroes it. The ruling did not name it. The gate review measured its cost
+  and found it identical to main: sevoflurane 2.5 % at FGF 6 on an SGA, spontaneous, fentanyl 2 µg/kg at 15 min gives
+  VE nadir 2.54 L/min, RR 6.1 and EtCO₂ 52.6 on FU-7, against 2.55 / 6.1 / 52.6 on main. So main had no
+  volatile–opioid synergy to lose.
+- The grid was the ruling's {0, 0.1, 0.2, 0.3}. **α 0.05 was not scanned** and may fit both bands (Q21).
 
 **Task 6/7 cells re-measured at α 0:**
 - DI-01c: excess −3.5 %, PL, unchanged.
@@ -678,7 +702,10 @@ The plan's Q1–Q17 stand as written, each with the number measured here:
 - Q1: 0.99. ΔCO survives β-blockade; §5.
 - Q3: +24.8 / +39.8.
 - Q12: the EC50 table in §5.
-- Q14: DV-01a 95 %; VF_TABLE re-sourced.
+- Q14: DV-01a 95 %; VF_TABLE re-sourced. **For the owner:** Stage 4's `test/l3/defib-pacer/outcome.test.ts` assertions
+  were re-stated to the re-sourced table (E-FU7-6, DV amendment; the ±2 % tolerance and seeds are unchanged):
+  persistent VF after a default-energy shock 0.30 → 0.10, asystole/PEA 0.60 → 0.80, and the low-energy share
+  0.65 → 0.55. These are sourced re-statements (Schneider 2000, van Alem 2003), not measured misses. Confirm them.
 - Q15: ×1.17.
 - Q16: +1.83.
 - Q17: +19.1 (+19.3 before the FU-9 merge).
@@ -694,6 +721,15 @@ New questions:
   revisited so that a "mildly synergistic" α (0.1–0.3, Nieuwenhuijs 2003) and the induction bands can hold together?
 - **Q22 — CI capacity.** Two more slow groups (slow-e/f) carry FU-7. Should the very long guards (the DI-85/86/68 CSHT
   arms, 282 s locally) become a nightly job instead?
+- **Q23 — the onset order of the induction agents (gate review O2).** On the same ventilated rig, LOC comes at:
+  propofol 2 mg/kg 54 s; thiopental 4 mg/kg **10 s** (#8); etomidate 0.3 mg/kg **16 s** (#41); ketamine 1.5 mg/kg
+  16 s (#9). The engine teaches thiopental and etomidate as 3–5 × faster than propofol, and faster than one arm–brain
+  circulation (30–60 s for all). Main never made them unconscious, so this is an improvement, but the order is wrong
+  for teaching. Is the fix each row's `tpS` / `hypC50`, or a shared arm–brain transit delay in 7g's chain?
+- **Q24 — the ephedrine time to peak (gate review §5).** Ephedrine 10 mg peaks at **8.5 min** on the gate tree (MAP
+  +18.0; main +12.2 at 8.2 min). The target is 4–5 min (tables §6.2), and HR rises only +5 against +15. The pressor
+  size is in band (DI-04a 8–25 mmHg). Should the time course be re-fitted through `sympDrive`'s onset (Task 9) or the
+  row's `tpS`?
 
 **Not in scope** (each needs a new profile field or state; listed so they are not lost):
 - DI-06 ACEi/ARB, DI-16 transplant, DI-20 N₂O gas spaces;
