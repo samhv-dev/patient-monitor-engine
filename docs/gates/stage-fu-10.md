@@ -257,3 +257,74 @@ Every other cell differs from pre-merge only in rounding, or in values FU-7 owns
 - Warm septic shock: ΔHR −46 → −45, ΔCO −0.44 → −0.59.
 
 These are exactly FU-10's moves on the pre-FU-7 base, now reproduced on the FU-7 base.
+
+## 11. CI slow-e failure (DI-26 guard) — diagnosis; STOPPED for an owner decision
+
+**The failure.** PR #37 CI run 37217929016, slow-e, `drug-layer-guards.test.ts`: the DI-26 guard requires insulin–dextrose
+at K 7.0 to give −0.6 to −1.1 mmol/L at 60 min. It measured **−1.2537**; main is PL. The cell was plausible on main, so this
+is a regression, and R45 applies in full: no band change and no `it.fails`. FU-9 Part B (`cdf95a2c`) was merged first
+(`7259b009`). Its `pk-acceptance-pd` move to slow-f is kept, and the six groups stay disjoint (115 files).
+
+**Every term that moves plasma K⁺ after the row** (merged tree; `drug` is the K set-point shift, mmol/L):
+
+| Term | Where | Size | Time course |
+|---|---|---|---|
+| 7c's own insulin–dextrose curve | `l2/blood/core.ts:166` `INSULIN_K_SHIFT * ef.ins` (`treatments.ts:50`, `insulinEffect`) | −1.0 × effect(t) | 7c's fitted curve |
+| 7g's bus K shift (salbutamol; the plain `insulin` row's PD `kShift` emax −1.2) | `blood/pipeline.ts:196` → `core.ts:165` `x.kShiftExt` | 0 for this row (`rows-other.ts:26`: `pd: []`) | 7g PD |
+| 7e endogenous adrenaline β2 | `l2/endo/effects.ts:78` `EPI_K_SHIFT (−0.8) × b2` → `endo/core.ts:189` → `blood.core.endoKShift` | — | follows plasma adrenaline |
+| 7e secreted insulin above basal (exogenous excluded) | `endo/core.ts:189` `INS_K_PER_UU (−0.03 per µU/mL) × max(0, i − iExo − Ib)` | — | follows secretion |
+| 7e insulinopenia efflux (FU-10 A7) | `endo/core.ts:194` | 0 here (β-cell reserve present; review I1) | — |
+| Na/K pump rate | `blood/core.ts:178` `1 + K_PUMP_GAIN (1.5) × |drug|` | scales all of the above | — |
+
+**Contributions in DI-26's rig** (ventilated, K 7.0, 10 units at 300 s, ΔK⁺ against the no-dose arm at 60 min; a
+scratch copy with switches):
+
+| Variant | ΔK⁺ 60 min | Glucose at 60 min |
+|---|---|---|
+| merged tree (FU-10 A4 on) | **−1.253** | 3.6 mmol/L |
+| A4 off (7e does not see the row; = main) | −0.939 | 5.6 (flat) |
+| A4 on, 7e secreted-insulin K term off | −1.238 | 3.6 |
+| A4 on, 7e adrenaline β2 K term off | −0.982 | 3.6 |
+| A4 on, both off | −0.956 | 3.6 |
+| **same doses as two rows (`insulin` 10 units + `dextrose` 25 g): 7g's insulin PD + 7e** | **−0.878** | 3.6 |
+| two rows, adrenaline β2 term off | −0.601 | 3.6 |
+
+**What is counted twice.** Insulin's direct K shift on this row already has one source, 7c's curve: 7g's bus is 0, and 7e
+excludes exogenous insulin.
+
+A4 lets the row's insulin lower 7e's glucose to 3.6 mmol/L. 7e's counter-regulatory adrenaline then adds **−0.27**
+through β2, and secretion adds −0.015. 7c's curve was fitted to the treatment's whole K fall in a world where that
+path did not exist, so with A4 the endogenous response is counted on top of an empirical curve that already contains it.
+
+The plain `insulin` row, by contrast, already uses 7g's PD **plus** 7e's adrenaline path; that is FU-7's fit, and ET-20
+holds at −0.73. A4's own rig gives the same picture (ET-31): combined row −1.15, two rows −0.78, A4 off −0.86.
+
+**Options, with numbers.** None is taken: each needs files outside FU-10's assignment or the owner's Q4.
+
+1. **Single source = the insulin row's mechanism.** The combined row's insulin carries 7g's insulin `kShift` PD
+   (`l2/pk/data/rows-other.ts`, 7g's file). 7c's `insulinDextrose` curve is retired when 7g is present, as its salbutamol
+   curve already is (`l2/blood/core.ts` / `treatments.ts`, 7c's files).
+   - Measured, as the two-row arm: DI-26 **−0.88**; A4 rig **−0.78**.
+   - Both bands are met. E-FU10-12's `it.fails` would flip to `it`, and E8's glucose is unchanged.
+   - It reverses the plan's D6 ("K⁺ stays 7c's") and 7c's documented rule that its curve always stays 7c's, which
+     needs an owner decision.
+2. **Single source = 7c's empirical curve.** 7e would have to withhold its adrenaline β2 K term while 7c's curve is
+   active. That is a coupling between layers and has no clean owner.
+   - Measured, with the β2 term off altogether as the bound: DI-26 −0.98.
+   - A global switch-off breaks every other adrenaline K effect, so it is not an option. A targeted gate is a constant-free
+     hack that the owner would have to accept.
+3. **Revert A4's insulin half** (7e sees only the row's dextrose), or all of A4.
+   - DI-26 ≈ −0.94 to −0.96 (PL).
+   - E8 regresses: the row's glucose is again not the two rows' (ET-31 back to WR or IN), and the A4 l2/engine tests fail.
+     That is an R45 regression in FU-10's own cell.
+4. **Fix the insulin disposition** (E12a: the nadir at 13 min is too early and too deep). This would leave glucose higher
+   at 60 min and the adrenaline smaller. It is FU-8 Part B's item (ruling R-1): number unknown, not FU-10's.
+
+**Unaffected by every option:**
+- A7: omitted basal insulin 35.5 / 11.55 / pH 7.31 / K⁺ 6.00; treated 11.55 → 8.90 (0.88 /h), K⁺ 3.24.
+- The instructor DKA K⁺: 4.48 vs healthy 4.18 (ET-23c on the merged tree).
+- The plain insulin row (ET-20 −0.73).
+
+**Recommendation:** option 1 (Ali Q4). It is the only single source in which the two rows that give the same insulin
+give the same K, and it meets both bands without a constant. Executing it needs approval for the two out-of-partition
+files (7g `rows-other.ts`, 7c `blood/core.ts` or `treatments.ts`) and for reversing D6.
