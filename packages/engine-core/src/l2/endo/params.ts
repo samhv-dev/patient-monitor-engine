@@ -82,6 +82,9 @@ export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activit
  * rate/clearance: 1 µg/kg/min ÷ Pulse's 68.66 mL/min/kg = 14 564 pg/mL (0.05 µg/kg/min → 728 pg/mL) [ENG, units].
  */
 export const EPI_EXO_PG_PER_RATE_EQ = 1e6 / 68.66;
+/** FU-10 E8: 7c's `insulinDextrose` row is dosed in insulin units with 25 g dextrose per 10 units (the row's regimen;
+ * UK Renal Association 2020 / JBDS: 10 units soluble insulin in 50 mL 50 % glucose) [TXT]. */
+export const INSDEX_DEXTROSE_G_PER_UNIT = 2.5;
 
 /**
  * FU-4 F2(a) — the HUMORAL arm of haemorrhage compensation (vasopressin / angiotensin II / adrenal), which an

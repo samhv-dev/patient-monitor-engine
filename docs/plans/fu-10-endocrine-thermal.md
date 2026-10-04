@@ -1392,7 +1392,7 @@ the same doses as two rows moved it — one treatment, two answers. 7e observed 
 
 **Measured:** ET-31 combined row **+6.93 / −2.42 mmol/L**, identical to the two-row arm (IN → PL); K⁺ at 60 min **−0.96** (band −1.0 to −0.6, held by the engine test; two-row arm −0.68). Engine test: max +11.17, min −2.68 mmol/L, K⁺ −0.96. ET-20a/b's insulin-alone K⁺ at 60 min −0.78 → −0.62 (its graded minimum −0.87 → −0.86, PL). The insulin-nadir `it.fails` (13.3 min) is in this task's engine file (A5 dropped).
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/l2/endo/params.ts`, find:
 
@@ -1525,9 +1525,9 @@ describe('FU-10 E8/E12a: insulin–dextrose and the insulin nadir', { timeout: 9
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/blood test/engine/fu10-insulin-dextrose.test.ts test/engine/blood-hyperk.test.ts test/engine/blood-ecg.test.ts` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-31 ET-20 ET-22`.
-- [ ] **Commit and push.** `git add -A packages/engine-core && git commit -m "fix(7e): the insulin-dextrose row reaches the glucose model (FU-10 E8)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/blood test/engine/fu10-insulin-dextrose.test.ts test/engine/blood-hyperk.test.ts test/engine/blood-ecg.test.ts` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-31 ET-20 ET-22`.
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "fix(7e): the insulin-dextrose row reaches the glucose model (FU-10 E8)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 
