@@ -1,0 +1,15 @@
+{
+  "browser": "chromium",
+  "labelBefore": "Sound off",
+  "labelAfter": "Sound on",
+  "contextsBeforeClick": [],
+  "contextsAfterClick": [
+    "running"
+  ],
+  "contextsAfterAlarms": [
+    "closed",
+    "running"
+  ],
+  "alarmShown": "!!! Apnoea (no CO₂ breaths)",
+  "errors": []
+}

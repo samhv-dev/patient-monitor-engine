@@ -55,7 +55,7 @@ describe('rail command builders', () => {
       e.advanceTo(20);
       expect(et, p.id).toBeGreaterThan(20);
     }
-  });
+  }, 30_000); // one engine per preset, 20 s each: over the 5 s default on the 2-vCPU CI runner (failed on main bd5880b)
   it('every preset starts an engine with the invasive lines connected', () => {
     for (const p of A.PRESETS) {
       expect(() => createEngine({ seed: 1, mode: 'modeled', patient: p.profile }), p.id).not.toThrow();

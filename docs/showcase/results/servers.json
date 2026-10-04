@@ -1,0 +1,451 @@
+{
+  "at": "2026-10-04T06:57:10.338Z",
+  "bundle": "/Users/samhv/Desktop/Claude/_sandbox/pme-showcase",
+  "version": "Patient monitor simulator - offline showcase kit\nCommit:   bd5880b0189754a28d42e9e400b81911ffff7e74\nBranch:   showcase-kit\nSubject:  docs(resume): FU-9 merged; showcase rehearsal done; browser audit filed\nBuilt:    2026-10-04T06:50:10.387Z\nBuilt by: node scripts/showcase/make-bundle.mjs \"/Users/samhv/Desktop/Claude/_sandbox/pme-showcase\" (node v26.8.2, vite build --base ./ in apps/demo)\nApp size: 2.0 MB\nRuntime:  runtime/ left EMPTY: /opt/homebrew/Cellar/node/26.8.2/bin/node (v26.8.2) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.\nServers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).\n",
+  "rows": [
+    {
+      "label": "ruby",
+      "only": "ruby",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "400 400 400"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "405"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "ruby",
+      "port": 8642
+    },
+    {
+      "label": "perl",
+      "only": "perl",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "403 403 403"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "405"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "perl",
+      "port": 8642
+    },
+    {
+      "label": "python3 (if a real one is installed)",
+      "only": "python",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "404 404 404"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "501"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "python3 (/usr/bin/python3)",
+      "port": 8642
+    },
+    {
+      "label": "node (stand-in: this machine's v26.8.2 linked as runtime/node-arm64 in a temp copy)",
+      "only": "node",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "403 403 403"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "405"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "node (node-arm64)",
+      "port": 8642
+    },
+    {
+      "label": "ruby from a READ-ONLY disk image at \"/var/folders/yp/c85__13s3_g_87ypmvggzzkw0000gn/T/pme-kit-check-Oi56xt/USB stick (read only)/pme showcase\"",
+      "only": "ruby",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "400 400 400"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "405"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "ruby",
+      "port": 8642
+    },
+    {
+      "label": "perl from a READ-ONLY disk image at \"/var/folders/yp/c85__13s3_g_87ypmvggzzkw0000gn/T/pme-kit-check-Oi56xt/USB stick (read only)/pme showcase\"",
+      "only": "perl",
+      "ok": true,
+      "checks": [
+        {
+          "name": "GET /index.html",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET / (folder index)",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "GET entry chunk assets/index-RabzdwUo.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8"
+        },
+        {
+          "name": "GET worker chunk engine.worker-C9DrEmat.js",
+          "pass": true,
+          "detail": "200 text/javascript; charset=utf-8 591688 B"
+        },
+        {
+          "name": "GET stylesheet",
+          "pass": true,
+          "detail": "200 text/css; charset=utf-8"
+        },
+        {
+          "name": "GET framed page with a query string",
+          "pass": true,
+          "detail": "200 text/html; charset=utf-8"
+        },
+        {
+          "name": "HEAD /index.html",
+          "pass": true,
+          "detail": "200 length 2005"
+        },
+        {
+          "name": "GET missing file → 404",
+          "pass": true,
+          "detail": "404"
+        },
+        {
+          "name": "traversal refused (/.., %2e%2e, assets/../..)",
+          "pass": true,
+          "detail": "403 403 403"
+        },
+        {
+          "name": "POST refused",
+          "pass": true,
+          "detail": "405"
+        },
+        {
+          "name": "listens on 127.0.0.1 only",
+          "pass": true,
+          "detail": "127.0.0.1"
+        },
+        {
+          "name": "server stops when the launcher window closes (SIGHUP)",
+          "pass": true,
+          "detail": "stopped"
+        },
+        {
+          "name": "nothing written into the bundle",
+          "pass": true,
+          "detail": ""
+        }
+      ],
+      "server": "perl",
+      "port": 8642
+    }
+  ]
+}
