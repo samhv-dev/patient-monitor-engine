@@ -23,7 +23,13 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'calciumChloride', name: 'Calcium chloride 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '10 mg/kg (0.5–1 g) — 13.6 mEq Ca per g', onset: 'iCa ↑ in 1–3 min (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
   { id: 'calciumGluconate', name: 'Calcium gluconate 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '30 mg/kg (1–3 g) — 4.65 mEq Ca per g', onset: 'as chloride, one third of the calcium per gram (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
-  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', pk: blood, pd: [], doses: '10 U insulin + 25 g dextrose', onset: 'K −0.6 to −1.0 mmol/L at 60 min (7c)', ir: '?', src: '7c plan decision 7', tag: 'TXT' },
+  // FU-10 E-FU10-14 (orchestrator ruling; reverses FU-10 plan D6): the row's insulin is the plain insulin row's insulin —
+  // the same PK and the same K⁺ pharmacodynamics (`kShift` → bus.metabolic.kShift → 7c), so 7c's empirical whole-effect
+  // curve is retired whenever 7g is present (as salbutamol's is); 7c still reads the dose (shared) and keeps its curve in
+  // the no-7g configuration. Its glucose is 7e's (FU-10 E8); the counter-regulatory adrenaline after an insulin-induced
+  // hypoglycaemia is 7e's own, separate term.
+  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', shared: 'blood', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
+    pd: [{ target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U insulin + 25 g dextrose', onset: 'K −0.6 to −1.0 mmol/L at 60 min (insulin PD, 7g)', ir: '?', src: '7c plan decision 7; FU-10 E-FU10-14', tag: 'TXT' },
   { id: 'magnesium', name: 'Magnesium sulfate', cls: 'electrolyte', amountUnit: 'mg', shared: 'blood', elim: { renal: 1 },
     pk: { kind: 'perKg', conc: 'plain', pk: { v1: 0.3, v2: 0, v3: 0, cl1: 0.0015, cl2: 0, cl3: 0, ke0: [0.5] } },
     // FU-6 R2 (E-FU6-1): airway smooth-muscle relaxation (calcium antagonism) — an adjunct in severe bronchospasm/asthma;

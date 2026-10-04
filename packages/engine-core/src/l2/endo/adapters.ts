@@ -17,7 +17,7 @@ import { mhActivity } from '../thermal/mh.ts';
 import type { ThermalState } from '../thermal/heat.ts';
 import type { EndoInputs } from './core.ts';
 import { dextroseBolus, dextroseInfusion, insulinBolus, insulinInfusion } from './glucose.ts';
-import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ } from './params.ts';
+import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ, ETOM_SUPPR_REF_MG_KG, INSDEX_DEXTROSE_G_PER_UNIT } from './params.ts';
 import type { EndoCtx, EndoState } from './pipeline.ts';
 
 type Neuro = { antinoc?: number; antinocOp?: number; nmb?: number; thermoDepth?: number }; // FU-7 (addendum 25)
@@ -39,7 +39,8 @@ type Circ = {
 };
 type BloodLike = {
   out?: { dkaSeverity?: number };
-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
+  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number };
+    endoKShift?: number; endoGlucoseMgDl?: number; endoKetoMmolMin?: number; endoKetoUtilPerMin?: number };
 };
 
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -104,12 +105,20 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
 /**
  * 7g's accepted boluses (`bus.doses`, each listed for exactly one engine pass, R51 §3) → the glucose model: dextrose
  * (7g amount unit mg) and insulin (units). Called once per engine pass. `bus.metabolic.glucoseDelta` is NOT used (7e
- * owns glucose).
+ * owns glucose). FU-10 E8: 7c's `insulinDextrose` row (the hyperkalaemia treatment; its K⁺ curve stays 7c's) is the same
+ * insulin and dextrose to the glucose model — 10 units with 25 g, i.e. INSDEX_DEXTROSE_G_PER_UNIT per unit given.
  */
 export function observeDoses(es: EndoState, pk: PkLike | undefined): void {
   for (const d of pk?.bus?.doses ?? []) {
     if (d.agent === 'dextrose') dextroseBolus(es.core.glucose, d.amountUnit === 'mg' ? d.amount / 1000 : d.amount, es.weightKg);
     else if (d.agent === 'insulin' && d.amountUnit === 'units') insulinBolus(es.core.glucose, d.amount, es.weightKg);
+    else if (d.agent === 'etomidate') { // FU-10 E10: 11β-hydroxylase suppression for hours after one induction dose
+      const perKg = d.amountUnit === 'mg/kg' ? d.amount : d.amountUnit === 'mg' ? d.amount / es.weightKg : 0;
+      if (perKg > 0) es.core.etomSuppr = Math.min(1, (es.core.etomSuppr ?? 0) + perKg / ETOM_SUPPR_REF_MG_KG);
+    } else if (d.agent === 'insulinDextrose' && d.amountUnit === 'units') { // FU-10 E8
+      insulinBolus(es.core.glucose, d.amount, es.weightKg);
+      dextroseBolus(es.core.glucose, d.amount * INSDEX_DEXTROSE_G_PER_UNIT, es.weightKg);
+    }
   }
 }
 
@@ -190,6 +199,8 @@ export function writeBlood(ps: object, es: EndoState): boolean {
   const o = es.core.out;
   c.endoKShift = o.kShift;
   c.endoGlucoseMgDl = o.glucoseMgDl;
+  c.endoKetoMmolMin = o.ketoMmolMin; // FU-10 E7: ketogenesis from the insulin deficit — 7c integrates it into its pool
+  c.endoKetoUtilPerMin = o.ketoUtilPerMin; // FU-10 E7 (R-2): insulin-dependent utilisation of that pool
   if (c.fl && o.kfMult !== es.kfMult) {
     c.fl.kfMult = o.kfMult;
     c.fl.sigma = leakSigma(o.kfMult); // FU-9 F4: the same leak lowers the protein reflection coefficient (lung water, Starling)

@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { shiverW, sweatW, thresholds, vasoDilation } from '../../../src/l2/thermal/thresholds.ts';
 
 describe('thermoregulatory thresholds', () => {
-  it('awake 37.2/36.9/36.0 and GA 38.0/34.8/33.5 (sweat/vaso/shiver); a fever shifts all three', () => {
+  // FU-10 E5 (ruling R-4, E-FU10-10): the GA vasoconstriction centre is the tables' 34.5 °C (was the [ENG] 34.8)
+  it('awake 37.2/36.9/36.0 and GA 38.0/34.5/33.5 (sweat/vaso/shiver); a fever shifts all three', () => {
     const a = thresholds(0, 0);
     expect([a.sweat, a.vaso, a.shiver]).toEqual([37.2, 36.9, 36.0]);
     const g = thresholds(1, 0);
     expect(g.sweat).toBeCloseTo(38.0, 9);
-    expect(g.vaso).toBeCloseTo(34.8, 9);
+    expect(g.vaso).toBeCloseTo(34.5, 9);
     expect(g.shiver).toBeCloseTo(33.5, 9);
     expect(thresholds(0, 2).shiver).toBeCloseTo(38.0, 9);
   });
@@ -16,7 +17,7 @@ describe('thermoregulatory thresholds', () => {
   it('awake tone at 36.8 °C is 0.2 dilated (reproduces Stage 3 k0); GA at 36.8 is fully dilated', () => {
     expect(vasoDilation(36.8, thresholds(0, 0))).toBeCloseTo(0.2, 9);
     expect(vasoDilation(36.8, thresholds(1, 0))).toBeGreaterThan(0.999);
-    expect(vasoDilation(34.0, thresholds(1, 0))).toBeLessThan(0.001);
+    expect(vasoDilation(33.8, thresholds(1, 0))).toBeLessThan(0.001); // FU-10 (R-4): fully constricted 0.7 °C below the centre, as before
   });
 
   it('shivering: 0 above threshold, linear to the summit over 1.8 °C, capped at × 5, abolished by NMB', () => {

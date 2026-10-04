@@ -100,7 +100,8 @@
           "description": "FU-8 (research/19 §5, R-S9-4): Stage 7e's endocrine profile, passed to the engine's PatientProfile.endo 1:1.",
           "type": "object",
           "additionalProperties": false,
-          "properties": { "diabetes": { "enum": ["none", "type1", "type2"] }, "thyroid": { "enum": ["normal", "hypo", "hyper"] }, "adrenalInsufficiency": { "type": "boolean" } }
+          "properties": { "diabetes": { "enum": ["none", "type1", "type2"] }, "thyroid": { "enum": ["normal", "hypo", "hyper"] }, "adrenalInsufficiency": { "type": "boolean" },
+            "basalInsulin": { "type": "boolean", "description": "FU-10 E7 (E-FU10-9): type 1 only — false omits the long-acting basal insulin (default true)." } }
         }
       }
     },

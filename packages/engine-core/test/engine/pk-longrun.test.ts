@@ -42,9 +42,9 @@ describe('Stage 7g long run', () => {
   // leaves the effect site 0.4 % above its target after 6 h. Measured 2.5098 on CI (run 37135534941) and on the Mac;
   // main 2.5 (within ± 0.005). The TCI band is unchanged (orchestrator ruling at G-FU9): an open-loop TCI pump does not
   // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
-  // FU-8 B4 (E-FU8B-3): flipped — anaesthesia now removes the tonic sympathetic share, so this rig's cardiac output (and
-  // with it FU-9's flow-limited hepatic clearance) sits where the open-loop TCI's own model expects it again.
-  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — back within the band after FU-8 B4 (measured 2.5021; 2.5098 with FU-9; main within the band before FU-9)`, { timeout: 1_800_000 }, async () => {
+  // FU-9 → FU-10 Gate (E-FU10-13) → FU-8 B4 (E-FU8B-3): the declared FU-9 `it.fails` (2.5098) is back inside the unchanged
+  // band — FU-10 Part A measured 2.4995, FU-8 Part B alone 2.5021; the merged tree's value is in the title.
+  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5033 on the merged tree with FU-10 Part A and FU-8 Part B (2.4995 FU-10 alone, 2.5021 FU-8 alone, 2.5098 with FU-9)`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;
     console.log(`pk-longrun ${LONGRUN_HOURS} h propofol Ce ${l.drugs.find((x) => x.id === 'propofol')!.ce.toFixed(4)}`);

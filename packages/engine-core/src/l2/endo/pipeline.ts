@@ -11,6 +11,7 @@ import { VAGAL_SITES } from '../../types-neuro.ts'; // FU-4 G7: the stimulus's o
 import type { HemoState } from '../hemo/pipeline.ts';
 import type { RespState } from '../resp/pipeline.ts';
 import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
+import { mhFromExposure, type MhExposure, type MhOwner } from '../thermal/mh.ts';
 import { observeDoses, pkOf, readEndoInputs, readInfusions } from './adapters.ts';
 import { SEPSIS_PHASES } from './conditions.ts';
 import { createEndoCore, DEFAULT_ENDO_PROFILE, stepEndoCore, type EndoCore, type EndoProfile } from './core.ts';
@@ -24,10 +25,12 @@ export interface EndoState {
   k: number; // next 1 Hz step index (time k s)
   noxious: number;
   weightKg: number;
+  ageY: number; // FU-10 E6: written into the heat model's `ageY` (the thresholds fall with age; Stage 3 owns `resp`)
   ecg: { tempC: number; shiver: number }; // last values pushed as ECG modifier deltas
   kfMult: number; // last capillary-leak multiplier written into 7c
   lungSev: number; // last 7b anaphylaxis severity written
   cascade: Cascade; // cascade(th) at the last 1 Hz step: 7f reads endo.cascade.macF (R-7f-8)
+  mhOwner?: MhOwner; // FU-10 E1 (D3): who made the MH state once an exposure was seen (absent = no exposure yet)
   out: EngineEvent[];
 }
 
@@ -45,7 +48,7 @@ export function resolveEndoProfile(profile: PatientProfile | undefined): EndoPro
 
 export function createEndoState(profile: PatientProfile | undefined, weightKg: number): EndoState {
   return {
-    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ecg: { tempC: 0, shiver: 0 },
+    core: createEndoCore(resolveEndoProfile(profile), weightKg), k: 1, noxious: 0, weightKg, ageY: profile?.ageY ?? 40, ecg: { tempC: 0, shiver: 0 },
     kfMult: 1, lungSev: 0, cascade: { ...NEUTRAL_CASCADE }, out: [],
   };
 }
@@ -54,8 +57,16 @@ export function createEndoState(profile: PatientProfile | undefined, weightKg: n
 export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
   const th = ctx.resp.temp;
   const pk = pkOf(ctx.ps);
+  th.ageY = es.ageY; // FU-10 E6: the patient's age reaches the thermoregulatory thresholds (Stage 3 creates the state)
   observeDoses(es, pk);
   th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // Stage 7g's dantrolene effect → the MH suppression (thermal/mh.ts)
+  // FU-10 E1: an MH-susceptible patient's triggers (7f's exposure times) start the MH state 7e owns (R51 §6)
+  const mhx = (ctx.ps as { neuro?: { mhExposure?: MhExposure } }).neuro?.mhExposure;
+  if (mhx) {
+    const r = mhFromExposure(th.mh, mhx, es.mhOwner, tEnd);
+    th.mh = r.mh;
+    es.mhOwner = r.owner;
+  }
   for (; es.k <= tEnd + 1e-9; es.k++) {
     const t = es.k;
     readInfusions(es, pk);

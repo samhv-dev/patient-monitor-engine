@@ -46,6 +46,9 @@ export type EndoEvent = {
 /** PatientProfile.endo (optional; defaults: no diabetes, euthyroid, normal adrenals). β-blockade is 7a's profile. */
 export interface EndoProfileInput {
   diabetes?: 'none' | 'type1' | 'type2';
+  /** FU-10 E7: type 1 only — `false` OMITS the long-acting basal insulin (the missed-dose case: ketosis within hours).
+   * Default `true` (the profile as it behaved before FU-10). FU-8 A16 carries it into `pme-scenario/1`. */
+  basalInsulin?: boolean;
   thyroid?: 'normal' | 'hypo' | 'hyper';
   adrenalInsufficiency?: boolean;
 }

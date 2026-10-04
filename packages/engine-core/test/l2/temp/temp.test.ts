@@ -29,18 +29,31 @@ describe('two-compartment heat model', () => {
     expect(rate).toBeGreaterThanOrEqual(0.3);
     expect(rate).toBeLessThanOrEqual(0.5);
     const last = tc.slice(-60); // hour 8: plateau
-    expect(Math.min(...last)).toBeGreaterThanOrEqual(34.5);
     expect(Math.max(...last)).toBeLessThanOrEqual(35.5);
     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
   });
 
-  it('neuraxial: smaller redistribution and no plateau (still falling below 34.5 °C in hour 8)', () => {
+  // R45 (FU-10 E5, ruling R-4, E-FU10-3): with the tables' vasoconstriction threshold 34.5 °C (was the [ENG] 34.8 this
+  // band was fitted with) the GA heat model plateaus just below it — measured 34.37 °C in hour 8. Not tuned (R44).
+  it.fails('GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37', () => {
+    const st = createTemp(36.8, 70);
+    st.anaesthesia = 'general';
+    const tc = run(st, 0, 8 * 3600);
+    expect(Math.min(...tc.slice(-60))).toBeGreaterThanOrEqual(34.5);
+  });
+
+  // FU-10 E3 (E-FU10-3, research/14 ET-04): "no plateau" meant no VASOCONSTRICTION plateau — the block abolishes the
+  // legs' vasoconstriction, so the core keeps falling through the GA plateau's hours; it now stops only where shivering
+  // ABOVE the block starts, below the lowered shivering threshold (35.5 °C; Kurz 1993). Before FU-10 the neuraxial state
+  // took the GA thresholds (shivering 33.5 °C) and fell to 33.47 °C at 8 h with no shivering; now 35.22 °C, shivering.
+  it('neuraxial: smaller redistribution, no vasoconstriction plateau; the fall stops only below the lowered shivering threshold', () => {
     const st = createTemp(36.8, 70);
     st.anaesthesia = 'neuraxial';
     const tc = run(st, 0, 8 * 3600);
     expect(36.8 - tc[59]!).toBeLessThan(1.0);
-    expect(tc[419]! - tc[479]!).toBeGreaterThan(0.1); // still falling in hour 8, where GA has plateaued
-    expect(tc[479]!).toBeLessThan(34.5);
+    expect(tc[59]! - tc[119]!).toBeGreaterThanOrEqual(0.3); // hour 2: still the linear phase (0.50 °C/h)
+    expect(tc[479]!).toBeLessThan(35.5); // below the shivering threshold 36.0 − 0.5
+    expect(st.out.shiverW).toBeGreaterThan(0); // shivering above the block defends it
   });
 
   it('forced-air warming adds +0.5–1 °C/h against the GA linear phase', () => {
