@@ -1,0 +1,109 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-bronchospasm",
+  "title": "Severe bronchospasm on the ventilator",
+  "category": "Showcase",
+  "durationMin": 10,
+  "story": "A ventilated 45-year-old woman develops severe bronchospasm: airway pressures climb, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch the pressures fall.",
+  "objectives": [
+    "Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP",
+    "Treat with a bronchodilator",
+    "Watch the peak pressure and auto-PEEP fall"
+  ],
+  "notes": "Showcase case (Stage 9 Task 26): the airway event 'bronchospasm' at severity 1 (it aliases 7b's bronchospasm row); salbutamol's bronchodilation is FU-6's.",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 45,
+    "sex": "F",
+    "weightKg": 68,
+    "heightCm": 165,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "initialState": "spasm",
+  "states": [
+    {
+      "id": "spasm",
+      "label": "Severe bronchospasm",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 0.5
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airway",
+            "state": "bronchospasm",
+            "severity": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "salbGiven",
+          "label": "Salbutamol given",
+          "to": "treated",
+          "when": {
+            "event": {
+              "kind": "drug",
+              "drugId": "salbutamol"
+            }
+          }
+        },
+        {
+          "id": "giveSalb",
+          "label": "Give salbutamol 250 µg",
+          "to": "treatedByButton",
+          "when": {
+            "manual": {
+              "label": "Give salbutamol 250 µg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treatedByButton",
+      "label": "Salbutamol given: pressures falling",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "salbutamol",
+            "dose": 250,
+            "unit": "mcg",
+            "route": "iv"
+          }
+        }
+      ]
+    },
+    {
+      "id": "treated",
+      "label": "Salbutamol given: pressures falling"
+    }
+  ]
+}

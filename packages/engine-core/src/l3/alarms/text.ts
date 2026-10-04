@@ -66,7 +66,7 @@ const stars = (level: AlarmLevel): string => '*'.repeat(4 - level);
 
 export function fixedText(p: DeviceProfile, id: FixedAlarmId, level: AlarmLevel, technical: boolean): string {
   if (p.prefix === 'none') return SAADAT_TEXT[id];
-  return `${technical ? '' : stars(level)}${IEC_TEXT[id]}`;
+  return `${technical ? '' : stars(level)}${p.texts?.[id] ?? IEC_TEXT[id]}`; // Stage 9 (E-S9-4): the skin's wording first
 }
 
 /**
