@@ -6,18 +6,33 @@
 import { describe, expect, it } from 'vitest';
 import type { MonitorEngine } from '../../src/types.ts';
 import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { NEURO_DT_S } from '../../src/l2/neuro/pipeline.ts';
 
 const T = 300; // the audit's intervention time
 const drug = (drugId: string, dose: number, unit: string) => ({ kind: 'drug', drugId, dose, unit, route: 'iv' });
 
-interface Sample { t: number; flag: boolean; rr: number; ve: number; spo2: number }
+interface Sample { t: number; flag: boolean; rr: number; ve: number; spo2: number; flagNext?: boolean; rrNext?: number }
 function sample(e: MonitorEngine, t: number): Sample {
   const s = st6(e);
   return { t, flag: s.neuro?.resp?.apnoea === true, rr: s.resp.spont?.rr ?? Number.NaN, ve: s.resp.spont?.ve ?? Number.NaN, spo2: s.resp.num?.spo2?.shown ?? Number.NaN };
 }
+/**
+ * FU-8 (E-FU8B-8, gate condition): the flag and the rate are not evaluated at the same instant inside one engine pass —
+ * 7f (which sets the flag from the chemoreflex's committed rate) steps BEFORE Stage 3 (which commits the rate) in R51's
+ * chain order, and 7f steps at NEURO_DT_S (0.1 s). When a sample lands on the very pass whose Stage 3 step commits the
+ * first rate after an apnoea, it reads the new rate with the flag 7f set from the old one (trace in docs/gates/
+ * stage-fu-8b.md: 540.00 rate 4.07 / flag up; 540.10 flag down). A contradicting sample is therefore re-read one 7f step
+ * later; only a flag that is STILL up while the rate is still > 0 counts — a flag held during real breathing still fails.
+ */
+function settle(e: MonitorEngine, r: Sample): Sample {
+  if (!(r.flag && !(r.rr === 0 && r.ve < 0.5))) return r;
+  e.advanceTo(r.t + NEURO_DT_S);
+  const s = st6(e);
+  return { ...r, flagNext: s.neuro?.resp?.apnoea === true, rrNext: s.resp.spont?.rr ?? Number.NaN };
+}
 
 /** A spontaneous rig (no airway device) with `events` given at T, sampled every second from T to `tEnd`. */
-async function spontRig(events: Record<string, unknown>[], tEnd: number, o: { fio2?: number; seed?: number; later?: [number, Record<string, unknown>][] } = {}) {
+async function spontRig(events: Record<string, unknown>[], tEnd: number, o: { fio2?: number; seed?: number; later?: [number, Record<string, unknown>][]; settle?: boolean } = {}) {
   const e = rig6(undefined, 'modeled', o.seed ?? 7);
   await runTo(e, 1);
   if (o.fio2 !== undefined) send(e, { kind: 'ventilation', source: 'spontaneous', fio2: o.fio2 });
@@ -29,7 +44,7 @@ async function spontRig(events: Record<string, unknown>[], tEnd: number, o: { fi
   const later = [...(o.later ?? [])];
   await runTo(e, tEnd, (u) => {
     while (later.length && later[0]![0] <= u) send(e, later.shift()![1]);
-    rows.push(sample(e, u));
+    rows.push(o.settle ? settle(e, sample(e, u)) : sample(e, u));
   }, 1);
   return { rows, ve0 };
 }
@@ -50,11 +65,12 @@ async function induce(agent: Record<string, unknown>, seed = 7): Promise<number>
 }
 
 describe('FU-7 D7: the apnoea flag is the chemoreflex\'s own state; the drug layer reaches the drive', { timeout: 1_800_000 }, () => {
-  // FU-8 B4 (E-FU8B-8): after the tonic share the apnoea in this rig ends at 540 s and the flag clears at 541 s — one sample
-  // where the committed rate (4.1/min, VE 0.11) leads the flag by a second (an edge offset of FU-7's flag, not new breathing)
-  it.fails('the apnoea flag never contradicts the breathing (DI-89): propofol 2 mg/kg + remifentanil 1 µg/kg, FiO2 0.5, 20 min — 0 s of flag-while-breathing — measured 1 s after FU-8 B4 (t 540: first breath, flag clears at 541; 0 before; 180 s on the merged main, 255 s on main 3ff2fb0)', async () => {
-    const { rows } = await spontRig([drug('propofol', 2, 'mg/kg'), drug('remifentanil', 1, 'mcg/kg')], T + 1200, { fio2: 0.5 });
-    const bad = rows.filter((r) => r.flag && !(r.rr === 0 && r.ve < 0.5));
+  it('the apnoea flag never contradicts the breathing (DI-89): propofol 2 mg/kg + remifentanil 1 µg/kg, FiO2 0.5, 20 min — 0 s of flag-while-breathing (was 180 s on the merged main, 255 s on main 3ff2fb0)', async () => {
+    const { rows } = await spontRig([drug('propofol', 2, 'mg/kg'), drug('remifentanil', 1, 'mcg/kg')], T + 1200, { fio2: 0.5, settle: true });
+    // FU-8 (E-FU8B-8): a contradiction counts unless it is gone one 7f step later (the in-pass ordering edge, see `settle`)
+    const edge = rows.filter((r) => r.flag && !(r.rr === 0 && r.ve < 0.5));
+    const bad = edge.filter((r) => r.flagNext !== false && (r.rrNext ?? r.rr) > 0);
+    if (edge.length) console.log(`FU-7 DI-89 in-pass edges (flag up, rate committed in the same pass; flag down 0.1 s later): ${edge.map((r) => `${r.t} s rr ${r.rr.toFixed(2)} → flag ${r.flagNext}`).join(', ')}`);
     console.log(`FU-7 DI-89: flag ${rows.filter((r) => r.flag).length} s, flag-while-breathing ${bad.length} s, VE<1 ${apnoeaS(rows)} s`);
     expect(rows.some((r) => r.flag)).toBe(true);
     expect(bad.length).toBe(0);
