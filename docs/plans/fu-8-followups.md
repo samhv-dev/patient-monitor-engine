@@ -5150,13 +5150,28 @@ git push
 **Precondition:** FU-7 is merged to `origin/main` (and FU-6 before it). Part A's PR may be merged or open; if open, this
 continues on the same branch.
 
-- [ ] **Step 1.** `git fetch origin && git merge origin/main` (no stash; resolve by keeping both sides; FU-7 rewrites
+- [x] **Step 1.** `git fetch origin && git merge origin/main` (no stash; resolve by keeping both sides; FU-7 rewrites
   `l2/pk/row.ts`, `pipeline.ts`, `combine.ts` and every `data/rows-*.ts` — its Task 2 replaces the gamma fallback curve by a
   transit chain, so the `gammaPk(...)` helper lines in B1/B2 may read differently).
-- [ ] **Step 2.** Run the block checker on the merged tree: `python3 ../scratch/plans-backup/fu-8-check-blocks.py --part B
+- [x] **Step 2.** Run the block checker on the merged tree: `python3 ../scratch/plans-backup/fu-8-check-blocks.py --part B
   docs/plans/fu-8-followups.md .` — it lists every Part B find block that no longer matches exactly once. Re-anchor each
   by its quoted comment or statement (never re-type a line you are not changing) and record the list in the gate note.
-- [ ] **Step 3.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk` and the fast set → green before any Part B edit (record FU-7's numbers as the baseline).
+- [x] **Step 3.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk` and the fast set → green before any Part B edit (record FU-7's numbers as the baseline).
+
+#### Base drift (Task B0, executor, 2026-10-04; base `origin/main` `4a1cc3f7` = FU-6 + Stage 9 + FU-9 A/C + FU-7)
+
+Part B was branched fresh from `origin/main` (Part A merged as PR #27), so Step 1 is the branch point itself. Block
+checker (`--part B`): 28 find/replace blocks + 3 creates; **2 drifted**, both re-anchored with unambiguous intent:
+
+| Task | File | Block | Drift | Re-anchored as |
+|---|---|---|---|---|
+| B1 | `l2/pk/data/rows-other.ts` | lidocaine `pd: [...]` + `doses:` | FU-7 (addenda 22/23) added `antinocAdd` and `antiarrhythmic` PD targets on two lines | `maxDose` inserted on its own line before the unchanged `doses:` line |
+| B4 | `l2/circ/model.ts` | the `stepBaro(` gains line | FU-7 (addendum 22) made `setF: de.setF * (m.ext.surgeF ?? 1)` | `tonic: m.prof.tonicSymp` appended after `brainF`, FU-7's `setF` and its comment kept |
+
+Other drift read on the merged tree (no find block, intent unchanged): FU-7 did NOT edit `baroreflex.ts` (its gate note
+Task 8 Step 6 reported the vagal-limb caps to FU-4, no edit), so B4's `svrF`/`eesF` lines match. The insulin row, the
+`gammaPk` helper and `setRate`'s `infTarget` line are FU-7-unchanged (no transit chain on gamma rows). `PkRoute` still has 8
+values. Baseline (Step 3): engine fast set 304 files / 1 365 passed + 1 skipped (110 s); `test/l2/pk` in it, green.
 
 ### Task B1: The drug library — the insulin reference, explicit routes, no silent curve-row infusions, a documented maximum (I-25…I-28)
 
