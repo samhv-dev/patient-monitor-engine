@@ -82,8 +82,17 @@ const TILE_W = 190;
 const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 ms is plenty [ENG]
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
-  let r: ResolvedSkin | null = opts.skin ? resolveSkin(opts.skin, opts.theme ? { theme: opts.theme } : {}) : null;
+  // Showcase hotfix item 4: a skin's layout.whenAttached follows the CO2 line (saadat-like: the CO2 waveform takes the
+  // RESP lane, the CO2 tile the RR tile). The state starts as the engine's (resp pipeline: 'on' or 'warmup' = attached)
+  // and follows every accepted attachSensor co2; skins without the rule resolve identically either way.
+  const sensorState = opts.engine?.patient?.sensors?.co2;
+  let co2 = sensorState === 'on' || sensorState === 'warmup';
+  let theme = opts.theme;
+  const resolveFor = (id: string): ResolvedSkin => resolveSkin(id, { ...(theme ? { theme } : {}), sensors: { co2 } });
+  let r: ResolvedSkin | null = opts.skin ? resolveFor(opts.skin) : null;
   let page = opts.page;
+  /** ECG lead per ECG lane chosen since the skin was set, kept when a sensor swaps a lane (a new skin starts afresh). */
+  const leads = new Map<number, LeadId>();
   const doc = el.ownerDocument;
   const outer = doc.createElement('div');
   outer.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
@@ -224,6 +233,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
     ...(r ? { plan: renderPlan(r, page, only) } : {}), // Stage 4b
   };
+  /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
+  const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
+  if (coreOpts.plan) markLanes(coreOpts.plan.lanes);
   const hostP: Promise<Host> = createHost(canvas, sizeOf(), coreOpts, opts.worker ?? 'auto', onEvents);
   const skinCmd = (body: Record<string, unknown>) => ({ id: `skin-${Math.random().toString(36).slice(2)}`, issuedBy: 'renderer', ...body }) as Command;
   if (r) void hostP.then((h) => h.command(skinCmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: filterModeFor(r!.render.ecgFilter.band) } })));
@@ -255,10 +267,36 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
   };
 
+  /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
+  const planNow = (sk: ResolvedSkin) => {
+    const p = renderPlan(sk, page, only);
+    let k = 0;
+    for (const l of p.lanes) if (l.kind === 'ecg') l.channel = leads.get(k++) ?? l.channel;
+    return p;
+  };
+  /** Showcase hotfix item 4: the CO2 line was attached or detached; re-resolve and redraw only if the skin swaps. */
+  const setCo2 = (on: boolean, h: Host) => {
+    if (on === co2) return;
+    co2 = on;
+    if (!r || !ui) return;
+    const next = resolveFor(r.id);
+    const same = JSON.stringify(next.render.lanes) === JSON.stringify(r.render.lanes) && JSON.stringify(next.skin.layout.tiles) === JSON.stringify(r.skin.layout.tiles);
+    r = next;
+    if (same) return;
+    const plan = planNow(next);
+    h.control({ type: 'plan', plan });
+    markLanes(plan.lanes);
+    ui.setSkin(next, page);
+  };
   const dispatch = (cmd: Command) =>
     hostP.then(async (h) => {
       const res = await h.command(cmd);
-      if (res.accepted) eventLog.command(cmd, anchor.simT); // Stage 4b
+      if (res.accepted) {
+        eventLog.command(cmd, anchor.simT); // Stage 4b
+        const c = cmd as { type: string; sensor?: string; state?: string; action?: { device?: string; action?: string; lane?: number; value?: unknown } };
+        if (c.type === 'attachSensor' && c.sensor === 'co2') setCo2(c.state !== 'off', h);
+        if (c.type === 'device' && c.action?.device === 'ecg' && c.action.action === 'lead' && typeof c.action.lane === 'number') leads.set(c.action.lane, c.action.value as LeadId);
+      }
       return res;
     });
   return {
@@ -312,14 +350,18 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     restore: (s) => hostP.then((h) => h.restore(s)),
     async setSkin(id, o = {}) {
       if (!ui || !r) throw new Error('setSkin needs a skin at mount (MountOptions.skin)');
-      const next = resolveSkin(id, o.theme ? { theme: o.theme } : {});
+      theme = o.theme;
+      const next = resolveFor(id);
       const h = await hostP;
       if (next.id !== r.id) await h.command(skinCmd({ type: 'device', action: { device: 'monitor', action: 'skin', value: id } }));
       await h.command(skinCmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: filterModeFor(next.render.ecgFilter.band) } }));
       const soundChanged = next.audio.alarm.profile !== r.audio.alarm.profile || next.skin.defib?.toneSet !== r.skin.defib?.toneSet;
       r = next;
       page = o.page;
-      h.control({ type: 'plan', plan: renderPlan(next, page, only) });
+      leads.clear();
+      const plan = renderPlan(next, page, only);
+      h.control({ type: 'plan', plan });
+      markLanes(plan.lanes);
       ui.setSkin(next, page);
       root.style.background = next.render.background;
       if (soundChanged && audio) {

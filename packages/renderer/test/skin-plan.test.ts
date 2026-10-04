@@ -17,6 +17,13 @@ describe('renderPlan', () => {
     expect(p.paceMarker).toEqual({ style: 'vertical-line', heightMm: 10 });
   });
 
+  it('saadat-like with the CO2 line attached (showcase hotfix item 4): the capnogram in the RESP lane\'s place', () => {
+    const p = renderPlan(resolveSkin('saadat-like', { sensors: { co2: true } }));
+    expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['PLETH', 'pleth'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['CO2', 'co2']]);
+    expect(p.lanes[4]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 12.5, range: [0, 76] }); // 10 %V scale (research/06 §3.2)
+    expect(renderPlan(resolveSkin('iran-icu-as-found', { sensors: { co2: true } })).lanes.map((l) => l.id)).toEqual(['ECG1', 'ECG2', 'PLETH', 'CO2']);
+  });
+
   it('philips-like: II and V1, letter filter, ABP 0–150, CO2 0–40 mmHg; zoll-like r-above sync markers', () => {
     const p = renderPlan(resolveSkin('philips-like'));
     expect(p.lanes.map((l) => l.channel)).toEqual(['ecgII', 'V1', 'abp', 'pleth', 'co2']);
