@@ -40,7 +40,8 @@ describe('Stage 7g long run', () => {
   // R45 (FU-9 Gate, declared): with FU-9 H2/H4 (A9, +0.006) and H3 (A12, +0.004 — hepatic flow = CO/CO0 × 7d's factor,
   // sevoflurane × 0.8/MAC) propofol's flow-limited clearance falls under this rig, and the open-loop TCI (7g's own model)
   // leaves the effect site 0.4 % above its target after 6 h. Measured 2.5098 on CI (run 37135534941) and on the Mac;
-  // main 2.5 (within ± 0.005). The TCI band is unchanged; whether TCI should see the patient's hepatic flow is 7g's.
+  // main 2.5 (within ± 0.005). The TCI band is unchanged (orchestrator ruling at G-FU9): an open-loop TCI pump does not
+  // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
   it.fails(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5098 with FU-9 (main within the band)`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;

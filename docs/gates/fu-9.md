@@ -130,8 +130,8 @@ Added by FU-9 (Part A):
 | `fu9-iap` | IAP 14: CO −10 to −30 % (SP-08a) | **0.0 %** | 0.0 % |
 | `fu9-mannitol` | 1 g/kg: osmolality +20–30 at 15 min | **+8.7** (BV +73 mL, Na −7.6) | +8.7 |
 
-Declared on an existing test (R45, §5): `fu8-body-size` "127 kg: resting CO ≤ 1.5 × the 70 kg adult" — **× 1.53** at
-the single 300 s sample (lean 4.85 vs 5.14 on main), × 1.38 as the 240–300 s mean on both trees. And `pk-longrun` "TCI propofol
+Re-stated on an existing test (**E-FU9-6**, orchestrator ruling, §5): `fu8-body-size` "127 kg: resting CO 1.2–1.5 × the
+70 kg adult" now reads the 240–300 s MEAN — **× 1.38** (6.97 vs 5.04), an `it` again (the single 300 s sample read × 1.53). And `pk-longrun` "TCI propofol
 effect site held at 2.5 ± 0.005" — **2.5098** (CI and Mac; main within the band; §7).
 
 Flipped `it.fails` → `it`: `neuro-engine` "propofol 2 mg/kg: depth-index nadir < 52" — **50** (bisected: 52 at A11, 50 at
@@ -170,12 +170,12 @@ FU-8 and FU-6, which moved these rows.)
 FU-4 engine files on the gate head: `clinical-suite`, `circ-lowflow-arrest`, `circ-hypoxic-arrest`, `blood-k-rhythm`,
 `fidelity-lowflow` — green (slow-a/slow-b).
 
-**Declared R45 row (for the orchestrator).** `test/engine/fu8-body-size.test.ts` "127 kg / 175 cm … resting CO 1.2–1.5 ×
+**E-FU9-6 (was a declared R45 row).** `test/engine/fu8-body-size.test.ts` "127 kg / 175 cm … resting CO 1.2–1.5 ×
 the 70 kg adult" read **× 1.53**: the CO is ONE low-passed sample at 300 s, which swings 4.63–5.36 L/min with the
 ventilator cycle in the 70 kg arm. Bisected: × 1.44 at A8, × 1.50 at A9, × 1.53 with Part C. The output itself did not
 move: the 240–300 s mean is 5.049 (main) → 5.044 L/min (FU-9) at 70 kg and 6.970 → 6.970 at 127 kg — × 1.38 on both trees
-(tables 1.35). The test was split: the BV band and the ≥ 1.2 floor stay an `it`; the ≤ 1.5 edge is an `it.fails` with
-the number. Recommendation: read the resting CO as the mean over a ventilator cycle (FU-8's test; not changed here).
+(tables 1.35). **E-FU9-6 (orchestrator ruling at G-FU9):** the assertion is re-stated on the 240–300 s mean of 1 s samples (× 1.38,
+band 1.2–1.5 unchanged) — a better measurement, not a wider band; the test is one `it` again (the interim split is gone).
 
 ## 6. Re-anchorings (the plan was verified on 2473f0b; FU-8 Part A and FU-6 merged since)
 
@@ -201,14 +201,15 @@ with `resolveProfile().bloodVolumeMl` holds for every adult 50–160 kg, M/F, wi
 - **E-FU9-5** (A1): declared on 2473f0b (B2/B7 830 → 825 s, I1 910 → 920 s); **on the merged tree no arrest row moves**
   (B2/B7 830 → 830, B6 1135 → 1135, I1 1220 → 1220). Two first-MAP < 30 samples move (B9 740 → 735, A9; I1 – → 1215).
 - E-FU9-2 / E-FU9-3: Part B, not executed.
-- **New, declared for a ruling:** the `fu8-body-size` CO-ratio edge (§5).
+- **E-FU9-6:** the `fu8-body-size` CO ratio on the 240–300 s mean (§5), ruled at G-FU9.
 - **`pk-longrun`, declared (R45).** "6 h: TCI propofol + remifentanil + sevoflurane … targets held": propofol Ce
   **2.5098** on CI (run 37135534941: 2.50979) and on this Mac vs 2.5 ± 0.005; main is within the band. Bisected: A8
   passes, **A9 2.5062** (H2/H4), A10–A11 2.5062, **A12 2.5098** (H3: hepatic flow = CO/CO₀ × 7d's factor, sevoflurane
   × 0.8/MAC — propofol's flow-limited clearance falls and the open-loop TCI, which runs 7g's own model, leaves the effect
   site 0.4 % above target). The test now shares one memoised 6 h run between an `it` (sample clocks, remifentanil,
-  sevoflurane, finiteness) and an `it.fails` for the propofol line with the number; the band is unchanged. Whether TCI
-  should see the patient's hepatic flow is a 7g question for the orchestrator.
+  sevoflurane, finiteness) and an `it.fails` for the propofol line with the number; the band is unchanged. Ruled at G-FU9: the
+  line stays `it.fails` (an open-loop TCI pump does not know the patient's liver flow — real pumps do not either);
+  whether the pump's model should see hepatic flow goes to Ali.
 - **Intermediate commits.** `blood-sanity-acid` ("saline Cl up > 4") reads Cl 106.8 (+2.8) at A1 alone (the expansion
   urine carries chloride) and 108.5 (+4.5 → lab 109) from A13 on; it is green on the gate head (slow-b). Probed only at
   main (109.4), A1 and A13.
