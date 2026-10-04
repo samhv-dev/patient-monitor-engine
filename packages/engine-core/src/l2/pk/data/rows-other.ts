@@ -28,7 +28,7 @@ export const OTHER_ROWS: DrugRow[] = [
   // curve is retired whenever 7g is present (as salbutamol's is); 7c still reads the dose (shared) and keeps its curve in
   // the no-7g configuration. Its glucose is 7e's (FU-10 E8); the counter-regulatory adrenaline after an insulin-induced
   // hypoglycaemia is 7e's own, separate term.
-  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', shared: 'blood', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
+  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', shared: 'blood', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60, true), // FU-8 (B1): the same per-kg infusion reference as the insulin row (E-FU10-14: one insulin)
     pd: [{ target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U insulin + 25 g dextrose', onset: 'K −0.6 to −1.0 mmol/L at 60 min (insulin PD, 7g)', ir: '?', src: '7c plan decision 7; FU-10 E-FU10-14', tag: 'TXT' },
   { id: 'magnesium', name: 'Magnesium sulfate', cls: 'electrolyte', amountUnit: 'mg', shared: 'blood', elim: { renal: 1 },
     pk: { kind: 'perKg', conc: 'plain', pk: { v1: 0.3, v2: 0, v3: 0, cl1: 0.0015, cl2: 0, cl3: 0, ke0: [0.5] } },
