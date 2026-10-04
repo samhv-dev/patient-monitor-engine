@@ -369,7 +369,8 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(pap / n).toBeGreaterThanOrEqual(30);
     expect(pap / n).toBeLessThanOrEqual(45);
   });
-  it.fails('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 (met) / EtCO2 +5.98 (94040f7: +5.9 / +5.1)', async () => {
+  // FU-8 B4 (E-FU8B-7): flipped — EtCO2 +5.98 → +6.1 with the tonic sympathetic share
+  it('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +6.1 after FU-8 B4 (+6.7 / +5.98 before it; 94040f7: +5.9 / +5.1)', async () => {
     const run = async (fico2: number) => {
       const e = rig6();
       await ventRig(e);
