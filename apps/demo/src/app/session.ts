@@ -258,6 +258,9 @@ export class AppSession {
       if (e.type !== 'truth') for (const fn of this.listeners) fn(e); // truth (≈ 25 KB at 1 Hz) stays on this page
       for (const fn of this.appFns) fn(e);
     });
+    // a new engine = a new timeline: every controller (this page's panel, a paired Remote) restarts its clock and
+    // scenario timer here instead of holding the old body's high-water time (showcase rehearsal 2026-10-04)
+    this.host.newTimeline();
     m.setTimeScale(this.timeScale);
     if (this.paused) m.pause();
     if (this.soundOn) void m.enableSound();

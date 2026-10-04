@@ -353,6 +353,12 @@ dialog .actions { display: flex; justify-content: flex-end; gap: var(--s-2); mar
 .param .nowwrap { justify-self: end; white-space: nowrap; }
 .param .now { font-variant-numeric: tabular-nums; color: var(--text-strong); font-size: var(--t-22); }
 .param[hidden] { display: none; }
+/* Acute events (Task 26): the name and its running chip on one line, the description under them at full width, then
+   the controls. The description used to sit in the narrow value column with the empty chip's box drawn over it, which
+   read as a checkbox (showcase rehearsal 2026-10-04). */
+.param.event .lbl, .param.event > .hint { grid-column: 1 / -1; }
+.param.event > .hint { margin: 0; }
+.param.event .chip:empty { display: none; }
 .vgroup { margin-bottom: var(--s-3); }
 .row.between { justify-content: space-between; }
 .cards { display: grid; gap: var(--s-3); }
