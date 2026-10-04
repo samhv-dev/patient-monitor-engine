@@ -1,0 +1,77 @@
+{
+  "case": "Severe bronchospasm on the ventilator",
+  "browser": "chromium",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8700",
+  "steps": [
+    {
+      "simT": 2.3,
+      "what": "loaded \"Severe bronchospasm on the ventilator\" at ×4",
+      "state": "spasm",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 84,
+      "what": "#/vent before salbutamol",
+      "state": "spasm",
+      "hr": 75,
+      "art": "118.1/83 (95.7)",
+      "spo2": 97,
+      "etco2": 32,
+      "rr": 11,
+      "vent": "⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 162 VTE ml 35 Ppeak cmH₂O 2.3 ExpMinVol l/min 13 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patient & Scenarios Close Patient Characteristics Presets ARDS Mild ARDS Mod ARDS Severe COPD Asthma Compliance: 55 ml/cmH₂O Normal Resistance: 10 cmH₂O/l/s Normal Time Constant τ: 0.55 s 95% equilibration 1.65 s Airway Closure Enable Stress Index Enable Reverse Triggering Enable Spontaneous Breathing Enable Advanced Expiratory Flow Limitation Enable Cardiac Oscillations Enable Natural Variability Enable Upper Inflection Enable Show P0.1 Enable Asynchrony examples Reverse Triggering (Early) PC Reverse"
+    },
+    {
+      "simT": 93.6,
+      "what": "pressed \"Give salbutamol 250 µg\"",
+      "state": "treatedByButton",
+      "hr": 75,
+      "art": "119.2/84.5 (97.2)",
+      "spo2": 99,
+      "etco2": 34,
+      "rr": 10
+    },
+    {
+      "simT": 291.7,
+      "what": "#/vent 3 min after salbutamol",
+      "state": "treatedByButton",
+      "hr": 85,
+      "art": "117.5/86.1 (97.3)",
+      "spo2": 98,
+      "etco2": 36,
+      "rr": 14,
+      "vent": "⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 367 VTE ml 35 Ppeak cmH₂O 5.1 ExpMinVol l/min 14 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patient & Scenarios Close Patient Characteristics Presets ARDS Mild ARDS Mod ARDS Severe COPD Asthma Compliance: 55 ml/cmH₂O Normal Resistance: 10 cmH₂O/l/s Normal Time Constant τ: 0.55 s 95% equilibration 1.65 s Airway Closure Enable Stress Index Enable Reverse Triggering Enable Spontaneous Breathing Enable Advanced Expiratory Flow Limitation Enable Cardiac Oscillations Enable Natural Variability Enable Upper Inflection Enable Show P0.1 Enable Asynchrony examples Reverse Triggering (Early) PC Reverse"
+    },
+    {
+      "alarmsRaised": []
+    }
+  ],
+  "labels": {
+    "tab": "Scenario",
+    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "toast": "Scenario loaded: Severe bronchospasm on the ventilator",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressures climb, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch the pressures fall.\nSevere bronchospasm\nSalbutamol given: pressures falling\nSalbutamol given: pressures falling\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nSalbutamol (IV/neb) given: Salbutamol given: pressures falling\nYou press \"Give salbutamol 250 µg\": Salbutamol given: pressures falling\nGive salbutamol 250 µg\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the peak pressure and auto-PEEP fall\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "afterSalbutamol": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressures climb, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch the pressures fall.\nSevere bronchospasm\nSalbutamol given: pressures falling\nSalbutamol given: pressures falling\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the peak pressure and auto-PEEP fall\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressures climb, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch the pressures fall.\nSevere bronchospasm\nSalbutamol given: pressures falling\nSalbutamol given: pressures falling\nTime in state\n03:27\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the peak pressure and auto-PEEP fall\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "the button changes the scenario state",
+      "expected": "spasm → treatedByButton",
+      "observed": "spasm → treatedByButton",
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}
