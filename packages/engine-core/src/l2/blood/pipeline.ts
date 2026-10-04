@@ -12,9 +12,10 @@ import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCap
 import { createBloodCore, DKA_KETO_MMOL_L, stepBloodCore, type BloodCore, type BloodOut } from './core.ts';
 import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
-import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedK, type Composition, type FluidId, type ProductId } from './params.ts';
+import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
 import { ivInflow } from '../thermal/environment.ts'; // Stage 7e (E-7e-1)
+import { MANNITOL_MOSM_PER_G } from '../brain/params.ts'; // FU-9 H8
 
 export interface BloodState {
   k: number; // next step index (time k·0.1 s)
@@ -141,6 +142,9 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
       case 'magnesium':
         c.so.mg += g * MG_MMOL_PER_G;
         break;
+      case 'mannitol': // FU-9 H8: an effective ECF osmole in 7c's pool; 7d's kidney clears it from here
+        c.so.mannitol = (c.so.mannitol ?? 0) + g * MANNITOL_MOSM_PER_G;
+        break;
       case 'hypertonicSaline':
         if (d.amountUnit === 'mL') c.fl.flows.push({ rate: d.amount / HTS_OVER_MIN, until: 1e9, leftMl: d.amount, comp: hypertonicSaline(d.concentrationPct ?? 3) });
         break;
@@ -240,7 +244,7 @@ const DRUG_UNITS: Record<BloodDrugId, readonly string[]> = {
 const num = (name: string, v: number | undefined, lo: number, hi: number) =>
   v === undefined || (Number.isFinite(v) && v >= lo && v <= hi) ? undefined : `${name} must be a finite number in ${lo}–${hi}`;
 /** 7a's `crystalloid`/`colloid`/`blood` map to saline / gelatin / whole blood (R50 F5). */
-const ALIAS: Record<string, Composition> = { crystalloid: FLUIDS.saline, colloid: FLUIDS.gelatin, blood: { ...PRODUCTS.wholeBlood.comp, k: storedK(14) } };
+const ALIAS: Record<string, Composition> = { crystalloid: FLUIDS.saline, colloid: FLUIDS.gelatin, blood: storedComp('wholeBlood', 14) };
 const FLUID_IDS = [...Object.keys(FLUIDS), ...Object.keys(ALIAS)];
 
 /**
@@ -322,7 +326,7 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
       const x = ev as { product: ProductId; units: number; overS?: number; storageDays?: number; warmed?: boolean };
       const p = PRODUCTS[x.product];
       const over = x.overS ?? 600 * x.units; // 10 min per unit unless told
-      const comp = { ...p.comp, k: p.comp.hct > 0 ? storedK(x.storageDays ?? 14) : p.comp.k };
+      const comp = storedComp(x.product, x.storageDays ?? 14); // FU-9 F5 (R1): the aged, electroneutral unit
       const fl: Flow = { rate: (p.ml * x.units * 60) / over, until: 1e9, leftMl: p.ml * x.units, comp };
       c.fl.flows.push(fl);
       if (x.warmed !== true) bs.cold.push({ until: t + over, cPerS: (COLD_UNIT_C * x.units) / over });

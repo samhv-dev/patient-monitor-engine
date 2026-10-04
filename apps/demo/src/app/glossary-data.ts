@@ -339,25 +339,37 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 310, s: 'S9', keys: ['resp.volumes.pattern'], label: 'Spirometry pattern', name: 'Spirometry pattern (normal, obstructive, restrictive or mixed)', unit: '', normal: 'normal' },
   { n: 311, s: 'S9', keys: ['resp.volumes.pred.tlc', 'resp.volumes.pred.rv', 'resp.volumes.pred.frc', 'resp.volumes.pred.vc', 'resp.volumes.pred.fvc', 'resp.volumes.pred.fev1', 'resp.volumes.pred.ratio', 'resp.volumes.pred.pef'], label: 'Predicted', name: 'Predicted value (ECSC 1993 adults, Zapletal children)', unit: '', normal: '—' },
   { n: 312, s: 'S9', keys: ['resp.lung.lp.side.#.vdAlv'], label: 'VD alv fraction', name: 'Alveolar dead space as a fraction of alveolar ventilation, per lung', unit: 'fraction', normal: '≈ 0 healthy' },
-  // FU-7's new truth leaves (drug-layer integration; numbered after 312; labels from research/11 §5 where it has them —
+  // FU-9's new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for Ali's review)
+  { n: 313, s: 'S9', keys: ['blood.core.fl.globG'], label: 'Globulins (plasma)', name: 'Plasma globulin mass: with albumin it sets the colloid osmotic pressure', unit: 'g', normal: '≈ 65 at 70 kg (24 g/L)' },
+  { n: 314, s: 'S9', keys: ['blood.core.hbfFactor'], label: 'HBF factor', name: 'Hepatic blood-flow factor: splanchnic constriction, volatile agent and hepatic outflow pressure (CVP or intra-abdominal pressure)', unit: '× baseline', normal: '1' },
+  { n: 315, s: 'S9', keys: ['blood.core.renal.excretion.mannitol'], label: 'Mannitol excretion', name: 'Renal mannitol excretion', unit: 'mmol/h', normal: '0' },
+  { n: 316, s: 'S9', keys: ['blood.core.so.mannitol'], label: 'Mannitol (ECF)', name: 'Mannitol in the extracellular fluid: effective osmoles (1 mmol = 1 mOsm)', unit: 'mmol', normal: '0' },
+  { n: 317, s: 'S9', keys: ['blood.core.so.set.kIcf'], label: 'K⁺ cell store (reference)', name: 'Resting intracellular potassium store: the reference for total-body potassium balance', unit: 'mmol', normal: '≈ 3 900 at 70 kg' },
+  { n: 318, s: 'S9', keys: ['organs.brain.osm0'], label: 'Osm (brain reference)', name: 'Resting plasma osmolality the brain is adapted to', unit: 'mOsm/kg', normal: '275–295' },
+  { n: 319, s: 'S9', keys: ['organs.brain.osmWater'], label: 'Brain water (hypo-osmolar)', name: 'Brain water gained from a fall in plasma osmolality (hyponatraemic swelling)', unit: 'mL', normal: '0' },
+  { n: 320, s: 'S9', keys: ['organs.renal.eabvLp'], label: 'EABV', name: 'Effective arterial blood volume sensed by the kidney: blood volume, or cardiac output against oxygen demand', unit: '× normal', normal: '1' },
+  { n: 321, s: 'S9', keys: ['organs.view.demandRel'], label: 'O₂ demand (×)', name: 'Whole-body oxygen demand relative to rest: anaesthesia, temperature, fever', unit: '× rest', normal: '1 awake; ≈ 0.85 under GA' },
+  { n: 322, s: 'S9', keys: ['organs.view.mannitolMmol'], label: 'Mannitol (kidney input)', name: 'Plasma mannitol as the kidney reads it (osmotic diuresis)', unit: 'mmol', normal: '0' },
+  { n: 323, s: 'S9', keys: ['organs.view.osm'], label: 'Osm (organ input)', name: 'Plasma osmolality as the brain and kidney read it', unit: 'mOsm/kg', normal: '275–295' },
+  // FU-7's new truth leaves (drug-layer integration; numbered after FU-9's 323; labels from research/11 §5 where it has them —
   // the FU-7 plan's Task 19 console rows — and clinical wording for the rest; for Ali's review). Copies of these values
   // in 7f's input cache (`neuro.last.*`), 7c's copy of the profile magnesium (`blood.mgSeen`) and the hooks' clock
   // (`pkHooks.conv.lastT`) stay model internals.
-  { n: 313, s: 'S9', keys: ['pk.bus.cns.hypPropEq'], label: 'Ce prop-eq', name: 'Propofol-equivalent effect-site concentration: every hypnotic given, expressed as propofol', unit: 'µg/mL', normal: '0' },
-  { n: 314, s: 'S9', keys: ['pk.bus.cns.opioidCeFentEq'], label: 'Ce fent-eq', name: 'Fentanyl-equivalent effect-site concentration: every opioid given, expressed as fentanyl', unit: 'ng/mL', normal: '0' },
-  { n: 315, s: 'S9', keys: ['pk.bus.cns.dissoc'], label: 'Dissociative fraction', name: 'Dissociative (ketamine) share of the hypnotic effect', unit: 'fraction', normal: '0' },
-  { n: 316, s: 'S9', keys: ['pk.bus.cns.benzoShare'], label: 'Benzodiazepine share', name: 'Benzodiazepine share of the hypnotic effect on breathing', unit: 'fraction', normal: '0' },
-  { n: 317, s: 'S9', keys: ['pk.bus.cns.sympDrive'], label: 'Drug sympathetic drive', name: 'Central sympathetic drive from drugs (indirect sympathomimetics such as ephedrine and ketamine)', unit: '0–3', normal: '0' },
-  { n: 318, s: 'S9', keys: ['pk.bus.cns.antinocAdd'], label: 'Adjuvant antinociception', name: 'Antinociception added by non-opioid adjuvants such as intravenous lidocaine', unit: '0–1', normal: '0' },
-  { n: 319, s: 'S9', keys: ['neuro.antinocOp'], label: 'Opioid antinociception', name: 'Antinociception from opioids and adjuvants (the share that blunts the stress response to stimulation)', unit: '0–1', normal: '0' },
-  { n: 320, s: 'S9', keys: ['pk.bus.rhythm.antiarrhythmicU'], label: 'Antiarrhythmic occupancy', name: 'Antiarrhythmic drug effect, potency-weighted (amiodarone, lidocaine, procainamide)', unit: 'fraction', normal: '0' },
-  { n: 321, s: 'S9', keys: ['pk.bus.qtcMsAdd'], label: 'Drug QTc prolongation', name: 'QTc prolongation from drugs (e.g. ondansetron)', unit: 'ms', normal: '0' },
-  { n: 322, s: 'S9', keys: ['pk.bus.metabolic.glucocorticoidNmolL'], label: 'Exogenous glucocorticoid', name: 'Exogenous glucocorticoid (dexamethasone) as a cortisol-equivalent level', unit: 'nmol/L', normal: '0' },
-  { n: 323, s: 'S9', keys: ['endo.core.hormones.catReserve'], label: 'Catecholamine reserve', name: 'Releasable catecholamine reserve of the sympathetic nerve endings (falls with sustained sympathetic drive)', unit: 'fraction', normal: '1 (replete)' },
-  { n: 324, s: 'S9', keys: ['endo.core.hormones.surge'], label: 'Stimulus surge', name: 'Sympathetic surge from noxious stimulation (laryngoscopy, intubation, incision)', unit: '0–1', normal: '0' },
-  { n: 325, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
-  { n: 326, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
-  { n: 327, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
+  { n: 324, s: 'S9', keys: ['pk.bus.cns.hypPropEq'], label: 'Ce prop-eq', name: 'Propofol-equivalent effect-site concentration: every hypnotic given, expressed as propofol', unit: 'µg/mL', normal: '0' },
+  { n: 325, s: 'S9', keys: ['pk.bus.cns.opioidCeFentEq'], label: 'Ce fent-eq', name: 'Fentanyl-equivalent effect-site concentration: every opioid given, expressed as fentanyl', unit: 'ng/mL', normal: '0' },
+  { n: 326, s: 'S9', keys: ['pk.bus.cns.dissoc'], label: 'Dissociative fraction', name: 'Dissociative (ketamine) share of the hypnotic effect', unit: 'fraction', normal: '0' },
+  { n: 327, s: 'S9', keys: ['pk.bus.cns.benzoShare'], label: 'Benzodiazepine share', name: 'Benzodiazepine share of the hypnotic effect on breathing', unit: 'fraction', normal: '0' },
+  { n: 328, s: 'S9', keys: ['pk.bus.cns.sympDrive'], label: 'Drug sympathetic drive', name: 'Central sympathetic drive from drugs (indirect sympathomimetics such as ephedrine and ketamine)', unit: '0–3', normal: '0' },
+  { n: 329, s: 'S9', keys: ['pk.bus.cns.antinocAdd'], label: 'Adjuvant antinociception', name: 'Antinociception added by non-opioid adjuvants such as intravenous lidocaine', unit: '0–1', normal: '0' },
+  { n: 330, s: 'S9', keys: ['neuro.antinocOp'], label: 'Opioid antinociception', name: 'Antinociception from opioids and adjuvants (the share that blunts the stress response to stimulation)', unit: '0–1', normal: '0' },
+  { n: 331, s: 'S9', keys: ['pk.bus.rhythm.antiarrhythmicU'], label: 'Antiarrhythmic occupancy', name: 'Antiarrhythmic drug effect, potency-weighted (amiodarone, lidocaine, procainamide)', unit: 'fraction', normal: '0' },
+  { n: 332, s: 'S9', keys: ['pk.bus.qtcMsAdd'], label: 'Drug QTc prolongation', name: 'QTc prolongation from drugs (e.g. ondansetron)', unit: 'ms', normal: '0' },
+  { n: 333, s: 'S9', keys: ['pk.bus.metabolic.glucocorticoidNmolL'], label: 'Exogenous glucocorticoid', name: 'Exogenous glucocorticoid (dexamethasone) as a cortisol-equivalent level', unit: 'nmol/L', normal: '0' },
+  { n: 334, s: 'S9', keys: ['endo.core.hormones.catReserve'], label: 'Catecholamine reserve', name: 'Releasable catecholamine reserve of the sympathetic nerve endings (falls with sustained sympathetic drive)', unit: 'fraction', normal: '1 (replete)' },
+  { n: 335, s: 'S9', keys: ['endo.core.hormones.surge'], label: 'Stimulus surge', name: 'Sympathetic surge from noxious stimulation (laryngoscopy, intubation, incision)', unit: '0–1', normal: '0' },
+  { n: 336, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
+  { n: 337, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
+  { n: 338, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
 ];
 
 /**

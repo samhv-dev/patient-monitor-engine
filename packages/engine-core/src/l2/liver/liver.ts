@@ -17,6 +17,7 @@ export const CLEAR_TEMP_PER_C = 0.1; // tables `clearTemp` −10 %/°C below 37 
 export const HEPATIC_FAILURE_LOSS = 0.7;
 export const SPLANCHNIC_GAIN = 0.4; // hbfFactor ×0.6 at full sympathetic splanchnic constriction (tables `hbfFactor`)
 export const VOLATILE_HBF_PER_MAC = 0.2; // ×0.8 at 1 MAC volatile (tables `hbfFactor`)
+export const HEPATIC_OUTFLOW_PER_MMHG = 0.02; // FU-9 H3 [ENG]
 export const DO2_CRIT = 6; // mL/kg/min, tables `do2Crit` (Q42) — fallback lactate production only
 export const K_ANAER = 0.03; // mmol lactate per mL O2 deficit, tables `kAnaer` (Q41) — fallback only
 
@@ -26,6 +27,8 @@ export interface LiverInputs {
   alphaE: number; // 0–1 α-agonist effect (7g); 0 until then
   volatileMac: number;
   tempC: number;
+  /** FU-9 H3: the hepatic outflow pressure, max(CVP, IAP), mmHg; absent → 5 (no outflow term). */
+  outflowMmHg?: number;
   gfrRel: number; // kidney's GFR ÷ its set point (renal share of lactate clearance)
   hbfRel?: number; // 7c's `blood.out.hbfRel` (7c owns hepatic flow); absent → CO × hbfFactor (fallback)
   do2MlKgMin: number; // global O2 delivery (fallback lactate production when 7c is absent)
@@ -50,10 +53,16 @@ export function createLiver(weightKg: number, inp: LiverInputs, failure = 0): Li
   return s;
 }
 
-/** Splanchnic/hepatic flow factor: sympathetic constriction with volume loss (full at −30 %) or α-agonists, volatile ×0.8/MAC. */
+/**
+ * Splanchnic/hepatic flow factor: sympathetic constriction with volume loss (full at −30 %) or α-agonists, volatile
+ * ×0.8/MAC, and (FU-9 H3) the hepatic OUTFLOW pressure — CVP or intra-abdominal pressure above 5 mmHg lowers the portal
+ * and hepatic-arterial flow 2 %/mmHg [ENG, research/13: PEEP 15 HBF −10–35 %; IAP 20 −30–40 %, Diebel 1992]. FU-9 H3:
+ * 7c multiplies it with CO/CO0 (7d writes it into `blood.core.hbfFactor`), so it is no longer dead code with 7c present.
+ */
 export function hbfFactor(inp: LiverInputs): number {
   const symp = Math.min(1, Math.max(inp.alphaE, (1 - inp.bvRel) / 0.3));
-  return (1 - SPLANCHNIC_GAIN * symp) * Math.max(0.5, 1 - VOLATILE_HBF_PER_MAC * inp.volatileMac);
+  const outflow = Math.max(0.3, 1 - HEPATIC_OUTFLOW_PER_MMHG * Math.max(0, (inp.outflowMmHg ?? 5) - 5));
+  return (1 - SPLANCHNIC_GAIN * symp) * Math.max(0.5, 1 - VOLATILE_HBF_PER_MAC * inp.volatileMac) * outflow;
 }
 
 function update(s: LiverState, inp: LiverInputs): void {

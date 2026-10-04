@@ -6,11 +6,12 @@
 //
 // RenalModel (Stage 7d, tables §5.2): the algebraic kidney (kidney.ts) + tubular output → UOP, bladder/urometer,
 // cumulative volume, KDIGO-style oliguria/AKI state and the excretion hooks for 7c. Plain JSON-safe state.
+import { MANNITOL_MOSM_PER_G } from '../brain/params.ts'; // FU-9 H8
 import { angiotensin, effFactor, natriuresis, renalHaemo, tgfTarget } from './kidney.ts';
 import {
-  AKI_KF_LOSS, ALBUMIN0_G_L, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
-  EABV_EXP, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
-  SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30,
+  AKI_AFF_TONE, AKI_KF_LOSS, ALBUMIN0_G_L, COLD_DIURESIS_PER_C, COLD_ONSET_C, ANG_TAU_S, BLADDER_CAP_ML, FUROSEMIDE_EC50_REF, FUROSEMIDE_ED50_MG, FUROSEMIDE_EMAX, FUROSEMIDE_KA_PER_MIN, FUROSEMIDE_KE_PER_MIN,
+  EABV_EXP, EABV_TAU_S, MANNITOL_KE_PER_MIN, P_BOWMAN, RENAL_REF_CO_L_KG, RENAL_REF_CVP, RENAL_REF_MAP, MANNITOL_ML_PER_G, NE_EXCESS_PER_01, NH_TAU_OFF_S, NH_TAU_ON_S, OLIGURIA_ML_KG_H, PEEP_PER_10, R_AFF, RENAL_FLOW_FRAC, S_GA,
+  R_AFF_MAX, R_AFF_MIN, SEPSIS_GFR_LOSS, TGF_TAU_S, UOP0_ML_KG_H, V_AT_15, V_AT_30, V_EXP_GAIN, V_EXP_MAX,
 } from './params.ts';
 
 export interface RenalInputs {
@@ -26,6 +27,14 @@ export interface RenalInputs {
   sepsis: number; // 0–1 (7e's sepsis stage, organs/inputs.ts)
   /** 7g's furosemide effect-site level in reference doses (1 = the peak of 20 mg); absent → the model's own depot (no 7g). */
   furoCe?: number;
+  /** FU-9 H1: the whole-body O2 demand ÷ rest (Stage 3's metabolic factor; GA 0.85, cold lower); absent → 1. */
+  demandRel?: number;
+  /** FU-9 H2: haematocrit (7c's Hb × 3/100) for the renal plasma flow; absent → HCT_REF. */
+  hct?: number;
+  /** FU-9 H10: core temperature, °C; absent → 37. */
+  tempC?: number;
+  /** FU-9 H8: 7c's plasma mannitol amount, mmol (ONE pool); absent → the kidney's own depot (`mannitolG`, no 7c). */
+  mannitolMmol?: number;
 }
 export interface RenalParams { k: number; pRef: number; ef0: number; weightKg: number; gfrSet: number; aki: number; co0: number }
 export interface RenalState {
@@ -35,6 +44,7 @@ export interface RenalState {
   furoDepot: number; furoE: number; // mg in the depot; effect 0–1 (Bateman through an effect compartment)
   furoPlasma: number;
   vNh: number; // neurohumoral (ADH/aldosterone) volume factor: follows volumeFactor(eabv) with a fast onset, slow washout
+  eabvLp?: number; // FU-9 H1: the effective volume low-passed symmetrically (τ EABV_TAU_S) before the neurohumoral lag
   mannitolG: number; // g in plasma
   rbf: number; pgc: number; gfr: number; uopMlMin: number; ang: number;
   cumMl: number; bladderMl: number; bagMl: number; catheter: 'foley' | 'none';
@@ -53,11 +63,51 @@ export function volumeFactor(bvRel: number): number {
   return Math.max(0.1, V_AT_15 - ((V_AT_15 - V_AT_30) * (loss - 0.15)) / 0.15);
 }
 
+/**
+ * FU-9 F1: the expanded circulation is excreted. Atrial stretch (ANP) and ADH suppression raise the excreted fraction
+ * with the blood volume ABOVE the profile's (tables §5.2's V covers only depletion): × (1 + V_EXP_GAIN·(bvRel − 1)⁺),
+ * capped at V_EXP_MAX. It multiplies the same chain as V, so general anaesthesia (S_GA, lower CO → vNh) and a
+ * depleted patient (vNh < 1) retain more — Hahn's context-sensitive volume kinetics (Hahn 2010 Anesthesiology
+ * 113:470; Norberg 2007 Anesthesiology 107:24; Drobin & Hahn 1999 Anesthesiology 90:81). 1 at and below normovolaemia.
+ */
+export function expansionFactor(bvRel: number): number {
+  return Math.min(V_EXP_MAX, 1 + V_EXP_GAIN * Math.max(0, bvRel - 1));
+}
+
+/**
+ * FU-9 H6 (research/13): `aki` severity is NEPHRON LOSS. The surviving nephrons' TGF defends only their own share of the
+ * filtration (target gfrSet × (1 − AKI_KF_LOSS·aki): at severity 1 GFR ≈ 25 mL/min, KDIGO G4–5 — Ali's Q), and intrinsic
+ * AKI's afferent vasoconstriction floors the afferent resistance at R_AFF_MIN × (1 + AKI_AFF_TONE·aki), so RBF falls
+ * instead of rising (the TGF of a single nephron no longer restores the kidney's GFR by dilating it). Kf × (1 − loss) as before.
+ */
+function nephronTone(rAff: number, aki: number): number {
+  return Math.min(R_AFF_MAX, Math.max(rAff, R_AFF_MIN * (1 + AKI_AFF_TONE * aki)));
+}
+
+/**
+ * FU-9 H10 (research/13): cold diuresis — below COLD_ONSET_C tubular Na reabsorption and ADH responsiveness fall and the
+ * excreted fraction rises (Polderman KH. Crit Care Med 2009;37:S186–S202) × (1 + COLD_DIURESIS_PER_C·(onset − T)⁺)
+ * [ENG, Ali's Q]: 33 °C → × 1.4.
+ */
+export function coldDiuresis(tempC = 37): number {
+  return 1 + COLD_DIURESIS_PER_C * Math.max(0, COLD_ONSET_C - tempC);
+}
+
+/** Mannitol excreted, g/min: first order at the renal clearance (t½ 2 h at the reference GFR), from 7c's plasma pool
+ *  (FU-9 H8) or, without 7c, the kidney's own depot. 7c removes the same amount through the seam. */
+export function mannitolExcretionGMin(s: RenalState, inp: RenalInputs): number {
+  const g = inp.mannitolMmol !== undefined ? inp.mannitolMmol / MANNITOL_MOSM_PER_G : s.mannitolG;
+  return MANNITOL_KE_PER_MIN * g * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
+}
+
 /** Effective arterial blood volume (0–1+) [ENG]: the smaller of the blood volume and (CO/CO0)^0.75 — a low-output state
  *  activates the same volume receptors as bleeding (tables §7 check 20: HFrEF oliguria at normal blood volume). The
- *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*). */
+ *  volume factor V acts through `vNh`, which follows V(eabv) with onset τ 2 min and washout τ 45 min (NH_TAU_*).
+ *  FU-9 H1 (research/13): the output is referenced to the body's DEMAND (CO0 × demandRel) — general anaesthesia,
+ *  hypothermia and sedation lower demand and output together and stay "full" (tables §5.2: intra-operative UOP 0.5–1
+ *  with S the only GA term), while HFrEF (a low CO at a normal demand) and haemorrhage (bvRel) are unchanged. */
 export function eabv(inp: RenalInputs, co0: number): number {
-  return Math.min(inp.bvRel, (Math.max(0, inp.coLpm) / Math.max(0.1, co0)) ** EABV_EXP);
+  return Math.min(inp.bvRel, (Math.max(0, inp.coLpm) / Math.max(0.1, co0 * Math.max(0.3, inp.demandRel ?? 1))) ** EABV_EXP);
 }
 
 function pv(inp: RenalInputs): number {
@@ -84,12 +134,13 @@ export function createRenal(inp: RenalInputs, weightKg: number, aki = 0): RenalS
   // settle at the start inputs: controllers at their targets
   const pvn = pv(inp);
   const ev = eabv(inp, s.p.co0);
+  s.eabvLp = ev;
   s.ang = angiotensin(inp.map - pvn, ev);
   s.vNh = volumeFactor(ev);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  s.rAff = tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet, pb);
-  const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb);
+  s.rAff = nephronTone(tgfTarget(inp.map, pvn, k0, effFactor(s.ang), kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * aki), pb, inp.hct), aki);
+  const h = renalHaemo(inp.map, pvn, k0, s.rAff, effFactor(s.ang), kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
   s.pgc = h.pgc;
   s.gfr = h.gfr;
@@ -101,8 +152,11 @@ function tubularOutput(s: RenalState, inp: RenalInputs): number {
   const stress = inp.anaesthesia === 'general' ? S_GA : 1;
   const peep = PEEP_PER_10 ** (Math.max(0, inp.pawExcessCmH2O) / 10);
   const ne = NE_EXCESS_PER_01 ** (Math.max(0, inp.alphaExcess) / 0.1);
-  const fe = s.p.ef0 * natriuresis(inp.map, s.p.pRef) * stress * s.vNh * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
-  const mannitol = MANNITOL_ML_PER_G * MANNITOL_KE_PER_MIN * s.mannitolG * Math.min(1, s.gfr / Math.max(1, s.p.gfrSet));
+  // FU-9 H4 (research/13): pressure natriuresis reads the renal PERFUSION pressure, MAP − max(CVP, IAP) (tables §5.2 U(RPP)),
+  // referred to the reference CVP so the awake UOP–MAP curve at CVP 5 is unchanged: venous congestion and intra-abdominal
+  // pressure now lower the urine (WSACS: oliguria from IAP 15)
+  const fe = s.p.ef0 * natriuresis(inp.map - pv(inp) + RENAL_REF_CVP, s.p.pRef) * coldDiuresis(inp.tempC) * stress * s.vNh * expansionFactor(inp.bvRel) * peep * ne * (1 + FUROSEMIDE_EMAX * s.furoE);
+  const mannitol = MANNITOL_ML_PER_G * mannitolExcretionGMin(s, inp); // FU-9 H8: from 7c's pool when present
   return Math.min(0.25 * s.gfr, s.gfr * fe) + mannitol;
 }
 
@@ -119,16 +173,19 @@ export function stepRenal(s: RenalState, inp: RenalInputs, dt: number): void {
   s.t += dt;
   const pvn = pv(inp);
   const rpp = inp.map - pvn;
-  const ev = eabv(inp, s.p.co0);
+  // FU-9 H1: low-pass the effective volume symmetrically first, so a CO that swings ±5 % breath to breath under PPV is
+  // not rectified downwards by the fast-onset / slow-washout neurohumoral lag
+  s.eabvLp = (s.eabvLp ?? eabv(inp, s.p.co0)) + (eabv(inp, s.p.co0) - (s.eabvLp ?? eabv(inp, s.p.co0))) * (1 - Math.exp(-dt / EABV_TAU_S));
+  const ev = s.eabvLp;
   s.ang += (angiotensin(rpp, ev) - s.ang) * (1 - Math.exp(-dt / ANG_TAU_S)); // AngII acts over minutes
   const vT = volumeFactor(ev);
   s.vNh += (vT - s.vNh) * (1 - Math.exp(-dt / (vT < s.vNh ? NH_TAU_ON_S : NH_TAU_OFF_S)));
   const effF = effFactor(s.ang);
   const kfF = (1 - SEPSIS_GFR_LOSS * inp.sepsis) * (1 - AKI_KF_LOSS * s.p.aki);
   const pb = Math.max(P_BOWMAN, inp.iap);
-  const target = tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet, pb);
+  const target = nephronTone(tgfTarget(inp.map, pvn, s.p.k, effF, kfF, inp.albuminGL, s.p.gfrSet * (1 - AKI_KF_LOSS * s.p.aki), pb, inp.hct), s.p.aki);
   s.rAff += (target - s.rAff) * (1 - Math.exp(-dt / TGF_TAU_S));
-  const h = renalHaemo(inp.map, pvn, s.p.k, s.rAff, effF, kfF, inp.albuminGL, pb);
+  const h = renalHaemo(inp.map, pvn, s.p.k, s.rAff, effF, kfF, inp.albuminGL, pb, inp.hct);
   s.rbf = h.rbf;
   s.pgc = h.pgc;
   s.gfr = h.gfr;

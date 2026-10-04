@@ -6,20 +6,30 @@ import { resolveProfile } from '../../src/l2/circ/profile.ts';
 
 type C = { beats: Array<{ map: number; sv: number }>; qFwd: number; prof: { bloodVolumeMl: number } };
 const bvOf = (sex: 'M' | 'F', weightKg: number, heightCm?: number, ageY = 40) => resolveProfile({ ageY, sex, weightKg, ...(heightCm ? { heightCm } : {}), conditions: [] }).bloodVolumeMl;
-async function rest(patient: Record<string, unknown>, endS: number, vent = false) {
+async function rest(patient: Record<string, unknown>, endS: number, vent = false, coMeanFromS = endS) {
   const e = createEngine({ seed: 7, mode: 'modeled', patient: { sex: 'M', ...patient, sensors: { abp: 'connected' } } as never });
   if (vent) {
     e.advanceTo(1);
     e.dispatch({ id: 'a', issuedBy: 'test', type: 'applyEvent', event: { kind: 'airwayDevice', device: 'ett' } } as never);
     e.dispatch({ id: 'b', issuedBy: 'test', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5, fio2: 0.5 } } as never);
   }
-  for (let t = 60; t <= endS; t += 60) {
+  const circ = () => (e as unknown as { st: { hemo: { circ: C } } }).st.hemo.circ;
+  for (let t = 60; t <= coMeanFromS; t += 60) {
     e.advanceTo(t);
     await new Promise((r) => setImmediate(r));
   }
-  const c = (e as unknown as { st: { hemo: { circ: C } } }).st.hemo.circ;
+  // FU-9 (E-FU9-6): the CO over [coMeanFromS, endS] is the mean of 1 s samples — over the last minute it spans several
+  // ventilator cycles; a single sample (the default, coMeanFromS = endS) lands on one breath phase
+  let coSum = circ().qFwd * 0.06;
+  let coN = 1;
+  for (let t = coMeanFromS + 1; t <= endS; t++) {
+    e.advanceTo(t);
+    coSum += circ().qFwd * 0.06;
+    coN++;
+  }
+  const c = circ();
   const bs = c.beats.slice(-6);
-  return { map: bs.reduce((a, b) => a + b.map, 0) / bs.length, sv: bs.reduce((a, b) => a + b.sv, 0) / bs.length, co: c.qFwd * 0.06, bv: c.prof.bloodVolumeMl };
+  return { map: bs.reduce((a, b) => a + b.map, 0) / bs.length, sv: bs.reduce((a, b) => a + b.sv, 0) / bs.length, co: coSum / coN, bv: c.prof.bloodVolumeMl };
 }
 
 describe('FU-8 A12 (C5): the resting pressure follows the band set point', () => {
@@ -66,10 +76,15 @@ describe('FU-8 A13 (C4; R50 F1, ruling 1): ONE continuous body-size rule (l2/bod
       expect(b.sv).toBeGreaterThanOrEqual(a.sv);
     }
   }, 240_000);
-  it('127 kg / 175 cm (BMI 41): blood volume by Lemmens (6.3–6.7 L) and resting CO 1.2–1.5 × the 70 kg adult (tables §1.3 × 1.35); before FU-8: 8.89 L and × 1.85', async () => {
-    const lean = await rest({ ageY: 40, weightKg: 70, heightCm: 175 }, 300, true);
-    const obese = await rest({ ageY: 40, weightKg: 127, heightCm: 175 }, 300, true);
-    console.log(`fu8 A13: BV ${obese.bv.toFixed(0)} mL, CO ${obese.co.toFixed(2)} vs ${lean.co.toFixed(2)} (× ${(obese.co / lean.co).toFixed(2)})`);
+  let a13: Promise<{ lean: Awaited<ReturnType<typeof rest>>; obese: Awaited<ReturnType<typeof rest>> }> | undefined;
+  const a13Runs = () => (a13 ??= (async () => ({ lean: await rest({ ageY: 40, weightKg: 70, heightCm: 175 }, 300, true, 240), obese: await rest({ ageY: 40, weightKg: 127, heightCm: 175 }, 300, true, 240) }))());
+  // E-FU9-6 (FU-9 gate, orchestrator ruling): the resting CO is the 240–300 s MEAN of 1 s samples, not ONE low-passed
+  // sample at 300 s, which swings 4.63–5.36 L/min with the ventilator cycle at 70 kg — FU-9 moved the breath phase of
+  // that instant (× 1.44 on main → × 1.53), not the output (means 5.049 → 5.044 and 6.970 → 6.970: × 1.38 on both
+  // trees). A better measurement; the band is unchanged.
+  it('127 kg / 175 cm (BMI 41): blood volume by Lemmens (6.3–6.7 L) and resting CO (240–300 s mean) 1.2–1.5 × the 70 kg adult (tables §1.3 × 1.35); before FU-8: 8.89 L and × 1.85', async () => {
+    const { lean, obese } = await a13Runs();
+    console.log(`fu8 A13: BV ${obese.bv.toFixed(0)} mL, CO ${obese.co.toFixed(2)} vs ${lean.co.toFixed(2)} (× ${(obese.co / lean.co).toFixed(2)}, 240–300 s means)`);
     expect(obese.bv).toBeGreaterThanOrEqual(6300);
     expect(obese.bv).toBeLessThanOrEqual(6700);
     expect(obese.co / lean.co).toBeGreaterThanOrEqual(1.2);

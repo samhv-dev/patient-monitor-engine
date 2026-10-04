@@ -8,11 +8,13 @@ function simulate(f: FluidState, fromS: number, toS: number): void {
 }
 
 describe('fluid compartments (tables §5b.4; annex B1 tissue branch)', () => {
-  it('70 kg man: BV 4.8 L, plasma 2.6 L, ISF 11.4 L, ICF 28 L, Hb 15, COP ≈ 22 mmHg (Landis–Pappenheimer at TP 6.4)', () => {
+  // FU-9 Part C (R3): the 70 kg / 175 cm man is FU-8's anchor, 4 900 mL (was 4 807 by 7c's capped Lemmens branch):
+  // plasma 2 695 (was 2 644), ISF 11 305 (was 11 356) — the definition moved, not the physiology
+  it('70 kg man: BV 4.9 L, plasma 2.7 L, ISF 11.3 L, ICF 28 L, Hb 15, COP ≈ 22 mmHg (Landis–Pappenheimer at TP 6.4)', () => {
     const f = createFluids(ADULT, 40);
-    expect(bloodMl(f)).toBeCloseTo(4807, -1);
-    expect(f.vp).toBeCloseTo(2644, -1);
-    expect(f.visf).toBeCloseTo(11356, -1);
+    expect(bloodMl(f)).toBeCloseTo(4900, -1);
+    expect(f.vp).toBeCloseTo(2695, -1);
+    expect(f.visf).toBeCloseTo(11305, -1);
     expect(f.vicf).toBeCloseTo(28000, -1);
     expect(hbOf(f)).toBeCloseTo(15, 6);
     expect(copPlasma(f)).toBeCloseTo(22.4, 0);
@@ -20,8 +22,8 @@ describe('fluid compartments (tables §5b.4; annex B1 tissue branch)', () => {
   it('at rest nothing moves for 24 h (no drift)', () => {
     const f = createFluids(ADULT, 40);
     simulate(f, 0, 86_400);
-    expect(Math.abs(f.vp - 2644)).toBeLessThan(1);
-    expect(Math.abs(f.visf - 11356)).toBeLessThan(1);
+    expect(Math.abs(f.vp - 2695)).toBeLessThan(1); // FU-9 Part C: was 2644 / 11356 (4 807 mL)
+    expect(Math.abs(f.visf - 11305)).toBeLessThan(1);
   });
   it('1 L crystalloid over 30 min, awake: 50–60 % intravascular at the end, 15–25 % 30 min later (Hahn, Q47)', () => {
     const f = createFluids(ADULT, 40);
@@ -49,7 +51,7 @@ describe('fluid compartments (tables §5b.4; annex B1 tissue branch)', () => {
     const f = createFluids(ADULT, 40);
     f.flows.push({ rate: 175, until: 600, comp: null });
     simulate(f, 0, 600);
-    expect(bloodMl(f)).toBeLessThan(4807 - 1600);
+    expect(bloodMl(f)).toBeLessThan(4900 - 1600); // FU-9 Part C: was 4807 − 1600
     expect(hbOf(f)).toBeGreaterThan(14.4); // only the refill during the bleed dilutes
     expect(f.refill / 70).toBeGreaterThanOrEqual(0.1);
     expect(f.refill / 70).toBeLessThanOrEqual(0.5);
