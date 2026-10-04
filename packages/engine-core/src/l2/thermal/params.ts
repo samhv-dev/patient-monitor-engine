@@ -60,3 +60,21 @@ export const MH_RELAX_TAU_S = 600; // the unsuppressed fraction follows dantrole
  * 5 mg/kg (E 0.67) → 0 (tables "repeat to response: average 5 mg/kg") [ENG, fitted in the prototype].
  */
 export const DANT_GAIN = 1.6;
+/**
+ * FU-10 E1 — MH from its triggers in a susceptible patient (7f publishes the exposure times; the MH state is 7e's).
+ * Onset latency after each trigger: succinylcholine starts the hypermetabolism at once (the Stage 3 ramp then reaches
+ * full activity over MH_ONSET_S, so EtCO2 doubles ≈ 14 min after the dose); a volatile alone starts it later. Direction:
+ * Visoiu M, Young MC, Wieland K, Brandom BW, Anesth Analg 2014;118:388–396 (North American MH Registry, 477 cases: onset
+ * is shorter after succinylcholine with every volatile; without succinylcholine sevoflurane is faster than isoflurane or
+ * desflurane); Larach MG et al., Anesth Analg 2010;110:498–507 (clinical presentation) [VERIFY the medians]. Magnitudes
+ * [ENG]: 0 s with succinylcholine; for a volatile alone the agent's registry median (below). Severity 1 = the
+ * fulminant course of the instructor's `condition mh 1` (Ali Q2, open: fixed vs a seeded draw; fulminant vs abortive).
+ */
+export const MH_SUX_LATENCY_S = 0;
+/** FU-10 E1 (orchestrator ruling R-8): the volatile-alone latency is agent-specific and deterministic — the registry's
+ * median time to the first sign without succinylcholine (Visoiu 2014: sevoflurane ≈ 45 min, desflurane ≈ 114 min, as
+ * quoted in secondary sources [VERIFY against the paper]; isoflurane has no median in those sources — the desflurane
+ * value is used and flagged [VERIFY]; halothane is not a library agent). Any other agent takes the sevoflurane value. */
+export const MH_VOLATILE_LATENCY_S: Readonly<Record<string, number>> = { sevoflurane: 45 * 60, desflurane: 114 * 60, isoflurane: 114 * 60 };
+export const MH_VOLATILE_LATENCY_DEFAULT_S = 45 * 60;
+export const MH_PROFILE_SEVERITY = 1;

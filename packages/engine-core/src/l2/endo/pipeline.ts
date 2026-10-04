@@ -11,6 +11,7 @@ import { VAGAL_SITES } from '../../types-neuro.ts'; // FU-4 G7: the stimulus's o
 import type { HemoState } from '../hemo/pipeline.ts';
 import type { RespState } from '../resp/pipeline.ts';
 import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
+import { mhFromExposure, type MhExposure, type MhOwner } from '../thermal/mh.ts';
 import { observeDoses, pkOf, readEndoInputs, readInfusions } from './adapters.ts';
 import { SEPSIS_PHASES } from './conditions.ts';
 import { createEndoCore, DEFAULT_ENDO_PROFILE, stepEndoCore, type EndoCore, type EndoProfile } from './core.ts';
@@ -28,6 +29,7 @@ export interface EndoState {
   kfMult: number; // last capillary-leak multiplier written into 7c
   lungSev: number; // last 7b anaphylaxis severity written
   cascade: Cascade; // cascade(th) at the last 1 Hz step: 7f reads endo.cascade.macF (R-7f-8)
+  mhOwner?: MhOwner; // FU-10 E1 (D3): who made the MH state once an exposure was seen (absent = no exposure yet)
   out: EngineEvent[];
 }
 
@@ -56,6 +58,13 @@ export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
   const pk = pkOf(ctx.ps);
   observeDoses(es, pk);
   th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // Stage 7g's dantrolene effect → the MH suppression (thermal/mh.ts)
+  // FU-10 E1: an MH-susceptible patient's triggers (7f's exposure times) start the MH state 7e owns (R51 §6)
+  const mhx = (ctx.ps as { neuro?: { mhExposure?: MhExposure } }).neuro?.mhExposure;
+  if (mhx) {
+    const r = mhFromExposure(th.mh, mhx, es.mhOwner, tEnd);
+    th.mh = r.mh;
+    es.mhOwner = r.owner;
+  }
   for (; es.k <= tEnd + 1e-9; es.k++) {
     const t = es.k;
     readInfusions(es, pk);

@@ -327,30 +327,30 @@ pre-arrest course identical, tcMax 47.77 → 42.34 °C; without FU-9 A2 the MH a
 
 ### Task A0: Base check — the branch, the worktree, the find blocks, the before-numbers, the slow group (no code change)
 
-- [ ] **Step 1 — the worktree and the branch.**
+- [x] **Step 1 — the worktree and the branch.**
 ```
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin && git worktree add ../scratch/wt-fu-10 -b fu-10-endocrine-thermal origin/main
 cd ../scratch/wt-fu-10 && npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
-- [ ] **Step 2 — the base.** `git log --oneline -1` (≥ `ad05773`). Expected merged: FU-3 … FU-6, V.1, FU-8 Part A (incl.
+- [x] **Step 2 — the base.** `git log --oneline -1` (≥ `ad05773`). Expected merged: FU-3 … FU-6, V.1, FU-8 Part A (incl.
   A16's `endo` schema block). Record whether FU-7 and FU-9 have merged (`git log --oneline origin/main | head -30`);
   each Part B task names the one it waits for.
-- [ ] **Step 3 — every find block on this base.** Apply the plan's blocks in document order with a checker (the
+- [x] **Step 3 — every find block on this base.** Apply the plan's blocks in document order with a checker (the
   writer's: `scratch/plans-backup/fu-10-plan-tools/check_plan.py`) and assert each find occurs exactly once in the
   applied state; the blocks marked "(chained on <task>)" are the only ones that do not occur on `origin/main` itself.
   The fixer measured Part A 71 find/replace blocks + 14 creates, 0 problems, 6 chained (all marked); with B2 78 + 14, 0 problems, 9 chained (all marked) — on `origin/main` `1b8bdd3`. If a block fails because another plan merged first, re-anchor it on the merged statement
   by its quoted comment (each task's Overlap line gives the merged form).
-- [ ] **Step 4 — the ET runner and the before-numbers.** Copy `research/14-coverage-et-scripts` to `<scratchpad>/fu-10/et`
+- [x] **Step 4 — the ET runner and the before-numbers.** Copy `research/14-coverage-et-scripts` to `<scratchpad>/fu-10/et`
   and run all 72 cells against the worktree (`PME_ENGINE=…/packages/engine-core/src/index.ts ET_OUT=out/before.json
   ./run.sh cli.ts all`). Compare with the Prototype results' "main" column; a moved cell means a stage merged in between
   — record it before changing anything.
-- [ ] **Step 5 — the suites before.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/engine`
+- [x] **Step 5 — the suites before.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/engine`
   and `npx -y pnpm@9.15.9 run audit:physiology`; keep both logs.
-- [ ] **Step 6 — the slow group (ruling R-12).** `grep -n "slow-c\|SLOW_C" packages/engine-core/vite.config.ts .github/workflows/ci.yml`.
+- [x] **Step 6 — the slow group (ruling R-12).** `grep -n "slow-c\|SLOW_C" packages/engine-core/vite.config.ts .github/workflows/ci.yml`.
   If FU-9 has created `slow-c`, Task A1's `vite.config.ts` block adds the `fu10-*` glob to `SLOW` and to FU-9's
   `SLOW_C` list instead of `SLOW_A` (same two lines, the other list); otherwise as written. Record which.
-- [ ] **Step 7 — no commit.**
+- [x] **Step 7 — no commit.**
 
 ---
 ### Task A1: E1 — an MH-susceptible patient given its triggers develops MH (7f publishes the exposure, 7e owns the MH state; PROTOTYPED)
@@ -380,7 +380,7 @@ so `condition mh 0` stays cleared (review F4).
 
 **Measured (fixed prototype, current main):** suxamethonium + sevoflurane at 300 s with the ventilation held fixed (rocuronium after the suxamethonium — FU-6's merged patient-triggered breaths would otherwise raise it): EtCO₂ doubles at **+18.2 min** (band 10–30; main: never); sevoflurane alone: MH activity from **+48.5 min** (median 45 min + the ramp to a detectable activity); not susceptible: 0. ET-10a `mhDevelops` **true** (WR → PL), EtCO₂ max 52.6 (main 28.4). The instructor-MH rows (ET-10b–g, ET-11, ET-M2) move by ≤ 0.01 °C (tcMax 47.77 → 47.76) and the untreated comparison arm of ET-11 by +0.9 mmHg EtCO₂ at 30 min (18.23 → 19.15). D3: the instructor-cleared case is a unit test. **FU-4 check:** the arrest table of `audit:physiology` is identical in every arrest time.
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/l2/neuro/pipeline.ts`, find:
 
@@ -749,9 +749,9 @@ describe('FU-10 E1: MH from its triggers (MHAUS; Larach 1994/2010; Visoiu 2014)'
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/neuro test/l2/endo test/engine/fu10-mh-trigger.test.ts` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-10 ET-11 ET-M2` → ET-10a `mhDevelops` true; every other MH cell as before.
-- [ ] **Commit and push.**
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/neuro test/l2/endo test/engine/fu10-mh-trigger.test.ts` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-10 ET-11 ET-M2` → ET-10a `mhDevelops` true; every other MH cell as before.
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7e,7f): an MH-susceptible patient develops MH from its triggers (FU-10 E1, E-FU10-1)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push -u origin fu-10-endocrine-thermal

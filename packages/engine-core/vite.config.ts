@@ -61,6 +61,7 @@ const SLOW = [
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
+  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs (SLOW_A, or slow-c if FU-9 created it — Task A0 Step 6)
   'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
 ];
 /**
@@ -116,6 +117,7 @@ const SLOW_C = [
   'test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts',
   'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
   'test/engine/thermal-warmer.test.ts', // FU-9 Gate: from slow-b by time (136 s)
+  'test/engine/fu10-*.test.ts', // FU-10: its files join slow-c (Task A0 Step 6, ruling R-12: FU-9 created slow-c)
 ];
 const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p));
 const set = process.env.PME_TEST_SET;

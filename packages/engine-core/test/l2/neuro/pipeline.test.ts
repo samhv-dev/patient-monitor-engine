@@ -113,6 +113,7 @@ describe('neuro pipeline', () => {
     stepNeuroTo(ns, 60, ENV, bus); // the same log read again: nothing new
     expect(kinds(ns).filter((k) => k === 'fasciculation')).toHaveLength(1);
     expect(kinds(ns).filter((k) => k === 'mhTrigger')).toHaveLength(1);
+    expect(ns.mhExposure).toEqual({ sux: 0 }); // FU-10 E1: the exposure time 7e turns into MH
     expect('kRiseMmolL' in ns.outputs).toBe(false);
   });
   it('publishes the 7e fields ps.neuro.{antinoc, nmb, thermoDepth}: neutral awake; 1 MAC + fentanyl 2 ng/mL + full block', () => {
