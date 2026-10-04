@@ -155,7 +155,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
       console.log(`FU-7 case 4 esmolol 1 mg/kg: HR ratio ${f2(x.hr)}, MAP ratio ${f2(x.map)}`);
       expect(x.hr).toBeLessThan(x.map);
     });
-    it.fails('the bounds: ΔHR ratio ≤ 0.5 and ΔMAP ratio ≤ 0.9 — measured HR 0.58, MAP 0.98 (β-occupancy blunts the HR share only; the MAP share acts through α)', async () => {
+    it.fails('the bounds: ΔHR ratio ≤ 0.5 and ΔMAP ratio ≤ 0.9 — measured HR 0.56, MAP 1.00 on the gate tree (8454221: 0.58 / 0.98; β-occupancy blunts the HR share only; the MAP share acts through α)', async () => {
       const x = await ratios();
       expect(x.hr).toBeLessThanOrEqual(0.5);
       expect(x.map).toBeLessThanOrEqual(0.9);
