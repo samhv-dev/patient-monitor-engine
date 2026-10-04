@@ -19,11 +19,10 @@ describe('FU-10 E8/E12a: insulin–dextrose and the insulin nadir', { timeout: 9
     expect(Math.max(...c.map((x) => x.glu)) - g0).toBeGreaterThan(3);
     expect(Math.min(...c.map((x) => x.glu)) - g0).toBeLessThan(-1);
   });
-  // R45 (declared exception E-FU10-12): the K⁺ band was met (−0.93) only through an artefact the final review found —
-  // the hypoglycaemia after the bolus suppressed the pancreas and the insulinopenia term then moved K⁺ OUT (review I1,
-  // fixed: only a patient without β-cell reserve is insulinopenic). The fall beyond −1.0 is two pre-existing K⁺ sources,
-  // 7c's insulin–dextrose curve plus the insulin secreted for the row's 25 g dextrose (D6; Ali Q4). Not tuned (R44).
-  it.fails('the combined row: K⁺ −0.6 to −1.0 at 60 min (tables §5b.2) — measured −1.15', async () => {
+  // The K⁺ band the plan held (D6). It was an `it.fails` (E-FU10-12, −1.15) while 7c's empirical whole-effect curve and
+  // 7e's counter-regulatory adrenaline after the induced hypoglycaemia both acted; E-FU10-14 (orchestrator ruling) gives
+  // the row's insulin 7g's insulin K⁺ PD and retires 7c's curve when 7g is present — measured −0.78 (= the two-row arm).
+  it('the combined row: K⁺ −0.6 to −1.0 at 60 min (tables §5b.2) — measured −0.78 (−1.15 before E-FU10-14)', async () => {
     const { c, ctl } = await combo();
     expect(k60(c, ctl)).toBeLessThanOrEqual(-0.6);
     expect(k60(c, ctl)).toBeGreaterThanOrEqual(-1.0);

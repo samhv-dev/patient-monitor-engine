@@ -43,8 +43,9 @@ describe('library III', () => {
     expect(DRUG_IDS.length).toBeGreaterThanOrEqual(55);
   });
   it('7c-owned chemistry rows are shared or blood-only (decision 10)', () => {
-    for (const id of ['calciumChloride', 'calciumGluconate', 'sodiumBicarbonate', 'insulinDextrose'])
+    for (const id of ['calciumChloride', 'calciumGluconate', 'sodiumBicarbonate'])
       expect(DRUGS[id]!.pk.kind).toBe('blood');
+    expect(DRUGS.insulinDextrose!.shared).toBe('blood'); // FU-10 E-FU10-14: the insulin's PK/PD is 7g's (the insulin row's); 7c reads the dose
     expect(DRUGS.magnesium!.shared).toBe('blood');
     expect(DRUGS.succinylcholine!.shared).toBe('blood');
   });

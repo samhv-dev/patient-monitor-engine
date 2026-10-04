@@ -20,8 +20,9 @@ export interface BloodInputs {
   demandRel?: number;
   /**
    * Stage 7g's β2-agonist/insulin/epinephrine K shift (`bus.metabolic.kShift`, mmol/L). Given → it is the ONLY
-   * β2/insulin-row shift (7c's own salbutamol curve is off); absent → 7c's own salbutamol curve (fallback, R50 F2).
-   * 7c's `insulinDextrose` row carries no 7g PD, so its curve always stays 7c's.
+   * β2/insulin-row shift (7c's own salbutamol AND insulin–dextrose curves are off); absent → 7c's own curves (fallback,
+   * R50 F2). FU-10 E-FU10-14: the `insulinDextrose` row's insulin now carries 7g's insulin K⁺ PD (the plain insulin row's
+   * mechanism), so its empirical curve is retired whenever 7g is present, exactly as salbutamol's.
    */
   kShiftExt?: number;
 }
@@ -163,7 +164,8 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const hbfRel = Math.min(1.5, hf === undefined ? coRel ** HBF_EXP : coRel * hf);
   const ef = effects(bc, x.t);
   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
-  const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
+  const insCurve = x.kShiftExt === undefined ? INSULIN_K_SHIFT * ef.ins : 0; // FU-10 E-FU10-14: 7g present → 7g's insulin PD is the source
+  const drug = insCurve + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
   // FU-10 E7 (E-FU10-2, ruling R-2): Stage 7e's NET ketone rate — production from the insulin deficit minus its
   // insulin-dependent utilisation of 7c's pool (which 7c owns, the instructor's `condition dka` pool included): the
   // acidaemia, the anion gap, `out.dkaSeverity` and the Kussmaul drive emerge from it, and insulin treats it
