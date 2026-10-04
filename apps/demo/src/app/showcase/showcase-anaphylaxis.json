@@ -1,0 +1,134 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-anaphylaxis",
+  "title": "Anaphylaxis under anaesthesia",
+  "category": "Showcase",
+  "durationMin": 10,
+  "story": "Minutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.",
+  "objectives": [
+    "Recognise anaphylaxis: hypotension, tachycardia, bronchospasm",
+    "Give epinephrine 50–100 µg IV early and repeat as needed",
+    "Give fluid for the capillary leak"
+  ],
+  "notes": "Showcase case (Stage 9 Task 26): 7e anaphylaxis at severity 1.",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 50,
+    "sex": "F",
+    "weightKg": 70,
+    "heightCm": 165,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "initialState": "stable",
+  "states": [
+    {
+      "id": "stable",
+      "label": "Ventilated, stable",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 0.5
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "react",
+          "label": "Start the reaction",
+          "to": "anaphylaxis",
+          "when": {
+            "any": [
+              {
+                "afterS": 60
+              },
+              {
+                "manual": {
+                  "label": "Start the reaction"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "anaphylaxis",
+      "label": "Anaphylaxis",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "anaphylaxis",
+            "severity": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "epiGiven",
+          "label": "Epinephrine given",
+          "to": "treated",
+          "when": {
+            "event": {
+              "kind": "drug",
+              "drugId": "epinephrine"
+            }
+          }
+        },
+        {
+          "id": "giveEpi",
+          "label": "Give epinephrine 100 µg",
+          "to": "treatedByButton",
+          "when": {
+            "manual": {
+              "label": "Give epinephrine 100 µg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treatedByButton",
+      "label": "Epinephrine given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 100,
+            "unit": "mcg",
+            "route": "iv"
+          }
+        }
+      ]
+    },
+    {
+      "id": "treated",
+      "label": "Epinephrine given"
+    }
+  ]
+}

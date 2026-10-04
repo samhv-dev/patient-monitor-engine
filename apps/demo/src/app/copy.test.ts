@@ -16,7 +16,8 @@ describe('clinical copy', () => {
   it('the library holds every scenario document and every card has meta written for learners', () => {
     expect(LIBRARY.length).toBeGreaterThanOrEqual(11);
     for (const c of LIBRARY) {
-      expect(SCENARIO_META[c.id], `${c.id} has card meta`).toBeDefined();
+      // card meta from scenario-meta.ts, or the document's own card fields (pme-scenario/1 since FU-8; the showcase cases)
+      expect(SCENARIO_META[c.id] ?? (c.doc.story ? c.doc : undefined), `${c.id} has card meta`).toBeDefined();
       expect(`${c.title} ${c.story} ${c.objectives.join(' ')}`).not.toMatch(LEAK);
       expect(c.title).not.toMatch(/^\[draft\]/i);
     }
