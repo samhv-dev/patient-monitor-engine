@@ -1,0 +1,170 @@
+{
+  "browser": "webkit",
+  "base": "http://127.0.0.1:8700",
+  "server": "perl (through the launcher)",
+  "windows": {
+    "B": {
+      "route": "#/monitor",
+      "before": {
+        "route": "#/monitor",
+        "code": "S4XGZC",
+        "simT": 14.3,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:13×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/monitor",
+        "code": "S4XGZC",
+        "simT": 29.7,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 70,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:29×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 117,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "C": {
+      "route": "#/explore",
+      "before": {
+        "route": "#/explore",
+        "code": "U4KRNY",
+        "simT": 8.9,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:08×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/explore",
+        "code": "U4KRNY",
+        "simT": 24.2,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 70,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:24×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 122.5,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "D": {
+      "route": "#/vent",
+      "before": {
+        "route": "#/vent",
+        "code": "GVB8KY",
+        "simT": 3.9,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": null,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:03×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/vent",
+        "code": "GVB8KY",
+        "simT": 19.3,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 72,
+        "abp": null,
+        "etco2": 37,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:18×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 127.4,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "A": {
+      "before": {
+        "route": "#/teach",
+        "code": "AJ2SJD",
+        "simT": 85.2,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "awake",
+        "hr": 69,
+        "abp": "122/80 (94)",
+        "etco2": 39,
+        "rr": 13,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 01:23 01:23 ×1 ×2 ×4 Pause Bookmark"
+      },
+      "after": {
+        "route": "#/teach",
+        "code": "AJ2SJD",
+        "simT": 146.7,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "induced",
+        "hr": 71,
+        "abp": "106/70 (81)",
+        "etco2": 0,
+        "rr": 0,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 00:59 02:25 ×1 ×2 ×4 Pause Bookmark"
+      }
+    },
+    "R": {
+      "connected": true,
+      "status": "Connected to AJ2SJD",
+      "scenarioShownOnRemote": "Healthy induction",
+      "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 01:27 02:53 ×1 ×2 ×4 Pause Bookmark",
+      "pressedIntubateOnRemote": true,
+      "instructorStateBefore": "induced",
+      "hostReachedVentilated": true,
+      "hostAfter": {
+        "route": "#/monitor",
+        "code": "AJ2SJD",
+        "simT": 182.5,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "ventilated",
+        "hr": 74,
+        "abp": "98/66 (76)",
+        "etco2": 45,
+        "rr": 5,
+        "bar": "M 40 y 75 kgMODELEDHealthy induction: Intubated and ventilated 00:0803:02×1×2×4PauseBookmark"
+      },
+      "inStep": true
+    }
+  },
+  "errors": {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": [],
+    "R": []
+  }
+}

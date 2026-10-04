@@ -1,0 +1,10 @@
+PATIENT MONITOR SIMULATOR - how to start it (no internet needed)
+1. Double-click "Start Simulator". A black Terminal window opens and the simulator opens in the web browser.
+2. If macOS says it cannot open "Start Simulator": right-click it (or Control-click), choose Open, then Open again.
+   If it still refuses: Apple menu > System Settings > Privacy & Security > scroll down > "Open Anyway".
+3. If macOS asks whether Terminal may access files (on a USB stick, Desktop or Documents), click OK / Allow.
+4. Leave the black Terminal window open while you use the simulator.
+5. If the browser does not open by itself, open Safari or Chrome and type the address shown in the black window
+   (it looks like 127.0.0.1:8642).
+6. To stop: close the black Terminal window (click "Terminate" if asked). Closing the browser alone does not stop it.
+7. If nothing works, use the rescue card; the recorded cases are in the "videos" folder.
