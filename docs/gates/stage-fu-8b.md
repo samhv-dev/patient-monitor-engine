@@ -292,6 +292,39 @@ On B1 and E-FU10-14: B1 changes only the `insulin` row's INFUSION reference (`re
 combined `insulinDextrose` bolus's K⁺ to 7g's insulin PD, so the two do not duplicate. `insulinDextrose` keeps the
 absolute infusion reference: if an infusion of the combined row is meant to be possible, it needs the same per-kg flag.
 
+## 8c. After FU-10 Part A merged (main `998561b8`; merge `b2077e3e`, fix `83cb3075`)
+Only what moved:
+- **Conflicts resolved:**
+  - glossary entry 339 → **348** (`hemo.circ.skinTone`, after FU-10's 339–347);
+  - `pk-longrun`: both branches had flipped it, and it stays `it` with the merged-tree value in its title: **2.5033**
+    (FU-10 alone 2.4995, FU-8 alone 2.5021).
+- **Reconciliation with E-FU10-14:**
+  - FU-10's `fu10-insdex-k` asserts the combined `insulinDextrose` row has the plain insulin row's PK.
+  - The combined row now takes B1's per-kg infusion reference too (`gammaPk(…, true)`): one insulin.
+  - Its bolus K⁺ path (FU-10's) is untouched.
+  - B1 insulin infusion, re-measured on the merged tree: unchanged (glucoseDelta −60.00, kShift −0.600).
+- **Slow groups:** the `fu8-*` glob bundle stays whole in FU-10's slow-d. Part B adds ≈ 60 s CI (estimate), so slow-d is
+  ≈ 34.2 min. ci.yml's disjointness check is unchanged, because the glob is.
+- **Truth leaves:** 12-drug tree **2,079** of 2,100.
+- **Local checks on the merged tree:**
+  - typecheck, build and check-notices: OK.
+  - fast set: 315 files / 1,397 passed + 1 skipped. Run after the fix; before it, `fu10-insdex-k` failed.
+  - slow-d: 34 files / 150 passed.
+  - files from other groups that Part B touches (`circ-sanity-1`, `resp-inspired-co2`, `resp-suite`, `drug-apnoea`,
+    `fidelity-lowflow`, `blood-hyperk`): 48 passed.
+  - demo: 200.
+  - Stage 9 + showcase e2e: 30 passed on both engines.
+  - The remaining slow groups are left to CI.
+- **Rehearsal: 12/12 on both engines.**
+
+| Case | Result |
+|---|---|
+| Healthy induction | apnoea 62.5 / 62.6 s, MAP 94.8 → 65.7 |
+| Tamponade | MAP < 40 at 73.9 s |
+| Anaphylaxis | 11.3 s |
+| Bronchospasm | 161/162 → 305 mL |
+| Haemorrhage | pulse lost at 10 min, ROSC after 4.3 min |
+
 ## 8b. For the owner
 - **HFrEF propofol fall:** −41 to −42 %, beyond the −40…−20 band in DI-47 and CM-06b. This is a size question for the
   A23 calibration pass.
