@@ -291,7 +291,7 @@ function control(m: CircModelState, env: CircEnv): void {
   }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF * (m.ext.surgeF ?? 1), brainF: brainstemOutF(m.ext.cbfRel) }, raTm) // FU-7 (addendum 22): the nociceptive surge rides FU-4's set-point path
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF * (m.ext.surgeF ?? 1), brainF: brainstemOutF(m.ext.cbfRel), tonic: m.prof.tonicSymp }, raTm) // FU-7 (addendum 22): the nociceptive surge rides FU-4's set-point path; FU-8 (C1): tonic
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;

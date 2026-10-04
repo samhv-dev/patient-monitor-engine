@@ -472,6 +472,15 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   tests that import `cardiacOutput` call it outside CPR, where it is unchanged; V.1's CPR guard is handed (below).
 - **E-FU8-12** (Task A28): `neuro-engine.test.ts` (7f; FU-4 F4's record) — "propofol 2 mg/kg: depth-index nadir < 52" flips
   (52 → 51): its 70 kg / 170 cm adult has effKg 67.6, and A28 gives it its own resting-output reference back.
+- **E-FU8B-1** (Task B4, executor 2026-10-04): four pre-declared `it.fails` FLIP to `it` (R45: pins flipping, titles re-stated
+  with before → after): `circ-sanity-1` "propofol 2 mg/kg: MAP ≈ 70 % at 2 min" (0.802 → 0.727); `clinical-suite` S2's MAP side
+  (−14.7 → −20.6 %), S4b (MAP 58.9 → 40.7, CO −17 → −35 %) and S14's MAP side (−22.6 → −44.5 %); the suite's header count
+  ELEVEN → EIGHT. No assertion changed.
+- **E-FU8B-2** (Task B4; the owner's ruling "A23 and the perfusion floor", 2026-10-04, and the orchestrator's brief): the
+  `clinical-suite` row "S6a: class III haemorrhage + propofol 2 mg/kg does not arrest within 5 min" is no longer an acceptance
+  criterion in either direction; it becomes a RECORD (logs nadir, seconds < 35 / < 30, minimum CoPP and kIsch, the arrest
+  time; asserts only that the run completed). Before B4: no arrest, nadir 26.5; after: arrest at +90 s. The S6a percentage
+  `it.fails` keeps failing; its title re-states the new number (nadir 2.7, −97 %).
 
 ## Handed to (items another plan owns, with the reason)
 
@@ -5829,11 +5838,40 @@ Replace with:
       r.mapSet += 20 * s;
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-tonic.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/neuro-circ.test.ts test/engine/pk-acceptance-`
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-tonic.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/neuro-circ.test.ts test/engine/pk-acceptance-`
 and `npx -y pnpm@9.15.9 run audit:drugs all` (FU-7's harness). Every row that moves is a before → after line in the
 gate note; a row that breaks a sourced band stops the task (R45) and goes to the orchestrator with the numbers.
 
-- [ ] **Commit and push.**
+**Executed (owner A23 AGREED 2026-10-04; research/23 §6.3 applied to the design, not the outcome):** mechanism and sizes as
+prototyped. §6.3 note 2: `tonicSymp` is documented as the SYMPATHETIC share with a `tonicVagal` twin expected (FU-12).
+Note 3, DECIDED: `dV0`/`cSvF` carry NO tonic share (recorded in `baroreflex.ts`; a later hub adds it). Note 4: `tonicSymp`
+is a profile constant; it is removed in proportion to the existing delivered output `o = outF × brainF` (as prototyped) —
+a diagnostic with `outF` alone moved the class III arrest only from +86 to +89 s, so brainstem coupling is not what tips it.
+Not attempted: the sinus-rate floor, sympathoinhibition, resetting bounds (FU-12). Measured (seed 7; nadir 60–360 s after
+propofol 2 mg/kg, ventilated):
+
+| Profile | before (4a1cc3f7 + B1/B2) | after B4 | A23 target |
+|---|---|---|---|
+| healthy 40 y | −22.7 % (95.3 → 73.7) | −30.3 % (→ 66.4) | −25 to −40 % |
+| 80 y | −23.5 % | −37.3 % | larger than the young |
+| untreated HTN 60 y | −22.7 % | −35.9 % | ≈ 40 % vs 30 % |
+| 80 y HTN (S14) | −22.5 % | −42.8 % | −30 to −45 % |
+| HFrEF 60 y | −21.6 % | −42.5 % (MAP 49.7) | large falls expected |
+| AS severe + CAD severe 75 y | −23.0 % | −39.5 % (at +145 s) | (A27: 60–65 at 2 min) |
+| PH moderate 60 y | −23.7 % | −31.4 % | — |
+
+Resting MAP and HR bit-identical in every profile. Rows that moved (verify set before → after): `circ-sanity-1` propofol
+0.802 → 0.727 (pin flips); S1 0.785 → 0.698 (band 0.6–0.8), S1b 0.913 → 0.877 (≥ 0.85), S2 −14.7 → −20.6 % (flips), S4a PEA
++170 → +105 s, S4b 58.9 / −17 % → 40.7 / −35 % (flips), S6a no arrest / nadir 26.5 → arrest +90 s / nadir 2.7 (record,
+E-FU8B-2), S6b Ce ratio 1.78 → 2.06, S9 PEA 510 → 495 s, S13 CoPP 26.4–28.1 → 25.9–28.1, S14 −22.6 → −44.5 % (flips), 7f
+`neuro-circ` propofol 0.775 → 0.704; MANUAL class III unchanged (35.1, no arrest). DI cells (`audit:drugs`): DI-46 −21.1 → −42.7 %
+(TW → PL), DI-47 −22.1 → −44.1 % (PL → TS, band −40…−20), DI-48 −18.4 → −45.1 % (TW → TS by 0.1, band −45…−30), DI-79
+extraFall 0.9 → 0.7 (WR stays). CM cells (research/19 runner, `CM_OUT` in scratch): CM-01b −19.8 → −33.0 % (WR → PL),
+CM-03b −21.8 → −35.5 % (WR → PL), CM-05a −18.4 → −45.1 %, MAP at 2 min 96.6 → 66.5, ST 0 (WR stays: the ST half), CM-06b
+propofol −22.1 → −44.1 % (PL → TS, band −40…−20), etomidate −3.7 → −15.3 %. Class III + propofol (the old safeguard, now a
+record): nadir 26.4 → 2.5 mmHg; s < 35 113 → 808, s < 30 57 → 806; min CoPP 21.6 → 0.1; min kIsch 0.814 → 0.000; recovery →
+arrest at +86 s (pulseless sinus, agonal +240 s, asystole +390 s) — a CLIFF (MAP 38.7 at +30 s, 20.4 at +60, 8.0 at +90).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/baroreflex.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/circ/profile.ts packages/engine-core/test/engine/fu8-tonic.test.ts

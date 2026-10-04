@@ -103,6 +103,18 @@ export interface BaroGains {
    * catecholamines, instead of a reflex that stays saturated through the whole arrest (1 = intact).
    */
   brainF?: number;
+  /**
+   * FU-8 (C1, research/19; Part B, for Ali's review): the TONIC sympathetic share of resting SVR and contractility
+   * (0–1). At rest the delivered output is 1 and nothing changes; when an anaesthetic lowers the delivered output
+   * (`outF` < 1) it removes this share of the RESTING tone too, not only the reflex response — so a patient whose
+   * resting pressure depends on sympathetic tone (elderly, hypertensive, heart failure: MSNA rises with each) falls more.
+   * Removed in proportion to the DELIVERED output `o = outF × brainF`, so brainstem hypoperfusion withdraws it through the
+   * existing brainF path; the share itself is a profile constant (research/23 §6.3 note 4).
+   * DECISION (research/23 §6.3 note 3): the venous effectors (`dV0`, `cSvF`) carry NO tonic share in FU-8 — only SVR and
+   * contractility (as prototyped and agreed, A23). The resting venous tone is also sympathetically maintained, so a later
+   * stage (FU-12's hub) that gives `dV0`/`cSvF` a tonic share ADDS a term here; it changes no FU-8 number by omission.
+   */
+  tonic?: number;
 }
 
 export interface BaroOut {
@@ -120,6 +132,8 @@ export function createBaro(set: number, cpSet = Number.NaN): BaroState {
 }
 
 const clampSat = (x: number) => Math.min(SYMP_SAT, Math.max(-SYMP_SAT, x));
+/** FU-8 (C1): the contractility share of the tonic sympathetic support, relative to the SVR share [ENG]. */
+export const TONIC_EES_SHARE = 0.5;
 
 /** One 10 Hz step with the current mean arterial pressure; returns the effector factors. */
 export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number): BaroOut {
@@ -152,8 +166,8 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
     hrF: 1 + o * clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
-    svrF: 1 + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp),
-    eesF: 1 + o * clampSat(G_C * s * betaC * b.es),
+    svrF: 1 - (g.tonic ?? 0) * (1 - o) + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp), // FU-8 (C1): − the tonic share removed
+    eesF: 1 - TONIC_EES_SHARE * (g.tonic ?? 0) * (1 - o) + o * clampSat(G_C * s * betaC * b.es),
     dV0: o * Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
     cSvF: 1 - o * clampSat(G_CSV * s * b.es) * 0.5,
   };
