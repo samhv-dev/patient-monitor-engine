@@ -1187,7 +1187,7 @@ Replace with:
 ```
 
 In `.gitignore`, add `.audit-drugs/` next to the other audit output folders.
-- [ ] **Step 4 — run it on the untouched tree (the "before" column).**
+- [x] **Step 4 — run it on the untouched tree (the "before" column).**
 ```
 npx -y pnpm@9.15.9 run audit:drugs DI-69 DI-71 DI-72 DI-88 DI-63 DI-03 DI-01d DI-89 DI-04a DI-05 DI-41 DI-21 DI-80 DI-57 DI-83 DI-13a DI-61 DI-14c DI-23 DI-19 DI-70 DI-51 DI-25 DI-90 DI-37c DI-42 DI-45 DI-60 DI-76 DI-73
 node --experimental-strip-types scripts/audit-drugs/report.ts > docs/gates/fu-7/audit-before.md
@@ -1198,7 +1198,7 @@ Record both in the gate note; a cell whose FU-4/FU-6 fix did NOT land is reporte
 - [x] **Step 5 — a typecheck guard.** `npx -y pnpm@9.15.9 -r typecheck` must stay clean (the scripts are outside the
 workspace packages; if the root `tsconfig` picks them up, add `scripts/audit-drugs` to its `exclude` exactly as
 `scripts/audit-physiology` is handled).
-- [ ] **Step 6 — commit.** `git add -A && git commit -m "chore(fu-7): adopt the drug-interaction audit as pnpm run audit:drugs"`
+- [x] **Step 6 — commit.** `git add -A && git commit -m "chore(fu-7): adopt the drug-interaction audit as pnpm run audit:drugs"`
 (trailer `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`), then `git push -u origin fu-7-drug-layer`.
 
 ---
@@ -1766,7 +1766,7 @@ Expected: the 5 new cases pass. Measured by the RH-amendment fixer on `origin/ma
 applied: 5 / 5, with `test/l2/pk` + `test/l2/endo` at 29 files / 155 tests, 154 passed. The one failure is Task 10 Step 5b's
 `adapters.test.ts` key list, which was not applied on that tree because of the stale anchor that "Find-block
 verification → RH/ET amendment" names.
-- [ ] **Step 4 — the engine cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-63 DI-71 DI-72 DI-88 DI-69`.
+- [x] **Step 4 — the engine cells.** `npx -y pnpm@9.15.9 run audit:drugs DI-63 DI-71 DI-72 DI-88 DI-69`.
 Expected (first writer, before Step 2b): atropine peak 70 s, glycopyrrolate peak 140 s, naloxone reversal 40 s (band
 30–180 → **PL**), flumazenil DI rise 0 → +12 after Task 3, midazolam DI nadir 115 s, ketamine LOC 20 s. **With Step 2b
 (measured by the third fixer, "Prototype — second fixer"):** atropine peak **130 s** (10–180 ✓), glycopyrrolate 140 s,
@@ -1798,7 +1798,7 @@ is 16.6 min against t½β 2.15 h. So halving or thirding clearance moves the 60-
 MacGilchrist's "clearance halved, t½ doubled" is a plasma elimination-phase statement. RH's 60-min band is RH's own
 reading of it. φ comes from the sourced t½β and is not an adjustable gain. Reaching 1.3 would mean replacing midazolam's
 sourced half-life with a fitted one (R45). Recorded in "Expected `it.fails`" as a cell gap and put to Ali (Q15).
-- [ ] **Step 5 — commit.** `feat(7g): zero-slope onset for the fallback effect curve (R51 addendum 19)`, push.
+- [x] **Step 5 — commit.** `feat(7g): zero-slope onset for the fallback effect curve (R51 addendum 19)`, push.
 
 ---
 
@@ -6737,7 +6737,7 @@ and `ledger.ts > docs/gates/fu-7/ledger-after.md`. Diff the verdict counts again
 into the gate note. **Target (from research/14 §4's FU-7/7g/7f/7c rows):** DI-69, 71, 72, 88, 63, 04a, 05, 41, 23, 70,
 19, 13a, 15, 61, 14c, 57, 25, 90, 37c, 51, 42, 45, 60, 76, 08, 21, 03, 89, 01d move to PL, except the declared
 `it.fails` (DI-15 added by review F20; DI-85 joins case 7's CSHT guards).
-- [ ] **Step 6 — commit.** `test(fu-7): the drug-layer matrix cells as engine tests; console rows`, push.
+- [x] **Step 6 — commit.** `test(fu-7): the drug-layer matrix cells as engine tests; console rows`, push.
 
 ---
 
