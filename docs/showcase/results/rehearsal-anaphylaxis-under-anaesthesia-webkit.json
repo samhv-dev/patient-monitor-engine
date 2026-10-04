@@ -5,7 +5,7 @@
   "base": "http://127.0.0.1:8700",
   "steps": [
     {
-      "simT": 3.7,
+      "simT": 3.5,
       "what": "loaded \"Anaphylaxis under anaesthesia\" at ×4",
       "state": "stable",
       "hr": null,
@@ -15,52 +15,52 @@
       "rr": null
     },
     {
-      "simT": 61,
+      "simT": 60.2,
       "what": "reaction started (automatically, 60 s after load)",
       "state": "anaphylaxis",
       "hr": 74,
-      "art": "119.4/82.8 (96.3)",
+      "art": "119.3/82.9 (96.3)",
       "spo2": 99,
       "etco2": 34,
       "rr": 12
     },
     {
-      "simT": 179.2,
+      "simT": 179.5,
       "what": "≈ 2 min into Anaphylaxis",
       "state": "anaphylaxis",
-      "hr": 136,
-      "art": "95.3/70.1 (77.3)",
+      "hr": 135,
+      "art": "95.6/70.3 (77.5)",
       "spo2": 99,
-      "etco2": 31,
+      "etco2": 32,
       "rr": 12,
       "hrMax100to118": 135
     },
     {
-      "simT": 182.9,
+      "simT": 183.1,
       "what": "pressed \"Give epinephrine 100 µg\"",
       "state": "treatedByButton",
-      "hr": 140,
-      "art": "98.2/71.5 (79.2)",
+      "hr": 142,
+      "art": "98.2/72 (79.7)",
       "spo2": 99,
       "etco2": 31,
       "rr": 12
     },
     {
-      "simT": 191.4,
+      "simT": 191.2,
       "what": "systolic recovered",
       "state": "treatedByButton",
       "hr": 173,
-      "art": "117.4/87.1 (96.6)",
+      "art": "116/86.4 (95.6)",
       "spo2": 99,
       "etco2": 31,
       "rr": 12
     },
     {
-      "simT": 300.5,
+      "simT": 301.3,
       "what": "2 min after epinephrine",
       "state": "treatedByButton",
-      "hr": 111,
-      "art": "119.3/88 (97.5)",
+      "hr": 110,
+      "art": "121.2/87.8 (98.2)",
       "spo2": 99,
       "etco2": 33,
       "rr": 12
@@ -78,9 +78,9 @@
     "running": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nAfter 1 min in this state or you press \"Start the reaction\": Anaphylaxis\nStart the reaction\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)",
     "alarmButtonAfterLoad": "Alarms off",
     "sessionBar": "F 50 y 70 kg MODELED Anaphylaxis under anaesthesia: Ventilated, stable 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
-    "afterReaction": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n00:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nEpinephrine given: Epinephrine given\nYou press \"Give epinephrine 100 µg\": Epinephrine given\nGive epinephrine 100 µg\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterEpinephrine": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n01:59\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "afterReaction": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n00:59\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nAfter 1 min in this state or you press \"Start the reaction\": Anaphylaxis\nStart the reaction\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "afterEpinephrine": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Anaphylaxis under anaesthesia\nChoose another scenario\nMinutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.\nVentilated, stable\nAnaphylaxis\nEpinephrine given\nEpinephrine given\nTime in state\n02:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise anaphylaxis: hypotension, tachycardia, bronchospasm\nGive epinephrine 50–100 µg IV early and repeat as needed\nGive fluid for the capillary leak\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
@@ -98,7 +98,7 @@
     {
       "what": "systolic after epinephrine",
       "expected": "> 110 within 60 s sim",
-      "observed": "11.8 s",
+      "observed": "11.4 s",
       "pass": true
     },
     {
