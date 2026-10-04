@@ -61,7 +61,7 @@ const SLOW = [
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
-  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs (SLOW_A, or slow-c if FU-9 created it — Task A0 Step 6)
+  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs, spread over the four groups by measured time (SLOW_A/C/D below; the rest is slow-b)
   'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
 ];
 /**
@@ -74,6 +74,8 @@ const SLOW_A = [
   // (1438 s), the engine pipeline (196), the organ soak (207) and FU-8's files (385) — 2226 s ≈ 37 min.
   'test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts',
   'test/engine/fu8-*.test.ts', // FU-8: its files join slow-a
+  // FU-10 Gate: by measured serial time (local): adrenal 101 s, mh-trigger 43 s; fu10-thresholds (334 s) stays in slow-b
+  'test/engine/fu10-adrenal.test.ts', 'test/engine/fu10-mh-trigger.test.ts',
 ];
 /**
  * FU-9 Gate (CI amendment 5): slow-a ran 70 min on CI (4191 s of tests) on PRs #29–#31 — FU-6's files had joined it
@@ -102,6 +104,7 @@ const SLOW_D = [
   'test/engine/resp-child-baseline.test.ts',
   'test/engine/resp-mechanics.test.ts', // Stage 7k (58 s)
   'test/engine/vagal-events.test.ts', // FU-4 G7, from slow-b by time (140 s)
+  'test/engine/fu10-insulin-omission.test.ts', // FU-10 Gate: by measured serial time (local 231 s)
 ];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus the other groups, and the difference cannot be taken by STRING comparison —
 // the glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
@@ -117,7 +120,8 @@ const SLOW_C = [
   'test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts',
   'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
   'test/engine/thermal-warmer.test.ts', // FU-9 Gate: from slow-b by time (136 s)
-  'test/engine/fu10-*.test.ts', // FU-10: its files join slow-c (Task A0 Step 6, ruling R-12: FU-9 created slow-c)
+  // FU-10 Gate: by measured serial time (local, 843 s for the six files): insulin-dextrose 100 s, fever 34 s
+  'test/engine/fu10-insulin-dextrose.test.ts', 'test/engine/fu10-fever.test.ts',
 ];
 const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p));
 const set = process.env.PME_TEST_SET;
