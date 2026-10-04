@@ -110,7 +110,10 @@ export type ExtraEvent =
       rhythm?: { id: RhythmId; rateBpm: number }; // FU-2: the engine's running rhythm (absent from a host-synthesised state)
     }
   | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
-  | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] };
+  | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
+  /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
+   *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
+  | { type: 'timeline'; t: SimSeconds; tick: Tick };
 /** Brief §7.3 `EngineEvent` as it travels on the wire. */
 export type WireEvent = EngineEvent | ExtraEvent;
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;

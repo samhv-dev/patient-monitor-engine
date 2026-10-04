@@ -35,7 +35,11 @@ export class Link {
   constructor(ctl: ControllerSession, transport: ManagedTransport, host: AppSession | null = null) {
     this.ctl = ctl;
     this.host = host;
-    host?.onMount(() => this.conditions.clear()); // a new body (restart, scenario) starts with none
+    host?.onMount(() => {
+      // a new body (restart, scenario) starts with no acute events and no onsets in progress (their t0 was on the old timeline)
+      this.conditions.clear();
+      this.ramps.clear();
+    });
     this.offs = [
       transport.onMessage((m: WireMessage) => {
         if (m.kind !== 'event') return;

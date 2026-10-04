@@ -68,6 +68,18 @@ export class ScenarioView {
     return false;
   }
 
+  /** A new timeline (the host's engine was replaced): no scenario runs until the next `load`. */
+  reset(): void {
+    if (this.doc) this.docVersion++;
+    this.doc = null;
+    this.stateId = null;
+    this.enteredT = 0;
+    this.paused = false;
+    this.pausedAt = null;
+    this.pausedTotal = 0;
+    this.history = [];
+  }
+
   current(): ScenarioState | null {
     return this.doc?.states.find((s) => s.id === this.stateId) ?? null;
   }

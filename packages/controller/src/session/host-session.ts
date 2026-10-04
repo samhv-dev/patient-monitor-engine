@@ -147,6 +147,23 @@ export class HostSession {
     this.broadcast({ kind: 'event', body });
   }
 
+  /**
+   * The target's engine was replaced (patient restart, scenario load): sim time starts again. The old timeline's queued
+   * events go out first, then a `timeline` event every peer restarts its clock on (a controller's time is otherwise
+   * monotonic, so without it the session clock froze at the old high-water time — showcase rehearsal 2026-10-04).
+   * Per-timeline host state (stage groups, set targets, the scenario run) ends with the old engine.
+   */
+  newTimeline(): void {
+    this.flush();
+    this.groups.clear();
+    this.targets.clear();
+    this.sticky.delete('scenario.load');
+    this.sticky.delete('scenario.run');
+    const { tick, simT } = this.o.target.now();
+    this.queue({ type: 'timeline', t: simT, tick });
+    this.flush();
+  }
+
   /** Emit a `state` event (brief §7.3). Target-derived until the engine emits its own (engine request E1). */
   emitState(): void {
     if (this.engineState) return;
