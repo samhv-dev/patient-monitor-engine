@@ -75,8 +75,11 @@ describe('kidney (Pulse-ported haemodynamics + tables §5.2 output)', () => {
   it('calibrated on the healthy reference, settled at the start: a patient who starts in shock is oliguric at t = 0 (no NaN)', () => {
     const s = createRenal({ ...BASE, map: 55, cvp: 12, coLpm: 3.5 }, W);
     expect(s.p.gfrSet).toBeCloseTo(125, 0);
-    expect(s.gfr).toBe(0);
-    expect(s.uopMlMin).toBe(0);
+    // FU-9 H2 (E-FU9-4): with filtration equilibrium the oncotic pressure at zero filtration is the AFFERENT one (27.7, the
+    // mean 32 only at the resting FF), so a shocked kidney still filters a little: GFR 18 (was exactly 0), urine 0.03
+    // mL/kg/h. The property — oliguric at t = 0, calibrated on the healthy reference — is asserted, not the zero.
+    expect(s.gfr).toBeLessThan(0.2 * s.p.gfrSet);
+    expect((s.uopMlMin * 60) / W).toBeLessThan(0.05);
     stepRenal(s, { ...BASE, map: 55, cvp: 12, coLpm: 3.5 }, 1);
     expect(Number.isFinite(s.uopMlMin)).toBe(true);
   });

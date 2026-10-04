@@ -12,8 +12,8 @@ import { brainParams, createBrain, giveOsmotherapy, stepBrain, type BrainInputs,
 import { BRAIN_DT_S, ICP_THRESHOLD, MANNITOL_MOSM_PER_G, NACL_MOSM_PER_G } from '../brain/params.ts';
 import { icpSample } from '../brain/wave.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
-import { createLiver, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
-import { createRenal, giveMannitolRenal, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
+import { createLiver, hbfFactor, lacProdBasal, stepLiver, type LiverInputs, type LiverState } from '../liver/liver.ts';
+import { createRenal, expansionFactor, giveMannitolRenal, mannitolExcretionGMin, stepRenal, uopOver, type RenalInputs, type RenalState } from '../renal/model.ts';
 import { OLIGURIA_ML_KG_H, RENAL_REF_CO_L_KG, UOP0_ML_KG_H } from '../renal/params.ts';
 import { respBreathU, type RespState } from '../resp/pipeline.ts';
 import { applyOrganEffects, createEffects, type EffectsState } from './effects.ts';
@@ -70,11 +70,12 @@ function brainDrugs(v: OrganView): BrainDrugs {
   return v.anaesthesia === 'general' ? GA_FALLBACK : NO_DRUGS;
 }
 const brainIn = (v: OrganView): BrainInputs => ({
-  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v),
+  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v), osm: v.osm, // FU-9 F11
 });
 const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
-  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis,
+  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, hct: (3 * v.hb) / 100, tempC: v.tempC, // FU-9 H1, H2, H10
+  ...(v.mannitolMmol !== null ? { mannitolMmol: v.mannitolMmol } : {}), // FU-9 H8: 7c's pool
   ...(v.drugs.furoCe !== undefined ? { furoCe: v.drugs.furoCe } : {}),
 });
 function liverIn(os: OrgansState, v: OrganView): LiverInputs {
@@ -82,6 +83,7 @@ function liverIn(os: OrgansState, v: OrganView): LiverInputs {
   return {
     coLpm: v.coLpm, co0Lpm: os.co0, bvRel: v.bvRel, alphaE: Math.min(1, v.drugs.alphaNe / ALPHA_E_FULL), volatileMac: v.drugs.volatileMac,
     tempC: v.tempC, gfrRel: os.kidney.gfrRel, do2MlKgMin: do2, ...(v.hbfRel !== null ? { hbfRel: v.hbfRel } : {}),
+    outflowMmHg: Math.max(v.cvp, os.iap), // FU-9 H3
   };
 }
 
@@ -91,7 +93,7 @@ function nominalView(l1: L1State, w: number): OrganView {
   const dbp = l1Target(l1, 'dbp', 0);
   return {
     map: dbp + 0.4 * (sbp - dbp), pp: sbp - dbp, cvp: l1Target(l1, 'cvp', 0), coLpm: (5.6 * w) / 70, paco2: 40, pao2: 95, sao2: 0.97,
-    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
+    tempC: l1Target(l1, 'tempCore', 0), hb: 14, albuminGL: 42, bvRel: 1, osm: null, demandRel: 1, mannitolMmol: null, hbfRel: null, lactate: null, gluconate: 0, anaesthesia: 'none',
     pawExcessCmH2O: 0, drugs: readDrugView({}), circ: false, blood: false,
   };
 }
@@ -165,21 +167,29 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
  *  carries the urine ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition);
  *  below it the balance is neutral, as in 7c's fallback (no retention term). Reporting the whole urine drained a resting
  *  patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band ±0.02). */
-function renalSeam(s: RenalState, gluconate: number): RenalSeam {
+function renalSeam(s: RenalState, gluconate: number, natriuresis = { share: 0, naMmolL: URINE_NA }, kRel = 1, mannitolMmolH = 0): RenalSeam {
   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
-  const na = lH * URINE_NA * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
-  const k = lH * URINE_K;
-  return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED } };
+  // FU-9 F1/R4: the expansion diuresis is NATRIURETIC (ANP): its share of the urine leaves at the plasma Na, not the
+  // basal urine's URINE_NA [ENG] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
+  const naUrine = natriuresis.share * natriuresis.naMmolL + (1 - natriuresis.share) * URINE_NA;
+  const na = lH * naUrine * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
+  // FU-9 F6: distal K secretion follows the plasma K (÷ the patient's own set point: at rest the basal excretion
+  // balances the basal intake) and the distal flow, sublinearly (Good & Wright 1979 Am J Physiol 236:F192; Young 1988
+  // Am J Physiol 255:F811) — so a loop diuretic's flow and a high K excrete more, and an oliguric kidney RETAINS the
+  // intake's K (negative: KCl kept, the AKI hyperkalaemia). Replaces URINE_K × the urine above basal.
+  const k0 = (UOP0_ML_KG_H * s.p.weightKg * URINE_K) / 1000; // mmol/h at the basal urine
+  const k = k0 * (kRel * Math.sqrt(Math.max(0, s.uopMlMin * 60) / (UOP0_ML_KG_H * s.p.weightKg)) - 1);
+  return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED, mannitol: mannitolMmolH } };
 }
 
 /** 7g's accepted boluses (R51 §3: 7d OBSERVES, never consumes): mannitol → brain water and osmotic diuresis; hypertonic
  *  saline → brain water (its sodium load is 7c's, from the same log entry). Other agents are not ours. */
-function observeDoses(os: OrgansState, doses: readonly OrganDose[]): void {
+function observeDoses(os: OrgansState, doses: readonly OrganDose[], blood7c = false): void {
   for (const d of doses) {
     if (d.agent === 'mannitol') {
       const g = d.amount / (MG_PER_G[d.amountUnit] ?? 1000);
       giveOsmotherapy(os.brain, 'mannitol', g * MANNITOL_MOSM_PER_G);
-      giveMannitolRenal(os.renal, g);
+      if (!blood7c) giveMannitolRenal(os.renal, g); // FU-9 H8: with 7c the plasma pool is 7c's (the kidney reads it)
     } else if (d.agent === 'hypertonicSaline' && d.amountUnit === 'mL') {
       giveOsmotherapy(os.brain, 'hypertonicSaline', ((d.amount * (d.concentrationPct ?? 3)) / 100) * NACL_MOSM_PER_G);
     }
@@ -196,7 +206,14 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
   stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // with 7c its pool is authoritative (decision 12)
   if (core) {
     core.liver = os.liver.liverFn * os.liver.tempF; // function only: 7c multiplies its own hbfRel (addendum 14)
-    core.renal = renalSeam(os.renal, v.gluconate);
+    core.hbfFactor = hbfFactor(liverIn(os, v)); // FU-9 H3: the splanchnic/outflow factor 7c multiplies with CO/CO0
+    const naPl = core.out?.na;
+    const natri = { share: 1 - 1 / expansionFactor(v.bvRel), naMmolL: typeof naPl === 'number' && naPl > 0 ? naPl : URINE_NA }; // FU-9 F1/R4
+    const kSet = core.so?.set?.k;
+    const kNow = core.out?.k;
+    const kRel = typeof kSet === 'number' && typeof kNow === 'number' && kSet > 0 ? kNow / kSet : 1; // FU-9 F6
+    const manH = mannitolExcretionGMin(os.renal, renalIn(os, v)) * 60 * MANNITOL_MOSM_PER_G; // FU-9 H8: mmol/h cleared from 7c's pool
+    core.renal = renalSeam(os.renal, v.gluconate, natri, kRel, manH);
   }
   if (os.num.accN > 0) {
     os.num.sec.push(os.num.acc / os.num.accN);
@@ -244,7 +261,7 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
 
 export function advanceOrgans(os: OrgansState, ctx: OrgansCtx, mEnd: number, write: (ch: OrganChannel, m: number, v: number) => void): void {
   const tEnd = mEnd / ICP_RATE;
-  observeDoses(os, readDrugView(ctx).doses); // once per engine pass: 7g lists each accepted bolus for exactly one pass
+  observeDoses(os, readDrugView(ctx).doses, bloodCore(ctx.blood) !== null); // once per engine pass: 7g lists each accepted bolus for exactly one pass
   while (os.k * BRAIN_DT_S <= tEnd + 1e-9) {
     const t = os.k * BRAIN_DT_S;
     if (os.k > 0) {
