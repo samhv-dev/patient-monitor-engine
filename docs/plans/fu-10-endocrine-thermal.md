@@ -2671,3 +2671,23 @@ both reported, not tuned. (2) The surgical onset (2.27 h) depends on `PREP_EVAP_
 ≈ 15–18 min of slow-a; without `slow-c` the Gate's stop rule will probably trigger. (4) B1, B3–B7 are unprototyped
 because their predecessors own the files. (5) The ET runner's instructor-MH rigs are no longer "fixed MV" after FU-6
 (a Request to the auditor); A1's test pins the MV with rocuronium.
+
+---
+## Base drift (executor, 2026-10-04; Part A executed on `origin/main` `5559533` + the RESUME commit `bd5880b`)
+
+Since the plan's base `1b8bdd3`: Stage 9 (PR #29) and FU-9 Parts A + C (PR #31) merged; FU-7 had not. Task A0's mechanical
+check of every Part A block on this base: **71 find/replace + 14 creates, 1 block drifted, 6 chained (as marked)**.
+
+| Block | Drift | What was done |
+|---|---|---|
+| A7, `l2/endo/adapters.ts` `BloodLike` `core?: {…}` type line | FU-9 A4 added `sigma?: number` to `fl` (the exact merged form this task's Overlap line gives) | adapted: the replacement keeps `sigma?: number` and adds FU-10's second line unchanged |
+| A0 Step 6 / A1 `vite.config.ts` (R-12) | FU-9 created `slow-c` AND a fourth group `slow-d` (four groups at 35–37.6 min each on CI) | the `fu10-*` glob joined SLOW; at the Gate the six files were spread over the four groups by measured serial time instead of all into one group (thresholds → slow-b, insulin-omission → slow-d, adrenal + mh-trigger → slow-a, insulin-dextrose + fever → slow-c) |
+
+Numbers that moved with the base (no block change): A3 draped onset 6.30 → **6.28 h**; A6 adrenal-insufficient surgical MAP
+−4.2 → **−3.9** (its `it.fails` title re-stated to the measured value); A7 omitted-insulin K⁺ 6.05 → **6.00**; A4/A7 combined-row
+K⁺ at 60 min −0.96 → **−0.93**. A8's titles carried the pre-A3 cores (36.86 / 36.58); measured on the Part A tree **36.60 / 36.34**
+(the plan's own Prototype results predict exactly these) — titles re-stated.
+
+**Plan ordering defect (not drift):** Task A4's engine test holds the combined-row K⁺ band (−1.0 to −0.6), but with A1–A4
+alone the fall is −1.15; the band is reached only with A7's insulinopenia term (−0.93). The engine file was therefore
+committed with Task A7; A4's commit carries the source and the l2 test (glucose +11.17 / −2.68 seen passing at A4).
