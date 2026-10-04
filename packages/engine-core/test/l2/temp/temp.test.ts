@@ -34,13 +34,18 @@ describe('two-compartment heat model', () => {
     expect(Math.max(...last) - Math.min(...last)).toBeLessThan(0.1);
   });
 
-  it('neuraxial: smaller redistribution and no plateau (still falling below 34.5 °C in hour 8)', () => {
+  // FU-10 E3 (E-FU10-3, research/14 ET-04): "no plateau" meant no VASOCONSTRICTION plateau — the block abolishes the
+  // legs' vasoconstriction, so the core keeps falling through the GA plateau's hours; it now stops only where shivering
+  // ABOVE the block starts, below the lowered shivering threshold (35.5 °C; Kurz 1993). Before FU-10 the neuraxial state
+  // took the GA thresholds (shivering 33.5 °C) and fell to 33.47 °C at 8 h with no shivering; now 35.22 °C, shivering.
+  it('neuraxial: smaller redistribution, no vasoconstriction plateau; the fall stops only below the lowered shivering threshold', () => {
     const st = createTemp(36.8, 70);
     st.anaesthesia = 'neuraxial';
     const tc = run(st, 0, 8 * 3600);
     expect(36.8 - tc[59]!).toBeLessThan(1.0);
-    expect(tc[419]! - tc[479]!).toBeGreaterThan(0.1); // still falling in hour 8, where GA has plateaued
-    expect(tc[479]!).toBeLessThan(34.5);
+    expect(tc[59]! - tc[119]!).toBeGreaterThanOrEqual(0.3); // hour 2: still the linear phase (0.50 °C/h)
+    expect(tc[479]!).toBeLessThan(35.5); // below the shivering threshold 36.0 − 0.5
+    expect(st.out.shiverW).toBeGreaterThan(0); // shivering above the block defends it
   });
 
   it('forced-air warming adds +0.5–1 °C/h against the GA linear phase', () => {

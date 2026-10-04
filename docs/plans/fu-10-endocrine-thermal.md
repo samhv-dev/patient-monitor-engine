@@ -780,7 +780,7 @@ Sessler, Schroeder, Kurz, Anesth Analg 1993;77:721–726). Sedation still arrive
 the core is below the lowered shivering threshold with shivering above the block. The old test pinned the GA thresholds
 the neuraxial state took (the defect).
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/l2/thermal/params.ts`, find:
 
@@ -982,9 +982,9 @@ describe('FU-10 E3: neuraxial thermoregulation (Sessler 2000/2008; Kurz 1993; Ma
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/temp test/engine/thermal-warmer.test.ts` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-04 ET-01a ET-02 ET-29 ET-30`.
-- [ ] **Commit and push.** `git add -A packages/engine-core && git commit -m "feat(7e): a neuraxial block blocks its effectors and lowers the cold-defence thresholds (FU-10 E3, E-FU10-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/thermal test/l2/temp test/engine/thermal-warmer.test.ts` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-04 ET-01a ET-02 ET-29 ET-30`.
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "feat(7e): a neuraxial block blocks its effectors and lowers the cold-defence thresholds (FU-10 E3, E-FU10-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 

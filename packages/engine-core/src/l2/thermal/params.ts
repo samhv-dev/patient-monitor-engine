@@ -11,10 +11,21 @@ export const PERIPH_GRADIENT_C = 4.3; // awake core − periphery at 21 °C ambi
 export const AMBIENT_C = 21; // operating theatre [ENG]
 export const GA_KCP = 3; // k_cp × 2–4 once vasodilated (brief §4.6)
 export const GA_M = 0.8; // metabolic heat −15–20 % under GA
-export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG]
+export const NEURAXIAL_KCP = 1.8; // redistribution 0.5–1 °C, no plateau (research 03 §6.2) [ENG] — FU-10 E3: no longer read (NEURAXIAL_BLOCK_FRAC)
 export const NEURAXIAL_H = 1.5; // vasodilated skin below the block loses more heat [ENG]
 export const VASOCONSTRICT_C = 34.8; // GA vasoconstriction logistic centre (tables 34.5 ± 0.2; plateau 34.6–34.8) [ENG]
 export const VASOCONSTRICT_KCP = 0.5; // k_cp × once constricted [ENG]
+/**
+ * FU-10 E3 — neuraxial thermoregulation (Sessler DI, Anesthesiology 2000;92:578 and 2008;109:318; Kurz A, Sessler DI,
+ * Schroeder M, Kurz M, Anesth Analg 1993;77:721–726): the block abolishes vasoconstriction AND shivering below its level
+ * only; centrally the patient keeps an unsedated patient's thresholds, both cold-defence thresholds ≈ 0.5 °C lower (the
+ * warm, vasodilated legs are "felt" as warm — orchestrator ruling R-7). Redistribution is then smaller than general
+ * anaesthesia's (Matsukawa T et al., Anesthesiology 1995;83:961: epidural −0.8 °C in hour 1 [VERIFY the value]).
+ * Sedation adds 7f's depth. NEURAXIAL_BLOCK_FRAC: the fraction of the vasomotor/shivering effector mass below a T10 block
+ * [ENG: legs + lower trunk ≈ ½].
+ */
+export const NEURAXIAL_BLOCK_FRAC = 0.5;
+export const NEURAXIAL_THR_SHIFT_C = -0.5;
 export const MH_ONSET_S = 900; // MH reaches its full activity over 15 min (tables 5–30 min) [ENG]
 export const MH_VCO2_FACTOR = 3; // VCO2 × 3 at activity 1 (tables × 2–5; × 5 passes the 150 mmHg EtCO2 limit) [ENG]
 export const SENSOR_TAU_S = 5; // probe time constant < 10 s (research 03 §6.1)

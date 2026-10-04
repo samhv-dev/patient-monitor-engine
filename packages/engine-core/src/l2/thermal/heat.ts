@@ -14,8 +14,8 @@ import {
 } from './environment.ts';
 import { mhActivity, stepMh, type MhState } from './mh.ts';
 import {
-  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_HEAT_X, NEURAXIAL_H,
-  NEURAXIAL_KCP, PERIPH_GRADIENT_C, T_NORMAL, VASOCONSTRICT_KCP,
+  AMBIENT_C, CORE_FRACTION, EMERGE_TAU_S, GA_KCP, GA_M, HEAT_CAP_J_KG_C, M_AWAKE_W_70, MH_HEAT_X, NEURAXIAL_BLOCK_FRAC, NEURAXIAL_H,
+  NEURAXIAL_THR_SHIFT_C, PERIPH_GRADIENT_C, T_NORMAL, VASOCONSTRICT_KCP,
 } from './params.ts';
 import { shiverW, sweatW, thresholds, vasoDilation, type Thresholds } from './thresholds.ts';
 
@@ -114,15 +114,21 @@ export function createThermal(tCore: number, effKg: number, heightCm = 175): The
   return st;
 }
 
-/** Current thresholds (depth, set point; the shivering-only shift applied). */
+/** Current thresholds (depth, set point; the drugs' shivering-only shift; a neuraxial block lowers both cold-defence
+ * thresholds — FU-10 E3, ruling R-7). */
 export function currentThresholds(st: ThermalState): Thresholds {
   const thr = thresholds(st.depth, st.setShift + st.feverShift);
-  return { ...thr, shiver: thr.shiver + st.shiverShift };
+  const nx = st.anaesthesia === 'neuraxial' ? NEURAXIAL_THR_SHIFT_C : 0;
+  return { ...thr, vaso: thr.vaso + nx, shiver: thr.shiver + st.shiverShift + nx };
 }
 
+/** FU-10 E3: the fraction of the effectors (vasomotor tone, shivering) a neuraxial block abolishes; 0 otherwise. */
+const blocked = (st: ThermalState): number => (st.anaesthesia === 'neuraxial' ? NEURAXIAL_BLOCK_FRAC : 0);
+
 function kcp(st: ThermalState, tc: number, thr: Thresholds): { k: number; f: number } {
-  if (st.anaesthesia === 'neuraxial') return { k: st.k0 * NEURAXIAL_KCP, f: 1 }; // no vasoconstriction below the block
-  const f = vasoDilation(tc, thr);
+  // FU-10 E3: below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
+  const b = blocked(st);
+  const f = b + (1 - b) * vasoDilation(tc, thr);
   return { k: st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f), f };
 }
 
@@ -142,7 +148,7 @@ function balance(st: ThermalState, t: number): ThermalOut {
   return {
     vasoF: f, kcp: k,
     metabolicW: basalW(st) + st.m0 * (st.extraX - 1),
-    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb),
+    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)), // FU-10 E3: no shivering below a block
     mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t),
     sweatW: sweatW(st.tc, thr, st.effKg),
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
@@ -156,9 +162,10 @@ function balance(st: ThermalState, t: number): ThermalOut {
 /** One step of dtS seconds (≤ 1 s). */
 export function stepThermal(st: ThermalState, t: number, dtS: number): void {
   // depth = max(7f's thermoDepth, the Stage 3 `thermal` flag's depth) (R51 addendum 16): a Stage 3 scenario that sets
-  // anaesthesia 'general' without drugs keeps its R39-7 course after 7f lands. Neuraxial: the thresholds of a sedated
-  // patient (decision 4: Stage 3's "no plateau" keeps shivering out of hour 8).
-  const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'none' ? 0 : 1);
+  // anaesthesia 'general' without drugs keeps its R39-7 course after 7f lands. Neuraxial (FU-10 E3): no central depth of
+  // its own — the block acts on the effectors below it (kcp, shivering) and lowers the shivering threshold; sedation
+  // reaches the thresholds through 7f's depth.
+  const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'general' ? 1 : 0);
   // induction is fast (drug onset); emergence follows the elimination of the agent (τ EMERGE_TAU_S) [ENG]
   st.depth = target >= st.depth ? target : target + (st.depth - target) * Math.exp(-dtS / EMERGE_TAU_S);
   st.warmLag += ((st.warming ? 1 : 0) - st.warmLag) * (1 - Math.exp(-dtS / FORCED_AIR_TAU_S));
@@ -210,6 +217,6 @@ export function upgradeThermal(st: ThermalState): ThermalState {
   const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70);
   return {
     ...fresh, tc: st.tc, tp: st.tp, ta: st.ta, anaesthesia: st.anaesthesia, warming: st.warming, mh: st.mh, sites: st.sites,
-    depth: st.anaesthesia === 'none' ? 0 : 1,
+    depth: st.anaesthesia === 'general' ? 1 : 0, // FU-10 E3: a neuraxial block has no central depth
   };
 }
