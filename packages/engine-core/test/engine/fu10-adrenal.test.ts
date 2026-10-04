@@ -35,9 +35,11 @@ describe('FU-10 E10/E13: etomidate and adrenal insufficiency', { timeout: 900_00
     expect(minA).toBeLessThan(minN - 2);
     expect(pe(a) / pe(n)).toBeLessThanOrEqual(0.8);
   });
-  // R45: the permissive term ([ENG] 0.25) is not tuned to the band; the mineralocorticoid volume deficit is not modelled
-  // in Part A, and hydrocortisone (FU-7 D13 / Task B7) is what reverses it.
-  it.fails('adrenal insufficiency: surgical MAP ≥ 5 mmHg below normal (research/14 ET-15a) — measured −3.9 (−4.2 on the plan base 1b8bdd3)', async () => {
+  // R45: the permissive term ([ENG] 0.25) is not tuned to the band. Before FU-7 this was an `it.fails` (measured −3.9;
+  // −4.2 on the plan base 1b8bdd3). FU-7's stimulus surge (Task 10, addendum 25) now carries the incision's pressor
+  // response, and the adrenal-insufficient patient's lower vasopressor responsiveness answers it less (ET-15a: healthy
+  // surgical MAP 87.4 → 96.5, adrenal-insufficient 83.3 → 88.2), so the band is met on the merged tree.
+  it('adrenal insufficiency: surgical MAP ≥ 5 mmHg below normal (research/14 ET-15a) — measured −8.1 with FU-7 (−3.9 before)', async () => {
     const a = await aiArm(true);
     const n = await aiArm(false);
     expect(mean(a, T + 900, T + 1200) - mean(n, T + 900, T + 1200)).toBeLessThanOrEqual(-5);
