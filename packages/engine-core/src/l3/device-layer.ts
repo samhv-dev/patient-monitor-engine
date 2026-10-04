@@ -82,6 +82,9 @@ export interface DeviceHost {
   setRhythm(id: RhythmId, opts: RhythmOpts): void;
   setHr(value: number, ramp?: Ramp): void;
   setL1(v: StateVar, value: number, ramp?: Ramp): void;
+  /** FU-7 (addendum 23): the state a shock lands in (7g's antiarrhythmic occupancy, 7c's K/pH, 7a's continuous CPP,
+   * the arrest clock, the core temperature). Optional: a host that does not provide it keeps the state-free table. */
+  shockState?: () => { antiarrhythmicU?: number; kEcg?: number; ph?: number; cppMmHg?: number; arrestS?: number; tempC?: number };
 }
 
 const defibSpec = (d: DeviceState): DefibSpec => d.alarms.profile.defib ?? FALLBACK_DEFIB;
@@ -193,7 +196,10 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
   if (d.defib.preselect !== null) outcome = d.defib.preselect;
   else {
     const vfDurationS = d.inputs.vfSince === null ? 0 : t - d.inputs.vfSince;
-    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak }, rng);
+    // FU-7 (addendum 23, E-FU7-6): the shock's state context, duck-typed from the host (absent = the pre-FU-7 table);
+    // the rhythm id selects the cardioversion curve (DV amendment)
+    const st = host.shockState?.() ?? {};
+    outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
   }
   d.pending = null;
   switch (outcome) {

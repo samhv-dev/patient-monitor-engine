@@ -7,7 +7,7 @@ import { brainstemOutF, createBaro, K_PP, stepBaro, V0_RECRUIT_MAX_ML_KG, type B
 import { createOut, evaluate, S, stepCirc, type CircDrive, type CircOut, type CircParams } from './circuit.ts';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus, type DrugEffect, type DrugId } from './drugs.ts';
 import { betaBlunt } from '../pk/pd.ts'; // Stage 7g
-import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, K_PVR_CO2, P_PL0 } from './params.ts';
+import { ATRIAL_DELAY_S, ATRIAL_T_S, DYSSYNC, H_S, HIST_SVR, HIST_V0, K_PVR_CO2, P_PL0 } from './params.ts';
 import { DEFAULT_PROFILE, resolveProfile, type CircProfile, type ResolvedProfile } from './profile.ts';
 import { stabilise, type Stabilised } from './stabilise.ts';
 import { createCoronary, G_ISCH, type CoronaryState } from './coronary.ts';
@@ -161,6 +161,8 @@ export interface CircModelState {
     pvrLung?: number; pvrLungL?: number; pvrLungR?: number; // R46 (7b)
     rSysF?: number; hrF?: number; // R48 (7d, Cushing response): systemic resistance and HR set-point multipliers
     endoHrF?: number; endoSvrF?: number; endoEesF?: number; endoDV0Frac?: number; // R49 (7e endocrine stress response)
+    surgeF?: number; // FU-7 (addendum 22; ruling 1): 7e's NOCICEPTIVE set-point factor, multiplied into FU-4's setF
+    histamine?: number; // FU-7 (addendum 24 / audit D15): 7g's bus.airway.histamine, 0–1 — vasodilation and venodilation
     endoHumDV0Frac?: number; // FU-4 F2(a) (7e): the humoral arm's venous recruitment, fraction of blood volume (− = venoconstriction)
     endoHumSvrF?: number; // FU-4 G-FU4-1 (7e): the humoral arm's × on SVR, already inside endoSvrF
     kChem?: number; // 7c: blood-chemistry contractility multiplier (K, Ca, pH) on all four chambers, default 1
@@ -279,9 +281,17 @@ function control(m: CircModelState, env: CircEnv): void {
     de.vagalMs = (de.vagalMs ?? 0) + (d7.vagalMs ?? 0); // FU-4 G7/F10: the vagal RR increment is ADDITIVE (ms), already × (1 − muscarinic occupancy) by 7g
     de.muscBlock = d7.muscBlock ?? 0; // FU-4 G7: muscarinic occupancy — blocks the vagal limb and the stimulus/empty-ventricle events
   }
+  // FU-7 (addendum 24 / audit D15): histamine (morphine, atracurium, mivacurium) — vasodilation and venodilation with a
+  // reflex tachycardia that EMERGES from the pressure fall. Sizes [ENG; fit target: fast morphine 10 mg lowers SVR
+  // 10–20 % (M10 ch. 22) and MAP 8–25 % (T6.3), with HR +3 to +25 (DI-42's PL item)].
+  const hist = Math.min(1, Math.max(0, m.ext.histamine ?? 0));
+  if (hist > 0) {
+    de.svr *= 1 - HIST_SVR * hist;
+    de.v0Frac += HIST_V0 * hist;
+  }
   const w = m.weightKg / 70;
   const b = env.modeled
-    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF, brainF: brainstemOutF(m.ext.cbfRel) }, raTm)
+    ? stepBaro(m.baro, sensed, { gVagal: m.prof.gVagal * de.gv * (1 - (de.muscBlock ?? 0)), gSymp: m.prof.gSymp * de.gv, betaBlock: Math.min(0.95, m.prof.betaBlock + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlock)), betaBlockC: Math.min(0.95, m.prof.betaBlockC + (m.ext.betaBlockAdd ?? 0) * (1 - m.prof.betaBlockC)), hrGain: de.gvHr, weightScale: w, pinnedSet: m.mapSetPinned, outF: de.symp, setF: de.setF * (m.ext.surgeF ?? 1), brainF: brainstemOutF(m.ext.cbfRel) }, raTm) // FU-7 (addendum 22): the nociceptive surge rides FU-4's set-point path
     : { rrMs: 0, hrF: 1, svrF: 1, eesF: 1, dV0: 0, cSvF: 1 };
   const ch = env.modeled ? chemoFactors(m.chemo, m.prof.band) : { hrF: 1, svrF: 1 }; // Task 19
   const p = m.p;

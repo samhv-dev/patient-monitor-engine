@@ -38,6 +38,13 @@ export interface NeuroEnv {
   neuroglycopenia?: number;
   /** Stage 7e `cascade(th).macF` — MAC requirement × (−5 %/°C below 37; tables §5.3); 1 without 7e (request R-7f-8). */
   macF?: number;
+  /** FU-7 (D7): `resp.spont.rr` as committed by the previous pass (MODELED only — spontaneous OR ventilated; undefined
+   * in MANUAL and before the drive has run once). */
+  spontRr?: number;
+  /** FU-7 (addendum 24 / audit D12): 7c's `blood.out.mg` / `blood.out.iCa` (mmol/L) — ONE magnesium and ONE calcium
+   * state; undefined without 7c (the profile's mgMmolL is then the fallback). */
+  mgMmolL?: number;
+  iCaMmolL?: number;
 }
 
 export interface NeuroState {
@@ -55,6 +62,8 @@ export interface NeuroState {
   outputs: NeuroOutputs;
   /** Read by Stage 7e as ps.neuro.{antinoc, nmb, thermoDepth} (R51 §6; the 7e plan's Requests): mirrors of `outputs`. */
   antinoc: number;
+  /** FU-7 (R51 addendum 25): the OPIOID + lidocaine share of `antinoc` — 7e's nociceptive surge state reads it. */
+  antinocOp: number;
   nmb: number;
   thermoDepth: number;
   flags: { conscious: boolean; aware: boolean; moved: boolean; recovered: boolean; recurarised: boolean; mhMarked: boolean };
@@ -81,7 +90,7 @@ export function createNeuroState(profile: PatientProfile | undefined, seed: numb
     last: { tof: tofFrom(0, 0, 0), thumb: 0, dia: 0, d: d0, x: x0 },
     resp: { ...IDLE_RESP },
     outputs: neuroOutputs({ diRaw: d0.diRaw, opioidFentEq: 0, antinoc: 0, thumbBlock: 0, hypEq: 0 }),
-    antinoc: 0, nmb: 0, thermoDepth: 0,
+    antinoc: 0, antinocOp: 0, nmb: 0, thermoDepth: 0, // FU-7 (addendum 25): antinocOp
     flags: { conscious: true, aware: false, moved: false, recovered: false, recurarised: false, mhMarked: false },
     fasc: { from: -1, to: -1 }, emgBase: null, out: [],
   };
@@ -184,7 +193,9 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
 
 function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): void {
   // NMB
-  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: ns.profile.mgMmolL, tempC: env.tempC });
+  // FU-7 (addendum 24 / audit D12): ONE magnesium state and ONE calcium state — 7c's blood, with the profile as the
+  // baseline when 7c is absent (`env.mgMmolL`/`env.iCaMmolL` are duck-typed in engine.ts's neuro context).
+  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC });
   const neo = neoEc50Mult(x.achGain);
   const mult: Record<NmbAgent, number> = { rocuronium: m.rocuronium * neo, vecuronium: m.vecuronium * neo, cisatracurium: m.cisatracurium * neo, succinylcholine: m.succinylcholine };
   const th = siteBlock(x.nmj, 'thumb', mult);
@@ -194,15 +205,17 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   // depth
   // 7e's hypothermic MAC reduction (cascade macF: the same brain tension is a larger MAC fraction) and neuroglycopenia
   const macF = Math.max(0.3, env.macF ?? 1);
-  const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0 });
+  const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0,
+    hypPropEq: x.hypPropEq, opioidFentEqIn: x.opioidFentEq, dissoc: x.dissoc, antinocAdd: x.antinocAdd }); // FU-7 (addenda 20, 22)
   ns.diShown = smoothDi(ns.diShown, d.diRaw, NEURO_DT_S);
   // drive
   const natural = ns.airway === 'none' || (ns.airway === 'auto' && !env.mechanical);
   const wasApnoeic = ns.resp.apnoea;
-  ns.resp = neuroResp({ vent: x.vent, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive
+  ns.resp = neuroResp({ vent: x.vent, hypVentPropEq: x.hypVentPropEq, benzoShare: x.benzoShare, macVolatile: x.macPotent, diaBlock: di.b, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, spontRr: env.spontRr, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive; FU-7 (addendum 20; D7): the hypnotic equivalent, its benzodiazepine share and the chemoreflex's committed rate
   // outputs (7d, 7e)
   ns.outputs = neuroOutputs({ diRaw: d.diRaw, opioidFentEq: opioidFentEq(x.brain), antinoc: d.antinoc, thumbBlock: th.b, hypEq: d.hypEq });
   ns.antinoc = ns.outputs.antinoc;
+  ns.antinocOp = d.antinocOp; // FU-7 (R51 addendum 25): 7e reads this for the catecholamine release
   ns.nmb = ns.outputs.nmb;
   ns.thermoDepth = ns.outputs.thermoDepth;
   // MH exposure to a potent volatile: a mark only (MH is 7e's, R51 §6)

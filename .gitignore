@@ -8,6 +8,7 @@ coverage/
 playwright-report/
 test-results/
 .audit-respiratory/
+.audit-drugs/
 packages/validation/datasets/cache/
 .audit-physiology/
 # offline showcase kit (scripts/showcase/make-bundle.mjs)

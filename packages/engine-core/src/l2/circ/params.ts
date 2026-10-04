@@ -129,6 +129,13 @@ export const V_CPR_REF_FRAC = 0.08;
  */
 export const CPR_RELEASE_RESIDUAL = 0.65;
 
+// --- FU-7 (addendum 24 / audit D15): histamine release (morphine, atracurium, mivacurium) ---
+/** × (1 − HIST_SVR·histamine) on SVR and + HIST_V0·histamine on the venous unstressed fraction, histamine 0–1 from 7g's
+ * `bus.airway.histamine` [ENG; fit target: fast morphine 10 mg lowers SVR 10–20 % (M10 ch. 22) and MAP 8–25 % (T6.3),
+ * with the reflex tachycardia EMERGING from the pressure fall (DI-42: HR +3 to +25)]. */
+export const HIST_SVR = 0.22;
+export const HIST_V0 = 0.04;
+
 // --- integration ---
 export const H_S = 0.002; // RK4 step (R42; Stage 2 H_S)
 

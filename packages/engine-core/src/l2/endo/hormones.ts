@@ -20,10 +20,14 @@ import {
   CORT_BASAL, CORT_GAIN, CORT_TAU_S, DRIVE_HYPERCAPNIA_PER_MMHG, DRIVE_HYPOGLY_PER_MGDL, DRIVE_HYPOTENSION_PER_MMHG,
   DRIVE_HYPOXIA_PER_SAT, EPI_ADRENAL_GAIN, EPI_BASAL_PG_ML, EPI_CL_ML_MIN_KG, EPI_VD_L_KG, HYPO_EPI_THRESHOLD_MGDL,
   NE_BASAL_PG_ML, NE_CL_ML_MIN_KG, NE_SPILL_GAIN, NE_VD_L_KG, SYMP_MAX, SYMP_OFF_TAU_S, SYMP_ON_TAU_S,
+  CAT_RESERVE_FLOOR, CAT_RESERVE_SYMP_REF, CAT_RESERVE_TAU_DOWN_S, CAT_RESERVE_TAU_UP_S,
 } from './params.ts';
 
 export interface HormoneState {
   symp: number;
+  /** FU-7 (addendum 22; ruling 1): the NOCICEPTIVE share of the stress activity alone — noxious × (1 − antinoc), same
+   * onset/offset τ as `symp`, without `extraSymp`. It drives ONLY the set-point factor `surgeF` (effects.ts). */
+  surge: number;
   /** FU-4 F2(a): the humoral vasoconstrictor arm (AVP + angiotensin II), 0–1. Propofol does not suppress it. */
   hum: number;
   epi: number; // endogenous plasma epinephrine, pg/mL
@@ -31,12 +35,14 @@ export interface HormoneState {
   ne: number;
   cort: number;
   cortDrive: number; // the slow surgical-stress drive integrated for cortisol
+  catReserve: number; // FU-7 (audit D9): releasable catecholamine store, 0–1 (1 = replete)
 }
 
 /** Inputs of one hormone step (all optional sources resolved by the adapters; neutral values = a resting patient). */
 export interface HormoneInputs {
   noxious: number; // 0 none … 1 incision … 1.5 laryngoscopy/sternotomy (tables `noxious`)
   antinoc: number; // 0–1 antinociception (7f; fallback ANTINOC_GA_FALLBACK under GA)
+  antinocOp?: number; // FU-7 (R51 addendum 25): its OPIOID + lidocaine share — the nociceptive surge state reads this
   extraSymp: number; // MH, thyroid storm, sepsis, awareness … (0–3)
   glucoseMgDl: number;
   mapMmHg: number;
@@ -48,7 +54,7 @@ export interface HormoneInputs {
 }
 
 export function createHormones(): HormoneState {
-  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0 };
+  return { symp: 0, surge: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0, catReserve: 1 };
 }
 
 /** Adrenal (humoral) drive: stress activity plus the metabolic emergencies the baroreflex does not cover. */
@@ -66,6 +72,17 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
   const target = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinoc))) + x.extraSymp));
   const tau = target > h.symp ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S;
   h.symp += (target - h.symp) * (1 - Math.exp(-dtS / tau));
+  // FU-7 (addendum 22; Orchestrator ruling (FU-7 review) 1): the nociceptive surge — the SAME first-order law on the
+  // nociceptive term only. `?? 0` tolerates a snapshot written before FU-7 (the state is serialised).
+  // FU-7 (R51 addendum 25): the RELEASE is blunted by the opioid and by IV lidocaine, not by the hypnotic
+  const nox = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinocOp ?? x.antinoc)))));
+  const s0 = h.surge ?? 0;
+  h.surge = s0 + (nox - s0) * (1 - Math.exp(-dtS / (nox > s0 ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S)));
+  // FU-7 (audit D9): the releasable store falls with sustained sympathetic drive and refills slowly (`?? 1`: a snapshot
+  // written before FU-7 is replete)
+  const rTarget = Math.max(CAT_RESERVE_FLOOR, 1 - (1 - CAT_RESERVE_FLOOR) * Math.min(1, h.symp / CAT_RESERVE_SYMP_REF));
+  const r0 = h.catReserve ?? 1;
+  h.catReserve = r0 + (rTarget - r0) * (1 - Math.exp(-dtS / (rTarget < r0 ? CAT_RESERVE_TAU_DOWN_S : CAT_RESERVE_TAU_UP_S)));
   // FU-4 F2(a): the humoral arm follows baroreceptor UNLOADING with a minutes time constant and is not suppressed by
   // an anaesthetic (Schadt & Ludbrook 1991). The unloading signal is the fall of mean pressure below the set point.
   const u = Math.max(0, x.mapSetMmHg - x.mapMmHg - HUM_DEADBAND_MMHG);

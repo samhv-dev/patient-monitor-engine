@@ -30,6 +30,8 @@ export interface BloodState {
   keto: { rate: number; until: number } | null;
   /** What the engine has already pushed into Modifiers (plan decision 9). */
   ecg: { k: number; qtc: number };
+  /** FU-7 (addendum 24): the neuro-profile Mg last applied to the Mg set point (undefined = not yet seen). */
+  mgSeen?: number;
   /** Lung-water seam (G7b ruling 8): filtered pulmonary capillary pressure (mmHg) and the extra EVLWI (mL/kg). */
   lung: { pCap: number; evlwi: number };
   /** Output events (`labs`, `labResult`) waiting for the engine's flush. */
@@ -50,6 +52,9 @@ export interface BloodCtx {
   hemo: unknown; // HemoState; Stage 7a's `circ`/`circOut` are duck-typed
   l1: L1State;
   pk?: unknown; // Stage 7g's PkState (duck-typed: `bus.doses`, `bus.metabolic.kShift`); absent → 7c's own drug fallback
+  /** FU-7 (addendum 24 / audit D6, D12): 7f's neuro profile (duck-typed) — its Mg re-baselines 7c's ONE Mg state and its
+   * burn/denervation upregulation reaches the succinylcholine K+ surge. */
+  neuroProfile?: { nm: string; mgMmolL: number };
 }
 
 /** Create the blood for a profile. With 7a present CO0 becomes the circuit's settled resting CO (advanceBlood, addendum 15). */
@@ -155,6 +160,17 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
   const bus = pkBus(ctx.pk);
   const c = bs.core;
   if (bus) observeDoses(bs, bus.doses);
+  // FU-7 (addendum 24 / audit D12, D6): ONE Mg state — a CHANGED neuro-profile Mg re-baselines 7c's set point and amount
+  // (the first sight only records it: creation already used it); ONE upregulation answer for the sux K+ surge.
+  const np = ctx.neuroProfile;
+  if (np) {
+    if (bs.mgSeen !== undefined && np.mgMmolL !== bs.mgSeen && c.out.mg > 0) {
+      c.so.mg *= np.mgMmolL / c.out.mg;
+      c.so.set.mg = np.mgMmolL;
+    }
+    bs.mgSeen = np.mgMmolL;
+    c.nmUpreg = np.nm === 'burn' || np.nm === 'denervation' ? 1 : 0;
+  }
   // CO0 in L/min (coRatio × CI × effKg = the circuit's CO since FU-4 F4): the circuit's settled resting CO, starting from
   // 7a's stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone. FU-8 (A28): the start
   // was still in the pre-F4 gas units (× effKg/70), so a non-70 kg patient's co0 began off by that factor
@@ -215,8 +231,9 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
 }
 
 /** ECG targets the engine pushes as deltas: K for Modifiers.k, ΔQTc for Modifiers.qtc. */
-export function bloodEcgTargets(bs: BloodState): { k: number; qtc: number } {
-  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
+/** `qtcAdd` (FU-7, addendum 24): 7g's drug-added QTc, ms (ondansetron), added to the iCa term. */
+export function bloodEcgTargets(bs: BloodState, qtcAdd = 0): { k: number; qtc: number } {
+  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) + Math.max(0, qtcAdd) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
 }
 
 // --- commands ----------------------------------------------------------------------------------------------------

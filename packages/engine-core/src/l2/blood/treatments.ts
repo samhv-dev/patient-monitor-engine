@@ -26,6 +26,10 @@ export function bateman(tMin: number, ka: number, ke: number): number {
  * 5·(1 + 5·burns) min [ENG]. Insulin and β2 agonists act on the K set point only (no unsourced second effect on the
  * pulse's decay; R50 review F13).
  */
+/** FU-7 (addendum 24 / audit D6, DI-37c): ONE disease, ONE answer. Burns > 48 h, denervation and prolonged
+ * immobilisation all upregulate extrajunctional acetylcholine receptors, so 7f's nm profile raises the succinylcholine
+ * K+ surge exactly as `blood.burns` does (M10 ch. 24: +3–7 mmol/L; measured before: denervation gave +0.5). The caller
+ * passes max(burns, the nm profile's upregulation), so the two commands cannot disagree. */
 export function suxDeltaK(tMin: number, burns: number): number {
   if (tMin <= 0) return 0;
   const peak = 0.5 + 6 * burns;

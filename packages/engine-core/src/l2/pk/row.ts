@@ -13,7 +13,20 @@ export type DrugClass =
 export type PdTarget =
   | 'hr' | 'ees' | 'svr' | 'v0Frac' | 'pvr' | 'gv' | 'gvHr' | 'symp' | 'setF' // → 7a DrugEffect (FU-4 G2: symp, setF)
   | 'vagalMs' | 'muscarinic' // FU-4 G7: vagal RR increment (ms, additive) and muscarinic block (occupancy 0–1)
-  | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain';
+  | 'betaBlock' | 'avNode' | 'bronchodilation' | 'histamine' | 'hpvInhibit' | 'kShift' | 'glucose' | 'cmro2' | 'cbfVaso' | 'achGain'
+  /** FU-7 (addenda 20–21): an INDIRECT sympathomimetic's central drive (ephedrine, ketamine) — added to 7e's
+   * `extraSymp`, so β-blockade blunts its β1 share and catecholamine depletion weakens it, instead of multiplying 7a. */
+  | 'sympDrive'
+  /** FU-7 (addendum 22): an ADDED antinociception (IV lidocaine's airway-reflex blunting) → 7f's `antinoc`, 0–0.6. */
+  | 'antinocAdd'
+  /** FU-7 (addendum 23): class-weighted antiarrhythmic occupancy 0–1 → `bus.rhythm.antiarrhythmicU`, read by the
+   * conversion hooks and by the shock outcome (Task 12). */
+  | 'antiarrhythmic'
+  /** FU-7 (addendum 24 / DI-76): an exogenous GLUCOCORTICOID as cortisol-equivalent nmol/L above basal → 7e's cortisol
+   * metabolic term (insulin resistance, gluconeogenesis). */
+  | 'glucocorticoid'
+  /** FU-7 (addendum 24 / DI-76): an added QTc, ms → 7c's ECG QTc delta (`bloodEcgTargets`). */
+  | 'qtc';
 
 export interface PdEffect {
   target: PdTarget;
@@ -21,6 +34,8 @@ export interface PdEffect {
   ec50: number; // in the row's concentration unit (see PkSpec)
   hill?: number;
   beta?: boolean; // β-mediated: EC50 shifted by β-blocker occupancy (decision 7)
+  /** FU-7 (addendum 21): a β2 effect — occupied only by NON-SELECTIVE blockade (propranolol), not by a β1-selective drug. */
+  beta2?: boolean;
   catecholamine?: boolean; // efficacy × acidosisFactor(pH) × sepsis vasoResp
   linear?: boolean; // E = emax·c/ec50 (per-MAC effects of the volatiles, tables §6.3), clamped to ±|emax|·3
 }
@@ -44,6 +59,16 @@ export interface CnsSpec {
   cmro2?: number; // fractional CMRO2 fall at uHyp = 1 (tables §5.1)
   /** FU-2 item 8, volatiles: CMRO2 × max(0.5, 1 − cmro2PerMac·MAC) (tables §5.1 rows; replaces `cmro2`). */
   cmro2PerMac?: number;
+  /** FU-7 (addendum 20): a dissociative hypnotic (ketamine) — counted in `dissoc` for 7f's EEG/BIS rise and airway reflexes. */
+  dissociative?: boolean;
+  /** FU-7 (addendum 20): ventilatory potency relative to this row's hypnotic potency (1 = same; ketamine ≈ 0.3, T6.3). */
+  ventShare?: number;
+  /** FU-7 (D16; review F4): an opioid's MAC-reduction potency as remifentanil-equivalents per unit Ce, where it differs
+   * from the EEG weight `remiEq` (fentanyl 0.8 = remifentanil 1.2 ≈ fentanyl 1.5 ng/mL, tables §5d). Absent = `remiEq`. */
+  macRemiEq?: number;
+  /** FU-7 (D16; Orchestrator ruling (FU-7 review) 4): an opioid's VENTILATORY potency as remifentanil-equivalents per
+   * unit Ce at its ventilatory site (remifentanil 1.0 pinned; fentanyl 0.55, D-7f-3). Absent = `remiEq`. */
+  ventRemiEq?: number;
   /** FU-2 item 8, volatiles: DIRECT CBF change at 0.5 and 1.5 MAC — the vasodilation beyond flow–metabolism coupling
    * (Matta 1999 under an isoelectric EEG, tables §5.1); published as `cbfVaso`, and 7d's NET CBF = direct × coupling. */
   cbfDirect?: readonly [number, number];
@@ -56,7 +81,11 @@ export interface DrugRow {
   amountUnit: AmountUnit;
   pk: PkSpec;
   /** elimination route fractions of CL (the rest organ-independent); hepatic high-extraction drugs follow liver FLOW */
-  elim?: { hepatic?: number; highExtraction?: boolean; renal?: number };
+  elim?: { hepatic?: number; highExtraction?: boolean; renal?: number;
+    /** FU-7 (research/13 H9), gamma rows only: the TERMINAL elimination half-life, s. The share of the effect curve's
+     * decline that clearance governs is min(1, (ln 2 / t12S) / chain ke); the rest is redistribution, which organ
+     * function does not change. Absent = the decline is organ-independent (the row keeps its curve). */
+    t12S?: number };
   /** FU-4 G10: the central volume and the fast distribution follow cardiac output (propofol; Kazama 2002). */
   flowDist?: boolean;
   pd: PdEffect[];

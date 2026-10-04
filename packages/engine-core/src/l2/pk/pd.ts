@@ -38,3 +38,7 @@ export function betaBlunt(f: number, occupancy: number): number {
 
 /** Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d, R51 addendum 11). */
 export const ELEVELD_CE50_AGE_K = 0.00635;
+/** FU-7 (D16; Orchestrator ruling (FU-7 review) 4): fentanyl's VENTILATORY potency relative to remifentanil — 7f's
+ * deviation D-7f-3 (Q54: 0.55×, C50 ≈ 1.7 ng/mL; the tables' EEG-derived 1.6× made 1.5 µg/kg apnoeic). ONE source:
+ * the fentanyl row's `ventRemiEq`, `combine`'s fentanyl-equivalent and 7f's `FENT_VENT_POT` all read this. */
+export const FENT_VENT_REMI_EQ = 0.55;

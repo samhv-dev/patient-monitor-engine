@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FU-7: drug-layer integration</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 0; }
+      .panel { width: 1280px; height: 640px; box-sizing: border-box; padding: 8px 12px; border-bottom: 1px solid #333; }
+      .panel h2 { margin: 0 0 4px; font-size: 16px; color: #eee; font-weight: 600; }
+      .panel canvas { display: block; }
+      #status { font: 13px ui-monospace, monospace; color: #8f8; padding: 6px 12px; }
+    </style>
+  </head>
+  <body>
+    <div id="status">computing…</div>
+    <div class="panel" id="p1"><h2>1 · Onset: gamma (step onset, dashed) vs the zero-slope transit chain (solid) — same peak and 10 % times (R51 addendum 19)</h2><canvas width="1256" height="600"></canvas></div>
+    <div class="panel" id="p2"><h2>2 · Potency: thiopental 4 mg/kg — propofol-equivalent Ce, depth index, consciousness, spontaneous rate (DI-69; addendum 20)</h2><canvas width="1256" height="600"></canvas></div>
+    <div class="panel" id="p3"><h2>3 · β-blockade: ephedrine 10 mg and adrenaline 100 µg, healthy vs chronic β-blockade (occupancy 0.85; addendum 21)</h2><canvas width="1256" height="600"></canvas></div>
+    <div class="panel" id="p4"><h2>4 · Surge and shock: laryngoscopy after propofol ± labetalol 10 mg; the shock-success factor vs K⁺, pH and CPP (addenda 22–23, 25)</h2><canvas width="1256" height="600"></canvas></div>
+    <script type="module" src="./src/fu7.ts"></script>
+  </body>
+</html>

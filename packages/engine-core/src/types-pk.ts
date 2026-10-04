@@ -46,14 +46,35 @@ export interface DrugBus {
   antagonist: { opioid: number; benzodiazepine: number }; // EC50 multipliers of the class (1 = no antagonist)
   cns: {
     propCe: number; opioidCeRemiEq: number; macBrain: number; ketamineCe: number; benzoCeMidazEq: number; dexmedCe: number;
+    /** FU-7 (addendum 20): the ONE hypnotic-potency output — propofol-equivalent brain Ce, µg/mL (every row with hypC50). */
+    hypPropEq: number;
+    /** FU-7 (addendum 20): the same, weighted by CnsSpec.ventShare — the ventilatory drive's hypnotic input. */
+    hypVentPropEq: number;
+    /** FU-7 (addendum 20): the ONE opioid-potency output — fentanyl-equivalent Ce, ng/mL, at the brain (MAC-reduction
+     * potency, `macRemiEq`) and the ventilatory site (`ventRemiEq`); fentanyl Ce X alone publishes X at both. */
+    opioidCeFentEq: number; opioidVentFentEq: number;
+    /** FU-7 (addendum 20): share of hypPropEq contributed by DISSOCIATIVE agents (ketamine), 0–1. */
+    dissoc: number;
+    /** FU-7 (addenda 20–21): an indirect sympathomimetic's central drive (ephedrine, ketamine) → 7e's `extraSymp`, 0–3. */
+    sympDrive: number;
+    /** FU-7 (addendum 22): added antinociception from 7g's PD (IV lidocaine), 0–0.6 → 7f's `antinoc`. */
+    antinocAdd: number;
+    /** FU-7 (review F2, ruling 2): share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
+    benzoShare: number;
     uHyp: number; uOpioid: number; uSurface: number; seizure: boolean; cmro2Mult: number; cbfVaso: number;
   };
   nmb: { achGain: number }; // neostigmine's acetylcholine gain (1 = none); 7f applies the ceiling
   airway: { bronchodilation: number; histamine: number };
   hpvInhibit: number;
-  metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number };
+  /** FU-7 (addendum 24): `glucocorticoidNmolL` = an exogenous glucocorticoid (dexamethasone) as cortisol-equivalent
+   * nmol/L above basal, read by 7e's cortisol metabolic term. */
+  metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number; glucocorticoidNmolL: number };
   last: { cnsE: number; cvE: number };
   avNodeBlock: number; // adenosine/β/Ca-channel AV-nodal effect 0–1
+  /** FU-7 (addendum 23): potency-weighted antiarrhythmic occupancy (amiodarone, lidocaine, procainamide), 0–1. */
+  rhythm: { antiarrhythmicU: number };
+  /** FU-7 (addendum 24 / DI-76): drug-added QTc, ms (ondansetron) — 7c adds it to its ECG QTc delta. */
+  qtcMsAdd: number;
 }
 
 export const DRUG_BUS_NEUTRAL: DrugBus = {
@@ -61,13 +82,15 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   volatiles: {},
   doses: [],
   antagonist: { opioid: 1, benzodiazepine: 1 },
-  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
+  cns: { propCe: 0, opioidCeRemiEq: 0, macBrain: 0, ketamineCe: 0, benzoCeMidazEq: 0, dexmedCe: 0, hypPropEq: 0, hypVentPropEq: 0, opioidCeFentEq: 0, opioidVentFentEq: 0, benzoShare: 0, dissoc: 0, sympDrive: 0, antinocAdd: 0, uHyp: 0, uOpioid: 0, uSurface: 0, seizure: false, cmro2Mult: 1, cbfVaso: 1 },
   nmb: { achGain: 1 },
   airway: { bronchodilation: 0, histamine: 0 },
   hpvInhibit: 0,
-  metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0 },
+  metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0, glucocorticoidNmolL: 0 },
   last: { cnsE: 0, cvE: 0 },
   avNodeBlock: 0,
+  rhythm: { antiarrhythmicU: 0 }, // FU-7 (addendum 23)
+  qtcMsAdd: 0, // FU-7 (addendum 24)
 };
 
 export interface DrugPanelRow {

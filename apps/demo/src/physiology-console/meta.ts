@@ -62,6 +62,11 @@ const CURATED: Entry[] = [
   ['resp.temp.tc', 'Core temp (model)', '°C', 2],
   // organs (7x.1): 7d's intra-abdominal pressure (the `renal` event's iapMmHg), a kidney input
   ['organs.iap', 'Intra-abdominal pressure', 'mmHg', 0],
+  // drug layer (FU-7 E-FU7-8; research/11 §5 labels): 7g's potency and occupancy outputs
+  ['pk.bus.cns.hypPropEq', 'Propofol-equivalent effect-site concentration (Ce prop-eq)', 'µg/mL', 2],
+  ['pk.bus.cns.opioidCeFentEq', 'Fentanyl-equivalent effect-site concentration (Ce fent-eq)', 'ng/mL', 2],
+  ['pk.bus.cns.dissoc', 'Dissociative fraction', '', 2], ['pk.betaBlockAdd', 'β-receptor occupancy', '', 2],
+  ['pk.bus.rhythm.antiarrhythmicU', 'Antiarrhythmic occupancy', '', 2], ['pk.bus.cns.sympDrive', 'Central sympathetic drive from drugs', '', 2],
   // controls
   ['ev.state.values.sbp', 'SBP (truth)', 'mmHg', 0], ['ev.state.values.dbp', 'DBP (truth)', 'mmHg', 0], ['ev.state.values.hr', 'HR (truth)', 'bpm', 0],
 ];

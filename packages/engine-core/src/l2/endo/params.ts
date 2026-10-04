@@ -4,11 +4,38 @@
 // --- sympathetic stress (tables §5c `noxious`, `sympStress`) ----------------------------------------------------
 export const SYMP_ON_TAU_S = 25; // onset τ 20–40 s (tables) [TXT pattern; 25 → measured HR τ ≈ 35 s with the epinephrine part]
 export const SYMP_OFF_TAU_S = 180; // offset τ 2–4 min (tables)
+/** FU-7 (addendum 22; Orchestrator ruling (FU-7 review) 1): the CENTRAL component of the stress response — NOCICEPTION
+ * resets the baroreflex set point upward, so the reflex defends the higher pressure instead of cancelling the surge
+ * (audit D8: laryngoscopy after propofol gave +6 mmHg because the set point did not move). The factor reads the
+ * nociceptive state `h.surge` ONLY (never `h.symp`, which carries sepsis/anaphylaxis/MH/hypoglycaemia and 7g's
+ * `sympDrive`). [ENG; fit target: MAP +20–30 mmHg and HR +12–30 for 2–5 min after laryngoscopy (M10 ch. 44; tables
+ * §5.3), with 7e's own onset τ 25 s / offset τ 180 s giving the time course. Prototype (main + FU-4): 0.25 gives awake
+ * ΔMAP +25 / ΔHR +22 and, after propofol 2 mg/kg, ΔMAP +12.8 / ΔHR +15 — after propofol FU-4's `outF` caps what the
+ * reflex can deliver, so the gain has little MAP leverage there (0.5 → +14.2 only); 0.12 gave +12.2 / +11.] */
+export const SURGE_SET_PER_NOX = 0.25;
+export const SURGE_SET_MAX = 0.25;
+/** FU-7 (R51 addendum 25): × on the NOCICEPTIVE share of the noradrenaline spillover readout (NE_BASAL_PG_ML ·
+ * NE_SPILL_GAIN · h.surge, pg/mL) that circulates and acts through 7g's noradrenaline row. [ENG; fit target: ΔMAP +20–30
+ * mmHg after propofol 2 mg/kg (Shribman 1987; M10 ch. 44) with the set-point reset above, the awake response and
+ * ruling 1's guard arms unchanged. Direction: plasma noradrenaline rises within 1 min of laryngoscopy (Shribman 1987;
+ * Derbyshire 1983).] MEASURED (second fixer, main + FU-4 + Tasks 1–10): 0.6 gives ΔMAP +27.1 after propofol 2 mg/kg
+ * (band 20–30), ΔHR +18 (12–30), 84 % of the peak still present at +90 s, fentanyl-blunted ratio 0.20 and
+ * lidocaine 0.85; 1.0 gave +33.2 (above the band), 0.4 gave +23.7 with the fentanyl ratio 0.18 (below 0.2–0.7).
+ * Table: "Prototype — second fixer". */
+export const SURGE_NE_GAIN = 0.6;
 export const G_SYMP_HR = 0.18; // neural part of HR +15–25 % at sympStress 1 (tables); with the adrenal epinephrine part: × 1.245 [ENG]
 export const G_SYMP_SVR = 0.2; // SVR +15–25 % at sympStress 1 (tables)
 export const G_SYMP_EES = 0.15; // contractility [ENG]
 export const G_SYMP_V0 = 0.03; // venous unstressed volume −3 % of blood volume at 1 [ENG]
 export const SYMP_MAX = 3; // clamp
+/** FU-7 (audit D9): the releasable catecholamine store an INDIRECT sympathomimetic (ephedrine, ketamine) works through.
+ * It falls while the endogenous sympathetic drive is high (prolonged shock: the "cold" phase, reserpine-like depletion)
+ * and refills slowly. τ_down 20 min at symp 3, τ_up 2 h, floor 0.2 [ENG; direction: M10 ch. 21 (ketamine's depression is
+ * unmasked when catecholamines are exhausted), Levy 2018 (adrenergic hyporesponsiveness in prolonged septic shock)]. */
+export const CAT_RESERVE_TAU_DOWN_S = 1200;
+export const CAT_RESERVE_TAU_UP_S = 7200;
+export const CAT_RESERVE_FLOOR = 0.2;
+export const CAT_RESERVE_SYMP_REF = 3;
 /** Antinociception when 7f is absent: general anaesthesia alone blunts ≈ 60 % of the noxious response [ENG, Q48]. */
 export const ANTINOC_GA_FALLBACK = 0.6;
 

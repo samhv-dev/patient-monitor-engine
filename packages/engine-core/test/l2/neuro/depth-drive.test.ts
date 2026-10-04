@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { depth } from '../../../src/l2/neuro/depth.ts';
+import { depth, KET_EQ_PROP, MIDAZ_EQ_PROP } from '../../../src/l2/neuro/depth.ts'; // FU-7 (E-FU7-9)
 import { neuroResp } from '../../../src/l2/neuro/drive.ts';
-import { ec50Multipliers } from '../../../src/l2/neuro/interactions.ts';
+import { ec50Multipliers, VOL_NMB_K } from '../../../src/l2/neuro/interactions.ts'; // FU-7 (E-FU7-10)
 
 const C0 = { propofol: 0, remifentanil: 0, fentanyl: 0, midazolam: 0, ketamine: 0 };
-const di = (ce: Partial<typeof C0>, mac: { potent?: number; n2o?: number } = {}, ageY = 40, t1 = 0, stimulus = 0) =>
-  depth({ ageY, ce: { ...C0, ...ce }, macPotent: mac.potent ?? 0, macN2o: mac.n2o ?? 0, t1, stimulus });
+// FU-7 (addendum 20, E-FU7-9): the hypnotic POTENCY OUTPUT is 7g's; this helper computes it from the per-agent
+// concentrations at the ratios 7g's rows carry (review F10: depth.ts's MIDAZ_EQ_PROP / KET_EQ_PROP are derived from them).
+const di = (ce: Partial<typeof C0>, mac: { potent?: number; n2o?: number } = {}, ageY = 40, t1 = 0, stimulus = 0) => {
+  const c = { ...C0, ...ce };
+  const hypPropEq = c.propofol + MIDAZ_EQ_PROP * c.midazolam + KET_EQ_PROP * c.ketamine;
+  return depth({ ageY, ce: c, macPotent: mac.potent ?? 0, macN2o: mac.n2o ?? 0, t1, stimulus,
+    hypPropEq, dissoc: hypPropEq > 0 ? (KET_EQ_PROP * c.ketamine) / hypPropEq : 0 });
+};
 const V0 = { opioid: 0, propofol: 0, midazolam: 0, ketamine: 0 };
 const vent = (v: Partial<typeof V0>, macVolatile = 0) =>
   neuroResp({ vent: { ...V0, ...v }, macVolatile, diaBlock: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false });
@@ -97,9 +103,13 @@ describe('respiratory-drive depression (tables §5d)', () => {
     expect(vent({}, 1).hypnoticDep).toBeGreaterThan(0.55);
     expect(vent({}, 1).hypnoticDep).toBeLessThan(0.7);
   });
-  it('synergy: propofol 1 + remifentanil 1 depresses more than the product of each', () => {
+  // R45 (FU-7 D15b, Orchestrator ruling 2026-10-04): the propofol–opioid ventilatory α was scanned over {0, 0.1, 0.2, 0.3}
+  // against FU-6's sourced resp-induction bands and only α = 0 keeps them (fentanyl 2 µg/kg 120 s in 60–240, remifentanil
+  // 190 s). At α = 0 the pair is exactly Bliss-independent, so this 7f band (tables §5d synergy) is a measured miss.
+  it.fails('synergy: propofol 1 + remifentanil 1 depresses more than the product of each — measured equal at α 0 (D15b: totalDep 0.735 both vs 0.735 independent; was met at SYNERGY 0.5 and at α 0.3)', () => {
     const both = vent({ propofol: 1000, opioid: 1 }).totalDep;
     const indep = 1 - (1 - vent({ propofol: 1000 }).totalDep) * (1 - vent({ opioid: 1 }).totalDep);
+    console.log(`7f synergy (D15b): totalDep both ${both.toFixed(4)}, independent ${indep.toFixed(4)}`);
     expect(both).toBeGreaterThan(indep);
   });
   // FU-6 R3(d), E-FU6-10 (Orchestrator ruling (FU-6 review), 2026-09-28; Q-FU6-4 / D21): the tables §4.6 `uaCollapse`
@@ -127,11 +137,17 @@ describe('respiratory-drive depression (tables §5d)', () => {
 });
 
 describe('interactions', () => {
-  it('1 MAC volatile lowers non-depolariser EC50 by ~33 %; Mg 2 mmol/L by ~23 %; myasthenia ×0.3, sux resistant', () => {
-    const N = { profile: 'normal' as const, volatileMac: 0, mgMmolL: 0.9, tempC: 37 };
-    const v = ec50Multipliers({ ...N, volatileMac: 1 });
+  // R45 (FU-7 gate review, condition 2): the ORIGINAL band (0.62–0.72, the tables' ~33 %) is kept as written; FU-7
+  // Task 14 (E-FU7-10 b) re-sized VOL_NMB_K to 0.18 [ENG; fit target DI-51's engine duration], so it is a measured miss.
+  it.fails('1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)', () => {
+    const v = ec50Multipliers({ profile: 'normal', volatileMac: 1, mgMmolL: 0.9, tempC: 37 });
     expect(v.rocuronium).toBeGreaterThan(0.62);
     expect(v.rocuronium).toBeLessThan(0.72);
+  });
+  it('Mg 2 mmol/L lowers non-depolariser EC50 by ~23 %; myasthenia ×0.3, sux resistant; wiring: 1 MAC volatile multiplies it by 1 / (1 + VOL_NMB_K)', () => {
+    const N = { profile: 'normal' as const, volatileMac: 0, mgMmolL: 0.9, tempC: 37 };
+    const v = ec50Multipliers({ ...N, volatileMac: 1 });
+    expect(v.rocuronium).toBeCloseTo(1 / (1 + VOL_NMB_K), 6);
     expect(v.succinylcholine).toBe(1);
     expect(ec50Multipliers({ ...N, mgMmolL: 2 }).rocuronium).toBeCloseTo(1 / 1.3, 5);
     const mg = ec50Multipliers({ ...N, profile: 'myasthenia' });

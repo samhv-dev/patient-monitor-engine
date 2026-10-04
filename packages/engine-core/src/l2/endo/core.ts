@@ -30,8 +30,13 @@ export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: 
 }
 
 export interface EndoInputs {
+  /** FU-7 (addenda 20–21): 7g's indirect-sympathomimetic drive (`pk.bus.cns.sympDrive`), 0–3; 0 without 7g. */
+  sympDrug?: number;
   noxious: number;
   antinoc: number;
+  /** FU-7 (R51 addendum 25): the OPIOID + lidocaine share of the antinociception — the nociceptive surge state reads it
+   * (a hypnotic does not abolish the humoral stress response, Desborough 2000). Absent = the total. */
+  antinocOp?: number;
   mapMmHg: number;
   /** FU-4 F2(a): the patient's own mean-pressure set point (7a `baro.set`) — the humoral arm's unloading reference. */
   mapSetMmHg: number;
@@ -44,13 +49,15 @@ export interface EndoInputs {
   betaBlock: number; // 7a `prof.betaBlock` (HR)
   betaBlockC: number; // 7a `prof.betaBlockC` (contractility)
   epiExoPgMl: number; // 7g epinephrine as plasma pg/mL
+  /** FU-7 (addendum 24 / DI-76): 7g's exogenous glucocorticoid, cortisol-equivalent nmol/L above basal (0 without 7g). */
+  cortExoNmolL?: number;
   bronchoDilExt: number; // 7g `bus.airway.bronchodilation` (0–1)
   dkaSeverity: number; // 7c (0–1)
 }
 
 export const NEUTRAL_ENDO_INPUTS: EndoInputs = {
   noxious: 0, antinoc: 0, mapMmHg: 85, mapSetMmHg: 85, sao2: 0.97, paco2: 40, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
-  epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0,
+  epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0, sympDrug: 0,
 };
 
 export interface EndoCore {
@@ -88,7 +95,12 @@ export interface EndoOut {
   epiPgMl: number; // total plasma epinephrine (endogenous + 7g's)
   nePgMl: number;
   cortisolNmolL: number;
+  catReserve: number; // FU-7 (audit D9): 7e's releasable catecholamine store (0–1), scales 7g's indirect drive
   symp: number;
+  /** FU-7 (addendum 22; ruling 1): × on 7a's baroreflex set point from the NOCICEPTIVE surge (1 = none). */
+  surgeF: number;
+  /** FU-7 (R51 addendum 25): the nociceptive circulating catecholamines, 7g rate-equivalents — 7g's `PkCtx.endoCat`. */
+  surgeCat: { ne: number; epi: number };
   stressIndex: number; // 0–100, instructor only
   neuroglycopenia: number; // 0–1 → 7f BIS/depth
   stress: StressEffects;
@@ -155,6 +167,9 @@ function compose(c: EndoCore): EndoOut {
     nePgMl: h.ne,
     cortisolNmolL: h.cort,
     symp: h.symp,
+    surgeF: st.surgeF, // FU-7 (addendum 22; ruling 1): the nociceptive set-point factor 7a defends
+    surgeCat: { ne: st.surgeNe, epi: st.surgeEpi }, // FU-7 (R51 addendum 25): acted out by 7g's adrenergic rows
+    catReserve: h.catReserve, // FU-7 (audit D9)
     stressIndex: Math.round(100 * (1 - Math.exp(-(h.symp + lg / 2) / 1.5))),
     neuroglycopenia: Math.min(1, Math.max(0, (NEUROGLYCOPENIA_MGDL + 10 - g.g) / 30)), // 0 at 60 mg/dL, 1 at 30
     stress: st,
@@ -168,12 +183,12 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
   const cd = c.out.cond;
   stepHormones(c.hormones, {
-    noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
+    noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve, // FU-7 (addenda 20–21, 25)
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
     cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);
-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1);
+  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1, x.cortExoNmolL ?? 0); // FU-7 (addendum 24)
   const gp = glucoseProfile(c.profile);
   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
   stepGlucose(g, {

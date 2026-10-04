@@ -32,7 +32,7 @@ import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWA
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
-import { resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // Stage 7b; FU-6 F6: SMOOTH_MUSCLE; R6: spasmSeverity
+import { HIST_SPASM, resolveLung, SMOOTH_MUSCLE, spasmSeverity } from '../lung/conditions.ts'; // Stage 7b; FU-6 F6: SMOOTH_MUSCLE; R6: spasmSeverity; FU-7: HIST_SPASM
 import { blockedSides, capnoTerms, createLung, lungGasStep, lungMechStep, shuntFraction, staticCompliance, type LungState, type Mainstem } from '../lung/lung.ts'; // Stage 7b
 import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // Stage 7b
 import { mechParams } from '../lung/side.ts'; // Stage 7b
@@ -71,6 +71,8 @@ export interface RespCtx {
   cbfRel?: number; // FU-3 item 16 (E-FU3-10): 7d's organs.brain.cbfRel — the brainstem-perfusion gate on the MODELED drive
   /** FU-6: 7g's bus (R51: the lung reads PD outputs, never PK) — bronchodilation B (R2) and HPV inhibition (R13), 0–1. */
   bronchoDil?: number;
+  /** FU-7 (addendum 24, E-FU7-5): 7g's `bus.airway.histamine` (0–1) — the drug-driven bronchoconstriction. */
+  histamine?: number;
   hpvInhibit?: number;
   /** FU-6 R2: 7e is writing the anaphylaxis lung condition with its own β2 relief (endo.lungSev > 0). */
   anaphEndo?: boolean;
@@ -118,6 +120,7 @@ export interface RespState {
   lungSpecs: LungConditionSpec[];
   bd?: number; // FU-6 R2: the bronchodilation state B the lung was last resolved with (absent = 0; truth budget D16)
   bdExempt?: string[]; // FU-6 R2: condition ids whose relief their owner applies (7e's anaphylaxis); absent = none
+  histSev?: number; // FU-7 (addendum 24, E-FU7-5): the drug-driven bronchospasm severity last applied; absent = none
   /** FU-6 F6: onset (sim s, earlier by the spec's `ageMin`) of each smooth-muscle condition and the sim time the lung
    * was last resolved at (ages are read there); absent while no smooth-muscle condition is present (truth budget D16). */
   sm?: { onsetS: Record<string, number>; atS: number };
@@ -285,10 +288,21 @@ function syncSmOnset(rs: RespState, t: number): void {
   for (const id of Object.keys(sm.onsetS)) if (!specs.some((s) => s.id === id)) delete sm.onsetS[id];
 }
 
+/** FU-7 (addendum 24, E-FU7-5): the lung specs with the drug-driven bronchospasm ADDED to the side-less `bronchospasm`
+ * spec (created when absent). It is relievable — never in `bdExempt` — so salbutamol reverses it through FU-6's
+ * `relaxed()`; the instructor's own spec list is not edited. */
+function withDrugSpasm(specs: readonly LungConditionSpec[], sev: number): readonly LungConditionSpec[] {
+  if (!(sev > 0)) return specs;
+  const i = specs.findIndex((s) => s.id === 'bronchospasm' && s.side === undefined);
+  if (i < 0) return [...specs, { id: 'bronchospasm', severity: sev }];
+  return specs.map((s, k) => (k === i ? { ...s, severity: s.severity + sev } : s));
+}
+
 export function applyLungSpecs(rs: RespState): void {
   const ages = smAges(rs); // FU-6 F6
-  const r = resolveLung(rs.lungSpecs, rs.pat.ibwKg, rs.evlwiExtra ?? 0, rs.bd ?? 0, rs.bdExempt ?? [], ages); // Stage 7c: + lung water; FU-6 R2: B (F6: ages)
-  const spasm = spasmSeverity(rs.lungSpecs, rs.bd ?? 0, rs.bdExempt ?? [], ages); // FU-6 R6: the shark fin follows the lung
+  const specs = withDrugSpasm(rs.lungSpecs, rs.histSev ?? 0); // FU-7 (addendum 24): histamine release constricts
+  const r = resolveLung(specs, rs.pat.ibwKg, rs.evlwiExtra ?? 0, rs.bd ?? 0, rs.bdExempt ?? [], ages); // Stage 7c: + lung water; FU-6 R2: B (F6: ages)
+  const spasm = spasmSeverity(specs, rs.bd ?? 0, rs.bdExempt ?? [], ages); // FU-6 R6: the shark fin follows the lung
   if (spasm > 0) rs.driver.spasm = spasm;
   else delete rs.driver.spasm;
   const ls = rs.lung;
@@ -451,7 +465,14 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
   const bd = Math.min(1, Math.max(0, ctx.bronchoDil ?? 0));
   const exempt = ctx.anaphEndo ? ['anaphylaxis'] : [];
   syncSmOnset(rs, t); // FU-6 F6: the attack ages; under a bronchodilator the lung is re-resolved once a sim-minute for it
-  if (Math.abs(bd - (rs.bd ?? 0)) >= 0.01 || (bd === 0 && (rs.bd ?? 0) > 0) || exempt.length !== (rs.bdExempt ?? []).length
+  // FU-7 (addendum 24, E-FU7-5): the drug-driven bronchospasm severity, re-resolved on the same ≥ 0.01 rule as B
+  const hs = HIST_SPASM * Math.min(1, Math.max(0, ctx.histamine ?? 0));
+  const histMoved = Math.abs(hs - (rs.histSev ?? 0)) >= 0.01 || (hs === 0 && (rs.histSev ?? 0) > 0);
+  if (histMoved) {
+    if (hs > 0) rs.histSev = hs;
+    else delete rs.histSev; // absent until a releaser acts (truth budget, D16)
+  }
+  if (histMoved || Math.abs(bd - (rs.bd ?? 0)) >= 0.01 || (bd === 0 && (rs.bd ?? 0) > 0) || exempt.length !== (rs.bdExempt ?? []).length
     || (bd > 0 && rs.sm !== undefined && t - rs.sm.atS >= 60)) {
     if (rs.sm) rs.sm.atS = t;
     if (bd > 0 || rs.bd !== undefined) rs.bd = bd; // absent until a bronchodilator acts (truth budget, D16)
