@@ -53,7 +53,7 @@ describe('ventilatory response surface (R51 addendum 20, D4)', () => {
   });
   it('the α is per class (review F2): the SAME equivalent is more synergistic with an opioid as a benzodiazepine than as propofol', () => {
     const pair = (share: number) => neuroResp({ vent: { ...V0, opioid: 1 }, hypVentPropEq: 1000, benzoShare: share, macVolatile: 0, diaBlock: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false }).veRest;
-    expect(pair(1)).toBeLessThan(pair(0) - 0.05); // Bailey (α 1.5) vs Nieuwenhuijs (α 0.3)
+    expect(pair(1)).toBeLessThan(pair(0) - 0.05); // Bailey (α 1.5) vs Nieuwenhuijs (α 0, D15b)
     expect(VENT_ALPHA_HYP).toBeLessThan(VENT_ALPHA_BENZO);
     // the benzodiazepine pair is FAR below the product of the singles; the propofol pair only just below it
     // (measured on the applied tree: singles 0.723 / 0.868, product 0.628; propofol pair 0.500, benzodiazepine pair 0.203)

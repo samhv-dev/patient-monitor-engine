@@ -22,7 +22,13 @@ export const MIDAZ_VENT_C50 = 150;
  * the BIS interaction is synergistic — VENT_ALPHA_HYP [ENG, low; Nieuwenhuijs 2003]. pd.ts's SURFACE_ALPHA is the EEG
  * surface's [ENG] constant and is NOT reused here. (Replaces SYNERGY 0.5, whose only reader was the old product term.) */
 export const VENT_ALPHA_BENZO = 1.5;
-export const VENT_ALPHA_HYP = 0.3;
+// D15b (Orchestrator ruling, FU-7 finisher, 2026-10-04): 0.3 stacked on FU-6's wakefulness-drive calibration took FU-6's
+// sourced induction-apnoea band out (fentanyl 2 µg/kg + propofol 394 s vs 60–240 s; remifentanil pair 567 s). Scan on
+// the merged tree (resp-induction rig, seed 7): α 0.3 → 394 / 567 s; 0.2 → 316 / 504; 0.1 → 232 / 364; 0 → 120 / 190.
+// The largest α keeping fentanyl ≥ 20 s inside 60–240 and remifentanil in 90–300 s is 0 — ADDITIVE, the bottom of the R50
+// review's "additive to mildly synergistic" range. [ENG; fit target: FU-6's resp-induction bands.] VENT_ALPHA_BENZO is
+// untouched, and a single agent is bit-identical (the α multiplies the OTHER class's units, zero when it is alone).
+export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [ENG]
@@ -123,7 +129,7 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   // FU-7 (addendum 20): ONE hypnotic ventilatory term from 7g's equivalent (ketamine already weighted by `ventShare`,
   // etomidate by its 0.7). Each class's C50 is divided by 1 + α·(the OTHER class's units) — a single agent keeps its
   // own calibration (Nieuwenhuijs 2003: remifentanil 1 ng/mL −28 %, propofol 1 µg/mL −13 %); the benzodiazepine pair is
-  // supra-additive (Bailey 1990, α 1.5) and propofol–opioid nearly additive (Nieuwenhuijs 2003, α 0.3) — review F2.
+  // supra-additive (Bailey 1990, α 1.5) and propofol–opioid additive (Nieuwenhuijs 2003; α 0 by D15b) — review F2.
   const hypC = hypVent(x);
   const uO = x.vent.opioid / REMI_VENT_C50;
   const dProp = hill(hypC / (PROP_VENT_C50 / (1 + alphaHyp(x) * uO)), 1.5);

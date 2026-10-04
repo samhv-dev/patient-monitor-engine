@@ -103,9 +103,13 @@ describe('respiratory-drive depression (tables §5d)', () => {
     expect(vent({}, 1).hypnoticDep).toBeGreaterThan(0.55);
     expect(vent({}, 1).hypnoticDep).toBeLessThan(0.7);
   });
-  it('synergy: propofol 1 + remifentanil 1 depresses more than the product of each', () => {
+  // R45 (FU-7 D15b, Orchestrator ruling 2026-10-04): the propofol–opioid ventilatory α was scanned over {0, 0.1, 0.2, 0.3}
+  // against FU-6's sourced resp-induction bands and only α = 0 keeps them (fentanyl 2 µg/kg 120 s in 60–240, remifentanil
+  // 190 s). At α = 0 the pair is exactly Bliss-independent, so this 7f band (tables §5d synergy) is a measured miss.
+  it.fails('synergy: propofol 1 + remifentanil 1 depresses more than the product of each — measured equal at α 0 (D15b: totalDep 0.735 both vs 0.735 independent; was met at SYNERGY 0.5 and at α 0.3)', () => {
     const both = vent({ propofol: 1000, opioid: 1 }).totalDep;
     const indep = 1 - (1 - vent({ propofol: 1000 }).totalDep) * (1 - vent({ opioid: 1 }).totalDep);
+    console.log(`7f synergy (D15b): totalDep both ${both.toFixed(4)}, independent ${indep.toFixed(4)}`);
     expect(both).toBeGreaterThan(indep);
   });
   // FU-6 R3(d), E-FU6-10 (Orchestrator ruling (FU-6 review), 2026-09-28; Q-FU6-4 / D21): the tables §4.6 `uaCollapse`
