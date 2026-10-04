@@ -4177,10 +4177,10 @@ git add -A packages/engine-core && git commit -m "feat(7c,7d): mannitol is a pla
 
 ### Task B0: Part B base — FU-7 merged
 
-- [ ] **Step 1.** `git fetch origin && git log --oneline origin/main | head` — FU-7's merge commit must be on main (and
+- [x] **Step 1.** `git fetch origin && git log --oneline origin/main | head` — FU-7's merge commit must be on main (and
   therefore FU-6's). If not, stop Part B (Global Constraints: Part A's Gate runs alone).
-- [ ] **Step 2.** `git merge origin/main` (no stash; resolve by content).
-- [ ] **Step 3 — Part B anchors.** Each must print exactly ONE line (the fixer checked them on `2473f0b` with FU-7 Task
+- [x] **Step 2.** `git merge origin/main` (no stash; resolve by content).
+- [x] **Step 3 — Part B anchors.** Each must print exactly ONE line (the fixer checked them on `2473f0b` with FU-7 Task
   14 Step 2's call line substituted, and against FU-7's Task 14 / E-FU7-7 blocks):
 
 ```
@@ -4217,8 +4217,8 @@ Decision D10 (R6/R50 F9: inside `ec50Multipliers`, beside Mg and iCa).
 **Prototype numbers:** engine test T1 25 % at 47.5 min (K 2.5) vs 35.8 (K 4.2) (Open question 9: the size is [ENG]).
 **FU-4 check:** K ≥ 3.5 is exactly × 1.
 
-- [ ] **Step 0 — merge.** `git fetch origin && git merge origin/main` (Task B0 has done it).
-- [ ] **Step 1 — the tests.**
+- [x] **Step 0 — merge.** `git fetch origin && git merge origin/main` (Task B0 has done it).
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/neuro/fu9-hypokalaemia.test.ts`:
 
@@ -4265,9 +4265,9 @@ describe('FU-9 F10: hypokalaemia prolongs a non-depolarising block', { timeout: 
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-hypokalaemia.test.ts test/engine/fu9-rocuronium.test.ts` →
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-hypokalaemia.test.ts test/engine/fu9-rocuronium.test.ts` →
   `hypokalaemiaMult` missing; engine: 35.7 vs 35.7 min.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/neuro/interactions.ts`, find:
 
@@ -4365,9 +4365,11 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/fu9-rocuronium.test.ts test/engine/neuro-engine.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-09b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/fu9-rocuronium.test.ts test/engine/neuro-engine.test.ts` → pass.
+- [x] **Step 5 — BF runner:** `BF-09b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+  Executed (4a1cc3f7 + B1): engine test T1 25 % 47.3 min (K 2.5) vs 36.0 (K 4.2), +11.3 min; BF-09b t25LowK 47.0 vs
+  t25Normal 35.8, dMin 0 → **11.2** (WR → PL). `test/l2/neuro` + fu9-rocuronium + neuro-engine: 18 files / 106 tests pass.
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7f): hypokalaemia potentiates non-depolarising block on the one 7c electrolyte path (FU-9 F10, E-FU9-2)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -4388,7 +4390,7 @@ so COPD GOLD 3 is normocapnic (39.7, HCO₃ 24.35). Decision D9; the chronic con
 
 **Prototype numbers:** COPD GOLD 3 awake: PaCO₂ 44.1, HCO₃ 26.02, pH 7.383, +3.4 mmol/L HCO₃ per 10 mmHg (band 3–4.5); X-A unchanged.
 
-- [ ] **Step 1 — the tests.**
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/blood/fu9-chronic.test.ts`:
 
@@ -4449,9 +4451,9 @@ describe('FU-9 F7: chronic hypercapnia with chronic renal compensation (tables �
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-chronic.test.ts test/engine/fu9-copd.test.ts` → `restingPaco2`
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood/fu9-chronic.test.ts test/engine/fu9-copd.test.ts` → `restingPaco2`
   missing; engine PaCO₂ 39.7.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/gas/params.ts`, find:
 
@@ -4539,11 +4541,20 @@ import { bloodPatient, CHRONIC_HCO3_PER_MMHG, HBF_EXP, NORMAL, type BloodPatient
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/gas test/l2/resp test/l2/lung test/engine/fu9-copd.test.ts
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/blood test/l2/gas test/l2/resp test/l2/lung test/engine/fu9-copd.test.ts
   test/engine/lung-copd.test.ts test/engine/resp-coupling.test.ts` → pass; if a 7b/Stage 3 COPD test pinned a resting
   PaCO₂ of 40 for GOLD 3, it is re-pinned to the tables' 45 with the reason (tables §1.5), never widened.
-- [ ] **Step 5 — BF runner:** `BF-16b BF-15b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 5 — BF runner:** `BF-16b BF-15b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+  Executed (4a1cc3f7 + B1 + B2): engine test COPD GOLD 3 PaCO₂ 43.9, HCO₃ 25.99, pH 7.385; X-A 39.0 / 24.26 → +3.52 per
+  10 mmHg (was 39.6 / 24.33 / 7.402, +1.30). GOLD 4 (probe) PaCO₂ 50.51, HCO₃ 29.15, pH 7.374 (was 40.72 / 24.49 / 7.392);
+  GOLD 2 unchanged (38.85). BF-16b hco3Per10 1.31 → **3.52** (PL), dPaco2 0.6 → **4.9** (band 5–15: TW by 0.1 — X-A now rests
+  at 39.0, the prototype's 44.14 is 43.92 here; not tuned, R44); verdict TW → TW. BF-15b dPaco2 +6.24 unchanged (PL).
+  Step 4: `test/l2/{blood,gas,resp,lung}` + fu9-copd + lung-copd + resp-coupling 59 files / 249 tests pass (one Vitest
+  RPC timeout under a load average of 143 on the shared Mac; the three engine files re-run serially: 11/11 pass). The other
+  engine files with a COPD profile (lung-capno/circ/commands/gas/state/wiring, resp-bronchodilation/mechanics/suite,
+  types-lung): one pre-declared `it.fails` flips — `lung-circ` "COPD GOLD 3 at RR 26 … MAP falls by > 2 mmHg": 1.79
+  (101.4 → 99.6) → **2.5 (102.0 → 99.5)**; it becomes `it` (R45: named here with both numbers; band unchanged).
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7b-profile,7c): COPD retainers rest at their tables PaCO2 with chronic renal compensation (FU-9 F7, E-FU9-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push
@@ -4915,3 +4926,32 @@ gh pr create --base main --head fu-9-blood-fluids --title "FU-9: blood, fluids a
   chronic-compensation constant, one renal unit rig (`test/helpers/fu9-renal.ts`) instead of four copies.
 - **Not verified here (the executor's):** FU-6/FU-7/FU-8 composition on their merged trees (their plans move); CI's Linux
   wall times (this Mac is faster: slow-b 37.6 min on CI vs 26.5 min here for the same files).
+
+---
+## Base drift (Part B executor, 2026-10-04, on `origin/main` 4a1cc3f7 — FU-7 #32, Stage 9 #29 and FU-9 Parts A + C #31 merged)
+
+Task B0 re-verified every Part B find block on the merged tree. Branch `fu-9b-blood-fluids` (worktree
+`scratch/wt-fu-9b`) was cut from 4a1cc3f7, so Step 2's merge was a no-op.
+
+- **Anchors (B0 Step 3):** all ten print exactly ONE line; the B1/B2 find blocks (multi-line ones included) match byte for
+  byte. FU-7 Task 14's merged call line in `neuro/pipeline.ts` (line 198) is the plan's call-line block verbatim; FU-7's
+  `InteractionCtx` ends on `tempC`, as the plan assumed; `ec50Multipliers` keeps the `let nd = vol * mg * cold;` line (FU-7
+  re-sized only the volatile divisor, `VOL_NMB_K` 0.18, and made Mg antagonised by iCa). A7's `CHRONIC_HCO3_PER_MMHG` is on
+  main (`blood/params.ts`, consumed by `neuro/spont.ts`), so B2's import resolves.
+- **Drifted placement 1 — `engine.ts` (E-FU9-2):** FU-7 gave 7c's electrolytes their OWN line in the `stepNeuroTo` context
+  (`mgMmolL: … iCaMmolL: …`, line 593), separate from the `tempC:` line the plan anchors on (line 588, still matching).
+  R6 ("K joins … beside Mg and iCa") is unambiguous, so `kMmolL` goes on FU-7's electrolyte line, same expression
+  (`ps.blood.out.k > 0 ? ps.blood.out.k : undefined`). Still ONE engine line (E-FU9-2 unchanged in size).
+- **Drifted placement 2 — `NeuroEnv` (neuro/pipeline.ts):** FU-7 added `mgMmolL?`/`iCaMmolL?` at the end of `NeuroEnv`;
+  `kMmolL?` sits after them instead of between `tempC` and `mechanical`. Same type, same doc line.
+- **Before-numbers moved by FU-7/Part A (recorded, not tuned):** rocuronium T1 25 % — engine test 36.0 / 36.0 min at K 2.5 /
+  4.2 (plan: 35.7 / 35.7), BF runner BF-09b 35.8 / 35.8 (dMin 0, WR). COPD awake at 30 min (engine test rig): GOLD 3
+  PaCO₂ 39.57, HCO₃ 24.33, pH 7.402, +1.30 per 10 mmHg vs X-A 39.0 / 24.26 (plan: 39.7, 24.35, +1.32); GOLD 4 PaCO₂ 40.72,
+  HCO₃ 24.49, pH 7.392; GOLD 2 38.85 / 24.24 / 7.408. BF runner BF-16b paco2Copd 39.57, hco3Copd 24.334, phCopd 7.402,
+  hco3Per10 1.31 (TW); BF-15b dPaco2 +6.24 (PL — Part A's F9 is merged).
+- **Slow groups (six since the FU-7 gate):** the `fu9-*` glob in `SLOW_C` keeps B1/B2's engine files in slow-c (every other
+  group excludes `SLOW_C`, so an `fu9-*` file cannot be listed elsewhere without changing A0b's matcher). slow-c summed
+  2 295 / 2 315 s of tests on PR #32's two CI runs — the heaviest group — so `pk-acceptance-pd` (239 s on both runs) moves
+  from `SLOW_C` to `SLOW_F` (862 / 1 807 s). `vite.config.ts` is not a Part B file in the File map; the move is the
+  executor brief's "place new slow files by measured time" and the Gate's "move a file by name" remedy.
+

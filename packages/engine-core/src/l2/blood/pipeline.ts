@@ -59,7 +59,8 @@ export interface BloodCtx {
 
 /** Create the blood for a profile. With 7a present CO0 becomes the circuit's settled resting CO (advanceBlood, addendum 15). */
 export function createBloodState(profile: PatientProfile | undefined): BloodState {
-  const core = createBloodCore(profile, CI_LPM_PER_KG * gasPatient(profile).effKg, NORMAL.paco2);
+  const gp = gasPatient(profile);
+  const core = createBloodCore(profile, CI_LPM_PER_KG * gp.effKg, gp.paco2Rest); // FU-9 F7: the patient's own resting PaCO2
   return {
     k: 0, core, out: core.out, view: { odc: { ...core.odc }, coFactor: 1, co2LoadMlMin: 0 }, labs: [], cold: [], keto: null,
     ecg: { k: 0, qtc: 0 }, lung: { pCap: 8, evlwi: 0 }, events: [], rest: { coLp: 0, latched: false }, circNetMl: 0,

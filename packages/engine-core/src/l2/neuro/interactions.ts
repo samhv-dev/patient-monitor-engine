@@ -23,6 +23,9 @@ export interface InteractionCtx {
    * potentiation (M10 ch. 24 p. 698); `undefined` without 7c keeps the pre-FU-7 behaviour. */
   iCaMmolL?: number;
   tempC: number; // core temperature
+  /** FU-9 F10 (R50 ruling R6): 7c's plasma K (`blood.out.k`, mmol/L) — the third 7c electrolyte on FU-7's one path
+   * (Mg, iCa, K); undefined without 7c keeps the pre-FU-9 behaviour. */
+  kMmolL?: number;
 }
 
 /** FU-7 (addendum 24 / DI-51): the volatile potentiation of a non-depolarising block, as the EC50 divisor 1/(1 + k·MAC).
@@ -42,7 +45,7 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
   const ca = x.iCaMmolL === undefined ? 1 : Math.min(1.6, Math.max(0.7, x.iCaMmolL / 1.15));
   const mg = 1 / (1 + (0.3 * Math.max(0, x.mgMmolL - 1)) / ca);
   const cold = Math.max(0.6, 1 - 0.12 * Math.max(0, 37 - x.tempC));
-  let nd = vol * mg * cold;
+  let nd = vol * mg * cold * hypokalaemiaMult(x.kMmolL); // FU-9 F10: hypokalaemia potentiates the non-depolarisers
   let dep = mg;
   switch (x.profile) {
     case 'myasthenia':
@@ -61,4 +64,16 @@ export function ec50Multipliers(x: InteractionCtx): Record<NmbAgent, number> {
       break;
   }
   return { rocuronium: nd, vecuronium: nd, cisatracurium: nd, succinylcholine: dep };
+}
+
+/**
+ * FU-9 F10: hypokalaemia potentiates a non-depolarising block — the hyperpolarised end-plate needs less antagonist to
+ * fail (Miller 10e ch. 27, "hypokalaemia enhances non-depolarising block"; Feldman 1963). EC50 × (1 − HYPOK_SLOPE·
+ * (HYPOK_K − K)⁺), floor HYPOK_FLOOR [ENG size, Open question 9]; 1 at K ≥ 3.5 and without 7c.
+ */
+export const HYPOK_K = 3.5;
+export const HYPOK_SLOPE = 0.15;
+export const HYPOK_FLOOR = 0.7;
+export function hypokalaemiaMult(kMmolL: number | undefined): number {
+  return kMmolL === undefined ? 1 : Math.max(HYPOK_FLOOR, 1 - HYPOK_SLOPE * Math.max(0, HYPOK_K - kMmolL));
 }

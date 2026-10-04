@@ -4,7 +4,7 @@ import { solvePh, anionGap, type AcidBase } from './acid-base.ts';
 import { albGL, bloodMl, createFluids, ecfMl, hbOf, stepFluids, copPlasma, type FluidState } from './fluids.ts';
 import { contentDB, type OdcCtx } from './odc.ts';
 import { o2Delivery, stepLactate, type O2Out } from './oxygen.ts';
-import { bloodPatient, HBF_EXP, NORMAL, type BloodPatient } from './params.ts';
+import { bloodPatient, CHRONIC_HCO3_PER_MMHG, HBF_EXP, NORMAL, type BloodPatient } from './params.ts';
 import { MANNITOL_KE_PER_MIN } from '../renal/params.ts'; // FU-9 H8: 7d's renal mannitol clearance, the fallback without 7d
 import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, K_TBK_MMOL, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
 import { caMembrane, insulinEffect, INSULIN_K_SHIFT, K_PUMP_GAIN, salbutamolEffect, SALBUTAMOL_K_SHIFT, suxDeltaK, type Dose } from './treatments.ts';
@@ -96,8 +96,11 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   // FU-9 F8: without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its
   // weak-acid deficit — the Figge picture (low AG, mild alkalosis) that the same albumin reached by dilution shows
   // (Figge 1998 Crit Care Med 26:1807; Fencl 2000 AJRCCM 162:2246); a given profile HCO3 is honoured as measured.
-  const hco3 = b.hco3 ?? NORMAL.hco3;
-  const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * NORMAL.paco2));
+  // FU-9 F7: a chronic hypercapnic profile (resting PaCO2 above 40) starts with its chronic renal compensation, +0.35
+  // mmol/L HCO3 per mmHg (tables §5b.1 "chronic (profile only): +0.35–0.4 per mmHg … set by the profile"; Brackett 1965,
+  // Schwartz 1965), calibrated at that PaCO2; a given profile HCO3 is honoured
+  const hco3 = b.hco3 ?? NORMAL.hco3 + CHRONIC_HCO3_PER_MMHG * Math.max(0, paco2 - NORMAL.paco2);
+  const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * Math.max(NORMAL.paco2, paco2)));
   const c = concOf(so, e0, pat.vLacL, e0);
   const alb = albGL(fl);
   const albCal = b.hco3 === undefined && b.albuminGL !== undefined ? NORMAL.albGL : alb; // on the profile's fields, not floats (R50 F8)
