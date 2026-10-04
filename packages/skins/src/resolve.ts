@@ -4,7 +4,7 @@
 import { darkenToContrast } from './color.ts';
 import { deepMerge } from './merge.ts';
 import { BASES, PRESETS, SKINS, THEMES } from './registry.ts';
-import type { AgeBand, LaneId, Level, LimitTable, PitchMapId, Preset, Provenance, Skin, SoundProfileId, TileParam } from './types.ts';
+import type { AgeBand, LaneId, Level, LimitTable, PitchMapId, Preset, Provenance, Skin, SoundProfileId, SwapSensor, TileParam } from './types.ts';
 
 /** The engine's two ECG filter modes (packages/engine-core/src/l3/ecg-filter.ts FILTER_BANDS; a test keeps them equal). */
 export const ENGINE_FILTER_BANDS = { monitor: [0.5, 40], diagnostic: [0.05, 150] } as const;
@@ -67,6 +67,8 @@ export interface ResolvedSkin {
 
 export interface ResolveOptions {
   theme?: string;
+  /** Which swap sensors are attached (layout.whenAttached). Omitted or false: the skin's own lanes and tiles. */
+  sensors?: Partial<Record<SwapSensor, boolean>>;
 }
 
 /** Merge a skin source over its base (if any); provenance merges the same way. */
@@ -109,6 +111,25 @@ function applyTheme(skin: Skin, themeId: string): Skin {
   for (const k of Object.keys(out.provenance)) if (k.startsWith('colors.')) delete out.provenance[k];
   out.provenance.colors = { tag: 'eng', source: `ENG: theme ${themeId} darkens the skin colours to ${min}:1` };
   for (const [k, v] of Object.entries(theme.provenance)) if (k !== 'colorTransform') out.provenance[k] = v;
+  return out;
+}
+
+/**
+ * layout.whenAttached, resolved here and only here: for each attached sensor its lanes and tiles take the place of the
+ * ones they name, on the layout and on every page that lists its own lanes. A skin without the rule is returned as is.
+ */
+function applySensors(skin: Skin, sensors: ResolveOptions['sensors']): Skin {
+  const rules = skin.layout.whenAttached;
+  if (!rules || !sensors) return skin;
+  const out = structuredClone(skin);
+  for (const [sensor, on] of Object.entries(sensors) as Array<[SwapSensor, boolean | undefined]>) {
+    const rule = rules[sensor];
+    if (!on || !rule) continue;
+    const lane = (id: LaneId): LaneId => rule.lanes?.[id] ?? id;
+    out.layout.lanes = out.layout.lanes.map(lane);
+    for (const pg of out.pages) if (pg.lanes) pg.lanes = pg.lanes.map(lane);
+    out.layout.tiles = out.layout.tiles.map((col) => col.map((t) => structuredClone(rule.tiles?.[t.param] ?? t)));
+  }
   return out;
 }
 
@@ -233,6 +254,7 @@ export function resolveSkin(id: string, opts: ResolveOptions = {}): ResolvedSkin
   let skin = mergeSkinSource(skinId);
   if (preset) skin = applyPreset(skin, preset);
   if (opts.theme) skin = applyTheme(skin, opts.theme);
+  skin = applySensors(skin, opts.sensors);
   const { limits, approximate } = resolveLimits(skin);
   const { provenance } = skin;
   return {

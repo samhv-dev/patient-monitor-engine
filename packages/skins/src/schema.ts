@@ -1,7 +1,7 @@
 // JSON Schemas (draft-07, validated with ajv) for skins, themes and presets (brief §3.8). Built from small helpers
 // so the schema and src/types.ts read side by side. Every object is closed (additionalProperties: false) and every
 // property is required unless listed in `opt`: a shipped skin can neither miss a field nor carry an unknown one.
-import { COLOR_KEYS, HEADER_ITEMS, LAMP_STYLES, LANE_IDS, PAGE_KINDS, PITCH_MAPS, REQUIRED_COLOR_KEYS, SOUND_PROFILES, TILE_PARAMS } from './types.ts';
+import { COLOR_KEYS, HEADER_ITEMS, LAMP_STYLES, LANE_IDS, PAGE_KINDS, PITCH_MAPS, REQUIRED_COLOR_KEYS, SOUND_PROFILES, SWAP_SENSORS, TILE_PARAMS } from './types.ts';
 
 export type JsonSchema = Record<string, unknown>;
 
@@ -57,6 +57,11 @@ const colors: JsonSchema = {
 };
 
 const tile = obj({ param: en(TILE_PARAMS) }, { size: en(['large', 'normal']), extras: arr({ type: 'string', pattern: '^[A-Za-z0-9%]+$' }) });
+/** layout.whenAttached: per sensor, lane → lane drawn in its place and tile → tile drawn in its place (types.ts SensorSwap). */
+const sensorSwap = obj({}, {
+  lanes: { type: 'object', properties: Object.fromEntries(LANE_IDS.map((k) => [k, en(LANE_IDS)])), additionalProperties: false, minProperties: 1 },
+  tiles: { type: 'object', properties: Object.fromEntries(TILE_PARAMS.map((k) => [k, tile])), additionalProperties: false, minProperties: 1 },
+});
 const page = obj(
   { id: { type: 'string', pattern: '^P[0-9]{1,2}$' }, kind: en(PAGE_KINDS), label: str },
   {
@@ -120,7 +125,7 @@ export const skinSchema: JsonSchema = {
       menuRegion: en(['popup', 'wave-area-bottom']),
       header: arr(en(HEADER_ITEMS), 1),
       messageBars: en(['single-under-header', 'split-technical-physiological']),
-    }, { badge: str }),
+    }, { badge: str, whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))) }),
     pages: arr(page, 1),
     defaultPage: { type: 'string', pattern: '^P[0-9]{1,2}$' },
     calendar: obj({

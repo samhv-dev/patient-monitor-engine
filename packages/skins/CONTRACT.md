@@ -51,6 +51,16 @@ objects merge. `r.provenance` is merged the same way, so every leaf of `r.skin` 
 Alarm tone ids are `alarm:<alarmId>:<train>:<burst>:<pulse>`, never reused, so `ToneScheduler.cancel(ids)` stops
 pulses already handed to Web Audio.
 
+## Sensor swaps (`layout.whenAttached`, showcase hotfix)
+
+Optional `layout.whenAttached.<sensor>` (sensors: `co2`) = `{ lanes?: { <lane>: <lane> }, tiles?: { <param>: TileSpec } }`:
+while that sensor is attached, each named lane is drawn as the mapped lane in the same position (on the layout and on
+every page that lists its own lanes) and each named tile is replaced by the given tile. It is resolved in one place,
+`resolveSkin(id, { sensors: { co2: true } })`; without `sensors`, or with the sensor false, the skin's own lanes and
+tiles. A skin without the rule resolves byte-identically either way (test `sensor-swap.test.ts`). `saadat-like` (and
+so `iran-icu-as-found`) declares `co2: RESP → CO2` and `RR → CO2 (IMCO2, AWRR)` (research/06 §3.1 F6, §5). The
+renderer's `mountMonitor` starts from the engine's `patient.sensors.co2` and follows every accepted `attachSensor co2`.
+
 ## Alarm visuals (data only in 4a)
 
 `r.skin.alarms.lamp` (`L1..L3` style plus `flashHz` and `duty`), `messageBar` (`bg`/`fg` per level, idle, acknowledged,

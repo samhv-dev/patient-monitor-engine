@@ -4,11 +4,11 @@
   "title": "Severe bronchospasm on the ventilator",
   "category": "Showcase",
   "durationMin": 10,
-  "story": "A ventilated 45-year-old woman develops severe bronchospasm: airway pressures climb, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch the pressures fall.",
+  "story": "A ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.",
   "objectives": [
     "Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP",
     "Treat with a bronchodilator",
-    "Watch the peak pressure and auto-PEEP fall"
+    "Watch the delivered tidal volume and minute volume recover as air trapping eases"
   ],
   "notes": "Showcase case (Stage 9 Task 26): the airway event 'bronchospasm' at severity 1 (it aliases 7b's bronchospasm row); salbutamol's bronchodilation is FU-6's.",
   "seed": 7,
@@ -87,7 +87,7 @@
     },
     {
       "id": "treatedByButton",
-      "label": "Salbutamol given: pressures falling",
+      "label": "Salbutamol given: ventilation recovering",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -103,7 +103,7 @@
     },
     {
       "id": "treated",
-      "label": "Salbutamol given: pressures falling"
+      "label": "Salbutamol given: ventilation recovering"
     }
   ]
 }
