@@ -258,7 +258,7 @@ Every other cell differs from pre-merge only in rounding, or in values FU-7 owns
 
 These are exactly FU-10's moves on the pre-FU-7 base, now reproduced on the FU-7 base.
 
-## 11. CI slow-e failure (DI-26 guard) — diagnosis; STOPPED for an owner decision
+## 11. CI slow-e failure (DI-26 guard) — diagnosis, ruling and fix (E-FU10-14)
 
 **The failure.** PR #37 CI run 37217929016, slow-e, `drug-layer-guards.test.ts`: the DI-26 guard requires insulin–dextrose
 at K 7.0 to give −0.6 to −1.1 mmol/L at 60 min. It measured **−1.2537**; main is PL. The cell was plausible on main, so this
@@ -320,7 +320,7 @@ holds at −0.73. A4's own rig gives the same picture (ET-31): combined row −1
 4. **Fix the insulin disposition** (E12a: the nadir at 13 min is too early and too deep). This would leave glucose higher
    at 60 min and the adrenaline smaller. It is FU-8 Part B's item (ruling R-1): number unknown, not FU-10's.
 
-**Unaffected by every option:**
+**Unaffected by every option** (re-measured after the fix, below):
 - A7: omitted basal insulin 35.5 / 11.55 / pH 7.31 / K⁺ 6.00; treated 11.55 → 8.90 (0.88 /h), K⁺ 3.24.
 - The instructor DKA K⁺: 4.48 vs healthy 4.18 (ET-23c on the merged tree).
 - The plain insulin row (ET-20 −0.73).
@@ -328,3 +328,103 @@ holds at −0.73. A4's own rig gives the same picture (ET-31): combined row −1
 **Recommendation:** option 1 (Ali Q4). It is the only single source in which the two rows that give the same insulin
 give the same K, and it meets both bands without a constant. Executing it needs approval for the two out-of-partition
 files (7g `rows-other.ts`, 7c `blood/core.ts` or `treatments.ts`) and for reversing D6.
+
+### Ruling and fix (orchestrator, after the diagnosis)
+
+**Option 1 was executed: exception E-FU10-14 (approved; reverses plan decision D6).** Commit `18e93168`.
+- **7g, `l2/pk/data/rows-other.ts`.** The `insulinDextrose` row's insulin is now the plain `insulin` row's insulin: the
+  same PK (`gammaPk(10, false, 1800, 14400, 0.1/60)`) and the same K⁺ PD (`kShift`, emax −1.2, EC50 1). It is
+  `shared: 'blood'`, so 7c (and 7e's E8 observer) still read the dose from `bus.doses`, exactly as for salbutamol.
+- **7c, `l2/blood/core.ts`.** The empirical whole-effect curve (`INSULIN_K_SHIFT × insulinEffect`) is used only when
+  7g is absent (`kShiftExt` undefined), exactly as 7c's salbutamol curve. The no-7g configuration keeps it, and so does
+  its test (`core.test.ts` "insulin–dextrose alone: −0.6 to −1.0 by 60 min").
+- **Tests.**
+  - New `test/l2/blood/fu10-insdex-k.test.ts` (RED first: 0.87 mmol/L from the retired curve, and the row was not shared).
+  - 7g's `library.test.ts`: the row is asserted shared rather than blood-only.
+  - The A4 engine test's E-FU10-12 `it.fails` flips back to `it`. **E-FU10-12 is deleted.**
+
+**What the owner should know (Q4).** One physiological mechanism now carries insulin's K⁺ shift on both rows.
+The counter-regulatory adrenaline K⁺ shift after an insulin-induced hypoglycaemia is a separate, real term (7e's
+endogenous adrenaline β2, `EPI_K_SHIFT`). It is no longer stacked on top of an empirical curve that already contained it.
+
+**Before → after the fix** (merged tree; DI-26 = the FU-7 guard at K 7.0; ΔK⁺ against the no-dose arm):
+
+| Measurement | Before fix | After fix | Band |
+|---|---|---|---|
+| DI-26 insulin–dextrose, ΔK⁺ at 60 min | −1.253 | **−0.88** | −0.6 to −1.1 |
+| DI-26 calcium chloride 1 g, ΔK⁺ at 5 min | −0.01 | −0.01 | ±0.15 |
+| DI-26 salbutamol 10 mg, ΔK⁺ at 30 min | −0.67 | −0.67 | −0.4 to −1.0 |
+| DI-26 insulin–dextrose + salbutamol, ΔK⁺ at 30 min | −2.02 | **−1.70** | < salbutamol alone |
+| FU-10 A4 combined row, ΔK⁺ at 60 min (ET-31) | −1.15 (`it.fails`) | **−0.78** (`it`) | −1.0 to −0.6 |
+| ET-31 two-row arm | −0.78 | −0.78 | — |
+| A4 combined-row glucose max / min (E8) | +11.17 / −2.68 | +11.17 / −2.68 | unchanged |
+| 7c sanity III (burns + succinylcholine), K⁺ 30 min after insulin–dextrose | 7.1 → 3.6 | 7.1 → **3.9** | fall ≥ 1 |
+| A7 omitted 6 h: glucose / ketones / pH / K⁺ | 35.5 / 11.55 / 7.31 / 6.00 | same | — |
+| A7 insulin 0.1 U/kg/h: ketones, K⁺ | 11.55 → 8.90 (0.88 /h), 3.24 | same | — |
+| Instructor DKA K⁺ (ET-23c) | 4.48 vs healthy 4.18 | 4.48 | — |
+| Insulin 10 U alone (ET-20) K⁺ at 60 min | −0.73 | −0.73 | — |
+
+ET re-run on the fixed head (ET-10, 18, 20, 22, 23, 31, M2): every value is identical except ET-31's combined-row K⁺.
+No showcase or draft scenario gives insulin–dextrose; the legacy `stage7c` demo page does, and it now follows 7g's PD.
+Sodium bicarbonate is not part of DI-26 and has no K⁺ term of its own beyond 7c's pH term (unchanged).
+
+### CI amendment 6: the seventh slow group
+
+Approved by the orchestrator. Commit `662f8a1b` changes `.github/workflows/ci.yml` (matrix, and the disjointness check
+over seven lists) and `packages/engine-core/vite.config.ts`. All seven groups were re-packed longest-first from the
+measured CI per-file times: the mean of FU-7's PR run 37199184387 and PR #37's run 37217929016, with FU-9 B's two new
+files estimated at 80 s each.
+
+| Group | Contents (glob bundles kept whole) | Estimated CI sum | Local (staggered, shared Mac) |
+|---|---|---|---|
+| slow-a | the long runs, resp-bronchodilation, resp-coupling, lung-unilateral, … (17 files) | 2,002 s (33.4 min) | 17 / 59 passed, 992 s |
+| slow-b | the remainder: fu10-insulin-omission, resp-suite, endo-acceptance, organs-renal, organs-soak, … (13) | 1,998 s (33.3) | 13 / 73 passed, 986 s |
+| slow-c | fu9-*, pk-acceptance-pd, fu10-mh-trigger, organs-curves, … (21) | 1,998 s (33.3) | 21 / 72 passed, 921 s |
+| slow-d | stimulus-surge, clinical-suite, fu8-*, resp-induction, vagal-events, fu10-fever, … (31) | 1,993 s (33.2) | 31 / 142 passed, 916 s |
+| slow-e | drug-layer-guards, blood-sanity-acid, neuro-engine, … (10) | 1,998 s (33.3) | 10 / 58 passed, 891 s |
+| slow-f | drug-layer, drug-apnoea, fu7-nmb-one-state, thermal-warmer, … (12) | 1,995 s (33.2) | 12 / 95 passed, 1,099 s |
+| slow-g | fu10-thresholds, fu10-adrenal, fu10-insulin-dextrose, engine-pipeline, blood-anaemia-co, … (11) | 1,987 s (33.1) | 11 / 47 passed, 967 s |
+
+Every group excludes every other by Vitest's matcher; slow-b is SLOW minus the other six. The local check matches
+ci.yml: `slow` 115 = 17 + 13 + 21 + 31 + 10 + 12 + 11, no overlaps, nothing missing.
+
+### Full gate after the fix (head `662f8a1b`, local)
+
+- **Slow groups:** all seven green; **546 tests**, 0 failures (table above). DI-26 is now PL.
+- **FU-10 acceptance numbers, all unchanged from §10 except ET-31's K⁺:**
+  - MH: +18.2 / +48.5 min.
+  - Thresholds: −1.44 / −0.492 / onset 34.50 / plateau −0.087 / 2.27 h; elderly 33.50 vs 34.50.
+  - E8: +11.17 / −2.68, with K⁺ now −0.78.
+  - Etomidate cortisol ratio 0.653.
+  - Adrenal insufficiency: post-induction MAP 69.4 vs 72.7, phenylephrine ratio 0.65, surgical ΔMAP −8.1.
+  - A7: as above.
+  - Fever `it.fails`: 36.60 / 36.34 °C.
+- **Fast suites:** all green, with no load flakes this time: engine-core 313 files / 1393 passed (1 skipped); audio 58;
+  skins 191; controller 227; ventilator 97; renderer 90; validation 107 (+11 skipped); demo 200.
+- **Typecheck, build, check-notices:** clean / OK / OK (3 governed files).
+- **e2e, Stage 9 + showcase specs, Chromium and WebKit:** 30 passed, 6 skipped, 0 failed. The tracked screenshots the
+  run rewrites were restored.
+- **Scripted showcase rehearsal** (`docs/showcase/KIT-GATE.md` sequence, without the videos): the kit was built into the
+  session scratchpad from `662f8a1b` (`VERSION.txt` Commit 662f8a1b…).
+  - Server checks pass and the sub-path check passes.
+  - Rehearsal and sound: **14 of 14 passed**.
+  - Sub-path Healthy induction on WebKit: passed.
+  - Results were copied out to the scratchpad and `docs/showcase/` was restored; nothing from the run is committed.
+
+**Rehearsal differences from round three.** Only one exceeds the 2 s / 1-unit jitter the kit gate describes:
+
+| Case | Check | Round 3 | Now (Chromium / WebKit) |
+|---|---|---|---|
+| Healthy induction | apnoea alarm after "Induce now" | 55.0 / 55.0 s | **61 s** / 55.0 s |
+| | sub-path WebKit run | 59.5 s | 55.1 s |
+| | CO2 tile after intubation | 45 at 7.3 s / 45 at 5.3 s | 46 at 7.3 s / 46 at 7.3 s |
+| | MAP nadir | 71.7 / 71.6 | 71.7 / 71.7 |
+| Anaphylaxis | systolic > 110 after epinephrine | 11.3 / 11.4 s | 11.3 / 11.3 s |
+| Bronchospasm | VTE before → 3 min | 162 → 304 / 161 → 305 | 161 → 305 / 160 → 305 |
+| Tamponade | MAP < 40 after propofol | 112.7 / 112.7 s | 112.1 / 112.2 s |
+| Haemorrhage | pulse lost / CPR to systolic > 90 / ROSC | 10 min / 4.3 min / yes | same on both |
+| Second load | clock | 02:04 → 00:05 / 02:05 → 00:03 | 02:02 → 00:05 / 02:03 → 00:04 |
+
+The Chromium apnoea alarm at 61 s is inside the 70 s window the run sheet states. WebKit is unchanged (55.0 s) and the
+sub-path run moved the other way (59.5 → 55.1 s), so it reads as press-time jitter, not a model change. FU-10 changes
+nothing in a non-susceptible, normothermic induction's first minutes.
