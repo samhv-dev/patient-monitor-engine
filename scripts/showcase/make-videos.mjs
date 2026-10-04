@@ -19,23 +19,27 @@ if (spawnSync('ffmpeg', ['-version']).status !== 0) {
 const results = join(repo, 'test-results/showcase-video');
 if (!convertOnly) {
   rmSync(results, { recursive: true, force: true });
-  const pw = spawnSync('npx', ['playwright', 'test', '-c', 'scripts/showcase/playwright.showcase.config.ts', 'rehearsal', '--project', 'video'], {
+  const pw = spawnSync('npx', ['playwright', 'test', '-c', 'scripts/showcase/playwright.showcase.config.ts', 'rehearsal', '--project', 'video', '-g', 'Healthy induction|Anaphylaxis|bronchospasm|tamponade|haemorrhage'], {
     cwd: repo, stdio: 'inherit', env: { ...process.env, SHOWCASE_KIT: kit, SHOWCASE_VIDEO: '1', SHOWCASE_WORKERS: '1' },
   });
   console.log(`rehearsal for video exited ${pw.status}`);
 }
 
 // [a word that identifies the case in Playwright's (possibly truncated) result folder name, the file name]
-const ORDER = [['healthy-induction', 'healthy induction'], ['anaphylaxis', 'anaphylaxis under anaesthesia'], ['bronchospasm', 'severe bronchospasm on the ventilator'], ['tamponade', 'severe tamponade then induction'], ['resuscitation', 'class IV haemorrhage PEA and resuscitation']];
+const ORDER = [['healthy-induction', '1-healthy-induction'], ['anaphylaxis', '2-anaphylaxis'], ['bronchospasm', '3-bronchospasm'], ['resuscitation', '4-haemorrhage-cpr'], ['tamponade', '5-tamponade']];
 const outDir = join(kit, 'videos');
 mkdirSync(outDir, { recursive: true });
 const dirs = existsSync(results) ? readdirSync(results) : [];
+// replace the previous set only when this run recorded all five: remove every .mp4 written before (old and new names)
+const found = ORDER.filter(([key]) => dirs.some((x) => x.toLowerCase().includes(key)));
+if (found.length === ORDER.length) for (const f of readdirSync(outDir)) if (f.endsWith('.mp4')) rmSync(join(outDir, f));
+else console.log(`only ${found.length} of ${ORDER.length} recordings: the previous videos are kept, new ones written beside them`);
 let made = 0;
-ORDER.forEach(([key, name], i) => {
+ORDER.forEach(([key, name]) => {
   const d = dirs.find((x) => x.toLowerCase().includes(key));
   const webm = d && readdirSync(join(results, d)).find((f) => f.endsWith('.webm'));
   if (!webm) return console.log(`no recording for ${name}`);
-  const mp4 = join(outDir, `${i + 1} ${name}.mp4`);
+  const mp4 = join(outDir, `${name}.mp4`);
   const r = spawnSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(results, d, webm), '-c:v', 'libx264', '-preset', 'medium', '-crf', '23', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', mp4], { stdio: 'inherit' });
   if (r.status === 0) {
     made++;

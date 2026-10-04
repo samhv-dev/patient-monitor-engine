@@ -2,8 +2,11 @@
 // 1440×900. Each case: a fresh page load at #/teach → Scenario tab → Showcase filter → Load → ×4 → its on-panel action
 // buttons. Expected values come from the orchestrator's manual rehearsal (generous windows: a smoke rehearsal, not a
 // calibration test). Every observed number and every visible label is written to docs/showcase/results/.
+// The DEFAULT monitor (Saadat-style) is used throughout; since the showcase hotfix it shows a CO2 tile, read from the DOM.
+// Written to hold on the hotfix build (main f29951b) AND the FU-7 drug-layer build: assertions are directions with
+// generous floors, never calibration bands.
 import { expect, test, type Page } from '@playwright/test';
-import { action, alarms, hist, latest, loadShowcase, maxOf, meanOf, minOf, openTeach, r1, record, runText, save, shot, simNow, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
+import { action, alarms, barClock, co2Tile, hist, latest, loadShowcase, maxOf, meanOf, minOf, openTeach, r1, record, runText, save, shot, simNow, stateId, waitSim, waitUntilSim, watchConsole } from './showcase-support.ts';
 
 type Result = { case: string; browser: string; server: string; base: string; steps: Array<Record<string, unknown>>; labels: Record<string, string>; checks: Array<{ what: string; expected: string; observed: unknown; pass: boolean }>; errors: string[] };
 
@@ -44,29 +47,28 @@ test('Healthy induction', async ({ page }) => {
   try {
     const t0 = await start(page, r, 'Healthy induction');
     await waitUntilSim(page, t0 + 30);
+    r.labels.co2TileAwake = (await co2Tile(page)).text;
     const baseMap = meanOf(await hist(page, t0 + 15, t0 + 30), 'abpMean');
     await step(r, page, 'baseline (15–30 s after load)', { baselineMap: r1(baseMap) });
     const tInd = await action(page, 'Induce now');
     await page.waitForTimeout(800);
     r.labels.afterInduce = await runText(page);
     await step(r, page, 'pressed "Induce now"');
-    const tApn = await waitSim(page, 120, async (now) => {
-      const a = (await alarms(page)).find((x) => x.t > tInd && /apn/i.test(x.text));
-      if (a) return true;
-      return (await hist(page, tInd + 5, now)).some((s) => s.rr === 0 || s.awrr === 0);
-    });
+    // smoke check: the apnoea ALARM shows 55–62 s after the button depending on where in the breath it is pressed
+    await waitSim(page, 120, async () => (await alarms(page)).some((x) => x.t > tInd && /apn/i.test(x.text)));
     const apnAlarm = (await alarms(page)).find((x) => x.t > tInd && /apn/i.test(x.text));
-    await step(r, page, 'apnoea detected', { apnoeaAlarm: apnAlarm?.text ?? null });
-    check(r, 'apnoea after "Induce now"', '≤ 60 s sim', tApn === null ? 'not within 120 s' : `${r1(tApn - tInd)} s`, tApn !== null && tApn - tInd <= 60);
+    await step(r, page, 'apnoea alarm', { apnoeaAlarm: apnAlarm?.text ?? null, alarmButton: await page.locator('.alarm-count').innerText(), co2Tile: (await co2Tile(page)).text });
+    check(r, 'apnoea alarm after "Induce now"', 'within 70 s sim', apnAlarm ? `${r1(apnAlarm.t - tInd)} s "${apnAlarm.text}"` : 'no apnoea alarm within 120 s', !!apnAlarm && apnAlarm.t - tInd <= 70);
     await waitUntilSim(page, tInd + 120);
     await step(r, page, '2 min after induction');
     const tInt = await action(page, 'Intubate and ventilate');
     await page.waitForTimeout(800);
     r.labels.afterIntubate = await runText(page);
     await step(r, page, 'pressed "Intubate and ventilate"');
-    const tCo2 = await waitSim(page, 90, (_n, v) => typeof v.etco2 === 'number' && v.etco2 > 25);
-    await step(r, page, 'EtCO2 back');
-    check(r, 'EtCO2 number returns after "Intubate and ventilate"', '> 25 mmHg', tCo2 === null ? `not within 90 s (latest ${r1((await latest(page)).etco2)})` : `${r1(tCo2 - tInt)} s`, tCo2 !== null);
+    const tCo2 = await waitSim(page, 90, async () => ((await co2Tile(page)).value ?? 0) > 25);
+    const tile = await co2Tile(page);
+    await step(r, page, 'EtCO2 back on the monitor CO2 tile', { co2Tile: tile.text });
+    check(r, 'EtCO2 number on the Saadat CO2 tile after "Intubate and ventilate"', '> 25 mmHg', tCo2 === null ? `not within 90 s (tile "${tile.text}")` : `${tile.value} after ${r1(tCo2 - tInt)} s`, tCo2 !== null);
     await waitUntilSim(page, tInd + 240);
     const nadir = minOf(await hist(page, tInd, tInd + 240), 'abpMean');
     await step(r, page, '4 min after induction', { mapNadir: r1(nadir) });
@@ -111,16 +113,25 @@ test('Severe bronchospasm on the ventilator', async ({ page }) => {
     const f = page.frames().find((x) => x.url().includes('vent-hamilton'));
     return f ? (await f.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 900) : 'no ventilator frame';
   };
-  try {
-    const t0 = await start(page, r, 'Severe bronchospasm on the ventilator');
-    await waitUntilSim(page, t0 + 60);
+  const vte = (t: string): number | null => {
+    const m = /(\d+)\s*VTE ml/.exec(t);
+    return m ? Number(m[1]) : null;
+  };
+  const atVent = async (what: string, file: string | null): Promise<number | null> => {
     await page.evaluate(() => (location.hash = '#/vent'));
     await page.waitForTimeout(5000);
-    await step(r, page, '#/vent before salbutamol', { vent: await ventText() });
-    await shot(page, `severe-bronchospasm-on-the-ventilator-vent-before-${browserName}`);
+    const text = await ventText();
+    await step(r, page, what, { vte: vte(text), vent: text, co2Tile: (await co2Tile(page)).text });
+    if (file) await shot(page, file);
     await page.evaluate(() => (location.hash = '#/teach'));
     await page.waitForTimeout(1200);
     await page.click('[role=tab][data-tab=scenario]');
+    return vte(text);
+  };
+  try {
+    const t0 = await start(page, r, 'Severe bronchospasm on the ventilator');
+    await waitUntilSim(page, t0 + 60);
+    const vte0 = await atVent('#/vent before salbutamol', `severe-bronchospasm-on-the-ventilator-vent-before-${browserName}`);
     const before = await stateId(page);
     const tS = await action(page, 'Give salbutamol 250 µg');
     await page.waitForTimeout(1000);
@@ -128,14 +139,13 @@ test('Severe bronchospasm on the ventilator', async ({ page }) => {
     const after = await stateId(page);
     await step(r, page, 'pressed "Give salbutamol 250 µg"');
     check(r, 'the button changes the scenario state', 'spasm → treatedByButton', `${before} → ${after}`, before === 'spasm' && after === 'treatedByButton');
+    const label = 'Salbutamol given: ventilation recovering';
+    check(r, 'the new state label is shown', `"${label}" in the state strip`, r.labels.afterSalbutamol.includes(label) ? label : r.labels.afterSalbutamol.split('\n').slice(3, 6).join(' | '), r.labels.afterSalbutamol.includes(label));
     await waitUntilSim(page, tS + 180);
-    await page.evaluate(() => (location.hash = '#/vent'));
-    await page.waitForTimeout(5000);
-    await step(r, page, '#/vent 3 min after salbutamol', { vent: await ventText() });
-    await shot(page, `severe-bronchospasm-on-the-ventilator-vent-after-${browserName}`);
-    await page.evaluate(() => (location.hash = '#/teach'));
-    await page.waitForTimeout(1200);
-    await page.click('[role=tab][data-tab=scenario]');
+    const vte3 = await atVent('#/vent 3 min after salbutamol', `severe-bronchospasm-on-the-ventilator-vent-after-${browserName}`);
+    check(r, 'delivered tidal volume recovers after salbutamol', 'VTE rises by ≥ 100 mL within 3 min', `${vte0} → ${vte3} mL`, vte0 !== null && vte3 !== null && vte3 - vte0 >= 100);
+    await waitUntilSim(page, tS + 360);
+    await atVent('#/vent 6 min after salbutamol (observation only)', null);
   } finally {
     await finish(page, r, browserName);
   }
@@ -188,9 +198,9 @@ test('Class IV haemorrhage, PEA and resuscitation', async ({ page }) => {
     // WHEN to press CPR matters (measured, docs/showcase/KIT-GATE.md): pressed ≈ 25 s after the arterial trace goes
     // static (10:28) the rhythm turned to VF within 5 s and no pulse returned in 8 min (both browsers); pressed after
     // the "SPO2 NO PULSE" alarm (≈ 10:40; probes at 10:52 and 11:47) the pulse returned after 4.3 min. The rehearsal
-    // follows the run-sheet cue: press about 10 s after "SPO2 NO PULSE". SHOWCASE_CPR_AT=<s after load> probes others.
+    // follows the run-sheet cue: press about 10 s after "SPO2 NO PULSE". SHOWCASE_CPR_AT=<sim s> probes others.
     const cprAt = Number(process.env.SHOWCASE_CPR_AT ?? 0);
-    if (cprAt) await waitUntilSim(page, t0 + cprAt);
+    if (cprAt) await waitUntilSim(page, cprAt); // absolute sim time = the session-bar clock (10:28 → 628)
     else {
       const tNp = await waitSim(page, 180, async () => (await alarms(page)).some((a) => /NO PULSE/i.test(a.text)));
       await step(r, page, 'monitor alarm "SPO2 NO PULSE"');
@@ -211,6 +221,33 @@ test('Class IV haemorrhage, PEA and resuscitation', async ({ page }) => {
     await waitUntilSim(page, tStop + 60);
     const sys = minOf(await hist(page, tStop + 20, tStop + 60), 'abpSys');
     await step(r, page, '1 min after stopping CPR (observation only)', { minSys20to60: r1(sys) });
+  } finally {
+    await finish(page, r, browserName);
+  }
+});
+
+test('A second scenario in the same page restarts the clock', async ({ page }) => {
+  const browserName = test.info().project.name;
+  const r = begin('Second scenario load restarts the clock', browserName);
+  try {
+    const t0 = await start(page, r, 'Healthy induction');
+    await waitUntilSim(page, t0 + 120);
+    const c1 = await barClock(page);
+    await step(r, page, 'first case running 2 min', { clock: c1.text });
+    await page.locator('section[aria-label="Running scenario"] button', { hasText: 'Choose another scenario' }).click();
+    await page.waitForTimeout(600);
+    r.labels.libraryDuringRun = (await page.locator('section[aria-label="Scenario library"]').innerText()).split('\n').slice(0, 4).join(' | ');
+    r.labels.backButton = (await page.getByRole('button', { name: 'Back to the running case' }).count()) ? 'Back to the running case' : 'not shown';
+    Object.assign(r.labels, Object.fromEntries(Object.entries(await loadShowcase(page, 'Severe tamponade, then induction', { speed: false })).map(([k, v]) => [`second_${k}`, v])));
+    await page.waitForTimeout(1500);
+    const c2 = await barClock(page);
+    const inState = (await page.locator('section[aria-label="Running scenario"]').innerText()).match(/Time in state\s+(\d+:\d+)/)?.[1] ?? '?';
+    await step(r, page, 'second case loaded', { clock: c2.text, timeInState: inState });
+    check(r, 'the clock restarts on the second load', 'session-bar clock < 00:20 just after loading', `${c1.text} → ${c2.text} (time in state ${inState})`, c2.s < 20);
+    await page.waitForTimeout(8000);
+    const c3 = await barClock(page);
+    await step(r, page, '8 s (wall) later', { clock: c3.text });
+    check(r, 'the clock runs after the second load', 'advances', `${c2.text} → ${c3.text}`, c3.s > c2.s);
   } finally {
     await finish(page, r, browserName);
   }

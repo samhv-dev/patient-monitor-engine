@@ -5,7 +5,7 @@
   "base": "http://127.0.0.1:8700",
   "steps": [
     {
-      "simT": 2.2,
+      "simT": 4.8,
       "what": "loaded \"Healthy induction\" at ×4",
       "state": "awake",
       "hr": null,
@@ -15,111 +15,118 @@
       "rr": null
     },
     {
-      "simT": 32.8,
+      "simT": 36.3,
       "what": "baseline (15–30 s after load)",
       "state": "awake",
-      "hr": 71,
-      "art": "122.9/81.2 (95)",
-      "spo2": 98,
+      "hr": 69,
+      "art": "122.3/80 (94.2)",
+      "spo2": 99,
       "etco2": 39,
       "rr": 13,
       "baselineMap": 94.8
     },
     {
-      "simT": 36.4,
+      "simT": 39.9,
       "what": "pressed \"Induce now\"",
       "state": "induced",
       "hr": 69,
-      "art": "122.2/79.9 (94.1)",
+      "art": "122.6/80.6 (94.7)",
       "spo2": 99,
       "etco2": 39,
       "rr": 13
     },
     {
-      "simT": 87.5,
-      "what": "apnoea detected",
+      "simT": 94.3,
+      "what": "apnoea alarm",
       "state": "induced",
-      "hr": 72,
-      "art": "108.6/71.2 (83)",
+      "hr": 71,
+      "art": "107.1/70.2 (81.7)",
       "spo2": 99,
       "etco2": 0,
       "rr": 0,
-      "apnoeaAlarm": null
+      "apnoeaAlarm": "CO2 APNEA",
+      "alarmButton": "!!! Apnoea (no CO₂ breaths)",
+      "co2Tile": "CO2 mmHg 0 FiCO2 0 awRR 0"
     },
     {
-      "simT": 153.5,
+      "simT": 157.9,
       "what": "2 min after induction",
       "state": "induced",
-      "hr": 74,
-      "art": "107/71.5 (82.7)",
+      "hr": 73,
+      "art": "106.8/71.1 (82.4)",
       "spo2": 99,
       "etco2": 0,
       "rr": 0
     },
     {
-      "simT": 157,
+      "simT": 161.7,
       "what": "pressed \"Intubate and ventilate\"",
       "state": "ventilated",
-      "hr": 73,
-      "art": "107.1/71.2 (82.6)",
+      "hr": 75,
+      "art": "107.5/72.2 (83.4)",
       "spo2": 99,
       "etco2": 0,
       "rr": 4
     },
     {
-      "simT": 159.1,
-      "what": "EtCO2 back",
+      "simT": 164.6,
+      "what": "EtCO2 back on the monitor CO2 tile",
       "state": "ventilated",
       "hr": 75,
-      "art": "105.2/70.9 (81.9)",
+      "art": "104.3/69.9 (80.8)",
       "spo2": 99,
       "etco2": 46,
-      "rr": 4
+      "rr": 4,
+      "co2Tile": "CO2 mmHg 46 FiCO2 46 awRR 3"
     },
     {
-      "simT": 274.4,
+      "simT": 278.4,
       "what": "4 min after induction",
       "state": "ventilated",
       "hr": 73,
-      "art": "101.7/67.5 (78.1)",
+      "art": "101.5/67.6 (78.1)",
       "spo2": 99,
       "etco2": 38,
       "rr": 12,
-      "mapNadir": 71.7
+      "mapNadir": 71.5
     },
     {
       "alarmsRaised": [
-        "89.1 s CO2 APNEA"
+        "93.7 s CO2 APNEA"
       ]
     }
   ],
   "labels": {
+    "alarmButtonAtOpen": "Alarms off",
     "tab": "Scenario",
     "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
     "toast": "Scenario loaded: Healthy induction",
     "speed": "×4 (session bar) → toast \"Speed ×4\"",
-    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nInduce now\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterInduce": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Intubate and ventilate\": Intubated and ventilated\nIntubate and ventilate\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterIntubate": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nInduce now\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Alarms off",
+    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 00:03 00:03 ×1 ×2 ×4 Pause Bookmark",
+    "co2TileAwake": "CO2 mmHg 39 FiCO2 0 awRR 13",
+    "afterInduce": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Intubate and ventilate\": Intubated and ventilated\nIntubate and ventilate\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "afterIntubate": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
     "finalRun": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n01:58\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
-      "what": "apnoea after \"Induce now\"",
-      "expected": "≤ 60 s sim",
-      "observed": "54.4 s",
+      "what": "apnoea alarm after \"Induce now\"",
+      "expected": "within 70 s sim",
+      "observed": "57.1 s \"CO2 APNEA\"",
       "pass": true
     },
     {
-      "what": "EtCO2 number returns after \"Intubate and ventilate\"",
+      "what": "EtCO2 number on the Saadat CO2 tile after \"Intubate and ventilate\"",
       "expected": "> 25 mmHg",
-      "observed": "5.4 s",
+      "observed": "46 after 5.8 s",
       "pass": true
     },
     {
       "what": "arterial mean falls after induction",
       "expected": "≥ 10 mmHg below baseline",
-      "observed": "94.8 → nadir 71.7",
+      "observed": "94.8 → nadir 71.5",
       "pass": true
     },
     {
