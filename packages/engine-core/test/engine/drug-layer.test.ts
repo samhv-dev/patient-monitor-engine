@@ -211,6 +211,18 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(tn).toBeGreaterThanOrEqual(120);
       expect(tn).toBeLessThanOrEqual(420);
     });
+    // The plan's "Expected it.fails" table pre-declared DI-01c as `it.fails` at −0.4 % (FU-4's `symp` rows for opioids,
+    // Requests → FU-4 item 1; FU-7 adds no `symp` row). The finisher measured it on the gate tree instead of assuming it.
+    it('propofol 2 mg/kg + remifentanil 1 µg/kg are more than additive on MAP (DI-01c; Bouillon 2004, M10 ch. 22: one response surface): the pair\'s MAP fall exceeds the sum of each alone, no arrest — measured excess −3.5 % (was −0.4 % before FU-7, pre-declared it.fails)', async () => {
+      const pro = d(T, 'propofol', 2, 'mg/kg');
+      const rem = d(T, 'remifentanil', 1, 'mcg/kg');
+      const [i, p, r, c] = await Promise.all([V([pro, rem]), V([pro]), V([rem]), V([])].map((a) => F7.runArm(a)));
+      const both = F7.pctMin(i!.rows, c!.rows, 'map', T, T + 600);
+      const sum = F7.pctMin(p!.rows, c!.rows, 'map', T, T + 600) + F7.pctMin(r!.rows, c!.rows, 'map', T, T + 600);
+      console.log(`FU-7 T19 DI-01c: MAP both ${both.toFixed(1)} %, sum alone ${sum.toFixed(1)} %, excess ${(both - sum).toFixed(1)} %`);
+      expect(both - sum).toBeLessThanOrEqual(0);
+      expect(F7.arrestIn(i!.rows, T, T + 600)).toBe(false);
+    });
     /** The smallest bolus (geometric bisection, 9 steps over [lo, hi] mg/kg) that sets `conscious` false within 10 min. */
     async function locDose(id: string, ageY: number, lo: number, hi: number): Promise<number> {
       for (let i = 0; i < 9; i++) {
