@@ -72,6 +72,8 @@ export class AppSession {
   private lastWall = performance.now();
   private readonly pollTimer: ReturnType<typeof setInterval>;
   private readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
+  /** What the paired-remote channel has received, by message kind (the e2e prints it when a remote cannot join). */
+  readonly diag = { received: {} as Record<string, number> };
 
   /** `?load=perf8`: mount the Stage 8a performance layout instead of the site's skin (the frame gate, review F6). */
   private readonly perf8: boolean;
@@ -114,6 +116,7 @@ export class AppSession {
     hs.addTransport(hub.connect());
     this.bc = createBroadcastChannelTransport(this.code);
     hs.addTransport(this.bc);
+    this.bc.onMessage((m) => void (this.diag.received[m.kind] = (this.diag.received[m.kind] ?? 0) + 1)); // e2e diagnostics
     this.panelTransport = hub.connect();
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);

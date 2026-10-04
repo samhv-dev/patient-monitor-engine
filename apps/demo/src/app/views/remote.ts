@@ -3,7 +3,7 @@
 // Stage 6a transports (BroadcastChannel in the same browser; the relay when the link carries ?relay=). Version 1.0 is
 // same-browser only (review F2, orchestrator ruling 6): tablet pairing over the relay is version 1.1. The Remote never
 // runs an engine: it sends commands and reads state, as the 6a remote does.
-import { ControllerSession, createBroadcastChannelTransport, createWebSocketTransport, normalizeSessionCode, type ManagedTransport } from '@pme/controller';
+import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type ManagedTransport, type WireMessage } from '@pme/controller';
 import { Link } from '../link.ts';
 import { mountPanel } from '../panel/panel.ts';
 import { pairingOf } from '../pairing.ts';
@@ -65,10 +65,22 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
     // Connected once the host has answered the hello (its snapshot) OR once its 1 Hz state reaches this page: the state
     // is all the panel needs (on a cold Vite start a remote once waited over 10 s for the snapshot answer).
     const draw = throttle(() => setText(status, ctl.hostOnline || ctl.state ? `Connected to ${code}` : `Waiting for the monitor ${code}…`), 500);
+    // Joining is robust to a lost or unanswered hello: until the host has answered (snapshot) or its state has arrived,
+    // the remote says hello again every 2 s (from its own peer id, so the host's duplicate filter never drops it); the
+    // host answers every hello with a fresh snapshot (Stage 6a late join). What arrives is counted for the e2e diagnostics.
+    const diag = { sent: 0, received: {} as Record<string, number>, transport: () => transport.status };
+    transport.onMessage((m: WireMessage) => void (diag.received[m.kind] = (diag.received[m.kind] ?? 0) + 1));
+    const stamp = createStamper(code, newPeerId('rejoin'));
+    const rejoin = setInterval(() => {
+      if (ctl.hostOnline || ctl.state) return void clearInterval(rejoin);
+      if (transport.status !== 'open') return;
+      transport.send(stamp({ kind: 'hello', role: 'controller' }));
+      diag.sent++;
+    }, 2000);
     link.onChange(draw);
     draw();
     history.replaceState(null, '', `${location.pathname}${location.search}#/remote?code=${code}`);
-    Object.assign(window, { __pmeRemote: { link, panel } }); // e2e hook
+    Object.assign(window, { __pmeRemote: { link, panel, diag } }); // e2e hook
   }
   if (normalizeSessionCode(codeIn.inp.value)) queueMicrotask(() => connect(codeIn.inp.value));
   return { id: 'remote', el };

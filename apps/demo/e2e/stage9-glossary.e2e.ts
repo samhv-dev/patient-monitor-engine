@@ -40,13 +40,30 @@ test('no engine id reaches a clinical view', async ({ page }) => {
   await join.waitForFunction(() => '__pmeApp' in window);
   hits.push(...(await scanEngineIds(join, IDS)).map((h) => `remote join form → ${h}`));
   await join.close();
-  // pair the way an instructor does: the host shows its Remote view (its code) while the remote joins. The host was
-  // last on the Ventilator view (its cockpit drives the patient at 50 Hz, the likely load); on the 2-vCPU CI runner the WebKit host
-  // answered no remote within 10 s (CI run 37136321632, 3 of 3 attempts; passes locally), every other remote test passed
+  // pair the way an instructor does: the host shows its Remote view (its code) while the remote joins
   await go(page, '#/remote');
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(`host: ${e.message}`));
+  page.on('crash', () => errors.push('host: page crashed'));
   const remote = await page.context().newPage();
+  remote.on('pageerror', (e) => errors.push(`remote: ${e.message}`));
+  remote.on('crash', () => errors.push('remote: page crashed'));
   await remote.goto(`${base}/#/remote?code=${code}`);
-  await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 20_000 });
+  try {
+    await expect(remote.locator('.status-pill')).toContainText('Connected', { timeout: 20_000 });
+  } catch (err) {
+    // CI WebKit (2-vCPU runner) failed here repeatedly while macOS WebKit passes: name what each side saw
+    const host = await page.evaluate(() => {
+      const a = (window as unknown as { __pmeApp: { session: { diag: unknown; host: { stats: unknown }; simNow(): number } } }).__pmeApp.session;
+      return JSON.stringify({ simNow: a.simNow(), received: a.diag, stats: a.host.stats, hidden: document.hidden });
+    }).catch((e: Error) => `host unreachable: ${e.message}`);
+    const rem = await remote.evaluate(() => {
+      const r = (window as unknown as { __pmeRemote?: { diag: { sent: number; received: unknown; transport(): string } } }).__pmeRemote;
+      return JSON.stringify(r ? { sent: r.diag.sent, received: r.diag.received, transport: r.diag.transport(), hidden: document.hidden } : 'no remote hook');
+    }).catch((e: Error) => `remote unreachable: ${e.message}`);
+    console.log(`[remote-join] host ${host}\n[remote-join] remote ${rem}\n[remote-join] errors ${JSON.stringify(errors)}`);
+    throw err;
+  }
   for (const t of TABS) {
     await tab(remote, t);
     hits.push(...(await scanEngineIds(remote, IDS)).map((h) => `remote ${t} → ${h}`));

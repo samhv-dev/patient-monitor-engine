@@ -28,5 +28,11 @@ export function validateView(): View {
       }
       if (sub) t.select(sub);
     },
+    // the tools run their own engines: leaving the view unloads them, so a hidden view does no work (brief §10, D26)
+    // and this session's main thread is not shared with two more monitors while the instructor teaches
+    leave: () => {
+      el.replaceChildren();
+      t = null;
+    },
   };
 }
