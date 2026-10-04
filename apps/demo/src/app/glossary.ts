@@ -163,3 +163,6 @@ export function lungLabel(id: string, catalogueLabel = ''): string {
   return LUNG_LABELS[id] ?? (catalogueLabel.split(/ \(| \//)[0] || 'Lung condition');
 }
 
+/** The lung catalogue's full text for a tooltip, in the copy rules' words ("e.g." is written out). */
+export const lungDetail = (catalogueLabel: string): string => catalogueLabel.replace(/\be\.g\./g, 'for example');
+

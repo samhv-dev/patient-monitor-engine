@@ -6,7 +6,7 @@ import { lungCondition, ventilation } from '../../physiology-console/actions.ts'
 import { describeCommand } from '../describe.ts';
 import { hrefOf } from '../router.ts';
 import { button, h, seg, select, setText, stepper } from '../ui.ts';
-import { lungLabel } from '../glossary.ts';
+import { lungDetail, lungLabel } from '../glossary.ts';
 import type { PanelCtx } from './ctx.ts';
 
 const AIRWAY: Array<[string, string]> = [
@@ -36,7 +36,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   const conds = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
   // short names from the glossary (Task 26); the catalogue's full text is each option's tooltip and the hint below
   const cond = select('Condition', conds.map((x) => [x.id, lungLabel(x.id, x.label)]), conds[0]?.id ?? '');
-  for (const o of cond.sel.options) o.title = conds.find((x) => x.id === o.value)?.label ?? '';
+  for (const o of cond.sel.options) o.title = lungDetail(conds.find((x) => x.id === o.value)?.label ?? '');
   const condHint = h('p', { class: 'hint' });
   let severity = 0.67;
   const sev = seg<string>('Severity', [['0.33', 'Mild'], ['0.67', 'Moderate'], ['1', 'Severe']], '0.67', (v) => (severity = Number(v)));
@@ -44,7 +44,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   const sideSeg = seg<'' | 'L' | 'R'>('Side', [['L', 'Left'], ['R', 'Right']], 'R', (v) => (side = v));
   const syncSide = () => {
     const d = conds.find((x) => x.id === cond.sel.value);
-    setText(condHint, d?.label ?? '');
+    setText(condHint, lungDetail(d?.label ?? ''));
     sideSeg.hidden = !d?.sided;
     side = d?.sided ? (d.defaultSide ?? 'R') : '';
     if (side) sideSeg.set(side);
