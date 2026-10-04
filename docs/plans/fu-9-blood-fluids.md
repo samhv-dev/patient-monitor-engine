@@ -4217,8 +4217,8 @@ Decision D10 (R6/R50 F9: inside `ec50Multipliers`, beside Mg and iCa).
 **Prototype numbers:** engine test T1 25 % at 47.5 min (K 2.5) vs 35.8 (K 4.2) (Open question 9: the size is [ENG]).
 **FU-4 check:** K ≥ 3.5 is exactly × 1.
 
-- [ ] **Step 0 — merge.** `git fetch origin && git merge origin/main` (Task B0 has done it).
-- [ ] **Step 1 — the tests.**
+- [x] **Step 0 — merge.** `git fetch origin && git merge origin/main` (Task B0 has done it).
+- [x] **Step 1 — the tests.**
 
 Create `packages/engine-core/test/l2/neuro/fu9-hypokalaemia.test.ts`:
 
@@ -4265,9 +4265,9 @@ describe('FU-9 F10: hypokalaemia prolongs a non-depolarising block', { timeout: 
 ```
 
 
-- [ ] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-hypokalaemia.test.ts test/engine/fu9-rocuronium.test.ts` →
+- [x] **Step 2 — run; they fail.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu9-hypokalaemia.test.ts test/engine/fu9-rocuronium.test.ts` →
   `hypokalaemiaMult` missing; engine: 35.7 vs 35.7 min.
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/neuro/interactions.ts`, find:
 
@@ -4365,9 +4365,11 @@ replace with:
 ```
 
 
-- [ ] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/fu9-rocuronium.test.ts test/engine/neuro-engine.test.ts` → pass.
-- [ ] **Step 5 — BF runner:** `BF-09b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
-- [ ] **Commit and push.**
+- [x] **Step 4 — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/fu9-rocuronium.test.ts test/engine/neuro-engine.test.ts` → pass.
+- [x] **Step 5 — BF runner:** `BF-09b` (A0 Step 3's command, `BF_OUT=out/<task>.json`).
+  Executed (4a1cc3f7 + B1): engine test T1 25 % 47.3 min (K 2.5) vs 36.0 (K 4.2), +11.3 min; BF-09b t25LowK 47.0 vs
+  t25Normal 35.8, dMin 0 → **11.2** (WR → PL). `test/l2/neuro` + fu9-rocuronium + neuro-engine: 18 files / 106 tests pass.
+- [x] **Commit and push.**
 
 ```
 git add -A packages/engine-core && git commit -m "feat(7f): hypokalaemia potentiates non-depolarising block on the one 7c electrolyte path (FU-9 F10, E-FU9-2)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push

@@ -45,6 +45,8 @@ export interface NeuroEnv {
    * state; undefined without 7c (the profile's mgMmolL is then the fallback). */
   mgMmolL?: number;
   iCaMmolL?: number;
+  /** FU-9 F10: 7c's plasma K (`blood.out.k`, mmol/L); undefined without 7c. */
+  kMmolL?: number;
 }
 
 export interface NeuroState {
@@ -195,7 +197,7 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   // NMB
   // FU-7 (addendum 24 / audit D12): ONE magnesium state and ONE calcium state — 7c's blood, with the profile as the
   // baseline when 7c is absent (`env.mgMmolL`/`env.iCaMmolL` are duck-typed in engine.ts's neuro context).
-  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC });
+  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC, kMmolL: env.kMmolL }); // FU-9 F10: 7c's K on FU-7's one electrolyte path
   const neo = neoEc50Mult(x.achGain);
   const mult: Record<NmbAgent, number> = { rocuronium: m.rocuronium * neo, vecuronium: m.vecuronium * neo, cisatracurium: m.cisatracurium * neo, succinylcholine: m.succinylcholine };
   const th = siteBlock(x.nmj, 'thumb', mult);
