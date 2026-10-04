@@ -549,14 +549,14 @@ inflated).**
 | run | tree | result | wall |
 |---|---|---|---|
 | typecheck (`-r`) | gate tree | clean | |
-| fast | gate tree | FAST_ROW | |
-| slow-a … slow-f | gate tree | SLOW_ROWS | |
+| fast (`PME_TEST_SET=fast`, engine-core) | gate tree, inside `-r test` | 304 files: 1,361 passed, 1 skipped, 2 load timeouts. The two were the truth-event wall clock (1.40 ms against 1 ms) and the ET-19 diabetic arm (30 s timeout). Both pass when run alone (0.44 ms; 13.5 s), the load average was 46–81 from other sessions, and CI passes both. Before the FU-9 merge (fc434e0): 290 files, 1,335 passed, 1 skipped. | 5.6 min |
+| slow-a / b / c / d / e / f | gate tree | 28 / 38 / 15 / 19 / 5 / 2 files and 72 / 204 / 61 / 118 / 34 / 39 tests, **all green**: 107 files, 528 tests. Before the FU-9 merge (old two-group split): slow-a 52 files / 253 tests and slow-b 45 / 253, all green, including `resp-induction` and `pk-longrun`. | 19.5 / 26.9 / 25.5 / 28.3 / 17.4 / 21.4 min |
 | non-engine packages, run in each package | before the FU-9 merge | audio 58, skins 184, renderer 89, controller 224, ventilator 97, validation 107 (+11 skipped), demo 199 | |
-| non-engine packages, `-r test` | gate tree | RTEST_ROW | |
-| build | gate tree | BUILD_ROW | |
-| browser tests (`CI=1 pnpm test:e2e`, Chromium + WebKit) | gate tree | E2E_ROW2 | |
+| non-engine packages, run in each package | gate tree | audio 58, skins 184, renderer 89, controller 224, ventilator 97, validation 107 (+11 skipped), demo 199; all green | |
+| `pnpm build` | gate tree | clean (every package and `apps/demo`) | |
+| browser tests (`CI=1 pnpm test:e2e`, Chromium + WebKit) | gate tree | 85 passed, 31 skipped, 2 failed. Both failures are Chromium `stage6a` WebRTC pairing tests (`host + remote + viewer over rtc`; `stage6a-latency`, where `hostOnline` never turns true). Both fail identically on `origin/main` bd5880b on this Mac, so they are local RTC and not FU-7's. `fu7.e2e.ts` ✓ (Chromium; WebKit skipped by design); `stage9-glossary` ✓ on both. Other stages' re-taken screenshots were discarded (`git checkout -- docs/gates`). | 16.2 min |
 | `stage9-glossary.e2e.ts` | after the first merge | Chromium ✓, WebKit ✓ | |
-| tick bench | gate tree | TICK_ROW | |
+| tick bench (`tickBench(60)`, 3 runs, same load as main) | gate tree vs `origin/main` | p50 **0.91–1.13 ms** vs main 0.98–1.06 (load average 11–18 from other sessions); p99 4.9–5.4 vs 3.1–3.9. p50 is far under the 6 ms CI budget. | |
 
 **Slow groups (finisher, cd26d5f).** FU-9's four groups each run about 36–37 min on CI. FU-7's seven slow files
 measured 1,578 s on the local slow-a run:
@@ -578,9 +578,18 @@ measured 1,578 s on the local slow-a run:
   - **slow-f:** `drug-layer` and `drug-apnoea`.
 - **Config:** `ci.yml`'s matrix and its printed disjointness check cover all six groups. Run locally, the check gives
   107 files, disjoint and covering: a 28, b 38, c 15, d 19, e 5, f 2.
-- **CI per-group times on PR #32:** CI_ROW.
+- **CI per-group times on PR #32** (run 37184798915 on 281ec9e, the gate tree's code; every job green): build 45.2 min; slow-a 38.1, b 34.8, c 39.0, d 17.8, **e 37.7, f 30.3** min. Every group is under 40 min. A second run on 135152d (docs only) gave a 37.5 / f 30.4. That run's build job hit a 5 s timeout in `apps/demo` `actions.test.ts` (7x.1, a pre-existing test), which had passed on the same code in the run above; it is a runner flake. The head commit's run is the PR's check.
 
-**PNG sizes (bytes):** PNG_ROWS
+**PNG sizes (bytes).** Taken by `fu7-shots.mjs` on 722d728, before D15b and the two merges, and kept. Every panel is a
+single-agent or non-ventilatory run (onset curves, thiopental alone, ephedrine/adrenaline, laryngoscopy after propofol,
+shock factors), so the α change does not reach them. FU-9's merge moves their numbers by tenths at most.
+
+| panel | size | note |
+|---|---|---|
+| 1-onset | 57,003 | re-taken at deviceScaleFactor 0.6: 74 KB at 0.7, no quantiser on the machine |
+| 2-potency-thiopental | 52,816 | |
+| 3-beta-blockade | 52,923 | |
+| 4-surge-and-shock | 59,275 | |
 
 ## §8 Re-anchorings (Task 0 Step 3; none at Task 20 Step 1)
 

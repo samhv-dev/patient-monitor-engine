@@ -6721,7 +6721,7 @@ concentration (Ce prop-eq, µg/mL)", "Fentanyl-equivalent effect-site concentrat
 "Dissociative fraction (—)", "β-receptor occupancy (—)", "Antiarrhythmic occupancy (—)", "Central sympathetic drive from
 drugs (—)". No layout change (R52's generic discovery already shows unknown paths in "other"; these rows give them their
 labels).
-- [ ] **Step 4 — run the full set.**
+- [x] **Step 4 — run the full set.**
 ```
 CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run
 CI=1 PME_TEST_SET=slow-a npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run
@@ -6748,11 +6748,11 @@ into the gate note. **Target (from research/14 §4's FU-7/7g/7f/7c rows):** DI-6
 - Create: `apps/demo/fu7.html`, `apps/demo/src/fu7.ts`, `apps/demo/scripts/fu7-shots.mjs`, `apps/demo/e2e/fu7.e2e.ts`
 - Modify: this plan (tick the boxes)
 
-- [ ] **Step 1 — merge main and re-verify.** `git fetch origin && git merge origin/main`. If V.1, FU-5, 7i or Stage 9
+- [x] **Step 1 — merge main and re-verify.** `git fetch origin && git merge origin/main`. If V.1, FU-5, 7i or Stage 9
 have landed since Task 0, re-run Task 0 Step 3's verifier in dry mode, re-run the full test set (Task 19 Step 4) and
 `pnpm run audit:drugs` for the 18 owned cells; record every moved number. STOP and report if another stage has taken a
 file this plan edits.
-- [ ] **Step 2 — the evidence page (Chromium only).** `apps/demo/fu7.html` + `src/fu7.ts`: four panels driven by the
+- [x] **Step 2 — the evidence page (Chromium only).** `apps/demo/fu7.html` + `src/fu7.ts`: four panels driven by the
 engine, each a screenshot (`deviceScaleFactor: 0.7`, viewport 1280 × 640, **≤ 60 KB each**, quantised if larger and the
 fact recorded):
   1. **onset** — the effect curves of naloxone, atropine, midazolam and ketamine over 10 min, before (gamma) and after
@@ -6765,7 +6765,7 @@ fact recorded):
      against K⁺, pH and CPP.
   `apps/demo/e2e/fu7.e2e.ts` is a smoke test with `test.skip(browserName === 'webkit', …)` and
   `test.setTimeout(300_000)`; the shots script runs with `PW_SYSTEM_CHROME=1`.
-- [ ] **Step 3 — the gate note.** `docs/gates/fu-7.md` with:
+- [x] **Step 3 — the gate note.** `docs/gates/fu-7.md` with:
   §1 what changed, task by task, with the file list;
   §2 the acceptance table: every band, its source, the before value (research/14's column), the after value, the verdict;
   §3 the audit's before/after verdict counts and the moved cells (the tables from Task 19 Step 5), plus Task 4 Step 2's
@@ -6783,17 +6783,17 @@ fact recorded):
   §9 the exceptions used (E-FU7-1…10, all APPROVED by Orchestrator ruling (FU-7 review) 6) with file:line, and the ones
   declared but unused;
   §10 the open questions (below), marked "confirm with Ali" where the plan decided them from the textbooks.
-- [ ] **Step 4 — the matrix ledger.** Update `research/12`'s §4.4 ledger? **No** — `research/**` is outside this repo and
+- [x] **Step 4 — the matrix ledger.** Update `research/12`'s §4.4 ledger? **No** — `research/**` is outside this repo and
 outside the partition. Instead the gate note §3 carries the new verdict column and states that the orchestrator folds it
 into research/12 (the audit's own convention: "for each gate the owner pastes the report rows into its gate note").
-- [ ] **Step 5 — the PR.**
+- [x] **Step 5 — the PR.**
 ```
 gh pr create --title "FU-7: drug-layer integration — onset, hypnotic/opioid potency, β-blockade, stimulus surge, antiarrhythmics, interactions" --body-file <body>
 ```
 The body: the goal, the task list with its numbers, the acceptance table, the `it.fails` list, the deviations, the open
 questions, the CI counts, and the last line `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 **Never merge** (R51/R25; PR-review workflow: Ali speaks the merge).
-- [ ] **Step 6 — the calibration queue for the gate note §6.** The rows this plan knowingly leaves for Ali:
+- [x] **Step 6 — the calibration queue for the gate note §6.** The rows this plan knowingly leaves for Ali:
 ephedrine's β-blocked ratio (0.99 vs 0.3–0.7, Q1); the unopposed-α reflex bradycardia; ketamine's LOC at 20 s (D20);
 the catecholamine reserve's τ and floor; the five shock-state factors of Task 12; the conversion hazards'
 trial-to-hazard mapping; atracurium/mivacurium PK (and whether they get a block, Q11); the histamine sizes (`HIST_SVR`,
