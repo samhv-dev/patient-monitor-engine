@@ -117,6 +117,13 @@ export interface CircModelState {
   boluses: Bolus[];
   vol: VolumeEvent[];
   hrModel: number; // bpm the reflex/drugs ask the rhythm engine for (MODELED)
+  /**
+   * FU-8 (B3, R-FU5-9): the cutaneous vasomotor tone (1 at rest, < 1 dilated, > 1 constricted) the finger pleth reads —
+   * the systemic vasomotor factors (baroreflex incl. FU-8 B4's tonic share, 7g's vascular PD, chemoreflex, endocrine and
+   * humoral, Cushing) WITHOUT the MANUAL tracker or blood viscosity, which are not tone. MODELED only (1 in MANUAL). [ENG:
+   * the skin is assumed to share the systemic vasomotor factor; a skin-specific (thermoregulatory) share is FU-12's.]
+   */
+  skinTone?: number;
   /** FU-4 G7: the stimulus-driven vagal event (engine observer → `circVagalStimulus`); absent until a site is seen. */
   vagalStim?: { t0: number; ms: number } | null;
   /** FU-2 (NR-7g-5): the rate the instructor or the rhythm set (rate-rule.ts); null = the reflex owns a sinus-family rate. */
@@ -308,6 +315,7 @@ function control(m: CircModelState, env: CircEnv): void {
   const hsv = x.endoHumSvrF ?? 1;
   const endoSvr = humF === 1 || hsv === 1 ? (x.endoSvrF ?? 1) : ((x.endoSvrF ?? 1) / hsv) * (1 + (hsv - 1) * humF);
   p.rSys = (man.rSys ?? base.rSys) * b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr * (x.viscF ?? 1); // FU-6 R11: viscosity
+  m.skinTone = env.modeled ? b.svrF * de.svr * ch.svrF * (x.rSysF ?? 1) * endoSvr : 1; // FU-8 (B3): the tone part of the line above
   const betaOcc = 1 - (1 - (x.betaBlockAdd ?? 0)) * (1 - m.prof.betaBlockC); // FU-2: as 7g's competitive β shift
   const dv0Beta = betaDV0Ml(x.betaAgonistU ?? 0, betaOcc, m.weightKg); // FU-2 (NR-7g-2)
   // FU-2 F4 + FU-4 F2(a): the baroreflex, the β-agonists and the HUMORAL arm all recruit from ONE splanchnic reservoir.

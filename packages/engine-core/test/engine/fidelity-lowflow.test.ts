@@ -79,7 +79,8 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
 });
 
 // FU-5 review, ruling 1 (Orchestrator ruling (FU-5 review), 2026-09-28): PI follows SV/SV₀ with a vasoconstriction-only
-// factor (MODELED, ≤ 1; none in MANUAL). Guards: the normal patient's PI, the MANUAL ladder's direction, and the
+// factor (MODELED, ≤ 1; none in MANUAL) — FU-8 B3: the factor reads the cutaneous tone and may exceed 1 (dilated finger).
+// Guards: the normal patient's PI, the MANUAL ladder's direction, and the
 // clinical rise after induction that waits for FU-4's cutaneous tone (R-FU5-9). Before FU-5 (origin/main, seed 7):
 // rest PI 1.79 spontaneous / 1.80 ventilated MODELED / 1.70 MANUAL ventilated.
 const piMean = (rows: MonRow[], a: number, b: number) => mean(rows.filter((r) => r.t >= a && r.t <= b && r.m.pi?.value != null).map((r) => r.m.pi?.value as number));
@@ -110,7 +111,8 @@ describe('FU-5 fidelity 1b: PI of the normal patient and its direction (review r
     expect(pi[2] as number).toBeLessThanOrEqual(0.9 * (pi[0] as number)); // MAP 61: clearly lower than at rest
   }, 120_000);
 
-  it.fails('propofol 2 mg/kg in a ventilated patient: PI RISES after induction (the sympatholysis sign) — measured 1.49 → 1.17 (−21 %) at 180–240 s (MAP 96 → 86, SV 68 → 55): PI follows SV only; the vasodilated finger needs FU-4\'s cutaneous tone (R-FU5-9)', async () => {
+  // FU-8 B3 (R-FU5-9): flipped — the pleth reads the circulation's cutaneous tone (`circ.skinTone`), no longer capped at 1
+  it('propofol 2 mg/kg in a ventilated patient: PI RISES after induction (the sympatholysis sign) — measured 1.50 → 1.66 (+11 %) at 180–240 s after FU-8 B3 (MAP 96 → 69 with B4\'s tonic share); 1.50 → 1.40 on B4 alone, 1.49 → 1.17 (−21 %) at FU-5: PI followed SV only', async () => {
     const { rows } = await monitorRun({ mode: 'modeled', tEnd: 300, steps: [...VENTED, [60, M.drug('propofol', 2, 'mg/kg')]] });
     expect(piMean(rows, 180, 240)).toBeGreaterThan(piMean(rows, 30, 58));
   }, 120_000);

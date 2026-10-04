@@ -5627,12 +5627,22 @@ it. Definition: `skinTone = (1 + k_s·(reflex SVR drive − 1))·(catecholamine 
 1 at rest, < 1 dilated (propofol, volatiles, neuraxial, warming), > 1 constricted (catecholamines, cold, hypovolaemic
 reflex); reuse the existing baroreflex `svrF` and 7g's `svr` PD rather than new constants where possible.
 
-- [ ] **Step 1:** measure first (`fidelity-lowflow` 1b rows; the MANUAL MAP ladder must still show PI falling as MAP falls).
-- [ ] **Step 2:** implement; acceptance: propofol 2 mg/kg PI RISES (FU-5 `it.fails`); the MANUAL ladder direction test and
+- [x] **Step 1:** measure first (`fidelity-lowflow` 1b rows; the MANUAL MAP ladder must still show PI falling as MAP falls).
+- [x] **Step 2:** implement; acceptance: propofol 2 mg/kg PI RISES (FU-5 `it.fails`); the MANUAL ladder direction test and
   the 3 L bleed rows (PI < 0.3 at MAP < 30) stay green. If the rise cannot be reached without breaking a green row, keep
   the `it.fails` with the new number (R45) and report.
 
-- [ ] **Commit and push.**
+**Executed (after B4 — executor's ruling: the skin tone reuses B4's tonic-share mechanism, so it is measured on B4's
+tree; both before-numbers given):** `circ.skinTone = b.svrF · de.svr · ch.svrF · rSysF · endoSvr` (MODELED; 1 in MANUAL) — the
+vasomotor part of the systemic-resistance line, without the MANUAL tracker and viscosity; no new constant beyond the bound.
+The pleth factor is `1/√skinTone`, bounded 0.25–2 [ENG], no longer capped at 1. PI (ventilated, seed 7; `monitorRun`):
+propofol 2 mg/kg 1.49 → 1.17 at FU-5, 1.50 → 1.40 on B4 alone, **1.50 → 1.66** after B3 (`it.fails` flips — the plan's own
+target); sevoflurane 3 % 20 min 1.50 → 1.57 (B4) / 1.78 (B3); 1.5 L bleed 0.46 both; phenylephrine 100 µg 1.50 → 1.50 both
+(skinTone 1.47 but SV rises with the reflex bradycardia — the finger does not fall; recorded, not in scope); spontaneous rest
+1.84 → 1.86 (band 1.82 ± 5 %); the ventilated rest `it.fails` (1.80 vs 1.50) unchanged — an SV₀ matter, not tone. Verify:
+`fidelity-*` 7 files + `fu8-motion-pi` → 60 passed (the MANUAL ladder and the 3 L bleed rows green). New truth leaf
+`hemo.circ.skinTone` (12-drug tree 2 077 → 2 078 of 2 100) with glossary entry 339 (renumber at merge).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/fidelity-lowflow.test.ts

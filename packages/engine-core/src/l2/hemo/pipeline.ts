@@ -606,8 +606,11 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         // In MODELED, vasoconstriction (systemic R above rest) lowers PI too [ENG exponent 0.5]; the factor is never above 1
         // and is 1 in MANUAL (FU-5 review ruling 1: an uncapped factor made PI rise as the MANUAL tracker lowered SVR, and
         // fall after propofol; the vasodilated finger waits for FU-4's cutaneous tone, R-FU5-9).
+        // FU-8 (B3, R-FU5-9): the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
+        // MANUAL tracker, no viscosity) and is no longer capped at 1, so a dilated finger (an anaesthetic's sympatholysis)
+        // raises PI; MANUAL keeps 1. Same [ENG] exponent 0.5; bounded 0.25–2 [ENG].
         const svRef = Math.max(1, c.ref.sv || 70);
-        const tone = ctx.l1.mode === 'modeled' ? Math.min(1, Math.max(0.25, Math.sqrt(c.base.rSys / c.p.rSys))) : 1;
+        const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
         const lb = bs[bs.length - 1];
         const lvet = lb && lb.avClose > lb.avOpen ? lb.avClose - lb.avOpen : 0.3;
         for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * op.sv) / svRef, lvet, c.p.rSys);

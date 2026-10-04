@@ -370,6 +370,8 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 336, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
   { n: 337, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
   { n: 338, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
+  // FU-8 Part B's new truth leaf (numbered after FU-7's 338; renumber at merge if another branch took 339 first)
+  { n: 339, s: 'S9', keys: ['hemo.circ.skinTone'], label: 'Skin vasomotor tone', name: 'Cutaneous vasomotor tone the finger pleth reads: falls when an anaesthetic removes sympathetic tone (PI rises), rises with vasoconstriction', unit: '× rest', normal: '1' },
 ];
 
 /**
