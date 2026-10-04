@@ -20,7 +20,7 @@ import { dextroseBolus, dextroseInfusion, insulinBolus, insulinInfusion } from '
 import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ, ETOM_SUPPR_REF_MG_KG, INSDEX_DEXTROSE_G_PER_UNIT } from './params.ts';
 import type { EndoCtx, EndoState } from './pipeline.ts';
 
-type Neuro = { antinoc?: number; nmb?: number; thermoDepth?: number };
+type Neuro = { antinoc?: number; antinocOp?: number; nmb?: number; thermoDepth?: number }; // FU-7 (addendum 25)
 type DoseLike = { agent: string; amount: number; amountUnit: string };
 type Bus = {
   agents?: Record<string, { brain?: number } | undefined>;
@@ -86,11 +86,17 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
   const antinoc = num(n?.antinoc) && pkActive(pk) ? n.antinoc : flag;
   const prof = circOf(ctx)?.prof;
   return {
-    noxious: es.noxious, antinoc, mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
+    noxious: es.noxious, antinoc,
+    // FU-7 (R51 addendum 25): the opioid/lidocaine share for the catecholamine RELEASE; without 7f it is the total
+    antinocOp: num(n?.antinocOp) && pkActive(pk) ? n.antinocOp : antinoc,
+    mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
     epiExoPgMl: (pk?.bus?.agents?.epinephrine?.brain ?? 0) * EPI_EXO_PG_PER_RATE_EQ,
+    // FU-7 (addendum 24 / DI-76): 7g's exogenous glucocorticoid (dexamethasone), duck-typed
+    cortExoNmolL: (pk?.bus as { metabolic?: { glucocorticoidNmolL?: number } } | undefined)?.metabolic?.glucocorticoidNmolL ?? 0,
+    sympDrug: (pk?.bus as { cns?: { sympDrive?: number } } | undefined)?.cns?.sympDrive ?? 0, // FU-7 (addenda 20–21)
     bronchoDilExt: pk?.bus?.airway?.bronchodilation ?? 0,
     dkaSeverity: dkaOf(bloodOf(ctx.ps)),
   };
@@ -165,6 +171,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     ext.endoDV0Frac = v0 > 0 ? (-o.dV0Frac * bv) / v0 : 0;
     ext.endoHumDV0Frac = o.humDV0Frac; // FU-4 F2(a): fraction of BLOOD VOLUME, into 7a's shared reservoir
     ext.endoHumSvrF = o.humSvrF; // FU-4 G-FU4-1: the humoral share of endoSvrF (7a withdraws its effect under ischaemia)
+    ext.surgeF = o.surgeF; // FU-7 (addendum 22; ruling 1): the nociceptive set-point reset, MODELED only
     return 1;
   }
   if (ext && ext.endoHrF !== undefined) {
@@ -174,6 +181,7 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
     ext.endoDV0Frac = 0;
     ext.endoHumDV0Frac = 0;
     ext.endoHumSvrF = 1;
+    ext.surgeF = 1; // FU-7: MANUAL holds the set point (the instructor owns the pressures)
   }
   return ctx.l1.pinned.includes('hr') ? 1 : endoHr(es, bba, false);
 }

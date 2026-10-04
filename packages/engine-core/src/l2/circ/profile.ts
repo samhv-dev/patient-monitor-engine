@@ -45,6 +45,11 @@ export interface ResolvedProfile {
   cfr: number; // coronary flow reserve (tables §3)
   betaBlock: number; // 0–1 fraction of the reflex β1 chronotropic gain removed (g_hs)
   betaBlockC: number; // 0–1 fraction of the β contractility gain and β-agonist drug response removed (g_c, betaResp)
+  /** FU-7 (addendum 21): chronic β-blockade as RECEPTOR OCCUPANCY (0–1) — the dose-ratio input of 7g's competitive
+   * β-agonist EC50 shift, separate from the reflex gains above (which stay the tables' ×0.4 / ×0.5). */
+  betaOcc: number;
+  /** FU-7 (addendum 21): non-selective blockade (propranolol-like) occupies β2 too — adrenaline's vasodilator arm. */
+  betaNonSel: boolean;
   lvedpTarget: number;
   ageY: number; // the profile's age (drug sensitivity)
   /** R45(c): the stabiliser anchors the LV EDPVR at the EDV the ventricle actually reaches (conditions that set an LVEDP). */
@@ -133,7 +138,7 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     // neonate (set point 45) stabilised at MAP 93 and sat at 82–89 at 600 s (SV 1.1 mL, CO 0.15 L/min). The adult
     // (120/80 ↔ 90) is unchanged; conditions then apply their deltas as before (HTN, HFrEF: Waiting on Ali, plan D13).
     targets: { sbp: b.map + TARGET_MAP_ABOVE_SET + (2 * b.pp) / 3, dbp: b.map + TARGET_MAP_ABOVE_SET - b.pp / 3, hr: b.hr, cvp: 5 }, mapSet: b.map, hrRest: b.hr,
-    hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0, betaBlockC: 0,
+    hrMax: 208 - 0.7 * pr.ageY, hrIntrinsic: 118 - 0.57 * pr.ageY, gVagal: b.gv, gSymp: b.gs, cfr: GRADES.cad.none, betaBlock: 0, betaBlockC: 0, betaOcc: 0, betaNonSel: false,
     lvedpTarget: 8,
     ageY: pr.ageY,
     tuneLvedp: false,
@@ -218,6 +223,11 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       // tables' linear sketch, and "HR stays < 100 in class III" (tables §1.5, §7 17b) holds only at ×0.2 [ENG, R44]
       r.betaBlock = 0.8 * s;
       r.betaBlockC = 0.5 * s;
+      // FU-7 (addendum 21): chronic metoprolol/bisoprolol — occupancy 0.85 = a dose ratio of ≈ 6.7 on every β-agonist's
+      // EC50, which is tables §1.5's "β-agonist ×0.5" read as COMPETITIVE antagonism instead of a gain scale [ENG, Q1].
+      // `betaNonSel` stays false (cardioselective is the common case; the scenario/profile may set it — Q1 asks Ali
+      // whether the unopposed-α picture should need propranolol).
+      r.betaOcc = 0.85 * s;
       r.hrRest = 60;
       r.targets = { ...r.targets, hr: 60 };
       return;

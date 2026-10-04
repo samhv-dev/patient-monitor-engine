@@ -32,7 +32,8 @@ export const OTHER_ROWS: DrugRow[] = [
     pd: [{ target: 'svr', emax: -0.3, ec50: 60 }, { target: 'bronchodilation', emax: 0.35, ec50: 60 }],
     doses: '2 g over 1–2 min (TdP); 40–50 mg/kg (analgesia, bronchospasm); concentration = rise over baseline, mg/L', onset: 'TdP termination within minutes; vecuronium ED50 −25 % after 40 mg/kg (M10 ch. 24 p. 698)', ir: '?', src: 'T6.2; M10 ch. 24', tag: 'TXT' },
   { id: 'salbutamol', name: 'Salbutamol (IV/neb)', cls: 'betaAgonist', amountUnit: 'mcg', shared: 'blood', pk: gammaPk(250, false, 600, 7200),
-    pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
+    // FU-7 (addendum 21): salbutamol is a β2 agonist — a cardioselective blocker does not blunt it (M10 ch. 14)
+    pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, beta2: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
     doses: '250 µg IV slowly; 10–20 mg nebulised for K', onset: 'K −1.4 at full effect (7c); HR +10–20 %', ir: '?', src: '7c decision 7; [TXT]', tag: 'TXT' },
   { id: 'insulin', name: 'Insulin (regular)', cls: 'metabolic', amountUnit: 'units', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
     pd: [{ target: 'glucose', emax: -120, ec50: 1 }, { target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U bolus; 0.05–0.1 U/kg/h', onset: 'IV onset 5–15 min, peak 30–60, 2–4 h (7e owns glucose)', ir: '?', src: '[TXT] placeholder for 7e', tag: 'TXT' },
@@ -53,7 +54,10 @@ export const OTHER_ROWS: DrugRow[] = [
     doses: '0.2 mg, repeat to 1 mg', onset: 'onset 1–2 min, duration 45–60 min (resedation)', ir: '?', src: '[TXT]; decision 6', tag: 'TXT' },
   // --- local anaesthetics (LAST, decision 12) and lipid ---
   { id: 'lidocaine', name: 'Lidocaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.5, 1.0, 0.01, 0.05), elim: { hepatic: 1, highExtraction: true },
-    pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }],
+    // FU-7 (addendum 22): IV lidocaine blunts the airway-reflex / intubation pressor response (Lin 2016 meta-analysis)
+    // — an added antinociception on 7e's noxious input, not a sympatholysis [ENG size: emax 0.35 at 3 µg/mL].
+    pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }, { target: 'antinocAdd', emax: 0.35, ec50: 3 },
+      { target: 'antiarrhythmic', emax: 0.6, ec50: 3 }], // FU-7 (addendum 23): antiarrhythmic plasma range 1.5–5 µg/mL (M10 ch. 25)
     doses: 'antiarrhythmic 1–1.5 mg/kg; max 4.5 mg/kg plain / 7 with epinephrine (M10 ch. 25 Table 25.6: 350/500 mg)', onset: 'IV peak 1–2 min; seizures reported from 1.4 mg/kg in IVRA (M10 p. 755)', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'bupivacaine', name: 'Bupivacaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.25, 0.75, 0.008, 0.03), elim: { hepatic: 1 },
     pd: [{ target: 'ees', emax: -0.7, ec50: 4, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 4, hill: 2 }],
@@ -64,7 +68,18 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'lipidEmulsion', name: 'Lipid emulsion 20 %', cls: 'lipid', amountUnit: 'mL', pk: gammaPk(1.5, true, 60, 1800, 0.25), pd: [],
     doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink: free LA ↓ up to 50 % [ENG]; M10 p. 762: cardiac bupivacaine −11 % in 3 min', ir: '?', src: 'ASRA 2020; M10 ch. 25 p. 762', tag: 'ENG' },
   // --- placeholders (panel only; no engine effect in v1) ---
-  { id: 'tranexamicAcid', name: 'Tranexamic acid', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 10800), pd: [], doses: '1 g over 10 min, then 1 g over 8 h', onset: 'no monitor effect in v1', ir: '?', src: 'placeholder', tag: 'TXT' },
-  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [], doses: '4 mg', onset: 'no monitor effect in v1 (QTc prolongation not modelled)', ir: '?', src: 'placeholder', tag: 'TXT' },
-  { id: 'dexamethasone', name: 'Dexamethasone', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(8, false, 3600, 86400), pd: [], doses: '4–8 mg', onset: 'no monitor effect in v1 (glucose ↑ is 7e)', ir: '?', src: 'placeholder', tag: 'TXT' },
+  // FU-7 (addendum 24 / D12): TXA stays INERT until 7i's coagulation lands (R58). Its dose log (bus.doses) is what 7i
+  // will read, so the row must not be removed: 7i adds the fibrinolysis target to THIS row.
+  { id: 'tranexamicAcid', name: 'Tranexamic acid', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(1000, false, 600, 10800), pd: [], doses: '1 g over 10 min, then 1 g over 8 h', onset: 'antifibrinolytic: no monitor effect until 7i models coagulation (R58; CRASH-2 acts through bleeding)', ir: '?', src: 'CRASH-2; placeholder for 7i', tag: 'TXT' },
+  // FU-7 (addendum 24 / DI-76): ondansetron 4–8 mg IV prolongs the QTc ≈ 10–20 ms (FDA 2012 label change; the 32 mg IV
+  // dose was withdrawn for this reason). No arrhythmia hazard is added in v1: torsades needs the QT-dependent trigger
+  // Stage 5's torsades rhythm provides by instruction. emax 30 → 15 ms at the 4 mg reference dose (the Hill is
+  // emax·c/(ec50 + c)) [ENG within the label range; measured (third fixer): +14 ms at 10–30 min, +8 at 2 h; emax 15 gave 7].
+  { id: 'ondansetron', name: 'Ondansetron', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(4, false, 600, 14400), pd: [{ target: 'qtc', emax: 30, ec50: 1 }], doses: '4 mg', onset: 'QTc +10–20 ms (FDA 2012); no arrhythmia hazard in v1', ir: '?', src: 'FDA 2012 label change; size [ENG]', tag: 'ENG' },
+  // FU-7 (addendum 24 / DI-76; D12): dexamethasone 8 mg raises glucose ≈ 1–2 mmol/L (18–36 mg/dL) over the first hours
+  // and more in diabetics (Hans 2006; M10 ch. 47) — a GLUCOCORTICOID acting on 7e's cortisol metabolic term (insulin
+  // resistance, gluconeogenesis). emax 4000 → 2000 nmol/L cortisol-equivalent above basal at the 8 mg reference dose
+  // (≈ 200 mg hydrocortisone-equivalent, potency 25:1) [ENG; fit target: glucose +10–60 mg/dL within 1 h (DI-76).
+  // Measured (third fixer): +17.7 mg/dL at 60 min, +19.7 at 2 h, MAP/HR unchanged; emax 600 gave +8.4, 2000 +14.7].
+  { id: 'dexamethasone', name: 'Dexamethasone', cls: 'placeholder', amountUnit: 'mg', pk: gammaPk(8, false, 3600, 86400), pd: [{ target: 'glucocorticoid', emax: 4000, ec50: 1 }], doses: '4–8 mg', onset: 'glucose +1–2 mmol/L over 1–2 h (Hans 2006); anti-emetic and anti-inflammatory effects are not modelled', ir: '?', src: 'Hans 2006; M10 ch. 47; size [ENG]', tag: 'ENG' },
 ];

@@ -60,6 +60,8 @@ export interface BloodCore {
   odc: OdcCtx;
   doses: Dose[];
   burns: number;
+  /** FU-7 (addendum 24 / audit D6): 7f's nm-profile receptor upregulation (burn, denervation), 0–1 — the sux K+ surge. */
+  nmUpreg?: number;
   liver: number; // 7d writes liverFn·tempF (function only, R51 addendum 14); hepatic FLOW is 7c's hbfRel, applied once
   renal: RenalSeam | null; // 7d fills it (null = fixed elimination)
   co0: number; // reference CO (L/min): the circuit's settled resting CO, from 7a's `ref.co` (pipeline, addendum 15), else CI × weight
@@ -85,7 +87,10 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   const b = profile?.blood ?? {};
   const fl = createFluids(pat, b.albuminGL ?? NORMAL.albGL);
   const e0 = ecfMl(fl);
-  const so = createSolutes({ na: b.na ?? NORMAL.na, k: b.k ?? NORMAL.k, cl: b.cl ?? NORMAL.cl, iCa: b.iCa ?? NORMAL.iCa, mg: b.mg ?? NORMAL.mg, lactate: b.lactate ?? NORMAL.lactate }, e0, pat.vLacL, pat.icfMl);
+  // FU-7 (addendum 24 / audit D12): ONE magnesium state — a neuro-profile Mg (7f's `neuroProfile.mgMmolL`) is 7c's
+  // baseline when the blood profile gives none
+  const mg0 = b.mg ?? (profile as { neuro?: { mgMmolL?: number } } | undefined)?.neuro?.mgMmolL ?? NORMAL.mg;
+  const so = createSolutes({ na: b.na ?? NORMAL.na, k: b.k ?? NORMAL.k, cl: b.cl ?? NORMAL.cl, iCa: b.iCa ?? NORMAL.iCa, mg: mg0, lactate: b.lactate ?? NORMAL.lactate }, e0, pat.vLacL, pat.icfMl);
   const odc: OdcCtx = { hb: pat.hb, ph: 7.4, dpgMmolL: b.dpgMmolL ?? NORMAL.dpgMmolL, cohb: b.cohb ?? 0, methb: b.methb ?? 0 };
   // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row).
   // FU-9 F8: without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its
@@ -117,7 +122,7 @@ function effects(bc: BloodCore, t: number): { ins: number; salb: number; sux: nu
     const tm = (t - d.t0) / 60;
     if (d.id === 'insulinDextrose') ins += insulinEffect(tm);
     else if (d.id === 'salbutamol') salb += salbutamolEffect(tm);
-    else if (d.id === 'succinylcholine') sux += suxDeltaK(tm, bc.burns);
+    else if (d.id === 'succinylcholine') sux += suxDeltaK(tm, Math.max(bc.burns, bc.nmUpreg ?? 0)); // FU-7 (addendum 24 / DI-37c)
     else if (d.id === 'calciumChloride' || d.id === 'calciumGluconate') caMem = Math.max(caMem, caMembrane(tm));
   }
   return { ins, salb, sux, caMem };

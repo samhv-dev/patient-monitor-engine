@@ -15,7 +15,20 @@ export const REMI_VENT_H = 1.25;
 export const PROP_VENT_C50 = 1170;
 export const VOL_VENT_C50 = 0.8;
 export const MIDAZ_VENT_C50 = 150;
-export const SYNERGY = 0.5;
+/** FU-7 (addendum 20; review F2 / Orchestrator ruling (FU-7 review) 2): the VENTILATORY response-surface α is PER CLASS.
+ * Opioid + benzodiazepine is strongly synergistic for breathing — VENT_ALPHA_BENZO [ENG; fit target Bailey 1990:
+ * fentanyl 2 µg/kg + midazolam 0.05 mg/kg → SpO2 < 90 % in 11/12, apnoea in 6/12 (DI-03 nadir 70–89 %)]. Opioid +
+ * propofol (and the other non-benzodiazepine hypnotics and the volatiles) is close to ADDITIVE for breathing although
+ * the BIS interaction is synergistic — VENT_ALPHA_HYP [ENG, low; Nieuwenhuijs 2003]. pd.ts's SURFACE_ALPHA is the EEG
+ * surface's [ENG] constant and is NOT reused here. (Replaces SYNERGY 0.5, whose only reader was the old product term.) */
+export const VENT_ALPHA_BENZO = 1.5;
+// D15b (Orchestrator ruling, FU-7 finisher, 2026-10-04): 0.3 stacked on FU-6's wakefulness-drive calibration took FU-6's
+// sourced induction-apnoea band out (fentanyl 2 µg/kg + propofol 394 s vs 60–240 s; remifentanil pair 567 s). Scan on
+// the merged tree (resp-induction rig, seed 7): α 0.3 → 394 / 567 s; 0.2 → 316 / 504; 0.1 → 232 / 364; 0 → 120 / 190.
+// The largest α keeping fentanyl ≥ 20 s inside 60–240 and remifentanil in 90–300 s is 0 — ADDITIVE, the bottom of the R50
+// review's "additive to mildly synergistic" range. [ENG; fit target: FU-6's resp-induction bands.] VENT_ALPHA_BENZO is
+// untouched, and a single agent is bit-identical (the α multiplies the OTHER class's units, zero when it is alone).
+export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [ENG]
@@ -63,6 +76,15 @@ export const UA_AROUSAL = 0.25;
 
 export interface DriveInputs {
   vent: { opioid: number; propofol: number; midazolam: number; ketamine: number }; // ng/mL(-eq), bus.ts
+  /** FU-7 (addendum 20): 7g's propofol-equivalent hypnotic Ce at the VENTILATORY site, ng/mL — every hypnotic in ONE
+   * input (thiopental and etomidate depress breathing too); replaces the per-agent propofol/midazolam/ketamine terms. */
+  hypVentPropEq?: number;
+  /** FU-7 (D7): the MODELED chemoreflex's committed spontaneous rate (`resp.spont.rr`, FU-6's relative threshold puts
+   * it at 0 for apnoea). Present in MODELED whatever the ventilator is doing (FU-6 evaluates `spont` for the trigger
+   * while ventilated); when present it IS the apnoea truth. */
+  spontRr?: number;
+  /** FU-7 (review F2): the benzodiazepine share of `hypVentPropEq` (7g's `cns.benzoShare`), 0–1 — the per-class α. */
+  benzoShare?: number;
   macVolatile: number; // brain MAC fraction of the potent volatiles (N2O excluded)
   diaBlock: number; // 0–1
   tofr: number; // thumb TOF ratio (pharyngeal weakness proxy)
@@ -91,15 +113,29 @@ export interface NeuroResp {
 }
 
 const hill = (x: number, h: number) => (x > 0 ? x ** h / (1 + x ** h) : 0);
+/** FU-7 (addendum 20): the ventilatory hypnotic equivalent, or the pre-FU-7 per-agent sum when 7g does not publish it. */
+const hypVent = (x: DriveInputs): number => x.hypVentPropEq ?? x.vent.propofol + (PROP_VENT_C50 / MIDAZ_VENT_C50) * x.vent.midazolam + 0.3 * (PROP_VENT_C50 / 2000) * x.vent.ketamine;
+/** FU-7 (review F2): the hypnotic class's α on the opioid–hypnotic surface — VENT_ALPHA_BENZO for the benzodiazepine
+ * share of the equivalent, VENT_ALPHA_HYP for the rest (7g's benzoShare; the per-agent share as the fallback). */
+const alphaHyp = (x: DriveInputs): number => {
+  const h = hypVent(x);
+  const share = x.benzoShare ?? (h > 0 ? ((PROP_VENT_C50 / MIDAZ_VENT_C50) * x.vent.midazolam) / h : 0);
+  return VENT_ALPHA_HYP + (VENT_ALPHA_BENZO - VENT_ALPHA_HYP) * Math.min(1, Math.max(0, share));
+};
 
 export function neuroResp(x: DriveInputs): NeuroResp {
-  const dOp = hill(x.vent.opioid / REMI_VENT_C50, REMI_VENT_H);
-  const dProp = hill(x.vent.propofol / PROP_VENT_C50, 1.5);
-  const dVol = hill(x.macVolatile / VOL_VENT_C50, 2);
-  const dMid = hill(x.vent.midazolam / MIDAZ_VENT_C50, 1.5);
-  const dKet = (0.3 * x.vent.ketamine) / (x.vent.ketamine + 2000);
-  const dHyp = 1 - (1 - dProp) * (1 - dVol) * (1 - dMid) * (1 - dKet);
-  const syn = 1 - SYNERGY * dOp * dHyp;
+  // FU-7 (addendum 20; review F2): the opioid C50 is divided by 1 + α·(the hypnotic units), each class with its own α
+  const dOp = hill(x.vent.opioid / (REMI_VENT_C50 / (1 + alphaHyp(x) * (hypVent(x) / PROP_VENT_C50) + VENT_ALPHA_HYP * (x.macVolatile / VOL_VENT_C50))), REMI_VENT_H);
+  // FU-7 (addendum 20): ONE hypnotic ventilatory term from 7g's equivalent (ketamine already weighted by `ventShare`,
+  // etomidate by its 0.7). Each class's C50 is divided by 1 + α·(the OTHER class's units) — a single agent keeps its
+  // own calibration (Nieuwenhuijs 2003: remifentanil 1 ng/mL −28 %, propofol 1 µg/mL −13 %); the benzodiazepine pair is
+  // supra-additive (Bailey 1990, α 1.5) and propofol–opioid additive (Nieuwenhuijs 2003; α 0 by D15b) — review F2.
+  const hypC = hypVent(x);
+  const uO = x.vent.opioid / REMI_VENT_C50;
+  const dProp = hill(hypC / (PROP_VENT_C50 / (1 + alphaHyp(x) * uO)), 1.5);
+  const dVol = hill(x.macVolatile / (VOL_VENT_C50 / (1 + VENT_ALPHA_HYP * uO)), 2);
+  const dHyp = 1 - (1 - dProp) * (1 - dVol);
+  const syn = 1; // the surface replaces the old product term (SYNERGY deleted, review F17)
   const totalDep = 1 - (1 - dOp) * (1 - dHyp) * syn;
   const opR = 1 - dOp * dOp;
   const hyR = 1 - dHyp ** 2.48;
@@ -109,9 +145,15 @@ export function neuroResp(x: DriveInputs): NeuroResp {
   const loc = Math.max(0, Math.min(1, ((x.hypnotic ?? 0) - LOC_LO) / (LOC_HI - LOC_LO)));
   // FU-6 R3(d) (D21, Eriksson 1993): a residual block blunts the carotid hypoxic response — with or without a tube
   const hvrNmb = HVR_NMB_EMAX * Math.max(0, Math.min(1, (0.9 - x.tofr) / (0.9 - HVR_NMB_TOFR_LO)));
-  const hvrDep = 1 - (1 - HVR_VOL_EMAX * hill(x.macVolatile / HVR_VOL_C50, 1)) * (1 - hill(x.vent.propofol / HVR_PROP_C50, 1.5)) * (1 - dOp) * (1 - dMid) * (1 - hvrNmb);
-  let apnoea = x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
-  if (strength < DIAPH_APNOEA) apnoea = true;
+  // FU-7 (ruling 3): the hypnotic factor reads the ONE ventilatory equivalent (thiopental, etomidate and midazolam depress
+  // the hypoxic arm too) and dMid is gone (its share is inside hypC). HVR_PROP_C50 = 3 × PROP_VENT_C50 (FU-6 F3b) and the
+  // volatile, opioid and NMB factors are FU-6's, unchanged — propofol's own hvrDep is identical by construction.
+  const hvrDep = 1 - (1 - HVR_VOL_EMAX * hill(x.macVolatile / HVR_VOL_C50, 1)) * (1 - hill(hypC / HVR_PROP_C50, 1.5)) * (1 - dOp) * (1 - hvrNmb);
+  // FU-7 (D7): ONE truth. In MODELED the chemoreflex decides whether the patient breathes (FU-6's relative threshold
+  // puts `resp.spont.rr` at 0), so the flag and the `apnoea` neuro mark read it; the drug-derived hysteresis stays for
+  // MANUAL, where there is no chemoreflex. research/14 DI-89: the flag was set for 255 s at VE 8.4 L/min.
+  let apnoea = x.spontRr !== undefined ? x.spontRr <= 0 : x.wasApnoeic ? veRest < APNOEA_OUT : veRest < APNOEA_IN;
+  if (strength < DIAPH_APNOEA) apnoea = true; // no effective breath whatever the drive (diaphragm block)
   // upper airway: residual block (TOFR < 0.9) and sedation (DI < 60 or dOp > 0.3: tables §4.6 uaCollapse)
   // FU-6 R3(d) (D21): arousal scales the RESIDUAL-BLOCK share between UA_AROUSAL (awake, Eikermann 2003) and 1
   // (unconscious — the tables' own value); the sedation arm below is untouched, and a complete-obstruction event

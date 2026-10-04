@@ -351,16 +351,35 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 321, s: 'S9', keys: ['organs.view.demandRel'], label: 'O₂ demand (×)', name: 'Whole-body oxygen demand relative to rest: anaesthesia, temperature, fever', unit: '× rest', normal: '1 awake; ≈ 0.85 under GA' },
   { n: 322, s: 'S9', keys: ['organs.view.mannitolMmol'], label: 'Mannitol (kidney input)', name: 'Plasma mannitol as the kidney reads it (osmotic diuresis)', unit: 'mmol', normal: '0' },
   { n: 323, s: 'S9', keys: ['organs.view.osm'], label: 'Osm (organ input)', name: 'Plasma osmolality as the brain and kidney read it', unit: 'mOsm/kg', normal: '275–295' },
-  // FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after 323, for Ali's review)
-  { n: 324, s: 'S9', keys: ['resp.temp.ageY'], label: 'Age (thermoregulation)', name: 'Patient age as the thermoregulatory thresholds read it: the cold-defence thresholds fall with age under anaesthesia', unit: 'years', normal: '—' },
-  { n: 325, s: 'S9', keys: ['endo.ageY'], label: 'Age (endocrine)', name: 'Patient age as the endocrine model holds it', unit: 'years', normal: '—' },
-  { n: 326, s: 'S9', keys: ['endo.core.etomSuppr'], label: 'Etomidate adrenal suppression', name: 'Adrenal 11β-hydroxylase suppression left by etomidate: blunts the cortisol response, recovers over hours', unit: '0–1', normal: '0' },
-  { n: 327, s: 'S9', keys: ['endo.core.ketoDef'], label: 'Ketogenic insulin deficit', name: 'Insulin deficit that drives ketone production and moves potassium out of the cells', unit: '0–1', normal: '0' },
-  { n: 328, s: 'S9', keys: ['blood.core.endoKetoMmolMin'], label: 'Ketone production', name: 'Ketoacid production from insulin deficiency, into the ketoacid pool', unit: 'mmol/min', normal: '0' },
-  { n: 329, s: 'S9', keys: ['blood.core.endoKetoUtilPerMin'], label: 'Ketone utilisation', name: 'Insulin-dependent ketone utilisation: fraction of the ketoacid pool cleared per minute', unit: '/min', normal: '≈ 0.0004 at basal insulin' },
-  { n: 330, s: 'S9', keys: ['neuro.mhExposure.sux'], label: 'MH trigger: succinylcholine', name: 'When an MH-susceptible patient was first given succinylcholine', unit: 's', normal: 'never' },
-  { n: 331, s: 'S9', keys: ['neuro.mhExposure.volatile', 'neuro.mhExposure.volatileAgent'], label: 'MH trigger: volatile', name: 'When an MH-susceptible patient was first exposed to a volatile agent, and which agent', unit: 's', normal: 'never' },
-  { n: 332, s: 'S9', keys: ['endo.mhOwner'], label: 'MH source', name: 'Whether the malignant hyperthermia came from its triggers or from the instructor', unit: '', normal: '—' },
+  // FU-7's new truth leaves (drug-layer integration; numbered after FU-9's 323; labels from research/11 §5 where it has them —
+  // the FU-7 plan's Task 19 console rows — and clinical wording for the rest; for Ali's review). Copies of these values
+  // in 7f's input cache (`neuro.last.*`), 7c's copy of the profile magnesium (`blood.mgSeen`) and the hooks' clock
+  // (`pkHooks.conv.lastT`) stay model internals.
+  { n: 324, s: 'S9', keys: ['pk.bus.cns.hypPropEq'], label: 'Ce prop-eq', name: 'Propofol-equivalent effect-site concentration: every hypnotic given, expressed as propofol', unit: 'µg/mL', normal: '0' },
+  { n: 325, s: 'S9', keys: ['pk.bus.cns.opioidCeFentEq'], label: 'Ce fent-eq', name: 'Fentanyl-equivalent effect-site concentration: every opioid given, expressed as fentanyl', unit: 'ng/mL', normal: '0' },
+  { n: 326, s: 'S9', keys: ['pk.bus.cns.dissoc'], label: 'Dissociative fraction', name: 'Dissociative (ketamine) share of the hypnotic effect', unit: 'fraction', normal: '0' },
+  { n: 327, s: 'S9', keys: ['pk.bus.cns.benzoShare'], label: 'Benzodiazepine share', name: 'Benzodiazepine share of the hypnotic effect on breathing', unit: 'fraction', normal: '0' },
+  { n: 328, s: 'S9', keys: ['pk.bus.cns.sympDrive'], label: 'Drug sympathetic drive', name: 'Central sympathetic drive from drugs (indirect sympathomimetics such as ephedrine and ketamine)', unit: '0–3', normal: '0' },
+  { n: 329, s: 'S9', keys: ['pk.bus.cns.antinocAdd'], label: 'Adjuvant antinociception', name: 'Antinociception added by non-opioid adjuvants such as intravenous lidocaine', unit: '0–1', normal: '0' },
+  { n: 330, s: 'S9', keys: ['neuro.antinocOp'], label: 'Opioid antinociception', name: 'Antinociception from opioids and adjuvants (the share that blunts the stress response to stimulation)', unit: '0–1', normal: '0' },
+  { n: 331, s: 'S9', keys: ['pk.bus.rhythm.antiarrhythmicU'], label: 'Antiarrhythmic occupancy', name: 'Antiarrhythmic drug effect, potency-weighted (amiodarone, lidocaine, procainamide)', unit: 'fraction', normal: '0' },
+  { n: 332, s: 'S9', keys: ['pk.bus.qtcMsAdd'], label: 'Drug QTc prolongation', name: 'QTc prolongation from drugs (e.g. ondansetron)', unit: 'ms', normal: '0' },
+  { n: 333, s: 'S9', keys: ['pk.bus.metabolic.glucocorticoidNmolL'], label: 'Exogenous glucocorticoid', name: 'Exogenous glucocorticoid (dexamethasone) as a cortisol-equivalent level', unit: 'nmol/L', normal: '0' },
+  { n: 334, s: 'S9', keys: ['endo.core.hormones.catReserve'], label: 'Catecholamine reserve', name: 'Releasable catecholamine reserve of the sympathetic nerve endings (falls with sustained sympathetic drive)', unit: 'fraction', normal: '1 (replete)' },
+  { n: 335, s: 'S9', keys: ['endo.core.hormones.surge'], label: 'Stimulus surge', name: 'Sympathetic surge from noxious stimulation (laryngoscopy, intubation, incision)', unit: '0–1', normal: '0' },
+  { n: 336, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
+  { n: 337, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
+  { n: 338, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
+  // FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after FU-7's 338, for Ali's review)
+  { n: 339, s: 'S9', keys: ['resp.temp.ageY'], label: 'Age (thermoregulation)', name: 'Patient age as the thermoregulatory thresholds read it: the cold-defence thresholds fall with age under anaesthesia', unit: 'years', normal: '—' },
+  { n: 340, s: 'S9', keys: ['endo.ageY'], label: 'Age (endocrine)', name: 'Patient age as the endocrine model holds it', unit: 'years', normal: '—' },
+  { n: 341, s: 'S9', keys: ['endo.core.etomSuppr'], label: 'Etomidate adrenal suppression', name: 'Adrenal 11β-hydroxylase suppression left by etomidate: blunts the cortisol response, recovers over hours', unit: '0–1', normal: '0' },
+  { n: 342, s: 'S9', keys: ['endo.core.ketoDef'], label: 'Ketogenic insulin deficit', name: 'Insulin deficit that drives ketone production and moves potassium out of the cells', unit: '0–1', normal: '0' },
+  { n: 343, s: 'S9', keys: ['blood.core.endoKetoMmolMin'], label: 'Ketone production', name: 'Ketoacid production from insulin deficiency, into the ketoacid pool', unit: 'mmol/min', normal: '0' },
+  { n: 344, s: 'S9', keys: ['blood.core.endoKetoUtilPerMin'], label: 'Ketone utilisation', name: 'Insulin-dependent ketone utilisation: fraction of the ketoacid pool cleared per minute', unit: '/min', normal: '≈ 0.0004 at basal insulin' },
+  { n: 345, s: 'S9', keys: ['neuro.mhExposure.sux'], label: 'MH trigger: succinylcholine', name: 'When an MH-susceptible patient was first given succinylcholine', unit: 's', normal: 'never' },
+  { n: 346, s: 'S9', keys: ['neuro.mhExposure.volatile', 'neuro.mhExposure.volatileAgent'], label: 'MH trigger: volatile', name: 'When an MH-susceptible patient was first exposed to a volatile agent, and which agent', unit: 's', normal: 'never' },
+  { n: 347, s: 'S9', keys: ['endo.mhOwner'], label: 'MH source', name: 'Whether the malignant hyperthermia came from its triggers or from the instructor', unit: '', normal: '—' },
 ];
 
 /**
@@ -371,7 +390,7 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
   // Stage 7k (its plan's Requests → Stage 9): one label per truth path where an entry names two readings
   'resp.mechanics.plEi': 'PL,ei', 'resp.mechanics.plEe': 'PL,ee', 'resp.mechanics.pesEi': 'Pes,ei (est.)', 'resp.mechanics.pesEe': 'Pes,ee (est.)',
   'resp.mechanics.rinsp': 'Rinsp',
-  // FU-10: entry 331 names two readings
+  // FU-10: entry 346 names two readings
   'neuro.mhExposure.volatile': 'MH trigger: volatile (time)', 'neuro.mhExposure.volatileAgent': 'MH trigger: volatile (agent)',
   'resp.volumes.pred.tlc': 'TLC predicted', 'resp.volumes.pred.rv': 'RV predicted', 'resp.volumes.pred.frc': 'FRC (seated) predicted', 'resp.volumes.pred.vc': 'VC predicted',
   'resp.volumes.pred.fvc': 'FVC predicted', 'resp.volumes.pred.fev1': 'FEV₁ predicted', 'resp.volumes.pred.ratio': 'FEV₁/FVC predicted', 'resp.volumes.pred.pef': 'PEF predicted',
@@ -442,6 +461,9 @@ export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>>
   sodiumBicarbonate: { name: "Sodium bicarbonate 8.4 %" }, succinylcholine: { name: "Succinylcholine" }, sufentanil: { name: "Sufentanil" },
   sugammadex: { name: "Sugammadex" }, thiopental: { name: "Thiopental" }, vasopressin: { name: "Vasopressin" },
   vecuronium: { name: "Vecuronium" },
+  // FU-7's new library rows
+  atracurium: { name: "Atracurium" }, mivacurium: { name: "Mivacurium" }, nitroprusside: { name: "Sodium nitroprusside" },
+  glucagon: { name: "Glucagon" }, procainamide: { name: "Procainamide" }, verapamil: { name: "Verapamil" },
 };
 
 /**

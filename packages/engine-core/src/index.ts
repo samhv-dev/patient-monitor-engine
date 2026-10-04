@@ -28,6 +28,8 @@ export type * from './types-pk.ts'; // Stage 7g
 export { DRUG_BUS_NEUTRAL } from './types-pk.ts'; // Stage 7g
 export type { PkState, DrugInst } from './l2/pk/pipeline.ts'; // Stage 7g
 export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // Stage 7g (demo/controller drug pickers)
+export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // FU-7 evidence page: the onset shapes (gamma vs chain)
+export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // FU-7 evidence page: the shock-state factor
 export type * from './types-truth.ts'; // Stage 7x
 export type * from './types-neuro.ts'; // Stage 7f
 export { pruneTruth, TRUTH_LIMITS } from './truth.ts'; // Stage 7x

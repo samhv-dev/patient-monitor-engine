@@ -11,14 +11,14 @@ import { decrementFromNowMin } from './csht.ts';
 import { DEFAULT_PK_PATIENT, type PkPatient } from './covariates.ts';
 import { DRUGS } from './data/drugs.ts';
 import { LAST_THRESHOLDS } from './data/rows-other.ts';
-import { gammaConc, gammaN, type GammaDose } from './gamma.ts';
+import { gammaConc, gammaN, onsetChain, ONSET_N_MIN, type GammaDose } from './gamma.ts';
 import { eleveldPropofol, geptsSufentanil, marshPropofol, mintoRemifentanil, schniderPropofol, shaferFentanyl } from './models.ts';
 import { bindSugammadex, bindSugammadexSites, CISATRACURIUM, MW, PCHE_CL_MULT, perKg, ROCURONIUM, SUCCINYLCHOLINE, SUGAMMADEX, VECURONIUM } from './nmb.ts';
 import { hill, tachy } from './pd.ts';
-import type { DrugRow } from './row.ts';
+import type { DrugRow, PdTarget } from './row.ts';
 import { tciRate, TCI_DT_S } from './tci.ts';
 import { toAmount, toRate } from './units.ts';
-import { createVolatile, macForAge, macFraction, stepVolatile, type VolatileAgent, type VolatileState } from './volatile.ts';
+import { createVolatile, macForAge, macFraction, stepVolatile, uptakeLpm, type VolatileAgent, type VolatileState } from './volatile.ts';
 
 export const PK_DT_S = 0.1;
 const TACHY_WINDOW_S = 3600;
@@ -70,15 +70,36 @@ export interface PkState {
 }
 
 /** Context gathered by the engine each pass from the other modules (duck-typed; neutral when absent). */
+/** FU-7 (R51 addendum 25): endogenous catecholamines act through 7g's OWN adrenergic rows — the same receptors, Loewe
+ * sums, β-occupancy shift and acidosis/vasopressor-responsiveness scaling as an injected dose. Circulatory targets only:
+ * endogenous adrenaline's metabolic effects stay 7e's (stressEffects), so nothing is counted twice. */
+const ENDO_CIRC_TARGETS: readonly PdTarget[] = ['hr', 'ees', 'svr', 'pvr', 'v0Frac'];
+const endoRow = (id: string): DrugRow | null => {
+  const r = DRUGS[id];
+  return r ? { ...r, id: `endo:${id}`, pd: r.pd.filter((e) => ENDO_CIRC_TARGETS.includes(e.target)) } : null;
+};
+const ENDO_NE = endoRow('norepinephrine');
+const ENDO_EPI = endoRow('epinephrine');
+function endoCatActives(cat: PkCtx['endoCat']): Active[] {
+  const out: Active[] = [];
+  if (cat && ENDO_NE && cat.ne > 0) out.push({ row: ENDO_NE, c: cat.ne });
+  if (cat && ENDO_EPI && cat.epi > 0) out.push({ row: ENDO_EPI, c: cat.epi });
+  return out;
+}
+
 export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
   coRefLpm?: number; // FU-4 G10: the circulation's resting output (the reference distFactor divides by)
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
+  /** FU-7 (addendum 21): the 7a profile's β-receptor occupancy and its selectivity. */
+  betaOcc?: number; betaNonSel?: boolean;
+  /** FU-7 (R51 addendum 25): 7e's nociceptive CIRCULATING catecholamines, rate-equivalents of 7g's own rows (MODELED). */
+  endoCat?: { ne: number; epi: number };
   /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
    * apply its own temperature term to the hepatic share again. */
   hepFnTemp: boolean;
 }
-export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false };
+export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false, betaOcc: 0, betaNonSel: false };
 
 export function pkPatientOf(p: PatientProfile | undefined): PkPatient {
   return {
@@ -158,6 +179,15 @@ export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const hep = row.elim?.highExtraction ? ctx.hepFlow * temp : ctx.hepFn * (ctx.hepFnTemp ? 1 : temp);
   const organ = h * hep + (r * ctx.renal + Math.max(0, 1 - h - r)) * temp;
   return Math.round(organ * 100) / 100;
+}
+
+/** FU-7 (research/13 H9): the decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the
+ * clearance-governed share of the chain's decline (ke, Task 2); f = clFactor. 1 without `elim.t12S` or a chain. */
+export function gammaDeclineRate(row: DrugRow, f: number): number {
+  const t12 = row.elim?.t12S;
+  if (row.pk.kind !== 'gamma' || !t12 || f === 1 || gammaN(row.pk.tpS, row.pk.t10S) >= ONSET_N_MIN) return 1;
+  const phi = Math.min(1, Math.LN2 / t12 / onsetChain(row.pk.tpS, row.pk.t10S).ke);
+  return 1 - phi * (1 - f);
 }
 
 /** FU-4 G10: cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075
@@ -330,7 +360,7 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
     case 'nmb':
       return { c: d.x[3] as number, plasma: p ? cp(p, d.x) : 0, nmj: d.x[3] as number, dia: d.x[4] as number };
     case 'gamma': {
-      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S)) + d.infC;
+      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S), row.pk.t10S) + d.infC; // FU-7 (addendum 19): zero-slope onset
       return { c, plasma: c };
     }
     default:
@@ -339,7 +369,8 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 }
 
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
-  const actives: Active[] = [];
+  // FU-7 (R51 addendum 25): the surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
+  const actives: Active[] = endoCatActives(ctx.endoCat);
   let lipid = 0;
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
@@ -349,6 +380,11 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
       d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG bound]
+      // FU-7 (research/13 H9): organ function slows the ELIMINATION share of the decline — each dose past its peak ages at
+      // rate g (dose time moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution).
+      d.factor = clFactor(row, ctx);
+      const g = gammaDeclineRate(row, d.factor);
+      if (g !== 1) for (const x of d.doses) if (t - x.t > tpS) x.t += PK_DT_S * (1 - g);
     } else if (d.x.length) {
       const f = clFactor(row, ctx);
       if (f !== d.factor) d.factor = f;
@@ -381,7 +417,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const volatiles: DrugBus['volatiles'] = {};
   if (pk.vap) {
     const env = { vaLpm: ctx.vaLpm, coLpm: ctx.coLpm, frcL: ctx.frcL, weightKg: pk.patient.weightKg };
-    stepVolatile(pk.vap.s, env, PK_DT_S);
+    // FU-7 (addendum 24): the second-gas effect. N2O's uptake augments the potent agent's effective alveolar
+    // ventilation (M10 ch. 19; Epstein 1964), so the potent agent is stepped with VA + U_N2O and N2O with VA.
+    const uN2o = Math.max(0, uptakeLpm(pk.vap.n2o, env.coLpm));
+    stepVolatile(pk.vap.s, { ...env, vaLpm: env.vaLpm + (env.vaLpm > 0 ? uN2o : 0) }, PK_DT_S);
     stepVolatile(pk.vap.n2o, env, PK_DT_S);
     for (const s of [pk.vap.s, pk.vap.n2o]) {
       const v: BusVolatile = { fet: 100 * s.fa, brain: 100 * s.vrg, macAge: macForAge(s.agent, pk.patient.ageY), macFrac: macFraction(s, pk.patient.ageY) };
@@ -395,9 +434,10 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const lip = pk.drugs.lipidEmulsion;
   if (lip) lipid = hill(siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c, 1, 0.5);
   const freeF = (1 + 2 * Math.max(0, 7.4 - ctx.ph)) * (1 - lipid);
-  let cnsE = 0;
-  let cvE = 0;
-  let seizure = false;
+  // FU-7 (addendum 24): potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
+  let uCns = 0;
+  let uCv = 0;
+  let uSeiz = 0;
   const agents: Record<string, BusAgent> = {};
   for (const d of Object.values(pk.drugs)) {
     const row = DRUGS[d.id] as DrugRow;
@@ -408,13 +448,16 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       c *= freeF;
       const th = LAST_THRESHOLDS[row.id];
       if (th) {
-        cnsE = Math.max(cnsE, hill(c, th.cns, 1, 3));
-        cvE = Math.max(cvE, hill(c, th.cv, 1, 3));
-        seizure ||= c >= th.seizure;
+        // FU-7 (addendum 24 / audit D14): local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice
+        // advisory; M10 ch. 25: the doses share one maximum). The fractional sums replace the per-agent maximum, and each
+        // is fed to the SAME Hill as before, so a sole agent at its threshold gives exactly the pre-FU-7 effect.
+        uCns += c / th.cns;
+        uCv += c / th.cv;
+        uSeiz += c / th.seizure;
       }
     }
     pk.lastC[d.id] = c;
-    actives.push({ row, c });
+    actives.push({ row, c, ...(sc.vent !== undefined ? { vent: sc.vent } : {}) }); // FU-7 (addendum 20): the ventilatory site
     agents[d.id] = {
       unit: concUnit(row), plasma: sc.plasma, brain: c,
       ...(sc.vent !== undefined ? { vent: sc.vent } : {}),
@@ -423,12 +466,21 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       ...(row.id === 'rocuronium' || row.id === 'vecuronium' ? { sgxBoundFrac: d.total > 0 ? Math.min(1, d.bound / d.total) : 0 } : {}),
     };
   }
-  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain });
+  // FU-7 (addendum 24): one Hill per endpoint on the summed fractions (h 3, as each agent had)
+  const cnsE = hill(uCns, 1, 1, 3);
+  const cvE = hill(uCv, 1, 1, 3);
+  const seizure = uSeiz >= 1;
+  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain }); // FU-7 (addendum 21)
   // desflurane sympathetic surge on a rapid rise above 1 MAC (T6.3): HR +25 %, SVR +20 % over 2–4 min [TXT]
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {
-    pk.macPrev.push(macBrain);
+    // FU-7 (addendum 24 / DI-70): the surge is an AIRWAY-RECEPTOR reflex to the rate of rise of the INSPIRED/end-tidal
+    // fraction (Weiskopf 1994: a rapid increase in desflurane concentration, not a brain level, releases catecholamines),
+    // so the trigger reads the end-tidal MAC fraction, which a dial step moves within seconds. The brain-MAC trigger
+    // never fired: a 3 → 12 % step gave HR +1 bpm.
+    const etMac = (100 * pk.vap.s.fa) / macForAge(pk.vap.s.agent, pk.patient.ageY); // END-TIDAL (alveolar) MAC fraction
+    pk.macPrev.push(etMac);
     if (pk.macPrev.length > 60) pk.macPrev.shift();
-    if (macBrain > 1 && macBrain - (pk.macPrev[0] as number) > 0.3 && t - pk.desSurgeT > 600) pk.desSurgeT = t;
+    if (etMac > 1 && etMac - (pk.macPrev[0] as number) > 0.3 && t - pk.desSurgeT > 600) pk.desSurgeT = t;
   }
   const surge = t - pk.desSurgeT < 240 ? Math.sin((Math.PI * (t - pk.desSurgeT)) / 240) : 0;
   r.fx.hr *= 1 + 0.25 * surge;

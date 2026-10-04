@@ -61,8 +61,15 @@ const SLOW = [
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
-  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs, spread over the four groups by measured time (SLOW_A/C/D below; the rest is slow-b)
+  'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs, placed by CI per-file time (SLOW_A and SLOW_F below; insulin-omission is slow-b)
   'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
+  'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population
+  'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms
+  'test/engine/stimulus-surge.test.ts', // FU-7 Task 10: ≈ 40 ventilated arms of 10–60 sim-min
+  'test/engine/fu7-nmb-one-state.test.ts', // FU-7 Task 14: two 140 sim-min rocuronium arms + four 15 sim-min sux arms
+  'test/engine/fu7-volatile.test.ts', // FU-7 Task 15: two 30 sim-min desflurane arms
+  'test/engine/drug-layer.test.ts', // FU-7 Tasks 16 + 19: the drug-layer engine cases
+  'test/engine/drug-layer-guards.test.ts', // FU-7 Task 19 case 7: the regression guards (split from drug-layer by time)
 ];
 /**
  * FU-4 (D17): CI runs the slow set as two jobs (`slow-a`, `slow-b`) so neither passes ≈ 40 min on the runner; `slow` still
@@ -74,8 +81,7 @@ const SLOW_A = [
   // (1438 s), the engine pipeline (196), the organ soak (207) and FU-8's files (385) — 2226 s ≈ 37 min.
   'test/engine/**/*longrun*.test.ts', 'test/engine/engine-pipeline.test.ts', 'test/engine/organs-soak.test.ts',
   'test/engine/fu8-*.test.ts', // FU-8: its files join slow-a
-  // FU-10 Gate: by measured serial time (local): adrenal 101 s, mh-trigger 43 s; fu10-thresholds (334 s) stays in slow-b
-  'test/engine/fu10-adrenal.test.ts', 'test/engine/fu10-mh-trigger.test.ts',
+  'test/engine/fu10-adrenal.test.ts', // FU-10 Gate (after FU-7): 389 s on CI (PR #37 run 37199560174)
 ];
 /**
  * FU-9 Gate (CI amendment 5): slow-a ran 70 min on CI (4191 s of tests) on PRs #29–#31 — FU-6's files had joined it
@@ -104,7 +110,6 @@ const SLOW_D = [
   'test/engine/resp-child-baseline.test.ts',
   'test/engine/resp-mechanics.test.ts', // Stage 7k (58 s)
   'test/engine/vagal-events.test.ts', // FU-4 G7, from slow-b by time (140 s)
-  'test/engine/fu10-insulin-omission.test.ts', // FU-10 Gate: by measured serial time (local 231 s)
 ];
 // FU-4 (R50 review F8): SLOW_B is SLOW minus the other groups, and the difference cannot be taken by STRING comparison —
 // the glob 'test/engine/neuro-*.test.ts' is not equal to 'test/engine/**/*longrun*.test.ts' but MATCHES the same 6 h
@@ -120,10 +125,31 @@ const SLOW_C = [
   'test/engine/fu9-*.test.ts', 'test/engine/pk-acceptance-pd.test.ts', 'test/engine/endo-acceptance.test.ts',
   'test/engine/organs-renal.test.ts', 'test/engine/blood-sanity-acid.test.ts', 'test/engine/pk-acceptance-pk.test.ts',
   'test/engine/thermal-warmer.test.ts', // FU-9 Gate: from slow-b by time (136 s)
-  // FU-10 Gate: by measured serial time (local, 843 s for the six files): insulin-dextrose 100 s, fever 34 s
-  'test/engine/fu10-insulin-dextrose.test.ts', 'test/engine/fu10-fever.test.ts',
 ];
-const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p));
+/**
+ * FU-7 gate (finisher, 2026-10-04): FU-7's seven slow files measured 1 578 s on the local slow-a run (drug-layer 1 018 s
+ * before its split, drug-apnoea 331, stimulus-surge 144, fu7-nmb-one-state 59, cat-reserve-engine 14, fu7-volatile 12).
+ * At the CI/local ratio of the FU-6 files (clinical-suite 467/170 s, resp-suite 426/160 s ≈ 2.7) that is ≈ 4 250 s on the
+ * runner, and FU-9's four groups leave ≈ 800 s of room under 40 min — so two more groups, each ≈ 35 min by estimate:
+ * slow-e = the regression guards (≈ 1 510 s) + stimulus-surge + the three small files; slow-f = drug-layer (≈ 1 240 s) +
+ * drug-apnoea (≈ 890 s). The CI sums of the PR's first run replace these estimates in the gate note.
+ */
+const SLOW_E = [
+  'test/engine/drug-layer-guards.test.ts', 'test/engine/stimulus-surge.test.ts', 'test/engine/fu7-nmb-one-state.test.ts',
+  'test/engine/cat-reserve-engine.test.ts', 'test/engine/fu7-volatile.test.ts',
+];
+/**
+ * FU-10 Gate (after the FU-7 merge): FU-10's six files took 2 208 s on CI (PR #37 run 37199560174: thresholds 804,
+ * insulin-omission 670, adrenal 389, insulin-dextrose 152, mh-trigger 145, fever 48). Against FU-7's PR CI sums (a 1837,
+ * b 1573, c 2295, d 2075, e 2222, f 862 s) the six groups have ≈ 2 050 s of room under 35 min, so the fit is: slow-f +
+ * thresholds, insulin-dextrose, mh-trigger, fever (≈ 2 011 s); slow-a + adrenal (≈ 2 226 s); slow-b + insulin-omission
+ * (≈ 2 243 s, by the glob). Every group ≤ ≈ 37 min by estimate; the merged PR's first CI run replaces these numbers.
+ */
+const SLOW_F = [
+  'test/engine/drug-layer.test.ts', 'test/engine/drug-apnoea.test.ts',
+  'test/engine/fu10-thresholds.test.ts', 'test/engine/fu10-insulin-dextrose.test.ts', 'test/engine/fu10-mh-trigger.test.ts', 'test/engine/fu10-fever.test.ts',
+];
+const SLOW_B = SLOW.filter((p) => !SLOW_A.includes(p) && !SLOW_C.includes(p) && !SLOW_D.includes(p) && !SLOW_E.includes(p) && !SLOW_F.includes(p));
 const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
@@ -142,8 +168,10 @@ export default defineConfig({
     ...(set === 'slow-a' ? { include: SLOW_A, fileParallelism: false } : {}), // FU-4 (D17)
     // FU-4 (R50 review F8): the groups MUST be disjoint — SLOW_A is excluded here by the same matcher that includes it
     // above, so a file matching a SLOW_A glob (e.g. the 6 h neuro long run) runs in slow-a only, never in both jobs.
-    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D], fileParallelism: false } : {}),
+    ...(set === 'slow-b' ? { include: SLOW_B, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_E, ...SLOW_F], fileParallelism: false } : {}),
     ...(set === 'slow-c' ? { include: SLOW_C, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_D], fileParallelism: false } : {}), // FU-9 (CI amendment 5)
     ...(set === 'slow-d' ? { include: SLOW_D, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C], fileParallelism: false } : {}), // FU-9 Gate: the fourth group
+    ...(set === 'slow-e' ? { include: SLOW_E, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_F], fileParallelism: false } : {}), // FU-7 gate
+    ...(set === 'slow-f' ? { include: SLOW_F, exclude: ['**/node_modules/**', '**/dist/**', ...SLOW_A, ...SLOW_C, ...SLOW_D, ...SLOW_E], fileParallelism: false } : {}), // FU-7 gate
   },
 });

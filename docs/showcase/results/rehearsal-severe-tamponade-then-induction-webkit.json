@@ -5,7 +5,7 @@
   "base": "http://127.0.0.1:8700",
   "steps": [
     {
-      "simT": 2.5,
+      "simT": 3.5,
       "what": "loaded \"Severe tamponade, then induction\" at ×4",
       "state": "tamponade",
       "hr": null,
@@ -15,65 +15,68 @@
       "rr": null
     },
     {
-      "simT": 32.9,
+      "simT": 33.8,
       "what": "compensating, 30 s after load",
       "state": "tamponade",
-      "hr": 96,
-      "art": "107/85.9 (93.3)",
-      "spo2": 95,
-      "etco2": 35,
-      "rr": 14
-    },
-    {
-      "simT": 36.3,
-      "what": "pressed \"Give propofol 2 mg/kg\"",
-      "state": "inducedByButton",
-      "hr": 100,
-      "art": "111.6/90.5 (97.6)",
+      "hr": 98,
+      "art": "108.8/88.1 (95.2)",
       "spo2": 96,
       "etco2": 35,
       "rr": 14
     },
     {
-      "simT": 146,
+      "simT": 37.1,
+      "what": "pressed \"Give propofol 2 mg/kg\"",
+      "state": "inducedByButton",
+      "hr": 100,
+      "art": "111.1/90.3 (97.3)",
+      "spo2": 96,
+      "etco2": 35,
+      "rr": 14
+    },
+    {
+      "simT": 147.1,
       "what": "arterial mean < 40",
       "state": "inducedByButton",
       "hr": 40,
-      "art": "49.8/33.5 (38.2)",
+      "art": "49.2/33.3 (37.9)",
       "spo2": 80,
       "etco2": 0,
       "rr": 4
     },
     {
-      "simT": 154.3,
+      "simT": 155.6,
       "what": "2 min after propofol",
       "state": "inducedByButton",
       "hr": 40,
-      "art": "40.8/29.4 (32.8)",
+      "art": "38.7/28.5 (31.6)",
       "spo2": 82,
       "etco2": 0,
       "rr": 4
     },
     {
       "alarmsRaised": [
-        "88.4 s CO2 APNEA"
+        "79.9 s CO2 APNEA"
       ]
     }
   ],
   "labels": {
+    "alarmButtonAtOpen": "Alarms off",
     "tab": "Scenario",
     "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
     "toast": "Scenario loaded: Severe tamponade, then induction",
     "speed": "×4 (session bar) → toast \"Speed ×4\"",
-    "running": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nPropofol given: After induction: compensation lost\nYou press \"Give propofol 2 mg/kg\": After induction: compensation lost\nGive propofol 2 mg/kg\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterPropofol": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n01:59\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "running": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nPropofol given: After induction: compensation lost\nYou press \"Give propofol 2 mg/kg\": After induction: compensation lost\nGive propofol 2 mg/kg\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Alarms off",
+    "sessionBar": "M 58 y 80 kg MODELED Severe tamponade, then induction: Tamponade, compensating 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
+    "afterPropofol": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n02:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
       "what": "arterial mean after propofol",
       "expected": "< 40 mmHg (within 5 min sim)",
-      "observed": "112.9 s",
+      "observed": "113.1 s",
       "pass": true
     },
     {

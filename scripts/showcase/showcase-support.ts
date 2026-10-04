@@ -79,7 +79,7 @@ export async function waitSim(page: Page, maxSimS: number, ok: (now: number, v: 
 export const waitUntilSim = async (page: Page, t: number): Promise<number | null> => waitSim(page, Math.max(0, t - (await simNow(page))) + 5, (now) => now >= t);
 
 /** Scenario tab → Showcase filter → Load the card titled `title`; then ×4. Returns the visible labels on the way. */
-export async function loadShowcase(page: Page, title: string): Promise<Record<string, string>> {
+export async function loadShowcase(page: Page, title: string, o: { speed?: boolean } = {}): Promise<Record<string, string>> {
   const seen: Record<string, string> = {};
   seen.alarmButtonAtOpen = await page.locator('.alarm-count').innerText();
   await page.click('[role=tab][data-tab=scenario]');
@@ -89,8 +89,15 @@ export async function loadShowcase(page: Page, title: string): Promise<Record<st
   seen.showcaseCards = (await cards.locator('h3').allInnerTexts()).join(' | ');
   const card = cards.filter({ has: page.locator('h3', { hasText: title }) });
   await card.locator('button', { hasText: 'Load' }).click();
+  // a case already running asks first ("Load this scenario?"): confirm with "Load scenario"
+  const confirm = page.getByRole('button', { name: 'Load scenario', exact: true });
+  if (await confirm.waitFor({ timeout: 1500 }).then(() => true, () => false)) {
+    seen.confirm = 'dialog "Load this scenario?" → Load scenario';
+    await confirm.click();
+  }
   await page.locator('.toasts').getByText(`Scenario loaded: ${title}`).waitFor({ timeout: 15_000 });
   seen.toast = `Scenario loaded: ${title}`;
+  if (o.speed === false) return seen;
   await page.locator('.sessionbar button', { hasText: '×4' }).click();
   await page.locator('.toasts').getByText('Speed ×4').waitFor({ timeout: 10_000 });
   seen.speed = '×4 (session bar) → toast "Speed ×4"';
@@ -137,3 +144,18 @@ export const meanOf = (s: Sample[], k: keyof Vals): number | null => {
   const v = s.map((x) => x[k]).filter((x): x is number => typeof x === 'number');
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
 };
+
+/** The number in the monitor's CO2 tile (Saadat-style: "CO2 mmHg", value, "FiCO2 … awRR …"); null when blank/dashes. */
+export async function co2Tile(page: Page): Promise<{ value: number | null; text: string }> {
+  const t = page.locator('.stage .pme-stile[data-param=CO2]').first();
+  if (!(await t.count())) return { value: null, text: 'no CO2 tile on the monitor' };
+  const v = (await t.locator('[data-pme=v]').innerText()).trim();
+  return { value: /^\d+$/.test(v) ? Number(v) : null, text: (await t.innerText()).replace(/\s+/g, ' ').trim() };
+}
+
+/** The session-bar clock as seconds ("mm:ss" or "h:mm:ss"). */
+export async function barClock(page: Page): Promise<{ s: number; text: string }> {
+  const text = (await page.locator('.sessionbar [aria-label="Simulation time"]').first().innerText()).trim();
+  const s = text.split(':').map(Number).reduce((a, b) => a * 60 + b, 0);
+  return { s, text };
+}

@@ -1,40 +1,40 @@
 {
   "browser": "webkit",
-  "base": "http://127.0.0.1:8700",
+  "base": "http://127.0.0.1:8702",
   "server": "perl (through the launcher)",
   "windows": {
     "B": {
       "route": "#/monitor",
       "before": {
         "route": "#/monitor",
-        "code": "S4XGZC",
-        "simT": 14.3,
+        "code": "SEX5WC",
+        "simT": 27.6,
         "speed": 1,
         "scenario": null,
         "state": null,
-        "hr": 71,
+        "hr": 69,
         "abp": null,
         "etco2": 36,
         "rr": 14,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:13×1×2×4PauseBookmark"
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:27×1×2×4PauseBookmark"
       },
       "after": {
         "route": "#/monitor",
-        "code": "S4XGZC",
-        "simT": 29.7,
+        "code": "SEX5WC",
+        "simT": 85.2,
         "speed": 1,
         "scenario": null,
         "state": null,
-        "hr": 70,
+        "hr": 69,
         "abp": null,
         "etco2": 36,
         "rr": 14,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:29×1×2×4PauseBookmark"
+        "bar": "M 40 y 70 kgMODELEDNo scenario01:25×1×2×4PauseBookmark"
       },
       "sameCode": false,
       "sameScenario": false,
       "sameState": false,
-      "clockGapS": 117,
+      "clockGapS": 303.2,
       "followsInduction": false,
       "inStep": false
     },
@@ -42,21 +42,8 @@
       "route": "#/explore",
       "before": {
         "route": "#/explore",
-        "code": "U4KRNY",
-        "simT": 8.9,
-        "speed": 1,
-        "scenario": null,
-        "state": null,
-        "hr": 71,
-        "abp": null,
-        "etco2": null,
-        "rr": null,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:08×1×2×4PauseBookmark"
-      },
-      "after": {
-        "route": "#/explore",
-        "code": "U4KRNY",
-        "simT": 24.2,
+        "code": "6PYVXM",
+        "simT": 18.1,
         "speed": 1,
         "scenario": null,
         "state": null,
@@ -64,12 +51,25 @@
         "abp": null,
         "etco2": 36,
         "rr": 14,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:24×1×2×4PauseBookmark"
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:17×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/explore",
+        "code": "6PYVXM",
+        "simT": 75.8,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 69,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario01:15×1×2×4PauseBookmark"
       },
       "sameCode": false,
       "sameScenario": false,
       "sameState": false,
-      "clockGapS": 122.5,
+      "clockGapS": 312.6,
       "followsInduction": false,
       "inStep": false
     },
@@ -77,55 +77,55 @@
       "route": "#/vent",
       "before": {
         "route": "#/vent",
-        "code": "GVB8KY",
-        "simT": 3.9,
+        "code": "ZGB29U",
+        "simT": 4.8,
         "speed": 1,
         "scenario": null,
         "state": null,
-        "hr": null,
+        "hr": 71,
         "abp": null,
         "etco2": null,
         "rr": null,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:03×1×2×4PauseBookmark"
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:04×1×2×4PauseBookmark"
       },
       "after": {
         "route": "#/vent",
-        "code": "GVB8KY",
-        "simT": 19.3,
+        "code": "ZGB29U",
+        "simT": 62.3,
         "speed": 1,
         "scenario": null,
         "state": null,
-        "hr": 72,
+        "hr": 73,
         "abp": null,
-        "etco2": 37,
-        "rr": 14,
-        "bar": "M 40 y 70 kgMODELEDNo scenario00:18×1×2×4PauseBookmark"
+        "etco2": 35,
+        "rr": 13,
+        "bar": "M 40 y 70 kgMODELEDNo scenario01:01×1×2×4PauseBookmark"
       },
       "sameCode": false,
       "sameScenario": false,
       "sameState": false,
-      "clockGapS": 127.4,
+      "clockGapS": 326.1,
       "followsInduction": false,
       "inStep": false
     },
     "A": {
       "before": {
         "route": "#/teach",
-        "code": "AJ2SJD",
-        "simT": 85.2,
+        "code": "7XG55W",
+        "simT": 156.6,
         "speed": 4,
         "scenario": "Healthy induction",
         "state": "awake",
         "hr": 69,
         "abp": "122/80 (94)",
-        "etco2": 39,
-        "rr": 13,
-        "bar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 01:23 01:23 ×1 ×2 ×4 Pause Bookmark"
+        "etco2": 38,
+        "rr": 14,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 02:35 02:35 ×1 ×2 ×4 Pause Bookmark"
       },
       "after": {
         "route": "#/teach",
-        "code": "AJ2SJD",
-        "simT": 146.7,
+        "code": "7XG55W",
+        "simT": 388.4,
         "speed": 4,
         "scenario": "Healthy induction",
         "state": "induced",
@@ -133,29 +133,29 @@
         "abp": "106/70 (81)",
         "etco2": 0,
         "rr": 0,
-        "bar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 00:59 02:25 ×1 ×2 ×4 Pause Bookmark"
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 01:00 06:26 ×1 ×2 ×4 Pause Bookmark"
       }
     },
     "R": {
       "connected": true,
-      "status": "Connected to AJ2SJD",
+      "status": "Connected to 7XG55W",
       "scenarioShownOnRemote": "Healthy induction",
-      "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 01:27 02:53 ×1 ×2 ×4 Pause Bookmark",
+      "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 01:38 07:05 ×1 ×2 ×4 Pause Bookmark",
       "pressedIntubateOnRemote": true,
       "instructorStateBefore": "induced",
       "hostReachedVentilated": true,
       "hostAfter": {
         "route": "#/monitor",
-        "code": "AJ2SJD",
-        "simT": 182.5,
+        "code": "7XG55W",
+        "simT": 436.9,
         "speed": 4,
         "scenario": "Healthy induction",
         "state": "ventilated",
-        "hr": 74,
-        "abp": "98/66 (76)",
-        "etco2": 45,
-        "rr": 5,
-        "bar": "M 40 y 75 kgMODELEDHealthy induction: Intubated and ventilated 00:0803:02×1×2×4PauseBookmark"
+        "hr": 77,
+        "abp": "95/64 (73)",
+        "etco2": 46,
+        "rr": 4,
+        "bar": "M 40 y 75 kgMODELEDHealthy induction: Intubated and ventilated 00:0907:16×1×2×4PauseBookmark"
       },
       "inStep": true
     }

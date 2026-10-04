@@ -56,7 +56,9 @@ describe('7g acceptance — vasopressor dose–response (tables §6.2)', () => {
   // +11.8 % (β-blocked +3.4 %); circ level at rest +17 % (+7.6 % without the term). The rest of the gap is the reflexes
   // returning about half of the mobilised volume (cardiopulmonary + arterial venous limbs) and the ventilated
   // engine's lower venous-return reserve; reaching +20 % needs ≈ 730 mL at 5 µg/kg/min, beyond the ≈ 1 L reservoir.
-  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +11.8 with the FU-2 β venous term)', async () => {
+  // FU-7 Task 17 Step 4: re-measured on this healthy rig after FU-4/FU-7 — +13.6 %; NOT flipped (the HFrEF CM-06d +34.9 %
+  // is another rig and does not license the flip; no dobutamine size was changed).
+  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +13.6 on the FU-7 tree; +11.8 with the FU-2 β venous term)', async () => {
     const free = await dobuRise({});
     console.log(`dobutamine 5: CO ${free.toFixed(1)} %`);
     expect(free).toBeGreaterThanOrEqual(20);
@@ -114,7 +116,11 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
     },
     900_000,
   );
-  it('ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²)', () => {
+  // R45 (FU-7 Task 17 Step 3): since FU-7 Task 9 ephedrine acts INDIRECTLY (bus.cns.sympDrive → 7e), so 7g's own SVR
+  // multiplier carries only the small direct α arm (emax 0.08): the first increment 0.040 misses this case's > 0.05
+  // precondition while the tachyphylaxis ratio still holds (third/first 0.13). The same claim on the indirect drive is the
+  // case below; this one keeps its body and band.
+  it.fails('ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) — measured direct SVR increments 0.040 / 0.010 / 0.005 (the pressor moved to sympDrive, FU-7 Task 9)', () => {
     const pk = createPkState();
     const incr: number[] = [];
     for (const t0 of [0, 600, 1200]) {
@@ -125,6 +131,20 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
       incr.push(pk.fx.svr - before);
     }
     console.log(`ephedrine SVR increments ${incr.map((x) => x.toFixed(3)).join(' / ')}`);
+    expect(incr[0]!).toBeGreaterThan(0.05);
+    expect(incr[2]!).toBeLessThanOrEqual(0.6 * incr[0]!);
+  });
+  it('FU-7 (Task 9): ephedrine 10 mg ×3 at 10 min — the third dose adds ≤ 0.6 × the INDIRECT drive (bus.cns.sympDrive) of the first (tachyphylaxis 0.7²)', () => {
+    const pk = createPkState();
+    const incr: number[] = [];
+    for (const t0 of [0, 600, 1200]) {
+      advancePk(pk, NEUTRAL_PK_CTX, t0);
+      const before = pk.bus.cns.sympDrive;
+      applyPkCommand(pk, ev({ kind: 'drug', drugId: 'ephedrine', dose: 10, unit: 'mg', route: 'iv' }), t0);
+      advancePk(pk, NEUTRAL_PK_CTX, t0 + 270);
+      incr.push(pk.bus.cns.sympDrive - before);
+    }
+    console.log(`ephedrine sympDrive increments ${incr.map((x) => x.toFixed(3)).join(' / ')}`);
     expect(incr[0]!).toBeGreaterThan(0.05);
     expect(incr[2]!).toBeLessThanOrEqual(0.6 * incr[0]!);
   });

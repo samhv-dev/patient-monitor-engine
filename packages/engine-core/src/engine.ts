@@ -494,6 +494,11 @@ class Engine implements MonitorEngine {
       hepFnTemp: blood?.core?.liver !== undefined && organs?.liver !== undefined, // FU-2 item 9: 7d's liverFn·tempF carries the temperature
       renal: organs?.kidney?.gfrRel ?? 1,
       betaBlockC: circ?.prof.betaBlockC ?? 0,
+      betaOcc: circ?.prof.betaOcc ?? 0, // FU-7 (addendum 21): the profile's own β-receptor occupancy
+      betaNonSel: circ?.prof.betaNonSel ?? false,
+      // FU-7 (R51 addendum 25): 7e's nociceptive catecholamine release (its previous 1 Hz pass — 7g runs first in the
+      // chain; the surge's 25 s onset τ makes the lag irrelevant). MODELED only: MANUAL's instructor owns the pressures.
+      ...(circ ? { endoCat: (ps as unknown as { endo?: { core?: { out?: { surgeCat?: { ne: number; epi: number } } } } }).endo?.core?.out?.surgeCat ?? { ne: 0, epi: 0 } } : {}),
       vasoResp: cond?.vasoResp ?? 1,
     };
   }
@@ -564,9 +569,13 @@ class Engine implements MonitorEngine {
       circ7g.ext.betaBlockAdd = ps.pk.betaBlockAdd;
       circ7g.ext.betaAgonistU = betaVenousUnits(ps.pk.bus.agents); // FU-2 (NR-7g-2)
       circ7g.ext.avNodeBlock = ps.pk.bus.avNodeBlock; // FU-2 (AF rate control)
+      circ7g.ext.histamine = ps.pk.bus.airway.histamine; // FU-7 (addendum 24 / audit D15): histamine release acts on 7a
       circ7g.ext.tempC = ps.resp.temp.tc; // FU-4 G12: core temperature for the hypothermic (and G8 hyperthermic) arrest hazard
     }
-    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false }, end / ECG_RATE, ps.rng.outcome); // Stage 7g (FU-4 G7: the repeat-sux draw uses the `outcome` stream)
+    // FU-7 (addendum 23; ruling 5): the hook needs to know whether the rhythm PERFUSES (the device host's own definition,
+    // plus FU-4's arrest state) and the `outcome` stream for its hazards (FU-4 18f passes the same stream)
+    const pulseless7g = ps.rhythm.opts.pulseless === true || ((circ7g as { arrest?: unknown } | undefined)?.arrest ?? null) !== null;
+    const req7g = rhythmRequest(ps.pk, ps.pkHooks, { id: ps.rhythm.id, pinned: false, pulseless: pulseless7g }, end / ECG_RATE, ps.rng.outcome); // Stage 7g (FU-4 G7: the repeat-sux draw uses the `outcome` stream)
     if (req7g) {
       // exactly as the engine's setRhythm and device paths: the rhythm clock restarts at the new rhythm's rate
       ps.hr = constantRamp(startRate(req7g.id, req7g.opts));
@@ -578,12 +587,17 @@ class Engine implements MonitorEngine {
     stepNeuroTo(ps.neuro, end / ECG_RATE, {
       tempC: ps.resp.temp.tc, mechanical: src7f === 'ventilator' || src7f === 'external' || src7f === 'bvm',
       neuroglycopenia: endo7f?.core?.out?.neuroglycopenia ?? 0, macF: endo7f?.cascade?.macF ?? 1,
+      // FU-7 (D7; review F11): the chemoreflex's committed rate is the respiratory-effort truth WHATEVER the ventilator is
+      // doing — the apnoeic patient is the one being ventilated. MODELED only; `rr < 0` = not yet evaluated.
+      spontRr: ps.l1.mode === 'modeled' && (ps.resp.spont?.rr ?? -1) >= 0 ? ps.resp.spont?.rr : undefined,
+      mgMmolL: ps.blood.out.mg > 0 ? ps.blood.out.mg : undefined, iCaMmolL: ps.blood.out.iCa > 0 ? ps.blood.out.iCa : undefined, // FU-7 (addendum 24): ONE Mg and Ca state (0 before 7c's first step)
     }, ps.pk.bus);
     advanceResp(ps.resp, {
       l1: ps.l1, hemo: ps.hemo, rhythm: ps.rhythm, hr: ps.hr, blood: ps.blood.view, neuro: ps.neuro.resp, hco3: ps.blood.core.ab.hco3, cbfRel: ps.organs.brain.cbfRel,
       bronchoDil: ps.pk.bus.airway.bronchodilation, hpvInhibit: ps.pk.bus.hpvInhibit, anaphEndo: ps.endo.lungSev > 0, // FU-6 R2/R13 (E-FU6-6): 7g's PD outputs; 7e's own anaphylaxis relief
+      histamine: ps.pk.bus.airway.histamine, // FU-7 (addendum 24, E-FU7-5): the drug-driven bronchoconstriction
     }, Math.floor(end / 8), (ch, m, v) => this.respWrite(ch, m, v)); // Stage 3 (7c: blood view; 7f: neuro, HCO3 for Winter's; FU-3 E-FU3-10: 7d's CBF, one step late — organs advance after resp)
-    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo
+    advanceBlood(ps.blood, { resp: ps.resp, hemo: ps.hemo, l1: ps.l1, pk: ps.pk, neuroProfile: ps.neuro.profile }, Math.floor(end / 8) / RESP_RATE); // Stage 7c: after pk and resp, before hemo (FU-7: 7f's profile, addendum 24)
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const endoCtx = { l1: ps.l1, hemo: ps.hemo, resp: ps.resp, ps }; // Stage 7e: after 7c's blood, before 7d's organs and the haemodynamics
     advanceEndo(ps.endo, endoCtx, Math.floor(end / 8) / RESP_RATE); // Stage 7e (1 Hz steps; 7g's doses every pass)
@@ -664,6 +678,23 @@ class Engine implements MonitorEngine {
         return Number.isNaN(x) ? null : [x, by.at(n), bz.at(n)];
       },
       outcomeRng: ps.rng.outcome,
+      shockState: () => ({
+        antiarrhythmicU: (ps.pk.bus as { rhythm?: { antiarrhythmicU?: number } }).rhythm?.antiarrhythmicU ?? 0,
+        kEcg: (ps as unknown as { blood?: { out?: { kEcg?: number } } }).blood?.out?.kEcg,
+        ph: (ps as unknown as { blood?: { core?: { ab?: { ph?: number } } } }).blood?.core?.ab?.ph,
+        // DV amendment: the CONTINUOUS no-beat CoPP only (hemo/pipeline.ts `cppCont` → cor.cpp while no beat is read),
+        // never a beat's aoDia − LVEDP, which an IABP's post-deflation dip distorts (research/20 DV-13d)
+        cppMmHg: (() => {
+          const c = (ps.hemo as unknown as { circ?: { cor?: { cpp?: number }; beats?: { t: number }[] } }).circ;
+          const lb = c?.beats?.[c.beats.length - 1];
+          return ps.rhythm.opts.pulseless === true || !lb || simT - lb.t > 3 ? c?.cor?.cpp : undefined;
+        })(),
+        arrestS: (() => {
+          const a = (ps.hemo as unknown as { circ?: { arrest?: { t?: number } | null } }).circ?.arrest;
+          return a && typeof a.t === 'number' ? Math.max(0, simT - a.t) : undefined;
+        })(),
+        tempC: (ps.resp as { temp?: { tc?: number } }).temp?.tc, // DV amendment: core temperature (FU-4 G12 reads the same)
+      }), // FU-7 (addendum 23): every field duck-typed — 7c, 7a/FU-4, 7g and Stage 3 all publish them already
       l1: (v) => (v === 'hr' ? rampValue(ps.hr, simT) : l1Value(ps.l1, v as L1Var, simT)),
       setModifiers: (patch) => {
         ps.mods = mergeModifiers(ps.mods, patch);
@@ -899,7 +930,7 @@ class Engine implements MonitorEngine {
    * of its iCa QTc effect since the last push into Modifiers — never overwrite an instructor's setModifiers value.
    */
   private pushBloodEcg(ps: PipelineState): void {
-    const tg = bloodEcgTargets(ps.blood);
+    const tg = bloodEcgTargets(ps.blood, (ps.pk.bus as { qtcMsAdd?: number }).qtcMsAdd ?? 0); // FU-7 (addendum 24): ondansetron's QTc
     const a = ps.blood.ecg;
     if (Math.abs(tg.k - a.k) < 0.05 && Math.abs(tg.qtc - a.qtc) < 2) return;
     ps.mods = mergeModifiers(ps.mods, {

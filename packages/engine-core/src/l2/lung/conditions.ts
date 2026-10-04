@@ -49,6 +49,12 @@ export const SMOOTH_MUSCLE: Readonly<Record<string, { frac: number; keys: readon
  * status asthmaticus is one command: `lungCondition asthma 1, ageMin 720` keeps ≈ 0.7 · 0.22 ≈ 0.16 of its airway
  * obstruction reversible. FU-6 adds NO dose-response of its own — B is 7g's; this function is the MAXIMUM reversal.
  */
+/** FU-7 (addendum 24): a drug-driven bronchospasm severity — histamine release (morphine, atracurium, mivacurium) and
+ * anaphylactic mediators act on the SAME smooth muscle FU-6's `relaxed()` relieves, so the drug's contribution is an
+ * added SEVERITY on the `bronchospasm` spec, not a second state. 0.35 at full histamine [ENG; direction: M10 ch. 22 /
+ * ch. 24 (wheeze and bronchospasm after a fast benzylisoquinolinium or morphine bolus), size has no source]. A plain
+ * scalable input: a future per-profile airway-reactivity gain (research/19 CM-11a) multiplies it in one place. */
+export const HIST_SPASM = 0.35;
 export const REFRACT_SEV = 0.6;
 export const REFRACT_DUR_MAX = 0.9;
 export const REFRACT_TAU_MIN = 360;

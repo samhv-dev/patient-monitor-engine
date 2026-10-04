@@ -13,6 +13,10 @@ export interface RhythmHookState {
   mgDone: boolean;
   /** FU-4 G7/F10: the repeat-succinylcholine bradyarrhythmia — `drawnFor` is the bolus time already drawn for. */
   sux: { drawnFor: number; until: number; from: RhythmId };
+  /** FU-7 (addendum 23): the last conversion-hazard evaluation time (s) — optional: a pre-FU-7 snapshot lacks it (3d). */
+  conv?: { lastT: number };
+  /** FU-7 (addendum 23 / DI-14c): the accessory-pathway acceleration has fired for this block (reset below 0.3). */
+  preexcited?: boolean;
 }
 
 export const createHookState = (): RhythmHookState => ({ aden: { active: false, from: 'sinus', peak: 0 }, lastStage: 0, mgDone: false, sux: { drawnFor: -1, until: 0, from: 'sinus' } });
@@ -42,7 +46,20 @@ const SINUS_GROUP = ['sinus', 'sinusBrady', 'sinusTachy', 'sinusArrhythmia'];
 const ADEN_AV = DRUGS.adenosine?.pd.find((e) => e.target === 'avNode') as PdEffect;
 const adenosineBlock = (pk: PkState) => hill(concOf(pk, 'adenosine'), ADEN_AV.ec50, ADEN_AV.emax, ADEN_AV.hill ?? 1);
 
-export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: RhythmId; pinned: boolean }, t: number, outcomeRng?: Sfc32State): { id: RhythmId; opts: RhythmOpts; hold?: boolean } | null {
+/** FU-7 (addendum 23) conversion hazards, /s, at full occupancy; λ = −ln(1 − p)/T. PROCAMIO (Ortiz 2017, Eur Heart J
+ * 38:1329), stable wide-QRS tachycardia, abstract: "Tachycardia terminated within 40 min in 22 (67%) procainamide and
+ * 11 (38%) amiodarone patients" — so amiodarone 38 % (Step 3's PROCAMIO check; the plan's 25 % was superseded) and
+ * procainamide 67 % at 40 min; Gorgels 1996: lidocaine ≈ 20 % at 20 min; Letelier 2003: amiodarone ≈ 25 % of
+ * recent-onset AF within 1 h. */
+export const L_AMIO_VT = -Math.log(0.62) / 2400;
+export const L_PROC_VT = -Math.log(0.33) / 2400;
+export const L_LIDO_VT = -Math.log(0.8) / 1200;
+export const L_AMIO_AF = -Math.log(0.75) / 3600;
+/** FU-7 (DI-14c): VF on an AV-nodal block of pre-excited AF, per event [ENG — Q10, R44 calibration]. */
+export const PREEXCITED_VF_P = 0.2;
+const VT_RHYTHMS: readonly string[] = ['vtMono'];
+
+export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: RhythmId; pinned: boolean; pulseless?: boolean }, t: number, outcomeRng?: Sfc32State): { id: RhythmId; opts: RhythmOpts; hold?: boolean } | null {
   if (current.pinned) return null;
   // FU-4 G7/F10: the repeat-succinylcholine bradyarrhythmia (seeded; abolished by an anticholinergic given first)
   const bt = pk.drugs['succinylcholine']?.bolusTimes ?? [];
@@ -87,6 +104,30 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
       return { id: hs.aden.from as RhythmId, opts: {} };
     }
     return null;
+  }
+  // FU-7 (addendum 23 / DI-14c): AV-nodal block in PRE-EXCITED AF favours the accessory pathway — the rate RISES and VF
+  // may follow (ALS; M10 ch. 25). The teaching hazard adenosine, verapamil and diltiazem carry. One VF draw per event
+  // at PREEXCITED_VF_P [ENG: the direction is the ALS warning; the size has no source — Q10].
+  if (hs.preexcited && pk.bus.avNodeBlock < 0.3) hs.preexcited = false;
+  if (current.id === 'preexcitedAf' && pk.bus.avNodeBlock >= 0.5 && !hs.preexcited) {
+    hs.preexcited = true;
+    if (outcomeRng && uniform(outcomeRng) < PREEXCITED_VF_P) return { id: 'vfCoarse', opts: {}, hold: false };
+    return { id: 'preexcitedAf', opts: { rateBpm: 220 }, hold: false };
+  }
+  // FU-7 (addendum 23): antiarrhythmic conversion as a HAZARD per second, scaled by the drug's own occupancy — ONLY in a
+  // PERFUSING rhythm (ruling 5): pulseless VT/VF is Task 12's shock path, and amiodarone does not convert VF by itself
+  // (ARREST 1999, ALPS 2016: λ_vf = 0). Sources on the constants below.
+  hs.conv ??= { lastT: t }; // 3d: a pre-FU-7 snapshot
+  const dt = Math.max(0, t - hs.conv.lastT);
+  hs.conv.lastT = t;
+  if (dt > 0 && outcomeRng && current.pulseless !== true) {
+    const u = (id: string, ec50: number) => hill(concOf(pk, id), ec50, 1);
+    const lam = VT_RHYTHMS.includes(current.id)
+      ? L_AMIO_VT * u('amiodarone', 1) + L_PROC_VT * u('procainamide', 1) + L_LIDO_VT * u('lidocaine', 3)
+      : ATRIAL.includes(current.id)
+        ? L_AMIO_AF * u('amiodarone', 1) + L_PROC_VT * 0.5 * u('procainamide', 1)
+        : 0;
+    if (lam > 0 && uniform(outcomeRng) < 1 - Math.exp(-lam * dt)) return { id: 'sinus', opts: { rateBpm: 80 }, hold: false };
   }
   // LAST
   const cv = pk.bus.last.cvE;
