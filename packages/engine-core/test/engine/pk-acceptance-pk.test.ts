@@ -35,12 +35,15 @@ describe('7g acceptance — PK through the engine', () => {
     expect(row.ce).toBeCloseTo(x[3]!, 6);
     expect(row.cp).toBeCloseTo(cp(p, x), 6);
     // temperature-scaled (hbfRel pinned, core free): the core is 36.65 °C at 240 s and the hypothermic clearance
-    // (−5 %/°C) leaves Ce 2.996568, 0.02 % above the standalone model (addendum 18: documents the live temperature term)
+    // (−5 %/°C) leaves Ce 2.996568 (2.996590 after FU-10), 0.02 % above the standalone model (addendum 18: documents the live temperature term)
     const cool = await runPk(pat, dose, 300, 11, { setup: pinHbf });
     const coolCe = cool.drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!.ce;
     const tc = (cool.e.snapshot().state as { st: { resp: { temp: { tc: number } } } }).st.resp.temp.tc;
     console.log(`Eleveld Ce at 3 min with the core free: ${coolCe.toFixed(6)} (core ${tc.toFixed(2)} °C at 300 s; standalone ${x[3]!.toFixed(6)})`);
-    expect(coolCe).toBeCloseTo(2.996568, 5);
+    // FU-10 Gate (E-FU10-13): the tables' GA vasoconstriction threshold (34.5 °C, ruling R-4) and the depth cap leave the
+    // anaesthetised patient vasodilated a little longer, so the free core cools slightly faster in these 4 min and the
+    // documented Ce moves 2.996568 → 2.996590 (core 36.61 °C at 300 s either way, to 2 decimals); precision unchanged
+    expect(coolCe).toBeCloseTo(2.996590, 5);
     expect(coolCe).toBeGreaterThan(x[3]!);
     // flow-scaled (hbfRel live): propofol lowers CO, so hepatic flow and clearance fall and Ce runs above the standalone value
     const live = (await runPk(pat, dose, 300)).drugs.find((d) => Math.abs(d.t - 240) < 1e-6)!.drugs.find((x) => x.id === 'propofol')!;

@@ -42,7 +42,9 @@ describe('Stage 7g long run', () => {
   // leaves the effect site 0.4 % above its target after 6 h. Measured 2.5098 on CI (run 37135534941) and on the Mac;
   // main 2.5 (within ± 0.005). The TCI band is unchanged (orchestrator ruling at G-FU9): an open-loop TCI pump does not
   // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
-  it.fails(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5098 with FU-9 (main within the band)`, { timeout: 1_800_000 }, async () => {
+  // FU-10 Gate (E-FU10-13): with FU-10 Part A (the endocrine/thermal integration) the same rig measures 2.4995 on the Mac
+  // (base 5559533: 2.5097) — inside the unchanged band again, so the declared `it.fails` flips back to `it`.
+  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.4995 with FU-10 Part A (2.5098 with FU-9 alone)`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;
     expect(l.drugs.find((x) => x.id === 'propofol')!.ce).toBeCloseTo(2.5, 2);
