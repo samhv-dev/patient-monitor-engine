@@ -206,8 +206,11 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const cd = c.out.cond;
   // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
   if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
-  // FU-10 E7 (R-2): the ketogenic deficit follows the CURRENT insulin deficit within tens of minutes
-  const kd = Math.max(0, 1 - g.i / IB_UU_ML);
+  // FU-10 E7 (R-2): the ketogenic deficit follows the CURRENT insulin deficit within tens of minutes — in a patient with
+  // NO β-cell reserve only (type 1). A pancreas that secretes less because glucose fell (after an insulin bolus) is not
+  // insulinopenic, and the instructor's `dka` pool is already the ketosis its suppression of secretion stands for (final
+  // review I1/I2: before this gate a non-diabetic made ketones and a K⁺ rebound after insulin, and `dka 1` grew unbounded)
+  const kd = glucoseProfile(c.profile).beta === 0 ? Math.max(0, 1 - g.i / IB_UU_ML) : 0;
   c.ketoDef = kd + ((c.ketoDef ?? 0) - kd) * Math.exp(-dtS / KETO_TAU_S);
   stepHormones(c.hormones, {
     noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
