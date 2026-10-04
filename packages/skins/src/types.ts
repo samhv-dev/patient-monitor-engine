@@ -49,6 +49,18 @@ export interface TileSpec {
    * inspired minimum CO2 under the vendor's word, imCO2 on Philips, FiCO2 elsewhere, research/11 glossary #16). */
   extras?: string[];
 }
+/** Sensors whose attachment can swap a lane and a tile (showcase hotfix item 4: the Saadat-style capnogram). */
+export const SWAP_SENSORS = ['co2'] as const;
+export type SwapSensor = (typeof SWAP_SENSORS)[number];
+/**
+ * What a sensor takes over while it is attached: `lanes` maps a lane to the lane drawn in its place (same position),
+ * `tiles` a tile to the tile drawn in its place. Applied in one place, resolveSkin's `sensors` option; a skin without
+ * the rule resolves identically whatever the sensors.
+ */
+export interface SensorSwap {
+  lanes?: Partial<Record<LaneId, LaneId>>;
+  tiles?: Partial<Record<TileParam, TileSpec>>;
+}
 export interface PumpPage {
   watermark: string;
   ibpAutoScale: boolean;
@@ -117,6 +129,8 @@ export interface Skin {
     messageBars: 'single-under-header' | 'split-technical-physiological';
     /** Text drawn in the header when the layout is not taken from the vendor's manual (Stage 4b, gate G4a). */
     badge?: string;
+    /** Lanes and tiles a sensor takes over while it is attached (saadat-like: CO2 replaces RESP and RR). */
+    whenAttached?: Partial<Record<SwapSensor, SensorSwap>>;
   };
   pages: PageSpec[];
   defaultPage: string;

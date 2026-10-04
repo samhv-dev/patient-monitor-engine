@@ -17,6 +17,9 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const sv = link.ctl.scenario;
   let filter = 'All';
   let docV = -1;
+  /** "Choose another scenario" pressed during a run: the library stays up until a load or "Back to the running case"
+   *  (the ≤ 2 Hz repaint used to flip it back to the run within half a second — showcase rehearsal 2026-10-04). */
+  let choosing = false;
 
   // ---- library ----
   const chips = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': 'Category' });
@@ -34,7 +37,9 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
       toast(r.accepted ? `Scenario loaded: ${x.title}` : 'The monitor refused the scenario (see the log)');
     }
   };
-  const library = h('section', { 'aria-label': 'Scenario library' }, h('h3', {}, 'Scenario library'), chips, cards);
+  const back = button('Back to the running case', () => ((choosing = false), (library.hidden = true), (run.hidden = false)), 'ghost small');
+  back.hidden = true;
+  const library = h('section', { 'aria-label': 'Scenario library' }, h('div', { class: 'scard-head' }, h('h3', {}, 'Scenario library'), back), chips, cards);
 
   // ---- run view ----
   // learner controls under the learner monitor: off by default, on for this run (host only; orchestrator ruling 4)
@@ -56,7 +61,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const objectives = h('ul', { class: 'objectives checks', 'aria-label': 'Objectives' });
   const marks = h('ul', { class: 'marks' });
   const run = h('section', { 'aria-label': 'Running scenario' },
-    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((run.hidden = true), (library.hidden = false)), 'ghost small')), story,
+    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
     strip,
     h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
     learnerRow,
@@ -73,8 +78,10 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
 
   c.onRefresh(() => {
     const doc = sv.doc;
-    run.hidden = !doc;
-    library.hidden = !!doc;
+    if (docV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
+    run.hidden = !doc || choosing;
+    library.hidden = !!doc && !choosing;
+    back.hidden = !doc;
     if (!doc) return;
     if (docV !== sv.docVersion) {
       docV = sv.docVersion;

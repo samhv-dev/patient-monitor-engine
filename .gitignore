@@ -11,3 +11,5 @@ test-results/
 .audit-drugs/
 packages/validation/datasets/cache/
 .audit-physiology/
+# offline showcase kit (scripts/showcase/make-bundle.mjs)
+pme-showcase/

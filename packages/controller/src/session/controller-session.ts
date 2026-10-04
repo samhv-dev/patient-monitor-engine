@@ -169,7 +169,13 @@ export class ControllerSession {
   }
 
   private onEvent(e: WireEvent): void {
-    if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t);
+    if (e.type === 'timeline') {
+      // a new engine (patient restart, scenario load): the clock restarts; the old run ended with the old body
+      this.simT = e.t;
+      this.scenario.reset();
+      return;
+    }
+    if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t); // monotonic within one timeline
     this.scenario.onEvent(e);
     if (e.type === 'state') {
       this.state = e;
