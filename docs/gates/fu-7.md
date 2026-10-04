@@ -92,8 +92,65 @@ Branch `fu-7-drug-layer`, plan `docs/plans/fu-7-drug-layer.md`, rules `docs/revi
 
 ## §3 Audit before / after (`pnpm run audit:drugs all`)
 
-PENDING: the verdict counts, `docs/gates/fu-7/audit-before.md` vs `audit-after.md`, and the ledger in
-`ledger-after.md`.
+**Inputs:** `docs/gates/fu-7/audit-before.md` (Task 1's run on b004289, the 30 owned cells) and `audit-after.md`
+(all 105 cells on the gate tree, 6682 s); ledger in `ledger-after.md`.
+
+**Automatic grades** (the runner's own grade, before any `hand` note), on the 30 owned cells:
+
+| verdict | before | after |
+|---|---|---|
+| PL | 6 | 16 |
+| WR | 12 | 5 |
+| TS | 8 | 3 |
+| TW | 4 | 6 |
+
+**All 105 cells after:** PL 58, TW 17, WR 10, TS 10, NE 10. With the hand notes applied (the report's column): PL 52,
+TW 17, NE 10, MI 9, TS 8, WR 7, IN 2.
+
+**Moved (15):**
+
+| cell | before → after |
+|---|---|
+| DI-51 | TS → PL |
+| DI-57 | TS → PL |
+| DI-63 | TS → PL |
+| DI-71 | TS → PL |
+| DI-88 | TS → PL |
+| DI-23 | WR → PL |
+| DI-45 | WR → PL |
+| DI-69 | WR → PL |
+| DI-76 | WR → PL |
+| DI-89 | WR → PL |
+| DI-37c | TW → PL |
+| DI-21 | WR → TW |
+| DI-25 | WR → TW |
+| DI-60 | WR → TW |
+| DI-14c | PL → WR |
+
+**DI-14c.** It moves backwards because seed 7 now draws the new pre-excited-AF VF branch at +68 s. The cell's
+HR-change measure reads 0 on that branch. The 400-seed unit test gives a VF share of 0.23, within its band.
+
+**Owned cells not PL after, each with its reason:**
+
+| cell | grade | reason |
+|---|---|---|
+| DI-03 | WR | Bailey overshoot, §5 |
+| DI-04a | TS | Q1 |
+| DI-05 | WR | reflex bradycardia |
+| DI-19 | WR | +0.02 rounds to 0 in the runner |
+| DI-21 | TW | sign right |
+| DI-25 | TW | calcium −0.3 min |
+| DI-41 | TS | the cell gives adrenaline only |
+| DI-42 | TW | MAP −5.4 % |
+| DI-60 | TW | α2B |
+| DI-61 | WR | a single seed; the 200-seed engine share is 20.5 % |
+| DI-70 | TW | trigger |
+| DI-72 | TS | rig artefact |
+| DI-90 | TW | +12 % |
+
+The plan's Step 5 target list also named DI-08, 11, 13a, 14c, 15, 01d, 61 and 70. Of those, DI-08 is TW (its pressor item PL, its labetalol-ratio item not),
+DI-11 is PL, and DI-01d is TW; DI-13a and DI-15 are covered only by the engine tests, because the runner has no shock
+arm and no verapamil arm.
 
 **Stale `hand` notes.** Task 1 forbids editing them, so these cells grade one way automatically while the note says
 another:
@@ -240,7 +297,9 @@ Task 20 Step 6's list, unchanged, plus three executor additions:
 
 ## §7 CI
 
-PENDING: slow-a / slow-b counts, `-r` tests, build, browser tests, tick bench.
+PENDING: slow-a, `-r` tests, build, browser tests, tick bench.
+
+- **Slow-b (gate tree):** 45 files, 253 passed (4451 s, run beside slow-a and the audit).
 
 - **Fast set (gate tree):** 286 files, 1307 passed, 1 skipped, 0 failed (341 s).
 - **Mid-plan slow-b:** 45 files, 253 passed.

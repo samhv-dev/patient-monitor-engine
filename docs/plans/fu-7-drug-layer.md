@@ -6730,7 +6730,7 @@ npx -y pnpm@9.15.9 -r typecheck && npx -y pnpm@9.15.9 -r test && npx -y pnpm@9.1
 ```
 Record every count and every `it.fails` in the gate note. A test that fails for a reason OTHER than a declared
 `it.fails` stops the task.
-- [ ] **Step 5 — the audit's own regression.**
+- [x] **Step 5 — the audit's own regression.**
 `npx -y pnpm@9.15.9 run audit:drugs all` (≈ 30 min on an idle machine; run it in the background with a bounded `until`
 loop of ≤ 10 min per check), then `node --experimental-strip-types scripts/audit-drugs/report.ts > docs/gates/fu-7/audit-after.md`
 and `ledger.ts > docs/gates/fu-7/ledger-after.md`. Diff the verdict counts against `audit-before.md` and paste the table
