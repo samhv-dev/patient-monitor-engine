@@ -5909,6 +5909,21 @@ and ΔHR > 0 awake; the same pacing under GA (propofol + remifentanil) within ±
 and every pacing test unchanged. Ali's W25 (8): whether the patient also moves (a movement flag) and whether the capture
 threshold rises with thoracic impedance.
 
+- [x] **Executed (executor, UNPROTOTYPED → R45 procedure).** `engine.ts` only (no `device-layer.ts`, no `l2/endo`/`l2/neuro`
+  edit): `tcpNoxious(mods)` = 0 up to 40 mA, linear to 1.5 (7e's laryngoscopy grade) at ≥ 100 mA [ENG]; for each pass it is
+  ADDED to the instructor's held stimulus (7f `neuro.stim`, 7e `endo.noxious`) and the held values are restored after 7e's
+  step — one `stimulus` shape, no new state. Test `test/engine/fu8-tcp-pain.test.ts` (new; capture threshold 30 mA so 40
+  and 100 mA give the same paced haemodynamics): before (pain path off) — DV-08c NE 275 → 275; awake 100 vs 40 mA identical
+  (NE 275, epi 34, MAP 98.4, sinus-node 68.5). After — DV-08c NE 275 → 497; awake 100 mA NE 608, epi 128, MAP 141.6,
+  sinus-node 78.1 vs 40 mA 275 / 34 / 98.4 / 68.5; under propofol 3.5 + remifentanil 4 (effect site) 100 vs 40 mA NE 278 vs
+  275 (+1 %), MAP 70.9 vs 66.8 (+6.1 %) — within ± 10 %. research/20 cells (runner, `DV_OUT` in scratch): DV-08a capture 70 mA
+  unchanged; DV-08b mapPaced 96 → 137.1 (its ventilated X-A rig has no sedation: the paced patient now feels 100 mA; the
+  dead-heart half unchanged); DV-08c dNeAwake 0 → 221.9, dEpi −0.1 → 62.5, mapAwake 98.5 → 130.7, mapGa 95.7 → 105.2 (that
+  rig's GA is the drug-free `thermal` flag: 7e's 60 % fallback blunting). The awake size (MAP 142 at 100 mA) is an [ENG]
+  first size for Ali's W25 (8) with the movement flag and the impedance-dependent threshold. Pacing tests (37 files / 183)
+  green.
+
+
 ## Task G: Gate — merge main, full verification, evidence, the gate note, the pull request
 
 **Files:** Create `docs/gates/fu-8.md`, `docs/gates/fu-8/**` (≤ 60 KB PNGs); modify `apps/demo/scripts/fu4-shots.mjs`
