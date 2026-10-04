@@ -18,4 +18,12 @@ describe('showcase cases (Task 26)', () => {
       expect(v.ok ? [] : v.errors, `${c.id}: ${JSON.stringify(v.ok ? [] : v.errors)}`).toEqual([]);
     }
   });
+
+  it('bronchospasm says what the learner sees: pressure-limited, so ventilation recovers rather than pressures falling', () => {
+    const c = LIBRARY.find((x) => x.id === 'showcase-bronchospasm');
+    const words = [c?.story ?? '', ...(c?.objectives ?? []), ...(c?.doc.states ?? []).map((s) => s.label ?? '')].join(' | ');
+    expect(words).not.toMatch(/pressures? (fall|falling)|auto-PEEP fall/i);
+    expect(c?.story).toMatch(/tidal volume/);
+    expect(c?.doc.states.find((s) => s.id === 'treated')?.label).toBe('Salbutamol given: ventilation recovering');
+  });
 });
