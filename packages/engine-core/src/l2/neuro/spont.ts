@@ -4,11 +4,13 @@
 // multipliers (driverCtx). Re-evaluated at 1 Hz on the gas grid; plain data (snapshots, look-ahead clone).
 //   set point: the resting PaCO2 the MANUAL etco2 calibration placed (paco2Rest), lowered in metabolic acidosis to
 //     Winter's expected PaCO2 = 1.5·HCO3 + 8 (Albert, Dell & Winters 1967; ±2) — HCO3 from 7c's blood.core.ab.hco3
-//     (24 without 7c → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8). Metabolic alkalosis is not compensated (v1).
+//     (24 without 7c → no shift): paco2Set = min(paco2Rest, 1.5·HCO3 + 8); raised in metabolic alkalosis by 0.7 mmHg per
+//     mmol/L of HCO3 above the patient's reference (FU-9 F9: Javaheri & Kazemi 1987 / the Boston rules), capped at 55 mmHg.
 //   drive: 7b's VE = [S·(PaCO2 − B)]₊·H(PaO2)·(1 − opioidDep)·(1 − hypnoticDep)·F with 7f's opioidDep/hypnoticDep
 //     (fixed-CO2 depression, decision 7); the resting pattern rr0/vt0 is the instructor's rr/vt target.
 //   NMB: VT × nmbVtMult (diaphragm strength), apnoea below DIAPH_APNOEA strength; upper-airway obstruction × (1 − obs);
 //     pti's pMax × diaphragm strength × 7b's condition pMax (fatigue comes sooner in a weak patient).
+import { CHRONIC_HCO3_PER_MMHG, NORMAL } from '../blood/params.ts'; // FU-9 F9: ONE reference (7c's normal and chronic rule)
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
 import { NO_FLOW_S } from '../circ/arrest.ts'; // FU-6 gate G-FU6-2: the arrest declaration's no-flow window
 import { DIAPH_APNOEA, type NeuroResp } from './drive.ts';
@@ -67,8 +69,29 @@ export function winterPaco2(hco3: number): number {
   return WINTER_SLOPE * hco3 + WINTER_OFFSET;
 }
 
-/** The chemoreflex set point: the resting PaCO2, lowered to Winter's value in metabolic acidosis only. */
-export function paco2SetPoint(paco2Rest: number, hco3: number): number {
+/**
+ * FU-9 F9: metabolic alkalosis is compensated by hypoventilation — PaCO2 rises 0.7 mmHg per mmol/L HCO3 above normal
+ * (Javaheri S, Kazemi H. Am Rev Respir Dis 1987;136:1011; Narins & Emmett 1980 "Boston rules"), rarely beyond 55 mmHg
+ * (the hypoxaemic drive limits it). The reference is 7c's normal HCO3 plus the chronic renal compensation the patient's
+ * own resting PaCO2 implies (7c's CHRONIC_HCO3_PER_MMHG, tables §5b.1), plus a 0.1 mmol/L deadband, so a compensated
+ * chronic hypercapnic profile is not read as a metabolic alkalosis and a resting patient is exactly unchanged.
+ */
+export const ALK_SLOPE = 0.7;
+export const ALK_PACO2_MAX = 55;
+/** The branch opens only 0.1 mmol/L above the reference [ENG] (R50 F6): 7c's resting HCO3 is 24.40045 at t = 0. */
+export const ALK_DEADBAND = 0.1;
+/** Acute CO2 buffering, mmol/L HCO3 per mmHg PaCO2 (Brackett, Cohen & Schwartz 1965 NEJM 272:6; 7c's own BF-16a 0.11–0.15). */
+export const ACUTE_HCO3_PER_MMHG = 0.1;
+/**
+ * The chemoreflex set point: the resting PaCO2, lowered to Winter's value in metabolic acidosis, raised in metabolic
+ * alkalosis (FU-9 F9). The alkalosis branch reads the METABOLIC bicarbonate — the measured HCO3 less the acute buffering
+ * of a PaCO2 above the resting value (`paco2`, default the resting value) — so an acute hypercapnia (opioids, dead space)
+ * is never read as a metabolic alkalosis that would lift the set point further; at rest the set point is unchanged.
+ */
+export function paco2SetPoint(paco2Rest: number, hco3: number, paco2 = paco2Rest): number {
+  const ref = NORMAL.hco3 + CHRONIC_HCO3_PER_MMHG * Math.max(0, paco2Rest - NORMAL.paco2) + ALK_DEADBAND; // 7c's own values
+  const met = hco3 - ACUTE_HCO3_PER_MMHG * Math.max(0, paco2 - paco2Rest);
+  if (met > ref) return Math.max(paco2Rest, Math.min(ALK_PACO2_MAX, paco2Rest + ALK_SLOPE * (met - ref)));
   return Math.min(paco2Rest, winterPaco2(hco3));
 }
 
@@ -99,7 +122,7 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   if (x.t + 1e-9 < s.nextT) return;
   s.nextT = x.t + SPONT_DT_S;
   if (Number.isNaN(s.paco2Rest)) s.paco2Rest = x.paco2;
-  s.paco2Set = paco2SetPoint(s.paco2Rest - (x.setShift ?? 0), x.hco3); // FU-6 R10: the pregnancy set point
+  s.paco2Set = paco2SetPoint(s.paco2Rest - (x.setShift ?? 0), x.hco3, x.paco2); // FU-6 R10: the pregnancy set point; FU-9 F9: the metabolic HCO3
   const n = x.neuro;
   s.pc = (s.pc ?? x.paco2) + (x.paco2 - (s.pc ?? x.paco2)) * (1 - Math.exp(-SPONT_DT_S / CENTRAL_TAU_S)); // FU-6 R3(a)
   const out = drive({

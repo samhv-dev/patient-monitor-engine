@@ -17,6 +17,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      - name: slow groups are disjoint and cover SLOW (FU-9 CI amendment 5)
+        working-directory: packages/engine-core
+        run: |
+          for g in slow slow-a slow-b slow-c slow-d; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
+          cd "$RUNNER_TEMP"
+          sort slow-a.txt slow-b.txt slow-c.txt slow-d.txt | uniq -d > both.txt
+          if [ -s both.txt ]; then echo "in two slow groups:"; cat both.txt; exit 1; fi
+          sort -u slow-a.txt slow-b.txt slow-c.txt slow-d.txt | diff slow.txt -
       - run: pnpm test
         env:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
@@ -33,11 +41,11 @@ jobs:
   test-slow:
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
-    # cannot starve the Vitest worker RPC there. FU-4 (D17): two file groups, one job each.
+    # cannot starve the Vitest worker RPC there. FU-4 (D17): two file groups, one job each; FU-9 (CI amendment 5): four, by measured time.
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b]
+        group: [slow-a, slow-b, slow-c, slow-d]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90

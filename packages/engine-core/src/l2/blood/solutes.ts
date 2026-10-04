@@ -2,7 +2,7 @@
 // are amount / ECF volume (tables §5b.1–5b.2; annex B1 "Electrolytes: take the initial values … ours: K transcellular
 // shift, pH–K, citrate/iCa, Mg"). The strong-ion difference is recomputed from these every step (audit #5: DYNAMIC
 // SID), so lactate, saline chloride, ketoacids and sodium bicarbonate all move the pH by construction.
-import { MG_ION_FRAC, NORMAL, OSM0, type Composition } from './params.ts';
+import { CITRATE_CHARGE, MG_ION_FRAC, NORMAL, OSM0, type Composition } from './params.ts';
 
 export interface SoluteState {
   na: number; k: number; cl: number;
@@ -13,41 +13,48 @@ export interface SoluteState {
   metab: number; // acetate/gluconate awaiting metabolism
   citrate: number; // free citrate (transfusion)
   osmOther: number; // glycine and other non-Na effective osmoles
+  mannitol?: number; // FU-9 H8: mannitol, mmol — an effective ECF osmole (absent = 0); cleared by 7d's kidney
   lac: number; // lactate amount in its distribution volume
   kIcf: number; // cellular K pool (mmol)
   pi: number; // phosphate amount (mmol; dilutes with the ECF) [ENG]
-  set: { k: number; ca: number; mg: number; ph: number }; // homeostatic set points (mmol/L; pH of the K reference)
+  set: { k: number; ca: number; mg: number; ph: number; kIcf: number }; // homeostatic set points (mmol/L; pH of the K reference; FU-9 F6: the cellular K pool, mmol)
 }
 
 export interface Conc {
   na: number; k: number; cl: number; iCaRaw: number; mg: number; xa: number; keto: number; metab: number;
   citrate: number; osmOther: number; lactate: number; pi: number;
+  mannitol: number; // FU-9 H8
 }
 
 export function concOf(s: SoluteState, ecfMl: number, vLacL: number, ecf0Ml: number): Conc {
   const v = ecfMl / 1000;
   return {
     na: s.na / v, k: s.k / v, cl: s.cl / v, iCaRaw: s.ca / v, mg: s.mg / v, xa: s.xa / v, keto: s.keto / v,
-    metab: s.metab / v, citrate: s.citrate / v, osmOther: s.osmOther / v, pi: s.pi / v,
+    metab: s.metab / v, citrate: s.citrate / v, osmOther: s.osmOther / v, pi: s.pi / v, mannitol: (s.mannitol ?? 0) / v,
     lactate: s.lac / (vLacL + (ecfMl - ecf0Ml) / 1000),
   };
 }
 
-/** Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − XA (tables §5b.1 "Stewart-lite"). */
+/**
+ * Apparent SID (mEq/L): Na + K + 2·iCa + 2·Mg_ion − Cl − lactate − keto − metab − (3 − 2·K_CIT)·citrate − XA (tables
+ * §5b.1 "Stewart-lite"). FU-9 F5: citrate is a strong trivalent anion until it is metabolised (Stewart/Fencl; Driscoll
+ * 1987), so a transfused unit's sodium does not alkalinise at once — its metabolism turns it into bicarbonate later. The
+ * Ca it complexes (K_CIT per mmol, removed from iCa by `ionisedCa`) keeps its charge in the complex: counted once.
+ */
 export function sidOf(c: Conc, iCa: number): number {
-  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - c.xa;
+  return c.na + c.k + 2 * iCa + 2 * MG_ION_FRAC * c.mg - c.cl - c.lactate - c.keto - c.metab - (CITRATE_CHARGE - 2 * K_CIT) * c.citrate - c.xa;
 }
 
-/** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles. */
+/** Effective ECF osmolality (mOsm/kg): 2·Na + 10 (glucose + urea at normal) + other osmoles + mannitol. */
 export function osmEcf(c: Conc): number {
-  return 2 * c.na + 10 + c.osmOther;
+  return 2 * c.na + 10 + c.osmOther + c.mannitol; // FU-9 H8: mannitol is an effective ECF osmole
 }
 
 export function createSolutes(p: { na: number; k: number; cl: number; iCa: number; mg: number; lactate: number }, ecfMl: number, vLacL: number, icfMl: number): SoluteState {
   const v = ecfMl / 1000;
   return {
     na: p.na * v, k: p.k * v, cl: p.cl * v, ca: p.iCa * v, mg: p.mg * v, xa: 0, keto: 0, metab: 0, citrate: 0, osmOther: 0,
-    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4 },
+    lac: p.lactate * vLacL, kIcf: 140 * (icfMl / 1000), pi: NORMAL.piMmolL * v, set: { k: p.k, ca: p.iCa, mg: p.mg, ph: 7.4, kIcf: 140 * (icfMl / 1000) },
   };
 }
 
@@ -70,6 +77,7 @@ export function addFluid(s: SoluteState, ml: number, c: Composition): void {
 export function removePlasma(s: SoluteState, plasmaMl: number, ecfMl: number, c: Conc): void {
   const f = plasmaMl / ecfMl;
   for (const k of ['na', 'k', 'cl', 'ca', 'mg', 'xa', 'keto', 'metab', 'citrate', 'osmOther', 'pi'] as const) s[k] -= s[k] * f;
+  if (s.mannitol) s.mannitol -= s.mannitol * f; // FU-9 H8
   s.lac -= c.lactate * (plasmaMl / 1000);
 }
 
@@ -80,6 +88,9 @@ export function calibrateXa(s: SoluteState, ecfMl: number, sidNow: number, sidTa
 
 /** Homeostasis and first-order kinetics (per step): transcellular K, Ca and Mg buffering, citrate and metabolisable anions. */
 export const K_TAU_MIN = 43; // 50 % of a K load into cells in 30 min (tables `vK`) [ENG]
+/** FU-9 F6: total-body K per mmol/L of plasma K — a 200–400 mmol deficit lowers plasma K ≈ 1 mmol/L (Sterns RH et al.
+ *  Medicine 1981;60:339–354) [TXT, midpoint]; the Na/K-ATPase set point follows it (core.ts kSet). */
+export const K_TBK_MMOL = 300;
 export const CA_TAU_MIN = 15; // ionised Ca returns to its set point (bone/protein buffer, PTH) [ENG, Q46]
 export const MG_TAU_MIN = 60; // Mg load distributes into cells/bone [ENG]
 export const CITRATE_TAU_MIN = 5; // hepatic citrate clearance at normal hepatic flow (tables `citrateUnit`) [TXT]

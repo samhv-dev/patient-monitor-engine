@@ -8,7 +8,7 @@ import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
 import {
   CBF_LL, CBF_UL, CBV0_ML, CBV_EFF, CPP_REF, CSF_RESERVE_ML, HEAD_HEIGHT_CM, HEADUP_VOL_ML_30, HERNIATION_CPP, HERNIATION_S,
   HTS_TAU_IN_MIN, HTS_TAU_OUT_MIN, HTN_LL_SHIFT, HTN_UL_SHIFT, ICP0, ICP_THRESHOLD, MANNITOL_TAU_IN_MIN, MANNITOL_TAU_OUT_MIN, MAP_BASE_TAU_S,
-  MMHG_PER_CM_BLOOD, OSM_K_MOSM, OSM_VMAX_ML, PACO2_ADAPT_TAU_S, PVI, R_OUT, TAU_VASC_S, TBI_AR_LOSS, TBI_ICP0_RISE, TBI_PVI_DROP, TBI_RESERVE_DROP,
+  MMHG_PER_CM_BLOOD, OSM_K_MOSM, OSM_VMAX_ML, OSM_WATER_ML_PER_MOSM, PACO2_ADAPT_TAU_S, PVI, R_OUT, TAU_VASC_S, TBI_AR_LOSS, TBI_ICP0_RISE, TBI_PVI_DROP, TBI_RESERVE_DROP,
 } from './params.ts';
 
 export interface BrainParams {
@@ -22,6 +22,7 @@ export interface BrainInputs {
   hb: number; // g/dL
   tempC: number;
   drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: 7f/7g, or the INTERIM fallback)
+  osm?: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (absent/null without 7c)
 }
 export interface BrainState {
   t: number;
@@ -30,6 +31,8 @@ export interface BrainState {
   oedema: number; // mL
   csfDisp: number; // mL displaced
   osm: OsmDose[];
+  osm0?: number; // FU-9 F11: the patient's own resting plasma osmolality (latched on the first reading)
+  osmWater?: number; // FU-9 F11: brain water gained from a fall in plasma osmolality, mL
   headUpDeg: number;
   g: number; // cerebrovascular conductance, CBF-relative per mmHg CPP
   paco2Ref: number;
@@ -106,7 +109,7 @@ function solve(b: BrainState, inp: BrainInputs, dt: number): void {
   const hu = headUp(b.headUpDeg);
   b.mapHead = inp.map - MMHG_PER_CM_BLOOD * hu.hCm;
   const cvpHead = inp.cvp - MMHG_PER_CM_BLOOD * hu.hCm;
-  const fixedV = b.mass + b.oedema - b.csfDisp - osmoticLoss(b.osm, b.t) - hu.volMl;
+  const fixedV = b.mass + b.oedema - b.csfDisp - osmoticLoss(b.osm, b.t) + (b.osmWater ?? 0) - hu.volMl;
   let icp = b.icp;
   let cbf = b.cbfRel;
   for (let i = 0; i < 6; i++) {
@@ -129,6 +132,12 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   b.mass = Math.max(0, b.mass + (b.massRate * dt) / 60);
   b.csfDisp = Math.max(0, b.csfDisp + (csfDisplacementRate(b.icp, b.csfDisp, b.p.icp0, b.p.rOut, b.p.csfReserve) * dt) / 60);
   b.paco2Ref += (inp.paco2 - b.paco2Ref) * (dt / PACO2_ADAPT_TAU_S);
+  if (typeof inp.osm === 'number' && Number.isFinite(inp.osm) && inp.osm > 0) {
+    // FU-9 F11: hypo-osmolar brain swelling (the fall only; osmotherapy's rise is the dose term)
+    b.osm0 ??= inp.osm;
+    const target = OSM_WATER_ML_PER_MOSM * Math.max(0, b.osm0 - inp.osm);
+    b.osmWater = (b.osmWater ?? 0) + (target - (b.osmWater ?? 0)) * (1 - Math.exp(-dt / (HTS_TAU_IN_MIN * 60)));
+  }
   // conductance relaxes toward the one that gives the target CBF at the current CPP (dynamic autoregulation)
   const gT = targetCbf(b, inp, b.cpp) / Math.max(1, b.cpp);
   b.g += (gT - b.g) * (1 - Math.exp(-dt / TAU_VASC_S));

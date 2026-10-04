@@ -9,6 +9,7 @@
 //        `lungCondition anaphylaxis`; ECG modifier deltas (tempC → Osborn, shivering artefact).
 import { l1Value, type L1State } from '../../l1/state.ts';
 import type { Modifiers } from '../../types.ts';
+import { leakSigma } from '../blood/fluids.ts'; // FU-9 F4
 import { betaBlunt } from '../pk/pd.ts';
 import { applyLungSpecs, type RespState } from '../resp/pipeline.ts';
 import { cascade } from '../thermal/metabolic.ts';
@@ -38,7 +39,7 @@ type Circ = {
 };
 type BloodLike = {
   out?: { dkaSeverity?: number };
-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
+  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
 };
 
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -171,9 +172,9 @@ export function writeCirc(ctx: EndoCtx, es: EndoState): number {
 /**
  * 7c seams: the ENDOGENOUS K set-point term (`blood.core.endoKShift`, E-7e-3), the glucose for the lab panel
  * (`blood.core.endoGlucoseMgDl`, E-7e-2) and the capillary leak (`blood.core.fl.kfMult`, R51 addendum 16; written
- * only when 7e's value changes, so a resting 7e never overwrites another writer). `fl.sigma` is left to 7c: the
- * tables give no septic/anaphylactic σ, and 7c's Starling form scales only pressure-driven filtration (gap, Requests).
- * False without 7c.
+ * only when 7e's value changes, so a resting 7e never overwrites another writer) and, with it, the protein reflection
+ * coefficient `fl.sigma` = 7c's `leakSigma(kfMult)` (FU-9 F4: a leak without a high pulmonary venous pressure now makes
+ * lung water). False without 7c.
  */
 export function writeBlood(ps: object, es: EndoState): boolean {
   const c = bloodOf(ps)?.core;
@@ -183,6 +184,7 @@ export function writeBlood(ps: object, es: EndoState): boolean {
   c.endoGlucoseMgDl = o.glucoseMgDl;
   if (c.fl && o.kfMult !== es.kfMult) {
     c.fl.kfMult = o.kfMult;
+    c.fl.sigma = leakSigma(o.kfMult); // FU-9 F4: the same leak lowers the protein reflection coefficient (lung water, Starling)
     es.kfMult = o.kfMult;
   }
   return true;
