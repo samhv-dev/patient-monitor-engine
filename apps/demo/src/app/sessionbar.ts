@@ -15,8 +15,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const badge = h('button', { type: 'button', class: 'mode-badge', 'aria-haspopup': 'dialog' });
   const scen = h('span', { class: 'scen' });
   const t = h('span', { class: 'clock num', 'aria-label': 'Simulation time' });
-  const speed = seg<string>('Simulation speed', [['1', '×1'], ['2', '×2'], ['4', '×4'], ['8', '×8']], '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
-  speed.classList.add('compact');
+  const speed = seg<string>('Simulation speed', [['1', '×1'], ['2', '×2'], ['4', '×4']], '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
+  speed.classList.add('compact'); // ×4 is the host's limit (the 6a host refuses a scale above 4: 'scale must be 0.25–4')
   let paused = false;
   const pause = button('Pause', () => {
     paused = !paused;
