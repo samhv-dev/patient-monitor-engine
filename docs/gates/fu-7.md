@@ -578,7 +578,11 @@ measured 1,578 s on the local slow-a run:
   - **slow-f:** `drug-layer` and `drug-apnoea`.
 - **Config:** `ci.yml`'s matrix and its printed disjointness check cover all six groups. Run locally, the check gives
   107 files, disjoint and covering: a 28, b 38, c 15, d 19, e 5, f 2.
-- **CI per-group times on PR #32** (run 37184798915 on 281ec9e, the gate tree's code; every job green): build 45.2 min; slow-a 38.1, b 34.8, c 39.0, d 17.8, **e 37.7, f 30.3** min. Every group is under 40 min. A second run on 135152d (docs only) gave a 37.5 / f 30.4. That run's build job hit a 5 s timeout in `apps/demo` `actions.test.ts` (7x.1, a pre-existing test), which had passed on the same code in the run above; it is a runner flake. The head commit's run is the PR's check.
+- **CI per-group times on PR #32** (run 37184798915 on 281ec9e, the gate tree's code; every job green): build 45.2 min; slow-a 38.1, b 34.8, c 39.0, d 17.8, **e 37.7, f 30.3** min. Every group is under 40 min. A second run on 135152d (docs only) gave a 37.5 / f 30.4. That run's build job, and the head run 37188387639 on 7f22096, failed on one test: `apps/demo` `actions.test.ts` 7x.1,
+which starts an engine for every preset and hit Vitest's 5 s default. It passed on 281ec9e at 3.0 s, and runs locally in
+0.9 s. **`origin/main` bd5880b's own CI build fails on the same test** (run 37181994845), so it is pre-existing on main
+and outside FU-7's partition. It is reported, not fixed here. The head run's slow groups are all green: a 39.2, b 18.1,
+c 39.2, d 37.3, e 16.6, f 17.2 min.
 
 **PNG sizes (bytes).** Taken by `fu7-shots.mjs` on 722d728, before D15b and the two merges, and kept. Every panel is a
 single-agent or non-ventilatory run (onset curves, thiopental alone, ephedrine/adrenaline, laryngoscopy after propofol,
