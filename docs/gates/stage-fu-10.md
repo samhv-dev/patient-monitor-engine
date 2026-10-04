@@ -1,5 +1,7 @@
 # Gate note — FU-10 Part A: endocrine and thermal integration
 
+> **Updated after the FU-7 merge (§10).** Main `4a1cc3f7` (FU-7, PR #32) and later docs (`9ab3a36f`) are merged in. Exceptions E-FU10-12, E-FU10-13 and the glossary entries were approved at the gate. §§1–9 describe the pre-merge state; where §10 differs, §10 holds.
+
 Branch `fu-10-endocrine-thermal`, from `origin/main` `bd5880b` (= `5559533`, FU-9 Parts A + C and Stage 9 merged, plus the
 RESUME commit), merged with `origin/main` at the gate twice: `fecbdcc` (showcase hotfix, PR #33) and then `f29951b` (showcase kit #34, preset-test timeout #35). Neither touches an engine file; after the second merge, typecheck, the non-engine packages, build and notices were re-run green. Plan:
 `docs/plans/fu-10-endocrine-thermal.md` (written and verified on `1b8bdd3`; its new "Base drift" section lists what moved).
@@ -9,7 +11,7 @@ Every number is seed 7 on this Mac, which three other local agents were using at
 
 ## 1. Summary
 
-- **Commits:** the plan; one per task A1, A2, A3, A4, A6, A7, A8, each pushed; glossary entries 324–332; the slow-group
+- **Commits:** the plan; one per task A1, A2, A3, A4, A6, A7, A8, each pushed; glossary entries 324–332 (339–347 after the FU-7 merge); the slow-group
   spread; the base-drift note; the review fix (I1/I2); the two 7g test lines (E-FU10-13); the merge of `origin/main`.
 - **Blocks:** Task A0 mechanically re-checked all of Part A's blocks on this base: **71 find/replace + 14 creates, 1 drifted**
   (the `BloodLike` type line FU-9 gave `sigma`; the plan's own Overlap line gives the merged form, which is what was applied).
@@ -98,7 +100,7 @@ insulin-omission to slow-d; adrenal and mh-trigger to slow-a; insulin-dextrose a
   - `pk-acceptance-pk`: the documented free-core Eleveld Ce **2.996568 → 2.996590** is re-pinned at the same 5-decimal
     precision. Bisected to Task A3: with the core pinned, the PK context is identical. A3's 34.5 °C threshold keeps the
     patient vasodilated a little longer, so the free core cools slightly faster.
-- **Glossary** (`apps/demo/src/app/glossary-data.ts`, a UI-data file): entries 324–332 label FU-10's new truth leaves, as
+- **Glossary** (`apps/demo/src/app/glossary-data.ts`, a UI-data file): entries 324–332 (renumbered **339–347** after FU-7's 324–338) label FU-10's new truth leaves, as
   the brief asks and as FU-9 did. They are `resp.temp.ageY`, `endo.ageY`, `endo.core.etomSuppr`, `endo.core.ketoDef`,
   `blood.core.endoKetoMmolMin` / `UtilPerMin`, `neuro.mhExposure.{sux,volatile,volatileAgent}` (two `KEY_LABELS`) and
   `endo.mhOwner`.
@@ -156,3 +158,102 @@ The plan's "Base drift" section is the record. In short:
 - **Ali:** Q2 (MH severity draw), Q4 (the two insulin K⁺ sources, now E-FU10-12), Q7 (fever, A8), Q12 (ET-07).
 - **Requests:** the ET runner owner (ET-10a/b rigs after FU-6, and ET-04's wrong Kurz reference); the insulin disposition
   (FU-8 Part B).
+
+## 10. After the FU-7 merge (main `4a1cc3f7`, then `9ab3a36f`; branch head after the merge `90d34028`)
+
+**Conflicts (both sides kept):**
+- `stressEffects(c.hormones, …, cortResponseOf(c), x.cortExoNmolL ?? 0)`, the plan's stated merged form.
+- `createHormones(cortBasalF)` with FU-7's `surge` and `catReserve`.
+- The `effects.ts` import list.
+- Glossary: FU-10's entries renumbered 324–332 → **339–347**, after FU-7's 324–338. KEY_LABELS comment updated; `glossary.test` 6/6.
+- Slow groups: re-placed for six groups (below).
+
+The exogenous glucocorticoid joining the permissive SVR term stays Part B (B7).
+
+**The drug bus FU-10 reads, re-verified against FU-7:**
+- The dose log is still `DoseLogEntry {agent, amount, amountUnit, mgPerKg}`.
+- Row ids and units are unchanged: `etomidate` mg, `insulin` and `insulinDextrose` units, `dextrose` mg, `succinylcholine` through 7f's NMB dose site.
+- 7f's `macPotent`, `x.et[*].fet` and `macAge` are unchanged.
+- Typecheck is clean, and every FU-10 acceptance number below is reproduced.
+
+**Truth tree:** live 1399 leaves; synthetic 12-drug tree **2078** of 2,100 (FU-7 alone 2,077). No cap change.
+
+**Slow groups (six, CI per-file times from PR #37 run 37199560174 and FU-7's PR run 37199184387).**
+- FU-10's six files took **2,208 s on CI**: thresholds 804, insulin-omission 670, adrenal 389, insulin-dextrose 152, mh-trigger 145, fever 48.
+- FU-7's groups ran a 1837, b 1573, c 2295, d 2075, e 2222, f 862 s. That leaves ≈ 2,050 s of room under 35 min in total, less than FU-10 needs.
+- Best fit without a seventh group (a seventh would mean editing `.github/ci.yml`, which the plan forbids):
+  - slow-f + thresholds, insulin-dextrose, mh-trigger, fever: ≈ 2,011 s
+  - slow-a + adrenal: ≈ 2,226 s
+  - slow-b + insulin-omission: ≈ 2,243 s
+- Estimated maximum ≈ 37 min. CI sums vary a lot between runs: slow-c measured 1,171 s on PR #37 against 2,295 s on FU-7's PR, for nearly the same files.
+- Disjointness: `slow` 113 = 29 + 39 + 15 + 19 + 5 + 6, no overlap, nothing missing.
+
+**Suites on the merged tree:**
+- typecheck clean; build and check-notices OK.
+- Fast set: engine-core **310 files / 1386 passed, 1 skipped**; audio 58, skins 191, controller 227, ventilator 97, renderer 90, validation 107 (+11 skipped), demo 200.
+- Two load-sensitive tests failed under load and pass alone: `truth-event` cost (0.38 ms/call alone) and ventilator `ports`.
+- slow-a, slow-b and slow-f all green after the flip below: 29 / 39 / 6 files; slow-a had 1 failure before the flip.
+- `pk-acceptance-pk` green.
+- Stage 9 + showcase e2e, Chromium and WebKit: 28 passed, 6 skipped, 2 failed (`showcase-clock` in both browsers: the scenario card's Load button never became visible within 90 s on the loaded Mac). Re-run alone it passes 2/2, and it passes 2/2 on main. FU-10's only `apps/demo` change is the 12 glossary lines. The run rewrote tracked screenshots; they were restored.
+
+**7g tests (E-FU10-13) on the merged tree:**
+- `pk-longrun`: TCI propofol Ce **2.4995**, identical to pre-merge, so `it` stays true. Main without FU-10 still carries FU-9's `it.fails` 2.5098.
+- `pk-acceptance-pk`: free-core Ce **2.996590**, identical, so the re-pin stands. Main pins 2.996568, and FU-7 did not change this line.
+
+**A newly-true `it.fails`, flipped to `it`:** adrenal insufficiency, surgical MAP ≥ 5 mmHg below normal (ET-15a). Measured **−3.9 → −8.1** (`9beab853`).
+- Why: FU-7's stimulus surge (Task 10, addendum 25) now carries the incision's pressor response, and it is scaled by the patient's vasopressor responsiveness, which FU-10's basal-cortisol deficit lowers.
+- ET-15a: healthy surgical MAP 87.4 → 96.5; adrenal-insufficient 83.3 → 88.2.
+- FU-7 alone gives Δ −3.3, FU-10 alone −4.1, merged −8.3: an interaction, not either plan alone.
+
+### Acceptance numbers, pre-merge → merged
+
+| Task | Pre-merge | Merged | Note |
+|---|---|---|---|
+| A1 sux / sevoflurane alone / not susceptible | +18.2 / +48.5 min / 0 | +18.2 / +48.5 / 0 | — |
+| A2 neuraxial hour 1 / GA / shivering | −0.86 / −1.25 / 35.49 °C | same | — |
+| A3 surgical h1 / linear / onset °C / plateau / onset h | −1.44 / −0.492 / 34.50 / −0.087 / 2.27 h | same | — |
+| A3 80 y vs 40 y (onset; core at 4 h) | 33.50 vs 34.50; 33.43 vs 34.28 | same | — |
+| A4 combined row glucose / K⁺ at 60 min | +11.17 / −2.68; −1.15 | same | E-FU10-12 `it.fails` holds |
+| A5 insulin nadir | 13.3 min | 13.3 | `it.fails` holds |
+| A6 etomidate cortisol ratio | 0.653 (1025 vs 1570) | 0.653 (1025 vs 1569) | rounding |
+| A6 AI post-induction MAP / phenylephrine ratio / surgical ΔMAP | 69.4 vs 72.7 / 0.67 / −3.9 | 69.4 vs 72.7 / **0.65** / **−8.1** | ΔMAP: FU-7's surge × FU-10's lower vasopressor responsiveness (above). PE ratio −0.02: FU-7 raises both arms' pressor rise (ET-15a 29.7/44.0 → 41.1/62.2 mmHg) |
+| A7 omitted 6 h: glucose / ketones / pH / K⁺ | 35.5 / 11.55 / 7.31 / 6.00 | same | — |
+| A7 treated | 11.55 → 8.90 (0.88 /h), glucose 5.1, K⁺ 3.24 | same | — |
+| A8 sepsis / storm under GA | 36.60 / 36.34 °C | same | `it.fails` hold |
+
+### ET matrix, all 72 cells: base → pre-merge → merged (automatic verdicts)
+
+| | PL | WR | TW | TS | MI | NE |
+|---|---|---|---|---|---|---|
+| base `bd5880b` | 35 | 13 | 10 | 4 | 2 | 8 |
+| FU-10 pre-merge | 38 | 10 | 9 | 5 | 2 | 8 |
+| merged (FU-10 + FU-7) | **38** | **9** | **9** | **6** | 2 | 8 |
+
+**Verdict changes pre-merge → merged:**
+- ET-08b PL → TS: FU-7's rocuronium (t25 hypothermic 164 → 132.5 min, normothermic 60.5 → 44, ratio 2.71 → 3.01).
+- ET-19 WR → TW: FU-7 Task 18's dexamethasone (glucose +0 → +1.83).
+- ET-15a TW → PL: the interaction above.
+
+To attribute every number that moved by more than rounding, those cells were run on main (FU-7 without FU-10):
+
+| Cell | Metric | Base | FU-10 pre-merge | Main (FU-7 only) | Merged | Attribution |
+|---|---|---|---|---|---|---|
+| ET-05a | shivering VO₂ %, cold CO | 46.9 %, 5.7 | 67.9 %, 5.7 | 46.4 %, 5.5 | 67.3 %, 5.5 | VO₂: FU-10 (A3, as the plan); CO: FU-7 |
+| ET-08b | t25 hypothermic / normothermic | 164 / 60.5 | 164 / 60.5 | 132.5 / 44 | 132.5 / 44 | FU-7 |
+| ET-09a | HR / MAP / CO at 28 °C | 47 / 65.5 / 3.71 | 40 / 66.9 / 4.33 | 47 / 65.5 / 3.70 | 47 / 65.5 / 3.71 | FU-10's pre-merge change at 28 °C disappears on the FU-7 base |
+| ET-10a | MH develops / EtCO₂ max | no / 28.4 | yes / 52.5 | no / 28.4 | yes / 52.5 | FU-10 (A1) |
+| ET-11a | dantrolene t½ / peak core / K⁺ change at 30 min | 340 s / 39.0 / −0.43 | same | 560 s / 39.25 / −0.32 | 560 s / 39.24 / −0.32 | FU-7 |
+| ET-13a | esmolol HR % | −28.4 | −29.0 | −32.3 | −32.3 | FU-7 |
+| ET-15a | ΔMAP surgical / PE ratio | −0.8 / 0.78 | −4.1 / 0.67 | −3.3 / 0.76 | −8.3 / 0.66 | interaction (above) |
+| ET-16a | incision ΔMAP F0 / F2 / F5, ΔHR | 7.7 / 2.1 / −9.6, 6 | same | 19.0 / 5.9 / −7.4, 13 | 19.0 / 6.3 / −7.7, 13 | FU-7 (Task 10); FU-10 adds ≤ 0.4 |
+| ET-19 | dexamethasone glucose | 0 | 0 | +1.83 | +1.83 | FU-7 |
+| ET-20a | K⁺ at 60 min | −0.75 | −0.75 | −0.73 | −0.73 | FU-7 |
+| ET-M3 | incision ΔMAP | 3.0 | 3.0 | 14.8 | 14.8 | FU-7 |
+
+Every other cell differs from pre-merge only in rounding, or in values FU-7 owns. Two examples: the ET-10b–g K⁺ at 20 min 5.59 → 5.58, and ET-10a's event marks, which gained FU-7's 179 s apnoea mark.
+
+**`audit:physiology`, main (FU-7) → merged:**
+- Every arrest time identical; F4-mh's minimum HR 175 → 177.
+- Warm septic shock: ΔHR −46 → −45, ΔCO −0.44 → −0.59.
+
+These are exactly FU-10's moves on the pre-FU-7 base, now reproduced on the FU-7 base.
