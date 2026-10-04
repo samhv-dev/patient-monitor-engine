@@ -1,0 +1,137 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-haemorrhage",
+  "title": "Class IV haemorrhage, PEA and resuscitation",
+  "category": "Showcase",
+  "durationMin": 20,
+  "story": "A ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.",
+  "objectives": [
+    "Recognise PEA from hypovolaemia",
+    "Start high-quality CPR without delay",
+    "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram"
+  ],
+  "notes": "Showcase case (Stage 9 Task 26): the fu4 page's class IV run (bleed 2.5 L over 600 s; CPR + 2 L over 180 s + epinephrine 1 mg; pulse back ≈ 4.5 min into CPR).",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 35,
+    "sex": "M",
+    "weightKg": 75,
+    "heightCm": 178,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "initialState": "bleeding",
+  "states": [
+    {
+      "id": "bleeding",
+      "label": "Bleeding 2.5 L over 10 min",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 0.5
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "bleed",
+            "volumeMl": 2500,
+            "overS": 600
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "resus",
+          "label": "Start CPR, 2 L and epinephrine",
+          "to": "resuscitation",
+          "when": {
+            "manual": {
+              "label": "Start CPR, 2 L and epinephrine"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "resuscitation",
+      "label": "CPR, 2 L warmed fluid, epinephrine 1 mg",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "balanced",
+            "volumeMl": 2000,
+            "overS": 180
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "stopCpr",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rosc",
+      "label": "Return of circulation",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        }
+      ]
+    }
+  ]
+}

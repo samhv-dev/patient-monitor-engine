@@ -2,33 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Patient-monitor engine demos</title>
-    <style>
-      body { background: #000; color: #ddd; font: 16px system-ui, sans-serif; margin: 2rem; }
-      a { color: #4f4; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Patient monitor simulator</title>
   </head>
   <body>
-    <h1>Patient-monitor engine demos</h1>
-    <ul>
-      <li><a href="./stage0.html">Stage 0: sim-time sweep cursor</a></li>
-      <li><a href="./stage1.html">Stage 1: ECG rhythm engine, sweep and beep</a></li>
-      <li><a href="./stage2.html">Stage 2: haemodynamics (ABP, pleth, CVP, NIBP)</a></li>
-      <li><a href="./stage3.html">Stage 3: respiratory, gas and temperature (CO2, SpO2 lag, RR, temp)</a></li>
-      <li><a href="./stage7c.html">Stage 7c: blood, acid–base, electrolytes, O2 delivery (labs, ABG)</a></li>
-      <li><a href="./stage7b.html">Stage 7b: the lungs (two lungs, mixing point, 32-condition catalogue)</a></li>
-      <li><a href="./stage4a-skins.html">Stage 4a: skin preview and alarm sound profiles</a></li>
-      <li><a href="./stage7a.html">Stage 7a: circulation — elastance heart, PV loop, drugs, IABP/LVAD</a></li>
-      <li><a href="./stage7g.html">Stage 7g: drug PK/PD — TCI, vasoactives, volatiles, adenosine, LAST, reversal</a></li>
-      <li><a href="./stage7f.html">Stage 7f: neuromuscular block, TOF, anaesthetic depth, drive depression</a></li>
-      <li><a href="./stage7e.html">Stage 7e: endocrine, glucose, thermoregulation — MH, hypothermia, sepsis, hypoglycaemia</a></li>
-      <li><a href="./physiology-console.html">Stage 7x: physiology console — every truth value by organ, with the monitor and an actions rail</a></li>
-      <li><a href="./stage4b-device.html">Stage 4b: device layer (alarms, defibrillator, pacer, 12-lead, trends)</a></li>
-      <li><a href="./stage6a.html">Stage 6a: host monitor + hidden instructor panel</a> ·
-        <a href="./stage6a-remote.html">remote controller</a> · <a href="./stage6a-viewer.html">viewer</a></li>
-      <li><a href="./stage6b-acls.html?scenario=acls-vf-witnessed">Stage 6b: scenario runner — ACLS (VF)</a></li>
-      <li><a href="./vent-link.html">Stage V: ventilator ↔ monitor link</a> · <a href="./vent-hamilton.html">ventilator alone</a></li>
-    </ul>
+    <div id="app"></div>
+    <noscript>The patient monitor simulator needs JavaScript.</noscript>
+    <script type="module" src="./src/app/main.ts"></script>
   </body>
 </html>

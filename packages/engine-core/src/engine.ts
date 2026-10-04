@@ -37,7 +37,7 @@ import {
   type SimSeconds,
 } from './types.ts';
 import { version } from './version.ts';
-import { createL1State, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
+import { createL1State, l1Target, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
 import {
   advanceHemo,
   applyHemoCommand,
@@ -789,7 +789,24 @@ class Engine implements MonitorEngine {
       this.syncRespBuffers(); // Stage 3
       return;
     }
+    // Stage 9 (E-S9-5): "Return to model" in MODELED mode (pin/release semantics only, no physiology). A hold moves
+    // the value's target (SpO₂: the shunt is solved for it; HR: the instructor's rate is recorded); a release puts the
+    // pre-hold target back and hands HR to the reflex again, so the model's own value returns.
+    const modeled = ps.l1.mode === 'modeled';
+    if (modeled && cmd.type === 'pin' && cmd.variable !== 'hr' && !ps.l1.pinned.includes(cmd.variable)) {
+      (ps.l1.preHold ??= {})[cmd.variable as L1Var] = l1Target(ps.l1, cmd.variable as L1Var, simT);
+      if (cmd.variable === 'spo2') ps.resp.seen.spo2 = Number.NaN; // a hold re-solves even at the value last held
+    }
+    if (modeled && cmd.type === 'release' && ps.l1.preHold) {
+      for (const [v, x] of Object.entries(ps.l1.preHold) as [L1Var, number][]) {
+        if (cmd.variable !== 'all' && cmd.variable !== v) continue;
+        setL1Target(ps.l1, v, simT, x);
+        delete ps.l1.preHold[v];
+      }
+    }
+    const releasesHr = cmd.type === 'release' && (cmd.variable === 'hr' || cmd.variable === 'all');
     if (applyHemoCommand(ps.hemo, ps.l1, cmd, simT, setHr, ps.rng)) {
+      if (modeled && releasesHr) holdRate(ps, ps.rhythm.pendingSwitch?.id ?? ps.rhythm.id, false); // E-S9-5: the reflex rate again
       this.syncHemoBuffers(); // Stage 2
       return;
     }
