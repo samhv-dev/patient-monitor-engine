@@ -9,7 +9,8 @@ import { stressEffects, type StressEffects } from './effects.ts';
 import { createGlucose, stepGlucose, type GlucoseState } from './glucose.ts';
 import { createHormones, stepHormones, type HormoneState } from './hormones.ts';
 import {
-  AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S,
+  AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S, HYPEROSM_FROM_MGDL, HYPEROSM_K_PER_MGDL, KETO_K_EFFLUX, KETO_MMOL_MIN_MAX,
+  KETO_TAU_S, KETO_UTIL_INS_MAX, KETO_UTIL_PER_MIN,
   EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
   SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
 } from './params.ts';
@@ -17,15 +18,17 @@ import { thyroidEffects, type ThyroidState } from './thyroid.ts';
 
 export interface EndoProfile {
   diabetes: 'none' | 'type1' | 'type2';
+  /** FU-10 E7: type 1 only — false omits the long-acting basal insulin (insulin-deficient: ketogenesis, K⁺ efflux). */
+  basalInsulin: boolean;
   thyroid: ThyroidState;
   adrenalInsufficiency: boolean;
 }
 
-export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false };
+export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true };
 
 /** Resolved per-profile glucose parameters (tables §5c SI diabetic 1–3e-4 → × 0.3; type 2 fasting ≈ 8 mmol/L). */
 export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: number; glucagon: number; basalExo: boolean } {
-  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: true };
+  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: p.basalInsulin !== false }; // FU-10 E7
   if (p.diabetes === 'type2') return { gb: 144, si: 0.3, beta: 1, glucagon: 1, basalExo: false };
   return { gb: 100, si: 1, beta: 1, glucagon: 1, basalExo: false };
 }
@@ -62,6 +65,8 @@ export interface EndoCore {
   x: EndoInputs; // the last inputs (compose reads the β-block, temperature, MH and 7g's bronchodilation from them)
   /** FU-10 E10: 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
   etomSuppr?: number;
+  /** FU-10 E7 (R-2): the ketogenic insulin deficit (0–1), the current deficit smoothed with KETO_TAU_S. */
+  ketoDef?: number;
   out: EndoOut;
 }
 
@@ -82,6 +87,10 @@ export interface EndoOut {
   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
   setShiftC: number; // fever set point added to the thermal thresholds
   kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
+  /** FU-10 E7: ketoacid production from the INSULIN DEFICIT, mmol/min → 7c's ketoacid pool (`blood.core.endoKetoMmolMin`). */
+  ketoMmolMin: number;
+  /** FU-10 E7 (R-2): insulin-dependent ketone utilisation, fraction of 7c's pool per minute (`blood.core.endoKetoUtilPerMin`). */
+  ketoUtilPerMin: number;
   kfMult: number; // → 7c `blood.core.fl.kfMult`
   vasoResp: number; // → `ps.cond.vasoResp` (7g)
   anaphLung: number; // 7b `lungCondition anaphylaxis` severity (0–1; grade/5 relieved by β2 bronchodilation)
@@ -119,6 +128,12 @@ export function createEndoCore(profile: EndoProfile = DEFAULT_ENDO_PROFILE, weig
  */
 export function cortResponseOf(c: EndoCore): number {
   return (c.profile.adrenalInsufficiency ? 0.5 : 1) * Math.max(0, 1 - ETOM_SUPPR_MAX * Math.min(1, Math.max(0, c.etomSuppr ?? 0)));
+}
+
+/** FU-10 E7: the insulinopenia that shifts K⁺ out of the cells — the patient's own (smoothed) insulin deficit, or the
+ * instructor's `dka` condition, which IS insulinopenia even though the profile's insulin is normal (research/14 ET-23c). */
+export function insulinopenia(c: EndoCore): number {
+  return Math.max(c.ketoDef ?? 0, Math.min(1, Math.max(0, c.x.dkaSeverity)));
 }
 
 /** FU-10 E13: the × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
@@ -159,7 +174,14 @@ function compose(c: EndoCore): EndoOut {
     humSvrF: st.humSvrF, // FU-4 G-FU4-1
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
-    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity,
+    kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity
+      // FU-10 E7: insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
+      // high at presentation despite a total-body deficit) — the two DKA causes the old K path had no term for.
+      // The instructor's `dka` condition (7c's severity) IS insulinopenia, so it carries the same efflux even though the
+      // patient's own insulin is normal — without this DKA presented HYPOkalaemic (research/14 ET-23c)
+      + insulinopenia(c) * (KETO_K_EFFLUX + HYPEROSM_K_PER_MGDL * Math.max(0, g.g - HYPEROSM_FROM_MGDL)),
+    ketoMmolMin: KETO_MMOL_MIN_MAX * (c.ketoDef ?? 0) * (x.weightKg / 70),
+    ketoUtilPerMin: KETO_UTIL_PER_MIN * Math.min(KETO_UTIL_INS_MAX, g.i / IB_UU_ML),
     kfMult: cd.kfMult,
     vasoResp: vr,
     anaphLung: 0.8 * c.cond.anaph.mediator * (1 - 0.6 * bd), // mediator 0.75 (grade III) → 7b severity 0.6 (its grade III)
@@ -184,6 +206,9 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const cd = c.out.cond;
   // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
   if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
+  // FU-10 E7 (R-2): the ketogenic deficit follows the CURRENT insulin deficit within tens of minutes
+  const kd = Math.max(0, 1 - g.i / IB_UU_ML);
+  c.ketoDef = kd + ((c.ketoDef ?? 0) - kd) * Math.exp(-dtS / KETO_TAU_S);
   stepHormones(c.hormones, {
     noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,

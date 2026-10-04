@@ -4,7 +4,7 @@ import { createEndoCore, NEUTRAL_ENDO_INPUTS, stepEndoCore } from '../../../src/
 import { insulinInfusion } from '../../../src/l2/endo/glucose.ts';
 
 const X = NEUTRAL_ENDO_INPUTS;
-const T1 = { diabetes: 'type1', thyroid: 'normal', adrenalInsufficiency: false } as const;
+const T1 = { diabetes: 'type1', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true } as const; // FU-10 E7: the basal insulin can now be omitted
 
 describe('endocrine core', { timeout: 60_000 }, () => {
   it('rest: every haemodynamic/metabolic multiplier is exactly 1 for 24 h (Stage 1–3 outputs untouched)', () => {

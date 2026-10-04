@@ -39,7 +39,8 @@ type Circ = {
 };
 type BloodLike = {
   out?: { dkaSeverity?: number };
-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number }; endoKShift?: number; endoGlucoseMgDl?: number };
+  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number };
+    endoKShift?: number; endoGlucoseMgDl?: number; endoKetoMmolMin?: number; endoKetoUtilPerMin?: number };
 };
 
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -190,6 +191,8 @@ export function writeBlood(ps: object, es: EndoState): boolean {
   const o = es.core.out;
   c.endoKShift = o.kShift;
   c.endoGlucoseMgDl = o.glucoseMgDl;
+  c.endoKetoMmolMin = o.ketoMmolMin; // FU-10 E7: ketogenesis from the insulin deficit — 7c integrates it into its pool
+  c.endoKetoUtilPerMin = o.ketoUtilPerMin; // FU-10 E7 (R-2): insulin-dependent utilisation of that pool
   if (c.fl && o.kfMult !== es.kfMult) {
     c.fl.kfMult = o.kfMult;
     c.fl.sigma = leakSigma(o.kfMult); // FU-9 F4: the same leak lowers the protein reflection coefficient (lung water, Starling)

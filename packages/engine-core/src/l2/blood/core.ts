@@ -156,6 +156,11 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   const ef = effects(bc, x.t);
   const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
   const drug = INSULIN_K_SHIFT * ef.ins + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
+  // FU-10 E7 (E-FU10-2, ruling R-2): Stage 7e's NET ketone rate — production from the insulin deficit minus its
+  // insulin-dependent utilisation of 7c's pool (which 7c owns, the instructor's `condition dka` pool included): the
+  // acidaemia, the anion gap, `out.dkaSeverity` and the Kussmaul drive emerge from it, and insulin treats it
+  const kx = bc as { endoKetoMmolMin?: number; endoKetoUtilPerMin?: number };
+  so.keto = Math.max(0, so.keto + (Math.max(0, kx.endoKetoMmolMin ?? 0) - so.keto * Math.max(0, kx.endoKetoUtilPerMin ?? 0)) * (dtS / 60));
   // Q45; FU-9 F6: the set point follows the total-body K — an external K loss (or gain) is shared by the cells instead of
   // being refilled from an unlimited store: plasma K falls 1 mmol/L per K_TBK_MMOL of total-body deficit (Sterns 1981)
   const kSet = so.set.k + (so.kIcf + so.k - (so.set.kIcf + so.set.k * (bc.ecf0 / 1000))) / K_TBK_MMOL - 4.0 * (bc.phNonOrg - so.set.ph) + drug;

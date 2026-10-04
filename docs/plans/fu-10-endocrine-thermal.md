@@ -1915,7 +1915,7 @@ ketoacidosis, the instructor's `dka` pool included; (c) insulinopenia (the smoot
 
 **Measured:** Engine test, type 1 with the basal insulin omitted 6 h: glucose **35.5 mmol/L**, ketones **11.5 mmol/L**, pH **7.31**, K⁺ **6.05** (on basal insulin: 7.2 / 0 / 4.17). Insulin 0.1 units/kg/h from 6 h: ketones **11.53 → 8.88 in 3 h (0.88 mmol/L/h, JBDS ≥ 0.5)**, glucose 5.1 mmol/L, K⁺ **3.25** (the expected fall on insulin). ET-23c (instructor `dka 1`): K⁺ **4.48 vs healthy 4.18** (main 3.68), after intubation +0.38 (main −0.01); WR → TW (auto; the report's §7 item 'K⁺ ≥ healthy' is met). ET-23a–d otherwise within 0.3 (HCO₃ 4.30 → 4.63: the instructor pool is now utilised at the insulin the patient has). Non-diabetic rows unchanged.
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/types-endo.ts`, find:
 
@@ -2250,9 +2250,9 @@ describe('FU-10 E7: patient.endo.basalInsulin', () => {
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/blood test/engine/fu10-insulin-omission.test.ts test/engine/blood-k-rhythm.test.ts test/engine/blood-sanity-acid.test.ts test/engine/blood-hyperk.test.ts` and `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-18 ET-23 ET-20 ET-16c ET-17`; add `endo: { diabetes: 'type1', basalInsulin: false }` to a scratch copy of ET-18a's arm and quote it.
-- [ ] **Commit and push.** `git add -A packages/engine-core packages/controller && git commit -m "feat(7e,7c): insulin deficiency makes and insulin clears ketones; the DKA potassium; the type 1 basal insulin can be omitted (FU-10 E7, E-FU10-2, E-FU10-4, E-FU10-9)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/blood test/engine/fu10-insulin-omission.test.ts test/engine/blood-k-rhythm.test.ts test/engine/blood-sanity-acid.test.ts test/engine/blood-hyperk.test.ts` and `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/scenario` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-18 ET-23 ET-20 ET-16c ET-17`; add `endo: { diabetes: 'type1', basalInsulin: false }` to a scratch copy of ET-18a's arm and quote it.
+- [x] **Commit and push.** `git add -A packages/engine-core packages/controller && git commit -m "feat(7e,7c): insulin deficiency makes and insulin clears ketones; the DKA potassium; the type 1 basal insulin can be omitted (FU-10 E7, E-FU10-2, E-FU10-4, E-FU10-9)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 

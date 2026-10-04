@@ -102,6 +102,28 @@ export const GUT_BIOAVAIL = 0.7; // hepatic first-pass uptake ≈ 30 % [TXT]
 export const EGP_INSULIN_SUPP = 2; // hepatic output × (1 + 2·insulin deficit fraction): insulinopenia → 400+ mg/dL over hours [ENG]
 export const EGP_DEFICIT_TAU_S = 3 * 3600; // the insulinopenic rise of hepatic output builds over hours (glucagon, gluconeogenesis) [ENG]
 export const INS_K_PER_UU = -0.03; // SECRETED insulin above basal drives K into cells: −0.3 mmol/L per +10 µU/mL [ENG]; exogenous insulin is 7g's kShift
+/**
+ * FU-10 E7 (orchestrator ruling R-2) — a NET ketone rate. Production follows the CURRENT insulin deficit (lipolysis and
+ * hepatic ketogenesis respond within tens of minutes, so the deficit is smoothed with KETO_TAU_S, not with the 3-h
+ * `egpDef` of hepatic glucose output); utilisation is insulin-dependent: 7c's pool is cleared at a fractional rate
+ * KETO_UTIL_PER_MIN × the insulin action (insulin ÷ basal, saturating at KETO_UTIL_INS_MAX), so ketones fall once
+ * insulin is given and the ketoacidosis is treatable (JBDS DKA 2023 target: ketones falling ≥ 0.5 mmol/L/h on the
+ * fixed-rate infusion). Omitted basal insulin in type 1 produces ketosis within hours (JBDS-IP 2023; Kitabchi AE et al.,
+ * Diabetes Care 2009;32:1335). Sizes [ENG; fit targets: ketosis > 3 mmol/L within the first hours of omission, and the
+ * JBDS fall rate on the infusion]. 7c's established DKA (`DKA_KETO_MMOL_L` 25 mmol/L) is the pool's scale.
+ */
+export const KETO_MMOL_MIN_MAX = 0.5;
+export const KETO_TAU_S = 1800;
+export const KETO_UTIL_PER_MIN = 0.0004;
+export const KETO_UTIL_INS_MAX = 5;
+/** FU-10 E7: the insulin deficit shifts K OUT of the cells (Kitabchi 2009: insulinopenia is one of DKA's two causes of
+ * hyperkalaemia) — mmol/L of K set point at a full deficit [ENG: with the hyperosmolar term, DKA presents ≥ healthy]. */
+export const KETO_K_EFFLUX = 1.4;
+/** FU-10 E7: hyperosmolar hyperglycaemia is the other (water leaves the cells with K): mmol/L of K set point per mg/dL
+ * of glucose above HYPEROSM_FROM_MGDL, in the INSULIN-DEFICIENT patient only (× the deficit — review F17: a dextrose
+ * bolus given to a patient with insulin does not shift K out) [ENG; Kitabchi 2009]. */
+export const HYPEROSM_K_PER_MGDL = 0.002;
+export const HYPEROSM_FROM_MGDL = 200;
 export const MH_K_EFFLUX = 2.2; // MH muscle K efflux, kSet +3 mmol/L at activity 1 — net of the endogenous-epinephrine β2 uptake and with 7c's acidosis term: K 5.5–6.5 by 20 min (tables §7 21) [ENG]
 /**
  * 7g's epinephrine concentration is a RATE EQUIVALENT (µg/kg/min, the infusion that would hold it). Its plasma level is
