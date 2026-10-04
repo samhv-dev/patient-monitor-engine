@@ -38,6 +38,9 @@
 | 8 validation/release | not started | waits for all | write plan |
 | Ali's review pack (questions + capability inventory + parameter tables + 12-lead strips) | pack DELIVERED 2026-09-28 (290 pp) + ADDENDUM DELIVERED 2026-09-30 (31 pp, 55 new questions; urgent A23, F11, D14, E4, E5) | every open Ali item with stable IDs; his answers by ID → rulings | apply his answers by ID as rulings; triage the writer's 20 findings (rulings 22:20)
 
+## Live state (2026-10-04 09:25)
+Live local agents: FU-9 executor (merge step on PR #31) and FU-7 finisher (worktree `../scratch/wt-fu-7`); their ids and the full snapshot are in `../research/00-orchestrator-rulings.md` under "STATE SNAPSHOT before compaction". Showcase Tuesday 2026-10-06 from the playground (port 5180); four showcase cases still to rehearse. Local cap 3.
+
 ## After a usage-cap kill
 First try `SendMessage` to each stopped agent's id ("the cap has reset; continue exactly where you stopped; confirm the worktree state first") — the harness resumes it with its context intact (worked 2026-09-29 01:25). Only if that fails, relaunch a fresh agent from the pushed state with the brief below.
 
