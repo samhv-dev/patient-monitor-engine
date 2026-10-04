@@ -339,6 +339,18 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 310, s: 'S9', keys: ['resp.volumes.pattern'], label: 'Spirometry pattern', name: 'Spirometry pattern (normal, obstructive, restrictive or mixed)', unit: '', normal: 'normal' },
   { n: 311, s: 'S9', keys: ['resp.volumes.pred.tlc', 'resp.volumes.pred.rv', 'resp.volumes.pred.frc', 'resp.volumes.pred.vc', 'resp.volumes.pred.fvc', 'resp.volumes.pred.fev1', 'resp.volumes.pred.ratio', 'resp.volumes.pred.pef'], label: 'Predicted', name: 'Predicted value (ECSC 1993 adults, Zapletal children)', unit: '', normal: '—' },
   { n: 312, s: 'S9', keys: ['resp.lung.lp.side.#.vdAlv'], label: 'VD alv fraction', name: 'Alveolar dead space as a fraction of alveolar ventilation, per lung', unit: 'fraction', normal: '≈ 0 healthy' },
+  // FU-9's new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for Ali's review)
+  { n: 313, s: 'S9', keys: ['blood.core.fl.globG'], label: 'Globulins (plasma)', name: 'Plasma globulin mass: with albumin it sets the colloid osmotic pressure', unit: 'g', normal: '≈ 65 at 70 kg (24 g/L)' },
+  { n: 314, s: 'S9', keys: ['blood.core.hbfFactor'], label: 'HBF factor', name: 'Hepatic blood-flow factor: splanchnic constriction, volatile agent and hepatic outflow pressure (CVP or intra-abdominal pressure)', unit: '× baseline', normal: '1' },
+  { n: 315, s: 'S9', keys: ['blood.core.renal.excretion.mannitol'], label: 'Mannitol excretion', name: 'Renal mannitol excretion', unit: 'mmol/h', normal: '0' },
+  { n: 316, s: 'S9', keys: ['blood.core.so.mannitol'], label: 'Mannitol (ECF)', name: 'Mannitol in the extracellular fluid: effective osmoles (1 mmol = 1 mOsm)', unit: 'mmol', normal: '0' },
+  { n: 317, s: 'S9', keys: ['blood.core.so.set.kIcf'], label: 'K⁺ cell store (reference)', name: 'Resting intracellular potassium store: the reference for total-body potassium balance', unit: 'mmol', normal: '≈ 3 900 at 70 kg' },
+  { n: 318, s: 'S9', keys: ['organs.brain.osm0'], label: 'Osm (brain reference)', name: 'Resting plasma osmolality the brain is adapted to', unit: 'mOsm/kg', normal: '275–295' },
+  { n: 319, s: 'S9', keys: ['organs.brain.osmWater'], label: 'Brain water (hypo-osmolar)', name: 'Brain water gained from a fall in plasma osmolality (hyponatraemic swelling)', unit: 'mL', normal: '0' },
+  { n: 320, s: 'S9', keys: ['organs.renal.eabvLp'], label: 'EABV', name: 'Effective arterial blood volume sensed by the kidney: blood volume, or cardiac output against oxygen demand', unit: '× normal', normal: '1' },
+  { n: 321, s: 'S9', keys: ['organs.view.demandRel'], label: 'O₂ demand (×)', name: 'Whole-body oxygen demand relative to rest: anaesthesia, temperature, fever', unit: '× rest', normal: '1 awake; ≈ 0.85 under GA' },
+  { n: 322, s: 'S9', keys: ['organs.view.mannitolMmol'], label: 'Mannitol (kidney input)', name: 'Plasma mannitol as the kidney reads it (osmotic diuresis)', unit: 'mmol', normal: '0' },
+  { n: 323, s: 'S9', keys: ['organs.view.osm'], label: 'Osm (organ input)', name: 'Plasma osmolality as the brain and kidney read it', unit: 'mOsm/kg', normal: '275–295' },
 ];
 
 /**
