@@ -156,8 +156,12 @@ function sensorMap(ps: PipelineState): Partial<Record<SensorId, string>> {
 const TCP_PAIN_MA_0 = 40;
 const TCP_PAIN_MA_FULL = 100;
 const TCP_PAIN_MAX = 1.5;
-function tcpNoxious(mods: Modifiers): number {
-  const mA = mods.tcp?.mA ?? 0;
+function tcpNoxious(mods: Modifiers, lastPulseT: number | undefined, t: number): number {
+  const tcp = mods.tcp;
+  // only DELIVERED pulses hurt: a demand pacer the patient's own rhythm inhibits fires nothing (final review I-1) —
+  // pain while the last pulse is within 1.5 pacing intervals of now
+  if (!tcp || lastPulseT === undefined || t - lastPulseT > (1.5 * 60) / Math.max(1, tcp.ratePpm)) return 0;
+  const mA = tcp.mA;
   return TCP_PAIN_MAX * Math.min(1, Math.max(0, (mA - TCP_PAIN_MA_0) / (TCP_PAIN_MA_FULL - TCP_PAIN_MA_0)));
 }
 
@@ -617,7 +621,7 @@ class Engine implements MonitorEngine {
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
     // FU-8 (B5): the pacer's current joins the instructor's stimulus for this pass (7f and 7e read it), then the held value is restored
-    const tcpNox = tcpNoxious(ps.mods);
+    const tcpNox = tcpNoxious(ps.mods, ps.rhythm.tcpLastPulseT, end / ECG_RATE);
     const stimHeld = ps.neuro.stim;
     const noxHeld = ps.endo.noxious;
     if (tcpNox > 0) {

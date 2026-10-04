@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 
 type St = { endo: { core: { out: { nePgMl: number; epiPgMl: number } } }; hemo: { circ: { mapNow: number; hrModel: number } } };
-async function arm(o: { ga: boolean; mA: number; threshold?: number }) {
+async function arm(o: { ga: boolean; mA: number; threshold?: number; mode?: 'fixed' | 'demand'; noBlock?: boolean }) {
   const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } as never });
   let n = 0;
   const send = (t: number, body: Record<string, unknown>) => e.dispatch({ id: `t${++n}`, issuedBy: 'test', atTick: Math.round(t * 50), ...body } as never);
@@ -22,9 +22,9 @@ async function arm(o: { ga: boolean; mA: number; threshold?: number }) {
   }
   // under GA the block starts 10 s before the pacer (a 4 min anaesthetised CHB 30 collapses before pacing starts)
   const tChb = o.ga ? 290 : 60;
-  send(tChb, { type: 'setRhythm', rhythm: 'avb3Wide', opts: { rateBpm: 30 } });
+  if (!o.noBlock) send(tChb, { type: 'setRhythm', rhythm: 'avb3Wide', opts: { rateBpm: 30 } });
   if (o.threshold !== undefined) send(tChb, { type: 'setTarget', variable: 'paceThresholdMa', value: o.threshold });
-  ev(300, { kind: 'pacer', action: 'set', mode: 'fixed', ratePpm: 70, mA: o.mA });
+  ev(300, { kind: 'pacer', action: 'set', mode: o.mode ?? 'fixed', ratePpm: o.mode === 'demand' ? 50 : 70, mA: o.mA });
   const acc = { pre: { ne: 0, n: 0 }, ne: 0, epi: 0, map: 0, hr: 0, n: 0 };
   for (let t = 5; t <= 600; t += 5) {
     e.advanceTo(t);
@@ -58,5 +58,14 @@ describe('FU-8 B5: transcutaneous pacing is painful when awake, not under analge
     console.log(`fu8 B5 GA: 100 mA ${f(hi)}; 40 mA ${f(lo)}`);
     expect(Math.abs(hi.ne / lo.ne - 1)).toBeLessThanOrEqual(0.1);
     expect(Math.abs(hi.map / lo.map - 1)).toBeLessThanOrEqual(0.1);
+  });
+  // final-review finding I-1: the pain follows the pulses DELIVERED, not the set current — a demand pacer the patient's own
+  // rhythm inhibits delivers nothing (before the fix: NE 275 → 717, MAP 97 → 142 with no pace spike at all)
+  it('awake sinus (≈ 69/min), DEMAND 50 ppm at 100 mA: the pacer is inhibited, so noradrenaline and MAP stay within ± 2 % of the same rig at 0 mA', async () => {
+    const hi = await arm({ ga: false, mA: 100, mode: 'demand', noBlock: true });
+    const off = await arm({ ga: false, mA: 0, mode: 'demand', noBlock: true });
+    console.log(`fu8 B5 inhibited demand: 100 mA ${f(hi)}; 0 mA ${f(off)}`);
+    expect(Math.abs(hi.ne / off.ne - 1)).toBeLessThanOrEqual(0.02);
+    expect(Math.abs(hi.map / off.map - 1)).toBeLessThanOrEqual(0.02);
   });
 });
