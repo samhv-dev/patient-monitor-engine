@@ -25,32 +25,32 @@
       "rr": 14
     },
     {
-      "simT": 37.1,
+      "simT": 37.2,
       "what": "pressed \"Give propofol 2 mg/kg\"",
       "state": "inducedByButton",
       "hr": 100,
-      "art": "111.1/90.3 (97.3)",
+      "art": "111.1/90.2 (97.3)",
       "spo2": 96,
       "etco2": 35,
       "rr": 14
     },
     {
-      "simT": 147.1,
+      "simT": 146.6,
       "what": "arterial mean < 40",
       "state": "inducedByButton",
       "hr": 40,
-      "art": "49.2/33.3 (37.9)",
-      "spo2": 80,
+      "art": "49.6/33.5 (38.1)",
+      "spo2": 81,
       "etco2": 0,
       "rr": 4
     },
     {
-      "simT": 155.6,
+      "simT": 154.8,
       "what": "2 min after propofol",
       "state": "inducedByButton",
       "hr": 40,
-      "art": "38.7/28.5 (31.6)",
-      "spo2": 82,
+      "art": "39.6/28.9 (32.1)",
+      "spo2": 83,
       "etco2": 0,
       "rr": 4
     },
@@ -69,14 +69,14 @@
     "running": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nPropofol given: After induction: compensation lost\nYou press \"Give propofol 2 mg/kg\": After induction: compensation lost\nGive propofol 2 mg/kg\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
     "alarmButtonAfterLoad": "Alarms off",
     "sessionBar": "M 58 y 80 kg MODELED Severe tamponade, then induction: Tamponade, compensating 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
-    "afterPropofol": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n02:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "afterPropofol": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n02:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
       "what": "arterial mean after propofol",
       "expected": "< 40 mmHg (within 5 min sim)",
-      "observed": "113.1 s",
+      "observed": "112.7 s",
       "pass": true
     },
     {

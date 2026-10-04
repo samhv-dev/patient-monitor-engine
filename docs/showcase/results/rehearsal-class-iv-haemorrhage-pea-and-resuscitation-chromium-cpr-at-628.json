@@ -2,10 +2,10 @@
   "case": "Class IV haemorrhage, PEA and resuscitation",
   "browser": "chromium",
   "server": "perl (through the launcher)",
-  "base": "http://127.0.0.1:8703",
+  "base": "http://127.0.0.1:8701",
   "steps": [
     {
-      "simT": 5,
+      "simT": 4.6,
       "what": "loaded \"Class IV haemorrhage, PEA and resuscitation\" at ×4",
       "state": "bleeding",
       "hr": null,
@@ -15,47 +15,47 @@
       "rr": null
     },
     {
-      "simT": 128.3,
+      "simT": 125.2,
       "what": "2 min of bleeding",
       "state": "bleeding",
-      "hr": 82,
-      "art": "113.7/83.1 (93.2)",
+      "hr": 81,
+      "art": "113.6/82.6 (92.8)",
       "spo2": 99,
       "etco2": 35,
       "rr": 12
     },
     {
-      "simT": 260.4,
+      "simT": 245.5,
       "what": "4 min of bleeding",
       "state": "bleeding",
-      "hr": 97,
-      "art": "106.7/83 (90.4)",
+      "hr": 95,
+      "art": "108/82.7 (90.7)",
       "spo2": 99,
       "etco2": 33,
       "rr": 12
     },
     {
-      "simT": 366.3,
+      "simT": 366,
       "what": "6 min of bleeding",
       "state": "bleeding",
-      "hr": 121,
-      "art": "98.2/80.4 (85.5)",
+      "hr": 119,
+      "art": "98.9/80.3 (85.6)",
       "spo2": 99,
       "etco2": 31,
       "rr": 13
     },
     {
-      "simT": 484.6,
+      "simT": 485.7,
       "what": "8 min of bleeding",
       "state": "bleeding",
-      "hr": 140,
-      "art": "74.6/60.7 (65.1)",
+      "hr": 138,
+      "art": "74.9/61 (65.3)",
       "spo2": 99,
       "etco2": 27,
       "rr": 13
     },
     {
-      "simT": 604,
+      "simT": 604.6,
       "what": "pulse lost (systolic < 20 or static arterial pressure)",
       "state": "bleeding",
       "hr": 106,
@@ -73,53 +73,50 @@
       "noPulseAlarm": null
     },
     {
-      "simT": 631.7,
+      "simT": 633.6,
       "what": "pressed \"Start CPR, 2 L and epinephrine\"",
       "state": "resuscitation",
-      "hr": 57,
-      "art": "null/null (14.9)",
+      "hr": 69,
+      "art": "null/null (11.6)",
       "spo2": 99,
-      "etco2": 18,
+      "etco2": 17,
       "rr": 15
     },
     {
-      "simT": 1112.5,
+      "simT": 887.4,
       "what": "arterial systolic > 90",
       "state": "resuscitation",
-      "hr": 100,
-      "art": "53.4/22.9 (33.9)",
+      "hr": 121,
+      "art": "129.7/77 (99.9)",
       "spo2": 99,
-      "etco2": 19,
+      "etco2": 16,
       "rr": 12
     },
     {
-      "simT": 1116.2,
+      "simT": 890.9,
       "what": "pressed \"Pulse back: stop CPR\"",
       "state": "rosc",
-      "hr": 89,
-      "art": "53.9/23.3 (34.2)",
+      "hr": 119,
+      "art": "157.5/103.6 (123.9)",
       "spo2": 99,
-      "etco2": 19,
+      "etco2": 17,
       "rr": 12
     },
     {
-      "simT": 1174.4,
+      "simT": 949.5,
       "what": "1 min after stopping CPR (observation only)",
       "state": "rosc",
-      "hr": 91,
-      "art": "null/null (11.4)",
-      "spo2": null,
-      "etco2": 9,
+      "hr": 77,
+      "art": "131.6/88.6 (102.5)",
+      "spo2": 99,
+      "etco2": 34,
       "rr": 12,
-      "minSys20to60": null
+      "minSys20to60": 125.3
     },
     {
       "alarmsRaised": [
         "500 s SPO2 LOW PERFUSION",
-        "603 s IBP1 STATIC PRESSURE",
-        "633 s ECG VFIB",
-        "1119 s IBP1 STATIC PRESSURE",
-        "1123 s SPO2 NO PULSE"
+        "603 s IBP1 STATIC PRESSURE"
       ]
     }
   ],
@@ -132,9 +129,9 @@
     "running": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Start CPR, 2 L and epinephrine\": CPR, 2 L warmed fluid, epinephrine 1 mg\nStart CPR, 2 L and epinephrine\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
     "alarmButtonAfterLoad": "Alarms off",
     "sessionBar": "M 35 y 75 kg MODELED Class IV haemorrhage, PEA and resuscitation: Bleeding 2.5 L over 10 min 00:03 00:03 ×1 ×2 ×4 Pause Bookmark",
-    "afterCpr": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Pulse back: stop CPR\": Return of circulation\nPulse back: stop CPR\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterStopCpr": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:59\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "afterCpr": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Pulse back: stop CPR\": Return of circulation\nPulse back: stop CPR\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "afterStopCpr": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n01:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
@@ -146,8 +143,8 @@
     {
       "what": "circulation returns during CPR",
       "expected": "arterial systolic > 90 within 7 min sim",
-      "observed": "not within 8 min (max 63.2)",
-      "pass": false
+      "observed": "4.3 min",
+      "pass": true
     },
     {
       "what": "\"Pulse back: stop CPR\" moves the scenario on",
