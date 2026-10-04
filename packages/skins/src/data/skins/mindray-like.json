@@ -20,6 +20,7 @@
   },
   "layout": { "badge": "LAYOUT UNVERIFIED", "messageBars": "split-technical-physiological" },
   "alarms": {
+    "wording": { "texts": { "abpNonPulsatile": "ART NON-PULSATILE", "abpDisconnect": "ART DISCONNECT", "abpZero": "ART ZEROING", "tempProbeOff": "T1 NO TRANSDUCER" }, "limitLabels": { "ART_S": "ART S", "ART_D": "ART D", "ART_M": "ART M", "EtCO2": "EtCO2", "EtCO2_pctV": "EtCO2", "TEMP": "T1" } },
     "pause": { "durationS": 120 }, "numericStyle": "flash-box", "messageBar": { "L1": { "bg": "#FF0000", "fg": "#FFFFFF" }, "L2": { "bg": "#FFFF00", "fg": "#000000" }, "L3": { "bg": "#00FFFF", "fg": "#000000" } },
     "silence": { "mode": "acknowledge", "durationS": null, "suppressesVisual": false, "cancelOnNewAlarm": true, "headerCountdown": false, "technicalActsAsAck": true },
     "latching": { "visual": "off", "audible": "off" },
@@ -59,6 +60,7 @@
   },
   "co2": { "sidestreamDelayS": 3.5, "riseTimeMs": 280 },
   "provenance": {
+    "alarms.wording": { "tag": "inferred", "source": "research/11 §5.16 rule 2 and §5.1 conventions (GE/Mr/Dr/NK/Sa \"ART\", GE/Mr/Sa \"EtCO₂\" and \"T1\"; Philips keeps ABP/etCO2/Temp); FU-5 R-FU5-6, Stage 9 E-S9-4" },
     "co2.sidestreamDelayS": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
     "co2.riseTimeMs": { "tag": "documented", "source": "research/09 §5 (Mindray DRYLINE; R39-5)" },
     "colors.ECG": { "tag": "documented", "source": "research/05 §2.1 (ECG 'normally green')" },

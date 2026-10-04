@@ -28,7 +28,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { CI_LPM_PER_KG, coRefLpm, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -38,7 +38,9 @@ import { circPtx, circSideFlows, writeCircPvr } from '../lung/circ-link.ts'; // 
 import { mechParams } from '../lung/side.ts'; // Stage 7b
 import { chestWallPressure, unitPressure } from '../lung/mechanics.ts'; // FU-4 F3: the one-way valve's driving pressure
 import { PTX_DRAIN_TAU_S, PTX_VALVE_PER_CMH2O_S } from '../lung/params.ts'; // FU-4 F3
-import { lungStatePayload } from '../lung/state-event.ts'; // Stage 7b
+import { aeratedFrc, lungStatePayload } from '../lung/state-event.ts'; // Stage 7b; 7k: aeratedFrc (one bedside FRC)
+import { breathMechanics, deadSpaceSet, expHold, inspHold, pesEstimate, type DeadSpace, type Mechanics } from '../lung/breath.ts'; // Stage 7k (R57)
+import { actualVolumes, closingCapacity, pattern, predictedVolumes, type Actual, type Predicted } from '../lung/volumes.ts'; // Stage 7k (R57)
 import { LUNG_CONDITION_IDS, type LungClinicalEvent, type LungConditionSpec } from '../../types-lung.ts'; // Stage 7b
 import {
   alveolarVentilation, breathSignal, chestVolume, checkDrive, createDriver, cycleAt, frameAt, nominalRate,
@@ -132,6 +134,14 @@ export interface RespState {
   ptxAcc: number;
   /** FU-4 F3: the catalogue ceiling the accumulation climbs toward (mmHg, 0 = no pneumothorax). */
   ptxCeil: number;
+  /** Stage 7k (R57): the last breath's mechanics (per breath; `kind` 'spont' leaves the positive-pressure fields null). */
+  mechanics?: Mechanics;
+  /** Stage 7k: the dead-space set of the last breath (VD anat/app/alv/phys, Enghoff VD/VT, PĒCO2). */
+  vd?: DeadSpace;
+  /** Stage 7k: static volumes (1 Hz): the bedside FRC, the PFT set (seated) and the forced expiration; `pred` = ECSC/Zapletal. */
+  volumes?: Omit<Actual, 'fe'> & { frc: number; cc: number | null; pattern: string; pred: Predicted; fe: Actual['fe'] };
+  /** Stage 7k machinery (out of truth, E-7k-1): the running Ppeak, the end-expiratory hold of the breath in progress, the patient constants. */
+  brk: { pk: number; peepTot: number; pesEe: number; ageY: number; bmi: number; pred: Predicted };
   out: EngineEvent[];
 }
 
@@ -159,6 +169,7 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
     beats: [], beatSeq: -1, shownCo2: 0, lungKey: '', lungCore: '', lungT: -1e12, out: [],
     lung: createLung(resolveLung(profile?.lungConditions ?? [], pat.ibwKg).lp, pat.frcGaMl, 0.14, 140), // Stage 7b
     lungSpecs: [...(profile?.lungConditions ?? [])], mainstemCmd: null, recruit: null, circPtx: 0, ptxAcc: 0, ptxCeil: 0,
+    brk: createBrk(profile, pat), // Stage 7k (R57)
   };
   rs.driver.vent = { ...rs.driver.vent, ...ventDefaults(pat, profile?.ageY ?? 40) }; // FU-4 F4 / R1(c): per-patient ventilator defaults
   applyLungSpecs(rs); // Stage 7b: mainstem from the profile's conditions
@@ -602,6 +613,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     c.rr = breathing ? n.rr : 0;
     c.vt = breathing ? n.vt : 0;
   }
+  if (rs.gasK % 10 === 0) updateVolumes(rs); // Stage 7k (R57)
   lungStateEvent(rs, t, l1);
   if (rs.gasK % 10 === 0 && rs.gasK > 0) emitSecond(rs, t);
 }
@@ -623,6 +635,59 @@ function lungStateEvent(rs: RespState, t: number, l1?: L1State): void {
   rs.lungCore = core;
   rs.lungT = t;
   rs.out.push({ type: 'lungState', t, ...ev });
+}
+
+// --- Stage 7k (R57): per-breath mechanics and the volume set ---------------------------------------------------
+const mechSource = (rs: RespState) => rs.driver.source === 'ventilator' || rs.driver.source === 'bvm' || rs.driver.source === 'external';
+/**
+ * Stage 7k: the oesophageal-pressure ESTIMATE (cmH2O; lung/breath.ts, F4 ruling). Awake and spontaneous: the lung
+ * model's own pleural pressure (West: ≈ −5 at FRC). Supine and ventilated or anaesthetised: the balloon's supine value
+ * + the pleural change from the relaxation volume (the lung's chest-wall recoil on a passive breath, 7a's swing on a
+ * spontaneous one).
+ */
+function pesNow(rs: RespState, t: number): number {
+  if (!mechSource(rs) && gaLevel(rs) < 0.5) return respPleural(rs, t) / CMH2O_TO_MMHG;
+  const ptx = Math.max(rs.lung.lp.pPtx, rs.circPtx) / CMH2O_TO_MMHG;
+  const d = mechSource(rs) ? chestWallPressure(rs.lung.mp, rs.lung.mech) + (rs.lung.mech.pMus ?? 0) + ptx : (respPleural(rs, t) - P_PL0) / CMH2O_TO_MMHG;
+  return pesEstimate(d, rs.brk.bmi);
+}
+/** Stage 7k: the patient constants of the measurement (predicted volumes, BMI for the Pes estimate); height as gasPatient's. */
+function createBrk(profile: PatientProfile | undefined, pat: GasPatient): RespState['brk'] {
+  const ageY = profile?.ageY ?? 40;
+  const heightCm = profile?.heightCm ?? defaultHeightCm(ageY);
+  return { pk: 0, peepTot: 0, pesEe: 0, ageY, bmi: pat.weightKg / (heightCm / 100) ** 2, pred: predictedVolumes({ ageY, sex: profile?.sex ?? 'M', heightCm }) };
+}
+const setPeep = (rs: RespState) => (rs.driver.source === 'ventilator' ? rs.driver.vent.peep : rs.driver.source === 'external' && rs.driver.ext ? rs.driver.ext.peep : 0);
+/** End-expiration (the next sample starts an inspiration): the expiratory hold on a copy and the end-expiratory Pes. */
+function breathStart(rs: RespState, t: number): void {
+  rs.brk.peepTot = mechSource(rs) ? expHold(rs.lung.mp, rs.lung.mech) : 0; // a hold needs a ventilator (D3)
+  rs.brk.pesEe = pesNow(rs, t);
+  rs.brk.pk = rs.lung.mech.paw;
+}
+/** End-inspiration (the next sample is not inspiratory flow): Ppeak, the inspiratory hold on a copy, the dead-space set. */
+function breathEnd(rs: RespState, l1: L1State, t: number): void {
+  const ls = rs.lung;
+  const vt = ls.mech.v.reduce((a, v, u) => a + Math.max(0, v - (ls.v0[u] as number)), 0);
+  if (!(vt > 5)) return;
+  const mech = mechSource(rs) && (cycleAt(rs.driver, t - 1e-3)?.mech ?? true);
+  const ppeak = Math.max(rs.brk.pk, ls.mech.paw);
+  // F7: Rinsp needs square flow — not a breath held at the VCV Pmax (FU-6 D18), not an external (link) PCV/PSV frame
+  const limited = rs.driver.source === 'external' || (rs.driver.source === 'ventilator' && ppeak >= (rs.driver.vent.pmax ?? VCV_PMAX_DEFAULT) - 0.05);
+  rs.mechanics = breathMechanics({
+    t, mech, limited, vt, ti: t - ls.tInsp, peep: setPeep(rs), ppeak, pplat: mech ? inspHold(ls.mp, ls.mech) : 0, peepTot: rs.brk.peepTot,
+    pesEi: pesNow(rs, t), pesEe: rs.brk.pesEe, elErs: 1 - staticCompliance(ls) / ls.mp.ccw,
+  });
+  const art = mech || rs.driver.airway !== 'patent';
+  const vdS = deadSpace(rs, l1);
+  rs.vd = deadSpaceSet({ vt, vdSeries: vdS, vdApp: art && mechSource(rs) ? Math.min(vdS, apparatusDeadSpaceMl(rs.pat.weightKg)) : 0, paco2: rs.co2.pf, pico2: rs.driver.fico2, e: ls.co2.e, phi: rs.co2.flow });
+}
+/** 1 Hz: the static volumes (predicted × the resolved lung) and the forced expiration; the bedside FRC is the lung's. */
+function updateVolumes(rs: RespState): void {
+  const ls = rs.lung;
+  const aerCond = ls.lp.side.map((sp) => Math.max(0.02, 1 - sp.atel - sp.consol));
+  const a = actualVolumes(rs.brk.pred, ls.lp, rs.lungSpecs, aerCond);
+  const frc = aeratedFrc(ls, frcNow(rs));
+  rs.volumes = { ...a, frc, cc: rs.brk.ageY >= 18 ? closingCapacity(rs.brk.pred, rs.brk.ageY, FRC_AWAKE_ML_KG * rs.pat.ibwKg) : null, pattern: pattern(a, rs.brk.pred), pred: rs.brk.pred };
 }
 
 function emitSecond(rs: RespState, t: number): void {
@@ -676,11 +741,15 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const m = rs.m;
     const t = m / RESP_RATE;
     const ld = lungDrive(rs, t); // Stage 7b: mechanics at 250 Hz (4 sub-steps per sample)
+    const inspNext = ld.mode === 'flow' && ld.x > 0; // Stage 7k: breath boundaries for the per-breath measurement
+    if (!rs.lung.inInsp && inspNext) breathStart(rs, t);
+    else if (rs.lung.inInsp && !inspNext) breathEnd(rs, ctx.l1, t);
     const wasInsp = rs.lung.inInsp;
     const pb = buckPressure(rs, t); // FU-6 R9
     if (pb > 0) rs.lung.mech.pMus = pb;
     else delete rs.lung.mech.pMus;
     lungMechStep(rs.lung, ld.mode, ld.x, DT, ld.pLimit); // FU-6 R7: the VCV pressure limit
+    if (rs.lung.inInsp && rs.lung.mech.paw > rs.brk.pk) rs.brk.pk = rs.lung.mech.paw; // Stage 7k: Ppeak of the breath
     if (wasInsp && !rs.lung.inInsp && rs.driver.source === 'ventilator') {
       // FU-6 R7: a pressure-limited breath delivers less than the set VT — the cycle carries what the lung received
       const c = cycleAt(rs.driver, t);

@@ -23,7 +23,7 @@ describe('7b lung paths: curated labels and units', () => {
     ['resp.lung.co2.pA.0', 'L fast unit PACO₂', 'mmHg', 1],
     ['resp.lung.mp.units.3.rIn', 'R slow unit R insp', 'cmH₂O/L/s', 1000],
     ['resp.lung.lp.ccw', 'Chest-wall compliance', 'mL/cmH₂O', 1],
-    ['resp.lung.peepTot', 'Total PEEP', 'cmH₂O', 1],
+    ['resp.lung.peepTot', 'Mean end-expiratory alveolar pressure', 'cmH₂O', 1], // Stage 7k (R56): PEEPtot is the expiratory-hold reading, resp.mechanics.peepTot
   ] as const)('%s → "%s" (%s)', (path, label, unit, scale) => {
     expect(metaOf(path)).toMatchObject({ label, unit, scale });
     expect(metaOf(path).rank).toBeLessThan(Number.POSITIVE_INFINITY);

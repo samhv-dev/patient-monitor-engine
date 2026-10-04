@@ -53,6 +53,8 @@ export interface L1State {
   pinned: StateVar[];
   /** Stage 3: coupled truths (coupling rules and the gas/temperature models); absent → the ramp is the truth. */
   coupled?: Partial<Record<L1Var, number>>;
+  /** Stage 9 (E-S9-5): in MODELED mode, each held value's target from before the hold; a release puts it back. */
+  preHold?: Partial<Record<L1Var, number>>;
 }
 
 export function createL1State(profile?: PatientProfile): L1State {

@@ -240,9 +240,9 @@ export class HostSession {
     const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);
     if (cmd.type === 'scenario') return this.scenario(cmd);
-    if (cmd.type === 'pin' || cmd.type === 'release' || cmd.type === 'setFactor' || cmd.type === 'setMode') {
-      return reject(`${cmd.type} needs MODELED mode (Stage 7)`);
-    }
+    // Stage 9 (E-S9-2): pin, release and setMode go to the engine, which validates them (7a implemented MODELED; this
+    // guard predated it and refused every pin from a panel or a remote). setFactor reaches the engine too and is refused
+    // there with its own reason until the engine models factors.
     // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
     let c = cmd as Command;
     if (cmd.stageGroup) {

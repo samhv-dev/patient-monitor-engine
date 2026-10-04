@@ -60,6 +60,7 @@ const SLOW = [
   'test/engine/tension-ptx.test.ts', // FU-4 F3: three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
+  'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
   'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population (SLOW_A)
   'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms (SLOW_A)
   'test/engine/stimulus-surge.test.ts', // FU-7 Task 10: ≈ 40 ventilated arms of 10–60 sim-min (SLOW_A)
@@ -93,6 +94,7 @@ const SLOW_A = [
   'test/engine/lung-r14.test.ts',
   'test/engine/resp-child-baseline.test.ts',
   'test/engine/resp-suite.test.ts',
+  'test/engine/resp-mechanics.test.ts', // Stage 7k (R50 F1): slow-b ran 37.6 of its 40 min at G-FU4
   // FU-7 (executor instruction, 2026-09-30): every new FU-7 slow file joins SLOW_A as well (slow-b ran 58 min at G-FU6).
   'test/engine/drug-apnoea.test.ts',
   'test/engine/cat-reserve-engine.test.ts',

@@ -1,7 +1,7 @@
 // Panel and remote CSS, injected once per document. Touch-sized (≥ 44 px targets) for iPad use.
 export const PANEL_CSS = `
-.pme-drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);background:#111c;color:#ddd;
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-left:1px solid #333;z-index:2147483000;
+.pme-drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,92vw);background:#111;color:#ddd;
+  border-left:1px solid #333;z-index:2147483000;
   transform:translateX(100%);transition:transform .18s ease-out;display:flex;flex-direction:column;
   font:14px system-ui,sans-serif}
 .pme-drawer[data-open="true"]{transform:none}
