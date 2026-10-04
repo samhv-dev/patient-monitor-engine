@@ -42,9 +42,12 @@ describe('Stage 7g long run', () => {
   // leaves the effect site 0.4 % above its target after 6 h. Measured 2.5098 on CI (run 37135534941) and on the Mac;
   // main 2.5 (within ± 0.005). The TCI band is unchanged (orchestrator ruling at G-FU9): an open-loop TCI pump does not
   // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
-  it.fails(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5098 with FU-9 (main within the band)`, { timeout: 1_800_000 }, async () => {
+  // FU-8 B4 (E-FU8B-3): flipped — anaesthesia now removes the tonic sympathetic share, so this rig's cardiac output (and
+  // with it FU-9's flow-limited hepatic clearance) sits where the open-loop TCI's own model expects it again.
+  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — back within the band after FU-8 B4 (2.5098 with FU-9; main within the band before FU-9)`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;
+    console.log(`pk-longrun ${LONGRUN_HOURS} h propofol Ce ${l.drugs.find((x) => x.id === 'propofol')!.ce.toFixed(4)}`);
     expect(l.drugs.find((x) => x.id === 'propofol')!.ce).toBeCloseTo(2.5, 2);
   });
 });
