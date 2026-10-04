@@ -1562,7 +1562,7 @@ t½ 8 h and multiplies the cortisol RESPONSE (ruling R-9: 8 h for a single induc
 
 **Measured:** ET-34 cortisol at 4 h **1031 vs 1575 nmol/L = 0.655** (TS → PL; engine test 0.653). ET-15a: post-induction MAP **70.02 vs 73.51**, surgical **−4.1** mmHg (engine test −4.2; band beyond 5 → `it.fails`), phenylephrine **0.68** of normal (PL), cortisol **233 vs 532**. Healthy patients bit-identical in every stress row (ET-16a–c within 0.4 nmol/L of cortisol).
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 In `packages/engine-core/src/l2/endo/params.ts`, find:
 
@@ -1885,9 +1885,9 @@ describe('FU-10 E10/E13: etomidate and adrenal insufficiency', { timeout: 900_00
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/engine/fu10-adrenal.test.ts test/engine/endo-acceptance.test.ts test/engine/endo-circ-acceptance.test.ts` → green.
-- [ ] **Step — the ET runner.** `./run.sh cli.ts ET-34 ET-15a ET-16 ET-26b`.
-- [ ] **Commit and push.** `git add -A packages/engine-core && git commit -m "feat(7e): etomidate suppresses the cortisol response; adrenal insufficiency is a basal deficit (FU-10 E10, E13)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/engine/fu10-adrenal.test.ts test/engine/endo-acceptance.test.ts test/engine/endo-circ-acceptance.test.ts` → green.
+- [x] **Step — the ET runner.** `./run.sh cli.ts ET-34 ET-15a ET-16 ET-26b`.
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "feat(7e): etomidate suppresses the cortisol response; adrenal insufficiency is a basal deficit (FU-10 E10, E13)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 

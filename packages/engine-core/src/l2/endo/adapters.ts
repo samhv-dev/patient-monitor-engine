@@ -17,7 +17,7 @@ import { mhActivity } from '../thermal/mh.ts';
 import type { ThermalState } from '../thermal/heat.ts';
 import type { EndoInputs } from './core.ts';
 import { dextroseBolus, dextroseInfusion, insulinBolus, insulinInfusion } from './glucose.ts';
-import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ, INSDEX_DEXTROSE_G_PER_UNIT } from './params.ts';
+import { ANTINOC_GA_FALLBACK, EPI_EXO_PG_PER_RATE_EQ, ETOM_SUPPR_REF_MG_KG, INSDEX_DEXTROSE_G_PER_UNIT } from './params.ts';
 import type { EndoCtx, EndoState } from './pipeline.ts';
 
 type Neuro = { antinoc?: number; nmb?: number; thermoDepth?: number };
@@ -105,7 +105,10 @@ export function observeDoses(es: EndoState, pk: PkLike | undefined): void {
   for (const d of pk?.bus?.doses ?? []) {
     if (d.agent === 'dextrose') dextroseBolus(es.core.glucose, d.amountUnit === 'mg' ? d.amount / 1000 : d.amount, es.weightKg);
     else if (d.agent === 'insulin' && d.amountUnit === 'units') insulinBolus(es.core.glucose, d.amount, es.weightKg);
-    else if (d.agent === 'insulinDextrose' && d.amountUnit === 'units') { // FU-10 E8
+    else if (d.agent === 'etomidate') { // FU-10 E10: 11β-hydroxylase suppression for hours after one induction dose
+      const perKg = d.amountUnit === 'mg/kg' ? d.amount : d.amountUnit === 'mg' ? d.amount / es.weightKg : 0;
+      if (perKg > 0) es.core.etomSuppr = Math.min(1, (es.core.etomSuppr ?? 0) + perKg / ETOM_SUPPR_REF_MG_KG);
+    } else if (d.agent === 'insulinDextrose' && d.amountUnit === 'units') { // FU-10 E8
       insulinBolus(es.core.glucose, d.amount, es.weightKg);
       dextroseBolus(es.core.glucose, d.amount * INSDEX_DEXTROSE_G_PER_UNIT, es.weightKg);
     }

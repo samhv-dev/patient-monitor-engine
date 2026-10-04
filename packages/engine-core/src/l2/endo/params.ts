@@ -51,6 +51,32 @@ export const CORT_EC50 = 400; // nmol/L above basal for its metabolic effects
 export const CORT_SI_LOSS = 0.8; // insulin resistance: SI × 0.42 at cortisol 1500 (tables stress SI × 0.3–0.5)
 export const CORT_EGP_X = 0.3; // gluconeogenesis
 export const CORT_VASO_RESP = 0.3; // vasopressor responsiveness (adrenal insufficiency: ×0.5 of cortisol) [TXT]
+/**
+ * FU-10 E13 — untreated adrenal insufficiency is a BASAL deficit, not only a blunted stress rise: the resting cortisol
+ * is low, so the permissive support of vascular tone is already missing before any stress (Annane D et al., Crit Care
+ * Med 2017;45:2078 / Intensive Care Med 2017 (the glucocorticoid-deficiency guidelines: vasopressor-dependent
+ * hypotension reversed by hydrocortisone); Miller 10e ch. 35). Before FU-10 `cortResponse` 0.5 halved only the stress
+ * RISE, so the resting patient was exactly normal (research/14 ET-15a). [ENG size: a basal cortisol at half normal,
+ * the same fraction the stress response already carried.]
+ */
+export const AI_CORT_BASAL_F = 0.5;
+/**
+ * FU-10 E13 — cortisol is PERMISSIVE for vascular tone: below the basal level the vessels lose part of their resting
+ * resistance (the vasoplegia of glucocorticoid deficiency; Annane 2017). × on SVR = 1 − CORT_SVR_PERMISSIVE · (1 −
+ * cortisol/basal), applied BELOW basal only (a high cortisol does not raise SVR: the receptor is saturated) [ENG size:
+ * the ET-15a target is a lower resting/post-induction MAP that a vasopressor answers poorly].
+ */
+export const CORT_SVR_PERMISSIVE = 0.25;
+/**
+ * FU-10 E10 — one induction dose of etomidate inhibits 11β-hydroxylase, so the adrenal cannot make cortisol for hours
+ * (Wagner RL, White PF et al., NEJM 1984;310:1415; Absalom A, Pledger D, Kong A, Anaesthesia 1999;54:861 [VERIFY]).
+ * The suppression follows the dose with a first-order recovery (t½ chosen inside the sources' 6–12 h) and multiplies the
+ * adrenal's cortisol RESPONSE (`cortResponse`), so the resting level is untouched and the surgical rise is blunted.
+ * ETOM_SUPPR_MAX at the 0.3 mg/kg reference dose [ENG: the ET-34 target is cortisol ≤ 0.8 × propofol's at 4 h].
+ */
+export const ETOM_SUPPR_MAX = 0.6;
+export const ETOM_SUPPR_REF_MG_KG = 0.3;
+export const ETOM_SUPPR_T12_S = 8 * 3600;
 
 // --- glucose–insulin (Bergman minimal model, tables §5c; Pulse secretion line annex B3) --------------------------
 export const GB_MGDL = 100; // 5.5 mmol/L

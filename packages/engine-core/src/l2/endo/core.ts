@@ -9,6 +9,7 @@ import { stressEffects, type StressEffects } from './effects.ts';
 import { createGlucose, stepGlucose, type GlucoseState } from './glucose.ts';
 import { createHormones, stepHormones, type HormoneState } from './hormones.ts';
 import {
+  AI_CORT_BASAL_F, ETOM_SUPPR_MAX, ETOM_SUPPR_T12_S,
   EPI_BASAL_PG_ML, HYPO_EPI_THRESHOLD_MGDL, IB_UU_ML, INS_K_PER_UU, INS_N_PER_MIN, MGDL_PER_MMOL, MH_K_EFFLUX, NEUROGLYCOPENIA_MGDL,
   SYMP_HYPOGLY_PER_MGDL, VI_ML_KG,
 } from './params.ts';
@@ -59,6 +60,8 @@ export interface EndoCore {
   glucose: GlucoseState;
   cond: ConditionState;
   x: EndoInputs; // the last inputs (compose reads the β-block, temperature, MH and 7g's bronchodilation from them)
+  /** FU-10 E10: 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
+  etomSuppr?: number;
   out: EndoOut;
 }
 
@@ -103,11 +106,23 @@ export function createEndoCore(profile: EndoProfile = DEFAULT_ENDO_PROFILE, weig
     glucose.iExo = IB_UU_ML;
   }
   const c: EndoCore = {
-    profile, hormones: createHormones(), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg }, out: null as unknown as EndoOut,
+    profile, hormones: createHormones(cortBasalF(profile)), glucose, cond: createConditions(), x: { ...NEUTRAL_ENDO_INPUTS, weightKg },
+    etomSuppr: 0, out: null as unknown as EndoOut,
   };
   c.out = compose(c);
   return c;
 }
+
+/**
+ * FU-10 E10/E13: the adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile (as before) and, on top
+ * of it, suppressed by an 11β-hydroxylase inhibitor the patient has had (etomidate: `etomSuppr`, 0–1).
+ */
+export function cortResponseOf(c: EndoCore): number {
+  return (c.profile.adrenalInsufficiency ? 0.5 : 1) * Math.max(0, 1 - ETOM_SUPPR_MAX * Math.min(1, Math.max(0, c.etomSuppr ?? 0)));
+}
+
+/** FU-10 E13: the × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
+export const cortBasalF = (p: EndoProfile): number => (p.adrenalInsufficiency ? AI_CORT_BASAL_F : 1);
 
 /** β2 bronchodilation of endogenous + 7g epinephrine and 7g's other β2 agonists (independent effects combine). */
 const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.max(0, b)));
@@ -115,7 +130,7 @@ const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.
 function compose(c: EndoCore): EndoOut {
   const p = c.profile;
   const x = c.x;
-  const cortResponse = p.adrenalInsufficiency ? 0.5 : 1;
+  const cortResponse = cortResponseOf(c);
   const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponse);
   const th = thyroidEffects(p.thyroid, c.cond.storm.cur);
   const cd = conditionEffects(c.cond);
@@ -167,13 +182,15 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const g = c.glucose;
   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
   const cd = c.out.cond;
+  // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
+  if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
   stepHormones(c.hormones, {
     noxious: x.noxious, antinoc: x.antinoc, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity,
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
-    cortResponse: c.profile.adrenalInsufficiency ? 0.5 : 1, epiExoPgMl: x.epiExoPgMl,
+    cortResponse: cortResponseOf(c), cortBasalF: cortBasalF(c.profile), epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);
-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, c.profile.adrenalInsufficiency ? 0.5 : 1);
+  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponseOf(c));
   const gp = glucoseProfile(c.profile);
   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
   stepGlucose(g, {

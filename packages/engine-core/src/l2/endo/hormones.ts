@@ -43,12 +43,14 @@ export interface HormoneInputs {
   sao2: number; // 0–1
   paco2: number; // mmHg
   cortResponse: number; // 1 normal, 0.5 adrenal insufficiency / etomidate (tables)
+  /** FU-10 E13: × on the BASAL cortisol target (adrenal insufficiency: a resting deficit, not only a blunted rise). */
+  cortBasalF?: number;
   epiExoPgMl: number; // 7g's epinephrine as plasma pg/mL (0 without 7g)
   mapSetMmHg: number; // FU-4 F2(a): the patient's own mean-pressure set point — the humoral arm's unloading reference
 }
 
-export function createHormones(): HormoneState {
-  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL, cortDrive: 0 };
+export function createHormones(cortBasalF = 1): HormoneState {
+  return { symp: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL * cortBasalF, cortDrive: 0 };
 }
 
 /** Adrenal (humoral) drive: stress activity plus the metabolic emergencies the baroreflex does not cover. */
@@ -81,6 +83,6 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
   h.ne = neSs + (h.ne - neSs) * Math.exp(-kN * dtS);
   // cortisol: the drive is surgical stress (noxious, not blunted by anaesthesia — Desborough 2000) + adrenal drive
   h.cortDrive = Math.min(2, x.noxious + 0.3 * drive);
-  const cSs = CORT_BASAL * (1 + CORT_GAIN * h.cortDrive * x.cortResponse);
+  const cSs = CORT_BASAL * (x.cortBasalF ?? 1) * (1 + CORT_GAIN * h.cortDrive * x.cortResponse); // FU-10 E13: the basal deficit
   h.cort = cSs + (h.cort - cSs) * Math.exp(-dtS / CORT_TAU_S);
 }

@@ -10,7 +10,7 @@
 import {
   CORT_BASAL, CORT_EC50, CORT_EGP_X, CORT_SI_LOSS, CORT_VASO_RESP, EPI_ALPHA_SVR, EPI_BASAL_PG_ML, EPI_BETA1_EES,
   EPI_BETA1_HR, EPI_BETA2_SVR, EPI_EC50_ALPHA, EPI_EC50_BETA1, EPI_EC50_BETA2, EPI_EC50_METAB, EPI_EGP_X, EPI_K_SHIFT,
-  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0, HUM_SVR, HUM_V0,
+  EPI_SEC_SUPPRESS, EPI_SI_LOSS, G_SYMP_EES, G_SYMP_HR, G_SYMP_SVR, G_SYMP_V0, HUM_SVR, HUM_V0, CORT_SVR_PERMISSIVE,
 } from './params.ts';
 import type { HormoneState } from './hormones.ts';
 
@@ -54,7 +54,8 @@ export function stressEffects(h: HormoneState, bb: BetaBlock, cortResponse: numb
   const co = hill(h.cort - CORT_BASAL, CORT_EC50);
   return {
     hrF: (1 + G_SYMP_HR * h.symp * kHr) * (1 + EPI_BETA1_HR * b1 * kHr),
-    svrF: (1 + G_SYMP_SVR * h.symp) * (1 + EPI_BETA2_SVR * b2) * (1 + EPI_ALPHA_SVR * al),
+    // FU-10 E13: cortisol's permissive effect on resting vascular tone, below basal only
+    svrF: (1 + G_SYMP_SVR * h.symp) * (1 + EPI_BETA2_SVR * b2) * (1 + EPI_ALPHA_SVR * al) * (1 - CORT_SVR_PERMISSIVE * Math.max(0, 1 - h.cort / CORT_BASAL)),
     eesF: (1 + G_SYMP_EES * h.symp * kC) * (1 + EPI_BETA1_EES * b1 * kC),
     dV0Frac: -G_SYMP_V0 * h.symp,
     egpF: (1 + EPI_EGP_X * me) * (1 + CORT_EGP_X * co),
