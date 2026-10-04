@@ -70,7 +70,7 @@ Screenshots are indexed PNGs from `stage9-shots.e2e.ts` (bundled Chromium 1243, 
 | Remote pairing (same browser in v1.0, no QR without a relay) | ![](stage-9/remote-pairing-1280x800.png) | ![](stage-9/remote-pairing-820x1180.png) |
 | Remote panel (a second page joined by code) | ![](stage-9/remote-panel-1280x800.png) | ![](stage-9/remote-panel-820x1180.png) |
 | Explore, heart and circulation | ![](stage-9/explore-haemodynamics-1280x800.png) | ![](stage-9/explore-haemodynamics-820x1180.png) |
-| Explore, respiratory mechanics (7k slot: placeholder) | ![](stage-9/explore-respiratory-1280x800.png) | ![](stage-9/explore-respiratory-820x1180.png) |
+| Explore, respiratory mechanics and volumes (7k's rows; loops to come) | ![](stage-9/explore-respiratory-1280x800.png) | ![](stage-9/explore-respiratory-820x1180.png) |
 | Ventilator — the Stage V cockpit linked to this patient | ![](stage-9/ventilator-1280x800.png) | ![](stage-9/ventilator-820x1180.png) |
 | Validate — the 8a tools | ![](stage-9/validate-1280x800.png) | ![](stage-9/validate-820x1180.png) |
 | Developer — the stage pages | ![](stage-9/developer-1280x800.png) | ![](stage-9/developer-820x1180.png) |
@@ -221,6 +221,10 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
    with the host on its Remote view, passed on CI). Fix (robustness, not a skip): the test pairs the way an instructor
    does — the host shows its Remote view while the remote joins — with 20 s to connect; `stage9-shots` does the same.
    (The Chromium `stage9-tasks` "✘" in that log is the expected failure of task 5, counted as passed.)
+8. **After the 7k merge** (local): typecheck clean; fast set — engine-core 1,255 passed / 1 skipped, controller 224,
+   demo 195, skins 184, renderer 89, validation 107, audio 58, ventilator 96/97 (`ports.test.ts` 5 s timeout under this
+   machine's load again; 3/3 alone; green on CI); Stage 9 e2e on Chromium + WebKit 17 passed, 1 skipped (tasks on WebKit
+   by design); the 56 screenshots re-taken (all ≤ 60 KB).
 
 ### Ali should not demo (what remains true)
 
