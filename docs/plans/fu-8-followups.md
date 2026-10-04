@@ -5584,16 +5584,21 @@ caveat). The states live in four owners — the device layer (`ecg`), Stage 3 (`
 `nibp`, `abp`, `cvp`, `pap`, `pv`) and 7d (`icp`, `pbto2`, `urometer`) — so the map is assembled where all are visible,
 in `engine.ts`, when the hemo pipeline's `state` event passes out (FU-6/FU-7 edit `engine.ts` elsewhere: Part B).
 
-- [ ] **Step 1 — test (write first):** attach `spo2 motion`, detach `cvp`, attach `co2 on`; within 2 s the next `state` event
+- [x] **Step 1 — test (write first):** attach `spo2 motion`, detach `cvp`, attach `co2 on`; within 2 s the next `state` event
   carries `sensors` with exactly those values and the defaults for the rest; a snapshot/restore round trip keeps it.
-- [ ] **Step 2 — code:** in the loop that forwards committed events, `if (ev.type === 'state') ev.sensors = sensorMap(ps)`
+- [x] **Step 2 — code:** in the loop that forwards committed events, `if (ev.type === 'state') ev.sensors = sensorMap(ps)`
   with `sensorMap` reading `ps.hemo.pleth.state`, `ps.hemo.nibp.sensor`, `ps.hemo.lines.{abp,cvp,pap}.sensor`,
   `ps.hemo.pvOn`, the device layer's ECG lead state, `ps.resp` co2/temp sensor fields and 7d's organ sensors (read their
   field names on the merged tree; no new state). Plain JSON; no per-tick allocation (build it only on `state` events, 1 Hz).
-- [ ] **Step 3 — R45:** no band exists; the test above is new. Controller: `HostSession` forwards `state` unchanged — check
+- [x] **Step 3 — R45:** no band exists; the test above is new. Controller: `HostSession` forwards `state` unchanged — check
   the remote's protocol test still passes.
 
-- [ ] **Commit and push.**
+  **Executed:** before — the `state` event has no `sensors` field (the new test fails: `expected undefined to be defined`, with
+  the hook removed). After — 12 keys (`ecg` from the front end's lead-off/motion artefact, `spo2`, `nibp`, `abp`, `cvp`,
+  `pap`, `pv`, `co2`, `temp`, `icp`, `pbto2`, `urometer`), built in `flush` only for committed `state` events (1 Hz); the
+  three changes show at the next event; a snapshot/restore round trip keeps the map. Controller 39 files / 226 passed;
+  engine typecheck clean. Note: an instructor-set ECG motion artefact reads `ecg: 'motion'` (the same modifier).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/types-hemo.ts packages/engine-core/test/engine/fu8-sensor-map.test.ts

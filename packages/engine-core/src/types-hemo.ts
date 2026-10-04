@@ -51,4 +51,7 @@ export type HemoEvent =
       type: 'state'; t: SimSeconds; tick: number; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
       rhythm?: { id: RhythmId; rateBpm: number }; // FU-2 (G-FU1 item 6): the running rhythm, engine-initiated changes included
+      /** FU-8 (B2, R-S9-6): every sensor's state as `attachSensor` names it (the `state` strings of brief §7.2), so a Remote
+       * can show which sensors are attached. Assembled by the engine when the event is committed (four owners). */
+      sensors?: Partial<Record<SensorId, string>>;
     }; // the brief §7.3 `alarm` event (NIBP INOP) is Stage 5's copy in types.ts

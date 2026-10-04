@@ -36,6 +36,7 @@ import {
   type RhythmOpts,
   type SimSeconds,
 } from './types.ts';
+import type { SensorId } from './types-hemo.ts'; // FU-8 (B2)
 import { version } from './version.ts';
 import { createL1State, l1Target, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
 import {
@@ -125,6 +126,23 @@ interface PipelineState {
   pkHooks: RhythmHookState; // Stage 7g
   neuro: NeuroState; // Stage 7f: NMB, depth, drive depression (R32)
   organs: OrgansState; // Stage 7d: brain, kidney, liver
+}
+
+/**
+ * FU-8 (B2, R-S9-6): the sensor-state map the `state` event carries. The states live with four owners — the ECG front
+ * end (the device layer's lead-off/motion artefact, `mods.artefact`), Stage 3 (co2, temp), the hemo pipeline (spo2,
+ * nibp, the three lines, the teaching channels) and 7d (icp, pbto2, urometer) — and are read here, where all four are
+ * visible; no new state. Values are the `attachSensor` state strings.
+ */
+function sensorMap(ps: PipelineState): Partial<Record<SensorId, string>> {
+  const a = ps.mods.artefact;
+  const h = ps.hemo;
+  return {
+    ecg: a.leadOff ? 'off' : a.motion > 0 ? 'motion' : 'on',
+    spo2: h.pleth.state, nibp: h.nibp.sensor, abp: h.lines.abp.sensor, cvp: h.lines.cvp.sensor, pap: h.lines.pap.sensor,
+    co2: ps.resp.co2Sensor, temp: ps.resp.tempSensor, pv: h.pvOn ? 'on' : 'off',
+    icp: ps.organs.sensors.icp, pbto2: ps.organs.sensors.pbto2, urometer: ps.organs.sensors.urometer,
+  };
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -651,6 +669,7 @@ class Engine implements MonitorEngine {
     this.st.endo.out = keep(this.st.endo.out); // Stage 7e
     this.st.organs.out = keep(this.st.organs.out); // Stage 7d
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
+    for (const e of due) if (e.type === 'state') e.sensors = sensorMap(this.st); // FU-8 (B2, R-S9-6): 1 Hz, built only here
     return due;
   }
 
