@@ -2266,7 +2266,7 @@ its cost (10–13 %/°C, the ET cell's own grade). The writer's first draft — 
 withdrawn (review F2: nearly twice the anaesthetised metabolic heat of 64 W, and it moved the septic propofol row of
 `audit:physiology`).
 
-- [ ] **Step — the edits and the new files** (each find matches exactly once in application order):
+- [x] **Step — the edits and the new files** (each find matches exactly once in application order):
 
 Create `packages/engine-core/test/engine/fu10-fever.test.ts`:
 
@@ -2290,8 +2290,8 @@ describe('FU-10 E11: fever under general anaesthesia (withdrawn, ruling R-3)', {
 });
 ```
 
-- [ ] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu10-fever.test.ts` → both `it.fails` hold.
-- [ ] **Commit and push.** `git add -A packages/engine-core && git commit -m "test(7e): fever under anaesthesia recorded as it.fails pending Ali (FU-10 E11, ruling R-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
+- [x] **Step — run.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu10-fever.test.ts` → both `it.fails` hold.
+- [x] **Commit and push.** `git add -A packages/engine-core && git commit -m "test(7e): fever under anaesthesia recorded as it.fails pending Ali (FU-10 E11, ruling R-3)" -m "Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>" && git push`
 
 ---
 
