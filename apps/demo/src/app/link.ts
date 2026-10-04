@@ -26,6 +26,8 @@ export class Link {
   readonly log: ClinicalLogEntry[] = [];
   /** Per-target onset in progress (REALITi's trend arc): the panel draws progress from sim time. */
   readonly ramps = new Map<string, { t0: number; dur: number; to: number }>();
+  /** Acute events started from this panel (Task 26): id → severity. The engine does not report them, so a Remote sees only its own. */
+  readonly conditions = new Map<string, number>();
   private readonly fns = new Set<() => void>();
   private readonly offs: Array<() => void>;
   private lastRaised = new Set<string>();
@@ -33,6 +35,7 @@ export class Link {
   constructor(ctl: ControllerSession, transport: ManagedTransport, host: AppSession | null = null) {
     this.ctl = ctl;
     this.host = host;
+    host?.onMount(() => this.conditions.clear()); // a new body (restart, scenario) starts with none
     this.offs = [
       transport.onMessage((m: WireMessage) => {
         if (m.kind !== 'event') return;
@@ -53,6 +56,11 @@ export class Link {
     const ramp = (c as { ramp?: { durationS?: number } }).ramp?.durationS;
     if (r.accepted && (c.type === 'setTarget' || c.type === 'pin') && ramp) this.ramps.set(c.variable, { t0: this.simT, dur: ramp, to: c.value ?? 0 });
     if (r.accepted && (c.type === 'setTarget' || c.type === 'pin' || c.type === 'release') && !ramp) this.ramps.delete(c.variable);
+    const ev = c.type === 'applyEvent' ? (c.event as { kind?: string; id?: string; severity?: number }) : null;
+    if (r.accepted && ev?.kind === 'condition' && typeof ev.id === 'string') {
+      if ((ev.severity ?? 0) > 0) this.conditions.set(ev.id, ev.severity ?? 0);
+      else this.conditions.delete(ev.id);
+    }
     this.add({ simT: this.simT, kind, text, ...(r.accepted ? {} : { refused: r.reason ?? 'refused' }) });
     return r;
   }

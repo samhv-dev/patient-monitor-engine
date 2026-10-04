@@ -2,7 +2,7 @@
 // shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the DOM of a
 // clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
 import { DRUGS, type StateVar } from '@pme/engine-core';
-import { DRUG_NAMES, GLOSSARY, GLOSSARY_S9, KEY_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
+import { DRUG_NAMES, GLOSSARY, GLOSSARY_S9, KEY_LABELS, LUNG_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
 
 export type { GlossaryEntry } from './glossary-data.ts';
 export const ALL_ENTRIES: readonly GlossaryEntry[] = [...GLOSSARY_S9, ...GLOSSARY]; // S9 first: its split rows win the exact keys
@@ -157,3 +157,9 @@ export const DISPLAY_SCALE: Readonly<Record<string, number>> = {
   'ev.organs.brain.cbf': 50, 'ev.organs.brain.cmro2': 3.3, 'ev.organs.liver.hbfRel': 1.5, 'ev.state.values.fio2': 100, 'l1.coupled.fio2': 100,
   'ev.lungState.atelectasisFrac': 100, 'ev.lungState.vqAdmixture': 100, 'mon.tofRatio': 1,
 };
+
+/** Task 26: the short screen name of a 7b lung condition (the catalogue's full text belongs in its tooltip). */
+export function lungLabel(id: string, catalogueLabel = ''): string {
+  return LUNG_LABELS[id] ?? (catalogueLabel.split(/ \(| \//)[0] || 'Lung condition');
+}
+

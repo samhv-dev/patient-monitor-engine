@@ -419,3 +419,19 @@ export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>>
   sugammadex: { name: "Sugammadex" }, thiopental: { name: "Thiopental" }, vasopressin: { name: "Vasopressin" },
   vecuronium: { name: "Vecuronium" },
 };
+
+/**
+ * Task 26: short screen names for the 7b lung catalogue (the catalogue's full text, with its grading notes, goes in the
+ * tooltip). Reviewed with the glossary; an id missing here shows the catalogue text up to its first "(" or " /".
+ */
+export const LUNG_LABELS: Readonly<Record<string, string>> = {
+  ph: 'Pulmonary hypertension', bronchospasm: 'Bronchospasm', asthma: 'Asthma', anaphylaxis: 'Anaphylactic bronchospasm', copd: 'COPD',
+  ards: 'ARDS', ild: 'Pulmonary fibrosis', ssc: 'Systemic sclerosis', chestWall: 'Chest-wall restriction', obesity: 'Obesity',
+  pneumonia: 'Pneumonia', atelectasis: 'Lobar collapse', pulmOedema: 'Pulmonary oedema', effusion: 'Pleural effusion',
+  ptxSimple: 'Pneumothorax', ptxTension: 'Tension pneumothorax', haemothorax: 'Haemothorax', pe: 'Pulmonary embolism',
+  fatEmbolism: 'Fat embolism', vae: 'Venous air embolism', aspiration: 'Aspiration', olv: 'One-lung ventilation',
+  endobronchial: 'Endobronchial intubation', bpf: 'Bronchopleural fistula', airwayObstruction: 'Tracheal or tube obstruction',
+  cf: 'Cystic fibrosis', nmWeakness: 'Neuromuscular weakness', diaphragmParalysis: 'Diaphragmatic paralysis', pregnancy: 'Pregnancy',
+  neonatalRds: 'Neonatal RDS', covidPneumonitis: 'Viral pneumonitis', smokeInhalation: 'Smoke inhalation',
+};
+

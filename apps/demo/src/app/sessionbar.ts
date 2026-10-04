@@ -4,6 +4,7 @@
 import type { Link } from './link.ts';
 import { cardOf } from './scenarios.ts';
 import { oneLiner } from './patients.ts';
+import { activeText } from './events.ts';
 import { vitalLabel } from './vitals.ts';
 import type { StateVar } from '@pme/engine-core';
 import { bookmark } from './commands.ts';
@@ -43,7 +44,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     const host = link.host;
     const p = link.ctl.scenario.doc?.patient;
     // a Remote knows the patient only from the loaded scenario; the status pill says whether it is connected
-    setText(who, host ? oneLiner(host.spec) : p ? [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' ') : '');
+    const base = host ? oneLiner(host.spec) : p ? [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' ') : '';
+    setText(who, [base, ...activeText(link.conditions)].filter(Boolean).join(' · ')); // Task 26: the acute events running
     const m = link.ctl.state?.mode ?? host?.mode ?? 'manual';
     const n = m === 'modeled' ? held().length : 0;
     badge.dataset.mode = m;

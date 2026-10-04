@@ -3,7 +3,7 @@
 // conditions and rhythms by their catalogue labels.
 import { DRUGS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { unitText } from './drugs.ts';
-import { drugName } from './glossary.ts';
+import { drugName, lungLabel } from './glossary.ts';
 import { showVital, vitalLabel, vitalOf } from './vitals.ts';
 import { rhythmLabel } from './rhythms.ts';
 
@@ -22,6 +22,8 @@ const grade = (sev: unknown): string => {
 export const CONDITIONS: Readonly<Record<string, string>> = {
   tamponade: 'Cardiac tamponade', pe: 'Pulmonary embolism', tensionPtx: 'Tension pneumothorax', rvInfarct: 'Right-ventricular infarction',
   anaphylaxis: 'Anaphylaxis', mh: 'Malignant hyperthermia', last: 'Local anaesthetic toxicity', burns: 'Burns', dka: 'Diabetic ketoacidosis', sepsis: 'Sepsis',
+  thyroidStorm: 'Thyroid storm', sirs: 'Systemic inflammatory response', hypermetabolic: 'Hypermetabolic state', tbi: 'Traumatic brain injury',
+  hepaticFailure: 'Acute liver failure', aki: 'Acute kidney injury',
 };
 export const SENSORS: Readonly<Record<string, string>> = {
   ecg: 'ECG leads', spo2: 'SpO₂ probe', nibp: 'NIBP cuff', abp: 'Arterial line', cvp: 'CVP line', pap: 'PA catheter', co2: 'CO₂ sampling line', temp: 'Temperature probe',
@@ -62,7 +64,7 @@ function event(e: Any): string {
       return e.mode === 'off' ? 'Pacer off' : `Pacer ${e.mode}, ${e.ratePpm} /min, ${e.mA} mA${e.pause ? ' (paused)' : ''}`;
     case 'lungCondition': {
       const c = LUNG_CONDITIONS.find((x) => x.id === e.id);
-      return `${c?.label ?? 'Lung condition'}: ${grade(e.severity)}${e.side ? ` (${e.side === 'L' ? 'left' : 'right'})` : ''}`;
+      return `${lungLabel(String(e.id), c?.label ?? '')}: ${grade(e.severity)}${e.side ? ` (${e.side === 'L' ? 'left' : 'right'})` : ''}`;
     }
     case 'condition':
       return `${CONDITIONS[String(e.id)] ?? 'Condition'}: ${grade(e.severity)}`;

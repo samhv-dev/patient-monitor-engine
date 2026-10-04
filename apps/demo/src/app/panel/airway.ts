@@ -5,7 +5,8 @@ import { LUNG_CONDITIONS } from '@pme/engine-core';
 import { lungCondition, ventilation } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';
 import { hrefOf } from '../router.ts';
-import { button, h, seg, select, stepper } from '../ui.ts';
+import { button, h, seg, select, setText, stepper } from '../ui.ts';
+import { lungLabel } from '../glossary.ts';
 import type { PanelCtx } from './ctx.ts';
 
 const AIRWAY: Array<[string, string]> = [
@@ -33,13 +34,17 @@ export function airwayTab(c: PanelCtx): HTMLElement {
   settings.hidden = true;
 
   const conds = LUNG_CONDITIONS.filter((x) => x.id !== 'pregnancy');
-  const cond = select('Condition', conds.map((x) => [x.id, x.label]), conds[0]?.id ?? '');
+  // short names from the glossary (Task 26); the catalogue's full text is each option's tooltip and the hint below
+  const cond = select('Condition', conds.map((x) => [x.id, lungLabel(x.id, x.label)]), conds[0]?.id ?? '');
+  for (const o of cond.sel.options) o.title = conds.find((x) => x.id === o.value)?.label ?? '';
+  const condHint = h('p', { class: 'hint' });
   let severity = 0.67;
   const sev = seg<string>('Severity', [['0.33', 'Mild'], ['0.67', 'Moderate'], ['1', 'Severe']], '0.67', (v) => (severity = Number(v)));
   let side: '' | 'L' | 'R' = '';
   const sideSeg = seg<'' | 'L' | 'R'>('Side', [['L', 'Left'], ['R', 'Right']], 'R', (v) => (side = v));
   const syncSide = () => {
     const d = conds.find((x) => x.id === cond.sel.value);
+    setText(condHint, d?.label ?? '');
     sideSeg.hidden = !d?.sided;
     side = d?.sided ? (d.defaultSide ?? 'R') : '';
     if (side) sideSeg.set(side);
@@ -53,7 +58,7 @@ export function airwayTab(c: PanelCtx): HTMLElement {
     h('div', { class: 'row' },
       button('Stage', () => stage(ventilation(source, rr.value, vt.value, peep.value, fio2.value / 100), 'ventilation')),
       h('a', { class: 'btn ghost', href: hrefOf('vent') }, 'Open the ventilator')),
-    h('h3', {}, 'Lung condition'), cond.el, sev, sideSeg,
+    h('h3', {}, 'Lung condition'), cond.el, condHint, sev, sideSeg,
     h('div', { class: 'row' },
       button('Stage', () => stage(lungCondition(cond.sel.value, severity, side), `lung-${cond.sel.value}`)),
       button('Remove', () => stage(lungCondition(cond.sel.value, 0, side), `lung-${cond.sel.value}`), 'ghost')),
