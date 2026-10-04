@@ -163,28 +163,134 @@ propofol 1 none → 910 s; B2/B7 830 → 765 s; B6 1135 → 910 s; B9 760 → 74
   does not edit the glossary; the orchestrator's brief assigns numbers from 339 with a renumber at merge.
 - **E-FU8B-6.** The plan's `fu8-tonic` test is split: healthy in S1 and 80 y / HFrEF ≥ 5 points more stay `it`; the
   untreated-HTN row becomes `it.fails`, measured 4.96 points (−35.27 vs −30.31 %). See the gate revision in §2.
+- **E-FU8B-7.** Two FU-6 RS14 pins flip: `resp-inspired-co2` and `resp-suite` "FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10".
+  EtCO2 goes from +5.98 to +6.1 and PaCO2 is +6.7. This anaesthetised rig's output moves with the tonic share.
+- **E-FU8B-8.** FU-7's `drug-apnoea` DI-89 "0 s of flag-while-breathing" becomes `it.fails`, measured **1 s**. At
+  t = 540 the first breath after the apnoea (4.1/min, VE 0.11) comes one sample before the flag clears at 541. This is an
+  edge offset of the flag, not breathing under a standing flag. I could not fix it inside Part B's files; it goes to
+  the FU-7 owner.
 - The plan's E-FU8-7 (`baroreflex.ts`, FU-4's file) applies as declared.
 
-## 7. Showcase rehearsal (KIT-GATE.md procedure, final head `ef79e74e`)
-The kit was built into the scratchpad. Five cases plus the clock check ran on Chromium and WebKit through the perl
-launcher: **12/12 PASS**. `docs/showcase` was restored afterwards. (A first rehearsal on `70124113`, with the prototype's
-`brainF` line, was also 12/12.)
+## 7. Showcase rehearsal (KIT-GATE.md procedure; final merged head `a531c739` = FU-8 Part B + main `cdf95a2c` incl. FU-9 Part B)
+The kit was built into the scratchpad (`VERSION.txt` `a531c739…`). Five cases plus the clock check ran on Chromium and
+WebKit through the perl launcher: **12/12 PASS**. Results were copied out and `docs/showcase` restored. Before the
+merge, the same run was also 12/12 on `70124113` (prototype line) and on `ef79e74e` (final B4).
 
-| Case | KIT-GATE round 2 (f29951b, pre-FU-7) | FU-8 Part B final (Chromium / WebKit) |
+| Case | Round 3 (FU-7 build 4a1cc3f7, the current showcase build) | FU-8 Part B, merged head (Chromium / WebKit) |
 |---|---|---|
-| Healthy induction: apnoea alarm after "Induce now" | 57.1 s / 55.7 s | **59.4 s / 60.4 s** (check ≤ 70: PASS) |
-| Healthy induction: MAP | 94.8 → 71.5 / 71.4 | **94.8 → nadir 65.6** (PASS) |
-| Healthy induction: CO2 tile after intubation | 46 | 46 / 46 (PASS) |
-| Anaphylaxis: HR at 2 min; systolic > 110 after adrenaline | 135; 11.7 s | 135; 11.2 s (PASS) |
-| Bronchospasm: VTE at 3 min | 162 → 367 | 161 / 160 → **305** (PASS; FU-7's slower recovery) |
-| Tamponade: MAP < 40 after propofol | 112.6 s / 113.1 s | **73.8 s / 73.8 s** (PASS) |
-| Tamponade: at 2 min | HR 40, 41/29 (33) | **pulseless**: IBP1 STATIC PRESSURE at +91 s, SPO2 NO PULSE at +116 s, mean 16 |
-| Haemorrhage: pulse lost; ROSC after CPR | 10:03; 4.3 min | 10:03; 4.3 min (PASS) |
-| Second load restarts the clock | 02:02 → 00:05 | 02:04 → 00:04 / 02:03 → 00:05 (PASS) |
+| Healthy induction: apnoea alarm after "Induce now" (≤ 70 s) | 55.0 / 55.0 s | **59.4 / 59.1 s** (PASS) |
+| Healthy induction: MAP baseline → nadir | 94.8 → 71.7 / 71.6 | **94.8 → 65.6** (PASS; −6 mmHg) |
+| Healthy induction: CO2 tile after intubation | 45 | 45 (PASS) |
+| Anaphylaxis: HR at 2 min; systolic > 110 after adrenaline | 135; 11.3 / 11.4 s | 135; 11.3 / 11.4 s (PASS) |
+| Bronchospasm: VTE before → 3 min → 6 min | 162 → 304 → 368 | 160 / 162 → 305 → 368 (PASS) |
+| Tamponade: MAP < 40 after propofol | 112.7 / 112.7 s | **74.7 / 74.7 s** (PASS) |
+| Tamponade: 2 min after propofol | (pulsatile; round 2: HR 40, 41/29) | **pulseless**: "IBP1 STATIC PRESSURE" ≈ +92 s, mean 15.7, HR 45 |
+| Haemorrhage: pulse lost; "SPO2 NO PULSE"; ROSC after CPR | 10:03; 10:40; 4.3 min | 10:03; 10:40; 4.3 min (PASS) |
+| Haemorrhage: 1 min after "Pulse back" | 132/89, HR 78 | 132/89, HR 78 |
+| Second load restarts the clock | 02:04 → 00:05 | 02:04 → 00:03 / 02:03 → 00:04 (PASS) |
 
-For the run sheet:
-- The tamponade case now reaches PEA about 1.5 min after propofol. Before, the patient was still pulsatile at 2 min.
-- The induction nadir is 6 mmHg deeper.
-- The apnoea alarm comes about 3–5 s later.
+For the run sheet, if FU-8 Part B enters the showcase build:
+- **Tamponade:** the case reaches PEA about 1.5 min after propofol. Before, the patient was still pulsatile at 2 min.
+- **Induction:** the nadir is 6 mmHg deeper and the apnoea alarm about 4 s later.
+- **Other cases:** unchanged.
 
-## 8. Verification at the gate (final head `ef79e74e`, main `28ee2297` merged)
+## 8. Verification at the gate (final merged head `a531c739`: Part B + main `cdf95a2c`, FU-9 Part B merged)
+**Commands:**
+- `pnpm -r typecheck`: clean.
+- `pnpm build`: OK.
+- `check-notices`: OK (3 governed files).
+
+**Engine `CI=1`, all six slow groups** (local wall time; machine shared with other executors):
+
+| Group | Files | Tests | Result | Wall time |
+|---|---|---|---|---|
+| fast | 308 | 1,372 + 1 skipped | pass | 88 s |
+| slow-a | 31 | 80 | pass | 719 s |
+| slow-b | 38 | 204 | pass | 624 s |
+| slow-c | 16 | 44 | pass | 854 s |
+| slow-d | 19 | 118 | pass | 752 s |
+| slow-e | 5 | 34 | pass | 555 s |
+| slow-f | 3 | 59 | pass | 491 s |
+
+**Packages:**
+
+| Package | Tests | Result |
+|---|---|---|
+| controller | 226 | pass |
+| renderer | 90 | pass |
+| skins | 191 | pass |
+| demo | 200 | pass |
+| validation | 107 + 11 skipped | pass |
+| ventilator | 97 | pass |
+
+**End-to-end:** Stage 9 and the showcase e2e (`stage9-*`, `showcase-*`) on Chromium + WebKit: 30 passed, 6 skipped
+(the heavy shots run Chromium only). The rewritten stage-9 screenshots were reverted.
+
+**Showcase rehearsal:** 12/12 (§7).
+
+**Physiology audit** (`audit:physiology`, before = `4a1cc3f7`, after = the B4 final tree): see §3 and §5.
+
+**Slow-group placement.** The new slow files match `fu8-*`, so they are in slow-a:
+
+| File | Local time |
+|---|---|
+| `fu8-tcp-pain` | 13.3 s |
+| `fu8-tonic` | 8.9 s |
+| `fu8-sensor-map` | 0.2 s |
+
+Together that is about 22 s locally, roughly 60 s on CI. slow-a locally went from 653 to 719 s, the latter including
+the merge.
+
+**What the full runs found.** The first full run on the B4 commit failed FU-9 H1/F5 in slow-c, which led to the gate
+revision. The second run, on `ef79e74e`, failed RS14 ×2 in slow-d (pins flip, E-FU8B-7) and DI-89 in slow-f (pinned,
+E-FU8B-8). After these, every group is green.
+
+**The tick bench** (validation `tick-bench`): it failed once at load average 120–250 and passed in the final package
+run.
+
+**Main moves still to merge:**
+- **FU-10 Part A** (`origin/fu-10-endocrine-thermal`, not yet merged) brings glossary 339–347, a seventh group slow-g
+  and E-FU10-14. E-FU10-14 makes the `insulinDextrose` row's insulin lower K⁺ through 7g's insulin PD.
+- **B1's insulin change touches only the INFUSION reference** (`refRatePerKg` on the `insulin` row), not the bolus path
+  E-FU10-14 uses, so the two do not duplicate.
+- **Reconcile at the merge:**
+  - `insulinDextrose` keeps `gammaPk(10, false, …, 0.1/60)`. If an infusion of that combined row is meant to be
+    possible, it should take the same per-kg reference (`…, true`); otherwise B1 refuses nothing there, because the row
+    has an infusion reference.
+  - FU-10's `pk-longrun` returns that row to `it` as E-FU8B-3 does. Expect a textual conflict with the same outcome.
+  - Renumber glossary entry 339 to 348 if FU-10 lands first.
+  - Place `fu8-*` in whichever group CI amendment 6 assigns.
+
+## 9. Final review
+I dispatched a fresh reviewer (Opus) on the B1–B5 range. It found no Critical issues; I graded its findings as
+follows.
+
+**I-1, fixed.** An inhibited demand pacer still caused pain.
+- Commit `2d75cca3`: the pain now follows delivered pulses.
+- The new test went red to green: 1.21 → 0.
+- Pacing tests: 181 passed.
+
+**I-2, declared, not reverted.** DV-08b/08c moved against the plan's "unchanged" line; this is now E-FU8B-4.
+
+**Deferred minors:**
+- **M-1:** the stimulus add-and-restore has no try/finally. A side effect: above 40 mA a non-paralysed patient's
+  depth index reads EMG noise (7f's `stim.level > 0` rule).
+- **M-2:** `maxDose` is checked only at boluses, so an infusion's accrued total warns only at the next bolus.
+- **M-3:** the controller's `StateEvent` type has no `sensors` field. An instructor-set ECG motion artefact reads as
+  `ecg: 'motion'`.
+- **M-4:** the glossary edit, now declared as E-FU8B-5.
+- **M-5:** test re-readings:
+  - "ΔHR > 0" is tested as the sinus-node rate.
+  - "Unpaced reflex" is tested as 40 mA against 100 mA at the same capture.
+  - The B5 GA row is a guard: it passes on the base too.
+
+## 10. Not done / for the orchestrator
+- **The P-1 cross-cutting perfusion-floor audit is not in this branch.** The 15:20 ruling moved it to FU-12. The
+  physiology audit's arrest table above (§5) is the raw material for it.
+- **The insulinDextrose per-kg question** (above).
+- **Owner sizes:**
+  - HFrEF propofol −41 to −42 % (DI-47 and CM-06b TS).
+  - The HTN extra fall of 4.96 points (E-FU8B-6).
+  - Awake TCP MAP 142 at 100 mA.
+  - These sit with A23 and W25 (8).
+- **The B4 line choice:** `outF` only, as delivered, against the prototype's `outF × brainF` (§2 gate revision).

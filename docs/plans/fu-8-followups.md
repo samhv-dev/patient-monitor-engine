@@ -491,6 +491,9 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   stay `it`; "untreated HTN 60 y ≥ 5 points more" becomes `it.fails` measured 4.96 points (−35.27 vs −30.31 %). Cause: the
   tonic share is removed by `outF` only (see the B4 gate revision); with the prototype's `o = outF × brainF` it was 5.6 points
   but FU-9's GA-kidney H1 (0.49 < 0.5 mL/kg/h) and massive-transfusion F5 ("no arrest" → arrest) rows broke through `cbfRel`.
+- **E-FU8B-7** (Task B4, gate): FU-6 RS14 pins flip in `resp-inspired-co2` and `resp-suite` (EtCO2 +5.98 → +6.1).
+- **E-FU8B-8** (Task B4, gate): FU-7 `drug-apnoea` DI-89 "0 s flag-while-breathing" → `it.fails`, measured 1 s (a one-sample
+  edge at the end of the apnoea, t 540/541).
 
 ## Handed to (items another plan owns, with the reason)
 
