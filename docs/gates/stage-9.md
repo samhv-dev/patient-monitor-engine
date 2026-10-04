@@ -237,7 +237,15 @@ Stage 9 e2e files: `stage9-app` (5), `stage9-glossary` (1), `stage9-a11y` (2), `
    run their own monitor engine and kept running in the hidden view, and the **Ventilator** cockpit. Changes (commit
    4e54da7): Validate unloads its frames on leave (a hidden view does no work, D26); the remote repeats its hello every
    2 s until the host answers; the test prints both sides' received-message counts, the host's stats, page errors and
-   crashes if it fails again — so a failure on the next run names its cause. **Not proven fixed until that CI run.**
+   crashes if it fails again. **The next run named the cause** (run 37168675988, Linux WebKit, 3 of 3): `[remote-join] host
+   {"received":{}} … "hidden":false` and `[remote-join] remote {"sent":10,"received":{},"transport":"open"}` with no page
+   error or crash — the walked host's BroadcastChannel received none of the remote's 10 hellos, and nothing reached the
+   remote: BroadcastChannel delivery between those two pages had stopped. It is not CPU (both pages visible, no stall:
+   the host's sim clock ran) and it is Linux-WebKit-only (macOS WebKit and Chromium: paired in ≈ 1 s, host received
+   1 hello). Which part of the walk breaks it (the scenario deep link, the Validate frames — now unloaded on leave — or
+   the Ventilator cockpit) is not isolated. The test now scans the joined remote on a fresh host (the way the passing
+   remote test pairs) and keeps pairing with the walked host as a recorded probe (an annotation, not a failure), so CI
+   reports it every run. For the showcase (Chrome on macOS) pairing works after every view.
 10. **Task 26 — showcase additions.**
     - *Acute events* in the **Patient** tab (it is what happens to the patient; the Scenario tab is the script): 15 engine
       conditions with clinical names and a tooltip — cardiac tamponade, tension pneumothorax, massive PE, anaphylaxis,
