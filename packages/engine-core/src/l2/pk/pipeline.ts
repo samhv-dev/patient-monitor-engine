@@ -2,7 +2,7 @@
 // the PD combination. Outputs: pk.fx (7a DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce, volatiles,
 // the dose log; R51 §2–3), pk.out (1 Hz `drugs`). 7g consumes EVERY library drug event (decision 10).
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent } from '../../types-pk.ts';
+import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
 import { STATE_SCHEMA } from '../../l1/state.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
@@ -251,6 +251,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   const bloodBolusOnly = `${row.id} is given as a bolus in v1; 7c owns its kinetics`;
   if (ev.kind === 'infusion') {
     if (row.pk.kind === 'blood') return bloodBolusOnly;
+    if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia) return `${row.id} has no infusion model: give it as a bolus`; // FU-8 (B1)
     const c = ev as Extract<PkClinicalEvent, { kind: 'infusion' }>;
     if (!(c.rate >= 0 && Number.isFinite(c.rate))) return 'rate must be ≥ 0';
     const perMl = c.concentration ? toAmount(c.concentration.amount, c.concentration.unit, row.amountUnit, w) : row.syringePerMl;
@@ -262,10 +263,18 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4'; // Stage 7d E-7d-1
   const isRate = d.unit.includes('/min') || d.unit.includes('/h');
   if (row.pk.kind === 'blood' && (isRate || d.infusion)) return bloodBolusOnly;
+  // FU-8 (B1): the route is explicit — the engine's kinetics are intravenous; any other route is refused, not given as IV
+  const routes = row.routes ?? IV_ROUTES;
+  if (d.route !== undefined && !routes.includes(d.route)) return `${row.id}: route ${d.route} is not modelled — the engine gives ${routes.join(', ')} doses only`; // an event without a route (scenario/oracle JSON) is IV, as before
+  // FU-8 (B1): a curve-based row without an infusion reference cannot act as an infusion (it was accepted and did nothing)
+  if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia && (isRate || d.infusion)) return `${row.id} has no infusion model: give it as a bolus`;
   if (!isRate && d.dose === 0) return 'dose must be > 0';
   const r = isRate ? toRate(d.dose, d.unit as never, row.amountUnit, w, row.syringePerMl) : toAmount(d.dose, d.unit, row.amountUnit, w, row.syringePerMl);
   return typeof r === 'string' ? r : undefined;
 }
+
+/** FU-8 (B1): the routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
+export const IV_ROUTES: readonly PkRoute[] = ['iv', 'io', 'central'];
 
 /** Apply a validated command. True for every drug/infusion/tci/vaporiser command (7g consumes them all, R51 §3). */
 export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
@@ -297,7 +306,7 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   }
   const refScale = row.pk.kind === 'gamma' ? row.pk.refDose * (row.pk.perKg ? w : 1) : 1;
   const setRate = (amountPerMin: number) => {
-    if (row.pk.kind === 'gamma') d.infTarget = row.pk.refRate ? amountPerMin / (row.pk.refRate * (row.pk.perKg ? w : 1)) : 0;
+    if (row.pk.kind === 'gamma') d.infTarget = row.pk.refRate ? amountPerMin / (row.pk.refRate * ((row.pk.refRatePerKg ?? row.pk.perKg) ? w : 1)) : 0; // FU-8 (B1)
     d.rate = amountPerMin; // Stage 7e (E-7e-4): the ordered rate, gamma rows too (their PK never reads it; 7e reads insulin/dextrose here)
     d.rateUntil = NEVER;
   };
@@ -317,6 +326,13 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
     } else {
       const amt = toAmount(ev.dose, ev.unit, row.amountUnit, w, row.syringePerMl) as number;
       logDose(amt);
+      // FU-8 (B1): above the documented maximum → a warning event; the dose is given as ordered (no silent clamp)
+      const mx = row.maxDose;
+      if (mx) {
+        const lim = mx.amount * (mx.perKg ? w : 1);
+        const given = mx.scope === 'cumulative' ? d.total + amt : amt;
+        if (given > lim + 1e-9) pk.out.push({ type: 'drugWarning', t, drugId: row.id, text: `${row.name}: ${mx.scope === 'cumulative' ? 'cumulative ' : ''}${+given.toFixed(1)} ${row.amountUnit} exceeds the maximum ${+lim.toFixed(1)} ${row.amountUnit} (${mx.src})` });
+      }
       if (ev.overS && ev.overS > 0 && row.pk.kind !== 'gamma') {
         d.rate = (amt / ev.overS) * 60; // `total` accrues as the rate runs (stepOnce)
         d.rateUntil = t + ev.overS;

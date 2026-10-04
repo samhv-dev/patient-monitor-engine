@@ -5554,12 +5554,19 @@ Replace with:
   | BloodEvent // Stage 7c (types-blood.ts)
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/endo test/l2/blood test/engine/blood-hyperk.test.ts test/engine/endo-seams.test.ts`,
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/endo test/l2/blood test/engine/blood-hyperk.test.ts test/engine/endo-seams.test.ts`,
 the fast set, then `npx -y pnpm@9.15.9 --filter @pme/validation test && npx -y pnpm@9.15.9 --filter @pme/demo test`. Prototype:
 fast set 269 files green; validation 107 passed / 11 skipped (the oracle documents send drug events without a route);
 demo 141.
+  **Executed (FU-8 Part B, base 4a1cc3f7):** before — insulin 0.1 units/kg/h glucoseDelta −118.31 / kShift −1.183 at 60 min;
+  IM adrenaline accepted; amiodarone infusion accepted; no warning for lidocaine 3 + 2 mg/kg. After — −60.00 / −0.600; IM refused
+  with the reason; amiodarone infusion refused; one `drugWarning` (350 > 315 mg). Curve rows without an infusion model on the
+  merged tree: 23 (FU-7 added glucagon, procainamide, verapamil). Verify: pk/endo/blood subset 58 files / 284 passed; fast set
+  306 files / 1 369 passed + 1 skipped; demo 24 / 200; validation 106 passed / 11 skipped + the tick-bench p50 (5.69 ms vs
+  the local 2 ms bound at load average 120–250 from other executors — a load artefact, re-run at the gate). The insulin test
+  yields per sim-minute (CI rule; the plan's block advanced 3 600 s in one call).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/pk/row.ts packages/engine-core/src/l2/pk/pipeline.ts packages/engine-core/src/l2/pk/data/rows-other.ts packages/engine-core/src/types-pk.ts packages/engine-core/src/types.ts packages/engine-core/test/l2/pk/fu8-insulin-ref.test.ts packages/engine-core/test/l2/pk/fu8-dose-rules.test.ts
