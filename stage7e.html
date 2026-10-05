@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stage 7e: endocrine, glucose and thermoregulation</title>
+  <style>
+    body { margin: 0; background: #000; color: #ddd; font: 13px system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: 100vh; }
+    #monitor { min-height: 0; height: 100vh; }
+    aside { padding: 8px 10px; overflow: auto; border-left: 1px solid #333; }
+    fieldset { border: 1px solid #333; margin: 0 0 6px; padding: 4px 8px; }
+    legend { color: #888; }
+    button, select { margin: 2px; font: inherit; }
+    .pme-endo { font: 13px ui-monospace, monospace; margin: 4px 0 8px; }
+    .pme-endo [data-level='amber'] { color: #ffbf40; }
+    .pme-endo [data-level='red'] { color: #ff5c5c; }
+    #log { white-space: pre; font: 11px ui-monospace, monospace; color: #8f8; }
+  </style>
+  <script type="module" crossorigin src="./assets/stage7e-BvfUkSGs.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/truth-v705DCbR.js">
+  <link rel="modulepreload" crossorigin href="./assets/context-BzoOqa4m.js">
+  <link rel="modulepreload" crossorigin href="./assets/alarm-voice-WqLzLFNG.js">
+  <link rel="modulepreload" crossorigin href="./assets/clock-C_fpNLDt.js">
+  <link rel="modulepreload" crossorigin href="./assets/engine-CvroiKVw.js">
+  <link rel="modulepreload" crossorigin href="./assets/engine.worker-CDYQpNpj.js">
+  <link rel="modulepreload" crossorigin href="./assets/wave-lanes-DQlLuakQ.js">
+  <link rel="modulepreload" crossorigin href="./assets/sweep-lane-DLt-pTEF.js">
+  <link rel="modulepreload" crossorigin href="./assets/numerics-dom-C5bX6zwA.js">
+  <link rel="modulepreload" crossorigin href="./assets/mount-Dfy8R3uc.js">
+  <link rel="modulepreload" crossorigin href="./assets/relay-frames-BH4hSqru.js">
+</head>
+<body>
+  <div id="monitor"></div>
+  <aside>
+    <div id="endo"></div>
+    <fieldset><legend>Scenario (restarts the patient)</legend>
+      <button id="mh">MH crisis (GA, ventilated)</button>
+      <button id="hypo">Hypothermia under GA</button>
+      <button id="sepsis">Sepsis warm → cold (MODELED)</button>
+      <button id="gluc">Diabetic hypoglycaemia under GA</button>
+    </fieldset>
+    <fieldset><legend>MH</legend>
+      <button id="dant">Dantrolene 2.5 mg/kg</button><button id="mv">Double MV (RR 24)</button>
+    </fieldset>
+    <fieldset><legend>Temperature</legend>
+      <button id="warmOn">Forced air on</button><button id="warmOff">Forced air off</button>
+      <button id="cold">2 L crystalloid over 30 min</button><button id="warmer">Fluid warmer</button>
+      <button id="emerge">Emerge (anaesthesia off)</button>
+    </fieldset>
+    <fieldset><legend>Glucose</legend>
+      <button id="d50">D50 25 g</button><button id="insStop">Stop insulin</button>
+    </fieldset>
+    <fieldset><legend>Speed</legend>
+      <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4" selected>×4</option></select>
+    </fieldset>
+    <div id="log"></div>
+  </aside>
+</body>
+</html>

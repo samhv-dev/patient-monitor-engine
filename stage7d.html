@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stage 7d: brain, kidney, liver</title>
+  <style>
+    body { margin: 0; background: #000; color: #ddd; font: 13px system-ui, sans-serif; display: grid; grid-template-columns: minmax(0, 1fr) 380px; height: 100vh; }
+    #monitor { min-height: 0; height: 100vh; }
+    aside { padding: 8px 10px; overflow: auto; border-left: 1px solid #333; }
+    fieldset { border: 1px solid #333; margin: 0 0 6px; padding: 4px 8px; }
+    legend { color: #888; }
+    button, select { margin: 2px; font: inherit; }
+    button[aria-pressed='true'] { background: #2a2; color: #000; }
+    .tile { display: inline-block; min-width: 104px; margin: 2px 6px 2px 0; }
+    .tile b { font-size: 28px; font-weight: 500; }
+    .tile small { display: block; color: #888; }
+    .status { color: #f33; }
+    #organs { white-space: pre; font: 11px ui-monospace, monospace; color: #9c9; margin: 4px 0; }
+    #trend { background: #050505; border: 1px solid #333; }
+  </style>
+  <script type="module" crossorigin src="./assets/stage7d-CdOUk94f.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/truth-v705DCbR.js">
+  <link rel="modulepreload" crossorigin href="./assets/context-BzoOqa4m.js">
+  <link rel="modulepreload" crossorigin href="./assets/alarm-voice-WqLzLFNG.js">
+  <link rel="modulepreload" crossorigin href="./assets/clock-C_fpNLDt.js">
+  <link rel="modulepreload" crossorigin href="./assets/engine-CvroiKVw.js">
+  <link rel="modulepreload" crossorigin href="./assets/engine.worker-CDYQpNpj.js">
+  <link rel="modulepreload" crossorigin href="./assets/wave-lanes-DQlLuakQ.js">
+  <link rel="modulepreload" crossorigin href="./assets/sweep-lane-DLt-pTEF.js">
+  <link rel="modulepreload" crossorigin href="./assets/numerics-dom-C5bX6zwA.js">
+  <link rel="modulepreload" crossorigin href="./assets/mount-Dfy8R3uc.js">
+  <link rel="modulepreload" crossorigin href="./assets/relay-frames-BH4hSqru.js">
+</head>
+<body>
+  <div id="monitor"></div>
+  <aside>
+    <div>
+      <span class="tile" id="tIcp"><small>ICP mmHg</small><b>--</b> <span></span><em class="status"></em></span>
+      <span class="tile" id="tPbto2"><small>PbtO2 mmHg</small><b>--</b> <em class="status"></em></span>
+      <span class="tile" id="tUop"><small>UO mL/h</small><b>--</b> <span></span><em class="status"></em></span>
+    </div>
+    <canvas id="trend" width="360" height="110" title="last 30 min: ICP (white), CPP (green), UOP mL/kg/h × 20 (yellow)"></canvas>
+    <div id="organs"></div>
+    <fieldset><legend>Brain (TBI)</legend>
+      <button id="restartTbi">TBI profile (restart)</button><button id="restartAdult">Adult (restart)</button><br />
+      <button id="bleed1">Haematoma 1 mL/min</button><button id="bleed0">Stop bleeding</button>
+      <button id="mass15">Mass 15 mL</button><button id="mass28">Mass 28 mL</button><br />
+      <button id="mannitol">Mannitol 1 g/kg</button><button id="hts">HTS 3 % 250 mL</button><br />
+      <button id="hyper">Hyperventilate (RR 30)</button><button id="normo">Normoventilate (RR 18)</button><br />
+      <button id="headUp">Head-up 30°</button><button id="flat">Flat</button><br />
+      <label>Anaesthesia <select id="anaes"><option value="awake">awake</option><option value="propofol">propofol TCI Ce 3</option><option value="sevo">sevoflurane 1.5 MAC</option><option value="iso">isoflurane 1.5 MAC</option><option value="ketamine">ketamine 1.5 mg/kg</option></select></label><br />
+      <button id="sIcp" aria-pressed="true">ICP probe</button><button id="sPbto2" aria-pressed="true">PbtO2 probe</button>
+      <button id="check19">Check 19 (TBI, 1 mL/min)</button>
+    </fieldset>
+    <fieldset><legend>Kidney</legend>
+      <button id="bleed">Bleed (volumeStatus 0.2, 85/50, HR 125 over 60 s)</button><button id="fluids">Fluids (restore over 5 min)</button><br />
+      <button id="furo">Furosemide 40 mg</button><button id="ne">NE 0.1 µg/kg/min</button><button id="neOff">Stop NE</button><button id="map70">MAP 70 (instructor)</button><br />
+      <button id="emptyBag">Empty bag</button><button id="kdigo" aria-pressed="false">KDIGO teaching ×12</button><button id="sUro" aria-pressed="true">Urometer</button>
+    </fieldset>
+    <label>Speed <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="4">×4</option></select></label>
+  </aside>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FU-6: respiratory integration</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 12px; }
+      #monitor { height: 560px; max-width: 1000px; border: 1px solid #333; }
+      .row { display: flex; gap: 8px; flex-wrap: wrap; max-width: 1000px; margin-top: 10px; }
+      #diag { font: 13px ui-monospace, monospace; white-space: pre; color: #8f8; max-width: 1000px; }
+      button { font: inherit; }
+    </style>
+    <script type="module" crossorigin src="./assets/fu6-Cya3KGoR.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/truth-v705DCbR.js">
+    <link rel="modulepreload" crossorigin href="./assets/context-BzoOqa4m.js">
+    <link rel="modulepreload" crossorigin href="./assets/alarm-voice-WqLzLFNG.js">
+    <link rel="modulepreload" crossorigin href="./assets/clock-C_fpNLDt.js">
+    <link rel="modulepreload" crossorigin href="./assets/engine-CvroiKVw.js">
+    <link rel="modulepreload" crossorigin href="./assets/engine.worker-CDYQpNpj.js">
+    <link rel="modulepreload" crossorigin href="./assets/wave-lanes-DQlLuakQ.js">
+    <link rel="modulepreload" crossorigin href="./assets/sweep-lane-DLt-pTEF.js">
+    <link rel="modulepreload" crossorigin href="./assets/numerics-dom-C5bX6zwA.js">
+    <link rel="modulepreload" crossorigin href="./assets/mount-Dfy8R3uc.js">
+    <link rel="modulepreload" crossorigin href="./assets/relay-frames-BH4hSqru.js">
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="row">
+      <button data-demo="bronchospasm">Bronchospasm → salbutamol</button>
+      <button data-demo="induction">Propofol + fentanyl (SGA)</button>
+      <button data-demo="laryngospasm">Laryngospasm on air</button>
+      <button data-demo="kink">Kinked tube on VCV</button>
+      <button data-demo="anaemia">Hb 5</button>
+    </div>
+    <div id="diag"></div>
+  </body>
+</html>

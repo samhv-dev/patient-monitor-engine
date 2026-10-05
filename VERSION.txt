@@ -1,0 +1,9 @@
+Patient monitor simulator - offline showcase kit
+Commit:   41678d0bf6a96ea8c62da6ab949705e9c74b172e (with uncommitted changes)
+Branch:   showcase-kit-4
+Subject:  Merge pull request #40 from samhv-dev/fu-8b-followups
+Built:    2026-10-05T00:16:21.792Z
+Built by: node scripts/showcase/make-bundle.mjs "/Users/samhv/Desktop/Claude/_sandbox/pme-showcase-next" (node v26.8.2, vite build --base ./ in apps/demo)
+App size: 2.1 MB
+Runtime:  runtime/ left EMPTY: /opt/homebrew/Cellar/node/26.8.2/bin/node (v26.8.2) is not an official signed Node.js build (ad-hoc signature (not an official Node.js build)). The launcher uses ruby, then perl.
+Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).

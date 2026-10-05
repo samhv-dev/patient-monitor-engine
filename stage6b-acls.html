@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stage 6b: scenario runner — ACLS</title>
+    <style>
+      body { background: #000; color: #ccc; font: 14px system-ui, sans-serif; margin: 0; }
+      #monitor { height: min(62vh, 440px); }
+      .bar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 12px; border-top: 1px solid #222; }
+      .code { font: 700 22px ui-monospace, monospace; letter-spacing: .12em; color: #fff; }
+      button { font: inherit; min-height: 40px; background: #1a1a1a; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 4px 12px; }
+      #actions button { border-color: #c33; }
+      #actions button[data-kind="cpr"][aria-pressed="true"] { background: #633; }
+      #scenario { font: 600 16px system-ui, sans-serif; color: #fc6; }
+      #notes, #diag { font: 12px ui-monospace, monospace; color: #8f8; white-space: pre-wrap; padding: 0 12px; }
+      #notes { color: #c96; }
+      .hint { color: #777; }
+    </style>
+    <script type="module" crossorigin src="./assets/stage6b-acls-BqpRpadY.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/truth-v705DCbR.js">
+    <link rel="modulepreload" crossorigin href="./assets/broadcast-channel-CtD6W2bO.js">
+    <link rel="modulepreload" crossorigin href="./assets/clock-C_fpNLDt.js">
+    <link rel="modulepreload" crossorigin href="./assets/engine-CvroiKVw.js">
+    <link rel="modulepreload" crossorigin href="./assets/staging-Cejw7UY1.js">
+    <link rel="modulepreload" crossorigin href="./assets/reveal-CyYolVAW.js">
+    <link rel="modulepreload" crossorigin href="./assets/relay-frames-BH4hSqru.js">
+    <link rel="modulepreload" crossorigin href="./assets/styles-BEDNKHZX.js">
+    <link rel="modulepreload" crossorigin href="./assets/panel-AnuPfJU3.js">
+    <link rel="modulepreload" crossorigin href="./assets/actions-BcyDRN9c.js">
+    <link rel="modulepreload" crossorigin href="./assets/context-BzoOqa4m.js">
+    <link rel="modulepreload" crossorigin href="./assets/engine.worker-CDYQpNpj.js">
+    <link rel="modulepreload" crossorigin href="./assets/wave-lanes-DQlLuakQ.js">
+    <link rel="modulepreload" crossorigin href="./assets/sweep-lane-DLt-pTEF.js">
+    <link rel="modulepreload" crossorigin href="./assets/numerics-dom-C5bX6zwA.js">
+    <link rel="modulepreload" crossorigin href="./assets/sim-monitor-CmC9nXPL.js">
+  </head>
+  <body>
+    <div id="monitor"></div>
+    <div class="bar"><span id="scenario">No scenario loaded</span></div>
+    <div class="bar" id="actions" aria-label="Learner actions"><strong>Learner:</strong></div>
+    <div class="bar">
+      <span>Session <span class="code" id="code">------</span></span>
+      <button id="openRemote">Open remote</button>
+      <button id="sound">Enable sound</button>
+      <span class="hint">Press <kbd>i</kbd> for the instructor panel → Scenario tab.</span>
+    </div>
+    <div id="notes"></div>
+    <div id="diag"></div>
+  </body>
+</html>
