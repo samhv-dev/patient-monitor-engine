@@ -54,6 +54,13 @@ export interface ResolvedProfile {
   ageY: number; // the profile's age (drug sensitivity)
   /** R45(c): the stabiliser anchors the LV EDPVR at the EDV the ventricle actually reaches (conditions that set an LVEDP). */
   tuneLvedp: boolean;
+  /**
+   * FU-8 (C1, Part B): the tonic SYMPATHETIC share of resting SVR (baroreflex.ts `tonic`); MSNA-graded [ENG]. A constant
+   * of the profile — never a function of the arrest or perfusion state (research/23 §6.3 note 4: those act through the
+   * delivered output `outF × brainF`). A VAGAL twin (`tonicVagal`: the resting cardiac vagal level an antimuscarinic
+   * removes, the resting BRS and its age decline) is expected from FU-12's autonomic hub; this number does not cover it.
+   */
+  tonicSymp: number;
 }
 
 export function ageBand(ageY: number): AgeBand {
@@ -86,6 +93,11 @@ const AS_BETA: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.6,
  * normalises wall stress and keeps ESV near normal at LVSP 170–200) [ENG, magnitude for Ali's R44 calibration pass].
  */
 const AS_EES: Record<string, number> = { mild: 1.0, moderate: 1.3, severe: 1.7, critical: 2.0 };
+/** FU-8 (C1, Part B): tonic sympathetic share of resting SVR by profile [ENG; MSNA: Sundlöf & Wallin 1978, Grassi 1998]. */
+export const TONIC_ADULT = 0.2;
+export const TONIC_ELDERLY = 0.3;
+export const TONIC_HTN = 0.1;
+export const TONIC_HFREF = 0.25;
 
 /** FU-8 (C5): the stabiliser's resting MAP (radial) sits this far above the reflex set point — the adult default
  * 120/80 (MAP 93.3) against 90 [ENG: kept so no adult row moves]. */
@@ -142,6 +154,9 @@ export function resolveProfile(pr: CircProfile = DEFAULT_PROFILE): ResolvedProfi
     lvedpTarget: 8,
     ageY: pr.ageY,
     tuneLvedp: false,
+    // FU-8 (C1): young adult ≈ 0.2 (the resting SVR fall under autonomic ganglionic blockade); MSNA doubles 25 → 65 y
+    // (Sundlöf & Wallin) — elderly 0.3; untreated HTN and HFrEF add below (Grassi 1998) [ENG sizes, Ali's review]
+    tonicSymp: band === 'elderly' ? TONIC_ELDERLY : TONIC_ADULT,
   };
   // the elderly keep 140/80 (MAP 100 against the set point 95): 7d's check 18 (75 y HTN CBF plateau) is fitted to it,
   // and the elderly resting pressure is research/19 C5's Ali question (plan "Waiting on Ali")
@@ -163,6 +178,7 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
   const lerp = (m: number) => 1 + (m - 1) * s;
   switch (c.id) {
     case 'hfref': // tables §1.5: Ees ×0.45, β ×1.3, V ×1.10, G_v ×0.5, MAP_set 75
+      r.tonicSymp += TONIC_HFREF * s; // FU-8 (C1)
       p.eesLv *= lerp(0.45);
       p.betaLv *= lerp(1.3);
       r.bloodVolumeMl *= lerp(1.1);
@@ -179,6 +195,7 @@ function applyCondition(r: ResolvedProfile, c: CircCondition): void {
       r.tuneLvedp = true;
       return;
     case 'htn': // +20 MAP_set, C ×0.7, R ×1.2, G_v ×0.6, β ×1.3
+      r.tonicSymp += TONIC_HTN * s; // FU-8 (C1)
       r.mapSet += 20 * s;
       p.cArt *= lerp(0.7);
       p.rSys *= lerp(1.2);

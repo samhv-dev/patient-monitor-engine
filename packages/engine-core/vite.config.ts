@@ -108,7 +108,7 @@ const SLOW_C = [ // ≈ 1998 s on CI (33.3 min)
 const SLOW_D = [ // ≈ 1993 s on CI (33.2 min)
   'test/engine/stimulus-surge.test.ts', // 478 s,
   'test/engine/clinical-suite.test.ts', // 460 s,
-  'test/engine/fu8-*.test.ts', // 313 s,
+  'test/engine/fu8-*.test.ts', // 313 s + FU-8 Part B's three files (≈ 22 s local, ≈ 60 s CI est.: slow-d ≈ 34.2 min),
   'test/engine/resp-induction.test.ts', // 254 s,
   'test/engine/vagal-events.test.ts', // 141 s,
   'test/engine/fu10-fever.test.ts', // 84 s,

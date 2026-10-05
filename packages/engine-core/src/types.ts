@@ -9,7 +9,7 @@ import type { BloodCommandBody, BloodEvent, BloodProfile } from './types-blood.t
 import type { OrganCommandBody, OrganNumericId, OrgansEvent } from './types-organs.ts'; // Stage 7d
 import type { CircClinicalEvent, CircDeviceAction, CircEvent, ProfileCondition, TeachingChannel } from './types-circ.ts'; // Stage 7a
 import type { LungCommandBody, LungConditionSpec } from './types-lung.ts'; // Stage 7b
-import type { DrugsEvent, PkClinicalEvent } from './types-pk.ts'; // Stage 7g
+import type { DrugsEvent, DrugWarningEvent, PkClinicalEvent } from './types-pk.ts'; // Stage 7g; FU-8 (B1)
 import type { TruthEvent } from './types-truth.ts'; // Stage 7x
 import type { NeuroCommandBody, NeuroDeviceAction, NeuroEvent, NeuroNumericId, NeuroProfile } from './types-neuro.ts'; // Stage 7f
 
@@ -152,6 +152,7 @@ export type EngineEvent =
   | RespEvent // Stage 3 (types-resp.ts)
   | CircEvent // Stage 7a (types-circ.ts)
   | DrugsEvent // Stage 7g (types-pk.ts)
+  | DrugWarningEvent // FU-8 (B1)
   | BloodEvent // Stage 7c (types-blood.ts)
   | NeuroEvent // Stage 7f (types-neuro.ts)
   | EndoEvent // Stage 7e (types-endo.ts)

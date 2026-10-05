@@ -472,6 +472,30 @@ unless a file overlaps FU-6/FU-7 (then Part B).
   tests that import `cardiacOutput` call it outside CPR, where it is unchanged; V.1's CPR guard is handed (below).
 - **E-FU8-12** (Task A28): `neuro-engine.test.ts` (7f; FU-4 F4's record) — "propofol 2 mg/kg: depth-index nadir < 52" flips
   (52 → 51): its 70 kg / 170 cm adult has effKg 67.6, and A28 gives it its own resting-output reference back.
+- **E-FU8B-1** (Task B4, executor 2026-10-04; final numbers after the gate revision below): three pre-declared `it.fails`
+  FLIP to `it` (R45: pins flipping, titles re-stated with before → after): `circ-sanity-1` "propofol 2 mg/kg: MAP ≈ 70 % at
+  2 min" (0.802 → 0.727); `clinical-suite` S2's MAP side (−14.7 → −19.7 %) and S14's MAP side (−22.6 → −42.2 %); the suite's
+  header count ELEVEN → NINE. S4b moves (58.9 / −17 % → 50.5 / −21 %) but stays an `it.fails` (its CO −25 % side). No
+  assertion changed.
+- **E-FU8B-2** (Task B4; the owner's ruling "A23 and the perfusion floor", 2026-10-04, and the orchestrator's brief): the
+  `clinical-suite` row "S6a: class III haemorrhage + propofol 2 mg/kg does not arrest within 5 min" is no longer an acceptance
+  criterion in either direction; it becomes a RECORD (logs nadir, seconds < 35 / < 30, minimum CoPP and kIsch, the arrest
+  time; asserts only that the run completed). Before B4: no arrest, nadir 26.5; after: arrest at +90 s. The S6a percentage
+  `it.fails` keeps failing; its title re-states the new number (nadir 2.7, −97 %).
+- **E-FU8B-3** (Task B4): `pk-longrun` (FU-9's declared `it.fails`, 6 h TCI propofol Ce 2.5 ± 0.005) flips: 2.5098 → 2.5021.
+- **E-FU8B-4** (Task B5): research/20 DV-08b (mapPaced 96 → 137) and DV-08c move against the plan line "DV-08a/08b
+  unchanged": the X-A ventilated rig has no sedation, so the paced patient feels 100 mA (capture unchanged).
+- **E-FU8B-5** (Task B3): `apps/demo/src/app/glossary-data.ts` entry 339 `hemo.circ.skinTone` (the brief assigns numbers
+  from 339; renumber at merge) — the plan's R56 line said FU-8 does not edit the glossary.
+- **E-FU8B-6** (Task B4, gate revision): the plan's `fu8-tonic` test is split — healthy in S1 and 80 y / HFrEF ≥ 5 points more
+  stay `it`; "untreated HTN 60 y ≥ 5 points more" becomes `it.fails` measured 4.96 points (−35.27 vs −30.31 %). Cause: the
+  tonic share is removed by `outF` only (see the B4 gate revision); with the prototype's `o = outF × brainF` it was 5.6 points
+  but FU-9's GA-kidney H1 (0.49 < 0.5 mL/kg/h) and massive-transfusion F5 ("no arrest" → arrest) rows broke through `cbfRel`.
+- **E-FU8B-7** (Task B4, gate): FU-6 RS14 pins flip in `resp-inspired-co2` and `resp-suite` (EtCO2 +5.98 → +6.1).
+- **E-FU8B-8** (Task B4, gate; revised on the orchestrator's condition): FU-7 `drug-apnoea` DI-89 stays a passing `it`. Its
+  sampling re-reads a contradicting sample one `NEURO_DT_S` later. B4 moved the first post-apnoea rate commit onto a 1 s
+  sample (540.00); in R51's chain order, 7f (the flag) steps before Stage 3 (the rate) inside a pass. A sticky flag still
+  fails (mutation: 9 s). Test-only; the trace is in the gate note.
 
 ## Handed to (items another plan owns, with the reason)
 
@@ -5150,13 +5174,28 @@ git push
 **Precondition:** FU-7 is merged to `origin/main` (and FU-6 before it). Part A's PR may be merged or open; if open, this
 continues on the same branch.
 
-- [ ] **Step 1.** `git fetch origin && git merge origin/main` (no stash; resolve by keeping both sides; FU-7 rewrites
+- [x] **Step 1.** `git fetch origin && git merge origin/main` (no stash; resolve by keeping both sides; FU-7 rewrites
   `l2/pk/row.ts`, `pipeline.ts`, `combine.ts` and every `data/rows-*.ts` — its Task 2 replaces the gamma fallback curve by a
   transit chain, so the `gammaPk(...)` helper lines in B1/B2 may read differently).
-- [ ] **Step 2.** Run the block checker on the merged tree: `python3 ../scratch/plans-backup/fu-8-check-blocks.py --part B
+- [x] **Step 2.** Run the block checker on the merged tree: `python3 ../scratch/plans-backup/fu-8-check-blocks.py --part B
   docs/plans/fu-8-followups.md .` — it lists every Part B find block that no longer matches exactly once. Re-anchor each
   by its quoted comment or statement (never re-type a line you are not changing) and record the list in the gate note.
-- [ ] **Step 3.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk` and the fast set → green before any Part B edit (record FU-7's numbers as the baseline).
+- [x] **Step 3.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk` and the fast set → green before any Part B edit (record FU-7's numbers as the baseline).
+
+#### Base drift (Task B0, executor, 2026-10-04; base `origin/main` `4a1cc3f7` = FU-6 + Stage 9 + FU-9 A/C + FU-7)
+
+Part B was branched fresh from `origin/main` (Part A merged as PR #27), so Step 1 is the branch point itself. Block
+checker (`--part B`): 28 find/replace blocks + 3 creates; **2 drifted**, both re-anchored with unambiguous intent:
+
+| Task | File | Block | Drift | Re-anchored as |
+|---|---|---|---|---|
+| B1 | `l2/pk/data/rows-other.ts` | lidocaine `pd: [...]` + `doses:` | FU-7 (addenda 22/23) added `antinocAdd` and `antiarrhythmic` PD targets on two lines | `maxDose` inserted on its own line before the unchanged `doses:` line |
+| B4 | `l2/circ/model.ts` | the `stepBaro(` gains line | FU-7 (addendum 22) made `setF: de.setF * (m.ext.surgeF ?? 1)` | `tonic: m.prof.tonicSymp` appended after `brainF`, FU-7's `setF` and its comment kept |
+
+Other drift read on the merged tree (no find block, intent unchanged): FU-7 did NOT edit `baroreflex.ts` (its gate note
+Task 8 Step 6 reported the vagal-limb caps to FU-4, no edit), so B4's `svrF`/`eesF` lines match. The insulin row, the
+`gammaPk` helper and `setRate`'s `infTarget` line are FU-7-unchanged (no transit chain on gamma rows). `PkRoute` still has 8
+values. Baseline (Step 3): engine fast set 304 files / 1 365 passed + 1 skipped (110 s); `test/l2/pk` in it, green.
 
 ### Task B1: The drug library — the insulin reference, explicit routes, no silent curve-row infusions, a documented maximum (I-25…I-28)
 
@@ -5539,12 +5578,19 @@ Replace with:
   | BloodEvent // Stage 7c (types-blood.ts)
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/endo test/l2/blood test/engine/blood-hyperk.test.ts test/engine/endo-seams.test.ts`,
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk test/l2/endo test/l2/blood test/engine/blood-hyperk.test.ts test/engine/endo-seams.test.ts`,
 the fast set, then `npx -y pnpm@9.15.9 --filter @pme/validation test && npx -y pnpm@9.15.9 --filter @pme/demo test`. Prototype:
 fast set 269 files green; validation 107 passed / 11 skipped (the oracle documents send drug events without a route);
 demo 141.
+  **Executed (FU-8 Part B, base 4a1cc3f7):** before — insulin 0.1 units/kg/h glucoseDelta −118.31 / kShift −1.183 at 60 min;
+  IM adrenaline accepted; amiodarone infusion accepted; no warning for lidocaine 3 + 2 mg/kg. After — −60.00 / −0.600; IM refused
+  with the reason; amiodarone infusion refused; one `drugWarning` (350 > 315 mg). Curve rows without an infusion model on the
+  merged tree: 23 (FU-7 added glucagon, procainamide, verapamil). Verify: pk/endo/blood subset 58 files / 284 passed; fast set
+  306 files / 1 369 passed + 1 skipped; demo 24 / 200; validation 106 passed / 11 skipped + the tick-bench p50 (5.69 ms vs
+  the local 2 ms bound at load average 120–250 from other executors — a load artefact, re-run at the gate). The insulin test
+  yields per sim-minute (CI rule; the plan's block advanced 3 600 s in one call).
 
-- [ ] **Commit and push.**
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/pk/row.ts packages/engine-core/src/l2/pk/pipeline.ts packages/engine-core/src/l2/pk/data/rows-other.ts packages/engine-core/src/types-pk.ts packages/engine-core/src/types.ts packages/engine-core/test/l2/pk/fu8-insulin-ref.test.ts packages/engine-core/test/l2/pk/fu8-dose-rules.test.ts
@@ -5562,16 +5608,21 @@ caveat). The states live in four owners — the device layer (`ecg`), Stage 3 (`
 `nibp`, `abp`, `cvp`, `pap`, `pv`) and 7d (`icp`, `pbto2`, `urometer`) — so the map is assembled where all are visible,
 in `engine.ts`, when the hemo pipeline's `state` event passes out (FU-6/FU-7 edit `engine.ts` elsewhere: Part B).
 
-- [ ] **Step 1 — test (write first):** attach `spo2 motion`, detach `cvp`, attach `co2 on`; within 2 s the next `state` event
+- [x] **Step 1 — test (write first):** attach `spo2 motion`, detach `cvp`, attach `co2 on`; within 2 s the next `state` event
   carries `sensors` with exactly those values and the defaults for the rest; a snapshot/restore round trip keeps it.
-- [ ] **Step 2 — code:** in the loop that forwards committed events, `if (ev.type === 'state') ev.sensors = sensorMap(ps)`
+- [x] **Step 2 — code:** in the loop that forwards committed events, `if (ev.type === 'state') ev.sensors = sensorMap(ps)`
   with `sensorMap` reading `ps.hemo.pleth.state`, `ps.hemo.nibp.sensor`, `ps.hemo.lines.{abp,cvp,pap}.sensor`,
   `ps.hemo.pvOn`, the device layer's ECG lead state, `ps.resp` co2/temp sensor fields and 7d's organ sensors (read their
   field names on the merged tree; no new state). Plain JSON; no per-tick allocation (build it only on `state` events, 1 Hz).
-- [ ] **Step 3 — R45:** no band exists; the test above is new. Controller: `HostSession` forwards `state` unchanged — check
+- [x] **Step 3 — R45:** no band exists; the test above is new. Controller: `HostSession` forwards `state` unchanged — check
   the remote's protocol test still passes.
 
-- [ ] **Commit and push.**
+  **Executed:** before — the `state` event has no `sensors` field (the new test fails: `expected undefined to be defined`, with
+  the hook removed). After — 12 keys (`ecg` from the front end's lead-off/motion artefact, `spo2`, `nibp`, `abp`, `cvp`,
+  `pap`, `pv`, `co2`, `temp`, `icp`, `pbto2`, `urometer`), built in `flush` only for committed `state` events (1 Hz); the
+  three changes show at the next event; a snapshot/restore round trip keeps the map. Controller 39 files / 226 passed;
+  engine typecheck clean. Note: an instructor-set ECG motion artefact reads `ecg: 'motion'` (the same modifier).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/engine.ts packages/engine-core/src/types-hemo.ts packages/engine-core/test/engine/fu8-sensor-map.test.ts
@@ -5591,12 +5642,22 @@ it. Definition: `skinTone = (1 + k_s·(reflex SVR drive − 1))·(catecholamine 
 1 at rest, < 1 dilated (propofol, volatiles, neuraxial, warming), > 1 constricted (catecholamines, cold, hypovolaemic
 reflex); reuse the existing baroreflex `svrF` and 7g's `svr` PD rather than new constants where possible.
 
-- [ ] **Step 1:** measure first (`fidelity-lowflow` 1b rows; the MANUAL MAP ladder must still show PI falling as MAP falls).
-- [ ] **Step 2:** implement; acceptance: propofol 2 mg/kg PI RISES (FU-5 `it.fails`); the MANUAL ladder direction test and
+- [x] **Step 1:** measure first (`fidelity-lowflow` 1b rows; the MANUAL MAP ladder must still show PI falling as MAP falls).
+- [x] **Step 2:** implement; acceptance: propofol 2 mg/kg PI RISES (FU-5 `it.fails`); the MANUAL ladder direction test and
   the 3 L bleed rows (PI < 0.3 at MAP < 30) stay green. If the rise cannot be reached without breaking a green row, keep
   the `it.fails` with the new number (R45) and report.
 
-- [ ] **Commit and push.**
+**Executed (after B4 — executor's ruling: the skin tone reuses B4's tonic-share mechanism, so it is measured on B4's
+tree; both before-numbers given):** `circ.skinTone = b.svrF · de.svr · ch.svrF · rSysF · endoSvr` (MODELED; 1 in MANUAL) — the
+vasomotor part of the systemic-resistance line, without the MANUAL tracker and viscosity; no new constant beyond the bound.
+The pleth factor is `1/√skinTone`, bounded 0.25–2 [ENG], no longer capped at 1. PI (ventilated, seed 7; `monitorRun`):
+propofol 2 mg/kg 1.49 → 1.17 at FU-5, 1.50 → 1.40 on B4 alone, **1.50 → 1.66** after B3 (`it.fails` flips — the plan's own
+target); sevoflurane 3 % 20 min 1.50 → 1.57 (B4) / 1.78 (B3); 1.5 L bleed 0.46 both; phenylephrine 100 µg 1.50 → 1.50 both
+(skinTone 1.47 but SV rises with the reflex bradycardia — the finger does not fall; recorded, not in scope); spontaneous rest
+1.84 → 1.86 (band 1.82 ± 5 %); the ventilated rest `it.fails` (1.80 vs 1.50) unchanged — an SV₀ matter, not tone. Verify:
+`fidelity-*` 7 files + `fu8-motion-pi` → 60 passed (the MANUAL ladder and the 3 L bleed rows green). New truth leaf
+`hemo.circ.skinTone` (12-drug tree 2 077 → 2 078 of 2 100) with glossary entry 339 (renumber at merge).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/fidelity-lowflow.test.ts
@@ -5802,11 +5863,51 @@ Replace with:
       r.mapSet += 20 * s;
 ```
 
-- [ ] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-tonic.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/neuro-circ.test.ts test/engine/pk-acceptance-`
+- [x] **Verify.** `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu8-tonic.test.ts test/engine/clinical-suite.test.ts test/engine/circ- test/engine/neuro-circ.test.ts test/engine/pk-acceptance-`
 and `npx -y pnpm@9.15.9 run audit:drugs all` (FU-7's harness). Every row that moves is a before → after line in the
 gate note; a row that breaks a sourced band stops the task (R45) and goes to the orchestrator with the numbers.
 
-- [ ] **Commit and push.**
+**Executed (owner A23 AGREED 2026-10-04; research/23 §6.3 applied to the design, not the outcome):** mechanism and sizes as
+prototyped. §6.3 note 2: `tonicSymp` is documented as the SYMPATHETIC share with a `tonicVagal` twin expected (FU-12).
+Note 3, DECIDED: `dV0`/`cSvF` carry NO tonic share (recorded in `baroreflex.ts`; a later hub adds it). Note 4: `tonicSymp`
+is a profile constant; it is removed in proportion to the existing delivered output `o = outF × brainF` (as prototyped) —
+a diagnostic with `outF` alone moved the class III arrest only from +86 to +89 s, so brainstem coupling is not what tips it.
+Not attempted: the sinus-rate floor, sympathoinhibition, resetting bounds (FU-12). Measured (seed 7; nadir 60–360 s after
+propofol 2 mg/kg, ventilated):
+
+| Profile | before (4a1cc3f7 + B1/B2) | after B4 | A23 target |
+|---|---|---|---|
+| healthy 40 y | −22.7 % (95.3 → 73.7) | −30.3 % (→ 66.4) | −25 to −40 % |
+| 80 y | −23.5 % | −37.3 % | larger than the young |
+| untreated HTN 60 y | −22.7 % | −35.9 % | ≈ 40 % vs 30 % |
+| 80 y HTN (S14) | −22.5 % | −42.8 % | −30 to −45 % |
+| HFrEF 60 y | −21.6 % | −42.5 % (MAP 49.7) | large falls expected |
+| AS severe + CAD severe 75 y | −23.0 % | −39.5 % (at +145 s) | (A27: 60–65 at 2 min) |
+| PH moderate 60 y | −23.7 % | −31.4 % | — |
+
+Resting MAP and HR bit-identical in every profile. Rows that moved (verify set before → after): `circ-sanity-1` propofol
+0.802 → 0.727 (pin flips); S1 0.785 → 0.698 (band 0.6–0.8), S1b 0.913 → 0.877 (≥ 0.85), S2 −14.7 → −20.6 % (flips), S4a PEA
++170 → +105 s, S4b 58.9 / −17 % → 40.7 / −35 % (flips), S6a no arrest / nadir 26.5 → arrest +90 s / nadir 2.7 (record,
+E-FU8B-2), S6b Ce ratio 1.78 → 2.06, S9 PEA 510 → 495 s, S13 CoPP 26.4–28.1 → 25.9–28.1, S14 −22.6 → −44.5 % (flips), 7f
+`neuro-circ` propofol 0.775 → 0.704; MANUAL class III unchanged (35.1, no arrest). DI cells (`audit:drugs`): DI-46 −21.1 → −42.7 %
+(TW → PL), DI-47 −22.1 → −44.1 % (PL → TS, band −40…−20), DI-48 −18.4 → −45.1 % (TW → TS by 0.1, band −45…−30), DI-79
+extraFall 0.9 → 0.7 (WR stays). CM cells (research/19 runner, `CM_OUT` in scratch): CM-01b −19.8 → −33.0 % (WR → PL),
+CM-03b −21.8 → −35.5 % (WR → PL), CM-05a −18.4 → −45.1 %, MAP at 2 min 96.6 → 66.5, ST 0 (WR stays: the ST half), CM-06b
+propofol −22.1 → −44.1 % (PL → TS, band −40…−20), etomidate −3.7 → −15.3 %. Class III + propofol (the old safeguard, now a
+record): nadir 26.4 → 2.5 mmHg; s < 35 113 → 808, s < 30 57 → 806; min CoPP 21.6 → 0.1; min kIsch 0.814 → 0.000; recovery →
+arrest at +86 s (pulseless sinus, agonal +240 s, asystole +390 s) — a CLIFF (MAP 38.7 at +30 s, 20.4 at +60, 8.0 at +90).
+**Gate revision (executor, 2026-10-04; commit "fix(circ): the tonic share follows the anaesthetic only"):** the full slow
+run on the B4 commit failed two FU-9 rows (slow-c): `fu9-kinetics` H1 "GA, normovolaemic: hour-2 urine 0.5–1 mL/kg/h"
+0.49 and `fu9-transfusion` F5 "no arrest" (an arrest; lactate 16.2, BE −14.2). Cause: the prototype's line removed the
+tonic share by `o = outF × brainF`, and `brainF` reads `cbfRel`, which the GA flow–metabolism coupling lowers at a normal
+MAP — i.e. the tonic level was coupled to the perfusion state, which research/23 §6.3 note 4 and the brief rule out, and
+plan D15's own formula writes `outF`. Ruling: remove it by `outF` only (the reflex response keeps `o`). After: H1 0.57,
+F5 no arrest (iCa 0.958, BE −0.2 as on main). Final numbers (replacing the table above where they differ): healthy −30.3,
+80 y −37.1, HTN 60 y −35.3, 80 y HTN −41.2, HFrEF −41.2, AS + CAD −38.4, PH −31.4 %; S1 0.702, S1b 0.868, S2 −19.7 (flips),
+S4b 50.5 / −21 % (stays `it.fails`), S14 −42.2 (flips), `pk-longrun` 2.5021 (flips); class III + propofol arrest at +89 s
+(nadir 2.5). DI-46 −40.8 (PL), DI-47 −42.0 (TS), DI-48 −39.9 (PL), DI-79 0.8 (WR); CM-01b −32.0 (PL), CM-03b −34.7 (PL),
+CM-05a −39.9 / 71.3 at 2 min (WR: ST), CM-06b −42.0 (TS). `fu8-tonic`'s HTN row → `it.fails` (E-FU8B-6).
+- [x] **Commit and push.**
 
 ```bash
 git add packages/engine-core/src/l2/circ/baroreflex.ts packages/engine-core/src/l2/circ/model.ts packages/engine-core/src/l2/circ/profile.ts packages/engine-core/test/engine/fu8-tonic.test.ts
@@ -5833,6 +5934,21 @@ respond and sedation/analgesia (7f's antinociception) remove the response. No ne
 and ΔHR > 0 awake; the same pacing under GA (propofol + remifentanil) within ± 10 % of the unpaced reflex; DV-08a/08b
 and every pacing test unchanged. Ali's W25 (8): whether the patient also moves (a movement flag) and whether the capture
 threshold rises with thoracic impedance.
+
+- [x] **Executed (executor, UNPROTOTYPED → R45 procedure).** `engine.ts` only (no `device-layer.ts`, no `l2/endo`/`l2/neuro`
+  edit): `tcpNoxious(mods)` = 0 up to 40 mA, linear to 1.5 (7e's laryngoscopy grade) at ≥ 100 mA [ENG]; for each pass it is
+  ADDED to the instructor's held stimulus (7f `neuro.stim`, 7e `endo.noxious`) and the held values are restored after 7e's
+  step — one `stimulus` shape, no new state. Test `test/engine/fu8-tcp-pain.test.ts` (new; capture threshold 30 mA so 40
+  and 100 mA give the same paced haemodynamics): before (pain path off) — DV-08c NE 275 → 275; awake 100 vs 40 mA identical
+  (NE 275, epi 34, MAP 98.4, sinus-node 68.5). After — DV-08c NE 275 → 497; awake 100 mA NE 608, epi 128, MAP 141.6,
+  sinus-node 78.1 vs 40 mA 275 / 34 / 98.4 / 68.5; under propofol 3.5 + remifentanil 4 (effect site) 100 vs 40 mA NE 278 vs
+  275 (+1 %), MAP 70.9 vs 66.8 (+6.1 %) — within ± 10 %. research/20 cells (runner, `DV_OUT` in scratch): DV-08a capture 70 mA
+  unchanged; DV-08b mapPaced 96 → 137.1 (its ventilated X-A rig has no sedation: the paced patient now feels 100 mA; the
+  dead-heart half unchanged); DV-08c dNeAwake 0 → 221.9, dEpi −0.1 → 62.5, mapAwake 98.5 → 130.7, mapGa 95.7 → 105.2 (that
+  rig's GA is the drug-free `thermal` flag: 7e's 60 % fallback blunting). The awake size (MAP 142 at 100 mA) is an [ENG]
+  first size for Ali's W25 (8) with the movement flag and the impedance-dependent threshold. Pacing tests (37 files / 183)
+  green.
+
 
 ## Task G: Gate — merge main, full verification, evidence, the gate note, the pull request
 

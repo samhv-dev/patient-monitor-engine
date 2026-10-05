@@ -2,6 +2,7 @@
 import type { PerKgPk } from './nmb.ts';
 import type { AmountUnit } from './units.ts';
 import type { VolatileAgent } from './volatile.ts';
+import type { PkRoute } from '../../types-pk.ts';
 
 export type DrugClass =
   | 'hypnotic' | 'opioid' | 'benzodiazepine' | 'ketamine' | 'alpha2' | 'volatile' | 'nmb' | 'depolariser' | 'nmbReversal'
@@ -46,7 +47,7 @@ export type PkSpec =
   | { kind: 'model'; model: 'eleveld' | 'schnider' | 'marsh' | 'minto' | 'shafer' | 'gepts'; ventKe0?: number }
   | { kind: 'perKg'; pk: PerKgPk; conc: 'rateEq' | 'plain' } // rateEq: Ce·CL/W in µg/kg/min (decision 4)
   | { kind: 'nmb'; agent: 'rocuronium' | 'vecuronium' | 'cisatracurium' | 'succinylcholine' | 'sugammadex' }
-  | { kind: 'gamma'; refDose: number; perKg: boolean; tpS: number; t10S: number; refRate?: number; tauOnS?: number; tauOffS?: number } // c in reference-dose units
+  | { kind: 'gamma'; refDose: number; perKg: boolean; tpS: number; t10S: number; refRate?: number; tauOnS?: number; tauOffS?: number; refRatePerKg?: boolean } // c in reference-dose units; FU-8 (B1): refRatePerKg — the infusion reference is per kg even when the bolus reference is not (insulin)
   | { kind: 'volatile'; agent: VolatileAgent }
   | { kind: 'blood' }; // chemistry only: 7g validates, consumes and logs the dose; 7c's mass balance acts (decision 10)
 
@@ -96,6 +97,16 @@ export interface DrugRow {
   /** competitive antagonist of a whole class (naloxone → opioid, flumazenil → benzodiazepine): occupancy = hill(c, ec50, emax) */
   antagonises?: { cls: DrugClass; ec50: number; emax: number };
   shared?: 'blood'; // 7c also acts on this id, reading it from bus.doses (decision 10; 7g still consumes the event)
+  /** FU-8 (B1): the routes this row honours — the engine's kinetics are intravenous; absent = IV_ROUTES. A dose by any
+   * other route is refused with a reason (no absorption model is built; review pack "every dose behaves as IV"). */
+  routes?: readonly PkRoute[];
+  /** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
+   * weight; `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set;
+   * the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+  maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
+  /** FU-8 (B1): another stage reads this row's ordered RATE and acts on it (7e reads dextrose, E-7e-4), so an infusion
+   * is meaningful although the row's own curve has no infusion reference. */
+  rateActsVia?: string;
   doses: string; // typical adult doses, text
   onset: string; // onset / peak / duration, text (research 03 §8.6)
   ir: '?'; // Iranian availability — a question for Ali on every row

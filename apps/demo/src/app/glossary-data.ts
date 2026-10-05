@@ -380,6 +380,8 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 345, s: 'S9', keys: ['neuro.mhExposure.sux'], label: 'MH trigger: succinylcholine', name: 'When an MH-susceptible patient was first given succinylcholine', unit: 's', normal: 'never' },
   { n: 346, s: 'S9', keys: ['neuro.mhExposure.volatile', 'neuro.mhExposure.volatileAgent'], label: 'MH trigger: volatile', name: 'When an MH-susceptible patient was first exposed to a volatile agent, and which agent', unit: 's', normal: 'never' },
   { n: 347, s: 'S9', keys: ['endo.mhOwner'], label: 'MH source', name: 'Whether the malignant hyperthermia came from its triggers or from the instructor', unit: '', normal: '—' },
+  // FU-8 Part B's new truth leaf (numbered after FU-10's 347)
+  { n: 348, s: 'S9', keys: ['hemo.circ.skinTone'], label: 'Skin vasomotor tone', name: 'Cutaneous vasomotor tone the finger pleth reads: falls when an anaesthetic removes sympathetic tone (PI rises), rises with vasoconstriction', unit: '× rest', normal: '1' },
 ];
 
 /**

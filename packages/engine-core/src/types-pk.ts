@@ -102,6 +102,9 @@ export interface DrugPanelRow {
   decrement50Min: number | null; // time for Cp to fall 50 % if the pump stopped now (decision 13)
 }
 
+/** FU-8 (B1): a dose above the row's documented maximum (`DrugRow.maxDose`) — the dose is still given, as ordered. */
+export type DrugWarningEvent = { type: 'drugWarning'; t: SimSeconds; drugId: string; text: string };
+
 export type DrugsEvent = {
   type: 'drugs'; t: SimSeconds;
   drugs: DrugPanelRow[];

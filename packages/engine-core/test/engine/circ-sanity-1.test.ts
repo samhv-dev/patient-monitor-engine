@@ -80,7 +80,8 @@ describe('sanity scenarios I (MODELED)', () => {
   it('propofol 2 mg/kg: little HR rise (< +15) — was +16.6 before FU-4', async () => {
     expect((await propofol()).dHr).toBeLessThan(15);
   }, 300_000);
-  it.fails('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.801 with the humoral arm (Task 18e; 0.72 after Task 2, 0.913 before FU-4; Q1)', async () => {
+  // FU-8 B4 (E-FU8B-1): flipped — propofol removes the tonic sympathetic share of resting tone (research/19 C1, owner A23)
+  it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.727 after FU-8 B4 (0.802 before it; 0.801 at FU-4 Task 18e; 0.72 after Task 2, 0.913 before FU-4; Q1)', async () => {
     const { ratio } = await propofol();
     expect(ratio).toBeGreaterThanOrEqual(0.6);
     expect(ratio).toBeLessThanOrEqual(0.8);

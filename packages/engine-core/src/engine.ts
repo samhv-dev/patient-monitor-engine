@@ -36,6 +36,7 @@ import {
   type RhythmOpts,
   type SimSeconds,
 } from './types.ts';
+import type { SensorId } from './types-hemo.ts'; // FU-8 (B2)
 import { version } from './version.ts';
 import { createL1State, l1Target, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
 import {
@@ -71,7 +72,7 @@ import { SINUS_FAMILY } from './l2/circ/rate-rule.ts'; // FU-2's rate rule (NR-7
 import { advancePk, applyPkCommand, createPkState, NEUTRAL_PK_CTX, pkPatientOf, validatePkCommand, type PkCtx, type PkState } from './l2/pk/pipeline.ts'; // Stage 7g
 import { createHookState, rhythmRequest, type RhythmHookState } from './l2/pk/hooks.ts'; // Stage 7g
 import { obstructiveAlias } from './l2/circ/aliases.ts'; // FU-4 G6 (Task 11)
-import { applyNeuroCommand, createNeuroState, fasciculating, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f
+import { applyNeuroCommand, createNeuroState, fasciculating, STIM_FULL, stepNeuroTo, validateNeuroCommand, type NeuroState } from './l2/neuro/pipeline.ts'; // Stage 7f (FU-8 B5: STIM_FULL)
 import { pcheOf } from './l2/neuro/bus.ts'; // Stage 7f
 import { circCardiacOutput, circVagalStimulus, type CircModelState } from './l2/circ/model.ts'; // Stage 7g; FU-4 G7: the stimulus observer
 import { heldRate } from './l2/circ/rate-rule.ts'; // FU-2
@@ -125,6 +126,43 @@ interface PipelineState {
   pkHooks: RhythmHookState; // Stage 7g
   neuro: NeuroState; // Stage 7f: NMB, depth, drive depression (R32)
   organs: OrgansState; // Stage 7d: brain, kidney, liver
+}
+
+/**
+ * FU-8 (B2, R-S9-6): the sensor-state map the `state` event carries. The states live with four owners — the ECG front
+ * end (the device layer's lead-off/motion artefact, `mods.artefact`), Stage 3 (co2, temp), the hemo pipeline (spo2,
+ * nibp, the three lines, the teaching channels) and 7d (icp, pbto2, urometer) — and are read here, where all four are
+ * visible; no new state. Values are the `attachSensor` state strings.
+ */
+function sensorMap(ps: PipelineState): Partial<Record<SensorId, string>> {
+  const a = ps.mods.artefact;
+  const h = ps.hemo;
+  return {
+    ecg: a.leadOff ? 'off' : a.motion > 0 ? 'motion' : 'on',
+    spo2: h.pleth.state, nibp: h.nibp.sensor, abp: h.lines.abp.sensor, cvp: h.lines.cvp.sensor, pap: h.lines.pap.sensor,
+    co2: ps.resp.co2Sensor, temp: ps.resp.tempSensor, pv: h.pvOn ? 'on' : 'off',
+    icp: ps.organs.sensors.icp, pbto2: ps.organs.sensors.pbto2, urometer: ps.organs.sensors.urometer,
+  };
+}
+
+/**
+ * FU-8 (B5, research/20 DV-08c, gap V6): transcutaneous pacing is painful. The pacer's output current is a nociceptive
+ * input on 7e's stimulus scale — none up to TCP_PAIN_MA_0, rising linearly to TCP_PAIN_MAX ("laryngoscopy-grade", 7e's
+ * 1.5) at TCP_PAIN_MA_FULL and above [ENG; research/20 V6's smallest mechanism, fit target: an awake patient paced at
+ * 50–100 mA needs analgesia/sedation (ERC 2021 ALS)]. It is ADDED to the instructor's held stimulus through the one
+ * `stimulus` shape (R51 addenda 12/17) for the duration of each pass, so 7e's catecholamines and 7f's arousal answer it and
+ * antinociception (opioid, hypnotic) removes it; no new effector, no new state.
+ */
+const TCP_PAIN_MA_0 = 40;
+const TCP_PAIN_MA_FULL = 100;
+const TCP_PAIN_MAX = 1.5;
+function tcpNoxious(mods: Modifiers, lastPulseT: number | undefined, t: number): number {
+  const tcp = mods.tcp;
+  // only DELIVERED pulses hurt: a demand pacer the patient's own rhythm inhibits fires nothing (final review I-1) —
+  // pain while the last pulse is within 1.5 pacing intervals of now
+  if (!tcp || lastPulseT === undefined || t - lastPulseT > (1.5 * 60) / Math.max(1, tcp.ratePpm)) return 0;
+  const mA = tcp.mA;
+  return TCP_PAIN_MAX * Math.min(1, Math.max(0, (mA - TCP_PAIN_MA_0) / (TCP_PAIN_MA_FULL - TCP_PAIN_MA_0)));
 }
 
 /** One QRS detection: the detected R sample and the sample at which the detector reported it. */
@@ -582,6 +620,15 @@ class Engine implements MonitorEngine {
       holdRate(ps, req7g.id, req7g.hold ?? false); // FU-2: an engine-initiated sinus rate belongs to the reflex (FU-4 G7: a vagal event's own rate is held)
       applyRhythm(ps.rhythm, req7g.id, req7g.opts, end / ECG_RATE, true, rhythmCtx(ps));
     }
+    // FU-8 (B5): the pacer's current joins the instructor's stimulus for this pass (7f and 7e read it), then the held value is restored
+    const tcpNox = tcpNoxious(ps.mods, ps.rhythm.tcpLastPulseT, end / ECG_RATE);
+    const stimHeld = ps.neuro.stim;
+    const noxHeld = ps.endo.noxious;
+    if (tcpNox > 0) {
+      const i = stimHeld.intensity + tcpNox;
+      ps.neuro.stim = { intensity: i, level: Math.min(1, i / STIM_FULL) };
+      ps.endo.noxious = noxHeld + tcpNox;
+    }
     const src7f = ps.resp.driver.source; // Stage 7f: after 7g's pk (reads ps.pk.bus), before the breath driver (its hook shapes the next breaths)
     const endo7f = (ps as unknown as { endo?: { core?: { out?: { neuroglycopenia?: number } }; cascade?: { macF?: number } } }).endo; // Stage 7f: 7e seams, duck-typed (neutral without 7e)
     stepNeuroTo(ps.neuro, end / ECG_RATE, {
@@ -601,6 +648,10 @@ class Engine implements MonitorEngine {
     this.pushBloodEcg(ps); // Stage 7c: K / QTc deltas into Modifiers (plan decision 9)
     const endoCtx = { l1: ps.l1, hemo: ps.hemo, resp: ps.resp, ps }; // Stage 7e: after 7c's blood, before 7d's organs and the haemodynamics
     advanceEndo(ps.endo, endoCtx, Math.floor(end / 8) / RESP_RATE); // Stage 7e (1 Hz steps; 7g's doses every pass)
+    if (tcpNox > 0) {
+      ps.neuro.stim = stimHeld; // FU-8 (B5): the instructor's stimulus is the held state
+      ps.endo.noxious = noxHeld;
+    }
     ps.endoHrF = writeCirc(endoCtx, ps.endo); // Stage 7e: MODELED → circ.ext.endo*; MANUAL → the rhythm-clock factor
     writeBlood(ps, ps.endo); // Stage 7e → 7c (endogenous K, lab glucose, capillary leak)
     writeCond(ps, ps.endo); // Stage 7e → 7g (ps.cond.vasoResp)
@@ -651,6 +702,7 @@ class Engine implements MonitorEngine {
     this.st.endo.out = keep(this.st.endo.out); // Stage 7e
     this.st.organs.out = keep(this.st.organs.out); // Stage 7d
     due.sort((a, b) => (a as { t: number }).t - (b as { t: number }).t);
+    for (const e of due) if (e.type === 'state') e.sensors = sensorMap(this.st); // FU-8 (B2, R-S9-6): 1 Hz, built only here
     return due;
   }
 

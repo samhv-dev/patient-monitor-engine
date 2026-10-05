@@ -1,8 +1,8 @@
 // Drug library III (Stage 7g Task 14). DATA only.
 import type { DrugRow } from '../row.ts';
 
-const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, refRate?: number): DrugRow['pk'] => ({
-  kind: 'gamma', refDose, perKg, tpS, t10S, ...(refRate !== undefined ? { refRate, tauOnS: 120, tauOffS: 900 } : {}),
+const gammaPk = (refDose: number, perKg: boolean, tpS: number, t10S: number, refRate?: number, refRatePerKg?: boolean): DrugRow['pk'] => ({
+  kind: 'gamma', refDose, perKg, tpS, t10S, ...(refRate !== undefined ? { refRate, tauOnS: 120, tauOffS: 900 } : {}), ...(refRatePerKg ? { refRatePerKg } : {}), // FU-8 (B1)
 });
 const blood: DrugRow['pk'] = { kind: 'blood' };
 const LA = (v1: number, v2: number, cl1: number, cl2: number): DrugRow['pk'] => ({ kind: 'perKg', conc: 'plain', pk: { v1, v2, v3: 0, cl1, cl2, cl3: 0, ke0: [1] } });
@@ -28,7 +28,7 @@ export const OTHER_ROWS: DrugRow[] = [
   // curve is retired whenever 7g is present (as salbutamol's is); 7c still reads the dose (shared) and keeps its curve in
   // the no-7g configuration. Its glucose is 7e's (FU-10 E8); the counter-regulatory adrenaline after an insulin-induced
   // hypoglycaemia is 7e's own, separate term.
-  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', shared: 'blood', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
+  { id: 'insulinDextrose', name: 'Insulin + dextrose', cls: 'metabolic', amountUnit: 'units', shared: 'blood', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60, true), // FU-8 (B1): the same per-kg infusion reference as the insulin row (E-FU10-14: one insulin)
     pd: [{ target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U insulin + 25 g dextrose', onset: 'K −0.6 to −1.0 mmol/L at 60 min (insulin PD, 7g)', ir: '?', src: '7c plan decision 7; FU-10 E-FU10-14', tag: 'TXT' },
   { id: 'magnesium', name: 'Magnesium sulfate', cls: 'electrolyte', amountUnit: 'mg', shared: 'blood', elim: { renal: 1 },
     pk: { kind: 'perKg', conc: 'plain', pk: { v1: 0.3, v2: 0, v3: 0, cl1: 0.0015, cl2: 0, cl3: 0, ke0: [0.5] } },
@@ -40,12 +40,17 @@ export const OTHER_ROWS: DrugRow[] = [
   { id: 'salbutamol', name: 'Salbutamol (IV/neb)', cls: 'betaAgonist', amountUnit: 'mcg', shared: 'blood', pk: gammaPk(250, false, 600, 7200),
     // FU-7 (addendum 21): salbutamol is a β2 agonist — a cardioselective blocker does not blunt it (M10 ch. 14)
     pd: [{ target: 'hr', emax: 0.3, ec50: 1, beta: true, beta2: true, catecholamine: true }, { target: 'bronchodilation', emax: 1, ec50: 0.5 }, { target: 'kShift', emax: -0.8, ec50: 1 }],
+    routes: ['iv', 'io', 'central', 'neb'], // FU-8 (B1): nebulised for K (7c decision 7; the K-shift acceptance uses it) — the same curve, a documented simplification
     doses: '250 µg IV slowly; 10–20 mg nebulised for K', onset: 'K −1.4 at full effect (7c); HR +10–20 %', ir: '?', src: '7c decision 7; [TXT]', tag: 'TXT' },
-  { id: 'insulin', name: 'Insulin (regular)', cls: 'metabolic', amountUnit: 'units', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60),
+  // FU-8 (B1, review pack DR-44): the infusion reference is 0.1 units/kg/h (the row's own dose text) — it was read as
+  // 0.1 units/h absolute, so 0.1 units/kg/h at 70 kg (7 units/h) was 70 reference rates: glucose −118 mg/dL (the E_max)
+  // and K 4.18 → 2.88 mmol/L within the hour. The 10-unit bolus reference stays absolute.
+  { id: 'insulin', name: 'Insulin (regular)', cls: 'metabolic', amountUnit: 'units', pk: gammaPk(10, false, 1800, 14400, 0.1 / 60, true),
     pd: [{ target: 'glucose', emax: -120, ec50: 1 }, { target: 'kShift', emax: -1.2, ec50: 1 }], doses: '10 U bolus; 0.05–0.1 U/kg/h', onset: 'IV onset 5–15 min, peak 30–60, 2–4 h (7e owns glucose)', ir: '?', src: '[TXT] placeholder for 7e', tag: 'TXT' },
-  { id: 'dextrose', name: 'Dextrose 50 %', cls: 'metabolic', amountUnit: 'mg', pk: gammaPk(25000, false, 120, 3600),
+  { id: 'dextrose', name: 'Dextrose 50 %', cls: 'metabolic', amountUnit: 'mg', pk: gammaPk(25000, false, 120, 3600), rateActsVia: '7e glucose (E-7e-4)', // FU-8 (B1)
     pd: [{ target: 'glucose', emax: 300, ec50: 1 }], doses: '25 g (50 mL of 50 %)', onset: 'glucose ↑ at once, back over 30–60 min (7e owns glucose)', ir: '?', src: '[TXT] placeholder for 7e', tag: 'TXT' },
   { id: 'dantrolene', name: 'Dantrolene', cls: 'dantrolene', amountUnit: 'mg', pk: gammaPk(2.5, true, 600, 21600),
+    maxDose: { amount: 10, perKg: true, scope: 'cumulative', src: 'tables §7 21; the row: repeat to 10 mg/kg' }, // FU-8 (B1)
     pd: [], doses: '2.5 mg/kg, repeat to 10 mg/kg', onset: 'EtCO2 falls within 5–10 min, HR normal by 15–20 (tables §7 21); bus.metabolic.dantroleneE → 7e/Stage 3 MH', ir: '?', src: 'tables §7 21; M10 ch. on neuromuscular disorders (2.4 mg/kg max twitch depression)', tag: 'TXT' },
   { id: 'furosemide', name: 'Furosemide', cls: 'diuretic', amountUnit: 'mg', pk: gammaPk(20, false, 900, 7200), pd: [{ target: 'v0Frac', emax: 0.06, ec50: 1 }],
     doses: '10–40 mg IV', onset: 'venodilation within 5–15 min (modelled); diuresis 5–30 min (7d owns urine)', ir: '?', src: '[TXT]; 7d plan Task 11', tag: 'TXT' },
@@ -64,12 +69,15 @@ export const OTHER_ROWS: DrugRow[] = [
     // — an added antinociception on 7e's noxious input, not a sympatholysis [ENG size: emax 0.35 at 3 µg/mL].
     pd: [{ target: 'ees', emax: -0.7, ec50: 20, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 20, hill: 2 }, { target: 'antinocAdd', emax: 0.35, ec50: 3 },
       { target: 'antiarrhythmic', emax: 0.6, ec50: 3 }], // FU-7 (addendum 23): antiarrhythmic plasma range 1.5–5 µg/mL (M10 ch. 25)
+    maxDose: { amount: 4.5, perKg: true, scope: 'cumulative', src: 'M10 ch. 25 Table 25.6, plain' }, // FU-8 (B1)
     doses: 'antiarrhythmic 1–1.5 mg/kg; max 4.5 mg/kg plain / 7 with epinephrine (M10 ch. 25 Table 25.6: 350/500 mg)', onset: 'IV peak 1–2 min; seizures reported from 1.4 mg/kg in IVRA (M10 p. 755)', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'bupivacaine', name: 'Bupivacaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.25, 0.75, 0.008, 0.03), elim: { hepatic: 1 },
     pd: [{ target: 'ees', emax: -0.7, ec50: 4, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 4, hill: 2 }],
+    maxDose: { amount: 2.5, perKg: true, scope: 'cumulative', src: 'M10 Table 25.6, plain' }, // FU-8 (B1)
     doses: 'max 2.5 mg/kg (175 mg plain / 225 with epinephrine, M10 Table 25.6)', onset: 'intravascular injection: CNS then CV collapse within minutes; resistant VF', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'ropivacaine', name: 'Ropivacaine', cls: 'localAnaesthetic', amountUnit: 'mg', pk: LA(0.25, 0.6, 0.0071, 0.03), elim: { hepatic: 1 },
     pd: [{ target: 'ees', emax: -0.7, ec50: 6, hill: 2 }, { target: 'svr', emax: -0.3, ec50: 6, hill: 2 }],
+    maxDose: { amount: 3, perKg: true, scope: 'cumulative', src: 'M10 Table 25.6, plain' }, // FU-8 (B1)
     doses: 'max 3 mg/kg (200 mg plain / 250 with epinephrine, M10 Table 25.6)', onset: 'as bupivacaine with a higher CV threshold', ir: '?', src: 'M10 ch. 25; LAST_THRESHOLDS', tag: 'TXT' },
   { id: 'lipidEmulsion', name: 'Lipid emulsion 20 %', cls: 'lipid', amountUnit: 'mL', pk: gammaPk(1.5, true, 60, 1800, 0.25), pd: [],
     doses: '1.5 mL/kg over 1 min, then 0.25 mL/kg/min (ASRA 2020)', onset: 'lipid sink: free LA ↓ up to 50 % [ENG]; M10 p. 762: cardiac bupivacaine −11 % in 3 min', ir: '?', src: 'ASRA 2020; M10 ch. 25 p. 762', tag: 'ENG' },
