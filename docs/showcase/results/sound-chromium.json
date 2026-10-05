@@ -10,6 +10,6 @@
     "closed",
     "running"
   ],
-  "alarmShown": "!!! Apnoea (no CO₂ breaths)",
+  "alarmShown": "!!! Apnoea (no CO₂ breaths) +2",
   "errors": []
 }

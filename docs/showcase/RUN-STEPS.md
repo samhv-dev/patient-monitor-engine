@@ -1,11 +1,11 @@
 # Showcase cases: exact on-screen labels, step by step (notes for the run sheet)
 
-*For the orchestrator, not the final user documents. Round 3: numbers from the kit built from `main` 4a1cc3f7 (FU-7 +
-the showcase hotfix; labels unchanged since round 2, f29951b) on Chromium and WebKit at 1440×900, Saadat-style monitor (the default, now with its CO2 lane
+*For the orchestrator, not the final user documents. Round 4 (FINAL): numbers from the kit built from `main` 41678d0b
+(FU-7, FU-8 B, FU-9 B, FU-10 A + the showcase hotfix; labels unchanged since round 2, f29951b) on Chromium and WebKit at 1440×900, Saadat-style monitor (the default, now with its CO2 lane
 and tile), by `rehearsal.showcase.ts`; every label below is copied from the page's own text
 (`docs/showcase/results/rehearsal-*.json`, fields `labels`). Times are SIMULATED time at ×4 (divide by 4 for
-wall-clock time); the session-bar clock shows the same time. Against round 2 only case 3's recovery is different (slower); see
-KIT-GATE "Round 3".*
+wall-clock time); the session-bar clock shows the same time. Round 4 changed cases 1 and 4 (see KIT-GATE "Round 4"). **Do not open the
+Ventilator view before loading a case** (it takes over ventilation; reload the page if it was opened).*
 
 ## Getting to a case (same for all five)
 1. The launcher opens the **Start** page (`127.0.0.1:8642/#/`, heading "Set up the session").
@@ -22,7 +22,7 @@ KIT-GATE "Round 3".*
 - What happens next (at load): `You press "Induce now": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg` — button **Induce now**.
 - After **Induce now**: `You press "Intubate and ventilate": Intubated and ventilated` — button **Intubate and ventilate**.
 - After **Intubate and ventilate**: "What happens next" is empty (end of case).
-- Observed (both browsers): baseline ART 123/81 (95), HR 70, SpO2 98, CO2 tile 39. Apnoea alarm "CO2 APNEA" 55 s after **Induce now** (55–60 s across runs) (top-right "!!! Apnoea (no CO₂ breaths)"; the CO2 tile reads "CO2 mmHg 0 FiCO2 0 awRR 0"); ART mean 95 → 82 at 1 min → 82.5 at 2 min; SpO2 stays 99 (preoxygenated). After **Intubate and ventilate** the CO2 tile reads 45 within 5–7 s ("CO2 mmHg 45 FiCO2 45 awRR 3"), 37 two minutes later; MAP nadir 71.6–71.7 at ≈ 4 min.
+- Observed (both browsers): baseline ART 123/81 (95), HR 70, SpO2 98, CO2 tile 39. Apnoea alarm "CO2 APNEA" 62 s after **Induce now** (60.5–62.5 s across runs) (top-right "!!! Apnoea (no CO₂ breaths)"; the CO2 tile reads "CO2 mmHg 0 FiCO2 0 awRR 0"); ART mean 95 → 74 at 1 min → 74.7 at 2 min; SpO2 stays 99 (preoxygenated). After **Intubate and ventilate** the CO2 tile reads 46 within 5–7 s ("CO2 mmHg 46 FiCO2 46 awRR 3"), 38 two minutes later; MAP nadir 65.6–65.7 after intubation (71 at 4 min).
 - Saadat-style monitor (default), lanes top to bottom: II, PLETH, IBP1, IBP2, **CO2** (the capnogram, in yellow, where RESP was); tiles HR, NIBP, IBP1, IBP2 | SpO2, TEMP, **CO2** ("CO2 mmHg", value, "FiCO2 … awRR …").
 
 ## 2. Anaphylaxis under anaesthesia
@@ -44,7 +44,7 @@ KIT-GATE "Round 3".*
 - State strip: "Tamponade, compensating" → "After induction: compensation lost" → "After induction: compensation lost" → "Pericardium drained".
 - At load: `Propofol given: After induction: compensation lost` (no button: fires on propofol from Drugs & fluids) and `You press "Give propofol 2 mg/kg": After induction: compensation lost` — button **Give propofol 2 mg/kg**.
 - After the button: `You press "Drain the pericardium": Pericardium drained` — button **Drain the pericardium** (not pressed in the rehearsal).
-- Observed (both browsers): compensating HR 98, ART 109/88 (95), SpO2 96, CO2 35. After **Give propofol 2 mg/kg**: "CO2 APNEA" 43–49 s after the button; ART mean < 40 after 113 s; at 2 min HR 40, ART 40–41/29 (32–33), SpO2 83, CO2 0, RR 4.
+- Observed (both browsers): compensating HR 98, ART 109/88 (95), SpO2 96, CO2 35. After **Give propofol 2 mg/kg**: "CO2 APNEA" 46–55 s after the button; at 1 min ART 56–57/42 (46), HR 83–84; ART mean < 40 at 73–74 s; pulseless ("IBP1 STATIC PRESSURE", mean only) at 94–96 s; "SPO2 LOW PERFUSION" 102 s; "SPO2 NO PULSE" 120 s; at 2 min no pulse, arterial mean ≈ 16, HR 46.
 
 ## 5. Class IV haemorrhage, PEA and resuscitation
 - State strip: "Bleeding 2.5 L over 10 min" → "CPR, 2 L warmed fluid, epinephrine 1 mg" → "Return of circulation".

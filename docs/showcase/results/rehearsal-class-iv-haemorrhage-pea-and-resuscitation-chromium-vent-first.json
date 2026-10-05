@@ -1,0 +1,104 @@
+{
+  "case": "Class IV haemorrhage, PEA and resuscitation",
+  "browser": "chromium",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8702",
+  "steps": [
+    {
+      "simT": 3.5,
+      "what": "loaded \"Class IV haemorrhage, PEA and resuscitation\" at ×4",
+      "state": "bleeding",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 124.2,
+      "what": "2 min of bleeding",
+      "state": "bleeding",
+      "hr": 82,
+      "art": "111.6/82.6 (92)",
+      "spo2": 96,
+      "etco2": 46,
+      "rr": 3
+    },
+    {
+      "simT": 244.7,
+      "what": "4 min of bleeding",
+      "state": "bleeding",
+      "hr": 95,
+      "art": "104.5/81.5 (88.6)",
+      "spo2": 97,
+      "etco2": 46,
+      "rr": 4
+    },
+    {
+      "simT": 364.2,
+      "what": "6 min of bleeding",
+      "state": "bleeding",
+      "hr": 119,
+      "art": "92.5/76.6 (81.1)",
+      "spo2": 97,
+      "etco2": 46,
+      "rr": 3
+    },
+    {
+      "simT": 485.6,
+      "what": "8 min of bleeding",
+      "state": "bleeding",
+      "hr": 141,
+      "art": "67.1/54.7 (59)",
+      "spo2": 97,
+      "etco2": 42,
+      "rr": 3
+    },
+    {
+      "simT": 907.8,
+      "what": "pulse lost (systolic < 20 or static arterial pressure)",
+      "state": "bleeding",
+      "hr": 164,
+      "art": "51.9/40.7 (45)",
+      "spo2": 96,
+      "etco2": 32,
+      "rr": 3,
+      "firstLostSample": null,
+      "staticPressureAlarm": null,
+      "noPulseAlarm": null
+    },
+    {
+      "alarmsRaised": [
+        "486 s SPO2 LOW PERFUSION",
+        "502 s SPO2 LOW PERFUSION"
+      ]
+    }
+  ],
+  "labels": {
+    "ventFirst": "Ventilator view opened for 5 s before loading",
+    "alarmButtonAtOpen": "Alarms off",
+    "tab": "Scenario",
+    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "toast": "Scenario loaded: Class IV haemorrhage, PEA and resuscitation",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Start CPR, 2 L and epinephrine\": CPR, 2 L warmed fluid, epinephrine 1 mg\nStart CPR, 2 L and epinephrine\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Alarms off",
+    "sessionBar": "M 35 y 75 kg MODELED Class IV haemorrhage, PEA and resuscitation: Bleeding 2.5 L over 10 min 00:01 00:01 ×1 ×2 ×4 Pause Bookmark",
+    "finalRun": "Class IV haemorrhage, PEA and resuscitation\nChoose another scenario\nA ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.\nBleeding 2.5 L over 10 min\nCPR, 2 L warmed fluid, epinephrine 1 mg\nReturn of circulation\nTime in state\n15:06\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Start CPR, 2 L and epinephrine\": CPR, 2 L warmed fluid, epinephrine 1 mg\nStart CPR, 2 L and epinephrine\nObjectives\nRecognise PEA from hypovolaemia\nStart high-quality CPR without delay\nGive volume and epinephrine; recognise the return of circulation on the arterial line and capnogram\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "pulse lost",
+      "expected": "between 8 and 13 min sim",
+      "observed": "not by 15 min",
+      "pass": false
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

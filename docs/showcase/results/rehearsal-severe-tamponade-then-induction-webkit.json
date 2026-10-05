@@ -2,10 +2,10 @@
   "case": "Severe tamponade, then induction",
   "browser": "webkit",
   "server": "perl (through the launcher)",
-  "base": "http://127.0.0.1:8700",
+  "base": "http://127.0.0.1:8703",
   "steps": [
     {
-      "simT": 3.5,
+      "simT": 3.6,
       "what": "loaded \"Severe tamponade, then induction\" at ×4",
       "state": "tamponade",
       "hr": null,
@@ -15,48 +15,61 @@
       "rr": null
     },
     {
-      "simT": 33.8,
+      "simT": 34.3,
       "what": "compensating, 30 s after load",
       "state": "tamponade",
-      "hr": 98,
-      "art": "108.8/88.1 (95.2)",
+      "hr": 101,
+      "art": "110.1/89.4 (96.5)",
       "spo2": 96,
       "etco2": 35,
       "rr": 14
     },
     {
-      "simT": 37.2,
+      "simT": 37.6,
       "what": "pressed \"Give propofol 2 mg/kg\"",
       "state": "inducedByButton",
       "hr": 100,
-      "art": "111.1/90.2 (97.3)",
+      "art": "111.2/90.4 (97.4)",
       "spo2": 96,
       "etco2": 35,
       "rr": 14
     },
     {
-      "simT": 146.6,
+      "simT": 107.1,
       "what": "arterial mean < 40",
       "state": "inducedByButton",
-      "hr": 40,
-      "art": "49.6/33.5 (38.1)",
-      "spo2": 81,
+      "hr": 81,
+      "art": "47.3/36.5 (39.6)",
+      "spo2": 95,
       "etco2": 0,
-      "rr": 4
+      "rr": 0
     },
     {
-      "simT": 154.8,
+      "simT": 160.2,
       "what": "2 min after propofol",
       "state": "inducedByButton",
-      "hr": 40,
-      "art": "39.6/28.9 (32.1)",
-      "spo2": 83,
+      "hr": 44,
+      "art": "null/null (15.6)",
+      "spo2": null,
       "etco2": 0,
-      "rr": 4
+      "rr": 3,
+      "apnoeaAlarmAfterS": 55,
+      "at1min": "57.2/42.5 (46.5) HR 84",
+      "at2min": "null/null (15.9) HR 46",
+      "pulselessAfterS": 95.6,
+      "alarmsAfterPropofol": [
+        "55 s CO2 APNEA",
+        "95.6 s IBP1 STATIC PRESSURE",
+        "102.6 s SPO2 LOW PERFUSION",
+        "119.6 s SPO2 NO PULSE"
+      ]
     },
     {
       "alarmsRaised": [
-        "79.9 s CO2 APNEA"
+        "89.4 s CO2 APNEA",
+        "130 s IBP1 STATIC PRESSURE",
+        "137 s SPO2 LOW PERFUSION",
+        "154 s SPO2 NO PULSE"
       ]
     }
   ],
@@ -70,13 +83,13 @@
     "alarmButtonAfterLoad": "Alarms off",
     "sessionBar": "M 58 y 80 kg MODELED Severe tamponade, then induction: Tamponade, compensating 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
     "afterPropofol": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n02:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n02:05\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Drain the pericardium\": Pericardium drained\nDrain the pericardium\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
       "what": "arterial mean after propofol",
       "expected": "< 40 mmHg (within 5 min sim)",
-      "observed": "112.7 s",
+      "observed": "72.7 s",
       "pass": true
     },
     {

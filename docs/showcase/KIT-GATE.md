@@ -28,7 +28,65 @@ at 2 min and systolic > 110 within 60 s of epinephrine; bronchospasm VTE rises �
 
 ---
 
-## Round 3 — the FU-7 build (CURRENT showcase build)
+## Round 4 — FINAL showcase build, main 41678d0b (FU-9 Part B, FU-10 Part A, FU-8 Part B since round 3)
+*2026-10-05. The kit was built into `_sandbox/pme-showcase-next` first, and all proofs ran against that folder. The
+4a1cc3f7 kit stayed in place as the fallback until everything had passed. `VERSION.txt`: `Commit: 41678d0b… (with
+uncommitted changes)`. The "uncommitted changes" are this branch's `scripts/showcase` edits; the app source is
+main's. Sequence: the one at the top with `K=…/pme-showcase-next`.*
+
+**All pass.**
+- Server checks: 6 of 6.
+- Sub-path: 0 root-absolute URLs. On WebKit: apnoea alarm 60.5 s, MAP nadir 65.5, CO2 tile 46.
+- Rehearsal: the five cases and the second-load clock check pass on Chromium and WebKit, 14 of 14, with no console
+  errors.
+- Sound: passes on both browsers.
+
+| Case | Chromium | WebKit | Change since round 3 |
+|---|---|---|---|
+| Induction: apnoea alarm / MAP baseline → nadir / CO2 tile after intubation | 62.5 s / 94.8 → 65.7 / 46 at 7.3 s | 62.0 s / 94.8 → 65.6 / 46 at 5.3 s | apnoea 55 → 62 s, nadir 71.7 → 65.7 |
+| Anaphylaxis: systolic > 110 after epinephrine | 11.3 s | 11.3 s | none |
+| Bronchospasm: VTE 0 → 3 min | 161 → 305 | 161 → 305 | none |
+| Tamponade: MAP < 40 after propofol | 73.9 s (rerun 72.6) | 73.9 s (rerun 72.7) | 112.7 → 74 s |
+| Haemorrhage: pulse lost / SPO2 NO PULSE / systolic > 90 | 10:03 / 10:40 / 4.3 min into CPR | same | none |
+| Second load: clock | 02:04 → 00:04 → 00:37 | 02:03 → 00:05 → 00:35 | none |
+
+Run-sheet numbers, from both browsers:
+- **Healthy induction**
+  - baseline ART 123/81, MAP 95 (94.8)
+  - "CO2 APNEA" 62 s after **Induce now** (60.5–62.5 s over 3 runs); MAP 74 at that moment
+  - MAP 74.7 at 2 min; nadir 65.6–65.7, reached after **Intubate and ventilate**, about 4 min after induction (it reads
+    71 at 4 min)
+  - CO2 tile 46 within 5–7 s of intubation, 38 two minutes later
+- **Tamponade**
+  - compensating ART 109/88 (95), HR 98
+  - after **Give propofol 2 mg/kg**:
+    - "CO2 APNEA" 46–55 s (breath phase)
+    - 1 min: ART 56–57/42 (46), HR 83–84
+    - MAP < 40 at 73–74 s
+    - pulseless ("IBP1 STATIC PRESSURE", mean only) at 94–96 s
+    - "SPO2 LOW PERFUSION" 102 s, "SPO2 NO PULSE" 120 s
+    - 2 min: no pulse, arterial mean ≈ 16, HR 46
+
+Probes:
+- **Early CPR at 10:25** (pressed 10:28.7–10:29.2): VFIB 10:33 and no ROSC in 8 min (best systolic 63), on both
+  browsers, as in rounds 1–3. CPR after the alarm (10:55) gives ROSC at 4.3 min on both (the main rehearsal).
+- **Ventilator view opened in the same page BEFORE loading the haemorrhage case** (`SHOWCASE_VENT_FIRST=1`):
+  - the case changes completely: the cockpit ventilates at RR 3–4 with EtCO2 45–46, instead of the case's settings
+  - at 8 min ART 67/55, HR 140
+  - **no pulse loss by 15 min** (still 52/41, HR 165; "IBP1 STATIC PRESSURE" only at 15:01 on the old build)
+  - alarms: only "SPO2 LOW PERFUSION" (8:06, 8:22)
+  - both browsers on 41678d0b behave this way, and so does the **4a1cc3f7 fallback kit (Chromium)**: this is not a
+    regression, it is how the app has always behaved.
+
+  Run sheet: **do not open the Ventilator view before a case; reload the page (Cmd-R) before loading the haemorrhage
+  case if it was opened.** The bronchospasm case opens it AFTER loading, which is fine.
+
+Videos are recorded into the new kit (same names). The folders were swapped: the new kit is `pme-showcase`, the old one
+is `pme-showcase-fallback-4a1cc3f7` (intact, with its videos). Videos: 1-healthy-induction 1:12, 2-anaphylaxis 1:20, 3-bronchospasm 2:03, 4-haemorrhage-cpr 4:06, 5-tamponade 0:44 (H.264, 1280×800).
+
+---
+
+## Round 3 — the FU-7 build (superseded by round 4)
 *2026-10-04: the sequence above was run exactly as written on a fresh detached checkout of `main` **4a1cc3f7** (FU-7
 merged, with the hotfix and round 2) at `scratch/wt-kit-rebuild`. `VERSION.txt`: `Commit: 4a1cc3f7f359…`. It finished
 without an error (`SEQ-EXIT 0`). App: 79 HTML/CSS/JS files, 28 pages; still 0 root-absolute URLs. `runtime/` is
