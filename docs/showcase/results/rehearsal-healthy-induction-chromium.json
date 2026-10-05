@@ -15,7 +15,7 @@
       "rr": null
     },
     {
-      "simT": 33.9,
+      "simT": 33.8,
       "what": "baseline (15–30 s after load)",
       "state": "awake",
       "hr": 70,
@@ -26,7 +26,7 @@
       "baselineMap": 94.8
     },
     {
-      "simT": 37.3,
+      "simT": 37.2,
       "what": "pressed \"Induce now\"",
       "state": "induced",
       "hr": 70,
@@ -36,24 +36,24 @@
       "rr": 13
     },
     {
-      "simT": 90,
+      "simT": 97.9,
       "what": "apnoea alarm",
       "state": "induced",
       "hr": 75,
-      "art": "111/73.6 (85.7)",
+      "art": "97.6/63.7 (74)",
       "spo2": 99,
       "etco2": 0,
-      "rr": 11,
+      "rr": 0,
       "apnoeaAlarm": "CO2 APNEA",
       "alarmButton": "Alarms off",
-      "co2Tile": "CO2 mmHg 0 FiCO2 0 awRR 13"
+      "co2Tile": "CO2 mmHg 0 FiCO2 0 awRR 0"
     },
     {
       "simT": 154.5,
       "what": "2 min after induction",
       "state": "induced",
-      "hr": 74,
-      "art": "106.9/71.3 (82.4)",
+      "hr": 77,
+      "art": "98.1/64.4 (74.7)",
       "spo2": 99,
       "etco2": 0,
       "rr": 0
@@ -62,37 +62,37 @@
       "simT": 157.9,
       "what": "pressed \"Intubate and ventilate\"",
       "state": "ventilated",
-      "hr": 73,
-      "art": "107.3/71.4 (82.9)",
+      "hr": 77,
+      "art": "98.5/64.6 (75.2)",
       "spo2": 99,
       "etco2": 0,
       "rr": 4
     },
     {
-      "simT": 162.1,
+      "simT": 162,
       "what": "EtCO2 back on the monitor CO2 tile",
       "state": "ventilated",
-      "hr": 75,
-      "art": "101/68.1 (78.3)",
+      "hr": 78,
+      "art": "93/61.5 (71.1)",
       "spo2": 99,
-      "etco2": 45,
+      "etco2": 46,
       "rr": 4,
-      "co2Tile": "CO2 mmHg 45 FiCO2 45 awRR 3"
+      "co2Tile": "CO2 mmHg 46 FiCO2 46 awRR 3"
     },
     {
-      "simT": 275.2,
+      "simT": 275.1,
       "what": "4 min after induction",
       "state": "ventilated",
-      "hr": 73,
-      "art": "101.4/67.4 (77.9)",
+      "hr": 75,
+      "art": "94.4/61.4 (71.4)",
       "spo2": 99,
-      "etco2": 37,
+      "etco2": 38,
       "rr": 12,
-      "mapNadir": 71.7
+      "mapNadir": 65.7
     },
     {
       "alarmsRaised": [
-        "89 s CO2 APNEA"
+        "96.6 s CO2 APNEA"
       ]
     }
   ],
@@ -114,19 +114,19 @@
     {
       "what": "apnoea alarm after \"Induce now\"",
       "expected": "within 70 s sim",
-      "observed": "55 s \"CO2 APNEA\"",
+      "observed": "62.5 s \"CO2 APNEA\"",
       "pass": true
     },
     {
       "what": "EtCO2 number on the Saadat CO2 tile after \"Intubate and ventilate\"",
       "expected": "> 25 mmHg",
-      "observed": "45 after 7.3 s",
+      "observed": "46 after 7.3 s",
       "pass": true
     },
     {
       "what": "arterial mean falls after induction",
       "expected": "≥ 10 mmHg below baseline",
-      "observed": "94.8 → nadir 71.7",
+      "observed": "94.8 → nadir 65.7",
       "pass": true
     },
     {

@@ -27,6 +27,14 @@ async function start(page: Page, r: Result, title: string): Promise<number> {
   const errs = watchConsole(page);
   r.errors = errs;
   await openTeach(page);
+  if (process.env.SHOWCASE_VENT_FIRST) {
+    // probe: the Ventilator view opened in this page before the case is loaded (its cockpit keeps running)
+    await page.evaluate(() => (location.hash = '#/vent'));
+    await page.waitForTimeout(5000);
+    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.waitForTimeout(1200);
+    r.labels.ventFirst = 'Ventilator view opened for 5 s before loading';
+  }
   Object.assign(r.labels, await loadShowcase(page, title));
   await record(page);
   const t = await simNow(page);
@@ -165,8 +173,21 @@ test('Severe tamponade, then induction', async ({ page }) => {
     const tLow = await waitSim(page, 300, (_n, v) => typeof v.abpMean === 'number' && v.abpMean < 40);
     await step(r, page, 'arterial mean < 40');
     check(r, 'arterial mean after propofol', '< 40 mmHg (within 5 min sim)', tLow === null ? `not within 300 s (latest ${r1((await latest(page)).abpMean)})` : `${r1(tLow - tP)} s`, tLow !== null);
-    await waitUntilSim(page, tP + 120);
-    await step(r, page, '2 min after propofol');
+    await waitUntilSim(page, tP + 125);
+    // observations for the run sheet (no assertion): apnoea alarm, pressures at 1 and 2 min, when the pulse is lost
+    // (arterial systolic/diastolic blank = "IBP1 STATIC PRESSURE", or systolic < 20)
+    const h = await hist(page, tP, tP + 125);
+    const ha = h.filter((s) => 'abpMean' in s); // measurement events can be partial
+    const hh = h.filter((s) => 'hr' in s);
+    const nearIn = (xs: typeof h, t: number) => xs.reduce((a, s) => (Math.abs(s.t - t) < Math.abs(a.t - t) ? s : a), xs[0]);
+    const near = (t: number) => ({ ...nearIn(ha, t), hr: hh.length ? nearIn(hh, t).hr : null });
+    const art = (s: { abpSys?: number | null; abpDia?: number | null; abpMean?: number | null; hr?: number | null }) => `${r1(s.abpSys)}/${r1(s.abpDia)} (${r1(s.abpMean)}) HR ${r1(s.hr)}`;
+    const lostAt = h.find((s) => (s.abpSys === null && typeof s.abpMean === 'number') || (typeof s.abpSys === 'number' && s.abpSys < 20));
+    const al = (await alarms(page)).filter((x) => x.t > tP);
+    await step(r, page, '2 min after propofol', {
+      apnoeaAlarmAfterS: r1((al.find((x) => /apn/i.test(x.text))?.t ?? NaN) - tP), at1min: ha.length ? art(near(tP + 60)) : null, at2min: ha.length ? art(near(tP + 120)) : null,
+      pulselessAfterS: lostAt ? r1(lostAt.t - tP) : null, alarmsAfterPropofol: al.map((x) => `${r1(x.t - tP)} s ${x.text}`),
+    });
   } finally {
     await finish(page, r, browserName);
   }
