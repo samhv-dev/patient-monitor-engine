@@ -46,6 +46,10 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   amiodarone: { bolus: [[150, 'mg'], [300, 'mg']] },
   adenosine: { bolus: [[6, 'mg'], [12, 'mg']] },
   calciumChloride: { bolus: [[10, 'mg/kg'], [1, 'g']] },
+  // FU-7.1 A5 (Ali 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
+  // peripheral 10 mmol/h and the central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset. The
+  // engine warns, with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
+  potassiumChloride: { infusion: [[10, 'mmol/h'], [20, 'mmol/h']], aka: ['kcl', 'potassium'] },
   magnesium: { bolus: [[2, 'g']] },
   dantrolene: { bolus: [[2.5, 'mg/kg']] },
   naloxone: { bolus: [[40, 'mcg'], [100, 'mcg'], [400, 'mcg']] },
@@ -81,6 +85,7 @@ export function rateUnits(d: DrugItem): RateUnit[] {
   if (a === 'mcg') return ['mcg/kg/min', 'mcg/min'];
   if (a === 'mg') return ['mcg/kg/min', 'mg/kg/h', 'mg/h', 'mg/min'];
   if (a === 'units') return ['units/min', 'units/h'];
+  if (a === 'mmol') return ['mmol/h']; // FU-7.1 A5: potassium chloride (10–20 mmol/h)
   return ['mL/h'];
 }
 

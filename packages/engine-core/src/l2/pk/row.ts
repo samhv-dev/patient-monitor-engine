@@ -103,6 +103,8 @@ export interface DrugRow {
   /** FU-8 (B1): a documented maximum — exceeding it raises a `drugWarning` event, never a clamp. `perKg`: × actual
    * weight; `scope` 'cumulative' sums every bolus of the row. Only maxima the row's own `doses` text sources are set;
    * the rest wait on Ali's dosing-preset table (review pack DP-01…DP-64). */
+  /** FU-7.1 A5: the documented maximum INFUSION rate (amount per hour); a faster rate or a bolus order is warned about. */
+  maxRatePerH?: { amount: number; perKg?: boolean; src: string };
   maxDose?: { amount: number; perKg: boolean; scope: 'dose' | 'cumulative'; src: string };
   /** FU-8 (B1): another stage reads this row's ordered RATE and acts on it (7e reads dextrose, E-7e-4), so an infusion
    * is meaningful although the row's own curve has no infusion reference. */

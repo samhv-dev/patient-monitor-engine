@@ -2,7 +2,7 @@
 // the PD combination. Outputs: pk.fx (7a DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce, volatiles,
 // the dose log; R51 §2–3), pk.out (1 Hz `drugs`). 7g consumes EVERY library drug event (decision 10).
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
-import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute } from '../../types-pk.ts';
+import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type RateUnit } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
 import { STATE_SCHEMA } from '../../l1/state.ts';
 import { combine, NEUTRAL_FX, type Active } from './combine.ts';
@@ -41,6 +41,8 @@ export interface DrugInst {
   doses: GammaDose[];
   infC: number; // gamma infusion state, reference units
   infTarget: number;
+  /** FU-7.1 A5: amount infused since the last advance pass (blood rows only), logged to `bus.doses` there. */
+  acc?: number;
   total: number; // amount given
   bound: number; // amount bound by sugammadex in plasma (rocuronium/vecuronium)
   bolusTimes: number[];
@@ -250,7 +252,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   }
   const bloodBolusOnly = `${row.id} is given as a bolus in v1; 7c owns its kinetics`;
   if (ev.kind === 'infusion') {
-    if (row.pk.kind === 'blood') return bloodBolusOnly;
+    if (row.pk.kind === 'blood' && !row.rateActsVia) return bloodBolusOnly; // FU-7.1 A5: KCl declares its rate consumer
     if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia) return `${row.id} has no infusion model: give it as a bolus`; // FU-8 (B1)
     const c = ev as Extract<PkClinicalEvent, { kind: 'infusion' }>;
     if (!(c.rate >= 0 && Number.isFinite(c.rate))) return 'rate must be ≥ 0';
@@ -262,7 +264,7 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   if (!(Number.isFinite(d.dose) && d.dose >= 0)) return 'dose must be ≥ 0';
   if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4'; // Stage 7d E-7d-1
   const isRate = d.unit.includes('/min') || d.unit.includes('/h');
-  if (row.pk.kind === 'blood' && (isRate || d.infusion)) return bloodBolusOnly;
+  if (row.pk.kind === 'blood' && (isRate || d.infusion) && !row.rateActsVia) return bloodBolusOnly; // FU-7.1 A5
   // FU-8 (B1): the route is explicit — the engine's kinetics are intravenous; any other route is refused, not given as IV
   const routes = row.routes ?? IV_ROUTES;
   if (d.route !== undefined && !routes.includes(d.route)) return `${row.id}: route ${d.route} is not modelled — the engine gives ${routes.join(', ')} doses only`; // an event without a route (scenario/oracle JSON) is IV, as before
@@ -298,8 +300,27 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   const logDose = (amount: number) => pk.pending.push({ agent: row.id, mgPerKg: mgPerKgOf(row, amount, w), amount, amountUnit: row.amountUnit, t, ...(pct !== undefined ? { concentrationPct: pct } : {}) });
   if (row.pk.kind === 'blood') {
     // 7c's chemistry (decision 10): validated as a bolus; 7g records and logs it, 7c's mass balance acts on bus.doses
+    // FU-7.1 A5: a row that declares `rateActsVia` may also be INFUSED (potassium chloride, 10–20 mmol/h). The ordered
+    // rate accrues into the dose log one entry per advance pass, so 7c's mass balance sees the same stream it already
+    // reads for a bolus — 7g keeps no kinetics of its own for these rows.
+    const rateLimit = row.maxRatePerH;
+    if (row.rateActsVia && (ev.kind === 'infusion' || (ev.kind === 'drug' && (ev.infusion || ev.unit.includes('/min') || ev.unit.includes('/h'))))) {
+      const unit = ev.kind === 'infusion' ? ev.unit : (ev.unit as RateUnit);
+      const perMin = toRate(ev.kind === 'infusion' ? ev.rate : ev.dose, unit, row.amountUnit, w, row.syringePerMl) as number;
+      d.rate = perMin;
+      d.rateUntil = NEVER;
+      if (rateLimit && perMin * 60 > rateLimit.amount * (rateLimit.perKg ? w : 1) + 1e-9) {
+        pk.out.push({ type: 'drugWarning', t, drugId: row.id, text: `${row.name}: ${+(perMin * 60).toFixed(1)} ${row.amountUnit}/h exceeds the maximum ${rateLimit.amount * (rateLimit.perKg ? w : 1)} ${row.amountUnit}/h (${rateLimit.src})` });
+      }
+      return true;
+    }
     const e = ev as Extract<PkClinicalEvent, { kind: 'drug' }>;
     const amt = toAmount(e.dose, e.unit, row.amountUnit, w, row.syringePerMl) as number;
+    // FU-7.1 A5: a row with a documented maximum RATE ordered as a bolus — the dose is given as ordered (FU-8 B1: no
+    // silent clamp) with a warning naming the rate it should have run at. KCl by iv push is the error the warning is for.
+    if (rateLimit) {
+      pk.out.push({ type: 'drugWarning', t, drugId: row.id, text: `${row.name}: ${+amt.toFixed(1)} ${row.amountUnit} ordered as a bolus — it must be infused at ${rateLimit.amount * (rateLimit.perKg ? w : 1)} ${row.amountUnit}/h or less (${rateLimit.src})` });
+    }
     d.total += amt;
     logDose(amt);
     return true;
@@ -401,6 +422,17 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       d.factor = clFactor(row, ctx);
       const g = gammaDeclineRate(row, d.factor);
       if (g !== 1) for (const x of d.doses) if (t - x.t > tpS) x.t += PK_DT_S * (1 - g);
+    } else if (row.pk.kind === 'blood') {
+      // FU-7.1 A5: an infused blood row accrues its ordered rate; `acc` is logged once per advance pass (advancePk)
+      if (t > d.rateUntil) {
+        d.rate = 0;
+        d.rateUntil = NEVER;
+      }
+      if (d.rate > 0) {
+        const amt = (d.rate * PK_DT_S) / 60;
+        d.acc = (d.acc ?? 0) + amt;
+        d.total += amt;
+      }
     } else if (d.x.length) {
       const f = clFactor(row, ctx);
       if (f !== d.factor) d.factor = f;
@@ -545,6 +577,13 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
  */
 export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
   pk.distQ = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // FU-4 G10 (F12(3)): the bolus transit lag reads it
+  // FU-7.1 A5: an infused blood row's accrued amount joins the same dose stream 7c reads for a bolus, one entry per pass
+  for (const d of Object.values(pk.drugs)) {
+    if (!d.acc) continue;
+    const row = DRUGS[d.id] as DrugRow;
+    pk.pending.push({ agent: row.id, mgPerKg: mgPerKgOf(row, d.acc, pk.patient.weightKg), amount: d.acc, amountUnit: row.amountUnit, t: pk.t });
+    d.acc = 0;
+  }
   pk.bus.doses = pk.pending;
   pk.pending = [];
   while (pk.t + PK_DT_S <= tEnd + 1e-9) {

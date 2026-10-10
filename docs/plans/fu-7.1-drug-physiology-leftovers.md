@@ -1295,8 +1295,8 @@ git push
 
 ### Task A5: potassium chloride, infused, in the library and in the app
 
-> **Branch a executor (2026-10-10): STOPPED, not in `fu-7.1-a`.** `apps/demo/src/app/glossary.test.ts` requires a
-> `DRUG_NAMES` row in `glossary-data.ts` (a Never-touch file); see `docs/gates/fu-7.1-a.md` §4.
+> **Branch a executor (2026-10-10):** `apps/demo/src/app/glossary.test.ts` (R56) requires a `DRUG_NAMES` row in
+> `glossary-data.ts` (a Never-touch file); the orchestrator ALLOWED that one declared line — see `docs/gates/fu-7.1-a.md` §4.
 
 **Branch** `fu-7.1-a` · **Items** A5 (owner's defect, 2026-10-10: "there is no KCl as drug") · **Files** Modify
 `packages/engine-core/src/l2/pk/data/rows-other.ts`, `src/l2/pk/row.ts`, `src/l2/pk/pipeline.ts`, `src/types-pk.ts`,
@@ -1316,7 +1316,7 @@ Stoelting Co-Existing 8e ch. 23).
 `RateUnit` gains `mmol/h`; `DrugInst.acc` (the amount infused since the last advance pass); the app's `PRESETS` gains
 an infusion-only entry and `rateUnits` answers `mmol/h` for a mmol-dosed drug. **No constant of 7c is touched.**
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-kcl.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-kcl.test.ts`:
 
 ```ts
 // FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
@@ -1399,13 +1399,13 @@ describe('FU-7.1 A5: potassium chloride', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-kcl.test.ts`
 Expected: 4 failed — every case throws on the unknown drug (`DRUGS['potassiumChloride']` is undefined, so the
 engine's validator refuses the event and the helper's `send` throws `rejected …: unknown drug potassiumChloride`).
 
-- [ ] **Step 3 — implement.** Six blocks: the row, the row type's rate maximum, the `mmol/h` rate unit, 7g's infused
+- [x] **Step 3 — implement.** Six blocks: the row, the row type's rate maximum, the `mmol/h` rate unit, 7g's infused
   blood-row path (validation, the rate branch and the warnings, the accrual in the step, the flush into the dose log),
   7c's K + Cl load, and the app's preset and rate-unit list.
 
@@ -1771,10 +1771,10 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 4 passed (one of them the recorded known miss), with
+- [x] **Step 4 — run it green.** Expected: 4 passed (one of them the recorded known miss), with
   `FU-7.1 A5: 20 mmol/h K 4.20 → 4.97 at 1 h (+0.77), 4.33 at 3 h (+0.13); 10 mmol/h +0.37` and the two warning texts.
 
-- [ ] **Step 5 — the blast radius: the drug layer, 7c's pool and the demo package.** Run and compare with A0.3:
+- [x] **Step 5 — the blast radius: the drug layer, 7c's pool and the demo package.** Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/l3
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-hyperk.test.ts test/engine/blood-k-rhythm.test.ts test/engine/blood-sanity-acid.test.ts test/engine/fu9-acid.test.ts test/engine/drug-layer.test.ts test/engine/pk-wiring.test.ts
@@ -1784,10 +1784,10 @@ Expected (the prototype): `test/l2` + `test/l3` **1 160 passed, 1 skipped** (62 
 demo package green with A1's two cases. Nothing about an existing drug changes: a `blood` row without `rateActsVia`
 still refuses an infusion with the same reason, and no existing row has a `maxRatePerH`.
 
-- [ ] **Step 6 — the slow group.** `fu71-kcl` is ≈ 64 s (3.2 sim-hours), so it belongs in SLOW: it is covered by the
+- [x] **Step 6 — the slow group.** `fu71-kcl` is ≈ 64 s (3.2 sim-hours), so it belongs in SLOW: it is covered by the
   `fu71-*` glob of B4 Step 3.
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/pk packages/engine-core/src/l2/blood/pipeline.ts packages/engine-core/src/types-pk.ts apps/demo/src/app/drugs.ts packages/engine-core/test/engine/fu71-kcl.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
