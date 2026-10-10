@@ -7,7 +7,7 @@ import { DRUG_LIST, doseUnits } from './drugs.ts';
 const NMB = ['rocuronium', 'vecuronium', 'cisatracurium', 'atracurium', 'mivacurium', 'succinylcholine'];
 const item = (id: string) => DRUG_LIST.find((d) => d.id === id)!;
 
-describe('FU-7.1 A1: neuromuscular blockers in the dose picker', () => {
+describe('FU-7.1 A1: neuromuscular blockers in the dose picker', { timeout: 30_000 }, () => { // the engine case: 1.4 s alone, > 5 s under a loaded parallel run
   it('every blocker opens on a mg/kg preset (the label intubating doses) and offers mg/kg; other µg drugs do not', () => {
     const want: Record<string, number> = { rocuronium: 0.6, vecuronium: 0.1, cisatracurium: 0.15, atracurium: 0.5, mivacurium: 0.2, succinylcholine: 1 };
     for (const id of NMB) {
