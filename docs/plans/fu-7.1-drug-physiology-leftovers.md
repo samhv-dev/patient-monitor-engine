@@ -3240,7 +3240,7 @@ number": `flag: 'invalid'` with a null value, which the renderer draws as `---` 
 **Interfaces:** none (the `nibp` event and `NibpState` are unchanged; only the `measurement` event a FAILED cycle
 emits is new).
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-nibp-arrest.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-nibp-arrest.test.ts`:
 
 ```ts
 // FU-7.1 B8 (Ali 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
@@ -3296,14 +3296,14 @@ describe('FU-7.1 B8: the cuff in a pulseless patient', { timeout: 600_000 }, () 
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-nibp-arrest.test.ts`
 Expected: 1 failed —
 `FU-7.1 B8: with a pulse 129/76 (99); pulseless phase failed, result none, numeric 129 flag valid`
 (`expected 129 to be null`): the attempt DOES fail, and the monitor still shows the pre-arrest systolic.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
@@ -3342,10 +3342,10 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 1 passed, with
+- [x] **Step 4 — run it green.** Expected: 1 passed, with
   `FU-7.1 B8: with a pulse 129/76 (99); pulseless phase failed, result none, numeric --- flag invalid`.
 
-- [ ] **Step 5 — every reader of the NIBP numerics.** Run:
+- [x] **Step 5 — every reader of the NIBP numerics.** Run:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/hemo-nibp.test.ts \
   test/engine/fidelity-arrest.test.ts test/engine/fidelity-alarms.test.ts test/engine/stage3-alarms-engine.test.ts
@@ -3355,7 +3355,7 @@ VF onset — that assertion is unchanged and still passes; the alarm suites see 
 invalid flags, which raises no alarm (an invalid numeric cannot breach a limit). The NIBP trend keeps its last valid
 sample: a blanked numeric is not a trend point (checked in `test/l3/trends`).
 
-- [ ] **Step 6 — typecheck, commit, push.**
+- [x] **Step 6 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/fu71-nibp-arrest.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
