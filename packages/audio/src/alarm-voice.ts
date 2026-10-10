@@ -19,8 +19,9 @@ export function harmonicTable(harmonicsDb: readonly number[]): { real: Float32Ar
   return { real, imag };
 }
 
-function stopper(osc: OscillatorNode, env: GainNode): ToneHandle {
+function stopper(osc: OscillatorNode, env: GainNode, endsAt: number): ToneHandle {
   return {
+    endsAt, // FU-11 (F19): the scheduler keeps the handle until the voice has ended
     stop() {
       env.disconnect();
       try {
@@ -47,7 +48,7 @@ export function playAlarmPulse(ctx: Ctx, dest: AudioNode, when: number, p: { fre
   osc.connect(env).connect(dest);
   osc.start(when);
   osc.stop(when + p.durS + 0.01);
-  return stopper(osc, env);
+  return stopper(osc, env, when + p.durS + 0.01);
 }
 
 /** A device tone (segments back to back, each gliding startHz → endHz) at audio time `when`. */
@@ -72,7 +73,7 @@ export function playSegments(ctx: Ctx, dest: AudioNode, when: number, segs: read
   osc.connect(env).connect(dest);
   osc.start(when);
   osc.stop(t + 0.01);
-  return stopper(osc, env);
+  return stopper(osc, env, t + 0.01);
 }
 
 export interface TonePlayerOptions {
