@@ -60,6 +60,9 @@ export class ControllerSession {
   rhythm: RhythmId | null = null;
   /** The host's scenario as seen from here (Stage 6b). */
   readonly scenario = new ScenarioView();
+  /** FU-11 (K5): the host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
+  timeScale = 1;
+  hostPaused = false;
   private readonly o: ControllerSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
@@ -195,6 +198,8 @@ export class ControllerSession {
     else if (e.type === 'commandApplied') {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
+      if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value; // FU-11 (K5)
+      if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack

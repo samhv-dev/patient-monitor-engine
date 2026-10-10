@@ -18,9 +18,11 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const speed = seg<string>('Simulation speed', [['1', '×1'], ['2', '×2'], ['4', '×4']], '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
   speed.classList.add('compact'); // ×4 is the host's limit (the 6a host refuses a scale above 4: 'scale must be 0.25–4')
   let paused = false;
+  let asking = 0; // R50 M4: own pause/resume requests not yet answered — until then the button shows what was asked
   const pause = button('Pause', () => {
     paused = !paused;
-    void link.send({ type: 'time', action: paused ? 'pause' : 'resume' });
+    asking++;
+    void link.send({ type: 'time', action: paused ? 'pause' : 'resume' }).finally(() => (asking--, draw()));
     pause.textContent = paused ? 'Resume' : 'Pause';
     pause.setAttribute('aria-pressed', String(paused));
   }, 'small');
@@ -55,6 +57,14 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     const sv = link.ctl.scenario;
     setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
     setText(t, clock(link.simT));
+    // FU-11 (K5): the speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)
+    const k = String(link.ctl.timeScale);
+    if (speed.value !== k && ['1', '2', '4'].includes(k)) speed.set(k);
+    if (!asking && paused !== link.ctl.hostPaused) {
+      paused = link.ctl.hostPaused;
+      pause.textContent = paused ? 'Resume' : 'Pause';
+      pause.setAttribute('aria-pressed', String(paused));
+    }
   }, 500);
   const off = link.onChange(draw);
   const iv = setInterval(draw, 1000);
