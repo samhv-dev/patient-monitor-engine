@@ -65,7 +65,7 @@ scope.onmessage = (ev) => {
         return;
       case 'snapshot':
         if (core) scope.postMessage({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
-        else scope.postMessage({ type: 'error', message: 'not initialised' });
+        else scope.postMessage({ type: 'error', message: 'not initialised', reqId: m.reqId });
         return;
       case 'plan': // Stage 4b
         core?.setPlan(m.plan);
@@ -94,6 +94,8 @@ scope.onmessage = (ev) => {
         return;
     }
   } catch (err) {
-    scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err) });
+    // FU-11 (F06): a request that threw answers its own reqId, so the caller's promise rejects instead of waiting forever
+    const reqId = 'reqId' in m ? m.reqId : undefined;
+    scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err), ...(reqId !== undefined ? { reqId } : {}) });
   }
 };
