@@ -33,7 +33,9 @@ export interface Cycle {
   t0: number;
   ti: number;
   te: number;
-  vt: number; // mL reaching the lungs
+  vt: number; // mL reaching the lungs (the SET/intended volume of the cycle)
+  /** FU-7.1 B5 (research/24 P8b): the volume the lung actually received, stamped at end-inspiration; absent until then. */
+  vtDelMl?: number;
   kind: BreathKind;
   mech: boolean; // positive pressure (true) or negative (spontaneous)
   exch: boolean; // gas exchange happens

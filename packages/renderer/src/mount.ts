@@ -196,6 +196,8 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           const n = formatNibp(undefined, nibpLast);
           nibpTile.set(n.main, n.sub, n.status);
         }
+        // FU-7.1 B8: a failed cuff cycle's blanked numerics clear the last result (the tile then reads "---/---")
+        else if (nibpTile && v.nibpSys?.flag === 'invalid') nibpLast = null;
       }
       if (e.type === 'nibp' && nibpTile) {
         const n = formatNibp(e, nibpLast);

@@ -371,6 +371,20 @@ function nibpEvents(hs: HemoState, outs: NibpOut[], t: number): void {
   for (const o of outs) {
     if (o.kind === 'failed') {
       hs.out.push({ type: 'alarm', t, id: 'nibp-failed', priority: 'low', category: 'technical', state: 'raised', text: o.text });
+      // FU-7.1 B8 (Ali 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
+      // already fails every attempt in an arrest (no oscillations: measured PEA, asystole and VF all fail, and every
+      // compression pulse is rejected as artefact, brief §4.5) — but only an INOP was emitted, so the tile kept the
+      // pre-arrest 129/76 for the rest of the case. Real monitors blank the reading when the attempt fails (Philips
+      // IntelliVue and GE CARESCAPE show "---" / "XX" with the INOP; DESIGN-BRIEF §4.5 "result + timestamp, or fail").
+      // The numerics go `invalid` (the renderer's one convention for "---", numerics-dom.ts), never a made-up number.
+      hs.out.push({
+        type: 'measurement', t,
+        values: {
+          nibpSys: { value: null, flag: 'invalid', at: t },
+          nibpDia: { value: null, flag: 'invalid', at: t },
+          nibpMean: { value: null, flag: 'invalid', at: t },
+        },
+      });
     } else if (o.kind === 'cuff') {
       hs.out.push({ type: 'nibp', t, phase: o.phase, cuffMmHg: Math.round(o.cuff) });
     } else {

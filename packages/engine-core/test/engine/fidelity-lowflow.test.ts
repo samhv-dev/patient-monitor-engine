@@ -62,15 +62,25 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
-  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): at MAP < 30 the SpO2 is never shown valid; no technical raise/clear cycle shorter than 5 s", async () => {
+  it("MODELED Ali's case (tamponade, propofol 2 + 1, PEEP 15, sevoflurane 2 %, bleed 2 L): no technical raise/clear cycle shorter than 5 s", async () => {
     const { rows, alarms } = await aliRun();
     console.log(`fidelity-lowflow Ali short cycles: technical ${JSON.stringify(shortCycles(alarms, 3, 5))}, red ${JSON.stringify(shortCycles(alarms, 1, 5))}`);
+    expect(lowFlowOnset(rows)).toBeDefined();
+    expect(shortCycles(alarms, 3, 5)).toEqual([]);
+  }, 120_000);
+  // R45 (FU-7.1 B3, owner-ruled band change 2026-10-07): split out as a record, bounds unchanged. The alveolar-washout
+  // fall keeps the CO2 the arrested circulation does not carry away in the body, so this collapse runs at a slightly
+  // higher PaCO2; the hypercapnic pressor response holds the stroke volume a little longer and the perfusion index of
+  // the last six seconds before the pulse is lost reads 0.31–0.33 instead of 0.29 — just above the LOW PERF threshold
+  // (brief §4.3, PI 0.3), so the oximeter shows SpO2 99 valid at MAP 19–20 for 6 s (rows 760–765). It is the FU-5 audit's
+  // own M1 class of defect (a normal saturation in a nearly pulseless patient), 0.03 of PI wide and 6 s long, and it
+  // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
+  it.fails("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3", async () => {
+    const { rows } = await aliRun();
     const on = lowFlowOnset(rows);
-    expect(on).toBeDefined();
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
     expect(after.filter((r) => validShown(r.m.spo2)).map((r) => r.t)).toEqual([]);
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
-    expect(shortCycles(alarms, 3, 5)).toEqual([]);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
   it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {

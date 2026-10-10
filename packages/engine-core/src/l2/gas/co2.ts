@@ -1,7 +1,7 @@
 // CO2 kinetics (brief §4.4 "Kinetics"; research 03 §4.4): two compartments (fast: lung gas + blood + well-
 // perfused tissue; slow: muscle class), alveolar elimination limited by pulmonary blood flow (low-flow
 // compression, so CO2 accumulates in arrest and washes out at ROSC), Pa − EtCO2 gradient.
-import { K_CO2, LOW_FLOW_EXP, LOW_FLOW_TAU_S, PA_ET_GRADIENT } from './params.ts';
+import { K_CO2, LOW_FLOW_ALV_L, LOW_FLOW_EXP, LOW_FLOW_TAU_S, LOW_FLOW_WASHOUT_MIN_S, PA_ET_GRADIENT } from './params.ts';
 
 export interface Co2State {
   pf: number; // fast compartment = PaCO2 (mmHg)
@@ -21,6 +21,8 @@ export interface Co2Inputs {
   extraGradient: number; // added Pa − Et (bronchospasm) mmHg
   /** FU-6 R8: inspired PCO2 (mmHg) of the gas the breaths bring (rebreathing, exhausted absorber); absent = 0. */
   pico2?: number;
+  /** FU-7.1 B3: the alveolar gas volume the breaths wash out (L); absent = LOW_FLOW_ALV_L. */
+  alvVolL?: number;
 }
 
 /** min(1, CO/CO_ref)^0.6 (brief §4.4 low-flow compression). */
@@ -38,7 +40,11 @@ export function createCo2State(paco2: number): Co2State {
  */
 export function stepCo2(st: Co2State, x: Co2Inputs, dtS: number): void {
   const target = lowFlowFactor(x.coRatio);
-  st.flow += (target - st.flow) * (1 - Math.exp(-dtS / LOW_FLOW_TAU_S));
+  // FU-7.1 B3: the FALL is the alveolar store's washout by the breaths that continue (τ = V_alv/VA); the RISE is the
+  // tissue CO2 coming back once flow returns (LOW_FLOW_TAU_S). Apnoeic (VA ≈ 0) keeps the slow τ: nothing washes out.
+  const tauWash = x.vaLpm > 0 ? Math.max(LOW_FLOW_WASHOUT_MIN_S, (60 * (x.alvVolL ?? LOW_FLOW_ALV_L)) / x.vaLpm) : LOW_FLOW_TAU_S;
+  const tau = target < st.flow ? Math.min(LOW_FLOW_TAU_S, tauWash) : LOW_FLOW_TAU_S;
+  st.flow += (target - st.flow) * (1 - Math.exp(-dtS / tau));
   const dt = dtS / 60;
   const elim = (st.flow * x.vaLpm * (st.pf - (x.pico2 ?? 0))) / K_CO2; // FU-6 R8: VA·(PACO2 − PICO2)/0.863 (Nunn ch. 7)
   const ex = x.kfs * (st.pf - st.ps);

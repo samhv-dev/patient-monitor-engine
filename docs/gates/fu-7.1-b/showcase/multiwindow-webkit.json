@@ -1,0 +1,170 @@
+{
+  "browser": "webkit",
+  "base": "http://127.0.0.1:8701",
+  "server": "perl (through the launcher)",
+  "windows": {
+    "B": {
+      "route": "#/monitor",
+      "before": {
+        "route": "#/monitor",
+        "code": "PDRUJ4",
+        "simT": 12.5,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:12×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/monitor",
+        "code": "PDRUJ4",
+        "simT": 27.7,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 69,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:27×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 108.1,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "C": {
+      "route": "#/explore",
+      "before": {
+        "route": "#/explore",
+        "code": "7ZTJAE",
+        "simT": 8.2,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:08×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/explore",
+        "code": "7ZTJAE",
+        "simT": 23.4,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 70,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:23×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 112.4,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "D": {
+      "route": "#/vent",
+      "before": {
+        "route": "#/vent",
+        "code": "XBTAQW",
+        "simT": 3.9,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": null,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:03×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/vent",
+        "code": "XBTAQW",
+        "simT": 19.1,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 72,
+        "abp": null,
+        "etco2": 37,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:18×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 116.7,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "A": {
+      "before": {
+        "route": "#/teach",
+        "code": "BJCDUA",
+        "simT": 75.1,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "awake",
+        "hr": 70,
+        "abp": "123/80 (94)",
+        "etco2": 39,
+        "rr": 13,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 01:13 01:13 ×1 ×2 ×4 Pause Bookmark"
+      },
+      "after": {
+        "route": "#/teach",
+        "code": "BJCDUA",
+        "simT": 135.8,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "induced",
+        "hr": 75,
+        "abp": "98/64 (74)",
+        "etco2": 0,
+        "rr": 0,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 00:59 02:15 ×1 ×2 ×4 Pause Bookmark"
+      }
+    },
+    "R": {
+      "connected": true,
+      "status": "Connected to BJCDUA",
+      "scenarioShownOnRemote": "Healthy induction",
+      "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg 01:23 02:38 ×1 ×2 ×4 Pause Bookmark",
+      "pressedIntubateOnRemote": true,
+      "instructorStateBefore": "induced",
+      "hostReachedVentilated": true,
+      "hostAfter": {
+        "route": "#/monitor",
+        "code": "BJCDUA",
+        "simT": 169.7,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "ventilated",
+        "hr": 77,
+        "abp": "89/59 (68)",
+        "etco2": 45,
+        "rr": 5,
+        "bar": "M 40 y 75 kgMODELEDHealthy induction: Intubated and ventilated 00:0802:47×1×2×4PauseBookmark"
+      },
+      "inStep": true
+    }
+  },
+  "errors": {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": [],
+    "R": []
+  }
+}

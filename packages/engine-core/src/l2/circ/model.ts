@@ -323,7 +323,18 @@ function control(m: CircModelState, env: CircEnv): void {
   // suppresses the neural arm — which is the difference between "profound hypotension" and "instant PEA" in a bleeding
   // patient (before this, propofol's `outF` returned the reflex's whole ≈ 840 mL recruitment at once, an acute bleed of
   // the same size on top of the haemorrhage).
-  const humMl = (m.ext.endoHumDV0Frac ?? 0) * m.prof.bloodVolumeMl * humF; // negative = recruited; × the ischaemic withdrawal (G-FU4-1)
+  // FU-7.1 B4 (defect; research/26 T4: "the engine cannot produce ROSC after drainage without 1 L of crystalloid — a
+  // missing or exhausted venous reservoir, not a tamponade finding"): G-FU4-1 withdrew the humoral arm's EFFECT in the
+  // arrest, and that is right for the VASCULAR arm (a vasopressor that is not delivered to hypoxic, acidotic smooth
+  // muscle does nothing — `endoSvr` above still carries `humF`). It is NOT right for the venous reservoir: recruited
+  // splanchnic volume is MECHANICS, not a delivered effect — the veins are already constricted and the blood is already
+  // central, and in tamponade the systemic venous pressure is HIGH (Dellinger 5e ch. 6). Withdrawing it emptied the
+  // reservoir exactly when the drainage needed it: the drained patient reached a mean CPR CoPP of 14.4–14.6 mmHg
+  // against `CPP_ROSC` 15 and never regained a pulse without 1 L of crystalloid. The venous term therefore keeps its
+  // recruitment through the arrest. The exsanguination rows G-FU4-1 was ruled for are unchanged, because there the
+  // reservoir is genuinely empty: a FRACTION of a blood volume that has been shed is still nothing (re-measured —
+  // CPR alone after 3 L: no pulse, CoPP 0.1–4.1).
+  const humMl = (m.ext.endoHumDV0Frac ?? 0) * m.prof.bloodVolumeMl; // negative = recruited (FU-7.1 B4: not withdrawn)
   const recruit = Math.max(-V0_RECRUIT_MAX_ML_KG * m.weightKg, Math.min(b.dV0 - dv0Beta, humMl));
   p.v0Sv = base.v0Sv * (1 - (x.endoDV0Frac ?? 0)) + recruit + de.v0Frac * m.prof.bloodVolumeMl + man.dV0;
   p.cSv = base.cSv * b.cSvF;

@@ -22,7 +22,9 @@ describe('FU-6 R8: rebreathing acts on PaCO2 (was 46.6 = control)', { timeout: 6
     expect(r.et - c.et).toBeGreaterThan(3);
   });
   // FU-8 B4 (E-FU8B-7): flipped — the anaesthetised rig's output moves with the tonic sympathetic share; EtCO2 +5.98 → +6.1
-  it('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +6.1 after FU-8 B4 (+6.66 / +5.98 before it; FU-6 R8; plan +5.7 / +5.0)', async () => {
+  // R45 (FU-7.1 B3; OWNER RULING Q5, 2026-10-10, the same assertion as resp-suite RS14): recorded with its number, NOT
+  // widened — the alveolar-washout fall moves the EtCO2 rise to +5.99994, red by 6 × 10⁻⁵. PaCO2 +6.7 unchanged.
+  it.fails('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 after FU-7.1 B3 (+6.1 after FU-8 B4, +5.98 before it; FU-6 R8; plan +5.7 / +5.0)', async () => {
     const c = await run(0);
     const r = await run(8);
     expect(r.pa - c.pa).toBeGreaterThanOrEqual(6);

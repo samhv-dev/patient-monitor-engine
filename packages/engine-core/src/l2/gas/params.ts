@@ -27,8 +27,18 @@ export const CO2_KFS_PER_VCO2 = 18 / 200; // (mL/min/mmHg) per (mL/min)
 export const LOW_FLOW_EXP = 0.6;
 /** FU-4 G4 (orchestrator 2026-09-28): the arrest EtCO2 falls over 1–2 min to ≈ 5–10 mmHg, not within seconds — τ 70 s
  * [ENG, fit: 10–20 mmHg at 60 s and 3–10 at 120 s after VF without CPR on the ventilated audit rig; measured 14.5 / 6.6.
- * The plan's first guess τ 40 gave 7.9 / 1.9 — a single exponential needs τ 51–101 s for both bands] (was 5 s). */
+ * The plan's first guess τ 40 gave 7.9 / 1.9 — a single exponential needs τ 51–101 s for both bands] (was 5 s).
+ * FU-7.1 B3: this τ governs the RISE of φ only (the CO2 that must come back from the tissue stores at ROSC). The FALL
+ * is the alveolar gas store being washed out by the breaths that continue, LOW_FLOW_WASHOUT_* below. */
 export const LOW_FLOW_TAU_S = 70;
+/**
+ * FU-7.1 B3 (research/24 P7; research 03 §4.4 / BUILD-PLAN Stage 3 acceptance 4): once pulmonary blood flow falls, no
+ * new CO2 reaches the alveoli, so the end-tidal value follows the WASHOUT of the alveolar gas store, not a fixed lag:
+ * τ = V_alv/VA (an exponential dilution by the continuing breaths), bounded below by one breath's worth of time
+ * [ENG bound]. V_alv is the lung's FRC when the resp pipeline passes it, else LOW_FLOW_ALV_L.
+ */
+export const LOW_FLOW_ALV_L = 2.5;
+export const LOW_FLOW_WASHOUT_MIN_S = 5;
 
 export const ANAT_DEAD_SPACE_ML_PER_KG = 2.2; // brief §4.4
 /** FU-4 F4 / R1(a): the healthy resting PaCO2 every profile starts from (pregnancy 31 under R10). */

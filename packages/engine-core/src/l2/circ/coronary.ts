@@ -235,6 +235,16 @@ export function stepCoronary(c: CoronaryState, beats: readonly CircBeat[], cfr: 
     const tRv = Math.max(K_ISCH_MIN, 1 - G_ISCH * Math.max(0, 1 - flowRv / Math.max(0.05, demRv)));
     c.kIschRv += (tRv - c.kIschRv) * (1 - Math.exp(-dt / (tRv < c.kIschRv ? TAU_ISCH_DOWN_S : TAU_ISCH_UP_S)));
     if (c.kIschRv > 0.9995) c.kIschRv = 1;
+  } else if (modeled && (noBeat || !b)) {
+    // FU-7.1 B4 (defect; research/26 T4): with no beat to read there are no RV pressures, so the RV's own balance
+    // could not be computed and `kIschRv` FROZE at the value it had when the pulse was lost — while the LV's followed
+    // the arrest's own perfusion (above). Two consequences, both measured on the drained-tamponade rig: the arrest
+    // declaration reads min(kIsch, kIschRv) (arrest.ts K_ISCH_ARREST), so a heart that regained a pulse re-arrested
+    // within 2 s on a stale RV number; and good CPR could never show the RV recovering. During an arrest BOTH
+    // ventricles are perfused by the same compression-generated coronary pressure, so the RV follows the same target
+    // and the same time constants as the LV. No new constant. (While a beat exists the RV branch above is unchanged.)
+    c.kIschRv += (target - c.kIschRv) * (1 - Math.exp(-dt / tau));
+    if (c.kIschRv > 0.9995) c.kIschRv = 1;
   }
   // FU-8 (C2, research/19): ST follows the SAME filtered flow deficit that drives kIsch — (1 − kIsch)/G_ISCH, the
   // deficit low-passed with τ 20 s — instead of a continuous-seconds timer on the instantaneous δ that reset on any

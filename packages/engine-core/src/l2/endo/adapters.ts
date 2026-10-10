@@ -39,7 +39,8 @@ type Circ = {
 };
 type BloodLike = {
   out?: { dkaSeverity?: number };
-  core?: { so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number };
+  ab?: { ph?: number };
+  core?: { ab?: { ph?: number }; so?: { keto?: number }; fl?: { vp?: number; visf?: number; kfMult?: number; sigma?: number };
     endoKShift?: number; endoGlucoseMgDl?: number; endoKetoMmolMin?: number; endoKetoUtilPerMin?: number };
 };
 
@@ -66,6 +67,12 @@ function mapOf(ctx: EndoCtx, t: number): number {
   return (l1Value(ctx.l1, 'sbp', t) + 2 * l1Value(ctx.l1, 'dbp', t)) / 3;
 }
 
+/** FU-7.1 B1: 7c's arterial pH (`blood.core.ab.ph`); without 7c the neutral 7.4. */
+function phOf(blood: BloodLike | undefined): number {
+  const ph = blood?.core?.ab?.ph;
+  return num(ph) ? ph : 7.4;
+}
+
 /** 7c's DKA severity: `blood.out.dkaSeverity` (R51 addendum 16); fallback: 7c's ketoacid pool ÷ 25 mmol/L (its DKA at 1). */
 function dkaOf(blood: BloodLike | undefined): number {
   const s = blood?.out?.dkaSeverity;
@@ -89,7 +96,7 @@ export function readEndoInputs(ctx: EndoCtx, es: EndoState, t: number): EndoInpu
     noxious: es.noxious, antinoc,
     // FU-7 (R51 addendum 25): the opioid/lidocaine share for the catecholamine RELEASE; without 7f it is the total
     antinocOp: num(n?.antinocOp) && pkActive(pk) ? n.antinocOp : antinoc,
-    mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, tempC: th.tc,
+    mapMmHg: mapOf(ctx, t), mapSetMmHg: ctx.hemo?.circ?.baro?.set ?? 85, sao2: ctx.resp.o2.sa, paco2: ctx.resp.co2.pf, ph: phOf(bloodOf(ctx.ps)), tempC: th.tc,
     mhActivity: mhActivity(th.mh, t),
     liverF: (ctx.ps as { organs?: { liver?: { glucoseF?: number } } }).organs?.liver?.glucoseF ?? 1,
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
