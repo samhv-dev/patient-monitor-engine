@@ -2419,7 +2419,7 @@ with a chronic bicarbonate and a normal PaCO2 — an alkalaemia no patient has: 
 10 s** and settles at 7.39 / 49; GOLD 3 reads 7.45 / 36 and settles 7.39 / 43. The FU-7 gate recorded it as
 "GOLD 4 start-up transient pH 7.485 at 10 s (CO2 stores seeded from EtCO2 — fix in l2/resp)".
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-copd-startup.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-copd-startup.test.ts`:
 
 ```ts
 // FU-7.1 B7 (FU-7 gate §6): a chronic CO2 retainer starts the case at his own acid–base state, not alkalaemic. The
@@ -2451,10 +2451,10 @@ describe('FU-7.1 B7: the COPD start-up transient', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.** Expected: 2 failed — GOLD 4 `at 10 s pH 7.49 / PaCO2 37; settled pH 7.39 / 49`
+- [x] **Step 2 — run it red.** Expected: 2 failed — GOLD 4 `at 10 s pH 7.49 / PaCO2 37; settled pH 7.39 / 49`
   (Δ 0.10 and 12 mmHg), GOLD 3 `7.45 / 36` against `7.39 / 43`.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/resp/pipeline.ts`, find:
 
@@ -2497,17 +2497,17 @@ Replace with:
     shunt: l1Target(l1, 'shunt', 0), etco2: l1Target(l1, 'etco2', 0), coRatio: 1,
 ```
 
-- [ ] **Step 4 — run it green.** Expected: 2 passed —
+- [x] **Step 4 — run it green.** Expected: 2 passed —
   `GOLD 4: at 10 s pH 7.37 / PaCO2 52; settled pH 7.39 / PaCO2 49`, `GOLD 3: at 10 s pH 7.39 / 43; settled 7.39 / 43`.
 
-- [ ] **Step 5 — the COPD and acid–base suites** (every rig with a `copd` lung condition; a non-retainer is
+- [x] **Step 5 — the COPD and acid–base suites** (every rig with a `copd` lung condition; a non-retainer is
   bit-identical by construction):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-copd.test.ts test/engine/fu9-acid.test.ts test/engine/blood-sanity-acid.test.ts test/engine/resp-suite.test.ts test/l2/gas test/l2/resp
 ```
 Expected (the prototype): green, except RS14 if Q5 is still open (see B1 Step 6 — the same single assertion).
 
-- [ ] **Step 6 — typecheck, commit, push** (`fix(7b): a chronic retainer's CO2 stores start at his own PaCO2 (FU-7.1 B7)`).
+- [x] **Step 6 — typecheck, commit, push** (`fix(7b): a chronic retainer's CO2 stores start at his own PaCO2 (FU-7.1 B7)`).
 
 ### Task B4: the drained tamponade comes back on the drainage (a DEFECT fix)
 

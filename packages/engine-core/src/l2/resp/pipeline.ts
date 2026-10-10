@@ -28,7 +28,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, PACO2_REST_MMHG, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -153,7 +153,12 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
   const rs: RespState = {
     m: 0, gasK: 0, pat, driver: createDriver(rng),
     o2: { fa: 0.14, cv: 140, sa: 0.97, pao2: 95 },
-    co2: createCo2State(l1Target(l1, 'etco2', 0) + PA_ET_GRADIENT),
+    // FU-7.1 A3f (FU-7 gate §6 follow-up: "GOLD 4 start-up transient pH 7.485 at 10 s — CO2 stores seeded from EtCO2"):
+    // 7c builds the patient's CHRONIC renal compensation on `paco2Rest` (FU-9 F7: 45/55 mmHg at GOLD 3/4), so a retainer
+    // whose CO2 compartments start from the generic EtCO2 target begins with the chronic HCO3 and a normal PaCO2 — an
+    // alkalaemia (pH 7.49, PaCO2 37 at 10 s against the settled 7.39 / 49) that no patient has. A retainer's stores start
+    // at his own resting PaCO2; every other patient (`paco2Rest` = PACO2_REST_MMHG) keeps the EtCO2-derived start exactly.
+    co2: createCo2State(pat.paco2Rest > PACO2_REST_MMHG ? pat.paco2Rest : l1Target(l1, 'etco2', 0) + PA_ET_GRADIENT),
     delay: createDelay(l1Target(l1, 'spo2', 0) / 100),
     temp: createTemp(t0, pat.effKg),
     shunt: l1Target(l1, 'shunt', 0), etco2: l1Target(l1, 'etco2', 0), coRatio: 1,
