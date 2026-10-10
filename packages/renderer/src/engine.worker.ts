@@ -85,8 +85,7 @@ scope.onmessage = (ev) => {
       case 'restore':
         try {
           if (!core) throw new Error('not initialised');
-          core.engine.restore(m.snapshot);
-          core.clock.setTick(m.snapshot.tick);
+          core.restore(m.snapshot); // FU-11 (F05, BA01): the lanes restart with the engine
           scope.postMessage({ type: 'restored', reqId: m.reqId });
         } catch (err) {
           scope.postMessage({ type: 'restored', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });

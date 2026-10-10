@@ -167,6 +167,21 @@ export class DeviceUI {
     else if (e.type === 'deviceStatus') this.dev = e;
   }
 
+  /**
+   * FU-11 (F05, BA01): the timeline went back (a bookmark restore, or a viewer's resync). The numerics, the NIBP result
+   * and the alarm and device status belonged to the discarded run — a sensor the restored patient does not have would
+   * otherwise keep its last number; they are cleared and refill from the restored engine's next events (≤ 1 s).
+   */
+  reset(t: number): void {
+    this.values = {};
+    this.nibpLast = null;
+    this.nibpEv = undefined;
+    this.nibpPr = null;
+    this.status = null;
+    this.dev = null;
+    this.paint(t);
+  }
+
   /** Repaint for sim time t (called with every event batch, ≤ 4 Hz). */
   paint(t: number): void {
     this.paintHeader(t);

@@ -267,6 +267,22 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
   };
 
+  /**
+   * FU-11 (F05, BA01): after a restore the trends forget the discarded future, the sim clock estimate starts at the
+   * bookmark, and a skin's CO2 lane follows the restored sampling line (showcase hotfix note: the swap followed
+   * attachSensor only). The sampling-line state is read from the snapshot (`st.resp.co2Sensor`, a string the codec keeps).
+   */
+  const afterRestore = (s: PatientSnapshot, h: Host) => {
+    const t = s.tick * 0.02;
+    trends.rewind(t);
+    ui?.reset(t); // the tiles and the alarm header refill from the restored engine
+    lastStatus = null;
+    nibpLast = null;
+    lastPi = undefined;
+    anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
+    const line = (s.state as { st?: { resp?: { co2Sensor?: string } } } | null)?.st?.resp?.co2Sensor;
+    if (line !== undefined) setCo2(line !== 'off', h);
+  };
   /** The plan for the current skin, with the ECG leads chosen on this skin kept. */
   const planNow = (sk: ResolvedSkin) => {
     const p = renderPlan(sk, page, only);
@@ -347,7 +363,11 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     engine: { dispatch },
     role: opts.role ?? 'host',
     snapshot: () => hostP.then((h) => h.snapshot()),
-    restore: (s) => hostP.then((h) => h.restore(s)),
+    restore: (s) =>
+      hostP.then(async (h) => {
+        await h.restore(s);
+        afterRestore(s, h);
+      }),
     async setSkin(id, o = {}) {
       if (!ui || !r) throw new Error('setSkin needs a skin at mount (MountOptions.skin)');
       theme = o.theme;
