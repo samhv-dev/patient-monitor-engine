@@ -97,8 +97,13 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   // FU-11 (F06, BA06): ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker
   // crashed after ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call
   // at once — a bookmark, a command or a capture can no longer wait forever, nor block the host's command chain.
-  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void }>();
+  const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; command?: boolean }>();
   let failure: Error | null = null;
+  // FU-11 Gate A: a COMMAND waiting at destroy (or sent after it) is refused like any refusal, not rejected — a fire-and-
+  // forget dispatch (a remounting page, the ventilator link, mount's ECG-filter command) must not become an unhandled
+  // rejection; snapshots, restores and captures still reject
+  let destroyed = false;
+  const refusedDestroyed = (): DispatchResult => ({ accepted: false, tick: 0, reason: 'the monitor was destroyed' });
   let ready = false;
   let reqId = 0;
   let raf = 0;
@@ -144,11 +149,11 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       worker.terminate();
     }
   };
-  const request = <T>(make: (id: number) => ToWorker): Promise<T> => {
+  const request = <T>(make: (id: number) => ToWorker, command = false): Promise<T> => {
     if (failure) return Promise.reject(failure);
     return new Promise<T>((resolve, reject) => {
       const id = ++reqId;
-      requests.set(id, { resolve: resolve as (v: never) => void, reject });
+      requests.set(id, { resolve: resolve as (v: never) => void, reject, command });
       if (watch === null) {
         lastWatch = performance.now();
         watch = setInterval(check, WATCH_MS);
@@ -208,12 +213,18 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
   return {
     canvas,
     path,
-    command: (cmd) => request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd })),
+    command: (cmd) => (destroyed ? Promise.resolve(refusedDestroyed()) : request<DispatchResult>((reqId) => ({ type: 'command', reqId, cmd }), true)),
     snapshot: () => request<PatientSnapshot>((reqId) => ({ type: 'snapshot', reqId })),
     restore: (snapshot) => request<void>((reqId) => ({ type: 'restore', reqId, snapshot })),
     control: (m) => post(m),
     capture12: () => request<Capture12>((reqId) => ({ type: 'capture12', reqId })), // Stage 4b
     destroy: () => {
+      destroyed = true;
+      for (const [id, r] of requests) {
+        if (!r.command) continue;
+        requests.delete(id);
+        r.resolve(refusedDestroyed() as never);
+      }
       fail(new Error('the monitor was destroyed'), false);
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
