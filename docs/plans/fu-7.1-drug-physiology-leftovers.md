@@ -2723,6 +2723,10 @@ Expected (the prototype, with every other task of this plan in the tree): green,
 `exsanguination volume threshold` measurement unchanged. **Put every arrest and ROSC time in one table in the gate
 note.** Two files carry records this plan creates (`fidelity-arrest` fidelity-3's EtCO2 floor, `fidelity-lowflow`'s
 Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
+**Executed (branch b, 2026-10-10): one row did NOT stay unchanged** — `exsanguination volume threshold` (a measurement,
+no band) read "no pulse in 10 min" at 2 / 2.5 / 3 / 3.5 L on main and reads **2 L none; 2.5 L pulse at +270 s; 3 L
++240 s; 3.5 L +220 s** with B4 (the venous-reservoir hunk moves it; with only the RV hunk it is unchanged).
+`CPR alone` (no pulse, CoPP 2.8–3.5) and the 2 L `it.fails` record are unchanged. Flagged for the orchestrator.
 
 - [x] **Step 7 — place the new files in a slow group.** The four `fu71-*` engine files of branch b (and branch a's
   two) run 7–119 s each locally, so they join `SLOW` and the lightest group (slow-b, the remainder) with ONE line in
@@ -2766,14 +2770,14 @@ washing the alveolar gas out: on the haemorrhage rig the true EtCO2 goes 16.7 at
 FALL: τ = V_alv/VA with the lung's own FRC, i.e. ≈ 24–36 s at adult ventilation, bounded below by
 `LOW_FLOW_WASHOUT_MIN_S`. An apnoeic patient (VA ≈ 0) keeps the slow τ, because nothing washes out.
 
-- [ ] **Step 1 — the before-numbers** (into `<scratchpad>/fu-7.1-b/b3.txt`):
+- [x] **Step 1 — the before-numbers** (into `<scratchpad>/fu-7.1-b/b3.txt`):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/arrest-etco2.test.ts test/l2/gas/co2.test.ts
 ```
 Expected on main: 3 + 5 passed; `arrest-etco2 no CPR: pre 32.0, +20 s 28.0, +60 s 14.2, +120 s 5.0`;
 `arrest-etco2 CPR: mean minutes 1–10 18.0`.
 
-- [ ] **Step 2 — implement.**
+- [x] **Step 2 — implement.**
 
 In `packages/engine-core/src/l2/gas/params.ts`, find:
 
@@ -2911,17 +2915,17 @@ Replace with:
   const sh = l1Target(l1, 'shunt', t);
 ```
 
-- [ ] **Step 3 — measure the P7 course** with the probe harness
+- [x] **Step 3 — measure the P7 course** with the probe harness
   (`<scratchpad>/probe-s2/zz-probe-p7.test.ts`, copied in as `zz-probe-p7.test.ts` and deleted afterwards).
   Expected (the prototype): arm A true EtCO2 11.8 at the arrest → 4.7 at +30 s → 1.8 at +60 s → 0.3 at +120 s;
   arm B (after 90 s of CPR) 4.9 at +5 s → 0.9 at +60 s.
 
-- [ ] **Step 4 — the gas suites.** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas
+- [x] **Step 4 — the gas suites.** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas
   test/l2/resp test/l2/lung`. Expected on the prototype: green — `test/l2/gas` 7 files / 22 passed, the two Stage 3
   `it.fails` of `test/l2/gas/co2.test.ts` STILL RED as recorded (the unit rig's ventilation gives τ ≈ 41 s, so
   "< 5 mmHg within 30 s" is missed there too).
 
-- [ ] **Step 5 — re-target `arrest-etco2` on the ruled source.** Three blocks: the file's header records the ruling,
+- [x] **Step 5 — re-target `arrest-etco2` on the ruled source.** Three blocks: the file's header records the ruling,
   the no-CPR case is re-targeted on Falk (and PASSES), the 30 s half of research 03's target becomes the one record,
   and the CPR "+2 min ≥ 17" row becomes a record with its number. **No bound is widened: every `expect` keeps its
   number.**
@@ -3029,7 +3033,7 @@ Replace with:
   `arrest-etco2 no CPR: pre 32.0, +20 s 14.2, +30 s 9.3, +60 s 2.6, +120 s 0.2` and
   `arrest-etco2 CPR: +30 s 9.5, +2 min of CPR 15.9, mean minutes 1–10 17.8`.
 
-- [ ] **Step 6 — `stimulus-surge` case 1 (the first casualty).** B3 raises the awake-laryngoscopy ΔMAP from 38.4 to
+- [x] **Step 6 — `stimulus-surge` case 1 (the first casualty).** B3 raises the awake-laryngoscopy ΔMAP from 38.4 to
   **40.3** against its sourced 20–40 band: the opioid-free arm's cardiac-output dip lowers φ faster, so its PaCO2
   rises more and the hypercapnic pressor response is larger. Recorded with the number; the HR half stays asserted.
 
@@ -3065,7 +3069,7 @@ Replace with:
   Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/stimulus-surge.test.ts`
   Expected: green, with `FU-7 case 1 awake: ΔMAP 40.3, ΔHR 13.1` and `FU-7 case 2 fentanyl 3: ΔMAP 5.1 ratio 0.22`.
 
-- [ ] **Step 7 — the two monitor-fidelity casualties (R50 I5: these were not in the first prototype's test list).**
+- [x] **Step 7 — the two monitor-fidelity casualties (R50 I5: these were not in the first prototype's test list).**
   (a) `fidelity-arrest` fidelity-3 (VF → CPR → ROSC, three skins): the 90 s of VF before the compressions now empty
   the lung, so the CPR window's FIRST samples are the rise back from nothing — 7 mmHg at 170–185 s, 12 at 200 s, 17 at
   240 s, mean 15.3–15.6, max 20–21 — against an [ENG] floor of 10 fitted when the fall was a 70 s lag. Falk's own
@@ -3209,12 +3213,12 @@ Replace with:
   `fidelity-lowflow`'s Ali run takes ≈ 60 s and timed out at 120 s once under three parallel executors: if it times
   out, re-run the file alone before reporting it.
 
-- [ ] **Step 8 — the P7 course** with the probe harness (optional, for the gate note's narrative):
+- [x] **Step 8 — the P7 course** with the probe harness (optional, for the gate note's narrative):
   `<scratchpad>/probe-s2/zz-probe-p7.test.ts`, copied in as `zz-probe-p7.test.ts` and deleted afterwards. Expected:
   arm A true EtCO2 11.8 at the arrest → 4.7 at +30 s → 1.8 at +60 s → 0.3 at +120 s; arm B (after 90 s of CPR) 4.9 at
   +5 s → 0.9 at +60 s.
 
-- [ ] **Step 9 — typecheck, commit, push** (`feat(gas): EtCO2 follows the alveolar washout when pulmonary flow stops (FU-7.1 B3)`,
+- [x] **Step 9 — typecheck, commit, push** (`feat(gas): EtCO2 follows the alveolar washout when pulmonary flow stops (FU-7.1 B3)`,
   with a second `-m` naming the owner's ruling and the four recorded bands).
 
 ### Task B8: the cuff in a pulseless patient does not leave a pressure on the monitor

@@ -564,7 +564,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.palvObs = (rs.palvObs ?? 0) + (palvNow - (rs.palvObs ?? 0)) * (GAS_DT_S / 10);
     if (rs.palvObs > -0.01 && palvNow === 0) delete rs.palvObs;
   }
-  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs), pico2: d.fico2 }, GAS_DT_S); // FU-6 R8: the inspired CO2 of the breaths
+  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs), pico2: d.fico2, alvVolL: frcNow(rs) / 1000 }, GAS_DT_S); // FU-6 R8: the inspired CO2 of the breaths
   rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)
   const sh = l1Target(l1, 'shunt', t);
