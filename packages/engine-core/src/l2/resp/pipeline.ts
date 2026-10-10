@@ -28,7 +28,7 @@ import { createCo2State, etco2Mixed, lowFlowFactor, stepCo2, vaForPaco2, type Co
 import { createDelay, delayStep, siteDelay, type DelayLine } from '../gas/delay.ts';
 import { o2Steady, solveShunt, type O2Inputs, type O2State } from '../gas/o2.ts';
 import { pulseOxApparent, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
-import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
+import { apparatusDeadSpaceMl, CI_LPM_PER_KG, coRefLpm, defaultHeightCm, FRC_AWAKE_ML_KG, GA_METABOLIC, GAS_DT_S, gasPatient, PA_ET_GRADIENT, PACO2_REST_MMHG, physicalDeadSpace, PREG_PACO2_SHIFT_MMHG, PREG_VO2_TERM, tempFactor, ventDefaults, type GasPatient } from '../gas/params.ts';
 import type { HemoState, RhythmView } from '../hemo/pipeline.ts';
 import { createTemp, setCoreTarget, stepTemp, type TempState } from '../temp/temp.ts';
 import { thermalMetabolic } from '../thermal/metabolic.ts'; // Stage 7e
@@ -153,7 +153,12 @@ export function createRespState(profile: PatientProfile | undefined, l1: L1State
   const rs: RespState = {
     m: 0, gasK: 0, pat, driver: createDriver(rng),
     o2: { fa: 0.14, cv: 140, sa: 0.97, pao2: 95 },
-    co2: createCo2State(l1Target(l1, 'etco2', 0) + PA_ET_GRADIENT),
+    // FU-7.1 A3f (FU-7 gate §6 follow-up: "GOLD 4 start-up transient pH 7.485 at 10 s — CO2 stores seeded from EtCO2"):
+    // 7c builds the patient's CHRONIC renal compensation on `paco2Rest` (FU-9 F7: 45/55 mmHg at GOLD 3/4), so a retainer
+    // whose CO2 compartments start from the generic EtCO2 target begins with the chronic HCO3 and a normal PaCO2 — an
+    // alkalaemia (pH 7.49, PaCO2 37 at 10 s against the settled 7.39 / 49) that no patient has. A retainer's stores start
+    // at his own resting PaCO2; every other patient (`paco2Rest` = PACO2_REST_MMHG) keeps the EtCO2-derived start exactly.
+    co2: createCo2State(pat.paco2Rest > PACO2_REST_MMHG ? pat.paco2Rest : l1Target(l1, 'etco2', 0) + PA_ET_GRADIENT),
     delay: createDelay(l1Target(l1, 'spo2', 0) / 100),
     temp: createTemp(t0, pat.effKg),
     shunt: l1Target(l1, 'shunt', 0), etco2: l1Target(l1, 'etco2', 0), coRatio: 1,
@@ -559,7 +564,7 @@ function gasStep(rs: RespState, ctx: RespCtx, t: number): void {
     rs.palvObs = (rs.palvObs ?? 0) + (palvNow - (rs.palvObs ?? 0)) * (GAS_DT_S / 10);
     if (rs.palvObs > -0.01 && palvNow === 0) delete rs.palvObs;
   }
-  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs), pico2: d.fico2 }, GAS_DT_S); // FU-6 R8: the inspired CO2 of the breaths
+  stepCo2(rs.co2, { vaLpm: va * rs.lung.co2.e, vco2, coRatio: rs.coRatio, cf: rs.pat.cf, cs: rs.pat.cs, kfs: rs.pat.kfs, extraGradient: extraGradient(rs), pico2: d.fico2, alvVolL: frcNow(rs) / 1000 }, GAS_DT_S); // FU-6 R8: the inspired CO2 of the breaths
   rs.etco2 = etco2Mixed(rs.co2, rs.lung.co2.g, extraGradient(rs));
   // MANUAL shunt input and spo2 target (spo2 wins when both change; decision 2)
   const sh = l1Target(l1, 'shunt', t);
@@ -668,6 +673,9 @@ function breathStart(rs: RespState, t: number): void {
 function breathEnd(rs: RespState, l1: L1State, t: number): void {
   const ls = rs.lung;
   const vt = ls.mech.v.reduce((a, v, u) => a + Math.max(0, v - (ls.v0[u] as number)), 0);
+  // FU-7.1 B5: the delivered volume this cycle achieved — the `breath` event reports it instead of the set VT
+  const cyc = cycleAt(rs.driver, t - 1e-3);
+  if (cyc) cyc.vtDelMl = vt;
   if (!(vt > 5)) return;
   const mech = mechSource(rs) && (cycleAt(rs.driver, t - 1e-3)?.mech ?? true);
   const ppeak = Math.max(rs.brk.pk, ls.mech.paw);
@@ -727,13 +735,6 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     c.lungTauII = ct.tauII;
     c.lungRiseIII = ct.riseIII;
   }
-  for (const c of rs.driver.cycles) {
-    const ext = rs.driver.source === 'external' && rs.driver.ext?.inInsp && c === rs.driver.cycles[rs.driver.cycles.length - 1];
-    if (!c.emitted && c.exch && c.vt > 0 && !ext) {
-      c.emitted = true;
-      rs.out.push({ type: 'breath', t: c.t0, seq: c.seq, kind: c.kind, tiS: c.ti, teS: c.te, vtMl: Math.round(c.vt), etco2True: Math.round(rs.etco2 * 10) / 10 });
-    }
-  }
   const h = ctx.hemo;
   const cap: CapnoCtx = { etco2: rs.etco2, beats: rs.beats, cpr: { active: h.cpr.active, rate: h.cpr.rate, quality: h.cpr.quality, anchor: h.cpr.nextT } };
   const air = (t: number) => airwayCo2(rs.driver, t, cap);
@@ -783,6 +784,17 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const ie = impStep(rs.num.imp, t, imp, DT, rs.beats); // FU-5 (E-FU5-5): cardiac-overlay rejection
     if (ie === 'apnoea') alarm(rs, t, 'apnoea-resp', true, 'APNEA (RESP)');
     else if (ie === 'resumed') alarm(rs, t, 'apnoea-resp', false, 'APNEA (RESP)');
+  }
+  for (const c of rs.driver.cycles) {
+    const ext = rs.driver.source === 'external' && rs.driver.ext?.inInsp && c === rs.driver.cycles[rs.driver.cycles.length - 1];
+    // FU-7.1 B5 (research/24 P8b): a breath is reported once it HAS BEEN DELIVERED, with the volume the lung received
+    // (`vtDelMl`, stamped at end-inspiration) — a pressure-limited VCV breath reported its set 500 mL while the lung got
+    // 242–303. Before this the event was emitted as soon as the cycle was PLANNED (up to PLAN_AHEAD_S early) and had to
+    // be withdrawn again when the plan changed (`withdraw`, applyRespCommand).
+    if (!c.emitted && c.exch && c.vt > 0 && !ext && c.vtDelMl !== undefined) {
+      c.emitted = true;
+      rs.out.push({ type: 'breath', t: c.t0, seq: c.seq, kind: c.kind, tiS: c.ti, teS: c.te, vtMl: Math.round(c.vtDelMl), etco2True: Math.round(rs.etco2 * 10) / 10 });
+    }
   }
   pruneCycles(rs.driver, tEnd - KEEP_S);
   while (rs.beats.length > 0 && (rs.beats[0] as number) < tEnd - 5) rs.beats.shift();

@@ -1,0 +1,56 @@
+== multiwindow-chromium.json
+== multiwindow-webkit.json
+== rehearsal-anaphylaxis-under-anaesthesia-chromium.json
+   the reaction starts by itself                                | exp state "Anaphylaxis" within 120 s         | old yes                            | new yes                            | pass True
+   HR about 2 min into the Anaphylaxis state                    | exp > 120                                    | old 135                            | new 135                            | pass True
+   systolic after epinephrine                                   | exp > 110 within 60 s sim                    | old 11.3 s                         | new 11.3 s                         | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-anaphylaxis-under-anaesthesia-webkit.json
+   the reaction starts by itself                                | exp state "Anaphylaxis" within 120 s         | old yes                            | new yes                            | pass True
+   HR about 2 min into the Anaphylaxis state                    | exp > 120                                    | old 135                            | new 135                            | pass True
+   systolic after epinephrine                                   | exp > 110 within 60 s sim                    | old 11.3 s                         | new 11.3 s                         | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-class-iv-haemorrhage-pea-and-resuscitation-chromium.json
+   pulse lost                                                   | exp between 8 and 13 min sim                 | old 10 min                         | new 10 min                         | pass True
+   circulation returns during CPR                               | exp arterial systolic > 90 within 7 min sim  | old 4.3 min                        | new 3 min                          | pass True  <-- CHANGED
+   "Pulse back: stop CPR" moves the scenario on                 | exp state rosc                               | old rosc                           | new rosc                           | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-class-iv-haemorrhage-pea-and-resuscitation-webkit.json
+   pulse lost                                                   | exp between 8 and 13 min sim                 | old 10 min                         | new 10 min                         | pass True
+   circulation returns during CPR                               | exp arterial systolic > 90 within 7 min sim  | old 4.3 min                        | new 3 min                          | pass True  <-- CHANGED
+   "Pulse back: stop CPR" moves the scenario on                 | exp state rosc                               | old rosc                           | new rosc                           | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-healthy-induction-chromium.json
+   apnoea alarm after "Induce now"                              | exp within 70 s sim                          | old 62.5 s "CO2 APNEA"             | new 55 s "CO2 APNEA"               | pass True  <-- CHANGED
+   EtCO2 number on the Saadat CO2 tile after "Intubate and vent | exp > 25 mmHg                                | old 46 after 7.3 s                 | new 35 after 5.3 s                 | pass True  <-- CHANGED
+   arterial mean falls after induction                          | exp ≥ 10 mmHg below baseline                 | old 94.8 → nadir 65.7              | new 94.8 → nadir 65.7              | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-healthy-induction-webkit.json
+   apnoea alarm after "Induce now"                              | exp within 70 s sim                          | old 62 s "CO2 APNEA"               | new 54.6 s "CO2 APNEA"             | pass True  <-- CHANGED
+   EtCO2 number on the Saadat CO2 tile after "Intubate and vent | exp > 25 mmHg                                | old 46 after 5.3 s                 | new 46 after 5.2 s                 | pass True  <-- CHANGED
+   arterial mean falls after induction                          | exp ≥ 10 mmHg below baseline                 | old 94.8 → nadir 65.6              | new 94.8 → nadir 65.6              | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-second-scenario-load-restarts-the-clock-chromium.json
+   the clock restarts on the second load                        | exp session-bar clock < 00:20 just after loa | old 02:04 → 00:04 (time in state 0 | new 02:04 → 00:04 (time in state 0 | pass True
+   the clock runs after the second load                         | exp advances                                 | old 00:04 → 00:37                  | new 00:04 → 00:37                  | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-second-scenario-load-restarts-the-clock-webkit.json
+   the clock restarts on the second load                        | exp session-bar clock < 00:20 just after loa | old 02:03 → 00:05 (time in state 0 | new 02:03 → 00:05 (time in state 0 | pass True  <-- CHANGED
+   the clock runs after the second load                         | exp advances                                 | old 00:05 → 00:35                  | new 00:05 → 00:36                  | pass True  <-- CHANGED
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-severe-bronchospasm-on-the-ventilator-chromium.json
+   the button changes the scenario state                        | exp spasm → treatedByButton                  | old spasm → treatedByButton        | new spasm → treatedByButton        | pass True
+   the new state label is shown                                 | exp "Salbutamol given: ventilation recoverin | old Salbutamol given: ventilation  | new Salbutamol given: ventilation  | pass True
+   delivered tidal volume recovers after salbutamol             | exp VTE rises by ≥ 100 mL within 3 min       | old 161 → 305 mL                   | new 161 → 305 mL                   | pass True
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-severe-bronchospasm-on-the-ventilator-webkit.json
+   the button changes the scenario state                        | exp spasm → treatedByButton                  | old spasm → treatedByButton        | new spasm → treatedByButton        | pass True
+   the new state label is shown                                 | exp "Salbutamol given: ventilation recoverin | old Salbutamol given: ventilation  | new Salbutamol given: ventilation  | pass True
+   delivered tidal volume recovers after salbutamol             | exp VTE rises by ≥ 100 mL within 3 min       | old 161 → 305 mL                   | new 162 → 305 mL                   | pass True  <-- CHANGED
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-severe-tamponade-then-induction-chromium.json
+   arterial mean after propofol                                 | exp < 40 mmHg (within 5 min sim)             | old 72.6 s                         | new 73.8 s                         | pass True  <-- CHANGED
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True
+== rehearsal-severe-tamponade-then-induction-webkit.json
+   arterial mean after propofol                                 | exp < 40 mmHg (within 5 min sim)             | old 72.7 s                         | new 73.8 s                         | pass True  <-- CHANGED
+   no console error or page error                               | exp none                                     | old []                             | new []                             | pass True

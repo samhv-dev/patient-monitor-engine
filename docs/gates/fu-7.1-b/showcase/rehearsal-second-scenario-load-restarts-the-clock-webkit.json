@@ -1,0 +1,94 @@
+{
+  "case": "Second scenario load restarts the clock",
+  "browser": "webkit",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8701",
+  "steps": [
+    {
+      "simT": 3.5,
+      "what": "loaded \"Healthy induction\" at ×4",
+      "state": "awake",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 124.5,
+      "what": "first case running 2 min",
+      "state": "awake",
+      "hr": 71,
+      "art": "122.8/80.7 (94.7)",
+      "spo2": 99,
+      "etco2": 38,
+      "rr": 14,
+      "clock": "02:03"
+    },
+    {
+      "simT": 5.7,
+      "what": "second case loaded",
+      "state": "tamponade",
+      "hr": 71,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null,
+      "clock": "00:05",
+      "timeInState": "00:03"
+    },
+    {
+      "simT": 37.8,
+      "what": "8 s (wall) later",
+      "state": "tamponade",
+      "hr": 100,
+      "art": "111.2/90.5 (97.4)",
+      "spo2": 96,
+      "etco2": 33,
+      "rr": 14,
+      "clock": "00:36"
+    },
+    {
+      "alarmsRaised": []
+    }
+  ],
+  "labels": {
+    "alarmButtonAtOpen": "Alarms off",
+    "tab": "Scenario",
+    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "toast": "Scenario loaded: Healthy induction",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nInduce now\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Alarms off",
+    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
+    "libraryDuringRun": "Scenario library | Back to the running case | All | Showcase",
+    "backButton": "Back to the running case",
+    "second_alarmButtonAtOpen": "Alarms off",
+    "second_tab": "Scenario",
+    "second_showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "second_confirm": "dialog \"Load this scenario?\" → Load scenario",
+    "second_toast": "Scenario loaded: Severe tamponade, then induction",
+    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:36\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nPropofol given: After induction: compensation lost\nYou press \"Give propofol 2 mg/kg\": After induction: compensation lost\nGive propofol 2 mg/kg\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "the clock restarts on the second load",
+      "expected": "session-bar clock < 00:20 just after loading",
+      "observed": "02:03 → 00:05 (time in state 00:03)",
+      "pass": true
+    },
+    {
+      "what": "the clock runs after the second load",
+      "expected": "advances",
+      "observed": "00:05 → 00:36",
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

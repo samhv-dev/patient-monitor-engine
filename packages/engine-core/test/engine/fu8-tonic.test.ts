@@ -41,7 +41,9 @@ describe('FU-8 B4 (C1): the induction fall depends on resting sympathetic tone',
     for (const v of Object.values(rows)) expect(v).toBeLessThanOrEqual(h - 0.05);
   }, 120_000);
   // R45 (E-FU8B-6): the plan's row, kept with its number — the HTN tonic size (+0.1) is the owner's calibration item (A23)
-  it.fails('untreated HTN 60 y falls at least 5 points more than the healthy 40 y — measured 4.96 points (−35.27 vs −30.31 %)', async () => {
+  // FU-7.1 gate B: flipped (a known miss that turns green is flipped) — FU-7.1 B3's alveolar-washout fall of the
+  // low-flow factor moves the HTN induction fall to −35.42 % against the healthy −30.28 %: 5.14 points (was 4.96).
+  it('untreated HTN 60 y falls at least 5 points more than the healthy 40 y — measured 5.14 points (−35.42 vs −30.28 %) after FU-7.1 B3 (4.96 before it)', async () => {
     const h = await healthy();
     const v = await htn();
     console.log(`fu8 B4: HTN 60 y ${(v * 100).toFixed(2)} % vs healthy ${(h * 100).toFixed(2)} %`);

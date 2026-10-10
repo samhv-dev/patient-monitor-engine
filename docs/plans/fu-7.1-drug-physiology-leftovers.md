@@ -1801,7 +1801,7 @@ git push
 
 **Branch** `fu-7.1-b` · **Items** — · **Files** none (setup)
 
-- [ ] **Step 1 — worktree and install.**
+- [x] **Step 1 — worktree and install.**
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin
@@ -1810,7 +1810,7 @@ cd ../scratch/wt-fu-7.1-b && npx -y pnpm@9.15.9 install --frozen-lockfile
 cp ../plans-backup/fu-7.1-drug-physiology-leftovers.md docs/plans/fu-7.1-drug-physiology-leftovers.md
 ```
 
-- [ ] **Step 2 — block check:**
+- [x] **Step 2 — block check:**
 ```bash
 python3 ../plans-backup/fu-7.1-plan-tools/check-blocks.py --branch b docs/plans/fu-7.1-drug-physiology-leftovers.md .
 ```
@@ -1818,7 +1818,7 @@ Expected: `branch b: 29 find/replace blocks, 6 creates; problems: 0`. B3 is no l
 Q4c on 2026-10-07), so every block of Part B is applied. (Checked 2026-10-10 against `origin/main` 48864439 AND with
 FU-11's whole FIXED prototype patch in the tree: 0 problems both ways — R50 C1.)
 
-- [ ] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-b/before.txt` (the files B1, B5 and B7 can move):
+- [x] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-b/before.txt` (the files B1, B5 and B7 can move):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/gas test/l2/resp test/l2/lung
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-acceptance.test.ts test/engine/endo-circ-acceptance.test.ts test/engine/clinical-suite.test.ts test/engine/arrest-etco2.test.ts test/engine/lung-copd.test.ts test/engine/resp-suite.test.ts
@@ -1835,7 +1835,7 @@ Expected on 48864439: green (86 of 90 in the review's run; the four reds were th
 plus one load timeout re-run alone), with `CPR alone after full exsanguination: no pulse, CoPP 0.1–4.1` and the
 `exsanguination volume threshold` measurement — the two rows B4 must leave untouched.
 
-- [ ] **Step 4 — commit the plan copy and push** (message `docs(plan): FU-7.1 … (branch b copy)`), then `git push -u origin fu-7.1-b`.
+- [x] **Step 4 — commit the plan copy and push** (message `docs(plan): FU-7.1 … (branch b copy)`), then `git push -u origin fu-7.1-b`.
 
 ### Task B1: severe acidaemia blunts the vascular response to the patient's own catecholamines
 
@@ -1857,7 +1857,7 @@ own surge keeps 100 %. This task gives that row its reader, with the same curve 
 `l2/endo/core.ts` gains the local `vrA` used by `alpha()`. `EndoOut.vasoResp` keeps its present meaning (the
 UNBLUNTED responsiveness 7g reads through `ps.cond.vasoResp`), so no consumer outside this file changes.
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/endo/fu71-acid-vaso.test.ts`:
 
@@ -1958,7 +1958,7 @@ describe('FU-7.1 B1: the MH haemodynamics', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/fu71-acid-vaso.test.ts test/engine/fu71-mh-haemodynamics.test.ts`
 Expected: 3 failed, 2 passed — the unit file's first case (`FU-7.1 B1 pH 7.3: svrF 1.473 (expected 1.355)`: the
@@ -1967,7 +1967,7 @@ excess is unchanged at every pH on the base) and both halves of the MH case
 — `expected 109 to be less than or equal to 104`). The unit file's other two cases pass on the base already (they
 assert what must NOT change).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/endo/core.ts`, find:
 
@@ -2146,13 +2146,13 @@ Replace with:
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
 ```
 
-- [ ] **Step 4 — run them green.**
+- [x] **Step 4 — run them green.**
 
 Run the two new files again. Expected: 5 passed, with `FU-7.1 B1 pH 7.3: svrF 1.355 (expected 1.355)`, …7.2 → 1.237,
 …7.16 → 1.189 (the floor), and
 `FU-7.1 B1 MH: pH 7.22/7.11, MAP 99 at +20, peak 103 at +27 min, 94 at +40; SVR 1317 → 1314; HR peak 180; CO 4.71`.
 
-- [ ] **Step 5 — the blast radius of this task** (every suite that reads the endocrine pressor arm or an acid–base
+- [x] **Step 5 — the blast radius of this task** (every suite that reads the endocrine pressor arm or an acid–base
   course). Run and compare with Step B0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/pk test/l2/neuro \
@@ -2163,7 +2163,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo t
 Expected (the prototype): all green. Record `S8: PEA at +3.58 min` (main +9.75; band 3–10 — Review Focus 2) and the
 two septic HR numbers (sepsis MANUAL HR 112, MODELED warm 116 — unchanged, because `beta()` is not blunted).
 
-- [ ] **Step 6 — `resp-suite` RS14: record it (Q5 RULED 2026-10-10: "record it as a known miss with the number").**
+- [x] **Step 6 — `resp-suite` RS14: record it (Q5 RULED 2026-10-10: "record it as a known miss with the number").**
   The rebreathing arm's ΔEtCO2 reads **5.99994** against its `>= 6` [ENG] bound — red by 6 × 10⁻⁵ (main 6.1; it read
   5.98 before FU-8 B4 moved it just inside). **The band is not changed**: the `it` becomes an `it.fails` with the
   measured number in its title, and the PaCO2 half (+6.7, unchanged) keeps asserting.
@@ -2201,8 +2201,10 @@ Replace with:
 
   Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-suite.test.ts`
   Expected: **38 passed** (RS14 recorded), with `RS-ROW RS14 {"dPaco2":6.7,"dEtco2":6}`.
+  **Executed (branch b, 2026-10-10):** NOT applied — on this tree RS14 still reads `{"dPaco2":6.7,"dEtco2":6.1}` with
+  B1 in (the `it` passes), so the `it.fails` would itself fail; the test stays as on main (no record, no bound touched).
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/endo packages/engine-core/test/l2/endo/fu71-acid-vaso.test.ts packages/engine-core/test/engine/fu71-mh-haemodynamics.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -2229,7 +2231,7 @@ will look):** `breath.t` is still the cycle's START time and `seq` still increas
 the volume the lung received) and the emission TIME (after the breath instead of when the cycle was planned, within
 one tick) change. Nothing in `packages/ventilator` is edited by this plan.
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-breath-vt.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-breath-vt.test.ts`:
 
 ```ts
 // FU-7.1 B5 (research/24 P8b): the `breath` event reports the volume the LUNG RECEIVED, not the set VT. Rig: the
@@ -2274,13 +2276,13 @@ describe('FU-7.1 B5: the breath event reports the delivered volume', { timeout: 
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-breath-vt.test.ts`
 Expected: 1 failed, 1 passed — `FU-7.1 B5: breath vtMl 500, mechanics vt 295, Ppeak 40.0`, `expected 205 to be less
 than or equal to 2`.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/resp/driver.ts`, find:
 
@@ -2395,9 +2397,9 @@ Replace with:
   while (rs.beats.length > 0 && (rs.beats[0] as number) < tEnd - 5) rs.beats.shift();
 ```
 
-- [ ] **Step 4 — run it green.** Expected: 2 passed, `FU-7.1 B5: breath vtMl 299, mechanics vt 299, Ppeak 40.0`.
+- [x] **Step 4 — run it green.** Expected: 2 passed, `FU-7.1 B5: breath vtMl 299, mechanics vt 299, Ppeak 40.0`.
 
-- [ ] **Step 5 — every reader of a breath event.**
+- [x] **Step 5 — every reader of a breath event.**
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp test/l2/lung test/l2/gas test/engine/resp-vcv-pmax.test.ts test/engine/stage3-alarms-engine.test.ts test/engine/vent-infant.test.ts test/engine/truth-event.test.ts
 CI=1 npx -y pnpm@9.15.9 --filter @pme/validation test
@@ -2406,7 +2408,7 @@ Expected (the prototype): 35 engine files / 159 passed, validation unchanged. `t
 case ("emits breath and lungState events") is the one that proves the emission still happens inside ONE `advanceResp`
 call — it is why the emit loop moved to the end of the pass rather than keeping its place.
 
-- [ ] **Step 6 — typecheck, commit, push** (`fix(7b): the breath event reports the delivered volume, after the breath (FU-7.1 B5)`).
+- [x] **Step 6 — typecheck, commit, push** (`fix(7b): the breath event reports the delivered volume, after the breath (FU-7.1 B5)`).
 
 ### Task B7: a chronic retainer's CO2 stores start at his own PaCO2 (the inventory's item A3f)
 
@@ -2420,7 +2422,7 @@ with a chronic bicarbonate and a normal PaCO2 — an alkalaemia no patient has: 
 10 s** and settles at 7.39 / 49; GOLD 3 reads 7.45 / 36 and settles 7.39 / 43. The FU-7 gate recorded it as
 "GOLD 4 start-up transient pH 7.485 at 10 s (CO2 stores seeded from EtCO2 — fix in l2/resp)".
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-copd-startup.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-copd-startup.test.ts`:
 
 ```ts
 // FU-7.1 B7 (FU-7 gate §6): a chronic CO2 retainer starts the case at his own acid–base state, not alkalaemic. The
@@ -2452,10 +2454,10 @@ describe('FU-7.1 B7: the COPD start-up transient', { timeout: 300_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.** Expected: 2 failed — GOLD 4 `at 10 s pH 7.49 / PaCO2 37; settled pH 7.39 / 49`
+- [x] **Step 2 — run it red.** Expected: 2 failed — GOLD 4 `at 10 s pH 7.49 / PaCO2 37; settled pH 7.39 / 49`
   (Δ 0.10 and 12 mmHg), GOLD 3 `7.45 / 36` against `7.39 / 43`.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/resp/pipeline.ts`, find:
 
@@ -2498,17 +2500,17 @@ Replace with:
     shunt: l1Target(l1, 'shunt', 0), etco2: l1Target(l1, 'etco2', 0), coRatio: 1,
 ```
 
-- [ ] **Step 4 — run it green.** Expected: 2 passed —
+- [x] **Step 4 — run it green.** Expected: 2 passed —
   `GOLD 4: at 10 s pH 7.37 / PaCO2 52; settled pH 7.39 / PaCO2 49`, `GOLD 3: at 10 s pH 7.39 / 43; settled 7.39 / 43`.
 
-- [ ] **Step 5 — the COPD and acid–base suites** (every rig with a `copd` lung condition; a non-retainer is
+- [x] **Step 5 — the COPD and acid–base suites** (every rig with a `copd` lung condition; a non-retainer is
   bit-identical by construction):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/lung-copd.test.ts test/engine/fu9-acid.test.ts test/engine/blood-sanity-acid.test.ts test/engine/resp-suite.test.ts test/l2/gas test/l2/resp
 ```
 Expected (the prototype): green, except RS14 if Q5 is still open (see B1 Step 6 — the same single assertion).
 
-- [ ] **Step 6 — typecheck, commit, push** (`fix(7b): a chronic retainer's CO2 stores start at his own PaCO2 (FU-7.1 B7)`).
+- [x] **Step 6 — typecheck, commit, push** (`fix(7b): a chronic retainer's CO2 stores start at his own PaCO2 (FU-7.1 B7)`).
 
 ### Task B4: the drained tamponade comes back on the drainage (a DEFECT fix)
 
@@ -2543,7 +2545,7 @@ blood volume is still nothing.
 
 **Interfaces:** none (no new symbol, no new constant).
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts`:
 
 ```ts
 // FU-7.1 B4 (research/24 P3b; owner ruling 2026-10-07 + research/26 T4, Perkins 2025 JAMA Surg n = 601: relieving a
@@ -2622,14 +2624,14 @@ describe('FU-7.1 B4: the drained tamponade comes back on the drainage', { timeou
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-tamponade-rosc.test.ts`
 Expected: 1 failed, 2 passed — the first case reads
 `FU-7.1 B4 drained, q 0.8 / 110, nothing else: arrest +116 s, mean CoPP 14.4, max hold 0 s, ROSC never, pulse held 0 s`
 (`expected 14.4 to be greater than 15`). The two "does not" cases pass on the base: they assert what must NOT change.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/circ/model.ts`, find:
 
@@ -2699,18 +2701,18 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 3 passed, with
+- [x] **Step 4 — run it green.** Expected: 3 passed, with
   `drained, q 0.8 / 110, nothing else: arrest +116 s, mean CoPP 18.1, max hold 59 s, ROSC +200 s, pulse held 120 s`,
   `drained, q 0.4 / 110: mean CoPP 10.3, max hold 0 s, ROSC never` and
   `UNDRAINED, q 1.0 / 120: mean CoPP 10.2, max hold 0 s, ROSC never`.
 
-- [ ] **Step 5 — the matrix the owner asked for** (record it in the gate note; the quality sweep is what expresses
+- [x] **Step 5 — the matrix the owner asked for** (record it in the gate note; the quality sweep is what expresses
   "less likely" without a random draw). Measured on the prototype, all with the pericardium drained at the arrest
   unless stated: q 1.0/110 → ROSC **+146 s**; q 0.9 → in band; q 0.8/110 → **+200 s**; q 0.6 → **never** (mean CoPP
   15.3, hold 0); q 0.4 → **never** (10.3); UNDRAINED q 1.0/120 → **never** (9.9) and still never with epinephrine
   1 mg (13.2); drained + epinephrine 1 mg at q 0.8 → **+88 s**. Re-run any two of these arms yourself and report them.
 
-- [ ] **Step 6 — every arrest and ROSC rig** (Review Focus 7; the two rulings this task touches). Run and compare with
+- [x] **Step 6 — every arrest and ROSC rig** (Review Focus 7; the two rulings this task touches). Run and compare with
   B0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/clinical-suite.test.ts \
@@ -2724,8 +2726,12 @@ Expected (the prototype, with every other task of this plan in the tree): green,
 `exsanguination volume threshold` measurement unchanged. **Put every arrest and ROSC time in one table in the gate
 note.** Two files carry records this plan creates (`fidelity-arrest` fidelity-3's EtCO2 floor, `fidelity-lowflow`'s
 Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
+**Executed (branch b, 2026-10-10): one row did NOT stay unchanged** — `exsanguination volume threshold` (a measurement,
+no band) read "no pulse in 10 min" at 2 / 2.5 / 3 / 3.5 L on main and reads **2 L none; 2.5 L pulse at +270 s; 3 L
++240 s; 3.5 L +220 s** with B4 (the venous-reservoir hunk moves it; with only the RV hunk it is unchanged).
+`CPR alone` (no pulse, CoPP 2.8–3.5) and the 2 L `it.fails` record are unchanged. Flagged for the orchestrator.
 
-- [ ] **Step 7 — place the new files in a slow group.** The four `fu71-*` engine files of branch b (and branch a's
+- [x] **Step 7 — place the new files in a slow group.** The four `fu71-*` engine files of branch b (and branch a's
   two) run 7–119 s each locally, so they join `SLOW` and the lightest group (slow-b, the remainder) with ONE line in
   `packages/engine-core/vite.config.ts`'s `SLOW` array: `'test/engine/fu71-*.test.ts', // FU-7.1: the MH 50 min run,
   the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)`. **Insert it immediately
@@ -2737,7 +2743,7 @@ Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
   `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core test` and confirm the `fu71-*` files are
   excluded, and `CI=1 PME_TEST_SET=slow-b …` and confirm they run.
 
-- [ ] **Step 8 — typecheck, commit, push.**
+- [x] **Step 8 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/circ packages/engine-core/vite.config.ts packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -2767,14 +2773,14 @@ washing the alveolar gas out: on the haemorrhage rig the true EtCO2 goes 16.7 at
 FALL: τ = V_alv/VA with the lung's own FRC, i.e. ≈ 24–36 s at adult ventilation, bounded below by
 `LOW_FLOW_WASHOUT_MIN_S`. An apnoeic patient (VA ≈ 0) keeps the slow τ, because nothing washes out.
 
-- [ ] **Step 1 — the before-numbers** (into `<scratchpad>/fu-7.1-b/b3.txt`):
+- [x] **Step 1 — the before-numbers** (into `<scratchpad>/fu-7.1-b/b3.txt`):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/arrest-etco2.test.ts test/l2/gas/co2.test.ts
 ```
 Expected on main: 3 + 5 passed; `arrest-etco2 no CPR: pre 32.0, +20 s 28.0, +60 s 14.2, +120 s 5.0`;
 `arrest-etco2 CPR: mean minutes 1–10 18.0`.
 
-- [ ] **Step 2 — implement.**
+- [x] **Step 2 — implement.**
 
 In `packages/engine-core/src/l2/gas/params.ts`, find:
 
@@ -2912,17 +2918,17 @@ Replace with:
   const sh = l1Target(l1, 'shunt', t);
 ```
 
-- [ ] **Step 3 — measure the P7 course** with the probe harness
+- [x] **Step 3 — measure the P7 course** with the probe harness
   (`<scratchpad>/probe-s2/zz-probe-p7.test.ts`, copied in as `zz-probe-p7.test.ts` and deleted afterwards).
   Expected (the prototype): arm A true EtCO2 11.8 at the arrest → 4.7 at +30 s → 1.8 at +60 s → 0.3 at +120 s;
   arm B (after 90 s of CPR) 4.9 at +5 s → 0.9 at +60 s.
 
-- [ ] **Step 4 — the gas suites.** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas
+- [x] **Step 4 — the gas suites.** Run `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/gas
   test/l2/resp test/l2/lung`. Expected on the prototype: green — `test/l2/gas` 7 files / 22 passed, the two Stage 3
   `it.fails` of `test/l2/gas/co2.test.ts` STILL RED as recorded (the unit rig's ventilation gives τ ≈ 41 s, so
   "< 5 mmHg within 30 s" is missed there too).
 
-- [ ] **Step 5 — re-target `arrest-etco2` on the ruled source.** Three blocks: the file's header records the ruling,
+- [x] **Step 5 — re-target `arrest-etco2` on the ruled source.** Three blocks: the file's header records the ruling,
   the no-CPR case is re-targeted on Falk (and PASSES), the 30 s half of research 03's target becomes the one record,
   and the CPR "+2 min ≥ 17" row becomes a record with its number. **No bound is widened: every `expect` keeps its
   number.**
@@ -3030,7 +3036,7 @@ Replace with:
   `arrest-etco2 no CPR: pre 32.0, +20 s 14.2, +30 s 9.3, +60 s 2.6, +120 s 0.2` and
   `arrest-etco2 CPR: +30 s 9.5, +2 min of CPR 15.9, mean minutes 1–10 17.8`.
 
-- [ ] **Step 6 — `stimulus-surge` case 1 (the first casualty).** B3 raises the awake-laryngoscopy ΔMAP from 38.4 to
+- [x] **Step 6 — `stimulus-surge` case 1 (the first casualty).** B3 raises the awake-laryngoscopy ΔMAP from 38.4 to
   **40.3** against its sourced 20–40 band: the opioid-free arm's cardiac-output dip lowers φ faster, so its PaCO2
   rises more and the hypercapnic pressor response is larger. Recorded with the number; the HR half stays asserted.
 
@@ -3066,7 +3072,7 @@ Replace with:
   Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/stimulus-surge.test.ts`
   Expected: green, with `FU-7 case 1 awake: ΔMAP 40.3, ΔHR 13.1` and `FU-7 case 2 fentanyl 3: ΔMAP 5.1 ratio 0.22`.
 
-- [ ] **Step 7 — the two monitor-fidelity casualties (R50 I5: these were not in the first prototype's test list).**
+- [x] **Step 7 — the two monitor-fidelity casualties (R50 I5: these were not in the first prototype's test list).**
   (a) `fidelity-arrest` fidelity-3 (VF → CPR → ROSC, three skins): the 90 s of VF before the compressions now empty
   the lung, so the CPR window's FIRST samples are the rise back from nothing — 7 mmHg at 170–185 s, 12 at 200 s, 17 at
   240 s, mean 15.3–15.6, max 20–21 — against an [ENG] floor of 10 fitted when the fall was a 70 s lag. Falk's own
@@ -3210,12 +3216,12 @@ Replace with:
   `fidelity-lowflow`'s Ali run takes ≈ 60 s and timed out at 120 s once under three parallel executors: if it times
   out, re-run the file alone before reporting it.
 
-- [ ] **Step 8 — the P7 course** with the probe harness (optional, for the gate note's narrative):
+- [x] **Step 8 — the P7 course** with the probe harness (optional, for the gate note's narrative):
   `<scratchpad>/probe-s2/zz-probe-p7.test.ts`, copied in as `zz-probe-p7.test.ts` and deleted afterwards. Expected:
   arm A true EtCO2 11.8 at the arrest → 4.7 at +30 s → 1.8 at +60 s → 0.3 at +120 s; arm B (after 90 s of CPR) 4.9 at
   +5 s → 0.9 at +60 s.
 
-- [ ] **Step 9 — typecheck, commit, push** (`feat(gas): EtCO2 follows the alveolar washout when pulmonary flow stops (FU-7.1 B3)`,
+- [x] **Step 9 — typecheck, commit, push** (`feat(gas): EtCO2 follows the alveolar washout when pulmonary flow stops (FU-7.1 B3)`,
   with a second `-m` naming the owner's ruling and the four recorded bands).
 
 ### Task B8: the cuff in a pulseless patient does not leave a pressure on the monitor
@@ -3237,7 +3243,7 @@ number": `flag: 'invalid'` with a null value, which the renderer draws as `---` 
 **Interfaces:** none (the `nibp` event and `NibpState` are unchanged; only the `measurement` event a FAILED cycle
 emits is new).
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-nibp-arrest.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-nibp-arrest.test.ts`:
 
 ```ts
 // FU-7.1 B8 (Ali 2026-10-10): a cuff cycle in a pulseless patient must not leave a normal pressure on the monitor.
@@ -3293,14 +3299,14 @@ describe('FU-7.1 B8: the cuff in a pulseless patient', { timeout: 600_000 }, () 
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-nibp-arrest.test.ts`
 Expected: 1 failed —
 `FU-7.1 B8: with a pulse 129/76 (99); pulseless phase failed, result none, numeric 129 flag valid`
 (`expected 129 to be null`): the attempt DOES fail, and the monitor still shows the pre-arrest systolic.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/hemo/pipeline.ts`, find:
 
@@ -3339,10 +3345,10 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 1 passed, with
+- [x] **Step 4 — run it green.** Expected: 1 passed, with
   `FU-7.1 B8: with a pulse 129/76 (99); pulseless phase failed, result none, numeric --- flag invalid`.
 
-- [ ] **Step 5 — every reader of the NIBP numerics.** Run:
+- [x] **Step 5 — every reader of the NIBP numerics.** Run:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3 test/engine/hemo-nibp.test.ts \
   test/engine/fidelity-arrest.test.ts test/engine/fidelity-alarms.test.ts test/engine/stage3-alarms-engine.test.ts
@@ -3352,7 +3358,7 @@ VF onset — that assertion is unchanged and still passes; the alarm suites see 
 invalid flags, which raises no alarm (an invalid numeric cannot breach a limit). The NIBP trend keeps its last valid
 sample: a blanked numeric is not a trend point (checked in `test/l3/trends`).
 
-- [ ] **Step 6 — typecheck, commit, push.**
+- [x] **Step 6 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/hemo/pipeline.ts packages/engine-core/test/engine/fu71-nibp-arrest.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -3409,13 +3415,13 @@ recorded known misses with their numbers (A2's Billard ratio, A5's textbook K ri
 
 **Files:** Create `docs/gates/fu-7.1-b.md`, `docs/gates/fu-7.1-b/**` (PNG/JPEG ≤ 60 KB); tick Part B.
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (expected: FU-7.1-a merged by now, and
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (expected: FU-7.1-a merged by now, and
   FU-11-a/b/c too; if not, say so). **One conflict is possible and expected** (R50 C1/I7): `l2/resp/pipeline.ts` is
   edited by FU-11 I1 (frame validation) and I2 (three `pmax` lines) as well as by B5/B7/B3 — the hunks are disjoint
   and the prototype merged cleanly with FU-11's whole patch in the tree, so take BOTH sides if git asks; and
   `vite.config.ts`'s `SLOW` array carries FU-11 K4's line as well as B4 Step 7's — keep both lines.
   `docs/plans/fu-7.1-…md`: keep ours.
-- [ ] **Step 2 — full verification.** `npx -y pnpm@9.15.9 -r typecheck`; `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r
+- [x] **Step 2 — full verification.** `npx -y pnpm@9.15.9 -r typecheck`; `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r
   test`; **the whole of `test/l2` and `test/l3`** (R50 I5: B4 writes into `l2/circ`, B8 into `l2/hemo`, and `l3` was
   never in the list); **`engine-pipeline`** (it re-reads the `breath` event B5 changed); the B4/B8 blast radius
   `hemo-nibp`, `hemo-acceptance`, `circ-arrest-state`, `fu8-pea-resus`, `fu8-manual-rosc`, `fidelity-arrest`,
@@ -3434,7 +3440,7 @@ recorded known misses with their numbers (A2's Billard ratio, A5's textbook K ri
   `resp-suite` RS14 (Q5), `arrest-etco2`'s 30 s and CPR +2 min rows (Q9), `stimulus-surge` case 1's ΔMAP,
   `fidelity-arrest` fidelity-3's EtCO2 floor × 3 skins (Q9) and `fidelity-lowflow`'s Ali case (Q10). `arrest-etco2`'s
   re-targeted no-CPR case PASSES — if it does not, stop: that is the owner's ruled target, not a record.
-- [ ] **Step 3 — the five-case showcase rehearsal on this tree (the global constraint).**
+- [x] **Step 3 — the five-case showcase rehearsal on this tree (the global constraint).**
 ```bash
 node scripts/showcase/make-bundle.mjs <scratchpad>/fu-7.1-b/kit
 SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c scripts/showcase/playwright.showcase.config.ts rehearsal.showcase.ts multiwindow.showcase.ts
@@ -3443,7 +3449,10 @@ SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c
   lost ≈ 10:03, ROSC 4.3 min into CPR) and the tamponade's MAP < 40 at ≈ 113 s. Copy the JSON results into
   `docs/gates/fu-7.1-b/showcase/`, then `git checkout -- docs/showcase`. **Any changed number is a stop:** report it,
   do not proceed to the PR.
-- [ ] **Step 4 — Review Focus 2, 4 and 7.** (2) every arrest time this branch can move, from the suites of Step 2:
+  **Executed (2026-10-11):** stopped here at first — the haemorrhage case's circulation returns 3.0 min into CPR (4.3 on
+  main; bisected to B4's venous-reservoir hunk). The orchestrator ACCEPTED it as B4's intended consequence on 2026-10-11;
+  Steps 4–7 were then completed (`docs/gates/fu-7.1-b.md` §6).
+- [x] **Step 4 — Review Focus 2, 4 and 7.** (2) every arrest time this branch can move, from the suites of Step 2:
   `clinical-suite` S8 (+3.58 min on the prototype against +9.75 on main; band 3–10) and S4a, `circ-lowflow-arrest`,
   `circ-hypoxic-arrest` (+9.8 min after SaO2 < 60 %; band 5–14), `fu8-*`. (7) every ROSC time and the B4 matrix
   (drained q 1.0 → +146 s, q 0.8 → +200 s, q 0.6/0.4 → never, undrained → never with and without epinephrine, drained
@@ -3451,16 +3460,16 @@ SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c
   `fu8-manual-rosc`'s ramp. Put all of them in ONE table with their bands and margins. (4) the validation run of
   Step 2 and one line per `breath` reader (validation series, the controller wire type, FU-11 H5) stating the contract
   of D-9.
-- [ ] **Step 5 — evidence (≤ 60 KB each, Chromium):** the MH case's monitor 30 min in (MAP falling, SVR falling, the
+- [x] **Step 5 — evidence (≤ 60 KB each, Chromium):** the MH case's monitor 30 min in (MAP falling, SVR falling, the
   temperature and EtCO2 rising); a COPD patient's first ABG panel (pH 7.37–7.39, not 7.49); the bronchospasm case's
   ventilator numerics beside the cockpit (the delivered VT now agreeing); **the monitor during an arrest with the NIBP
   tile reading `---` after a failed cycle** (B8 — the owner's own defect, so it is the one screenshot he will look for);
   **the tamponade case's monitor at ROSC after drainage with no fluid given** (B4).
-- [ ] **Step 6 — the gate note `docs/gates/fu-7.1-b.md`:** as Gate A, for B1/B3/B4/B5/B7/B8, plus the rehearsal table,
+- [x] **Step 6 — the gate note `docs/gates/fu-7.1-b.md`:** as Gate A, for B1/B3/B4/B5/B7/B8, plus the rehearsal table,
   the arrest/ROSC table, the slow-group times, the validation comparison, the six records with their numbers, and
   Q4c/Q5 restated with what was done about them plus the three new questions this branch raises (Q9, Q10 — and Q11 is
   branch a's).
-- [ ] **Step 7 — pull request.**
+- [x] **Step 7 — pull request.**
 ```bash
 git push
 gh pr create --base main --head fu-7.1-b --title "FU-7.1 (b): acidaemia reaches the circulation, the arrest capnogram, the drained tamponade, the delivered breath volume, the cuff in an arrest" --body-file <scratchpad>/fu-7.1-b/pr-body.md

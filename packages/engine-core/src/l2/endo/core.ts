@@ -3,6 +3,7 @@
 // Drugs are Stage 7g's (R51 §1–3): dextrose/insulin reach the glucose model through the pipeline's dose observer,
 // exogenous epinephrine arrives as a plasma-equivalent input, dantrolene acts in the thermal module. DKA is Stage 7c's
 // condition: its severity (7c's `blood.out.dkaSeverity`) is an INPUT here, never an output (no ketone drive back).
+import { acidosisFactor } from '../pk/pd.ts'; // FU-7.1 B1: ONE pH → catecholamine-efficacy curve (tables §5b.1, Q44)
 import { tempHrF } from '../thermal/metabolic.ts';
 import { conditionEffects, createConditions, stepConditions, type ConditionEffects, type ConditionState } from './conditions.ts';
 import { stressEffects, type StressEffects } from './effects.ts';
@@ -46,6 +47,8 @@ export interface EndoInputs {
   mapSetMmHg: number;
   sao2: number;
   paco2: number;
+  /** FU-7.1 B1: arterial pH (7c `blood.core.ab.ph`); absent/neutral 7.4. The catecholamine responsiveness reads it. */
+  ph?: number;
   tempC: number; // core temperature (the fever HR term)
   mhActivity: number; // thermal (0–1)
   liverF: number; // 7d `organs.liver.glucoseF` (1 normal)
@@ -60,7 +63,7 @@ export interface EndoInputs {
 }
 
 export const NEUTRAL_ENDO_INPUTS: EndoInputs = {
-  noxious: 0, antinoc: 0, mapMmHg: 85, mapSetMmHg: 85, sao2: 0.97, paco2: 40, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
+  noxious: 0, antinoc: 0, mapMmHg: 85, mapSetMmHg: 85, sao2: 0.97, paco2: 40, ph: 7.4, tempC: 36.8, mhActivity: 0, liverF: 1, weightKg: 70, betaBlock: 0, betaBlockC: 0,
   epiExoPgMl: 0, bronchoDilExt: 0, dkaSeverity: 0, sympDrug: 0,
 };
 
@@ -164,8 +167,15 @@ function compose(c: EndoCore): EndoOut {
   // catecholamine responsiveness (tables §5e `vasoResp`: septic hyporesponsiveness, cortisol's permissive effect) and the
   // thyroid β sensitivity scale the EXCESS of the stress effects (neural and humoral), not the condition rows
   const vr = st.vasoResp * cd.vasoResp;
+  // FU-7.1 B1 (research/24 P2; tables §5b.1 row "pH → catecholamine response `vasoResp`", Q44 — a row nothing read
+  // until now): acidaemia blunts the VASCULAR response to the patient's OWN catecholamines exactly as 7g blunts an
+  // infused one — the SAME curve (`acidosisFactor`, pd.ts: ×(1 − 2.5·(7.4 − pH)), floor 0.4), one source for both.
+  // It scales the EXCESS `alpha()` scales (SVR, venous tone). The chronotropic/inotropic arm `beta()` is NOT scaled:
+  // the row names the vasopressor response, and blunting HR as well misses both sourced septic HR bands (tables §5e
+  // MANUAL 110–130 → measured 107; §7 check 16 MODELED 115–130 → 114.8). Owner question Q-FU71-1.
+  const vrA = vr * acidosisFactor(x.ph ?? 7.4);
   const beta = (v: number) => 1 + (v - 1) * th.betaSens * vr;
-  const alpha = (v: number) => 1 + (v - 1) * vr;
+  const alpha = (v: number) => 1 + (v - 1) * vrA; // FU-7.1 B1
   const h = c.hormones;
   const g = c.glucose;
   const setShiftC = th.setShiftC + cd.setShiftC;
