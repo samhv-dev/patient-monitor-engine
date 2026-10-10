@@ -54,7 +54,7 @@ export function validateDefib(d: DefibState, ev: DefibEvent): string | undefined
     case 'shock':
       return d.state === 'ready' ? undefined : 'defibrillator is not charged';
     case 'preselect':
-      return ev.outcome === 'unchanged' || (ev.outcome !== undefined && ev.outcome in RHYTHMS) ? undefined : "outcome must be a rhythm id or 'unchanged'";
+      return ev.outcome === 'unchanged' || (typeof ev.outcome === 'string' && Object.hasOwn(RHYTHMS, ev.outcome)) ? undefined : "outcome must be a rhythm id or 'unchanged'"; // FU-11 (F11): own keys only
     case 'disarm':
     case 'syncOn':
     case 'syncOff':

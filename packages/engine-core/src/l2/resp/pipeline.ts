@@ -799,7 +799,10 @@ export function validateRespCommand(cmd: Command): string | undefined | null {
     if (cmd.source !== 'ventilator') return "externalDrive source must be 'ventilator'";
     if (!f) return 'externalDrive needs a frame';
     return num('pawCmH2O', f.pawCmH2O, -30, 150) ?? num('flowLps', f.flowLps, -20, 20) ?? num('volumeMl', f.volumeMl, -100, 4000)
-      ?? num('fio2', f.fio2, 0.21, 1) ?? num('peepCmH2O', f.peepCmH2O, 0, 40) ?? num('palvCmH2O', (f as VentFrameExt).palvCmH2O, -30, 150) ?? (f.pawCmH2O === undefined || f.flowLps === undefined ? 'frame needs pawCmH2O and flowLps' : undefined);
+      ?? num('fio2', f.fio2, 0.21, 1) ?? num('peepCmH2O', f.peepCmH2O, 0, 40) ?? num('palvCmH2O', (f as VentFrameExt).palvCmH2O, -30, 150)
+      // FU-11 (F11): every frame field the lung reads is required (a paw/flow-only frame left volume, FiO2 and PEEP
+      // undefined, VT went NaN and the next beat time threw)
+      ?? (f.pawCmH2O === undefined || f.flowLps === undefined || f.volumeMl === undefined || f.fio2 === undefined || f.peepCmH2O === undefined ? 'frame needs pawCmH2O, flowLps, volumeMl, fio2 and peepCmH2O' : undefined);
   }
   if (cmd.type === 'attachSensor') {
     if (cmd.sensor === 'co2') {
