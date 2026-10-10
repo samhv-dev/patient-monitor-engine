@@ -124,6 +124,16 @@ export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: 
   }
 }
 
+/** FU-11 (owner ruling Q4): what the skin (and its preset) says still alarms with every limit group off. */
+export function skinAlwaysOn(skin: string): { alwaysOn: readonly string[]; apnoeaOff: boolean } {
+  try {
+    const r = resolveSkin(skin);
+    return { alwaysOn: r.skin.alarms.alwaysOn, apnoeaOff: r.preset?.startState?.apneaLimit === 'OFF' };
+  } catch {
+    return { alwaysOn: [], apnoeaOff: false };
+  }
+}
+
 export const LEVEL_NAME: Readonly<Record<1 | 2 | 3, 'high' | 'medium' | 'low'>> = { 1: 'high', 2: 'medium', 3: 'low' };
 /** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). The marks
  *  follow the active skin (`applySkinAlarmColours`): the mirror shows the monitor's own marks (R50 review F12). */

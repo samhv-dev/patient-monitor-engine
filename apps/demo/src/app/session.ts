@@ -67,6 +67,7 @@ export class AppSession {
   private readonly listeners = new Set<(e: EngineEvent) => void>();
   private readonly appFns = new Set<(e: EngineEvent) => void>();
   private readonly mountFns = new Set<(m: MonitorHandle) => void>();
+  private readonly scaleFns = new Set<(k: number) => void>(); // FU-11 (D3)
   private offMon: (() => void) | null = null;
   private lastT = 0;
   private lastWall = performance.now();
@@ -165,6 +166,13 @@ export class AppSession {
     this.lastWall = performance.now();
     this.timeScale = k;
     this.monitor?.setTimeScale(k);
+    for (const fn of this.scaleFns) fn(k);
+  }
+
+  /** FU-11 (D3): every speed change (the Ventilator view's cockpit runs at the session's speed, not its first one). */
+  onTimeScale(fn: (k: number) => void): () => void {
+    this.scaleFns.add(fn);
+    return () => void this.scaleFns.delete(fn);
   }
 
   setPaused(p: boolean): void {
@@ -186,6 +194,12 @@ export class AppSession {
 
   enableSound(): Promise<void> {
     return (this.monitor?.enableSound() ?? Promise.resolve()).then(() => void (this.soundOn = true));
+  }
+
+  /** FU-11 (H4): sound off again, for this window (a new patient's monitor stays off too). */
+  disableSound(): void {
+    this.soundOn = false;
+    this.monitor?.disableSound();
   }
 
   /** A new body (profile, mode) = a new engine; the session code, remote pairing, log and listeners carry on. */

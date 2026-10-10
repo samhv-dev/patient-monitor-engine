@@ -179,9 +179,10 @@ export class ControllerSession {
 
   private onEvent(e: WireEvent): void {
     if (e.type === 'timeline') {
-      // a new engine (patient restart, scenario load): the clock restarts; the old run ended with the old body
+      // a new engine (patient restart, scenario load): the clock restarts; the old run ended with the old body.
+      // FU-11 (F09, BA05): a bookmark restore starts a timeline too — the clock goes back, the scenario run continues.
       this.simT = e.t;
-      this.scenario.reset();
+      if (e.cause !== 'restore') this.scenario.reset();
       return;
     }
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t); // monotonic within one timeline
