@@ -279,7 +279,8 @@
         {
           "properties": {
             "type": { "const": "setModifiers" }, "$comment": { "type": "string" },
-            "modifiers": { "type": "object" }, "ramp": { "$ref": "#/definitions/ramp" }
+            "modifiers": { "type": "object" },
+            "ramp": { "description": "FU-11 (F13): version 1.0 applies modifiers at once; the engine refuses a ramp with a delay or a duration", "allOf": [{ "$ref": "#/definitions/ramp" }] }
           },
           "required": ["modifiers"], "additionalProperties": false
         },

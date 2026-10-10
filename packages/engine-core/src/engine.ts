@@ -822,6 +822,8 @@ class Engine implements MonitorEngine {
         );
       }
       case 'setModifiers': {
+        // FU-11 (F13): no modifier has a ramp consumer — a delayed or gradual change happened at once; refused, not ignored
+        if (cmd.ramp !== undefined && ((cmd.ramp.durationS ?? 0) > 0 || (cmd.ramp.delayS ?? 0) > 0)) return 'setModifiers applies at once: a ramp (delayS, durationS) is not supported';
         return validateModifiers(cmd.modifiers) ?? rampReason(cmd.ramp);
       }
       case 'device': {
