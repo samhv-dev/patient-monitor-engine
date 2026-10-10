@@ -247,11 +247,14 @@ export class MonitorCore {
     }
     this.waveLive[i] = true;
     if (pl.range === null && t - (this.autoRangeT[i] ?? -1) >= 1) {
-      this.autoRangeT[i] = t;
       // Stage 3: every auto-scaled lane (pleth over 4 s, resp over 10 s: two or three breaths)
       const rate = this.engine.sampleRate(ch);
       const winS = ch === 'resp' ? 10 : 4;
       const n = this.engine.readSamples(ch, Math.floor((t - winS) * rate), this.plethScratch.subarray(0, Math.round(winS * rate)));
+      // FU-11 (Stage 9 polish note 4): a new engine's first 0.4 s of pleth is flat; scaled on that, the first beat was drawn
+      // clamped to the lane's top edge for a second (a rectangle after every load or restore). Until the window holds a
+      // second of signal the scale is re-taken every frame.
+      if (n >= rate) this.autoRangeT[i] = t;
       const [lo, hi] = autoRange(this.plethScratch, n, ch === 'resp' ? RESP_MIN_SPAN : undefined);
       Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
     }
