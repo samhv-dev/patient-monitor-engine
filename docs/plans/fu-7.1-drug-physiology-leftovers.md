@@ -3415,13 +3415,13 @@ recorded known misses with their numbers (A2's Billard ratio, A5's textbook K ri
 
 **Files:** Create `docs/gates/fu-7.1-b.md`, `docs/gates/fu-7.1-b/**` (PNG/JPEG ≤ 60 KB); tick Part B.
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (expected: FU-7.1-a merged by now, and
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (expected: FU-7.1-a merged by now, and
   FU-11-a/b/c too; if not, say so). **One conflict is possible and expected** (R50 C1/I7): `l2/resp/pipeline.ts` is
   edited by FU-11 I1 (frame validation) and I2 (three `pmax` lines) as well as by B5/B7/B3 — the hunks are disjoint
   and the prototype merged cleanly with FU-11's whole patch in the tree, so take BOTH sides if git asks; and
   `vite.config.ts`'s `SLOW` array carries FU-11 K4's line as well as B4 Step 7's — keep both lines.
   `docs/plans/fu-7.1-…md`: keep ours.
-- [ ] **Step 2 — full verification.** `npx -y pnpm@9.15.9 -r typecheck`; `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r
+- [x] **Step 2 — full verification.** `npx -y pnpm@9.15.9 -r typecheck`; `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r
   test`; **the whole of `test/l2` and `test/l3`** (R50 I5: B4 writes into `l2/circ`, B8 into `l2/hemo`, and `l3` was
   never in the list); **`engine-pipeline`** (it re-reads the `breath` event B5 changed); the B4/B8 blast radius
   `hemo-nibp`, `hemo-acceptance`, `circ-arrest-state`, `fu8-pea-resus`, `fu8-manual-rosc`, `fidelity-arrest`,
@@ -3440,7 +3440,7 @@ recorded known misses with their numbers (A2's Billard ratio, A5's textbook K ri
   `resp-suite` RS14 (Q5), `arrest-etco2`'s 30 s and CPR +2 min rows (Q9), `stimulus-surge` case 1's ΔMAP,
   `fidelity-arrest` fidelity-3's EtCO2 floor × 3 skins (Q9) and `fidelity-lowflow`'s Ali case (Q10). `arrest-etco2`'s
   re-targeted no-CPR case PASSES — if it does not, stop: that is the owner's ruled target, not a record.
-- [ ] **Step 3 — the five-case showcase rehearsal on this tree (the global constraint).**
+- [x] **Step 3 — the five-case showcase rehearsal on this tree (the global constraint).**
 ```bash
 node scripts/showcase/make-bundle.mjs <scratchpad>/fu-7.1-b/kit
 SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c scripts/showcase/playwright.showcase.config.ts rehearsal.showcase.ts multiwindow.showcase.ts
@@ -3449,6 +3449,8 @@ SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c
   lost ≈ 10:03, ROSC 4.3 min into CPR) and the tamponade's MAP < 40 at ≈ 113 s. Copy the JSON results into
   `docs/gates/fu-7.1-b/showcase/`, then `git checkout -- docs/showcase`. **Any changed number is a stop:** report it,
   do not proceed to the PR.
+  **Executed (2026-10-11): STOPPED here.** The haemorrhage case's circulation returns 3.0 min into CPR (4.3 on main and
+  at the B7 commit; bisected to B4's venous-reservoir hunk). Steps 4–7 wait for the orchestrator: `docs/gates/fu-7.1-b.md`.
 - [ ] **Step 4 — Review Focus 2, 4 and 7.** (2) every arrest time this branch can move, from the suites of Step 2:
   `clinical-suite` S8 (+3.58 min on the prototype against +9.75 on main; band 3–10) and S4a, `circ-lowflow-arrest`,
   `circ-hypoxic-arrest` (+9.8 min after SaO2 < 60 %; band 5–14), `fu8-*`. (7) every ROSC time and the B4 matrix
