@@ -15,6 +15,18 @@ import type { LinkProfile } from './profiles.ts';
 
 export const LINK_TICK_S = 0.02; // the engine tick; one frame per tick = 50 Hz
 
+/** The monitor's own ventilator: I:E 1:2 (engine-core l2/resp/driver.ts `vent.ie`, default 2). */
+export const MONITOR_IE = 2;
+/**
+ * FU-11 (H5): the VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no
+ * pause — so the same VT, rate and Pmax deliver the same volume on the same lungs (the cockpit's preset 60 L/min + 0.3 s
+ * pause reached Pmax early in bronchospasm: VTE 204 vs 424, measured). L/min, whole.
+ */
+export function monitorMatchedFlow(c: { vt: number; rate: number }): { vcFlow: number; pause: number } {
+  const ti = 60 / Math.max(4, c.rate) / (1 + MONITOR_IE);
+  return { vcFlow: Math.round(((c.vt / 1000) / ti) * 60), pause: 0 };
+}
+
 export interface LinkCore {
   vs: VentState;
   lung: LungLink;
