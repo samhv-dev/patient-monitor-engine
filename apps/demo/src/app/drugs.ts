@@ -23,6 +23,13 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   remifentanil: { infusion: [[0.1, 'mcg/kg/min'], [0.2, 'mcg/kg/min']] },
   morphine: { bolus: [[2, 'mg'], [5, 'mg']] },
   rocuronium: { bolus: [[0.6, 'mg/kg'], [1.2, 'mg/kg']] },
+  // FU-7.1 A1 (research/24 P1): every neuromuscular blocker opens on its intubating dose in mg/kg — without a preset
+  // the dose started at 0 in µg and "0.15" gave 0.15 µg. Doses [TXT]: the drug labels (Nimbex 0.15–0.2 mg/kg;
+  // vecuronium 0.08–0.1; atracurium 0.4–0.5; Mivacron 0.15–0.2 mg/kg, 0.2 over 30 s) as the 7g rows quote them.
+  cisatracurium: { bolus: [[0.15, 'mg/kg'], [0.2, 'mg/kg']] },
+  vecuronium: { bolus: [[0.1, 'mg/kg']] },
+  atracurium: { bolus: [[0.5, 'mg/kg']] },
+  mivacurium: { bolus: [[0.2, 'mg/kg']] },
   succinylcholine: { bolus: [[1, 'mg/kg'], [1.5, 'mg/kg']], aka: ['suxamethonium'] },
   sugammadex: { bolus: [[2, 'mg/kg'], [4, 'mg/kg'], [16, 'mg/kg']] },
   neostigmine: { bolus: [[50, 'mcg/kg']] },
@@ -55,13 +62,18 @@ export interface DrugItem {
   preset: DrugPreset;
 }
 
-/** Dose units offered for a drug: its own unit and per kg, plus g for drugs dosed in mg. */
+/** The neuromuscular blockers' classes: dosed in µg by the engine's rows, prescribed in mg/kg. */
+const NMB_CLASSES = new Set(['nmb', 'depolariser']);
+
+/** Dose units offered for a drug: its own unit and per kg, plus g for drugs dosed in mg (FU-7.1 A1: mg/kg for the
+ * neuromuscular blockers, the unit they are prescribed in; not for the other µg drugs, where mg/kg is a 1000× trap). */
 export function doseUnits(d: DrugItem): DoseUnit[] {
   const a = d.amountUnit as DoseUnit;
   const u: DoseUnit[] = [a];
   if (a === 'mg' || a === 'mcg' || a === 'mL' || a === 'units' || a === 'mmol') u.push(`${a}/kg` as DoseUnit);
   if (a === 'mg') u.push('g', 'mcg');
   if (a === 'mcg') u.push('mg');
+  if (a === 'mcg' && NMB_CLASSES.has(d.cls)) u.push('mg/kg');
   return u;
 }
 export function rateUnits(d: DrugItem): RateUnit[] {

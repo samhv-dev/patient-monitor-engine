@@ -448,7 +448,7 @@ matters (no task depends on another's code), but the block sequence was checked 
 **Why:** executor A owns Part A. This task makes the worktree, proves every Part A find block still matches the base
 exactly once, and records the before-numbers the gate note compares with.
 
-- [ ] **Step 1 — worktree and install.**
+- [x] **Step 1 — worktree and install.**
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin
@@ -457,7 +457,7 @@ cd ../scratch/wt-fu-7.1-a && npx -y pnpm@9.15.9 install --frozen-lockfile
 cp ../plans-backup/fu-7.1-drug-physiology-leftovers.md docs/plans/fu-7.1-drug-physiology-leftovers.md
 ```
 
-- [ ] **Step 2 — block check** (the base must be 48864439 or a later main where every block still matches once):
+- [x] **Step 2 — block check** (the base must be 48864439 or a later main where every block still matches once):
 ```bash
 python3 ../plans-backup/fu-7.1-plan-tools/check-blocks.py --branch a docs/plans/fu-7.1-drug-physiology-leftovers.md .
 ```
@@ -466,7 +466,7 @@ matches, find the same statement by its quoted FU-7.1 neighbour, re-anchor it, a
 changing. (Checked 2026-10-10 against `origin/main` 48864439 AND against a tree carrying FU-11's whole FIXED prototype
 patch: 0 problems both ways.)
 
-- [ ] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-a/before.txt`:
+- [x] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-a/before.txt`:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/demo test
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk
@@ -480,7 +480,7 @@ Also record, for A4 and A5: `CI=1 … exec vitest run test/l2 test/l3` → **1 1
 0/20 seeds apnoeic) still red as recorded in `test/engine/drug-apnoea.test.ts` (R50 M6: that is the file to quote
 their numbers from).
 
-- [ ] **Step 4 — commit the plan copy and push the branch.**
+- [x] **Step 4 — commit the plan copy and push the branch.**
 ```bash
 git add docs/plans/fu-7.1-drug-physiology-leftovers.md
 git commit -m "docs(plan): FU-7.1 drug and physiology leftovers (branch a copy)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -503,7 +503,7 @@ TOF 0 at 150 s and a flat capnogram at 150 s, and `l2/pk/units.ts toAmount` alre
 **Interfaces:** `PRESETS` gains `cisatracurium`, `vecuronium`, `atracurium`, `mivacurium`; `doseUnits` gains `mg/kg`
 for `cls` `nmb` and `depolariser`; module-private `NMB_CLASSES`.
 
-- [ ] **Step 1 — the failing test.** Create `apps/demo/src/app/drugs.test.ts`:
+- [x] **Step 1 — the failing test.** Create `apps/demo/src/app/drugs.test.ts`:
 
 ```ts
 // FU-7.1 A1 (research/24 P1): the dose picker gives every neuromuscular blocker its intubating dose in mg/kg, and that
@@ -552,13 +552,13 @@ describe('FU-7.1 A1: neuromuscular blockers in the dose picker', () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/drugs.test.ts`
 Expected: 2 failed — the preset test on `undefined` against `[0.15, 'mg/kg']`, and the engine test with
 `FU-7.1 A1: cisatracurium undefined undefined` (the first preset does not exist).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/drugs.ts`, find:
 
@@ -630,7 +630,7 @@ export function doseUnits(d: DrugItem): DoseUnit[] {
 export function rateUnits(d: DrugItem): RateUnit[] {
 ```
 
-- [ ] **Step 4 — run it green.**
+- [x] **Step 4 — run it green.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/drugs.test.ts`
 Expected: 2 passed; the log line `FU-7.1 A1: cisatracurium 0.15 mg/kg: last breath +134 s, EtCO2 0, apnoea flag true`
@@ -639,12 +639,12 @@ that 2 s is the only measured consequence anywhere). This file has no explicit p
 demo package's 5 s default: under three parallel executors it took 44 s of test time and timed out. If it times out,
 re-run it alone before reporting it, and say so in the gate note.
 
-- [ ] **Step 5 — the rest of the demo package and the e2e that opens the drug panel.**
+- [x] **Step 5 — the rest of the demo package and the e2e that opens the drug panel.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo test` (expected 202 passed: 200 + this file's 2) and
 `npx playwright test stage9-app stage9-tasks --retries=0` (both projects; expected unchanged).
 
-- [ ] **Step 6 — typecheck, commit, push.**
+- [x] **Step 6 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add apps/demo/src/app/drugs.ts apps/demo/src/app/drugs.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
