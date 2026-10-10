@@ -2228,7 +2228,7 @@ will look):** `breath.t` is still the cycle's START time and `seq` still increas
 the volume the lung received) and the emission TIME (after the breath instead of when the cycle was planned, within
 one tick) change. Nothing in `packages/ventilator` is edited by this plan.
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-breath-vt.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-breath-vt.test.ts`:
 
 ```ts
 // FU-7.1 B5 (research/24 P8b): the `breath` event reports the volume the LUNG RECEIVED, not the set VT. Rig: the
@@ -2273,13 +2273,13 @@ describe('FU-7.1 B5: the breath event reports the delivered volume', { timeout: 
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-breath-vt.test.ts`
 Expected: 1 failed, 1 passed — `FU-7.1 B5: breath vtMl 500, mechanics vt 295, Ppeak 40.0`, `expected 205 to be less
 than or equal to 2`.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/resp/driver.ts`, find:
 
@@ -2394,9 +2394,9 @@ Replace with:
   while (rs.beats.length > 0 && (rs.beats[0] as number) < tEnd - 5) rs.beats.shift();
 ```
 
-- [ ] **Step 4 — run it green.** Expected: 2 passed, `FU-7.1 B5: breath vtMl 299, mechanics vt 299, Ppeak 40.0`.
+- [x] **Step 4 — run it green.** Expected: 2 passed, `FU-7.1 B5: breath vtMl 299, mechanics vt 299, Ppeak 40.0`.
 
-- [ ] **Step 5 — every reader of a breath event.**
+- [x] **Step 5 — every reader of a breath event.**
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/resp test/l2/lung test/l2/gas test/engine/resp-vcv-pmax.test.ts test/engine/stage3-alarms-engine.test.ts test/engine/vent-infant.test.ts test/engine/truth-event.test.ts
 CI=1 npx -y pnpm@9.15.9 --filter @pme/validation test
@@ -2405,7 +2405,7 @@ Expected (the prototype): 35 engine files / 159 passed, validation unchanged. `t
 case ("emits breath and lungState events") is the one that proves the emission still happens inside ONE `advanceResp`
 call — it is why the emit loop moved to the end of the pass rather than keeping its place.
 
-- [ ] **Step 6 — typecheck, commit, push** (`fix(7b): the breath event reports the delivered volume, after the breath (FU-7.1 B5)`).
+- [x] **Step 6 — typecheck, commit, push** (`fix(7b): the breath event reports the delivered volume, after the breath (FU-7.1 B5)`).
 
 ### Task B7: a chronic retainer's CO2 stores start at his own PaCO2 (the inventory's item A3f)
 

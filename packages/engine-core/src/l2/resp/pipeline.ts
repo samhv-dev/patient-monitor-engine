@@ -668,6 +668,9 @@ function breathStart(rs: RespState, t: number): void {
 function breathEnd(rs: RespState, l1: L1State, t: number): void {
   const ls = rs.lung;
   const vt = ls.mech.v.reduce((a, v, u) => a + Math.max(0, v - (ls.v0[u] as number)), 0);
+  // FU-7.1 B5: the delivered volume this cycle achieved — the `breath` event reports it instead of the set VT
+  const cyc = cycleAt(rs.driver, t - 1e-3);
+  if (cyc) cyc.vtDelMl = vt;
   if (!(vt > 5)) return;
   const mech = mechSource(rs) && (cycleAt(rs.driver, t - 1e-3)?.mech ?? true);
   const ppeak = Math.max(rs.brk.pk, ls.mech.paw);
@@ -727,13 +730,6 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     c.lungTauII = ct.tauII;
     c.lungRiseIII = ct.riseIII;
   }
-  for (const c of rs.driver.cycles) {
-    const ext = rs.driver.source === 'external' && rs.driver.ext?.inInsp && c === rs.driver.cycles[rs.driver.cycles.length - 1];
-    if (!c.emitted && c.exch && c.vt > 0 && !ext) {
-      c.emitted = true;
-      rs.out.push({ type: 'breath', t: c.t0, seq: c.seq, kind: c.kind, tiS: c.ti, teS: c.te, vtMl: Math.round(c.vt), etco2True: Math.round(rs.etco2 * 10) / 10 });
-    }
-  }
   const h = ctx.hemo;
   const cap: CapnoCtx = { etco2: rs.etco2, beats: rs.beats, cpr: { active: h.cpr.active, rate: h.cpr.rate, quality: h.cpr.quality, anchor: h.cpr.nextT } };
   const air = (t: number) => airwayCo2(rs.driver, t, cap);
@@ -783,6 +779,17 @@ export function advanceResp(rs: RespState, ctx: RespCtx, mEnd: number, write: (c
     const ie = impStep(rs.num.imp, t, imp, DT, rs.beats); // FU-5 (E-FU5-5): cardiac-overlay rejection
     if (ie === 'apnoea') alarm(rs, t, 'apnoea-resp', true, 'APNEA (RESP)');
     else if (ie === 'resumed') alarm(rs, t, 'apnoea-resp', false, 'APNEA (RESP)');
+  }
+  for (const c of rs.driver.cycles) {
+    const ext = rs.driver.source === 'external' && rs.driver.ext?.inInsp && c === rs.driver.cycles[rs.driver.cycles.length - 1];
+    // FU-7.1 B5 (research/24 P8b): a breath is reported once it HAS BEEN DELIVERED, with the volume the lung received
+    // (`vtDelMl`, stamped at end-inspiration) — a pressure-limited VCV breath reported its set 500 mL while the lung got
+    // 242–303. Before this the event was emitted as soon as the cycle was PLANNED (up to PLAN_AHEAD_S early) and had to
+    // be withdrawn again when the plan changed (`withdraw`, applyRespCommand).
+    if (!c.emitted && c.exch && c.vt > 0 && !ext && c.vtDelMl !== undefined) {
+      c.emitted = true;
+      rs.out.push({ type: 'breath', t: c.t0, seq: c.seq, kind: c.kind, tiS: c.ti, teS: c.te, vtMl: Math.round(c.vtDelMl), etco2True: Math.round(rs.etco2 * 10) / 10 });
+    }
   }
   pruneCycles(rs.driver, tEnd - KEEP_S);
   while (rs.beats.length > 0 && (rs.beats[0] as number) < tEnd - 5) rs.beats.shift();
