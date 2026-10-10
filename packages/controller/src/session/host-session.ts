@@ -281,8 +281,21 @@ export class HostSession {
     if (cmd.type === 'time') this.emitState();
   }
 
-  /** Dispatch one command; returns the result and the command as applied (with atTick). */
+  /**
+   * FU-11 (F06, BA06): a target that throws or rejects (a failed or destroyed worker) answers with a refusal — the
+   * controller gets its ack and the host's command chain moves on instead of waiting behind a promise that never settles.
+   */
   private async apply(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
+    try {
+      return await this.applyOnce(cmd);
+    } catch (err) {
+      const reason = `the monitor could not apply it: ${err instanceof Error ? err.message : String(err)}`;
+      return { result: { accepted: false, tick: this.o.target.now().tick, reason }, applied: cmd };
+    }
+  }
+
+  /** Dispatch one command; returns the result and the command as applied (with atTick). */
+  private async applyOnce(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
     const { tick, simT } = this.o.target.now();
     const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);
