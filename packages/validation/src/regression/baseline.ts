@@ -32,6 +32,12 @@ export interface WaveCompare { case: string; channel: string; n: number; failed:
 
 /** Per-sample 2 % comparison; green = every sample within, yellow ≤ 1 % of samples outside, else red. */
 export function compareWave(caseId: string, channel: string, base: number[], now: ArrayLike<number>): WaveCompare {
+  // FU-11 (F02): a NaN or infinite sample on either side, or nothing to compare, is red — NaN differences compared false
+  // against the limit, so an all-NaN waveform graded green
+  let invalid = base.length === 0 || now.length === 0 ? 1 : 0;
+  for (let i = 0; i < base.length; i++) if (!Number.isFinite(base[i] as number)) invalid++;
+  for (let i = 0; i < now.length; i++) if (!Number.isFinite(now[i] as number)) invalid++;
+  if (invalid > 0) return { case: caseId, channel, n: Math.min(base.length, now.length), failed: Math.max(base.length, now.length, 1), maxRelErr: Infinity, rms: Infinity, grade: 'red' };
   let lo = Infinity;
   let hi = -Infinity;
   for (const v of base) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
