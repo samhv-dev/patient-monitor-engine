@@ -89,7 +89,9 @@ The first full e2e run failed `fu4`, `fu6` (both engines), `stage7d` (both) and 
 fire-and-forget `dispatch` (`void send(...)`) and then remount (`pm?.destroy()`) before the worker answers — the
 rejection became an unhandled rejection. The same pattern is in the ventilator link port
 (`void Promise.resolve(mon.dispatch(...)).then(...)`) and in `mount.ts`'s own ECG-filter command. With the base's
-sources swapped in (same load), `fu6`, `stage7d` and `showcase-clock` passed — so this was this branch's regression.
+sources swapped in (same load), `fu6` and `stage7d` passed — so this was this branch's regression. (`showcase-clock`
+also failed in that run — a Load button "not visible" for 90 s at load average ≈ 380 — but passed when re-run alone on
+this branch and in the second full run: load, not this branch.)
 Fix (worker-host.ts only): a COMMAND waiting at destroy, or sent after it, settles as a refusal
 `{ accepted: false, tick: 0, reason: 'the monitor was destroyed' }` (a `DispatchResult`, like the worker's
 'not initialised'); `snapshot`, `restore` and `capture12` still reject (audit-worker's destroy case, which uses a
