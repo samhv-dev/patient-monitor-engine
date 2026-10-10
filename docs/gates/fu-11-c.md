@@ -62,7 +62,40 @@ is 1 on both trees (9 red gating targets on `origin/main` itself).
 Local (`vitest list --filesOnly`, the ci.yml check): `slow` 119 files = a 17 + b 14 + c 21 + d 34 + e 10 + f 12 + g 11,
 **0 duplicates, COVER-OK**; `interactions-misc.test.ts` (ET-19) in slow-b, not in the fast set.
 
-On the PR's CI run: _filled in after the first CI run (§7)._
+On the PR's first CI run (38067528571, head `fa79d02d`; all eight jobs green). Times are each group's Vitest `Duration`;
+the same groups on `origin/main`'s last CI run (37507183823, `48864439`, identical files except ET-19) for scale:
+
+| group | files | tests | this PR | main 48864439 |
+|---|---|---|---|---|
+| slow-a | 17 | 59 | 18.6 min | 27.6 min |
+| slow-b | 14 (+ ET-19) | 94 | 18.0 min | 19.7 min (13 files) |
+| slow-c | 21 | 72 | **36.2 min** | 24.3 min |
+| slow-d | 34 | 150 | **37.6 min** | 28.5 min |
+| slow-e | 10 | 58 | **36.0 min** | 26.8 min |
+| slow-f | 12 | 95 | 22.5 min | **41.4 min** |
+| slow-g | 11 | 47 | 26.4 min | 26.4 min |
+
+ET-19 (`test/l2/pk/interactions-misc.test.ts`) ran in slow-b in **9.1 s**. CI's own disjointness step: slow 119 = 17 + 14 +
+21 + 34 + 10 + 12 + 11.
+
+**Three groups are over 35 min on this run (c, d, e)** — none of them changed on this branch; the same files took
+24–29 min on main's last run, where slow-f was the one at 41.4 min. Runner speed varies by up to ≈ 1.5× between runs,
+so ≈ 33 min packing leaves no margin: reported to the orchestrator (FU-11 does not re-pack; every group stays far under
+its 90 min job limit). The twenty slowest files of each, on this run:
+
+- **slow-c** (36.0 min summed): fu9-kinetics 453 s, pk-acceptance-pd 246, fu9-potassium 217, fu9-leak 199,
+  fu9-osmolality 169, fu10-mh-trigger 141, organs-curves 130, fu9-rocuronium 90, resp-inspired-co2 73, blood-hyperk 65,
+  fu9-iap 54, resp-bronchospasm-one 49, fu9-transfusion 42, fidelity-resp 41, fu9-copd 37, fu9-alkalosis 36,
+  fu9-oxygen 26, fu9-mannitol 26, circ-sanity-1 25, resp-pregnancy 25.
+- **slow-d** (37.3 min): stimulus-surge 474 s, clinical-suite 474, resp-induction 269, vagal-events 149, fu10-fever 92,
+  hemo-nibp 88, resp-mechanics 60, organs-tbi 58, fu8-tcp-pain 51, fu8-coronary 48, fu8-body-size 47, fu8-oliguria 47,
+  fu8-negative-volume 46, fu8-iabp 45, resp-drive-fu6 37, fu8-tonic 32, fu8-cpr 30, fu8-pulseless-arrest 28,
+  resp-obstruction 25, fu8-lvad 23.
+- **slow-e** (35.9 min, 10 files): drug-layer-guards 1 493 s, blood-sanity-acid 186, neuro-engine 136, lung-r14 81,
+  neuro-acceptance 76, circ-hypoxic-arrest 62, fu7-volatile 48, circ-manual-cvp-peep 29, af-rate-control 27,
+  pacer-sensing 14.
+
+(all under `test/engine/`.)
 
 ## 5. Disclosures
 
@@ -86,4 +119,11 @@ On the PR's CI run: _filled in after the first CI run (§7)._
 
 ## 7. CI
 
-_Filled in after the PR's first CI run._
+Run 38067528571 (PR #44, head `fa79d02d`): **all eight jobs green**. Build job: typecheck; the slow-group check; fast
+suites identical to the local numbers (engine 317 / 1 388 + 1 skipped, controller 231, ventilator 100, validation 119 +
+11 skipped, audio 58, skins 191, renderer 90, demo 200); build; notices; e2e **95 passed, 31 skipped, 0 failed, 0
+retries** (Chromium + WebKit, 28.7 min). The rtc paths ran on Linux Chromium (K2 skips only on macOS).
+
+Walked-host BroadcastChannel probe (`stage9-glossary.e2e.ts`, the declined FU-11 list item): Chromium "paired; host
+channel received {"received":{"hello":1}}"; **WebKit "paired; host channel received {"received":{}}"** — it paired
+this time (CI run 37168675988 had measured 3 of 3 not paired), though the host's diag counted no hello.
