@@ -174,6 +174,8 @@ export interface MonitorEngine {
   readonly version: string;
   start(): void;
   pause(): void;
+  /** FU-11 (F26): end start()'s interval (idempotent; start() may follow). */
+  stop(): void;
   resume(): void;
   setTimeScale(k: number): void;
   step(ticks?: number): void;

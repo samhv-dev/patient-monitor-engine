@@ -328,6 +328,14 @@ class Engine implements MonitorEngine {
   pause(): void {
     this.clock.pause();
   }
+  /**
+   * FU-11 (F26): end start()'s interval. Idempotent; start() may run the engine again afterwards (the state is kept).
+   * Engines a renderer drives (advanceTo per frame) never start a timer and need no stop.
+   */
+  stop(): void {
+    if (this.timer !== null) clearInterval(this.timer);
+    this.timer = null;
+  }
   resume(): void {
     this.clock.resume();
     this.lastWall = performance.now();
@@ -348,7 +356,15 @@ class Engine implements MonitorEngine {
   }
 
   // --- commands and events ---------------------------------------------------------------------
-  dispatch(cmd: Command): DispatchResult {
+  dispatch(input: Command): DispatchResult {
+    // FU-11 (F12): the queue keeps its OWN copy — a caller that edits its command object after dispatch (a staging
+    // buffer, a UI form) can no longer change what was validated and accepted. Not plain data → refused.
+    let cmd: Command;
+    try {
+      cmd = structuredClone(input);
+    } catch {
+      return { accepted: false, tick: this.tick, reason: 'a command must be plain data (no functions or class instances)' };
+    }
     const reason = this.validate(cmd);
     let tick = Math.max(cmd.atTick ?? this.tick + 1, this.tick + 1);
     if (reason) return { accepted: false, tick: this.tick, reason };
