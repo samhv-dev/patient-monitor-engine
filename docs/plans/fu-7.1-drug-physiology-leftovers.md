@@ -1295,6 +1295,9 @@ git push
 
 ### Task A5: potassium chloride, infused, in the library and in the app
 
+> **Branch a executor (2026-10-10): STOPPED, not in `fu-7.1-a`.** `apps/demo/src/app/glossary.test.ts` requires a
+> `DRUG_NAMES` row in `glossary-data.ts` (a Never-touch file); see `docs/gates/fu-7.1-a.md` §4.
+
 **Branch** `fu-7.1-a` · **Items** A5 (owner's defect, 2026-10-10: "there is no KCl as drug") · **Files** Modify
 `packages/engine-core/src/l2/pk/data/rows-other.ts`, `src/l2/pk/row.ts`, `src/l2/pk/pipeline.ts`, `src/types-pk.ts`,
 `src/l2/blood/pipeline.ts`, `apps/demo/src/app/drugs.ts`; Create
@@ -3362,13 +3365,13 @@ git push
 
 **Files:** Create `docs/gates/fu-7.1-a.md`; tick Part A in the branch copy.
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (no stash; keep both sides). FU-11-a/b/c may
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (no stash; keep both sides). FU-11-a/b/c may
   have merged by now; the only file this branch shares with them is `vite.config.ts` (B4 Step 7's note — keep BOTH
   lines). Then confirm the merge left every FU-7.1 hunk: `git diff origin/main --stat` lists
   `apps/demo/src/app/drugs.ts`, `packages/engine-core/src/l2/pk/{combine,row,pipeline}.ts`,
   `src/l2/pk/data/rows-other.ts`, `src/types-pk.ts`, `src/l2/blood/pipeline.ts`, `src/l2/neuro/{drive,pipeline,spont}.ts`,
   the six new test files and this plan.
-- [ ] **Step 2 — full verification** (logs under `<scratchpad>/fu-7.1-a/`): `npx -y pnpm@9.15.9 -r typecheck`;
+- [x] **Step 2 — full verification** (logs under `<scratchpad>/fu-7.1-a/`): `npx -y pnpm@9.15.9 -r typecheck`;
   `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r test`; **the whole of `test/l2` and `test/l3`** (R50 I5: ≈ 62 s for
   1 161 cases, and A4/A5 write into three of those directories); the engine slow groups the changed modules belong to
   — **slow-f** (`drug-layer`, `drug-apnoea`, `fu7-nmb-one-state`), **slow-d** (`stimulus-surge`, `clinical-suite`,
@@ -3378,7 +3381,7 @@ git push
   Expected: all green. The new `it.fails` records of this branch are A2's Billard ratio and A5's textbook K rise.
   Under three parallel executors `neuro-engine` and `fidelity-lowflow` have each timed out once at their file limit:
   re-run any timed-out file ALONE before reporting it, and say so in the gate note.
-- [ ] **Step 3 — Review Focus 5 by hand, both browsers.** Open the app, Teach → Drugs, search "cisatracurium": the
+- [x] **Step 3 — Review Focus 5 by hand, both browsers.** Open the app, Teach → Drugs, search "cisatracurium": the
   dose box opens at **0.15 mg/kg** and the unit select contains mg/kg. Press Give now on a spontaneously breathing
   patient and watch the capnogram go flat within 3 min and the apnoea alarm raise. Then check the other three presets
   open at **0.1 / 0.5 / 0.2 mg/kg** (vecuronium / atracurium / mivacurium) — and do NOT expect a flat capnogram from
@@ -3386,7 +3389,7 @@ git push
   only the histamine fall appears. Say that in the gate note so it is not read as a defect (R50 M5). Also search
   "potassium" (and "KCl"): the picker opens on **Infusion** with 10 mmol/h, offers 20 mmol/h and `mmol/h` as the only
   rate unit, and has no bolus preset. Two screenshots (≤ 60 KB each).
-- [ ] **Step 4 — the gate note `docs/gates/fu-7.1-a.md`:** base and head; per task the before → after row from
+- [x] **Step 4 — the gate note `docs/gates/fu-7.1-a.md`:** base and head; per task the before → after row from
   "Prototype results" beside your measurement; the four band numbers of A2 Step 5 (case 1 awake, case 2 ratio, the two
   induction apnoeas) with their bands; **A4's two event times and the first effort's VT, EtCO2 and awRR**; **A5's K
   course (+0.77 at 1 h, +0.13 at 3 h, 10 mmol/h +0.37) with the recorded textbook miss and the two warning texts**;
