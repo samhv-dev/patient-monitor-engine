@@ -81,7 +81,7 @@ test('command → ack → visible latency on four paths', async ({ page, browser
     };
     if (sender !== page) await sender.close();
   }
-  const out = resolve(import.meta.dirname, '../../../docs/gates/stage-6a');
+  const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-6a' : '../../../test-results/gate-shots/stage-6a'); // FU-11 K1
   mkdirSync(out, { recursive: true });
   writeFileSync(resolve(out, 'latency.json'), `${JSON.stringify({ n: N, measuredAt: new Date().toISOString(), results }, null, 2)}\n`);
   for (const [k, v] of Object.entries(results)) {

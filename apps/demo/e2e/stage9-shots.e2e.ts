@@ -10,7 +10,7 @@ import { go, openApp, startVite, tab } from './stage9-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
-const out = resolve(import.meta.dirname, '../../../docs/gates/stage-9');
+const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-9' : '../../../test-results/gate-shots/stage-9'); // FU-11 K1: evidence only on request
 test.beforeAll(async () => {
   ({ vite, base } = await startVite());
   mkdirSync(out, { recursive: true });
