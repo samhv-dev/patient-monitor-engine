@@ -1,16 +1,56 @@
 # Gate FU-11 (b): one timeline for restore and restart, exact snapshots, showcase defects
 
 Branch `fu-11-b` (Parts D, E, H of `docs/plans/fu-11-hardening.md`), executed 2026-10-10 on `origin/main` 48864439.
-Head: see the PR. Every block of branch b was applied as written: `check-blocks.py --branch b` 0 problems before Task 1,
+Head: see the PR (merge of main 7a3d5672: 6988b983). Every block of branch b was applied as written: `check-blocks.py --branch b` 0 problems before Task 1,
 and the branch's 48 changed files are byte-identical to `check-blocks.py --branch b --apply` on 48864439.
 
-**Gate B Step 1 — merge:** `origin/main` was still 48864439 at the gate: branches `fu-11-a` and `fu-11-c` were NOT
-merged (both pushed, gates in progress). So every number below is for b ON MAIN, not for a+b+c. A trial merge of
-`origin/fu-11-a`, then `origin/fu-11-c`, then `fu-11-b` onto 48864439 (throwaway worktree) was automatic with 0
-conflicts (auto-merged `defib.ts`, `mount.ts`, `worker-host.ts`, `port.ts`). Note: a and c each also committed a copy
-of the plan (cc9d7bf5, e063f1d2); R50 M6 says only b does. The copies were identical to b's at the time, so the merge is
-clean, but b's ticked copy must win (keep ours) if a later merge conflicts.
-**The integrated-tree verification and the same-day rehearsal (Gate B Steps 2–3) must be repeated after a and c merge.**
+## Post-merge Gate B (2026-10-10/11) — the authoritative run
+
+`origin/main` 7a3d5672 contains `fu-11-a` (PR #43), `fu-11-c` (PR #44) and FU-7.1 a (PR #46). Merged into `fu-11-b` as
+6988b983: one conflict, the plan file (add/add) → b's ticked copy kept; `packages/engine-core/vite.config.ts` came
+from main unchanged (K4's `interactions-misc` line and the `fu71-*` line, one copy each; b does not edit it). `git diff
+origin/main --stat` lists exactly branch b's files plus this gate's evidence.
+
+| Check | Main 7a3d5672 (same day) | Branch (merged) |
+|---|---|---|
+| Block check | `--branch b` vs the new main: every find block still occurs once; the only report is `audit-fixture.ts` "create over an existing file" (a created the identical file); `--branch all --base 48864439`: 0 problems; every one of b's 76 replacement/create texts is present in the merged tree | |
+| typecheck | | clean |
+| fast suites | | engine 1 415 passed (1 skipped), controller 248, renderer 92, ventilator 103, demo 204, audio 65, skins 191, validation 119 (+11 skipped) — all passed, no failure |
+| build | | ok |
+| `validate --suites sanity,gates --quick` | 51 · 20 · 9, 9 gating, 1 not measurable, queue 29 | **identical** (every report row and the calibration queue equal) |
+| FU-7 counters `truth.test.ts` / `glossary.test.ts` | 8 / 6 passed | 8 / 6 passed |
+| Audit regressions, both browsers | | **42/42** (all 21 audit tests × Chromium + WebKit) |
+| Targeted e2e (`audit-`, `fu11-`, `showcase-`, `stage9-app`, `vent-link`), both browsers | | 87 passed, 1 skipped (vent-link's pre-existing WebKit skip), 0 failed; `git status docs` clean (K1) |
+| Slow groups a–g | | all passed, 122 files: a 17 files 27.0 min · b 17 files 20.6 min · c 21 files 12.8 min · d 34 files 11.1 min · e 10 files 10.4 min · f 12 files 12.0 min · g 11 files 12.1 min |
+| Rehearsal (`SHOWCASE_WORKERS=2`) | 12/12 passed (10.3 min) | 14/14 with the multi-window proof (11.9 min) |
+
+Rehearsal, main vs merged branch (Chromium / WebKit; results in `docs/gates/fu-11-b/showcase-merged/{main,branch}/`):
+
+| Case | Main 7a3d5672 | Branch |
+|---|---|---|
+| Induction: MAP fall | 94.8 → 65.6 / 65.5 | 94.8 → 65.6 / 65.5 |
+| Induction: apnoea alarm after "Induce now" | 54.0 s / 54.2 s | 54.0 s / 54.1 s |
+| Anaphylaxis: systolic > 110 after epinephrine | 9.5 s / 11.7 s | 9.9 s / 11.5 s |
+| Tamponade: MAP < 40 after propofol | 75.0 s / 73.7 s | 74.2 s / 72.8 s |
+| Haemorrhage: pulse lost; ROSC during CPR | 10 min; 4.3 min / same | 10 min; 4.3 min / same |
+| Second scenario: clock restarts | 02:03 → 00:04 / 02:04 → 00:04 | 02:03 → 00:05 / 02:04 → 00:04 |
+| Console errors | 0 | 0 |
+| **Bronchospasm, Ventilator-view VTE** before → 3 min → 6 min after salbutamol (H5) | 162 → 305 → 368 / same | **312 → 498 → 501 / 310 → 498 → 501** |
+| **Bronchospasm, monitor EtCO2** at 3 and 6 min after salbutamol (H5's consequence) | 40, 40 / 40, 40 | **32, 33 / 32, 33** |
+
+Every compared number is equal within the rehearsal's run-to-run jitter (it presses buttons on wall time) except H5's.
+**H5's changed bronchospasm numbers are ACCEPTED by the orchestrator (2026-10-10) as the declared change** — VTE ≈ 311
+→ 498 → 501 (the plan had expected ≈ 400–430 before salbutamol; research/24 P8 predicted ≈ 348 for this unparalysed
+patient) and the monitor's EtCO2 after salbutamol 32–33 instead of 40, because the Ventilator view ventilates the
+patient in this case. (FU-7.1 moved the induction apnoea time from ≈ 62 s to 54 s on main and branch alike.)
+
+The sections below are the first gate run, on b ALONE over 48864439 (a and c not yet merged then), kept as the record.
+
+## First gate run (b on 48864439)
+
+**Gate B Step 1 — merge (first run):** `origin/main` was still 48864439: branches `fu-11-a` and `fu-11-c` were NOT
+merged. A trial merge a → c → b onto 48864439 was automatic with 0 conflicts. a and c each also committed a copy of the
+plan (cc9d7bf5, e063f1d2; R50 M6 says only b does) — resolved in the real merge by keeping b's ticked copy.
 
 ## Tasks (ticked in `docs/plans/fu-11-hardening.md`, Parts D, E, H)
 
@@ -93,7 +133,7 @@ The rehearsal presses its buttons on wall time, so sim times jitter run to run: 
 62.0 s in the kit's committed main results (e0daff59) — today's main run (59.3 s) is the outlier, the branch matches
 the kit. Every listed number is equal within that jitter except the declared one.
 
-**For the orchestrator — H5's numbers differ from the plan's expectation.** The plan expected the Ventilator-view VTE
+**H5's numbers differ from the plan's expectation (ACCEPTED by the orchestrator as the declared change; see the post-merge section).** The plan expected the Ventilator-view VTE
 "≈ 400–430 before salbutamol and ≈ 500 after". Measured: 311–312 before, 498 after (501 at 6 min). The "after" matches;
 the "before" is lower and agrees with research/24 P8 (cockpit at the engine's flow, Pmax 35, unparalysed showcase
 patient: 348). The plan's 424/426 parity was measured on a paralysed `normal`-profile rig; the showcase patient is not
@@ -129,6 +169,6 @@ higher priority end a pause too? Nothing in FU-11 waits on it.
 
 ## Deviations
 
-- Gate run on b + main only (a and c not merged at the gate); Steps 1–3 to be repeated on the integrated tree.
+- The first gate run was on b + 48864439 only; Steps 1–3 were repeated on the merged tree (post-merge section). The post-merge e2e was the targeted set (the orchestrator's instruction), not the full suite.
 - The engine fast set was run once in the gate (the brief: full suites once, on a shared machine), not inside D1.
 - The E4 and H3 commit messages are the plan's with the inner quotes escaped (the plan's shell lines would have split them).
