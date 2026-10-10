@@ -6,9 +6,10 @@ Branch `fu-7.1-a`, from `origin/main` 48864439 (the plan's base). Main moved dur
 machine shared with other executors. The load average reached 114 during the slow groups, so the wall times below are
 contended.
 
-**Tasks done: A0, A1, A2, A4. Task A5 (potassium chloride) is STOPPED and is NOT in this PR** (§4). The plan's own
-block check passed (`check-blocks.py --branch a`: 25 find/replace blocks, 6 creates, 0 problems). Every block of A1, A2
-and A4 was applied by a script that requires each find to match exactly once, so all of them are byte-exact.
+**Tasks done: A0, A1, A2, A4 and A5.** A5 (potassium chloride) first stopped on a file outside the plan's partition.
+The orchestrator then allowed that one declared line, and A5 landed after the first gate run (§4). The plan's own block
+check passed (`check-blocks.py --branch a`: 25 find/replace blocks, 6 creates, 0 problems). Every block was applied by a
+script that requires each find to match exactly once, so all 25 are byte-exact.
 
 ## 1. Commits
 
@@ -19,7 +20,10 @@ and A4 was applied by a script that requires each find to match exactly once, so
 | 6a4da296 | A2: an opioid deepens the hypnotic's vasodilation and venodilation (`HEMO_SYN_MAX` 0.2, `HEMO_SYN_U50` 1.2) |
 | 59a9700a | A4: the first diaphragmatic effort after a blocker is not a breath (+ the `fu71-*` slow glob, §5) |
 | 1d44fa6f | merge of `origin/main` 7513a481 (FU-11-a) |
-| (this) | the gate note, two screenshots, and the plan's ticks |
+| 433f8afd | the gate note (first version), two screenshots, and the plan's ticks |
+| 0e3206e7 | A5: potassium chloride, infused in mmol through 7c's potassium pool, plus the one declared glossary line (§4) |
+| 4aa105e5 | A1's `drugs.test.ts`: a describe-level `{ timeout: 30_000 }` (orchestrator ruling, §5) |
+| (this) | this gate-note update |
 
 ## 2. Suites
 
@@ -92,31 +96,42 @@ passed**.
 **Known misses recorded by this branch (`it.fails`, red as declared):**
 
 - A2: the Billard ratio is **1.16** against the paper's 1.7–2.1 (1.89). Owner question Q2.
-- A5's textbook K rise would have been the second record. It is not here, because A5 is not in this branch (§4).
+- A5: 20 mmol over 1 h raises plasma K by **+0.77** at the end of the infusion and **+0.13** two hours later, against
+  the textbook's ≈ 0.25 (band 0.15–0.35, [TXT] grade C). Both constants belong to 7c (`K_TAU_MIN`, `K_TBK_MMOL`).
+  Owner question Q11.
 
-## 4. Task A5 (potassium chloride): STOPPED
+## 4. Task A5 (potassium chloride): done, with one declared line outside the partition
 
-**What happened.** Every block of A5 applies cleanly. Its own test is green with exactly the prototype's numbers:
-`20 mmol/h K 4.20 → 4.97 at 1 h (+0.77), 4.33 at 3 h (+0.13); 10 mmol/h +0.37`, and both warnings. The bolus warning
-reads "20 mmol ordered as a bolus — it must be infused at 20 mmol/h or less (…Miller 10e ch. 46…)" and the rate warning
-reads "40 mmol/h exceeds the maximum 20 mmol/h (…)". The `im` route is refused. Also green: `test/l2` + `test/l3` (244
-files / 1152 passed) and `blood-hyperk`, `blood-k-rhythm`, `blood-sanity-acid`, `drug-layer` and `pk-wiring` (46
-passed). **The demo package then fails one test:** `apps/demo/src/app/glossary.test.ts` › "drug names come from the
-glossary" — `potassiumChloride: expected undefined to be defined`. R56 (orchestrator ruling 5) requires every library
-drug to have a `DRUG_NAMES` row in `apps/demo/src/app/glossary-data.ts`.
+**Numbers** (`test/engine/fu71-kcl.test.ts`, 4/4 passed; identical to the prototype):
 
-**Why it stopped.** The fix is one line in `glossary-data.ts`. That file is under `apps/demo/src/app/**`, which the
-plan's Global Constraints list as "Never touch" (FU-11's, except `drugs.ts` and `panel/drugs.ts`). The prototype's
-"demo package green" claim for A5 is wrong on this point. The brief's rule for a test that cannot go green inside the
-plan's files is to stop the task and report it.
+| check | result |
+|---|---|
+| 20 mmol/h for 1 h (70 kg): plasma K at 0 / 1 h / 3 h | 4.20 → **4.97 (+0.77)** → **4.33 (+0.13)** |
+| 10 mmol/h for 1 h | **+0.37** (half the rate, about half the rise) |
+| a 20 mmol bolus order | given as ordered, with the warning "Potassium chloride: 20 mmol ordered as a bolus — it must be infused at 20 mmol/h or less (peripheral line 10 mmol/h, central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23])" |
+| an infusion at 40 mmol/h | given, with the warning "Potassium chloride: 40 mmol/h exceeds the maximum 20 mmol/h (…the same source…)" |
+| route `im` | refused: "route im is not modelled" |
+| the textbook size (≈ 0.25 per 20 mmol) | `it.fails` with both numbers (§3; Q11) |
 
-**Verified fix, not applied:** `potassiumChloride: { name: "Potassium chloride" }, // FU-7.1 A5`, inserted
-alphabetically before `propofol`. With that line `glossary.test.ts` and `drugs.test.ts` are 8/8 green. None of
-FU-11-a/b/c edits `glossary-data.ts`.
+**Blast radius, measured with A5 applied:**
 
-**For the orchestrator.** Either allow the one glossary line, so that A5 lands here or as a follow-up commit, or route
-A5 elsewhere. A5 is reproducible mechanically from the plan's blocks. The whole A5 diff, the glossary line and the test
-file are also kept in the executor's scratchpad (`fu-7.1-a/a5-stopped.patch`, `a5-glossary-line.patch`).
+- `test/l2` + `test/l3`: 244 files / 1152 passed, 1 skipped.
+- `blood-hyperk`, `blood-k-rhythm`, `blood-sanity-acid`, `drug-layer` and `pk-wiring`: 46 passed.
+- The final fast sets: engine-core 318 files / 1412 passed, 1 skipped; demo 25 files / 202 passed.
+- `fu71-kcl` itself runs in slow-b (the `fu71-*` glob).
+- The plan's sixth file, `fu9-acid.test.ts`, does not exist on this main, so five files ran.
+
+**The glossary line (orchestrator ruling, 2026-10-10).** R56 (orchestrator ruling 5) requires every library drug to have
+a `DRUG_NAMES` row, which `apps/demo/src/app/glossary.test.ts` asserts. Without the row that test failed:
+`potassiumChloride: expected undefined to be defined`. `apps/demo/src/app/glossary-data.ts` is on the plan's Never-touch
+list (FU-11's). The orchestrator allowed exactly one declared line:
+`potassiumChloride: { name: "Potassium chloride" }, // FU-7.1 A5`, inserted alphabetically before `propofol`. No FU-11
+branch edits that file. With the line, `glossary.test.ts` + `drugs.test.ts` pass 8/8. The prototype's "demo package
+green" claim for A5 had missed this test.
+
+**Not re-run for A5:** the slow groups (A5 adds a K + Cl load only for its own new row) and the full e2e. A5's app change
+is one infusion-only `PRESETS` entry and `rateUnits` → `mmol/h` for a mmol-dosed drug. The Review Focus 5 browser check
+of the KCl picker was not repeated.
 
 ## 5. Deviations
 
@@ -136,8 +151,8 @@ file are also kept in the executor's scratchpad (`fu-7.1-a/a5-stopped.patch`, `a
    (+946 / +960); the engine rig samples every 2 s.
 5. **Timeouts under load.** Two tests timed out in the parallel gate run, A1's engine case in `drugs.test.ts` (the demo
    package's 5 s default) and `ventilator/ports.test.ts`. Both are green alone and in the post-merge package-by-package
-   run. **A1's case has no explicit timeout, as the plan wrote it.** If CI's demo job times out on it, the remedy is a
-   describe-level `{ timeout: 30_000 }`, the precedent of `physiology-console/view.dom.test.ts`.
+   run. **Orchestrator ruling:** A1's describe now carries `{ timeout: 30_000 }` (commit 4aa105e5), following the
+   precedent of `physiology-console/view.dom.test.ts`, so CI's 5 s demo default cannot time it out.
 6. **The Review Focus 5 hand check was run by a Playwright script in both browsers**, against the branch's Vite dev
    server, not by hand in the pane:
    - Search "cisatracurium": the box opens at 0.15 mg/kg, with presets 0.15 and 0.2 mg/kg and mg/kg in the select.
@@ -146,13 +161,20 @@ file are also kept in the executor's scratchpad (`fu-7.1-a/a5-stopped.patch`, `a
    - Vecuronium, atracurium and mivacurium open at 0.10 / 0.50 / 0.20 mg/kg.
    - Atracurium and mivacurium have no block in v1 by design (FU-7 review F12, Q11). Giving them leaves the TOF at 4,
      and only the histamine fall appears. This is not a defect.
-   - "potassium" finds nothing, because A5 is not in the branch.
+   - "potassium" found nothing at the time, because A5 was not yet in the branch. It was not re-checked after A5
+     landed (§4).
 
    Screenshots (indexed PNG): `docs/gates/fu-7.1-a/cisatracurium-picker-chromium.png` (7 KB) and
    `cisatracurium-apnoea-webkit.png` (45 KB).
 
 ## 6. Merge order
 
-Branch a first, then `fu-7.1-b`, which merges LAST and runs the five-case rehearsal on the integrated tree. Branch b
-will meet the identical `fu71-*` glob line in `vite.config.ts`. It must keep one copy of it, plus FU-11 K4's
-`interactions-misc` line if that has landed.
+Branch a first, then `fu-7.1-b`, which merges LAST and runs the five-case rehearsal on the integrated tree.
+
+**The `vite.config.ts` duplication rule for branch b's merge.** Branch a already carries B4 Step 7's line, immediately
+after the `fu10-*` glob:
+
+`'test/engine/fu71-*.test.ts', // FU-7.1: the MH 50 min run, the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)`
+
+When b merges main (with a in), it must keep exactly ONE copy of that line. If FU-11 K4's
+`'test/l2/pk/interactions-misc.test.ts'` line has landed, b must keep it as well.
