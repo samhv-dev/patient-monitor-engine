@@ -1798,7 +1798,7 @@ git push
 
 **Branch** `fu-7.1-b` · **Items** — · **Files** none (setup)
 
-- [ ] **Step 1 — worktree and install.**
+- [x] **Step 1 — worktree and install.**
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin
@@ -1807,7 +1807,7 @@ cd ../scratch/wt-fu-7.1-b && npx -y pnpm@9.15.9 install --frozen-lockfile
 cp ../plans-backup/fu-7.1-drug-physiology-leftovers.md docs/plans/fu-7.1-drug-physiology-leftovers.md
 ```
 
-- [ ] **Step 2 — block check:**
+- [x] **Step 2 — block check:**
 ```bash
 python3 ../plans-backup/fu-7.1-plan-tools/check-blocks.py --branch b docs/plans/fu-7.1-drug-physiology-leftovers.md .
 ```
@@ -1815,7 +1815,7 @@ Expected: `branch b: 29 find/replace blocks, 6 creates; problems: 0`. B3 is no l
 Q4c on 2026-10-07), so every block of Part B is applied. (Checked 2026-10-10 against `origin/main` 48864439 AND with
 FU-11's whole FIXED prototype patch in the tree: 0 problems both ways — R50 C1.)
 
-- [ ] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-b/before.txt` (the files B1, B5 and B7 can move):
+- [x] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-b/before.txt` (the files B1, B5 and B7 can move):
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/gas test/l2/resp test/l2/lung
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/endo-acceptance.test.ts test/engine/endo-circ-acceptance.test.ts test/engine/clinical-suite.test.ts test/engine/arrest-etco2.test.ts test/engine/lung-copd.test.ts test/engine/resp-suite.test.ts
@@ -1832,7 +1832,7 @@ Expected on 48864439: green (86 of 90 in the review's run; the four reds were th
 plus one load timeout re-run alone), with `CPR alone after full exsanguination: no pulse, CoPP 0.1–4.1` and the
 `exsanguination volume threshold` measurement — the two rows B4 must leave untouched.
 
-- [ ] **Step 4 — commit the plan copy and push** (message `docs(plan): FU-7.1 … (branch b copy)`), then `git push -u origin fu-7.1-b`.
+- [x] **Step 4 — commit the plan copy and push** (message `docs(plan): FU-7.1 … (branch b copy)`), then `git push -u origin fu-7.1-b`.
 
 ### Task B1: severe acidaemia blunts the vascular response to the patient's own catecholamines
 
@@ -1854,7 +1854,7 @@ own surge keeps 100 %. This task gives that row its reader, with the same curve 
 `l2/endo/core.ts` gains the local `vrA` used by `alpha()`. `EndoOut.vasoResp` keeps its present meaning (the
 UNBLUNTED responsiveness 7g reads through `ps.cond.vasoResp`), so no consumer outside this file changes.
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/endo/fu71-acid-vaso.test.ts`:
 
@@ -1955,7 +1955,7 @@ describe('FU-7.1 B1: the MH haemodynamics', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo/fu71-acid-vaso.test.ts test/engine/fu71-mh-haemodynamics.test.ts`
 Expected: 3 failed, 2 passed — the unit file's first case (`FU-7.1 B1 pH 7.3: svrF 1.473 (expected 1.355)`: the
@@ -1964,7 +1964,7 @@ excess is unchanged at every pH on the base) and both halves of the MH case
 — `expected 109 to be less than or equal to 104`). The unit file's other two cases pass on the base already (they
 assert what must NOT change).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/endo/core.ts`, find:
 
@@ -2143,13 +2143,13 @@ Replace with:
     weightKg: es.weightKg, betaBlock: prof?.betaBlock ?? 0, betaBlockC: prof?.betaBlockC ?? 0,
 ```
 
-- [ ] **Step 4 — run them green.**
+- [x] **Step 4 — run them green.**
 
 Run the two new files again. Expected: 5 passed, with `FU-7.1 B1 pH 7.3: svrF 1.355 (expected 1.355)`, …7.2 → 1.237,
 …7.16 → 1.189 (the floor), and
 `FU-7.1 B1 MH: pH 7.22/7.11, MAP 99 at +20, peak 103 at +27 min, 94 at +40; SVR 1317 → 1314; HR peak 180; CO 4.71`.
 
-- [ ] **Step 5 — the blast radius of this task** (every suite that reads the endocrine pressor arm or an acid–base
+- [x] **Step 5 — the blast radius of this task** (every suite that reads the endocrine pressor arm or an acid–base
   course). Run and compare with Step B0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo test/l2/pk test/l2/neuro \
@@ -2160,7 +2160,7 @@ CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/endo t
 Expected (the prototype): all green. Record `S8: PEA at +3.58 min` (main +9.75; band 3–10 — Review Focus 2) and the
 two septic HR numbers (sepsis MANUAL HR 112, MODELED warm 116 — unchanged, because `beta()` is not blunted).
 
-- [ ] **Step 6 — `resp-suite` RS14: record it (Q5 RULED 2026-10-10: "record it as a known miss with the number").**
+- [x] **Step 6 — `resp-suite` RS14: record it (Q5 RULED 2026-10-10: "record it as a known miss with the number").**
   The rebreathing arm's ΔEtCO2 reads **5.99994** against its `>= 6` [ENG] bound — red by 6 × 10⁻⁵ (main 6.1; it read
   5.98 before FU-8 B4 moved it just inside). **The band is not changed**: the `it` becomes an `it.fails` with the
   measured number in its title, and the PaCO2 half (+6.7, unchanged) keeps asserting.
@@ -2198,8 +2198,10 @@ Replace with:
 
   Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/resp-suite.test.ts`
   Expected: **38 passed** (RS14 recorded), with `RS-ROW RS14 {"dPaco2":6.7,"dEtco2":6}`.
+  **Executed (branch b, 2026-10-10):** NOT applied — on this tree RS14 still reads `{"dPaco2":6.7,"dEtco2":6.1}` with
+  B1 in (the `it` passes), so the `it.fails` would itself fail; the test stays as on main (no record, no bound touched).
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/endo packages/engine-core/test/l2/endo/fu71-acid-vaso.test.ts packages/engine-core/test/engine/fu71-mh-haemodynamics.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
