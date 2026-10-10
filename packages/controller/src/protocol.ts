@@ -113,7 +113,13 @@ export type ExtraEvent =
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
   /** The host replaced its engine (patient restart, scenario load): sim time starts again at `t` on a new timeline.
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
-  | { type: 'timeline'; t: SimSeconds; tick: Tick };
+  | { type: 'timeline'; t: SimSeconds; tick: Tick; cause?: TimelineCause };
+/**
+ * FU-11 (F04, F05, F09; BA01, BA04, BA05): why a timeline began. 'restart' (the default; the showcase hotfix's case): a
+ * new engine — the scenario run ended with the old body. 'restore': the same engine went back to a bookmark — the
+ * scenario run continues from the bookmark's state (the driver publishes it). Either way every clock restarts at `t`.
+ */
+export type TimelineCause = 'restart' | 'restore';
 /** Brief §7.3 `EngineEvent` as it travels on the wire. */
 export type WireEvent = EngineEvent | ExtraEvent;
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;

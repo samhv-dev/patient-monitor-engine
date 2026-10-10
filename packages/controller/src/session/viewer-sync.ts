@@ -122,7 +122,9 @@ export class ViewerSync {
   }
 
   // --- internals ---------------------------------------------------------------------------------------------
-  private requestSync(): void {
+  /** `newTimeline`: the host's clock may have gone back — the old anchor must not steer the restored engine (F04, BA04). */
+  private requestSync(newTimeline = false): void {
+    if (newTimeline) this.anchor = null;
     if (this.status === 'synced') this.resyncs++;
     this.awaiting = true;
     this.replays = [];
@@ -136,7 +138,13 @@ export class ViewerSync {
     // Gaps are normal here (the relay routes acks and snapshots only to the peers that need them), so only
     // duplicates are dropped; a lost connection shows up as a transport 'open' → requestSync().
     if (this.seqs.check(m) === 'duplicate') return;
-    if (m.kind === 'hello' && m.role === 'host') return this.requestSync(); // host (re)started or restored a bookmark
+    if (m.kind === 'hello' && m.role === 'host') {
+      // host (re)started, reloaded or restored a bookmark. R50 F5: a reloaded host has its own speed and pause — the old
+      // host's are forgotten here; the sticky time commands it replays to our hello set them again
+      this.hostRate = 1;
+      this.hostPaused = false;
+      return this.requestSync(true);
+    }
     if (m.kind === 'snapshot') return this.onSnapshot(m.body);
     if (m.kind === 'event') for (const e of m.body) this.onEvent(e);
   }
@@ -160,6 +168,9 @@ export class ViewerSync {
   }
 
   private onEvent(e: WireEvent): void {
+    // FU-11 (showcase hotfix note; F04, BA04): a new timeline (patient restart, bookmark restore) — drop the anchor and
+    // take a fresh snapshot; a restart sends no host hello, so without this the viewer mirrored onto the old body
+    if (e.type === 'timeline') return this.requestSync(true);
     if (e.type === 'state') {
       this.setAnchor(e.t);
       return;
