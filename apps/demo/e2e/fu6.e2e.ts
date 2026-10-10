@@ -7,7 +7,7 @@ import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;
 let base = '';
-const out = resolve(import.meta.dirname, '../../../docs/gates/fu-6');
+const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/fu-6' : '../../../test-results/gate-shots/fu-6'); // FU-11 K1: evidence only on request
 type Hook = { demo(n: string): Promise<void>; simT(): number; timeScale(k: number): void; ready: boolean };
 const demo = (page: Page, name: string) => page.evaluate((n) => (window as unknown as { __pme6: Hook }).__pme6.demo(n), name);
 const waitSim = (page: Page, t: number) => page.waitForFunction((t) => (window as unknown as { __pme6: Hook }).__pme6.simT() >= t, t, { timeout: 900_000 });

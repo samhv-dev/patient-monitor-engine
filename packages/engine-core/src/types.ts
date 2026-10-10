@@ -96,6 +96,7 @@ export type Command = CommandBase &
   (
     | { type: 'setTarget'; variable: StateVar; value: number; ramp?: Ramp }
     | { type: 'setRhythm'; rhythm: RhythmId; opts?: RhythmOpts; when?: 'now' | 'nextBeat'; respectRefractory?: boolean }
+    /** FU-11 (F13): modifiers apply at once in version 1.0 — a `ramp` with a delay or a duration is refused (Q6, ruled). */
     | { type: 'setModifiers'; modifiers: ModifiersPatch; ramp?: Ramp }
     | { type: 'device'; action: DeviceAction }
     | HemoCommandBody // Stage 2 (types-hemo.ts)
