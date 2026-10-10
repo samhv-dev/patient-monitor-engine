@@ -99,6 +99,12 @@ export class Link {
       this.changed();
     } else if (e.type === 'deviceStatus') {
       this.device = e as unknown as DeviceStatusEvent;
+    } else if (e.type === 'timeline') {
+      // FU-11 (F05, F09): a new timeline — onsets in progress began on the old one; a restart also ends the acute events
+      // (a Remote has no AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
+      this.ramps.clear();
+      if (e.cause !== 'restore') this.conditions.clear();
+      this.changed();
     } else if (e.type === 'scenario') {
       const st = this.ctl.scenario.doc?.states.find((s) => s.id === e.stateId);
       this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${st?.label ?? 'next state'}` });

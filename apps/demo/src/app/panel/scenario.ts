@@ -111,10 +111,11 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
         h('span', {}, transitionText(tr, doc)), left !== null ? h('span', { class: 'num muted' }, ` in ${clock(left)}`) : null,
         manual ? button(manual, () => void link.send({ type: 'scenario', action: 'trigger', target: tr.id }), 'small') : null);
     }));
-    // Bookmarks are debrief markers in version 1.0. Returning to one is hidden: measured through this app, a restore puts
-    // the numbers back but leaves the waveforms on the old timeline and stops the clock until the engine catches up
-    // (external review F03–F05, F09; owned by the engineering-hardening plan). The restore comes back with that fix.
-    marks.replaceChildren(...link.ctl.bookmarks.map((b) => h('li', {}, b)));
+    // FU-11 (F03–F05, F09, F14; BA01–BA05): a restore now rewinds the waveforms, trends, clocks and pending groups, so
+    // "Return here" is back (it was hidden in Stage 9 while a restore left the screen on the discarded timeline)
+    marks.replaceChildren(...link.ctl.bookmarks.map((b) => h('li', {}, b, ' ', button('Return here', async () => {
+      if (await confirmDialog('Return to this bookmark?', `The patient goes back to "${b}". The clock goes back with it.`, 'Return', false, 'Stay here')) void link.send({ type: 'scenario', action: 'restoreBookmark', target: b });
+    }, 'ghost small'))));
     if (!link.ctl.bookmarks.length) marks.replaceChildren(h('li', { class: 'muted' }, 'No bookmarks yet (Shift+B)'));
   });
 
