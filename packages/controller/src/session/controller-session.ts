@@ -78,6 +78,12 @@ export class ControllerSession {
     this.offs = [
       o.transport.onStatus((s) => this.onStatus(s)),
       o.transport.onMessage((m) => this.onMessage(m)),
+      // FU-11 (BA12): the relay says the host left — the panel stops showing it as connected
+      o.transport.onPresence?.((p) => {
+        if (p.hostOnline || !this.hostOnline) return;
+        this.hostOnline = false;
+        this.addLog('status', 'host offline');
+      }) ?? (() => undefined),
     ];
   }
 
