@@ -25,6 +25,8 @@ export interface DefibState {
   seq: number;
   preselect: RhythmId | 'unchanged' | null;
   lastShock: { t: number; energyJ: number; sync: boolean; outcome: string } | null;
+  /** FU-11 (F19, BA08): ids of the charge/ready tones still sounding; disarm, shock and recharge cancel them. */
+  tones?: string[];
 }
 
 export function createDefib(spec: DefibSpec): DefibState {
@@ -54,7 +56,7 @@ export function validateDefib(d: DefibState, ev: DefibEvent): string | undefined
     case 'shock':
       return d.state === 'ready' ? undefined : 'defibrillator is not charged';
     case 'preselect':
-      return ev.outcome === 'unchanged' || (ev.outcome !== undefined && ev.outcome in RHYTHMS) ? undefined : "outcome must be a rhythm id or 'unchanged'";
+      return ev.outcome === 'unchanged' || (typeof ev.outcome === 'string' && Object.hasOwn(RHYTHMS, ev.outcome)) ? undefined : "outcome must be a rhythm id or 'unchanged'"; // FU-11 (F11): own keys only
     case 'disarm':
     case 'syncOn':
     case 'syncOff':
@@ -74,12 +76,15 @@ export function applyDefib(d: DefibState, ev: DefibEvent, t: number, spec: Defib
     case 'charge': {
       if (ev.energyJ !== undefined) d.energyJ = ev.energyJ;
       const chargeS = chargeTimeS(spec, d.energyJ);
+      endTones(d, t, out); // a recharge silences the previous charge or ready tone
       d.state = 'charging';
       d.readyAt = t + chargeS;
       d.disarmAt = null;
       d.syncArmed = false;
       out.push({ type: 'marker', t, kind: 'chargeStart', data: { energyJ: d.energyJ } });
-      out.push({ type: 'tone', t, id: `defib-charge-${++d.seq}`, kind: 'charge', chargeS });
+      const id = `defib-charge-${++d.seq}`;
+      out.push({ type: 'tone', t, id, kind: 'charge', chargeS });
+      d.tones = [id];
       return null;
     }
     case 'shock':
@@ -104,7 +109,14 @@ export function applyDefib(d: DefibState, ev: DefibEvent, t: number, spec: Defib
   }
 }
 
+/** FU-11 (F19, BA08): the device's charge and ready tones end with the state that started them. */
+function endTones(d: DefibState, t: number, out: EngineEvent[]): void {
+  if (d.tones?.length) out.push({ type: 'toneCancel', after: t, ids: d.tones });
+  d.tones = [];
+}
+
 function disarm(d: DefibState, t: number, out: EngineEvent[], auto: boolean): void {
+  endTones(d, t, out);
   d.state = 'idle';
   d.readyAt = null;
   d.disarmAt = null;
@@ -118,7 +130,9 @@ export function stepDefib(d: DefibState, t: number, spec: DefibSpec, out: Engine
     d.state = 'ready';
     d.disarmAt = d.readyAt + spec.readyTimeoutS;
     out.push({ type: 'marker', t, kind: 'chargeReady', data: { energyJ: d.energyJ } });
-    out.push({ type: 'tone', t, id: `defib-ready-${++d.seq}`, kind: 'chargeReady' });
+    const id = `defib-ready-${++d.seq}`;
+    out.push({ type: 'tone', t, id, kind: 'chargeReady' });
+    d.tones = [id]; // the charge tone has run its course
     return true;
   }
   if (d.state === 'ready' && d.disarmAt !== null && t >= d.disarmAt - 1e-9) {
@@ -130,6 +144,7 @@ export function stepDefib(d: DefibState, t: number, spec: DefibSpec, out: Engine
 
 /** After a delivered shock (brief §6.5: LIFEPAK-like "Sync After Shock" off; applied to every skin [ENG]). */
 export function afterShock(d: DefibState, t: number, atS: number, synced: boolean, outcome: string, out: EngineEvent[]): void {
+  endTones(d, t, out); // the ready tone stops at the shock; the shock tone below is new
   out.push({ type: 'marker', t, kind: 'shock', data: { energyJ: d.energyJ, sync: synced, atS } });
   out.push({ type: 'tone', t, id: `defib-shock-${++d.seq}`, kind: 'shock' });
   d.lastShock = { t, energyJ: d.energyJ, sync: synced, outcome };

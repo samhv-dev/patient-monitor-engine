@@ -55,6 +55,12 @@ if (hostless) {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
+  // R50 M15: a monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the
+  // console for the gate note's diagnostics
+  shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
+    console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
+    toast('The monitor stopped — Restart the patient');
+  });
 
   const loadScenario = (c: ScenarioCard): boolean => {
     const r = session.loadScenario(c.doc);

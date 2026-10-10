@@ -60,6 +60,9 @@ export class ControllerSession {
   rhythm: RhythmId | null = null;
   /** The host's scenario as seen from here (Stage 6b). */
   readonly scenario = new ScenarioView();
+  /** FU-11 (K5): the host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
+  timeScale = 1;
+  hostPaused = false;
   private readonly o: ControllerSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
@@ -78,6 +81,12 @@ export class ControllerSession {
     this.offs = [
       o.transport.onStatus((s) => this.onStatus(s)),
       o.transport.onMessage((m) => this.onMessage(m)),
+      // FU-11 (BA12): the relay says the host left — the panel stops showing it as connected
+      o.transport.onPresence?.((p) => {
+        if (p.hostOnline || !this.hostOnline) return;
+        this.hostOnline = false;
+        this.addLog('status', 'host offline');
+      }) ?? (() => undefined),
     ];
   }
 
@@ -190,6 +199,8 @@ export class ControllerSession {
     else if (e.type === 'commandApplied') {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
+      if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value; // FU-11 (K5)
+      if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack

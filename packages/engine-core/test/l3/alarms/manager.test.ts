@@ -77,12 +77,39 @@ describe('alarm manager', () => {
     expect(s.silencedUntil).toBeNull();
   });
 
-  it('IEC-style mute silence (90 s, zoll-like) is not ended by a new alarm', () => {
+  // FU-11 (owner ruling Q1, audit AL01): on EVERY profile a new alarm of HIGHER priority than the ones silenced ends the
+  // silence, as on the real devices — no vendor source documents a silence that holds through one (the ZOLL-like 90 s is
+  // cited to the ZOLL X guide [research/05 §2.6, S5]; "keep it through a new alarm" was an uncited default). A new alarm
+  // of the same or lower priority, and a pre-silence pressed with nothing sounding, keep the IEC-style mute as before.
+  for (const id of ['zoll-like', 'ge-like', 'lifepak-like']) {
+    it(`IEC-style mute silence (90 s, ${id}) is ended by a new HIGHER-priority alarm (Q1, AL01)`, () => {
+      const s = createAlarmMgr(deviceProfile(id));
+      run(s, 0, 1, () => [HR]);
+      applyAlarmAction(s, { device: 'alarm', action: 'silence' }, 1, []);
+      run(s, 1.02, 5, () => [HR, ASY]);
+      expect(s.silencedUntil).toBeNull();
+    });
+    it(`IEC-style mute silence (90 s, ${id}) holds through a new alarm of the same or lower priority`, () => {
+      const s = createAlarmMgr(deviceProfile(id));
+      run(s, 0, 1, () => [HR]);
+      applyAlarmAction(s, { device: 'alarm', action: 'silence' }, 1, []);
+      run(s, 1.02, 15, () => [HR, { ...SPO2, delayS: 0 }]);
+      expect(s.silencedUntil).toBeCloseTo(91, 6);
+    });
+  }
+  it('an IEC-style pre-silence (nothing sounding) still mutes the next alarm for its 90 s', () => {
     const s = createAlarmMgr(deviceProfile('zoll-like'));
-    run(s, 0, 1, () => [HR]);
+    run(s, 0, 1, () => []);
     applyAlarmAction(s, { device: 'alarm', action: 'silence' }, 1, []);
-    run(s, 1.02, 5, () => [HR, ASY]);
+    run(s, 1.02, 5, () => [ASY]);
     expect(s.silencedUntil).toBeCloseTo(91, 6);
+  });
+  it('Saadat-like: any new alarm ends the silence (documented, research/06 §4.2, M p. 38, 50) — unchanged', () => {
+    const s = createAlarmMgr(deviceProfile('saadat-like'));
+    run(s, 0, 1, () => [ASY]);
+    applyAlarmAction(s, { device: 'alarm', action: 'silence' }, 1, []);
+    run(s, 1.02, 5, () => [ASY, HR]);
+    expect(s.silencedUntil).toBeNull();
   });
 
   it('pause (IEC-style 180 s) removes every alarm and raises nothing until it ends; Saadat-like rejects pause', () => {

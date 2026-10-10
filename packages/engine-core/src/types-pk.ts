@@ -2,7 +2,7 @@
 import type { SimSeconds } from './types.ts';
 
 export type DoseUnit = 'mcg' | 'mg' | 'g' | 'mcg/kg' | 'mg/kg' | 'g/kg' | 'mEq' | 'mmol' | 'mmol/kg' | 'units' | 'units/kg' | 'mL' | 'mL/kg';
-export type RateUnit = 'mcg/min' | 'mg/min' | 'mcg/kg/min' | 'mcg/kg/h' | 'mg/kg/h' | 'mg/h' | 'units/min' | 'units/h' | 'mL/h' | 'mL/kg/min';
+export type RateUnit = 'mcg/min' | 'mg/min' | 'mcg/kg/min' | 'mcg/kg/h' | 'mg/kg/h' | 'mg/h' | 'units/min' | 'units/h' | 'mmol/h' | 'mL/h' | 'mL/kg/min'; // FU-7.1 A5: mmol/h (potassium chloride)
 export type PkRoute = 'iv' | 'io' | 'im' | 'inh' | 'neb' | 'sc' | 'perineural' | 'central'; // 'neb': 7c's salbutamol
 
 /**

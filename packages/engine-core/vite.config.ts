@@ -62,6 +62,7 @@ const SLOW = [
   'test/engine/af-pulse-deficit.test.ts', // FU-4 Task 17: two 320 sim-s AF 150 runs
   'test/engine/fu8-*.test.ts', // FU-8: monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
   'test/engine/fu10-*.test.ts', // FU-10: the endocrine/thermal rigs, placed by CI per-file time (SLOW_A/C/D/F below; adrenal is slow-b)
+  'test/engine/fu71-*.test.ts', // FU-7.1: the MH 50 min run, the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)
   'test/engine/resp-mechanics.test.ts', // Stage 7k: nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
   'test/engine/drug-apnoea.test.ts', // FU-7 Task 7: 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population
   'test/engine/cat-reserve-engine.test.ts', // FU-7 Task 9: four 15 sim-min ketamine arms
@@ -70,6 +71,7 @@ const SLOW = [
   'test/engine/fu7-volatile.test.ts', // FU-7 Task 15: two 30 sim-min desflurane arms
   'test/engine/drug-layer.test.ts', // FU-7 Tasks 16 + 19: the drug-layer engine cases
   'test/engine/drug-layer-guards.test.ts', // FU-7 Task 19 case 7: the regression guards (split from drug-layer by time)
+  'test/l2/pk/interactions-misc.test.ts', // FU-11 K4 (R50 F9): FU-7's ET-19 four 8 h arms, 15.2 s alone in the fast set — slow-b (the remainder)
 ];
 /**
  * CI amendment 6 (FU-10 gate, orchestrator ruling): SEVEN slow groups, re-packed longest-first from the measured CI

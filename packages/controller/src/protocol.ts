@@ -161,6 +161,11 @@ export interface Transport {
 /** Every transport in this package also exposes its current status (onStatus replays it on subscribe). */
 export interface ManagedTransport extends Transport {
   readonly status: TransportStatus;
+  /**
+   * FU-11 (BA12): who else is there, when the link knows it (the relay's `peers` frame). Absent on links that cannot
+   * tell (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
+   */
+  onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
 }
 
 export type AckResult = DispatchResult & { commandId: string; rttMs: number };

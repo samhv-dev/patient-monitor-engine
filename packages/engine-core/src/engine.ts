@@ -391,7 +391,9 @@ class Engine implements MonitorEngine {
 
   // --- samples ---------------------------------------------------------------------------------
   readSamples(ch: ChannelId, fromIndex: number, out: Float32Array): number {
-    return this.bufs.get(ch)?.read(fromIndex, out) ?? 0;
+    // FU-11 (F20, R50 M8): a sample index is whole — a fractional one read NaN past the ring's slots; none for NaN/±∞
+    if (!Number.isFinite(fromIndex)) return 0;
+    return this.bufs.get(ch)?.read(Math.floor(fromIndex), out) ?? 0;
   }
   latestSampleIndex(ch: ChannelId): number {
     return this.bufs.get(ch)?.latest ?? -1;
@@ -823,12 +825,17 @@ class Engine implements MonitorEngine {
         if (!Number.isFinite(cmd.value) || cmd.value < 0 || cmd.value > 300) return 'hr must be 0–300 bpm';
         return rampReason(cmd.ramp);
       case 'setRhythm': {
-        if (!(cmd.rhythm in RHYTHMS)) return `unknown rhythm ${String(cmd.rhythm)}`;
+        // FU-11 (F11): `in` also finds 'toString', 'constructor' … on the prototype — accepted, then the rhythm engine threw
+        if (typeof cmd.rhythm !== 'string' || !Object.hasOwn(RHYTHMS, cmd.rhythm)) return `unknown rhythm ${String(cmd.rhythm)}`;
         if (cmd.when !== undefined && cmd.when !== 'now' && cmd.when !== 'nextBeat') return 'when must be now or nextBeat';
         const o = cmd.opts ?? {};
         return (
           unknownKeys('opts', o, RHYTHM_OPT_KEYS) ?? // FU-8 (research/19 C12): an unknown option is refused, not dropped
           unknownKeys('opts.pacer', o.pacer ?? {}, PACER_OPT_KEYS) ??
+          // FU-11 (F11): the pacer's numbers are numbers (a NaN rate was accepted and the next beat time became NaN)
+          numReason('opts.pacer.ratePpm', o.pacer?.ratePpm, 30, 200) ??
+          numReason('opts.pacer.avDelayMs', o.pacer?.avDelayMs, 50, 350) ??
+          numReason('opts.pacer.faultRate', o.pacer?.faultRate, 0, 1) ??
           numReason('opts.rateBpm', o.rateBpm, 0, 300) ??
           numReason('opts.atrialRateBpm', o.atrialRateBpm, 20, 400) ??
           numReason('opts.prMs', o.prMs, 80, 600) ??
@@ -837,6 +844,8 @@ class Engine implements MonitorEngine {
         );
       }
       case 'setModifiers': {
+        // FU-11 (F13): no modifier has a ramp consumer — a delayed or gradual change happened at once; refused, not ignored
+        if (cmd.ramp !== undefined && ((cmd.ramp.durationS ?? 0) > 0 || (cmd.ramp.delayS ?? 0) > 0)) return 'setModifiers applies at once: a ramp (delayS, durationS) is not supported';
         return validateModifiers(cmd.modifiers) ?? rampReason(cmd.ramp);
       }
       case 'device': {

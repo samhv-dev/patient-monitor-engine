@@ -74,9 +74,13 @@ describe('truth event', () => {
     e.advanceTo(30);
     const { st, dev } = e.snapshot().state as { st: Record<string, unknown>; dev: object };
     for (let i = 0; i < 100; i++) pruneTruth(st, dev); // JIT warm-up
-    const t0 = performance.now();
-    for (let i = 0; i < 200; i++) pruneTruth(st, dev);
-    const per = (performance.now() - t0) / 200;
+    // FU-11 K3: the best of five 40-call batches — one batch on a loaded runner could exceed the bound while the cost did not
+    let per = Infinity;
+    for (let b = 0; b < 5; b++) {
+      const t0 = performance.now();
+      for (let i = 0; i < 40; i++) pruneTruth(st, dev);
+      per = Math.min(per, (performance.now() - t0) / 40);
+    }
     console.log(`pruneTruth ≈ ${per.toFixed(3)} ms per call`);
     expect(per).toBeLessThan(1);
     // later stages add ~6 organ sub-trees (150 leaves each, realistic key lengths) and 7g's pk tree, on top of the

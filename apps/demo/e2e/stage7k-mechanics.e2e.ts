@@ -9,7 +9,7 @@ import { createServer, type ViteDevServer } from 'vite';
 
 let vite: ViteDevServer;
 let base = '';
-const out = resolve(import.meta.dirname, '../../../docs/gates/stage-7k');
+const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/stage-7k' : '../../../test-results/gate-shots/stage-7k'); // FU-11 K1: evidence only on request
 
 test.beforeAll(async () => {
   vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
