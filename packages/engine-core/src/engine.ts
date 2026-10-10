@@ -373,7 +373,9 @@ class Engine implements MonitorEngine {
 
   // --- samples ---------------------------------------------------------------------------------
   readSamples(ch: ChannelId, fromIndex: number, out: Float32Array): number {
-    return this.bufs.get(ch)?.read(fromIndex, out) ?? 0;
+    // FU-11 (F20, R50 M8): a sample index is whole — a fractional one read NaN past the ring's slots; none for NaN/±∞
+    if (!Number.isFinite(fromIndex)) return 0;
+    return this.bufs.get(ch)?.read(Math.floor(fromIndex), out) ?? 0;
   }
   latestSampleIndex(ch: ChannelId): number {
     return this.bufs.get(ch)?.latest ?? -1;
