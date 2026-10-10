@@ -46,8 +46,11 @@ const stats = (xs: number[]) => {
 
 test('command → ack → visible latency on four paths', async ({ page, browserName }) => {
   const results: Record<string, { ack: ReturnType<typeof stats>; visible: ReturnType<typeof stats> }> = {};
-  // Headless WebKit on Linux CI cannot complete a loopback WebRTC ICE exchange; skip that path there.
-  const paths = browserName === 'webkit' ? (['in-process', 'bc', 'relay'] as const) : (['in-process', 'bc', 'relay', 'rtc'] as const);
+  // Headless WebKit on Linux CI cannot complete a loopback WebRTC ICE exchange; skip that path there. FU-11 K2: nor can
+  // headless Chromium on macOS (no loopback host candidate; also with --allow-loopback-in-peer-connection, measured
+  // 2026-10-04) — local runs skip it unless PME_RTC=1; CI (Linux Chromium) runs it.
+  const noRtc = browserName === 'webkit' || (process.platform === 'darwin' && !process.env.PME_RTC);
+  const paths = noRtc ? (['in-process', 'bc', 'relay'] as const) : (['in-process', 'bc', 'relay', 'rtc'] as const);
   for (const path of paths) {
     const relayQ = path === 'relay' || path === 'rtc' ? `&relay=${encodeURIComponent(relayUrl)}` : '';
     const session = { 'in-process': 'QATAAA', bc: 'QATBBB', relay: 'QATCCC', rtc: 'QATDDD' }[path];

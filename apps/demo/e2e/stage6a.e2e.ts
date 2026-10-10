@@ -53,6 +53,9 @@ for (const via of ['bc', 'relay', 'rtc'] as const) {
     // Headless WebKit on Linux CI cannot complete a loopback WebRTC ICE exchange (no host candidates);
     // the WebRTC transport is covered on Chromium and on real Safari by the LAN gate check.
     test.skip(via === 'rtc' && browserName === 'webkit', 'loopback WebRTC unsupported in headless WebKit');
+    // FU-11 K2: headless Chromium on macOS gathers no loopback candidate either (measured 2026-10-04, also with
+    // --allow-loopback-in-peer-connection); CI (Linux) runs it, PME_RTC=1 forces it locally
+    test.skip(via === 'rtc' && process.platform === 'darwin' && !process.env.PME_RTC, 'loopback WebRTC unsupported in headless Chromium on macOS');
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     const { remote, viewer } = await trio(page, via);
