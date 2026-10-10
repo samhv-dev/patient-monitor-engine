@@ -58,7 +58,18 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
   let visible = false;
   let changedOnly = false;
   session.onEvent((e: EngineEvent) => {
-    if (model.ingest(e) && visible) draw();
+    const before = model.t;
+    const changed = model.ingest(e);
+    if (changed && model.t < before) {
+      // R50 M14: time went back (a bookmark restore) — the histories restart, and a baseline taken after the restored
+      // moment belongs to the discarded future: it is taken again at 1 minute
+      model.clearHistory();
+      if (model.baseT !== null && model.t < model.baseT) (model.base = null), (model.baseT = null);
+    }
+    // FU-11 (presenter note D5): the baseline is taken at 1 minute of sim time whether or not Explore is open (it was set
+    // on the first visit after 1 minute, so opening Explore at 08:30 compared against 08:30)
+    if (model.baseT === null && model.t >= 60) model.setBaseline();
+    if (changed && visible) draw();
   });
   session.onMount(() => model.clear());
 
@@ -86,7 +97,6 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     setText(place, s.placeholder ?? '');
     for (const a of nav.querySelectorAll('a')) a.setAttribute('aria-current', String(a.dataset.id === s.id));
     setText(stamp, model.baseT === null ? `Sim time ${clock(model.t)}. The baseline is set at 1 minute.` : `Sim time ${clock(model.t)}. Changes are from the baseline at ${clock(model.baseT)}.`);
-    if (model.baseT === null && model.t >= 60) model.setBaseline();
     const rows = model.rows().filter((r) => {
       const l = lookup(r.path);
       if (s.withGroup && r.group === s.withGroup) return true;
