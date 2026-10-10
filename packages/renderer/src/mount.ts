@@ -133,6 +133,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const trends = new TrendStore(); // Stage 4b
   const eventLog = new EventLog(); // Stage 4b
   const listeners = new Set<(e: EngineEvent) => void>();
+  let destroyed = false; // FU-11 (BA09): a late audio unlock after destroy() closes its context instead of attaching
   let scheduler: ToneScheduler | null = null;
   let audio: AudioOut | null = null;
   let soundP: Promise<void> | null = null;
@@ -310,7 +311,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     calibrate: (pxPerMm) => void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm })),
     enableSound() {
       // Idempotent: two quick taps must not create two AudioContexts (iOS caps live contexts; review M7).
+      if (destroyed) return Promise.resolve(); // FU-11 (BA09)
       soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
+        if (destroyed) return out.close(); // FU-11 (BA09): the monitor went away while the unlock was pending
         audio = out;
         play = playerFor(out, r);
         scheduler = new ToneScheduler({
@@ -330,6 +333,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     resume: () => void hostP.then((h) => h.control({ type: 'resume' })),
     setFps: (fps) => void hostP.then((h) => h.control({ type: 'fps', fps })),
     destroy() {
+      destroyed = true; // FU-11 (BA09)
       ro.disconnect();
       clearInterval(pumpTimer);
       mq?.removeEventListener('change', onDpr);

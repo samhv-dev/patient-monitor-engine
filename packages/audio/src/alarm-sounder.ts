@@ -62,6 +62,8 @@ export class AlarmSounder {
   private train: Train | null = null;
   private pending = new Map<string, number>(); // id → sim t
   private silentUntil: number | null = null;
+  /** FU-11 (owner ruling Q1, AL01): the highest priority (lowest level) active when the silence began; null = none. */
+  private silentLevel: AlarmLevel | null = null;
   private volumeStep: number;
 
   constructor(sched: SounderScheduler, profile: AlarmSoundProfile, opts: AlarmSounderOptions = {}) {
@@ -104,7 +106,8 @@ export class AlarmSounder {
     const prev = this.active.get(id);
     if (prev && prev.level === level) return;
     this.active.set(id, { id, level, seq: prev?.seq ?? this.seq++ });
-    if (!prev && this.silentUntil !== null && this.silence.cancelOnNewAlarm) this.silentUntil = null;
+    const above = this.silentLevel !== null && level < this.silentLevel; // a higher priority ends any silence (Q1, AL01)
+    if (!prev && this.silentUntil !== null && (this.silence.cancelOnNewAlarm || above)) this.silentUntil = null;
     this.retrain(t);
   }
 
@@ -119,6 +122,8 @@ export class AlarmSounder {
     this.cancelPending(() => true);
     this.train = null;
     this.silentUntil = t + durationS * this.sched.clock.timeScale;
+    const levels = [...this.active.values()].map((a) => a.level);
+    this.silentLevel = levels.length ? (Math.min(...levels) as AlarmLevel) : null;
   }
 
   /** End a silence early (e.g. Silence pressed again, brief §6.4.1). */

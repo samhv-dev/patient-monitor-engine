@@ -83,6 +83,15 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     ws.close(code, message);
   };
   const peersFrame = (room: Room): RelayFrame => ({ relay: 'peers', hostOnline: room.host !== null, peers: room.peers.size });
+  /** FU-11 (F01, BA10): one peer's frame that throws is that frame's problem, never the process's (logged and dropped). */
+  const contain = (fn: () => void) => {
+    try {
+      fn();
+    } catch (err) {
+      dropped++;
+      log(`frame dropped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   const getRoom = (code: string): Room | null => {
     let room = rooms.get(code);
@@ -140,7 +149,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const onWire = (ws: WebSocket) => {
     let peer: Peer | null = null;
     let room: Room | null = null;
-    ws.on('message', (buf, isBinary) => {
+    ws.on('message', (buf, isBinary) => contain(() => {
       if (isBinary) return void dropped++;
       const data = buf.toString();
       const m = parseWireMessage(data);
@@ -173,7 +182,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       }
       if (!room || m.session !== room.code || m.from !== peer.id) return void dropped++; // no spoofing
       route(room, peer, m, data);
-    });
+    }));
     ws.on('close', () => {
       if (!peer || !room) return;
       if (room.host === peer) {
@@ -198,17 +207,20 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     const prev = sroom.get(id);
     if (prev && prev.readyState === prev.OPEN) return refuse(ws, RELAY_CLOSE.hostExists, 'host-exists', `peer id ${id} is taken`);
     sroom.set(id, ws);
-    ws.on('message', (buf) => {
-      let f: { to?: unknown; data?: unknown };
+    ws.on('message', (buf) => contain(() => {
+      let f: unknown;
       try {
-        f = JSON.parse(buf.toString()) as { to?: unknown; data?: unknown };
+        f = JSON.parse(buf.toString());
       } catch {
         return void dropped++;
       }
-      const to = typeof f.to === 'string' ? sroom.get(f.to) : undefined;
+      // FU-11 (F01, BA10): `null`, an array or a primitive is valid JSON but not a signalling frame (null.to killed the relay)
+      if (f === null || typeof f !== 'object' || Array.isArray(f)) return void dropped++;
+      const { to: id2, data } = f as { to?: unknown; data?: unknown };
+      const to = typeof id2 === 'string' ? sroom.get(id2) : undefined;
       if (!to) return void dropped++;
-      raw(to, JSON.stringify({ from: id, data: f.data }));
-    });
+      raw(to, JSON.stringify({ from: id, data }));
+    }));
     ws.on('close', () => {
       if (sroom.get(id) === ws) sroom.delete(id);
       if (sroom.size === 0) signalRooms.delete(code);
@@ -216,6 +228,12 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   };
 
   wss.on('connection', (ws, req) => {
+    // FU-11 (F01, BA10): a socket error (a frame over maxPayload, a broken frame) closes THAT socket; without a listener
+    // the ws library re-threw it as an unhandled 'error' event and the whole relay exited with every room on it
+    ws.on('error', (err) => {
+      dropped++;
+      log(`socket error: ${err.message}`);
+    });
     alive.set(ws, true);
     ws.on('pong', () => alive.set(ws, true));
     const path = new URL(req.url ?? '/', 'http://relay').pathname;

@@ -16,7 +16,7 @@ export const MAX_QRS_AFTER_R_S = 0.15;
 /** Output latency assumed when the browser reports none (ruling R15). */
 export const DEFAULT_OUTPUT_LATENCY_S = 0.02;
 const LOG_MAX = 500;
-const FORGET_AFTER_S = 2; // keep played ids this long for dedupe [ENG]
+const FORGET_AFTER_S = 2; // keep played ids this long after their voice ends, for dedupe [ENG]
 
 export interface ToneRequest {
   t: number; // sim seconds
@@ -29,6 +29,8 @@ export interface ToneRequest {
 
 export interface ToneHandle {
   stop(): void;
+  /** FU-11 (F19, BA08): audio time the voice ends on its own; the scheduler owns the handle until then. */
+  readonly endsAt?: number;
 }
 
 export interface SchedulerDeps {
@@ -118,7 +120,8 @@ export class ToneScheduler {
     const now = this.deps.audioNow();
     for (const [id, l] of [...this.live]) {
       if (!match(id, l)) continue;
-      if (l.handle && l.at > now) l.handle.stop();
+      // FU-11 (F19, BA08): a voice that is still sounding stops too — not only one scheduled for later
+      if (l.handle && !((l.handle.endsAt ?? Infinity) <= now)) l.handle.stop();
       this.live.delete(id);
     }
     this.queue = this.queue.filter((q) => this.live.has(q.id));
@@ -128,7 +131,8 @@ export class ToneScheduler {
   pump(): void {
     if (!this.clock.hasAnchor) return;
     const now = this.deps.audioNow();
-    for (const [id, l] of this.live) if (l.at + FORGET_AFTER_S < now) this.live.delete(id);
+    // FU-11 (F19, BA08): forget a tone only after its voice has ended (a 60 s ready tone outlives the 2 s dedupe window)
+    for (const [id, l] of this.live) if ((l.handle?.endsAt ?? l.at) + FORGET_AFTER_S < now) this.live.delete(id);
     while (this.queue.length > 0) {
       const tone = this.queue[0] as ToneRequest;
       const when = this.deps.perfToAudio(this.clock.simToPerfMs(tone.t));
