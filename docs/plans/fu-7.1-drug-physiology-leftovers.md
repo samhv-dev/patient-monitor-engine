@@ -917,7 +917,7 @@ their fit targets); `DriveInputs.diaNd` / `NeuroResp.diaNd` (the non-depolarisin
 `siteBlock` already computes); `diaphragmVtCapMl(strength, nd, ibwKg)` exported from `spont.ts` for its unit test.
 `DIAPH_APNOEA` is NOT changed.
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/neuro/fu71-diaphragm-two-events.test.ts`:
 
@@ -1029,7 +1029,7 @@ describe('FU-7.1 A4: the first diaphragmatic effort after rocuronium does not re
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu71-diaphragm-two-events.test.ts test/engine/fu71-roc-two-events.test.ts`
 Expected: 2 failed, 1 passed. The unit file's first case fails on the VT of the first effort
@@ -1040,7 +1040,7 @@ second event; the engine file fails with
 the base: `diaphragmVtCapMl` does not exist yet, so run it AFTER Step 3 and say so in the gate note if it is red for
 that reason (an import error, not a behaviour).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/neuro/drive.ts`, find:
 
@@ -1265,11 +1265,11 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run them green.** Expected: 3 passed, with
+- [x] **Step 4 — run them green.** Expected: 3 passed, with
   `FU-7.1 A4: first effort 13.8 min (VT 35 mL); effective ventilation 25.4 min; 9.4 min of efforts below the dead space`
   and `FU-7.1 A4 P5 rig: first effort +946 s, VT max 35 mL, EtCO2 max 0, awRR max 0 until the arrest at +960 s`.
 
-- [ ] **Step 5 — every rig that lets a weak patient breathe** (Review Focus 6). Run and compare with A0.3:
+- [x] **Step 5 — every rig that lets a weak patient breathe** (Review Focus 6). Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/neuro-engine.test.ts \
   test/engine/neuro-acceptance.test.ts test/engine/neuro-spont.test.ts test/engine/drug-apnoea.test.ts \
@@ -1281,11 +1281,11 @@ untouched, a depolarising block is uncapped and an unparalysed patient's cap is 
 `neuro-engine`'s rocuronium case takes ≈ 65 s alone and TIMED OUT at 180 s once under three parallel executors: if it
 times out, re-run it alone before reporting it (it passed alone, 10/10).
 
-- [ ] **Step 6 — the slow group.** `fu71-roc-two-events` is ≈ 16 s; it joins the `fu71-*` glob B4 Step 3 adds, so
+- [x] **Step 6 — the slow group.** `fu71-roc-two-events` is ≈ 16 s; it joins the `fu71-*` glob B4 Step 3 adds, so
   branch a touches `vite.config.ts` only if branch b has not merged yet — in that case add the glob here and say so in
   the gate note (the line is identical).
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/neuro packages/engine-core/test/l2/neuro/fu71-diaphragm-two-events.test.ts packages/engine-core/test/engine/fu71-roc-two-events.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
