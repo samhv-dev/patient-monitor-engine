@@ -2542,7 +2542,7 @@ blood volume is still nothing.
 
 **Interfaces:** none (no new symbol, no new constant).
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts`:
 
 ```ts
 // FU-7.1 B4 (research/24 P3b; owner ruling 2026-10-07 + research/26 T4, Perkins 2025 JAMA Surg n = 601: relieving a
@@ -2621,14 +2621,14 @@ describe('FU-7.1 B4: the drained tamponade comes back on the drainage', { timeou
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-tamponade-rosc.test.ts`
 Expected: 1 failed, 2 passed — the first case reads
 `FU-7.1 B4 drained, q 0.8 / 110, nothing else: arrest +116 s, mean CoPP 14.4, max hold 0 s, ROSC never, pulse held 0 s`
 (`expected 14.4 to be greater than 15`). The two "does not" cases pass on the base: they assert what must NOT change.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/circ/model.ts`, find:
 
@@ -2698,18 +2698,18 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 3 passed, with
+- [x] **Step 4 — run it green.** Expected: 3 passed, with
   `drained, q 0.8 / 110, nothing else: arrest +116 s, mean CoPP 18.1, max hold 59 s, ROSC +200 s, pulse held 120 s`,
   `drained, q 0.4 / 110: mean CoPP 10.3, max hold 0 s, ROSC never` and
   `UNDRAINED, q 1.0 / 120: mean CoPP 10.2, max hold 0 s, ROSC never`.
 
-- [ ] **Step 5 — the matrix the owner asked for** (record it in the gate note; the quality sweep is what expresses
+- [x] **Step 5 — the matrix the owner asked for** (record it in the gate note; the quality sweep is what expresses
   "less likely" without a random draw). Measured on the prototype, all with the pericardium drained at the arrest
   unless stated: q 1.0/110 → ROSC **+146 s**; q 0.9 → in band; q 0.8/110 → **+200 s**; q 0.6 → **never** (mean CoPP
   15.3, hold 0); q 0.4 → **never** (10.3); UNDRAINED q 1.0/120 → **never** (9.9) and still never with epinephrine
   1 mg (13.2); drained + epinephrine 1 mg at q 0.8 → **+88 s**. Re-run any two of these arms yourself and report them.
 
-- [ ] **Step 6 — every arrest and ROSC rig** (Review Focus 7; the two rulings this task touches). Run and compare with
+- [x] **Step 6 — every arrest and ROSC rig** (Review Focus 7; the two rulings this task touches). Run and compare with
   B0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/circ test/engine/clinical-suite.test.ts \
@@ -2724,7 +2724,7 @@ Expected (the prototype, with every other task of this plan in the tree): green,
 note.** Two files carry records this plan creates (`fidelity-arrest` fidelity-3's EtCO2 floor, `fidelity-lowflow`'s
 Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
 
-- [ ] **Step 7 — place the new files in a slow group.** The four `fu71-*` engine files of branch b (and branch a's
+- [x] **Step 7 — place the new files in a slow group.** The four `fu71-*` engine files of branch b (and branch a's
   two) run 7–119 s each locally, so they join `SLOW` and the lightest group (slow-b, the remainder) with ONE line in
   `packages/engine-core/vite.config.ts`'s `SLOW` array: `'test/engine/fu71-*.test.ts', // FU-7.1: the MH 50 min run,
   the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)`. **Insert it immediately
@@ -2736,7 +2736,7 @@ Ali case) — they are B3's casualties, flipped in Task B3, not B4's.
   `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core test` and confirm the `fu71-*` files are
   excluded, and `CI=1 PME_TEST_SET=slow-b …` and confirm they run.
 
-- [ ] **Step 8 — typecheck, commit, push.**
+- [x] **Step 8 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/circ packages/engine-core/vite.config.ts packages/engine-core/test/engine/fu71-tamponade-rosc.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
