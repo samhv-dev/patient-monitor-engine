@@ -5,11 +5,11 @@ Branch `fu-7.1-b`. Base `origin/main` 48864439. At the gate, `origin/main` 7a3d5
 Opus 5.5, 2026-10-10/11. Seed 7 throughout. Node v26.8.2 locally. CI on main (Node 22) gave the same numbers wherever
 both were compared.
 
-> **STATUS: STOPPED AT GATE B STEP 3. No PR was opened.** The five-case rehearsal changed one headline number. In the
-> class IV haemorrhage case, the circulation now returns **3.0 min** into CPR. On main it returns at **4.3 min**, both
-> browsers. Bisected: the 4.3 min holds at the B7 commit and on main 7a3d5672. It becomes 3.0 min at the B4 commit, so
-> B4's venous-reservoir hunk causes it. The plan says any changed number is a stop. Steps 4–7 (Review Focus table,
-> screenshots, PR) wait for the orchestrator. Section 6 lists the decisions needed.
+> **STATUS: gate complete; PR opened, not merged.** The gate first stopped at Step 3. The five-case rehearsal had
+> changed one headline number: in the class IV haemorrhage case the circulation returns **3.0 min** into CPR (4.3 on
+> main), bisected to B4's venous-reservoir hunk. The orchestrator ruled on 2026-10-11 (Section 6), and Steps 4–7 were
+> then completed. Step 5 found that B8's display half was missing in the real app; it was fixed in the renderer
+> (Section 2, item 7).
 
 ## 1. Tasks, before and after
 
@@ -40,8 +40,8 @@ was probably measured on a tree that already carried more than 48864439.
    - `fu8-tonic`, HTN induction fall: a known miss turned green and was **flipped** to `it` (4.96 → **5.14** points;
      −35.42 vs −30.28 %).
    - `organs-htn`, check 18 hypocapnia: CBF **0.4019** against the 35–40 % band (0.394 before). The ceiling is **split
-     out as a record**; the floor and PbtO2 still assert. **This record is NOT owner-ruled. It needs the owner's
-     ratification, as Q9/Q10 do.**
+     out as a record**; the floor and PbtO2 still assert. **RATIFIED by the orchestrator on 2026-10-11 as a known miss
+     with the number (R45, not widened).**
 3. **The S8 move is B3's, not B1's.** S8 tension PTX is +5.67 → **+3.58 min** (band 3–10, margin 0.58). With B1 alone
    it stayed at +5.67. It is B3 that moves it: +3.58 on b alone at the B3 commit.
 4. **B4 changed an unbanded measurement the plan expected unchanged.** The `exsanguination volume threshold` row
@@ -53,7 +53,17 @@ was probably measured on a tree that already carried more than 48864439.
    - The same mechanism makes the rehearsal's haemorrhage ROSC earlier (Section 4).
 5. **B3 Step 3/8 probe harness.** `probe-s2/zz-probe-p7.test.ts` is not on disk any more. The course is shown by
    `arrest-etco2` instead.
-6. **No PR** (see the status box).
+6. **The record titles name B3.** The plan attributed RS14 and S8 to B1; the bisection shows B3.
+7. **B8's display half (Gate B Step 5, commit d3b6d36c).** The plan's engine fix blanks the numerics: `invalid`, null.
+   In the real app the NIBP tile ignored a null value. It showed the failure glyph only until the device's next
+   `idle` event, about 0.6 s later, and then went back to the pre-arrest 121/76. This was the owner's defect, still
+   visible.
+   - **Fix:** in `packages/renderer/src/device-ui.ts` and `mount.ts`, a measurement whose `nibpSys` is `invalid` now
+     clears the last result and the cuff PR, so the tile reads `---/---`.
+   - **Test:** `packages/renderer/test/fu71-nibp-blank.test.ts`, three skins. It failed first.
+   - **Other runs:** renderer 28 files / 93 passed; `fu5`, `stage4b` and `stage9-app` e2e 27 passed.
+   - **Scope:** this file is outside the plan's file list, but it is not on the "Never touch" list. FU-11 b (#45) adds
+     `reset()` a few lines below the edited line, so a merge needs no hand edits.
 
 ## 3. Verification on the merged tree (f35ef125 + d16bdbd3)
 
@@ -110,16 +120,53 @@ Arrest times (merged tree): S4a PEA +105 s (unchanged) · S8 +3.58 min (main +5.
 decay arrest 554 s (553); its ROSC rig gives a pulse at **+188 s of CPR (main +264 s)**, CoPP 5.8–31.7 (main
 1.1–22.3) · `fu8-manual-rosc` A27 ROSC beat 102.5 s (unchanged) · S13 CPR CoPP 26.3–27.9 (26.4–28.1).
 
-## 6. For the orchestrator to decide
+## 6. Orchestrator rulings (2026-10-11) and declared rehearsal changes
 
-1. **The rehearsal's haemorrhage ROSC, 4.3 → 3.0 min into CPR (B4).** Accept it as the intended consequence of the
-   owner's Q4d ruling: recruited volume is mechanics, not a delivered effect. If accepted, the PR can be opened from
-   this branch as it stands. Otherwise, narrow B4's venous hunk to the tamponade case.
-2. **The exsanguination volume threshold (B4).** After a complete 3 L bleed-out, 2.5–3.5 L plus adrenaline now regain
-   a pulse at +220–275 s. Before, none did. This bears on Ali's question A-new and on G-FU4-1.
-3. **The `organs-htn` hypocapnia CBF record (B3), 0.4019 vs ≤ 0.40.** It was recorded at the gate under R45 without an
-   owner ruling. Ratify it or re-rule the band.
-4. The circ-lowflow-arrest ROSC moves from +264 s to +188 s of CPR (in band). Recorded here only.
+1. **Declared rehearsal change: haemorrhage ROSC, 4.3 → 3.0 min into CPR (both browsers). ACCEPTED** as the intended
+   consequence of the owner-ruled B4 defect fix: the venous reservoir is no longer withdrawn at the arrest. Stage 11
+   has already changed the card's story to "about three minutes into CPR". The other rehearsal differences from the
+   committed 41678d0b results are main's, not this branch's: apnoea 62 → 55 s and tamponade 72.6 → 73.8 s, both
+   re-measured on main 7a3d5672.
+2. **The exsanguination volume threshold is ACCEPTED as an unbanded observation.** It reads 2 L none; 2.5 L pulse at
+   +275 s; 3 L +245 s; 3.5 L +220 s. CPR alone and G-FU4-1's no-fluid row are unchanged. **This is an item for the
+   owner to review.**
+3. **The `organs-htn` hypocapnia CBF record (0.4019 against the 0.40 ceiling) is RATIFIED** as a known miss with the
+   number (R45, no widening).
+4. The RS14 twin in `resp-inspired-co2` and the `fu8-tonic` HTN flip are recorded as described in Section 2.
+
+## 6a. Review Focus 2 and 7: every arrest and ROSC time this branch can move (Gate B Step 4)
+
+| Row | Band | main 7a3d5672 (CI) | This branch | Margin |
+|---|---|---|---|---|
+| `clinical-suite` S8 tension PTX → PEA | 3–10 min | +5.67 min | **+3.58 min** (B3) | 0.58 min to the floor |
+| `clinical-suite` S4a tamponade + propofol → PEA | ≤ 10 min | +105 s | +105 s | 8.25 min |
+| `clinical-suite` S16 untreated MH → VF | < 60 min, core ≤ 44 °C | 44.4 min, 42.3 °C | 44.4 min, 42.3 °C | 15.6 min |
+| `circ-hypoxic-arrest` PEA after SaO2 < 60 % | 5–14 min | +11.23 min | +11.23 min | 2.77 min |
+| `circ-lowflow-arrest` class IV MODELED, arrest | ≤ 15 min of MAP < 30 | 553 s | 554 s | in band |
+| `circ-lowflow-arrest` ROSC (CPR + 2 L + adrenaline) | pulse ≤ 5 min | +264 s of CPR | **+188 s** (B4) | 112 s |
+| `fu8-pea-resus` G-FU8A-1 (class IV, CPR + 2 L + adrenaline) | pulse ≤ 10 min, no asystole | +258 s of CPR | **+184 s** (B4) | in band |
+| `fu8-pea-resus` A21 instructor PEA + CPR / shock-PEA | pulse returns | 142 / 201 s | 142 / 201 s | — |
+| `fu8-manual-rosc` A27 first ejecting beat | ramp 0.4–0.8 at +10 s | 102.5 s, 0.55 | 102.5 s, 0.55 | in band |
+| `clinical-suite` CPR alone after 3 L (G-FU4-1) | no pulse in 10 min | none, CoPP 2.8–3.5 | none, CoPP 2.8–3.5 | unchanged |
+| `clinical-suite` exsanguination threshold (unbanded) | — | none at 2–3.5 L | 2 L none; 2.5 / 3 / 3.5 L at +275 / +245 / +220 s | ruling 2 |
+| B4 drained tamponade, q 0.8/110, no fluid or drug | ROSC 30 s – 4 min, held ≥ 120 s | never (CoPP 14.4) | **+200 s**, held 120 s | 40 s |
+| B4 matrix, q 1.0 / 0.6 / 0.4 | — | never | +146 s / never / never | — |
+| B4 undrained, without / with epinephrine 1 mg | never | never | never (CoPP 10.2 / 13.5) | — |
+| B4 drained + epinephrine 1 mg, q 0.8 | — | +148 s then re-arrest at +2 s (prototype) | **+88 s, no re-arrest** | — |
+| Rehearsal: haemorrhage pulse lost / ROSC | 8–13 min / ≤ 7 min | 10 min / 4.3 min | 10 min / **3.0 min** | ruling 1 |
+
+## 6b. Evidence (Gate B Step 5, Chromium, indexed PNG ≤ 60 KB)
+
+The screenshots come from a scratch Playwright script against this branch's Vite dev server, at ×4, seed 7. The
+script was not committed.
+
+| File | What it shows (numbers read from the same session's events) |
+|---|---|
+| `fu-7.1-b/b1-mh-30min-monitor-chromium.png` (49 KB) | Probe P2's MH rig at +30 min of MH: art 124/94 (103), HR 156, temp 40.2, EtCO2 55. Course: MAP 93 / 100 / 103 at +10 / +20 / +30 min, SVR 1255 / 1311 / **1295** (past its peak), pH 7.30 / 7.22 / 7.17 |
+| `fu-7.1-b/b7-copd-gold4-first-abg-chromium.png` (40 KB) | GOLD 4 at sim 00:18 (Explore → Labs): **pH 7.38, PaCO2 50**, HCO3 29.2 (main: 7.49 / 37) |
+| `fu-7.1-b/b5-bronchospasm-vent-chromium.png` (49 KB) | The showcase bronchospasm case on the Ventilator view: **VTE 159 mL**, and `breath.vtMl` from the same session is **159** (set 500, Pmax) |
+| `fu-7.1-b/b8-nibp-failed-in-pea-chromium.png` (22 KB) | 58 y man: a cycle with a pulse reads 121/76 (95). In PEA the next cycle fails at 173 s and the tile reads **`---/---`, PR ---**, with the NIBP MEASUREMENT FAILED INOP |
+| `fu-7.1-b/b4-tamponade-rosc-after-drainage-chromium.png` (44 KB) | Showcase-tamponade patient: PEA at +121 s after propofol; drainage + CPR q 0.8/110, **no fluid, no drug**; ROSC +218 s; the monitor 40 s later reads art 88/62 (71), CVP 10, SpO2 99, EtCO2 30 |
 
 ## 7. Contract for `breath` readers (D-9, Review Focus 4)
 

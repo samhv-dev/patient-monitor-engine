@@ -3449,9 +3449,10 @@ SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c
   lost ≈ 10:03, ROSC 4.3 min into CPR) and the tamponade's MAP < 40 at ≈ 113 s. Copy the JSON results into
   `docs/gates/fu-7.1-b/showcase/`, then `git checkout -- docs/showcase`. **Any changed number is a stop:** report it,
   do not proceed to the PR.
-  **Executed (2026-10-11): STOPPED here.** The haemorrhage case's circulation returns 3.0 min into CPR (4.3 on main and
-  at the B7 commit; bisected to B4's venous-reservoir hunk). Steps 4–7 wait for the orchestrator: `docs/gates/fu-7.1-b.md`.
-- [ ] **Step 4 — Review Focus 2, 4 and 7.** (2) every arrest time this branch can move, from the suites of Step 2:
+  **Executed (2026-10-11):** stopped here at first — the haemorrhage case's circulation returns 3.0 min into CPR (4.3 on
+  main; bisected to B4's venous-reservoir hunk). The orchestrator ACCEPTED it as B4's intended consequence on 2026-10-11;
+  Steps 4–7 were then completed (`docs/gates/fu-7.1-b.md` §6).
+- [x] **Step 4 — Review Focus 2, 4 and 7.** (2) every arrest time this branch can move, from the suites of Step 2:
   `clinical-suite` S8 (+3.58 min on the prototype against +9.75 on main; band 3–10) and S4a, `circ-lowflow-arrest`,
   `circ-hypoxic-arrest` (+9.8 min after SaO2 < 60 %; band 5–14), `fu8-*`. (7) every ROSC time and the B4 matrix
   (drained q 1.0 → +146 s, q 0.8 → +200 s, q 0.6/0.4 → never, undrained → never with and without epinephrine, drained
@@ -3459,16 +3460,16 @@ SHOWCASE_KIT=<scratchpad>/fu-7.1-b/kit SHOWCASE_WORKERS=2 npx playwright test -c
   `fu8-manual-rosc`'s ramp. Put all of them in ONE table with their bands and margins. (4) the validation run of
   Step 2 and one line per `breath` reader (validation series, the controller wire type, FU-11 H5) stating the contract
   of D-9.
-- [ ] **Step 5 — evidence (≤ 60 KB each, Chromium):** the MH case's monitor 30 min in (MAP falling, SVR falling, the
+- [x] **Step 5 — evidence (≤ 60 KB each, Chromium):** the MH case's monitor 30 min in (MAP falling, SVR falling, the
   temperature and EtCO2 rising); a COPD patient's first ABG panel (pH 7.37–7.39, not 7.49); the bronchospasm case's
   ventilator numerics beside the cockpit (the delivered VT now agreeing); **the monitor during an arrest with the NIBP
   tile reading `---` after a failed cycle** (B8 — the owner's own defect, so it is the one screenshot he will look for);
   **the tamponade case's monitor at ROSC after drainage with no fluid given** (B4).
-- [ ] **Step 6 — the gate note `docs/gates/fu-7.1-b.md`:** as Gate A, for B1/B3/B4/B5/B7/B8, plus the rehearsal table,
+- [x] **Step 6 — the gate note `docs/gates/fu-7.1-b.md`:** as Gate A, for B1/B3/B4/B5/B7/B8, plus the rehearsal table,
   the arrest/ROSC table, the slow-group times, the validation comparison, the six records with their numbers, and
   Q4c/Q5 restated with what was done about them plus the three new questions this branch raises (Q9, Q10 — and Q11 is
   branch a's).
-- [ ] **Step 7 — pull request.**
+- [x] **Step 7 — pull request.**
 ```bash
 git push
 gh pr create --base main --head fu-7.1-b --title "FU-7.1 (b): acidaemia reaches the circulation, the arrest capnogram, the drained tamponade, the delivered breath volume, the cuff in an arrest" --body-file <scratchpad>/fu-7.1-b/pr-body.md
