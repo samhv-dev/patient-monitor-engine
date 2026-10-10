@@ -7,6 +7,7 @@ export abstract class TransportBase implements ManagedTransport {
   abstract readonly kind: TransportKind;
   private readonly msgFns = new Set<(m: WireMessage) => void>();
   private readonly statusFns = new Set<(s: TransportStatus) => void>();
+  private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>(); // FU-11 (BA12)
   private current: TransportStatus = 'connecting';
   protected closed = false;
   /** Messages refused by parseWireMessage (malformed, oversized or carrying samples). */
@@ -39,6 +40,14 @@ export abstract class TransportBase implements ManagedTransport {
     };
   }
 
+  /** FU-11 (BA12): presence reports from the link (only links that know call presence()). */
+  onPresence(fn: (p: { hostOnline: boolean }) => void): () => void {
+    this.presenceFns.add(fn);
+    return () => {
+      this.presenceFns.delete(fn);
+    };
+  }
+
   close(): void {
     if (this.closed) return;
     this.closed = true;
@@ -54,6 +63,11 @@ export abstract class TransportBase implements ManagedTransport {
     if (this.closed && s !== 'closed') return;
     this.current = s;
     for (const fn of [...this.statusFns]) fn(s);
+  }
+
+  protected presence(p: { hostOnline: boolean }): void {
+    if (this.closed) return;
+    for (const fn of [...this.presenceFns]) fn(p);
   }
 
   /** Validate untrusted input, then hand it to the listeners. */
