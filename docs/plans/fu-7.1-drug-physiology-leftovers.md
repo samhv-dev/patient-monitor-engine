@@ -674,7 +674,7 @@ ratio is recorded as a known miss with its number, and Q2 asks the owner whether
 
 **Interfaces:** `HEMO_SYN_MAX = 0.2`, `HEMO_SYN_U50 = 1.2` (exported from `combine.ts`; the unit test reads them).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/pk/fu71-hemo-synergy.test.ts`:
 
@@ -783,7 +783,7 @@ describe('FU-7.1 A2: the opioid deepens the induction hypotension', { timeout: 6
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/fu71-hemo-synergy.test.ts test/engine/fu71-induction-synergy.test.ts`
 Expected: 2 failed, 4 passed — the unit file's interaction case (`svr both 0.6963 vs independent 0.6963; factor NaN`,
@@ -791,7 +791,7 @@ Expected: 2 failed, 4 passed — the unit file's interaction case (`svr both 0.6
 first case (`ΔSBP propofol 25.6, with fentanyl 27.8, ratio 1.09`, `expected 1.0882… to be greater than or equal to
 1.15`). The `it.fails` case passes on the base (the miss it records is the base's behaviour too).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/pk/combine.ts`, find:
 
@@ -866,12 +866,12 @@ Replace with:
       fx[k] *= Math.max(0.05, 1 + E);
 ```
 
-- [ ] **Step 4 — run them green.**
+- [x] **Step 4 — run them green.**
 
 Expected: 6 passed — `FU-7.1 A2 unit: svr both 0.6630 vs independent 0.6963; factor 1.165` and
 `FU-7.1 A2 Billard rig: ΔSBP propofol 25.6, with fentanyl 29.6, ratio 1.16; ΔMAP 22.2 / 27.3`.
 
-- [ ] **Step 5 — the two bands this task is capped by, and the drug layer around them.** Run and compare with A0.3:
+- [x] **Step 5 — the two bands this task is capped by, and the drug layer around them.** Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/stimulus-surge.test.ts test/engine/resp-induction.test.ts test/engine/drug-layer.test.ts test/l2/pk test/l2/neuro
 ```
@@ -881,10 +881,10 @@ main 0.23), `propofol + fentanyl apnoea 108 s` and `propofol + remifentanil 186 
 and 184), and DI-01c unchanged. **If any of these four is outside its band, STOP** and report: the size needs a new
 scan (the scan script is `../scratch/plans-backup/fu-7.1-plan-tools/scan-a2.sh`), not a band change.
 
-- [ ] **Step 6 — the slow groups.** Both new files are fast enough to stay in the fast set
+- [x] **Step 6 — the slow groups.** Both new files are fast enough to stay in the fast set
   (`fu71-hemo-synergy` ≈ 1 s, `fu71-induction-synergy` ≈ 10 s), so `vite.config.ts` is NOT touched by branch a.
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/pk/combine.ts packages/engine-core/test/l2/pk/fu71-hemo-synergy.test.ts packages/engine-core/test/engine/fu71-induction-synergy.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
