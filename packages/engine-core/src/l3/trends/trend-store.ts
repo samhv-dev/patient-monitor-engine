@@ -52,6 +52,19 @@ export class TrendStore {
     }
   }
 
+  /**
+   * FU-11 (F05, BA01): the timeline went back to sim time `t` (a bookmark restore). Every second after floor(t) belonged
+   * to the discarded future: it is emptied and the newest second becomes floor(t), so the next measurements are kept
+   * and a trend never shows a run that no longer happened. A rewind older than the ring empties it.
+   */
+  rewind(t: number): void {
+    const keep = Math.floor(t + 1e-6);
+    if (keep >= this.last) return;
+    const from = Math.max(keep + 1, this.last - TREND_SLOTS + 1);
+    for (let k = from; k <= this.last; k++) for (const a of this.data.values()) a[k % TREND_SLOTS] = Number.NaN;
+    this.last = Math.max(-1, keep);
+  }
+
   /** Values of one numeric for seconds [fromS, toS] (NaN where missing or no longer held). */
   series(id: NumericId, fromS: number, toS: number): Float32Array {
     const out = new Float32Array(Math.max(0, toS - fromS + 1)).fill(Number.NaN);
