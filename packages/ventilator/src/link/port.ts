@@ -144,6 +144,20 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   });
   const offEng = mon.on((e) => {
     const tk = 't' in e ? Math.floor(e.t / 0.02 + 1e-6) : 0; // every event but toneCancel carries sim time
+    if (e.type === 'toneCancel' && e.ids === undefined) {
+      // FU-11 (R50 F1): the engine was RESTORED (its restore marker: a toneCancel without ids; a new engine re-attaches
+      // instead). The old timeline's offset stamped every later frame in the restored future (50 s late after a 50 s
+      // rewind) and no clock was published: the cockpit stopped ventilating the patient while its own screen looked
+      // normal. Start a new generation: the next frame probes, the clock is published again from the restored time.
+      // (Event times alone cannot tell: a breath or a beat may carry a time seconds before "now".)
+      offset = null;
+      allowed = -Infinity;
+      learning = false;
+      gen++;
+      engTick = Math.floor(e.after / 0.02 + 1e-6);
+      publishClock();
+      return;
+    }
     if (tk > engTick) {
       engTick = tk;
       publishClock();
