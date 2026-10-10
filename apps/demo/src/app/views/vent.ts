@@ -28,6 +28,9 @@ export function ventView(session: AppSession): View {
         port.post({ v: 1, kind: 'control', patch: {} });
         port.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
       };
+      // FU-11 (D3, presenter rehearsal): the cockpit follows every later speed change too — opened at ×1 and then run at
+      // ×4 it ventilated at a quarter of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal
+      const offScale = session.onTimeScale((k) => port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
       frame.src = `./vent-hamilton.html?link=${link}&profile=normal`;
     },
   };
