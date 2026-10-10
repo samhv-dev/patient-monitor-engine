@@ -196,6 +196,12 @@ export class AppSession {
     return (this.monitor?.enableSound() ?? Promise.resolve()).then(() => void (this.soundOn = true));
   }
 
+  /** FU-11 (H4): sound off again, for this window (a new patient's monitor stays off too). */
+  disableSound(): void {
+    this.soundOn = false;
+    this.monitor?.disableSound();
+  }
+
   /** A new body (profile, mode) = a new engine; the session code, remote pairing, log and listeners carry on. */
   restart(start: SessionStart): void {
     this.spec = start.spec;

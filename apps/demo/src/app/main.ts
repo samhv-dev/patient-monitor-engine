@@ -82,7 +82,9 @@ if (hostless) {
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
   const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
-  const sound = button('Sound off', () => void session.enableSound().then(() => ((sound.textContent = 'Sound on'), sound.setAttribute('aria-pressed', 'true'))), 'small sound');
+  // FU-11 (H4): a toggle — it turns sound off again (it only ever turned it on); this window's sound only (ruling Q3)
+  const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
+  const sound = button('Sound off', () => (session.soundOn ? (session.disableSound(), drawSound()) : void session.enableSound().then(drawSound)), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
   const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
   shell.right.append(alarm, sound, code);

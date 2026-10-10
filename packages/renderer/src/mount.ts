@@ -49,6 +49,11 @@ export interface MonitorHandle {
   calibrate(pxPerMm: number): void;
   /** Must be called from a user gesture (brief §3.6). */
   enableSound(): Promise<void>;
+  /** FU-11 (H4): sound off again — this window's output goes silent at once (the audio clock keeps running, so a later
+   *  enableSound() resumes in step); the alarms and the device state are untouched. Idempotent. */
+  disableSound(): void;
+  /** FU-11 (H4): whether this window is sounding (unlocked and not turned off). */
+  readonly soundOn: boolean;
   setTimeScale(k: number): void;
   pause(): void;
   resume(): void;
@@ -136,6 +141,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   let scheduler: ToneScheduler | null = null;
   let audio: AudioOut | null = null;
   let soundP: Promise<void> | null = null;
+  let muted = false; // FU-11 (H4): Sound turned off again
   let sounder: AlarmSounder | null = null; // Stage 4b
   let bridge: AlarmAudioBridge | null = null; // Stage 4b
   let lastStatus: Extract<EngineEvent, { type: 'alarmStatus' }> | null = null;
@@ -325,9 +331,12 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     },
     calibrate: (pxPerMm) => void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm })),
     enableSound() {
+      muted = false; // FU-11 (H4): on again after disableSound()
+      if (audio) audio.master.gain.value = 1;
       // Idempotent: two quick taps must not create two AudioContexts (iOS caps live contexts; review M7).
       soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
         audio = out;
+        out.master.gain.value = muted ? 0 : 1; // FU-11 (H4): turned off while the unlock was pending
         play = playerFor(out, r);
         scheduler = new ToneScheduler({
           audioNow: () => out.ctx.currentTime,
@@ -340,6 +349,13 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         makeSounder();
       });
       return soundP;
+    },
+    disableSound() {
+      muted = true; // FU-11 (H4): the master gain, not the context: a suspended context would stall the tone clock
+      if (audio) audio.master.gain.value = 0;
+    },
+    get soundOn() {
+      return !!audio && !muted;
     },
     setTimeScale: (k) => void hostP.then((h) => h.control({ type: 'timeScale', k })),
     pause: () => void hostP.then((h) => h.control({ type: 'pause' })),
