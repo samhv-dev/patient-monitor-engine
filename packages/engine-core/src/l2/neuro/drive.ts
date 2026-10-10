@@ -32,7 +32,25 @@ export const VENT_ALPHA_HYP = 0;
 export const APNOEA_IN = 0.42;
 export const APNOEA_OUT = 0.5;
 export const DIAPH_WEAK = 0.3; // diaphragm strength below which VT falls (reserve) [ENG]
-export const DIAPH_APNOEA = 0.05; // no effective breath below 5 % strength [ENG]
+export const DIAPH_APNOEA = 0.05; // no effective breath below 5 % strength [ENG]; FU-7.1 A4: the FIRST diaphragmatic effort
+/**
+ * FU-7.1 A4 (owner ruling 2026-10-07, research/26 T1): the return of diaphragm ACTIVITY is not the return of BREATHING.
+ * After a non-depolarising blocker the first efforts (strength DIAPH_APNOEA, ≈ 16 min after rocuronium 0.6 mg/kg —
+ * Moerer 2005 [P, PMID 15832241, read from a search summary]: onset of diaphragm recovery 15.9 min in young adults)
+ * move almost nothing — the train fades, so a SUSTAINED contraction (a breath) has far less force than a single twitch
+ * at the same block [TXT: Miller 10e ch. 39 p. 1213, the diaphragm recovers first; the fade mechanism is the reason a
+ * twitch overstates the breath]. The spontaneous VT of a non-depolarising block is capped by the weak diaphragm:
+ * VT ≤ IBW·max(VT_EFFORT_ML_KG, VT_MAX_ML_KG·x^k), x = (strength − DIAPH_APNOEA)/(1 − DIAPH_APNOEA), k such that the
+ * cap reaches a resting tidal volume (VT_REST_ML_KG) at DIAPH_EFFECTIVE (spont.ts). Fit targets: first effort ≈ 16 min
+ * (band 12–24) with an ineffective VT (owner's hypothesis 10–50 mL, below the dead space: no alveolar ventilation, no
+ * CO2 plateau, no awRR; NOT yet checked against the literature — research/26 T1b follow-up); effective ventilation ≈ 30
+ * min (band 20–50; label clinical duration 31 min, Adamus 2007 31.3 min [S], Miller 9e Table 27.2 20–50 min [T]).
+ * [ENG sizes: DIAPH_EFFECTIVE 0.8 is the strength the rocuronium 0.6 mg/kg course reaches at ≈ 30 min; VT_EFFORT 0.5
+ * mL/kg = 35 mL at 70 kg, the middle of the owner's 10–50 mL.] A depolarising (phase I) block has no fade: the cap
+ * scales with the non-depolarising share of the diaphragm's block (`diaNd`), and succinylcholine recovery is unchanged.
+ */
+export const DIAPH_EFFECTIVE = 0.8;
+export const VT_EFFORT_ML_KG = 0.5;
 /**
  * FU-6 R3/R4 (E-FU6-2): loss of consciousness (depth.ts `hypnotic` level, ≥ 1 unconscious) as a 0–1 ramp over 0.6–1.0
  * (fully 'unconscious' from the LOC C50 up) — what removes the wakefulness drive (R3) and makes the lungs
@@ -93,6 +111,8 @@ export interface DriveInputs {
   wasApnoeic: boolean;
   hypnotic?: number; // FU-6: depth.ts consciousness level (≥ 1 unconscious); absent = awake
   stress?: number; // FU-6 R12: depth.ts `stress` = noxious stimulus × (1 − antinociception), 0–1; absent = 0
+  /** FU-7.1 A4: the non-depolarising share of the diaphragm's block (nmb.ts siteBlock nd/(nd + dep)); absent = 0. */
+  diaNd?: number;
 }
 
 export interface NeuroResp {
@@ -107,6 +127,8 @@ export interface NeuroResp {
   obstruction: number; // 0–1 upper-airway obstruction (natural airway only); ≥ 0.9 = complete
   nmbVtMult: number; // VT factor from diaphragm weakness alone (Stage 7b's MODELED path multiplies its own VT by it)
   cleft: number; // 0–1 own diaphragmatic effort visible during mechanical breaths while a block wears off
+  /** FU-7.1 A4: the non-depolarising (fading) share of the diaphragm's block, 0–1 — spont.ts caps the VT by it. */
+  diaNd?: number;
   loc: number; // FU-6 R3/R4: 0 awake … 1 unconscious (LOC_LO–LOC_HI ramp of the hypnotic level)
   pain: number; // FU-6 R12: the nociceptive drive input to 7b's drive (depth.ts stress)
   hvrDep: number; // FU-6 R12: depression of the hypoxic ventilatory response (0–1)
@@ -168,5 +190,6 @@ export function neuroResp(x: DriveInputs): NeuroResp {
     apnoea, pMaxMult: strength, obstruction, nmbVtMult: nmbVt, loc, pain: Math.max(0, Math.min(1, x.stress ?? 0)), hvrDep,
     // the curare cleft is the sign of a PARTIAL block wearing off under mechanical ventilation (tables §5d)
     cleft: x.diaBlock > 0.05 ? Math.max(0, Math.min(1, strength * (1 - totalDep))) : 0,
+    diaNd: x.diaNd ?? 0, // FU-7.1 A4
   };
 }

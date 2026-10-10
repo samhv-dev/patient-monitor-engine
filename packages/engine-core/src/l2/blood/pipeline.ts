@@ -134,6 +134,16 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
         c.doses.push({ id: d.agent, t0: d.t, amount: mmol });
         break;
       }
+      // FU-7.1 A5 (Ali 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
+      // pool's kinetics then own the course: K into cells with τ K_TAU_MIN (43 min, tables `vK`) and the Na/K-ATPase set
+      // point following total-body K (K_TBK_MMOL 300, Sterns 1981). The chloride keeps the SID honest (a K load without
+      // its anion would alkalinise the patient). 7g logs the infused amount once per advance pass (A5, pipeline.ts).
+      case 'potassiumChloride':
+        if (d.amountUnit === 'mmol') {
+          c.so.k += d.amount;
+          c.so.cl += d.amount;
+        }
+        break;
       case 'sodiumBicarbonate':
         if (d.amountUnit === 'mmol') {
           c.so.na += d.amount;

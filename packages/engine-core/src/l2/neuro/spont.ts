@@ -13,7 +13,7 @@
 import { CHRONIC_HCO3_PER_MMHG, NORMAL } from '../blood/params.ts'; // FU-9 F9: ONE reference (7c's normal and chronic rule)
 import { drive, pti, stepFatigue } from '../lung/drive.ts';
 import { NO_FLOW_S } from '../circ/arrest.ts'; // FU-6 gate G-FU6-2: the arrest declaration's no-flow window
-import { DIAPH_APNOEA, type NeuroResp } from './drive.ts';
+import { DIAPH_APNOEA, DIAPH_EFFECTIVE, VT_EFFORT_ML_KG, type NeuroResp } from './drive.ts';
 
 export const SPONT_DT_S = 1;
 export const WINTER_SLOPE = 1.5;
@@ -44,6 +44,19 @@ export const PERIPH_SHARE = 0.3;
  * 1966 Respir Physiol 1:193), VC ≈ 60–70 mL/kg IBW → 35 mL/kg IBW, × fatigue (weakness stays nmbVtMult's) [ENG size].
  */
 export const VT_MAX_ML_KG = 35;
+/** FU-7.1 A4: a resting tidal volume per kg IBW, the size the weak diaphragm's cap reaches at DIAPH_EFFECTIVE (6–8
+ * mL/kg [TXT: the lung-protective range gas/params.ts already quotes]). */
+export const VT_REST_ML_KG = 7;
+const FADE_K = Math.log(VT_REST_ML_KG / VT_MAX_ML_KG) / Math.log((DIAPH_EFFECTIVE - DIAPH_APNOEA) / (1 - DIAPH_APNOEA));
+/**
+ * FU-7.1 A4 (drive.ts DIAPH_EFFECTIVE): the tidal volume a partly blocked diaphragm can move in one SUSTAINED breath,
+ * mL — 35 mL (VT_EFFORT_ML_KG) at the first effort, a resting VT at DIAPH_EFFECTIVE, the chemical ceiling at full
+ * strength. `nd` (0–1, the non-depolarising share of the block) scales the exponent: no fade, no cap.
+ */
+export function diaphragmVtCapMl(strength: number, nd: number, ibwKg: number): number {
+  const x = Math.min(1, Math.max(0, (strength - DIAPH_APNOEA) / (1 - DIAPH_APNOEA)));
+  return ibwKg * Math.max(VT_EFFORT_ML_KG, VT_MAX_ML_KG * x ** (FADE_K * Math.min(1, Math.max(0, nd))));
+}
 
 export interface SpontDrive {
   rr: number; // < 0: not yet evaluated (driverCtx falls back to the rr/vt targets)
@@ -139,7 +152,11 @@ export function stepSpontDrive(s: SpontDrive, x: SpontInputs): void {
   vt = Math.min(vt, VT_MAX_ML_KG * (x.ibwKg ?? 70) * s.fatigue); // weakness is nmbVtMult's (below), not counted twice
   s.effort = rr > 0 && x.vt0 > 0 ? vt / x.vt0 : 0;
   if (strength < DIAPH_APNOEA) rr = vt = 0;
-  else if (n) vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
+  else if (n) {
+    vt *= n.nmbVtMult * (1 - Math.min(0.9, n.obstruction));
+    // FU-7.1 A4: a fading (non-depolarising) block lets the diaphragm make efforts long before it can move a breath
+    if ((n.diaNd ?? 0) > 0) vt = Math.min(vt, diaphragmVtCapMl(strength, n.diaNd ?? 0, x.ibwKg ?? 70));
+  }
   // FU-3 item 16 (E-FU3-10): brainstem-perfusion gate
   const unperfused = x.noFlow === true || (x.cbfRel !== undefined && x.cbfRel < BRAINSTEM_CBF_MIN);
   if (unperfused) s.anoxS = (s.anoxS ?? 0) + SPONT_DT_S;

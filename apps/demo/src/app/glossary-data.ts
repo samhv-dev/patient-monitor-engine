@@ -458,6 +458,7 @@ export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>>
   midazolam: { name: "Midazolam" }, milrinone: { name: "Milrinone" }, morphine: { name: "Morphine" },
   naloxone: { name: "Naloxone" }, neostigmine: { name: "Neostigmine" }, nitroglycerin: { name: "Nitroglycerin" },
   n2o: { name: "Nitrous oxide" }, norepinephrine: { name: "Norepinephrine", uk: "Noradrenaline" }, phenylephrine: { name: "Phenylephrine" },
+  potassiumChloride: { name: "Potassium chloride" }, // FU-7.1 A5
   propofol: { name: "Propofol" }, remifentanil: { name: "Remifentanil" }, rocuronium: { name: "Rocuronium" },
   ropivacaine: { name: "Ropivacaine" }, salbutamol: { name: "Salbutamol (IV/neb)" }, sevoflurane: { name: "Sevoflurane" },
   sodiumBicarbonate: { name: "Sodium bicarbonate 8.4 %" }, succinylcholine: { name: "Succinylcholine" }, sufentanil: { name: "Sufentanil" },

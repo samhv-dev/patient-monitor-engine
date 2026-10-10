@@ -30,6 +30,20 @@ const OCCUPANCY: readonly PdTarget[] = ['betaBlock', 'avNode', 'muscarinic']; //
 
 /** Remifentanil-equivalent Ce that halves MAC ≈ 1.2 ng/mL (tables §5d [VERIFY]) → uOpioid unit. */
 const OPIOID_U1 = 1.2;
+/**
+ * FU-7.1 A2: an opioid on board deepens a HYPNOTIC's vasodilation and venodilation beyond the independent product —
+ * the hypnotic class's `svr` and `v0Frac` effects × (1 + HEMO_SYN_MAX·u/(u + HEMO_SYN_U50)), u = `uOpioid`.
+ * [ENG sizes; fit target [P]: Billard 1994 Anesthesiology 81:1384 (n = 120, ASA 1–2), propofol 2–3.5 mg/kg, systolic
+ * fall 28 mmHg alone vs 53 mmHg after fentanyl 2 µg/kg 5 min earlier (ratio 1.9) and 50 mmHg after 4 µg/kg — the same
+ * within the study, hence the saturating form (fentanyl 2 µg/kg is u ≈ 3.5 at 5 min, 4 µg/kg ≈ 7).]
+ * Hypnotic class only: midazolam co-induction is additive for pressure (research/14 DI-02).
+ * SIZE (FU-7.1 D-4, the D15b precedent): 0.2 is the LARGEST that keeps the two sourced bands this interaction feeds
+ * back into through FU-4 G10's flow-dependent distribution — FU-6's induction apnoea (fentanyl pair 60–240 s: 108 s at
+ * 0.2, 513 s at 2) and FU-7 Task 10 case 2's blunting ratio (0.2–0.7: 0.22 at 0.2, 0.19 at 0.6). It reaches a Billard
+ * ratio of 1.16 against the paper's 1.9 — recorded as a known miss, owner question Q2.
+ */
+export const HEMO_SYN_MAX = 0.2;
+export const HEMO_SYN_U50 = 1.2;
 /** FU-7 (addendum 20): propofol's hypnotic C50 at 35 y, µg/mL (Eleveld BIS 2024; the propofol-equivalent unit). */
 export const PROP_HYP_C50_REF = 3.08;
 /** FU-7 (addendum 20): remifentanil → fentanyl equivalence for the potency output (tables §5d: remi 1.2 ≈ fentanyl 1.5 ng/mL). */
@@ -80,10 +94,17 @@ export function combine(actives: readonly Active[], ctx: PdContext): { fx: DrugE
     }
   const fx: DrugEffect = { ...NEUTRAL_FX };
   const other: Record<string, number> = {};
+  // FU-7.1 A2: the opioid × hypnotic HAEMODYNAMIC interaction — an opioid on board deepens the hypnotic's vasodilation
+  // and venodilation beyond the independent product (Billard 1994, below). Opioid units are the MAC-reduction units of
+  // the response surface (remifentanil-equivalent / OPIOID_U1, antagonist-divided); a single class is unchanged.
+  let uOpHemo = 0;
+  for (const a of actives) if (a.row.cns?.remiEq) uOpHemo += (conc(a) * a.row.cns.remiEq) / OPIOID_U1;
+  const hemoSyn = 1 + (HEMO_SYN_MAX * uOpHemo) / (uOpHemo + HEMO_SYN_U50);
   for (const [key, g] of byKey) {
     const target = key.split('|')[0] as PdTarget;
     let E = g.lin ? Math.max(-3 * Math.abs(g.emax), Math.min(3 * Math.abs(g.emax), g.emax * g.u)) : hill(g.u, 1, g.emax, g.hill);
     if (g.cat) E *= acidosisFactor(ctx.ph) * ctx.vasoResp;
+    if (key === 'svr|hypnotic|-1' || key === 'v0Frac|hypnotic|1') E *= hemoSyn; // FU-7.1 A2
     if ((FX_TARGETS as readonly string[]).includes(target)) {
       const k = target as (typeof FX_TARGETS)[number];
       fx[k] *= Math.max(0.05, 1 + E);
