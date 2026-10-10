@@ -42,7 +42,9 @@ export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   });
   const dispatch = (c: Command) => {
     const r = engine.dispatch(c);
-    if (!r.accepted && LATER_STAGE.test(r.reason ?? '')) unsupported.push({ t: engine.now().simT, type: c.type === 'applyEvent' ? `applyEvent ${(c.event as { kind: string }).kind}` : c.type, reason: r.reason ?? '' });
+    // FU-11 (F21): EVERY refused action makes the run unmeasurable — a refused intervention otherwise graded the unchanged
+    // baseline green. A later-stage gap keeps its own words; any other refusal says "refused".
+    if (!r.accepted) unsupported.push({ t: engine.now().simT, type: c.type === 'applyEvent' ? `applyEvent ${(c.event as { kind: string }).kind}` : c.type, reason: LATER_STAGE.test(r.reason ?? '') ? (r.reason ?? '') : `refused: ${r.reason ?? ''}` });
     return r;
   };
   const driver = new ScenarioDriver({

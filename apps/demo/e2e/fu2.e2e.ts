@@ -10,7 +10,7 @@ let vite: ViteDevServer;
 let base = '';
 // CI run 36294420648: headless WebKit wrote a > 60 KB JPEG (its font rendering) and closed the page on retry; the evidence is Chromium's.
 test.skip(({ browserName }) => browserName === 'webkit', 'heavy evidence run: Chromium only (G7g rule)');
-const out = resolve(import.meta.dirname, '../../../docs/gates/fu-2');
+const out = resolve(import.meta.dirname, process.env.PME_SHOTS === '1' ? '../../../docs/gates/fu-2' : '../../../test-results/gate-shots/fu-2'); // FU-11 K1: evidence only on request
 
 test.beforeAll(async () => {
   vite = await createServer({ root: resolve(import.meta.dirname, '..'), configFile: resolve(import.meta.dirname, '../vite.config.ts'), server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });

@@ -9,6 +9,10 @@ export const WIRE_LIMITS = {
   eventNumericArray: 64,
   /** Longest all-numeric array allowed in a snapshot (the QRS detector history is 128) [ENG]. */
   snapshotNumericArray: 1024,
+  /** FU-11 (F01, BA10): deepest nesting accepted (a real snapshot is 10 deep) [ENG]. */
+  maxDepth: 32,
+  /** FU-11 (F01, BA11): most values in one message (a real snapshot holds ≈ 5 000) [ENG]. */
+  maxNodes: 50_000,
 } as const;
 
 /** Keys that only a waveform leak would use. */
@@ -18,31 +22,67 @@ export class WireSafetyError extends Error {
   override readonly name = 'WireSafetyError';
 }
 
-/** Returns a description of the first sample-like payload in `m`, or null when the message is clean. */
-export function findSampleLeak(m: WireMessage): string | null {
-  const limit = m.kind === 'snapshot' ? WIRE_LIMITS.snapshotNumericArray : WIRE_LIMITS.eventNumericArray;
+/** UTF-8 length of a string, at most 3 bytes per UTF-16 unit (an over-estimate for surrogate pairs; fine for a budget). */
+function utf8Bytes(s: string): number {
+  let n = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    n += c < 0x80 ? 1 : c < 0x800 ? 2 : 3;
+  }
+  return n;
+}
+
+/**
+ * FU-11 (F01, BA10, BA11): one ITERATIVE pass over a message (the recursive walk overflowed the stack on 12 000 nested
+ * objects in a 72 KB hello and took the relay down). Returns a reason for the first sample-like payload and, with
+ * `budget`, for nesting deeper than maxDepth, more than maxNodes values or more than maxBytes of encoded size — the
+ * same limits whether the message arrived as a JSON string or as a structured-clone object.
+ */
+function inspect(m: unknown, limit: number, budget: boolean): string | null {
   const seen = new Set<object>();
-  const walk = (v: unknown, path: string): string | null => {
-    if (v === null || typeof v !== 'object') return null;
+  const stack: Array<[unknown, string, number]> = [[m, 'message', 0]];
+  let nodes = 0;
+  let bytes = 0;
+  const over = () => `more than ${WIRE_LIMITS.maxBytes} bytes`;
+  while (stack.length > 0) {
+    const [v, path, depth] = stack.pop() as [unknown, string, number];
+    if (budget && ++nodes > WIRE_LIMITS.maxNodes) return `more than ${WIRE_LIMITS.maxNodes} values`;
+    if (v === null || typeof v !== 'object') {
+      if (budget) bytes += typeof v === 'string' ? utf8Bytes(v) + 2 : 8;
+      if (bytes > WIRE_LIMITS.maxBytes) return over();
+      continue;
+    }
+    if (depth > WIRE_LIMITS.maxDepth) return `${path}: nested deeper than ${WIRE_LIMITS.maxDepth}`;
     if (ArrayBuffer.isView(v) || v instanceof ArrayBuffer) return `${path}: binary data (${v.constructor.name})`;
-    if (seen.has(v)) return null;
+    if (seen.has(v)) continue;
     seen.add(v);
     if (Array.isArray(v)) {
       if (v.length > limit && v.every((x) => typeof x === 'number')) return `${path}: numeric array of ${v.length} > ${limit}`;
-      for (let i = 0; i < v.length; i++) {
-        const r = walk(v[i], `${path}[${i}]`);
-        if (r) return r;
-      }
-      return null;
+      for (let i = v.length - 1; i >= 0; i--) stack.push([v[i], `${path}[${i}]`, depth + 1]);
+      continue;
     }
-    for (const [k, x] of Object.entries(v)) {
-      if (FORBIDDEN_KEYS.has(k)) return `${path}.${k}: forbidden key`;
-      const r = walk(x, `${path}.${k}`);
-      if (r) return r;
+    const entries = Object.entries(v);
+    for (const [k] of entries) if (FORBIDDEN_KEYS.has(k)) return `${path}.${k}: forbidden key`;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const [k, x] = entries[i] as [string, unknown];
+      if (budget) bytes += utf8Bytes(k) + 4;
+      stack.push([x, `${path}.${k}`, depth + 1]);
     }
-    return null;
-  };
-  return walk(m, 'message');
+    if (bytes > WIRE_LIMITS.maxBytes) return over();
+  }
+  return null;
+}
+
+const numericLimit = (m: WireMessage) => (m.kind === 'snapshot' ? WIRE_LIMITS.snapshotNumericArray : WIRE_LIMITS.eventNumericArray);
+
+/** Returns a description of the first sample-like payload in `m`, or null when the message is clean. */
+export function findSampleLeak(m: WireMessage): string | null {
+  return inspect(m, numericLimit(m), false);
+}
+
+/** FU-11 (F01, BA11): the sample guard plus the size, depth and value budgets (every receiving transport applies it). */
+export function wireBudgetError(m: WireMessage): string | null {
+  return inspect(m, numericLimit(m), true);
 }
 
 /** Throws WireSafetyError when `m` carries samples. Every transport calls this in send(). */
@@ -95,5 +135,5 @@ export function parseWireMessage(data: unknown): WireMessage | null {
     }
   }
   const msg = o as WireMessage;
-  return findSampleLeak(msg) ? null : msg;
+  return wireBudgetError(msg) ? null : msg;
 }

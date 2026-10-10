@@ -8,6 +8,12 @@ import { quantile } from '../stats.ts';
 /** heapGrowthMb is NaN unless Node runs with --expose-gc (the perf:ticks script sets it): without a forced GC it measures garbage. */
 export interface TickStats { ticks: number; p50: number; p95: number; p99: number; max: number; heapGrowthMb: number }
 
+/** FU-11 (F10): the p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. */
+export function overBudget(s: Pick<TickStats, 'p99'>, budgetMs: number | null): string | null {
+  if (budgetMs === null) return null;
+  return s.p99 <= budgetMs ? null : `tick p99 ${Number.isFinite(s.p99) ? s.p99.toFixed(3) : String(s.p99)} ms is over the ${budgetMs} ms budget`;
+}
+
 export async function tickBench(simSeconds = 60, seed = 3): Promise<TickStats> {
   const e = createEngine({ seed, patient: { sensors: { ecg: 'on', spo2: 'on', abp: 'connected', cvp: 'connected', co2: 'on' } } });
   e.dispatch({ id: 'vent', issuedBy: 'perf', type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 } } as never);

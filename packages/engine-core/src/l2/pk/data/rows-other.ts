@@ -22,6 +22,15 @@ export const OTHER_ROWS: DrugRow[] = [
   // --- chemistry owned by 7c (decision 10): 7g lists them; the blood module acts ---
   { id: 'calciumChloride', name: 'Calcium chloride 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '10 mg/kg (0.5–1 g) — 13.6 mEq Ca per g', onset: 'iCa ↑ in 1–3 min (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
   { id: 'calciumGluconate', name: 'Calcium gluconate 10 %', cls: 'electrolyte', amountUnit: 'mg', pk: blood, pd: [], doses: '30 mg/kg (1–3 g) — 4.65 mEq Ca per g', onset: 'as chloride, one third of the calcium per gram (7c)', ir: '?', src: '7c plan decision 8', tag: 'TXT' },
+  // FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride. 7c owns the kinetics, as for every
+  // `blood` row: the infused mmol enter the ECF potassium pool and redistribute into cells with the pool's own τ
+  // (solutes.ts K_TAU_MIN 43 min) while the Na/K-ATPase set point follows total-body K (K_TBK_MMOL 300, Sterns 1981) —
+  // the same pool and kinetics insulin–dextrose shifts K into. `rateActsVia` makes it the first INFUSED blood row
+  // (10–20 mmol/h): KCl is never given as an iv push, and a bolus order is warned about with its source (below).
+  { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
+    rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
+    maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h, central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23]' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in a normal adult (7c mass balance; [TXT] grade C)', ir: '?', src: 'Ali 2026-10-10; M10 ch. 46', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // FU-10 E-FU10-14 (orchestrator ruling; reverses FU-10 plan D6): the row's insulin is the plain insulin row's insulin —
   // the same PK and the same K⁺ pharmacodynamics (`kShift` → bus.metabolic.kShift → 7c), so 7c's empirical whole-effect

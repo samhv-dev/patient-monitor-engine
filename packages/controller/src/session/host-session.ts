@@ -54,6 +54,13 @@ export interface HostSessionOptions {
 export const STAGE_LEAD_TICKS = 3;
 const STAGE_GROUP_TTL_MS = 5000;
 const SEEN_MAX = 500;
+/**
+ * FU-11 (BA11; R50 F2): a hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each
+ * (200 events reached 379 KB) — every wire message holds at most this much JSON and this many events, so it passes
+ * the receivers' 256 KB budget (guard.ts) [ENG: half the budget].
+ */
+export const MESSAGE_BUDGET_BYTES = 128 * 1024;
+export const EVENTS_PER_MESSAGE = 200;
 /** Events that stay on the host: audio is scheduled locally by every monitor from its own engine. */
 const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
 const TICK_S = 0.02;
@@ -142,9 +149,21 @@ export class HostSession {
   flush(): void {
     this.flushQueued = false;
     if (this.batch.length === 0) return;
-    const body = this.batch;
+    const all = this.batch;
     this.batch = [];
-    this.broadcast({ kind: 'event', body });
+    let body: WireEvent[] = [];
+    let bytes = 0;
+    for (const e of all) {
+      const n = JSON.stringify(e).length;
+      if (body.length > 0 && (body.length >= EVENTS_PER_MESSAGE || bytes + n > MESSAGE_BUDGET_BYTES)) {
+        this.broadcast({ kind: 'event', body });
+        body = [];
+        bytes = 0;
+      }
+      body.push(e);
+      bytes += n;
+    }
+    if (body.length > 0) this.broadcast({ kind: 'event', body });
   }
 
   /**
@@ -203,9 +222,20 @@ export class HostSession {
     for (const t of this.transports.keys()) t.send(m);
   }
 
+  /** Peers whose last hello said `viewer` (R50 M13). */
+  private readonly viewerPeers = new Set<string>();
+
   private async receive(t: ManagedTransport, m: WireMessage): Promise<void> {
+    if (m.session !== this.o.session) return; // FU-11 (BA11): a message for another session is not ours, whatever channel it came on
+    // R50 M13: a peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket;
+    // a BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport)
+    if (m.kind === 'hello') (m.role === 'viewer' ? this.viewerPeers.add(m.from) : this.viewerPeers.delete(m.from));
     if (m.from === this.peerId || this.seqs.check(m) === 'duplicate') return;
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
+    if (m.kind === 'command' && this.viewerPeers.has(m.from)) {
+      t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason: 'a viewer cannot command' }));
+      return;
+    }
     if (m.kind === 'command') return this.command(t, m.body, m.from);
   }
 
@@ -251,8 +281,21 @@ export class HostSession {
     if (cmd.type === 'time') this.emitState();
   }
 
-  /** Dispatch one command; returns the result and the command as applied (with atTick). */
+  /**
+   * FU-11 (F06, BA06): a target that throws or rejects (a failed or destroyed worker) answers with a refusal — the
+   * controller gets its ack and the host's command chain moves on instead of waiting behind a promise that never settles.
+   */
   private async apply(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
+    try {
+      return await this.applyOnce(cmd);
+    } catch (err) {
+      const reason = `the monitor could not apply it: ${err instanceof Error ? err.message : String(err)}`;
+      return { result: { accepted: false, tick: this.o.target.now().tick, reason }, applied: cmd };
+    }
+  }
+
+  /** Dispatch one command; returns the result and the command as applied (with atTick). */
+  private async applyOnce(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
     const { tick, simT } = this.o.target.now();
     const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);

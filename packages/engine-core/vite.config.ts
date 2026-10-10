@@ -71,6 +71,7 @@ const SLOW = [
   'test/engine/fu7-volatile.test.ts', // FU-7 Task 15: two 30 sim-min desflurane arms
   'test/engine/drug-layer.test.ts', // FU-7 Tasks 16 + 19: the drug-layer engine cases
   'test/engine/drug-layer-guards.test.ts', // FU-7 Task 19 case 7: the regression guards (split from drug-layer by time)
+  'test/l2/pk/interactions-misc.test.ts', // FU-11 K4 (R50 F9): FU-7's ET-19 four 8 h arms, 15.2 s alone in the fast set — slow-b (the remainder)
 ];
 /**
  * CI amendment 6 (FU-10 gate, orchestrator ruling): SEVEN slow groups, re-packed longest-first from the measured CI

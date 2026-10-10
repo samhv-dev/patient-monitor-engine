@@ -39,6 +39,9 @@ export interface AlarmMgrState {
   pending: Record<string, number>;
   active: Record<string, AlarmEntry>;
   silencedUntil: number | null;
+  /** FU-11 (owner ruling Q1, AL01): the highest priority (lowest level) sounding when Silence was pressed; a new alarm
+   *  above it ends the silence on every profile. null = nothing was sounding (a pre-silence); absent in older snapshots. */
+  silencedLevel?: AlarmLevel | null;
   pausedUntil: number | null;
   lastStatusT: number;
   dirty: boolean;
@@ -163,6 +166,8 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
         return;
       }
       s.silencedUntil = t + (p.silence.durationS ?? 0);
+      const levels = Object.values(s.active).map((e) => e.level);
+      s.silencedLevel = levels.length ? (Math.min(...levels) as AlarmLevel) : null;
       for (const e of Object.values(s.active)) {
         if (e.category === 'technical' && p.silence.technicalActsAsAck) {
           e.acked = true;
@@ -249,7 +254,10 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     if (c.numeric) entry.numeric = c.numeric;
     if (c.holdS) (s.hold ??= {})[c.id] = t + c.holdS;
     s.active[c.id] = entry;
-    if (s.silencedUntil !== null && p.silence.cancelOnNewAlarm) s.silencedUntil = null; // brief §6.4.1: any new alarm ends silence
+    // brief §6.4.1: on a profile with cancelOnNewAlarm any new alarm ends silence; FU-11 (owner ruling Q1, AL01): on every
+    // profile a new alarm of HIGHER priority than those silenced does (no vendor source documents a mute that holds)
+    const above = s.silencedLevel != null && entry.level < s.silencedLevel;
+    if (s.silencedUntil !== null && (p.silence.cancelOnNewAlarm || above)) s.silencedUntil = null;
     emitAlarm(out, t, entry, 'raised');
     s.dirty = true;
   }

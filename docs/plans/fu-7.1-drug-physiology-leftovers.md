@@ -448,7 +448,7 @@ matters (no task depends on another's code), but the block sequence was checked 
 **Why:** executor A owns Part A. This task makes the worktree, proves every Part A find block still matches the base
 exactly once, and records the before-numbers the gate note compares with.
 
-- [ ] **Step 1 — worktree and install.**
+- [x] **Step 1 — worktree and install.**
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin
@@ -457,7 +457,7 @@ cd ../scratch/wt-fu-7.1-a && npx -y pnpm@9.15.9 install --frozen-lockfile
 cp ../plans-backup/fu-7.1-drug-physiology-leftovers.md docs/plans/fu-7.1-drug-physiology-leftovers.md
 ```
 
-- [ ] **Step 2 — block check** (the base must be 48864439 or a later main where every block still matches once):
+- [x] **Step 2 — block check** (the base must be 48864439 or a later main where every block still matches once):
 ```bash
 python3 ../plans-backup/fu-7.1-plan-tools/check-blocks.py --branch a docs/plans/fu-7.1-drug-physiology-leftovers.md .
 ```
@@ -466,7 +466,7 @@ matches, find the same statement by its quoted FU-7.1 neighbour, re-anchor it, a
 changing. (Checked 2026-10-10 against `origin/main` 48864439 AND against a tree carrying FU-11's whole FIXED prototype
 patch: 0 problems both ways.)
 
-- [ ] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-a/before.txt`:
+- [x] **Step 3 — before-numbers** into `<scratchpad>/fu-7.1-a/before.txt`:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/demo test
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk
@@ -480,7 +480,7 @@ Also record, for A4 and A5: `CI=1 … exec vitest run test/l2 test/l3` → **1 1
 0/20 seeds apnoeic) still red as recorded in `test/engine/drug-apnoea.test.ts` (R50 M6: that is the file to quote
 their numbers from).
 
-- [ ] **Step 4 — commit the plan copy and push the branch.**
+- [x] **Step 4 — commit the plan copy and push the branch.**
 ```bash
 git add docs/plans/fu-7.1-drug-physiology-leftovers.md
 git commit -m "docs(plan): FU-7.1 drug and physiology leftovers (branch a copy)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -503,7 +503,7 @@ TOF 0 at 150 s and a flat capnogram at 150 s, and `l2/pk/units.ts toAmount` alre
 **Interfaces:** `PRESETS` gains `cisatracurium`, `vecuronium`, `atracurium`, `mivacurium`; `doseUnits` gains `mg/kg`
 for `cls` `nmb` and `depolariser`; module-private `NMB_CLASSES`.
 
-- [ ] **Step 1 — the failing test.** Create `apps/demo/src/app/drugs.test.ts`:
+- [x] **Step 1 — the failing test.** Create `apps/demo/src/app/drugs.test.ts`:
 
 ```ts
 // FU-7.1 A1 (research/24 P1): the dose picker gives every neuromuscular blocker its intubating dose in mg/kg, and that
@@ -552,13 +552,13 @@ describe('FU-7.1 A1: neuromuscular blockers in the dose picker', () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/drugs.test.ts`
 Expected: 2 failed — the preset test on `undefined` against `[0.15, 'mg/kg']`, and the engine test with
 `FU-7.1 A1: cisatracurium undefined undefined` (the first preset does not exist).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/drugs.ts`, find:
 
@@ -630,7 +630,7 @@ export function doseUnits(d: DrugItem): DoseUnit[] {
 export function rateUnits(d: DrugItem): RateUnit[] {
 ```
 
-- [ ] **Step 4 — run it green.**
+- [x] **Step 4 — run it green.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/drugs.test.ts`
 Expected: 2 passed; the log line `FU-7.1 A1: cisatracurium 0.15 mg/kg: last breath +134 s, EtCO2 0, apnoea flag true`
@@ -639,12 +639,12 @@ that 2 s is the only measured consequence anywhere). This file has no explicit p
 demo package's 5 s default: under three parallel executors it took 44 s of test time and timed out. If it times out,
 re-run it alone before reporting it, and say so in the gate note.
 
-- [ ] **Step 5 — the rest of the demo package and the e2e that opens the drug panel.**
+- [x] **Step 5 — the rest of the demo package and the e2e that opens the drug panel.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo test` (expected 202 passed: 200 + this file's 2) and
 `npx playwright test stage9-app stage9-tasks --retries=0` (both projects; expected unchanged).
 
-- [ ] **Step 6 — typecheck, commit, push.**
+- [x] **Step 6 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add apps/demo/src/app/drugs.ts apps/demo/src/app/drugs.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -674,7 +674,7 @@ ratio is recorded as a known miss with its number, and Q2 asks the owner whether
 
 **Interfaces:** `HEMO_SYN_MAX = 0.2`, `HEMO_SYN_U50 = 1.2` (exported from `combine.ts`; the unit test reads them).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/pk/fu71-hemo-synergy.test.ts`:
 
@@ -783,7 +783,7 @@ describe('FU-7.1 A2: the opioid deepens the induction hypotension', { timeout: 6
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/pk/fu71-hemo-synergy.test.ts test/engine/fu71-induction-synergy.test.ts`
 Expected: 2 failed, 4 passed — the unit file's interaction case (`svr both 0.6963 vs independent 0.6963; factor NaN`,
@@ -791,7 +791,7 @@ Expected: 2 failed, 4 passed — the unit file's interaction case (`svr both 0.6
 first case (`ΔSBP propofol 25.6, with fentanyl 27.8, ratio 1.09`, `expected 1.0882… to be greater than or equal to
 1.15`). The `it.fails` case passes on the base (the miss it records is the base's behaviour too).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/pk/combine.ts`, find:
 
@@ -866,12 +866,12 @@ Replace with:
       fx[k] *= Math.max(0.05, 1 + E);
 ```
 
-- [ ] **Step 4 — run them green.**
+- [x] **Step 4 — run them green.**
 
 Expected: 6 passed — `FU-7.1 A2 unit: svr both 0.6630 vs independent 0.6963; factor 1.165` and
 `FU-7.1 A2 Billard rig: ΔSBP propofol 25.6, with fentanyl 29.6, ratio 1.16; ΔMAP 22.2 / 27.3`.
 
-- [ ] **Step 5 — the two bands this task is capped by, and the drug layer around them.** Run and compare with A0.3:
+- [x] **Step 5 — the two bands this task is capped by, and the drug layer around them.** Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/stimulus-surge.test.ts test/engine/resp-induction.test.ts test/engine/drug-layer.test.ts test/l2/pk test/l2/neuro
 ```
@@ -881,10 +881,10 @@ main 0.23), `propofol + fentanyl apnoea 108 s` and `propofol + remifentanil 186 
 and 184), and DI-01c unchanged. **If any of these four is outside its band, STOP** and report: the size needs a new
 scan (the scan script is `../scratch/plans-backup/fu-7.1-plan-tools/scan-a2.sh`), not a band change.
 
-- [ ] **Step 6 — the slow groups.** Both new files are fast enough to stay in the fast set
+- [x] **Step 6 — the slow groups.** Both new files are fast enough to stay in the fast set
   (`fu71-hemo-synergy` ≈ 1 s, `fu71-induction-synergy` ≈ 10 s), so `vite.config.ts` is NOT touched by branch a.
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/pk/combine.ts packages/engine-core/test/l2/pk/fu71-hemo-synergy.test.ts packages/engine-core/test/engine/fu71-induction-synergy.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -917,7 +917,7 @@ their fit targets); `DriveInputs.diaNd` / `NeuroResp.diaNd` (the non-depolarisin
 `siteBlock` already computes); `diaphragmVtCapMl(strength, nd, ibwKg)` exported from `spont.ts` for its unit test.
 `DIAPH_APNOEA` is NOT changed.
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/engine-core/test/l2/neuro/fu71-diaphragm-two-events.test.ts`:
 
@@ -1029,7 +1029,7 @@ describe('FU-7.1 A4: the first diaphragmatic effort after rocuronium does not re
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro/fu71-diaphragm-two-events.test.ts test/engine/fu71-roc-two-events.test.ts`
 Expected: 2 failed, 1 passed. The unit file's first case fails on the VT of the first effort
@@ -1040,7 +1040,7 @@ second event; the engine file fails with
 the base: `diaphragmVtCapMl` does not exist yet, so run it AFTER Step 3 and say so in the gate note if it is red for
 that reason (an import error, not a behaviour).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l2/neuro/drive.ts`, find:
 
@@ -1265,11 +1265,11 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run them green.** Expected: 3 passed, with
+- [x] **Step 4 — run them green.** Expected: 3 passed, with
   `FU-7.1 A4: first effort 13.8 min (VT 35 mL); effective ventilation 25.4 min; 9.4 min of efforts below the dead space`
   and `FU-7.1 A4 P5 rig: first effort +946 s, VT max 35 mL, EtCO2 max 0, awRR max 0 until the arrest at +960 s`.
 
-- [ ] **Step 5 — every rig that lets a weak patient breathe** (Review Focus 6). Run and compare with A0.3:
+- [x] **Step 5 — every rig that lets a weak patient breathe** (Review Focus 6). Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2/neuro test/engine/neuro-engine.test.ts \
   test/engine/neuro-acceptance.test.ts test/engine/neuro-spont.test.ts test/engine/drug-apnoea.test.ts \
@@ -1281,11 +1281,11 @@ untouched, a depolarising block is uncapped and an unparalysed patient's cap is 
 `neuro-engine`'s rocuronium case takes ≈ 65 s alone and TIMED OUT at 180 s once under three parallel executors: if it
 times out, re-run it alone before reporting it (it passed alone, 10/10).
 
-- [ ] **Step 6 — the slow group.** `fu71-roc-two-events` is ≈ 16 s; it joins the `fu71-*` glob B4 Step 3 adds, so
+- [x] **Step 6 — the slow group.** `fu71-roc-two-events` is ≈ 16 s; it joins the `fu71-*` glob B4 Step 3 adds, so
   branch a touches `vite.config.ts` only if branch b has not merged yet — in that case add the glob here and say so in
   the gate note (the line is identical).
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/neuro packages/engine-core/test/l2/neuro/fu71-diaphragm-two-events.test.ts packages/engine-core/test/engine/fu71-roc-two-events.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -1294,6 +1294,9 @@ git push
 ```
 
 ### Task A5: potassium chloride, infused, in the library and in the app
+
+> **Branch a executor (2026-10-10):** `apps/demo/src/app/glossary.test.ts` (R56) requires a `DRUG_NAMES` row in
+> `glossary-data.ts` (a Never-touch file); the orchestrator ALLOWED that one declared line — see `docs/gates/fu-7.1-a.md` §4.
 
 **Branch** `fu-7.1-a` · **Items** A5 (owner's defect, 2026-10-10: "there is no KCl as drug") · **Files** Modify
 `packages/engine-core/src/l2/pk/data/rows-other.ts`, `src/l2/pk/row.ts`, `src/l2/pk/pipeline.ts`, `src/types-pk.ts`,
@@ -1313,7 +1316,7 @@ Stoelting Co-Existing 8e ch. 23).
 `RateUnit` gains `mmol/h`; `DrugInst.acc` (the amount infused since the last advance pass); the app's `PRESETS` gains
 an infusion-only entry and `rateUnits` answers `mmol/h` for a mmol-dosed drug. **No constant of 7c is touched.**
 
-- [ ] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-kcl.test.ts`:
+- [x] **Step 1 — the failing test.** Create `packages/engine-core/test/engine/fu71-kcl.test.ts`:
 
 ```ts
 // FU-7.1 A5 (Ali 2026-10-10 "there is no KCl as drug"): potassium chloride as an iv INFUSION in mmol, raising plasma K
@@ -1396,13 +1399,13 @@ describe('FU-7.1 A5: potassium chloride', { timeout: 600_000 }, () => {
 });
 ```
 
-- [ ] **Step 2 — run it red.**
+- [x] **Step 2 — run it red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu71-kcl.test.ts`
 Expected: 4 failed — every case throws on the unknown drug (`DRUGS['potassiumChloride']` is undefined, so the
 engine's validator refuses the event and the helper's `send` throws `rejected …: unknown drug potassiumChloride`).
 
-- [ ] **Step 3 — implement.** Six blocks: the row, the row type's rate maximum, the `mmol/h` rate unit, 7g's infused
+- [x] **Step 3 — implement.** Six blocks: the row, the row type's rate maximum, the `mmol/h` rate unit, 7g's infused
   blood-row path (validation, the rate branch and the warnings, the accrual in the step, the flush into the dose log),
   7c's K + Cl load, and the app's preset and rate-unit list.
 
@@ -1768,10 +1771,10 @@ Replace with:
 ```
 
 
-- [ ] **Step 4 — run it green.** Expected: 4 passed (one of them the recorded known miss), with
+- [x] **Step 4 — run it green.** Expected: 4 passed (one of them the recorded known miss), with
   `FU-7.1 A5: 20 mmol/h K 4.20 → 4.97 at 1 h (+0.77), 4.33 at 3 h (+0.13); 10 mmol/h +0.37` and the two warning texts.
 
-- [ ] **Step 5 — the blast radius: the drug layer, 7c's pool and the demo package.** Run and compare with A0.3:
+- [x] **Step 5 — the blast radius: the drug layer, 7c's pool and the demo package.** Run and compare with A0.3:
 ```bash
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l2 test/l3
 CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/blood-hyperk.test.ts test/engine/blood-k-rhythm.test.ts test/engine/blood-sanity-acid.test.ts test/engine/fu9-acid.test.ts test/engine/drug-layer.test.ts test/engine/pk-wiring.test.ts
@@ -1781,10 +1784,10 @@ Expected (the prototype): `test/l2` + `test/l3` **1 160 passed, 1 skipped** (62 
 demo package green with A1's two cases. Nothing about an existing drug changes: a `blood` row without `rateActsVia`
 still refuses an infusion with the same reason, and no existing row has a `maxRatePerH`.
 
-- [ ] **Step 6 — the slow group.** `fu71-kcl` is ≈ 64 s (3.2 sim-hours), so it belongs in SLOW: it is covered by the
+- [x] **Step 6 — the slow group.** `fu71-kcl` is ≈ 64 s (3.2 sim-hours), so it belongs in SLOW: it is covered by the
   `fu71-*` glob of B4 Step 3.
 
-- [ ] **Step 7 — typecheck, commit, push.**
+- [x] **Step 7 — typecheck, commit, push.**
 ```bash
 npx -y pnpm@9.15.9 -r typecheck
 git add packages/engine-core/src/l2/pk packages/engine-core/src/l2/blood/pipeline.ts packages/engine-core/src/types-pk.ts apps/demo/src/app/drugs.ts packages/engine-core/test/engine/fu71-kcl.test.ts docs/plans/fu-7.1-drug-physiology-leftovers.md
@@ -3368,13 +3371,13 @@ git push
 
 **Files:** Create `docs/gates/fu-7.1-a.md`; tick Part A in the branch copy.
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (no stash; keep both sides). FU-11-a/b/c may
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (no stash; keep both sides). FU-11-a/b/c may
   have merged by now; the only file this branch shares with them is `vite.config.ts` (B4 Step 7's note — keep BOTH
   lines). Then confirm the merge left every FU-7.1 hunk: `git diff origin/main --stat` lists
   `apps/demo/src/app/drugs.ts`, `packages/engine-core/src/l2/pk/{combine,row,pipeline}.ts`,
   `src/l2/pk/data/rows-other.ts`, `src/types-pk.ts`, `src/l2/blood/pipeline.ts`, `src/l2/neuro/{drive,pipeline,spont}.ts`,
   the six new test files and this plan.
-- [ ] **Step 2 — full verification** (logs under `<scratchpad>/fu-7.1-a/`): `npx -y pnpm@9.15.9 -r typecheck`;
+- [x] **Step 2 — full verification** (logs under `<scratchpad>/fu-7.1-a/`): `npx -y pnpm@9.15.9 -r typecheck`;
   `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 -r test`; **the whole of `test/l2` and `test/l3`** (R50 I5: ≈ 62 s for
   1 161 cases, and A4/A5 write into three of those directories); the engine slow groups the changed modules belong to
   — **slow-f** (`drug-layer`, `drug-apnoea`, `fu7-nmb-one-state`), **slow-d** (`stimulus-surge`, `clinical-suite`,
@@ -3384,7 +3387,7 @@ git push
   Expected: all green. The new `it.fails` records of this branch are A2's Billard ratio and A5's textbook K rise.
   Under three parallel executors `neuro-engine` and `fidelity-lowflow` have each timed out once at their file limit:
   re-run any timed-out file ALONE before reporting it, and say so in the gate note.
-- [ ] **Step 3 — Review Focus 5 by hand, both browsers.** Open the app, Teach → Drugs, search "cisatracurium": the
+- [x] **Step 3 — Review Focus 5 by hand, both browsers.** Open the app, Teach → Drugs, search "cisatracurium": the
   dose box opens at **0.15 mg/kg** and the unit select contains mg/kg. Press Give now on a spontaneously breathing
   patient and watch the capnogram go flat within 3 min and the apnoea alarm raise. Then check the other three presets
   open at **0.1 / 0.5 / 0.2 mg/kg** (vecuronium / atracurium / mivacurium) — and do NOT expect a flat capnogram from
@@ -3392,7 +3395,7 @@ git push
   only the histamine fall appears. Say that in the gate note so it is not read as a defect (R50 M5). Also search
   "potassium" (and "KCl"): the picker opens on **Infusion** with 10 mmol/h, offers 20 mmol/h and `mmol/h` as the only
   rate unit, and has no bolus preset. Two screenshots (≤ 60 KB each).
-- [ ] **Step 4 — the gate note `docs/gates/fu-7.1-a.md`:** base and head; per task the before → after row from
+- [x] **Step 4 — the gate note `docs/gates/fu-7.1-a.md`:** base and head; per task the before → after row from
   "Prototype results" beside your measurement; the four band numbers of A2 Step 5 (case 1 awake, case 2 ratio, the two
   induction apnoeas) with their bands; **A4's two event times and the first effort's VT, EtCO2 and awRR**; **A5's K
   course (+0.77 at 1 h, +0.13 at 3 h, 10 mmol/h +0.37) with the recorded textbook miss and the two warning texts**;

@@ -102,8 +102,11 @@ export function validateEndoCommand(cmd: Command): string | undefined | null {
       if (site !== undefined && !(VAGAL_SITES as readonly string[]).includes(site)) return `site must be ${VAGAL_SITES.join(', ')}`;
       return i === undefined ? 'intensity is required' : range('intensity', i, 0, 2);
     }
-    case 'meal':
-      return range('carbohydrateG', (ev as { carbohydrateG: number }).carbohydrateG, 0, 300);
+    case 'meal': {
+      // FU-11 (F11): the amount is required (an empty meal was accepted and its undefined grams poisoned the gut model)
+      const g = (ev as { carbohydrateG?: number }).carbohydrateG;
+      return g === undefined ? 'carbohydrateG is required' : range('carbohydrateG', g, 0, 300);
+    }
     case 'thermal7e': {
       const e = ev as Extract<EndoClinicalEvent, { kind: 'thermal7e' }>;
       if (e.exposure !== undefined && !['draped', 'exposed', 'prep'].includes(e.exposure)) return 'exposure must be draped, exposed or prep';
@@ -112,7 +115,7 @@ export function validateEndoCommand(cmd: Command): string | undefined | null {
     case 'condition': {
       const c = ev as { id: string; severity?: number; phase?: string; rampS?: number };
       if (!ENDO_CONDITIONS.includes(c.id)) return null; // Stage 3 (mh), 7a, 7c (burns, dka) …
-      if (c.phase !== undefined && !(c.phase in SEPSIS_PHASES)) return 'phase must be sirs, sepsis, warm or cold';
+      if (c.phase !== undefined && !(typeof c.phase === 'string' && Object.hasOwn(SEPSIS_PHASES, c.phase))) return 'phase must be sirs, sepsis, warm or cold'; // FU-11 (F11)
       return range('severity', c.severity, 0, 1) ?? range('rampS', c.rampS, 10, 7200) ?? (c.severity === undefined ? 'severity is required' : undefined);
     }
     default:

@@ -125,8 +125,21 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
         const probe = offset === null && !learning;
         if (probe) learning = true;
         const g = gen;
-        void Promise.resolve(mon.dispatch(at === undefined ? c : { ...c, atTick: at })).then((r) => {
-          if (!r.accepted) onRejected(c, r.reason);
+        // FU-11 (F08): a probe that is refused, throws or rejects frees the next command to probe (before, `learning`
+        // stayed true, no offset was ever learnt, no clock was published and the ventilator stalled for good)
+        const failed = (reason?: string) => {
+          if (probe && g === gen) learning = false;
+          onRejected(c, reason);
+        };
+        let sent: Promise<DispatchResult> | DispatchResult;
+        try {
+          sent = mon.dispatch(at === undefined ? c : { ...c, atTick: at });
+        } catch (err) {
+          failed(err instanceof Error ? err.message : String(err));
+          continue;
+        }
+        void Promise.resolve(sent).then((r) => {
+          if (!r.accepted) failed(r.reason);
           else if (g !== gen) return; // Stage V.1: learnt from the ventilator before a restart — never install it
           else if (probe) {
             offset = r.tick - m.tick + LEAD_TICKS;
@@ -134,7 +147,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
             engTick = Math.max(engTick, r.tick - 1);
             publishClock();
           } else if (at !== undefined && r.tick > at) offset = (offset ?? 0) + r.tick - at;
-        });
+        }, (err: unknown) => failed(err instanceof Error ? err.message : String(err)));
       }
     } else if (m.kind === 'time') {
       if (m.action === 'pause') mon.pause?.();

@@ -37,7 +37,7 @@ describe('link ports', () => {
     b.close();
   });
 
-  it('monitor side: frames replay on their own engine ticks, lungState goes back, the ventilator never outruns the engine', async () => {
+  it('monitor side: frames replay on their own engine ticks, lungState goes back, the ventilator never outruns the engine', { timeout: 30_000 }, async () => { // FU-11 K3: a real engine under CI load (CI amendment 3)
     const [ventPort, monPort] = createLocalPortPair();
     const e = createEngine({ seed: 7, patient: PROFILES.normal!.patient });
     const scheduled: number[] = [];
@@ -72,7 +72,7 @@ describe('link ports', () => {
   // ventilator's last frame (tick ≈ 3000) became the offset probe; the NEW ventilator (tick 1) reset the offset while
   // that probe was in flight, and its late result then installed offset 1 − 3000 + 5: every later frame carried a
   // negative atTick and was rejected — the monitor showed apnoea with the ventilator breathing.
-  it('monitor side: a ventilator restart while the offset probe is in flight relearns from the new ventilator', async () => {
+  it('monitor side: a ventilator restart while the offset probe is in flight relearns from the new ventilator', { timeout: 30_000 }, async () => { // FU-11 K3: a real engine under CI load (CI amendment 3)
     const [ventPort, monPort] = createLocalPortPair();
     const sent: Command[] = [];
     let engTick = 0;
