@@ -146,3 +146,27 @@ stage's.
 
 The trend axes auto-scale to the data. A 96–99 % SpO₂ chart therefore shows a 3-point change as full height, though the
 printed axis range says so.
+
+## 9. After the dry run (orchestrator decisions, 2026-10-11)
+
+- **DV-1 (test only, 337bb3c9).** The §4 assertion now matches `00:0[01]`. Exactly one "began" row is still asserted.
+- **DV-2 (908ade09).** Each trend chart's axis has a least span, centred on the data when their range is smaller:
+  - SpO₂ 20 points, never above 100
+  - HR 40 bpm
+  - ART M / NIBP M 40 mmHg
+  - EtCO₂ 20 mmHg
+  - temperature 2 °C
+  - never below zero when the data are not
+  - RR has no floor and keeps its old behaviour (± 1 when flat)
+
+  This is `axisRange` in `debrief.ts`, with one unit test. It closes the §8 note on the SpO₂ axis.
+- **Evidence regenerated:**
+  - `debrief.pdf` and both print screenshots on 908ade09: 5 A4 pages, footer and "Build 908ade09" on every page. Both
+    engines passed, including DV-1.
+  - The MH and tamponade Debriefs on a kit built from 58b2c13c (908ade09 plus the evidence commit, docs only), both
+    engines, all 4 passed: MH 7 A4 pages, tamponade 5 A4 pages, footer and "Build 58b2c13c" on every page.
+  - The run sheets of those two cards were refreshed. In this run MH's potassium objective was met: the presenter's
+    timing varies from run to run.
+  - The owner's folder now holds these PDFs and the kit built from 58b2c13c. The 8d6a2275 copies were moved to
+    `_to_delete/`.
+- The full suites were not re-run (orchestrator: not until "merge main and open the PR").

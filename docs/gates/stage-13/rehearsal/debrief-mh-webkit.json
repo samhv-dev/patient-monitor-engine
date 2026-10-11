@@ -5,23 +5,23 @@
   "objectives": [
     {
       "status": "not met",
-      "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation) The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 13 min 20 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:52 → 20:12; within 2 min 00 s asked)."
+      "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation) The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 12 min 57 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:52 → 19:49; within 2 min 00 s asked)."
     },
     {
       "status": "met",
-      "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisis Dantrolene 1 min 09 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (20:12 → 21:21; within 5 min 00 s asked)."
+      "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisis Dantrolene 1 min 01 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (19:49 → 20:50; within 5 min 00 s asked)."
     },
     {
       "status": "not assessable",
       "text": "– Not assessable Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg This objective has no rule: the instructor judges it."
     },
     {
-      "status": "not met",
-      "text": "✗ Not met Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L Calcium chloride 10 % or Insulin + dextrose 5 min 15 s after K⁺ above 5.5 mmol/L (17:12 → 22:26; within 5 min 00 s asked)."
+      "status": "met",
+      "text": "✓ Met Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L Calcium chloride 10 % or Insulin + dextrose 4 min 39 s after K⁺ above 5.5 mmol/L (17:12 → 21:50; within 5 min 00 s asked)."
     },
     {
       "status": "met",
-      "text": "✓ Met Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg The state \"Ventilation back to 12 × 500, O₂ 100 %\" 2 min 24 s after EtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (37:43 → 40:06; within 5 min 00 s asked)."
+      "text": "✓ Met Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg The state \"Ventilation back to 12 × 500, O₂ 100 %\" 2 min 05 s after EtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (37:01 → 39:06; within 5 min 00 s asked)."
     }
   ],
   "facts": [
@@ -35,18 +35,18 @@
     ],
     [
       "Highest EtCO₂",
-      "82 mmHg at 18:56"
+      "81 mmHg at 18:36"
     ],
     [
       "Highest T1 / T2",
-      "39.6 °C at 29:33"
+      "39.5 °C at 28:30"
     ],
     [
       "Labs (the model): last (lowest–highest)",
-      "K⁺ 4.5 mmol/L (4.2–5.9) · Lactate 6.4 mmol/L (1.0–7.6) · pH 7.34 (7.09–7.41) · Glucose 5.6 mmol/L (5.6–17.3) · Tcore 39.4 °C (36.7–39.6)"
+      "K⁺ 4.5 mmol/L (4.2–5.9) · Lactate 6.4 mmol/L (1.0–7.4) · pH 7.33 (7.09–7.41) · Glucose 5.9 mmol/L (5.6–17.2) · Tcore 39.4 °C (36.7–39.5)"
     ]
   ],
   "timelineRows": 36,
-  "minuteRows": 42,
+  "minuteRows": 41,
   "title": "Debrief Malignant hyperthermia 2026-10-11"
 }
