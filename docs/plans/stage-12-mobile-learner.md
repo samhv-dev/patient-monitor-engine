@@ -3058,7 +3058,7 @@ git push
 **Files:**
 - Create: `scripts/classroom/playwright.classroom.config.ts`, `scripts/classroom/load.classroom.ts`
 
-- [ ] **Step 1: Create the script and its config** (its own Playwright config: `pnpm test:e2e` and CI never run it)
+- [x] **Step 1: Create the script and its config** (its own Playwright config: `pnpm test:e2e` and CI never run it)
 
 Create `scripts/classroom/load.classroom.ts`:
 
@@ -3259,7 +3259,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Run it** (one run at a time; it starts its own relay and builds the app unless `CLASSROOM_APP` names a
+- [x] **Step 2: Run it** (one run at a time; it starts its own relay and builds the app unless `CLASSROOM_APP` names a
   built one, e.g. the kit's `app/`):
 
 ```bash
@@ -3272,7 +3272,7 @@ Expected: `1 passed` each; one JSON line per phase; `test-results/classroom/load
 Capacity table: a relay CPU over 10 % at 30 phones, a lag p95 over 100 ms, a phone that is not `synced`, or a 61st
 phone that is not refused is a finding for the gate note (not a band: this machine is shared — record the load average).
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 ```bash
 git add scripts/classroom
