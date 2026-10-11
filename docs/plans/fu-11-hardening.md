@@ -8770,22 +8770,22 @@ M5/Q4, the showcase's Sound and Ventilator-view items), ending with
 
 **Files:** Create `docs/gates/fu-11-d.md`, `docs/gates/fu-11-d/**` (≤ 60 KB each); tick G in the plan copy (from b).
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (b must be in; if not, stop: d waits for b).
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (b must be in; if not, stop: d waits for b).
   `python3 ../plans-backup/fu-11-plan-tools/check-blocks.py --branch d --b-merged …` is no longer meaningful after the
   merge; confirm with `git diff origin/main --stat` that exactly Part G's files differ.
-- [ ] **Step 2 — full verification** as Gate B Step 2 (fast suites, typecheck, build, the e2e on both projects).
-- [ ] **Step 3 — the learner monitor (Review Focus 3 and 4).** (3) with a follower open: change the instructor's skin
+- [x] **Step 2 — full verification** as Gate B Step 2 (fast suites, typecheck, build, the e2e on both projects).
+- [x] **Step 3 — the learner monitor (Review Focus 3 and 4).** (3) with a follower open: change the instructor's skin
   (Settings) → the follower follows within 1 s; press Silence on the instructor → the follower still sounds (sound on
   in both windows; by ear, or `__pmeFollower.monitor.audioLog` growing); "Silence here" on the follower → the
   instructor's alarm state (`__pmeApp.link.alarms.silencedUntil`) unchanged; reload the instructor → the follower
   re-syncs under the same code; close it → "The instructor's monitor is not answering" within 5 s. (4) host frame p95
   on the bronchospasm case at ×4 with the Ventilator view, with and without a follower window (`__pmeApp.frames`,
   30 s each; report both).
-- [ ] **Step 4 — rehearsal** as Gate B Step 3 with `multiwindow.showcase.ts` and a follower open in each case; the
+- [x] **Step 4 — rehearsal** as Gate B Step 3 with `multiwindow.showcase.ts` and a follower open in each case; the
   numbers equal Gate B's.
-- [ ] **Step 5 — evidence:** the follower beside the host (same numbers, same skin); the follower with the Ventilator
+- [x] **Step 5 — evidence:** the follower beside the host (same numbers, same skin); the follower with the Ventilator
   view; the follower after a skin change.
-- [ ] **Step 6 — the gate note `docs/gates/fu-11-d.md`:** the measurements above, the declared deviation (mirror frames
+- [x] **Step 6 — the gate note `docs/gates/fu-11-d.md`:** the measurements above, the declared deviation (mirror frames
   over BroadcastChannel only, brief §3.7, R50 F3), the wire contract pointer (`follower.ts` header) for the later
   mobile plan.
 - [ ] **Step 7 — pull request** `gh pr create --base main --head fu-11-d --title "FU-11 (d): the second-screen learner

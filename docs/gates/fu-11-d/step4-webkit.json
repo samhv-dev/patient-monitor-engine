@@ -1,0 +1,20 @@
+{
+  "without": {
+    "n": 1801,
+    "p95": 18
+  },
+  "withFollower": {
+    "n": 1800,
+    "p95": 18
+  },
+  "followerResyncsIn30s": 0,
+  "follower": {
+    "status": "synced",
+    "resyncs": 0,
+    "drift": 0,
+    "lag": 0.14468268180377208,
+    "rate": 4,
+    "paused": false,
+    "pill": "Following session DR4AJH"
+  }
+}

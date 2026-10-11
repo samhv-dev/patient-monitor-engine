@@ -1,0 +1,121 @@
+{
+  "chromium.styleFollowMs": {
+    "from": "saadat-like",
+    "to": "philips-like",
+    "ms": 7
+  },
+  "chromium.speed": {
+    "x4": {
+      "follower": 3.99,
+      "host": 4
+    },
+    "×1": {
+      "follower": 1.02,
+      "host": 1
+    },
+    "×2": {
+      "follower": 2,
+      "host": 2
+    }
+  },
+  "chromium.pause": {
+    "paused": {
+      "rate": 0,
+      "sync": {
+        "status": "synced",
+        "resyncs": 0,
+        "drift": 0,
+        "lag": 0.0999235305591597,
+        "rate": 2,
+        "paused": true,
+        "pill": "Following session W7X8UW (paused)"
+      }
+    },
+    "resumedWindow1": {
+      "host": 2,
+      "follower": 1.35,
+      "gapS": 0.12
+    },
+    "resumedWindow2": {
+      "host": 2,
+      "follower": 2.01,
+      "gapS": 0.12
+    },
+    "sync": {
+      "status": "synced",
+      "resyncs": 0,
+      "drift": 0,
+      "lag": 0.10141153506628342,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session W7X8UW"
+    }
+  },
+  "chromium.fastForwardControls": [],
+  "chromium.instructorSilence": {
+    "before": {
+      "instr": 5,
+      "fol": 5
+    },
+    "atSilence": {
+      "instr": 5,
+      "fol": 5
+    },
+    "sixSecondsLater": {
+      "instr": 5,
+      "fol": 10
+    },
+    "instructorSilencedUntil": 191.3
+  },
+  "chromium.silenceHere": {
+    "pressed": "true",
+    "followerTonesIn5s": 0,
+    "instructorSilencedUntilBefore": null,
+    "after": null
+  },
+  "chromium.timeline": {
+    "resyncsBefore": 0,
+    "afterRestore": {
+      "status": "synced",
+      "resyncs": 1,
+      "drift": 0,
+      "lag": 0.10134200530008286,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session W7X8UW"
+    },
+    "clockAfterRestore": {
+      "host": 105.5,
+      "follower": 105.3
+    },
+    "afterRestart": {
+      "status": "synced",
+      "resyncs": 2,
+      "drift": 0,
+      "lag": 0.09524932743355308,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session W7X8UW"
+    },
+    "clockAfterRestart": {
+      "host": 8.7,
+      "follower": 8.6
+    }
+  },
+  "chromium.reload": {
+    "sameCode": true,
+    "resyncedMs": 4254,
+    "sync": {
+      "status": "synced",
+      "resyncs": 3,
+      "drift": 0,
+      "lag": 0.09199230769197042,
+      "rate": 1,
+      "paused": false,
+      "pill": "Following session W7X8UW"
+    }
+  },
+  "chromium.closed": {
+    "notAnsweringAfterMs": 5325
+  }
+}

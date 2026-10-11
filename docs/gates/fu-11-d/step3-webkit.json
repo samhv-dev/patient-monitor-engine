@@ -1,0 +1,121 @@
+{
+  "webkit.styleFollowMs": {
+    "from": "saadat-like",
+    "to": "philips-like",
+    "ms": 85
+  },
+  "webkit.speed": {
+    "x4": {
+      "follower": 3.99,
+      "host": 4
+    },
+    "×1": {
+      "follower": 1.04,
+      "host": 1
+    },
+    "×2": {
+      "follower": 2,
+      "host": 2
+    }
+  },
+  "webkit.pause": {
+    "paused": {
+      "rate": 0,
+      "sync": {
+        "status": "synced",
+        "resyncs": 0,
+        "drift": 0,
+        "lag": 0.10458345720631002,
+        "rate": 2,
+        "paused": true,
+        "pill": "Following session M5DZUD (paused)"
+      }
+    },
+    "resumedWindow1": {
+      "host": 2,
+      "follower": 1.25,
+      "gapS": 0.11
+    },
+    "resumedWindow2": {
+      "host": 2.01,
+      "follower": 2.01,
+      "gapS": 0.12
+    },
+    "sync": {
+      "status": "synced",
+      "resyncs": 0,
+      "drift": 0,
+      "lag": 0.09909502300626372,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session M5DZUD"
+    }
+  },
+  "webkit.fastForwardControls": [],
+  "webkit.instructorSilence": {
+    "before": {
+      "instr": 5,
+      "fol": 5
+    },
+    "atSilence": {
+      "instr": 5,
+      "fol": 5
+    },
+    "sixSecondsLater": {
+      "instr": 5,
+      "fol": 10
+    },
+    "instructorSilencedUntil": 191.44
+  },
+  "webkit.silenceHere": {
+    "pressed": "true",
+    "followerTonesIn5s": 0,
+    "instructorSilencedUntilBefore": null,
+    "after": null
+  },
+  "webkit.timeline": {
+    "resyncsBefore": 0,
+    "afterRestore": {
+      "status": "synced",
+      "resyncs": 1,
+      "drift": 0,
+      "lag": 0.10012166997860561,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session M5DZUD"
+    },
+    "clockAfterRestore": {
+      "host": 105.8,
+      "follower": 105.7
+    },
+    "afterRestart": {
+      "status": "synced",
+      "resyncs": 2,
+      "drift": 0,
+      "lag": 0.09370207793462093,
+      "rate": 2,
+      "paused": false,
+      "pill": "Following session M5DZUD"
+    },
+    "clockAfterRestart": {
+      "host": 8.5,
+      "follower": 8.4
+    }
+  },
+  "webkit.reload": {
+    "sameCode": true,
+    "resyncedMs": 4288,
+    "sync": {
+      "status": "synced",
+      "resyncs": 3,
+      "drift": 0,
+      "lag": 0.09512514174205888,
+      "rate": 1,
+      "paused": false,
+      "pill": "Following session M5DZUD"
+    }
+  },
+  "webkit.closed": {
+    "notAnsweringAfterMs": 5378
+  }
+}
