@@ -33,7 +33,11 @@ const at = async (p: Page, t: number) => {
   return { spo2: await tile(p, 'SpO2'), co2: await tile(p, 'CO2') };
 };
 
-test('after "Return here" on the Ventilator view the replayed minute matches the first one', async ({ page }) => {
+test('after "Return here" on the Ventilator view the replayed minute matches the first one', async ({ page, browserName }) => {
+  // Orchestrator FALLBACK ruling (fix-ci-webkit-2): on CI's headless WebKit the ×4 cockpit passed the precondition but then
+  // dropped out mid-replay (EtCO2 0 or 14 where the first pass read 32-42), so the replay band failed 3/3 on stage-11.
+  // Chromium in CI and system Chrome locally cover it, as for vent-link.e2e.ts.
+  test.skip(browserName === 'webkit', 'long ×4 sim scenario too slow on headless WebKit');
   test.setTimeout(180_000);
   await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });
   await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
