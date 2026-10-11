@@ -78,6 +78,8 @@ const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
 const TICK_S = 0.02;
 /** FU-11 (K2): a viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every resync) [ENG]. */
 const VIEWER_TTL_MS = 600_000;
+/** Stage 12: while the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. */
+export const COCKPIT_EVENT_MS = 1000;
 /**
  * Stage 10: a fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and
  * its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG].
@@ -108,6 +110,7 @@ export class HostSession {
   private readonly timer: ReturnType<typeof setInterval> | null;
   private bookmarkN = 0;
   private viewerSeenAt = -Infinity; // FU-11 (K2): wall ms of the last viewer hello
+  private cockpitSaidAt = -Infinity; // Stage 12: wall ms of the last `cockpit` event
   private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // Stage 10: the fast-forward running
   private activeAlarms = new Set<string>(); // Stage 10: the alarm ids of the last alarmStatus (what is NEW during a span)
   private timelines = 0; // Stage 10: newTimeline() count — a fast-forward stops when its timeline ends
@@ -186,9 +189,22 @@ export class HostSession {
    * viewer resyncs above 1 ms), and a follower-side cockpit learns its own tick offset.
    */
   mirror(cmd: Command, result: DispatchResult): void {
-    if (!result.accepted || this.ff || this.now() - this.viewerSeenAt > VIEWER_TTL_MS) return; // Stage 10: a viewer waits out a fast-forward
+    if (!result.accepted || this.ff) return; // Stage 10: a viewer waits out a fast-forward
+    this.cockpitNotice(result.tick); // Stage 12: whether or not a viewer said hello lately (a phone that joined long ago)
+    if (this.now() - this.viewerSeenAt > VIEWER_TTL_MS) return;
     const m = this.stamp({ kind: 'event', body: [{ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: { ...cmd, atTick: result.tick }, mirror: true } satisfies AppliedResolution }] });
     for (const t of this.transports.keys()) if (t.kind === 'broadcastChannel') t.send(m);
+  }
+
+  /** Stage 12: a viewer on the network gets no frames — it is told the cockpit drives (once a second), and holds. */
+  private cockpitNotice(tick: Tick): void {
+    const now = this.now();
+    if (now - this.cockpitSaidAt < COCKPIT_EVENT_MS) return;
+    const net = [...this.transports.keys()].filter((t) => t.kind === 'websocket' || t.kind === 'webrtc');
+    if (net.length === 0) return; // nothing stamped for nobody (R50 M1)
+    this.cockpitSaidAt = now;
+    const c = this.stamp({ kind: 'event', body: [{ type: 'cockpit', t: tick * TICK_S, tick }] });
+    for (const t of net) t.send(c);
   }
 
   /** Broadcast an event that did not come from the engine (e.g. `scenario`), batched with this frame's events. */

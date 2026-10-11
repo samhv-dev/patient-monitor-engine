@@ -129,6 +129,11 @@ export class ViewerSync {
     for (const off of this.offs) off();
   }
 
+  /** Stage 12: start again from a fresh snapshot of the host (a phone that held while it could not follow). */
+  resync(): void {
+    this.requestSync(true);
+  }
+
   // --- internals ---------------------------------------------------------------------------------------------
   /** `newTimeline`: the host's clock may have gone back — the old anchor must not steer the restored engine (F04, BA04). */
   private requestSync(newTimeline = false): void {

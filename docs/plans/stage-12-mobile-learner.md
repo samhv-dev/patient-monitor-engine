@@ -1562,7 +1562,7 @@ git push
   sends it, Task 6 wears it); `COCKPIT_EVENT_MS = 1000` exported from `host-session.ts`; `ViewerSync.resync(): void`
   (a fresh hello and snapshot, the anchor dropped).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/controller/test/session/s12-cockpit.test.ts`:
 
@@ -1630,9 +1630,9 @@ describe('Stage 12: the cockpit event', () => {
 });
 ```
 
-- [ ] **Step 2: Run it red** — `cd packages/controller && npx vitest run test/session/s12-cockpit.test.ts` → 1 failed — `expected [] to have a length of 1 but got +0` (no `cockpit` event).
+- [x] **Step 2: Run it red** — `cd packages/controller && npx vitest run test/session/s12-cockpit.test.ts` → 1 failed — `expected [] to have a length of 1 but got +0` (no `cockpit` event).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/controller/src/protocol.ts`, find:
 
@@ -1751,10 +1751,10 @@ Replace with:
     this.requestSync(true);
 ```
 
-- [ ] **Step 4: Run green** — the same file, `npx vitest run test/session/fu11-mirror.test.ts test/session/viewer-sync.test.ts
+- [x] **Step 4: Run green** — the same file, `npx vitest run test/session/fu11-mirror.test.ts test/session/viewer-sync.test.ts
   test/session/s10-fast-forward.test.ts test/relay` and the controller typecheck.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/controller

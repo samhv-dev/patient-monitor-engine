@@ -120,7 +120,18 @@ export type ExtraEvent =
    * Stage 10: the host's fast-forward from `fromT` to `toT` began (`wallMs`: the wall time it is paced to), or ended at `t`
    * (`stopped`: why it ended early; `alarms`: every alarm raised during it, once, `ended` = no longer active at its end).
    */
-  | { type: 'fastForward'; t: SimSeconds; tick: Tick; phase: 'start' | 'end'; fromT: SimSeconds; toT: SimSeconds; wallMs?: number; stopped?: string; alarms?: FastForwardAlarm[] };
+  | { type: 'fastForward'; t: SimSeconds; tick: Tick; phase: 'start' | 'end'; fromT: SimSeconds; toT: SimSeconds; wallMs?: number; stopped?: string; alarms?: FastForwardAlarm[] }
+  /**
+   * Stage 12: the host's Ventilator view drives the patient (its frames reach same-browser viewers only, FU-11 R50 F3):
+   * sent at most once a second to every other transport while it does, so a phone on the relay knows it cannot follow.
+   */
+  | { type: 'cockpit'; t: SimSeconds; tick: Tick }
+  /**
+   * Stage 12 (owner ruling Q4): the instructor's monitor style, for a phone on the relay (the second screen has its own
+   * same-browser style channel, FU-11 G2). Sent with every answer to a hello (`replay: true`: the relay routes it as the
+   * welcome) and at every change. Presentation only.
+   */
+  | { type: 'style'; skin: string; theme: string; replay?: true };
 
 /** Stage 10: an alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
@@ -148,11 +159,12 @@ export type WireEvent = EngineEvent | ExtraEvent;
 /**
  * Stage 12: the events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor
  * (`state`), the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward
- * (ViewerSync; the follower page's liveness and pause read the same) and the scenario's state (small, 1 Hz at most). The
- * relay sends a viewer on the network only these (at ×8 the rest — measurements, alarm and organ status its own engine
- * computes — was 4/5 of a phone's traffic).
+ * (ViewerSync; the follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the
+ * Ventilator view's `cockpit` notice and the instructor's monitor `style` (R50 I3). The relay sends a viewer on the
+ * network only these (at ×8 the rest — measurements, alarm and organ status its own engine computes — was 4/5 of a
+ * phone's traffic).
  */
-export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario']);
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 
