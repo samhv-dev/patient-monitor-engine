@@ -144,6 +144,15 @@ export const fastForwardDone = (e: { t: SimSeconds; fromT: SimSeconds; toT: SimS
 export type TimelineCause = 'restart' | 'restore';
 /** Brief §7.3 `EngineEvent` as it travels on the wire. */
 export type WireEvent = EngineEvent | ExtraEvent;
+
+/**
+ * Stage 12: the events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor
+ * (`state`), the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward
+ * (ViewerSync; the follower page's liveness and pause read the same) and the scenario's state (small, 1 Hz at most). The
+ * relay sends a viewer on the network only these (at ×8 the rest — measurements, alarm and organ status its own engine
+ * computes — was 4/5 of a phone's traffic).
+ */
+export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
 export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }>;
 

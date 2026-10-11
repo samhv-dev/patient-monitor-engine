@@ -980,7 +980,7 @@ git push
   `'style'` to it); the relay's welcome rule: a host event message with any event flagged `replay: true` (on the event,
   or a `commandApplied`'s `resolved.replay`) goes only to the peers awaiting a snapshot.
 
-- [ ] **Step 1: Write the failing tests** (the first replaced test now sends a `state`, which every peer gets; the two
+- [x] **Step 1: Write the failing tests** (the first replaced test now sends a `state`, which every peer gets; the two
   new ones pin the rules)
 
 In `packages/controller/test/relay/relay.test.ts`, find:
@@ -1053,12 +1053,12 @@ Replace with:
     expect(c1.wire('event')).toEqual([]);
 ```
 
-- [ ] **Step 2: Run them red**
+- [x] **Step 2: Run them red**
 
 Run: `cd packages/controller && npx vitest run test/relay/relay.test.ts`
 Expected (prototype): 3 failed | 7 passed (10) — the viewer gets the measurement-only message (`timed out waiting for condition`); v1 gets the replay sent for v2, and c1 the style welcome sent for c2 (`expected [ { v: 1, session: 'RQY234', …(5) } ] to deeply equal []`).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/controller/relay/server.ts`, find:
 
@@ -1122,10 +1122,10 @@ export type WireEvent = EngineEvent | ExtraEvent;
 export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario']);
 ```
 
-- [ ] **Step 4: Run green** — `npx vitest run test/relay` (all, including FU-11's `fu11-relay-mirror`: its sentinel is a
+- [x] **Step 4: Run green** — `npx vitest run test/relay` (all, including FU-11's `fu11-relay-mirror`: its sentinel is a
   `scenario` event, which a viewer still gets) and `npx -y pnpm@9.15.9 --filter @pme/controller typecheck`.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/controller

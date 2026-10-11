@@ -8,7 +8,7 @@ import { createServer, type IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, type Role, type WireMessage } from '../src/protocol.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, type Role, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -157,7 +157,24 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // FU-11 (R50 F3): a host's `mirror` frames (the Ventilator view's samples) are for same-browser viewers only —
         // brief §3.7: raw samples never cross the wire
         if (m.body.some((e) => e.type === 'commandApplied' && (e.resolved as { mirror?: unknown } | undefined)?.mirror === true)) return void dropped++;
-        for (const p of room.peers) raw(p.ws, data);
+        {
+          // Stage 12: the host's answer to a hello (its sticky replays) is for the peers waiting on a snapshot — sent to
+          // the whole room, 30 phones joining (or re-syncing after a fast-forward) made 30 × 30 copies of it
+          // (a welcome event of the host's own — its style — carries `replay: true` itself)
+          const welcome = m.body.some((e) => (e as { replay?: unknown }).replay === true || (e.type === 'commandApplied' && (e.resolved as { replay?: unknown } | undefined)?.replay === true));
+          let lean: string | null | undefined; // the viewers' copy (VIEWER_EVENTS only), made once per message
+          for (const p of welcome ? room.awaiting : room.peers) {
+            if (p.role !== 'viewer') {
+              raw(p.ws, data);
+              continue;
+            }
+            if (lean === undefined) {
+              const body = m.body.filter((e) => VIEWER_EVENTS.has(e.type));
+              lean = body.length === 0 ? null : body.length === m.body.length ? data : JSON.stringify({ ...m, body });
+            }
+            if (lean !== null) raw(p.ws, lean);
+          }
+        }
         return;
       case 'snapshot':
         if (!isHost) return void dropped++;
