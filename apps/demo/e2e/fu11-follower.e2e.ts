@@ -19,12 +19,52 @@ const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-
 const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === (await tiles(p)) || `${await tiles(f)} | ${await tiles(p)}`, { timeout: 10_000, intervals: [100] }).toBe(true);
 const send = (p: Page, c: unknown) => p.evaluate((x) => (window as unknown as W).__pmeApp.link.send(x), c);
 
+// fix-ci-webkit-2 (diagnostic): on CI's Linux WebKit the follower never reached 'synced' within 30 s (9/9 attempts over
+// three pushes; macOS WebKit and CI Chromium pass). The wait polls on a timer, not on the popup's rAF, and a timeout
+// reports what each window saw, so the next CI run names the cause instead of a bare timeout.
+type Diag = Record<string, unknown>;
+const followerDiag = (f: Page) => f.evaluate(() => {
+  const w = window as unknown as { __pmeFollower?: { sync: Sync | null; transport: { status: string; rejected: number } }; __pmeApp?: { frames: number[] } };
+  const s = w.__pmeFollower?.sync;
+  return { mounted: !!w.__pmeFollower, sync: s ? { status: s.status, resyncs: s.resyncs } : null, transport: w.__pmeFollower ? { status: w.__pmeFollower.transport.status, rejected: w.__pmeFollower.transport.rejected } : null, vis: document.visibilityState, focus: document.hasFocus(), frames: w.__pmeApp?.frames.length ?? -1, pill: document.querySelector('.status-pill')?.textContent ?? null };
+});
+const hostDiag = (p: Page) => p.evaluate(() => {
+  const w = window as unknown as { __pmeApp: { frames: number[]; session: { code: string; host: { stats: unknown } } } };
+  return { code: w.__pmeApp.session.code, stats: w.__pmeApp.session.host.stats, vis: document.visibilityState, frames: w.__pmeApp.frames.length };
+});
+/** Can a plain BroadcastChannel message cross from `a` to `b` (same origin, `name`)? */
+async function bcCrosses(a: Page, b: Page, name: string): Promise<boolean> {
+  await b.evaluate((n) => { const c = new BroadcastChannel(n); (window as unknown as Diag)[n] = false; c.onmessage = () => ((window as unknown as Diag)[n] = true); (window as unknown as Diag)[`${n}-ch`] = c; }, name);
+  await a.evaluate((n) => { const c = new BroadcastChannel(n); c.postMessage('x'); setTimeout(() => c.close(), 2000); }, name);
+  await b.waitForTimeout(1000);
+  return b.evaluate((n) => (window as unknown as Diag)[n] === true, name);
+}
+
 async function follow(page: Page, scenario: string): Promise<Page> {
+  const logs: string[] = [];
+  const ctx = page.context();
+  ctx.on('console', (m) => m.page() !== page && logs.length < 40 && logs.push(`${m.type()}: ${m.text()}`));
+  ctx.on('weberror', (e) => logs.length < 40 && logs.push(`error: ${e.error().message}`));
   await openApp(page, base, `?scenario=${scenario}`, { warmMs: 1500 });
   await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
   await page.evaluate(() => (location.hash = '#/monitor'));
-  const [f] = await Promise.all([page.context().waitForEvent('page'), page.getByRole('button', { name: 'Open on a second screen', includeHidden: true }).dispatchEvent('click')]);
-  await f!.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
+  const [f] = await Promise.all([ctx.waitForEvent('page'), page.getByRole('button', { name: 'Open on a second screen', includeHidden: true }).dispatchEvent('click')]);
+  const synced = () => f!.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
+  try {
+    await synced();
+  } catch {
+    const d: Diag = { follower: await followerDiag(f!), host: await hostDiag(page) };
+    await page.waitForTimeout(1000);
+    d.followerFramesAfter1s = (await followerDiag(f!)).frames;
+    d.bcPopupToOpener = await bcCrosses(f!, page, 'diag-up');
+    d.bcOpenerToPopup = await bcCrosses(page, f!, 'diag-down');
+    await f!.bringToFront();
+    d.syncedAfterBringToFront = await synced().then(() => true, () => false);
+    d.followerAfter = await followerDiag(f!);
+    d.logs = logs;
+    throw new Error(`the learner monitor never synced within 30 s: ${JSON.stringify(d)}`);
+  }
+  console.log('follower synced', JSON.stringify(await followerDiag(f!)));
   expect(await f!.evaluate(() => window.opener)).toBeNull(); // R50 F4: its own process, not the instructor's main thread
   return f!;
 }
