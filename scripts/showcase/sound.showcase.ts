@@ -29,9 +29,9 @@ test('sound unlocks after a click, no console errors', async ({ page, browserNam
   await expect(btn).toHaveText('Sound on', { timeout: 10_000 });
   await page.waitForTimeout(1500);
   const afterClick = await states();
-  // drive an alarm so tones are scheduled: the tamponade case + propofol gives apnoea and low-pressure alarms
-  await loadShowcase(page, 'Severe tamponade, then induction');
-  await page.locator('section[aria-label="Running scenario"] button', { hasText: 'Give propofol 2 mg/kg' }).click();
+  // drive an alarm so tones are scheduled: the tamponade case + propofol gives apnoea and low-pressure alarms (Stage 11's card)
+  await loadShowcase(page, 'Stab wound: tamponade, PEA and pericardiocentesis');
+  await page.locator('section[aria-label="Running scenario"] button', { hasText: 'Induce for intubation: propofol 2 mg/kg' }).click();
   await page.waitForTimeout(30_000);
   const afterAlarms = await states();
   const result = { browser: browserName, labelBefore, labelAfter: await btn.innerText(), contextsBeforeClick: beforeClick, contextsAfterClick: afterClick, contextsAfterAlarms: afterAlarms, alarmShown: await page.locator('.alarm-count').innerText(), errors };

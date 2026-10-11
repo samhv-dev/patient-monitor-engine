@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Last-resort videos: record the five Showcase cases (Chromium, 1280×800, ×4) with the rehearsal itself, then convert
+// Last-resort videos: record the six Showcase cases (Chromium, 1280×800, ×4) with the rehearsal itself, then convert
 // each recording to H.264 .mp4 (plays in QuickTime) into KIT/videos/. Needs ffmpeg on PATH (never installed here).
 //   node scripts/showcase/make-videos.mjs [KIT_DIR] [--convert-only]   (default ./pme-showcase; --convert-only reuses
 //   the last recordings in test-results/showcase-video)
@@ -19,18 +19,19 @@ if (spawnSync('ffmpeg', ['-version']).status !== 0) {
 const results = join(repo, 'test-results/showcase-video');
 if (!convertOnly) {
   rmSync(results, { recursive: true, force: true });
-  const pw = spawnSync('npx', ['playwright', 'test', '-c', 'scripts/showcase/playwright.showcase.config.ts', 'rehearsal', '--project', 'video', '-g', 'Healthy induction|Anaphylaxis|bronchospasm|tamponade|haemorrhage'], {
+  const pw = spawnSync('npx', ['playwright', 'test', '-c', 'scripts/showcase/playwright.showcase.config.ts', 'rehearsal', '--project', 'video', '-g', 'Healthy induction$|fentanyl|Anaphylaxis|Malignant|Stab wound|haemorrhage'], {
     cwd: repo, stdio: 'inherit', env: { ...process.env, SHOWCASE_KIT: kit, SHOWCASE_VIDEO: '1', SHOWCASE_WORKERS: '1' },
   });
   console.log(`rehearsal for video exited ${pw.status}`);
 }
 
 // [a word that identifies the case in Playwright's (possibly truncated) result folder name, the file name]
-const ORDER = [['healthy-induction', '1-healthy-induction'], ['anaphylaxis', '2-anaphylaxis'], ['bronchospasm', '3-bronchospasm'], ['resuscitation', '4-haemorrhage-cpr'], ['tamponade', '5-tamponade']];
+// Stage 11: the six cards in the demonstration's order
+const ORDER = [['healthy-induction-video', '1-healthy-induction'], ['fentanyl', '2-induction-premedication'], ['anaphylaxis', '3-anaphylaxis'], ['malignant', '4-malignant-hyperthermia'], ['stab-wound', '5-tamponade'], ['resuscitation', '6-haemorrhage-cpr']];
 const outDir = join(kit, 'videos');
 mkdirSync(outDir, { recursive: true });
 const dirs = existsSync(results) ? readdirSync(results) : [];
-// replace the previous set only when this run recorded all five: remove every .mp4 written before (old and new names)
+// replace the previous set only when this run recorded all six: remove every .mp4 written before (old and new names)
 const found = ORDER.filter(([key]) => dirs.some((x) => x.toLowerCase().includes(key)));
 if (found.length === ORDER.length) for (const f of readdirSync(outDir)) if (f.endsWith('.mp4')) rmSync(join(outDir, f));
 else console.log(`only ${found.length} of ${ORDER.length} recordings: the previous videos are kept, new ones written beside them`);
