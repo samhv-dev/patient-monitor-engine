@@ -122,7 +122,23 @@ static page, so it is a capture limitation; the owner should glance at it once i
 Not done by hand (headless session): listening for the end cue and the absence of sound inside a span — the e2e checks both
 (no tone scheduled inside the span; one 660 + 990 Hz cue ≥ 9 s after the click, none at the start; beat tones again at ×1).
 
-## 7. For the orchestrator
+## 7. Orchestrator rulings on the dry run (2026-10-11)
+
+The dry run and both gate fixes (§4) were accepted and stay.
+
+1. **Stale card button** (item 1 below): not Stage 10's to fix. A separate fixer, on a branch off main, touches only the
+   scenario panel and none of this branch's files. The fixer receives the diagnosis and the `notTaken` evidence
+   (`docs/gates/stage-10/s10-cards/malignant-hyperthermia-x8-and-fast-forward-webkit.json`).
+2. **Task 6 anchor reset** (both sim time and wall time, §2): accepted as built.
+3. **Alarm PAUSE vs a higher-priority alarm — a known design choice for rc.1, no code change.** As built, a pause silences
+   alarms for its duration and a new alarm raised during it is visual only, as on Philips monitors. The alternative,
+   GE-style (a new higher-priority alarm breaks the pause, as FU-11 B4 already does for SILENCE), is listed as a **v1.0
+   polish item**. Stage 10 neither changes nor undoes this: the alarm voice it rebuilds after a span takes the pause and
+   the silence from the engine's status.
+4. **WebKit blur in screenshots** (§6): accepted as a capture limit. The owner checks the look in real Safari (hand check
+   **H18**).
+
+## 8. For the orchestrator (as reported with the dry run)
 
 1. **A card button pressed as the scenario changes state can be ignored silently** (pre-existing, Stage 9/11 panel; not a
    Stage 10 file). In WebKit, three presses across four runs of the MH card did nothing — no state change, no toast: once
