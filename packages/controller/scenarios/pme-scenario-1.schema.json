@@ -15,7 +15,7 @@
     "notes": { "type": "string" },
     "category": { "type": "string", "minLength": 1, "description": "FU-8 (Stage 9 R-S9-4): the scenario library's group (e.g. 'ACLS', 'Induction', 'Neuromuscular')." },
     "story": { "type": "string", "description": "FU-8 (R-S9-4): the learner-facing case text shown before the start (no engine words)." },
-    "objectives": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "FU-8 (R-S9-4): learning objectives, one per line." },
+    "objectives": { "type": "array", "items": { "anyOf": [{ "type": "string", "minLength": 1 }, { "$ref": "#/definitions/objective" }] }, "description": "FU-8 (R-S9-4): learning objectives, one per line. Stage 13: an objective may carry a debrief rule, { text, rule }; one without a rule is listed as not assessable." },
     "durationMin": { "type": "number", "exclusiveMinimum": 0, "description": "FU-8 (R-S9-4): the expected run time in minutes." },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
@@ -31,6 +31,44 @@
   },
   "definitions": {
     "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$" },
+    "runEvent": {
+      "type": "string", "pattern": "^(start|fluid|cpr|shock|ventilation|pulseLoss|rosc|(state|alarm|drug|condition|airway):[A-Za-z0-9_.-]+|value:(hr|map|spo2|etco2|rr|temp|k|lactate|ph|glucose|tcore)[<>][0-9]+(\\.[0-9]+)?)$",
+      "description": "Stage 13: a run event a debrief rule names (scenario/types.ts RunEventId)."
+    },
+    "runEvents": {
+      "anyOf": [{ "$ref": "#/definitions/runEvent" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/runEvent" } }],
+      "description": "Stage 13: one run event, or a list meaning any one of them."
+    },
+    "objective": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": { "$comment": { "type": "string" }, "text": { "type": "string", "minLength": 1 }, "rule": { "$ref": "#/definitions/objectiveRule" } }
+    },
+    "objectiveRule": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": { "kind": { "type": "string" } },
+      "discriminator": { "propertyName": "kind" },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "eventWithin" }, "after": { "$ref": "#/definitions/runEvents" }, "event": { "$ref": "#/definitions/runEvents" },
+            "withinS": { "type": "number", "exclusiveMinimum": 0 }, "from": { "$ref": "#/definitions/runEvents" }
+          },
+          "required": ["after", "event", "withinS"], "additionalProperties": false
+        },
+        { "properties": { "kind": { "const": "occurred" }, "event": { "$ref": "#/definitions/runEvents" }, "from": { "$ref": "#/definitions/runEvents" } }, "required": ["event"], "additionalProperties": false },
+        { "properties": { "kind": { "const": "never" }, "event": { "$ref": "#/definitions/runEvents" }, "from": { "$ref": "#/definitions/runEvents" } }, "required": ["event"], "additionalProperties": false },
+        {
+          "properties": {
+            "kind": { "const": "stayed" }, "value": { "enum": ["hr", "map", "spo2", "etco2", "rr", "temp", "k", "lactate", "ph", "glucose", "tcore"] }, "above": { "type": "number" },
+            "below": { "type": "number" }, "after": { "$ref": "#/definitions/runEvents" }, "forS": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "required": ["value"], "anyOf": [{ "properties": { "above": { "type": "number" } }, "required": ["above"] }, { "properties": { "below": { "type": "number" } }, "required": ["below"] }], "additionalProperties": false
+        }
+      ]
+    },
     "comment": { "type": "string" },
     "stateVar": {
       "enum": ["hr", "sbp", "dbp", "cvp", "papSys", "papDia", "pawp", "spo2", "pi", "rr", "vt", "etco2", "fio2",
