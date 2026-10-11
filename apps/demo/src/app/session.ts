@@ -5,7 +5,7 @@
 // HostTarget so the HostSession, the driver and every listener survive the restart.
 import type { Command, EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import {
-  ControllerSession, createBroadcastChannelTransport, createInProcessHub, HostSession, newSessionCode, normalizeSessionCode,
+  ControllerSession, createBroadcastChannelTransport, createInProcessHub, createWebSocketTransport, HostSession, newSessionCode, normalizeSessionCode,
   type HostTarget, type ScenarioEvent,
 } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
@@ -86,11 +86,16 @@ export class AppSession {
   private readonly bc: ReturnType<typeof createBroadcastChannelTransport>;
   /** What the paired-remote channel has received, by message kind (the e2e prints it when a remote cannot join). */
   readonly diag = { received: {} as Record<string, number> };
+  /** Stage 12: the session on the relay (learners' phones follow it there), or null without one. */
+  readonly relay: ReturnType<typeof createWebSocketTransport> | null = null;
+  /** Stage 12: peers on the relay besides this host (the phones following), from the relay's `peers` frames. */
+  followers = 0;
+  private readonly followerFns = new Set<(n: number) => void>();
 
   /** `?load=perf8`: mount the Stage 8a performance layout instead of the site's skin (the frame gate, review F6). */
   private readonly perf8: boolean;
 
-  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null }) {
+  constructor(el: HTMLElement, start: SessionStart, o: { skin: string; theme: string; code?: string | null; load?: 'perf8' | null; relay?: string | null }) {
     this.el = el;
     this.perf8 = o.load === 'perf8';
     this.spec = start.spec;
@@ -144,7 +149,9 @@ export class AppSession {
     let hs: HostSession | null = null;
     this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
     hs = new HostSession({
-      session: this.code, target: this.driver.host, scenario: this.driver.hook, welcomeEvents: () => this.driver.welcomeEvents(),
+      session: this.code, target: this.driver.host, scenario: this.driver.hook,
+      // Stage 12 (owner ruling Q4): with a relay, every answer to a hello also carries the monitor style (a phone wears it)
+      welcomeEvents: () => [...this.driver.welcomeEvents(), ...(this.relay ? [{ type: 'style' as const, skin: this.skin, theme: this.theme, replay: true as const }] : [])],
       fastForwardWallMs: FF_WALL_MS, // Stage 10 (owner's decision 1): paced so the room sees the clock run
     });
     this.host = hs;
@@ -153,11 +160,31 @@ export class AppSession {
     this.bc = createBroadcastChannelTransport(this.code);
     hs.addTransport(this.bc);
     this.bc.onMessage((m) => void (this.diag.received[m.kind] = (this.diag.received[m.kind] ?? 0) + 1)); // e2e diagnostics
+    // Stage 12: with a relay the session is also offered there, for learners' phones (they may only follow: the relay
+    // refuses another device's commands in a classroom, and the host refuses a viewer's)
+    if (o.relay) {
+      this.relay = createWebSocketTransport({
+        url: o.relay,
+        onRelayFrame: (f) => {
+          if (f.relay !== 'peers') return;
+          this.followers = f.peers;
+          for (const fn of this.followerFns) fn(f.peers);
+        },
+      });
+      hs.addTransport(this.relay);
+      this.onSkin((skin, theme) => hs?.publish({ type: 'style', skin, theme })); // owner ruling Q4: phones follow a change
+    }
     this.panelTransport = hub.connect();
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
     this.pollTimer = setInterval(() => !this.fastForwarding && this.driver.poll(), 100); // Stage 10: a fast-forward polls per step
+  }
+
+  /** Stage 12: every change in the number of phones following on the relay. */
+  onFollowers(fn: (n: number) => void): () => void {
+    this.followerFns.add(fn);
+    return () => void this.followerFns.delete(fn);
   }
 
   /** Every engine event (the worker's batches), for the shell: alarm mirror, session bar, Explore. */
@@ -307,6 +334,7 @@ export class AppSession {
     this.monitor?.destroy();
     this.panel.close();
     this.bc.close();
+    this.relay?.close();
   }
 
   // --- internals ---------------------------------------------------------------------------------------------

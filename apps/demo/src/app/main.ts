@@ -5,6 +5,7 @@ import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controll
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { joinCode, relayOf } from './classroom.ts';
+import { mountClassroomPanel } from './classroom-panel.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
@@ -70,7 +71,7 @@ if (follow) {
 } else {
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
-  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null });
+  const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
   // FU-11 (R50 F5): the session code survives a reload of this window, so a learner monitor and a Remote that follow it
   // find it again (a reload made a new code and left them on a frozen screen)
   publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f)); // owner ruling Q3
@@ -102,7 +103,8 @@ if (follow) {
   const weightKg = () => session.spec.weightKg;
 
   shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code) }));
-  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code) }));
+  const phones = relay ? mountClassroomPanel(shell.right, session, relay) : null; // Stage 12: the QR moment (a classroom relay)
+  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));
@@ -159,5 +161,5 @@ if (follow) {
   shell.start();
   // e2e hook: the engine ids the glossary test must never find in a clinical view
   const engineIds = [...RHYTHM_IDS, ...DRUG_IDS, ...LUNG_CONDITIONS.map((c) => c.id)];
-  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar } });
+  Object.assign(window, { __pmeApp: { shell, session, link, frames, site, teach, engineIds, skinAlarmBar, phones } });
 }

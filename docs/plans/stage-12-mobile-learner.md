@@ -2222,7 +2222,7 @@ git push
   `monitorView(…, { …, phones })`; `window.__pmeApp.phones`; with a relay, every answer to a hello carries a `style`
   event (`replay: true`) and every style change publishes one (owner ruling Q4, R50 I3).
 
-- [ ] **Step 1: Write the failing e2e**
+- [x] **Step 1: Write the failing e2e**
 
 Create `apps/demo/e2e/s12-mobile-learner.e2e.ts`:
 
@@ -2393,9 +2393,9 @@ test('a relay restart, a full session and a relay the phone cannot reach', async
 });
 ```
 
-- [ ] **Step 2: Run it red** — `npx playwright test s12-mobile-learner --retries=0 --project=chromium` → 3 failed — test 1 times out waiting for the **Phones** button (5 min, the test's budget); tests 2 and 3: the phone never syncs (`page.waitForFunction: Timeout 30000ms exceeded`: the instructor's session is not on the relay).
+- [x] **Step 2: Run it red** — `npx playwright test s12-mobile-learner --retries=0 --project=chromium` → 3 failed — test 1 times out waiting for the **Phones** button (5 min, the test's budget); tests 2 and 3: the phone never syncs (`page.waitForFunction: Timeout 30000ms exceeded`: the instructor's session is not on the relay).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `apps/demo/src/app/app.css`, find:
 
@@ -2645,11 +2645,11 @@ Replace with:
     h('a', { class: 'btn small ghost', href: hrefOf('start') }, 'Start'));
 ```
 
-- [ ] **Step 4: Run green on both engines** — `npx playwright test s12-mobile-learner --retries=0` (prototype after R50:
+- [x] **Step 4: Run green on both engines** — `npx playwright test s12-mobile-learner --retries=0` (prototype after R50:
   6 passed, Chromium 33 / 18 / 13 s, WebKit 34 / 18 / 12 s), then `npx playwright test fu11-follower s10-time-control
   stage6a-screens audit-relay audit-remote --retries=0` and the demo typecheck.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo

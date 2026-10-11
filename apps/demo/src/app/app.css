@@ -469,3 +469,9 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .learner-hold { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; gap: var(--s-2); padding: var(--s-4); background: rgb(0 0 0 / 0.72); color: #f3f6f9; text-align: center; font-size: var(--t-22); font-weight: 600; }
 .learner-hold .muted { font-size: var(--t-15); font-weight: 400; color: #aab3bf; }
 .learner-hold[hidden] { display: none; }
+/* Stage 12: the QR moment — a sheet over every view, the code as large as the projector allows */
+.phones-sheet { width: min(720px, calc(100vw - 2 * var(--s-4))); max-height: calc(100dvh - 2 * var(--s-4)); text-align: center; }
+.phones-qr svg { width: min(480px, 52dvh, calc(100vw - 6 * var(--s-4))); height: auto; }
+.phones-url { font-size: var(--t-18); word-break: break-all; margin: var(--s-2) 0 0; }
+.phones-code { font-size: var(--t-32); font-weight: 700; letter-spacing: 0.2em; margin: var(--s-1) 0; }
+.phones-count { font-size: var(--t-18); }
