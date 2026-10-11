@@ -2,6 +2,7 @@
 // dialog lists held values with "Return to model"), the scenario's state and time, sim speed and pause, and a bookmark.
 // It reads the same Link as the panel, so it is identical same-screen and on a Remote.
 import type { Link } from './link.ts';
+import { hrefOf } from './router.ts';
 import { cardOf } from './scenarios.ts';
 import { oneLiner } from './patients.ts';
 import { activeText } from './events.ts';
@@ -56,6 +57,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   });
 
   bar.replaceChildren(h('div', { class: 'sb-left' }, who, badge, scen), h('div', { class: 'sb-right' }, t, speed, pause, ff, mark));
+  const debrief = h('a', { class: 'btn small ghost sb-debrief', href: hrefOf('debrief') }, 'Debrief'); // Stage 13: the report, at any time
+  mark.after(debrief);
   const draw = throttle(() => {
     const host = link.host;
     const p = link.ctl.scenario.doc?.patient;
@@ -70,6 +73,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     badge.setAttribute('aria-label', `Physiology mode ${m === 'modeled' ? 'MODELED' : 'MANUAL'}${n ? `, ${n} values held by you` : ''}: show details`);
     const sv = link.ctl.scenario;
     setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
+    debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length); // the scenario has ended
     setText(t, clock(link.simT));
     for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // Stage 10: one at a time
     // FU-11 (K5): the speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)

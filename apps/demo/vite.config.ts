@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { defineConfig } from 'vite';
 
 // Multi-page demo: one page per stage (BUILD-PLAN "Monorepo layout").
@@ -46,4 +47,15 @@ export default defineConfig({
       },
     },
   },
+  define: { __PME_BUILD__: JSON.stringify(buildId()) }, // Stage 13: printed on every page of the debrief
 });
+
+/** The build a page was served from: the git commit (+ when the tree has uncommitted changes) and the date; "unknown"
+ *  outside a git checkout. */
+function buildId(): string {
+  const git = (...a: string[]) => spawnSync('git', a, { cwd: import.meta.dirname, encoding: 'utf8' });
+  const head = git('rev-parse', '--short=8', 'HEAD');
+  if (head.status !== 0) return `unknown ${new Date().toISOString().slice(0, 10)}`;
+  const dirty = git('status', '--porcelain', '--untracked-files=no').stdout.trim() ? '+' : '';
+  return `${head.stdout.trim()}${dirty} ${new Date().toISOString().slice(0, 10)}`;
+}

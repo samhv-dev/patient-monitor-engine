@@ -17,6 +17,7 @@ import { mountSessionBar } from './sessionbar.ts';
 import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite } from './site.ts';
 import { button, h, setText, throttle, toast } from './ui.ts';
+import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
@@ -113,6 +114,7 @@ if (follow) {
   shell.add(validateView());
   shell.add(devView());
   shell.add(settingsView(site, session));
+  shell.add(debriefView(session, link)); // Stage 13
   mountSessionBar(shell.bar, link);
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Stage 10: above every view
 
