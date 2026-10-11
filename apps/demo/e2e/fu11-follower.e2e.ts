@@ -19,9 +19,14 @@ const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-
 const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === (await tiles(p)) || `${await tiles(f)} | ${await tiles(p)}`, { timeout: 10_000, intervals: [100] }).toBe(true);
 const send = (p: Page, c: unknown) => p.evaluate((x) => (window as unknown as W).__pmeApp.link.send(x), c);
 
-// fix-ci-webkit-2 (diagnostic): on CI's Linux WebKit the follower never reached 'synced' within 30 s (9/9 attempts over
-// three pushes; macOS WebKit and CI Chromium pass). The wait polls on a timer, not on the popup's rAF, and a timeout
-// reports what each window saw, so the next CI run names the cause instead of a bare timeout.
+// fix-ci-webkit-2: on CI's Linux WebKit a `noopener` POPUP is not a usable window. The diagnostic run (38125603326) saw,
+// in 6 of 9 attempts, the popup with no app after 30 s (`__pmeApp` absent, only Vite's client ran) and a plain
+// BroadcastChannel message crossing in neither direction; once it did mount it stayed 'waiting' (the host never got its
+// hello: snapshotsSent 1). Where the popup did sync, its Sound never started (Silence here stayed disabled), though the
+// same Sound works on a normal WebKit page (fu11-sound-toggle). macOS WebKit and CI Chromium run the popup fine. So on
+// WebKit the learner monitor is opened at the URL the button opens, as a page of the same browser context (how the
+// Stage 6a viewer pages over BroadcastChannel pass on CI WebKit); Chromium keeps the real popup and its `noopener` check.
+// The wait polls on a timer, and a timeout still reports what each window saw.
 type Diag = Record<string, unknown>;
 const followerDiag = (f: Page) => f.evaluate(() => {
   const w = window as unknown as { __pmeFollower?: { sync: Sync | null; transport: { status: string; rejected: number } }; __pmeApp?: { frames: number[] } };
@@ -40,7 +45,7 @@ async function bcCrosses(a: Page, b: Page, name: string): Promise<boolean> {
   return b.evaluate((n) => (window as unknown as Diag)[n] === true, name);
 }
 
-async function follow(page: Page, scenario: string): Promise<Page> {
+async function follow(page: Page, scenario: string, browserName: string): Promise<Page> {
   const logs: string[] = [];
   const ctx = page.context();
   ctx.on('console', (m) => m.page() !== page && logs.length < 40 && logs.push(`${m.type()}: ${m.text()}`));
@@ -48,7 +53,17 @@ async function follow(page: Page, scenario: string): Promise<Page> {
   await openApp(page, base, `?scenario=${scenario}`, { warmMs: 1500 });
   await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
   await page.evaluate(() => (location.hash = '#/monitor'));
-  const [f] = await Promise.all([ctx.waitForEvent('page'), page.getByRole('button', { name: 'Open on a second screen', includeHidden: true }).dispatchEvent('click')]);
+  const button = page.getByRole('button', { name: 'Open on a second screen', includeHidden: true });
+  let f: Page;
+  if (browserName === 'webkit') {
+    // the button's own window.open call, recorded instead of opened (url and features), then the same URL in a page
+    await page.evaluate(() => ((window as unknown as Diag).open = (...a: unknown[]) => (((window as unknown as Diag).__opened = a), null)));
+    await button.dispatchEvent('click');
+    const [url, , features] = (await page.evaluate(() => (window as unknown as Diag).__opened)) as string[];
+    expect(features).toContain('noopener');
+    f = await ctx.newPage();
+    await f.goto(url!);
+  } else [f] = await Promise.all([ctx.waitForEvent('page'), button.dispatchEvent('click')]);
   const synced = () => f!.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000, polling: 250 });
   try {
     await synced();
@@ -65,13 +80,13 @@ async function follow(page: Page, scenario: string): Promise<Page> {
     throw new Error(`the learner monitor never synced within 30 s: ${JSON.stringify(d)}`);
   }
   console.log('follower synced', JSON.stringify(await followerDiag(f!)));
-  expect(await f!.evaluate(() => window.opener)).toBeNull(); // R50 F4: its own process, not the instructor's main thread
+  if (browserName !== 'webkit') expect(await f!.evaluate(() => window.opener)).toBeNull(); // R50 F4: its own process, not the instructor's main thread
   return f!;
 }
 
-test('the second-screen learner monitor follows commands, a bookmark restore and a restart', async ({ page }) => {
+test('the second-screen learner monitor follows commands, a bookmark restore and a restart', async ({ page, browserName }) => {
   test.setTimeout(180_000);
-  const f = await follow(page, 'showcase-induction');
+  const f = await follow(page, 'showcase-induction', browserName);
   await page.waitForTimeout(10_000);
   expect(await sync(f)).toMatchObject({ status: 'synced', resyncs: 0, drift: 0 });
   await same(f, page);
@@ -102,18 +117,18 @@ test('the second-screen learner monitor follows commands, a bookmark restore and
   await expect(f.locator('.status-pill')).toHaveText("The instructor's monitor is not answering", { timeout: 10_000 });
 });
 
-test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', async ({ page }) => {
+test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', async ({ page, browserName }) => {
   test.setTimeout(180_000);
-  const f = await follow(page, 'showcase-bronchospasm');
+  const f = await follow(page, 'showcase-bronchospasm', browserName);
   await page.evaluate(() => (location.hash = '#/vent'));
   await page.waitForTimeout(30_000);
   expect(await sync(f)).toMatchObject({ status: 'synced', resyncs: 0, drift: 0 });
   await same(f, page);
 });
 
-test("it wears the instructor's monitor style and follows a change; its alarm sound is its own (owner ruling Q3)", async ({ page }) => {
+test("it wears the instructor's monitor style and follows a change; its alarm sound is its own (owner ruling Q3)", async ({ page, browserName }) => {
   test.setTimeout(120_000);
-  const f = await follow(page, 'showcase-induction');
+  const f = await follow(page, 'showcase-induction', browserName);
   type S = { __pmeFollower: { style: { skin: string }; monitor: { skin: { id: string } | null } } };
   type I = { __pmeApp: { session: { skin: string; setSkin(s: string, t: string): Promise<void> }; link: { alarms: { silencedUntil: number | null } | null } } };
   const skinOf = () => f.evaluate(() => { const x = (window as unknown as S).__pmeFollower; return `${x.style.skin}|${x.monitor.skin?.id}`; });
