@@ -32,6 +32,15 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
   let sim = k * LINK_TICK_S;
   let lastMs: number | null = null;
   let allowed = port ? k + 2 * LEAD_TICKS : Infinity;
+  /** Run the ventilator tick by tick up to sim time `to`, posting each tick's commands. */
+  const runTo = (to: number) => {
+    while ((k + 1) * LINK_TICK_S <= to + 1e-9) {
+      k++;
+      advanceVent(vs, k * LINK_TICK_S, d.onStep);
+      const cmds = linkTick(core, LINK_TICK_S);
+      port?.post({ v: 1, kind: 'cmds', tick: k, cmds });
+    }
+  };
   const d: VentDriver = {
     vs,
     get core() {
@@ -47,12 +56,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
       lastMs = nowMs;
       if (d.paused) return;
       sim = Math.min(sim + dt * d.scale, allowed * LINK_TICK_S);
-      while ((k + 1) * LINK_TICK_S <= sim + 1e-9) {
-        k++;
-        advanceVent(vs, k * LINK_TICK_S, d.onStep);
-        const cmds = linkTick(core, LINK_TICK_S);
-        port?.post({ v: 1, kind: 'cmds', tick: k, cmds });
-      }
+      runTo(sim);
     },
     setProfile(id: ProfileId) {
       core = createLinkCore(vs, prof(id));
@@ -63,6 +67,12 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
   const off = port?.onMessage((m) => {
     if (m.kind === 'lungState') linkEvent(core, m.ev);
     else if (m.kind === 'clock') allowed = Math.max(allowed, m.ventTick);
+    else if (m.kind === 'run') {
+      // Stage 10 (fast-forward): the engine is about to run past these ticks — produce their frames now, not on the wall clock
+      allowed = Math.max(allowed, m.ventTick);
+      runTo(m.ventTick * LINK_TICK_S);
+      sim = Math.max(sim, k * LINK_TICK_S);
+    }
     else if (m.kind === 'time') {
       if (m.action === 'pause') d.paused = true;
       else if (m.action === 'resume') d.paused = false;

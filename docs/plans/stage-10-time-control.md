@@ -2224,7 +2224,7 @@ app depends on both the controller and the ventilator; no `package.json` change)
 use it as a plain detach function are unchanged); `RUN_TIMEOUT_MS = 2000`. Consumes FU-11 E3b/I4 (the link's
 generation and probe), Task 3's host (the cockpit determinism test).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `apps/demo/src/app/s10-ff-cockpit.test.ts`:
 
@@ -2417,7 +2417,7 @@ describe('Stage 10: the cockpit steps through a fast-forward', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/s10-run.test.ts`
 Expected: 2 failed — `TypeError: r.link.runTo is not a function` and `link.runTo is not a function`; the third test
@@ -2426,7 +2426,7 @@ Expected: 2 failed — `TypeError: r.link.runTo is not a function` and `link.run
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/s10-ff-cockpit.test.ts`
 Expected: 1 failed — `TypeError: link.runTo is not a function`.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/ventilator/src/link/port.ts`, find:
 
@@ -2628,14 +2628,14 @@ Replace with:
     }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run the two Step 2 commands again — Expected: 3 passed, 1 passed (the cockpit determinism test ≈ 30 s). Then
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run` (all passed; prototype: 21 files, 106 tests) and
 `npx -y pnpm@9.15.9 -r typecheck` (clean). A mutation check done in the prototype: without `runTo` in the cockpit test's
 step, `expected 14995 to be +0` (unframed ticks).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/ventilator/src/link/port.ts packages/ventilator/src/link/vent-driver.ts \
