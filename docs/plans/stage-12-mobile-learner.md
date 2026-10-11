@@ -1780,7 +1780,7 @@ git push
   `phoneStyle(want, upright, themes, fallback)` and `NO_PHONE_LAYOUT` in `follower-status.ts`, the phone wears every
   `style` event (`.follower-note` under the monitor when it falls back).
 
-- [ ] **Step 1: Write the failing test** (the follower reducer)
+- [x] **Step 1: Write the failing test** (the follower reducer)
 
 Create `apps/demo/src/app/views/follower-status.test.ts`:
 
@@ -1829,9 +1829,9 @@ describe('Stage 12: the learner monitor status (follower reducer)', () => {
 });
 ```
 
-- [ ] **Step 2: Run it red** — `cd apps/demo && npx vitest run src/app/views/follower-status.test.ts` → `Error: Cannot find module './follower-status.ts'` (no tests run).
+- [x] **Step 2: Run it red** — `cd apps/demo && npx vitest run src/app/views/follower-status.test.ts` → `Error: Cannot find module './follower-status.ts'` (no tests run).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `apps/demo/src/app/app.css`, find:
 
@@ -2194,11 +2194,11 @@ Replace with:
     style?.close();
 ```
 
-- [ ] **Step 4: Run green** — the reducer test (7 tests), the demo typecheck, and the second screen unchanged:
+- [x] **Step 4: Run green** — the reducer test (7 tests), the demo typecheck, and the second screen unchanged:
   `npx playwright test fu11-follower s10-time-control --retries=0` (both engines; prototype: all green — the follower
   e2e reads the same status texts).
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/app

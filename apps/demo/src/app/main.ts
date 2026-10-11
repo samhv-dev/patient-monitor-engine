@@ -4,6 +4,7 @@ import './app.css';
 import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
+import { joinCode, relayOf } from './classroom.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
@@ -31,7 +32,11 @@ const site = loadSite();
 setDrugNames(site.drugNames); // one set of drug names on every screen (orchestrator ruling 5)
 const q = new URLSearchParams(location.search);
 // FU-11 (K2): `?follow=<code>` = the learner monitor on a second screen: it follows that session and runs none of its own
-const follow = normalizeSessionCode(q.get('follow') ?? '');
+// Stage 12: `?join=<code>` = a learner's PHONE: it follows that session over the relay (the QR code's address)
+const join = joinCode(location);
+const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
+const relay = relayOf(location);
+if (join) document.documentElement.dataset.learner = 'phone'; // the portrait learner layout (app.css)
 const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
@@ -52,7 +57,7 @@ if (follow) {
   // its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar (R50 Q3)
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
-  const follower = mountFollower(shell, site, follow, bar);
+  const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined);
   // Stage 10: the second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
