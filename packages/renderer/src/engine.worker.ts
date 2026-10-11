@@ -82,6 +82,10 @@ scope.onmessage = (ev) => {
           scope.postMessage({ type: 'capture12', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
         }
         return;
+      case 'advance': // Stage 10: a fast-forward step; its events were posted before this answer
+        if (!core) throw new Error('not initialised');
+        scope.postMessage({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
+        return;
       case 'restore':
         try {
           if (!core) throw new Error('not initialised');

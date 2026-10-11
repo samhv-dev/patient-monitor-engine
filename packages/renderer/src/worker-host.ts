@@ -32,6 +32,8 @@ export interface Host {
   restore(s: PatientSnapshot): Promise<void>;
   /** Stage 4b: the last 10 s as a 12-lead capture (brief §6.6). */
   capture12(): Promise<Capture12>;
+  /** Stage 10: one fast-forward step (MonitorCore.advance); resolves after the step's events were delivered. */
+  advance(ticks: number, last: boolean): Promise<{ tick: number; simT: number }>;
   destroy(): void;
 }
 
@@ -83,6 +85,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
       else core.calibrate(m.pxPerMm);
     },
     capture12: () => Promise.resolve().then(() => core.capture12()), // Stage 4b
+    advance: (ticks, last) => Promise.resolve().then(() => core.advance(ticks, last)), // Stage 10
     destroy: () => {
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
@@ -175,6 +178,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
+      else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never)); // Stage 10
       else if (m.type === 'capture12') settle(m.reqId, (r) => (m.capture ? r.resolve(m.capture as never) : r.reject(new Error(m.error ?? 'capture12 failed'))));
       else if (m.reqId !== undefined) settle(m.reqId, (r) => r.reject(new Error(m.message)));
       else if (!ready) {
@@ -218,6 +222,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     restore: (snapshot) => request<void>((reqId) => ({ type: 'restore', reqId, snapshot })),
     control: (m) => post(m),
     capture12: () => request<Capture12>((reqId) => ({ type: 'capture12', reqId })), // Stage 4b
+    advance: (ticks, last) => request<{ tick: number; simT: number }>((reqId) => ({ type: 'advance', reqId, ticks, last })), // Stage 10
     destroy: () => {
       destroyed = true;
       for (const [id, r] of requests) {

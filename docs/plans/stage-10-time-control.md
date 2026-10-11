@@ -769,7 +769,7 @@ after the step's events were delivered to `on` listeners); `MonitorHandle.latchA
 `beatToneAt(kind, timeScale)` in `mount.ts`. Consumes FU-11 C1 (`request`/`settle`), H4 (`makeSounder`, the Sound
 toggle's master gain), FU-5's latched presentation (`alarm-view.ts`, unchanged).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/renderer/test/s10-fast-forward.test.ts`:
 
@@ -891,13 +891,13 @@ describe('Stage 10: the beat tone above ×4 (owner: at ×8 it would beep ≈ 10 
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/s10-fast-forward.test.ts`
 Expected: 7 failed — `TypeError: c.advance is not a function` (and `a.advance`), and `expected undefined to be 4` (no
 `BEAT_TONE_MAX_SCALE`).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/renderer/src/engine.worker.ts`, find:
 
@@ -1333,12 +1333,12 @@ Replace with:
     advance: (ticks, last) => request<{ tick: number; simT: number }>((reqId) => ({ type: 'advance', reqId, ticks, last })), // Stage 10
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run` — Expected: all passed (prototype: 31 files, 101
 tests). Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/renderer/src/monitor-core.ts packages/renderer/src/overlays.ts packages/renderer/src/protocol.ts \

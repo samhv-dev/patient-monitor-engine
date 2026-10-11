@@ -6,7 +6,7 @@
 import { capture12, Clock, createEngine, type Capture12, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
-import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
+import { drawLeadOffDashes, drawMark, Overlays, shows, simClock } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { ecgLabel, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
@@ -54,6 +54,8 @@ export class MonitorCore {
   private batch: EngineEvent[] = [];
   private lastPost = -Infinity;
   private visible = true;
+  /** Stage 10: a fast-forward is holding the clock — the pause state to return to (null: none running). */
+  private ffWasPaused: boolean | null = null;
   private readonly canvas: CanvasTarget;
   private readonly ctx: Ctx2D;
   private readonly post: (anchor: ClockAnchor, events: EngineEvent[]) => void;
@@ -163,7 +165,7 @@ export class MonitorCore {
   catchUp(epochMs: number): void {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
-    if (this.clock.paused || dt === 0) return;
+    if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
     if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // remainder carried (review L1)
     // Post what was generated while hidden, so the batch does not grow without frames (review L2).
     this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
@@ -172,8 +174,34 @@ export class MonitorCore {
     this.overlays.due(this.clock.renderT); // marks from the hidden stretch are not drawn
   }
 
+  /**
+   * Stage 10 (fast-forward): run `ticks` ticks now, without drawing, and post their events. The clock is held from the
+   * first step to the `last` one (a frame neither advances nor draws meanwhile); `last` gives it back in the pause state it
+   * had before. The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers.
+   */
+  advance(ticks: number, last: boolean): { tick: number; simT: number } {
+    if (this.ffWasPaused === null) {
+      this.ffWasPaused = this.clock.paused;
+      this.clock.pause();
+    }
+    if (this.clock.step(ticks) > 0) this.engine.advanceTo(this.clock.simT);
+    this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
+    if (last) {
+      this.overlays.add({ t: this.clock.renderT, kind: 'seam', label: simClock(this.clock.renderT) }); // the jump, on every lane
+      if (!this.ffWasPaused) this.clock.resume();
+      this.ffWasPaused = null;
+      this.lastEpoch = null; // the next frame counts from itself, not from the fast-forward's start
+    }
+    const epochMs = performance.timeOrigin + performance.now();
+    this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
+    this.batch = [];
+    this.lastPost = epochMs;
+    return { tick: this.clock.tick, simT: this.clock.simT };
+  }
+
   /** One animation frame. `epochMs` = performance.timeOrigin + frame timestamp (ms). */
   frame(epochMs: number): void {
+    if (this.ffWasPaused !== null) return; // Stage 10: a fast-forward runs the clock; nothing is drawn until it ends
     if (this.fps === 30 && this.parity++ % 2 === 1) return; // 30 fps mode: skip every other frame
     const dt = this.lastEpoch === null ? 0 : epochMs - this.lastEpoch;
     this.lastEpoch = epochMs;
@@ -193,7 +221,7 @@ export class MonitorCore {
       const marks = this.overlays.due(t);
       for (const m of marks) {
         if (!shows(this.plan, m)) continue;
-        for (const i of this.ecgLaneIndices()) drawMark(this.ctx, this.lanes[i] as SweepLane, m, this.plan, this.pxPerMm);
+        for (const i of m.kind === 'seam' ? this.plan.lanes.keys() : this.ecgLaneIndices()) drawMark(this.ctx, this.lanes[i] as SweepLane, m, this.plan, this.pxPerMm);
       }
     }
     if (this.batch.length > 0 || epochMs - this.lastPost >= EVENT_POST_MS) {

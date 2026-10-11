@@ -45,7 +45,9 @@ export type ToWorker =
   | { type: 'restore'; reqId: number; snapshot: PatientSnapshot }
   // Stage 4b: skin switch without restart, and the 12-lead capture
   | { type: 'plan'; plan: RenderPlan }
-  | { type: 'capture12'; reqId: number };
+  | { type: 'capture12'; reqId: number }
+  // Stage 10: one fast-forward step (MonitorCore.advance)
+  | { type: 'advance'; reqId: number; ticks: number; last: boolean };
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
@@ -54,4 +56,5 @@ export type FromWorker =
   | { type: 'error'; message: string; reqId?: number } // FU-11 (F06): reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }
-  | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string }; // Stage 4b
+  | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string } // Stage 4b
+  | { type: 'advanced'; reqId: number; tick: number; simT: number }; // Stage 10
