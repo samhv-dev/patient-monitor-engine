@@ -21,7 +21,7 @@ const DOC = {
   ],
 } as ScenarioDoc;
 
-function rig(reply: AckResult = { accepted: true, tick: 0 }, during: (sv: ScenarioView) => void = () => undefined) {
+function rig(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }, during: (sv: ScenarioView) => void = () => undefined) {
   const sv = new ScenarioView();
   sv.doc = DOC;
   sv.docVersion = 1;
@@ -77,7 +77,7 @@ describe('scenario panel: a manual-trigger button drawn for the previous state',
 
   it('a refusal from the scenario runner: a toast in clinical words (no state id), nothing logged', async () => {
     // the runner moved on before the panel's view heard of it; its state event arrives with the refusal
-    const { sent, logged, buttonFor } = rig({ accepted: false, tick: 0, reason: 'no transition onset-crisis in state established' }, (sv) => (sv.stateId = 'established'));
+    const { sent, logged, buttonFor } = rig({ accepted: false, tick: 0, commandId: 'c1', rttMs: 0, reason: 'no transition onset-crisis in state established' }, (sv) => (sv.stateId = 'established'));
     buttonFor('MH crisis').click();
     await settle();
     expect(targets(sent)).toEqual(['onset-crisis']);
