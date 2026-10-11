@@ -1,9 +1,10 @@
 # Gate note — Stage 10: time control (×8 and a paced 5- or 2-minute fast-forward)
 
-**DRAFT — pre-merge dry run on `21e57186`** (branch `stage-10`; app code as of `bae65d22`). `origin/main` (`c7d9b51c`) does
-NOT yet contain FU-11 (d) (PR #49 open), so no PR is opened. When d merges, what remains is: `git merge origin/main`, the
-block re-check, a short re-run of the e2e and unit suites touched by the merge, and the PR. Every number below is seed 7 on
-this Mac (Apple M3, 8 cores), shared with other executors and headless jobs; load averages are given where they mattered.
+**Final** (branch `stage-10`, merged with `origin/main` `d2ee5b7a` = FU-11 (d) #49 and the card-button fix #51 as
+`9598d629`). The suites, measurements, rehearsal and screenshots of §3–§6 were taken in a pre-merge dry run on `21e57186`
+(app code as of `bae65d22`, main `c7d9b51c` merged); §9 is the re-check after FU-11 (d) reached main. Every number below
+is seed 7 on this Mac (Apple M3, 8 cores), shared with other executors and headless jobs; load averages are given where
+they mattered.
 
 Plan: `docs/plans/stage-10-time-control.md` (REVIEWED-FIXED 2026-10-10). Executor: one local session (Claude Opus 5.5).
 
@@ -154,8 +155,17 @@ The dry run and both gate fixes (§4) were accepted and stay.
 3. **Task 6's fix resets the anchor's time as well as its wall time** (§2) — a small widening of the brief's wording.
 4. **Left from the plan:** alarm PAUSE vs a higher-priority alarm (FU-11's B4 covers SILENCE only; Stage 10 neither changes
    nor undoes it); the owner's sign-off on the look (screenshots above).
-5. **To finish once FU-11 d is on main:** `git fetch origin && git merge origin/main`; `check.py` against the merged base
-   (expect 0 problems); typecheck; the controller, renderer and demo suites; `s10-time-control`, `fu11-follower`,
-   `fu11-vent-*`, `stage9-app` e2e on both engines; tick G1–G5 in the plan copy; remove "DRAFT" here; open the PR
-   (`gh pr create --base main --head stage-10`, title "Stage 10: time control — ×8 and a paced fast-forward (5 or 2 min)",
-   the screenshots named in the body).
+5. **To finish once FU-11 d is on main:** done — §9. (Item 1 was fixed on main by #51, merged here.)
+
+## 9. After FU-11 (d) reached main (2026-10-11, load ≈ 2)
+
+- `git merge origin/main` (`d2ee5b7a`: #49 FU-11 d, #51 the stale card-button fix): **clean, no conflict** (`9598d629`).
+- Block re-check on a detached checkout of `origin/main` `d2ee5b7a`: **114 blocks + 10 creates, 37 files: 0 problems.**
+- `pnpm -r typecheck`: clean. Unit: controller **54 files, 263 passed**; renderer **31, 107**; demo **36, 245** (#51's DOM
+  test included).
+- e2e `--retries=0`, both engines: `s10-time-control`, `fu11-follower`, `fu11-vent-*`, `stage9-app`, and #51's
+  `scenario-panel-stale-press`: **26 passed, 6 skipped** — skips: `fu11-follower` on WebKit at file level (orchestrator
+  ruling, F-49-1/2), `fu11-vent-restore` on WebKit (ruling), Stage 10's two measure tests. Every test passed first time.
+  Fast-forward click → panel gone: Chromium 10.6 s, WebKit 10.5 s.
+- Plan gate steps G1–G5 ticked in the plan copy.
+

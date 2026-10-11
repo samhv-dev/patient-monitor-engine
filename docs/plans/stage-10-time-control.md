@@ -3498,20 +3498,20 @@ git push
 
 ## Gate — merge main, full verification, measurements, gate note, pull request
 
-- [ ] **G1 — merge main, block re-check.** `git fetch -q origin && git merge origin/main` (no rebase). Re-run the Task 0
+- [x] **G1 — merge main, block re-check.** `git fetch -q origin && git merge origin/main` (no rebase). Re-run the Task 0
   Step 3 check against the merge base's files if main moved: `0 problems` or each drift listed in the gate note.
-- [ ] **G2 — full suites.** `npx -y pnpm@9.15.9 -r typecheck` (clean); `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9
+- [x] **G2 — full suites.** `npx -y pnpm@9.15.9 -r typecheck` (clean); `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9
   --filter @pme/engine-core exec vitest run` and every other package's `vitest run` (all passed; numbers to the gate
   note); `npx -y pnpm@9.15.9 --filter @pme/renderer build`, then `npx playwright test --retries=0` (both engines; every
   test passed or skipped for its existing reason). `git status docs/gates` stays clean (FU-11 K1).
-- [ ] **G3 — the measurements (on a kit built from the branch, both engines, nothing else running).** Run
+- [x] **G3 — the measurements (on a kit built from the branch, both engines, nothing else running).** Run
   `PME_S10_MEASURE=1 npx playwright test s10-time-control -g measure --retries=0` and copy its `[measure]` lines: the ×8
   rate over 30 s of the heaviest showcase case (anaphylaxis) and of bronchospasm with the Ventilator view, the
   main-thread frame p95, and the wall time of a 300 s fast-forward for each (the second with the cockpit stepping).
   Pass: ×8 rate ≥ 7.8 in both engines; the fast-forward 9.5–13 s in both (paced to 10 s; above 13 s = the monitor or the
   cockpit could not keep the pace — report it, do not raise a constant). Compare with "Prototype results"; a rate below
   7.8 is reported with the catch-up policy (D-2), not "fixed" by raising a constant.
-- [ ] **G4 — the five-case rehearsal** (`scripts/showcase/rehearsal.showcase.ts`, both engines, kit built from the
+- [x] **G4 — the five-case rehearsal** (`scripts/showcase/rehearsal.showcase.ts`, both engines, kit built from the
   branch) at the speeds the run sheet uses (×4): the numbers match FU-11 Gate B's (Global Constraints). Then by hand,
   once per engine: induction case at ×8 for 2 min (clock and SpO2 move; no beat tone; no console error); "Fast-forward
   5 min" from the Instructor view with a second screen and a Remote open: the panel (dimmed, blurred page; pulsing
@@ -3522,7 +3522,7 @@ git push
   both lines; an alarm that came and went is latched on the monitor until Silence/Acknowledge; then "Fast-forward 2
   min" with the Ventilator view ventilating (bronchospasm case): the cockpit keeps ventilating through and after it.
   Screenshots to `docs/gates/stage-10/` (only the ones this gate takes) — the owner signs off the look from them.
-- [ ] **G5 — gate note** `docs/gates/stage-10.md`: what was built, the numbers of G2–G4 against "Prototype results",
+- [x] **G5 — gate note** `docs/gates/stage-10.md`: what was built, the numbers of G2–G4 against "Prototype results",
   every block drift, the owner's decisions and the two items left for the orchestrator. Commit with the plan's ticks,
   push, open the PR (`gh pr create --base main --head stage-10-time-control`, title "Stage 10: time control — ×8 and a
   paced fast-forward (5 or 2 min)"), and STOP (the orchestrator merges).
