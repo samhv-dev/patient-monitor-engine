@@ -1,23 +1,25 @@
 {
   "schema": "pme-scenario/1",
   "id": "showcase-tamponade",
-  "title": "Severe tamponade, then induction",
+  "title": "Stab wound: tamponade, PEA and pericardiocentesis",
   "category": "Showcase",
   "durationMin": 15,
-  "story": "A 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.",
+  "story": "A 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.",
   "objectives": [
-    "Recognise tamponade physiology: low pressure, high CVP, tachycardia",
-    "Predict the effect of a standard induction dose",
-    "Treat PEA from tamponade: CPR and pericardial drainage"
+    "Name the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)",
+    "Start CPR within 10 s of the pulse loss",
+    "Pericardiocentesis within 120 s of starting CPR",
+    "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram",
+    "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows"
   ],
-  "notes": "Showcase case (Stage 9 Task 26): Ali's headline case; the fu4 page's tamponade run (tamponade 1, then propofol 2 mg/kg).",
+  "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
-    "ageY": 58,
+    "ageY": 30,
     "sex": "M",
     "weightKg": 80,
-    "heightCm": 175,
+    "heightCm": 180,
     "ageBand": "adult",
     "sensors": {
       "ecg": "on",
@@ -29,48 +31,109 @@
       "cvp": "connected"
     }
   },
-  "initialState": "tamponade",
+  "initialState": "arrival",
   "states": [
     {
-      "id": "tamponade",
-      "label": "Tamponade, compensating",
+      "id": "arrival",
+      "label": "Arrival: tachycardic, narrow pulse pressure, raised CVP",
       "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "spontaneous",
+            "fio2": 0.5
+          }
+        },
         {
           "type": "applyEvent",
           "event": {
             "kind": "condition",
             "id": "tamponade",
-            "severity": 1
+            "severity": 1,
+            "volumeMl": 250,
+            "rateMlPerMin": 15
           }
         }
       ],
       "transitions": [
         {
-          "id": "propofolGiven",
-          "label": "Propofol given",
-          "to": "induced",
+          "id": "drain",
+          "label": "Pericardiocentesis",
+          "to": "drainedEarly",
           "when": {
-            "event": {
-              "kind": "drug",
-              "drugId": "propofol"
+            "manual": {
+              "label": "Pericardiocentesis"
             }
           }
         },
         {
-          "id": "givePropofol",
-          "label": "Give propofol 2 mg/kg",
-          "to": "inducedByButton",
+          "id": "propofol",
+          "label": "Induce for intubation: propofol 2 mg/kg",
+          "to": "propofol",
           "when": {
             "manual": {
-              "label": "Give propofol 2 mg/kg"
+              "label": "Induce for intubation: propofol 2 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "worse",
+          "label": "Systolic below 80",
+          "to": "deteriorating",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 80,
+              "forS": 5
             }
           }
         }
       ]
     },
     {
-      "id": "inducedByButton",
-      "label": "After induction: compensation lost",
+      "id": "deteriorating",
+      "label": "Deteriorating: systolic below 80",
+      "transitions": [
+        {
+          "id": "drain-deteriorating",
+          "label": "Pericardiocentesis",
+          "to": "drainedEarly",
+          "when": {
+            "manual": {
+              "label": "Pericardiocentesis"
+            }
+          }
+        },
+        {
+          "id": "propofol-deteriorating",
+          "label": "Induce for intubation: propofol 2 mg/kg",
+          "to": "propofol",
+          "when": {
+            "manual": {
+              "label": "Induce for intubation: propofol 2 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "loss",
+          "label": "No pulse (PEA)",
+          "to": "pea",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "propofol",
+      "label": "Propofol 2 mg/kg given: compensation lost",
       "onEnter": [
         {
           "type": "applyEvent",
@@ -85,43 +148,414 @@
       ],
       "transitions": [
         {
-          "id": "drain1",
-          "label": "Drain the pericardium",
-          "to": "drained",
+          "id": "drain-propofol",
+          "label": "Pericardiocentesis",
+          "to": "drainedEarly",
           "when": {
             "manual": {
-              "label": "Drain the pericardium"
+              "label": "Pericardiocentesis"
             }
           }
-        }
-      ]
-    },
-    {
-      "id": "induced",
-      "label": "After induction: compensation lost",
-      "transitions": [
+        },
         {
-          "id": "drain2",
-          "label": "Drain the pericardium",
-          "to": "drained",
+          "id": "loss-propofol",
+          "label": "No pulse (PEA)",
+          "to": "peaAfterPropofol",
           "when": {
-            "manual": {
-              "label": "Drain the pericardium"
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
             }
           }
         }
       ]
     },
     {
-      "id": "drained",
-      "label": "Pericardium drained",
+      "id": "pea",
+      "label": "PEA: organised rhythm, no pulse; the pericardium holds about 370 mL",
+      "notes": "With no cardiac output the wound stops bleeding: the accumulation stops at the pulse loss (370 mL).",
       "onEnter": [
         {
           "type": "applyEvent",
           "event": {
             "kind": "condition",
             "id": "tamponade",
-            "severity": 0
+            "severity": 1,
+            "volumeMl": 370,
+            "rateMlPerMin": 0
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "cpr",
+          "label": "Start CPR, intubate, FiO₂ 1.0",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR, intubate, FiO₂ 1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "peaAfterPropofol",
+      "label": "PEA after propofol: organised rhythm, no pulse",
+      "transitions": [
+        {
+          "id": "cpr-peaAfterPropofol",
+          "label": "Start CPR, intubate, FiO₂ 1.0",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR, intubate, FiO₂ 1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cpr",
+      "label": "CPR, ventilated with FiO₂ 1.0",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "drain-cpr",
+          "label": "Pericardiocentesis during CPR",
+          "to": "cprDrained",
+          "when": {
+            "manual": {
+              "label": "Pericardiocentesis during CPR"
+            }
+          }
+        },
+        {
+          "id": "epi",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprEpi",
+      "label": "CPR: epinephrine 1 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "drain-cprEpi",
+          "label": "Pericardiocentesis during CPR",
+          "to": "cprDrained",
+          "when": {
+            "manual": {
+              "label": "Pericardiocentesis during CPR"
+            }
+          }
+        },
+        {
+          "id": "epi-cprEpi",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpiRepeat",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprEpiRepeat",
+      "label": "CPR: epinephrine 1 mg repeated",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "drain-cprEpiRepeat",
+          "label": "Pericardiocentesis during CPR",
+          "to": "cprDrained",
+          "when": {
+            "manual": {
+              "label": "Pericardiocentesis during CPR"
+            }
+          }
+        },
+        {
+          "id": "epi-cprEpiRepeat",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprDrained",
+      "label": "CPR: pericardium drained, catheter left in",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 1,
+            "volumeMl": 30,
+            "rateMlPerMin": 4
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "epi-cprDrained",
+          "label": "Epinephrine 1 mg",
+          "to": "cprDrainedEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rosc",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprDrainedEpi",
+      "label": "CPR, drained: epinephrine 1 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "rosc-cprDrainedEpi",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rosc",
+      "label": "Return of circulation: ventilated, catheter in the pericardium",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "fluid",
+          "label": "Crystalloid 500 mL",
+          "to": "roscFluid",
+          "when": {
+            "manual": {
+              "label": "Crystalloid 500 mL"
+            }
+          }
+        },
+        {
+          "id": "reasp",
+          "label": "Aspirate the catheter again",
+          "to": "roscReaspirated",
+          "when": {
+            "manual": {
+              "label": "Aspirate the catheter again"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "roscFluid",
+      "label": "Post-ROSC: 500 mL crystalloid running",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "balanced",
+            "volumeMl": 500,
+            "overS": 300
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "reasp-roscFluid",
+          "label": "Aspirate the catheter again",
+          "to": "roscReaspirated",
+          "when": {
+            "manual": {
+              "label": "Aspirate the catheter again"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "roscReaspirated",
+      "label": "Post-ROSC: catheter aspirated",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 1,
+            "volumeMl": 30,
+            "rateMlPerMin": 4
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "fluid-roscReaspirated",
+          "label": "Crystalloid 500 mL",
+          "to": "roscFluid",
+          "when": {
+            "manual": {
+              "label": "Crystalloid 500 mL"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "drainedEarly",
+      "label": "Pericardium drained before the arrest, catheter left in",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 1,
+            "volumeMl": 30,
+            "rateMlPerMin": 4
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "reasp-drainedEarly",
+          "label": "Aspirate the catheter again",
+          "to": "drainedEarlyReaspirated",
+          "when": {
+            "manual": {
+              "label": "Aspirate the catheter again"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "drainedEarlyReaspirated",
+      "label": "Catheter aspirated again",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "tamponade",
+            "severity": 1,
+            "volumeMl": 30,
+            "rateMlPerMin": 4
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "reasp-drainedEarlyReaspirated",
+          "label": "Aspirate the catheter again",
+          "to": "drainedEarly",
+          "when": {
+            "manual": {
+              "label": "Aspirate the catheter again"
+            }
           }
         }
       ]

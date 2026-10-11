@@ -1,0 +1,55 @@
+// Stage 11: the Showcase cards as content — every document is valid, every button's commands are accepted by an engine
+// built from the card's own patient, every state can be reached from the start, the card fields read like a case, the
+// objectives are checkable (a number or a time in each), and the library lists the Showcase cards in the demonstration
+// order. The physiology of each card is in the *.slow.test.ts files beside this one (PME_TEST_SET=showcase).
+import { createEngine, type Command } from '@pme/engine-core';
+import { engineOptionsOf, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
+import { describe, expect, it } from 'vitest';
+import { LIBRARY, SHOWCASE_ORDER } from '../scenarios.ts';
+import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
+
+const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
+const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade'];
+
+describe('Stage 11 Showcase cards', () => {
+  it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {
+    expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
+    expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
+    expect(LIBRARY.slice(0, SHOWCASE.length).map((c) => c.id)).toEqual(SHOWCASE);
+    expect(LIBRARY.find((c) => c.id === 'showcase-bronchospasm')?.category).toBe('Airway and breathing');
+  });
+
+  it.each(SHOWCASE_IDS)('%s: valid, every state reachable, every command accepted by an engine of its own patient', (id) => {
+    const doc = showcaseDoc(id);
+    const v = validateScenario(doc);
+    expect(v.ok ? [] : v.errors).toEqual([]);
+    const seen = new Set([doc.initialState]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const s of doc.states) if (seen.has(s.id)) for (const t of s.transitions ?? []) if (!seen.has(t.to)) (seen.add(t.to), (grew = true));
+    }
+    expect(doc.states.map((s) => s.id).filter((s) => !seen.has(s)), 'unreachable states').toEqual([]);
+    const eo = engineOptionsOf(doc, 7);
+    const e = createEngine({ ...eo, mode: doc.mode ?? 'modeled', patient: { ...eo.patient, ...(doc.patient?.sensors ? { sensors: doc.patient.sensors } : {}) } } as never);
+    const cmds: DocCommand[] = doc.states.flatMap((s) => [...(s.onEnter ?? []), ...(s.onExit ?? [])]);
+    for (const [i, c] of cmds.entries()) {
+      const r = e.dispatch({ id: `${id}-${i}`, issuedBy: 'test', ...(c as object) } as Command);
+      expect(r.accepted, `${JSON.stringify(c)}: ${r.reason}`).toBe(true);
+    }
+  });
+
+  it.each(NEW)('%s: a case card — story, measurable objectives, every state labelled, every button labelled once per state', (id) => {
+    const doc: ScenarioDoc = showcaseDoc(id);
+    expect(doc.category).toBe('Showcase');
+    expect(doc.mode).toBe('modeled');
+    expect(doc.title).not.toMatch(/^\[draft\]/i);
+    expect(doc.story?.length ?? 0).toBeGreaterThan(120);
+    expect(doc.objectives?.length ?? 0).toBeGreaterThanOrEqual(3);
+    for (const o of doc.objectives ?? []) expect(o, `objective without a number: ${o}`).toMatch(/\d/);
+    for (const s of doc.states) {
+      expect(s.label?.length ?? 0, s.id).toBeGreaterThan(5);
+      const manual = (s.transitions ?? []).flatMap((t) => ('manual' in t.when ? [t.when.manual.label] : 'any' in t.when ? t.when.any.flatMap((w) => ('manual' in w ? [w.manual.label] : [])) : []));
+      expect(new Set(manual).size, `${s.id}: a button label twice`).toBe(manual.length);
+    }
+  });
+});

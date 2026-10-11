@@ -1,10 +1,20 @@
+/// <reference types="vitest/config" />
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 // Multi-page demo: one page per stage (BUILD-PLAN "Monorepo layout").
 const page = (name: string) => resolve(import.meta.dirname, `${name}.html`);
+// Stage 11: the showcase cards run on the engine for 10–60 sim-min each (≈ 3.5 min in all, alone). CI runs them in the test-slow
+// job's `showcase` group (PME_TEST_SET=showcase, one file at a time); the main job's fast set (PME_TEST_SET=fast) leaves
+// them out, as engine-core does with its SLOW set. Unset = everything (a local `pnpm test`).
+const SHOWCASE_SLOW = 'src/app/showcase/*.slow.test.ts';
+const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
+  test: {
+    ...(set === 'fast' ? { exclude: ['**/node_modules/**', '**/dist/**', SHOWCASE_SLOW] } : {}),
+    ...(set === 'showcase' ? { include: [SHOWCASE_SLOW], fileParallelism: false } : {}),
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

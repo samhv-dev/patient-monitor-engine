@@ -4,13 +4,13 @@
   "title": "Class IV haemorrhage, PEA and resuscitation",
   "category": "Showcase",
   "durationMin": 20,
-  "story": "A ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA). Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about four and a half minutes into CPR.",
+  "story": "A ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA) at about 10½ minutes. Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about three minutes into CPR.",
   "objectives": [
     "Recognise PEA from hypovolaemia",
     "Start high-quality CPR without delay",
     "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram"
   ],
-  "notes": "Showcase case (Stage 9 Task 26): the fu4 page's class IV run (bleed 2.5 L over 600 s; CPR + 2 L over 180 s + epinephrine 1 mg; pulse back ≈ 4.5 min into CPR).",
+  "notes": "Showcase case (Stage 9 Task 26): the fu4 page's class IV run (bleed 2.5 L over 600 s; CPR + 2 L over 180 s + epinephrine 1 mg; pulse lost ≈ 10:29, back ≈ 3 min into CPR — Stage 11, measured on the FU-7.1 physiology; it was ≈ 10:05 and ≈ 4.5 min).",
   "seed": 7,
   "mode": "modeled",
   "patient": {
