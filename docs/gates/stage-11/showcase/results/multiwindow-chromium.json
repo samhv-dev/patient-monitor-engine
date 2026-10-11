@@ -1,0 +1,170 @@
+{
+  "browser": "chromium",
+  "base": "http://127.0.0.1:8700",
+  "server": "perl (through the launcher)",
+  "windows": {
+    "B": {
+      "route": "#/monitor",
+      "before": {
+        "route": "#/monitor",
+        "code": "4TBVUC",
+        "simT": 12.5,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:12×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/monitor",
+        "code": "4TBVUC",
+        "simT": 27.9,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 69,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:27×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 108.9,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "C": {
+      "route": "#/explore",
+      "before": {
+        "route": "#/explore",
+        "code": "UC6562",
+        "simT": 8.2,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 71,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:08×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/explore",
+        "code": "UC6562",
+        "simT": 23.7,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 70,
+        "abp": null,
+        "etco2": 36,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:23×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 113.1,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "D": {
+      "route": "#/vent",
+      "before": {
+        "route": "#/vent",
+        "code": "MQFTA6",
+        "simT": 4,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": null,
+        "abp": null,
+        "etco2": null,
+        "rr": null,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:03×1×2×4PauseBookmark"
+      },
+      "after": {
+        "route": "#/vent",
+        "code": "MQFTA6",
+        "simT": 19.4,
+        "speed": 1,
+        "scenario": null,
+        "state": null,
+        "hr": 73,
+        "abp": null,
+        "etco2": 38,
+        "rr": 14,
+        "bar": "M 40 y 70 kgMODELEDNo scenario00:19×1×2×4PauseBookmark"
+      },
+      "sameCode": false,
+      "sameScenario": false,
+      "sameState": false,
+      "clockGapS": 117.4,
+      "followsInduction": false,
+      "inStep": false
+    },
+    "A": {
+      "before": {
+        "route": "#/teach",
+        "code": "QEZKZG",
+        "simT": 74.9,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "awake",
+        "hr": 70,
+        "abp": "123/81 (95)",
+        "etco2": 39,
+        "rr": 13,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction 01:13 01:13 ×1 ×2 ×4 Pause Bookmark"
+      },
+      "after": {
+        "route": "#/teach",
+        "code": "QEZKZG",
+        "simT": 136.8,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "induced",
+        "hr": 75,
+        "abp": "97/63 (74)",
+        "etco2": 0,
+        "rr": 0,
+        "bar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured 01:00 02:15 ×1 ×2 ×4 Pause Bookmark"
+      }
+    },
+    "R": {
+      "connected": true,
+      "status": "Connected to QEZKZG",
+      "scenarioShownOnRemote": "Healthy induction",
+      "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured 01:25 02:40 ×1 ×2 ×4 Pause Bookmark",
+      "pressedIntubateOnRemote": true,
+      "instructorStateBefore": "induced",
+      "hostReachedVentilated": true,
+      "hostAfter": {
+        "route": "#/monitor",
+        "code": "QEZKZG",
+        "simT": 169.3,
+        "speed": 4,
+        "scenario": "Healthy induction",
+        "state": "ventilated",
+        "hr": 77,
+        "abp": "90/59 (68)",
+        "etco2": 45,
+        "rr": 6,
+        "bar": "M 40 y 75 kgMODELEDHealthy induction: Intubated and ventilated 00:0702:48×1×2×4PauseBookmark"
+      },
+      "inStep": true
+    }
+  },
+  "errors": {
+    "A": [],
+    "B": [],
+    "C": [],
+    "D": [],
+    "R": []
+  }
+}

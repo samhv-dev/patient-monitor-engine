@@ -2,7 +2,7 @@
   "schema": "pme-scenario/1",
   "id": "showcase-bronchospasm",
   "title": "Severe bronchospasm on the ventilator",
-  "category": "Showcase",
+  "category": "Airway and breathing",
   "durationMin": 10,
   "story": "A ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.",
   "objectives": [

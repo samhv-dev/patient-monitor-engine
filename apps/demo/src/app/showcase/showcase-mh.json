@@ -1,0 +1,657 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-mh",
+  "title": "Malignant hyperthermia",
+  "category": "Showcase",
+  "durationMin": 40,
+  "story": "A fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.",
+  "objectives": [
+    "Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)",
+    "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis",
+    "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg",
+    "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L",
+    "Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg"
+  ],
+  "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 35,
+    "sex": "M",
+    "weightKg": 80,
+    "heightCm": 180,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "initialState": "induction",
+  "states": [
+    {
+      "id": "induction",
+      "label": "Induced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %",
+      "notes": "Say it: the jaw is hard to open after the succinylcholine (masseter rigidity). The monitor cannot show it.",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "succinylcholine",
+            "dose": 1.5,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 0.5
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "vaporiser",
+            "agent": "sevoflurane",
+            "dialPct": 2,
+            "fgfLpm": 2
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "condition",
+            "id": "mh",
+            "severity": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "surgery",
+          "label": "Start surgery: rocuronium 0.6 mg/kg",
+          "to": "surgery",
+          "when": {
+            "manual": {
+              "label": "Start surgery: rocuronium 0.6 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "crisis",
+          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "to": "triggerOff",
+          "when": {
+            "manual": {
+              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "surgery",
+      "label": "Surgery under way: sevoflurane 2 %, rocuronium",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "rocuronium",
+            "dose": 0.6,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "crisis-surgery",
+          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "to": "triggerOff",
+          "when": {
+            "manual": {
+              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+            }
+          }
+        },
+        {
+          "id": "early",
+          "label": "EtCO₂ above 45 at the same ventilation",
+          "to": "earlySigns",
+          "when": {
+            "vital": {
+              "var": "etco2",
+              "op": ">",
+              "value": 45,
+              "forS": 20
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "earlySigns",
+      "label": "Early signs: EtCO₂ rising at the same ventilation, tachycardia",
+      "transitions": [
+        {
+          "id": "crisis-earlySigns",
+          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "to": "triggerOff",
+          "when": {
+            "manual": {
+              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+            }
+          }
+        },
+        {
+          "id": "established",
+          "label": "Core temperature above 38.5 °C",
+          "to": "established",
+          "when": {
+            "vital": {
+              "var": "tempCore",
+              "op": ">",
+              "value": 38.5,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "established",
+      "label": "Established MH: hyperthermia, acidosis, rising potassium",
+      "transitions": [
+        {
+          "id": "crisis-established",
+          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "to": "triggerOff",
+          "when": {
+            "manual": {
+              "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate"
+            }
+          }
+        },
+        {
+          "id": "arrest",
+          "label": "No pulse",
+          "to": "arrest",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "triggerOff",
+      "label": "Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "vaporiser",
+            "agent": "sevoflurane",
+            "dialPct": 0,
+            "fgfLpm": 10
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 20,
+            "vtMl": 600,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "dant",
+          "label": "Dantrolene 2.5 mg/kg",
+          "to": "dantrolene",
+          "when": {
+            "manual": {
+              "label": "Dantrolene 2.5 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "cool",
+          "label": "Cool: 2 L saline at room temperature",
+          "to": "cooling",
+          "when": {
+            "manual": {
+              "label": "Cool: 2 L saline at room temperature"
+            }
+          }
+        },
+        {
+          "id": "kTreat",
+          "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+          "to": "potassium",
+          "when": {
+            "manual": {
+              "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose"
+            }
+          }
+        },
+        {
+          "id": "bicarb",
+          "label": "Sodium bicarbonate 1 mmol/kg",
+          "to": "bicarbonate",
+          "when": {
+            "manual": {
+              "label": "Sodium bicarbonate 1 mmol/kg"
+            }
+          }
+        },
+        {
+          "id": "arrest-triggerOff",
+          "label": "No pulse",
+          "to": "arrest",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "treating",
+      "label": "MH treatment under way",
+      "transitions": [
+        {
+          "id": "dant-treating",
+          "label": "Dantrolene 2.5 mg/kg",
+          "to": "dantrolene",
+          "when": {
+            "manual": {
+              "label": "Dantrolene 2.5 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "cool-treating",
+          "label": "Cool: 2 L saline at room temperature",
+          "to": "cooling",
+          "when": {
+            "manual": {
+              "label": "Cool: 2 L saline at room temperature"
+            }
+          }
+        },
+        {
+          "id": "kTreat-treating",
+          "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+          "to": "potassium",
+          "when": {
+            "manual": {
+              "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose"
+            }
+          }
+        },
+        {
+          "id": "bicarb-treating",
+          "label": "Sodium bicarbonate 1 mmol/kg",
+          "to": "bicarbonate",
+          "when": {
+            "manual": {
+              "label": "Sodium bicarbonate 1 mmol/kg"
+            }
+          }
+        },
+        {
+          "id": "recover",
+          "label": "EtCO₂ below 45 for a minute",
+          "to": "recovering",
+          "when": {
+            "vital": {
+              "var": "etco2",
+              "op": "<",
+              "value": 45,
+              "forS": 60
+            }
+          }
+        },
+        {
+          "id": "arrest-treating",
+          "label": "No pulse",
+          "to": "arrest",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "dantrolene",
+      "label": "Dantrolene 2.5 mg/kg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "dantrolene",
+            "dose": 2.5,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back",
+          "label": "Back to the crisis checklist",
+          "to": "treating",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "cooling",
+      "label": "Cooling: 2 L saline at room temperature running",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "fluid",
+            "fluid": "saline",
+            "volumeMl": 2000,
+            "overS": 900
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-cooling",
+          "label": "Back to the crisis checklist",
+          "to": "treating",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "potassium",
+      "label": "Calcium chloride 10 mg/kg and insulin 10 U with dextrose given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "calciumChloride",
+            "dose": 10,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "insulinDextrose",
+            "dose": 10,
+            "unit": "units",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-potassium",
+          "label": "Back to the crisis checklist",
+          "to": "treating",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "bicarbonate",
+      "label": "Sodium bicarbonate 1 mmol/kg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "sodiumBicarbonate",
+            "dose": 1,
+            "unit": "mmol/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-bicarbonate",
+          "label": "Back to the crisis checklist",
+          "to": "treating",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "recovering",
+      "label": "Recovering: EtCO₂ below 45",
+      "transitions": [
+        {
+          "id": "dant-recovering",
+          "label": "Dantrolene 2.5 mg/kg",
+          "to": "dantrolene",
+          "when": {
+            "manual": {
+              "label": "Dantrolene 2.5 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "cool-recovering",
+          "label": "Cool: 2 L saline at room temperature",
+          "to": "cooling",
+          "when": {
+            "manual": {
+              "label": "Cool: 2 L saline at room temperature"
+            }
+          }
+        },
+        {
+          "id": "kTreat-recovering",
+          "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+          "to": "potassium",
+          "when": {
+            "manual": {
+              "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose"
+            }
+          }
+        },
+        {
+          "id": "bicarb-recovering",
+          "label": "Sodium bicarbonate 1 mmol/kg",
+          "to": "bicarbonate",
+          "when": {
+            "manual": {
+              "label": "Sodium bicarbonate 1 mmol/kg"
+            }
+          }
+        },
+        {
+          "id": "normo",
+          "label": "EtCO₂ normal: ventilation back to 12 × 500",
+          "to": "normoventilated",
+          "when": {
+            "manual": {
+              "label": "EtCO₂ normal: ventilation back to 12 × 500"
+            }
+          }
+        },
+        {
+          "id": "arrest-recovering",
+          "label": "No pulse",
+          "to": "arrest",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "normoventilated",
+      "label": "Ventilation back to 12 × 500, O₂ 100 %",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "dant-normoventilated",
+          "label": "Dantrolene 2.5 mg/kg",
+          "to": "dantrolene",
+          "when": {
+            "manual": {
+              "label": "Dantrolene 2.5 mg/kg"
+            }
+          }
+        },
+        {
+          "id": "cool-normoventilated",
+          "label": "Cool: 2 L saline at room temperature",
+          "to": "cooling",
+          "when": {
+            "manual": {
+              "label": "Cool: 2 L saline at room temperature"
+            }
+          }
+        },
+        {
+          "id": "kTreat-normoventilated",
+          "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+          "to": "potassium",
+          "when": {
+            "manual": {
+              "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose"
+            }
+          }
+        },
+        {
+          "id": "bicarb-normoventilated",
+          "label": "Sodium bicarbonate 1 mmol/kg",
+          "to": "bicarbonate",
+          "when": {
+            "manual": {
+              "label": "Sodium bicarbonate 1 mmol/kg"
+            }
+          }
+        },
+        {
+          "id": "arrest-normoventilated",
+          "label": "No pulse",
+          "to": "arrest",
+          "when": {
+            "vital": {
+              "var": "sbp",
+              "op": "<",
+              "value": 25,
+              "forS": 10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "arrest",
+      "label": "Cardiac arrest",
+      "transitions": [
+        {
+          "id": "cpr",
+          "label": "Start CPR",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cpr",
+      "label": "CPR (defibrillate VF from the Devices tab)",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        }
+      ]
+    }
+  ]
+}
