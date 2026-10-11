@@ -1,0 +1,57 @@
+{
+  "case": "Malignant hyperthermia",
+  "browser": "chromium",
+  "endLinkMarked": "false",
+  "objectives": [
+    {
+      "status": "not met",
+      "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation) The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 13 min 06 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:54 → 20:00; within 2 min 00 s asked)."
+    },
+    {
+      "status": "met",
+      "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisis Dantrolene 1 min 04 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (20:00 → 21:04; within 5 min 00 s asked)."
+    },
+    {
+      "status": "not assessable",
+      "text": "– Not assessable Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg This objective has no rule: the instructor judges it."
+    },
+    {
+      "status": "not met",
+      "text": "✗ Not met Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L Calcium chloride 10 % or Insulin + dextrose 5 min 53 s after K⁺ above 5.5 mmol/L (17:13 → 23:05; within 5 min 00 s asked)."
+    },
+    {
+      "status": "met",
+      "text": "✓ Met Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg The state \"Ventilation back to 12 × 500, O₂ 100 %\" 2 min 06 s after EtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (37:26 → 39:32; within 5 min 00 s asked)."
+    }
+  ],
+  "facts": [
+    [
+      "Lowest SpO₂",
+      "96 % at 00:10"
+    ],
+    [
+      "Lowest ART M / NIBP M",
+      "66 mmHg at 01:15"
+    ],
+    [
+      "Highest EtCO₂",
+      "82 mmHg at 19:01"
+    ],
+    [
+      "Highest T1 / T2",
+      "39.5 °C at 27:51"
+    ],
+    [
+      "Labs (the model): last (lowest–highest)",
+      "K⁺ 4.5 mmol/L (4.2–5.9) · Lactate 6.4 mmol/L (1.0–7.5) · pH 7.34 (7.09–7.41) · Glucose 6.0 mmol/L (5.6–17.3) · Tcore 39.4 °C (36.7–39.5)"
+    ]
+  ],
+  "timelineRows": 36,
+  "minuteRows": 42,
+  "title": "Debrief Malignant hyperthermia 2026-10-11",
+  "pdf": {
+    "pages": 7,
+    "a4": true,
+    "title": "Debrief Malignant hyperthermia 2026-10-11"
+  }
+}

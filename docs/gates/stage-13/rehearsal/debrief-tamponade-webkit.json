@@ -1,0 +1,60 @@
+{
+  "case": "Stab wound: tamponade, PEA and pericardiocentesis",
+  "browser": "webkit",
+  "endLinkMarked": "false",
+  "objectives": [
+    {
+      "status": "not assessable",
+      "text": "– Not assessable Name the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed) This objective has no rule: the instructor judges it."
+    },
+    {
+      "status": "not met",
+      "text": "✗ Not met Start CPR within 10 s of the pulse loss CPR 33 s after the pulse loss (07:48 → 08:20; within 10 s asked)."
+    },
+    {
+      "status": "not met",
+      "text": "✗ Not met Pericardiocentesis within 120 s of starting CPR The state \"CPR: pericardium drained, catheter left in\" 2 min 12 s after CPR (08:20 → 10:32; within 2 min 00 s asked)."
+    },
+    {
+      "status": "met",
+      "text": "✓ Met Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram The state \"Return of circulation: ventilated, catheter in the pericardium\" 28 s after the return of circulation (12:09 → 12:36; within 30 s asked)."
+    },
+    {
+      "status": "not met",
+      "text": "✗ Not met Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows The pulse loss at 07:48"
+    }
+  ],
+  "facts": [
+    [
+      "Lowest SpO₂",
+      "95 % at 00:30"
+    ],
+    [
+      "Lowest ART M / NIBP M",
+      "19 mmHg at 08:16"
+    ],
+    [
+      "Highest EtCO₂",
+      "40 mmHg at 13:38"
+    ],
+    [
+      "Highest T1 / T2",
+      "36.8 °C at 00:01"
+    ],
+    [
+      "Pulseless",
+      "4 min 21 s in all; first lost at 07:48"
+    ],
+    [
+      "Return of circulation",
+      "4 min 21 s after the pulse loss (12:09)"
+    ],
+    [
+      "Labs (the model): last (lowest–highest)",
+      "K⁺ 4.3 mmol/L (4.2–4.3) · Lactate 2.4 mmol/L (1.0–2.6) · pH 7.34 (7.25–7.41) · Glucose 6.1 mmol/L (5.6–6.1) · Tcore 36.7 °C (36.7–36.8)"
+    ]
+  ],
+  "timelineRows": 25,
+  "minuteRows": 16,
+  "title": "Debrief Stab wound: tamponade, PEA and pericardiocentesis 2026-10-11"
+}
