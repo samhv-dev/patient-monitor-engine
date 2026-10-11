@@ -131,5 +131,6 @@ export const timeText = (t: number): string => `${String(Math.floor(t / 60)).pad
 
 /** Stage 10: a fast-forward's span in words ("5 min", "90 s"). */
 export function spanText(s: number): string {
-  return Number.isFinite(s) && s > 0 && s % 60 === 0 ? `${s / 60} min` : `${Math.round(s)} s`;
+  const r = Math.round(s); // a span computed as toT − fromT is a few ULPs off a whole second (604.3 − 484.3 = 119.99…)
+  return Number.isFinite(s) && r > 0 && r % 60 === 0 ? `${r / 60} min` : `${r} s`;
 }
