@@ -1,0 +1,213 @@
+{
+  "case": "Tamponade, CPR with 2-min fast-forwards, second screen and Remote",
+  "browser": "chromium",
+  "base": "http://127.0.0.1:8700",
+  "steps": [
+    {
+      "clock": "07:52",
+      "state": "pea",
+      "what": "state pea (×8)",
+      "hr": 44,
+      "art": "null/null (20)",
+      "spo2": 99,
+      "etco2": 13
+    },
+    {
+      "clock": "08:00",
+      "state": "cpr",
+      "what": "CPR started",
+      "hr": 102,
+      "art": "51.7/24.7 (34.7)",
+      "spo2": 99,
+      "etco2": 11
+    },
+    {
+      "clock": "10:03",
+      "state": "cpr",
+      "what": "after 2 min of CPR fast-forwarded",
+      "hr": 107,
+      "art": "41.6/20.2 (28.2)",
+      "spo2": 99,
+      "etco2": 9
+    },
+    {
+      "clock": "12:17",
+      "state": "cprDrained",
+      "what": "after 2 min more (the pulse returns ≈ 96 s after the drainage)",
+      "hr": 124,
+      "art": "114.1/66.3 (84.5)",
+      "spo2": 99,
+      "etco2": 28
+    },
+    {
+      "clock": "12:51",
+      "state": "rosc",
+      "what": "30 s after stopping CPR",
+      "hr": 64,
+      "art": "119.3/78.3 (92.1)",
+      "spo2": 99,
+      "etco2": 36,
+      "minSys10to30": 112.6,
+      "drainToStopS": 133.1
+    },
+    {
+      "presses": [
+        {
+          "label": "Start CPR, intubate, FiO₂ 1.0",
+          "at": "07:52",
+          "before": "pea",
+          "after": "cpr",
+          "toast": ""
+        },
+        {
+          "label": "Pericardiocentesis during CPR",
+          "at": "10:05",
+          "before": "cpr",
+          "after": "cprDrained",
+          "toast": ""
+        },
+        {
+          "label": "Pulse back: stop CPR",
+          "at": "12:18",
+          "before": "cprDrained",
+          "after": "rosc",
+          "toast": ""
+        }
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "min": 2,
+      "title": "FAST FORWARD · 2 MIN",
+      "clockAtShow": "08:02",
+      "clockLater": "08:26",
+      "wallS": 10.4,
+      "fromT": 481.1,
+      "endT": 601.1,
+      "simStart": 480.8,
+      "banner": "Fast-forwarded 2 min, 08:01 → 10:01. During it: no alarms.",
+      "alarms": []
+    },
+    {
+      "min": 2,
+      "title": "FAST FORWARD · 2 MIN",
+      "clockAtShow": "10:14",
+      "clockLater": "10:50",
+      "wallS": 10.5,
+      "fromT": 614.1,
+      "endT": 734.1,
+      "simStart": 613.8,
+      "banner": "Fast-forwarded 2 min, 10:14 → 12:14. During it: no alarms.",
+      "alarms": []
+    }
+  ],
+  "checks": [
+    {
+      "what": "the Remote pairs",
+      "expected": "connected",
+      "observed": true,
+      "pass": true
+    },
+    {
+      "what": "PEA without drainage at ×8",
+      "expected": "state pea 5–11 min after load",
+      "observed": "7.8 min",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: panel title",
+      "expected": "FAST FORWARD · 2 MIN",
+      "observed": "FAST FORWARD · 2 MIN",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: the clock runs on the panel",
+      "expected": "changes",
+      "observed": "08:02 → 08:26",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: exact span",
+      "expected": "120 s",
+      "observed": 120,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: paced",
+      "expected": "9.5–20 s of wall time (click to panel gone)",
+      "observed": 10.4,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: banner",
+      "expected": "\"Fast-forwarded 2 min, mm:ss → mm:ss. During it: …\"",
+      "observed": "Fast-forwarded 2 min, 08:01 → 10:01. During it: no alarms.",
+      "pass": true
+    },
+    {
+      "what": "the panel on the second screen during the span",
+      "expected": "shown",
+      "observed": "see screenshot",
+      "pass": true
+    },
+    {
+      "what": "the panel on the Remote during the span",
+      "expected": "FAST FORWARD · 2 MIN",
+      "observed": {
+        "shown": true,
+        "title": "FAST FORWARD · 2 MIN"
+      },
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: panel title",
+      "expected": "FAST FORWARD · 2 MIN",
+      "observed": "FAST FORWARD · 2 MIN",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: the clock runs on the panel",
+      "expected": "changes",
+      "observed": "10:14 → 10:50",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: exact span",
+      "expected": "120 s",
+      "observed": 120,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: paced",
+      "expected": "9.5–20 s of wall time (click to panel gone)",
+      "observed": 10.5,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 2 min: banner",
+      "expected": "\"Fast-forwarded 2 min, mm:ss → mm:ss. During it: …\"",
+      "observed": "Fast-forwarded 2 min, 10:14 → 12:14. During it: no alarms.",
+      "pass": true
+    },
+    {
+      "what": "the pulse holds after CPR stops (drained, the span ran through the return)",
+      "expected": "arterial systolic > 90 from 10 to 30 s after stopping",
+      "observed": 112.6,
+      "pass": true
+    },
+    {
+      "what": "the second screen follows again after the spans",
+      "expected": "synced",
+      "observed": true,
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}
