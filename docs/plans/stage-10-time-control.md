@@ -1365,7 +1365,7 @@ endT; stopped?; alarms }` and `fastForwardDone(e)` (protocol); `ControllerSessio
 fields on `ViewerSync`, plus `ViewerSync.fastForwardAt` (the host's time during the span). Consumes FU-11 E3
 (`newTimeline`, `timeline`), F3, G1 (`mirror`), A3/C2 (the host's receive and apply wrapper).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `packages/controller/test/scenario/s10-ff-determinism.test.ts`:
 
@@ -1644,7 +1644,7 @@ describe('Stage 10: fast-forward on the host', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/s10-fast-forward.test.ts test/scenario/s10-ff-determinism.test.ts`
 Expected: 9 failed — the jump is refused (`expected false to be true`; `expected 'time jump arrives in Stage 6b' to be
@@ -1653,7 +1653,7 @@ Expected: 9 failed — the jump is refused (`expected false to be true`; `expect
 StringMatching /HR/, true ], …(1) ]`), waits time out; the determinism test `expected undefined to be 25` (no
 `FF_STEP_TICKS`).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/controller/src/protocol.ts`, find:
 
@@ -2195,14 +2195,14 @@ Replace with:
       }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run the Step 2 command again — Expected: 9 passed (alone: the determinism test ≈ 10 s, the 300 s span test ≈ 15 s; on a
 loaded machine the 300 s test took 69 s, hence its 240 s timeout). Then `CI=1 npx -y pnpm@9.15.9 --filter
 @pme/controller exec vitest run test/session test/scenario` (all passed: the 6a `host-session` test still sees `time
 jump` refused — its manual host has no `fastForwardStep`) and `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/controller/src/protocol.ts packages/controller/src/session/host-session.ts \

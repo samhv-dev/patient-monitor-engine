@@ -5,10 +5,12 @@ import type { RhythmId, SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
   newPeerId,
+  fastForwardDone,
   SeqFilter,
   type AckResult,
   type AppliedResolution,
   type CommandInput,
+  type FastForwardDone,
   type ManagedTransport,
   type MeasuredMap,
   type StateEvent,
@@ -63,6 +65,9 @@ export class ControllerSession {
   /** FU-11 (K5): the host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
   timeScale = 1;
   hostPaused = false;
+  /** Stage 10: the host's fast-forward while it runs (null otherwise), and the last one that ended. */
+  fastForward: { fromT: SimSeconds; toT: SimSeconds } | null = null;
+  lastFastForward: FastForwardDone | null = null;
   private readonly o: ControllerSessionOptions;
   private readonly stamp: (b: WireBody) => WireMessage;
   private readonly now: () => number;
@@ -183,6 +188,7 @@ export class ControllerSession {
       // FU-11 (F09, BA05): a bookmark restore starts a timeline too — the clock goes back, the scenario run continues.
       this.simT = e.t;
       if (e.cause !== 'restore') this.scenario.reset();
+      this.fastForward = null; // Stage 10: a fast-forward ends with its timeline
       return;
     }
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t); // monotonic within one timeline
@@ -196,11 +202,21 @@ export class ControllerSession {
     else if (e.type === 'alarm') this.addLog('alarm', `${e.priority} ${e.state}: ${e.text}`);
     else if (e.type === 'marker') this.addLog('marker', e.kind);
     else if (e.type === 'scenario') this.addLog('scenario', `→ ${e.stateId}${e.transitionId ? ` (${e.transitionId})` : ''}`);
-    else if (e.type === 'commandApplied') {
+    else if (e.type === 'fastForward') {
+      // Stage 10: every controller sees the host's fast-forward, like its speed and pause
+      if (e.phase === 'start') this.fastForward = { fromT: e.fromT, toT: e.toT };
+      else {
+        this.fastForward = null;
+        this.lastFastForward = fastForwardDone(e);
+      }
+      this.addLog('marker', e.phase === 'start' ? `fast-forward ${Math.round(e.toT - e.fromT)} s` : `fast-forward ended${e.stopped ? `: ${e.stopped}` : ''}`);
+    } else if (e.type === 'commandApplied') {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
       if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value; // FU-11 (K5)
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
+      // Stage 10: a late joiner learns a running fast-forward from the sticky jump (its atTick = where it began)
+      if (c?.type === 'time' && c.action === 'jump' && res?.replay && typeof c.value === 'number') this.fastForward = { fromT: (c.atTick ?? e.tick) * 0.02, toT: (c.atTick ?? e.tick) * 0.02 + c.value };
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
