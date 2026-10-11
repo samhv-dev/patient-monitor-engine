@@ -72,7 +72,10 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     expect(a.engine.snapshot().state).toEqual(b.engine.snapshot().state);
   });
 
-  it('the NIBP cycle runs through the span: the same results at the same times as without a fast-forward', () => {
+  // yields to the event loop between chunks: a 46 s synchronous block on a loaded CI runner starved vitest's progress
+  // messages ("Timeout calling onTaskUpdate", run 38181144224); the same steps, the same 300 s at ×4
+  it('the NIBP cycle runs through the span: the same results at the same times as without a fast-forward', async () => {
+    const yieldToLoop = () => new Promise((r) => setTimeout(r, 0));
     const results = (posts: Array<{ events: EngineEvent[] }>) =>
       posts.flatMap((p) => p.events).flatMap((e) => (e.type === 'nibp' && e.result ? [{ t: e.t, ...e.result }] : []));
     const pa: Array<{ anchor: ClockAnchor; events: EngineEvent[] }> = [];
@@ -80,9 +83,15 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     const a = make(pa);
     const b = make(pb);
     for (const c of [a, b]) c.command({ id: 'nibp', issuedBy: 't', type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 1 } });
-    for (let k = 0; k < 15_000; k += 25) a.advance(25, k + 25 >= 15_000); // 300 s fast-forwarded
+    for (let k = 0; k < 15_000; k += 25) {
+      a.advance(25, k + 25 >= 15_000); // 300 s fast-forwarded
+      if (k % 500 === 0) await yieldToLoop();
+    }
     b.clock.timeScale = 4;
-    frames(b, 0, 300_000 / 4 + 100); // the same 300 s at ×4, drawn
+    for (let from = 0; from <= 300_000 / 4 + 100; from += 5000) {
+      frames(b, from, Math.min(from + 5000 - 1, 300_000 / 4 + 100)); // the same 300 s at ×4, drawn (5 s of frames a chunk)
+      await yieldToLoop();
+    }
     expect(b.engine.now().tick).toBeGreaterThanOrEqual(15_000);
     const ra = results(pa);
     const rb = results(pb).filter((r) => r.t <= 300);

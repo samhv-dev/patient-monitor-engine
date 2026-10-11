@@ -210,3 +210,11 @@ The e2e gave 166 passed, 38 skipped, 2 flaky, 0 failed. Record-only, passed on r
 - `showcase-clock.e2e.ts:19` on Chromium: `locator.click` timed out at 90 s.
 - `showcase-clock.e2e.ts:19` on WebKit: 2.548 s against < 2 s (F-49-3).
 
+## 13. CI: the NIBP-through-the-span test yields to the event loop (orchestrator ruling 2026-10-12)
+
+Run 38181144224 (head `940da8db`, docs only) failed the unit step on a vitest "Timeout calling onTaskUpdate" in the
+renderer package. All 107 tests passed, the NIBP test in 46.4 s under its 180 s timeout, but its 46 s synchronous block
+starved vitest's progress messages on the loaded runner (the same error accompanied the 43 s timeout of run 38169697950).
+The test is now async and awaits a macrotask every 500 ticks of the fast-forward and after every 5 s of the ×4 frames. The
+fast-forward steps, the 300 s at ×4 (60 fps frames, chunked), the assertions and the 180 s timeout are unchanged. Recorded as a deviation in the plan copy.
+

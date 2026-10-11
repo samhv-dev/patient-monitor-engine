@@ -3539,6 +3539,10 @@ git push
 - **Task 2's NIBP-through-the-span test: an explicit 180 000 ms timeout** (orchestrator ruling 2026-10-12), like the
   plan's other long Stage 10 tests. A pure CPU comparison of 300 s at two speeds with no wall-clock assertion: 4 s alone,
   43 s on a loaded CI runner (run 38169697950), where vitest's default 30 s timeout failed it. No assertion changed.
+- **Task 2's NIBP-through-the-span test yields to the event loop** (orchestrator ruling 2026-10-12): with the 180 s
+  timeout it passed on CI, but its 46 s synchronous block on a loaded runner starved vitest's progress messages ("Timeout
+  calling onTaskUpdate", run 38181144224) and the package exited 1. It now awaits a macrotask every 500 ticks of the
+  fast-forward and after every 5 s of the ×4 frames; the fast-forward steps, the 300 s at ×4 (60 fps frames, chunked) and the assertions are unchanged.
 - **Task 5's e2e `s10-time-control` is skipped on WebKit when on CI only** (FALLBACK ruling 2026-10-12). On PR #54's
   CI (run 38172603508) the 2-vCPU Linux WebKit runner held ×5.3 instead of ×8 (S10-F5; the D-2 policy: sim time runs
   slower, no tick is skipped), scheduled no beat tone within 10 s back at ×1, and once left a fast-forward from the
