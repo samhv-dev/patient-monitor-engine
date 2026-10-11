@@ -30,13 +30,70 @@ jobs:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
       - run: pnpm build
       - run: pnpm check-notices
-      - run: pnpm exec playwright install --with-deps chromium webkit
-      - run: pnpm test:e2e
+
+  # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
+  # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
+  # unit tests in the build job.
+  renderer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pme/renderer build
       - uses: actions/upload-artifact@v4
         with:
           name: patient-monitor-iife
           path: packages/renderer/dist/patient-monitor.iife.js
           if-no-files-found: error
+
+  # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
+  # wall-clock-sensitive tests ran beside the other's load). Retries stay at 2 (playwright.config.ts, CI).
+  e2e:
+    needs: renderer
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    name: e2e (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: patient-monitor-iife
+          path: packages/renderer/dist
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm test:e2e --project=${{ matrix.browser }} --reporter=list,json
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.browser }}.json
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-report-${{ matrix.browser }}
+          path: |
+            playwright-report-${{ matrix.browser }}.json
+            test-results/
+          if-no-files-found: warn
+      # echo only, never fails the job (Stage 14 turns this into a rule with a known-flaky list)
+      - name: e2e tests that passed only on retry
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          f=playwright-report-${{ matrix.browser }}.json
+          [ -f "$f" ] || { echo "no JSON report ($f)"; exit 0; }
+          jq -r '[.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky") | "[\(.projectName)] \($s.file):\($s.line) \($s.title) (passed on retry #\(.results | map(select(.status == "passed")) | .[0].retry))"] | if length == 0 then "none" else .[] end' "$f" || true
 
   test-slow:
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
