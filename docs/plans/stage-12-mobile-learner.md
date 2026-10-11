@@ -2670,7 +2670,7 @@ git push
   `LICENSES/` (R50 I1); the launcher's knob `PME_NODE=<path>` (try only that Node: the version check's own test) and
   its two Node messages (R50 I4); the run sheet's pre-flight checklist (owner Q5).
 
-- [ ] **Step 1: The check first (it fails: no launcher, no relay file)**
+- [x] **Step 1: The check first (it fails: no launcher, no relay file)**
 
 ```bash
 SP=<scratchpad>/stage-12
@@ -2680,7 +2680,7 @@ ls "$SP/kit/Start Classroom.command" $SP/kit/server/relay.mjs
 
 Expected before: `ls: …Start Classroom.command: No such file or directory` (and relay.mjs).
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 In `NOTICES.md`, find:
 
@@ -3015,7 +3015,7 @@ Replace with:
 
 `chmod 755 scripts/showcase/kit/start-classroom.command` (git records the mode).
 
-- [ ] **Step 3: Build the kit and start the classroom headless**
+- [x] **Step 3: Build the kit and start the classroom headless**
 
 ```bash
 node scripts/showcase/make-bundle.mjs $SP/kit
@@ -3043,7 +3043,7 @@ Expected: "Classroom mode needs Node.js 22 or later; this Mac has Node.js v20.11
 Mac has none."; both followed by "Install Node.js from nodejs.org (the LTS, version 22 or later), then double-click
 "Start Classroom" again."; nothing started (`lsof -nP -iTCP:8650 -sTCP:LISTEN` prints nothing).
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 git add scripts/showcase docs/showcase/CLASSROOM.md NOTICES.md
