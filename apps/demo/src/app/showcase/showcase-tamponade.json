@@ -7,10 +7,10 @@
   "story": "A 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.",
   "objectives": [
     "Name the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)",
-    "Start CPR within 10 s of the pulse loss",
-    "Pericardiocentesis within 120 s of starting CPR",
-    "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram",
-    "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows"
+    { "text": "Start CPR within 10 s of the pulse loss", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 10 } },
+    { "text": "Pericardiocentesis within 120 s of starting CPR", "rule": { "kind": "eventWithin", "after": "cpr", "event": "state:cprDrained", "withinS": 120 } },
+    { "text": "Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram", "rule": { "kind": "eventWithin", "after": "rosc", "event": "state:rosc", "withinS": 30 } },
+    { "text": "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows", "rule": { "kind": "never", "event": "pulseLoss" } }
   ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,

@@ -7,8 +7,8 @@
   "story": "A ventilated 35-year-old man bleeding 2.5 L over 10 minutes. He loses his pulse (PEA) at about 10½ minutes. Start CPR, give 2 L of warmed fluid and epinephrine 1 mg: the pulse returns about three minutes into CPR.",
   "objectives": [
     "Recognise PEA from hypovolaemia",
-    "Start high-quality CPR without delay",
-    "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram"
+    { "text": "Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "cpr", "withinS": 30 } },
+    { "text": "Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "pulseLoss", "event": "rosc", "withinS": 360 } }
   ],
   "notes": "Showcase case (Stage 9 Task 26): the fu4 page's class IV run (bleed 2.5 L over 600 s; CPR + 2 L over 180 s + epinephrine 1 mg; pulse lost ≈ 10:29, back ≈ 3 min into CPR — Stage 11, measured on the FU-7.1 physiology; it was ≈ 10:05 and ≈ 4.5 min).",
   "seed": 7,

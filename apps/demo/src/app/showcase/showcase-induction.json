@@ -7,10 +7,10 @@
   "story": "A fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.",
   "objectives": [
     "Induce after at least 180 s of preoxygenation",
-    "Intubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)",
-    "Confirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation",
-    "Airway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)",
-    "Ventilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)"
+    { "text": "Intubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)", "rule": { "kind": "eventWithin", "after": "alarm:apnoea", "event": "ventilation", "withinS": 90 } },
+    { "text": "Confirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation", "rule": { "kind": "eventWithin", "after": ["state:ventilated", "state:rescuedEtt"], "event": "value:etco2>25", "withinS": 30 } },
+    { "text": "Airway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)", "rule": { "kind": "eventWithin", "after": "state:desaturating", "event": "ventilation", "withinS": 60 } },
+    { "text": "Ventilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)", "rule": { "kind": "eventWithin", "after": "state:bradycardic", "event": "ventilation", "withinS": 300 } }
   ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,

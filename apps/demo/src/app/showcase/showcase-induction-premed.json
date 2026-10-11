@@ -7,9 +7,9 @@
   "story": "The same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.",
   "objectives": [
     "Acknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s",
-    "Intubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)",
-    "Give a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg",
-    "Mean arterial pressure back above 65 mmHg within 120 s of the vasopressor"
+    { "text": "Intubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)", "rule": { "kind": "eventWithin", "after": "alarm:apnoea", "event": "ventilation", "withinS": 60 } },
+    { "text": "Give a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg", "rule": { "kind": "eventWithin", "after": "value:map<60", "event": ["drug:phenylephrine", "drug:ephedrine"], "withinS": 60 } },
+    { "text": "Mean arterial pressure back above 65 mmHg within 120 s of the vasopressor", "rule": { "kind": "eventWithin", "after": ["drug:phenylephrine", "drug:ephedrine"], "event": "value:map>65", "withinS": 120 } }
   ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,
