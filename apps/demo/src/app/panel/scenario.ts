@@ -10,7 +10,8 @@ import { button, clock, confirmDialog, h, setText, toast, toggle } from '../ui.t
 import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
-import { manualLabel as manualOf } from '@pme/controller';
+import { describeCommand } from '../describe.ts';
+import { manualLabel as manualOf, type CommandInput } from '@pme/controller';
 
 export function scenarioTab(c: PanelCtx): HTMLElement {
   const { link } = c;
@@ -76,6 +77,20 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     if (r.accepted) toast(`Scenario: ${label}`);
   };
 
+  /** A manual trigger, resolved when pressed: the ≤ 2 Hz repaint can leave up a button drawn for the previous state, so
+   *  the press finds its label in the CURRENT state and sends that transition (Stage 10 finding: "MH crisis" pressed
+   *  as the case reached "Established" did nothing). A press the case cannot take now is said in a toast, by the state's
+   *  name, and is not logged as an instructor action. */
+  const press = async (label: string) => {
+    const moved = () => toast(`Not available now: ${sv.doc ? `the case has moved to ${sv.current()?.label ?? 'the next state'}` : 'no scenario is running'}.`);
+    const tr = sv.current()?.transitions?.find((x) => manualOf(x.when) === label);
+    if (!tr) return moved();
+    const cmd: CommandInput = { type: 'scenario', action: 'trigger', target: tr.id };
+    const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
+    if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+    else moved();
+  };
+
   c.onRefresh(() => {
     const doc = sv.doc;
     if (docV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
@@ -109,7 +124,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
       const manual = manualOf(tr.when);
       return h('li', {},
         h('span', {}, transitionText(tr, doc)), left !== null ? h('span', { class: 'num muted' }, ` in ${clock(left)}`) : null,
-        manual ? button(manual, () => void link.send({ type: 'scenario', action: 'trigger', target: tr.id }), 'small') : null);
+        manual ? button(manual, () => void press(manual), 'small') : null);
     }));
     // FU-11 (F03–F05, F09, F14; BA01–BA05): a restore now rewinds the waveforms, trends, clocks and pending groups, so
     // "Return here" is back (it was hidden in Stage 9 while a restore left the screen on the discarded timeline)
