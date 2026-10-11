@@ -5,7 +5,7 @@ export type RelayFrame =
   | { relay: 'error'; code: 'bad-hello' | 'host-exists' | 'forbidden' | 'full' | 'bad-session'; message: string };
 
 /** WebSocket close codes the relay uses for fatal refusals (no reconnect) [ENG]. */
-export const RELAY_CLOSE = { badHello: 4001, badSession: 4002, hostExists: 4009, full: 4029 } as const;
+export const RELAY_CLOSE = { badHello: 4001, badSession: 4002, forbiddenRole: 4003, hostExists: 4009, full: 4029 } as const; // Stage 12: 4003
 export const FATAL_CLOSE_CODES: ReadonlySet<number> = new Set(Object.values(RELAY_CLOSE));
 
 export function isRelayFrame(o: unknown): o is RelayFrame {

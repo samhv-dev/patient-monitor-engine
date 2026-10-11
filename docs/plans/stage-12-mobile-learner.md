@@ -327,7 +327,7 @@ on the branch (committed in Task 0).
 
 **Files:** none changed except this plan (copied in and committed).
 
-- [ ] **Step 1: Worktree and install**
+- [x] **Step 1: Worktree and install**
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -338,11 +338,11 @@ cd ../scratch/wt-stage-12
 npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 
-- [ ] **Step 2: FU-11 b, d and Stage 10 are on main** — `git log --oneline origin/main | grep -E "fu-11-b|fu-11-d|stage-10"`
+- [x] **Step 2: FU-11 b, d and Stage 10 are on main** — `git log --oneline origin/main | grep -E "fu-11-b|fu-11-d|stage-10"`
   shows the three merges, and `ls apps/demo/src/app/views/follower.ts apps/demo/src/app/fast-forward.ts` lists both.
   If any is missing: STOP and report.
 
-- [ ] **Step 3: Block check**
+- [x] **Step 3: Block check**
 
 ```bash
 python3 ../plans-backup/stage-12-plan-tools/check.py ../../repo/docs/plans/stage-12-mobile-learner.md ../../repo ../plans-backup/stage-12-plan-tools/chain.txt --base-dir .
@@ -351,11 +351,11 @@ python3 ../plans-backup/stage-12-plan-tools/check.py ../../repo/docs/plans/stage
 Expected: `75 find/replace blocks + 15 creates, 34 files: 0 problems` (the creates only count; a find that occurs 0× or 2× is named with its task: see Global
 Constraints, "Find/replace discipline").
 
-- [ ] **Step 4: Before-numbers** (record in the gate note): `npx -y pnpm@9.15.9 -r typecheck` (clean);
+- [x] **Step 4: Before-numbers** (record in the gate note): `npx -y pnpm@9.15.9 -r typecheck` (clean);
   `cd packages/controller && npx vitest run test/relay test/session/viewer-sync.test.ts` (counts);
   `npx playwright test fu11-follower s10-time-control --retries=0` (counts, both engines).
 
-- [ ] **Step 5: Commit the plan**
+- [x] **Step 5: Commit the plan**
 
 ```bash
 cp ../../repo/docs/plans/stage-12-mobile-learner.md docs/plans/
@@ -382,7 +382,7 @@ git push -u origin stage-12-mobile-learner
   taken still REJECTS `startRelay` (`EADDRINUSE`; the WebSocketServer is attached after the http server listens, R50
   I2); `/signal` is refused (4003) to another device under `remoteRoles: 'viewer'` (R50 M3).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/controller/test/relay/s12-relay-classroom.test.ts`:
 
@@ -518,12 +518,12 @@ describe('Stage 12: the addresses the QR code may use', () => {
 });
 ```
 
-- [ ] **Step 2: Run it red**
+- [x] **Step 2: Run it red**
 
 Run: `cd packages/controller && npx vitest run test/relay/s12-relay-classroom.test.ts`
 Expected (prototype): 7 failed | 2 passed (9) — the http requests answer `Upgrade Required` / 426 (ws's own server), the roles, the `/signal` door and the limit are not enforced (`timed out waiting for condition`), `Cannot find module '../../relay/http.ts'`; the two passing ones are "this machine itself may still host and command" and "a port already taken rejects" (both true before too: the second pins the R50 I2 regression the first prototype had).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/controller/relay/README.md`, find:
 
@@ -953,12 +953,12 @@ Replace with:
 export const RELAY_CLOSE = { badHello: 4001, badSession: 4002, forbiddenRole: 4003, hostExists: 4009, full: 4029 } as const; // Stage 12: 4003
 ```
 
-- [ ] **Step 4: Run green**
+- [x] **Step 4: Run green**
 
 Run: `cd packages/controller && npx vitest run test/relay && npx -y pnpm@9.15.9 --filter @pme/controller typecheck`
 Expected: all relay files pass (prototype: 3 + the new file, 20 tests), typecheck clean.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/controller
