@@ -17,7 +17,7 @@ test.beforeAll(async () => {
 test.afterAll(async () => vite?.close());
 
 test('asystole demo measures the saadat-like delay; results download', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -26,7 +26,10 @@ test('asystole demo measures the saadat-like delay; results download', async ({ 
   const item = page.locator('[data-item="asystole-delay"]');
   await page.waitForTimeout(2000); // the start snapshot is taken 1.5 s after load
   await item.locator('.run').click();
-  await expect(item.locator('.measured')).toHaveValue(/ASYSTOLE after \d+\.\d s/, { timeout: 40_000 });
+  // fix-ci-webkit-3: wait for the page's own demo to finish (its button comes back; the page gives up by itself after 90 s
+  // and says so) instead of 40 s of wall time: the ×1 live demo on CI's WebKit was still "running…" when the check ran.
+  await expect(item.locator('.run')).toBeEnabled({ timeout: 100_000 });
+  await expect(item.locator('.measured')).toHaveValue(/ASYSTOLE after \d+\.\d s/);
   const s = Number(/after (\d+\.\d)/.exec(await item.locator('.measured').inputValue())?.[1]);
   // This e2e proves the PAGE works (the demo runs, measures, downloads). The exact saadat-like asystole delay (10 s) is
   // asserted deterministically by the segment document g4b (9.7 s) and Stage 4b's unit tests; the ×1 live demo on the

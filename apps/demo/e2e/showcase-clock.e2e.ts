@@ -28,7 +28,13 @@ test('loading another scenario restarts the session clock and the time in state,
   const before = await page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
 
   await page.click('[role=tab][data-tab=scenario]');
+  // fix-ci-webkit-3: the Scenario tab's first repaint (it names the running case) comes before "Choose another scenario".
+  // A press before that repaint is undone by it: the library closes again (finding F-CW3-1, a product defect reported in
+  // docs/gates/ci-webkit-3.md, reproduced locally on Chromium and WebKit). On the slow CI runner the Load button then
+  // stayed hidden until the 90 s test timeout (3 runs, Chromium too). This test is about the clock, so it waits.
+  await expect(page.getByRole('region', { name: 'Running scenario' }).locator('h3').first()).not.toBeEmpty({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Choose another scenario' }).click();
+  await expect(page.getByRole('region', { name: 'Scenario library' })).toBeVisible();
   await page.getByRole('article', { name: 'Anaphylaxis under anaesthesia' }).getByRole('button', { name: 'Load' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Load scenario' }).click();
   await expect(bar.locator('.scen')).toContainText('Anaphylaxis under anaesthesia', { timeout: 10_000 });
@@ -42,7 +48,12 @@ test('loading another scenario restarts the session clock and the time in state,
   expect(before).toBeGreaterThan(60);
   expect(after.doc).toBe('showcase-anaphylaxis');
   expect(after.simT).toBeLessThan(15);
-  expect(Math.abs(after.simT - after.host)).toBeLessThan(2); // the panel's clock is the new engine's clock
+  // the panel's clock is the new engine's clock. fix-ci-webkit-3: one reading compared the panel clock (the last event's
+  // time) with the host's estimate at ×4, i.e. 4 × the event delivery lag (CI WebKit and Chromium: 2.24–2.87). The same
+  // bound is now waited for: a panel clock stuck on the old case (≥ 60) never comes within 2 s of the new engine's.
+  await expect
+    .poll(() => page.evaluate(() => { const a = (window as unknown as App).__pmeApp; return Math.abs(a.link.simT - a.session.simNow()); }), { timeout: 10_000 })
+    .toBeLessThan(2);
   expect(after.inState).toBeLessThan(15);
 
   // …and it counts up: the bar's clock and the scenario's time in state both advance
