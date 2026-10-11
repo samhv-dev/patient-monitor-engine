@@ -114,6 +114,7 @@ export class MonitorCore {
   restore(s: PatientSnapshot): void {
     this.engine.restore(s);
     this.clock.setTick(s.tick);
+    this.lastEpoch = null; // the clock restarts at the bookmark on the next frame: the restore's own wall time is not sim time
     this.overlays.clear();
     this.layout();
   }
