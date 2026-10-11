@@ -1,0 +1,57 @@
+1 wt-stage-12   1 failed 
+1 wt-stage-12-base   1 passed (36.1s) 
+2 wt-stage-12   1 passed (35.4s) 
+2 wt-stage-12-base   1 passed (34.8s) 
+3 wt-stage-12   1 passed (34.2s) 
+3 wt-stage-12-base   1 passed (33.3s) 
+4 wt-stage-12   1 passed (33.8s) 
+4 wt-stage-12-base   1 passed (33.3s) 
+5 wt-stage-12   1 passed (34.4s) 
+5 wt-stage-12-base   1 passed (38.4s) 
+
+# probe runs (instrumented copy, not committed), branch vs base alternating
+probe.log:=== 1 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 1 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 2 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 2 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":1,"drift":0} RESYNC undefined @
+probe.log:      24 |   console.log('PROBE', JSON.stringify(st), logs.length ? logs.join('\n---\n') : 'no RESYNC');
+probe.log:=== 3 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 3 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 4 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 4 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 5 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 5 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 6 wt-stage-12
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe.log:=== 6 wt-stage-12-base
+probe.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 1 wt-stage-12
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 1 wt-stage-12-base
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 2 wt-stage-12
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 2 wt-stage-12-base
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 3 wt-stage-12
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 3 wt-stage-12-base
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 4 wt-stage-12
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 4 wt-stage-12-base
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 5 wt-stage-12
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC
+probe2.log:=== 5 wt-stage-12-base
+probe2.log:PROBE {"status":"synced","resyncs":0,"drift":0} no RESYNC

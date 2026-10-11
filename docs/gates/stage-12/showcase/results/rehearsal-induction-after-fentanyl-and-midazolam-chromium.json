@@ -1,0 +1,192 @@
+{
+  "case": "Induction after fentanyl and midazolam",
+  "browser": "chromium",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8701",
+  "t0": 3.5266833233996246,
+  "steps": [
+    {
+      "simT": 3.5,
+      "what": "loaded \"Induction after fentanyl and midazolam\" at ×4",
+      "state": "awake",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 11.6,
+      "what": "premedication given by itself (fentanyl 2 µg/kg, midazolam 0.03 mg/kg)",
+      "state": "premedicated",
+      "hr": 71,
+      "art": "123.2/81.6 (95.7)",
+      "spo2": 96,
+      "etco2": 36,
+      "rr": 14
+    },
+    {
+      "simT": 124.7,
+      "what": "2:00 — breathing slows",
+      "state": "premedicated",
+      "hr": 63,
+      "art": "119/73.9 (88.4)",
+      "spo2": 99,
+      "etco2": 45,
+      "rr": 0
+    },
+    {
+      "simT": 189,
+      "what": "press **Induce now**",
+      "state": "induced",
+      "hr": 61,
+      "art": "116.1/71.9 (86.2)",
+      "spo2": 99,
+      "etco2": 48,
+      "rr": 5
+    },
+    {
+      "simT": 279.9,
+      "what": "press **Intubate and ventilate**",
+      "state": "ventilated",
+      "hr": 59,
+      "art": "87.4/49.9 (60.7)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 3
+    },
+    {
+      "simT": 283.9,
+      "what": "mean arterial pressure below 60",
+      "state": "ventilated",
+      "hr": 60,
+      "art": "86.1/49.5 (60)",
+      "spo2": 99,
+      "etco2": 49,
+      "rr": 3
+    },
+    {
+      "simT": 307.9,
+      "what": "press **Ephedrine 10 mg**",
+      "state": "maintained",
+      "hr": 56,
+      "art": "78.2/42.6 (52.2)",
+      "spo2": 99,
+      "etco2": 43,
+      "rr": 4
+    },
+    {
+      "simT": 401.7,
+      "what": "mean arterial pressure back to 65",
+      "state": "maintained",
+      "hr": 60,
+      "art": "94/54 (65.4)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 12
+    },
+    {
+      "simT": 485,
+      "what": "end (8:00)",
+      "state": "maintained",
+      "hr": 60,
+      "art": "101.3/58.9 (71.5)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 12
+    },
+    {
+      "alarmsRaised": [
+        "232.9 s CO2 APNEA"
+      ]
+    }
+  ],
+  "sheet": [
+    {
+      "clock": "0:00",
+      "monitor": "HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state awake",
+      "presenter": "loaded \"Induction after fentanyl and midazolam\" at ×4"
+    },
+    {
+      "clock": "0:08",
+      "monitor": "HR 71, ART 123/82 (96), SpO2 96, EtCO2 36, RR 14 · state premedicated",
+      "presenter": "premedication given by itself (fentanyl 2 µg/kg, midazolam 0.03 mg/kg)"
+    },
+    {
+      "clock": "2:01",
+      "monitor": "HR 63, ART 119/74 (88), SpO2 99, EtCO2 45, RR 0 · state premedicated",
+      "presenter": "2:00 — breathing slows"
+    },
+    {
+      "clock": "3:05",
+      "monitor": "HR 61, ART 116/72 (86), SpO2 99, EtCO2 48, RR 5 · state induced",
+      "presenter": "press **Induce now**"
+    },
+    {
+      "clock": "4:36",
+      "monitor": "HR 59, ART 87/50 (61), SpO2 99, EtCO2 0, RR 3 · state ventilated",
+      "presenter": "press **Intubate and ventilate**"
+    },
+    {
+      "clock": "4:40",
+      "monitor": "HR 60, ART 86/50 (60), SpO2 99, EtCO2 49, RR 3 · state ventilated",
+      "presenter": "mean arterial pressure below 60"
+    },
+    {
+      "clock": "5:04",
+      "monitor": "HR 56, ART 78/43 (52), SpO2 99, EtCO2 43, RR 4 · state maintained",
+      "presenter": "press **Ephedrine 10 mg**"
+    },
+    {
+      "clock": "6:38",
+      "monitor": "HR 60, ART 94/54 (65), SpO2 99, EtCO2 40, RR 12 · state maintained",
+      "presenter": "mean arterial pressure back to 65"
+    },
+    {
+      "clock": "8:01",
+      "monitor": "HR 60, ART 101/59 (71), SpO2 99, EtCO2 40, RR 12 · state maintained",
+      "presenter": "end (8:00)"
+    }
+  ],
+  "labels": {
+    "alarmButtonAtOpen": "Limit alarms off",
+    "tab": "Scenario",
+    "showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
+    "toast": "Scenario loaded: Induction after fentanyl and midazolam",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Induction after fentanyl and midazolam\nChoose another scenario\nThe same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nFentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nIntubated and ventilated\nPhenylephrine 100 µg given\nEphedrine 10 mg given\nVentilated: vasopressor given\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Premedicate: fentanyl 2 µg/kg, midazolam 0.03 mg/kg\" or after 10 s in this state: Fentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nPremedicate: fentanyl 2 µg/kg, midazolam 0.03 mg/kg\nObjectives\nAcknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s\nIntubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)\nGive a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg\nMean arterial pressure back above 65 mmHg within 120 s of the vasopressor\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "sessionBar": "M 40 y 75 kg MODELED Induction after fentanyl and midazolam: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction 00:03 00:03 ×1 ×2 ×4 ×8 Pause 2 min 5 min Bookmark",
+    "after Induce now": "Induction after fentanyl and midazolam\nChoose another scenario\nThe same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nFentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nIntubated and ventilated\nPhenylephrine 100 µg given\nEphedrine 10 mg given\nVentilated: vasopressor given\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Intubate and ventilate\": Intubated and ventilated\nIntubate and ventilate\nObjectives\nAcknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s\nIntubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)\nGive a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg\nMean arterial pressure back above 65 mmHg within 120 s of the vasopressor\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Intubate and ventilate": "Induction after fentanyl and midazolam\nChoose another scenario\nThe same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nFentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nIntubated and ventilated\nPhenylephrine 100 µg given\nEphedrine 10 mg given\nVentilated: vasopressor given\nTime in state\n00:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Phenylephrine 100 µg\": Phenylephrine 100 µg given\nPhenylephrine 100 µg\nYou press \"Ephedrine 10 mg\": Ephedrine 10 mg given\nEphedrine 10 mg\nObjectives\nAcknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s\nIntubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)\nGive a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg\nMean arterial pressure back above 65 mmHg within 120 s of the vasopressor\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Ephedrine 10 mg": "Induction after fentanyl and midazolam\nChoose another scenario\nThe same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nFentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nIntubated and ventilated\nPhenylephrine 100 µg given\nEphedrine 10 mg given\nVentilated: vasopressor given\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nAfter 2 s in this state: Ventilated: vasopressor given\nin 00:00\nObjectives\nAcknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s\nIntubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)\nGive a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg\nMean arterial pressure back above 65 mmHg within 120 s of the vasopressor\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Induction after fentanyl and midazolam\nChoose another scenario\nThe same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nFentanyl 2 µg/kg and midazolam 0.03 mg/kg given\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nIntubated and ventilated\nPhenylephrine 100 µg given\nEphedrine 10 mg given\nVentilated: vasopressor given\nTime in state\n02:56\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Phenylephrine 100 µg\": Phenylephrine 100 µg given\nPhenylephrine 100 µg\nYou press \"Ephedrine 10 mg\": Ephedrine 10 mg given\nEphedrine 10 mg\nObjectives\nAcknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s\nIntubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)\nGive a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg\nMean arterial pressure back above 65 mmHg within 120 s of the vasopressor\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "the premedication starts by itself",
+      "expected": "state premedicated within 30 s of load",
+      "observed": "8 s",
+      "pass": true
+    },
+    {
+      "what": "the mean falls below 60 after the premedicated induction",
+      "expected": "within 3 min of intubation",
+      "observed": "98.2 s after induction",
+      "pass": true
+    },
+    {
+      "what": "the mean recovers after ephedrine",
+      "expected": "≥ 65 within 4 min",
+      "observed": "97 s",
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}
