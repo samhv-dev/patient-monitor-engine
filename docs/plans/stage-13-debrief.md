@@ -2601,6 +2601,11 @@ git push
   `00:0[01]`, not `00:00`. Under load the first mechanical breath may begin just before the 00:01 bookmark, so its one
   kept row reads 00:01 (4 failures in ≈ 16 runs during the dry-run gate, rows dumped: one "began" row, not undone).
   Exactly one row is still asserted. Orchestrator approval, 2026-10-11.
+- **DV-2 (the trend axes, orchestrator ruling 2026-10-11).** The dry run's MH print drew a 96–99 % SpO₂ wobble at full
+  chart height. Each trend chart's axis now has a least span, centred on the data when their range is smaller:
+  SpO₂ 20 points (never above 100), HR 40 bpm, ART M / NIBP M 40 mmHg, EtCO₂ 20 mmHg, temperature 2 °C; never below zero
+  when the data are not; RR has no floor (± 1 when flat, as before). `axisRange` in `apps/demo/src/app/debrief.ts`, used
+  by `views/debrief.ts` `chart`; the axis labels stay (the span's ends). One unit test in `debrief.test.ts` (DV-2).
 
 ## Appendix B — Task 3 when Stage 11 merged without rules
 

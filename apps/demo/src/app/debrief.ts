@@ -7,7 +7,7 @@ import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
-import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type ValueKey } from './record.ts';
+import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -77,6 +77,20 @@ export function trendMeta(k: ValueKey): { label: string; unit: string; digits: n
   const keys = isLab(k) ? [LABS[k]] : TREND[k].map((id) => `mon.${id}`);
   const l = lookup(keys[0] as string);
   return { label: keys.map((key) => labelOf(key) ?? '').filter(Boolean).join(' / '), unit: l ? unitOf(l.e) : '', digits: DIGITS[k] ?? 0 };
+}
+/** DV-2 (orchestrator ruling 2026-10-11): the least span of a trend chart's axis, so a few-point wobble is not drawn at
+ *  full height; RR has no floor (± 1 when flat, as before). */
+const AXIS_FLOOR: Partial<Record<TrendKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
+/** The axis of one trend chart: the data's own range, or the floor centred on the data (SpO₂ never above 100, and never
+ *  below zero when the data are not). */
+export function axisRange(k: TrendKey, lo: number, hi: number): [number, number] {
+  const floor = AXIS_FLOOR[k];
+  if (floor === undefined) return hi - lo < 2 ? [lo - 1, hi + 1] : [lo, hi];
+  if (hi - lo >= floor) return [lo, hi];
+  let a = (lo + hi) / 2 - floor / 2;
+  if (k === 'spo2' && a + floor > 100) a = 100 - floor;
+  if (a < 0 && lo >= 0) a = 0;
+  return [a, a + floor];
 }
 const fmt = (k: ValueKey, v: number): string => {
   const m = trendMeta(k);

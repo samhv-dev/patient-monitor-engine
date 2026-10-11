@@ -8,7 +8,7 @@
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta, type Status } from '../debrief.ts';
+import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta, type Status } from '../debrief.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
@@ -33,9 +33,7 @@ function chart(d: RunData, k: TrendKey, end: number): HTMLElement {
   const pts = d.samples.filter((s) => s[k] !== null);
   if (!pts.length) return fig.appendChild(h('p', { class: 'muted' }, 'Not measured during the run.')), fig;
   const vals = pts.map((s) => s[k] as number);
-  let lo = Math.min(...vals);
-  let hi = Math.max(...vals);
-  if (hi - lo < 2) (lo -= 1), (hi += 1);
+  const [lo, hi] = axisRange(k, Math.min(...vals), Math.max(...vals)); // DV-2: a least span per trend
   const W = 640, H = 130, L = 44, R = 10, T = 8, B = 20;
   const x = (t: number) => L + (t / Math.max(end, 1)) * (W - L - R);
   const y = (v: number) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);

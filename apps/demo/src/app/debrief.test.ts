@@ -4,7 +4,7 @@
 import type { ObjectiveRule } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
-import { debriefJson, drugTotals, facts, objectives, perMinute, verdict } from './debrief.ts';
+import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, verdict } from './debrief.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { cardOf } from './scenarios.ts';
 
@@ -199,5 +199,19 @@ describe('Stage 13: the objective rule in pme-scenario/1', () => {
     [{ text: 'x', rule: { kind: 'stayed', value: 'spo2', above: 90, from: 'start' } }],
   ])('refuses %j', (o) => {
     expect(validateScenario(doc([o])).ok).toBe(false);
+  });
+});
+
+describe('Stage 13 DV-2: the trend axes have a least span (orchestrator ruling 2026-10-11)', () => {
+  it('a few-point wobble is not drawn at full height: the floor, centred on the data, SpO₂ never above 100', () => {
+    expect(axisRange('spo2', 96, 99)).toEqual([80, 100]); // 20 points, capped at 100
+    expect(axisRange('spo2', 70, 80)).toEqual([65, 85]); // centred below the cap
+    expect(axisRange('hr', 70, 78)).toEqual([54, 94]); // 40 bpm
+    expect(axisRange('map', 94, 96)).toEqual([75, 115]); // 40 mmHg
+    expect(axisRange('etco2', 33, 35)).toEqual([24, 44]); // 20 mmHg
+    expect(axisRange('etco2', 0, 2)).toEqual([0, 20]); // never below zero when the data are not
+    expect(axisRange('temp', 36.8, 36.8)).toEqual([35.8, 37.8]); // 2 °C
+    expect(axisRange('hr', 70, 148)).toEqual([70, 148]); // a wide range is the data's own
+    expect(axisRange('rr', 12, 12)).toEqual([11, 13]); // no floor ruled for RR: unchanged (± 1 when flat)
   });
 });
