@@ -46,4 +46,14 @@ describe('Stage 10: the fast-forward in the clinical log', () => {
     expect(describeCommand({ type: 'time', action: 'jump', value: 120 })).toBe('Fast-forward 2 min');
     expect(spanText(90)).toBe('90 s');
   });
+
+  it('a span computed from two sim times reads in minutes despite floating point (gate dry run: "FAST FORWARD · 120 S")', () => {
+    // the panel, the banner and the log compute the span as toT − fromT; 604.3 − 484.3 = 119.99999999999994 in IEEE doubles
+    expect(spanText(604.3 - 484.3)).toBe('2 min');
+    for (const tick of [22_305, 24_215, 32_845, 64_895]) {
+      const fromT = tick * 0.02;
+      expect(spanText(fromT + 300 - fromT)).toBe('5 min');
+      expect(spanText(fromT + 120 - fromT)).toBe('2 min');
+    }
+  });
 });
