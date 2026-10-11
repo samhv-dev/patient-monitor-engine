@@ -8,6 +8,11 @@ import { openApp, startVite } from './stage9-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
+// FALLBACK ruling 2026-10-11 (PR #49 findings F-49-1, F-49-2): CI runs 38125603326 to 38145499655 showed a plain
+// BroadcastChannel message crossing between two pages in one direction only on Playwright's Linux WebKit (popup or not),
+// and the follower's exactness at ×4 failing there too. Every test here rides that channel, so the whole file is skipped
+// on WebKit; Chromium keeps full coverage, and the owner hand-checks real Safari (H20).
+test.skip(({ browserName }) => browserName === 'webkit', 'FALLBACK ruling 2026-10-11: BroadcastChannel drops messages in one direction between pages on Playwright Linux WebKit (F-49-2); follower exactness at ×4 also fails there (F-49-1); passes on macOS WebKit and CI Chromium, which keeps full coverage');
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
@@ -85,9 +90,6 @@ async function follow(page: Page, scenario: string, browserName: string): Promis
 }
 
 test('the second-screen learner monitor follows commands, a bookmark restore and a restart', async ({ page, browserName }) => {
-  // CI run 38136153572: about 10 s after a ×4 setTarget the follower showed one resync and beat drift of 450–2143 ms, 3/3
-  // on Linux WebKit only. Chromium keeps this test; the exactness loss is finding F-49-1 (PR #49), not dismissed.
-  test.skip(browserName === 'webkit', 'FALLBACK ruling 2026-10-11: follower exactness (resync count, beat drift) fails only on CI Linux WebKit; passes on macOS WebKit and CI Chromium; tracked as finding F-49-1');
   test.setTimeout(180_000);
   const f = await follow(page, 'showcase-induction', browserName);
   await page.waitForTimeout(10_000);
@@ -121,8 +123,6 @@ test('the second-screen learner monitor follows commands, a bookmark restore and
 });
 
 test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', async ({ page, browserName }) => {
-  // CI run 38141773957: resyncs 2, then 1, then tiles never matched (HR 82 / SpO2 89 vs 81 / 85), 3/3 on Linux WebKit only
-  test.skip(browserName === 'webkit', 'FALLBACK ruling 2026-10-11: follower exactness at ×4 fails only on CI Linux WebKit (F-49-1); long ×4 sim scenario too slow on headless WebKit (as vent-link)');
   test.setTimeout(180_000);
   const f = await follow(page, 'showcase-bronchospasm', browserName);
   await page.evaluate(() => (location.hash = '#/vent'));
