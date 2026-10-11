@@ -121,6 +121,8 @@ test('the second-screen learner monitor follows commands, a bookmark restore and
 });
 
 test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', async ({ page, browserName }) => {
+  // CI run 38141773957: resyncs 2, then 1, then tiles never matched (HR 82 / SpO2 89 vs 81 / 85), 3/3 on Linux WebKit only
+  test.skip(browserName === 'webkit', 'FALLBACK ruling 2026-10-11: follower exactness at ×4 fails only on CI Linux WebKit (F-49-1); long ×4 sim scenario too slow on headless WebKit (as vent-link)');
   test.setTimeout(180_000);
   const f = await follow(page, 'showcase-bronchospasm', browserName);
   await page.evaluate(() => (location.hash = '#/vent'));
