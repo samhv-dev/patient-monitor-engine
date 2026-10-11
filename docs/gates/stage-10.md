@@ -189,3 +189,19 @@ The second CI run (38169697950) passed the rewritten pace test but failed the bu
 ruling it gets the same explicit 180 000 ms timeout as the plan's other long Stage 10 tests. No assertion changed.
 Recorded as a deviation in the plan copy. The eight `test-slow` jobs of that run all passed.
 
+## 12. CI: `s10-time-control` skipped on WebKit on CI only (FALLBACK ruling 2026-10-12)
+
+The third CI run (38172603508) passed the unit step (the NIBP timeout held), the build and every `test-slow` job; its e2e
+failed `s10-time-control.e2e.ts:25` on CI Linux WebKit in all three attempts, at three different places:
+
+| Attempt | Line | Observed | Reading |
+|---|---|---|---|
+| 1 | 48 | ×8 gave 21 s of sim in 4 s (≈ ×5.3) against the floor > 24 (×6) | **S10-F5:** the 2-vCPU runner cannot hold ×8; by D-2 sim time runs slower, no tick is skipped |
+| retry 1 | 103 | back at ×1, no QRS/pulse tone scheduled within 10 s | not reproduced locally (passes on both engines every run) |
+| retry 2 | 121 | the 2-min fast-forward sent from the Ventilator view went unanswered to the 300 s test timeout | **FX-2b**, with F-49-1: the host command queue may stall on a loaded CI WebKit; never reproduced locally; for the fixer round |
+
+By ruling the file is skipped on WebKit when `CI` is set only: local macOS WebKit (the owner's Safari engine) still runs
+every test, and CI Chromium keeps full coverage. The kit measurements proved ×8.00–8.01 on both engines locally (§5); the
+owner's hand check **H18** covers Safari. Record-only, passed on retry in the same run (WebKit): `stage6a-worker.e2e.ts:24`
+(99 against < 82) and `stage9-app.e2e.ts:15` (2.497 s against > 2.5 s). Recorded as a deviation in the plan copy.
+

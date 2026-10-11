@@ -3539,6 +3539,12 @@ git push
 - **Task 2's NIBP-through-the-span test: an explicit 180 000 ms timeout** (orchestrator ruling 2026-10-12), like the
   plan's other long Stage 10 tests. A pure CPU comparison of 300 s at two speeds with no wall-clock assertion: 4 s alone,
   43 s on a loaded CI runner (run 38169697950), where vitest's default 30 s timeout failed it. No assertion changed.
+- **Task 5's e2e `s10-time-control` is skipped on WebKit when on CI only** (FALLBACK ruling 2026-10-12). On PR #54's
+  CI (run 38172603508) the 2-vCPU Linux WebKit runner held ×5.3 instead of ×8 (S10-F5; the D-2 policy: sim time runs
+  slower, no tick is skipped), scheduled no beat tone within 10 s back at ×1, and once left a fast-forward from the
+  Ventilator view unanswered to the 300 s timeout (fixer item FX-2b, with F-49-1). Local macOS WebKit and CI Chromium run
+  it in full; the kit measurements proved ×8.00–8.01 on both engines locally (gate note §5), and the owner's hand check H18
+  covers Safari.
 - **Task 6** (added by the orchestrator) and the two gate fixes (span wording, seam label): see `docs/gates/stage-10.md`.
 
 ## Mechanical self-check (done while writing; the executor re-runs Task 0 Step 3)

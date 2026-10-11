@@ -8,6 +8,11 @@ import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './stage9-support.ts';
 
+// CI WebKit (PR #54, run 38172603508), three attempts: line 48 held ×5.3 against > ×6; line 103 scheduled no QRS/pulse
+// tone within 10 s back at ×1; line 121 the fast-forward sent from the Ventilator view went unanswered to the 300 s
+// timeout. Local macOS WebKit (the owner's Safari engine) still runs every test here; CI Chromium keeps full coverage.
+test.skip(({ browserName }) => browserName === 'webkit' && !!process.env.CI, 'FALLBACK ruling 2026-10-12: the 2-vCPU CI WebKit runner holds about ×5.3, not ×8 (S10-F5); a fast-forward command from the Ventilator view once went unanswered there (fixer item FX-2b, with F-49-1); passes on macOS WebKit and CI Chromium');
+
 let vite: ViteDevServer;
 let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
