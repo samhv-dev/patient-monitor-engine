@@ -181,3 +181,11 @@ cannot hold on a shared runner, so, by ruling, the test no longer measures real 
 - **Real-time smoke check kept with a lower bound only:** the same span never finishes in under 1400 ms. No upper bound.
 - Recorded as a deviation in the plan copy.
 
+## 11. CI: an explicit timeout for the NIBP-through-the-span test (orchestrator ruling 2026-10-12)
+
+The second CI run (38169697950) passed the rewritten pace test but failed the build job's unit step on
+`packages/renderer/test/s10-fast-forward.test.ts` "the NIBP cycle runs through the span": 43.4 s against vitest's default
+30 s timeout (4 s alone locally). It is a pure CPU comparison of 300 s at two speeds, with no wall-clock assertion, so by
+ruling it gets the same explicit 180 000 ms timeout as the plan's other long Stage 10 tests. No assertion changed.
+Recorded as a deviation in the plan copy. The eight `test-slow` jobs of that run all passed.
+

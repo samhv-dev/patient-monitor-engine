@@ -88,7 +88,7 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     const rb = results(pb).filter((r) => r.t <= 300);
     expect(ra.length).toBeGreaterThanOrEqual(4); // one a minute
     expect(ra).toEqual(rb);
-  });
+  }, 180_000); // pure CPU comparison of 300 s at two speeds: 43 s on a loaded CI runner (run 38169697950), 4 s alone
 
   it('after the last step a seam marks the jump on every lane, labelled with the new time (mm:ss)', () => {
     const ctx = new FakeCtx();

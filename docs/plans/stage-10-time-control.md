@@ -3536,6 +3536,9 @@ git push
   239 waits of exactly 6.25 ms, the paced total and the start event's `wallMs`; and (b) one real-time smoke check with a
   LOWER bound only (≥ 1400 ms). The upper bound is gone. The blocks above are unchanged (they reproduce the prototype);
   the branch carries the new test.
+- **Task 2's NIBP-through-the-span test: an explicit 180 000 ms timeout** (orchestrator ruling 2026-10-12), like the
+  plan's other long Stage 10 tests. A pure CPU comparison of 300 s at two speeds with no wall-clock assertion: 4 s alone,
+  43 s on a loaded CI runner (run 38169697950), where vitest's default 30 s timeout failed it. No assertion changed.
 - **Task 6** (added by the orchestrator) and the two gate fixes (span wording, seam label): see `docs/gates/stage-10.md`.
 
 ## Mechanical self-check (done while writing; the executor re-runs Task 0 Step 3)
