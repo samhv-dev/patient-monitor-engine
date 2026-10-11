@@ -205,3 +205,8 @@ every test, and CI Chromium keeps full coverage. The kit measurements proved ×8
 owner's hand check **H18** covers Safari. Record-only, passed on retry in the same run (WebKit): `stage6a-worker.e2e.ts:24`
 (99 against < 82) and `stage9-app.e2e.ts:15` (2.497 s against > 2.5 s). Recorded as a deviation in the plan copy.
 
+**Run 38176710973 (head `0d75b6ff`): green.** Build (unit, build, check-notices, e2e) and all eight `test-slow` jobs passed.
+The e2e gave 166 passed, 38 skipped, 2 flaky, 0 failed. Record-only, passed on retry:
+- `showcase-clock.e2e.ts:19` on Chromium: `locator.click` timed out at 90 s.
+- `showcase-clock.e2e.ts:19` on WebKit: 2.548 s against < 2 s (F-49-3).
+
