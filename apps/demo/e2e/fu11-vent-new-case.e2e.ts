@@ -30,3 +30,18 @@ test('the cockpit is unloaded by a new patient and reloads fresh on the next vis
   const fresh = async () => (await cockpit()?.evaluate(() => !(window as unknown as { __old?: boolean }).__old && '__vent' in window).catch(() => false)) ?? false;
   await expect.poll(fresh, { timeout: 10_000 }).toBe(true);
 });
+
+// fix-main-webkit: the route the URL names decides "on screen", not the last hashchange handled. A restart in the same
+// task as the route change (Linux WebKit can run the test's next call ahead of the queued hashchange) reloaded the
+// cockpit off screen; this pins that ordering on every browser.
+test('a restart in the same task as leaving the Ventilator view still unloads the cockpit', async ({ page }) => {
+  await openApp(page, base, '#/vent', { warmMs: 1500 });
+  await expect.poll(() => cockpits(page), { timeout: 10_000 }).toBe(1);
+  await page.evaluate(() => {
+    location.hash = '#/teach';
+    const s = (window as unknown as W).__pmeApp.session;
+    s.restart({ spec: s.spec, mode: 'modeled' });
+  });
+  await expect.poll(() => page.locator('iframe.vent').getAttribute('src'), { timeout: 5_000 }).toBe('about:blank');
+  await expect.poll(() => cockpits(page), { timeout: 5_000 }).toBe(0);
+});

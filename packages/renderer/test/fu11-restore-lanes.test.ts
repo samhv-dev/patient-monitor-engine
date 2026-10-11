@@ -24,4 +24,19 @@ describe('FU-11 E2: restore restarts the sweep', () => {
     expect(lanes(c).every((l) => l.lastDrawnIndex > 0)).toBe(true);
     for (const l of lanes(c)) expect(l.lastDrawnIndex).toBeLessThan(l.cfg.rate * 1.3); // drawn on the restored timeline
   });
+
+  // fix-main-webkit: the wall time the restore itself took (and any wait for the next frame) is not run as sim time past
+  // the bookmark. The first frame after it credited `now - lastEpoch` from the last frame BEFORE the restore; with the
+  // FU-11 re-layout in between, a slow WebKit worker landed 5–33 ticks past the snapshot (stage6a-worker on CI).
+  it('the first frame after a restore starts the clock at the bookmark', () => {
+    const c = make();
+    frames(c, 0, 1000);
+    const s = c.engine.snapshot();
+    frames(c, 1000, 2000);
+    c.restore(s);
+    c.frame(1_000_000 + 2000 + 240); // the restore and the wait for the next frame took 240 ms of wall time
+    expect(c.clock.tick).toBe(s.tick);
+    c.frame(1_000_000 + 2000 + 240 + 100); // and from there it runs on as usual
+    expect(c.clock.tick).toBe(s.tick + 5);
+  });
 });
