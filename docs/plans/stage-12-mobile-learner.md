@@ -1389,7 +1389,7 @@ git push
 - Produces: `MountOptions.portrait?: boolean`; `new DeviceUI(doc, waveArea, skin, page?, portrait = false)`; the tiles
   element gets class `pme-portrait` (CSS rules in `flashCss`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `packages/renderer/test/s12-portrait.test.ts`:
 
@@ -1426,9 +1426,9 @@ describe('Stage 12: portrait tiles', () => {
 });
 ```
 
-- [ ] **Step 2: Run it red** — `cd packages/renderer && npx vitest run test/s12-portrait.test.ts` → 2 failed | 1 passed (3) — `expected '' to be 'pme-portrait'`, `expected '' to be 'contents'` (the landscape test passes before and after).
+- [x] **Step 2: Run it red** — `cd packages/renderer && npx vitest run test/s12-portrait.test.ts` → 2 failed | 1 passed (3) — `expected '' to be 'pme-portrait'`, `expected '' to be 'contents'` (the landscape test passes before and after).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/renderer/src/device-ui.ts`, find:
 
@@ -1534,10 +1534,10 @@ Replace with:
   const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait) : null; // Stage 4b; Stage 12: portrait
 ```
 
-- [ ] **Step 4: Run green** — the same file (3 tests), `npx vitest run test/fu5-tiles.test.ts test/neuro-tiles.test.ts`
+- [x] **Step 4: Run green** — the same file (3 tests), `npx vitest run test/fu5-tiles.test.ts test/neuro-tiles.test.ts`
   (unchanged landscape tiles) and `npx -y pnpm@9.15.9 --filter @pme/renderer typecheck`.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add packages/renderer

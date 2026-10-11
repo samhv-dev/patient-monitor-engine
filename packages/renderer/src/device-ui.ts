@@ -46,6 +46,13 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.large .v{font-size:60px}',
     '.pme-stile .s{font-size:16px;text-align:right;font-variant-numeric:tabular-nums;min-height:18px}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
+    // Stage 12: portrait tiles (a phone): a third of the width each, numerics as large as that leaves
+    '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
+    '.pme-portrait .pme-stile .h{font-size:12px;gap:3px}',
+    '.pme-portrait .pme-stile .lim{display:none}',
+    '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
+    '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
+    '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
   ].join('\n');
 }
 
@@ -92,8 +99,12 @@ export class DeviceUI {
   private readonly badge: HTMLSpanElement;
   private readonly date: HTMLSpanElement;
 
-  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string) {
+  /** Stage 12: the tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
+  private readonly portrait: boolean;
+
+  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false) {
     this.r = r;
+    this.portrait = portrait;
     this.style = doc.createElement('style');
     doc.head.append(this.style);
     this.header = doc.createElement('div');
@@ -111,7 +122,9 @@ export class DeviceUI {
     this.badge = q('badge');
     this.date = q('date');
     this.tiles = doc.createElement('div');
-    this.tiles.style.cssText = 'display:flex;flex:none;overflow:hidden;';
+    // Stage 12: portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
+    this.tiles.style.cssText = portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
+    if (portrait) this.tiles.className = 'pme-portrait';
     this.watermark = doc.createElement('div');
     this.watermark.className = 'pme-watermark';
     waveArea.append(this.watermark);
@@ -135,7 +148,7 @@ export class DeviceUI {
     const doc = this.tiles.ownerDocument;
     for (const col of r.skin.layout.tiles) {
       const c = doc.createElement('div');
-      c.style.cssText = `width:180px;border-left:1px solid ${r.skin.chrome.divider};`;
+      c.style.cssText = this.portrait ? 'display:contents' : `width:180px;border-left:1px solid ${r.skin.chrome.divider};`; // Stage 12
       for (const spec of col) {
         const el = doc.createElement('div');
         // the HR tile keeps the Stage 1 class `pme-tile`, which the IIFE smoke test (and embedders) look up
