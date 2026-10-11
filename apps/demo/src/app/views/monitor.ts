@@ -9,10 +9,13 @@ import type { AppSession } from '../session.ts';
 import { button, h } from '../ui.ts';
 import type { View } from '../shell.ts';
 
-export function monitorView(stage: HTMLElement, o: { session: AppSession; link: Link }): View {
+export function monitorView(stage: HTMLElement, o: { session: AppSession; link: Link; learnerUrl: string }): View {
   const full = button('Full screen', () => void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()), 'small');
+  // FU-11 (K2): a second window that FOLLOWS this session (drag it to the projector), not a second patient
+  // R50 F4: `noopener` puts the window in its own process (an opener would share this page's main thread with its engine)
+  const second = button('Open on a second screen', () => void window.open(o.learnerUrl, '_blank', 'noopener,width=1280,height=800'), 'small');
   const strip = h('div', { class: 'reveal', role: 'toolbar', 'aria-label': 'Monitor view' },
-    h('a', { class: 'btn small', href: hrefOf('teach') }, 'Instructor view'), full, h('a', { class: 'btn small ghost', href: hrefOf('start') }, 'Start'));
+    h('a', { class: 'btn small', href: hrefOf('teach') }, 'Instructor view'), full, second, h('a', { class: 'btn small ghost', href: hrefOf('start') }, 'Start'));
   stage.append(strip);
   // the learner controls strip under the monitor: hidden unless the instructor switched it on (ruling 4)
   const learner = learnerStrip(o.link);

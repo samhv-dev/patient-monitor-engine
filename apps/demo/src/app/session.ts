@@ -143,6 +143,22 @@ export class AppSession {
     return () => void this.learnerFns.delete(fn);
   }
 
+  /**
+   * FU-11 (K2): the monitor as the Ventilator view's link sees it — every command the link applies is also sent to a
+   * second-screen learner monitor (HostSession.mirror), which otherwise ran an unventilated copy and resynced once a second.
+   */
+  linked(m: MonitorHandle): Pick<MonitorHandle, 'dispatch' | 'on' | 'pause' | 'resume' | 'setTimeScale'> {
+    return {
+      dispatch: (c) => m.dispatch(c).then((r) => (this.host.mirror(c, r), r)),
+      on: (fn) => m.on(fn),
+      // the cockpit's own time controls are SESSION commands (they acted on the monitor alone: the session bar, a Remote
+      // and the next speed change disagreed with them)
+      pause: () => void this.panel.send({ type: 'time', action: 'pause' }),
+      resume: () => void this.panel.send({ type: 'time', action: 'resume' }),
+      setTimeScale: (k) => void this.panel.send({ type: 'time', action: 'scale', value: k }),
+    };
+  }
+
   /** Called after every (re)mount with the new monitor (the ventilator link re-attaches to it). */
   onMount(fn: (m: MonitorHandle) => void): () => void {
     this.mountFns.add(fn);
@@ -183,11 +199,19 @@ export class AppSession {
     else this.monitor?.resume();
   }
 
+  private readonly skinFns = new Set<(skin: string, theme: string) => void>();
+  /** FU-11 (Q3): every skin or theme change, wherever it came from. */
+  onSkin(fn: (skin: string, theme: string) => void): () => void {
+    this.skinFns.add(fn);
+    return () => this.skinFns.delete(fn);
+  }
+
   /** Change the monitor's skin or theme. The shell's alarm mirror follows at once, wherever the change came from
    *  (Start, Settings, an imported site profile): the mirror always shows the monitor's colours (review F5, D5). */
   async setSkin(skin: string, theme: string): Promise<void> {
     this.skin = skin;
     this.theme = theme;
+    for (const f of this.skinFns) f(skin, theme); // FU-11 (owner ruling Q3): the learner monitor follows the style
     applySkinAlarmColours(skin, theme);
     await this.monitor?.setSkin(skin, theme ? { theme } : {});
   }

@@ -14,6 +14,8 @@ export interface StartDeps {
   site: SiteProfile;
   /** Called with the chosen scenario when the instructor view opens with one. */
   loadScenario(card: ScenarioCard): boolean;
+  /** FU-11 (K2): the address of a second-screen learner monitor that follows this session. */
+  learnerUrl: string;
 }
 
 export function startView(d: StartDeps): View {
@@ -138,7 +140,10 @@ export function startView(d: StartDeps): View {
     h('h2', {}, 'Monitor'), h('div', { class: 'grid2' }, mon.el, theme.el), monHint,
     h('div', { class: 'actions' },
       button('Open the instructor view', () => void go('teach'), 'primary'),
-      button('Open the learner monitor', () => void go('monitor')),
+      button('Show the learner monitor here', () => void go('monitor')),
+      // FU-11 (K2): the old "Open the learner monitor" changed THIS window's view; a second window used to start its own
+      // patient. This one follows the session (same browser; drag it to the projector).
+      button('Open the learner monitor in a new window', () => void window.open(d.learnerUrl, '_blank', 'noopener,width=1280,height=800')), // R50 F4: its own process
       h('a', { class: 'btn ghost', href: hrefOf('remote') }, 'Open a remote'),
     ),
   );

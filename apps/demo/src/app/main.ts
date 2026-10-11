@@ -1,7 +1,7 @@
 // The app (research/13 brief §4–§5): one document, one engine session for every view. A document opened at
 // #/remote is a Remote instead: it pairs to a monitor on another device and never starts an engine.
 import './app.css';
-import { attachReveal, RevealGesture } from '@pme/controller';
+import { attachReveal, normalizeSessionCode, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
 import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { setDrugNames } from './glossary.ts';
@@ -17,6 +17,7 @@ import { loadSite } from './site.ts';
 import { button, h, setText, throttle, toast } from './ui.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
+import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
 import { settingsView } from './views/settings.ts';
@@ -28,8 +29,10 @@ import { ventView } from './views/vent.ts';
 const site = loadSite();
 setDrugNames(site.drugNames); // one set of drug names on every screen (orchestrator ruling 5)
 const q = new URLSearchParams(location.search);
-const hostless = parseRoute(location.hash).id === 'remote';
-const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless });
+// FU-11 (K2): `?follow=<code>` = the learner monitor on a second screen: it follows that session and runs none of its own
+const follow = normalizeSessionCode(q.get('follow') ?? '');
+const hostless = !follow && parseRoute(location.hash).id === 'remote';
+const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
 
 // Frame intervals for the Stage 8a gate with the whole shell mounted (docs/gates/stage-8a.md measures the same thing).
@@ -43,7 +46,15 @@ const onFrame = (t: number) => {
 };
 requestAnimationFrame(onFrame);
 
-if (hostless) {
+if (follow) {
+  if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
+  // its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar (R50 Q3)
+  const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
+  shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
+  const follower = mountFollower(shell, site, follow, bar);
+  shell.start();
+  Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
+} else if (hostless) {
   shell.add(remoteView({ site, hostless: true, bar: shell.bar }));
   shell.add(settingsView(site, null));
   shell.start();
@@ -52,6 +63,14 @@ if (hostless) {
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
   const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null });
+  // FU-11 (R50 F5): the session code survives a reload of this window, so a learner monitor and a Remote that follow it
+  // find it again (a reload made a new code and left them on a frozen screen)
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f)); // owner ruling Q3
+  if (q.get('session') !== session.code) {
+    const u = new URL(location.href);
+    u.searchParams.set('session', session.code);
+    history.replaceState(null, '', u);
+  }
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
@@ -74,8 +93,8 @@ if (hostless) {
   };
   const weightKg = () => session.spec.weightKg;
 
-  shell.add(startView({ session, site, loadScenario }));
-  shell.add(monitorView(shell.stage, { session, link }));
+  shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code) }));
+  shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code) }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
   shell.add(remoteView({ site, hostless: false, bar: shell.bar, code: session.code }));

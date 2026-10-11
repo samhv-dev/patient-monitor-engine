@@ -38,10 +38,31 @@ export interface MountOptions {
   pxPerMm?: number;
   /** The part this monitor plays in a session (brief §7.5; renderer request R-1, ruling R25). Default 'host'. */
   role?: MonitorRole;
+  /**
+   * FU-11 (owner ruling Q3): who manages this window's alarm SOUND. 'engine' (default): the device's Silence. 'window':
+   * this window alone (`silenceAudio()`); the instructor's Silence does not quiet it — the learner monitor on a second
+   * screen. The alarm conditions and the visual alarm state are the engine's either way.
+   */
+  audioSilence?: 'engine' | 'window';
 }
 
 /** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
 export type MonitorRole = 'host' | 'viewer';
+
+/**
+ * FU-11 (K2, the second-screen learner monitor): the synchronous clock a ViewerSync steers every frame (structurally the
+ * controller's ViewerTarget). Only a 'viewer' monitor mounted with worker 'off' has one (its calls must be immediate).
+ */
+export interface ViewerClock {
+  restore(s: PatientSnapshot): void;
+  dispatch(cmd: Command): DispatchResult;
+  on(fn: (e: EngineEvent) => void, types?: EngineEvent['type'][]): () => void;
+  renderT(): number;
+  tick(): number;
+  setRate(k: number): void;
+  setPaused(p: boolean): void;
+  jumpTo(simT: number): void;
+}
 
 export interface MonitorHandle {
   dispatch(cmd: Command): Promise<DispatchResult>;
@@ -81,6 +102,11 @@ export interface MonitorHandle {
   readonly trends: TrendStore;
   /** Stage 4b: commands, alarms, shocks, NIBP results (brief §6.7), CSV/JSON export. */
   readonly eventLog: EventLog;
+  /** FU-11 (K2): the clock ViewerSync steers; needs role 'viewer' and worker 'off' (its calls are synchronous). */
+  viewerClock(): Promise<ViewerClock>;
+  /** FU-11 (Q3): with `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
+   *  whether this window is now silenced; false before sound is enabled. */
+  silenceAudio(): boolean;
 }
 
 const TILE_W = 190;
@@ -272,7 +298,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     const a = r.audio.alarm;
     sounder = new AlarmSounder(scheduler, getAlarmProfile(a.profile), { overrides: { repeatS: a.repeatS, lowPulses: a.lowPulses, volume: a.volume, silence: a.silence } });
     const s = scheduler;
-    bridge = new AlarmAudioBridge(sounder, () => s.clock.timeScale);
+    bridge = new AlarmAudioBridge(sounder, () => s.clock.timeScale, { windowSilence: opts.audioSilence === 'window' });
     if (lastStatus) bridge.onStatus({ ...lastStatus, t: simNow() });
   };
 
@@ -313,15 +339,17 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     markLanes(plan.lanes);
     ui.setSkin(next, page);
   };
+  /** An accepted command's effects on this page (the log, the CO2 lane swap, the kept ECG leads) — FU-11: shared by a viewer's mirrored commands. */
+  const accepted = (cmd: Command, h: Host) => {
+    eventLog.command(cmd, anchor.simT); // Stage 4b
+    const c = cmd as { type: string; sensor?: string; state?: string; action?: { device?: string; action?: string; lane?: number; value?: unknown } };
+    if (c.type === 'attachSensor' && c.sensor === 'co2') setCo2(c.state !== 'off', h);
+    if (c.type === 'device' && c.action?.device === 'ecg' && c.action.action === 'lead' && typeof c.action.lane === 'number') leads.set(c.action.lane, c.action.value as LeadId);
+  };
   const dispatch = (cmd: Command) =>
     hostP.then(async (h) => {
       const res = await h.command(cmd);
-      if (res.accepted) {
-        eventLog.command(cmd, anchor.simT); // Stage 4b
-        const c = cmd as { type: string; sensor?: string; state?: string; action?: { device?: string; action?: string; lane?: number; value?: unknown } };
-        if (c.type === 'attachSensor' && c.sensor === 'co2') setCo2(c.state !== 'off', h);
-        if (c.type === 'device' && c.action?.device === 'ecg' && c.action.action === 'lead' && typeof c.action.lane === 'number') leads.set(c.action.lane, c.action.value as LeadId);
-      }
+      if (res.accepted) accepted(cmd, h);
       return res;
     });
   return {
@@ -384,6 +412,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     },
     engine: { dispatch },
     role: opts.role ?? 'host',
+    silenceAudio: () => (opts.audioSilence === 'window' && bridge && r ? bridge.silenceWindow(simNow(), r.skin.alarms.silence) : false),
     snapshot: () => hostP.then((h) => h.snapshot()),
     restore: (s) =>
       hostP.then(async (h) => {
@@ -417,5 +446,31 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     capture12: () => hostP.then((h) => h.capture12()),
     trends,
     eventLog,
+    viewerClock: () =>
+      hostP.then((h) => {
+        const core = h.core;
+        if (opts.role !== 'viewer' || !core) throw new Error("viewerClock needs a monitor mounted with role 'viewer' and worker 'off'");
+        const clock: ViewerClock = {
+          restore: (s) => {
+            core.restore(s);
+            afterRestore(s, h);
+          },
+          dispatch: (cmd) => {
+            const r = core.command(cmd);
+            if (r.accepted) accepted(cmd, h);
+            return r;
+          },
+          on: (fn, types) => core.engine.on(fn, types),
+          renderT: () => core.clock.renderT,
+          tick: () => core.engine.now().tick,
+          setRate: (k) => void (core.clock.timeScale = Math.min(4, Math.max(0.25, k))),
+          setPaused: (p) => (p ? core.clock.pause() : core.clock.resume()),
+          jumpTo: (simT) => {
+            core.clock.setTick(Math.floor(simT * 50 + 1e-6));
+            core.engine.advanceTo(core.clock.simT);
+          },
+        };
+        return clock;
+      }),
   };
 }

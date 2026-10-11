@@ -7681,7 +7681,7 @@ follows a skin change in < 1 s; with the Ventilator view driving: 0 resyncs.
 `windowSilence` + `silenceWindow(t, s)`, `followUrl(code)`, `mountFollower(shell, site, code, bar)`, `publishStyle(code,
 now, onChange)`, `AppSession.linked(m)`, `AppSession.onSkin(fn)`, `Shell` option `follower`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-follower.e2e.ts`:
 
@@ -7787,7 +7787,7 @@ test("it wears the instructor's monitor style and follows a change; its alarm so
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-follower`  
 Expected: 6 failed: no "Open on a second screen" button (timeout)
@@ -7795,7 +7795,7 @@ Expected: 6 failed: no "Open on a second screen" button (timeout)
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/alarm-audio.test.ts`  
 Expected: 2 failed: silenceWindow is not a function
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 Create `apps/demo/src/app/views/follower.ts`:
 
@@ -8581,7 +8581,7 @@ Replace with:
 .follower-bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); justify-content: flex-end; }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-follower`  
 Expected: 6 passed
@@ -8597,7 +8597,7 @@ Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-follower.e2e.ts \
