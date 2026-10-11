@@ -28,7 +28,7 @@ already up to date). Every number is seed 7 on this Mac, shared with other execu
 | kit scripts `tsc --strict` / `node --check make-videos.mjs` | clean |
 | e2e `showcase-clock`, `fu11-restore`, `fu11-vent-restore` (Chromium + WebKit, `--retries=0`) | **6 passed** |
 | kit: `rehearsal` + `sound` + `multiwindow` on the built kit (perl launcher), Chromium + WebKit, 2 workers | **20 passed (30.0 min)** = 8 + 1 + 1 per engine |
-| CI `test-slow (showcase)` | see §6 (filled from the PR's CI run) |
+| CI `test-slow (showcase)` | passed, 13 min 12 s (§6) |
 
 ## 3. Measured numbers (Step 2, `PME_SHOWCASE_PRINT=1`)
 
@@ -107,5 +107,7 @@ Findings for the orchestrator (none changes a number):
 
 ## 6. CI
 
-The new `test-slow (showcase)` job (an eighth `test-slow` matrix entry, its own step, `PME_TEST_SET=showcase`): time
-from the PR's first CI run — see the PR conversation (filled in after the run if it completes within the session).
+The new `test-slow (showcase)` job (an eighth `test-slow` matrix entry, its own step, `PME_TEST_SET=showcase`), PR #48's
+first CI run (run 38100631999, head `46ca3f55`): **passed in 13 min 12 s**, of which the `vitest run` step took 12 min 58 s
+(5 files, 20 cases, one file at a time; 4 min 38 s on this Mac). It runs in parallel with slow-a … slow-g, all started
+together, so it adds no wall time while it stays under the longest engine-core group.
