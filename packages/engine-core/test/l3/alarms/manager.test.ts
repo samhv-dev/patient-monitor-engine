@@ -112,16 +112,58 @@ describe('alarm manager', () => {
     expect(s.silencedUntil).toBeNull();
   });
 
-  it('pause (IEC-style 180 s) removes every alarm and raises nothing until it ends; Saadat-like rejects pause', () => {
+  // FU-11 G3 (owner ruling Q7, 2026-10-07): a new alarm of HIGHER priority than the ones paused ends an alarm PAUSE too,
+  // by B4's rule for silence (Q1) and on its evidence — no vendor source documents a pause that holds through one. A
+  // condition of the same or lower priority, and a pre-pause pressed with nothing alarming, still raise nothing until
+  // the pause ends. Saadat-like has no pause (it rejects one); every other profile's pause follows the rule.
+  const LOW_SPO2: Condition = { ...SPO2, delayS: 0 };
+  it('pause (IEC-style 180 s) removes every alarm and raises nothing of the same or lower priority until it ends; Saadat-like rejects pause', () => {
     const s = createAlarmMgr(deviceProfile('zoll-like'));
     run(s, 0, 1, () => [HR]);
     const out: EngineEvent[] = [];
     applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, out);
     expect(alarms(out, 'paused').map((a) => a.id)).toEqual(['HR_HIGH']);
-    expect(alarms(run(s, 1.02, 180.98, () => [HR, ASY]), 'raised')).toHaveLength(0);
-    const after = alarms(run(s, 181, 181.1, () => [HR, ASY]), 'raised');
-    expect(after.map((a) => a.id).sort()).toEqual(['ASYSTOLE', 'HR_HIGH']);
+    expect(alarms(run(s, 1.02, 180.98, () => [HR, LOW_SPO2]), 'raised')).toHaveLength(0);
+    const after = alarms(run(s, 181, 181.1, () => [HR, LOW_SPO2]), 'raised');
+    expect(after.map((a) => a.id).sort()).toEqual(['HR_HIGH', 'SpO2_LOW']);
     expect(validateAlarmAction(createAlarmMgr(deviceProfile('saadat-like')), { device: 'alarm', action: 'pause' })).toMatch(/no function/);
+  });
+  for (const [id, pauseS] of [['zoll-like', 180], ['ge-like', 180], ['lifepak-like', 180], ['philips-like', 120], ['mindray-like', 120]] as const) {
+    it(`alarm pause (${pauseS} s, ${id}) is ended by a new HIGHER-priority alarm, which is raised at once (G3, Q7)`, () => {
+      const s = createAlarmMgr(deviceProfile(id));
+      run(s, 0, 1, () => [HR]);
+      applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);
+      expect(s.pausedUntil).toBeCloseTo(1 + pauseS, 6);
+      expect(alarms(run(s, 1.02, 10, () => [HR]), 'raised')).toHaveLength(0);
+      const ev = run(s, 10.02, 10.02, () => [HR, ASY]);
+      expect(s.pausedUntil).toBeNull();
+      expect(alarms(ev, 'raised').map((a) => a.id).sort()).toEqual(['ASYSTOLE', 'HR_HIGH']);
+      expect(ev.filter((e): e is Status => e.type === 'alarmStatus').at(-1)?.pausedUntil).toBeNull();
+    });
+    it(`alarm pause (${pauseS} s, ${id}) holds through a new alarm of the same or lower priority, and a pre-pause holds through anything (G3)`, () => {
+      const s = createAlarmMgr(deviceProfile(id));
+      run(s, 0, 1, () => [HR]);
+      applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);
+      expect(alarms(run(s, 1.02, 20, () => [HR, LOW_SPO2, LEADS]), 'raised')).toHaveLength(0);
+      expect(s.pausedUntil).toBeCloseTo(1 + pauseS, 6);
+      const pre = createAlarmMgr(deviceProfile(id));
+      run(pre, 0, 1, () => []);
+      applyAlarmAction(pre, { device: 'alarm', action: 'pause' }, 1, []);
+      expect(alarms(run(pre, 1.02, 20, () => [ASY]), 'raised')).toHaveLength(0);
+      expect(pre.pausedUntil).toBeCloseTo(1 + pauseS, 6);
+    });
+  }
+  it('a higher-priority condition with a delay ends the pause only once it would be raised (G3)', () => {
+    const s = createAlarmMgr(deviceProfile('philips-like'));
+    run(s, 0, 1, () => [{ ...LEADS, delayS: 0 }]);
+    applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);
+    run(s, 1.02, 5, () => [LEADS]);
+    // SpO2 (medium) is above the paused technical alarm (low) and has a 10 s delay: true from 5.02, due at 15.02
+    expect(alarms(run(s, 5.02, 15, () => [LEADS, SPO2]), 'raised')).toHaveLength(0);
+    expect(s.pausedUntil).toBeCloseTo(121, 6);
+    const ev = run(s, 15.02, 15.04, () => [LEADS, SPO2]);
+    expect(s.pausedUntil).toBeNull();
+    expect(alarms(ev, 'raised').find((a) => a.id === 'SpO2_LOW')?.t).toBeCloseTo(15.02, 6);
   });
 
   it('alarmStatus on every change and at 1 Hz; saadat-like starts all-off, the preset turns NIBP and SpO2 on', () => {

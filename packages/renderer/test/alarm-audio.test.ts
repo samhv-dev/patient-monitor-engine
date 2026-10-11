@@ -81,6 +81,23 @@ describe('alarm audio bridge', () => {
   });
 });
 
+describe('FU-11 G3 (owner ruling Q7): an alarm pause ended by a new higher-priority alarm sounds at once', () => {
+  it('the paused monitor is quiet; when the engine ends the pause for a higher alarm, that alarm sounds in the same status', () => {
+    const r = rig(IEC_STYLE);
+    r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));
+    r.run(2);
+    const n = r.played.length;
+    expect(n).toBeGreaterThan(0);
+    r.bridge.onStatus({ ...st(2, []), pausedUntil: 182 }); // Pause: the engine removes every alarm and raises nothing
+    r.run(20);
+    expect(r.played.length).toBe(n);
+    r.bridge.onStatus(st(20, [entry('HR_HIGH', 2), entry('ASYSTOLE', 1)])); // the engine ended the pause (G3) and raised
+    r.run(21);
+    expect(r.played.slice(n).some((p) => p.id.startsWith('alarm:ASYSTOLE:'))).toBe(true);
+    expect(r.played.slice(n).every((p) => p.t >= 20 - 1e-9)).toBe(true);
+  });
+});
+
 describe('FU-11 (owner ruling Q3): a learner window manages its own alarm sound', () => {
   it("ignores the instructor's silence (timer or acknowledge) and keeps its own; its own silence never reaches the engine", () => {
     const r = rig(IEC_STYLE, { windowSilence: true });
