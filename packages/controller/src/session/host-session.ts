@@ -65,6 +65,8 @@ export const EVENTS_PER_MESSAGE = 200;
 /** Events that stay on the host: audio is scheduled locally by every monitor from its own engine. */
 const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
 const TICK_S = 0.02;
+/** FU-11 (K2): a viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every resync) [ENG]. */
+const VIEWER_TTL_MS = 600_000;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
 
@@ -87,6 +89,7 @@ export class HostSession {
   private readonly offEngine: () => void;
   private readonly timer: ReturnType<typeof setInterval> | null;
   private bookmarkN = 0;
+  private viewerSeenAt = -Infinity; // FU-11 (K2): wall ms of the last viewer hello
   readonly stats = { applied: 0, rejected: 0, duplicates: 0, snapshotsSent: 0 };
 
   constructor(o: HostSessionOptions) {
@@ -139,6 +142,22 @@ export class HostSession {
     });
     this.chain = run.then(() => undefined, (err) => console.error('[pme host]', err));
     return run;
+  }
+
+  /**
+   * FU-11 (K2): a command the host's monitor applied OUTSIDE this session (the Ventilator view's link drives it directly,
+   * up to 200 commands a second at ×4) — sent as a `mirror` commandApplied so a second-screen viewer applies it at the
+   * same tick, and only while a viewer has said hello (no traffic in a session without one) [ENG: 10 min].
+   * R50 F3 (orchestrator ruling; a DECLARED deviation from brief §3.7): these are the ventilator's frames — pressure,
+   * flow and volume every 20 ms of sim, i.e. samples — so they go ONLY to same-browser BroadcastChannel transports,
+   * never to the relay, WebRTC or the in-process panel (and the relay refuses them, relay/server.ts). Mirroring the
+   * cockpit's SETTINGS instead cannot be exact: a frame one tick off moves the beats 3.5 ms (five ticks: 18 ms; the
+   * viewer resyncs above 1 ms), and a follower-side cockpit learns its own tick offset.
+   */
+  mirror(cmd: Command, result: DispatchResult): void {
+    if (!result.accepted || this.now() - this.viewerSeenAt > VIEWER_TTL_MS) return;
+    const m = this.stamp({ kind: 'event', body: [{ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: { ...cmd, atTick: result.tick }, mirror: true } satisfies AppliedResolution }] });
+    for (const t of this.transports.keys()) if (t.kind === 'broadcastChannel') t.send(m);
   }
 
   /** Broadcast an event that did not come from the engine (e.g. `scenario`), batched with this frame's events. */
@@ -236,6 +255,7 @@ export class HostSession {
     // a BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport)
     if (m.kind === 'hello') (m.role === 'viewer' ? this.viewerPeers.add(m.from) : this.viewerPeers.delete(m.from));
     if (m.from === this.peerId || this.seqs.check(m) === 'duplicate') return;
+    if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
     if (m.kind === 'hello' && m.role !== 'host') return this.welcome(t);
     if (m.kind === 'command' && this.viewerPeers.has(m.from)) {
       t.send(this.stamp({ kind: 'ack', commandId: m.body.id, accepted: false, tick: this.o.target.now().tick, reason: 'a viewer cannot command' }));

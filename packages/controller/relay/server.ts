@@ -135,6 +135,9 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       }
       case 'event':
         if (!isHost) return void dropped++;
+        // FU-11 (R50 F3): a host's `mirror` frames (the Ventilator view's samples) are for same-browser viewers only —
+        // brief §3.7: raw samples never cross the wire
+        if (m.body.some((e) => e.type === 'commandApplied' && (e.resolved as { mirror?: unknown } | undefined)?.mirror === true)) return void dropped++;
         for (const p of room.peers) raw(p.ws, data);
         return;
       case 'snapshot':

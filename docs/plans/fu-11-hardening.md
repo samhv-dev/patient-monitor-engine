@@ -7357,7 +7357,7 @@ git push
 its own gate (Gate D). A later plan adds a QR-paired MOBILE learner monitor on top of G2 — G2 documents its wire
 contract in `follower.ts` (header) so that plan builds on it without re-opening these files.
 
-- [ ] **Step 1.** **Worktree** (after `fu-11-b`'s last task is pushed; if b has merged, branch from `origin/main` instead and pass
+- [x] **Step 1.** **Worktree** (after `fu-11-b`'s last task is pushed; if b has merged, branch from `origin/main` instead and pass
 `--b-merged` below):
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -7390,7 +7390,7 @@ said hello in the last 10 min; the relay DROPS any event batch holding a mirror 
 
 **Interfaces:** Produces: `HostSession.mirror(cmd: Command, result: DispatchResult): void`; `AppliedResolution.mirror?: boolean`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/controller/test/session/fu11-mirror.test.ts`:
 
@@ -7498,12 +7498,12 @@ describe('FU-11 G1: no mirror frame crosses the relay', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/fu11-mirror.test.ts test/relay/fu11-relay-mirror.test.ts`  
 Expected: fail: hs.mirror is not a function; the relay forwards the mirror batch
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/controller/relay/server.ts`, find:
 
@@ -7624,14 +7624,14 @@ Replace with:
       if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // FU-11: link traffic is not a log line
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session test/relay`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/controller/relay/server.ts \
