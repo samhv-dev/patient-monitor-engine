@@ -169,3 +169,15 @@ The dry run and both gate fixes (§4) were accepted and stay.
   Fast-forward click → panel gone: Chromium 10.6 s, WebKit 10.5 s.
 - Plan gate steps G1–G5 ticked in the plan copy.
 
+## 10. CI fix: the pace test made deterministic (orchestrator ruling 2026-10-11)
+
+PR #54's first CI run (38166128702) failed in the unit step: `s10-fast-forward.test.ts` "is paced to the wall time it is
+given" took 4568 ms against `< 4000` (S10-F3 locally; Stages 12/13 saw 5.35 s and 7.5 s). A real-wall-clock upper bound
+cannot hold on a shared runner, so, by ruling, the test no longer measures real time:
+- **Product change, pacer only:** `HostSessionOptions.sleep?: (ms) => Promise<void>` — the pacer's wait, read together with
+  the existing `wallNow`; default a real `setTimeout`, so the app's behaviour is unchanged.
+- **Deterministic test:** a 120 s span paced to 1500 ms on a fake clock: 239 waits of exactly 6.25 ms (after every 25-tick
+  step but the last), the paced total 1493.75 ms, the start event's `wallMs: 1500`, the span exact (tick 6000).
+- **Real-time smoke check kept with a lower bound only:** the same span never finishes in under 1400 ms. No upper bound.
+- Recorded as a deviation in the plan copy.
+

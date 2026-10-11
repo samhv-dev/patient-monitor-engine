@@ -60,6 +60,11 @@ export interface HostSessionOptions {
    * run (the app: FF_WALL_MS, ≈ 10 s). 0 (default): as fast as the monitor runs.
    */
   fastForwardWallMs?: number;
+  /**
+   * Stage 10 (orchestrator ruling 2026-10-11): the fast-forward pacer's wait, read with `wallNow`, so a test drives the
+   * pace on a fake clock. Default: a real `setTimeout`.
+   */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 /** Commands that share a stageGroup land on one tick this many ticks after the first arrives (60 ms) [ENG]. */
@@ -439,7 +444,7 @@ export class HostSession {
         tick = (await advance(n, tick + n >= ff.toTick)).tick;
         await this.chain; // the scenario's commands of this step are applied before the next step
         const wait = w0 + (wallMs * (tick - ff.fromTick)) / span - this.now(); // the pace: ahead of it, wait
-        if (wait > 0 && tick < ff.toTick) await new Promise((r) => setTimeout(r, wait));
+        if (wait > 0 && tick < ff.toTick) await (this.o.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms))))(wait);
       }
     } catch (err) {
       if (this.timelines !== timeline) stopped = 'a new patient or scenario started'; // its monitor was replaced

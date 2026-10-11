@@ -3527,6 +3527,17 @@ git push
   push, open the PR (`gh pr create --base main --head stage-10-time-control`, title "Stage 10: time control — ×8 and a
   paced fast-forward (5 or 2 min)"), and STOP (the orchestrator merges).
 
+## Deviations recorded during execution
+
+- **Task 3's pace test (test design; orchestrator ruling 2026-10-11).** The block's test "is paced to the wall time it is
+  given" asserted a REAL wall time below 4000 ms for a 1.5 s pace; on PR #54's CI (run 38166128702) it took 4568 ms, and
+  Stages 12/13 saw 5.35 s and 7.5 s under load. Replaced by (a) the same span on a fake clock — `HostSessionOptions.sleep`
+  (new, the pacer's wait, default a real `setTimeout`; production unchanged) with the existing `wallNow` — asserting the
+  239 waits of exactly 6.25 ms, the paced total and the start event's `wallMs`; and (b) one real-time smoke check with a
+  LOWER bound only (≥ 1400 ms). The upper bound is gone. The blocks above are unchanged (they reproduce the prototype);
+  the branch carries the new test.
+- **Task 6** (added by the orchestrator) and the two gate fixes (span wording, seam label): see `docs/gates/stage-10.md`.
+
 ## Mechanical self-check (done while writing; the executor re-runs Task 0 Step 3)
 
 - `blocks.py` cut 114 find/replace blocks and 10 created files from the five task commits (T1 22 + 1, T2 27 + 1, T3
