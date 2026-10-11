@@ -33,12 +33,14 @@ export class Shell {
   private readonly nav: HTMLElement;
   private readonly routeFns = new Set<(r: Route) => void>();
 
-  constructor(parent: HTMLElement, o: { hostless: boolean }) {
-    this.nav = h('nav', { class: 'nav', 'aria-label': 'Views' }, ...NAV.filter(([id]) => !o.hostless || id === 'settings').map(([id, label]) => h('a', { href: hrefOf(id), 'data-route': id }, label)));
+  constructor(parent: HTMLElement, o: { hostless: boolean; follower?: boolean }) {
+    // FU-11 (K2): a second-screen learner monitor shows the monitor alone — no views to switch to
+    const navIds = (id: RouteId) => (o.follower ? false : !o.hostless || id === 'settings');
+    this.nav = h('nav', { class: 'nav', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), 'data-route': id }, label)));
     this.right = h('div', { class: 'topright' });
     // narrow screens (iPad portrait, phones): the view list moves into a menu dialog so no label is clipped
     const menuDlg = h('dialog', { class: 'menu-sheet', 'aria-label': 'Views' },
-      h('nav', { class: 'menu-list', 'aria-label': 'Views' }, ...NAV.filter(([id]) => !o.hostless || id === 'settings').map(([id, label]) => h('a', { href: hrefOf(id), onclick: () => menuDlg.close() }, label))),
+      h('nav', { class: 'menu-list', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), onclick: () => menuDlg.close() }, label))),
       h('button', { type: 'button', class: 'btn ghost', onclick: () => menuDlg.close() }, 'Close'));
     const menuBtn = h('button', { type: 'button', class: 'btn small menu-btn', 'aria-haspopup': 'dialog', onclick: () => menuDlg.showModal() }, 'Menu');
     const top = h('header', { class: 'topbar' }, h('a', { class: 'brand', href: hrefOf(o.hostless ? 'remote' : 'start') }, 'Patient monitor simulator'), menuBtn, this.nav, h('div', { class: 'spacer' }), this.right, menuDlg);
@@ -48,6 +50,7 @@ export class Shell {
     this.main = h('main', { class: 'main', id: 'main', tabindex: -1 }, this.bar, this.stage);
     this.root = h('div', { class: 'app' }, h('a', { class: 'skip', href: '#main', onclick: (e: Event) => (e.preventDefault(), this.main.focus()) }, 'Skip to the main content'), top, this.main);
     parent.append(this.root);
+    if (o.follower) this.bar.hidden = true;
     if (o.hostless) {
       this.stage.hidden = true;
       this.bar.hidden = true;

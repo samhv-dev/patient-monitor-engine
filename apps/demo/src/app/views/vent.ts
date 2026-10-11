@@ -41,7 +41,7 @@ export function ventView(session: AppSession): View {
       let detach: () => void = () => {};
       const offAttach = session.onMount((m) => {
         detach();
-        detach = attachMonitorToLink(m, port, (c, r) => console.warn('vent link rejected', c.type, r));
+        detach = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r)); // FU-11 (K2)
       });
       // as the Stage V link page does: once the cockpit has loaded, send it an empty patch (its first control message)
       // and this session's speed

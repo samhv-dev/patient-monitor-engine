@@ -43,6 +43,9 @@ export interface AlarmMgrState {
    *  above it ends the silence on every profile. null = nothing was sounding (a pre-silence); absent in older snapshots. */
   silencedLevel?: AlarmLevel | null;
   pausedUntil: number | null;
+  /** FU-11 G3 (owner ruling Q7): the highest priority (lowest level) active when the pause began; a new alarm above it
+   *  ends the pause, by D-14's rule for silence. null = nothing was alarming (a pre-pause); absent in older snapshots. */
+  pausedLevel?: AlarmLevel | null;
   lastStatusT: number;
   dirty: boolean;
   /** FU-5: alarm id → the time before which a raised event alarm is kept (Condition.holdS); absent in older snapshots. */
@@ -178,6 +181,8 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
     }
     case 'pause': {
       s.pausedUntil = t + (p.pauseS as number);
+      const levels = Object.values(s.active).map((e) => e.level);
+      s.pausedLevel = levels.length ? (Math.min(...levels) as AlarmLevel) : null; // FU-11 G3 (Q7)
       for (const e of Object.values(s.active)) emitAlarm(out, t, e, 'paused');
       s.active = {};
       s.pending = {};
@@ -220,6 +225,18 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
   if (s.silencedUntil !== null && t >= s.silencedUntil) {
     s.silencedUntil = null;
     s.dirty = true;
+  }
+  // FU-11 G3 (owner ruling Q7): a condition of HIGHER priority than the alarms paused ends the pause once it would be
+  // raised (its delay held while paused), as a higher priority ends a silence (B4, Q1) — no vendor source documents a
+  // pause that holds through one; the loop below then raises it, and the rest, as after a pause that ran out
+  if (s.pausedUntil !== null && s.pausedLevel != null) {
+    for (const c of conds) {
+      if (c.suppressed || c.level >= s.pausedLevel) continue;
+      if (t - (s.pending[c.id] ??= t) + 1e-9 < c.delayS) continue;
+      s.pausedUntil = null;
+      s.dirty = true;
+      break;
+    }
   }
   const now = new Set<string>();
   let superseded: Set<string> | null = null;

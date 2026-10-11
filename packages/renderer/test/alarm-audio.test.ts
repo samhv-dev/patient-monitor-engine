@@ -5,7 +5,7 @@ import { AlarmSounder, IEC_STYLE, SAADAT, ToneScheduler, type AlarmSoundProfile,
 import { AlarmAudioBridge } from '../src/alarm-audio.ts';
 import type { AlarmStatus } from '../src/alarm-view.ts';
 
-function rig(profile: AlarmSoundProfile) {
+function rig(profile: AlarmSoundProfile, o: { windowSilence?: boolean } = {}) {
   let now = 0;
   const played: AlarmToneRequest[] = [];
   const sched = new ToneScheduler({
@@ -19,7 +19,7 @@ function rig(profile: AlarmSoundProfile) {
   });
   sched.clock.setAnchor({ simT: 0, perfMs: 0, timeScale: 1 });
   const sounder = new AlarmSounder(sched, profile);
-  const bridge = new AlarmAudioBridge(sounder);
+  const bridge = new AlarmAudioBridge(sounder, () => 1, o);
   const run = (t: number) => {
     while (now < t - 1e-9) {
       now = Math.min(t, now + 0.025);
@@ -78,5 +78,55 @@ describe('alarm audio bridge', () => {
     r.bridge.onStatus(st(40, [entry('ASYSTOLE', 1), entry('VFIB', 1)], null)); // the engine ended the silence (new alarm)
     r.run(41.5);
     expect(r.played.length).toBe(10);
+  });
+});
+
+describe('FU-11 G3 (owner ruling Q7): an alarm pause ended by a new higher-priority alarm sounds at once', () => {
+  it('the paused monitor is quiet; when the engine ends the pause for a higher alarm, that alarm sounds in the same status', () => {
+    const r = rig(IEC_STYLE);
+    r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));
+    r.run(2);
+    const n = r.played.length;
+    expect(n).toBeGreaterThan(0);
+    r.bridge.onStatus({ ...st(2, []), pausedUntil: 182 }); // Pause: the engine removes every alarm and raises nothing
+    r.run(20);
+    expect(r.played.length).toBe(n);
+    r.bridge.onStatus(st(20, [entry('HR_HIGH', 2), entry('ASYSTOLE', 1)])); // the engine ended the pause (G3) and raised
+    r.run(21);
+    expect(r.played.slice(n).some((p) => p.id.startsWith('alarm:ASYSTOLE:'))).toBe(true);
+    expect(r.played.slice(n).every((p) => p.t >= 20 - 1e-9)).toBe(true);
+  });
+});
+
+describe('FU-11 (owner ruling Q3): a learner window manages its own alarm sound', () => {
+  it("ignores the instructor's silence (timer or acknowledge) and keeps its own; its own silence never reaches the engine", () => {
+    const r = rig(IEC_STYLE, { windowSilence: true });
+    r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));
+    r.run(2);
+    const n = r.played.length;
+    expect(n).toBeGreaterThan(0);
+    r.bridge.onStatus(st(2, [entry('HR_HIGH', 2)], 92)); // the instructor pressed Silence (mute timer)
+    r.bridge.onStatus(st(2.5, [entry('HR_HIGH', 2, true)], 92)); // …or an acknowledge-style Silence
+    r.run(40);
+    expect(r.played.length).toBeGreaterThan(n); // this window still sounds
+    expect(r.bridge.silenceWindow(40, { durationS: 90, mode: 'mute' })).toBe(true); // its own Silence
+    const m = r.played.length;
+    r.run(80);
+    expect(r.played.length).toBe(m);
+    r.bridge.onStatus(st(80, [entry('HR_HIGH', 2, true), entry('ASYSTOLE', 1)], 92)); // a higher alarm breaks through (Q1)
+    r.run(82);
+    expect(r.played.slice(m).some((p) => p.id.startsWith('alarm:ASYSTOLE:'))).toBe(true);
+  });
+  it('an acknowledge-style skin\'s own-window Silence lasts until a new alarm', () => {
+    const r = rig(IEC_STYLE, { windowSilence: true });
+    r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));
+    r.run(1);
+    r.bridge.silenceWindow(1, { durationS: null, mode: 'acknowledge' });
+    const m = r.played.length;
+    r.run(200);
+    expect(r.played.length).toBe(m);
+    r.bridge.onStatus(st(200, [entry('HR_HIGH', 2), entry('SPO2_LOW', 2)]));
+    r.run(202);
+    expect(r.played.length).toBeGreaterThan(m);
   });
 });

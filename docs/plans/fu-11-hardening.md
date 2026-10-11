@@ -7357,7 +7357,7 @@ git push
 its own gate (Gate D). A later plan adds a QR-paired MOBILE learner monitor on top of G2 — G2 documents its wire
 contract in `follower.ts` (header) so that plan builds on it without re-opening these files.
 
-- [ ] **Step 1.** **Worktree** (after `fu-11-b`'s last task is pushed; if b has merged, branch from `origin/main` instead and pass
+- [x] **Step 1.** **Worktree** (after `fu-11-b`'s last task is pushed; if b has merged, branch from `origin/main` instead and pass
 `--b-merged` below):
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -7390,7 +7390,7 @@ said hello in the last 10 min; the relay DROPS any event batch holding a mirror 
 
 **Interfaces:** Produces: `HostSession.mirror(cmd: Command, result: DispatchResult): void`; `AppliedResolution.mirror?: boolean`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/controller/test/session/fu11-mirror.test.ts`:
 
@@ -7498,12 +7498,12 @@ describe('FU-11 G1: no mirror frame crosses the relay', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/fu11-mirror.test.ts test/relay/fu11-relay-mirror.test.ts`  
 Expected: fail: hs.mirror is not a function; the relay forwards the mirror batch
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/controller/relay/server.ts`, find:
 
@@ -7624,14 +7624,14 @@ Replace with:
       if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // FU-11: link traffic is not a log line
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session test/relay`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/controller/relay/server.ts \
@@ -7681,7 +7681,7 @@ follows a skin change in < 1 s; with the Ventilator view driving: 0 resyncs.
 `windowSilence` + `silenceWindow(t, s)`, `followUrl(code)`, `mountFollower(shell, site, code, bar)`, `publishStyle(code,
 now, onChange)`, `AppSession.linked(m)`, `AppSession.onSkin(fn)`, `Shell` option `follower`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-follower.e2e.ts`:
 
@@ -7787,7 +7787,7 @@ test("it wears the instructor's monitor style and follows a change; its alarm so
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-follower`  
 Expected: 6 failed: no "Open on a second screen" button (timeout)
@@ -7795,7 +7795,7 @@ Expected: 6 failed: no "Open on a second screen" button (timeout)
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/alarm-audio.test.ts`  
 Expected: 2 failed: silenceWindow is not a function
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 Create `apps/demo/src/app/views/follower.ts`:
 
@@ -8581,7 +8581,7 @@ Replace with:
 .follower-bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); justify-content: flex-end; }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-follower`  
 Expected: 6 passed
@@ -8597,7 +8597,7 @@ Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-follower.e2e.ts \
@@ -8770,22 +8770,22 @@ M5/Q4, the showcase's Sound and Ventilator-view items), ending with
 
 **Files:** Create `docs/gates/fu-11-d.md`, `docs/gates/fu-11-d/**` (≤ 60 KB each); tick G in the plan copy (from b).
 
-- [ ] **Step 1 — merge.** `git fetch origin && git merge origin/main` (b must be in; if not, stop: d waits for b).
+- [x] **Step 1 — merge.** `git fetch origin && git merge origin/main` (b must be in; if not, stop: d waits for b).
   `python3 ../plans-backup/fu-11-plan-tools/check-blocks.py --branch d --b-merged …` is no longer meaningful after the
   merge; confirm with `git diff origin/main --stat` that exactly Part G's files differ.
-- [ ] **Step 2 — full verification** as Gate B Step 2 (fast suites, typecheck, build, the e2e on both projects).
-- [ ] **Step 3 — the learner monitor (Review Focus 3 and 4).** (3) with a follower open: change the instructor's skin
+- [x] **Step 2 — full verification** as Gate B Step 2 (fast suites, typecheck, build, the e2e on both projects).
+- [x] **Step 3 — the learner monitor (Review Focus 3 and 4).** (3) with a follower open: change the instructor's skin
   (Settings) → the follower follows within 1 s; press Silence on the instructor → the follower still sounds (sound on
   in both windows; by ear, or `__pmeFollower.monitor.audioLog` growing); "Silence here" on the follower → the
   instructor's alarm state (`__pmeApp.link.alarms.silencedUntil`) unchanged; reload the instructor → the follower
   re-syncs under the same code; close it → "The instructor's monitor is not answering" within 5 s. (4) host frame p95
   on the bronchospasm case at ×4 with the Ventilator view, with and without a follower window (`__pmeApp.frames`,
   30 s each; report both).
-- [ ] **Step 4 — rehearsal** as Gate B Step 3 with `multiwindow.showcase.ts` and a follower open in each case; the
+- [x] **Step 4 — rehearsal** as Gate B Step 3 with `multiwindow.showcase.ts` and a follower open in each case; the
   numbers equal Gate B's.
-- [ ] **Step 5 — evidence:** the follower beside the host (same numbers, same skin); the follower with the Ventilator
+- [x] **Step 5 — evidence:** the follower beside the host (same numbers, same skin); the follower with the Ventilator
   view; the follower after a skin change.
-- [ ] **Step 6 — the gate note `docs/gates/fu-11-d.md`:** the measurements above, the declared deviation (mirror frames
+- [x] **Step 6 — the gate note `docs/gates/fu-11-d.md`:** the measurements above, the declared deviation (mirror frames
   over BroadcastChannel only, brief §3.7, R50 F3), the wire contract pointer (`follower.ts` header) for the later
   mobile plan.
 - [ ] **Step 7 — pull request** `gh pr create --base main --head fu-11-d --title "FU-11 (d): the second-screen learner

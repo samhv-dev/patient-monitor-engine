@@ -6,7 +6,7 @@ export * from './decimate.ts';
 export { SweepLane, type LaneConfig, type SampleSource } from './sweep-lane.ts';
 export { MonitorCore } from './monitor-core.ts';
 export { NumericTile, formatNumeric } from './numerics-dom.ts';
-export { mountMonitor, type MonitorHandle, type MonitorRole, type MountOptions } from './mount.ts';
+export { mountMonitor, type MonitorHandle, type MonitorRole, type MountOptions, type ViewerClock } from './mount.ts';
 export type { RenderPath } from './worker-host.ts';
 export { WAVE_STYLE, scaleFor, autoRange, type WaveLaneId, type WaveStyle } from './wave-lanes.ts'; // Stage 2
 export { PressureTile, formatPressure, formatNibp, formatClock, type NibpView } from './numerics-hemo.ts'; // Stage 2

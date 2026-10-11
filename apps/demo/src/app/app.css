@@ -435,3 +435,6 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 /* learner controls under the learner monitor (orchestrator ruling 4): hidden unless switched on for the scenario */
 .learner-strip { display: flex; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--bezel-1); border-top: 1px solid var(--line); }
 .learner-strip[hidden] { display: none; }
+
+/* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */
+.follower-bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); justify-content: flex-end; }

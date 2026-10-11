@@ -22,6 +22,8 @@ const WATCH_MS = 500;
 export interface Host {
   readonly canvas: HTMLCanvasElement;
   readonly path: Promise<RenderPath>;
+  /** FU-11 (K2): the main-thread core, for a viewer monitor's synchronous clock (absent on the worker path). */
+  readonly core?: MonitorCore;
   command(cmd: Command): Promise<DispatchResult>;
   control(msg: ControlMsg): void;
   /** Engine snapshot (renderer request R-1, ruling R25). */
@@ -66,6 +68,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
   document.addEventListener('visibilitychange', onVis);
   return {
     canvas,
+    core,
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
     snapshot: () => Promise.resolve(core.engine.snapshot()),

@@ -133,6 +133,8 @@ export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }
 export interface AppliedResolution {
   command: WireCommand;
   replay?: boolean;
+  /** FU-11 (K2): applied outside the session (the Ventilator view's link) and sent only so a viewer mirrors it; not a log line. */
+  mirror?: boolean;
 }
 
 /** Brief §7.5, exactly. */

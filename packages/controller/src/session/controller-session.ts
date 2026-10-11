@@ -204,7 +204,7 @@ export class ControllerSession {
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
-      if (c && !res?.replay && !mine) this.addLog('applied', describe(c), e.commandId);
+      if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // FU-11: link traffic is not a log line
     }
   }
 
