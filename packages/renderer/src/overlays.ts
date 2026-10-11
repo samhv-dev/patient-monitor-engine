@@ -117,12 +117,15 @@ export function drawMark(ctx: Ctx2D, lane: SweepLane, m: OverlayMark, plan: Rend
       ctx.stroke();
     }
   } else if (m.kind === 'seam') {
-    // Stage 10: a thin line where the fast-forward jumped, labelled with the new time; the sweep erases it a lap later
+    // Stage 10: a thin line where the fast-forward jumped, labelled with the new time; the sweep erases it a lap later.
+    // The label sits BEHIND the line (right-aligned to its left), where the sweep has already drawn: ahead of the line the
+    // erase gap wiped it within half a second (gate dry run)
     ctx.lineWidth = 1;
     vline(ctx, x, c.y, c.y + c.height);
     ctx.font = `12px ${plan.font}`;
     ctx.textBaseline = 'top';
-    ctx.fillText(m.label ?? '', x + 4, c.y + 4);
+    ctx.textAlign = 'right';
+    ctx.fillText(m.label ?? '', x - 4, c.y + 4);
   } else {
     ctx.lineWidth = 2.5;
     vline(ctx, x, c.y, c.y + c.height);

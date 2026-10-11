@@ -103,6 +103,29 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     expect(label).toMatch(/^05:0\d$/);
     expect(ctx.texts.filter((x) => x === label)).toHaveLength(lanes(c).length); // ECG and pleth lanes alike
   });
+
+  it('the seam label stays readable: it is drawn behind the line, where the sweep has passed (gate dry run: erased at once)', () => {
+    // the sweep clears an erase gap AHEAD of its cursor every frame; a label drawn to the right of the line (ahead) was
+    // wiped within half a second on every lane with a trace — only the line stayed (the owner's screenshots showed no time)
+    const ctx = new FakeCtx();
+    const c = make([], ctx);
+    frames(c, 0, 1000);
+    const end = c.engine.now().tick + 6000; // 2 min
+    for (let k = c.engine.now().tick; k < end; k += 25) c.advance(25, k + 25 >= end);
+    const t = c.clock.renderT;
+    const label = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    ctx.calls.length = 0;
+    ctx.texts.length = 0;
+    frames(c, 1000, 2000); // 1 s of frames after the span
+    const drawn = ctx.calls.flatMap((k, i) => (k.op === 'fillText' && k.style === `right:${label}` ? [i] : []));
+    expect(drawn).toHaveLength(lanes(c).length);
+    const W = 44; // "mm:ss" at 12 px plus the gap: the label occupies [x − W, x] right-aligned at x
+    for (const i of drawn) {
+      const [lx, ly] = ctx.calls[i]!.args as [number, number];
+      const wiped = ctx.calls.slice(i + 1).filter((k) => k.op === 'fillRect' && k.args[0]! < lx && k.args[0]! + k.args[2]! > lx - W && k.args[1]! <= ly && k.args[1]! + k.args[3]! > ly);
+      expect(wiped).toHaveLength(0);
+    }
+  });
 });
 
 describe('Stage 10: the beat tone above ×4 (owner: at ×8 it would beep ≈ 10 times a second)', () => {
