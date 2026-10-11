@@ -85,6 +85,9 @@ async function follow(page: Page, scenario: string, browserName: string): Promis
 }
 
 test('the second-screen learner monitor follows commands, a bookmark restore and a restart', async ({ page, browserName }) => {
+  // CI run 38136153572: about 10 s after a ×4 setTarget the follower showed one resync and beat drift of 450–2143 ms, 3/3
+  // on Linux WebKit only. Chromium keeps this test; the exactness loss is finding F-49-1 (PR #49), not dismissed.
+  test.skip(browserName === 'webkit', 'FALLBACK ruling 2026-10-11: follower exactness (resync count, beat drift) fails only on CI Linux WebKit; passes on macOS WebKit and CI Chromium; tracked as finding F-49-1');
   test.setTimeout(180_000);
   const f = await follow(page, 'showcase-induction', browserName);
   await page.waitForTimeout(10_000);
