@@ -113,6 +113,8 @@ passed**.
 | route `im` | refused: "route im is not modelled" |
 | the textbook size (≈ 0.25 per 20 mmol) | `it.fails` with both numbers (§3; Q11) |
 
+Citation text corrected in PR #52; numbers unchanged.
+
 **Blast radius, measured with A5 applied:**
 
 - `test/l2` + `test/l3`: 244 files / 1152 passed, 1 skipped.

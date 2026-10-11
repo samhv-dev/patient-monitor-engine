@@ -1439,16 +1439,16 @@ Replace with:
   // (solutes.ts K_TAU_MIN 43 min) while the Na/K-ATPase set point follows total-body K (K_TBK_MMOL 300, Sterns 1981) —
   // the same pool and kinetics insulin–dextrose shifts K into. `rateActsVia` makes it the first INFUSED blood row
   // (10–20 mmol/h): KCl is never given as an iv push, and a bolus order is warned about with its source (below).
-  // Citation note (fix-citations 2026-10-11; the strings below are runtime text and are left for the owner): "Miller 10e
-  // ch. 46" is coagulation and "Co-Existing 8e ch. 23" is haematology. The electrolyte chapters say: Miller 10e ch. 43
+  // Citation note (fix-citations PR #52, owner-ruled 2026-10-11; numbers unchanged): the strings first cited "Miller 10e
+  // ch. 46" (coagulation) and "Co-Existing 8e ch. 23" (haematology). The electrolyte chapters say: Miller 10e ch. 43
   // p. 1355, K+ "no faster than 0.5 mEq/kg/h", solutions over 40 mEq/L via a central venous catheter; Co-Existing 8e
   // ch. 20 p. 404, non-emergent iv repletion "at a rate of less than 20 mEq/h", a central catheter preferred, ECG
   // monitoring for rapid repletion. The "peripheral line 10 mmol/h" is in neither [chapter not verified]. The onset's
   // ≈ 0.25 per 20 mmol is Kruse 1990 (PMID 2310280) in hypokalaemic ICU patients, not a normal adult.
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
-    maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h, central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23]' },
-    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in a normal adult (7c mass balance; [TXT] grade C)', ir: '?', src: 'Ali 2026-10-10; M10 ch. 46', tag: 'TXT' },
+    maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h [chapter not verified], central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 43 p. 1355; Stoelting Co-Existing 8e ch. 20 p. 404]' },
+    doses: '10 mmol/h peripherally, up to 20 mmol/h centrally with monitoring; never an iv bolus', onset: 'plasma K ≈ +0.25 mmol/L per 20 mmol in hypokalaemic ICU patients (Kruse 1990, PMID 2310280; grade C)', ir: '?', src: 'Ali 2026-10-10; Miller 10e ch. 43 p. 1355; Co-Existing 8e ch. 20 p. 404; Kruse 1990 (PMID 2310280)', tag: 'TXT' },
   { id: 'sodiumBicarbonate', name: 'Sodium bicarbonate 8.4 %', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, pd: [], doses: '1 mmol/kg (1 mL/kg of 8.4 %)', onset: 'pH ↑ at once; EtCO2 +5 mmHg at 90 s (7c decision 14)', ir: '?', src: '7c plan decision 14', tag: 'TXT' },
   // FU-10 E-FU10-14 (orchestrator ruling; reverses FU-10 plan D6): the row's insulin is the plain insulin row's insulin —
   // the same PK and the same K⁺ pharmacodynamics (`kShift` → bus.metabolic.kShift → 7c), so 7c's empirical whole-effect
@@ -3536,8 +3536,8 @@ recorded as a known miss with its measured number (six records: RS14, `arrest-et
 `fidelity-arrest` ×3 skins, `fidelity-lowflow`'s Ali case, A2's Billard ratio, A5's textbook K rise). Every new
 constant carries its tag and citation: A2's two [ENG] sizes with Billard 1994 as the [P] fit target; A4's
 `DIAPH_EFFECTIVE`, `VT_EFFORT_ML_KG` and `VT_REST_ML_KG` [ENG] with Moerer 2005 and the label's clinical duration as
-the fit targets; A5's `maxRatePerH` [TXT] with Miller 10e ch. 43 and Co-Existing 8e ch. 20 (the row's string still reads ch. 46; see
-fix-citations). B1, B4, B7 and B8 add no constant. No constant of
+the fit targets; A5's `maxRatePerH` [TXT] with Miller 10e ch. 43 and Co-Existing 8e ch. 20 (the row's strings corrected in PR #52,
+numbers unchanged). B1, B4, B7 and B8 add no constant. No constant of
 `l2/circ`, `l2/blood` or `l2/neuro` is RE-FITTED (the narrowed constraint). The glossary is untouched (no new truth
 leaf: B1 writes into an existing factor, B5 changes a field's meaning, A4 adds a cap on an existing volume, A5 adds a
 library row and B8 a flag on existing numerics). Commits carry
