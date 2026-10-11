@@ -78,7 +78,7 @@ R50, R51, the executor brief).
   | `stimulus-surge` case 1 awake ΔMAP 20–40 (sourced) | **recorded** (`it.fails`) with the number and the mechanism (B3's faster φ fall raises PaCO2, so the hypercapnic pressor response is larger) | 40.3 |
   | `fidelity-arrest` fidelity-3 CPR EtCO2 floor 10 ([ENG], research/10 §13) | the floor is **split out and recorded** for the three skins; the ceiling still asserts; Falk measured ≈ 7.6 mmHg with compressions in place | 7 in the first 15 s of CPR (mean 15.3–15.6, max 20–21) |
   | `resp-suite` RS14 ΔEtCO2 ≥ 6 ([ENG]) | **recorded** (`it.fails`) with the number (owner ruling Q5) | 5.99994 |
-  | A5's textbook K rise (≈ 0.25 mmol/L per 20 mmol, [TXT] grade C) | **recorded** (`it.fails`) with both numbers; 7c's two pool constants own it | +0.77 at 1 h, +0.13 at 3 h |
+  | A5's K rise (≈ 0.25 mmol/L per 20 mmol: Kruse 1990, PMID 2310280, hypokalaemic ICU patients — not in the textbook chapters first cited) | **recorded** (`it.fails`) with both numbers; 7c's two pool constants own it | +0.77 at 1 h, +0.13 at 3 h |
 - **A known miss that turns green is flipped.** An `it.fails` that passes on the branch becomes an `it` with its new
   measured number in the title. This plan expects none to flip (none did on the prototype); if one does, flip it and
   record it in the gate note.
@@ -177,7 +177,7 @@ reason) · **gated Q#** (the implementation is written and measured, but it need
 |---|---|---|---|
 | B1 | Acidosis reaches the circulation (P2) | Three couplings asked for: (i) contractility — EXISTS, `chemistryContractility` ×0.94 at pH 7.16, zero above 7.20; (ii) SVR responsiveness and (iii) endogenous catecholamine responsiveness — MISSING: the parameter tables' own row "pH → catecholamine response `vasoResp` ×0.5 at pH 7.1" (§5b.1, Q44) had no reader, so only INFUSED catecholamines were blunted (`pd.ts acidosisFactor`, drug rows only) | **task B1** (ii + iii, by giving that row its reader); (i) is **Q4b** (threshold/slope, three measured variants) |
 | B2 | Hypoxic arrest timing (P5): the sensitivity runs the probe could not do | Done here; **every number below was measured with B1 in the tree** (R50 I4), so it is the combined timing, not the constant's own. `TAU_HYP_S` 235 → asphyxial PEA +9.8 min after SaO2 < 60 % (prototype; +10.0 on main), 175 → +7.95, 117.5 → +6.23 — **every one inside the engine's own sourced band 5–14 min** [P: Varvarousi 2011 swine, DeBehnke 1995 dogs, quoted in `circ-hypoxic-arrest.test.ts`], and `circ-hypoxic-arrest` + `clinical-suite` stay green at all three (S8 +3.58 / +3.50 min). The owner's "MAP ≈ 100 at SaO2 < 20 %" was not reproduced at any τ: 78–79 mmHg at 235, 76 at 117.5. The hypoxic-arrest threshold `HYP_ARREST` 0.9 is still never reached (peak 0.858): the low-flow route fires first | **recorded**; **Q4a RULED 2026-10-07**: KEEP `TAU_HYP_S` 235 — research/26 T5 reads the piglet end points as ≈ 9–10 min from SaO2 < 60 % to loss of aortic pulsations and ≈ 5–6 min to the pulseless-pressure point, so 6.2 min would silently redefine "arrest". The sensitivity table stays as evidence; the constant is FU-12's |
-| B3 | EtCO2 after flow stops (P7) | Mechanism-light fix written and measured: the FALL of the low-flow factor is the alveolar store's washout by the breaths that continue (τ = V_alv/VA, the lung's own FRC), the RISE keeps `LOW_FLOW_TAU_S` 70 s (tissue CO2 returning at ROSC). Haemorrhage rig true EtCO2 at the arrest / +30 / +60 / +120 s: 11.8 / 4.7 / 1.8 / 0.3 (prototype) against 16.7 / 11.6 / 7.8 / 3.5 (main). It turns `arrest-etco2`'s FU-4 G4(b) bands red (+60 s 2.6 against 10–20; CPR +2 min 15.9 against ≥ 17) while NOT turning the two Stage 3 known misses green | **task B3, UNGATED.** Q4c RULED 2026-10-07 (research/26 T3): research 03 / Falk 1988 GOVERNS — Falk measured 13 human arrests, ventilated and monitored through the transition, at 0.4 ± 0.4 % (≈ 3 ± 3 mmHg) by one minute; FU-4's "10–20 at 60 s" is a CPR value (Garnett 1987's resuscitated patients read 15 ± 4 DURING compressions) and is **SUPERSEDED**. `arrest-etco2`'s no-CPR case is re-targeted on Falk and passes; three bands become records with their numbers (R45 table in the Global Constraints) |
+| B3 | EtCO2 after flow stops (P7) | Mechanism-light fix written and measured: the FALL of the low-flow factor is the alveolar store's washout by the breaths that continue (τ = V_alv/VA, the lung's own FRC), the RISE keeps `LOW_FLOW_TAU_S` 70 s (tissue CO2 returning at ROSC). Haemorrhage rig true EtCO2 at the arrest / +30 / +60 / +120 s: 11.8 / 4.7 / 1.8 / 0.3 (prototype) against 16.7 / 11.6 / 7.8 / 3.5 (main). It turns `arrest-etco2`'s FU-4 G4(b) bands red (+60 s 2.6 against 10–20; CPR +2 min 15.9 against ≥ 17) while NOT turning the two Stage 3 known misses green | **task B3, UNGATED.** Q4c RULED 2026-10-07 (research/26 T3): research 03 / Falk 1988 GOVERNS — Falk measured 13 human arrests, ventilated and monitored through the transition, at 0.4 ± 0.4 % (≈ 3 ± 3 mmHg) by one minute; FU-4's "10–20 at 60 s" is a CPR value (Sanders 1989's resuscitated patients read 15 ± 4 DURING compressions; PMID 2761035) and is **SUPERSEDED**. `arrest-etco2`'s no-CPR case is re-targeted on Falk and passes; three bands become records with their numbers (R45 table in the Global Constraints) |
 | B4 | ROSC threshold coincidence (P3b) | Swept, then diagnosed (R50 C2). It is NOT the threshold and NOT volume depletion: two bookkeeping defects. (i) `l2/circ/model.ts` withdrew the recruited VENOUS volume with the humoral arm's EFFECT in the arrest (G-FU4-1), so the reservoir emptied (−489 → 0 mL) exactly when the drainage needed it and the mean CPR CoPP sat at 14.4–14.6 against `CPP_ROSC` 15; (ii) `l2/circ/coronary.ts` froze `kIschRv` while there was no beat, and the arrest declaration reads `min(kIsch, kIschRv)`, so the one arm that did reach ROSC re-arrested **2 s later** on a stale number | **task B4** (a DEFECT FIX: two mechanism hunks, no constant) — Q4d RULED 2026-10-07 + research/26 T4 (Perkins 2025): drainage + good CPR alone must give ROSC without fluid; undrained → no sustained ROSC; epinephrine raises the chance through time, not a draw |
 | B8 | *(owner's defect, 2026-10-10)* the cuff shows a normal pressure in an arrested patient | The DEVICE is right: measured in PEA, asystole, VF and during CPR, every attempt fails (no envelope; CPR pulses are rejected as artefact and the cycle runs to the 170 s safety deflation). What is wrong is that a failed attempt emitted only the INOP, so the numerics kept the last good result — 129/76 (99) stayed on the monitor for the rest of the case | **task B8** (the failed attempt blanks the numerics: `invalid`, the renderer's "---"); the cuff reading the compression pressure during CPR is **handed** on |
 | B5 | The internal `breath` event reports the set VT (P8b) | `vtMl` 500 on every breath while the lung received 295 (bronchospasm 1, VCV 12 × 500, Pmax 40) | **task B5** |
@@ -310,7 +310,7 @@ reason) · **gated Q#** (the implementation is written and measured, but it need
 | **A4** `l2/neuro` + `neuro-*` + `drug-apnoea` + `resp-ga-state` + `resp-induction` + `fu7-nmb-one-state` + `resp-suite` | green | **green, no changed number** |
 | **A5** KCl 20 mmol/h for 1 h (70 kg): plasma K at 0 / 1 h / 3 h | the drug does not exist — every order refused | 4.20 → **4.97 (+0.77)** → 4.33 (+0.13) |
 | **A5** the same at 10 mmol/h | — | **+0.37** at 1 h (half the rate, about half the rise) |
-| **A5** the textbook size (≈ 0.25 mmol/L per 20 mmol, [TXT] grade C) | — | **known miss** recorded with both numbers; 7c's `K_TAU_MIN` / `K_TBK_MMOL` own it |
+| **A5** the size (≈ 0.25 mmol/L per 20 mmol: Kruse 1990, PMID 2310280, hypokalaemic ICU patients — not in the textbook chapters first cited) | — | **known miss** recorded with both numbers; 7c's `K_TAU_MIN` / `K_TBK_MMOL` own it |
 | **A5** a bolus order / an infusion at 40 mmol/h / route `im` | refused (unknown drug) | **warned with the source** (dose still given, FU-8 B1's rule) / **warned** / **refused** |
 | **A5** every other drug and 7c's pool (`test/l2` + `test/l3`, 1 161 cases) | 1 160 passed, 1 skipped | **1 160 passed, 1 skipped** |
 | **B4** drained tamponade + CPR q 0.8/110, no fluid, no drug: mean CoPP / longest hold / ROSC | **14.4 / 0 s / never** | **18.1 / 59 s / +200 s**, pulse held ≥ 120 s |
@@ -379,7 +379,7 @@ keeps its row below.
 | Fentanyl's ventilatory potency (`ventRemiEq` 0.55) and the high-dose opioid apnoea | FU-7's Q21 / D15b + Q6 | the band that pins it is FU-6's; changing it re-opens that ruling |
 | Ephedrine's `sympDrive` onset | the calibration queue + Q7 (FU-7's Q24) | 7e's hormone integration, not a drug row |
 | The induction agents' absolute onsets | the calibration queue (Q3 DEFERRED) | the fix is either every row's `tpS`/`hypC50` or a shared arm–brain transit — a design decision, not a constant |
-| `K_TAU_MIN` 43 min and `K_TBK_MMOL` 300 (A5's size, Q11) | the calibration queue (R44) | `l2/blood/solutes.ts`; A5 measures +0.77 at 1 h and +0.13 at 3 h against the textbook ≈ 0.25 and records the miss |
+| `K_TAU_MIN` 43 min and `K_TBK_MMOL` 300 (A5's size, Q11) | the calibration queue (R44) | `l2/blood/solutes.ts`; A5 measures +0.77 at 1 h and +0.13 at 3 h against Kruse 1990's ≈ 0.25 (PMID 2310280) and records the miss |
 | The two [ENG] CPR-EtCO2 bounds B3 moved (Q9) and the 6 s of valid SpO2 at MAP 19 (Q10) | the owner, then FU-5's file / FU-12 | both recorded with their numbers in this plan's own tests; neither is widened here |
 | P2b (lactate vs base excess), P5d (noradrenaline flat) | the calibration queue / FU-10 Part B | not investigated by the probe or here |
 | P5c (truth SaO2 77 % during asystole) | FU-12 | the arrest's O2 transport |
@@ -412,7 +412,7 @@ Every question Q1–Q8 of 2026-10-07 is closed. The rulings are recorded in `../
 - **Q9 — two [ENG] CPR-EtCO2 bounds the washout moved, and both are inside the literature's own CPR band.**
   `arrest-etco2` asserts ≥ 17 mmHg at +2 min of CPR (measured **15.9**) and `fidelity-arrest`'s fidelity-3 asserts a
   window floor of 10 (measured **7** in the first 15 s of compressions, mean 15.3–15.6). research/26 T3 bands CPR
-  EtCO2 as 5–10 poor / 10–20 adequate / > 20 good (Garnett 1987 n = 35: 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6
+  EtCO2 as 5–10 poor / 10–20 adequate / > 20 good (Sanders 1989 n = 35 arrests: 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6
   with compressions in place; AHA 2020 "above 10"), so both measured values are defensible and both bounds are
   [ENG] fits made when the fall was a 70 s lag. Both are recorded with their numbers. **Re-rule them on research/26
   T3, or keep them as records?**
@@ -425,7 +425,8 @@ Every question Q1–Q8 of 2026-10-07 is closed. The rulings are recorded in `../
   hidden. **Lower the LOW PERF threshold's neighbourhood (FU-5's file, a band change), accept the 6 s, or make the
   pleth's amplitude follow the stroke volume more steeply (a mechanism change, FU-12)?**
 - **Q11 — A5's size.** 20 mmol over 1 h raises plasma K by **+0.77** at the end of the infusion and **+0.13** three
-  hours later, against the textbook's ≈ 0.25 [TXT, grade C]. The direction, the dose-proportionality and the shape are
+  hours later, against Kruse 1990's ≈ 0.25 (PMID 2310280, hypokalaemic ICU patients; first cited to textbook chapters that do
+  not carry it). The direction, the dose-proportionality and the shape are
   right; the size is wrong in both directions, and both responsible constants are 7c's (`K_TAU_MIN` 43 min [ENG];
   `K_TBK_MMOL` 300 [TXT, Sterns 1981]). **Fit them in the calibration queue, or accept the recorded miss for v1.0?**
 
@@ -1308,8 +1309,11 @@ while everything needed to answer one exists: 7c carries an ECF potassium pool w
 `K_TAU_MIN` 43 min, tables `vK`), a set point that follows total-body K (`K_TBK_MMOL` 300, Sterns 1981), the renal
 loss, and the insulin/β2 shift that moves K INTO that pool's cells. KCl is the commonest thing a clinician hangs for
 the hypokalaemia this engine already simulates, and it is also the drug whose WRONG administration kills: it is
-infused, never pushed (peripheral line 10 mmol/h, central up to 20 mmol/h with monitoring — Miller 10e ch. 46;
-Stoelting Co-Existing 8e ch. 23).
+infused, never pushed (peripheral line 10 mmol/h, central up to 20 mmol/h with monitoring — Miller 10e ch. 43
+p. 1355: "no faster than 0.5 mEq/kg/h", over 40 mEq/L via a central catheter; Stoelting Co-Existing 8e ch. 20 p. 404:
+non-emergent iv repletion "at a rate of less than 20 mEq/h", central catheter preferred, ECG monitoring when rapid; the
+10 mmol/h peripheral figure is in neither [chapter not verified]. Corrected 2026-10-11, fix-citations: first cited as
+Miller 10e ch. 46, which is coagulation, and Co-Existing 8e ch. 23, which is haematology).
 
 **Interfaces:** the row `potassiumChloride` (`cls` `electrolyte`, `amountUnit` `mmol`, `pk` `blood`, `shared` `blood`,
 `rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)'`, `maxRatePerH 20 mmol/h`); `DrugRow.maxRatePerH`;
@@ -1323,8 +1327,10 @@ an infusion-only entry and `rateUnits` answers `mmol/h` for a mmol-dosed drug. *
 // through 7c's own potassium pool (the pool insulin–dextrose shifts K into: ECF K + ICF K with τ K_TAU_MIN 43 min, the
 // Na/K-ATPase set point following total-body K, K_TBK_MMOL 300). What the engine OWES the clinician is the shape: the
 // plasma K rises while the infusion runs, in proportion to the rate, peaks at its end and then falls back toward a
-// small persistent rise as the load enters the cells. The textbook SIZE — 20 mmol raises serum K by ≈ 0.25 mmol/L in a
-// normal adult [TXT, grade C: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23] — is a known
+// small persistent rise as the load enters the cells. The SIZE — 20 mmol raises serum K by ≈ 0.25 mmol/L [Kruse JA,
+// Carlson RW, Arch Intern Med 1990;150:613, PMID 2310280: the mean rise per 20-mEq infusion in HYPOkalaemic ICU
+// patients (pre-infusion K 3.2; sampling time not stated). First cited to Miller 10e ch. 46 (coagulation) and Co-Existing
+// 8e ch. 23 (haematology); the electrolyte chapters, Miller 10e ch. 43 and Co-Existing 8e ch. 20, lack it] — is a known
 // miss here and is recorded with its measured numbers below: 7c's pool is the owner of both constants (l2/blood,
 // FU-12 / the calibration queue), and this plan does not re-fit them. SLOW (≈ 2 min wall: 3.2 sim-hours); the 20 mmol/h
 // arm is measured once and shared by both cases.
@@ -1364,10 +1370,12 @@ describe('FU-7.1 A5: potassium chloride', { timeout: 600_000 }, () => {
     expect(b.kEnd - b.k0).toBeLessThan(0.75 * (a.kEnd - a.k0));
   });
 
-  // R45 (FU-7.1 A5): the textbook SIZE is missed in both directions — the end-of-infusion rise overshoots it and the
+  // R45 (FU-7.1 A5): the SIZE (Kruse 1990) is missed in both directions — the end-of-infusion rise overshoots it and the
   // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min [ENG, tables `vK`]; `K_TBK_MMOL` 300
   // [TXT, Sterns 1981]) and live in l2/blood, which this plan does not touch. Recorded with the numbers for the
   // calibration queue; the band is NOT widened.
+  // Title left for Stage 14 (fix-citations): its "Miller 10e ch. 46" is wrong (ch. 46 is coagulation); the ≈ 0.25 is
+  // Kruse 1990 (PMID 2310280), see the header. The band is unchanged.
   it.fails('20 mmol over 1 h raises plasma K by 0.15–0.35 mmol/L (≈ 0.25, Miller 10e ch. 46 [TXT, grade C]) — measured +0.77 at the end of the infusion and +0.13 two hours later', async () => {
     const a = await twenty();
     expect(a.kEnd - a.k0).toBeGreaterThanOrEqual(0.15);
@@ -1431,6 +1439,12 @@ Replace with:
   // (solutes.ts K_TAU_MIN 43 min) while the Na/K-ATPase set point follows total-body K (K_TBK_MMOL 300, Sterns 1981) —
   // the same pool and kinetics insulin–dextrose shifts K into. `rateActsVia` makes it the first INFUSED blood row
   // (10–20 mmol/h): KCl is never given as an iv push, and a bolus order is warned about with its source (below).
+  // Citation note (fix-citations 2026-10-11; the strings below are runtime text and are left for the owner): "Miller 10e
+  // ch. 46" is coagulation and "Co-Existing 8e ch. 23" is haematology. The electrolyte chapters say: Miller 10e ch. 43
+  // p. 1355, K+ "no faster than 0.5 mEq/kg/h", solutions over 40 mEq/L via a central venous catheter; Co-Existing 8e
+  // ch. 20 p. 404, non-emergent iv repletion "at a rate of less than 20 mEq/h", a central catheter preferred, ECG
+  // monitoring for rapid repletion. The "peripheral line 10 mmol/h" is in neither [chapter not verified]. The onset's
+  // ≈ 0.25 per 20 mmol is Kruse 1990 (PMID 2310280) in hypokalaemic ICU patients, not a normal adult.
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h, central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23]' },
@@ -2948,7 +2962,7 @@ Replace with:
 // FU-4 G4 (b), Task 17 (orchestrator update 2026-09-28): the arrest EtCO2 falls over 1–2 min, not within seconds.
 // FU-7.1 B3 (OWNER RULING 2026-10-07, research/26 T3): SUPERSEDED for the NO-FLOW value. Falk JL et al., N Engl J Med
 // 1988;318:607 measured the transition in 13 human arrests, ventilated and monitored throughout: EtCO2 fell to
-// 0.4 ± 0.4 % — ≈ 3 ± 3 mmHg — within ONE minute. FU-4 G4's "10–20 mmHg at 60 s" is a CPR value (Garnett 1987's
+// 0.4 ± 0.4 % — ≈ 3 ± 3 mmHg — within ONE minute. FU-4 G4's "10–20 mmHg at 60 s" is a CPR value (Sanders 1989's
 // resuscitated patients read 15 ± 4 DURING compressions), not a no-flow value, and the owner ruled research 03 §4.4
 // ("< 5 mmHg within 30 s") governs. The no-CPR case below is re-targeted on Falk; the CPR cases keep R39-2's bands.
 // Rig: adult 40 y 70 kg MODELED, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit's rig), seed 7, commanded coarse VF at
@@ -3022,7 +3036,7 @@ Replace with:
   // pulmonary flow (A22), 18.0 at +2 min
   // R45 (FU-7.1 B3): flipped by the washout — the fall into the arrest now starts the CPR phase from a lower EtCO2, so
   // the +2 min point reads 15.9 (18.0 before). It is INSIDE research/26 T3's sourced band for adequate CPR (10–20 mmHg:
-  // Garnett 1987 n = 35, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
+  // Sanders 1989 n = 35 arrests, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
   // candidate for a re-rule — recorded here with the number, not widened (FU-7.1 Q9 to the owner).
   it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after) — measured 15.9 with the FU-7.1 B3 washout', async () => {
     const c = await course(90, 210);
@@ -3522,7 +3536,8 @@ recorded as a known miss with its measured number (six records: RS14, `arrest-et
 `fidelity-arrest` ×3 skins, `fidelity-lowflow`'s Ali case, A2's Billard ratio, A5's textbook K rise). Every new
 constant carries its tag and citation: A2's two [ENG] sizes with Billard 1994 as the [P] fit target; A4's
 `DIAPH_EFFECTIVE`, `VT_EFFORT_ML_KG` and `VT_REST_ML_KG` [ENG] with Moerer 2005 and the label's clinical duration as
-the fit targets; A5's `maxRatePerH` [TXT] with Miller 10e ch. 46. B1, B4, B7 and B8 add no constant. No constant of
+the fit targets; A5's `maxRatePerH` [TXT] with Miller 10e ch. 43 and Co-Existing 8e ch. 20 (the row's string still reads ch. 46; see
+fix-citations). B1, B4, B7 and B8 add no constant. No constant of
 `l2/circ`, `l2/blood` or `l2/neuro` is RE-FITTED (the narrowed constraint). The glossary is untouched (no new truth
 leaf: B1 writes into an existing factor, B5 changes a field's meaning, A4 adds a cap on an existing volume, A5 adds a
 library row and B8 a flag on existing numerics). Commits carry

@@ -1,5 +1,11 @@
 // FU-8 Task A24 (research/20 DV-02a; gap V8): cerebral blood flow under CPR. MODELED, seed 7, ventilated (ETT + VCV
-// 12 × 600, PEEP 5, FiO2 0.5). Before FU-8 (origin/main 3feee6f): 0.71 of normal under good CPR (consensus 30–40 %).
+// 12 × 600, PEEP 5, FiO2 0.5). Before FU-8 (origin/main 3feee6f): 0.71 of normal under good CPR (30–40 % at best).
+// Source of the 30–40 % (fix-citations): Kern KB, Niemann JT, Steen S, "Coronary perfusion pressure during CPR", in
+// Cardiac Arrest: The Science and Practice of Resuscitation Medicine, 2nd ed., Cambridge UP 2007, pp. 369–388,
+// doi:10.1017/CBO9780511544828.020: standard compressions "can, at best, provide 30% to 40% of normal cerebral blood
+// flow" (a review chapter, not a measurement; primary canine microsphere data e.g. Michael 1984, PMID 6697465:
+// 41 ± 15 % of control WITH adrenaline, < 3 % without). Meaney 2013 (PMID 23801105) repeats the range in its text,
+// not its abstract; it is not the source.
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 
@@ -52,6 +58,8 @@ describe('FU-8 A24: cerebral blood flow under CPR (research/20 DV-02a, gap V8)',
     console.log(`fu8 A24: VF CPR CBF ${v.cbf.toFixed(3)}`);
     expect(v.cbf).toBeLessThan(0.5);
   }, 120_000);
+  // Title left for Stage 14 (fix-citations): its "Meaney 2013 consensus [VERIFY]" is resolved — the 30–40 % is Kern,
+  // Niemann & Steen 2007's best case (see the header), which Meaney 2013 only repeats. The band is unchanged.
   it.fails('VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 DV-02a band 0.2–0.45) — measured 0.45 after FU-8 (a model limitation for the calibration pass)', async () => {
     const v = await vfCpr();
     expect(v.cbf).toBeGreaterThanOrEqual(0.3);

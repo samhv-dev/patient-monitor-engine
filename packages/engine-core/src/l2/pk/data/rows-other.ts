@@ -27,6 +27,12 @@ export const OTHER_ROWS: DrugRow[] = [
   // (solutes.ts K_TAU_MIN 43 min) while the Na/K-ATPase set point follows total-body K (K_TBK_MMOL 300, Sterns 1981) —
   // the same pool and kinetics insulin–dextrose shifts K into. `rateActsVia` makes it the first INFUSED blood row
   // (10–20 mmol/h): KCl is never given as an iv push, and a bolus order is warned about with its source (below).
+  // Citation note (fix-citations 2026-10-11; the strings below are runtime text and are left for the owner): "Miller 10e
+  // ch. 46" is coagulation and "Co-Existing 8e ch. 23" is haematology. The electrolyte chapters say: Miller 10e ch. 43
+  // p. 1355, K+ "no faster than 0.5 mEq/kg/h", solutions over 40 mEq/L via a central venous catheter; Co-Existing 8e
+  // ch. 20 p. 404, non-emergent iv repletion "at a rate of less than 20 mEq/h", a central catheter preferred, ECG
+  // monitoring for rapid repletion. The "peripheral line 10 mmol/h" is in neither [chapter not verified]. The onset's
+  // ≈ 0.25 per 20 mmol is Kruse 1990 (PMID 2310280) in hypokalaemic ICU patients, not a normal adult.
   { id: 'potassiumChloride', name: 'Potassium chloride', cls: 'electrolyte', amountUnit: 'mmol', pk: blood, shared: 'blood', pd: [],
     rateActsVia: '7c potassium pool (ECF K + Cl, solutes.ts)',
     maxRatePerH: { amount: 20, src: 'peripheral line 10 mmol/h, central up to 20 mmol/h with ECG monitoring [TXT: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23]' },
