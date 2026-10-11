@@ -1,0 +1,280 @@
+{
+  "schema": "pme-scenario/1",
+  "id": "showcase-induction-premed",
+  "title": "Induction after fentanyl and midazolam",
+  "category": "Showcase",
+  "durationMin": 10,
+  "story": "The same fit 40-year-old man as the healthy induction, preoxygenated in the same way (the oxygen stays on until you press “Induce now” at 3:00), given fentanyl 2 µg/kg and midazolam 0.03 mg/kg at 0:10, about three minutes before the same propofol and rocuronium. Breathing slows before induction, the apnoea comes earlier and the pressure falls further: in the healthy induction the mean pressure fell from 95 to 65 mmHg with the heart rate 70–79; here it falls from 90 to 52 with the heart rate 55–62.",
+  "objectives": [
+    "Acknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 s",
+    "Intubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)",
+    "Give a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHg",
+    "Mean arterial pressure back above 65 mmHg within 120 s of the vasopressor"
+  ],
+  "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
+  "seed": 7,
+  "mode": "modeled",
+  "patient": {
+    "ageY": 40,
+    "sex": "M",
+    "weightKg": 75,
+    "heightCm": 178,
+    "ageBand": "adult",
+    "sensors": {
+      "ecg": "on",
+      "spo2": "on",
+      "nibp": "on",
+      "abp": "connected",
+      "co2": "on",
+      "temp": "on"
+    }
+  },
+  "initialState": "awake",
+  "states": [
+    {
+      "id": "awake",
+      "label": "Awake, preoxygenating: FiO₂ 1.0 by face mask until induction",
+      "onEnter": [
+        {
+          "$comment": "Held until “Induce now” (R50, Q5 ruling): 3600 s is the event’s maximum; the induced state ends it.",
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 3600
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "premed",
+          "label": "Premedicate: fentanyl 2 µg/kg, midazolam 0.03 mg/kg",
+          "to": "premedicated",
+          "when": {
+            "any": [
+              {
+                "manual": {
+                  "label": "Premedicate: fentanyl 2 µg/kg, midazolam 0.03 mg/kg"
+                }
+              },
+              {
+                "afterS": 10
+              }
+            ]
+          }
+        }
+      ],
+      "notes": "The oxygen stays on until “Induce now”; the premedication is given by itself at 0:10."
+    },
+    {
+      "id": "premedicated",
+      "label": "Fentanyl 2 µg/kg and midazolam 0.03 mg/kg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "fentanyl",
+            "dose": 2,
+            "unit": "mcg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "midazolam",
+            "dose": 0.03,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "induce",
+          "label": "Induce now",
+          "to": "induced",
+          "when": {
+            "manual": {
+              "label": "Induce now"
+            }
+          }
+        }
+      ],
+      "notes": "Induce at 3:00 (“Induce now”), as in the healthy induction; the oxygen stays on until then."
+    },
+    {
+      "id": "induced",
+      "label": "Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured",
+      "onEnter": [
+        {
+          "$comment": "Ends the hold: the face mask stays on 45 s, until the breathing has stopped, then comes off (room air; no apnoeic oxygenation through an unsupported airway).",
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 45
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "propofol",
+            "dose": 2,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "rocuronium",
+            "dose": 0.6,
+            "unit": "mg/kg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "intubate",
+          "label": "Intubate and ventilate",
+          "to": "ventilated",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "ventilated",
+      "label": "Intubated and ventilated",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 0.5
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "phenyl",
+          "label": "Phenylephrine 100 µg",
+          "to": "phenylephrine",
+          "when": {
+            "manual": {
+              "label": "Phenylephrine 100 µg"
+            }
+          }
+        },
+        {
+          "id": "ephedrine",
+          "label": "Ephedrine 10 mg",
+          "to": "ephedrine",
+          "when": {
+            "manual": {
+              "label": "Ephedrine 10 mg"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "phenylephrine",
+      "label": "Phenylephrine 100 µg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "phenylephrine",
+            "dose": 100,
+            "unit": "mcg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back",
+          "label": "Back to the case",
+          "to": "maintained",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "ephedrine",
+      "label": "Ephedrine 10 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "ephedrine",
+            "dose": 10,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "back-ephedrine",
+          "label": "Back to the case",
+          "to": "maintained",
+          "when": {
+            "afterS": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "maintained",
+      "label": "Ventilated: vasopressor given",
+      "transitions": [
+        {
+          "id": "phenyl-maintained",
+          "label": "Phenylephrine 100 µg",
+          "to": "phenylephrine",
+          "when": {
+            "manual": {
+              "label": "Phenylephrine 100 µg"
+            }
+          }
+        },
+        {
+          "id": "ephedrine-maintained",
+          "label": "Ephedrine 10 mg",
+          "to": "ephedrine",
+          "when": {
+            "manual": {
+              "label": "Ephedrine 10 mg"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
