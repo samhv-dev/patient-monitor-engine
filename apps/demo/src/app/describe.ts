@@ -49,6 +49,8 @@ function event(e: Any): string {
       return e.rateMlPerMin !== undefined ? `Bleeding ${e.rateMlPerMin} mL/min` : `Blood loss ${e.volumeMl} mL${over(e.overS)}`;
     case 'airway':
       return `Airway ${AIRWAY[String(e.state)] ?? 'changed'}`;
+    case 'airwayDevice': // Stage 13: the debrief's timeline printed "Clinical event" for it
+      return e.device === 'ett' ? 'Tracheal tube in place' : e.device === 'sga' ? 'Supraglottic airway in place' : 'Airway device removed';
     case 'ventilation':
       return e.source === 'ventilator' || e.source === 'bvm'
         ? `${e.source === 'bvm' ? 'Bag-mask' : 'Ventilator'}: RR ${e.rr} /min, VT ${e.vtMl} mL, PEEP ${e.peep} cmH₂O, FiO₂ ${Math.round(num(e.fio2) * 100)} %`
