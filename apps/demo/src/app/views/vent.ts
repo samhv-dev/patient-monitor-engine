@@ -2,6 +2,7 @@
 // BroadcastChannel port. The cockpit keeps its own device look inside its frame (research/13 P13). It loads on first
 // visit; the link re-attaches when the patient restarts (a new engine).
 import { attachMonitorToLink, createBroadcastPort } from '@pme/ventilator';
+import { parseRoute } from '../router.ts';
 import type { AppSession } from '../session.ts';
 import { h } from '../ui.ts';
 import type { View } from '../shell.ts';
@@ -10,11 +11,9 @@ export function ventView(session: AppSession): View {
   const frame = h('iframe', { class: 'iframe vent', title: 'Ventilator' });
   const el = h('section', { 'aria-label': 'Ventilator' }, frame);
   let started = false;
-  let shown = false; // FU-11 (R50 F10)
   const view: View = {
     id: 'vent', el,
     enter: () => {
-      shown = true;
       if (started) return;
       started = true;
       const link = `v${session.code.toLowerCase()}`;
@@ -34,7 +33,10 @@ export function ventView(session: AppSession): View {
         frame.onload = null;
         frame.src = 'about:blank';
         started = false;
-        if (shown) queueMicrotask(() => view.enter?.('')); // after the mount loop (a new subscription would be visited by it)
+        // On screen = the route the URL names NOW, not the last hashchange handled: a restart in the same task as a route
+        // change (or ahead of its queued hashchange, as Linux WebKit runs a Playwright call) saw a stale flag and reloaded
+        // the cockpit off screen.
+        if (parseRoute(location.hash).id === 'vent') queueMicrotask(() => view.enter?.('')); // after the mount loop (a new subscription would be visited by it)
       });
       let detach: () => void = () => {};
       const offAttach = session.onMount((m) => {
@@ -51,9 +53,6 @@ export function ventView(session: AppSession): View {
       // ×4 it ventilated at a quarter of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal
       const offScale = session.onTimeScale((k) => port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
       frame.src = `./vent-hamilton.html?link=${link}&profile=normal`;
-    },
-    leave: () => {
-      shown = false;
     },
   };
   return view;
