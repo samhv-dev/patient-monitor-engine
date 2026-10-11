@@ -56,7 +56,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(has(/^\d\d:\d\d Scenario Epinephrine 100 µg IV$/)).toHaveLength(1);
   expect(has(/^\d\d:\d\d Scenario Scenario state: Epinephrine given$/)).toHaveLength(1);
   expect(has(/ — undone by return 1$/).length).toBeGreaterThanOrEqual(2);
-  expect(has(/^00:00 Patient Ventilated breaths began$/)).toHaveLength(1); // the restored engine's breath under way is no second start
+  expect(has(/^00:0[01] Patient Ventilated breaths began$/)).toHaveLength(1); // the restored engine's breath under way is no second start (the first breath may begin just before the 00:01 bookmark)
   const strike = await view.locator('#db-timeline tbody tr.undone td').first().evaluate((td) => getComputedStyle(td).textDecorationLine);
   expect(strike).toBe('line-through'); // Q6: the undone course struck through, its words kept
 

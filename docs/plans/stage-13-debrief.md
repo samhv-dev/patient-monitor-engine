@@ -2595,6 +2595,13 @@ git push
   its blocks (the prototype typechecked after every task).
 - **Review Focus.** Each line names the test that pins it.
 
+## Deviations (execution, 2026-10-11)
+
+- **DV-1 (test only).** `apps/demo/e2e/stage13-debrief.e2e.ts`: the "Ventilated breaths began" row is matched at
+  `00:0[01]`, not `00:00`. Under load the first mechanical breath may begin just before the 00:01 bookmark, so its one
+  kept row reads 00:01 (4 failures in ≈ 16 runs during the dry-run gate, rows dumped: one "began" row, not undone).
+  Exactly one row is still asserted. Orchestrator approval, 2026-10-11.
+
 ## Appendix B — Task 3 when Stage 11 merged without rules
 
 Use this instead of Task 3 when Stage 11's showcase cards are on `origin/main` and their objectives are strings
