@@ -78,4 +78,26 @@ build job; Chromium (2 workers) ≈ 23 min, then WebKit (1 worker) ≈ 12.5–17
 
 ## Local verification
 
+macOS, Playwright 1.63.0, the six changed files on both browsers, `--repeat-each=3 --retries=0`: **78 passed** (8.1 min),
+no retry. `return-here` (local): the restored panel clock was seen 29–68 ms after the recorder started, at 1.54–1.98 s
+for tMark 1.11 (bound < 6.11). `stage6a-worker (auto)`: `c === a` on every repeat, `d − c` = 3–5 ticks.
+
 ## CI runs
+
+PR #55, run **38182120111** (head c8f7e917): **green on the first attempt, no rerun needed**. 12 jobs, all success.
+
+| Job | Wall (job) | Playwright | Result |
+|---|---|---|---|
+| renderer | 0.4 min | — | IIFE artefact 0.55 MB |
+| e2e (chromium) | 24.1 min | 23.6 min, 2 workers | 99 passed, 2 skipped, **0 passed only on retry** |
+| e2e (webkit) | 12.7 min | 11.8 min, 1 worker | 68 passed, 33 skipped, **0 passed only on retry** |
+| build (now without e2e) | 16.2 min | — | success |
+| test-slow ×8 | 7.3–38.5 min | — | unchanged, success |
+
+Run wall time 38.5 min (bound by `test-slow (slow-d)`), against 58–68 min for the build job alone before (its e2e step
+34.9–39.6 min, started 17–30 min into the job). CI `return-here` line on WebKit: `{"tMark":1.02,"before":[836,39.02],
+"restored":[836,2.396],"updates":43}` — the restore reached the panel 836 ms after the recorder started, already back at
+2.40 s: a correct restore which, at ×4, a 5 s outside poll could see only within its first ≈ 1.2 s window. This is the
+mechanism behind the old reads (class a), and nothing FX-1-like. Chromium: 68 ms, 1.20 s. `stage6a-worker (auto)` on CI
+WebKit: `a 47, b 113, c 47, d 66` (c === a; 19 ticks drawn after the resume before the next snapshot — the frames the
+old `c < a + 10` counted).
