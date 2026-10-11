@@ -1148,7 +1148,7 @@ git push
   `qrTarget(code, loc, relay, info): { ok: true; url; origin; others: string[] } | { ok: false; why }`;
   `relayInfo(relay, ms?, fetchFn?): Promise<RelayInfo | null>`; types `PageLocation`, `RelayInfo`, `QrTarget`; `LOOPBACK`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `apps/demo/src/app/classroom.test.ts`:
 
@@ -1218,9 +1218,9 @@ describe('Stage 12: where the QR code sends phones', () => {
 });
 ```
 
-- [ ] **Step 2: Run it red** — `cd apps/demo && npx vitest run src/app/classroom.test.ts` → `Error: Cannot find module './classroom.ts'` (no tests run).
+- [x] **Step 2: Run it red** — `cd apps/demo && npx vitest run src/app/classroom.test.ts` → `Error: Cannot find module './classroom.ts'` (no tests run).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `LICENSES/qrcodegen-MIT.txt`:
 
@@ -1365,10 +1365,10 @@ Replace with:
 // text is LICENSES/qrcodegen-MIT.txt. Mask choice uses penalty rules 1, 2 and 4 (rule 3 is optional for a valid symbol).
 ```
 
-- [ ] **Step 4: Run green** — the same command (8 tests), `node --experimental-strip-types scripts/check-notices.ts .`
+- [x] **Step 4: Run green** — the same command (8 tests), `node --experimental-strip-types scripts/check-notices.ts .`
   (OK) and `npx -y pnpm@9.15.9 --filter @pme/demo typecheck`.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add apps/demo/src/app/classroom.ts apps/demo/src/app/classroom.test.ts apps/demo/src/app/qr.ts NOTICES.md LICENSES/qrcodegen-MIT.txt

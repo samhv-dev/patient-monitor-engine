@@ -1,7 +1,9 @@
-// A small QR Code encoder for the Remote pairing link (research/13 §4.4: "pairing by code and QR"; no dependency).
-// Byte mode, error-correction level M, versions 1–10 (up to 213 bytes: a pairing URL is ≈ 60). Structure follows
-// ISO/IEC 18004 as laid out in Project Nayuki's public description of the algorithm; the code is written here, not
-// copied. Mask choice uses penalty rules 1, 2 and 4 (rule 3 is optional for a valid symbol).
+// A small QR Code encoder for the Remote pairing link (research/13 §4.4: "pairing by code and QR"; no dependency) and,
+// since Stage 12, the learners' phones. Byte mode, error-correction level M, versions 1–10 (up to 213 bytes: a pairing
+// URL is ≈ 60). ADAPTED from Project Nayuki's QR Code generator library (TypeScript), Copyright (c) Project Nayuki, MIT
+// License, https://www.nayuki.io/page/qr-code-generator-library — the capacity formula, the Reed–Solomon arithmetic and
+// the codeword placement follow it closely (Stage 12 R50 I1); trimmed to the cases above. NOTICES N-014; the licence
+// text is LICENSES/qrcodegen-MIT.txt. Mask choice uses penalty rules 1, 2 and 4 (rule 3 is optional for a valid symbol).
 
 // Error-correction level M, index = version (0 unused).
 const ECC_PER_BLOCK = [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26];
