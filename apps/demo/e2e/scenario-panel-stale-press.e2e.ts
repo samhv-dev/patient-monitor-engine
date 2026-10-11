@@ -11,7 +11,7 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; log: Array<{ kind: string; refused?: string }>; ctl: { scenario: { stateId: string | null } } } }; __stale: Record<string, HTMLButtonElement> };
+type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>; log: Array<{ kind: string; refused?: string }>; ctl: { scenario: { stateId: string | null } } } }; __stale: { crisis: HTMLButtonElement; surgery: HTMLButtonElement } };
 const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
 const SURGERY = 'Start surgery: rocuronium 0.6 mg/kg';
 
