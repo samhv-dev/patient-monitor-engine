@@ -2659,7 +2659,7 @@ target's `fastForwardStep` (the cockpit's `runTo` before each step when it was v
 `FF_DONE_SHOW_MS = 8000` in `fast-forward.ts`. Consumes T2's `MonitorHandle.advance` / `latchAlarms`, T3's host and
 controller fields, T4's `runTo`, FU-11 F3 (session bar), G2 (the follower), H1/H6 (the Ventilator view).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 Create `apps/demo/e2e/s10-time-control.e2e.ts`:
 
@@ -2946,7 +2946,7 @@ describe('Stage 10: the fast-forward in the clinical log', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/s10-fast-forward.test.ts src/app/s10-fast-forward.dom.test.ts`
 Expected: 3 failed — `expected [] to deeply equal [ [ 60, …(1) ], [ 360, …(1) ] ]` (no log lines), `expected [] to
@@ -2958,7 +2958,7 @@ Expected: 1 failed — `locator.click: Test timeout … waiting for locator('.se
 'Fast-forward' }).getByRole('button', { name: 'Fast-forward 5 min' })` (the ×8 and beat-tone steps before it already
 pass: Tasks 1–2); 1 skipped.
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/app.css`, find:
 
@@ -3474,7 +3474,7 @@ Replace with:
         session.ventLink = link; // Stage 10 (owner's decision 6): a fast-forward steps this cockpit with the engine
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run` — Expected: all passed.
 Run: `npx playwright test s10-time-control --retries=0` — Expected: 2 passed (Chromium, WebKit) and 2 skipped (the
@@ -3485,7 +3485,7 @@ Run: `npx playwright test fu11- showcase-clock stage9-app stage9-a11y vent-link 
 no-horizontal-scroll and target-size checks green; the Ventilator view's FU-11 checks are unchanged).
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/src/app/session.ts apps/demo/src/app/sessionbar.ts apps/demo/src/app/link.ts apps/demo/src/app/describe.ts \

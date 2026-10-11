@@ -11,6 +11,7 @@ import {
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
+import { FF_WALL_MS } from './fast-forward.ts';
 import { ageBandOf, profileOf, type PatientSpec } from './patients.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
@@ -39,6 +40,8 @@ export const PERF8 = {
 } as const;
 /** How far the sim clock estimate may run past the last engine event before it waits for the next one [ENG]. */
 const EST_CAP_S = 1.5;
+/** Stage 10: the Ventilator view ventilates the patient while its last frame is this recent (it sends 50 a second) [ENG]. */
+const VENT_DRIVING_MS = 2000;
 
 export class AppSession {
   readonly code: string;
@@ -57,6 +60,14 @@ export class AppSession {
   theme: string;
   timeScale = 1;
   paused = false;
+  /** Stage 10: a fast-forward holds the monitor's clock (the sim clock estimate stands still between its steps). */
+  fastForwarding = false;
+  /** Stage 10: the Ventilator view's link (it sets it): a fast-forward steps the cockpit with the engine through it. */
+  ventLink: { runTo(engTick: number): Promise<void> } | null = null;
+  private ventFrameAt = -Infinity; // Stage 10: wall ms of the Ventilator view's last frame
+  private ffWaiters: Array<() => void> = []; // Stage 10: a cockpit opened during a fast-forward waits for its end
+  private ffTick: number | null = null; // Stage 10: the monitor's tick during a fast-forward (from its own steps)
+  private ffCockpit = false; // Stage 10: the cockpit was ventilating when the fast-forward began: it steps with it
   /** Learner controls under the learner monitor (orchestrator ruling 4): off by default, on per scenario. */
   learner = false;
   private readonly learnerFns = new Set<(on: boolean) => void>();
@@ -108,10 +119,34 @@ export class AppSession {
         if (action === 'resume') this.setPaused(false);
         if (action === 'scale' && value !== undefined) this.setTimeScale(value);
       },
+      // Stage 10: one fast-forward step on the monitor; the clock estimate is exact at every step (the runner reads it).
+      // A cockpit ventilating the patient produces the step's frames first (owner's decision 6: the Ventilator view
+      // supports the fast-forward), so the engine never runs a tick without its frame.
+      fastForwardStep: async (ticks, last) => {
+        this.fastForwarding = !last;
+        try {
+          if (this.ffTick === null) this.ffCockpit = this.ventLink !== null && performance.now() - this.ventFrameAt < VENT_DRIVING_MS;
+          if (ticks > 0 && this.ffCockpit && this.ffTick !== null) await this.ventLink?.runTo(this.ffTick + ticks);
+          const r = await this.need().advance(ticks, last);
+          this.ffTick = last ? null : r.tick;
+          this.lastT = r.simT;
+          this.lastWall = performance.now();
+          return r;
+        } catch (err) {
+          this.fastForwarding = false;
+          this.ffTick = null;
+          throw err;
+        } finally {
+          if (!this.fastForwarding) this.releaseFrames();
+        }
+      },
     };
     let hs: HostSession | null = null;
     this.driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e: ScenarioEvent) => hs?.publish(e) });
-    hs = new HostSession({ session: this.code, target: this.driver.host, scenario: this.driver.hook, welcomeEvents: () => this.driver.welcomeEvents() });
+    hs = new HostSession({
+      session: this.code, target: this.driver.host, scenario: this.driver.hook, welcomeEvents: () => this.driver.welcomeEvents(),
+      fastForwardWallMs: FF_WALL_MS, // Stage 10 (owner's decision 1): paced so the room sees the clock run
+    });
     this.host = hs;
     const hub = createInProcessHub();
     hs.addTransport(hub.connect());
@@ -122,7 +157,7 @@ export class AppSession {
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
-    this.pollTimer = setInterval(() => this.driver.poll(), 100);
+    this.pollTimer = setInterval(() => !this.fastForwarding && this.driver.poll(), 100); // Stage 10: a fast-forward polls per step
   }
 
   /** Every engine event (the worker's batches), for the shell: alarm mirror, session bar, Explore. */
@@ -149,7 +184,14 @@ export class AppSession {
    */
   linked(m: MonitorHandle): Pick<MonitorHandle, 'dispatch' | 'on' | 'pause' | 'resume' | 'setTimeScale'> {
     return {
-      dispatch: (c) => m.dispatch(c).then((r) => (this.host.mirror(c, r), r)),
+      dispatch: (c) => {
+        // Stage 10: a frame from the cockpit means it ventilates the patient (a fast-forward then steps it along); one
+        // from a cockpit opened during a fast-forward waits for its end — refused, the cockpit's first frames would never
+        // teach the link its clock and the cockpit would stall for good
+        this.ventFrameAt = performance.now();
+        const go = () => m.dispatch(c).then((r) => (this.host.mirror(c, r), r));
+        return this.fastForwarding && !this.ffCockpit ? new Promise<void>((res) => this.ffWaiters.push(res)).then(go) : go();
+      },
       on: (fn) => m.on(fn),
       // the cockpit's own time controls are SESSION commands (they acted on the monitor alone: the session bar, a Remote
       // and the next speed change disagreed with them)
@@ -166,9 +208,14 @@ export class AppSession {
     return () => void this.mountFns.delete(fn);
   }
 
+  /** Stage 10: the cockpit frames held during a fast-forward go to the monitor now (the link learns its clock from them). */
+  private releaseFrames(): void {
+    for (const res of this.ffWaiters.splice(0)) res();
+  }
+
   /** Sim time: the last engine event's time run forward on the wall clock at the current speed, capped [ENG]. */
   simNow(): number {
-    if (this.paused) return this.lastT;
+    if (this.paused || this.fastForwarding) return this.lastT; // Stage 10: exact between fast-forward steps
     const dt = ((performance.now() - this.lastWall) / 1000) * this.timeScale;
     return this.lastT + Math.min(Math.max(0, dt), EST_CAP_S * this.timeScale);
   }
@@ -239,6 +286,8 @@ export class AppSession {
   /** Load a scenario: its patient body restarts the engine, then the runner starts (never silently over a live run —
    *  the caller confirms first). */
   loadScenario(raw: unknown): { ok: true; doc: ScenarioDoc } | { ok: false; reason: string } {
+    // Stage 10: the host refuses the scenario command during a fast-forward — the new body would run without its scenario
+    if (this.fastForwarding) return { ok: false, reason: 'the simulation is fast-forwarding; try again when it ends' };
     const v = validateScenario(raw);
     if (!v.ok) return { ok: false, reason: v.errors.join('; ') };
     const eo = engineOptionsOf(v.doc, 7);
@@ -283,6 +332,9 @@ export class AppSession {
     this.lastT = 0;
     this.lastWall = performance.now();
     this.last = {};
+    this.fastForwarding = false; // Stage 10: a new monitor (the host stops a fast-forward on the old timeline)
+    this.ffTick = null;
+    this.releaseFrames();
     const look = this.perf8 ? { ...PERF8.view, lanes: [...PERF8.view.lanes], waves: [...PERF8.view.waves] } : { skin: this.skin, ...(this.theme ? { theme: this.theme } : {}) };
     const m = mountMonitor(this.el, { ...look, engine } as Parameters<typeof mountMonitor>[1]);
     this.monitor = m;
