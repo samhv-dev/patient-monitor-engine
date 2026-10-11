@@ -334,11 +334,11 @@ on the branch.
 
 **Files:** the plan file only (`docs/plans/stage-10-time-control.md`, committed on the branch so its ticks are tracked).
 
-- [ ] **Step 1 — FU-11 is on main.** From `projects/patient-monitor-engine/repo`: `git fetch -q origin`, then for each
+- [x] **Step 1 — FU-11 is on main.** From `projects/patient-monitor-engine/repo`: `git fetch -q origin`, then for each
   FU-11 branch `for b in a b c d; do git merge-base --is-ancestor origin/fu-11-$b origin/main && echo "fu-11-$b merged" || echo "fu-11-$b NOT merged"; done`
   (a branch deleted after its merge: `gh pr list --state merged --head fu-11-$b` lists its merged PR), and
   `git ls-tree origin/main docs/plans/fu-11-hardening.md` lists the plan. If any branch is not merged: STOP and report.
-- [ ] **Step 2 — worktree and install** (still from `repo`):
+- [x] **Step 2 — worktree and install** (still from `repo`):
 
 ```bash
 git worktree add -b stage-10-time-control ../scratch/wt-stage-10 origin/main
@@ -347,13 +347,13 @@ npx -y pnpm@9.15.9 install --frozen-lockfile
 cp ../../repo/docs/plans/stage-10-time-control.md docs/plans/
 ```
 
-- [ ] **Step 3 — block check on this main.**
+- [x] **Step 3 — block check on this main.**
 
 Run: `python3 ../plans-backup/stage-10-plan-tools/check.py docs/plans/stage-10-time-control.md . ../plans-backup/stage-10-plan-tools/chain.txt --base-dir .`
 Expected: `114 blocks + 10 creates, 37 files: 0 problems` (on the prototype base). A problem line names
 the block; apply the find/replace discipline in Global Constraints and list it in the gate note.
 
-- [ ] **Step 4 — commit the plan and push.**
+- [x] **Step 4 — commit the plan and push.**
 
 ```bash
 git add docs/plans/stage-10-time-control.md
@@ -373,7 +373,7 @@ git push -u origin stage-10-time-control
 outside it with `scale must be 0.25–8`; `SPEEDS: readonly string[]` exported from `apps/demo/src/app/sessionbar.ts`.
 Consumes FU-11 F3 (the session bar's host-speed draw).
 
-- [ ] **Step 1 — the failing tests.**
+- [x] **Step 1 — the failing tests.**
 
 In `apps/demo/e2e/stage4b-device.e2e.ts`, find:
 
@@ -534,7 +534,7 @@ Replace with:
     expect(() => e.setTimeScale(9)).toThrow(RangeError); // Stage 10: the clock accepts 0.25–8
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/clock test/engine/engine-commands.test.ts`
 Expected: 3 failed in `clock.test.ts` (`RangeError: timeScale must be in [0.25, 4], got 8`); `engine-commands` passes
@@ -544,7 +544,7 @@ Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/sess
 Expected: 2 failed — `expected 4 to be 8` (the host refused ×8) and `expected 0.997… to be greater than 7.2` (the
 viewer stayed at ×1 while the host refused).
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/sessionbar.ts`, find:
 
@@ -736,13 +736,13 @@ Replace with:
           setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // Stage 10: ×8
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run the two commands of Step 2 again — Expected: all passed. Then
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session` (all passed),
 `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run` (all passed) and `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/engine-core/src/clock/clock.ts packages/engine-core/src/engine.ts \

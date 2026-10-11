@@ -1,6 +1,6 @@
 // The host end of every transport (brief §3.7, R7): it owns the engine. Commands in → dispatch → ack; engine
 // events out, batched per frame; a `state` event at 1 Hz; a snapshot for anyone who says hello.
-import type { Command, DispatchResult, EngineEvent, PatientSnapshot, SimSeconds, StateVar, Tick } from '@pme/engine-core';
+import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds, type StateVar, type Tick } from '@pme/engine-core';
 import {
   createStamper,
   newPeerId,
@@ -25,7 +25,7 @@ export interface HostTarget {
   restore(s: PatientSnapshot): void | Promise<void>;
   on(fn: (e: EngineEvent) => void): () => void;
   now(): { tick: Tick; simT: SimSeconds };
-  /** Remote equivalents of the lifecycle calls (brief §7.2 `time`): pause, resume, scale (0.25–4). */
+  /** Remote equivalents of the lifecycle calls (brief §7.2 `time`): pause, resume, scale (0.25–8, the engine clock's range). */
   time(action: 'pause' | 'resume' | 'scale', value?: number): void;
 }
 
@@ -354,8 +354,8 @@ export class HostSession {
   private time(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
     const { tick } = this.o.target.now();
     if (cmd.action === 'step' || cmd.action === 'jump') return { result: { accepted: false, tick, reason: `time ${cmd.action} arrives in Stage 6b` }, applied: cmd };
-    if (cmd.action === 'scale' && !(typeof cmd.value === 'number' && cmd.value >= 0.25 && cmd.value <= 4)) {
-      return { result: { accepted: false, tick, reason: 'scale must be 0.25–4' }, applied: cmd };
+    if (cmd.action === 'scale' && !(typeof cmd.value === 'number' && cmd.value >= MIN_TIME_SCALE && cmd.value <= MAX_TIME_SCALE)) {
+      return { result: { accepted: false, tick, reason: `scale must be ${MIN_TIME_SCALE}–${MAX_TIME_SCALE}` }, applied: cmd }; // Stage 10: the clock's own range (×8)
     }
     this.o.target.time(cmd.action, cmd.value);
     this.sticky.set(cmd.action === 'scale' ? 'time.scale' : 'time.run', cmd);

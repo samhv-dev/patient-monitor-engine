@@ -167,7 +167,7 @@ test('device evidence: pacing with capture, charge-ready with sync markers, tren
   await page.locator('#monitor').screenshot({ path: resolve(out, 'zoll-like--defib-sync-ready.png') });
 
   await open(page, 'philips-like');
-  await page.evaluate(() => (window as unknown as { __pme4b: { pm: { setTimeScale(k: number): void } } }).__pme4b.pm.setTimeScale(4)); // max 4× (brief §3.3)
+  await page.evaluate(() => (window as unknown as { __pme4b: { pm: { setTimeScale(k: number): void } } }).__pme4b.pm.setTimeScale(4)); // ×4 (the clock accepts 0.25–8 since Stage 10)
   await page.waitForTimeout(10_000);
   await send(page, { type: 'setTarget', variable: 'hr', value: 130, ramp: { durationS: 30 } });
   await page.waitForTimeout(20_000);

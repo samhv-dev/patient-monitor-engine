@@ -4,7 +4,7 @@
 // On the same build this is sample-identical (the engine is deterministic, brief §3.3). If a mirrored command
 // arrives too late, a beat's time disagrees with the host's, the link reconnects or the host says hello again,
 // it resyncs by saying hello (→ fresh snapshot).
-import type { Command, DispatchResult, EngineEvent, PatientSnapshot, SimSeconds } from '@pme/engine-core';
+import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
   newPeerId,
@@ -114,7 +114,7 @@ export class ViewerSync {
     }
     if (err < -0.05) return t.setPaused(true); // ahead of the host: wait for it
     t.setPaused(false);
-    t.setRate(Math.min(4, Math.max(0.25, this.hostRate * (1 + Math.max(-0.1, Math.min(0.1, 0.5 * err))))));
+    t.setRate(Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, this.hostRate * (1 + Math.max(-0.1, Math.min(0.1, 0.5 * err)))))); // Stage 10: ×8
   }
 
   close(): void {

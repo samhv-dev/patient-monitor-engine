@@ -222,7 +222,7 @@ describe('engine commands', () => {
   it('start / pause / setTimeScale / step drive the internal wall-clock pump', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'performance'] });
     const e = createEngine();
-    expect(() => e.setTimeScale(8)).toThrow(RangeError);
+    expect(() => e.setTimeScale(9)).toThrow(RangeError); // Stage 10: the clock accepts 0.25–8
     e.start();
     vi.advanceTimersByTime(1000);
     expect(e.now().tick).toBeGreaterThanOrEqual(49);

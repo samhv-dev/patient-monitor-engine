@@ -5,7 +5,7 @@
 import {
   AlarmSounder, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
-import { EventLog, TrendStore, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
+import { EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
 import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI } from './device-ui.ts';
@@ -463,7 +463,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           on: (fn, types) => core.engine.on(fn, types),
           renderT: () => core.clock.renderT,
           tick: () => core.engine.now().tick,
-          setRate: (k) => void (core.clock.timeScale = Math.min(4, Math.max(0.25, k))),
+          setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // Stage 10: ×8
           setPaused: (p) => (p ? core.clock.pause() : core.clock.resume()),
           jumpTo: (simT) => {
             core.clock.setTick(Math.floor(simT * 50 + 1e-6));

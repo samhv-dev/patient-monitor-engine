@@ -10,13 +10,16 @@ import type { StateVar } from '@pme/engine-core';
 import { bookmark } from './commands.ts';
 import { button, clock, h, infoDialog, PIN_SVG, seg, setText, throttle, toast, WAVE_SVG } from './ui.ts';
 
+/** The speeds the bar offers (Stage 10: ×8 added for the 22 Oct demonstration; the host accepts 0.25–8). */
+export const SPEEDS: readonly string[] = ['1', '2', '4', '8'];
+
 export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const who = h('span', { class: 'who num' });
   const badge = h('button', { type: 'button', class: 'mode-badge', 'aria-haspopup': 'dialog' });
   const scen = h('span', { class: 'scen' });
   const t = h('span', { class: 'clock num', 'aria-label': 'Simulation time' });
-  const speed = seg<string>('Simulation speed', [['1', '×1'], ['2', '×2'], ['4', '×4']], '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
-  speed.classList.add('compact'); // ×4 is the host's limit (the 6a host refuses a scale above 4: 'scale must be 0.25–4')
+  const speed = seg<string>('Simulation speed', SPEEDS.map((k) => [k, `×${k}`] as [string, string]), '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
+  speed.classList.add('compact'); // Stage 10: ×8 is the host's limit (the engine clock's MAX_TIME_SCALE; it refuses more: 'scale must be 0.25–8')
   let paused = false;
   let asking = 0; // R50 M4: own pause/resume requests not yet answered — until then the button shows what was asked
   const pause = button('Pause', () => {
@@ -59,7 +62,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     setText(t, clock(link.simT));
     // FU-11 (K5): the speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)
     const k = String(link.ctl.timeScale);
-    if (speed.value !== k && ['1', '2', '4'].includes(k)) speed.set(k);
+    if (speed.value !== k && SPEEDS.includes(k)) speed.set(k);
     if (!asking && paused !== link.ctl.hostPaused) {
       paused = link.ctl.hostPaused;
       pause.textContent = paused ? 'Resume' : 'Pause';
