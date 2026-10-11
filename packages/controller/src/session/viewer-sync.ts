@@ -190,7 +190,7 @@ export class ViewerSync {
       this.fastForward = e.phase === 'start' ? { fromT: e.fromT, toT: e.toT } : null;
       if (e.phase === 'end') {
         this.lastFastForward = fastForwardDone(e);
-        this.requestSync(true);
+        this.requestSync(true); // Task 6: drops the pre-span anchor; the end snapshot (or the next state) re-anchors at now
       }
       return;
     }
@@ -213,7 +213,13 @@ export class ViewerSync {
     if (!c) return;
     if (c.type === 'time') {
       if (c.action === 'pause') this.hostPaused = true;
-      if (c.action === 'resume') this.hostPaused = false;
+      if (c.action === 'resume') {
+        this.hostPaused = false;
+        // Stage 10 Task 6: the host sent no state while paused (nor while it fast-forwarded), so the old anchor would
+        // project the whole pause forward (up to MAX_EXTRAPOLATE_S × rate) and the viewer leapt ahead, then froze.
+        // Re-anchor at the host's time of the resume, on the wall clock of now.
+        if (this.anchor && !res?.replay) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
+      }
       if (c.action === 'scale' && typeof c.value === 'number') this.hostRate = c.value;
       if (c.action === 'jump' && res?.replay && typeof c.value === 'number') {
         this.hostFastForward = true; // Stage 10: joined during a fast-forward (atTick = where it began)
