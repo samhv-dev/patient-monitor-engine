@@ -83,6 +83,7 @@ import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/b
 import { lastCycleBefore } from './l2/resp/driver.ts'; // Stage 5.1 (R-S3-3)
 import { advanceOrgans, applyOrgansCommand, createOrgansState, ICP_RATE, organChannelActive, rebaselineOrgans, validateOrgansCommand, type OrganChannel, type OrgansCtx, type OrgansState } from './l2/organs/pipeline.ts'; // Stage 7d
 import { pruneTruth } from './truth.ts'; // Stage 7x (R52)
+import { decodeState, encodeState } from './snapshot-codec.ts'; // FU-11 (F14, BA03)
 
 export const SAMPLES_PER_TICK = (ECG_RATE * TICK_MS) / 1000; // 10
 export const BUFFER_SECONDS = 120; // brief §3.5
@@ -247,7 +248,7 @@ class Engine implements MonitorEngine {
   private timer: ReturnType<typeof setInterval> | null = null;
   private lastWall = 0;
   private readonly sections = new Map<EcgFilterMode, Biquad[]>();
-  private readonly groupTicks = new Map<string, number>(); // Stage 2: stageGroup → tick (brief §4.9)
+  private groupTicks = new Map<string, number>(); // Stage 2: stageGroup → tick (brief §4.9); FU-11 (F03, BA02): in the snapshot
   private dev: DeviceState; // Stage 4b: alarms, defibrillator, pacer (brief §6.4–§6.5)
   private readonly devOpts: EngineOptions['device']; // Stage 4b: for restoring pre-4b snapshots
   private readonly truthEvery: number; // Stage 7x (R52): ticks between truth events, 0 = off
@@ -327,6 +328,14 @@ class Engine implements MonitorEngine {
   pause(): void {
     this.clock.pause();
   }
+  /**
+   * FU-11 (F26): end start()'s interval. Idempotent; start() may run the engine again afterwards (the state is kept).
+   * Engines a renderer drives (advanceTo per frame) never start a timer and need no stop.
+   */
+  stop(): void {
+    if (this.timer !== null) clearInterval(this.timer);
+    this.timer = null;
+  }
   resume(): void {
     this.clock.resume();
     this.lastWall = performance.now();
@@ -347,12 +356,21 @@ class Engine implements MonitorEngine {
   }
 
   // --- commands and events ---------------------------------------------------------------------
-  dispatch(cmd: Command): DispatchResult {
+  dispatch(input: Command): DispatchResult {
+    // FU-11 (F12): the queue keeps its OWN copy — a caller that edits its command object after dispatch (a staging
+    // buffer, a UI form) can no longer change what was validated and accepted. Not plain data → refused.
+    let cmd: Command;
+    try {
+      cmd = structuredClone(input);
+    } catch {
+      return { accepted: false, tick: this.tick, reason: 'a command must be plain data (no functions or class instances)' };
+    }
     const reason = this.validate(cmd);
     let tick = Math.max(cmd.atTick ?? this.tick + 1, this.tick + 1);
     if (reason) return { accepted: false, tick: this.tick, reason };
     if (cmd.stageGroup !== undefined) {
       // Stage 2: commands sharing a stageGroup apply on the same tick (brief §4.9 "stage then commit")
+      for (const [k, at] of this.groupTicks) if (at <= this.tick) this.groupTicks.delete(k); // FU-11 (F03): committed groups end
       const g = this.groupTicks.get(cmd.stageGroup);
       if (g !== undefined && g > this.tick) tick = g;
       else this.groupTicks.set(cmd.stageGroup, tick);
@@ -392,14 +410,15 @@ class Engine implements MonitorEngine {
       engineVersion: this.version,
       seed: this.seed,
       tick: this.tick,
-      state: structuredClone({ st: this.st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev }), // Stage 4b: dev
+      // Stage 4b: dev. FU-11: the pending stage groups (F03, BA02) and a JSON-safe encoding (F14, BA03: snapshot-codec.ts)
+      state: encodeState({ st: this.st, queue: this.queue, mainsHz: this.mainsHz, dev: this.dev, groups: [...this.groupTicks].filter(([, at]) => at > this.tick) }),
     };
   }
   restore(s: PatientSnapshot): void {
     if (s.schema !== 'pme-snapshot/1') throw new Error(`unknown snapshot schema ${String(s.schema)}`);
     // Exact replay is promised only on the same build and the same filter design (review L10).
     if (s.engineVersion !== this.version) throw new Error(`snapshot is from engine version ${s.engineVersion}, this is ${this.version}`);
-    const data = structuredClone(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState };
+    const data = decodeState(s.state) as { st: PipelineState; queue: Array<{ cmd: Command; tick: number }>; mainsHz?: number; dev?: DeviceState; groups?: Array<[string, number]> };
     data.st.pk ??= createPkState(pkPatientOf(undefined)); // Stage 7g: pre-7g snapshots
     data.st.pkHooks ??= createHookState(); // Stage 7g
     data.st.endo ??= createEndoState(undefined, 70); // Stage 7e: pre-7e snapshots
@@ -417,6 +436,7 @@ class Engine implements MonitorEngine {
     }
     this.st = data.st;
     this.queue = data.queue;
+    this.groupTicks = new Map(data.groups ?? []); // FU-11 (F03, BA02): the bookmark's pending groups, never the discarded future's
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand); // Stage 4b
     this.syncCo2Sampler(); // R39-5
     this.tick = s.tick;

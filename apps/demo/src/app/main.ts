@@ -3,7 +3,7 @@
 import './app.css';
 import { attachReveal, RevealGesture } from '@pme/controller';
 import { DRUG_IDS, LUNG_CONDITIONS, RHYTHM_IDS } from '@pme/engine-core';
-import { alarmLine } from './alarms.ts';
+import { alarmLine, limitsOffTitle, LIMITS_OFF_LABEL } from './alarms.ts';
 import { setDrugNames } from './glossary.ts';
 import { Link } from './link.ts';
 import { PATIENT_PRESETS } from './patients.ts';
@@ -12,7 +12,7 @@ import { SCENARIO_META } from './scenario-meta.ts';
 import { scenarioById, type ScenarioCard } from './scenarios.ts';
 import { AppSession } from './session.ts';
 import { mountSessionBar } from './sessionbar.ts';
-import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar } from './shell.ts';
+import { applySkinAlarmColours, LEVEL_MARK, LEVEL_NAME, Shell, skinAlarmBar, skinAlwaysOn } from './shell.ts';
 import { loadSite } from './site.ts';
 import { button, h, setText, throttle, toast } from './ui.ts';
 import { devView } from './views/dev.ts';
@@ -88,15 +88,24 @@ if (hostless) {
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
   const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
-  const sound = button('Sound off', () => void session.enableSound().then(() => ((sound.textContent = 'Sound on'), sound.setAttribute('aria-pressed', 'true'))), 'small sound');
+  // FU-11 (H4): a toggle — it turns sound off again (it only ever turned it on); this window's sound only (ruling Q3)
+  const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
+  const sound = button('Sound off', () => (session.soundOn ? (session.disableSound(), drawSound()) : void session.enableSound().then(drawSound)), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
   const code = h('a', { class: 'code-pill', href: hrefOf('remote'), 'aria-label': `Remote pairing code ${session.code.split('').join(' ')}` }, h('span', { class: 'muted' }, 'Remote '), session.code);
   shell.right.append(alarm, sound, code);
   const drawAlarm = throttle(() => {
     const s = link.alarmSummary;
     alarm.dataset.level = s.level ? LEVEL_NAME[s.level] : 'none';
-    setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? 'Alarms off' : 'No alarms');
+    // FU-11 (showcase kit K3, presenter note D4): with the factory "all alarm groups off" (saadat-like) asystole, VF, VT and
+    // apnoea still alarm — "Alarms off" read as if nothing would; the label says which alarms are off
+    setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms');
     if (s.top) alarm.title = `On the monitor: ${s.top.text}`; // the vendor's words, outside the glossary scan (review F4)
+    else if (link.alarms?.allOff) {
+      // owner ruling Q4 (R50 M5, R56): what still alarms comes from the skin's data, worded by the alarm table
+      const k = skinAlwaysOn(link.alarms.skin);
+      alarm.title = limitsOffTitle(k.alwaysOn, k.apnoeaOff);
+    }
     else alarm.removeAttribute('title');
     alarm.setAttribute('aria-label', s.level ? `${s.n} active alarm${s.n > 1 ? 's' : ''}, highest ${LEVEL_NAME[s.level]} priority: show alarms` : 'No active alarms: show alarms');
   }, 500);

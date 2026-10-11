@@ -3061,7 +3061,7 @@ UI items (D3, D5, K3, H4 Sound off, H5 the Ventilator view's volume, H6 the cock
 same file as A0's (identical content: the merge of the two branches is clean). This branch alone commits the plan
 (R50 M6).
 
-- [ ] **Step 1.** **Worktree and install.**
+- [x] **Step 1.** **Worktree and install.**
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
 git fetch origin
@@ -3072,12 +3072,12 @@ python3 ../plans-backup/fu-11-plan-tools/check-blocks.py --branch b docs/plans/f
 ```
 Expected: `branch b: 53 find/replace blocks (0 chained), 23 creates; problems: 0`.
 
-- [ ] **Step 2.** **Before-numbers** (`<scratchpad>/fu-11-b/before.txt`; R50 M3: record them, do not compare with this plan's): engine
+- [x] **Step 2.** **Before-numbers** (`<scratchpad>/fu-11-b/before.txt`; R50 M3: record them, do not compare with this plan's): engine
 fast set (`CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9 --filter @pme/engine-core test`), controller, renderer, ventilator,
 demo; and the FU-7 counters Gate B compares (R50 review §3): `npx -y pnpm@9.15.9 --filter @pme/validation validate
 --suites sanity,gates --quick --out <scratchpad>/fu-11-b/validate-before`.
 
-- [ ] **Step 3.** Create the fixture (below; identical to A0's), then commit:
+- [x] **Step 3.** Create the fixture (below; identical to A0's), then commit:
 ```bash
 git add apps/demo/e2e/audit-fixture.ts docs/plans/fu-11-hardening.md
 git commit -m "test(demo): the browser audit's Playwright fixture; the FU-11 plan (FU-11 D0)" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -3125,7 +3125,7 @@ see tagged objects only where a value is non-finite, −0 or undefined: the fast
 (packages/engine-core/src/snapshot-codec.ts); the snapshot `state` gains `groups: Array<[string, number]>`; schema
 string unchanged (`pme-snapshot/1`).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/engine-core/test/engine/fu11-snapshot-codec.test.ts`:
 
@@ -3245,7 +3245,7 @@ for(const kind of ['json-lvad','pending-group'])test(`snapshot fidelity: ${kind}
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu11-snapshot-codec.test.ts test/engine/fu11-snapshot-replay.test.ts`  
 Expected: the codec file fails to import; 5 failed in replay (JSON rigs: events differ at `lvad.pi` / truth `dropped`; groups: tick 350 vs 250, 100 vs 2)
@@ -3253,7 +3253,7 @@ Expected: the codec file fails to import; 5 failed in replay (JSON rigs: events 
 Run: `npx playwright test --retries=0 audit-snapshot`  
 Expected: 4 failed: `lvad.pi` 15.52 vs 12.12; ack tick 350 vs 250
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 Create `packages/engine-core/src/snapshot-codec.ts`:
 
@@ -3393,7 +3393,7 @@ Replace with:
     this.dev = data.dev ?? createDevice(this.devOpts?.skin, this.devOpts?.ageBand); // Stage 4b
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu11-snapshot-codec.test.ts test/engine/fu11-snapshot-replay.test.ts test/engine/resp-engine.test.ts test/engine/truth-event.test.ts test/engine/neuro-engine.test.ts`  
 Expected: all passed
@@ -3406,7 +3406,7 @@ Expected: all passed (prototype: 295 files / 1 283 passed with every FU-11 engin
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/audit-snapshot.e2e.ts \
@@ -3429,7 +3429,7 @@ clears it (idempotent; `start()` may run again; `pause()` keeps its resumable me
 
 **Interfaces:** Produces: `MonitorEngine.stop(): void`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/engine-core/test/engine/fu11-command-ownership.test.ts`:
 
@@ -3476,12 +3476,12 @@ describe('FU-11 D2: the engine owns what it queued; a started engine can be stop
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu11-command-ownership.test.ts`  
 Expected: 3 failed (hr.to 400; a function-carrying command accepted; e.stop is not a function)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/engine.ts`, find:
 
@@ -3541,14 +3541,14 @@ Replace with:
   resume(): void;
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/engine/fu11-command-ownership.test.ts test/engine/engine-commands.test.ts`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/engine-core/src/engine.ts \
@@ -3572,7 +3572,7 @@ forward "rewind" is a no-op.
 
 **Interfaces:** Produces: `TrendStore.rewind(t: number): void`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/engine-core/test/l3/trends/fu11-trend-rewind.test.ts`:
 
@@ -3609,12 +3609,12 @@ describe('FU-11 E2: TrendStore.rewind', () => {
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/trends/fu11-trend-rewind.test.ts`  
 Expected: 2 failed: s.rewind is not a function
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/engine-core/src/l3/trends/trend-store.ts`, find:
 
@@ -3643,14 +3643,14 @@ Replace with:
   /** Values of one numeric for seconds [fromS, toS] (NaN where missing or no longer held). */
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/engine-core exec vitest run test/l3/trends`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/engine-core/src/l3/trends/trend-store.ts \
@@ -3674,7 +3674,7 @@ snapshot's `st.resp.co2Sensor`. The event log is NOT rewound (a debrief record o
 
 **Interfaces:** Consumes E1. Produces: `MonitorCore.restore(s: PatientSnapshot): void`; `DeviceUI.reset(t: number): void`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/renderer/test/fu11-restore-lanes.test.ts`:
 
@@ -3730,7 +3730,7 @@ for(const mode of ['off','auto'])test(`rewind resets trend timeline and waveform
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/fu11-restore-lanes.test.ts`  
 Expected: 1 failed: c.restore is not a function
@@ -3738,7 +3738,7 @@ Expected: 1 failed: c.restore is not a function
 Run: `npx playwright test --retries=0 audit-rewind`  
 Expected: 4 failed: 'waveform must advance after rewind' and trend latest 5 > 2 (main and worker paths)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/renderer/src/mount.ts`, find:
 
@@ -3881,7 +3881,7 @@ Replace with:
   }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run`  
 Expected: all passed
@@ -3891,7 +3891,7 @@ Expected: 4 passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/audit-rewind.e2e.ts \
@@ -3926,7 +3926,7 @@ ran at ×4 against a ×1 host (measured: follower 2.3 s ahead after 8 s, tiles n
 **Interfaces:** Produces: `TimelineCause = 'restart' | 'restore'` (protocol.ts); `HostSession.newTimeline(cause: TimelineCause = 'restart')`.
 Consumers of the hotfix's `newTimeline()` keep working (default 'restart').
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/controller/test/session/fu11-timeline-restore.test.ts`:
 
@@ -4082,7 +4082,7 @@ test('viewer and controller adopt the restored timeline',async({page,audit})=>{
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run test/session/fu11-timeline-restore.test.ts`  
 Expected: 4 failed (controller 5 / viewer 4.9 after the restore; restore ends the scenario; the lead sticky survives a restart; a viewer of a ×4 host keeps rate 4 after a new host's hello)
@@ -4090,7 +4090,7 @@ Expected: 4 failed (controller 5 / viewer 4.9 after the restore; restore ends th
 Run: `npx playwright test --retries=0 audit-timeline`  
 Expected: 2 failed: viewer 4.9 < 2, controller 5 < 2
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/controller/src/session/host-session.ts`, find:
 
@@ -4251,7 +4251,7 @@ Replace with:
     if (e.type === 'state') {
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/controller exec vitest run`  
 Expected: all passed (timeline-reset.test.ts from the hotfix unchanged)
@@ -4261,7 +4261,7 @@ Expected: 2 passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/audit-timeline.e2e.ts \
@@ -4290,7 +4290,7 @@ from the restored tick. Event times alone cannot tell (a first attempt keyed on 
 
 **Interfaces:** Consumes D1 (the restore) and the engine's restore marker. E4 depends on this task (the button comes back only with it).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/ventilator/test/fu11-link-restore.test.ts`:
 
@@ -4386,7 +4386,7 @@ test('after "Return here" on the Ventilator view the replayed minute matches the
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/fu11-link-restore.test.ts`  
 Expected: fails: `expected 256 to be greater than 256` (no new clock message after the restore)
@@ -4394,7 +4394,7 @@ Expected: fails: `expected 256 to be greater than 256` (no new clock message aft
 Run: `npx playwright test --retries=0 fu11-vent-restore`  
 Expected: 2 failed: after the restore CO2 0 and SpO2 88 vs 94 (the cockpit no longer ventilates)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/ventilator/src/link/port.ts`, find:
 
@@ -4424,7 +4424,7 @@ Replace with:
     if (tk > engTick) {
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run`  
 Expected: all passed (ports.test included)
@@ -4434,7 +4434,7 @@ Expected: all passed (SpO2/CO2 within 3/4 of the first run, e.g. [93/32, 94/33] 
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-vent-restore.e2e.ts \
@@ -4455,7 +4455,7 @@ AppSession.onMount to tell it); a restore keeps the acute events (the engine doe
 
 **Interfaces:** Consumes D1, E1–E3 and E3b (the Ventilator view follows the restore: R50 F1). Not executed unless all of them are green.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/src/app/fu11-link-timeline.test.ts`:
 
@@ -4528,7 +4528,7 @@ test('Return here: the clock, the trends and the waveforms go back with the pati
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/fu11-link-timeline.test.ts`  
 Expected: 1 failed: ramps.size 1
@@ -4536,7 +4536,7 @@ Expected: 1 failed: ramps.size 1
 Run: `npx playwright test --retries=0 fu11-restore`  
 Expected: 2 failed: no "Return here" button (timeout)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/link.ts`, find:
 
@@ -4577,7 +4577,7 @@ Replace with:
     }, 'ghost small'))));
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run`  
 Expected: all passed
@@ -4587,7 +4587,7 @@ Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-restore.e2e.ts \
@@ -4607,7 +4607,7 @@ to the lane's top edge until the next re-scale a second later: a rectangle after
 (now) restore — reproduced on WebKit at 3 s after `?scenario=showcase-haemorrhage` (writer's screenshot), gone with
 the fix. The scale is re-taken every frame until the window holds a second of samples.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/renderer/test/fu11-pleth-scale.test.ts`:
 
@@ -4636,12 +4636,12 @@ describe('FU-11 E5: the pleth scale is re-taken until a second of signal is in i
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run test/fu11-pleth-scale.test.ts`  
 Expected: 1 failed: span 0.125 (expected > 0.5)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/renderer/src/monitor-core.ts`, find:
 
@@ -4666,14 +4666,14 @@ Replace with:
       if (n >= rate) this.autoRangeT[i] = t;
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/renderer exec vitest run`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add packages/renderer/src/monitor-core.ts \
@@ -4695,7 +4695,7 @@ notifies every change; the Ventilator view posts it to the cockpit.
 
 **Interfaces:** Produces: `AppSession.onTimeScale(fn: (k: number) => void): () => void`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-vent-speed.e2e.ts`:
 
@@ -4726,12 +4726,12 @@ test('the Ventilator view takes a speed change made after it opened (D3)', async
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-vent-speed`  
 Expected: 2 failed: __vent.scale stays 1
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/session.ts`, find:
 
@@ -4786,14 +4786,14 @@ Replace with:
       frame.src = `./vent-hamilton.html?link=${link}&profile=normal`;
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-vent-speed vent-link`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-vent-speed.e2e.ts \
@@ -4812,7 +4812,7 @@ git push
 the event feed. R50 M14: a bookmark restore to before the baseline left a baseline from the discarded future; when time goes
 back the histories restart and a baseline taken after the restored moment is dropped (taken again at 1 minute).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-explore-baseline.e2e.ts`:
 
@@ -4856,12 +4856,12 @@ test('a bookmark restore to before the baseline drops it; it is taken again at 1
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-explore-baseline`  
 Expected: 4 failed: no "Changes are from the baseline at 01:0x" (D5); after the restore the stamp still names the old baseline (M14)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/views/explore.ts`, find:
 
@@ -4901,14 +4901,14 @@ Replace with:
     const rows = model.rows().filter((r) => {
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-explore-baseline stage9-tasks`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-explore-baseline.e2e.ts \
@@ -4932,7 +4932,7 @@ Below 900 px the Sound button was hidden (app.css:103) — the only way to start
 Noted (not changed, recorded for 8b): the alarm words live in `alarms.ts`, not in the glossary data — a strict R56
 reading would move them; and the iec skins' `alwaysOn: []` while VF/VT/asystole still sound (data gap for 8b).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-alarm-label.e2e.ts`:
 
@@ -4962,7 +4962,7 @@ test('the top-bar alarm count says which alarms are off, and Sound stays reachab
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-alarm-label`  
 Expected: 2 failed: text 'Alarms off'
@@ -4970,7 +4970,7 @@ Expected: 2 failed: text 'Alarms off'
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/demo exec vitest run src/app/alarms.test.ts`  
 Expected: 1 failed: limitsOffTitle is not exported
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/main.ts`, find:
 
@@ -5135,7 +5135,7 @@ Replace with:
 @media (max-width: 900px) { .code-pill .muted { display: none; } } /* FU-11: Sound stays reachable in a narrow window */
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-alarm-label stage9-a11y stage9-glossary`  
 Expected: all passed
@@ -5145,7 +5145,7 @@ Expected: passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-alarm-label.e2e.ts \
@@ -5172,7 +5172,7 @@ learner monitor's own Sound (Part G) uses the same pair.
 
 **Interfaces:** Produces: `MonitorHandle.disableSound(): void`, `MonitorHandle.soundOn: boolean`, `AppSession.disableSound(): void`.
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-sound-toggle.e2e.ts`:
 
@@ -5210,12 +5210,12 @@ test('Sound on, then off again, then on: the button, its pressed state and the m
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-sound-toggle`  
 Expected: 2 failed: `monitor.soundOn` undefined; the second click leaves "Sound on"
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `packages/renderer/src/mount.ts`, find:
 
@@ -5337,7 +5337,7 @@ Replace with:
   }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-sound-toggle stage9-a11y`  
 Expected: all passed
@@ -5347,7 +5347,7 @@ Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-sound-toggle.e2e.ts \
@@ -5381,7 +5381,7 @@ If the probe agent's research/24 P7/P8 sections disagree when this task runs, st
 
 **Interfaces:** Produces: `monitorMatchedFlow(c: { vt: number; rate: number }): { vcFlow: number; pause: number }`, `MONITOR_IE = 2` (ventilator link/core.ts).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `packages/ventilator/test/fu11-vc-flow-parity.test.ts`:
 
@@ -5467,12 +5467,12 @@ test('the linked cockpit matches the monitor ventilator\'s flow, and keeps match
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run test/fu11-vc-flow-parity.test.ts`  
 Expected: 2 failed: monitorMatchedFlow is not a function (with the preset flow: VTE 204 vs 424, measured)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/vent/hamilton-page.ts`, find:
 
@@ -5540,7 +5540,7 @@ export function monitorMatchedFlow(c: { vt: number; rate: number }): { vcFlow: n
 }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `CI=1 npx -y pnpm@9.15.9 --filter @pme/ventilator exec vitest run`  
 Expected: all passed (parity: cockpit VTE 426, monitor VT 424)
@@ -5550,7 +5550,7 @@ Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-vent-flow.e2e.ts \
@@ -5575,7 +5575,7 @@ inside it would be visited by the same loop). A bookmark restore is not a new pa
 
 **Interfaces:** Consumes H1 (`offScale`).
 
-- [ ] **Step 1 — the failing tests.** 
+- [x] **Step 1 — the failing tests.** 
 
 Create `apps/demo/e2e/fu11-vent-new-case.e2e.ts`:
 
@@ -5614,12 +5614,12 @@ test('the cockpit is unloaded by a new patient and reloads fresh on the next vis
 });
 ```
 
-- [ ] **Step 2 — run them red.**
+- [x] **Step 2 — run them red.**
 
 Run: `npx playwright test --retries=0 fu11-vent-new-case`  
 Expected: 2 failed: the cockpit iframe still loaded after a restart (1 cockpit, expected 0 / a fresh one)
 
-- [ ] **Step 3 — implement.**
+- [x] **Step 3 — implement.**
 
 In `apps/demo/src/app/views/vent.ts`, find:
 
@@ -5688,14 +5688,14 @@ Replace with:
 }
 ```
 
-- [ ] **Step 4 — run them green, and the neighbours.**
+- [x] **Step 4 — run them green, and the neighbours.**
 
 Run: `npx playwright test --retries=0 fu11-vent-new-case fu11-vent-speed vent-link`  
 Expected: all passed
 
 Then `npx -y pnpm@9.15.9 -r typecheck` (clean).
 
-- [ ] **Step 5 — commit and push.**
+- [x] **Step 5 — commit and push.**
 
 ```bash
 git add apps/demo/e2e/fu11-vent-new-case.e2e.ts \

@@ -100,7 +100,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .topbar .spacer { flex: 1; }
 .topright { display: flex; align-items: center; gap: var(--s-2); flex: none; }
 @media (max-width: 1379px) { .brand { display: none; } }
-@media (max-width: 900px) { .topright .sound, .code-pill .muted { display: none; } }
+@media (max-width: 900px) { .code-pill .muted { display: none; } } /* FU-11: Sound stays reachable in a narrow window */
 
 /* The monitor region ("stage") never leaves the DOM while a session lives; each route places it by grid area. */
 .main { position: relative; display: grid; min-height: 0; min-width: 0; overflow: hidden; grid-template: 'view' minmax(0, 1fr) / minmax(0, 1fr); }

@@ -69,10 +69,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
     snapshot: () => Promise.resolve(core.engine.snapshot()),
-    restore: async (s) => {
-      core.engine.restore(s);
-      core.clock.setTick(s.tick);
-    },
+    restore: async (s) => core.restore(s), // FU-11 (F05, BA01): the lanes restart with the engine
     control: (m) => {
       if (m.type === 'resize') core.resize(m.size);
       else if (m.type === 'timeScale') core.clock.timeScale = m.k;

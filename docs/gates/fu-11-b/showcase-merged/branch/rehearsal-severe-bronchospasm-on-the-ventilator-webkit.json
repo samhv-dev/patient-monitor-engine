@@ -1,0 +1,109 @@
+{
+  "case": "Severe bronchospasm on the ventilator",
+  "browser": "webkit",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8700",
+  "steps": [
+    {
+      "simT": 3.7,
+      "what": "loaded \"Severe bronchospasm on the ventilator\" at ×4",
+      "state": "spasm",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 84.7,
+      "what": "#/vent before salbutamol",
+      "state": "spasm",
+      "hr": 75,
+      "art": "115/83.3 (94.7)",
+      "spo2": 97,
+      "etco2": 30,
+      "rr": 16,
+      "vte": 310,
+      "vent": "⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 310 VTE ml 35 Ppeak cmH₂O 4.4 ExpMinVol l/min 24 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer.Close Controls Patient & Scenarios Close Patient Characteristics Presets ARDS Mild ARDS Mod ARDS Severe COPD Asthma Compliance: 55 ml/cmH₂O Normal Resistance: 10 cmH₂O/l/s Normal Time Constant τ: 0.55 s 95% equilibration 1.65 s Airway Closure Enable Stress Index Enable Reverse Triggering Enable Spontaneous Breathing Enable Advanced Expiratory Flow Limitation Enable Cardiac Oscillations Enable Natural Variability Enable Upper Inflection Enable Show P0.1 Enable Asynchrony examples Reverse Triggering (Early) PC Reverse ",
+      "co2Tile": "CO2 mmHg 30 FiCO2 0 awRR 13"
+    },
+    {
+      "simT": 96.6,
+      "what": "pressed \"Give salbutamol 250 µg\"",
+      "state": "treatedByButton",
+      "hr": 77,
+      "art": "115.8/84.6 (96.1)",
+      "spo2": 99,
+      "etco2": 30,
+      "rr": 14
+    },
+    {
+      "simT": 294.3,
+      "what": "#/vent 3 min after salbutamol",
+      "state": "treatedByButton",
+      "hr": 85,
+      "art": "115.8/85.8 (96.7)",
+      "spo2": 98,
+      "etco2": 32,
+      "rr": 14,
+      "vte": 498,
+      "vent": "⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 498 VTE ml 35 Ppeak cmH₂O 7.0 ExpMinVol l/min 21 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer.Close Controls Patient & Scenarios Close Patient Characteristics Presets ARDS Mild ARDS Mod ARDS Severe COPD Asthma Compliance: 55 ml/cmH₂O Normal Resistance: 10 cmH₂O/l/s Normal Time Constant τ: 0.55 s 95% equilibration 1.65 s Airway Closure Enable Stress Index Enable Reverse Triggering Enable Spontaneous Breathing Enable Advanced Expiratory Flow Limitation Enable Cardiac Oscillations Enable Natural Variability Enable Upper Inflection Enable Show P0.1 Enable Asynchrony examples Reverse Triggering (Early) PC Reverse ",
+      "co2Tile": "CO2 mmHg 32 FiCO2 0 awRR 14"
+    },
+    {
+      "simT": 473.4,
+      "what": "#/vent 6 min after salbutamol (observation only)",
+      "state": "treatedByButton",
+      "hr": 87,
+      "art": "116.3/85.7 (96.8)",
+      "spo2": 98,
+      "etco2": 33,
+      "rr": 14,
+      "vte": 501,
+      "vent": "No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 32 Ppeak cmH₂O 7.0 ExpMinVol l/min 19 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer.Close Controls Patient & Scenarios Close Patient Characteristics Presets ARDS Mild ARDS Mod ARDS Severe COPD Asthma Compliance: 55 ml/cmH₂O Normal Resistance: 10 cmH₂O/l/s Normal Time Constant τ: 0.55 s 95% equilibration 1.65 s Airway Closure Enable Stress Index Enable Reverse Triggering Enable Spontaneous Breathing Enable Advanced Expiratory Flow Limitation Enable Cardiac Oscillations Enable Natural Variability Enable Upper Inflection Enable Show P0.1 Enable Asynchrony examples Reverse Triggering (Early) PC Reverse Trigge",
+      "co2Tile": "CO2 mmHg 33 FiCO2 0 awRR 14"
+    },
+    {
+      "alarmsRaised": []
+    }
+  ],
+  "labels": {
+    "alarmButtonAtOpen": "Limit alarms off",
+    "tab": "Scenario",
+    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "toast": "Scenario loaded: Severe bronchospasm on the ventilator",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.\nSevere bronchospasm\nSalbutamol given: ventilation recovering\nSalbutamol given: ventilation recovering\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nSalbutamol (IV/neb) given: Salbutamol given: ventilation recovering\nYou press \"Give salbutamol 250 µg\": Salbutamol given: ventilation recovering\nGive salbutamol 250 µg\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the delivered tidal volume and minute volume recover as air trapping eases\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "sessionBar": "F 45 y 68 kg MODELED Severe bronchospasm on the ventilator: Severe bronchospasm 00:03 00:03 ×1 ×2 ×4 Pause Bookmark",
+    "afterSalbutamol": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.\nSevere bronchospasm\nSalbutamol given: ventilation recovering\nSalbutamol given: ventilation recovering\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the delivered tidal volume and minute volume recover as air trapping eases\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Severe bronchospasm on the ventilator\nChoose another scenario\nA ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.\nSevere bronchospasm\nSalbutamol given: ventilation recovering\nSalbutamol given: ventilation recovering\nTime in state\n06:24\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nRecognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP\nTreat with a bronchodilator\nWatch the delivered tidal volume and minute volume recover as air trapping eases\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "the button changes the scenario state",
+      "expected": "spasm → treatedByButton",
+      "observed": "spasm → treatedByButton",
+      "pass": true
+    },
+    {
+      "what": "the new state label is shown",
+      "expected": "\"Salbutamol given: ventilation recovering\" in the state strip",
+      "observed": "Salbutamol given: ventilation recovering",
+      "pass": true
+    },
+    {
+      "what": "delivered tidal volume recovers after salbutamol",
+      "expected": "VTE rises by ≥ 100 mL within 3 min",
+      "observed": "310 → 498 mL",
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

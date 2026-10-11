@@ -11,6 +11,7 @@ import {
   type ScenarioCommand,
   type StateEvent,
   type TimeCommand,
+  type TimelineCause,
   type WireBody,
   type WireCommand,
   type WireEvent,
@@ -172,14 +173,18 @@ export class HostSession {
    * monotonic, so without it the session clock froze at the old high-water time — showcase rehearsal 2026-10-04).
    * Per-timeline host state (stage groups, set targets, the scenario run) ends with the old engine.
    */
-  newTimeline(): void {
+  newTimeline(cause: TimelineCause = 'restart'): void {
     this.flush();
     this.groups.clear();
     this.targets.clear();
-    this.sticky.delete('scenario.load');
-    this.sticky.delete('scenario.run');
+    if (cause === 'restart') {
+      this.sticky.delete('scenario.load');
+      this.sticky.delete('scenario.run');
+      // FU-11 (showcase hotfix note): the old engine's lead and filter choices are not the new monitor's
+      for (const k of [...this.sticky.keys()]) if (k.startsWith('ecg.')) this.sticky.delete(k);
+    }
     const { tick, simT } = this.o.target.now();
-    this.queue({ type: 'timeline', t: simT, tick });
+    this.queue({ type: 'timeline', t: simT, tick, cause });
     this.flush();
   }
 
@@ -356,6 +361,7 @@ export class HostSession {
       const snap = cmd.target !== undefined ? this.marks.get(cmd.target) : undefined;
       if (!snap) return { result: { accepted: false, tick, reason: `no bookmark ${String(cmd.target)}` }, applied: cmd };
       await this.o.target.restore(snap);
+      this.newTimeline('restore'); // FU-11 (F09, BA05): every controller's clock goes back with the engine
       queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' })); // viewers re-hello and resync
       return { result: { accepted: true, tick: snap.tick }, applied: cmd };
     }
@@ -370,7 +376,10 @@ export class HostSession {
       this.sticky.set('scenario.load', c);
     }
     if (c.action === 'pause' || c.action === 'resume') this.sticky.set('scenario.run', c);
-    if (c.action === 'restoreBookmark') queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' }));
+    if (c.action === 'restoreBookmark') {
+      this.newTimeline('restore'); // FU-11 (F09, BA05)
+      queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' }));
+    }
   }
 
   private pruneGroups(): void {
