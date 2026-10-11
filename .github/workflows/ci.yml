@@ -45,7 +45,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g]
+        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, showcase]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
@@ -58,5 +58,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @pme/engine-core test
+        if: matrix.group != 'showcase'
         env:
           PME_TEST_SET: ${{ matrix.group }}
+      # Stage 11: the showcase cards' scenario tests (apps/demo vite.config.ts); `vitest run` without the package
+      # script's --passWithNoTests, so a set that matches no file fails instead of passing empty
+      - run: pnpm --filter @pme/demo exec vitest run
+        if: matrix.group == 'showcase'
+        env:
+          PME_TEST_SET: showcase

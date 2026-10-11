@@ -3,14 +3,16 @@
   "id": "showcase-induction",
   "title": "Healthy induction",
   "category": "Showcase",
-  "durationMin": 10,
-  "story": "A fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.",
+  "durationMin": 15,
+  "story": "A fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.",
   "objectives": [
-    "Anticipate the fall in arterial pressure after propofol",
-    "Recognise apnoea and falling SpO₂ before intubation",
-    "Confirm ventilation with the capnogram"
+    "Induce after at least 180 s of preoxygenation",
+    "Intubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)",
+    "Confirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation",
+    "Airway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)",
+    "Ventilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)"
   ],
-  "notes": "Showcase case (Stage 9 Task 26). MODELED: the physiology produces every change.",
+  "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,
   "mode": "modeled",
   "patient": {
@@ -32,14 +34,16 @@
   "states": [
     {
       "id": "awake",
-      "label": "Awake, preoxygenated",
+      "label": "Awake, preoxygenating: FiO₂ 1.0 by face mask until induction",
+      "notes": "The oxygen stays on until “Induce now”: induce at 3:00 or later (3 minutes of preoxygenation; waiting longer costs no desaturation time). An earlier induction shortens the safe apnoea, and the “first diaphragmatic efforts” label (a timer from the bradycardia) then comes before the efforts.",
       "onEnter": [
         {
+          "$comment": "Held until “Induce now” (R50, Q5 ruling): 3600 s is the event’s maximum; the induced state ends it.",
           "type": "applyEvent",
           "event": {
             "kind": "preoxygenate",
             "fio2": 1,
-            "durationS": 180
+            "durationS": 3600
           }
         }
       ],
@@ -58,8 +62,17 @@
     },
     {
       "id": "induced",
-      "label": "Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg",
+      "label": "Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured",
       "onEnter": [
+        {
+          "$comment": "Ends the hold: the face mask stays on 45 s, until the breathing has stopped, then comes off (room air; no apnoeic oxygenation through an unsupported airway).",
+          "type": "applyEvent",
+          "event": {
+            "kind": "preoxygenate",
+            "fio2": 1,
+            "durationS": 45
+          }
+        },
         {
           "type": "applyEvent",
           "event": {
@@ -90,6 +103,390 @@
             "manual": {
               "label": "Intubate and ventilate"
             }
+          }
+        },
+        {
+          "id": "rescueBvm",
+          "label": "Bag-mask ventilate, FiO₂ 1.0",
+          "to": "rescuedBvm",
+          "when": {
+            "manual": {
+              "label": "Bag-mask ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "desat",
+          "label": "SpO₂ below 90 %",
+          "to": "desaturating",
+          "when": {
+            "vital": {
+              "var": "spo2",
+              "op": "<",
+              "value": 90
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "desaturating",
+      "label": "Airway not secured: SpO₂ below 90 %",
+      "transitions": [
+        {
+          "id": "rescueEtt",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "rescuedEtt",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "rescueBvm-desaturating",
+          "label": "Bag-mask ventilate, FiO₂ 1.0",
+          "to": "rescuedBvm",
+          "when": {
+            "manual": {
+              "label": "Bag-mask ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "brady",
+          "label": "SpO₂ below 60 %",
+          "to": "bradycardic",
+          "when": {
+            "vital": {
+              "var": "spo2",
+              "op": "<",
+              "value": 60
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "bradycardic",
+      "label": "SpO₂ below 60 %: hypoxic bradycardia",
+      "transitions": [
+        {
+          "id": "rescueEtt-bradycardic",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "rescuedEtt",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "rescueBvm-bradycardic",
+          "label": "Bag-mask ventilate, FiO₂ 1.0",
+          "to": "rescuedBvm",
+          "when": {
+            "manual": {
+              "label": "Bag-mask ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "loss",
+          "label": "No pulse",
+          "to": "pulseless",
+          "when": {
+            "any": [
+              {
+                "vital": {
+                  "var": "hr",
+                  "op": "<",
+                  "value": 1,
+                  "forS": 3
+                }
+              },
+              {
+                "vital": {
+                  "var": "sbp",
+                  "op": "<",
+                  "value": 25,
+                  "forS": 10
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "effort",
+          "label": "First diaphragmatic efforts",
+          "to": "firstEffort",
+          "when": {
+            "afterS": 357
+          }
+        }
+      ]
+    },
+    {
+      "id": "firstEffort",
+      "label": "First diaphragmatic efforts: about 35 mL, too small for the capnogram",
+      "notes": "Rocuronium is wearing off (FU-7.1 A4): the diaphragm makes its first efforts, each about 35 mL, soon about 40 a minute — below the dead space, so no capnogram, no respiratory rate on the monitor and no rise in SpO₂.",
+      "transitions": [
+        {
+          "id": "rescueEtt-firstEffort",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "rescuedEtt",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "rescueBvm-firstEffort",
+          "label": "Bag-mask ventilate, FiO₂ 1.0",
+          "to": "rescuedBvm",
+          "when": {
+            "manual": {
+              "label": "Bag-mask ventilate, FiO₂ 1.0"
+            }
+          }
+        },
+        {
+          "id": "loss-firstEffort",
+          "label": "No pulse",
+          "to": "pulseless",
+          "when": {
+            "any": [
+              {
+                "vital": {
+                  "var": "hr",
+                  "op": "<",
+                  "value": 1,
+                  "forS": 3
+                }
+              },
+              {
+                "vital": {
+                  "var": "sbp",
+                  "op": "<",
+                  "value": 25,
+                  "forS": 10
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulseless",
+      "label": "Hypoxic cardiac arrest",
+      "transitions": [
+        {
+          "id": "cpr",
+          "label": "Start CPR, intubate, FiO₂ 1.0",
+          "to": "cpr",
+          "when": {
+            "manual": {
+              "label": "Start CPR, intubate, FiO₂ 1.0"
+            }
+          }
+        }
+      ],
+      "notes": "Asystole after prolonged hypoxia is rarely recoverable; ventilate before this point. In this engine asystole never regains a pulse (FU-4 Q3): CPR here shows that, it does not rescue him."
+    },
+    {
+      "id": "cpr",
+      "label": "CPR, ventilated with FiO₂ 1.0",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": true,
+            "rate": 110,
+            "quality": 0.8
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "epi",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rosc",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprEpi",
+      "label": "CPR: epinephrine 1 mg given",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "epi-cprEpi",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpiRepeat",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rosc-cprEpi",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "cprEpiRepeat",
+      "label": "CPR: epinephrine 1 mg repeated",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "drug",
+            "drugId": "epinephrine",
+            "dose": 1,
+            "unit": "mg",
+            "route": "iv"
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "epi-cprEpiRepeat",
+          "label": "Epinephrine 1 mg",
+          "to": "cprEpi",
+          "when": {
+            "manual": {
+              "label": "Epinephrine 1 mg"
+            }
+          }
+        },
+        {
+          "id": "rosc-cprEpiRepeat",
+          "label": "Pulse back: stop CPR",
+          "to": "rosc",
+          "when": {
+            "manual": {
+              "label": "Pulse back: stop CPR"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rosc",
+      "label": "Return of circulation",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "cpr",
+            "active": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "rescuedBvm",
+      "label": "Bag-mask ventilation, FiO₂ 1.0",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "bvm",
+            "rr": 12,
+            "vtMl": 500,
+            "fio2": 1
+          }
+        }
+      ],
+      "transitions": [
+        {
+          "id": "rescueEtt-rescuedBvm",
+          "label": "Intubate and ventilate, FiO₂ 1.0",
+          "to": "rescuedEtt",
+          "when": {
+            "manual": {
+              "label": "Intubate and ventilate, FiO₂ 1.0"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "rescuedEtt",
+      "label": "Rescued: intubated, FiO₂ 1.0",
+      "onEnter": [
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "airwayDevice",
+            "device": "ett"
+          }
+        },
+        {
+          "type": "applyEvent",
+          "event": {
+            "kind": "ventilation",
+            "source": "ventilator",
+            "rr": 12,
+            "vtMl": 500,
+            "peep": 5,
+            "fio2": 1
           }
         }
       ]

@@ -35,10 +35,13 @@ export function cardOf(doc: ScenarioDoc): ScenarioCard {
   };
 }
 
+/** Stage 11: the Showcase cards in the order of the demonstration's run sheet; every other group sorts by title. */
+export const SHOWCASE_ORDER: readonly string[] = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
+
 export const LIBRARY: readonly ScenarioCard[] = Object.entries(FILES)
   .filter(([path]) => !path.endsWith('.schema.json'))
   .map(([, mod]) => cardOf(mod.default))
-  .sort((a, b) => rank(a.category) - rank(b.category) || a.title.localeCompare(b.title));
+  .sort((a, b) => rank(a.category) - rank(b.category) || SHOWCASE_ORDER.indexOf(a.id) - SHOWCASE_ORDER.indexOf(b.id) || a.title.localeCompare(b.title));
 
 function rank(c: string): number {
   const i = (CATS as readonly string[]).indexOf(c);
