@@ -56,11 +56,35 @@ device layer.
 **Owner's folder:** `Desktop/Claude/_sandbox/pme-debrief-dryrun/` now holds the three cb4fb17e PDFs, the kit built from
 cb4fb17e and `HOW-TO-CHECK-THE-PRINT.txt`. Older copies are in `_to_delete/`.
 
-**CI:** see §0.1, added after the PR's CI run.
+**CI:** see §0.1.
 
 **PENDING-OWNER:** the print preview in real Safari and Chrome (Task 4 Step 5). For each browser, record whether the
 report prints alone, whether the page breaks are right, where the footer appears, and anything unreadable. Safari is
 expected to show the footer only at the end of each section (D-8).
+
+## 0.1 CI on PR #60
+
+**Run 38208532262** (head 071f5ad6, the formal gate's evidence commit):
+- These jobs passed: renderer, build, `e2e (chromium)` and the nine `test-slow` groups (`slow`, `slow-a`…`slow-g`,
+  `showcase`).
+- `e2e (chromium)`: 106 passed, 3 skipped, no retry-only passes.
+- **`e2e (webkit)` failed**: 71 passed, 36 skipped, 1 flaky, 1 failed.
+
+**Finding (retry-only pass, CI WebKit):** `scenario-choose-another.e2e.ts:14` "the scenario library opened before the
+first repaint stays open until a scenario is loaded" passed on retry #1. On the first attempt the panel was not visible
+within 10 s. This test comes from main (#56), not from this stage.
+
+**Finding (failed, CI WebKit), now fixed as DV-3:** `stage13-debrief.e2e.ts` failed all three attempts. The first
+attempt failed at line 55 (`^01:00 Scenario Scenario state: Anaphylaxis$` matched no row), and both retries at line 53
+(the undone first-reaction row at `01:00`).
+- **Diagnosis, a hypothesis:** CI keeps no row dump. On the 2-vCPU Linux WebKit runner the host advances the engine in
+  coarser catch-up steps, so the scenario's 60 s state event lands at 01:01 or later. On macOS it always lands at 01:00.
+- **Fix (DV-3, test only, orchestrator approval 2026-10-12):** lines 53, 55 and 70 now match `01:0\d`, and line 59
+  matches `00:0\d`. The row-existence, count and undo checks are unchanged.
+- **Local re-check after the change:** passes on macOS on both engines (Chromium 43.0 s, WebKit 44.3 s). The CI result is in the PR's next run.
+
+**Retry-only passes so far:** `stage4b-device.e2e.ts:72` (local Chromium, §0) and `scenario-choose-another.e2e.ts:14`
+(CI WebKit).
 
 ## 1. Blocks and commits
 

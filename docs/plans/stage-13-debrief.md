@@ -2606,6 +2606,12 @@ git push
   SpO₂ 20 points (never above 100), HR 40 bpm, ART M / NIBP M 40 mmHg, EtCO₂ 20 mmHg, temperature 2 °C; never below zero
   when the data are not; RR has no floor (± 1 when flat, as before). `axisRange` in `apps/demo/src/app/debrief.ts`, used
   by `views/debrief.ts` `chart`; the axis labels stay (the span's ends). One unit test in `debrief.test.ts` (DV-2).
+- **DV-3 (test only, orchestrator approval 2026-10-12).** `stage13-debrief.e2e.ts`: the two "Scenario state:
+  Anaphylaxis" rows and the epinephrine verdict's anchor are matched at `01:0\d`, not `01:00`; the "Ventilated breaths
+  began" row at `00:0\d` (was DV-1's `00:0[01]`). PR #60's CI run 38208532262 failed all three WebKit attempts on these
+  rows (lines 55, then 53). Hypothesis, not proven (CI keeps no row dump): on the 2-vCPU Linux WebKit runner the host
+  advances the engine in coarser catch-up steps, so the scenario's 60 s state event lands at 01:01 or later. The
+  row-existence, count and undo checks are unchanged.
 
 ## Appendix B — Task 3 when Stage 11 merged without rules
 
