@@ -1,15 +1,51 @@
 # Gate note: Stage 12, learners' phones (QR-paired live learner monitor)
 
-**DRAFT: pre-merge dry run on 07d7cd00.** NOT the formal gate. There is no PR and nothing is merged into main.
+**Formal gate on a075fd39** (origin/main 8c74d994 merged into `stage-12`; Stage 10 is on main). Gate step 4, the owner's
+own phone, is **PENDING-OWNER**: the PR is not to be merged before it is recorded (§4).
 
-- **Branch:** `stage-12`. Its BASE, by orchestrator ruling, is `origin/stage-10` (60405f2f), not `origin/main`.
-- **Merges in this dry run:**
-  - `origin/main` c7d9b51c (Stage 11 and the WebKit fix) at 806b00bc. No conflicts.
-  - `origin/stage-10` 854219c5 (the span-label fix) at 07d7cd00. No conflicts.
-- **Since the dry run:**
-  - FU-11 d has merged into main (99f4e25f). Per the orchestrator, main is not merged again here.
-  - `origin/stage-10` moved on to 83cbd709 after 854219c5: `bae65d22` (renderer: the fast-forward seam's label), `21e57186` (the Stage 10 kit gate script) and two docs commits. These are **not** in this branch.
-- **Formal gate:** re-run it once Stage 10 and this branch's base are on main.
+- **Branch name:** `stage-12`, as the executor brief and the orchestrator named it. The plan's text says
+  `stage-12-mobile-learner` (Task 0, Gate Step 7); this is the same branch under the brief's name (orchestrator: fine).
+- **Base:** by orchestrator ruling, `origin/stage-10` (60405f2f), not `origin/main`, because Stage 10 and FU-11 d were not
+  yet on main when Stage 12 started.
+- **Merges:**
+  - `origin/main` c7d9b51c (Stage 11 and the WebKit fix) at 806b00bc, no conflicts. This was the pre-merge dry run.
+  - `origin/stage-10` 854219c5 (the span-label fix) at 07d7cd00, no conflicts. Dry run.
+  - `origin/main` 8c74d994 at **a075fd39**, no conflicts. This was the formal gate. 8c74d994 has Stage 10 (#54), FU-11 d (#49), the CI reshaping (#55), the citation fixes (#52), the card-button fix (#51) and the scenario-library fix (#56).
+- **What is in which section:** §1–§3 and §5 are the pre-merge dry run on 07d7cd00. §0 is the formal gate's re-check
+  on a075fd39. The 34 files this stage changes are byte-identical on the two trees: only other plans' files moved.
+
+## 0. Formal gate on a075fd39 (2026-10-12)
+
+**Block re-check.** The comparator worktree was set to `origin/main` 8c74d994, i.e. main without Stage 12.
+- `check.py --base-dir`: **75 find/replace blocks + 15 creates, 34 files: 0 problems.** No block had to be re-located.
+- Applying every block of the plan, task by task, to that tree reproduces the branch byte for byte (`cmp`).
+- `git diff origin/main stage-12` lists exactly those 34 files, plus this plan and `docs/gates/stage-12*`.
+
+**Targeted sets, all with `--retries=0`.** Load average 1.7–2.2.
+
+| Check | Result |
+|---|---|
+| `pnpm -r typecheck` | clean |
+| controller / renderer / demo unit tests, CI=1 | **56 files / 277 tests · 32 / 110 · 38 / 261: all passed at the first run** |
+| `pnpm build`, `pnpm check-notices` | OK |
+| e2e `s12-mobile-learner fu11-follower s10-time-control stage6a audit-relay audit-remote iife-smoke`, Chromium + WebKit | **37 passed, 7 skipped, 0 failed (4.4 min)** |
+
+The 7 skips are by design:
+- `s10-time-control`'s `measure` test, both engines (it needs `PME_S10_MEASURE=1`).
+- `stage6a`'s WebRTC test, both engines.
+- `fu11-follower` on WebKit: the whole file is now skipped by main's FALLBACK ruling of 2026-10-11 (F-49-2: BroadcastChannel drops messages between pages on Playwright's WebKit).
+  - The 5 × 5 branch-vs-base comparison of its "Ventilator view drives" test therefore cannot run on the committed file any more. Its result is the dry run's (§2: branch 1 of 16, base 1 of 16).
+  - `s12-mobile-learner` does not use BroadcastChannel (the phone follows over the relay's WebSocket), and it ran and passed on WebKit (3 of 3).
+
+**Retry-only passes at the formal gate: none.** The dry run's are listed in §6, F1.
+
+**CI** (PR #55's shape, `docs/gates/ci-webkit-3.md`):
+- The `renderer` job builds the IIFE once.
+- `e2e (chromium)` and `e2e (webkit)` run as matrix jobs, with retries 2 under CI, and echo any retry-only pass at the end of each job.
+- `s10-time-control` is skipped on CI WebKit (S10-F5); `fu11-follower` is skipped on WebKit everywhere.
+- The PR's CI run id is in the PR conversation. Any retry-only pass it echoes is a finding for the orchestrator.
+
+## The pre-merge dry run (on 07d7cd00, 2026-10-11)
 
 Plan: `docs/plans/stage-12-mobile-learner.md`. Executor: one session (Claude Opus 5.5). Machine: Apple M3, shared with other executors; the load average is given per run.
 
@@ -132,7 +168,7 @@ Every step label matches between the two runs. The largest differences:
 
 ## 4. The real phone (Gate Step 4): **PENDING-OWNER**
 
-- The kit for the owner's own-phone test is built from 07d7cd00 at `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit`.
+- The kit for the owner's own-phone test is built from this PR's head (rebuilt at the formal gate; first built from 07d7cd00) at `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit`.
 - Beside it: `CLASSROOM.md` (the run sheet), `PRE-FLIGHT.md` (the one-page checklist) and `OWN-PHONE-TEST.md` (the table to fill in).
 - The table is also committed as `docs/gates/stage-12-real-phone.md`. Nothing is recorded yet.
 - The PR does not merge before the owner's run.
@@ -170,5 +206,6 @@ Every step label matches between the two runs. The largest differences:
   - **The `fu11-follower` WebKit flake:** branch 1 of 16, base 1 of 16 (§2).
   - `iife-smoke` and `stage6a-worker` are not flakes: they need `pnpm build` first, as in CI.
 - **O1:** the one extra resync during the bronchospasm hold at ×8 (§3b). Not a STOP; the real-phone run's optional Ventilator-view check will show it if it matters.
-- **Stage 10 gap:** `origin/stage-10` 83cbd709 has `bae65d22` (renderer: the seam's label drawn behind its line) and `21e57186` (the Stage 10 kit gate script), neither in this branch. The formal gate's merge of main, after Stage 10 merges, picks them up; the block check runs again then.
+- **Stage 10 gap (closed):** the dry run's tree lacked Stage 10's last commits (`bae65d22`, `21e57186`). The formal gate's merge of main 8c74d994 brought them in, and the block check passed again (§0).
+- **The six-card rehearsal and the phone room (§3) and the load runs (§5) were not repeated on a075fd39.** Since the dry run, the merge changed only other plans' files: the seam label, the scenario library, the card button and test files. The 34 Stage 12 files are identical. The owner's real-phone kit in `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit` was rebuilt from this PR's head, so it has main's fixes. The headless Start Classroom check on it passed: `/pme-relay.json` `serves:true`, `/?join=` 200, and nothing listening after the stop.
 - **Q5 (the owner's), open:** the network on the day, and Node.js 22 or later on the presenting Mac. The pre-flight checklist is in `docs/showcase/CLASSROOM.md` and `PRE-FLIGHT.md` beside the kit.
