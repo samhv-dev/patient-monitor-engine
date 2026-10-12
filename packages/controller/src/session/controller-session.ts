@@ -1,6 +1,9 @@
 // The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC).
 // Commands carry a unique id; unacked ones are re-sent on every reconnect and host hello, and the host
 // de-duplicates by id, so a Wi-Fi drop never applies a command twice (BUILD-PLAN Stage 6 acceptance 3).
+// FX-2: while the link is open an unanswered command is also re-sent every COMMAND_RESEND_MS (a message lost on the way:
+// Playwright Linux WebKit's BroadcastChannel, F-49-2), and refused after COMMAND_ANSWER_TIMEOUT_MS with no answer (a host
+// that stopped answering) — a sender always hears back; it never waits forever.
 import type { RhythmId, SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
@@ -40,13 +43,24 @@ export interface ControllerSessionOptions {
   issuedBy?: string;
   wallNow?: () => number;
   logMax?: number;
+  /** FX-2: re-send an unanswered command this often while the link is open (default COMMAND_RESEND_MS). */
+  resendMs?: number;
+  /** FX-2: refuse a command after this long open with no answer (default COMMAND_ANSWER_TIMEOUT_MS). */
+  answerTimeoutMs?: number;
 }
+
+/** FX-2: an unanswered command goes again this often while the link is open; the host de-duplicates by id [ENG]. */
+export const COMMAND_RESEND_MS = 2000;
+/** FX-2: …and is refused ("no answer from the host") after this long open with no answer [ENG: a restore under load takes ≤ 2 s]. */
+export const COMMAND_ANSWER_TIMEOUT_MS = 15_000;
 
 interface Pending {
   cmd: WireCommand;
   sentAt: number;
   resolve: (r: AckResult) => void;
   reject: (e: Error) => void;
+  /** FX-2: how long the link has been open with this command unanswered, ms (time without a link does not count). */
+  waitedMs: number;
 }
 
 export class ControllerSession {
@@ -77,6 +91,7 @@ export class ControllerSession {
   private readonly offs: Array<() => void>;
   private n = 0;
   private closed = false;
+  private retryTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(o: ControllerSessionOptions) {
     this.o = o;
@@ -107,9 +122,10 @@ export class ControllerSession {
     if (this.closed) return Promise.reject(new Error('session closed'));
     const cmd = { ...input, id: input.id ?? `${this.peerId}-${++this.n}`, issuedBy: this.o.issuedBy ?? `controller:${this.peerId}` } as WireCommand;
     return new Promise<AckResult>((resolve, reject) => {
-      this.pending.set(cmd.id, { cmd, sentAt: this.now(), resolve, reject });
+      this.pending.set(cmd.id, { cmd, sentAt: this.now(), resolve, reject, waitedMs: 0 });
       this.addLog('command', describe(cmd), cmd.id);
       this.transmit(cmd);
+      this.retryTimer ??= setInterval(() => this.retry(), this.o.resendMs ?? COMMAND_RESEND_MS);
     });
   }
 
@@ -127,6 +143,7 @@ export class ControllerSession {
 
   close(): void {
     this.closed = true;
+    this.stopRetry();
     for (const off of this.offs) off();
     for (const p of this.pending.values()) p.reject(new Error('session closed'));
     this.pending.clear();
@@ -139,6 +156,31 @@ export class ControllerSession {
 
   private resendPending(): void {
     for (const p of this.pending.values()) this.transmit(p.cmd);
+  }
+
+  /** FX-2: every unanswered command again, or its refusal once it has waited out the timeout on an open link. */
+  private retry(): void {
+    if (this.pending.size === 0) return this.stopRetry();
+    if (this.o.transport.status !== 'open') return; // a reconnect sends them again; time without a link does not count
+    const every = this.o.resendMs ?? COMMAND_RESEND_MS;
+    const limit = this.o.answerTimeoutMs ?? COMMAND_ANSWER_TIMEOUT_MS;
+    for (const [id, p] of [...this.pending]) {
+      p.waitedMs += every;
+      if (p.waitedMs < limit) this.transmit(p.cmd);
+      else this.answer(id, p, { accepted: false, tick: -1, reason: `no answer from the host in ${Math.round(limit / 1000)} s` });
+    }
+  }
+
+  private stopRetry(): void {
+    if (this.retryTimer !== null) clearInterval(this.retryTimer);
+    this.retryTimer = null;
+  }
+
+  private answer(id: string, p: Pending, a: { accepted: boolean; tick: number; reason?: string }): void {
+    this.pending.delete(id);
+    const r: AckResult = { commandId: id, accepted: a.accepted, tick: a.tick, rttMs: this.now() - p.sentAt, ...(a.reason !== undefined ? { reason: a.reason } : {}) };
+    this.addLog('ack', a.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${a.reason ?? ''}`, id);
+    p.resolve(r);
   }
 
   private onStatus(s: TransportStatus): void {
@@ -161,11 +203,7 @@ export class ControllerSession {
         return;
       case 'ack': {
         const p = this.pending.get(m.commandId);
-        if (!p) return;
-        this.pending.delete(m.commandId);
-        const r: AckResult = { commandId: m.commandId, accepted: m.accepted, tick: m.tick, rttMs: this.now() - p.sentAt, ...(m.reason !== undefined ? { reason: m.reason } : {}) };
-        this.addLog('ack', m.accepted ? `ok (${Math.round(r.rttMs)} ms)` : `rejected: ${m.reason ?? ''}`, m.commandId);
-        p.resolve(r);
+        if (p) this.answer(m.commandId, p, m);
         return;
       }
       case 'event':

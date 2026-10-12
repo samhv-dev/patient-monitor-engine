@@ -4,6 +4,9 @@
 // On the same build this is sample-identical (the engine is deterministic, brief §3.3). If a mirrored command
 // arrives too late, a beat's time disagrees with the host's, the link reconnects or the host says hello again,
 // it resyncs by saying hello (→ fresh snapshot).
+// FX-2 (F-49-1): the delay is WALL time — a mirrored command has delayS of wall time to arrive at every speed (as a
+// delay in sim time it left 25 ms at ×4 and 12.5 ms at ×8, and a loaded machine resynced); and a hello that got no
+// snapshot is said again, so a lost message never leaves the viewer waiting for good.
 import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
@@ -43,7 +46,7 @@ export interface ViewerSyncOptions {
   target: ViewerTarget;
   /** Engine build of this viewer; a snapshot from a different build cannot be mirrored. */
   engineVersion: string;
-  /** How far behind the host the viewer draws (default 0.1 s) — the jitter budget for mirrored commands [ENG]. */
+  /** How far behind the host the viewer draws, wall seconds at any speed (default 0.1 s) — the jitter budget for mirrored commands [ENG]. */
   delayS?: number;
   peerId?: string;
   wallNow?: () => number;
@@ -52,6 +55,7 @@ export interface ViewerSyncOptions {
 const BEAT_TOLERANCE_S = 0.001; // same build ⇒ identical times; anything above this is divergence [ENG]
 const MAX_EXTRAPOLATE_S = 3; // stop running ahead of a silent host after this long [ENG]
 const TICK_S = 0.02;
+const HELLO_AGAIN_MS = 3000; // FX-2: no snapshot this long after a hello — say it again (a message lost on the way) [ENG]
 
 export class ViewerSync {
   readonly peerId: string;
@@ -73,6 +77,7 @@ export class ViewerSync {
   private readonly seqs = new SeqFilter();
   private readonly offs: Array<() => void>;
   private awaiting = false;
+  private helloAt = -Infinity; // FX-2: wall ms of the last hello
   private replays: Command[] = [];
   private early: Command[] = [];
   private anchor: { simT: number; wallMs: number } | null = null;
@@ -108,13 +113,14 @@ export class ViewerSync {
   /** Call once per animation frame, before the monitor draws: steers the local clock onto the host's. */
   follow(): void {
     const t = this.o.target;
+    if (this.awaiting && this.now() - this.helloAt > HELLO_AGAIN_MS) this.hello(); // FX-2
     if (this.status !== 'synced' || !this.anchor) return t.setPaused(true);
     if (this.hostPaused || this.hostFastForward) return t.setPaused(true);
     const since = (this.now() - this.anchor.wallMs) / 1000;
     const hostNow = this.anchor.simT + Math.min(since, MAX_EXTRAPOLATE_S) * this.hostRate;
-    const want = hostNow - this.delayS;
+    const want = hostNow - this.delayS * this.hostRate; // FX-2: delayS of WALL time behind, at every speed
     const err = want - t.renderT();
-    this.lagS = hostNow - t.renderT();
+    this.lagS = (hostNow - t.renderT()) / this.hostRate;
     if (err > 1) {
       t.jumpTo(want);
       t.setPaused(false);
@@ -144,6 +150,11 @@ export class ViewerSync {
     this.early = [];
     if (this.status !== 'incompatible') this.status = 'waiting';
     this.o.target.setPaused(true);
+    this.hello();
+  }
+
+  private hello(): void {
+    this.helloAt = this.now();
     this.o.transport.send(this.stamp({ kind: 'hello', role: 'viewer' }));
   }
 

@@ -88,7 +88,7 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
     await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: k }).click();
     await page.waitForTimeout(8000);
     expect((await sync(f)).status).toBe('synced');
-    expect((await sync(f)).lagS).toBeLessThan(k === '×8' ? 2 : 1); // sim seconds behind the host (a delay of 0.1 s × the speed is by design)
+    expect((await sync(f)).lagS).toBeLessThan(0.5); // FX-2: WALL seconds behind the host (0.1 s at every speed by design)
     await same(f, page);
   }
   await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×1' }).click();
