@@ -6,7 +6,8 @@
 // it resyncs by saying hello (→ fresh snapshot).
 // FX-2 (F-49-1): the delay is WALL time — a mirrored command has delayS of wall time to arrive at every speed (as a
 // delay in sim time it left 25 ms at ×4 and 12.5 ms at ×8, and a loaded machine resynced); and a hello that got no
-// snapshot is said again, so a lost message never leaves the viewer waiting for good.
+// snapshot is said again, so a lost message never leaves the viewer waiting for good; a speed change counts from the
+// change (it threw the viewer ahead of the host).
 import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
@@ -236,7 +237,14 @@ export class ViewerSync {
         // Re-anchor at the host's time of the resume, on the wall clock of now.
         if (this.anchor && !res?.replay) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
       }
-      if (c.action === 'scale' && typeof c.value === 'number') this.hostRate = c.value;
+      if (c.action === 'scale' && typeof c.value === 'number') {
+        // FX-2: the new speed counts from the change. Applied to the whole time since the last 1 Hz anchor, a frame drawn
+        // before the next `state` projected up to 7 s of sim ahead at ×1 → ×8, jumped there and resynced on the next
+        // mirrored command. Re-anchor at the host's time of the change on the wall clock of now, as on a resume (the
+        // message's own latency leaves the viewer that much further behind, never ahead).
+        if (this.anchor && !res?.replay && !this.hostPaused) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
+        this.hostRate = c.value;
+      }
       if (c.action === 'jump' && res?.replay && typeof c.value === 'number') {
         this.hostFastForward = true; // Stage 10: joined during a fast-forward (atTick = where it began)
         this.fastForward = { fromT: (c.atTick ?? e.tick) * TICK_S, toT: (c.atTick ?? e.tick) * TICK_S + c.value };
