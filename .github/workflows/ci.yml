@@ -76,7 +76,7 @@ jobs:
           path: packages/renderer/dist
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       # FX-1 TEMPORARY diagnostic (reverted in the next commit): only the Ventilator-view files, no retries
-      - run: pnpm test:e2e --project=${{ matrix.browser }} --reporter=list,json --retries=0 --repeat-each=3 apps/demo/e2e/zz-fx1-diag.e2e.ts apps/demo/e2e/fu11-vent-restore.e2e.ts apps/demo/e2e/fu11-vent-speed.e2e.ts
+      - run: pnpm test:e2e --project=${{ matrix.browser }} --reporter=list,json --retries=0 --repeat-each=3 apps/demo/e2e/zz-fx1-diag.e2e.ts
         env:
           PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report-${{ matrix.browser }}.json
           FX1_NOSKIP: '1'

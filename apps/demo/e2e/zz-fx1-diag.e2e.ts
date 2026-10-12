@@ -85,9 +85,13 @@ for (let rep = 0; rep < 2; rep++) {
     const ages: number[] = [];
     for (let i = 0; i < 6; i++) {
       await page.waitForTimeout(1000);
-      ages.push(await page.evaluate(() => Math.round(performance.now() - (window as Any).__pmeApp.session.ventFrameAt)));
+      ages.push(await page.evaluate(() => {
+        const w = window as Any;
+        const cw = (document.querySelector('iframe.vent') as HTMLIFrameElement).contentWindow as Any;
+        return `${Math.round(performance.now() - w.__pmeApp.session.ventFrameAt)}ms raf=${cw.__fx1c.raf} vsim=${cw.__vent.simT().toFixed(2)} clk=${cw.__fx1c.lastClock} sim=${w.__pmeApp.session.simNow().toFixed(1)} vis=${cw.document.visibilityState}`;
+      }) as unknown as number);
     }
-    console.log(`FX1 HIDDEN rep=${rep} ventFrameAge=${JSON.stringify(ages)}`);
+    console.log(`FX1 HIDDEN rep=${rep} ${JSON.stringify(ages)}`);
     expect(got, 'the cockpit took the speed change').toBe(4);
   });
 }
@@ -135,7 +139,7 @@ for (let rep = 0; rep < 0; rep++) {
 // session's sim time, the age of the cockpit's last frame at the engine, the cockpit's own time and clock, and the tiles.
 const W2 = (p: Page) => p.evaluate(() => (window as Any).__pmeApp.session.simNow() as number);
 const tile2 = (p: Page, param: string) => p.evaluate((x) => Number(document.querySelector(`.pme-stile[data-param="${x}"] [data-pme="v"]`)?.textContent), param);
-for (let rep = 0; rep < 4; rep++) {
+for (let rep = 0; rep < 6; rep++) {
   test(`FX1 diag exact restore ${rep}`, async ({ page }) => {
     test.setTimeout(180_000);
     await instrument(page);
@@ -168,6 +172,14 @@ for (let rep = 0; rep < 4; rep++) {
       return W2(page);
     };
     const mark = (m: string) => page.evaluate((x) => (window as Any).__rec.push(`>> ${x}`), m);
+    // stream the recorder every 5 s, so a run that ends in a page crash still shows what came before it
+    let sent = 0;
+    const stream = setInterval(() => void page.evaluate((n) => ((window as Any).__rec as string[]).slice(n), sent).then((rows) => {
+      sent += rows.length;
+      if (rows.length) console.log(rows.map((l) => `FX1 EXACT rep=${rep} | ${l}`).join('\n'));
+    }, () => {}), 5000);
+    page.on('crash', () => console.log(`FX1 EXACT rep=${rep} PAGE CRASH`));
+    page.on('close', () => console.log(`FX1 EXACT rep=${rep} PAGE CLOSE`));
     await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
     await page.evaluate(() => (location.hash = '#/vent'));
     await at(30);
@@ -184,7 +196,7 @@ for (let rep = 0; rep < 4; rep++) {
     let ok = true;
     for (let i = 0; i < 2; i++) ok &&= Math.abs((again[i]?.spo2 ?? 0) - (first[i]?.spo2 ?? 0)) <= 3 && Math.abs((again[i]?.co2 ?? 0) - (first[i]?.co2 ?? 0)) <= 4;
     console.log(`FX1 EXACT rep=${rep} ok=${ok} ${JSON.stringify({ b, first, again, v2 })}`);
-    if (!ok) console.log((await page.evaluate(() => (window as Any).__rec as string[])).map((l) => `FX1 EXACT rep=${rep} | ${l}`).join('\n'));
+    clearInterval(stream);
     expect(ok, 'replay within the bands').toBe(true);
   });
 }
