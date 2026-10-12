@@ -54,7 +54,7 @@ async function instrument(page: Page): Promise<void> {
 const flush = async (page: Page, tag: string) => console.log((await page.evaluate(() => (window as Any).__fx1 as string[])).map((l) => `FX1 ${tag} ${l}`).join('\n'));
 const cockpit = (page: Page) => page.frames().find((fr) => fr.url().includes('vent-hamilton'));
 
-for (let rep = 0; rep < 6; rep++) {
+for (let rep = 0; rep < 2; rep++) {
   test(`FX1 diag speed ${rep}`, async ({ page }) => {
     test.setTimeout(60_000);
     await instrument(page);
@@ -92,7 +92,7 @@ for (let rep = 0; rep < 6; rep++) {
   });
 }
 
-for (let rep = 0; rep < 2; rep++) {
+for (let rep = 0; rep < 0; rep++) {
   test(`FX1 diag restore ${rep}`, async ({ page }) => {
     test.setTimeout(240_000);
     await instrument(page);
@@ -128,5 +128,63 @@ for (let rep = 0; rep < 2; rep++) {
     for (let i = 0; i < 10; i++) { await page.waitForTimeout(300); await sample(`restore+${Date.now() - tr}ms`); }
     await until(b + 70);
     await flush(page, `restore${rep}`).catch(() => {});
+  });
+}
+
+// The exact fu11-vent-restore flow, with an in-page recorder (no extra round trips): every 500 ms of wall time the
+// session's sim time, the age of the cockpit's last frame at the engine, the cockpit's own time and clock, and the tiles.
+const W2 = (p: Page) => p.evaluate(() => (window as Any).__pmeApp.session.simNow() as number);
+const tile2 = (p: Page, param: string) => p.evaluate((x) => Number(document.querySelector(`.pme-stile[data-param="${x}"] [data-pme="v"]`)?.textContent), param);
+for (let rep = 0; rep < 4; rep++) {
+  test(`FX1 diag exact restore ${rep}`, async ({ page }) => {
+    test.setTimeout(180_000);
+    await instrument(page);
+    await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });
+    await page.evaluate(() => {
+      const w = window as Any;
+      const s = w.__pmeApp.session;
+      const t0 = performance.now();
+      w.__rec = [] as string[];
+      let last = '';
+      setInterval(() => {
+        const tile = (x: string) => document.querySelector(`.pme-stile[data-param="${x}"] [data-pme="v"]`)?.textContent ?? '-';
+        const cw = (document.querySelector('iframe.vent') as HTMLIFrameElement | null)?.contentWindow as Any;
+        const v = cw?.__vent;
+        const c = cw?.__fx1c;
+        const row = `${((performance.now() - t0) / 1000).toFixed(1)} sim=${s.simNow().toFixed(1)} age=${Math.round(performance.now() - s.ventFrameAt)} vsim=${v ? v.simT().toFixed(1) : '-'} clk=${c?.lastClock ?? '-'} raf=${c?.raf ?? '-'} co2=${tile('CO2')} spo2=${tile('SpO2')} ${location.hash}`;
+        if (row !== last) w.__rec.push(row);
+        last = row;
+      }, 500);
+      s.onMount(() => w.__rec.push('mount'));
+    });
+    const at = async (t: number) => {
+      while ((await W2(page)) < t) await page.waitForTimeout(250);
+      return { spo2: await tile2(page, 'SpO2'), co2: await tile2(page, 'CO2') };
+    };
+    const ventilating = async () => {
+      let run = 0;
+      const t = Date.now();
+      while (run < 2 && Date.now() - t < 60_000) { run = (await tile2(page, 'CO2')) > 20 ? run + 1 : 0; await page.waitForTimeout(250); }
+      return W2(page);
+    };
+    const mark = (m: string) => page.evaluate((x) => (window as Any).__rec.push(`>> ${x}`), m);
+    await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+    await page.evaluate(() => (location.hash = '#/vent'));
+    await at(30);
+    const b = Math.ceil(await ventilating());
+    await at(b);
+    await page.evaluate(() => (window as Any).__pmeApp.link.send({ type: 'scenario', action: 'bookmark', target: 'vent' }));
+    await mark(`bookmark b=${b}`);
+    const first = [await at(b + 40), await at(b + 70)];
+    await page.evaluate(() => (window as Any).__pmeApp.link.send({ type: 'scenario', action: 'restoreBookmark', target: 'vent' }));
+    await mark('restore');
+    const v2 = await ventilating();
+    await mark(`ventilating again at ${v2.toFixed(1)}`);
+    const again = [await at(b + 40), await at(b + 70)];
+    let ok = true;
+    for (let i = 0; i < 2; i++) ok &&= Math.abs((again[i]?.spo2 ?? 0) - (first[i]?.spo2 ?? 0)) <= 3 && Math.abs((again[i]?.co2 ?? 0) - (first[i]?.co2 ?? 0)) <= 4;
+    console.log(`FX1 EXACT rep=${rep} ok=${ok} ${JSON.stringify({ b, first, again, v2 })}`);
+    if (!ok) console.log((await page.evaluate(() => (window as Any).__rec as string[])).map((l) => `FX1 EXACT rep=${rep} | ${l}`).join('\n'));
+    expect(ok, 'replay within the bands').toBe(true);
   });
 }
