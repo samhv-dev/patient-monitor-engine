@@ -57,6 +57,7 @@ const BEAT_TOLERANCE_S = 0.001; // same build ⇒ identical times; anything abov
 const MAX_EXTRAPOLATE_S = 3; // stop running ahead of a silent host after this long [ENG]
 const TICK_S = 0.02;
 const HELLO_AGAIN_MS = 3000; // FX-2: no snapshot this long after a hello — say it again (a message lost on the way) [ENG]
+const HELLO_AGAIN_MAX_MS = 24_000; // …doubling each time up to this, so phones waiting on a slow host do not snowball [ENG]
 
 export class ViewerSync {
   readonly peerId: string;
@@ -79,6 +80,7 @@ export class ViewerSync {
   private readonly offs: Array<() => void>;
   private awaiting = false;
   private helloAt = -Infinity; // FX-2: wall ms of the last hello
+  private helloWaitMs = HELLO_AGAIN_MS; // FX-2: how long the next hello waits for its snapshot
   private replays: Command[] = [];
   private early: Command[] = [];
   private anchor: { simT: number; wallMs: number } | null = null;
@@ -114,7 +116,10 @@ export class ViewerSync {
   /** Call once per animation frame, before the monitor draws: steers the local clock onto the host's. */
   follow(): void {
     const t = this.o.target;
-    if (this.awaiting && this.now() - this.helloAt > HELLO_AGAIN_MS) this.hello(); // FX-2
+    if (this.awaiting && this.now() - this.helloAt > this.helloWaitMs) {
+      this.helloWaitMs = Math.min(2 * this.helloWaitMs, HELLO_AGAIN_MAX_MS); // FX-2
+      this.hello();
+    }
     if (this.status !== 'synced' || !this.anchor) return t.setPaused(true);
     if (this.hostPaused || this.hostFastForward) return t.setPaused(true);
     const since = (this.now() - this.anchor.wallMs) / 1000;
@@ -147,6 +152,7 @@ export class ViewerSync {
     if (newTimeline) this.anchor = null;
     if (this.status === 'synced') this.resyncs++;
     this.awaiting = true;
+    this.helloWaitMs = HELLO_AGAIN_MS;
     this.replays = [];
     this.early = [];
     if (this.status !== 'incompatible') this.status = 'waiting';
