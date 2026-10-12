@@ -16,7 +16,8 @@ test('the Ventilator view takes a speed change made after it opened (D3)', async
   await openApp(page, base, '#/vent', { warmMs: 1000 });
   const frame = page.frameLocator('iframe.vent');
   await frame.locator('body').waitFor();
-  const scale = () => page.frames().find((fr) => fr.url().includes('vent-hamilton'))?.evaluate(() => (window as unknown as { __vent: { scale: number } }).__vent.scale);
+  // FX-1: undefined until the cockpit's module has set __vent (its <body> comes first), instead of a throw that ends the poll
+  const scale = () => page.frames().find((fr) => fr.url().includes('vent-hamilton'))?.evaluate(() => (window as unknown as { __vent?: { scale: number } }).__vent?.scale);
   await expect.poll(scale, { timeout: 10_000 }).toBe(1);
   await page.evaluate(() => (location.hash = '#/teach'));
   await speed(page, '×4');

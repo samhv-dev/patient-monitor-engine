@@ -1,7 +1,8 @@
 // The window link (R27 second transport): the ventilator in its own window/iframe, the monitor elsewhere in the
 // same browser. A tiny versioned message set over a `LinkPort` — BroadcastChannel `pme-vent/<session>` across
 // windows, or a local pair in one page. It deliberately does NOT go through the controller's HostSession (roles,
-// auth, samples guard): the ventilator is a device on the host, not a controller.
+// auth, samples guard): the ventilator is a device on the host, not a controller. FX-1: the app's own cockpit iframe
+// uses `createFramePort` (direct same-origin delivery) instead of BroadcastChannel.
 //   vent → monitor: { kind: 'cmds' }      the linkTick commands of ventilator tick `tick` (frame, shunt, airway);
 //                                         the monitor side stamps them `atTick` so bursts replay on their own ticks
 //   monitor → vent: { kind: 'lungState' } every lungState event of the engine
@@ -50,6 +51,50 @@ export function createBroadcastPort(session: string, Impl: new (name: string) =>
     close() {
       fns.clear();
       ch.close();
+    },
+  };
+}
+
+/** The property of a window under which `createFramePort` keeps its receivers, by channel name. */
+export const FRAME_PORT_KEY = '__pmeVentRx';
+type Receivers = Record<string, (m: unknown) => void>;
+
+/**
+ * FX-1: a port between a page and the same-origin iframe it embeds that never waits on the receiving document's own
+ * task queue. Each side keeps its receiver on its window (`FRAME_PORT_KEY`); a post clones the message and hands it to
+ * the peer's receiver in a microtask of the POSTING side. On CI's Linux WebKit, messages to the cockpit iframe — over
+ * BroadcastChannel and over window.postMessage alike — were held for seconds or never delivered once the Ventilator
+ * view was hidden (PR #58 diagnostic runs 38203086536, 38207874736): a speed change was lost, and without `clock`
+ * messages the cockpit stopped at its last limit. `peer()` is read at every post (an iframe's contentWindow outlives its
+ * documents); a post before the peer's receiver exists is dropped, as a BroadcastChannel post before the peer opened it.
+ */
+export function createFramePort(session: string, peer: () => object | null | undefined, self: object = globalThis): LinkPort {
+  const ch = linkChannelName(session);
+  const fns = new Set<(m: LinkMsg) => void>();
+  const own = ((self as { [FRAME_PORT_KEY]?: Receivers })[FRAME_PORT_KEY] ??= {});
+  const receive = (d: unknown) => {
+    if (isMsg(d)) for (const fn of [...fns]) fn(d);
+  };
+  own[ch] = receive;
+  return {
+    post(m) {
+      let rx: ((m: unknown) => void) | undefined;
+      try {
+        rx = (peer() as { [FRAME_PORT_KEY]?: Receivers } | null | undefined)?.[FRAME_PORT_KEY]?.[ch];
+      } catch {
+        return; // a cross-origin peer (never the app's own cockpit): nothing to deliver to
+      }
+      if (typeof rx !== 'function') return;
+      const copy = structuredClone(m);
+      queueMicrotask(() => rx(copy));
+    },
+    onMessage(fn) {
+      fns.add(fn);
+      return () => fns.delete(fn);
+    },
+    close() {
+      fns.clear();
+      if (own[ch] === receive) delete own[ch];
     },
   };
 }
@@ -108,7 +153,7 @@ export type LinkDetach = (() => void) & {
  * Monitor side: dispatch the ventilator's commands on the engine tick that matches the ventilator tick (so a burst
  * of frames from one animation frame, or a ×10 time scale, replays at 50 Hz sim time), forward lungState, apply
  * time messages, and publish the engine's clock. The tick offset is learnt from the first (unstamped) dispatch
- * result — which is the engine's current tick + 1 — and only ever grows by the lateness the engine reports; a
+ * result — which is the engine's current tick + 1 — and only ever grows, to what the latest late frame needed; a
  * ventilator restart (its tick goes backwards) relearns it. Returns a detach function.
  */
 export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): LinkDetach {
@@ -163,7 +208,13 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
             learning = false;
             engTick = Math.max(engTick, r.tick - 1);
             publishClock();
-          } else if (at !== undefined && r.tick > at) offset = (offset ?? 0) + r.tick - at;
+          } else if (at !== undefined && r.tick > at) {
+            // FX-1: the offset this frame needed, not the current offset plus its lateness. A burst of late frames is
+            // stamped with one offset, and adding each frame's lateness moved it once per frame (40 frames 35 ticks late:
+            // 14 s); the clock limit then held the cockpit until the engine's 5 s drive watchdog declared apnoea. For a
+            // single late frame the two rules agree.
+            offset = Math.max(offset ?? 0, r.tick - m.tick);
+          }
         }, (err: unknown) => failed(err instanceof Error ? err.message : String(err)));
       }
       w?.done();
@@ -186,6 +237,13 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
       learning = false;
       gen++;
       engTick = Math.floor(e.after / 0.02 + 1e-6);
+      // FX-1: the offset is relearnt from the next frame, but a cockpit already at its clock limit sends none (common on a
+      // slow runner: CI WebKit's cockpit froze at its limit after "Return here" and the 5 s watchdog declared apnoea).
+      // Let it run 2·LEAD_TICKS past its last frame, as before its first clock; those frames probe the new offset.
+      if (lastTick >= 0) {
+        allowed = lastTick + 2 * LEAD_TICKS;
+        port.post({ v: 1, kind: 'clock', ventTick: allowed });
+      }
       publishClock();
       return;
     }

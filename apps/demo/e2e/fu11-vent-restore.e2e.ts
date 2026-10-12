@@ -33,11 +33,14 @@ const at = async (p: Page, t: number) => {
   return { spo2: await tile(p, 'SpO2'), co2: await tile(p, 'CO2') };
 };
 
+// FX-1: the CI WebKit drop-outs (EtCO2 0 or 14 mid-replay, the old fallback skip) were product defects in the link, now
+// fixed: messages to the cockpit iframe held for seconds (a direct frame port now), a burst of late frames moving the
+// offset once per frame, and a restore that left a cockpit sitting at its clock limit without a clock for good. Runs on
+// WebKit locally and on CI Chromium. On CI's Linux WebKit only it stays skipped, for a different reason: there the page
+// itself crashed in 3–7 of 18 runs of this flow soon after "Return here" (PR #58 runs 38212560444, 38214428810; also
+// before FX-1, run 38203086536), so a first-attempt pass cannot be had there. That crash is finding F-FX1-1.
 test('after "Return here" on the Ventilator view the replayed minute matches the first one', async ({ page, browserName }) => {
-  // Orchestrator FALLBACK ruling (fix-ci-webkit-2): on CI's headless WebKit the ×4 cockpit passed the precondition but then
-  // dropped out mid-replay (EtCO2 0 or 14 where the first pass read 32-42), so the replay band failed 3/3 on stage-11.
-  // Chromium in CI and system Chrome locally cover it, as for vent-link.e2e.ts.
-  test.skip(browserName === 'webkit', 'long ×4 sim scenario too slow on headless WebKit');
+  test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-1 finding F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow');
   test.setTimeout(180_000);
   await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });
   await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();

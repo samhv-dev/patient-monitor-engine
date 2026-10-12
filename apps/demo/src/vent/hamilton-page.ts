@@ -1,13 +1,15 @@
 // vent-hamilton.html: the ventilator alone (no ?link) or linked to a monitor in another window/iframe
-// (?link=<session>[&profile=<id>]) over BroadcastChannel `pme-vent/<session>`.
-import { createBroadcastPort, createVentDriver, monitorMatchedFlow, PROFILES, type ProfileId } from '@pme/ventilator';
+// (?link=<session>[&profile=<id>]) over BroadcastChannel `pme-vent/<session>`, or over a direct frame port with its
+// parent page (`&via=parent`, the app's Ventilator view: FX-1).
+import { createBroadcastPort, createFramePort, createVentDriver, monitorMatchedFlow, PROFILES, type ProfileId } from '@pme/ventilator';
 import { mountHamiltonUi } from './hamilton-ui.ts';
 
 const q = new URLSearchParams(location.search);
 const session = q.get('link');
 const pid = q.get('profile');
 const profile: ProfileId = pid && pid in PROFILES ? (pid as ProfileId) : 'normal';
-const port = session ? createBroadcastPort(session) : null;
+// FX-1: embedded by the app's Ventilator view (`&via=parent`), the link is a direct frame port with the parent page
+const port = session ? (q.get('via') === 'parent' && parent !== window ? createFramePort(session, () => parent) : createBroadcastPort(session)) : null;
 const driver = createVentDriver(port, profile);
 if (port) {
   // FU-11 (H5): linked to the monitor, VC runs at the monitor ventilator's flow for the set VT and rate (I:E 1:2, no
