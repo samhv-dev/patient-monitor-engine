@@ -131,11 +131,15 @@ The dry run and both gate fixes (§4) were accepted and stay.
    scenario panel and none of this branch's files. The fixer receives the diagnosis and the `notTaken` evidence
    (`docs/gates/stage-10/s10-cards/malignant-hyperthermia-x8-and-fast-forward-webkit.json`).
 2. **Task 6 anchor reset** (both sim time and wall time, §2): accepted as built.
-3. **Alarm PAUSE vs a higher-priority alarm — a known design choice for rc.1, no code change.** As built, a pause silences
-   alarms for its duration and a new alarm raised during it is visual only, as on Philips monitors. The alternative,
-   GE-style (a new higher-priority alarm breaks the pause, as FU-11 B4 already does for SILENCE), is listed as a **v1.0
-   polish item**. Stage 10 neither changes nor undoes this: the alarm voice it rebuilds after a span takes the pause and
-   the silence from the engine's status.
+3. **Alarm PAUSE vs a higher-priority alarm — ruling WITHDRAWN (kit round, 2026-10-12).** This item first said a pause
+   holds through a new alarm for rc.1 (Philips-style) and that breaking it was v1.0 polish. That was wrong: the owner had
+   already ruled on 7 October that a higher-priority alarm ends a timed alarm PAUSE as it ends a silence
+   (`research/25-owner-questions-2026-10-07.md` D1), and `docs/gates/fu-11-d.md` G3 records that rule as BUILT on main for
+   every skin with a pause (a condition above the pause's level ends it and is raised at once; same or lower priority
+   waits). Stage 10 neither changes nor undoes it: the alarm voice it rebuilds after a span takes the pause and the silence
+   from the engine's status. For skins WITHOUT a pause (the default Saadat-style: its manual's Audio Pause has no
+   function), see FX-4 (PR #59): the Pause control is disabled with its reason, Silence mutes for 120 s, and every refused
+   alarm action is said in a toast.
 4. **WebKit blur in screenshots** (§6): accepted as a capture limit. The owner checks the look in real Safari (hand check
    **H18**).
 
@@ -154,7 +158,8 @@ The dry run and both gate fixes (§4) were accepted and stay.
 2. **Two Stage 10 defects fixed at this gate** (§4) — the plan's tests did not catch them; both now have a test.
 3. **Task 6's fix resets the anchor's time as well as its wall time** (§2) — a small widening of the brief's wording.
 4. **Left from the plan:** alarm PAUSE vs a higher-priority alarm (FU-11's B4 covers SILENCE only; Stage 10 neither changes
-   nor undoes it); the owner's sign-off on the look (screenshots above).
+   nor undoes it; since settled: FU-11 d G3 built the owner's D1 rule, see §7 item 3); the owner's sign-off on the look
+   (screenshots above).
 5. **To finish once FU-11 d is on main:** done — §9. (Item 1 was fixed on main by #51, merged here.)
 
 ## 9. After FU-11 (d) reached main (2026-10-11, load ≈ 2)
