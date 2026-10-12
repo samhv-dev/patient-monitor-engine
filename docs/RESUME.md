@@ -1,45 +1,55 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-09-28 14:54 (after the 11th cap: FU-4 executor resumed at Task 16; FU-5 + FU-6 fixers; FU-7 review; cap 4).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-12 (kit round part A;
+main b8c9c04a).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
-- Rulings (binding decisions R1–R28 + gate verdicts): `../research/00-orchestrator-rulings.md` (workspace, not in this repo).
-- Spec: `docs/DESIGN-BRIEF.md`. Roadmap: `docs/BUILD-PLAN.md`. Per-stage task plans: `docs/plans/stage-*.md` (writing-plans format, checkboxes ticked as tasks complete). Gate evidence: `docs/gates/stage-*.md`.
-- Each executing stage works in its OWN git worktree: `../scratch/wt-stage-<N>/` on branch `stage-<N>-<name>`; the ticked plan is committed in that branch.
-- pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright uses installed Chrome: `PW_SYSTEM_CHROME=1`.
+- Rulings (binding decisions, gate verdicts, the live-agent ids): `../research/00-orchestrator-rulings.md` (workspace, not in this repo). The owner's open decisions: `../research/31-owner-decisions-2026-10-12.md`.
+- Spec: `docs/DESIGN-BRIEF.md`. Roadmap: `docs/roadmap/` (v1.0, v1.x, v2.0). Per-stage task plans: `docs/plans/stage-*.md`. Gate evidence: `docs/gates/*.md`.
+- Each executing stage works in its OWN git worktree: `../scratch/wt-<name>/` on its own branch; the ticked plan is committed in that branch.
+- pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright's own Chromium and WebKit are installed.
+- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-b8c9c04a/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`).
 
-## Stage status table (edit at every gate)
-| Stage | Branch / PR | State | Next action |
-|---|---|---|---|
-| 0, 1, 1.1, 6a, 5, 4a, 6b, 2, 3, 4b, 5.1, V, 3.1, FU-1, 7a, 7b, 7g, 7x, FU-2, 7c, 8a, 7f | merged to main | DONE (7a #13; 7b #14; 7g #15; 7x #16; FU-2 #17; 7c #20; 8a #18; 7f #21) | — |
-| 7d brain/kidney/liver | MERGED 2026-09-27 19:02 (PR #19, head 9075aff; CI amendment 4: per-minute yields in hemo-longrun + engine-pipeline) | G7d + follow-throughs 1–4 in the rulings file | done |
-| 7e endocrine/thermal | MERGED 2026-09-27 20:55 (PR #22, head 1d6f5a7) | G7e + four rulings in the rulings file; child-rig defect handed to V.1; FU-4 list opened | done |
-| FU-1 follow-ups | PR #12 merged | DONE (G-FU1) | FU-2 candidates: rhythm in `state` event; saadat 8 s HR averaging mapping |
-| FU-3 follow-ups | MERGED 2026-09-27 23:36 (PR #23, head 26f5290) | G-FU3 + seven rulings in the rulings file (t25 ventilated → FU-4; escape-pacemaker hypoxia → FU-4 G7; oracle MODELED) | done |
-| Coverage audits (R54) | inventory + glossary (294 entries; 40 % of labels non-clinical) + matrix (837 cells; 201 measured; 636 new in 10 runs; 181 blocked) DONE → `../research/11-…`, `12-…`; run 1 DRUG INTERACTIONS DONE (105 cells: 42 plausible / 53 not / 10 blocked; 37 new gaps → FU-7) → `../research/14-audit-drug-interactions.md`(→ `../research/14-audit-drug-interactions.md`) | next runs: blood/fluids → endocrine/thermal → neuro → renal/hepatic → comorbidity → devices → stimuli → paediatric → obstetric | each run → FU-7+ plan items |
-| 7i labs & coagulation (R58) | DEFERRED to v1.1 (R60, Ali) | CBC, chemistry, ABG/VBG, coagulation model, TEG/ROTEM panels, labs UI | plan after FU-6 |
-| 7k respiratory mechanics & volumes (R57) | not started | Ppeak/Pplat/PEEP/driving/transpulmonary, compliance/resistance, VD set, FRC/ERV/RV/TLC/VC/IC, FEV1/FVC; Ventilation panel; PFT device later | plan after FU-6 |
-| 7j obstetric physiology (R59) | DEFERRED to v1.1 (R60, Ali) | term-pregnancy physiology, fetus + CTG device, uterotonics, pre-eclampsia, PPH, AFE | plan after 7i |
-| Stage 9 clinical UI + naming (R55, R56) | MERGED 2026-10-04 08:40 (PR #29, b86aa8a) incl. Task 26 (Acute events, five Showcase cases) | done — one app, instructor panel, glossary labels, Explore with 7k mechanics; playground updated; tamponade showcase case rehearsed on the playground | SHOWCASE Tuesday 2026-10-06: rehearse the other four cases; FU-11 items (restore, BroadcastChannel pairing on WebKit, renderer first-samples line)
-| 8b release + IIFE embed | plan FIXED 23:16 (3,749 lines, 43 unique blocks; licence texts in every dist; fresh validate report in Task 12) — READY; executor after FU-3 + FU-4 + V.1 merge; Ali: Q1 npm?, Q2 @pme scope, Q3 Pages, Q5 Zenodo DOI, Q8 1.0.0 vs rc.1 | versions 1.0.0, IIFE build + ventilator-sim embed, TypeDoc, guides, physiology overview, README/CITATION/CONTRIBUTING, NOTICES audit, release workflow; orchestrator tags v1.0.0 after 7e + FU-3 + V.1 merge | R50 review → executor after V.1 lands |
-| FU-4 integration polish (R53) | MERGED 2026-09-29 15:20 (PR #25, e81e53f) | done — emergent arrest (tamponade PEA, class IV, tension PTX, K, MH hazard), CPR on volume + PEA decay, humoral arm withdrawn in arrest, vagal events, dead-space root, clinical scenario suite; 39 FU-4 it.fails | FU-5 follow-up list F1–F6; calibration queue items
-| Audits (R53) | haemodynamic → `../research/08-physiology-integration-audit.md` DONE (→ FU-4); monitor-fidelity → `../research/10-monitor-fidelity-audit.md` DONE (→ FU-5); respiratory → `../research/09-respiratory-integration-audit.md` DONE (R1 → FU-4 G11; R2–R15 → FU-6) | all three audits done | — |
-| FU-5 monitor fidelity (parallel with FU-4) | MERGED 2026-09-29 12:40 (PR #24, 16cdf79) | done — SpO2 honesty at low flow, one apnoea one alarm, latched never suppresses, vendor on-delay, NIBP at narrow PP, per-skin tiles | FU-5 follow-ups: PI spike on motion end, CVP −1 row (calibration queue)
-| FU-6 respiratory integration | MERGED 2026-09-30 (PR #28, 176f702) | done — bronchodilation, induction apnoea, anaesthetised lungs, capnograph physics, viscosity (fading at low flow), pulseless effort withdrawal | 10-min VF CPR rig needs ventilation (FU-8 Part B); RS1 GA default ventilation → Ali
-| FU-7 drug-layer integration (7g) | Tasks 0–19 committed in the cloud (head 8454221); gate left incomplete (no PR, 68 commits behind main); LOCAL FINISHER running since 2026-10-04 09:00 (completeness audit → merge main → gate → PR) | onset curves, one hypnotic/opioid potency output, β-blockade state, stimulus surge, antiarrhythmic/shock probabilities, LAST additive, Mg/Ca/burn unified, second-gas, histamine, inert entries | R50 review → executor after FU-6 merges |
-| V.1 ventilator follow-up | MERGED 2026-09-29 15:55 (PR #26, ed530d5; executed in the CLOUD) | G7b rulings 4+5+13: absolute lungState + link profiles carry lungConditions + retire interim link shunt/recruit; ventilator sees pPtx/pleural pressure; regenerate stage-v-lung-pathology-data.md; oedema link test → SpO2/PCWP; tension-ptx plateau calibration row | calibration rows added; open items routed to FU-8 (A22, A28, A29) and 8b
-| Stage 7k respiratory mechanics & volumes (R57) | MERGED 2026-10-04 (PR #30, 0eed975) | Ppeak/Pplat/auto-PEEP/ΔP/PL, Cstat/Cdyn/R, VD set + Enghoff, FRC/ERV/RV/TLC/VC/IC, FEV1/FVC model; Ventilation panel; glossary keys | Q-7k-1/2/5/6 for Ali; truth tree 2,075 of 2,100 leaves
-| FU-8 follow-ups (loose ends) | Part A MERGED 2026-09-30 (PR #27); Part B ready, after FU-7 (C1 gated on Ali A23) | FU-5 follow-ups F1–F6, A10-E5, R-FU5-9, R-S9-1/2/4/6, review-pack defects (insulin units, route, max dose, amiodarone claim, VT 170 pulse, agonal rate, 12-lead in arrest, oliguria, neonatal profile) | two PRs: Part A (incl. AF fix, arrest state for every pulseless state — FU-7 needs both) before FU-7; Part B after FU-7
-| Coverage runs (R54) | DI, CM, BF, DV, RH, ET, SP, NN (research/15, recovered from the session branch) DONE; remaining PD (OB v1.1) | remaining: RH, ET, NN, DV, SP, PD, OB | idle slots / cloud |
-| FU-9 blood, fluids & acid–base | Parts A and C: PR #31 approved; executor merging main (Stage 9) + glossary labels + re-verify; merge on green CI | BF F1–F11: volume excretion, profile K⁺ → ECG, SvO2 in haemorrhage, citrate SID, renal K⁺, chronic compensation, COP, alkalosis compensation | R50 review → fixer → executor (Part A now / Part B after FU-7) |
-| FU-10 endocrine & thermal | plan FIXED and READY 2026-10-04 (2,674 lines; 0 block problems on main with 7k); executor after the showcase and after FU-9 merges (slow-c) | ET E1–E13: MH from its triggers, MH heat O2-limited, neuraxial thermoregulation, cold sympathetic response, DKA/insulin deficiency, hypoglycaemia masking, fever under GA, adrenal/thyroid profiles, etomidate cortisol | R50 review → fixer → executor |
-| FU-11 engineering hardening (external review) | 26 findings filed (`../research/16-external-review-chatgpt.md`); a second external browser-integration audit is running; plan to be written when it reports | restore timeline, worker/transport/audio lifecycle, command validation, relay, scenario alternatives, modifier ramps, validation honesty, p99 gate | plan → R50 review → executor BEFORE Stage 9 (packages 3–5) and before 8b (packages 1, 2, 8) |
-| 8 validation/release | not started | waits for all | write plan |
-| Ali's review pack (questions + capability inventory + parameter tables + 12-lead strips) | pack DELIVERED 2026-09-28 (290 pp) + ADDENDUM DELIVERED 2026-09-30 (31 pp, 55 new questions; urgent A23, F11, D14, E4, E5) | every open Ali item with stable IDs; his answers by ID → rulings | apply his answers by ID as rulings; triage the writer's 20 findings (rulings 22:20)
+## State on 2026-10-12 (main b8c9c04a)
 
-## Live state (2026-10-05 01:15)
-Main `73f9c6d4`: FU-7, FU-9 Part B, FU-10 Part A merged (seven slow CI groups slow-a..g). SHOWCASE BUILD = `4a1cc3f7` (hotfix + FU-7): kit `_sandbox/pme-showcase/`, hosted https://samhv-dev.github.io/patient-monitor-engine/, videos and presenter documents (`_sandbox/pme-showcase-docs/`) are all on it. ONE final kit round Monday 2026-10-05 ≈ 13:00 on main as merged then (resume the kit agent, then the presenter-docs agent, by message; ids in `../research/00-orchestrator-rulings.md`); if any case fails or time is short the showcase build stays `4a1cc3f7`. Freeze 18:00. Open: PR #40 FU-8 Part B (approved; executor reconciling with main; merge on green CI — it changes the induction and tamponade showcase numbers). BUDGET RULE: keep ≥ 10 % of the weekly allowance (ceiling 90 %; check usage at every wake; nothing new before the showcase). STOPPED, resume by message after the showcase: FU-11 plan fixer (R50 review in `../scratch/plans-backup/fu-11-review.md`). Post-showcase queue: FU-11 hardening, FU-7.1, FU-12 autonomic reflexes (`../research/23-cardiac-reflexes.md`), FU-10 Part B, calibration, 8b. Local cap 4.
+**v1.0 feature work is merged.** Everything up to FU-11 and the five showcase-2 stages is on main:
+
+| Stage | PR | State |
+|---|---|---|
+| FU-11 d (second-screen follower, alarm pause rule G3) | #49 | merged |
+| Stage 10 time control (×8, 2- and 5-min fast-forward) | #54 | merged |
+| Stage 11 showcase cards (six Showcase cards + bronchospasm) | #48 | merged |
+| Stage 12 learners' phones over the classroom relay | #57 | merged; gate step 4 PENDING-OWNER (H17, H21) |
+| Stage 13 Debrief report (print to PDF) | #60 | merged; print check PENDING-OWNER |
+
+**Fixer round** (branches from main): FX-1 Ventilator view after restore / speed change on WebKit — **PR #58 open** (green; an
+independent review before merge). Merged: FX-2 follower exactness and no silent command hang (#61), FX-4 alarm controls
+follow the skin (#59), FX-7 the scenario library stays open (#56). Closed as test fixes: FX-3, FX-5, FX-6.
+
+**CI reshaped** (#55, `docs/gates/ci-webkit-3.md`): one `renderer` job builds the IIFE once; e2e is a per-browser matrix
+(`e2e (chromium)`, `e2e (webkit)`) beside the unit and the nine `test-slow` groups; JSON reports are kept as artefacts;
+retry-only passes are printed (not failing). CI-only WebKit skips name their finding. Known-flaky candidates for
+Stage 14's list are in the rulings log.
+
+**Open PRs:** #58 FX-1; #53 showcase-2 run sheet + presenter guide (held for the owner; part B of the kit round revises
+it); the kit round part A PR (measurements in `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`).
+
+**Pending with the owner (by id, `../research/31-owner-decisions-2026-10-12.md`):**
+- Decisions: **E17** the run sheet vs the Debrief's "not met" objectives; **E18** publish the target audit in the repo;
+  **E19** MH called at early signs, adrenaline at ≈ 1:30, the slot length; **E20** the skin on the day (Saadat-style,
+  Silence only, or Philips-style with a 120 s pause); still open from earlier: **E13** presenting Mac and Node,
+  **E14** network, **E15** phones or Debrief if short, **E16** reflex fix in v1.0, **A48** pulsus paradoxus go/no-go.
+- Hand checks: **H17** own phone through the six cards, **H18** fast-forward look in real Safari, **H19** hidden-tab
+  watchdog, **H20** second screen in real Safari within 5 s, **H21** bronchospasm with the Ventilator view and a phone
+  following; the Stage 13 print preview in Safari and Chrome.
+
+**Dates.** Freeze **2026-10-19**; then **v1.0.0-rc.1** (Stage 8b release, plan refreshed; the on-screen version still
+reads 0.0.0 until then). Showcase 2 on **2026-10-22** (slack to the 25th). After the rc: Stage 14 (clean-up; plan
+REVIEWED-FIXED), the calibration pass (bands first, `../research/30-parts/`), v1.x maintenance; v2.0 in specification.
+
+**Next actions:** FX-1 review → merge on a green main; kit round part B (run sheet revision) once E17–E20 are answered
+and FX-1 is merged; the owner's hand checks before the freeze.
 
 ## After a usage-cap kill
 First try `SendMessage` to each stopped agent's id ("the cap has reset; continue exactly where you stopped; confirm the worktree state first") — the harness resumes it with its context intact (worked 2026-09-29 01:25). Only if that fails, relaunch a fresh agent from the pushed state with the brief below.
