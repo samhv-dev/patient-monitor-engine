@@ -82,7 +82,7 @@ describe('FX-2: a command always gets a reply or a timeout refusal', () => {
 const flushIo = () => new Promise((r) => setTimeout(r, 0));
 
 /** Host + in-process hub + controller + viewer on one fake wall clock (20 ms frames); the viewer's link is `vt`. */
-async function rig(o: { dropFirstHello?: boolean } = {}) {
+async function rig(o: { dropFirstHello?: boolean; dropHellos?: boolean } = {}) {
   const clock = { wall: 1_000_000 };
   const wallNow = () => clock.wall;
   const h = manualHost();
@@ -94,13 +94,13 @@ async function rig(o: { dropFirstHello?: boolean } = {}) {
   const v = manualViewer();
   const vt = hub.connect();
   let hellos = 0;
-  const viewerLink: ManagedTransport = !o.dropFirstHello
+  const viewerLink: ManagedTransport = !o.dropFirstHello && !o.dropHellos
     ? vt
     : (new Proxy(vt, {
         get(target, key, recv) {
           if (key !== 'send') return Reflect.get(target, key, recv) as unknown;
           return (m: WireMessage) => {
-            if (m.kind === 'hello' && hellos++ === 0) return; // lost on the way (Playwright Linux WebKit, F-49-2)
+            if (m.kind === 'hello' && (hellos++ === 0 || o.dropHellos)) return; // lost on the way (Playwright Linux WebKit, F-49-2)
             target.send(m);
           };
         },
@@ -127,6 +127,14 @@ describe('FX-2: the follower', () => {
     await r.run(5);
     expect(r.hellos()).toBeGreaterThanOrEqual(2);
     expect(r.sync.status).toBe('synced');
+    r.close();
+  });
+
+  it('backs off while nothing answers (3, 6, 12 s…), so a room of phones waiting on a slow host does not snowball', async () => {
+    const r = await rig({ dropHellos: true });
+    await r.run(20);
+    expect(r.sync.status).toBe('waiting');
+    expect(r.hellos()).toBe(3); // at 0, 3 and 9 s (the next would be at 21 s; every 3 s it was 7)
     r.close();
   });
 
