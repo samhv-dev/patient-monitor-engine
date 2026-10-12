@@ -15,6 +15,7 @@ const BUSY = Number(process.env.FX1_BUSY ?? 0);
 
 async function instrument(page: Page): Promise<void> {
   if (BUSY) await page.addInitScript((b) => { setInterval(() => { const e = performance.now() + b; while (performance.now() < e); }, 50); }, BUSY);
+  if (process.env.FX1_IFR_RAF_MS) await page.addInitScript((ms) => ((window as Any).__fx1IfrRafMs = ms), Number(process.env.FX1_IFR_RAF_MS));
   await page.addInitScript(() => {
     const w = window as Any;
     const top0 = (() => { try { return window.top as Any; } catch { return null; } })();
@@ -24,21 +25,24 @@ async function instrument(page: Page): Promise<void> {
     const L = (s: string) => { const root = (window.top as Any) ?? w; (root.__fx1 = root.__fx1 || []).push(`${Date.now() - T0} [${window === window.top ? 'top' : 'ifr'} ${location.pathname.split('/').pop()}] ${s}`); };
     w.__fx1L = L;
     const c = (w.__fx1c = { msgs: {} as Record<string, number>, lastClock: -1, lastTime: '', raf: 0, gapMax: 0, lastRaf: 0 });
+    const count = (d: Any, via: string) => {
+      if (!d || typeof d.kind !== 'string') return;
+      c.msgs[d.kind] = (c.msgs[d.kind] ?? 0) + 1;
+      if (d.kind === 'clock') c.lastClock = d.ventTick;
+      if (d.kind === 'time' || d.kind === 'control') { c.lastTime = JSON.stringify(d); L(`recv(${via}) ${JSON.stringify(d)}`); }
+    };
     const BC = window.BroadcastChannel;
     window.BroadcastChannel = class extends BC {
       constructor(n: string) {
         super(n);
         L(`BroadcastChannel ${n}`);
-        this.addEventListener('message', (e: MessageEvent) => {
-          const d = e.data;
-          if (!d || typeof d.kind !== 'string') return;
-          c.msgs[d.kind] = (c.msgs[d.kind] ?? 0) + 1;
-          if (d.kind === 'clock') c.lastClock = d.ventTick;
-          if (d.kind === 'time' || d.kind === 'control') { c.lastTime = JSON.stringify(d); L(`recv ${JSON.stringify(d)}`); }
-        });
+        this.addEventListener('message', (e: MessageEvent) => count(e.data, 'bc'));
       }
     } as Any;
-    const raf = window.requestAnimationFrame.bind(window);
+    addEventListener('message', (e: MessageEvent) => { if (e.data && typeof e.data.ch === 'string') count(e.data.m, 'win'); });
+    const raf0 = window.requestAnimationFrame.bind(window);
+    const slow = Number((window as Any).__fx1IfrRafMs ?? 0);
+    const raf = window !== window.top && slow ? (cb: FrameRequestCallback) => setTimeout(() => raf0(cb), slow) as unknown as number : raf0;
     window.requestAnimationFrame = (cb) => raf((ts) => { c.raf++; const n = performance.now(); if (c.lastRaf) c.gapMax = Math.max(c.gapMax, n - c.lastRaf); c.lastRaf = n; cb(ts); });
     addEventListener('load', () => L('load'));
     document.addEventListener('visibilitychange', () => L(`visibility ${document.visibilityState}`));

@@ -9,6 +9,14 @@ import { createLinkCore, linkEvent, linkTick, patchVent, LINK_TICK_S, type LinkC
 import { LEAD_TICKS, type LinkPort } from './port.ts';
 import { PROFILES, type ProfileId } from './profiles.ts';
 
+/**
+ * FX-1: the longest animation frame a LINKED ventilator counts in full (wall s). Free-running it keeps v1.9's 0.1 s; linked,
+ * the engine's `clock` already bounds it (never more than MAX_AHEAD_TICKS ahead), and 0.1 s made a cockpit drawn at
+ * ≈ 5 frames/s (CI's Linux WebKit: 200–280 ms apart) run at half the session's speed — at ×4 it breathed for the patient
+ * at ×2, every frame late. Frames ≤ 0.1 s apart (any normal screen) step exactly as before.
+ */
+export const LINKED_MAX_FRAME_S = 0.5;
+
 export interface VentDriver {
   vs: VentState;
   core: LinkCore;
@@ -52,7 +60,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
     onStep: undefined,
     onControl: undefined,
     frame(nowMs: number) {
-      const dt = lastMs === null ? 0 : Math.min(0.1, (nowMs - lastMs) / 1000); // v1.9: clamp long frames
+      const dt = lastMs === null ? 0 : Math.min(port ? LINKED_MAX_FRAME_S : 0.1, (nowMs - lastMs) / 1000); // v1.9: clamp long frames
       lastMs = nowMs;
       if (d.paused) return;
       sim = Math.min(sim + dt * d.scale, allowed * LINK_TICK_S);

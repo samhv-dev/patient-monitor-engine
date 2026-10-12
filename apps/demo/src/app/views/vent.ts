@@ -1,7 +1,7 @@
 // Ventilator (research/13 §4.6): the Stage V cockpit beside THIS session's monitor, linked both ways over the Stage V
-// BroadcastChannel port. The cockpit keeps its own device look inside its frame (research/13 P13). It loads on first
+// link (window.postMessage with its own iframe since FX-1). The cockpit keeps its own device look inside its frame (research/13 P13). It loads on first
 // visit; the link re-attaches when the patient restarts (a new engine).
-import { attachMonitorToLink, createBroadcastPort } from '@pme/ventilator';
+import { attachMonitorToLink, createWindowPort } from '@pme/ventilator';
 import { parseRoute } from '../router.ts';
 import type { AppSession } from '../session.ts';
 import { h } from '../ui.ts';
@@ -17,7 +17,10 @@ export function ventView(session: AppSession): View {
       if (started) return;
       started = true;
       const link = `v${session.code.toLowerCase()}`;
-      const port = createBroadcastPort(link);
+      // FX-1: the link to this view's own iframe goes over window.postMessage, not BroadcastChannel (on CI's Linux WebKit its
+      // messages reached the cockpit seconds late or never: a speed change was lost, and without `clock` messages the
+      // cockpit stopped at its last limit, so the restored patient went apnoeic). `?via=parent` tells the cockpit.
+      const port = createWindowPort(link, () => frame.contentWindow);
       // FU-11 (R50 F10): a NEW patient (patient restart, scenario load) unloads the cockpit. It kept running with the
       // last case's settings and re-attached to every new monitor, so a case run after the Ventilator view had been
       // opened was ventilated by the old cockpit (haemorrhage: pulse lost 10:08 instead of 10:03). The next visit
@@ -55,7 +58,7 @@ export function ventView(session: AppSession): View {
       // FU-11 (D3, presenter rehearsal): the cockpit follows every later speed change too — opened at ×1 and then run at
       // ×4 it ventilated at a quarter of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal
       const offScale = session.onTimeScale((k) => port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
-      frame.src = `./vent-hamilton.html?link=${link}&profile=normal`;
+      frame.src = `./vent-hamilton.html?link=${link}&profile=normal&via=parent`;
     },
   };
   return view;

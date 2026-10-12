@@ -334,7 +334,8 @@ test('Bronchospasm with the Ventilator view: a 2-minute fast-forward ventilated 
     await page.evaluate((c) => {
       const w = window as unknown as { __cmds: number[] };
       w.__cmds = [];
-      new BroadcastChannel(`pme-vent/v${c.toLowerCase()}`).onmessage = (ev: MessageEvent<{ kind: string; tick: number }>) => void (ev.data?.kind === 'cmds' && w.__cmds.push(ev.data.tick));
+      // FX-1: the cockpit posts its frames to this page (window.postMessage), no longer on a BroadcastChannel
+      addEventListener('message', (ev: MessageEvent<{ ch?: string; m?: { kind: string; tick: number } }>) => void (ev.data?.ch === `pme-vent/v${c.toLowerCase()}` && ev.data.m?.kind === 'cmds' && w.__cmds.push(ev.data.m.tick)));
     }, code);
     await fastForward(r, page, 2, () => shot(page, `ff-panel-ventilator-${browserName}`), 3000, 'command');
     const ticks = await page.evaluate(() => (window as unknown as { __cmds: number[] }).__cmds);

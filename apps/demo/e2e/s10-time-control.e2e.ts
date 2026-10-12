@@ -121,7 +121,8 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   await page.evaluate((c) => {
     const w = window as unknown as { __cmds: number[] };
     w.__cmds = [];
-    new BroadcastChannel(`pme-vent/v${c.toLowerCase()}`).onmessage = (ev: MessageEvent<{ kind: string; tick: number }>) => void (ev.data?.kind === 'cmds' && w.__cmds.push(ev.data.tick));
+    // FX-1: the cockpit posts its frames to this page (window.postMessage), no longer on a BroadcastChannel
+    addEventListener('message', (ev: MessageEvent<{ ch?: string; m?: { kind: string; tick: number } }>) => void (ev.data?.ch === `pme-vent/v${c.toLowerCase()}` && ev.data.m?.kind === 'cmds' && w.__cmds.push(ev.data.m.tick)));
   }, code);
   const ack = await page.evaluate(() => (window as unknown as Win).__pmeApp.link.send({ type: 'time', action: 'jump', value: 120 }));
   expect(ack.accepted).toBe(true);
