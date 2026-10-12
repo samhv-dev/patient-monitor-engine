@@ -1,0 +1,119 @@
+// TEMPORARY FX-1 diagnostic (removed before review): what the Ventilator view's cockpit receives, and when, after a
+// speed change and after "Return here". Prints `FX1 …` lines; never fails on the measured values.
+import { test, type Page } from '@playwright/test';
+import type { ViteDevServer } from 'vite';
+import { openApp, startVite } from './stage9-support.ts';
+
+let vite: ViteDevServer;
+let base = '';
+test.beforeAll(async () => ({ vite, base } = await startVite()));
+test.afterAll(async () => vite?.close());
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Any = any;
+const BUSY = Number(process.env.FX1_BUSY ?? 0);
+
+async function instrument(page: Page): Promise<void> {
+  if (BUSY) await page.addInitScript((b) => { setInterval(() => { const e = performance.now() + b; while (performance.now() < e); }, 50); }, BUSY);
+  await page.addInitScript(() => {
+    const w = window as Any;
+    const top0 = (() => { try { return window.top as Any; } catch { return null; } })();
+    const T0 = (top0 && top0.__fx1T0) || Date.now();
+    w.__fx1T0 = T0;
+    w.__fx1 = w.__fx1 || [];
+    const L = (s: string) => { const root = (window.top as Any) ?? w; (root.__fx1 = root.__fx1 || []).push(`${Date.now() - T0} [${window === window.top ? 'top' : 'ifr'} ${location.pathname.split('/').pop()}] ${s}`); };
+    w.__fx1L = L;
+    const c = (w.__fx1c = { msgs: {} as Record<string, number>, lastClock: -1, lastTime: '', raf: 0, gapMax: 0, lastRaf: 0 });
+    const BC = window.BroadcastChannel;
+    window.BroadcastChannel = class extends BC {
+      constructor(n: string) {
+        super(n);
+        L(`BroadcastChannel ${n}`);
+        this.addEventListener('message', (e: MessageEvent) => {
+          const d = e.data;
+          if (!d || typeof d.kind !== 'string') return;
+          c.msgs[d.kind] = (c.msgs[d.kind] ?? 0) + 1;
+          if (d.kind === 'clock') c.lastClock = d.ventTick;
+          if (d.kind === 'time' || d.kind === 'control') { c.lastTime = JSON.stringify(d); L(`recv ${JSON.stringify(d)}`); }
+        });
+      }
+    } as Any;
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (cb) => raf((ts) => { c.raf++; const n = performance.now(); if (c.lastRaf) c.gapMax = Math.max(c.gapMax, n - c.lastRaf); c.lastRaf = n; cb(ts); });
+    addEventListener('load', () => L('load'));
+    document.addEventListener('visibilitychange', () => L(`visibility ${document.visibilityState}`));
+    L('document start');
+  });
+}
+
+const flush = async (page: Page, tag: string) => console.log((await page.evaluate(() => (window as Any).__fx1 as string[])).map((l) => `FX1 ${tag} ${l}`).join('\n'));
+const cockpit = (page: Page) => page.frames().find((fr) => fr.url().includes('vent-hamilton'));
+
+for (let rep = 0; rep < 6; rep++) {
+  test(`FX1 diag speed ${rep}`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await instrument(page);
+    await openApp(page, base, '#/vent', { warmMs: 1000 });
+    await page.evaluate(() => {
+      const w = window as Any;
+      const s = w.__pmeApp.session;
+      const orig = s.setTimeScale.bind(s);
+      s.setTimeScale = (k: number) => { w.__fx1L(`session.setTimeScale ${k}`); orig(k); };
+    });
+    await page.frameLocator('iframe.vent').locator('body').waitFor();
+    const scale = async () => (await cockpit(page)?.evaluate(() => (window as Any).__vent?.scale).catch(() => undefined)) as number | undefined;
+    let t = Date.now();
+    while (Date.now() - t < 10_000 && (await scale()) !== 1) await page.waitForTimeout(100);
+    await page.evaluate(() => (window as Any).__fx1L('test: scale 1 seen; -> #/teach'));
+    await page.evaluate(() => (location.hash = '#/teach'));
+    await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+    await page.evaluate(() => (window as Any).__fx1L('test: clicked ×4'));
+    t = Date.now();
+    let got: number | undefined;
+    while (Date.now() - t < 8_000 && (got = await scale()) !== 4) await page.waitForTimeout(100);
+    const ms = Date.now() - t;
+    const c = await cockpit(page)?.evaluate(() => ({ c: (window as Any).__fx1c, vis: document.visibilityState, simT: (window as Any).__vent?.simT() }));
+    const sess = await page.evaluate(() => ({ ts: (window as Any).__pmeApp.session.timeScale, frames: document.querySelectorAll('iframe').length, src: document.querySelector('iframe.vent')?.getAttribute('src') }));
+    console.log(`FX1 SPEED rep=${rep} result=${got === 4 ? 'ok' : 'MISS'} scale=${got} after=${ms}ms session=${JSON.stringify(sess)} cockpit=${JSON.stringify(c)}`);
+    await flush(page, `speed${rep}`);
+  });
+}
+
+for (let rep = 0; rep < 2; rep++) {
+  test(`FX1 diag restore ${rep}`, async ({ page }) => {
+    test.setTimeout(240_000);
+    await instrument(page);
+    await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });
+    await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+    await page.evaluate(() => (location.hash = '#/vent'));
+    const t0 = Date.now();
+    let prevRaf = 0;
+    let prevCmdsAt = 0;
+    const sample = async (tag: string) => {
+      const m = await page.evaluate(() => {
+        const w = window as Any;
+        const s = w.__pmeApp.session;
+        const tile = (x: string) => Number(document.querySelector(`.pme-stile[data-param="${x}"] [data-pme="v"]`)?.textContent);
+        return { sim: +s.simNow().toFixed(1), ts: s.timeScale, ventAge: Math.round(performance.now() - s.ventFrameAt), co2: tile('CO2'), spo2: tile('SpO2'), route: location.hash };
+      });
+      const v = await cockpit(page)?.evaluate(() => { const w = window as Any; return { vsim: +w.__vent.simT().toFixed(1), scale: w.__vent.scale, paused: w.__vent.paused, raf: w.__fx1c.raf, gap: Math.round(w.__fx1c.gapMax), clock: w.__fx1c.lastClock, msgs: w.__fx1c.msgs }; }).catch((e) => ({ err: String(e).slice(0, 80) }));
+      const raf = (v as Any)?.raf ?? 0;
+      console.log(`FX1 RESTORE rep=${rep} ${tag} wall=${((Date.now() - t0) / 1000).toFixed(1)} ${JSON.stringify(m)} cockpit=${JSON.stringify(v)} rafΔ=${raf - prevRaf} cmdsΔ=${((v as Any)?.msgs?.cmds ?? 0) - prevCmdsAt}`);
+      prevRaf = raf;
+      prevCmdsAt = (v as Any)?.msgs?.cmds ?? 0;
+      return m;
+    };
+    const simNow = () => page.evaluate(() => (window as Any).__pmeApp.session.simNow() as number);
+    const until = async (t: number) => { while ((await simNow()) < t) { await page.waitForTimeout(2000); await sample(`→${t}`); } };
+    await until(40);
+    const b = Math.ceil(await simNow());
+    await page.evaluate(() => (window as Any).__pmeApp.link.send({ type: 'scenario', action: 'bookmark', target: 'vent' }));
+    await sample(`bookmark b=${b}`);
+    await until(b + 70);
+    await page.evaluate(() => (window as Any).__pmeApp.link.send({ type: 'scenario', action: 'restoreBookmark', target: 'vent' }));
+    const tr = Date.now();
+    for (let i = 0; i < 10; i++) { await page.waitForTimeout(300); await sample(`restore+${Date.now() - tr}ms`); }
+    await until(b + 70);
+    await flush(page, `restore${rep}`).catch(() => {});
+  });
+}
