@@ -21,6 +21,9 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   /** "Choose another scenario" pressed during a run: the library stays up until a load or "Back to the running case"
    *  (the ≤ 2 Hz repaint used to flip it back to the run within half a second — showcase rehearsal 2026-10-04). */
   let choosing = false;
+  /** The scenario document's version when it was pressed: only a different one (a load, or the end of the run) closes
+   *  the library. Not `docV`, which is −1 until the tab's first repaint (F-CW3-1: a press before it was undone by it). */
+  let chosenV = -1;
 
   // ---- library ----
   const chips = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': 'Category' });
@@ -62,7 +65,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const objectives = h('ul', { class: 'objectives checks', 'aria-label': 'Objectives' });
   const marks = h('ul', { class: 'marks' });
   const run = h('section', { 'aria-label': 'Running scenario' },
-    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
+    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (chosenV = sv.docVersion), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
     strip,
     h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
     learnerRow,
@@ -93,7 +96,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
 
   c.onRefresh(() => {
     const doc = sv.doc;
-    if (docV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
+    if (chosenV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
     run.hidden = !doc || choosing;
     library.hidden = !!doc && !choosing;
     back.hidden = !doc;
