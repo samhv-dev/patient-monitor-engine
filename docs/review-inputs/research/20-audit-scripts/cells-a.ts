@@ -68,15 +68,15 @@ add({ id: 'DV-02a', tier: 'P1', ctx: 'X-A ventilated, MODELED', state: 'VF (inst
   measure: (R) => m({ cppQ1: w(R.q1!.rows, 'cpp', 180, 600), cppQ1Max: mx(R.q1!.rows, 'cpp', 130, 600), cppQ08: w(R.q08!.rows, 'cpp', 180, 600), cbfQ1: w2(R.q1!.rows, 'cbf', 180, 600),
     coQ1: w2(R.q1!.rows, 'co', 180, 600), mapQ1: w(R.q1!.rows, 'map', 180, 600), myoQ1End: r2(R.q1!.rows[R.q1!.rows.length - 1]!.myo as number), myoQ08Max: mx(R.q08!.rows, 'myo', 180, 600) }),
   expect: [{ m: 'cppQ1', lo: 15, hi: 25, src: SRC_PARADIS },
-    { m: 'cbfQ1', lo: 0.2, hi: 0.45, src: 'Meaney PA et al., Circulation 2013;128:417 (CPR quality consensus: high-quality CPR delivers ≈ 10–30 % of normal coronary and 30–40 % of cerebral flow) [VERIFY]' },
-    { m: 'coQ1', lo: 1.0, hi: 1.9, src: 'CPR cardiac output 20–33 % of normal (AHA 2020 ALS physiology; Meaney 2013)' }],
+    { m: 'cbfQ1', lo: 0.2, hi: 0.45, src: 'Kern KB, Niemann JT, Steen S, in Cardiac Arrest 2nd ed., Cambridge UP 2007, pp. 369–388, doi:10.1017/CBO9780511544828.020 (standard compressions give at best 30–40 % of normal cerebral and typically 10–30 % of normal myocardial flow); Meaney PA et al., Circulation 2013;128:417, PMID 23801105, repeats the ranges in its text, not its abstract' },
+    { m: 'coQ1', lo: 1.0, hi: 1.9, src: 'CPR cardiac output 20–33 % of normal (AHA 2020 ALS physiology; Miller 10e ch. 82 p. 2617: "at best 25% to 30%" — Meaney 2013 gives heart and brain flow, not cardiac output)' }],
   hand: { verdict: 'TS', why: 'CoPP 27 at quality 1 and 26 at the default 0.8 (FU-4 S13 already pins 25.1–28.8 as `it.fails` under R45); new here: cerebral flow 0.71 of normal under CPR, about twice the 30–40 % of the consensus — organs/brain reads cbfRel from a CPR MAP of 55 that sits on the autoregulation plateau; and the myocardial state recovers to 0.8–0.9 in VF (FU-4 `it.fails` "kIsch < 0.9 throughout", max 0.91)' },
   known: 'FU-4 S13 it.fails (CoPP) + new (CBF)', owner: 'FU-4 CPR model (circ/params.ts:109–125) for CoPP; 7d brain (CBF under CPR) — new' });
 
 add({ id: 'DV-02b', tier: 'P1', ctx: 'X-A ventilated VCV 12 × 600, MODELED', state: 'VF + CPR quality 1', intv: 'EtCO2 during minutes 2–8 of CPR (truth and displayed)', sys: 'LUNG DEV',
   arms: { q1: cprArm(1) },
   measure: (R) => m({ etco2Q1: w(R.q1!.rows, 'etco2', 240, 600), etco2Q1Disp: w(R.q1!.rows, 'dEtco2', 240, 600), etco2Early: w(R.q1!.rows, 'etco2', 125, 180) }),
-  expect: [{ m: 'etco2Q1', lo: 10, hi: 20, src: 'research/12 DV-02 (10–20; > 20 at ROSC); Sanders AB et al., JAMA 1989;262:1347 (EtCO2 during CPR 15 ± 4 in survivors vs 7 ± 5); AHA 2020 (EtCO2 < 10 = poor CPR)' }],
+  expect: [{ m: 'etco2Q1', lo: 10, hi: 20, src: 'research/12 DV-02 (10–20; > 20 at ROSC); Sanders AB et al., JAMA 1989;262:1347, PMID 2761035 (EtCO2 during CPR 15 ± 4 in the 9 resuscitated vs 7 ± 5 in the 26 not; 17 ± 6 in the 3 survivors to discharge); AHA 2020 (EtCO2 < 10 = poor CPR)' }],
   owner: '3 / FU-4 (CO2 low-flow coupling, gas/coupling.ts CPR_FLOW_EXP)' });
 
 add({ id: 'DV-02c', tier: 'P1', ctx: 'X-A ventilated, MODELED', state: 'VF', intv: 'CPR quality 0.4 vs 1.0 (poor vs good compressions)', sys: 'CIRC LUNG',

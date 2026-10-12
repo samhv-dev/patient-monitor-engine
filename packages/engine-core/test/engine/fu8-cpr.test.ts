@@ -50,6 +50,8 @@ const vfCpr = (): Promise<{ etco2: number; cbf: number }> =>
   })());
 
 describe('FU-8 A22: EtCO2 under CPR follows the blood the compressions move through the lungs', () => {
+  // Title left for Stage 14 (fix-citations): Sanders 1989 (PMID 2761035) reports 15 ± 4 mmHg in the 9 RESUSCITATED
+  // (ROSC) patients; its 3 survivors to discharge read 17 ± 6. The band is unchanged.
   it('VF + CPR q 1, minutes 2–8: EtCO2 10–20 mmHg (research/20 DV-02b; Sanders 1989: 15 ± 4 in survivors)', async () => {
     const v = await vfCpr();
     console.log(`fu8 A22: VF CPR EtCO2 ${v.etco2.toFixed(1)}`);

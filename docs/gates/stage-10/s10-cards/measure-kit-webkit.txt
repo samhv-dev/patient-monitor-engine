@@ -1,0 +1,4 @@
+[measure] [webkit] kit showcase-anaphylaxis at ×8: rate ×8.01; main-thread frames p50 17.0 p95 19.0 max 38 ms
+[measure] [webkit] kit showcase-anaphylaxis: fast-forward of 300 s took 10.01 s (paced to 10 s)
+[measure] [webkit] kit showcase-bronchospasm + Ventilator view at ×8: rate ×8.01; main-thread frames p50 17.0 p95 18.0 max 85 ms
+[measure] [webkit] kit showcase-bronchospasm + Ventilator view: fast-forward of 300 s took 10.00 s (paced to 10 s)
