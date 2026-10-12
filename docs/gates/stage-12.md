@@ -110,6 +110,11 @@ Plan: `docs/plans/stage-12-mobile-learner.md`. Executor: one session (Claude Opu
 
 **T8, the kit, headless.**
 - **Start Classroom** (`PME_NO_OPEN`, port 8750) printed "THE CLASSROOM IS RUNNING" and the phones' addresses.
+  *(Kit round A, 2026-10-12: 8750 is the test's own override, `PME_PORT=8750`, chosen so the check did not collide with
+  a running classroom. The kit's real port is **8650**: `Start Classroom.command` sets `START_PORT="${PME_PORT:-8650}"`
+  and tries the next 9 if it is busy, so a presenter sees `http://127.0.0.1:8650/?relay#/` as `PRE-FLIGHT.md` says.
+  Measured on the b8c9c04a kit: the launcher prints `ADDRESS: http://127.0.0.1:<port>/?relay#/` with the first free
+  port from 8650 (`START_PORT` 8760 under the kit round's own override).)*
 - `/pme-relay.json` answered `{"relay":"pme","port":8750,"addresses":["192.168.1.100","172.21.0.1"],"serves":true}`, and `/?join=` answered 200.
 - After the kill, nothing listened on 8750.
 - The kit contains `server/relay.mjs` (139 678 bytes), `relay.mjs.LICENSE-ws.txt`, `NOTICES.md`, and `LICENSES/qrcodegen-MIT.txt`.
