@@ -1,3 +1,5 @@
+> **Showcase 1 record; numbers superseded by [SHOWCASE-2-MEASUREMENTS.md](SHOWCASE-2-MEASUREMENTS.md).**
+
 # Showcase cases: exact on-screen labels, step by step (notes for the run sheet)
 
 *For the orchestrator, not the final user documents. Round 4 (FINAL): numbers from the kit built from `main` 41678d0b
