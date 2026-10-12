@@ -153,3 +153,53 @@ describe('FX-2: the follower', () => {
     }
   });
 });
+
+describe('FX-2: a speed change while following', () => {
+  it('does not throw the viewer ahead of the host: the new speed counts from the change, not from the last anchor', async () => {
+    // the app's engine emits its own 1 Hz `state` (truthHz 1), so the host sends no extra state after a time command
+    const clock = { wall: 1_000_000 };
+    const wallNow = () => clock.wall;
+    const h = manualHost();
+    let engineFn: ((e: never) => void) | null = null;
+    const target = { ...h, on: (fn: (e: never) => void) => ((engineFn = fn), h.on(fn as never)) };
+    const hub = createInProcessHub();
+    const hs = new HostSession({ session: S, target: target as typeof h, wallNow, stateIntervalMs: 0 });
+    hs.addTransport(hub.connect());
+    const state = () => { const { tick, simT } = h.engine.now(); engineFn?.({ type: 'state', t: simT, tick, mode: 'manual', values: {}, control: {} } as never); };
+    state();
+    const ctl = new ControllerSession({ session: S, transport: hub.connect(), wallNow });
+    await waitFor(() => ctl.hostOnline);
+    const v = manualViewer();
+    const sync = new ViewerSync({ session: S, transport: hub.connect(), target: v, engineVersion: h.engine.version, wallNow });
+    let ahead = -Infinity;
+    const run = async (seconds: number) => {
+      for (let i = 0; i < Math.round(seconds * 50); i++) {
+        clock.wall += 20;
+        h.advance(20);
+        if (clock.wall % 1000 === 0) state(); // 1 Hz, on the wall clock
+        await flushIo();
+        sync.follow();
+        v.advance(20);
+        ahead = Math.max(ahead, v.engine.now().simT - h.engine.now().simT);
+      }
+    };
+    await waitFor(() => sync.status === 'synced');
+    await run(3.9); // the last anchor was 0.9 s ago
+    ahead = -Infinity;
+    await ctl.send({ type: 'time', action: 'scale', value: 8 });
+    // the viewer draws a frame before the host's next `state` (at ×8 that comes up to 125 ms of wall later)
+    await flushIo();
+    clock.wall += 16;
+    sync.follow();
+    v.advance(16);
+    ahead = Math.max(ahead, v.engine.now().simT - h.engine.now().simT);
+    await run(0.5);
+    expect(ahead).toBeLessThan(0); // the viewer never ran ahead of the host's engine
+    await ctl.send({ type: 'setRhythm', rhythm: 'avb2Mobitz1' }); // mirrored at the host's tick: in time
+    await run(3);
+    expect({ status: sync.status, resyncs: sync.resyncs }).toEqual({ status: 'synced', resyncs: 0 });
+    hs.close();
+    ctl.close();
+    sync.close();
+  });
+});
