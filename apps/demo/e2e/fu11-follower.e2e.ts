@@ -11,8 +11,9 @@ let base = '';
 // FALLBACK ruling 2026-10-11 (PR #49 findings F-49-1, F-49-2): CI runs 38125603326 to 38145499655 showed a plain
 // BroadcastChannel message crossing between two pages in one direction only on Playwright's Linux WebKit (popup or not),
 // and the follower's exactness at ×4 failing there too. Every test here rides that channel, so the whole file is skipped
-// on WebKit; Chromium keeps full coverage, and the owner hand-checks real Safari (H20).
-test.skip(({ browserName }) => browserName === 'webkit', 'FALLBACK ruling 2026-10-11: BroadcastChannel drops messages in one direction between pages on Playwright Linux WebKit (F-49-2); follower exactness at ×4 also fails there (F-49-1); passes on macOS WebKit and CI Chromium, which keeps full coverage');
+// on WebKit; Chromium keeps full coverage, and the owner hand-checks real Safari (H20). FX-2: the skip is CI-only — local
+// macOS WebKit (the owner's Safari engine) runs the file (as s10-time-control's CI-conditioned skip, S10-F5).
+test.skip(({ browserName }) => browserName === 'webkit' && !!process.env.CI, 'FALLBACK ruling 2026-10-11: BroadcastChannel drops messages in one direction between pages on Playwright Linux WebKit (F-49-2); follower exactness at ×4 also fails there (F-49-1); passes on macOS WebKit and CI Chromium, which keeps full coverage');
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 

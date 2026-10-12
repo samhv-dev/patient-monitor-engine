@@ -4,6 +4,10 @@
 // On the same build this is sample-identical (the engine is deterministic, brief §3.3). If a mirrored command
 // arrives too late, a beat's time disagrees with the host's, the link reconnects or the host says hello again,
 // it resyncs by saying hello (→ fresh snapshot).
+// FX-2 (F-49-1): the delay is WALL time — a mirrored command has delayS of wall time to arrive at every speed (as a
+// delay in sim time it left 25 ms at ×4 and 12.5 ms at ×8, and a loaded machine resynced); and a hello that got no
+// snapshot is said again, so a lost message never leaves the viewer waiting for good; a speed change counts from the
+// change (it threw the viewer ahead of the host).
 import { MAX_TIME_SCALE, MIN_TIME_SCALE, type Command, type DispatchResult, type EngineEvent, type PatientSnapshot, type SimSeconds } from '@pme/engine-core';
 import {
   createStamper,
@@ -43,7 +47,7 @@ export interface ViewerSyncOptions {
   target: ViewerTarget;
   /** Engine build of this viewer; a snapshot from a different build cannot be mirrored. */
   engineVersion: string;
-  /** How far behind the host the viewer draws (default 0.1 s) — the jitter budget for mirrored commands [ENG]. */
+  /** How far behind the host the viewer draws, wall seconds at any speed (default 0.1 s) — the jitter budget for mirrored commands [ENG]. */
   delayS?: number;
   peerId?: string;
   wallNow?: () => number;
@@ -52,6 +56,8 @@ export interface ViewerSyncOptions {
 const BEAT_TOLERANCE_S = 0.001; // same build ⇒ identical times; anything above this is divergence [ENG]
 const MAX_EXTRAPOLATE_S = 3; // stop running ahead of a silent host after this long [ENG]
 const TICK_S = 0.02;
+const HELLO_AGAIN_MS = 3000; // FX-2: no snapshot this long after a hello — say it again (a message lost on the way) [ENG]
+const HELLO_AGAIN_MAX_MS = 24_000; // …doubling each time up to this, so phones waiting on a slow host do not snowball [ENG]
 
 export class ViewerSync {
   readonly peerId: string;
@@ -73,6 +79,8 @@ export class ViewerSync {
   private readonly seqs = new SeqFilter();
   private readonly offs: Array<() => void>;
   private awaiting = false;
+  private helloAt = -Infinity; // FX-2: wall ms of the last hello
+  private helloWaitMs = HELLO_AGAIN_MS; // FX-2: how long the next hello waits for its snapshot
   private replays: Command[] = [];
   private early: Command[] = [];
   private anchor: { simT: number; wallMs: number } | null = null;
@@ -108,13 +116,17 @@ export class ViewerSync {
   /** Call once per animation frame, before the monitor draws: steers the local clock onto the host's. */
   follow(): void {
     const t = this.o.target;
+    if (this.awaiting && this.now() - this.helloAt > this.helloWaitMs) {
+      this.helloWaitMs = Math.min(2 * this.helloWaitMs, HELLO_AGAIN_MAX_MS); // FX-2
+      this.hello();
+    }
     if (this.status !== 'synced' || !this.anchor) return t.setPaused(true);
     if (this.hostPaused || this.hostFastForward) return t.setPaused(true);
     const since = (this.now() - this.anchor.wallMs) / 1000;
     const hostNow = this.anchor.simT + Math.min(since, MAX_EXTRAPOLATE_S) * this.hostRate;
-    const want = hostNow - this.delayS;
+    const want = hostNow - this.delayS * this.hostRate; // FX-2: delayS of WALL time behind, at every speed
     const err = want - t.renderT();
-    this.lagS = hostNow - t.renderT();
+    this.lagS = (hostNow - t.renderT()) / this.hostRate;
     if (err > 1) {
       t.jumpTo(want);
       t.setPaused(false);
@@ -140,10 +152,16 @@ export class ViewerSync {
     if (newTimeline) this.anchor = null;
     if (this.status === 'synced') this.resyncs++;
     this.awaiting = true;
+    this.helloWaitMs = HELLO_AGAIN_MS;
     this.replays = [];
     this.early = [];
     if (this.status !== 'incompatible') this.status = 'waiting';
     this.o.target.setPaused(true);
+    this.hello();
+  }
+
+  private hello(): void {
+    this.helloAt = this.now();
     this.o.transport.send(this.stamp({ kind: 'hello', role: 'viewer' }));
   }
 
@@ -225,7 +243,14 @@ export class ViewerSync {
         // Re-anchor at the host's time of the resume, on the wall clock of now.
         if (this.anchor && !res?.replay) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
       }
-      if (c.action === 'scale' && typeof c.value === 'number') this.hostRate = c.value;
+      if (c.action === 'scale' && typeof c.value === 'number') {
+        // FX-2: the new speed counts from the change. Applied to the whole time since the last 1 Hz anchor, a frame drawn
+        // before the next `state` projected up to 7 s of sim ahead at ×1 → ×8, jumped there and resynced on the next
+        // mirrored command. Re-anchor at the host's time of the change on the wall clock of now, as on a resume (the
+        // message's own latency leaves the viewer that much further behind, never ahead).
+        if (this.anchor && !res?.replay && !this.hostPaused) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
+        this.hostRate = c.value;
+      }
       if (c.action === 'jump' && res?.replay && typeof c.value === 'number') {
         this.hostFastForward = true; // Stage 10: joined during a fast-forward (atTick = where it began)
         this.fastForward = { fromT: (c.atTick ?? e.tick) * TICK_S, toT: (c.atTick ?? e.tick) * TICK_S + c.value };
