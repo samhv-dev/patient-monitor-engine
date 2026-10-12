@@ -8,3 +8,13 @@ PATIENT MONITOR SIMULATOR - how to start it (no internet needed)
    (it looks like 127.0.0.1:8642).
 6. To stop: close the black Terminal window (click "Terminate" if asked). Closing the browser alone does not stop it.
 7. If nothing works, use the rescue card; the recorded cases are in the "videos" folder.
+
+LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network the phones share with it)
+   Before the day: in Terminal, "node -v" must print v22 or later; if not, install the LTS from nodejs.org. Test it the
+   day before with your own phone on the network you will use (the venue Wi-Fi, or this Mac's hotspot).
+8. Instead of "Start Simulator", double-click "Start Classroom". If macOS asks whether "node" may accept incoming
+   network connections, click Allow. The QR code points at THIS Mac: phones must be on the same network.
+9. On the Monitor view, move the pointer to the top edge and click "Phones" (or "Phones" at the top right of the other
+   views): a QR code fills the screen. Learners scan it; their phones show the monitor and follow your case.
+10. Phones start with their sound off; each learner taps "Sound off" to hear it. Close the QR with "Close".
+11. If "Start Classroom" says it cannot start, use "Start Simulator": everything works except the phones.

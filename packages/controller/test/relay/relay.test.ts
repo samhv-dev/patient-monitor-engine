@@ -51,10 +51,56 @@ describe('relay', () => {
     const host = await client('h', 'host');
     const c = await client('c', 'controller');
     const v = await client('v', 'viewer');
-    host.send({ kind: 'event', body: [{ type: 'measurement', t: 1, values: {} }] });
+    host.send({ kind: 'event', body: [{ type: 'state', t: 1, tick: 50, mode: 'manual', values: {}, control: {} }] });
     await waitFor(() => c.wire('event').length === 1 && v.wire('event').length === 1);
     await sleep(20);
     expect(host.wire('event')).toEqual([]);
+  });
+
+  it('Stage 12: a viewer gets only the events a viewer uses; a controller gets them all', async () => {
+    const host = await client('h', 'host');
+    const c = await client('c', 'controller');
+    const v = await client('v', 'viewer');
+    host.send({ kind: 'event', body: [{ type: 'measurement', t: 1, values: {} }] });
+    host.send({ kind: 'event', body: [{ type: 'measurement', t: 2, values: {} }, { type: 'state', t: 2, tick: 100, mode: 'manual', values: {}, control: {} }] });
+    await waitFor(() => c.wire('event').length === 2 && v.wire('event').length === 1);
+    await sleep(20);
+    expect((v.wire('event')[0] as Extract<WireMessage, { kind: 'event' }>).body.map((e) => e.type)).toEqual(['state']);
+    expect(v.wire('event').length).toBe(1); // the measurement-only message is not sent to the viewer at all
+  });
+
+  it("Stage 12: the host's answer to a hello (its sticky replays) goes to the peers waiting on a snapshot, not the room", async () => {
+    const host = await client('h', 'host');
+    const v1 = await client('v1', 'viewer');
+    await waitFor(() => host.wire('hello').length === 1);
+    host.send({ kind: 'snapshot', body: snap }); // v1 is synced: it waits for nothing
+    await waitFor(() => v1.wire('snapshot').length === 1);
+    const v2 = await client('v2', 'viewer');
+    await waitFor(() => host.wire('hello').length === 2);
+    const replay = { type: 'commandApplied' as const, commandId: 'k', tick: 9, resolved: { command: { id: 'k', issuedBy: 'i', type: 'time', action: 'scale', value: 8 }, replay: true } };
+    host.send({ kind: 'event', body: [replay] });
+    host.send({ kind: 'snapshot', body: { ...snap, tick: 900 } });
+    await waitFor(() => v2.wire('snapshot').length === 1);
+    await sleep(20);
+    expect(v2.wire('event').length).toBe(1);
+    expect(v1.wire('event')).toEqual([]);
+  });
+
+  it('Stage 12 (R50 M2): an event flagged `replay: true` itself (the style a welcome carries) marks the welcome too', async () => {
+    const host = await client('h', 'host');
+    const c1 = await client('c1', 'controller'); // controllers get every event: the routing alone is under test
+    await waitFor(() => host.wire('hello').length === 1);
+    host.send({ kind: 'snapshot', body: snap });
+    await waitFor(() => c1.wire('snapshot').length === 1);
+    const c2 = await client('c2', 'controller');
+    await waitFor(() => host.wire('hello').length === 2);
+    // Task 5 adds the `style` event to the protocol; the relay's rule is the flag, whatever the event
+    host.send({ kind: 'event', body: [{ type: 'style', skin: 'philips-like', theme: '', replay: true } as never] });
+    host.send({ kind: 'snapshot', body: { ...snap, tick: 900 } });
+    await waitFor(() => c2.wire('snapshot').length === 1);
+    await sleep(20);
+    expect(c2.wire('event').length).toBe(1);
+    expect(c1.wire('event')).toEqual([]);
   });
 
   it('routes controller commands only to the host, and the ack only to the issuer', async () => {

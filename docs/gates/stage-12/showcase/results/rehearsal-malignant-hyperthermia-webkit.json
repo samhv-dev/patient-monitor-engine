@@ -1,0 +1,306 @@
+{
+  "case": "Malignant hyperthermia",
+  "browser": "webkit",
+  "server": "perl (through the launcher)",
+  "base": "http://127.0.0.1:8701",
+  "t0": 3.517417738473132,
+  "steps": [
+    {
+      "simT": 3.5,
+      "what": "loaded \"Malignant hyperthermia\" at ×4",
+      "state": "induction",
+      "hr": null,
+      "art": "null/null (null)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "simT": 247.1,
+      "what": "press **Start surgery: rocuronium 0.6 mg/kg**",
+      "state": "surgery",
+      "hr": 78,
+      "art": "98.5/64.6 (74.4)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 12
+    },
+    {
+      "simT": 412.7,
+      "what": "state \"Early signs\" (EtCO2 above 45 at the same ventilation)",
+      "state": "earlySigns",
+      "hr": 85,
+      "art": "104.8/70.5 (80.4)",
+      "spo2": 99,
+      "etco2": 46,
+      "rr": 12
+    },
+    {
+      "simT": 543.9,
+      "what": "9:00 (fast-forward here with Stage 10)",
+      "state": "earlySigns",
+      "hr": 94,
+      "art": "110/76.4 (86.2)",
+      "spo2": 99,
+      "etco2": 51,
+      "rr": 12
+    },
+    {
+      "simT": 784.6,
+      "what": "13:00 (fast-forward here with Stage 10)",
+      "state": "earlySigns",
+      "hr": 114,
+      "art": "116.2/85.2 (93.9)",
+      "spo2": 99,
+      "etco2": 64,
+      "rr": 12
+    },
+    {
+      "simT": 1025.5,
+      "what": "17:00 (fast-forward here with Stage 10)",
+      "state": "earlySigns",
+      "hr": 136,
+      "art": "119.2/88.8 (97.5)",
+      "spo2": 98,
+      "etco2": 77,
+      "rr": 12
+    },
+    {
+      "simT": 1127,
+      "what": "state \"Established MH\" — Explore → \"Changed only\"",
+      "state": "established",
+      "hr": 143,
+      "art": "118.6/88.1 (97.8)",
+      "spo2": 98,
+      "etco2": 81,
+      "rr": 12
+    },
+    {
+      "simT": 1191.8,
+      "what": "press **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate**",
+      "state": "triggerOff",
+      "hr": 144,
+      "art": "118.3/88.3 (97.1)",
+      "spo2": 99,
+      "etco2": 60,
+      "rr": 31
+    },
+    {
+      "simT": 1252.6,
+      "what": "press **Dantrolene 2.5 mg/kg**",
+      "state": "treating",
+      "hr": 140,
+      "art": "118.3/88.2 (96.6)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 26
+    },
+    {
+      "simT": 1282.4,
+      "what": "press **Cool: 2 L saline at room temperature**",
+      "state": "treating",
+      "hr": 140,
+      "art": "120.2/89.2 (98)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 26
+    },
+    {
+      "simT": 1312.1,
+      "what": "press **Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose**",
+      "state": "treating",
+      "hr": 139,
+      "art": "123.5/91.9 (101)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 25
+    },
+    {
+      "simT": 1343.7,
+      "what": "press **Sodium bicarbonate 1 mmol/kg**",
+      "state": "treating",
+      "hr": 136,
+      "art": "126.7/94.6 (104)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 25
+    },
+    {
+      "simT": 1793.4,
+      "what": "press **Dantrolene 2.5 mg/kg**",
+      "state": "treating",
+      "hr": 108,
+      "art": "150/103.4 (118.4)",
+      "spo2": 99,
+      "etco2": 45,
+      "rr": 24
+    },
+    {
+      "simT": 1854.2,
+      "what": "state \"Recovering: EtCO₂ below 45\"",
+      "state": "recovering",
+      "hr": 106,
+      "art": "152.4/103.5 (119.3)",
+      "spo2": 99,
+      "etco2": 44,
+      "rr": 23
+    },
+    {
+      "simT": 2346.5,
+      "what": "press **EtCO₂ normal: ventilation back to 12 × 500**",
+      "state": "normoventilated",
+      "hr": 95,
+      "art": "153.2/100 (117.9)",
+      "spo2": 99,
+      "etco2": 37,
+      "rr": 21
+    },
+    {
+      "simT": 2405.7,
+      "what": "end (40:00)",
+      "state": "normoventilated",
+      "hr": 96,
+      "art": "150.8/98.5 (115.9)",
+      "spo2": 99,
+      "etco2": 42,
+      "rr": 18,
+      "minSystolicAfterCall": 113.4
+    },
+    {
+      "alarmsRaised": []
+    }
+  ],
+  "sheet": [
+    {
+      "clock": "0:00",
+      "monitor": "HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state induction",
+      "presenter": "loaded \"Malignant hyperthermia\" at ×4"
+    },
+    {
+      "clock": "4:03",
+      "monitor": "HR 78, ART 98/65 (74), SpO2 99, EtCO2 40, RR 12 · state surgery",
+      "presenter": "press **Start surgery: rocuronium 0.6 mg/kg**"
+    },
+    {
+      "clock": "6:49",
+      "monitor": "HR 85, ART 105/70 (80), SpO2 99, EtCO2 46, RR 12 · state earlySigns",
+      "presenter": "state \"Early signs\" (EtCO2 above 45 at the same ventilation)"
+    },
+    {
+      "clock": "9:00",
+      "monitor": "HR 94, ART 110/76 (86), SpO2 99, EtCO2 51, RR 12 · state earlySigns",
+      "presenter": "9:00 (fast-forward here with Stage 10)"
+    },
+    {
+      "clock": "13:01",
+      "monitor": "HR 114, ART 116/85 (94), SpO2 99, EtCO2 64, RR 12 · state earlySigns",
+      "presenter": "13:00 (fast-forward here with Stage 10)"
+    },
+    {
+      "clock": "17:01",
+      "monitor": "HR 136, ART 119/89 (98), SpO2 98, EtCO2 77, RR 12 · state earlySigns",
+      "presenter": "17:00 (fast-forward here with Stage 10)"
+    },
+    {
+      "clock": "18:43",
+      "monitor": "HR 143, ART 119/88 (98), SpO2 98, EtCO2 81, RR 12 · state established",
+      "presenter": "state \"Established MH\" — Explore → \"Changed only\""
+    },
+    {
+      "clock": "19:48",
+      "monitor": "HR 144, ART 118/88 (97), SpO2 99, EtCO2 60, RR 31 · state triggerOff",
+      "presenter": "press **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate**"
+    },
+    {
+      "clock": "20:49",
+      "monitor": "HR 140, ART 118/88 (97), SpO2 99, EtCO2 54, RR 26 · state treating",
+      "presenter": "press **Dantrolene 2.5 mg/kg**"
+    },
+    {
+      "clock": "21:18",
+      "monitor": "HR 140, ART 120/89 (98), SpO2 99, EtCO2 54, RR 26 · state treating",
+      "presenter": "press **Cool: 2 L saline at room temperature**"
+    },
+    {
+      "clock": "21:48",
+      "monitor": "HR 139, ART 123/92 (101), SpO2 99, EtCO2 54, RR 25 · state treating",
+      "presenter": "press **Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose**"
+    },
+    {
+      "clock": "22:20",
+      "monitor": "HR 136, ART 127/95 (104), SpO2 99, EtCO2 54, RR 25 · state treating",
+      "presenter": "press **Sodium bicarbonate 1 mmol/kg**"
+    },
+    {
+      "clock": "29:49",
+      "monitor": "HR 108, ART 150/103 (118), SpO2 99, EtCO2 45, RR 24 · state treating",
+      "presenter": "press **Dantrolene 2.5 mg/kg**"
+    },
+    {
+      "clock": "30:50",
+      "monitor": "HR 106, ART 152/103 (119), SpO2 99, EtCO2 44, RR 23 · state recovering",
+      "presenter": "state \"Recovering: EtCO₂ below 45\""
+    },
+    {
+      "clock": "39:03",
+      "monitor": "HR 95, ART 153/100 (118), SpO2 99, EtCO2 37, RR 21 · state normoventilated",
+      "presenter": "press **EtCO₂ normal: ventilation back to 12 × 500**"
+    },
+    {
+      "clock": "40:02",
+      "monitor": "HR 96, ART 151/99 (116), SpO2 99, EtCO2 42, RR 18 · state normoventilated",
+      "presenter": "end (40:00)"
+    }
+  ],
+  "labels": {
+    "alarmButtonAtOpen": "Limit alarms off",
+    "tab": "Scenario",
+    "showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
+    "toast": "Scenario loaded: Malignant hyperthermia",
+    "speed": "×4 (session bar) → toast \"Speed ×4\"",
+    "running": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Start surgery: rocuronium 0.6 mg/kg\": Surgery under way: sevoflurane 2 %, rocuronium\nStart surgery: rocuronium 0.6 mg/kg\nYou press \"MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate\": Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "sessionBar": "M 35 y 80 kg MODELED Malignant hyperthermia: Induced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 % 00:02 00:02 ×1 ×2 ×4 ×8 Pause 2 min 5 min Bookmark",
+    "after Start surgery: rocuronium 0.6 mg/kg": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate\": Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate\nEtCO₂ > 45 mmHg for 20 s: Early signs: EtCO₂ rising at the same ventilation, tachycardia\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Dantrolene 2.5 mg/kg\": Dantrolene 2.5 mg/kg given\nDantrolene 2.5 mg/kg\nYou press \"Cool: 2 L saline at room temperature\": Cooling: 2 L saline at room temperature running\nCool: 2 L saline at room temperature\nYou press \"Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\": Calcium chloride 10 mg/kg and insulin 10 U with dextrose given\nPotassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\nYou press \"Sodium bicarbonate 1 mmol/kg\": Sodium bicarbonate 1 mmol/kg given\nSodium bicarbonate 1 mmol/kg\nART S < 25 mmHg for 10 s: Cardiac arrest\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Dantrolene 2.5 mg/kg": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nAfter 2 s in this state: MH treatment under way\nin 00:00\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Cool: 2 L saline at room temperature": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Dantrolene 2.5 mg/kg\": Dantrolene 2.5 mg/kg given\nDantrolene 2.5 mg/kg\nYou press \"Cool: 2 L saline at room temperature\": Cooling: 2 L saline at room temperature running\nCool: 2 L saline at room temperature\nYou press \"Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\": Calcium chloride 10 mg/kg and insulin 10 U with dextrose given\nPotassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\nYou press \"Sodium bicarbonate 1 mmol/kg\": Sodium bicarbonate 1 mmol/kg given\nSodium bicarbonate 1 mmol/kg\nEtCO₂ < 45 mmHg for 1 min: Recovering: EtCO₂ below 45\nART S < 25 mmHg for 10 s: Cardiac arrest\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nAfter 2 s in this state: MH treatment under way\nin 00:00\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Sodium bicarbonate 1 mmol/kg": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:00\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Dantrolene 2.5 mg/kg\": Dantrolene 2.5 mg/kg given\nDantrolene 2.5 mg/kg\nYou press \"Cool: 2 L saline at room temperature\": Cooling: 2 L saline at room temperature running\nCool: 2 L saline at room temperature\nYou press \"Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\": Calcium chloride 10 mg/kg and insulin 10 U with dextrose given\nPotassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\nYou press \"Sodium bicarbonate 1 mmol/kg\": Sodium bicarbonate 1 mmol/kg given\nSodium bicarbonate 1 mmol/kg\nEtCO₂ < 45 mmHg for 1 min: Recovering: EtCO₂ below 45\nART S < 25 mmHg for 10 s: Cardiac arrest\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after EtCO₂ normal: ventilation back to 12 × 500": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Dantrolene 2.5 mg/kg\": Dantrolene 2.5 mg/kg given\nDantrolene 2.5 mg/kg\nYou press \"Cool: 2 L saline at room temperature\": Cooling: 2 L saline at room temperature running\nCool: 2 L saline at room temperature\nYou press \"Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\": Calcium chloride 10 mg/kg and insulin 10 U with dextrose given\nPotassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\nYou press \"Sodium bicarbonate 1 mmol/kg\": Sodium bicarbonate 1 mmol/kg given\nSodium bicarbonate 1 mmol/kg\nART S < 25 mmHg for 10 s: Cardiac arrest\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Malignant hyperthermia\nChoose another scenario\nA fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.\nInduced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %\nSurgery under way: sevoflurane 2 %, rocuronium\nEarly signs: EtCO₂ rising at the same ventilation, tachycardia\nEstablished MH: hyperthermia, acidosis, rising potassium\nTrigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\nMH treatment under way\nDantrolene 2.5 mg/kg given\nCooling: 2 L saline at room temperature running\nCalcium chloride 10 mg/kg and insulin 10 U with dextrose given\nSodium bicarbonate 1 mmol/kg given\nRecovering: EtCO₂ below 45\nVentilation back to 12 × 500, O₂ 100 %\nCardiac arrest\nCPR (defibrillate VF from the Devices tab)\nTime in state\n01:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Dantrolene 2.5 mg/kg\": Dantrolene 2.5 mg/kg given\nDantrolene 2.5 mg/kg\nYou press \"Cool: 2 L saline at room temperature\": Cooling: 2 L saline at room temperature running\nCool: 2 L saline at room temperature\nYou press \"Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\": Calcium chloride 10 mg/kg and insulin 10 U with dextrose given\nPotassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose\nYou press \"Sodium bicarbonate 1 mmol/kg\": Sodium bicarbonate 1 mmol/kg given\nSodium bicarbonate 1 mmol/kg\nART S < 25 mmHg for 10 s: Cardiac arrest\nObjectives\nCall the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)\nGive dantrolene 2.5 mg/kg within 300 s of calling the crisis\nRepeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg\nTreat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L\nBring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg\nBookmarks\nNo bookmarks yet (Shift+B)"
+  },
+  "checks": [
+    {
+      "what": "early signs",
+      "expected": "state earlySigns 4–12 min after load",
+      "observed": "6.8 min",
+      "pass": true
+    },
+    {
+      "what": "established crisis",
+      "expected": "state established 14–26 min after load",
+      "observed": "18.7 min",
+      "pass": true
+    },
+    {
+      "what": "recovery after dantrolene",
+      "expected": "state recovering within 20 min of the first dose",
+      "observed": "10.1 min",
+      "pass": true
+    },
+    {
+      "what": "no arrest on the treated path",
+      "expected": "arterial systolic never below 60 after the call",
+      "observed": 113.4,
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

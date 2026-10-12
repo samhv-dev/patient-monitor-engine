@@ -24,15 +24,33 @@
 //    (owner ruling Q3; `publishStyle` on the instructor's page). Presentation only, not the session wire.
 //  - Sound: per window (owner ruling Q3; mount option `audioSilence: 'window'`): the follower's own Sound and
 //    "Silence here"; nothing about sound crosses either channel.
-import { createBroadcastChannelTransport, ViewerSync, type ManagedTransport } from '@pme/controller';
+//  - Stage 12, a PHONE over the relay (`?join=<CODE>`, docs/plans/stage-12-mobile-learner.md): the same contract on a
+//    WebSocket to `pme-relay`. The relay sends a viewer only VIEWER_EVENTS (protocol.ts) and a hello's replays only to
+//    the peers awaiting a snapshot; it refuses a phone past the session's limit (`full`, no retry) and any role but
+//    viewer from another device. Style (owner ruling Q4): a phone has no style channel; the instructor's style comes IN
+//    the follow stream — a `style` event in every answer to a hello and at every change — and the phone wears it
+//    upright (`phoneStyle`; a style with no phone layout: the default, said under the monitor). While the Ventilator
+//    view drives the patient the host sends a `cockpit` event once a second to the network instead of its frames: the
+//    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
+//    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
+import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
 import { version as engineVersion } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
-import type { SiteProfile } from '../site.ts';
+import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';
 import { button, h, setText } from '../ui.ts';
+import { followerStatus, phoneStyle } from './follower-status.ts';
 
-/** R50 F5: no message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. */
-const HOST_SILENT_MS = 5000;
+/**
+ * Stage 12: a phone's socket is dropped and reopened when nothing (not even the relay's 10 s heartbeat) arrived for this
+ * long — a phone that slept or moved to another access point often keeps a dead socket open [ENG: 1.2 heartbeats].
+ */
+const PHONE_LIVENESS_MS = 12_000;
+/** Stage 12: hidden this long (a locked phone, another tab), the page starts again from a fresh snapshot [ENG]. */
+const HIDDEN_RESYNC_MS = 2000;
+/** Stage 12 (owner ruling Q4): the styles a phone draws upright — every shipped one (measured at 375 px, both engines). */
+const UPRIGHT: ReadonlySet<string> = new Set(MONITORS.map((m) => m.id));
+const PHONE_THEMES: ReadonlySet<string> = new Set(THEMES.map(([t]) => t));
 
 /**
  * FU-11 (owner ruling Q3): the learner monitor wears the instructor's monitor style and follows its changes. A small
@@ -67,11 +85,24 @@ export interface Follower {
   destroy(): void;
 }
 
-export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement): Follower {
+/** Stage 12: a learner's phone follows over the relay at this WebSocket address instead of this browser's channel. */
+export interface NetFollow {
+  relay: string;
+}
+
+export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar: HTMLElement, net?: NetFollow): Follower {
   applySkinAlarmColours(site.skin, site.theme);
   // owner ruling Q3: this window's alarm SOUND is its own (its Sound and Silence buttons); the alarms are the patient's
-  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window' });
-  const transport = createBroadcastChannelTransport(code);
+  // Stage 12: a phone shows the monitor upright (tiles under the waveforms)
+  const monitor = mountMonitor(shell.monitorHost, { skin: site.skin, ...(site.theme ? { theme: site.theme } : {}), role: 'viewer', worker: 'off', audioSilence: 'window', portrait: !!net });
+  let refused: { code: string; message: string } | null = null; // Stage 12: the relay's refusal (a full session)
+  let hostAway = false; // Stage 12: the relay says the instructor's page is not connected
+  let cockpitAt = -Infinity; // Stage 12: wall ms of the host's last `cockpit` event (the Ventilator view drives)
+  const onRelay = (fr: RelayFrame) => {
+    if (fr.relay === 'error') refused = fr;
+    if (fr.relay === 'peers') hostAway = !fr.hostOnline;
+  };
+  const transport = net ? createWebSocketTransport({ url: net.relay, livenessMs: PHONE_LIVENESS_MS, onRelayFrame: onRelay }) : createBroadcastChannelTransport(code);
   const status = h('span', { class: 'status-pill', role: 'status' }, `Waiting for the instructor's monitor ${code}…`);
   // FU-11 (H4): on and off again, this window only
   const drawSound = () => ((sound.textContent = monitor.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(monitor.soundOn)), (hush.disabled = !monitor.soundOn));
@@ -87,26 +118,43 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
   hush.title = "Silence this window's alarm sound";
   hush.disabled = true;
   bar.append(status, sound, hush);
+  // Stage 12 (owner ruling Q4): under a phone's monitor when the instructor's style has no phone layout
+  const styleNote = h('p', { class: 'follower-note', hidden: true });
+  if (net) bar.append(styleNote);
+  // Stage 12: while the Ventilator view drives the patient, a phone's monitor is held still behind this line
+  const holdNote = h('div', { class: 'learner-hold', hidden: true }, h('p', {}, 'The ventilator is on the main screen'), h('p', { class: 'muted' }, 'This monitor continues when the ventilator view closes.'));
+  shell.stage.append(holdNote);
+  let hold = false;
   let raf = 0;
   const f: Follower = { monitor, transport, sync: null, destroy, style: { skin: site.skin, theme: site.theme } };
-  const style = styleChannel(code);
-  style.onmessage = (ev: MessageEvent<StyleMsg>) => {
+  const style = net ? null : styleChannel(code); // Stage 12: same-browser only
+  if (style) style.onmessage = (ev: MessageEvent<StyleMsg>) => {
     const m = ev.data;
     if (m?.kind !== 'style' || (m.skin === f.style.skin && m.theme === f.style.theme)) return;
     f.style = { skin: m.skin, theme: m.theme };
     applySkinAlarmColours(m.skin, m.theme);
     void monitor.setSkin(m.skin, m.theme ? { theme: m.theme } : {});
   };
-  style.postMessage({ kind: 'ask' } satisfies StyleMsg);
+  style?.postMessage({ kind: 'ask' } satisfies StyleMsg);
   void monitor.viewerClock().then((clock) => {
     const sync = new ViewerSync({ session: code, transport, target: clock, engineVersion });
     f.sync = sync;
     const loop = () => {
-      sync.follow(); // once per frame: steers this monitor's clock onto the instructor's (a frame behind is fine)
+      if (hold) clock.setPaused(true); // Stage 12: it cannot follow the cockpit's patient — still, not wrong
+      else sync.follow(); // once per frame: steers this monitor's clock onto the instructor's (a frame behind is fine)
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
   });
+  // Stage 12: back from hidden (a locked phone), start from a fresh snapshot — catching up would compute every tick of
+  // the gap on this page's main thread (five minutes = 15 000 ticks)
+  let hiddenAt: number | null = null;
+  const onVisible = () => {
+    if (document.hidden) return void (hiddenAt = performance.now());
+    if (hiddenAt !== null && performance.now() - hiddenAt > HIDDEN_RESYNC_MS) f.sync?.resync();
+    hiddenAt = null;
+  };
+  document.addEventListener('visibilitychange', onVisible);
   // R50 F5: host liveness — a running host sends at least its 1 Hz state; a paused one may be silent. Silence of more than
   // 5 s while running means the instructor's window is gone or reloading (it comes back under the same code).
   let heard = performance.now();
@@ -117,19 +165,43 @@ export function mountFollower(shell: Shell, site: SiteProfile, code: string, bar
     heard = performance.now();
     if (m.kind !== 'event') return;
     for (const e of m.body) {
+      if (e.type === 'cockpit') cockpitAt = performance.now(); // Stage 12
+      if (e.type === 'style' && net) wearPhone(e.skin, e.theme); // Stage 12 (owner ruling Q4)
       const c = e.type === 'commandApplied' ? (e.resolved as { command?: { type?: string; action?: string } } | undefined)?.command : undefined;
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) paused = c.action === 'pause';
     }
   });
+  /** Stage 12 (owner ruling Q4): the instructor's style, upright on this phone (or the default, said under the monitor). */
+  function wearPhone(skin: string, theme: string): void {
+    const w = phoneStyle({ skin, theme }, UPRIGHT, PHONE_THEMES, DEFAULT_SITE.skin);
+    styleNote.hidden = w.note === null;
+    setText(styleNote, w.note ?? '');
+    if (w.skin === f.style.skin && w.theme === f.style.theme) return;
+    f.style = { skin: w.skin, theme: w.theme };
+    applySkinAlarmColours(w.skin, w.theme);
+    void monitor.setSkin(w.skin, w.theme ? { theme: w.theme } : {});
+  }
+  let opened = false; // Stage 12: the phone has reached the relay at least once
+  const t0 = performance.now();
+  const offOpen = transport.onStatus((st) => void (st === 'open' && (opened = true)));
   const draw = setInterval(() => {
-    const s = f.sync?.status ?? 'waiting';
-    const alive = paused || performance.now() - heard < HOST_SILENT_MS;
-    setText(status, s === 'incompatible' ? 'This window runs another version: reload both windows' : s !== 'synced' ? `Waiting for the instructor's monitor ${code}…` : !alive ? "The instructor's monitor is not answering" : `Following session ${code}${paused ? ' (paused)' : ''}`);
-    status.dataset.ok = String(s === 'synced' && alive);
+    const now = performance.now();
+    const v = followerStatus({
+      code, net: !!net, sync: f.sync?.status ?? 'waiting', transport: transport.status, opened, sinceStartMs: now - t0, refused, hostAway,
+      heardAgoMs: now - heard, paused, cockpitAgoMs: now - cockpitAt,
+    });
+    if (hold && !v.hold) f.sync?.resync(); // Stage 12: the ventilator view closed — start again from the host's snapshot
+    hold = v.hold;
+    holdNote.hidden = !hold;
+    setText(status, v.text);
+    status.dataset.ok = String(v.ok);
   }, 500);
   function destroy(): void {
     offHost();
-    style.close();
+    offOpen();
+    document.removeEventListener('visibilitychange', onVisible);
+    holdNote.remove();
+    style?.close();
     cancelAnimationFrame(raf);
     clearInterval(draw);
     f.sync?.close();

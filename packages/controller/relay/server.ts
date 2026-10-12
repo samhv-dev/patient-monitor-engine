@@ -4,10 +4,11 @@
 //   /signal  WebRTC signalling: {to, data} frames routed between peers of one session (?session=&peer=).
 // Routing (host authority): only the host's event/snapshot/ack/hello go out; controllers' commands go only to
 // the host; viewers may send only hello. A host `snapshot` goes to peers that said hello since their last one.
-import type { IncomingMessage } from 'node:http';
+import { createServer, type IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { httpHandler, isLocalAddress, lanAddresses } from './http.ts';
 import { WIRE_LIMITS, parseWireMessage } from '../src/guard.ts';
-import { SESSION_CODE_RE, type Role, type WireMessage } from '../src/protocol.ts';
+import { SESSION_CODE_RE, VIEWER_EVENTS, type Role, type WireMessage } from '../src/protocol.ts';
 import { RELAY_CLOSE, type RelayFrame } from '../src/transport/relay-frames.ts';
 
 export interface RelayOptions {
@@ -19,6 +20,20 @@ export interface RelayOptions {
   heartbeatMs?: number;
   maxRooms?: number; // default 500
   log?: (line: string) => void;
+  /** Stage 12: serve this folder (the built app) over http on the same port, for learners' phones. */
+  staticDir?: string;
+  /**
+   * Stage 12: the most non-host peers one session takes (default 60) [ENG: twice the measured classroom of 30, see
+   * docs/plans/stage-12-mobile-learner.md "Capacity"]. One more is refused (`full`, close 4029: it does not retry).
+   */
+  maxPeersPerRoom?: number;
+  /**
+   * Stage 12: the roles a socket from ANOTHER device may take. 'viewer' (classroom: the QR code shows the session code
+   * to the room, so a phone may only follow; the host and a Remote run on the instructor's laptop) or 'all' (default).
+   */
+  remoteRoles?: 'viewer' | 'all';
+  /** Stage 12 (tests): whether a socket's address is this machine (default: loopback or one of its own addresses). */
+  isLocal?: (address: string | undefined) => boolean;
 }
 
 interface Peer {
@@ -66,11 +81,15 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const alive = new WeakMap<WebSocket, boolean>();
   let dropped = 0;
 
-  const wss = new WebSocketServer({ port: opts.port ?? 8787, host: opts.host ?? '0.0.0.0', maxPayload: WIRE_LIMITS.maxBytes });
+  const maxPeers = opts.maxPeersPerRoom ?? 60;
+  // Stage 12: one http server carries the WebSockets, `/pme-relay.json` and (with staticDir) the app itself
+  const http = createServer(httpHandler({ ...(opts.staticDir ? { staticDir: opts.staticDir } : {}), info: () => ({ relay: 'pme', port, addresses: lanAddresses(), serves: !!opts.staticDir }) }));
   await new Promise<void>((resolve, reject) => {
-    wss.once('listening', resolve);
-    wss.once('error', reject);
+    http.once('listening', resolve);
+    http.once('error', reject); // a busy port rejects (the WebSocketServer is attached after: it re-threw this error)
+    http.listen(opts.port ?? 8787, opts.host ?? '0.0.0.0');
   });
+  const wss = new WebSocketServer({ server: http, maxPayload: WIRE_LIMITS.maxBytes });
 
   const frame = (ws: WebSocket, f: RelayFrame) => {
     if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(f));
@@ -138,7 +157,24 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         // FU-11 (R50 F3): a host's `mirror` frames (the Ventilator view's samples) are for same-browser viewers only —
         // brief §3.7: raw samples never cross the wire
         if (m.body.some((e) => e.type === 'commandApplied' && (e.resolved as { mirror?: unknown } | undefined)?.mirror === true)) return void dropped++;
-        for (const p of room.peers) raw(p.ws, data);
+        {
+          // Stage 12: the host's answer to a hello (its sticky replays) is for the peers waiting on a snapshot — sent to
+          // the whole room, 30 phones joining (or re-syncing after a fast-forward) made 30 × 30 copies of it
+          // (a welcome event of the host's own — its style — carries `replay: true` itself)
+          const welcome = m.body.some((e) => (e as { replay?: unknown }).replay === true || (e.type === 'commandApplied' && (e.resolved as { replay?: unknown } | undefined)?.replay === true));
+          let lean: string | null | undefined; // the viewers' copy (VIEWER_EVENTS only), made once per message
+          for (const p of welcome ? room.awaiting : room.peers) {
+            if (p.role !== 'viewer') {
+              raw(p.ws, data);
+              continue;
+            }
+            if (lean === undefined) {
+              const body = m.body.filter((e) => VIEWER_EVENTS.has(e.type));
+              lean = body.length === 0 ? null : body.length === m.body.length ? data : JSON.stringify({ ...m, body });
+            }
+            if (lean !== null) raw(p.ws, lean);
+          }
+        }
         return;
       case 'snapshot':
         if (!isHost) return void dropped++;
@@ -149,7 +185,11 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     }
   };
 
-  const onWire = (ws: WebSocket) => {
+  /** Stage 12: the host hears how many peers follow (the instructor's QR panel counts the phones). */
+  const tellHost = (room: Room) => {
+    if (room.host) frame(room.host.ws, peersFrame(room));
+  };
+  const onWire = (ws: WebSocket, local: boolean) => {
     let peer: Peer | null = null;
     let room: Room | null = null;
     ws.on('message', (buf, isBinary) => contain(() => {
@@ -162,6 +202,9 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
         if (!SESSION_CODE_RE.test(m.session)) return refuse(ws, RELAY_CLOSE.badSession, 'bad-session', 'invalid session code');
         room = getRoom(m.session);
         if (!room) return refuse(ws, RELAY_CLOSE.full, 'full', 'relay is full');
+        // Stage 12: another device follows; only this machine hosts or commands (the room has seen the code)
+        if (!local && opts.remoteRoles === 'viewer' && m.role !== 'viewer') return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', `${m.role} only from the instructor's computer`);
+        if (m.role !== 'host' && room.peers.size >= maxPeers) return refuse(ws, RELAY_CLOSE.full, 'full', `session ${m.session} is full (${maxPeers})`);
         peer = { ws, id: m.from, role: m.role, alive: true };
         if (m.role === 'host') {
           const old = room.host;
@@ -172,11 +215,13 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
           if (old && old.ws !== ws) old.ws.close(1000, 'replaced by reconnect');
           room.host = peer;
           for (const p of room.peers) frame(p.ws, peersFrame(room));
+          tellHost(room);
           route(room, peer, m, data); // fan the host hello out: peers re-hello and resend pending commands
           // Peers that said hello while the host was away still wait for a snapshot.
         } else {
           room.peers.add(peer);
           frame(ws, peersFrame(room));
+          tellHost(room);
           if (!room.host && room.snapshot) raw(ws, room.snapshot); // host offline: serve the cache
           route(room, peer, m, data);
         }
@@ -194,6 +239,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       } else {
         room.peers.delete(peer);
         room.awaiting.delete(peer);
+        tellHost(room);
       }
       if (!room.host && room.peers.size === 0) room.emptySince = Date.now();
       log(`room ${room.code}: ${peer.role} ${peer.id} left`);
@@ -240,8 +286,11 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
     alive.set(ws, true);
     ws.on('pong', () => alive.set(ws, true));
     const path = new URL(req.url ?? '/', 'http://relay').pathname;
+    const local = (opts.isLocal ?? isLocalAddress)(req.socket.remoteAddress);
+    // Stage 12: the classroom uses no WebRTC; with the code on the projector, another device gets no signalling either
+    if (path === '/signal' && !local && opts.remoteRoles === 'viewer') return refuse(ws, RELAY_CLOSE.forbiddenRole, 'forbidden', "signalling only from the instructor's computer");
     if (path === '/signal') onSignal(ws, req);
-    else onWire(ws);
+    else onWire(ws, local);
   });
 
   const sweep = (now = Date.now()) => {
@@ -264,7 +313,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
   const timer = setInterval(() => sweep(), heartbeatMs);
   timer.unref?.();
 
-  const port = (wss.address() as { port: number }).port;
+  const port: number = (http.address() as { port: number }).port;
   log(`pme relay listening on ${opts.host ?? '0.0.0.0'}:${port}`);
   return {
     port,
@@ -278,7 +327,7 @@ export async function startRelay(opts: RelayOptions = {}): Promise<RelayHandle> 
       new Promise<void>((resolve) => {
         clearInterval(timer);
         for (const ws of wss.clients) ws.terminate();
-        wss.close(() => resolve());
+        wss.close(() => http.close(() => resolve()));
       }),
   };
 }

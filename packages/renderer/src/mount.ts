@@ -45,6 +45,11 @@ export interface MountOptions {
    * screen. The alarm conditions and the visual alarm state are the engine's either way.
    */
   audioSilence?: 'engine' | 'window';
+  /**
+   * Stage 12 (a learner's phone held upright): the waveforms over the whole width and the skin's tiles in a grid under
+   * them, instead of tile columns beside the waveforms. Needs `skin`.
+   */
+  portrait?: boolean;
 }
 
 /** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
@@ -148,7 +153,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const outer = doc.createElement('div');
   outer.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
   const root = doc.createElement('div');
-  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;`;
+  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${opts.portrait ? 'flex-direction:column;' : ''}`; // Stage 12
   const wrap = doc.createElement('div');
   wrap.style.cssText = 'flex:1;position:relative;min-width:0;';
   const canvas = doc.createElement('canvas');
@@ -156,7 +161,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   wrap.append(canvas);
   const tiles = doc.createElement('div');
   tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Stage 2: scroll
-  const ui = r ? new DeviceUI(doc, wrap, r, page) : null; // Stage 4b
+  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait) : null; // Stage 4b; Stage 12: portrait
   root.append(wrap, ui ? ui.tiles : tiles);
   if (ui) outer.append(ui.header);
   outer.append(root);

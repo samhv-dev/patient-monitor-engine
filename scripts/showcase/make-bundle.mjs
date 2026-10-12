@@ -4,9 +4,12 @@
 // Builds apps/demo with a relative base (works from any folder and any port) and assembles OUTPUT_DIR:
 //   app/                      the built site (the whole dist: the one-page app plus the pages it frames)
 //   Start Simulator.command   double-click launcher (macOS)
-//   server/                   serve.mjs (bundled node), serve.rb (ruby/WEBrick), serve.pl (core perl), serve.py
+//   Start Classroom.command   Stage 12: the relay on the network address, for learners' phones (needs Node.js ≥ 22)
+//   server/                   serve.mjs (bundled node), serve.rb (ruby/WEBrick), serve.pl (core perl), serve.py;
+//                             relay.mjs (Stage 12: pme-relay in one file, its `ws` dependency inside)
 //   runtime/                  node-<arch> ONLY if this machine's node is an official signed Node.js build; else empty
 //   READ ME FIRST.txt, VERSION.txt
+//   NOTICES.md, LICENSES/     Stage 12 (R50 I1): the notices of what the kit's app and relay carry (MIT/BSD texts)
 // Rerunnable: it replaces only the kit's own entries, so a videos/ folder (or anything else) beside them is kept.
 // Nothing is downloaded except the workspace's npm dependencies when node_modules is missing (pnpm install).
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -40,7 +43,7 @@ else console.log('node_modules present');
 
 step(`clean the kit's entries in ${out}`);
 mkdirSync(out, { recursive: true });
-const KIT = ['app', 'server', 'runtime', 'Start Simulator.command', 'READ ME FIRST.txt', 'VERSION.txt'];
+const KIT = ['app', 'server', 'runtime', 'Start Simulator.command', 'Start Classroom.command', 'READ ME FIRST.txt', 'VERSION.txt', 'NOTICES.md', 'LICENSES'];
 for (const k of KIT) rmSync(join(out, k), { recursive: true, force: true });
 
 step('build apps/demo (vite build --base ./)');
@@ -52,8 +55,25 @@ const kit = join(here, 'kit');
 copyFileSync(join(kit, 'start-simulator.command'), join(out, 'Start Simulator.command'));
 chmodSync(join(out, 'Start Simulator.command'), 0o755);
 copyFileSync(join(kit, 'read-me-first.txt'), join(out, 'READ ME FIRST.txt'));
+copyFileSync(join(repo, 'NOTICES.md'), join(out, 'NOTICES.md')); // Stage 12 (R50 I1): the app carries MIT code (qr.ts, ajv)
+cpSync(join(repo, 'LICENSES'), join(out, 'LICENSES'), { recursive: true });
 cpSync(join(here, 'server'), join(out, 'server'), { recursive: true });
 for (const f of readdirSync(join(out, 'server'))) chmodSync(join(out, 'server', f), 0o755);
+copyFileSync(join(kit, 'start-classroom.command'), join(out, 'Start Classroom.command')); // Stage 12
+chmodSync(join(out, 'Start Classroom.command'), 0o755);
+
+step('classroom relay (Stage 12: one file, ws inside; runs on any Node.js >= 22)');
+const { build } = await import('vite');
+await build({
+  configFile: false, root: repo, logLevel: 'warn',
+  ssr: { noExternal: true, target: 'node' },
+  build: {
+    ssr: join(repo, 'packages/controller/relay/bin.ts'), outDir: join(out, 'server'), emptyOutDir: false, minify: false, target: 'node22',
+    rollupOptions: { output: { entryFileNames: 'relay.mjs', inlineDynamicImports: true } },
+  },
+});
+if (!existsSync(join(out, 'server/relay.mjs'))) throw new Error('the relay bundle was not written');
+copyFileSync(join(repo, 'packages/controller/node_modules/ws/LICENSE'), join(out, 'server/relay.mjs.LICENSE-ws.txt')); // NOTICES N-007 (MIT)
 
 step('runtime (bundled node only if it is an official signed build)');
 mkdirSync(join(out, 'runtime'));
@@ -89,6 +109,7 @@ writeFileSync(join(out, 'VERSION.txt'), [
   `App size: ${(size(join(out, 'app')) / 1e6).toFixed(1)} MB`,
   `Runtime:  ${runtimeNote}`,
   'Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).',
+  'Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.',
   '',
 ].join('\n'));
 
