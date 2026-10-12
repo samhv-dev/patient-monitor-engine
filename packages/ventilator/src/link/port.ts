@@ -237,6 +237,13 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
       learning = false;
       gen++;
       engTick = Math.floor(e.after / 0.02 + 1e-6);
+      // FX-1: the offset is relearnt from the next frame, but a cockpit already at its clock limit sends none (common on a
+      // slow runner: CI WebKit's cockpit froze at its limit after "Return here" and the 5 s watchdog declared apnoea).
+      // Let it run 2·LEAD_TICKS past its last frame, as before its first clock; those frames probe the new offset.
+      if (lastTick >= 0) {
+        allowed = lastTick + 2 * LEAD_TICKS;
+        port.post({ v: 1, kind: 'clock', ventTick: allowed });
+      }
       publishClock();
       return;
     }
