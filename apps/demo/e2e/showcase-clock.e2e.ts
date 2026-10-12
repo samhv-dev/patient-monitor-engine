@@ -29,9 +29,8 @@ test('loading another scenario restarts the session clock and the time in state,
 
   await page.click('[role=tab][data-tab=scenario]');
   // fix-ci-webkit-3: the Scenario tab's first repaint (it names the running case) comes before "Choose another scenario".
-  // A press before that repaint is undone by it: the library closes again (finding F-CW3-1, a product defect reported in
-  // docs/gates/ci-webkit-3.md, reproduced locally on Chromium and WebKit). On the slow CI runner the Load button then
-  // stayed hidden until the 90 s test timeout (3 runs, Chromium too). This test is about the clock, so it waits.
+  // A press before that repaint used to be undone by it (finding F-CW3-1, fixed in fix-choose-scenario-repaint and
+  // covered by scenario-choose-another.e2e.ts). This test is about the clock, so it still waits.
   await expect(page.getByRole('region', { name: 'Running scenario' }).locator('h3').first()).not.toBeEmpty({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Choose another scenario' }).click();
   await expect(page.getByRole('region', { name: 'Scenario library' })).toBeVisible();

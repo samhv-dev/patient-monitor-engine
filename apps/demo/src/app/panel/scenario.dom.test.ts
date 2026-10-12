@@ -3,10 +3,11 @@
 // pressed the instant the case reached "Established" did nothing). The panel repaints ≤ 2 Hz, so a button can be the
 // one drawn for the previous state: the press resolves its label against the CURRENT state, and a press the current
 // state cannot take is said in a toast and not logged as an instructor action.
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import type { Link } from '../link.ts';
 import type { PanelCtx } from './ctx.ts';
+import { throttle } from '../ui.ts';
 import { scenarioTab } from './scenario.ts';
 
 const DOC = {
@@ -21,7 +22,7 @@ const DOC = {
   ],
 } as ScenarioDoc;
 
-function rig(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }, during: (sv: ScenarioView) => void = () => undefined) {
+function rig(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttMs: 0 }, during: (sv: ScenarioView) => void = () => undefined, repaint: (fn: () => void) => () => void = (fn) => fn, paintNow = true) {
   const sv = new ScenarioView();
   sv.doc = DOC;
   sv.docVersion = 1;
@@ -38,12 +39,12 @@ function rig(reply: AckResult = { accepted: true, tick: 0, commandId: 'c1', rttM
     note: (_text: string, kind = 'note') => void logged.push(kind),
   } as unknown as Link;
   let refresh = () => undefined as void;
-  const ctx = { link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = fn), goTab: () => undefined } as unknown as PanelCtx;
+  const ctx = { link, staging: {}, site: {}, weightKg: () => 70, onRefresh: (fn: () => void) => (refresh = repaint(fn)), goTab: () => undefined } as unknown as PanelCtx;
   const el = scenarioTab(ctx);
   document.body.append(el);
-  refresh();
+  if (paintNow) refresh();
   const buttonFor = (label: string) => [...el.querySelectorAll('ul.next button')].find((b) => b.textContent === label) as HTMLButtonElement;
-  return { sv, sent, logged, refresh, buttonFor };
+  return { sv, el, sent, logged, refresh: () => refresh(), buttonFor };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -83,5 +84,45 @@ describe('scenario panel: a manual-trigger button drawn for the previous state',
     expect(targets(sent)).toEqual(['onset-crisis']);
     expect(logged).toEqual([]);
     expect(toasts()).toEqual(['Not available now: the case has moved to Established.']);
+  });
+});
+
+// F-CW3-1 (fix-ci-webkit-3): "Choose another scenario" pressed before the tab's first throttled repaint (a timer, then
+// a frame) was undone by it: the panel read the first repaint as a new scenario document and closed the library.
+describe('scenario panel: "Choose another scenario" and the throttled repaint', () => {
+  beforeEach(() => {
+    document.body.replaceChildren();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'requestAnimationFrame', 'performance'] });
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const shown = (el: HTMLElement, name: string) => !(el.querySelector(`section[aria-label="${name}"]`) as HTMLElement).hidden;
+
+  it('the library stays open through repaints with no new document, and closes when a scenario is loaded', () => {
+    const { sv, el, refresh } = rig(undefined, undefined, (fn) => throttle(fn, 500), false);
+    refresh(); // the tab opens: its first repaint is queued, not yet run
+    const choose = [...el.querySelectorAll('button')].find((b) => b.textContent === 'Choose another scenario') as HTMLButtonElement;
+    choose.click();
+    expect(shown(el, 'Scenario library')).toBe(true);
+    // the throttle timer and a frame: the first repaint runs, then more of them, with the same document
+    for (let i = 0; i < 4; i++) {
+      vi.advanceTimersByTime(600);
+      vi.advanceTimersToNextFrame();
+      refresh();
+    }
+    vi.advanceTimersByTime(600);
+    vi.advanceTimersToNextFrame();
+    expect(shown(el, 'Scenario library')).toBe(true);
+    expect(shown(el, 'Running scenario')).toBe(false);
+
+    // a scenario is loaded: a new document version closes the library and shows the run
+    sv.doc = { ...DOC, id: 'test-next', title: 'Next case' } as ScenarioDoc;
+    sv.docVersion++;
+    refresh();
+    vi.advanceTimersByTime(600);
+    vi.advanceTimersToNextFrame();
+    expect(shown(el, 'Scenario library')).toBe(false);
+    expect(shown(el, 'Running scenario')).toBe(true);
+    expect(el.querySelector('section[aria-label="Running scenario"] h3')?.textContent).toBe('Next case');
   });
 });
