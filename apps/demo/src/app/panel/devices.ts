@@ -2,8 +2,10 @@
 // monitor flashes; its mirror must not pull the instructor's eye), with the priority as a marker and a word as well
 // (IEC 60601-1-8; research/13-ui-design-references rules 3, 4). Silence and pause show the IEC 60417 bell-cancel /
 // alarm-inhibit meaning in words with a countdown. Sensors attach and detach per channel (Laerdal: traces appear only
-// once attached).
+// once attached). FX-4: the alarm keys follow the skin — a key the modelled monitor lacks (Saadat-like has no alarm
+// pause) is shown disabled with the reason, and every refused alarm action is said in a toast.
 import type { SensorId } from '@pme/engine-core';
+import { alarmCaps, alarmRefusal, noPauseReason } from '../alarm-caps.ts';
 import { alarmLine } from '../alarms.ts';
 import { describeCommand, SENSORS } from '../describe.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
@@ -14,21 +16,36 @@ const CHANNELS: ReadonlyArray<[SensorId, 'on' | 'connected']> = [['ecg', 'on'], 
 
 export function devicesTab(c: PanelCtx): HTMLElement {
   const { link } = c;
-  const now = async (cmd: Record<string, unknown>) => {
+  const skin = () => link.alarms?.skin ?? link.host?.skin ?? null; // the engine's word first (a Remote has no host)
+  const now = async (cmd: Record<string, unknown>, refused = (why?: string) => `Not done: ${why ?? 'refused'}`) => {
     const r = await link.send(cmd as never);
-    toast(r.accepted ? describeCommand(cmd) : `Not done: ${r.reason ?? 'refused'}`);
+    toast(r.accepted ? describeCommand(cmd) : refused(r.reason));
     return r.accepted;
   };
-  const dev = (action: Record<string, unknown>) => now({ type: 'device', action });
+  const dev = (action: Record<string, unknown>) => now({ type: 'device', action }, action.device === 'alarm' ? (why) => alarmRefusal(action.action, why, skin()) : undefined);
 
   // ---- alarms ----
   const list = h('ul', { class: 'alarms', 'aria-label': 'Active alarms' });
   const live = h('div', { class: 'sr-only', 'aria-live': 'assertive' });
   const status = h('p', { class: 'hint', role: 'status' });
   let announced = new Set<string>();
+  const pause = button('Pause alarms', () => void dev({ device: 'alarm', action: 'pause' }));
+  const pauseWhy = h('p', { class: 'hint', id: 'alarm-pause-why' });
+  let capsOf: string | null | undefined;
+  const followSkin = () => {
+    if (skin() === capsOf) return;
+    capsOf = skin();
+    const why = noPauseReason(alarmCaps(capsOf));
+    pause.disabled = why !== null;
+    pauseWhy.hidden = why === null;
+    setText(pauseWhy, why ?? '');
+    if (why) pause.setAttribute('aria-describedby', pauseWhy.id);
+    else pause.removeAttribute('aria-describedby');
+  };
+  followSkin();
   const actions = h('div', { class: 'row' },
     button('Silence', () => void dev({ device: 'alarm', action: 'silence' }), 'primary'),
-    button('Pause alarms', () => void dev({ device: 'alarm', action: 'pause' })),
+    pause,
     button('Acknowledge', () => void dev({ device: 'alarm', action: 'ack' })),
     button('All alarms on', () => void dev({ device: 'alarm', action: 'enableAll', value: true }), 'ghost'));
 
@@ -50,6 +67,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void dev({ device: 'nibp', action: 'start' })), interval.el);
 
   c.onRefresh(() => {
+    followSkin();
     const a = link.alarms;
     const act = a?.active ?? [];
     list.replaceChildren(...[...act].sort((x, y) => x.level - y.level).map((x) => {
@@ -72,6 +90,6 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     announced = new Set(act.map((x) => x.id));
   });
 
-  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
+  return h('div', {}, h('h3', {}, 'Alarms'), status, list, live, actions, pauseWhy, h('h3', {}, 'Sensors'), h('p', { class: 'hint' }, 'A trace appears on the monitor only while its sensor is attached.'),
     host ? null : h('p', { class: 'hint' }, 'On a remote the sensors show no state until you set them: the monitor does not report which are attached yet.'), sensors, h('h3', {}, 'NIBP'), nibp);
 }
