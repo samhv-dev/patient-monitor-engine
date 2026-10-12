@@ -3498,20 +3498,20 @@ git push
 
 ## Gate — merge main, full verification, measurements, gate note, pull request
 
-- [ ] **G1 — merge main, block re-check.** `git fetch -q origin && git merge origin/main` (no rebase). Re-run the Task 0
+- [x] **G1 — merge main, block re-check.** `git fetch -q origin && git merge origin/main` (no rebase). Re-run the Task 0
   Step 3 check against the merge base's files if main moved: `0 problems` or each drift listed in the gate note.
-- [ ] **G2 — full suites.** `npx -y pnpm@9.15.9 -r typecheck` (clean); `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9
+- [x] **G2 — full suites.** `npx -y pnpm@9.15.9 -r typecheck` (clean); `CI=1 PME_TEST_SET=fast npx -y pnpm@9.15.9
   --filter @pme/engine-core exec vitest run` and every other package's `vitest run` (all passed; numbers to the gate
   note); `npx -y pnpm@9.15.9 --filter @pme/renderer build`, then `npx playwright test --retries=0` (both engines; every
   test passed or skipped for its existing reason). `git status docs/gates` stays clean (FU-11 K1).
-- [ ] **G3 — the measurements (on a kit built from the branch, both engines, nothing else running).** Run
+- [x] **G3 — the measurements (on a kit built from the branch, both engines, nothing else running).** Run
   `PME_S10_MEASURE=1 npx playwright test s10-time-control -g measure --retries=0` and copy its `[measure]` lines: the ×8
   rate over 30 s of the heaviest showcase case (anaphylaxis) and of bronchospasm with the Ventilator view, the
   main-thread frame p95, and the wall time of a 300 s fast-forward for each (the second with the cockpit stepping).
   Pass: ×8 rate ≥ 7.8 in both engines; the fast-forward 9.5–13 s in both (paced to 10 s; above 13 s = the monitor or the
   cockpit could not keep the pace — report it, do not raise a constant). Compare with "Prototype results"; a rate below
   7.8 is reported with the catch-up policy (D-2), not "fixed" by raising a constant.
-- [ ] **G4 — the five-case rehearsal** (`scripts/showcase/rehearsal.showcase.ts`, both engines, kit built from the
+- [x] **G4 — the five-case rehearsal** (`scripts/showcase/rehearsal.showcase.ts`, both engines, kit built from the
   branch) at the speeds the run sheet uses (×4): the numbers match FU-11 Gate B's (Global Constraints). Then by hand,
   once per engine: induction case at ×8 for 2 min (clock and SpO2 move; no beat tone; no console error); "Fast-forward
   5 min" from the Instructor view with a second screen and a Remote open: the panel (dimmed, blurred page; pulsing
@@ -3522,10 +3522,34 @@ git push
   both lines; an alarm that came and went is latched on the monitor until Silence/Acknowledge; then "Fast-forward 2
   min" with the Ventilator view ventilating (bronchospasm case): the cockpit keeps ventilating through and after it.
   Screenshots to `docs/gates/stage-10/` (only the ones this gate takes) — the owner signs off the look from them.
-- [ ] **G5 — gate note** `docs/gates/stage-10.md`: what was built, the numbers of G2–G4 against "Prototype results",
+- [x] **G5 — gate note** `docs/gates/stage-10.md`: what was built, the numbers of G2–G4 against "Prototype results",
   every block drift, the owner's decisions and the two items left for the orchestrator. Commit with the plan's ticks,
   push, open the PR (`gh pr create --base main --head stage-10-time-control`, title "Stage 10: time control — ×8 and a
   paced fast-forward (5 or 2 min)"), and STOP (the orchestrator merges).
+
+## Deviations recorded during execution
+
+- **Task 3's pace test (test design; orchestrator ruling 2026-10-11).** The block's test "is paced to the wall time it is
+  given" asserted a REAL wall time below 4000 ms for a 1.5 s pace; on PR #54's CI (run 38166128702) it took 4568 ms, and
+  Stages 12/13 saw 5.35 s and 7.5 s under load. Replaced by (a) the same span on a fake clock — `HostSessionOptions.sleep`
+  (new, the pacer's wait, default a real `setTimeout`; production unchanged) with the existing `wallNow` — asserting the
+  239 waits of exactly 6.25 ms, the paced total and the start event's `wallMs`; and (b) one real-time smoke check with a
+  LOWER bound only (≥ 1400 ms). The upper bound is gone. The blocks above are unchanged (they reproduce the prototype);
+  the branch carries the new test.
+- **Task 2's NIBP-through-the-span test: an explicit 180 000 ms timeout** (orchestrator ruling 2026-10-12), like the
+  plan's other long Stage 10 tests. A pure CPU comparison of 300 s at two speeds with no wall-clock assertion: 4 s alone,
+  43 s on a loaded CI runner (run 38169697950), where vitest's default 30 s timeout failed it. No assertion changed.
+- **Task 2's NIBP-through-the-span test yields to the event loop** (orchestrator ruling 2026-10-12): with the 180 s
+  timeout it passed on CI, but its 46 s synchronous block on a loaded runner starved vitest's progress messages ("Timeout
+  calling onTaskUpdate", run 38181144224) and the package exited 1. It now awaits a macrotask every 500 ticks of the
+  fast-forward and after every 5 s of the ×4 frames; the fast-forward steps, the 300 s at ×4 (60 fps frames, chunked) and the assertions are unchanged.
+- **Task 5's e2e `s10-time-control` is skipped on WebKit when on CI only** (FALLBACK ruling 2026-10-12). On PR #54's
+  CI (run 38172603508) the 2-vCPU Linux WebKit runner held ×5.3 instead of ×8 (S10-F5; the D-2 policy: sim time runs
+  slower, no tick is skipped), scheduled no beat tone within 10 s back at ×1, and once left a fast-forward from the
+  Ventilator view unanswered to the 300 s timeout (fixer item FX-2b, with F-49-1). Local macOS WebKit and CI Chromium run
+  it in full; the kit measurements proved ×8.00–8.01 on both engines locally (gate note §5), and the owner's hand check H18
+  covers Safari.
+- **Task 6** (added by the orchestrator) and the two gate fixes (span wording, seam label): see `docs/gates/stage-10.md`.
 
 ## Mechanical self-check (done while writing; the executor re-runs Task 0 Step 3)
 

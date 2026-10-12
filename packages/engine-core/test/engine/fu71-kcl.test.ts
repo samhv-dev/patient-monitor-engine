@@ -2,8 +2,10 @@
 // through 7c's own potassium pool (the pool insulin–dextrose shifts K into: ECF K + ICF K with τ K_TAU_MIN 43 min, the
 // Na/K-ATPase set point following total-body K, K_TBK_MMOL 300). What the engine OWES the clinician is the shape: the
 // plasma K rises while the infusion runs, in proportion to the rate, peaks at its end and then falls back toward a
-// small persistent rise as the load enters the cells. The textbook SIZE — 20 mmol raises serum K by ≈ 0.25 mmol/L in a
-// normal adult [TXT, grade C: Miller 10e ch. 46 electrolyte management; Stoelting Co-Existing 8e ch. 23] — is a known
+// small persistent rise as the load enters the cells. The SIZE — 20 mmol raises serum K by ≈ 0.25 mmol/L [Kruse JA,
+// Carlson RW, Arch Intern Med 1990;150:613, PMID 2310280: the mean rise per 20-mEq infusion in HYPOkalaemic ICU
+// patients (pre-infusion K 3.2; sampling time not stated). First cited to Miller 10e ch. 46 (coagulation) and Co-Existing
+// 8e ch. 23 (haematology); the electrolyte chapters, Miller 10e ch. 43 and Co-Existing 8e ch. 20, lack it] — is a known
 // miss here and is recorded with its measured numbers below: 7c's pool is the owner of both constants (l2/blood,
 // FU-12 / the calibration queue), and this plan does not re-fit them. SLOW (≈ 2 min wall: 3.2 sim-hours); the 20 mmol/h
 // arm is measured once and shared by both cases.
@@ -43,10 +45,12 @@ describe('FU-7.1 A5: potassium chloride', { timeout: 600_000 }, () => {
     expect(b.kEnd - b.k0).toBeLessThan(0.75 * (a.kEnd - a.k0));
   });
 
-  // R45 (FU-7.1 A5): the textbook SIZE is missed in both directions — the end-of-infusion rise overshoots it and the
+  // R45 (FU-7.1 A5): the SIZE (Kruse 1990) is missed in both directions — the end-of-infusion rise overshoots it and the
   // settled rise undershoots it. Both constants are 7c's (`K_TAU_MIN` 43 min [ENG, tables `vK`]; `K_TBK_MMOL` 300
   // [TXT, Sterns 1981]) and live in l2/blood, which this plan does not touch. Recorded with the numbers for the
   // calibration queue; the band is NOT widened.
+  // Title left for Stage 14 (fix-citations): its "Miller 10e ch. 46" is wrong (ch. 46 is coagulation); the ≈ 0.25 is
+  // Kruse 1990 (PMID 2310280), see the header. The band is unchanged.
   it.fails('20 mmol over 1 h raises plasma K by 0.15–0.35 mmol/L (≈ 0.25, Miller 10e ch. 46 [TXT, grade C]) — measured +0.77 at the end of the infusion and +0.13 two hours later', async () => {
     const a = await twenty();
     expect(a.kEnd - a.k0).toBeGreaterThanOrEqual(0.15);

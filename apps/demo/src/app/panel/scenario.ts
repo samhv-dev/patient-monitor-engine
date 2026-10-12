@@ -10,7 +10,8 @@ import { button, clock, confirmDialog, h, setText, toast, toggle } from '../ui.t
 import { scenarioCard } from '../cards.ts';
 import { bookmark } from '../commands.ts';
 import type { PanelCtx } from './ctx.ts';
-import { manualLabel as manualOf } from '@pme/controller';
+import { describeCommand } from '../describe.ts';
+import { manualLabel as manualOf, type CommandInput } from '@pme/controller';
 
 export function scenarioTab(c: PanelCtx): HTMLElement {
   const { link } = c;
@@ -20,6 +21,9 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   /** "Choose another scenario" pressed during a run: the library stays up until a load or "Back to the running case"
    *  (the ≤ 2 Hz repaint used to flip it back to the run within half a second — showcase rehearsal 2026-10-04). */
   let choosing = false;
+  /** The scenario document's version when it was pressed: only a different one (a load, or the end of the run) closes
+   *  the library. Not `docV`, which is −1 until the tab's first repaint (F-CW3-1: a press before it was undone by it). */
+  let chosenV = -1;
 
   // ---- library ----
   const chips = h('div', { class: 'chips', role: 'radiogroup', 'aria-label': 'Category' });
@@ -61,7 +65,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const objectives = h('ul', { class: 'objectives checks', 'aria-label': 'Objectives' });
   const marks = h('ul', { class: 'marks' });
   const run = h('section', { 'aria-label': 'Running scenario' },
-    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
+    h('div', { class: 'scard-head' }, title, button('Choose another scenario', () => ((choosing = true), (chosenV = sv.docVersion), (run.hidden = true), (library.hidden = false), (back.hidden = false)), 'ghost small')), story,
     strip,
     h('div', { class: 'row' }, h('span', {}, 'Time in state '), inState, hold, button('Bookmark', () => void bookmark(link), 'small')),
     learnerRow,
@@ -76,9 +80,23 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
     if (r.accepted) toast(`Scenario: ${label}`);
   };
 
+  /** A manual trigger, resolved when pressed: the ≤ 2 Hz repaint can leave up a button drawn for the previous state, so
+   *  the press finds its label in the CURRENT state and sends that transition (Stage 10 finding: "MH crisis" pressed
+   *  as the case reached "Established" did nothing). A press the case cannot take now is said in a toast, by the state's
+   *  name, and is not logged as an instructor action. */
+  const press = async (label: string) => {
+    const moved = () => toast(`Not available now: ${sv.doc ? `the case has moved to ${sv.current()?.label ?? 'the next state'}` : 'no scenario is running'}.`);
+    const tr = sv.current()?.transitions?.find((x) => manualOf(x.when) === label);
+    if (!tr) return moved();
+    const cmd: CommandInput = { type: 'scenario', action: 'trigger', target: tr.id };
+    const r = await link.ctl.send(cmd); // not link.send: that logs a refused command too
+    if (r.accepted) link.note(describeCommand(cmd as Record<string, unknown>), 'instructor');
+    else moved();
+  };
+
   c.onRefresh(() => {
     const doc = sv.doc;
-    if (docV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
+    if (chosenV !== sv.docVersion) choosing = false; // a load (or the end of the run) closes the library
     run.hidden = !doc || choosing;
     library.hidden = !!doc && !choosing;
     back.hidden = !doc;
@@ -109,7 +127,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
       const manual = manualOf(tr.when);
       return h('li', {},
         h('span', {}, transitionText(tr, doc)), left !== null ? h('span', { class: 'num muted' }, ` in ${clock(left)}`) : null,
-        manual ? button(manual, () => void link.send({ type: 'scenario', action: 'trigger', target: tr.id }), 'small') : null);
+        manual ? button(manual, () => void press(manual), 'small') : null);
     }));
     // FU-11 (F03–F05, F09, F14; BA01–BA05): a restore now rewinds the waveforms, trends, clocks and pending groups, so
     // "Return here" is back (it was hidden in Stage 9 while a restore left the screen on the discarded timeline)

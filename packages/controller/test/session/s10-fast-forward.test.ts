@@ -140,14 +140,38 @@ describe('Stage 10: fast-forward on the host', () => {
     expect(sync.lastFastForward).toEqual({ fromT: 0, toT: 60, endT: 60, alarms: [] });
   }, 180_000);
 
-  it('is paced to the wall time it is given (owner: ≈ 10 s, so the room sees it); the start event carries the pace', async () => {
-    const r = await rig({ fastForwardWallMs: 1500 });
-    const w0 = performance.now();
+  // Orchestrator ruling 2026-10-11 (CI run 38166128702: 4568 ms against < 4000; Stage 12/13 saw 5.35 s and 7.5 s): a
+  // real-wall-clock upper bound cannot hold on a shared runner. The pace is asserted exactly on a fake clock; one real-time
+  // smoke check keeps only a lower bound, which load cannot break.
+  it('is paced to the wall time it is given (owner: ≈ 10 s, so the room sees it); the start event carries the pace — fake clock, exact', async () => {
+    const clock = { wall: 5_000_000 };
+    const waits: number[] = [];
+    const r = await rig({
+      fastForwardWallMs: 1500,
+      wallNow: () => clock.wall,
+      sleep: async (ms) => {
+        waits.push(ms);
+        clock.wall += ms; // the steps themselves take no time on this clock: every wait is the pace
+      },
+    });
+    const watcher = collect(r.hub.connect());
     await r.ctl.send({ type: 'time', action: 'jump', value: 120 }); // the owner's 2-minute span (the CPR pulse-check interval)
     await waitFor(() => r.ctl.lastFastForward !== null, 30_000);
-    const wall = performance.now() - w0;
-    expect(wall).toBeGreaterThanOrEqual(1400);
-    expect(wall).toBeLessThan(4000);
+    expect(r.host.engine.now().tick).toBe(6000);
+    // 240 steps of 25 ticks: a wait of 1500 × 25 / 6000 = 6.25 ms after each but the last
+    expect(waits).toHaveLength(239);
+    for (const w of waits) expect(w).toBeCloseTo(6.25, 9);
+    expect(clock.wall - 5_000_000).toBeCloseTo((1500 * 239) / 240, 9);
+    const start = watcher.flatMap((m) => (m.kind === 'event' ? m.body : [])).find((e) => e.type === 'fastForward' && (e as { phase: string }).phase === 'start');
+    expect(start).toMatchObject({ phase: 'start', wallMs: 1500, fromT: 0, toT: 120 });
+  }, 180_000);
+
+  it('real time: a paced span never finishes early (lower bound only; load can only make it slower)', async () => {
+    const r = await rig({ fastForwardWallMs: 1500 });
+    const w0 = performance.now();
+    await r.ctl.send({ type: 'time', action: 'jump', value: 120 });
+    await waitFor(() => r.ctl.lastFastForward !== null, 120_000);
+    expect(performance.now() - w0).toBeGreaterThanOrEqual(1400);
     expect(r.host.engine.now().tick).toBe(6000);
   }, 180_000);
 

@@ -1,7 +1,7 @@
 // FU-4 G4 (b), Task 17 (orchestrator update 2026-09-28): the arrest EtCO2 falls over 1–2 min, not within seconds.
 // FU-7.1 B3 (OWNER RULING 2026-10-07, research/26 T3): SUPERSEDED for the NO-FLOW value. Falk JL et al., N Engl J Med
 // 1988;318:607 measured the transition in 13 human arrests, ventilated and monitored throughout: EtCO2 fell to
-// 0.4 ± 0.4 % — ≈ 3 ± 3 mmHg — within ONE minute. FU-4 G4's "10–20 mmHg at 60 s" is a CPR value (Garnett 1987's
+// 0.4 ± 0.4 % — ≈ 3 ± 3 mmHg — within ONE minute. FU-4 G4's "10–20 mmHg at 60 s" is a CPR value (Sanders 1989's
 // resuscitated patients read 15 ± 4 DURING compressions), not a no-flow value, and the owner ruled research 03 §4.4
 // ("< 5 mmHg within 30 s") governs. The no-CPR case below is re-targeted on Falk; the CPR cases keep R39-2's bands.
 // Rig: adult 40 y 70 kg MODELED, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit's rig), seed 7, commanded coarse VF at
@@ -77,7 +77,7 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // pulmonary flow (A22), 18.0 at +2 min
   // R45 (FU-7.1 B3): flipped by the washout — the fall into the arrest now starts the CPR phase from a lower EtCO2, so
   // the +2 min point reads 15.9 (18.0 before). It is INSIDE research/26 T3's sourced band for adequate CPR (10–20 mmHg:
-  // Garnett 1987 n = 35, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
+  // Sanders 1989 n = 35 arrests, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
   // candidate for a re-rule — recorded here with the number, not widened (FU-7.1 Q9 to the owner).
   it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after) — measured 15.9 with the FU-7.1 B3 washout', async () => {
     const c = await course(90, 210);

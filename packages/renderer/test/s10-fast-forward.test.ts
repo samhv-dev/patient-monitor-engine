@@ -72,7 +72,10 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     expect(a.engine.snapshot().state).toEqual(b.engine.snapshot().state);
   });
 
-  it('the NIBP cycle runs through the span: the same results at the same times as without a fast-forward', () => {
+  // yields to the event loop between chunks: a 46 s synchronous block on a loaded CI runner starved vitest's progress
+  // messages ("Timeout calling onTaskUpdate", run 38181144224); the same steps, the same 300 s at ×4
+  it('the NIBP cycle runs through the span: the same results at the same times as without a fast-forward', async () => {
+    const yieldToLoop = () => new Promise((r) => setTimeout(r, 0));
     const results = (posts: Array<{ events: EngineEvent[] }>) =>
       posts.flatMap((p) => p.events).flatMap((e) => (e.type === 'nibp' && e.result ? [{ t: e.t, ...e.result }] : []));
     const pa: Array<{ anchor: ClockAnchor; events: EngineEvent[] }> = [];
@@ -80,15 +83,21 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     const a = make(pa);
     const b = make(pb);
     for (const c of [a, b]) c.command({ id: 'nibp', issuedBy: 't', type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 1 } });
-    for (let k = 0; k < 15_000; k += 25) a.advance(25, k + 25 >= 15_000); // 300 s fast-forwarded
+    for (let k = 0; k < 15_000; k += 25) {
+      a.advance(25, k + 25 >= 15_000); // 300 s fast-forwarded
+      if (k % 500 === 0) await yieldToLoop();
+    }
     b.clock.timeScale = 4;
-    frames(b, 0, 300_000 / 4 + 100); // the same 300 s at ×4, drawn
+    for (let from = 0; from <= 300_000 / 4 + 100; from += 5000) {
+      frames(b, from, Math.min(from + 5000 - 1, 300_000 / 4 + 100)); // the same 300 s at ×4, drawn (5 s of frames a chunk)
+      await yieldToLoop();
+    }
     expect(b.engine.now().tick).toBeGreaterThanOrEqual(15_000);
     const ra = results(pa);
     const rb = results(pb).filter((r) => r.t <= 300);
     expect(ra.length).toBeGreaterThanOrEqual(4); // one a minute
     expect(ra).toEqual(rb);
-  });
+  }, 180_000); // pure CPU comparison of 300 s at two speeds: 43 s on a loaded CI runner (run 38169697950), 4 s alone
 
   it('after the last step a seam marks the jump on every lane, labelled with the new time (mm:ss)', () => {
     const ctx = new FakeCtx();
@@ -102,6 +111,29 @@ describe('Stage 10: MonitorCore.advance (fast-forward steps)', () => {
     frames(c, 1000, 1200);
     expect(label).toMatch(/^05:0\d$/);
     expect(ctx.texts.filter((x) => x === label)).toHaveLength(lanes(c).length); // ECG and pleth lanes alike
+  });
+
+  it('the seam label stays readable: it is drawn behind the line, where the sweep has passed (gate dry run: erased at once)', () => {
+    // the sweep clears an erase gap AHEAD of its cursor every frame; a label drawn to the right of the line (ahead) was
+    // wiped within half a second on every lane with a trace — only the line stayed (the owner's screenshots showed no time)
+    const ctx = new FakeCtx();
+    const c = make([], ctx);
+    frames(c, 0, 1000);
+    const end = c.engine.now().tick + 6000; // 2 min
+    for (let k = c.engine.now().tick; k < end; k += 25) c.advance(25, k + 25 >= end);
+    const t = c.clock.renderT;
+    const label = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    ctx.calls.length = 0;
+    ctx.texts.length = 0;
+    frames(c, 1000, 2000); // 1 s of frames after the span
+    const drawn = ctx.calls.flatMap((k, i) => (k.op === 'fillText' && k.style === `right:${label}` ? [i] : []));
+    expect(drawn).toHaveLength(lanes(c).length);
+    const W = 44; // "mm:ss" at 12 px plus the gap: the label occupies [x − W, x] right-aligned at x
+    for (const i of drawn) {
+      const [lx, ly] = ctx.calls[i]!.args as [number, number];
+      const wiped = ctx.calls.slice(i + 1).filter((k) => k.op === 'fillRect' && k.args[0]! < lx && k.args[0]! + k.args[2]! > lx - W && k.args[1]! <= ly && k.args[1]! + k.args[3]! > ly);
+      expect(wiped).toHaveLength(0);
+    }
   });
 });
 

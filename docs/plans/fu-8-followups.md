@@ -4773,8 +4773,9 @@ git push
 
 **Files:** Create `packages/engine-core/test/engine/fu8-cpr-brain.test.ts`. No source change.
 
-**Why:** research/20 measured 0.71 of normal cerebral flow under good CPR (Meaney 2013 consensus: 30–40 % [VERIFY];
-research/12's band 0.2–0.45): the CPR arterial pressure (MAP ≈ 55) sat on the autoregulation plateau. The smallest
+**Why:** research/20 measured 0.71 of normal cerebral flow under good CPR (30–40 % at best: Kern KB, Niemann JT, Steen S, in
+Cardiac Arrest 2nd ed., Cambridge UP 2007, pp. 369–388, doi:10.1017/CBO9780511544828.020 — Meaney 2013, PMID 23801105,
+repeats the range in its text, not its abstract; research/12's band 0.2–0.45): the CPR arterial pressure (MAP ≈ 55) sat on the autoregulation plateau. The smallest
 mechanism research/20 proposed (autoregulation lost in a pulseless state) was measured unnecessary for the first step:
 with Task A19 (compressions act on real volumes) CBF is **0.45** (CPR MAP ≈ 46). It does not reach the consensus, and no
 further mechanism is added in v1.0 (the ruling: toward the consensus, or `it.fails` with its number): the fall is
@@ -4785,7 +4786,13 @@ Create `packages/engine-core/test/engine/fu8-cpr-brain.test.ts`:
 
 ```ts
 // FU-8 Task A24 (research/20 DV-02a; gap V8): cerebral blood flow under CPR. MODELED, seed 7, ventilated (ETT + VCV
-// 12 × 600, PEEP 5, FiO2 0.5). Before FU-8 (origin/main 3feee6f): 0.71 of normal under good CPR (consensus 30–40 %).
+// 12 × 600, PEEP 5, FiO2 0.5). Before FU-8 (origin/main 3feee6f): 0.71 of normal under good CPR (30–40 % at best).
+// Source of the 30–40 % (fix-citations): Kern KB, Niemann JT, Steen S, "Coronary perfusion pressure during CPR", in
+// Cardiac Arrest: The Science and Practice of Resuscitation Medicine, 2nd ed., Cambridge UP 2007, pp. 369–388,
+// doi:10.1017/CBO9780511544828.020: standard compressions "can, at best, provide 30% to 40% of normal cerebral blood
+// flow" (a review chapter, not a measurement; primary canine microsphere data e.g. Michael 1984, PMID 6697465:
+// 41 ± 15 % of control WITH adrenaline, < 3 % without). Meaney 2013 (PMID 23801105) repeats the range in its text,
+// not its abstract; it is not the source.
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 
