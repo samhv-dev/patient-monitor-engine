@@ -29,6 +29,7 @@ export function ventView(session: AppSession): View {
         offAttach();
         offScale();
         detach();
+        session.ventLink = null; // Stage 10
         port.close();
         frame.onload = null;
         frame.src = 'about:blank';
@@ -41,7 +42,9 @@ export function ventView(session: AppSession): View {
       let detach: () => void = () => {};
       const offAttach = session.onMount((m) => {
         detach();
-        detach = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r)); // FU-11 (K2)
+        const link = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r)); // FU-11 (K2)
+        detach = link;
+        session.ventLink = link; // Stage 10 (owner's decision 6): a fast-forward steps this cockpit with the engine
       });
       // as the Stage V link page does: once the cockpit has loaded, send it an empty patch (its first control message)
       // and this session's speed

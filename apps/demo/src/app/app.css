@@ -436,5 +436,24 @@ table.values tbody th .lbl b { color: var(--text-strong); font-weight: 600; }
 .learner-strip { display: flex; flex-wrap: wrap; gap: var(--s-2); padding: var(--s-2) var(--s-3); background: var(--bezel-1); border-top: 1px solid var(--line); }
 .learner-strip[hidden] { display: none; }
 
+/* Stage 10 (owner's decision 1): while the host fast-forwards, the window dims and blurs behind one centred panel (above
+   every view and the monitor in full screen); after it the panel fades and a banner stays ≈ 8 s. Amber, not alarm red. */
+.ff-veil { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; background: rgb(0 0 0 / 0.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; visibility: hidden; transition: opacity 0.4s, visibility 0s 0.4s; }
+.ff-veil.on { opacity: 1; visibility: visible; transition: opacity 0.25s; }
+.ff-panel { display: grid; justify-items: center; gap: var(--s-2); min-width: min(360px, calc(100vw - 2 * var(--s-4))); padding: var(--s-5) var(--s-6); border: 2px solid #ffb000; border-radius: var(--r-card); background: #0b0d10; color: #f3f6f9; }
+.ff-icon svg { width: 96px; height: 64px; color: #ffb000; animation: ff-pulse 2s ease-in-out infinite; }
+@keyframes ff-pulse { 50% { opacity: 0.35; transform: scale(0.92); } }
+@media (prefers-reduced-motion: reduce) { .ff-icon svg { animation: none; } }
+.ff-title { color: #ffb000; font-size: var(--t-22); font-weight: 700; letter-spacing: 0.06em; }
+.ff-now { font-size: var(--t-44); font-variant-numeric: tabular-nums; }
+.ff-bar { width: 100%; height: 3px; background: #2a3038; }
+.ff-fill { height: 100%; width: 0; background: #ffb000; }
+.ff-ends { display: flex; justify-content: space-between; width: 100%; font-size: var(--t-13); font-variant-numeric: tabular-nums; color: #aab3bf; }
+.ff-mute { display: flex; align-items: center; gap: var(--s-2); color: #aab3bf; }
+.ff-mute svg { width: 20px; height: 20px; }
+.ff-banner { position: fixed; top: var(--s-2); left: 50%; transform: translateX(-50%); z-index: 45; max-width: calc(100vw - 2 * var(--s-4)); padding: var(--s-2) var(--s-4); border: 2px solid #ffb000; border-radius: var(--r-control); background: #0b0d10; color: #f3f6f9; font-weight: 600; text-align: center; pointer-events: none; }
+.ff-banner[hidden] { display: none; }
+.ff-group { display: inline-flex; align-items: center; gap: var(--s-1); }
+
 /* FU-11 (owner ruling Q3): the learner monitor's status and its own Sound / Silence, under the monitor */
 .follower-bar { display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2); justify-content: flex-end; }

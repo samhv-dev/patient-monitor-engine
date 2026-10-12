@@ -9,6 +9,7 @@ import { mountPanel } from '../panel/panel.ts';
 import { pairingOf } from '../pairing.ts';
 import { qrSvg } from '../qr.ts';
 import { mountSessionBar } from '../sessionbar.ts';
+import { mountFastForward } from '../fast-forward.ts';
 import type { SiteProfile } from '../site.ts';
 import { button, h, input, setText, throttle } from '../ui.ts';
 import type { View } from '../shell.ts';
@@ -59,6 +60,7 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
     join.hidden = true;
     holder.append(status);
     mountSessionBar(o.bar, link);
+    mountFastForward(document.body, ctl, { simT: () => link.simT }); // Stage 10
     o.bar.hidden = false;
     const panel = mountPanel(link, { site: o.site, weightKg: () => link.ctl.scenario.doc?.patient?.weightKg ?? 70 });
     holder.append(panel.el);

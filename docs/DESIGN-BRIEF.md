@@ -166,7 +166,7 @@ Every waveform comes from a coupled physiology core and passes through a model o
 - **Clock.** `simT = tick × 0.020 s` (Pulse's default step [05 §3.2]). Frames feed the clock through an accumulator [05 §3.2; S38]:
   - `acc += min(wallΔ, 250 ms) × timeScale` **[ENG clamp]**;
   - `while (acc ≥ 20 ms) tick()`.
-  - `timeScale` ranges 0.25–4. Pause and single-step are also supported.
+  - `timeScale` ranges 0.25–8 (Stage 10 raised the limit from 4 to 8: the owner's ×8 for the 22 Oct 2026 demonstration). Pause and single-step are also supported.
 - **Order of work inside `tick()`:**
   1. Apply the commands stamped for this tick.
   2. Advance L1 ramps and fast state.
@@ -1317,7 +1317,7 @@ export interface MonitorEngine {
   start(): void;                         // internal wall-clock pump
   pause(): void;
   resume(): void;
-  setTimeScale(k: number): void;         // 0.25–4
+  setTimeScale(k: number): void;         // 0.25–8 (Stage 10)
   step(ticks?: number): void;            // while paused
   advanceTo(simT: SimSeconds): void;     // host-driven clock (worker frame pump, Node, tests)
   now(): { tick: Tick; simT: SimSeconds };

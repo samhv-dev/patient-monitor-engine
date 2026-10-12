@@ -8,6 +8,8 @@
 //                   { kind: 'clock' }     the ventilator tick it may run up to: the ENGINE is the master clock, the
 //                                         ventilator never runs more than MAX_AHEAD_TICKS ahead of the newest engine
 //                                         event (a slow worker, a busy tab or an unheld time scale slow both alike)
+//                   { kind: 'run' }       Stage 10 (fast-forward): run up to this ventilator tick NOW, not on the wall
+//                                         clock — the cockpit steps through the span with the engine
 //   either way:     { kind: 'time' }      pause / resume / scale, so both sides stay on one sim time base
 //   page → vent:    { kind: 'control' }   settings patch, circuit, profile (the combined page's scripted demos)
 import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
@@ -19,6 +21,7 @@ export type LinkMsg =
   | { v: 1; kind: 'cmds'; tick: number; cmds: Command[] }
   | { v: 1; kind: 'lungState'; ev: LungStateEvent }
   | { v: 1; kind: 'clock'; ventTick: number }
+  | { v: 1; kind: 'run'; ventTick: number } // Stage 10
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
   | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId };
 
@@ -88,6 +91,18 @@ export interface MonitorLike {
 export const LEAD_TICKS = 5;
 /** The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). */
 export const MAX_AHEAD_TICKS = 75;
+/** Stage 10: a cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
+ *  takes over, as when the cockpit is closed), wall ms [ENG]. */
+export const RUN_TIMEOUT_MS = 2000;
+
+/** The link's detach function; Stage 10: also `runTo`, the fast-forward's lockstep with the cockpit. */
+export type LinkDetach = (() => void) & {
+  /**
+   * Have the ventilator's frames for every engine tick up to `engTick` dispatched (with their `atTick`) before the
+   * engine runs there. Resolves at once when the link has not learnt its offset yet (no cockpit ventilates).
+   */
+  runTo(engTick: number): Promise<void>;
+};
 
 /**
  * Monitor side: dispatch the ventilator's commands on the engine tick that matches the ventilator tick (so a burst
@@ -96,13 +111,14 @@ export const MAX_AHEAD_TICKS = 75;
  * result — which is the engine's current tick + 1 — and only ever grows by the lateness the engine reports; a
  * ventilator restart (its tick goes backwards) relearns it. Returns a detach function.
  */
-export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): () => void {
+export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): LinkDetach {
   let offset: number | null = null;
   let learning = false;
   let gen = 0; // Stage V.1: bumped by a ventilator restart; results of commands sent before it are stale
   let lastTick = -1;
   let allowed = -Infinity;
   let engTick = 0;
+  let waiter: { ventTick: number; done: () => void } | null = null; // Stage 10: a fast-forward step waits for frames
   const publishClock = () => {
     if (offset === null) return;
     const allow = engTick - offset + MAX_AHEAD_TICKS;
@@ -120,6 +136,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
         gen++;
       }
       lastTick = m.tick;
+      const w = waiter !== null && m.tick >= waiter.ventTick ? waiter : null; // Stage 10: released after these dispatches
       for (const c of m.cmds) {
         const at = offset === null ? undefined : m.tick + offset;
         const probe = offset === null && !learning;
@@ -149,6 +166,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
           } else if (at !== undefined && r.tick > at) offset = (offset ?? 0) + r.tick - at;
         }, (err: unknown) => failed(err instanceof Error ? err.message : String(err)));
       }
+      w?.done();
     } else if (m.kind === 'time') {
       if (m.action === 'pause') mon.pause?.();
       else if (m.action === 'resume') mon.resume?.();
@@ -177,8 +195,30 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
     }
     if (e.type === 'lungState') port.post({ v: 1, kind: 'lungState', ev: e });
   });
-  return () => {
+  const detach = () => {
     offPort();
     offEng();
+    waiter?.done();
   };
+  return Object.assign(detach, {
+    runTo(eng: number): Promise<void> {
+      if (offset === null) return Promise.resolve();
+      const ventTick = eng - offset;
+      if (lastTick >= ventTick) return Promise.resolve();
+      return new Promise<void>((res) => {
+        const timer = setTimeout(() => w.done(), RUN_TIMEOUT_MS);
+        const w = {
+          ventTick,
+          done: () => {
+            clearTimeout(timer);
+            if (waiter === w) waiter = null;
+            res();
+          },
+        };
+        waiter?.done();
+        waiter = w;
+        port.post({ v: 1, kind: 'run', ventTick });
+      });
+    },
+  });
 }

@@ -1,13 +1,14 @@
 // Fixed-step simulation clock (brief §3.3; "Fix Your Timestep", Gaffer on Games).
 // simT = tick × 20 ms. Frames feed wall time through an accumulator:
 //   acc += min(wallΔ, 250 ms) × timeScale;  while (acc ≥ 20 ms) tick()
-// The 250 ms clamp is [ENG]. timeScale is limited to 0.25–4 (brief §3.3).
+// The 250 ms clamp is [ENG]. timeScale is limited to 0.25–8 (brief §3.3 said 0.25–4; Stage 10 adds ×8, the owner's
+// request for the 22 Oct demonstration: at ×8 a 60 fps frame runs 6.7 ticks).
 
 export const TICK_MS = 20;
 export const TICK_S = TICK_MS / 1000;
 export const MAX_FRAME_MS = 250;
 export const MIN_TIME_SCALE = 0.25;
-export const MAX_TIME_SCALE = 4;
+export const MAX_TIME_SCALE = 8;
 
 export class Clock {
   readonly tickMs = TICK_MS;

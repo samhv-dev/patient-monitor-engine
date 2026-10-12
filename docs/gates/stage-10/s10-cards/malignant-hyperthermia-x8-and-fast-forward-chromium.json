@@ -1,0 +1,300 @@
+{
+  "case": "Malignant hyperthermia, x8 and fast-forward",
+  "browser": "chromium",
+  "base": "http://127.0.0.1:8700",
+  "steps": [
+    {
+      "clock": "04:14",
+      "state": "surgery",
+      "what": "rocuronium (×8)",
+      "hr": 79,
+      "art": "98.7/65.1 (74.8)",
+      "spo2": 99,
+      "etco2": 40
+    },
+    {
+      "clock": "06:53",
+      "state": "earlySigns",
+      "what": "state earlySigns",
+      "hr": 86,
+      "art": "104.7/70.5 (80.3)",
+      "spo2": 99,
+      "etco2": 46
+    },
+    {
+      "clock": "11:56",
+      "state": "earlySigns",
+      "what": "after the first 5-min fast-forward",
+      "hr": 106,
+      "art": "115.5/82.9 (92.5)",
+      "spo2": 99,
+      "etco2": 60
+    },
+    {
+      "clock": "17:03",
+      "state": "earlySigns",
+      "what": "after the second 5-min fast-forward",
+      "hr": 139,
+      "art": "118.5/88.5 (97.2)",
+      "spo2": 98,
+      "etco2": 77
+    },
+    {
+      "clock": "18:48",
+      "state": "established",
+      "what": "state established",
+      "hr": 144,
+      "art": "119.2/87.5 (97.8)",
+      "spo2": 98,
+      "etco2": 81
+    },
+    {
+      "clock": "21:29",
+      "state": "treating",
+      "what": "treatment given (×8)",
+      "hr": 133,
+      "art": "130/97.3 (107)",
+      "spo2": 99,
+      "etco2": 54
+    },
+    {
+      "clock": "26:32",
+      "state": "treating",
+      "what": "after the 5-min fast-forward following treatment",
+      "hr": 111,
+      "art": "145.1/102.1 (115.7)",
+      "spo2": 99,
+      "etco2": 46
+    },
+    {
+      "clock": "29:02",
+      "state": "recovering",
+      "what": "state recovering",
+      "hr": 108,
+      "art": "151.5/104.2 (119.4)",
+      "spo2": 99,
+      "etco2": 44
+    },
+    {
+      "alarmsRaised": [],
+      "log": [
+        "Fast-forward 5 min",
+        "Fast-forward 5 min started (sound muted until it ends)",
+        "Fast-forward ended; no alarms during it",
+        "Fast-forward 5 min",
+        "Fast-forward 5 min started (sound muted until it ends)",
+        "Fast-forward ended; no alarms during it",
+        "Fast-forward 5 min",
+        "Fast-forward 5 min started (sound muted until it ends)",
+        "Fast-forward ended; no alarms during it"
+      ]
+    },
+    {
+      "presses": [
+        {
+          "label": "Start surgery: rocuronium 0.6 mg/kg",
+          "at": "04:06",
+          "before": "induction",
+          "after": "surgery",
+          "toast": ""
+        },
+        {
+          "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+          "at": "18:48",
+          "before": "established",
+          "after": "triggerOff",
+          "toast": ""
+        },
+        {
+          "label": "Dantrolene 2.5 mg/kg",
+          "at": "19:50",
+          "before": "triggerOff",
+          "after": "treating",
+          "toast": ""
+        },
+        {
+          "label": "Cool: 2 L saline at room temperature",
+          "at": "20:23",
+          "before": "treating",
+          "after": "treating",
+          "toast": ""
+        },
+        {
+          "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+          "at": "20:52",
+          "before": "treating",
+          "after": "treating",
+          "toast": ""
+        },
+        {
+          "label": "Sodium bicarbonate 1 mmol/kg",
+          "at": "21:21",
+          "before": "treating",
+          "after": "treating",
+          "toast": ""
+        }
+      ]
+    }
+  ],
+  "spans": [
+    {
+      "min": 5,
+      "title": "FAST FORWARD · 5 MIN",
+      "clockAtShow": "06:56",
+      "clockLater": "08:25",
+      "wallS": 10.3,
+      "fromT": 414.3,
+      "endT": 714.3,
+      "simStart": 414,
+      "banner": "Fast-forwarded 5 min, 06:54 → 11:54. During it: no alarms.",
+      "alarms": []
+    },
+    {
+      "min": 5,
+      "title": "FAST FORWARD · 5 MIN",
+      "clockAtShow": "12:04",
+      "clockLater": "13:34",
+      "wallS": 10.7,
+      "fromT": 718.7,
+      "endT": 1018.7,
+      "simStart": 718.1,
+      "banner": "Fast-forwarded 5 min, 11:58 → 16:58. During it: no alarms.",
+      "alarms": []
+    },
+    {
+      "min": 5,
+      "title": "FAST FORWARD · 5 MIN",
+      "clockAtShow": "21:30",
+      "clockLater": "23:00",
+      "wallS": 10.5,
+      "fromT": 1289.5,
+      "endT": 1589.5,
+      "simStart": 1289.3,
+      "banner": "Fast-forwarded 5 min, 21:29 → 26:29. During it: no alarms.",
+      "alarms": []
+    }
+  ],
+  "checks": [
+    {
+      "what": "early signs at ×8",
+      "expected": "state earlySigns 4–12 min after load",
+      "observed": "6.8 min",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: panel title",
+      "expected": "FAST FORWARD · 5 MIN",
+      "observed": "FAST FORWARD · 5 MIN",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: the clock runs on the panel",
+      "expected": "changes",
+      "observed": "06:56 → 08:25",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: exact span",
+      "expected": "300 s",
+      "observed": 300,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: paced",
+      "expected": "9.5–20 s of wall time (click to panel gone)",
+      "observed": 10.3,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: banner",
+      "expected": "\"Fast-forwarded 5 min, mm:ss → mm:ss. During it: …\"",
+      "observed": "Fast-forwarded 5 min, 06:54 → 11:54. During it: no alarms.",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: panel title",
+      "expected": "FAST FORWARD · 5 MIN",
+      "observed": "FAST FORWARD · 5 MIN",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: the clock runs on the panel",
+      "expected": "changes",
+      "observed": "12:04 → 13:34",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: exact span",
+      "expected": "300 s",
+      "observed": 300,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: paced",
+      "expected": "9.5–20 s of wall time (click to panel gone)",
+      "observed": 10.7,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: banner",
+      "expected": "\"Fast-forwarded 5 min, mm:ss → mm:ss. During it: …\"",
+      "observed": "Fast-forwarded 5 min, 11:58 → 16:58. During it: no alarms.",
+      "pass": true
+    },
+    {
+      "what": "established crisis through the spans",
+      "expected": "state established 14–26 min after load",
+      "observed": "18.8 min",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: panel title",
+      "expected": "FAST FORWARD · 5 MIN",
+      "observed": "FAST FORWARD · 5 MIN",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: the clock runs on the panel",
+      "expected": "changes",
+      "observed": "21:30 → 23:00",
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: exact span",
+      "expected": "300 s",
+      "observed": 300,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: paced",
+      "expected": "9.5–20 s of wall time (click to panel gone)",
+      "observed": 10.5,
+      "pass": true
+    },
+    {
+      "what": "fast-forward 5 min: banner",
+      "expected": "\"Fast-forwarded 5 min, mm:ss → mm:ss. During it: …\"",
+      "observed": "Fast-forwarded 5 min, 21:29 → 26:29. During it: no alarms.",
+      "pass": true
+    },
+    {
+      "what": "recovery after dantrolene, through a span",
+      "expected": "state recovering within 20 min of the first dose",
+      "observed": "9.2 min",
+      "pass": true
+    },
+    {
+      "what": "no arrest on the treated path",
+      "expected": "arterial systolic never below 60 after the call",
+      "observed": 114,
+      "pass": true
+    },
+    {
+      "what": "no console error or page error",
+      "expected": "none",
+      "observed": [],
+      "pass": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,4 @@
+[measure] [chromium] kit showcase-anaphylaxis at ×8: rate ×8.01; main-thread frames p50 16.7 p95 16.8 max 17 ms
+[measure] [chromium] kit showcase-anaphylaxis: fast-forward of 300 s took 10.00 s (paced to 10 s)
+[measure] [chromium] kit showcase-bronchospasm + Ventilator view at ×8: rate ×8.00; main-thread frames p50 16.7 p95 16.7 max 17 ms
+[measure] [chromium] kit showcase-bronchospasm + Ventilator view: fast-forward of 300 s took 10.00 s (paced to 10 s)

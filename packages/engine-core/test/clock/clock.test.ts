@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Clock, MAX_FRAME_MS, TICK_MS } from '../../src/clock/clock.ts';
+import { Clock, MAX_FRAME_MS, MAX_TIME_SCALE, TICK_MS } from '../../src/clock/clock.ts';
 import { createRng } from '../../src/rng/sfc32.ts';
 
 describe('clock/Clock', () => {
   it('10,000 random 8–50 ms frames: ticks == floor(Σ(wallΔ·scale)/20 ms) and acc < 20 ms', () => {
     const rnd = createRng(2026).stream('scenario');
-    const scales = [0.25, 0.5, 1, 2, 4];
+    const scales = [0.25, 0.5, 1, 2, 4, 8];
     for (const scale of scales) {
       const clock = new Clock();
       clock.timeScale = scale;
@@ -25,7 +25,7 @@ describe('clock/Clock', () => {
   });
 
   it('clamps a 5 s frame to at most 250 ms × scale', () => {
-    for (const scale of [0.25, 1, 4]) {
+    for (const scale of [0.25, 1, 4, 8]) {
       const clock = new Clock();
       clock.timeScale = scale;
       const n = clock.advance(5000);
@@ -53,16 +53,17 @@ describe('clock/Clock', () => {
     expect(clock.advance(40)).toBe(2);
   });
 
-  it('rejects timeScale outside 0.25–4', () => {
+  it('rejects timeScale outside 0.25–8 (Stage 10: ×8 is the fastest speed)', () => {
     const clock = new Clock();
     expect(() => {
       clock.timeScale = 0.1;
     }).toThrow(RangeError);
     expect(() => {
-      clock.timeScale = 5;
+      clock.timeScale = 8.5;
     }).toThrow(RangeError);
-    clock.timeScale = 4;
-    expect(clock.timeScale).toBe(4);
+    clock.timeScale = 8;
+    expect(clock.timeScale).toBe(8);
+    expect(MAX_TIME_SCALE).toBe(8);
   });
 
   it('a 24 h run in 20 ms frames lands exactly on tick 4,320,000', () => {

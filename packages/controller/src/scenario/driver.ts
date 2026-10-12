@@ -202,6 +202,16 @@ export class ScenarioDriver {
       on: (fn) => inner.on(fn),
       now: () => inner.now(),
       time: (a, v) => inner.time(a, v),
+      // Stage 10: the runner keeps running through a fast-forward — it is polled after every step, at the step's sim time
+      ...(inner.fastForwardStep
+        ? {
+            fastForwardStep: async (n: number, last: boolean) => {
+              const r = await (inner.fastForwardStep as NonNullable<HostTarget['fastForwardStep']>)(n, last);
+              if (n > 0) this.poll(); // an empty step (the host reading the monitor's tick) runs no time
+              return r;
+            },
+          }
+        : {}),
     };
   }
 

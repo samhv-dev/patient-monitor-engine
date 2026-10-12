@@ -341,7 +341,7 @@ class Engine implements MonitorEngine {
     this.lastWall = performance.now();
   }
   setTimeScale(k: number): void {
-    this.clock.timeScale = k; // throws RangeError outside 0.25–4
+    this.clock.timeScale = k; // throws RangeError outside 0.25–8 (MIN_TIME_SCALE–MAX_TIME_SCALE)
   }
   step(ticks = 1): void {
     if (this.timer !== null && !this.clock.paused) return;

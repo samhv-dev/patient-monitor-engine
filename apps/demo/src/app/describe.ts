@@ -99,6 +99,7 @@ export function describeCommand(c: Any): string {
     case 'setFactor':
       return `Model factor ×${c.factor}`;
     case 'time':
+      if (c.action === 'jump') return `Fast-forward ${spanText(Number(c.value))}`; // Stage 10
       return c.action === 'pause' ? 'Simulation paused' : c.action === 'resume' ? 'Simulation resumed' : c.action === 'scale' ? `Speed ×${c.value}` : 'Time changed';
     case 'scenario': {
       const doc = c.doc as { title?: string } | undefined;
@@ -123,4 +124,13 @@ export function describeCommand(c: Any): string {
     default:
       return 'Instructor action';
   }
+}
+
+/** Stage 10: a sim time as the session clock shows it ("13:20"; ui.ts's `clock`, which the log cannot import in Node). */
+export const timeText = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+/** Stage 10: a fast-forward's span in words ("5 min", "90 s"). */
+export function spanText(s: number): string {
+  const r = Math.round(s); // a span computed as toT − fromT is a few ULPs off a whole second (604.3 − 484.3 = 119.99…)
+  return Number.isFinite(s) && r > 0 && r % 60 === 0 ? `${r / 60} min` : `${r} s`;
 }

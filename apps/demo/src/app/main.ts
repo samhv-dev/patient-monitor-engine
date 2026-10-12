@@ -17,6 +17,7 @@ import { loadSite } from './site.ts';
 import { button, h, setText, throttle, toast } from './ui.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
+import { mountFastForward } from './fast-forward.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
@@ -52,6 +53,8 @@ if (follow) {
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
   const follower = mountFollower(shell, site, follow, bar);
+  // Stage 10: the second screen shows the same fast-forward panel and latches the alarms that came and went
+  mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
 } else if (hostless) {
@@ -104,6 +107,7 @@ if (follow) {
   shell.add(devView());
   shell.add(settingsView(site, session));
   mountSessionBar(shell.bar, link);
+  mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Stage 10: above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
   const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });

@@ -5,7 +5,7 @@
 import {
   AlarmSounder, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
-import { EventLog, TrendStore, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
+import { EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
 import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI } from './device-ui.ts';
@@ -14,6 +14,7 @@ import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts'; /
 import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts'; // Stage 4b
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts'; // Stage 2
 import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
+import { simClock } from './overlays.ts'; // Stage 10
 import type { ClockAnchor, Size } from './protocol.ts';
 import { createHost, type Host, type RenderPath } from './worker-host.ts';
 
@@ -104,6 +105,18 @@ export interface MonitorHandle {
   readonly eventLog: EventLog;
   /** FU-11 (K2): the clock ViewerSync steers; needs role 'viewer' and worker 'off' (its calls are synchronous). */
   viewerClock(): Promise<ViewerClock>;
+  /**
+   * Stage 10 (fast-forward): run `ticks` sim ticks now without drawing them; their events arrive as usual (trends, tiles,
+   * alarms, the event log). Sound is off from the first step to the `last`: no tone is scheduled and the alarm voice
+   * stops; after the last step the alarms still active sound again. Resolves after the step's events were delivered.
+   */
+  advance(ticks: number, last: boolean): Promise<{ tick: number; simT: number }>;
+  /**
+   * Stage 10 (owner's decision 5): show alarms that came and went inside a fast-forward in the alarm area as silent latched
+   * entries ("… · during fast-forward mm:ss") until the next acknowledge (Silence or Acknowledge), as a monitor's alarm
+   * history keeps them. A later call replaces the list; a rewind drops entries after the restored time.
+   */
+  latchAlarms(alarms: readonly AlarmEntry[]): void;
   /** FU-11 (Q3): with `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
    *  whether this window is now silenced; false before sound is enabled. */
   silenceAudio(): boolean;
@@ -111,6 +124,13 @@ export interface MonitorHandle {
 
 const TILE_W = 190;
 const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 ms is plenty [ENG]
+/** Stage 10 (owner's decision 4): above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of
+ *  80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. */
+export const BEAT_TONE_MAX_SCALE = 4;
+/** Stage 10: whether a tone of this kind plays at this speed. */
+export const beatToneAt = (kind: string, timeScale: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || timeScale <= BEAT_TONE_MAX_SCALE;
+/** Stage 10: the two-tone cue at the end of a fast-forward (none at its start), Hz [ENG]. */
+const FF_CUE_HZ = [660, 990] as const;
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
   // Showcase hotfix item 4: a skin's layout.whenAttached follows the CO2 line (saadat-like: the CO2 waveform takes the
@@ -172,6 +192,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   let sounder: AlarmSounder | null = null; // Stage 4b
   let bridge: AlarmAudioBridge | null = null; // Stage 4b
   let lastStatus: Extract<EngineEvent, { type: 'alarmStatus' }> | null = null;
+  let ff = false; // Stage 10: a fast-forward is running — no tone is scheduled, the alarm voice is gone until it ends
+  let ffLatched: AlarmEntry[] = []; // Stage 10: alarms of a fast-forward shown latched until the next acknowledge
+  const withLatched = (e: EngineEvent): EngineEvent => (e.type === 'alarmStatus' && ffLatched.length ? { ...e, active: [...e.active, ...ffLatched] } : e);
   let play: ((tone: ToneRequest, when: number) => ToneHandle | void) | null = null; // Stage 4b: follows the skin
   const playerFor = (out: AudioOut, sk: ResolvedSkin | null) =>
     sk
@@ -185,7 +208,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     for (const e of events) {
       trends.record(e);
       eventLog.event(e);
-      ui?.onEvent(e);
+      ui?.onEvent(withLatched(e)); // Stage 10: the device shows the fast-forward's latched alarms; the sound never hears them
       if (e.type === 'alarmStatus') {
         lastStatus = e;
         bridge?.onStatus(e);
@@ -235,7 +258,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         const n = formatNibp(e, nibpLast);
         nibpTile.set(n.main, n.sub, n.status);
       }
-      if (e.type === 'tone' && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
+      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
           ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
@@ -293,7 +316,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
 
   /** Stage 4b: the alarm voice of the current skin (profile + the skin's cadence overrides, brief §3.8). */
   const makeSounder = () => {
-    if (!scheduler || !r) return;
+    if (!scheduler || !r || ff) return; // Stage 10: sound enabled during a fast-forward starts at its end
     sounder?.dispose();
     const a = r.audio.alarm;
     sounder = new AlarmSounder(scheduler, getAlarmProfile(a.profile), { overrides: { repeatS: a.repeatS, lowPulses: a.lowPulses, volume: a.volume, silence: a.silence } });
@@ -312,6 +335,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     trends.rewind(t);
     ui?.reset(t); // the tiles and the alarm header refill from the restored engine
     lastStatus = null;
+    ffLatched = ffLatched.filter((x) => x.since <= t); // Stage 10: a rewind drops the latched alarms of its discarded future
     nibpLast = null;
     lastPi = undefined;
     anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
@@ -343,6 +367,10 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const accepted = (cmd: Command, h: Host) => {
     eventLog.command(cmd, anchor.simT); // Stage 4b
     const c = cmd as { type: string; sensor?: string; state?: string; action?: { device?: string; action?: string; lane?: number; value?: unknown } };
+    if (ffLatched.length && c.type === 'device' && c.action?.device === 'alarm' && (c.action.action === 'ack' || c.action.action === 'silence')) {
+      ffLatched = []; // Stage 10: the next acknowledge clears the fast-forward's latched alarms
+      if (lastStatus) ui?.onEvent(lastStatus);
+    }
     if (c.type === 'attachSensor' && c.sensor === 'co2') setCo2(c.state !== 'off', h);
     if (c.type === 'device' && c.action?.device === 'ecg' && c.action.action === 'lead' && typeof c.action.lane === 'number') leads.set(c.action.lane, c.action.value as LeadId);
   };
@@ -444,6 +472,30 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       return r;
     },
     capture12: () => hostP.then((h) => h.capture12()),
+    advance: (ticks, last) =>
+      hostP.then(async (h) => {
+        if (!ff) {
+          ff = true; // Stage 10: silence now — queued and sounding tones stop, the alarm voice goes (no bursts are pumped)
+          sounder?.dispose();
+          sounder = null;
+          bridge = null;
+          scheduler?.clear();
+        }
+        try {
+          return await h.advance(ticks, last);
+        } finally {
+          if (last) {
+            ff = false;
+            makeSounder(); // the alarms active NOW sound again (makeSounder replays the last alarm status)
+            // the owner's cue: one short two-tone at the END only (the Sound toggle's gain applies)
+            if (audio) FF_CUE_HZ.forEach((hz, i) => playBeep((audio as AudioOut).ctx, (audio as AudioOut).master, (audio as AudioOut).ctx.currentTime + 0.05 + 0.18 * i, hz));
+          }
+        }
+      }),
+    latchAlarms(alarms) {
+      ffLatched = alarms.map(({ numeric: _n, ...x }) => ({ ...x, id: `ff:${x.id}`, text: `${x.text} · during fast-forward ${simClock(x.since)}`, latched: true, acked: false, sounding: false }));
+      if (lastStatus) ui?.onEvent(withLatched(lastStatus));
+    },
     trends,
     eventLog,
     viewerClock: () =>
@@ -463,7 +515,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           on: (fn, types) => core.engine.on(fn, types),
           renderT: () => core.clock.renderT,
           tick: () => core.engine.now().tick,
-          setRate: (k) => void (core.clock.timeScale = Math.min(4, Math.max(0.25, k))),
+          setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // Stage 10: ×8
           setPaused: (p) => (p ? core.clock.pause() : core.clock.resume()),
           jumpTo: (simT) => {
             core.clock.setTick(Math.floor(simT * 50 + 1e-6));

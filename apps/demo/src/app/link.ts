@@ -4,7 +4,7 @@
 // document `host` is the AppSession (patient restart, skin, sound); a Remote has none of those.
 import type { AlarmEntry, EngineEvent } from '@pme/engine-core';
 import type { AckResult, CommandInput, ControllerSession, ManagedTransport, WireEvent, WireMessage } from '@pme/controller';
-import { describeCommand } from './describe.ts';
+import { describeCommand, spanText, timeText } from './describe.ts';
 import type { AppSession } from './session.ts';
 
 export type AlarmStatusEvent = Extract<EngineEvent, { type: 'alarmStatus' }>;
@@ -105,6 +105,13 @@ export class Link {
       this.ramps.clear();
       if (e.cause !== 'restore') this.conditions.clear();
       this.changed();
+    } else if (e.type === 'fastForward') {
+      // Stage 10: where a fast-forward began and ended, and the alarms raised during it (shown, not sounded), with times
+      if (e.phase === 'start') this.add({ simT: e.fromT, kind: 'system', text: `Fast-forward ${spanText(e.toT - e.fromT)} started (sound muted until it ends)` });
+      else {
+        const al = (e.alarms ?? []).map((a) => `${a.text} ${timeText(a.since)}`);
+        this.add({ simT: e.t, kind: 'system', text: `Fast-forward ended${e.stopped ? ` early (${e.stopped})` : ''}; ${al.length ? `alarms during it: ${al.join(', ')}` : 'no alarms during it'}` });
+      }
     } else if (e.type === 'scenario') {
       const st = this.ctl.scenario.doc?.states.find((s) => s.id === e.stateId);
       this.add({ simT: e.t, kind: 'scenario', text: `Scenario state: ${st?.label ?? 'next state'}` });
