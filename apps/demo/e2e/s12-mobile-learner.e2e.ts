@@ -50,6 +50,12 @@ const status = (p: Page) => p.locator('.follower-bar .status-pill');
 const styleOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollower.style.skin);
 
 test("the QR sheet, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins", async ({ page, browser, browserName }) => {
+  // FX-2 (CI-only WebKit skip, orchestrator scope addition 2026-10-12): on the 2-vCPU CI WebKit runner the phone fell behind
+  // at a different step on each attempt — main run 38205878761: 'waiting' 8 s after ×4/×8, tiles unequal 15 s, lag 2.04 s
+  // of sim; PR #61 run 38211190394 (after the FX-2 fixes, which cleared the speed steps): '(paused)' not shown within
+  // 5 s, then a phone 15 s behind the instructor after the style change, passing on retry 2. Never reproduced on macOS
+  // WebKit or Chromium under load (26 local runs, branch and base); local macOS WebKit and CI Chromium keep this test.
+  test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-2: the 2-vCPU CI WebKit runner cannot hold an instructor, a phone and the relay in step (runs 38205878761, 38211190394); macOS WebKit and CI Chromium run it');
   test.setTimeout(300_000);
   await classroom();
   const code = await instructor(page, 'showcase-anaphylaxis', { skin: 'philips-like' }); // not the phones' default style
