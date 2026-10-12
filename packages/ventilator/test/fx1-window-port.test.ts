@@ -1,9 +1,11 @@
 // FX-1: the app's Ventilator view talks to its own cockpit iframe over window.postMessage. On CI's Linux WebKit the
 // BroadcastChannel link delivered the app's messages to the cockpit seconds late or never (PR #58's diagnostic run
 // 38203086536: a speed change lost in 4 of 18 tries; `clock` messages stopped for 20 s, so the cockpit froze at its last
-// limit and the patient went apnoeic after "Return here"). Also: a linked cockpit drawn at ≈ 5 frames/s keeps the pace.
+// limit and the patient went apnoeic after "Return here"). Also: a linked cockpit drawn at ≈ 5 frames/s keeps the pace,
+// and a burst of late frames moves the link's offset once, not once per frame.
 import { describe, expect, it } from 'vitest';
-import { createVentDriver, createWindowPort, LINK_TICK_S, type LinkMsg, type LinkPort, type PortWindow } from '../src/index.ts';
+import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
+import { attachMonitorToLink, createLocalPortPair, createVentDriver, createWindowPort, LINK_TICK_S, type LinkMsg, type LinkPort, type PortWindow } from '../src/index.ts';
 
 /** Two fake same-origin windows: `w.postMessage` fires a `message` event on `w` whose `source` is the other window. */
 function windows(origin = 'http://127.0.0.1:5173') {
@@ -112,5 +114,38 @@ describe('FX-1 linked cockpit at a low frame rate', () => {
     d.frame(0);
     for (let i = 1; i <= 10; i++) d.frame(i * 200);
     expect(d.simT()).toBeCloseTo(1, 6);
+  });
+});
+
+describe('FX-1 a burst of late frames', () => {
+  // PR #58's run 38205628560 (window port in, CI WebKit): `clock` still stopped for 10–30 s. Every frame of a late burst
+  // added its own lateness to the offset although all were stamped with the same old one: 40 frames 35 ticks late moved
+  // it by ≈ 700 ticks (14 s), the clock limit fell 14 s behind the engine, the cockpit stopped, the 5 s watchdog fired.
+  it('moves the offset by the lateness once: the next frame lands just ahead of the engine, the clock keeps up', async () => {
+    const [ventPort, monPort] = createLocalPortPair();
+    let engTick = 0;
+    const sent: Command[] = [];
+    const mon = {
+      dispatch: (c: Command): DispatchResult => (sent.push(c), { accepted: true, tick: Math.max(c.atTick ?? 0, engTick + 1) }),
+      on: (fn: (e: EngineEvent) => void) => ((emit = fn), () => {}),
+    };
+    let emit: (e: EngineEvent) => void = () => {};
+    attachMonitorToLink(mon, monPort);
+    const clocks: number[] = [];
+    ventPort.onMessage((m) => void (m.kind === 'clock' && clocks.push(m.ventTick)));
+    const frame = (k: number) => ventPort.post({ v: 1, kind: 'cmds', tick: k, cmds: [{ id: `f${k}`, issuedBy: 'ventilator', type: 'externalDrive', source: 'ventilator', frame: {} } as unknown as Command] });
+    const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
+    frame(1); // the probe: offset = 1 − 1 + LEAD_TICKS
+    await settle();
+    engTick = 100; // a slow runner: the engine is 2 s on before the cockpit's next animation frame
+    for (let k = 2; k <= 41; k++) frame(k); // that frame's burst, all stamped with the old offset, all late
+    await settle();
+    emit({ type: 'vitals', t: engTick * LINK_TICK_S } as unknown as EngineEvent); // the engine's time reaches the link
+    frame(42);
+    await settle();
+    const at = sent.at(-1)?.atTick as number;
+    expect(at).toBeGreaterThan(engTick); // not late any more
+    expect(at).toBeLessThanOrEqual(engTick + 41); // and not seconds in the future (was ≈ 840 ticks ahead)
+    expect(Math.max(...clocks)).toBeGreaterThan(42); // the clock lets the cockpit (at tick 42) keep running
   });
 });

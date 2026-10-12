@@ -147,7 +147,7 @@ export type LinkDetach = (() => void) & {
  * Monitor side: dispatch the ventilator's commands on the engine tick that matches the ventilator tick (so a burst
  * of frames from one animation frame, or a ×10 time scale, replays at 50 Hz sim time), forward lungState, apply
  * time messages, and publish the engine's clock. The tick offset is learnt from the first (unstamped) dispatch
- * result — which is the engine's current tick + 1 — and only ever grows by the lateness the engine reports; a
+ * result — which is the engine's current tick + 1 — and only ever grows, to what the latest late frame needed; a
  * ventilator restart (its tick goes backwards) relearns it. Returns a detach function.
  */
 export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected: (c: Command, reason?: string) => void = () => {}): LinkDetach {
@@ -202,7 +202,13 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
             learning = false;
             engTick = Math.max(engTick, r.tick - 1);
             publishClock();
-          } else if (at !== undefined && r.tick > at) offset = (offset ?? 0) + r.tick - at;
+          } else if (at !== undefined && r.tick > at) {
+            // FX-1: the offset this frame needed, not the current offset plus its lateness. A burst of late frames is
+            // stamped with one offset, and adding each frame's lateness moved it once per frame (40 frames 35 ticks late:
+            // 14 s); the clock limit then held the cockpit until the engine's 5 s drive watchdog declared apnoea. For a
+            // single late frame the two rules agree.
+            offset = Math.max(offset ?? 0, r.tick - m.tick);
+          }
         }, (err: unknown) => failed(err instanceof Error ? err.message : String(err)));
       }
       w?.done();
