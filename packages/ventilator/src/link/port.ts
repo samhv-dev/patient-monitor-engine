@@ -2,7 +2,7 @@
 // same browser. A tiny versioned message set over a `LinkPort` — BroadcastChannel `pme-vent/<session>` across
 // windows, or a local pair in one page. It deliberately does NOT go through the controller's HostSession (roles,
 // auth, samples guard): the ventilator is a device on the host, not a controller. FX-1: the app's own cockpit iframe
-// uses `createWindowPort` (window.postMessage) instead of BroadcastChannel.
+// uses `createFramePort` (direct same-origin delivery) instead of BroadcastChannel.
 //   vent → monitor: { kind: 'cmds' }      the linkTick commands of ventilator tick `tick` (frame, shunt, airway);
 //                                         the monitor side stamps them `atTick` so bursts replay on their own ticks
 //   monitor → vent: { kind: 'lungState' } every lungState event of the engine
@@ -55,40 +55,46 @@ export function createBroadcastPort(session: string, Impl: new (name: string) =>
   };
 }
 
-/** What `createWindowPort` needs of a window (structurally typed, so a test can pass a fake). */
-export interface PortWindow {
-  postMessage(data: unknown, targetOrigin: string): void;
-  addEventListener(type: 'message', fn: (e: MessageEvent) => void): void;
-  removeEventListener(type: 'message', fn: (e: MessageEvent) => void): void;
-  location: { origin: string };
-}
+/** The property of a window under which `createFramePort` keeps its receivers, by channel name. */
+export const FRAME_PORT_KEY = '__pmeVentRx';
+type Receivers = Record<string, (m: unknown) => void>;
 
 /**
- * FX-1: a port between a page and the same-origin iframe it embeds, over `window.postMessage` (delivered inside the
- * page, unlike BroadcastChannel, which WebKit routes through another process). On CI's Linux WebKit, BroadcastChannel
- * messages from the app to its own cockpit iframe arrived seconds late or not at all — a speed change never reached
- * the cockpit, and with no `clock` the cockpit stopped at its last limit, so the patient went apnoeic after "Return
- * here". `peer()` is read at every post (an iframe's contentWindow outlives its documents); only messages from `peer()`
- * on this page's origin and this session's channel are taken.
+ * FX-1: a port between a page and the same-origin iframe it embeds that never waits on the receiving document's own
+ * task queue. Each side keeps its receiver on its window (`FRAME_PORT_KEY`); a post clones the message and hands it to
+ * the peer's receiver in a microtask of the POSTING side. On CI's Linux WebKit, messages to the cockpit iframe — over
+ * BroadcastChannel and over window.postMessage alike — were held for seconds or never delivered once the Ventilator
+ * view was hidden (PR #58 diagnostic runs 38203086536, 38207874736): a speed change was lost, and without `clock`
+ * messages the cockpit stopped at its last limit. `peer()` is read at every post (an iframe's contentWindow outlives its
+ * documents); a post before the peer's receiver exists is dropped, as a BroadcastChannel post before the peer opened it.
  */
-export function createWindowPort(session: string, peer: () => Pick<PortWindow, 'postMessage'> | null | undefined, self: PortWindow = window): LinkPort {
+export function createFramePort(session: string, peer: () => object | null | undefined, self: object = globalThis): LinkPort {
   const ch = linkChannelName(session);
   const fns = new Set<(m: LinkMsg) => void>();
-  const onMsg = (e: MessageEvent) => {
-    const d = e.data as { ch?: unknown; m?: unknown } | null;
-    if (e.origin !== self.location.origin || e.source !== peer() || typeof d !== 'object' || d === null || d.ch !== ch || !isMsg(d.m)) return;
-    for (const fn of [...fns]) fn(d.m);
+  const own = ((self as { [FRAME_PORT_KEY]?: Receivers })[FRAME_PORT_KEY] ??= {});
+  const receive = (d: unknown) => {
+    if (isMsg(d)) for (const fn of [...fns]) fn(d);
   };
-  self.addEventListener('message', onMsg);
+  own[ch] = receive;
   return {
-    post: (m) => peer()?.postMessage({ ch, m }, self.location.origin),
+    post(m) {
+      let rx: ((m: unknown) => void) | undefined;
+      try {
+        rx = (peer() as { [FRAME_PORT_KEY]?: Receivers } | null | undefined)?.[FRAME_PORT_KEY]?.[ch];
+      } catch {
+        return; // a cross-origin peer (never the app's own cockpit): nothing to deliver to
+      }
+      if (typeof rx !== 'function') return;
+      const copy = structuredClone(m);
+      queueMicrotask(() => rx(copy));
+    },
     onMessage(fn) {
       fns.add(fn);
       return () => fns.delete(fn);
     },
     close() {
       fns.clear();
-      self.removeEventListener('message', onMsg);
+      if (own[ch] === receive) delete own[ch];
     },
   };
 }

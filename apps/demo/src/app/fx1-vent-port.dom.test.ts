@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-// FX-1: the Ventilator view links to its own cockpit iframe over window.postMessage, never over BroadcastChannel (on CI's
-// Linux WebKit BroadcastChannel delivered the app's messages to the iframe seconds late or never: PR #58's run
-// 38203086536 lost a speed change in 4 of 18 tries and froze the cockpit after "Return here").
+// FX-1: the Ventilator view links to its own cockpit iframe over a direct frame port, never over BroadcastChannel (on CI's
+// Linux WebKit messages to the hidden iframe came seconds late or never: PR #58's runs 38203086536 and 38207874736 lost
+// a speed change in 4 of 18 and 6 of 24 tries).
+import { FRAME_PORT_KEY } from '@pme/ventilator';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppSession } from './session.ts';
 import { ventView } from './views/vent.ts';
@@ -26,21 +27,20 @@ function fakeSession() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('FX-1 Ventilator view link', () => {
-  it('opens no BroadcastChannel; the cockpit is told to use its parent; a speed change is posted to the iframe', () => {
-    (window as unknown as { happyDOM: { settings: { disableIframePageLoading: boolean } } }).happyDOM.settings.disableIframePageLoading = true; // no cockpit page here
+  it('opens no BroadcastChannel; the cockpit is told to use its parent; a speed change reaches the iframe', async () => {
     const opened: string[] = [];
     vi.stubGlobal('BroadcastChannel', class { constructor(n: string) { opened.push(n); } postMessage() {} close() {} });
     const s = fakeSession();
     const v = ventView(s as unknown as AppSession);
-    document.body.append(v.el);
     const frame = v.el.querySelector('iframe') as HTMLIFrameElement;
     const posted: unknown[] = [];
-    const cw = { postMessage: (d: unknown) => posted.push(d) };
+    const cw = { [FRAME_PORT_KEY]: { 'pme-vent/vabc123': (m: unknown) => void posted.push(m) } }; // the cockpit's receiver
     Object.defineProperty(frame, 'contentWindow', { get: () => cw });
     v.enter?.('');
     expect(opened).toEqual([]);
     expect(frame.getAttribute('src')).toContain('via=parent');
     s.setTimeScale(4);
-    expect(posted).toContainEqual({ ch: 'pme-vent/vabc123', m: { v: 1, kind: 'time', action: 'scale', value: 4 } });
+    await Promise.resolve();
+    expect(posted).toContainEqual({ v: 1, kind: 'time', action: 'scale', value: 4 });
   });
 });

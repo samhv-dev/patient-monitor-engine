@@ -1,79 +1,56 @@
-// FX-1: the app's Ventilator view talks to its own cockpit iframe over window.postMessage. On CI's Linux WebKit the
-// BroadcastChannel link delivered the app's messages to the cockpit seconds late or never (PR #58's diagnostic run
-// 38203086536: a speed change lost in 4 of 18 tries; `clock` messages stopped for 20 s, so the cockpit froze at its last
-// limit and the patient went apnoeic after "Return here"). Also: a linked cockpit drawn at ≈ 5 frames/s keeps the pace,
-// and a burst of late frames moves the link's offset once, not once per frame.
-import { describe, expect, it } from 'vitest';
+// FX-1: the app's Ventilator view talks to its own cockpit iframe over a direct frame port. On CI's Linux WebKit messages
+// to the hidden cockpit iframe (BroadcastChannel and window.postMessage alike) came seconds late or never (PR #58's
+// diagnostic runs 38203086536 and 38207874736: a speed change lost in 4 of 18 and 6 of 24 tries). Also: a linked cockpit
+// drawn at ≈ 5 frames/s keeps the pace, and a burst of late frames moves the link's offset once, not once per frame.
 import type { Command, DispatchResult, EngineEvent } from '@pme/engine-core';
-import { attachMonitorToLink, createLocalPortPair, createVentDriver, createWindowPort, LINK_TICK_S, type LinkMsg, type LinkPort, type PortWindow } from '../src/index.ts';
+import { describe, expect, it } from 'vitest';
+import { attachMonitorToLink, createFramePort, createLocalPortPair, createVentDriver, FRAME_PORT_KEY, LINK_TICK_S, type LinkMsg, type LinkPort } from '../src/index.ts';
 
-/** Two fake same-origin windows: `w.postMessage` fires a `message` event on `w` whose `source` is the other window. */
-function windows(origin = 'http://127.0.0.1:5173') {
-  const mk = () => {
-    const fns = new Set<(e: MessageEvent) => void>();
-    const w = {
-      location: { origin },
-      fns,
-      peer: null as unknown,
-      postMessage(data: unknown, target: string) {
-        if (target !== origin) return;
-        const ev = { data: structuredClone(data), origin, source: w.peer } as unknown as MessageEvent;
-        for (const fn of [...fns]) fn(ev);
-      },
-      addEventListener: (_t: 'message', fn: (e: MessageEvent) => void) => void fns.add(fn),
-      removeEventListener: (_t: 'message', fn: (e: MessageEvent) => void) => void fns.delete(fn),
-    };
-    return w;
-  };
-  const top = mk();
-  const ifr = mk();
-  top.peer = ifr;
-  ifr.peer = top;
-  return { top, ifr };
-}
+const tick = async () => { for (let i = 0; i < 3; i++) await Promise.resolve(); };
 
-describe('FX-1 window port', () => {
-  it('carries link messages both ways between a page and its iframe', () => {
-    const { top, ifr } = windows();
-    const app = createWindowPort('vabc', () => ifr, top as unknown as PortWindow);
-    const cockpit = createWindowPort('vabc', () => top, ifr as unknown as PortWindow);
+describe('FX-1 frame port', () => {
+  it('carries link messages both ways between a page and its iframe, after the post returns, as copies', async () => {
+    const top = {};
+    const ifr = {};
+    const app = createFramePort('vabc', () => ifr, top);
+    const cockpit = createFramePort('vabc', () => top, ifr);
     const atCockpit: LinkMsg[] = [];
     const atApp: LinkMsg[] = [];
     cockpit.onMessage((m) => atCockpit.push(m));
     app.onMessage((m) => atApp.push(m));
-    app.post({ v: 1, kind: 'time', action: 'scale', value: 4 });
+    const scale = { v: 1, kind: 'time', action: 'scale', value: 4 } as const satisfies LinkMsg;
+    app.post(scale);
     cockpit.post({ v: 1, kind: 'cmds', tick: 7, cmds: [] });
-    expect(atCockpit).toEqual([{ v: 1, kind: 'time', action: 'scale', value: 4 }]);
+    expect(atCockpit).toEqual([]); // not inside the poster's call
+    await tick();
+    expect(atCockpit).toEqual([scale]);
+    expect(atCockpit[0]).not.toBe(scale); // cloned, as a message would be
     expect(atApp).toEqual([{ v: 1, kind: 'cmds', tick: 7, cmds: [] }]);
   });
 
-  it('takes only its peer, its origin and its session; close stops it', () => {
-    const { top, ifr } = windows();
+  it('only its session; nothing before the peer listens, from a foreign peer, or after close', async () => {
+    const top = {};
+    const ifr = {};
+    const app = createFramePort('vabc', () => ifr, top);
+    const msg = { v: 1, kind: 'time', action: 'pause' } as const satisfies LinkMsg;
+    app.post(msg); // the cockpit has not loaded yet: dropped
     const got: LinkMsg[] = [];
-    const cockpit = createWindowPort('vabc', () => top, ifr as unknown as PortWindow);
+    const cockpit = createFramePort('vabc', () => top, ifr);
     cockpit.onMessage((m) => got.push(m));
-    const msg = { v: 1, kind: 'time', action: 'pause' } as const;
-    const send = (data: unknown, o: { origin?: string; source?: unknown } = {}) => {
-      for (const fn of [...ifr.fns]) fn({ data, origin: o.origin ?? top.location.origin, source: 'source' in o ? o.source : top } as unknown as MessageEvent);
-    };
-    send({ ch: 'pme-vent/vabc', m: msg }, { source: {} }); // another window
-    send({ ch: 'pme-vent/vabc', m: msg }, { origin: 'https://elsewhere.example' }); // another origin
-    send({ ch: 'pme-vent/vother', m: msg }); // another session
-    send({ ch: 'pme-vent/vabc', m: { hello: 1 } }); // not a link message
-    send({ __pme: 1, m: msg }); // the controller's postMessage envelope
+    createFramePort('vother', () => ifr, top).post(msg); // another session
+    (ifr as Record<string, Record<string, (m: unknown) => void>>)[FRAME_PORT_KEY]!['pme-vent/vabc']!({ hello: 1 }); // not a link message
+    const foreign = createFramePort('vabc', () => { throw new DOMException('cross-origin', 'SecurityError'); }, {});
+    expect(() => foreign.post(msg)).not.toThrow();
+    await tick();
     expect(got).toEqual([]);
-    send({ ch: 'pme-vent/vabc', m: msg });
+    app.post(msg);
+    await tick();
     expect(got).toEqual([msg]);
     cockpit.close();
-    send({ ch: 'pme-vent/vabc', m: msg });
+    app.post(msg);
+    await tick();
     expect(got).toHaveLength(1);
-    expect(ifr.fns.size).toBe(0);
-  });
-
-  it('a post with no peer window (the iframe between documents) is dropped, not thrown', () => {
-    const { top } = windows();
-    const app = createWindowPort('vabc', () => null, top as unknown as PortWindow);
-    expect(() => app.post({ v: 1, kind: 'time', action: 'scale', value: 2 })).not.toThrow();
+    expect(createFramePort('vabc', () => null, top).post(msg)).toBeUndefined(); // the iframe between documents
   });
 });
 

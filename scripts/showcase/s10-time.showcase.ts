@@ -334,8 +334,14 @@ test('Bronchospasm with the Ventilator view: a 2-minute fast-forward ventilated 
     await page.evaluate((c) => {
       const w = window as unknown as { __cmds: number[] };
       w.__cmds = [];
-      // FX-1: the cockpit posts its frames to this page (window.postMessage), no longer on a BroadcastChannel
-      addEventListener('message', (ev: MessageEvent<{ ch?: string; m?: { kind: string; tick: number } }>) => void (ev.data?.ch === `pme-vent/v${c.toLowerCase()}` && ev.data.m?.kind === 'cmds' && w.__cmds.push(ev.data.m.tick)));
+      // FX-1: the cockpit hands its frames to this page's frame-port receiver, no longer over a BroadcastChannel
+      const rx = (window as unknown as { __pmeVentRx: Record<string, (m: { kind: string; tick: number }) => void> }).__pmeVentRx;
+      const k = `pme-vent/v${c.toLowerCase()}`;
+      const own = rx[k] as (m: { kind: string; tick: number }) => void;
+      rx[k] = (m) => {
+        if (m?.kind === 'cmds') w.__cmds.push(m.tick);
+        own(m);
+      };
     }, code);
     await fastForward(r, page, 2, () => shot(page, `ff-panel-ventilator-${browserName}`), 3000, 'command');
     const ticks = await page.evaluate(() => (window as unknown as { __cmds: number[] }).__cmds);

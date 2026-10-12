@@ -1,6 +1,6 @@
 // TEMPORARY FX-1 diagnostic (removed before review): what the Ventilator view's cockpit receives, and when, after a
 // speed change and after "Return here". Prints `FX1 …` lines; never fails on the measured values.
-import { test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './stage9-support.ts';
 
@@ -40,6 +40,7 @@ async function instrument(page: Page): Promise<void> {
       }
     } as Any;
     addEventListener('message', (e: MessageEvent) => { if (e.data && typeof e.data.ch === 'string') count(e.data.m, 'win'); });
+    if (window !== window.top) w.__pmeVentRx = new Proxy({} as Record<string, (m: unknown) => void>, { set: (t, k, v) => ((t[k as string] = (m: unknown) => (count(m, 'rx'), v(m))), true) });
     const raf0 = window.requestAnimationFrame.bind(window);
     const slow = Number((window as Any).__fx1IfrRafMs ?? 0);
     const raf = window !== window.top && slow ? (cb: FrameRequestCallback) => setTimeout(() => raf0(cb), slow) as unknown as number : raf0;
@@ -80,6 +81,14 @@ for (let rep = 0; rep < 6; rep++) {
     const sess = await page.evaluate(() => ({ ts: (window as Any).__pmeApp.session.timeScale, frames: document.querySelectorAll('iframe').length, src: document.querySelector('iframe.vent')?.getAttribute('src') }));
     console.log(`FX1 SPEED rep=${rep} result=${got === 4 ? 'ok' : 'MISS'} scale=${got} after=${ms}ms session=${JSON.stringify(sess)} cockpit=${JSON.stringify(c)}`);
     await flush(page, `speed${rep}`);
+    // S12-F1 / FU-11 H6: does the hidden cockpit keep driving the patient? (age of its last frame at the engine, ms)
+    const ages: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      await page.waitForTimeout(1000);
+      ages.push(await page.evaluate(() => Math.round(performance.now() - (window as Any).__pmeApp.session.ventFrameAt)));
+    }
+    console.log(`FX1 HIDDEN rep=${rep} ventFrameAge=${JSON.stringify(ages)}`);
+    expect(got, 'the cockpit took the speed change').toBe(4);
   });
 }
 
