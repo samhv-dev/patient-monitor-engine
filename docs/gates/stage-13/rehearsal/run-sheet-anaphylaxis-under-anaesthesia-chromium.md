@@ -3,12 +3,12 @@
 | Clock | Monitor | Presenter |
 |---|---|---|
 | 0:00 | HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state stable | loaded "Anaphylaxis under anaesthesia" at ×4 |
-| 0:57 | HR 73, ART 120/83 (96), SpO2 99, EtCO2 33, RR 12 · state anaphylaxis | reaction started (automatically, 60 s after load) |
-| 2:56 | HR 136, ART 97/71 (78), SpO2 99, EtCO2 32, RR 12 · state anaphylaxis | ≈ 2 min into the reaction |
-| 3:02 | HR 139, ART 96/70 (77), SpO2 99, EtCO2 31, RR 12 · state treatedByButton | press **Give epinephrine 100 µg** |
-| 3:11 | HR 169, ART 122/91 (101), SpO2 99, EtCO2 31, RR 12 · state treatedByButton | systolic above 110 |
-| 5:01 | HR 113, ART 119/88 (97), SpO2 99, EtCO2 33, RR 12 · state treatedByButton | 2 min after epinephrine |
+| 0:58 | HR 73, ART 120/83 (96), SpO2 99, EtCO2 33, RR 12 · state anaphylaxis | reaction started (automatically, 60 s after load) |
+| 2:57 | HR 135, ART 97/70 (78), SpO2 99, EtCO2 32, RR 12 · state anaphylaxis | ≈ 2 min into the reaction |
+| 3:00 | HR 141, ART 98/71 (79), SpO2 99, EtCO2 31, RR 12 · state treatedByButton | press **Give epinephrine 100 µg** |
+| 3:08 | HR 174, ART 115/88 (96), SpO2 99, EtCO2 32, RR 12 · state treatedByButton | systolic above 110 |
+| 4:59 | HR 111, ART 122/88 (99), SpO2 99, EtCO2 33, RR 12 · state treatedByButton | 2 min after epinephrine |
 
 Alarms raised (scenario clock): none
 
-Checks: PASS the reaction starts by itself ("yes") · PASS HR about 2 min into the Anaphylaxis state (135) · PASS systolic after epinephrine ("12.6 s") · PASS no console error or page error ([])
+Checks: PASS the reaction starts by itself ("yes") · PASS HR about 2 min into the Anaphylaxis state (135) · PASS systolic after epinephrine ("11.4 s") · PASS no console error or page error ([])

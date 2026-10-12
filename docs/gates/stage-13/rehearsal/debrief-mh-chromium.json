@@ -5,11 +5,11 @@
   "objectives": [
     {
       "status": "not met",
-      "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation) The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 12 min 57 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:52 → 19:49; within 2 min 00 s asked)."
+      "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation) The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 12 min 56 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:52 → 19:48; within 2 min 00 s asked)."
     },
     {
       "status": "met",
-      "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisis Dantrolene 1 min 02 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (19:49 → 20:51; within 5 min 00 s asked)."
+      "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisis Dantrolene 1 min 02 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (19:48 → 20:50; within 5 min 00 s asked)."
     },
     {
       "status": "not assessable",
@@ -21,7 +21,7 @@
     },
     {
       "status": "met",
-      "text": "✓ Met Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg The state \"Ventilation back to 12 × 500, O₂ 100 %\" 2 min 05 s after EtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (37:01 → 39:05; within 5 min 00 s asked)."
+      "text": "✓ Met Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg The state \"Ventilation back to 12 × 500, O₂ 100 %\" 2 min 00 s after EtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (37:01 → 39:01; within 5 min 00 s asked)."
     }
   ],
   "facts": [
@@ -48,10 +48,10 @@
   ],
   "timelineRows": 36,
   "minuteRows": 41,
-  "title": "Debrief Malignant hyperthermia 2026-10-11",
+  "title": "Debrief Malignant hyperthermia 2026-10-12",
   "pdf": {
     "pages": 7,
     "a4": true,
-    "title": "Debrief Malignant hyperthermia 2026-10-11"
+    "title": "Debrief Malignant hyperthermia 2026-10-12"
   }
 }

@@ -1,14 +1,66 @@
-# Gate note — Stage 13: the debrief report (print to PDF) — DRAFT
+# Gate note — Stage 13: the debrief report (print to PDF)
 
-**PRE-MERGE DRY RUN on `8d6a2275`** (orchestrator ruling 2026-10-11). This is not the gate. `origin/main` (`c7d9b51c`)
-holds Stage 11 and the WebKit fix but not Stage 10, Stage 12 or FU-11 d, so no PR is open. Re-run this gate once they
-have merged.
+Plan: `docs/plans/stage-13-debrief.md` (READY, R50), Tasks 0–4 plus Appendix B, with deviations DV-1 (test only) and
+DV-2 (trend axes, orchestrator ruling). Executor: one session (Claude Opus 5.5). The formal gate (§0) ran on
+`cb4fb17e` = `origin/main` 8698a86e merged into `stage-13`. Sections 1–9 are the pre-merge dry run of 2026-10-11 on
+`8d6a2275`, kept as the record. **Owner's print check in Safari and Chrome: PENDING-OWNER.**
 
-Branch `stage-13` was cut from `origin/stage-12` (6c412b18) with `origin/stage-11` merged in (0fdef0c0, no conflict).
-Then `origin/main` c7d9b51c was merged in (8d6a2275). That merge was clean: it brought only the WebKit skip in
-`fu11-vent-restore.e2e.ts`. Plan: `docs/plans/stage-13-debrief.md` (READY, R50). Executor: one session (Claude Opus 5.5),
-Tasks 0–4 in order. Task 3 took the Appendix B path because Stage 11's cards have string objectives. The Mac is shared
-with other executors: the load average was 180–260 during the first suite runs and about 10–50 afterwards.
+## 0. Formal gate (2026-10-12, on cb4fb17e)
+
+**Merge.** `git merge origin/main` (8698a86e: FU-11 d #49, Stage 10 #54, Stage 12 #57, CI reshaping #55, card-button
+fix #51, scenario-library fix #56, citations #52) gave merge commit cb4fb17e.
+- The merge had **no conflict**.
+- `docs/showcase/CLASSROOM.md` and `packages/controller/src/scenario/driver.ts` are byte-identical to main's on the merged
+  tree. This branch already carried Stage 12's and Stage 10's versions through `stage-12`, and Stage 13 does not edit
+  either file, so nothing needed resolving.
+- The one file both sides changed is `apps/demo/src/app/describe.ts`. It keeps this stage's `airwayDevice` words and
+  main's `spanText` rounding.
+
+**Block re-check** on a detached checkout of main 8698a86e, which has no Stage 13 (`check.py --variant b --base-dir`):
+**32 blocks + 9 creates, 27 files, 0 problems**.
+
+**Suites**, one at a time on the shared Mac:
+
+| check | result |
+|---|---|
+| `pnpm install --frozen-lockfile`, `pnpm -r build` | clean |
+| `pnpm -r typecheck` | clean (8 packages) |
+| `PME_TEST_SET=fast pnpm -r --no-bail test` | audio 11/65 · skins 21/191 · engine-core 325 files, 1430 passed, 1 skipped · controller 56/277 · ventilator 21/106 · renderer 32/110 · validation 35 (+1 skipped)/119 (+11 skipped) · demo 36/277 — **exit 0, no worker errors** |
+| `PME_TEST_SET=showcase vitest run` (apps/demo) | **5 files, 20 passed** (368 s) |
+| engine-core slow groups (`slow`, `slow-a`…`slow-g`) | not run locally: engine-core is untouched by this stage, so they are left to CI's `test-slow` jobs |
+| `npx playwright test --retries=0 --workers=4`, both engines, macOS | **216 tests: 176 passed, 1 failed, 39 skipped** (26.7 min). Locally WebKit also runs the CI-only skips (`s10-time-control` ×8, `s12-mobile-learner` hold, FALLBACK rulings 2026-10-12), and they passed. `fu11-vent-restore` skips WebKit on every platform |
+
+**Finding (retry-only pass, local):** `stage4b-device.e2e.ts:72` "flash rates" failed on Chromium at load ≈ 108 (the
+`.pme-bar` text stayed empty for 15 s). With `--last-failed` at load ≈ 27 it passed. This stage does not touch the
+device layer.
+
+**Rehearsal** (kit built from cb4fb17e, perl server, 1440 × 900, both engines, through the debrief wrapper):
+- **16/16 passed on the first run**: the six cards, the induction rescue variant and the second-load clock test.
+- The Debrief was opened and printed after MH and tamponade (`docs/gates/stage-13/rehearsal/`):
+  - **MH: PDF 7 A4 pages**, 36 timeline rows, 41 minute rows.
+  - **Tamponade: PDF 5 A4 pages**, 25 timeline rows, 16 minute rows.
+  - Footer and "Build cb4fb17e 2026-10-12. Page n of N" on every page.
+- Verdicts were the same on both engines:
+  - MH: not met / met / not assessable / met / met.
+  - Tamponade: not assessable / not met / not met / met / not met.
+  - Each follows the run sheet's presenter timing; the question is with the owner (§8).
+- `docs/showcase/` was put back to its committed state afterwards.
+
+**Evidence** (`PME_SHOTS=1`, both engines passed, clean tree):
+- `debrief.pdf`: **5 A4 pages**, titled "Debrief Anaphylaxis under anaesthesia 2026-10-12", with "Build cb4fb17e" and
+  "Page n of 5" on every page.
+- `debrief-print-{chromium,webkit}.png`.
+- One evidence run was discarded: the rehearsal had left `docs/showcase` modified, so the build read "cb4fb17e+". It was
+  re-run after the restore.
+
+**Owner's folder:** `Desktop/Claude/_sandbox/pme-debrief-dryrun/` now holds the three cb4fb17e PDFs, the kit built from
+cb4fb17e and `HOW-TO-CHECK-THE-PRINT.txt`. Older copies are in `_to_delete/`.
+
+**CI:** see §0.1, added after the PR's CI run.
+
+**PENDING-OWNER:** the print preview in real Safari and Chrome (Task 4 Step 5). For each browser, record whether the
+report prints alone, whether the page breaks are right, where the footer appears, and anything unreadable. Safari is
+expected to show the footer only at the end of each section (D-8).
 
 ## 1. Blocks and commits
 
@@ -119,13 +171,10 @@ The verdicts judge the rehearsal script's own timing, and the rules read them co
   - "Pulse back" within 30 s: not met at 35 s on Chromium, met at 28 s on WebKit.
   - "Better: pericardiocentesis before the pulse loss": not met.
 
-## 7. Not done in this dry run (for the real gate)
+## 7. Not done in the dry run
 
-- **The hand check of the print preview in real Safari and Chrome (Task 4 Step 5).** An agent cannot drive the print
-  dialog. The kit, the three PDFs and a how-to note are in `Desktop/Claude/_sandbox/pme-debrief-dryrun/` for the owner.
-  Record the result here.
-- The PR. It is opened only once `origin/main` contains Stage 10, Stage 12 and FU-11 d. The real gate then re-runs
-  Gate Steps 1–3 on the new main.
+- The hand check of the print preview in real Safari and Chrome is PENDING-OWNER (§0).
+- The PR and the formal gate were done afterwards (§0).
 
 ## 8. For the owner (Q5): draft numbers to confirm
 
