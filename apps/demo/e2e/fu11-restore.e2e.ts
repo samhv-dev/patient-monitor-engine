@@ -9,7 +9,7 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type W = { __pmeApp: { session: { simNow(): number; monitor: { trends: { latestS: number } } }; link: { simT: number } } };
+type W = { __pmeApp: { session: { simNow(): number; monitor: { trends: { latestS: number } } }; link: { simT: number; onChange(fn: () => void): () => void } }; __clk?: Array<[number, number]> };
 const speed = (page: import('@playwright/test').Page, x: string) => page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: x }).click();
 
 test('Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09)', async ({ page }) => {
@@ -21,8 +21,21 @@ test('Return here: the clock, the trends and the waveforms go back with the pati
   const tMark = await page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
   await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.session.simNow()), { timeout: 20_000 }).toBeGreaterThan(tMark + 30);
   await page.getByRole('button', { name: 'Return here' }).first().click();
+  // fix-ci-webkit-3: the panel's clock is recorded IN the page on every link update from the Return click on. Polling it
+  // from the test measured the runner: at ×4 the restored clock is past tMark + 5 within 1.25 s of wall time, and on CI's
+  // WebKit one poll round trip took longer than that (CI read 7.0–22.6 after a correct restore). Same bound, every update.
+  await page.evaluate(() => {
+    const w = window as unknown as W;
+    const t0 = performance.now();
+    w.__clk = [];
+    w.__pmeApp.link.onChange(() => void w.__clk?.push([Math.round(performance.now() - t0), w.__pmeApp.link.simT]));
+  });
   await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click();
-  await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.simT), { timeout: 5_000 }).toBeLessThan(tMark + 5);
+  const back = () => page.evaluate(() => Math.min(...((window as unknown as W).__clk ?? []).map(([, t]) => t)));
+  await expect.poll(back, { timeout: 20_000, message: 'the panel clock went back to the bookmark' }).toBeLessThan(tMark + 5);
+  const clk = await page.evaluate(() => (window as unknown as W).__clk ?? []);
+  const i = clk.findIndex(([, t]) => t < tMark + 5);
+  console.log('return-here', JSON.stringify({ tMark, before: clk[i - 1], restored: clk[i], updates: clk.length })); // CI evidence: wall ms, simT
   const clip = { x: 0, y: 160, width: 560, height: 220 };
   const a = await page.screenshot({ clip });
   await page.waitForTimeout(1500);

@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test';
 const smokeUrl = pathToFileURL(resolve(import.meta.dirname, 'iife-smoke.html')).href;
 
 type Snap = { schema: string; tick: number };
-type Handle = { role: string; renderPath: Promise<string>; snapshot(): Promise<Snap>; restore(s: Snap): Promise<void>; destroy(): void };
+type Handle = { role: string; renderPath: Promise<string>; snapshot(): Promise<Snap>; restore(s: Snap): Promise<void>; pause(): void; resume(): void; destroy(): void };
 type PM = { transports: Record<string, unknown>; mountMonitor(el: HTMLElement, o: object): Handle };
 
 test('PatientMonitor.transports has the five adapters', async ({ page }) => {
@@ -38,20 +38,30 @@ for (const worker of ['auto', 'off'] as const) {
         await sleep(250);
         b = await h.snapshot();
       }
+      // fix-ci-webkit-3: restore on a PAUSED clock, so the snapshot after it reads the restored tick itself. On the running
+      // clock `c < a + 10` counted the frames the runner drew between the restore and the next snapshot (CI's WebKit worker:
+      // 14–47 ticks, 5 of 14 runs), not where the restore put the clock. Then the clock must run on from there.
+      h.pause();
       await h.restore(a);
       const c = await h.snapshot();
+      h.resume();
+      let d = await h.snapshot();
+      for (const end = Date.now() + 15_000; d.tick <= c.tick && Date.now() < end; ) {
+        await sleep(100);
+        d = await h.snapshot();
+      }
       let refused = '';
       await h.restore({ schema: 'nope', tick: 0 }).catch((e: Error) => (refused = e.message));
       h.destroy();
-      return { path, role: h.role, schema: a.schema, a: a.tick, b: b.tick, c: c.tick, refused };
+      return { path, role: h.role, schema: a.schema, a: a.tick, b: b.tick, c: c.tick, d: d.tick, refused };
     }, worker);
     console.log(worker, JSON.stringify(r));
     expect(r.role).toBe('viewer');
     expect(r.path).toBe(worker === 'off' ? 'main' : r.path);
     expect(r.schema).toBe('pme-snapshot/1');
     expect(r.b).toBeGreaterThan(r.a + 50); // ≥ 1 s at 50 ticks/s
-    expect(r.c).toBeGreaterThanOrEqual(r.a); // back at the snapshot (plus any frame drawn in between)
-    expect(r.c).toBeLessThan(r.a + 10);
+    expect(r.c).toBe(r.a); // back at the snapshot's tick exactly (paused: no frame can run in between)
+    expect(r.d).toBeGreaterThan(r.c); // and it runs on from there once resumed
     expect(r.refused).toMatch(/schema/);
     expect(errors).toEqual([]);
   });
