@@ -87,7 +87,9 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
   for (const k of ['×4', '×8']) {
     await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: k }).click();
     await page.waitForTimeout(8000);
-    expect((await sync(f)).status).toBe('synced');
+    // FX-2 (main run 38205878761, CI WebKit: 'waiting' 8 s after a speed change; lag 2.04 s of sim at ×8): a resync after
+    // a ×4/×8 change is allowed on a loaded machine (orchestrator ruling), so the phone is awaited in state, not read once
+    await expect.poll(async () => (await sync(f)).status, { timeout: 30_000 }).toBe('synced');
     expect((await sync(f)).lagS).toBeLessThan(0.5); // FX-2: WALL seconds behind the host (0.1 s at every speed by design)
     await same(f, page);
   }
