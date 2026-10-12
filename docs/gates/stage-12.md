@@ -43,7 +43,41 @@ The 7 skips are by design:
 - The `renderer` job builds the IIFE once.
 - `e2e (chromium)` and `e2e (webkit)` run as matrix jobs, with retries 2 under CI, and echo any retry-only pass at the end of each job.
 - `s10-time-control` is skipped on CI WebKit (S10-F5); `fu11-follower` is skipped on WebKit everywhere.
-- The PR's CI run id is in the PR conversation. Any retry-only pass it echoes is a finding for the orchestrator.
+
+### CI on PR #57
+
+**Run 38194080645, head 51a37063: failure.** Every job was green except e2e (webkit):
+- renderer, build, the eight slow groups and the showcase group: success.
+- e2e (chromium): **success**. 103 passed, 3 skipped. All three `s12-mobile-learner` tests passed on the first attempt.
+- e2e (webkit): **failure**. 68 passed, 35 skipped, 1 failed, 3 passed only on a retry.
+
+**Failed on every attempt: `s12-mobile-learner.e2e.ts:123`** on WebKit (the Ventilator-view hold).
+- Attempt 1: the phone never showed the hold within 10 s of the Ventilator view opening; its status stayed "Following session …".
+- Retries 1 and 2: the phone held while the Ventilator view was shown. Four seconds after the switch back to the Monitor view the hold had gone, and the phone was taking a fresh snapshot ("Waiting for the instructor's monitor …").
+
+**Retry-only passes (findings):**
+
+| Test | Browser | Passed on | Note |
+|---|---|---|---|
+| `s12-mobile-learner.e2e.ts:52` (Stage 12's own test) | WebKit | retry #1 | Line 90: the phone read `waiting`, not `synced`, 8 s after a speed change on the 2-vCPU runner. S10-F5: that runner holds about ×5.3, not ×8 |
+| `s10-time-control.e2e.ts:30` (Stage 10's) | Chromium | retry #1 | |
+| `scenario-choose-another.e2e.ts:14` (main's) | WebKit | retry #1 | "Running scenario" region not found in 10 s |
+| `stage9-a11y.e2e.ts:15` iPad portrait (main's) | WebKit | retry #1 | the page closed under the test (a WebKit crash) |
+
+**S12-F1: the hidden cockpit on CI Linux WebKit. Orchestrator ruling 2026-10-12: option (b) first, then the outcome's branch.**
+
+I downloaded the WebKit report artifact 11723131755. It holds the JSON report and one error context per attempt. Each error context is a snapshot of the PHONE page. Neither has stdout. **The instructor page's state is not in the artifact.**
+
+**(2) Why the notices stopped.** The code settles this. `cockpitNotice` is called only from `HostSession.mirror`, and that runs only from the Ventilator link's `dispatch`. Each such dispatch is a cockpit frame being applied to the instructor's engine (`session.ts` `linked().dispatch`: `m.dispatch(c).then((r) => host.mirror(c, r))`). The only early returns are a rejected frame and a fast-forward; there was no fast-forward here. There is no path by which the cockpit drives the patient without passing `mirror`. So notices stop only when accepted cockpit frames stop reaching the engine.
+
+**(1) Did the cockpit keep driving after the switch back?** By (2): no. For at least 2.5 s, no accepted cockpit frame reached the engine. The engine's external drive times out after 5 s, after which its own ventilation takes over. This is consistent with the hidden cockpit iframe being throttled on Linux WebKit (attempt 1's 10-s miss fits the slow cockpit start that `docs/gates/ci-webkit-3.md` recorded on this runner).
+- **Not shown directly:** the instructor page's EtCO2 and VT after the switch were not captured.
+
+**Outcome: platform throttling, outside this PR. Fallback (a) applied.**
+- `s12-mobile-learner.e2e.ts:123` is skipped only on WebKit when `CI` is set. The reason names this run and S12-F1.
+- The test runs on CI Chromium, and locally on both browsers, where it passes.
+- The owner checks the real presenting Mac by hand: **H21** in `docs/gates/stage-12-real-phone.md` and in the kit's `OWN-PHONE-TEST.md`. That is bronchospasm with the Ventilator view, then the Monitor view for 30 s: the hold stays on the phone and the patient keeps ventilating on the screen.
+- **Open beyond this PR:** if Safari on the presenting Mac also throttles a hidden cockpit, the cockpit stops ventilating the patient whenever another view is shown. That would be a FU-11 H6 design question, not Stage 12's.
 
 ## The pre-merge dry run (on 07d7cd00, 2026-10-11)
 
@@ -205,7 +239,8 @@ Every step label matches between the two runs. The largest differences:
   - **e2e.** In Task 7's neighbour run (five files in parallel), `s10-time-control`'s 5-minute test failed once on WebKit (`toHaveText`). It then passed 1 + 4 of 4 alone and passed in the full e2e. This is the same Stage 10 load flake the plan saw on Chromium.
   - **The `fu11-follower` WebKit flake:** branch 1 of 16, base 1 of 16 (§2).
   - `iife-smoke` and `stage6a-worker` are not flakes: they need `pnpm build` first, as in CI.
-- **O1:** the one extra resync during the bronchospasm hold at ×8 (§3b). Not a STOP; the real-phone run's optional Ventilator-view check will show it if it matters.
+- **S12-F1:** the hidden cockpit on CI Linux WebKit (§0, CI). The hold test is skipped there by fallback; the owner's hand check is H21.
+- **O1:** the one extra resync during the bronchospasm hold at ×8 (§3b). Not a STOP; hand check H21 will show it if it matters.
 - **Stage 10 gap (closed):** the dry run's tree lacked Stage 10's last commits (`bae65d22`, `21e57186`). The formal gate's merge of main 8c74d994 brought them in, and the block check passed again (§0).
 - **The six-card rehearsal and the phone room (§3) and the load runs (§5) were not repeated on a075fd39.** Since the dry run, the merge changed only other plans' files: the seam label, the scenario library, the card button and test files. The 34 Stage 12 files are identical. The owner's real-phone kit in `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit` was rebuilt from this PR's head, so it has main's fixes. The headless Start Classroom check on it passed: `/pme-relay.json` `serves:true`, `/?join=` 200, and nothing listening after the stop.
 - **Q5 (the owner's), open:** the network on the day, and Node.js 22 or later on the presenting Mac. The pre-flight checklist is in `docs/showcase/CLASSROOM.md` and `PRE-FLIGHT.md` beside the kit.

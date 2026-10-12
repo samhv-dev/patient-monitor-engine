@@ -121,6 +121,7 @@ test("the QR sheet, then a phone follows in the instructor's style through ×4, 
 });
 
 test('while the Ventilator view drives the patient the phone holds; it follows again with the next patient', async ({ page, browser, browserName }) => {
+  test.skip(browserName === 'webkit' && !!process.env.CI, 'FALLBACK ruling 2026-10-12 (S12-F1, PR #57 run 38194080645): hidden cockpit iframe throttled on CI Linux WebKit — the cockpit stops sending frames on the Monitor view, so the hold ends; passes on macOS WebKit and CI Chromium. The owner checks it by hand (H21, docs/gates/stage-12-real-phone.md)');
   test.setTimeout(180_000);
   await classroom();
   const code = await instructor(page, 'showcase-bronchospasm');
