@@ -7,8 +7,8 @@
   "story": "Minutes after an antibiotic, a ventilated 50-year-old woman becomes profoundly hypotensive and tachycardic with rising airway pressures. Give epinephrine and fluid.",
   "objectives": [
     "Recognise anaphylaxis: hypotension, tachycardia, bronchospasm",
-    "Give epinephrine 50–100 µg IV early and repeat as needed",
-    "Give fluid for the capillary leak"
+    { "text": "Give epinephrine 50–100 µg IV early and repeat as needed (debrief: within 2 min of the reaction — draft, owner to confirm)", "rule": { "kind": "eventWithin", "after": "state:anaphylaxis", "event": "drug:epinephrine", "withinS": 120 } },
+    { "text": "Give fluid for the capillary leak", "rule": { "kind": "occurred", "event": "fluid" } }
   ],
   "notes": "Showcase case (Stage 9 Task 26): 7e anaphylaxis at severity 1.",
   "seed": 7,

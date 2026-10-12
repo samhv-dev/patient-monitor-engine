@@ -1,0 +1,241 @@
+// Stage 13: the debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every
+// command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks and
+// returns to them, the pulse lost and back (from the model), ventilated breaths beginning, the instructor's notes, and a
+// 1 Hz trend of six numerics and five laboratory values of the model (Q7: K⁺, lactate, pH, glucose, core temperature). It lives beside the engine, NOT in its snapshot: a return to a bookmark rewinds the
+// engine, the trends and the clocks (FU-11 Part E) but not this record — the discarded course stays, marked undone, so
+// the debrief shows the run as it happened, and its rules and charts read the course that was kept. A new patient or
+// scenario (a 'restart' timeline) starts a new record. Plain JSON data; no DOM.
+import type { EngineEvent } from '@pme/engine-core';
+import type { AppliedResolution, WireEvent } from '@pme/controller';
+import type { ScenarioDoc } from '@pme/controller/scenario';
+import { alarmLine } from './alarms.ts';
+import { describeCommand } from './describe.ts';
+
+export type RowKind = 'action' | 'remote' | 'scenario' | 'alarm' | 'bookmark' | 'restore' | 'patient' | 'note';
+export interface Row {
+  /** Simulated seconds, as the monitor's clock showed them. */
+  t: number;
+  kind: RowKind;
+  text: string;
+  /** The run event a debrief rule can name (types.ts `RunEventId`). */
+  ev?: string;
+  /** A bolus, for the drug totals. */
+  dose?: { drugId: string; dose: number; unit: string };
+  /** A bookmark's label (bookmark rows). */
+  mark?: string;
+  /** Set when the n-th return to a bookmark discarded this row (it happened, on a course that was then undone). */
+  undone?: number;
+}
+
+/** The six trended numerics; each reads the first valid of its monitor numerics (glossary keys `mon.<id>`). */
+export const TREND = { hr: ['hr'], map: ['abpMean', 'nibpMean'], spo2: ['spo2'], etco2: ['etco2'], rr: ['awrr', 'rr'], temp: ['tempCore', 'tempSite'] } as const;
+export type TrendKey = keyof typeof TREND;
+export const TREND_KEYS = Object.keys(TREND) as TrendKey[];
+/**
+ * Stage 13 Q7: the model's laboratory values, 1 Hz, each with the glossary key that labels it: K⁺, lactate and pH from
+ * the engine's `labs` event (the arterial panel the Labs view shows), glucose from its `endo` event, the core
+ * temperature from the truth. They are the model's values, not samples the instructor drew.
+ */
+export const LABS = { k: 'ev.labs.values.k', lactate: 'ev.labs.values.lactate', ph: 'ev.labs.values.ph', glucose: 'ev.endo.glucoseMmolL', tcore: 'resp.temp.tc' } as const;
+export type LabKey = keyof typeof LABS;
+export const LAB_KEYS = Object.keys(LABS) as LabKey[];
+/** A value a sample holds (a trend or a lab), as a debrief rule names it (scenario/types.ts `TrendValue`). */
+export type ValueKey = TrendKey | LabKey;
+export type Sample = { t: number } & Record<ValueKey, number | null>;
+
+export interface RunData {
+  /** Wall clock (ms since 1970) when the run began, and of the last thing recorded. */
+  startedAt: number;
+  lastWall: number;
+  patient: string;
+  weightKg: number;
+  doc: ScenarioDoc | null;
+  rows: Row[];
+  /** One per simulated second of the kept course. */
+  samples: Sample[];
+  /** Returns to a bookmark so far. */
+  returns: number;
+}
+
+/** Ventilated breaths "begin" after this long without one [ENG: longer than any set rate's interval, 6/min = 10 s]. */
+const VENT_GAP_S = 15;
+/** A state published this long before the newest row is a return's re-publish, not a new state [ENG: > the app's
+ *  poll lag of 0.8 s of sim at ×8]. */
+const RESYNC_S = 2;
+/** Samples kept: 4 h of a run [ENG]. ponytail: oldest dropped beyond it; a longer run needs a coarser trend. */
+const SAMPLES_MAX = 4 * 3600;
+const EPS = 1e-6;
+
+export const emptyRun = (patient = '', weightKg = 70, now = Date.now()): RunData => ({ startedAt: now, lastWall: now, patient, weightKg, doc: null, rows: [], samples: [], returns: 0 });
+
+export class RunRecord {
+  data: RunData;
+  private active = new Set<string>();
+  private lastVent = -Infinity;
+  private pulse: boolean | null = null;
+  private held: WireEvent | null = null;
+  /** The engine time of the last return to a bookmark (-∞: none this run). */
+  private since = -Infinity;
+  /** The trackers as they stood at each bookmark of this run. */
+  private readonly marks = new Map<string, { lastVent: number; pulse: boolean | null; active: string[] }>();
+  private readonly cur: Record<string, number | null> = {};
+  private readonly lab: Partial<Record<LabKey, number | null>> = {};
+
+  private readonly who: () => { patient: string; weightKg: number };
+  private readonly now: () => number;
+
+  constructor(who: () => { patient: string; weightKg: number }, now: () => number = Date.now) {
+    this.who = who;
+    this.now = now;
+    const w = who();
+    this.data = emptyRun(w.patient, w.weightKg, now());
+  }
+
+  /** The host's wire events (its own panel's end of the in-process hub): commands applied, states, timelines. */
+  wire(e: WireEvent): void {
+    if (e.type === 'timeline') return e.cause === 'restore' ? this.restored(e.t) : this.reset();
+    if (e.type === 'scenario') {
+      if (!this.data.doc) return void (this.held = e); // a load publishes its first state before its own commandApplied
+      // a return to a bookmark re-publishes the bookmark's state, with the time it was entered, BEFORE the timeline
+      // event: it is not a new state (the return's row says where the run went back to)
+      if (e.t < (this.data.rows.at(-1)?.t ?? 0) - RESYNC_S) return;
+      const kept = this.data.rows.filter((r) => r.kind === 'scenario' && r.undone === undefined).at(-1);
+      if (kept?.ev === `state:${e.stateId}`) return; // a resync's repeat of the state we are in
+      const label = this.data.doc?.states.find((s) => s.id === e.stateId)?.label ?? 'next state';
+      return this.add({ t: e.t, kind: 'scenario', text: `Scenario state: ${label}`, ev: `state:${e.stateId}` });
+    }
+    if (e.type !== 'commandApplied') return;
+    const r = e.resolved as AppliedResolution | undefined;
+    if (!r?.command || r.replay || r.mirror) return; // a late-join replay or a cockpit frame is not an action
+    const c = r.command as unknown as Record<string, unknown>;
+    const bySc = c.issuedBy === 'scenario';
+    // the scenario's own set-up (mode, sensors, device settings) is not part of the case; a manual trigger is shown
+    // by the state it leads to
+    if ((bySc && (c.type === 'setMode' || c.type === 'attachSensor' || c.type === 'device')) || (c.type === 'scenario' && c.action === 'trigger')) return;
+    const t = e.tick * 0.02;
+    const text = describeCommand(c);
+    if (c.type === 'scenario') {
+      if (c.action === 'load' && c.doc) {
+        this.data.doc = c.doc as ScenarioDoc;
+        this.add({ t, kind: 'scenario', text });
+        if (this.held) this.wire(this.held);
+        return void (this.held = null);
+      }
+      if (c.action === 'restoreBookmark') this.undo(String(c.target), t);
+      if (c.action === 'bookmark') {
+        this.marks.set(String(c.target), { lastVent: this.lastVent, pulse: this.pulse, active: [...this.active] });
+        return this.add({ t, kind: 'bookmark', text, mark: String(c.target) });
+      }
+      return this.add({ t, kind: c.action === 'restoreBookmark' ? 'restore' : 'scenario', text });
+    }
+    const ev = c.type === 'applyEvent' ? (c.event as Record<string, unknown>) : null;
+    const row: Row = { t, kind: bySc ? 'scenario' : c.issuedBy === 'remote' ? 'remote' : 'action', text };
+    if (ev?.kind === 'drug' || ev?.kind === 'infusion' || ev?.kind === 'tci') row.ev = `drug:${String(ev.drugId)}`;
+    if (ev?.kind === 'drug' && !ev.infusion) row.dose = { drugId: String(ev.drugId), dose: Number(ev.dose), unit: String(ev.unit) };
+    if (ev?.kind === 'fluid') row.ev = 'fluid';
+    if (ev?.kind === 'cpr' && ev.active) row.ev = 'cpr';
+    if (ev?.kind === 'defib' && ev.action === 'shock') row.ev = 'shock';
+    if (ev?.kind === 'condition' && Number(ev.severity) > 0) row.ev = `condition:${String(ev.id)}`;
+    if (ev?.kind === 'airway') row.ev = `airway:${String(ev.state)}`;
+    this.add(row);
+  }
+
+  /** The host's engine events (truth included: it stays on this page). */
+  engine(e: EngineEvent): void {
+    if (e.type === 'alarmStatus') {
+      for (const a of e.active) if (!this.active.has(a.id)) this.add({ t: e.t, kind: 'alarm', text: alarmLine(a).text, ev: `alarm:${a.id}` });
+      this.active = new Set(e.active.map((a) => a.id));
+    } else if (e.type === 'breath') {
+      const b = e as unknown as { t: number; kind: string };
+      if (b.kind !== 'mech' && b.kind !== 'bvm') return;
+      // after a return, a breath that began before the snapshot is the restored engine finishing one under way
+      if (b.t < this.since - EPS) return void (this.lastVent = Math.max(this.lastVent, b.t));
+      if (b.t - this.lastVent > VENT_GAP_S) this.add({ t: b.t, kind: 'patient', text: b.kind === 'bvm' ? 'Bag-mask breaths began' : 'Ventilated breaths began', ev: 'ventilation' });
+      this.lastVent = b.t;
+    } else if (e.type === 'truth') {
+      const circ = (e.tree.hemo as Record<string, Record<string, unknown>> | undefined)?.circ;
+      if (!circ) return;
+      const pulse = circ.arrest === null || circ.arrest === undefined;
+      if (this.pulse !== null && pulse !== this.pulse) this.add({ t: e.t, kind: 'patient', text: pulse ? 'Circulation returned (the model)' : 'Pulse lost (the model)', ev: pulse ? 'rosc' : 'pulseLoss' });
+      if (this.pulse === null && !pulse) this.add({ t: e.t, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' });
+      this.pulse = pulse;
+      const tc = (e.tree.resp as Record<string, Record<string, unknown>> | undefined)?.temp?.tc;
+      this.lab.tcore = typeof tc === 'number' ? Math.round(tc * 10) / 10 : null;
+      this.sample(e.t);
+    } else if (e.type === 'measurement') {
+      for (const [k, m] of Object.entries(e.values)) this.cur[k] = m && m.value !== null && m.flag !== 'invalid' ? m.value : null;
+      this.sample(e.t);
+    } else if (e.type === 'labs') {
+      Object.assign(this.lab, { k: e.values.k, lactate: e.values.lactate, ph: e.values.ph });
+      this.sample(e.t);
+    } else if (e.type === 'endo') {
+      this.lab.glucose = e.glucoseMmolL;
+      this.sample(e.t);
+    }
+  }
+
+  /** The 1 Hz sample of simulated second ⌊t⌋ from the latest values (several events of one second update one sample). */
+  private sample(t: number): void {
+    const s = Math.floor(t + EPS);
+    const row = { t: s } as Sample;
+    for (const k of TREND_KEYS) row[k] = TREND[k].map((id) => this.cur[id]).find((v) => typeof v === 'number') ?? null;
+    for (const k of LAB_KEYS) row[k] = this.lab[k] ?? null;
+    const last = this.data.samples.at(-1);
+    if (last && last.t === s) Object.assign(last, row);
+    else if (!last || s > last.t) this.data.samples.push(row);
+    if (this.data.samples.length > SAMPLES_MAX) this.data.samples.splice(0, this.data.samples.length - SAMPLES_MAX);
+    this.data.lastWall = this.now();
+  }
+
+  /** An instructor note or an objective ticked in the Scenario tab (the Link's log). */
+  note(t: number, text: string): void {
+    this.add({ t, kind: 'note', text });
+  }
+
+  private add(r: Row): void {
+    this.data.rows.push(r);
+    this.data.lastWall = this.now();
+  }
+
+  private reset(): void {
+    const w = this.who();
+    this.data = emptyRun(w.patient, w.weightKg, this.now());
+    this.active = new Set();
+    this.lastVent = -Infinity;
+    this.pulse = null;
+    this.held = null;
+    this.since = -Infinity;
+    this.marks.clear();
+    for (const k of Object.keys(this.cur)) delete this.cur[k];
+    for (const k of LAB_KEYS) delete this.lab[k];
+  }
+
+  /** The engine went back to simulated time t (a return to a bookmark): the trend rewinds as the monitor's does. */
+  private restored(t: number): void {
+    this.data.samples = this.data.samples.filter((s) => s.t <= t + EPS);
+    this.since = t;
+  }
+
+  /**
+   * The return to bookmark `label`, whose snapshot is at the engine's time `t` (exact: the restore's tick): every kept row
+   * recorded after that bookmark at or after `t` is undone. Both tests matter: an action in the snapshot's own tick came
+   * after it (same time, later order), and a breath reaches the record when it ends, seconds after the time it carries
+   * (earlier time, later order). The breath, pulse and alarm trackers go back to where they stood at the bookmark, so the
+   * restored engine's repeat of a breath already under way is no new "began" and an alarm active at the bookmark is not
+   * raised again (R50 M-2). A bookmark this record never saw: the rows after `t`, the trackers from the kept rows, and
+   * every alarm the restored engine reports is raised.
+   */
+  private undo(label: string, t: number): void {
+    const n = ++this.data.returns;
+    const rows = this.data.rows;
+    let i = rows.length - 1;
+    while (i >= 0 && !(rows[i]?.mark === label && rows[i]?.undone === undefined)) i--;
+    rows.forEach((r, k) => {
+      if (r.undone === undefined && k > i && r.t > t - EPS && (i >= 0 || r.t > t + EPS)) r.undone = n;
+    });
+    const m = this.marks.get(label);
+    this.lastVent = m ? m.lastVent : -Infinity;
+    this.active = new Set(m?.active ?? []);
+    this.pulse = m ? m.pulse : rows.filter((r) => r.undone === undefined && (r.ev === 'pulseLoss' || r.ev === 'rosc')).at(-1)?.ev !== 'pulseLoss';
+  }
+}

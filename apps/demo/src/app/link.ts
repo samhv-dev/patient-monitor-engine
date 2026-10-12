@@ -119,6 +119,7 @@ export class Link {
   }
 
   private add(x: ClinicalLogEntry): void {
+    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Stage 13: into the debrief
     this.log.push(x);
     if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
     this.changed();

@@ -1,6 +1,7 @@
 // The scenario library: every `pme-scenario/1` document in packages/controller/scenarios (the five the 6b runner bundles
 // and the depth and neuromuscular cases 7f added), so a case a later stage adds appears without a code change.
 import type { ScenarioDoc } from '@pme/controller';
+import type { Objective } from '@pme/controller/scenario';
 import { CATEGORIES as CATS, draft, SCENARIO_META, storyOf, type Category } from './scenario-meta.ts';
 
 const FILES = {
@@ -8,6 +9,9 @@ const FILES = {
   ...import.meta.glob<{ default: ScenarioDoc }>('./showcase/*.json', { eager: true }),
   ...import.meta.glob<{ default: ScenarioDoc }>('../../../../packages/controller/scenarios/*.json', { eager: true }),
 };
+
+/** Stage 13: an objective's words, with or without its debrief rule. */
+export const objectiveText = (o: string | Objective): string => (typeof o === 'string' ? o : o.text);
 
 export interface ScenarioCard {
   id: string;
@@ -30,7 +34,7 @@ export function cardOf(doc: ScenarioDoc): ScenarioCard {
   const cat = (CATS as readonly string[]).includes(doc.category ?? '') ? (doc.category as Category) : undefined;
   return {
     id: doc.id, title: d.title, draft: d.draft, story: doc.story ?? storyOf(doc.id, doc.notes), category: cat ?? m?.category ?? 'Other',
-    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: doc.objectives ?? m?.objectives ?? [], doc,
+    minutes: doc.durationMin ?? m?.minutes ?? null, objectives: (doc.objectives ?? m?.objectives ?? []).map(objectiveText), doc,
     patient: [p.sex ?? '', p.ageY !== undefined ? `${p.ageY} y` : '', p.weightKg !== undefined ? `${p.weightKg} kg` : ''].filter(Boolean).join(' '),
   };
 }

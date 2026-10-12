@@ -1,6 +1,6 @@
 // Hash routing without a router dependency (research/13 brief §5): `#/teach`, `#/explore/respiratory`, `#/validate/review`.
 // Views are sections toggled with `hidden`; the monitor region is never unmounted while the session lives.
-export const ROUTES = ['start', 'monitor', 'teach', 'remote', 'explore', 'vent', 'validate', 'dev', 'settings'] as const;
+export const ROUTES = ['start', 'monitor', 'teach', 'remote', 'explore', 'vent', 'validate', 'dev', 'settings', 'debrief'] as const;
 export type RouteId = (typeof ROUTES)[number];
 export interface Route {
   id: RouteId;
@@ -9,7 +9,7 @@ export interface Route {
 }
 
 /** Views that need the engine session (every other view works without one, e.g. a paired Remote). */
-export const HOST_ROUTES: ReadonlySet<RouteId> = new Set(['monitor', 'teach', 'explore', 'vent', 'start']);
+export const HOST_ROUTES: ReadonlySet<RouteId> = new Set(['monitor', 'teach', 'explore', 'vent', 'start', 'debrief']);
 
 export function parseRoute(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0] ?? '';

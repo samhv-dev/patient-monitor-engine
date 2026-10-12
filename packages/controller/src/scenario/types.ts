@@ -84,6 +84,38 @@ export interface ScenarioProfile {
   lungConditions?: LungConditionSpec[];
 }
 
+/**
+ * Stage 13: a run event a debrief rule names. 'start' (the run's first second); 'state:<stateId>' (the scenario entered
+ * it); 'alarm:<alarmId>' (the monitor raised it; 'alarm:apnoea' also matches 'alarm:apnoea-co2' — an id matches its own
+ * prefix up to a hyphen); 'drug:<drugId>' (a bolus, infusion or TCI of it); 'fluid'; 'cpr' (started); 'shock';
+ * 'condition:<id>' (started); 'airway:<state>'; 'ventilation' (mechanical or bag-mask breaths began after ≥ 15 s without
+ * one); 'pulseLoss' and 'rosc' (the model's circulation stopped / returned); 'value:<trend><op><n>' (the first second a
+ * trended value or lab was below or above n, e.g. 'value:spo2<90', 'value:map>65', 'value:k>5.5'; as `TrendValue`).
+ */
+export type RunEventId = string;
+/** The six trended numerics a `stayed` rule reads (ART M, else NIBP M, for `map`; awRR, else RR, for `rr`; T1, else T2,
+ *  for `temp`) and the model's five labs (K⁺, lactate, pH, glucose in mmol/L, core temperature). */
+export type TrendValue = 'hr' | 'map' | 'spo2' | 'etco2' | 'rr' | 'temp' | 'k' | 'lactate' | 'ph' | 'glucose' | 'tcore';
+/**
+ * Stage 13: how the debrief judges an objective. `eventWithin`: `event` within `withinS` s after the FIRST `after` (a later
+ * one is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` /
+ * `never`. `from` (R50): the `after` (or the `event` of occurred / never) counts only at or after the first `from` —
+ * "EtCO₂ falling below 40 after the crisis was called" = `{ from: 'state:triggerOff', after: 'value:etco2<40', … }`, as a
+ * value event alone is the first second past the limit from the start. A list of events means any one of them
+ * (`['drug:phenylephrine', 'drug:ephedrine']`). `stayed`: every value above/below the limit, over the run or the `forS` s
+ * after the first `after`.
+ */
+export type ObjectiveRule =
+  | { kind: 'eventWithin'; after: RunEventId | RunEventId[]; event: RunEventId | RunEventId[]; withinS: number; from?: RunEventId | RunEventId[] }
+  | { kind: 'occurred'; event: RunEventId | RunEventId[]; from?: RunEventId | RunEventId[] }
+  | { kind: 'never'; event: RunEventId | RunEventId[]; from?: RunEventId | RunEventId[] }
+  | { kind: 'stayed'; value: TrendValue; above?: number; below?: number; after?: RunEventId | RunEventId[]; forS?: number };
+export interface Objective extends C {
+  text: string;
+  /** Absent: the debrief lists the objective as not assessable. */
+  rule?: ObjectiveRule;
+}
+
 /** An authored jump point shown in the timeline; choosing it is a `goto` to `state`. */
 export interface DocBookmark {
   id: string;
@@ -100,7 +132,7 @@ export interface ScenarioDoc extends C {
   /** FU-8 (Stage 9 R-S9-4): library group, learner-facing story, objectives and expected minutes (all optional). */
   category?: string;
   story?: string;
-  objectives?: string[];
+  objectives?: Array<string | Objective>;
   durationMin?: number;
   /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
   seed?: number;

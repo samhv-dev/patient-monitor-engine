@@ -1,0 +1,217 @@
+// Stage 13 Task 2: the debrief's judgements — every rule kind met, not met and not assessable, read on the kept course
+// (an event before the anchor, a second anchor, a value never measured); the measured facts, the labs and the drug
+// totals; objectives without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
+import type { ObjectiveRule } from '@pme/controller/scenario';
+import { validateScenario } from '@pme/controller/scenario';
+import { describe, expect, it } from 'vitest';
+import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, verdict } from './debrief.ts';
+import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
+import { cardOf } from './scenarios.ts';
+
+/** A two-state case (the showcase cards' words are Stage 11's to change). */
+const DOC = { schema: 'pme-scenario/1', id: 'case', title: 'Case', initialState: 'awake', states: [{ id: 'awake', label: 'Awake' }, { id: 'induced', label: 'Induced' }] } as const;
+const sample = (t: number, o: Partial<Sample> = {}): Sample => ({ t, hr: 80, map: 80, spo2: 98, etco2: 38, rr: 12, temp: 36.8, k: null, lactate: null, ph: null, glucose: null, tcore: null, ...o });
+const run = (rows: Row[], samples: Sample[] = [], weightKg = 70): RunData => ({ ...emptyRun('M 40 y 70 kg', weightKg, 0), doc: DOC as never, rows, samples });
+const apnoea = (t: number, undone?: number): Row => ({ t, kind: 'alarm', text: 'Apnoea (no CO₂ breaths)', ev: 'alarm:apnoea-co2', ...(undone ? { undone } : {}) });
+const vent = (t: number, undone?: number): Row => ({ t, kind: 'patient', text: 'Ventilated breaths began', ev: 'ventilation', ...(undone ? { undone } : {}) });
+const v = (rule: ObjectiveRule, d: RunData) => verdict(rule, d);
+
+describe('Stage 13: objective rules', () => {
+  const within: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 90 };
+
+  it('eventWithin: met, not met (late or never), not assessable (no trigger, or the run ended first)', () => {
+    expect(v(within, run([apnoea(66), vent(106)]))).toEqual({ status: 'met', why: 'Ventilated breaths 40 s after the alarm Apnoea (no CO₂ breaths) (01:06 → 01:46; within 1 min 30 s asked).' });
+    expect(v(within, run([apnoea(66), vent(200)])).status).toBe('not met');
+    expect(v(within, run([apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.' });
+    expect(v(within, run([], [sample(300)]))).toEqual({ status: 'not assessable', why: 'The alarm Apnoea (no CO₂ breaths) did not happen.' });
+    expect(v(within, run([apnoea(66)], [sample(100)])).why).toBe('The run ended 34 s after the alarm Apnoea (no CO₂ breaths) at 01:06, before 1 min 30 s had passed.');
+  });
+
+  it('an event before the anchor does not count; a second anchor is not judged again (the first is)', () => {
+    expect(v(within, run([vent(30), apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.' });
+    const cpr: ObjectiveRule = { kind: 'eventWithin', after: 'pulseLoss', event: 'cpr', withinS: 30 };
+    const rows: Row[] = [
+      { t: 100, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 160, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
+      { t: 300, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 310, kind: 'action', text: 'CPR started', ev: 'cpr' },
+    ];
+    expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).' });
+  });
+
+  it('a value never measured is not assessable, never "did not happen" (R50 I-3)', () => {
+    const none = [sample(0, { spo2: null, map: null }), sample(200, { spo2: null, map: null })];
+    expect(v({ kind: 'occurred', event: 'value:spo2<90' }, run([], none))).toEqual({ status: 'not assessable', why: 'SpO₂ was not measured during the run.' });
+    expect(v({ kind: 'never', event: 'value:spo2<90' }, run([], none)).status).toBe('not assessable');
+    const pe: Row = { t: 60, kind: 'action', text: 'Phenylephrine 100 µg IV', ev: 'drug:phenylephrine' };
+    expect(v({ kind: 'eventWithin', after: 'drug:phenylephrine', event: 'value:map>65', withinS: 120 }, run([pe], [sample(0, { map: 50 }), sample(61, { map: null }), sample(300, { map: null })])))
+      .toEqual({ status: 'not assessable', why: 'ART M / NIBP M was not measured after Phenylephrine at 01:00.' });
+    expect(v({ kind: 'eventWithin', after: 'value:map<60', event: 'drug:phenylephrine', withinS: 60 }, run([pe], none)).why).toBe('ART M / NIBP M was not measured during the run.');
+  });
+
+  it('from (R50): a value event counted only after an event — "EtCO₂ below 40 after the crisis was called"', () => {
+    const xs = [sample(0, { etco2: 34 }), sample(20, { etco2: 52 }), sample(100, { etco2: 38 })];
+    const off: Row = { t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' };
+    const back: Row = { t: 130, kind: 'scenario', text: 'y', ev: 'ventilation' };
+    const rule: ObjectiveRule = { kind: 'eventWithin', from: 'state:induced', after: 'value:etco2<40', event: 'ventilation', withinS: 60 };
+    expect(v(rule, run([off, back], xs))).toEqual({ status: 'met', why: 'Ventilated breaths 30 s after EtCO₂ below 40 mmHg after the state "Induced" (01:40 → 02:10; within 1 min 00 s asked).' });
+    expect(v({ ...rule, from: undefined } as ObjectiveRule, run([off, back], xs)).status).toBe('not met'); // without it: the baseline at 00:00
+    expect(v(rule, run([back], xs))).toEqual({ status: 'not assessable', why: 'The state "Induced" did not happen.' });
+    expect(v({ kind: 'occurred', from: 'state:induced', event: 'value:etco2<40' }, run([off], xs))).toEqual({ status: 'met', why: 'EtCO₂ below 40 mmHg after the state "Induced" at 01:40' });
+    expect(v({ kind: 'never', from: 'state:induced', event: 'value:etco2<40' }, run([off], [sample(0, { etco2: 34 }), sample(20, { etco2: null })])).why).toBe('EtCO₂ was not measured after the state "Induced" at 00:10.');
+  });
+
+  it('Q7: a lab value in a rule — K⁺ above 5.5, treated within 300 s', () => {
+    const potassium: ObjectiveRule = { kind: 'eventWithin', after: 'value:k>5.5', event: ['drug:calciumChloride', 'drug:insulinDextrose'], withinS: 300 };
+    const ca: Row = { t: 400, kind: 'scenario', text: 'Calcium chloride', ev: 'drug:calciumChloride' };
+    const ks = [sample(0, { k: 4.2 }), sample(200, { k: 5.6 }), sample(400, { k: 6.1 })];
+    expect(v(potassium, run([ca], ks))).toEqual({ status: 'met', why: 'Calcium chloride 10 % or Insulin + dextrose 3 min 20 s after K⁺ above 5.5 mmol/L (03:20 → 06:40; within 5 min 00 s asked).' });
+    expect(v({ kind: 'stayed', value: 'k', below: 6, after: 'drug:calciumChloride', forS: 60 }, run([ca], ks)).status).toBe('not met');
+  });
+
+  it('reads the kept course: an undone try does not count, the retry does', () => {
+    expect(v(within, run([apnoea(66), vent(250, 1), { t: 20, kind: 'restore', text: 'Returned to bookmark' }, apnoea(66), vent(100)])).status).toBe('met');
+    expect(v(within, run([apnoea(66, 1), vent(100, 1)], [sample(30)])).status).toBe('not assessable');
+  });
+
+  it('ROSC within N s of the pulse loss is an eventWithin', () => {
+    const rosc: ObjectiveRule = { kind: 'eventWithin', after: 'pulseLoss', event: 'rosc', withinS: 300 };
+    const lost: Row = { t: 600, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' };
+    expect(v(rosc, run([lost, { t: 780, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' }])).why).toBe('The return of circulation 3 min 00 s after the pulse loss (10:00 → 13:00; within 5 min 00 s asked).');
+    expect(v(rosc, run([lost], [sample(1000)])).status).toBe('not met');
+  });
+
+  it('value events and lists of events', () => {
+    const xs = [sample(0, { map: 80 }), sample(30, { map: 58 }), sample(50, { map: 59 }), sample(70, { map: 66 })];
+    const pe: Row = { t: 60, kind: 'action', text: 'Phenylephrine 100 µg IV', ev: 'drug:phenylephrine' };
+    const treat: ObjectiveRule = { kind: 'eventWithin', after: 'value:map<60', event: ['drug:phenylephrine', 'drug:ephedrine'], withinS: 60 };
+    expect(v(treat, run([pe], xs))).toEqual({ status: 'met', why: 'Phenylephrine or Ephedrine 30 s after ART M / NIBP M below 60 mmHg (00:30 → 01:00; within 1 min 00 s asked).' });
+    expect(v({ kind: 'eventWithin', after: ['drug:ephedrine', 'drug:phenylephrine'], event: 'value:map>65', withinS: 120 }, run([pe], xs)).why).toBe('ART M / NIBP M above 65 mmHg 10 s after Ephedrine or Phenylephrine (01:00 → 01:10; within 2 min 00 s asked).');
+    expect(v({ kind: 'occurred', event: 'value:spo2<90' }, run([], xs))).toEqual({ status: 'not met', why: 'SpO₂ below 90 %: did not happen' });
+  });
+
+  it('occurred and never', () => {
+    const drug: Row = { t: 150, kind: 'action', text: 'Dantrolene 175 mg IV', ev: 'drug:dantrolene', dose: { drugId: 'dantrolene', dose: 2.5, unit: 'mg/kg' } };
+    expect(v({ kind: 'occurred', event: 'drug:dantrolene' }, run([drug]))).toEqual({ status: 'met', why: 'Dantrolene at 02:30' });
+    expect(v({ kind: 'occurred', event: 'drug:dantrolene' }, run([]))).toEqual({ status: 'not met', why: 'Dantrolene: did not happen' });
+    expect(v({ kind: 'never', event: 'pulseLoss' }, run([]))).toEqual({ status: 'met', why: 'The pulse loss: did not happen' });
+    expect(v({ kind: 'never', event: 'state:induced' }, run([{ t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' }])).why).toBe('The state "Induced" at 00:10');
+  });
+
+  it('stayed: over the whole run or a window after an event', () => {
+    const spo2: ObjectiveRule = { kind: 'stayed', value: 'spo2', above: 90 };
+    const xs = [sample(0, { spo2: 99 }), sample(60, { spo2: 93 }), sample(120, { spo2: 97 })];
+    expect(v(spo2, run([], xs))).toEqual({ status: 'met', why: 'SpO₂ stayed above 90 % (lowest 93 % at 01:00).' });
+    expect(v(spo2, run([], [...xs, sample(130, { spo2: 88 })]))).toEqual({ status: 'not met', why: 'SpO₂ 88 % at 02:10 (asked: above 90 %).' });
+    expect(v(spo2, run([], [sample(0, { spo2: null })])).status).toBe('not assessable');
+    const map: ObjectiveRule = { kind: 'stayed', value: 'map', above: 65, after: 'state:induced', forS: 120 };
+    const induced: Row = { t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' };
+    expect(v(map, run([induced], [sample(5, { map: 50 }), sample(60, { map: 70 }), sample(140, { map: 66 })])).status).toBe('met'); // 5 s is before the window
+    expect(v(map, run([induced], [sample(60, { map: 70 })])).why).toBe('The run ended before the 2 min 00 s window closed; ART M / NIBP M stayed above 65 mmHg until then.');
+    expect(v(map, run([], [sample(60)])).status).toBe('not assessable');
+    expect(v({ kind: 'stayed', value: 'etco2', below: 45 }, run([], [sample(0, { etco2: 52 })])).why).toBe('EtCO₂ 52 mmHg at 00:00 (asked: below 45 mmHg).');
+  });
+
+  it('objectives: strings and rule-less objects are not assessable; a tick in the Scenario tab is reported', () => {
+    const d = run([apnoea(66), vent(100), { t: 140, kind: 'note', text: 'Objective met: Confirm ventilation with the capnogram' }], [sample(200)]);
+    d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
+    expect(objectives(d)).toEqual([
+      { text: 'Anticipate the fall in arterial pressure after propofol', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it.' } },
+      { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after') } },
+      { text: 'Confirm ventilation with the capnogram', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it. The instructor ticked it at 02:20.' } },
+    ]);
+  });
+});
+
+describe('Stage 13: facts and totals', () => {
+  it('states the extremes, the apnoea-to-ventilation time, the pulseless time, ROSC and the epinephrine total', () => {
+    const epi = (t: number, dose: number, unit: string): Row => ({ t, kind: 'action', text: 'Epinephrine', ev: 'drug:epinephrine', dose: { drugId: 'epinephrine', dose, unit } });
+    const d = run([
+      apnoea(66), vent(106),
+      { t: 300, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, epi(330, 1, 'mg'), epi(510, 1000, 'mcg'),
+      { t: 480, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
+      { t: 500, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 560, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
+      epi(900, 1, 'mg', ), // undone below
+    ], [sample(0), sample(200, { spo2: 81, map: 48, etco2: 52, temp: 37.4 }), sample(600)]);
+    (d.rows.at(-1) as Row).undone = 1;
+    expect(facts(d)).toEqual([
+      { label: 'Lowest SpO₂', value: '81 % at 03:20' },
+      { label: 'Lowest ART M / NIBP M', value: '48 mmHg at 03:20' },
+      { label: 'Highest EtCO₂', value: '52 mmHg at 03:20' },
+      { label: 'Highest T1 / T2', value: '37.4 °C at 03:20' },
+      { label: 'Apnoea alarm to ventilated breaths', value: '40 s (01:06 → 01:46)' },
+      { label: 'Pulseless', value: '4 min 00 s in all; first lost at 05:00' },
+      { label: 'Return of circulation', value: '3 min 00 s after the pulse loss (08:00)' },
+      { label: 'Epinephrine, boluses in all', value: '2 mg (2 doses)' },
+    ]);
+    expect(facts(run([], []))).toEqual([]);
+  });
+
+  it('Q7: the labs — last value (lowest–highest), labels and units from the glossary', () => {
+    const d = run([], [sample(0, { k: 4.2, lactate: 1, ph: 7.41, glucose: 5.5, tcore: 36.8 }), sample(60, { k: 6.3, lactate: 3.4, ph: 7.19, glucose: 5.7, tcore: 39.4 }), sample(120, { k: 6.1, lactate: 3.2, ph: 7.21, glucose: 5.6, tcore: 39.1 })]);
+    expect(facts(d).at(-1)).toEqual({ label: 'Labs (the model): last (lowest–highest)', value: 'K⁺ 6.1 mmol/L (4.2–6.3) · Lactate 3.2 mmol/L (1.0–3.4) · pH 7.21 (7.19–7.41) · Glucose 5.6 mmol/L (5.5–5.7) · Tcore 39.1 °C (36.8–39.4)' });
+  });
+
+  it('Q1 and Q3: one row per minute (each value’s first measurement in it); the report as JSON', () => {
+    const d = run([apnoea(66), vent(106)], [sample(0, { hr: null, k: 4.2 }), sample(1, { hr: 71 }), sample(61, { hr: 90, k: 4.4 }), sample(185, { hr: 100 })]);
+    expect(perMinute(d).map((m) => [m.t, m.values.hr, m.values.k])).toEqual([[0, 71, 4.2], [60, 90, 4.4], [120, null, null], [180, 100, null]]);
+    const j = JSON.parse(debriefJson(d, 'abc1234 2026-10-11'));
+    expect(Object.keys(j)).toEqual(['schema', 'build', 'record', 'objectives', 'facts', 'minutes']);
+    expect(j.schema).toBe('pme-debrief/1');
+    expect(j.record).toEqual(JSON.parse(JSON.stringify(d)));
+    expect(j.minutes).toHaveLength(4);
+  });
+
+  it('totals per-kg doses by weight and keeps other units as given', () => {
+    const d = run([
+      { t: 1, kind: 'action', text: '', dose: { drugId: 'propofol', dose: 2, unit: 'mg/kg' } },
+      { t: 2, kind: 'action', text: '', dose: { drugId: 'fentanyl', dose: 1, unit: 'mcg/kg' } },
+      { t: 3, kind: 'action', text: '', dose: { drugId: 'sodiumBicarbonate', dose: 50, unit: 'mEq' } },
+    ], [], 80);
+    expect(drugTotals(d)).toEqual([{ drugId: 'propofol', n: 1, total: '160 mg' }, { drugId: 'fentanyl', n: 1, total: '80 µg' }, { drugId: 'sodiumBicarbonate', n: 1, total: '50 mEq' }]);
+  });
+});
+
+describe('Stage 13: the objective rule in pme-scenario/1', () => {
+  const doc = (objectives: unknown[]) => ({ ...DOC, objectives });
+  it('accepts strings and { text, rule } of every kind; the card shows the words', () => {
+    const r = validateScenario(doc([
+      'Plain words',
+      { text: 'No rule' },
+      { text: 'A', rule: { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 90 } },
+      { text: 'B', rule: { kind: 'occurred', event: 'drug:dantrolene' } },
+      { text: 'C', rule: { kind: 'never', event: 'pulseLoss' } },
+      { text: 'D', rule: { kind: 'stayed', value: 'spo2', above: 90, after: 'state:induced', forS: 300 } },
+      { text: 'E', rule: { kind: 'eventWithin', after: 'value:map<60', event: ['drug:phenylephrine', 'drug:ephedrine'], withinS: 60 } },
+      { text: 'F', rule: { kind: 'eventWithin', after: 'value:k>5.5', event: ['drug:calciumChloride', 'drug:insulinDextrose'], withinS: 300 } },
+      { text: 'G', rule: { kind: 'stayed', value: 'ph', above: 7.2 } },
+      { text: 'H', rule: { kind: 'eventWithin', from: 'state:triggerOff', after: 'value:etco2<40', event: 'state:normoventilated', withinS: 300 } },
+    ]));
+    expect(r.ok, r.ok ? '' : r.errors.join('\n')).toBe(true);
+    if (r.ok) expect(cardOf(r.doc).objectives).toEqual(['Plain words', 'No rule', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+  });
+  it.each([
+    [{ text: 'x', rule: { kind: 'soon', event: 'cpr' } }],
+    [{ text: 'x', rule: { kind: 'occurred', event: 'ventilated' } }],
+    [{ text: 'x', rule: { kind: 'stayed', value: 'spo2' } }],
+    [{ text: 'x', rule: { kind: 'eventWithin', after: 'cpr', event: 'shock' } }],
+    [{ rule: { kind: 'occurred', event: 'cpr' } }],
+    [{ text: 'x', rule: { kind: 'occurred', event: 'value:na>150' } }],
+    [{ text: 'x', rule: { kind: 'occurred', event: [] } }],
+    [{ text: 'x', rule: { kind: 'stayed', value: 'spo2', above: 90, from: 'start' } }],
+  ])('refuses %j', (o) => {
+    expect(validateScenario(doc([o])).ok).toBe(false);
+  });
+});
+
+describe('Stage 13 DV-2: the trend axes have a least span (orchestrator ruling 2026-10-11)', () => {
+  it('a few-point wobble is not drawn at full height: the floor, centred on the data, SpO₂ never above 100', () => {
+    expect(axisRange('spo2', 96, 99)).toEqual([80, 100]); // 20 points, capped at 100
+    expect(axisRange('spo2', 70, 80)).toEqual([65, 85]); // centred below the cap
+    expect(axisRange('hr', 70, 78)).toEqual([54, 94]); // 40 bpm
+    expect(axisRange('map', 94, 96)).toEqual([75, 115]); // 40 mmHg
+    expect(axisRange('etco2', 33, 35)).toEqual([24, 44]); // 20 mmHg
+    expect(axisRange('etco2', 0, 2)).toEqual([0, 20]); // never below zero when the data are not
+    expect(axisRange('temp', 36.8, 36.8)).toEqual([35.8, 37.8]); // 2 °C
+    expect(axisRange('hr', 70, 148)).toEqual([70, 148]); // a wide range is the data's own
+    expect(axisRange('rr', 12, 12)).toEqual([11, 13]); // no floor ruled for RR: unchanged (± 1 when flat)
+  });
+});

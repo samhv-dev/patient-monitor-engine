@@ -12,7 +12,8 @@ import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } f
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
-import { ageBandOf, profileOf, type PatientSpec } from './patients.ts';
+import { ageBandOf, oneLiner, profileOf, type PatientSpec } from './patients.ts';
+import { RunRecord } from './record.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
 export type Mode = 'modeled' | 'manual';
@@ -71,6 +72,8 @@ export class AppSession {
   /** Learner controls under the learner monitor (orchestrator ruling 4): off by default, on per scenario. */
   learner = false;
   private readonly learnerFns = new Set<(on: boolean) => void>();
+  /** Stage 13: the debrief's record of the run — beside the engine, not in its snapshot, so a restore keeps it. */
+  readonly record: RunRecord;
   /** Latest engine events the shell reads (alarm mirror, defib, drugs). */
   last: Partial<Record<EngineEvent['type'], EngineEvent>> = {};
   soundOn = false;
@@ -103,6 +106,7 @@ export class AppSession {
     this.skin = o.skin;
     this.theme = o.theme;
     this.code = normalizeSessionCode(o.code ?? '') ?? newSessionCode();
+    this.record = new RunRecord(() => ({ patient: oneLiner(this.spec), weightKg: this.spec.weightKg }));
     const target: HostTarget = {
       dispatch: (c) => this.need().dispatch(c),
       snapshot: () => this.need().snapshot(),
@@ -175,6 +179,7 @@ export class AppSession {
       this.onSkin((skin, theme) => hs?.publish({ type: 'style', skin, theme })); // owner ruling Q4: phones follow a change
     }
     this.panelTransport = hub.connect();
+    this.panelTransport.onMessage((m) => void (m.kind === 'event' && m.body.forEach((e) => this.record.wire(e)))); // every source's commands, in order
     this.panel = new ControllerSession({ session: this.code, transport: this.panelTransport, issuedBy: 'instructor' });
     this.mount(start.seed ?? 7);
     // the runner advances at the engine's sim time; 10 Hz is enough for triggers stated in seconds [ENG]
@@ -373,6 +378,7 @@ export class AppSession {
         this.lastWall = performance.now();
       }
       this.last[e.type] = e;
+      this.record.engine(e);
       if (e.type !== 'truth') for (const fn of this.listeners) fn(e); // truth (≈ 25 KB at 1 Hz) stays on this page
       for (const fn of this.appFns) fn(e);
     });

@@ -5,7 +5,7 @@
 import { createEngine, type Command } from '@pme/engine-core';
 import { engineOptionsOf, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
-import { LIBRARY, SHOWCASE_ORDER } from '../scenarios.ts';
+import { LIBRARY, objectiveText, SHOWCASE_ORDER } from '../scenarios.ts';
 import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 
 const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
@@ -45,7 +45,7 @@ describe('Stage 11 Showcase cards', () => {
     expect(doc.title).not.toMatch(/^\[draft\]/i);
     expect(doc.story?.length ?? 0).toBeGreaterThan(120);
     expect(doc.objectives?.length ?? 0).toBeGreaterThanOrEqual(3);
-    for (const o of doc.objectives ?? []) expect(o, `objective without a number: ${o}`).toMatch(/\d/);
+    for (const o of (doc.objectives ?? []).map(objectiveText)) expect(o, `objective without a number: ${o}`).toMatch(/\d/); // Stage 13: { text, rule }
     for (const s of doc.states) {
       expect(s.label?.length ?? 0, s.id).toBeGreaterThan(5);
       const manual = (s.transitions ?? []).flatMap((t) => ('manual' in t.when ? [t.when.manual.label] : 'any' in t.when ? t.when.any.flatMap((w) => ('manual' in w ? [w.manual.label] : [])) : []));
