@@ -5,6 +5,7 @@ import type { Link } from '../link.ts';
 import type { ScenarioCard } from '../scenarios.ts';
 import type { SiteProfile } from '../site.ts';
 import { Staging } from '../staging.ts';
+import { alarmRefusal } from '../alarm-caps.ts';
 import { bookmark, shortcutsDialog } from '../commands.ts';
 import { button, h, select, tabs, throttle, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
@@ -118,7 +119,10 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
     }
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag) || e.metaKey || e.ctrlKey || e.altKey || el.closest('[hidden]')) return;
     const k = e.key;
-    const dev = (action: Record<string, unknown>) => void link.send({ type: 'device', action } as never).then((r) => r.accepted && toast(action.action === 'silence' ? 'Alarm sound silenced' : action.action === 'pause' ? 'Alarms paused' : 'NIBP measurement started'));
+    // FX-4: a refusal is said too (Shift+P on a monitor without an alarm pause was silent)
+    const dev = (action: Record<string, unknown>) => void link.send({ type: 'device', action } as never).then((r) =>
+      toast(!r.accepted ? (action.device === 'alarm' ? alarmRefusal(action.action, r.reason, link.alarms?.skin ?? link.host?.skin) : `Not done: ${r.reason ?? 'refused'}`)
+        : action.action === 'silence' ? 'Alarm sound silenced' : action.action === 'pause' ? 'Alarms paused' : 'NIBP measurement started'));
     if (k === 'S') dev({ device: 'alarm', action: 'silence' });
     else if (k === 'P') dev({ device: 'alarm', action: 'pause' });
     else if (k === 'N') dev({ device: 'nibp', action: 'start' });
