@@ -15,6 +15,9 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   found and stops with this same instruction if it is too old.)
 - [ ] **Start Classroom runs**: double-click it; its window says "THE CLASSROOM IS RUNNING" and lists "learners'
   phones reach it at: http://…". Click **Allow** if macOS asks about incoming connections for "node".
+- [ ] **The relay carries frames, not only pages**: the pre-flight relay test sends a real frame (`check-relay.mjs`
+  when the kit is built, `KIT-GATE.md`; here, 10 s after the simulator opens the black window still says "THE
+  CLASSROOM IS RUNNING": a kit built before the KR-A1 fix stopped at that moment).
 - [ ] **The hotspot path works** (the fallback network you carry): turn on the Mac's hotspot (System Settings >
   General > Sharing > Internet Sharing, to Wi-Fi), join it with **your own phone**, open the Monitor view, click
   **Phones**, scan: your phone shows the monitor within a few seconds and the count says "1 phone following". Note

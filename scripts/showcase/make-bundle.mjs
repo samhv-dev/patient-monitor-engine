@@ -13,7 +13,7 @@
 // Rerunnable: it replaces only the kit's own entries, so a videos/ folder (or anything else) beside them is kept.
 // Nothing is downloaded except the workspace's npm dependencies when node_modules is missing (pnpm install).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -69,10 +69,15 @@ await build({
   ssr: { noExternal: true, target: 'node' },
   build: {
     ssr: join(repo, 'packages/controller/relay/bin.ts'), outDir: join(out, 'server'), emptyOutDir: false, minify: false, target: 'node22',
-    rollupOptions: { output: { entryFileNames: 'relay.mjs', inlineDynamicImports: true } },
+    // KR-A1: ws require()s its optional native helpers (bufferutil, utf-8-validate) inside try/catch and takes its
+    // pure-JS path when that require throws. Bundled, Vite replaced each missing optional peer dependency with an empty
+    // module, so the require returned {} and the first client frame of 32 bytes or more called an undefined unmask().
+    // External, they stay a plain require() inside ws's try/catch: in this ES module it throws, and ws uses its JS code.
+    rollupOptions: { external: ['bufferutil', 'utf-8-validate'], output: { entryFileNames: 'relay.mjs', inlineDynamicImports: true } },
   },
 });
 if (!existsSync(join(out, 'server/relay.mjs'))) throw new Error('the relay bundle was not written');
+if (/__viteOptionalPeerDep/.test(readFileSync(join(out, 'server/relay.mjs'), 'utf8'))) throw new Error('KR-A1: the relay bundle stubs an optional peer dependency (ws would call an empty bufferutil)');
 copyFileSync(join(repo, 'packages/controller/node_modules/ws/LICENSE'), join(out, 'server/relay.mjs.LICENSE-ws.txt')); // NOTICES N-007 (MIT)
 
 step('runtime (bundled node only if it is an official signed build)');

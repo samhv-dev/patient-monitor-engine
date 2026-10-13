@@ -9,6 +9,7 @@ git -C "$R/repo" fetch origin && git -C "$R/repo" worktree add --detach "$W" ori
  && npx -y pnpm@9.15.9 install --frozen-lockfile \
  && node scripts/showcase/make-bundle.mjs "$K" && grep '^Commit' "$K/VERSION.txt" \
  && node scripts/showcase/check-servers.mjs "$K" --json docs/showcase/results/servers.json \
+ && node scripts/showcase/check-relay.mjs "$K" --json docs/showcase/results/relay.json \
  && node scripts/showcase/check-subpath.mjs "$K" \
  && SHOWCASE_KIT="$K" SHOWCASE_WORKERS=3 npx playwright test -c scripts/showcase/playwright.showcase.config.ts rehearsal sound \
  && SHOWCASE_KIT="$K" SHOWCASE_PREFIX=/patient-monitor-engine/ SHOWCASE_TAG=-subpath npx playwright test -c scripts/showcase/playwright.showcase.config.ts rehearsal -g "Healthy induction" --project webkit \
@@ -18,6 +19,20 @@ git -C "$R/repo" fetch origin && git -C "$R/repo" worktree add --detach "$W" ori
 `$W/docs/showcase/results/*.json` and `rehearsal/*.jpg`; the videos replace `$K/videos/*.mp4` only when all five
 recorded. Optional: the multi-window observation (`… playwright test -c … multiwindow`) and the early-CPR probe
 (`SHOWCASE_CPR_AT=628 SHOWCASE_TAG=-cpr-at-628 … rehearsal -g haemorrhage`, expected to FAIL its ROSC check, see U1).
+
+**The classroom relay (KR-A1, 2026-10-13).** `check-relay.mjs` is the kit's relay smoke test: the pre-flight relay
+test sends a real frame. It starts the BUILT `server/relay.mjs` twice, alone and through `Start Classroom.command`
+(`PME_NO_OPEN=1`, `PME_PORT=8690` so it never meets a classroom on 8650, stripped environment, no `WS_NO_*`), and
+per run sends a 64-byte binary frame, a host hello of ≥ 64 bytes (answer: the relay's `peers` frame), a controller
+hello and a 1 KB host event that must reach the controller byte for byte; then `/pme-relay.json` must still answer, the
+relay must still be running, and after the stop its port must be free. HTTP requests alone never caught KR-A1: every
+kit from 51a37063 to 56f3761f answered `/pme-relay.json` and then exited at the first client frame of 32 bytes or more
+(`TypeError: bufferUtil$1.unmask is not a function`: Vite had bundled ws's optional `bufferutil` as an empty module).
+`make-bundle.mjs` now keeps `bufferutil` and `utf-8-validate` external, so ws's `require()` of them throws inside its
+own try/catch and ws takes its pure-JS path; the builder refuses a relay bundle that still holds such a stub.
+Red, kit 56f3761f: 0 of 2 runs (`results/relay-red-56f3761f.json`). Green, kit from `fix-kr-a1-kit-relay`: 2 of 2
+(`results/relay.json`). For the phones' own e2e against a built kit's relay:
+`PME_KIT_RELAY="$K/server/relay.mjs" npx playwright test s12-mobile-learner` (both projects).
 
 **Both builds.** The checks are directions with floors, chosen to hold on the hotfix build and on the FU-7
 drug-layer build (independent FU-7 run: bronchospasm VTE ≈ 161 → 305 mL at 3 min, ≈ 360 at 6 min, EtCO2 ≈ 40):
