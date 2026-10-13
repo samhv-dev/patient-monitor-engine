@@ -1,0 +1,293 @@
+{
+  "case": "Class IV haemorrhage, early CPR probe (kit round)",
+  "browser": "chromium",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T08:50:14.684Z",
+  "loadAvg": {
+    "start": 2.97,
+    "end": 3.41,
+    "min": 2.82,
+    "max": 3.41
+  },
+  "setup": {
+    "sessionCode": "Y6DRKC",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "!! EtCO₂ low"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.7,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.82,
+      "what": "Load \"Class IV haemorrhage, PEA and resuscitation\" at ×8, Bookmark",
+      "hr": 71,
+      "art": "118/81 (93)",
+      "spo2": 96,
+      "etco2": 35,
+      "rr": 19
+    },
+    {
+      "wall": 128.2,
+      "clock": "10:05",
+      "simS": 605.2,
+      "speed": 1,
+      "state": "bleeding",
+      "load1": 3.24,
+      "what": "IBP1 STATIC PRESSURE (before SPO2 NO PULSE)",
+      "hr": 97,
+      "art": "–/– (13)",
+      "spo2": 99,
+      "etco2": 18,
+      "rr": 15
+    },
+    {
+      "wall": 131.1,
+      "clock": "10:08",
+      "simS": 608.1,
+      "speed": 1,
+      "state": "resuscitation",
+      "load1": 3.24,
+      "what": "press **Start CPR, 2 L and epinephrine**",
+      "hr": 82,
+      "art": "–/– (13)",
+      "spo2": 99,
+      "etco2": 17,
+      "rr": 15
+    },
+    {
+      "wall": 137.1,
+      "clock": "10:55",
+      "simS": 655.3,
+      "speed": 8,
+      "state": "resuscitation",
+      "load1": 3.41,
+      "what": "systolic above 90",
+      "hr": 138,
+      "art": "96/71 (79)",
+      "spo2": 99,
+      "etco2": 17,
+      "rr": 16
+    },
+    {
+      "wall": 137.9,
+      "clock": "11:02",
+      "simS": 662.1,
+      "speed": 8,
+      "state": "rosc",
+      "load1": 3.41,
+      "what": "press **Pulse back: stop CPR**",
+      "hr": 138,
+      "art": "104/88 (93)",
+      "spo2": 99,
+      "etco2": 17,
+      "rr": 16
+    }
+  ],
+  "presses": [
+    {
+      "label": "Start CPR, 2 L and epinephrine",
+      "clock": "10:07",
+      "simS": 607.3,
+      "wall": 131.1,
+      "before": "bleeding",
+      "after": "resuscitation",
+      "load1": 3.24,
+      "toast": ""
+    },
+    {
+      "label": "Pulse back: stop CPR",
+      "clock": "10:55",
+      "simS": 655.5,
+      "wall": 137.9,
+      "before": "resuscitation",
+      "after": "rosc",
+      "load1": 3.41,
+      "toast": "The scenario has ended: the debrief is ready (Debrief, in the session bar)"
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 1.8,
+      "clock": "00:01",
+      "id": "bleeding"
+    },
+    {
+      "t": 607.3,
+      "clock": "10:07",
+      "id": "resuscitation"
+    },
+    {
+      "t": 655.5,
+      "clock": "10:55",
+      "id": "rosc"
+    }
+  ],
+  "alarms": [
+    "07:46 ART SYS TOO LOW",
+    "08:21 SPO2 LOW PERFUSION",
+    "08:35 ART MEAN TOO LOW",
+    "08:49 HR TOO HIGH",
+    "09:01 ART DIA TOO LOW",
+    "09:51 ETCO2 TOO LOW",
+    "10:05 IBP1 STATIC PRESSURE",
+    "10:13 ART SYS TOO LOW",
+    "10:13 ART DIA TOO LOW",
+    "11:17 ART DIA TOO HIGH"
+  ],
+  "measures": {
+    "earlyCpr": {
+      "staticAt": "10:05",
+      "cprAt": "10:07",
+      "noPulseAlarmBeforeCpr": false,
+      "noPulseAlarmAt": null,
+      "vfAlarm": "none",
+      "systolicAbove90AfterCprS": 47.9,
+      "bestSystolicAfterCpr": 95.8
+    }
+  },
+  "debrief": {
+    "openedAt": "11:02",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Recognise PEA from hypovolaemiaThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)The pulse loss did not happen."
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)The pulse loss did not happen."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "13 mmHg at 10:07",
+      "Highest EtCO₂": "35 mmHg at 00:09",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Epinephrine, boluses in all": "1 mg (1 dose)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 2.3 mmol/L (1.0–2.3) · pH 7.37 (7.37–7.41) · Glucose 5.8 mmol/L (5.6–5.8) · Tcore 36.6 °C (36.6–36.8)"
+    },
+    "timelineRows": 26,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Class IV haemorrhage, PEA and resuscitation",
+      "00:00 Scenario Scenario state: Bleeding 2.5 L over 10 min",
+      "00:00 Scenario Tracheal tube in place",
+      "00:00 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "00:00 Scenario Blood loss 2500 mL over 10 min",
+      "00:01 Action Speed ×8",
+      "00:00 Patient Ventilated breaths began",
+      "00:04 Bookmark Bookmark: Bookmark 1 at 00:04",
+      "00:07 Action All alarms on",
+      "07:46 Alarm ART S low",
+      "08:21 Alarm SpO₂: low perfusion",
+      "08:35 Alarm ART M low",
+      "08:49 Alarm HR high",
+      "09:01 Alarm ART D low",
+      "09:04 Action Speed ×1",
+      "09:51 Alarm EtCO₂ low",
+      "10:05 Alarm ART: no pulsatile pressure",
+      "10:07 Scenario Scenario state: CPR, 2 L warmed fluid, epinephrine 1 mg",
+      "10:07 Scenario CPR started, 110 /min",
+      "10:07 Scenario Crystalloid 2000 mL over 3 min",
+      "10:07 Scenario Epinephrine 1 mg IV",
+      "10:08 Action Speed ×8",
+      "10:13 Alarm ART S low",
+      "10:13 Alarm ART D low",
+      "10:55 Scenario Scenario state: Return of circulation",
+      "10:55 Scenario CPR stopped"
+    ],
+    "minuteRows": 12
+  },
+  "phones": {
+    "rule": "a parameter differing (> 1 unit, or number vs blank) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 1.5,
+        "worst": {
+          "param": "HR",
+          "forS": 1.5,
+          "instructorFirst": "87",
+          "phoneFirst": "78",
+          "instructorNow": "109",
+          "phoneNow": "116",
+          "atWallS": 131.4
+        },
+        "samples": 278,
+        "compared": 274,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 278
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 1.5,
+        "worst": {
+          "param": "HR",
+          "forS": 1.5,
+          "instructorFirst": "87",
+          "phoneFirst": "78",
+          "instructorNow": "109",
+          "phoneNow": "116",
+          "atWallS": 131.4
+        },
+        "samples": 278,
+        "compared": 274,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 278
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 1.5,
+        "worst": {
+          "param": "HR",
+          "forS": 1.5,
+          "instructorFirst": "87",
+          "phoneFirst": "78",
+          "instructorNow": "109",
+          "phoneNow": "116",
+          "atWallS": 131.4
+        },
+        "samples": 278,
+        "compared": 274,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 278
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}

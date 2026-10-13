@@ -1,0 +1,32 @@
+Finding KR-A1 (kit round A; reproduced 2026-10-12 on kit b8c9c04a and 2026-10-13 on kit 56f3761f, node v26.8.2, macOS): the kit's server/relay.mjs stops at the first client WebSocket frame of 32 bytes or more.
+
+Reproduce: node <kit>/server/relay.mjs --port 8770 --static <kit>/app ; open http://127.0.0.1:8770/?relay#/teach in Chromium; the relay exits; a phone page /?join=<code> then gets ERR_CONNECTION_REFUSED. 'Start Classroom.command' runs the same file, so the classroom stops when the instructor's page opens.
+Cause: relay.mjs line 140: const require$$1 = getAugmentedNamespace(__viteOptionalPeerDep_bufferutil_ws$1). Vite bundled ws's optional peer dependency 'bufferutil' as an empty stub, so ws's try { require('bufferutil') } succeeds and unmask() calls an undefined function for any client frame >= 32 bytes. The same line is in the 51a37063 (Stage 12 owner kit), cb4fb17e (Stage 13), b8c9c04a and 56f3761f kits.
+Why no gate caught it: Stage 12's phone-room test runs the SOURCE relay (packages/controller/relay/bin.ts with node_modules ws, no bufferutil installed, so ws falls back to its JS unmask); the kit check (Stage 12 T8) fetched /pme-relay.json and /?join= over HTTP only, no WebSocket frame.
+Workaround used for the kit-round measurements: WS_NO_BUFFER_UTIL=1 in Start Classroom's environment (ws then uses its JS unmask: the phones join and follow). The kit as built does not set it. Fix belongs to the kit builder (scripts/showcase/make-bundle.mjs relay build) or the launcher: not done here (no product code in this round).
+
+Relay output on kit 56f3761f, as built:
+[pme-relay] pme relay listening on 0.0.0.0:8770
+pme-relay ready on ws://0.0.0.0:8770/ (Ctrl+C to stop)
+  instructor (this computer): http://127.0.0.1:8770/?relay#/
+  learners' phones reach it at: http://192.168.1.100:8770/
+  learners' phones reach it at: http://172.21.0.1:8770/
+file://pme-showcase-kit-56f3761f/server/relay.mjs:208
+        else bufferUtil$1.unmask(buffer, mask);
+                          ^
+
+TypeError: bufferUtil$1.unmask is not a function
+    at bufferUtil.exports.unmask (file://pme-showcase-kit-56f3761f/server/relay.mjs:208:27)
+    at Receiver.getData (file://pme-showcase-kit-56f3761f/server/relay.mjs:1265:11)
+    at Receiver.startLoop (file://pme-showcase-kit-56f3761f/server/relay.mjs:1013:18)
+    at Receiver._write (file://pme-showcase-kit-56f3761f/server/relay.mjs:951:12)
+    at writeOrBuffer (node:internal/streams/writable:574:12)
+    at _write (node:internal/streams/writable:503:10)
+    at Writable.write (node:internal/streams/writable:512:10)
+    at Socket.socketOnData (file://pme-showcase-kit-56f3761f/server/relay.mjs:3228:37)
+    at Socket.emit (node:events:514:20)
+    at addChunk (node:internal/streams/readable:575:12)
+
+Node.js v26.8.2
+
+Update 2026-10-13: fixed on main by PR #64 (62e521c3: make-bundle leaves bufferutil/utf-8-validate external, so ws takes its pure-JS path); the kit smoke test is scripts/showcase/check-relay.mjs. The three owner kits rebuilt from 62e521c3 pass it 2 of 2, and the 62e521c3 re-check runs in this folder (*-kit-62e521c3.*) used the relay as built, without WS_NO_BUFFER_UTIL.

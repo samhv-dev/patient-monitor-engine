@@ -1,0 +1,466 @@
+{
+  "case": "Induction after fentanyl and midazolam (kit round)",
+  "browser": "chromium",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T08:34:16.492Z",
+  "loadAvg": {
+    "start": 2.48,
+    "end": 2.76,
+    "min": 2.48,
+    "max": 4.68
+  },
+  "setup": {
+    "sessionCode": "RSSZ6V",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:07",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:07",
+      "simS": 7.6,
+      "speed": 4,
+      "state": "awake",
+      "load1": 4.68,
+      "what": "Load \"Induction after fentanyl and midazolam\" at ×4, Bookmark",
+      "hr": 70,
+      "art": "122/80 (94)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "wall": 2.4,
+      "clock": "00:10",
+      "simS": 10.8,
+      "speed": 4,
+      "state": "premedicated",
+      "load1": 4.55,
+      "what": "premedication given by itself",
+      "hr": 71,
+      "art": "123/81 (96)",
+      "spo2": 96,
+      "etco2": 36,
+      "rr": null
+    },
+    {
+      "wall": 24.7,
+      "clock": "01:40",
+      "simS": 100.2,
+      "speed": 4,
+      "state": "premedicated",
+      "load1": 4.37,
+      "what": "RR limit alarm raised",
+      "hr": 63,
+      "art": "120/75 (89)",
+      "spo2": 99,
+      "etco2": 43,
+      "rr": 0,
+      "alarm": "RR TOO LOW",
+      "alarmButton": "No alarms"
+    },
+    {
+      "wall": 27.8,
+      "clock": "01:52",
+      "simS": 112.5,
+      "speed": 4,
+      "state": "premedicated",
+      "load1": 4.26,
+      "what": "Acknowledge (alarm button → Devices & alarms)",
+      "hr": 64,
+      "art": "120/75 (90)",
+      "spo2": 99,
+      "etco2": 44,
+      "rr": 0,
+      "alarmButton": "No alarms"
+    },
+    {
+      "wall": 30.4,
+      "clock": "02:02",
+      "simS": 123,
+      "speed": 4,
+      "state": "premedicated",
+      "load1": 4.26,
+      "what": "2:00",
+      "hr": 62,
+      "art": "117/73 (87)",
+      "spo2": 99,
+      "etco2": 45,
+      "rr": 6
+    },
+    {
+      "wall": 46.4,
+      "clock": "03:07",
+      "simS": 187.1,
+      "speed": 4,
+      "state": "induced",
+      "load1": 3.67,
+      "what": "press **Induce now**",
+      "hr": 60,
+      "art": "115/71 (85)",
+      "spo2": 99,
+      "etco2": 49,
+      "rr": 5
+    },
+    {
+      "wall": 55.6,
+      "clock": "03:43",
+      "simS": 223.6,
+      "speed": 4,
+      "state": "induced",
+      "load1": 3.48,
+      "what": "CO2 apnoea alarm",
+      "hr": 60,
+      "art": "92/54 (65)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 0,
+      "alarm": "CO2 APNEA"
+    },
+    {
+      "wall": 58.4,
+      "clock": "03:54",
+      "simS": 234.9,
+      "speed": 4,
+      "state": "ventilated",
+      "load1": 3.52,
+      "what": "press **Intubate and ventilate**",
+      "hr": 59,
+      "art": "90/52 (63)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 3
+    },
+    {
+      "wall": 59.7,
+      "clock": "04:00",
+      "simS": 240,
+      "speed": 4,
+      "state": "ventilated",
+      "load1": 3.52,
+      "what": "MAP below 60",
+      "hr": 59,
+      "art": "84/49 (59)",
+      "spo2": 99,
+      "etco2": 48,
+      "rr": 4
+    },
+    {
+      "wall": 62.5,
+      "clock": "04:11",
+      "simS": 251.3,
+      "speed": 4,
+      "state": "maintained",
+      "load1": 3.32,
+      "what": "press **Ephedrine 10 mg**",
+      "hr": 57,
+      "art": "78/44 (53)",
+      "spo2": 99,
+      "etco2": 45,
+      "rr": 5
+    },
+    {
+      "wall": 89.7,
+      "clock": "06:00",
+      "simS": 360,
+      "speed": 4,
+      "state": "maintained",
+      "load1": 2.79,
+      "what": "MAP back to 65",
+      "hr": 59,
+      "art": "94/53 (65)",
+      "spo2": 99,
+      "etco2": 38,
+      "rr": 12
+    },
+    {
+      "wall": 120.4,
+      "clock": "08:03",
+      "simS": 483,
+      "speed": 4,
+      "state": "maintained",
+      "load1": 2.96,
+      "what": "end (8:00)",
+      "hr": 61,
+      "art": "102/60 (72)",
+      "spo2": 99,
+      "etco2": 38,
+      "rr": 12,
+      "mapNadirAfterInduction": 52.4
+    },
+    {
+      "wall": 124.2,
+      "clock": "08:18",
+      "simS": 498.2,
+      "speed": 4,
+      "state": "maintained",
+      "load1": 2.73,
+      "what": "monitor style changed: Saadat-style → Philips-style (Settings)",
+      "hr": 61,
+      "art": "102/60 (72)",
+      "spo2": 99,
+      "etco2": 39,
+      "rr": 12
+    }
+  ],
+  "presses": [
+    {
+      "label": "Induce now",
+      "clock": "03:03",
+      "simS": 183.8,
+      "wall": 46.4,
+      "before": "premedicated",
+      "after": "induced",
+      "load1": 3.67,
+      "toast": ""
+    },
+    {
+      "label": "Intubate and ventilate",
+      "clock": "03:51",
+      "simS": 231.7,
+      "wall": 58.4,
+      "before": "induced",
+      "after": "ventilated",
+      "load1": 3.52,
+      "toast": ""
+    },
+    {
+      "label": "Ephedrine 10 mg",
+      "clock": "04:08",
+      "simS": 248.1,
+      "wall": 62.5,
+      "before": "ventilated",
+      "after": "maintained",
+      "load1": 3.32,
+      "toast": ""
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 1.1,
+      "clock": "00:01",
+      "id": "awake"
+    },
+    {
+      "t": 10.1,
+      "clock": "00:10",
+      "id": "premedicated"
+    },
+    {
+      "t": 184,
+      "clock": "03:04",
+      "id": "induced"
+    },
+    {
+      "t": 232.1,
+      "clock": "03:52",
+      "id": "ventilated"
+    },
+    {
+      "t": 248.4,
+      "clock": "04:08",
+      "id": "ephedrine"
+    },
+    {
+      "t": 250.5,
+      "clock": "04:10",
+      "id": "maintained"
+    }
+  ],
+  "alarms": [
+    "01:40 RR TOO LOW",
+    "01:53 RR TOO LOW",
+    "02:06 RR TOO LOW",
+    "03:10 AWRR TOO LOW",
+    "03:29 ETCO2 TOO HIGH",
+    "03:34 ETCO2 TOO HIGH",
+    "03:42 CO2 APNEA",
+    "03:57 RR TOO LOW",
+    "03:57 AWRR TOO LOW",
+    "04:01 ART DIA TOO LOW",
+    "04:01 ART MEAN TOO LOW",
+    "04:06 ART SYS TOO LOW"
+  ],
+  "measures": {
+    "rrAlarm": {
+      "text": "RR TOO LOW",
+      "at": "01:40",
+      "afterPremedS": 89.3,
+      "ackAfterS": 10.4,
+      "allAlarms": [
+        "01:40 RR TOO LOW",
+        "01:53 RR TOO LOW"
+      ]
+    },
+    "timings": {
+      "apnoeaAfterInductionS": 38.8,
+      "apnoeaAlarmAt": "03:42",
+      "intubatedAfterAlarmS": 9.1,
+      "intubateAt": "03:51",
+      "mapBelow60At": "04:00",
+      "mapBelow60AfterInductionS": 56.2,
+      "ephedrineAfterMapBelow60S": 8.1,
+      "map65AfterEphedrineS": 111.9,
+      "mapNadir": 52.4,
+      "apnoeaTimeTakenFrom": "alarm event"
+    }
+  },
+  "debrief": {
+    "openedAt": "08:03",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Acknowledge the respiratory-rate alarm (RR below 8/min, about 75 s after the premedication) within 30 sThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Intubate and ventilate within 60 s of the CO₂ apnoea alarm (it sounds about 43 s after induction, 13 s earlier than in the healthy induction)Ventilated breaths 9 s after the alarm Apnoea (no CO₂ breaths) (03:42 → 03:51; within 1 min 00 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Give a vasopressor (phenylephrine or ephedrine) within 60 s of the mean arterial pressure falling below 60 mmHgPhenylephrine or Ephedrine 8 s after ART M / NIBP M below 60 mmHg (04:00 → 04:08; within 1 min 00 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Mean arterial pressure back above 65 mmHg within 120 s of the vasopressorART M / NIBP M above 65 mmHg 1 min 52 s after Phenylephrine or Ephedrine (04:08 → 06:00; within 2 min 00 s asked)."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "52 mmHg at 04:18",
+      "Highest EtCO₂": "51 mmHg at 03:30",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Apnoea alarm to ventilated breaths": "9 s (03:42 → 03:51)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.38 (7.28–7.41) · Glucose 5.6 mmol/L (5.6–5.6) · Tcore 36.5 °C (36.5–36.8)"
+    },
+    "timelineRows": 33,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Induction after fentanyl and midazolam",
+      "00:00 Scenario Scenario state: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction",
+      "00:00 Scenario Preoxygenation, FiO₂ 100 %",
+      "00:01 Action Speed ×4",
+      "00:02 Bookmark Bookmark: Bookmark 1 at 00:02",
+      "00:04 Action All alarms on",
+      "00:10 Scenario Scenario state: Fentanyl 2 µg/kg and midazolam 0.03 mg/kg given",
+      "00:10 Scenario Fentanyl 2 µg/kg IV",
+      "00:10 Scenario Midazolam 0.03 mg/kg IV",
+      "01:40 Alarm RR low",
+      "01:50 Action Alarms acknowledged",
+      "01:53 Alarm RR low",
+      "02:06 Alarm RR low",
+      "03:03 Scenario Scenario state: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured",
+      "03:03 Scenario Preoxygenation, FiO₂ 100 %",
+      "03:03 Scenario Propofol 2 mg/kg IV",
+      "03:03 Scenario Rocuronium 0.6 mg/kg IV",
+      "03:10 Alarm awRR low",
+      "03:29 Alarm EtCO₂ high",
+      "03:34 Alarm EtCO₂ high",
+      "03:42 Alarm Apnoea (no CO₂ breaths)",
+      "03:51 Scenario Scenario state: Intubated and ventilated",
+      "03:51 Scenario Tracheal tube in place",
+      "03:51 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "03:51 Patient Ventilated breaths began",
+      "03:57 Alarm RR low",
+      "03:57 Alarm awRR low",
+      "04:01 Alarm ART D low",
+      "04:01 Alarm ART M low",
+      "04:06 Alarm ART S low",
+      "04:08 Scenario Scenario state: Ephedrine 10 mg given",
+      "04:08 Scenario Ephedrine 10 mg IV",
+      "04:10 Scenario Scenario state: Ventilated: vasopressor given"
+    ],
+    "minuteRows": 9
+  },
+  "phones": {
+    "rule": "a parameter differing (> 1 unit, or number vs blank) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [
+      {
+        "label": "before the style change",
+        "atWallS": 121.8,
+        "maxMismatchSoFar": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "label": "after Saadat-style → Philips-style",
+        "atWallS": 122.6,
+        "maxMismatchSoFar": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "label": "30 s after the style change",
+        "atWallS": 152.7,
+        "maxMismatchSoFar": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 305,
+        "compared": 300,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 304,
+          "waiting": 1
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 305,
+        "compared": 301,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 305
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 305,
+        "compared": 301,
+        "commonTiles": 10,
+        "holdSamples": 0,
+        "status": {
+          "synced": 305
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}

@@ -1,0 +1,555 @@
+{
+  "case": "Class IV haemorrhage (kit round)",
+  "browser": "webkit",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T09:32:40.331Z",
+  "loadAvg": {
+    "start": 2.19,
+    "end": 2.6,
+    "min": 2.08,
+    "max": 2.82
+  },
+  "setup": {
+    "sessionCode": "8N2DJB",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.7,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.39,
+      "what": "Load \"Class IV haemorrhage, PEA and resuscitation\" at ×8, Bookmark",
+      "hr": 71,
+      "art": "118/81 (93)",
+      "spo2": 96,
+      "etco2": 35,
+      "rr": 19
+    },
+    {
+      "wall": 12.3,
+      "clock": "01:07",
+      "simS": 68,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.33,
+      "what": "1:00 Pause → Explore → Set the baseline now → back → Resume",
+      "hr": 77,
+      "art": "117/82 (94)",
+      "spo2": 99,
+      "etco2": 35,
+      "rr": 12
+    },
+    {
+      "wall": 19.4,
+      "clock": "02:04",
+      "simS": 125,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.47,
+      "what": "2:00",
+      "hr": 81,
+      "art": "114/83 (93)",
+      "spo2": 99,
+      "etco2": 34,
+      "rr": 12
+    },
+    {
+      "wall": 34.4,
+      "clock": "04:04",
+      "simS": 244.8,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.42,
+      "what": "4:00",
+      "hr": 95,
+      "art": "108/82 (90)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 49.4,
+      "clock": "06:04",
+      "simS": 364.6,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.43,
+      "what": "6:00",
+      "hr": 120,
+      "art": "99/81 (86)",
+      "spo2": 99,
+      "etco2": 30,
+      "rr": 13
+    },
+    {
+      "wall": 64.8,
+      "clock": "08:04",
+      "simS": 484.8,
+      "speed": 8,
+      "state": "bleeding",
+      "load1": 2.82,
+      "what": "8:00 paused",
+      "hr": 140,
+      "art": "74/60 (65)",
+      "spo2": 99,
+      "etco2": 25,
+      "rr": 13
+    },
+    {
+      "wall": 102.2,
+      "clock": "10:04",
+      "simS": 604.8,
+      "speed": 1,
+      "state": "bleeding",
+      "load1": 2.31,
+      "what": "10:00 ×1",
+      "hr": 106,
+      "art": "20/15 (17)",
+      "spo2": 99,
+      "etco2": 18,
+      "rr": 15
+    },
+    {
+      "wall": 137.6,
+      "clock": "10:40",
+      "simS": 640.2,
+      "speed": 1,
+      "state": "bleeding",
+      "load1": 2.08,
+      "what": "SPO2 NO PULSE",
+      "hr": 44,
+      "art": "–/– (4)",
+      "spo2": null,
+      "etco2": 12,
+      "rr": 15,
+      "alarm": "SPO2 NO PULSE"
+    },
+    {
+      "wall": 140.4,
+      "clock": "10:43",
+      "simS": 643,
+      "speed": 1,
+      "state": "resuscitation",
+      "load1": 2.08,
+      "what": "press **Start CPR, 2 L and epinephrine**",
+      "hr": 53,
+      "art": "–/– (6)",
+      "spo2": null,
+      "etco2": 10,
+      "rr": 15
+    },
+    {
+      "wall": 153.5,
+      "clock": "12:46",
+      "simS": 766.1,
+      "speed": 1,
+      "state": "resuscitation",
+      "load1": 2.75,
+      "what": "after the 2-min fast-forward",
+      "hr": 133,
+      "art": "65/30 (43)",
+      "spo2": 99,
+      "etco2": 15,
+      "rr": 12
+    },
+    {
+      "wall": 167.4,
+      "clock": "13:41",
+      "simS": 821.5,
+      "speed": 4,
+      "state": "resuscitation",
+      "load1": 2.75,
+      "what": "systolic above 90",
+      "hr": 107,
+      "art": "99/49 (72)",
+      "spo2": 99,
+      "etco2": 17,
+      "rr": 12
+    },
+    {
+      "wall": 170.2,
+      "clock": "13:53",
+      "simS": 833,
+      "speed": 4,
+      "state": "rosc",
+      "load1": 2.75,
+      "what": "press **Pulse back: stop CPR**",
+      "hr": 110,
+      "art": "–/– (85)",
+      "spo2": 99,
+      "etco2": 19,
+      "rr": 12
+    },
+    {
+      "wall": 184.5,
+      "clock": "14:50",
+      "simS": 890.1,
+      "speed": 4,
+      "state": "rosc",
+      "load1": 2.82,
+      "what": "1 min after stopping CPR",
+      "hr": 75,
+      "art": "135/90 (105)",
+      "spo2": 99,
+      "etco2": 35,
+      "rr": 12
+    },
+    {
+      "wall": 188.3,
+      "clock": "15:05",
+      "simS": 905.2,
+      "speed": 4,
+      "state": "rosc",
+      "load1": 2.67,
+      "what": "monitor style changed: Saadat-style → Philips-style (Settings)",
+      "hr": 75,
+      "art": "135/90 (104)",
+      "spo2": 99,
+      "etco2": 37,
+      "rr": 13
+    }
+  ],
+  "presses": [
+    {
+      "label": "Start CPR, 2 L and epinephrine",
+      "clock": "10:42",
+      "simS": 642.2,
+      "wall": 140.4,
+      "before": "bleeding",
+      "after": "resuscitation",
+      "load1": 2.08,
+      "toast": ""
+    },
+    {
+      "label": "Pulse back: stop CPR",
+      "clock": "13:49",
+      "simS": 829.8,
+      "wall": 170.2,
+      "before": "resuscitation",
+      "after": "rosc",
+      "load1": 2.75,
+      "toast": "The scenario has ended: the debrief is ready (Debrief, in the session bar)"
+    }
+  ],
+  "spans": [
+    {
+      "min": 2,
+      "via": "button",
+      "clockBefore": "10:43",
+      "fromT": 643.1,
+      "endT": 763.1,
+      "wallS": 10.1,
+      "speedBefore": 1,
+      "speedAfter": 1,
+      "rateAfter3s": 1,
+      "banner": "Fast-forwarded 2 min, 10:43 → 12:43. During it: ART SYS TOO LOW 10:47, ART DIA TOO LOW 10:47, SPO2 LOW PERFUSION 10:58, HR TOO HIGH 12:30.",
+      "alarms": [
+        "10:47 ART SYS TOO LOW",
+        "10:47 ART DIA TOO LOW",
+        "10:58 SPO2 LOW PERFUSION",
+        "12:30 HR TOO HIGH (came and went)"
+      ],
+      "load1": 2.75
+    }
+  ],
+  "states": [
+    {
+      "t": 1.8,
+      "clock": "00:01",
+      "id": "bleeding"
+    },
+    {
+      "t": 642.2,
+      "clock": "10:42",
+      "id": "resuscitation"
+    },
+    {
+      "t": 830,
+      "clock": "13:50",
+      "id": "rosc"
+    }
+  ],
+  "alarms": [
+    "07:46 ART SYS TOO LOW",
+    "08:21 SPO2 LOW PERFUSION",
+    "08:35 ART MEAN TOO LOW",
+    "08:49 HR TOO HIGH",
+    "09:01 ART DIA TOO LOW",
+    "09:51 ETCO2 TOO LOW",
+    "10:05 IBP1 STATIC PRESSURE",
+    "10:30 HR TOO LOW",
+    "10:40 SPO2 NO PULSE",
+    "10:47 ART SYS TOO LOW",
+    "10:47 ART DIA TOO LOW",
+    "10:58 SPO2 LOW PERFUSION",
+    "12:30 HR TOO HIGH",
+    "12:53 HR TOO HIGH",
+    "13:44 ART SYS TOO HIGH",
+    "13:44 ART MEAN TOO HIGH",
+    "13:46 ART DIA TOO HIGH",
+    "13:49 IBP1 STATIC PRESSURE",
+    "15:12 **ABPd 91>90"
+  ],
+  "measures": {
+    "exploreAt8": {
+      "overview": [
+        "HRⓘ 140 bpm 60–100 +64",
+        "ART Sⓘ 74 mmHg 90–140 −43",
+        "ART Dⓘ 60 mmHg 60–90 −22",
+        "ART Mⓘ 65 mmHg 70–105 −29",
+        "EtCO₂ⓘ 25 mmHg 35–45 (PaCO2 − 2 to 5) −10",
+        "RRⓘ 13 /min 12–20 +1",
+        "PRⓘ 138 bpm = HR (pulse deficit in AF) +63",
+        "PIⓘ 0.3 % typical 1–10 (device range 0.02–20) −1.1",
+        "awRRⓘ 14.0 /min 12–20 +2.0"
+      ],
+      "haemodynamics": [
+        "COⓘ 2.53 L/min 4–8 −2.64",
+        "SVⓘ 18 mL 60–100 −53",
+        "LVEFⓘ 37 % 55–70 (≥ 50) −22",
+        "SVRⓘ 1951 dyn·s·cm⁻⁵ 800–1,200 (10–15 WU) +660",
+        "LVEDVⓘ 47 mL 65–150 −74",
+        "LVESVⓘ 29 mL 20–60 −20",
+        "LVEDPⓘ 1.1 mmHg 4–12 −6.0",
+        "LVSPⓘ 72 mmHg 90–140 (= SBP without AS) −40",
+        "RVSVⓘ 18 mL = SV −50",
+        "Pmsfⓘ 4.9 mmHg ≈ 7–20 (method-dependent) −7.1",
+        "CoPPⓘ 63 mmHg 50–80; CPR ≥ 15–20 for ROSC (Paradis) −14",
+        "Myocardial O2 supply/demandⓘ 1.45 ratio > 1 (EVR ≥ 0.7 in Buckberg's terms) −2.25",
+        "SVR (model)ⓘ 1.463 mmHg·s/mL ≈ 0.85–1.05 +0.495",
+        "Sympathetic toneⓘ 34.6 a.u. +32.4",
+        "Vagal toneⓘ 37.2 a.u. +33.8",
+        "Cvⓘ 108 mL; mL/mmHg Vu ≈ 70 % of blood volume; Cv 100–130 −8",
+        "Vuⓘ 1708 mL; mL/mmHg Vu ≈ 70 % of blood volume; Cv 100–130 −553",
+        "Skin vasomotor toneⓘ 1.71 × rest 1 +0.58"
+      ],
+      "blood": [
+        "Globulinsⓘ 41.6 g ≈ 65 at 70 kg (24 g/L) −23.0",
+        "HBF factorⓘ 0.600 × baseline 1 −0.289",
+        "O₂ debtⓘ 153 mL 0 +153",
+        "DO₂ⓘ 517 mL/min 950–1,150 (DO2I 500–600) −565",
+        "O₂ERⓘ 49.4 % 22–30 +25.8",
+        "SvO₂ⓘ 52.9 % 65–75 −26.3",
+        "Albⓘ 38.8 g/L 35–50 −1.2",
+        "COPⓘ 21.5 mmHg 22–28 −0.8",
+        "Lactateⓘ 1.72 mmol/L 0.5–2.0 +0.72",
+        "Hbⓘ 14.7 g/dL M 13.5–17.5; F 12–15.5 −0.3",
+        "PCO₂ⓘ 41.0 mmHg 35–45 +2.0",
+        "pHⓘ 7.38 7.35–7.45 (venous ≈ 0.03 lower) −0.03",
+        "PO₂ⓘ 300 mmHg 80–100 on air; venous 35–45 +44"
+      ],
+      "stamp": [
+        "Sim time 08:04. Changes are from the baseline at 01:04."
+      ]
+    },
+    "haemorrhage": {
+      "hrAbove100": "04:30",
+      "hrAbove120": "06:05",
+      "hrAbove140": "08:00",
+      "systolicBelow90": "06:56",
+      "staticPressure": "10:05",
+      "noPulseAlarm": "10:40",
+      "cprAt": "10:42",
+      "cprAfterNoPulseAlarmS": 2.2,
+      "systolicAbove90At": "13:41",
+      "systolicAbove90AfterCprS": 179.3,
+      "returnInsideTheSpan": false,
+      "stopCprAt": "13:49"
+    }
+  },
+  "debrief": {
+    "openedAt": "14:50",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Recognise PEA from hypovolaemiaThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Start high-quality CPR without delay (debrief: within 30 s of the pulse loss — draft, owner to confirm)CPR 13 s after the pulse loss (10:29 → 10:42; within 30 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Give volume and epinephrine; recognise the return of circulation on the arterial line and capnogram (debrief: the pulse back within 6 min of its loss — draft, owner to confirm)The return of circulation 3 min 10 s after the pulse loss (10:29 → 13:39; within 6 min 00 s asked)."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "3 mmHg at 10:42",
+      "Highest EtCO₂": "35 mmHg at 00:09",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Pulseless": "3 min 10 s in all; first lost at 10:29",
+      "Return of circulation": "3 min 10 s after the pulse loss (13:39)",
+      "Epinephrine, boluses in all": "1 mg (1 dose)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 2.8 mmol/L (1.0–2.8) · pH 7.30 (7.29–7.41) · Glucose 6.5 mmol/L (5.6–6.5) · Tcore 36.1 °C (36.1–36.8)"
+    },
+    "timelineRows": 43,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Class IV haemorrhage, PEA and resuscitation",
+      "00:00 Scenario Scenario state: Bleeding 2.5 L over 10 min",
+      "00:00 Scenario Tracheal tube in place",
+      "00:00 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "00:00 Scenario Blood loss 2500 mL over 10 min",
+      "00:01 Action Speed ×8",
+      "00:00 Patient Ventilated breaths began",
+      "00:04 Bookmark Bookmark: Bookmark 1 at 00:04",
+      "00:07 Action All alarms on",
+      "01:04 Action Simulation paused",
+      "01:04 Action Simulation resumed",
+      "07:46 Alarm ART S low",
+      "08:04 Action Simulation paused",
+      "08:04 Action Simulation resumed",
+      "08:08 Action Speed ×4",
+      "08:21 Alarm SpO₂: low perfusion",
+      "08:35 Alarm ART M low",
+      "08:49 Alarm HR high",
+      "09:01 Alarm ART D low",
+      "09:51 Alarm EtCO₂ low",
+      "10:04 Action Speed ×1",
+      "10:05 Alarm ART: no pulsatile pressure",
+      "10:29 Patient Pulse lost (the model)",
+      "10:30 Alarm HR low",
+      "10:40 Alarm SpO₂: no pulse detected",
+      "10:42 Scenario Scenario state: CPR, 2 L warmed fluid, epinephrine 1 mg",
+      "10:42 Scenario CPR started, 110 /min",
+      "10:42 Scenario Crystalloid 2000 mL over 3 min",
+      "10:42 Scenario Epinephrine 1 mg IV",
+      "10:43 Action Fast-forward 2 min",
+      "10:47 Alarm ART S low",
+      "10:47 Alarm ART D low",
+      "10:58 Alarm SpO₂: low perfusion",
+      "12:30 Alarm HR high",
+      "12:46 Action Speed ×4",
+      "12:53 Alarm HR high",
+      "13:39 Patient Circulation returned (the model)",
+      "13:44 Alarm ART S high",
+      "13:44 Alarm ART M high",
+      "13:46 Alarm ART D high",
+      "13:49 Alarm ART: no pulsatile pressure",
+      "13:49 Scenario Scenario state: Return of circulation",
+      "13:49 Scenario CPR stopped"
+    ],
+    "minuteRows": 15
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": true,
+    "marks": [
+      {
+        "label": "before the style change",
+        "atWallS": 185.9,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "label": "after Saadat-style → Philips-style",
+        "atWallS": 186.7,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "label": "30 s after the style change",
+        "atWallS": 216.8,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "167",
+          "phoneFirst": "169",
+          "instructorNow": "106",
+          "phoneNow": "115",
+          "atWallS": 100.3
+        },
+        "samples": 433,
+        "compared": 382,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 220,
+        "holdSamples": 0,
+        "status": {
+          "synced": 433
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "167",
+          "phoneFirst": "169",
+          "instructorNow": "106",
+          "phoneNow": "115",
+          "atWallS": 100.3
+        },
+        "samples": 433,
+        "compared": 382,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 221,
+        "holdSamples": 0,
+        "status": {
+          "synced": 433
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "167",
+          "phoneFirst": "169",
+          "instructorNow": "106",
+          "phoneNow": "115",
+          "atWallS": 100.3
+        },
+        "samples": 433,
+        "compared": 382,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 220,
+        "holdSamples": 0,
+        "status": {
+          "synced": 433
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}
