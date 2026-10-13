@@ -1,0 +1,34 @@
+{
+  "kit": "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/green",
+  "node": "v26.8.2",
+  "at": "2026-10-13T08:50:02.341Z",
+  "pass": true,
+  "results": [
+    {
+      "run": "relay.mjs alone (the bundle)",
+      "pass": true,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "host hello (127 bytes) answered: {\"relay\":\"peers\",\"hostOnline\":true,\"peers\":0}",
+        "controller hello answered (peers 1); the host was told and got the hello",
+        "host event (1176 bytes) forwarded to the controller byte for byte",
+        "/pme-relay.json still answers: {\"relay\":\"pme\",\"port\":53920,\"addresses\":[\"192.168.1.100\",\"172.21.0.1\"],\"serves\":true}",
+        "the relay is still running after the frames",
+        "stopped; port 53920 free"
+      ]
+    },
+    {
+      "run": "Start Classroom.command (PME_PORT=8690, stripped environment)",
+      "pass": true,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "host hello (127 bytes) answered: {\"relay\":\"peers\",\"hostOnline\":true,\"peers\":0}",
+        "controller hello answered (peers 1); the host was told and got the hello",
+        "host event (1176 bytes) forwarded to the controller byte for byte",
+        "/pme-relay.json still answers: {\"relay\":\"pme\",\"port\":8690,\"addresses\":[\"192.168.1.100\",\"172.21.0.1\"],\"serves\":true}",
+        "the relay is still running after the frames",
+        "stopped; port 8690 free"
+      ]
+    }
+  ]
+}

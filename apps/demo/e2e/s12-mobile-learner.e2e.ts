@@ -4,6 +4,7 @@
 // phone following through speed changes and a fast-forward, a pause, the instructor's style and its change (owner ruling
 // Q4), a phone that joins DURING a fast-forward, the Ventilator view (the phone holds), a relay that restarts (the phone
 // reconnects), a full session and a relay a phone cannot reach.
+import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -25,11 +26,49 @@ type W = {
   __pmeApp: { session: { code: string; followers: number; setSkin(skin: string, theme: string): Promise<void> }; link: { simT: number; send(c: unknown): Promise<{ accepted: boolean }> }; frames: number[] };
 };
 const ws = () => `ws://127.0.0.1:${relay!.port}/`;
+/**
+ * KR-A1: PME_KIT_RELAY=<kit>/server/relay.mjs runs these tests against a BUILT kit's relay (a child process, the same
+ * options as flags) instead of the source relay; a kit relay that exits before it is closed fails the test.
+ */
+async function startAnyRelay(o: RelayOptions): Promise<RelayHandle> {
+  const bin = process.env.PME_KIT_RELAY;
+  if (!bin) return startRelay(o);
+  const args = [bin, '--port', String(o.port ?? 0), '--host', o.host ?? '127.0.0.1', '--remote-roles', o.remoteRoles ?? 'all', '--max-peers', String(o.maxPeersPerRoom ?? 60)];
+  if (o.staticDir) args.push('--static', o.staticDir);
+  const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('WS_NO_')));
+  const proc = spawn(process.execPath, args, { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '';
+  let closing = false;
+  const exited = new Promise<number | null>((r) => proc.once('exit', (code) => r(code)));
+  const port = await new Promise<number>((ok, no) => {
+    const onData = (d: Buffer) => {
+      out += d;
+      const m = /ready on ws:\/\/[^:]+:(\d+)\//.exec(out);
+      if (m) ok(Number(m[1]));
+    };
+    proc.stdout.on('data', onData);
+    proc.stderr.on('data', onData);
+    void exited.then((code) => no(new Error(`kit relay exited before ready (${code}): ${out}`)));
+  });
+  void exited.then((code) => closing || console.log(`kit relay EXITED (${code}):\n${out}`));
+  return {
+    port,
+    close: async () => {
+      if (proc.exitCode !== null || proc.signalCode !== null) {
+        if (!closing) throw new Error(`the kit relay exited during the test (${proc.exitCode ?? proc.signalCode}): ${out.slice(-600)}`);
+        return;
+      }
+      closing = true;
+      proc.kill('SIGTERM');
+      await exited;
+    },
+  } as RelayHandle;
+}
 /** A relay as the classroom runs it (app folder, phones may only follow), on a random port or a given one. */
 async function classroom(o: RelayOptions = {}): Promise<void> {
   const dir = mkdtempSync(join(tmpdir(), 's12-'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the QR sheet reads `serves`; the pages come from Vite here
-  relay = await startRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', ...o });
+  relay = await startAnyRelay({ port: 0, host: '127.0.0.1', staticDir: dir, remoteRoles: 'viewer', ...o });
 }
 async function instructor(page: Page, scenario: string, site?: Record<string, unknown>): Promise<string> {
   await openApp(page, base, `?relay=${encodeURIComponent(ws())}&scenario=${scenario}`, { warmMs: 1500, ...(site ? { site } : {}) });
@@ -164,7 +203,7 @@ test('a relay restart, a full session and a relay the phone cannot reach', async
   // the network blinks: the relay goes away and comes back on the same address
   await relay!.close();
   await expect(status(f)).toHaveText(/Connection lost: reconnecting…|The instructor's monitor is not answering/, { timeout: 15_000 });
-  relay = await startRelay({ port, host: '127.0.0.1', remoteRoles: 'viewer' });
+  relay = await startAnyRelay({ port, host: '127.0.0.1', remoteRoles: 'viewer' });
   await expect(status(f)).toHaveText(`Following session ${code}`, { timeout: 30_000 });
   await same(f, page);
   // a phone on another network: it waits, then says what to check
