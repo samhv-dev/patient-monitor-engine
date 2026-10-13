@@ -30,6 +30,10 @@ jobs:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
       - run: pnpm build
       - run: pnpm check-notices
+      # KR-A1: the showcase kit's one-file classroom relay must survive real WebSocket frames on Node 22 (an HTTP-only
+      # kit check let every kit from 51a37063 to 56f3761f ship a relay that exited at the first client frame)
+      - name: kit classroom relay smoke test
+        run: node scripts/showcase/make-bundle.mjs "$RUNNER_TEMP/kit" > "$RUNNER_TEMP/kit-build.log" && node scripts/showcase/check-relay.mjs "$RUNNER_TEMP/kit"
 
   # fix-ci-webkit-3: the renderer IIFE is built once, here, and shared: the e2e jobs need only it (iife-smoke.html loads
   # it from file://; every other e2e page runs on a Vite dev server from source), so they start without waiting for the
