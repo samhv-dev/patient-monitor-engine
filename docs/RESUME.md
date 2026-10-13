@@ -1,7 +1,7 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-12 (kit round part A;
-main b8c9c04a).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-13 (kit round part A, part 2;
+main 62e521c3).*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -9,9 +9,9 @@ main b8c9c04a).*
 - Spec: `docs/DESIGN-BRIEF.md`. Roadmap: `docs/roadmap/` (v1.0, v1.x, v2.0). Per-stage task plans: `docs/plans/stage-*.md`. Gate evidence: `docs/gates/*.md`.
 - Each executing stage works in its OWN git worktree: `../scratch/wt-<name>/` on its own branch; the ticked plan is committed in that branch.
 - pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright's own Chromium and WebKit are installed.
-- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-b8c9c04a/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`).
+- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-62e521c3/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
 
-## State on 2026-10-12 (main b8c9c04a)
+## State on 2026-10-13 (main 62e521c3)
 
 **v1.0 feature work is merged.** Everything up to FU-11 and the five showcase-2 stages is on main:
 
@@ -23,17 +23,18 @@ main b8c9c04a).*
 | Stage 12 learners' phones over the classroom relay | #57 | merged; gate step 4 PENDING-OWNER (H17, H21) |
 | Stage 13 Debrief report (print to PDF) | #60 | merged; print check PENDING-OWNER |
 
-**Fixer round** (branches from main): FX-1 Ventilator view after restore / speed change on WebKit — **PR #58 open** (green; an
-independent review before merge). Merged: FX-2 follower exactness and no silent command hang (#61), FX-4 alarm controls
-follow the skin (#59), FX-7 the scenario library stays open (#56). Closed as test fixes: FX-3, FX-5, FX-6.
+**Fixer round** (branches from main), all merged: FX-1 the Ventilator view's cockpit link survives slow WebKit (direct
+frame port; #58), FX-2 follower exactness and no silent command hang (#61), FX-4 alarm controls follow the skin (#59),
+FX-7 the scenario library stays open (#56). Closed as test fixes: FX-3, FX-5, FX-6. KR-A1 (the kit's bundled classroom
+relay died at the first WebSocket frame) fixed by #64; `scripts/showcase/check-relay.mjs` is the kit smoke test.
 
 **CI reshaped** (#55, `docs/gates/ci-webkit-3.md`): one `renderer` job builds the IIFE once; e2e is a per-browser matrix
-(`e2e (chromium)`, `e2e (webkit)`) beside the unit and the nine `test-slow` groups; JSON reports are kept as artefacts;
+(`e2e (chromium)`, `e2e (webkit)`) beside the unit and the eight `test-slow` groups; JSON reports are kept as artefacts;
 retry-only passes are printed (not failing). CI-only WebKit skips name their finding. Known-flaky candidates for
 Stage 14's list are in the rulings log.
 
-**Open PRs:** #58 FX-1; #53 showcase-2 run sheet + presenter guide (held for the owner; part B of the kit round revises
-it); the kit round part A PR (measurements in `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`).
+**On main since 2026-10-12:** the showcase-2 run sheet and presenter guide (#53; part B of the kit round revises them).
+**Open PR:** #63 kit round A part 2 (measurements in `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`).
 
 **Pending with the owner (by id, `../research/31-owner-decisions-2026-10-12.md`):**
 - Decisions: **E17** the run sheet vs the Debrief's "not met" objectives; **E18** publish the target audit in the repo;
@@ -48,8 +49,8 @@ it); the kit round part A PR (measurements in `docs/showcase/SHOWCASE-2-MEASUREM
 reads 0.0.0 until then). Showcase 2 on **2026-10-22** (slack to the 25th). After the rc: Stage 14 (clean-up; plan
 REVIEWED-FIXED), the calibration pass (bands first, `../research/30-parts/`), v1.x maintenance; v2.0 in specification.
 
-**Next actions:** FX-1 review → merge on a green main; kit round part B (run sheet revision) once E17–E20 are answered
-and FX-1 is merged; the owner's hand checks before the freeze.
+**Next actions:** kit round part B (run sheet revision from SHOWCASE-2-MEASUREMENTS.md) once E17–E20 are answered; the
+owner's hand checks before the freeze.
 
 ## After a usage-cap kill
 First try `SendMessage` to each stopped agent's id ("the cap has reset; continue exactly where you stopped; confirm the worktree state first") — the harness resumes it with its context intact (worked 2026-09-29 01:25). Only if that fails, relaunch a fresh agent from the pushed state with the brief below.
