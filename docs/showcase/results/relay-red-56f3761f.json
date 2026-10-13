@@ -1,0 +1,62 @@
+{
+  "kit": "/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red",
+  "node": "v26.8.2",
+  "at": "2026-10-13T08:49:10.892Z",
+  "pass": false,
+  "results": [
+    {
+      "run": "relay.mjs alone (the bundle)",
+      "pass": false,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "stopped; port 53908 free"
+      ],
+      "error": "socket closed (1006 )",
+      "output": [
+        "                          ^",
+        "",
+        "TypeError: bufferUtil$1.unmask is not a function",
+        "    at bufferUtil.exports.unmask (file:///Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red/server/relay.mjs:208:27)",
+        "    at Receiver.getData (file:///Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red/server/relay.mjs:1265:11)",
+        "    at Receiver.startLoop (file:///Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red/server/relay.mjs:1013:18)",
+        "    at Receiver._write (file:///Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red/server/relay.mjs:951:12)",
+        "    at writeOrBuffer (node:internal/streams/writable:574:12)",
+        "    at _write (node:internal/streams/writable:503:10)",
+        "    at Writable.write (node:internal/streams/writable:512:10)",
+        "    at Socket.socketOnData (file:///Users/samhv/Desktop/Claude/projects/patient-monitor-engine/scratch/kr-a1-kits/red/server/relay.mjs:3228:37)",
+        "    at Socket.emit (node:events:514:20)",
+        "    at addChunk (node:internal/streams/readable:575:12)",
+        "",
+        "Node.js v26.8.2",
+        ""
+      ]
+    },
+    {
+      "run": "Start Classroom.command (PME_PORT=8690, stripped environment)",
+      "pass": false,
+      "steps": [
+        "64-byte binary frame sent (the relay drops binary frames)",
+        "stopped; port 8690 free"
+      ],
+      "error": "socket closed (1006 )",
+      "output": [
+        "  \u001b[1m\u001b[0m",
+        "  \u001b[1mThe simulator has opened in your web browser.\u001b[0m",
+        "  \u001b[1m\u001b[0m",
+        "  \u001b[1mLEAVE THIS WINDOW OPEN while you teach.\u001b[0m",
+        "  \u001b[1mTo stop: close this window (click \"Terminate\" if asked).\u001b[0m",
+        "  ======================================================================",
+        "",
+        "  If macOS asks whether \"node\" may accept incoming network connections: click ALLOW (phones need it).",
+        "",
+        "  On this computer:  127.0.0.1:8690/?relay",
+        "  Phones join with the QR code: Monitor view, \"Phones\" (or the \"Phones\" button at the top right).",
+        "  learners' phones reach it at: http://192.168.1.100:8690/",
+        "  learners' phones reach it at: http://172.21.0.1:8690/",
+        "",
+        "ADDRESS: http://127.0.0.1:8690/?relay#/",
+        ""
+      ]
+    }
+  ]
+}

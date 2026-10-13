@@ -116,6 +116,8 @@ Plan: `docs/plans/stage-12-mobile-learner.md`. Executor: one session (Claude Opu
   Measured on the b8c9c04a kit: the launcher prints `ADDRESS: http://127.0.0.1:<port>/?relay#/` with the first free
   port from 8650 (`START_PORT` 8760 under the kit round's own override).)*
 - `/pme-relay.json` answered `{"relay":"pme","port":8750,"addresses":["192.168.1.100","172.21.0.1"],"serves":true}`, and `/?join=` answered 200.
+  *(KR-A1, 2026-10-13: HTTP only. This kit's relay exited at the first client WebSocket frame of 32 bytes or more; the
+  kit check now also runs `scripts/showcase/check-relay.mjs`, which sends real frames, see `docs/showcase/KIT-GATE.md`.)*
 - After the kill, nothing listened on 8750.
 - The kit contains `server/relay.mjs` (139 678 bytes), `relay.mjs.LICENSE-ws.txt`, `NOTICES.md`, and `LICENSES/qrcodegen-MIT.txt`.
 - A stand-in Node v20.11.1, and no Node at all, each give the plan's two messages, and nothing starts.
