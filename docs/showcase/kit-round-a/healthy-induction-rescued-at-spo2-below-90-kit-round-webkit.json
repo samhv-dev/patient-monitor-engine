@@ -1,0 +1,597 @@
+{
+  "case": "Healthy induction, rescued at SpO2 below 90 (kit round)",
+  "browser": "webkit",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T09:23:03.735Z",
+  "loadAvg": {
+    "start": 2.37,
+    "end": 2.25,
+    "min": 1.86,
+    "max": 2.44
+  },
+  "setup": {
+    "sessionCode": "TRFAVS",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.7,
+      "speed": 8,
+      "state": "awake",
+      "load1": 2.26,
+      "what": "Load \"Healthy induction\" at ×8, Bookmark",
+      "hr": 71,
+      "art": "123/82 (95)",
+      "spo2": 96,
+      "etco2": 37,
+      "rr": 14
+    },
+    {
+      "wall": 24.1,
+      "clock": "03:09",
+      "simS": 189.4,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.11,
+      "what": "press **Induce now**",
+      "hr": 71,
+      "art": "123/81 (95)",
+      "spo2": 99,
+      "etco2": 39,
+      "rr": 14
+    },
+    {
+      "wall": 36.8,
+      "clock": "04:00",
+      "simS": 240.4,
+      "speed": 4,
+      "state": "induced",
+      "load1": 1.86,
+      "what": "CO2 apnoea alarm (nobody secures the airway)",
+      "hr": 78,
+      "art": "101/67 (77)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 0,
+      "alarm": "CO2 APNEA"
+    },
+    {
+      "wall": 59,
+      "clock": "09:49",
+      "simS": 589.2,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.11,
+      "what": "after the 5-min fast-forward",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 59,
+      "clock": "09:49",
+      "simS": 589.2,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.11,
+      "what": "9.5 min",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 62.9,
+      "clock": "10:04",
+      "simS": 604.6,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.26,
+      "what": "10 min",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 70.5,
+      "clock": "10:35",
+      "simS": 635.1,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.16,
+      "what": "10.5 min",
+      "hr": 83,
+      "art": "109/75 (86)",
+      "spo2": 98,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 77.9,
+      "clock": "11:04",
+      "simS": 664.7,
+      "speed": 4,
+      "state": "induced",
+      "load1": 2.14,
+      "what": "11 min",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 96,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 82.7,
+      "clock": "11:24",
+      "simS": 684.1,
+      "speed": 4,
+      "state": "desaturating",
+      "load1": 2.13,
+      "what": "state \"Airway not secured: SpO₂ below 90 %\"",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 94,
+      "etco2": 0,
+      "rr": 0
+    },
+    {
+      "wall": 85.6,
+      "clock": "11:35",
+      "simS": 695.5,
+      "speed": 4,
+      "state": "rescuedBvm",
+      "load1": 2.13,
+      "what": "press **Bag-mask ventilate, FiO₂ 1.0**",
+      "hr": 84,
+      "art": "109/75 (86)",
+      "spo2": 92,
+      "etco2": 0,
+      "rr": 1
+    },
+    {
+      "wall": 95.7,
+      "clock": "12:15",
+      "simS": 735.7,
+      "speed": 4,
+      "state": "rescuedEtt",
+      "load1": 2.44,
+      "what": "press **Intubate and ventilate, FiO₂ 1.0**",
+      "hr": 81,
+      "art": "106/71 (82)",
+      "spo2": 99,
+      "etco2": 55,
+      "rr": 12
+    },
+    {
+      "wall": 137.9,
+      "clock": "15:04",
+      "simS": 904.8,
+      "speed": 4,
+      "state": "rescuedEtt",
+      "load1": 2.35,
+      "what": "end (15:00)",
+      "hr": 79,
+      "art": "104/71 (81)",
+      "spo2": 99,
+      "etco2": 48,
+      "rr": 12
+    },
+    {
+      "wall": 141.7,
+      "clock": "15:19",
+      "simS": 919.8,
+      "speed": 4,
+      "state": "rescuedEtt",
+      "load1": 2.35,
+      "what": "monitor style changed: Saadat-style → Philips-style (Settings)",
+      "hr": 79,
+      "art": "104/72 (82)",
+      "spo2": 99,
+      "etco2": 48,
+      "rr": 12
+    }
+  ],
+  "presses": [
+    {
+      "label": "Induce now",
+      "clock": "03:06",
+      "simS": 186.2,
+      "wall": 24.1,
+      "before": "awake",
+      "after": "induced",
+      "load1": 2.11,
+      "toast": "Speed ×4"
+    },
+    {
+      "label": "Bag-mask ventilate, FiO₂ 1.0",
+      "clock": "11:32",
+      "simS": 692.2,
+      "wall": 85.6,
+      "before": "desaturating",
+      "after": "rescuedBvm",
+      "load1": 2.13,
+      "toast": ""
+    },
+    {
+      "label": "Intubate and ventilate, FiO₂ 1.0",
+      "clock": "12:12",
+      "simS": 732.4,
+      "wall": 95.6,
+      "before": "rescuedBvm",
+      "after": "rescuedEtt",
+      "load1": 2.44,
+      "toast": "The scenario has ended: the debrief is ready (Debrief, in the session bar)"
+    }
+  ],
+  "spans": [
+    {
+      "min": 5,
+      "via": "button",
+      "clockBefore": "04:34",
+      "fromT": 275.1,
+      "endT": 575.1,
+      "wallS": 10.6,
+      "speedBefore": 4,
+      "speedAfter": 4,
+      "rateAfter3s": 4,
+      "banner": "Fast-forwarded 5 min, 04:35 → 09:35. During it: no alarms.",
+      "alarms": [],
+      "load1": 2.11
+    }
+  ],
+  "states": [
+    {
+      "t": 1.8,
+      "clock": "00:01",
+      "id": "awake"
+    },
+    {
+      "t": 186.4,
+      "clock": "03:06",
+      "id": "induced"
+    },
+    {
+      "t": 683.2,
+      "clock": "11:23",
+      "id": "desaturating"
+    },
+    {
+      "t": 692.3,
+      "clock": "11:32",
+      "id": "rescuedBvm"
+    },
+    {
+      "t": 732.6,
+      "clock": "12:12",
+      "id": "rescuedEtt"
+    }
+  ],
+  "alarms": [
+    "03:54 ETCO2 TOO LOW",
+    "03:59 RR TOO LOW",
+    "04:00 CO2 APNEA",
+    "11:37 RR TOO LOW",
+    "11:37 AWRR TOO LOW",
+    "11:38 ETCO2 TOO HIGH",
+    "11:42 ETCO2 TOO HIGH",
+    "11:45 %SPO2 LOW",
+    "12:19 RR TOO LOW"
+  ],
+  "measures": {
+    "rescue": {
+      "inducedAt": "03:06",
+      "apnoeaAfterInductionS": 53.9,
+      "desaturatingAt": "11:24",
+      "desatAfterInductionMin": 8.3,
+      "bvmAt": "11:32",
+      "bvmAfterDesatS": 8.2,
+      "spo2LowestAfterBvm": 87,
+      "spo2NadirAfterBvmS": 18.8,
+      "spo2Back90AfterNadirFromBvmS": 24.8,
+      "spo2Back95FromBvmS": 29.8,
+      "firstSampleAtOrAbove90FromBvmS": 0.8,
+      "intubatedAt": "12:12",
+      "etco2Above25AfterTubeS": 3.3,
+      "curve": [
+        {
+          "afterBvmS": 5,
+          "spo2": 91,
+          "etco2": 58,
+          "hr": 86
+        },
+        {
+          "afterBvmS": 10,
+          "spo2": 90,
+          "etco2": 65,
+          "hr": 89
+        },
+        {
+          "afterBvmS": 15,
+          "spo2": 88,
+          "etco2": 65,
+          "hr": 86
+        },
+        {
+          "afterBvmS": 20,
+          "spo2": 87,
+          "etco2": 61,
+          "hr": 85
+        },
+        {
+          "afterBvmS": 25,
+          "spo2": 90,
+          "etco2": 59,
+          "hr": 84
+        },
+        {
+          "afterBvmS": 30,
+          "spo2": 96,
+          "etco2": 57,
+          "hr": 84
+        },
+        {
+          "afterBvmS": 35,
+          "spo2": 98,
+          "etco2": 56,
+          "hr": 83
+        },
+        {
+          "afterBvmS": 40,
+          "spo2": 99,
+          "etco2": 55,
+          "hr": 84
+        },
+        {
+          "afterBvmS": 45,
+          "spo2": 99,
+          "etco2": 55,
+          "hr": 82
+        },
+        {
+          "afterBvmS": 60,
+          "spo2": 99,
+          "etco2": 53,
+          "hr": 84
+        },
+        {
+          "afterBvmS": 75,
+          "spo2": 99,
+          "etco2": 52,
+          "hr": 83
+        },
+        {
+          "afterBvmS": 90,
+          "spo2": 99,
+          "etco2": 51,
+          "hr": 84
+        },
+        {
+          "afterBvmS": 105,
+          "spo2": 99,
+          "etco2": 51,
+          "hr": 82
+        },
+        {
+          "afterBvmS": 120,
+          "spo2": 99,
+          "etco2": 50,
+          "hr": 82
+        },
+        {
+          "afterBvmS": 135,
+          "spo2": 99,
+          "etco2": 50,
+          "hr": 81
+        },
+        {
+          "afterBvmS": 150,
+          "spo2": 99,
+          "etco2": 50,
+          "hr": 82
+        },
+        {
+          "afterBvmS": 165,
+          "spo2": 99,
+          "etco2": 49,
+          "hr": 81
+        },
+        {
+          "afterBvmS": 180,
+          "spo2": 99,
+          "etco2": 49,
+          "hr": 81
+        }
+      ]
+    }
+  },
+  "debrief": {
+    "openedAt": "15:04",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Induce after at least 180 s of preoxygenationThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "not met",
+        "text": "✗ Not met Intubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)Ventilated breaths 7 min 32 s after the alarm Apnoea (no CO₂ breaths) (04:00 → 11:32; within 1 min 30 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Confirm the tube: EtCO₂ above 25 mmHg within 30 s of intubationEtCO₂ above 25 mmHg 1 s after the state \"Intubated and ventilated\" or the state \"Rescued: intubated, FiO₂ 1.0\" (12:12 → 12:13; within 30 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Airway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)Ventilated breaths 9 s after the state \"Airway not secured: SpO₂ below 90 %\" (11:23 → 11:32; within 1 min 00 s asked)."
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Ventilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)The state \"SpO₂ below 60 %: hypoxic bradycardia\" did not happen."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "87 % at 11:51",
+      "Lowest ART M / NIBP M": "73 mmHg at 04:25",
+      "Highest EtCO₂": "65 mmHg at 11:41",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Apnoea alarm to ventilated breaths": "7 min 32 s (04:00 → 11:32)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.3 mmol/L (4.2–4.3) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.30 (7.18–7.41) · Glucose 5.8 mmol/L (5.6–5.8) · Tcore 36.3 °C (36.3–36.8)"
+    },
+    "timelineRows": 28,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Healthy induction",
+      "00:00 Scenario Scenario state: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction",
+      "00:00 Scenario Preoxygenation, FiO₂ 100 %",
+      "00:01 Action Speed ×8",
+      "00:04 Bookmark Bookmark: Bookmark 1 at 00:04",
+      "00:07 Action All alarms on",
+      "03:04 Action Speed ×4",
+      "03:06 Scenario Scenario state: Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured",
+      "03:06 Scenario Preoxygenation, FiO₂ 100 %",
+      "03:06 Scenario Propofol 2 mg/kg IV",
+      "03:06 Scenario Rocuronium 0.6 mg/kg IV",
+      "03:54 Alarm EtCO₂ low",
+      "03:59 Alarm RR low",
+      "04:00 Alarm Apnoea (no CO₂ breaths)",
+      "04:35 Action Fast-forward 5 min",
+      "11:23 Scenario Scenario state: Airway not secured: SpO₂ below 90 %",
+      "11:32 Scenario Scenario state: Bag-mask ventilation, FiO₂ 1.0",
+      "11:32 Scenario Bag-mask: RR 12 /min, VT 500 mL, PEEP undefined cmH₂O, FiO₂ 100 %",
+      "11:32 Patient Bag-mask breaths began",
+      "11:37 Alarm RR low",
+      "11:37 Alarm awRR low",
+      "11:38 Alarm EtCO₂ high",
+      "11:42 Alarm EtCO₂ high",
+      "11:45 Alarm SpO₂ low",
+      "12:12 Scenario Scenario state: Rescued: intubated, FiO₂ 1.0",
+      "12:12 Scenario Tracheal tube in place",
+      "12:12 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 100 %",
+      "12:19 Alarm RR low"
+    ],
+    "minuteRows": 16
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [
+      {
+        "label": "before the style change",
+        "atWallS": 139.3,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "label": "after Saadat-style → Philips-style",
+        "atWallS": 140.1,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "label": "30 s after the style change",
+        "atWallS": 170.2,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "CO2",
+          "forS": 0.5,
+          "instructorFirst": "64",
+          "phoneFirst": "58",
+          "instructorNow": "29",
+          "phoneNow": "64",
+          "atWallS": 85.2
+        },
+        "samples": 340,
+        "compared": 306,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 111,
+        "holdSamples": 0,
+        "status": {
+          "synced": 340
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "CO2",
+          "forS": 0.5,
+          "instructorFirst": "64",
+          "phoneFirst": "58",
+          "instructorNow": "29",
+          "phoneNow": "64",
+          "atWallS": 85.2
+        },
+        "samples": 340,
+        "compared": 306,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 112,
+        "holdSamples": 0,
+        "status": {
+          "synced": 340
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "CO2",
+          "forS": 0.5,
+          "instructorFirst": "64",
+          "phoneFirst": "58",
+          "instructorNow": "29",
+          "phoneNow": "64",
+          "atWallS": 85.2
+        },
+        "samples": 340,
+        "compared": 306,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 111,
+        "holdSamples": 0,
+        "status": {
+          "synced": 340
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}

@@ -8,12 +8,12 @@ import { join, resolve } from 'node:path';
 export default async function globalSetup(): Promise<() => Promise<void>> {
   const kit = resolve(process.env.SHOWCASE_KIT ?? '');
   if (!existsSync(join(kit, 'app/index.html'))) throw new Error(`no kit at ${kit} (set SHOWCASE_KIT)`);
-  // FINDING KR-A1 (kit round A): the kit's bundled server/relay.mjs dies on the first client WebSocket frame of 32 bytes
-  // or more ("TypeError: bufferUtil$1.unmask is not a function": Vite bundled ws's optional `bufferutil` as an empty stub,
-  // so ws's try/require never falls back). WS_NO_BUFFER_UTIL=1 makes ws use its own JavaScript unmasking, which is what the
-  // source relay (packages/controller/relay, no bufferutil installed) runs. The measurements need it; the kit as built
-  // does not set it. KITROUND_WS_WORKAROUND=0 runs the kit exactly as built (the relay then dies at the instructor's hello).
-  const ws = process.env.KITROUND_WS_WORKAROUND === '0' ? {} : { WS_NO_BUFFER_UTIL: '1' };
+  // FINDING KR-A1 (kit round A): kits built before main 62e521c3 (PR #64) carry a server/relay.mjs that dies on the first
+  // client WebSocket frame of 32 bytes or more (Vite bundled ws's optional `bufferutil` as an empty stub). The 56f3761f
+  // measurements ran with WS_NO_BUFFER_UTIL=1 (ws's own JavaScript unmasking, the path the fixed kits take by
+  // construction; the relay code is otherwise unchanged). KITROUND_WS_WORKAROUND=1 sets it again for such an old kit;
+  // a kit from 62e521c3 or later needs nothing.
+  const ws = process.env.KITROUND_WS_WORKAROUND === '1' ? { WS_NO_BUFFER_UTIL: '1' } : {};
   const env = { PATH: '/usr/bin:/bin:/opt/homebrew/bin:/usr/local/bin', TMPDIR: process.env.TMPDIR ?? '/tmp', PME_NO_OPEN: '1', PME_PORT: process.env.KITROUND_PORT ?? '8760', ...ws };
   const proc = spawn('/bin/bash', [join(kit, 'Start Classroom.command')], { env, stdio: ['ignore', 'pipe', 'pipe'] });
   const out: string[] = [];

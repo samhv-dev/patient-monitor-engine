@@ -1,0 +1,421 @@
+{
+  "case": "Anaphylaxis, epinephrine at 2-03 (kit round)",
+  "browser": "webkit",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T09:27:58.817Z",
+  "loadAvg": {
+    "start": 2.26,
+    "end": 3.04,
+    "min": 1.71,
+    "max": 2.37
+  },
+  "setup": {
+    "sessionCode": "BCPRSG",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:07",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:07",
+      "simS": 7.6,
+      "speed": 4,
+      "state": "stable",
+      "load1": 2.16,
+      "what": "Load \"Anaphylaxis under anaesthesia\" at ×4, Bookmark",
+      "hr": 70,
+      "art": "120/81 (96)",
+      "spo2": null,
+      "etco2": null,
+      "rr": 24
+    },
+    {
+      "wall": 7.9,
+      "clock": "00:32",
+      "simS": 33,
+      "speed": 4,
+      "state": "stable",
+      "load1": 2.05,
+      "what": "00:30 (30-s row)",
+      "hr": 73,
+      "art": "119/83 (96)",
+      "spo2": 97,
+      "etco2": 34,
+      "rr": 13
+    },
+    {
+      "wall": 15.5,
+      "clock": "01:03",
+      "simS": 63.4,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2.37,
+      "what": "01:00 (30-s row)",
+      "hr": 74,
+      "art": "119/83 (96)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 22.9,
+      "clock": "01:32",
+      "simS": 92.8,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2,
+      "what": "01:30 (30-s row)",
+      "hr": 82,
+      "art": "114/80 (92)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 30.5,
+      "clock": "02:03",
+      "simS": 123.2,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2.24,
+      "what": "02:00 (30-s row)",
+      "hr": 99,
+      "art": "109/79 (89)",
+      "spo2": 99,
+      "etco2": 32,
+      "rr": 12
+    },
+    {
+      "wall": 38.1,
+      "clock": "02:33",
+      "simS": 153.6,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2.13,
+      "what": "02:30 (30-s row)",
+      "hr": 115,
+      "art": "104/77 (85)",
+      "spo2": 99,
+      "etco2": 32,
+      "rr": 12
+    },
+    {
+      "wall": 45.4,
+      "clock": "03:02",
+      "simS": 182.9,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2.04,
+      "what": "03:00 (30-s row)",
+      "hr": 137,
+      "art": "96/71 (78)",
+      "spo2": 99,
+      "etco2": 31,
+      "rr": 12
+    },
+    {
+      "wall": 46.5,
+      "clock": "03:07",
+      "simS": 187.3,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 2.04,
+      "what": "press **Give epinephrine 100 µg**",
+      "hr": 143,
+      "art": "95/70 (77)",
+      "spo2": 99,
+      "etco2": 31,
+      "rr": 12
+    },
+    {
+      "wall": 50.7,
+      "clock": "03:24",
+      "simS": 204.3,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 2.2,
+      "what": "Drugs & fluids → Crystalloid 500 mL over 10 min → Give",
+      "hr": 162,
+      "art": "121/88 (98)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 53,
+      "clock": "03:33",
+      "simS": 213.5,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 2.1,
+      "what": "03:30 (30-s row)",
+      "hr": 140,
+      "art": "111/82 (91)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 60.4,
+      "clock": "04:02",
+      "simS": 242.9,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 1.93,
+      "what": "04:00 (30-s row)",
+      "hr": 133,
+      "art": "119/88 (97)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 68,
+      "clock": "04:33",
+      "simS": 273.3,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 1.71,
+      "what": "04:30 (30-s row)",
+      "hr": 123,
+      "art": "119/89 (98)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 75.6,
+      "clock": "05:03",
+      "simS": 303.7,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 1.89,
+      "what": "05:00 (30-s row)",
+      "hr": 115,
+      "art": "120/89 (98)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    },
+    {
+      "wall": 79.4,
+      "clock": "05:18",
+      "simS": 318.8,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 2.14,
+      "what": "monitor style changed: Saadat-style → Philips-style (Settings)",
+      "hr": 113,
+      "art": "120/89 (98)",
+      "spo2": 99,
+      "etco2": 33,
+      "rr": 12
+    }
+  ],
+  "presses": [
+    {
+      "label": "Give epinephrine 100 µg",
+      "clock": "03:04",
+      "simS": 184.1,
+      "wall": 46.5,
+      "before": "anaphylaxis",
+      "after": "treatedByButton",
+      "load1": 2.04,
+      "toast": "The scenario has ended: the debrief is ready (Debrief, in the session bar)"
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 1.1,
+      "clock": "00:01",
+      "id": "stable"
+    },
+    {
+      "t": 60.2,
+      "clock": "01:00",
+      "id": "anaphylaxis"
+    },
+    {
+      "t": 184.2,
+      "clock": "03:04",
+      "id": "treatedByButton"
+    }
+  ],
+  "alarms": [
+    "03:10 HR TOO HIGH"
+  ],
+  "measures": {
+    "anaphylaxis": {
+      "reactionAt": "01:00",
+      "epinephrineAt": "03:04",
+      "epinephrineAfterReactionS": 123.9,
+      "systolicAbove110AfterEpiS": 9.9,
+      "hrPeakAfterEpi": 171,
+      "systolicPeakAfterEpi": 121.4,
+      "lowestSystolicBeforeEpi": 94.7,
+      "fluidGivenAt": "03:20"
+    }
+  },
+  "debrief": {
+    "openedAt": "05:03",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Recognise anaphylaxis: hypotension, tachycardia, bronchospasmThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "not met",
+        "text": "✗ Not met Give epinephrine 50–100 µg IV early and repeat as needed (debrief: within 2 min of the reaction — draft, owner to confirm)Epinephrine 2 min 04 s after the state \"Anaphylaxis\" (01:00 → 03:04; within 2 min 00 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Give fluid for the capillary leakFluid at 03:20"
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "76 mmHg at 03:05",
+      "Highest EtCO₂": "34 mmHg at 00:09",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Epinephrine, boluses in all": "100 µg (1 dose)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.1 mmol/L (4.1–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.44 (7.41–7.44) · Glucose 5.9 mmol/L (5.6–5.9) · Tcore 36.8 °C (36.8–36.8)"
+    },
+    "timelineRows": 14,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Anaphylaxis under anaesthesia",
+      "00:00 Scenario Scenario state: Ventilated, stable",
+      "00:00 Scenario Tracheal tube in place",
+      "00:00 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "00:01 Action Speed ×4",
+      "00:00 Patient Ventilated breaths began",
+      "00:02 Bookmark Bookmark: Bookmark 1 at 00:02",
+      "00:04 Action All alarms on",
+      "01:00 Scenario Scenario state: Anaphylaxis",
+      "01:00 Scenario Anaphylaxis: severe",
+      "03:04 Scenario Scenario state: Epinephrine given",
+      "03:04 Scenario Epinephrine 100 µg IV",
+      "03:10 Alarm HR high",
+      "03:20 Action Crystalloid 500 mL over 10 min"
+    ],
+    "minuteRows": 6
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": true,
+    "marks": [
+      {
+        "label": "before the style change",
+        "atWallS": 77,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "label": "after Saadat-style → Philips-style",
+        "atWallS": 77.8,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "label": "30 s after the style change",
+        "atWallS": 107.8,
+        "maxMismatchSoFar": [
+          3,
+          3,
+          3
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "IBP1",
+          "forS": 3,
+          "instructorFirst": "93/71",
+          "phoneFirst": "95/70",
+          "instructorNow": "119/88",
+          "phoneNow": "116/88",
+          "atWallS": 48.1
+        },
+        "samples": 216,
+        "compared": 211,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 84,
+        "holdSamples": 0,
+        "status": {
+          "synced": 216
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "IBP1",
+          "forS": 3,
+          "instructorFirst": "93/71",
+          "phoneFirst": "95/70",
+          "instructorNow": "119/88",
+          "phoneNow": "116/88",
+          "atWallS": 48.1
+        },
+        "samples": 216,
+        "compared": 211,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 84,
+        "holdSamples": 0,
+        "status": {
+          "synced": 216
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "IBP1",
+          "forS": 3,
+          "instructorFirst": "93/71",
+          "phoneFirst": "95/70",
+          "instructorNow": "119/88",
+          "phoneNow": "116/88",
+          "atWallS": 48.1
+        },
+        "samples": 216,
+        "compared": 211,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 84,
+        "holdSamples": 0,
+        "status": {
+          "synced": 216
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load",
+    "fluid toast: Crystalloid 500 mL over 10 min"
+  ],
+  "errors": []
+}

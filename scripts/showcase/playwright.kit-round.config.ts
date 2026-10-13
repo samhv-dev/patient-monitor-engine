@@ -2,7 +2,8 @@
 // serves the app; the phones follow over it), one case at a time, both engines. Documentation-grade evidence, not a CI
 // test and not part of `pnpm test:e2e`. Results: docs/showcase/kit-round-a/ (JSON + one Markdown table per case).
 //   SHOWCASE_KIT=/path/to/pme-showcase-kit-<sha> npx playwright test -c scripts/showcase/playwright.kit-round.config.ts [-g …] [--project …]
-//   knobs: KITROUND_PHONES=3 (emulated phones following), KITROUND_REACT_S=2 (the presenter's reaction, wall seconds)
+//   knobs: KITROUND_PHONES=3 (emulated phones following), KITROUND_REACT_S=2 (the presenter's reaction, wall seconds),
+//          KITROUND_TAG=-x (file-name suffix), KITROUND_WS_WORKAROUND=1 (only for a kit built before main 62e521c3, KR-A1)
 import { defineConfig, devices } from '@playwright/test';
 
 const viewport = { width: 1440, height: 900 };

@@ -1,0 +1,298 @@
+{
+  "case": "Session mechanics (kit round)",
+  "browser": "webkit",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T09:50:44.565Z",
+  "loadAvg": {
+    "start": 2.57,
+    "end": 2.25,
+    "min": 2.55,
+    "max": 2.93
+  },
+  "setup": {
+    "sessionCode": "4ZUNB5",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:07",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "Limit alarms off"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:07",
+      "simS": 7.6,
+      "speed": 4,
+      "state": "stable",
+      "load1": 2.55,
+      "what": "Load \"Anaphylaxis under anaesthesia\" at ×4, Bookmark",
+      "hr": 70,
+      "art": "120/81 (96)",
+      "spo2": null,
+      "etco2": null,
+      "rr": 24
+    },
+    {
+      "wall": 54.3,
+      "clock": "03:38",
+      "simS": 218.5,
+      "speed": 4,
+      "state": "anaphylaxis",
+      "load1": 2.93,
+      "what": "an alarm is active",
+      "hr": 152,
+      "art": "79/56 (63)",
+      "spo2": 99,
+      "etco2": 30,
+      "rr": 12,
+      "alarmButton": "No alarms"
+    }
+  ],
+  "presses": [],
+  "spans": [],
+  "states": [],
+  "alarms": [],
+  "measures": {
+    "pauseButton": {
+      "disabled": true,
+      "why": "This monitor has no alarm pause. Silence mutes for 120 s."
+    },
+    "silenceEndedAfterS": 4.2,
+    "alarmsRaisedDuringSilence": [
+      "03:44 ART SYS TOO LOW"
+    ],
+    "silenceSaadat": [
+      {
+        "label": "just after Silence",
+        "clock": "03:43",
+        "sinceSilenceS": 3.2,
+        "panelStatus": "Sound silenced, 01:57 left",
+        "alarmButton": "!!! HR high",
+        "monitorAlarmText": [],
+        "active": [
+          "HR TOO HIGH"
+        ],
+        "silencedUntil": 340.03999999999996
+      },
+      {
+        "label": "the silence ended",
+        "clock": "03:44",
+        "sinceSilenceS": 4.2,
+        "panelStatus": "Sound silenced, 01:57 left",
+        "alarmButton": "!!! HR high",
+        "monitorAlarmText": [
+          "HR TOO HIGH"
+        ],
+        "active": [
+          "HR TOO HIGH",
+          "ART SYS TOO LOW"
+        ],
+        "silencedUntil": null
+      },
+      {
+        "label": "30 s after Silence",
+        "clock": "04:11",
+        "sinceSilenceS": 31,
+        "panelStatus": "Alarm sound on",
+        "alarmButton": "!!! HR high +3",
+        "monitorAlarmText": [
+          "ART SYS TOO LOW"
+        ],
+        "active": [
+          "HR TOO HIGH",
+          "ART SYS TOO LOW",
+          "ART MEAN TOO LOW",
+          "ART DIA TOO LOW"
+        ],
+        "silencedUntil": null
+      },
+      {
+        "label": "60 s after Silence",
+        "clock": "04:40",
+        "sinceSilenceS": 60.5,
+        "panelStatus": "Alarm sound on",
+        "alarmButton": "!!! HR high +3",
+        "monitorAlarmText": [
+          "HR TOO HIGH"
+        ],
+        "active": [
+          "HR TOO HIGH",
+          "ART SYS TOO LOW",
+          "ART MEAN TOO LOW",
+          "ART DIA TOO LOW"
+        ],
+        "silencedUntil": null
+      },
+      {
+        "label": "110 s after Silence",
+        "clock": "05:30",
+        "sinceSilenceS": 110.4,
+        "panelStatus": "Alarm sound on",
+        "alarmButton": "!!! ART M low +2",
+        "monitorAlarmText": [
+          "ART MEAN TOO LOW"
+        ],
+        "active": [
+          "ART MEAN TOO LOW",
+          "IBP1 STATIC PRESSURE",
+          "SPO2 NO PULSE"
+        ],
+        "silencedUntil": null
+      },
+      {
+        "label": "125 s after Silence",
+        "clock": "05:45",
+        "sinceSilenceS": 125.7,
+        "panelStatus": "Alarm sound on",
+        "alarmButton": "!!! ART M low +3",
+        "monitorAlarmText": [
+          "IBP1 STATIC PRESSURE"
+        ],
+        "active": [
+          "ART MEAN TOO LOW",
+          "ETCO2 TOO LOW",
+          "IBP1 STATIC PRESSURE",
+          "SPO2 NO PULSE"
+        ],
+        "silencedUntil": null
+      }
+    ],
+    "versionLabel": {
+      "start": [
+        "Every model value, raw commands and the build-stage pages."
+      ],
+      "teach": [],
+      "monitor": [],
+      "settings": [],
+      "debrief": [
+        "For education only. Not a medical device: never use it for patient care. Build 56f3761f 2026-10-13."
+      ]
+    },
+    "reload": {
+      "before": {
+        "alarmButton": "!!! ART M low +3",
+        "allOff": false,
+        "sound": "Sound on",
+        "code": "4ZUNB5"
+      },
+      "after": {
+        "alarmButton": "Limit alarms off",
+        "allOff": true,
+        "sound": "Sound off",
+        "code": "4ZUNB5",
+        "scenario": null
+      },
+      "phonesAfterReload15s": [
+        {
+          "status": "synced",
+          "text": "Skip to the main content 13/10/2026 HR bpm 70 ST-II --- NIBP mmHg ---/--- MANUAL PR --- IBP1 mmHg ---/--- (---) IBP2 mmHg --- SpO2 % 96 PI 1.9 PR 70 TEMP °C 36."
+        },
+        {
+          "status": "synced",
+          "text": "Skip to the main content 13/10/2026 HR bpm 70 ST-II --- NIBP mmHg ---/--- MANUAL PR --- IBP1 mmHg ---/--- (---) IBP2 mmHg --- SpO2 % 96 PI 1.9 PR 70 TEMP °C 36."
+        },
+        {
+          "status": "synced",
+          "text": "Skip to the main content 13/10/2026 HR bpm 70 ST-II --- NIBP mmHg ---/--- MANUAL PR --- IBP1 mmHg ---/--- (---) IBP2 mmHg --- SpO2 % 96 PI 1.9 PR 70 TEMP °C 36."
+        }
+      ]
+    }
+  },
+  "debrief": null,
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [
+      {
+        "label": "before the reload",
+        "atWallS": 92,
+        "maxMismatchSoFar": [
+          1,
+          1,
+          1
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 1,
+        "worst": {
+          "param": "IBP1",
+          "forS": 1,
+          "instructorFirst": "71/50",
+          "phoneFirst": "76/52",
+          "instructorNow": "72/50",
+          "phoneNow": "74/49",
+          "atWallS": 56.2
+        },
+        "samples": 220,
+        "compared": 213,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 86,
+        "holdSamples": 0,
+        "status": {
+          "synced": 220
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 1,
+        "worst": {
+          "param": "IBP1",
+          "forS": 1,
+          "instructorFirst": "71/50",
+          "phoneFirst": "76/52",
+          "instructorNow": "72/50",
+          "phoneNow": "74/49",
+          "atWallS": 56.2
+        },
+        "samples": 220,
+        "compared": 213,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 86,
+        "holdSamples": 0,
+        "status": {
+          "synced": 220
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 1,
+        "worst": {
+          "param": "IBP1",
+          "forS": 1,
+          "instructorFirst": "71/50",
+          "phoneFirst": "76/52",
+          "instructorNow": "72/50",
+          "phoneNow": "74/49",
+          "atWallS": 56.2
+        },
+        "samples": 220,
+        "compared": 213,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 87,
+        "holdSamples": 0,
+        "status": {
+          "synced": 220
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}

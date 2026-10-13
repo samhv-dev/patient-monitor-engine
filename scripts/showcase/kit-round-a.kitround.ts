@@ -111,7 +111,10 @@ class Run {
     await this.page.waitForTimeout(800);
     let after = await stateId(this.page);
     const rec: Row = { label, clock: mmss(t), simS: r1(t), wall: this.wall(), before, after, load1: load1(), toast: (await this.page.locator('.toasts').innerText().catch(() => '')).split('\n').slice(-2).join(' | ') };
-    if (expectState && after !== expectState && (await btn.count()) > 0) {
+    // a transient state ("Dantrolene 2.5 mg/kg given" lasts 2 s of sim) may already have passed: the state log says
+    // whether the press was taken (the first chromium MH runs pressed such buttons twice: kept as probes, not used)
+    const passed = expectState ? await this.page.evaluate(([id, from]) => ((window as unknown as Hook).__st ?? []).some((x) => x.id === id && x.t >= (from as number) - 0.5), [expectState, t] as const) : true;
+    if (expectState && after !== expectState && !passed && (await btn.count()) > 0) {
       rec.notTaken = true;
       await btn.click();
       await this.page.waitForTimeout(800);
@@ -280,7 +283,7 @@ class Run {
     this.r.loadAvg.min = Math.min(...this.loads, this.r.loadAvg.start);
     this.r.loadAvg.max = Math.max(...this.loads, this.r.loadAvg.start);
     mkdirSync(OUTDIR, { recursive: true });
-    const base = `${slug(this.r.case)}-${this.r.browser}`;
+    const base = `${slug(this.r.case)}-${this.r.browser}${process.env.KITROUND_TAG ?? ''}`; // KITROUND_TAG=-<x>: a second evidence set beside the first
     writeFileSync(join(OUTDIR, `${base}.json`), JSON.stringify(this.r, null, 2));
     const md = [
       `### ${this.r.case} (${this.r.browser}, kit ${this.r.kit}, load avg ${this.r.loadAvg.min}–${this.r.loadAvg.max})`, '',
@@ -305,12 +308,12 @@ class Run {
 class PhoneProbe {
   private running = false;
   private loop: Promise<void> | null = null;
-  private readonly per: Array<{ maxS: number; worst: Row | null; open: Map<string, { since: number; inst: string; ph: string }>; status: Record<string, number>; hold: number; samples: number; compared: number; common: number }>;
+  private readonly per: Array<{ maxS: number; worst: Row | null; open: Map<string, { since: number; inst: string; ph: string }>; status: Record<string, number>; hold: number; samples: number; compared: number; common: number; markOnly: number }>;
   private readonly marks: Row[] = [];
   private lastVeil = 0;
   private readonly t0 = Date.now();
   constructor(private readonly host: Page, private readonly phones: Page[]) {
-    this.per = phones.map(() => ({ maxS: 0, worst: null, open: new Map(), status: {}, hold: 0, samples: 0, compared: 0, common: 0 }));
+    this.per = phones.map(() => ({ maxS: 0, worst: null, open: new Map(), status: {}, hold: 0, samples: 0, compared: 0, common: 0, markOnly: 0 }));
   }
   private static tiles = () => Object.fromEntries([...document.querySelectorAll('.pme-stile')].map((e) => [(e as HTMLElement).dataset.param ?? '?', (e.querySelector('[data-pme="v"]')?.textContent ?? '').trim()]));
   start(): void {
@@ -331,7 +334,8 @@ class PhoneProbe {
           if (!comparable || x.hold || x.veil || x.status !== 'synced' || !inst) return s.open.clear();
           s.compared++;
           s.common = Math.max(s.common, Object.keys(inst.tiles).filter((k) => k in x.tiles).length);
-          const num = (v: string) => (/^-?\d+(\.\d+)?$/.test(v) ? Number(v) : null);
+          // the number itself: a trailing signal-quality mark ("99?") is not a different number (counted apart)
+          const num = (v: string) => (/^-?\d+(\.\d+)?/.test(v) ? Number(/^-?\d+(\.\d+)?/.exec(v)![0]) : null);
           for (const k of Object.keys(inst.tiles)) {
             if (!(k in x.tiles)) continue;
             const a = inst.tiles[k]!;
@@ -339,6 +343,7 @@ class PhoneProbe {
             const na = num(a);
             const nb = num(b);
             const differ = (na === null) !== (nb === null) || (na !== null && nb !== null && Math.abs(na - nb) > 1);
+            if (a !== b && !differ) s.markOnly++;
             if (!differ) {
               s.open.delete(k);
               continue;
@@ -364,10 +369,10 @@ class PhoneProbe {
     await this.loop;
     const sync = await Promise.all(this.phones.map((p) => p.evaluate(() => (window as unknown as Hook).__pmeFollower?.sync ?? null).catch(() => null)));
     return {
-      rule: 'a parameter differing (> 1 unit, or number vs blank) for more than 2 s while comparable = S12-F2 seen',
+      rule: 'a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as "?" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen',
       s12f2Seen: this.per.some((s) => s.maxS > 2),
       marks: this.marks,
-      perPhone: this.per.map((s, i) => ({ maxMismatchS: r1(s.maxS), worst: s.worst, samples: s.samples, compared: s.compared, commonTiles: s.common, holdSamples: s.hold, status: s.status, resyncs: sync[i]?.resyncs ?? null, lagS: r1(sync[i]?.lagS) })),
+      perPhone: this.per.map((s, i) => ({ maxMismatchS: r1(s.maxS), worst: s.worst, samples: s.samples, compared: s.compared, commonTiles: s.common, sameNumberOtherMarkSamples: s.markOnly, holdSamples: s.hold, status: s.status, resyncs: sync[i]?.resyncs ?? null, lagS: r1(sync[i]?.lagS) })),
     };
   }
 }
@@ -751,9 +756,12 @@ test('tamponade: CPR at the no-pulse alarm, the 2-min span at once (the delibera
     await R.untilT(tD + 75);
     await R.speed(1);
     await R.row('≈ 75 s after drainage, ×1');
-    // the pulse back on the arterial line: a pulsatile systolic again (> 60 and not blank)
-    const tBack = await R.waitSim(150, (_n, v) => typeof v.abpSys === 'number' && v.abpSys > 60);
-    await R.row('pulse back on the arterial line (systolic > 60)');
+    // the pulse back: the model's return of circulation (the Debrief's 'rosc', what the arterial line and the capnogram
+    // then show). NOT "systolic > 60": the first Chromium run stopped CPR on that cue at 11:20 — compressions alone read
+    // 69/32 on the arterial line 75 s after the drainage — and the patient re-arrested (asystole 13:44; the Debrief: "The
+    // return of circulation did not happen"); that run is kept as tamponade-probe-stop-on-systolic-60-chromium.*
+    const tBack = await R.waitSim(240, async () => (await page.evaluate(() => (window as unknown as { __pmeApp: { session: { record: { pulse: boolean | null } } } }).__pmeApp.session.record.pulse)) === true);
+    await R.row('pulse back (the model\'s return of circulation)');
     await R.react();
     const tStop = await R.press('Pulse back: stop CPR', 'rosc');
     await R.untilT(tStop + 30);
@@ -773,10 +781,19 @@ test('tamponade: CPR at the no-pulse alarm, the 2-min span at once (the delibera
   }
 });
 
-for (const path of ['early', 'late'] as const) {
-  test(`MH, crisis called at ${path === 'early' ? 'the early signs' : 'the established crisis'}, three 5-min fast-forwards`, async ({ page, browser }) => {
+for (const path of ['early', 'late', 'early-normo'] as const) {
+  test(`MH, crisis called at ${path === 'late' ? 'the established crisis' : 'the early signs'}${path === 'early-normo' ? ', ventilation back at Recovering before span 1' : ''}, three 5-min fast-forwards`, async ({ page, browser }) => {
     test.setTimeout(40 * 60_000);
     const R = new Run(page, browser, `Malignant hyperthermia, ${path} call (kit round)`);
+    // the 40-mmHg check (ventilation back at 12 × 500 when Recovering shows and the CO2 tile reads below 40)
+    const normo = async () => {
+      if ((await stateId(page)) === 'recovering' && ((await latest(page)).etco2 ?? 99) < 40) {
+        await R.press('EtCO₂ normal: ventilation back to 12 × 500', 'normoventilated');
+        return true;
+      }
+      return false;
+    };
+    let normoDone = false;
     const etBelow40 = async (from: number) => (await hist(page, from, Infinity)).find((s) => typeof s.etco2 === 'number' && s.etco2 < 40) ?? null;
     try {
       await R.start('Malignant hyperthermia', 8);
@@ -784,7 +801,7 @@ for (const path of ['early', 'late'] as const) {
       await R.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
       let tC: number;
       let ffDone = 0;
-      if (path === 'early') {
+      if (path !== 'late') {
         await R.untilT(R.t0 + 390);
         await R.speed(4);
         await R.row('6:30 ×4: watch the CO2 tile');
@@ -798,6 +815,13 @@ for (const path of ['early', 'late'] as const) {
         await R.untilT(tC + 30);
         await R.press('Cool: 2 L saline at room temperature', 'cooling');
         await R.untilT(tC + 40);
+        if (path === 'early-normo') {
+          // E19 option: wait for "Recovering" (≈ 1.6 min after the call on this build), press ventilation back, THEN span 1
+          await R.waitSim(300, async (_n, v) => (await stateId(page)) === 'recovering' && typeof v.etco2 === 'number' && v.etco2 < 40);
+          await R.react();
+          normoDone = await normo();
+          await R.row('Recovering shown: ventilation back before span 1', { normoDone });
+        }
         await R.ff(5);
         ffDone++;
         await R.pauseToggle();
@@ -833,15 +857,6 @@ for (const path of ['early', 'late'] as const) {
         await R.untilT(tC + 50);
         await R.press('Sodium bicarbonate 1 mmol/kg', 'bicarbonate');
       }
-      // the 40-mmHg check before the next span: back to 12 × 500 if Recovering shows and the CO2 tile reads below 40
-      const normo = async () => {
-        if ((await stateId(page)) === 'recovering' && ((await latest(page)).etco2 ?? 99) < 40) {
-          await R.press('EtCO₂ normal: ventilation back to 12 × 500', 'normoventilated');
-          return true;
-        }
-        return false;
-      };
-      let normoDone = false;
       while (ffDone < 3) {
         await R.pauseToggle();
         await R.row(`paused before span ${ffDone + 1}`);
@@ -892,6 +907,10 @@ test('session mechanics: reload survival, Silence on the Saadat-style skin, the 
     };
     await page.waitForTimeout(800);
     await look('just after Silence');
+    const tEnd = await R.waitSim(125, async () => (await page.evaluate(() => (window as unknown as Hook).__pmeApp.link.alarms?.silencedUntil ?? null)) === null);
+    await look(tEnd === null ? 'silence still on after 125 s' : 'the silence ended');
+    R.r.measures.silenceEndedAfterS = tEnd === null ? null : r1(tEnd - tSil);
+    R.r.measures.alarmsRaisedDuringSilence = (await alarms(page)).filter((a) => a.t >= tSil && (tEnd === null || a.t <= tEnd + 1)).map((a) => `${mmss(a.t)} ${a.text}`);
     await page.locator('.stage').screenshot({ path: join(OUTDIR, `silence-saadat-${R.r.browser}.png`) }).catch(() => undefined);
     for (const s of [30, 60, 110, 125]) {
       await R.untilT(tSil + s);
@@ -922,7 +941,7 @@ test('session mechanics: reload survival, Silence on the Saadat-style skin, the 
     await page.waitForTimeout(15_000);
     const phonesAfterReload = await Promise.all(R.phones.map((p) => p.evaluate(() => ({ status: (window as unknown as Hook).__pmeFollower?.sync?.status ?? 'none', text: document.body.innerText.replace(/\s+/g, ' ').slice(0, 160) })).catch(() => null)));
     R.r.measures.reload = { before, after, phonesAfterReload15s: phonesAfterReload };
-    await R.row('after the reload');
+    await record(page); // the reload cleared the page's recorder
   } finally {
     await R.finish();
   }

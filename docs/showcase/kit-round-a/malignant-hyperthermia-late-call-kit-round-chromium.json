@@ -1,0 +1,641 @@
+{
+  "case": "Malignant hyperthermia, late call (kit round)",
+  "browser": "chromium",
+  "kit": "56f3761f",
+  "server": "Start Classroom.command (relay + static app, node, WS_NO_BUFFER_UTIL=1 (finding KR-A1))",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-13T09:13:07.986Z",
+  "loadAvg": {
+    "start": 2.53,
+    "end": 1.71,
+    "min": 1.81,
+    "max": 2.61
+  },
+  "setup": {
+    "sessionCode": "3V4YG2",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "** ART M high +2"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.8,
+      "speed": 8,
+      "state": "induction",
+      "load1": 2.6,
+      "what": "Load \"Malignant hyperthermia\" at ×8, Bookmark",
+      "hr": 71,
+      "art": "111/75 (86)",
+      "spo2": 96,
+      "etco2": 36,
+      "rr": 19
+    },
+    {
+      "wall": 31.3,
+      "clock": "04:11",
+      "simS": 251.3,
+      "speed": 8,
+      "state": "surgery",
+      "load1": 2.61,
+      "what": "press **Start surgery: rocuronium 0.6 mg/kg**",
+      "hr": 79,
+      "art": "99/66 (75)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 12
+    },
+    {
+      "wall": 51.7,
+      "clock": "06:54",
+      "simS": 414.5,
+      "speed": 8,
+      "state": "earlySigns",
+      "load1": 2.42,
+      "what": "state Early signs (not called: the late path)",
+      "hr": 84,
+      "art": "104/70 (80)",
+      "spo2": 99,
+      "etco2": 46,
+      "rr": 12
+    },
+    {
+      "wall": 65.1,
+      "clock": "12:21",
+      "simS": 741.6,
+      "speed": 8,
+      "state": "earlySigns",
+      "load1": 2.28,
+      "what": "after the 5-min fast-forward",
+      "hr": 109,
+      "art": "116/84 (93)",
+      "spo2": 99,
+      "etco2": 61,
+      "rr": 12
+    },
+    {
+      "wall": 78.5,
+      "clock": "17:48",
+      "simS": 1068.8,
+      "speed": 8,
+      "state": "earlySigns",
+      "load1": 2.14,
+      "what": "after the 5-min fast-forward",
+      "hr": 141,
+      "art": "119/87 (97)",
+      "spo2": 98,
+      "etco2": 79,
+      "rr": 12
+    },
+    {
+      "wall": 85.8,
+      "clock": "18:47",
+      "simS": 1127.6,
+      "speed": 8,
+      "state": "established",
+      "load1": 2.04,
+      "what": "state Established MH",
+      "hr": 143,
+      "art": "119/88 (98)",
+      "spo2": 98,
+      "etco2": 81,
+      "rr": 12
+    },
+    {
+      "wall": 89,
+      "clock": "19:00",
+      "simS": 1140.5,
+      "speed": 4,
+      "state": "triggerOff",
+      "load1": 1.88,
+      "what": "press **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate**",
+      "hr": 145,
+      "art": "120/89 (99)",
+      "spo2": 98,
+      "etco2": 81,
+      "rr": 19
+    },
+    {
+      "wall": 94.2,
+      "clock": "19:21",
+      "simS": 1161.2,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.81,
+      "what": "press **Dantrolene 2.5 mg/kg**",
+      "hr": 139,
+      "art": "116/86 (94)",
+      "spo2": 98,
+      "etco2": 57,
+      "rr": 30
+    },
+    {
+      "wall": 96.5,
+      "clock": "19:30",
+      "simS": 1170.7,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.81,
+      "what": "press **Cool: 2 L saline at room temperature**",
+      "hr": 138,
+      "art": "116/86 (94)",
+      "spo2": 99,
+      "etco2": 55,
+      "rr": 29
+    },
+    {
+      "wall": 99.2,
+      "clock": "19:41",
+      "simS": 1181.1,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.91,
+      "what": "press **Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose**",
+      "hr": 137,
+      "art": "118/87 (96)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 28
+    },
+    {
+      "wall": 101.8,
+      "clock": "19:51",
+      "simS": 1191.6,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.83,
+      "what": "press **Sodium bicarbonate 1 mmol/kg**",
+      "hr": 137,
+      "art": "120/89 (98)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 28
+    },
+    {
+      "wall": 102.2,
+      "clock": "19:51",
+      "simS": 1191.7,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.83,
+      "what": "paused before span 3",
+      "hr": 137,
+      "art": "120/89 (98)",
+      "spo2": 99,
+      "etco2": 54,
+      "rr": 28
+    },
+    {
+      "wall": 116.1,
+      "clock": "25:07",
+      "simS": 1507.1,
+      "speed": 4,
+      "state": "treating",
+      "load1": 1.94,
+      "what": "after the 5-min fast-forward",
+      "hr": 112,
+      "art": "143/102 (115)",
+      "spo2": 99,
+      "etco2": 48,
+      "rr": 26
+    },
+    {
+      "wall": 266.3,
+      "clock": "35:08",
+      "simS": 2108.1,
+      "speed": 4,
+      "state": "recovering",
+      "load1": 2.12,
+      "what": "end of the path",
+      "hr": 97,
+      "art": "158/103 (121)",
+      "spo2": 99,
+      "etco2": 41,
+      "rr": 20
+    },
+    {
+      "wall": 270.4,
+      "clock": "35:24",
+      "simS": 2124.4,
+      "speed": 4,
+      "state": "recovering",
+      "load1": 2.11,
+      "what": "monitor style changed: Saadat-style → Philips-style (Settings)",
+      "hr": 97,
+      "art": "157/102 (121)",
+      "spo2": 99,
+      "etco2": 41,
+      "rr": 20
+    }
+  ],
+  "presses": [
+    {
+      "label": "Start surgery: rocuronium 0.6 mg/kg",
+      "clock": "04:04",
+      "simS": 244.9,
+      "wall": 31.3,
+      "before": "induction",
+      "after": "surgery",
+      "load1": 2.61,
+      "toast": ""
+    },
+    {
+      "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+      "clock": "18:57",
+      "simS": 1137.3,
+      "wall": 89,
+      "before": "established",
+      "after": "triggerOff",
+      "load1": 1.88,
+      "toast": "Speed ×4"
+    },
+    {
+      "label": "Dantrolene 2.5 mg/kg",
+      "clock": "19:18",
+      "simS": 1158,
+      "wall": 94.2,
+      "before": "triggerOff",
+      "after": "treating",
+      "load1": 1.81,
+      "toast": ""
+    },
+    {
+      "label": "Cool: 2 L saline at room temperature",
+      "clock": "19:27",
+      "simS": 1167.5,
+      "wall": 96.5,
+      "before": "treating",
+      "after": "treating",
+      "load1": 1.81,
+      "toast": ""
+    },
+    {
+      "label": "Potassium: calcium chloride 10 mg/kg, insulin 10 U with dextrose",
+      "clock": "19:37",
+      "simS": 1177.9,
+      "wall": 99.2,
+      "before": "treating",
+      "after": "treating",
+      "load1": 1.91,
+      "toast": ""
+    },
+    {
+      "label": "Sodium bicarbonate 1 mmol/kg",
+      "clock": "19:48",
+      "simS": 1188.3,
+      "wall": 101.8,
+      "before": "treating",
+      "after": "treating",
+      "load1": 1.83,
+      "toast": ""
+    }
+  ],
+  "spans": [
+    {
+      "min": 5,
+      "via": "button",
+      "clockBefore": "06:54",
+      "fromT": 414.8,
+      "endT": 714.8,
+      "wallS": 10.4,
+      "speedBefore": 8,
+      "speedAfter": 8,
+      "rateAfter3s": 8.1,
+      "banner": "Fast-forwarded 5 min, 06:54 → 11:54. During it: ETCO2 TOO HIGH 08:22.",
+      "alarms": [
+        "08:22 ETCO2 TOO HIGH"
+      ],
+      "load1": 2.28
+    },
+    {
+      "min": 5,
+      "via": "button",
+      "clockBefore": "12:21",
+      "fromT": 741.9,
+      "endT": 1041.9,
+      "wallS": 10.4,
+      "speedBefore": 8,
+      "speedAfter": 8,
+      "rateAfter3s": 8.1,
+      "banner": "Fast-forwarded 5 min, 12:21 → 17:21. During it: no alarms.",
+      "alarms": [],
+      "load1": 2.14
+    },
+    {
+      "min": 5,
+      "via": "button",
+      "clockBefore": "19:53",
+      "fromT": 1193.5,
+      "endT": 1493.5,
+      "wallS": 10.4,
+      "speedBefore": 4,
+      "speedAfter": 4,
+      "rateAfter3s": 4,
+      "banner": "Fast-forwarded 5 min, 19:53 → 24:53. During it: ART DIA TOO HIGH 22:20, T1 TOO HIGH 24:20.",
+      "alarms": [
+        "22:20 ART DIA TOO HIGH",
+        "24:20 T1 TOO HIGH"
+      ],
+      "load1": 1.94
+    }
+  ],
+  "states": [
+    {
+      "t": 1.8,
+      "clock": "00:01",
+      "id": "induction"
+    },
+    {
+      "t": 245,
+      "clock": "04:05",
+      "id": "surgery"
+    },
+    {
+      "t": 413,
+      "clock": "06:53",
+      "id": "earlySigns"
+    },
+    {
+      "t": 1127.4,
+      "clock": "18:47",
+      "id": "established"
+    },
+    {
+      "t": 1137.3,
+      "clock": "18:57",
+      "id": "triggerOff"
+    },
+    {
+      "t": 1158.1,
+      "clock": "19:18",
+      "id": "dantrolene"
+    },
+    {
+      "t": 1160.3,
+      "clock": "19:20",
+      "id": "treating"
+    },
+    {
+      "t": 1167.6,
+      "clock": "19:27",
+      "id": "cooling"
+    },
+    {
+      "t": 1170,
+      "clock": "19:30",
+      "id": "treating"
+    },
+    {
+      "t": 1178,
+      "clock": "19:38",
+      "id": "potassium"
+    },
+    {
+      "t": 1180.5,
+      "clock": "19:40",
+      "id": "treating"
+    },
+    {
+      "t": 1188.4,
+      "clock": "19:48",
+      "id": "bicarbonate"
+    },
+    {
+      "t": 1190.7,
+      "clock": "19:50",
+      "id": "treating"
+    },
+    {
+      "t": 1699.2,
+      "clock": "28:19",
+      "id": "recovering"
+    }
+  ],
+  "alarms": [
+    "08:22 ETCO2 TOO HIGH",
+    "19:04 RR TOO HIGH",
+    "19:08 AWRR TOO HIGH",
+    "22:20 ART DIA TOO HIGH",
+    "24:20 T1 TOO HIGH",
+    "25:41 ART MEAN TOO HIGH",
+    "27:33 ART SYS TOO HIGH",
+    "35:27 **ABPm 121>110",
+    "35:27 **ABPd 102>90",
+    "35:27 **Temp 39.2>39.0"
+  ],
+  "measures": {
+    "earlySignsAt": "06:54",
+    "callAfterEstablishedS": 9.7,
+    "mh": {
+      "path": "late",
+      "callAt": "18:57",
+      "etco2FirstBelow40": null,
+      "etco2Below40AfterCallMin": null,
+      "recoveringAt": "28:19",
+      "recoveringAfterCallMin": 9.4,
+      "normoventilated": false,
+      "fastForwards": 3,
+      "hrMaxAfterCall": 146,
+      "etco2MaxAfterCall": 81,
+      "minSystolicAfterCall": 113.4
+    }
+  },
+  "debrief": {
+    "openedAt": "35:09",
+    "objectives": [
+      {
+        "status": "not met",
+        "text": "✗ Not met Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)The state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" 12 min 05 s after the state \"Early signs: EtCO₂ rising at the same ventilation, tachycardia\" (06:52 → 18:57; within 2 min 00 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Give dantrolene 2.5 mg/kg within 300 s of calling the crisisDantrolene 21 s after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" (18:57 → 19:18; within 5 min 00 s asked)."
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHgThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/LCalcium chloride 10 % or Insulin + dextrose 2 min 26 s after K⁺ above 5.5 mmol/L (17:12 → 19:37; within 5 min 00 s asked)."
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHgEtCO₂ below 40 mmHg after the state \"Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600\" did not happen."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Lowest ART M / NIBP M": "66 mmHg at 01:15",
+      "Highest EtCO₂": "81 mmHg at 18:36",
+      "Highest T1 / T2": "39.3 °C at 28:37",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.7 mmol/L (4.2–5.8) · Lactate 6.5 mmol/L (1.0–6.8) · pH 7.34 (7.09–7.41) · Glucose 7.0 mmol/L (5.6–17.0) · Tcore 39.2 °C (36.7–39.3)"
+    },
+    "timelineRows": 47,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Malignant hyperthermia",
+      "00:00 Scenario Scenario state: Induced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 %",
+      "00:00 Scenario Propofol 2 mg/kg IV",
+      "00:00 Scenario Succinylcholine 1.5 mg/kg IV",
+      "00:00 Scenario Tracheal tube in place",
+      "00:00 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "00:00 Scenario Sevoflurane 2 % at 2 L/min fresh gas",
+      "00:00 Scenario Malignant hyperthermia: severe",
+      "00:01 Action Speed ×8",
+      "00:00 Patient Ventilated breaths began",
+      "00:04 Bookmark Bookmark: Bookmark 1 at 00:04",
+      "00:07 Action All alarms on",
+      "04:04 Scenario Scenario state: Surgery under way: sevoflurane 2 %, rocuronium",
+      "04:04 Scenario Rocuronium 0.6 mg/kg IV",
+      "04:11 Action Speed ×8",
+      "06:52 Scenario Scenario state: Early signs: EtCO₂ rising at the same ventilation, tachycardia",
+      "06:54 Action Fast-forward 5 min",
+      "08:22 Alarm EtCO₂ high",
+      "12:21 Action Fast-forward 5 min",
+      "18:46 Scenario Scenario state: Established MH: hyperthermia, acidosis, rising potassium",
+      "18:47 Action Speed ×4",
+      "18:57 Scenario Scenario state: Trigger off: sevoflurane stopped, O₂ 100 % at 10 L/min, ventilation 20 × 600",
+      "18:57 Scenario Sevoflurane vaporiser off",
+      "18:57 Scenario Ventilator: RR 20 /min, VT 600 mL, PEEP 5 cmH₂O, FiO₂ 100 %",
+      "19:04 Alarm RR high",
+      "19:08 Alarm awRR high",
+      "19:18 Scenario Scenario state: Dantrolene 2.5 mg/kg given",
+      "19:18 Scenario Dantrolene 2.5 mg/kg IV",
+      "19:20 Scenario Scenario state: MH treatment under way",
+      "19:27 Scenario Scenario state: Cooling: 2 L saline at room temperature running",
+      "19:27 Scenario Crystalloid 2000 mL over 15 min",
+      "19:29 Scenario Scenario state: MH treatment under way",
+      "19:37 Scenario Scenario state: Calcium chloride 10 mg/kg and insulin 10 U with dextrose given",
+      "19:37 Scenario Calcium chloride 10 % 10 mg/kg IV",
+      "19:38 Scenario Insulin + dextrose 10 units IV",
+      "19:40 Scenario Scenario state: MH treatment under way",
+      "19:48 Scenario Scenario state: Sodium bicarbonate 1 mmol/kg given",
+      "19:48 Scenario Sodium bicarbonate 8.4 % 1 mmol/kg IV",
+      "19:50 Scenario Scenario state: MH treatment under way",
+      "19:51 Action Simulation paused",
+      "19:51 Action Simulation resumed",
+      "19:53 Action Fast-forward 5 min",
+      "22:20 Alarm ART D high",
+      "24:20 Alarm T1 high",
+      "25:41 Alarm ART M high",
+      "27:33 Alarm ART S high",
+      "28:19 Scenario Scenario state: Recovering: EtCO₂ below 45"
+    ],
+    "minuteRows": 36
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [
+      {
+        "label": "before the style change",
+        "atWallS": 268,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "label": "after Saadat-style → Philips-style",
+        "atWallS": 268.8,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      {
+        "label": "30 s after the style change",
+        "atWallS": 298.9,
+        "maxMismatchSoFar": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      }
+    ],
+    "perPhone": [
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "HR",
+          "forS": 0.5,
+          "instructorFirst": "78",
+          "phoneFirst": "80",
+          "instructorNow": "79",
+          "phoneNow": "77",
+          "atWallS": 20.5
+        },
+        "samples": 597,
+        "compared": 507,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 272,
+        "holdSamples": 0,
+        "status": {
+          "synced": 597
+        },
+        "resyncs": 6,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "HR",
+          "forS": 0.5,
+          "instructorFirst": "78",
+          "phoneFirst": "80",
+          "instructorNow": "79",
+          "phoneNow": "77",
+          "atWallS": 20.5
+        },
+        "samples": 597,
+        "compared": 507,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 280,
+        "holdSamples": 0,
+        "status": {
+          "synced": 597
+        },
+        "resyncs": 6,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "IBP1",
+          "forS": 0.5,
+          "instructorFirst": "120/88",
+          "phoneFirst": "118/88",
+          "instructorNow": "119/89",
+          "phoneNow": "121/90",
+          "atWallS": 83.7
+        },
+        "samples": 597,
+        "compared": 507,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 266,
+        "holdSamples": 0,
+        "status": {
+          "synced": 597
+        },
+        "resyncs": 6,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}

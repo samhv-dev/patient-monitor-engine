@@ -28,3 +28,5 @@ TypeError: bufferUtil$1.unmask is not a function
     at addChunk (node:internal/streams/readable:575:12)
 
 Node.js v26.8.2
+
+Update 2026-10-13: fixed on main by PR #64 (62e521c3: make-bundle leaves bufferutil/utf-8-validate external, so ws takes its pure-JS path); the kit smoke test is scripts/showcase/check-relay.mjs. The three owner kits rebuilt from 62e521c3 pass it 2 of 2, and the 62e521c3 re-check runs in this folder (*-kit-62e521c3.*) used the relay as built, without WS_NO_BUFFER_UTIL.
