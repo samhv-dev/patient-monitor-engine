@@ -1,5 +1,9 @@
 // Worker entry: engine + renderer on an OffscreenCanvas (brief §3.4). Uses the worker's own
 // requestAnimationFrame when it exists, otherwise waits for 'frame' messages from the main thread.
+// Stage 8b: the file starts itself only inside the worker we create, named 'pme-engine' (the ESM build's
+// `?worker&inline` bundle via worker-host.ts, or the IIFE re-running its own source as the worker,
+// src/iife-worker.ts). Imported anywhere else — the page, or a host's OWN worker that importScripts the IIFE for a
+// headless createEngine — it is inert and never touches that scope's onmessage.
 import { MonitorCore } from './monitor-core.ts';
 import type { Ctx2D } from './ctx.ts';
 import type { FromWorker, ToWorker } from './protocol.ts';
@@ -10,7 +14,7 @@ interface WorkerScope {
   requestAnimationFrame?: (cb: (t: number) => void) => number;
 }
 
-const scope = self as unknown as WorkerScope;
+let scope: WorkerScope; // set by startWorker() (Stage 8b)
 let core: MonitorCore | null = null;
 let useRaf = false;
 
@@ -19,7 +23,7 @@ function loop(t: number): void {
   scope.requestAnimationFrame?.(loop);
 }
 
-scope.onmessage = (ev) => {
+function onMessage(ev: MessageEvent<ToWorker>): void {
   const m = ev.data;
   try {
     switch (m.type) {
@@ -101,4 +105,14 @@ scope.onmessage = (ev) => {
     const reqId = 'reqId' in m ? m.reqId : undefined;
     scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err), ...(reqId !== undefined ? { reqId } : {}) });
   }
-};
+}
+
+/** Serve one monitor from this worker scope (Stage 8b). */
+export function startWorker(s: WorkerScope): void {
+  scope = s;
+  scope.onmessage = onMessage;
+}
+
+if (typeof document === 'undefined' && (globalThis as { name?: unknown }).name === 'pme-engine') {
+  startWorker(globalThis as unknown as WorkerScope);
+}

@@ -34,7 +34,10 @@ test('Stage 1: mountMonitor draws two ECG lanes and an HR number from file://', 
     const h = pm.mountMonitor!(document.getElementById('pm')!, { skin: 'philips-like', engine: { seed: 1 } });
     return h.renderPath;
   });
-  expect(['worker-raf', 'worker-pump', 'main']).toContain(path);
+  // Stage 8b: the IIFE's worker is its own source text (src/iife-worker.ts). Where OffscreenCanvas transfer exists the
+  // monitor must run in that worker; a silent fall-back to the main thread would hide a broken self-worker.
+  const offscreen = await page.evaluate(() => 'transferControlToOffscreen' in HTMLCanvasElement.prototype);
+  expect(offscreen ? ['worker-raf', 'worker-pump'] : ['main']).toContain(path);
   await expect(page.locator('canvas')).toHaveCount(1);
   await expect(page.locator('.pme-tile')).toContainText(/HR[\s\S]*\d{2,3}/, { timeout: 15_000 });
   expect(errors).toEqual([]);
