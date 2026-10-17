@@ -38,6 +38,8 @@ export default defineConfig(({ mode }) => {
       ? { alias: [{ find: /^\.\/engine\.worker\.ts\?worker&inline$/, replacement: resolve(import.meta.dirname, 'src/iife-worker.ts') }] }
       : {},
     plugins: iife ? [selfWrap] : [],
+    // FU-11 A1: the engine's build id (packages/engine-core/src/version.ts) in both builds; 'dev' unless PME_BUILD is set.
+    define: { __PME_ENGINE_BUILD__: JSON.stringify(process.env.PME_BUILD ?? 'dev') },
     build: {
       lib: {
         entry: 'src/index.ts',

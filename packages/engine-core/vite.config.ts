@@ -167,6 +167,8 @@ const SLOW_B = SLOW.filter((p) => !Object.values(OTHERS).some((g) => g.includes(
 const set = process.env.PME_TEST_SET;
 
 export default defineConfig({
+  // FU-11 A1 (Stage 8b): the build id in the snapshot key (src/version.ts); the release workflow sets PME_BUILD.
+  define: { __PME_ENGINE_BUILD__: JSON.stringify(process.env.PME_BUILD ?? 'dev') },
   build: {
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: 'index' },
     outDir: 'dist',
