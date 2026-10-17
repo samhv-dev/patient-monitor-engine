@@ -11,6 +11,7 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
+    "check-licences": "node --experimental-strip-types scripts/check-licences.ts",
     "check-size": "node --experimental-strip-types scripts/check-size.ts",
     "pack-smoke": "node scripts/pack-smoke.mjs",
     "audit:physiology": "node --experimental-strip-types --import ./scripts/audit-physiology/hooks.mjs scripts/audit-physiology/cli.ts",
