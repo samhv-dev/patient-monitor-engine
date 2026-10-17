@@ -9,6 +9,8 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
+    // Stage 8b: sibling @pme packages stay imports (npm consumers get one copy of each); ajv stays bundled (N-011).
+    rollupOptions: { external: [/^@pme\//] },
   },
   // Scenario tests run whole ACLS cases through a real engine; ~3 s locally, >5 s on the 2-vCPU CI runner.
   test: { testTimeout: 60_000 },

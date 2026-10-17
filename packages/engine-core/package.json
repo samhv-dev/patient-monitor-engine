@@ -1,15 +1,39 @@
 {
   "name": "@pme/engine-core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0-rc.1",
+  "description": "Patient-monitor simulation engine core: rhythm engine, haemodynamics, gas exchange, device layer, MANUAL and MODELED physiology (no DOM).",
+  "license": "MIT",
+  "author": "Ali Mahdavi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
+    "directory": "packages/engine-core"
+  },
   "type": "module",
+  "sideEffects": [
+    "./src/l2/ecg/pacing.ts",
+    "./src/l2/ecg/arrest/vf.ts"
+  ],
   "exports": {
     ".": "./src/index.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/types/src/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    },
+    "types": "./dist/types/src/index.d.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build"
+    "build": "vite build && tsc -p tsconfig.build.json && node --experimental-strip-types ../../scripts/finish-dist.ts"
   },
   "dependencies": {
     "@pme/skins": "workspace:*"

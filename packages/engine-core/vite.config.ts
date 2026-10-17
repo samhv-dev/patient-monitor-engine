@@ -172,6 +172,8 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
+    // Stage 8b: sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled.
+    rollupOptions: { external: [/^@pme\//] },
   },
   // Stage 7a: every engine now integrates the four-chamber circulation (≈ +60 % CPU per tick); the 5 s default left
   // no margin for the short engine tests on a loaded 2-vCPU runner. Long tests keep their explicit budgets.

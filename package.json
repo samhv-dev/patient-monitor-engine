@@ -12,6 +12,7 @@
     "build": "pnpm -r build",
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
     "check-size": "node --experimental-strip-types scripts/check-size.ts",
+    "pack-smoke": "node scripts/pack-smoke.mjs",
     "audit:physiology": "node --experimental-strip-types --import ./scripts/audit-physiology/hooks.mjs scripts/audit-physiology/cli.ts",
     "audit:respiratory": "node --experimental-strip-types --import ./scripts/audit-respiratory/hooks.mjs scripts/audit-respiratory/cli.ts",
     "audit:drugs": "node --experimental-strip-types --import ./scripts/audit-drugs/hooks.mjs scripts/audit-drugs/cli.ts",

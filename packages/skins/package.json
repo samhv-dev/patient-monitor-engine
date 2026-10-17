@@ -1,16 +1,41 @@
 {
   "name": "@pme/skins",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0-rc.1",
+  "description": "Data-only monitor skins and themes (saadat-like, philips-like, zoll-like, ge-like, mindray-like, lifepak-like) with JSON Schemas and provenance.",
+  "license": "MIT",
+  "author": "Ali Mahdavi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
+    "directory": "packages/skins"
+  },
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
     "./validate": "./src/validate.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/types/src/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./validate": {
+        "types": "./dist/types/src/validate.d.ts",
+        "import": "./dist/validate.js"
+      }
+    },
+    "types": "./dist/types/src/index.d.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build"
+    "build": "vite build && tsc -p tsconfig.build.json && node --experimental-strip-types ../../scripts/finish-dist.ts"
   },
   "dependencies": {
     "ajv": "8.20.0"
