@@ -21,4 +21,13 @@ describe('release versions', () => {
     const vs = ['audio', 'controller', 'engine-core', 'renderer', 'skins', 'ventilator', 'validation'].map(pkgVersion);
     expect(new Set(vs).size).toBe(1);
   });
+  it('CITATION.cff carries the package version and the CHANGELOG release date', () => {
+    const root = resolve(pkgs, '..');
+    const cff = readFileSync(resolve(root, 'CITATION.cff'), 'utf8');
+    const v = pkgVersion('renderer');
+    expect(/^version: (.+)$/m.exec(cff)?.[1]).toBe(v);
+    const heading = new RegExp(`^## \\[${v.replace(/\./g, '\\.')}\\] - (\\d{4}-\\d{2}-\\d{2})$`, 'm').exec(readFileSync(resolve(root, 'CHANGELOG.md'), 'utf8'));
+    expect(heading?.[1], 'CHANGELOG.md has a dated section for this version').toBeDefined();
+    expect(/^date-released: "?(\d{4}-\d{2}-\d{2})"?$/m.exec(cff)?.[1]).toBe(heading?.[1]);
+  });
 });

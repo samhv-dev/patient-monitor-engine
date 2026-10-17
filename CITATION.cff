@@ -6,6 +6,7 @@ authors:
   - family-names: Mahdavi
     given-names: Ali
 version: 1.0.0-rc.1
+date-released: "2026-10-17"
 license: MIT
 repository-code: "https://github.com/samhv-dev/patient-monitor-engine"
 abstract: >-
