@@ -888,6 +888,83 @@ for (const path of ['early', 'late', 'early-normo'] as const) {
   });
 }
 
+// E22 (owner ruling 2026-10-17): the MH objective is now "hyperventilation kept until EtCO2 has stayed below 40 mmHg for
+// 2 min, then ventilation normalised" (rule `heldThen`; an earlier press is not met). The early call as the cue card runs
+// it, then "ventilation back" the moment the 2 min are complete: `at-hold` presses it there (no fast-forward before it),
+// `after-span-1` runs span 1 at 8:45 as the cue card does and presses after it (the 2 min complete inside the span).
+// Then the remaining 5-min fast-forwards (three in all), the repeat dantrolene if EtCO2 is above 45 after span 1 (as the
+// early path above), and EtCO2's course after the press from the page's 1 Hz history.
+const NORMO = 'EtCO₂ normal: ventilation back to 12 × 500';
+for (const variant of ['at-hold', 'after-span-1'] as const) {
+  test(`MH E22, early call, ventilation back once EtCO2 has stayed below 40 for 2 min (${variant})`, async ({ page, browser }) => {
+    test.setTimeout(40 * 60_000);
+    const R = new Run(page, browser, `Malignant hyperthermia E22 ${variant} (kit round)`);
+    /** The start of the current unbroken stretch of EtCO2 below 40 since `from` (a measurement without EtCO2 is skipped). */
+    const below40Since = async (from: number): Promise<number | null> => {
+      let run: number | null = null;
+      for (const x of await hist(page, from, Infinity)) if (x.etco2 !== undefined) run = typeof x.etco2 === 'number' && x.etco2 < 40 ? (run ?? x.t) : null;
+      return run;
+    };
+    const held = async (from: number, now: number) => {
+      const h = await below40Since(from);
+      return h !== null && now - h >= 120;
+    };
+    try {
+      await R.start('Malignant hyperthermia', 8);
+      await R.untilT(R.t0 + 240);
+      await R.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
+      await R.untilT(R.t0 + 390);
+      await R.speed(4);
+      await R.row('6:30 ×4: watch the CO2 tile');
+      const tEarly = await R.until('earlySigns', 600);
+      await R.row('state Early signs');
+      await R.react();
+      const tC = await R.press(CRISIS, 'triggerOff');
+      await R.untilT(tC + 20);
+      await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+      await R.untilT(tC + 30);
+      await R.press('Cool: 2 L saline at room temperature', 'cooling');
+      let ffDone = 0;
+      if (variant === 'after-span-1') {
+        await R.untilT(525); // the cue card's span 1 at 8:45
+        await R.row('8:45: span 1 as the cue card');
+        await R.ff(5);
+        ffDone++;
+      }
+      const tHeld = await R.waitSim(600, async (now) => held(tC, now));
+      const holdFrom = await below40Since(tC);
+      await R.row('EtCO2 below 40 for 2 min since the call', { holdFrom: holdFrom === null ? null : mmss(holdFrom), heldAt: holdFrom === null ? null : mmss(holdFrom + 120), seenAt: tHeld === null ? null : mmss(tHeld) });
+      await R.react();
+      const tP = await R.press(NORMO, 'normoventilated');
+      let repeat: number | null = null;
+      while (ffDone < 3) {
+        await R.ff(5);
+        ffDone++;
+        const et = (await latest(page)).etco2;
+        await R.row(`after span ${ffDone}`, { co2: et });
+        if (repeat === null && typeof et === 'number' && et > 45) repeat = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+      }
+      await R.row('end of the path');
+      // EtCO2 after the press: per minute (the first measurement of each minute), the maximum, the first time at 45 or above
+      const after = (await hist(page, tP, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+      const perMin = Array.from({ length: Math.floor(((after.at(-1)?.t ?? tP) - tP) / 60) + 1 }, (_, m) => after.find((x) => x.t >= tP + m * 60)).map((x, m) => `+${m} min ${x ? Math.round(x.etco2) : '–'}`);
+      const max = after.reduce<{ t: number; etco2: number } | null>((b, x) => (!b || x.etco2 > b.etco2 ? x : b), null);
+      const at45 = after.find((x) => x.etco2 >= 45);
+      const before = (await hist(page, tC, tP)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+      R.r.measures.e22 = {
+        variant, earlySignsAt: tEarly === null ? null : mmss(tEarly), callAt: mmss(tC), etco2FirstBelow40: (() => { const x = before.find((y) => y.etco2 < 40); return x ? mmss(x.t) : null; })(),
+        holdFrom: holdFrom === null ? null : mmss(holdFrom), heldAt: holdFrom === null ? null : mmss(holdFrom + 120), heldAfterCallMin: holdFrom === null ? null : r1((holdFrom + 120 - tC) / 60),
+        pressAt: mmss(tP), pressAfterCallMin: r1((tP - tC) / 60), etco2AtPress: r1((await hist(page, tP - 2, tP)).filter((x) => typeof x.etco2 === 'number').at(-1)?.etco2),
+        etco2MaxAfterPress: max ? `${r1(max.etco2)} at ${mmss(max.t)} (+${r1((max.t - tP) / 60)} min)` : null, etco2First45AfterPress: at45 ? `${mmss(at45.t)} (+${r1((at45.t - tP) / 60)} min)` : 'never', etco2PerMinuteAfterPress: perMin.join(' · '),
+        historySamplesAfterPress: after.length, repeatDantrolene: repeat === null ? null : mmss(repeat), fastForwards: ffDone,
+      };
+      await R.debrief();
+    } finally {
+      await R.finish();
+    }
+  });
+}
+
 test('session mechanics: reload survival, Silence on the Saadat-style skin, the version label', async ({ page, browser }) => {
   const R = new Run(page, browser, 'Session mechanics (kit round)');
   try {
