@@ -1,6 +1,6 @@
 // How the host offers a Remote (review F2; orchestrator ruling 6). Version 1.0 pairs a Remote in the SAME browser only:
 // the default transport is a BroadcastChannel, which never leaves the browser profile. A tablet on the network needs
-// the Stage 6a relay (?relay=ws://…) and a network address the tablet can reach; that path is a version 1.1 feature,
+// the Stage 6a relay (?relay=ws://…) and a network address the tablet can reach; that path is an untested preview at 1.0.0-rc.1 (Stage 8b: no "version 1.1" on screen),
 // so without a relay the host shows no QR code and says so. No DOM here: the host view and its test read the result.
 
 export interface PairingLocation {
@@ -34,7 +34,7 @@ export function pairingOf(code: string, loc: PairingLocation): Pairing {
   if (!relay) {
     return {
       url, relay: null, qr: false,
-      note: 'In this version the remote works in this browser only: open it in a new window or tab on this computer. Pairing a tablet over the network needs the relay server and comes in version 1.1.',
+      note: 'Here the remote works in this browser only: open it in a new window or tab on this computer. Learners\' phones follow this monitor over the classroom relay ("Learners\' phones"); pairing a tablet as a remote over the network is not part of this release.',
     };
   }
   if (LOOPBACK.test(loc.hostname)) {
@@ -43,5 +43,5 @@ export function pairingOf(code: string, loc: PairingLocation): Pairing {
       note: 'This address works on this computer only. Open the app by its network address (for example http://192.168.1.20:5173/?relay=…) so a tablet can reach it.',
     };
   }
-  return { url, relay, qr: true, note: 'Network pairing through the relay is a preview of version 1.1. Scan the code with a tablet on the same network.' };
+  return { url, relay, qr: true, note: 'Pairing a tablet as a remote through the relay is an untested preview in this release (learners\' phones use the same relay). Scan the code with a tablet on the same network.' };
 }

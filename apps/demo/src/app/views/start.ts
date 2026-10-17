@@ -6,6 +6,7 @@ import { LIBRARY, type ScenarioCard } from '../scenarios.ts';
 import type { AppSession, Mode } from '../session.ts';
 import { MONITORS, THEMES, saveSite, type SiteProfile } from '../site.ts';
 import { button, confirmDialog, h, seg, select, stepper, toast } from '../ui.ts';
+import { ABOUT_LINE } from '../about.ts';
 import { hrefOf } from '../router.ts';
 import type { View } from '../shell.ts';
 
@@ -69,7 +70,7 @@ export function startView(d: StartDeps): View {
           preview();
         } });
         box.checked = spec.comorbid.includes(c.id);
-        return h('label', { class: 'check', for: id }, box, c.label, c.later ? h('span', { class: 'tag' }, 'coming in v1.1') : null);
+        return h('label', { class: 'check', for: id }, box, c.label, c.later ? h('span', { class: 'tag' }, 'not in this release') : null);
       }),
     );
   };
@@ -160,6 +161,7 @@ export function startView(d: StartDeps): View {
     h('div', { class: 'page start' },
       h('h1', { id: 'start-h' }, 'Set up the session'),
       h('p', { class: 'lede' }, 'Choose the patient, the monitor and who is watching. The monitor already shows this patient, and the patient keeps running in every view.'),
+      h('p', { class: 'about-line muted', 'data-about': '' }, ABOUT_LINE), // Stage 8b: the release label and education-only line
       setup,
       h('h2', {}, 'Other tools'), tools,
     ),

@@ -41,7 +41,7 @@ export const SECTIONS: readonly Section[] = [
   { id: 'neuro', title: 'Anaesthetic depth and neuromuscular block', groups: ['neuro'], intro: 'Depth index, MAC, train-of-four and drive depression.' },
   { id: 'drugs', title: 'Drugs', groups: ['drugs'], intro: 'Plasma and effect-site concentrations of the drugs given.' },
   { id: 'labs', title: 'Labs', groups: ['blood'], gloss: ['5.7'], intro: 'The arterial blood gas the model computes today.',
-    placeholder: 'Full blood count, chemistry, coagulation and TEG/ROTEM panels are coming in version 1.1.' },
+    placeholder: 'Full blood count, chemistry, coagulation and TEG/ROTEM panels are not part of this release.' },
 ];
 
 const displayOf = (r: Row): { value: string; unit: string; delta: string } => {
