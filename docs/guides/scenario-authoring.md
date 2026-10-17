@@ -1,0 +1,129 @@
+# Authoring scenarios (`pme-scenario/1`)
+
+A scenario is a JSON document: a patient, a device skin, and a state machine whose states run commands when entered
+and whose transitions fire on time, vitals, learner actions, sensors or instructor buttons (brief §7.4). The JSON
+Schema is `packages/controller/scenarios/pme-scenario-1.schema.json`; `validateScenario(doc)` from
+`@pme/controller/scenario` checks a document (schema, then references between states) and returns
+`{ ok, errors, warnings }`. The built-in scenarios in `packages/controller/scenarios/` are worked examples.
+
+## The document
+
+| Field | Meaning |
+|---|---|
+| `schema` | always `"pme-scenario/1"` |
+| `id`, `title`, `notes` | identifier (`[A-Za-z][A-Za-z0-9_.-]*`), title, instructor notes |
+| `category`, `story`, `durationMin` | the library group (e.g. `ACLS`, `Induction`), the learner-facing case text shown before the start, the expected run time in minutes |
+| `objectives` | learning objectives, one per entry: a string, or `{ "text", "rule" }` where the rule (`eventWithin`, `occurred`, `never`, …) lets the Debrief report mark it met or not met |
+| `seed` | uint32; the same seed and the same learner actions replay the same run |
+| `mode` | `"manual"` (targets and ramps you script) or `"modeled"` (the physiology responds by itself) |
+| `patient` | `ageY`, `sex`, `weightKg`, `heightCm`, `ageBand`, `baseline` (starting values of state variables: `hr`, `sbp`, `dbp`, `spo2`, `rr`, `etco2`, `tempCore`, …), `rhythm` (`{ "id": "sinus" }`), `sensors` (`ecg`, `spo2`, `nibp`, `abp`, `cvp`, `pap`, `co2`, `temp`: `"on"`, `"off"`, …), `neuro`, `blood`, `endo`, and `profile` (below) |
+| `device` | `skin` (a skin or preset id) and `layout` |
+| `initialState`, `states` | the state machine |
+| `bookmarks` | named snapshots the instructor can jump to |
+
+### Patient profile (`patient.profile`)
+
+Chronic conditions and lung pathology are fixed when the engine is created and act in MODELED mode:
+
+```jsonc
+"profile": {
+  "conditions": [ { "id": "as", "grade": "severe" }, { "id": "cad", "grade": "stable" } ],
+  "lungConditions": [ { "id": "copd", "severity": 0.6 } ]
+}
+```
+
+`conditions` ids: `hfref`, `hfpef`, `htn`, `as`, `ar`, `mr`, `ms`, `tr`, `cad`, `betaBlocked`, `rvFailure`, `ph`,
+`tbi`, `hepaticFailure`, `aki` (valves and CAD take a `grade`, the others a `severity` 0–1). `lungConditions` ids are
+the lung-pathology catalogue (`ards`, `copd`, `asthma`, `pneumonia`, `ptxTension`, `pregnancy`, …; full list in the
+schema) with a `severity` 0–1 and, for one-sided conditions, `side`. Acute events — tamponade, massive PE, tension
+pneumothorax, sepsis, anaphylaxis, a haemorrhage — are not profile: send them as `applyEvent` commands in a state.
+
+## States and commands
+
+Each state has an `id`, a `label`, optional `notes`, `onEnter`/`onExit` command lists and `transitions`. Commands are
+the engine's (`setRhythm`, `setTarget` with a `ramp`, `pin`/`release`, `setFactor`, `setMode`, `setModifiers`,
+`applyEvent` with an event `kind` — `drug`, `fluid`, `bleed`, `airway`, `airwayDevice`, `ventilation`, `preoxygenate`,
+`vaporiser`, `cpr`, `defib`, `pacer`, `line`, `surgical`, `stimulus`, `condition`, `neuroProfile` —, `attachSensor`,
+`device`). `$comment` is allowed on the document, states, transitions and commands and is
+never interpreted.
+
+In **MANUAL** mode you script the numbers: a bleed is `setTarget` on `sbp`/`dbp`/`hr` with ramps. In **MODELED** mode
+you apply the cause (`applyEvent` `bleed`, a `drug`, a `condition`) and the physiology produces the numbers — check the
+[known deviations](known-deviations.md) before relying on a specific value.
+
+## Transitions
+
+`when` is one trigger or a combination: `{ "afterS": 60 }` (time in the state), `{ "atScenarioS": 300 }`,
+`{ "vital": { "var": "spo2", "op": "<", "value": 90, "forS": 10 } }` (on the *measured* value),
+`{ "event": { "kind": "drug", "drugId": "atropine" } }` (a learner action; filters such as `minJ`, `minDose`),
+`{ "sensor": { "sensor": "spo2", "state": "off" } }`, `{ "manual": { "label": "Induce" } }` (an instructor button),
+and `{ "all": [ … ] }` / `{ "any": [ … ] }`. `probability` with an `else` target rolls on the scenario's own random
+stream, so a seeded run replays exactly.
+
+## A complete example
+
+<!-- example: pme-scenario/1 -->
+```json
+{
+  "schema": "pme-scenario/1",
+  "id": "guide-bradycardia",
+  "title": "Guide example: bradycardia with hypotension in PACU, treated with atropine",
+  "notes": "62-year-old woman in PACU after a knee arthroscopy. Sinus bradycardia with hypotension at 1 min; atropine restores the rate.",
+  "seed": 11,
+  "mode": "manual",
+  "patient": {
+    "ageY": 62, "sex": "F", "weightKg": 70, "heightCm": 165, "ageBand": "adult",
+    "baseline": { "hr": 72, "sbp": 124, "dbp": 76, "spo2": 97, "rr": 14 },
+    "rhythm": { "id": "sinus" },
+    "sensors": { "ecg": "on", "spo2": "on", "nibp": "on" }
+  },
+  "device": { "skin": "saadat-like" },
+  "initialState": "stable",
+  "states": [
+    {
+      "id": "stable", "label": "Stable",
+      "onEnter": [ { "type": "device", "action": { "device": "nibp", "action": "auto", "intervalMin": 3 } } ],
+      "transitions": [ { "id": "t-brady", "to": "brady", "when": { "afterS": 60 } } ]
+    },
+    {
+      "id": "brady", "label": "Sinus bradycardia, hypotension",
+      "onEnter": [
+        { "type": "setRhythm", "rhythm": "sinusBrady", "opts": { "rateBpm": 38 }, "when": "nextBeat" },
+        { "type": "setTarget", "variable": "sbp", "value": 82, "ramp": { "durationS": 45, "curve": "sigmoid" } },
+        { "type": "setTarget", "variable": "dbp", "value": 48, "ramp": { "durationS": 45, "curve": "sigmoid" } }
+      ],
+      "transitions": [
+        { "id": "t-atropine", "label": "Atropine given", "to": "recovering", "when": { "event": { "kind": "drug", "drugId": "atropine" } } },
+        { "id": "t-worse", "label": "HR < 35 for 30 s", "to": "worse", "when": { "vital": { "var": "hr", "op": "<", "value": 35, "forS": 30 } } }
+      ]
+    },
+    {
+      "id": "worse", "label": "Worsening", "notes": "Instructor: prompt for atropine or pacing.",
+      "onEnter": [ { "type": "setRhythm", "rhythm": "sinusBrady", "opts": { "rateBpm": 32 }, "when": "nextBeat" } ],
+      "transitions": [ { "id": "t-atropine2", "to": "recovering", "when": { "event": { "kind": "drug", "drugId": "atropine" } } } ]
+    },
+    {
+      "id": "recovering", "label": "Recovering after atropine",
+      "onEnter": [
+        { "type": "setRhythm", "rhythm": "sinus", "opts": { "rateBpm": 88 }, "when": "nextBeat" },
+        { "type": "setTarget", "variable": "sbp", "value": 118, "ramp": { "durationS": 60, "curve": "exp" } },
+        { "type": "setTarget", "variable": "dbp", "value": 70, "ramp": { "durationS": 60, "curve": "exp" } }
+      ]
+    }
+  ]
+}
+```
+
+## Running a scenario
+
+In the clinical app, the Instructor view's scenario library loads the built-in scenarios (the developer page `stage6b-acls.html` loads one into the older instructor panel). In code, `ScenarioDriver` /
+`ScenarioRunner` from `@pme/controller/scenario` run a validated document against a monitor handle or a headless
+engine; the run log (`runLog`, `replayRunLog`) replays a session exactly.
+
+## Checklist
+
+- `validateScenario(doc).ok` is true and `warnings` is empty.
+- Every state the learner can reach has a way out (or is a deliberate end state).
+- MANUAL numbers come from a source you can cite in `notes` or `$comment`; MODELED scenarios name the events, not the
+  numbers.
+- Mark clinical content that has not been reviewed by a clinician `[draft]` in the title, as the built-ins do.
