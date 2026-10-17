@@ -262,3 +262,17 @@ Q4 ruling (the embed ships in this repository); 10 per §15. Open questions: non
 `docs/guides/known-deviations.md` lists **151 expected failures and 1 skipped test** (every one with where it is
 tracked), the 5 CI-only WebKit skips, 18 retry-only browser tests and all 60 calibration-queue rows. No release page
 claims clinical validation, IEC 60601 compliance, FDA/CE status or diagnostic use (`docs-honesty`, 7/7).
+
+## 18. CI on the final code push
+
+Run **39076653954** on `d72eeaf3` (the gate note and plan commits only follow it): **all 12 jobs green** — `build`
+(incl. `check-licences`, `check-size`, `pack-smoke`, `docs:api`), `renderer`, `e2e (chromium)`, `e2e (webkit)` and
+the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
+
+- `e2e (chromium)`: 108 passed, 3 skipped (25.6 min); `vent-embed {"s0":98,"s20":99,"s120":92,"c0":37,"c180":47,"simPerWall":4}`;
+  "e2e tests that passed only on retry": none.
+- `e2e (webkit)`: 72 passed, 38 skipped, 1 flaky (14.4 min); passed only on retry:
+  `[webkit] scenario-choose-another.e2e.ts:14 the scenario library opened before the first repaint stays open until a
+  scenario is loaded (passed on retry #1)` — already on the known-flaky list (known-deviations.md). The embed's light
+  test passed first time on WebKit after the timeout fix (and on the merge run 39068579366 before it).
+
