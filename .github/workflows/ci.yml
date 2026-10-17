@@ -30,6 +30,10 @@ jobs:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
       - run: pnpm build
       - run: pnpm check-notices
+      - run: pnpm check-licences # Stage 8b: allow-listed licences; shipped packages named in NOTICES with their LICENSES/ texts
+      - run: pnpm check-size # Stage 8b: patient-monitor.iife.js ≤ 400 KB gzipped (BUILD-PLAN Stage 8 acceptance 4); no .wasm
+      - run: pnpm pack-smoke "$RUNNER_TEMP/pack-smoke" # Stage 8b: the published shape installs, type-checks, runs and bundles (15–30 s)
+      - run: pnpm docs:api # Stage 8b: the TypeDoc reference still builds (25–55 s; output git-ignored, not uploaded)
       # KR-A1: the showcase kit's one-file classroom relay must survive real WebSocket frames on Node 22 (an HTTP-only
       # kit check let every kit from 51a37063 to 56f3761f ship a relay that exited at the first client frame)
       - name: kit classroom relay smoke test
@@ -48,11 +52,18 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "@pme/renderer^..." build # Stage 8b: the renderer's workspace dependencies first (its tsconfig.build.json reads their dist/types)
       - run: pnpm --filter @pme/renderer build
       - uses: actions/upload-artifact@v4
         with:
           name: patient-monitor-iife
           path: packages/renderer/dist/patient-monitor.iife.js
+          if-no-files-found: error
+      - run: pnpm --filter @pme/demo build # Stage 8b: writes apps/demo/dist/embed/ (the file:// ventilator + monitor embed)
+      - uses: actions/upload-artifact@v4 # Stage 8b: the file:// ventilator + monitor embed
+        with:
+          name: ventilator-monitor-embed
+          path: apps/demo/dist/embed/
           if-no-files-found: error
 
   # fix-ci-webkit-3: one e2e job per browser (was one step running both on one 2-vCPU runner, so each browser's
@@ -78,6 +89,10 @@ jobs:
         with:
           name: patient-monitor-iife
           path: packages/renderer/dist
+      - uses: actions/download-artifact@v4 # Stage 8b: the embed for vent-embed.e2e.ts
+        with:
+          name: ventilator-monitor-embed
+          path: apps/demo/dist/embed
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm test:e2e --project=${{ matrix.browser }} --reporter=list,json
         env:

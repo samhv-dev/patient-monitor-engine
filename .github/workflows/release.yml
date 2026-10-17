@@ -1,0 +1,64 @@
+name: release
+
+# Stage 8b. Runs when the ORCHESTRATOR pushes a `v*` tag on main (RELEASE.md; executors never tag). Rebuilds the
+# tagged commit, re-runs the release checks and publishes a GitHub release with the single-file IIFE, the file://
+# ventilator + monitor embed and the API reference attached. Tests stay in ci.yml (fast/slow split) and
+# validation.yml; this workflow does not replace them.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: The tag matches the package versions
+        run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./packages/renderer/package.json').version")"
+      - run: pnpm typecheck
+      - run: PME_BUILD="${GITHUB_SHA::7}" pnpm build # the build-unique engine key (Task 5, FU-11 A1); CI and local builds say 'dev'
+      - run: pnpm check-notices
+      - run: pnpm check-licences
+      - run: pnpm check-size
+      - run: pnpm exec playwright install --with-deps chromium webkit
+      - run: pnpm exec playwright test apps/demo/e2e/iife-smoke.e2e.ts apps/demo/e2e/vent-embed.e2e.ts
+      - run: pnpm pack-smoke "$RUNNER_TEMP/pack-smoke"
+      - run: pnpm docs:api
+      - name: Assemble the release assets
+        run: |
+          set -euo pipefail
+          V="$GITHUB_REF_NAME"
+          mkdir -p release
+          cp packages/renderer/dist/patient-monitor.iife.js packages/renderer/dist/patient-monitor.iife.js.map LICENSE NOTICES.md release/
+          zip -qr release/LICENSES.zip LICENSES   # the full third-party texts, beside the standalone IIFE
+          # build-embed.mjs already put LICENSE, NOTICES.md and LICENSES/ into the embed folder: refuse a zip without them
+          test -f apps/demo/dist/embed/LICENSE && test -f apps/demo/dist/embed/NOTICES.md && test -f apps/demo/dist/embed/LICENSES/Apache-2.0.txt
+          (cd apps/demo/dist/embed && zip -qr "../../../../release/ventilator-monitor-embed-$V.zip" .)
+          cp LICENSE NOTICES.md docs/api/
+          cp LICENSES/Apache-2.0.txt docs/api/TYPEDOC-ASSETS-LICENSE-Apache-2.0.txt
+          cp LICENSES/lunr-*.txt docs/api/   # lunr (MIT) is bundled in the theme's main.js
+          (cd docs/api && zip -qr "../../release/api-reference-$V.zip" .)
+          awk -v v="${V#v}" 'index($0, "## [" v "]") == 1 {on = 1; next} /^## \[/ || /^\[[^]]+\]: / {on = 0} on' CHANGELOG.md > release/NOTES.md
+          test -s release/NOTES.md
+          (cd release && sha256sum patient-monitor.iife.js patient-monitor.iife.js.map "ventilator-monitor-embed-$V.zip" "api-reference-$V.zip" \
+            LICENSES.zip LICENSE NOTICES.md > SHA256SUMS.txt)
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="$GITHUB_REF_NAME"
+          PRE=""; case "$V" in *-*) PRE="--prerelease" ;; esac   # v1.0.0-rc.1 → a GitHub pre-release (Q8)
+          gh release create "$V" --verify-tag $PRE --title "patient-monitor-engine $V" --notes-file release/NOTES.md \
+            release/patient-monitor.iife.js release/patient-monitor.iife.js.map \
+            "release/ventilator-monitor-embed-$V.zip" "release/api-reference-$V.zip" release/LICENSES.zip \
+            release/SHA256SUMS.txt release/LICENSE release/NOTICES.md
