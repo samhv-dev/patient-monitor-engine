@@ -10,6 +10,9 @@ test-results/
 .audit-respiratory/
 .audit-drugs/
 packages/validation/datasets/cache/
+docs/api/
+# the local Pulse build (pulse.wasm) is never committed or distributed (NOTICES N-062, N-084); check-size also refuses it
+*.wasm
 .audit-physiology/
 # offline showcase kit (scripts/showcase/make-bundle.mjs)
 pme-showcase/
