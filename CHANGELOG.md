@@ -51,10 +51,9 @@ realism review have not run, and the limits below are known.
 
 - The MODELED physiology is a teaching model with open calibration items: see
   [docs/guides/known-deviations.md](docs/guides/known-deviations.md). Not a medical device; not clinically validated.
-- FILL: the validation state at this release, from `docs/guides/validation-summary.md`: the harness's red (gating)
-  row count and the blind realism review's status — e.g. "N validation rows are outside their evidence band and the
-  blind realism review has not been run, so the v1.0 acceptance criteria 'V1–V9 pass' and 'realism review' are not met
-  yet; see the validation summary."
+- 27 validation rows are outside their evidence band by 30 % or more (the report regenerated on the release tree:
+  🟢 96 · 🟡 33 · 🔴 27) and the blind realism review has not been run, so the v1.0 acceptance criteria "V1–V9 pass"
+  and "realism review" are not met yet; see [the validation summary](docs/guides/validation-summary.md).
 - During compensated haemorrhage the systemic vascular resistance falls instead of rising (the reflex
   vasoconstriction is not reproduced).
 - There is no decompensation or reflex-collapse model: shock does not progress by itself to collapse (the autonomic
