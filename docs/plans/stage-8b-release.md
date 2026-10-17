@@ -170,7 +170,7 @@ re-measured: IIFE size, pack-smoke, TypeDoc, the embed e2e (nothing was built or
 
 **Files:** none changed (the plan copy is committed).
 
-- [ ] **Step 1: Launch gate (R53).** All three must be merged; stop and report if any is not:
+- [x] **Step 1: Launch gate (R53).** All three must be merged; stop and report if any is not:
 
 ```bash
 cd /Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo
@@ -193,7 +193,7 @@ git log --oneline "$R"..origin/main -- packages/engine-core/src packages/engine-
 
 Expected on the day of writing (checked on `d455b50`): report commit `7bcf992` ("engine 0.0.0", 🟢 96 · 🟡 27 · 🔴 16), followed by 77 physiology commits (7c, 7d, 7e and later; FU-3, FU-4 and V.1 add more). Refresh 2026-10-10 on 48864439: the same report commit, now followed by **238** physiology commits; FU-11, FU-7.1 and Stage 10 add more. Task 12 Step 0 regenerates the report on this stage's tree (orchestrator ruling Q9).
 
-- [ ] **Step 2: Worktree and branch.**
+- [x] **Step 2: Worktree and branch.**
 
 ```bash
 git worktree add ../scratch/wt-stage-8b -b stage-8b-release origin/main
@@ -202,7 +202,7 @@ mkdir -p docs/plans && cp ../../repo/docs/plans/stage-8b-release.md docs/plans/s
 npx -y pnpm@9.15.9 install --frozen-lockfile
 ```
 
-- [ ] **Step 3: Verify every find block of this plan against the tree (sequential, in memory, nothing written).** Save the script below as `<scratchpad>/stage-8b-release/check-blocks.py` with your file-writing tool (never a heredoc: no command may read standard input), then run `python3 <scratchpad>/stage-8b-release/check-blocks.py docs/plans/stage-8b-release.md` from the worktree root.
+- [x] **Step 3: Verify every find block of this plan against the tree (sequential, in memory, nothing written).** Save the script below as `<scratchpad>/stage-8b-release/check-blocks.py` with your file-writing tool (never a heredoc: no command may read standard input), then run `python3 <scratchpad>/stage-8b-release/check-blocks.py docs/plans/stage-8b-release.md` from the worktree root.
 
 ```python
 import re, sys, os
@@ -239,9 +239,9 @@ print(f'{n} find blocks; {len(bad)} problems; {len(info)} package.json (informat
 
 Expected (plan written on `main` 9f864b3, fixed on d455b50, refreshed on 48864439 and on the simulated freeze tree, rebase-checked on 56f3761f): `45 find blocks; 0 problems; 0 package.json (informational)` (43 until the rebase check added two `ci.yml` blocks to Task 9). Any problem: re-anchor that block on its neighbouring comment, apply the same change, and list it in the gate note. An informational `package.json` line: the anchor is a single script line — apply the same one-line change on the line as it now reads (never retype sibling keys) and list it in the gate note. The six library manifests are not blocks: `scripts/release-manifests.ts` (Task 4 Step 4) sets their fields. Command-driven edits (`pnpm add`, `pnpm install`, the manifest script) are not blocks and are re-run as written.
 
-- [ ] **Step 3b: Final block re-check after the freeze** (refresh 2026-10-10; binding). The refresh checked the blocks on 48864439 and on a SIMULATED freeze tree (48864439 + the FU-11, FU-7.1 and Stage 10 prototype patches), not on the real merged branches — executors and their gate fixes change files after a prototype. So, as the last act before the Step 5 commit: `git fetch origin && git merge --no-edit origin/main` (nothing should move after the freeze; if something did, say what in the gate note), re-run Step 3 on the merged tree, and re-run the launch gate (Step 1's first command). Expected: `45 find blocks; 0 problems`, every launch-gate branch merged. Files the sibling stages are known to touch near this plan's anchors (watch these first if a block misses): `packages/renderer/src/engine.worker.ts` (FU-11 F06 rewrites the `catch`, Stage 10 adds an `advance` case — the blocks anchor around both), `packages/engine-core/vite.config.ts` (the SLOW list; FU-7.1-a), `packages/renderer/src/index.ts` and `packages/controller/src/index.ts` (export lines), `NOTICES.md`, `apps/demo/e2e/iife-smoke.e2e.ts`. A block that misses is re-anchored by the Step 3 rule and listed in the gate note. Also re-run `node --experimental-strip-types scripts/deviations.ts` after Task 12 exists only if `main` moved (Task 14 Step 1).
+- [x] **Step 3b: Final block re-check after the freeze** (refresh 2026-10-10; binding). The refresh checked the blocks on 48864439 and on a SIMULATED freeze tree (48864439 + the FU-11, FU-7.1 and Stage 10 prototype patches), not on the real merged branches — executors and their gate fixes change files after a prototype. So, as the last act before the Step 5 commit: `git fetch origin && git merge --no-edit origin/main` (nothing should move after the freeze; if something did, say what in the gate note), re-run Step 3 on the merged tree, and re-run the launch gate (Step 1's first command). Expected: `45 find blocks; 0 problems`, every launch-gate branch merged. Files the sibling stages are known to touch near this plan's anchors (watch these first if a block misses): `packages/renderer/src/engine.worker.ts` (FU-11 F06 rewrites the `catch`, Stage 10 adds an `advance` case — the blocks anchor around both), `packages/engine-core/vite.config.ts` (the SLOW list; FU-7.1-a), `packages/renderer/src/index.ts` and `packages/controller/src/index.ts` (export lines), `NOTICES.md`, `apps/demo/e2e/iife-smoke.e2e.ts`. A block that misses is re-anchored by the Step 3 rule and listed in the gate note. Also re-run `node --experimental-strip-types scripts/deviations.ts` after Task 12 exists only if `main` moved (Task 14 Step 1).
 
-- [ ] **Step 4: Baseline.** `npx -y pnpm@9.15.9 build`, then record the IIFE on `main`:
+- [x] **Step 4: Baseline.** `npx -y pnpm@9.15.9 build`, then record the IIFE on `main`:
 
 ```bash
 node -e 'const z=require("zlib"),b=require("fs").readFileSync("packages/renderer/dist/patient-monitor.iife.js");console.log("main IIFE raw",b.length,"gzip-9",z.gzipSync(b,{level:9}).length)'
@@ -249,7 +249,7 @@ node -e 'const z=require("zlib"),b=require("fs").readFileSync("packages/renderer
 
 Expected ≈ 1.3 MB raw / ≈ 545 KB gzip (refresh on 48864439: 1,290,519 / 544,134; prototype on 9f864b3: 1,129,884 / 485,085; FU-11, FU-7.1 and Stage 10 add a little). Record it for the gate note.
 
-- [ ] **Step 5: Commit the plan and push.**
+- [x] **Step 5: Commit the plan and push.**
 
 ```bash
 git add docs/plans/stage-8b-release.md
@@ -267,7 +267,7 @@ git push -u origin stage-8b-release
 - Modify: `packages/renderer/src/engine.worker.ts`, `packages/renderer/src/worker-host.ts` (one line), `packages/renderer/vite.config.ts`, `packages/renderer/package.json` (build script), `apps/demo/e2e/iife-smoke.e2e.ts`
 - Create: `packages/renderer/src/iife-worker.ts`
 
-- [ ] **Step 1: Make the smoke test demand a worker path** (it fails today only if the self-worker is broken; it is the regression guard for Step 3).
+- [x] **Step 1: Make the smoke test demand a worker path** (it fails today only if the self-worker is broken; it is the regression guard for Step 3).
 
 **Find** in `apps/demo/e2e/iife-smoke.e2e.ts`:
 ```ts
@@ -281,7 +281,7 @@ git push -u origin stage-8b-release
   expect(offscreen ? ['worker-raf', 'worker-pump'] : ['main']).toContain(path);
 ```
 
-- [ ] **Step 2: The worker entry starts itself only inside our own worker (named `pme-engine`).**
+- [x] **Step 2: The worker entry starts itself only inside our own worker (named `pme-engine`).**
 
 **Find** in `packages/renderer/src/engine.worker.ts`:
 ```ts
@@ -372,7 +372,7 @@ export default class EngineWorker {
 }
 ```
 
-- [ ] **Step 3: Two build modes, the self-wrap plugin and the banner.**
+- [x] **Step 3: Two build modes, the self-wrap plugin and the banner.**
 
 **Find** in `packages/renderer/vite.config.ts`:
 ```ts
@@ -467,7 +467,7 @@ export default defineConfig(({ mode }) => {
     "build": "vite build && vite build --mode iife"
 ```
 
-- [ ] **Step 4: Build, test, measure.**
+- [x] **Step 4: Build, test, measure.**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/renderer build
@@ -480,7 +480,7 @@ node -e 'const z=require("zlib"),b=require("fs").readFileSync("packages/renderer
 
 Expected: the file starts with the `/*! patient-monitor-engine 0.0.0 (@pme/renderer IIFE) | MIT …` banner line, then `(function __pmeSelf(){`; typecheck clean; renderer tests pass (27 files / 90 tests on 48864439; 32 test files on 56f3761f — the rebase check counted files, not tests; 22 / 70 in the 9f864b3 prototype); smoke 2/2 with `worker-raf`; **≈ 681 KB raw / ≈ 285 KB gzip** (refresh on 48864439 with the banner: 680,626 / 284,562; prototype on 9f864b3: 597,766 / 253,765; FU-11, FU-7.1 and Stage 10 add a little). The source map is exact: in the prototype, `"worker-raf"` in the IIFE mapped back to `src/engine.worker.ts` line 32 and `'pme-engine'` to `src/iife-worker.ts` line 13 (check with `source-map-js`, as in the prototype, if you touch the plugin). The name guard and the `worker-host.ts` line came from the R50 review after the prototype (the reviewer re-checked the mechanism, not a full run): if the smoke reports `main` where OffscreenCanvas exists, or the renderer tests fail, the name is not reaching the worker — stop and report rather than loosening the guard. The ESM worker path (named by `worker-host.ts`) is exercised by the vent-link e2e in Task 4 Step 7.
 
-- [ ] **Step 5: Commit and push.**
+- [x] **Step 5: Commit and push.**
 
 ```bash
 git add packages/renderer/src/engine.worker.ts packages/renderer/src/worker-host.ts packages/renderer/src/iife-worker.ts packages/renderer/vite.config.ts packages/renderer/package.json apps/demo/e2e/iife-smoke.e2e.ts docs/plans/stage-8b-release.md
@@ -502,7 +502,7 @@ The draft PR exists so that every later push runs CI (since PR #55: jobs `build`
 
 **Files:** Create `scripts/check-size.ts`, `packages/validation/test/check-size.test.ts`; Modify root `package.json`.
 
-- [ ] **Step 1: Write the failing test.**
+- [x] **Step 1: Write the failing test.**
 
 **Create** `packages/validation/test/check-size.test.ts`:
 ```ts
@@ -548,7 +548,7 @@ describe('scripts/check-size', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/check-size.test.ts` — Expected: FAIL (cannot find `scripts/check-size.ts`).
 
-- [ ] **Step 2: The script.**
+- [x] **Step 2: The script.**
 
 **Create** `scripts/check-size.ts`:
 ```ts
@@ -621,9 +621,9 @@ if (invokedDirectly) {
     "check-size": "node --experimental-strip-types scripts/check-size.ts",
 ```
 
-- [ ] **Step 3: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/check-size.test.ts` → PASS (3 tests; the `.wasm` case came from the R50 review and was not prototyped). `npx -y pnpm@9.15.9 check-size` → `check-size: OK — patient-monitor.iife.js 664.7 KB raw, 277.9 KB gzip -9, 247.0 KB brotli (budget 400.0 KB gzip)` (refresh on 48864439; 583.8 / 247.8 / 222.2 in the 9f864b3 prototype; yours differs by what FU-11, FU-7.1 and Stage 10 added). The `.wasm` case was first run in the refresh: 3/3 pass. The CI step is added in Task 9.
+- [x] **Step 3: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/check-size.test.ts` → PASS (3 tests; the `.wasm` case came from the R50 review and was not prototyped). `npx -y pnpm@9.15.9 check-size` → `check-size: OK — patient-monitor.iife.js 664.7 KB raw, 277.9 KB gzip -9, 247.0 KB brotli (budget 400.0 KB gzip)` (refresh on 48864439; 583.8 / 247.8 / 222.2 in the 9f864b3 prototype; yours differs by what FU-11, FU-7.1 and Stage 10 added). The `.wasm` case was first run in the refresh: 3/3 pass. The CI step is added in Task 9.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add scripts/check-size.ts packages/validation/test/check-size.test.ts package.json docs/plans/stage-8b-release.md
@@ -641,7 +641,7 @@ git push origin stage-8b-release
 - Create: `scripts/finish-dist.ts`, `packages/validation/test/finish-dist.test.ts`, `packages/{engine-core,renderer,audio,controller,skins,ventilator}/tsconfig.build.json`, `scripts/release-manifests.ts`, `packages/validation/test/release-manifests.test.ts`, `scripts/pack-smoke.mjs`
 - Modify: the six `package.json` (by `scripts/release-manifests.ts`), five `vite.config.ts` (renderer's was done in Task 2), root `package.json`, `pnpm-lock.yaml` (by `pnpm install`)
 
-- [ ] **Step 1: Failing test for the declaration rewrite.**
+- [x] **Step 1: Failing test for the declaration rewrite.**
 
 **Create** `packages/validation/test/finish-dist.test.ts`:
 ```ts
@@ -673,7 +673,7 @@ describe('scripts/finish-dist rewriteDts', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/finish-dist.test.ts` — Expected: FAIL (module not found).
 
-- [ ] **Step 2: The finishing script.**
+- [x] **Step 2: The finishing script.**
 
 **Create** `scripts/finish-dist.ts`:
 ```ts
@@ -722,7 +722,7 @@ if (invokedDirectly) {
 
 Run the test again → PASS (1 test).
 
-- [ ] **Step 3: One `tsconfig.build.json` per library package.** Sibling `@pme/*` imports resolve to the siblings' emitted declarations (`pnpm -r build` builds skins → engine-core → audio/controller → renderer/ventilator in dependency order). `types` lists `node` as every package's own `tsconfig.json` does (Decision 26: engine-core reads `globalThis.process?.env` since FU-7; without it `tsc` fails with TS7017).
+- [x] **Step 3: One `tsconfig.build.json` per library package.** Sibling `@pme/*` imports resolve to the siblings' emitted declarations (`pnpm -r build` builds skins → engine-core → audio/controller → renderer/ventilator in dependency order). `types` lists `node` as every package's own `tsconfig.json` does (Decision 26: engine-core reads `globalThis.process?.env` since FU-7; without it `tsc` fails with TS7017).
 
 **Create** `packages/engine-core/tsconfig.build.json`:
 ```json
@@ -868,7 +868,7 @@ Run the test again → PASS (1 test).
 }
 ```
 
-- [ ] **Step 4: Package metadata and `publishConfig`, set by a script** (workspace `exports` stay on `src/`; `pnpm pack`/`publish` swap in the `publishConfig` fields). Orchestrator ruling (8b review), 2026-09-27: the six manifests are NOT edited by find blocks — FU-3, FU-4 or V.1 may have added scripts or dependencies to them, and JSON has no comments to re-anchor on — but by one small field-setting script that keeps every other key and its order. Test first:
+- [x] **Step 4: Package metadata and `publishConfig`, set by a script** (workspace `exports` stay on `src/`; `pnpm pack`/`publish` swap in the `publishConfig` fields). Orchestrator ruling (8b review), 2026-09-27: the six manifests are NOT edited by find blocks — FU-3, FU-4 or V.1 may have added scripts or dependencies to them, and JSON has no comments to re-anchor on — but by one small field-setting script that keeps every other key and its order. Test first:
 
 **Create** `packages/validation/test/release-manifests.test.ts`:
 ```ts
@@ -1277,7 +1277,7 @@ Expected head of `packages/ventilator/package.json`:
   },
 ```
 
-- [ ] **Step 5: ESM externals and the skins `validate` entry.**
+- [x] **Step 5: ESM externals and the skins `validate` entry.**
 
 **Find** in `packages/engine-core/vite.config.ts`:
 ```ts
@@ -1351,7 +1351,7 @@ Expected head of `packages/ventilator/package.json`:
   },
 ```
 
-- [ ] **Step 6: The pack smoke.**
+- [x] **Step 6: The pack smoke.**
 
 **Create** `scripts/pack-smoke.mjs`:
 ```js
@@ -1428,7 +1428,7 @@ console.log(`pack-smoke: OK — ${PKGS.length} tarballs carry the licence texts 
     "pack-smoke": "node scripts/pack-smoke.mjs",
 ```
 
-- [ ] **Step 7: Lockfile, build, verify the published shape.**
+- [x] **Step 7: Lockfile, build, verify the published shape.**
 
 ```bash
 npx -y pnpm@9.15.9 install                      # ws moved to devDependencies: pnpm-lock.yaml changes (commit it)
@@ -1442,7 +1442,7 @@ PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/iife-sm
 
 Expected: typecheck and build clean (`finish-dist: N declaration files rewritten; LICENSE, NOTICES.md and LICENSES/ copied into dist/` six times; refresh on 48864439: 144 engine-core, 26 controller, 13 ventilator, 12 renderer, 9 audio, 5 skins); six `index.d.ts`, `validate.js`, six `dist/LICENSE` and six `dist/LICENSES/Apache-2.0.txt`; no `.ts'` specifier left in `dist/types`; `grep -rl 'reference types="node"' packages/*/dist/types` prints nothing; `pack-smoke: OK …` (15 s in the 9f864b3 prototype; 4 min 13 s wall in the refresh on a loaded machine, almost all npm install; the tarball licence check, the Node import and the renderer's `!dist/assets` all ran in the refresh and passed: no tarball carries `dist/assets/`. If a later pnpm ignored the negation, set `worker: { rollupOptions: { output: { sourcemap: false } } }` in the renderer's ESM config instead and note it); the fast suite unchanged from `main`; smoke and vent-link e2e pass (the demo still resolves `src/`; vent-link runs the ESM worker named by `worker-host.ts`). If `pack-smoke` fails on a sibling stage's new export, fix the declaration build, not the consumer.
 
-- [ ] **Step 8: Commit and push.**
+- [x] **Step 8: Commit and push.**
 
 ```bash
 git add scripts/finish-dist.ts scripts/pack-smoke.mjs scripts/release-manifests.ts packages/validation/test/finish-dist.test.ts packages/validation/test/release-manifests.test.ts packages/*/tsconfig.build.json \
@@ -1470,7 +1470,7 @@ Then check CI on the draft PR (bounded, as in Task 2 Step 5): the IIFE smoke on 
 
 **Executor note on the FU-11 amendment (refresh 2026-10-10; not prototyped — the amendment's text above is FU-11's, verbatim).** (1) Q8: read `version = '1.0.0-rc.1'` where the amendment says `'1.0.0'`. (2) Do it after Step 4's commit, as a second commit of this task, `feat(engine): build-unique snapshot compatibility key (FU-11 A1)`, with the engine-core and renderer tests and the IIFE smoke re-run before it. (3) Shape, smallest that works: in `version.ts` keep the `export const version = '…';` line exactly as `release-versions.test.ts` reads it, and add `declare const __PME_ENGINE_BUILD__: string | undefined;` + `export const build: string = typeof __PME_ENGINE_BUILD__ === 'string' ? __PME_ENGINE_BUILD__ : 'dev';`. The `define: { __PME_ENGINE_BUILD__: JSON.stringify(process.env.PME_BUILD ?? 'dev') }` goes into the `vite.config.ts` of engine-core and renderer (both builds; Vitest and the demo dev server then see `'dev'`). **Rebase check 2026-10-13: do NOT name it `__PME_BUILD__`** — Stage 13 already defines `__PME_BUILD__` in `apps/demo/vite.config.ts:50` as `"<git sha8>[+] <date>"` for the Debrief footer (`apps/demo/src/app/views/debrief.ts:19–20`), and the demo's Vite applies its `define` to the engine-core source it compiles, so an engine reading `__PME_BUILD__` would get a date-stamped key in every demo build, dev server and demo Vitest run (snapshots refused across days), not `'dev'`, and the release workflow (Task 9) sets `PME_BUILD: ${{ github.sha }}` shortened to 7 characters on its `pnpm build` step; CI and local builds stay `'dev'`. (4) ONE key everywhere: export `engineKey` (= `${version}+${build}`) from `version.ts` (and the package index); the engine's `snapshot()` writes it into `engineVersion` and `restore()` compares against it. Then EVERY other comparison must use the same key, or it refuses every snapshot: find them with `grep -rn "engineVersion" packages/*/src apps/demo/src` (on 56f3761f: `packages/engine-core/src/engine.ts:410` (writes) and `:420` (compares), `packages/controller/src/session/viewer-sync.ts:186` fed by `apps/demo/src/stage6a/viewer.ts:15` with `engine.version` and by the FU-11 d learner/phone follower `apps/demo/src/app/views/follower.ts:37` (`import { version as engineVersion } from '@pme/engine-core'`, used at `:140`) — that import must become `engineKey`; `packages/controller/src/session/controller-session.ts:214` stores the host's `engineVersion`; FU-11 did NOT implement A1: `version.ts` on 56f3761f is still the one line `export const version = '0.0.0';`). Stage 12's phones run the same follower code (re-run `s12-mobile-learner.e2e.ts` on Chromium after the change; on CI WebKit two of its tests are skipped). Simplest: make the engine instance's `version` property return `engineKey` only if nothing displays it as a release number; otherwise change each call site. A learner/remote e2e (FU-11's same-browser second screen) must still pair after the change — run it. (5) Test: a new case in `packages/engine-core/test/version.test.ts` or the engine's snapshot test — a snapshot whose build part differs is refused, the message names both keys. (6) The controller fixtures that carry `engineVersion: '0.0.0'` as DATA stay (see the note after Step 2); if one of them is RESTORED by a test, it now needs the current key — read the failure, change only that fixture's version field, and list it in the gate note. If any of (3)–(5) touches a file outside this stage's partition, STOP and report instead.
 
-- [ ] **Step 1: Failing test.**
+- [x] **Step 1: Failing test.**
 
 **Create** `packages/validation/test/release-versions.test.ts`:
 ```ts
@@ -1502,7 +1502,7 @@ describe('release versions', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/release-versions.test.ts` — Expected: FAIL (constants 0.0.0 vs 1.0.0-rc.1; validation 0.0.0).
 
-- [ ] **Step 2: Bump.** The same one-line edit in six files, then the six tests, then validation's manifest and the IIFE smoke:
+- [x] **Step 2: Bump.** The same one-line edit in six files, then the six tests, then validation's manifest and the IIFE smoke:
 
 **Find** in `packages/engine-core/src/version.ts`:
 ```ts
@@ -1643,9 +1643,9 @@ export const version = '1.0.0-rc.1';
 
 (Leave `'0.0.0'` where it is DATA, not the package version: `stage1Vocabulary(engineVersion = '0.0.0')` and the relay/session snapshot fixtures in `packages/controller` — the exported default is listed in the gate note as a later-release item (Decision 22) — and `docs/validation/report.*`, which Task 12 Step 0's `pnpm validate` run regenerates.)
 
-- [ ] **Step 3: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/release-versions.test.ts` → PASS (2); `for p in engine-core audio controller renderer skins validation; do npx -y pnpm@9.15.9 --filter @pme/$p exec vitest run test/version.test.ts; done` → PASS; `npx -y pnpm@9.15.9 --filter @pme/renderer build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/iife-smoke.e2e.ts` → 2 passed, and `head -c 60 packages/renderer/dist/patient-monitor.iife.js` shows `patient-monitor-engine 1.0.0-rc.1`.
+- [x] **Step 3: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/release-versions.test.ts` → PASS (2); `for p in engine-core audio controller renderer skins validation; do npx -y pnpm@9.15.9 --filter @pme/$p exec vitest run test/version.test.ts; done` → PASS; `npx -y pnpm@9.15.9 --filter @pme/renderer build && PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/iife-smoke.e2e.ts` → 2 passed, and `head -c 60 packages/renderer/dist/patient-monitor.iife.js` shows `patient-monitor-engine 1.0.0-rc.1`.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add packages/*/src/index.ts packages/engine-core/src/version.ts packages/*/test/version.test.ts packages/controller/test/index.test.ts packages/validation/package.json \
@@ -1664,7 +1664,7 @@ git push origin stage-8b-release
 
 Orchestrator ruling (8b review), 2026-09-27: every shipped package's licence text is in `LICENSES/` and travels with every distribution (BUILD-PLAN Stage 8 acceptance 6: "every `LICENSES/` text is present"). MIT and BSD-3 require the copyright and permission notice in every copy; ajv, fast-deep-equal, json-schema-traverse and require-from-string are bundled into `@pme/controller/scenario` and `@pme/skins/validate`, and only fast-uri's text was in `LICENSES/`.
 
-- [ ] **Step 1: Failing test.**
+- [x] **Step 1: Failing test.**
 
 **Create** `packages/validation/test/check-licences.test.ts`:
 ```ts
@@ -1710,7 +1710,7 @@ describe('scripts/check-licences auditLicences', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/check-licences.test.ts` — Expected: FAIL (module not found).
 
-- [ ] **Step 2: The script.**
+- [x] **Step 2: The script.**
 
 **Create** `scripts/check-licences.ts`:
 ```ts
@@ -1843,9 +1843,9 @@ Then point N-010–N-013 at the texts:
     "check-licences": "node --experimental-strip-types scripts/check-licences.ts",
 ```
 
-- [ ] **Step 3: Run.** The unit test → PASS (4; the text checks came from the R50 review and were not prototyped). `npx -y pnpm@9.15.9 check-licences` → `check-licences: OK (N packages, 5 shipped, every shipped text in LICENSES/; licences Apache-2.0, BSD-2-Clause, BSD-3-Clause, BlueOak-1.0.0, ISC, MIT, Python-2.0)` (prototype: 89 packages with TypeDoc installed, 88 without it at this point, 69 on d455b50 per the reviewer; refresh on 48864439: 89 / 5 with TypeDoc, and the pre-copy run failed naming exactly the four texts; shipped = ajv, fast-deep-equal, json-schema-traverse, require-from-string, fast-uri once `ws` is a devDependency). Run it once BEFORE copying the four texts and see it fail naming exactly those four (the test that the check bites), then after. If FU-3/FU-4/V.1 added a runtime dependency, the audit tells you which NOTICES row or text is missing: add them in THIS task (same PR rule, brief §8) and record it in the gate note. `npx -y pnpm@9.15.9 build && ls packages/controller/dist/LICENSES/` → the seven texts (six + `qrcodegen-MIT.txt`, on `main` since Stage 12) (finish-dist copies the directory). The CI step is added in Task 9.
+- [x] **Step 3: Run.** The unit test → PASS (4; the text checks came from the R50 review and were not prototyped). `npx -y pnpm@9.15.9 check-licences` → `check-licences: OK (N packages, 5 shipped, every shipped text in LICENSES/; licences Apache-2.0, BSD-2-Clause, BSD-3-Clause, BlueOak-1.0.0, ISC, MIT, Python-2.0)` (prototype: 89 packages with TypeDoc installed, 88 without it at this point, 69 on d455b50 per the reviewer; refresh on 48864439: 89 / 5 with TypeDoc, and the pre-copy run failed naming exactly the four texts; shipped = ajv, fast-deep-equal, json-schema-traverse, require-from-string, fast-uri once `ws` is a devDependency). Run it once BEFORE copying the four texts and see it fail naming exactly those four (the test that the check bites), then after. If FU-3/FU-4/V.1 added a runtime dependency, the audit tells you which NOTICES row or text is missing: add them in THIS task (same PR rule, brief §8) and record it in the gate note. `npx -y pnpm@9.15.9 build && ls packages/controller/dist/LICENSES/` → the seven texts (six + `qrcodegen-MIT.txt`, on `main` since Stage 12) (finish-dist copies the directory). The CI step is added in Task 9.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add scripts/check-licences.ts packages/validation/test/check-licences.test.ts package.json NOTICES.md \
@@ -1862,7 +1862,7 @@ git push origin stage-8b-release
 
 **Files:** Create `typedoc.json`, `packages/{engine-core,renderer,audio,controller,skins,ventilator}/typedoc.json`, `LICENSES/lunr-<version>.txt`; Modify root `package.json` (via `pnpm add` + one script), `pnpm-lock.yaml`, `.gitignore`, `NOTICES.md`.
 
-- [ ] **Step 1: Install (exact version, build only).**
+- [x] **Step 1: Install (exact version, build only).**
 
 ```bash
 npx -y pnpm@9.15.9 add -Dw typedoc@0.28.20
@@ -1870,7 +1870,7 @@ npx -y pnpm@9.15.9 add -Dw typedoc@0.28.20
 
 Expected: root `devDependencies` gains `"typedoc": "0.28.20"` (pnpm re-sorts that block alphabetically; leave it), `pnpm-lock.yaml` gains TypeDoc and its five dependencies (`@gerrit0/mini-shiki`, `lunr`, `markdown-it`, `minimatch`, `yaml`).
 
-- [ ] **Step 2: Configuration.**
+- [x] **Step 2: Configuration.**
 
 **Create** `typedoc.json`:
 ```json
@@ -1946,7 +1946,7 @@ docs/api/
 *.wasm
 ```
 
-- [ ] **Step 3: NOTICES row and lunr's text** (IDs N-001…N-013 are build/runtime dependencies; **N-014 is TAKEN on `main` since Stage 12** — Project Nayuki's QR code generator, `LICENSES/qrcodegen-MIT.txt` — so this row is **N-015** (rebase check 2026-10-13: free on 56f3761f; `check-notices` fails on a duplicate row ID, `scripts/check-notices.ts:47`); if N-015 is taken too by launch, use the next free `N-01x` and write that ID everywhere this plan says N-015). The generated site redistributes TypeDoc's theme assets (Apache-2.0) and lunr (MIT, bundled into the theme's `main.js`), so the API zip carries `NOTICES.md`, `LICENSES/Apache-2.0.txt` and lunr's text (Task 9). Copy lunr's licence verbatim from the installed package:
+- [x] **Step 3: NOTICES row and lunr's text** (IDs N-001…N-013 are build/runtime dependencies; **N-014 is TAKEN on `main` since Stage 12** — Project Nayuki's QR code generator, `LICENSES/qrcodegen-MIT.txt` — so this row is **N-015** (rebase check 2026-10-13: free on 56f3761f; `check-notices` fails on a duplicate row ID, `scripts/check-notices.ts:47`); if N-015 is taken too by launch, use the next free `N-01x` and write that ID everywhere this plan says N-015). The generated site redistributes TypeDoc's theme assets (Apache-2.0) and lunr (MIT, bundled into the theme's `main.js`), so the API zip carries `NOTICES.md`, `LICENSES/Apache-2.0.txt` and lunr's text (Task 9). Copy lunr's licence verbatim from the installed package:
 
 ```bash
 L=$(ls -d node_modules/.pnpm/lunr@*/node_modules/lunr | head -1); V=$(node -p "require('./$L/package.json').version")
@@ -1967,7 +1967,7 @@ In the row below, replace `lunr-<version>` with that file's name (e.g. `lunr-2.3
 
 (Replace `FILL: YYYY-MM-DD` with the day you commit and `lunr-<version>` with the real file name before committing — `check-licences` fails on a `LICENSES/` path that does not exist.)
 
-- [ ] **Step 4: Build the reference.**
+- [x] **Step 4: Build the reference.**
 
 ```bash
 /usr/bin/time -p npx -y pnpm@9.15.9 docs:api > <scratchpad>/stage-8b-release/typedoc.log 2>&1; echo exit $?
@@ -1978,7 +1978,7 @@ npx -y pnpm@9.15.9 check-notices && npx -y pnpm@9.15.9 check-licences
 
 Expected: exit 0 in ≈ 24 s unloaded (prototype 23.8 s; refresh on 48864439: 38.5 s CPU, 3.5 min wall with five other agents running); ≈ 35 warnings (refresh: 36), all "X, defined in …, is referenced by Y but not included in the documentation" (types used by public signatures but not exported — informational, listed in the gate note; do not export engine internals to silence them); `docs/api/modules` lists `_pme_audio.html`, `_pme_controller.index.html`, `_pme_controller.scenario.html`, `_pme_engine-core.html`, `_pme_renderer.html`, `_pme_skins.index.html`, `_pme_skins.validate.html`, `_pme_ventilator.html` (+ the two package pages `_pme_controller.html`, `_pme_skins.html`); ≈ 650 pages (9f864b3; 663 on 48864439), ≈ 8–9.3 MB; nothing to commit under `docs/api`; both checks OK.
 
-- [ ] **Step 5: Commit and push.**
+- [x] **Step 5: Commit and push.**
 
 ```bash
 git add typedoc.json packages/*/typedoc.json package.json pnpm-lock.yaml .gitignore NOTICES.md LICENSES/lunr-*.txt docs/plans/stage-8b-release.md
@@ -1998,7 +1998,7 @@ git push origin stage-8b-release
 
 Before starting, read `apps/demo/src/vent/link-page.ts` on `main`: V.1 may have changed how the combined page mounts the monitor and the ventilator (profiles carrying `lungConditions`, absolute `lungState`, the retired interim shunt/recruit). `embed.ts` must mount exactly as `link-page.ts` does after V.1 — the block below mirrors `link-page.ts` as of 9f864b3 (`mountMonitor` with the profile's `patient`, the GA `thermal` event, `attachMonitorToLink`, `createVentDriver(port, profile)`); if V.1 changed any of those calls, copy its new form and note it in the gate note. Typecheck catches signature changes. Refresh 2026-10-10: V.1 has merged, and on 48864439 the block below still mirrors `link-page.ts` (same `mountMonitor` options, GA `thermal` event and `attachMonitorToLink`; typecheck clean; both e2e pass) — FU-11 or Stage 10 may still change the link or `mountMonitor` (e.g. a fast-forward the embed must not offer): compare again on your base.
 
-- [ ] **Step 1: Write the e2e first** (it fails: the page does not exist).
+- [x] **Step 1: Write the e2e first** (it fails: the page does not exist).
 
 **Create** `apps/demo/e2e/vent-embed.e2e.ts`:
 ```ts
@@ -2097,7 +2097,7 @@ test('vent embed: FiO2 0.21 at shunt 30 % lowers SpO2 after the §4.3 lag; RR 6 
 
 The waits take their budget from the sim span at ×1 real time (+ 60 s) and the test has 900 s (orchestrator ruling, 8b review: the prototype's 2.3 min on this Mac does not show the CI runner holds ×4 with two engines on the page); the assertions are all in sim time, so no band changed. These two bands are new acceptance tests of THIS stage (BUILD-PLAN acceptance 5: "visibly lowers SpO2 with the §4.3 lag", "RR 6 raises EtCO2 per the kinetics"), set with margin below the prototype. If FU-3/FU-4/V.1 moved the physiology so that a band is missed, do NOT widen it (R45): record the numbers, keep the test as an expected failure — Playwright's `test.fail('<literal title with the measured numbers>', async (…) => …)`, the e2e form of `it.fails` — and report — the cause belongs to the stage that moved it; `scripts/deviations.ts` scans `apps/demo/e2e` too, so the miss must then appear on known-deviations.md (Task 12). If a wait times out on CI, that is the runner's speed, not a band: record `simPerWall` and report; never shorten the sim spans.
 
-- [ ] **Step 2: The embed entry.**
+- [x] **Step 2: The embed entry.**
 
 **Create** `apps/demo/src/vent/embed.ts`:
 ```ts
@@ -2257,7 +2257,7 @@ console.log('build-embed: dist/embed/ventilator-monitor.html + patient-monitor.i
   "include": ["src", "e2e", "vite.config.ts", "vite.embed.config.ts"]
 ```
 
-- [ ] **Step 3: Build and run.**
+- [x] **Step 3: Build and run.**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/demo exec tsc -p tsconfig.json
@@ -2268,9 +2268,9 @@ PW_SYSTEM_CHROME=1 npx -y pnpm@9.15.9 exec playwright test apps/demo/e2e/vent-em
 ls -la docs/gates/stage-8b/
 ```
 
-Expected: typecheck clean; `dist/embed/` holds `ventilator-monitor.html` (≈ 13.5 KB), `patient-monitor.iife.js` + `.map`, `pme-ventilator-embed.iife.js` (+ map), `LICENSE`, `NOTICES.md` and `LICENSES/`; embed ≈ 122 KB raw / ≈ 40 KB gzip (it must NOT contain the engine's VF/AF templates: if it is ≈ 260 KB the `sideEffects` settings of Task 4 are missing — engine-core now uses the two-file list, not `false`: record the measured size; if it is well above 122 KB, report it rather than reverting to `false`); `grep -c "onApply.push\|onBeat.push" packages/renderer/dist/patient-monitor.iife.js` still finds the ECG hook registrations (reviewer: 2× `onApply.push`, 1× `onBeat.push`); e2e 2/2 in ≈ 2.3 min with `vent-embed {"s0":99,"s20":99,"s120":92,"c0":34,"c180":42,"simPerWall":4.01}` (refresh on 48864439; `{"s0":98,"s20":98,"s120":92,"c0":38,"c180":47,…}` in the 9f864b3 prototype — the EtCO2 rise margin over the band shrank from 4 to 3 mmHg, so FU-7.1-b's gas changes, e.g. the B3 washout, may move it: a miss is a `test.fail` with numbers, never a wider band) and `simPerWall` ≈ 4 locally; two JPEGs ≤ 60 KB (asserted by the test). **Mandatory:** open `apps/demo/dist/embed/ventilator-monitor.html` by double-click in Safari once (acceptance 5 names Safari and Chrome; WebKit is not installed for Playwright here) and record the result and the Safari version (Safari → About Safari) for the gate note. After the push (Step 4), check CI on the draft PR (bounded, as in Task 2 Step 5): the embed's light test on WebKit.
+Expected: typecheck clean; `dist/embed/` holds `ventilator-monitor.html` (≈ 13.5 KB), `patient-monitor.iife.js` + `.map`, `pme-ventilator-embed.iife.js` (+ map), `LICENSE`, `NOTICES.md` and `LICENSES/`; embed ≈ 122 KB raw / ≈ 40 KB gzip (it must NOT contain the engine's VF/AF templates: if it is ≈ 260 KB the `sideEffects` settings of Task 4 are missing — engine-core now uses the two-file list, not `false`: record the measured size; if it is well above 122 KB, report it rather than reverting to `false`); `grep -c "onApply.push\|onBeat.push" packages/renderer/dist/patient-monitor.iife.js` still finds the ECG hook registrations (reviewer: 2× `onApply.push`, 1× `onBeat.push`); e2e 2/2 in ≈ 2.3 min with `vent-embed {"s0":99,"s20":99,"s120":92,"c0":34,"c180":42,"simPerWall":4.01}` (refresh on 48864439; `{"s0":98,"s20":98,"s120":92,"c0":38,"c180":47,…}` in the 9f864b3 prototype — the EtCO2 rise margin over the band shrank from 4 to 3 mmHg, so FU-7.1-b's gas changes, e.g. the B3 washout, may move it: a miss is a `test.fail` with numbers, never a wider band) and `simPerWall` ≈ 4 locally; two JPEGs ≤ 60 KB (asserted by the test). **Mandatory (executor 2026-10-17: NOT done — no way to drive real Safari here; it is owner hand check H22 in the gate note, orchestrator ruling 2026-10-18):** open `apps/demo/dist/embed/ventilator-monitor.html` by double-click in Safari once (acceptance 5 names Safari and Chrome; WebKit is not installed for Playwright here) and record the result and the Safari version (Safari → About Safari) for the gate note. After the push (Step 4), check CI on the draft PR (bounded, as in Task 2 Step 5): the embed's light test on WebKit.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git status --short docs/gates   # restore any other stage's screenshot the e2e rewrote: git checkout -- <path>
@@ -2288,7 +2288,7 @@ git push origin stage-8b-release
 
 **Files:** Modify `.github/workflows/ci.yml` (additive only); Create `.github/workflows/release.yml`.
 
-- [ ] **Step 1: CI.** The build job gains the two checks, the pack smoke and the TypeDoc build (8b review finding 8: a later PR that breaks the published shape or TypeDoc must fail before merge, not at the tag); the `test-slow` job and `validation.yml` are untouched. **Rebase check 2026-10-13 — CI was reshaped by PR #55 (`docs/gates/ci-webkit-3.md`):** the IIFE is now built and uploaded by a separate `renderer` job (`pnpm --filter @pme/renderer build` only), and the browser tests run in a per-browser matrix job `e2e` (`needs: renderer`) that downloads ONLY the IIFE artefact. Two consequences the 2026-10-10 blocks did not handle: (a) after Task 4 the renderer's `build` runs `tsc -p tsconfig.build.json`, whose `paths` point at the SIBLINGS' `dist/types` — in the `renderer` job nothing else is built, so the declaration build would fail (not executed in the check: tsc falls back to the workspace `src/` and errors outside `rootDir`); (b) `vent-embed.e2e.ts` opens `apps/demo/dist/embed/`, which no e2e job has. So the `renderer` job now builds the renderer's workspace dependencies first and, after the IIFE upload, the demo (whose `build` writes the embed, Task 8) and uploads `ventilator-monitor-embed`; each `e2e` job downloads it. All four blocks only ADD lines; `test-slow` keeps its eight groups (`slow-a` … `slow-g` + `showcase`, Stage 11). After applying them, prove it: `git diff -U0 .github/workflows/ci.yml | grep '^-[^-]'` must print nothing (no line removed or changed), and `grep -c 'slow-g' .github/workflows/ci.yml` must print the same number as on `main` (5 on 48864439 and on 56f3761f). Note for CI time: each `e2e (<browser>)` job now also runs `vent-embed.e2e.ts` (≈ 2.2 min at ×4 here; the heavy case is Chromium-only, up to 15 min if the runner holds only ×1; the job's `timeout-minutes: 60` stays), and the `renderer` job grows by the sibling builds and the demo build (≈ 1–2 min), which delays the e2e jobs by that much.
+- [x] **Step 1: CI.** The build job gains the two checks, the pack smoke and the TypeDoc build (8b review finding 8: a later PR that breaks the published shape or TypeDoc must fail before merge, not at the tag); the `test-slow` job and `validation.yml` are untouched. **Rebase check 2026-10-13 — CI was reshaped by PR #55 (`docs/gates/ci-webkit-3.md`):** the IIFE is now built and uploaded by a separate `renderer` job (`pnpm --filter @pme/renderer build` only), and the browser tests run in a per-browser matrix job `e2e` (`needs: renderer`) that downloads ONLY the IIFE artefact. Two consequences the 2026-10-10 blocks did not handle: (a) after Task 4 the renderer's `build` runs `tsc -p tsconfig.build.json`, whose `paths` point at the SIBLINGS' `dist/types` — in the `renderer` job nothing else is built, so the declaration build would fail (not executed in the check: tsc falls back to the workspace `src/` and errors outside `rootDir`); (b) `vent-embed.e2e.ts` opens `apps/demo/dist/embed/`, which no e2e job has. So the `renderer` job now builds the renderer's workspace dependencies first and, after the IIFE upload, the demo (whose `build` writes the embed, Task 8) and uploads `ventilator-monitor-embed`; each `e2e` job downloads it. All four blocks only ADD lines; `test-slow` keeps its eight groups (`slow-a` … `slow-g` + `showcase`, Stage 11). After applying them, prove it: `git diff -U0 .github/workflows/ci.yml | grep '^-[^-]'` must print nothing (no line removed or changed), and `grep -c 'slow-g' .github/workflows/ci.yml` must print the same number as on `main` (5 on 48864439 and on 56f3761f). Note for CI time: each `e2e (<browser>)` job now also runs `vent-embed.e2e.ts` (≈ 2.2 min at ×4 here; the heavy case is Chromium-only, up to 15 min if the runner holds only ×1; the job's `timeout-minutes: 60` stays), and the `renderer` job grows by the sibling builds and the demo build (≈ 1–2 min), which delays the e2e jobs by that much.
 
 **Find** in `.github/workflows/ci.yml`:
 ```yaml
@@ -2351,7 +2351,7 @@ In the `e2e` matrix job, next to the IIFE download (`vent-embed.e2e.ts` opens `a
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 ```
 
-- [ ] **Step 2: Release workflow** (runs only on a `v*` tag, which only the orchestrator pushes).
+- [x] **Step 2: Release workflow** (runs only on a `v*` tag, which only the orchestrator pushes).
 
 **Create** `.github/workflows/release.yml`:
 ```yaml
@@ -2421,7 +2421,7 @@ jobs:
             release/SHA256SUMS.txt release/LICENSE release/NOTICES.md
 ```
 
-- [ ] **Step 3: Validate the YAML and dry-run the asset assembly locally.**
+- [x] **Step 3: Validate the YAML and dry-run the asset assembly locally.**
 
 ```bash
 Y=$(ls -d node_modules/.pnpm/yaml@*/node_modules/yaml | head -1)   # TypeDoc's dependency; no new install
@@ -2430,7 +2430,7 @@ for f in .github/workflows/*.yml; do node -e "const Y=require('./$Y');const d=Y.
 
 Expected: `ci.yml build,renderer,e2e,test-slow` (PR #55 shape; it was `build,test-slow` on 48864439), `release.yml release`, `validation.yml validate`. Then, after Task 13 exists, run the "Assemble the release assets" script body by hand from the worktree root (after `build` and `docs:api`) with `GITHUB_REF_NAME=v1.0.0-rc.1`, writing into `<scratchpad>/stage-8b-release/release-dry/` instead of `release/` (use `shasum -a 256` for `sha256sum` on macOS; the `cp` into `docs/api/` is git-ignored), and check: `NOTES.md` is exactly the `## [1.0.0-rc.1]` section without the trailing `[Unreleased]: …` / `[1.0.0-rc.1]: …` link lines (refresh dry run: the old `awk` kept them — Decision 30); the "Publish" step's `case` gives `--prerelease` for `v1.0.0-rc.1` and nothing for a plain `v1.0.0` (checked in the refresh); `unzip -l` of the embed zip lists `LICENSE`, `NOTICES.md`, `LICENSES/…` and `patient-monitor.iife.js.map`; the API zip lists `LICENSE`, `NOTICES.md`, the Apache text and the lunr text; `SHA256SUMS.txt` has seven lines.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add .github/workflows/ci.yml .github/workflows/release.yml docs/plans/stage-8b-release.md
@@ -2449,7 +2449,7 @@ Counts quoted below (36 rhythms, 65 drugs, six skins, two themes, one preset) ar
 
 **Files:** Overwrite `README.md`; Create `apps/demo/scripts/readme-shots.mjs`, `docs/images/monitor-philips-like.jpg`, `docs/images/ventilator-embed.jpg` (by the script), `CITATION.cff`, `CONTRIBUTING.md`, `SECURITY.md`, `.github/ISSUE_TEMPLATE/{bug_report.md,realism_report.md,feature_request.md,config.yml}`.
 
-- [ ] **Step 1: README screenshots** (file:// pages only; each ≤ 60 KB).
+- [x] **Step 1: README screenshots** (file:// pages only; each ≤ 60 KB).
 
 **Create** `apps/demo/scripts/readme-shots.mjs`:
 ```js
@@ -2494,7 +2494,7 @@ await browser.close();
 
 Run: `npx -y pnpm@9.15.9 build && node apps/demo/scripts/readme-shots.mjs` → two lines, each ≤ 60,000 bytes (the script throws above that) (prototype: `monitor-philips-like 53886 bytes`, `ventilator-embed 56398 bytes`). Open both images and check they show a live monitor (ECG, ABP, pleth, CO2, numerics) and the ventilator with the monitor beside it. If a numeric reads `--`, raise the wait, not the quality.
 
-- [ ] **Step 2: README.**
+- [x] **Step 2: README.**
 
 **Overwrite** `README.md`:
 ````markdown
@@ -2616,7 +2616,7 @@ downloaded, never committed. To cite this software, use [CITATION.cff](CITATION.
 [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)
 ````
 
-- [ ] **Step 3: Citation, contributing, security.**
+- [x] **Step 3: Citation, contributing, security.**
 
 **Create** `CITATION.cff`:
 ```yaml
@@ -2716,7 +2716,7 @@ Out of scope: clinical accuracy (use the "Clinical realism" issue template inste
 simulator and is not a medical device; it must never be connected to patients or used for clinical decisions.
 ```
 
-- [ ] **Step 4: Issue templates.**
+- [x] **Step 4: Issue templates.**
 
 **Create** `.github/ISSUE_TEMPLATE/config.yml`:
 ```yaml
@@ -2782,7 +2782,7 @@ labels: enhancement
 **Sources** (papers, manuals or datasets, with their licences if data would be bundled)
 ```
 
-- [ ] **Step 5: Check and commit.** Fill the README's `FILL:` marker (the clinical app's view names) — `docs-honesty` (Task 12) rejects any left. `ls -la docs/images` (two files ≤ 60,000 B); `npx -y pnpm@9.15.9 exec prettier --version` is NOT needed (no formatter in the repo). Then
+- [x] **Step 5: Check and commit.** Fill the README's `FILL:` marker (the clinical app's view names) — `docs-honesty` (Task 12) rejects any left. `ls -la docs/images` (two files ≤ 60,000 B); `npx -y pnpm@9.15.9 exec prettier --version` is NOT needed (no formatter in the repo). Then
 
 ```bash
 git status --short docs/gates   # restore other stages' screenshots if a run rewrote them
@@ -2799,7 +2799,7 @@ git push origin stage-8b-release
 
 **Files:** Create `docs/guides/embedding.md`, `docs/guides/scenario-authoring.md`, `docs/guides/skin-authoring.md`, `packages/validation/test/docs-examples.test.ts`.
 
-- [ ] **Step 1: The example test first** (fails: the guides do not exist).
+- [x] **Step 1: The example test first** (fails: the guides do not exist).
 
 **Create** `packages/validation/test/docs-examples.test.ts`:
 ```ts
@@ -2838,7 +2838,7 @@ describe('guide examples validate', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-examples.test.ts` — Expected: FAIL (ENOENT).
 
-- [ ] **Step 2: The embedding guide.** Before writing, re-read `packages/renderer/src/mount.ts` (`MountOptions`, `MonitorHandle`), `packages/engine-core/src/types.ts` (`Command`, `EngineEvent`, `EngineOptions`), the `LungStateEvent` type (`grep -rn "LungStateEvent" packages/engine-core/src packages/ventilator/src`) and `apps/demo/src/vent/embed.ts` on your branch: if FU-3/FU-4/V.1 — and, since the refresh, FU-7 to FU-11, Stage 9, Stage 10 (the `MIN_TIME_SCALE`/`MAX_TIME_SCALE` constants, fast-forward) and FU-7.1 — added options, commands or events, add them to the tables; the handle and `Limits` quote the time-scale range from those constants (0.25–8 after Stage 10), never a literal from this plan; the worked example's lung-state field list has a `FILL:` marker to be filled from V.1's `LungStateEvent`.
+- [x] **Step 2: The embedding guide.** Before writing, re-read `packages/renderer/src/mount.ts` (`MountOptions`, `MonitorHandle`), `packages/engine-core/src/types.ts` (`Command`, `EngineEvent`, `EngineOptions`), the `LungStateEvent` type (`grep -rn "LungStateEvent" packages/engine-core/src packages/ventilator/src`) and `apps/demo/src/vent/embed.ts` on your branch: if FU-3/FU-4/V.1 — and, since the refresh, FU-7 to FU-11, Stage 9, Stage 10 (the `MIN_TIME_SCALE`/`MAX_TIME_SCALE` constants, fast-forward) and FU-7.1 — added options, commands or events, add them to the tables; the handle and `Limits` quote the time-scale range from those constants (0.25–8 after Stage 10), never a literal from this plan; the worked example's lung-state field list has a `FILL:` marker to be filled from V.1's `LungStateEvent`.
 
 **Create** `docs/guides/embedding.md`:
 ````markdown
@@ -2979,7 +2979,7 @@ MODELED physiology has known deviations: read [known-deviations.md](known-deviat
 that depends on a specific number.
 ````
 
-- [ ] **Step 3: The scenario-authoring guide.** Re-read `packages/controller/scenarios/pme-scenario-1.schema.json` on your branch first: after FU-3 the `patient` block has a `profile` (`conditions`, `lungConditions`); if FU-4 or a later stage (FU-7 to FU-11, FU-7.1, Stage 10) added fields, event kinds or drug units (e.g. FU-7.1-a's mg/kg presets and potassium chloride), list them.
+- [x] **Step 3: The scenario-authoring guide.** Re-read `packages/controller/scenarios/pme-scenario-1.schema.json` on your branch first: after FU-3 the `patient` block has a `profile` (`conditions`, `lungConditions`); if FU-4 or a later stage (FU-7 to FU-11, FU-7.1, Stage 10) added fields, event kinds or drug units (e.g. FU-7.1-a's mg/kg presets and potassium chloride), list them.
 
 **Create** `docs/guides/scenario-authoring.md`:
 ````markdown
@@ -3111,7 +3111,7 @@ engine; the run log (`runLog`, `replayRunLog`) replays a session exactly.
 - Mark clinical content that has not been reviewed by a clinician `[draft]` in the title, as the built-ins do.
 ````
 
-- [ ] **Step 4: The skin-authoring guide.** Re-read `packages/skins/CONTRACT.md`, `src/schema.ts` and `src/registry.ts` first.
+- [x] **Step 4: The skin-authoring guide.** Re-read `packages/skins/CONTRACT.md`, `src/schema.ts` and `src/registry.ts` first.
 
 **Create** `docs/guides/skin-authoring.md`:
 ````markdown
@@ -3181,7 +3181,7 @@ darkens colours to a minimum contrast of 4.5:1. Keep the conventional colour lan
 cyan, CO2 yellow) unless the device you model documents otherwise.
 ````
 
-- [ ] **Step 5: Run and commit.** Fill the embedding guide's `FILL:` markers first (the lung-state fields, and the time-scale range in two places) (from V.1's `LungStateEvent`; Task 12's `docs-honesty` test rejects any marker left). `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-examples.test.ts` → PASS (2 tests). If the scenario example produces a warning after FU-3/FU-4 (e.g. a renamed rhythm option), fix the EXAMPLE, not the validator.
+- [x] **Step 5: Run and commit.** Fill the embedding guide's `FILL:` markers first (the lung-state fields, and the time-scale range in two places) (from V.1's `LungStateEvent`; Task 12's `docs-honesty` test rejects any marker left). `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-examples.test.ts` → PASS (2 tests). If the scenario example produces a warning after FU-3/FU-4 (e.g. a renamed rhythm option), fix the EXAMPLE, not the validator.
 
 ```bash
 git add docs/guides/embedding.md docs/guides/scenario-authoring.md docs/guides/skin-authoring.md packages/validation/test/docs-examples.test.ts docs/plans/stage-8b-release.md
@@ -3198,7 +3198,7 @@ git push origin stage-8b-release
 
 These three pages are written NOW, at execution time, from what is on this branch after FU-3, FU-4, V.1 and every stage merged before the freeze (FU-5 to FU-11, 7k, Stage 9, FU-7.1, Stage 10; R53). **Size it before you start (rebase check 2026-10-13):** on 56f3761f the plan's own lister (`scripts/deviations.ts`, run on that tree) prints **151 expected failures + 1 skip** (143 + 1 on 48864439; none unreadable), and the overview needs a Mode-labelled row for 36 rhythms, 65 drugs and 56 condition ids (the docs-honesty reader, run on 56f3761f) — budget a long task, write the tables from `scripts/deviations.ts` and the id lists mechanically, and spend the judgement on the "Tracked in" cells and the mode labels: the code, `docs/gates/*.md` (every stage and FU note, including `docs/gates/fu-4.md`), `docs/validation/{report.md,calibration-queue.md}` as regenerated in Step 0, `docs/validation/{perf/README.md,review/README.md}`, `docs/physiology/stage-7-parameter-tables.md` and the brief §4. Cite only files in this repository (the orchestrator's rulings file is outside the repo and not public). The skeletons below fix the structure and the rules; every `FILL:` marker is replaced by content, and the test fails while one remains. Do not copy numbers from this plan: take them from the documents on the branch.
 
-- [ ] **Step 0: Regenerate the validation report on this tree** (orchestrator ruling, 8b review: Q9 = YES, in 8b). The report on `main` was measured at `7bcf992`, before 7c–7e, FU-3, FU-4 and V.1 (Task 1 Step 1 recorded the list); the release docs must quote a report of the release tree. Run it the way Stage 8a did (`docs/gates/stage-8a.md`: `pnpm validate --seeds 11,12` with `PME_PULSE_DIR` set; 653 s wall there), in the background, with bounded waits:
+- [x] **Step 0: Regenerate the validation report on this tree** (orchestrator ruling, 8b review: Q9 = YES, in 8b). The report on `main` was measured at `7bcf992`, before 7c–7e, FU-3, FU-4 and V.1 (Task 1 Step 1 recorded the list); the release docs must quote a report of the release tree. Run it the way Stage 8a did (`docs/gates/stage-8a.md`: `pnpm validate --seeds 11,12` with `PME_PULSE_DIR` set; 653 s wall there), in the background, with bounded waits:
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation datasets:fetch > <scratchpad>/stage-8b-release/datasets.log 2>&1; tail -2 <scratchpad>/stage-8b-release/datasets.log   # 8a: "verified 73 files"; needs the network
@@ -3211,7 +3211,7 @@ head -5 docs/validation/report.md
 
 Start it with nothing uncommitted (right after Task 11's commit): the harness records `git rev-parse --short HEAD`, so that commit must be the tree it measured. It exits 1 when rows gate — expected; the three files are written anyway (`report: … N queued, M gating` is the last log line). Expected: `docs/validation/report.md` says `on commit <this branch's HEAD>` and `engine 1.0.0-rc.1` (Task 5 bumped it); its Summary line has new counts — whatever they are, they are the numbers the release docs quote. Commit ONLY `docs/validation/report.md`, `docs/validation/report.json` and `docs/validation/calibration-queue.md` as the harness wrote them (never hand-edit them); restore any other modified path under `docs/validation/` (`git checkout -- <path>`) and note it in the gate note. More red rows than on `main` are NOT this stage's to fix (R45: no band or physiology change here): they go on known-deviations.md and into the gate note, and the orchestrator is told. If the harness cannot run (network, Pulse directory), STOP and report; do not quote the old report as if it were current.
 
-- [ ] **Step 1: The deviations lister.**
+- [x] **Step 1: The deviations lister.**
 
 **Create** `scripts/deviations.ts`:
 ```ts
@@ -3305,7 +3305,7 @@ if (invokedDirectly) {
 
 Run: `node --experimental-strip-types scripts/deviations.ts > <scratchpad>/stage-8b-release/deviations.md` — prints one row per expected failure (29 `it.fails` on `main` d455b50; 143 on 48864439; **151 on 56f3761f** (rebase check 2026-10-13, after FU-11, FU-7.1 and Stages 10–13) — including 1 conditional `test.fail` in `apps/demo/e2e/stage9-tasks.e2e.ts`, Decision 27, which stays because Stage 14 runs after the rc) and one per literal-titled skip (1 on d455b50: `packages/engine-core/test/l2/circ/lvad.test.ts`, "7h: VA-ECMO pulsatility fades with flow fraction …"; V.1 may add e.g. its neonatal profile skip), and on stderr any file whose expected-failure title cannot be read (expected: none — if one appears, give that test a literal title; never exclude the file). Every row's last cell is `FILL: tracked in`: replace it with the gate-note section or calibration-queue row that tracks the item. Keep this output: it is the first two tables of Step 4.
 
-- [ ] **Step 2: The honesty test** (fails until Steps 3–5 exist).
+- [x] **Step 2: The honesty test** (fails until Steps 3–5 exist).
 
 **Create** `packages/validation/test/docs-honesty.test.ts`:
 ```ts
@@ -3403,7 +3403,7 @@ describe('docs honesty (Stage 8b)', () => {
 
 Run: `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-honesty.test.ts` — Expected: FAIL (the three pages do not exist) except the condition-id sanity case, which passes now (7 tests; the R50 additions were not prototyped).
 
-- [ ] **Step 3: The physiology overview.** Start from this skeleton; fill every section from the code and the gate notes on `main`; keep it one page (tables, not prose, for the id lists; ≤ ~450 lines).
+- [x] **Step 3: The physiology overview.** Start from this skeleton; fill every section from the code and the gate notes on `main`; keep it one page (tables, not prose, for the id lists; ≤ ~450 lines).
 
 **Create** `docs/guides/physiology-overview.md`:
 ````markdown
@@ -3509,7 +3509,7 @@ list (Decision 24): haemorrhage SVR falls instead of rising, no decompensation/r
 fit for teaching, pulsus paradoxus (unless FU-7.1 landed it), adults only.
 ````
 
-- [ ] **Step 4: Known deviations.** Paste the Step 1 rows into the first two tables and replace each `FILL: tracked in` cell with the gate-note section or calibration-queue row that tracks it (never leave it empty: the test checks). Fill the other sections from `docs/validation/calibration-queue.md` and `docs/validation/report.md` (both as regenerated in Step 0), `docs/gates/fu-4.md` and `grep -rn "INTERIM" packages/*/src`.
+- [x] **Step 4: Known deviations.** Paste the Step 1 rows into the first two tables and replace each `FILL: tracked in` cell with the gate-note section or calibration-queue row that tracks it (never leave it empty: the test checks). Fill the other sections from `docs/validation/calibration-queue.md` and `docs/validation/report.md` (both as regenerated in Step 0), `docs/gates/fu-4.md` and `grep -rn "INTERIM" packages/*/src`.
 
 **Create** `docs/guides/known-deviations.md`:
 ````markdown
@@ -3571,7 +3571,7 @@ FILL: e.g. PWDB (Zenodo returned 403 to the fetcher in Stage 8a: not measured), 
 (CapnoBase, MIMIC, PulseDB) — from `docs/gates/stage-8a.md` and the NOTICES rows.
 ````
 
-- [ ] **Step 5: Validation summary.**
+- [x] **Step 5: Validation summary.**
 
 **Create** `docs/guides/validation-summary.md`:
 ````markdown
@@ -3617,11 +3617,11 @@ models and a reference physiology engine. They do not show that the simulator is
 purpose, and they do not replace a clinician's review of each teaching scenario. The engine is not a medical device.
 ````
 
-- [ ] **Step 6: Fill every `FILL:` marker** from the sources named in each. Rules: numbers only from documents in this repository on this branch (cite the file); MODELED-only behaviour labelled; no estimates for things not measured; `it.fails` titles verbatim; unmet acceptance stated as unmet.
+- [x] **Step 6: Fill every `FILL:` marker** from the sources named in each. Rules: numbers only from documents in this repository on this branch (cite the file); MODELED-only behaviour labelled; no estimates for things not measured; `it.fails` titles verbatim; unmet acceptance stated as unmet.
 
-- [ ] **Step 7: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-honesty.test.ts test/docs-examples.test.ts` → PASS (7 + 2). Expected failure modes and fixes: a missing expected-failure or skipped title → add the row (copy from Step 1's output); an unreadable title → give that test a literal title; an empty "Tracked in" → name the tracker; a missing id or a row without a Mode label → add it to the right table with its label; a claim line → reword with the negation it needs; a `FILL:` left (NOTICES.md's N-015 date included) → fill it. Also `grep -rniE "validat|60601|diagnos" docs/guides README.md` and read each hit.
+- [x] **Step 7: Run.** `npx -y pnpm@9.15.9 --filter @pme/validation exec vitest run test/docs-honesty.test.ts test/docs-examples.test.ts` → PASS (7 + 2). Expected failure modes and fixes: a missing expected-failure or skipped title → add the row (copy from Step 1's output); an unreadable title → give that test a literal title; an empty "Tracked in" → name the tracker; a missing id or a row without a Mode label → add it to the right table with its label; a claim line → reword with the negation it needs; a `FILL:` left (NOTICES.md's N-015 date included) → fill it. Also `grep -rniE "validat|60601|diagnos" docs/guides README.md` and read each hit.
 
-- [ ] **Step 8: Commit and push.**
+- [x] **Step 8: Commit and push.**
 
 ```bash
 git add scripts/deviations.ts packages/validation/test/docs-honesty.test.ts docs/guides/physiology-overview.md docs/guides/validation-summary.md docs/guides/known-deviations.md \
@@ -3640,7 +3640,7 @@ git push origin stage-8b-release
 
 **Files:** Create `CHANGELOG.md`, `RELEASE.md`; Modify `CITATION.cff` (adds `date-released`), `packages/validation/test/release-versions.test.ts` (CITATION checks).
 
-- [ ] **Step 1: CHANGELOG.** Fill the `## [1.0.0-rc.1]` section from the stage list in `docs/RESUME.md` and the gate notes (one bullet per stage, user-facing wording, no internal ticket numbers except in parentheses); the date is the day the PR is opened (the orchestrator may correct it before tagging).
+- [x] **Step 1: CHANGELOG.** Fill the `## [1.0.0-rc.1]` section from the stage list in `docs/RESUME.md` and the gate notes (one bullet per stage, user-facing wording, no internal ticket numbers except in parentheses); the date is the day the PR is opened (the orchestrator may correct it before tagging).
 
 **Create** `CHANGELOG.md`:
 ````markdown
@@ -3749,7 +3749,7 @@ date-released: "2026-10-01"
 });
 ```
 
-- [ ] **Step 2: RELEASE checklist.**
+- [x] **Step 2: RELEASE checklist.**
 
 **Create** `RELEASE.md`:
 ````markdown
@@ -3813,7 +3813,7 @@ Fix on a branch through a PR, merge, then move the tag only if the release was n
 release's assets.
 ````
 
-- [ ] **Step 3: Run the whole release-doc suite and dry-run the release assembly.**
+- [x] **Step 3: Run the whole release-doc suite and dry-run the release assembly.**
 
 ```bash
 npx -y pnpm@9.15.9 --filter @pme/validation test
@@ -3824,7 +3824,7 @@ cd -
 
 Expected: the validation package passes (101 tests on `main` 9f864b3, 7 of them skipped without datasets/`PME_PULSE_DIR`, + this stage's 22 — check-size 3, finish-dist 1, release-manifests 2, release-versions 3, check-licences 4, docs-examples 2, docs-honesty 7 — plus whatever FU-3/FU-4 added); the `awk` prints the start of the 1.0.0-rc.1 section only.
 
-- [ ] **Step 4: Commit and push.**
+- [x] **Step 4: Commit and push.**
 
 ```bash
 git add CHANGELOG.md RELEASE.md CITATION.cff packages/validation/test/release-versions.test.ts docs/plans/stage-8b-release.md
@@ -3842,28 +3842,28 @@ git push origin stage-8b-release
 Developer view's page list in `apps/demo/src/app/views/dev.ts` (or the file that lists the build-stage pages on your
 base); Create `docs/gates/stage-8b/developer-pages.md`.
 
-- [ ] **Step 1 — the tick-cost release gate (FU-11 J5, F10).** In `RELEASE.md`'s checklist, before "tag", add:
+- [x] **Step 1 — the tick-cost release gate (FU-11 J5, F10).** In `RELEASE.md`'s checklist, before "tag", add:
   "On an idle machine (nothing else running): `npx -y pnpm@9.15.9 --filter @pme/validation perf:ticks --seconds 600
   --budget-ms <Stage 8a's p99 budget from docs/gates/stage-8a.md>` exits 0. CI does not run it (shared runners)."
-- [ ] **Step 2 — the Developer-page review (FU-11 F24, F25).** For every build-stage page reachable from the Developer
+- [x] **Step 2 — the Developer-page review (FU-11 F24, F25).** For every build-stage page reachable from the Developer
   view (physiology console, stage7g, …) record in `docs/gates/stage-8b/developer-pages.md`: keep (it works and says what
   it is), fix (name the defect: the console restart's Pause/Resume and baseline, F24; stage7g's "7f pending" depth
   index, F25), or retire (remove the link and the page). No page that misreports the engine ships in v1.0.
-- [ ] **Step 3 — release notes: trust limits (FU-11, rulings Q2/HI03/F07).** In `CHANGELOG.md`'s 1.0.0 "Known
+- [x] **Step 3 — release notes: trust limits (FU-11, rulings Q2/HI03/F07).** In `CHANGELOG.md`'s 1.0.0 "Known
   limits": "Pairing is for a trusted local network: anyone with the room code can act as a controller, and a peer that
   knows the host's id can take over the relay's host slot. A host-issued controller token and a host reconnect key
   come with the v1.1 relay. The relay's drop log has no rate limit (v1.1)."
-- [ ] **Step 4 — soak with a busy Ventilator view (FU-11 list; CI WebKit).** Add to `RELEASE.md`: "With the
+- [x] **Step 4 — soak with a busy Ventilator view (FU-11 list; CI WebKit).** Add to `RELEASE.md`: "With the
   Ventilator view open at ×4 and a Remote paired, the Remote shows its first state within 5 s and the host's frame
   p95 stays ≤ 20 ms for 10 min (record both)."
-- [ ] **Step 5 — validation documents may declare an expected refusal (FU-11 J3, R50 M9).** Only if a document needs
+- [x] **Step 5 — validation documents may declare an expected refusal (FU-11 J3, R50 M9).** Only if a document needs
   it by then: a `expect: { refused: true }` step field in `pme-validation/*` documents that makes a refusal the
   expected outcome; otherwise record "not needed" in the gate note.
-- [ ] **Step 6 — R56 data gaps found by FU-11 H3.** (a) The fixed alarm words (`apps/demo/src/app/alarms.ts`
+- [x] **Step 6 — R56 data gaps found by FU-11 H3.** (a) The fixed alarm words (`apps/demo/src/app/alarms.ts`
   `FIXED_ALARM_WORDS`) are not glossary data: move them into the glossary file (with Ali's review) or record why not;
   (b) the iec-defaults skins list `alwaysOn: []` while VF, VT and asystole still alarm on them: give them the
   documented list (with a provenance row) or record the gap.
-- [ ] **Step 7 — commit:** `git add RELEASE.md CHANGELOG.md docs/gates/stage-8b/developer-pages.md …` and
+- [x] **Step 7 — commit:** `git add RELEASE.md CHANGELOG.md docs/gates/stage-8b/developer-pages.md …` and
   `git commit -m "docs(release): FU-11 hand-overs — tick gate, developer pages, trust limits, soak (8b Task 13b)"`.
 
 **Executor notes on Task 13b (refresh 2026-10-10; the task text above is FU-11's appendix A2, verbatim).**
@@ -3887,13 +3887,23 @@ base); Create `docs/gates/stage-8b/developer-pages.md`.
 
 ---
 
+### Task 13c: App text — no "version 1.1", education-only line and version label (ruled 2026-10-13, added by the executor)
+
+- [x] `apps/demo/src/app/pairing.ts:37,46` (and the Explore labs placeholder and the Start view's "coming in v1.1" tag)
+  no longer promise a version 1.1: they say what exists (phones follow over the classroom relay; tablet pairing as a
+  remote is an untested preview; the rest is not part of this release).
+- [x] Start and Settings → About show "Version 1.0.0-rc.1 (pre-release). For education only. Not a medical device:
+  never use it for patient care." (`apps/demo/src/app/about.ts`, the Debrief footer's words; test `about.test.ts`).
+
+---
+
 ### Task 14: Gate — full verification, gate note, PR (no merge, no tag)
 
 **Files:** Create `docs/gates/stage-8b.md`.
 
-- [ ] **Step 1: Re-check the launch gate and merge `main`.** `git fetch origin && git merge --no-edit origin/main`; FU-3, FU-4, V.1, FU-11, FU-7.1 and Stage 10 (and any stage the launch message listed) are on `main` (Task 1 Step 1). If anything new landed after the freeze, re-run Task 1 Step 3's find check for the files this stage touched and the affected tasks' tests. If it changed physiology (`git log --oneline <report-commit>..HEAD -- packages/engine-core/src packages/engine-core/data packages/ventilator/src` is non-empty, where `<report-commit>` is the one `docs/validation/report.md` names), re-run Task 12 Step 0 and update the pages, or make the validation summary name those changes as not re-measured.
+- [x] **Step 1: Re-check the launch gate and merge `main`.** `git fetch origin && git merge --no-edit origin/main`; FU-3, FU-4, V.1, FU-11, FU-7.1 and Stage 10 (and any stage the launch message listed) are on `main` (Task 1 Step 1). If anything new landed after the freeze, re-run Task 1 Step 3's find check for the files this stage touched and the affected tasks' tests. If it changed physiology (`git log --oneline <report-commit>..HEAD -- packages/engine-core/src packages/engine-core/data packages/ventilator/src` is non-empty, where `<report-commit>` is the one `docs/validation/report.md` names), re-run Task 12 Step 0 and update the pages, or make the validation summary name those changes as not re-measured.
 
-- [ ] **Step 2: Full verification** (record every number and wall time; bounded background waits for the slow set and the e2e).
+- [x] **Step 2: Full verification** (record every number and wall time; bounded background waits for the slow set and the e2e).
 
 ```bash
 npx -y pnpm@9.15.9 install --frozen-lockfile
@@ -3911,7 +3921,7 @@ git status --short   # restore every other stage's screenshot the e2e rewrote; n
 
 Expected: typecheck clean; fast and slow sets as on `main` plus this stage's validation tests (the known `it.fails` report as expected failures); build clean; the three checks OK (`check-size` ≈ 278 KB gzip on 48864439 + what FU-11, FU-7.1 and Stage 10 added, ≤ 400); `pack-smoke: OK`; TypeDoc exit 0; e2e all pass except known flakes — the `stage6a` relay/rtc page-load timeouts under parallel load are pre-existing (prototype: 2 failures in the full run, both pass when `apps/demo/e2e/stage6a.e2e.ts` is re-run alone); the retry-only candidates seen on `main` CI (rulings log, 2026-10-11/12: WebKit `fu11-explore-baseline:31`, `fu11-restore:15`, `stage7d:36`, `stage9-app:15`, `scenario-choose-another:14`; Chromium `s10-time-control:30`) are Stage 14's known-flaky list, not this stage's; re-run any failing file alone and record both results.
 
-- [ ] **Step 3: Gate note** `docs/gates/stage-8b.md` with: the launch-gate evidence (FU-3, FU-4, V.1, every FU-11, FU-7.1 and Stage 10 branch, and any other pre-freeze stage: PR numbers and merge commits) and the Step 3b block re-check result; the validation report found on `main` at launch (commit, Summary line, the physiology merges it predated — Task 1 Step 1) and the one regenerated in Task 12 Step 0 (commit, Summary line, wall time); any re-anchored find blocks and informational `package.json` lines; the `release-manifests` diffs (nothing but the publish fields and controller's `ws`); the IIFE before/after (raw, gzip -9, brotli) and the `check-size` line; the IIFE smoke paths (Chrome here; WebKit from CI on the draft PR, with the run links of the checks after Tasks 2, 4 and 8); the ESM package list with `dist` sizes and the `pack-smoke` line; `check-licences` output (package and shipped counts, licence list, the `LICENSES/` files); TypeDoc (time, pages, warnings); the embed sizes (with engine-core's `sideEffects` list), the e2e numbers (`vent-embed {…}` line with `simPerWall`, locally AND from CI's run) and the Safari double-click result with the Safari version; test counts (fast, slow, e2e) with wall times; the two gate JPEGs and the README JPEGs (all ≤ 60 KB); deviations from this plan; the FU-11 hand-overs (Task 5 amendment: the build key and its test; Task 13b: the tick-gate budget, the developer-pages record, the trust-limit text, the soak numbers, Steps 5–6 outcomes); later-release items (a built relay bin, Q7; the exported default `stage1Vocabulary(engineVersion = '0.0.0')`, Decision 22); a short "honesty" paragraph: how many expected failures and skipped tests the known-deviations page lists and that no page claims clinical validation.
+- [x] **Step 3: Gate note** `docs/gates/stage-8b.md` with: the launch-gate evidence (FU-3, FU-4, V.1, every FU-11, FU-7.1 and Stage 10 branch, and any other pre-freeze stage: PR numbers and merge commits) and the Step 3b block re-check result; the validation report found on `main` at launch (commit, Summary line, the physiology merges it predated — Task 1 Step 1) and the one regenerated in Task 12 Step 0 (commit, Summary line, wall time); any re-anchored find blocks and informational `package.json` lines; the `release-manifests` diffs (nothing but the publish fields and controller's `ws`); the IIFE before/after (raw, gzip -9, brotli) and the `check-size` line; the IIFE smoke paths (Chrome here; WebKit from CI on the draft PR, with the run links of the checks after Tasks 2, 4 and 8); the ESM package list with `dist` sizes and the `pack-smoke` line; `check-licences` output (package and shipped counts, licence list, the `LICENSES/` files); TypeDoc (time, pages, warnings); the embed sizes (with engine-core's `sideEffects` list), the e2e numbers (`vent-embed {…}` line with `simPerWall`, locally AND from CI's run) and the Safari double-click result with the Safari version; test counts (fast, slow, e2e) with wall times; the two gate JPEGs and the README JPEGs (all ≤ 60 KB); deviations from this plan; the FU-11 hand-overs (Task 5 amendment: the build key and its test; Task 13b: the tick-gate budget, the developer-pages record, the trust-limit text, the soak numbers, Steps 5–6 outcomes); later-release items (a built relay bin, Q7; the exported default `stage1Vocabulary(engineVersion = '0.0.0')`, Decision 22); a short "honesty" paragraph: how many expected failures and skipped tests the known-deviations page lists and that no page claims clinical validation.
 
   It also carries a section **"Licence items for legal review before the v1.0 tag (brief §10)"** (orchestrator ruling, 8b review; BUILD-PLAN Stage 8 "licence review items (brief §10) closed or documented", Definition of done 10 "resolved or listed") — one row per §10 item with its status and evidence, from the files in this repo (NOTICES.md, the brief §8/§11, the gate notes); rows that need a lawyer say **"open, for Ali"**:
 
@@ -3930,7 +3940,7 @@ Expected: typecheck clean; fast and slow sets as on `main` plus this stage's val
 
   BUILD-PLAN Stage 8 acceptance, as delivered by 8a + 8b — never present an unmet item as met (orchestrator ruling, 8b review): **(1) and (2) NOT MET at this release**: <red count> gating rows in the regenerated report (list the gating ones) and the blind realism review not run; (3) partly (8a's perf numbers; the iPad not measured); (4) size ✓ with the number; (5) embed ✓ with the numbers (Chrome by e2e, Safari by hand); (6) licence ✓ — `check-notices`, the extended `check-licences` (every shipped text in `LICENSES/`, every `LICENSES/` path NOTICES names present) and the legal-review section above. Definition of done: 1 and 8 not met (as acceptance 1–2); 9 — the IIFE and ESM packages are built and publishable (publishing = Q1), and "the ventilator-sim PR has been handed to Ali" is superseded by R35 and the Q4 ruling (the embed ships in this repo); 10 per the legal-review section. Open questions: none open — Q1, Q2, Q3, Q5, Q8 ruled by Ali (2026-10-10, Decision 23); Q4, Q6, Q7 ruled 2026-09-27; Q9 ruled yes.
 
-- [ ] **Step 4: Commit, push, PR.**
+- [x] **Step 4: Commit, push, PR.**
 
 ```bash
 git add docs/gates/stage-8b.md docs/gates/stage-8b docs/plans/stage-8b-release.md
@@ -3943,6 +3953,22 @@ gh pr edit stage-8b-release --title "Stage 8b: 1.0.0-rc.1 release candidate, doc
 ```
 
 (The PR was opened as a draft in Task 2; this finalises its body and marks it ready for review.) Then wait (bounded, as in Task 2 Step 5) for `gh pr checks <n>`: `build`, `renderer`, `e2e (chromium)`, `e2e (webkit)` and the eight `test-slow` groups green (PR #55 shape); copy both e2e jobs' "e2e tests that passed only on retry" output into the gate note. Fix red checks on the branch. **Do NOT merge and do NOT tag** (R21; `RELEASE.md` is the orchestrator's). Report: commits, test counts, the key numbers, deviations, open questions.
+
+---
+
+### Task 15: Publish the rc.1 static build to gh-pages (orchestrator addition 2026-10-17; owner's go-ahead 2026-10-18)
+
+Runs ONLY after the orchestrator has merged the Stage 8b PR and pushed the `v1.0.0-rc.1` tag, so Pages shows exactly
+the tagged build. Until then nothing touches `gh-pages`. It supersedes Q3 ("no GitHub Pages at this release") for this
+release only. The steps are `RELEASE.md` "After the workflow" item 5:
+
+- [ ] From the tagged commit: `node scripts/showcase/make-bundle.mjs <scratch>/kit` (the kit's relative-base build of
+  the app and its `VERSION.txt`).
+- [ ] A clean gh-pages tree: `<scratch>/kit/app/` + an empty `.nojekyll` + the kit's `VERSION.txt` + `LICENSE`,
+  `NOTICES.md`, `LICENSES/`. Check the Start view shows "Version 1.0.0-rc.1 (pre-release). For education only. …".
+- [ ] Commit and force-push the `gh-pages` branch ONLY (never `main`), once; record the gh-pages commit in the gate
+  note or the rulings file. The README already says the Pages copy cannot pair learners' phones (they need the local
+  kit's classroom relay).
 
 ---
 
