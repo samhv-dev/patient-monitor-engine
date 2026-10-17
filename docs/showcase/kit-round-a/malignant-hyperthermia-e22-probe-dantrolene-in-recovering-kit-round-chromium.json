@@ -1,0 +1,338 @@
+{
+  "case": "Malignant hyperthermia E22 probe dantrolene in Recovering (kit round)",
+  "browser": "chromium",
+  "kit": "b08a972b",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-17T20:21:52.884Z",
+  "loadAvg": {
+    "start": 3.64,
+    "end": 2.23,
+    "min": 2.21,
+    "max": 3.64
+  },
+  "setup": {
+    "sessionCode": "Q9NT3P",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.8,
+      "speed": 8,
+      "state": "induction",
+      "load1": 3.39,
+      "what": "Load \"Malignant hyperthermia\" at ×8, Bookmark",
+      "hr": 71,
+      "art": "111/75 (86)",
+      "spo2": 96,
+      "etco2": 36,
+      "rr": 19
+    },
+    {
+      "wall": 31.4,
+      "clock": "04:12",
+      "simS": 252.3,
+      "speed": 8,
+      "state": "surgery",
+      "load1": 3.01,
+      "what": "press **Start surgery: rocuronium 0.6 mg/kg**",
+      "hr": 80,
+      "art": "99/65 (75)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 12
+    },
+    {
+      "wall": 56.4,
+      "clock": "07:04",
+      "simS": 424.3,
+      "speed": 4,
+      "state": "triggerOff",
+      "load1": 2.62,
+      "what": "press **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate**",
+      "hr": 86,
+      "art": "105/71 (81)",
+      "spo2": 99,
+      "etco2": 46,
+      "rr": 13
+    },
+    {
+      "wall": 61.5,
+      "clock": "07:24",
+      "simS": 444.9,
+      "speed": 4,
+      "state": "treating",
+      "load1": 2.41,
+      "what": "press **Dantrolene 2.5 mg/kg**",
+      "hr": 85,
+      "art": "105/71 (80)",
+      "spo2": 99,
+      "etco2": 40,
+      "rr": 20
+    },
+    {
+      "wall": 64.1,
+      "clock": "07:35",
+      "simS": 455.4,
+      "speed": 4,
+      "state": "treating",
+      "load1": 2.41,
+      "what": "press **Cool: 2 L saline at room temperature**",
+      "hr": 85,
+      "art": "105/71 (81)",
+      "spo2": 99,
+      "etco2": 38,
+      "rr": 20
+    },
+    {
+      "wall": 82.5,
+      "clock": "08:48",
+      "simS": 528.8,
+      "speed": 4,
+      "state": "treating",
+      "load1": 2.21,
+      "what": "press **Dantrolene 2.5 mg/kg**",
+      "hr": 84,
+      "art": "115/78 (89)",
+      "spo2": 99,
+      "etco2": 37,
+      "rr": 20
+    },
+    {
+      "wall": 97.9,
+      "clock": "09:50",
+      "simS": 590.2,
+      "speed": 4,
+      "state": "recovering",
+      "load1": 2.23,
+      "what": "ventilation back offered again",
+      "hr": 86,
+      "art": "121/83 (94)",
+      "spo2": 99,
+      "etco2": 37,
+      "rr": 20,
+      "stateNow": "recovering"
+    }
+  ],
+  "presses": [
+    {
+      "label": "Start surgery: rocuronium 0.6 mg/kg",
+      "clock": "04:05",
+      "simS": 245.9,
+      "wall": 31.4,
+      "before": "induction",
+      "after": "surgery",
+      "load1": 3.01,
+      "toast": ""
+    },
+    {
+      "label": "MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate",
+      "clock": "07:01",
+      "simS": 421,
+      "wall": 56.4,
+      "before": "earlySigns",
+      "after": "triggerOff",
+      "load1": 2.62,
+      "toast": ""
+    },
+    {
+      "label": "Dantrolene 2.5 mg/kg",
+      "clock": "07:21",
+      "simS": 441.7,
+      "wall": 61.5,
+      "before": "triggerOff",
+      "after": "treating",
+      "load1": 2.41,
+      "toast": ""
+    },
+    {
+      "label": "Cool: 2 L saline at room temperature",
+      "clock": "07:32",
+      "simS": 452.1,
+      "wall": 64.1,
+      "before": "treating",
+      "after": "treating",
+      "load1": 2.41,
+      "toast": ""
+    },
+    {
+      "label": "Dantrolene 2.5 mg/kg",
+      "clock": "08:45",
+      "simS": 525.7,
+      "wall": 82.5,
+      "before": "recovering",
+      "after": "treating",
+      "load1": 2.21,
+      "toast": ""
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 1.8,
+      "clock": "00:01",
+      "id": "induction"
+    },
+    {
+      "t": 245.9,
+      "clock": "04:05",
+      "id": "surgery"
+    },
+    {
+      "t": 412.4,
+      "clock": "06:52",
+      "id": "earlySigns"
+    },
+    {
+      "t": 421.1,
+      "clock": "07:01",
+      "id": "triggerOff"
+    },
+    {
+      "t": 442,
+      "clock": "07:22",
+      "id": "dantrolene"
+    },
+    {
+      "t": 444.1,
+      "clock": "07:24",
+      "id": "treating"
+    },
+    {
+      "t": 452.3,
+      "clock": "07:32",
+      "id": "cooling"
+    },
+    {
+      "t": 454.6,
+      "clock": "07:34",
+      "id": "treating"
+    },
+    {
+      "t": 515.1,
+      "clock": "08:35",
+      "id": "recovering"
+    },
+    {
+      "t": 526,
+      "clock": "08:46",
+      "id": "dantrolene"
+    },
+    {
+      "t": 528,
+      "clock": "08:48",
+      "id": "treating"
+    },
+    {
+      "t": 588.4,
+      "clock": "09:48",
+      "id": "recovering"
+    }
+  ],
+  "alarms": [],
+  "measures": {
+    "e22probe": {
+      "offeredIn": {
+        "earlySigns": false,
+        "triggerOff": false,
+        "treating": false,
+        "recovering": false,
+        "afterDantrolene": false
+      },
+      "dantroleneInRecoveringAt": "08:45",
+      "offeredAgainAt": "09:50",
+      "goneForS": 64.5
+    }
+  },
+  "debrief": null,
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "HR",
+          "forS": 0.5,
+          "instructorFirst": "80",
+          "phoneFirst": "78",
+          "instructorNow": "77",
+          "phoneNow": "79",
+          "atWallS": 19
+        },
+        "samples": 193,
+        "compared": 193,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 141,
+        "holdSamples": 0,
+        "status": {
+          "synced": 193
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "HR",
+          "forS": 0.5,
+          "instructorFirst": "80",
+          "phoneFirst": "78",
+          "instructorNow": "77",
+          "phoneNow": "79",
+          "atWallS": 19
+        },
+        "samples": 193,
+        "compared": 193,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 138,
+        "holdSamples": 0,
+        "status": {
+          "synced": 193
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0.5,
+        "worst": {
+          "param": "HR",
+          "forS": 0.5,
+          "instructorFirst": "80",
+          "phoneFirst": "78",
+          "instructorNow": "77",
+          "phoneNow": "79",
+          "atWallS": 19
+        },
+        "samples": 193,
+        "compared": 193,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 136,
+        "holdSamples": 0,
+        "status": {
+          "synced": 193
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}
