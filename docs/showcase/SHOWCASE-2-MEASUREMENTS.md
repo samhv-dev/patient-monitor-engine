@@ -299,3 +299,135 @@ Owner's folders, replaced on 2026-10-13 with the build from **main 62e521c3** (t
 | `_sandbox/pme-kit-main-62e521c3/` (+ README.txt) | pme-showcase-kit-62e521c3 | **PASS, 2 of 2 runs** (relay alone; through Start Classroom), node v26.8.2 |
 | `_sandbox/pme-classroom-dryrun/kit/` (PRE-FLIGHT.md updated; KR-A1 warning removed) | 62e521c3 | **PASS, 2 of 2** |
 | `_sandbox/pme-debrief-dryrun/pme-showcase-kit-62e521c3/` (HOW-TO-CHECK-THE-PRINT.txt updated) | 62e521c3 | **PASS, 2 of 2** |
+
+---
+
+## A3 — the run sheet's tamponade path and two checks
+
+*Measured 2026-10-17 on kit `pme-showcase-kit-ca0d2dbb`, built from main ca0d2dbb (the final run sheet and cue cards,
+PR #65). Its relay smoke test `check-relay.mjs` passed 2 of 2. The kit was served as built by Start Classroom, with
+three emulated phones following. Chromium, then WebKit, one test at a time. The script is
+`scripts/showcase/kit-round-a.kitround.ts`, tests "A3 …" (`-g A3`).*
+
+**Load.** The release executor was running on the same Mac. The load average was **4.8–18.1** during these runs, much
+higher than in §0–§8: tamponade 4.8–15.1 (C) / 7.8–11.6 (W); Return here 14.2–17.3 / 10.6–18.1; bronchospasm
+10.8–17.3 / 6.5–10.6. No press was lost and every state was taken on the first press, but the timings carry that load.
+
+**Raw files** (`docs/showcase/kit-round-a/`):
+- `a3-tamponade-cue-card-path-kit-round-{chromium,webkit}.{json,md}`
+- `a3-tamponade-debrief-chromium.pdf`, `a3-tamponade-debrief-print-{chromium,webkit}.png`
+- `a3-return-here-and-all-alarms-on-kit-round-*`
+- `a3-bronchospasm-instructor-view-fast-forward-cockpit-hidden-kit-round-*`
+
+### A3.1 Tamponade on the cue-card path (card 6)
+
+The path, as card 6 sets it:
+- Load · All alarms on · Bookmark · ×8, then ×1 at 7:00.
+- **Start CPR from the PEA state**, 2 s of wall time after "PEA" shows.
+- ×4, then ×1 at 9:00.
+- **Pericardiocentesis 1 min 30 s into CPR**, then ×4, and ×1 one minute after the drainage.
+- **No fast-forward.**
+- **Stop CPR on the model's return of circulation**, plus 2 s.
+- Crystalloid 500 mL 30 s later, then the Debrief: read, "Run by" and Notes filled, printed.
+
+| | Chromium | WebKit |
+|---|---|---|
+| State PEA / pulse loss (Debrief) | 07:49 / 07:48 | 07:49 / 07:48 |
+| Start CPR | **07:51**: 2 s after "PEA" | 07:51 |
+| Pericardiocentesis | **09:21**: 1 min 30 s into CPR | 09:21 |
+| Return of circulation (Debrief) | **10:55**: **93.7 s after the drainage** | 10:55, 93.8 s |
+| Arterial line before the return | 71/33 (46) at 10:22, 1 min after the drainage, compressions only; 69/32 (45) at 10:55, the moment of return | 70/33 (46) at 10:22; 70/33 (46) at 10:55 |
+| Stop CPR | 10:57, 2 s after the return; the line then read **114/51 (76)** | 10:57; **97/49 (68)** |
+| 30 s after stopping | 115/77 (90), HR 64, EtCO₂ 28 | same ± 1 |
+
+**Alarms**, the same in both engines:
+- `CVP MEAN TOO HIGH` 00:22
+- `SPO2 LOW PERFUSION` 05:59
+- `ART SYS TOO LOW` 06:06
+- `ART MEAN TOO LOW` 07:03
+- `HR TOO HIGH` 07:10
+- `ART DIA TOO LOW` 07:17
+- `ETCO2 TOO LOW` 07:21
+- `IBP1 STATIC PRESSURE` 07:31
+- `HR TOO LOW` 07:45
+- `ART SYS TOO LOW` + `ART DIA TOO LOW` 07:57
+- `ART MEAN TOO HIGH` 11:03, `ART DIA TOO HIGH` 11:04
+
+**No `SPO2 NO PULSE`** on this path: CPR started before it would sound.
+
+**Debrief**, identical in both engines:
+- – Name the tamponade (no rule)
+- **✓ CPR within 10 s** — "CPR 3 s after the pulse loss (07:48 → 07:51)"
+- **✓ Pericardiocentesis within 120 s of CPR** — "1 min 30 s after CPR (07:51 → 09:21)"
+- **✓ Stop CPR within 30 s** — "2 s after the return of circulation (10:55 → 10:57)"
+- **✗ Better: pericardiocentesis before the pulse loss** — "The pulse loss at 07:48"
+
+**Facts:**
+- lowest SpO₂ 95 % at 00:28
+- lowest ART M / NIBP M **20 mmHg at 07:51**
+- highest EtCO₂ 36 mmHg at 00:09
+- highest T1 / T2 36.8 °C
+- **pulseless 3 min 07 s in all; first lost at 07:48**
+- return of circulation 3 min 07 s after the pulse loss (10:55)
+- labs: K⁺ 4.2 · lactate 2.2 (1.0–2.2) · pH 7.28 (7.28–7.41) · glucose 5.8 · Tcore 36.8
+
+**Rows:** **41 timeline rows**, 12 minute rows.
+
+**Printed (Chromium `page.pdf`):** **6 A4 pages**, A4 on every page, title "Debrief Stab wound: tamponade, PEA and
+pericardiocentesis 2026-10-17". The Stage 13 path gave 5 pages. Playwright cannot print to PDF in WebKit, so for WebKit
+there is only the print-media screenshot.
+
+**Phones:** all synced; 2 resyncs each. During CPR at ×4 the phones' HR differed from the instructor's for up to 3 s
+(97 against 83, then 112 against 117) while HR swung from about 50 to 110. That is a fast-moving value, not a stale one.
+
+### A3.2 Does "Return here" keep "All alarms on"?
+
+Anaphylaxis card at ×4:
+- **Bookmark 1** right after Load (limits are off after every Load).
+- Then **All alarms on**.
+- Then **Bookmark 2**.
+- Run to 2:32, then Return to Bookmark 2, then Return to Bookmark 1.
+
+| | Chromium | WebKit |
+|---|---|---|
+| Running at 2:32–2:33 | limits on ("No alarms") | same |
+| **Return to Bookmark 2** (taken after All alarms on) | **limits stay ON** ("No alarms"), and still on 40 s later | same |
+| **Return to Bookmark 1** (taken before All alarms on) | **"Limit alarms off"**: the setting goes back with the bookmark | same |
+
+The alarm setting is part of the bookmark. **Return here keeps "All alarms on" only if the bookmark was taken after
+pressing it.** The cards' order (Load · All alarms on · Bookmark) is right.
+
+### A3.3 Bronchospasm: ×8 and a 2-min fast-forward from the Instructor view with the cockpit hidden
+
+The case is loaded at ×4, the Ventilator view opened, and the cockpit's frames are tapped (`__pmeVentRx`). At 1:30 the
+presenter goes to the Instructor view, which hides the cockpit's frame, and presses **×8**. At 2:20 they press
+**Fast-forward 2 min** in the session bar, wait 5 s, then return to the Ventilator view. No salbutamol is given in this
+check.
+
+| | Chromium | WebKit |
+|---|---|---|
+| Cockpit while hidden (×8 + the span, 228.8 / 227.8 s of sim) | **11 690 frames, ticks 4 267–15 956, contiguous** | **11 681, contiguous** |
+| Cockpit in the 5 s after returning | 2 047 frames, contiguous | 2 020, contiguous |
+| EtCO₂ before → while hidden | 32–33 → **32–36** | 32 → 32–36 |
+| VTE before → after | 300 → 300 mL | 300 → 299 |
+| Fast-forward | 10.5 s of wall; banner "Fast-forwarded 2 min, 02:20 → 04:20. During it: no alarms."; speed ×8 after | 10.4 s; same |
+| Phones | **hold ("The ventilator is on the main screen") and `synced`** at ×8, after the span, and after the return; 4–5 resyncs | same |
+
+**The cockpit keeps driving the patient** through ×8 and a fast-forward pressed from the Instructor view while it is
+hidden, and the phones keep their hold. EtCO₂ drifts up by up to 3 mmHg at ×8. VTE is unchanged; this is the
+untreated spasm.
+
+### A3 against the cue cards and the run sheet
+
+| Item | What the cards or sheet say | What A3 measured |
+|---|---|---|
+| Card 6, ≈ 10:55 cue: "pressure climbs **above** 69/32" | The return comes at 10:55 as written | The compressions alone already read **70–71/33** one minute after the drainage, and the line still read **69–70/32–33** at the moment of return. Only 3 s later did it show **97–114 / 49–51**. Suggested cue: "systolic jumps to about 100". |
+| Run sheet §4, line 552 | "5 A4 pages … the page count on this path is not measured" | **6 A4 pages** (41 rows) |
+| Run sheet §6, line 590, and "Facts" item 7 | "whether Return here keeps the alarm setting was not measured" | It keeps the setting the bookmark was taken with (A3.2) |
+| Card 6, "✓ times are worked out, not measured" | | Now measured: CPR 3 s, drainage 1 min 30 s, stop 2 s, and only "Better" ✗ |
+
+Everything else on card 6 matched as written:
+- the PEA state at 07:49;
+- "30 s later ART about 117/79, HR 64" (measured 115/77, HR 64);
+- the Debrief line "The pulse loss at 07:48";
+- "CVP on the IBP2 tile: 17".

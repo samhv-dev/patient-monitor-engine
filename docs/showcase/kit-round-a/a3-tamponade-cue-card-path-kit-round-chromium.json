@@ -1,0 +1,486 @@
+{
+  "case": "A3 tamponade, cue-card path (kit round)",
+  "browser": "chromium",
+  "kit": "ca0d2dbb",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-17T19:43:38.507Z",
+  "loadAvg": {
+    "start": 4.99,
+    "end": 14.37,
+    "min": 4.83,
+    "max": 15.09
+  },
+  "setup": {
+    "sessionCode": "D487BZ",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "allOnAgainAfterLoadAt": "00:13",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "bookmarkAt": "00:13",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 1.6,
+      "clock": "00:13",
+      "simS": 13.8,
+      "speed": 8,
+      "state": "arrival",
+      "load1": 4.99,
+      "what": "Load \"Stab wound: tamponade, PEA and pericardiocentesis\" at ×8, Bookmark",
+      "hr": 104,
+      "art": "113/88 (96)",
+      "spo2": 96,
+      "etco2": 36,
+      "rr": 20
+    },
+    {
+      "wall": 7.9,
+      "clock": "01:04",
+      "simS": 64.6,
+      "speed": 8,
+      "state": "arrival",
+      "load1": 4.83,
+      "what": "1:00 (CVP on the IBP2 tile)",
+      "hr": 97,
+      "art": "105/85 (91)",
+      "spo2": 98,
+      "etco2": 32,
+      "rr": 13,
+      "ibp2": "17"
+    },
+    {
+      "wall": 53.4,
+      "clock": "07:06",
+      "simS": 426.6,
+      "speed": 1,
+      "state": "deteriorating",
+      "load1": 5.36,
+      "what": "7:00 ×1",
+      "hr": 147,
+      "art": "62/54 (57)",
+      "spo2": 99,
+      "etco2": 21,
+      "rr": 16
+    },
+    {
+      "wall": 96.1,
+      "clock": "07:49",
+      "simS": 469.2,
+      "speed": 1,
+      "state": "pea",
+      "load1": 5.82,
+      "what": "card shows PEA",
+      "hr": 45,
+      "art": "–/– (21)",
+      "spo2": 99,
+      "etco2": 14,
+      "rr": 16
+    },
+    {
+      "wall": 99,
+      "clock": "07:52",
+      "simS": 472.1,
+      "speed": 1,
+      "state": "cpr",
+      "load1": 5.51,
+      "what": "press **Start CPR, intubate, FiO₂ 1.0**",
+      "hr": 49,
+      "art": "–/– (23)",
+      "spo2": 99,
+      "etco2": 13,
+      "rr": 16
+    },
+    {
+      "wall": 99.4,
+      "clock": "07:53",
+      "simS": 473.6,
+      "speed": 4,
+      "state": "cpr",
+      "load1": 5.51,
+      "what": "×4 after CPR",
+      "hr": 54,
+      "art": "–/– (31)",
+      "spo2": 99,
+      "etco2": 12,
+      "rr": 19
+    },
+    {
+      "wall": 117.6,
+      "clock": "09:05",
+      "simS": 545.3,
+      "speed": 1,
+      "state": "cpr",
+      "load1": 7.64,
+      "what": "9:00 ×1",
+      "hr": 114,
+      "art": "40/19 (27)",
+      "spo2": 99,
+      "etco2": 9,
+      "rr": 12
+    },
+    {
+      "wall": 134.5,
+      "clock": "09:22",
+      "simS": 562.2,
+      "speed": 1,
+      "state": "cprDrained",
+      "load1": 11.04,
+      "what": "press **Pericardiocentesis during CPR**",
+      "hr": 107,
+      "art": "41/20 (28)",
+      "spo2": 99,
+      "etco2": 9,
+      "rr": 12
+    },
+    {
+      "wall": 150,
+      "clock": "10:22",
+      "simS": 623,
+      "speed": 1,
+      "state": "cprDrained",
+      "load1": 13.41,
+      "what": "≈ 1 min after the drainage, ×1: watch",
+      "hr": 112,
+      "art": "71/33 (46)",
+      "spo2": 99,
+      "etco2": 17,
+      "rr": 12
+    },
+    {
+      "wall": 182.1,
+      "clock": "10:55",
+      "simS": 655.1,
+      "speed": 1,
+      "state": "cprDrained",
+      "load1": 14.15,
+      "what": "return of circulation (the model)",
+      "hr": 107,
+      "art": "69/32 (45)",
+      "spo2": 99,
+      "etco2": 19,
+      "rr": 12
+    },
+    {
+      "wall": 185,
+      "clock": "10:58",
+      "simS": 658,
+      "speed": 1,
+      "state": "rosc",
+      "load1": 13.9,
+      "what": "press **Pulse back: stop CPR**",
+      "hr": 99,
+      "art": "114/51 (76)",
+      "spo2": 99,
+      "etco2": 19,
+      "rr": 12
+    },
+    {
+      "wall": 214.3,
+      "clock": "11:27",
+      "simS": 687.3,
+      "speed": 1,
+      "state": "rosc",
+      "load1": 15.09,
+      "what": "30 s after stopping CPR",
+      "hr": 64,
+      "art": "115/77 (90)",
+      "spo2": 99,
+      "etco2": 28,
+      "rr": 12
+    },
+    {
+      "wall": 215.2,
+      "clock": "11:28",
+      "simS": 688.2,
+      "speed": 1,
+      "state": "roscFluid",
+      "load1": 15.09,
+      "what": "press **Crystalloid 500 mL**",
+      "hr": 65,
+      "art": "115/78 (91)",
+      "spo2": 99,
+      "etco2": 28,
+      "rr": 12
+    }
+  ],
+  "presses": [
+    {
+      "label": "Start CPR, intubate, FiO₂ 1.0",
+      "clock": "07:51",
+      "simS": 471.3,
+      "wall": 99,
+      "before": "pea",
+      "after": "cpr",
+      "load1": 5.51,
+      "toast": ""
+    },
+    {
+      "label": "Pericardiocentesis during CPR",
+      "clock": "09:21",
+      "simS": 561.4,
+      "wall": 134.5,
+      "before": "cpr",
+      "after": "cprDrained",
+      "load1": 11.04,
+      "toast": ""
+    },
+    {
+      "label": "Pulse back: stop CPR",
+      "clock": "10:57",
+      "simS": 657.2,
+      "wall": 185,
+      "before": "cprDrained",
+      "after": "rosc",
+      "load1": 13.9,
+      "toast": ""
+    },
+    {
+      "label": "Crystalloid 500 mL",
+      "clock": "11:27",
+      "simS": 687.4,
+      "wall": 215.2,
+      "before": "rosc",
+      "after": "roscFluid",
+      "load1": 15.09,
+      "toast": ""
+    }
+  ],
+  "spans": [],
+  "states": [
+    {
+      "t": 2,
+      "clock": "00:02",
+      "id": "arrival"
+    },
+    {
+      "t": 374,
+      "clock": "06:14",
+      "id": "deteriorating"
+    },
+    {
+      "t": 469,
+      "clock": "07:49",
+      "id": "pea"
+    },
+    {
+      "t": 471.3,
+      "clock": "07:51",
+      "id": "cpr"
+    },
+    {
+      "t": 561.4,
+      "clock": "09:21",
+      "id": "cprDrained"
+    },
+    {
+      "t": 657.2,
+      "clock": "10:57",
+      "id": "rosc"
+    },
+    {
+      "t": 687.4,
+      "clock": "11:27",
+      "id": "roscFluid"
+    }
+  ],
+  "alarms": [
+    "00:22 CVP MEAN TOO HIGH",
+    "05:59 SPO2 LOW PERFUSION",
+    "06:06 ART SYS TOO LOW",
+    "07:03 ART MEAN TOO LOW",
+    "07:10 HR TOO HIGH",
+    "07:17 ART DIA TOO LOW",
+    "07:21 ETCO2 TOO LOW",
+    "07:31 IBP1 STATIC PRESSURE",
+    "07:45 HR TOO LOW",
+    "07:57 ART SYS TOO LOW",
+    "07:57 ART DIA TOO LOW",
+    "11:03 ART MEAN TOO HIGH",
+    "11:04 ART DIA TOO HIGH"
+  ],
+  "measures": {
+    "a3tamponade": {
+      "peaStateAt": "07:49",
+      "cprAt": "07:51",
+      "cprAfterPeaStateS": 2.1,
+      "drainedAt": "09:21",
+      "drainAfterCprS": 90.1,
+      "roscAt": "10:55",
+      "drainToRoscS": 93.7,
+      "stopAt": "10:57",
+      "stopAfterRoscS": 2.1,
+      "maxSystolicDrainToRosc": 71.4,
+      "artAtStop": "114/51 (76)"
+    },
+    "pdf": {
+      "pages": 6,
+      "a4": true,
+      "title": "Debrief Stab wound: tamponade, PEA and pericardiocentesis 2026-10-17"
+    }
+  },
+  "debrief": {
+    "openedAt": "11:28",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Name the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)This objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Start CPR within 10 s of the pulse lossCPR 3 s after the pulse loss (07:48 → 07:51; within 10 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Pericardiocentesis within 120 s of starting CPRThe state \"CPR: pericardium drained, catheter left in\" 1 min 30 s after CPR (07:51 → 09:21; within 2 min 00 s asked)."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Stop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogramThe state \"Return of circulation: ventilated, catheter in the pericardium\" 2 s after the return of circulation (10:55 → 10:57; within 30 s asked)."
+      },
+      {
+        "status": "not met",
+        "text": "✗ Not met Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA followsThe pulse loss at 07:48"
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "95 % at 00:28",
+      "Lowest ART M / NIBP M": "20 mmHg at 07:51",
+      "Highest EtCO₂": "36 mmHg at 00:09",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Pulseless": "3 min 07 s in all; first lost at 07:48",
+      "Return of circulation": "3 min 07 s after the pulse loss (10:55)",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 2.2 mmol/L (1.0–2.2) · pH 7.28 (7.28–7.41) · Glucose 5.8 mmol/L (5.6–5.8) · Tcore 36.8 °C (36.8–36.8)"
+    },
+    "timelineRows": 41,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Stab wound: tamponade, PEA and pericardiocentesis",
+      "00:00 Scenario Scenario state: Arrival: tachycardic, narrow pulse pressure, raised CVP",
+      "00:00 Scenario Breathing spontaneously",
+      "00:00 Scenario Cardiac tamponade: severe",
+      "00:01 Action Speed ×8",
+      "00:06 Action All alarms on",
+      "00:13 Bookmark Bookmark: Bookmark 1 at 00:13",
+      "00:22 Alarm CVP high",
+      "05:59 Alarm SpO₂: low perfusion",
+      "06:06 Alarm ART S low",
+      "06:13 Scenario Scenario state: Deteriorating: systolic below 80",
+      "07:03 Alarm ART M low",
+      "07:06 Action Speed ×1",
+      "07:10 Alarm HR high",
+      "07:17 Alarm ART D low",
+      "07:21 Alarm EtCO₂ low",
+      "07:31 Alarm ART: no pulsatile pressure",
+      "07:45 Alarm HR low",
+      "07:48 Patient Pulse lost (the model)",
+      "07:49 Scenario Scenario state: PEA: organised rhythm, no pulse; the pericardium holds about 370 mL",
+      "07:49 Scenario Cardiac tamponade: severe",
+      "07:51 Scenario Scenario state: CPR, ventilated with FiO₂ 1.0",
+      "07:51 Scenario CPR started, 110 /min",
+      "07:51 Scenario Tracheal tube in place",
+      "07:51 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 100 %",
+      "07:52 Action Speed ×4",
+      "07:51 Patient Ventilated breaths began",
+      "07:57 Alarm ART S low",
+      "07:57 Alarm ART D low",
+      "09:05 Action Speed ×1",
+      "09:21 Scenario Scenario state: CPR: pericardium drained, catheter left in",
+      "09:21 Scenario Cardiac tamponade: severe",
+      "09:22 Action Speed ×4",
+      "10:22 Action Speed ×1",
+      "10:55 Patient Circulation returned (the model)",
+      "10:57 Scenario Scenario state: Return of circulation: ventilated, catheter in the pericardium",
+      "10:57 Scenario CPR stopped",
+      "11:03 Alarm ART M high",
+      "11:04 Alarm ART D high",
+      "11:27 Scenario Scenario state: Post-ROSC: 500 mL crystalloid running",
+      "11:27 Scenario Crystalloid 500 mL over 5 min"
+    ],
+    "minuteRows": 12
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": true,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "97",
+          "phoneFirst": "83",
+          "instructorNow": "112",
+          "phoneNow": "117",
+          "atWallS": 101.7
+        },
+        "samples": 435,
+        "compared": 430,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 245,
+        "holdSamples": 0,
+        "status": {
+          "synced": 435
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "97",
+          "phoneFirst": "83",
+          "instructorNow": "112",
+          "phoneNow": "117",
+          "atWallS": 101.7
+        },
+        "samples": 435,
+        "compared": 430,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 247,
+        "holdSamples": 0,
+        "status": {
+          "synced": 435
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 3,
+        "worst": {
+          "param": "HR",
+          "forS": 3,
+          "instructorFirst": "97",
+          "phoneFirst": "83",
+          "instructorNow": "112",
+          "phoneNow": "117",
+          "atWallS": 101.7
+        },
+        "samples": 435,
+        "compared": 430,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 230,
+        "holdSamples": 0,
+        "status": {
+          "synced": 435
+        },
+        "resyncs": 2,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}
