@@ -21,6 +21,12 @@ commit and creates the GitHub release with its assets.
 7. The version label is `1.0.0-rc.1` (Ali's ruling, Q8 of the Stage 8b plan): a pre-release until the calibration
    pass and the blind review have run. The workflow flags any `v*-*` tag as a GitHub pre-release; check the release
    page says "Pre-release".
+8. Tick-cost gate (FU-11 J5, F10). On an idle machine (nothing else running):
+   `npx -y pnpm@9.15.9 --filter @pme/validation perf:ticks --seconds 600 --budget-ms 6` exits 0 (6 ms: Stage 8a's
+   stated bound "p99 ≪ 6 ms", measured 0.53 ms; `docs/gates/stage-8a.md`). CI does not run it (shared runners). The run
+   rewrites `docs/validation/perf/ticks.json`: restore it unless the release lands a new measurement on purpose.
+9. Soak with a busy Ventilator view (FU-11). With the Ventilator view open at ×4 and a Remote paired, the Remote shows
+   its first state within 5 s and the host's frame p95 stays ≤ 20 ms for 10 min (record both numbers).
 
 ## Tag (orchestrator only)
 
@@ -43,6 +49,14 @@ gh run watch "$(gh run list --workflow release --limit 1 --json databaseId --jq 
    source". If a later release publishes, it is `pnpm -r publish --access public` from the tagged commit by the owner
    of the npm scope (decide the scope first) — pnpm applies each package's `publishConfig`.
 4. Update `docs/RESUME.md` and the rulings file.
+5. Publish the rc.1 static build to GitHub Pages (the owner's go-ahead, relayed 2026-10-18: "the update after rc1 is
+   acceptable"; it supersedes the Stage 8b plan's Q3 for this release). Once, after the tag, from the tagged commit:
+   `node scripts/showcase/make-bundle.mjs <scratch>/kit` (the kit's relative-base build of the app, with its
+   `VERSION.txt`); copy `<scratch>/kit/app/` into a clean gh-pages tree with an empty `.nojekyll`, the kit's
+   `VERSION.txt`, `LICENSE`, `NOTICES.md` and `LICENSES/`; check that the Start view shows "Version 1.0.0-rc.1
+   (pre-release). For education only. …"; commit and force-push the `gh-pages` branch ONLY (never `main`); record the
+   gh-pages commit in the gate note or the rulings file. The Pages site cannot pair learners' phones: they need the
+   classroom relay of the local kit (README).
 
 ## Later: 1.0.0 (not at the release candidate)
 

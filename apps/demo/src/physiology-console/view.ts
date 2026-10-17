@@ -343,6 +343,7 @@ export function mountConsole(root: HTMLElement, host: ConsoleHost, o: { autoBase
     mode: () => void send(A.setMode(f('mode').value as 'manual' | 'modeled')),
     restart: () => {
       host.restart(f('preset').value, f('mode').value as 'manual' | 'modeled');
+      if (paused) host.pause(true); // Stage 8b (FU-11 F24): a restart keeps the pause, as the clinical app's does
       model.clear();
       baseSnap = null;
       simT = 0;

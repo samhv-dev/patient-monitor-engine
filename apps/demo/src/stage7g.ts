@@ -81,11 +81,13 @@ $('nal').onclick = () => void drug('naloxone', 0.1, 'mg');
 /** The depth tile: 7f's depth index when 7f publishes it on the 1 Hz state event, else 7g's own summaries. */
 function depthText(): string {
   if (!shadow) return '';
-  const st = (shadow.snapshot().state as { st: { pk?: { bus: { cns: { uSurface: number; macBrain: number; propCe: number; opioidCeRemiEq: number; seizure: boolean } } }; neuro?: { out?: { depthIndex?: number } } } }).st;
-  const di = st.neuro?.out?.depthIndex;
+  // Stage 8b (FU-11 F25): 7f's shown depth index is `neuro.diShown` (the old `neuro.out.depthIndex` never existed, so
+  // the tile always said "7f pending")
+  const st = (shadow.snapshot().state as { st: { pk?: { bus: { cns: { uSurface: number; macBrain: number; propCe: number; opioidCeRemiEq: number; seizure: boolean } } }; neuro?: { diShown?: number } } }).st;
+  const di = st.neuro?.diShown;
   const c = st.pk?.bus.cns;
   if (!c) return '';
-  return (di !== undefined ? `depth index ${di.toFixed(0)} (7f)\n` : 'depth index: 7f pending\n') +
+  return (typeof di === 'number' && Number.isFinite(di) ? `depth index ${di.toFixed(0)} (7f)\n` : 'depth index: not yet computed\n') +
     `U surface ${c.uSurface.toFixed(2)}  MAC ${c.macBrain.toFixed(2)}\npropofol Ce ${c.propCe.toFixed(2)} µg/mL  opioid ${c.opioidCeRemiEq.toFixed(2)} ng/mL remi-eq` +
     (c.seizure ? '\nLAST: SEIZURE' : '');
 }
