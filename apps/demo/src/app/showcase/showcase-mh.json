@@ -10,7 +10,7 @@
     { "text": "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis", "rule": { "kind": "eventWithin", "after": "state:triggerOff", "event": "drug:dantrolene", "withinS": 300 } },
     "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg",
     { "text": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L", "rule": { "kind": "eventWithin", "after": "value:k>5.5", "event": ["drug:calciumChloride", "drug:insulinDextrose"], "withinS": 300 } },
-    { "text": "Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg", "rule": { "kind": "eventWithin", "from": "state:triggerOff", "after": "value:etco2<40", "event": "state:normoventilated", "withinS": 300 } }
+    { "text": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "rule": { "kind": "heldThen", "from": "state:triggerOff", "value": "etco2", "below": 40, "forS": 120, "event": "state:normoventilated" } }
   ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,

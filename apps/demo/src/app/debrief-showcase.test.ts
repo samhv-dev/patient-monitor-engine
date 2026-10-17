@@ -12,6 +12,7 @@ import { RunRecord } from './record.ts';
 import { LIBRARY } from './scenarios.ts';
 import anaphylaxis from './showcase/showcase-anaphylaxis.json';
 import induction from './showcase/showcase-induction.json';
+import mh from './showcase/showcase-mh.json';
 
 const known = (ev: string, doc: ScenarioDoc): boolean => {
   const [k = '', id = ''] = ev.split(':');
@@ -53,6 +54,19 @@ async function hostRun(raw: unknown, untilS: number, press: (t: number, rec: Run
 const once = (fn: (t: number, rec: RunRecord) => boolean, tr: string) => {
   let done = false;
   return (t: number, rec: RunRecord) => (!done && fn(t, rec) ? ((done = true), tr) : null);
+};
+/** The MH early call as the cue card runs it (call 9 s into Early signs, dantrolene +20 s, cooling +30 s), then
+ *  "ventilation back" when `normo` says so. */
+const mhPresses = (normo: (t: number, rec: RunRecord, at: (id: string) => number | undefined) => boolean) => {
+  const done = new Set<string>();
+  return (t: number, rec: RunRecord): string | null => {
+    const at = (id: string) => rec.data.rows.find((r) => r.ev === `state:${id}`)?.t;
+    const go = (tr: string, ok: boolean) => (ok && !done.has(tr) ? (done.add(tr), tr) : null);
+    const early = at('earlySigns');
+    const off = at('triggerOff');
+    return go('surgery', t >= 240) ?? go('crisis-earlySigns', early !== undefined && t >= early + 9) ?? go('dant', off !== undefined && t >= off + 20)
+      ?? go('cool-treating', off !== undefined && t >= off + 30 && at('treating') !== undefined) ?? go('normo', at('recovering') !== undefined && normo(t, rec, at));
+  };
 };
 const alarmAt = (rec: RunRecord) => rec.data.rows.find((r) => r.ev?.startsWith('alarm:apnoea'))?.t;
 /** The verdict of the objective whose rule starts at the apnoea alarm (its place in the list is the card's business). */
@@ -99,4 +113,21 @@ describe('Stage 13: the showcase objectives as rules', () => {
     const untreated = await hostRun(induction, 170, press);
     expect(apnoeaObjective(untreated)?.status).toBe('not met');
   }, 120_000);
+
+  it('E22 MH: ventilation back at "Recovering" is not met; after 2 min of EtCO₂ below 40 it is met', async () => {
+    const vent = (rec: RunRecord) => objectives(rec.data)[4]?.verdict;
+    const early = await hostRun(mh, 560, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
+    expect(objectives(early.data).map((o) => o.verdict.status).slice(0, 2)).toEqual(['met', 'met']);
+    expect(vent(early)?.status).toBe('not met');
+    expect(vent(early)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, when EtCO₂ had been below 40 mmHg for 1 min \d\d s \(2 min 00 s asked\)\.$/);
+    // held: no sample at 40 or above for the last 2 min since the call, then the press
+    const held = (t: number, rec: RunRecord, at: (id: string) => number | undefined) => {
+      const xs = rec.data.samples.filter((s) => s.t >= (at('triggerOff') as number));
+      const bad = xs.filter((s) => s.etco2 === null || s.etco2 >= 40).at(-1);
+      return bad !== undefined && t >= bad.t + 1 + 120 + 5;
+    };
+    const kept = await hostRun(mh, 640, mhPresses(held));
+    expect(vent(kept)?.status).toBe('met');
+    expect(vent(kept)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s \(\d\d:\d\d → \d\d:\d\d\)\.$/);
+  }, 300_000);
 });

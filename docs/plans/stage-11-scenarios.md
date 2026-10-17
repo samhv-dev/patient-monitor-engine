@@ -506,7 +506,7 @@ haemorrhage blocks still apply.
 | S1 | Give dantrolene 2.5 mg/kg within 300 s of calling the crisis | `eventWithin` after `state:triggerOff` → `drug:dantrolene`, 300 |
 | S1 | Repeat dantrolene … within 600 s of the first dose while EtCO₂ is still above 45 mmHg | rule-less (a second occurrence under a condition is not a kind) |
 | S1 | Treat the potassium … within 300 s of K⁺ rising above 5.5 mmol/L | rule-less (K is not a trend; Stage 13's Q7) |
-| S1 | Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg | `eventWithin` after `value:etco2<40` → `state:normoventilated`, 300 |
+| S1 | ~~Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg~~ → **E22 (owner ruling 2026-10-17):** Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500) | ~~`eventWithin` after `value:etco2<40` → `state:normoventilated`, 300~~ → `heldThen` from `state:triggerOff`, `etco2` below 40 for 120 s → `state:normoventilated` (an earlier press is not met; Stage 13 plan, rule table) |
 | S2 | Name the tamponade within 180 s of arrival … (instructor-assessed) | rule-less |
 | S2 | Start CPR within 10 s of the pulse loss | `eventWithin` after `pulseLoss` → `cpr`, 10 |
 | S2 | Pericardiocentesis within 120 s of starting CPR | `eventWithin` after `cpr` → `state:cprDrained`, 120 |
