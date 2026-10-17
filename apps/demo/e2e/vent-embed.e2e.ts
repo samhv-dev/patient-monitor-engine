@@ -32,6 +32,9 @@ const shot = async (p: Page, name: string) => {
 };
 
 test('vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths', async ({ page }) => {
+  // The waits below add up to 80 s (20 + 30 + 30); the 30 s default cut the awRR poll short on the CI WebKit runner
+  // (PR #66 run 39066929916: passed only on retry #2). Same values, the whole budget.
+  test.setTimeout(120_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
