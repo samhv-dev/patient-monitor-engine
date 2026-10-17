@@ -1,57 +1,59 @@
-# Showcase 2: presenter guide (one page, FINAL)
+# Showcase 2: presenter guide (one page, the 30-minute slot)
 
-*22 October 2026. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
+*22 October 2026, 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
 [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys are
-those of the run sheet; MEAS = `SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13). The owner defaults D1–D6 are
-listed at the top of the run sheet; each is marked "owner default — change if he says otherwise" here too.*
+those of the run sheet; MEAS = `SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13), A3 = its section A3 (kit round
+A3, 2026-10-17). The owner's final answers of 2026-10-17 (E17, E19a, E19c, E20, E21, E22) are listed at the top of the
+run sheet. One number is a placeholder on purpose: **[E22 time: filled from the E22 measurement]**.*
+
+## The order (30:00)
+
+Opening + QR (3:00) · **bronchospasm** with the Ventilator view (5:00) · **tamponade** → CPR → drainage (5:30) · **the
+Debrief** (3:30) · **MH**, early call (5:30) · close and the ask (3:00) · questions (4:00) · buffer (0:30). Running
+over: cut questions first, then the MH third fast-forward, then the bronchospasm Explore line. Premed, plain induction,
+anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the cue cards.
 
 ## Ten things to remember
 
 1. **Load → All alarms on → speed → Bookmark, every case.** Loading a case turns the limit alarms off, every time
-   [MEAS §7]. A page reload loses **All alarms on** AND **Sound on**; it keeps the session code, and the phones stay
-   synced [MEAS §7].
+   [MEAS §7]; pressing it again is your step (E21). Take the Bookmark AFTER All alarms on: Return here then brings the
+   alarms back on [A3.2]. A page reload loses **All alarms on** AND **Sound on**; it keeps the session code, and the
+   phones stay synced [MEAS §7].
 2. **QR first.** Phones are synced before case 1; they start silent; up to 60 per session [CR12].
-3. **The speed after a fast-forward is the speed before it.** A fast-forward takes 10–11 s of wall; nothing can be
-   pressed while the amber panel shows; then set the next speed yourself [MEAS §7; G10].
-4. **Load first, then the Ventilator view; reload the page after the bronchospasm case**, then Sound on [RUN4;
-   R00 2026-10-04; MEAS §7]. Fast-forward and speed are on the Instructor view's session bar.
-5. **Six tight windows** (slow down for them):
-   - premed: **Intubate** at `CO2 APNEA` (39 s after Induce on Chromium, 57 s on WebKit) [MEAS §3];
-   - anaphylaxis: **epinephrine at 02:30** on the clock, 1:30 into the reaction, not 2:00 (2:03 is ✗ and gives HR 171
-     and `HR TOO HIGH`) [MEAS §2] (*owner default — change if he says otherwise*);
-   - haemorrhage: **CPR at `SPO2 NO PULSE` (10:40), never before** (an early press makes both CPR lines "not
-     assessable") [MEAS §4];
-   - tamponade: **CPR the moment the card shows PEA (07:49)**, NOT at `SPO2 NO PULSE` (07:58 is already 10 s after the
-     pulse loss) [MEAS §5]; **drainage about 1:30 into CPR** (the rule is 2:00);
-   - tamponade: **stop CPR only when the pressure climbs above the compression level**; CPR alone reads **69/32**, and
-     stopping on it re-arrests the patient [MEAS §5];
-   - MH: **call at Early signs (06:52)**; **ventilation back to 12 × 500 the moment "Recovering" shows (08:35)**, before
-     the first fast-forward; **repeat dantrolene** when EtCO₂ is back above 55 (57 at 14:00) [MEAS §0, §1]
-     (*owner default — change if he says otherwise*).
+3. **The speed after a fast-forward is the speed before it** (×8 stays ×8). A fast-forward takes 10–11 s of wall;
+   nothing can be pressed while the amber panel shows; then set the next speed yourself, **×1** when you want real time
+   [MEAS §7; A3.3; G10].
+4. **Bronchospasm: load first, then the Ventilator view; reload the page after it**, then Sound on [RUN4; R00
+   2026-10-04; MEAS §7]. Speed and fast-forward are on the Instructor view's session bar: pressing them there, with the
+   cockpit hidden, is measured safe (the cockpit keeps ventilating, the phones keep their hold) [A3.3].
+5. **Five tight moments** (slow down for them):
+   - tamponade: **CPR the moment the card shows PEA (07:49)**, NOT at `SPO2 NO PULSE` (on this path it never sounds;
+     on a late path it comes at 07:58, already 10 s after the pulse loss) [A3.1; MEAS §5];
+   - tamponade: **drainage 1:30 into CPR (09:21)**; the rule is 2:00 [A3.1];
+   - tamponade: **stop CPR only when the systolic jumps to about 100**; compressions alone read **about 70/33**, and
+     stopping on them re-arrests the patient [A3.1; MEAS §5 probe];
+   - MH: **call at Early signs (06:52)** (E19a) [MEAS §0, §1];
+   - MH: **keep the hyperventilation through the fast-forwards**; press **ventilation back** only at **[E22 time: filled
+     from the E22 measurement]**, never at "Recovering" (early is "not met" under the new rule) (E22) [R00 2026-10-17].
 6. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 7. **The one ✗ of the day** is the tamponade's **"Better: pericardiocentesis before the pulse loss"**. Every timed
-   objective is met; name the ✗ as the better course of action (drain before the arrest), not a timing [CARD; R00
-   2026-10-13] (*owner default — change if he says otherwise*). Never open the plain induction's Debrief: it marks
-   "intubate within 90 s" ✗ by design [MEAS §3].
-8. **Debrief before loading the next case**: it reports the current run. Print from Chrome if you can (footer on every
-   page); Safari puts the footer only at section ends [PRINT].
-9. **Saadat-style monitor, and no style change during the talk** (*owner default — change if he says otherwise*): the
-   phones' AGENTS tile read "---" for 30 s after a change to Philips-style (FX-9) [MEAS §8].
-10. **Say the known misses yourself**: no shock decompensation or reflex bradycardia; no pulsus paradoxus; MH death too
-    fast and post-MH hypertension; sepsis not built [RM; SYN; G11 §5 Q8]. In haemorrhage, Explore shows the
-    resistance **rising** (SVR +659 at 8:00): that is right, not a miss [MEAS §4].
+   objective is met (measured: CPR 3 s, drainage 1 min 30 s, stop 2 s); name the ✗ as the lesson, the better course of
+   action (drain before the arrest), not a timing (E17) [A3.1].
+8. **Debrief before loading the next case**: it reports the current run. It prints **6 A4 pages** on this path [A3.1].
+   Print from Chrome if you can (footer on every page); Safari puts the footer only at section ends [PRINT].
+9. **Saadat-style monitor, and no style change during the talk** (E20): the phones' AGENTS tile read "---" for 30 s
+   after a change to Philips-style (FX-9) [MEAS §8].
+10. **Say the known misses yourself**: no pulsus paradoxus; MH death too fast and post-MH hypertension; shock
+    decompensation and reflex bradycardia not modelled; sepsis not built [RM; SYN; G11 §5 Q8].
 
 ## Numbers to have in your head
 
 | Case | The number |
 |---|---|
-| Premed | `RR TOO LOW` at 01:40; MAP nadir 52; MAP back to 65 at 108–112 s after ephedrine [MEAS §3] |
-| Plain induction | apnoea 52–54 s after Induce; SpO₂ < 90 state at 11:26 while the monitor reads 94; after the bag-mask nadir 87 at 19 s, 95 at 30 s [MEAS §3] |
-| Anaphylaxis | epinephrine 02:30; systolic > 110 in 5 s; HR peak 144–145 [MEAS §2] |
 | Bronchospasm | VTE 300 → 501 mL; minute volume 4.2 → 7.0 L/min; the Pmax banner goes out [MEAS §6] |
-| Haemorrhage | HR > 100 at 4:30, > 120 at 6:05, > 140 at 8:00; systolic < 90 at 6:56; pulse loss 10:29; ROSC 13:38; overshoot 203/106 at the stop [MEAS §4] |
-| Tamponade | CVP on **IBP2** (17); pulse loss 07:48, PEA 07:49; compressions alone 69/32; ROSC about 95–96 s after drainage [MEAS §5] |
-| MH | Early signs 06:52; EtCO₂ < 40 at 07:27; Recovering 08:35; EtCO₂ 57 at 14:00, max 61 [MEAS §0, §1] |
+| Tamponade | CVP on **IBP2** (17); pulse loss 07:48, PEA 07:49, CPR 07:51; drainage 09:21; compressions alone about 70/33; return 10:55 (93.7 s after drainage), the systolic jumping to about 100 3 s later; 30 s after stopping 115/77, HR 64 [A3.1; MEAS §5] |
+| Debrief | – ✓ ✓ ✓ ✗; pulseless 3 min 07 s; 41 timeline rows; 6 A4 pages [A3.1] |
+| MH | Early signs 06:52; call lands 07:01; EtCO₂ < 40 at 07:27; kept on, EtCO₂ 38 at 12:55 and 36 at 18:11; ventilation back at [E22 time: filled from the E22 measurement] [MEAS §0, §1; KR MH early-call C] |
 
 ## Keys and buttons
 
@@ -101,7 +103,7 @@ calibration queue, not of every test):
   the reference band, 27 missed by under 30 %, 16 by more [SC1 handout "How it was checked"].
 - Not yet run: the blind realism review and the item-by-item Saadat comparison (both built) [SC1 handout].
 
-If asked about haemorrhage and ATLS: the audit ranks the ATLS heart-rate bands first among the targets most likely wrong;
+If asked about haemorrhage and ATLS (the haemorrhage case is in reserve today): the audit ranks the ATLS heart-rate bands first among the targets most likely wrong;
 the model's five measured values fit the registry evidence [SYN (a) item 1]. On this build the monitor crosses HR 100,
 120 and 140 at 4:30, 6:05 and 8:00 [MEAS §4].
 
