@@ -4,7 +4,7 @@
 [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys are
 those of the run sheet; MEAS = `SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13), A3 = its section A3 (kit round
 A3, 2026-10-17). The owner's final answers of 2026-10-17 (E17, E19a, E19c, E20, E21, E22) are listed at the top of the
-run sheet. One number is a placeholder on purpose: **[E22 time: filled from the E22 measurement]**.*
+run sheet. The MH press time is the E22 measurement: **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**.*
 
 ## The order (30:00)
 
@@ -33,8 +33,7 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
    - tamponade: **stop CPR only when the systolic jumps to about 100**; compressions alone read **about 70/33**, and
      stopping on them re-arrests the patient [A3.1; MEAS §5 probe];
    - MH: **call at Early signs (06:52)** (E19a) [MEAS §0, §1];
-   - MH: **keep the hyperventilation through the fast-forwards**; press **ventilation back** only at **[E22 time: filled
-     from the E22 measurement]**, never at "Recovering" (early is "not met" under the new rule) (E22) [R00 2026-10-17].
+   - MH: **keep the hyperventilation through the fast-forwards**; press **ventilation back** only at **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**, never at "Recovering" (early is "not met" under the new rule) (E22) [R00 2026-10-17].
 6. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 7. **The one ✗ of the day** is the tamponade's **"Better: pericardiocentesis before the pulse loss"**. Every timed
    objective is met (measured: CPR 3 s, drainage 1 min 30 s, stop 2 s); name the ✗ as the lesson, the better course of
@@ -53,7 +52,7 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
 | Bronchospasm | VTE 300 → 501 mL; minute volume 4.2 → 7.0 L/min; the Pmax banner goes out [MEAS §6] |
 | Tamponade | CVP on **IBP2** (17); pulse loss 07:48, PEA 07:49, CPR 07:51; drainage 09:21; compressions alone about 70/33; return 10:55 (93.7 s after drainage), the systolic jumping to about 100 3 s later; 30 s after stopping 115/77, HR 64 [A3.1; MEAS §5] |
 | Debrief | – ✓ ✓ ✓ ✗; pulseless 3 min 07 s; 41 timeline rows; 6 A4 pages [A3.1] |
-| MH | Early signs 06:52; call lands 07:01; EtCO₂ < 40 at 07:27; kept on, EtCO₂ 38 at 12:55 and 36 at 18:11; ventilation back at [E22 time: filled from the E22 measurement] [MEAS §0, §1; KR MH early-call C] |
+| MH | Early signs 06:52; call lands 07:01; EtCO₂ < 40 at 07:27; kept on, EtCO₂ 38 at 12:55; ventilation back at 13:03 (as fast-forward 1 ends; any press from 12:41 is met); then 38 → 49 at +1 min → peak 55 inside span 2 (not visible), ETCO2 TOO HIGH 14:13 shown latched, 45 after span 2, 42 at the end; repeat dantrolene – (not needed; not on the alarm); say "EtCO₂ rose to the alarm limit while CO₂ production settled; the alarm caught it; we keep watching" [MEAS §0, §1, E22] |
 
 ## Keys and buttons
 

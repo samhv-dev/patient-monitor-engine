@@ -127,13 +127,38 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
     if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.` };
     return no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`);
   }
-  // stayed
   const m = trendMeta(rule.value);
+  const limit = [rule.above !== undefined ? `above ${fmt(rule.value, rule.above)}` : '', rule.below !== undefined ? `below ${fmt(rule.value, rule.below)}` : ''].filter(Boolean).join(' and ');
+  if (rule.kind === 'heldThen') {
+    // E22: the first `event` from `from` on, judged against the first moment the value had stayed past the limit for forS
+    const inside = (v: number | null) => v !== null && (rule.above === undefined || v > rule.above) && (rule.below === undefined || v < rule.below);
+    const e = first(d, rule.event, t0);
+    let run: number | null = null; // the start of the current unbroken stretch inside the limit
+    let held: [number, number] | null = null; // the first stretch of forS: [start, end]
+    let atE: number | null | undefined; // the stretch's start at the event (null: outside the limit then)
+    for (const s of d.samples) {
+      if (s.t < t0) continue;
+      if (e && atE === undefined && s.t > e.t) atE = run;
+      run = inside(s[rule.value]) ? (run ?? s.t) : null;
+      if (!held && run !== null && s.t - run >= rule.forS) held = [run, s.t];
+    }
+    if (e && atE === undefined) atE = run;
+    const ew = eventWords(rule.event, d);
+    const hw = `${m.label} had stayed ${limit} for ${span(rule.forS)}`;
+    if (e && (!held || e.t < held[1])) {
+      const when = atE != null ? `had been ${limit} for ${span(e.t - atE)}` : `was not ${limit}`;
+      return { status: 'not met', why: `${cap(ew)} at ${mmss(e.t)}, when ${m.label} ${when} (${span(rule.forS)} asked).` };
+    }
+    if (e && held) return { status: 'met', why: `${cap(ew)} at ${mmss(e.t)}, after ${hw} (${mmss(held[0])} → ${mmss(held[1])}).` };
+    if (held) return { status: 'not met', why: `${cap(ew)} did not happen; ${hw} by ${mmss(held[1])}.` };
+    if (!d.samples.some((s) => s.t >= t0 && s[rule.value] !== null)) return no(`${m.label} was not measured ${tail}.`);
+    return no(`The run ended before ${hw}${since}${start ? ` at ${mmss(t0)}` : ''}; ${ew} had not happened.`);
+  }
+  // stayed
   const from = rule.after ? first(d, rule.after) : { t: 0 };
   if (!from) return no(`${cap(eventWords(rule.after ?? 'start', d))} did not happen.`);
   const to = rule.forS ? from.t + rule.forS : end;
   const xs = d.samples.filter((s): s is Sample => s.t >= from.t && s.t <= to && s[rule.value] !== null);
-  const limit = [rule.above !== undefined ? `above ${fmt(rule.value, rule.above)}` : '', rule.below !== undefined ? `below ${fmt(rule.value, rule.below)}` : ''].filter(Boolean).join(' and ');
   if (!xs.length) return no(`${m.label} was not measured${rule.after ? ` after ${eventWords(rule.after, d)}` : ''}.`);
   const bad = xs.find((s) => {
     const v = s[rule.value] as number;

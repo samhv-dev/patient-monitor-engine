@@ -103,13 +103,16 @@ export type TrendValue = 'hr' | 'map' | 'spo2' | 'etco2' | 'rr' | 'temp' | 'k' |
  * "EtCO₂ falling below 40 after the crisis was called" = `{ from: 'state:triggerOff', after: 'value:etco2<40', … }`, as a
  * value event alone is the first second past the limit from the start. A list of events means any one of them
  * (`['drug:phenylephrine', 'drug:ephedrine']`). `stayed`: every value above/below the limit, over the run or the `forS` s
- * after the first `after`.
+ * after the first `after`. `heldThen` (E22, owner ruling 2026-10-17): the FIRST `event` (at or after the first `from`)
+ * comes only once `value` has stayed above/below the limit for `forS` s on end — "hyperventilation kept until EtCO₂ has
+ * stayed below 40 for 2 min, then ventilation normalised"; an earlier `event` is not met, none at all is not met.
  */
 export type ObjectiveRule =
   | { kind: 'eventWithin'; after: RunEventId | RunEventId[]; event: RunEventId | RunEventId[]; withinS: number; from?: RunEventId | RunEventId[] }
   | { kind: 'occurred'; event: RunEventId | RunEventId[]; from?: RunEventId | RunEventId[] }
   | { kind: 'never'; event: RunEventId | RunEventId[]; from?: RunEventId | RunEventId[] }
-  | { kind: 'stayed'; value: TrendValue; above?: number; below?: number; after?: RunEventId | RunEventId[]; forS?: number };
+  | { kind: 'stayed'; value: TrendValue; above?: number; below?: number; after?: RunEventId | RunEventId[]; forS?: number }
+  | { kind: 'heldThen'; value: TrendValue; above?: number; below?: number; forS: number; event: RunEventId | RunEventId[]; from?: RunEventId | RunEventId[] };
 export interface Objective extends C {
   text: string;
   /** Absent: the debrief lists the objective as not assessable. */
