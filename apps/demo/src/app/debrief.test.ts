@@ -6,6 +6,7 @@ import { validateScenario } from '@pme/controller/scenario';
 import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
 import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, span, verdict } from './debrief.ts';
+import { keyMoments, keyTimes } from './debrief-moments.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { cardOf } from './scenarios.ts';
 
@@ -172,12 +173,14 @@ describe('objective rules', () => {
     expect(ruled?.verdict.why).toContain('The instructor ticked it at 02:30.');
     expect(ruled?.verdict).not.toHaveProperty('tickedT');
     expect(ruled?.verdict).not.toHaveProperty('measure');
-    // (a) and (e): the schema, the renderer's version, and the key times and moments empty in A
+    // (a) and (e): the schema, the renderer's version, and the key times and moments (B2)
     const j = JSON.parse(debriefJson(d, 'b'));
     expect(j.schema).toBe('pme-debrief/2');
     expect(j.version).toBe(version);
-    expect(j.keyTimes).toEqual([]);
-    expect(j.keyMoments).toEqual([]);
+    expect(j.keyTimes).toEqual(keyTimes(d));
+    expect(j.keyTimes.map((k: { id: string }) => k.id)).toEqual(['recognition', 'objective:1']);
+    expect(j.keyTimes[0]).toMatchObject({ toT: 130, state: 'measured' });
+    expect(j.keyMoments).toEqual(keyMoments(d));
     expect(j.objectives[1]).toMatchObject({ discuss: true, verdict: { measure: { fromT: 66, toT: 200, askedS: 90 } } });
   });
 });

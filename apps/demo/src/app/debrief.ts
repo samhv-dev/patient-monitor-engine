@@ -8,6 +8,7 @@ import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
 import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
+import { keyMoments, keyTimes } from './debrief-moments.ts';
 import { version } from '@pme/renderer';
 
 export type Status = 'met' | 'not met' | 'not assessable';
@@ -282,7 +283,7 @@ export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKe
 }
 
 /** The report as exported (`pme-debrief/2`). Over `/1` it adds the renderer's `version`, `discuss` and the verdicts'
- *  `tickedT` and `measure`, and the key times and key moments of the course (empty until they are computed). */
+ *  `tickedT` and `measure`, and the key times and key moments of the course (`debrief-moments.ts`). */
 export interface DebriefExport {
   schema: 'pme-debrief/2';
   version: string;
@@ -307,6 +308,7 @@ export interface DebriefExport {
  *  moments, and the minute table, with the version and build that made it. Not the "Run by" line or the notes box:
  *  they are printed only, never stored. */
 export const debriefJson = (d: RunData, build: string): string => {
-  const out: DebriefExport = { schema: 'pme-debrief/2', version, build, record: d, objectives: objectives(d), facts: facts(d), keyTimes: [], keyMoments: [], minutes: perMinute(d) };
+  const moments = keyMoments(d);
+  const out: DebriefExport = { schema: 'pme-debrief/2', version, build, record: d, objectives: objectives(d), facts: facts(d), keyTimes: keyTimes(d, moments), keyMoments: moments, minutes: perMinute(d) };
   return JSON.stringify(out, null, 1);
 };

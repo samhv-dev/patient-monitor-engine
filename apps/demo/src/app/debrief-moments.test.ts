@@ -3,6 +3,7 @@
 import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
+import { debriefJson } from './debrief.ts';
 import { keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
@@ -92,6 +93,15 @@ describe('key times', () => {
     expect(by['objective:3']?.toT).toBeCloseTo(657.26, 2);
     expect(by.pulseless).toMatchObject({ fromT: 468, toT: null, totalS: 187, state: 'measured' });
     expect(by['objective:1']?.label).toBe('Start CPR within 10 s of the pulse loss');
+  });
+
+  it('pme-debrief/2 carries them (B2): the A3.1 export round-trips its key times and moments', () => {
+    const d = a31Run();
+    const j = JSON.parse(debriefJson(d, 'b'));
+    expect(j.keyTimes).toEqual(keyTimes(d));
+    expect(j.keyMoments).toEqual(keyMoments(d));
+    expect(j.keyMoments).toHaveLength(7);
+    expect(j.keyTimes).toHaveLength(6);
   });
 
   it('A3.1 with the tick: the recognition tile is the tick time as recorded', () => {
