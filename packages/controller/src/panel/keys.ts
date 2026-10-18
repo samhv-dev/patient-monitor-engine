@@ -1,5 +1,5 @@
-// FX-18: one test for "the user is typing", shared by every single-key shortcut (the `i` reveal here, the demo app's
-// Shift+S/P/N/B/?). A tag-name check missed the Debrief notes, a contenteditable div: `i` toggled and ate the letter.
+// One test for "the user is typing", shared by every single-key shortcut (the `i` reveal here, the demo app's
+// Shift+S/P/N/B/?). A tag-name check alone misses contenteditable fields such as the Debrief notes.
 const NOT_TEXT = new Set(['button', 'checkbox', 'radio', 'range', 'submit']);
 
 function isTextField(x: unknown): boolean {

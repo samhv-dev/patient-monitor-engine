@@ -75,7 +75,7 @@ export class RevealGesture {
 /** Wire a RevealGesture to a window. Returns a detach function. */
 export function attachReveal(win: Window, g: RevealGesture): () => void {
   const onKey = (e: KeyboardEvent) => {
-    if (isTyping(e)) return; // FX-18: contenteditable and role=textbox fields too, not only INPUT/TEXTAREA/SELECT
+    if (isTyping(e)) return; // any text field, contenteditable and textbox roles included (keys.ts)
     const tag = (e.target as Element | null)?.tagName ?? '';
     if (g.key({ key: e.key, ctrlKey: e.ctrlKey, shiftKey: e.shiftKey, altKey: e.altKey, metaKey: e.metaKey, targetTag: tag })) e.preventDefault();
   };
