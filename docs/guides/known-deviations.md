@@ -212,31 +212,42 @@ Also not run on any WebKit (`test.skip(browserName === 'webkit', …)`): heavy e
 
 ## Browser tests that passed only on a retry
 
-These end-to-end tests passed only on a retry in CI runs between 2026-10-10 and 2026-10-17 (main runs 38092760192 … 39067903552 and the release PR runs 39066929916, 39076653954; `gh run view <id> --log`, step 'e2e tests that passed only on retry', or the Playwright 'flaky' summary before 2026-10-12). They are flaky, not band misses: most are wall-clock or runner-speed reads on the loaded 2-vCPU runner; 'crash' marks the WebKit page or browser closing under the test. They are left for the clean-up after this release.
+These end-to-end tests passed only on a retry in CI between 2026-10-11 and 2026-10-18. Scope: **main and release-PR
+runs; eight further tests flaked only on feature-branch runs and are tracked in the clean-up stage's list.** The counts
+in each row are over all 99 `ci` runs of the window (main and pull-request branches): "Retry" = runs in which the test
+passed only on a retry, "3/3" = runs in which all three attempts failed, "Runs" = runs in which it ran on that browser.
+They are flaky, not band misses. Class: **capacity** = a timing or speed reading on the loaded 2-vCPU runner;
+**timing** = a fixed wait or poll too short for that runner; **crash** = the WebKit page or browser closed under the
+test; **unknown** = the log shows no runner cause. Read any run with `gh run view <id> --log` (step "e2e tests that
+passed only on retry", or the Playwright "flaky" summary before 2026-10-12). They are left for the clean-up after this
+release.
 
-| Test (file:line as CI reported it) | Test title | Note |
-|---|---|---|
-| `scenario-choose-another.e2e.ts:14` | the scenario library opened before the first repaint stays open until a scenario is loaded | the regression test for a fixed product defect (`docs/gates/ci-webkit-3.md` "(c) findings"); passed only on retry on CI WebKit in 11 of 12 main runs, so the fix is not confirmed on slow WebKit |
-| `fu11-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09) | `docs/gates/ci-webkit-3.md` "Classification" |
-| `fu11-explore-baseline.e2e.ts` (tests at :22 and :31) | Explore compares with the 1-minute baseline although it was opened later (D5); a bookmark restore to before the baseline drops it; it is taken again at 1 minute (R50 M14) | `docs/gates/ci-webkit-3.md` "Classification" (listed there at :14 and :23) |
-| `stage6a-worker.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | `docs/gates/stage-10.md` §12 (99 against < 82) |
-| `stage7d.e2e.ts:36` | stage7d page: check 19 starts, the ICP tile shows a rising ICP, no page errors | crash class |
-| `stage9-app.e2e.ts:15` | every view shares the one engine session | `docs/gates/stage-10.md` §12 (2.497 s against > 2.5 s) |
-| `stage9-app.e2e.ts:43` | learner controls: off by default, switched on per scenario, logged as learner actions (ruling 4) | at :53 on this tree; `docs/gates/ci-webkit-3.md` "Classification" |
-| `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | `docs/gates/stage-10.md` §12 (F-49-3) |
-| `s10-time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium (the file is skipped on CI WebKit, above) |
-| `fu11-vent-new-case.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | |
-| `fu11-vent-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened (D3) | |
-| `fu11-vent-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium (skipped on CI WebKit, above) |
-| `validation-bedside.e2e.ts:19` | asystole demo measures the saadat-like delay; results download | |
-| `fu11-alarm-label.e2e.ts:15` | the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window (K3) | |
-| `fu6.e2e.ts:30` | fu6 page: the bronchospasm demo runs, EtCO2 shows, no page errors | crash class |
-| `stage9-a11y.e2e.ts:15` | accessibility: iPad portrait 820×1180 | crash class (the "laptop" case is not found in any main run of the window) |
-| `s12-mobile-learner.e2e.ts:193` | a relay restart, a full session and a relay the phone cannot reach | [webkit], run 38386662185 |
-| `stage13-debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | [chromium, webkit], run 38386662185 |
-| `vent-link.e2e.ts:29` | vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP | [webkit], run 38386662185 |
-| `scenario-panel-stale-press.e2e.ts:18` | a card button drawn for the previous state acts on the current one, or says why not | [webkit], run 39063479453 |
-| `vent-embed.e2e.ts:34` | vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths | [webkit], release PR run 39066929916; the test's timeout was then raised to the 120 s its own waits need |
+| Test (file:line) | Test title | Browser | Retry | 3/3 | Runs | Class | First / last run | Note |
+|---|---|---|---|---|---|---|---|---|
+| `scenario-choose-another.e2e.ts:14` | the scenario library opened before the first repaint stays open until a scenario is loaded | WebKit | 36 |  | 44 | unknown | 38194080645 / 39083193845 | fails the first attempt and passes the retry: near-deterministic; 11 of 13 main runs through 39067903552 (12 of 14 counting 39082091200). The regression test for a fixed product defect (`docs/gates/ci-webkit-3.md` "(c) findings"), so the fix is not confirmed on slow WebKit |
+| `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | WebKit | 15 | 1 | 76 | capacity | 38097625873 / 39083174976 |  |
+| `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | Chromium | 3 |  | 75 | unknown | 38106008764 / 38176710973 | the scenario library defect fixed in FX-7; none after 2026-10-11 |
+| `fu11-vent-new-case.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | WebKit | 11 | 4 | 76 | timing | 38097625873 / 39082091200 | 3/3 incl. main 38097625873 |
+| `fu11-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09) | WebKit | 10 |  | 76 | capacity | 38110530561 / 39067799627 |  |
+| `stage9-app.e2e.ts:15` | every view shares the one engine session | WebKit | 9 |  | 76 | unknown | 38161262512 / 39082213337 | **under investigation (FX-11)**: since PR #55 the failure is "sim time went back … the engine restarted" (0.1–0.4 s back; 5 runs, incl. main 39082091200 and this release PR's 39082213337) — not a runner-speed reading |
+| `fu11-explore-baseline.e2e.ts:23` | a bookmark restore to before the baseline drops it; it is taken again at 1 minute (R50 M14) | WebKit | 7 | 1 | 76 | timing | 38100631999 / 38381261724 | at :31 on this tree (CI reported :23 before PR #55); 3/3 in main 38172300684 |
+| `stage7d.e2e.ts:36` | stage7d page: check 19 starts, the ICP tile shows a rising ICP, no page errors | WebKit | 7 |  | 76 | crash | 38107292797 / 39082091200 |  |
+| `stage6a-worker.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | WebKit | 6 | 2 | 76 | capacity | 38100631999 / 38182829101 | none after 2026-10-11 |
+| `stage13-debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | WebKit | 5 | 1 | 35 | timing | 38208532262 / 39082572086 | 3/3 in 38208532262 |
+| `stage13-debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | Chromium | 1 |  | 33 | unknown | 38386662185 / 38386662185 |  |
+| `s10-time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium | 4 |  | 46 | capacity | 38193355147 / 38212119356 | the file is skipped on CI WebKit (above) |
+| `stage9-a11y.e2e.ts:15` | accessibility: iPad portrait 820×1180 | WebKit | 4 |  | 76 | crash | 38145499655 / 39067888843 | the laptop case never failed |
+| `stage9-app.e2e.ts:53` | learner controls: off by default, switched on per scenario, logged as learner actions (ruling 4) | WebKit | 4 |  | 76 | timing | 38135947061 / 39067635795 | CI reported :43 before the file moved |
+| `validation-bedside.e2e.ts:19` | asystole demo measures the saadat-like delay; results download | WebKit | 3 |  | 76 | timing | 38161262512 / 38381261724 |  |
+| `fu11-explore-baseline.e2e.ts:14` | Explore compares with the 1-minute baseline although it was opened later (D5) | WebKit | 2 |  | 76 | timing | 38106008764 / 38161262512 | at :22 on this tree |
+| `scenario-panel-stale-press.e2e.ts:18` | a card button drawn for the previous state acts on the current one, or says why not | WebKit | 2 |  | 54 | timing | 39063479453 / 39065636299 |  |
+| `fu11-alarm-label.e2e.ts:15` | the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window (K3) | WebKit | 1 |  | 76 | unknown | 38215998313 / 38215998313 |  |
+| `s12-mobile-learner.e2e.ts:193` | a relay restart, a full session and a relay the phone cannot reach | WebKit | 1 |  | 42 | timing | 38386662185 / 38386662185 |  |
+| `vent-embed.e2e.ts:34` | vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths | WebKit | 1 |  | 6 | timing | 39066929916 / 39066929916 | release PR only; the test's timeout was then raised to the 120 s its own waits need |
+| `vent-link.e2e.ts:29` | vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP | WebKit | 1 |  | 75 | timing | 38386662185 / 38386662185 |  |
+| `fu6.e2e.ts:30` | fu6 page: the bronchospasm demo runs, EtCO2 shows, no page errors | WebKit | 1 |  | 76 | crash | 38216030108 / 38216030108 | in this window on a feature-branch run only; on main in 38092760192 (2026-10-10) |
+| `fu11-vent-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium | 2 |  |  | capacity | 38377803966 / 39065636299 | **tagged known-flaky** (orchestrator ruling 2026-10-18): 2 retry-passes after FX-1, main 38377803966 and 39065636299; replayed minute differed (SpO2 |Δ| 5 > 3). Skipped on CI WebKit (above) |
+| `fu11-vent-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened (D3) | WebKit | 6 |  |  | unknown | 38114676150 / 38227924181 | none since FX-1 merged (run 38240122427) |
 
 ## Validation harness: rows outside their band
 
