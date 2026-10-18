@@ -212,13 +212,17 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', asy
 // and typing in Run by and Notes across a refresh (Decision 11). Both engines; Chromium also prints both PDFs.
 const A31 = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json');
 const TAMPONADE = resolve(import.meta.dirname, '../src/app/showcase/showcase-tamponade.json');
+// R-B C2: the committed full MH run (kit round A, early call, ventilation back) with the card's six objectives (E52)
+const MH_RUN = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/fa/debrief-malignant-hyperthermia-early-normo-call-kit-round-chromium.json');
+const MH = resolve(import.meta.dirname, '../src/app/showcase/showcase-mh.json');
 const MM = 96 / 25.4;
 const VERDICT = /Observed|Not observed|Not assessable|Discuss|✓|✗|◆/;
 
-/** The view with a recorded run in place of the live one: the simulation paused first, so nothing is added to it. */
-async function showRecorded(page: Page): Promise<void> {
-  const rec = JSON.parse(readFileSync(A31, 'utf8')).record;
-  rec.doc.objectives = JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives;
+/** The view with a recorded run in place of the live one (its scenario's objectives as the card holds them now): the
+ *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
+async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
+  const rec = JSON.parse(readFileSync(run, 'utf8')).record;
+  rec.doc.objectives = JSON.parse(readFileSync(card, 'utf8')).objectives;
   await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
   await openApp(page, base, '#/teach', { warmMs: 1000 });
   await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
@@ -332,19 +336,29 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   }
 });
 
-// B6 (f) on the malignant hyperthermia card (six objectives, E52): page 1 stays within one A4 page.
-test('Debrief B on the MH card: page 1 within one A4 page', async ({ page }) => {
+// B6 (f) on the malignant hyperthermia card (six objectives, E52), on its recorded full run (R-B C2): page 1 and the
+// learner handout each within one A4 page, both engines; Chromium prints the handout on one page.
+test('Debrief B on the MH card: page 1 and the handout within one A4 page', async ({ page, browserName }) => {
   test.setTimeout(90_000);
-  await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 });
-  await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
-  await page.waitForTimeout(30_000);
-  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  await showRecorded(page, MH_RUN, MH);
   const view = page.locator('[data-view=debrief]');
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
   await page.emulateMedia({ media: 'print' });
   const { page1 } = await printHeights(page);
-  test.info().annotations.push({ type: 'MH page 1 (mm)', description: page1.toFixed(1) });
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'MH heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
   expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    mkdirSync(out, { recursive: true });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-b-mh-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-b-mh.pdf`, report);
+    test.info().annotations.push({ type: 'MH pages', description: String(pdfInfo(report).boxes.length) });
+  }
 });
