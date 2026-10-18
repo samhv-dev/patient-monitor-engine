@@ -1,5 +1,6 @@
 // How the hidden same-screen panel is revealed: a three-finger long-press, Ctrl+Shift+I, the plain `i` key or a 5-tap
 // top-left corner (for iPads without keyboards). Pure logic; the DOM wiring is attachReveal().
+import { isTyping } from './keys.ts';
 export interface RevealOptions {
   cornerPx: number; // tap zone size at the top-left corner
   taps: number; // taps needed
@@ -74,6 +75,7 @@ export class RevealGesture {
 /** Wire a RevealGesture to a window. Returns a detach function. */
 export function attachReveal(win: Window, g: RevealGesture): () => void {
   const onKey = (e: KeyboardEvent) => {
+    if (isTyping(e)) return; // FX-18: contenteditable and role=textbox fields too, not only INPUT/TEXTAREA/SELECT
     const tag = (e.target as Element | null)?.tagName ?? '';
     if (g.key({ key: e.key, ctrlKey: e.ctrlKey, shiftKey: e.shiftKey, altKey: e.altKey, metaKey: e.metaKey, targetTag: tag })) e.preventDefault();
   };

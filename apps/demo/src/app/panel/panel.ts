@@ -2,6 +2,7 @@
 // (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), keyboard
 // shortcuts (brief §9) and one ≤ 2 Hz repaint. Built only on a Link, so the same panel runs same-screen and as the
 // Remote.
+import { isTyping } from '@pme/controller';
 import type { Link } from '../link.ts';
 import type { ScenarioCard } from '../scenarios.ts';
 import type { SiteProfile } from '../site.ts';
@@ -112,13 +113,12 @@ export function mountPanel(link: Link, o: { site: SiteProfile; weightKg(): numbe
 
   // ---- keyboard shortcuts (brief §9); never while typing ----
   const onKey = (e: KeyboardEvent) => {
-    const tag = (e.target as HTMLElement | null)?.tagName ?? '';
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
       void doCommit();
       return;
     }
-    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(tag) || e.metaKey || e.ctrlKey || e.altKey || el.closest('[hidden]')) return;
+    if (isTyping(e) || e.metaKey || e.ctrlKey || e.altKey || el.closest('[hidden]')) return;
     const k = e.key;
     // FX-4: a refusal is said too (Shift+P on a monitor without an alarm pause was silent)
     const dev = (action: Record<string, unknown>) => void link.send({ type: 'device', action } as never).then((r) =>
