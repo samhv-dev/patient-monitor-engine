@@ -1,6 +1,6 @@
 # Validation report
 
-Generated 2026-10-17T20:45:39.399Z by `pnpm validate` on commit `e737de92` (engine 1.0.0-rc.1); 914 s wall. Suites: morphology, intervals, sanity, gates, regression, determinism, oracle; seeds 11, 12.
+Generated 2026-10-18T11:44:29.774Z by `pnpm validate` on commit `3db25a3b` (engine 1.0.0-rc.1); 788 s wall. Suites: morphology, intervals, sanity, gates, regression, determinism, oracle; seeds 11, 12.
 
 **Summary:** 🟢 96 · 🟡 33 · 🔴 27 graded rows; 1 documents not measurable on this build; calibration queue 60 rows. Gating failures: 27.
 

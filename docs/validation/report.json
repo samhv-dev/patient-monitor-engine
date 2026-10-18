@@ -1,7 +1,7 @@
 {
  "schema": "pme-validation-report/1",
- "createdAt": "2026-10-17T20:45:39.399Z",
- "commit": "e737de92",
+ "createdAt": "2026-10-18T11:44:29.774Z",
+ "commit": "3db25a3b",
  "engineVersion": "1.0.0-rc.1",
  "options": {
   "suites": [
@@ -1215,7 +1215,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 4247.010499999975
+    "wallMs": 3361.8427909999737
    },
    {
     "id": "s1-phenylephrine",
@@ -1227,7 +1227,7 @@
      "7a",
      "7g"
     ],
-    "wallMs": 1827.0302909999737
+    "wallMs": 1480.6611659999471
    },
    {
     "id": "s2-class2-haemorrhage",
@@ -1239,7 +1239,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 8643.67504100001
+    "wallMs": 7117.924916999997
    },
    {
     "id": "s3-propofol-induction",
@@ -1250,7 +1250,7 @@
     "requires": [
      "7g"
     ],
-    "wallMs": 2783.222625000053
+    "wallMs": 2033.1882079999777
    },
    {
     "id": "s4-class-i",
@@ -1262,7 +1262,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 9468.34375
+    "wallMs": 7322.474083000037
    },
    {
     "id": "s4-class-iii",
@@ -1274,7 +1274,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 10066.096709000005
+    "wallMs": 7340.562166999967
    },
    {
     "id": "s4-class-iv",
@@ -1286,7 +1286,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 13340.790500000003
+    "wallMs": 7389.953333000012
    },
    {
     "id": "s6-apnoea-preoxygenated",
@@ -1295,7 +1295,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 13052.643959000008
+    "wallMs": 7154.874167000002
    },
    {
     "id": "s6-apnoea-room-air",
@@ -1304,7 +1304,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 4371.574499999988
+    "wallMs": 2320.275250000006
    },
    {
     "id": "s7-apnoea-child",
@@ -1313,7 +1313,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 6224.527041999972
+    "wallMs": 4731.000540999987
    },
    {
     "id": "s8-co2-apnoea-first-breath",
@@ -1322,7 +1322,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 2095.5878329999978
+    "wallMs": 1629.446333000029
    },
    {
     "id": "s9-witnessed-vf",
@@ -1331,7 +1331,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 2482.752542000031
+    "wallMs": 1484.8636249999981
    },
    {
     "id": "t10-as-cad-propofol",
@@ -1343,7 +1343,7 @@
      "7a",
      "7g"
     ],
-    "wallMs": 4055.8112919999985
+    "wallMs": 3047.792333999998
    },
    {
     "id": "t11-chronic-mr-fluid",
@@ -1356,7 +1356,7 @@
      "7b",
      "7c"
     ],
-    "wallMs": 29427.233416000032
+    "wallMs": 22027.556500000006
    },
    {
     "id": "t12-massive-pe",
@@ -1368,7 +1368,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 3170.2726250000414
+    "wallMs": 2539.63949999999
    },
    {
     "id": "t13-tension-ptx",
@@ -1380,7 +1380,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 4928.18862500001
+    "wallMs": 4170.794750000001
    },
    {
     "id": "t14-tamponade",
@@ -1391,7 +1391,7 @@
     "requires": [
      "7a"
     ],
-    "wallMs": 6986.512250000029
+    "wallMs": 5975.246041999955
    },
    {
     "id": "t15-rv-infarct",
@@ -1402,7 +1402,7 @@
     "requires": [
      "7a"
     ],
-    "wallMs": 2832.287540999998
+    "wallMs": 2432.4742079999996
    },
    {
     "id": "t16-septic-shock-warm",
@@ -1413,7 +1413,7 @@
     "requires": [
      "7f"
     ],
-    "wallMs": 5956.226665999973
+    "wallMs": 5105.326209000021
    },
    {
     "id": "t17a-class3-no-bb",
@@ -1425,7 +1425,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 17009.779749999987
+    "wallMs": 14585.051124999998
    },
    {
     "id": "t17b-class3-bb",
@@ -1438,7 +1438,7 @@
      "7c",
      "7g"
     ],
-    "wallMs": 15902.309249999991
+    "wallMs": 14691.989583000017
    },
    {
     "id": "t18-htn-hypocapnia-cbf",
@@ -1449,7 +1449,7 @@
     "requires": [
      "7d"
     ],
-    "wallMs": 5300.222582999966
+    "wallMs": 5156.107415999984
    },
    {
     "id": "t19-tbi-haematoma",
@@ -1460,7 +1460,7 @@
     "requires": [
      "7d"
     ],
-    "wallMs": 15014.70316699997
+    "wallMs": 14827.265458000009
    },
    {
     "id": "t20-low-flow-oliguria",
@@ -1472,7 +1472,7 @@
      "7d",
      "7g"
     ],
-    "wallMs": 29700.749584000092
+    "wallMs": 29907.901332999987
    },
    {
     "id": "t21-mh",
@@ -1481,7 +1481,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 12396.160999999964
+    "wallMs": 12529.030667000043
    },
    {
     "id": "t22-term-spinal",
@@ -1499,7 +1499,7 @@
      "7a",
      "7f"
     ],
-    "wallMs": 515.0520409999881
+    "wallMs": 517.5422919999692
    },
    {
     "id": "t23-term-apnoea",
@@ -1510,7 +1510,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 4729.984165999922
+    "wallMs": 4904.561125000007
    },
    {
     "id": "t24-edmark-fio2-1",
@@ -1521,7 +1521,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 6940.1706669999985
+    "wallMs": 7018.70208399999
    },
    {
     "id": "t24-edmark-fio2-0.8",
@@ -1532,7 +1532,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 7072.400167000014
+    "wallMs": 7113.81487500004
    },
    {
     "id": "t24-edmark-fio2-0.6",
@@ -1543,7 +1543,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 7011.647666999954
+    "wallMs": 7069.3102090000175
    },
    {
     "id": "t25-rocuronium-sugammadex",
@@ -1555,7 +1555,7 @@
      "7f",
      "7g"
     ],
-    "wallMs": 20488.921707999893
+    "wallMs": 20155.91537500004
    },
    {
     "id": "t25-apnoea",
@@ -1567,7 +1567,7 @@
      "7f",
      "7g"
     ],
-    "wallMs": 14464.177208000096
+    "wallMs": 14047.656374999962
    },
    {
     "id": "g2-displayed-abp",
@@ -1576,7 +1576,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 892.6981250001118
+    "wallMs": 908.3049999999348
    },
    {
     "id": "g3-rr-three-ways",
@@ -1585,7 +1585,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 977.5642089999747
+    "wallMs": 1001.892000000109
    },
    {
     "id": "g3-peep-map",
@@ -1594,7 +1594,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1972.0924999999115
+    "wallMs": 1979.1227909999434
    },
    {
     "id": "g3-disconnect-apnoea-alarm",
@@ -1603,7 +1603,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 960.3822500000242
+    "wallMs": 984.361957999994
    },
    {
     "id": "g4b-asystole-saadat-like",
@@ -1612,7 +1612,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 464.765875000041
+    "wallMs": 475.75608299998567
    },
    {
     "id": "g4b-asystole-philips-like",
@@ -1621,7 +1621,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 463.52383299998473
+    "wallMs": 473.84370899992064
    },
    {
     "id": "g3-cpr-etco2",
@@ -1632,7 +1632,7 @@
     "requires": [
      "3.1"
     ],
-    "wallMs": 2132.661291999975
+    "wallMs": 2133.6098749999655
    }
   ],
   "results": [
@@ -3044,5 +3044,5 @@
    "O12 hepatic clearance in haemorrhage"
   ]
  },
- "wallS": 913.9516155000001
+ "wallS": 787.8961208339999
 }

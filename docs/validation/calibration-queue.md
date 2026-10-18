@@ -1,6 +1,6 @@
 # Calibration queue (R44)
 
-From `pnpm validate` at 2026-10-17T20:45:39.399Z, commit `e737de92`. Every row outside its band; fill the last column during the calibration pass.
+From `pnpm validate` at 2026-10-18T11:44:29.774Z, commit `3db25a3b`. Every row outside its band; fill the last column during the calibration pass.
 
 | | Suite | Row | Measured | Expected | Source | Ali: decision |
 |---|---|---|---|---|---|---|
