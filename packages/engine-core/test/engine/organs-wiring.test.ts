@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import { organsRig } from '../helpers/organs.ts';
 
-describe('Stage 7d engine wiring', { timeout: 300_000 }, () => {
+describe('organ engine wiring', { timeout: 300_000 }, () => {
   it('organs event at 1 Hz; icp buffer only while the sensor is on; commands owned and rejected correctly', async () => {
     const r = organsRig({ seed: 1, patient: { weightKg: 70 } });
     await r.run(5);
@@ -26,7 +26,7 @@ describe('Stage 7d engine wiring', { timeout: 300_000 }, () => {
     r.send({ type: 'attachSensor', sensor: 'icp', state: 'off' });
     expect(r.e.latestSampleIndex('icp')).toBe(-1);
   });
-  it('§11: the published kidney.gfrRel reaches 7g\'s rocuronium clearance — ≈ 1 at rest, lower with an AKI kidney', async () => {
+  it('§11: the published kidney.gfrRel reaches rocuronium clearance — ≈ 1 at rest, lower with an AKI kidney', async () => {
     type St = { st: { organs: { kidney: { gfrRel: number } }; pk: { drugs: Record<string, { factor: number }> } } };
     const factor = async (aki: boolean) => {
       const r = organsRig({ seed: 6, patient: { weightKg: 70, heightCm: 170, ageY: 40, sex: 'M' } });

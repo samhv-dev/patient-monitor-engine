@@ -52,7 +52,7 @@ describe('clinical copy', () => {
     expect(lines).toContain('Norepinephrine 0.1 µg/kg/min infusion started');
     expect(lines).toContain('Rhythm: Coarse VF');
   });
-  it('learner controls read clinically in either drug-name set (rulings 4 and 5)', () => {
+  it('learner controls read clinically in either drug-name set', () => {
     for (const a of LEARNER_ACTIONS) expect(drugWords(a.label), a.id).not.toMatch(LEAK);
     expect(LEARNER_ACTIONS.map((a) => a.label)).toContain('Epinephrine 1 mg');
   });

@@ -10,7 +10,7 @@ async function run(e: { advanceTo: (t: number) => void }, from: number, to: numb
   for (let t = from + 60; t <= to; t += 60) { e.advanceTo(t); await new Promise((res) => setImmediate(res)); }
 }
 
-describe('unilateral states (R43, catalogue §15, §22, §23)', { timeout: 300_000 }, () => {
+describe('unilateral states (catalogue §15, §22, §23)', { timeout: 300_000 }, () => {
   // Stage 7c (R51 addendum 15, ruling 2): the rig ventilates toward normocapnia — RR 18 before isolation (PaCO2 40.5 at
   // 10 min) and RR 40 at VT 350 during OLV (PaCO2 45 at 5 min, 47 at 10, 51 at 60 min). At RR 14 the awake patient went
   // 47 → 122 mmHg (pH 7.01), and with 7c's live pH the Bohr shift moved the nadir to 46.6 min. RR alone cannot hold 38–45

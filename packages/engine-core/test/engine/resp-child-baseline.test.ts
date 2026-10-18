@@ -2,16 +2,16 @@
 // its own pattern at PaCO2 35–45 with VT 6–8 mL/kg (±30 %) and no lactate rise over 15 min; displayed SpO2 lags SaO2
 // ≤ 20 s during a preoxygenated apnoea (RS2).
 import { describe, expect, it } from 'vitest';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 const CHILD = { ageY: 4, sex: 'M' as const, weightKg: 16, heightCm: 102 };
 
-describe('FU-6 R15: the child baseline (was PaCO2 49–52, VT 590–706, lactate 1.0 → 3.5)', { timeout: 600_000 }, () => {
+describe('the child baseline', { timeout: 600_000 }, () => {
   // R45 (FU-6 executor, merged main): PaCO2 36.1 and lactate 0.99 → 1.00 are met; the VT is not — 246 mL = 15.4 mL/kg
   // at RR 7.4. The child's L1 resting pattern is still the adult default (15 × 500 — FU-4's R1 root did not derive it
   // from the patient), and the drive scales rate and depth from it; on main the same child oscillates between
   // 19 × 638 and 4.9 × 160 (FU-6's central lag damps it). Request to FU-4's R1 owner: the per-patient resting pattern.
-  it.fails('awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min — measured VT 15.4 mL/kg (246 mL, RR 7.4; PaCO2 36.1, lactate +0.01) (FU-6 R15, band 4.2–10.4)', async () => {
+  it.fails('awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min — measured VT 15.4 mL/kg (246 mL, RR 7.4; PaCO2 36.1, lactate +0.01) (band 4.2–10.4)', async () => {
     const e = rig6(CHILD);
     await runTo(e, 60);
     const lac0 = st6(e).blood.out.lactate as number;
@@ -27,7 +27,7 @@ describe('FU-6 R15: the child baseline (was PaCO2 49–52, VT 590–706, lactate
   });
   // R45: SaO2 < 90 at +200 s, displayed SpO2 < 90 at +222 s — a 22 s lag against the 20 s band (was 66 s on 94040f7;
   // V.1's CO-ratio fix is in). Request to V.1's owner / FU-5 (the display lag); not FU-6 code.
-  it.fails('preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 — measured 22 s (+200 / +222 s) (FU-6 R15, band ≤ 20 s)', async () => {
+  it.fails('preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 — measured 22 s (+200 / +222 s) (band ≤ 20 s)', async () => {
     const e = rig6(CHILD);
     const spo2: Array<[number, number]> = [];
     e.on((x) => { if (x.type === 'measurement' && x.values.spo2?.value != null) spo2.push([x.t, x.values.spo2.value as number]); }, ['measurement']);

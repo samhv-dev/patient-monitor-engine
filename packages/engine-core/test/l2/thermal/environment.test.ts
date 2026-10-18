@@ -34,7 +34,7 @@ describe('environment terms', () => {
     expect(infusionW(100, 37, 37)).toBeCloseTo(0, 12);
   });
 
-  it('IV inflow (E-7e-1): crystalloid at room temperature, an unwarmed unit at 4 °C, haemorrhage ignored, finished lines ignored', () => {
+  it('IV inflow: crystalloid at room temperature, an unwarmed unit at 4 °C, haemorrhage ignored, finished lines ignored', () => {
     const saline = { rate: 60, until: 1e9, comp: { citrate: 0 } };
     const rbc = { rate: 56, until: 1e9, leftMl: 200, comp: { citrate: 55.7 } };
     const bleed = { rate: 100, until: 1e9, comp: null };

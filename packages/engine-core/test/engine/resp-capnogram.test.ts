@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADULT, breaths, capnoAngles, ev3, mean, numSeries, read62, rig3, vent, run } from '../helpers/resp.ts';
 
-describe('Stage 3 acceptance: capnogram', { timeout: 300_000 }, () => {
+describe('respiratory acceptance: capnogram', { timeout: 300_000 }, () => {
   it('1. α 100–110° normally and ≥ 120° in bronchospasm (25 mmHg/s axis), phase III +1–3 mmHg', async () => {
     const { e } = rig3({ patient: ADULT });
     e.dispatch(vent());
@@ -21,7 +21,7 @@ describe('Stage 3 acceptance: capnogram', { timeout: 300_000 }, () => {
     expect(mean(b.map((x) => x.alpha))).toBeGreaterThanOrEqual(120);
   });
 
-  it('1b. R39-6 α vs bronchospasm severity: 0 → 105° (100–110), 0.5 → 125° (120–130), 0.8 → 135° (128–142), 1.0 → 145° (140–150); 1.25 near-fatal extreme → 157° (150–160)', async () => {
+  it('1b. α vs bronchospasm severity: 0 → 105° (100–110), 0.5 → 125° (120–130), 0.8 → 135° (128–142), 1.0 → 145° (140–150); 1.25 near-fatal extreme → 157° (150–160)', async () => {
     // ONE measurement convention (research 09 §6; brief §4.4 "declared axis scale of 25 mmHg/s"): capnoAngles in
     // helpers/resp.ts — phase II slope between the 25 % and 75 % crossings of the plateau-end value, phase III by
     // regression from the 90 % crossing + 0.2 s to the plateau end, both in mmHg/s, with 1 s on the time axis drawn

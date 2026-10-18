@@ -165,7 +165,7 @@ kinetics give EtCO2 at once and SpO2 late after an airway loss (Stage 3, `docs/g
 The ventilator link sends frames in and reads an absolute `lungState` out, on the 7b lungs since V.1
 (`docs/gates/stage-V.md`, `docs/gates/stage-v1.md`). Respiratory mechanics readouts (Pplat, ΔP, PEEPi, VD/VT, lung
 volumes) are 7k's (`docs/gates/stage-7k.md`). The 32 catalogue conditions (`LUNG_CONDITION_IDS`;
-`docs/physiology/stage-7-lung-pathology-catalogue.md`) take a severity; sided ones take L or R. The 7b gate
+`docs/physiology/lung-pathology-catalogue.md`) take a severity; sided ones take L or R. The 7b gate
 measured all 32: 23 meet every band, 9 carry recorded misses (`docs/gates/stage-7b.md` §1). INTERIM: the ventilator
 link's `anaphylaxis-bronchospasm` and `air-embolism` profiles still set their shock as MANUAL targets
 (`packages/ventilator/src/link/profiles.ts`).
@@ -390,7 +390,7 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **No sepsis model fit for teaching:** the `sepsis` id exists (7e) but its MODELED shock misses its bands
   (`packages/engine-core/test/engine/endo-circ-acceptance.test.ts`; [known-deviations.md](known-deviations.md)), the
   septic and thyrotoxic patient under GA stays afebrile (36.60 / 36.34 °C, recorded misses in
-  `packages/engine-core/test/engine/fu10-fever.test.ts`), and lactate in sepsis is v2.0 work
+  `packages/engine-core/test/engine/thermal-fever-ga.test.ts`), and lactate in sepsis is v2.0 work
   (`docs/roadmap/v1.0-remaining.md`). No sepsis scenario ships.
 - **Pulsus paradoxus is not reproduced:** 3.1 mmHg against ≥ 10 in tamponade (`docs/gates/fu-4.md` S3); the
   follow-up that would address it (FU-7.1 c) was never started.

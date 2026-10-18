@@ -16,7 +16,7 @@ export interface Deviation {
 
 const FAILS_RE = /\b(?:it|test)\.fails?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g;
 // Playwright's in-body annotation `test.fail(condition, 'reason')`: an expected failure whenever the condition holds;
-// the reason is its title (apps/demo/e2e/stage9-tasks.e2e.ts uses it).
+// the reason is its title (apps/demo/e2e/app-instructor-tasks.e2e.ts uses it).
 const COND_FAIL_RE = /\btest\.fail\(\s*[^'"`\s,][^,]*,\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g;
 const FAILS_CALL_RE = /\b(?:it|test)\.fails?\s*\(/g;
 const SKIP_RE = /\b(?:it|test|describe)\.(?:skip|todo)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g;

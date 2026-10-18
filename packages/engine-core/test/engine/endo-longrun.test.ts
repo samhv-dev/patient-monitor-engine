@@ -8,7 +8,7 @@ import type { EngineEvent } from '../../src/types.ts';
 import { expectedIndex, LONGRUN_HOURS } from '../helpers/longrun.ts';
 import { ADULT, ev3, read62, rig3, run, stateSeries } from '../helpers/resp.ts';
 
-describe('Stage 7e long-run', () => {
+describe('endocrine long-run', () => {
   it('same seed + script → identical co2 samples and endo events; another seed differs', { timeout: 300_000 }, async () => {
     const go = async (seed: number) => {
       const { e, ev } = rig3({ seed, patient: { ...ADULT, endo: { diabetes: 'type2' } } });

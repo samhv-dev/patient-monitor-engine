@@ -28,7 +28,7 @@ describe('brain → body effects (decision 4)', () => {
     expect(hr).toBe(80);
     expect((resp.driver as { ataxia?: number }).ataxia).toBe(0);
   });
-  it('MODELED: the surge goes into 7a\'s circ.ext.rSysF (R48) even though ext has no such key yet (addendum 14); HR is the baroreflex\'s', () => {
+  it('MODELED: the surge goes into the circulation\'s circ.ext.rSysF even though ext has no such key yet; HR is the baroreflex\'s', () => {
     const l1 = createL1State();
     l1.mode = 'modeled';
     const hemo = createHemoState(undefined, l1, 80);

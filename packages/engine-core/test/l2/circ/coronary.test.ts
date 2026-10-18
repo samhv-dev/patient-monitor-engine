@@ -8,7 +8,7 @@ const beat = (o: Partial<CircBeat>): CircBeat => ({
   avOpen: 0.08, avClose: 0.37, dur: 60 / 70, ...o,
 });
 
-describe('coronary supply/demand (R23, tables §3)', () => {
+describe('coronary supply/demand (tables §3)', () => {
   it('at rest the supply/demand ratio equals the CFR (normal 3.5): no ischaemia', () => {
     const c = createCoronary(ref);
     for (let i = 0; i < 60; i++) stepCoronary(c, [beat({})], 3.5, 1, 70);

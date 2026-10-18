@@ -14,11 +14,11 @@ async function bag(vtMl: number) {
   return max;
 }
 
-describe('FU-6 R5: no plateau below the dead space (was 42 → 55 at VT 68 → 11 mL)', { timeout: 120_000 }, () => {
+describe('no plateau below the dead space', { timeout: 120_000 }, () => {
   // R45: after FU-4's ONE physical dead space (≈ 127 mL for this ventilated adult, was 204) a 100 mL breath is 0.79 × VDs
   // and draws a LOW partial plateau (alvFrac ≈ 0.24) — the plan predicted this row as the one at risk; it misses by the
   // display's resolution. Not re-fitted (the plan: "a band the mechanism now misses becomes it.fails").
-  it.fails('12 × 100 mL: displayed EtCO2 < 15 — measured 15.0 (FU-6 R5, band < 15; 0.0 on the pre-FU-4 tree)', async () => {
+  it.fails('12 × 100 mL: displayed EtCO2 < 15 — measured 15.0 (band < 15)', async () => {
     expect(await bag(100)).toBeLessThan(15);
   });
   it('12 × 500 mL: displayed EtCO2 ≥ 30 (normal breaths keep their plateau)', async () => {

@@ -31,7 +31,7 @@ const share = (pk: PkState, id: RhythmId, windowS: number, n = 200, o: { pulsele
 };
 const FULL = 1000; // × each drug's ec50: occupancy u = c/(c + ec50) ≈ 0.999
 
-describe('antiarrhythmic conversion hazards (R51 addendum 23)', () => {
+describe('antiarrhythmic conversion hazards', () => {
   it('the hazard constants reproduce their trial numbers: 1 − e^{−λT} = 0.38 / 0.67 / 0.20 / 0.25', () => {
     expect(1 - Math.exp(-L_AMIO_VT * 2400)).toBeCloseTo(0.38, 9); // PROCAMIO: amiodarone 11/29 (38 %) at 40 min
     expect(1 - Math.exp(-L_PROC_VT * 2400)).toBeCloseTo(0.67, 9); // PROCAMIO: procainamide 22/33 (67 %) at 40 min
@@ -55,10 +55,10 @@ describe('antiarrhythmic conversion hazards (R51 addendum 23)', () => {
   it('amiodarone during VF never converts (λ_vf = 0: ARREST 1999, ALPS 2016 — the drug acts through the shock, Task 12)', () => {
     expect(share(pkWith({ amiodarone: FULL }), 'vfCoarse', 2400, 50)).toBe(0);
   });
-  it('a PULSELESS VT at full amiodarone and procainamide occupancy never converts (ruling 5: the shock path)', () => {
+  it('a PULSELESS VT at full amiodarone and procainamide occupancy never converts (the shock path)', () => {
     expect(share(pkWith({ amiodarone: FULL, procainamide: FULL }), 'vtMono', 2400, 200, { pulseless: true })).toBe(0);
   });
-  it('a hook state WITHOUT conv/preexcited (a pre-FU-7 snapshot) runs without throwing (3d)', () => {
+  it('a hook state WITHOUT conv/preexcited (an older snapshot) runs without throwing', () => {
     const hs = createHookState() as unknown as Record<string, unknown>;
     delete hs.conv;
     delete hs.preexcited;

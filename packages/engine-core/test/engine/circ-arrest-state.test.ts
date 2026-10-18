@@ -28,7 +28,7 @@ async function vfCpr() {
   return { cbf, map, cpp };
 }
 
-describe('FU-4 G4: the arrest reads its own pressures', () => {
+describe('the arrest reads its own pressures', () => {
   it('VF: the continuous MAP and the brain CBF collapse; CPR brings CBF back above 20 %', async () => {
     const r = await vfCpr();
     console.log(`MAP rest ${r.map[50]?.toFixed(0)} VF ${r.map[110]?.toFixed(0)} CPR ${r.map[240]?.toFixed(0)}; CBF VF ${r.cbf[110]?.toFixed(2)} CPR ${r.cbf[240]?.toFixed(2)}`);

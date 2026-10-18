@@ -4,14 +4,14 @@ import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '../../src/types.ts';
 import { ADULT, cmd, desatTime, ev3, firstBelow, numSeries, rig3, stateSeries, run } from '../helpers/resp.ts';
 
-describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure', { timeout: 300_000 }, () => {
+describe('respiratory acceptance: O2 store (Benumof, Patel) and the SpO2 lag structure', { timeout: 300_000 }, () => {
   it('5. preoxygenated healthy 70 kg adult: SaO2 90 % at 8 ± 1.5 min of apnoea', async () => {
     const t = (await desatTime(ADULT, true)) / 60;
     expect(t).toBeGreaterThanOrEqual(6.5);
     expect(t).toBeLessThanOrEqual(9.5);
   });
 
-  it('5b. room air: SaO2 90 % in 35–60 s (R39-1 true arterial band; model 41 s); obese 127 kg ≈ 2.7 min (the child: 5b-child)', async () => {
+  it('5b. room air: SaO2 90 % in 35–60 s (true arterial band; model 41 s); obese 127 kg ≈ 2.7 min (the child: 5b-child)', async () => {
     const room = await desatTime(ADULT, false);
     expect(room).toBeGreaterThanOrEqual(35); // R39-1: arterial 45 s (35–60); the displayed value is test 5c
     expect(room).toBeLessThanOrEqual(60);
@@ -27,14 +27,14 @@ describe('Stage 3 acceptance: O2 store (Benumof, Patel) and the R8 lag structure
   // FU-4 F4 (Task 18d): the "resting hypercapnia (PaCO2 94 at FiO2 0.21)" of this rig was Stage 3's CO2 low-flow factor
   // reading the child's cardiac output against the ADULT 5.25 L/min (coRatio 0.21 → elimination × 0.40); with the
   // ratio to the patient's own output the child desaturates at 155 s. Band unchanged (R45).
-  it('5b-child. children 2–5 y 160 ± 30 s — measured 155 s; was 128 s with Stage 7e (Q-7e-8; 130 s on main)', async () => {
+  it('5b-child. children 2–5 y 160 ± 30 s — measured 155 s', async () => {
     const child = await desatTime({ ageY: 4, weightKg: 16, baseline: { rr: 24, vt: 130 } }, true);
     console.log(`resp-oxygen 5b-child: ${child} s`);
     expect(child).toBeGreaterThanOrEqual(130);
     expect(child).toBeLessThanOrEqual(190);
   });
 
-  it('5c. R39-1 room air: TRUE SaO2 90 % at 35–60 s; DISPLAYED SpO2 < 90 at 45–90 s and first falls at 20–45 s', async () => {
+  it('5c. room air: TRUE SaO2 90 % at 35–60 s; DISPLAYED SpO2 < 90 at 45–90 s and first falls at 20–45 s', async () => {
     // research 09 §1: arterial 45 s (35–60), displayed 60 s (45–90), displayed onset ≈ 30 s. Same run as desatTime.
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));

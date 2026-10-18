@@ -160,8 +160,8 @@ let asphyxiaRun: Promise<Course> | undefined;
 // +11.2 min after SaO2 < 60 % (TAU_HYP_S 235), so the 6–10 min post-arrest window needs the longer run; no band moves
 const asphyxiaCourse = (): Promise<Course> => (asphyxiaRun ??= asphyxia('modeled', false, 24 * 60, true));
 
-describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_000 }, () => {
-  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole, FU-4 F5), monitor HR 0 vs 59/57.9; PEA at +11.2 min (TAU_HYP_S 235, FU-8; +6.35 at 300 before)', async () => {
+describe('MODELED hypoxaemic bradycardia and asphyxial arrest', { timeout: 300_000 }, () => {
+  it('apnoeic paralysed adult on room air: HR < 40 within 6 min of SaO2 < 60 %, then PEA/asystole/VF 5–14 min after it; 6–10 min later still pulseless, SaO2 < 20 %, HR not rising — measured SaO2 0.11 %, PP 0.00 mmHg, rate 0 (the PEA decayed to asystole), monitor HR 0 vs 59/57.9; PEA at +11.2 min (TAU_HYP_S 235; +6.35 at 300)', async () => {
     const c = await asphyxiaCourse();
     const sat = c.tSat60 ?? Number.NaN;
     const w = c.win;
@@ -189,7 +189,7 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
   // R45 (FU-4 F5, ruling 7): an untreated PEA now DECAYS — rate, then idioventricular, then asystole — so the organised
   // electrical activity this window assumed (the non-decaying PEA: 207 beats) is gone by 6–10 min. Split out unchanged
   // as a record; the decay itself is asserted below.
-  it.fails('a PEA onset still shows organised electrical activity 6–10 min after the arrest — measured 0 beats (the PEA decayed to asystole first; FU-4 F5)', async () => {
+  it.fails('a PEA onset still shows organised electrical activity 6–10 min after the arrest — measured 0 beats (the PEA decayed to asystole first)', async () => {
     const c = await asphyxiaCourse();
     expect(c.arrestRhythm?.startsWith('PEA')).toBe(true);
     expect(c.win.beats).toBeGreaterThan(0);
@@ -217,7 +217,7 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
     const c = await asphyxiaCourse();
     expect(Math.min(...c.hrMonBefore)).toBeLessThan(45);
   });
-  it('E-FU3-10: 5–10 min after the arrest the brainstem is unperfused — no spontaneous breathing: RR numeric 0 or --, VA 0, flat CO2 trace — measured RR numeric 0, VA 0.000 L/min, CO2 range 0.00 mmHg (without the gate: RR 43–48 and VA up to 59.7 L/min in this window)', async () => {
+  it('5–10 min after the arrest the brainstem is unperfused — no spontaneous breathing: RR numeric 0 or --, VA 0, flat CO2 trace — measured RR numeric 0, VA 0.000 L/min, CO2 range 0.00 mmHg (without the gate: RR 43–48 and VA up to 59.7 L/min in this window)', async () => {
     const c = await asphyxia('modeled', false, 24 * 60, false, true);
     const sat = c.tSat60 ?? Number.NaN;
     const r = c.resp;
@@ -248,7 +248,7 @@ describe('FU-3 item 16: MODELED hypoxaemic bradycardia and asphyxial arrest', { 
   // R45 (executor, FU-3 Task 15, after merging Stage 7e): the [ENG] "no runaway rebound" bound was met before 7e
   // (final HR 126) and missed on main + 7e (132.1). FU-4 (Tasks 4–6): met again — 74.4. The criterion is unchanged;
   // it is kept apart so the reversal time, the no-arrest and the HR ≥ 60 assertions above stay enforced (R-5).
-  it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG] — was 132.1 on main + 7e, 74.4 with FU-4', async () => {
+  it('after the FiO2 1 reversal the final HR is ≤ 130 [ENG]', async () => {
     const c = await reversalCourse();
     console.log(`reversal: HR at the end ${c.hrAfter.at(-1)?.[1].toFixed(1)}`);
     expect(c.hrAfter.at(-1)?.[1] ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(130); // [ENG] sanity: no runaway rebound

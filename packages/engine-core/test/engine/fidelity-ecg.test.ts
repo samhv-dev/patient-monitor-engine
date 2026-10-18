@@ -7,7 +7,7 @@ import { activeIds, M, monitorRun, VENTED, type MonRun, type Step } from '../hel
 
 const settle = (run: MonRun, from: number, target: number) => (run.rows.find((r) => r.t >= from && Math.abs((r.m.hr?.value ?? 0) - target) <= 0.05 * target)?.t ?? Infinity) - from;
 
-describe('FU-5 fidelity 5: ECG leads off', () => {
+describe('ECG leads off', () => {
   it.each(['philips-like', 'mindray-like', 'saadat-like'])('%s: HR invalid within 2 s (never "0"), LEADS OFF active; no HR alarm within 15 s of reconnection', async (skin) => {
     const run = await monitorRun({ mode: 'manual', skin, tEnd: 140, steps: [...VENTED, [60, M.sensor('ecg', 'off')], [120, M.sensor('ecg', 'on')]] });
     const off = run.rows.filter((r) => r.t > 62 && r.t <= 120);
@@ -16,7 +16,7 @@ describe('FU-5 fidelity 5: ECG leads off', () => {
     expect(run.alarms.filter((a) => a.state === 'raised' && /^(HR_|EXTREME_)/.test(a.id) && a.t >= 120 && a.t <= 135).map((a) => a.id)).toEqual([]);
   }, 120_000);
 
-  it('mindray-like (HR/PR Alarm Source Auto, [S4] App. C.1.1.1 / C.1.3; review ruling 5): with the leads off the pulse is the alarm source — "**Pulse 130>120"', async () => {
+  it('mindray-like (HR/PR Alarm Source Auto, [S4] App. C.1.1.1 / C.1.3): with the leads off the pulse is the alarm source — "**Pulse 130>120"', async () => {
     const run = await monitorRun({ mode: 'manual', skin: 'mindray-like', tEnd: 110, steps: [...VENTED, [60, M.sensor('ecg', 'off')], [70, M.target('hr', 130)]] });
     const hi = run.alarms.find((a) => a.id === 'HR_HIGH' && a.state === 'raised' && a.t > 60);
     expect(hi?.text).toBe('**Pulse 130>120');
@@ -30,7 +30,7 @@ describe('FU-5 fidelity 5: ECG leads off', () => {
   }, 120_000);
 });
 
-describe('FU-5 fidelity 12: HR response per skin (MANUAL steps 80 → 120 → 40 → 80)', () => {
+describe('HR response per skin (MANUAL steps 80 → 120 → 40 → 80)', () => {
   it.each(['philips-like', 'mindray-like', 'saadat-like'])('%s: every step within 11 s (IEC 60601-2-27)', async (skin) => {
     const run = await monitorRun({ mode: 'manual', skin, tEnd: 240, steps: [...VENTED, [2, M.target('hr', 80)], [60, M.target('hr', 120)], [120, M.target('hr', 40)], [180, M.target('hr', 80)]] });
     for (const [from, to] of [[60, 120], [120, 40], [180, 80]] as const) expect(settle(run, from, to)).toBeLessThanOrEqual(11);
@@ -39,13 +39,13 @@ describe('FU-5 fidelity 12: HR response per skin (MANUAL steps 80 → 120 → 40
     const run = await monitorRun({ mode: 'manual', tEnd: 90, steps: [...VENTED, [2, M.target('hr', 80)], [60, M.target('hr', 120)]] });
     expect(settle(run, 60, 120)).toBeLessThanOrEqual(8.8);
   }, 120_000);
-  it.fails('saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) — measured 9 s (the review measured 10 s to its settle rule; Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5)', async () => {
+  it.fails('saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) — measured 9 s (10 s to the review\'s settle rule)', async () => {
     const run = await monitorRun({ mode: 'manual', skin: 'saadat-like', tEnd: 90, steps: [...VENTED, [2, M.target('hr', 80)], [60, M.target('hr', 120)]] });
     expect(settle(run, 60, 120)).toBeLessThanOrEqual(8);
   }, 120_000);
 });
 
-describe('FU-5 fidelity 13: rhythm tour, one arrhythmia alarm at a time', () => {
+describe('rhythm tour, one arrhythmia alarm at a time', () => {
   const tour: Step[] = [
     [60, M.rhythm('sinus', { rateBpm: 30 })], [120, M.rhythm('sinusBrady', { rateBpm: 35 })], [180, M.rhythm('junctionalEscape', { rateBpm: 40 })],
     [240, M.rhythm('afib', { rateBpm: 140 })], [300, M.rhythm('vtMono', { rateBpm: 180 })], [360, M.rhythm('sinus', { rateBpm: 75 })],

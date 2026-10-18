@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { apparatusDeadSpaceMl, gasPatient, physicalDeadSpace } from '../../../src/l2/gas/params.ts';
 
-describe('physicalDeadSpace (FU-4 / FU-6 ruling)', () => {
+describe('physicalDeadSpace', () => {
   it('70 kg man: 154 mL breathing through his own airway; 154 − 77 + 50 = 127 mL through an ETT (1.8 mL/kg IBW)', () => {
     const p = { deadSpaceMl: 154, ibwKg: 70, weightKg: 70 };
     expect(physicalDeadSpace(p, false)).toBeCloseTo(154, 9);

@@ -14,7 +14,7 @@ function measuredHr(rhythm: RhythmId, hr: number, hrvScale: number, seed = 3, fr
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-describe('sinus rate sweep (review H1: sinus above ~180 locked into 2:1)', () => {
+describe('sinus rate sweep (sinus above ~180 locked into 2:1)', () => {
   for (const hrvScale of [0, 1]) {
     it(`sinus 40–220 bpm, HRV ${hrvScale ? 'on' : 'off'}: displayed HR within ±3 % of the set rate`, () => {
       for (let hr = 40; hr <= 220; hr += 20) {

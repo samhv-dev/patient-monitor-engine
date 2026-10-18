@@ -3,11 +3,11 @@
 // non-pregnant 8 min).
 import { describe, expect, it } from 'vitest';
 import type { PatientProfile } from '../../src/types.ts';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 const TERM: PatientProfile = { ageY: 30, sex: 'F', weightKg: 70, heightCm: 165, lungConditions: [{ id: 'pregnancy', severity: 1 }] };
 
-describe('FU-6 R10: pregnancy physiology (was PaCO2 41.7; apnoea 5.6–6.9 min)', { timeout: 600_000 }, () => {
+describe('pregnancy physiology', { timeout: 600_000 }, () => {
   it('awake at term: PaCO2 28–32 at 20 min (measured 30.7; plan 31.2)', async () => {
     const e = rig6(TERM);
     await runTo(e, 1200);
@@ -16,7 +16,7 @@ describe('FU-6 R10: pregnancy physiology (was PaCO2 41.7; apnoea 5.6–6.9 min)'
     expect(pa).toBeGreaterThanOrEqual(28);
     expect(pa).toBeLessThanOrEqual(32);
   });
-  it.fails('preoxygenated apnoea to SaO2 90 %: 2.5–4.5 min — measured 4.82 (plan 4.83; was 5.75 after Task 7; FU-6 R10)', async () => {
+  it.fails('preoxygenated apnoea to SaO2 90 %: 2.5–4.5 min — measured 4.82', async () => {
     const e = rig6(TERM);
     await runTo(e, 60);
     send(e, { kind: 'preoxygenate', fio2: 1, durationS: 180 });

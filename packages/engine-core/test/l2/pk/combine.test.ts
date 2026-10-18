@@ -32,7 +32,7 @@ describe('combination rules', () => {
     const acid = combine([{ row: PHE, c: 0.25 }], { ...CTX, ph: 7.2 }).fx.svr;
     expect(acid - 1).toBeCloseTo(0.5 * 0.5, 9);
   });
-  it('naloxone competitively antagonises opioids: remifentanil-equivalent falls; the EC50 multiplier is on the bus for 7f', () => {
+  it('naloxone competitively antagonises opioids: remifentanil-equivalent falls; the EC50 multiplier is on the bus for the neuro model', () => {
     const REMI: DrugRow = { ...base, id: 'remi', name: 'remi', cls: 'opioid', pk: PHE.pk, pd: [], cns: { remiEq: 1 } };
     const NAL: DrugRow = { ...base, id: 'nal', name: 'nal', cls: 'opioidAntagonist', pk: PHE.pk, pd: [], antagonises: { cls: 'opioid', ec50: 1, emax: 0.98 } };
     const on = combine([{ row: REMI, c: 3 }], CTX).bus;
@@ -41,14 +41,14 @@ describe('combination rules', () => {
     expect(rev.antagonist.opioid).toBeCloseTo(on.cns.opioidCeRemiEq / rev.cns.opioidCeRemiEq, 9);
     expect(rev.antagonist.benzodiazepine).toBe(1);
   });
-  it('the bus carries CNS potency units; the propofol C50 falls with age (Eleveld, R51 addendum 11)', () => {
+  it('the bus carries CNS potency units; the propofol C50 falls with age (Eleveld)', () => {
     const r = combine([{ row: PROP, c: 3.08 }], CTX);
     expect(r.bus.cns.propCe).toBeCloseTo(3.08, 9);
     expect(r.bus.cns.uHyp).toBeCloseTo(1, 9);
     const old = combine([{ row: PROP, c: 3.08 }], { ...CTX, ageY: 75 });
     expect(old.bus.cns.uHyp).toBeCloseTo(Math.exp(0.00635 * 40), 9); // Ce50 2.39 at 75 y → uHyp 1.29
   });
-  it('R51 §2: no drive or NMB PD on the bus; agents/volatiles/doses are left for the pipeline', () => {
+  it('no drive or NMB PD on the bus; agents/volatiles/doses are left for the pipeline', () => {
     const r = combine([{ row: PROP, c: 3 }], CTX).bus;
     expect('resp' in r).toBe(false);
     expect(r.nmb).toEqual({ achGain: 1 });

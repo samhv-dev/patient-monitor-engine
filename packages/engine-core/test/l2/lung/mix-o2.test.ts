@@ -12,7 +12,7 @@ const settle = (x: O2LungInputs, s = 600) => {
   return st;
 };
 
-describe('O2 mixing point, two stores (R43; tables §4.1, §4.5)', () => {
+describe('O2 mixing point, two stores (tables §4.1, §4.5)', () => {
   it('healthy on FiO2 0.4: SaO2 > 0.99, both stores alike', () => {
     const st = settle(base);
     expect(st.sa).toBeGreaterThan(0.99);

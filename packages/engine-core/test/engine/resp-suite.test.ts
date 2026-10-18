@@ -6,7 +6,7 @@ import type { PatientProfile } from '../../src/types.ts';
 import { cardiacOutput } from '../../src/l2/gas/coupling.ts';
 import { capnoAngles, mean, numSeries, read62 } from '../helpers/resp.ts';
 import { VCV_PMAX_DEFAULT } from '../../src/l2/resp/driver.ts'; // FU-6 F2: the default-Pmax LIMIT rows (RS7c, RS11b)
-import { ADULT6, fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { ADULT6, fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 const row = (id: string, v: Record<string, number | string>) => console.log(`RS-ROW ${id} ${JSON.stringify(v)}`);
 const WOMAN: PatientProfile = { ageY: 40, sex: 'F', weightKg: 60, heightCm: 165 };
@@ -28,11 +28,11 @@ async function apnoea90(p: PatientProfile): Promise<number> {
   return (t90 - 240) / 60;
 }
 
-describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
+describe('respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // R45 (merged main): VD/VT is now met (FU-4's ONE physical dead space) but both patients are HYPOcapnic — FU-4's R1 root
   // plus FU-6 R4's anaesthetised VCO2 (−15 %) on a 7 mL/kg × 12 VCV. Calibration row (GA_METABOLIC via gaLvl; the default
   // ventilator setting), owner FU-6/FU-4 with Ali (§7 question 1).
-  it.fails('RS1 healthy intubated, VCV 12 × 7 mL/kg IBW, man and woman: PaCO2 35–42 at 30 min, VD/VT 0.25–0.4 — measured PaCO2 32.2 / 33.7, VD/VT 0.26 / 0.28 (FU-6 R4 + FU-4 R1; was 50.0 / 0.54 on 94040f7)', async () => {
+  it.fails('RS1 healthy intubated, VCV 12 × 7 mL/kg IBW, man and woman: PaCO2 35–42 at 30 min, VD/VT 0.25–0.4 — measured PaCO2 32.2 / 33.7, VD/VT 0.26 / 0.28', async () => {
     const got: Array<{ pa: number; vdvt: number }> = [];
     for (const [p, vt] of [[ADULT6, 490], [WOMAN, 400]] as Array<[PatientProfile, number]>) {
       const e = rig6(p);
@@ -56,7 +56,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
       expect(g.vdvt).toBeLessThanOrEqual(0.4);
     }
   });
-  it('RS2 preoxygenated apnoea to SaO2 90 %: adult 6.5–9.5, obese 2–3.5 (measured 7.95 / 2.77 with FU-8’s body-size rule; 2.87 before the FU-8 merge)', async () => {
+  it('RS2 preoxygenated apnoea to SaO2 90 %: adult 6.5–9.5, obese 2–3.5 (measured 7.95 / 2.77 with the continuous body-size rule)', async () => {
     const a = await apnoea90(ADULT6);
     const o = await apnoea90({ ...ADULT6, weightKg: 127 });
     row('RS2', { adult: +a.toFixed(2), obese: +o.toFixed(2) });
@@ -65,7 +65,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(o).toBeGreaterThanOrEqual(2);
     expect(o).toBeLessThanOrEqual(3.5);
   });
-  it.fails('RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.38) (FU-6 R10 / R4; 7j, FU-4 R1 owners)', async () => {
+  it.fails('RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.38)', async () => {
     const p = await apnoea90({ ageY: 30, sex: 'F', weightKg: 70, heightCm: 165, lungConditions: [{ id: 'pregnancy', severity: 1 }] });
     const c = await apnoea90({ ageY: 4, sex: 'M', weightKg: 16, heightCm: 102 });
     row('RS2b', { pregnancy: +p.toFixed(2), child: +c.toFixed(2) });
@@ -90,7 +90,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(tVt - 300).toBeLessThanOrEqual(60);
     expect(tSa - 300).toBeLessThanOrEqual(120);
   });
-  it.fails('RS3 capnogram < 15 mmHg while VT < dead space (from 10 s after the first such breath) — measured 26.8 on the merged main (15.6 on 94040f7: FU-4’s smaller physical VDs moves the Fowler ramp down, as predicted; Q-FU6-12)', async () => {
+  it.fails('RS3 capnogram < 15 mmHg while VT < dead space (from 10 s after the first such breath) — measured 26.8 (the smaller physical VDs move the Fowler ramp down; 15.6 with the larger ones)', async () => {
     const e = rig6();
     await runTo(e, 300);
     send(e, prop(2));
@@ -139,7 +139,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(rr2).toBeLessThanOrEqual(6);
     expect(rr3 - rr2).toBeGreaterThanOrEqual(3);
   });
-  it.fails('RS5 remifentanil 0.1 awake: RR 6–10 and, at 0.2, PaCO2 +5–15 — measured RR 5.58 (audit D1 5.6: 7f/7g opioid rate depression, calibration row) and ΔPaCO2 +13.3 (met; +15.0 on 94040f7)', async () => {
+  it.fails('RS5 remifentanil 0.1 awake: RR 6–10 and, at 0.2, PaCO2 +5–15 — measured RR 5.58 (opioid rate depression, calibration row) and ΔPaCO2 +13.3 (met)', async () => {
     const e = rig6();
     await runTo(e, 300);
     const pa0 = st6(e).resp.co2.pf as number;
@@ -191,7 +191,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(w1.peak).toBeLessThanOrEqual(0.7 * w0.peak);
     expect(ap1).toBeLessThanOrEqual(0.5 * ap0);
   });
-  it('RS7c the same spasm at the DEFAULT Pmax 40 is pressure-limited: Ppeak pinned within 0.5 of the limit and the delivered VT below the set 500 mL (measured 40.0 / 476 mL) — what a Pmax alarm teaches (F2)', async () => {
+  it('RS7c the same spasm at the DEFAULT Pmax 40 is pressure-limited: Ppeak pinned within 0.5 of the limit and the delivered VT below the set 500 mL (measured 40.0 / 476 mL) — what a Pmax alarm teaches', async () => {
     const e = rig6();
     await ventRig(e); // the factory default Pmax
     await runTo(e, 600);
@@ -251,7 +251,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
     expect(palv).toBeGreaterThan(-12); // … but bounded by the capped chemical effort
     expect(dEv).toBeLessThan(0.5); // no negative-pressure oedema: NOT MODELLED (gate note §5, Q-FU6-3)
   });
-  it('RS9 circuit events on VCV: kink → Ppeak ≥ Pmax − 0.5, VT ≤ 20 % (measured 40.0 / 68 mL); disconnection → capnogram flat within one breath (0.0; the numeric follows at +13 s: FU-5)', async () => {
+  it('RS9 circuit events on VCV: kink → Ppeak ≥ Pmax − 0.5, VT ≤ 20 % (measured 40.0 / 68 mL); disconnection → capnogram flat within one breath (0.0; the numeric follows at +13 s)', async () => {
     const e = rig6();
     const ev: unknown[] = [];
     e.on((x) => ev.push(x), ['measurement']);
@@ -375,7 +375,7 @@ describe('FU-6 respiratory suite (RS1–RS15)', { timeout: 1_800_000 }, () => {
   // EtCO2 rise from +6.1 to +5.99994 — red by 6 × 10⁻⁵ of an [ENG] band that read +5.98 before FU-8 B4 moved it just
   // inside (B1 alone measured +6.1). The PaCO2 rise (+6.7) is unchanged; the twin row in resp-inspired-co2.test.ts is
   // recorded the same way.
-  it.fails('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 after FU-7.1 B3 (+6.1 after FU-8 B4, +5.98 before it; 94040f7: +5.9 / +5.1)', async () => {
+  it.fails('RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
     const run = async (fico2: number) => {
       const e = rig6();
       await ventRig(e);

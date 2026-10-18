@@ -4,7 +4,7 @@ import { ev3, rig3 } from '../helpers/resp.ts';
 
 const vent = { kind: 'ventilation', source: 'ventilator', rr: 14, vtMl: 490, peep: 5, ie: 2, fio2: 0.4 };
 
-describe('Stage 7b wiring I: the breath driver drives the lung module', { timeout: 300_000 }, () => {
+describe('lung wiring I: the breath driver drives the lung module', { timeout: 300_000 }, () => {
   it('ventilated healthy adult: unit tidal volumes sum to VT, 45 % left, static compliance ≈ 55', () => {
     const r = rig3({ patient: { ageY: 40, weightKg: 70, heightCm: 175, sex: 'M' } });
     r.e.dispatch(ev3(vent));

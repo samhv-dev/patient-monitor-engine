@@ -30,7 +30,7 @@ async function share(mode: 'modeled' | 'manual'): Promise<number> {
   return s;
 }
 
-describe('FU-4 Task 17: AF 150/min pulse deficit', { timeout: 300_000 }, () => {
+describe('AF 150/min pulse deficit', { timeout: 300_000 }, () => {
   it('MODELED: 10–20 % of beats do not eject — was 7.2 % before mechanical restitution', async () => {
     const s = await share('modeled');
     expect(s).toBeGreaterThanOrEqual(0.1);

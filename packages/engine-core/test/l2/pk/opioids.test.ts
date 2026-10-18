@@ -10,7 +10,7 @@ describe('opioid models', () => {
     expect(p.k10 * p.v1).toBeCloseTo(2.61, 1);
     expect(p.ke0[0]).toBeCloseTo(0.595, 3);
   });
-  it('remifentanil TTPE rises with age (D5): 40 y 1.36–1.50 (prototype 1.43), 80 y 2.1–2.4 (2.26)', () => {
+  it('remifentanil TTPE rises with age: 40 y 1.36–1.50 (prototype 1.43), 80 y 2.1–2.4 (2.26)', () => {
     const t40 = ttpeMin(mintoRemifentanil(A40));
     const t80 = ttpeMin(mintoRemifentanil({ ...A40, ageY: 80 }));
     expect(t40).toBeGreaterThan(1.36);
@@ -18,7 +18,7 @@ describe('opioid models', () => {
     expect(t80).toBeGreaterThan(2.1);
     expect(t80).toBeLessThan(2.4);
   });
-  it('fentanyl (Shafer PK, derived ke0 0.117) peaks at 3.6 min ±3 %; with the tables 0.147 it would be 3.17 (D2)', () => {
+  it('fentanyl (Shafer PK, derived ke0 0.117) peaks at 3.6 min ±3 %; with the tables 0.147 it would be 3.17', () => {
     expect(ttpeMin(shaferFentanyl())).toBeGreaterThan(3.49);
     expect(ttpeMin(shaferFentanyl())).toBeLessThan(3.71);
     expect(ttpeMin({ ...shaferFentanyl(), ke0: [0.147] })).toBeCloseTo(3.17, 1);

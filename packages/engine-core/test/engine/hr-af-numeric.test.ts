@@ -66,7 +66,7 @@ async function measure(skin: string, rhythm: string, rate: number, seed = 21): P
   return { trueRate, monitor, pct, beats: beats.length, detected: rs.size };
 }
 
-describe('HR numeric in MANUAL AF vs the true mean ventricular rate (FU-3 item 6, Q-FU2-11)', () => {
+describe('HR numeric in MANUAL AF vs the true mean ventricular rate', () => {
   // The generator bound is the sampling spread of the window, not a calibration: SE of the mean RR ≈ CV/√n ≈ 0.20/√489
   // ≈ 0.9 % at AF 100, and ± 3 % ≈ 3 SE (FU-2's ± 2 % AF-mapping gate is on 600 s runRhythm runs at 130–150).
   it('the detector counts every beat, and the AF generator realises its set rate (± 3 %): AF 100 / 130 / 145', async () => {
@@ -84,7 +84,7 @@ describe('HR numeric in MANUAL AF vs the true mean ventricular rate (FU-3 item 6
     }
   }, 300_000);
 
-  it('saadat-like (8 s moving average, FU-2 item 5) is untouched: AF 130 / 145 read the true mean within ± 1.5 %', async () => {
+  it('saadat-like (8 s moving average) is untouched: AF 130 / 145 read the true mean within ± 1.5 %', async () => {
     for (const rate of [130, 145]) {
       const r = await hrVsTrue('saadat-like', 'afib', rate);
       expect(Math.abs(r.pct), `AF ${rate}: ${r.pct.toFixed(2)} %`).toBeLessThanOrEqual(1.5);

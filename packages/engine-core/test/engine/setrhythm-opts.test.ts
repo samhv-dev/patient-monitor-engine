@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/index.ts';
 
-describe('FU-8 A14: RhythmOpts are validated', () => {
+describe('RhythmOpts are validated', () => {
   it('a pacemaker fault at the top level of opts is refused with the known keys; under opts.pacer it is accepted', () => {
     const e = createEngine({ seed: 7 });
     const top = e.dispatch({ id: 'a', issuedBy: 'test', type: 'setRhythm', rhythm: 'pacedVVI', opts: { fault: 'failureToCapture', faultRate: 1 } } as never);

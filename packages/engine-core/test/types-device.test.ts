@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AlarmDeviceAction, Command, DeviceEvent, EngineEvent, MonitorDeviceAction } from '../src/index.ts';
 
-describe('Stage 4b types', () => {
+describe('device-layer types', () => {
   it('commands: applyEvent defib/pacer, device alarm/monitor', () => {
     const cmds: Command[] = [
       { id: 'a', issuedBy: 't', type: 'applyEvent', event: { kind: 'defib', action: 'charge', energyJ: 200 } },

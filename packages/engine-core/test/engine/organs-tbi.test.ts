@@ -69,7 +69,7 @@ describe('tables §7 check 19 through the engine — MANUAL', { timeout: 300_000
   });
 });
 
-describe('tables §7 check 19 through the engine — MODELED (7a circulation and baroreflex)', { timeout: 300_000 }, () => {
+describe('tables §7 check 19 through the engine — MODELED (circulation and baroreflex)', { timeout: 300_000 }, () => {
   let n: Check19;
   beforeAll(async () => {
     n = await check19('modeled');
@@ -94,7 +94,7 @@ describe('tables §7 check 19 through the engine — MODELED (7a circulation and
   // 0.803 (58.7/73.0) against the ≤ 0.80 edge. Paralysing the rig (FU-6's ventRig) was measured and rejected: the
   // diaphragm block makes the lungs "anaesthetised" (R4: VCO2 −15 %), PaCO2 38.6 → 36.0 and ICP 20 at 12.0 min, and the
   // ratio went to 0.81. Split from the MAP row so the MAP band stays asserted; the HR half is it.fails with its number.
-  it.fails('Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex — measured ratio 0.803 (FU-6 R9, band 0.6–0.8; 0.799 before FU-6 R9)', () => {
+  it.fails('Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex — measured ratio 0.803 (band 0.6–0.8; 0.799 without the patient\'s own breathing effort)', () => {
     expect(n.hrEnd / n.hr0).toBeGreaterThanOrEqual(0.6); // prototype 55.8/73.2 = 0.76
     expect(n.hrEnd / n.hr0).toBeLessThanOrEqual(0.8);
   });

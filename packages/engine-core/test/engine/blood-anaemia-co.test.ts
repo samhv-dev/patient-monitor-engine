@@ -3,7 +3,7 @@
 // FiO2 1 60 min → 13–21 % (t½ 320 / 74 ± 15 min, Weaver 2009).
 import { describe, expect, it } from 'vitest';
 import { cardiacOutput } from '../../src/l2/gas/coupling.ts';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 async function anaemia(hb: number) {
   const e = rig6({ ageY: 40, sex: 'M', weightKg: 70, heightCm: 175, blood: { hb } });
@@ -15,7 +15,7 @@ async function anaemia(hb: number) {
   return { co: cardiacOutput(s.hemo, e.now().simT), hr, map, svo2: s.blood.core.o2.svo2 as number, lac: s.blood.out.lactate as number };
 }
 
-describe('FU-6 R11: O2 content reaches the circulation; CO clears', { timeout: 900_000 }, () => {
+describe('O2 content reaches the circulation; CO clears', { timeout: 900_000 }, () => {
   it('Hb 5 vs 15: HR rises 20–60 % — TWO-SIDED against Weiskopf (63 → 85, +35 %); CO rises; no lactate rise (measured HR 70 → 103 = +48 %, CO 5.49 → 6.87, lactate 1.00; plan +56 %, 5.54 → 6.89; was unchanged)', async () => {
     const n = await anaemia(15);
     const a = await anaemia(5);
@@ -28,7 +28,7 @@ describe('FU-6 R11: O2 content reaches the circulation; CO clears', { timeout: 9
     expect(a.co).toBeGreaterThan(1.1 * n.co);
     expect(a.lac).toBeLessThan(1.5);
   });
-  it.fails('Hb 5 vs 15: CO ≥ +30 % (Weiskopf CI +66 %) — measured +25 % (5.49 → 6.87; FU-6 R11; plan +24 %)', async () => {
+  it.fails('Hb 5 vs 15: CO ≥ +30 % (Weiskopf CI +66 %) — measured +25 % (5.49 → 6.87)', async () => {
     const n = await anaemia(15);
     const a = await anaemia(5);
     console.log(`FU-6 R11 anaemia: CO ${n.co.toFixed(2)} → ${a.co.toFixed(2)}, HR ${n.hr.toFixed(0)} → ${a.hr.toFixed(0)}, MAP ${n.map.toFixed(0)} → ${a.map.toFixed(0)}, SvO2 ${(a.svo2 * 100).toFixed(0)} %, lactate ${a.lac.toFixed(2)}`);

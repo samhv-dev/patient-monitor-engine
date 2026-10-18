@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const DIR = join(import.meta.dirname, '../../../src/l2/blood');
 const NOTICES = readFileSync(join(import.meta.dirname, '../../../../../NOTICES.md'), 'utf8');
 
-describe('R34: ported files carry the Apache header and a NOTICES row', () => {
+describe('ported files carry the Apache header and a NOTICES row', () => {
   for (const f of ['odc.ts', 'acid-base.ts', 'fluids.ts']) {
     it(f, () => {
       const head = readFileSync(join(DIR, f), 'utf8').slice(0, 1500);

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { labsAt, MAN, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('7c oxygen delivery and the oximeter', { timeout: 300_000 }, () => {
+describe('blood oxygen delivery and the oximeter', { timeout: 300_000 }, () => {
   it('Hb 7: SpO2 truth unchanged, DO2 ≈ half, SvO2 lower', async () => {
     const a = rigB();
     const b = rigB({ patient: { ...MAN, blood: { hb: 7 } } });

@@ -50,7 +50,7 @@ describe('reversal (tables §5d Sgx/Neo rows)', { timeout: 180_000 }, () => {
   // (0.045 ≥ 0.04). After rocuronium 1.2, 0.75 mg/kg peaks 0.997 at +13.1 min and falls to 0.419, 1 mg/kg to 0.695.
   // R45: the criteria are untouched and this stays `it.fails` with the measured numbers; retargeting it to the source's
   // dose pair (or to 0.75 mg/kg after 1.2) is a band decision for Ali/the orchestrator, not the executor's.
-  it.fails('[R-7f-7] underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall', () => {
+  it.fails('underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall', () => {
     const r = rig();
     give(r, 'rocuronium', 1.2);
     untilTof(r, (p) => p.tof.count === 0, 5);

@@ -7,7 +7,7 @@ import { version } from '@pme/renderer';
 import { ABOUT_LINE, EDUCATION_LINE, RELEASE_LABEL } from './about.ts';
 import { pairingOf } from './pairing.ts';
 
-describe('about line (Stage 8b)', () => {
+describe('about line', () => {
   it('names the package version, flags a pre-release, and says education only like the Debrief footer', () => {
     expect(RELEASE_LABEL).toBe(`Version ${version} (pre-release)`);
     expect(ABOUT_LINE).toContain(EDUCATION_LINE);

@@ -8,7 +8,7 @@ import { ConsoleModel } from './model.ts';
 import { metaOf } from './meta.ts';
 import { isInternal } from './organs.ts';
 
-describe('7b lung paths: curated labels and units', () => {
+describe('lung paths: curated labels and units', () => {
   it.each([
     ['resp.lung.lp.side.0.cL', 'L lung compliance', 'mL/cmH₂O', 1],
     ['resp.lung.lp.side.1.rLung', 'R airway resistance', 'cmH₂O/L/s', 1],

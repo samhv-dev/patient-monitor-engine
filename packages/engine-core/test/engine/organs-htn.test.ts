@@ -62,7 +62,7 @@ describe('tables §7 check 18 through the engine (MANUAL, 75 y HTN, cbfLL 75, GA
   // out as a record with its number, bound unchanged. FU-7.1 B3's alveolar-washout fall of the low-flow factor moves
   // the CBF read at the first PaCO2 ≤ 25 sample from 0.394 to 0.4019 of the anaesthetised baseline — 0.0019 above the
   // 40 % ceiling (PbtO2 12.5 → 12.6, inside its band).
-  it.fails('hypocapnia PaCO2 25: CBF ≤ 40 % of the anaesthetised baseline — measured 0.4019 after FU-7.1 B3 (0.394 before it)', () => {
+  it.fails('hypocapnia PaCO2 25: CBF ≤ 40 % of the anaesthetised baseline — measured 0.4019 with the alveolar washout (0.394 without it)', () => {
     expect(n.hypo).toBeLessThanOrEqual(0.4);
   });
   // Was `it.fails` on the real 7c (gate §10: MAP 125.3): 7a's MANUAL tracker reached MAP 65 with Emax ×2.06 in an
@@ -74,7 +74,7 @@ describe('tables §7 check 18 through the engine (MANUAL, 75 y HTN, cbfLL 75, GA
   // FU-3 Task 15 (after merging Stage 7e, R45): on main + 7e the same rig recovers to MAP 86.6 (band 77–84) with CBF
   // 0.891 — the MAP premise is lost again, by 2.6 mmHg (checks 1 and 2 unchanged: mapLow 64.39, hypocapnia 0.377,
   // PbtO2 14.1). Pre-7e FU-3 measured MAP 81.1 / CBF 0.837. Back to `it.fails` with the numbers; band unchanged.
-  it.fails('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — on main + 7e MAP 86.6 (premise 77–84 missed), CBF 0.891', () => {
+  it.fails('restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — measured MAP 86.6 (premise 77–84 missed), CBF 0.891', () => {
     expect(n.mapRec).toBeGreaterThan(77); // premise; prototype 81.1 (at 79 CBF was 0.77: CPP 67 with CVP 12, below LL 75)
     expect(n.mapRec).toBeLessThan(84);
     expect(n.recovered).toBeGreaterThan(0.8); // prototype 0.81

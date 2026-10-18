@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cohbWashout } from '../../../src/l2/blood/core.ts';
 
-describe('FU-6 R11: COHb washout (Weaver 2009: t½ 320 min on air, 74 min on FiO2 1)', () => {
+describe('COHb washout (Weaver 2009: t½ 320 min on air, 74 min on FiO2 1)', () => {
   it('halves in 320 min at PaO2 95 and in ≈ 74 min at PaO2 600', () => {
     let a = 0.3;
     let b = 0.3;

@@ -42,7 +42,7 @@ const T0 = 300;
 const stim = (site: string, i: number, dur: number): [number, Ev][] => [[T0, { kind: 'stimulus', intensity: i, site }], [T0 + dur, { kind: 'stimulus', intensity: 0 }]];
 const GLYCO: [number, Ev] = [T0 - 180, drug('glycopyrrolate', 0.4, 'mg')];
 
-describe('FU-4 G7: vagal events, drug-driven (Task 18f)', { timeout: 600_000 }, () => {
+describe('vagal events, drug-driven', { timeout: 600_000 }, () => {
   const ctl = course([], 900);
   it('opioid bradycardia: fentanyl 10 µg/kg → HR nadir ≤ 55 and > 40, no arrest (Miller ch. 22)', async () => {
     const f = await course([[T0, drug('fentanyl', 10, 'mcg/kg')]], 900);
@@ -85,7 +85,7 @@ describe('FU-4 G7: vagal events, drug-driven (Task 18f)', { timeout: 600_000 }, 
   });
 });
 
-describe('FU-4 G7: vagal events, stimulus-driven (Task 12 Step 3 / 18f Step 3, UNPROTOTYPED → measured)', { timeout: 600_000 }, () => {
+describe('vagal events, stimulus-driven', { timeout: 600_000 }, () => {
   it('oculocardiac traction (intensity 1, 60 s): HR −20 % or more while it lasts, back within 10 of baseline after release (Miller, ophthalmic anaesthesia)', async () => {
     const c = await course(stim('oculocardiac', 1, 60), T0 + 240);
     const pre = hrMean(c, T0 - 30, T0);

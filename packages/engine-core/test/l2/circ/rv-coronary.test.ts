@@ -10,7 +10,7 @@ const beat = (o: Partial<CircBeat> = {}): CircBeat => ({
   avOpen: 0.08, avClose: 0.37, dur: 60 / 70, pItEd: -4, rvsp: 25, rvMean: 10, ...o,
 });
 
-describe('FU-4 G5: RV coronary balance', () => {
+describe('RV coronary balance', () => {
   it('the first beat is the reference; at rest kIschRv stays 1', () => {
     const c = createCoronary(ref);
     for (let i = 0; i < 60; i++) stepCoronary(c, [beat()], 3.5, 1, 70);

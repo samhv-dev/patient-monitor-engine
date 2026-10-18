@@ -129,7 +129,7 @@ describe('alarm manager', () => {
     expect(validateAlarmAction(createAlarmMgr(deviceProfile('saadat-like')), { device: 'alarm', action: 'pause' })).toMatch(/no function/);
   });
   for (const [id, pauseS] of [['zoll-like', 180], ['ge-like', 180], ['lifepak-like', 180], ['philips-like', 120], ['mindray-like', 120]] as const) {
-    it(`alarm pause (${pauseS} s, ${id}) is ended by a new HIGHER-priority alarm, which is raised at once (G3, Q7)`, () => {
+    it(`alarm pause (${pauseS} s, ${id}) is ended by a new HIGHER-priority alarm, which is raised at once`, () => {
       const s = createAlarmMgr(deviceProfile(id));
       run(s, 0, 1, () => [HR]);
       applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);
@@ -140,7 +140,7 @@ describe('alarm manager', () => {
       expect(alarms(ev, 'raised').map((a) => a.id).sort()).toEqual(['ASYSTOLE', 'HR_HIGH']);
       expect(ev.filter((e): e is Status => e.type === 'alarmStatus').at(-1)?.pausedUntil).toBeNull();
     });
-    it(`alarm pause (${pauseS} s, ${id}) holds through a new alarm of the same or lower priority, and a pre-pause holds through anything (G3)`, () => {
+    it(`alarm pause (${pauseS} s, ${id}) holds through a new alarm of the same or lower priority, and a pre-pause holds through anything`, () => {
       const s = createAlarmMgr(deviceProfile(id));
       run(s, 0, 1, () => [HR]);
       applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);
@@ -153,7 +153,7 @@ describe('alarm manager', () => {
       expect(pre.pausedUntil).toBeCloseTo(1 + pauseS, 6);
     });
   }
-  it('a higher-priority condition with a delay ends the pause only once it would be raised (G3)', () => {
+  it('a higher-priority condition with a delay ends the pause only once it would be raised', () => {
     const s = createAlarmMgr(deviceProfile('philips-like'));
     run(s, 0, 1, () => [{ ...LEADS, delayS: 0 }]);
     applyAlarmAction(s, { device: 'alarm', action: 'pause' }, 1, []);

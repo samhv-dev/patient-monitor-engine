@@ -16,7 +16,7 @@ async function hashRun(seed: number): Promise<string> {
   return createHash('sha256').update(Buffer.from(buf.buffer)).update(JSON.stringify(r.last())).digest('hex');
 }
 
-describe('Stage 7d soak', () => {
+describe('organ soak', () => {
   it('determinism: same seed → identical icp samples and organ state; another seed differs', { timeout: 300_000 }, async () => {
     expect(await hashRun(11)).toBe(await hashRun(11));
     expect(await hashRun(11)).not.toBe(await hashRun(12));

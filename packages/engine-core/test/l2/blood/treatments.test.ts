@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bateman, bicarbCo2MlMin, caMembrane, insulinEffect, salbutamolEffect, suxDeltaK } from '../../../src/l2/blood/treatments.ts';
 
-describe('7c treatment curves (tables §5b.2)', () => {
+describe('blood treatment curves (tables §5b.2)', () => {
   it('Bateman curves peak at 1', () => {
     let m = 0;
     for (let t = 0; t < 600; t += 0.5) m = Math.max(m, bateman(t, 1 / 15, 1 / 180));

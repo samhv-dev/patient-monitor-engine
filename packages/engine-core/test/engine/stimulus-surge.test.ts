@@ -7,7 +7,7 @@
 // at 240 s and the stimulus at 300 s. One yield per sim-MINUTE (CI amendment 4). SLOW_A (executor instruction).
 import { describe, expect, it } from 'vitest';
 import type { MonitorEngine, PatientProfile } from '../../src/types.ts';
-import { ADULT6, rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { ADULT6, rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 type Ev = Record<string, unknown>;
 interface Row { t: number; map: number; hr: number; set: number; surgeF: number; ne: number; epi: number }
@@ -67,7 +67,7 @@ async function laryngoscopy(pre: Ev | null, key: string) {
 const f1 = (x: number) => x.toFixed(1);
 const f2 = (x: number) => x.toFixed(2);
 
-describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; ruling 1)', { timeout: 3_600_000 }, () => {
+describe('the stimulus sympathetic surge', { timeout: 3_600_000 }, () => {
   it('laryngoscopy after propofol raises MAP 20–30 mmHg and HR 12–30 and is still ≥ 50 % of its peak at 90 s (Shribman 1987; research/14 D8: was +6.1)', async () => {
     const r = await laryngoscopy(null, 'prop');
     console.log(`FU-7 case 1 propofol: ΔMAP ${f1(r.dMap)}, ΔHR ${f1(r.dHr)}, at +90 s ${f1(r.at90)} (${f1((100 * r.at90) / r.dMap)} %)`);
@@ -82,7 +82,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
   // washout the opioid-free arm's cardiac-output dip lowers the low-flow factor faster, so its PaCO2 rises further and
   // the hypercapnic pressor response adds to the laryngoscopy surge: ΔMAP 38.4 → 40.3 against the sourced 20–40 band.
   // The HR half (13.1) is inside its band and is asserted below; the ΔMAP ceiling is the record (FU-7.1 Q9's neighbour).
-  it.fails('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band, orchestrator ruling 2026-09-28) — ΔMAP measured 40.3 after FU-7.1 B3 (38.4 before)', async () => {
+  it.fails('awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)', async () => {
     const i = await run('awake:stim', LARYNX, STIM_T + 600);
     const c = await run('awake:ctrl', [], STIM_T + 600);
     const dMap = dPeak(i, c, 'map', STIM_T);
@@ -96,7 +96,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
 
   // R45 (CM amendment): the resting-tone half of the exaggerated response is research/19's C1, owned by FU-8 Part B.
   // No 7e gain, `htn` set point or SURGE_SET_PER_NOX is raised to reach it; both arms' absolute ΔMAP are logged.
-  it.fails('1b: the untreated hypertensive\'s pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 (Prys-Roberts 1971) — measured 1.19 (HTN +29.8 vs healthy +25.0; CM-03c before 1.19 at +10.8 / +9.1); the resting-tone half is FU-8 Part B\'s C1', async () => {
+  it.fails('1b: the untreated hypertensive\'s pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 (Prys-Roberts 1971) — measured 1.19 (HTN +29.8 vs healthy +25.0; earlier 1.19 at +10.8 / +9.1); the resting-tone half is the tonic sympathetic share\'s', async () => {
     const HTN: PatientProfile = { ...ADULT6, conditions: [{ id: 'htn', severity: 1 }] } as PatientProfile;
     const steps: [number, Ev][] = [PROP, [360, stim(1.5)], [420, stim(0)]];
     const d = async (p: PatientProfile, k: string) => dPeak(await run(`${k}:stim`, steps, 700, { patient: p }), await run(`${k}:ctrl`, [PROP], 700, { patient: p }), 'map', 360, 240);
@@ -118,7 +118,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
     };
     // R45 (ET amendment): SURGE_NE_GAIN / SURGE_SET_PER_NOX are fitted to case 1 and not raised; the stimulus scale is 7e's
     // one shape (R51 addendum 12). The 0.7 mmHg remainder goes to the gate note §5 and Ali (Q17).
-    it.fails('no opioid: ΔMAP 20–30 mmHg (ET-16a band; Shribman 1987 via R51 addendum 25; Q17) — measured +19.1 on the gate tree (+19.3 before the FU-9 merge; was +7.7)', async () => {
+    it.fails('no opioid: ΔMAP 20–30 mmHg (Shribman 1987) — measured +19.1 (+19.3 before the blood/fluids merge)', async () => {
       const x = await d(0);
       console.log(`FU-7 case 1c: incision, no opioid ΔMAP ${f1(x)}`);
       expect(x).toBeGreaterThanOrEqual(20);
@@ -182,7 +182,7 @@ describe('FU-7 Task 10: the stimulus sympathetic surge (R51 addenda 22 + 25; rul
     expect(dev).toBeLessThanOrEqual(1);
   });
 
-  describe('7: a CONDITION\'s or a DRUG\'s sympathetic activity never resets the set point (ruling 1; addendum 25)', () => {
+  describe('7: a CONDITION\'s or a DRUG\'s sympathetic activity never resets the set point', () => {
     const guards: [string, [number, Ev][], number][] = [
       ['(a) septic shock (sepsis severity 1)', [[60, { kind: 'condition', id: 'sepsis', severity: 1 }]], 1200],
       ['(b) anaphylaxis grade III (severity 0.75)', [[60, { kind: 'condition', id: 'anaphylaxis', severity: 0.75 }]], 1200],

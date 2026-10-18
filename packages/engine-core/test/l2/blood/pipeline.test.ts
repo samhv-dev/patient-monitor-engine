@@ -17,7 +17,7 @@ function rig(pk?: unknown) {
 const bv = (bs: ReturnType<typeof createBloodState>) => bs.core.fl.vp + bs.core.fl.hbG * 3;
 
 describe('blood pipeline: commands, view, labs, ECG targets', () => {
-  it('validates only its own kinds (null = pass on); 7a’s crystalloid/colloid/blood ids are accepted', () => {
+  it('validates only its own kinds (null = pass on); the circulation’s crystalloid/colloid/blood ids are accepted', () => {
     expect(validateBloodCommand(ev({ kind: 'fluid', fluid: 'rl', volumeMl: 500 }))).toBeUndefined();
     for (const fluid of ['crystalloid', 'colloid', 'blood']) expect(validateBloodCommand(ev({ kind: 'fluid', fluid, volumeMl: 500, overS: 600 }))).toBeUndefined();
     expect(validateBloodCommand(ev({ kind: 'fluid', volumeMl: 0 }))).toMatch(/volumeMl/);
@@ -28,7 +28,7 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
     expect(validateBloodCommand(ev({ kind: 'airway', state: 'patent' }))).toBeNull();
     expect(validateBloodCommand({ id: 'x', issuedBy: 't', type: 'setTarget', variable: 'hr', value: 70 } as Command)).toBeNull();
   });
-  it('a 500 mL bleed over 60 s removes exactly 500 mL (minus refill); 7a’s colloid is gelatin', () => {
+  it('a 500 mL bleed over 60 s removes exactly 500 mL (minus refill); the circulation’s colloid is gelatin', () => {
     const { bs, ctx } = rig();
     advanceBlood(bs, ctx, 5);
     const bv0 = bv(bs);
@@ -64,7 +64,7 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
     expect(qtcDeltaCa(0.9)).toBeCloseTo(20, 6);
     expect(qtcDeltaCa(1.2)).toBe(0);
   });
-  it('R51 addendum 16: blood.out.dkaSeverity (0–1) publishes the ketoacid drive 7c applies, for Stage 7e', () => {
+  it('blood.out.dkaSeverity (0–1) publishes the ketoacid drive the blood model applies, for the endocrine model', () => {
     const { bs, ctx } = rig();
     advanceBlood(bs, ctx, 1);
     expect(bs.out.dkaSeverity).toBe(0);
@@ -73,7 +73,7 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
     expect(bs.out.dkaSeverity).toBeCloseTo(0.6, 2);
     expect(bs.out.ag).toBeGreaterThan(20); // the same drive that raises the anion gap
   });
-  it('an unwarmed unit runs into the heat model at 4 °C: ≈ 0.25 °C of a 70 kg core (Stage 7e E-7e-1: physical IV heat term)', () => {
+  it('an unwarmed unit runs into the heat model at 4 °C: ≈ 0.25 °C of a 70 kg core (a physical IV heat term)', () => {
     const { bs, ctx, rs } = rig();
     applyBloodCommand(bs, ev({ kind: 'transfusion', product: 'rbc', units: 1, overS: 300 }), 0, ctx.resp);
     advanceBlood(bs, ctx, 100);
@@ -84,14 +84,14 @@ describe('blood pipeline: commands, view, labs, ECG targets', () => {
   });
 });
 
-describe('Stage 7g observer (R51 §3; R50 F1/F2)', () => {
+describe('drug-bus observer', () => {
   const bus = (doses: unknown[], kShift = 0) => ({ bus: { doses, metabolic: { kShift } } });
-  it('pkBus reads 7g’s bus by duck typing; absent → null (fallback)', () => {
+  it('pkBus reads the drug bus by duck typing; absent → null (fallback)', () => {
     expect(pkBus(undefined)).toBeNull();
     expect(pkBus({})).toBeNull();
     expect(pkBus(bus([], -0.4))?.kShift).toBe(-0.4);
   });
-  it('7g’s logged doses (library units) reach the mass balance once; salbutamol is NOT read from the log', () => {
+  it('the logged drug doses (library units) reach the mass balance once; salbutamol is NOT read from the log', () => {
     const pk = bus([
       { agent: 'succinylcholine', mgPerKg: 1.43, amount: 100_000, amountUnit: 'mcg', t: 0 },
       { agent: 'calciumChloride', mgPerKg: 14.3, amount: 1000, amountUnit: 'mg', t: 0 },
@@ -113,7 +113,7 @@ describe('Stage 7g observer (R51 §3; R50 F1/F2)', () => {
     advanceBlood(bs, ctx, 1);
     expect(bs.core.doses).toHaveLength(4);
   });
-  it('with 7g, the β2/insulin K shift is bus.metabolic.kShift only; without it, 7c’s own salbutamol curve', () => {
+  it('with the drug model, the β2/insulin K shift is bus.metabolic.kShift only; without it, the blood model’s own salbutamol curve', () => {
     const own = rig();
     applyBloodCommand(own.bs, ev({ kind: 'drug', drugId: 'salbutamol', dose: 10, unit: 'mg' }), 0, own.ctx.resp);
     advanceBlood(own.bs, own.ctx, 1800);

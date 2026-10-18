@@ -16,7 +16,7 @@ function trapezoid(fs: number, sII: number, sIII: number, breaths = 5, hold = 1)
 
 const expected = (sII: number, sIII: number) => 180 - (Math.atan(sII / 25) * 180) / Math.PI + (Math.atan(sIII / 25) * 180) / Math.PI;
 
-describe('capnogram α (R39 item 6: one convention for recorded and generated)', () => {
+describe('capnogram α (one convention for recorded and generated)', () => {
   it('recovers α of a synthetic trapezoid within 1°', () => {
     const a = capnoAngles(trapezoid(62.5, 90, 1));
     expect(a.length).toBe(5);

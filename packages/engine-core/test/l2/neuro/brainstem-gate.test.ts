@@ -27,7 +27,7 @@ const fresh = () => {
   return s;
 };
 
-describe('FU-3 item 16: brainstem-perfusion gate on the MODELED drive (E-FU3-10)', () => {
+describe('brainstem-perfusion gate on the MODELED drive', () => {
   it('perfused (cbfRel ≥ 0.2, flow present): bit-identical to the ungated drive, no gate fields written', () => {
     const a = fresh();
     const b = fresh();
@@ -54,7 +54,7 @@ describe('FU-3 item 16: brainstem-perfusion gate on the MODELED drive (E-FU3-10)
     }
     expect(ref[200]?.[1] ?? 0).toBeGreaterThan(GASP_RR); // the ungated hypercapnic drive breathes fast
   });
-  it('7d CBF below 20 % closes the gate exactly as no flow does; 25 % does not', () => {
+  it('CBF below 20 % closes the gate exactly as no flow does; 25 % does not', () => {
     const noFlow = run(fresh(), 0, 200, { noFlow: true });
     expect(run(fresh(), 0, 200, { cbfRel: 0.1 })).toEqual(noFlow);
     expect(run(fresh(), 0, 200, { cbfRel: 0.25 })).toEqual(run(fresh(), 0, 200, {}));

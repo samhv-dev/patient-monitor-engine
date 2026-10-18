@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { HEALTHY, LUNG_CONDITIONS, VENT_ROW_MAP, type EffectKey } from '../../../data/lung-pathology.ts';
 import { LUNG_CONDITION_IDS } from '../../../src/types-lung.ts';
 
-describe('lung-pathology data (R36, catalogue §1–§33)', () => {
+describe('lung-pathology data (catalogue §1–§33)', () => {
   it('32 conditions in catalogue order, ids = LUNG_CONDITION_IDS', () => {
     expect(LUNG_CONDITIONS.map((c) => c.id)).toEqual([...LUNG_CONDITION_IDS]);
     expect(LUNG_CONDITIONS.map((c) => c.section)).toEqual(Array.from({ length: 32 }, (_, i) => i + 1));

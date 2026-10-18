@@ -10,7 +10,7 @@ type State = Extract<EngineEvent, { type: 'state' }>;
 const lastState = (ev: EngineEvent[]) => ev.filter((x): x is State => x.type === 'state').pop()!;
 const defib = (action: string) => cmd({ type: 'applyEvent', event: { kind: 'defib', action } });
 
-describe('state event rhythm (FU-2 item 4)', () => {
+describe('state event rhythm', () => {
   it('effectiveRateBpm: rate-driven rhythms clamp the hr value to their range; flutter = atrial/ratio; arrest and VF 0', () => {
     expect(effectiveRateBpm('sinus', {}, 72)).toBe(72);
     expect(effectiveRateBpm('sinusBrady', {}, 72)).toBe(59);

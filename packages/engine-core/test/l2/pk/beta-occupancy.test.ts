@@ -8,7 +8,7 @@ const act = (id: string, c: number): Active => ({ row: DRUGS[id]!, c });
 const svr = (fx: { svr: number }) => fx.svr;
 
 /** FU-7 (addendum 21): chronic β-blockade is receptor occupancy with a selectivity. */
-describe('β-receptor occupancy (R51 addendum 21)', () => {
+describe('β-receptor occupancy', () => {
   it('occupancy 0.85 is a dose ratio of ≈ 6.7 on a β-mediated EC50 (the tables\' ×0.5 as competition, D5)', () => {
     expect(competitiveEc50(1, 0.85)).toBeCloseTo(1 + 0.85 / 0.15, 6);
   });
@@ -28,12 +28,12 @@ describe('β-receptor occupancy (R51 addendum 21)', () => {
     const sFree = combine([act('salbutamol', 1)], { ...CTX, betaOccProfile: 0 }).fx.hr - 1;
     expect(sBlocked).toBeLessThan(0.6 * sFree);
   });
-  it('an older caller without the field keeps the pre-FU-7 behaviour (betaBlockC as the occupancy)', () => {
+  it('an older caller without the field keeps the earlier behaviour (betaBlockC as the occupancy)', () => {
     const a = combine([act('dobutamine', 10)], CTX).fx.ees;
     const b = combine([act('dobutamine', 10)], { ...CTX, betaOccProfile: 0.5 }).fx.ees;
     expect(a).toBeCloseTo(b, 9);
   });
-  it('ephedrine and ketamine publish a central drive instead of multiplying 7a (audit D4/D9)', () => {
+  it('ephedrine and ketamine publish a central drive instead of multiplying the circulation', () => {
     // one reference dose sits at each row's EC50, so the Hill gives half of Emax (ephedrine 1.6 → 0.8, ketamine 2.2 → 1.1)
     const e = combine([act('ephedrine', 1)], { ...CTX, betaOccProfile: 0 });
     expect(e.bus.cns.sympDrive).toBeGreaterThan(0.5);
@@ -43,7 +43,7 @@ describe('β-receptor occupancy (R51 addendum 21)', () => {
     expect(k.fx.hr).toBeCloseTo(1, 6); // ketamine's chronotropy is indirect too
     expect(k.fx.ees).toBeLessThan(1); // the DIRECT myocardial depression stays
   });
-  it('glucagon acts DOWNSTREAM of the β receptor: at occupancy 0.95 dobutamine collapses, glucagon keeps ≥ 0.9 × its effect (D13)', () => {
+  it('glucagon acts DOWNSTREAM of the β receptor: at occupancy 0.95 dobutamine collapses, glucagon keeps ≥ 0.9 × its effect', () => {
     const dob = (occ: number) => combine([act('dobutamine', 10)], { ...CTX, betaOccProfile: occ }).fx.ees - 1;
     const glu = (occ: number) => combine([act('glucagon', 1)], { ...CTX, betaOccProfile: occ }).fx.ees - 1;
     expect(dob(0.95)).toBeLessThan(0.5 * dob(0));

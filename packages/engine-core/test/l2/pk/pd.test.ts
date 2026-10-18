@@ -23,7 +23,7 @@ describe('PD primitives', () => {
     expect(responseSurface(0.5, 0.5)).toBeCloseTo(1.375, 12);
     expect(tachy(2, 0.7)).toBeCloseTo(0.49, 12);
   });
-  it('β-blockade blunts the RISE of a catecholamine-surge multiplier only (7e endoHrF/endoEesF)', () => {
+  it('β-blockade blunts the RISE of a catecholamine-surge multiplier only (endocrine endoHrF/endoEesF)', () => {
     expect(betaBlunt(1.4, 0)).toBeCloseTo(1.4, 12);
     expect(betaBlunt(1.4, 0.75)).toBeCloseTo(1.1, 12);
     expect(betaBlunt(0.8, 0.9)).toBe(0.8); // a fall is not a β effect

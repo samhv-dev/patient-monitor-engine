@@ -37,11 +37,11 @@ async function course(cprAt?: number, endS = 240): Promise<Map<number, number>> 
   return out;
 }
 
-describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
+describe('arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // FU-7.1 B3: re-targeted on Falk 1988 (owner ruling 2026-10-07) — ≈ 3 mmHg (band 0–6) at 60 s with ventilation
   // continuing, and lower still at 120 s. Measured with the alveolar-washout mechanism: 9.3 at +30 s, 2.6 at +60 s,
   // 0.2 at +120 s (FU-4's τ-70 s lag read 14.2 and 5.0).
-  it('VF without CPR: EtCO2 ≤ 6 mmHg at +60 s (Falk 1988 ≈ 3 ± 3 in 13 human arrests) and ≤ 5 at +120 s — FU-4 G4\'s "10–20 at 60 s" is a CPR value and is superseded (owner ruling 2026-10-07)', async () => {
+  it('VF without CPR: EtCO2 ≤ 6 mmHg at +60 s (Falk 1988 ≈ 3 ± 3 in 13 human arrests) and ≤ 5 at +120 s — the earlier "10–20 at 60 s" target is a CPR value', async () => {
     const c = await course();
     console.log(`arrest-etco2 no CPR: pre ${c.get(59)!.toFixed(1)}, +20 s ${c.get(80)!.toFixed(1)}, +30 s ${c.get(90)!.toFixed(1)}, +60 s ${c.get(120)!.toFixed(1)}, +120 s ${c.get(180)!.toFixed(1)}`);
     expect(c.get(120)!).toBeGreaterThanOrEqual(0);
@@ -52,7 +52,7 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // within 30 s") is still missed on this rig, because the washout τ is the lung's own V_alv/VA (≈ 24–36 s at 12 × 600)
   // and 30 s is barely one time constant. Recorded with the number; the two unit-level records in
   // `test/l2/gas/co2.test.ts` say the same thing at the unit rig's ventilation.
-  it.fails('VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / Stage 3 acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it)', async () => {
+  it.fails('VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / respiratory acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it)', async () => {
     const c = await course(undefined, 120);
     expect(c.get(90)!).toBeLessThan(5);
   });
@@ -64,7 +64,7 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // CBF above its threshold) — its drive triggers the ventilator at 14–19/min during CPR instead of the set 10, and the
   // mean EtCO2 over minutes 1–10 falls 17.5 (origin/main) → 15.9. it.fails with the number; whether an arrested
   // patient's drive may trigger during CPR is an open question in the FU-6 gate note (a guard is a mechanism change).
-  it('VF with CPR q 0.8 from +30 s: EtCO2 in R39-2\'s steady 17–23 (mean over minutes 1–10 of CPR) — measured 18.3 after G-FU6-2 (was 15.9 with FU-6 R9 triggering; 17.5 on origin/main)', async () => {
+  it('VF with CPR q 0.8 from +30 s: EtCO2 in the steady 17–23 band (mean over minutes 1–10 of CPR) — measured 18.3 with the pulseless apnoea (15.9 with ventilator triggering)', async () => {
     const c = await course(90, 690);
     const v = [...c].filter(([t]) => t >= 150 && t <= 690).map(([, x]) => x);
     const m = v.reduce((a, x) => a + x, 0) / v.length;
@@ -79,7 +79,7 @@ describe('FU-4 G4 (b): arrest EtCO2 kinetics', { timeout: 300_000 }, () => {
   // the +2 min point reads 15.9 (18.0 before). It is INSIDE research/26 T3's sourced band for adequate CPR (10–20 mmHg:
   // Sanders 1989 n = 35 arrests, 15 ± 4 in the resuscitated; Falk 1988 ≈ 7.6; AHA 2020 "above 10"), so the bound itself is a
   // candidate for a re-rule — recorded here with the number, not widened (FU-7.1 Q9 to the owner).
-  it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after) — measured 15.9 with the FU-7.1 B3 washout', async () => {
+  it.fails('VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 15.9 with the alveolar washout', async () => {
     const c = await course(90, 210);
     expect(c.get(210)!).toBeGreaterThanOrEqual(17);
   });

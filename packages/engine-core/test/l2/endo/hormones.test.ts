@@ -67,7 +67,7 @@ describe('stress hormones', () => {
     expect((h.epi - 34) / ex0).toBeLessThan(0.6);
   });
 
-  it('exogenous epinephrine (7g, 728 pg/mL ≈ 0.05 µg/kg/min) adds β2 and metabolic effects but no HR/SVR/Ees/K (7g owns those)', () => {
+  it('exogenous epinephrine (728 pg/mL ≈ 0.05 µg/kg/min) adds β2 and metabolic effects but no HR/SVR/Ees/K (the drug model owns those)', () => {
     const h = createHormones();
     stepHormones(h, { ...REST, epiExoPgMl: 728 }, 1);
     const e = stressEffects(h, NO_BB, 1);
@@ -77,7 +77,7 @@ describe('stress hormones', () => {
     expect(e.egpF).toBeGreaterThan(1.3);
   });
 
-  it('hypoglycaemia 50 mg/dL drives epinephrine 10–20× basal; 7a profile β-blockade removes the HR part, keeps the K shift', () => {
+  it('hypoglycaemia 50 mg/dL drives epinephrine 10–20× basal; the circulation profile β-blockade removes the HR part, keeps the K shift', () => {
     const h = createHormones();
     for (let s = 0; s < 1800; s++) stepHormones(h, { ...REST, glucoseMgDl: 50 }, 1);
     expect(h.epi / 34).toBeGreaterThanOrEqual(10);
@@ -92,7 +92,7 @@ describe('stress hormones', () => {
   });
 });
 
-describe('FU-4 F2(a): the humoral arm of haemorrhage compensation', () => {
+describe('the humoral arm of haemorrhage compensation', () => {
   it('at rest h.hum stays 0 and the humoral outputs are neutral', () => {
     const h = createHormones();
     for (let s = 0; s < 600; s++) stepHormones(h, REST, 1);

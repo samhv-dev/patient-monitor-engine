@@ -6,7 +6,7 @@
 // per sim-minute (CI amendment 4). SLOW_A.
 import { describe, expect, it } from 'vitest';
 import type { MonitorEngine } from '../../src/types.ts';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 const T = 300;
 const mapOf = (e: MonitorEngine): number => {
@@ -29,7 +29,7 @@ async function arm(ketamine: boolean, depleted: boolean): Promise<number[]> {
 }
 const rise = (i: number[], c: number[]) => Math.max(...i.map((v, k) => v - c[k]!));
 
-describe('FU-7 Task 9: the catecholamine reserve reaches the engine (audit D9)', { timeout: 900_000 }, () => {
+describe('the catecholamine reserve reaches the engine', { timeout: 900_000 }, () => {
   it('ketamine 1.5 mg/kg raises MAP less in the depleted state: rise ≤ 0.5 × the replete rise', async () => {
     const replete = rise(await arm(true, false), await arm(false, false));
     const depleted = rise(await arm(true, true), await arm(false, true));

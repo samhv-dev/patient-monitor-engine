@@ -37,7 +37,7 @@ describe('impedance respiration', () => {
     expect(alarm).toBeGreaterThan(25);
     expect(alarm).toBeLessThan(32);
   });
-  it('FU-5 (M10): with the beat times given, a 20 % ripple at the heart period is cardiac overlay — the apnoea is raised 20 s after the last breath and RR reads 0', () => {
+  it('with the beat times given, a 20 % ripple at the heart period is cardiac overlay — the apnoea is raised 20 s after the last breath and RR reads 0', () => {
     const st = createImpNum();
     const beats: number[] = [];
     let apnoea = -1;
@@ -51,7 +51,7 @@ describe('impedance respiration', () => {
     expect(apnoea).toBeLessThan(53);
     expect(impRr(st, 90).value).toBe(0);
   });
-  it('FU-5 (M11): the skin apnoea time — saadat-like RESP APNEA at 10 s', () => {
+  it('the skin apnoea time — saadat-like RESP APNEA at 10 s', () => {
     const st = createImpNum();
     st.apneaS = 10;
     let apnoea = -1;

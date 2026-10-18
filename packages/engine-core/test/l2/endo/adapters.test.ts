@@ -16,8 +16,8 @@ function ctx(ps: Record<string, unknown> = {}, hemo: Record<string, unknown> = {
 }
 const circ = () => ({ ext: {} as Record<string, number>, prof: { betaBlock: 0, betaBlockC: 0, bloodVolumeMl: 5000 }, base: { v0Sv: 2500 }, beats: [{ map: 90 }] });
 
-describe('Stage 7e adapters', () => {
-  it('fallbacks: MAP from the L1 truth (120/80 → 93.3) without a circuit, gas truths from Stage 3, antinociception 0 awake, 0.6 under the GA flag', () => {
+describe('endocrine adapters', () => {
+  it('fallbacks: MAP from the L1 truth (120/80 → 93.3) without a circuit, gas truths from the respiratory model, antinociception 0 awake, 0.6 under the GA flag', () => {
     const c = ctx();
     const es = createEndoState(undefined, 70);
     const x = readEndoInputs(c, es, 1);
@@ -28,7 +28,7 @@ describe('Stage 7e adapters', () => {
     expect(readEndoInputs(c, es, 1).antinoc).toBeCloseTo(0.6, 9);
   });
 
-  it('7f/7d/7a/7c/7g reads: thermoDepth/nmb always; 7f antinoc only while 7g has an active agent; β-block from 7a; DKA from 7c', () => {
+  it('neuro/organ/circulation/blood/drug reads: thermoDepth/nmb always; neuro antinoc only while a drug agent is active; β-block from the circulation; DKA from the blood', () => {
     const es = createEndoState(undefined, 70);
     const neuro = { antinoc: 0.9, nmb: 1, thermoDepth: 0.7 };
     const idle = ctx({ neuro, organs: { liver: { glucoseF: 0.5 } }, pk: { bus: { agents: {}, volatiles: {} } } }, { circ: { ...circ(), prof: { betaBlock: 0.5, betaBlockC: 0.25, bloodVolumeMl: 5000 } } });
@@ -48,7 +48,7 @@ describe('Stage 7e adapters', () => {
     expect(readEndoInputs(keto, es, 1).dkaSeverity).toBeCloseTo(0.4, 9); // 10 mmol/L ÷ 25 (fallback when 7c publishes no severity)
   });
 
-  it('7g doses and infusions: dextrose 25 000 mg → +210 mg/dL; insulin units; infusion rates from pk.drugs.<id>.rate', () => {
+  it('drug doses and infusions: dextrose 25 000 mg → +210 mg/dL; insulin units; infusion rates from pk.drugs.<id>.rate', () => {
     const es = createEndoState(undefined, 70);
     observeDoses(es, { bus: { doses: [{ agent: 'dextrose', amount: 25_000, amountUnit: 'mg' }, { agent: 'propofol', amount: 140, amountUnit: 'mg' }] } });
     expect(es.core.glucose.g).toBeCloseTo(100 + 25_000 / (1.7 * 70), 6);
@@ -59,7 +59,7 @@ describe('Stage 7e adapters', () => {
     expect(es.core.glucose.dexMgMin).toBeCloseTo(10_000 / 60, 6);
   });
 
-  it('MODELED: circ.ext.endo* written even though 7a’s initialiser omits them; V0 sign/unit per 7a; at rest exactly neutral', () => {
+  it('MODELED: circ.ext.endo* written even though the circulation’s initialiser omits them; V0 sign/unit per the circulation; at rest exactly neutral', () => {
     const es = createEndoState(undefined, 70);
     const cm = circ();
     const c = ctx({}, { circ: cm }, 'modeled');
@@ -72,7 +72,7 @@ describe('Stage 7e adapters', () => {
     expect(cm.ext.endoHrF).toBeCloseTo(1.6, 12);
   });
 
-  it('F4: a β-blocked (7g) patient with fever keeps the fever tachycardia: 7a’s betaBlunt(endoHrF) = betaBlunt(stress) × fever', () => {
+  it('a β-blocked patient with fever keeps the fever tachycardia: the circulation’s betaBlunt(endoHrF) = betaBlunt(stress) × fever', () => {
     const es = createEndoState(undefined, 70);
     es.core.out = { ...es.core.out, hrF: 1.3, feverHrF: 1.18 }; // 39 °C: +12 %/°C above 37.5 (≈ 9 bpm/°C at 75)
     const cm = circ();
@@ -84,7 +84,7 @@ describe('Stage 7e adapters', () => {
     expect(preBlunt(0.9, 0.8)).toBe(0.9); // ≤ 1 passes through (betaBlunt does not touch it)
   });
 
-  it('MANUAL: 7a keys neutral, the rhythm-clock factor = betaBlunt(stress × condition rows, 7g) × fever above the set point; 1 when hr is pinned', () => {
+  it('MANUAL: the circulation keys neutral, the rhythm-clock factor = betaBlunt(stress × condition rows) × fever above the set point; 1 when hr is pinned', () => {
     const es = createEndoState(undefined, 70);
     es.core.out = { ...es.core.out, hrF: 1.3, condHrF: 1, feverHrF: 1.3, feverHrFExcess: 1.1 }; // MANUAL uses the excess above the set point
     const cm = circ();
@@ -96,7 +96,7 @@ describe('Stage 7e adapters', () => {
     expect(writeCirc(c, es)).toBe(1);
   });
 
-  it('7c/7g writes: endoKShift, lab glucose, kfMult only on change; ps.cond.vasoResp', () => {
+  it('blood/drug writes: endoKShift, lab glucose, kfMult only on change; ps.cond.vasoResp', () => {
     const es = createEndoState(undefined, 70);
     expect(writeBlood({}, es)).toBe(false);
     const ps = { blood: { core: { fl: { kfMult: 2 } } as Record<string, unknown> } };

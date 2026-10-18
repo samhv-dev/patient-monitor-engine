@@ -32,7 +32,7 @@ kit from 51a37063 to 56f3761f answered `/pme-relay.json` and then exited at the 
 own try/catch and ws takes its pure-JS path; the builder refuses a relay bundle that still holds such a stub.
 Red, kit 56f3761f: 0 of 2 runs (`results/relay-red-56f3761f.json`). Green, kit from `fix-kr-a1-kit-relay`: 2 of 2
 (`results/relay.json`). For the phones' own e2e against a built kit's relay:
-`PME_KIT_RELAY="$K/server/relay.mjs" npx playwright test s12-mobile-learner` (both projects).
+`PME_KIT_RELAY="$K/server/relay.mjs" npx playwright test mobile-learner` (both projects).
 
 **Both builds.** The checks are directions with floors, chosen to hold on the hotfix build and on the FU-7
 drug-layer build (independent FU-7 run: bronchospasm VTE ≈ 161 → 305 mL at 3 min, ≈ 360 at 6 min, EtCO2 ≈ 40):

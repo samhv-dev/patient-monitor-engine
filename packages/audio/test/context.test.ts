@@ -7,7 +7,7 @@ describe('audio context helpers', () => {
     expect(mapPerfToAudio(5100, r)).toBeCloseTo(10.11, 12);
   });
 
-  it('fallback mapping SUBTRACTS base + output latency (review M6: it used to add baseLatency)', () => {
+  it('fallback mapping SUBTRACTS base + output latency', () => {
     const r = { currentTime: 10, perfNow: 5000, baseLatency: 0.005, outputLatency: 0.016, ts: { contextTime: 0, performanceTime: 0 } };
     // the sample at currentTime is heard base + output latency from now, so perf 5100 ↔ 10 + 0.1 − 0.021
     expect(mapPerfToAudio(5100, r)).toBeCloseTo(10.079, 12);

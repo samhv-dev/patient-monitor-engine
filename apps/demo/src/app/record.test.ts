@@ -18,7 +18,7 @@ const labs = (t: number, k: number): EngineEvent => ({ type: 'labs', t, values: 
 const NO_LABS = { k: null, lactate: null, ph: null, glucose: null, tcore: null };
 const fresh = () => new RunRecord(() => ({ patient: 'M 40 y 70 kg', weightKg: 70 }), () => 1_000);
 
-describe('Stage 13: the run record', () => {
+describe('the run record', () => {
   it('turns commands, states, alarms, breaths, the pulse and notes into rows with run events', () => {
     const r = fresh();
     r.wire(applied(0, { type: 'scenario', action: 'load', doc: induction }));
@@ -161,7 +161,7 @@ describe('Stage 13: the run record', () => {
     hs.close();
   }, 60_000);
 
-  it('on a real host, Stage 10: every alarm raised inside a fast-forward is a row at its own time, the trend has the span', async (ctx) => {
+  it('on a real host: every alarm raised inside a fast-forward is a row at its own time, the trend has the span', async (ctx) => {
     const v = validateScenario(BUILTIN_SCENARIOS['acls-pea-hypovolaemia']);
     if (!v.ok) throw new Error(v.errors.join('; '));
     const eo = engineOptionsOf(v.doc, 7);

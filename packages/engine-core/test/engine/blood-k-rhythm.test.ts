@@ -38,7 +38,7 @@ async function course(blood: PatientProfile['blood'], script: [number, Record<st
   return { tArrest, cause, hr120, k120 };
 }
 
-describe('FU-4 G3: hyperkalaemia on the ECG, the pump and the rhythm', () => {
+describe('hyperkalaemia on the ECG, the pump and the rhythm', () => {
   it('K 8.5 profile: the ECG draws K 8.5 (absolute), the sinus rate slows', async () => {
     const ctl = await course(undefined, [], 130);
     const k = await course({ k: 8.5 }, [], 130);

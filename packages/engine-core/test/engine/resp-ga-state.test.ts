@@ -4,7 +4,7 @@
 // propofol + rocuronium on VCV reach the GA FRC (20 mL/kg IBW).
 import { describe, expect, it } from 'vitest';
 import type { PatientProfile } from '../../src/types.ts';
-import { ADULT6, rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { ADULT6, rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 async function apnoea90(patient: PatientProfile): Promise<number> {
   const e = rig6(patient);
@@ -21,18 +21,18 @@ async function apnoea90(patient: PatientProfile): Promise<number> {
   return min;
 }
 
-describe('FU-6 R4: anaesthetised lungs follow the anaesthetic state (was a hidden instructor switch)', { timeout: 900_000 }, () => {
+describe('anaesthetised lungs follow the anaesthetic state', { timeout: 900_000 }, () => {
   it('preoxygenated adult: 6.5–9.5 min without the switch (measured 7.93; plan 8.00; was 9.75)', async () => {
     const m = await apnoea90(ADULT6);
     expect(m).toBeGreaterThanOrEqual(6.5);
     expect(m).toBeLessThanOrEqual(9.5);
   });
-  it('obese 127 kg: 2–3.5 min (measured 2.77 under FU-8’s continuous body-size rule; 2.85 before the FU-8 merge; plan 2.83; was 3.33)', async () => {
+  it('obese 127 kg: 2–3.5 min (measured 2.77 under the continuous body-size rule)', async () => {
     const m = await apnoea90({ ...ADULT6, weightKg: 127 });
     expect(m).toBeGreaterThanOrEqual(2);
     expect(m).toBeLessThanOrEqual(3.5);
   });
-  it.fails('child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.38 on the tree merged with FU-8 (3.33 before it; 3.50 on the prototype; was 7.83); FU-6 Task 17 re-measures', async () => {
+  it.fails('child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.38 (3.50 on the prototype)', async () => {
     const m = await apnoea90({ ageY: 4, weightKg: 16, heightCm: 102, sex: 'M' });
     expect(m).toBeGreaterThanOrEqual(2);
     expect(m).toBeLessThanOrEqual(3.2);

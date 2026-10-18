@@ -3,7 +3,7 @@ import { respOf as resp } from '../helpers/lung.ts';
 import { ev3, rig3 } from '../helpers/resp.ts';
 
 
-describe('Stage 7b commands', () => {
+describe('lung commands', () => {
   it('validates ids, severities, sides, recruitability and manoeuvres', () => {
     const { e } = rig3();
     expect(e.dispatch(ev3({ kind: 'lungCondition', id: 'copd', severity: 0.75 })).accepted).toBe(true);
@@ -27,7 +27,7 @@ describe('Stage 7b commands', () => {
     e.advanceTo(2);
     expect(resp(e).lungSpecs.map((s) => s.id)).toEqual(['copd']);
   });
-  it('Stage 3 airway events: endobronchial blocks the left lung; bronchospasm 1 → R ≈ 60', () => {
+  it('airway events: endobronchial blocks the left lung; bronchospasm 1 → R ≈ 60', () => {
     const { e } = rig3();
     e.dispatch(ev3({ kind: 'airway', state: 'endobronchial' }));
     e.advanceTo(1);

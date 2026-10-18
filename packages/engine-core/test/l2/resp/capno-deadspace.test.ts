@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { alveolarFraction } from '../../../src/l2/resp/driver.ts';
 
-describe('FU-6 R5: the sampled plateau is the mixed-expirate share (Fowler; D10)', () => {
+describe('the sampled plateau is the mixed-expirate share (Fowler)', () => {
   it('0 below 0.6 of the series dead space, 1 above 1.4×, linear between', () => {
     expect(alveolarFraction(80, 150)).toBe(0);
     expect(alveolarFraction(90, 150)).toBe(0);

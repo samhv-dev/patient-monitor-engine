@@ -16,7 +16,7 @@ function settle(map: number, g: BaroGains) {
   return { o, b };
 }
 
-describe('FU-4 G2: sympathetic output suppression and resetting (baroreflex)', () => {
+describe('sympathetic output suppression and resetting (baroreflex)', () => {
   it('outF 1 and setF 1 are bit-identical to the absent fields', () => {
     const a = settle(70, G).o;
     const b = settle(70, { ...G, outF: 1, setF: 1 }).o;
@@ -36,7 +36,7 @@ describe('FU-4 G2: sympathetic output suppression and resetting (baroreflex)', (
     const plain = settle(80, G);
     expect(reset.b.es).toBeLessThan(0.1 * plain.b.es + 1e-9); // set 95 × 0.85 ≈ 81 vs MAP 80
   });
-  it('7g: propofol Ce 3 µg/mL → output × 0.10 and set point × 0.865; sevoflurane 0.65 MAC → output × 0.675; no drug → 1', () => {
+  it('propofol Ce 3 µg/mL → output × 0.10 and set point × 0.865; sevoflurane 0.65 MAC → output × 0.675; no drug → 1', () => {
     const ctx = { ph: 7.4, betaBlockC: 0, vasoResp: 1, ageY: 40, macBrain: 0 };
     const prop = combine([{ row: DRUGS.propofol as DrugRow, c: 3 }], ctx).fx;
     expect(prop.symp).toBeCloseTo(0.1, 3);

@@ -11,7 +11,7 @@ import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade'];
 
-describe('Stage 11 Showcase cards', () => {
+describe('Showcase cards', () => {
   it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {
     expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
     expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
@@ -53,7 +53,7 @@ describe('Stage 11 Showcase cards', () => {
     }
   });
 
-  it('E22 (owner ruling 2026-10-17): the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
+  it('the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
     const doc: ScenarioDoc = showcaseDoc('showcase-mh');
     const vent = (doc.objectives ?? []).find((o) => typeof o !== 'string' && o.rule?.kind === 'heldThen');
     expect(vent).toEqual({

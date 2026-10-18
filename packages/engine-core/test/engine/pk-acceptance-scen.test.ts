@@ -7,7 +7,7 @@ import { cmd } from '../helpers/hemo.ts';
 import { yieldNow } from '../helpers/pk.ts';
 import type { Command } from '../../src/types.ts';
 
-describe('7g scenarios', () => {
+describe('drug scenarios', () => {
   it('adenosine 6 mg on AVNRT 180/min: a pause/complete block 5–30 s after the push, then sinus ≤ 110/min', async () => {
     const e = createEngine({ seed: 9, mode: 'modeled', patient: { ageY: 26, sex: 'F', weightKg: 58 } });
     const ev: EngineEvent[] = [];

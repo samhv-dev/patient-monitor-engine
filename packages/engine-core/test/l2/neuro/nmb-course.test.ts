@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { give, rig } from '../../helpers/neuro.ts';
 import { onsetMin, recoveryMin, t1Course, untilTof } from '../../helpers/neuro-nmb.ts';
 
-describe('NMB time course on 7g\'s PK', { timeout: 120_000 }, () => {
-  it('rocuronium 0.6 mg/kg: TOF 0 by ~1.8 min, T1 25 % at ~31 min (label); spontaneous TOFR 0.9 at 55–95 min (R51 addendum 17: Debaene 2003; label)', () => {
+describe('NMB time course on the drug model\'s PK', { timeout: 120_000 }, () => {
+  it('rocuronium 0.6 mg/kg: TOF 0 by ~1.8 min, T1 25 % at ~31 min (label); spontaneous TOFR 0.9 at 55–95 min (Debaene 2003; label)', () => {
     const r = rig();
     give(r, 'rocuronium', 0.6);
     const tof0 = untilTof(r, (p) => p.tof.count === 0, 5);
@@ -65,7 +65,7 @@ describe('NMB time course on 7g\'s PK', { timeout: 120_000 }, () => {
   // FU-3 item 1 (R51 addendum 17) is done: 7g re-fitted succinylcholine onto Roy 2002's CL 0.037 L/kg/min and
   // V1 = CL/k = 0.038 L/kg with ke0 0.1475/0.236 and the effect-site EC50 1160 ng/mL, γ 6. Before: T1 ≤ 5 % at
   // 0.17 min, T1 10 % 5.37, T1 90 % 12.68. After: 0.73 / 6.98 / 11.98 min — inside the label bands, so this is `it`.
-  it('[FU-3 item 1] succinylcholine 1 mg/kg: block by ~1 min, T1 10 % at ~7.1 min, 90 % at ~10.9 min (label), no fade', () => {
+  it('succinylcholine 1 mg/kg: block by ~1 min, T1 10 % at ~7.1 min, 90 % at ~10.9 min (label), no fade', () => {
     const r = rig();
     give(r, 'succinylcholine', 1);
     const on = untilTof(r, (p) => p.tof.t1 <= 0.05, 3);
@@ -80,14 +80,14 @@ describe('NMB time course on 7g\'s PK', { timeout: 120_000 }, () => {
     expect(t90).toBeLessThan(12.5);
     expect(fade).toBe(1);
   });
-  it('succinylcholine phase I has no fade on 7g\'s PK (holds whatever FU-3 does to its timing)', () => {
+  it('succinylcholine phase I has no fade on the drug model\'s PK, whatever its timing', () => {
     const r = rig();
     give(r, 'succinylcholine', 1);
     let fade = 1;
     untilTof(r, (p) => { fade = Math.min(fade, p.tof.count === 4 ? p.tof.ratio : 1); return false; }, 20);
     expect(fade).toBe(1);
   });
-  it('plasma cholinesterase (7g\'s PK, R51 addendum 10): heterozygous ≈ ×1.5–2, homozygous 4–8 h (tables §5d, Lee 2009)', () => {
+  it('plasma cholinesterase (the drug model\'s PK): heterozygous ≈ ×1.5–2, homozygous 4–8 h (tables §5d, Lee 2009)', () => {
     const het = rig({ pche: 'het' });
     give(het, 'succinylcholine', 1);
     untilTof(het, (p) => p.tof.t1 <= 0.05, 3);

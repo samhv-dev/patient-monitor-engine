@@ -5,7 +5,7 @@ import { totalVolume } from '../../src/l2/circ/circuit.ts';
 const ev = (event: Record<string, unknown>) => cmd({ type: 'applyEvent', event });
 
 describe('circulation clinical events', () => {
-  it('accepts the 7a drugs and every library drug (Stage 7g); unknown ids are rejected', () => {
+  it('accepts the circulation drugs and every library drug; unknown ids are rejected', () => {
     const { e } = rig();
     expect(e.dispatch(ev({ kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' })).accepted).toBe(true);
     expect(e.dispatch(ev({ kind: 'drug', drugId: 'propofol', dose: 2, unit: 'mg/kg', route: 'iv' })).accepted).toBe(true);

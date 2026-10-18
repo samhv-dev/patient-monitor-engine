@@ -28,7 +28,7 @@ describe('l3/hr', () => {
     expect(hrMeasure(m.st, m.t).value).toBe(Math.round(60 / ((10 * 0.75 + 0.3 + 1.5) / 12)));
   });
 
-  it("FU-3 (Q-FU2-11): hrMeasure's method argument (the active skin's) overrides the state's creation default", () => {
+  it("hrMeasure's method argument (the active skin's) overrides the state's creation default", () => {
     const { st, t } = feed([...Array(10).fill(0.75), 0.3, 1.5]); // a 'dropMaxMin' state
     expect(hrMeasure(st, t).value).toBe(80);
     expect(hrMeasure(st, t, undefined, 'mean12').value).toBe(Math.round(60 / ((10 * 0.75 + 0.3 + 1.5) / 12)));
@@ -45,7 +45,7 @@ describe('l3/hr', () => {
     expect(hrMeasure(st, t).value).toBe(Math.round(60 / ((0.75 + 1.3 + 1.4 + 1.5) / 4)));
   });
 
-  it('FU-5 (audit M16): an R–R over 6 s restarts the history (no "3" after an asystole); the "0" follows the skin asystole time', () => {
+  it('an R–R over 6 s restarts the history (no "3" after an asystole); the "0" follows the skin asystole time', () => {
     const { st, t } = feed(Array(12).fill(0.8));
     expect(hrMeasure(st, t + 9.9, undefined, 'dropMaxMin', 10).value).toBe(75); // saadat-like: still the rate before its 10 s
     expect(hrMeasure(st, t + 10, undefined, 'dropMaxMin', 10).value).toBe(0);

@@ -12,7 +12,7 @@ const W: AnalysisWindow = { source: 'vitaldb', record: 'x', fromS: 0, toS: 300, 
 const pair = (rec: Partial<WindowMetrics>, eng: Partial<WindowMetrics>): WindowPair => ({ window: W, recorded: M(rec), engine: M(eng), wallMs: 0 });
 const band = (id: string) => BANDS.find((b) => b.id === id) as (typeof BANDS)[number];
 
-describe('morphology grading (R40 grades on evidence bands)', () => {
+describe('morphology grading (grades on evidence bands)', () => {
   it('V1 is graded against the recorded median ± 20 ms', () => {
     expect(gradeBand(band('V1'), [pair({ rToFootMs: [160, 162, 158] }, { rToFootMs: [170, 171, 169] })], 'HR 70–90')?.grade).toBe('green');
     expect(gradeBand(band('V1'), [pair({ rToFootMs: [160, 162, 158] }, { rToFootMs: [190, 191, 189] })], 'HR 70–90')?.grade).toBe('yellow');

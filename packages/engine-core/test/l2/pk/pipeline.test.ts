@@ -5,7 +5,7 @@ import type { Command } from '../../../src/types.ts';
 const ev = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
 
 describe('PK pipeline', () => {
-  it('validates every library drug, 7c-owned ids included (R51 §3); non-drug commands are not its business', () => {
+  it('validates every library drug, blood-owned ids included; non-drug commands are not its business', () => {
     const pk = createPkState();
     expect(validatePkCommand(ev({ kind: 'drug', drugId: 'unobtainium', dose: 1, unit: 'mg', route: 'iv' }), pk)).toMatch(/unknown drug/);
     expect(validatePkCommand(ev({ kind: 'drug', drugId: 'propofol', dose: 1, unit: 'units', route: 'iv' }), pk)).toMatch(/unit/);
@@ -29,7 +29,7 @@ describe('PK pipeline', () => {
     expect(a.cumulativeMgPerKg).toBeCloseTo(2, 12);
     expect(a.vent).toBeUndefined(); // not an opioid
   });
-  it('every drug event is consumed; each bolus is in bus.doses for exactly one pass (7c/7f observe, R51 §3)', () => {
+  it('every drug event is consumed; each bolus is in bus.doses for exactly one pass (the blood and neuro models observe it)', () => {
     const pk = createPkState();
     expect(applyPkCommand(pk, ev({ kind: 'drug', drugId: 'succinylcholine', dose: 1, unit: 'mg/kg', route: 'iv' }), 0)).toBe(true);
     expect(applyPkCommand(pk, ev({ kind: 'drug', drugId: 'calciumChloride', dose: 1, unit: 'g', route: 'iv' }), 0)).toBe(true);
@@ -45,7 +45,7 @@ describe('PK pipeline', () => {
     advancePk(pk, NEUTRAL_PK_CTX, 61);
     expect(pk.bus.doses).toEqual([]);
   });
-  it('opioids carry a SEPARATE ventilatory effect site (remifentanil ke0 0.92 vs brain 0.595, R51 §2)', () => {
+  it('opioids carry a SEPARATE ventilatory effect site (remifentanil ke0 0.92 vs brain 0.595)', () => {
     const pk = createPkState({ ageY: 40, weightKg: 70, heightCm: 170, sex: 'm' });
     applyPkCommand(pk, ev({ kind: 'drug', drugId: 'remifentanil', dose: 1, unit: 'mcg/kg', route: 'iv' }), 0);
     advancePk(pk, NEUTRAL_PK_CTX, 30);

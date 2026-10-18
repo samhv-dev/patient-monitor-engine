@@ -17,7 +17,7 @@ function vols(p: VolPatient & { weightKg: number }, specs: LungConditionSpec[]) 
   return { a, pred, fev1Pct: (100 * a.fev1) / pred.fev1, fvcPct: (100 * a.fvc) / pred.fvc };
 }
 
-describe('Stage 7k: predicted volumes', () => {
+describe('predicted volumes', () => {
   it('ECSC 1993, man 40 y 175 cm: TLC 6.90, RV 1.94, FRC 3.41, FVC 4.70, FEV1 3.87 L (Stocks & Quanjer 1995 Table 8)', () => {
     const p = predictedVolumes(MAN);
     expect(p.tlc).toBeCloseTo(6902.5, 0);
@@ -52,7 +52,7 @@ describe('Stage 7k: predicted volumes', () => {
   });
 });
 
-describe('Stage 7k: actual volumes and the forced expiration', () => {
+describe('actual volumes and the forced expiration', () => {
   it('a healthy lung reads its predicted values: FVC and FEV1 100 ± 1 %, FEV1/FVC = predicted, normal pattern', () => {
     const r = vols(MAN, []);
     expect(r.a.tlc).toBeCloseTo(r.pred.tlc, 6);
@@ -79,7 +79,7 @@ describe('Stage 7k: actual volumes and the forced expiration', () => {
     expect(g4.a.rv / g4.a.tlc).toBeGreaterThan(0.55); // hyperinflation and gas trapping
     expect(g4.a.fvc).toBeLessThan(0.95 * g4.a.vc); // FVC < VC: the slow units' tail is trapped at the end of the test
   });
-  it.fails('COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue\'s GOLD 1 rawExp 1.5; Q-7k-2)', () => {
+  it.fails('COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue\'s GOLD 1 rawExp 1.5)', () => {
     const g1 = vols(OLD, [{ id: 'copd', severity: 0.25 }]);
     expect(g1.a.ratio).toBeLessThan(0.7);
     expect(g1.fev1Pct).toBeGreaterThanOrEqual(80);
@@ -96,7 +96,7 @@ describe('Stage 7k: actual volumes and the forced expiration', () => {
       expect(pattern(g.a, g.pred)).toBe('restrictive');
     }
   });
-  it('PEF falls with obstruction as FEV1 does (F3): PEF % pred within ±15 points of FEV1 % pred in acute severe asthma and COPD GOLD 2/3; acute severe asthma PEF 33–50 % (BTS/SIGN 2019, GINA)', () => {
+  it('PEF falls with obstruction as FEV1 does: PEF % pred within ±15 points of FEV1 % pred in acute severe asthma and COPD GOLD 2/3; acute severe asthma PEF 33–50 % (BTS/SIGN 2019, GINA)', () => {
     const cases = [vols(MAN, [{ id: 'asthma', severity: 1 }]), vols(OLD, [{ id: 'copd', severity: 0.5 }]), vols(OLD, [{ id: 'copd', severity: 0.75 }])];
     for (const r of cases) expect(Math.abs((100 * r.a.pef) / r.pred.pef - r.fev1Pct)).toBeLessThanOrEqual(15);
     const asthma = cases[0]!;

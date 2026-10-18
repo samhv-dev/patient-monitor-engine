@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cardiacOutput } from '../../src/l2/gas/coupling.ts';
 import { numeric, rig } from '../helpers/hemo.ts';
 
-describe('CircBeats feed the Stage 2/3 consumers', () => {
+describe('CircBeats feed the haemodynamic and respiratory signal consumers', () => {
   it('pulse rate (pleth) equals HR in sinus and the NIBP cycle completes near the arterial truth', () => {
     const { e, ev } = rig({ hr: 75, sensors: { abp: 'connected' } });
     e.dispatch({ id: 'n', issuedBy: 't', type: 'device', action: { device: 'nibp', action: 'start' } });

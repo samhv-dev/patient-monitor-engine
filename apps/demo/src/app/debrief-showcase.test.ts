@@ -75,7 +75,7 @@ const apnoeaObjective = (rec: RunRecord) => {
   return objectives(rec.data)[i]?.verdict;
 };
 
-describe('Stage 13: the showcase objectives as rules', () => {
+describe('the showcase objectives as rules', () => {
   it('every rule in the library names a state, drug, alarm or condition that exists', () => {
     let n = 0;
     for (const c of LIBRARY) {
@@ -89,7 +89,7 @@ describe('Stage 13: the showcase objectives as rules', () => {
     expect(n).toBeGreaterThanOrEqual(7);
   });
 
-  it('Q5: the draft numbers of the cards Stage 13 owns are marked for the owner in the card text', () => {
+  it('the draft numbers of the anaphylaxis and haemorrhage cards are marked for the owner in the card text', () => {
     for (const id of ['showcase-anaphylaxis', 'showcase-haemorrhage']) {
       const timed = (LIBRARY.find((c) => c.id === id)?.doc.objectives ?? []).filter((o) => typeof o !== 'string' && o.rule?.kind === 'eventWithin');
       expect(timed.length, id).toBeGreaterThan(0);

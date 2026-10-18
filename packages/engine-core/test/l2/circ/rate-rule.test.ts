@@ -4,7 +4,7 @@ import { constantRamp } from '../../../src/l1/ramp.ts';
 import { createCircModel } from '../../../src/l2/circ/model.ts';
 import { AV_GAIN, AV_MOD_MAX, heldRate, modeledHrRequest, PACER_SENSING, SINUS_FAMILY } from '../../../src/l2/circ/rate-rule.ts';
 
-describe('MODELED rate rule (NR-7g-5)', () => {
+describe('MODELED rate rule', () => {
   it('the sinus family is derived from the rhythm library (sinus atria, rate driven as sinus): 11 rhythms, complete block excluded', () => {
     expect([...SINUS_FAMILY].sort()).toEqual(['avb1', 'avb2Mobitz1', 'avb2Mobitz2', 'avb2to1', 'avbHighGrade', 'sinus', 'sinusArrhythmia', 'sinusBrady', 'sinusPause', 'sinusTachy', 'wpwSinus']);
     for (const id of ['avb3Narrow', 'avb3Wide', 'atrialTach', 'pacedAAI', 'pacedDDD', 'pacedVVI']) expect(SINUS_FAMILY.has(id)).toBe(false);

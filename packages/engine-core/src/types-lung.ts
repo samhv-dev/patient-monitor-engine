@@ -1,5 +1,5 @@
 // The lung model's public types, in their own file: types.ts and types-resp.ts gain one line each. Conditions are
-// the catalogue's ids (docs/physiology/stage-7-lung-pathology-catalogue.md, data in
+// the catalogue's ids (docs/physiology/lung-pathology-catalogue.md, data in
 // packages/engine-core/data/lung-pathology.ts).
 export type LungSide = 'L' | 'R';
 

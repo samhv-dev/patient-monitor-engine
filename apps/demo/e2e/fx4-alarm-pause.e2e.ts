@@ -4,7 +4,7 @@
 // is enabled and pauses the alarms for the skin's time. Both browsers.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite, tab } from './stage9-support.ts';
+import { openApp, startVite, tab } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';

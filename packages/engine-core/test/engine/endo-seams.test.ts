@@ -12,7 +12,7 @@ const at = <T extends EngineEvent>(ev: EngineEvent[], type: T['type'], t: number
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const st = (e: MonitorEngine) => (e.snapshot().state as { st: any }).st;
 
-describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
+describe('endocrine seams (engine)', { timeout: 300_000 }, () => {
   it('rest: every seam neutral — endoKShift 0, cond.vasoResp 1, kfMult 1, no anaphylaxis spec, lab glucose 100', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 30);
@@ -25,7 +25,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(at<Labs>(ev, 'labs', 30).values.glucose).toBe(100);
   });
 
-  it('7g dextrose infusion (E-7e-4) raises glucose and 7c’s lab panel shows 7e’s value (E-7e-2)', async () => {
+  it('dextrose infusion raises glucose and the blood lab panel shows the endocrine value', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'infusion', drugId: 'dextrose', rate: 20_000, unit: 'mg/h' })); // 20 g/h
     await run(e, 1800);
@@ -35,7 +35,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(Math.abs(at<Labs>(ev, 'labs', 1800).values.glucose - g)).toBeLessThanOrEqual(1);
   });
 
-  it('MH K efflux reaches 7c’s K through the endogenous term (E-7e-3): K rises ≥ 0.5 mmol/L in 15 min at fixed ventilation', async () => {
+  it('MH K efflux reaches the blood K through the endogenous term: K rises ≥ 0.5 mmol/L in 15 min at fixed ventilation', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 }));
@@ -47,7 +47,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(at<Labs>(ev, 'labs', 120 + 900).values.k - k0).toBeGreaterThanOrEqual(0.5);
   });
 
-  it('cold IV (E-7e-1): 2 unwarmed RBC units cool the core ≥ 0.3 °C more than 2 warmed ones; the fluid warmer removes the difference', async () => {
+  it('cold IV: 2 unwarmed RBC units cool the core ≥ 0.3 °C more than 2 warmed ones; the fluid warmer removes the difference', async () => {
     const core = async (warmed: boolean, warmer: boolean) => {
       const { e } = rig3({ patient: ADULT });
       e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
@@ -63,7 +63,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(Math.abs((await core(false, true)) - warm)).toBeLessThan(0.02);
   });
 
-  it('sepsis writes ps.cond.vasoResp (7g reads it) and 7c’s kfMult; anaphylaxis drives 7b’s lungCondition anaphylaxis', async () => {
+  it('sepsis writes ps.cond.vasoResp (the drugs read it) and the blood’s kfMult; anaphylaxis drives the lungs’ lungCondition anaphylaxis', async () => {
     const { e } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'condition', id: 'sepsis', severity: 1, phase: 'warm', rampS: 60 }));
     e.dispatch(ev3({ kind: 'condition', id: 'anaphylaxis', severity: 0.75 }));
@@ -76,7 +76,7 @@ describe('Stage 7e seams (engine)', { timeout: 300_000 }, () => {
     expect(a.severity).toBeGreaterThan(0.3);
   });
 
-  it('7f hand-overs: 7e alone validates `stimulus` (R-7f-4) and 7f observes it; 7f reads endo.cascade.macF (R-7f-8)', async () => {
+  it('neuro hand-overs: the endocrine model alone validates `stimulus` and neuro observes it; neuro reads endo.cascade.macF', async () => {
     expect(validateNeuroCommand(ev3({ kind: 'stimulus', intensity: 1 }))).toBeNull();
     const { e } = rig3({ patient: ADULT });
     expect(e.dispatch(ev3({ kind: 'stimulus', intensity: 3 }))).toMatchObject({ accepted: false });

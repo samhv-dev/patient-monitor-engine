@@ -27,7 +27,7 @@ function rig() {
   return { e, ev };
 }
 
-describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check 16)', { timeout: 900_000 }, () => {
+describe('septic shock warm → cold (MODELED; tables §7 check 16)', { timeout: 900_000 }, () => {
   let warm = { map: 0, hr: 0, co: 0, svr: 0 };
   let cold = { map: 0, hr: 0, co: 0, svr: 0 };
   beforeAll(async () => {
@@ -50,22 +50,22 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
   }, 900_000);
   // R45 misses (prototype, Q-7e-7): warm HR 131, MAP 61, CO 5.0, SVR 866; cold SVR 1510. 7a's baroreflex restores the
   // SVR the vasoplegia removed and nothing raises venous return (see Requests: 7a baroreflex × vasoResp, septic RVR).
-  it('warm HR 115–130 — measured 116 at the FU-4 gate; was 131 before FU-4, 118 after Task 8 (Q-7e-7)', () => {
+  it('warm HR 115–130 — measured 116', () => {
     expect(warm.hr).toBeGreaterThanOrEqual(115);
     expect(warm.hr).toBeLessThanOrEqual(130);
   });
   // E-FU4-9 (title/flip edits only): flipped to `it` by Task 8 at 56; the later FU-4 mechanisms (Task 18a's brainstem
   // arm, 18d's gas-exchange flow) took it to 54.0; Task 18e's humoral arm (AVP/angiotensin answer the septic unloading)
   // brings it back to 56 — flipped again, body unchanged (R45).
-  it('warm MAP 55–60 — measured 56 with the humoral arm (Task 18e); was 54.0 after Task 18d, 61 before FU-4, 56 after Task 8 (Q-7e-7)', () => {
+  it('warm MAP 55–60 — measured 56 with the humoral arm', () => {
     expect(warm.map).toBeGreaterThanOrEqual(55);
     expect(warm.map).toBeLessThanOrEqual(60);
   });
-  it.fails('warm CO 7–9 L/min (measured 5.0; 4.9 with FU-4, 4.9 at the gate; Q-7e-7)', () => {
+  it.fails('warm CO 7–9 L/min (measured 5.0)', () => {
     expect(warm.co).toBeGreaterThanOrEqual(7);
     expect(warm.co).toBeLessThanOrEqual(9);
   });
-  it.fails('warm SVR 500–700 dyn·s/cm⁵ (measured 861; 792 with FU-4, 767 at the gate; Q-7e-7)', () => {
+  it.fails('warm SVR 500–700 dyn·s/cm⁵ (measured 861)', () => {
     expect(warm.svr).toBeGreaterThanOrEqual(500);
     expect(warm.svr).toBeLessThanOrEqual(700);
   });
@@ -73,14 +73,14 @@ describe('Stage 7e × 7a (MODELED): septic shock warm → cold (tables §7 check
     expect(cold.co).toBeGreaterThanOrEqual(3);
     expect(cold.co).toBeLessThanOrEqual(4);
   });
-  it('cold SVR 1200–1500 dyn·s/cm⁵ — was 1507 before FU-4, 1444 with it (Q-7e-7)', () => {
+  it('cold SVR 1200–1500 dyn·s/cm⁵', () => {
     expect(cold.svr).toBeGreaterThanOrEqual(1200);
     expect(cold.svr).toBeLessThanOrEqual(1500);
   });
 });
 
-describe('Stage 7e × 7a (MODELED): anaphylaxis grade III (tables §5e)', { timeout: 600_000 }, () => {
-  it('MAP falls ≥ 30 % within 10 min of the trigger (tables: onset 1–10 min); epinephrine 100 µg ×2 (7g) restores ≥ 80 % of baseline within 3 min of the second dose', async () => {
+describe('anaphylaxis grade III (MODELED; tables §5e)', { timeout: 600_000 }, () => {
+  it('MAP falls ≥ 30 % within 10 min of the trigger (tables: onset 1–10 min); epinephrine 100 µg ×2 restores ≥ 80 % of baseline within 3 min of the second dose', async () => {
     const { e, ev } = rig();
     await run(e, 120);
     const base = haemo(ev, 60, 120).map;

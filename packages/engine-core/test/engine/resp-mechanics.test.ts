@@ -4,7 +4,7 @@
 // (`data/lung-pathology.ts` Bands, reference VT 490 × 14, PEEP 5), Owens 2012 (Pes), Nunn 8e / Nuckton 2002 (VD/VT),
 // ATS/ERS (reversibility ≥ 12 % and ≥ 200 mL). One yield per sim-minute (runTo).
 import { describe, expect, it } from 'vitest';
-import { ADULT6, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { ADULT6, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 import type { PatientProfile } from '../../src/types.ts';
 import type { LungConditionSpec } from '../../src/types-lung.ts';
 
@@ -38,7 +38,7 @@ async function run(opts: Opts): Promise<{ m: Any; vd: Any; v: Any; ls: Any }> {
   return r;
 }
 
-describe('Stage 7k: mechanics on the running engine (per breath)', { timeout: 300_000 }, () => {
+describe('mechanics on the running engine (per breath)', { timeout: 300_000 }, () => {
   it('healthy adult under GA on VCV 500 × 12, PEEP 5: Ppeak < 30, Pplat 10–20, PEEPi < 1, ΔP 6–12, Cstat 45–80, Cdyn < Cstat, Rinsp 6–15 (Hess & Kacmarek; glossary §5.6)', async () => {
     const { m, v } = await measure({ vent: {} });
     expect(m.kind).toBe('mech');
@@ -67,7 +67,7 @@ describe('Stage 7k: mechanics on the running engine (per breath)', { timeout: 30
     expect(m.plEi).toBeGreaterThan(0);
     expect(m.plEi).toBeLessThan(15);
   });
-  it.fails('healthy adult under GA on VCV: Enghoff VD/VT 0.30–0.45 (Nunn 8e: ≈ 0.3 awake, higher under anaesthesia) — measured 0.28 (VD phys 140 mL: FU-4\'s ETT bypass + HEALTHY_VDALV 0.075; Q-7k-5)', async () => {
+  it.fails('healthy adult under GA on VCV: Enghoff VD/VT 0.30–0.45 (Nunn 8e: ≈ 0.3 awake, higher under anaesthesia) — measured 0.28 (VD phys 140 mL: the ETT bypass + HEALTHY_VDALV 0.075)', async () => {
     const { vd } = await measure({ vent: {} });
     expect(vd.vdvt).toBeGreaterThanOrEqual(0.3);
     expect(vd.vdvt).toBeLessThanOrEqual(0.45);
@@ -87,7 +87,7 @@ describe('Stage 7k: mechanics on the running engine (per breath)', { timeout: 30
     expect(m.plEe).toBeLessThanOrEqual(7);
     expect(Math.round(v.frc)).toBe(ls.frcMl); // one bedside FRC (D6): the panel and lungState agree
   });
-  it('bronchospasm 1 (Pmax 80, FU-6 D18b): Ppeak ≥ 40, PEEPi 6–12, Rinsp ≥ 40, Cdyn < ½ Cstat, VD/VT ≥ 0.45 (catalogue §2)', async () => {
+  it('bronchospasm 1 (Pmax 80): Ppeak ≥ 40, PEEPi 6–12, Rinsp ≥ 40, Cdyn < ½ Cstat, VD/VT ≥ 0.45 (catalogue §2)', async () => {
     const { m, vd } = await measure({ vent: { pmax: 80 }, conds: [{ id: 'bronchospasm', severity: 1 }] });
     expect(m.ppeak).toBeGreaterThanOrEqual(40);
     expect(m.peepi).toBeGreaterThanOrEqual(6);
@@ -121,7 +121,7 @@ describe('Stage 7k: mechanics on the running engine (per breath)', { timeout: 30
     expect(m.rinsp).toBeLessThanOrEqual(33);
     expect(v.ratio).toBeLessThan(0.7);
   });
-  it.fails('COPD GOLD 3, VCV 490 × 14: PEEPi 4–8 (catalogue §5 band at the reference rate) — measured 3.6 (lungState 3.7: the 7b lung\'s own value, not a 7k measurement; R46 calibration row)', async () => {
+  it.fails('COPD GOLD 3, VCV 490 × 14: PEEPi 4–8 (catalogue §5 band at the reference rate) — measured 3.6 (lungState 3.7: the lung\'s own value, not a respiratory-mechanics measurement; calibration row)', async () => {
     const { m } = await measure({ patient: { ...ADULT6, ageY: 65 }, vent: { vtMl: 490, rr: 14 }, conds: [{ id: 'copd', severity: 0.75 }] });
     expect(m.peepi).toBeGreaterThanOrEqual(4);
     expect(m.peepi).toBeLessThanOrEqual(8);
@@ -149,7 +149,7 @@ describe('Stage 7k: mechanics on the running engine (per breath)', { timeout: 30
   });
 });
 
-describe('Stage 7k: spirometry answers the bronchodilator through FU-6\'s one smooth-muscle state', { timeout: 300_000 }, () => {
+describe('spirometry answers the bronchodilator through the one smooth-muscle state', { timeout: 300_000 }, () => {
   const arm = async (id: 'asthma' | 'copd', severity: number) => {
     const e = rig6({ ...ADULT6, lungConditions: [{ id, severity }] });
     await runTo(e, 60);

@@ -76,7 +76,7 @@ const TAMP = { kind: 'condition', id: 'tamponade', severity: 1 };
 const BLEED15: Step = [60, { kind: 'bleed', volumeMl: 1500, overS: 600 }];
 const memo = <T>(f: () => Promise<T>) => { let p: Promise<T> | undefined; return () => (p ??= f()); };
 
-describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, () => {
+describe('clinical scenario suite (MODELED, audit rig)', { timeout: 600_000 }, () => {
   const s1 = memo(() => scenario([[300, drug('propofol', 2, 'mg/kg')]], 1200));
   it('S1 healthy, propofol 2 mg/kg: MAP nadir 60–80 % of baseline at 2–5 min, HR change −10…+10, no arrest (Miller ch. 21 p. 519; Q1)', async () => {
     const r = await s1();
@@ -90,7 +90,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
     expect(arrestAt(r)).toBeUndefined();
   });
   // R45: flipped — the humoral arm (Task 18e) carries the recovery: 0.920 at 15 min (was 0.84 on the prototype)
-  it('S1b the same run: MAP back to ≥ 85 % of baseline by 15 min (audit S1 proposal; measured 0.920 — was 0.84 on the prototype)', async () => {
+  it('S1b the same run: MAP back to ≥ 85 % of baseline by 15 min (measured 0.920 — was 0.84 on the prototype)', async () => {
     const r = await s1();
     expect(mean(win(r, 1170, 1200), 'map') / mean(win(r, 270, 300), 'map')).toBeGreaterThanOrEqual(0.85);
   });
@@ -106,13 +106,13 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   });
   // R45 (Task 18e): the humoral arm answers the volatile's own unloading — −21 % on the prototype, −14.3 % at FU-4 (Q1).
   // FU-8 B4 (E-FU8B-1): flipped — the volatile's delivered-output factor removes the tonic sympathetic share too
-  it('S2 the same: MAP −15 to −30 % at 20 min — measured −19.7 % after FU-8 B4 (−14.7 % before it; −14.3 % at FU-4; −21 % on the prototype; Q1)', async () => {
+  it('S2 the same: MAP −15 to −30 % at 20 min — measured −19.7 % when sevoflurane removes the tonic sympathetic share (−14.7 % when it does not; −21 % on the prototype)', async () => {
     const r = await s2();
     const f = mean(win(r, 1440, 1500), 'map') / mean(win(r, 270, 300), 'map') - 1;
     expect(f).toBeLessThanOrEqual(-0.15);
     expect(f).toBeGreaterThanOrEqual(-0.3);
   });
-  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (Ali, R53; Barash, pericardial disease)", async () => {
+  it("S4a severe tamponade (compensated), propofol 2 mg/kg: collapse and PEA within 10 min (Ali; Barash, pericardial disease)", async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 2, 'mg/kg')]], 1260);
     const pre = mean(win(r, 630, 660), 'map');
     const a = arrestAt(r, 660);
@@ -121,7 +121,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
     expect(a).toBeDefined();
     expect((a as number) - 660).toBeLessThanOrEqual(600);
   });
-  it.fails('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (audit S4 proposal; Q2; measured MAP 50.5, CO −21 % after FU-8 B4 — 58.9 / −17 % before it, 59.7 / −15 % at FU-4, 57 / −15 % on the prototype)', async () => {
+  it.fails('S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)', async () => {
     const r = await scenario([[60, TAMP], [660, drug('propofol', 1, 'mg/kg')]], 1260);
     const co0 = mean(win(r, 630, 660), 'co');
     const w = win(r, 660, 840);
@@ -150,7 +150,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   // LONGER an acceptance criterion in either direction — a sustained MAP of 25–30 mmHg cannot perfuse — so it is RECORDED
   // here (the FU-12 autonomic-hub plan writes its criterion as time at low perfusion, by mechanism). Measured: no arrest,
   // nadir 26.5 before FU-8 B4; arrest at +90 s after it (nadir 2.7) — the tonic share an anaesthetic removes.
-  it('S6a the same: class III haemorrhage + propofol 2 mg/kg — RECORDED, not asserted (owner ruling 2026-10-04): after FU-8 B4 an arrest at +90 s (none before; nadir 26.5 → 2.7)', async () => {
+  it('S6a the same: class III haemorrhage + propofol 2 mg/kg — RECORDED, not asserted: when propofol removes the tonic sympathetic share an arrest at +90 s (none when it does not; nadir 26.5 → 2.7)', async () => {
     const r = await s6a();
     const w = win(r, 960, 1500);
     const a = arrestAt(r, 960);
@@ -158,7 +158,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
     expect(w.length).toBe(108); // the run reached 1500 s; the outcome is the record above
   });
   // R45 (Task 18e, D23): the two sourced targets pull against each other — kept with the numbers (Ali's Q1, item 19)
-  it.fails('S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest after FU-8 B4 — 26.5, −68 % before it, 27.0 at FU-4, 28.7 on the prototype; Q1)', async () => {
+  it.fails('S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share — 26.5, −68 % when it does not, 28.7 on the prototype)', async () => {
     const r = await s6a();
     const pre = mean(win(r, 930, 960), 'map');
     const nadir = minOf(win(r, 960, 1140), 'map');
@@ -219,7 +219,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   });
   // R45 (Task 18a): 23.8 at 70 s on the 18a rig, but the CoPP climbs as the CPR circulation settles — 25.1–28.8 over
   // 1–5 min of CPR alone here (the plan's quality-1 rig read 43–46 before 18a). Kept with the number (Q13's residual).
-  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 after FU-8 A19, 25.1–28.8 before)', async () => {
+  it.fails('S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 with the outflow limiter, 25.1–28.8 without)', async () => {
     // commanded VF is a setRhythm, not an applyEvent: its own engine
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     const cpp: number[] = [];
@@ -242,7 +242,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   });
   // R45 (Task 18e, D23): −31 % on the prototype; with the humoral arm −22.9 % (the four-patient table's −20 to −22 %; Q1).
   // FU-8 B4 (E-FU8B-1; research/19 C1, owner A23): flipped — the anaesthetic removes the elderly hypertensive's tonic share
-  it('S14 the same: MAP −30 to −45 % — measured −42.2 % after FU-8 B4 (−22.6 % before it; −22.9 % at FU-4; −31 % on the prototype; Q1)', async () => {
+  it('S14 the same: MAP −30 to −45 % — measured −42.2 % when propofol removes the tonic sympathetic share (−22.6 % when it does not; −31 % on the prototype)', async () => {
     const r = await s14();
     const f = minOf(win(r, 360, 660), 'map') / mean(win(r, 270, 300), 'map') - 1;
     expect(f).toBeLessThanOrEqual(-0.3);
@@ -258,7 +258,7 @@ describe('FU-4 clinical scenario suite (MODELED, audit rig)', { timeout: 600_000
   });
 });
 
-describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { timeout: 600_000 }, () => {
+describe('clinical scenario suite — resuscitation', { timeout: 600_000 }, () => {
   // full exsanguination (3 L over 10 min) → PEA; the arrest time is found by the run itself
   async function exsang(cpr: 'none' | 'alone' | 'full', tEnd: number, fluidMl = 2000): Promise<{ rows: Row[]; tArrest?: number; tCpr?: number }> {
     const probe = await scenario([[60, { kind: 'bleed', volumeMl: 3000, overS: 600 }]], 900);
@@ -272,7 +272,7 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   // FU-4 gate finding G-FU4-1 (orchestrator ruling, final): the humoral arm's effect is withdrawn in the declared
   // arrest (model.ts) — before that, the unsuppressed humoral venous term let CPR alone restore a pulse at +175 s.
   // Flipped to `it` (was `it.fails`, pulse at +175 s); measured after the fix: no pulse, CoPP 2.9–3.5.
-  it('CPR alone after full exsanguination (3 L): no pulse in 10 min of standard-quality CPR (an empty heart cannot be pumped; ruling 3) — was a pulse at +175 s before G-FU4-1', async () => {
+  it('CPR alone after full exsanguination (3 L): no pulse in 10 min of standard-quality CPR (an empty heart cannot be pumped)', async () => {
     const { rows, tArrest, tCpr } = await exsang('alone', 1800);
     const w = win(rows, (tCpr as number) + 5, (tCpr as number) + 600);
     console.log(`CPR alone: arrest ${tArrest} s, CPR from ${tCpr} s; pulse regained ${w.find((x) => !x.pulseless)?.t ?? 'never'}; CoPP ${minOf(w, 'cpp').toFixed(1)}–${Math.max(...w.map((x) => x.cpp)).toFixed(1)}`);
@@ -283,7 +283,7 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   // ruling 3, not a sourced band; with the humoral effect withdrawn in the arrest, 2 L no longer refills a COMPLETE 3 L
   // bleed-out. Kept as a record with its number; the sourced ROSC-with-volume assertion is circ-lowflow-arrest's class IV
   // rig (2 L + adrenaline 60 s after the arrest: pulse at +119 s). The volume threshold is measured below (Ali: A-new).
-  it.fails('CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min after G-FU4-1 (was +105 s)', async () => {
+  it.fails('CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min with the humoral fade (+105 s without it)', async () => {
     const { rows, tCpr } = await exsang('full', 1800);
     const back = win(rows, tCpr as number, (tCpr as number) + 600).find((x) => !x.pulseless);
     console.log(`CPR + 2 L + adrenaline: pulse at +${back ? back.t - (tCpr as number) : '–'} s`);
@@ -308,7 +308,7 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   // withdrawn while pulseless it stays apnoeic through the whole CPR (on 82104cc FU-3's reopened drive breathed for it),
   // and the kIsch maximum reads 1.00 (0.89 after FU-8, 0.912 with the interim brainstem factor). Not the viscosity fade
   // (Hb normal: viscF ≈ 1). it.fails with the number.
-  it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before) — measured 1.00 after FU-6 G-FU6-2 (the unventilated rig is apnoeic while pulseless)', async () => {
+  it.fails('10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 with the outflow limiter, 0.91 without) — measured 1.00 with the pulseless apnoea (the unventilated rig is apnoeic while pulseless)', async () => {
     const eng = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, sensors: { abp: 'connected' } } });
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'setRhythm', rhythm: 'vfCoarse', atTick: 60 * 50 } as unknown as Command);
     eng.dispatch({ id: `cs${++n}`, issuedBy: 'test', type: 'applyEvent', event: { kind: 'cpr', active: true, rate: 110, quality: 0.8 }, atTick: 120 * 50 } as unknown as Command);
@@ -323,7 +323,7 @@ describe('FU-4 clinical scenario suite — resuscitation (Tasks 18a, 18b)', { ti
   });
 });
 
-describe('FU-4 clinical scenario suite — MANUAL (review F16, ruling 6)', { timeout: 600_000 }, () => {
+describe('clinical scenario suite — MANUAL', { timeout: 600_000 }, () => {
   it('MANUAL class III haemorrhage + propofol 2 mg/kg: no engine arrest in 5 min, MAP nadir < 50 (Task 18e)', async () => {
     const r = await scenario([BLEED15, [960, drug('propofol', 2, 'mg/kg')]], 1260, { mode: 'manual' });
     console.log(`MANUAL class III + propofol: MAP nadir ${minOf(win(r, 960, 1260), 'map').toFixed(1)}; arrest ${arrestAt(r, 960) ?? 'none'}`);
@@ -337,7 +337,7 @@ describe('FU-4 clinical scenario suite — MANUAL (review F16, ruling 6)', { tim
     expect(minOf(win(r, 660, 1560), 'map')).toBeGreaterThanOrEqual(35);
   });
   // R45 (ruling 6, item 21, Q-FU3-4a): the MANUAL tracker's floor — an instructor cannot dial a peri-arrest pressure
-  it.fails('MANUAL target 18/10 mmHg: the displayed arterial pressure reaches the target (≤ 25/15) — the tracker floors it (monitor audit T4: 65/30; Q9)', async () => {
+  it.fails('MANUAL target 18/10 mmHg: the displayed arterial pressure reaches the target (≤ 25/15) — the tracker floors it (the monitor showed 65/30)', async () => {
     const r = await scenario([], 240, { mode: 'manual', commands: [[60, { type: 'setTarget', variable: 'sbp', value: 18 }], [60, { type: 'setTarget', variable: 'dbp', value: 10 }]] });
     const w = win(r, 180, 240);
     console.log(`MANUAL 18/10: displayed ${w.at(-1)?.shownSys?.toFixed(0)}/${w.at(-1)?.shownDia?.toFixed(0)}, MAP ${mean(w, 'map').toFixed(1)}`);

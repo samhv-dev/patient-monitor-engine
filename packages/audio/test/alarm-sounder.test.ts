@@ -147,7 +147,7 @@ describe('AlarmSounder cadence on a fake audio clock', () => {
     expect(bursts(onsets(r.played)).map((x) => x[0])).toEqual([0, 91]);
   });
 
-  it('iec-style silence IS ended by a new alarm of higher priority (FU-11, owner ruling Q1, AL01)', () => {
+  it('iec-style silence IS ended by a new alarm of higher priority', () => {
     const r = rig(IEC_STYLE);
     r.s.raise('SPO2', 2, 0);
     r.run(1);

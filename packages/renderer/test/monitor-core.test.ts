@@ -52,7 +52,7 @@ describe('MonitorCore', () => {
   });
 });
 
-describe('MonitorCore lane changes (review L3)', () => {
+describe('MonitorCore lane changes', () => {
   const laneClears = (ctx: FakeCtx) =>
     ctx.calls.filter((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[2] === 1000).map((c) => c.args[1]);
 
@@ -88,7 +88,7 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(core.engine.now().simT).toBe(core.clock.simT);
   });
 
-  it('carries the fractional tick across hidden pumps, so sim time does not fall behind (review L1)', () => {
+  it('carries the fractional tick across hidden pumps, so sim time does not fall behind', () => {
     const { core } = make();
     core.frame(1000);
     for (let k = 1; k <= 60; k++) core.catchUp(1000 + k * 1010); // 1 Hz hidden pump with 10 ms of jitter
@@ -96,7 +96,7 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(Math.abs(core.clock.renderT - 60.6)).toBeLessThan(0.021);
   });
 
-  it('posts the events generated while hidden instead of letting the batch grow (review L2)', () => {
+  it('posts the events generated while hidden instead of letting the batch grow', () => {
     const { core, posts } = make();
     core.frame(1000);
     const before = posts.length;
@@ -106,7 +106,7 @@ describe('MonitorCore hidden-tab catch-up', () => {
   });
 });
 
-describe('MonitorCore Stage 2 waveform lanes', () => {
+describe('MonitorCore haemodynamic waveform lanes', () => {
   it('adds ABP and pleth lanes below the ECG lanes with label and scale chrome, and draws them in their colours', () => {
     const ctx = new FakeCtx();
     const canvas = { width: 0, height: 0 };

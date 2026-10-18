@@ -58,7 +58,7 @@ async function both(spasm: boolean) {
   return out;
 }
 
-describe('FU-6 R7: link parity (RS15; audit I-b: link VT 207 / SpO2 0 vs internal VT 400 / SpO2 98)', { timeout: 900_000 }, () => {
+describe('link parity (RS15)', { timeout: 900_000 }, () => {
   // R45 (FU-6 executor, merged main with V.1): healthy parity is met (10/30 min: PaCO2 35.8/33.3 vs 34.5/31.8, EtCO2
   // 32.7/30 vs 31/28.8, SpO2 99/99, Pplat 14.1/14.1, VT 500 vs 494; Ppeak 24.0 vs 16.7 logged). In bronchospasm 1 at
   // 30 min both paths sit at Pmax 40 but the link delivers VT 238 vs the engine's 476 (Pplat 13.5 vs 25.9), so PaCO2

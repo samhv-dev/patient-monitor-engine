@@ -25,7 +25,7 @@ describe('alarm mirror wording', () => {
   });
 });
 
-describe('FU-11 (owner ruling Q4): the "Limit alarms off" tooltip', () => {
+describe('the "Limit alarms off" tooltip', () => {
   it('names what the skin lists as always on, in the table\'s words; drops apnoea under APNEA LIMIT OFF; generic when none', () => {
     expect(limitsOffTitle(['ASYSTOLE', 'VFIB', 'VTAC', 'APNEA'])).toBe('Limit alarms are off on this monitor. Still alarming: Asystole, Ventricular fibrillation or tachycardia, Ventricular tachycardia, Apnoea.');
     expect(limitsOffTitle(['ASYSTOLE', 'APNEA'], true)).toBe('Limit alarms are off on this monitor. Still alarming: Asystole.');

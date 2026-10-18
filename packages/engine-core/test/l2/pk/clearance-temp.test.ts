@@ -8,16 +8,16 @@ import type { DrugRow } from '../../../src/l2/pk/row.ts';
 const row = (id: string) => DRUGS[id] as DrugRow;
 const at33 = { ...NEUTRAL_PK_CTX, tempC: 33 }; // 3.8 °C below the engine's 36.8 °C normothermia → 7g term 0.81
 
-describe('clearance temperature counted once (FU-2 item 9)', () => {
-  it('without 7d (hepFn = 1, no temperature in it): 7g scales the whole clearance — midazolam 0.81 at 33 °C', () => {
+describe('clearance temperature counted once', () => {
+  it('without the organ model (hepFn = 1, no temperature in it): the drug model scales the whole clearance — midazolam 0.81 at 33 °C', () => {
     expect(clFactor(row('midazolam'), at33)).toBe(0.81);
     expect(clFactor(row('midazolam'), NEUTRAL_PK_CTX)).toBe(1);
   });
-  it('with 7d (hepFn = liverFn·tempF): the low-extraction hepatic share takes hepFn alone — midazolam 0.62, not 0.62 × 0.81', () => {
+  it('with the organ model (hepFn = liverFn·tempF): the low-extraction hepatic share takes hepFn alone — midazolam 0.62, not 0.62 × 0.81', () => {
     expect(clFactor(row('midazolam'), { ...at33, hepFn: 0.62, hepFnTemp: true })).toBe(0.62);
     expect(clFactor(row('midazolam'), { ...at33, hepFn: 0.62, hepFnTemp: false })).toBe(0.5); // the old double count (0.502)
   });
-  it('the other shares keep 7g’s term: renal/other of a mixed row, and flow-limited hepatic clearance', () => {
+  it('the other shares keep the drug model’s term: renal/other of a mixed row, and flow-limited hepatic clearance', () => {
     const r = row('rocuronium');
     const h = r.elim?.hepatic ?? 0;
     const rn = r.elim?.renal ?? 0;

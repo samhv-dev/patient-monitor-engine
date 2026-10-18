@@ -1,6 +1,6 @@
 // Renderer request R-1 (ruling R25): the host behind mountMonitor can snapshot and restore its engine, so a
 // viewer or a bookmark can use the renderer's own path. Main-thread host here; the worker path is checked in
-// apps/demo/e2e/stage6a-worker.e2e.ts (Node has no OffscreenCanvas worker).
+// apps/demo/e2e/iife-transports-snapshot.e2e.ts (Node has no OffscreenCanvas worker).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHost } from '../src/worker-host.ts';
 import { FakeCtx } from './fake-ctx.ts';

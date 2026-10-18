@@ -23,7 +23,7 @@ function rig(coLpmCirc: number, pk?: unknown) {
 /** Advance keeping Stage 3's coRatio (the rig has no gas step to recompute it). */
 const run = (r: ReturnType<typeof rig>, t: number) => advanceBlood(r.bs, r.ctx, t);
 
-describe('R51 addendum 15 — 7c side', () => {
+describe('blood reference CO, haemorrhage accounting and test seam', () => {
   it('(5) CO0 settles on the circuit’s own resting CO (not ref.co) and is latched after the settle window', () => {
     const r = rig(6.4); // an awake rig runs ≈ +15 % above 7a's stabilised ref.co
     run(r, 1);
@@ -37,7 +37,7 @@ describe('R51 addendum 15 — 7c side', () => {
     expect(r.bs.core.co0).toBeCloseTo(r.toGas(6.4), 2);
     expect(r.bs.out.hbfRel).toBeCloseTo((4.8 / 6.4) ** 2, 2);
   });
-  it('(5) a perturbation latches the reference early: a bleed, or any 7g drug on the bus', () => {
+  it('(5) a perturbation latches the reference early: a bleed, or any drug on the bus', () => {
     const r = rig(6.4);
     run(r, 30);
     const co0 = r.bs.core.co0;
@@ -75,7 +75,7 @@ describe('R51 addendum 15 — 7c side', () => {
     expect(refill).toBeLessThan(10);
     expect(pushed).toBeCloseTo(r.bs.circNetMl, 3);
   });
-  it('(4) test seam: pinHbfRel fixes the published hbfRel (7g reads it); unset = live flow scaling', () => {
+  it('(4) test seam: pinHbfRel fixes the published hbfRel (the drug model reads it); unset = live flow scaling', () => {
     const r = rig(6.4);
     run(r, CO0_SETTLE_S + 1);
     r.rs.coRatio = 4.0 / CO_REF_LPM;

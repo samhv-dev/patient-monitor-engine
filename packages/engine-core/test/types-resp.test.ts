@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import type { RespClinicalEvent, VentFrame } from '../src/types-resp.ts';
 import type { Command, EngineEvent, PatientProfile } from '../src/types.ts';
 
-describe('Stage 3 public types', () => {
-  it('Command, EngineEvent and PatientProfile carry the Stage 3 variants', () => {
+describe('respiratory public types', () => {
+  it('Command, EngineEvent and PatientProfile carry the respiratory variants', () => {
     const frame: VentFrame = { pawCmH2O: 18, flowLps: 0.4, volumeMl: 250, fio2: 0.4, peepCmH2O: 5, phase: 'insp' };
     const airway: RespClinicalEvent = { kind: 'airway', state: 'bronchospasm', severity: 0.5 };
     const cmds: Command[] = [

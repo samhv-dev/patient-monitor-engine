@@ -21,7 +21,7 @@ describe('clinical commands', () => {
     expect(describeCommand(probe)).toBe('sensor spo2 off');
   });
 
-  it('a plain host forwards applyEvent to the engine, which accepts a library drug (Stage 7g)', async () => {
+  it('a plain host forwards applyEvent to the engine, which accepts a library drug', async () => {
     const host = manualHost();
     const hub = createInProcessHub();
     const hs = new HostSession({ session: 'CLN234', target: host, stateIntervalMs: 0 });

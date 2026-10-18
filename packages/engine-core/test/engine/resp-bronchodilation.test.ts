@@ -3,7 +3,7 @@
 // no improvement) and Miller 10e bronchospasm management (adrenaline acts in minutes; deepening a volatile bronchodilates).
 import { describe, expect, it } from 'vitest';
 import { VCV_PMAX_DEFAULT } from '../../src/l2/resp/driver.ts'; // FU-6 F2: the limit's own row
-import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 // FU-6 F2 (Orchestrator ruling (FU-6 review), 2026-09-28): `vent` carries the ventilator overrides of the arm. Until
 // Task 9 there is no Pmax, so these arms are unlimited (Ppeak 44.0, PEEPi 11.9); Task 9 sets the default to
@@ -27,7 +27,7 @@ async function arm(drug: Record<string, unknown> | null, cond = 'bronchospasm', 
   return { before, early, late };
 }
 
-describe('FU-6 R2: bronchospasm answers treatment (prototype 44.0 → 23.3 with salbutamol)', { timeout: 900_000 }, () => {
+describe('bronchospasm answers treatment (prototype 44.0 → 23.3 with salbutamol)', { timeout: 900_000 }, () => {
   it('untreated severe bronchospasm on an unlimited arm: Ppeak ≥ 40, PEEPi ≥ 8, no improvement over 10 min (44.0 / 11.9 unlimited; the Pmax-40 arm reads its limit — Task 9)', async () => {
     const r = await arm(null);
     expect(r.before.peak).toBeGreaterThanOrEqual(40);

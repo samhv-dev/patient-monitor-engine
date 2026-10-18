@@ -23,7 +23,7 @@ describe('control command builders', () => {
     expect(modifierCommand(pvc, null)).toEqual({ type: 'setModifiers', modifiers: { pvc: null } });
   });
 
-  it('every generated Stage 1 command is accepted by a real engine', () => {
+  it('every generated command is accepted by a real engine', () => {
     const e = createEngine();
     let n = 0;
     const ok = (c: CommandInput) => e.dispatch({ ...c, id: `x${n++}`, issuedBy: 't' } as Command).accepted;

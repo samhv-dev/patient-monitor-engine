@@ -5,8 +5,8 @@ import { advanceVent, createVent, LUNG_PATHOLOGIES, pleuralOpening, PPL_REST_CMH
 import { P_PL0 } from '../../engine-core/src/l2/circ/params.ts';
 import { CMH2O_TO_MMHG } from '../../engine-core/src/l2/gas/params.ts';
 
-describe('pleural opening pressure (Stage V.1, G7b ruling 5)', () => {
-  it('rests on 7a\'s P_PL0 (−4 mmHg): the lung collapses only when the pleural pressure passes PEEP', () => {
+describe('pleural opening pressure', () => {
+  it('rests on the circulation\'s P_PL0 (−4 mmHg): the lung collapses only when the pleural pressure passes PEEP', () => {
     expect(PPL_REST_CMH2O).toBeCloseTo(-P_PL0 / CMH2O_TO_MMHG, 9);
     const c = createVent({ pleural: 27.2, peep: 5 }).cfg;
     expect(pleuralOpening(c, 0)).toBe(0); // end-expiration: the expiratory hold reads set PEEP

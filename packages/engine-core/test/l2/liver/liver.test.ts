@@ -34,7 +34,7 @@ describe('liver and lactate (tables §5.3)', () => {
     expect(stepLactatePool(1, 58.33, 1.4, 42, 1e6)).toBeCloseTo(58.33 / (42 * 1.4), 6);
     expect(stepLactatePool(5, 0, 1.4, 42, 3600)).toBeCloseTo(5 * Math.exp(-1.4), 6);
   });
-  it('hepatic flow: 7c\'s hbfRel wins when present (never multiplied twice); the fallback falls with CO and splanchnic constriction', () => {
+  it('hepatic flow: the blood model\'s hbfRel wins when present (never multiplied twice); the fallback falls with CO and splanchnic constriction', () => {
     expect(createLiver(70, { ...BASE, coLpm: 3.4, bvRel: 0.7 }).hbfRel).toBeCloseTo((3.4 / 5.6) * 0.6, 9);
     expect(createLiver(70, { ...BASE, coLpm: 3.4, bvRel: 0.7, hbfRel: 0.8 }).hbfRel).toBe(0.8);
   });

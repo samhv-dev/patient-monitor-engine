@@ -48,7 +48,7 @@ async function series(rhythm: 'sinus' | 'afib', n: number, seed: number) {
   return Object.assign(out, { durs });
 }
 
-describe('Stage 2 acceptance 9: NIBP', () => {
+describe('haemodynamic acceptance 9: NIBP', () => {
   it('one adult cycle at HR 75 (inflate to 165) lasts 25–40 s (median of 12 first cycles)', { timeout: 120_000 }, () => {
     // Evidence band (Stage 3.1 item 7): Philips manual typical 30 s, max 180 s; Stage 2's gate measured 33.9 s mean.
     // A 6-seed mean ≤ 35 s was seed-dependent (12-seed mean ≈ 35.5 s), so the median of 12 is asserted instead.

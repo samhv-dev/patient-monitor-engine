@@ -13,7 +13,7 @@ const PROFILE_DOCS = [
 /** A command no stage implements yet (decision 8), by document: `neuraxial` (spinal level) has no owner in 7a–7g. */
 const STILL_REFUSED: Record<string, RegExp> = { 't22-term-spinal': /^applyEvent neuraxial$/ };
 
-describe('profile documents run on their own patient (FU-3 item 9)', { timeout: 900_000 }, () => {
+describe('profile documents run on their own patient', { timeout: 900_000 }, () => {
   it.each(PROFILE_DOCS)('%s: no "patient profile" refusal; every target graded', async (id) => {
     const d = SANITY_DOCS.find((x) => x.id === id);
     if (!d) throw new Error(`no document ${id}`);

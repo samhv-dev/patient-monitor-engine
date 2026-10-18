@@ -6,8 +6,8 @@ import { fmt, lungShunt, pcwp, run, snap } from './helpers.ts';
 
 const log = (tag: string, o: Record<string, number>) => { if (process.env.PRINT) console.log(`LINK ${tag}: ${fmt(o)}`); };
 
-describe('R27 link — ventilator settings move the monitor', { timeout: 300_000 }, () => {
-  it('PEEP 5 → 15 (normal): CO −5…−15 %, MAP falls > 8 mmHg, CVP rises 1.5–3.5 mmHg (Stage 3 coupling)', async () => {
+describe('ventilator settings move the monitor through the link', { timeout: 300_000 }, () => {
+  it('PEEP 5 → 15 (normal): CO −5…−15 %, MAP falls > 8 mmHg, CVP rises 1.5–3.5 mmHg (respiratory coupling)', async () => {
     const s = createLinkedSim({ profile: 'normal' });
     await run(s, 240);
     const a = snap(s, 200, 240);
@@ -35,7 +35,7 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
     expect(Math.abs(mid.spo2 - b.spo2)).toBeLessThanOrEqual(1);
   });
 
-  it('RR 14 → 22 (VT 500): EtCO2 falls ≥ 2 mmHg in 2 min and keeps falling (Stage 3 kinetics: slow compartment)', async () => {
+  it('RR 14 → 22 (VT 500): EtCO2 falls ≥ 2 mmHg in 2 min and keeps falling (respiratory kinetics: slow compartment)', async () => {
     const s = createLinkedSim({ profile: 'normal' });
     await run(s, 300);
     const a = snap(s, 280, 300);
@@ -53,7 +53,7 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
   // (pleural input, T_IT 0.65) instead of Stage 3's MANUAL Paw coupling; measured: COPD auto-PEEP 9.9 → MAP −9.4 (CO −12 %);
   // oedema (70 y, no HF condition in the profile) PEEP 5 → 12: SpO2 +3, CO 4.65 → 4.66. it.fails keeps CI green and flags it.
   // Stage 7b: NR-3 closed per the orchestrator — auto-PEEP in R46's 6–12 band; the MAP fall is asserted by direction (> 3)
-  it('COPD GOLD 3–4 at RR 20 / VT 8 mL/kg: auto-PEEP 6–12 cmH2O (R46) and MAP falls; RR 10 reverses it', async () => {
+  it('COPD GOLD 3–4 at RR 20 / VT 8 mL/kg: auto-PEEP 6–12 cmH2O and MAP falls; RR 10 reverses it', async () => {
     const s = createLinkedSim({ profile: 'copd-gold-3-4', vent: { rate: 10, vt: 560, pmax: 60, pause: 0, flowPattern: 'decel' } });
     await run(s, 180);
     const a = snap(s, 150, 180);
@@ -78,7 +78,7 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
   // recruit on their own (R46: PEEP alone −20 % shunt, de-recruitment τ 2 min), so the band — fitted to the interim curve —
   // is further away: SpO2 95.0 → 97.0 at PEEP 15 (+2.0 vs ≥ 5) and 97.0 60 s after PEEP 5 (0 vs > 3; plan prototype +1.5 / 0.0). Stays it.fails (R45);
   // calibration row "ARDS link band: re-derive from 7b's recruitment" (orchestrator ruling (V.1 review) 2).
-  it.fails('ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the 7b lungs)', async () => {
+  it.fails('ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs)', async () => {
     const s = createLinkedSim({ profile: 'ards-moderate', vent: { vt: 420, pmax: 45, fio2: 60 } });
     await run(s, 180);
     const a = snap(s, 150, 180);
@@ -125,7 +125,7 @@ describe('R27 link — ventilator settings move the monitor', { timeout: 300_000
       expect(b.shunt).toBeLessThanOrEqual(0.75 * a.shunt);
       expect(b.pcwp).toBeLessThan(a.pcwp);
     });
-    it.fails('FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the 7b oedema shunt does not desaturate)', () => {
+    it.fails('FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate)', () => {
       const { a, b } = hf.get(40)!;
       expect(b.spo2 - a.spo2).toBeGreaterThanOrEqual(2);
     });

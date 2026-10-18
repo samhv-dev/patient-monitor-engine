@@ -5,7 +5,7 @@
 // clinically reported ranges and the tests require the model inside them. Textbook citations: "Miller 10e pdf p. N"
 // (running heads carry no chapter number in the extraction), "Co-Existing 8e ch. N p. M", "Dellinger 5e ch. N p. M".
 // `ENG` = engineering judgement, reasoning given; every ENG number is a row for Ali's review in
-// docs/physiology/stage-7-parameter-tables.md §4b.
+// docs/physiology/parameter-tables.md §4b.
 // `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (the respiratory signals' shunt
 // input), 'stage7a' (PVR/HPV/RV: the two-sided heart), 'stage7b' (dead space, diffusion: the lung module),
 // 'not-modelled'.

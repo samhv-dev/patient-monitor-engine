@@ -18,7 +18,7 @@ describe('blood oracle rules (always run)', () => {
       for (const r of sc.rows) expect(r.tol).toBeGreaterThan(0);
     }
   });
-  it('O13b: our baseline is the panel BEFORE the bicarbonate dose (7c read it after: ΔNa −2.00 was the post-bolus decay)', { timeout: 60_000 }, async () => {
+  it('O13b: our baseline is the panel BEFORE the bicarbonate dose (read after it, ΔNa −2.00 is the post-bolus decay)', { timeout: 60_000 }, async () => {
     const flat: Pick<PulseOracle, 'step' | 'pull' | 'act'> = { step: () => {}, pull: () => Object.fromEntries(PULSE_REQUESTS.map((k) => [k, 1])) as never, act: () => true };
     const o13b = BLOOD_ORACLE.find((s) => s.id === 'O13b')!;
     const r = await runBloodOracle({ ...o13b, compareAtS: 120 }, flat);

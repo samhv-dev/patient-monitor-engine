@@ -3,7 +3,7 @@ import { createEngine, RHYTHM_IDS } from '@pme/engine-core';
 import { stage1Vocabulary, vocabularyOf, type Vocabulary } from '../src/vocabulary.ts';
 
 describe('vocabulary', () => {
-  it('describes exactly what the Stage 1 engine accepts', () => {
+  it('describes exactly what the base engine accepts', () => {
     const e = createEngine({ seed: 1 });
     const v = vocabularyOf(e);
     expect(v.schema).toBe('pme-vocabulary/1');
@@ -20,7 +20,7 @@ describe('vocabulary', () => {
     }
   });
 
-  it("prefers the engine's own vocabulary() when it reports one (Stage 5+)", () => {
+  it("prefers the engine's own vocabulary() when it reports one", () => {
     const own: Vocabulary = { ...stage1Vocabulary('9.9.9'), variables: [] };
     expect(vocabularyOf({ version: '9.9.9', vocabulary: () => own })).toBe(own);
     expect(vocabularyOf({ version: '1.0.0', vocabulary: () => ({ something: 'else' }) }).engineVersion).toBe('1.0.0');

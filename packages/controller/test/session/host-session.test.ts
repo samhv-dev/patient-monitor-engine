@@ -73,7 +73,7 @@ describe('HostSession', () => {
     expect(of('ack')[2]!.reason).toMatch(/Stage 6b/);
   });
 
-  it('forwards pin, release and setMode to the engine; setFactor is refused by the engine itself (Stage 9 E-S9-2)', async () => {
+  it('forwards pin, release and setMode to the engine; setFactor is refused by the engine itself', async () => {
     const { command, of, events, host } = setup();
     command({ type: 'pin', variable: 'hr', value: 90 });
     command({ type: 'release', variable: 'all' });
@@ -87,7 +87,7 @@ describe('HostSession', () => {
     await waitFor(() => events().some((e) => e.type === 'state' && (e as { mode?: string }).mode === 'modeled'), 3000, 'a MODELED state event');
   });
 
-  it('hands scenario load/goto/trigger to the Stage 6b hook when one is given', async () => {
+  it('hands scenario load/goto/trigger to the scenario-runner hook when one is given', async () => {
     const seen: string[] = [];
     const { command, of } = setup({ scenario: (c) => (seen.push(c.action), { accepted: true, tick: 0 }) });
     command({ type: 'scenario', action: 'trigger', target: 'shock' });
@@ -131,7 +131,7 @@ describe('HostSession', () => {
     expect(replayed.sort()).toEqual(['pause', 'scale']);
   });
 
-  it("forwards the engine's own state (engine request E1, delivered by Stage 2) with a ramping flag", async () => {
+  it("forwards the engine's own state with a ramping flag", async () => {
     const { command, of, events, hs: h, host } = setup();
     command({ type: 'setTarget', variable: 'hr', value: 120, ramp: { durationS: 10 } });
     await waitFor(() => of('ack').length === 1);

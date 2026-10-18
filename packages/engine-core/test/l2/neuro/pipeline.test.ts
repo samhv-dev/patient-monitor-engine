@@ -17,7 +17,7 @@ const ROC_FULL = { rocuronium: nmbAgent(3000, 3000, 0.6) };
 const SEVO = (mac: number) => ({ sevoflurane: vol(mac, 1.8) }); // steady state: end-tidal = brain
 
 describe('neuro pipeline', () => {
-  it('validates its own commands; drug and vaporiser events are 7g\'s (null / false: never consumed, R51 §3)', () => {
+  it('validates its own commands; drug and vaporiser events are the drug model\'s (null / false: never consumed)', () => {
     const roc = ev({ kind: 'drug', drugId: 'rocuronium', dose: 0.6, unit: 'mg/kg', route: 'iv' });
     expect(validateNeuroCommand(roc)).toBeNull();
     expect(validateNeuroCommand(ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2 }))).toBeNull();
@@ -27,7 +27,7 @@ describe('neuro pipeline', () => {
     expect(validateNeuroCommand(dev({ device: 'tof', action: 'start', intervalS: 5 }))).toMatch(/12–60/);
     expect(validateNeuroCommand(dev({ device: 'nibp', action: 'start' }))).toBeNull();
   });
-  it('stimulus is OBSERVED (apply false, 7e consumes it): intensity/1.5 → 7f\'s level, held until the next event', () => {
+  it('stimulus is OBSERVED (apply false, the endocrine model consumes it): intensity/1.5 → the neuro model\'s level, held until the next event', () => {
     const ns = createNeuroState({}, 1);
     expect(applyNeuroCommand(ns, ev({ kind: 'stimulus', intensity: 1 }), 0)).toBe(false);
     expect(ns.stim.level).toBeCloseTo(1 / 1.5, 9);
@@ -47,14 +47,14 @@ describe('neuro pipeline', () => {
     expect(lastAn(ns)?.ce.propofol).toBe(3000);
     expect(JSON.parse(JSON.stringify(ns)).k).toBe(601);
   });
-  it('the resp hook: remifentanil 5 ng/mL at 7g\'s ventilatory site → apnoea mark and rrMult 0', () => {
+  it('the resp hook: remifentanil 5 ng/mL at the drug model\'s ventilatory site → apnoea mark and rrMult 0', () => {
     const ns = createNeuroState({}, 1);
     stepNeuroTo(ns, 5, ENV, busFixture({ cns: { opioidCeRemiEq: 3 }, agents: { remifentanil: opioid(3, 5) } }));
     expect(ns.resp.apnoea).toBe(true);
     expect(ns.resp.rrMult).toBe(0);
     expect(kinds(ns)).toContain('apnoea');
   });
-  it('naloxone (F2) on 7g\'s real PK: remifentanil 0.3 µg/kg/min → apnoea; naloxone 0.4 mg → breathing again within 3 min', () => {
+  it('naloxone on the drug model\'s real PK: remifentanil 0.3 µg/kg/min → apnoea; naloxone 0.4 mg → breathing again within 3 min', () => {
     const r = rig();
     const ns = createNeuroState({}, 1);
     giveDrug(r, 'remifentanil', 0.3, 'mcg/kg/min', true);
@@ -78,7 +78,7 @@ describe('neuro pipeline', () => {
     expect(lastAn(ns)?.awarenessRisk).toBe(true);
     expect(ns.out.some((e) => e.type === 'measurement' && e.values.di !== undefined)).toBe(true);
   });
-  it('light anaesthesia: 0.5 MAC potent volatile, unparalysed, laryngoscopy (7e intensity 1.5) → movement mark and stress > 0.6', () => {
+  it('light anaesthesia: 0.5 MAC potent volatile, unparalysed, laryngoscopy (endocrine intensity 1.5) → movement mark and stress > 0.6', () => {
     const ns = createNeuroState({ ageY: 40 }, 1);
     const bus = busFixture({ volatiles: SEVO(0.5) });
     stepNeuroTo(ns, 60, ENV, bus);
@@ -95,7 +95,7 @@ describe('neuro pipeline', () => {
     expect(m?.values.etAa?.value).toBe(1.8);
     expect([lastAn(ns)?.mac, lastAn(ns)?.macBrain]).toEqual([1, 0.5]);
   });
-  it('7e seams (duck-typed, neutral without 7e): neuroglycopenia 1 → unconscious; hypothermic macF 0.8 deepens the same tension', () => {
+  it('endocrine seams (duck-typed, neutral without the endocrine model): neuroglycopenia 1 → unconscious; hypothermic macF 0.8 deepens the same tension', () => {
     const a = createNeuroState({}, 1);
     stepNeuroTo(a, 5, { ...ENV, neuroglycopenia: 1 }, busFixture());
     expect(lastAn(a)?.conscious).toBe(false);
@@ -116,7 +116,7 @@ describe('neuro pipeline', () => {
     expect(ns.mhExposure).toEqual({ sux: 0 }); // FU-10 E1: the exposure time 7e turns into MH
     expect('kRiseMmolL' in ns.outputs).toBe(false);
   });
-  it('publishes the 7e fields ps.neuro.{antinoc, nmb, thermoDepth}: neutral awake; 1 MAC + fentanyl 2 ng/mL + full block', () => {
+  it('publishes the endocrine fields ps.neuro.{antinoc, nmb, thermoDepth}: neutral awake; 1 MAC + fentanyl 2 ng/mL + full block', () => {
     const ns = createNeuroState({ ageY: 40 }, 1);
     expect([ns.antinoc, ns.nmb, ns.thermoDepth]).toEqual([0, 0, 0]);
     stepNeuroTo(ns, 5, { tempC: 37, mechanical: true }, busFixture({
@@ -131,7 +131,7 @@ describe('neuro pipeline', () => {
   });
   // FU-6 R3(d), E-FU6-10 (Q-FU6-4 / D21): this fixture has NO hypnotic, so it is Eikermann's AWAKE patient — the
   // tables' > 0.3 belongs to the sedated one (kept on `depth-drive`'s unconscious arm). Was > 0.3; measured 0.151.
-  it('residual block with a natural airway → a small awake obstruction (Eikermann 2003; E-FU6-10, was > 0.3); with a tube → none', () => {
+  it('residual block with a natural airway → a small awake obstruction (Eikermann 2003); with a tube → none', () => {
     const a = createNeuroState({}, 1);
     give(a, ev({ kind: 'airwayDevice', device: 'none' }), 0);
     const bus = busFixture({ agents: { rocuronium: nmbAgent(605, 605, 0.6) } }); // thumb T1 ≈ 0.81 → TOFR ≈ 0.6

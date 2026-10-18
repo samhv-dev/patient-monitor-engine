@@ -20,7 +20,7 @@ describe('rhythm engine: sinus family', () => {
     }
   });
 
-  it('acceptance 3 (ruling R16): at 160 bpm the P-wave onset falls inside the preceding T wave (after its peak, before its tangent end)', () => {
+  it('acceptance 3: at 160 bpm the P-wave onset falls inside the preceding T wave (after its peak, before its tangent end)', () => {
     const { st, beats, atrial } = runRhythm('sinus', 10, { hr: 160, mods: { hrvScale: 0 } });
     let checked = 0;
     for (const b of beats.slice(3, -3)) {

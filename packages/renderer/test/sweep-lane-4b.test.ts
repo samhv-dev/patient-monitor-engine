@@ -27,7 +27,7 @@ describe('SweepLane 4b options', () => {
     expect(strokes).toContain('#0f0'); // then the trace
   });
 
-  it('no grid: nothing but the background fill (Stage 1 behaviour)', () => {
+  it('no grid: nothing but the background fill', () => {
     const ctx = new FakeCtx();
     new SweepLane(cfg({}), 1).reset(ctx);
     expect(ctx.calls.filter((c) => c.op === 'stroke')).toEqual([]);

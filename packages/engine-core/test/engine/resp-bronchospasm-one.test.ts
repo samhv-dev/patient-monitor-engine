@@ -3,7 +3,7 @@
 // stay in resp-capnogram.test.ts).
 import { describe, expect, it } from 'vitest';
 import { capnoAngles, mean, read62 } from '../helpers/resp.ts';
-import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 // FU-6 F2: the three arms are compared UNLIMITED (pmax 80) — at the default Pmax 40 all three read 40.0 and the
 // equality would hold for any severity above the limit. The limit's own row is Task 9's `resp-bronchodilation` row.
@@ -19,7 +19,7 @@ async function spasm(cmds: Array<Record<string, unknown>>) {
 const AIR = { kind: 'airway', state: 'bronchospasm', severity: 1 };
 const LUNG = { kind: 'lungCondition', id: 'bronchospasm', severity: 1 };
 
-describe('FU-6 R6: one bronchospasm (was 31.8 airway vs 44.0 lung vs 66.1 both)', { timeout: 600_000 }, () => {
+describe('one bronchospasm', { timeout: 600_000 }, () => {
   it('the airway event and the lung condition give the same mechanics; both at once give one condition (unlimited arm: 44.0 / 11.9)', async () => {
     const a = await spasm([AIR]);
     const l = await spasm([LUNG]);

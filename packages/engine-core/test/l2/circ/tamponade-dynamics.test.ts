@@ -24,7 +24,7 @@ function advance(m: CircModelState, s: number): number {
   return sum / Math.max(1, n);
 }
 
-describe('FU-4 G6: tamponade dynamics', () => {
+describe('tamponade dynamics', () => {
   it('severity only: the same static 250 mL × severity as before', () => {
     const m = createCircModel();
     applyCircCondition(m, 'tamponade', 0.8);

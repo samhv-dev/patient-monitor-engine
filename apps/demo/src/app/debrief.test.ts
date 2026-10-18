@@ -16,7 +16,7 @@ const apnoea = (t: number, undone?: number): Row => ({ t, kind: 'alarm', text: '
 const vent = (t: number, undone?: number): Row => ({ t, kind: 'patient', text: 'Ventilated breaths began', ev: 'ventilation', ...(undone ? { undone } : {}) });
 const v = (rule: ObjectiveRule, d: RunData) => verdict(rule, d);
 
-describe('Stage 13: objective rules', () => {
+describe('objective rules', () => {
   const within: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 90 };
 
   it('eventWithin: met, not met (late or never), not assessable (no trigger, or the run ended first)', () => {
@@ -37,7 +37,7 @@ describe('Stage 13: objective rules', () => {
     expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).' });
   });
 
-  it('a value never measured is not assessable, never "did not happen" (R50 I-3)', () => {
+  it('a value never measured is not assessable, never "did not happen"', () => {
     const none = [sample(0, { spo2: null, map: null }), sample(200, { spo2: null, map: null })];
     expect(v({ kind: 'occurred', event: 'value:spo2<90' }, run([], none))).toEqual({ status: 'not assessable', why: 'SpO₂ was not measured during the run.' });
     expect(v({ kind: 'never', event: 'value:spo2<90' }, run([], none)).status).toBe('not assessable');
@@ -47,7 +47,7 @@ describe('Stage 13: objective rules', () => {
     expect(v({ kind: 'eventWithin', after: 'value:map<60', event: 'drug:phenylephrine', withinS: 60 }, run([pe], none)).why).toBe('ART M / NIBP M was not measured during the run.');
   });
 
-  it('from (R50): a value event counted only after an event — "EtCO₂ below 40 after the crisis was called"', () => {
+  it('from: a value event counted only after an event — "EtCO₂ below 40 after the crisis was called"', () => {
     const xs = [sample(0, { etco2: 34 }), sample(20, { etco2: 52 }), sample(100, { etco2: 38 })];
     const off: Row = { t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' };
     const back: Row = { t: 130, kind: 'scenario', text: 'y', ev: 'ventilation' };
@@ -110,7 +110,7 @@ describe('Stage 13: objective rules', () => {
     expect(v({ kind: 'stayed', value: 'etco2', below: 45 }, run([], [sample(0, { etco2: 52 })])).why).toBe('EtCO₂ 52 mmHg at 00:00 (asked: below 45 mmHg).');
   });
 
-  it('heldThen (E22, owner ruling 2026-10-17): ventilation back only once EtCO₂ has stayed below 40 for 2 min; earlier is not met', () => {
+  it('heldThen: ventilation back only once EtCO₂ has stayed below 40 for 2 min; earlier is not met', () => {
     // the MH early-call course measured on the kit: crisis called 07:01, EtCO₂ 46 until 07:26, below 40 from 07:27
     const mh = { ...DOC, states: [{ id: 'triggerOff', label: 'Trigger off' }, { id: 'normoventilated', label: 'Ventilation back to 12 × 500' }] };
     const course = (to: number, etco2 = (t: number): number | null => (t < 447 ? 46 : 36)) => Array.from({ length: to - 400 + 1 }, (_, i) => sample(400 + i, { etco2: etco2(400 + i) }));
@@ -149,7 +149,7 @@ describe('Stage 13: objective rules', () => {
   });
 });
 
-describe('Stage 13: facts and totals', () => {
+describe('facts and totals', () => {
   it('states the extremes, the apnoea-to-ventilation time, the pulseless time, ROSC and the epinephrine total', () => {
     const epi = (t: number, dose: number, unit: string): Row => ({ t, kind: 'action', text: 'Epinephrine', ev: 'drug:epinephrine', dose: { drugId: 'epinephrine', dose, unit } });
     const d = run([
@@ -198,7 +198,7 @@ describe('Stage 13: facts and totals', () => {
   });
 });
 
-describe('Stage 13: the objective rule in pme-scenario/1', () => {
+describe('the objective rule in pme-scenario/1', () => {
   const doc = (objectives: unknown[]) => ({ ...DOC, objectives });
   it('accepts strings and { text, rule } of every kind; the card shows the words', () => {
     const r = validateScenario(doc([
@@ -234,7 +234,7 @@ describe('Stage 13: the objective rule in pme-scenario/1', () => {
   });
 });
 
-describe('Stage 13 DV-2: the trend axes have a least span (orchestrator ruling 2026-10-11)', () => {
+describe('the trend axes have a least span', () => {
   it('a few-point wobble is not drawn at full height: the floor, centred on the data, SpO₂ never above 100', () => {
     expect(axisRange('spo2', 96, 99)).toEqual([80, 100]); // 20 points, capped at 100
     expect(axisRange('spo2', 70, 80)).toEqual([65, 85]); // centred below the cap

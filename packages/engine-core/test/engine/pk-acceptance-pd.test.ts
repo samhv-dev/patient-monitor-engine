@@ -27,7 +27,7 @@ function coMean(evs: EngineEvent[], a: number, b: number): number {
 type St = { pk: { bus: DrugBus; fx: { svr: number } }; blood?: { core?: { ab?: { ph?: number } } } };
 const stOf = (e: ReturnType<typeof createEngine>) => (e.snapshot().state as { st: St }).st;
 
-describe('7g acceptance — vasopressor dose–response (tables §6.2)', () => {
+describe('drug acceptance — vasopressor dose–response (tables §6.2)', () => {
   const PHE: [number, number, number][] = [[0.1, 8, 22], [0.25, 18, 32], [0.5, 25, 40], [1.0, 30, 45]];
   for (const [rate, lo, hi] of PHE)
     it(`phenylephrine ${rate} µg/kg/min: MAP +${lo}–${hi} % at 20 min`, async () => {
@@ -58,7 +58,7 @@ describe('7g acceptance — vasopressor dose–response (tables §6.2)', () => {
   // engine's lower venous-return reserve; reaching +20 % needs ≈ 730 mL at 5 µg/kg/min, beyond the ≈ 1 L reservoir.
   // FU-7 Task 17 Step 4: re-measured on this healthy rig after FU-4/FU-7 — +13.6 %; NOT flipped (the HFrEF CM-06d +34.9 %
   // is another rig and does not license the flip; no dobutamine size was changed).
-  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +13.6 on the FU-7 tree; +11.8 with the FU-2 β venous term)', async () => {
+  it.fails('dobutamine 5 µg/kg/min: CO +20–40 % (measured +13.6; +11.8 with the β venous term)', async () => {
     const free = await dobuRise({});
     console.log(`dobutamine 5: CO ${free.toFixed(1)} %`);
     expect(free).toBeGreaterThanOrEqual(20);
@@ -72,7 +72,7 @@ describe('7g acceptance — vasopressor dose–response (tables §6.2)', () => {
   }, 900_000);
 });
 
-describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', () => {
+describe('drug acceptance — context: acidosis, tachyphylaxis, age, antagonism', () => {
   it('acidosis: phenylephrine 0.5 at pH 7.2 gives ≤ 60 % of the pH 7.4 SVR rise (PD level: 0.5×, T6.2)', () => {
     const svrRise = (ph: number) => {
       const pk = createPkState();
@@ -120,7 +120,7 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
   // multiplier carries only the small direct α arm (emax 0.08): the first increment 0.040 misses this case's > 0.05
   // precondition while the tachyphylaxis ratio still holds (third/first 0.13). The same claim on the indirect drive is the
   // case below; this one keeps its body and band.
-  it.fails('ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) — measured direct SVR increments 0.040 / 0.010 / 0.005 (the pressor moved to sympDrive, FU-7 Task 9)', () => {
+  it.fails('ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) — measured direct SVR increments 0.040 / 0.010 / 0.005 (the pressor moved to sympDrive)', () => {
     const pk = createPkState();
     const incr: number[] = [];
     for (const t0 of [0, 600, 1200]) {
@@ -134,7 +134,7 @@ describe('7g acceptance — context: acidosis, tachyphylaxis, age, antagonism', 
     expect(incr[0]!).toBeGreaterThan(0.05);
     expect(incr[2]!).toBeLessThanOrEqual(0.6 * incr[0]!);
   });
-  it('FU-7 (Task 9): ephedrine 10 mg ×3 at 10 min — the third dose adds ≤ 0.6 × the INDIRECT drive (bus.cns.sympDrive) of the first (tachyphylaxis 0.7²)', () => {
+  it('ephedrine 10 mg ×3 at 10 min — the third dose adds ≤ 0.6 × the INDIRECT drive (bus.cns.sympDrive) of the first (tachyphylaxis 0.7²)', () => {
     const pk = createPkState();
     const incr: number[] = [];
     for (const t0 of [0, 600, 1200]) {
@@ -198,7 +198,7 @@ function sgxReversal(rocMgKg: number, giveAtT1: number | null, giveAtMin: number
   return { tofr90: Number.POSITIVE_INFINITY, t1of10 };
 }
 
-describe('7g acceptance — sugammadex reversal (tables §5d, §7 25; plasma + effect-site binding, D7)', () => {
+describe('drug acceptance — sugammadex reversal (tables §5d, §7 25; plasma + effect-site binding)', () => {
   it('2 mg/kg at T2 (T1 ≈ 10 %, rocuronium 0.6): TOFR 0.9 in 1.5–4 min (label median 2.2; prototype 2.11)', () => {
     const m = sgxReversal(0.6, 0.1, null, 2).tofr90;
     console.log(`sugammadex 2 mg/kg at T2: ${m.toFixed(2)} min`);

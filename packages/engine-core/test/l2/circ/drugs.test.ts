@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bolusScale, drugEffect, pruneBoluses, type Bolus } from '../../../src/l2/circ/drugs.ts';
 
-describe('7a bolus effect curves', () => {
+describe('circulation bolus effect curves', () => {
   it('phenylephrine 100 µg peaks at ×1.7 SVR 70–80 s after the bolus and is < 10 % of peak by 15 min', () => {
     const list: Bolus[] = [{ drug: 'phenylephrine', t: 0, scale: bolusScale('phenylephrine', 0.1, 70, []) }];
     let best = { t: 0, svr: 1 };

@@ -10,7 +10,7 @@ import type { DrugRow } from '../../../src/l2/pk/row.ts';
 const CTX: PdContext = { ph: 7.4, betaBlockC: 0, vasoResp: 1, ageY: 40, macBrain: 0 };
 const cns = (id: string, mac: number) => combine([{ row: DRUGS[id] as DrugRow, c: mac }], { ...CTX, macBrain: mac }).bus.cns;
 
-describe('volatile CBF on the drug bus (FU-2 item 8)', () => {
+describe('volatile CBF on the drug bus', () => {
   it('direct CBF (cbfVaso) at 0.5 / 1.5 MAC: sevoflurane 1.04 / 1.17, isoflurane 1.19 / 1.72 — no division by the CMRO2 share', () => {
     expect(cns('sevoflurane', 0.5).cbfVaso).toBeCloseTo(1.04, 9);
     expect(cns('sevoflurane', 1.5).cbfVaso).toBeCloseTo(1.17, 9);

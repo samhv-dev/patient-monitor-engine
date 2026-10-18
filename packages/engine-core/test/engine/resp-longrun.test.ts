@@ -6,7 +6,7 @@ import { createEngine } from '../../src/engine.ts';
 import type { Command } from '../../src/types.ts';
 import { cmd, ev3, run } from '../helpers/resp.ts';
 
-describe('Stage 3 determinism and drift', () => {
+describe('respiratory determinism and drift', () => {
   it('same seed + same commands → identical SHA-256 over 60 s of co2, resp, pleth and abp; another seed differs', () => {
     const script: Array<[number, Command]> = [
       [5, ev3({ kind: 'preoxygenate', fio2: 1, durationS: 20 })],

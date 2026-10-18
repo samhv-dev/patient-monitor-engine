@@ -4,7 +4,7 @@
 // state, whether or not the ≤ 2 Hz repaint has replaced them yet.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './stage9-support.ts';
+import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';

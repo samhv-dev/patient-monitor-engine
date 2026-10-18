@@ -58,7 +58,7 @@ describe('organ pipeline', () => {
     applyOrgansCommand(os, cmd({ type: 'applyEvent', event: { kind: 'condition', id: 'hepaticFailure', severity: 1 } }), 1);
     expect(os.liver.failure).toBe(1);
   });
-  it('observes 7g\'s bus.doses once per pass: mannitol (mg) → brain + kidney; HTS (mL, concentrationPct) → brain; others ignored', () => {
+  it('observes the drug model\'s bus.doses once per pass: mannitol (mg) → brain + kidney; HTS (mL, concentrationPct) → brain; others ignored', () => {
     const { os, ctx } = setup();
     const doses = [
       { agent: 'mannitol', mgPerKg: 1000, amount: 70_000, amountUnit: 'mg', t: 0.5 },
@@ -73,7 +73,7 @@ describe('organ pipeline', () => {
     advanceOrgans(os, { ...ctx, pk }, 125 * 2, () => {});
     expect(os.brain.osm).toHaveLength(2);
   });
-  it('furosemide acts through 7g\'s effect-site level (no 7d depot): 1.5 × the 20 mg reference → UOP ×≈7', () => {
+  it('furosemide acts through the drug model\'s effect-site level (no organ depot): 1.5 × the 20 mg reference → UOP ×≈7', () => {
     const { os, ctx } = setup();
     const u0 = os.renal.uopMlMin;
     advanceOrgans(os, { ...ctx, pk: { bus: { agents: { furosemide: { brain: 1.5 } } } } }, 125 * 3, () => {});
@@ -83,7 +83,7 @@ describe('organ pipeline', () => {
   // Re-specified on the real 7c (gate §10): 7c's balance has no intake term (its fallback eliminates only volume above
   // BV0), so the seam carries the urine ABOVE the basal turnover UOP0 = 1 mL/kg/h; the whole urine drained a resting
   // patient by 70 mL/h with nothing replacing it. The property is still "7d's urine is what leaves 7c's body water".
-  it('7c present: writes liver function × temperature and the renal seam (urine above the basal 1 mL/kg/h, excretion mmol/h); reports 7c\'s lactate', () => {
+  it('blood present: writes liver function × temperature and the renal seam (urine above the basal 1 mL/kg/h, excretion mmol/h); reports the blood lactate', () => {
     const { os, ctx } = setup();
     const blood = { core: { liver: 1 } as Record<string, unknown>, out: { hb: 14, albuminGL: 42, bvRel: 1, hbfRel: 1, lactate: 2.5, gluconate: 1 } };
     advanceOrgans(os, { ...ctx, blood }, 125 * 2, () => {});
@@ -106,7 +106,7 @@ describe('organ pipeline', () => {
   // FU-3 item 8 (G7d follow-through 2): the seam's field names its meaning — urine ABOVE the basal turnover. Pinned on
   // the REAL 7c core: at rest the seam is ≈ 0 and 7c's body water keeps its basal urine exactly as its own fallback
   // does (the basal 1 mL/kg/h is neither removed by the seam nor removed a second time by the fallback elimination).
-  it('seam uopAboveBasalMlH on the real 7c: ≈ 0 at resting UOP, body water after 10 min = 7c\'s fallback (basal urine not removed)', () => {
+  it('seam uopAboveBasalMlH on the real blood model: ≈ 0 at resting UOP, body water after 10 min = the blood fallback (basal urine not removed)', () => {
     const { os, ctx } = setup();
     const man = { ageY: 40, sex: 'M' as const, weightKg: 70, heightCm: 175 };
     const seamed = createBloodCore(man, 5.25, 40);

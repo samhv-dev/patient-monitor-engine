@@ -24,7 +24,7 @@ describe('organ grouping', () => {
     expect(groupOf('hemodynamics.x')).toBe('other');
     expect(groupOf('monitor.x')).toBe('other');
   });
-  it('has 15 groups ending with other (Stage 7k: "Respiratory mechanics and volumes")', () => {
+  it('has 15 groups ending with other (including "Respiratory mechanics and volumes")', () => {
     expect(GROUPS).toHaveLength(15);
     expect(GROUPS.at(-1)?.id).toBe('other');
   });
@@ -34,13 +34,13 @@ describe('organ grouping', () => {
     for (const p of ['l1.vars.sbp.to', 'mods.k', 'rhythm.id', 'hemo.numbers.x', 'dev.pacer.mode', 'blood.core.out.k', 'hemo.circ.p.rSys', 'ev.circ.svr', 'mon.hr', 'resp.o2.pao2', 'hemo.circ.kLv'])
       expect(isInternal(p), p).toBe(false);
   });
-  it('flags 7g\'s PK machinery as internal and keeps the bus concentrations visible (`*` = one segment)', () => {
+  it('flags the drug PK machinery as internal and keeps the bus concentrations visible (`*` = one segment)', () => {
     for (const p of ['pk.drugs.propofol.x.0', 'pk.drugs.rocuronium.bolusTimes.1', 'pk.drugs.adenosine.doses.0.scale', 'pk.bus.doses.0.amount', 'pk.lastC.propofol', 'pk.due.0.amt', 'pk.pending.0.t', 'pk.macPrev.3'])
       expect(isInternal(p), p).toBe(true);
     for (const p of ['pk.bus.agents.propofol.brain', 'pk.drugs.propofol.rate', 'pk.drugs.propofol.total', 'pk.drugs.x', 'pk.bus.cns.propCe', 'pk.vap.dialPct'])
       expect(isInternal(p), p).toBe(false);
   });
-  it('Stage 7c: the blood\'s chemistry block is visible in the Blood group; amounts, reference copies, solver scratch and queues are internal', () => {
+  it('the blood\'s chemistry block is visible in the Blood group; amounts, reference copies, solver scratch and queues are internal', () => {
     for (const p of ['blood.out.k', 'blood.out.lactate', 'blood.out.hbfRel', 'blood.core.ab.ph', 'blood.core.o2.do2', 'blood.core.fl.vp', 'blood.core.bledMl', 'blood.lung.evlwi', 'blood.core.co0']) {
       expect(isInternal(p), p).toBe(false);
       expect(groupOf(p), p).toBe('blood');

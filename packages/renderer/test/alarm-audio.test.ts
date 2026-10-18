@@ -34,7 +34,7 @@ const st = (t: number, active: Array<ReturnType<typeof entry> & { sounding?: boo
   type: 'alarmStatus', t, skin: 'x', ageBand: 'adult', active, silencedUntil, pausedUntil: null, limits: {}, allOff: false, arrhythmiaAnalysis: false, volume: 5,
 });
 
-describe('FU-5 alarm audio bridge: the engine decides what sounds', () => {
+describe('alarm audio bridge: the engine decides what sounds', () => {
   it('a latched alarm under visual-only latching is silent (`sounding: false`); a new alarm after an acknowledge sounds at once', () => {
     const r = rig(IEC_STYLE);
     r.bridge.onStatus(st(0, [{ ...entry('VFIB', 1), latched: true, sounding: false }]));
@@ -81,7 +81,7 @@ describe('alarm audio bridge', () => {
   });
 });
 
-describe('FU-11 G3 (owner ruling Q7): an alarm pause ended by a new higher-priority alarm sounds at once', () => {
+describe('an alarm pause ended by a new higher-priority alarm sounds at once', () => {
   it('the paused monitor is quiet; when the engine ends the pause for a higher alarm, that alarm sounds in the same status', () => {
     const r = rig(IEC_STYLE);
     r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));
@@ -98,7 +98,7 @@ describe('FU-11 G3 (owner ruling Q7): an alarm pause ended by a new higher-prior
   });
 });
 
-describe('FU-11 (owner ruling Q3): a learner window manages its own alarm sound', () => {
+describe('a learner window manages its own alarm sound', () => {
   it("ignores the instructor's silence (timer or acknowledge) and keeps its own; its own silence never reaches the engine", () => {
     const r = rig(IEC_STYLE, { windowSilence: true });
     r.bridge.onStatus(st(0, [entry('HR_HIGH', 2)]));

@@ -44,12 +44,12 @@ describe('renderPlan', () => {
     expect(filterModeFor([1, 20])).toBe('band:1-20');
   });
 
-  it('pages that name their lanes keep them, in the skin colours (Stage 1/2/5 demos)', () => {
+  it('pages that name their lanes keep them, in the skin colours (the base, haemodynamic and rhythm demos)', () => {
     const p = renderPlan(resolveSkin('philips-like'), undefined, { lanes: ['ecgII', 'V5'], waves: ['abp', 'pleth'] });
     expect(p.lanes.map((l) => [l.id, l.channel, l.color])).toEqual([['ECG1', 'ecgII', '#00FF00'], ['ECG2', 'V5', '#00FF00'], ['ART', 'abp', '#FF4040'], ['PLETH', 'pleth', '#00FFFF']]);
   });
 
-  it('legacyPlan reproduces the Stage 1/2 lanes', () => {
+  it('legacyPlan reproduces the base and haemodynamic lanes', () => {
     const p = legacyPlan(['ecgII', 'V5'], ['abp']);
     expect(p.lanes.map((l) => [l.channel, l.color, l.range])).toEqual([['ecgII', '#00ff66', null], ['V5', '#00ff66', null], ['abp', '#ff3b3b', [0, 150]]]);
     expect(ecgLabel(p.lanes[0]!.label, 'ecgII', 1, p.gainLabel, 'M')).toBe('II  M');

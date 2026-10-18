@@ -18,8 +18,8 @@ const ga = () => {
   return st;
 };
 
-describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
-  it('R39-7: unwarmed GA −0.9 °C at 30 min (−0.5 to −1.2), −1.3 at 60 (−1.0 to −1.6), then 0.3–0.6 °C/h', () => {
+describe('heat balance', { timeout: 60_000 }, () => {
+  it('unwarmed GA −0.9 °C at 30 min (−0.5 to −1.2), −1.3 at 60 (−1.0 to −1.6), then 0.3–0.6 °C/h', () => {
     const tc = run(ga(), 0, 2 * 3600);
     expect(tc[29]! - 36.8).toBeLessThanOrEqual(-0.5);
     expect(tc[29]! - 36.8).toBeGreaterThanOrEqual(-1.2);
@@ -29,7 +29,7 @@ describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
     expect(tc[59]! - tc[119]!).toBeLessThanOrEqual(0.6);
   });
 
-  it('R39-7: forced-air warming from induction — first-hour nadir −0.6 to −1.2 °C', () => {
+  it('forced-air warming from induction — first-hour nadir −0.6 to −1.2 °C', () => {
     const st = ga();
     st.warming = true;
     const tc = run(st, 0, 3600);
@@ -118,7 +118,7 @@ describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
     expect(Math.abs(g.tc - 36.0)).toBeLessThan(0.01);
   });
 
-  it('depth = max(7f thermoDepth, the Stage 3 flag): 0.3 under the GA flag keeps depth 1; 1.3 deepens it; 0.7 alone sedates', () => {
+  it('depth = max(neuro thermoDepth, the GA flag): 0.3 under the GA flag keeps depth 1; 1.3 deepens it; 0.7 alone sedates', () => {
     const a = ga();
     a.depthIn = 0.3;
     stepThermal(a, 1, 1);
@@ -133,7 +133,7 @@ describe('Stage 7e heat balance', { timeout: 60_000 }, () => {
     expect(c.depth).toBeCloseTo(0.7, 9);
   });
 
-  it('test seam pinCoreTemp (R51 addendum 18, like 7c pinHbfRel): the core stays at the pinned value under GA; unset → the heat balance runs', () => {
+  it('test seam pinCoreTemp (like pinHbfRel): the core stays at the pinned value under GA; unset → the heat balance runs', () => {
     const p = ga();
     p.pinCoreTemp = 36.8;
     run(p, 0, 3600);

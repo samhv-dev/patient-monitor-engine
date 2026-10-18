@@ -12,7 +12,7 @@ function drv(source: DriverState['source'], peep = 5): DriverState {
   return d;
 }
 
-describe('pleural pressure (audit R-B)', () => {
+describe('pleural pressure', () => {
   it('apnoea / no source: the resting supine value', () => {
     expect(pleuralPressureMmHg(drv('none'), 10, 50)).toBe(P_PL0);
   });

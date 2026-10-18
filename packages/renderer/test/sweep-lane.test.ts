@@ -90,7 +90,7 @@ describe('SweepLane', () => {
     expect(ctx.clipRect).toBeNull(); // restored after drawing
   });
 
-  it('DPR 1 (and 1.5, 2): drawing a steep QRS frame by frame leaves no column of it erased (review H2)', () => {
+  it('DPR 1 (and 1.5, 2): drawing a steep QRS frame by frame leaves no column of it erased', () => {
     // Synthetic R wave every 0.8 s: 1.5 mV, σ 8 ms, with an S wave, so a column holds a near-vertical stroke.
     const qrs = (from: number, out: Float32Array) => {
       for (let i = 0; i < out.length; i++) {

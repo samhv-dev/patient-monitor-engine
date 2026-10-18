@@ -1,6 +1,6 @@
 # Pulse parameter annex: "Pulse value" column for the Stage 7 tables (R34)
 
-*Draft 1, 2026-09-25. Companion to `stage-7-parameter-tables.md` (draft 1). Implements R34's "the tables document gains a
+*Draft 1, 2026-09-25. Companion to `parameter-tables.md` (draft 1). Implements R34's "the tables document gains a
 'Pulse value' column where Pulse has a number", the per-system porting briefs for 7c–7e, and the oracle-harness sketch.
 Read with R32, R33, R34 (`research/00-orchestrator-rulings.md`) and the spike report (`research/07-pulse-feasibility-spike.md`).*
 

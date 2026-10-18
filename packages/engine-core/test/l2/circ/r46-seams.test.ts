@@ -19,7 +19,7 @@ function run(set?: (m: ReturnType<typeof createCircModel>) => void) {
   return { m, fracR: qR / (qL + qR), co: circCardiacOutput(m), s: [...m.s] };
 }
 
-describe('R46 seams', () => {
+describe('per-lung PVR and external pleural seams', () => {
   it('per-lung PVR multipliers default to 1 (identical state); pvrLungL raises the right-lung share; pvrLung raises both', () => {
     const a = run();
     const b = run((m) => Object.assign(m.ext, { pvrLung: 1, pvrLungL: 1, pvrLungR: 1 }));
@@ -30,7 +30,7 @@ describe('R46 seams', () => {
     expect(d.fracR).toBeCloseTo(a.fracR, 2);
     expect(d.co).toBeLessThan(a.co);
   });
-  it('the external pleural source wins when it has a value; the Stage 3 path is the fallback', () => {
+  it('the external pleural source wins when it has a value; the respiratory path is the fallback', () => {
     const stage3 = (t: number) => -4 + t;
     expect(pleuralSource({})(3)).toBe(P_PL0);
     expect(pleuralSource({ pIt: stage3 })(3)).toBe(-1);

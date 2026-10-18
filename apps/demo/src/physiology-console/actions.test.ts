@@ -3,7 +3,7 @@ import { createEngine, type Command } from '@pme/engine-core';
 import * as A from './actions.ts';
 
 describe('rail command builders', () => {
-  it('build the brief §7.2 / 7a / 7g shapes', () => {
+  it('build the brief §7.2 / circulation / drug shapes', () => {
     expect(A.bolus('phenylephrine', 100, 'mcg')).toEqual({ type: 'applyEvent', event: { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' } });
     expect(A.infusion('norepinephrine', 0.1, 'mcg/kg/min')).toEqual({ type: 'applyEvent', event: { kind: 'infusion', drugId: 'norepinephrine', rate: 0.1, unit: 'mcg/kg/min' } });
     expect(A.vaporiser('sevoflurane', 2, 2)).toEqual({ type: 'applyEvent', event: { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 2, n2oFrac: 0 } });
@@ -30,7 +30,7 @@ describe('rail command builders', () => {
     expect(A.describe(A.lab('abg'))).toBe('send ABG');
     expect(A.describe({ type: 'pin', variable: 'hr' })).toBe('{"type":"pin","variable":"hr"}');
   });
-  it('the engine accepts what 7a implements and names the reason for what it does not know', () => {
+  it('the engine accepts what the circulation model implements and names the reason for what it does not know', () => {
     const e = createEngine({ seed: 7, mode: 'modeled', patient: A.PRESETS[0]?.profile });
     let n = 0;
     const send = (b: A.Body) => e.dispatch({ ...b, id: `t${++n}`, issuedBy: 'test' } as unknown as Command);
@@ -45,7 +45,7 @@ describe('rail command builders', () => {
     expect(r.accepted).toBe(false);
     expect(r.reason).toBeTruthy();
   });
-  it('7x.1 (FU-3 item 12): every preset starts with the CO2 sidestream line attached, so EtCO2 reads at rest', () => {
+  it('every preset starts with the CO2 sidestream line attached, so EtCO2 reads at rest', () => {
     for (const p of A.PRESETS) {
       expect(p.profile.sensors, p.id).toMatchObject({ co2: 'on' });
       const e = createEngine({ seed: 1, mode: 'modeled', patient: p.profile });

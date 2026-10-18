@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { ADULT, breaths, cmd, ev3, mean, numSeries, read62, rig3, vent, type Alarm, run } from '../helpers/resp.ts';
 
-describe('Stage 3 acceptance: airway loss, apnoea and CO2 kinetics', { timeout: 300_000 }, () => {
+describe('respiratory acceptance: airway loss, apnoea and CO2 kinetics', { timeout: 300_000 }, () => {
   it('3. disconnection: breath events stop, the capnogram is flat within one breath, awRR apnoea at 20 ± 1 s', async () => {
     const { e, ev } = rig3({ patient: ADULT, sampling: 'mainstream' });
     e.dispatch(vent(12));

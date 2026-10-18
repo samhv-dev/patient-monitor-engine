@@ -12,7 +12,7 @@ describe('pitch maps', () => {
     expect(pitchHz(m, 100)).toBeCloseTo(880, 9);
   });
 
-  it('nellcor-like: ≈ 5 Hz per % near 100 %, 830 Hz ± 1 at 90 % (BUILD-PLAN Stage 3 test 9)', () => {
+  it('nellcor-like: ≈ 5 Hz per % near 100 %, 830 Hz ± 1 at 90 %', () => {
     expect(880 - (pitchHz('nellcor-like', 99) as number)).toBeCloseTo(5.07, 1);
     expect(pitchHz('nellcor-like', 90)).toBeCloseTo(830.6, 0);
   });

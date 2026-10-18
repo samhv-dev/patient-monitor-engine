@@ -51,7 +51,7 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
     expect(out.some((o) => o.kind === 'failed' && o.text === 'NBP measurement failed')).toBe(true);
   });
 
-  it('FU-5 (audit M4): a narrow pulse pressure with an adequate MAP measures — 77/67 (PP 10), 81/63, 104/83', () => {
+  it('a narrow pulse pressure with an adequate MAP measures — 77/67 (PP 10), 81/63, 104/83', () => {
     for (const b of [{ sbp: 77, dbp: 67, map: 70 }, { sbp: 81, dbp: 63, map: 69 }, { sbp: 104, dbp: 83, map: 90 }]) {
       const { out } = run(b);
       const done = out.find((o) => o.kind === 'phase' && o.phase === 'done') as Extract<NibpOut, { kind: 'phase' }> | undefined;
@@ -60,13 +60,13 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
     }
   });
 
-  it('FU-5: true shock still fails — MAP 13 / PP 3 (envelope peak < 0.3 mmHg) fails after 2 attempts', () => {
+  it('true shock still fails — MAP 13 / PP 3 (envelope peak < 0.3 mmHg) fails after 2 attempts', () => {
     const { out } = run({ sbp: 15, dbp: 12, map: 13 });
     expect(out.filter((o) => o.kind === 'phase' && o.phase === 'inflating')).toHaveLength(2);
     expect(out.some((o) => o.kind === 'failed')).toBe(true);
   });
 
-  it('FU-5: the skin cuff settings — initial inflation and a STAT series 30 s start to start (saadat-like)', () => {
+  it('the skin cuff settings — initial inflation and a STAT series 30 s start to start (saadat-like)', () => {
     const nb = createNibpState();
     nb.cfg = { initial: 150, nextAbove: 30, statSpacingS: 30, statCount: 10, statWindowS: 300 };
     const out: NibpOut[] = [];

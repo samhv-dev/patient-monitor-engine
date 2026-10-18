@@ -3,9 +3,9 @@
 // (prototype −17.0 vs −6.9 mmHg); the resting spontaneous breath is unchanged (−6.9 mmHg = P_PL0 − 4 cmH2O).
 import { describe, expect, it } from 'vitest';
 import { CMH2O_TO_MMHG, P_PL0 } from '../../src/l2/circ/params.ts';
-import { fineWindow, rig6, runTo, send } from '../helpers/fu6.ts';
+import { fineWindow, rig6, runTo, send } from '../helpers/resp-modeled-rig.ts';
 
-describe('FU-6 R3(b): obstructed efforts reach the pleural space (was the resting value)', { timeout: 600_000 }, () => {
+describe('obstructed efforts reach the pleural space', { timeout: 600_000 }, () => {
   it('3 min of complete obstruction after propofol 1 mg/kg: pleural minimum ≥ 10 cmH2O below a resting breath (measured −30.1 vs −6.9 mmHg; plan −17.0 R1-emulated)', async () => {
     const e = rig6();
     await runTo(e, 480);

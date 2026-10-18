@@ -15,7 +15,7 @@ describe('ConsoleModel', () => {
     expect(m.t).toBe(1);
     expect(m.truth.bytes).toBe(JSON.stringify({ hemo: { circ: { p: { rSys: 0.9 } } } }).length);
   });
-  it('fields of stages not merged yet appear in their organ groups, unknown ones in other (fake 7b–7g tree)', () => {
+  it('fields of modules not yet present appear in their organ groups, unknown ones in other (fake lungs-to-drugs tree)', () => {
     const m = new ConsoleModel();
     m.ingest(truth(1, {
       hemo: { circ: { p: { rSys: 0.9 } } },

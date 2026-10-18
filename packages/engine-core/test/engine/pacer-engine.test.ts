@@ -51,7 +51,7 @@ describe('transcutaneous pacer', () => {
     expect(Math.abs(abpPulses(e, 85, 95) - (70 * 9.4) / 60)).toBeLessThanOrEqual(1); // Stage 2 ejects every captured beat
   }, { timeout: 300_000 });
 
-  it('R39-4 default adult threshold is 70 mA: no capture at 65 mA, capture at 70 mA (no setTarget)', () => {
+  it('default adult threshold is 70 mA: no capture at 65 mA, capture at 70 mA (no setTarget)', () => {
     const { e, ev } = devRig('zoll-like', { patient: { rhythm: { id: 'avb3Wide' } } });
     e.dispatch(pacer('fixed', { ratePpm: 70, mA: 65 }));
     e.advanceTo(15);

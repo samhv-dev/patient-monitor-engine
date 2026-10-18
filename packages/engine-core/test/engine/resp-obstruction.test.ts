@@ -6,9 +6,9 @@
 // (hyperpnoea after 3 min of asphyxia is expected; the audit's defect was the unbounded VT demand).
 import { describe, expect, it } from 'vitest';
 import { VT_MAX_ML_KG } from '../../src/l2/neuro/spont.ts';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
-describe('FU-6 R3(b, c): obstruction is a load (was RR 41 at VT 200; RR 45 × 1.57 L in laryngospasm)', { timeout: 600_000 }, () => {
+describe('obstruction is a load', { timeout: 600_000 }, () => {
   it('propofol 2 mg/kg, natural airway, room air: RR ≤ 30, VT < 100 mL within 60 s, SaO2 < 90 within 2 min (measured 24.0 / 44 s / 59 s; plan 18.1 / 50 s / 55 s R1-emulated)', async () => {
     const e = rig6();
     await runTo(e, 300);

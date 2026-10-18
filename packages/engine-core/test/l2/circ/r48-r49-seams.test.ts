@@ -12,7 +12,7 @@ function step(set?: (m: ReturnType<typeof createCircModel>) => void) {
   return m;
 }
 
-describe('R48/R49 seams', () => {
+describe('Cushing and endocrine control-step seams', () => {
   it('defaults (1, and 0 for endoDV0Frac) leave the state identical', () => {
     const a = step();
     const b = step((m) => Object.assign(m.ext, { rSysF: 1, hrF: 1, endoHrF: 1, endoSvrF: 1, endoEesF: 1, endoDV0Frac: 0, kChem: 1 }));
@@ -30,7 +30,7 @@ describe('R48/R49 seams', () => {
     expect(step((m) => (m.ext.endoEesF = 1.25)).kRv).toBeCloseTo(a.kRv * 1.25, 9);
     expect(step((m) => (m.ext.endoDV0Frac = 0.1)).p.v0Sv).toBeCloseTo(a.p.v0Sv - 0.1 * a.base.v0Sv, 6);
   });
-  it('7c kChem 0.8 lowers stroke volume (all four chambers)', () => {
+  it('kChem 0.8 lowers stroke volume (all four chambers)', () => {
     const sv = (k: number) => {
       const m = createCircModel();
       m.ext.kChem = k;

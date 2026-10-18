@@ -8,7 +8,7 @@ import { V0_RECRUIT_MAX_ML_KG } from '../../../src/l2/circ/baroreflex.ts';
 import { driver, runTo } from '../../helpers/circ.ts';
 import type { Command } from '../../../src/types.ts';
 
-describe('β venous mobilisation (NR-7g-2)', () => {
+describe('β venous mobilisation', () => {
   it('potency: dobutamine Ce / 7 µg/kg/min; other agents are ignored', () => {
     expect(betaVenousUnits({ dobutamine: { brain: 7 } })).toBeCloseTo(1, 12);
     expect(betaVenousUnits({ norepinephrine: { brain: 0.3 }, phenylephrine: { brain: 1 } })).toBe(0);
@@ -55,7 +55,7 @@ describe('β venous mobilisation (NR-7g-2)', () => {
     expect(both).toBeLessThanOrEqual(cap + 1e-6);
     expect(both).toBeGreaterThanOrEqual(reflex); // the β term still adds while there is room
   }, 120_000);
-  it('closed loop: dobutamine 5 µg/kg/min (7g multipliers) raises CO ≥ 8 points more with the venous term than without', () => {
+  it('closed loop: dobutamine 5 µg/kg/min (drug multipliers) raises CO ≥ 8 points more with the venous term than without', () => {
     const pk = createPkState();
     applyPkCommand(pk, { type: 'applyEvent', event: { kind: 'infusion', drugId: 'dobutamine', rate: 5, unit: 'mcg/kg/min' } } as unknown as Command, 0);
     advancePk(pk, NEUTRAL_PK_CTX, 1200);

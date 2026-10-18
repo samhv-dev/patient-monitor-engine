@@ -22,7 +22,7 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(st.fwaves.length).toBeGreaterThan(0);
   });
 
-  it('afib mean ventricular rate follows the hr target within ±5% across the whole 40–180 range (review M1)', () => {
+  it('afib mean ventricular rate follows the hr target within ±5% across the whole 40–180 range', () => {
     for (const hr of [40, 50, 60, 80, 100, 120, 150, 180]) {
       const { beats } = runRhythm('afib', 600, { hr, seed: 21 }); // not a calibration seed (11–13)
       const got = 60 / mean(diffs(beats.map((b) => b.t)));
@@ -30,7 +30,7 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     }
   });
 
-  it('FU-2 (E-FU2-5): afib mean ventricular rate within ±2 % at 130, 135, 140 and 145 bpm (knots at 135 and 145)', () => {
+  it('afib mean ventricular rate within ±2 % at 130, 135, 140 and 145 bpm (knots at 135 and 145)', () => {
     for (const hr of [130, 135, 140, 145]) {
       const { beats } = runRhythm('afib', 600, { hr, seed: 21 }); // not a calibration seed (11–13)
       const got = 60 / mean(diffs(beats.map((b) => b.t)));
@@ -57,7 +57,7 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(v.atrial.every((a) => a.kind === 'flutter')).toBe(true);
   });
 
-  it('ruling R18: flutter F waves in II are a continuous sawtooth (slow fall, fast return, no isoelectric segment), 0.25–0.32 mV p-p', () => {
+  it('flutter F waves in II are a continuous sawtooth (slow fall, fast return, no isoelectric segment), 0.25–0.32 mV p-p', () => {
     const { st, atrial } = runRhythm('aflutter', 12, { rhythmOpts: { ratio: 4 } });
     const cycle = 0.2; // 300/min
     const acc = new Float64Array(3);
@@ -97,7 +97,7 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(Math.max(...avf) - Math.min(...avf)).toBeGreaterThan(0.2);
   });
 
-  it('leaving AF fades the f-waves out instead of cutting them (review L8)', () => {
+  it('leaving AF fades the f-waves out instead of cutting them', () => {
     const { st } = runRhythm('afib', 10, { seed: 4 });
     const ctx = { hrAt: () => 75, mods: defaultModifiers(), rng: createRngState(4), hrv: { phi: 0, psi: 0 } };
     applyRhythm(st, 'sinus', {}, 10, true, ctx);
@@ -125,7 +125,7 @@ describe('rhythm engine: AF, flutter, AVNRT', () => {
     expect(retro.length).toBeGreaterThan(0);
   });
 
-  it('vtMono 120–130: a conducted sinus capture never overlaps a VT complex (review M2)', () => {
+  it('vtMono 120–130: a conducted sinus capture never overlaps a VT complex', () => {
     for (const hr of [120, 125, 130]) {
       for (const seed of [1, 2, 3]) {
         const { beats } = runRhythm('vtMono', 60, { hr, seed });

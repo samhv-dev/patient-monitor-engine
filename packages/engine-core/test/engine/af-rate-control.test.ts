@@ -30,7 +30,7 @@ async function afFall(drugs: Record<string, unknown>[], a: number, b: number) {
   return { before: hr(80, 120), after: hr(a, b), fall: 100 * (1 - hr(a, b) / hr(80, 120)) };
 }
 
-describe('AF rate control through the AV node (FU-2, E-FU2-6)', () => {
+describe('AF rate control through the AV node', () => {
   it('esmolol 0.5 mg/kg load + 150 µg/kg/min: AF 130 slows by 20–30 % at 15–20 min', async () => {
     const r = await afFall([{ kind: 'drug', drugId: 'esmolol', dose: 0.5, unit: 'mg/kg', route: 'iv' }, { kind: 'infusion', drugId: 'esmolol', rate: 150, unit: 'mcg/kg/min' }], 1020, 1320);
     console.log(`FU-2 AF 130 + esmolol 150: ${r.before.toFixed(1)} → ${r.after.toFixed(1)} (fall ${r.fall.toFixed(1)} %)`);

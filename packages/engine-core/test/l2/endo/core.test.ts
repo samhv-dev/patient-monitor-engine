@@ -7,7 +7,7 @@ const X = NEUTRAL_ENDO_INPUTS;
 const T1 = { diabetes: 'type1', thyroid: 'normal', adrenalInsufficiency: false, basalInsulin: true } as const; // FU-10 E7: the basal insulin can now be omitted
 
 describe('endocrine core', { timeout: 60_000 }, () => {
-  it('rest: every haemodynamic/metabolic multiplier is exactly 1 for 24 h (Stage 1–3 outputs untouched)', () => {
+  it('rest: every haemodynamic/metabolic multiplier is exactly 1 for 24 h (the haemodynamic and respiratory outputs untouched)', () => {
     const c = createEndoCore();
     for (let s = 0; s < 86_400; s++) stepEndoCore(c, X, 1);
     const o = c.out;
@@ -39,20 +39,20 @@ describe('endocrine core', { timeout: 60_000 }, () => {
     expect(c.out.kShift).toBeGreaterThan(0.5); // efflux minus the endogenous-epinephrine β2 uptake
   });
 
-  it('fever HR is a temperature term apart from the β-mediated hrF: 39 °C → × 1.18 even with full 7a β-blockade', () => {
+  it('fever HR is a temperature term apart from the β-mediated hrF: 39 °C → × 1.18 even with full circulation β-blockade', () => {
     const c = createEndoCore();
     stepEndoCore(c, { ...X, tempC: 39, betaBlock: 1, betaBlockC: 1 }, 1);
     expect(c.out.feverHrF).toBeCloseTo(1.18, 9);
     expect(c.out.hrF).toBe(1);
   });
 
-  it('DKA (7c publishes the severity): glucose > 250 mg/dL within 2 h', () => {
+  it('DKA (the blood model publishes the severity): glucose > 250 mg/dL within 2 h', () => {
     const c = createEndoCore(T1);
     for (let s = 0; s < 2 * 3600; s++) stepEndoCore(c, { ...X, dkaSeverity: 1 }, 1);
     expect(c.out.glucoseMgDl).toBeGreaterThan(250);
   });
 
-  it('type 1 on basal insulin + insulin 20 U/h under GA: glucose < 65 mg/dL and HR × ≥ 1.2; the exogenous insulin adds no 7e K shift', () => {
+  it('type 1 on basal insulin + insulin 20 U/h under GA: glucose < 65 mg/dL and HR × ≥ 1.2; the exogenous insulin adds no endocrine K shift', () => {
     const c = createEndoCore(T1);
     insulinInfusion(c.glucose, 20); // the "wrong infusion" (10× a 2 U/h sliding scale)
     let hr = 1;
@@ -67,7 +67,7 @@ describe('endocrine core', { timeout: 60_000 }, () => {
     expect(c.out.kShift - c.out.stress.kShift).toBeCloseTo(0, 9); // insulin term 0: 7g's bus.metabolic.kShift carries it
   });
 
-  it('anaphylaxis grade III → 7b severity 0.6 (its grade III) at the mediator plateau; 7g bronchodilation relieves it', () => {
+  it('anaphylaxis grade III → lung severity 0.6 (its grade III) at the mediator plateau; drug bronchodilation relieves it', () => {
     const c = createEndoCore();
     c.cond.anaph.target = 0.75;
     for (let s = 0; s < 1800; s++) stepEndoCore(c, X, 1);

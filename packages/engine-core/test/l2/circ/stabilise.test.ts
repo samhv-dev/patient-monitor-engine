@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveProfile } from '../../../src/l2/circ/profile.ts';
 import { stabilise } from '../../../src/l2/circ/stabilise.ts';
 
-describe('profile stabilisation (audit #3, A19)', () => {
+describe('profile stabilisation', () => {
   it('the default adult converges to 120/80, CVP 5 at HR 70 with H1-range resting values', () => {
     const st = stabilise(resolveProfile());
     expect(st.converged).toBe(true);
@@ -39,7 +39,7 @@ describe('profile stabilisation (audit #3, A19)', () => {
     expect(st.ledger.length).toBeLessThanOrEqual(30);
     expect(Math.abs(st.ref.sbp - r.targets.sbp)).toBeLessThanOrEqual(0.02 * r.targets.sbp);
   });
-  it('R45(c): the compensated AS + CAD + HTN profile rests at LVEDP 15–20 (tables §3 worked example 18), not 40', () => {
+  it('the compensated AS + CAD + HTN profile rests at LVEDP 15–20 (tables §3 worked example 18), not 40', () => {
     const st = stabilise(resolveProfile({ ageY: 75, sex: 'M', weightKg: 75, conditions: [{ id: 'htn' }, { id: 'as', grade: 'severe' }, { id: 'cad', grade: 'severe' }] }));
     expect(st.ref.lvedp).toBeGreaterThanOrEqual(15);
     expect(st.ref.lvedp).toBeLessThanOrEqual(20);

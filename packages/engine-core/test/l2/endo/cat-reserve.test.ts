@@ -7,7 +7,7 @@ import { createHormones, stepHormones, type HormoneInputs } from '../../../src/l
 
 const REST: HormoneInputs = { noxious: 0, antinoc: 0, extraSymp: 0, glucoseMgDl: 100, mapSetMmHg: 85, mapMmHg: 85, sao2: 0.97, paco2: 40, cortResponse: 1, epiExoPgMl: 0 };
 
-describe('catecholamine reserve (FU-7, audit D9)', () => {
+describe('catecholamine reserve', () => {
   it('a resting patient keeps the reserve replete for an hour (≥ 0.98)', () => {
     const h = createHormones();
     expect(h.catReserve).toBe(1);
@@ -23,7 +23,7 @@ describe('catecholamine reserve (FU-7, audit D9)', () => {
     expect(h.symp).toBeGreaterThan(2.4);
     expect(h.catReserve).toBeLessThan(0.45);
   });
-  it('a snapshot written before FU-7 (no catReserve) is treated as replete', () => {
+  it('an older snapshot without catReserve is treated as replete', () => {
     const h = createHormones() as unknown as Record<string, unknown>;
     delete h.catReserve;
     stepHormones(h as never, REST, 1);

@@ -20,7 +20,7 @@ describe('deviceProfile', () => {
     expect(p.pacer).toBeNull();
   });
 
-  it('philips-like: limits by age band (HR 50–120 / 75–160 / 100–200), desat 80, 4 s / 3 s asystole, Silence = acknowledge, 120 s pause (FU-5: IntelliVue [S1]/[S2])', () => {
+  it('philips-like: limits by age band (HR 50–120 / 75–160 / 100–200), desat 80, 4 s / 3 s asystole, Silence = acknowledge, 120 s pause (IntelliVue [S1]/[S2])', () => {
     expect(deviceProfile('philips-like', 'adult').limits.HR).toMatchObject({ low: 50, high: 120, level: 2 });
     expect(deviceProfile('philips-like', 'paed').limits.HR).toMatchObject({ low: 75, high: 160 });
     const neo = deviceProfile('philips-like', 'neo');

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contentDB, hillN, ODC_DEFAULT, p50, satDB } from '../../../src/l2/blood/odc.ts';
 
-describe('Dash–Bassingthwaighte ODC (tables §5b.3; audit #6/A14)', () => {
+describe('Dash–Bassingthwaighte ODC (tables §5b.3)', () => {
   it('P50 is 26.8 mmHg at pH 7.4, PCO2 40, 37 °C, DPG 4.65, no CO; S(P50) = 0.5; Hill n 2.7', () => {
     expect(p50(ODC_DEFAULT, 40, 37)).toBeCloseTo(26.8, 1);
     expect(satDB(p50(ODC_DEFAULT, 40, 37), 40, 37, ODC_DEFAULT)).toBeCloseTo(0.5, 6);

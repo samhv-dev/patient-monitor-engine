@@ -9,7 +9,7 @@ const at = (url: string): PageLocation => {
 };
 const info = (o: Partial<RelayInfo> = {}): RelayInfo => ({ relay: 'pme', port: 8642, addresses: ['192.168.1.20'], serves: true, ...o });
 
-describe('Stage 12: the learner address (QR payload)', () => {
+describe('the learner address (QR payload)', () => {
   it('is ONE short address, the session code in it and the relay the page\'s own host', () => {
     const url = learnerUrl('AB2CD3', 'http://192.168.1.20:8642', '/', null);
     expect(url).toBe('http://192.168.1.20:8642/?join=AB2CD3');
@@ -35,7 +35,7 @@ describe('Stage 12: the learner address (QR payload)', () => {
   });
 });
 
-describe('Stage 12: where the QR code sends phones', () => {
+describe('where the QR code sends phones', () => {
   it('the relay serves the app: its first network address, even when the instructor\'s page is on 127.0.0.1', () => {
     expect(qrTarget('AB2CD3', at('http://127.0.0.1:8642/?relay'), 'ws://127.0.0.1:8642/', info())).toEqual({ ok: true, url: 'http://192.168.1.20:8642/?join=AB2CD3', origin: 'http://192.168.1.20:8642', others: [] });
     // the relay lists the hotspot first (relay/http.ts); the computer's other networks are offered under the code

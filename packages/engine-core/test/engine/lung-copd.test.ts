@@ -15,7 +15,7 @@ async function copd(severity: number, rr: number) {
   return out;
 }
 
-describe('COPD through the engine (catalogue §5, Q19, R27)', { timeout: 300_000 }, () => {
+describe('COPD through the engine (catalogue §5)', { timeout: 300_000 }, () => {
   it('auto-PEEP bands at RR 14 by GOLD grade (1–3, 4–8, 8–12) and a monotonic rise with RR', async () => {
     expect((await copd(0.5, 14)).autoPeep).toBeGreaterThanOrEqual(1);
     expect((await copd(0.5, 14)).autoPeep).toBeLessThanOrEqual(3);

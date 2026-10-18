@@ -11,7 +11,7 @@ let n = 0;
 const ev = (event: Record<string, unknown>) => ({ id: `vi${++n}`, issuedBy: 'test', type: 'applyEvent', event }) as unknown as Command;
 type Rs = { co2: { pf: number }; etco2: number; driver: { vent: { rr: number; vt: number } } };
 
-describe('FU-4 F4: the 7 kg infant ventilates normally at its own defaults', { timeout: 300_000 }, () => {
+describe('the 7 kg infant ventilates normally at its own defaults', { timeout: 300_000 }, () => {
   it('ETT + VCV at the defaults: PaCO2 35–45 from 5 to 30 min, EtCO2 within 5, no non-finite numeric in 30 min', async () => {
     const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 0.5, sex: 'M', weightKg: 7, heightCm: 65, sensors: { co2: 'on', spo2: 'on' } } });
     const bad: string[] = [];

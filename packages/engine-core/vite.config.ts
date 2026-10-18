@@ -18,7 +18,7 @@ const SLOW = [
   'test/engine/pk-acceptance-*.test.ts',
   'test/engine/endo-acceptance.test.ts', // MH, glucose and sepsis scenarios (sim-hours)
   'test/engine/endo-circ-acceptance.test.ts', // MODELED sepsis warm → cold (2 sim-h)
-  'test/engine/blood-stage3-recheck.test.ts', // Four desaturations + a 70 min OLV run
+  'test/engine/blood-desaturation-recheck.test.ts', // Four desaturations + a 70 min OLV run
   'test/engine/blood-sanity-*.test.ts', // 2 h haemorrhage/transfusion and acid–base scenarios
   'test/engine/blood-hyperk.test.ts', // 30 min succinylcholine/calcium/insulin and salbutamol scenarios
   'test/engine/circ-rate-rule.test.ts', // MODELED rhythm-rate scenarios (2–4 sim-min each)
@@ -42,7 +42,7 @@ const SLOW = [
   'test/engine/resp-pleural-effort.test.ts', // a 13 sim-min laryngospasm run
   'test/engine/resp-ga-state.test.ts', // Three apnoea runs of 19 sim-min and a 40 sim-min ventilated run
   'test/engine/resp-vcv-pmax.test.ts', // Two 10 sim-min near-fatal bronchospasm runs
-  'test/engine/resp-drive-fu6.test.ts', // a 32 sim-min stimulus run and a 20 sim-min PE run
+  'test/engine/resp-drive-nonchemical.test.ts', // a 32 sim-min stimulus run and a 20 sim-min PE run
   'test/engine/resp-trigger.test.ts', // Three ≤ 7 sim-min ventilator runs
   'test/engine/resp-inspired-co2.test.ts', // Four 25 sim-min rebreathing runs
   'test/engine/resp-pregnancy.test.ts', // a 20 sim-min awake run and a 14 sim-min apnoea run
@@ -54,21 +54,64 @@ const SLOW = [
   'test/engine/circ-lowflow-arrest.test.ts', // Four 25–30 sim-min haemorrhage/ROSC runs
   'test/engine/blood-k-rhythm.test.ts', // Hyperkalaemia runs of 2–20 sim-min
   'test/engine/clinical-suite.test.ts', // The clinical scenario suite (SLOW_A)
-  'test/engine/fu9-*.test.ts', // blood/fluid/acid–base/renal scenarios, 10–90 sim-min arms (SLOW_C)
+  'test/engine/resp-alkalosis-compensation.test.ts', // blood/fluid/acid–base/renal scenarios, 10–90 sim-min arms (SLOW_C)
+  'test/engine/lung-copd-retainer.test.ts',
+  'test/engine/organs-renal-iap.test.ts',
+  'test/engine/blood-fluid-kinetics.test.ts',
+  'test/engine/blood-septic-leak.test.ts',
+  'test/engine/blood-mannitol.test.ts',
+  'test/engine/organs-brain-osmolality.test.ts',
+  'test/engine/blood-o2-extraction.test.ts',
+  'test/engine/organs-renal-kaliuresis.test.ts',
+  'test/engine/drug-hypokalaemia-rocuronium.test.ts',
+  'test/engine/blood-massive-transfusion.test.ts',
   'test/engine/circ-pulsus.test.ts', // Two 10 sim-min spontaneous-breathing runs
   'test/engine/vagal-events.test.ts', // Vagal-event runs of 5–10 sim-min
   'test/engine/thermal-warmer.test.ts', // Four 60 sim-min warming runs
   'test/engine/tension-ptx.test.ts', // Three 7–16 sim-min tension-pneumothorax runs
   'test/engine/af-pulse-deficit.test.ts', // Two 320 sim-s AF 150 runs
-  'test/engine/fu8-*.test.ts', // Monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
-  'test/engine/fu10-*.test.ts', // The endocrine/thermal rigs, placed by CI per-file time (SLOW_A/C/D/F below; adrenal is slow-b)
-  'test/engine/fu71-*.test.ts', // The MH 50 min run, the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)
+  'test/engine/hr-agonal-qrs.test.ts', // Monitor-in-arrest, agonal, oliguria and negative-volume rigs (SLOW_A: slow-b's margin is 2.4 min)
+  'test/engine/rhythm-agonal-rate.test.ts',
+  'test/engine/alarms-limit-text.test.ts',
+  'test/engine/circ-body-size.test.ts',
+  'test/engine/circ-coronary-supply.test.ts',
+  'test/engine/cpr-ecg-artefact.test.ts',
+  'test/engine/cpr-cerebral-flow.test.ts',
+  'test/engine/cpr-etco2-circulation.test.ts',
+  'test/engine/circ-iabp.test.ts',
+  'test/engine/circ-lvad-filling.test.ts',
+  'test/engine/circ-manual-rosc-ramp.test.ts',
+  'test/engine/spo2-motion-recovery.test.ts',
+  'test/engine/circ-negative-volume.test.ts',
+  'test/engine/organs-oliguria-flag.test.ts',
+  'test/engine/lung-pe-profile.test.ts',
+  'test/engine/circ-pea-resuscitation.test.ts',
+  'test/engine/circ-pulm-hypertension-grade.test.ts',
+  'test/engine/pk-propofol-co-reference.test.ts',
+  'test/engine/circ-pulseless-arrest.test.ts',
+  'test/engine/state-sensor-map.test.ts',
+  'test/engine/pacer-tcp-pain.test.ts',
+  'test/engine/circ-sympathetic-tone.test.ts',
+  'test/engine/endo-adrenal.test.ts', // The endocrine/thermal rigs, placed by CI per-file time (SLOW_A/C/D/F below; adrenal is slow-b)
+  'test/engine/thermal-fever-ga.test.ts',
+  'test/engine/endo-insulin-dextrose.test.ts',
+  'test/engine/endo-insulin-omission.test.ts',
+  'test/engine/thermal-mh-trigger.test.ts',
+  'test/engine/thermal-periop-course.test.ts',
+  'test/engine/resp-breath-delivered-vt.test.ts', // The MH 50 min run, the tamponade matrix, the KCl infusion, the COPD start-up, the rocuronium course (slow-b)
+  'test/engine/lung-copd-startup.test.ts',
+  'test/engine/drug-opioid-induction-synergy.test.ts',
+  'test/engine/blood-potassium-chloride.test.ts',
+  'test/engine/thermal-mh-haemodynamics.test.ts',
+  'test/engine/hemo-nibp-arrest.test.ts',
+  'test/engine/resp-rocuronium-apnoea.test.ts',
+  'test/engine/circ-tamponade-drainage.test.ts',
   'test/engine/resp-mechanics.test.ts', // Nine 5 sim-min mechanics rigs and two 16 sim-min bronchodilator arms (slow-a: slow-b is at 37.6 of 40 min)
   'test/engine/drug-apnoea.test.ts', // 20–25 sim-min spontaneous drug rigs incl. a 20-seed Bailey population
   'test/engine/cat-reserve-engine.test.ts', // Four 15 sim-min ketamine arms
   'test/engine/stimulus-surge.test.ts', // ≈ 40 ventilated arms of 10–60 sim-min
-  'test/engine/fu7-nmb-one-state.test.ts', // Two 140 sim-min rocuronium arms + four 15 sim-min sux arms
-  'test/engine/fu7-volatile.test.ts', // Two 30 sim-min desflurane arms
+  'test/engine/drug-nmb-volatile-sux.test.ts', // Two 140 sim-min rocuronium arms + four 15 sim-min sux arms
+  'test/engine/drug-desflurane-surge.test.ts', // Two 30 sim-min desflurane arms
   'test/engine/drug-layer.test.ts', // The drug-layer engine cases
   'test/engine/drug-layer-guards.test.ts', // The drug-layer regression guards (split from drug-layer by time)
   'test/l2/pk/interactions-misc.test.ts', // four 8 h interaction arms, 15.2 s alone in the fast set — slow-b (the remainder)
@@ -94,9 +137,19 @@ const SLOW_A = [ // ≈ 2002 s on CI (33.4 min)
   'test/engine/pk-acceptance-scen.test.ts', // 16 s
 ];
 const SLOW_C = [ // ≈ 1998 s on CI (33.3 min)
-  'test/engine/fu9-*.test.ts', // 1286 s,
+  'test/engine/resp-alkalosis-compensation.test.ts', // 1286 s,
+  'test/engine/lung-copd-retainer.test.ts',
+  'test/engine/organs-renal-iap.test.ts',
+  'test/engine/blood-fluid-kinetics.test.ts',
+  'test/engine/blood-septic-leak.test.ts',
+  'test/engine/blood-mannitol.test.ts',
+  'test/engine/organs-brain-osmolality.test.ts',
+  'test/engine/blood-o2-extraction.test.ts',
+  'test/engine/organs-renal-kaliuresis.test.ts',
+  'test/engine/drug-hypokalaemia-rocuronium.test.ts',
+  'test/engine/blood-massive-transfusion.test.ts',
   'test/engine/pk-acceptance-pd.test.ts', // 229 s,
-  'test/engine/fu10-mh-trigger.test.ts', // 127 s,
+  'test/engine/thermal-mh-trigger.test.ts', // 127 s,
   'test/engine/organs-curves.test.ts', // 102 s,
   'test/engine/resp-inspired-co2.test.ts', // 69 s,
   'test/engine/blood-hyperk.test.ts', // 50 s,
@@ -109,14 +162,35 @@ const SLOW_C = [ // ≈ 1998 s on CI (33.3 min)
 const SLOW_D = [ // ≈ 1993 s on CI (33.2 min)
   'test/engine/stimulus-surge.test.ts', // 478 s,
   'test/engine/clinical-suite.test.ts', // 460 s,
-  'test/engine/fu8-*.test.ts', // 313 s + three later fu8 files (≈ 22 s local, ≈ 60 s CI est.: slow-d ≈ 34.2 min),
+  'test/engine/hr-agonal-qrs.test.ts', // 313 s + three later fu8 files (≈ 22 s local, ≈ 60 s CI est.: slow-d ≈ 34.2 min),
+  'test/engine/rhythm-agonal-rate.test.ts',
+  'test/engine/alarms-limit-text.test.ts',
+  'test/engine/circ-body-size.test.ts',
+  'test/engine/circ-coronary-supply.test.ts',
+  'test/engine/cpr-ecg-artefact.test.ts',
+  'test/engine/cpr-cerebral-flow.test.ts',
+  'test/engine/cpr-etco2-circulation.test.ts',
+  'test/engine/circ-iabp.test.ts',
+  'test/engine/circ-lvad-filling.test.ts',
+  'test/engine/circ-manual-rosc-ramp.test.ts',
+  'test/engine/spo2-motion-recovery.test.ts',
+  'test/engine/circ-negative-volume.test.ts',
+  'test/engine/organs-oliguria-flag.test.ts',
+  'test/engine/lung-pe-profile.test.ts',
+  'test/engine/circ-pea-resuscitation.test.ts',
+  'test/engine/circ-pulm-hypertension-grade.test.ts',
+  'test/engine/pk-propofol-co-reference.test.ts',
+  'test/engine/circ-pulseless-arrest.test.ts',
+  'test/engine/state-sensor-map.test.ts',
+  'test/engine/pacer-tcp-pain.test.ts',
+  'test/engine/circ-sympathetic-tone.test.ts',
   'test/engine/resp-induction.test.ts', // 254 s,
   'test/engine/vagal-events.test.ts', // 141 s,
-  'test/engine/fu10-fever.test.ts', // 84 s,
+  'test/engine/thermal-fever-ga.test.ts', // 84 s,
   'test/engine/hemo-nibp.test.ts', // 72 s,
   'test/engine/resp-mechanics.test.ts', // 58 s,
   'test/engine/organs-tbi.test.ts', // 46 s,
-  'test/engine/resp-drive-fu6.test.ts', // 36 s,
+  'test/engine/resp-drive-nonchemical.test.ts', // 36 s,
   'test/engine/resp-obstruction.test.ts', // 24 s,
   'test/engine/resp-child-baseline.test.ts', // 22 s,
   'test/engine/circ-manual-ischaemia.test.ts', // 6 s
@@ -128,7 +202,7 @@ const SLOW_E = [ // ≈ 1998 s on CI (33.3 min)
   'test/engine/lung-r14.test.ts', // 78 s,
   'test/engine/neuro-acceptance.test.ts', // 60 s,
   'test/engine/circ-hypoxic-arrest.test.ts', // 49 s,
-  'test/engine/fu7-volatile.test.ts', // 42 s,
+  'test/engine/drug-desflurane-surge.test.ts', // 42 s,
   'test/engine/circ-manual-cvp-peep.test.ts', // 23 s,
   'test/engine/af-rate-control.test.ts', // 21 s,
   'test/engine/pacer-sensing.test.ts', // 11 s
@@ -136,7 +210,7 @@ const SLOW_E = [ // ≈ 1998 s on CI (33.3 min)
 const SLOW_F = [ // ≈ 1995 s on CI (33.3 min)
   'test/engine/drug-layer.test.ts', // 894 s,
   'test/engine/drug-apnoea.test.ts', // 387 s,
-  'test/engine/fu7-nmb-one-state.test.ts', // 231 s,
+  'test/engine/drug-nmb-volatile-sux.test.ts', // 231 s,
   'test/engine/thermal-warmer.test.ts', // 132 s,
   'test/engine/organs-tbi-treatment.test.ts', // 93 s,
   'test/engine/blood-sanity-haem.test.ts', // 70 s,
@@ -148,13 +222,13 @@ const SLOW_F = [ // ≈ 1995 s on CI (33.3 min)
   'test/engine/af-pulse-deficit.test.ts', // 8 s
 ];
 const SLOW_G = [ // ≈ 1987 s on CI (33.1 min)
-  'test/engine/fu10-thresholds.test.ts', // 751 s,
-  'test/engine/fu10-adrenal.test.ts', // 390 s,
-  'test/engine/fu10-insulin-dextrose.test.ts', // 274 s,
+  'test/engine/thermal-periop-course.test.ts', // 751 s,
+  'test/engine/endo-adrenal.test.ts', // 390 s,
+  'test/engine/endo-insulin-dextrose.test.ts', // 274 s,
   'test/engine/engine-pipeline.test.ts', // 175 s,
   'test/engine/blood-anaemia-co.test.ts', // 118 s,
   'test/engine/lung-recruitment.test.ts', // 81 s,
-  'test/engine/blood-stage3-recheck.test.ts', // 69 s,
+  'test/engine/blood-desaturation-recheck.test.ts', // 69 s,
   'test/engine/neuro-spont.test.ts', // 48 s,
   'test/engine/hr-af-numeric.test.ts', // 37 s,
   'test/engine/fidelity-alarms.test.ts', // 23 s,

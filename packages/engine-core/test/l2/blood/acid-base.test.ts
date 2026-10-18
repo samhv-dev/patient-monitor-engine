@@ -3,7 +3,7 @@ import { anionGap, baseExcess, chargeResidual, hco3Of, PH_MAX, PH_MIN, solvePh }
 
 const N = { sid: 38.1, albGL: 40, piMmolL: 1.1, hb: 15 };
 
-describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1; audit #5/A13)', () => {
+describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1)', () => {
   it('normal SID gives pH ≈ 7.40, HCO3 ≈ 24.4–25, BE ≈ 0, in ≤ 16 bisection steps with zero residual', () => {
     const a = solvePh(40, N);
     expect(a.ph).toBeGreaterThan(7.38);
@@ -42,7 +42,7 @@ describe('Figge/Stewart charge balance, bounded pH search (tables §5b.1; audit 
       expect(a.hco3).toBeCloseTo(hco3Of(a.ph, pco2), 9);
     }
   });
-  it('pH stays within 6.5–7.9 (audit A13) for ANY inputs; outside the bracket the bound is returned with atBound and the residual — never folded into HCO3', () => {
+  it('pH stays within 6.5–7.9 for ANY inputs; outside the bracket the bound is returned with atBound and the residual — never folded into HCO3', () => {
     for (const pco2 of [0, 5, 40, 150, 400]) for (const sid of [-20, 0, 20, 40, 80, 200]) for (const alb of [0, 40, 80]) {
       const a = solvePh(pco2, { sid, albGL: alb, piMmolL: 1.1, hb: 15 });
       expect(a.ph).toBeGreaterThanOrEqual(PH_MIN);

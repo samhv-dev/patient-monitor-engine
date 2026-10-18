@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { runPk } from '../helpers/pk.ts';
 
-describe('Stage 7g engine wiring', () => {
-  it('every library drug id — 7c-owned and shared ids included — is accepted by 7g (R51 §3); unknown ids are rejected', async () => {
+describe('drug engine wiring', () => {
+  it('every library drug id — blood-owned and shared ids included — is accepted by the drug model; unknown ids are rejected', async () => {
     const r = await runPk({}, [
       [1, { kind: 'drug', drugId: 'unobtainium', dose: 1, unit: 'mg', route: 'iv' }],
       [2, { kind: 'drug', drugId: 'remifentanil', dose: 1, unit: 'mcg/kg', route: 'iv' }],
@@ -47,7 +47,7 @@ describe('Stage 7g engine wiring', () => {
     const pb = (b.snapshot().state as { st: { pk: { drugs: Record<string, { x: number[] }> } } }).st.pk.drugs.propofol!.x;
     expect(pb).toEqual(pa);
   }, 300_000);
-  it('a β-blocker drug blunts 7e’s catecholamine-surge multiplier (R51 addendum 11)', async () => {
+  it('a β-blocker drug blunts the endocrine catecholamine-surge multiplier', async () => {
     const { createCircModel, RESTING_ENV } = await import('../../src/l2/circ/model.ts');
     const { driver, runTo } = await import('../helpers/circ.ts');
     const hrAfter = (endoHrF: number, betaBlockAdd: number) => {

@@ -63,7 +63,7 @@ describe('validateScenario', () => {
   });
 });
 
-describe('FU-8 (Stage 9 R-S9-4): the scenario card fields and the endocrine profile', () => {
+describe('the scenario card fields and the endocrine profile', () => {
   it('accepts category, story, objectives, durationMin and patient.endo; warns on an unlabelled state', () => {
     const d = base();
     Object.assign(d, { category: 'Induction', story: 'A 58-year-old for a laparotomy.', objectives: ['Recognise hypotension'], durationMin: 15 });

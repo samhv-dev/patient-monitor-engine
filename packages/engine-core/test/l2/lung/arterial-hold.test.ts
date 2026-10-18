@@ -21,7 +21,7 @@ const anoxic = () => {
   return st;
 };
 
-describe('FU-3 item 16: no ejection, no new arterial blood (E-FU3-9)', () => {
+describe('no ejection, no new arterial blood', () => {
   it('arterialHold: PaO2/SaO2 hold while the alveoli re-oxygenate; without it the floor flow re-saturates the arteries', () => {
     const held = anoxic();
     const free = anoxic();
@@ -34,7 +34,7 @@ describe('FU-3 item 16: no ejection, no new arterial blood (E-FU3-9)', () => {
     expect(held.fa[0]).toBeGreaterThan(0.1); // the alveolar gas itself is refreshed by the breaths
     expect(free.sa).toBeGreaterThan(0.5); // the pre-FU-3 behaviour the review measured
   });
-  it('arterialHold false/absent: bit-identical to the 7b mixing point', () => {
+  it('arterialHold false/absent: bit-identical to the lung mixing point', () => {
     const a = createO2Lung(0.5, 150);
     const b = createO2Lung(0.5, 150);
     for (let t = 0; t < 60; t += 0.1) {

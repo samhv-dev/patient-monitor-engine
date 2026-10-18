@@ -35,7 +35,7 @@ async function rig() {
   return { host, hs, panelS, other, panel, remote, inPanel, inRemote };
 }
 
-describe('controls follow the host (FU-1 item 6)', () => {
+describe('controls follow the host', () => {
   it('a rhythm change from another controller moves both dropdowns; ControllerSession.rhythm tracks it', async () => {
     const { host, other, panelS, inPanel, inRemote } = await rig();
     await other.send({ type: 'setRhythm', rhythm: 'afib' });

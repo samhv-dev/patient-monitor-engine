@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createEngine } from '../../src/engine.ts';
 import { cmd, ev3 } from '../helpers/resp.ts';
 
-describe('engine + Stage 3 pipeline wiring', () => {
+describe('engine + respiratory pipeline wiring', () => {
   it('co2 and resp run at 62.5 Hz with the 100 ms look-ahead (index 6 at creation); co2 off → no trace', () => {
     const e = createEngine({ seed: 1, patient: { sensors: { co2: 'on' } } });
     expect(e.sampleRate('co2')).toBe(62.5);
@@ -17,7 +17,7 @@ describe('engine + Stage 3 pipeline wiring', () => {
     expect(createEngine({ seed: 1 }).latestSampleIndex('co2')).toBe(-1);
   });
 
-  it('accepts the Stage 3 commands, rejects bad ones with a reason, and emits breath, lungState and the new numerics', () => {
+  it('accepts the respiratory commands, rejects bad ones with a reason, and emits breath, lungState and the respiratory numerics', () => {
     const e = createEngine({ seed: 2, patient: { sensors: { co2: 'on' } } });
     const got = new Set<string>();
     const nums = new Set<string>();

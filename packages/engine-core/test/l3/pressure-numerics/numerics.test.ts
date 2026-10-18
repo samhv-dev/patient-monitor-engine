@@ -35,7 +35,7 @@ describe('l3/pressure-numerics (brief §4.2 numerics)', () => {
   });
 });
 
-describe('FU-5: fresh beats, the non-pulsatile rule and the searching start (audit M5, M14)', () => {
+describe('fresh beats, the non-pulsatile rule and the searching start', () => {
   const beat = (t: number) => { const u = t % 1; return u < 0.1 ? 80 + 400 * u : 80 + 40 * Math.exp(-(u - 0.1) * 6); };
   it('one late small bump after a pulseless spell is not averaged with the pre-arrest beats (the PEA 118/79 glitch)', () => {
     const wn = createWaveNumerics(3);
@@ -74,7 +74,7 @@ describe('FU-5: fresh beats, the non-pulsatile rule and the searching start (aud
     expect(first).toBeGreaterThan(0);
     expect(flags.slice(first).every((f) => f === 'valid')).toBe(true);
   });
-  it("'keep' (philips-like, [S2] p. 57; review ruling 3): a static line keeps S/D/M of the flat line and reports non-pulsatile; 'mean-only' (saadat-like) hides S/D", () => {
+  it("'keep' (philips-like, [S2] p. 57): a static line keeps S/D/M of the flat line and reports non-pulsatile; 'mean-only' (saadat-like) hides S/D", () => {
     for (const [disp, sd] of [['keep', 'valid'], ['mean-only', 'invalid']] as const) {
       const wn = createWaveNumerics(1);
       wn.staticDisplay = disp;
@@ -91,7 +91,7 @@ describe('FU-5: fresh beats, the non-pulsatile rule and the searching start (aud
       }
     }
   });
-  it('amplitude hysteresis (review ruling 3): a static line stays static on 3.5 mmHg beats (≥ 3 but < REPULSE_AMP_MMHG 4), and a pulsatile line stays pulsatile on them', () => {
+  it('amplitude hysteresis: a static line stays static on 3.5 mmHg beats (≥ 3 but < REPULSE_AMP_MMHG 4), and a pulsatile line stays pulsatile on them', () => {
     const run = (startAmp: number) => {
       const wn = createWaveNumerics(1);
       let p = false;

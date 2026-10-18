@@ -28,13 +28,13 @@ function peakCe(coLpm: number, coRefLpm: number | undefined): { peak: number; tP
   return { peak, tPeak };
 }
 
-describe('FU-4 G10: propofol distribution follows cardiac output', () => {
+describe('propofol distribution follows cardiac output', () => {
   it('q is exactly 1 at the settled resting output and quantised to 5 % in 0.3–1.5', () => {
     expect(distFactor({ ...NEUTRAL_PK_CTX, coLpm: 5.25, coRefLpm: 5.25 }, 70)).toBe(1);
     expect(distFactor({ ...NEUTRAL_PK_CTX, coLpm: 3.1, coRefLpm: 5.25 }, 70)).toBe(0.6);
     expect(distFactor({ ...NEUTRAL_PK_CTX, coLpm: 0.1, coRefLpm: 5.25 }, 70)).toBe(0.3);
   });
-  it('at rest the bolus is 7g\'s unchanged model (q 1 ≡ no reference within 1e-9)', () => {
+  it('at rest the bolus is unchanged (q 1 ≡ no reference within 1e-9)', () => {
     const a = peakCe(5.25, 5.25);
     const b = peakCe(0.075 * 70, undefined);
     expect(Math.abs(a.peak - b.peak)).toBeLessThan(1e-9);
