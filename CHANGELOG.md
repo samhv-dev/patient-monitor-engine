@@ -54,8 +54,6 @@ realism review have not run, and the limits below are known.
 - 27 validation rows are outside their evidence band by 30 % or more (the report regenerated on the release tree:
   🟢 96 · 🟡 33 · 🔴 27) and the blind realism review has not been run, so the v1.0 acceptance criteria "V1–V9 pass"
   and "realism review" are not met yet; see [the validation summary](docs/guides/validation-summary.md).
-- During compensated haemorrhage the systemic vascular resistance falls instead of rising (the reflex
-  vasoconstriction is not reproduced).
 - There is no decompensation or reflex-collapse model: shock does not progress by itself to collapse (the autonomic
   hub and the cardiovascular reflexes are v2.0 work, `docs/roadmap/`).
 - No sepsis model fit for teaching: the `sepsis` condition exists, but its course is incomplete — under general

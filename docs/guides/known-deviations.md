@@ -239,8 +239,14 @@ Groups, in short:
   (phenylephrine reflex, haemorrhage classes II–IV, warm septic shock, Cushing) reads the documents' baseline 75 bpm,
   and the Pulse oracle's haemorrhage HR rise is 0 (Stage 8a measured +14 on the older tree). Whether the documents
   hold the rate (`docs/gates/fu-3.md` speaks of a "harness-held HR 75") or the reflex does not reach the rate in
-  them is open for the calibration pass; the owner's own limitation list (no reflex decompensation; SVR in
-  haemorrhage) is in the CHANGELOG.
+  them is open for the calibration pass. In one line: **every validation document reads a heart rate of 75 bpm;
+  whether the harness holds the rate or the reflex never reaches it is unresolved** — a harness or reflex defect to
+  be settled in the calibration pass (R45: the rows stay red).
+- **Haemorrhage, what is measured:** the systemic vascular resistance RISES as the patient bleeds (+659 at 8:00 in
+  the showcase kit's haemorrhage run, `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in an awake 50 %
+  bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The heart-rate bands of the haemorrhage
+  classes in the validation documents have no primary source on record; the target audit
+  (`docs/roadmap/v2.0/audits/04-further-briefs.md`, brief 11) reviews them.
 - **Waveform regression:** pleth and CO2 shapes moved from the Stage 8a baselines with the later physiology; the
   baselines were not re-recorded for this release.
 - **Pulse oracle:** haemorrhage MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg.

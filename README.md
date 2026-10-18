@@ -42,9 +42,8 @@ for v2.0 are in the [roadmap](docs/roadmap/README.md).
   recordings and published models, and every known miss is listed openly — see the
   [validation summary](docs/guides/validation-summary.md) and the [known deviations](docs/guides/known-deviations.md).
   The MODELED physiology is a teaching model whose calibration is ongoing.
-- **Adults only, and not complete.** Among the limits of this release candidate: during compensated haemorrhage the
-  systemic vascular resistance falls instead of rising; there is no decompensation or reflex-collapse model; there is
-  no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
+- **Adults only, and not complete.** Among the limits of this release candidate: there is no decompensation or
+  reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
 - **Not affiliated with any monitor manufacturer.** The `-like` skins evoke a general look; no logos or trade dress.
   Alarms are "IEC-style"; no IEC 60601-1-8 compliance is claimed.
 

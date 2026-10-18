@@ -373,8 +373,6 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 
 ## Not modelled in this release
 
-- **Compensated haemorrhage: the SVR falls instead of rising.** Recorded by the owner as a known limitation
-  (`docs/plans/stage-8b-release.md`, Decision 24).
 - **No decompensation or reflex-collapse model:** the autonomic hub, the perfusion floor and decompensation moved to
   v2.0; an awake patient who loses half the blood volume settles at a mean pressure of about 63 mmHg and never
   arrests (`docs/roadmap/v1.0-remaining.md`; `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F1, F2: no
