@@ -25,6 +25,8 @@ export interface ToneRequest {
   freqHz?: number;
   /** Sim time of the event the tone marks (the detected R for 'qrs'). */
   refT?: number;
+  /** A beat tone's length, ms, when shorter than the default (beepMsAt: fast beats). */
+  durMs?: number;
 }
 
 export interface ToneHandle {

@@ -66,7 +66,6 @@ No exported `…State` type in this module.
 |---|---|---|---|---|
 | `BUFFER_SECONDS` | `120` | — | brief §3.5 | brief §3.5 |
 | `BEEP_DELAY_S` | `0.03` | s | — | Tone at detected R + 30 ms. |
-| `QRS_TONE_HZ` | `880` | Hz | brief §3.6 | Fixed pitch until SpO2 exists (brief §3.6); then pitch(SpO2) |
 
 ## Functions
 
