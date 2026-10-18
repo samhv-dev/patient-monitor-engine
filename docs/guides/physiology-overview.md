@@ -38,6 +38,8 @@ L1 state is driven in one of two modes (brief §4.9):
     β-blocker bradycardia, inotrope tachycardia), AF rate control, hypoxic myocardial depression and the hypoxic
     arrest, the chemoreflex breathing drive, and the haemoglobin-viscosity term on SVR. HR, SBP/DBP and the gas
     targets otherwise stay where the instructor puts them.
+  - **MANUAL cannot show very low pressures:** a MANUAL arterial target of 18/10 mmHg displays about 65/30 (the
+    tracker floors it; a recorded miss).
 - **MODELED** — a lumped physiology computes the state: the four-chamber circulation with its reflexes and coronary
   balance (7a); two lungs feeding one gas-mixing point with O2/CO2 stores (Stage 3, 7b); blood, acid–base,
   electrolytes and fluids (7c); brain, kidney and liver (7d); endocrine stress, glucose and thermoregulation (7e);
@@ -134,9 +136,9 @@ circuit (FU-8 A13).
 | `id` | Mode | Effect |
 |---|---|---|
 | `tamponade` | both | pericardial fluid (default 250 mL), accumulation and drainage (FU-4 G6); 200 mL: CVP 15.1, CO −28 % (`docs/gates/stage-7a.md`); compensatory tachycardia MODELED only |
-| `pe` | both | PVR by the obstruction fraction, one command for circulation and lungs (FU-4 G6); massive PE: EtCO2 33 → 17 (`docs/gates/fu-4.md` S9) |
+| `pe` | both | PVR by the obstruction fraction, one command for circulation and lungs; massive PE: EtCO2 33 → 17, but SaO2 stays 97.8 % and CVP/MAP 9.3/82 (bands < 90 %, ≥ 15/< 65: recorded misses, `docs/gates/fu-4.md`) |
 | `tensionPtx` | both | an alias of the lungs' `ptxTension`: pleural pressure fills through a one-way valve; PEA at +9.75 min (`docs/gates/fu-4.md` S8) |
-| `rvInfarct` | both | RV contractility loss; CVP +1.3–1.8 (`docs/gates/stage-7a.md`) |
+| `rvInfarct` | both | RV contractility loss; CVP rises only +1.3–1.8 (`docs/gates/stage-7a.md`), and the validation rows miss their bands (CVP 6.9 vs 14–18, PAWP 3.3 vs 8–12, MAP 86 vs 60–70; [known-deviations.md](known-deviations.md)) |
 | `hfref` | both | LV Ees ×0.45, dilatation, LVEDP 18, MAP set point 75; reflex terms MODELED only |
 | `hfpef` | both | LV stiffness ×2.5, arterial compliance ×0.7, LVEDP 18 |
 | `htn` | both | MAP set point +20, stiffer arteries, SVR ×1.2 |
@@ -377,6 +379,10 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
   v2.0; an awake patient who loses half the blood volume settles at a mean pressure of about 63 mmHg and never
   arrests (`docs/roadmap/v1.0-remaining.md`; `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F1, F2: no
   bradycardic phase).
+- **No neuraxial (spinal/epidural) block haemodynamics:** a neuraxial block changes only heat balance (and the
+  kidney's anaesthesia flag); there is no sympathectomy, no hypotension or bradycardia from the block, and local
+  anaesthetics can be given only intravenously (other routes are refused). The validation document for a term spinal
+  cannot be measured.
 - **No sepsis model fit for teaching:** the `sepsis` id exists (7e) but its MODELED shock misses its bands
   (`docs/gates/stage-7e.md`), the septic and thyrotoxic patient under GA stays afebrile (36.60 °C, a recorded miss in
   `packages/engine-core/test/engine/fu10-fever.test.ts`), and lactate in sepsis is v2.0 work
@@ -386,6 +392,9 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **Adults only:** no paediatric or obstetric physiology (`docs/roadmap/v1.0-remaining.md`, moved to v2.0). The age
   bands, the `pregnancy` and `neonatalRds` lung ids and the child baselines scale size and lungs only; they are not
   teaching cases.
+- **Heart-rate response in the validation documents:** the documents that expect the heart rate to change read
+  75 bpm because the validation runner holds the baseline rate (a harness defect); 27 validation rows are outside
+  their band and the blind realism review has not been run ([validation summary](validation-summary.md)).
 - **VA-ECMO and cardiopulmonary bypass:** typed in `l2/circ/devices.ts` but no event drives them.
 - **Lundberg A/B waves:** the ICP waveform has P1/P2/P3 and the respiratory component only
   (`docs/plans/stage-7d-organs.md`, decision 15).

@@ -6,12 +6,14 @@ the literature is never loosened to make the model pass; a miss is kept as an `i
 number in its title and appears here until the mechanism is fixed. The calibration pass with a clinician (R44) works
 through this list.
 
-Regenerate the first two tables with `node --experimental-strip-types scripts/deviations.ts`; the `docs-honesty` test
-fails when an expected failure or a skipped test is missing from this page, or a row does not say where it is tracked.
+Regenerate the first two tables with `node --experimental-strip-types scripts/deviations.ts`. The `docs-honesty` test
+fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
+as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree (2026-10-18) the lister prints **151 expected failures** (150 `it.fails` in the package tests and 1
-conditional Playwright `test.fail`, which is inactive, see its row) and **1 skipped test**; no expected-failure title
-is unreadable. "Tracked in" names the gate note (and its section) that records the miss with its number; the open
+On this tree (2026-10-18) there are **152 expected-failure calls**: 150 `it.fails` read by the lister, 1 conditional
+`it.fails` the lister cannot read (`packages/ventilator/test/link-parity.test.ts`, bronchospasm row, listed by hand
+below), and 1 conditional Playwright `test.fail` that is inactive (see its row). That is 151 active misses and
+**1 skipped test**. "Tracked in" names the gate note (and its section) that records the miss with its number; the open
 questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
@@ -167,6 +169,7 @@ questions it cites (Q…, R-…, E-…) are listed in that note.
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37 | `docs/gates/stage-fu-10.md` §3 "Acceptance numbers, before (base) → after", row A3 "hour-8 plateau" (E-FU10-3b) |
 | `packages/ventilator/test/link-r27.test.ts` | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the 7b lungs) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the 7b oedema shunt does not desaturate) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
+| `packages/ventilator/test/link-parity.test.ts` | bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (conditional `it.fails`, title built from a template) | `docs/gates/fu-6.md` §2, row RS15 link parity |
 | `packages/ventilator/test/link-r27.test.ts` | room air (FiO2 0.21): SpO2 rises ≥ 2 (measured SpO2 94.0 → 95.0, SaO2 94.9 → 95.5: shunt 0.15 → 0.10 moves SpO2 by 1) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/pleural.test.ts` | reference run: Ppeak rises 10–20 cmH2O over the normal row (measured +21.6: 45.4 vs 23.8) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 16) |
 
@@ -177,6 +180,15 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 | Test file | What is not tested yet (test title, verbatim) | Tracked in |
 |---|---|---|
 | `packages/engine-core/test/l2/circ/lvad.test.ts` | 7h: VA-ECMO pulsatility fades with flow fraction (tables §8.5) — marked for Stage 7h | `docs/gates/stage-7x.md` §6 "For Ali", item 5 (ECMO has no owning stage yet); the LVAD/VA-ECMO interface came with Stage 7a (`docs/gates/stage-7a.md`) |
+
+## Lung-condition signatures outside their band (allow-list, not `it.fails`)
+
+`packages/engine-core/test/l2/lung/signatures.test.ts` keeps a `KNOWN` list of 11 bands the model misses; a new
+miss fails the test, a listed one does not. Measured vs band: asthma PaEt gap 6.3 vs 20–50; obesity PaEt gap 3.3
+vs 5–8 and shunt 0.05 vs 0.10–0.15; pneumonia SpO2 at FiO2 0.4 96.8 vs 88–93; atelectasis shunt 0.16 vs
+0.10–0.12; simple pneumothorax shunt 0.12 vs 0.07; one-lung ventilation Crs 33.9 vs 25–30 and shunt 0.14 vs
+0.2–0.3; endobronchial intubation Crs 34.0 vs 27.5–30.3; cystic fibrosis SpO2 at FiO2 0.21 95.4 vs 88–94; neonatal
+RDS shunt 0.16 vs 0.2–0.4. Tracked in: the file's own `KNOWN` comment (the calibration pass decides); no gate note.
 
 ## Browser tests skipped on CI WebKit only
 
@@ -235,18 +247,23 @@ to make a row pass (R45). The numbers below are copied from the queue.
 Groups, in short:
 - **Arterial timing and shape** (morphology): R → radial upstroke ≈ 100 ms against 145–190 ms recorded; dicrotic notch
   270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9.
-- **Heart-rate response in the scripted documents:** every document row that expects the heart rate to change
-  (phenylephrine reflex, haemorrhage classes II–IV, warm septic shock, Cushing) reads the documents' baseline 75 bpm,
-  and the Pulse oracle's haemorrhage HR rise is 0 (Stage 8a measured +14 on the older tree). Whether the documents
-  hold the rate (`docs/gates/fu-3.md` speaks of a "harness-held HR 75") or the reflex does not reach the rate in
-  them is open for the calibration pass. In one line: **every validation document reads a heart rate of 75 bpm;
-  whether the harness holds the rate or the reflex never reaches it is unresolved** — a harness or reflex defect to
-  be settled in the calibration pass (R45: the rows stay red).
-- **Haemorrhage, what is measured:** the systemic vascular resistance RISES as the patient bleeds (+659 at 8:00 in
+- **Heart rate in the scripted documents (a harness defect, not a physiology result):** 10 segment rows read exactly
+  75.0 bpm (s1 phenylephrine, s2, s3, s4 classes I/III/IV, t16 warm sepsis, t17a, t17b, t19 Cushing); 8 of them are
+  outside their band. The cause is recorded: the validation runner sends each document's baseline heart rate as a
+  held target, which the engine treats as an instructor-held rate, so the reflex cannot move it (`docs/gates/fu-3.md`
+  §2, "HR harness-held"; not yet fixed). These rows therefore say nothing about the heart-rate response. Outside the
+  harness the reflex does raise the rate (HR 139 at 8:00 in the showcase haemorrhage run; 69.6 → 149 in an awake
+  50 % bleed, `cardiac-reflexes-audit.md` §5.1). The Pulse oracle's haemorrhage HR rise reads 0 on this run (the
+  older tree measured +14); its cause has not been checked. The rows stay red until the runner is fixed and re-run.
+- **Haemorrhage, what is measured:** the systemic vascular resistance rises as the patient bleeds (+659 at 8:00 in
   the showcase kit's haemorrhage run, `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in an awake 50 %
-  bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The heart-rate bands of the haemorrhage
-  classes in the validation documents have no primary source on record; the target audit
-  (`docs/roadmap/v2.0/audits/04-further-briefs.md`, brief 11) reviews them.
+  bleed, `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F3). The reflex does not decompensate: in that awake
+  50 % bleed the heart rate peaks at 149 and then falls to 88 as the baroreflex set point resets, and MAP recovers
+  from 59.6 to 62.6 while lactate reaches 7.6 mmol/L (F1); there is no bradycardic phase in any arm (F2). The
+  heart-rate bands for the haemorrhage classes copy the 2008 ATLS teaching table; an evidence audit of the test
+  targets (its report is not yet in this repository) found them mis-specified: registry data give heart rates of
+  about 86–97 across classes I–IV, and a relative bradycardia appears beyond about 30 % loss. The bands stay unchanged
+  until they are re-based with their sources (no band is loosened to pass).
 - **Waveform regression:** pleth and CO2 shapes moved from the Stage 8a baselines with the later physiology; the
   baselines were not re-recorded for this release.
 - **Pulse oracle:** haemorrhage MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg.

@@ -38,10 +38,12 @@ for v2.0 are in the [roadmap](docs/roadmap/README.md).
 ## What it is not
 
 - **Not a medical device** and not for diagnosis, monitoring or treatment of real patients.
-- **Not clinically validated.** The realism of the waveforms and the physiology has been *measured* against public
-  recordings and published models, and every known miss is listed openly — see the
+- **Not clinically validated.** The waveforms and the physiology have been *measured* against public recordings,
+  published models and a reference physiology engine, and the misses found so far are listed in the
   [validation summary](docs/guides/validation-summary.md) and the [known deviations](docs/guides/known-deviations.md).
-  The MODELED physiology is a teaching model whose calibration is ongoing.
+  The list is not yet complete: an evidence audit of the test targets found that many targets are themselves wrong
+  and that some passing tests hide misses. The MODELED physiology is a teaching model whose calibration has not been
+  done yet.
 - **Adults only, and not complete.** Among the limits of this release candidate: there is no decompensation or
   reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
 - **Not affiliated with any monitor manufacturer.** The `-like` skins evoke a general look; no logos or trade dress.

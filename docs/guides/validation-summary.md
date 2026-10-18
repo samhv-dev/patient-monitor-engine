@@ -37,9 +37,10 @@ Measured on the v1.0.0-rc.1 tree: no physiology file (`packages/engine-core/src`
 · 🔴 16) was measured before Stages 7c–7k, FU-3 to FU-11, FU-7.1 and V.1.
 
 The 27 red rows by suite: morphology 10 (R → radial upstroke about 100 ms against 145–190 ms recorded; dicrotic notch
-270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9), segments 9 (haemorrhage class III/IV and
-class III without β-blockade: HR stays at 75 where 120–180 is expected; RV infarct CVP and PAWP low; warm septic shock
-MAP 87 and HR 75 against 55–60 and 115–130; EtCO2 below 5 mmHg only 83 s after witnessed VF against ≤ 30 s; the
+270–284 ms against 428–518 ms; PPG ↔ ABP shape correlation 0.4 against 0.9), segments 9 (haemorrhage class III/IV, class III without β-blockade and warm septic shock read a heart rate of exactly
+75 bpm: the validation runner sends each document's baseline heart rate as a held target, so these rows do not test
+the heart-rate response at all — a harness defect, recorded and not yet fixed; RV infarct CVP and PAWP low; warm
+septic shock MAP 87 against 55–60; EtCO2 below 5 mmHg only 83 s after witnessed VF against ≤ 30 s; the
 return of breathing after sugammadex reads 0 s against 60–240 s — that never-ventilated patient arrests first,
 `docs/gates/fu-3.md`), waveform regression 5 (pleth and CO2 shapes have moved from the Stage 8a baselines,
 which this release did not re-baseline), and the Pulse oracle 3 (haemorrhage HR rise 0 against Pulse's +48 bpm and
@@ -48,6 +49,21 @@ MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg). The row
 
 **BUILD-PLAN Stage 8 acceptance 1 ("V1–V9 pass") is not met at this release:** 27 rows are outside their evidence
 band by 30 % or more.
+
+## How far the bands themselves can be trusted
+
+The grades above compare the engine with each row's evidence band; they do not test the band. A separate evidence
+audit of 209 test targets (the 43 rows of the previous calibration queue, 154 expected-failure tests and 11
+lung-condition targets; on the 2026-10-11 tree, whose physiology this release keeps) checked each band against its
+sources. It found about one band in five right as written (46 of 209); 81 were mis-specified, 39 too narrow, 39
+unsupported and 4 too wide. Against the evidence (or the corrected band), the engine's value was inside in 90 of the
+209, partly inside in 31, uncertain in 13, and a real miss in 75. Among the bands judged wrong are the heart-rate
+bands of the haemorrhage classes, which copy the ATLS teaching table where registry data show much smaller rises.
+The audit also found misses that the tests pass or understate (the propofol depth-index nadir, cardiac output in
+anaemia, nitroprusside about twice too strong at a starting rate, the heart-rate fall after sugammadex 16 mg/kg).
+These 209 targets are a different set from the 156 graded rows of the report; the two sets of numbers are not
+combined. The audit is to be published in this repository after this release, and the calibration pass corrects the
+bands before it touches the model.
 
 ## Performance and determinism
 

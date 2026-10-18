@@ -136,8 +136,10 @@ PWDB still 403 from Zenodo). Exit 1 (red rows), the three files written:
 **More red rows than `main`'s report (16 → 27): not this stage's to fix (R45); the orchestrator is told.** By suite:
 morphology 10 (as before), segments 9 (+6: documents now measurable with their profiles), regression 5 (new: the
 Stage 8a waveform baselines predate the later physiology; not re-baselined here), oracle 3. One finding for the
-calibration pass: every document row that expects the heart rate to change reads the baseline 75 bpm, and the oracle's
-haemorrhage HR rise is 0 (Stage 8a: +14). No physiology changed after `e737de92` on this branch.
+calibration pass: 10 segment rows read exactly 75 bpm — a harness defect, recorded in `docs/plans/fu-3-followups.md`
+(Q-FU3-9a) and `docs/gates/fu-3.md` §2: the runner sends each document's baseline HR as a held target, so these rows
+do not test the heart-rate response (honesty review H3/H5, 2026-10-18); the oracle's haemorrhage HR rise is 0 (Stage 8a:
++14), cause not checked. No physiology changed after `e737de92` on this branch.
 
 ## 10. Full verification (Task 14)
 
@@ -285,8 +287,8 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
 - The limitation "SVR falls instead of rising in compensated haemorrhage" is removed from the CHANGELOG, the README
   and the physiology overview: it is wrong on this tree (SVR rises: +659 at 8:00 in
   `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md`
-  F3). known-deviations.md states what is measured instead, and names the HR-75 finding (every validation document
-  reads 75 bpm; harness or reflex, unresolved; the rows stay red, R45).
+  F3). known-deviations.md states what is measured instead, and names the HR-75 finding (superseded the same day by the honesty
+  review: 10 rows, a harness defect with its cause on record; the rows stay red, R45).
 - The app wording changes beyond `pairing.ts` (Task 13c) are accepted.
 - The temporary `scratch/wt-8b-maincheck` worktree is removed.
 - CHANGELOG "Changed": E22 (the MH objective "hyperventilation kept until EtCO2 < 40 for 2 min, then normalised",
