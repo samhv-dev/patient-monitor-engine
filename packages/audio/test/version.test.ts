@@ -3,6 +3,6 @@ import { version } from '../src/index.ts';
 
 describe('@pme/audio', () => {
   it('exports its version', () => {
-    expect(version).toBe('1.0.0-rc.1');
+    expect(version).toBe('1.0.0-rc.2');
   });
 });

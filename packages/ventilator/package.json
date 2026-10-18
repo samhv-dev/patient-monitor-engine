@@ -1,6 +1,6 @@
 {
   "name": "@pme/ventilator",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "Hamilton-style mechanical ventilator simulation (forked from the author's ventilator simulator) and its two-way link (VentFrame in, lungState out) to the patient-monitor engine.",
   "license": "MIT",
   "author": "Ali Mahdavi",

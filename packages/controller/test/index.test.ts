@@ -9,6 +9,6 @@ describe('@pme/controller public API', () => {
       'createWebRtcTransport', 'acceptWebRtcPeers', 'createRelaySignaling', 'HostSession', 'ControllerSession', 'ViewerSync',
       'mountInstructorPanel', 'mountRemote', 'vocabularyOf', 'newSessionCode', 'parseWireMessage', 'assertWireSafe',
     ] as const) expect(typeof api[name], name).toBe('function');
-    expect(api.version).toBe('1.0.0-rc.1');
+    expect(api.version).toBe('1.0.0-rc.2');
   });
 });

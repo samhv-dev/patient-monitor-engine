@@ -7,6 +7,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-10-20
+
 ### Fixed
 
 - The Persian Debrief handout (`scripts/showcase/debrief-fa.mjs`) prints the release footer in Persian: not a medical
@@ -141,5 +143,6 @@ realism review have not run, and the limits below are known.
   the documentation, and a few developer pages are leftovers; a clean-up follows this release candidate, then the
   calibration pass and the realism review.
 
-[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...HEAD
+[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...HEAD
+[1.0.0-rc.2]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...v1.0.0-rc.2
 [1.0.0-rc.1]: https://github.com/samhv-dev/patient-monitor-engine/releases/tag/v1.0.0-rc.1
