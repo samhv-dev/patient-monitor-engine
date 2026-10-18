@@ -29,19 +29,20 @@ export function whoOf(d: RunData, prev: string, id: string): Who {
   return ts.every((x) => 'manual' in x.when) ? 'team' : 'patient';
 }
 
-/** Whether simulated second `t` lies in a pulseless span: a kept pulse loss to the next kept return of circulation,
- *  both ends included; a span with no return runs to the end of the record (E60). */
-export function pulselessAt(d: RunData, t: number): boolean {
+/** The pulseless spans of the kept course, [from, to]: a kept pulse loss to the next kept return of circulation; a span
+ *  with no return runs to the end of the record (E60). */
+export function pulselessSpans(d: RunData): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
   let lost: number | null = null;
   for (const r of kept(d)) {
     if (r.ev === 'pulseLoss' && lost === null) lost = r.t;
-    else if (r.ev === 'rosc' && lost !== null) {
-      if (lost <= t && t <= r.t) return true;
-      lost = null;
-    }
+    else if (r.ev === 'rosc' && lost !== null) (out.push([lost, r.t]), (lost = null));
   }
-  return lost !== null && lost <= t;
+  if (lost !== null) out.push([lost, endOf(d)]);
+  return out;
 }
+/** Whether simulated second `t` lies in a pulseless span, both ends included (E60). */
+export const pulselessAt = (d: RunData, t: number, spans = pulselessSpans(d)): boolean => spans.some(([a, b]) => a <= t && t <= b);
 
 /** The value of `k` at second ⌊t⌋, else the first measured in the next three seconds, else null. */
 function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t: number): number | null {
@@ -75,9 +76,10 @@ export function keyMoments(d: RunData): KeyMoment[] {
   }
   const at = new Map(d.samples.map((s) => [s.t, s]));
   const alarms = kept(d).filter((r) => r.kind === 'alarm');
+  const spans = pulselessSpans(d);
   return merged.map((m, i) => {
     const from = i ? (merged[i - 1] as { t: number }).t : -Infinity;
-    const pulseless = pulselessAt(d, m.t);
+    const pulseless = pulselessAt(d, m.t, spans);
     return {
       n: i + 1, t: m.t, who: m.who, text: m.text,
       values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: pulseless ? null : valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
@@ -113,13 +115,7 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
     const cpr = rows.find((r) => r.t >= loss.t && isEvent(r.ev, 'cpr'));
     out.push(cpr ? { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: loss.t, toT: cpr.t, state: 'measured' } : { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: loss.t, toT: null, state: 'noneAfter' });
     // the same sum as facts()' "Pulseless … in all"
-    let off = 0;
-    let lost: number | null = null;
-    for (const r of rows) {
-      if (r.ev === 'pulseLoss' && lost === null) lost = r.t;
-      if (r.ev === 'rosc' && lost !== null) (off += r.t - lost), (lost = null);
-    }
-    if (lost !== null) off += endOf(d) - lost;
+    const off = pulselessSpans(d).reduce((a, [f, t]) => a + t - f, 0);
     out.push({ id: 'pulseless', label: 'Pulseless in all', fromT: loss.t, toT: null, totalS: off, state: 'measured' });
   }
   const same = (a: KeyTime) => objTiles.some((o) => o !== a && o.fromT === a.fromT && o.toT === a.toT);
