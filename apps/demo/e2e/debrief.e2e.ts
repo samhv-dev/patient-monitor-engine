@@ -165,12 +165,17 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 
 // Decision 12: a free run (no scenario) prints in at most four A4 pages — the header band with facts, talking points and
 // notes; trends; drugs, timeline and bookmarks; the appendix. Its /2 export is saved for the Persian check (A7 Step 4).
+// The run goes at ×4 and is paused before the Debrief opens: the CI Linux WebKit runner cannot hold ×8 (S10-F5), and
+// there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3).
 test('a free run prints in at most four pages; its export is pme-debrief/2', async ({ page, browserName }) => {
   test.setTimeout(120_000);
   await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
-  await page.waitForTimeout(25_000); // ≈ 3 sim-min
-  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await page.waitForTimeout(45_000); // ≈ 3 sim-min
+  await bar.getByRole('button', { name: 'Pause' }).click();
+  await expect(bar.getByRole('button', { name: 'Resume' })).toBeVisible({ timeout: 10_000 });
+  await bar.getByRole('link', { name: 'Debrief' }).click();
   const view = page.locator('[data-view=debrief]');
   await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible();
   await expect(view.locator('.db-title')).toHaveText('No scenario (free run)');
