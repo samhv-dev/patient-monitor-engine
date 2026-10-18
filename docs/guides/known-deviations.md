@@ -2,6 +2,8 @@
 
 Codes such as FU-4, R45 or 7a in this page are labels of the project's internal records (gate notes and plans); they will be replaced by plain names after this release candidate.
 
+The same expected failures, grouped by the module that owns them and split into target, measured value and source, are in [known misses by module](../validation/known-misses.md) (generated).
+
 The engine is a teaching model, not a validated clinical simulator. This page lists, openly, where it is known to
 differ from published physiology, recorded patients or a reference model. Policy (ruling R45): a test band taken from
 the literature is never loosened to make the model pass; a miss is kept as an `it.fails` test with the measured
@@ -273,9 +275,9 @@ Groups, in short:
   50 % bleed the heart rate peaks at 149 and then falls to 88 as the baroreflex set point resets, and MAP recovers
   from 59.6 to 62.6 while lactate reaches 7.6 mmol/L (F1); there is no bradycardic phase in any arm (F2). The
   heart-rate bands for the haemorrhage classes copy the 2008 ATLS teaching table; an evidence audit of the test
-  targets (its report is not yet in this repository) found them mis-specified: registry data give heart rates of
-  about 86–97 across classes I–IV, and a relative bradycardia appears beyond about 30 % loss. The bands stay unchanged
-  until they are re-based with their sources (no band is loosened to pass).
+  targets ([its report](../validation/target-audit/30-target-audit.md)) found them mis-specified: registry data give
+  heart rates of about 86–97 across classes I–IV, and a relative bradycardia appears beyond about 30 % loss. The
+  bands stay unchanged until they are re-based with their sources (no band is loosened to pass).
 - **Waveform regression:** pleth and CO2 shapes moved from the Stage 8a baselines with the later physiology; the
   baselines were not re-recorded for this release.
 - **Pulse oracle:** haemorrhage MAP fall 5 against 16 mmHg; MAP fall after propofol 19 against 28 mmHg.

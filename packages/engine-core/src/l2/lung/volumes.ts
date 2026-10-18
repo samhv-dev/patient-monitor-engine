@@ -8,7 +8,7 @@
 //     power laws in stature (cm); below the 5 y lower bound they are extrapolated [ENG]. Children's spirometry: FVC =
 //     0.95 × VC and FEV1/FVC 0.90 [ENG; preschool FEV1/FVC ≈ 0.9 (GLI-2012 direction)]. 16–20 y: the two sets are
 //     BLENDED linearly (the switch at 18 y otherwise jumps TLC +15–24 % at one birthday) [ENG]. v1.0 uses ECSC with the
-//     fixed FEV1/FVC ratio; GLI with the lower limit of normal is v1.1. FEV1/FVC
+//     fixed FEV1/FVC ratio; GLI with the lower limit of normal is a later release's. FEV1/FVC
 //     predicted is FEV1pred/FVCpred (82.4 % at 40 y), not ECSC's separate ratio equation (87.21 − 0.18A = 80.0 %).
 //   PEF predicted: ECSC (men 6.14H − 0.043A + 0.15, women 5.50H − 0.030A − 1.11 L/s); children: the model's own
 //     healthy peak (FVCpred/τf,ref) [ENG].

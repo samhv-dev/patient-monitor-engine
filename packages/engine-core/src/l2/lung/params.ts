@@ -17,7 +17,7 @@ export const CCW_ML = 200;
  * TLC and RV, mL/kg IBW (Pulse 4.3.2 standard patient: TLC 80, RV 16; audit 03 §1) — INTERNAL: the range of the unit P–V
  * sigmoids (side.ts `mechParams`), not the patient's clinical TLC/RV. The respiratory-mechanics model owns those:
  * `resp.volumes.tlc` and `.rv` (ECSC/Zapletal × pathology). Re-basing this range on them moves every mechanics number
- * (v1.1).
+ * (a later release).
  */
 export const TLC_ML_KG = 80;
 export const RV_ML_KG = 16;
