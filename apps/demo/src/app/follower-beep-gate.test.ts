@@ -1,4 +1,4 @@
-// FX-16: a follower's beat-tone gate (beeps off above ×4) reads the session's NOMINAL speed, which ViewerSync passes to
+// A follower's beat-tone gate (beeps off above ×4) reads the session's NOMINAL speed, which ViewerSync passes to
 // its clock every frame, not the steered rate (the host's ±10 %), on which a ×4 phone dropped about half its beeps.
 import { ControllerSession, createInProcessHub, HostSession, ViewerSync } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
@@ -9,7 +9,7 @@ import { beatToneAt } from '../../../../packages/renderer/src/mount.ts';
 const S = 'FXB234';
 const flushIo = () => new Promise((r) => setTimeout(r, 0));
 
-describe('FX-16: the follower beeps at the session speed, not its steered rate', () => {
+describe('the follower beeps at the session speed, not its steered rate', () => {
   it('nominal ×4 steered to 4.3: the beep plays; nominal ×8: it does not', async () => {
     const clock = { wall: 1_000_000 };
     const wallNow = () => clock.wall;
