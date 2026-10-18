@@ -60,6 +60,11 @@ const diag = (p: Page) =>
   });
 
 test('at ×4 a following phone beeps for (nearly) every beat the host beeps for', async ({ page, browser, browserName }) => {
+  // As in device-layer-page.e2e.ts: headless WebKit's AudioContext clock does not run on the Linux CI runner, so its tone
+  // schedulers are tens of seconds late and the host drops every QRS beep as stale (run 39147551166: host 0 beeps, its
+  // scheduler 0–2 played / 38–47 dropped, lateness 34–42 s; the phone 46–51 played at 26–29 s late). Nothing to compare
+  // there. macOS WebKit (the owner's Safari engine) runs this locally: 5/5 at 98–101 %; CI Chromium keeps it.
+  test.skip(browserName === 'webkit' && !!process.env.CI, "headless WebKit's AudioContext clock does not run on the CI runner (host lateness 34–42 s, every host beep dropped as stale; run 39147551166); macOS WebKit and CI Chromium run it");
   test.setTimeout(120_000);
   const dir = mkdtempSync(join(tmpdir(), 'fx16-'));
   writeFileSync(join(dir, 'index.html'), '<!doctype html>'); // the pages come from Vite here
