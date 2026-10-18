@@ -13,6 +13,8 @@ the public API is what the packages export (see the API reference), the `pme-sce
   device and not clinically validated, with the version (new required `--version` flag) and the build.
 - FX-13: a Debrief span could read '1 min 60 s'.
 - FX-18: single-key shortcuts fired while typing in the Debrief notes (a contenteditable field); the letter i toggled the instructor view.
+- FX-16: at ×4 a following phone played only about half of the heartbeat beeps (the beep gate read its steered clock rate, up to 10 % above the session speed); it now reads the session speed, so the phone beeps with the host.
+- FX-16 (owner's ruling from the Saadat skin audit): the heartbeat beep is now 1245 Hz at SpO2 100 % (was 880 Hz, the pitch of the alarm pulses), 100 ms long (was 60 ms) and square-like (a 3rd harmonic added), as measured on the real unit; the SpO2 pitch shift is unchanged (0.1 semitone per %), so the beep stays above the 880 Hz alarm pitch down to SpO2 40 %. When beats come fast (a tachycardia at ×4) a beep lasts at most 60 % of the beat interval, so beeps never run together. Alarm tones are unchanged.
 
 ### Changed
 

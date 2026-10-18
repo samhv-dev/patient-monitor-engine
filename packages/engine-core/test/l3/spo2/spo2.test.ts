@@ -1,14 +1,20 @@
 // SpO2 device chain and tone pitch (brief §4.3, research 03 §3.6; BUILD-PLAN Stage 3 acceptance 9).
 import { describe, expect, it } from 'vitest';
-import { createSpo2, spo2Measured, spo2PitchHz, stepSpo2 } from '../../../src/l3/spo2/spo2.ts';
+import { BEEP_BASE_HZ, createSpo2, spo2Measured, spo2PitchHz, stepSpo2 } from '../../../src/l3/spo2/spo2.ts';
 
 const ok = { probe: 'on' as const, pi: 2, cuffOnLimb: false, cpr: false };
 
 describe('SpO2 device chain', () => {
-  it('pitch: 880·2^(−(100 − SpO2)·0.1/12): 90 % → 830.6 Hz ± 1, 100 % → 880, none → 880', () => {
-    expect(Math.abs(spo2PitchHz(90) - 830.6)).toBeLessThanOrEqual(1);
-    expect(spo2PitchHz(100)).toBe(880);
-    expect(spo2PitchHz(null)).toBe(880);
+  it('pitch: 1245·2^(−(100 − SpO2)·0.1/12): 90 % → 1175.1 Hz ± 1, 100 % → 1245, none → 1245', () => {
+    expect(Math.abs(spo2PitchHz(90) - 1175.1)).toBeLessThanOrEqual(1);
+    expect(spo2PitchHz(100)).toBe(1245);
+    expect(spo2PitchHz(null)).toBe(1245);
+  });
+
+  it('the beep base is the measured Saadat 1245 Hz, apart from the 880 Hz alarm pulses down to SpO2 40 %', () => {
+    expect(BEEP_BASE_HZ).toBe(1245);
+    expect(spo2PitchHz(41)).toBeGreaterThan(880);
+    expect(spo2PitchHz(40)).toBeCloseTo(880, 0);
   });
 
   it('a site step from 97 to 85 %: lag + 8 s average reach 90 % of the change in ≤ 20 s (brief §6.1 response)', () => {

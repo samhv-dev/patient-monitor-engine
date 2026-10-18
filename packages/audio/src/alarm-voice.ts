@@ -98,7 +98,7 @@ export function createTonePlayer(ctx: Ctx, dest: AudioNode, opts: TonePlayerOpti
     switch (tone.kind) {
       case 'qrs':
       case 'pulse':
-        return playBeep(ctx, dest, when, tone.freqHz ?? 880, opts.beepGain ?? 0.25);
+        return playBeep(ctx, dest, when, tone.freqHz ?? 880, opts.beepGain ?? 0.25, tone.durMs);
       case 'alarm': {
         const a = tone as AlarmToneRequest;
         return playAlarmPulse(ctx, dest, when, a, opts.profile.harmonicsDb, opts.profile.rampMs);
