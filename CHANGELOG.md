@@ -7,7 +7,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
-## [1.0.0-rc.1] - 2026-10-17
+## [1.0.0-rc.1] - 2026-10-18
 
 First public **pre-release** (release candidate). It is not the final 1.0.0: the calibration pass and the blind
 realism review have not run, and the limits below are known.
@@ -46,6 +46,11 @@ realism review have not run, and the limits below are known.
 - CI: dependency-licence audit (with every shipped licence text in `LICENSES/`), IIFE size budget, pack smoke and
   TypeDoc build; a release workflow that attaches the IIFE, the embed, the API reference and the licence texts to
   GitHub releases.
+
+### Changed
+
+- The malignant-hyperthermia scenario's ventilation objective now reads "hyperventilation kept until EtCO2 < 40 for
+  2 min, then normalised", checked by a new objective rule kind, `heldThen` (E22, owner ruling 2026-10-17; PR #69).
 
 ### Known limitations
 

@@ -113,7 +113,7 @@ nothing for `v1.0.0`.
 
 ## 8. Documentation (Tasks 10–13)
 
-- README, CITATION.cff (`version 1.0.0-rc.1`, `date-released 2026-10-17`), CONTRIBUTING, SECURITY, four issue templates.
+- README, CITATION.cff (`version 1.0.0-rc.1`, `date-released 2026-10-18`), CONTRIBUTING, SECURITY, four issue templates.
   README shots: `monitor-philips-like.jpg` 58,631 B, `ventilator-embed.jpg` 57,226 B (the monitor shot's wait was raised
   from 12 to 25 s: at 12 s SpO2 and awRR still read `---`).
 - Guides: embedding (MountOptions incl. `audioSilence`, `portrait`, and `layout` marked as declared but not read; the
@@ -122,7 +122,7 @@ nothing for `v1.0.0`.
 - Physiology overview (400 lines; 36 rhythms, 65 drugs, 56 condition ids, each with a Mode label), validation
   summary, known deviations (151 expected failures + 1 skip, each with where it is tracked; the 5 CI-only WebKit skips;
   the 18 retry-only browser tests; the FU-4 suite; INTERIM stand-ins; datasets). `docs-honesty` 7/7.
-- CHANGELOG `## [1.0.0-rc.1] - 2026-10-17` and `RELEASE.md`.
+- CHANGELOG `## [1.0.0-rc.1] - 2026-10-18` (with E22, PR #69, under Changed) and `RELEASE.md`.
 
 ## 9. Validation report regenerated on the release tree (Task 12 Step 0)
 
@@ -275,4 +275,19 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
   `[webkit] scenario-choose-another.e2e.ts:14 the scenario library opened before the first repaint stays open until a
   scenario is loaded (passed on retry #1)` — already on the known-flaky list (known-deviations.md). The embed's light
   test passed first time on WebKit after the timeout fix (and on the merge run 39068579366 before it).
+
+## 19. Orchestrator rulings applied 2026-10-18
+
+- The limitation "SVR falls instead of rising in compensated haemorrhage" is removed from the CHANGELOG, the README
+  and the physiology overview: it is wrong on this tree (SVR rises: +659 at 8:00 in
+  `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md`
+  F3). known-deviations.md states what is measured instead, and names the HR-75 finding (every validation document
+  reads 75 bpm; harness or reflex, unresolved; the rows stay red, R45).
+- The app wording changes beyond `pairing.ts` (Task 13c) are accepted.
+- The temporary `scratch/wt-8b-maincheck` worktree is removed.
+- CHANGELOG "Changed": E22 (the MH objective "hyperventilation kept until EtCO2 < 40 for 2 min, then normalised",
+  rule kind `heldThen`; PR #69, merging before the tag). CHANGELOG and CITATION dated 2026-10-18.
+- GitHub Pages (plan Task 15): run by the executor only after the orchestrator reports the `v1.0.0-rc.1` tag.
+- Open for the owner, unchanged: the hand checks (H17–H22, the Stage 13 print check, `RELEASE.md` items 8–9) and the
+  licence rows marked "open, for Ali" (section 15).
 
