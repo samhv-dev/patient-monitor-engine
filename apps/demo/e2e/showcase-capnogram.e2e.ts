@@ -33,7 +33,7 @@ test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached;
   const tileV = (p: string) => page.locator(`.pme-stile[data-param="${p}"] [data-pme="v"]`);
 
   // attached (the default patient): the capnogram lane in RESP's place, an EtCO2 number with awRR
-  expect(await lanes()).toBe('ECG1 PLETH IBP1 IBP2 CO2');
+  expect(await lanes()).toBe('ECG1 ECG2 CO2 IBP1 IBP2 PLETH');
   await expect(page.locator('.pme-stile[data-param="CO2"] [data-pme="lbl"]')).toHaveText('CO2');
   await expect(tileV('CO2')).toHaveText(/^\d+$/, { timeout: 20_000 });
   await expect(page.locator('.pme-stile[data-param="CO2"]')).toContainText('awRR');
@@ -46,7 +46,7 @@ test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached;
   const line = page.getByRole('button', { name: 'CO₂ sampling line' });
   await expect(line).toHaveAttribute('aria-pressed', 'true');
   await line.click();
-  await expect.poll(lanes, { timeout: 10_000 }).toBe('ECG1 PLETH IBP1 IBP2 RESP');
+  await expect.poll(lanes, { timeout: 10_000 }).toBe('ECG1 ECG2 RESP IBP1 IBP2 PLETH');
   await expect(page.locator('.pme-stile[data-param="RR"]')).toHaveCount(1);
   await expect(page.locator('.pme-stile[data-param="CO2"]')).toHaveCount(0);
   await expect(tileV('RR')).toHaveText(/^\d+$/, { timeout: 20_000 });
@@ -55,5 +55,5 @@ test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached;
 
   // and attached again: the capnogram is back
   await line.click();
-  await expect.poll(lanes, { timeout: 10_000 }).toBe('ECG1 PLETH IBP1 IBP2 CO2');
+  await expect.poll(lanes, { timeout: 10_000 }).toBe('ECG1 ECG2 CO2 IBP1 IBP2 PLETH');
 });

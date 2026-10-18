@@ -1,6 +1,6 @@
 // Alarm header and tile views (brief §6.4 visual table, §6.4.1) as pure functions.
 import { describe, expect, it } from 'vitest';
-import { resolveSkin } from '@pme/skins';
+import { contrastRatio, resolveSkin } from '@pme/skins';
 import { barView, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
 
 const sa = resolveSkin('saadat-like');
@@ -19,10 +19,11 @@ describe('barView', () => {
   it('saadat-like idle: grey bar, lamp off; all-off bell when every parameter alarm is OFF', () => {
     expect(barView(status({ allOff: true }), sa, 10)).toMatchObject({ text: '', bg: '#E0E0E0', lamp: 'off', allOffBell: true });
   });
-  it('saadat-like levels: L1 red flash 2 Hz, L2 yellow flash 0.6 Hz, L3 cyan bar with a steady yellow lamp, black text', () => {
+  it('saadat-like levels: L1 red flash 2 Hz, L2 yellow flash 0.6 Hz, black text; L3 pale cyan bar with grey text (research/34 T5) and a steady yellow lamp', () => {
     expect(barView(status({ active: [hr, asy] }), sa, 10)).toMatchObject({ text: 'ECG ASYSTOLE', bg: '#F00000', fg: '#000000', lamp: 'red-flash', flashHz: 2 });
     expect(barView(status({ active: [hr] }), sa, 10)).toMatchObject({ bg: '#F0F000', lamp: 'yellow-flash', flashHz: 0.6 });
-    expect(barView(status({ active: [leads] }), sa, 10)).toMatchObject({ bg: '#00D0D0', fg: '#000000', lamp: 'yellow-steady', flashHz: 0 });
+    expect(barView(status({ active: [leads] }), sa, 10)).toMatchObject({ bg: '#B0E0E8', fg: '#4A5A64', lamp: 'yellow-steady', flashHz: 0 });
+    expect(contrastRatio('#4A5A64', '#B0E0E8')).toBeGreaterThanOrEqual(4.5); // WCAG AA for the technical-message text
   });
   it('saadat-like silence hides physiological alarms and shows the countdown; the PUMP page keeps ASYSTOLE', () => {
     const s = status({ active: [asy, { ...leads, acked: true }], silencedUntil: 130 });

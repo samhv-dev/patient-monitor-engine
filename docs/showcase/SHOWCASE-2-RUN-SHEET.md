@@ -206,6 +206,8 @@ phones [R31 §3]. Tick every line.
 - [ ] Settings → Monitor: **Saadat-style** (the default). On it, **Pause alarms** is greyed out with "This monitor has
       no alarm pause. Silence mutes for 120 s." [MEAS §7].
 - [ ] Do not change the monitor style during the talk (FX-9) [MEAS §8].
+- Lane order changed in rc.2; screenshots re-taken in the Wednesday rehearsal (ECG, ECG, CO2, IBP1, IBP2, pleth;
+  research/34 T3).
 
 **Limit alarms** (the factory state, and the state after every Load, is "Limit alarms off"; the owner's answer E21)
 - [ ] Instructor → **Devices & alarms** → **All alarms on**: the top-right alarm button then reads **No alarms** [KR
