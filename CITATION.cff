@@ -13,7 +13,8 @@ abstract: >-
   A TypeScript engine and renderer that simulate a bedside patient monitor (ECG, invasive and non-invasive blood
   pressure, SpO2 and pleth, capnography, temperature) for simulation-based medical education, with MANUAL
   (instructor-driven) and MODELED (lumped physiology and pharmacology) modes, device-behaviour realism, data-only
-  skins, remote control, a scenario runner and a validation harness. Not a medical device.
+  skins, remote control, a scenario runner and a validation harness. A pre-release for education only: not a medical
+  device and not clinically validated.
 keywords:
   - medical simulation
   - patient monitor

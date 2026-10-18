@@ -284,6 +284,14 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
 
 ## 19. Orchestrator rulings applied 2026-10-18
 
+- **"v1.1" in public text (ruling):** the roadmap has no v1.1 feature release; public text says "a later release"
+  and never "v1.1" (the app strings, the CHANGELOG and the guides follow this).
+- **Independent honesty review (FIX FIRST, `scratch/plans-backup/8b-honesty-review.md`):** all HIGH (H1–H6), all
+  MEDIUM (M1–M9) and the text LOW items applied. The CHANGELOG rc.1 section is the review's section R (internal ids
+  removed), keeping `RELEASE.md` items 8–9 as open. App strings (approved): Start, Settings → About and the Debrief
+  footer say "not clinically validated"; the footer also names the version and "pre-release". The HR-75 rows are a
+  harness defect (the runner sends the baseline HR as a held target), not an open question.
+
 - The limitation "SVR falls instead of rising in compensated haemorrhage" is removed from the CHANGELOG, the README
   and the physiology overview: it is wrong on this tree (SVR rises: +659 at 8:00 in
   `docs/showcase/SHOWCASE-2-MEASUREMENTS.md`; 1,205 → 2,112 in `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md`

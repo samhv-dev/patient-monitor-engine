@@ -34,6 +34,7 @@ realism review have not run, and the limits below are known.
   "Draft" (not yet reviewed clinically).
 - **The Hamilton-style ventilator** (no affiliation with any manufacturer) and its two-way link with the engine.
 - **Validation tooling:** the validation harness and the blind-review tool.
+- A script that prints the Debrief's JSON export as a Persian (right-to-left) A4 handout (`scripts/showcase/debrief-fa.mjs`); not an app feature, and its translations are not yet reviewed.
 - **Second screen:** a learner monitor following on a second screen in the same browser.
 - **Learners' phones:** phones follow the instructor's monitor, read-only, over a classroom relay on the instructor's
   computer. The relay comes in the classroom kit built from a source checkout (`node scripts/showcase/make-bundle.mjs`;

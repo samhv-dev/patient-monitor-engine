@@ -1,5 +1,7 @@
 # Known deviations
 
+Codes such as FU-4, R45 or 7a in this page are labels of the project's internal records (gate notes and plans); they will be replaced by plain names after this release candidate.
+
 The engine is a teaching model, not a validated clinical simulator. This page lists, openly, where it is known to
 differ from published physiology, recorded patients or a reference model. Policy (ruling R45): a test band taken from
 the literature is never loosened to make the model pass; a miss is kept as an `it.fails` test with the measured
@@ -343,7 +345,7 @@ Groups, in short:
 Source: `docs/gates/fu-4.md` §2 "The clinical scenario table" (Task 22), with the later moves from
 `docs/gates/stage-fu-8b.md` §5–§6. Rig: ETT, VCV 12 × 600, PEEP 5, FiO2 0.5, seed 7, truth values.
 
-- **Suite size.** `packages/engine-core/test/engine/clinical-suite.test.ts` has **28 rows** (condition × intervention:
+- **Suite size.** `packages/engine-core/test/engine/clinical-suite.test.ts` has **28 graded rows and 1 recorded (not asserted) row** (condition × intervention:
   propofol and sevoflurane in healthy and 80 y hypertensive patients, tamponade, class III and full exsanguination,
   massive PE, anaphylaxis, VF with CPR, untreated MH, and three MANUAL rows). Six more scenarios live in their own files
   (S3 `circ-pulsus`, S7 `circ-lowflow-arrest`, S11 `blood-k-rhythm`, S12 `circ-hypoxic-arrest`, S15 `vagal-events`,

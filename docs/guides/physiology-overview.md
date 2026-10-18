@@ -1,5 +1,7 @@
 # Physiology overview
 
+Codes such as FU-4, R45 or 7a in this page are labels of the project's internal records (gate notes and plans); they will be replaced by plain names after this release candidate.
+
 What the engine simulates, organ by organ, and in which mode. This page is derived from the code and the stage gate
 notes on `main` at the v1.0.0-rc.1 release; numbers that measure realism are in the
 [validation summary](validation-summary.md), and every known miss is in [known-deviations.md](known-deviations.md).
@@ -32,7 +34,7 @@ L1 state is driven in one of two modes (brief §4.9):
     a dead space, a heat state); lung conditions, MH and cooling then act on top (`l2/resp/pipeline.ts`).
   - **Endocrine:** the conditions' HR rows, stress and fever scale the sinus clock; their SVR, contractility and
     venous terms are held neutral, "the instructor owns the pressures" (`l2/endo/adapters.ts` `writeCirc`).
-  - **Brain:** Cushing's response is a MANUAL coupling rule on SBP/DBP (`l2/organs/effects.ts`; check 19 MANUAL
+  - **Brain:** Cushing's response is a MANUAL coupling rule on SBP/DBP and HR (`l2/organs/effects.ts`; check 19 MANUAL
     ΔMAP +41.7, `docs/gates/stage-7d.md`).
   - **Not in MANUAL:** the baroreflex and chemoreflex, every drug's direct HR term (opioid vagotonia, atropine,
     β-blocker bradycardia, inotrope tachycardia), AF rate control, hypoxic myocardial depression and the hypoxic
@@ -58,8 +60,8 @@ cell, any part that is MODELED only.
 
 The monitor layer measures the L1 truth the same way in either mode (brief §6).
 
-- **HR:** the last 12 R–R intervals averaged without the longest and shortest (IEC-style), or the `saadat-like`
-  skin's 8 s time window; falls back to pleth or ABP when the leads are off (§6.1).
+- **HR:** the last 12 R–R intervals averaged without the longest and shortest (IEC-style; the `philips-like` skin
+  uses the plain mean of 12), or the `saadat-like` skin's 8 s time window; falls back to pleth or ABP when the leads are off (§6.1).
 - **SpO2 and PR:** a device chain with site delay, averaging and its own pleth peak detector; the displayed SpO2
   keeps falling 10–30 s after ventilation resumes (§4.3, §6.1; coupling rule M5).
 - **NIBP:** a cuff state machine (inflate, step-deflate, result with timestamp, or fail) with AUTO and STAT; a failed
@@ -135,7 +137,7 @@ circuit (FU-8 A13).
 
 | `id` | Mode | Effect |
 |---|---|---|
-| `tamponade` | both | pericardial fluid (default 250 mL), accumulation and drainage (FU-4 G6); 200 mL: CVP 15.1, CO −28 % (`docs/gates/stage-7a.md`); compensatory tachycardia MODELED only |
+| `tamponade` | both | pericardial fluid (250 mL × severity by default), accumulation and drainage (FU-4 G6); 200 mL: CVP 15.1, CO −28 % (`docs/gates/stage-7a.md`); compensatory tachycardia MODELED only |
 | `pe` | both | PVR by the obstruction fraction, one command for circulation and lungs; massive PE: EtCO2 33 → 17, but SaO2 stays 97.8 % and CVP/MAP 9.3/82 (bands < 90 %, ≥ 15/< 65: recorded misses, `docs/gates/fu-4.md`) |
 | `tensionPtx` | both | an alias of the lungs' `ptxTension`: pleural pressure fills through a one-way valve; PEA at +9.75 min (`docs/gates/fu-4.md` S8) |
 | `rvInfarct` | both | RV contractility loss; CVP rises only +1.3–1.8 (`docs/gates/stage-7a.md`), and the validation rows miss their bands (CVP 6.9 vs 14–18, PAWP 3.3 vs 8–12, MAP 86 vs 60–70; [known-deviations.md](known-deviations.md)) |
@@ -196,7 +198,7 @@ link's `anaphylaxis-bronchospasm` and `air-embolism` profiles still set their sh
 | `bpf` | both | bronchopleural fistula: leak fraction |
 | `airwayObstruction` | both | tracheal or tube obstruction: resistance |
 | `cf` | both | cystic fibrosis: resistance, plugging, V/Q |
-| `nmWeakness` | MODELED only | weak spontaneous breathing through the drive's maximal pressure and CO2 response; in MANUAL only its chest-wall and atelectasis terms act |
+| `nmWeakness` | both (spontaneous-effort part MODELED only) | weak spontaneous breathing through the drive's maximal pressure and CO2 response; in MANUAL only its chest-wall and atelectasis terms act |
 | `diaphragmParalysis` | both | sided atelectasis and FRC; the weaker spontaneous effort is MODELED only |
 | `pregnancy` | both | respiratory only: FRC ×0.8 at term, chest wall, PVR (no obstetric physiology) |
 | `neonatalRds` | both | respiratory mechanics only; on the adult rig the shunt misses its band, 0.16 vs 0.2–0.4 (`docs/gates/stage-7b.md`) |
@@ -228,7 +230,7 @@ circulation's own flows (`l2/organs/inputs.ts`).
 
 | `id` | Mode | Effect |
 |---|---|---|
-| `tbi` | both | raised ICP, Cushing's response (MANUAL: coupling rule on SBP/DBP; MODELED: SVR plus the baroreflex's bradycardia) |
+| `tbi` | both | raised ICP, Cushing's response (MANUAL: coupling rule on SBP/DBP and HR; MODELED: SVR plus the baroreflex's bradycardia) |
 | `hepaticFailure` | both | lower lactate and drug clearance |
 | `aki` | both | lower GFR and urine output |
 
@@ -292,8 +294,8 @@ top of the held targets; its direct HR term and every reflex response do not. 65
 | `succinylcholine` | depolariser | both | phase I block, K rise, seeded repeat-dose bradyarrhythmia | same (a rhythm request) |
 | `sugammadex` | reversal | both | TOFR 0.9 in 2.11 min from TOF 2 (7g) | default |
 | `neostigmine` | anticholinesterase | both | reversal with a ceiling, bradycardia | reversal (no bradycardia) |
-| `glycopyrrolate` | anticholinergic | MODELED only | HR rise, blocks vagal events | only prevents the repeat-succinylcholine bradyarrhythmia |
-| `atropine` | anticholinergic | MODELED only | HR rise (0.5 mg: 73 → 100, FU-4) | as glycopyrrolate |
+| `glycopyrrolate` | anticholinergic | both (HR rise MODELED only) | HR rise, blocks vagal events | only prevents the repeat-succinylcholine bradyarrhythmia |
+| `atropine` | anticholinergic | both (HR rise MODELED only) | HR rise (0.5 mg: 73 → 100, FU-4) | as glycopyrrolate |
 | `phenylephrine` | α1 agonist | both | SVR, PVR, venoconstriction, reflex bradycardia | default (no reflex) |
 | `ephedrine` | mixed adrenergic | both | SVR, venoconstriction, indirect drive via 7e, tachyphylaxis | default; HR via 7e |
 | `norepinephrine` | α1/β1 agonist | both | SVR, contractility, venoconstriction, PVR | default |
@@ -329,7 +331,7 @@ top of the held targets; its direct HR term and every reflex response do not. 65
 | `naloxone` | opioid antagonist | both | reverses opioid drive (breathing at +0.1 s, 7f) | same |
 | `flumazenil` | benzodiazepine antagonist | both | reverses benzodiazepine | same |
 | `lidocaine` | local anaesthetic | both | toxicity, VT conversion hazard, antinociception, myocardial depression | same |
-| `bupivacaine` | local anaesthetic | both | toxicity: seizure, bradycardia, VF (225 mg: VF at 78 s, 7g) | same |
+| `bupivacaine` | local anaesthetic | both | toxicity: seizure, bradycardia, VF (225 mg in 70 kg: VF at 78 s, 7g) | same |
 | `ropivacaine` | local anaesthetic | both | toxicity, by potency-weighted dose (FU-7) | same |
 | `lipidEmulsion` | lipid | both | lowers the free local-anaesthetic level (×0.681 at 240 s, 7g) | same |
 | `tranexamicAcid` | placeholder | both | PK and dose log only; no effect (coagulation is not modelled) | same |

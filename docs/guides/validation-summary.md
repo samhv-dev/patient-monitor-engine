@@ -1,5 +1,7 @@
 # Validation summary
 
+Codes such as FU-4, R45 or 7a in this page are labels of the project's internal records (gate notes and plans); they will be replaced by plain names after this release candidate.
+
 What has been measured, how, and what the measurements do and do not show. The full, regenerated report is
 [`docs/validation/report.md`](../validation/report.md) (harness: `pnpm validate`, Stage 8a); the open items are the
 [calibration queue](../validation/calibration-queue.md) and [known-deviations.md](known-deviations.md).
@@ -17,10 +19,10 @@ ventilation), and grades every row against an evidence band. Datasets, all downl
 | PTB-XL 1.0.3 | CC BY 4.0 | 100 (report-only ECG comparison) |
 | Pulse Wave Database (PWDB) 0.1.0 | PDDL 1.0 | 0 — not fetched: Zenodo answers 403 to this network (Stage 8a, and again for this report) |
 
-Suites: **morphology** (recorded vs engine: R → radial upstroke, dicrotic notch, PPG ↔ ABP shape, brief §9 V1–V5),
+Suites: **morphology** (recorded vs engine: R → radial upstroke, dicrotic notch, PPG ↔ ABP shape, design brief §9, V1–V5),
 **intervals**, **sanity** scenarios and **gate** numbers (segment validation of `pme-validation` documents),
 **waveform regression** (2 % per sample against committed baselines), **determinism** (V9) and the **Pulse
-differential oracle** (the Pulse physiology engine as a reference, never bundled). Grades (R40): 🟢 inside the band
+differential oracle** (the Pulse physiology engine as a reference, never bundled). Grades: 🟢 inside the band
 (or within 10 % of a point target), 🟡 misses by less than 30 %, 🔴 misses by 30 % or more or was not measured; red
 rows are "gating" and fail the run, yellow rows never do. Every yellow and red row goes to the calibration queue.
 

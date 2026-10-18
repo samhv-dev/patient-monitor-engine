@@ -51,7 +51,7 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
   reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
 - **Tested browsers:** desktop Chromium and WebKit by automated tests (Playwright); real Safari, phones and
   tablets only by hand checks that are still open at this release candidate; Firefox is not tested.
-- **Not affiliated with any monitor manufacturer.** The `-like` skins evoke a general look; no logos or trade dress.
+- **Not affiliated with any monitor or ventilator manufacturer (the ventilator's Hamilton-style look included).** The `-like` skins evoke a general look; no logos or trade dress.
   Alarms are "IEC-style"; no IEC 60601-1-8 compliance is claimed.
 
 ## Quick start
@@ -118,7 +118,8 @@ pnpm validate                        # the validation harness (30–60 min; down
 The code is [MIT](LICENSE) (© Ali Mahdavi and contributors). The engine bundles short ECG templates derived from
 PhysioNet databases under ODC-By 1.0, and some modules are derived from Apache-2.0 sources; every third-party item and
 its attribution is listed in [NOTICES.md](NOTICES.md), and the full third-party licence texts are in
-[LICENSES/](LICENSES/); both travel with every build and release asset. Validation datasets are
+[LICENSES/](LICENSES/); they are inside every zip, package and kit, and attached beside the single-file IIFE on each
+release (its banner points to them). Validation datasets are
 downloaded, never committed. To cite this software, use [CITATION.cff](CITATION.cff).
 Whether the attribution in NOTICES.md and the build banner is sufficient for ODC-By templates bundled in MIT-licensed
 code has not yet had a legal review.
