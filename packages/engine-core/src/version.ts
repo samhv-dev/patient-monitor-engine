@@ -1,4 +1,4 @@
-export const version = '1.0.0-rc.1';
+export const version = '1.0.0-rc.2';
 
 // The build id. The release build sets it to the tagged commit's short hash (PME_BUILD, through the `define` in the
 // engine-core and renderer vite.config.ts); everywhere else — the workspace, Vitest, the demo's Vite — the identifier

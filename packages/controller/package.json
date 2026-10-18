@@ -1,6 +1,6 @@
 {
   "name": "@pme/controller",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "Command protocol, transports (in-process, postMessage, BroadcastChannel, WebSocket, WebRTC), instructor panel and the pme-scenario/1 runner for the patient-monitor engine.",
   "license": "MIT",
   "author": "Ali Mahdavi",

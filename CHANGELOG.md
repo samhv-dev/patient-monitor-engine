@@ -7,6 +7,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-10-20
+
+Second public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a
+medical device and it is not clinically validated. It is not the final 1.0.0: the calibration pass and the blind
+realism review have not run. The known limitations listed under 1.0.0-rc.1 still apply, except where this section
+says otherwise.
+
 ### Fixed
 
 - The Persian Debrief handout (`scripts/showcase/debrief-fa.mjs`) prints the release footer in Persian: not a medical
@@ -32,6 +39,17 @@ the public API is what the packages export (see the API reference), the `pme-sce
 ### Known limitations
 
 - FX-15 (with FX-14): in Safari a hidden host tab is suspended, so the host simulation pauses (the scenario clock does not advance) and a following phone loses the session (owner's hand check H19, 2026-10-18). The fix is for a later release; until then keep the host tab visible and frontmost.
+- The classroom kit (the app, the relay for learners' phones and the macOS launchers) is still built from a source
+  checkout with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22); it is not a release asset of this release
+  candidate.
+- Not run at this release: the two release-checklist runs of `RELEASE.md` — the 600 s tick-cost gate on an idle
+  machine (item 8) and the 10-minute soak with a busy Ventilator view and a paired Remote (item 9).
+- Browser coverage as for 1.0.0-rc.1, with one temporary change: on the WebKit CI runner a test that passes only on
+  a retry is recorded but no longer fails the run (docs/gates/stage-14.md, "Temporary relaxation"); Chromium still
+  fails on it. Tests that passed only on a retry are listed in docs/guides/known-deviations.md.
+- The owner's hand checks of 2026-10-18 ran on 1.0.0-rc.1 builds (docs/gates/stage-8b.md §11): the hidden host tab
+  failed (above); the others passed. This release candidate gets a shorter smoke check after the tag, recorded in
+  the repository's gate notes.
 
 ## [1.0.0-rc.1] - 2026-10-18
 
@@ -141,5 +159,6 @@ realism review have not run, and the limits below are known.
   the documentation, and a few developer pages are leftovers; a clean-up follows this release candidate, then the
   calibration pass and the realism review.
 
-[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...HEAD
+[Unreleased]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.2...HEAD
+[1.0.0-rc.2]: https://github.com/samhv-dev/patient-monitor-engine/compare/v1.0.0-rc.1...v1.0.0-rc.2
 [1.0.0-rc.1]: https://github.com/samhv-dev/patient-monitor-engine/releases/tag/v1.0.0-rc.1
