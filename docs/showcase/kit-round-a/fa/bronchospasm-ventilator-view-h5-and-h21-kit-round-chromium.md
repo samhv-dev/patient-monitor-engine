@@ -1,0 +1,33 @@
+### Bronchospasm, Ventilator view, H5 and H21 (kit round) (chromium, kit 62e521c3, load avg 2.61–4.27)
+
+Script: scripts/showcase/kit-round-a.kitround.ts · server: Start Classroom.command (relay + static app, node, as built) · reaction 2 s · 0 phones · setup: {"sessionCode":"AKGNED","alarmButtonAtOpen":"Limit alarms off","alarmButtonAfterAllOn":"No alarms","soundButton":"Sound on","alarmButtonAfterLoad":"Limit alarms off","limitsAfterLoad":"Limit alarms OFF after Load","allOnAgainAfterLoadAt":"00:07","alarmButtonAfterAllOnAgain":"No alarms","alarmButtonAtEnd":"No alarms"}
+
+| Wall | Clock | × | State | HR | ART | SpO2 | EtCO2 | RR | Load | What |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1.6 | 00:07 | 4 | spasm | 70 | 121/82 (97) | – | – | 25 | 2.97 | Load "Severe bronchospasm on the ventilator" at ×4, Bookmark |
+| 6.6 | 00:27 | 4 | spasm | 75 | 116/84 (96) | 89 | 30 | 16 | 2.81 | Ventilator view opened |
+| 21.6 | 01:27 | 4 | spasm | 77 | 116/85 (96) | 95 | 32 | 14 | 2.61 | ≈ 1:24, before salbutamol {"vte":300,"ppeak":35,"mv":4.2,"pmaxBanner":true,"ventText":"⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 300 VTE ml 35 Ppeak cmH₂O 4.2 ExpMinVol l/min 24 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patien"} |
+| 32.5 | 02:11 | 4 | treatedByButton | 78 | 116/86 (97) | 96 | 33 | 14 | 3.21 | press **Give salbutamol 250 µg** |
+| 73.9 | 06:17 | 4 | treatedByButton | 85 | 116/86 (97) | 98 | 34 | 14 | 3.79 | after the 2-min fast-forward |
+| 73.9 | 06:17 | 8 | treatedByButton | 85 | 116/86 (97) | 98 | 34 | 14 | 3.79 | ≈ 3 min after salbutamol (2-min span + ×8) {"vte":501,"ppeak":34,"mv":7,"pmaxBanner":false,"ventText":"⚠ Intrinsic PEEP i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 34 Ppeak cmH₂O 7.0 ExpMinVol l/min 20 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patient & Sc"} |
+| 87.4 | 08:45 | 8 | treatedByButton | 86 | 116/86 (97) | 98 | 34 | 14 | 3.62 | after the 2-min fast-forward |
+| 87.4 | 08:45 | 8 | treatedByButton | 86 | 116/86 (97) | 98 | 34 | 14 | 3.62 | ≈ 6 min after salbutamol (second span + ×8) {"vte":501,"ppeak":32,"mv":7,"pmaxBanner":false,"ventText":"No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 32 Ppeak cmH₂O 7.0 ExpMinVol l/min 19 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patient & Sc"} |
+| 123.6 | 11:09 | 4 | treatedByButton | 87 | 116/86 (97) | 98 | 34 | 14 | 4.27 | back on the Ventilator view after 30 s on the Monitor view {"vte":501,"ppeak":31,"mv":7,"pmaxBanner":false,"ventText":"No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 31 Ppeak cmH₂O 7.0 ExpMinVol l/min 18 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independent educational reimplementation — not affiliated with any manufacturer. Close Controls Patient & Sc"} |
+
+States: 00:01 spasm · 02:08 treatedByButton
+
+Alarms raised: 00:28 %SPO2 LOW
+
+Spans: {"min":2,"via":"command","clockBefore":"04:03","fromT":243.1,"endT":363.1,"wallS":10.4,"speedBefore":4,"speedAfter":4,"rateAfter3s":4,"banner":"Fast-forwarded 2 min, 04:03 → 06:03. During it: no alarms.","alarms":[],"load1":3.79}
+
+{"min":2,"via":"command","clockBefore":"06:17","fromT":377.1,"endT":497.1,"wallS":10.4,"speedBefore":8,"speedAfter":8,"rateAfter3s":8,"banner":"Fast-forwarded 2 min, 06:17 → 08:17. During it: no alarms.","alarms":[],"load1":3.62}
+
+Measures: {"h5":{"salbutamolAt":"02:08","before":{"vte":300,"ppeak":35,"mv":4.2,"pmaxBanner":true},"at3min":{"vte":501,"ppeak":34,"mv":7,"pmaxBanner":false,"etco2":33},"at6min":{"vte":501,"ppeak":32,"mv":7,"pmaxBanner":false,"etco2":34}},"h21":{"holdBefore":[],"perTwoSeconds":[{"wallS":2,"etco2":34,"phones":[]},{"wallS":4,"etco2":34,"phones":[]},{"wallS":6,"etco2":34,"phones":[]},{"wallS":8,"etco2":34,"phones":[]},{"wallS":10,"etco2":34,"phones":[]},{"wallS":12,"etco2":34,"phones":[]},{"wallS":14,"etco2":34,"phones":[]},{"wallS":16,"etco2":34,"phones":[]},{"wallS":18,"etco2":34,"phones":[]},{"wallS":20.1,"etco2":34,"phones":[]},{"wallS":22.1,"etco2":34,"phones":[]},{"wallS":24.1,"etco2":34,"phones":[]},{"wallS":26.1,"etco2":34,"phones":[]},{"wallS":28.1,"etco2":34,"phones":[]},{"wallS":30.1,"etco2":34,"phones":[]}],"etco2Before30s":{"min":34,"max":34},"etco2DuringMonitor30s":{"min":33,"max":34,"samples":480},"cockpitDuringMonitor30s":{"frames":6020,"firstTick":26267,"lastTick":32286,"contiguous":true},"cockpitKeptDriving":true,"holdKeptEverySample":true,"simSpanS":120.3,"ventAfter":{"vte":501,"ppeak":31,"mv":7,"pmaxBanner":false}}}
+
+Debrief: {"objectives":[{"status":"not assessable","text":"– Not assessable Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEPThis objective has no rule: the instructor judges it."},{"status":"met","text":"✓ Met Treat with a bronchodilatorSalbutamol (IV/neb) at 02:08"},{"status":"not assessable","text":"– Not assessable Watch the delivered tidal volume and minute volume recover as air trapping easesThis objective has no rule: the instructor judges it."}],"facts":{"Lowest SpO₂":"87 % at 00:30","Lowest ART M / NIBP M":"94 mmHg at 00:15","Highest EtCO₂":"34 mmHg at 06:12","Highest T1 / T2":"36.8 °C at 00:01","Labs (the model): last (lowest–highest)":"K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.37 (7.33–7.41) · Glucose 5.6 mmol/L (5.6–5.6) · Tcore 36.8 °C (36.8–36.8)"},"timelineRows":16,"minuteRows":12}
+
+Phones: null
+
+Notes: cockpit frame tap installed (__pmeVentRx)
+
+Errors: none

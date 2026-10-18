@@ -1,0 +1,23 @@
+--- a/scripts/showcase/kit-round-a.kitround.ts (origin/kit-round-a3 1abbbdea)
++++ b/scripts/showcase/kit-round-a.kitround.ts (capture copy, not committed)
+@@ -14,7 +14,7 @@
+ import { alarms, hist, latest, maxOf, minOf, r1, record, REPO, simNow, stateId, watchConsole, type Sample } from './showcase-support.ts';
+ import { pdfInfo } from '../../apps/demo/e2e/pdf-text.ts';
+ 
+-const OUTDIR = join(REPO, 'docs/showcase/kit-round-a');
++const OUTDIR = join(REPO, 'docs/showcase/kit-round-a/fa'); // debrief-fa capture: evidence beside the Debrief JSON exports
+ const N_PHONES = Number(process.env.KITROUND_PHONES ?? 3);
+ const REACT_S = Number(process.env.KITROUND_REACT_S ?? 2);
+ const KIT_SHA = (() => {
+@@ -256,6 +256,11 @@
+     const minuteRows = await view.locator('#db-minutes tbody tr').count();
+     const d: Row = { openedAt: mmss(at), objectives, facts: Object.fromEntries(dts.map((k, i) => [k, dds[i]])), timelineRows: timeline.length, timeline, minuteRows };
+     this.r.debrief = d;
++    // debrief-fa capture: the report's own JSON export (Stage 13 Q3), as the presenter's button saves it
++    const [dl] = await Promise.all([p.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
++    mkdirSync(OUTDIR, { recursive: true });
++    await dl.saveAs(join(OUTDIR, `debrief-${slug(this.r.case)}-${this.r.browser}.json`));
++    d.json = `debrief-${slug(this.r.case)}-${this.r.browser}.json (${dl.suggestedFilename()})`;
+     await p.evaluate(() => (location.hash = '#/teach'));
+     await p.waitForTimeout(1000);
+     await this.teachTab('scenario');
