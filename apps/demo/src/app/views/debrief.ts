@@ -33,9 +33,32 @@ function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.undone}` : '');
 
+type Who = 'team' | 'patient' | 'scenario';
+/** The event marks on the trend charts, from the kept rows: the pulse loss and return are the patient's; a drug, fluid,
+ *  shock or CPR given from the panel or a remote is the team's; every other state after the run's first is the
+ *  scenario's. (The redesign's B replaces them with the numbered key moments.) */
+export function chartMarks(d: RunData): Array<{ t: number; who: Who }> {
+  const rows = d.rows.filter((r) => r.undone === undefined);
+  const firstState = rows.find((r) => r.ev?.startsWith('state:'));
+  return rows.flatMap((r): Array<{ t: number; who: Who }> => {
+    const ev = r.ev ?? '';
+    if (ev === 'pulseLoss' || ev === 'rosc') return [{ t: r.t, who: 'patient' }];
+    if ((r.kind === 'action' || r.kind === 'remote') && (ev.startsWith('drug:') || ['fluid', 'shock', 'cpr'].includes(ev))) return [{ t: r.t, who: 'team' }];
+    if (ev.startsWith('state:') && r !== firstState) return [{ t: r.t, who: 'scenario' }];
+    return [];
+  });
+}
+/** A mark on a chart: a thin dashed line with a shape on top, ■ team (blue), ● patient (vermillion), │ scenario (grey). */
+const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
+  team: (x, top) => `<rect x="${(x - 3.5).toFixed(1)}" y="${top - 1}" width="7" height="7" fill="#0072B2"/>`,
+  patient: (x, top) => `<circle cx="${x.toFixed(1)}" cy="${top + 2.5}" r="3.8" fill="#D55E00"/>`,
+  scenario: () => '',
+};
+const MARK_INK: Readonly<Record<Who, string>> = { team: '#0072B2', patient: '#D55E00', scenario: '#777' };
+
 /** One trend as inline SVG over the kept course: a black line with gaps where nothing was measured, the first and
- *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark. */
-function chart(d: RunData, k: TrendKey, end: number): HTMLElement {
+ *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark, and the event marks. */
+function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: number; who: Who }> = []): HTMLElement {
   const m = trendMeta(k);
   const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', {}, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
   const pts = d.samples.filter((s) => s[k] !== null);
@@ -61,6 +84,7 @@ function chart(d: RunData, k: TrendKey, end: number): HTMLElement {
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
   const returns = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined)
     .map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/><text x="${x(r.t) + 3}" y="${T + 9}">↺</text>`).join('');
+  const mks = marks.map((mk) => `<g class="db-mk" data-who="${mk.who}"><line x1="${x(mk.t).toFixed(1)}" x2="${x(mk.t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${MARK_INK[mk.who]}" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>${MARK_SVG[mk.who](x(mk.t), T)}</g>`).join('');
   const f = (v: number) => v.toFixed(m.digits);
   const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
   const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
@@ -70,7 +94,7 @@ function chart(d: RunData, k: TrendKey, end: number): HTMLElement {
 <line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/><line class="axis" x1="${L}" x2="${L}" y1="${T}" y2="${H - B}"/>
 <line class="grid" x1="${L}" x2="${W - R}" y1="${T}" y2="${T}"/>
 <text x="${L - 4}" y="${T + 4}" text-anchor="end">${f(hi)}</text><text x="${L - 4}" y="${H - B}" text-anchor="end">${f(lo)}</text>
-<g class="ticks">${ticks}</g>${returns}<path d="${path}"/></svg>`;
+<g class="ticks">${ticks}</g>${mks}${returns}<path d="${path}"/></svg>`;
   fig.append(svg);
   return fig;
 }
@@ -132,6 +156,7 @@ export function debriefView(session: AppSession, link: Link): View {
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
     const marks = d.rows.filter((r) => r.kind === 'bookmark' || r.kind === 'restore');
+    const cm = chartMarks(d);
     live1.replaceChildren(
       band,
       section('objectives', 'Objectives', obj.length
@@ -146,7 +171,9 @@ export function debriefView(session: AppSession, link: Link): View {
     );
     live2.replaceChildren(
       runFoot(),
-      section('trends', 'Trends', h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end)))),
+      section('trends', 'Trends',
+        h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, '│'), ' scenario state'),
+        h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, cm)))),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
