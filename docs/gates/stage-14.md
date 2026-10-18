@@ -244,6 +244,20 @@ adaptations below were accepted by the orchestrator (2026-10-18).
 - `data/reviewed-keys.txt`, `data/reviewed-title-keys.txt`: the accepted keys above. `compare_lists.py` was run from a
   copy that prints every difference, not the first five.
 
+## Temporary relaxation (2026-10-18, after the merge; PR `ci-webkit-retry-warn`)
+
+Orchestrator ruling of 2026-10-18, time-boxed. On the **webkit** leg of the e2e job, an untagged test that passed only
+on a retry now gives a `::warning`; it no longer fails the job. The **chromium** leg still fails (exit 1). On both legs
+the step still writes a `::warning` line per retried test and the step summary, and a missing or unreadable JSON report
+still fails. The reason is the time left before the demo: the rule turned a different untagged WebKit test red on
+almost every run. These were PR #80's `showcase-events-layout.e2e.ts:37` and then `device-layer-page.e2e.ts:72` (run
+39149678598, attempts 1 and 2), and PR #82's `device-layer-page.e2e.ts:89` (crash class). Each cost a 45-minute rerun
+in a week with no CI slack (freeze Tuesday 20 October, 18:00). The two timing-class tests from run 39149678598 are
+recorded, not tagged, in `stage-14/known-flaky.tsv` ("not tagged" section).
+
+**Revert condition:** make the webkit leg exit 1 again after the v1.0.0-rc.2 demo, when Task 0 of the calibration pass
+re-harvests the known-flaky list. The workflow comment above the step names this ruling and this condition.
+
 ## Open (for the orchestrator or the owner)
 
 1. Question 7 (the audit's publication) is confirmed by owner decision E18 = YES, per the orchestrator's launch
