@@ -15,10 +15,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - FX-18: single-key shortcuts fired while typing in the Debrief notes (a contenteditable field); the letter i toggled the instructor view.
 - FX-16: at ×4 a following phone played only about half of the heartbeat beeps (the beep gate read its steered clock rate, up to 10 % above the session speed); it now reads the session speed, so the phone beeps with the host.
 - FX-16 (owner's ruling from the Saadat skin audit): the heartbeat beep is now 1245 Hz at SpO2 100 % (was 880 Hz, the pitch of the alarm pulses), 100 ms long (was 60 ms) and square-like (a 3rd harmonic added), as measured on the real unit; the SpO2 pitch shift is unchanged (0.1 semitone per %), so the beep stays above the 880 Hz alarm pitch down to SpO2 40 %. When beats come fast (a tachycardia at ×4) a beep lasts at most 60 % of the beat interval, so beeps never run together. Alarm tones are unchanged.
+- FX-20: notes typed in the Debrief right after opening the app on it were emptied by the next refresh.
 
 ### Changed
 
 - `saadat-like` skin matched to the owner's photos of a real unit (research/34 Tuesday set): CO2 lane at 6 mm/s on a 0–50 mmHg scale (values above 50 clip; the number does not), lanes ECG, ECG, CO2/RESP, IBP1, IBP2, pleth, IBP2 mid blue #6C9CF8, technical-message bar pale cyan with grey text; the `iran-icu-as-found` preset inherits the capnogram, IBP2 and message-bar changes (it keeps its own lane order).
+- Debrief redesign A: the report opens with a header band (the case, the patient, the simulated and wall-clock spans,
+  the date, Run by); the verdicts read ✓ Observed, ✗ Not observed, – Not assessable and ◆ Discuss (a structural lesson,
+  `"debrief": "discuss"`), and a rule-less objective ticked by the instructor reads ✓ Observed with its tick time; the
+  trend charts carry event marks (■ team, ● patient, │ scenario) with a legend in words; a talking points box (four
+  fixed debriefing prompts) sits before the notes; drugs, the timeline and bookmarks share a page and set-up rows print
+  grey. The JSON export is `pme-debrief/2` (adds the version, `discuss`, the tick time and the measured interval; key
+  times and key moments are empty for now); the Persian handout reads `/1` and `/2`. Scenario objectives may carry
+  `"debrief": "recognition" | "discuss"`; the malignant hyperthermia card gains a hand-ticked recognition objective.
 
 ### Known limitations
 

@@ -43,7 +43,8 @@
       "type": "object",
       "required": ["text"],
       "additionalProperties": false,
-      "properties": { "$comment": { "type": "string" }, "text": { "type": "string", "minLength": 1 }, "rule": { "$ref": "#/definitions/objectiveRule" } }
+      "properties": { "$comment": { "type": "string" }, "text": { "type": "string", "minLength": 1 }, "rule": { "$ref": "#/definitions/objectiveRule" },
+        "debrief": { "enum": ["recognition", "discuss"], "description": "Optional: how the Debrief uses this objective — recognition (its instructor tick is the time to recognition) or discuss (a structural lesson: ◆ Discuss when not met)." } }
     },
     "objectiveRule": {
       "type": "object",

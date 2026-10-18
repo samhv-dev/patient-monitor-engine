@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Persian (Farsi) handout of the Debrief report: reads the report's own JSON export ("Download the record (JSON)",
-// schema pme-debrief/1, Stage 13 Q3) and prints a right-to-left A4 PDF with the English report's sections in its order:
-// the case, objectives with their verdicts, measured facts (the labs row included), trends, drugs and fluids, the
-// timeline (the undone course struck through), bookmarks, notes and the one-row-per-minute appendix; the footer (the
+// schema pme-debrief/1 or pme-debrief/2, Stage 13 Q3; /2 adds `version` and the redesign's verdict words) and prints a
+// right-to-left A4 PDF with the English report's sections in its order: the case, objectives with their verdicts,
+// measured facts (the labs row included), trends, drugs and fluids, the timeline (the undone course struck through),
+// bookmarks, the talking points (/2 only), notes and the one-row-per-minute appendix; the footer (the
 // release wording of views/debrief.ts FOOT, with the version and the build) and "page n of N" on every page. A handout
 // script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
 // release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
@@ -11,7 +12,7 @@
 // Stage 13 print checks already use (no new dependency); the Vazirmatn font (SIL OFL) is embedded from local TTFs.
 //   node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]
 //   --version: the version the build printed on its Start screen (e.g. 1.0.0-rc.1). pme-debrief/1 carries the build but
-//            not the version, so it is given here; a JSON's own "version" field, if a later export adds one, wins.
+//            not the version, so it is given here; pme-debrief/2 carries its own "version", which wins.
 //   --fonts: a folder with Vazirmatn-Regular.ttf and Vazirmatn-Bold.ttf (or the variable Vazirmatn[wght].ttf); else
 //            $PME_FA_FONTS, ~/Library/Fonts, ~/.fonts, /Library/Fonts, /usr/share/fonts/truetype/vazirmatn
 //   --html / --text: also write the HTML, and the printed Persian text one string per line (for a spelling pass)
@@ -234,6 +235,25 @@ const ICON = {
   'not assessable': '<svg class="ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6h7" fill="none" stroke="#000" stroke-width="1.8"/></svg>',
 };
 const MARK = { met: 'Met', 'not met': 'Not met', 'not assessable': 'Not assessable' };
+const DIAMOND = '<svg class="ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1 11 6 6 11 1 6Z" fill="#000"/></svg>';
+/** The verdict's mark, icon, words and reason line. /1: today's MARK and ICON. /2: the redesign's words (views/debrief.ts
+ *  markOf): ✓ Observed (a rule-less objective the instructor ticked too, with the tick's time as its reason),
+ *  ✗ Not observed, – Not assessable, and ◆ Discuss for a discuss objective not met. */
+function markOf(o, schema) {
+  const v = o.verdict;
+  if (schema === 'pme-debrief/1') return { mark: null, icon: ICON[v.status] ?? '', words: MARK[v.status], why: v.why };
+  if (v.status === 'met') return { mark: 'observed', icon: ICON.met, words: 'Observed', why: v.why };
+  if (v.status === 'not met') return o.discuss ? { mark: 'discuss', icon: DIAMOND, words: 'Discuss', why: v.why } : { mark: 'not-observed', icon: ICON['not met'], words: 'Not observed', why: v.why };
+  if (v.tickedT !== undefined) return { mark: 'observed', icon: ICON.met, words: 'Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
+  return { mark: 'not-assessable', icon: ICON['not assessable'], words: 'Not assessable', why: v.why };
+}
+/** The talking points (views/debrief.ts PEARLS): fixed text, each phase and its prompt from the table. */
+const PEARLS = [
+  ['Reactions', 'How did that feel? What stands out for you?'],
+  ['Description', 'In a sentence or two: what was the problem, and when did you know?'],
+  ['Analysis', 'Take one key moment: what did you see, what did you think, what did you do?'],
+  ['Summary', 'One thing to keep doing, one thing to do differently next time.'],
+];
 const KIND = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 
 /** One trend as inline SVG (views/debrief.ts chart()): time runs left to right as on the monitor; a dashed line at each return. */
@@ -307,7 +327,10 @@ ol.obj { padding-inline-start: 6mm; margin: 0; list-style-type: persian; }
 ol.obj li { margin-bottom: 2.5mm; break-inside: avoid; }
 .mark { display: inline-block; min-width: 30mm; font-weight: 700; }
 .ic { width: 2.6mm; height: 2.6mm; vertical-align: -0.2mm; margin-inline-end: 1mm; }
-li[data-status="not met"] .mark { text-decoration: underline; }
+li[data-status="not met"]:not([data-mark]) .mark { text-decoration: underline; } /* /1 only */
+.pearls { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
+.pearl { border: 0.6pt solid #000; min-height: 20mm; padding: 1.5mm 2mm; }
+.pearl p { margin: 1mm 0 0; font-size: 9pt; }
 .why { font-size: 9pt; color: #222; }
 .en { font-family: "Vazirmatn", sans-serif; font-style: italic; }
 .chart { margin: 0 0 4mm; break-inside: avoid; }
@@ -331,7 +354,7 @@ table.minutes td { direction: ltr; unicode-bidi: isolate; font-variant-numeric: 
 table.minutes th .unit { display: block; font-weight: 400; }
 .notes { border: 0.6pt solid #000; min-height: 30mm; }
 #trends, #timeline, #minutes { break-before: page; }
-#objectives, #facts, #bookmarks, #notes { break-inside: avoid; }
+#objectives, #facts, #bookmarks, #pearls, #notes { break-inside: avoid; }
 .muted { color: #333; }
 .totals { margin: 2mm 0 0; padding-inline-start: 5mm; }
 p { orphans: 2; widows: 2; }
@@ -364,7 +387,10 @@ function render(j, fontsCss, version) {
 <dt>${D.t('Duration')}</dt><dd>${D.t(`${mmss(end)} simulated · ${span(wall)} on the clock`)}</dd></dl>
 <p class="runby">${D.t('Run by')}: <span></span></p>`;
   const obj = j.objectives.length
-    ? `<ol class="obj">${j.objectives.map((o) => `<li data-status="${esc(o.verdict.status)}"><span class="mark">${ICON[o.verdict.status] ?? ''}${D.t(MARK[o.verdict.status])}</span> ${D.t(o.text)}<div class="why">${D.t(o.verdict.why)}</div></li>`).join('')}</ol>`
+    ? `<ol class="obj">${j.objectives.map((o) => {
+      const m = markOf(o, j.schema);
+      return `<li data-status="${esc(o.verdict.status)}"${m.mark ? ` data-mark="${m.mark}"` : ''}><span class="mark">${m.icon}${D.t(m.words)}</span> ${D.t(o.text)}<div class="why">${D.t(m.why)}</div></li>`;
+    }).join('')}</ol>`
     : `<p class="muted">${D.t('This run has no objectives.')}</p>`;
   const facts = j.facts.length
     ? `<dl class="facts">${j.facts.map((x) => `<dt>${D.t(x.label)}</dt><dd>${x.value.split(' · ').map((v) => D.t(v)).join('<br>')}</dd>`).join('')}</dl>`
@@ -390,6 +416,7 @@ function render(j, fontsCss, version) {
     section('drugs', D.t('Drugs and fluids'), drugs),
     section('timeline', D.t('Timeline'), timeline),
     section('bookmarks', D.t('Bookmarks'), bookmarks),
+    j.schema === 'pme-debrief/2' ? section('pearls', D.t('Talking points'), `<div class="pearls">${PEARLS.map(([ph, pr]) => `<div class="pearl"><b>${D.t(ph)}</b><p>${D.t(pr)}</p></div>`).join('')}</div>`) : '',
     section('notes', D.t('Notes'), '<div class="notes"></div>'),
     section('minutes', D.t('Appendix: one row per minute'), minutes),
   ].join('\n');
@@ -434,7 +461,7 @@ if (!args.length) {
 }
 const inputs = args.map((file) => {
   const j = JSON.parse(readFileSync(file, 'utf8'));
-  if (j.schema !== 'pme-debrief/1') throw new Error(`${file}: not a Debrief export (schema ${j.schema})`);
+  if (j.schema !== 'pme-debrief/1' && j.schema !== 'pme-debrief/2') throw new Error(`${file}: not a Debrief export (schema ${j.schema}; pme-debrief/1 or pme-debrief/2 expected)`);
   const version = j.version ?? versionArg;
   if (!version) {
     console.error(`${file}: the Debrief JSON carries the build (${j.build}) but not the version. Pass --version with the version that build printed on its Start screen and in the English Debrief footer (e.g. --version 1.0.0-rc.1).\n${USAGE}`);

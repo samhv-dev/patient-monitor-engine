@@ -74,3 +74,15 @@ describe('the scenario card fields and the endocrine profile', () => {
     expect(errs({ ...base(), durationMin: 0 }).join()).toMatch(/durationMin/);
   });
 });
+
+describe('the Debrief fields (Debrief redesign A)', () => {
+  const withObjective = (o: unknown) => ({ ...base(), objectives: [o] });
+  it('accepts an objective flagged recognition or discuss', () => {
+    expect(validateScenario(withObjective({ text: 'Name it', debrief: 'recognition' })).ok).toBe(true);
+    expect(validateScenario(withObjective({ text: 'Better', debrief: 'discuss', rule: { kind: 'never', event: 'pulseLoss' } })).ok).toBe(true);
+  });
+  it('refuses an unknown debrief value', () => {
+    expect(errs(withObjective({ text: 'Name it', debrief: 'structural' })).join()).toMatch(/debrief/);
+  });
+  it.todo('refuses four takeHome lines (turned on by B5a)');
+});

@@ -8,12 +8,17 @@ import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
 import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
+import { version } from '@pme/renderer';
 
 export type Status = 'met' | 'not met' | 'not assessable';
 export interface Verdict {
   status: Status;
   why: string;
+  /** An `eventWithin` verdict that found both events: the times its reason line prints, and the seconds asked. */
+  measure?: { fromT: number; toT: number; askedS: number };
 }
+/** An objective's verdict in the report: `tickedT`, the instructor's tick (seconds), only on a rule-less objective. */
+export type ObjectiveVerdict = Verdict & { tickedT?: number };
 
 /** mm:ss of simulated time (the session bar's clock). */
 export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
@@ -125,7 +130,7 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
     const aw = `${eventWords(rule.after, d)}${since}`;
     const bw = eventWords(rule.event, d);
     if (!b && !measured(d, rule.event, a.t)) return no(unmeasured(rule.event, `after ${aw} at ${mmss(a.t)}`));
-    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).` };
+    if (b) return { status: b.t - a.t <= rule.withinS ? 'met' : 'not met', why: `${cap(bw)} ${span(b.t - a.t)} after ${aw} (${mmss(a.t)} → ${mmss(b.t)}; within ${span(rule.withinS)} asked).`, measure: { fromT: a.t, toT: b.t, askedS: rule.withinS } };
     if (end - a.t >= rule.withinS) return { status: 'not met', why: `No ${bw} within ${span(rule.withinS)} of ${aw} at ${mmss(a.t)}.` };
     return no(`The run ended ${span(end - a.t)} after ${aw} at ${mmss(a.t)}, before ${span(rule.withinS)} had passed.`);
   }
@@ -174,13 +179,16 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Every objective of the run's scenario with its verdict, in the document's order; a not-assessable one ticked in
- *  the Scenario tab says so (the tick is the instructor's judgement, not a rule's). */
-export function objectives(d: RunData): Array<{ text: string; verdict: Verdict }> {
+ *  the Scenario tab says so (the tick is the instructor's judgement, not a rule's). A rule-less objective's tick is
+ *  also kept as `tickedT`; a `debrief: 'discuss'` objective carries `discuss: true` (its status is unchanged). */
+export function objectives(d: RunData): Array<{ text: string; discuss?: true; verdict: ObjectiveVerdict }> {
   return (d.doc?.objectives ?? []).map((o) => {
     const text = drugWords(objectiveText(o));
+    const ruleLess = typeof o === 'string' || !o.rule;
     const v = verdict(typeof o === 'string' ? undefined : o.rule, d);
     const tick = v.status === 'not assessable' ? kept(d).find((r) => r.kind === 'note' && r.text === `Objective met: ${text}`) : undefined;
-    return { text, verdict: tick ? { ...v, why: `${v.why} The instructor ticked it at ${mmss(tick.t)}.` } : v };
+    const verdictOut: ObjectiveVerdict = tick ? { ...v, why: `${v.why} The instructor ticked it at ${mmss(tick.t)}.`, ...(ruleLess ? { tickedT: tick.t } : {}) } : v;
+    return { text, ...(typeof o !== 'string' && o.debrief === 'discuss' ? { discuss: true as const } : {}), verdict: verdictOut };
   });
 }
 
@@ -273,7 +281,32 @@ export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKe
   return out;
 }
 
-/** The report as JSON (`pme-debrief/1`) — the record, the verdicts, the facts and the minute table, with the build
- *  that made it. Not the "Run by" line or the notes box: they are printed only, never stored. */
-export const debriefJson = (d: RunData, build: string): string =>
-  JSON.stringify({ schema: 'pme-debrief/1', build, record: d, objectives: objectives(d), facts: facts(d), minutes: perMinute(d) }, null, 1);
+/** The report as exported (`pme-debrief/2`). Over `/1` it adds the renderer's `version`, `discuss` and the verdicts'
+ *  `tickedT` and `measure`, and the key times and key moments of the course (empty until they are computed). */
+export interface DebriefExport {
+  schema: 'pme-debrief/2';
+  version: string;
+  build: string;
+  record: RunData;
+  objectives: ReturnType<typeof objectives>;
+  facts: Fact[];
+  keyTimes: Array<{
+    id: 'recognition' | 'firstTeam' | `objective:${number}` | 'pulseLostToCpr' | 'pulseless';
+    label: string; fromT: number | null; toT: number | null; askedS?: number; totalS?: number;
+    state: 'measured' | 'notTicked' | 'noneAfter';
+  }>;
+  /** Values as recorded, unrounded, except SpO₂: null while pulseless (`pulseless` says why). */
+  keyMoments: Array<{
+    n: number; t: number; who: 'team' | 'patient' | 'scenario'; text: string;
+    values: { hr: number | null; map: number | null; spo2: number | null; etco2: number | null };
+    pulseless: boolean; alarms: string[];
+  }>;
+  minutes: ReturnType<typeof perMinute>;
+}
+/** The report as JSON (`pme-debrief/2`, `DebriefExport`) — the record, the verdicts, the facts, the key times and
+ *  moments, and the minute table, with the version and build that made it. Not the "Run by" line or the notes box:
+ *  they are printed only, never stored. */
+export const debriefJson = (d: RunData, build: string): string => {
+  const out: DebriefExport = { schema: 'pme-debrief/2', version, build, record: d, objectives: objectives(d), facts: facts(d), keyTimes: [], keyMoments: [], minutes: perMinute(d) };
+  return JSON.stringify(out, null, 1);
+};

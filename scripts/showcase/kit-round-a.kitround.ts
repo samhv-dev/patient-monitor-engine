@@ -271,7 +271,7 @@ class Run {
     const view = p.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
     await p.waitForTimeout(1500);
-    const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => ({ status: x.getAttribute('data-status'), text: (x.textContent ?? '').replace(/\s+/g, ' ').trim() })));
+    const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => ({ status: x.getAttribute('data-status'), mark: x.getAttribute('data-mark'), text: (x.textContent ?? '').replace(/\s+/g, ' ').trim() })));
     const dts = await view.locator('#db-facts dt').allInnerTexts();
     const dds = await view.locator('#db-facts dd').allInnerTexts();
     const timeline = (await view.locator('#db-timeline tbody tr').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim());

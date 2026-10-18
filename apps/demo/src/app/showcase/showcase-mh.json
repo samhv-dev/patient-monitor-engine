@@ -6,6 +6,7 @@
   "durationMin": 40,
   "story": "A fit 35-year-old man, induced with propofol and succinylcholine and maintained on sevoflurane 2 %. The jaw is stiff after the succinylcholine. Minutes into surgery the EtCO₂ climbs at the same ventilation and the heart rate rises; untreated, the core temperature passes 38.5 °C about 19 minutes after induction and he arrests in VF at 42 °C about 45 minutes after induction. Run the MH crisis: trigger off, oxygen, hyperventilation, dantrolene, cooling and the potassium.",
   "objectives": [
+    { "text": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "debrief": "recognition" },
     { "text": "Call the MH crisis (stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate) within 120 s of the early signs (EtCO₂ above 45 mmHg at the same ventilation)", "rule": { "kind": "eventWithin", "after": "state:earlySigns", "event": "state:triggerOff", "withinS": 120 } },
     { "text": "Give dantrolene 2.5 mg/kg within 300 s of calling the crisis", "rule": { "kind": "eventWithin", "after": "state:triggerOff", "event": "drug:dantrolene", "withinS": 300 } },
     "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg",

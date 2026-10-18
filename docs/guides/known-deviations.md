@@ -16,7 +16,7 @@ as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are
 
 On this tree there are **152 expected-failure calls**, all read by the lister: 151 `it.fails` (the bronchospasm row of
 `packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
-(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
+(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **2 skipped tests**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
@@ -182,6 +182,7 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 
 | Test file | What is not tested yet (test title, verbatim) | Tracked in |
 |---|---|---|
+| `packages/controller/test/scenario/schema.test.ts` | refuses four takeHome lines (turned on by B5a) | `docs/plans/debrief-redesign.md` Task A1 Step 1 and Task B5a: the scenario field `takeHome` (at most three lines) comes with the redesign's B, which turns this test on. |
 | `packages/engine-core/test/l2/circ/lvad.test.ts` | VA-ECMO pulsatility fades with flow fraction (tables §8.5) — awaits the bypass-device model | Not tracked: no stage owns ECMO and the 'Stage 7h' in the title does not exist; VA-ECMO pulsatility versus flow fraction is untested (the LVAD/VA-ECMO interface came with `docs/gates/stage-7a.md`). |
 
 ## Lung-condition signatures outside their band (allow-list, not `it.fails`)

@@ -327,7 +327,8 @@
    {"en": "Repeat dantrolene 2.5 mg/kg within 600 s of the first dose while EtCO₂ is still above 45 mmHg", "fa": "تکرار دانترولن 2.5 mg/kg ظرف 600 ثانیه پس از دوز اول، اگر EtCO₂ همچنان بالاتر از 45 mmHg باشد", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives", "reviewed": false},
    {"en": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L", "fa": "درمان هیپرکالمی (کلرید کلسیم، انسولین همراه با دکستروز) ظرف 300 ثانیه پس از افزایش K⁺ به بیش از 5.5 mmol/L", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives", "reviewed": false},
    {"en": "Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg", "fa": "بازگرداندن تهویه به 12 × 500 ظرف 300 ثانیه پس از کاهش EtCO₂ به کمتر از 40 mmHg", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives", "reviewed": false},
-   {"en": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "fa": "ادامه‌ی هیپرونتیلاسیون تا زمانی که EtCO₂ به مدت 2 دقیقه کمتر از 40 mmHg بماند، سپس عادی‌سازی تهویه (بازگشت به 12 × 500)", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (E22, PR #69, on main since ab10903e)", "reviewed": false}
+   {"en": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "fa": "ادامه‌ی هیپرونتیلاسیون تا زمانی که EtCO₂ به مدت 2 دقیقه کمتر از 40 mmHg بماند، سپس عادی‌سازی تهویه (بازگشت به 12 × 500)", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (E22, PR #69, on main since ab10903e)", "reviewed": false},
+   {"en": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "fa": "تشخیص هیپرترمی بدخیم از روی مانیتور: EtCO₂ بالاتر از 45 mmHg با تهویه‌ی ثابت، تاکی‌کاردی (ارزیابی با مربی)", "note": "E52: the new first MH objective (owner item 9; its words await his confirmation).", "source": "apps/demo/src/app/showcase/showcase-mh.json objectives (Debrief redesign A, E52)", "reviewed": false}
   ],
   "ev": [
    {"en": "the start", "fa": "شروع اجرا", "source": "apps/demo/src/app/debrief.ts eventWords()", "reviewed": false},
@@ -428,7 +429,19 @@
   {"en": "Bag-mask breaths began", "fa": "تهویه با بگ و ماسک آغاز شد", "source": "apps/demo/src/app/record.ts", "reviewed": false},
   {"en": "Ventilated breaths began", "fa": "تهویه‌ی کمکی آغاز شد", "note": "Uncertain: see \"ventilated breaths\".", "source": "apps/demo/src/app/record.ts", "reviewed": false},
   {"en": "Circulation returned (the model)", "fa": "بازگشت گردش خون (مدل)", "source": "apps/demo/src/app/record.ts", "reviewed": false},
-  {"en": "Pulse lost (the model)", "fa": "قطع نبض (مدل)", "source": "apps/demo/src/app/record.ts", "reviewed": false}
+  {"en": "Pulse lost (the model)", "fa": "قطع نبض (مدل)", "source": "apps/demo/src/app/record.ts", "reviewed": false},
+  {"en": "Observed", "fa": "مشاهده شد", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Not observed", "fa": "مشاهده نشد", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Discuss", "fa": "برای بحث", "note": "Uncertain: «برای بحث» (a structural lesson to discuss); «نیازمند گفت‌وگو» is an alternative.", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Talking points", "fa": "محورهای گفت‌وگو", "note": "PEARLS debriefing phases (E59); the box prints in the Persian handout this week.", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Reactions", "fa": "واکنش‌ها", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Description", "fa": "توصیف", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Analysis", "fa": "تحلیل", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Summary", "fa": "جمع‌بندی", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "How did that feel? What stands out for you?", "fa": "این تجربه چه حسی داشت؟ چه چیزی بیش از همه در ذهنتان مانده است؟", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "In a sentence or two: what was the problem, and when did you know?", "fa": "در یک یا دو جمله: مشکل چه بود و از چه زمانی متوجه آن شدید؟", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "Take one key moment: what did you see, what did you think, what did you do?", "fa": "یک لحظه‌ی کلیدی را در نظر بگیرید: چه دیدید، به چه فکر کردید و چه کردید؟", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false},
+  {"en": "One thing to keep doing, one thing to do differently next time.", "fa": "یک کار را نام ببرید که ادامه می‌دهید و یک کار را که دفعه‌ی بعد به شکل دیگری انجام می‌دهید.", "note": "Rendered as an instruction to the learner («نام ببرید»), the natural Persian form of the English list.", "source": "apps/demo/src/app/views/debrief.ts (Debrief redesign A)", "reviewed": false}
  ],
  "templates": [
   {"en": "{t} simulated · {span} on the clock", "fa": "{t} زمان شبیه‌سازی‌شده · {span} زمان واقعی", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
@@ -531,6 +544,7 @@
   {"en": "Scenario state: {state}", "fa": "وضعیت سناریو: {state}", "source": "apps/demo/src/app/record.ts / alarms.ts alarmLine()", "reviewed": false},
   {"en": "{label} high", "fa": "{label} بالا", "source": "apps/demo/src/app/record.ts / alarms.ts alarmLine()", "reviewed": false},
   {"en": "{label} low", "fa": "{label} پایین", "source": "apps/demo/src/app/record.ts / alarms.ts alarmLine()", "reviewed": false},
-  {"en": "Objective met: {objective}", "fa": "هدف محقق شد: {objective}", "source": "apps/demo/src/app/record.ts / alarms.ts alarmLine()", "reviewed": false}
+  {"en": "Objective met: {objective}", "fa": "هدف محقق شد: {objective}", "source": "apps/demo/src/app/record.ts / alarms.ts alarmLine()", "reviewed": false},
+  {"en": "Observed by the instructor at {t}.", "fa": "مربی آن را در {t} مشاهده کرد.", "source": "apps/demo/src/app/views/debrief.ts markOf() (Debrief redesign A)", "reviewed": false}
  ]
 }

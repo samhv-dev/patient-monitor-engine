@@ -13,7 +13,7 @@ Schema is `packages/controller/scenarios/pme-scenario-1.schema.json`; `validateS
 | `schema` | always `"pme-scenario/1"` |
 | `id`, `title`, `notes` | identifier (`[A-Za-z][A-Za-z0-9_.-]*`), title, instructor notes |
 | `category`, `story`, `durationMin` | the library group (e.g. `ACLS`, `Induction`), the learner-facing case text shown before the start, the expected run time in minutes |
-| `objectives` | learning objectives, one per entry: a string, or `{ "text", "rule" }` where the rule (`eventWithin`, `occurred`, `never`, …) lets the Debrief report mark it met or not met |
+| `objectives` | learning objectives, one per entry: a string, or `{ "text", "rule", "debrief" }` where the rule (`eventWithin`, `occurred`, `never`, …) lets the Debrief report mark it ✓ Observed or ✗ Not observed, and the optional `debrief` says how the report uses it: `"recognition"` (a rule-less objective the instructor ticks in the Scenario tab when the cues are named; its tick is the time to recognition) or `"discuss"` (a structural lesson: not met, it prints ◆ Discuss instead of ✗ Not observed). An objective with neither a rule nor a tick prints – Not assessable |
 | `seed` | uint32; the same seed and the same learner actions replay the same run |
 | `mode` | `"manual"` (targets and ramps you script) or `"modeled"` (the physiology responds by itself) |
 | `patient` | `ageY`, `sex`, `weightKg`, `heightCm`, `ageBand`, `baseline` (starting values of state variables: `hr`, `sbp`, `dbp`, `spo2`, `rr`, `etco2`, `tempCore`, …), `rhythm` (`{ "id": "sinus" }`), `sensors` (`ecg`, `spo2`, `nibp`, `abp`, `cvp`, `pap`, `co2`, `temp`: `"on"`, `"off"`, …), `neuro`, `blood`, `endo`, and `profile` (below) |
