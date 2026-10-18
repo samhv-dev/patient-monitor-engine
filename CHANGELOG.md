@@ -7,6 +7,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Fixed
+
+- The Persian Debrief handout (`scripts/showcase/debrief-fa.mjs`) prints the release footer in Persian: not a medical
+  device and not clinically validated, with the version (new required `--version` flag) and the build.
+
 ### Known limitations
 
 - FX-15 (with FX-14): in Safari a hidden host tab is suspended, so the host simulation pauses (the scenario clock does not advance) and a following phone loses the session (owner's hand check H19, 2026-10-18). The fix is for a later release; until then keep the host tab visible and frontmost.
