@@ -17,10 +17,10 @@ prints the talking points box and the redesign's verdict words (Observed, Not ob
    node scripts/showcase/debrief-fa.mjs debrief-showcase-mh-2026-10-17.json --version 1.0.0-rc.1 --fonts ~/Downloads/vazirmatn/fonts/ttf
    ```
 
-   `--version` is required: the JSON (`pme-debrief/1`) carries the build but not the version, so give the version that
-   build printed on its Start screen and in the English Debrief footer (the release kit 3db25a3b: `1.0.0-rc.1`; kits
-   built before the release, such as 62e521c3, printed no version and their packages said `0.0.0`). Without it the
-   script stops with an error before printing anything. If a later export adds a `version` field, that field wins.
+   `--version` is required for a `pme-debrief/1` JSON: `/1` carries the build but not the version, so give the version
+   that build printed on its Start screen and in the English Debrief footer (the release kit 3db25a3b: `1.0.0-rc.1`;
+   kits built before the release, such as 62e521c3, printed no version and their packages said `0.0.0`). Without it the
+   script stops with an error before printing anything. A `pme-debrief/2` export carries its own `version`, which wins.
 
    The PDF is written beside the JSON as `<name>.fa.pdf` (`--out-dir DIR` to put it elsewhere). Several JSON files may
    be given at once. `--html` also writes the HTML; `--text` writes the printed Persian strings one per line (for the

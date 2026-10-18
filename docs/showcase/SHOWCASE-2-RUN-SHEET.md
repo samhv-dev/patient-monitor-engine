@@ -16,7 +16,7 @@ These replace the round-B defaults D1–D6 [R00 2026-10-17 "OWNER ANSWERS"].
 
 | # | Question | The owner's answer | Where |
 |---|---|---|---|
-| E17 | Which objectives the Debrief marks | **Meet every timed objective.** The one ✗ of the day is the tamponade's structural line "Better: pericardiocentesis before the pulse loss", **named as the lesson**, not a timing. Measured: exactly that one ✗ on this path [A3.1] | Case 2, §4 |
+| E17 | Which objectives the Debrief marks | **Meet every timed objective.** The one line to discuss of the day (◆ Discuss, E43) is the tamponade's structural line "Better: pericardiocentesis before the pulse loss", **named as the lesson**, not a timing. Measured: exactly that one ◆ on this path [A3.1] | Case 2, §4 |
 | E19a | MH: when to call | **At Early signs** (06:52) [MEAS §0, §1] | Case 3 |
 | E19c | Slot length | **30 minutes or less.** The cases, in order: opening with the QR moment (3) · bronchospasm with the Ventilator view · tamponade → CPR → drainage with the Debrief moment · malignant hyperthermia with ×8 and the fast-forwards (early call) · close and the ask to the deans (3) · questions (4) | Programme |
 | — | Dropped to the reserve | premed induction, plain induction, anaphylaxis, haemorrhage with Explore | Appendix |
@@ -31,7 +31,7 @@ These replace the round-B defaults D1–D6 [R00 2026-10-17 "OWNER ANSWERS"].
 1. **The programme is 30 minutes** (§ "The programme at a glance"). Three cases run; four are in the reserve appendix.
 2. **Tamponade: the sheet's path is now measured**, both engines, on kit ca0d2dbb [A3.1]: CPR 3 s after the pulse loss
    (07:48 → 07:51), drainage 1 min 30 s into CPR (09:21), the return of circulation 93.7 s after the drainage (10:55),
-   CPR stopped 2 s later, and the Debrief's only ✗ is "Better". Every ≈ in Case 2 is gone.
+   CPR stopped 2 s later, and the Debrief's only line to discuss (◆) is "Better". Every ≈ in Case 2 is gone.
 3. **Tamponade: the cue for stopping CPR is "systolic jumps to about 100 (compressions alone read about 70/33)"**, not
    "pressure climbs above 69/32". The compressions alone read 70–71/33 one minute after the drainage and still
    69–70/32–33 at the model's return; only 3 s later the line read 97–114 / 49–51 [A3.1; A3 "against the cue cards"].
@@ -364,32 +364,33 @@ bring him back (40/19 before drainage); drainage during good CPR brings the puls
 pulsus paradoxus in this model [SYN (b); R24 P3: SBP swing 3.4 mmHg against > 10 expected].
 
 **Debrief objectives and the verdict, measured** [CARD; A3.1, identical in both engines]:
-- – Name the tamponade within 180 s (no rule: "This objective has no rule: the instructor judges it.", followed by "The
-  instructor ticked it at mm:ss." when you ticked it [`apps/demo/src/app/debrief.ts`]).
-- ✓ CPR within 10 s of the pulse loss: "CPR 3 s after the pulse loss (07:48 → 07:51)".
-- ✓ Pericardiocentesis within 120 s of starting CPR: "1 min 30 s after CPR (07:51 → 09:21)".
-- ✓ Stop CPR within 30 s of the pulse returning: "2 s after the return of circulation (10:55 → 10:57)".
-- **✗ "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA
-  follows"**, with "The pulse loss at 07:48". This is the one ✗ of the day (E17): the better course of action, named
-  as the lesson, not a timing.
+- Name the tamponade within 180 s (no rule): **– Not assessable**, "This objective has no rule: the instructor judges
+  it.", when nobody ticked it; **✓ Observed**, "Observed by the instructor at mm:ss.", when you ticked it in the
+  Scenario tab (E44) [`apps/demo/src/app/views/debrief.ts`].
+- ✓ Observed: CPR within 10 s of the pulse loss: "CPR 3 s after the pulse loss (07:48 → 07:51)".
+- ✓ Observed: pericardiocentesis within 120 s of starting CPR: "1 min 30 s after CPR (07:51 → 09:21)".
+- ✓ Observed: stop CPR within 30 s of the pulse returning: "2 s after the return of circulation (10:55 → 10:57)".
+- **◆ Discuss: "Better: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then
+  no PEA follows"**, with "The pulse loss at 07:48". This is the one line to discuss of the day (E17, E43): the better
+  course of action, named as the lesson, not a timing.
 
 ---
 
 ## 4. The Debrief moment (after the tamponade, before MH). Slot 3:30 (T+13:30 → 17:00)
 
-The owner's answer E17: every timed objective is met, and the tamponade report shows exactly one ✗, the structural
-"Better: pericardiocentesis before the pulse loss" line: the card's way of saying that the better course was to drain
+The owner's answer E17: every timed objective is met, and the tamponade report shows exactly one line to discuss
+(◆ Discuss, E43), the structural "Better: pericardiocentesis before the pulse loss" line: the card's way of saying that the better course was to drain
 before the arrest [CARD: objective 5, whose rule is that the pulse loss never happens; A3.1]. Name it as the lesson.
 
 | T+ (within the slot) | Do | The audience sees |
 |---|---|---|
 | 0:00 | Session bar → **Debrief** | the report of the run just finished: header, objectives, measured facts [G13 §5] |
 | 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** | — |
-| 0:30 | Read the objectives aloud | – Name the tamponade ("The instructor ticked it at mm:ss") · ✓ CPR 3 s · ✓ Pericardiocentesis 1 min 30 s · ✓ Stop CPR 2 s · **✗ "Better: pericardiocentesis before the pulse loss…" — "The pulse loss at 07:48"** [A3.1] |
-| 1:00 | Say: *"Everything was done in time, and the report still marks one line: the better course was to drain before he lost his pulse. That is the lesson."* | — |
+| 0:30 | Read the objectives aloud | ✓ Observed: name the tamponade ("Observed by the instructor at mm:ss." when ticked; – Not assessable if not) · ✓ Observed: CPR 3 s · ✓ Observed: pericardiocentesis 1 min 30 s · ✓ Observed: stop CPR 2 s · **◆ Discuss: "Better: pericardiocentesis before the pulse loss…" — "The pulse loss at 07:48"** [A3.1] |
+| 1:00 | Say: *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* | — |
 | 1:20 | Point at **Measured facts** | lowest SpO₂ 95 % at 00:28 · lowest ART M / NIBP M **20 mmHg at 07:51** · highest EtCO₂ 36 at 00:09 · **pulseless 3 min 07 s in all, first lost at 07:48** · return of circulation 3 min 07 s after the pulse loss (10:55) · labs: K⁺ 4.2 · lactate 2.2 · pH 7.28 [A3.1] |
 | 1:50 | Scroll to **Timeline** | undone rows struck through [G13 §5]; **41 timeline rows, 12 minute rows** [A3.1] |
-| 2:15 | **Print or save as PDF** → save | **6 A4 pages** on this path (Chromium), title "Debrief Stab wound: tamponade, PEA and pericardiocentesis ‹date›" [A3.1]; footer and build on every page in Chrome; in Safari the footer only ends each section [PRINT] |
+| 2:15 | **Print or save as PDF** → save. **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** | **6 A4 pages** on this path (Chromium), title "Debrief Stab wound: tamponade, PEA and pericardiocentesis ‹date›" [A3.1]; footer and build on every page in Chrome; in Safari the footer only ends each section [PRINT] |
 | 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* | — |
 
 Do the Debrief BEFORE loading the next case: it reports the current run.

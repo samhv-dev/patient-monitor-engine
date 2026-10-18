@@ -4,6 +4,10 @@
 here). Every number below was read through a BUILT kit, served by its own **Start Classroom** launcher, on Playwright's
 Chromium and macOS WebKit at 1440 × 900, one rehearsal at a time on a Mac shared with other agents.*
 
+*The Debrief verdicts below are recorded as those builds printed them (– · ✓ Met · ✗ Not met). From the Debrief
+redesign on, the report prints – Not assessable · ✓ Observed · ✗ Not observed · ◆ Discuss (E42–E44); the tamponade's
+"Better: …" line, ✗ here, is ◆ Discuss.*
+
 | | |
 |---|---|
 | Build measured | kit `pme-showcase-kit-56f3761f` (main 56f3761f: five showcase stages, FX-1 #58, FX-2, FX-4, FX-7, run sheet #53) |

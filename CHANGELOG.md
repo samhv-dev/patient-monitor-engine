@@ -13,10 +13,19 @@ the public API is what the packages export (see the API reference), the `pme-sce
   device and not clinically validated, with the version (new required `--version` flag) and the build.
 - FX-13: a Debrief span could read '1 min 60 s'.
 - FX-18: single-key shortcuts fired while typing in the Debrief notes (a contenteditable field); the letter i toggled the instructor view.
+- FX-20: notes typed in the Debrief right after opening the app on it were emptied by the next refresh.
 
 ### Changed
 
 - `saadat-like` skin matched to the owner's photos of a real unit (research/34 Tuesday set): CO2 lane at 6 mm/s on a 0–50 mmHg scale (values above 50 clip; the number does not), lanes ECG, ECG, CO2/RESP, IBP1, IBP2, pleth, IBP2 mid blue #6C9CF8, technical-message bar pale cyan with grey text; the `iran-icu-as-found` preset inherits the capnogram, IBP2 and message-bar changes (it keeps its own lane order).
+- Debrief redesign A: the report opens with a header band (the case, the patient, the simulated and wall-clock spans,
+  the date, Run by); the verdicts read ✓ Observed, ✗ Not observed, – Not assessable and ◆ Discuss (a structural lesson,
+  `"debrief": "discuss"`), and a rule-less objective ticked by the instructor reads ✓ Observed with its tick time; the
+  trend charts carry event marks (■ team, ● patient, │ scenario) with a legend in words; a talking points box (four
+  fixed debriefing prompts) sits before the notes; drugs, the timeline and bookmarks share a page and set-up rows print
+  grey. The JSON export is `pme-debrief/2` (adds the version, `discuss`, the tick time and the measured interval; key
+  times and key moments are empty for now); the Persian handout reads `/1` and `/2`. Scenario objectives may carry
+  `"debrief": "recognition" | "discuss"`; the malignant hyperthermia card gains a hand-ticked recognition objective.
 
 ### Known limitations
 

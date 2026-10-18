@@ -103,8 +103,9 @@ States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drain
 | **10:55** | **systolic jumps to about 100 (compressions alone read about 70/33)** | **Pulse back: stop CPR** (within 30 s) |
 | 11:27 | ART about 115/77, HR 64 | **Crystalloid 500 mL** → go to the Debrief |
 
-**Debrief will say:** – name it · ✓ CPR within 10 s (3 s) · ✓ drainage within 2 min (1 min 30 s) · ✓ stop CPR (2 s) ·
-**✗ "Better: pericardiocentesis before the pulse loss"** ◆ (the one ✗: the lesson, not a timing).
+**Debrief will say:** ✓ Observed name it (ticked; – Not assessable if not) · ✓ Observed CPR within 10 s (3 s) ·
+✓ Observed drainage within 2 min (1 min 30 s) · ✓ Observed stop CPR (2 s) · **◆ Discuss "Better: pericardiocentesis
+before the pulse loss"** (the one line to discuss: the lesson, not a timing).
 
 **Traps:** **not at SPO2 NO PULSE** (on this path it never sounds; on a late path it comes at 7:58, already 10 s late).
 **About 70/33 is the compressions, not a pulse: stopping there re-arrests him.** Wait for the jump to about 100
@@ -123,14 +124,15 @@ States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drain
 | 0:00 | Session bar **Debrief** |
 | 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
 | 0:30 | read the objectives aloud |
-| 1:00 | ◆ *"Everything was done in time, and the report still marks one line: the better course was to drain before he lost his pulse. That is the lesson."* |
+| 1:00 | ◆ *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* |
 | 1:20 | **Measured facts**: pulseless 3 min 07 s, first lost at 07:48; lowest mean 20 at 07:51 |
 | 1:50 | **Timeline**: 41 rows (undone rows struck through) |
-| 2:15 | **Print or save as PDF**: **6 A4 pages** (Chrome: footer on every page) |
+| 2:15 | **Print or save as PDF**: **6 A4 pages** (Chrome: footer on every page). **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** |
 | 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
 
-**Expect:** – name the tamponade ("The instructor ticked it at …") · ✓ CPR 3 s · ✓ drainage 1 min 30 s · ✓ stop CPR
-2 s · **✗ Better: pericardiocentesis before the pulse loss — "The pulse loss at 07:48"**.
+**Expect:** ✓ Observed name the tamponade ("Observed by the instructor at …"; – Not assessable if not ticked) ·
+✓ Observed CPR 3 s · ✓ Observed drainage 1 min 30 s · ✓ Observed stop CPR 2 s · **◆ Discuss Better: pericardiocentesis
+before the pulse loss — "The pulse loss at 07:48"**.
 
 **Trap:** the Debrief reports the CURRENT run: open it before loading MH.
 
