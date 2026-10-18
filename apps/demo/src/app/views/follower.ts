@@ -34,7 +34,7 @@
 //    phone HOLDS (its monitor still, "The ventilator is on the main screen") and takes a fresh snapshot when they stop.
 //    A page hidden for a while (a locked phone) also takes a fresh snapshot instead of computing the gap.
 import { createBroadcastChannelTransport, createWebSocketTransport, ViewerSync, type ManagedTransport, type RelayFrame } from '@pme/controller';
-import { version as engineVersion } from '@pme/engine-core';
+import { engineKey as engineVersion } from '@pme/engine-core'; // FU-11 A1: the snapshot key, version + build
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { applySkinAlarmColours, type Shell } from '../shell.ts';
 import { DEFAULT_SITE, MONITORS, THEMES, type SiteProfile } from '../site.ts';

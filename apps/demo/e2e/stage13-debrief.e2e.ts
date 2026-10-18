@@ -91,7 +91,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(json).not.toContain('Dr Instructor');
   expect(json).not.toContain('closed-loop');
   const build = j.build;
-  await expect(view.locator('.db-foot')).toHaveText(`For education only. Not a medical device: never use it for patient care. Build ${build}.`);
+  await expect(view.locator('.db-foot')).toHaveText(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version 1.0.0-rc.1 (pre-release), build ${build}.`);
 
   // print layout, both engines: only the report; trends and timeline on new pages; a chart never split
   await page.emulateMedia({ media: 'print' });
@@ -129,7 +129,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
         'Appendix: one row per minute']) expect(t, want).toContain(squash(want));
       expect(text.split('\f')[0], 'objectives and facts on page 1').toContain('Measured facts');
       text.split('\f').forEach((p, i) => {
-        expect(squash(p), `page ${i + 1}: the footer and the build`).toContain(squash(`For education only. Not a medical device: never use it for patient care. Build ${build}.`));
+        expect(squash(p), `page ${i + 1}: the footer and the build`).toContain(squash(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version 1.0.0-rc.1 (pre-release), build ${build}.`));
         expect(squash(p), `page ${i + 1}: its number`).toContain(squash(`Page ${i + 1} of ${pages}`));
       });
     } else test.info().annotations.push({ type: 'pdf text', description: 'not read on this platform (R50 I-2): page count, A4 and title only' });

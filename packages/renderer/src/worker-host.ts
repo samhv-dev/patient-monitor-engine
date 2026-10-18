@@ -95,7 +95,7 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
 }
 
 function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEvents: EventsHandler): Host {
-  const worker = new EngineWorker();
+  const worker = new EngineWorker({ name: 'pme-engine' }); // Stage 8b: engine.worker.ts starts only under this name
   const offscreen = canvas.transferControlToOffscreen();
   // FU-11 (F06, BA06): ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker
   // crashed after ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call

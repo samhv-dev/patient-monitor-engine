@@ -1,26 +1,51 @@
 {
   "name": "@pme/controller",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0-rc.1",
+  "description": "Command protocol, transports (in-process, postMessage, BroadcastChannel, WebSocket, WebRTC), instructor panel and the pme-scenario/1 runner for the patient-monitor engine.",
+  "license": "MIT",
+  "author": "Ali Mahdavi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
+    "directory": "packages/controller"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./scenario": "./src/scenario/index.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/types/src/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./scenario": {
+        "types": "./dist/types/src/scenario/index.d.ts",
+        "import": "./dist/scenario.js"
+      }
+    },
+    "types": "./dist/types/src/index.d.ts",
+    "bin": {}
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build",
+    "build": "vite build && tsc -p tsconfig.build.json && node --experimental-strip-types ../../scripts/finish-dist.ts",
     "relay": "node --experimental-strip-types --no-warnings relay/bin.ts"
   },
   "dependencies": {
     "@pme/engine-core": "workspace:*",
-    "ajv": "8.20.0",
-    "ws": "8.21.3"
+    "ajv": "8.20.0"
   },
   "devDependencies": {
     "@types/ws": "8.18.1",
-    "happy-dom": "20.14.5"
+    "happy-dom": "20.14.5",
+    "ws": "8.21.3"
   },
   "bin": {
     "pme-relay": "./relay/bin.ts"

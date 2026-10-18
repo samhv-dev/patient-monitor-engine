@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "patient-monitor-engine: an open-source simulated patient monitor for teaching simulators"
+type: software
+authors:
+  - family-names: Mahdavi
+    given-names: Ali
+version: 1.0.0-rc.1
+date-released: "2026-10-18"
+license: MIT
+repository-code: "https://github.com/samhv-dev/patient-monitor-engine"
+abstract: >-
+  A TypeScript engine and renderer that simulate a bedside patient monitor (ECG, invasive and non-invasive blood
+  pressure, SpO2 and pleth, capnography, temperature) for simulation-based medical education, with MANUAL
+  (instructor-driven) and MODELED (lumped physiology and pharmacology) modes, device-behaviour realism, data-only
+  skins, remote control, a scenario runner and a validation harness. A pre-release for education only: not a medical
+  device and not clinically validated.
+keywords:
+  - medical simulation
+  - patient monitor
+  - anaesthesia education
+  - physiology model
+  - TypeScript

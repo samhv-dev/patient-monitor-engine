@@ -1,4 +1,4 @@
-export const version = '0.0.0';
+export const version = '1.0.0-rc.1';
 export * from './clock-map.ts';
 export * from './scheduler.ts';
 export * from './tones.ts';

@@ -1,8 +1,8 @@
 {
  "schema": "pme-validation-report/1",
- "createdAt": "2026-09-27T04:13:20.412Z",
- "commit": "7bcf992",
- "engineVersion": "0.0.0",
+ "createdAt": "2026-10-17T20:45:39.399Z",
+ "commit": "e737de92",
+ "engineVersion": "1.0.0-rc.1",
  "options": {
   "suites": [
    "morphology",
@@ -62,17 +62,17 @@
     "p75": 163.8454285025901
    },
    "engine": {
-    "n": 23758,
-    "median": 94.53576519969786,
-    "p25": 88.3669989893896,
-    "p75": 108.73762217546812
+    "n": 23817,
+    "median": 94.52033227867673,
+    "p25": 88.26073007892887,
+    "p75": 108.67038849337973
    },
-   "ks": 0.6606642232302584,
-   "w1": 53.01200130191351,
-   "engineStat": 94.53576519969786,
+   "ks": 0.6613957919200126,
+   "w1": 53.04049709603225,
+   "engineStat": 94.52033227867673,
    "expected": "130–170",
    "grade": "yellow",
-   "errPct": 27.242594028737127,
+   "errPct": 27.254471642439043,
    "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
   },
   {
@@ -87,16 +87,16 @@
    },
    "engine": {
     "n": 12774,
-    "median": 97.32746003870218,
-    "p25": 93.93589872695429,
-    "p75": 107.08892328391428
+    "median": 97.3506801774775,
+    "p25": 93.93958562327853,
+    "p75": 107.0815174115225
    },
    "ks": 0.8201463143579022,
-   "w1": 58.14997215588642,
-   "engineStat": 97.32746003870218,
+   "w1": 58.13531962311936,
+   "engineStat": 97.3506801774775,
    "expected": "134–174",
    "grade": "yellow",
-   "errPct": 27.530825540579816,
+   "errPct": 27.513536028583804,
    "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
   },
   {
@@ -110,17 +110,17 @@
     "p75": 193.16094863790312
    },
    "engine": {
-    "n": 24793,
-    "median": 106.03972116774685,
-    "p25": 96.01264938408427,
-    "p75": 115.39910668643216
+    "n": 25080,
+    "median": 106.61349385568286,
+    "p25": 95.84295206976122,
+    "p75": 115.92175503837865
    },
-   "ks": 0.9069250197324112,
-   "w1": 70.79064231478026,
-   "engineStat": 106.03972116774685,
+   "ks": 0.907456179024406,
+   "w1": 70.5101694917119,
+   "engineStat": 106.61349385568286,
    "expected": "151–191",
    "grade": "yellow",
-   "errPct": 29.64391332512233,
+   "errPct": 29.26322200945729,
    "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
   },
   {
@@ -134,17 +134,17 @@
     "p75": 208.76877920633774
    },
    "engine": {
-    "n": 17767,
-    "median": 103.57011348173728,
-    "p25": 98.95513522906185,
-    "p75": 108.25274072433189
+    "n": 17782,
+    "median": 103.62868961815686,
+    "p25": 98.94982197572588,
+    "p75": 108.24337206928413
    },
-   "ks": 0.9813455649424682,
-   "w1": 92.25208437984531,
-   "engineStat": 103.57011348173728,
+   "ks": 0.9814018490647173,
+   "w1": 92.24197079548648,
+   "engineStat": 103.62868961815686,
    "expected": "170–210",
    "grade": "red",
-   "errPct": 39.128379591198915,
+   "errPct": 39.093952436286365,
    "source": "brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]"
   },
   {
@@ -158,17 +158,17 @@
     "p75": 193.50411463601702
    },
    "engine": {
-    "n": 79092,
-    "median": 101.76647853326415,
-    "p25": 93.67280092349795,
-    "p75": 110.42027714509572
+    "n": 79453,
+    "median": 101.9034776281238,
+    "p25": 93.67623011718096,
+    "p75": 110.96634419065943
    },
-   "ks": 0.7905530167548247,
-   "w1": 67.93562353453397,
-   "engineStat": 101.76647853326415,
+   "ks": 0.7901693319091642,
+   "w1": 67.84202507453548,
+   "engineStat": 101.9034776281238,
    "expected": "150–220",
    "grade": "red",
-   "errPct": 32.155680977823906,
+   "errPct": 32.06434824791747,
    "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
   },
   {
@@ -182,17 +182,17 @@
     "p75": 197.50446798116172
    },
    "engine": {
-    "n": 64605,
-    "median": 103.3335560919113,
-    "p25": 94.49728076577912,
-    "p75": 110.20857974835963
+    "n": 64892,
+    "median": 103.40782100620771,
+    "p25": 94.48855985876125,
+    "p75": 110.76545760037249
    },
-   "ks": 0.8458208229364381,
-   "w1": 72.55618381177253,
-   "engineStat": 103.3335560919113,
+   "ks": 0.8455221556310415,
+   "w1": 72.45329460103251,
+   "engineStat": 103.40782100620771,
    "expected": "150–220",
    "grade": "red",
-   "errPct": 31.110962605392462,
+   "errPct": 31.06145266252819,
    "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
   },
   {
@@ -206,17 +206,17 @@
     "p75": 170.0336667016984
    },
    "engine": {
-    "n": 14487,
-    "median": 95.21647643447295,
-    "p25": 88.27433658223072,
-    "p75": 121.88039773934634
+    "n": 14561,
+    "median": 95.13752846129364,
+    "p25": 88.32026267185711,
+    "p75": 121.75843870146963
    },
-   "ks": 0.6447946186427543,
-   "w1": 46.13644535530297,
-   "engineStat": 95.21647643447295,
+   "ks": 0.6368916719052717,
+   "w1": 46.05911138789621,
+   "engineStat": 95.13752846129364,
    "expected": "150–220",
    "grade": "red",
-   "errPct": 36.5223490436847,
+   "errPct": 36.57498102580424,
    "source": "research 03 §2.1: R → radial upstroke 150–220 ms"
   },
   {
@@ -230,13 +230,13 @@
     "p75": 427.9444444444424
    },
    "engine": {
-    "n": 23723,
+    "n": 23789,
     "median": 258.0000000000098,
     "p25": 250,
-    "p75": 298.00000000000006
+    "p75": 296.0000000000207
    },
-   "ks": 0.6836310356951373,
-   "w1": 90.17153611111185,
+   "ks": 0.6856028103132205,
+   "w1": 90.4129861111101,
    "engineStat": 258.0000000000098,
    "expected": "340–380",
    "grade": "yellow",
@@ -259,8 +259,8 @@
     "p25": 256.0000000000002,
     "p75": 287.9999999999967
    },
-   "ks": 0.8806115999620426,
-   "w1": 150.9614444444439,
+   "ks": 0.8805332054810141,
+   "w1": 150.96444444444376,
    "engineStat": 269.9999999999818,
    "expected": "408–448",
    "grade": "red",
@@ -278,13 +278,13 @@
     "p75": 525.9999999999998
    },
    "engine": {
-    "n": 24768,
+    "n": 25060,
     "median": 282.0000000000107,
     "p25": 262.00000000000045,
     "p75": 310.0000000000023
    },
-   "ks": 0.9539532752000682,
-   "w1": 195.3601375000002,
+   "ks": 0.9543484508096131,
+   "w1": 195.3848125000009,
    "engineStat": 282.0000000000107,
    "expected": "464–504",
    "grade": "red",
@@ -302,13 +302,13 @@
     "p75": 554.000000000002
    },
    "engine": {
-    "n": 17740,
+    "n": 17756,
     "median": 283.9999999999918,
     "p25": 269.999999999996,
     "p75": 299.99999999999716
    },
-   "ks": 0.9582008003697111,
-   "w1": 212.91004444444553,
+   "ks": 0.9578321173350229,
+   "w1": 212.92591944444496,
    "engineStat": 283.9999999999918,
    "expected": "498–538",
    "grade": "red",
@@ -326,14 +326,14 @@
     "p75": 0.8150378545388142
    },
    "engine": {
-    "n": 78987,
-    "median": 0.7391653879981961,
-    "p25": 0.5565065527627981,
-    "p75": 0.8355209188719177
+    "n": 79361,
+    "median": 0.7395017381350736,
+    "p25": 0.5576214836699024,
+    "p75": 0.8360751279573967
    },
-   "ks": 0.11221647234326804,
-   "w1": 3.60191538138915,
-   "engineStat": 0.7391653879981961,
+   "ks": 0.1129566094405896,
+   "w1": 3.6005786482972097,
+   "engineStat": 0.7395017381350736,
    "expected": "0.55–0.85",
    "grade": "green",
    "errPct": 0,
@@ -350,14 +350,14 @@
     "p75": 0.807157940962253
    },
    "engine": {
-    "n": 64518,
-    "median": 0.7386642105348526,
-    "p25": 0.5555560355102572,
-    "p75": 0.8185743899432742
+    "n": 64818,
+    "median": 0.7391368318188352,
+    "p25": 0.5548229169034202,
+    "p75": 0.8199535280006414
    },
-   "ks": 0.1276177661177496,
-   "w1": 4.06692232361475,
-   "engineStat": 0.7386642105348526,
+   "ks": 0.12910825959620648,
+   "w1": 4.066822315335645,
+   "engineStat": 0.7391368318188352,
    "expected": "0.55–0.85",
    "grade": "green",
    "errPct": 0,
@@ -374,14 +374,14 @@
     "p75": 0.8421093200812186
    },
    "engine": {
-    "n": 14469,
-    "median": 0.7457638937362169,
-    "p25": 0.5695320364733928,
-    "p75": 0.9323605910670621
+    "n": 14543,
+    "median": 0.7449661934783217,
+    "p25": 0.58070841929722,
+    "p75": 0.9318982800938611
    },
-   "ks": 0.2597489171437538,
-   "w1": 0.784296832304891,
-   "engineStat": 0.7457638937362169,
+   "ks": 0.25745898798892564,
+   "w1": 0.778267301271438,
+   "engineStat": 0.7449661934783217,
    "expected": "0.57–0.87",
    "grade": "green",
    "errPct": 0,
@@ -398,14 +398,14 @@
     "p75": 0.9801816635408034
    },
    "engine": {
-    "n": 192,
-    "median": 0.9981662632782036,
-    "p25": 0.9971810077147156,
+    "n": 190,
+    "median": 0.9982237786506396,
+    "p25": 0.997229916897507,
     "p75": 1
    },
-   "ks": 0.7291666666666667,
-   "w1": 0.23725358920905723,
-   "engineStat": 0.9981662632782036,
+   "ks": 0.7333333333333334,
+   "w1": 0.23946667653605455,
+   "engineStat": 0.9982237786506396,
    "expected": "0.63–1.23",
    "grade": "green",
    "errPct": 0,
@@ -422,14 +422,14 @@
     "p75": 0.9793778631594503
    },
    "engine": {
-    "n": 160,
-    "median": 0.9980970487054137,
-    "p25": 0.9970674486803519,
+    "n": 158,
+    "median": 0.9982158772599949,
+    "p25": 0.9971098265895953,
     "p75": 1
    },
-   "ks": 0.74375,
-   "w1": 0.2053746085193467,
-   "engineStat": 0.9980970487054137,
+   "ks": 0.7487341772151899,
+   "w1": 0.2081426024750831,
+   "engineStat": 0.9982158772599949,
    "expected": "0.63–1.23",
    "grade": "green",
    "errPct": 0,
@@ -452,7 +452,7 @@
     "p75": 1
    },
    "ks": 0.65625,
-   "w1": 0.40911748087597644,
+   "w1": 0.4091149634077209,
    "engineStat": 0.9982773458365481,
    "expected": "0.32–0.92",
    "grade": "yellow",
@@ -470,14 +470,14 @@
     "p75": 962.9649096839623
    },
    "engine": {
-    "n": 79092,
-    "median": 973.5500599258353,
-    "p25": 744.9398333139934,
-    "p75": 1124.7454773582404
+    "n": 79453,
+    "median": 971.4561298859596,
+    "p25": 740.0430819588611,
+    "p75": 1123.7357126478873
    },
-   "ks": 0.30222945973627346,
-   "w1": 181.32223454794203,
-   "engineStat": 1.2306522597296006,
+   "ks": 0.29813885143959107,
+   "w1": 181.5205998456812,
+   "engineStat": 1.2280053493740253,
    "expected": "0.70–1.30",
    "grade": "green",
    "errPct": 0,
@@ -494,14 +494,14 @@
     "p75": 914.0933416455432
    },
    "engine": {
-    "n": 64605,
-    "median": 964.8016588753396,
-    "p25": 774.9748504679102,
-    "p75": 1111.6462683900056
+    "n": 64892,
+    "median": 962.9626414435082,
+    "p25": 759.4885826728761,
+    "p75": 1110.32858585689
    },
-   "ks": 0.3482519651521648,
-   "w1": 199.27363011658466,
-   "engineStat": 1.241175456095392,
+   "ks": 0.34419575394455687,
+   "w1": 197.47864232467566,
+   "engineStat": 1.238809639993478,
    "expected": "0.70–1.30",
    "grade": "green",
    "errPct": 0,
@@ -518,14 +518,14 @@
     "p75": 1327.8700665008737
    },
    "engine": {
-    "n": 14487,
-    "median": 1040.8854536545605,
-    "p25": 646.8501103075384,
-    "p75": 1168.8160980732173
+    "n": 14561,
+    "median": 1037.9708021854563,
+    "p25": 659.2138283773199,
+    "p75": 1168.4628921543565
    },
-   "ks": 0.2108891790301336,
-   "w1": 149.82888030261236,
-   "engineStat": 1.0817677202397231,
+   "ks": 0.21223161111524524,
+   "w1": 144.78423211781848,
+   "engineStat": 1.0787385916608232,
    "expected": "0.70–1.30",
    "grade": "green",
    "errPct": 0,
@@ -542,17 +542,17 @@
     "p75": 473.39343815372104
    },
    "engine": {
-    "n": 79340,
-    "median": 112.62409668790596,
-    "p25": 87.37163236175327,
-    "p75": 121.61930957127254
+    "n": 79703,
+    "median": 112.43516382167229,
+    "p25": 87.21921018729262,
+    "p75": 121.2713343654066
    },
-   "ks": 0.9240885919097419,
-   "w1": 290.23056620486585,
-   "engineStat": 112.62409668790596,
+   "ks": 0.9245003574641867,
+   "w1": 290.5470499780503,
+   "engineStat": 112.43516382167229,
    "expected": "20.0–100",
    "grade": "yellow",
-   "errPct": 12.624096687905963,
+   "errPct": 12.43516382167229,
    "source": "brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)"
   },
   {
@@ -566,17 +566,17 @@
     "p75": 473.39343815372104
    },
    "engine": {
-    "n": 64578,
-    "median": 114.73428925691564,
-    "p25": 90.12709782221862,
-    "p75": 122.22510816572552
+    "n": 64868,
+    "median": 114.55146588860998,
+    "p25": 89.95439111688341,
+    "p75": 121.91447967696689
    },
-   "ks": 0.927306070383273,
-   "w1": 288.45192662952377,
-   "engineStat": 114.73428925691564,
+   "ks": 0.9279479993168261,
+   "w1": 288.71989011276196,
+   "engineStat": 114.55146588860998,
    "expected": "20.0–100",
    "grade": "yellow",
-   "errPct": 14.734289256915645,
+   "errPct": 14.551465888609982,
    "source": "brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)"
   },
   {
@@ -585,14 +585,14 @@
    "group": "mghdb",
    "recorded": null,
    "engine": {
-    "n": 14762,
-    "median": 91.51742635473425,
-    "p25": 80.43448777225848,
-    "p75": 112.96150141309624
+    "n": 14835,
+    "median": 91.34227639182768,
+    "p25": 80.37829950077224,
+    "p75": 112.61751278394172
    },
    "ks": null,
    "w1": null,
-   "engineStat": 91.51742635473425,
+   "engineStat": 91.34227639182768,
    "expected": "20.0–100",
    "grade": "green",
    "errPct": 0,
@@ -610,16 +610,16 @@
    },
    "engine": {
     "n": 192,
-    "median": 0.4081616785675904,
-    "p25": 0.24455870089200044,
-    "p75": 0.7273480000036896
+    "median": 0.4235785591656881,
+    "p25": 0.25544064163752117,
+    "p75": 0.7389095207145138
    },
-   "ks": 0.61875,
-   "w1": 0.37704822034752183,
-   "engineStat": 0.4081616785675904,
+   "ks": 0.6239583333333334,
+   "w1": 0.3724037391223634,
+   "engineStat": 0.4235785591656881,
    "expected": "0.80–1.00",
    "grade": "red",
-   "errPct": 48.9797901790512,
+   "errPct": 47.052680104288996,
    "source": "brief §9 V3: r ≥ 0.8 [ENG]"
   },
   {
@@ -634,16 +634,16 @@
    },
    "engine": {
     "n": 160,
-    "median": 0.3939912808129087,
-    "p25": 0.25163297656860434,
-    "p75": 0.6810215320611579
+    "median": 0.39733789926372803,
+    "p25": 0.26912116701405464,
+    "p75": 0.6871987075312167
    },
    "ks": 0.65,
-   "w1": 0.3894610603176222,
-   "engineStat": 0.3939912808129087,
+   "w1": 0.3835991124606775,
+   "engineStat": 0.39733789926372803,
    "expected": "0.80–1.00",
    "grade": "red",
-   "errPct": 50.75108989838642,
+   "errPct": 50.332762592033994,
    "source": "brief §9 V3: r ≥ 0.8 [ENG]"
   },
   {
@@ -658,16 +658,16 @@
    },
    "engine": {
     "n": 32,
-    "median": 0.4812375109858603,
-    "p25": 0.1937360577772706,
-    "p75": 0.8407340504736778
+    "median": 0.48132319281594793,
+    "p25": 0.19371174962160492,
+    "p75": 0.840744348277081
    },
    "ks": null,
    "w1": null,
-   "engineStat": 0.4812375109858603,
+   "engineStat": 0.48132319281594793,
    "expected": "0.80–1.00",
    "grade": "red",
-   "errPct": 39.84531112676746,
+   "errPct": 39.834600898006514,
    "source": "brief §9 V3: r ≥ 0.8 [ENG]"
   },
   {
@@ -686,8 +686,8 @@
     "p25": 1,
     "p75": 1
    },
-   "ks": 0.509375,
-   "w1": 0.022390792742574016,
+   "ks": 0.49895833333333334,
+   "w1": 0.02234284944243609,
    "engineStat": 1,
    "expected": "0.98–1.02",
    "grade": "green",
@@ -710,8 +710,8 @@
     "p25": 1,
     "p75": 1
    },
-   "ks": 0.5125000000000001,
-   "w1": 0.022833682438477595,
+   "ks": 0.5,
+   "w1": 0.022815093521941034,
    "engineStat": 1,
    "expected": "0.98–1.02",
    "grade": "green",
@@ -754,13 +754,13 @@
    },
    "engine": {
     "n": 13202,
-    "median": 106.2976949521572,
-    "p25": 105.08108081516131,
-    "p75": 107.18505929513883
+    "median": 107.19422293432422,
+    "p25": 105.96298463587081,
+    "p75": 107.78127242371369
    },
-   "ks": 0.6667788943723414,
-   "w1": 6.083474124638099,
-   "engineStat": 106.2976949521572,
+   "ks": 0.6001903328073495,
+   "w1": 5.27744005450411,
+   "engineStat": 107.19422293432422,
    "expected": "100–110",
    "grade": "green",
    "errPct": 0,
@@ -778,13 +778,13 @@
    },
    "engine": {
     "n": 11044,
-    "median": 106.20116861960625,
-    "p25": 104.84858864889772,
-    "p75": 107.11723336831422
+    "median": 107.1259181572828,
+    "p25": 105.53214636049984,
+    "p75": 107.7954712196632
    },
-   "ks": 0.6713612041548471,
-   "w1": 6.278509646687699,
-   "engineStat": 106.20116861960625,
+   "ks": 0.6006196845002207,
+   "w1": 5.43448940401549,
+   "engineStat": 107.1259181572828,
    "expected": "100–110",
    "grade": "green",
    "errPct": 0,
@@ -797,13 +797,13 @@
    "recorded": null,
    "engine": {
     "n": 2158,
-    "median": 106.89774522756068,
-    "p25": 106.06016006200782,
-    "p75": 107.33437063846917
+    "median": 107.40149053693764,
+    "p25": 107.09451351851712,
+    "p75": 107.73881522176441
    },
    "ks": null,
    "w1": null,
-   "engineStat": 106.89774522756068,
+   "engineStat": 107.40149053693764,
    "expected": "100–110",
    "grade": "green",
    "errPct": 0,
@@ -821,13 +821,13 @@
    },
    "engine": {
     "n": 13202,
-    "median": 106.2976949521572,
-    "p25": 105.08108081516131,
-    "p75": 107.18505929513883
+    "median": 107.19422293432422,
+    "p25": 105.96298463587081,
+    "p75": 107.78127242371369
    },
-   "ks": 0.6667788943723414,
-   "w1": 6.083474124638099,
-   "engineStat": 106.2976949521572,
+   "ks": 0.6001903328073495,
+   "w1": 5.27744005450411,
+   "engineStat": 107.19422293432422,
    "expected": "106–116",
    "grade": "green",
    "errPct": 0,
@@ -845,13 +845,13 @@
    },
    "engine": {
     "n": 11044,
-    "median": 106.20116861960625,
-    "p25": 104.84858864889772,
-    "p75": 107.11723336831422
+    "median": 107.1259181572828,
+    "p25": 105.53214636049984,
+    "p75": 107.7954712196632
    },
-   "ks": 0.6713612041548471,
-   "w1": 6.278509646687699,
-   "engineStat": 106.20116861960625,
+   "ks": 0.6006196845002207,
+   "w1": 5.43448940401549,
+   "engineStat": 107.1259181572828,
    "expected": "106–116",
    "grade": "green",
    "errPct": 0,
@@ -869,13 +869,13 @@
    },
    "engine": {
     "n": 190,
-    "median": 8.190145577697308,
-    "p25": 4.014042682958367,
-    "p75": 13.784050997383329
+    "median": 8.269028707031966,
+    "p25": 4.080836287076756,
+    "p75": 14.102862118777162
    },
    "ks": 0.21447368421052626,
-   "w1": 20.254706963155805,
-   "engineStat": 8.190145577697308,
+   "w1": 20.224081017512873,
+   "engineStat": 8.269028707031966,
    "expected": "4.28–10.3",
    "grade": "green",
    "errPct": 0,
@@ -893,13 +893,13 @@
    },
    "engine": {
     "n": 158,
-    "median": 8.131977267418582,
-    "p25": 4.25337257162997,
-    "p75": 12.473384619271023
+    "median": 8.200281987918153,
+    "p25": 4.3990464622217225,
+    "p75": 12.648559323972599
    },
    "ks": 0.22499999999999998,
-   "w1": 20.63101191785956,
-   "engineStat": 8.131977267418582,
+   "w1": 20.604992471347877,
+   "engineStat": 8.200281987918153,
    "expected": "4.28–10.3",
    "grade": "green",
    "errPct": 0,
@@ -917,13 +917,13 @@
    },
    "engine": {
     "n": 190,
-    "median": 2.750340490775187,
-    "p25": 1.6397596609326222,
-    "p75": 5.084383414295996
+    "median": 2.7617961099237007,
+    "p25": 1.6404887261680408,
+    "p75": 5.125036586993154
    },
-   "ks": 0.3776315789473685,
-   "w1": 6.364813099973418,
-   "engineStat": 2.750340490775187,
+   "ks": 0.3730263157894737,
+   "w1": 6.3412086678367325,
+   "engineStat": 2.7617961099237007,
    "expected": "1.93–7.93",
    "grade": "green",
    "errPct": 0,
@@ -941,13 +941,13 @@
    },
    "engine": {
     "n": 158,
-    "median": 2.5209788177454158,
-    "p25": 1.5796897207360416,
-    "p75": 4.508028285807924
+    "median": 2.554085133237436,
+    "p25": 1.5789605040652006,
+    "p75": 4.726905153322708
    },
-   "ks": 0.41993670886075946,
-   "w1": 6.7317205003032505,
-   "engineStat": 2.5209788177454158,
+   "ks": 0.4136075949367089,
+   "w1": 6.697616470675149,
+   "engineStat": 2.554085133237436,
    "expected": "1.93–7.93",
    "grade": "green",
    "errPct": 0,
@@ -964,14 +964,14 @@
     "p75": 4.6849334428282905
    },
    "engine": {
-    "n": 55685,
-    "median": 0.25157537566654753,
-    "p25": 0.12172714745062763,
-    "p75": 0.4092526690393612
+    "n": 55690,
+    "median": 0.24666198172881337,
+    "p25": 0.120879120879124,
+    "p75": 0.3864168618266923
    },
-   "ks": 0.5399687501356041,
-   "w1": 6.6306940327624275,
-   "engineStat": 0.25157537566654753,
+   "ks": 0.6177816384444741,
+   "w1": 6.649801957959154,
+   "engineStat": 0.24666198172881337,
    "expected": "0.00–2.00",
    "grade": "green",
    "errPct": 0,
@@ -988,14 +988,14 @@
     "p75": 4.6849334428282905
    },
    "engine": {
-    "n": 46369,
-    "median": 0.2453215379380964,
-    "p25": 0.11790393013109224,
-    "p75": 0.3970683336925447
+    "n": 46372,
+    "median": 0.24300275036411279,
+    "p25": 0.11762054979727665,
+    "p75": 0.37953526294325
    },
-   "ks": 0.5528973314139929,
-   "w1": 7.037054906217838,
-   "engineStat": 0.2453215379380964,
+   "ks": 0.6303630096061388,
+   "w1": 7.055872334109423,
+   "engineStat": 0.24300275036411279,
    "expected": "0.00–2.00",
    "grade": "green",
    "errPct": 0,
@@ -1007,14 +1007,14 @@
    "group": "mghdb",
    "recorded": null,
    "engine": {
-    "n": 9316,
-    "median": 0.2873828490600161,
-    "p25": 0.13869625520096562,
-    "p75": 0.4700027647220679
+    "n": 9318,
+    "median": 0.28200497092986154,
+    "p25": 0.138695116946991,
+    "p75": 0.42292490118565595
    },
    "ks": null,
    "w1": null,
-   "engineStat": 0.2873828490600161,
+   "engineStat": 0.28200497092986154,
    "expected": "0.00–2.00",
    "grade": "green",
    "errPct": 0,
@@ -1031,14 +1031,14 @@
     "p75": 4.6172072283426076
    },
    "engine": {
-    "n": 926,
-    "median": -0.05685915359037352,
-    "p25": -2.846690172812398,
-    "p75": 2.3823188428380853
+    "n": 939,
+    "median": -0.39487111457404467,
+    "p25": -2.5444994180140412,
+    "p75": 2.0265192994413823
    },
-   "ks": 0.3946004319654428,
-   "w1": 6.330462270060147,
-   "engineStat": -0.05685915359037352,
+   "ks": 0.3978700745473909,
+   "w1": 6.6449464850523965,
+   "engineStat": -0.39487111457404467,
    "expected": "-5.00–5.00",
    "grade": "green",
    "errPct": 0,
@@ -1055,14 +1055,14 @@
     "p75": 4.6172072283426076
    },
    "engine": {
-    "n": 777,
-    "median": -0.11463663112724021,
-    "p25": -2.829631662337192,
-    "p75": 2.363741627747814
+    "n": 787,
+    "median": -0.31994987656422325,
+    "p25": -2.5365493602596345,
+    "p75": 2.0142081619677867
    },
-   "ks": 0.39485199485199485,
-   "w1": 6.382423016223871,
-   "engineStat": -0.11463663112724021,
+   "ks": 0.3974587039390089,
+   "w1": 6.658358939251408,
+   "engineStat": -0.31994987656422325,
    "expected": "-5.00–5.00",
    "grade": "green",
    "errPct": 0,
@@ -1074,14 +1074,14 @@
    "group": "mghdb",
    "recorded": null,
    "engine": {
-    "n": 149,
-    "median": 0.12932891019860904,
-    "p25": -2.9473905291186213,
-    "p75": 2.45546277444555
+    "n": 152,
+    "median": -0.5558457418224307,
+    "p25": -2.5489315491287883,
+    "p75": 2.210521439817736
    },
    "ks": null,
    "w1": null,
-   "engineStat": 0.12932891019860904,
+   "engineStat": -0.5558457418224307,
    "expected": "-5.00–5.00",
    "grade": "green",
    "errPct": 0,
@@ -1215,7 +1215,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 2730.5344589999877
+    "wallMs": 4247.010499999975
    },
    {
     "id": "s1-phenylephrine",
@@ -1227,7 +1227,7 @@
      "7a",
      "7g"
     ],
-    "wallMs": 1179.1933340000105
+    "wallMs": 1827.0302909999737
    },
    {
     "id": "s2-class2-haemorrhage",
@@ -1239,7 +1239,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 5747.391000000003
+    "wallMs": 8643.67504100001
    },
    {
     "id": "s3-propofol-induction",
@@ -1250,7 +1250,7 @@
     "requires": [
      "7g"
     ],
-    "wallMs": 1580.0717919999734
+    "wallMs": 2783.222625000053
    },
    {
     "id": "s4-class-i",
@@ -1262,7 +1262,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 5707.084959
+    "wallMs": 9468.34375
    },
    {
     "id": "s4-class-iii",
@@ -1274,7 +1274,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 5743.566583000007
+    "wallMs": 10066.096709000005
    },
    {
     "id": "s4-class-iv",
@@ -1286,7 +1286,7 @@
      "7a",
      "7c"
     ],
-    "wallMs": 5777.457958999963
+    "wallMs": 13340.790500000003
    },
    {
     "id": "s6-apnoea-preoxygenated",
@@ -1295,7 +1295,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 5611.497415999998
+    "wallMs": 13052.643959000008
    },
    {
     "id": "s6-apnoea-room-air",
@@ -1304,7 +1304,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1873.4177079999936
+    "wallMs": 4371.574499999988
    },
    {
     "id": "s7-apnoea-child",
@@ -1313,7 +1313,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 3837.6794579999987
+    "wallMs": 6224.527041999972
    },
    {
     "id": "s8-co2-apnoea-first-breath",
@@ -1322,7 +1322,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1269.7247920000227
+    "wallMs": 2095.5878329999978
    },
    {
     "id": "s9-witnessed-vf",
@@ -1331,44 +1331,32 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1150.1849999999977
+    "wallMs": 2482.752542000031
    },
    {
     "id": "t10-as-cad-propofol",
     "title": "AS + CAD + HTN, propofol 1.5 mg/kg",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"aorticStenosis\",\"cad3v\",\"htn\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7a",
      "7g"
     ],
-    "wallMs": 0.016583000018727034
+    "wallMs": 4055.8112919999985
    },
    {
     "id": "t11-chronic-mr-fluid",
     "title": "Chronic MR + 1.5 L crystalloid",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"mitralRegurgitationChronic\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7a",
      "7b",
      "7c"
     ],
-    "wallMs": 0.00237499998183921
+    "wallMs": 29427.233416000032
    },
    {
     "id": "t12-massive-pe",
@@ -1380,7 +1368,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 1980.5291659999639
+    "wallMs": 3170.2726250000414
    },
    {
     "id": "t13-tension-ptx",
@@ -1392,7 +1380,7 @@
      "7a",
      "7b"
     ],
-    "wallMs": 3125.9354169999715
+    "wallMs": 4928.18862500001
    },
    {
     "id": "t14-tamponade",
@@ -1403,41 +1391,29 @@
     "requires": [
      "7a"
     ],
-    "wallMs": 4575.948208999995
+    "wallMs": 6986.512250000029
    },
    {
     "id": "t15-rv-infarct",
     "title": "RV infarct (inferior STEMI, Ees_RV ×0.35)",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"rvInfarct\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7a"
     ],
-    "wallMs": 0.0017090000328607857
+    "wallMs": 2832.287540999998
    },
    {
     "id": "t16-septic-shock-warm",
     "title": "Septic shock, warm phase",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"sepsisWarm\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7f"
     ],
-    "wallMs": 0.00041699997382238507
+    "wallMs": 5956.226665999973
    },
    {
     "id": "t17a-class3-no-bb",
@@ -1449,78 +1425,54 @@
      "7a",
      "7c"
     ],
-    "wallMs": 11336.833915999974
+    "wallMs": 17009.779749999987
    },
    {
     "id": "t17b-class3-bb",
     "title": "Class III haemorrhage, chronic β-blocker",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"betaBlockerChronic\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7a",
      "7c",
      "7g"
     ],
-    "wallMs": 0.0022909999825060368
+    "wallMs": 15902.309249999991
    },
    {
     "id": "t18-htn-hypocapnia-cbf",
     "title": "Hypertensive 75 y at MAP 65, PaCO2 40 → 25",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"htn\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7d"
     ],
-    "wallMs": 0.000375000003259629
+    "wallMs": 5300.222582999966
    },
    {
     "id": "t19-tbi-haematoma",
     "title": "TBI, expanding haematoma",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"tbiHaematoma\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7d"
     ],
-    "wallMs": 0.00029199995333328843
+    "wallMs": 15014.70316699997
    },
    {
     "id": "t20-low-flow-oliguria",
     "title": "Low-flow oliguria, dobutamine",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "conditions [\"hfref\"]: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7d",
      "7g"
     ],
-    "wallMs": 0.00029200001154094934
+    "wallMs": 29700.749584000092
    },
    {
     "id": "t21-mh",
@@ -1529,7 +1481,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 9426.30395900004
+    "wallMs": 12396.160999999964
    },
    {
     "id": "t22-term-spinal",
@@ -1538,33 +1490,27 @@
     "measurable": false,
     "unsupported": [
      {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "pregnancy 39 weeks: not expressible in pme-scenario/1 until the R22 profile schema lands"
+      "t": 60,
+      "type": "applyEvent neuraxial",
+      "reason": "command type applyEvent is not implemented until later stages"
      }
     ],
     "requires": [
      "7a",
      "7f"
     ],
-    "wallMs": 0.0019580000080168247
+    "wallMs": 515.0520409999881
    },
    {
     "id": "t23-term-apnoea",
     "title": "Term pregnancy, GA apnoea after preoxygenation",
     "suite": "sanity",
-    "measurable": false,
-    "unsupported": [
-     {
-      "t": 0,
-      "type": "patient profile",
-      "reason": "pregnancy 39 weeks: not expressible in pme-scenario/1 until the R22 profile schema lands"
-     }
-    ],
+    "measurable": true,
+    "unsupported": [],
     "requires": [
      "7b"
     ],
-    "wallMs": 0.000707999977748841
+    "wallMs": 4729.984165999922
    },
    {
     "id": "t24-edmark-fio2-1",
@@ -1575,7 +1521,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 5503.661334000004
+    "wallMs": 6940.1706669999985
    },
    {
     "id": "t24-edmark-fio2-0.8",
@@ -1586,7 +1532,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 5605.955875000043
+    "wallMs": 7072.400167000014
    },
    {
     "id": "t24-edmark-fio2-0.6",
@@ -1597,7 +1543,7 @@
     "requires": [
      "7b"
     ],
-    "wallMs": 5685.948291999986
+    "wallMs": 7011.647666999954
    },
    {
     "id": "t25-rocuronium-sugammadex",
@@ -1609,7 +1555,19 @@
      "7f",
      "7g"
     ],
-    "wallMs": 15886.759625000006
+    "wallMs": 20488.921707999893
+   },
+   {
+    "id": "t25-apnoea",
+    "title": "Rocuronium 0.6 mg/kg, never ventilated: asphyxial arrest",
+    "suite": "sanity",
+    "measurable": true,
+    "unsupported": [],
+    "requires": [
+     "7f",
+     "7g"
+    ],
+    "wallMs": 14464.177208000096
    },
    {
     "id": "g2-displayed-abp",
@@ -1618,7 +1576,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 720.719374999986
+    "wallMs": 892.6981250001118
    },
    {
     "id": "g3-rr-three-ways",
@@ -1627,7 +1585,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 799.3510409999872
+    "wallMs": 977.5642089999747
    },
    {
     "id": "g3-peep-map",
@@ -1636,7 +1594,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 1574.8084579999559
+    "wallMs": 1972.0924999999115
    },
    {
     "id": "g3-disconnect-apnoea-alarm",
@@ -1645,7 +1603,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 781.8840419999906
+    "wallMs": 960.3822500000242
    },
    {
     "id": "g4b-asystole-saadat-like",
@@ -1654,7 +1612,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 372.2843330000178
+    "wallMs": 464.765875000041
    },
    {
     "id": "g4b-asystole-philips-like",
@@ -1663,7 +1621,7 @@
     "measurable": true,
     "unsupported": [],
     "requires": [],
-    "wallMs": 381.35383300000103
+    "wallMs": 463.52383299998473
    },
    {
     "id": "g3-cpr-etco2",
@@ -1674,7 +1632,7 @@
     "requires": [
      "3.1"
     ],
-    "wallMs": 1620.8483750000014
+    "wallMs": 2132.661291999975
    }
   ],
   "results": [
@@ -1698,7 +1656,7 @@
     "type": "Range",
     "series": "numeric:hr",
     "source": "brief §6.1: displayed HR within 3 bpm of truth at steady state [ENG]",
-    "measured": 78.25,
+    "measured": 78.35,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1776,7 +1734,7 @@
     "type": "Range",
     "series": "state:map",
     "source": "baseline MAP physiological [ENG]",
-    "measured": 92.03498818564483,
+    "measured": 94.01749906636725,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1789,11 +1747,11 @@
     "type": "Range",
     "series": "state:map",
     "source": "brief §4.9 1: MAP +15–25 within 30–60 s",
-    "measured": 114.13341220719819,
+    "measured": 120.52659216618575,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "109–119"
+    "expected": "111–121"
    },
    {
     "doc": "s1-phenylephrine",
@@ -1802,11 +1760,11 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 1: reflex HR −5–15",
-    "measured": 57.65339827469445,
-    "errPct": 0,
-    "grade": "green",
+    "measured": 75,
+    "errPct": 7.142857142857143,
+    "grade": "yellow",
     "pass": true,
-    "expected": "53.0–63.0"
+    "expected": "60.0–70.0"
    },
    {
     "doc": "s2-class2-haemorrhage",
@@ -1815,7 +1773,7 @@
     "type": "Range",
     "series": "state:pp",
     "source": "baseline PP [ENG]",
-    "measured": 41.53527026621699,
+    "measured": 40.10200176639595,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1828,8 +1786,8 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 2: HR 100–120",
-    "measured": 81.61258258579059,
-    "errPct": 18.38741741420941,
+    "measured": 75,
+    "errPct": 25,
     "grade": "yellow",
     "pass": true,
     "expected": "100–120"
@@ -1841,11 +1799,11 @@
     "type": "Range",
     "series": "state:sbp",
     "source": "brief §4.9 2: SBP near normal (R45 b)",
-    "measured": 108.86826216401138,
+    "measured": 110.11283123864433,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "108–126"
+    "expected": "109–127"
    },
    {
     "doc": "s2-class2-haemorrhage",
@@ -1854,11 +1812,11 @@
     "type": "LessThan",
     "series": "state:pp",
     "source": "brief §4.9 2: PP narrowed",
-    "measured": 29.752972847582946,
+    "measured": 32.085716507307254,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "< 37.4"
+    "expected": "< 36.1"
    },
    {
     "doc": "s3-propofol-induction",
@@ -1867,7 +1825,7 @@
     "type": "Range",
     "series": "state:map",
     "source": "baseline MAP physiological [ENG]",
-    "measured": 92.03498818564483,
+    "measured": 94.01749906636725,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1880,11 +1838,11 @@
     "type": "EqualTo",
     "series": "state:map",
     "source": "brief §4.9 3: MAP ≈ 70 % of baseline at 2 min",
-    "measured": 84.80944353173803,
-    "errPct": 31.641618357245868,
-    "grade": "red",
-    "pass": false,
-    "expected": "= 64.4 ±15 %"
+    "measured": 75.41409041578619,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "= 65.8 ±15 %"
    },
    {
     "doc": "s3-propofol-induction",
@@ -1893,11 +1851,11 @@
     "type": "LessThan",
     "series": "state:hr",
     "source": "brief §4.9 3: little HR rise",
-    "measured": 79.87899085183635,
-    "errPct": 6.55901532294464,
-    "grade": "yellow",
+    "measured": 75,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
-    "expected": "< 75.0"
+    "expected": "< 82.5"
    },
    {
     "doc": "s4-class-i",
@@ -1906,7 +1864,7 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class I: HR 60–100",
-    "measured": 74.98024758482873,
+    "measured": 75,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1919,10 +1877,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class III: HR 120–140",
-    "measured": 107.4310075906894,
-    "errPct": 10.474160341092162,
-    "grade": "yellow",
-    "pass": true,
+    "measured": 75,
+    "errPct": 37.5,
+    "grade": "red",
+    "pass": false,
     "expected": "120–140"
    },
    {
@@ -1932,9 +1890,9 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "brief §4.9 4 / ATLS class III: SBP decreased",
-    "measured": 98.44015833200973,
-    "errPct": 0,
-    "grade": "green",
+    "measured": 103.15019560895179,
+    "errPct": 3.1501956089517904,
+    "grade": "yellow",
     "pass": true,
     "expected": "< 100"
    },
@@ -1945,10 +1903,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "brief §4.9 4 / ATLS class IV: HR 140–180",
-    "measured": 134.17381271751174,
-    "errPct": 4.161562344634474,
-    "grade": "yellow",
-    "pass": true,
+    "measured": 75,
+    "errPct": 46.42857142857143,
+    "grade": "red",
+    "pass": false,
     "expected": "140–180"
    },
    {
@@ -1958,7 +1916,7 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "brief §4.9 4 / ATLS class IV: SBP decreased",
-    "measured": 73.17640086761774,
+    "measured": 87.13447302706503,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1971,7 +1929,7 @@
     "type": "LessThan",
     "series": "state:pp",
     "source": "brief §4.9 4: class IV PP < 25",
-    "measured": 13.371568257691534,
+    "measured": 19.20580965809087,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1984,7 +1942,7 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "brief §4.9 6: SaO2 90 % at 8 ± 1.5 min (Benumof)",
-    "measured": 494,
+    "measured": 484,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -1997,7 +1955,7 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "R39-1: true SaO2 90 % at 45 s (35–60)",
-    "measured": 38,
+    "measured": 35,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2010,7 +1968,7 @@
     "type": "Range",
     "series": "numeric:spo2",
     "source": "R39-1: displayed SpO2 90 % at 60 s (45–90)",
-    "measured": 61,
+    "measured": 60,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2023,7 +1981,7 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "brief §4.9 7: 160 ± 30 s",
-    "measured": 141,
+    "measured": 158,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2036,7 +1994,7 @@
     "type": "Range",
     "series": "breath:etco2True",
     "source": "normocapnia [ENG]",
-    "measured": 38.275,
+    "measured": 38.3,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2049,7 +2007,7 @@
     "type": "Range",
     "series": "breath:etco2True",
     "source": "Stage 3 acc. 4: first breath +9 to +15 mmHg",
-    "measured": 53.3,
+    "measured": 50.6,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2062,7 +2020,7 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "normocapnia [ENG]",
-    "measured": 39.233333333333334,
+    "measured": 37.233333333333334,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2088,11 +2046,76 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "Stage 3: EtCO2 < 5 within 30 s",
-    "measured": 18,
+    "measured": 83,
+    "errPct": 176.66666666666666,
+    "grade": "red",
+    "pass": false,
+    "expected": "0.00–30.0"
+   },
+   {
+    "doc": "t10-as-cad-propofol",
+    "segment": "base",
+    "target": "steady-map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "baseline MAP physiological [ENG]",
+    "measured": 111.57717883629299,
+    "errPct": 1.4337989420845334,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "60.0–110"
+   },
+   {
+    "doc": "t10-as-cad-propofol",
+    "segment": "2min",
+    "target": "map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "tables §7 10: MAP 103 → 60–65 at 2 min",
+    "measured": 69.92813172167727,
+    "errPct": 7.581741110272731,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "60.0–65.0"
+   },
+   {
+    "doc": "t10-as-cad-propofol",
+    "segment": "rescue",
+    "target": "map-rescued",
+    "type": "GreaterThan",
+    "series": "state:map",
+    "source": "tables §7 10: phenylephrine → MAP ≥ 85 within 90 s",
+    "measured": 98.24377392311975,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "0.00–30.0"
+    "expected": "> 85.0"
+   },
+   {
+    "doc": "t11-chronic-mr-fluid",
+    "segment": "late",
+    "target": "pawp",
+    "type": "GreaterThan",
+    "series": "state:pawp",
+    "source": "tables §7 11: PCWP 15 → > 25 by 15–25 min",
+    "measured": 25.448646446430615,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "> 25.0"
+   },
+   {
+    "doc": "t11-chronic-mr-fluid",
+    "segment": "oedema",
+    "target": "spo2",
+    "type": "Range",
+    "series": "state:spo2",
+    "source": "tables §7 11: SpO2 96 → 89–92",
+    "measured": 96.45665123548582,
+    "errPct": 4.844186125528068,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "89.0–92.0"
    },
    {
     "doc": "t12-massive-pe",
@@ -2101,7 +2124,7 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "normocapnia [ENG]",
-    "measured": 39.06666666666667,
+    "measured": 35,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2114,10 +2137,10 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "tables §7 12: EtCO2 35 → 20–25 within 3 breaths",
-    "measured": 38,
-    "errPct": 52,
-    "grade": "red",
-    "pass": false,
+    "measured": 26,
+    "errPct": 4,
+    "grade": "yellow",
+    "pass": true,
     "expected": "20.0–25.0"
    },
    {
@@ -2140,8 +2163,8 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 12: SpO2 85–92 on FiO2 1",
-    "measured": 99.98615642793945,
-    "errPct": 8.680604812977661,
+    "measured": 99.98414267969929,
+    "errPct": 8.678415956194879,
     "grade": "yellow",
     "pass": true,
     "expected": "85.0–92.0"
@@ -2153,7 +2176,7 @@
     "type": "Range",
     "series": "state:map",
     "source": "baseline MAP physiological [ENG]",
-    "measured": 91.81679815818173,
+    "measured": 92.34156026812174,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2166,7 +2189,7 @@
     "type": "LessThan",
     "series": "state:sbp",
     "source": "tables §7 13: SBP < 90 by 3 min",
-    "measured": 72.14183383636222,
+    "measured": 69.17378183902484,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2179,11 +2202,11 @@
     "type": "Range",
     "series": "state:cvp",
     "source": "tables §7 13: CVP +5–15",
-    "measured": 21.65216419327859,
+    "measured": 22.741669688522993,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "12.8–22.8"
+    "expected": "12.9–22.9"
    },
    {
     "doc": "t14-tamponade",
@@ -2192,7 +2215,7 @@
     "type": "Range",
     "series": "state:cvp",
     "source": "tables §7 14: CVP ≈ PAD ≈ PCWP 15–20",
-    "measured": 17.920577576875708,
+    "measured": 19.238107152538387,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2205,11 +2228,76 @@
     "type": "Range",
     "series": "state:pawp",
     "source": "tables §7 14",
-    "measured": 22.398607136343095,
-    "errPct": 11.993035681715476,
+    "measured": 23.896174130707646,
+    "errPct": 19.48087065353823,
     "grade": "yellow",
     "pass": true,
     "expected": "15.0–20.0"
+   },
+   {
+    "doc": "t15-rv-infarct",
+    "segment": "rest",
+    "target": "cvp",
+    "type": "Range",
+    "series": "state:cvp",
+    "source": "tables §7 15: CVP 14–18",
+    "measured": 6.933144101380309,
+    "errPct": 50.47754213299779,
+    "grade": "red",
+    "pass": false,
+    "expected": "14.0–18.0"
+   },
+   {
+    "doc": "t15-rv-infarct",
+    "segment": "rest",
+    "target": "pawp",
+    "type": "Range",
+    "series": "state:pawp",
+    "source": "tables §7 15: PCWP 8–12",
+    "measured": 3.264150917357384,
+    "errPct": 59.1981135330327,
+    "grade": "red",
+    "pass": false,
+    "expected": "8.00–12.0"
+   },
+   {
+    "doc": "t15-rv-infarct",
+    "segment": "rest",
+    "target": "map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "tables §7 15: MAP 60–70",
+    "measured": 85.86564913304278,
+    "errPct": 22.66521304720397,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "60.0–70.0"
+   },
+   {
+    "doc": "t16-septic-shock-warm",
+    "segment": "warm",
+    "target": "map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "tables §7 16: MAP 55–60",
+    "measured": 86.70438241726355,
+    "errPct": 44.50730402877257,
+    "grade": "red",
+    "pass": false,
+    "expected": "55.0–60.0"
+   },
+   {
+    "doc": "t16-septic-shock-warm",
+    "segment": "warm",
+    "target": "hr",
+    "type": "Range",
+    "series": "state:hr",
+    "source": "tables §7 16: HR 115–130",
+    "measured": 75,
+    "errPct": 34.78260869565217,
+    "grade": "red",
+    "pass": false,
+    "expected": "115–130"
    },
    {
     "doc": "t17a-class3-no-bb",
@@ -2218,10 +2306,10 @@
     "type": "Range",
     "series": "state:hr",
     "source": "tables §7 17a: HR 120–140",
-    "measured": 97.98930109604517,
-    "errPct": 18.342249086629025,
-    "grade": "yellow",
-    "pass": true,
+    "measured": 75,
+    "errPct": 37.5,
+    "grade": "red",
+    "pass": false,
     "expected": "120–140"
    },
    {
@@ -2231,8 +2319,8 @@
     "type": "Range",
     "series": "state:sbp",
     "source": "tables §7 17a: SBP 80–90",
-    "measured": 95.10679326998537,
-    "errPct": 5.674214744428194,
+    "measured": 101.22065825840497,
+    "errPct": 12.467398064894407,
     "grade": "yellow",
     "pass": true,
     "expected": "80.0–90.0"
@@ -2244,11 +2332,76 @@
     "type": "Range",
     "series": "state:pp",
     "source": "tables §7 17a: PP 20–25",
-    "measured": 20.918582597274018,
-    "errPct": 0,
-    "grade": "green",
+    "measured": 27.02526543496354,
+    "errPct": 8.10106173985416,
+    "grade": "yellow",
     "pass": true,
     "expected": "20.0–25.0"
+   },
+   {
+    "doc": "t17b-class3-bb",
+    "segment": "late",
+    "target": "hr",
+    "type": "Range",
+    "series": "state:hr",
+    "source": "tables §7 17b: HR 80–95",
+    "measured": 75,
+    "errPct": 6.25,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "80.0–95.0"
+   },
+   {
+    "doc": "t17b-class3-bb",
+    "segment": "late",
+    "target": "sbp",
+    "type": "Range",
+    "series": "state:sbp",
+    "source": "tables §7 17b: SBP 65–80",
+    "measured": 101.35952184472214,
+    "errPct": 26.699402305902673,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "65.0–80.0"
+   },
+   {
+    "doc": "t18-htn-hypocapnia-cbf",
+    "segment": "hypocapnia",
+    "target": "etco2",
+    "type": "Range",
+    "series": "numeric:etco2",
+    "source": "tables §7 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [ENG]",
+    "measured": 15.755,
+    "errPct": 21.224999999999998,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "20.0–28.0"
+   },
+   {
+    "doc": "t19-tbi-haematoma",
+    "segment": "cushing",
+    "target": "hr",
+    "type": "LessThan",
+    "series": "state:hr",
+    "source": "tables §7 19: HR 80 → 45–55 at CPP < 40",
+    "measured": 75,
+    "errPct": 25,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "< 60.0"
+   },
+   {
+    "doc": "t20-low-flow-oliguria",
+    "segment": "on-dobutamine",
+    "target": "map",
+    "type": "Range",
+    "series": "state:map",
+    "source": "tables §7 20: MAP 72 on dobutamine",
+    "measured": 84.18166484498569,
+    "errPct": 10.765348480244327,
+    "grade": "yellow",
+    "pass": true,
+    "expected": "68.0–76.0"
    },
    {
     "doc": "t21-mh",
@@ -2257,7 +2410,7 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "normocapnia [ENG]",
-    "measured": 42.28333333333333,
+    "measured": 38.166666666666664,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2270,9 +2423,9 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "tables §7 21: EtCO2 40 → 60 by 10 min (±15 %)",
-    "measured": 73.5,
-    "errPct": 6.521739130434782,
-    "grade": "yellow",
+    "measured": 63.71666666666667,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "51.0–69.0"
    },
@@ -2283,11 +2436,24 @@
     "type": "GreaterThan",
     "series": "numeric:etco2",
     "source": "tables §7 21: keeps rising 3–5 mmHg/min",
-    "measured": 115.22,
+    "measured": 100.07,
     "errPct": 0,
     "grade": "green",
     "pass": true,
-    "expected": "> 88.5"
+    "expected": "> 78.7"
+   },
+   {
+    "doc": "t23-term-apnoea",
+    "segment": "apnoea",
+    "target": "t90",
+    "type": "Range",
+    "series": "state:spo2",
+    "source": "tables §7 23: SpO2 90 % at 2.5–4 min",
+    "measured": 234,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "150–240"
    },
    {
     "doc": "t24-edmark-fio2-1",
@@ -2296,9 +2462,9 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 24: 411 s ±20 %",
-    "measured": 494,
-    "errPct": 0.2028397565922921,
-    "grade": "yellow",
+    "measured": 484,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "329–493"
    },
@@ -2309,8 +2475,8 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 24: 303 s ±20 %",
-    "measured": 385,
-    "errPct": 5.769230769230769,
+    "measured": 377,
+    "errPct": 3.5714285714285716,
     "grade": "yellow",
     "pass": true,
     "expected": "242–364"
@@ -2322,8 +2488,8 @@
     "type": "Range",
     "series": "state:spo2",
     "source": "tables §7 24: 213 s ±20 %",
-    "measured": 267,
-    "errPct": 4.296875,
+    "measured": 261,
+    "errPct": 1.953125,
     "grade": "yellow",
     "pass": true,
     "expected": "170–256"
@@ -2342,13 +2508,26 @@
     "expected": "60.0–240"
    },
    {
+    "doc": "t25-apnoea",
+    "segment": "arrest",
+    "target": "sbp-collapse",
+    "type": "Range",
+    "series": "state:sbp",
+    "source": "asphyxial arrest 5–20 min after the dose [P: DeBehnke 1995; Varvarousi 2011]",
+    "measured": 805,
+    "errPct": 0,
+    "grade": "green",
+    "pass": true,
+    "expected": "300–1200"
+   },
+   {
     "doc": "g2-displayed-abp",
     "segment": "steady",
     "target": "sys",
     "type": "Range",
     "series": "numeric:abpSys",
     "source": "gate 2 acc. 1: 120.8 (±3)",
-    "measured": 121.3274471404377,
+    "measured": 121.32788068305233,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2361,7 +2540,7 @@
     "type": "Range",
     "series": "numeric:abpDia",
     "source": "gate 2 acc. 1: 80.8 (±3)",
-    "measured": 80.2720914751927,
+    "measured": 80.27236554598183,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2374,7 +2553,7 @@
     "type": "Range",
     "series": "numeric:abpSys",
     "source": "gate 2 acc. 3: 91.2 (±3)",
-    "measured": 90.57427637138652,
+    "measured": 90.58442520248515,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2387,7 +2566,7 @@
     "type": "Range",
     "series": "numeric:abpDia",
     "source": "gate 2 acc. 3: 52.2 (±3)",
-    "measured": 50.27384023471075,
+    "measured": 50.287470538166055,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2426,7 +2605,7 @@
     "type": "Range",
     "series": "numeric:abpMean",
     "source": "gate 3: MAP ≈ 97 at PEEP 5 (displayed radial mean) [ENG band]",
-    "measured": 96.0873121716845,
+    "measured": 96.07026439447206,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2439,7 +2618,7 @@
     "type": "Range",
     "series": "numeric:abpMean",
     "source": "gate 3: PEEP 5 → 15 drops MAP by 14 (97 → 83) ± 3",
-    "measured": 82.65607705640734,
+    "measured": 82.64723427170392,
     "errPct": 0,
     "grade": "green",
     "pass": true,
@@ -2491,9 +2670,9 @@
     "type": "Range",
     "series": "numeric:etco2",
     "source": "R39-2: default quality 0.8 → ≈ 20 mmHg",
-    "measured": 16.341666666666665,
-    "errPct": 3.872549019607853,
-    "grade": "yellow",
+    "measured": 20.375,
+    "errPct": 0,
+    "grade": "green",
     "pass": true,
     "expected": "17.0–23.0"
    }
@@ -2523,27 +2702,27 @@
    "channel": "abp",
    "n": 625,
    "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
+   "maxRelErr": 0.00036571297079126825,
+   "rms": 0.004396345755283397,
    "grade": "green"
   },
   {
    "case": "sinus-75",
    "channel": "pleth",
    "n": 625,
-   "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
-   "grade": "green"
+   "failed": 625,
+   "maxRelErr": 0.08377837116154878,
+   "rms": 0.07933628435967999,
+   "grade": "red"
   },
   {
    "case": "sinus-75",
    "channel": "co2",
    "n": 313,
-   "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
-   "grade": "green"
+   "failed": 230,
+   "maxRelErr": 0.05423303705007484,
+   "rms": 1.5642463982406818,
+   "grade": "red"
   },
   {
    "case": "afib-110",
@@ -2559,18 +2738,18 @@
    "channel": "abp",
    "n": 625,
    "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
+   "maxRelErr": 0.01592025102385956,
+   "rms": 0.2187595070025525,
    "grade": "green"
   },
   {
    "case": "afib-110",
    "channel": "pleth",
    "n": 625,
-   "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
-   "grade": "green"
+   "failed": 625,
+   "maxRelErr": 0.38865836791147995,
+   "rms": 0.2597378402004606,
+   "grade": "red"
   },
   {
    "case": "vf-coarse",
@@ -2586,42 +2765,151 @@
    "channel": "abp",
    "n": 625,
    "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
+   "maxRelErr": 0.008264220327047985,
+   "rms": 0.04490711925741841,
    "grade": "green"
   },
   {
    "case": "bronchospasm",
    "channel": "co2",
    "n": 313,
-   "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
-   "grade": "green"
+   "failed": 234,
+   "maxRelErr": 0.11947297900848591,
+   "rms": 2.51345534258505,
+   "grade": "red"
   },
   {
    "case": "hypovolaemia-ppv",
    "channel": "abp",
    "n": 625,
    "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
+   "maxRelErr": 0.0003472751269879266,
+   "rms": 0.006385113937902247,
    "grade": "green"
   },
   {
    "case": "hypovolaemia-ppv",
    "channel": "pleth",
    "n": 625,
-   "failed": 0,
-   "maxRelErr": 0,
-   "rms": 0,
-   "grade": "green"
+   "failed": 625,
+   "maxRelErr": 0.2540276179516687,
+   "rms": 0.24003407841387855,
+   "grade": "red"
   }
  ],
  "determinism": {
   "runs": 216,
   "nonDeterministic": [],
-  "goldenChanged": []
+  "goldenChanged": [
+   "sinus/1",
+   "sinus/2",
+   "sinus/3",
+   "sinusBrady/1",
+   "sinusBrady/2",
+   "sinusBrady/3",
+   "sinusTachy/1",
+   "sinusTachy/2",
+   "sinusTachy/3",
+   "sinusArrhythmia/1",
+   "sinusArrhythmia/2",
+   "sinusArrhythmia/3",
+   "sinusPause/1",
+   "sinusPause/2",
+   "sinusPause/3",
+   "atrialTach/1",
+   "atrialTach/2",
+   "atrialTach/3",
+   "mat/1",
+   "mat/2",
+   "mat/3",
+   "afib/1",
+   "afib/2",
+   "afib/3",
+   "aflutter/1",
+   "aflutter/2",
+   "aflutter/3",
+   "svtAvnrt/1",
+   "svtAvnrt/2",
+   "svtAvnrt/3",
+   "svtAvrt/1",
+   "svtAvrt/2",
+   "svtAvrt/3",
+   "wpwSinus/1",
+   "wpwSinus/2",
+   "wpwSinus/3",
+   "preexcitedAf/1",
+   "preexcitedAf/2",
+   "preexcitedAf/3",
+   "junctionalEscape/1",
+   "junctionalEscape/2",
+   "junctionalEscape/3",
+   "junctionalAccel/1",
+   "junctionalAccel/2",
+   "junctionalAccel/3",
+   "junctionalTachy/1",
+   "junctionalTachy/2",
+   "junctionalTachy/3",
+   "avb1/1",
+   "avb1/2",
+   "avb1/3",
+   "avb2Mobitz1/1",
+   "avb2Mobitz1/2",
+   "avb2Mobitz1/3",
+   "avb2Mobitz2/1",
+   "avb2Mobitz2/2",
+   "avb2Mobitz2/3",
+   "avb2to1/1",
+   "avb2to1/2",
+   "avb2to1/3",
+   "avbHighGrade/1",
+   "avbHighGrade/2",
+   "avbHighGrade/3",
+   "avb3Narrow/1",
+   "avb3Narrow/2",
+   "avb3Narrow/3",
+   "avb3Wide/1",
+   "avb3Wide/2",
+   "avb3Wide/3",
+   "idioventricular/1",
+   "idioventricular/2",
+   "idioventricular/3",
+   "aivr/1",
+   "aivr/2",
+   "aivr/3",
+   "vtMono/1",
+   "vtMono/2",
+   "vtMono/3",
+   "vtPoly/1",
+   "vtPoly/2",
+   "vtPoly/3",
+   "torsades/1",
+   "torsades/2",
+   "torsades/3",
+   "vfCoarse/1",
+   "vfCoarse/2",
+   "vfCoarse/3",
+   "vfFine/1",
+   "vfFine/2",
+   "vfFine/3",
+   "asystole/1",
+   "asystole/2",
+   "asystole/3",
+   "pWaveAsystole/1",
+   "pWaveAsystole/2",
+   "pWaveAsystole/3",
+   "agonal/1",
+   "agonal/2",
+   "agonal/3",
+   "pacedAAI/1",
+   "pacedAAI/2",
+   "pacedAAI/3",
+   "pacedVVI/1",
+   "pacedVVI/2",
+   "pacedVVI/3",
+   "pacedDDD/1",
+   "pacedDDD/2",
+   "pacedDDD/3"
+  ]
  },
  "oracle": {
   "buildHash": "a3be71adfd49bd53eaec7c5e9c7e74ec0878ad0509e545b73ca927478ff6ff74",
@@ -2647,7 +2935,7 @@
    {
     "scenario": "O1",
     "id": "sao2",
-    "ours": 96.55950679603738,
+    "ours": 96.54310534197165,
     "pulse": 97.44808522456437,
     "grade": "green",
     "expected": "±10 % of Pulse",
@@ -2656,11 +2944,11 @@
    {
     "scenario": "O1",
     "id": "etco2",
-    "ours": 36.33659169251766,
+    "ours": 36.378221940936506,
     "pulse": 36.72194142737783,
     "grade": "green",
     "expected": "±10 % of Pulse",
-    "note": "1.0 %"
+    "note": "0.9 %"
    },
    {
     "scenario": "O1",
@@ -2683,20 +2971,20 @@
    {
     "scenario": "O2",
     "id": "hr-delta",
-    "ours": 14.027637675304234,
+    "ours": 0,
     "pulse": 47.70191834624316,
     "grade": "red",
     "expected": "±20 % of Pulse",
-    "note": "70.6 %"
+    "note": "100.0 %"
    },
    {
     "scenario": "O2",
     "id": "map-delta",
-    "ours": -3.7540836937624817,
+    "ours": -4.963775036799888,
     "pulse": -16.339664686534576,
     "grade": "red",
     "expected": "±20 % of Pulse",
-    "note": "77.0 %"
+    "note": "69.6 %"
    },
    {
     "scenario": "O2",
@@ -2710,16 +2998,16 @@
    {
     "scenario": "O4",
     "id": "map-delta",
-    "ours": -7.848726389930164,
+    "ours": -18.929036924620405,
     "pulse": -27.90751831973283,
     "grade": "red",
     "expected": "±15 % of Pulse",
-    "note": "71.9 %"
+    "note": "32.2 %"
    },
    {
     "scenario": "O4",
     "id": "hr-150s",
-    "ours": 81.35795737397537,
+    "ours": 72,
     "pulse": 48.938643761278406,
     "grade": "green",
     "expected": "Pulse < 58 (D8)",
@@ -2728,7 +3016,7 @@
    {
     "scenario": "O-VF",
     "id": "map-60s",
-    "ours": 11.329652151899761,
+    "ours": 11.320682035089321,
     "pulse": 19.434581860856074,
     "grade": "green",
     "expected": "±50 % of Pulse",
@@ -2756,5 +3044,5 @@
    "O12 hepatic clearance in haemorrhage"
   ]
  },
- "wallS": 653.2605275420001
+ "wallS": 913.9516155000001
 }

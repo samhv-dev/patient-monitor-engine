@@ -1,5 +1,5 @@
 // @pme/renderer public API. The IIFE build exposes this module as window.PatientMonitor (brief §7.6).
-export const version = '0.0.0';
+export const version = '1.0.0-rc.1';
 export { createEngine } from '@pme/engine-core';
 export * from './calibration.ts';
 export * from './decimate.ts';

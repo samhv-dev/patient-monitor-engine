@@ -1,0 +1,18 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "patient-monitor-engine",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/engine-core",
+    "packages/renderer",
+    "packages/audio",
+    "packages/controller",
+    "packages/skins",
+    "packages/ventilator"
+  ],
+  "packageOptions": { "excludePrivate": true, "excludeInternal": true },
+  "out": "docs/api",
+  "readme": "none",
+  "includeVersion": false,
+  "githubPages": false
+}

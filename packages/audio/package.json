@@ -1,14 +1,34 @@
 {
   "name": "@pme/audio",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0-rc.1",
+  "description": "Web Audio QRS beep and IEC-style / traditional / Saadat alarm tones for the patient-monitor engine.",
+  "license": "MIT",
+  "author": "Ali Mahdavi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samhv-dev/patient-monitor-engine.git",
+    "directory": "packages/audio"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/types/src/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    },
+    "types": "./dist/types/src/index.d.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
-    "build": "vite build"
+    "build": "vite build && tsc -p tsconfig.build.json && node --experimental-strip-types ../../scripts/finish-dist.ts"
   }
 }

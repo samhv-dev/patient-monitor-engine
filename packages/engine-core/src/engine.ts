@@ -37,7 +37,7 @@ import {
   type SimSeconds,
 } from './types.ts';
 import type { SensorId } from './types-hemo.ts'; // FU-8 (B2)
-import { version } from './version.ts';
+import { engineKey } from './version.ts';
 import { createL1State, l1Target, l1Value, setL1Target, type L1State, type L1Var } from './l1/state.ts'; // Stage 2 (Stage 4b: l1Value, setL1Target)
 import {
   advanceHemo,
@@ -229,7 +229,7 @@ function startRate(id: RhythmId, opts: RhythmOpts): number {
 }
 
 class Engine implements MonitorEngine {
-  readonly version = version;
+  readonly version = engineKey; // FU-11 A1 (Stage 8b): `${version}+${build}`, the snapshot compatibility key
   private readonly seed: number;
   private readonly lookTicks: number;
   private readonly mainsHz: 50 | 60;

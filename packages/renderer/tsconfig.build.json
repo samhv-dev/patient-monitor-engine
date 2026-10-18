@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": ".",
+    "outDir": "dist/types",
+    "types": ["node", "vite/client"],
+    "paths": {
+      "@pme/engine-core": ["../engine-core/dist/types/src/index.d.ts"],
+      "@pme/skins": ["../skins/dist/types/src/index.d.ts"],
+      "@pme/skins/validate": ["../skins/dist/types/src/validate.d.ts"],
+      "@pme/audio": ["../audio/dist/types/src/index.d.ts"],
+      "@pme/controller": ["../controller/dist/types/src/index.d.ts"],
+      "@pme/controller/scenario": ["../controller/dist/types/src/scenario/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

@@ -11,20 +11,25 @@
     "test": "pnpm -r test",
     "build": "pnpm -r build",
     "check-notices": "node --experimental-strip-types scripts/check-notices.ts",
+    "check-licences": "node --experimental-strip-types scripts/check-licences.ts",
+    "check-size": "node --experimental-strip-types scripts/check-size.ts",
+    "pack-smoke": "node scripts/pack-smoke.mjs",
     "audit:physiology": "node --experimental-strip-types --import ./scripts/audit-physiology/hooks.mjs scripts/audit-physiology/cli.ts",
     "audit:respiratory": "node --experimental-strip-types --import ./scripts/audit-respiratory/hooks.mjs scripts/audit-respiratory/cli.ts",
     "audit:drugs": "node --experimental-strip-types --import ./scripts/audit-drugs/hooks.mjs scripts/audit-drugs/cli.ts",
     "test:e2e": "playwright test",
     "validate": "pnpm --filter @pme/validation validate",
     "relay": "pme-relay",
+    "docs:api": "typedoc",
     "audit:monitor": "node --experimental-strip-types --import ./scripts/audit-monitor/hooks.mjs scripts/audit-monitor/cli.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@pme/controller": "workspace:*",
     "@types/node": "22.20.4",
+    "typedoc": "0.28.20",
     "typescript": "5.9.3",
     "vite": "6.4.3",
-    "vitest": "3.2.7",
-    "@pme/controller": "workspace:*"
+    "vitest": "3.2.7"
   }
 }
