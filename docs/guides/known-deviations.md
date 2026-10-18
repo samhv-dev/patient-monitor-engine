@@ -12,11 +12,11 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree (2026-10-18) there are **152 expected-failure calls**: 150 `it.fails` read by the lister, 1 conditional
-`it.fails` the lister cannot read (`packages/ventilator/test/link-parity.test.ts`, bronchospasm row, listed by hand
-below), and 1 conditional Playwright `test.fail` that is inactive (see its row). That is 151 active misses and
-**1 skipped test**. "Tracked in" names the gate note (and its section) that records the miss with its number; the open
-questions it cites (Q…, R-…, E-…) are listed in that note.
+On this tree there are **153 expected-failure calls**, all read by the lister: 151 `it.fails` (the bronchospasm row of
+`packages/ventilator/test/link-parity.test.ts` is now a literal `it.fails`), 1 `it.fails.each` with three cases
+(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and 1 conditional Playwright `test.fail` that is inactive
+(see its row). That is 152 active misses and **1 skipped test**. "Tracked in" names the gate note (and its section)
+that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
 
@@ -73,6 +73,7 @@ questions it cites (Q…, R-…, E-…) are listed in that note.
 | `packages/engine-core/test/engine/endo-circ-acceptance.test.ts` | warm SVR 500–700 dyn·s/cm⁵ (measured 861) | `docs/gates/stage-7e.md` "Expected failures (`it.fails`)", item 5 (Q-7e-7); re-measured in `docs/gates/fu-4.md` §4 "The `it.fails` list" |
 | `packages/engine-core/test/engine/fidelity-alarms.test.ts` | CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit's chatter criterion) — measured 4 on philips-like and 4 on mindray-like with the vendor alarm on-delays (11 and 9 without them): the displayed CVP swings 9–11 across the limit 10 with the ventilation and the rhythm changes, wider than the one-unit hysteresis | `docs/gates/fu-5.md` §4 "`it.fails` (all FU-5's …)", row `fidelity-alarms` 11 |
 | `packages/engine-core/test/engine/fidelity-arrest.test.ts` | philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats — measured 6 (27/21) at 6 samples | `docs/gates/fu-4.md` §9b "FU-5 (PR #24) — merged in, and its cross-branch items" (pinned, FU-5 follow-up) |
+| `packages/engine-core/test/engine/fidelity-arrest.test.ts` | %s: the CPR window's EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions with the alveolar washout (mean 15.3–15.6, max 20–21) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (fidelity-3 EtCO2 floor × 3 skins: 7; Q9); target audit row 181 (docs/validation/target-audit/30-target-audit.md#row-181) |
 | `packages/engine-core/test/engine/fidelity-ecg.test.ts` | saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) — measured 9 s (10 s to the review's settle rule) | `docs/gates/fu-5.md` §4 "`it.fails` (all FU-5's …)", row `fidelity-ecg` 12 (open question 12) |
 | `packages/engine-core/test/engine/fidelity-lowflow.test.ts` | MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (Ali case, Q10) |
 | `packages/engine-core/test/engine/fidelity-lowflow.test.ts` | ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until the circulation publishes a cutaneous tone | `docs/gates/fu-5.md` §4 "`it.fails` (all FU-5's …)", row `fidelity-lowflow` 1b |
@@ -171,7 +172,7 @@ questions it cites (Q…, R-…, E-…) are listed in that note.
 | `packages/engine-core/test/l2/temp/temp.test.ts` | GA: the hour-8 plateau stays at or above 34.5 °C — measured 34.37 | `docs/gates/stage-fu-10.md` §3 "Acceptance numbers, before (base) → after", row A3 "hour-8 plateau" (E-FU10-3b) |
 | `packages/ventilator/test/link-r27.test.ts` | ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/link-r27.test.ts` | FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
-| `packages/ventilator/test/link-parity.test.ts` | bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (conditional `it.fails`, title built from a template) | `docs/gates/fu-6.md` §2, row RS15 link parity |
+| `packages/ventilator/test/link-parity.test.ts` | bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ) | `docs/gates/fu-6.md` §2, row RS15 link parity; target audit row 110 (docs/validation/target-audit/30-target-audit.md#row-110) |
 | `packages/ventilator/test/link-r27.test.ts` | room air (FiO2 0.21): SpO2 rises ≥ 2 (measured SpO2 94.0 → 95.0, SaO2 94.9 → 95.5: shunt 0.15 → 0.10 moves SpO2 by 1) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 18) |
 | `packages/ventilator/test/pleural.test.ts` | reference run: Ppeak rises 10–20 cmH2O over the normal row (measured +21.6: 45.4 vs 23.8) | `docs/gates/stage-v1.md` §7 "`it.fails`" (Decision 16) |
 

@@ -14,11 +14,11 @@ export interface Deviation {
   title: string;
 }
 
-const FAILS_RE = /\b(?:it|test)\.fails?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g;
+const FAILS_RE = /\b(?:it|test)\.fails?(?:\.each\([^()]*\))?\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g;
 // Playwright's in-body annotation `test.fail(condition, 'reason')`: an expected failure whenever the condition holds;
 // the reason is its title (apps/demo/e2e/app-instructor-tasks.e2e.ts uses it).
 const COND_FAIL_RE = /\btest\.fail\(\s*[^'"`\s,][^,]*,\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1\s*\)/g;
-const FAILS_CALL_RE = /\b(?:it|test)\.fails?\s*\(/g;
+const FAILS_CALL_RE = /\b(?:it|test)\.fails?(?:\.each)?\s*\(/g;
 const SKIP_RE = /\b(?:it|test|describe)\.(?:skip|todo)\(\s*(["'`])((?:\\.|(?!\1)[^\\])*)\1/g;
 
 function walk(dir: string): string[] {
@@ -49,7 +49,7 @@ export function skippedTitles(text: string): string[] {
 
 /** Package unit tests and the Playwright e2e, sorted. */
 export function testFiles(root: string): string[] {
-  return [...walk(join(root, 'packages')), ...walk(join(root, 'apps', 'demo', 'e2e'))].filter((f) => /\.(test|e2e)\.ts$/.test(f)).sort();
+  return [...walk(join(root, 'packages')), ...walk(join(root, 'apps', 'demo', 'e2e')), ...walk(join(root, 'apps', 'demo', 'src'))].filter((f) => /\.(test|e2e)\.ts$/.test(f)).sort();
 }
 const list = (root: string, pick: (text: string) => string[]): Deviation[] =>
   testFiles(root).flatMap((f) => pick(readFileSync(f, 'utf8')).map((title) => ({ file: relative(root, f), title })));
