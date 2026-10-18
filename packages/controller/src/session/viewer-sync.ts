@@ -34,6 +34,8 @@ export interface ViewerTarget {
   /** Engine tick (commands must arrive before the viewer reaches their tick). */
   tick(): number;
   setRate(k: number): void;
+  /** FX-16: the host's (nominal) speed, told every frame; `setRate` gets the steered one (up to ±10 % around it). */
+  setNominalRate?(k: number): void;
   setPaused(p: boolean): void;
   /** Move the clock forward to simT (engine catches up without drawing the gap). */
   jumpTo(simT: SimSeconds): void;
@@ -122,6 +124,7 @@ export class ViewerSync {
     }
     if (this.status !== 'synced' || !this.anchor) return t.setPaused(true);
     if (this.hostPaused || this.hostFastForward) return t.setPaused(true);
+    t.setNominalRate?.(this.hostRate); // FX-16: the beat-tone gate reads this, not the steered rate
     const since = (this.now() - this.anchor.wallMs) / 1000;
     const hostNow = this.anchor.simT + Math.min(since, MAX_EXTRAPOLATE_S) * this.hostRate;
     const want = hostNow - this.delayS * this.hostRate; // FX-2: delayS of WALL time behind, at every speed

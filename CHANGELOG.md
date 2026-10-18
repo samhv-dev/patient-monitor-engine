@@ -13,6 +13,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
   device and not clinically validated, with the version (new required `--version` flag) and the build.
 - FX-13: a Debrief span could read '1 min 60 s'.
 - FX-18: single-key shortcuts fired while typing in the Debrief notes (a contenteditable field); the letter i toggled the instructor view.
+- FX-16: at ×4 a following phone played only about half of the heartbeat beeps (the beep gate read its steered clock rate, up to 10 % above the session speed); it now reads the session speed, so the phone beeps with the host.
 
 ### Changed
 

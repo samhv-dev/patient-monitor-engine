@@ -66,6 +66,8 @@ export interface ViewerClock {
   renderT(): number;
   tick(): number;
   setRate(k: number): void;
+  /** The session's nominal speed (the host's), which the beat-tone gate reads instead of the steered rate. */
+  setNominalRate(k: number): void;
   setPaused(p: boolean): void;
   jumpTo(simT: number): void;
 }
@@ -132,8 +134,9 @@ const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 
 /** Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of
  *  80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. */
 export const BEAT_TONE_MAX_SCALE = 4;
-/** Whether a tone of this kind plays at this speed. */
-export const beatToneAt = (kind: string, timeScale: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || timeScale <= BEAT_TONE_MAX_SCALE;
+/** Whether a tone of this kind plays at this speed. A follower passes the session's `nominal` speed: its own clock is
+ *  steered up to ±10 % around it, and a gate on the steered rate dropped about half the beats at ×4. */
+export const beatToneAt = (kind: string, timeScale: number, nominal?: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || (nominal ?? timeScale) <= BEAT_TONE_MAX_SCALE;
 /** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG]. */
 const FF_CUE_HZ = [660, 990] as const;
 
@@ -206,6 +209,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
       : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880);
   let anchor: { simT: number; perfMs: number; timeScale: number } = { simT: 0, perfMs: performance.now(), timeScale: 1 };
+  let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
   const onEvents = (a: ClockAnchor, events: EngineEvent[]) => {
     anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale };
@@ -263,7 +267,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         const n = formatNibp(e, nibpLast);
         nibpTile.set(n.main, n.sub, n.status);
       }
-      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
+      if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
           ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
@@ -522,6 +526,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           renderT: () => core.clock.renderT,
           tick: () => core.engine.now().tick,
           setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // ×8
+          setNominalRate: (k) => void (nominalRate = k),
           setPaused: (p) => (p ? core.clock.pause() : core.clock.resume()),
           jumpTo: (simT) => {
             core.clock.setTick(Math.floor(simT * 50 + 1e-6));
