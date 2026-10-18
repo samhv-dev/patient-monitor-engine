@@ -32,8 +32,8 @@ says otherwise.
   `"debrief": "discuss"`), and a rule-less objective ticked by the instructor reads ✓ Observed with its tick time; the
   trend charts carry event marks (■ team, ● patient, │ scenario) with a legend in words; a talking points box (four
   fixed debriefing prompts) sits before the notes; drugs, the timeline and bookmarks share a page and set-up rows print
-  grey. The JSON export is `pme-debrief/2` (adds the version, `discuss`, the tick time and the measured interval; key
-  times and key moments are empty for now); the Persian handout reads `/1` and `/2`. Scenario objectives may carry
+  grey. The JSON export is `pme-debrief/2` (adds the version, `discuss`, the tick time and the measured interval); the
+  Persian handout reads `/1` and `/2`. Scenario objectives may carry
   `"debrief": "recognition" | "discuss"`; the malignant hyperthermia card gains a hand-ticked recognition objective.
 - Debrief redesign B: page 1 reads the key times (up to six tiles: the instructor's recognition tick, the start to
   the first team action, each objective's measured interval against the time asked, the pulse loss to CPR, the time

@@ -166,7 +166,7 @@ Ventilation back to 12 × 500
 the press: 38 → 49 at +1 min, peak 55 inside span 2, 45 after it, 42 at the end · the
 pressure stays high after the crisis (systolic 136–151: a known miss).
 
-**Debrief would say:** – name MH (the instructor's tick; ✓ Observed at the tick time when ticked, ≈ 6:52) · ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
+**Debrief would say:** ✓ Observed name MH (ticked at Early signs, ≈ 6:52: the tick time as recorded; – name MH only if not ticked) · ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
 ventilation back ✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)").
 
 **Traps:** ◆ **do NOT press ventilation back at "Recovering"**: early is "not met" under the new rule, and it made the
