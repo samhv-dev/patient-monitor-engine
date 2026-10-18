@@ -1,7 +1,7 @@
 // Stage 9: one document, one engine session. Switching views never restarts the engine (sim time keeps rising, the
 // monitor host element is the same node), the scenario deep link still works, and a Remote in another page of the same
 // browser pairs by code and moves the host's patient.
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { go, openApp, startVite } from './stage9-support.ts';
 
@@ -10,7 +10,22 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type App = { __pmeApp: { session: { code: string; simNow(): number; monitor: unknown }; link: { log: Array<{ kind: string; text: string }>; ctl: { state: { values: Record<string, number>; control: Record<string, string> } | null } }; shell: { monitorHost: HTMLElement } } };
+type App = { __pmeApp: { session: { code: string; simNow(): number; monitor: unknown; spec: unknown; mode: string; restart(s: unknown): void }; link: { simT: number; log: Array<{ kind: string; text: string }>; ctl: { state: { values: Record<string, number>; control: Record<string, string> } | null } }; shell: { monitorHost: HTMLElement } } };
+
+const ROUTES = ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach'];
+const engineT = (page: Page) => page.evaluate(() => (window as unknown as App).__pmeApp.link.simT);
+
+/** The six views, the engine clock read at each; `at` runs before a route is shown. Fails if the engine clock went back. */
+async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>> = {}): Promise<void> {
+  let prev = await engineT(page);
+  for (const r of ROUTES) {
+    await at[r]?.();
+    await go(page, r, 500);
+    const t = await engineT(page);
+    expect(t, `sim time went back on ${r}: the engine restarted`).toBeGreaterThanOrEqual(prev);
+    prev = t;
+  }
+}
 
 test('every view shares the one engine session', async ({ page }) => {
   test.setTimeout(60_000); // fix-ci-webkit-3: CI's WebKit hit the 30 s default in the route walk (29.3 s, page closed)
@@ -18,19 +33,33 @@ test('every view shares the one engine session', async ({ page }) => {
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
   const simNow = () => page.evaluate(() => (window as unknown as App).__pmeApp.session.simNow());
   const t0 = await simNow();
-  // fix-ci-webkit-3: "the engine never restarts" is read at every view (a restart starts the clock again at 0, so sim time
-  // would go back), not as "≥ 2.5 s of sim in ≈ 3 s of wall time", which measured how fast the runner ran the sim (CI
-  // WebKit read 1.24, 2.32, 2.497: the 250 ms frame clamp drops time on a starved runner). The 2.5 s is then waited for.
-  let prev = t0;
-  for (const r of ['#/explore/haemodynamics', '#/settings', '#/dev', '#/monitor', '#/', '#/teach']) {
-    await go(page, r, 500);
-    const t = await simNow();
-    expect(t, `sim time went back on ${r}: the engine restarted`).toBeGreaterThanOrEqual(prev);
-    prev = t;
-  }
+  // fix-ci-webkit-3: "the engine never restarts" is read at every view, not as "≥ 2.5 s of sim in ≈ 3 s of wall time",
+  // which measured how fast the runner ran the sim (CI WebKit read 1.24, 2.32, 2.497: the 250 ms frame clamp drops time on
+  // a starved runner). The 2.5 s is then waited for.
+  // FX-11: it is read on the ENGINE's clock (link.simT: the latest engine event time, monotonic within one engine; a new
+  // engine's `timeline` event restarts it), not on session.simNow(). That is an estimate — the last event's time run on
+  // the wall clock — which runs ahead while the worker is starved and steps back (≤ 1.5 s × speed) at the next event:
+  // CI WebKit read 0.11–0.42 s back with the same monitor in 5 runs, and a 1.4 s worker stall gives it here every time.
+  await walk(page);
   const same = await page.evaluate(() => (window as unknown as { __host: unknown }).__host === (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild);
   expect(same, 'the monitor was not remounted').toBe(true);
   await expect.poll(simNow, { timeout: 15_000 }).toBeGreaterThan(t0 + 2.5);
+});
+
+// FX-11: the walk's check tells a stall from a restart. A worker blocked for 1.4 s (Playwright runs a busy loop in the
+// worker itself) made the estimate step back on 6 of 6 runs with the same monitor; the engine clock never does. A real
+// restart (a new engine) still fails the check.
+test('a stalled engine worker is not a restart; a new engine is (FX-11)', async ({ page }) => {
+  test.setTimeout(60_000);
+  await openApp(page, base, '#/teach', { warmMs: 3000 });
+  const worker = page.workers().at(-1);
+  test.skip(!worker, 'this browser runs the monitor on the main thread (no worker to stall)');
+  await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
+  const stall = async () => void worker?.evaluate(() => { const end = performance.now() + 1400; while (performance.now() < end); }).catch(() => undefined);
+  await walk(page, { '#/settings': stall });
+  expect(await page.evaluate(() => (window as unknown as { __host: unknown }).__host === (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild), 'the monitor was not remounted').toBe(true);
+  const restart = () => page.evaluate(() => { const s = (window as unknown as App).__pmeApp.session; s.restart({ spec: s.spec, mode: s.mode }); });
+  await expect(walk(page, { '#/monitor': restart }), 'a new engine is caught').rejects.toThrow(/sim time went back on #\/monitor/);
 });
 
 test('the scenario deep link loads the case into the instructor view', async ({ page }) => {
