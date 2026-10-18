@@ -1,9 +1,11 @@
 # Persian Debrief handout (گزارش دبریفینگ به فارسی)
 
 A **handout script, not an app feature.** `scripts/showcase/debrief-fa.mjs` reads the JSON that the Debrief view saves
-("Download the record (JSON)", schema `pme-debrief/1`, Stage 13 ruling Q3: the same data as the printed report) and
-prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are untouched; an in-app translation
-is planned for a later release. The English report stays the reference.
+("Download the record (JSON)", schema `pme-debrief/2` (`/1` exports are still read), Stage 13 ruling Q3: the same data
+as the printed report) and prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are
+untouched; an in-app translation is planned for a later release. The English report stays the reference.
+New sections in Persian: a later release (the key times, the key moments and the learner handout). A `/2` export also
+prints the talking points box and the redesign's verdict words (Observed, Not observed, Not assessable, Discuss).
 
 ## How to run
 
