@@ -1,0 +1,22 @@
+regression	afib-110/pleth	625/625 samples > 2 %	all samples within 2 %
+regression	bronchospasm/co2	234/313 samples > 2 %	all samples within 2 %
+regression	hypovolaemia-ppv/pleth	625/625 samples > 2 %	all samples within 2 %
+regression	sinus-75/co2	230/313 samples > 2 %	all samples within 2 %
+regression	sinus-75/pleth	625/625 samples > 2 %	all samples within 2 %
+segments	s1-phenylephrine/peak/hr-fall	75.0	60.0–70.0
+segments	s4-class-iii/late/sbp	103	< 100
+segments	s9-witnessed-vf/arrest/etco2-gone	83.0	0.00–30.0
+segments	t10-as-cad-propofol/2min/map	69.9	60.0–65.0
+segments	t10-as-cad-propofol/base/steady-map	112	60.0–110
+segments	t11-chronic-mr-fluid/oedema/spo2	96.5	89.0–92.0
+segments	t15-rv-infarct/rest/cvp	6.9	14.0–18.0
+segments	t15-rv-infarct/rest/map	85.9	60.0–70.0
+segments	t15-rv-infarct/rest/pawp	3.3	8.00–12.0
+segments	t16-septic-shock-warm/warm/hr	75.0	115–130
+segments	t16-septic-shock-warm/warm/map	86.7	55.0–60.0
+segments	t17a-class3-no-bb/late/pp	27.0	20.0–25.0
+segments	t17b-class3-bb/late/hr	75.0	80.0–95.0
+segments	t17b-class3-bb/late/sbp	101	65.0–80.0
+segments	t18-htn-hypocapnia-cbf/hypocapnia/etco2	15.8	20.0–28.0
+segments	t19-tbi-haematoma/cushing/hr	75.0	< 60.0
+segments	t20-low-flow-oliguria/on-dobutamine/map	84.2	68.0–76.0

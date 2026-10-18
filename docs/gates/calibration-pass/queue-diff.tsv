@@ -1,0 +1,66 @@
+suite	row	change	old_grade	new_grade	old_measured	new_measured	expected	source
+morphology	V1 · HR 50–70	same	red	red	engine 104 vs recorded 190	engine 104 vs recorded 190	170–210	brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]
+morphology	V1 · HR 70–90	moved	yellow	yellow	engine 106 vs recorded 171	engine 107 vs recorded 171	151–191	brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]
+morphology	V1 · HR 90–110	moved	yellow	yellow	engine 97.3 vs recorded 154	engine 97.4 vs recorded 154	134–174	brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]
+morphology	V1 · HR other	same	yellow	yellow	engine 94.5 vs recorded 150	engine 94.5 vs recorded 150	130–170	brief §9 V1: median within ±20 ms of the VitalDB median per HR bin [ENG]
+morphology	V1-lit · all	same	red	red	engine 102 vs recorded 167	engine 102 vs recorded 167	150–220	research 03 §2.1: R → radial upstroke 150–220 ms
+morphology	V1-lit · mghdb	moved	red	red	engine 95.2 vs recorded 145	engine 95.1 vs recorded 145	150–220	research 03 §2.1: R → radial upstroke 150–220 ms
+morphology	V1-lit · vitaldb	same	red	red	engine 103 vs recorded 172	engine 103 vs recorded 172	150–220	research 03 §2.1: R → radial upstroke 150–220 ms
+morphology	V2 · HR 50–70	same	red	red	engine 284 vs recorded 518	engine 284 vs recorded 518	498–538	brief §9 V2: ±20 ms
+morphology	V2 · HR 70–90	same	red	red	engine 282 vs recorded 484	engine 282 vs recorded 484	464–504	brief §9 V2: ±20 ms
+morphology	V2 · HR 90–110	same	red	red	engine 270 vs recorded 428	engine 270 vs recorded 428	408–448	brief §9 V2: ±20 ms
+morphology	V2 · HR other	same	yellow	yellow	engine 258 vs recorded 360	engine 258 vs recorded 360	340–380	brief §9 V2: ±20 ms
+morphology	V2-kind · mghdb	same	yellow	yellow	engine 1.0 vs recorded 0.6	engine 1.0 vs recorded 0.6	0.32–0.92	[ENG] share of beats with a true notch minimum within ±0.3 of the recording
+morphology	V3-delay · all	moved	yellow	yellow	engine 113 vs recorded 442	engine 112 vs recorded 442	20.0–100	brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)
+morphology	V3-delay · vitaldb	same	yellow	yellow	engine 115 vs recorded 442	engine 115 vs recorded 442	20.0–100	brief §9 V3 / research 03 §3.1: PPG foot − ABP foot 20–100 ms (recorded VitalDB delay is device-latency-contaminated, report only)
+morphology	V3-shape · all	same	red	red	engine 0.4 vs recorded 0.9	engine 0.4 vs recorded 0.9	0.80–1.00	brief §9 V3: r ≥ 0.8 [ENG]
+morphology	V3-shape · mghdb	same	red	red	engine 0.5 vs recorded —	engine 0.5 vs recorded —	0.80–1.00	brief §9 V3: r ≥ 0.8 [ENG]
+morphology	V3-shape · vitaldb	same	red	red	engine 0.4 vs recorded 0.9	engine 0.4 vs recorded 0.9	0.80–1.00	brief §9 V3: r ≥ 0.8 [ENG]
+morphology	V5-PR · all	same	yellow	yellow	engine 217 vs recorded —	engine 217 vs recorded —	140–216	PTB-XL NORM p10–p90 by the same method (filled at run time)
+morphology	V5-PR · vitaldb	same	yellow	yellow	engine 217 vs recorded —	engine 217 vs recorded —	140–216	PTB-XL NORM p10–p90 by the same method (filled at run time)
+oracle	O1/cvp	same	yellow	yellow	ours 6.00 · Pulse 4.73	ours 6.00 · Pulse 4.73	±10 % of Pulse	26.8 %
+oracle	O1/map	same	yellow	yellow	ours 87.33 · Pulse 95.38	ours 87.33 · Pulse 95.38	±5 % of Pulse	8.4 %
+oracle	O1/rr	same	yellow	yellow	ours 15.00 · Pulse 12.24	ours 15.00 · Pulse 12.24	±10 % of Pulse	22.5 %
+oracle	O2/hr-delta	moved	red	red	ours 14.03 · Pulse 47.70	ours 0.00 · Pulse 47.70	±20 % of Pulse	100.0 %
+oracle	O2/lactate	same	yellow	yellow	ours — · Pulse —	ours — · Pulse —	n/a	Pulse aborted after 1570 s (wasm abort); no Pulse value at 1800 s
+oracle	O2/map-delta	moved	red	red	ours -3.75 · Pulse -16.34	ours -4.96 · Pulse -16.34	±20 % of Pulse	69.6 %
+oracle	O4/map-delta	moved	red	red	ours -7.85 · Pulse -27.91	ours -18.93 · Pulse -27.91	±15 % of Pulse	32.2 %
+regression	afib-110/pleth	new		red		625/625 samples > 2 %	all samples within 2 %	R40 (audit N-P02)
+regression	bronchospasm/co2	new		red		234/313 samples > 2 %	all samples within 2 %	R40 (audit N-P02)
+regression	hypovolaemia-ppv/pleth	new		red		625/625 samples > 2 %	all samples within 2 %	R40 (audit N-P02)
+regression	sinus-75/co2	new		red		230/313 samples > 2 %	all samples within 2 %	R40 (audit N-P02)
+regression	sinus-75/pleth	new		red		625/625 samples > 2 %	all samples within 2 %	R40 (audit N-P02)
+segments	g3-cpr-etco2/cpr/etco2	gone	yellow		16.3		17.0–23.0	R39-2: default quality 0.8 → ≈ 20 mmHg
+segments	s1-phenylephrine/peak/hr-fall	new		yellow		75.0	60.0–70.0	brief §4.9 1: reflex HR −5–15
+segments	s2-class2-haemorrhage/class2/hr	moved	yellow	yellow	81.6	75.0	100–120	brief §4.9 2: HR 100–120
+segments	s3-propofol-induction/2min/hr-little	gone	yellow		79.9		< 75.0	brief §4.9 3: little HR rise
+segments	s3-propofol-induction/2min/map-70pct	gone	red		84.8		= 64.4 ±15 %	brief §4.9 3: MAP ≈ 70 % of baseline at 2 min
+segments	s4-class-iii/late/hr	grade	yellow	red	107	75.0	120–140	brief §4.9 4 / ATLS class III: HR 120–140
+segments	s4-class-iii/late/sbp	new		yellow		103	< 100	brief §4.9 4 / ATLS class III: SBP decreased
+segments	s4-class-iv/late/hr	grade	yellow	red	134	75.0	140–180	brief §4.9 4 / ATLS class IV: HR 140–180
+segments	s9-witnessed-vf/arrest/etco2-gone	new		red		83.0	0.00–30.0	Stage 3: EtCO2 < 5 within 30 s
+segments	t10-as-cad-propofol/2min/map	new		yellow		69.9	60.0–65.0	tables §7 10: MAP 103 → 60–65 at 2 min
+segments	t10-as-cad-propofol/base/steady-map	new		yellow		112	60.0–110	baseline MAP physiological [ENG]
+segments	t11-chronic-mr-fluid/oedema/spo2	new		yellow		96.5	89.0–92.0	tables §7 11: SpO2 96 → 89–92
+segments	t12-massive-pe/pe-late/papm	same	yellow	yellow	24.0	24.0	30.0–45.0	tables §7 12: mPAP 30–40, never > 45 (systolic proxy) [ENG]
+segments	t12-massive-pe/pe-late/spo2	same	yellow	yellow	100.0	100.0	85.0–92.0	tables §7 12: SpO2 85–92 on FiO2 1
+segments	t12-massive-pe/pe/etco2	grade	red	yellow	38.0	26.0	20.0–25.0	tables §7 12: EtCO2 35 → 20–25 within 3 breaths
+segments	t14-tamponade/equalised/pawp	moved	yellow	yellow	22.4	23.9	15.0–20.0	tables §7 14
+segments	t15-rv-infarct/rest/cvp	new		red		6.9	14.0–18.0	tables §7 15: CVP 14–18
+segments	t15-rv-infarct/rest/map	new		yellow		85.9	60.0–70.0	tables §7 15: MAP 60–70
+segments	t15-rv-infarct/rest/pawp	new		red		3.3	8.00–12.0	tables §7 15: PCWP 8–12
+segments	t16-septic-shock-warm/warm/hr	new		red		75.0	115–130	tables §7 16: HR 115–130
+segments	t16-septic-shock-warm/warm/map	new		red		86.7	55.0–60.0	tables §7 16: MAP 55–60
+segments	t17a-class3-no-bb/late/hr	grade	yellow	red	98.0	75.0	120–140	tables §7 17a: HR 120–140
+segments	t17a-class3-no-bb/late/pp	new		yellow		27.0	20.0–25.0	tables §7 17a: PP 20–25
+segments	t17a-class3-no-bb/late/sbp	moved	yellow	yellow	95.1	101	80.0–90.0	tables §7 17a: SBP 80–90
+segments	t17b-class3-bb/late/hr	new		yellow		75.0	80.0–95.0	tables §7 17b: HR 80–95
+segments	t17b-class3-bb/late/sbp	new		yellow		101	65.0–80.0	tables §7 17b: SBP 65–80
+segments	t18-htn-hypocapnia-cbf/hypocapnia/etco2	new		yellow		15.8	20.0–28.0	tables §7 18: hyperventilation to PaCO2 ≈ 25 (EtCO2 proxy) [ENG]
+segments	t19-tbi-haematoma/cushing/hr	new		yellow		75.0	< 60.0	tables §7 19: HR 80 → 45–55 at CPP < 40
+segments	t20-low-flow-oliguria/on-dobutamine/map	new		yellow		84.2	68.0–76.0	tables §7 20: MAP 72 on dobutamine
+segments	t21-mh/10min/etco2	gone	yellow		73.5		51.0–69.0	tables §7 21: EtCO2 40 → 60 by 10 min (±15 %)
+segments	t24-edmark-fio2-0.6/apnoea/t90	moved	yellow	yellow	267	261	170–256	tables §7 24: 213 s ±20 %
+segments	t24-edmark-fio2-0.8/apnoea/t90	moved	yellow	yellow	385	377	242–364	tables §7 24: 303 s ±20 %
+segments	t24-edmark-fio2-1/apnoea/t90	gone	yellow		494		329–493	tables §7 24: 411 s ±20 %
+segments	t25-rocuronium-sugammadex/recovery/rr-back	same	red	red	0.0	0.0	60.0–240	tables §7 25: spontaneous effort returns within ≈ 2.2 min of sugammadex [ENG]
