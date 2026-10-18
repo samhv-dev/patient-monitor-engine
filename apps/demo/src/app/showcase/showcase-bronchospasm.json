@@ -6,7 +6,7 @@
   "durationMin": 10,
   "story": "A ventilated 45-year-old woman develops severe bronchospasm: airway pressure climbs to the ventilator's limit, the delivered tidal volume falls, the capnogram turns shark-fin and air trapping builds. Give salbutamol and watch ventilation recover: delivered tidal volume and minute volume rise as air trapping eases.",
   "objectives": [
-    "Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP",
+    { "text": "Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEP", "debrief": "recognition" },
     { "text": "Treat with a bronchodilator", "rule": { "kind": "occurred", "event": "drug:salbutamol" } },
     "Watch the delivered tidal volume and minute volume recover as air trapping eases"
   ],

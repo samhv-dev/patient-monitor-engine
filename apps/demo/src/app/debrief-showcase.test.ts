@@ -115,9 +115,9 @@ describe('the showcase objectives as rules', () => {
   }, 120_000);
 
   it('E22 MH: ventilation back at "Recovering" is not met; after 2 min of EtCO₂ below 40 it is met', async () => {
-    const vent = (rec: RunRecord) => objectives(rec.data)[4]?.verdict;
+    const vent = (rec: RunRecord) => objectives(rec.data)[5]?.verdict; // after E52's recognition objective
     const early = await hostRun(mh, 560, mhPresses((t, _r, at) => t >= (at('recovering') as number) + 8));
-    expect(objectives(early.data).map((o) => o.verdict.status).slice(0, 2)).toEqual(['met', 'met']);
+    expect(objectives(early.data).map((o) => o.verdict.status).slice(0, 3)).toEqual(['not assessable', 'met', 'met']); // E52: recognition is the instructor's tick
     expect(vent(early)?.status).toBe('not met');
     expect(vent(early)?.why).toMatch(/^The state "Ventilation back to 12 × 500, O₂ 100 %" at \d\d:\d\d, when EtCO₂ had been below 40 mmHg for 1 min \d\d s \(2 min 00 s asked\)\.$/);
     // held: no sample at 40 or above for the last 2 min since the call, then the press

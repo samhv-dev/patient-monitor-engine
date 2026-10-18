@@ -485,9 +485,12 @@ controller schema test.
   - Tamponade objective 5 (`:13`) gains `"debrief": "discuss"`.
   - **MH (E52):** in `apps/demo/src/app/showcase/showcase-mh.json`, insert a new first objective at `:9` (before "Call
     the MH crisis …"; the existing `:9`–`:13` move down one line):
-    `{ "text": "Name malignant hyperthermia from the monitor: EtCO₂ rising at the same ventilation, tachycardia (instructor-assessed)", "debrief": "recognition" }`.
+    `{ "text": "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the same ventilation, tachycardia (instructor-assessed)", "debrief": "recognition" }`.
     The words follow the card's own state label (`earlySigns`, "Early signs: EtCO₂ rising at the same ventilation,
     tachycardia") and the tamponade objective's "(instructor-assessed)" form. They are listed for the owner (item 9).
+    **Amended at A1 (orchestrator ruling, 2026-10-18 23:50):** `showcase-cards.test.ts` requires a digit in every
+    objective of the new showcase cards, so "EtCO₂ rising" became "EtCO₂ above 45 mmHg", the card's own `earlySigns`
+    threshold (objective 2 and the transition). The test is unchanged.
     Every MH objective index after it shifts by one. Update the tests and docs that count or index MH objectives:
     `git grep -n "showcase-mh\|Call the MH crisis" -- apps scripts docs/showcase/SHOWCASE-2-*.md`, among them the run
     sheet's MH Debrief line (`SHOWCASE-2-RUN-SHEET.md:454`, which now starts with the new objective) and
@@ -1186,9 +1189,10 @@ grep -c "^- \[ \] OPEN" ../scratch/debrief-gate-rc2/gate-note.md                
 
 ---
 
-9. **The new MH objective's words (E52):** "Name malignant hyperthermia from the monitor: EtCO₂ rising at the same
-   ventilation, tachycardia (instructor-assessed)". Please confirm or correct them by Tuesday 12:00. Until then they
-   ship as written: they restate the card's own "Early signs" label.
+9. **The new MH objective's words (E52):** "Name malignant hyperthermia from the monitor: EtCO₂ above 45 mmHg at the
+   same ventilation, tachycardia (instructor-assessed)". Please confirm or correct them by Tuesday 12:00. Until then
+   they ship as written: they restate the card's own "Early signs" label with its 45 mmHg threshold (a test asks every
+   showcase objective to carry a number, so a correction keeps one).
 
 ---
 

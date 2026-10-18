@@ -61,6 +61,6 @@ describe('Showcase cards', () => {
       rule: { kind: 'heldThen', from: 'state:triggerOff', value: 'etco2', below: 40, forS: 120, event: 'state:normoventilated' },
     });
     expect((doc.objectives ?? []).map(objectiveText)).not.toContainEqual(expect.stringMatching(/within 300 s of EtCO₂ falling below 40/));
-    expect(doc.objectives).toHaveLength(5); // the other four unchanged
+    expect(doc.objectives).toHaveLength(6); // the other four unchanged, after E52's recognition objective
   });
 });

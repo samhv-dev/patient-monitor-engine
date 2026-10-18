@@ -3,6 +3,7 @@
 // without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
 import type { ObjectiveRule } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
+import { version } from '@pme/renderer';
 import { describe, expect, it } from 'vitest';
 import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, span, verdict } from './debrief.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
@@ -20,7 +21,7 @@ describe('objective rules', () => {
   const within: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 90 };
 
   it('eventWithin: met, not met (late or never), not assessable (no trigger, or the run ended first)', () => {
-    expect(v(within, run([apnoea(66), vent(106)]))).toEqual({ status: 'met', why: 'Ventilated breaths 40 s after the alarm Apnoea (no CO₂ breaths) (01:06 → 01:46; within 1 min 30 s asked).' });
+    expect(v(within, run([apnoea(66), vent(106)]))).toEqual({ status: 'met', why: 'Ventilated breaths 40 s after the alarm Apnoea (no CO₂ breaths) (01:06 → 01:46; within 1 min 30 s asked).', measure: { fromT: 66, toT: 106, askedS: 90 } });
     expect(v(within, run([apnoea(66), vent(200)])).status).toBe('not met');
     expect(v(within, run([apnoea(66)], [sample(200)]))).toEqual({ status: 'not met', why: 'No ventilated breaths within 1 min 30 s of the alarm Apnoea (no CO₂ breaths) at 01:06.' });
     expect(v(within, run([], [sample(300)]))).toEqual({ status: 'not assessable', why: 'The alarm Apnoea (no CO₂ breaths) did not happen.' });
@@ -34,7 +35,7 @@ describe('objective rules', () => {
       { t: 100, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 160, kind: 'patient', text: 'Circulation returned (the model)', ev: 'rosc' },
       { t: 300, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' }, { t: 310, kind: 'action', text: 'CPR started', ev: 'cpr' },
     ];
-    expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).' });
+    expect(v(cpr, run(rows))).toEqual({ status: 'not met', why: 'CPR 3 min 30 s after the pulse loss (01:40 → 05:10; within 30 s asked).', measure: { fromT: 100, toT: 310, askedS: 30 } });
   });
 
   it('a value never measured is not assessable, never "did not happen"', () => {
@@ -52,7 +53,7 @@ describe('objective rules', () => {
     const off: Row = { t: 10, kind: 'scenario', text: 'x', ev: 'state:induced' };
     const back: Row = { t: 130, kind: 'scenario', text: 'y', ev: 'ventilation' };
     const rule: ObjectiveRule = { kind: 'eventWithin', from: 'state:induced', after: 'value:etco2<40', event: 'ventilation', withinS: 60 };
-    expect(v(rule, run([off, back], xs))).toEqual({ status: 'met', why: 'Ventilated breaths 30 s after EtCO₂ below 40 mmHg after the state "Induced" (01:40 → 02:10; within 1 min 00 s asked).' });
+    expect(v(rule, run([off, back], xs))).toEqual({ status: 'met', why: 'Ventilated breaths 30 s after EtCO₂ below 40 mmHg after the state "Induced" (01:40 → 02:10; within 1 min 00 s asked).', measure: { fromT: 100, toT: 130, askedS: 60 } });
     expect(v({ ...rule, from: undefined } as ObjectiveRule, run([off, back], xs)).status).toBe('not met'); // without it: the baseline at 00:00
     expect(v(rule, run([back], xs))).toEqual({ status: 'not assessable', why: 'The state "Induced" did not happen.' });
     expect(v({ kind: 'occurred', from: 'state:induced', event: 'value:etco2<40' }, run([off], xs))).toEqual({ status: 'met', why: 'EtCO₂ below 40 mmHg after the state "Induced" at 01:40' });
@@ -63,7 +64,7 @@ describe('objective rules', () => {
     const potassium: ObjectiveRule = { kind: 'eventWithin', after: 'value:k>5.5', event: ['drug:calciumChloride', 'drug:insulinDextrose'], withinS: 300 };
     const ca: Row = { t: 400, kind: 'scenario', text: 'Calcium chloride', ev: 'drug:calciumChloride' };
     const ks = [sample(0, { k: 4.2 }), sample(200, { k: 5.6 }), sample(400, { k: 6.1 })];
-    expect(v(potassium, run([ca], ks))).toEqual({ status: 'met', why: 'Calcium chloride 10 % or Insulin + dextrose 3 min 20 s after K⁺ above 5.5 mmol/L (03:20 → 06:40; within 5 min 00 s asked).' });
+    expect(v(potassium, run([ca], ks))).toEqual({ status: 'met', why: 'Calcium chloride 10 % or Insulin + dextrose 3 min 20 s after K⁺ above 5.5 mmol/L (03:20 → 06:40; within 5 min 00 s asked).', measure: { fromT: 200, toT: 400, askedS: 300 } });
     expect(v({ kind: 'stayed', value: 'k', below: 6, after: 'drug:calciumChloride', forS: 60 }, run([ca], ks)).status).toBe('not met');
   });
 
@@ -83,7 +84,7 @@ describe('objective rules', () => {
     const xs = [sample(0, { map: 80 }), sample(30, { map: 58 }), sample(50, { map: 59 }), sample(70, { map: 66 })];
     const pe: Row = { t: 60, kind: 'action', text: 'Phenylephrine 100 µg IV', ev: 'drug:phenylephrine' };
     const treat: ObjectiveRule = { kind: 'eventWithin', after: 'value:map<60', event: ['drug:phenylephrine', 'drug:ephedrine'], withinS: 60 };
-    expect(v(treat, run([pe], xs))).toEqual({ status: 'met', why: 'Phenylephrine or Ephedrine 30 s after ART M / NIBP M below 60 mmHg (00:30 → 01:00; within 1 min 00 s asked).' });
+    expect(v(treat, run([pe], xs))).toEqual({ status: 'met', why: 'Phenylephrine or Ephedrine 30 s after ART M / NIBP M below 60 mmHg (00:30 → 01:00; within 1 min 00 s asked).', measure: { fromT: 30, toT: 60, askedS: 60 } });
     expect(v({ kind: 'eventWithin', after: ['drug:ephedrine', 'drug:phenylephrine'], event: 'value:map>65', withinS: 120 }, run([pe], xs)).why).toBe('ART M / NIBP M above 65 mmHg 10 s after Ephedrine or Phenylephrine (01:00 → 01:10; within 2 min 00 s asked).');
     expect(v({ kind: 'occurred', event: 'value:spo2<90' }, run([], xs))).toEqual({ status: 'not met', why: 'SpO₂ below 90 %: did not happen' });
   });
@@ -143,9 +144,41 @@ describe('objective rules', () => {
     d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
     expect(objectives(d)).toEqual([
       { text: 'Anticipate the fall in arterial pressure after propofol', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it.' } },
-      { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after') } },
-      { text: 'Confirm ventilation with the capnogram', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it. The instructor ticked it at 02:20.' } },
+      { text: 'Ventilate within 90 s of the apnoea alarm', verdict: { status: 'met', why: expect.stringContaining('34 s after'), measure: { fromT: 66, toT: 100, askedS: 90 } } },
+      { text: 'Confirm ventilation with the capnogram', verdict: { status: 'not assessable', why: 'This objective has no rule: the instructor judges it. The instructor ticked it at 02:20.', tickedT: 140 } },
     ]);
+  });
+
+  it('pme-debrief/2: discuss, the tick time of a rule-less objective only, the measured interval', () => {
+    const note = (t: number, text: string): Row => ({ t, kind: 'note', text: `Objective met: ${text}` });
+    const late: ObjectiveRule = { kind: 'eventWithin', after: 'alarm:apnoea', event: 'ventilation', withinS: 600 }; // the run ends before 600 s
+    const d = run([apnoea(66), vent(200), note(130, 'Name the problem'), note(150, 'Ventilate late'), note(160, 'Ventilate within 90 s')], [sample(210)]);
+    d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: [
+      { text: 'Name the problem', debrief: 'recognition' },
+      { text: 'Ventilate within 90 s', rule: within, debrief: 'discuss' },
+      { text: 'Ventilate late', rule: { ...late, after: 'alarm:apnoea', event: 'shock' } },
+    ] };
+    const [rec, disc, ruled] = objectives(d);
+    // (c) a rule-less objective with its tick: tickedT, still not assessable
+    expect(rec?.verdict).toMatchObject({ status: 'not assessable', tickedT: 130 });
+    expect(rec).not.toHaveProperty('discuss');
+    // (b) discuss: carried, the status unchanged
+    expect(disc).toMatchObject({ discuss: true, verdict: { status: 'not met' } });
+    // (d) the measured interval is the times the reason line prints
+    expect(disc?.verdict.measure).toEqual({ fromT: 66, toT: 200, askedS: 90 });
+    expect(disc?.verdict.why).toContain('(01:06 → 03:20; within 1 min 30 s asked)');
+    // (c) a rule's own not assessable with a matching tick: no tickedT
+    expect(ruled?.verdict.status).toBe('not assessable');
+    expect(ruled?.verdict.why).toContain('The instructor ticked it at 02:30.');
+    expect(ruled?.verdict).not.toHaveProperty('tickedT');
+    expect(ruled?.verdict).not.toHaveProperty('measure');
+    // (a) and (e): the schema, the renderer's version, and the key times and moments empty in A
+    const j = JSON.parse(debriefJson(d, 'b'));
+    expect(j.schema).toBe('pme-debrief/2');
+    expect(j.version).toBe(version);
+    expect(j.keyTimes).toEqual([]);
+    expect(j.keyMoments).toEqual([]);
+    expect(j.objectives[1]).toMatchObject({ discuss: true, verdict: { measure: { fromT: 66, toT: 200, askedS: 90 } } });
   });
 });
 
@@ -182,8 +215,8 @@ describe('facts and totals', () => {
     const d = run([apnoea(66), vent(106)], [sample(0, { hr: null, k: 4.2 }), sample(1, { hr: 71 }), sample(61, { hr: 90, k: 4.4 }), sample(185, { hr: 100 })]);
     expect(perMinute(d).map((m) => [m.t, m.values.hr, m.values.k])).toEqual([[0, 71, 4.2], [60, 90, 4.4], [120, null, null], [180, 100, null]]);
     const j = JSON.parse(debriefJson(d, 'abc1234 2026-10-11'));
-    expect(Object.keys(j)).toEqual(['schema', 'build', 'record', 'objectives', 'facts', 'minutes']);
-    expect(j.schema).toBe('pme-debrief/1');
+    expect(Object.keys(j)).toEqual(['schema', 'version', 'build', 'record', 'objectives', 'facts', 'keyTimes', 'keyMoments', 'minutes']);
+    expect(j.schema).toBe('pme-debrief/2');
     expect(j.record).toEqual(JSON.parse(JSON.stringify(d)));
     expect(j.minutes).toHaveLength(4);
   });

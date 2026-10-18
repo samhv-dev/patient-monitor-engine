@@ -118,6 +118,9 @@ export interface Objective extends C {
   text: string;
   /** Absent: the debrief lists the objective as not assessable. */
   rule?: ObjectiveRule;
+  /** Optional: how the Debrief uses this objective — recognition (its instructor tick is the time to recognition) or
+   *  discuss (a structural lesson: ◆ Discuss when not met). */
+  debrief?: 'recognition' | 'discuss';
 }
 
 /** An authored jump point shown in the timeline; choosing it is a `goto` to `state`. */

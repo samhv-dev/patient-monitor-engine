@@ -453,7 +453,7 @@ muscle was still producing CO₂: EtCO₂ rebounded to 57 after span 1 and 61 at
 and was 42 at the end [MEAS E22].
 
 **Debrief objectives and the expected verdict** [CARD; MEAS §0, §1] (the Debrief is not opened for MH on the day):
-✓ call within 120 s of the early signs (9 s) · ✓ dantrolene within 300 s of the call (21 s) · – repeat dantrolene (no
+– name malignant hyperthermia (E52: the instructor's tick; ticked, it reads ✓ Observed at the tick time) · ✓ call within 120 s of the early signs (9 s) · ✓ dantrolene within 300 s of the call (21 s) · – repeat dantrolene (no
 rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never above 5.5) · ventilation back:
 **✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)")** [MEAS E22].
 
