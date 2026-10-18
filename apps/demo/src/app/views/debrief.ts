@@ -146,13 +146,16 @@ export function debriefView(session: AppSession, link: Link): View {
   };
   who.addEventListener('input', runBy);
   let started = -1;
+  let lastSeen = 0; // the rows and samples of the run this view last drew
   const render = () => {
     const d = session.record.data;
     if (d.startedAt !== started) {
-      // a new run: its notes start empty (the record of the last run is gone with it)
+      // a new run: its notes start empty (the record of the last run is gone with it) — unless the run the view last
+      // drew was still empty: the record's own restart at load (FX-20) is not a new run for the notes typed meanwhile
       started = d.startedAt;
-      notes.replaceChildren();
+      if (lastSeen > 0) notes.replaceChildren();
     }
+    lastSeen = d.rows.length + d.samples.length;
     const end = endOf(d);
     const card = d.doc ? cardOf(d.doc) : null;
     const wall = Math.max(0, (d.lastWall - d.startedAt) / 1000);

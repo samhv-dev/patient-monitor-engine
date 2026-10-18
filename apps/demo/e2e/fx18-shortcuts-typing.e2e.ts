@@ -15,8 +15,8 @@ test.afterAll(async () => vite?.close());
 
 test('typing in the Debrief notes is text, not shortcuts; `i` on the Monitor still toggles the instructor view', async ({ page }) => {
   test.setTimeout(90_000);
-  // the Debrief is opened after load: when the page loads on #/debrief its first 5 s refresh empties the notes once
-  // (the run record's start changes after the view's first render), which is not this test's subject
+  // the Debrief is opened after load: the notes typed right after a load on #/debrief (FX-20, debrief.e2e.ts) are not
+  // this test's subject
   await openApp(page, base, '#/monitor', { warmMs: 1500 });
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect.poll(() => route(page)).toBe('debrief');

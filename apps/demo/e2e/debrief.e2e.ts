@@ -135,3 +135,27 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     } else test.info().annotations.push({ type: 'pdf text', description: 'not read on this platform (R50 I-2): page count, A4 and title only' });
   }
 });
+
+// FX-20: the app opened directly on the Debrief — the run record restarts once at load (the constructor's empty run,
+// then the first timeline event) and the next 5 s refresh emptied notes typed in the first seconds. A run the view
+// has drawn nothing of is not a run whose notes are dropped; a scenario loaded later still starts the notes empty.
+test('FX-20: notes typed right after opening the app on the Debrief are kept; a new scenario still empties them', async ({ page }) => {
+  test.setTimeout(90_000);
+  await openApp(page, base, '#/debrief');
+  const notes = page.locator('[data-view=debrief] .db-notes');
+  await notes.click({ timeout: 2_000 });
+  await page.keyboard.type('kept');
+  await page.waitForTimeout(7_000); // past the next 5 s refresh
+  await expect(notes).toHaveText('kept');
+
+  await page.evaluate(() => (location.hash = '#/teach')); // the Monitor with the instructor panel
+  await page.click('[role=tab][data-tab=scenario]');
+  const library = page.getByRole('region', { name: 'Scenario library' });
+  await library.getByRole('article', { name: 'Anaphylaxis under anaesthesia' }).getByRole('button', { name: 'Load' }).click();
+  await expect(page.getByRole('region', { name: 'Running scenario' })).toBeVisible({ timeout: 10_000 }); // none was running: no confirmation
+  await page.waitForTimeout(6_000);
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  await expect(notes).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(notes).toHaveText('');
+});
