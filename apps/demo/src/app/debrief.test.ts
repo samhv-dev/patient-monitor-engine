@@ -252,7 +252,9 @@ describe('FX-13: a span is rounded to whole seconds before it is split into minu
   it('never reads "1 min 60 s" or "60 s"', () => {
     expect(span(0)).toBe('0 s');
     expect(span(59.4)).toBe('59 s');
+    expect(span(59.5)).toBe('1 min 00 s'); // an exact .5 tie: Math.round rounds up
     expect(span(59.6)).toBe('1 min 00 s');
+    expect(span(119.5)).toBe('2 min 00 s'); // an exact .5 tie
     expect(span(119.7)).toBe('2 min 00 s');
     expect(span(125)).toBe('2 min 05 s');
   });
