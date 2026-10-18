@@ -1,0 +1,117 @@
+{
+ "comments": {
+  "d37900736922": {
+   "after": "// How the host offers a Remote. Version 1.0 pairs a Remote in the SAME browser only: the default transport is a\n// BroadcastChannel, which never leaves the browser profile. A tablet on the network needs the controllers' relay\n// (?relay=ws://…) and a network address the tablet can reach; that path is an untested preview at 1.0.0-rc.1 (the\n// screen promises no later version), so without a relay the host shows no QR code and says so. No DOM here: the\n// host view and its test read the result.",
+   "note": "executor 2026-10-18: m; review F2, ruling 6, Stage 6a, Stage 8b removed; \"no version 1.1 on screen\" kept as a fact without the version"
+  },
+  "4b92d6e62fe4": {
+   "after": "// A restart keeps the pause, as the clinical app's does",
+   "note": "executor 2026-10-18: b proposal not capitalised"
+  },
+  "e0d2b9504ffa": {
+   "after": "// The neuro model's shown depth index is `neuro.diShown` (the old `neuro.out.depthIndex` never existed, so the tile\n  // never showed it)",
+   "note": "executor 2026-10-18: the proposal rewrote the quoted UI text \"7f pending\"; the quote was the old tile text, now gone"
+  },
+  "5ff722b71891": {
+   "after": "// The ventilator-simulator embed: the Hamilton ventilator and the patient monitor in ONE page that opens from\n// file:// with no server. The monitor is the release IIFE (window.PatientMonitor, its own <script>); this file\n// becomes dist/embed/pme-ventilator-embed.iife.js (vite.embed.config.ts, global PmeVentilatorEmbed). Ventilator and\n// monitor talk over an in-page LinkPort pair: the same link messages vent-link.html sends over BroadcastChannel\n// (frames in, lungState out, the engine as master clock).",
+   "note": "executor 2026-10-18: m; BUILD-PLAN Stage 8 / Stage 8b pointer and ruling R27 removed (R27 -> \"link messages\", as e2d26420985c)"
+  },
+  "5c9c0c64f639": {
+   "after": "// The build id. The release build sets it to the tagged commit's short hash (PME_BUILD, through the `define` in the\n// engine-core and renderer vite.config.ts); everywhere else — the workspace, Vitest, the demo's Vite — the identifier\n// is not defined and the build is 'dev'. Named __PME_ENGINE_BUILD__, never __PME_BUILD__ (the demo's date-stamped\n// Debrief id, which the demo's Vite would otherwise apply to this file too).",
+   "note": "executor 2026-10-18: proposal's \"never the __PME_BUILD__\" was ungrammatical after the cut \"Stage 13's\""
+  },
+  "ea5011bf9da6": {
+   "after": "// The renderer tests drive a real engine through the sweep (5–8 s budgets); on the loaded CI runner the 5 s default\n    // timed out once per run once the full physiology raised the per-tick cost. Same budget as engine-core.",
+   "note": "executor 2026-10-18: m; \"since Stage 7\" -> \"once the full physiology\" (Stage 7 = the physiology modules), G8a CI removed"
+  },
+  "d82af3b7d748": {
+   "after": "/**\n * How the debrief judges an objective. `eventWithin`: `event` within `withinS` s after the FIRST `after` (a later one\n * is not judged again) (ROSC within N s of pulse loss = `{ after: 'pulseLoss', event: 'rosc' }`). `occurred` / `never`.\n * `from`: the `after` (or the `event` of occurred / never) counts only at or after the first `from` — \"EtCO₂ falling\n * below 40 after the crisis was called\" = `{ from: 'state:triggerOff', after: 'value:etco2<40', … }`, as a value event\n * alone is the first second past the limit from the start. A list of events means any one of them\n * (`['drug:phenylephrine', 'drug:ephedrine']`). `stayed`: every value above/below the limit, over the run or the\n * `forS` s after the first `after`. `heldThen`: the FIRST `event` (at or after the first `from`) comes only once\n * `value` has stayed above/below the limit for `forS` s on end — \"hyperventilation kept until EtCO₂ has stayed below\n * 40 for 2 min, then ventilation normalised\"; an earlier `event` is not met, none at all is not met.\n */",
+   "note": "executor 2026-10-18: m; Stage 13, R50, E22/owner ruling removed; re-wrapped to 120 columns (the proposal ran to 124)"
+  },
+  "b14119e5e508": {
+   "accepted": "// The in-app release label and education-only line (Start and Settings → About) match the packages' version and the\n// Debrief's print footer; no \"version 1.1\" promise is left on screen."
+  },
+  "a05bbf695d19": {
+   "accepted": "// The release label and the education-only line, shown in the app (Start and Settings → About) as the Debrief's print\n// footer says it. The version is the packages' own (`@pme/renderer` `version`)."
+  },
+  "b9cae440708a": {
+   "accepted": "// @vitest-environment happy-dom\n// A scenario card's manual-trigger button pressed as the case changes state (WebKit: \"MH crisis\" pressed the instant\n// the case reached \"Established\" did nothing). The panel repaints ≤ 2 Hz, so a button can be the one drawn for the\n// previous state: the press resolves its label against the CURRENT state, and a press the current state cannot take is\n// said in a toast and not logged as an instructor action."
+  },
+  "527df3d2a75b": {
+   "accepted": "// The snapshot key, version + build"
+  },
+  "f2e95c2a7fd1": {
+   "accepted": ""
+  },
+  "47a47ab56e85": {
+   "accepted": "// The release label and education-only line"
+  },
+  "ca418b363139": {
+   "accepted": "// As vent-hamilton.html does when linked: VC runs at the monitor ventilator's flow for the set VT and rate until the\n  // user sets Flow or Pause here, so the same settings deliver the same volume."
+  },
+  "ec5f4dcb62a9": {
+   "accepted": "// The ventilator-simulator embed: src/vent/embed.ts as one classic script, global PmeVentilatorEmbed. It needs\n// window.PatientMonitor (packages/renderer/dist/patient-monitor.iife.js) at run time; scripts/build-embed.mjs then\n// writes dist/embed/ventilator-monitor.html next to both files. Runs after the page build (which empties dist/)."
+  },
+  "4ee8b0b7638d": {
+   "accepted": "// Sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled."
+  },
+  "ad481071297a": {
+   "accepted": "/**\n   * The fast-forward pacer's wait, read with `wallNow`, so a test drives the pace on a fake clock. Default: a real\n   * `setTimeout`.\n   */"
+  },
+  "3e47c388ae2c": {
+   "accepted": "// Sibling @pme packages stay imports (npm consumers get one copy of each); ajv stays bundled (N-011)."
+  },
+  "f0c7cdf2cb32": {
+   "accepted": "// `${version}+${build}`, the snapshot compatibility key"
+  },
+  "f5740170c21b": {
+   "accepted": "/** The snapshot compatibility key: a snapshot restores only into an engine of the same version AND build. */"
+  },
+  "0a98970d58a2": {
+   "accepted": "// The build id in the snapshot key (src/version.ts); the release workflow sets PME_BUILD."
+  },
+  "064a15bec103": {
+   "accepted": "// Sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled."
+  },
+  "d7839de9e984": {
+   "accepted": "// Worker entry: engine + renderer on an OffscreenCanvas (brief §3.4). Uses the worker's own requestAnimationFrame when\n// it exists, otherwise waits for 'frame' messages from the main thread. The file starts itself only inside the worker\n// we create, named 'pme-engine' (the ESM build's `?worker&inline` bundle via worker-host.ts, or the IIFE re-running its\n// own source as the worker, src/iife-worker.ts). Imported anywhere else — the page, or a host's OWN worker that\n// importScripts the IIFE for a headless createEngine — it is inert and never touches that scope's onmessage."
+  },
+  "0c0d4722db56": {
+   "accepted": "// Set by startWorker()"
+  },
+  "c285741c69d8": {
+   "accepted": "/** Serve one monitor from this worker scope. */"
+  },
+  "36f7acbae34f": {
+   "accepted": "// engine.worker.ts starts only under this name"
+  },
+  "0cfa8debb750": {
+   "accepted": "// Two builds (package.json \"build\"): the default mode emits the ESM entry dist/index.js (Vite inlines the worker);\n// `--mode iife` emits the single-file dist/patient-monitor.iife.js (global PatientMonitor, brief §7.6). The IIFE's\n// worker is the file's OWN source (src/iife-worker.ts), so the engine ships once (544 → 285 KB gzip on 48864439)."
+  },
+  "b0952e38e670": {
+   "accepted": "// The engine's build id (packages/engine-core/src/version.ts) in both builds; 'dev' unless PME_BUILD is set."
+  },
+  "038183b9ad2c": {
+   "accepted": "// Two entries, like @pme/controller — the root (no ajv; what the renderer and the IIFE use) and './validate' (ajv,\n    // bundled: N-010), which package.json already exports."
+  },
+  "db3368121d90": {
+   "accepted": "// Sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled."
+  }
+ },
+ "titles": {
+  "20b277356ea4": {
+   "after": "the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back",
+   "note": "proposal kept the finding id E22"
+  },
+  "ee797c91f230": {
+   "after": "docs honesty (Stage 8b)",
+   "note": "unchanged: the plan never edits docs-honesty.test.ts (Question 1)"
+  },
+  "56e52728aa1f": {
+   "accepted": "about line"
+  },
+  "93b7a64afc35": {
+   "accepted": "heldThen: ventilation back only once EtCO₂ has stayed below 40 for 2 min; earlier is not met"
+  }
+ }
+}
