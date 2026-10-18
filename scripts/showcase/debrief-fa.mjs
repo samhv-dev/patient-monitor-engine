@@ -2,13 +2,16 @@
 // Persian (Farsi) handout of the Debrief report: reads the report's own JSON export ("Download the record (JSON)",
 // schema pme-debrief/1, Stage 13 Q3) and prints a right-to-left A4 PDF with the English report's sections in its order:
 // the case, objectives with their verdicts, measured facts (the labs row included), trends, drugs and fluids, the
-// timeline (the undone course struck through), bookmarks, notes and the one-row-per-minute appendix; the footer, the build
-// and "page n of N" on every page. A handout script, NOT an app feature: the app and its tests are untouched (the in-app
-// translation is a v1.1 item). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is
-// printed in English and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and
-// their units; prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
+// timeline (the undone course struck through), bookmarks, notes and the one-row-per-minute appendix; the footer (the
+// release wording of views/debrief.ts FOOT, with the version and the build) and "page n of N" on every page. A handout
+// script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
+// release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
+// and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and their units;
+// prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
 // Stage 13 print checks already use (no new dependency); the Vazirmatn font (SIL OFL) is embedded from local TTFs.
-//   node scripts/showcase/debrief-fa.mjs <debrief.json>... [--out-dir DIR] [--fonts DIR] [--html] [--text]
+//   node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]
+//   --version: the version the build printed on its Start screen (e.g. 1.0.0-rc.1). pme-debrief/1 carries the build but
+//            not the version, so it is given here; a JSON's own "version" field, if a later export adds one, wins.
 //   --fonts: a folder with Vazirmatn-Regular.ttf and Vazirmatn-Bold.ttf (or the variable Vazirmatn[wght].ttf); else
 //            $PME_FA_FONTS, ~/Library/Fonts, ~/.fonts, /Library/Fonts, /usr/share/fonts/truetype/vazirmatn
 //   --html / --text: also write the HTML, and the printed Persian text one string per line (for a spelling pass)
@@ -332,7 +335,7 @@ p { orphans: 2; widows: 2; }
 sub, sup { font-size: 70%; line-height: 0; }
 `;
 
-function render(j, fontsCss) {
+function render(j, fontsCss, version) {
   const D = new Doc();
   const d = j.record;
   const end = endOf(d);
@@ -345,7 +348,8 @@ function render(j, fontsCss) {
   const solar = `${sh.weekday} ${sh.day} ${sh.month} ${sh.year}، ساعت ${sh.hour}:${sh.minute}`;
   const greg = `${gr.day} ${gr.month} ${gr.year} میلادی`;
   const wall = Math.max(0, (d.lastWall - d.startedAt) / 1000);
-  const foot = D.plain(`For education only. Not a medical device: never use it for patient care. Build ${j.build}.`);
+  // the English footer's words and arithmetic (views/debrief.ts FOOT): "(pre-release)" when the version has a suffix
+  const foot = D.plain(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${j.build}.`);
   const pageT = TABLE.templates.find((e) => e.en === 'Page {c} of {c}');
   D.used.add(pageT);
   const [pa, , pb] = pageT.fa.split(/(\{c\})/);
@@ -390,10 +394,12 @@ function render(j, fontsCss) {
   const unreviewed = [...D.used].some((e) => !e.reviewed);
   const notice = unreviewed ? `<p class="notice">ترجمه‌ی فارسی این گزارش هنوز به تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.</p>` : '';
   if (unreviewed) D.printed.push('ترجمه‌ی فارسی این گزارش هنوز به تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.');
-  const iso = (s) => s.replace(LTR_RUN, (m) => `\u2066${m}\u2069`); // LRI … PDI: the build id stays one left-to-right run
+  // LRI … PDI: the version and the build id each stay one left-to-right run; no-break spaces keep each run, and the word
+  // before it («نسخه‌ی», «ساخت»), on one line when the two-line footer wraps
+  const iso = (s) => s.replace(LTR_RUN, (m) => `\u2066${m.replace(/ /g, '\u00a0')}\u2069`).replace(/ \u2066/g, '\u00a0\u2066');
   const cssStr = (s) => `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
   const pageCss = `@page { @bottom-right { content: ${cssStr(iso(foot))}; font: 7pt "Vazirmatn", sans-serif; direction: rtl; text-align: right; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; }
-@bottom-left { content: ${cssStr(pa)} counter(page, persian) ${cssStr(pb)} counter(pages, persian); font: 7pt "Vazirmatn", sans-serif; direction: rtl; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
+@bottom-left { content: ${cssStr(pa)} counter(page, persian) ${cssStr(pb)} counter(pages, persian); font: 7pt "Vazirmatn", sans-serif; direction: rtl; white-space: nowrap; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
   const docTitle = `${D.plain('Debrief')}: ${title ? D.plain(title) : ''} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
   const html = `<!doctype html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><title>${esc(docTitle)}</title>
 <style>${fontsCss}${CSS}${pageCss}</style></head><body>
@@ -417,17 +423,27 @@ const outDir = opt('--out-dir');
 const fontsDir = findFonts(opt('--fonts'));
 const wantHtml = flag('--html');
 const wantText = flag('--text');
+const versionArg = opt('--version');
+const USAGE = 'usage: node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]';
 if (!args.length) {
-  console.error('usage: node scripts/showcase/debrief-fa.mjs <debrief.json>... [--out-dir DIR] [--fonts DIR] [--html] [--text]');
+  console.error(USAGE);
   process.exit(1);
 }
+const inputs = args.map((file) => {
+  const j = JSON.parse(readFileSync(file, 'utf8'));
+  if (j.schema !== 'pme-debrief/1') throw new Error(`${file}: not a Debrief export (schema ${j.schema})`);
+  const version = j.version ?? versionArg;
+  if (!version) {
+    console.error(`${file}: the Debrief JSON carries the build (${j.build}) but not the version. Pass --version with the version that build printed on its Start screen and in the English Debrief footer (e.g. --version 1.0.0-rc.1).\n${USAGE}`);
+    process.exit(1);
+  }
+  return { file, j, version };
+});
 const fontsCss = fontFaces(fontsDir);
 const browser = await chromium.launch();
 try {
-  for (const file of args) {
-    const j = JSON.parse(readFileSync(file, 'utf8'));
-    if (j.schema !== 'pme-debrief/1') throw new Error(`${file}: not a Debrief export (schema ${j.schema})`);
-    const { html, D } = render(j, fontsCss);
+  for (const { file, j, version } of inputs) {
+    const { html, D } = render(j, fontsCss, version);
     const base = join(outDir ?? dirname(file), basename(file).replace(/\.json$/, '') + '.fa');
     if (wantHtml) writeFileSync(`${base}.html`, html);
     if (wantText) writeFileSync(`${base}.txt`, [...new Set(D.printed)].join('\n') + '\n');

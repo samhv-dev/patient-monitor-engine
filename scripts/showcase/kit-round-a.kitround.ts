@@ -1270,6 +1270,7 @@ test('A3 bronchospasm: ×8 and a 2-min fast-forward from the Instructor view wit
 // S12-F2 (one style change with the phones following, the AGENTS tile) and FX-12 (Restart patient, then Return here:
 // what does the session bar read?). One record per segment; the talk clock T+ is wall time from the opening.
 //   KITROUND_OUTDIR=docs/showcase/kit-round-a/q1 SHOWCASE_KIT=… npx playwright test -c scripts/showcase/playwright.kit-round.config.ts -g Q1 --project chromium
+//   KITROUND_Q1_STOP=bronchospasm: stop after card 1 (the opening and bronchospasm only, its Debrief JSON saved)
 const holds = (phones: Page[]) => Promise.all(phones.map((p) => p.evaluate(() => { const h = document.querySelector('.learner-hold') as HTMLElement | null; const s = (window as unknown as Hook).__pmeFollower?.sync; return { hold: !!h && !h.hidden, status: s?.status ?? 'none', resyncs: s?.resyncs ?? null }; }).catch(() => null)));
 const sessionBarScen = (page: Page) => page.locator('.sessionbar .scen').innerText().then((s) => s.trim()).catch(() => 'no session bar');
 
@@ -1413,11 +1414,19 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     };
     B.r.measures.vent = { salbutamolAt: mmss(tS), before, at615, at845, spans: [s1, s2] };
     await toTeach(B);
-    await B.debrief();
+    await B.debrief({ json: true });
     B.r.measures.wallLoadToReloadS = B.wall();
     seg('1 bronchospasm: end (reload next)', { wallS: B.wall() });
   } finally {
     await B.finish({ keepPhones: true });
+  }
+  // KITROUND_Q1_STOP=bronchospasm: the talk ends after card 1 (2026-10-18: the release build's bronchospasm Debrief JSON
+  // for the Persian handout, without re-running the other cards)
+  if (process.env.KITROUND_Q1_STOP === 'bronchospasm') {
+    for (const ph of phones) await ph.context().close().catch(() => undefined);
+    seg('end (KITROUND_Q1_STOP=bronchospasm)');
+    saveTalk();
+    return;
   }
   // the card's last step: reload the page, then Sound on (Start does Sound on before the next Load)
   const wR = Date.now();

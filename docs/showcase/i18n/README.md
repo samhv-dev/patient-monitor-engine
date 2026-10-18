@@ -3,7 +3,7 @@
 A **handout script, not an app feature.** `scripts/showcase/debrief-fa.mjs` reads the JSON that the Debrief view saves
 ("Download the record (JSON)", schema `pme-debrief/1`, Stage 13 ruling Q3: the same data as the printed report) and
 prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are untouched; an in-app translation
-is the v1.1 roadmap item. The English report stays the reference.
+is planned for a later release. The English report stays the reference.
 
 ## How to run
 
@@ -12,8 +12,13 @@ is the v1.1 roadmap item. The English report stays the reference.
    Chromium, the browser the Stage 13 print checks use):
 
    ```sh
-   node scripts/showcase/debrief-fa.mjs debrief-showcase-mh-2026-10-17.json --fonts ~/Downloads/vazirmatn/fonts/ttf
+   node scripts/showcase/debrief-fa.mjs debrief-showcase-mh-2026-10-17.json --version 1.0.0-rc.1 --fonts ~/Downloads/vazirmatn/fonts/ttf
    ```
+
+   `--version` is required: the JSON (`pme-debrief/1`) carries the build but not the version, so give the version that
+   build printed on its Start screen and in the English Debrief footer (the release kit 3db25a3b: `1.0.0-rc.1`; kits
+   built before the release, such as 62e521c3, printed no version and their packages said `0.0.0`). Without it the
+   script stops with an error before printing anything. If a later export adds a `version` field, that field wins.
 
    The PDF is written beside the JSON as `<name>.fa.pdf` (`--out-dir DIR` to put it elsewhere). Several JSON files may
    be given at once. `--html` also writes the HTML; `--text` writes the printed Persian strings one per line (for the
@@ -34,8 +39,23 @@ Everything the English Debrief prints, in its order: the title, the case lines (
 duration) and the "Run by" line; the objectives with their verdict words and the reason line; the measured facts with
 the labs row (one lab per line); the six trend charts (captions; the time axis runs left to right as on the monitor);
 drugs and fluids with the bolus totals; the timeline with the undone course struck through and marked «لغوشده با
-بازگشت n»; bookmarks; an empty notes box; the one-row-per-minute appendix; the footer ("education only", the build)
-and «صفحه‌ی n از N» on every page.
+بازگشت n»; bookmarks; an empty notes box; the one-row-per-minute appendix; the footer (the release wording of the
+English footer, "Not a medical device and not clinically validated", then the version, «(پیش‌انتشار)» for a
+pre-release, and the build) and «صفحه‌ی n از N» on every page.
+
+| English | Persian | Status |
+|---|---|---|
+| For education only. Not a medical device and not clinically validated: never use it for patient care. Version {code} (pre-release), build {code}. | فقط برای آموزش. این نرم‌افزار وسیله‌ی پزشکی نیست و از نظر بالینی اعتبارسنجی نشده است؛ نباید هرگز در مراقبت از بیمار به کار رود. نسخه‌ی {code} (پیش‌انتشار)، ساخت {code}. | added 2026-10-18 (footer) |
+| … Version {code}, build {code}. (a release without a suffix) | … نسخه‌ی {code}، ساخت {code}. | added 2026-10-18 (footer) |
+| not clinically validated | از نظر بالینی اعتبارسنجی نشده است | added 2026-10-18 (footer) |
+| pre-release | پیش‌انتشار | added 2026-10-18 (footer) |
+| Version / build | نسخه / ساخت | added 2026-10-18 (footer) |
+
+The two footer templates replace the pre-release one ("Not a medical device: never use it for patient care. Build
+{code}.", «… نسخه‌ی ساخت {code}.»), which the app no longer prints. The reused wording («فقط برای آموزش»، «وسیله‌ی
+پزشکی نیست»، «نباید هرگز در مراقبت از بیمار به کار رود») is the earlier entry's. The version and the build id are each
+one left-to-right run (LRI…PDI) held to the word before them by a no-break space, so a wrapped footer never splits
+«ساخت» from its id.
 
 `fa-debrief.json` is the translation table. Every entry carries `en`, `fa`, `source` (the app file the English comes
 from) and `reviewed: false`. It has three parts:
@@ -75,7 +95,7 @@ are written in Persian script (اپی‌نفرین، دانترولن، سالب
 
 ## Review status
 
-**Every one of the 494 entries is `reviewed: false`: an unreviewed machine translation until the project's clinical owner reads it.**
+**Every one of the 495 entries is `reviewed: false`: an unreviewed machine translation until the project's clinical owner reads it.**
 While any entry printed in a PDF is unreviewed, the first page carries the line «ترجمه‌ی فارسی این گزارش هنوز به
 تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.»; it disappears by itself when every entry used is set
 to `reviewed: true`. To correct a term, edit its `fa` (keep the placeholders) and set `reviewed: true`; a `note` field

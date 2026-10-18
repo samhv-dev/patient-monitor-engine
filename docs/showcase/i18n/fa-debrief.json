@@ -432,7 +432,8 @@
  ],
  "templates": [
   {"en": "{t} simulated · {span} on the clock", "fa": "{t} زمان شبیه‌سازی‌شده · {span} زمان واقعی", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
-  {"en": "For education only. Not a medical device: never use it for patient care. Build {code}.", "fa": "فقط برای آموزش. این نرم‌افزار وسیله‌ی پزشکی نیست و نباید هرگز در مراقبت از بیمار به کار رود. نسخه‌ی ساخت {code}.", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
+  {"en": "For education only. Not a medical device and not clinically validated: never use it for patient care. Version {code} (pre-release), build {code}.", "fa": "فقط برای آموزش. این نرم‌افزار وسیله‌ی پزشکی نیست و از نظر بالینی اعتبارسنجی نشده است؛ نباید هرگز در مراقبت از بیمار به کار رود. نسخه‌ی {code} (پیش‌انتشار)، ساخت {code}.", "source": "apps/demo/src/app/views/debrief.ts FOOT (release wording, about.ts EDUCATION_LINE; added 2026-10-18, footer)", "reviewed": false},
+  {"en": "For education only. Not a medical device and not clinically validated: never use it for patient care. Version {code}, build {code}.", "fa": "فقط برای آموزش. این نرم‌افزار وسیله‌ی پزشکی نیست و از نظر بالینی اعتبارسنجی نشده است؛ نباید هرگز در مراقبت از بیمار به کار رود. نسخه‌ی {code}، ساخت {code}.", "source": "apps/demo/src/app/views/debrief.ts FOOT (release wording, about.ts EDUCATION_LINE; added 2026-10-18, footer)", "reviewed": false},
   {"en": "Page {c} of {c}", "fa": "صفحه‌ی {c} از {c}", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
   {"en": " — undone by return {c}", "fa": "(لغوشده با بازگشت {c})", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
   {"en": "{drug}: {v} in {c} bolus", "fa": "{drug}: {v} در {c} نوبت", "source": "apps/demo/src/app/views/debrief.ts", "reviewed": false},
