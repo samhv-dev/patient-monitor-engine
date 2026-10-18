@@ -1,9 +1,11 @@
-# Showcase 2: cue cards (22 October 2026)
+# Showcase 2: cue cards (22 October 2026, the 30-minute slot)
 
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
-follows each card). Clock = the session-bar clock (Load = 0:00). Every number is from kit round A, 13 October
-(`SHOWCASE-2-MEASUREMENTS.md`, section given at the foot of each card); "≈" marks a time worked out, not measured. The
-run sheet has the full rows and sources. Owner defaults are marked ◆ (change them if the owner says otherwise).*
+follows each card). Clock = the session-bar clock (Load = 0:00). Every number is measured: kit round A (13 October)
+and kit round A3 (17 October) (`SHOWCASE-2-MEASUREMENTS.md`, section given at the foot of each card). The owner's final
+answers of 17 October are marked ◆. The MH press time, **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**,
+is the E22 measurement (owner ruling E23: ordering A). The run sheet has the full rows and sources. The four dropped cases are at
+the end, under "Cases held in reserve".*
 
 <div style="page-break-after: always;"></div>
 
@@ -11,31 +13,173 @@ run sheet has the full rows and sources. Owner defaults are marked ◆ (change t
 
 ## Load → All alarms on → speed → Bookmark
 
-- **Loading a case turns the limit alarms OFF.** Every time.
+- **Loading a case turns the limit alarms OFF.** Every time. ◆ Pressing it again is your step.
   Instructor → Devices & alarms → **All alarms on**.
   The top-right button then reads **No alarms**.
+- **Bookmark AFTER All alarms on.** Return here then brings the alarms back on.
 - **A reload loses All alarms on AND Sound on.** Press both again.
   The session code stays; the phones follow again by themselves.
 - **Fast-forward: about 10 seconds.** Press nothing while the amber panel shows.
-- **After a fast-forward the speed is what it was.** Set the next speed yourself.
+- **After a fast-forward the speed is what it was** (×8 stays ×8). Press **×1** yourself when you want real time.
 - **"Not available now"** → press again.
 - ◆ **Saadat-style monitor. Never change the monitor style during the talk.**
-- **Silence lasts only until the next alarm** (4–5 s in anaphylaxis). There is no alarm pause on this monitor.
-- Something went wrong → **Bookmark list → Return here**, then check **All alarms on**.
+- **Silence lasts only until the next alarm.** There is no alarm pause on this monitor.
+- Something went wrong → **Bookmark list → Return here**.
 
-### Order (60 min)
-Opening + QR · Premed · Plain induction · Anaphylaxis · Bronchospasm · Haemorrhage · Tamponade · **Debrief** · MH · Close · Questions
+### ◆ Order (30 min)
 
-### ◆ 45-minute cut
-Drop **Bronchospasm**, then **Plain induction**. Questions 5 min.
+| Clock (T+) | Segment | Slot |
+|---|---|---|
+| 0:00 | Opening + QR | 3:00 |
+| 3:00 | **1** Bronchospasm, Ventilator view (+ Explore line) | 5:00 |
+| 8:00 | **2** Tamponade → CPR → drainage | 5:30 |
+| 13:30 | **3** The Debrief | 3:30 |
+| 17:00 | **4** MH, early call | 5:30 |
+| 22:30 | Close and the ask | 3:00 |
+| 25:30 | Questions | 4:00 |
+| 29:30 | buffer | 0:30 |
 
-*Measurements §7, §8.*
+**Running over? Cut:** questions first · then MH span 3 · then the bronchospasm Explore line.
+
+*Measurements §7, §8, A3.2.*
 
 <div style="page-break-after: always;"></div>
 
-# 1 · Induction after fentanyl and midazolam
+# 1 · Severe bronchospasm on the ventilator
 
-**×4 throughout · about 2 min of running · slot 4:00**
+**Chip "Airway and breathing" · ×4, ×8 · two 2-min fast-forwards · about 1 min 30 s of running · slot 5:00**
+
+States: Severe bronchospasm → Salbutamol given: ventilation recovering
+
+| Clock | Cue | Press |
+|---|---|---|
+| 0:00 | | **Load · All alarms on · ×4 · Bookmark**, THEN top bar **Ventilator** |
+| ≈ 1:25 | point | — |
+| ≈ 2:00 | | **Instructor → Give salbutamol 250 µg → back to Ventilator** |
+| ≈ 4:00 | | **Instructor → 2 min** fast-forward, then **×8**; back to Ventilator |
+| ≈ 6:15 | point | **Instructor → 2 min** again (still ×8 after it); back to Ventilator |
+| ≈ 8:45 | end | **Instructor → ×1** · talk · **Reload the page** (Cmd-R), then **Sound on** |
+
+**Point at:** before: **VTE 300 mL, peak 35, minute volume 4.2**, "High pressure" banner · after: **VTE 501, minute
+volume 7.0**, banner gone, peak 34 → 32.
+
+**Explore line** (optional, 30 s, spoken, no press): *"A real monitor shows a handful of numbers; here the model carries
+the whole body behind them, and an instructor can open it while a case runs."*
+
+**Safe:** ×8 and the fast-forward pressed from the Instructor view, cockpit hidden: the cockpit keeps ventilating, the
+phones keep their hold.
+
+**Trap:** load first, Ventilator view second. Phones say "The ventilator is on the main screen": expected. Reload
+before tamponade.
+
+*Measurements §6, A3.3.*
+
+<div style="page-break-after: always;"></div>
+
+# 2 · Stab wound: tamponade, PEA and pericardiocentesis
+
+**×8, ×1, ×4 · no fast-forward · about 3 min 35 s of running · slot 5:30 · fresh (reloaded) page**
+
+States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drained → Return of circulation → Post-ROSC fluid
+
+| Clock | Cue | Press |
+|---|---|---|
+| 0:00 | | **Load · All alarms on · ×8 · Bookmark** |
+| 1:00 | **CVP on the IBP2 tile: 17** | name it aloud; tick objective 1 |
+| 7:00 | | **×1** |
+| 7:31 | IBP1 STATIC PRESSURE: trace going flat | hand on the Scenario tab |
+| **7:49** | card shows **PEA** | **Start CPR, intubate, FiO₂ 1.0 AT ONCE** (by 7:57) |
+| 7:52 | | **×4** |
+| 9:00 | | **×1** |
+| ◆ **9:21** | 1 min 30 s into CPR | **Pericardiocentesis during CPR** (by 9:51) |
+| 9:22 | | **×4** |
+| 10:22 | about 70/33: compressions only | **×1** · watch, do NOT stop |
+| **10:55** | **systolic jumps to about 100 (compressions alone read about 70/33)** | **Pulse back: stop CPR** (within 30 s) |
+| 11:27 | ART about 115/77, HR 64 | **Crystalloid 500 mL** → go to the Debrief |
+
+**Debrief will say:** – name it · ✓ CPR within 10 s (3 s) · ✓ drainage within 2 min (1 min 30 s) · ✓ stop CPR (2 s) ·
+**✗ "Better: pericardiocentesis before the pulse loss"** ◆ (the one ✗: the lesson, not a timing).
+
+**Traps:** **not at SPO2 NO PULSE** (on this path it never sounds; on a late path it comes at 7:58, already 10 s late).
+**About 70/33 is the compressions, not a pulse: stopping there re-arrests him.** Wait for the jump to about 100
+(it came 3 s after the model's return: 114/51 on Chromium, 97/49 on WebKit).
+
+*Measurements §5, A3.1.*
+
+<div style="page-break-after: always;"></div>
+
+# 3 · The Debrief moment (after the tamponade)
+
+**Slot 3:30 · before loading anything else**
+
+| Within the slot | Do |
+|---|---|
+| 0:00 | Session bar **Debrief** |
+| 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
+| 0:30 | read the objectives aloud |
+| 1:00 | ◆ *"Everything was done in time, and the report still marks one line: the better course was to drain before he lost his pulse. That is the lesson."* |
+| 1:20 | **Measured facts**: pulseless 3 min 07 s, first lost at 07:48; lowest mean 20 at 07:51 |
+| 1:50 | **Timeline**: 41 rows (undone rows struck through) |
+| 2:15 | **Print or save as PDF**: **6 A4 pages** (Chrome: footer on every page) |
+| 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
+
+**Expect:** – name the tamponade ("The instructor ticked it at …") · ✓ CPR 3 s · ✓ drainage 1 min 30 s · ✓ stop CPR
+2 s · **✗ Better: pericardiocentesis before the pulse loss — "The pulse loss at 07:48"**.
+
+**Trap:** the Debrief reports the CURRENT run: open it before loading MH.
+
+*Measurements A3.1; run sheet §4.*
+
+<div style="page-break-after: always;"></div>
+
+# 4 · Malignant hyperthermia, early call
+
+**×8 then ×4 · three 5-min fast-forwards · about 2 min of running · slot 5:30**
+
+States: Induced → Surgery → **Early signs** → Trigger off (20 × 600) → treatment → **Recovering: EtCO₂ below 45** →
+Ventilation back to 12 × 500
+
+| Clock | Cue | Press |
+|---|---|---|
+| 0:00 | | **Load · All alarms on · ×8 · Bookmark** |
+| 4:00 | | **Start surgery: rocuronium 0.6 mg/kg** |
+| 6:30 | | **×4** · watch the CO₂ tile climb |
+| ◆ **6:52** | state **Early signs** (EtCO₂ 46) | **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** |
+| ≈ 7:20 | | **Dantrolene 2.5 mg/kg**, then **Cool: 2 L saline** |
+| 7:42 | EtCO₂ 38 | **5 min** fast-forward (1). **Hyperventilation stays on** |
+| 12:55 | state **Recovering** · EtCO₂ 38 | **Pause** · point · **Resume**. Do NOT press ventilation back yet |
+| ◆ **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** | | **EtCO₂ normal: ventilation back to 12 × 500**, not before this time |
+| ≈ 13:07 | | **5 min** fast-forward (2) |
+| 18:20 | EtCO₂ 45 (peak 55 inside span 2; ETCO2 TOO HIGH 14:13 in the banner) | **Pause** · say: "EtCO₂ rose to the alarm limit while CO₂ production settled; the alarm caught it; we keep watching" · **Resume** |
+| ≈ 18:21 | | **5 min** (3) (cut first in MH if running over) |
+| 23:34 | EtCO₂ 42 | end · **Pause** |
+
+**Point at:** EtCO₂ below 40 at 7:27, 26 s after the call · it stays 36–38 while the hyperventilation is kept · the
+pressure stays high after the crisis (systolic 136–151: a known miss).
+
+**Debrief would say:** ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
+ventilation back ✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)").
+
+**Traps:** ◆ **do NOT press ventilation back at "Recovering"**: early is "not met" under the new rule, and it made the
+EtCO₂ rebound to 57–61 with ETCO2 TOO HIGH. **No repeat dantrolene just before the E22 time**: a dose takes the
+ventilation-back button off the card for at least a minute. Repeat only if EtCO₂ climbs back above 45. No potassium
+treatment on this path.
+
+*Measurements §0, §1 (early call); E22 (ordering A).*
+
+<div style="page-break-after: always;"></div>
+
+# Cases held in reserve
+
+*Dropped from the 30-minute slot by the owner's answer of 17 October; kept unchanged from kit round B (13 October) in
+case the slot grows or a question asks for one. Their slots are the round-B 60-minute figures. Load → All alarms on →
+speed → Bookmark as always.*
+
+<div style="page-break-after: always;"></div>
+
+# R1 · Induction after fentanyl and midazolam
+
+**×4 throughout · about 2 min of running · round-B slot 4:00**
 
 States: Awake → Fentanyl and midazolam given (by itself, 0:10) → Induced → Intubated and ventilated → Ephedrine given
 
@@ -60,9 +204,9 @@ contrast. The RR alarm comes back after you acknowledge it: once is enough.
 
 <div style="page-break-after: always;"></div>
 
-# 2 · Healthy induction, airway not secured
+# R2 · Healthy induction, airway not secured
 
-**×8 then ×4 · one 5-min fast-forward · about 1 min 50 s · slot 4:30 · DROP SECOND**
+**×8 then ×4 · one 5-min fast-forward · about 1 min 50 s · round-B slot 4:30**
 
 States: Awake → Induced (airway not secured) → **Airway not secured: SpO₂ below 90 %** → Bag-mask → Rescued: intubated
 
@@ -86,9 +230,9 @@ States: Awake → Induced (airway not secured) → **Airway not secured: SpO₂ 
 
 <div style="page-break-after: always;"></div>
 
-# 3 · Anaphylaxis under anaesthesia
+# R3 · Anaphylaxis under anaesthesia
 
-**×4 · about 1 min 15 s · slot 3:30**
+**×4 · about 1 min 15 s · round-B slot 3:30**
 
 States: Ventilated, stable → **Anaphylaxis** (by itself at 1:00) → Epinephrine given
 
@@ -111,36 +255,9 @@ States: Ventilated, stable → **Anaphylaxis** (by itself at 1:00) → Epinephri
 
 <div style="page-break-after: always;"></div>
 
-# 4 · Severe bronchospasm on the ventilator
+# R4 · Class IV haemorrhage, PEA and resuscitation
 
-**Chip "Airway and breathing" · ×4, ×8 · two 2-min fast-forwards · about 1 min 30 s · slot 4:30 · DROP FIRST**
-
-States: Severe bronchospasm → Salbutamol given: ventilation recovering
-
-| Clock | Cue | Press |
-|---|---|---|
-| 0:00 | | **Load · All alarms on · Bookmark**, THEN top bar **Ventilator** |
-| ≈ 1:25 | point | — |
-| ≈ 2:00 | | **Instructor → Give salbutamol 250 µg → back to Ventilator** |
-| ≈ 4:00 | | (Instructor) **2 min** fast-forward, then **×8**; back to Ventilator |
-| ≈ 6:15 | point | (Instructor) **2 min** again; back to Ventilator |
-| ≈ 8:45 | end | **Reload the page** (Cmd-R), then **Sound on** |
-
-**Point at:** before: **VTE 300 mL, peak 35, minute volume 4.2**, "High pressure" banner · after: **VTE 501, minute
-volume 7.0**, banner gone, peak 34 → 32.
-
-**Debrief would say:** – recognise · ✓ bronchodilator · – watch recovery (instructor).
-
-**Trap:** load first, Ventilator view second. Phones say "The ventilator is on the main screen": expected. Reload
-before haemorrhage.
-
-*Measurements §6.*
-
-<div style="page-break-after: always;"></div>
-
-# 5 · Class IV haemorrhage, PEA and resuscitation
-
-**×8, ×4, ×1 · one 2-min fast-forward · about 3 min + Explore · slot 7:30**
+**×8, ×4, ×1 · one 2-min fast-forward · about 3 min + Explore · round-B slot 7:30**
 
 States: Bleeding 2.5 L over 10 min → CPR, 2 L warmed fluid, epinephrine → Return of circulation
 
@@ -163,91 +280,3 @@ up +659** (right physiology), O₂ delivery halved · the overshoot 203/106 at t
 **Trap:** **no CPR before SPO2 NO PULSE** (both CPR lines turn "not assessable"). Press by 10:58.
 
 *Measurements §4.*
-
-<div style="page-break-after: always;"></div>
-
-# 6 · Stab wound: tamponade, PEA and pericardiocentesis
-
-**×8, ×1, ×4 · no fast-forward · about 3 min 45 s · slot 6:00**
-
-States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drained → Return of circulation → Post-ROSC fluid
-
-| Clock | Cue | Press |
-|---|---|---|
-| 0:00 | | **Load · All alarms on · Bookmark** · ×8 |
-| 1:00 | **CVP on the IBP2 tile: 17** | name it aloud; tick objective 1 |
-| 7:00 | | **×1** |
-| 7:31 | IBP1 STATIC PRESSURE: trace going flat | hand on the Scenario tab |
-| **7:49** | card shows **PEA** | **Start CPR, intubate, FiO₂ 1.0 AT ONCE** (by 7:57) |
-| ≈ 7:51 | | **×4** |
-| 9:00 | | **×1** |
-| ◆ ≈ **9:20** | 1 min 30 s into CPR | **Pericardiocentesis during CPR** (by CPR + 2:00) |
-| ≈ 9:21 | | **×4** |
-| ≈ 10:20 | | **×1** · watch |
-| ≈ 10:55 | pressure climbs **above** 69/32, EtCO₂ rises | **Pulse back: stop CPR** (within 30 s) |
-| 30 s later | ART about 117/79, HR 64 | **Crystalloid 500 mL** → go to the Debrief |
-
-**Debrief would say:** – name it · ✓ CPR within 10 s (≈ 3 s) · ✓ drainage within 2 min (≈ 1 min 30 s) · ✓ stop CPR ·
-**✗ "Better: pericardiocentesis before the pulse loss"** ◆ (the one ✗: the better course, not a timing).
-
-**Traps:** **not at SPO2 NO PULSE** (7:58 is already 10 s late). **CPR alone reads 69/32: that is the compressions,
-not a pulse; stopping there re-arrests him.** The ✓ times on this path are worked out, not measured.
-
-*Measurements §5.*
-
-<div style="page-break-after: always;"></div>
-
-# 7 · The Debrief moment (after the tamponade)
-
-**Slot 4:00 · before loading anything else**
-
-| Within the slot | Do |
-|---|---|
-| 0:00 | Session bar **Debrief** |
-| 0:20 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
-| 0:40 | read the objectives aloud |
-| 1:15 | *"Everything was done in time, and the report still marks one line: the better course was to drain before he lost his pulse."* |
-| 1:30 | **Measured facts** (pulse loss 07:48) |
-| 2:00 | **Timeline** (undone rows struck through) |
-| 2:30 | **Print or save as PDF** (Chrome: footer on every page) |
-| 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
-
-**Expect:** – name the tamponade ("The instructor ticked it at …") · ✓ CPR · ✓ drainage · ✓ stop CPR ·
-**✗ Better: pericardiocentesis before the pulse loss — "The pulse loss at 07:48"**.
-
-**Trap:** the Debrief reports the CURRENT run: open it before loading MH.
-
-*Measurements §5; run sheet §4.*
-
-<div style="page-break-after: always;"></div>
-
-# 8 · Malignant hyperthermia
-
-**×8 then ×4 · three 5-min fast-forwards · about 2 min · slot 7:00**
-
-States: Induced → Surgery → **Early signs** → Trigger off (20 × 600) → treatment → **Recovering: EtCO₂ below 45** →
-Ventilation back to 12 × 500
-
-| Clock | Cue | Press |
-|---|---|---|
-| 0:00 | | **Load · All alarms on · Bookmark** · ×8 |
-| 4:00 | | **Start surgery: rocuronium 0.6 mg/kg** |
-| 6:30 | | **×4** · watch the CO₂ tile climb |
-| ◆ **6:52** | state **Early signs** (EtCO₂ 46) | **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** |
-| ≈ 7:20 | | **Dantrolene 2.5 mg/kg**, then **Cool: 2 L saline** |
-| ◆ **8:35** | state **Recovering** | **EtCO₂ normal: ventilation back to 12 × 500** at once |
-| 8:45 | | **5 min** fast-forward (1) |
-| ◆ 14:00 | **EtCO₂ 57** (above 55) | **Dantrolene 2.5 mg/kg** again; tick objective 3; **5 min** (2) |
-| 19:19 | EtCO₂ 45 | **5 min** (3) |
-| 24:34 | EtCO₂ 41 | end |
-
-**Point at:** EtCO₂ below 40 at 7:27, 26 s after the call · EtCO₂ back up to 57–61 after the ventilation goes back
-(ETCO2 TOO HIGH) · the pressure stays high after the crisis (systolic 141–148: a known miss).
-
-**Debrief would say:** ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
-✓ ventilation back (1 min 16 s). No ✗.
-
-**Traps:** **do not wait for the 40-mmHg check** (the old sheet's): the ventilation must go back at "Recovering", before
-the first fast-forward. No potassium treatment on this path.
-
-*Measurements §0, §1.*
