@@ -20,6 +20,13 @@ declare const __PME_BUILD__: string;
 const BUILD = typeof __PME_BUILD__ === 'string' ? __PME_BUILD__ : 'development';
 const FOOT = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;
 
+/** The talking points (PEARLS phases, E46: fixed, non-clinical text the owner confirms; never interpolated). */
+const PEARLS: ReadonlyArray<readonly [string, string]> = [
+  ['Reactions', 'How did that feel? What stands out for you?'],
+  ['Description', 'In a sentence or two: what was the problem, and when did you know?'],
+  ['Analysis', 'Take one key moment: what did you see, what did you think, what did you do?'],
+  ['Summary', 'One thing to keep doing, one thing to do differently next time.'],
+];
 const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 /** The verdict words (E42–E44): the mark (`data-mark`), its words with a glyph, and the reason printed under it. A
  *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
@@ -131,7 +138,8 @@ export function debriefView(session: AppSession, link: Link): View {
   // between them are created once here and never re-created or re-appended, so typing in them is never interrupted
   const live1 = h('div', { id: 'db-live-1' });
   const live2 = h('div', { id: 'db-live-2' });
-  const pearls = h('div', { id: 'db-pearls' });
+  const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
+    ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
   const runBy = (): void => {
     const s = live1.querySelector('.db-runby');
     if (s) s.textContent = who.value;
