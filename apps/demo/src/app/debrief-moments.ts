@@ -1,0 +1,127 @@
+// The key moments and the key times of a run, computed from the run record alone (`record.ts` `RunData`): the scenario's
+// states after the first, the pulse lost and back (the model), and the team's drugs, fluids, shocks and CPR; each with
+// what the monitor's trend held at that second and the alarms raised since the moment before. The key times are the
+// intervals the facilitator reads first: the instructor's recognition tick, the first team action, each objective's
+// measured interval, the pulse loss to CPR and the time without a pulse. Every number traces to a row or a sample; an
+// absent one is null, never a guess. Read on the KEPT course, as the debrief's rules are. No DOM.
+import { endOf, isEvent, objectives, type DebriefExport } from './debrief.ts';
+import type { Row, RunData, Sample } from './record.ts';
+
+export type Who = 'team' | 'patient' | 'scenario';
+export type KeyMoment = DebriefExport['keyMoments'][number];
+export type KeyTime = DebriefExport['keyTimes'][number];
+
+const kept = (d: RunData): Row[] => d.rows.filter((r) => r.undone === undefined);
+const STATE = 'Scenario state: ';
+/** Two patient moments this close (s) are one moment [ENG: the pulse loss and the state it causes come ≈ 1 s apart]. */
+const MERGE_S = 3;
+/** A moment's value may come from this many seconds after it when its own second has none [ENG]. */
+const LOOK_S = 3;
+/** An alarm counts for a moment when raised up to this long after it [ENG: the alarm table's 1 Hz evaluation]. */
+const ALARM_S = 0.5;
+const MAX_TILES = 6;
+
+/** Who moved the scenario from state `prev` into `id`: its transitions there all manual → the team; any other kind →
+ *  the patient; none (an instructor's jump) → the scenario. */
+export function whoOf(d: RunData, prev: string, id: string): Who {
+  const ts = (d.doc?.states.find((s) => s.id === prev)?.transitions ?? []).filter((x) => x.to === id || x.else === id);
+  if (!ts.length) return 'scenario';
+  return ts.every((x) => 'manual' in x.when) ? 'team' : 'patient';
+}
+
+/** Whether simulated second `t` lies in a pulseless span: a kept pulse loss to the next kept return of circulation,
+ *  both ends included; a span with no return runs to the end of the record (E60). */
+export function pulselessAt(d: RunData, t: number): boolean {
+  let lost: number | null = null;
+  for (const r of kept(d)) {
+    if (r.ev === 'pulseLoss' && lost === null) lost = r.t;
+    else if (r.ev === 'rosc' && lost !== null) {
+      if (lost <= t && t <= r.t) return true;
+      lost = null;
+    }
+  }
+  return lost !== null && lost <= t;
+}
+
+/** The value of `k` at second ⌊t⌋, else the first measured in the next three seconds, else null. */
+function valueAt(at: Map<number, Sample>, k: 'hr' | 'map' | 'spo2' | 'etco2', t: number): number | null {
+  const f = Math.floor(t);
+  for (let s = f; s <= f + LOOK_S; s++) {
+    const v = at.get(s)?.[k];
+    if (v !== null && v !== undefined) return v;
+  }
+  return null;
+}
+
+/** The key moments of the kept course in time order, numbered 1…n. Values as recorded (unrounded), except SpO₂: null
+ *  while pulseless (`pulseless` says why). A state's own set-up rows are not moments. */
+export function keyMoments(d: RunData): KeyMoment[] {
+  const raw: Array<{ t: number; who: Who; text: string }> = [];
+  let prev: string | undefined;
+  for (const r of kept(d)) {
+    if (r.ev?.startsWith('state:')) {
+      const id = r.ev.slice('state:'.length);
+      if (prev !== undefined) raw.push({ t: r.t, who: whoOf(d, prev, id), text: r.text.startsWith(STATE) ? r.text.slice(STATE.length) : r.text });
+      prev = id;
+    } else if (r.ev === 'pulseLoss' || r.ev === 'rosc') raw.push({ t: r.t, who: 'patient', text: r.text });
+    else if ((r.kind === 'action' || r.kind === 'remote') && (r.ev?.startsWith('drug:') || r.ev === 'fluid' || r.ev === 'shock' || r.ev === 'cpr')) raw.push({ t: r.t, who: 'team', text: r.text });
+  }
+  raw.sort((a, b) => a.t - b.t);
+  const merged: typeof raw = [];
+  for (const m of raw) {
+    const last = merged.at(-1);
+    if (last && last.who === 'patient' && m.who === 'patient' && m.t - last.t <= MERGE_S) last.text += ` · ${m.text.split(':')[0]}`;
+    else merged.push({ ...m });
+  }
+  const at = new Map(d.samples.map((s) => [s.t, s]));
+  const alarms = kept(d).filter((r) => r.kind === 'alarm');
+  return merged.map((m, i) => {
+    const from = i ? (merged[i - 1] as { t: number }).t : -Infinity;
+    const pulseless = pulselessAt(d, m.t);
+    return {
+      n: i + 1, t: m.t, who: m.who, text: m.text,
+      values: { hr: valueAt(at, 'hr', m.t), map: valueAt(at, 'map', m.t), spo2: pulseless ? null : valueAt(at, 'spo2', m.t), etco2: valueAt(at, 'etco2', m.t) },
+      pulseless,
+      alarms: alarms.filter((a) => from < a.t && a.t <= m.t + ALARM_S).map((a) => a.text),
+    };
+  });
+}
+
+/** The key times, in order: recognition, the first team action, the objectives' measured intervals (document order),
+ *  the pulse loss to CPR, the time pulseless; at most six. A generic interval equal to an objective's is left out (the
+ *  objective's is kept). */
+export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyTime[] {
+  const objs = objectives(d);
+  const docObjs = d.doc?.objectives ?? [];
+  const out: KeyTime[] = [];
+  const ri = docObjs.findIndex((o) => typeof o !== 'string' && o.debrief === 'recognition');
+  if (ri >= 0) {
+    const tk = objs[ri]?.verdict.tickedT;
+    out.push({ id: 'recognition', label: "Recognition (instructor's tick)", fromT: 0, toT: tk ?? null, state: tk === undefined ? 'notTicked' : 'measured' });
+  }
+  const team = moments.find((m) => m.who === 'team');
+  if (team) out.push({ id: 'firstTeam', label: 'Start → first team action', fromT: 0, toT: team.t, state: 'measured' });
+  const objTiles: KeyTime[] = [];
+  objs.forEach((o, i) => {
+    const m = o.verdict.measure;
+    if (m) objTiles.push({ id: `objective:${i}`, label: o.text, fromT: m.fromT, toT: m.toT, askedS: m.askedS, state: 'measured' });
+  });
+  out.push(...objTiles);
+  const rows = kept(d);
+  const loss = rows.find((r) => r.ev === 'pulseLoss');
+  if (loss) {
+    const cpr = rows.find((r) => r.t >= loss.t && isEvent(r.ev, 'cpr'));
+    out.push(cpr ? { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: loss.t, toT: cpr.t, state: 'measured' } : { id: 'pulseLostToCpr', label: 'Pulse lost → CPR', fromT: loss.t, toT: null, state: 'noneAfter' });
+    // the same sum as facts()' "Pulseless … in all"
+    let off = 0;
+    let lost: number | null = null;
+    for (const r of rows) {
+      if (r.ev === 'pulseLoss' && lost === null) lost = r.t;
+      if (r.ev === 'rosc' && lost !== null) (off += r.t - lost), (lost = null);
+    }
+    if (lost !== null) off += endOf(d) - lost;
+    out.push({ id: 'pulseless', label: 'Pulseless in all', fromT: loss.t, toT: null, totalS: off, state: 'measured' });
+  }
+  const same = (a: KeyTime) => objTiles.some((o) => o !== a && o.fromT === a.fromT && o.toT === a.toT);
+  return out.filter((k) => k.id.startsWith('objective:') || !same(k)).slice(0, MAX_TILES);
+}
