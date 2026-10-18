@@ -119,9 +119,10 @@ describe('ToneScheduler', () => {
     expect(played[0]!.when).toBeCloseTo(0.05, 12);
   });
 
-  it('beep envelope: 5 ms attack, 60 ms total, back to zero', () => {
+  it('beep envelope: 5 ms attack, 100 ms total, back to zero', () => {
     const env = beepEnvelope(0.5);
     expect(env[1]).toEqual([0.005, 0.5]);
-    expect(env[env.length - 1]).toEqual([BEEP_MS / 1000, 0]);
+    expect(BEEP_MS).toBe(100);
+    expect(env[env.length - 1]).toEqual([0.1, 0]);
   });
 });

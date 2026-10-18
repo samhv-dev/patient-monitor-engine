@@ -3,7 +3,8 @@
 // that ran a hair fast was silent (37–60 % of beats played; 16–29 % under relay jitter). The gate now reads the
 // session's nominal speed. Host + one emulated phone (Pixel 7 on Chromium, iPhone 13 on WebKit) over the relay, Sound on
 // on both, ×4 for 20 s: the phone starts at least 90 % as many QRS beeps as the host. Web Audio is counted by an init
-// script: a beep is the oscillator whose PeriodicWave has 3 coefficients (packages/audio/src/tones.ts playBeep).
+// script: a beep is the oscillator whose PeriodicWave is the beep's (packages/audio/src/tones.ts playBeep: 4 coefficients,
+// the 3rd harmonic at 1/3; the device tones also have 4, with the 3rd at −12 dB ≈ 0.25).
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -28,25 +29,35 @@ function countBeeps(): void {
   const BAC = w.BaseAudioContext;
   const Osc = w.OscillatorNode;
   if (!BAC || !Osc) return;
-  const size = new WeakMap<object, number>();
+  const beep = new WeakSet<object>();
   const cpw = BAC.prototype.createPeriodicWave;
   BAC.prototype.createPeriodicWave = function (this: BaseAudioContext, real: Float32Array, imag: Float32Array, o?: PeriodicWaveConstraints) {
     const wave = cpw.call(this, real, imag, o);
-    size.set(wave, imag.length);
+    if (imag.length === 4 && Math.abs(imag[3]! - 1 / 3) < 1e-3) beep.add(wave);
     return wave;
   } as typeof cpw;
   const spw = Osc.prototype.setPeriodicWave;
-  Osc.prototype.setPeriodicWave = function (this: OscillatorNode & { __n?: number }, wave: PeriodicWave) {
-    this.__n = size.get(wave) ?? 0;
+  Osc.prototype.setPeriodicWave = function (this: OscillatorNode & { __beep?: boolean }, wave: PeriodicWave) {
+    this.__beep = beep.has(wave);
     return spw.call(this, wave);
   };
   const start = Osc.prototype.start;
-  Osc.prototype.start = function (this: OscillatorNode & { __n?: number }, ...a: Parameters<typeof start>) {
-    if (this.__n === 3) w.__beeps++;
+  Osc.prototype.start = function (this: OscillatorNode & { __beep?: boolean }, ...a: Parameters<typeof start>) {
+    if (this.__beep) w.__beeps++;
     return start.apply(this, a);
   };
 }
 const beeps = (p: Page) => p.evaluate(() => (window as unknown as { __beeps: number }).__beeps);
+/** What the page's tone scheduler did with its beat tones (played / dropped as stale), and its audio state — printed so a
+ *  failure says whether the beeps were gated, dropped or never started. */
+const diag = (p: Page) =>
+  p.evaluate(() => {
+    type Log = Array<{ kind: string; dropped: boolean; lateS: number }>;
+    const w = window as unknown as { __pmeApp?: { session: { monitor: { audioLog: Log } | null } }; __pmeFollower?: { monitor: { audioLog: Log } } };
+    const log = (w.__pmeFollower?.monitor ?? w.__pmeApp?.session.monitor)?.audioLog ?? [];
+    const qrs = log.filter((e) => e.kind === 'qrs');
+    return { qrsPlayed: qrs.filter((e) => !e.dropped).length, qrsDropped: qrs.filter((e) => e.dropped).length, maxLateS: Math.max(0, ...qrs.map((e) => e.lateS)) };
+  });
 
 test('at ×4 a following phone beeps for (nearly) every beat the host beeps for', async ({ page, browser, browserName }) => {
   test.setTimeout(120_000);
@@ -78,7 +89,7 @@ test('at ×4 a following phone beeps for (nearly) every beat the host beeps for'
   const [h1, p1] = await Promise.all([beeps(page), beeps(phone)]);
   const host = h1 - h0;
   const learner = p1 - p0;
-  console.log(`FX-16 ${browserName}: ×4 for ${WINDOW_MS / 1000} s — host ${host} beeps, phone ${learner} (${((100 * learner) / Math.max(1, host)).toFixed(0)} %)`);
+  console.log(`FX-16 ${browserName}: ×4 for ${WINDOW_MS / 1000} s — host ${host} beeps, phone ${learner} (${((100 * learner) / Math.max(1, host)).toFixed(0)} %); scheduler logs host ${JSON.stringify(await diag(page))} phone ${JSON.stringify(await diag(phone))}`);
   expect(host).toBeGreaterThan(40); // ≈ 4 beats a second at ×4: the host's own beep is the reference
   expect(learner).toBeGreaterThanOrEqual(Math.floor(0.9 * host));
   await ctx.close();

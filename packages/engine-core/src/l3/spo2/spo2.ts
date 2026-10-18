@@ -85,10 +85,14 @@ export function spo2Measured(st: Spo2State, t: number): Measured {
   return { value: st.shown, flag: st.shown === null ? 'invalid' : st.flag, at: t };
 }
 
+/** The beep's pitch at SpO2 100 %, Hz: measured on the Saadat unit (research/34 row 6, the owner's ruling). It was 880 Hz, the
+ *  pitch of the alarm pulses, which made a beep and an alarm hard to tell apart. */
+export const BEEP_BASE_HZ = 1245;
+
 /**
- * QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = 880·2^(−(100 − SpO2)·s/12) with s = 0.1
- * semitone per % ("standard", ≈ 5 Hz/% near 880 Hz). 90 % → 830.6 Hz.
+ * QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = BEEP_BASE_HZ·2^(−(100 − SpO2)·s/12) with
+ * s = 0.1 semitone per % ("standard", ≈ 7 Hz/% near 1245 Hz). 90 % → 1175.1 Hz; it reaches 880 Hz only at 40 %.
  */
 export function spo2PitchHz(spo2: number | null, semitonePerPct = 0.1): number {
-  return spo2 === null ? 880 : 880 * 2 ** ((-(100 - spo2) * semitonePerPct) / 12);
+  return spo2 === null ? BEEP_BASE_HZ : BEEP_BASE_HZ * 2 ** ((-(100 - spo2) * semitonePerPct) / 12);
 }

@@ -146,15 +146,15 @@ describe('respiratory acceptance: coupling, RR, ventilator link', { timeout: 300
     expect(b.autoPeepTendency).toBeGreaterThan(0.5);
   });
 
-  it('9. tone: the QRS beep pitch follows the displayed SpO2 (90 % → 830.6 Hz ± 1)', async () => {
+  it('9. tone: the QRS beep pitch follows the displayed SpO2 (90 % → 1175.1 Hz ± 1; base 1245 Hz)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(cmd({ type: 'setTarget', variable: 'spo2', value: 89.5 }));
     await run(e, 80);
     for (let t = 80; t <= 90; t += 0.02) e.advanceTo(t); // tones are posted from the look-ahead of each tick
     const sp = numSeries(ev, 'spo2', 85, 90).pop()![1];
     const tone = ev.filter((x) => x.type === 'tone' && x.t > 88).pop() as Extract<EngineEvent, { type: 'tone' }>;
-    expect(tone.freqHz).toBeCloseTo(880 * 2 ** (-(100 - sp) * 0.1 / 12), 3);
-    if (sp === 90) expect(Math.abs(tone.freqHz! - 830.6)).toBeLessThanOrEqual(1);
+    expect(tone.freqHz).toBeCloseTo(1245 * 2 ** (-(100 - sp) * 0.1 / 12), 3);
+    if (sp === 90) expect(Math.abs(tone.freqHz! - 1175.1)).toBeLessThanOrEqual(1);
   });
 
   it('GA redistribution, default adult: core −0.9 °C at 30 min (−0.7 to −1.1), −1.3 °C at 60 min (−1.0 to −1.6); forced-air warming −0.9 at 60 min (−0.6 to −1.2)', async () => {

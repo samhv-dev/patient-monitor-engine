@@ -77,7 +77,7 @@ import { pcheOf } from './l2/neuro/bus.ts';
 import { circCardiacOutput, circVagalStimulus, type CircModelState } from './l2/circ/model.ts'; // The stimulus observer
 import { heldRate } from './l2/circ/rate-rule.ts';
 import { betaVenousUnits } from './l2/circ/venous.ts';
-import { spo2PitchHz } from './l3/spo2/spo2.ts';
+import { BEEP_BASE_HZ, spo2PitchHz } from './l3/spo2/spo2.ts';
 import { advanceBlood, applyBloodCommand, bloodEcgTargets, createBloodState, validateBloodCommand, type BloodState } from './l2/blood/pipeline.ts';
 import { cycleBreathClock, fixedBreathClock, type BreathClock } from './l2/ecg/breath-clock.ts';
 import { lastCycleBefore } from './l2/resp/driver.ts';
@@ -91,7 +91,7 @@ export const BUFFER_SECONDS = 120; // brief §3.5
 export const BEEP_DELAY_S = 0.03;
 /** A committed detection re-posted after a command is still worth a (late) beep this long after its tone time. */
 const LATE_TONE_POST_S = 0.12;
-export const QRS_TONE_HZ = 880; // Fixed pitch until SpO2 exists (brief §3.6); then pitch(SpO2)
+export const QRS_TONE_HZ = BEEP_BASE_HZ; // Fixed pitch until SpO2 exists (brief §3.6); then pitch(SpO2)
 const PLAN_LEAD_S = 0.15; // plan rhythm events this far beyond the last generated sample (kernel lead-in)
 const DEFAULT_LANES: LeadId[] = ['ecgII', 'V5'];
 /**
