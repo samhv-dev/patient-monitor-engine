@@ -1,0 +1,65 @@
+{
+  "case": "Q1 0 opening and QR",
+  "browser": "webkit",
+  "kit": "3db25a3b",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-18T06:56:47.684Z",
+  "loadAvg": {
+    "start": 2.38,
+    "end": 2.68,
+    "min": 2.38,
+    "max": 2.38
+  },
+  "setup": {
+    "sessionCode": "EC7SHR",
+    "alarmButtonAtEnd": "Limit alarms off"
+  },
+  "rows": [],
+  "presses": [],
+  "spans": [],
+  "states": [],
+  "alarms": [],
+  "measures": {
+    "about": {
+      "start": "Version 1.0.0-rc.1 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+      "settings": "Version 1.0.0-rc.1 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+      "preRelease": true,
+      "notMedicalDevice": true
+    },
+    "qr": {
+      "url": "http://192.168.1.100:8760/?join=EC7SHR",
+      "code": "EC7SHR",
+      "countBefore": "0 phones following",
+      "joinWallS": 2.9,
+      "countAfter": "3 phones following"
+    },
+    "phonesAfterJoin": [
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      }
+    ]
+  },
+  "debrief": null,
+  "phones": null,
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}

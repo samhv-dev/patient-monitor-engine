@@ -73,6 +73,7 @@ unchanged [MEAS §7]; a higher-priority alarm ends an alarm pause [R00 2026-10-1
 | Key | File |
 |---|---|
 | MEAS | `docs/showcase/SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13; § numbers) |
+| Q1 | the same file, section **Q1** (kit round Q1, 2026-10-18, the release build `pme-showcase-kit-3db25a3b`); raw rows in `docs/showcase/kit-round-a/q1/` |
 | A3 | the same file, section **A3** (kit round A3, 2026-10-17, kit `pme-showcase-kit-ca0d2dbb`; PR #67, branch `kit-round-a3`); raw rows in `docs/showcase/kit-round-a/a3-*` |
 | KR | `docs/showcase/kit-round-a/<case>-kit-round-<chromium/webkit>.md` (the raw rows). "KR62" = the files ending `-kit-62e521c3` (the re-check on the fixed kit). "KR MH early-call" = `malignant-hyperthermia-early-call-kit-round-*.md` |
 | G10 | `docs/gates/stage-10.md` (Stage 10 dry run, time control) |
@@ -97,8 +98,9 @@ unchanged [MEAS §7]; a higher-priority alarm ends an alarm pause [R00 2026-10-1
 ## The programme at a glance (30:00)
 
 The run times are measured; the talk allowances are planning figures, not measurements [showcase 1 used 5 min for
-bronchospasm, SC1 "Order for a clinical audience"]. The 30-minute run has not been rehearsed end to end ("Still not
-measured").
+bronchospasm, SC1 "Order for a clinical audience"]. The case runs were rehearsed end to end in one page on the release
+build, both engines, presses only (no talk): 9 min 39 s of wall from the opening to the close [Q1]. The talk itself
+was not ("Still not measured").
 
 | # | Segment | Speeds used | Run (W, measured) | Slot | Clock (T+) |
 |---|---|---|---|---|---|
@@ -126,7 +128,7 @@ measured").
 | 8:15 | the tamponade run, narrated, to the crystalloid | 3:35 |
 | 11:50 | the talk: CPR alone cannot bring him back; the better course; the known miss | 1:40 |
 | 13:30 | **Debrief** (§4): open, Run by, the objectives, the lesson, facts, timeline, print | 3:30 |
-| 17:00 | Scenario → **Showcase** → Malignant hyperthermia: **Load · All alarms on · ×8 · Bookmark** | 0:15 |
+| 17:00 | Scenario → **Choose another scenario** (the tamponade is still loaded: the library is hidden until then [Q1]) → **Showcase** → Malignant hyperthermia: **Load · All alarms on · ×8 · Bookmark** | 0:15 |
 | 17:15 | the MH run, narrated, with three 5-min spans and the E22 press | 1:49–2:05 |
 | ≈ 19:15 | the talk: the early call against the late call; why the hyperventilation stays on; the honesty items | ≈ 3:15 |
 | 22:30 | Close and the ask | 3:00 |
@@ -278,7 +280,7 @@ stayed synced, and the speed was still ×8 after the span [A3.3]. The VTE and mi
 
 | W | Sim | Speed | Press / do | Point at (measured, C and W identical) |
 |---|---|---|---|---|
-| 0:00 | 0:00 | **×4** | **Load**, **All alarms on**, **Bookmark**, then top bar **Ventilator** (opened at 00:27) | `%SPO2 LOW` at 00:28; lowest SpO₂ 87 % at 00:30 [MEAS §6] |
+| 0:00 | 0:00 | **×4** | **Load**, **All alarms on**, **Bookmark**, then top bar **Ventilator** (opened at 00:27) | `%SPO2 LOW` at 00:28; lowest SpO₂ 87 % at 00:30 [MEAS §6]. On the release build, with ×4 pressed after All alarms on (the cards' order), the Ventilator view opened at 00:25: an RR alarm at 00:09–00:12 (`RR TOO LOW` C, `RR TOO HIGH` W), then `%SPO2 LOW` at 00:35, lowest SpO₂ 86 % at 00:37–00:39 [Q1] |
 | 0:22 | 1:27 | ×4 | — | **before salbutamol: VTE 300 mL, Ppeak 35, expiratory minute volume 4.2 L/min, banner "⚠ High pressure (Pmax)"**; monitor EtCO₂ 32 [MEAS §6] |
 | 0:33 | 2:08 | ×4 | **Instructor** → **Give salbutamol 250 µg** → back to **Ventilator** | salbutamol at 02:08 [MEAS §6] |
 | ≈ 1:01 | 4:03 | — | **Instructor** → **2 min** fast-forward (the cockpit keeps ventilating, hidden), then **×8**; back to **Ventilator** | 10.4 s of wall; "During it: no alarms" [KR bronchospasm C]; cockpit and phones as A3.3 |
@@ -397,7 +399,7 @@ both engines) [MEAS E22].
 
 | W | Sim | Speed | Press / do | Point at (measured, C; W within a second) |
 |---|---|---|---|---|
-| 0:00 | 0:00 | **×8** | **Load**, **All alarms on**, **Bookmark** | — |
+| 0:00 | 0:00 | **×8** | **Choose another scenario** first (the tamponade is still loaded, so the Scenario tab hides the library until it is pressed [Q1]), then **Load**, **All alarms on**, **Bookmark** | — |
 | 0:31 | 4:00 | ×8 | **Start surgery: rocuronium 0.6 mg/kg** | state Surgery 04:05; HR 79, ART 99/66 (75), EtCO₂ 40 [KR MH early-call C 04:11] |
 | 0:50 | 6:30 | **×4** | watch the CO₂ tile climb at the same ventilation | EtCO₂ 45 at 06:37 [KR MH early-call C] |
 | 0:54 | **6:52** | ×4 | state **Early signs** → **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** at once (the rule allows 120 s) | EtCO₂ 46, HR 86, ART 105/70 (80) [KR MH early-call C 06:53]. No limit alarm before the call: EtCO₂ peaks at 46, under the 49.4 limit [MEAS §1] |
@@ -473,7 +475,8 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 | The sheet says "The relay does not answer", or the black window stops | Close the Classroom window, double-click **Start Classroom** again, reload the page, **Sound on**. A kit before 62e521c3 stops at the first phone (KR-A1): use the 62e521c3 kit or later | [CR12; MEAS §9 item 1] |
 | Sound fails | Say so (*"the sound has failed; the alarms still show on screen"*) and continue; alarms stay visual | [G10 §7] |
 | A card press shows **"Not available now: the case has moved to …"** | Press again: the button now belongs to the current state | [G10 §8 item 1] |
-| A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load; the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken**: on, if you took it after All alarms on (the cards' order); "Limit alarms off" if before | [FU-11 E4; A3.2] |
+| A scenario goes wrong (wrong press, missed window) | Session bar **Bookmark** list → **Return here** on the bookmark taken at Load (the **last** one in the list: the bookmarks of the earlier cases of this page stay in it, named only by their clock [Q1]); the patient and the screen are restored together. **The alarms come back as they were when the bookmark was taken**: on, if you took it after All alarms on (the cards' order); "Limit alarms off" if before | [FU-11 E4; A3.2] |
+| Something went wrong: the toast "The monitor stopped — Restart the patient" | **Restart patient, then Return here** (a page reload loses the bookmarks) [R00 2026-10-18 FX-11 ruling]. **FX-12, measured on the release build:** after this sequence the session bar reads **No scenario**; the patient goes back to the bookmark but the case does not (no card buttons; the Debrief reads "No scenario (free run)"), and after Restart patient the bookmark list was not on screen in 3 of 6 tries. So after Restart patient, **load the case again** (Load · All alarms on · speed · Bookmark) and run it from 0:00 | [Q1 FX-12] |
 | The page froze or a Ventilator view is still driving | Reload (Cmd-R): **Sound on**, re-load the card, **All alarms on**, Bookmark; the session code is kept and the phones follow again | [MEAS §7; R00 2026-10-04] |
 | Tamponade: you missed the PEA moment and `SPO2 NO PULSE` has sounded | Press **Start CPR** at once anyway; the CPR line will be ✗ (12 s at the alarm). Or **Return here** and run the case again | [MEAS §5] |
 | Tamponade: you stopped CPR on the compression pressure and he re-arrests | **Return here** and run the case again (≈ 3:35 of wall), or say it: it is the trap the sheet warns about | [MEAS §5 probe; A3.1] |
@@ -490,12 +493,12 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 
 1. **E22**: measured since [MEAS E22]. "EtCO₂ below 40 for 2 min" is reached at 09:26–09:27, inside span 1; the press
    comes as span 1 ends, measured at 13:03 / 13:04 (C / W). Not measured: a human presenter's delay after span 1.
-2. **Bronchospasm as one run with the presses from the Instructor view and salbutamol**: A3 ran ×8 and the span from
-   the Instructor view without salbutamol [A3.3]; the run with salbutamol sent the same commands through the ventilator
-   link [MEAS §6]. The 8:44 → ×1 step at the end is the H21 run's ×4 step in kind [KR bronchospasm C 11:08], not
-   measured as such.
-3. **The sequence in one page**: bronchospasm → reload → tamponade → Debrief → MH was not run end to end. The reload
-   itself is measured [MEAS §7]; the A3 tamponade ran on a fresh page [A3.1].
+2. **Bronchospasm as one run with the presses from the Instructor view and salbutamol**: measured since [Q1]: the
+   card's presses from the Instructor view gave the same numbers as the link run (VTE 300 → 501, MV 4.2 → 7.0, both
+   engines), ×8 stayed ×8 after the second span, and H21 held at ×1.
+3. **The sequence in one page**: measured since [Q1]: bronchospasm → reload → tamponade → Debrief → MH ran in one
+   page with the phones joined once. The MH Load needs **Choose another scenario** first (the tamponade is still
+   loaded), and the bookmark list then still holds the tamponade's bookmark [Q1].
 4. **The 30-minute programme as a whole**: the talk allowances are planning figures; only the case runs are measured.
 5. **Real devices**: H17 (own phone, hotspot capacity), H18 (the fast-forward look in Safari), H19 (hidden tab), H20
    (second screen in Safari), H21 in real Safari (it passed in Playwright's WebKit [MEAS §6; A3.3]), sound by ear, and

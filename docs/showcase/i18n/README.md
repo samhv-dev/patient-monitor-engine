@@ -43,7 +43,8 @@ from) and `reviewed: false`. It has three parts:
 - **groups**: vocabularies a sentence may name: drug names (all 65 of the glossary's `DRUG_NAMES`, with the drug id),
   conditions, lung conditions, rhythms, alarm words, sensors, monitor labels, and the **titles, state labels and
   objective texts of the three showcase-2 cases** (bronchospasm, tamponade, malignant hyperthermia; plus the E22 MH
-  objective text from the open branch `fix-e22-mh-rule`, so the handout keeps working once it merges);
+  objective text and the `heldThen` reason lines, written against branch `fix-e22-mh-rule` and on main since PR #69:
+  kit round Q1 printed the release build's MH report with 0 strings left in English);
 - **strings**: exact strings (section titles, verdict words, fixed timeline lines);
 - **templates**: the sentences the app builds (`describe.ts` event lines, `debrief.ts` reasons and facts,
   `alarms.ts` "label high/low") with placeholders: `{t}` mm:ss, `{span}` a duration, `{n}` a number, `{u}` a unit,

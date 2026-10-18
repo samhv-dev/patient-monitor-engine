@@ -1,6 +1,7 @@
 # Stage 12 gate, Step 4: one real phone through the six cards (the OWNER's step)
 
-STATE: **PENDING-OWNER.** The PR does not merge before this table is filled in. Prepared on the pre-merge dry run
+STATE: **PENDING-OWNER.** Stage 12 merged (PR #57, main 8698a86e); the owner's result in this table still closes gate
+step 4. Prepared on the pre-merge dry run
 (kit built from `stage-12` at 806b00bc in `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit`).
 
 ## The run
@@ -39,4 +40,5 @@ Why: on CI's Linux WebKit, the hidden cockpit stopped sending frames once the Mo
 hold ended (PR #57, CI run 38194080645). The cockpit is meant to keep ventilating whichever view is on screen. This
 check answers it on the real presenting Mac and its browser.
 
-Any card the phone does not follow STOPS the merge. Write which card it was and what the status line said.
+Any card the phone does not follow keeps gate step 4 open (a finding for the orchestrator). Write which card it was and
+what the status line said.
