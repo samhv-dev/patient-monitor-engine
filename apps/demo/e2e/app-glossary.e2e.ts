@@ -13,7 +13,7 @@ test.afterAll(async () => vite?.close());
 
 const STATE_VARS = ['hr', 'sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'spo2', 'etco2', 'fio2', 'tempCore', 'volumeStatus', 'paceThresholdMa', 'svr', 'qtc'];
 
-test('no engine id reaches a clinical view', async ({ page }) => {
+test('no engine id reaches a clinical view', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(120_000);
   await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 4000 });
   // camelCase or digit-bearing ids only: a lowercase drug id is also the drug's English name ("propofol")

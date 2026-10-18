@@ -12,7 +12,7 @@ test.afterAll(async () => vite?.close());
 type W = { __pmeApp: { session: { simNow(): number; monitor: { trends: { latestS: number } } }; link: { simT: number } } };
 const speed = (page: import('@playwright/test').Page, x: string) => page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: x }).click();
 
-test('the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window', async ({ page }) => {
+test('the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
   await openApp(page, base, '#/teach', { warmMs: 500 });
   await expect(page.locator('.alarm-count')).toHaveText('Limit alarms off');

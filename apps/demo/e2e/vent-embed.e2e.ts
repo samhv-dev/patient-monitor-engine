@@ -31,7 +31,7 @@ const shot = async (p: Page, name: string) => {
   expect(statSync(path).size, `${name}.jpg must be ≤ 60 KB (committed screenshot rule)`).toBeLessThanOrEqual(60_000);
 };
 
-test('vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths', async ({ page }) => {
+test('vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths', { tag: '@known-flaky' }, async ({ page }) => {
   // The waits below add up to 80 s (20 + 30 + 30); the 30 s default cut the awRR poll short on the CI WebKit runner
   // (PR #66 run 39066929916: passed only on retry #2). Same values, the whole budget.
   test.setTimeout(120_000);

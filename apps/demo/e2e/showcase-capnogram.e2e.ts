@@ -24,7 +24,7 @@ async function save(page: Page, name: string, browserName: string): Promise<void
   expect(buf.length).toBeLessThanOrEqual(60 * 1024);
 }
 
-test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached; RESP and RR return when it is detached', async ({ page, browserName }) => {
+test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached; RESP and RR return when it is detached', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
   await openApp(page, base, '#/teach', { warmMs: 2000 });

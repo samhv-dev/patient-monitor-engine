@@ -15,7 +15,7 @@ type W = { __pmeApp: { link: { send(c: unknown): Promise<{ accepted: boolean }>;
 const CRISIS = 'MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate';
 const SURGERY = 'Start surgery: rocuronium 0.6 mg/kg';
 
-test('a card button drawn for the previous state acts on the current one, or says why not', async ({ page }) => {
+test('a card button drawn for the previous state acts on the current one, or says why not', { tag: '@known-flaky' }, async ({ page }) => {
   await openApp(page, base, '?scenario=showcase-mh', { warmMs: 1000 });
   await page.click('[role=tab][data-tab=scenario]');
   const run = page.locator('section[aria-label="Running scenario"]');

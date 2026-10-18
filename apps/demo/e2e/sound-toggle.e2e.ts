@@ -13,7 +13,7 @@ test.afterAll(async () => vite?.close());
 type W = { __pmeApp: { session: { soundOn: boolean; monitor: { soundOn: boolean } } } };
 const state = (page: import('@playwright/test').Page) => page.evaluate(() => { const s = (window as unknown as W).__pmeApp.session; return { session: s.soundOn, monitor: s.monitor.soundOn }; });
 
-test('Sound on, then off again, then on: the button, its pressed state and the monitor\'s audio agree', async ({ page }) => {
+test('Sound on, then off again, then on: the button, its pressed state and the monitor\'s audio agree', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
   await openApp(page, base, '#/teach', { warmMs: 500 });
   const sound = page.locator('.topright .sound');

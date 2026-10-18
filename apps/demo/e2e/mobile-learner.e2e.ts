@@ -190,7 +190,7 @@ test('while the Ventilator view drives the patient the phone holds; it follows a
   await expect(status(f)).toHaveText(`Following session ${code}`, { timeout: 10_000 });
 });
 
-test('a relay restart, a full session and a relay the phone cannot reach', async ({ page, browser, browserName }) => {
+test('a relay restart, a full session and a relay the phone cannot reach', { tag: '@known-flaky' }, async ({ page, browser, browserName }) => {
   test.setTimeout(180_000);
   await classroom({ maxPeersPerRoom: 1 });
   const port = relay!.port;

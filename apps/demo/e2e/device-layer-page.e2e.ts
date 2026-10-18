@@ -105,7 +105,7 @@ test('skin switch relayouts lanes and tiles without restarting the engine', asyn
   await expect.poll(() => advanced(t1), { timeout: 15_000 }).toBe(true);
 });
 
-test('12-lead report: 3×4 + rhythm strip screenshot', async ({ page }) => {
+test('12-lead report: 3×4 + rhythm strip screenshot', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
   await open(page, 'zoll-like');
   await expect.poll(() => simT(page), { timeout: 30_000 }).toBeGreaterThanOrEqual(10); // 10 s of ECG (sim time, FU-1)

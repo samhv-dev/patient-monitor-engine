@@ -39,7 +39,7 @@ const at = async (p: Page, t: number) => {
 // WebKit locally and on CI Chromium. On CI's Linux WebKit only it stays skipped, for a different reason: there the page
 // itself crashed in 3–7 of 18 runs of this flow soon after "Return here" (PR #58 runs 38212560444, 38214428810; also
 // before FX-1, run 38203086536), so a first-attempt pass cannot be had there. That crash is finding F-FX1-1.
-test('after "Return here" on the Ventilator view the replayed minute matches the first one', async ({ page, browserName }) => {
+test('after "Return here" on the Ventilator view the replayed minute matches the first one', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.skip(browserName === 'webkit' && !!process.env.CI, 'FX-1 finding F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow');
   test.setTimeout(180_000);
   await openApp(page, base, '?scenario=showcase-bronchospasm', { warmMs: 1500 });

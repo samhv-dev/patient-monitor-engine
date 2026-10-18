@@ -11,7 +11,7 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-test('the scenario library opened before the first repaint stays open until a scenario is loaded', async ({ page }) => {
+test('the scenario library opened before the first repaint stays open until a scenario is loaded', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
   await openApp(page, base, '?scenario=showcase-tamponade', { warmMs: 1000 });
   const run = page.getByRole('region', { name: 'Running scenario' });

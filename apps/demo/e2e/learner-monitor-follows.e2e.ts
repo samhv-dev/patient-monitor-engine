@@ -123,7 +123,7 @@ test('the second-screen learner monitor follows commands, a bookmark restore and
   await expect(f.locator('.status-pill')).toHaveText("The instructor's monitor is not answering", { timeout: 10_000 });
 });
 
-test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', async ({ page, browserName }) => {
+test('it follows while the Ventilator view drives the patient (the link\'s commands are mirrored)', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(180_000);
   const f = await follow(page, 'showcase-bronchospasm', browserName);
   await page.evaluate(() => (location.hash = '#/vent'));

@@ -13,7 +13,7 @@ type W = { __pmeApp: { session: { restart(s: unknown): void; spec: unknown; time
 const cockpits = (p: Page) => p.frames().filter((f) => f.url().includes('vent-hamilton')).length;
 const restart = (p: Page) => p.evaluate(() => { const s = (window as unknown as W).__pmeApp.session; s.restart({ spec: s.spec, mode: 'modeled' }); });
 
-test('the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown)', async ({ page }) => {
+test('the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown)', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(90_000);
   await openApp(page, base, '#/vent', { warmMs: 2000 });
   await expect.poll(() => cockpits(page), { timeout: 10_000 }).toBe(1);

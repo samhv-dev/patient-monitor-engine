@@ -4,7 +4,6 @@
 // Chromium only (a heavy evidence run, CI amendment rules).
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { GLOSSARY } from '../src/app/glossary-data.ts';
 import { openApp, startVite, tab } from './app-support.ts';
 
 let vite: ViteDevServer;
@@ -68,10 +67,6 @@ test('five instructor tasks, each under 30 s', async ({ page, browserName }) => 
     await expect.poll(() => logText(page)).toMatch(/Bookmark 1 at \d\d:\d\d/);
   });
 
-  // Until Stage 7k publishes ΔP on a truth path and Task 0/2 adds it to glossary entry 148 (Request R-S9-3), task 5 is an
-  // EXPECTED failure at the ΔP line (Playwright `test.fail`): tasks 1–4 above still run and must pass, and the day the
-  // entry gains its key this marker turns itself off — a red "expected to fail" then means the ΔP row is still missing.
-  test.fail(!GLOSSARY.find((e) => e.n === 148)?.keys.length, 'ΔP (driving pressure) is published by Stage 7k, not yet merged (R-S9-3)');
   await timed("5. Find the patient's compliance and driving pressure", async () => {
     await page.click('nav.nav >> text=Explore physiology');
     await page.click('nav.xnav >> text=Respiratory mechanics and volumes');

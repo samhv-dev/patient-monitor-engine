@@ -27,7 +27,7 @@ async function walk(page: Page, at: Partial<Record<string, () => Promise<void>>>
   }
 }
 
-test('every view shares the one engine session', async ({ page }) => {
+test('every view shares the one engine session', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000); // fix-ci-webkit-3: CI's WebKit hit the 30 s default in the route walk (29.3 s, page closed)
   await openApp(page, base, '#/teach', { warmMs: 3000 });
   await page.evaluate(() => ((window as unknown as { __host: unknown }).__host = (window as unknown as App).__pmeApp.shell.monitorHost.firstElementChild));
@@ -79,7 +79,7 @@ test('changing the monitor on Start updates the mirrored alarm colours', async (
   await expect.poll(bg).toBe(mindray);
 });
 
-test('learner controls: off by default, switched on per scenario, logged as learner actions', async ({ page }) => {
+test('learner controls: off by default, switched on per scenario, logged as learner actions', { tag: '@known-flaky' }, async ({ page }) => {
   await openApp(page, base, '?scenario=acls-vf-witnessed', { warmMs: 1500 });
   await go(page, '#/monitor');
   await expect(page.locator('.learner-strip')).toBeHidden();
@@ -97,7 +97,7 @@ test('learner controls: off by default, switched on per scenario, logged as lear
   await expect(page.locator('.log li[data-kind=learner]')).toContainText('Defibrillator charging to 200 J');
 });
 
-test('a remote pairs by code and changes the host patient', async ({ page, context }) => {
+test('a remote pairs by code and changes the host patient', { tag: '@known-flaky' }, async ({ page, context }) => {
   await openApp(page, base, '#/', { warmMs: 2000 });
   await go(page, '#/remote');
   const code = await page.evaluate(() => (window as unknown as App).__pmeApp.session.code);

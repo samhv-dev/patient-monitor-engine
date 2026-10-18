@@ -27,7 +27,7 @@ type Win = {
   __osc: Array<{ hz: number; at: number }>;
 };
 
-test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', async ({ page, context, browserName }) => {
+test('×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends', { tag: '@known-flaky' }, async ({ page, context, browserName }) => {
   test.setTimeout(300_000);
   // every oscillator the page starts (the end cue is 660 + 990 Hz)
   await page.addInitScript(() => {

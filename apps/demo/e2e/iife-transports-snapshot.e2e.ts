@@ -21,7 +21,7 @@ test('PatientMonitor.transports has the five adapters', async ({ page }) => {
 });
 
 for (const worker of ['auto', 'off'] as const) {
-  test(`MonitorHandle snapshot/restore/role (worker: ${worker})`, async ({ page }) => {
+  test(`MonitorHandle snapshot/restore/role (worker: ${worker})`, { tag: '@known-flaky' }, async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
     await page.goto(smokeUrl);

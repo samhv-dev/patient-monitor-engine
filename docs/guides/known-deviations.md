@@ -12,17 +12,15 @@ Regenerate the first two tables with `node --experimental-strip-types scripts/de
 fails when a literal-titled expected failure or skip is missing from this page. It cannot see conditional forms such
 as `(cond ? it.fails : it)(…)`, nor the lung-signature `KNOWN` list; those are listed by hand below.
 
-On this tree there are **153 expected-failure calls**, all read by the lister: 151 `it.fails` (the bronchospasm row of
-`packages/ventilator/test/link-parity.test.ts` is now a literal `it.fails`), 1 `it.fails.each` with three cases
-(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and 1 conditional Playwright `test.fail` that is inactive
-(see its row). That is 152 active misses and **1 skipped test**. "Tracked in" names the gate note (and its section)
+On this tree there are **152 expected-failure calls**, all read by the lister: 151 `it.fails` (the bronchospasm row of
+`packages/ventilator/test/link-parity.test.ts` is a literal `it.fails`) and 1 `it.fails.each` with three cases
+(`packages/engine-core/test/engine/fidelity-arrest.test.ts`), and **1 skipped test**. "Tracked in" names the gate note (and its section)
 that records the miss with its number; the open questions it cites (Q…, R-…, E-…) are listed in that note.
 
 ## Tests that record a miss (`it.fails`, and `test.fail` in the browser tests)
 
 | Test file | Band and measured value (test title, verbatim) | Tracked in |
 |---|---|---|
-| `apps/demo/e2e/app-instructor-tasks.e2e.ts` | ΔP (driving pressure) is published by Stage 7k, not yet merged (R-S9-3) | `docs/gates/stage-9.md` §1 "What shipped" and §5 "Five timed tasks" (R-S9-3). Conditional `test.fail`: inactive on this tree, since glossary entry 148 now has its truth key (`resp.mechanics.dp`, Stage 7k), so the ΔP line is asserted and this marker is inert; removing it is left for the clean-up after this release (no plan on this branch). |
 | `packages/engine-core/test/engine/af-rate-control.test.ts` | amiodarone 150 mg over 10 min: AF 130 slows by 20–30 % at its peak (10–13 min) (measured 14.0) | `docs/gates/stage-7e.md` "Expected failures (`it.fails`)"; `docs/gates/fu-3.md` §2 "Numbers vs bands", row 7 (13.4 %) |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / respiratory acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (+30 s: 9.3); §1 "Tasks, before and after", B3 |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 15.9 with the alveolar washout | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (CPR +2 min: 15.9); history in `docs/gates/fu-8-part-a.md` §4 "The rows FU-8 moves" |
@@ -207,9 +205,9 @@ tree's (`grep -n "webkit' && !!process.env.CI" apps/demo/e2e/*.ts`).
 | `apps/demo/e2e/time-control.e2e.ts:14` | the whole file (×8 and a 5-minute fast-forward from the instructor view, at :30; the ×8 rate / frame time / fast-forward pace measurement, at :147) | S10-F5: the runner holds about ×5.3, not ×8; a fast-forward from the Ventilator view once went unanswered (FX-2b, with F-49-1) (FALLBACK ruling 2026-10-12; `docs/gates/stage-10.md` §12) | **H18**: the fast-forward look in real Safari (`docs/gates/stage-10.md` §12; `docs/RESUME.md`) |
 | `apps/demo/e2e/mobile-learner.e2e.ts:97` | one test, at :91: the QR sheet, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins | FX-2: the runner cannot hold an instructor, a phone and the relay in step (runs 38205878761, 38211190394; PR #61 description) | **H17**: the owner's own phone through the six cards (`docs/gates/stage-12-real-phone.md`; `docs/gates/stage-12.md` §4, PENDING-OWNER) |
 | `apps/demo/e2e/mobile-learner.e2e.ts:171` | one test, at :170: while the Ventilator view drives the patient the phone holds; it follows again with the next patient | S12-F1: the hidden cockpit iframe is throttled on CI Linux WebKit, so the hold ends (FALLBACK ruling 2026-10-12, PR #57 run 38194080645; `docs/gates/stage-12.md` §6) | **H21**: bronchospasm with the Ventilator view, then the Monitor view for 30 s, with a phone following (`docs/gates/stage-12-real-phone.md` "Hand check H21") Open: if real Safari also throttles the hidden cockpit, the Ventilator view stops ventilating the patient while another view is shown (`docs/gates/stage-12.md` §0, 'Open beyond this PR'). |
-| `apps/demo/e2e/vent-view-restore.e2e.ts:43` | one test, at :42: after "Return here" on the Ventilator view the replayed minute matches the first one | F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow (3–7 of 18 runs; PR #58 runs 38212560444, 38214428810, and before FX-1 run 38203086536, as the test's comment records; FX-1 is in `docs/RESUME.md`, "Fixer round") | no dedicated hand check: the flow runs on local macOS WebKit and CI Chromium; F-FX1-1 itself is open |
+| `apps/demo/e2e/vent-view-restore.e2e.ts:43` | one test, at :42: after "Return here" on the Ventilator view the replayed minute matches the first one | F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow; class: Linux WebKit (WPE, Playwright webkit 2359) web-process crash: ThreadedCompositor segfault at libWPEWebKit-2.0.so.1.12.0+0x60a0f8a (one SIGILL at +0x613a168); covered by retries (3–7 of 18 runs; PR #58 runs 38212560444, 38214428810, and before FX-1 run 38203086536, as the test's comment records; FX-1 is in `docs/RESUME.md`, "Fixer round") | no dedicated hand check: the flow runs on local macOS WebKit and CI Chromium; F-FX1-1 itself is open |
 
-Also not run on any WebKit (`test.skip(browserName === 'webkit', …)`): heavy evidence and screenshot runs, plus these behaviour tests: `physiology-console.e2e.ts:40`, `stage4b-device.e2e.ts:118` (audio clock), `vent-link.e2e.ts:48`, `vent-embed.e2e.ts:53`, `fu4.e2e.ts:20`, `stage7e.e2e.ts:24`, `stage6a.e2e.ts:55` (WebRTC), `app-instructor-tasks.e2e.ts:26`. The Pulse-oracle unit suites run only when `PME_PULSE_DIR` is set, never in CI; the oracle numbers come from `pnpm validate`.
+Also not run on any WebKit (`test.skip(browserName === 'webkit', …)`): heavy evidence and screenshot runs, plus these behaviour tests: `physiology-console.e2e.ts:40`, `device-layer-page.e2e.ts:118` (audio clock), `vent-link.e2e.ts:48`, `vent-embed.e2e.ts:53`, `arrest-evidence-page.e2e.ts:20`, `endocrine-thermal-page.e2e.ts:24`, `controller-pages.e2e.ts:55` (WebRTC), `app-instructor-tasks.e2e.ts:25`. The Pulse-oracle unit suites run only when `PME_PULSE_DIR` is set, never in CI; the oracle numbers come from `pnpm validate`.
 
 ## Browser tests that passed only on a retry
 
@@ -229,10 +227,10 @@ release.
 | `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | WebKit | 15 | 1 | 76 | capacity | 38097625873 / 39083174976 |  |
 | `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | Chromium | 3 |  | 75 | unknown | 38106008764 / 38176710973 | the scenario library defect fixed in FX-7; none after 2026-10-11 |
 | `vent-view-new-patient.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | WebKit | 11 | 4 | 76 | timing | 38097625873 / 39082091200 | 3/3 incl. main 38097625873 |
-| `return-here-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09) | WebKit | 10 |  | 76 | capacity | 38110530561 / 39067799627 |  |
+| `return-here-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient | WebKit | 10 |  | 76 | capacity | 38110530561 / 39067799627 |  |
 | `app-one-session.e2e.ts:15` | every view shares the one engine session | WebKit | 9 |  | 76 | unknown | 38161262512 / 39082213337 | **under investigation (FX-11)**: since PR #55 the failure is "sim time went back … the engine restarted" (0.1–0.4 s back; 5 runs, incl. main 39082091200 and this release PR's 39082213337) — not a runner-speed reading |
 | `explore-baseline.e2e.ts:23` | a bookmark restore to before the baseline drops it; it is taken again at 1 minute | WebKit | 7 | 1 | 76 | timing | 38100631999 / 38381261724 | at :31 on this tree (CI reported :23 before PR #55); 3/3 in main 38172300684 |
-| `stage7d.e2e.ts:36` | stage7d page: check 19 starts, the ICP tile shows a rising ICP, no page errors | WebKit | 7 |  | 76 | crash | 38107292797 / 39082091200 |  |
+| `organs-page.e2e.ts:36` | organs page: check 19 starts, the ICP tile shows a rising ICP, no page errors | WebKit | 7 |  | 76 | crash | 38107292797 / 39082091200 |  |
 | `iife-transports-snapshot.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | WebKit | 6 | 2 | 76 | capacity | 38100631999 / 38182829101 | none after 2026-10-11 |
 | `debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | WebKit | 5 | 1 | 35 | timing | 38208532262 / 39082572086 | 3/3 in 38208532262 |
 | `debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | Chromium | 1 |  | 33 | unknown | 38386662185 / 38386662185 |  |
@@ -240,15 +238,15 @@ release.
 | `app-accessibility.e2e.ts:15` | accessibility: iPad portrait 820×1180 | WebKit | 4 |  | 76 | crash | 38145499655 / 39067888843 | the laptop case never failed |
 | `app-one-session.e2e.ts:53` | learner controls: off by default, switched on per scenario, logged as learner actions | WebKit | 4 |  | 76 | timing | 38135947061 / 39067635795 | CI reported :43 before the file moved |
 | `validation-bedside.e2e.ts:19` | asystole demo measures the saadat-like delay; results download | WebKit | 3 |  | 76 | timing | 38161262512 / 38381261724 |  |
-| `explore-baseline.e2e.ts:14` | Explore compares with the 1-minute baseline although it was opened later (D5) | WebKit | 2 |  | 76 | timing | 38106008764 / 38161262512 | at :22 on this tree |
+| `explore-baseline.e2e.ts:14` | Explore compares with the 1-minute baseline although it was opened later | WebKit | 2 |  | 76 | timing | 38106008764 / 38161262512 | at :22 on this tree |
 | `scenario-panel-stale-press.e2e.ts:18` | a card button drawn for the previous state acts on the current one, or says why not | WebKit | 2 |  | 54 | timing | 39063479453 / 39065636299 |  |
-| `alarm-off-label.e2e.ts:15` | the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window (K3) | WebKit | 1 |  | 76 | unknown | 38215998313 / 38215998313 |  |
+| `alarm-off-label.e2e.ts:15` | the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window | WebKit | 1 |  | 76 | unknown | 38215998313 / 38215998313 |  |
 | `mobile-learner.e2e.ts:193` | a relay restart, a full session and a relay the phone cannot reach | WebKit | 1 |  | 42 | timing | 38386662185 / 38386662185 |  |
 | `vent-embed.e2e.ts:34` | vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths | WebKit | 1 | 1 | 7 | timing | 39066929916 / 39084185298 | release PR only. The awRR poll read 13 (or 15) instead of 14 for its whole 30 s on the starved runner; after the test's timeout was raised to the 120 s its own waits need, it still failed all three attempts in 39084185298 (awRR 13). It passed first time in 39068579366 and 39076653954 |
 | `vent-link.e2e.ts:29` | vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP | WebKit | 1 |  | 75 | timing | 38386662185 / 38386662185 |  |
-| `fu6.e2e.ts:30` | fu6 page: the bronchospasm demo runs, EtCO2 shows, no page errors | WebKit | 1 |  | 76 | crash | 38216030108 / 38216030108 | in this window on a feature-branch run only; on main in 38092760192 (2026-10-10) |
+| `respiratory-evidence-page.e2e.ts:30` | respiratory-evidence page: the bronchospasm demo runs, EtCO2 shows, no page errors | WebKit | 1 |  | 76 | crash | 38216030108 / 38216030108 | in this window on a feature-branch run only; on main in 38092760192 (2026-10-10) |
 | `vent-view-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium | 2 |  |  | capacity | 38377803966 / 39065636299 | **tagged known-flaky** (orchestrator ruling 2026-10-18): 2 retry-passes after FX-1, main 38377803966 and 39065636299; replayed minute differed (SpO2 |Δ| 5 > 3). Skipped on CI WebKit (above) |
-| `vent-view-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened (D3) | WebKit | 6 |  |  | unknown | 38114676150 / 38227924181 | none since FX-1 merged (run 38240122427) |
+| `vent-view-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened | WebKit | 6 |  |  | unknown | 38114676150 / 38227924181 | none since FX-1 merged (run 38240122427) |
 
 ## Validation harness: rows outside their band
 

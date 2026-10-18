@@ -21,7 +21,7 @@ test.afterAll(async () => vite?.close());
 type W = { __pmeApp: { link: { simT: number }; engineIds: string[] } };
 const simT = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
 
-test('a showcase run ends in a debrief that prints (timeline, facts, objectives)', async ({ page, browserName }) => {
+test('a showcase run ends in a debrief that prints (timeline, facts, objectives)', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   test.setTimeout(180_000);
   await openApp(page, base, '?scenario=showcase-anaphylaxis', { warmMs: 1500 });
   await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();

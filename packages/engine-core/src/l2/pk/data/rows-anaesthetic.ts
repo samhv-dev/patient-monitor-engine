@@ -51,8 +51,8 @@ export const PROPOFOL_SETF: PdEffect = { target: 'setF', emax: -0.15, ec50: 1.0,
  * milliseconds added to the cycle length at full effect.
  * Fit target: fentanyl 10 µg/kg → HR into the 40s–50s without an anticholinergic.
  */
-export const FENTANYL_VAGAL: PdEffect = { target: 'vagalMs', emax: Number(globalThis.process?.env?.PME_VAG_EMAX ?? 420), ec50: Number(globalThis.process?.env?.PME_VAG_F ?? 4) };
-export const REMIFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: Number(globalThis.process?.env?.PME_VAG_EMAX ?? 420), ec50: Number(globalThis.process?.env?.PME_VAG_R ?? 6) };
+export const FENTANYL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 4 };
+export const REMIFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 6 };
 export const SUFENTANIL_VAGAL: PdEffect = { target: 'vagalMs', emax: 420, ec50: 0.5 };
 /** Sevoflurane/isoflurane lower SNA with MAP and no HR change (Ebert, Muzi & Lopatka 1995, Anesthesiology 83:88) [ENG size, fit: 0.65 MAC MAP −10 to −20 %]. */
 export const VOLATILE_SYMP: PdEffect = { target: 'symp', emax: -0.5, ec50: 1, linear: true };

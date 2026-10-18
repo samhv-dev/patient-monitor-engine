@@ -17,14 +17,16 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - name: slow groups are disjoint and cover SLOW (FU-9 CI amendment 5; FU-7 gate adds slow-e and slow-f; CI amendment 6 adds slow-g)
+      - name: slow groups are disjoint, cover SLOW and are all in the test-slow matrix
         working-directory: packages/engine-core
         run: |
-          for g in slow slow-a slow-b slow-c slow-d slow-e slow-f slow-g; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
+          groups="slow-a slow-b slow-c slow-d slow-e slow-f slow-g slow-h slow-i"
+          for g in slow $groups; do PME_TEST_SET=$g pnpm exec vitest list --filesOnly | sort > "$RUNNER_TEMP/$g.txt"; echo "$g: $(wc -l < "$RUNNER_TEMP/$g.txt") files"; done
+          for g in $groups; do grep -Eq "^ +group: \[.*\b$g\b" ../../.github/workflows/ci.yml || { echo "$g is not in the test-slow matrix"; exit 1; }; done
           cd "$RUNNER_TEMP"
-          sort slow-a.txt slow-b.txt slow-c.txt slow-d.txt slow-e.txt slow-f.txt slow-g.txt | uniq -d > both.txt
+          sort $(printf '%s.txt ' $groups) | uniq -d > both.txt
           if [ -s both.txt ]; then echo "in two slow groups:"; cat both.txt; exit 1; fi
-          sort -u slow-a.txt slow-b.txt slow-c.txt slow-d.txt slow-e.txt slow-f.txt slow-g.txt | diff slow.txt -
+          sort -u $(printf '%s.txt ' $groups) | diff slow.txt -
       - run: pnpm test
         env:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
@@ -105,23 +107,27 @@ jobs:
             playwright-report-${{ matrix.browser }}.json
             test-results/
           if-no-files-found: warn
-      # echo only, never fails the job (Stage 14 turns this into a rule with a known-flaky list)
-      - name: e2e tests that passed only on retry
+      - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky)
         if: ${{ !cancelled() }}
-        continue-on-error: true
         run: |
           f=playwright-report-${{ matrix.browser }}.json
-          [ -f "$f" ] || { echo "no JSON report ($f)"; exit 0; }
-          jq -r '[.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky") | "[\(.projectName)] \($s.file):\($s.line) \($s.title) (passed on retry #\(.results | map(select(.status == "passed")) | .[0].retry))"] | if length == 0 then "none" else .[] end' "$f" || true
+          [ -f "$f" ] || { echo "no e2e JSON report ($f)"; exit 0; }
+          jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky")
+            | "\(if ($s.tags | index("known-flaky")) then "known" else "new" end)\t\($s.file):\($s.line) [\(.projectName)] \($s.title)"' "$f" > "$RUNNER_TEMP/flaky.raw" \
+            || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }
+          sort -u "$RUNNER_TEMP/flaky.raw" > "$RUNNER_TEMP/flaky.tsv"
+          { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\t/- (@known-flaky) /' -e 's/^new\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
+          while IFS="$(printf '\t')" read -r k l; do echo "::warning title=e2e passed only on retry::$l"; done < "$RUNNER_TEMP/flaky.tsv"
+          if grep -q '^new' "$RUNNER_TEMP/flaky.tsv"; then echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1; fi
 
   test-slow:
     # Multi-sim-hour drift runs and long clinical scenarios of @pme/engine-core, one file at a time (see
     # packages/engine-core/vite.config.ts SLOW). Kept apart from the main job so their long synchronous stretches
-    # cannot starve the Vitest worker RPC there. FU-4 (D17): two file groups, one job each; FU-9 (CI amendment 5): four, by measured time; FU-7 gate: six (FU-7's seven files ≈ 71 min on the runner); CI amendment 6 (FU-10 gate): seven, re-packed to ≈ 33 min each.
+    # cannot starve the Vitest worker RPC there. Nine file groups, one job each, packed on the per-file CI maximum (≤ 33 min of tests each on the slowest runner seen).
     strategy:
       fail-fast: false
       matrix:
-        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, showcase]
+        group: [slow-a, slow-b, slow-c, slow-d, slow-e, slow-f, slow-g, slow-h, slow-i, showcase]
     name: test-slow (${{ matrix.group }})
     runs-on: ubuntu-latest
     timeout-minutes: 90

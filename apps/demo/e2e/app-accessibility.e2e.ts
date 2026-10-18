@@ -12,7 +12,7 @@ test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
 for (const [name, vp, touch] of [['laptop 1280×800', { width: 1280, height: 800 }, false], ['iPad portrait 820×1180', { width: 820, height: 1180 }, true]] as const) {
-  test(`accessibility: ${name}`, async ({ browser }) => {
+  test(`accessibility: ${name}`, { tag: '@known-flaky' }, async ({ browser }) => {
     test.setTimeout(150_000);
     const ctx = await browser.newContext({ viewport: vp, hasTouch: touch, isMobile: touch });
     const page = await ctx.newPage();

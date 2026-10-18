@@ -33,7 +33,7 @@ async function open(page: Page, errors: string[]) {
   await page.waitForFunction(() => (window as unknown as { __pme7d?: { ready: boolean } }).__pme7d?.ready === true);
 }
 
-test('organs page: check 19 starts, the ICP tile shows a rising ICP, no page errors', async ({ page }) => {
+test('organs page: check 19 starts, the ICP tile shows a rising ICP, no page errors', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(180_000);
   const errors: string[] = [];
   await open(page, errors);

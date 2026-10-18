@@ -27,7 +27,7 @@ async function open(page: Page, errors: string[]) {
   await page.waitForFunction(() => (window as unknown as { __pme6?: { ready: boolean } }).__pme6?.ready === true);
 }
 
-test('respiratory-evidence page: the bronchospasm demo runs, EtCO2 shows, no page errors', async ({ page }) => {
+test('respiratory-evidence page: the bronchospasm demo runs, EtCO2 shows, no page errors', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(180_000);
   const errors: string[] = [];
   await open(page, errors);

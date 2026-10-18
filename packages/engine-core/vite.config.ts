@@ -114,24 +114,22 @@ const SLOW = [
   'test/engine/drug-desflurane-surge.test.ts', // Two 30 sim-min desflurane arms
   'test/engine/drug-layer.test.ts', // The drug-layer engine cases
   'test/engine/drug-layer-guards.test.ts', // The drug-layer regression guards (split from drug-layer by time)
+  'test/engine/drug-layer-guards-csht.test.ts', // its context-sensitive offsets case (≈ 790 s on CI), split out by time
   'test/l2/pk/interactions-misc.test.ts', // four 8 h interaction arms, 15.2 s alone in the fast set — slow-b (the remainder)
 ];
 /**
- * SEVEN slow groups, re-packed longest-first from the measured CI per-file times (the mean of PR run 37199184387 and
+ * NINE slow groups, re-packed longest-first from the measured CI per-file times (the mean of PR run 37199184387 and
  * PR #37 run 37217929016; two fu9 files ≈ 80 s each, estimated) so that every group is ≈ 33 min: 13 971 s of slow
  * tests in all. The glob bundles stay whole (the long runs in A, fu8-* in D, fu9-* in C). slow-b is SLOW minus the
- * other six by Vitest's own matcher, and every group excludes every other, so the groups are disjoint by construction;
+ * other eight by Vitest's own matcher, and every group excludes every other, so the groups are disjoint by construction;
  * ci.yml checks it. A new slow file joins SLOW and the group whose CI sum it fits.
  */
 const SLOW_A = [ // ≈ 2002 s on CI (33.4 min)
   'test/engine/**/*longrun*.test.ts', // 1292 s,
-  'test/engine/resp-bronchodilation.test.ts', // 203 s,
-  'test/engine/resp-coupling.test.ts', // 147 s,
   'test/engine/lung-unilateral.test.ts', // 93 s,
   'test/engine/resp-ga-state.test.ts', // 71 s,
   'test/engine/lung-hpv-volatile.test.ts', // 57 s,
   'test/engine/cat-reserve-engine.test.ts', // 43 s,
-  'test/engine/organs-htn.test.ts', // 34 s,
   'test/engine/resp-trigger.test.ts', // 26 s,
   'test/engine/circ-sanity-2.test.ts', // 19 s,
   'test/engine/pk-acceptance-scen.test.ts', // 16 s
@@ -148,7 +146,6 @@ const SLOW_C = [ // ≈ 1998 s on CI (33.3 min)
   'test/engine/organs-renal-kaliuresis.test.ts',
   'test/engine/drug-hypokalaemia-rocuronium.test.ts',
   'test/engine/blood-massive-transfusion.test.ts',
-  'test/engine/pk-acceptance-pd.test.ts', // 229 s,
   'test/engine/thermal-mh-trigger.test.ts', // 127 s,
   'test/engine/organs-curves.test.ts', // 102 s,
   'test/engine/resp-inspired-co2.test.ts', // 69 s,
@@ -184,10 +181,8 @@ const SLOW_D = [ // ≈ 1993 s on CI (33.2 min)
   'test/engine/state-sensor-map.test.ts',
   'test/engine/pacer-tcp-pain.test.ts',
   'test/engine/circ-sympathetic-tone.test.ts',
-  'test/engine/resp-induction.test.ts', // 254 s,
   'test/engine/vagal-events.test.ts', // 141 s,
   'test/engine/thermal-fever-ga.test.ts', // 84 s,
-  'test/engine/hemo-nibp.test.ts', // 72 s,
   'test/engine/resp-mechanics.test.ts', // 58 s,
   'test/engine/organs-tbi.test.ts', // 46 s,
   'test/engine/resp-drive-nonchemical.test.ts', // 36 s,
@@ -206,11 +201,11 @@ const SLOW_E = [ // ≈ 1998 s on CI (33.3 min)
   'test/engine/circ-manual-cvp-peep.test.ts', // 23 s,
   'test/engine/af-rate-control.test.ts', // 21 s,
   'test/engine/pacer-sensing.test.ts', // 11 s
+  'test/engine/drug-nmb-volatile-sux.test.ts', // 244 s (from slow-f)
+  'test/engine/resp-coupling.test.ts', // 183 s (from slow-a)
 ];
 const SLOW_F = [ // ≈ 1995 s on CI (33.3 min)
   'test/engine/drug-layer.test.ts', // 894 s,
-  'test/engine/drug-apnoea.test.ts', // 387 s,
-  'test/engine/drug-nmb-volatile-sux.test.ts', // 231 s,
   'test/engine/thermal-warmer.test.ts', // 132 s,
   'test/engine/organs-tbi-treatment.test.ts', // 93 s,
   'test/engine/blood-sanity-haem.test.ts', // 70 s,
@@ -224,7 +219,6 @@ const SLOW_F = [ // ≈ 1995 s on CI (33.3 min)
 const SLOW_G = [ // ≈ 1987 s on CI (33.1 min)
   'test/engine/thermal-periop-course.test.ts', // 751 s,
   'test/engine/endo-adrenal.test.ts', // 390 s,
-  'test/engine/endo-insulin-dextrose.test.ts', // 274 s,
   'test/engine/engine-pipeline.test.ts', // 175 s,
   'test/engine/blood-anaemia-co.test.ts', // 118 s,
   'test/engine/lung-recruitment.test.ts', // 81 s,
@@ -234,8 +228,23 @@ const SLOW_G = [ // ≈ 1987 s on CI (33.1 min)
   'test/engine/fidelity-alarms.test.ts', // 23 s,
   'test/engine/lung-copd.test.ts', // 22 s
 ];
+// slow-h and slow-i (per-file CI maximum over 14 runs, 2026-10-11): every group ≤ 33 min of tests on the slowest runner
+const SLOW_H = [ // ≈ 1660 s at the CI max (27.7 min)
+  'test/engine/drug-layer-guards-csht.test.ts', // 786 s (split from drug-layer-guards, slow-e)
+  'test/engine/endo-insulin-omission.test.ts', // 712 s (from slow-b)
+  'test/engine/blood-potassium-chloride.test.ts', // 162 s (from slow-b)
+];
+const SLOW_I = [ // ≈ 1754 s at the CI max (29.2 min)
+  'test/engine/drug-apnoea.test.ts', // 562 s (from slow-f)
+  'test/engine/endo-insulin-dextrose.test.ts', // 316 s (from slow-g)
+  'test/engine/resp-induction.test.ts', // 280 s (from slow-d)
+  'test/engine/pk-acceptance-pd.test.ts', // 245 s (from slow-c)
+  'test/engine/resp-bronchodilation.test.ts', // 216 s (from slow-a)
+  'test/engine/hemo-nibp.test.ts', // 91 s (from slow-d)
+  'test/engine/organs-htn.test.ts', // 44 s (from slow-a)
+];
 // slow-b (the remainder, ≈ 1998 s): every SLOW file not listed above
-const OTHERS = { A: SLOW_A, C: SLOW_C, D: SLOW_D, E: SLOW_E, F: SLOW_F, G: SLOW_G };
+const OTHERS = { A: SLOW_A, C: SLOW_C, D: SLOW_D, E: SLOW_E, F: SLOW_F, G: SLOW_G, H: SLOW_H, I: SLOW_I };
 const SLOW_B = SLOW.filter((p) => !Object.values(OTHERS).some((g) => g.includes(p)));
 const set = process.env.PME_TEST_SET;
 
@@ -257,8 +266,8 @@ export default defineConfig({
     ...(set === 'fast' ? { exclude: ['**/node_modules/**', '**/dist/**', ...SLOW] } : {}),
     ...(set === 'slow' ? { include: SLOW, fileParallelism: false } : {}),
     // Each group excludes every other group by the same matcher (disjoint by construction)
-    ...(set && /^slow-[a-g]$/.test(set) ? (() => {
-      const own = set.slice(5).toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+    ...(set && /^slow-[a-i]$/.test(set) ? (() => {
+      const own = set.slice(5).toUpperCase() as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I';
       const groups = { ...OTHERS, B: SLOW_B };
       const other = Object.entries(OTHERS).filter(([k]) => k !== own).flatMap(([, g]) => g);
       return { include: groups[own], exclude: ['**/node_modules/**', '**/dist/**', ...other], fileParallelism: false };
