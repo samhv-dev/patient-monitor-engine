@@ -281,6 +281,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         });
       }
       if (e.type === 'toneCancel') {
+        lastBeatT = null; // a cancelled beat tone must not set the next beat's interval (its replacement is re-detected close by)
         if (e.ids) scheduler?.cancel(e.ids);
         else scheduler?.cancelAfter(e.after);
       }
