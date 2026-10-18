@@ -11,6 +11,7 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 - The Persian Debrief handout (`scripts/showcase/debrief-fa.mjs`) prints the release footer in Persian: not a medical
   device and not clinically validated, with the version (new required `--version` flag) and the build.
+- FX-13: a Debrief span could read '1 min 60 s'.
 
 ### Known limitations
 

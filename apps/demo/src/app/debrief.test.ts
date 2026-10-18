@@ -4,7 +4,7 @@
 import type { ObjectiveRule } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
-import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, verdict } from './debrief.ts';
+import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, span, verdict } from './debrief.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { cardOf } from './scenarios.ts';
 
@@ -245,5 +245,15 @@ describe('the trend axes have a least span', () => {
     expect(axisRange('temp', 36.8, 36.8)).toEqual([35.8, 37.8]); // 2 °C
     expect(axisRange('hr', 70, 148)).toEqual([70, 148]); // a wide range is the data's own
     expect(axisRange('rr', 12, 12)).toEqual([11, 13]); // no floor ruled for RR: unchanged (± 1 when flat)
+  });
+});
+
+describe('FX-13: a span is rounded to whole seconds before it is split into minutes and seconds', () => {
+  it('never reads "1 min 60 s" or "60 s"', () => {
+    expect(span(0)).toBe('0 s');
+    expect(span(59.4)).toBe('59 s');
+    expect(span(59.6)).toBe('1 min 00 s');
+    expect(span(119.7)).toBe('2 min 00 s');
+    expect(span(125)).toBe('2 min 05 s');
   });
 });
