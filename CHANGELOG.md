@@ -35,6 +35,15 @@ says otherwise.
   grey. The JSON export is `pme-debrief/2` (adds the version, `discuss`, the tick time and the measured interval; key
   times and key moments are empty for now); the Persian handout reads `/1` and `/2`. Scenario objectives may carry
   `"debrief": "recognition" | "discuss"`; the malignant hyperthermia card gains a hand-ticked recognition objective.
+- Debrief redesign B: page 1 reads the key times (up to six tiles: the instructor's recognition tick, the start to
+  the first team action, each objective's measured interval against the time asked, the pulse loss to CPR, the time
+  pulseless), the course (HR, MAP, SpO₂ and EtCO₂ on one time axis with the numbered key moments and the pulseless
+  spans) and the objectives with their intervals drawn; page 2 lists the key moments with HR, MAP, SpO₂ and EtCO₂ at
+  that second and the alarms since the moment before (SpO₂ prints "–" while there is no pulse: the oximeter has no
+  reliable reading then); the trend charts carry the same numbered moments. A learner handout prints on its own page
+  from its own button, with no marks: the course, the key moments, three questions to think about and the take-home
+  lines. The `pme-debrief/2` export now fills the key times and key moments. Scenarios may carry `takeHome` (up to three
+  lines the handout prints as written); no shipped card has them yet.
 
 ### Known limitations
 

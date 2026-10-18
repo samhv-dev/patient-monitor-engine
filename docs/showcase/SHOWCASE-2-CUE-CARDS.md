@@ -91,7 +91,7 @@ States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drain
 | Clock | Cue | Press |
 |---|---|---|
 | 0:00 | | **Load · All alarms on · ×8 · Bookmark** |
-| 1:00 | **CVP on the IBP2 tile: 17** | name it aloud; tick objective 1 |
+| 1:00 | **When the cues appear: CVP rising on the IBP2 tile (17), narrow pulse pressure, tachycardia** | name it aloud; **tick *Name the tamponade*** (Scenario tab) |
 | 7:00 | | **×1** |
 | 7:31 | IBP1 STATIC PRESSURE: trace going flat | hand on the Scenario tab |
 | **7:49** | card shows **PEA** | **Start CPR, intubate, FiO₂ 1.0 AT ONCE** (by 7:57) |
@@ -103,7 +103,7 @@ States: Arrival → Deteriorating → **PEA** → CPR → CPR: pericardium drain
 | **10:55** | **systolic jumps to about 100 (compressions alone read about 70/33)** | **Pulse back: stop CPR** (within 30 s) |
 | 11:27 | ART about 115/77, HR 64 | **Crystalloid 500 mL** → go to the Debrief |
 
-**Debrief will say:** ✓ Observed name it (ticked; – Not assessable if not) · ✓ Observed CPR within 10 s (3 s) ·
+**Debrief will say:** ✓ Observed name it (ticked: the tile shows your tick time; – Not assessable if not) · ✓ Observed CPR within 10 s (3 s) ·
 ✓ Observed drainage within 2 min (1 min 30 s) · ✓ Observed stop CPR (2 s) · **◆ Discuss "Better: pericardiocentesis
 before the pulse loss"** (the one line to discuss: the lesson, not a timing).
 
@@ -123,11 +123,11 @@ before the pulse loss"** (the one line to discuss: the lesson, not a timing).
 |---|---|
 | 0:00 | Session bar **Debrief** |
 | 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
-| 0:30 | read the objectives aloud |
+| 0:30 | read the **Key times** tiles: your tick · 7 min 51 s to the first team action · CPR 3 s · drainage 1 min 30 s · stop CPR 2 s · pulseless 3 min 07 s; then the objectives |
 | 1:00 | ◆ *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* |
-| 1:20 | **Measured facts**: pulseless 3 min 07 s, first lost at 07:48; lowest mean 20 at 07:51 |
+| 1:20 | **Key moments** (page 2): 7 rows, the numbers of the course strip; SpO₂ "–" while pulseless (07:48 → 10:55) |
 | 1:50 | **Timeline**: 41 rows (undone rows struck through) |
-| 2:15 | **Print or save as PDF**: **6 A4 pages** (Chrome: footer on every page). **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** |
+| 2:15 | **Print or save as PDF**: **6 A4 pages** (Chrome: footer on every page). **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** Then **Print the learner handout** (optional): 1 page, no marks |
 | 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* |
 
 **Expect:** ✓ Observed name the tamponade ("Observed by the instructor at …"; – Not assessable if not ticked) ·
@@ -152,7 +152,7 @@ Ventilation back to 12 × 500
 | 0:00 | | **Choose another scenario** (the tamponade is still loaded, so the library is hidden) · **Load · All alarms on · ×8 · Bookmark** |
 | 4:00 | | **Start surgery: rocuronium 0.6 mg/kg** |
 | 6:30 | | **×4** · watch the CO₂ tile climb |
-| ◆ **6:52** | state **Early signs** (EtCO₂ 46) | **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** |
+| ◆ **6:52** | state **Early signs** (EtCO₂ 46) | **tick *Name malignant hyperthermia*** (Scenario tab) as you call it, then **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** |
 | ≈ 7:20 | | **Dantrolene 2.5 mg/kg**, then **Cool: 2 L saline** |
 | 7:42 | EtCO₂ 38 | **5 min** fast-forward (1). **Hyperventilation stays on** |
 | 12:55 | state **Recovering** · EtCO₂ 38 | **Pause** · point · **Resume**. Do NOT press ventilation back yet |
@@ -166,7 +166,7 @@ Ventilation back to 12 × 500
 the press: 38 → 49 at +1 min, peak 55 inside span 2, 45 after it, 42 at the end · the
 pressure stays high after the crisis (systolic 136–151: a known miss).
 
-**Debrief would say:** ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
+**Debrief would say:** – name MH (the instructor's tick; ✓ Observed at the tick time when ticked, ≈ 6:52) · ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
 ventilation back ✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)").
 
 **Traps:** ◆ **do NOT press ventilation back at "Recovering"**: early is "not met" under the new rule, and it made the
