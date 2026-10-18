@@ -1,4 +1,4 @@
-// Stage 12: the QR payload and where a learner's phone finds the relay (pure; the QR panel and the learner page read these).
+// The QR payload and where a learner's phone finds the relay (pure; the QR panel and the learner page read these).
 import { describe, expect, it } from 'vitest';
 import { joinCode, learnerUrl, qrTarget, relayInfo, relayOf, type PageLocation, type RelayInfo } from './classroom.ts';
 import { encodeQr } from './qr.ts';

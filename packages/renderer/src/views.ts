@@ -1,4 +1,4 @@
-// Stage 4b views drawn on a plain canvas: the 12-lead report (brief §6.6: 3×4 + lead II rhythm strip, 25 mm/s,
+// Device-layer views drawn on a plain canvas: the 12-lead report (brief §6.6: 3×4 + lead II rhythm strip, 25 mm/s,
 // 10 mm/mV, calibration pulses, on ECG paper) and the graphic trend (brief §6.7; `trend.style` line or
 // filled-area, brief §3.8). Both take a Ctx2D, so they are tested with the recording fake.
 import type { Capture12, LeadId, NumericId, TrendStore } from '@pme/engine-core';

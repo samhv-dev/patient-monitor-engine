@@ -1,5 +1,5 @@
-// Stage 7b public types (R27, R31, R36, R43) in their own file, as Stage 3 did: types.ts and types-resp.ts gain one
-// line each. Conditions are the catalogue's ids (docs/physiology/stage-7-lung-pathology-catalogue.md, data in
+// The lung model's public types, in their own file: types.ts and types-resp.ts gain one line each. Conditions are
+// the catalogue's ids (docs/physiology/stage-7-lung-pathology-catalogue.md, data in
 // packages/engine-core/data/lung-pathology.ts).
 export type LungSide = 'L' | 'R';
 
@@ -18,11 +18,11 @@ export interface LungConditionSpec {
   side?: LungSide;
   /** Fraction of the condition's non-aerated lung that is recruitable (catalogue §6: high 0.5, low 0.15). */
   recruitFrac?: number;
-  /** FU-6 F6: the attack's age when sent, min (0–1440): a slow-onset (hours-old) smooth-muscle attack reverses less. */
+  /** The attack's age when sent, min (0–1440): a slow-onset (hours-old) smooth-muscle attack reverses less. */
   ageMin?: number;
 }
 
-/** applyEvent kinds added in Stage 7b (plan decision 11). */
+/** applyEvent kinds of the lung model. */
 export type LungClinicalEvent =
   | { kind: 'lungCondition'; id: LungConditionId; severity: number; side?: LungSide; recruitFrac?: number; ageMin?: number }
   | { kind: 'mainstem'; ventilated: 'both' | 'left' | 'right' }
@@ -30,7 +30,7 @@ export type LungClinicalEvent =
 
 export type LungCommandBody = { type: 'applyEvent'; event: LungClinicalEvent };
 
-/** One lung in `lungState.lungs` (R43). */
+/** One lung in `lungState.lungs`. */
 export interface LungStateLung {
   side: LungSide;
   complianceMlPerCmH2O: number; // this lung's respiratory-system compliance
@@ -57,9 +57,9 @@ export interface LungStateExt {
   autoPeepCmH2O: number;
   conditions: LungConditionSpec[];
   /**
-   * Stage V.1 (G7b rulings 4+5+13): pressure of the pleural space ABOVE normal, cmH2O — the lungs' own pPtx
-   * (pneumothorax, effusion, haemothorax) max-combined with 7a's tension-pneumothorax `ext.pPtx`, as the heart sees
-   * it (respPleural). The ventilator's single compartment must re-open the lung against it (packages/ventilator).
+   * Pressure of the pleural space ABOVE normal, cmH2O — the lungs' own pPtx (pneumothorax, effusion, haemothorax)
+   * max-combined with the circulation's tension-pneumothorax `ext.pPtx`, as the heart sees it (respPleural). The
+   * ventilator's single compartment must re-open the lung against it (packages/ventilator).
    */
   pleuralCmH2O: number;
 }

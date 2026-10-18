@@ -1,8 +1,9 @@
 // `pnpm validate` (root) → docs/validation/report.md, report.json, calibration-queue.md. Entry-only module.
 // Flags: --suites morphology,intervals,sanity,gates,regression,determinism,oracle (default: all)
-//        --quick (4 recorded windows, 30 PTB-XL records, 1 determinism seed)  --seeds 11,12  --max-windows N  --full (40 seeds)
-//        --rebaseline (rewrite waveform baselines + golden hashes)  --out <dir> (default docs/validation)
-// Exit 1 when any red row or a non-deterministic run exists (yellow never fails the run; R40).
+//        --quick (4 recorded windows, 30 PTB-XL records, 1 determinism seed)  --seeds 11,12  --max-windows N
+//        --full (40 seeds)  --rebaseline (rewrite waveform baselines + golden hashes)
+//        --out <dir> (default docs/validation)
+// Exit 1 when any red row or a non-deterministic run exists (yellow never fails the run).
 import { execSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';

@@ -62,7 +62,7 @@ export class AlarmSounder {
   private train: Train | null = null;
   private pending = new Map<string, number>(); // id → sim t
   private silentUntil: number | null = null;
-  /** FU-11 (owner ruling Q1, AL01): the highest priority (lowest level) active when the silence began; null = none. */
+  /** The highest priority (lowest level) active when the silence began; null = none. */
   private silentLevel: AlarmLevel | null = null;
   private volumeStep: number;
 

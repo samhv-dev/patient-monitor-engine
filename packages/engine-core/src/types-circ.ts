@@ -1,8 +1,8 @@
-// Stage 7a public types (R31/R42 circulation, R22 profile conditions, R28 devices), kept in their own file so
-// parallel stages do not collide in types.ts. types.ts adds each to its union with one line.
+// The circulation's public types (circulation, profile conditions, devices), kept in their own file so parallel
+// modules do not collide in types.ts. types.ts adds each to its union with one line.
 import type { SimSeconds } from './types.ts';
 
-/** Brief §7.2 ClinicalEvent members Stage 7a implements (drug ids beyond the five 7a drugs are rejected until 7g). */
+/** Brief §7.2 ClinicalEvent members the circulation implements (drug ids beyond its five drugs need the drug model). */
 export type CircClinicalEvent =
   | {
       kind: 'drug'; drugId: string; dose: number; unit: 'mcg' | 'mg' | 'mcg/kg' | 'mg/kg' | 'mEq' | 'units' | 'mcg/kg/min';
@@ -10,9 +10,9 @@ export type CircClinicalEvent =
     }
   | { kind: 'fluid'; fluid: 'crystalloid' | 'colloid' | 'blood'; volumeMl: number; overS: number }
   | { kind: 'bleed'; rateMlPerMin?: number; volumeMl?: number; overS?: number }
-  | { kind: 'condition'; id: 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct'; severity: number; volumeMl?: number; rateMlPerMin?: number }; // FU-4 G6: tamponade volume / accumulation
+  | { kind: 'condition'; id: 'tamponade' | 'pe' | 'tensionPtx' | 'rvInfarct'; severity: number; volumeMl?: number; rateMlPerMin?: number }; // Tamponade volume / accumulation
 
-/** R28 device modules on the circuit (tables §8.1–§8.2). */
+/** Device modules on the circuit (tables §8.1–§8.2). */
 export type CircDeviceAction =
   | {
       device: 'iabp'; action: 'start' | 'stop' | 'set'; ratio?: 1 | 2 | 3;

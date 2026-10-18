@@ -1,10 +1,9 @@
-// Debrief (Stage 13): the report of the run, read from the session's run record — the case, the objectives judged by
-// their rules, the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded
-// course of a return to a bookmark included, struck through as undone), bookmarks, the instructor's notes and a
-// one-row-per-minute appendix. The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no
-// colour needed to read it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves
-// the same data. Opened from the session bar; when a scenario reaches a state with no way out, a toast says the debrief
-// is ready.
+// Debrief: the report of the run, read from the session's run record — the case, the objectives judged by their rules,
+// the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded course of a
+// return to a bookmark included, struck through as undone), bookmarks, the instructor's notes and a one-row-per-minute
+// appendix. The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
+// it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
+// from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
@@ -157,7 +156,7 @@ export function debriefView(session: AppSession, link: Link): View {
       section('notes', 'Notes', notes),
       tail,
       h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
-  // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in (R50 I-4)
+  // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
   const pageStyle = h('style', { id: 'db-page-style' }, PAGE_CSS);
 

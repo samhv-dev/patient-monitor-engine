@@ -1,6 +1,6 @@
-// Lead-off technical flag (brief §5 "leadContact"; research 03 §1.8: leads off is a technical INOP with a flat
-// trace, not asystole). The planner emits an 'alarm' event (category 'technical') when the flag changes; Stage 4's
-// alarm manager owns presentation (priority/tones) and may re-map it.
+// Lead-off technical flag (brief §5 "leadContact"; research 03 §1.8: leads off is a technical INOP with a flat trace,
+// not asystole). The planner emits an 'alarm' event (category 'technical') when the flag changes; the alarm manager
+// owns presentation (priority/tones) and may re-map it.
 import { NEVER, type RhythmCtx, type RhythmState } from '../rhythm-state.ts';
 
 export const LEADS_OFF_ALARM_ID = 'ecgLeadsOff';

@@ -1,14 +1,14 @@
-// The mixing point, CO2 side (R43; tables §4.4): every ventilated unit's alveolar PCO2 from its own V/Q
+// The mixing point, CO2 side (tables §4.4): every ventilated unit's alveolar PCO2 from its own V/Q
 // (PA = Q·S·Pv / (VA_perfused/K + Q·S)), the arterial PCO2 as the perfusion-weighted mix (+ shunt at Pv), the
 // end-tidal PCO2 as the EXPIRATORY-FLOW-weighted mix at end-expiration (slow units empty last), unperfused alveolar
-// ventilation (vdAlv) diluting the expired gas. Stage 3's two-compartment store keeps PaCO2 kinetics; this module
-// hands it two RATIOS so healthy lungs reproduce Stage 3 exactly: efficiency e (effective / delivered alveolar
+// ventilation (vdAlv) diluting the expired gas. The two-compartment CO2 store keeps PaCO2 kinetics; this module
+// hands it two RATIOS so healthy lungs reproduce the store alone exactly: efficiency e (effective / delivered alveolar
 // ventilation) and g = EtCO2/PaCO2; plus the capnogram's phase III rise from the time-constant spread.
 import { K_CO2 } from '../gas/params.ts';
 import { CO2_SLOPE_BLOOD, HEALTHY_VDALV, VQ_LOW } from './params.ts';
 
 export interface Co2MixInputs {
-  va: number; // delivered alveolar ventilation (L/min), Stage 3's alveolarVentilation
+  va: number; // Delivered alveolar ventilation (L/min), the respiratory pipeline's alveolarVentilation
   vent: number[]; // share of `va` per unit (sums to 1 over ventilated units)
   perf: number[]; // pulmonary flow per unit through gas-exchanging capillaries (L/min)
   qLow: number; // flow through low-V/Q units (L/min)
@@ -16,11 +16,11 @@ export interface Co2MixInputs {
   vdAlv: number[]; // unperfused fraction of each unit's alveolar ventilation
   tauEx: number[]; // expiratory time constant of each unit (s)
   teS: number; // expiratory time of the current breath (s)
-  paco2: number; // Stage 3 fast compartment (the arterial PCO2)
+  paco2: number; // Two-compartment store: fast compartment (the arterial PCO2)
   vco2: number; // mL/min
 }
 export interface Co2Mix {
-  pA: number[]; // unit alveolar PCO2 on Stage 3's scale (mmHg)
+  pA: number[]; // Unit alveolar PCO2 on the two-compartment store's scale (mmHg)
   pv: number; // mixed venous PCO2
   e: number; // elimination efficiency 0–1
   g: number; // EtCO2 / PaCO2
@@ -74,7 +74,7 @@ export function mixCo2(x: Co2MixInputs): Co2Mix {
   const mixedA = vaSum > 0 ? pA.reduce((a, p, u) => a + p * (x.vent[u] as number), 0) : x.paco2;
   return {
     pA: pA.map((p) => p * scale), pv,
-    // normalised by the healthy alveolar dead space, which Stage 3's anatomic + apparatus dead space already holds (decision 7)
+    // Normalised by the healthy alveolar dead space, which the anatomic + apparatus dead space already holds
     e: x.va > 0 ? Math.min(1.5, (elim * K_CO2) / (paModel * x.va) / (1 - HEALTHY_VDALV)) : 1,
     g: x.va > 0 ? Math.min(1, et / paModel) : 1,
     riseIII: x.va > 0 ? Math.max(0, (et - early) * scale) : 0,

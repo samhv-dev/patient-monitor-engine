@@ -1,4 +1,4 @@
-// Stage 12 classroom proofs (not part of `pnpm test:e2e`, not in CI): the relay under a room of phones.
+// Classroom proofs (not part of `pnpm test:e2e`, not in CI): the relay under a room of phones.
 //   npx playwright test -c scripts/classroom/playwright.classroom.config.ts
 //   knobs: CLASSROOM_APP=<built app dir> (default: built now into a temp dir), CLASSROOM_N=30 (simulated followers),
 //          CLASSROOM_THROTTLE=4 (the real phone page's CPU slowdown, Chromium), CLASSROOM_PHASE_S=60, CLASSROOM_VENT=1

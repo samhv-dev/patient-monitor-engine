@@ -1,5 +1,5 @@
-// Published PK(+ke0) models, as functions of the patient (Stage 7g; tables §6.1). Units: volumes L, clearances
-// L/min, ke0 /min; amounts in the drug's amount unit (propofol mg → µg/mL; remifentanil/fentanyl µg → ng/mL).
+// Published PK(+ke0) models, as functions of the patient (tables §6.1). Units: volumes L, clearances L/min, ke0 /min;
+// amounts in the drug's amount unit (propofol mg → µg/mL; remifentanil/fentanyl µg → ng/mL).
 import { ffmAlSallami, lbmJames, type PkPatient } from './covariates.ts';
 import { fromClearances, pkStep, pkSystem, zeroState, type PkParams } from './compartment.ts';
 

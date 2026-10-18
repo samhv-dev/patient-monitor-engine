@@ -1,6 +1,6 @@
-// Stage 3 demo (BUILD-PLAN Stage 3 "Demo"): ECG II + ABP + pleth + CO2 + RESP lanes; SpO2 (PI), EtCO2/FiCO2/awRR,
-// RR and TEMP tiles; ventilation source/settings, airway states, preoxygenation, GA temperature, MH, sensors,
-// and a scripted "apnoea after preoxygenation" that shows the whole SpO2 lag story (R8) on a truth-vs-displayed plot.
+// Respiration, gas and temperature demo: ECG II + ABP + pleth + CO2 + RESP lanes; SpO2 (PI), EtCO2/FiCO2/awRR, RR and
+// TEMP tiles; ventilation source/settings, airway states, preoxygenation, GA temperature, MH, sensors, and a scripted
+// "apnoea after preoxygenation" that shows the whole SpO2 lag story on a truth-vs-displayed plot.
 import type { Command } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 

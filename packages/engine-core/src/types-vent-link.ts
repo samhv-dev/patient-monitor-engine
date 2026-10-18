@@ -1,5 +1,5 @@
-// Stage V (R27 ventilator link): additive VentFrame fields, in their own file so Stage 3's types stay untouched.
-// Both are optional: a Stage 3 frame is still a valid frame and behaves exactly as before.
+// Ventilator link: additive VentFrame fields, in their own file so the respiratory types stay untouched.
+// Both are optional: a frame without them is still a valid frame and behaves exactly as it would without the link.
 import type { VentFrame } from './types-resp.ts';
 
 export type VentFrameExt = VentFrame & {
@@ -9,7 +9,7 @@ export type VentFrameExt = VentFrame & {
    * pressure, and u(t)'s reference (U_REF_CMH2O) is an alveolar swing.
    */
   palvCmH2O?: number;
-  /** Ventilator mode name (R27 "mode"): carried for logs/controllers, not used by the physiology. */
+  /** Ventilator mode name: carried for logs/controllers, not used by the physiology. */
   mode?: string;
 };
 

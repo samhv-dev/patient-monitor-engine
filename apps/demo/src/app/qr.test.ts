@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { encodeQr } from './qr.ts';
 
-// The encoder was checked in the Stage 9 prototype by decoding versions 1, 4, 6, 8 and 10 with macOS CoreImage
+// The encoder was checked in the clinical app's prototype by decoding versions 1, 4, 6, 8 and 10 with macOS CoreImage
 // (CIDetectorTypeQRCode). CI has no decoder, so this pins the structure and one symbol's checksum.
 const finder = (m: boolean[][], x0: number, y0: number) => {
   for (let dy = 0; dy < 7; dy++) {

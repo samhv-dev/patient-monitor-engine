@@ -21,9 +21,9 @@ export interface BarView {
   countdownKind: 'silence' | 'pause' | null;
   /** Red crossed bell in the header: every parameter alarm is OFF (brief §6.4.1). */
   allOffBell: boolean;
-  /** FU-5: the message shown is a LATCHED alarm (condition gone, not acknowledged): drawn in the latched style. */
+  /** The message shown is a LATCHED alarm (condition gone, not acknowledged): drawn in the latched style. */
   latched: boolean;
-  /** FU-5: the technical-alarm field of a split layout (skin `layout.messageBars`, mindray-like), or null. */
+  /** The technical-alarm field of a split layout (skin `layout.messageBars`, mindray-like), or null. */
   inop: { text: string; bg: string; fg: string } | null;
 }
 
@@ -38,14 +38,14 @@ export function visibleAlarms(st: AlarmStatus, r: ResolvedSkin, t: number, pumpP
 }
 
 /**
- * The header's message bar and lamp. FU-5 (research/00 "FU-5 opened": "a DISTINCT latched presentation"; audit M2, M3):
+ * The header's message bar and lamp, with a DISTINCT latched presentation (research/00):
  * - live = raised and neither acknowledged nor latched: the level's colours, the lamp flashing (brief §6.4);
- * - latched = the condition ended, not acknowledged: the level's colour as TEXT on the idle bar, framed [ruling: the
- *   "distinct presentation" of research/00 "FU-5 opened"; Philips documents no style change, it keeps the message and
+ * - latched = the condition ended, not acknowledged: the level's colour as TEXT on the idle bar, framed [the
+ *   "distinct presentation" of research/00; Philips documents no style change, it keeps the message and
  *   the flashing numerics and drops the tone and lamp under audible latching Off, [S2] IFU p. 40];
  * - acknowledged: the skin's acknowledged colours;
  * - the pool is every UNACKNOWLEDGED message, live or latched (a visually latched alarm is still active, [S2] IFU
- *   p. 40), ordered by level — so a latched red is never hidden by a live yellow (review ruling 4); acknowledged
+ *   p. 40), ordered by level — so a latched red is never hidden by a live yellow; acknowledged
  *   messages show only when nothing unacknowledged is left;
  * - `messageBar.rotateAll` (philips-like): the whole pool rotates every two seconds — "all active alarm messages are
  *   shown in the alarm status area in succession … the message changes every two seconds" ([S2] IFU p. 29–30); the
@@ -100,12 +100,12 @@ export const TILE_NUMERICS: Readonly<Record<TileParam, { numerics: NumericId[]; 
   RR: { numerics: ['rr'], limits: ['RR', 'AWRR'] },
   CO2: { numerics: ['etco2'], limits: ['EtCO2', 'EtCO2_pctV'] },
   ST: { numerics: ['stII'], limits: ['ST_mV'] },
-  NMT: { numerics: ['tofRatio', 'tofCount', 'ptc'], limits: [] }, // Stage 7f
-  BFA: { numerics: ['di', 'sr'], limits: [] }, // Stage 7f
-  AGENTS: { numerics: ['etAa', 'mac'], limits: [] }, // FU-8 (A10-E5)
-  ICP: { numerics: ['icpMean', 'cpp'], limits: ['ICP', 'CPP'] }, // Stage 7d
-  PbtO2: { numerics: ['pbto2'], limits: [] }, // Stage 7d
-  UO: { numerics: ['uop'], limits: [] }, // Stage 7d
+  NMT: { numerics: ['tofRatio', 'tofCount', 'ptc'], limits: [] },
+  BFA: { numerics: ['di', 'sr'], limits: [] },
+  AGENTS: { numerics: ['etAa', 'mac'], limits: [] },
+  ICP: { numerics: ['icpMean', 'cpp'], limits: ['ICP', 'CPP'] },
+  PbtO2: { numerics: ['pbto2'], limits: [] },
+  UO: { numerics: ['uop'], limits: [] },
 };
 
 export interface TileAlarmView {
@@ -123,7 +123,7 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
   if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '' };
   const enabled = keys.some((k) => st.limits[k]?.enabled);
   const shown = r.skin.alarms.numericFlash ? visibleAlarms(st, r, t, pumpPage) : [];
-  const mine = shown.filter((a) => !a.acked && a.category === 'physiological' && a.numeric !== undefined && spec.numerics.includes(a.numeric)); // FU-5: INOPs mark, not flash
+  const mine = shown.filter((a) => !a.acked && a.category === 'physiological' && a.numeric !== undefined && spec.numerics.includes(a.numeric)); // INOPs mark, not flash
   const flash = mine.length > 0 ? (Math.min(...mine.map((a) => a.level)) as 1 | 2 | 3) : null;
   const l = st.limits[keys[0] as string];
   const fmt = (v: number | null) => (v === null ? '--' : String(Math.round(v * 10) / 10));

@@ -25,7 +25,7 @@ export interface DefibState {
   seq: number;
   preselect: RhythmId | 'unchanged' | null;
   lastShock: { t: number; energyJ: number; sync: boolean; outcome: string } | null;
-  /** FU-11 (F19, BA08): ids of the charge/ready tones still sounding; disarm, shock and recharge cancel them. */
+  /** Ids of the charge/ready tones still sounding; disarm, shock and recharge cancel them. */
   tones?: string[];
 }
 
@@ -56,7 +56,7 @@ export function validateDefib(d: DefibState, ev: DefibEvent): string | undefined
     case 'shock':
       return d.state === 'ready' ? undefined : 'defibrillator is not charged';
     case 'preselect':
-      return ev.outcome === 'unchanged' || (typeof ev.outcome === 'string' && Object.hasOwn(RHYTHMS, ev.outcome)) ? undefined : "outcome must be a rhythm id or 'unchanged'"; // FU-11 (F11): own keys only
+      return ev.outcome === 'unchanged' || (typeof ev.outcome === 'string' && Object.hasOwn(RHYTHMS, ev.outcome)) ? undefined : "outcome must be a rhythm id or 'unchanged'"; // Own keys only
     case 'disarm':
     case 'syncOn':
     case 'syncOff':
@@ -109,7 +109,7 @@ export function applyDefib(d: DefibState, ev: DefibEvent, t: number, spec: Defib
   }
 }
 
-/** FU-11 (F19, BA08): the device's charge and ready tones end with the state that started them. */
+/** The device's charge and ready tones end with the state that started them. */
 function endTones(d: DefibState, t: number, out: EngineEvent[]): void {
   if (d.tones?.length) out.push({ type: 'toneCancel', after: t, ids: d.tones });
   d.tones = [];

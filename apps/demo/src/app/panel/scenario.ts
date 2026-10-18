@@ -46,7 +46,7 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   const library = h('section', { 'aria-label': 'Scenario library' }, h('div', { class: 'scard-head' }, h('h3', {}, 'Scenario library'), back), chips, cards);
 
   // ---- run view ----
-  // learner controls under the learner monitor: off by default, on for this run (host only; orchestrator ruling 4)
+  // Learner controls under the learner monitor: off by default, on for this run (host only)
   const host = link.host;
   const learnerToggle = host
     ? toggle('Learner controls on the monitor', host.learner, (on) => {
@@ -81,8 +81,8 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
   };
 
   /** A manual trigger, resolved when pressed: the ≤ 2 Hz repaint can leave up a button drawn for the previous state, so
-   *  the press finds its label in the CURRENT state and sends that transition (Stage 10 finding: "MH crisis" pressed
-   *  as the case reached "Established" did nothing). A press the case cannot take now is said in a toast, by the state's
+   *  the press finds its label in the CURRENT state and sends that transition (otherwise "MH crisis" pressed as the
+   *  case reached "Established" would do nothing). A press the case cannot take now is said in a toast, by the state's
    *  name, and is not logged as an instructor action. */
   const press = async (label: string) => {
     const moved = () => toast(`Not available now: ${sv.doc ? `the case has moved to ${sv.current()?.label ?? 'the next state'}` : 'no scenario is running'}.`);
@@ -129,8 +129,8 @@ export function scenarioTab(c: PanelCtx): HTMLElement {
         h('span', {}, transitionText(tr, doc)), left !== null ? h('span', { class: 'num muted' }, ` in ${clock(left)}`) : null,
         manual ? button(manual, () => void press(manual), 'small') : null);
     }));
-    // FU-11 (F03–F05, F09, F14; BA01–BA05): a restore now rewinds the waveforms, trends, clocks and pending groups, so
-    // "Return here" is back (it was hidden in Stage 9 while a restore left the screen on the discarded timeline)
+    // A restore rewinds the waveforms, trends, clocks and pending groups, so "Return here" is shown (it was
+    // hidden while a restore left the screen on the discarded timeline)
     marks.replaceChildren(...link.ctl.bookmarks.map((b) => h('li', {}, b, ' ', button('Return here', async () => {
       if (await confirmDialog('Return to this bookmark?', `The patient goes back to "${b}". The clock goes back with it.`, 'Return', false, 'Stay here')) void link.send({ type: 'scenario', action: 'restoreBookmark', target: b });
     }, 'ghost small'))));

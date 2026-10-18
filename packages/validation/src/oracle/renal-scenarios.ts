@@ -1,11 +1,11 @@
 // Pulse oracle O11 (annex §D; tables §5.2): the kidney's response to haemorrhage. Pulse and our engine bleed the same
 // 1100 mL over 10 min (O2's action, which runs in the Node shim) and are observed for 2 h. Pulse's data requests carry
 // `UrineProductionRate(mL/min)` (no GFR/RBF), so O11 compares urine output and MAP. Annex §D's O11 drives MAP ≈ 60
-// with `CardiovascularMechanicsModification` (SVR × 0.55): 7a has no such event and the action is unverified in the
-// shim, so that premise (and Pulse's measured `rppZero`) stays open — gate note. Prototype (7a + 7b + 7g, Pulse
-// 4.3.2): resting UOP ours 1.16 vs Pulse 0.38 mL/min (D12); MAP Δ at 1 h −3.7 vs −1.0 (both compensate class II);
-// UOP Δ −0.63 vs +0.33 at 1 h, −0.63 vs +0.12 at 2 h: Pulse's urine RISES after a bleed (no ADH/RAAS/volume term,
-// annex B2 stated limits) — new expected difference D-R1.
+// with `CardiovascularMechanicsModification` (SVR × 0.55): the circulation has no such event and the action is
+// unverified in the shim, so that premise (and Pulse's measured `rppZero`) stays open. Prototype (circulation, lungs
+// and drugs; Pulse 4.3.2): resting UOP ours 1.16 vs Pulse 0.38 mL/min (D12); MAP Δ at 1 h −3.7 vs −1.0 (both
+// compensate class II); UOP Δ −0.63 vs +0.33 at 1 h, −0.63 vs +0.12 at 2 h: Pulse's urine RISES after a bleed (no
+// ADH/RAAS/volume term, annex B2 stated limits) — expected difference D-R1.
 import type { OracleRow } from './scenarios.ts';
 
 export interface RenalOracleRow extends Omit<OracleRow, 'channel'> {

@@ -1,7 +1,7 @@
-// Stage 12 (the classroom): learners' phones follow the instructor's session over the relay (`pme-relay --static`),
-// which serves this app on the laptop's network address. No DOM here: the QR panel, the learner page and their tests
-// read these. The QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>` — the page's relay is the page's
-// own host — so the symbol stays small enough to scan from the back of a lecture room.
+// Learners' phones follow the instructor's session over the relay (`pme-relay --static`), which serves this app on the
+// laptop's network address (the classroom). No DOM here: the QR panel, the learner page and their tests read these. The
+// QR carries ONE short address, `http://<laptop>:<port>/?join=<CODE>` — the page's relay is the page's own host — so
+// the symbol stays small enough to scan from the back of a lecture room.
 import { normalizeSessionCode } from '@pme/controller';
 
 export interface PageLocation {

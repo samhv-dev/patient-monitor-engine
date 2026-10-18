@@ -1,4 +1,4 @@
-// Stage 6a host page: the monitor that owns the simulation, the hidden panel (in-process), and the same
+// Controller host page: the monitor that owns the simulation, the hidden panel (in-process), and the same
 // session offered over BroadcastChannel (always) and over the relay + WebRTC (when ?relay= is given).
 import {
   acceptWebRtcPeers,

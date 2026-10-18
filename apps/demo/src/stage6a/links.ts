@@ -1,4 +1,4 @@
-// URL conventions shared by the three Stage 6a pages:
+// URL conventions shared by the three controller pages:
 //   ?session=ABC234   the session code (the host makes one when absent)
 //   ?via=bc|relay|rtc how a remote/viewer connects (default bc = BroadcastChannel, same browser)
 //   ?relay=ws://…     relay URL (default ws://<this host>:8787/); the host joins the relay only when present

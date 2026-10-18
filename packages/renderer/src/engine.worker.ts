@@ -1,9 +1,8 @@
-// Worker entry: engine + renderer on an OffscreenCanvas (brief §3.4). Uses the worker's own
-// requestAnimationFrame when it exists, otherwise waits for 'frame' messages from the main thread.
-// Stage 8b: the file starts itself only inside the worker we create, named 'pme-engine' (the ESM build's
-// `?worker&inline` bundle via worker-host.ts, or the IIFE re-running its own source as the worker,
-// src/iife-worker.ts). Imported anywhere else — the page, or a host's OWN worker that importScripts the IIFE for a
-// headless createEngine — it is inert and never touches that scope's onmessage.
+// Worker entry: engine + renderer on an OffscreenCanvas (brief §3.4). Uses the worker's own requestAnimationFrame when
+// it exists, otherwise waits for 'frame' messages from the main thread. The file starts itself only inside the worker
+// we create, named 'pme-engine' (the ESM build's `?worker&inline` bundle via worker-host.ts, or the IIFE re-running its
+// own source as the worker, src/iife-worker.ts). Imported anywhere else — the page, or a host's OWN worker that
+// importScripts the IIFE for a headless createEngine — it is inert and never touches that scope's onmessage.
 import { MonitorCore } from './monitor-core.ts';
 import type { Ctx2D } from './ctx.ts';
 import type { FromWorker, ToWorker } from './protocol.ts';
@@ -14,7 +13,7 @@ interface WorkerScope {
   requestAnimationFrame?: (cb: (t: number) => void) => number;
 }
 
-let scope: WorkerScope; // set by startWorker() (Stage 8b)
+let scope: WorkerScope; // Set by startWorker()
 let core: MonitorCore | null = null;
 let useRaf = false;
 
@@ -71,10 +70,10 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         if (core) scope.postMessage({ type: 'snapshot', reqId: m.reqId, snapshot: core.engine.snapshot() });
         else scope.postMessage({ type: 'error', message: 'not initialised', reqId: m.reqId });
         return;
-      case 'plan': // Stage 4b
+      case 'plan':
         core?.setPlan(m.plan);
         return;
-      case 'capture12': // Stage 4b: the 12 lead arrays are transferred, not copied
+      case 'capture12': // The 12 lead arrays are transferred, not copied
         try {
           if (!core) throw new Error('not initialised');
           const capture = core.capture12();
@@ -86,14 +85,14 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
           scope.postMessage({ type: 'capture12', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
         }
         return;
-      case 'advance': // Stage 10: a fast-forward step; its events were posted before this answer
+      case 'advance': // a fast-forward step; its events were posted before this answer
         if (!core) throw new Error('not initialised');
         scope.postMessage({ type: 'advanced', reqId: m.reqId, ...core.advance(m.ticks, m.last) });
         return;
       case 'restore':
         try {
           if (!core) throw new Error('not initialised');
-          core.restore(m.snapshot); // FU-11 (F05, BA01): the lanes restart with the engine
+          core.restore(m.snapshot); // The lanes restart with the engine
           scope.postMessage({ type: 'restored', reqId: m.reqId });
         } catch (err) {
           scope.postMessage({ type: 'restored', reqId: m.reqId, error: err instanceof Error ? err.message : String(err) });
@@ -101,13 +100,13 @@ function onMessage(ev: MessageEvent<ToWorker>): void {
         return;
     }
   } catch (err) {
-    // FU-11 (F06): a request that threw answers its own reqId, so the caller's promise rejects instead of waiting forever
+    // A request that threw answers its own reqId, so the caller's promise rejects instead of waiting forever
     const reqId = 'reqId' in m ? m.reqId : undefined;
     scope.postMessage({ type: 'error', message: err instanceof Error ? err.message : String(err), ...(reqId !== undefined ? { reqId } : {}) });
   }
 }
 
-/** Serve one monitor from this worker scope (Stage 8b). */
+/** Serve one monitor from this worker scope. */
 export function startWorker(s: WorkerScope): void {
   scope = s;
   scope.onmessage = onMessage;

@@ -1,7 +1,7 @@
-// Headless runner: one pme-validation/1 document → the scenario driven through Stage 6b's ScenarioDriver on a
-// bare engine (no renderer), the series recorded, every target graded (R40). Commands the engine refuses because a
-// later stage owns them ("arrives in Stage 7", "not implemented") make the document NOT MEASURABLE on this build
-// (decision 8): it is listed, not graded, and does not gate.
+// Headless runner: one pme-validation/1 document → the scenario driven through the ScenarioDriver on a bare engine (no
+// renderer), the series recorded, every target graded. Commands the engine refuses because a later stage owns them
+// ("arrives in Stage 7", "not implemented") make the document NOT MEASURABLE on this build: it is listed, not graded,
+// and does not gate.
 import { createEngine, type Command, type EngineEvent } from '@pme/engine-core';
 import { BUILTIN_SCENARIOS, engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
 import { gradeTarget } from './grade.ts';
@@ -28,10 +28,10 @@ export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   if (raw === undefined) throw new Error(`${doc.id}: no built-in scenario ${String(doc.scenario)}`);
   const v = validateScenario(raw);
   if (!v.ok) throw new Error(`${doc.id}: invalid scenario: ${v.errors.join('; ')}`);
-  // The body (age, size, sex, age band, baseline, and the R22 profile: conditions, lung conditions incl. pregnancy) is
-  // fixed when the engine is created — a scenario's setup batch only sends rhythm, targets and sensors (Stage 6b
-  // runner.start), so the host builds its engine from `patient` first (measured while planning: without this a
-  // 4-year-old desaturated like a room-air adult, 47 s instead of ≈ 160 s). FU-3 item 9: one mapping, the controller's.
+  // The body (age, size, sex, age band, baseline, and the profile: conditions, lung conditions incl. pregnancy) is
+  // fixed when the engine is created — a scenario's setup batch only sends rhythm, targets and sensors (runner.start),
+  // so the host builds its engine from `patient` first (measured while planning: without this a 4-year-old desaturated
+  // like a room-air adult, 47 s instead of ≈ 160 s). One mapping, the controller's.
   const engine = createEngine(engineOptionsOf(v.doc, doc.seed ?? 1));
   const store = new SeriesStore();
   const unsupported: Unsupported[] = [];
@@ -42,8 +42,8 @@ export async function runValidationDoc(doc: ValidationDoc): Promise<DocRun> {
   });
   const dispatch = (c: Command) => {
     const r = engine.dispatch(c);
-    // FU-11 (F21): EVERY refused action makes the run unmeasurable — a refused intervention otherwise graded the unchanged
-    // baseline green. A later-stage gap keeps its own words; any other refusal says "refused".
+    // EVERY refused action makes the run unmeasurable — a refused intervention otherwise graded the unchanged baseline
+    // green. A later-stage gap keeps its own words; any other refusal says "refused".
     if (!r.accepted) unsupported.push({ t: engine.now().simT, type: c.type === 'applyEvent' ? `applyEvent ${(c.event as { kind: string }).kind}` : c.type, reason: LATER_STAGE.test(r.reason ?? '') ? (r.reason ?? '') : `refused: ${r.reason ?? ''}` });
     return r;
   };

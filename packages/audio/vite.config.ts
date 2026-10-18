@@ -6,7 +6,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
-    // Stage 8b: sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled.
+    // Sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled.
     rollupOptions: { external: [/^@pme\//] },
   },
 });

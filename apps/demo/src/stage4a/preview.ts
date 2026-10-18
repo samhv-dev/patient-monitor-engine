@@ -1,4 +1,4 @@
-// Stage 4a preview page: every skin/preset × theme drawn statically, plus each alarm sound profile playable on
+// Skins preview page: every skin/preset × theme drawn statically, plus each alarm sound profile playable on
 // demand through the real look-ahead ToneScheduler and AlarmSounder. `?skin=&theme=&static=1` gives a deterministic
 // frame for the gate screenshots; window.__pme4a exposes state and an OfflineAudioContext timing renderer.
 import {
@@ -118,7 +118,7 @@ setInterval(() => {
     `ECG filter ${resolved.render.ecgFilter.name} ${resolved.render.ecgFilter.band.join('–')} Hz → engine '${resolved.render.ecgFilter.engineMode}'${resolved.render.ecgFilter.exact ? '' : ' (approximate)'}`;
 }, 250);
 
-/** Render one profile level offline and measure pulse onsets (gate evidence; BUILD-PLAN Stage 4 acceptance 1). */
+/** Render one profile level offline and measure pulse onsets (gate evidence). */
 async function renderTiming(profileId: string, level: AlarmLevel, seconds: number, skinId?: string): Promise<OnsetReport> {
   const sr = 48_000;
   const ctx = new OfflineAudioContext(1, Math.ceil(sr * seconds), sr);

@@ -1,11 +1,11 @@
-// FU-11 (external review F14, browser audit BA03): a snapshot's `state` must survive JSON exactly. The pipeline state
+// A snapshot's `state` must survive JSON exactly. The pipeline state
 // holds a few numbers JSON cannot carry — empty accumulators (LVAD qMin/qMax = ±Infinity), "not yet measured" markers
 // (NaN: the pressure detectors' previous sample, the spontaneous-breathing set point, the IABP's valve-off time) and
 // negative zeros — and JSON turns each into null or 0, so a bookmark saved to a file or sent over the relay restored a
 // different patient; a key holding `undefined` vanished (the truth tree's `dropped` count changed). The codec copies the
 // state and writes each such value as a tagged object { $nf: 'NaN' | 'Infinity' | '-Infinity' | '-0' | 'undefined' };
-// decoding copies back. Decoding leaves raw non-finite numbers as they are, so a
-// structured-clone snapshot from before this change (same build only — the engine version guards that) still restores.
+// decoding copies back. Decoding leaves raw non-finite numbers as they are, so an
+// older structured-clone snapshot (same build only — the engine version guards that) still restores.
 // No model code changes: the physiology keeps its sentinels; only their transport form is defined here.
 
 /** The tag key. No pipeline state object has a key that starts with `$`. */

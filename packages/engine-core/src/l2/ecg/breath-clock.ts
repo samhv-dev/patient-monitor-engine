@@ -1,7 +1,6 @@
-// Respiratory clock seam for the ECG (Stage 5.1, ruling R29 item R-S3-3): RSA, respiratory baseline wander and QRS
-// amplitude modulation read a BreathClock instead of Stage 1's fixed 15/min sinusoid. The default is that sinusoid,
-// bit-identical; a breath driver (Stage 3's, once merged) plugs in through cycleBreathClock without this module
-// importing it (structural typing only).
+// Respiratory clock seam for the ECG: RSA, respiratory baseline wander and QRS amplitude modulation read a BreathClock
+// instead of the fixed 15/min sinusoid. The default is that sinusoid, bit-identical; a breath driver plugs
+// in through cycleBreathClock without this module importing it (structural typing only).
 import { F_RESP_HZ, type HrvPhase } from './hrv.ts';
 
 export interface BreathClock {
@@ -11,12 +10,12 @@ export interface BreathClock {
   phaseRad(t: number): number;
 }
 
-/** Stage 1's fixed 15/min clock: phaseRad = 2π·0.25·t + φ, exactly the expression hrv.ts has always used. */
+/** The fixed 15/min clock: phaseRad = 2π·0.25·t + φ, exactly the expression hrv.ts has always used. */
 export function fixedBreathClock(ph: HrvPhase): BreathClock {
   return { rateBpm: () => F_RESP_HZ * 60, phaseRad: (t) => 2 * Math.PI * F_RESP_HZ * t + ph.phi };
 }
 
-/** The part of a breath cycle the clock needs (Stage 3's `Cycle` has these fields). */
+/** The part of a breath cycle the clock needs (the `Cycle` has these fields). */
 export interface BreathCycleLike {
   seq: number;
   t0: number;

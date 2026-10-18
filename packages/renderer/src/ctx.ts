@@ -8,7 +8,7 @@ export interface Ctx2D {
   lineCap: CanvasLineCap;
   font: string;
   textBaseline: CanvasTextBaseline;
-  textAlign: CanvasTextAlign; // Stage 10: the seam's label is right-aligned behind its line
+  textAlign: CanvasTextAlign; // The seam's label is right-aligned behind its line
   fillRect(x: number, y: number, w: number, h: number): void;
   beginPath(): void;
   moveTo(x: number, y: number): void;

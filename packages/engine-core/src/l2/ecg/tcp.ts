@@ -1,6 +1,6 @@
-// Transcutaneous pacing as seen on the ECG (brief §6.5; research 03 §1.7): a wide, blunt 20–40 ms artefact per
-// pulse plus a pace marker; electrical capture (wide QRS, broad T) iff mA ≥ threshold and the ventricle is not
-// refractory. Stage 4's pacer device writes Modifiers.tcp; the engine only draws what the pads do.
+// Transcutaneous pacing as seen on the ECG (brief §6.5; research 03 §1.7): a wide, blunt 20–40 ms artefact per pulse
+// plus a pace marker; electrical capture (wide QRS, broad T) iff mA ≥ threshold and the ventricle is not refractory.
+// The pacer device writes Modifiers.tcp; the engine only draws what the pads do.
 import { WAVE, kernel, makeEvent } from './kernels.ts';
 import { HOOKS, NEVER, type RhythmCtx, type RhythmState } from './rhythm-state.ts';
 import type { Vec3 } from './vcg.ts';
@@ -9,12 +9,12 @@ import type { Vec3 } from './vcg.ts';
 export const TCP_ART_DIR: Vec3 = [0.25, 0.6, -0.9];
 /** Artefact amplitude (mV along TCP_ART_DIR): 3 + 3·mA/140, capped at 6 [ENG]. */
 export function tcpArtefactMv(mA: number): number {
-  return Math.min(6, 3 + (3 * mA) / 140); // Stage 5.1: 3–6 mV (was 1.5–4) so the spike towers over any QRS
+  return Math.min(6, 3 + (3 * mA) / 140); // 3–6 mV so the spike towers over any QRS
 }
 /**
- * Stage 5.1 artefact shape: a tall, short spike (rise σ 2.5 ms, fall σ 4 ms: FWHM ≈ 8 ms) plus a slow
- * opposite-polarity polarisation tail (−12 %, rise σ 10 ms, fall σ 90 ms). The spike reads as an artefact and
- * never as a QRS (G5-obs); the pace MARKER (below) is what monitors draw at the pulse [ENG, research 03 §1.7].
+ * Artefact shape: a tall, short spike (rise σ 2.5 ms, fall σ 4 ms: FWHM ≈ 8 ms) plus a slow opposite-polarity
+ * polarisation tail (−12 %, rise σ 10 ms, fall σ 90 ms). The spike reads as an artefact and never as a QRS; the pace
+ * MARKER (below) is what monitors draw at the pulse [ENG, research 03 §1.7].
  */
 export const TCP_SPIKE_SIGMA_S: readonly [number, number] = [0.0025, 0.004];
 export const TCP_TAIL: { tau: number; sigma: readonly [number, number]; frac: number } = { tau: 0.02, sigma: [0.01, 0.09], frac: -0.12 };
@@ -36,8 +36,8 @@ export const tcpClock = {
     if (!m) return;
     const iv = 60 / m.ratePpm;
     // Demand mode: a SENSED beat within the last interval inhibits the pulse. Beats inside the pacer's own sensing
-    // refractory period after a pulse are not sensed (R-4b-2 / R30: the captured beat used to inhibit the next
-    // pulse, so 70 ppm paced at 68.4).
+    // refractory period after a pulse are not sensed (the captured beat used to inhibit the next pulse, so 70 ppm paced
+    // at 68.4).
     const sensed = st.lastVT > (st.tcpLastPulseT ?? -NEVER) + TCP_SENSE_REFRACTORY_S ? st.lastVT : -NEVER;
     if (m.mode === 'demand' && t - sensed < iv - 1e-9) {
       st.tcpNextT = sensed + iv;

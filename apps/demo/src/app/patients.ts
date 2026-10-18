@@ -1,6 +1,6 @@
-// Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). A profile is fixed when the
-// engine is created, so changing it restarts the patient (a confirm dialog says what resets). Comorbidities map 1:1
-// onto the engine's R22 profile (`conditions`) and 7b's lung catalogue (`lungConditions`).
+// Patient profiles for the Start screen and the Patient tab (brief §4.9 "one Patient card"). A profile is fixed when
+// the engine is created, so changing it restarts the patient (a confirm dialog says what resets). Comorbidities map 1:1
+// onto the engine's profile (`conditions`) and the lung catalogue (`lungConditions`).
 import type { PatientProfile, SensorId } from '@pme/engine-core';
 
 export interface PatientSpec {
@@ -18,7 +18,7 @@ export interface Comorbidity {
   id: string;
   label: string;
   profile: Pick<PatientProfile, 'conditions' | 'lungConditions'>;
-  /** Shown but not selectable yet (v1.1: 7j obstetric, R60). */
+  /** Shown but not selectable yet (v1.1: obstetric). */
   later?: string;
 }
 

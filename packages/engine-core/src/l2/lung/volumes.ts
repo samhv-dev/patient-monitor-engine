@@ -1,4 +1,4 @@
-// Stage 7k (R57): static lung volumes and the forced expiration. Pure functions; mL and s.
+// Static lung volumes and the forced expiration. Pure functions; mL and s.
 //
 // PREDICTED (seated, healthy, the "% predicted" reference a PFT lab prints):
 //   adults 18–70 y: ECSC/ERS 1993 (Quanjer et al., Eur Respir J 1993;6 Suppl 16:5 — Table 8 of Stocks & Quanjer,
@@ -8,7 +8,7 @@
 //     power laws in stature (cm); below the 5 y lower bound they are extrapolated [ENG]. Children's spirometry: FVC =
 //     0.95 × VC and FEV1/FVC 0.90 [ENG; preschool FEV1/FVC ≈ 0.9 (GLI-2012 direction)]. 16–20 y: the two sets are
 //     BLENDED linearly (the switch at 18 y otherwise jumps TLC +15–24 % at one birthday) [ENG]. v1.0 uses ECSC with the
-//     fixed FEV1/FVC ratio (orchestrator ruling on Q-7k-3); GLI with the lower limit of normal is v1.1. FEV1/FVC
+//     fixed FEV1/FVC ratio; GLI with the lower limit of normal is v1.1. FEV1/FVC
 //     predicted is FEV1pred/FVCpred (82.4 % at 40 y), not ECSC's separate ratio equation (87.21 − 0.18A = 80.0 %).
 //   PEF predicted: ECSC (men 6.14H − 0.043A + 0.15, women 5.50H − 0.030A − 1.11 L/s); children: the model's own
 //     healthy peak (FVCpred/τf,ref) [ENG].
@@ -19,7 +19,7 @@
 //                trapping in COPD/asthma, parenchymal and chest-wall restriction), severity knots with their source;
 //   strength   — respiratory-muscle weakness (lp.pMax < 1: neuromuscular weakness, diaphragm paralysis) lowers TLC and
 //                raises RV (the classic restrictive pattern of weakness) [ENG].
-// Two FRCs, two owners, two labels: the BEDSIDE FRC (supine, awake → anaesthetised: FU-6's `frcNow` × the conditions'
+// Two FRCs, two owners, two labels: the BEDSIDE FRC (supine, awake → anaesthetised: lung `frcNow` × the conditions'
 // `frc` × aeration — the O2 store, not computed here) and the PFT lab's SEATED FRC below (predicted × pathology), which
 // ERV (= FRCsit − RV) and IC (= TLC − FRCsit) are defined against, as a lab reports them (ATS/ERS 2005 lung volumes).
 //
@@ -39,10 +39,10 @@
 // healthy — restriction scales it by the forced VC, obstruction by a weaker power of the R·C ratio than FEV1's.
 // PEAK_TAU_EXP [ENG; fit: PEF % predicted tracks FEV1 % predicted within ±15 points in acute severe asthma and COPD
 // GOLD 2–4 (BTS/SIGN 2019 and GINA grade acute asthma by PEF % of predicted/best: 33–50 % acute severe, < 33 %
-// life-threatening)]. The 7h PFT device draws the rise to PEF and then joins the effort-independent curve below.
+// life-threatening)]. The PFT device draws the rise to PEF and then joins the effort-independent curve below.
 // Obstruction (raised R, fast/slow heterogeneity: asthma, COPD, bronchospasm) therefore lowers FEV1/FVC and scoops the
 // flow–volume curve (the slow units' tail); restriction lowers FVC and FEV1 together and keeps the ratio. The four
-// (VC_u, τf,u) pairs are published so a PFT device (7h) redraws the loop: V̇(t) = Σ VC_u/τf,u·e^(−t/τf,u).
+// (VC_u, τf,u) pairs are published so a PFT device redraws the loop: V̇(t) = Σ VC_u/τf,u·e^(−t/τf,u).
 import type { LungConditionSpec } from '../../types-lung.ts';
 import { conditionData, effectValue, interp } from './conditions.ts';
 import type { Knots } from '../../../data/lung-pathology.ts';

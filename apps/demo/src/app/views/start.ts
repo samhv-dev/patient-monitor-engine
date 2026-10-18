@@ -15,7 +15,7 @@ export interface StartDeps {
   site: SiteProfile;
   /** Called with the chosen scenario when the instructor view opens with one. */
   loadScenario(card: ScenarioCard): boolean;
-  /** FU-11 (K2): the address of a second-screen learner monitor that follows this session. */
+  /** The address of a second-screen learner monitor that follows this session. */
   learnerUrl: string;
 }
 
@@ -142,9 +142,9 @@ export function startView(d: StartDeps): View {
     h('div', { class: 'actions' },
       button('Open the instructor view', () => void go('teach'), 'primary'),
       button('Show the learner monitor here', () => void go('monitor')),
-      // FU-11 (K2): the old "Open the learner monitor" changed THIS window's view; a second window used to start its own
-      // patient. This one follows the session (same browser; drag it to the projector).
-      button('Open the learner monitor in a new window', () => void window.open(d.learnerUrl, '_blank', 'noopener,width=1280,height=800')), // R50 F4: its own process
+      // The old "Open the learner monitor" changed THIS window's view; a second window used to start its own patient.
+      // This one follows the session (same browser; drag it to the projector).
+      button('Open the learner monitor in a new window', () => void window.open(d.learnerUrl, '_blank', 'noopener,width=1280,height=800')), // Its own process
       h('a', { class: 'btn ghost', href: hrefOf('remote') }, 'Open a remote'),
     ),
   );
@@ -161,7 +161,7 @@ export function startView(d: StartDeps): View {
     h('div', { class: 'page start' },
       h('h1', { id: 'start-h' }, 'Set up the session'),
       h('p', { class: 'lede' }, 'Choose the patient, the monitor and who is watching. The monitor already shows this patient, and the patient keeps running in every view.'),
-      h('p', { class: 'about-line muted', 'data-about': '' }, ABOUT_LINE), // Stage 8b: the release label and education-only line
+      h('p', { class: 'about-line muted', 'data-about': '' }, ABOUT_LINE), // The release label and education-only line
       setup,
       h('h2', {}, 'Other tools'), tools,
     ),

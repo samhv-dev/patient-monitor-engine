@@ -15,8 +15,8 @@ export function gammaShape(dtS: number, tpS: number, n: number): number {
 
 export function gammaConc(doses: readonly GammaDose[], t: number, tpS: number, n: number, t10S?: number): number {
   let c = 0;
-  // FU-7 (R51 addendum 19): a shape with n < 1 rises with an infinite slope (a step onset); such rows use the
-  // zero-slope transit chain fitted to the SAME peak time and 10 % time. n ≥ 1 rows keep the gamma (slope 0 at t = 0).
+  // A shape with n < 1 rises with an infinite slope (a step onset); such rows use the zero-slope transit chain fitted
+  // to the SAME peak time and 10 % time. n ≥ 1 rows keep the gamma (slope 0 at t = 0).
   const chain = t10S !== undefined && n < ONSET_N_MIN ? onsetChain(tpS, t10S) : null;
   for (const d of doses) c += d.scale * (chain ? chainShape(t - d.t, chain) : gammaShape(t - d.t, tpS, n));
   return c;
@@ -26,11 +26,11 @@ export function gammaConc(doses: readonly GammaDose[], t: number, tpS: number, n
 export const ONSET_N_MIN = 1;
 
 /**
- * FU-7 (R51 addendum 19) zero-slope onset: a dose passes two equal transit compartments (rate ka: injection, mixing,
- * arm–brain circulation) into the effect compartment, which empties at ke (redistribution/elimination):
+ * Zero-slope onset: a dose passes two equal transit compartments (rate ka: injection, mixing, arm–brain circulation)
+ * into the effect compartment, which empties at ke (redistribution/elimination):
  *   C(t) ∝ e^{−ke·t} − e^{−ka·t}·(1 + (ka − ke)·t)      (Laplace ka²/((s + ka)²(s + ke)), up to a constant)
- * C(0) = 0 and C′(0) = 0 (no step onset); the tail is mono-exponential. With τ = ke·t and r = ka/ke the shape
- * depends on r only, so r is solved from t10/tp by bisection and ke = τpeak(r)/tp. Normalised to 1 at t = tp.
+ * C(0) = 0 and C′(0) = 0 (no step onset); the tail is mono-exponential. With τ = ke·t and r = ka/ke the shape depends
+ * on r only, so r is solved from t10/tp by bisection and ke = τpeak(r)/tp. Normalised to 1 at t = tp.
  */
 export interface OnsetChain { ke: number; ka: number; peak: number }
 

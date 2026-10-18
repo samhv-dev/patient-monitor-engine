@@ -1,5 +1,6 @@
-// Stage 7d demo: the monitor with the ICP lane, an organ side panel (ICP/CPP, PbtO2, UOP tiles from the renderer's
-// formatters, the organs truth line, a 30 min trend) and the brain/kidney actions. Drugs are 7g events (7d owns none).
+// Organs page: the monitor with the ICP lane, an organ side panel (ICP/CPP, PbtO2, UOP tiles from the renderer's
+// formatters, the organs truth line, a 30 min trend) and the brain/kidney actions. Drugs are drug-model events (the
+// organ model owns none).
 import type { Command, EngineEvent, EngineOptions, Measured } from '@pme/engine-core';
 import { formatIcp, formatPbto2, formatUop, mountMonitor, type MonitorHandle } from '@pme/renderer';
 

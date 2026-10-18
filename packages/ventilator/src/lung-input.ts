@@ -1,10 +1,10 @@
-// engine → vent: the R27 `lungState` event IS the patient's lung. Since Stage 7b the event carries ABSOLUTE values
-// (7b plan decision 15) and Stage V.1 (G7b rulings 4+5+13) reads them so: compliance, inspiratory and expiratory
-// resistance (flow limitation when R_exp > R_insp, expressed as v1.9's custom factor eflK = R_insp/R_exp with no PEEP
-// stenting, exactly as the catalogue rows are), and the pleural pressure the lung must be re-opened against each
-// breath (tension pneumothorax, mechanics.ts). The profile's `vent` lung — the catalogue row, generated from the
-// same engine data — holds until the first lungState arrives, and stays the stand-alone ventilator's lung. `effort`
-// drives the patient's Pmus; shunt, dead space and FRC stay engine-side (the Dynamic Lung view shows them).
+// Engine → vent: the `lungState` event IS the patient's lung. The event carries ABSOLUTE values and the ventilator
+// reads them so: compliance, inspiratory and expiratory resistance (flow limitation when R_exp > R_insp, expressed as
+// v1.9's custom factor eflK = R_insp/R_exp with no PEEP stenting, exactly as the catalogue rows are), and the pleural
+// pressure the lung must be re-opened against each breath (tension pneumothorax, mechanics.ts). The profile's `vent`
+// lung — the catalogue row, generated from the same engine data — holds until the first lungState arrives, and stays
+// the stand-alone ventilator's lung. `effort` drives the patient's Pmus; shunt, dead space and FRC stay engine-side
+// (the Dynamic Lung view shows them).
 import type { EngineEvent } from '@pme/engine-core';
 import type { VentConfig, VentState } from './types.ts';
 

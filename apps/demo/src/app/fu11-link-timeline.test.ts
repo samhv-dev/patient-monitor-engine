@@ -1,5 +1,5 @@
-// FU-11 Task E6 (F05, F09; showcase-hotfix notes): the panel's Link follows a new timeline — onsets in progress end on
-// any; acute events end on a restart (a Remote has no AppSession to tell it) and stay on a bookmark restore.
+// The panel's Link follows a new timeline — onsets in progress end on any; acute events end on a restart (a Remote has
+// no AppSession to tell it) and stay on a bookmark restore.
 import { ControllerSession, createInProcessHub, createStamper } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { Link } from './link.ts';

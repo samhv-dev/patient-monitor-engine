@@ -1,5 +1,5 @@
-// Stage 7d numeric tiles: ICP (mean) with CPP, PbtO2, urine output (mL/h over 60 min, cumulative). Pure formatters
-// (Node has no DOM); the tiles reuse PressureTile like Stage 3's (numerics-resp.ts).
+// Organ numeric tiles: ICP (mean) with CPP, PbtO2, urine output (mL/h over 60 min, cumulative). Pure formatters (Node
+// has no DOM); the tiles reuse PressureTile like the respiratory tiles (numerics-resp.ts).
 import type { Measured } from '@pme/engine-core';
 
 const ok = (x: Measured | undefined): x is Measured & { value: number } => !!x && x.value !== null && x.flag !== 'invalid';

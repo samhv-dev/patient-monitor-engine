@@ -1,7 +1,7 @@
-// Stage 7b (Task 27): one condition's ventilator reference numbers from the lung module's resolved parameters — for
-// Stage V's generated catalogue copy (the ventilator's own single-compartment model then shows plateau, ΔP and
-// peak − plateau from them). The condition's mainstem block (OLV, endobronchial) is applied: only the ventilated
-// side's lung compliance and airway count, in series with the whole (shared) chest wall and the tube.
+// One condition's ventilator reference numbers from the lung module's resolved parameters — for the ventilator's
+// generated catalogue copy (the ventilator's own single-compartment model then shows plateau, ΔP and peak − plateau
+// from them). The condition's mainstem block (OLV, endobronchial) is applied: only the ventilated side's lung
+// compliance and airway count, in series with the whole (shared) chest wall and the tube.
 import type { LungConditionSpec } from '../../types-lung.ts';
 import { resolveLung } from './conditions.ts';
 import { CMH2O_TO_MMHG } from '../gas/params.ts'; // Stage V.1

@@ -1,10 +1,10 @@
-// Couplings Stage 3 owns (brief §4.9 M4–M6; §4.9 "Ventilation → haemodynamics"; research 03 §8.7):
-//  • cardiac output READ from Stage 2's state (never written): drives gas uptake, low-flow EtCO2, SpO2 delay;
+// Couplings the respiratory model owns (brief §4.9 M4–M6; §4.9 "Ventilation → haemodynamics"; research 03 §8.7):
+//  • cardiac output READ from the haemodynamics state (never written): drives gas uptake, low-flow EtCO2, SpO2 delay;
 //  • mean airway pressure → effective RAP: CVP truth rises, venous return (so SV/CO) falls, PPV rises. In MANUAL
-//    this acts through L1 `coupled` truths on cvp/sbp/dbp/volumeStatus, which Stage 2's pipeline reads through
+//    this acts through L1 `coupled` truths on cvp/sbp/dbp/volumeStatus, which the hemo pipeline reads through
 //    l1Value (its M2 tracker then meets the coupled pressures).
 import { l1Target, type L1State } from '../../l1/state.ts';
-import { circCardiacOutput } from '../circ/model.ts'; // Stage 7a
+import { circCardiacOutput } from '../circ/model.ts';
 import type { HemoState } from '../hemo/pipeline.ts';
 import { CMH2O_TO_MMHG } from './params.ts';
 
@@ -15,24 +15,23 @@ export const PAW_REF_CMH2O = 10;
 /**
  * Venous-return driving pressure Pmsf − RAP by volume status [ENG]: 15 mmHg normovolaemic, 4 mmHg empty. PEEP
  * 5 → 15 (mean Paw ≈ 8 → 18) gives f = 0.84 normovolaemic and 0.68 at volumeStatus 0.3 (prototype: CO −9 % and
- * −23 %, MAP 97 → 83 and 97 → 68 mmHg once Stage 2's tracker has met the coupled pressures).
+ * −23 %, MAP 97 → 83 and 97 → 68 mmHg once the hemo tracker has met the coupled pressures).
  */
 export function venousGradient(vs: number): number {
   return 4 + 11 * Math.min(1, Math.max(0, vs));
 }
 
 /**
- * CO (L/min) for the gas model. Stage 7a: from the circulation (beats and CPR compressions eject through it).
- * FU-8 (research/20 DV-03, DV-04a, gap V4; V.1's "CPR flow scaling" request): during CPR the gas exchange reads the
- * circulation's PULMONARY blood flow (the hemo pipeline's 2 ms lung-bed flow, LPF τ CO_TAU_S), so EtCO2 follows the
- * blood the compressions actually move through the lungs — and the patient's size. Before, it took Stage 3.1's interim
- * quality fit (SV_REF·CPR_SV_FRAC·quality^1.9·rate, `cprFlowFactor`), blind to the circulation: a bled-out patient
- * (CoPP 3.1) read EtCO2 17.4 and a tamponade 15.9, the same as VF with a full circulation.
+ * CO (L/min) for the gas model, from the circulation (beats and CPR compressions eject through it). During CPR the gas
+ * exchange reads the circulation's PULMONARY blood flow (the hemo pipeline's 2 ms lung-bed flow, LPF τ CO_TAU_S), so
+ * EtCO2 follows the blood the compressions actually move through the lungs — and the patient's size (research/20,
+ * gap V4). A CPR-quality fit blind to the circulation would read EtCO2 17.4 in a bled-out patient (CoPP 3.1) and 15.9
+ * in a tamponade, the same as VF with a full circulation.
  */
 export function cardiacOutput(hs: HemoState, t: number): number {
   void t;
   if (hs.cpr.active) return Math.max(0, hs.av.qLung) * 0.06;
-  return circCardiacOutput(hs.circ); // Stage 7a
+  return circCardiacOutput(hs.circ);
 }
 
 /** Apply the mean-airway-pressure coupling to the L1 coupled truths at time t (MANUAL). */

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
-// Stage 10 Task 5 (owner's decision 1): the fast-forward panel — the page dimmed and blurred behind it, "FAST FORWARD ·
-// 5 MIN", the clock running from start to end over a progress bar, "sound muted" — then the banner for ≈ 8 s with the
-// alarms and their times, and the alarms that came and went handed to the monitor to latch (owner's decision 5).
+// The fast-forward panel — the page dimmed and blurred behind it, "FAST FORWARD · 5 MIN", the clock running from start
+// to end over a progress bar, "sound muted" — then the banner for ≈ 8 s with the alarms and their times, and the alarms
+// that came and went handed to the monitor to latch.
 import type { FastForwardAlarm, FastForwardDone } from '@pme/controller';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FF_DONE_SHOW_MS, FF_SPANS, FF_WALL_MS, mountFastForward, type FastForwardSource } from './fast-forward.ts';

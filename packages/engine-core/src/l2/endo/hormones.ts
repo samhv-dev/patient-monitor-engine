@@ -25,37 +25,37 @@ import {
 
 export interface HormoneState {
   symp: number;
-  /** FU-7 (addendum 22; ruling 1): the NOCICEPTIVE share of the stress activity alone — noxious × (1 − antinoc), same
-   * onset/offset τ as `symp`, without `extraSymp`. It drives ONLY the set-point factor `surgeF` (effects.ts). */
+  /** The NOCICEPTIVE share of the stress activity alone — noxious × (1 − antinoc), same onset/offset τ as `symp`,
+   * without `extraSymp`. It drives ONLY the set-point factor `surgeF` (effects.ts). */
   surge: number;
-  /** FU-4 F2(a): the humoral vasoconstrictor arm (AVP + angiotensin II), 0–1. Propofol does not suppress it. */
+  /** The humoral vasoconstrictor arm (AVP + angiotensin II), 0–1. Propofol does not suppress it. */
   hum: number;
   epi: number; // endogenous plasma epinephrine, pg/mL
-  epiExo: number; // exogenous (7g) plasma-equivalent epinephrine, pg/mL — β2 and metabolic effects only
+  epiExo: number; // Exogenous plasma-equivalent epinephrine, pg/mL — β2 and metabolic effects only
   ne: number;
   cort: number;
   cortDrive: number; // the slow surgical-stress drive integrated for cortisol
-  catReserve: number; // FU-7 (audit D9): releasable catecholamine store, 0–1 (1 = replete)
+  catReserve: number; // Releasable catecholamine store, 0–1 (1 = replete)
 }
 
 /** Inputs of one hormone step (all optional sources resolved by the adapters; neutral values = a resting patient). */
 export interface HormoneInputs {
   noxious: number; // 0 none … 1 incision … 1.5 laryngoscopy/sternotomy (tables `noxious`)
-  antinoc: number; // 0–1 antinociception (7f; fallback ANTINOC_GA_FALLBACK under GA)
-  antinocOp?: number; // FU-7 (R51 addendum 25): its OPIOID + lidocaine share — the nociceptive surge state reads this
+  antinoc: number; // 0–1 antinociception (the neuro model; fallback ANTINOC_GA_FALLBACK under GA)
+  antinocOp?: number; // Its OPIOID + lidocaine share — the nociceptive surge state reads this
   extraSymp: number; // MH, thyroid storm, sepsis, awareness … (0–3)
   glucoseMgDl: number;
   mapMmHg: number;
   sao2: number; // 0–1
   paco2: number; // mmHg
   cortResponse: number; // 1 normal, 0.5 adrenal insufficiency / etomidate (tables)
-  /** FU-10 E13: × on the BASAL cortisol target (adrenal insufficiency: a resting deficit, not only a blunted rise). */
+  /** × on the BASAL cortisol target (adrenal insufficiency: a resting deficit, not only a blunted rise). */
   cortBasalF?: number;
-  epiExoPgMl: number; // 7g's epinephrine as plasma pg/mL (0 without 7g)
-  mapSetMmHg: number; // FU-4 F2(a): the patient's own mean-pressure set point — the humoral arm's unloading reference
+  epiExoPgMl: number; // The drug model's epinephrine as plasma pg/mL (0 without the drug model)
+  mapSetMmHg: number; // The patient's own mean-pressure set point — the humoral arm's unloading reference
 }
 
-export function createHormones(cortBasalF = 1): HormoneState { // FU-10 E13: the basal deficit
+export function createHormones(cortBasalF = 1): HormoneState { // The basal deficit
   return { symp: 0, surge: 0, hum: 0, epi: EPI_BASAL_PG_ML, epiExo: 0, ne: NE_BASAL_PG_ML, cort: CORT_BASAL * cortBasalF, cortDrive: 0, catReserve: 1 };
 }
 
@@ -74,19 +74,19 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
   const target = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinoc))) + x.extraSymp));
   const tau = target > h.symp ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S;
   h.symp += (target - h.symp) * (1 - Math.exp(-dtS / tau));
-  // FU-7 (addendum 22; Orchestrator ruling (FU-7 review) 1): the nociceptive surge — the SAME first-order law on the
-  // nociceptive term only. `?? 0` tolerates a snapshot written before FU-7 (the state is serialised).
-  // FU-7 (R51 addendum 25): the RELEASE is blunted by the opioid and by IV lidocaine, not by the hypnotic
+  // The nociceptive surge — the SAME first-order law on the nociceptive term only. `?? 0` tolerates an older snapshot
+  // without it (the state is serialised).
+  // The RELEASE is blunted by the opioid and by IV lidocaine, not by the hypnotic
   const nox = Math.min(SYMP_MAX, Math.max(0, x.noxious * (1 - Math.min(1, Math.max(0, x.antinocOp ?? x.antinoc)))));
   const s0 = h.surge ?? 0;
   h.surge = s0 + (nox - s0) * (1 - Math.exp(-dtS / (nox > s0 ? SYMP_ON_TAU_S : SYMP_OFF_TAU_S)));
-  // FU-7 (audit D9): the releasable store falls with sustained sympathetic drive and refills slowly (`?? 1`: a snapshot
-  // written before FU-7 is replete)
+  // The releasable store falls with sustained sympathetic drive and refills slowly (`?? 1`: an older snapshot without
+  // it is replete)
   const rTarget = Math.max(CAT_RESERVE_FLOOR, 1 - (1 - CAT_RESERVE_FLOOR) * Math.min(1, h.symp / CAT_RESERVE_SYMP_REF));
   const r0 = h.catReserve ?? 1;
   h.catReserve = r0 + (rTarget - r0) * (1 - Math.exp(-dtS / (rTarget < r0 ? CAT_RESERVE_TAU_DOWN_S : CAT_RESERVE_TAU_UP_S)));
-  // FU-4 F2(a): the humoral arm follows baroreceptor UNLOADING with a minutes time constant and is not suppressed by
-  // an anaesthetic (Schadt & Ludbrook 1991). The unloading signal is the fall of mean pressure below the set point.
+  // The humoral arm follows baroreceptor UNLOADING with a minutes time constant and is not suppressed by an anaesthetic
+  // (Schadt & Ludbrook 1991). The unloading signal is the fall of mean pressure below the set point.
   const u = Math.max(0, x.mapSetMmHg - x.mapMmHg - HUM_DEADBAND_MMHG);
   const hTgt = (HUM_MAX * u) / (u + HUM_EC50_MMHG);
   h.hum += (hTgt - h.hum) * (1 - Math.exp(-dtS / (hTgt > h.hum ? HUM_ON_TAU_S : HUM_OFF_TAU_S)));
@@ -100,6 +100,6 @@ export function stepHormones(h: HormoneState, x: HormoneInputs, dtS: number): vo
   h.ne = neSs + (h.ne - neSs) * Math.exp(-kN * dtS);
   // cortisol: the drive is surgical stress (noxious, not blunted by anaesthesia — Desborough 2000) + adrenal drive
   h.cortDrive = Math.min(2, x.noxious + 0.3 * drive);
-  const cSs = CORT_BASAL * (x.cortBasalF ?? 1) * (1 + CORT_GAIN * h.cortDrive * x.cortResponse); // FU-10 E13: the basal deficit
+  const cSs = CORT_BASAL * (x.cortBasalF ?? 1) * (1 + CORT_GAIN * h.cortDrive * x.cortResponse); // The basal deficit
   h.cort = cSs + (h.cort - cSs) * Math.exp(-dtS / CORT_TAU_S);
 }

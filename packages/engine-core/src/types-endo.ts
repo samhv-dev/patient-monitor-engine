@@ -1,12 +1,12 @@
-// Stage 7e public types (tables §5c/§5e): endocrine/thermal clinical events, the 1 Hz `endo` event and the patient
-// profile's endocrine block. Kept in their own file so parallel stages do not collide in types.ts. Stage 7e owns NO
-// drug ids (R51 §3): dantrolene, dextrose, insulin and epinephrine are Stage 7g's library rows.
+// Endocrine public types (tables §5c/§5e): endocrine/thermal clinical events, the 1 Hz `endo` event and the patient
+// profile's endocrine block. Kept in their own file so parallel modules do not collide in types.ts. The endocrine
+// model owns NO drug ids: dantrolene, dextrose, insulin and epinephrine are the drug model's library rows.
 import type { SimSeconds } from './types.ts';
 
-/** The ONE `stimulus` shape (R51 addendum 12) is declared in types-neuro.ts (7f merged first; the plan's Task 1 note): 7e consumes it, 7f observes it. */
+/** The ONE `stimulus` shape is declared in types-neuro.ts: the endocrine model consumes it, the neuro model observes it. */
 import type { StimulusEvent } from './types-neuro.ts';
 
-/** Brief §7.2 ClinicalEvent members Stage 7e implements. */
+/** Brief §7.2 ClinicalEvent members the endocrine model implements. */
 export type EndoClinicalEvent =
   | StimulusEvent
   | {
@@ -21,7 +21,7 @@ export type EndoClinicalEvent =
       kind: 'thermal7e';
       exposure?: 'draped' | 'exposed' | 'prep';
       airSpeedMs?: number;
-      fluidWarmer?: boolean; // every IV line (7c's fluids and blood) enters at 37 °C
+      fluidWarmer?: boolean; // Every IV line (the blood model's fluids and blood) enters at 37 °C
       hme?: boolean;
     };
 
@@ -32,7 +32,7 @@ export type EndoEvent = {
   glucoseMgDl: number;
   glucoseMmolL: number;
   insulinUuMl: number;
-  epinephrinePgMl: number; // endogenous + 7g's
+  epinephrinePgMl: number; // Endogenous + the drug model's
   norepinephrinePgMl: number;
   cortisolNmolL: number;
   stressIndex: number;
@@ -43,11 +43,14 @@ export type EndoEvent = {
   tempPeriphC: number;
 };
 
-/** PatientProfile.endo (optional; defaults: no diabetes, euthyroid, normal adrenals). β-blockade is 7a's profile. */
+/**
+ * PatientProfile.endo (optional; defaults: no diabetes, euthyroid, normal adrenals). β-blockade is the circulation
+ * model's profile.
+ */
 export interface EndoProfileInput {
   diabetes?: 'none' | 'type1' | 'type2';
-  /** FU-10 E7: type 1 only — `false` OMITS the long-acting basal insulin (the missed-dose case: ketosis within hours).
-   * Default `true` (the profile as it behaved before FU-10). FU-8 A16 carries it into `pme-scenario/1`. */
+  /** Type 1 only — `false` OMITS the long-acting basal insulin (the missed-dose case: ketosis within hours).
+   * Default `true` (older profiles keep their behaviour). `pme-scenario/1` carries it. */
   basalInsulin?: boolean;
   thyroid?: 'normal' | 'hypo' | 'hyper';
   adrenalInsufficiency?: boolean;

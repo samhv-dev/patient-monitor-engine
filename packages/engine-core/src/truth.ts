@@ -1,13 +1,13 @@
-// Stage 7x (R52): prune the engine's pipeline state into a small, structured-clone-safe truth tree for developer
-// tools. Read-only: it walks the live state and builds a NEW object; it never writes to what it reads. No clone of
-// the whole state is made (the look-ahead already clones it every tick; this walk copies leaves only).
+// Prune the engine's pipeline state into a small, structured-clone-safe truth tree for developer tools. Read-only: it
+// walks the live state and builds a NEW object; it never writes to what it reads. No clone of the whole state is made
+// (the look-ahead already clones it every tick; this walk copies leaves only).
 import type { TruthLeaf, TruthTree } from './types-truth.ts';
 
 export const TRUTH_LIMITS = {
   /**
    * Leaf cap [ENG]: a tree cut here stays under the 50 KB budget. Today's tree averages 17 JSON bytes per leaf (keys
-   * included); the busy test case (organ sub-trees + 7g's pk with all 58 drugs given) averages 23, so 2 100 leaves ≈
-   * 48.7 KB. A typical future tree (12 drugs) is ≈ 1 900 leaves and is not cut.
+   * included); the busy test case (organ sub-trees + the drug model's pk with all 58 drugs given) averages 23, so 2 100
+   * leaves ≈ 48.7 KB. A typical future tree (12 drugs) is ≈ 1 900 leaves and is not cut.
    */
   maxLeaves: 2100,
   /** Numeric arrays up to this length are kept (per-lung pairs, small vectors); longer ones are buffers or histories. */
@@ -22,16 +22,17 @@ export const TRUTH_LIMITS = {
 const SKIP_TOP = new Set(['n', 'hrv', 'laneFilter', 'detFilter', 'qrs', 'hrm', 'detections', 'lanes', 'filterMode']);
 /** Keys skipped at any depth: event queues and PRNG state. */
 const SKIP_ANY = new Set(['out', 'rng']);
-/** Stage 7c: `blood.out` is the published chemistry block (Na, K, lactate, Hb…), not an event queue — kept (its twin `blood.core.out` is skipped). */
+/** `blood.out` is the published chemistry block (Na, K, lactate, Hb…), not an event queue — kept (its twin `blood.core.out` is skipped). */
 const KEEP_OUT = new Set(['blood.out']);
 /**
- * Sub-trees skipped by their full path: configuration and reference copies, not live physiology — the alarm profile
- * (≈ 2.3 KB of limits and labels) and 7a's copies of the profile parameters (the live ones are `hemo.circ.p`).
+ * Sub-trees skipped by their full path: configuration and reference copies, not live physiology — the alarm profile (≈
+ * 2.3 KB of limits and labels) and the circulation's copies of the profile parameters (the live ones are
+ * `hemo.circ.p`).
  */
-const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env', 'hemo.circ.acc', 'hemo.circ.cppAcc', 'hemo.num', 'resp.num', 'hemo.nibp', 'resp.spont.pc', 'resp.spont.effort', 'resp.wakeMmHg', 'resp.brk', 'resp.lung.mp', 'pk.bus.cns.hypVentPropEq', 'pk.bus.cns.opioidVentFentEq']); // Stage 7e: its input copy, profile and heat calibration; FU-4 (E-FU4-3): the in-progress beat and CPP accumulators; FU-5: the monitor's numerics machinery and the cuff (device state; the console hides them as internal); FU-6 (E-FU6-8): the drive's lagged central PCO2 and neural effort are machinery; F7's per-patient wake draw is a constant; FU-7 (E-FU7-8): the ventilatory-site copies of the two potency outputs (the console shows the brain-site ones)
-// Stage 7k (E-7k-1): `resp.brk` is 7k's measurement machinery; `resp.lung.mp` the unit mechanics, a derived copy of
-// `resp.lung.lp` rebuilt at every aeration change (glossary §5.16 rule 5: "the unit sigmoids") — together they pay for 7k's
-// 53 leaves (resp.mechanics, resp.vd, resp.volumes) under the 2 100-leaf cap.
+const SKIP_PATH = new Set(['dev.alarms.profile', 'hemo.circ.prof', 'hemo.circ.base', 'hemo.circ.ref', 'endo.core.x', 'endo.core.profile', 'resp.temp.env', 'hemo.circ.acc', 'hemo.circ.cppAcc', 'hemo.num', 'resp.num', 'hemo.nibp', 'resp.spont.pc', 'resp.spont.effort', 'resp.wakeMmHg', 'resp.brk', 'resp.lung.mp', 'pk.bus.cns.hypVentPropEq', 'pk.bus.cns.opioidVentFentEq']); // The endocrine model's input copy, profile and heat calibration; the in-progress beat and CPP accumulators; the monitor's numerics machinery and the cuff (device state; the console hides them as internal); the drive's lagged central PCO2 and neural effort are machinery; the per-patient wake draw is a constant; the ventilatory-site copies of the two potency outputs (the console shows the brain-site ones)
+// `resp.brk` is the respiratory-mechanics measurement machinery; `resp.lung.mp` the unit mechanics, a derived copy
+// of `resp.lung.lp` rebuilt at every aeration change (glossary §5.16 rule 5: "the unit sigmoids") — together they
+// pay for the 53 respiratory-mechanics leaves (resp.mechanics, resp.vd, resp.volumes) under the 2 100-leaf cap.
 /** Paths are only built as deep as the deepest SKIP_PATH entry, so the walk stays a leaf copy below that. */
 const SKIP_PATH_DEPTH = Math.max(...[...SKIP_PATH].map((p) => p.split('.').length));
 
@@ -93,7 +94,7 @@ export function pruneTruth(st: object, dev?: object): { tree: TruthTree; leaves:
     }
     const out: TruthTree = {};
     for (const [k, x] of Object.entries(v)) {
-      if (SKIP_ANY.has(k) && !(path && KEEP_OUT.has(`${path}.${k}`))) continue; // Stage 7c: KEEP_OUT
+      if (SKIP_ANY.has(k) && !(path && KEEP_OUT.has(`${path}.${k}`))) continue; // KEEP_OUT
       const p = path && depth < SKIP_PATH_DEPTH ? `${path}.${k}` : '';
       if (p && SKIP_PATH.has(p)) continue;
       const w = walk(x, depth + 1, p);

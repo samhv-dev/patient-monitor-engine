@@ -6,8 +6,8 @@ import { bandpassZeroPhase } from '../templates/dsp.ts';
 
 export function detectR(x: Float64Array, fs: number): number[] {
   const clean = Float64Array.from(x, (v) => (Number.isFinite(v) ? v : 0));
-  // FU-11 (F22): an absent signal has no R peaks. A flat (or all-invalid → zero) trace gave a zero threshold, and every
-  // sample of a plateau passed the strict neighbour test — 40 "peaks" (240/min) in 10 s of zeros.
+  // An absent signal has no R peaks. A flat (or all-invalid → zero) trace gave a zero threshold, and every sample of a
+  // plateau passed the strict neighbour test — 40 "peaks" (240/min) in 10 s of zeros.
   let lo = Infinity;
   let hi = -Infinity;
   for (const v of clean) {
@@ -28,7 +28,7 @@ export function detectR(x: Float64Array, fs: number): number[] {
   const w = Math.round(0.04 * fs);
   for (let i = 1; i < a.length - 1; i++) {
     const v = a[i] as number;
-    // FU-11 (F22): a peak rises above zero and above its left neighbour (a plateau counts once, at its first sample)
+    // A peak rises above zero and above its left neighbour (a plateau counts once, at its first sample)
     if (!(v > 0) || v < (thr[i] as number) || v <= (a[i - 1] as number) || v < (a[i + 1] as number)) continue;
     // polarity of the dominant deflection in this window decides whether R is a max or a min of the raw signal
     let best = i;

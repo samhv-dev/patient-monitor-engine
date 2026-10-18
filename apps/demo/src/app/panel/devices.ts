@@ -56,8 +56,8 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     attached.set(s, on);
     void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
   }));
-  // A Remote does not know which sensors are attached (the engine does not report it yet, R-S9-6): its toggles start
-  // with no pressed state, and the first tap attaches the sensor (R50 review F14).
+  // A Remote does not know which sensors are attached (the engine does not report it yet): its toggles start with no
+  // pressed state, and the first tap attaches the sensor.
   if (!host) for (const b of toggles) b.removeAttribute('aria-pressed');
   const sensors = h('div', { class: 'toggles' }, ...toggles);
 
@@ -72,7 +72,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
     const act = a?.active ?? [];
     list.replaceChildren(...[...act].sort((x, y) => x.level - y.level).map((x) => {
       const lv = LEVEL_NAME[x.level];
-      // glossary words outside the monitor frame (review F4); the monitor's own text is the tooltip
+      // Glossary words outside the monitor frame; the monitor's own text is the tooltip
       return h('li', { 'data-level': lv, title: `On the monitor: ${x.text}`, 'data-vendor-title': '' },
         h('span', { class: 'pri', 'data-level': lv }, `${LEVEL_MARK[x.level]} ${lv[0]?.toUpperCase()}${lv.slice(1)}`),
         h('span', {}, alarmLine(x).text, x.latched ? h('span', { class: 'muted' }, ' (latched)') : null),

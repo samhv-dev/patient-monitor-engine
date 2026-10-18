@@ -1,6 +1,6 @@
-// Stage 6a demo glue: a monitor that runs MonitorCore on the MAIN thread (the renderer's fallback path), so the
+// Controller demo glue: a monitor that runs MonitorCore on the MAIN thread (the renderer's fallback path), so the
 // page has the engine in hand for snapshot/restore/clock control. MonitorHandle now has async snapshot()/restore()
-// and role (renderer request R-1, ruling R25), but not the synchronous clock control (renderT, rate, jump) that
+// and role, but not the synchronous clock control (renderT, rate, jump) that
 // ViewerSync steers every frame, so the pages stay on this path; the drawing code is the renderer's own.
 import { playBeep, ToneScheduler, unlockAudio, type AudioOut } from '@pme/audio';
 import type { EngineEvent, EngineOptions, LeadId } from '@pme/engine-core';
@@ -43,7 +43,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
     scheduler?.clock.setAnchor({ simT: anchor.simT, perfMs: anchor.epochMs - performance.timeOrigin, timeScale: anchor.timeScale });
     for (const e of events) {
       if (e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
-      // Same tone handling as the renderer's mountMonitor after Stage 1.1 (R15, H3): stable ids, refT for the
+      // Same tone handling as the renderer's mountMonitor: stable ids, refT for the
       // lateness rule, cancel by id when the engine lists them.
       if (e.type === 'tone') {
         scheduler?.enqueue({
@@ -121,7 +121,7 @@ export function mountSimMonitor(el: HTMLElement, opts: { engine?: EngineOptions;
       };
     },
     enableSound() {
-      // Idempotent, as mountMonitor (Stage 1.1, review M7): one AudioContext however often it is tapped.
+      // Idempotent, as mountMonitor: one AudioContext however often it is tapped.
       soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
         audio = out;
         scheduler = new ToneScheduler({

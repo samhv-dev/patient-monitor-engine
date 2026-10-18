@@ -23,7 +23,7 @@ export interface GlucoseState {
   g: number; // mg/dL
   x: number; // /min
   i: number; // µU/mL (total)
-  iExo: number; // µU/mL of it from exogenous insulin (7g doses, the type 1 basal insulin)
+  iExo: number; // µU/mL of it from exogenous insulin (the drug model's doses, the type 1 basal insulin)
   gb: number; // basal glucose of this patient (profile: type 2 higher)
   gutMg: number; // carbohydrate in the stomach, mg
   gut2Mg: number; // carbohydrate in the intestine, mg

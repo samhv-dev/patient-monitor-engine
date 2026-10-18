@@ -6,7 +6,7 @@ describe('site profile', () => {
     expect(parseSite({ skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk' })).toEqual({
       schema: 'pme-site/1', skin: 'iran-icu-as-found', theme: 'projector-light', fps: 30, panel: 'drawer', gasUnit: 'kPa', sensorsOff: true, drugNames: 'uk',
     });
-    expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses (ruling 5)
+    expect(DEFAULT_SITE.drugNames).toBe('us'); // "epinephrine / norepinephrine" unless the site chooses
     expect(parseSite({ skin: 'nonsense', fps: 144, theme: 'neon' })).toEqual(DEFAULT_SITE);
     expect(parseSite(null)).toEqual(DEFAULT_SITE);
   });

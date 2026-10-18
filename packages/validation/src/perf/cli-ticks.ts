@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { overBudget, tickBench } from './tick-bench.ts';
 
 const i = process.argv.indexOf('--seconds');
-// FU-11 (F10): `--budget-ms <p99>` makes this a gate: the run fails (exit 1) when the tick p99 is over the budget. It is a
-// MANUAL release check (8b's checklist runs it on an idle machine); CI does not run it — its runners share cores.
+// `--budget-ms <p99>` makes this a gate: the run fails (exit 1) when the tick p99 is over the budget. It is a MANUAL
+// release check (the release checklist runs it on an idle machine); CI does not run it — its runners share cores.
 const b = process.argv.indexOf('--budget-ms');
 const budget = b >= 0 ? Number(process.argv[b + 1]) : null;
 const s = await tickBench(i >= 0 ? Number(process.argv[i + 1]) : 600);

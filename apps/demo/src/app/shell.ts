@@ -34,7 +34,7 @@ export class Shell {
   private readonly routeFns = new Set<(r: Route) => void>();
 
   constructor(parent: HTMLElement, o: { hostless: boolean; follower?: boolean }) {
-    // FU-11 (K2): a second-screen learner monitor shows the monitor alone — no views to switch to
+    // A second-screen learner monitor shows the monitor alone — no views to switch to
     const navIds = (id: RouteId) => (o.follower ? false : !o.hostless || id === 'settings');
     this.nav = h('nav', { class: 'nav', 'aria-label': 'Views' }, ...NAV.filter(([id]) => navIds(id)).map(([id, label]) => h('a', { href: hrefOf(id), 'data-route': id }, label)));
     this.right = h('div', { class: 'topright' });
@@ -104,7 +104,7 @@ export class Shell {
  * tokens; the panel's alarm list and the top-bar count read what the monitor shows). White text on a bright red below
  * 4.5:1 switches to black (research/13-ui-design-references rule 9: black text on bright red). A skin whose messages
  * carry asterisks gets `***`/`**`/`*`; a skin without marks (saadat-like) keeps `!!!`/`!!`/`!`, because the mirror must
- * still code priority by a mark as well as colour and word (rule 4; R50 review F12).
+ * still code priority by a mark as well as colour and word (rule 4).
  */
 export function applySkinAlarmColours(skin: string, theme: string): void {
   const bar = skinAlarmBar(skin, theme);
@@ -127,7 +127,7 @@ export function skinAlarmBar(skin: string, theme = ''): { L1: { bg: string; fg: 
   }
 }
 
-/** FU-11 (owner ruling Q4): what the skin (and its preset) says still alarms with every limit group off. */
+/** What the skin (and its preset) says still alarms with every limit group off. */
 export function skinAlwaysOn(skin: string): { alwaysOn: readonly string[]; apnoeaOff: boolean } {
   try {
     const r = resolveSkin(skin);
@@ -139,6 +139,6 @@ export function skinAlwaysOn(skin: string): { alwaysOn: readonly string[]; apnoe
 
 export const LEVEL_NAME: Readonly<Record<1 | 2 | 3, 'high' | 'medium' | 'low'>> = { 1: 'high', 2: 'medium', 3: 'low' };
 /** Priority as text and marker as well as colour (IEC 60601-1-8; research/13-ui-design-references rule 4). The marks
- *  follow the active skin (`applySkinAlarmColours`): the mirror shows the monitor's own marks (R50 review F12). */
+ *  follow the active skin (`applySkinAlarmColours`): the mirror shows the monitor's own marks. */
 export const LEVEL_MARK: Record<1 | 2 | 3, string> = { 1: '!!!', 2: '!!', 3: '!' };
 

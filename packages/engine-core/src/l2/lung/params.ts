@@ -1,6 +1,6 @@
-// Lung module constants (tables §4; catalogue §22–§23, §33; R43). Adult 70 kg values; volumes and compliances scale
-// with IBW/70, resistances with 70/IBW (tables §2.2 rule). Every number cites its row, or [ENG] with the prototype
-// number it was tuned to (plan "Prototype results").
+// Lung module constants (tables §4; catalogue §22–§23, §33). Adult 70 kg values; volumes and compliances scale with
+// IBW/70, resistances with 70/IBW (tables §2.2 rule). Every number cites its row, or [ENG] with the prototype number it
+// was tuned to.
 export const L = 0;
 export const R = 1;
 /** Units: 0 L-fast, 1 L-slow, 2 R-fast, 3 R-slow (side = u >> 1, slow = u & 1). */
@@ -14,17 +14,17 @@ export const R_TUBE = 4; // cmH2O·s/L
 /** Chest-wall compliance (catalogue lead `ccw`; Behazin 2010 normal 223 → 200 rounded). */
 export const CCW_ML = 200;
 /**
- * TLC and RV, mL/kg IBW (Pulse 4.3.2 standard patient: TLC 80, RV 16; audit 03 §1) — INTERNAL: the range of the unit
- * P–V sigmoids (side.ts `mechParams`), not the patient's clinical TLC/RV. Stage 7k (R50 F5) owns those: `resp.volumes.tlc`
- * and `.rv` (ECSC/Zapletal × pathology). Re-basing this range on them moves every mechanics number (Q-7k-6, v1.1).
+ * TLC and RV, mL/kg IBW (Pulse 4.3.2 standard patient: TLC 80, RV 16; audit 03 §1) — INTERNAL: the range of the unit P–V
+ * sigmoids (side.ts `mechParams`), not the patient's clinical TLC/RV. The respiratory-mechanics model owns those:
+ * `resp.volumes.tlc` and `.rv` (ECSC/Zapletal × pathology). Re-basing this range on them moves every mechanics number
+ * (v1.1).
  */
 export const TLC_ML_KG = 80;
 export const RV_ML_KG = 16;
 /**
- * Venegas sigmoid on the LUNG (audit borrow #8, A9; Venegas, Harris & Simon 1998): V(P) = a + b/(1 + e^(−(P−c)/d)),
- * P = transpulmonary pressure above the FRC state, V above FRC. c = the pressure of maximal compliance: 8 cmH2O puts
- * the tidal range of a normal breath on the steep part [ENG]; d = b/(4·C) so the slope at c equals the unit's
- * compliance; a from V(0) = 0.
+ * Venegas sigmoid on the LUNG (Venegas, Harris & Simon 1998): V(P) = a + b/(1 + e^(−(P−c)/d)), P = transpulmonary
+ * pressure above the FRC state, V above FRC. c = the pressure of maximal compliance: 8 cmH2O puts the tidal range of a
+ * normal breath on the steep part [ENG]; d = b/(4·C) so the slope at c equals the unit's compliance; a from V(0) = 0.
  */
 export const VENEGAS_C = 8;
 /** Integration sub-step for the mechanics (4 per 62.5 Hz sample) [ENG: h/τ ≤ 0.04 for the neonatal τ 0.1 s]. */
@@ -60,22 +60,20 @@ export const HPV_PAO2_LO = 40;
 export const ATEL_PERF = 1.0;
 /** Low-V/Q units have V/Q 0.1 (FiO2-responsive admixture; catalogue lead `vqLow`) [ENG]. */
 export const VQ_LOW = 0.1;
-/** Healthy unperfused fraction of alveolar ventilation: Pa−EtCO2 = 0.075 × 40 = 3 mmHg (Stage 3's gradient; tables §4.4). */
+/** Healthy unperfused fraction of alveolar ventilation: Pa−EtCO2 = 0.075 × 40 = 3 mmHg (tables §4.4). */
 export const HEALTHY_VDALV = 0.075;
-/** Capnogram (decision 9): phase II τ added = min(TAU_II_MAX, K_TAU_II·(τ̄_exp − TAU_EXP_REF)) [ENG, Q72: GOLD 1–4 → 111.6/115.7/124.1/131°]. */
+/** Capnogram: phase II τ added = min(TAU_II_MAX, K_TAU_II·(τ̄_exp − TAU_EXP_REF)) [ENG, Q72: GOLD 1–4 → 111.6/115.7/124.1/131°]. */
 export const K_TAU_II = 0.1;
 export const TAU_II_MAX = 0.3;
 export const TAU_EXP_REF = 0.54; // healthy ventilation-weighted expiratory τ (prototype)
 
 /**
- * FU-4 F3 (ruling 1) — a TENSION pneumothorax is not a step. Air enters the pleural space through a ONE-WAY VALVE:
- * it flows in whenever the alveolar (or airway) pressure exceeds the pleural pressure and cannot come back out, so the
- * hemithorax pressure climbs breath by breath toward the catalogue ceiling (`ptxTension`'s `pPtx`, 15–25 mmHg at
- * severity 1) — fast on positive-pressure ventilation, much slower on spontaneous gasps, where inspiration is
- * NEGATIVE at the alveolus and only the expiratory phase drives the valve.
- * Before this the catalogue's `set` put the full 25 mmHg on within one control step and the patient was in PEA 60 s
- * after onset, which the orchestrator ruled wrong (obstructive shock and PEA belong at 3–10 min on PPV).
- * `lp.pPtx` keeps its name, place and unit (mmHg) — V.1 reads it.
+ * A TENSION pneumothorax is not a step. Air enters the pleural space through a ONE-WAY VALVE: it flows in whenever the
+ * alveolar (or airway) pressure exceeds the pleural pressure and cannot come back out, so the hemithorax pressure
+ * climbs breath by breath toward the catalogue ceiling (`ptxTension`'s `pPtx`, 15–25 mmHg at severity 1) — fast on
+ * positive-pressure ventilation, much slower on spontaneous gasps, where inspiration is NEGATIVE at the alveolus and
+ * only the expiratory phase drives the valve. Obstructive shock and PEA belong at 3–10 min on PPV, not 60 s after
+ * onset. `lp.pPtx` keeps its name, place and unit (mmHg) — the ventilator link reads it.
  */
 export const PTX_VALVE_PER_CMH2O_S = 0.12; // mmHg of pleural pressure gained per cmH2O of driving pressure per second [ENG, fit: obstructive shock and PEA 3–10 min after onset on PPV — measured 8.9 min]
 export const PTX_DRAIN_TAU_S = 20; // decompression (severity → 0, or a chest drain): τ of the fall [ENG]

@@ -76,7 +76,7 @@ export function createVentDriver(port: LinkPort | null, profile: ProfileId = 'no
     if (m.kind === 'lungState') linkEvent(core, m.ev);
     else if (m.kind === 'clock') allowed = Math.max(allowed, m.ventTick);
     else if (m.kind === 'run') {
-      // Stage 10 (fast-forward): the engine is about to run past these ticks — produce their frames now, not on the wall clock
+      // The engine is about to run past these ticks — produce their frames now, not on the wall clock (fast-forward)
       allowed = Math.max(allowed, m.ventTick);
       runTo(m.ventTick * LINK_TICK_S);
       sim = Math.max(sim, k * LINK_TICK_S);

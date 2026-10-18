@@ -23,7 +23,7 @@ export function patientTab(c: PanelCtx): HTMLElement {
         host.restart({ spec: host.spec, mode: host.mode });
         link.note('Patient restarted', 'system');
         toast('Patient restarted');
-      }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling (R50 review F11)
+      }) // a secondary button: red is for alarms; the confirm dialog carries the danger styling
     : null;
   const edit = host ? h('a', { class: 'btn ghost', href: '#/' }, 'Change the patient on the Start screen') : h('p', { class: 'hint' }, 'The patient is chosen on the monitor screen.');
   // Task 26 — acute events: start or stop one of the engine's systemic conditions; staged with the other changes and

@@ -1,4 +1,4 @@
-// Stage 6a viewer page: a second monitor (projector) that synthesises its trace locally from the host's
+// Controller viewer page: a second monitor (projector) that synthesises its trace locally from the host's
 // snapshot + mirrored commands (ViewerSync). No samples ever arrive.
 import { normalizeSessionCode, ViewerSync } from '@pme/controller';
 import { mountSimMonitor } from './sim-monitor.ts';

@@ -1,4 +1,4 @@
-// R50 review F4: the alarm mirror speaks glossary words, never the vendor's aliases.
+// The alarm mirror speaks glossary words, never the vendor's aliases.
 import { describe, expect, it } from 'vitest';
 import type { NumericId } from '@pme/engine-core';
 import { alarmLine, FIXED_ALARM_WORDS, limitsOffTitle } from './alarms.ts';

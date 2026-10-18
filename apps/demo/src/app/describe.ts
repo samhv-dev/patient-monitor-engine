@@ -9,7 +9,7 @@ import { rhythmLabel } from './rhythms.ts';
 
 type Any = Record<string, unknown>;
 const num = (x: unknown): number => (typeof x === 'number' ? x : Number.NaN);
-const drug = (id: unknown): string => (DRUGS[String(id)] ? drugName(String(id)) : 'Drug'); // the site's name set (ruling 5)
+const drug = (id: unknown): string => (DRUGS[String(id)] ? drugName(String(id)) : 'Drug'); // The site's name set
 const over = (s: unknown): string => {
   const n = num(s);
   if (!(n > 0)) return '';
@@ -49,7 +49,7 @@ function event(e: Any): string {
       return e.rateMlPerMin !== undefined ? `Bleeding ${e.rateMlPerMin} mL/min` : `Blood loss ${e.volumeMl} mL${over(e.overS)}`;
     case 'airway':
       return `Airway ${AIRWAY[String(e.state)] ?? 'changed'}`;
-    case 'airwayDevice': // Stage 13: the debrief's timeline printed "Clinical event" for it
+    case 'airwayDevice': // The debrief's timeline printed "Clinical event" for it
       return e.device === 'ett' ? 'Tracheal tube in place' : e.device === 'sga' ? 'Supraglottic airway in place' : 'Airway device removed';
     case 'ventilation':
       return e.source === 'ventilator' || e.source === 'bvm'
@@ -101,7 +101,7 @@ export function describeCommand(c: Any): string {
     case 'setFactor':
       return `Model factor ×${c.factor}`;
     case 'time':
-      if (c.action === 'jump') return `Fast-forward ${spanText(Number(c.value))}`; // Stage 10
+      if (c.action === 'jump') return `Fast-forward ${spanText(Number(c.value))}`;
       return c.action === 'pause' ? 'Simulation paused' : c.action === 'resume' ? 'Simulation resumed' : c.action === 'scale' ? `Speed ×${c.value}` : 'Time changed';
     case 'scenario': {
       const doc = c.doc as { title?: string } | undefined;
@@ -128,10 +128,10 @@ export function describeCommand(c: Any): string {
   }
 }
 
-/** Stage 10: a sim time as the session clock shows it ("13:20"; ui.ts's `clock`, which the log cannot import in Node). */
+/** A sim time as the session clock shows it ("13:20"; ui.ts's `clock`, which the log cannot import in Node). */
 export const timeText = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
-/** Stage 10: a fast-forward's span in words ("5 min", "90 s"). */
+/** A fast-forward's span in words ("5 min", "90 s"). */
 export function spanText(s: number): string {
   const r = Math.round(s); // a span computed as toT − fromT is a few ULPs off a whole second (604.3 − 484.3 = 119.99…)
   return Number.isFinite(s) && r > 0 && r % 60 === 0 ? `${r / 60} min` : `${r} s`;

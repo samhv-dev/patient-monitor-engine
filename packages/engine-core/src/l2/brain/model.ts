@@ -1,7 +1,7 @@
-// BrainModel (Stage 7d, tables §5.1): plain-data state stepped at 10 Hz from the circulation/gas truths.
-// Intracranial volume → ICP (mechanics.ts) ⇄ CPP → CBF (flow.ts, conductance relaxing with τ 10 s) → CBV (Grubb)
-// solved by damped fixed-point each step; CSF displacement, mass lesion, oedema, osmotherapy and head-up posture
-// change the volume; Cushing (cushing.ts) and herniation are states.
+// BrainModel (tables §5.1): plain-data state stepped at 10 Hz from the circulation/gas truths. Intracranial volume →
+// ICP (mechanics.ts) ⇄ CPP → CBF (flow.ts, conductance relaxing with τ 10 s) → CBV (Grubb) solved by damped fixed-point
+// each step; CSF displacement, mass lesion, oedema, osmotherapy and head-up posture change the volume; Cushing
+// (cushing.ts) and herniation are states.
 import { createCushing, cushingDMap, stepCushing, type CushingState } from './cushing.ts';
 import { autoreg, brainOxygen, caO2, cbvRel, co2Factor, NO_DRUGS, o2Factor, tempCmro2, type BrainDrugs } from './flow.ts';
 import { csfDisplacementRate, elastance, icpOfVolume } from './mechanics.ts';
@@ -21,8 +21,8 @@ export interface BrainInputs {
   paco2: number; pao2: number; sao2: number; // mmHg, mmHg, fraction
   hb: number; // g/dL
   tempC: number;
-  drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: 7f/7g, or the INTERIM fallback)
-  osm?: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (absent/null without 7c)
+  drugs: BrainDrugs; // anaesthetic CMRO2 multiplier and direct vasodilation (organs/inputs.ts: neuro/drugs, or INTERIM fallback)
+  osm?: number | null; // The blood model's plasma effective osmolality, mOsm/kg (absent/null without the blood model)
 }
 export interface BrainState {
   t: number;
@@ -31,8 +31,8 @@ export interface BrainState {
   oedema: number; // mL
   csfDisp: number; // mL displaced
   osm: OsmDose[];
-  osm0?: number; // FU-9 F11: the patient's own resting plasma osmolality (latched on the first reading)
-  osmWater?: number; // FU-9 F11: brain water gained from a fall in plasma osmolality, mL
+  osm0?: number; // The patient's own resting plasma osmolality (latched on the first reading)
+  osmWater?: number; // Brain water gained from a fall in plasma osmolality, mL
   headUpDeg: number;
   g: number; // cerebrovascular conductance, CBF-relative per mmHg CPP
   paco2Ref: number;
@@ -133,7 +133,7 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   b.csfDisp = Math.max(0, b.csfDisp + (csfDisplacementRate(b.icp, b.csfDisp, b.p.icp0, b.p.rOut, b.p.csfReserve) * dt) / 60);
   b.paco2Ref += (inp.paco2 - b.paco2Ref) * (dt / PACO2_ADAPT_TAU_S);
   if (typeof inp.osm === 'number' && Number.isFinite(inp.osm) && inp.osm > 0) {
-    // FU-9 F11: hypo-osmolar brain swelling (the fall only; osmotherapy's rise is the dose term)
+    // Hypo-osmolar brain swelling (the fall only; osmotherapy's rise is the dose term)
     b.osm0 ??= inp.osm;
     const target = OSM_WATER_ML_PER_MOSM * Math.max(0, b.osm0 - inp.osm);
     b.osmWater = (b.osmWater ?? 0) + (target - (b.osmWater ?? 0)) * (1 - Math.exp(-dt / (HTS_TAU_IN_MIN * 60)));
@@ -146,8 +146,8 @@ export function stepBrain(b: BrainState, inp: BrainInputs, dt: number): void {
   if (b.cush.drive < 0.01) b.mapBase += (inp.map - b.mapBase) * (1 - Math.exp(-dt / MAP_BASE_TAU_S));
   const hu = headUp(b.headUpDeg);
   // Cushing is the response to INTRACRANIAL hypertension (tables §5.1 Cushing row): with the ICP at or below the
-  // treatment threshold neither trigger counts — a low CPP from systemic hypotension alone (a MANUAL SBP 45 shock, Stage 2
-  // NIBP acceptance 9) is the circulation's business, not a brainstem-compression surge [executor mechanism, gate note].
+  // treatment threshold neither trigger counts — a low CPP from systemic hypotension alone (a MANUAL SBP 45 shock) is
+  // the circulation's business, not a brainstem-compression surge [ENG].
   const raised = b.icp > ICP_THRESHOLD;
   stepCushing(b.cush, raised ? b.mapBase - MMHG_PER_CM_BLOOD * hu.hCm - b.icp : Infinity, raised ? b.mapHead - b.icp : Infinity, dt);
   b.lowCppS = b.cpp <= HERNIATION_CPP ? b.lowCppS + dt : 0;

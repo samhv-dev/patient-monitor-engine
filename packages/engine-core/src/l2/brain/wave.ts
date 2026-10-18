@@ -27,7 +27,7 @@ export function beatShapeArea(ratio: number): number {
   return (SQ2PI * (P_SIGMA_S[0] + ratio * P_SIGMA_S[1] + P3_REL * P_SIGMA_S[2])) / Math.max(1, ratio);
 }
 
-/** One sample: mean ICP + pulse (zero mean over the beat) + respiratory swing (u − 0.5 from Stage 3's breath signal). */
+/** One sample: mean ICP + pulse (zero mean over the beat) + respiratory swing (u − 0.5 from the breath signal). */
 export function icpSample(icpMean: number, elast: number, pp: number, sinceR: number, rr: number, u: number): number {
   const ratio = p2p1(elast);
   const amp = elast * PULSE_VOL_ML * Math.max(0, pp / 40);

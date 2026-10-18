@@ -8,28 +8,28 @@ export { RHYTHMS, RHYTHM_IDS } from './l2/ecg/rhythms.ts';
 export { defaultModifiers, mergeModifiers, validateModifiers } from './modifiers.ts';
 export { ecgVocabulary, type EcgVocabulary } from './l2/ecg/vocabulary.ts';
 export { dominantHz, rms, welch } from './util/dsp.ts';
-export * from './types-hemo.ts'; // Stage 2
-export * from './types-device.ts'; // Stage 4b
-export { capture12, LAYOUT_3X4, CAPTURE_S, type Capture12 } from './l3/capture12/capture.ts'; // Stage 4b
-export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store.ts'; // Stage 4b
-export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts'; // Stage 4b
-export * from './types-resp.ts'; // Stage 3
-export type * from './types-endo.ts'; // Stage 7e
-export type * from './types-organs.ts'; // Stage 7d
-export * from './types-lung.ts'; // Stage 7b
-export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.ts'; // Stage 7b
-export { resolveLung } from './l2/lung/conditions.ts'; // Stage 7b
-export { ventReference, type VentReference } from './l2/lung/vent-reference.ts'; // Stage 7b
+export * from './types-hemo.ts';
+export * from './types-device.ts';
+export { capture12, LAYOUT_3X4, CAPTURE_S, type Capture12 } from './l3/capture12/capture.ts';
+export { TrendStore, TREND_NUMERICS, TREND_SLOTS } from './l3/trends/trend-store.ts';
+export { EventLog, type LogEntry, type LogKind } from './l3/trends/event-log.ts';
+export * from './types-resp.ts';
+export type * from './types-endo.ts';
+export type * from './types-organs.ts';
+export * from './types-lung.ts';
+export { LUNG_CONDITIONS, VENT_ROW_MAP, HEALTHY } from '../data/lung-pathology.ts';
+export { resolveLung } from './l2/lung/conditions.ts';
+export { ventReference, type VentReference } from './l2/lung/vent-reference.ts';
 export * from './types-vent-link.ts'; // Stage V
-export * from './types-blood.ts'; // Stage 7c
-export { spo2PitchHz } from './l3/spo2/spo2.ts'; // Stage 3
-export type * from './types-circ.ts'; // Stage 7a
-export type * from './types-pk.ts'; // Stage 7g
-export { DRUG_BUS_NEUTRAL } from './types-pk.ts'; // Stage 7g
-export type { PkState, DrugInst } from './l2/pk/pipeline.ts'; // Stage 7g
-export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // Stage 7g (demo/controller drug pickers)
-export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // FU-7 evidence page: the onset shapes (gamma vs chain)
-export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // FU-7 evidence page: the shock-state factor
-export type * from './types-truth.ts'; // Stage 7x
-export type * from './types-neuro.ts'; // Stage 7f
-export { pruneTruth, TRUTH_LIMITS } from './truth.ts'; // Stage 7x
+export * from './types-blood.ts';
+export { spo2PitchHz } from './l3/spo2/spo2.ts';
+export type * from './types-circ.ts';
+export type * from './types-pk.ts';
+export { DRUG_BUS_NEUTRAL } from './types-pk.ts';
+export type { PkState, DrugInst } from './l2/pk/pipeline.ts';
+export { DRUGS, DRUG_IDS } from './l2/pk/data/drugs.ts'; // demo/controller drug pickers
+export { gammaConc, gammaN, gammaShape } from './l2/pk/gamma.ts'; // Evidence page: the onset shapes (gamma vs chain)
+export { shockStateFactor } from './l3/defib-pacer/outcome.ts'; // Evidence page: the shock-state factor
+export type * from './types-truth.ts';
+export type * from './types-neuro.ts';
+export { pruneTruth, TRUTH_LIMITS } from './truth.ts';

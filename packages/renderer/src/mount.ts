@@ -1,7 +1,7 @@
-// mountMonitor (brief §7.6). Stage 1: ECG lanes + HR tile + QRS beep; Stage 2: pressure/pleth lanes and tiles.
-// Stage 4b: `skin` takes any resolveSkin id (skin or preset) with an optional theme and page; the lanes, tiles,
-// alarm header, alarm sound and device tones follow the skin, `setSkin` switches without restarting the engine,
-// and the handle exposes the 12-lead capture, the trends and the event log. Without `skin` the Stage 1/2 look stays.
+// mountMonitor (brief §7.6): ECG lanes + HR tile + QRS beep; pressure/pleth lanes and tiles. `skin` takes any
+// resolveSkin id (skin or preset) with an optional theme and page; the lanes, tiles, alarm header, alarm sound and
+// device tones follow the skin, `setSkin` switches without restarting the engine, and the handle exposes the 12-lead
+// capture, the trends and the event log. Without `skin` the legacy look stays.
 import {
   AlarmSounder, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
@@ -10,44 +10,44 @@ import { resolveSkin, type ResolvedSkin } from '@pme/skins';
 import { AlarmAudioBridge } from './alarm-audio.ts';
 import { DeviceUI } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
-import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts'; // Stage 2
-import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts'; // Stage 4b
-import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts'; // Stage 2
-import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts'; // Stage 3
-import { simClock } from './overlays.ts'; // Stage 10
+import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
+import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts';
+import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
+import { formatEtco2, formatRr, formatSpo2, formatTemp } from './numerics-resp.ts';
+import { simClock } from './overlays.ts';
 import type { ClockAnchor, Size } from './protocol.ts';
 import { createHost, type Host, type RenderPath } from './worker-host.ts';
 
 export interface MountOptions {
   engine?: EngineOptions;
-  /** Stage 4b: any resolveSkin id ('saadat-like', 'iran-icu-as-found', 'philips-like', …). Omitted: the Stage 1/2 look. */
+  /** Any resolveSkin id ('saadat-like', 'iran-icu-as-found', 'philips-like', …). Omitted: the legacy look. */
   skin?: string;
-  /** Stage 4b: 'projector-light' | 'ecg-grid'. */
+  /** 'projector-light' | 'ecg-grid'. */
   theme?: string;
-  /** Stage 4b: a page of the skin ('P1', 'P10' = PUMP on saadat-like). */
+  /** A page of the skin ('P1', 'P10' = PUMP on saadat-like). */
   page?: string;
   layout?: string;
   worker?: 'auto' | 'off';
   lanes?: LeadId[];
-  /** Stage 2: waveform lanes below the ECG lanes (their tiles appear with them). */
+  /** Waveform lanes below the ECG lanes (their tiles appear with them). */
   waves?: WaveLaneId[];
-  /** Stage 2: show the NIBP tile. */
+  /** Show the NIBP tile. */
   nibp?: boolean;
-  /** Stage 3: show the temperature tile (T1/T2). */
+  /** Show the temperature tile (T1/T2). */
   temp?: boolean;
   fps?: 60 | 30;
   pxPerMm?: number;
-  /** The part this monitor plays in a session (brief §7.5; renderer request R-1, ruling R25). Default 'host'. */
+  /** The part this monitor plays in a session (brief §7.5). Default 'host'. */
   role?: MonitorRole;
   /**
-   * FU-11 (owner ruling Q3): who manages this window's alarm SOUND. 'engine' (default): the device's Silence. 'window':
-   * this window alone (`silenceAudio()`); the instructor's Silence does not quiet it — the learner monitor on a second
-   * screen. The alarm conditions and the visual alarm state are the engine's either way.
+   * Who manages this window's alarm SOUND. 'engine' (default): the device's Silence. 'window': this window alone
+   * (`silenceAudio()`); the instructor's Silence does not quiet it — the learner monitor on a second screen. The alarm
+   * conditions and the visual alarm state are the engine's either way.
    */
   audioSilence?: 'engine' | 'window';
   /**
-   * Stage 12 (a learner's phone held upright): the waveforms over the whole width and the skin's tiles in a grid under
-   * them, instead of tile columns beside the waveforms. Needs `skin`.
+   * The waveforms over the whole width and the skin's tiles in a grid under them, instead of tile columns beside the
+   * waveforms (a learner's phone held upright). Needs `skin`.
    */
   portrait?: boolean;
 }
@@ -56,7 +56,7 @@ export interface MountOptions {
 export type MonitorRole = 'host' | 'viewer';
 
 /**
- * FU-11 (K2, the second-screen learner monitor): the synchronous clock a ViewerSync steers every frame (structurally the
+ * The synchronous clock a ViewerSync steers every frame for the second-screen learner monitor (structurally the
  * controller's ViewerTarget). Only a 'viewer' monitor mounted with worker 'off' has one (its calls must be immediate).
  */
 export interface ViewerClock {
@@ -76,10 +76,10 @@ export interface MonitorHandle {
   calibrate(pxPerMm: number): void;
   /** Must be called from a user gesture (brief §3.6). */
   enableSound(): Promise<void>;
-  /** FU-11 (H4): sound off again — this window's output goes silent at once (the audio clock keeps running, so a later
+  /** Sound off again — this window's output goes silent at once (the audio clock keeps running, so a later
    *  enableSound() resumes in step); the alarms and the device state are untouched. Idempotent. */
   disableSound(): void;
-  /** FU-11 (H4): whether this window is sounding (unlocked and not turned off). */
+  /** Whether this window is sounding (unlocked and not turned off). */
   readonly soundOn: boolean;
   setTimeScale(k: number): void;
   pause(): void;
@@ -88,7 +88,7 @@ export interface MonitorHandle {
   destroy(): void;
   /** Which render path is running (worker rAF, worker with main-thread frame pump, or main thread). */
   readonly renderPath: Promise<RenderPath>;
-  /** Scheduled/dropped tones, for diagnostics (beep − R alignment; Stage 4b: alarm pulses and device tones too). */
+  /** Scheduled/dropped tones, for diagnostics (beep − R alignment; alarm pulses and device tones too). */
   readonly audioLog: readonly ToneLogEntry[];
   /** Worker proxy (brief §7.6 `engine`). */
   readonly engine: { dispatch(cmd: Command): Promise<DispatchResult> };
@@ -98,43 +98,43 @@ export interface MonitorHandle {
   snapshot(): Promise<PatientSnapshot>;
   /** Restore an engine snapshot and move the sim clock to its tick (R-1). */
   restore(s: PatientSnapshot): Promise<void>;
-  /** Stage 4b: switch skin, theme or page without restarting the engine (brief §3.8). Needs a skin at mount. */
+  /** Switch skin, theme or page without restarting the engine (brief §3.8). Needs a skin at mount. */
   setSkin(id: string, opts?: { theme?: string; page?: string }): Promise<void>;
-  /** Stage 4b: the resolved skin in use (null without `skin`). */
+  /** The resolved skin in use (null without `skin`). */
   readonly skin: ResolvedSkin | null;
-  /** Stage 4b: 12 leads × the last 10 s, diagnostic filter (brief §6.6). */
+  /** 12 leads × the last 10 s, diagnostic filter (brief §6.6). */
   capture12(): Promise<Capture12>;
-  /** Stage 4b: 1 Hz numerics for 8 h (brief §6.7). */
+  /** 1 Hz numerics for 8 h (brief §6.7). */
   readonly trends: TrendStore;
-  /** Stage 4b: commands, alarms, shocks, NIBP results (brief §6.7), CSV/JSON export. */
+  /** Commands, alarms, shocks, NIBP results (brief §6.7), CSV/JSON export. */
   readonly eventLog: EventLog;
-  /** FU-11 (K2): the clock ViewerSync steers; needs role 'viewer' and worker 'off' (its calls are synchronous). */
+  /** The clock ViewerSync steers; needs role 'viewer' and worker 'off' (its calls are synchronous). */
   viewerClock(): Promise<ViewerClock>;
   /**
-   * Stage 10 (fast-forward): run `ticks` sim ticks now without drawing them; their events arrive as usual (trends, tiles,
-   * alarms, the event log). Sound is off from the first step to the `last`: no tone is scheduled and the alarm voice
-   * stops; after the last step the alarms still active sound again. Resolves after the step's events were delivered.
+   * Run `ticks` sim ticks now without drawing them; their events arrive as usual (trends, tiles, alarms, the event log)
+   * (fast-forward). Sound is off from the first step to the `last`: no tone is scheduled and the alarm voice stops; after
+   * the last step the alarms still active sound again. Resolves after the step's events were delivered.
    */
   advance(ticks: number, last: boolean): Promise<{ tick: number; simT: number }>;
   /**
-   * Stage 10 (owner's decision 5): show alarms that came and went inside a fast-forward in the alarm area as silent latched
-   * entries ("… · during fast-forward mm:ss") until the next acknowledge (Silence or Acknowledge), as a monitor's alarm
-   * history keeps them. A later call replaces the list; a rewind drops entries after the restored time.
+   * Show alarms that came and went inside a fast-forward in the alarm area as silent latched entries ("… · during
+   * fast-forward mm:ss") until the next acknowledge (Silence or Acknowledge), as a monitor's alarm history keeps them. A
+   * later call replaces the list; a rewind drops entries after the restored time.
    */
   latchAlarms(alarms: readonly AlarmEntry[]): void;
-  /** FU-11 (Q3): with `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
+  /** With `audioSilence: 'window'`, this window's own alarm-sound Silence (pressed again: ends it). Returns
    *  whether this window is now silenced; false before sound is enabled. */
   silenceAudio(): boolean;
 }
 
 const TILE_W = 190;
 const SOUNDER_PUMP_MS = 100; // alarm bursts are enqueued ≥ 1 s ahead, so 100 ms is plenty [ENG]
-/** Stage 10 (owner's decision 4): above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of
+/** Above this speed the beat tones (QRS beep, pulse tone) are off — at ×8 a heart rate of
  *  80 beeps 10.7 times a second; alarms and device tones still sound [ENG]. */
 export const BEAT_TONE_MAX_SCALE = 4;
-/** Stage 10: whether a tone of this kind plays at this speed. */
+/** Whether a tone of this kind plays at this speed. */
 export const beatToneAt = (kind: string, timeScale: number): boolean => (kind !== 'qrs' && kind !== 'pulse') || timeScale <= BEAT_TONE_MAX_SCALE;
-/** Stage 10: the two-tone cue at the end of a fast-forward (none at its start), Hz [ENG]. */
+/** The two-tone cue at the end of a fast-forward (none at its start), Hz [ENG]. */
 const FF_CUE_HZ = [660, 990] as const;
 
 export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorHandle {
@@ -153,22 +153,22 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const outer = doc.createElement('div');
   outer.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;overflow:hidden;';
   const root = doc.createElement('div');
-  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${opts.portrait ? 'flex-direction:column;' : ''}`; // Stage 12
+  root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${opts.portrait ? 'flex-direction:column;' : ''}`;
   const wrap = doc.createElement('div');
   wrap.style.cssText = 'flex:1;position:relative;min-width:0;';
   const canvas = doc.createElement('canvas');
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
   wrap.append(canvas);
   const tiles = doc.createElement('div');
-  tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Stage 2: scroll
-  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait) : null; // Stage 4b; Stage 12: portrait
+  tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Scroll
+  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait) : null; // Device layer; portrait
   root.append(wrap, ui ? ui.tiles : tiles);
   if (ui) outer.append(ui.header);
   outer.append(root);
   el.append(outer);
   const legacy = !ui;
   const hrTile = legacy ? new NumericTile(tiles, { label: 'HR', unit: 'bpm', color: '#00ff66' }) : null;
-  // Stage 2 tiles (brief §6.1, §6.3)
+  // Pressure/pleth tiles (brief §6.1, §6.3)
   const waves = legacy ? (opts.waves ?? []) : [];
   const abpTile = waves.includes('abp') ? new PressureTile(tiles, 'ABP', 'mmHg', WAVE_STYLE.abp.color) : null;
   const papTile = waves.includes('pap') ? new PressureTile(tiles, 'PAP', 'mmHg', WAVE_STYLE.pap.color) : null;
@@ -176,7 +176,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const prTile = waves.includes('pleth') ? new PressureTile(tiles, 'PR', 'bpm', WAVE_STYLE.pleth.color) : null;
   const piTile = waves.includes('pleth') ? new PressureTile(tiles, 'PI', '%', WAVE_STYLE.pleth.color) : null;
   const nibpTile = legacy && opts.nibp ? new PressureTile(tiles, 'NBP', 'mmHg', '#ff7ad9') : null;
-  // Stage 3 tiles (brief §6.1, §6.8); with a skin, DeviceUI draws the skin's SpO2/CO2/RR/TEMP tiles instead
+  // SpO2/CO2/RR/TEMP tiles (brief §6.1, §6.8); with a skin, DeviceUI draws the skin's SpO2/CO2/RR/TEMP tiles instead
   const spo2Tile = waves.includes('pleth') ? new PressureTile(tiles, 'SpO2', '%', WAVE_STYLE.pleth.color) : null;
   const co2Tile = waves.includes('co2') ? new PressureTile(tiles, 'EtCO2', 'mmHg', WAVE_STYLE.co2.color) : null;
   const rrTile = waves.includes('resp') ? new PressureTile(tiles, 'RR', 'rpm', WAVE_STYLE.resp.color) : null;
@@ -186,21 +186,21 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const single = (m: { value: number | null; flag: string } | undefined, digits = 0) =>
     m && m.value !== null && m.flag !== 'invalid' ? m.value.toFixed(digits) : '---';
 
-  const trends = new TrendStore(); // Stage 4b
-  const eventLog = new EventLog(); // Stage 4b
+  const trends = new TrendStore();
+  const eventLog = new EventLog();
   const listeners = new Set<(e: EngineEvent) => void>();
-  let destroyed = false; // FU-11 (BA09): a late audio unlock after destroy() closes its context instead of attaching
+  let destroyed = false; // A late audio unlock after destroy() closes its context instead of attaching
   let scheduler: ToneScheduler | null = null;
   let audio: AudioOut | null = null;
   let soundP: Promise<void> | null = null;
-  let muted = false; // FU-11 (H4): Sound turned off again
-  let sounder: AlarmSounder | null = null; // Stage 4b
-  let bridge: AlarmAudioBridge | null = null; // Stage 4b
+  let muted = false; // Sound turned off again
+  let sounder: AlarmSounder | null = null;
+  let bridge: AlarmAudioBridge | null = null;
   let lastStatus: Extract<EngineEvent, { type: 'alarmStatus' }> | null = null;
-  let ff = false; // Stage 10: a fast-forward is running — no tone is scheduled, the alarm voice is gone until it ends
-  let ffLatched: AlarmEntry[] = []; // Stage 10: alarms of a fast-forward shown latched until the next acknowledge
+  let ff = false; // A fast-forward is running — no tone is scheduled, the alarm voice is gone until it ends
+  let ffLatched: AlarmEntry[] = []; // Alarms of a fast-forward shown latched until the next acknowledge
   const withLatched = (e: EngineEvent): EngineEvent => (e.type === 'alarmStatus' && ffLatched.length ? { ...e, active: [...e.active, ...ffLatched] } : e);
-  let play: ((tone: ToneRequest, when: number) => ToneHandle | void) | null = null; // Stage 4b: follows the skin
+  let play: ((tone: ToneRequest, when: number) => ToneHandle | void) | null = null; // Follows the skin
   const playerFor = (out: AudioOut, sk: ResolvedSkin | null) =>
     sk
       ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
@@ -213,14 +213,14 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     for (const e of events) {
       trends.record(e);
       eventLog.event(e);
-      ui?.onEvent(withLatched(e)); // Stage 10: the device shows the fast-forward's latched alarms; the sound never hears them
+      ui?.onEvent(withLatched(e)); // The device shows the fast-forward's latched alarms; the sound never hears them
       if (e.type === 'alarmStatus') {
         lastStatus = e;
         bridge?.onStatus(e);
       }
       if (hrTile && e.type === 'measurement' && e.values.hr) hrTile.update(e.values.hr);
       if (legacy && e.type === 'measurement') {
-        // Stage 2 tiles
+        // Pressure/pleth tiles
         const v = e.values;
         if (abpTile && v.abpSys) {
           const p = formatPressure(v.abpSys, v.abpDia, v.abpMean);
@@ -233,7 +233,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         if (cvpTile && v.cvpMean) cvpTile.set(single(v.cvpMean), '');
         if (prTile && v.pr) prTile.set(single(v.pr), '');
         if (piTile && v.pi) piTile.set(single(v.pi, 1), '');
-        // Stage 3 tiles
+        // SpO2/CO2/RR/TEMP tiles
         if (v.pi) lastPi = v.pi;
         if (spo2Tile && v.spo2) {
           const f = formatSpo2(v.spo2, lastPi);
@@ -256,7 +256,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           const n = formatNibp(undefined, nibpLast);
           nibpTile.set(n.main, n.sub, n.status);
         }
-        // FU-7.1 B8: a failed cuff cycle's blanked numerics clear the last result (the tile then reads "---/---")
+        // A failed cuff cycle's blanked numerics clear the last result (the tile then reads "---/---")
         else if (nibpTile && v.nibpSys?.flag === 'invalid') nibpLast = null;
       }
       if (e.type === 'nibp' && nibpTile) {
@@ -268,7 +268,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           t: e.t, id: e.id, kind: e.kind,
           ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
           ...(e.refT !== undefined ? { refT: e.refT } : {}),
-          ...(e.chargeS !== undefined ? { chargeS: e.chargeS } : {}), // Stage 4b (E-4a-3)
+          ...(e.chargeS !== undefined ? { chargeS: e.chargeS } : {}),
         });
       }
       if (e.type === 'toneCancel') {
@@ -291,10 +291,10 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const coreOpts = {
     ...(engineOpts ? { engine: engineOpts } : {}),
     ...(opts.lanes ? { lanes: opts.lanes } : {}),
-    ...(opts.waves ? { waves: opts.waves } : {}), // Stage 2
+    ...(opts.waves ? { waves: opts.waves } : {}),
     ...(opts.fps ? { fps: opts.fps } : {}),
     ...(opts.pxPerMm ? { pxPerMm: opts.pxPerMm } : {}),
-    ...(r ? { plan: renderPlan(r, page, only) } : {}), // Stage 4b
+    ...(r ? { plan: renderPlan(r, page, only) } : {}),
   };
   /** The lanes the canvas draws, as data for tests and embedders (the labels themselves are canvas pixels). */
   const markLanes = (lanes: ReadonlyArray<{ id: string }>) => void (canvas.dataset.lanes = lanes.map((l) => l.id).join(' '));
@@ -319,9 +319,9 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   watchDpr();
   const pumpTimer = setInterval(() => sounder?.pump(simNow()), SOUNDER_PUMP_MS);
 
-  /** Stage 4b: the alarm voice of the current skin (profile + the skin's cadence overrides, brief §3.8). */
+  /** The alarm voice of the current skin (profile + the skin's cadence overrides, brief §3.8). */
   const makeSounder = () => {
-    if (!scheduler || !r || ff) return; // Stage 10: sound enabled during a fast-forward starts at its end
+    if (!scheduler || !r || ff) return; // Sound enabled during a fast-forward starts at its end
     sounder?.dispose();
     const a = r.audio.alarm;
     sounder = new AlarmSounder(scheduler, getAlarmProfile(a.profile), { overrides: { repeatS: a.repeatS, lowPulses: a.lowPulses, volume: a.volume, silence: a.silence } });
@@ -331,16 +331,16 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   };
 
   /**
-   * FU-11 (F05, BA01): after a restore the trends forget the discarded future, the sim clock estimate starts at the
-   * bookmark, and a skin's CO2 lane follows the restored sampling line (showcase hotfix note: the swap followed
-   * attachSensor only). The sampling-line state is read from the snapshot (`st.resp.co2Sensor`, a string the codec keeps).
+   * After a restore the trends forget the discarded future, the sim clock estimate starts at the bookmark, and a skin's
+   * CO2 lane follows the restored sampling line. The sampling-line state is read from the snapshot
+   * (`st.resp.co2Sensor`, a string the codec keeps).
    */
   const afterRestore = (s: PatientSnapshot, h: Host) => {
     const t = s.tick * 0.02;
     trends.rewind(t);
     ui?.reset(t); // the tiles and the alarm header refill from the restored engine
     lastStatus = null;
-    ffLatched = ffLatched.filter((x) => x.since <= t); // Stage 10: a rewind drops the latched alarms of its discarded future
+    ffLatched = ffLatched.filter((x) => x.since <= t); // A rewind drops the latched alarms of its discarded future
     nibpLast = null;
     lastPi = undefined;
     anchor = { simT: t, perfMs: performance.now(), timeScale: anchor.timeScale };
@@ -368,12 +368,13 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     markLanes(plan.lanes);
     ui.setSkin(next, page);
   };
-  /** An accepted command's effects on this page (the log, the CO2 lane swap, the kept ECG leads) — FU-11: shared by a viewer's mirrored commands. */
+  /** An accepted command's effects on this page (the log, the CO2 lane swap, the kept ECG leads), shared by a
+   *  viewer's mirrored commands. */
   const accepted = (cmd: Command, h: Host) => {
-    eventLog.command(cmd, anchor.simT); // Stage 4b
+    eventLog.command(cmd, anchor.simT);
     const c = cmd as { type: string; sensor?: string; state?: string; action?: { device?: string; action?: string; lane?: number; value?: unknown } };
     if (ffLatched.length && c.type === 'device' && c.action?.device === 'alarm' && (c.action.action === 'ack' || c.action.action === 'silence')) {
-      ffLatched = []; // Stage 10: the next acknowledge clears the fast-forward's latched alarms
+      ffLatched = []; // The next acknowledge clears the fast-forward's latched alarms
       if (lastStatus) ui?.onEvent(lastStatus);
     }
     if (c.type === 'attachSensor' && c.sensor === 'co2') setCo2(c.state !== 'off', h);
@@ -395,14 +396,14 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     },
     calibrate: (pxPerMm) => void hostP.then((h) => h.control({ type: 'calibrate', pxPerMm })),
     enableSound() {
-      muted = false; // FU-11 (H4): on again after disableSound()
+      muted = false; // On again after disableSound()
       if (audio) audio.master.gain.value = 1;
-      // Idempotent: two quick taps must not create two AudioContexts (iOS caps live contexts; review M7).
-      if (destroyed) return Promise.resolve(); // FU-11 (BA09)
+      // Idempotent: two quick taps must not create two AudioContexts (iOS caps live contexts).
+      if (destroyed) return Promise.resolve();
       soundP ??= unlockAudio(() => scheduler?.clear()).then((out) => {
-        if (destroyed) return out.close(); // FU-11 (BA09): the monitor went away while the unlock was pending
+        if (destroyed) return out.close(); // The monitor went away while the unlock was pending
         audio = out;
-        out.master.gain.value = muted ? 0 : 1; // FU-11 (H4): turned off while the unlock was pending
+        out.master.gain.value = muted ? 0 : 1; // Turned off while the unlock was pending
         play = playerFor(out, r);
         scheduler = new ToneScheduler({
           audioNow: () => out.ctx.currentTime,
@@ -417,7 +418,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       return soundP;
     },
     disableSound() {
-      muted = true; // FU-11 (H4): the master gain, not the context: a suspended context would stall the tone clock
+      muted = true; // The master gain, not the context: a suspended context would stall the tone clock
       if (audio) audio.master.gain.value = 0;
     },
     get soundOn() {
@@ -428,7 +429,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     resume: () => void hostP.then((h) => h.control({ type: 'resume' })),
     setFps: (fps) => void hostP.then((h) => h.control({ type: 'fps', fps })),
     destroy() {
-      destroyed = true; // FU-11 (BA09)
+      destroyed = true;
       ro.disconnect();
       clearInterval(pumpTimer);
       mq?.removeEventListener('change', onDpr);
@@ -480,7 +481,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     advance: (ticks, last) =>
       hostP.then(async (h) => {
         if (!ff) {
-          ff = true; // Stage 10: silence now — queued and sounding tones stop, the alarm voice goes (no bursts are pumped)
+          ff = true; // Silence now — queued and sounding tones stop, the alarm voice goes (no bursts are pumped)
           sounder?.dispose();
           sounder = null;
           bridge = null;
@@ -520,7 +521,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
           on: (fn, types) => core.engine.on(fn, types),
           renderT: () => core.clock.renderT,
           tick: () => core.engine.now().tick,
-          setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // Stage 10: ×8
+          setRate: (k) => void (core.clock.timeScale = Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, k))), // ×8
           setPaused: (p) => (p ? core.clock.pause() : core.clock.resume()),
           jumpTo: (simT) => {
             core.clock.setTick(Math.floor(simT * 50 + 1e-6));

@@ -1,6 +1,6 @@
-// Stage 7a circulation constants (R31, R42; tables §2.2 adult 70 kg; audit §1.1 #4, §5 A1–A6). Every number cites
-// its source, or [ENG] when it is an engineering choice tuned by the Stage 7a prototype (plan "Prototype results").
-// Volumes and compliances scale by W/70, resistances by 70/W, elastances by 70/W (profile.ts does the scaling).
+// Circulation constants (tables §2.2 adult 70 kg). Every number cites its source, or [ENG] when it is an engineering
+// choice tuned by the circulation prototype. Volumes and compliances scale by W/70, resistances by 70/W, elastances
+// by 70/W (profile.ts does the scaling).
 
 // --- double-Hill activation (Stergiopulos, Meister & Westerhof 1996, Am J Physiol 270:H2050; Pulse CFG 494–498) ---
 export const DH_A1 = 0.303;
@@ -8,9 +8,9 @@ export const DH_A2 = 0.508;
 export const DH_N1 = 1.32;
 export const DH_N2 = 21.9;
 /**
- * Activation period T as a multiple of Weissler (PEP + LVET)(HR) (audit A3: systolic duration from the LVET–HR
- * regression, not ∝ RR). With 1.25 the emergent aortic-valve open time sits within ±15 ms of Weissler LVET at
- * HR 60–120 (prototype) [ENG].
+ * Activation period T as a multiple of Weissler (PEP + LVET)(HR) (systolic duration from the LVET–HR regression, not ∝
+ * RR). With 1.25 the emergent aortic-valve open time sits within ±15 ms of Weissler LVET at HR 60–120 (prototype)
+ * [ENG].
  */
 export const T_ACT_PER_SYSTOLE = 2.1;
 /** Electromechanical delay: ventricular activation starts this long after the beat record's R time [ENG]. */
@@ -59,25 +59,25 @@ export const REGURG_EPS = 1; // mmHg
 
 // --- vessels ---
 /**
- * Aortic characteristic impedance for the elastance heart (R45(b)): 0.035 mmHg·s/mL, inside Stage 2's WK_ZC range
- * 0.03–0.06. With Stage 2's 0.05 the Zc·Q_peak term dominated the pulse pressure of an ejecting elastance
+ * Aortic characteristic impedance for the elastance heart: 0.035 mmHg·s/mL, inside the haemodynamic WK_ZC range
+ * 0.03–0.06. With WK_ZC's 0.05 the Zc·Q_peak term dominated the pulse pressure of an ejecting elastance
  * ventricle, the stabiliser had to raise arterial compliance to 3.5 mL/mmHg (C 1.4 ± 0.7) and PP stopped following
  * stroke volume (class II PPV 7 %). At 0.035 the tuned compliance is ≈ 2.1 mL/mmHg and PP ∝ SV again [ENG].
  */
 export const ZC_AO = 0.035;
-/** Systemic veins: compliance 110 mL/mmHg (tables cSv; R03 §8.2), unstressed volume set by stabilisation. */
+/** Systemic veins: compliance 110 mL/mmHg (tables cSv), unstressed volume set by stabilisation. */
 export const C_SV = 110;
 /** Veins → RA resistance. Lumped-venous equivalent of R_vr 1.4 mmHg·min/L once P_sv ≈ Pmsf − 1 [ENG fit]. */
 export const R_VR = 0.06;
 export const R_VR_BACK = 5; // × for retrograde flow (jugular/caval valves; CPR thoracic pump) [ENG]
-export const C_PA = 4; // mL/mmHg (Stage 2 PA_C)
-export const Z_PA = 0.02; // mmHg·s/mL (Stage 2 PA_ZC)
+export const C_PA = 4; // mL/mmHg (PA_C)
+export const Z_PA = 0.02; // mmHg·s/mL (PA_ZC)
 export const PVR = 0.1; // mmHg·s/mL total (tables pvr = PA_R0)
-export const RIGHT_LUNG_FLOW = 0.55; // share of pulmonary flow to the right lung (R43 exposure; ICRP-style [TXT])
+export const RIGHT_LUNG_FLOW = 0.55; // share of pulmonary flow to the right lung (ICRP-style [TXT])
 export const C_PV = 10; // mL/mmHg pulmonary veins (tables cPv)
 export const R_PVLA = 0.01; // pulmonary veins → LA [ENG]
 
-// --- pericardium and thorax (tables §2.2; audit R-B) ---
+// --- pericardium and thorax (tables §2.2) ---
 export const PERI_A = 0.5; // mmHg (Smith)
 export const PERI_LAMBDA = 0.03; // /mL (Smith)
 /**
@@ -88,17 +88,17 @@ export const PERI_RESERVE = 1.0;
 export const PERI_EXTRA_ML = 0;
 export const P_PL0 = -4; // mmHg supine resting pleural (Smith 2004 P_th)
 /**
- * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). R45(b): raised to
+ * Fraction of alveolar pressure reaching the pleura. Tables tIt 0.4 (Q28 default; range 0.2–0.7). Raised to
  * 0.65 toward the evidence value 0.5–0.7 so class II haemorrhage gives PPV > 13 % on the ventilator (0.4 gave
- * 5 % → 7 %) while normovolaemic PPV stays < 10 % [calibration pass R44].
+ * 5 % → 7 %) while normovolaemic PPV stays < 10 % [calibration pass].
  */
 export const T_IT = 0.65;
 export const CMH2O_TO_MMHG = 0.7356;
-/** Spontaneous inspiratory pleural swing, cmH2O (Stage 3 SPONT_PPL_CMH2O). */
+/** Spontaneous inspiratory pleural swing, cmH2O (SPONT_PPL_CMH2O). */
 export const SPONT_SWING_CMH2O = 4;
 /**
- * FU-6 R14 (E-FU6-3): hypercapnic pulmonary vasoconstriction — PVR × (1 + K·(PaCO2 − 40)₊), K 0.015/mmHg (Balanos 2003
- * J Physiol; audit R14 "k ≈ 0.01–0.02 per mmHg") [ENG inside the sourced range]; PaCO2 from 7a's 1 Hz chemo input.
+ * Hypercapnic pulmonary vasoconstriction — PVR × (1 + K·(PaCO2 − 40)₊), K 0.015/mmHg (Balanos 2003
+ * J Physiol; k ≈ 0.01–0.02 per mmHg) [ENG inside the sourced range]; PaCO2 from the circulation's 1 Hz chemo input.
  */
 export const K_PVR_CO2 = 0.015;
 
@@ -108,36 +108,37 @@ export const BV_ML_KG_F = 65;
 /** Unstressed arterial volume (not in any state; bookkeeping only) [ENG]. */
 export const V0_ART = 600;
 
-// --- CPR (B §4.2; R39-2) ---
+// --- CPR (B §4.2) ---
 /** Direct cardiac compression: chamber pressure added per unit quality, mmHg [ENG; plan 60 (not prototyped) → 35 in the
  * engine: 60 gave SBP 95 / DBP 40 / CO 3.5 L/min at quality 0.8; 35/35 gives 73/16 and CO 2.1 (quality 1: 91/21, 2.5)]. */
-export const CPR_CARDIAC_MMHG = 24; // FU-4 F1: re-fitted with the volume factor, the release residual and the brainstem withdrawal (was 35)
+export const CPR_CARDIAC_MMHG = 24; // Re-fitted with the volume factor, the release residual and the brainstem withdrawal
 /** Thoracic-pump pressure on every intrathoracic compartment and the aortic root per unit quality [ENG; plan 30 → 35]. */
-export const CPR_THORACIC_MMHG = 24; // FU-4 F1: re-fitted with F1(a)/(c) (was 35)
+export const CPR_THORACIC_MMHG = 24; // Re-fitted with the volume factor and the release residual
 /**
- * FU-4 F1(a): a compression DISPLACES blood — it is not a pressure source. The pressure it generates scales with the
- * intrathoracic stressed volume it has to displace, so an empty thorax generates none (the exsanguinated heart gets no
- * CPP from compressions alone). Reference stressed intrathoracic volume ≈ 8 % of blood volume (measured resting:
- * adult 382 mL / BV 4 900, woman 370 / 3 900, 4 y child 89 / 1 152) [ENG].
+ * A compression DISPLACES blood — it is not a pressure source. The pressure it generates scales with the intrathoracic
+ * stressed volume it has to displace, so an empty thorax generates none (the exsanguinated heart gets no CPP from
+ * compressions alone). Reference stressed intrathoracic volume ≈ 8 % of blood volume (measured resting: adult 382 mL /
+ * BV 4 900, woman 370 / 3 900, 4 y child 89 / 1 152) [ENG].
  */
 export const V_CPR_REF_FRAC = 0.08;
 /**
- * FU-4 F1(c): the chest does not fully recoil between compressions — a residual intrathoracic pressure stays on the
- * collapsible venous side (RA and the pulmonary compartments) through the decompression phase, which is why Paradis
- * 1990 measured RA relaxation pressures of 15–25 mmHg rather than the ≈ 2 mmHg a full release gives. Fraction of the
- * thoracic-pump amplitude retained during release [ENG, fit to Paradis's RA relaxation band].
+ * The chest does not fully recoil between compressions — a residual intrathoracic pressure stays on the collapsible
+ * venous side (RA and the pulmonary compartments) through the decompression phase, which is why Paradis 1990 measured
+ * RA relaxation pressures of 15–25 mmHg rather than the ≈ 2 mmHg a full release gives. Fraction of the thoracic-pump
+ * amplitude retained during release [ENG, fit to Paradis's RA relaxation band].
  */
 export const CPR_RELEASE_RESIDUAL = 0.65;
 
-// --- FU-7 (addendum 24 / audit D15): histamine release (morphine, atracurium, mivacurium) ---
-/** × (1 − HIST_SVR·histamine) on SVR and + HIST_V0·histamine on the venous unstressed fraction, histamine 0–1 from 7g's
- * `bus.airway.histamine` [ENG; fit target: fast morphine 10 mg lowers SVR 10–20 % (M10 ch. 22) and MAP 8–25 % (T6.3),
- * with the reflex tachycardia EMERGING from the pressure fall (DI-42: HR +3 to +25)]. */
+// --- histamine release (morphine, atracurium, mivacurium) ---
+/** × (1 − HIST_SVR·histamine) on SVR and + HIST_V0·histamine on the venous unstressed fraction, histamine 0–1 from
+ * the drug model's `bus.airway.histamine` [ENG; fit target: fast morphine 10 mg lowers SVR 10–20 % (M10 ch. 22) and
+ * MAP 8–25 % (T6.3), with the reflex tachycardia EMERGING from the pressure fall (HR +3 to +25)]. */
 export const HIST_SVR = 0.22;
 export const HIST_V0 = 0.04;
 
 // --- integration ---
-export const H_S = 0.002; // RK4 step (R42; Stage 2 H_S)
+export const H_S = 0.002; // RK4 step
 
-/** ICRP 89 reference-adult (male) cardiac-output fractions (N-P10; audit #7) — used by 7d; 7a exposes them only. */
+/** ICRP 89 reference-adult (male) cardiac-output fractions (N-P10) — used by the organs; the circulation exposes them
+ * only. */
 export const ICRP89_FLOW_FRACTIONS_M = { brain: 0.12, myocardium: 0.04, kidneys: 0.17, liver: 0.255, muscle: 0.17, skin: 0.05, fat: 0.05, bone: 0.05 } as const;

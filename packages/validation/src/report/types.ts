@@ -24,5 +24,5 @@ export interface Report {
   wallS: number;
 }
 
-/** One calibration-queue entry: every yellow or red row, whatever suite it came from (R44). */
+/** One calibration-queue entry: every yellow or red row, whatever suite it came from. */
 export interface QueueItem { suite: string; id: string; measured: string; expected: string; grade: Exclude<Grade, 'green'>; source: string }

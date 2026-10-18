@@ -11,7 +11,7 @@ export interface ScenarioMeta {
   minutes: number;
   story: string;
   objectives: string[];
-  /** Show the learner controls under the monitor when this scenario loads (orchestrator ruling 4). Default off; no
+  /** Show the learner controls under the monitor when this scenario loads. Default off; no
    *  built-in case turns them on yet — the instructor switches them on per run in the Scenario tab. */
   learnerControls?: boolean;
 }

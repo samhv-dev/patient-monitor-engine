@@ -1,4 +1,4 @@
-// Stage 7e endo panel: glucose for everyone; the stress/hormone block for the instructor view only (plan decision 15).
+// Endocrine panel: glucose for everyone; the stress/hormone block for the instructor view only.
 import type { EndoEvent } from '@pme/engine-core';
 
 export function mountEndoPanel(host: HTMLElement, opts: { instructor: boolean }): { update(e: EndoEvent): void; destroy(): void } {

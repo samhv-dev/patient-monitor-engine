@@ -21,7 +21,7 @@ export function harmonicTable(harmonicsDb: readonly number[]): { real: Float32Ar
 
 function stopper(osc: OscillatorNode, env: GainNode, endsAt: number): ToneHandle {
   return {
-    endsAt, // FU-11 (F19): the scheduler keeps the handle until the voice has ended
+    endsAt, // The scheduler keeps the handle until the voice has ended
     stop() {
       env.disconnect();
       try {

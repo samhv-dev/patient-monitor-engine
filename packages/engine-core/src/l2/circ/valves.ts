@@ -1,6 +1,6 @@
-// Valves as one-way conductances (R42; tables §2.2): forward flow through an open resistance in series with a
-// stenotic Gorlin term, backward flow through a regurgitant orifice. Both branches are continuous functions of the
-// pressure difference (no switching state), so the 2 ms RK4 step never chatters at valve closure.
+// Valves as one-way conductances (tables §2.2): forward flow through an open resistance in series with a stenotic
+// Gorlin term, backward flow through a regurgitant orifice. Both branches are continuous functions of the pressure
+// difference (no switching state), so the 2 ms RK4 step never chatters at valve closure.
 //   forward  (ΔP > 0): ΔP = R·Q + k·Q²,  k = max(0, 1/(K·A)² − 1/(K·A_ref)²)          [Gorlin; excess over normal, ENG]
 //   backward (ΔP < 0): Q = −44.3·EROA·|ΔP|/√(|ΔP| + ε)                                  [orifice law, smoothed]
 import { REGURG_EPS, REGURG_K } from './params.ts';

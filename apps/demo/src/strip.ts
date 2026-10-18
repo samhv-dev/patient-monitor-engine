@@ -1,5 +1,5 @@
-// Offline 10 s two-lead strips for the Stage 5 gallery: an engine is run headlessly in the page, samples are read
-// from its lane buffers (monitor-filtered, as displayed) and drawn on a 25 mm/s, 10 mm/mV grid. Pace markers
+// Offline 10 s two-lead strips for the rhythm-library gallery: an engine is run headlessly in the page, samples are
+// read from its lane buffers (monitor-filtered, as displayed) and drawn on a 25 mm/s, 10 mm/mV grid. Pace markers
 // (EngineEvent 'marker' kind 'paceSpike') are drawn as vertical ticks, as a monitor does (research 03 §1.7).
 import { createEngine, type Command, type EngineEvent, type LeadId, type ModifiersPatch, type RhythmId, type RhythmOpts } from '@pme/engine-core';
 
@@ -41,7 +41,7 @@ export function renderStrip(canvas: HTMLCanvasElement, spec: StripSpec, label: s
   const g = canvas.getContext('2d') as CanvasRenderingContext2D;
   g.fillStyle = '#000';
   g.fillRect(0, 0, w, 2 * LANE_H);
-  // Stage 5.1: faint 1 mm minor grid (4 px) so 1–3 mm ST/J changes can be read off the strip
+  // Faint 1 mm minor grid (4 px) so 1–3 mm ST/J changes can be read off the strip
   g.strokeStyle = '#0f170f';
   g.lineWidth = 1;
   for (let x = 0; x <= w; x += 4) {

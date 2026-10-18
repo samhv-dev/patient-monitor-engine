@@ -3,15 +3,15 @@
 import type { WireMessage } from './protocol.ts';
 
 export const WIRE_LIMITS = {
-  /** Largest serialised message accepted anywhere (a Stage 1 snapshot is ≈ 7 KB) [ENG]. */
+  /** Largest serialised message accepted anywhere (an L1-only snapshot is ≈ 7 KB) [ENG]. */
   maxBytes: 256 * 1024,
   /** Longest all-numeric array allowed in commands and events (0.13 s of ECG at 500 Hz) [ENG]. */
   eventNumericArray: 64,
   /** Longest all-numeric array allowed in a snapshot (the QRS detector history is 128) [ENG]. */
   snapshotNumericArray: 1024,
-  /** FU-11 (F01, BA10): deepest nesting accepted (a real snapshot is 10 deep) [ENG]. */
+  /** Deepest nesting accepted (a real snapshot is 10 deep) [ENG]. */
   maxDepth: 32,
-  /** FU-11 (F01, BA11): most values in one message (a real snapshot holds ≈ 5 000) [ENG]. */
+  /** Most values in one message (a real snapshot holds ≈ 5 000) [ENG]. */
   maxNodes: 50_000,
 } as const;
 
@@ -33,10 +33,10 @@ function utf8Bytes(s: string): number {
 }
 
 /**
- * FU-11 (F01, BA10, BA11): one ITERATIVE pass over a message (the recursive walk overflowed the stack on 12 000 nested
- * objects in a 72 KB hello and took the relay down). Returns a reason for the first sample-like payload and, with
- * `budget`, for nesting deeper than maxDepth, more than maxNodes values or more than maxBytes of encoded size — the
- * same limits whether the message arrived as a JSON string or as a structured-clone object.
+ * One ITERATIVE pass over a message (the recursive walk overflowed the stack on 12 000 nested objects in a 72 KB hello
+ * and took the relay down). Returns a reason for the first sample-like payload and, with `budget`, for nesting deeper
+ * than maxDepth, more than maxNodes values or more than maxBytes of encoded size — the same limits whether the message
+ * arrived as a JSON string or as a structured-clone object.
  */
 function inspect(m: unknown, limit: number, budget: boolean): string | null {
   const seen = new Set<object>();
@@ -80,7 +80,7 @@ export function findSampleLeak(m: WireMessage): string | null {
   return inspect(m, numericLimit(m), false);
 }
 
-/** FU-11 (F01, BA11): the sample guard plus the size, depth and value budgets (every receiving transport applies it). */
+/** The sample guard plus the size, depth and value budgets (every receiving transport applies it). */
 export function wireBudgetError(m: WireMessage): string | null {
   return inspect(m, numericLimit(m), true);
 }

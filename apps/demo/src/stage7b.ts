@@ -1,6 +1,6 @@
-// Stage 7b demo: two lungs (R43) under a built-in ventilator; condition picker over the 32-row catalogue; per-lung
-// icons from lungState; five scripted demonstrations. Stage V's combined page (vent-link.html) shows the same lungs
-// with the full ventilator once both are merged.
+// The lung model demo: two lungs under a built-in ventilator; condition picker over the 32-row catalogue; per-lung
+// icons from lungState; five scripted demonstrations. The combined page (vent-link.html) shows the same lungs with the
+// full ventilator once both are merged.
 import { LUNG_CONDITIONS, type Command, type EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 

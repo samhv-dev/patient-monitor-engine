@@ -1,7 +1,7 @@
-// Target grading (R40 borrow #1). errPct = 0 when the target holds, else the distance to the nearest satisfying
+// Target grading. errPct = 0 when the target holds, else the distance to the nearest satisfying
 // value as a percentage of that value's magnitude. Grades: green = target holds (for EqualTo/TrendsTo: within
 // tolPct, default 10 %); yellow = misses by < 30 %; red = misses by ≥ 30 % (or the measurement is missing).
-// An evidence band (Range) replaces the 10 % green zone: the band IS the tolerance (R37/R39).
+// An evidence band (Range) replaces the 10 % green zone: the band IS the tolerance.
 // Gating: red fails `pnpm validate`; yellow is reported and goes to the calibration queue, as red does.
 import type { Grade, Ref, Target } from './types.ts';
 

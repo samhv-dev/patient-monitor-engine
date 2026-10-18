@@ -1,10 +1,10 @@
-// The mixing point, O2 side (R43; tables §4.1, §4.5; catalogue §22–§23). Two alveolar O2 stores, one per lung
-// (Stage 3's store split by side, each with its own aerated FRC), so a blocked lung keeps oxygenating its blood
-// until its gas is absorbed (OLV onset) and each side desaturates at its own rate. Within a side, units depart from
-// the store's fraction by their steady-state V/Q difference; low-V/Q units (vqLow) respond to FiO2, true shunt does
-// not. Arterial content = flow-weighted end-capillary contents + shunt at mixed-venous content (Stage 3's blood pool).
+// The mixing point, O2 side (tables §4.1, §4.5; catalogue §22–§23). Two alveolar O2 stores, one per lung (the gas
+// model's store split by side, each with its own aerated FRC), so a blocked lung keeps oxygenating its blood until its
+// gas is absorbed (OLV onset) and each side desaturates at its own rate. Within a side, units depart from the store's
+// fraction by their steady-state V/Q difference; low-V/Q units (vqLow) respond to FiO2, true shunt does not. Arterial
+// content = flow-weighted end-capillary contents + shunt at mixed-venous content (the gas model's blood pool).
 import { content, odc, po2ForContent } from '../gas/o2.ts';
-import type { OdcCtx } from '../blood/odc.ts'; // Stage 7c (exception E-7c-1)
+import type { OdcCtx } from '../blood/odc.ts'; // Import-boundary exception
 import { BLOOD_VENOUS_FRACTION, MASS_FLOW_DEFICIT_ML_MIN, PB_MMHG, PH2O_MMHG, RQ } from '../gas/params.ts';
 import { VQ_LOW } from './params.ts';
 
@@ -29,11 +29,11 @@ export interface O2LungInputs {
   bloodL: number;
   dl: number[]; // diffusion factor per side
   coRatio: number;
-  /** Stage 7c (E-7c-1): the blood's Hb, pH, 2,3-DPG, COHb, MetHb for every content/ODC call (absent → Stage 3's patient). */
+  /** The blood's Hb, pH, 2,3-DPG, COHb, MetHb for every content/ODC call (absent → the gas model's patient). */
   odc?: OdcCtx;
   /**
-   * FU-3 item 16 (E-FU3-9): nothing is ejected (cardiac output 0), so no blood leaves the lungs for the arteries — the
-   * alveolar stores and the venous store still step, PaO2/SaO2 hold their last values. Absent/false: the 7b mixing point.
+   * Nothing is ejected (cardiac output 0), so no blood leaves the lungs for the arteries — the alveolar stores and the
+   * venous store still step, PaO2/SaO2 hold their last values. Absent/false: the lung mixing point.
    */
   arterialHold?: boolean;
 }
@@ -129,7 +129,7 @@ export function stepO2Lung(st: O2LungState, x: O2LungInputs, dtS: number): void 
   const ca = caNum / Math.max(1e-6, q);
   const vv = BLOOD_VENOUS_FRACTION * x.bloodL;
   st.cv = Math.max(0, st.cv + ((q * (ca - st.cv) - x.vo2) / vv) * dt);
-  if (x.arterialHold) return; // FU-3 item 16 (E-FU3-9): no ejection, no new arterial blood — PaO2/SaO2 hold
+  if (x.arterialHold) return; // No ejection, no new arterial blood — PaO2/SaO2 hold
   st.pao2 = po2ForContent(ca, x.tempC, x.paco2, x.odc);
   st.sa = odc(st.pao2, x.tempC, x.paco2, x.odc);
 }

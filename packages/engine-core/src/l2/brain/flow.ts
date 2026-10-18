@@ -8,7 +8,8 @@ import {
 
 /**
  * Per-agent anaesthetic state in the tables' terms (§5.1 rows): the INTERIM/fallback input and the unit-test
- * vocabulary. In the engine the drugs arrive as `BrainDrugs` from 7g's bus (and 7f's CMRO2), see organs/inputs.ts.
+ * vocabulary. In the engine the drugs arrive as `BrainDrugs` from the drug model's bus (and the neuro model's CMRO2),
+ * see organs/inputs.ts.
  */
 export interface BrainAnaesthesia {
   propofolE: number; // 0–1 fractional effect, E = Ce/(Ce + C50)
@@ -19,8 +20,8 @@ export interface BrainAnaesthesia {
 export const NO_ANAESTHESIA: BrainAnaesthesia = { propofolE: 0, sevoMac: 0, isoMac: 0, ketamineE: 0 };
 /** What the brain model consumes: the drug CMRO2 multiplier (normothermic) and the direct cerebral vasodilation. */
 export interface BrainDrugs {
-  cmro2Mult: number; // 1 = none (7f `neuro.outputs.cmro2Mult`, else 7g `bus.cns.cmro2Mult`)
-  cbfVaso: number; // 1 = none (7g `bus.cns.cbfVaso`)
+  cmro2Mult: number; // 1 = none (neuro: `neuro.outputs.cmro2Mult`, else drugs: `bus.cns.cmro2Mult`)
+  cbfVaso: number; // 1 = none (the drug model's `bus.cns.cbfVaso`)
 }
 export const NO_DRUGS: BrainDrugs = { cmro2Mult: 1, cbfVaso: 1 };
 
@@ -77,7 +78,7 @@ export function vasoDirect(a: BrainAnaesthesia): number {
   return sevo * iso * (1 + 0.4 * a.ketamineE);
 }
 
-/** The tables' per-agent rows as the model's drug input (the INTERIM fallback: Stage 3 `thermal` GA without 7g drugs). */
+/** The tables' per-agent rows as the model's drug input (the INTERIM fallback: `thermal` GA without the drug model). */
 export function drugsOf(a: BrainAnaesthesia): BrainDrugs {
   return { cmro2Mult: cmro2Rel(a, 37), cbfVaso: vasoDirect(a) };
 }

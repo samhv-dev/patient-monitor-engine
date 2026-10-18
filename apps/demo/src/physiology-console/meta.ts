@@ -1,6 +1,6 @@
-// Stage 7x: display metadata per path — label, unit, digits and a scale into clinical units. A small curated map
-// for the values a clinician reads first; everything else gets its unit from the field name and its digits from
-// its magnitude (format.ts), so new fields need no entry here.
+// Display metadata per path — label, unit, digits and a scale into clinical units. A small curated map for the values a
+// clinician reads first; everything else gets its unit from the field name and its digits from its magnitude
+// (format.ts), so new fields need no entry here.
 export interface Meta {
   label: string;
   unit: string;
@@ -27,7 +27,7 @@ const CURATED: Entry[] = [
   ['mon.papSys', 'PAP sys', 'mmHg', 0], ['mon.papDia', 'PAP dia', 'mmHg', 0], ['mon.papMean', 'PAP mean', 'mmHg', 0],
   ['mon.tempCore', 'Temp core', '°C', 1], ['mon.pr', 'PR', 'bpm', 0], ['mon.pi', 'PI', '%', 1],
   ['mon.nibpSys', 'NIBP sys', 'mmHg', 0], ['mon.nibpDia', 'NIBP dia', 'mmHg', 0], ['mon.nibpMean', 'NIBP mean', 'mmHg', 0], ['mon.qtc', 'QTc', 'ms', 0],
-  // circulation summary (7a `circ` event, 1 Hz)
+  // Circulation summary (the circulation model's `circ` event, 1 Hz)
   ['ev.circ.co', 'CO', 'L/min', 2], ['ev.circ.sv', 'SV', 'mL', 0], ['ev.circ.ef', 'EF', '%', 0, 100],
   ['ev.circ.svr', 'SVR', 'dyn·s/cm⁵', 0, DYN], ['ev.circ.pvr', 'PVR', 'dyn·s/cm⁵', 0, DYN],
   ['ev.circ.lvedv', 'LVEDV', 'mL', 0], ['ev.circ.lvesv', 'LVESV', 'mL', 0], ['ev.circ.lvedp', 'LVEDP', 'mmHg', 1], ['ev.circ.lvsp', 'LV systolic', 'mmHg', 0],
@@ -35,19 +35,19 @@ const CURATED: Entry[] = [
   ['ev.circ.supplyDemand', 'Coronary supply/demand', '', 2], ['ev.circ.kIsch', 'Ischaemia factor', '', 2],
   ['hemo.circ.p.rSys', 'R systemic (model)', 'mmHg·s/mL', 3], ['hemo.circ.p.eesLv', 'Ees LV', 'mmHg/mL', 2], ['hemo.circ.p.eesRv', 'Ees RV', 'mmHg/mL', 3],
   ['hemo.circ.hrModel', 'HR (model)', 'bpm', 0],
-  // ECG inputs: the potassium the ECG morphology reads (stages push their changes into it as deltas, R51 §6)
+  // ECG inputs: the potassium the ECG morphology reads (stages push their changes into it as deltas)
   ['mods.k', 'K⁺ (ECG input)', 'mmol/L', 2],
   // lungs and gas
   ['resp.o2.pao2', 'PaO₂', 'mmHg', 0], ['resp.o2.sa', 'SaO₂', '%', 1, 100], ['resp.o2.fa', 'FAO₂', '%', 1, 100], ['resp.co2.pf', 'PaCO₂ (pf)', 'mmHg', 1],
   ['resp.shunt', 'Shunt', '%', 1, 100], ['ev.lungState.complianceMlPerCmH2O', 'Compliance', 'mL/cmH₂O', 0],
   ['ev.lungState.resistanceCmH2OPerLps', 'Resistance', 'cmH₂O/L/s', 1], ['ev.lungState.shunt', 'Shunt (lung)', '%', 1, 100],
   ['ev.lungState.deadSpaceMl', 'Dead space', 'mL', 0], ['ev.lungState.frcMl', 'FRC', 'mL', 0], ['resp.etco2', 'EtCO₂ (model)', 'mmHg', 1],
-  // Stage 7k (R57): the Ventilation panel "Respiratory mechanics and volumes" — glossary §5.6 labels (research/11)
+  // The Ventilation panel "Respiratory mechanics and volumes" — glossary §5.6 labels (research/11)
   ['resp.mechanics.ppeak', 'Ppeak', 'cmH₂O', 1], ['resp.mechanics.pplat', 'Pplat', 'cmH₂O', 1], ['resp.mechanics.peepTot', 'PEEPtot', 'cmH₂O', 1], ['resp.mechanics.peepi', 'PEEPi (auto-PEEP)', 'cmH₂O', 1], ['resp.mechanics.dp', 'ΔP', 'cmH₂O', 1],
   ['resp.mechanics.cstat', 'Cstat', 'mL/cmH₂O', 0], ['resp.mechanics.cdyn', 'Cdyn', 'mL/cmH₂O', 0], ['resp.mechanics.rinsp', 'Rinsp', 'cmH₂O·s/L', 1],
   ['resp.mechanics.vt', 'VT', 'mL', 0], ['resp.mechanics.flow', 'V̇insp', 'L/s', 2],
   ['resp.mechanics.plEi', 'PL,ei', 'cmH₂O', 1], ['resp.mechanics.plEe', 'PL,ee', 'cmH₂O', 1],
-  // short Pes labels: the label column must keep "est." visible (R50 F14; glossary "Pes (estimate)")
+  // Short Pes labels: the label column must keep "est." visible (glossary "Pes (estimate)")
   ['resp.mechanics.pesEi', 'Pes,ei est.', 'cmH₂O', 1], ['resp.mechanics.pesEe', 'Pes,ee est.', 'cmH₂O', 1], ['resp.mechanics.elErs', 'EL/Ers', '', 2],
   ['resp.vd.anat', 'VD anat', 'mL', 0], ['resp.vd.app', 'VD app', 'mL', 0], ['resp.vd.alv', 'VD alv', 'mL', 0], ['resp.vd.phys', 'VD phys', 'mL', 0],
   ['resp.vd.vdvt', 'VD/VT', '%', 0, 100], ['resp.vd.peco2', 'PĒCO₂', 'mmHg', 1],
@@ -58,11 +58,11 @@ const CURATED: Entry[] = [
   ['resp.volumes.pred.tlc', 'TLC predicted', 'mL', 0], ['resp.volumes.pred.rv', 'RV predicted', 'mL', 0], ['resp.volumes.pred.frc', 'FRC (seated) predicted', 'mL', 0],
   ['resp.volumes.pred.vc', 'VC predicted', 'mL', 0], ['resp.volumes.pred.fvc', 'FVC predicted', 'mL', 0], ['resp.volumes.pred.fev1', 'FEV₁ predicted', 'mL', 0],
   ['resp.volumes.pred.ratio', 'FEV₁/FVC predicted', '%', 0, 100], ['resp.volumes.pred.pef', 'PEF predicted', 'L/min', 0, 0.06],
-  // temperature (Stage 3 thermal model)
+  // Temperature (thermal model)
   ['resp.temp.tc', 'Core temp (model)', '°C', 2],
-  // organs (7x.1): 7d's intra-abdominal pressure (the `renal` event's iapMmHg), a kidney input
+  // Organs: the organ model's intra-abdominal pressure (the `renal` event's iapMmHg), a kidney input
   ['organs.iap', 'Intra-abdominal pressure', 'mmHg', 0],
-  // drug layer (FU-7 E-FU7-8; research/11 §5 labels): 7g's potency and occupancy outputs
+  // Drug layer (research/11 §5 labels): the drug model's potency and occupancy outputs
   ['pk.bus.cns.hypPropEq', 'Propofol-equivalent effect-site concentration (Ce prop-eq)', 'µg/mL', 2],
   ['pk.bus.cns.opioidCeFentEq', 'Fentanyl-equivalent effect-site concentration (Ce fent-eq)', 'ng/mL', 2],
   ['pk.bus.cns.dissoc', 'Dissociative fraction', '', 2], ['pk.betaBlockAdd', 'β-receptor occupancy', '', 2],
@@ -71,7 +71,7 @@ const CURATED: Entry[] = [
   ['ev.state.values.sbp', 'SBP (truth)', 'mmHg', 0], ['ev.state.values.dbp', 'DBP (truth)', 'mmHg', 0], ['ev.state.values.hr', 'HR (truth)', 'bpm', 0],
 ];
 /**
- * 7x.1 (FU-3 item 12): the 7b lung tree `resp.lung` (engine-core l2/lung: LungState in lung.ts, SideParams/LungParams
+ * The lung tree `resp.lung` (engine-core l2/lung: LungState in lung.ts, SideParams/LungParams
  * in side.ts, mechanics.ts, mix-o2.ts, mix-co2.ts, perfusion.ts, recruit.ts, venegas.ts). `#` stands for a side index
  * (0 = L, 1 = R: params.ts SIDE_SHARE) and `@` for a mechanical-unit index (0/1 = L fast/slow, 2/3 = R fast/slow:
  * side.ts `mechParams`); the label is then prefixed with the side or the unit. Fractions show in % (scale 100); the
@@ -79,7 +79,7 @@ const CURATED: Entry[] = [
  */
 const LUNG: Entry[] = [
   // whole lung: breath summary, gas exchange, the resolved global parameters
-  // Stage 7k (R56): "PEEPtot" is the expiratory-hold reading (resp.mechanics.peepTot, glossary #146); this is the model's mean alveolar value
+  // "PEEPtot" is the expiratory-hold reading (resp.mechanics.peepTot, glossary #146); this is the model's mean alveolar value
   ['peepTot', 'Mean end-expiratory alveolar pressure', 'cmH₂O', 1], ['pInsp', 'End-inspiratory alveolar pressure', 'cmH₂O', 1], ['tauBar', 'Expiratory τ', 's', 2],
   ['teS', 'Expiratory time', 's', 2], ['inInsp', 'In inspiration', ''], ['mainstem', 'Ventilated mainstem', ''], ['frcGaMl', 'FRC (anaesthetised)', 'mL', 0],
   ['mech.paw', 'Airway-opening pressure', 'cmH₂O', 1], ['mech.pcar', 'Carina pressure', 'cmH₂O', 1],
@@ -128,7 +128,7 @@ function lungMeta(path: string): Meta | undefined {
 /**
  * Absolute change tolerances by field name (whole path; `.to`/`.from` of an L1 ramp count as the variable) [ENG]:
  * pH 0.02; temperature 0.2 °C; SpO2/SaO2/SvO2 one point; PaCO2/EtCO2 2 mmHg; K 0.2 mmol/L; lactate 0.3 mmol/L;
- * 7x.1: BE and HCO3 1 mmol/L (half the ±2 mmol/L normal BE range, a quarter of the 22–26 mmol/L HCO3 range; the blood
+ * BE and HCO3 1 mmol/L (half the ±2 mmol/L normal BE range, a quarter of the 22–26 mmol/L HCO3 range; the blood
  * gas prints both to 0.1 but a 0.1 step is analyser noise, not a change). `k` is potassium only under `mods`, the L1
  * variable, `blood` and the lab events (elsewhere it is a step index or a valve constant).
  */
@@ -139,8 +139,8 @@ const TOLERANCES: Array<[RegExp, number | 'sat']> = [
   [/(^|\.)(paco2|pco2|pvco2|etco2|petco2)(\.(to|from))?$|^resp\.co2\.pf$/i, 2],
   [/^mods\.k$|^(l1\.coupled|ev\.state\.values)\.k$|^l1\.vars\.k\.(to|from)$|^(blood|ev\.labs|ev\.labResult)\..+\.k$|(^|\.)(kPlus|potassium|kMmolL)$/, 0.2],
   [/(^|\.)(lac|lactate|lactateMmolL)$/i, 0.3],
-  [/(^|\.)(be|sbe|beB|beEcf|baseExcess)(\.(to|from))?$/, 1], // 7x.1
-  [/(^|\.)(hco3|hco3Std|bicarbonate)(\.(to|from))?$/i, 1], // 7x.1
+  [/(^|\.)(be|sbe|beB|beEcf|baseExcess)(\.(to|from))?$/, 1],
+  [/(^|\.)(hco3|hco3Std|bicarbonate)(\.(to|from))?$/i, 1],
 ];
 const tolOf = (path: string): number | 'sat' | undefined => TOLERANCES.find(([re]) => re.test(path))?.[1];
 
@@ -169,7 +169,7 @@ const cache = new Map<string, Meta>();
 export function metaOf(path: string): Meta {
   const hit = BY_PATH.get(path) ?? cache.get(path);
   if (hit) return hit;
-  const lung = lungMeta(path); // 7x.1
+  const lung = lungMeta(path);
   if (lung) {
     const tol = tolOf(path);
     if (tol !== undefined) lung.tol = tol;
@@ -186,9 +186,10 @@ export function metaOf(path: string): Meta {
 }
 
 /**
- * The unit a sibling leaf declares for an uncurated number without a suffix unit: `<name>Unit` (7g's panel
- * `rate`/`rateUnit`), `amountUnit` for `…Amount`, else the object's `unit` (7g's bus agents: `plasma`, `brain`, `nmj`
- * in the drug's concentration unit). A unit in the field name wins over a sibling (`cumulativeMgPerKg` stays mg/kg).
+ * The unit a sibling leaf declares for an uncurated number without a suffix unit: `<name>Unit` (the drug model's panel
+ * `rate`/`rateUnit`), `amountUnit` for `…Amount`, else the object's `unit` (the drug model's bus agents: `plasma`,
+ * `brain`, `nmj` in the drug's concentration unit). A unit in the field name wins over a sibling (`cumulativeMgPerKg`
+ * stays mg/kg).
  */
 export function siblingUnit(path: string, get: (p: string) => unknown): string | undefined {
   const dot = path.lastIndexOf('.');

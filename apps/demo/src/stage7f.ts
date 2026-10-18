@@ -1,20 +1,20 @@
-// Stage 7f demo (R32 7f): TOF and depth tiles beside the monitor, the instructor "anaesthetic state" panel, and the
-// scripted sequences of the plan: induction (fentanyl → propofol → rocuronium → laryngoscopy/intubation → sevoflurane
-// on the ventilator), sugammadex / neostigmine reversal, remifentanil apnoea, residual block at extubation. Every drug
-// and the vaporiser go through Stage 7g (R51 §3–4); 7f supplies the TOF/depth devices, the tiles' data and the panel.
+// Depth and neuromuscular page: TOF and depth tiles beside the monitor, the instructor "anaesthetic state" panel, and
+// scripted sequences: induction (fentanyl → propofol → rocuronium → laryngoscopy/intubation → sevoflurane on the
+// ventilator), sugammadex / neostigmine reversal, remifentanil apnoea, residual block at extubation. Every drug and the
+// vaporiser go through the drug model; the neuro model supplies the TOF/depth devices, the tiles' data and the panel.
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 
 type Body = Command extends infer C ? (C extends Command ? Omit<C, 'id' | 'issuedBy'> : never) : never;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const pm = mountMonitor($('monitor'), {
-  skin: new URLSearchParams(location.search).get('skin') ?? 'philips-like', // FU-3 item 11: ?skin=saadat-like for the tile shots
+  skin: new URLSearchParams(location.search).get('skin') ?? 'philips-like', // ?skin=saadat-like for the tile shots
   engine: { seed: 17, patient: { ageY: 45, weightKg: 70, heightCm: 172, sex: 'M', sensors: { spo2: 'on', co2: 'on', abp: 'connected' } } },
   lanes: ['ecgII'],
   waves: ['abp', 'pleth', 'co2', 'resp'],
 });
 pm.setTimeScale(4);
-/** FU-8 (F4): when the induction script starts bag ventilation (sim s after the click). */
+/** When the induction script starts bag ventilation (sim s after the click). */
 const BVM_AT_S = Number(new URLSearchParams(location.search).get('bvmAt') ?? 180);
 let n = 0;
 let simT = 0;
@@ -89,17 +89,17 @@ $('induction').addEventListener('click', () => {
   log('fentanyl 1.5 µg/kg');
   at(120, () => { void drug('propofol', 2, 'mg/kg'); log('propofol 2 mg/kg'); });
   at(180, () => { void drug('rocuronium', 0.6, 'mg/kg'); log('rocuronium 0.6 mg/kg'); });
-  // FU-8 (F4): the bag starts at +180 s (unchanged) unless `?bvmAt=` says later — the FU-5 latched-APNEA e2e waits for
-  // the induction apnoea to alarm (after FU-4 the apnoea starts ≈ 4 s later and the capnograph's 20 s never elapsed)
+  // The bag starts at +180 s (unchanged) unless `?bvmAt=` says later — the latched-APNEA e2e waits for the induction
+  // apnoea to alarm (the apnoea now starts ≈ 4 s later, so at +180 s the capnograph's 20 s had never elapsed)
   at(BVM_AT_S, () => void ev({ kind: 'ventilation', source: 'bvm', rr: 12, vtMl: 500, fio2: 1 }));
-  // `stimulus` is Stage 7e's event (intensity 0–2, held until the next one; 7f observes it: R51 addenda 12, 17)
+  // `stimulus` is the endocrine model's event (intensity 0–2, held until the next one; the neuro model observes it)
   at(300, () => { void ev({ kind: 'stimulus', intensity: 1.5 }); log('laryngoscopy + intubation (stimulus 1.5)'); });
   at(330, () => {
     void ev({ kind: 'stimulus', intensity: 0 });
     void ev({ kind: 'airwayDevice', device: 'ett' });
     void ev({ kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio2: 0.5, peep: 5 });
-    // 7g's vaporiser (R51 §4). Maintenance dial 2 % (FU-3 item 12, Ali's call): 3 % on top of the propofol read DI 30
-    // at 13 min (gate 7f); 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
+    // The drug model's vaporiser. Maintenance dial 2 % (the owner's call): 3 % on top of the propofol read DI 30 at 13
+    // min; 2 % reads DI 38 at 13 min and 41–42 at 25–30 min once the propofol has worn off
     void ev({ kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2, fgfLpm: 6 });
     log('ventilator, sevoflurane dial 2 % (FGF 6 L/min)');
   });

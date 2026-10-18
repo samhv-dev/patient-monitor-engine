@@ -1,5 +1,5 @@
-// Generated controls (shared by the same-screen panel and the remote). One row per vocabulary entry, so
-// Stage 2/5 variables, rhythms, modifiers and devices appear without UI changes.
+// Generated controls (shared by the same-screen panel and the remote). One row per vocabulary entry, so new variables,
+// rhythms, modifiers and devices appear without UI changes.
 import type { RhythmId } from '@pme/engine-core';
 import type { CommandInput, MeasuredMap, StateEvent } from '../protocol.ts';
 import type { Vocabulary } from '../vocabulary.ts';
@@ -22,8 +22,8 @@ export interface ControlsHost {
 
 export interface ControlsView {
   /**
-   * Refresh the readouts and flags from the latest state and measurements. FU-1: the rhythm dropdown and each target
-   * field FOLLOW the host — when the host's rhythm or target changes, the control shows it (unless the user is in that
+   * Refresh the readouts and flags from the latest state and measurements. The rhythm dropdown and each target field
+   * FOLLOW the host — when the host's rhythm or target changes, the control shows it (unless the user is in that
    * control); a typed value is kept until then.
    */
   update(state: StateEvent | null, measured: MeasuredMap, host?: { rhythm?: RhythmId | null }): void;
@@ -97,8 +97,7 @@ export function renderControls(parent: HTMLElement, vocab: Vocabulary, host: Con
       const rel = el(doc, 'button', { type: 'button', 'data-action': 'release' }, 'Release');
       const modeled = opts.mode === 'modeled';
       pin.disabled = rel.disabled = !modeled;
-      // FU-8 (Stage 9 R-S9-2, R50 review F9): the gating is 6a's deliberate choice — in MANUAL every value is already
-      // the instructor's, so there is nothing to pin; the old tooltip blamed a missing Stage 7 that has landed
+      // The gating is deliberate — in MANUAL every value is already the instructor's, so there is nothing to pin
       if (!modeled) pin.title = rel.title = 'Pin and release hold a MODELED value; in MANUAL every value is already yours';
       pin.addEventListener('click', () => host.submit(pinCommand(spec, Number(val.value), ramp()), `pin.${spec.id}`));
       rel.addEventListener('click', () => host.submit(releaseCommand(spec, ramp()), `pin.${spec.id}`));

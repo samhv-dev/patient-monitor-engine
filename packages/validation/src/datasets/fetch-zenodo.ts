@@ -8,7 +8,7 @@ export const md5 = (buf: Uint8Array): string => createHash('md5').update(buf).di
 export async function fetchZenodo(cache: string, record: string, file: string, want: string): Promise<Uint8Array> {
   const path = join(cache, `zenodo-${record}`, file);
   let buf: Uint8Array;
-  // FU-11 (F23): cached bytes are checked like downloaded ones — a corrupt or truncated cache entry is fetched again
+  // Cached bytes are checked like downloaded ones — a corrupt or truncated cache entry is fetched again
   const cached = existsSync(path) ? new Uint8Array(readFileSync(path)) : null;
   if (cached && md5(cached) === want) buf = cached;
   else {

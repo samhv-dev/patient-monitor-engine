@@ -1,14 +1,14 @@
-// FU-3 item 16: asphyxial (hypoxaemic) arrest in MODELED mode. The coronary step (coronary.ts) carries the arterial
-// O2 content in the myocardial O2 supply and keeps `cor.hyp`, the hypoxaemic share of the supply deficit; the control
-// layer (model.ts) turns it into sinus-node depression and a global contractility loss. What emerges is the sequence
-// of the asphyxia models — early tachycardia and hypertension, then bradycardia and hypotension, then loss of aortic
-// pulsations with the ECG still organised (DeBehnke 1995 [P]; Varvarousi 2011, 2015 [P]). This module declares the
-// arrest once the hypoxic depression leaves the heart unable to eject (HYP_ARREST), and picks its rhythm. MANUAL never
-// calls it (the instructor owns the rhythm there). The carotid-chemoreflex bradycardia below SaO2 60 % is the existing
-// chemoFactors rule (model.ts, tables §1.1); the direct SA-node depression adds to it through cor.hyp.
-// The beats alone never make the declaration: at a vanishing contractility the lumped ventricle (active and passive
-// elastances blended by the activation) still moves ≈ 1 L/min against a reflex-raised filling pressure, so "loss of
-// aortic pulsations" is reached through the myocardial state, not the pressure.
+// Asphyxial (hypoxaemic) arrest in MODELED mode. The coronary step (coronary.ts) carries the arterial O2 content in the
+// myocardial O2 supply and keeps `cor.hyp`, the hypoxaemic share of the supply deficit; the control layer (model.ts)
+// turns it into sinus-node depression and a global contractility loss. What emerges is the sequence of the asphyxia
+// models — early tachycardia and hypertension, then bradycardia and hypotension, then loss of aortic pulsations with
+// the ECG still organised (DeBehnke 1995 [P]; Varvarousi 2011, 2015 [P]). This module declares the arrest once the
+// hypoxic depression leaves the heart unable to eject (HYP_ARREST), and picks its rhythm. MANUAL never calls it (the
+// instructor owns the rhythm there). The carotid-chemoreflex bradycardia below SaO2 60 % is the existing chemoFactors
+// rule (model.ts, tables §1.1); the direct SA-node depression adds to it through cor.hyp. The beats alone never make
+// the declaration: at a vanishing contractility the lumped ventricle (active and passive elastances blended by the
+// activation) still moves ≈ 1 L/min against a reflex-raised filling pressure, so "loss of aortic pulsations" is reached
+// through the myocardial state, not the pressure.
 import type { RhythmId, RhythmOpts } from '../../types.ts';
 import { SINUS_FAMILY } from './rate-rule.ts';
 import type { CircModelState } from './model.ts';

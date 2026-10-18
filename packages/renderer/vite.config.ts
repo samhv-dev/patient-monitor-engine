@@ -4,8 +4,8 @@ import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 
 // Two builds (package.json "build"): the default mode emits the ESM entry dist/index.js (Vite inlines the worker);
-// `--mode iife` emits the single-file dist/patient-monitor.iife.js (global PatientMonitor, brief §7.6). Stage 8b: the
-// IIFE's worker is the file's OWN source (src/iife-worker.ts), so the engine ships once (544 → 285 KB gzip on 48864439).
+// `--mode iife` emits the single-file dist/patient-monitor.iife.js (global PatientMonitor, brief §7.6). The IIFE's
+// worker is the file's OWN source (src/iife-worker.ts), so the engine ships once (544 → 285 KB gzip on 48864439).
 const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf8')) as { version: string };
 const BANNER =
   `/*! patient-monitor-engine ${version} (@pme/renderer IIFE) | MIT, (c) Ali Mahdavi and contributors | ` +
@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
       ? { alias: [{ find: /^\.\/engine\.worker\.ts\?worker&inline$/, replacement: resolve(import.meta.dirname, 'src/iife-worker.ts') }] }
       : {},
     plugins: iife ? [selfWrap] : [],
-    // FU-11 A1: the engine's build id (packages/engine-core/src/version.ts) in both builds; 'dev' unless PME_BUILD is set.
+    // The engine's build id (packages/engine-core/src/version.ts) in both builds; 'dev' unless PME_BUILD is set.
     define: { __PME_ENGINE_BUILD__: JSON.stringify(process.env.PME_BUILD ?? 'dev') },
     build: {
       lib: {
@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: iife ? {} : { external: [/^@pme\//] },
     },
     // The renderer tests drive a real engine through the sweep (5–8 s budgets); on the loaded CI runner the 5 s default
-    // timed out once per run since Stage 7 raised the per-tick cost (G8a CI). Same budget as engine-core.
+    // timed out once per run once the full physiology raised the per-tick cost. Same budget as engine-core.
     test: { testTimeout: 30_000 },
   };
 });

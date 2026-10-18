@@ -1,7 +1,6 @@
-// Stage 13 Task 1: the run record — every source becomes a row at its simulated time; a return to a bookmark keeps the
-// discarded course as undone rows and rewinds the trend; a restart starts a new record; the data survives JSON. The
-// last cases run a real engine, scenario driver and host session the way AppSession wires them (a bookmark restore; a
-// Stage 10 fast-forward, when Stage 10 is in).
+// The run record — every source becomes a row at its simulated time; a return to a bookmark keeps the discarded course
+// as undone rows and rewinds the trend; a restart starts a new record; the data survives JSON. The last cases run a
+// real engine, scenario driver and host session the way AppSession wires them (a bookmark restore; a fast-forward).
 import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { createInProcessHub, HostSession, type HostTarget, type WireEvent } from '@pme/controller';
 import { BUILTIN_SCENARIOS, engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
@@ -86,7 +85,7 @@ describe('Stage 13: the run record', () => {
   it('a return to a bookmark marks the discarded course undone, rewinds the trend, and the run goes on', () => {
     const r = fresh();
     for (let t = 0; t <= 100; t++) r.engine(meas(t, 99 - t / 10));
-    r.engine(alarms(10, ['HR_HIGH'])); // active when the bookmark is taken, and after the return: one row, not two (R50 M-2)
+    r.engine(alarms(10, ['HR_HIGH'])); // Active when the bookmark is taken, and after the return: one row, not two
     r.wire(applied(1000, { type: 'scenario', action: 'bookmark', target: 'Bookmark 1 at 00:20' }));
     r.engine(breath(19, 'mech')); // began before the bookmark, reported when it ended (after it)
     r.engine(alarms(66, ['apnoea-co2']));
@@ -169,7 +168,7 @@ describe('Stage 13: the run record', () => {
     const engine = createEngine({ ...eo, truthHz: 1, patient: { ...eo.patient, ...(v.doc.patient?.sensors ? { sensors: v.doc.patient.sensors } : {}) } } as never);
     const step = (n: number) => engine.advanceTo((engine.now().tick + n) * 0.02 + 1e-9);
     const base: HostTarget = { dispatch: (c) => engine.dispatch(c), snapshot: () => engine.snapshot(), restore: (s) => engine.restore(s), on: (f) => engine.on(f), now: () => engine.now(), time: () => {} };
-    const target = Object.assign(base, { fastForwardStep: async (n: number) => (step(n), engine.now()) }); // Stage 10's HostTarget hook
+    const target = Object.assign(base, { fastForwardStep: async (n: number) => (step(n), engine.now()) }); // The fast-forward hook
     let hs: HostSession | null = null;
     const driver = new ScenarioDriver({ target, submit: (c) => (hs as HostSession).submit(c), publish: (e) => hs?.publish(e) });
     hs = new HostSession({ session: 'REC345', target: driver.host, scenario: driver.hook, stateIntervalMs: 0 });

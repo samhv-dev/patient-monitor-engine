@@ -1,8 +1,9 @@
-// Explore physiology (research/13 §4.5; R56): the Stage 7x console's data, re-presented for residents in the light
+// Explore physiology (research/13 §4.5): the physiology console's data, re-presented for residents in the light
 // bench theme. Every row is labelled from the glossary (label, tooltip with the full name, unit and adult normal) and
 // grouped by organ; a change from the baseline is marked with an arrow and a tint, not colour alone. Values the
 // glossary does not name are model internals: collapsed, with their engine keys, for the curious. The respiratory
-// mechanics section shows Stage 7k's mechanics, dead-space and volume rows (loops to come); labs beyond the blood gas are placeholders until v1.1.
+// mechanics section shows the mechanics, dead-space and volume rows (loops to come); labs beyond the blood gas are
+// placeholders until v1.1.
 import type { EngineEvent } from '@pme/engine-core';
 import { ConsoleModel, type Row } from '../../physiology-console/model.ts';
 import { fmtDelta, fmtValue } from '../../physiology-console/format.ts';
@@ -21,7 +22,7 @@ interface Section {
   intro: string;
   /** Glossary sections whose rows belong here even if the console files them elsewhere. */
   gloss?: string[];
-  /** With `gloss`: this console group's labelled rows belong here too, listed first in the console's order (7k). */
+  /** With `gloss`: this console group's labelled rows belong here too, listed first in the console's order. */
   withGroup?: GroupId;
   placeholder?: string;
 }
@@ -61,13 +62,13 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     const before = model.t;
     const changed = model.ingest(e);
     if (changed && model.t < before) {
-      // R50 M14: time went back (a bookmark restore) — the histories restart, and a baseline taken after the restored
-      // moment belongs to the discarded future: it is taken again at 1 minute
+      // Time went back (a bookmark restore) — the histories restart, and a baseline taken after the restored moment
+      // belongs to the discarded future: it is taken again at 1 minute
       model.clearHistory();
       if (model.baseT !== null && model.t < model.baseT) (model.base = null), (model.baseT = null);
     }
-    // FU-11 (presenter note D5): the baseline is taken at 1 minute of sim time whether or not Explore is open (it was set
-    // on the first visit after 1 minute, so opening Explore at 08:30 compared against 08:30)
+    // The baseline is taken at 1 minute of sim time whether or not Explore is open (it was set on the first visit after
+    // 1 minute, so opening Explore at 08:30 compared against 08:30)
     if (model.baseT === null && model.t >= 60) model.setBaseline();
     if (changed && visible) draw();
   });
@@ -105,8 +106,8 @@ export function exploreView(session: AppSession, site: SiteProfile): View {
     });
     if (s.withGroup) rows.sort((a, b) => Number(b.group === s.withGroup) - Number(a.group === s.withGroup)); // stable: console order kept
     const clinical = rows.filter((r) => labelOf(r.path) !== null && !r.internal && (r.value === null || typeof r.value !== 'object')); // null = not measured yet (—)
-    // one row per quantity (review F1): the monitor and the truth copy of one value share a row key; two different
-    // quantities never do, even when research/11 gives them similar labels
+    // One row per quantity: the monitor and the truth copy of one value share a row key; two different quantities never
+    // do, even when research/11 gives them similar labels
     const seen = new Set<string>();
     const once = (r: Row) => {
       const k = rowKey(r.path) ?? r.path;

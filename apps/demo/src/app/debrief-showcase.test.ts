@@ -1,6 +1,6 @@
-// Stage 13 Task 3: the showcase objectives as rules — every rule in the library names a state, drug, alarm or condition
-// that exists, and on the engine (driver, host and run record wired as AppSession wires them) the anaphylaxis and
-// induction cards are judged as the presenter would judge them: treated in time = met, never = not met.
+// The showcase objectives as rules — every rule in the library names a state, drug, alarm or condition that exists, and
+// on the engine (driver, host and run record wired as AppSession wires them) the anaphylaxis and induction cards are
+// judged as the presenter would judge them: treated in time = met, never = not met.
 import { createEngine, DRUGS } from '@pme/engine-core';
 import { createInProcessHub, HostSession, type HostTarget } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';

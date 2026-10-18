@@ -1,5 +1,5 @@
-// FU-6 evidence page: five respiratory demonstrations on the Philips-like monitor (MODELED, ×4). The ground truth the
-// screenshots show is printed under the monitor from the lungState/measurement events. Hook: window.__pme6.
+// Respiratory evidence page: five respiratory demonstrations on the Philips-like monitor (MODELED, ×4). The ground
+// truth the screenshots show is printed under the monitor from the lungState/measurement events. Hook: window.__pme6.
 import type { Command, EngineEvent, EngineOptions, PatientProfile } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 

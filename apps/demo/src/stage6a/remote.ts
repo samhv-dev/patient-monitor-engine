@@ -1,11 +1,11 @@
-// Stage 6a remote controller page (phone/tablet). Never renders waveforms.
+// Controller remote page (phone/tablet). Never renders waveforms.
 import { createEngine } from '@pme/engine-core';
 import { mountRemote, vocabularyOf, type CommandInput } from '@pme/controller';
 import { connect, epochNow, params, viaParam } from './links.ts';
 
 const first = viaParam();
 const remote = mountRemote(document.getElementById('remote') as HTMLElement, {
-  vocabulary: vocabularyOf(createEngine()), // same build as the host; Stage 5's engine vocabulary() flows through
+  vocabulary: vocabularyOf(createEngine()), // Same build as the host; the engine vocabulary() flows through
   vias: [first, ...(['broadcastChannel', 'websocket', 'webrtc'] as const).filter((v) => v !== first)],
   connect,
   ...(params.get('session') ? { session: params.get('session') as string } : {}),

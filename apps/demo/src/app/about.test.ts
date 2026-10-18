@@ -1,5 +1,5 @@
-// Stage 8b: the in-app release label and education-only line (Start and Settings → About) match the packages' version
-// and the Debrief's print footer; no "version 1.1" promise is left on screen.
+// The in-app release label and education-only line (Start and Settings → About) match the packages' version and the
+// Debrief's print footer; no "version 1.1" promise is left on screen.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';

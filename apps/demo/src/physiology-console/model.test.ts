@@ -31,11 +31,11 @@ describe('ConsoleModel', () => {
     expect(groups).toMatchObject({
       'resp.lung.mech.cL': 'lungs', 'blood.core.ab.ph': 'blood', 'blood.core.out.k': 'blood', 'organs.brain.icp': 'brain',
       'organs.renal.gfr': 'kidney', 'organs.liver.lactate': 'liver', 'endo.core.glucose.g': 'endocrine', 'neuro.antinoc': 'neuro',
-      'pk.bus.cns.propCe': 'drugs', 'ecmo.flowLpm': 'other', 'organs.iap': 'kidney', // 7x.1: IAP is a kidney input
+      'pk.bus.cns.propCe': 'drugs', 'ecmo.flowLpm': 'other', 'organs.iap': 'kidney', // IAP is a kidney input
       'organs.kidney.gfrRel': 'kidney', 'organs.sensors.icp': 'brain', 'pk.bus.agents.propofol.brain': 'drugs',
     });
     expect(m.row('organs.renal.uopMlMin').meta.unit).toBe('mL/min');
-    // 7g's bus agents carry their concentration unit as a sibling leaf; the name's own unit wins
+    // The drug model's bus agents carry their concentration unit as a sibling leaf; the name's own unit wins
     expect(m.row('pk.bus.agents.propofol.brain').meta.unit).toBe('µg/mL');
     expect(m.row('pk.bus.agents.propofol.cumulativeMgPerKg').meta.unit).toBe('mg/kg');
     expect([m.row('pk.drugs.propofol.x.0').internal, m.row('pk.drugs.propofol.rate').internal]).toEqual([true, false]);

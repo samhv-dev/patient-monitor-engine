@@ -1,6 +1,7 @@
 // The instructor panel (research/13 §4.3, brief §7): eight tabs in the order they are used, the staged-changes footer
-// (the Stage 6a stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), keyboard shortcuts
-// (brief §9) and one ≤ 2 Hz repaint. Built only on a Link, so the same panel runs same-screen and as the Remote.
+// (the controller pages' stage bar grown up: Gaumard UNI's Apply list, SimPad's "Set transition time"), keyboard
+// shortcuts (brief §9) and one ≤ 2 Hz repaint. Built only on a Link, so the same panel runs same-screen and as the
+// Remote.
 import type { Link } from '../link.ts';
 import type { ScenarioCard } from '../scenarios.ts';
 import type { SiteProfile } from '../site.ts';

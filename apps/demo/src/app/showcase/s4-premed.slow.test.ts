@@ -1,10 +1,11 @@
-// Stage 11 S4 (showcase-induction-premed): fentanyl 2 µg/kg + midazolam 0.03 mg/kg at 0:10 (the card's own timer), the
-// same propofol and rocuronium at 3:00 ("Induce now", as the run sheet presses it), intubated at +90 s — with no vasopressor (the nadir the story compares with S3) and with ephedrine
-// 20 s after the mean pressure falls below 60. Bands: docs/plans/stage-11-scenarios.md (R45).
+// showcase-induction-premed: fentanyl 2 µg/kg + midazolam 0.03 mg/kg at 0:10 (the card's own timer), the
+// same propofol and rocuronium at 3:00 ("Induce now", as the run sheet presses it), intubated at +90 s — with no
+// vasopressor (the nadir the story compares with the healthy induction) and with ephedrine 20 s after the mean
+// pressure falls below 60.
 import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
-/** R45 bands: the measured prototype ± the plan's tolerances (docs/plans/stage-11-scenarios.md, "Bands"). Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S4 no pressor': { refused: [0, 0], premedS: [0, 25], inducedS: [162, 198], mapAt10: [91, 101], hrAt10: [66, 76], mapBefore: [85, 95], hrBefore: [57, 67], awrrBefore: [3, 7], etco2Before: [45, 51], apnoeaAlarmS: [28, 58], mapNadir: [47, 57], mapNadirS: [101, 131], hrAtNadir: [51, 61], hrMin5: [50, 60], spo2Min: [97, 100], mapAt4min: [53, 63] },
   'S4 ephedrine': { refused: [0, 0], ephedrineS: [100, 130], mapAtDose: [47, 57], hrAtDose: [51, 61], mapPlus60: [54, 64], mapPlus120: [62, 72], hrPlus120: [54, 64], mapOver65S: [81, 111], state: [1, 1] },

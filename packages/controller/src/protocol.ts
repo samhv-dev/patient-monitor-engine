@@ -23,7 +23,7 @@ export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
 type CommandBase = { id: string; issuedBy: string; atTick?: Tick; stageGroup?: string };
 
-/** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings until Stage 7 defines DrugId). */
+/** Brief §7.2 `ClinicalEvent`, verbatim (drug ids stay strings). */
 export type ClinicalEvent =
   | {
       kind: 'drug'; drugId: string; dose: number; unit: 'mcg' | 'mg' | 'mcg/kg' | 'mg/kg' | 'mEq' | 'units' | 'mcg/kg/min';
@@ -43,7 +43,7 @@ export type ClinicalEvent =
   | { kind: 'cpr'; active: boolean; rate?: number; quality?: number; ventilation?: '30:2' | 'continuous' }
   | {
       kind: 'defib'; action: 'selectEnergy' | 'charge' | 'shock' | 'disarm' | 'syncOn' | 'syncOff' | 'preselect'; energyJ?: number;
-      outcome?: string; // Stage 4b: `preselect` (the instructor's post-shock rhythm, engine-core DefibEvent)
+      outcome?: string; // `preselect` (the instructor's post-shock rhythm, engine-core DefibEvent)
     }
   | { kind: 'pacer'; mode: 'off' | 'demand' | 'fixed'; ratePpm?: number; mA?: number; pause?: boolean }
   | {
@@ -55,9 +55,9 @@ export type ClinicalEvent =
 export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp';
 
 /**
- * Brief §7.2 Command variants that @pme/engine-core does not export yet (its Stage 1 union is a subset).
- * Shapes are copied verbatim from the brief; `doc` is `unknown` until Stage 6b defines ScenarioDoc.
- * When engine-core adds a variant, delete it here — the union below stays valid either way.
+ * Brief §7.2 Command variants that @pme/engine-core does not export yet (its union is a subset). Shapes are copied
+ * verbatim from the brief; `doc` is `unknown` here (ScenarioDoc is the scenario runner's). When engine-core adds a
+ * variant, delete it here — the union below stays valid either way.
  */
 export type ExtraCommand = CommandBase &
   (
@@ -71,7 +71,7 @@ export type ExtraCommand = CommandBase &
         target?: string;
         doc?: unknown;
       }
-    // Stage 10: `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
+    // `jump` = fast-forward `value` sim seconds (> 0, ≤ 600) as fast as the host's monitor runs; `step` is refused
     | { type: 'time'; action: 'pause' | 'resume' | 'scale' | 'step' | 'jump'; value?: number }
     | { type: 'applyEvent'; event: ClinicalEvent }
     | {
@@ -87,7 +87,7 @@ export type ScenarioCommand = Extract<ExtraCommand, { type: 'scenario' }>;
 export type ClinicalCommand = Extract<ExtraCommand, { type: 'applyEvent' | 'attachSensor' }>;
 export type ScenarioEvent = Extract<ExtraEvent, { type: 'scenario' }>;
 
-/** Brief §7.3 EngineEvent variants not yet in engine-core's Stage 1 union (verbatim shapes). */
+/** Brief §7.3 EngineEvent variants not yet in engine-core's union (verbatim shapes). */
 export type ExtraEvent =
   | { type: 'rhythmSegment'; t: SimSeconds; rhythm: RhythmId; seed: number; templateId?: string }
   | {
@@ -109,7 +109,7 @@ export type ExtraEvent =
   | {
       type: 'state'; t: SimSeconds; tick: Tick; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
-      rhythm?: { id: RhythmId; rateBpm: number }; // FU-2: the engine's running rhythm (absent from a host-synthesised state)
+      rhythm?: { id: RhythmId; rateBpm: number }; // The engine's running rhythm (absent from a host-synthesised state)
     }
   | { type: 'scenario'; t: SimSeconds; stateId: string; transitionId?: string }
   | { type: 'commandApplied'; commandId: string; tick: Tick; resolved: unknown; ignored?: string[] }
@@ -117,25 +117,25 @@ export type ExtraEvent =
    *  Within one timeline a peer's clock only moves forward; across this boundary it restarts (showcase hotfix). */
   | { type: 'timeline'; t: SimSeconds; tick: Tick; cause?: TimelineCause }
   /**
-   * Stage 10: the host's fast-forward from `fromT` to `toT` began (`wallMs`: the wall time it is paced to), or ended at `t`
+   * The host's fast-forward from `fromT` to `toT` began (`wallMs`: the wall time it is paced to), or ended at `t`
    * (`stopped`: why it ended early; `alarms`: every alarm raised during it, once, `ended` = no longer active at its end).
    */
   | { type: 'fastForward'; t: SimSeconds; tick: Tick; phase: 'start' | 'end'; fromT: SimSeconds; toT: SimSeconds; wallMs?: number; stopped?: string; alarms?: FastForwardAlarm[] }
   /**
-   * Stage 12: the host's Ventilator view drives the patient (its frames reach same-browser viewers only, FU-11 R50 F3):
-   * sent at most once a second to every other transport while it does, so a phone on the relay knows it cannot follow.
+   * The host's Ventilator view drives the patient (its frames reach same-browser viewers only): sent at most once a
+   * second to every other transport while it does, so a phone on the relay knows it cannot follow.
    */
   | { type: 'cockpit'; t: SimSeconds; tick: Tick }
   /**
-   * Stage 12 (owner ruling Q4): the instructor's monitor style, for a phone on the relay (the second screen has its own
-   * same-browser style channel, FU-11 G2). Sent with every answer to a hello (`replay: true`: the relay routes it as the
-   * welcome) and at every change. Presentation only.
+   * The instructor's monitor style, for a phone on the relay (the second screen has its own same-browser style channel).
+   * Sent with every answer to a hello (`replay: true`: the relay routes it as the welcome) and at every change.
+   * Presentation only.
    */
   | { type: 'style'; skin: string; theme: string; replay?: true };
 
-/** Stage 10: an alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
+/** An alarm raised during a fast-forward (it did not sound); `ended`: it came and went inside the span. */
 export type FastForwardAlarm = AlarmEntry & { ended: boolean };
-/** Stage 10: a fast-forward that ended, as a controller or a viewer keeps it (the banner and the monitor read it). */
+/** A fast-forward that ended, as a controller or a viewer keeps it (the banner and the monitor read it). */
 export interface FastForwardDone {
   fromT: SimSeconds;
   toT: SimSeconds;
@@ -143,26 +143,25 @@ export interface FastForwardDone {
   stopped?: string;
   alarms: FastForwardAlarm[];
 }
-/** Stage 10: the `fastForward` end event as a FastForwardDone. */
+/** The `fastForward` end event as a FastForwardDone. */
 export const fastForwardDone = (e: { t: SimSeconds; fromT: SimSeconds; toT: SimSeconds; stopped?: string; alarms?: FastForwardAlarm[] }): FastForwardDone => ({
   fromT: e.fromT, toT: e.toT, endT: e.t, ...(e.stopped ? { stopped: e.stopped } : {}), alarms: e.alarms ?? [],
 });
 /**
- * FU-11 (F04, F05, F09; BA01, BA04, BA05): why a timeline began. 'restart' (the default; the showcase hotfix's case): a
- * new engine — the scenario run ended with the old body. 'restore': the same engine went back to a bookmark — the
- * scenario run continues from the bookmark's state (the driver publishes it). Either way every clock restarts at `t`.
+ * Why a timeline began. 'restart' (the default): a new engine — the scenario run ended with the old body. 'restore':
+ * the same engine went back to a bookmark — the scenario run continues from the bookmark's state (the driver publishes
+ * it). Either way every clock restarts at `t`.
  */
 export type TimelineCause = 'restart' | 'restore';
 /** Brief §7.3 `EngineEvent` as it travels on the wire. */
 export type WireEvent = EngineEvent | ExtraEvent;
 
 /**
- * Stage 12: the events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor
- * (`state`), the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward
- * (ViewerSync; the follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the
- * Ventilator view's `cockpit` notice and the instructor's monitor `style` (R50 I3). The relay sends a viewer on the
- * network only these (at ×8 the rest — measurements, alarm and organ status its own engine computes — was 4/5 of a
- * phone's traffic).
+ * The events a VIEWER uses — it runs its own engine from the host's snapshot, so it needs the clock anchor (`state`),
+ * the beats it checks its own against, the commands it mirrors, the host's timeline and fast-forward (ViewerSync; the
+ * follower page's liveness and pause read the same), the scenario's state (small, 1 Hz at most), the Ventilator view's
+ * `cockpit` notice and the instructor's monitor `style`. The relay sends a viewer on the network only these (at ×8 the
+ * rest — measurements, alarm and organ status its own engine computes — was 4/5 of a phone's traffic).
  */
 export const VIEWER_EVENTS: ReadonlySet<WireEvent['type']> = new Set<WireEvent['type']>(['state', 'beat', 'commandApplied', 'timeline', 'fastForward', 'scenario', 'cockpit', 'style']);
 export type StateEvent = Extract<ExtraEvent, { type: 'state' }>;
@@ -176,7 +175,7 @@ export type CommandAppliedEvent = Extract<ExtraEvent, { type: 'commandApplied' }
 export interface AppliedResolution {
   command: WireCommand;
   replay?: boolean;
-  /** FU-11 (K2): applied outside the session (the Ventilator view's link) and sent only so a viewer mirrors it; not a log line. */
+  /** Applied outside the session (the Ventilator view's link) and sent only so a viewer mirrors it; not a log line. */
   mirror?: boolean;
 }
 
@@ -207,8 +206,8 @@ export interface Transport {
 export interface ManagedTransport extends Transport {
   readonly status: TransportStatus;
   /**
-   * FU-11 (BA12): who else is there, when the link knows it (the relay's `peers` frame). Absent on links that cannot
-   * tell (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
+   * Who else is there, when the link knows it (the relay's `peers` frame). Absent on links that cannot tell
+   * (BroadcastChannel, in-process): a session then learns presence from the host's hello and its 1 Hz state.
    */
   onPresence?(fn: (p: { hostOnline: boolean }) => void): () => void;
 }

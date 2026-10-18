@@ -1,5 +1,5 @@
-// Stage 7k (R57): the Ventilation panel — the console group "Respiratory mechanics and volumes" (Stage 9's Explore
-// section title) with glossary labels (research/11 §5.6), fed by a running engine on the internal ventilator.
+// The Ventilation panel — the console group "Respiratory mechanics and volumes" (the Explore section title) with
+// glossary labels (research/11 §5.6), fed by a running engine on the internal ventilator.
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command } from '@pme/engine-core';
 import { ConsoleModel } from './model.ts';

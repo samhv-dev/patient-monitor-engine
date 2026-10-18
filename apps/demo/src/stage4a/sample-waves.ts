@@ -1,5 +1,5 @@
-// Sample SHAPES for the skin preview only (not physiology; Stages 2–3 own the real pleth/IBP/CO2/resp models).
-// Each returns a value in 0..1 at time t (s) so a lane can scale it to its height.
+// Sample SHAPES for the skin preview only (not physiology; the haemodynamic and respiratory signal modules own the
+// real pleth/IBP/CO2/resp models). Each returns a value in 0..1 at time t (s) so a lane can scale it to its height.
 import type { LaneId } from '@pme/skins';
 
 const HR_HZ = 75 / 60;

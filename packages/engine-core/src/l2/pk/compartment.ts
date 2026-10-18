@@ -1,5 +1,5 @@
-// Linear mammillary compartment PK with one or more effect sites (Stage 7g; tables §6.1). States (amounts in the
-// drug's amount unit, concentrations in amount/L):
+// Linear mammillary compartment PK with one or more effect sites (tables §6.1). States (amounts in the drug's amount
+// unit, concentrations in amount/L):
 //   x = [A1, A2, A3, Ce_1 … Ce_m]
 //   dA1/dt = −(k10 + k12 + k13)·A1 + k21·A2 + k31·A3 + R(t)      R: infusion, amount/min
 //   dA2/dt = k12·A1 − k21·A2

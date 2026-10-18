@@ -1,6 +1,6 @@
-// Saadat bedside checklist page (research/06 §7; BUILD-PLAN Stage 8 "Saadat screens as a capture source"). The engine
-// runs the saadat-like skin; each item restores the start snapshot, plays its demo and measures what the engine did;
-// Ali records the real monitor's behaviour and a verdict; the results JSON feeds `bedside:apply` (skin provenance).
+// Saadat bedside checklist page (research/06 §7). The engine runs the saadat-like skin; each item restores the start
+// snapshot, plays its demo and measures what the engine did; Ali records the real monitor's behaviour and a verdict;
+// the results JSON feeds `bedside:apply` (skin provenance).
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 import { BEDSIDE, type BedsideItem, type BedsideResult, type BedsideResults, type Verdict } from '../../../../packages/validation/src/bedside/checklist.ts';

@@ -1,7 +1,7 @@
-// Stage 7a demo: the circulation with a profile picker, lesions, drugs, events, CPR, IABP/LVAD, a PV-loop view and a
-// chamber-pressure view. The monitor is mounted exactly as stage2.ts does. The teaching views read a SHADOW engine
-// in this thread (same options, same commands at the same ticks, advanced to the monitor's clock): the engine is
-// deterministic, so the shadow is the monitor's patient without a sample channel through the worker protocol.
+// Circulation page: a profile picker, lesions, drugs, events, CPR, IABP/LVAD, a PV-loop view and a chamber-pressure
+// view. The monitor is mounted exactly as stage2.ts does. The teaching views read a SHADOW engine in this thread (same
+// options, same commands at the same ticks, advanced to the monitor's clock): the engine is deterministic, so the
+// shadow is the monitor's patient without a sample channel through the worker protocol.
 import { createEngine, type ChannelId, type Command, type EngineEvent, type EngineOptions, type MonitorEngine, type PatientProfile } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 

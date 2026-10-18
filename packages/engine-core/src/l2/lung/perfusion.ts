@@ -1,7 +1,7 @@
 // Per-lung perfusion with hypoxic pulmonary vasoconstriction (tables §4.2, catalogue §22, Q35). Each side's flow
-// divides into its collapsed part (true shunt), an aerated-but-hypoxic part and a normal part; HPV multiplies the
-// flow to the first two by (1 − hpv·a). The same factor is that side's PVR multiplier for Stage 7a, and without 7a
-// the side flow fractions come from the conductances directly (fallback).
+// divides into its collapsed part (true shunt), an aerated-but-hypoxic part and a normal part; HPV multiplies the flow
+// to the first two by (1 − hpv·a). The same factor is that side's PVR multiplier for the circulation model, and without
+// the circulation model the side flow fractions come from the conductances directly (fallback).
 import {
   ATEL_PERF, HPV2_EXTRA, HPV2_ONSET_S, HPV_PAO2_HI, HPV_PAO2_LO, PERF_SHARE, TAU_HPV1_S, TAU_HPV2_S,
 } from './params.ts';
@@ -10,7 +10,7 @@ import type { SideParams } from './side.ts';
 export interface HpvState { a1: number[]; a2: number[]; stimS: number[] }
 export interface Perfusion {
   f: number[]; // fraction of pulmonary flow to each side
-  pvrMult: number[]; // each side's vascular resistance multiplier (for 7a)
+  pvrMult: number[]; // each side's vascular resistance multiplier (for the circulation)
   shunt: number[]; // fraction of the side's flow through its collapsed part
   hypoxic: number[]; // hypoxic fraction of each side (HPV stimulus)
 }
@@ -37,9 +37,9 @@ export function stepHpv(st: HpvState, hypoxic: number[], dt: number): void {
 }
 
 /**
- * Side flows. `nonAer` = non-aerated fraction per side, `pao2` = each side's alveolar PO2, `hpvInhibit` (0–1, 7g's
- * `bus.hpvInhibit`: volatiles 0.2 per MAC — Miller 10e ch. 49 p. 1538, catalogue §22 — and the nitrovasodilators)
- * scales HPV ×(1 − hpvInhibit) (FU-6 R13: was a `volatileMac` input the pipeline wired to 0).
+ * Side flows. `nonAer` = non-aerated fraction per side, `pao2` = each side's alveolar PO2, `hpvInhibit` (0–1, the drug
+ * model's `bus.hpvInhibit`: volatiles 0.2 per MAC — Miller 10e ch. 49 p. 1538, catalogue §22 — and the
+ * nitrovasodilators) scales HPV ×(1 − hpvInhibit).
  */
 export function perfusion(sp: SideParams[], nonAer: number[], pao2: number[], st: HpvState, hpvInhibit: number): Perfusion {
   const g = [0, 0];

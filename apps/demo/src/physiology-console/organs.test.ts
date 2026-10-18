@@ -6,16 +6,16 @@ describe('organ grouping', () => {
     ['hemo.circ.p.rSys', 'circulation'], ['ev.circ.svr', 'circulation'], ['ev.circ.lvad.flowLpm', 'devices'], ['hemo.iabp.ratio', 'devices'],
     ['mon.hr', 'monitor'], ['hemo.num.abp.sys', 'monitor'], ['resp.o2.pao2', 'lungs'], ['resp.driver.vent.peep', 'devices'],
     ['resp.temp.tc', 'blood'], ['mods.k', 'ecg'], ['ev.beat.qtMs', 'ecg'], ['l1.vars.sbp.to', 'controls'], ['dev.pacer.mode', 'devices'],
-    // stages not merged yet (paths from the 7b–7g plans)
+    // Stages not merged yet (paths from their plans)
     ['resp.lung.mech.cL', 'lungs'], ['blood.core.ab.ph', 'blood'], ['organs.brain.icp', 'brain'], ['organs.renal.gfr', 'kidney'],
     ['organs.liver.lactate', 'liver'], ['endo.core.glucose.g', 'endocrine'], ['neuro.antinoc', 'neuro'], ['pk.bus.cns.propCe', 'drugs'],
     ['ev.drugs.macTotal', 'drugs'], ['ev.labs.values.ph', 'blood'],
-    // 7d's published keys (kidney, R51 addendum 13), its ICP sensor and interim anaesthesia input; 7e's seams
+    // The organ model's published keys (kidney), its ICP sensor and interim anaesthesia input; the endocrine seams
     ['organs.kidney.gfrRel', 'kidney'], ['ev.organs.kidney.uopMlMin', 'kidney'], ['organs.sensors.icp', 'brain'], ['organs.anaesEvent.propofolE', 'brain'],
     ['hemo.circ.ext.endoHrF', 'endocrine'], ['hemo.circ.ext.endoSvrF', 'endocrine'], ['blood.endo.glucoseMgDl', 'endocrine'], ['hemo.circ.ext.pPtx', 'circulation'],
     // unknown → other
     ['ecmo.flowLpm', 'other'], ['ev.somethingNew.x', 'other'],
-    // 7x.1 (FU-3 item 12): 7d's intra-abdominal pressure is a kidney input; its condition list by the organ it drives
+    // The organ model's intra-abdominal pressure is a kidney input; its condition list by the organ it drives
     // (tbi → brain, aki → kidney, hepaticFailure → liver; the profile's other conditions are inputs: controls)
     ['organs.iap', 'kidney'], ['organs.conds.tbi.severity', 'brain'], ['organs.conds.aki.severity', 'kidney'],
     ['organs.conds.hepaticFailure.severity', 'liver'], ['organs.conds.htn.id', 'controls'],

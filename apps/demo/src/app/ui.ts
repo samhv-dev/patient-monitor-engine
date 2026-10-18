@@ -44,7 +44,7 @@ document.addEventListener('keydown', (e) => e.key === 'Escape' && hideTip());
 document.addEventListener('pointerdown', (e) => !(e.target as Element).closest?.('.tip') && hideTip());
 
 /** "ⓘ" button that shows a glossary entry's long name, unit and normal range. `label` names the button after the row
- *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name (review F1). */
+ *  it sits in ("About Cp (Propofol)"), so two rows of one entry never share a button name. */
 export function tip(e: GlossaryEntry, label = shortLabel(e)): HTMLButtonElement {
   const text = `${e.label}\n${describeEntry(e)}`;
   const b = h('button', { type: 'button', class: 'tip', 'aria-label': `About ${label}` }, 'ⓘ');

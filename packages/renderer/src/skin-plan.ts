@@ -1,6 +1,6 @@
-// ResolvedSkin → RenderPlan (renderer requests RR-1, RR-2, RR-3): the plain-data lane layout the worker draws from.
-// It runs on the main thread (where @pme/skins is resolved) and crosses to the worker as JSON. A plan built from
-// the Stage 1/2 options (`legacyPlan`) reproduces the old hard-coded look exactly, so pages without a skin keep it.
+// ResolvedSkin → RenderPlan: the plain-data lane layout the worker draws from. It runs on the main thread (where
+// @pme/skins is resolved) and crosses to the worker as JSON. A plan built from the legacy options (`legacyPlan`)
+// reproduces the old hard-coded look exactly, so pages without a skin keep it.
 import { engineFilterFor, type LaneId, type ResolvedSkin, type Skin } from '@pme/skins';
 import type { ChannelId, EcgFilterMode, LeadId } from '@pme/engine-core';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
@@ -50,12 +50,12 @@ const LEAD_OF: Record<string, LeadId> = {
 export const LEAD_LABEL: Record<LeadId, string> = {
   ecgI: 'I', ecgII: 'II', ecgIII: 'III', aVR: 'aVR', aVL: 'aVL', aVF: 'aVF', V1: 'V1', V2: 'V2', V3: 'V3', V4: 'V4', V5: 'V5', V6: 'V6',
 };
-/** Skin wave lanes → engine channels (IBP1–3 are the ART/CVP/PAP lines of Stage 2; IBP4 has no line yet). */
+/** Skin wave lanes → engine channels (IBP1–3 are the ART/CVP/PAP lines; IBP4 has no line yet). */
 const WAVE_CHANNEL: Partial<Record<LaneId, ChannelId | null>> = {
   PLETH: 'pleth', ART: 'abp', CVP: 'cvp', PAP: 'pap', IBP1: 'abp', IBP2: 'cvp', IBP3: 'pap', IBP4: null, RESP: 'resp', CO2: 'co2',
-  ICP: 'icp', // Stage 7d
+  ICP: 'icp',
 };
-const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP', ICP: 'ICP' }; // Stage 7d: ICP
+const IBP_SCALE_KEY: Partial<Record<LaneId, string>> = { ART: 'ART', IBP1: 'ART', CVP: 'CVP', IBP2: 'CVP', PAP: 'PAP', IBP3: 'PAP', IBP4: 'IBP', ICP: 'ICP' }; // ICP
 /** Engine filter-command value for a skin band: the exact engine mode, else 'band:<lo>-<hi>' (E-4a-1). */
 export function filterModeFor(band: readonly [number, number]): EcgFilterMode {
   const f = engineFilterFor(band);
@@ -77,12 +77,12 @@ export function ecgLabel(template: string, lead: LeadId, gainMult: number, gainL
   return template.replace('{lead}', LEAD_LABEL[lead]).replace('{gain}', formatGain(gainMult, gainLabel)).replace('{FILTER}', filterName);
 }
 
-/** Pages that name their lanes (Stage 1/2/5 demos pass `lanes`/`waves`) keep them, in the skin's colours. */
+/** Pages that name their lanes (the demo pages pass `lanes`/`waves`) keep them, in the skin's colours. */
 export interface LaneOverride {
   lanes?: readonly LeadId[];
   waves?: readonly WaveLaneId[];
 }
-const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // Stage 3: co2, resp; Stage 7d: icp
+const WAVE_LANE: Record<WaveLaneId, LaneId> = { abp: 'ART', pleth: 'PLETH', cvp: 'CVP', pap: 'PAP', co2: 'CO2', resp: 'RESP', icp: 'ICP' }; // co2, resp, icp
 
 export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride): RenderPlan {
   const s = r.skin;
@@ -106,7 +106,7 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
     const range: [number, number] | null =
-      id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // Stage 7d: a skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
+      id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // A skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id };
   });
   return {
@@ -129,13 +129,13 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
   };
 }
 
-/** Stage 1/2 look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
+/** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
 export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[]): RenderPlan {
   const ecg = leads.map((lead): PlanLane => ({
     id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}',
   }));
   const wv = waves.map((w): PlanLane => ({
-    id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // Stage 3: co2/resp 6.25 mm/s
+    id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // co2/resp 6.25 mm/s
     autoGain: false, gainOptions: [],
     range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label,
   }));

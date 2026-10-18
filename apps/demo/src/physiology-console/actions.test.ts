@@ -38,8 +38,9 @@ describe('rail command builders', () => {
       A.bolus('phenylephrine', 100, 'mcg'), A.fluid('crystalloid', 500, 300), A.bleed(500, 60), A.condition('tamponade', 0.5),
       A.ventilation('ventilator', 12, 500, 5, 0.5), A.ventilation('spontaneous', 0, 0, 0, 0), A.rhythm('afib'), A.setMode('manual'),
     ]) expect(send(b), A.describe(b)).toMatchObject({ accepted: true });
-    // an id no stage knows is rejected with a reason (7g's infusion/tci/vaporiser, 7b's lungCondition/mainstem/recruit
-    // and 7c's lab and fluid ids are accepted or rejected depending on whether that stage has merged: not asserted)
+    // An id no stage knows is rejected with a reason (the drug model's infusion/tci/vaporiser, the lung model's
+    // lungCondition/mainstem/recruit and the blood model's lab and fluid ids are accepted or rejected depending on
+    // whether that stage has merged: not asserted)
     const r = send(A.bolus('notADrug', 1, 'mg'));
     expect(r.accepted).toBe(false);
     expect(r.reason).toBeTruthy();

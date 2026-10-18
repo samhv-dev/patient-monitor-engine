@@ -13,7 +13,7 @@ import { FF_SPANS } from './fast-forward.ts';
 import { spanText } from './describe.ts';
 import { button, clock, h, infoDialog, PIN_SVG, seg, setText, throttle, toast, WAVE_SVG } from './ui.ts';
 
-/** The speeds the bar offers (Stage 10: ×8 added for the 22 Oct demonstration; the host accepts 0.25–8). */
+/** The speeds the bar offers (×8 added for the 22 Oct demonstration; the host accepts 0.25–8). */
 export const SPEEDS: readonly string[] = ['1', '2', '4', '8'];
 
 export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
@@ -22,9 +22,9 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   const scen = h('span', { class: 'scen' });
   const t = h('span', { class: 'clock num', 'aria-label': 'Simulation time' });
   const speed = seg<string>('Simulation speed', SPEEDS.map((k) => [k, `×${k}`] as [string, string]), '1', (v) => void link.send({ type: 'time', action: 'scale', value: Number(v) }).then((r) => r.accepted && toast(`Speed ×${v}`)));
-  speed.classList.add('compact'); // Stage 10: ×8 is the host's limit (the engine clock's MAX_TIME_SCALE; it refuses more: 'scale must be 0.25–8')
+  speed.classList.add('compact'); // ×8 is the host's limit (the engine clock's MAX_TIME_SCALE; it refuses more: 'scale must be 0.25–8')
   let paused = false;
-  let asking = 0; // R50 M4: own pause/resume requests not yet answered — until then the button shows what was asked
+  let asking = 0; // Own pause/resume requests not yet answered — until then the button shows what was asked
   const pause = button('Pause', () => {
     paused = !paused;
     asking++;
@@ -33,8 +33,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     pause.setAttribute('aria-pressed', String(paused));
   }, 'small');
   pause.setAttribute('aria-pressed', 'false');
-  // Stage 10: the owner's fast-forward — 2 min (the CPR pulse-check interval) or 5 min of the case in ≈ 10 s, sound muted
-  // meanwhile (a host action every controller sees, like speed and pause; no Cancel, by the owner's decision)
+  // The owner's fast-forward — 2 min (the CPR pulse-check interval) or 5 min of the case in ≈ 10 s, sound muted meanwhile
+  // (a host action every controller sees, like speed and pause; no Cancel, by the owner's decision)
   const ffs = FF_SPANS.map((s) => {
     const b = button(spanText(s), () => void link.send({ type: 'time', action: 'jump', value: s }).then((r) => r.accepted || toast(`Fast-forward refused: ${r.reason ?? 'refused'}`)), 'small');
     b.setAttribute('aria-label', `Fast-forward ${spanText(s)}`);
@@ -57,7 +57,7 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
   });
 
   bar.replaceChildren(h('div', { class: 'sb-left' }, who, badge, scen), h('div', { class: 'sb-right' }, t, speed, pause, ff, mark));
-  const debrief = h('a', { class: 'btn small ghost sb-debrief', href: hrefOf('debrief') }, 'Debrief'); // Stage 13: the report, at any time
+  const debrief = h('a', { class: 'btn small ghost sb-debrief', href: hrefOf('debrief') }, 'Debrief'); // The report, at any time
   mark.after(debrief);
   const draw = throttle(() => {
     const host = link.host;
@@ -75,8 +75,8 @@ export function mountSessionBar(bar: HTMLElement, link: Link): () => void {
     setText(scen, sv.doc ? `${cardOf(sv.doc).title}: ${sv.stateLabel()} ${clock(sv.timeInState(link.simT))}` : 'No scenario');
     debrief.dataset.ready = String(!!sv.doc && !sv.current()?.transitions?.length); // the scenario has ended
     setText(t, clock(link.simT));
-    for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // Stage 10: one at a time
-    // FU-11 (K5): the speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)
+    for (const b of ffs) b.disabled = link.ctl.fastForward !== null; // One at a time
+    // The speed and pause the HOST runs at, wherever they were set (a Remote showed ×1 under a ×4 host)
     const k = String(link.ctl.timeScale);
     if (speed.value !== k && SPEEDS.includes(k)) speed.set(k);
     if (!asking && paused !== link.ctl.hostPaused) {

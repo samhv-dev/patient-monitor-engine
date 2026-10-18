@@ -1,6 +1,6 @@
-// Stage 7g demo: the monitor plus the drug panel (Cp/Ce, pump/TCI, decrement time, volatile line) and a depth tile
-// that shows 7g's summaries until 7f's depth index exists. The shadow engine is deterministic, so it IS the
-// monitor's patient (7a's pattern).
+// Drug PK/PD page: the monitor plus the drug panel (Cp/Ce, pump/TCI, decrement time, volatile line) and a depth tile
+// that shows the drug model's summaries until the neuro model's depth index exists. The shadow engine is deterministic,
+// so it IS the monitor's patient (the circulation page's pattern).
 import { createEngine, type Command, type EngineEvent, type EngineOptions, type MonitorEngine } from '@pme/engine-core';
 import { createDrugPanel, mountMonitor, type DrugPanel, type MonitorHandle } from '@pme/renderer';
 
@@ -78,11 +78,14 @@ $('lipid').onclick = () => {
 $('sgx').onclick = () => void drug('sugammadex', 2, 'mg/kg');
 $('nal').onclick = () => void drug('naloxone', 0.1, 'mg');
 
-/** The depth tile: 7f's depth index when 7f publishes it on the 1 Hz state event, else 7g's own summaries. */
+/**
+ * The depth tile: depth index when the neuro model publishes it on the 1 Hz state event, else the drug model's own
+ * summaries.
+ */
 function depthText(): string {
   if (!shadow) return '';
-  // Stage 8b (FU-11 F25): 7f's shown depth index is `neuro.diShown` (the old `neuro.out.depthIndex` never existed, so
-  // the tile always said "7f pending")
+  // The neuro model's shown depth index is `neuro.diShown` (the old `neuro.out.depthIndex` never existed, so the tile
+  // never showed it)
   const st = (shadow.snapshot().state as { st: { pk?: { bus: { cns: { uSurface: number; macBrain: number; propCe: number; opioidCeRemiEq: number; seizure: boolean } } }; neuro?: { diShown?: number } } }).st;
   const di = st.neuro?.diShown;
   const c = st.pk?.bus.cns;

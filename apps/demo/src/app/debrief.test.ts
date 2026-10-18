@@ -1,6 +1,6 @@
-// Stage 13 Task 2: the debrief's judgements — every rule kind met, not met and not assessable, read on the kept course
-// (an event before the anchor, a second anchor, a value never measured); the measured facts, the labs and the drug
-// totals; objectives without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
+// The debrief's judgements — every rule kind met, not met and not assessable, read on the kept course (an event before
+// the anchor, a second anchor, a value never measured); the measured facts, the labs and the drug totals; objectives
+// without a rule listed as not assessable (with the instructor's tick); the minute table and the JSON.
 import type { ObjectiveRule } from '@pme/controller/scenario';
 import { validateScenario } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ import { axisRange, debriefJson, drugTotals, facts, objectives, perMinute, verdi
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
 import { cardOf } from './scenarios.ts';
 
-/** A two-state case (the showcase cards' words are Stage 11's to change). */
+/** A two-state case (the showcase cards' words may change). */
 const DOC = { schema: 'pme-scenario/1', id: 'case', title: 'Case', initialState: 'awake', states: [{ id: 'awake', label: 'Awake' }, { id: 'induced', label: 'Induced' }] } as const;
 const sample = (t: number, o: Partial<Sample> = {}): Sample => ({ t, hr: 80, map: 80, spo2: 98, etco2: 38, rr: 12, temp: 36.8, k: null, lactate: null, ph: null, glucose: null, tcore: null, ...o });
 const run = (rows: Row[], samples: Sample[] = [], weightKg = 70): RunData => ({ ...emptyRun('M 40 y 70 kg', weightKg, 0), doc: DOC as never, rows, samples });

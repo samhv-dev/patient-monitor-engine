@@ -31,10 +31,10 @@ import { validateView } from './views/validate.ts';
 import { ventView } from './views/vent.ts';
 
 const site = loadSite();
-setDrugNames(site.drugNames); // one set of drug names on every screen (orchestrator ruling 5)
+setDrugNames(site.drugNames); // One set of drug names on every screen
 const q = new URLSearchParams(location.search);
-// FU-11 (K2): `?follow=<code>` = the learner monitor on a second screen: it follows that session and runs none of its own
-// Stage 12: `?join=<code>` = a learner's PHONE: it follows that session over the relay (the QR code's address)
+// `?follow=<code>` = the learner monitor on a second screen: it follows that session and runs none of its own
+// `?join=<code>` = a learner's PHONE: it follows that session over the relay (the QR code's address)
 const join = joinCode(location);
 const follow = join ?? normalizeSessionCode(q.get('follow') ?? '');
 const relay = relayOf(location);
@@ -43,7 +43,7 @@ const hostless = !follow && parseRoute(location.hash).id === 'remote';
 const shell = new Shell(document.getElementById('app') as HTMLElement, { hostless, follower: !!follow });
 if (site.theme === 'projector-light') document.documentElement.dataset.theme = 'bench';
 
-// Frame intervals for the Stage 8a gate with the whole shell mounted (docs/gates/stage-8a.md measures the same thing).
+// Frame intervals with the whole shell mounted, for the performance gate (validation-perf.html measures the same).
 const frames: number[] = [];
 let lastFrame = performance.now();
 const onFrame = (t: number) => {
@@ -56,11 +56,11 @@ requestAnimationFrame(onFrame);
 
 if (follow) {
   if (parseRoute(location.hash).id !== 'monitor') history.replaceState(null, '', `${location.pathname}${location.search}${hrefOf('monitor')}`);
-  // its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar (R50 Q3)
+  // Its status and its own Sound / Silence sit under the monitor: the monitor route hides the top bar
   const bar = h('div', { class: 'follower-bar', role: 'toolbar', 'aria-label': 'Learner monitor' });
   shell.add({ id: 'monitor', el: h('section', { 'aria-labelledby': 'fol-h' }, h('h1', { id: 'fol-h', class: 'sr-only' }, 'Learner monitor'), bar) });
   const follower = mountFollower(shell, site, follow, bar, join && relay ? { relay } : undefined);
-  // Stage 10: the second screen shows the same fast-forward panel and latches the alarms that came and went
+  // The second screen shows the same fast-forward panel and latches the alarms that came and went
   mountFastForward(shell.root, { get fastForward() { return follower.sync?.fastForward ?? null; }, get lastFastForward() { return follower.sync?.lastFastForward ?? null; } }, { simT: () => follower.sync?.fastForwardAt ?? null, font: () => follower.monitor.skin?.render.fontStack, latch: (a) => follower.monitor.latchAlarms(a) });
   shell.start();
   Object.assign(window, { __pmeFollower: follower, __pmeApp: { shell, frames, site } });
@@ -73,9 +73,9 @@ if (follow) {
   const base = PATIENT_PRESETS[0]?.spec;
   if (!base) throw new Error('no patient presets');
   const session = new AppSession(shell.monitorHost, { spec: { ...base, attached: !site.sensorsOff }, mode: 'modeled' }, { skin: site.skin, theme: site.theme, code: q.get('session'), load: q.get('load') === 'perf8' ? 'perf8' : null, relay });
-  // FU-11 (R50 F5): the session code survives a reload of this window, so a learner monitor and a Remote that follow it
-  // find it again (a reload made a new code and left them on a frozen screen)
-  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f)); // owner ruling Q3
+  // The session code survives a reload of this window, so a learner monitor and a Remote that follow it find it again
+  // (a reload made a new code and left them on a frozen screen)
+  publishStyle(session.code, () => ({ skin: session.skin, theme: session.theme }), (f) => session.onSkin(f));
   if (q.get('session') !== session.code) {
     const u = new URL(location.href);
     u.searchParams.set('session', session.code);
@@ -84,8 +84,8 @@ if (follow) {
   if (site.fps === 30) session.monitor?.setFps(30);
   applySkinAlarmColours(site.skin, site.theme);
   const link = new Link(session.panel, session.panelTransport, session);
-  // R50 M15: a monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the
-  // console for the gate note's diagnostics
+  // A monitor whose worker stopped is final (no fallback) — say so and name the way out; the reason goes to the console
+  // for the gate note's diagnostics
   shell.monitorHost.addEventListener('pme-monitor-failed', (e) => {
     console.error('monitor failed:', (e as CustomEvent<{ reason: string }>).detail.reason);
     toast('The monitor stopped — Restart the patient');
@@ -98,13 +98,13 @@ if (follow) {
       return false;
     }
     link.note(`Scenario loaded: ${c.title}`, 'scenario');
-    session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // off unless the case asks (ruling 4)
+    session.setLearner(SCENARIO_META[c.id]?.learnerControls ?? false); // Off unless the case asks
     return true;
   };
   const weightKg = () => session.spec.weightKg;
 
   shell.add(startView({ session, site, loadScenario, learnerUrl: followUrl(session.code) }));
-  const phones = relay ? mountClassroomPanel(shell.right, session, relay) : null; // Stage 12: the QR moment (a classroom relay)
+  const phones = relay ? mountClassroomPanel(shell.right, session, relay) : null; // The QR moment (a classroom relay)
   shell.add(monitorView(shell.stage, { session, link, learnerUrl: followUrl(session.code), phones }));
   const teach = teachView(link, { site, main: shell.main, stage: shell.stage, weightKg, loadScenario });
   shell.add(teach);
@@ -114,13 +114,13 @@ if (follow) {
   shell.add(validateView());
   shell.add(devView());
   shell.add(settingsView(site, session));
-  shell.add(debriefView(session, link)); // Stage 13
+  shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
-  mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Stage 10: above every view
+  mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
   const alarm = h('button', { type: 'button', class: 'alarm-count', 'data-vendor-title': '', onclick: () => ((location.hash = hrefOf('teach')), teach.panel.select('devices')) });
-  // FU-11 (H4): a toggle — it turns sound off again (it only ever turned it on); this window's sound only (ruling Q3)
+  // A toggle — it turns sound off again (it only ever turned it on); this window's sound only
   const drawSound = () => ((sound.textContent = session.soundOn ? 'Sound on' : 'Sound off'), sound.setAttribute('aria-pressed', String(session.soundOn)));
   const sound = button('Sound off', () => (session.soundOn ? (session.disableSound(), drawSound()) : void session.enableSound().then(drawSound)), 'small sound');
   sound.setAttribute('aria-pressed', 'false');
@@ -129,12 +129,12 @@ if (follow) {
   const drawAlarm = throttle(() => {
     const s = link.alarmSummary;
     alarm.dataset.level = s.level ? LEVEL_NAME[s.level] : 'none';
-    // FU-11 (showcase kit K3, presenter note D4): with the factory "all alarm groups off" (saadat-like) asystole, VF, VT and
-    // apnoea still alarm — "Alarms off" read as if nothing would; the label says which alarms are off
+    // With the factory "all alarm groups off" (saadat-like) asystole, VF, VT and apnoea still alarm — "Alarms off" read
+    // as if nothing would; the label says which alarms are off
     setText(alarm, s.level && s.top ? `${LEVEL_MARK[s.level]} ${alarmLine(s.top).text}${s.n > 1 ? ` +${s.n - 1}` : ''}` : link.alarms?.allOff ? LIMITS_OFF_LABEL : 'No alarms');
-    if (s.top) alarm.title = `On the monitor: ${s.top.text}`; // the vendor's words, outside the glossary scan (review F4)
+    if (s.top) alarm.title = `On the monitor: ${s.top.text}`; // The vendor's words, outside the glossary scan
     else if (link.alarms?.allOff) {
-      // owner ruling Q4 (R50 M5, R56): what still alarms comes from the skin's data, worded by the alarm table
+      // What still alarms comes from the skin's data, worded by the alarm table
       const k = skinAlwaysOn(link.alarms.skin);
       alarm.title = limitsOffTitle(k.alwaysOn, k.apnoeaOff);
     }
@@ -144,7 +144,7 @@ if (follow) {
   link.onChange(drawAlarm);
   drawAlarm();
 
-  // learner monitor ↔ instructor view: the Stage 6a reveal gestures
+  // Learner monitor ↔ instructor view: the hidden panel's reveal gestures
   attachReveal(window, new RevealGesture(() => {
     const r = shell.route.id;
     if (r === 'monitor') location.hash = hrefOf('teach');

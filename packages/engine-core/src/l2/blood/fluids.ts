@@ -28,11 +28,11 @@ export interface FluidState {
   vicf: number;
   hbG: number; // haemoglobin mass
   albG: number; // plasma albumin mass
-  globG: number; // plasma globulin mass (g) — FU-9 F8: constant unless bled or given, so it dilutes but never follows albumin
+  globG: number; // Plasma globulin mass (g): constant unless bled or given, so it dilutes but never follows albumin
   colloidG: number; // synthetic colloid (albumin-equivalent) mass
   ref: { vp: number; visf: number; vicf: number; bv: number; pi0: number; albGL: number };
   flows: Flow[];
-  kfMult: number; // capillary leak multiplier (sepsis/anaphylaxis/burns: 7f sets it) — 1 normal
+  kfMult: number; // capillary leak multiplier (sepsis/anaphylaxis/burns: the endocrine model sets it) — 1 normal
   sigma: number; // protein reflection coefficient (leak lowers it)
   anaesthesia: boolean; // elimination ×0.2 under GA (tables `t12El`)
   // outputs of the last step (mL/min) for tests and the lung-water hook
@@ -51,12 +51,12 @@ export const hbOf = (f: FluidState): number => (100 * f.hbG) / bloodMl(f); // g/
 export const albGL = (f: FluidState): number => (1000 * f.albG) / f.vp;
 export const ecfMl = (f: FluidState): number => f.vp + f.visf;
 /**
- * Plasma colloid osmotic pressure (mmHg). FU-9 F8 (R50 ruling R2): albumin and globulins each by their own polynomial
- * (Nitta S et al. Tohoku J Exp Med 1981;135:43–9: albumin 2.8C + 0.18C² + 0.012C³, globulin 0.9C + 0.12C² + 0.004C³,
- * C in g/dL), scaled by COP_SCALE so that the tables' normal plasma (albumin 40, globulins 24 g/L: Landis–Pappenheimer at
- * TP 6.4 = 22.35 mmHg; the globulin mass is GLOBULIN_GL, params.ts) is exactly unchanged. Albumin then carries ≈ 80 % of the COP: hypoalbuminaemia keeps the
- * globulins' share (albumin 20 → 11.7 mmHg; Weil 1979: 12–16) and 5 % albumin is iso-oncotic (≈ 25 mmHg). Synthetic
- * colloid counts as albumin-equivalent grams (Stage 7c's convention).
+ * Plasma colloid osmotic pressure (mmHg). Albumin and globulins each by their own polynomial (Nitta S et al. Tohoku J
+ * Exp Med 1981;135:43–9: albumin 2.8C + 0.18C² + 0.012C³, globulin 0.9C + 0.12C² + 0.004C³, C in g/dL), scaled by
+ * COP_SCALE so that the tables' normal plasma (albumin 40, globulins 24 g/L: Landis–Pappenheimer at TP 6.4 = 22.35
+ * mmHg; the globulin mass is GLOBULIN_GL, params.ts) is exactly unchanged. Albumin then carries ≈ 80 % of the COP:
+ * hypoalbuminaemia keeps the globulins' share (albumin 20 → 11.7 mmHg; Weil 1979: 12–16) and 5 % albumin is iso-oncotic
+ * (≈ 25 mmHg). Synthetic colloid counts as albumin-equivalent grams (the blood model's convention).
  */
 const nittaAlb = (c: number): number => 2.8 * c + 0.18 * c ** 2 + 0.012 * c ** 3;
 const nittaGlob = (c: number): number => 0.9 * c + 0.12 * c ** 2 + 0.004 * c ** 3;
@@ -77,11 +77,12 @@ export function createFluids(p: BloodPatient, albumin: number): FluidState {
 }
 
 /**
- * FU-9 F4: the protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of
- * the extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994
+ * The protein reflection coefficient of a leaky endothelium. Inflammation opens LARGE pores, which carry most of the
+ * extra hydraulic conductance and most of the protein flux (two-pore theory, the DIRECTION: Rippe & Haraldsson 1994
  * Physiol Rev 74:163). That the non-reflected share (1 − σ) grows with the same factor as the whole Kf is an assumption
  * [ENG]: σ = 1 − (1 − σ0)·kfMult, floor SIGMA_LEAK_FLOOR [ENG]. Normal (kfMult 1) → 0.9; warm septic shock (kfMult 2.6)
- * → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — 7e's sepsis, anaphylaxis and burns alike.
+ * → 0.74; kfMult 3 → 0.7. It applies to every writer of `fl.kfMult` — the endocrine model's sepsis, anaphylaxis and
+ * burns alike.
  */
 export const SIGMA_LEAK_FLOOR = 0.3;
 export function leakSigma(kfMult: number): number {
@@ -99,10 +100,10 @@ export function starling(f: FluidState): { j: number; lymph: number; pisf: numbe
 }
 
 /**
- * One step of dtS seconds (Euler; stable for dt ≤ 1 s: the fastest mode has τ ≈ 3 min). `osmRatio` drives the
- * ISF ↔ cell water shift. `elimMlMin` (7d's urine output, request R-7D-2) replaces the volume-receptor elimination
- * when given. Returns the volumes of whole blood lost and fluid given this step (mL) with their compositions, so
- * solutes.ts can move the matching amounts.
+ * One step of dtS seconds (Euler; stable for dt ≤ 1 s: the fastest mode has τ ≈ 3 min). `osmRatio` drives the ISF ↔
+ * cell water shift. `elimMlMin` (the kidney's urine output) replaces the volume-receptor elimination when given.
+ * Returns the volumes of whole blood lost and fluid given this step (mL) with their compositions, so solutes.ts can
+ * move the matching amounts.
  */
 export function stepFluids(f: FluidState, t: number, dtS: number, osmRatio: number, elimMlMin?: number): { bledMl: number; bledPlasmaMl: number; elimMl: number; given: { ml: number; comp: Composition }[] } {
   const dtM = dtS / 60;

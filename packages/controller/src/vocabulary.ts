@@ -1,8 +1,8 @@
 // The control vocabulary (brief §7.1 `vocabulary()`: bounds, normals, enums, constraints — Squiggler-style,
 // research 04 §5). The brief names the type but not its shape; this file defines it. Until engine-core
-// implements vocabulary() (BUILD-PLAN Stage 5), vocabularyOf() falls back to stage1Vocabulary(), which
-// describes exactly what the Stage 1 engine accepts. The panel and the remote generate their controls from it,
-// so Stage 2/5 parameters appear by themselves once the engine reports them.
+// implements vocabulary(), vocabularyOf() falls back to stage1Vocabulary(), which describes exactly what the
+// base engine accepts. The panel and the remote generate their controls from it, so further parameters
+// appear by themselves once the engine reports them.
 import { LEAD_IDS, RHYTHMS, RHYTHM_IDS, type RhythmId, type StateVar } from '@pme/engine-core';
 
 export interface VarSpec {
@@ -15,7 +15,7 @@ export interface VarSpec {
   normal: number;
   /** setTarget accepts a ramp. */
   rampable: boolean;
-  /** pin/release apply (brief §4.9): the 6a drawer offers them in MODELED only (FU-8: in MANUAL every value is set). */
+  /** pin/release apply (brief §4.9): the drawer offers them in MODELED only (in MANUAL every value is set). */
   pinnable: boolean;
 }
 
@@ -59,8 +59,8 @@ export interface Vocabulary {
   constraints: Array<{ id: string; text: string }>;
 }
 
-// Rhythm ids come from engine-core's RHYTHM_IDS (36 after Stage 5); an id without a label here is shown as
-// its id. Labels are display-only, so a new rhythm never breaks the controller build. FU-1: all 36 labelled.
+// Rhythm ids come from engine-core's RHYTHM_IDS (36); an id without a label here is shown as
+// its id. Labels are display-only, so a new rhythm never breaks the controller build. All 36 are labelled.
 const RHYTHM_LABEL: Partial<Record<RhythmId, string>> = {
   sinus: 'Sinus', sinusBrady: 'Sinus bradycardia', sinusTachy: 'Sinus tachycardia', sinusArrhythmia: 'Sinus arrhythmia',
   sinusPause: 'Sinus pause / arrest', atrialTach: 'Atrial tachycardia', mat: 'Multifocal atrial tachycardia',
@@ -75,7 +75,7 @@ const RHYTHM_LABEL: Partial<Record<RhythmId, string>> = {
   pacedDDD: 'Paced (DDD)',
 };
 
-/** What the Stage 1 engine accepts (engine.ts validate()). */
+/** What the base engine accepts (engine.ts validate()). */
 export function stage1Vocabulary(engineVersion = '0.0.0'): Vocabulary {
   return {
     schema: 'pme-vocabulary/1',
@@ -102,7 +102,7 @@ export function stage1Vocabulary(engineVersion = '0.0.0'): Vocabulary {
   };
 }
 
-/** The engine's own vocabulary when it has one (Stage 5+), else the Stage 1 description. */
+/** The engine's own vocabulary when it has one, else the base-engine description. */
 export function vocabularyOf(engine: { readonly version: string; vocabulary?: () => unknown }): Vocabulary {
   const v = engine.vocabulary?.();
   if (v && typeof v === 'object' && (v as Vocabulary).schema === 'pme-vocabulary/1') return v as Vocabulary;

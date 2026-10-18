@@ -1,5 +1,5 @@
 // QRS / pulse beep (brief §3.6): 60 ms, sine plus 2nd harmonic, 5 ms attack and release [ENG].
-// Stage 1 plays a fixed 880 Hz; Stage 3 adds pitch(SpO2) = 880·2^(−(100 − SpO2)·s/12).
+// A fixed 880 Hz without SpO2 pitch; with it, pitch(SpO2) = 880·2^(−(100 − SpO2)·s/12).
 
 export const BEEP_MS = 60;
 export const BEEP_RAMP_MS = 5;
@@ -30,7 +30,7 @@ export function playBeep(ctx: BaseAudioContext, dest: AudioNode, when: number, f
   osc.start(when);
   osc.stop(when + BEEP_MS / 1000 + 0.01);
   return {
-    endsAt: when + BEEP_MS / 1000 + 0.01, // FU-11 (F19)
+    endsAt: when + BEEP_MS / 1000 + 0.01,
     stop() {
       env.disconnect();
       try {

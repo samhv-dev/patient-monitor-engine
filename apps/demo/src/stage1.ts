@@ -69,9 +69,9 @@ soundBtn.addEventListener('click', () => {
   });
 });
 
-// Diagnostics for the Gate 1 checklist: render path, AUDIBLE beep − R (ruling R15), memory.
-// Audible beep − R = (tone sim time − true R) + the tone's audible lag behind its intended time. The scheduler maps
-// the intended time to the audio clock through getOutputTimestamp, so that lag includes the device output latency.
+// Diagnostics for the Gate 1 checklist: render path, AUDIBLE beep − R, memory. Audible beep − R = (tone sim time − true
+// R) + the tone's audible lag behind its intended time. The scheduler maps the intended time to the audio clock through
+// getOutputTimestamp, so that lag includes the device output latency.
 const beats: number[] = [];
 let simT = 0;
 pm.on((e) => {

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// The alarm mirror follows the active skin: its colours (D5, R50 review F5) and its priority marks (R50 review F12).
+// The alarm mirror follows the active skin: its colours and its priority marks.
 import { describe, expect, it } from 'vitest';
 import { applySkinAlarmColours, LEVEL_MARK, skinAlarmBar } from './shell.ts';
 

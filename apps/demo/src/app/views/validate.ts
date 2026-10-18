@@ -1,6 +1,6 @@
-// Validate (research/13 §4.7): the three Stage 8a tools as tabs in the bench theme. They are internal pages with their
-// own engines, so they load only when their tab opens. The performance check measures ONE monitor alone by design, so
-// it opens in a new tab rather than in a frame next to this session's running monitor (R50 review F13).
+// Validate (research/13 §4.7): the three validation-harness tools as tabs in the bench theme. They are internal pages
+// with their own engines, so they load only when their tab opens. The performance check measures ONE monitor alone by
+// design, so it opens in a new tab rather than in a frame next to this session's running monitor.
 import { h, tabs } from '../ui.ts';
 import type { View } from '../shell.ts';
 
@@ -28,8 +28,8 @@ export function validateView(): View {
       }
       if (sub) t.select(sub);
     },
-    // the tools run their own engines: leaving the view unloads them, so a hidden view does no work (brief §10, D26)
-    // and this session's main thread is not shared with two more monitors while the instructor teaches
+    // The tools run their own engines: leaving the view unloads them, so a hidden view does no work (brief §10) and
+    // this session's main thread is not shared with two more monitors while the instructor teaches
     leave: () => {
       el.replaceChildren();
       t = null;

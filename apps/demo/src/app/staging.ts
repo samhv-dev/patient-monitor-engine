@@ -1,8 +1,8 @@
 // Stage, then commit with one chosen transition (research/13-ui-simulator-benchmarks "Top 8" #1: Gaumard UNI's Apply
 // panel, SimPad PLUS "Set transition time", Infirmary Integrated's Apply/Reset + auto-apply opt-out). Staged commands
 // keep their control key (a later edit of the same control replaces the earlier one); Commit sends them as ONE stage
-// group (Stage 6a StageBuffer: the host applies them on one tick) with the batch transition as the ramp of every
-// target command. Urgent actions (shock, silence, bolus) never stage.
+// group (StageBuffer: the host applies them on one tick) with the batch transition as the ramp of every target command.
+// Urgent actions (shock, silence, bolus) never stage.
 import { StageBuffer, type AckResult, type CommandInput } from '@pme/controller';
 
 export class Staging {
@@ -66,7 +66,7 @@ export class Staging {
   withRamp(c: CommandInput): CommandInput {
     // Only the commands whose onset the engine honours carry one (measured on the merged base: a pin or a target ramps;
     // a release hands the value back at once and setFactor is refused) — an onset the engine would ignore is never
-    // sent, so the log, the toast and the progress bar never promise a slow change that happens at once (external review F13).
+    // sent, so the log, the toast and the progress bar never promise a slow change that happens at once.
     const rampable = c.type === 'setTarget' || c.type === 'pin';
     return rampable && this.transitionS > 0 ? ({ ...c, ramp: { durationS: this.transitionS, curve: 'linear' } } as CommandInput) : c;
   }

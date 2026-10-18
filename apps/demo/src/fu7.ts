@@ -1,7 +1,7 @@
-// FU-7 evidence page (plan Task 20 Step 2): four panels, each one gate screenshot, drawn from the engine. Panel 1 plots
-// the onset shapes 7g evaluates (gammaShape vs gammaConc's transit chain at each row's own tp/t10); panels 2–4 run the
-// engine headless (MODELED, seed 7, the drug audit's adult 40 y / 70 kg) and sample the committed state read-only
-// through snapshot() every 5 s (the stage7g.ts pattern). Hook: window.__pme7 { ready, done }.
+// Drug evidence page: four panels, each one gate screenshot, drawn from the engine. Panel 1 plots the onset shapes the
+// drug model evaluates (gammaShape vs gammaConc's transit chain at each row's own tp/t10); panels 2–4 run the engine
+// headless (MODELED, seed 7, the drug audit's adult 40 y / 70 kg) and sample the committed state read-only through
+// snapshot() every 5 s (the stage7g.ts pattern). Hook: window.__pme7 { ready, done }.
 import { createEngine, DRUGS, gammaConc, gammaN, gammaShape, shockStateFactor, type Command, type EngineEvent, type MonitorEngine, type PatientProfile } from '@pme/engine-core';
 
 type Body = Record<string, unknown>;

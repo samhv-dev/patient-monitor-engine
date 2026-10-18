@@ -1,10 +1,10 @@
-// Stage 11 S5: the two kept cards, unchanged, re-measured on the FU-7.1 physiology — haemorrhage → PEA → CPR and
-// anaphylaxis (treated 2 min into the reaction, and untreated). Their old run-sheet numbers are in
-// docs/plans/stage-11-scenarios.md beside these; a number that left its old band is reported there, not tuned (R45).
+// The two kept cards, unchanged, re-measured on the current physiology — haemorrhage → PEA → CPR and
+// anaphylaxis (treated 2 min into the reaction, and untreated). A number that left its old run-sheet band is
+// reported, not tuned.
 import { describe, it } from 'vitest';
 import { bands, first, near, range, runCard } from './harness.ts';
 
-/** R45 bands: the measured prototype ± the plan's tolerances (docs/plans/stage-11-scenarios.md, "Bands"). Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S5 haemorrhage': { refused: [0, 0], hrAt2: [76, 86], sysAt2: [109, 119], hrAt4: [91, 101], sysAt4: [103, 113], hrAt6: [116, 126], sysAt6: [94, 104], hrAt8: [137, 147], sysAt8: [70, 80], mapAt8: [61, 71], pulseLossS: [566, 692], roscIntoCprS: [158, 194], sysOver90IntoCprS: [160, 196], sysStop60: [130, 140], diaStop60: [86, 96], hrStop60: [70, 80], etco2Stop60: [32, 38] },
   'S5 anaphylaxis': { refused: [0, 0], hrAt2: [134, 144], sysAt2: [91, 101], mapAt2: [73, 83], sysOver110S: [0, 26], hrPeak: [173, 183], sysPlus2: [113, 123], mapPlus2: [92, 102], hrPlus2: [105, 115] },

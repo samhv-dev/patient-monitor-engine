@@ -100,13 +100,13 @@ export class Link {
     } else if (e.type === 'deviceStatus') {
       this.device = e as unknown as DeviceStatusEvent;
     } else if (e.type === 'timeline') {
-      // FU-11 (F05, F09): a new timeline — onsets in progress began on the old one; a restart also ends the acute events
-      // (a Remote has no AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
+      // A new timeline — onsets in progress began on the old one; a restart also ends the acute events (a Remote has no
+      // AppSession.onMount to tell it); a bookmark restore keeps them (the engine does not report them)
       this.ramps.clear();
       if (e.cause !== 'restore') this.conditions.clear();
       this.changed();
     } else if (e.type === 'fastForward') {
-      // Stage 10: where a fast-forward began and ended, and the alarms raised during it (shown, not sounded), with times
+      // Where a fast-forward began and ended, and the alarms raised during it (shown, not sounded), with times
       if (e.phase === 'start') this.add({ simT: e.fromT, kind: 'system', text: `Fast-forward ${spanText(e.toT - e.fromT)} started (sound muted until it ends)` });
       else {
         const al = (e.alarms ?? []).map((a) => `${a.text} ${timeText(a.since)}`);
@@ -119,7 +119,7 @@ export class Link {
   }
 
   private add(x: ClinicalLogEntry): void {
-    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Stage 13: into the debrief
+    if (x.kind === 'note' || x.kind === 'marker') this.host?.record.note(x.simT ?? this.simT, x.text); // Into the debrief
     this.log.push(x);
     if (this.log.length > 1000) this.log.splice(0, this.log.length - 1000);
     this.changed();

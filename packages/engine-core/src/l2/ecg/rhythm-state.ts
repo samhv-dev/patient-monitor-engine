@@ -35,7 +35,7 @@ export interface FWave {
   kind: 'fib' | 'flutter';
   start: number;
   end: number;
-  /** Sinusoids (Stage 1.1); empty for an AF wave played from the recorded texture (af-texture.ts). */
+  /** Sinusoids; empty for an AF wave played from the recorded texture (af-texture.ts). */
   f: number[];
   ph: number[];
   a: number[];
@@ -82,7 +82,7 @@ export interface RhythmState {
   pacer?: { nextA: number; nextV: number } | undefined;
   /** Next transcutaneous pulse (tcp.ts); undefined when TCP is off. */
   tcpNextT?: number | undefined;
-  /** Time of the last transcutaneous pulse (tcp.ts, Stage 5.1: sensing refractory). */
+  /** Time of the last transcutaneous pulse (tcp.ts, sensing refractory). */
   tcpLastPulseT?: number | undefined;
   /** Running VF episode (arrest/vf.ts). */
   vf?: VfState | undefined;
@@ -95,13 +95,13 @@ export interface RhythmState {
 export interface RhythmCtx {
   /** The L1 'hr' target at time t (bpm, unclamped). */
   hrAt(t: number): number;
-  /** FU-3 (Q-FU2-10): an implanted pacemaker's programmed lower rate at t (bpm, unclamped) — the rate held for the
-   * rhythm (the engine's held rate); absent = hrAt. MODELED AAI/DDD run hr = max(lower rate, reflex rate) above it. */
+  /** An implanted pacemaker's programmed lower rate at t (bpm, unclamped) — the rate held for the rhythm (the
+   * engine's held rate); absent = hrAt. MODELED AAI/DDD run hr = max(lower rate, reflex rate) above it. */
   pacerLowerAt?(t: number): number;
   mods: Modifiers;
   rng: Record<StreamName, Sfc32State>;
   hrv: HrvPhase;
-  /** Stage 5.1 (R-S3-3): respiratory clock for RSA and QRS amplitude modulation; absent = fixed 15/min clock. */
+  /** Respiratory clock for RSA and QRS amplitude modulation; absent = fixed 15/min clock. */
   breath?: BreathClock | undefined;
 }
 
@@ -120,9 +120,9 @@ export function rhythmRate(st: RhythmState, t: number, ctx: RhythmCtx): number {
 }
 
 /**
- * FU-3 (Q-FU2-10): the pacemaker's lower rate at t (bpm): PacerOpts.ratePpm, else the held rate (ctx.pacerLowerAt,
- * else hr), clamped to the rhythm's range. The pacer's escape interval is 60 / this; an 'hr' above it is the
- * intrinsic atrial rate of an atrial-sensing pacer (atria.ts atrialRate), which inhibits it.
+ * The pacemaker's lower rate at t (bpm): PacerOpts.ratePpm, else the held rate (ctx.pacerLowerAt, else hr), clamped to
+ * the rhythm's range. The pacer's escape interval is 60 / this; an 'hr' above it is the intrinsic atrial rate of an
+ * atrial-sensing pacer (atria.ts atrialRate), which inhibits it.
  */
 export function pacerLowerRate(st: RhythmState, t: number, ctx: RhythmCtx): number {
   const d = RHYTHMS[st.id];

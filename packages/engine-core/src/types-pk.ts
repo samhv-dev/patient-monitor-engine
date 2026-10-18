@@ -1,25 +1,25 @@
-// Stage 7g public types (drug PK/PD), kept in their own file so parallel stages do not collide in types.ts.
+// The drug model's public types (PK/PD), kept in their own file so parallel modules do not collide in types.ts.
 import type { SimSeconds } from './types.ts';
 
 export type DoseUnit = 'mcg' | 'mg' | 'g' | 'mcg/kg' | 'mg/kg' | 'g/kg' | 'mEq' | 'mmol' | 'mmol/kg' | 'units' | 'units/kg' | 'mL' | 'mL/kg';
-export type RateUnit = 'mcg/min' | 'mg/min' | 'mcg/kg/min' | 'mcg/kg/h' | 'mg/kg/h' | 'mg/h' | 'units/min' | 'units/h' | 'mmol/h' | 'mL/h' | 'mL/kg/min'; // FU-7.1 A5: mmol/h (potassium chloride)
-export type PkRoute = 'iv' | 'io' | 'im' | 'inh' | 'neb' | 'sc' | 'perineural' | 'central'; // 'neb': 7c's salbutamol
+export type RateUnit = 'mcg/min' | 'mg/min' | 'mcg/kg/min' | 'mcg/kg/h' | 'mg/kg/h' | 'mg/h' | 'units/min' | 'units/h' | 'mmol/h' | 'mL/h' | 'mL/kg/min'; // mmol/h (potassium chloride)
+export type PkRoute = 'iv' | 'io' | 'im' | 'inh' | 'neb' | 'sc' | 'perineural' | 'central'; // 'neb': the blood model's salbutamol
 
 /**
  * Brief §7.2 `drug` (bolus; `infusion: true` with a rate unit starts/changes an infusion, dose 0 stops it) plus the
- * 7g kinds: `infusion` (a syringe pump: rate in a rate unit, or mL/h with the syringe concentration), `tci`
- * (target 0 stops), `vaporiser` (dial 0 closes it; N2O as a fraction of the fresh gas).
+ * drug kinds: `infusion` (a syringe pump: rate in a rate unit, or mL/h with the syringe concentration), `tci` (target 0
+ * stops), `vaporiser` (dial 0 closes it; N2O as a fraction of the fresh gas).
  */
 export type PkClinicalEvent =
-  | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number } // concentrationPct: hypertonic saline 3 | 7.5 | 23.4 (default 3) — Stage 7d E-7d-1
+  | { kind: 'drug'; drugId: string; dose: number; unit: DoseUnit | RateUnit; route: PkRoute; infusion?: boolean; overS?: number; concentrationPct?: number } // concentrationPct: hypertonic saline 3 | 7.5 | 23.4 (default 3)
   | { kind: 'infusion'; drugId: string; rate: number; unit: RateUnit; concentration?: { amount: number; unit: 'mg' | 'mcg' | 'units' | 'g'; perMl: number } }
   | { kind: 'tci'; drugId: string; model?: string; mode: 'plasma' | 'effect'; target: number; maxRateMlH?: number }
   | { kind: 'vaporiser'; agent: 'sevoflurane' | 'isoflurane' | 'desflurane'; dialPct: number; fgfLpm?: number; n2oFrac?: number };
 
 /**
- * One drug's concentrations (R51 §2). All in `unit`, the library row's concentration unit: propofol µg/mL; opioids,
- * NMB agents and succinylcholine ng/mL; rate-equivalent vasoactives µg/kg/min; gamma rows "× ref dose". Totals, net
- * of sugammadex binding. 7f computes every NMB/depth/drive effect from these; 7g computes none of them.
+ * One drug's concentrations. All in `unit`, the library row's concentration unit: propofol µg/mL; opioids, NMB agents
+ * and succinylcholine ng/mL; rate-equivalent vasoactives µg/kg/min; gamma rows "× ref dose". Totals, net of sugammadex
+ * binding. The neuro model computes every NMB/depth/drive effect from these; the drug model computes none of them.
  */
 export interface BusAgent {
   unit: string;
@@ -32,13 +32,13 @@ export interface BusAgent {
   sgxBoundFrac?: number; // rocuronium/vecuronium: fraction of the given amount bound by sugammadex in plasma
 }
 
-/** One inhaled agent incl. N2O (R51 §2, addendum 9). Fractions of 1 atm in %. */
+/** One inhaled agent incl. N2O. Fractions of 1 atm in %. */
 export interface BusVolatile { fet: number; brain: number; macAge: number; macFrac: number }
 
 /** One accepted bolus (decision 10): listed in `bus.doses` for exactly one engine advance pass. */
-export interface DoseLogEntry { agent: string; mgPerKg: number | null; amount: number; amountUnit: string; t: SimSeconds; concentrationPct?: number } // Stage 7d E-7d-1: hypertonic saline only (7c Na load, 7d osmotic ICP effect)
+export interface DoseLogEntry { agent: string; mgPerKg: number | null; amount: number; amountUnit: string; t: SimSeconds; concentrationPct?: number } // Hypertonic saline only (Na load: blood model; osmotic ICP effect: organ model)
 
-/** What 7g publishes every 100 ms for the other modules (plan "Interfaces"). Plain data. */
+/** What the drug model publishes every 100 ms for the other modules. Plain data. */
 export interface DrugBus {
   agents: Record<string, BusAgent>;
   volatiles: Partial<Record<'sevoflurane' | 'isoflurane' | 'desflurane' | 'n2o', BusVolatile>>;
@@ -46,34 +46,34 @@ export interface DrugBus {
   antagonist: { opioid: number; benzodiazepine: number }; // EC50 multipliers of the class (1 = no antagonist)
   cns: {
     propCe: number; opioidCeRemiEq: number; macBrain: number; ketamineCe: number; benzoCeMidazEq: number; dexmedCe: number;
-    /** FU-7 (addendum 20): the ONE hypnotic-potency output — propofol-equivalent brain Ce, µg/mL (every row with hypC50). */
+    /** The ONE hypnotic-potency output — propofol-equivalent brain Ce, µg/mL (every row with hypC50). */
     hypPropEq: number;
-    /** FU-7 (addendum 20): the same, weighted by CnsSpec.ventShare — the ventilatory drive's hypnotic input. */
+    /** The same, weighted by CnsSpec.ventShare — the ventilatory drive's hypnotic input. */
     hypVentPropEq: number;
-    /** FU-7 (addendum 20): the ONE opioid-potency output — fentanyl-equivalent Ce, ng/mL, at the brain (MAC-reduction
-     * potency, `macRemiEq`) and the ventilatory site (`ventRemiEq`); fentanyl Ce X alone publishes X at both. */
+    /** The ONE opioid-potency output — fentanyl-equivalent Ce, ng/mL, at the brain (MAC-reduction potency,
+     * `macRemiEq`) and the ventilatory site (`ventRemiEq`); fentanyl Ce X alone publishes X at both. */
     opioidCeFentEq: number; opioidVentFentEq: number;
-    /** FU-7 (addendum 20): share of hypPropEq contributed by DISSOCIATIVE agents (ketamine), 0–1. */
+    /** Share of hypPropEq contributed by DISSOCIATIVE agents (ketamine), 0–1. */
     dissoc: number;
-    /** FU-7 (addenda 20–21): an indirect sympathomimetic's central drive (ephedrine, ketamine) → 7e's `extraSymp`, 0–3. */
+    /** An indirect sympathomimetic's central drive (ephedrine, ketamine) → the endocrine model's `extraSymp`, 0–3. */
     sympDrive: number;
-    /** FU-7 (addendum 22): added antinociception from 7g's PD (IV lidocaine), 0–0.6 → 7f's `antinoc`. */
+    /** Added antinociception from the drug PD (IV lidocaine), 0–0.6 → the neuro model's `antinoc`. */
     antinocAdd: number;
-    /** FU-7 (review F2, ruling 2): share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
+    /** Share of hypVentPropEq contributed by BENZODIAZEPINES, 0–1 — the drive's per-class α. */
     benzoShare: number;
     uHyp: number; uOpioid: number; uSurface: number; seizure: boolean; cmro2Mult: number; cbfVaso: number;
   };
-  nmb: { achGain: number }; // neostigmine's acetylcholine gain (1 = none); 7f applies the ceiling
+  nmb: { achGain: number }; // Neostigmine's acetylcholine gain (1 = none); the neuro model applies the ceiling
   airway: { bronchodilation: number; histamine: number };
   hpvInhibit: number;
-  /** FU-7 (addendum 24): `glucocorticoidNmolL` = an exogenous glucocorticoid (dexamethasone) as cortisol-equivalent
-   * nmol/L above basal, read by 7e's cortisol metabolic term. */
+  /** `glucocorticoidNmolL` = an exogenous glucocorticoid (dexamethasone) as cortisol-equivalent nmol/L above basal,
+   * read by the endocrine model's cortisol metabolic term. */
   metabolic: { kShift: number; glucoseDelta: number; dantroleneE: number; glucocorticoidNmolL: number };
   last: { cnsE: number; cvE: number };
   avNodeBlock: number; // adenosine/β/Ca-channel AV-nodal effect 0–1
-  /** FU-7 (addendum 23): potency-weighted antiarrhythmic occupancy (amiodarone, lidocaine, procainamide), 0–1. */
+  /** Potency-weighted antiarrhythmic occupancy (amiodarone, lidocaine, procainamide), 0–1. */
   rhythm: { antiarrhythmicU: number };
-  /** FU-7 (addendum 24 / DI-76): drug-added QTc, ms (ondansetron) — 7c adds it to its ECG QTc delta. */
+  /** Drug-added QTc, ms (ondansetron) — the blood model adds it to its ECG QTc delta. */
   qtcMsAdd: number;
 }
 
@@ -89,8 +89,8 @@ export const DRUG_BUS_NEUTRAL: DrugBus = {
   metabolic: { kShift: 0, glucoseDelta: 0, dantroleneE: 0, glucocorticoidNmolL: 0 },
   last: { cnsE: 0, cvE: 0 },
   avNodeBlock: 0,
-  rhythm: { antiarrhythmicU: 0 }, // FU-7 (addendum 23)
-  qtcMsAdd: 0, // FU-7 (addendum 24)
+  rhythm: { antiarrhythmicU: 0 },
+  qtcMsAdd: 0,
 };
 
 export interface DrugPanelRow {
@@ -102,7 +102,7 @@ export interface DrugPanelRow {
   decrement50Min: number | null; // time for Cp to fall 50 % if the pump stopped now (decision 13)
 }
 
-/** FU-8 (B1): a dose above the row's documented maximum (`DrugRow.maxDose`) — the dose is still given, as ordered. */
+/** A dose above the row's documented maximum (`DrugRow.maxDose`) — the dose is still given, as ordered. */
 export type DrugWarningEvent = { type: 'drugWarning'; t: SimSeconds; drugId: string; text: string };
 
 export type DrugsEvent = {

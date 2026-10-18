@@ -1,5 +1,5 @@
-// Patient covariates for the published PK models (Stage 7g). Every formula is the model author's own — a ke0 or a
-// body-size scalar belongs to the model it was fitted with (tables §6 "Rule for a ke0").
+// Patient covariates for the published PK models. Every formula is the model author's own — a ke0 or a body-size scalar
+// belongs to the model it was fitted with (tables §6 "Rule for a ke0").
 
 export interface PkPatient {
   ageY: number;

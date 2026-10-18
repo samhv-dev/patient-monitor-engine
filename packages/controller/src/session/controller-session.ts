@@ -1,8 +1,8 @@
 // The controller end (same-screen panel over in-process, or a remote over BroadcastChannel/WebSocket/WebRTC).
 // Commands carry a unique id; unacked ones are re-sent on every reconnect and host hello, and the host
-// de-duplicates by id, so a Wi-Fi drop never applies a command twice (BUILD-PLAN Stage 6 acceptance 3).
-// FX-2: while the link is open an unanswered command is also re-sent every COMMAND_RESEND_MS (a message lost on the way:
-// Playwright Linux WebKit's BroadcastChannel, F-49-2), and refused after COMMAND_ANSWER_TIMEOUT_MS with no answer (a host
+// de-duplicates by id, so a Wi-Fi drop never applies a command twice.
+// While the link is open an unanswered command is also re-sent every COMMAND_RESEND_MS (a message lost on the way:
+// Playwright Linux WebKit's BroadcastChannel), and refused after COMMAND_ANSWER_TIMEOUT_MS with no answer (a host
 // that stopped answering) — a sender always hears back; it never waits forever.
 import type { RhythmId, SimSeconds } from '@pme/engine-core';
 import {
@@ -72,14 +72,15 @@ export class ControllerSession {
   hostOnline = false;
   hostEngineVersion: string | null = null;
   bookmarks: string[] = [];
-  /** The host's current rhythm (FU-1): from `rhythmSegment` events, applied `setRhythm` commands and (FU-2) the 1 Hz `state` event; null until seen. */
+  /** The host's current rhythm: from `rhythmSegment` events, applied `setRhythm` commands and the 1 Hz `state` event;
+   * null until seen. */
   rhythm: RhythmId | null = null;
-  /** The host's scenario as seen from here (Stage 6b). */
+  /** The host's scenario as seen from here. */
   readonly scenario = new ScenarioView();
-  /** FU-11 (K5): the host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
+  /** The host's simulation speed and pause, from its applied `time` commands (sticky replays included). */
   timeScale = 1;
   hostPaused = false;
-  /** Stage 10: the host's fast-forward while it runs (null otherwise), and the last one that ended. */
+  /** The host's fast-forward while it runs (null otherwise), and the last one that ended. */
   fastForward: { fromT: SimSeconds; toT: SimSeconds } | null = null;
   lastFastForward: FastForwardDone | null = null;
   private readonly o: ControllerSessionOptions;
@@ -101,7 +102,7 @@ export class ControllerSession {
     this.offs = [
       o.transport.onStatus((s) => this.onStatus(s)),
       o.transport.onMessage((m) => this.onMessage(m)),
-      // FU-11 (BA12): the relay says the host left — the panel stops showing it as connected
+      // The relay says the host left — the panel stops showing it as connected
       o.transport.onPresence?.((p) => {
         if (p.hostOnline || !this.hostOnline) return;
         this.hostOnline = false;
@@ -223,17 +224,17 @@ export class ControllerSession {
   private onEvent(e: WireEvent): void {
     if (e.type === 'timeline') {
       // a new engine (patient restart, scenario load): the clock restarts; the old run ended with the old body.
-      // FU-11 (F09, BA05): a bookmark restore starts a timeline too — the clock goes back, the scenario run continues.
+      // A bookmark restore starts a timeline too — the clock goes back, the scenario run continues.
       this.simT = e.t;
       if (e.cause !== 'restore') this.scenario.reset();
-      this.fastForward = null; // Stage 10: a fast-forward ends with its timeline
+      this.fastForward = null; // A fast-forward ends with its timeline
       return;
     }
     if ('t' in e && typeof e.t === 'number') this.simT = Math.max(this.simT ?? 0, e.t); // monotonic within one timeline
     this.scenario.onEvent(e);
     if (e.type === 'state') {
       this.state = e;
-      if (e.rhythm) this.rhythm = e.rhythm.id; // FU-2: engine-initiated changes (shock outcome, drug conversion) too
+      if (e.rhythm) this.rhythm = e.rhythm.id; // Engine-initiated changes (shock outcome, drug conversion) too
     }
     else if (e.type === 'rhythmSegment') this.rhythm = e.rhythm;
     else if (e.type === 'measurement') Object.assign(this.measurements, e.values);
@@ -241,7 +242,7 @@ export class ControllerSession {
     else if (e.type === 'marker') this.addLog('marker', e.kind);
     else if (e.type === 'scenario') this.addLog('scenario', `→ ${e.stateId}${e.transitionId ? ` (${e.transitionId})` : ''}`);
     else if (e.type === 'fastForward') {
-      // Stage 10: every controller sees the host's fast-forward, like its speed and pause
+      // Every controller sees the host's fast-forward, like its speed and pause
       if (e.phase === 'start') this.fastForward = { fromT: e.fromT, toT: e.toT };
       else {
         this.fastForward = null;
@@ -251,14 +252,14 @@ export class ControllerSession {
     } else if (e.type === 'commandApplied') {
       const res = e.resolved as AppliedResolution | undefined;
       const c = res?.command;
-      if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value; // FU-11 (K5)
+      if (c?.type === 'time' && c.action === 'scale' && typeof c.value === 'number') this.timeScale = c.value;
       if (c?.type === 'time' && (c.action === 'pause' || c.action === 'resume')) this.hostPaused = c.action === 'pause';
-      // Stage 10: a late joiner learns a running fast-forward from the sticky jump (its atTick = where it began)
+      // A late joiner learns a running fast-forward from the sticky jump (its atTick = where it began)
       if (c?.type === 'time' && c.action === 'jump' && res?.replay && typeof c.value === 'number') this.fastForward = { fromT: (c.atTick ?? e.tick) * 0.02, toT: (c.atTick ?? e.tick) * 0.02 + c.value };
       if (c?.type === 'scenario' && c.action === 'bookmark' && c.target && !this.bookmarks.includes(c.target)) this.bookmarks = [...this.bookmarks, c.target];
       if (c?.type === 'setRhythm') this.rhythm = c.rhythm;
       const mine = e.commandId.startsWith(`${this.peerId}-`); // our own commands are already logged with their ack
-      if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // FU-11: link traffic is not a log line
+      if (c && !res?.replay && !res?.mirror && !mine) this.addLog('applied', describe(c), e.commandId); // Link traffic is not a log line
     }
   }
 
@@ -284,9 +285,9 @@ export function describe(c: WireCommand): string {
     case 'setModifiers':
       return `modifiers ${JSON.stringify(c.modifiers)}`;
     case 'device':
-      if (c.action.device === 'nibp') return `nibp ${c.action.action}${c.action.intervalMin !== undefined ? ` every ${c.action.intervalMin} min` : ''}`; // Stage 2
-      if (c.action.device === 'iabp' || c.action.device === 'lvad') return `${c.action.device} ${c.action.action}`; // Stage 7a
-      if (c.action.device === 'tof' || c.action.device === 'depth') return `${c.action.device} ${c.action.action}${'intervalS' in c.action && c.action.intervalS !== undefined ? ` every ${c.action.intervalS} s` : ''}`; // Stage 7f
+      if (c.action.device === 'nibp') return `nibp ${c.action.action}${c.action.intervalMin !== undefined ? ` every ${c.action.intervalMin} min` : ''}`;
+      if (c.action.device === 'iabp' || c.action.device === 'lvad') return `${c.action.device} ${c.action.action}`;
+      if (c.action.device === 'tof' || c.action.device === 'depth') return `${c.action.device} ${c.action.action}${'intervalS' in c.action && c.action.intervalS !== undefined ? ` every ${c.action.intervalS} s` : ''}`;
       return `${c.action.device} ${c.action.action} ${String(c.action.value ?? '')}${c.action.lane !== undefined ? ` lane ${c.action.lane}` : ''}`;
     case 'time':
       return `time ${c.action}${c.value !== undefined ? ` ${c.value}` : ''}`;
@@ -300,11 +301,11 @@ export function describe(c: WireCommand): string {
       return `${c.input} × ${c.factor}`;
     case 'setMode':
       return `mode ${c.mode}`;
-    case 'applyEvent': // generic: every ClinicalEvent kind logs its fields (Stage 6b), e.g. "event cpr true 110"
+    case 'applyEvent': // Generic: every ClinicalEvent kind logs its fields, e.g. "event cpr true 110"
       return `event ${Object.values(c.event).join(' ')}`;
-    case 'attachSensor': // Stage 2 adds the site
+    case 'attachSensor':
       return `sensor ${c.sensor} ${c.state}${c.site ? ` @${c.site}` : ''}`;
-    case 'externalDrive': // Stage 3
+    case 'externalDrive':
       return `drive paw ${c.frame.pawCmH2O.toFixed(1)} flow ${c.frame.flowLps.toFixed(2)}`;
   }
 }

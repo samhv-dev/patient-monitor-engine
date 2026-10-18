@@ -1,14 +1,14 @@
-// Stage 7d public types (R26/R32: brain, kidney, liver), kept in their own file so parallel stages do not collide
-// in types.ts. types.ts adds each to its union with one line. Stage 7d owns NO drug ids (R51 §3, addendum 14):
-// mannitol, hypertonic saline and furosemide are 7g library rows; the organs observe 7g's `bus.doses`.
+// Organ public types (brain, kidney, liver), kept in their own file so parallel modules do not collide in types.ts.
+// types.ts adds each to its union with one line. The organ model owns NO drug ids: mannitol, hypertonic saline and
+// furosemide are the drug model's library rows; the organs observe the drug model's `bus.doses`.
 import type { SimSeconds } from './types.ts';
 
-/** attachSensor ids Stage 7d implements (state 'on' | 'off'). */
+/** attachSensor ids the organ model implements (state 'on' | 'off'). */
 export type OrganSensorId = 'icp' | 'pbto2' | 'urometer';
-/** Numerics Stage 7d adds: ICP mean and CPP (mmHg), PbtO2 (mmHg), urine output (mL/h, rolling 60 min). */
+/** Numerics the organ model adds: ICP mean and CPP (mmHg), PbtO2 (mmHg), urine output (mL/h, rolling 60 min). */
 export type OrganNumericId = 'icpMean' | 'cpp' | 'pbto2' | 'uop';
 
-/** Brief §7.2 ClinicalEvent members Stage 7d implements (plan decision 16). */
+/** Brief §7.2 ClinicalEvent members the organ model implements. */
 export type OrganClinicalEvent =
   | {
       kind: 'brain';
@@ -36,7 +36,7 @@ export interface BrainSummary {
   icp: number; cpp: number; mapHead: number;
   cbf: number; // relative to 50 mL/100 g/min
   cbvMl: number; cmro2: number; pbto2: number; sjvo2: number; elastance: number;
-  paco2: number; // the PaCO2 the brain saw (Stage 3 truth), for the scenario tests
+  paco2: number; // The PaCO2 the brain saw (truth), for the scenario tests
   state: 'normal' | 'raisedIcp' | 'cushing' | 'herniated';
   cushing: number; // drive 0–1
 }
@@ -47,5 +47,5 @@ export interface KidneySummary {
 export interface LiverSummary {
   hbfRel: number; kLacPerH: number; lactate: number; tempF: number; liverFn: number; inr: number;
 }
-/** 1 Hz organ truth summary (like Stage 7a's `circ`). */
+/** 1 Hz organ truth summary (like the circulation model's `circ`). */
 export type OrgansEvent = { type: 'organs'; t: SimSeconds; brain: BrainSummary; kidney: KidneySummary; liver: LiverSummary };

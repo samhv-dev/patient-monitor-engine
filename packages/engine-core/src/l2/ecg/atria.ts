@@ -20,7 +20,7 @@ const AF_IMPULSE_MIN_S = 0.05; // truncation of the Poisson process [ENG]
 const AF_DV_MV = 15; // each impulse raises the junction potential by 15 mV [03 §1.5]
 const AF_SLOPE_MV_S = 30; // phase-4 depolarisation 30 mV/s [03 §1.5]
 /**
- * Rate control [ENG, calibrated by simulation in Stage 1 Task 9]. For a target ventricular rate hr (RR = 60/hr):
+ * Rate control [ENG, calibrated by simulation]. For a target ventricular rate hr (RR = 60/hr):
  *   threshold θ = AF_THETA_K · RR²; mean wait W ≈ θ / (slope + ΔV·impulseRate); refractory τ_R = RR − W.
  */
 const AF_THETA_K = 80;
@@ -29,14 +29,14 @@ const AF_RATE_CORRECTION = 0.95;
 const AF_AV_S = 0.06; // junction → QRS onset [ENG]
 const AF_MIN_REFRACTORY_S = 0.25; // RR_min 0.25–0.30 s (brief §4.1 AF fallback) [ENG]
 /**
- * AV-node effective refractory period, P to P (Stage 1.1 review H1: "≈250–300 ms"; the low end, so 1:1 conduction
- * holds up to 240/min) [ENG]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness.
+ * AV-node effective refractory period, P to P (≈ 250–300 ms; the low end, so 1:1 conduction holds up to 240/min)
+ * [ENG]. Supraventricular impulses are filtered HERE, not by ventricular refractoriness.
  */
 export const AV_NODE_ERP_S = 0.25;
 /**
- * AF rate calibration (Stage 1.1 review M1) [ENG]: pairs [target bpm, command bpm] — the command fed to the
- * threshold/refractory formulas that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13). FU-2
- * (E-FU2-5) added the 135 and 145 knots (135 read +1.0 %, +2.1 % on seed 21, between the 130 and 140 knots).
+ * AF rate calibration [ENG]: pairs [target bpm, command bpm] — the command fed to the threshold/refractory formulas
+ * that yields the target mean ventricular rate (simulated, 600 s × seeds 11–13). The 135 and 145 knots are fitted too:
+ * interpolated between the 130 and 140 knots, 135 read +1.0 % (+2.1 % on seed 21).
  */
 const AF_RATE_CAL: ReadonlyArray<readonly [number, number]> = [
   [20, 30], [40, 45.1], [50, 51.8], [60, 59.1], [70, 68.8], [80, 79.1], [90, 89.0], [100, 101.5], [110, 110.1],
@@ -47,9 +47,9 @@ export function atrialRate(st: RhythmState, d: RhythmDef, t: number, ctx: Rhythm
   if (d.atria === 'flutter') return st.opts.atrialRateBpm ?? DEFAULT_FLUTTER_ATRIAL_BPM;
   if (d.rateDrives === 'sinus') return rhythmRate(st, t, ctx);
   const base = st.opts.atrialRateBpm ?? d.atrialDefaultBpm;
-  // FU-3 (Q-FU2-10): under an atrial-sensing pacer (AAI, DDD) an hr above the lower rate is the intrinsic sinus rate
-  // (MODELED: the reflex overtaking the pacer; MANUAL: an instructor rate above PacerOpts.ratePpm). The sinus P is
-  // sensed and inhibits the atrial output (NASPE/BPEG code, Bernstein 2002); at or below the lower rate the pacer paces.
+  // Under an atrial-sensing pacer (AAI, DDD) an hr above the lower rate is the intrinsic sinus rate (MODELED: the reflex
+  // overtaking the pacer; MANUAL: an instructor rate above PacerOpts.ratePpm). The sinus P is sensed and inhibits the
+  // atrial output (NASPE/BPEG code, Bernstein 2002); at or below the lower rate the pacer paces.
   if (d.pacing === 'AAI' || d.pacing === 'DDD') {
     const hr = rhythmRate(st, t, ctx);
     if (hr > pacerLowerRate(st, t, ctx)) return Math.max(base, hr);
@@ -127,7 +127,7 @@ function onFib(st: RhythmState, t: number, ctx: RhythmCtx): void {
 
 function onFlutter(st: RhythmState, t: number, ctx: RhythmCtx): void {
   const d = RHYTHMS[st.id];
-  // The F wave itself is the continuous sawtooth in st.fwaves (Stage 1.1, ruling R18); this event only drives conduction.
+  // The F wave itself is the continuous sawtooth in st.fwaves; this event only drives conduction.
   const conducted = st.atria.groupPos === 0;
   st.atria.groupPos++;
   if (st.atria.groupPos >= st.atria.groupRatio) {
@@ -179,9 +179,9 @@ export function conductP(st: RhythmState, rate: number, ctx: RhythmCtx): number 
 }
 
 /**
- * conductP plus the AV-node and ventricular gates (Stage 1.1): a P inside the AV node's refractory period is
- * blocked (review H1); after an ectopic beat (PVC, escape) a P whose QRS would land in the ventricle's refractory
- * period is concealed (brief §4.1). A conducted P restarts the AV-node refractory period.
+ * conductP plus the AV-node and ventricular gates: a P inside the AV node's refractory period is blocked; after an
+ * ectopic beat (PVC, escape) a P whose QRS would land in the ventricle's refractory period is concealed (brief §4.1). A
+ * conducted P restarts the AV-node refractory period.
  */
 export function conductAt(st: RhythmState, t: number, rate: number, ctx: RhythmCtx): number | null {
   let pr = conductP(st, rate, ctx);

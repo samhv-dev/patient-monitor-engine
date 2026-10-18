@@ -1,9 +1,9 @@
-// Stage 2 public types (brief §7.2–§7.3), kept in their own file so parallel stages do not collide in
-// types.ts. types.ts adds `HemoCommandBody`, `NibpDeviceAction` and `HemoEvent` to its unions.
+// Haemodynamic public types (brief §7.2–§7.3), kept in their own file. types.ts adds `HemoCommandBody`,
+// `NibpDeviceAction` and `HemoEvent` to its unions.
 import type { Ramp, RhythmId, SimSeconds, StateVar } from './types.ts';
 
-/** Sensors named in brief §7.2 `attachSensor`. Stage 2 implements abp, cvp, pap, spo2 (pleth) and nibp. */
-export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp' | 'pv' | 'icp' | 'pbto2' | 'urometer'; // Stage 7a: 'pv' = teaching channels; Stage 7d: icp, pbto2, urometer
+/** Sensors named in brief §7.2 `attachSensor`. The haemodynamics implement abp, cvp, pap, spo2 (pleth) and nibp. */
+export type SensorId = 'ecg' | 'spo2' | 'nibp' | 'abp' | 'cvp' | 'pap' | 'co2' | 'temp' | 'pv' | 'icp' | 'pbto2' | 'urometer'; // 'pv' = teaching channels; icp, pbto2, urometer
 /** Invasive-line sensor states (brief §6.2, CAE semantics). */
 export type LineSensorState = 'none' | 'atmosphere' | 'connected' | 'zeroing' | 'damped';
 export type PressureChannel = 'abp' | 'cvp' | 'pap';
@@ -12,7 +12,7 @@ export type AbpSite = 'leftRadial' | 'rightRadial' | 'femoral';
 export type Spo2Site = 'leftFinger' | 'rightFinger' | 'ear' | 'forehead';
 export type NibpSite = 'rightArm' | 'leftArm' | 'leg';
 
-/** Brief §7.2 ClinicalEvent, the members Stage 2 implements. `fnHz` is a Stage 2 extension for `damp`. */
+/** Brief §7.2 ClinicalEvent, the members the haemodynamics implement. `fnHz` is an extension for `damp`. */
 export type HemoClinicalEvent =
   | {
       kind: 'line'; line: PressureChannel;
@@ -24,7 +24,7 @@ export type HemoClinicalEvent =
     }
   | { kind: 'cpr'; active: boolean; rate?: number; quality?: number; ventilation?: '30:2' | 'continuous' };
 
-/** Command variants added in Stage 2 (brief §7.2). setTarget already exists in types.ts. */
+/** Haemodynamic command variants (brief §7.2). setTarget already exists in types.ts. */
 export type HemoCommandBody =
   | { type: 'pin'; variable: StateVar; value?: number; ramp?: Ramp }
   | { type: 'release'; variable: StateVar | 'all'; ramp?: Ramp }
@@ -41,7 +41,7 @@ export type NibpDeviceAction = { device: 'nibp'; action: 'start' | 'stat' | 'sto
 export type NibpPhase = 'idle' | 'inflating' | 'deflating' | 'done' | 'failed';
 export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
 
-/** Event variants added in Stage 2 (brief §7.3). */
+/** Haemodynamic event variants (brief §7.3). */
 export type HemoEvent =
   | {
       type: 'nibp'; t: SimSeconds; phase: NibpPhase; cuffMmHg?: number; nextInS?: number;
@@ -50,8 +50,8 @@ export type HemoEvent =
   | {
       type: 'state'; t: SimSeconds; tick: number; mode: 'manual' | 'modeled';
       values: Partial<Record<StateVar, number>>; control: Partial<Record<StateVar, ControlFlag>>;
-      rhythm?: { id: RhythmId; rateBpm: number }; // FU-2 (G-FU1 item 6): the running rhythm, engine-initiated changes included
-      /** FU-8 (B2, R-S9-6): every sensor's state as `attachSensor` names it (the `state` strings of brief §7.2), so a Remote
-       * can show which sensors are attached. Assembled by the engine when the event is committed (four owners). */
+      rhythm?: { id: RhythmId; rateBpm: number }; // The running rhythm, engine-initiated changes included
+      /** Every sensor's state as `attachSensor` names it (the `state` strings of brief §7.2), so a Remote can show
+       * which sensors are attached. Assembled by the engine when the event is committed (four owners). */
       sensors?: Partial<Record<SensorId, string>>;
-    }; // the brief §7.3 `alarm` event (NIBP INOP) is Stage 5's copy in types.ts
+    }; // The brief §7.3 `alarm` event (NIBP INOP) is the copy in types.ts

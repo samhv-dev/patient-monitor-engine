@@ -1,6 +1,6 @@
 // The recorded-vs-engine morphology suite (brief §9 V1–V5): every manifest window is measured twice with the SAME
 // code — once on the recording, once on a matched engine run — then per metric and HR bin the two distributions are
-// compared (median, IQR, KS D, Wasserstein-1) and the engine's statistic is graded against the band (R40 grading).
+// compared (median, IQR, KS D, Wasserstein-1) and the engine's statistic is graded against the band.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseHeader } from '../templates/wfdb.ts';
@@ -50,9 +50,9 @@ export function series(m: WindowMetrics, metric: string): number[] {
 }
 
 /**
- * Grade one band over a group of window pairs. absolute: the engine median must lie in [min, max]; deltaToRecorded:
- * in [recorded median + min, recorded median + max]; ratioToRecorded: engine/recorded in [min, max]. errPct and the
- * green/yellow/red grade come from the segment grader (R40), so both suites grade identically.
+ * Grade one band over a group of window pairs. absolute: the engine median must lie in [min, max]; deltaToRecorded: in
+ * [recorded median + min, recorded median + max]; ratioToRecorded: engine/recorded in [min, max]. errPct and the
+ * green/yellow/red grade come from the segment grader, so both suites grade identically.
  */
 export function gradeBand(band: MetricBand, pairs: WindowPair[], group: string): MorphRow | null {
   const rec = pairs.flatMap((p) => series(p.recorded, band.metric));

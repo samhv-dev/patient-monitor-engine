@@ -5,9 +5,9 @@ const OP: Record<string, string> = { '<': '<', '<=': '≤', '>': '>', '>=': '≥
 const MIN_TEXT: Record<string, string> = { minJ: '≥ %s J', minDose: 'dose ≥ %s', minVolumeMl: '≥ %s mL', minMa: '≥ %s mA' };
 
 /**
- * FU-8 (Stage 9 R-S9-2): the words a host prints for engine ids — a vital (`etco2`), an event value (a drug id), a
- * sensor and a scenario state. The controller owns no glossary (R56: the app's glossary is the one label source), so
- * the host passes its labeller; without one the ids print as before.
+ * The words a host prints for engine ids — a vital (`etco2`), an event value (a drug id), a sensor and a scenario
+ * state. The controller owns no glossary (the app's glossary is the one label source), so the host passes its labeller;
+ * without one the ids print as they are.
  */
 export interface Labeller {
   vital?: (id: string) => string;

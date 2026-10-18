@@ -1,6 +1,7 @@
-// Stage 7e demo: MH crisis with dantrolene, hypothermia under GA with warming and cold fluid, sepsis warm → cold
-// (MODELED circulation), diabetic hypoglycaemia under GA. The endo panel (instructor view) is fed by the 1 Hz `endo`
-// event. Drugs and fluids are Stage 7g's and 7c's events; 7e owns `stimulus`, `thermal7e` and its conditions.
+// Endocrine and thermal page: MH crisis with dantrolene, hypothermia under GA with warming and cold fluid, sepsis warm
+// → cold (MODELED circulation), diabetic hypoglycaemia under GA. The endo panel (instructor view) is fed by the 1 Hz
+// `endo` event. Drugs and fluids are the drug model's and the blood model's events; the endocrine model owns
+// `stimulus`, `thermal7e` and its conditions.
 import type { Command, EngineEvent, EngineOptions } from '@pme/engine-core';
 import { mountEndoPanel, mountMonitor, type MonitorHandle } from '@pme/renderer';
 

@@ -1,7 +1,7 @@
-// Stage 12: the QR moment. With a relay (the classroom), the top bar has "Phones": a sheet over every view, the monitor
-// in full screen included, with a QR code as large as the projector allows, the address and the code beneath it, and the
-// number of phones following, live. Where phones cannot join (no relay answering, no network, a loopback-only page) it
-// says why instead of showing a code nobody can use.
+// The QR moment. With a relay (the classroom), the top bar has "Phones": a sheet over every view, the monitor in full
+// screen included, with a QR code as large as the projector allows, the address and the code beneath it, and the number
+// of phones following, live. Where phones cannot join (no relay answering, no network, a loopback-only page) it says why
+// instead of showing a code nobody can use.
 import { qrTarget, relayInfo } from './classroom.ts';
 import { qrSvg } from './qr.ts';
 import type { AppSession } from './session.ts';

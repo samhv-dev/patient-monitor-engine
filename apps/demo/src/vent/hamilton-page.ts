@@ -12,8 +12,8 @@ const profile: ProfileId = pid && pid in PROFILES ? (pid as ProfileId) : 'normal
 const port = session ? (q.get('via') === 'parent' && parent !== window ? createFramePort(session, () => parent) : createBroadcastPort(session)) : null;
 const driver = createVentDriver(port, profile);
 if (port) {
-  // FU-11 (H5): linked to the monitor, VC runs at the monitor ventilator's flow for the set VT and rate (I:E 1:2, no
-  // pause) — the same settings deliver the same volume — until the instructor sets Flow or Pause here
+  // Linked to the monitor, VC runs at the monitor ventilator's flow for the set VT and rate (I:E 1:2, no pause) — the
+  // same settings deliver the same volume — until the instructor sets Flow or Pause here
   let matched = true;
   addEventListener('input', (e) => {
     const k = (e.target as HTMLElement | null)?.dataset?.key;

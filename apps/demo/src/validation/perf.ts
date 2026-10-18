@@ -1,7 +1,7 @@
-// Performance gate page (BUILD-PLAN Stage 8 "Performance"): an 8-lane monitor (ECG II, V5, aVR, ABP, pleth, CVP, CO2,
-// resp) with a ventilated patient. Query: ?fps=60|30, ?worker=off (main-thread engine: its heap is then the page's,
-// which the soak measures), ?scale=1. Exposes window.__pmePerf: rAF frame intervals, alarm log, sim time. The same
-// page is the manual iPad check (open it on the iPad, read the stats line after 2 min).
+// Performance gate page: an 8-lane monitor (ECG II, V5, aVR, ABP, pleth, CVP, CO2, resp) with a ventilated patient.
+// Query: ?fps=60|30, ?worker=off (main-thread engine: its heap is then the page's, which the soak measures), ?scale=1.
+// Exposes window.__pmePerf: rAF frame intervals, alarm log, sim time. The same page is the manual iPad check (open it
+// on the iPad, read the stats line after 2 min).
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 

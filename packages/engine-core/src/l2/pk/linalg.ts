@@ -1,6 +1,6 @@
-// Small dense linear algebra for the compartment models (Stage 7g). Matrices are row-major number[] of size n×n.
-// The PK systems are at most 3 + 2 effect sites + 1 input = 6 states, so an O(n³) scaling-and-squaring exponential
-// is exact to machine precision and costs microseconds; it runs only when a drug's parameters change.
+// Small dense linear algebra for the compartment models. Matrices are row-major number[] of size n×n. The PK systems
+// are at most 3 + 2 effect sites + 1 input = 6 states, so an O(n³) scaling-and-squaring exponential is exact to machine
+// precision and costs microseconds; it runs only when a drug's parameters change.
 
 /** C = A·B (n×n). */
 export function matMul(a: readonly number[], b: readonly number[], n: number): number[] {

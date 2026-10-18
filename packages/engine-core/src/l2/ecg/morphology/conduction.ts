@@ -8,13 +8,13 @@ import { QRS_WAVES, frontalAxisDeg, isWave, jPointS, mainT, qrsOnsetS, rotateY, 
 import { K_STRIDE } from '../kernels.ts';
 
 /**
- * LBBB (Stage 5.1): no septal q; two leftward R kernels 60 ms apart — LBBB_R1 (V1 −0.15, V6 +0.70) then LBBB_R2
- * (V1 −1.00, V6 +0.90, posterior) — so V6/I show a broad notched monophasic R and V1 a broad QS with a slurred
- * downstroke (one trough: the first kernel is only a shoulder there). Vectors solved on the Dower rows [ENG].
+ * LBBB: no septal q; two leftward R kernels 60 ms apart — LBBB_R1 (V1 −0.15, V6 +0.70) then LBBB_R2 (V1 −1.00, V6
+ * +0.90, posterior) — so V6/I show a broad notched monophasic R and V1 a broad QS with a slurred downstroke (one
+ * trough: the first kernel is only a shoulder there). Vectors solved on the Dower rows [ENG].
  */
 export const LBBB_R1_VEC: Vec3 = [0.903, 0.25, -0.301];
 export const LBBB_R2_VEC: Vec3 = [0.893, 0.2, 0.623];
-/** RBBB (Stage 5.1): the LV's S forces halve and a late broad R′ (τ 100 ms) points right-anterior. */
+/** RBBB: the LV's S forces halve and a late broad R′ (τ 100 ms) points right-anterior. */
 export const RBBB_S_SCALE = 0.5;
 export const RBBB_RPRIME_TAU_S = 0.1;
 export const RBBB_RPRIME_SIGMA_S: readonly [number, number] = [0.02, 0.022];
@@ -93,7 +93,7 @@ export function solveAxisRad(k: readonly number[], target: number): number {
   return (((lo + hi) / 2) * Math.PI) / 180;
 }
 
-/** Default precordial transition of the Stage 1 template (V3–V4) and the horizontal rotation per lead [ENG]. */
+/** Default precordial transition of the base template (V3–V4) and the horizontal rotation per lead [ENG]. */
 export const DEFAULT_TRANSITION = 3.5;
 const DEG_PER_LEAD = 14;
 export const transitionStage: MorphStage = (k, info, mods) => {

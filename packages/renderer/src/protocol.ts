@@ -1,7 +1,7 @@
 // Messages between the main thread and the engine+renderer worker (brief §3.4). Raw samples never cross.
 import type { Capture12, Command, DispatchResult, EngineEvent, EngineOptions, LeadId, PatientSnapshot } from '@pme/engine-core';
-import type { RenderPlan } from './skin-plan.ts'; // Stage 4b
-import type { WaveLaneId } from './wave-lanes.ts'; // Stage 2
+import type { RenderPlan } from './skin-plan.ts';
+import type { WaveLaneId } from './wave-lanes.ts';
 
 export interface Size {
   cssW: number;
@@ -13,11 +13,11 @@ export interface CoreOptions {
   engine?: EngineOptions;
   /** Displayed ECG leads, one per lane (1–3). Default ['ecgII', 'V5']. */
   lanes?: LeadId[];
-  /** Stage 2: waveform lanes drawn below the ECG lanes, in order (default none). */
+  /** Waveform lanes drawn below the ECG lanes, in order (default none). */
   waves?: WaveLaneId[];
   pxPerMm?: number;
   fps?: 60 | 30;
-  /** Stage 4b: the skin's lane layout (skin-plan.ts); when present, `lanes`/`waves` are ignored. */
+  /** The skin's lane layout (skin-plan.ts); when present, `lanes`/`waves` are ignored. */
   plan?: RenderPlan;
 }
 
@@ -40,21 +40,21 @@ export type ToWorker =
   | { type: 'fps'; fps: 60 | 30 }
   | { type: 'calibrate'; pxPerMm: number }
   | { type: 'visible'; visible: boolean }
-  // Renderer request R-1 (ruling R25): engine snapshot/restore through the worker.
+  // Engine snapshot/restore through the worker.
   | { type: 'snapshot'; reqId: number }
   | { type: 'restore'; reqId: number; snapshot: PatientSnapshot }
-  // Stage 4b: skin switch without restart, and the 12-lead capture
+  // Skin switch without restart, and the 12-lead capture
   | { type: 'plan'; plan: RenderPlan }
   | { type: 'capture12'; reqId: number }
-  // Stage 10: one fast-forward step (MonitorCore.advance)
+  // One fast-forward step (MonitorCore.advance)
   | { type: 'advance'; reqId: number; ticks: number; last: boolean };
 
 export type FromWorker =
   | { type: 'ready'; path: 'worker-raf' | 'worker-pump' }
   | { type: 'events'; anchor: ClockAnchor; events: EngineEvent[] }
   | { type: 'result'; reqId: number; result: DispatchResult }
-  | { type: 'error'; message: string; reqId?: number } // FU-11 (F06): reqId when a request failed inside the worker
+  | { type: 'error'; message: string; reqId?: number } // reqId when a request failed inside the worker
   | { type: 'snapshot'; reqId: number; snapshot: PatientSnapshot }
   | { type: 'restored'; reqId: number; error?: string }
-  | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string } // Stage 4b
-  | { type: 'advanced'; reqId: number; tick: number; simT: number }; // Stage 10
+  | { type: 'capture12'; reqId: number; capture?: Capture12; error?: string }
+  | { type: 'advanced'; reqId: number; tick: number; simT: number };

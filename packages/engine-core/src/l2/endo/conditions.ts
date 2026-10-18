@@ -1,8 +1,9 @@
-// System-level conditions (tables §5e; R32 lists them under 7f — 7e implements them and 7f SHARES this interface,
-// see "Requests"). Each condition is a bundle of multipliers interpolated from the tables' columns by a CONTINUOUS
-// stage/grade, smoothed with its own onset τ so a scenario step produces a physiological transition. The engine never
-// hard-codes a trajectory: the scenario sets the target (tables §5e header). Pure data + a 1 Hz smoothing step.
-//   sepsis        stage 0 none · 1 SIRS · 2 sepsis · 3 septic shock warm · 4 septic shock cold (τ = rampS, default 600 s)
+// System-level conditions (tables §5e; the neuro model SHARES this interface). Each condition is a bundle of
+// multipliers interpolated from the tables' columns by a CONTINUOUS stage/grade, smoothed with its own onset τ so a
+// scenario step produces a physiological transition. The engine never hard-codes a trajectory: the scenario sets the
+// target (tables §5e header). Pure data + a 1 Hz smoothing step.
+//   sepsis        stage 0 none · 1 SIRS · 2 sepsis · 3 septic shock warm · 4 septic shock cold (τ = rampS,
+//                 default 600 s)
 //   anaphylaxis   grade 0 · 2 (II) · 3 (III) · 4 (IV) Ring–Messmer (onset τ 120 s; mediator release suppressed by
 //                 epinephrine's β2 effect — mast-cell stabilisation — so repeated epinephrine resolves it)
 //   sirs          severity 0–1 (post-bypass vasoplegia, major surgery day 1)
@@ -14,9 +15,9 @@ export interface ConditionEffects {
   svrF: number;
   eesF: number;
   dV0Frac: number;
-  kfMult: number; // capillary filtration × → 7c `blood.core.fl.kfMult` (its lung-water seam carries the leak to 7b)
-  vo2F: number; // metabolic rate × (VO2, VCO2, heat); 7c's lactate emerges from the O2 demand it raises
-  vasoResp: number; // catecholamine/vasopressor responsiveness × → `ps.cond.vasoResp` (7g's PD reads it)
+  kfMult: number; // capillary filtration × → `blood.core.fl.kfMult` (its lung-water seam carries the leak to the lungs)
+  vo2F: number; // Metabolic rate × (VO2, VCO2, heat); the blood model's lactate emerges from the O2 demand it raises
+  vasoResp: number; // catecholamine/vasopressor responsiveness × → `ps.cond.vasoResp` (the drug model's PD reads it)
   setShiftC: number; // fever
   siF: number; // insulin sensitivity ×
   extraSymp: number; // sympathetic stress added (fever, pain, mediators)
@@ -25,7 +26,8 @@ export interface ConditionEffects {
 export const NEUTRAL_CONDITIONS: ConditionEffects = { hrF: 1, svrF: 1, eesF: 1, dV0Frac: 0, kfMult: 1, vo2F: 1, vasoResp: 1, setShiftC: 0, siF: 1, extraSymp: 0 };
 
 type Row = Omit<ConditionEffects, never>;
-// tables §5e sepsis columns (HR + → × of 75 bpm; SVR, V0, kf, Ees, VO2, vasoResp, tempSet) [TXT/ENG]; erMax/shunt are not seams (R50 F10)
+// tables §5e sepsis columns (HR + → × of 75 bpm; SVR, V0, kf, Ees, VO2, vasoResp, tempSet) [TXT/ENG]; erMax/shunt
+// are not seams
 const SEPSIS: readonly Row[] = [
   NEUTRAL_CONDITIONS,
   { ...NEUTRAL_CONDITIONS, hrF: 1.27, svrF: 0.85, dV0Frac: 0.02, kfMult: 1.5, vo2F: 1.1, setShiftC: 1.5, siF: 0.7, extraSymp: 0.3 },
@@ -55,7 +57,7 @@ function interp(rows: readonly Row[], x: number): Row {
   return out;
 }
 
-/** Combine bundles: multipliers multiply, additive terms add (audit #9 "max-combined" for the multipliers). */
+/** Combine bundles: multipliers multiply, additive terms add. */
 export function combine(list: readonly ConditionEffects[]): ConditionEffects {
   const o = { ...NEUTRAL_CONDITIONS };
   for (const c of list) {
@@ -88,7 +90,7 @@ export function createConditions(): ConditionState {
 
 const relax = (cur: number, target: number, tau: number, dt: number) => target + (cur - target) * Math.exp(-dt / tau);
 
-/** 1 Hz step. `beta2` is EXOGENOUS (7g) epinephrine's β2 effect (0–1, effects.ts `mastB2`): it stabilises mast cells. */
+/** 1 Hz step. `beta2` is EXOGENOUS epinephrine's β2 effect (0–1, effects.ts `mastB2`): it stabilises mast cells. */
 export function stepConditions(c: ConditionState, beta2: number, dtS: number): void {
   c.sepsis.cur = relax(c.sepsis.cur, c.sepsis.target, c.sepsis.tauS, dtS);
   const release = c.anaph.target * (1 - ANAPH_EPI_STABILISE * Math.min(1, Math.max(0, beta2)));

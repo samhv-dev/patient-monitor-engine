@@ -1,14 +1,14 @@
-// Worker tick-time percentiles, measured in Node on the same engine code the worker runs (decision 14: the worker
-// has no timing hook and Stage 8a may not add one). One `advanceTo` per 20 ms tick with every channel produced
-// (8-lane monitor: ECG II/V5/aVR, ABP, pleth, CVP, CO2, resp) — the worker's steady-state cost per tick. BUILD-PLAN
-// Stage 8 budget: worker ≤ 6 ms per frame (≈ one tick at 60 fps), so p99 per tick must stay well under 6 ms.
+// Worker tick-time percentiles, measured in Node on the same engine code the worker runs (the worker has no timing
+// hook and the validation harness may not add one). One `advanceTo` per 20 ms tick with every channel produced
+// (8-lane monitor: ECG II/V5/aVR, ABP, pleth, CVP, CO2, resp) — the worker's steady-state cost per tick. Budget:
+// worker ≤ 6 ms per frame (≈ one tick at 60 fps), so p99 per tick must stay well under 6 ms.
 import { createEngine } from '@pme/engine-core';
 import { quantile } from '../stats.ts';
 
 /** heapGrowthMb is NaN unless Node runs with --expose-gc (the perf:ticks script sets it): without a forced GC it measures garbage. */
 export interface TickStats { ticks: number; p50: number; p95: number; p99: number; max: number; heapGrowthMb: number }
 
-/** FU-11 (F10): the p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. */
+/** The p99 gate of `perf:ticks --budget-ms` — a reason when the tail is over budget (or not a number), else null. */
 export function overBudget(s: Pick<TickStats, 'p99'>, budgetMs: number | null): string | null {
   if (budgetMs === null) return null;
   return s.p99 <= budgetMs ? null : `tick p99 ${Number.isFinite(s.p99) ? s.p99.toFixed(3) : String(s.p99)} ms is over the ${budgetMs} ms budget`;

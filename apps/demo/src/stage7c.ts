@@ -1,5 +1,5 @@
-// Stage 7c demo: blood, acid–base, electrolytes and O2 delivery. Monitor + a live lab panel (`labs`, 1 Hz truth) and a
-// "send ABG" result panel (`labResult`, 120 s turnaround); four scripted teaching stories (plan Task 24).
+// Blood and acid–base page: blood, acid–base, electrolytes and O2 delivery. Monitor + a live lab panel (`labs`, 1 Hz
+// truth) and a "send ABG" result panel (`labResult`, 120 s turnaround); four scripted teaching stories.
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountLabPanel, mountMonitor } from '@pme/renderer';
 

@@ -14,13 +14,14 @@ import type { ResolvedProfile } from './profile.ts';
 export const STAB_WINDOW_S = 2;
 export const STAB_MAX_WINDOWS = 60;
 export const STAB_PR_S = 0.16;
-/** R45(c): LVEDP tolerance for profiles whose conditions set an LVEDP (AS, HFrEF, HFpEF): ±2 mmHg = the tables' 15–20 / 16–20 bands [ENG]. */
+/** LVEDP tolerance for profiles whose conditions set an LVEDP (AS, HFrEF, HFpEF): ±2 mmHg = the tables' 15–20 / 16–20
+ * bands [ENG]. */
 export const STAB_LVEDP_TOL = 2;
 
 export interface LedgerRow {
   w: number; // window index
   sbp: number; dbp: number; cvp: number; rSys: number; cArt: number; v0Sv: number;
-  lvedp: number; aLv: number; // R45(c)
+  lvedp: number; aLv: number;
 }
 export interface Stabilised {
   s: number[];
@@ -153,8 +154,8 @@ function solve(r: ResolvedProfile): Stabilised {
     const mapT = dT + ff * (sT - dT);
     p.rSys = clamp(p.rSys * ((mapT - cvp) / Math.max(5, map - cvp)) ** 0.7, start.rSys);
     p.cArt = clamp(p.cArt * (pp / (sT - dT)) ** 0.7, start.cArt, 0.4, 2.5);
-    // R45(c): anchor the LV EDPVR scale at the EDV actually reached (β, the stiffness, is the condition's; A moves),
-    // once the venous volume has settled (CVP within 1 mmHg): during the transient LVEDP swings without any A change
+    // Anchor the LV EDPVR scale at the EDV actually reached (β, the stiffness, is the condition's; A moves), once the
+    // venous volume has settled (CVP within 1 mmHg): during the transient LVEDP swings without any A change
     if (!edpOk && Math.abs(cvp - cT) <= 1) p.aLv = clamp(p.aLv * (r.lvedpTarget / Math.max(1, edp)) ** 0.4, start.aLv, 0.1, 10);
     p.v0Sv = Math.min(start.v0Sv + 0.5 * r.bloodVolumeMl, Math.max(start.v0Sv - 0.5 * r.bloodVolumeMl, p.v0Sv - 0.6 * (cT - cvp) * p.cSv * 0.5));
   }

@@ -1,8 +1,8 @@
 // Engine + sweep lanes + static chrome, driven by frame timestamps. Runs inside the worker (OffscreenCanvas)
 // or on the main thread (fallback) unchanged (brief §3.4). The clock is sim time from an accumulator
 // (engine-core Clock), and lanes draw at clock.renderT, so sweep speed is independent of frame rate.
-// Stage 4b: the layout comes from a RenderPlan (skin-plan.ts; requests RR-1..RR-4), a skin switch relayouts without
-// restarting the engine, ECG lanes can auto-gain (RR-2), and event overlays (pace, sync, shock, lead-off) are drawn.
+// The layout comes from a RenderPlan (skin-plan.ts), a skin switch relayouts without restarting the engine, ECG
+// lanes can auto-gain, and event overlays (pace, sync, shock, lead-off) are drawn.
 import { capture12, Clock, createEngine, type Capture12, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
@@ -10,15 +10,15 @@ import { drawLeadOffDashes, drawMark, Overlays, shows, simClock } from './overla
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { ecgLabel, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
-import { autoRange, scaleFor } from './wave-lanes.ts'; // Stage 2
+import { autoRange, scaleFor } from './wave-lanes.ts';
 
-export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // Stage 1 look (legacyPlan)
+export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
 const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
 const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
-// Stage 3: impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple
-// (0.1) stays small in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
+// Impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple (0.1) stays small
+// in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
 const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
 /** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
@@ -36,9 +36,9 @@ export class MonitorCore {
   readonly clock = new Clock();
   private lanes: SweepLane[] = [];
   private plan: RenderPlan;
-  private waveLive: boolean[] = []; // Stage 2: the channel had samples on the last frame
-  private autoRangeT: number[] = []; // Stage 2 (4b: per lane): sim time of the last auto-scale
-  private readonly plethScratch = new Float32Array(1250); // Stage 2 (Stage 3: 10 s at 125 Hz)
+  private waveLive: boolean[] = []; // The channel had samples on the last frame
+  private autoRangeT: number[] = []; // sim time of the last auto-scale, per lane
+  private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private autoGainT = -Infinity;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
@@ -54,7 +54,7 @@ export class MonitorCore {
   private batch: EngineEvent[] = [];
   private lastPost = -Infinity;
   private visible = true;
-  /** Stage 10: a fast-forward is holding the clock — the pause state to return to (null: none running). */
+  /** A fast-forward is holding the clock — the pause state to return to (null: none running). */
   private ffWasPaused: boolean | null = null;
   private readonly canvas: CanvasTarget;
   private readonly ctx: Ctx2D;
@@ -95,7 +95,7 @@ export class MonitorCore {
     );
   }
 
-  /** Stage 4b: switch skin/page/theme: new lanes and chrome, same engine (no restart, tick continuity). */
+  /** Switch skin/page/theme: new lanes and chrome, same engine (no restart, tick continuity). */
   setPlan(plan: RenderPlan): void {
     this.plan = plan;
     this.overlays.clear();
@@ -103,15 +103,15 @@ export class MonitorCore {
     this.layout();
   }
 
-  /** Stage 4b: the 12-lead capture of the last 10 s (brief §6.6). */
+  /** The 12-lead capture of the last 10 s (brief §6.6). */
   capture12(): Capture12 {
     return capture12(this.engine);
   }
 
   /**
-   * FU-11 (F05, BA01): restore the engine and start the sweep afresh at the snapshot's tick. Every lane forgets what it
-   * drew (a SweepLane draws only forward, so after a rewind it waited for the old high-water time), the overlay marks
-   * of the discarded future go, and the lanes backfill from the restored engine on the next frame.
+   * Restore the engine and start the sweep afresh at the snapshot's tick. Every lane forgets what it drew (a SweepLane
+   * draws only forward, so after a rewind it waited for the old high-water time), the overlay marks of the discarded
+   * future go, and the lanes backfill from the restored engine on the next frame.
    */
   restore(s: PatientSnapshot): void {
     this.engine.restore(s);
@@ -125,7 +125,7 @@ export class MonitorCore {
   command(cmd: Command): DispatchResult {
     const r = this.engine.dispatch(cmd);
     if (r.accepted && cmd.type === 'device' && cmd.action.device === 'ecg') {
-      // Only what changed is redrawn: a filter change touches the chrome, a lead change one lane (review L3).
+      // Only what changed is redrawn: a filter change touches the chrome, a lead change one lane.
       const ecgLanes = this.ecgLaneIndices();
       if (cmd.action.action === 'filter') {
         this.filterMode = String(cmd.action.value);
@@ -166,8 +166,8 @@ export class MonitorCore {
     const dt = this.lastEpoch === null ? 0 : Math.max(0, epochMs - this.lastEpoch);
     this.lastEpoch = epochMs;
     if (this.clock.paused || dt === 0 || this.ffWasPaused !== null) return;
-    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // remainder carried (review L1)
-    // Post what was generated while hidden, so the batch does not grow without frames (review L2).
+    if (this.clock.advanceUnclamped(dt) > 0) this.engine.advanceTo(this.clock.simT); // Remainder carried
+    // Post what was generated while hidden, so the batch does not grow without frames.
     this.post({ simT: this.clock.renderT, epochMs, timeScale: this.clock.timeScale }, this.batch);
     this.batch = [];
     this.lastPost = epochMs;
@@ -175,9 +175,9 @@ export class MonitorCore {
   }
 
   /**
-   * Stage 10 (fast-forward): run `ticks` ticks now, without drawing, and post their events. The clock is held from the
-   * first step to the `last` one (a frame neither advances nor draws meanwhile); `last` gives it back in the pause state it
-   * had before. The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers.
+   * Run `ticks` ticks now, without drawing, and post their events (fast-forward). The clock is held from the first step to
+   * the `last` one (a frame neither advances nor draws meanwhile); `last` gives it back in the pause state it had before.
+   * The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers.
    */
   advance(ticks: number, last: boolean): { tick: number; simT: number } {
     if (this.ffWasPaused === null) {
@@ -201,7 +201,7 @@ export class MonitorCore {
 
   /** One animation frame. `epochMs` = performance.timeOrigin + frame timestamp (ms). */
   frame(epochMs: number): void {
-    if (this.ffWasPaused !== null) return; // Stage 10: a fast-forward runs the clock; nothing is drawn until it ends
+    if (this.ffWasPaused !== null) return; // A fast-forward runs the clock; nothing is drawn until it ends
     if (this.fps === 30 && this.parity++ % 2 === 1) return; // 30 fps mode: skip every other frame
     const dt = this.lastEpoch === null ? 0 : epochMs - this.lastEpoch;
     this.lastEpoch = epochMs;
@@ -264,7 +264,7 @@ export class MonitorCore {
     if (changed.length > 0) this.drawChrome(changed);
   }
 
-  /** Stage 2 wave lanes (125 Hz; Stage 4b: any channel the plan names), auto-scaled pleth, cleared on 'none'. */
+  /** Wave lanes (125 Hz; any channel the plan names), auto-scaled pleth, cleared on 'none'. */
   private drawWave(pl: PlanLane, i: number, t: number): void {
     const lane = this.lanes[i] as SweepLane;
     const ch = pl.channel;
@@ -276,13 +276,13 @@ export class MonitorCore {
     }
     this.waveLive[i] = true;
     if (pl.range === null && t - (this.autoRangeT[i] ?? -1) >= 1) {
-      // Stage 3: every auto-scaled lane (pleth over 4 s, resp over 10 s: two or three breaths)
+      // Every auto-scaled lane (pleth over 4 s, resp over 10 s: two or three breaths)
       const rate = this.engine.sampleRate(ch);
       const winS = ch === 'resp' ? 10 : 4;
       const n = this.engine.readSamples(ch, Math.floor((t - winS) * rate), this.plethScratch.subarray(0, Math.round(winS * rate)));
-      // FU-11 (Stage 9 polish note 4): a new engine's first 0.4 s of pleth is flat; scaled on that, the first beat was drawn
-      // clamped to the lane's top edge for a second (a rectangle after every load or restore). Until the window holds a
-      // second of signal the scale is re-taken every frame.
+      // A new engine's first 0.4 s of pleth is flat; scaled on that, the first beat was drawn clamped to the lane's top
+      // edge for a second (a rectangle after every load or restore). Until the window holds a second of signal the
+      // scale is re-taken every frame.
       if (n >= rate) this.autoRangeT[i] = t;
       const [lo, hi] = autoRange(this.plethScratch, n, ch === 'resp' ? RESP_MIN_SPAN : undefined);
       Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));

@@ -1,8 +1,7 @@
-// The same-screen hidden instructor panel (R7; BUILD-PLAN Stage 6): a drawer over the monitor, revealed by
-// `i`, Ctrl+Shift+I, a 5-tap top-left corner or a three-finger long-press. Tabs: Controls (generated from the
-// vocabulary, with stage-then-commit), Log (commands, acks, alarms, notes/markers), Bookmarks (snapshot/restore),
-// Scenario (Stage 6b). FU-1: every tab — built-in or a host page's own (e.g. a Device tab) — is a PanelTab added
-// through registerTab().
+// The same-screen hidden instructor panel: a drawer over the monitor, revealed by `i`, Ctrl+Shift+I, a 5-tap top-left
+// corner or a three-finger long-press. Tabs: Controls (generated from the vocabulary, with stage-then-commit), Log
+// (commands, acks, alarms, notes/markers), Bookmarks (snapshot/restore), Scenario. Every tab — built-in or a host
+// page's own (e.g. a Device tab) — is a PanelTab added through registerTab().
 import type { ControllerSession } from '../session/controller-session.ts';
 import type { CommandInput } from '../protocol.ts';
 import type { Vocabulary } from '../vocabulary.ts';
@@ -21,7 +20,7 @@ export interface PanelOptions {
   reveal?: Partial<RevealOptions>;
   /** Window to listen on for the reveal gestures (default: the element's window). */
   win?: Window;
-  /** Built-in scenarios the host can load by id (Stage 6b Scenario tab). */
+  /** Built-in scenarios the host can load by id (Scenario tab). */
   scenarios?: Array<{ id: string; title: string }>;
   /** Extra tabs registered at mount, after the built-ins (same as calling registerTab). */
   tabs?: PanelTab[];
@@ -36,7 +35,7 @@ export interface PanelTabContext {
   submit(c: CommandInput, key: string): void;
 }
 
-/** A panel tab (FU-1). render() fills the tab's pane once; update() runs on every session change. */
+/** A panel tab. render() fills the tab's pane once; update() runs on every session change. */
 export interface PanelTab {
   id: string;
   title: string;
@@ -104,7 +103,7 @@ export function mountInstructorPanel(parent: HTMLElement, o: PanelOptions): Pane
   const fmtT = (t: number | null) => (t === null ? '--:--' : `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`);
   const ctx: PanelTabContext = { session: s, send: fire, submit };
 
-  // --- tabs (FU-1 registration API) ---
+  // --- tabs (registration API) ---
   const tablist = q<HTMLElement>('.pme-tabs');
   const panes = q<HTMLElement>('.pme-panes');
   type Live = { tab: PanelTab; button: HTMLButtonElement; pane: HTMLElement; update?: () => void; destroy?: () => void };

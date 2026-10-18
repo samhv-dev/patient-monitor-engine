@@ -1,33 +1,33 @@
-// Drug → rhythm hooks (Stage 7g decisions 11–12). A PURE decision on the pipeline's bus/concentrations; the engine
-// applies the request through the rhythm engine's public applyRhythm (Stage 7g never edits l2/ecg/**).
+// Drug → rhythm hooks. A PURE decision on the pipeline's bus/concentrations; the engine applies the request
+// through the rhythm engine's public applyRhythm (the drug model never edits l2/ecg/**).
 import type { RhythmId, RhythmOpts } from '../../types.ts';
-import { uniform, type Sfc32State } from '../../rng/sfc32.ts'; // FU-4 G7: the repeat-sux draw is seeded
+import { uniform, type Sfc32State } from '../../rng/sfc32.ts'; // The repeat-sux draw is seeded
 import { concOf, type PkState } from './pipeline.ts';
-import { DRUGS } from './data/drugs.ts'; // FU-2 (E-FU2-7)
-import { hill } from './pd.ts'; // FU-2 (E-FU2-7)
-import type { PdEffect } from './row.ts'; // FU-2 (E-FU2-7)
+import { DRUGS } from './data/drugs.ts';
+import { hill } from './pd.ts';
+import type { PdEffect } from './row.ts';
 
 export interface RhythmHookState {
   aden: { active: boolean; from: string; peak: number };
   lastStage: number; // 0 none, 1 brady, 2 VF
   mgDone: boolean;
-  /** FU-4 G7/F10: the repeat-succinylcholine bradyarrhythmia — `drawnFor` is the bolus time already drawn for. */
+  /** The repeat-succinylcholine bradyarrhythmia — `drawnFor` is the bolus time already drawn for. */
   sux: { drawnFor: number; until: number; from: RhythmId };
-  /** FU-7 (addendum 23): the last conversion-hazard evaluation time (s) — optional: a pre-FU-7 snapshot lacks it (3d). */
+  /** The last conversion-hazard evaluation time (s) — optional: absent in older snapshots. */
   conv?: { lastT: number };
-  /** FU-7 (addendum 23 / DI-14c): the accessory-pathway acceleration has fired for this block (reset below 0.3). */
+  /** The accessory-pathway acceleration has fired for this block (reset below 0.3). */
   preexcited?: boolean;
 }
 
 export const createHookState = (): RhythmHookState => ({ aden: { active: false, from: 'sinus', peak: 0 }, lastStage: 0, mgDone: false, sux: { drawnFor: -1, until: 0, from: 'sinus' } });
 
 /**
- * FU-4 G7/F10: a SECOND succinylcholine dose given a few minutes after the first, without an anticholinergic, can
- * cause a profound muscarinic bradyarrhythmia — junctional escape, sinus arrest or (reported) asystole. Succinylcholine
- * and its metabolite succinylmonocholine sensitise cardiac muscarinic receptors, which is why the first dose usually
- * does nothing and the second one does, why atropine or glycopyrrolate given first prevents it, and why it is
- * commonest in children (M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children").
- * It is a RISK, not a certainty, so it is a seeded draw on the `outcome` stream, not a deterministic response.
+ * A SECOND succinylcholine dose given a few minutes after the first, without an anticholinergic, can cause a profound
+ * muscarinic bradyarrhythmia — junctional escape, sinus arrest or (reported) asystole. Succinylcholine and its
+ * metabolite succinylmonocholine sensitise cardiac muscarinic receptors, which is why the first dose usually does
+ * nothing and the second one does, why atropine or glycopyrrolate given first prevents it, and why it is commonest in
+ * children (M10 ch. 23 "succinylcholine: bradycardia … especially after a second dose and in children"). It is a RISK,
+ * not a certainty, so it is a seeded draw on the `outcome` stream, not a deterministic response.
  */
 export const SUX_REPEAT_P = 0.35; // adult probability per repeat dose [ENG]
 export const SUX_REPEAT_P_CHILD = 0.7; // < 12 y [ENG: "much commoner in children"]
@@ -41,27 +41,27 @@ const NODE_DEPENDENT = ['svtAvnrt', 'svtAvrt'];
 const ATRIAL = ['afib', 'aflutter', 'atrialTach', 'mat'];
 const SINUS_GROUP = ['sinus', 'sinusBrady', 'sinusTachy', 'sinusArrhythmia'];
 
-/** FU-2 (E-FU2-7): adenosine's OWN AV-nodal block (its row's avNode entry). The β-blocker and amiodarone rows feed the
- * bus's avNodeBlock too (AF rate control), and stacked rate control must never fire the adenosine pause/conversion. */
+/** Adenosine's OWN AV-nodal block (its row's avNode entry). The β-blocker and amiodarone rows feed the bus's
+ * avNodeBlock too (AF rate control), and stacked rate control must never fire the adenosine pause/conversion. */
 const ADEN_AV = DRUGS.adenosine?.pd.find((e) => e.target === 'avNode') as PdEffect;
 const adenosineBlock = (pk: PkState) => hill(concOf(pk, 'adenosine'), ADEN_AV.ec50, ADEN_AV.emax, ADEN_AV.hill ?? 1);
 
-/** FU-7 (addendum 23) conversion hazards, /s, at full occupancy; λ = −ln(1 − p)/T. PROCAMIO (Ortiz 2017, Eur Heart J
+/** Conversion hazards, /s, at full occupancy; λ = −ln(1 − p)/T. PROCAMIO (Ortiz 2017, Eur Heart J
  * 38:1329), stable wide-QRS tachycardia, abstract: "Tachycardia terminated within 40 min in 22 (67%) procainamide and
- * 11 (38%) amiodarone patients" — so amiodarone 38 % (Step 3's PROCAMIO check; the plan's 25 % was superseded) and
+ * 11 (38%) amiodarone patients" — so amiodarone 38 % and
  * procainamide 67 % at 40 min; Gorgels 1996: lidocaine ≈ 20 % at 20 min; Letelier 2003: amiodarone ≈ 25 % of
  * recent-onset AF within 1 h. */
 export const L_AMIO_VT = -Math.log(0.62) / 2400;
 export const L_PROC_VT = -Math.log(0.33) / 2400;
 export const L_LIDO_VT = -Math.log(0.8) / 1200;
 export const L_AMIO_AF = -Math.log(0.75) / 3600;
-/** FU-7 (DI-14c): VF on an AV-nodal block of pre-excited AF, per event [ENG — Q10, R44 calibration]. */
+/** VF on an AV-nodal block of pre-excited AF, per event [ENG, for the calibration pass]. */
 export const PREEXCITED_VF_P = 0.2;
 const VT_RHYTHMS: readonly string[] = ['vtMono'];
 
 export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: RhythmId; pinned: boolean; pulseless?: boolean }, t: number, outcomeRng?: Sfc32State): { id: RhythmId; opts: RhythmOpts; hold?: boolean } | null {
   if (current.pinned) return null;
-  // FU-4 G7/F10: the repeat-succinylcholine bradyarrhythmia (seeded; abolished by an anticholinergic given first)
+  // The repeat-succinylcholine bradyarrhythmia (seeded; abolished by an anticholinergic given first)
   const bt = pk.drugs['succinylcholine']?.bolusTimes ?? [];
   if (hs.sux.until > 0) {
     if (t >= hs.sux.until) {
@@ -84,7 +84,7 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
       }
     }
   }
-  const block = adenosineBlock(pk); // FU-2 (E-FU2-7): was pk.bus.avNodeBlock
+  const block = adenosineBlock(pk);
   // adenosine
   if (!hs.aden.active && block >= 0.5 && (NODE_DEPENDENT.includes(current.id) || ATRIAL.includes(current.id) || SINUS_GROUP.includes(current.id))) {
     hs.aden = { active: true, from: current.id, peak: block };
@@ -105,19 +105,19 @@ export function rhythmRequest(pk: PkState, hs: RhythmHookState, current: { id: R
     }
     return null;
   }
-  // FU-7 (addendum 23 / DI-14c): AV-nodal block in PRE-EXCITED AF favours the accessory pathway — the rate RISES and VF
-  // may follow (ALS; M10 ch. 25). The teaching hazard adenosine, verapamil and diltiazem carry. One VF draw per event
-  // at PREEXCITED_VF_P [ENG: the direction is the ALS warning; the size has no source — Q10].
+  // AV-nodal block in PRE-EXCITED AF favours the accessory pathway — the rate RISES and VF may follow (ALS; M10 ch.
+  // 25). The teaching hazard adenosine, verapamil and diltiazem carry. One VF draw per event at PREEXCITED_VF_P [ENG:
+  // the direction is the ALS warning; the size has no source — Q10].
   if (hs.preexcited && pk.bus.avNodeBlock < 0.3) hs.preexcited = false;
   if (current.id === 'preexcitedAf' && pk.bus.avNodeBlock >= 0.5 && !hs.preexcited) {
     hs.preexcited = true;
     if (outcomeRng && uniform(outcomeRng) < PREEXCITED_VF_P) return { id: 'vfCoarse', opts: {}, hold: false };
     return { id: 'preexcitedAf', opts: { rateBpm: 220 }, hold: false };
   }
-  // FU-7 (addendum 23): antiarrhythmic conversion as a HAZARD per second, scaled by the drug's own occupancy — ONLY in a
-  // PERFUSING rhythm (ruling 5): pulseless VT/VF is Task 12's shock path, and amiodarone does not convert VF by itself
+  // Antiarrhythmic conversion as a HAZARD per second, scaled by the drug's own occupancy — ONLY in a
+  // PERFUSING rhythm: pulseless VT/VF takes the shock path, and amiodarone does not convert VF by itself
   // (ARREST 1999, ALPS 2016: λ_vf = 0). Sources on the constants below.
-  hs.conv ??= { lastT: t }; // 3d: a pre-FU-7 snapshot
+  hs.conv ??= { lastT: t }; // absent in older snapshots
   const dt = Math.max(0, t - hs.conv.lastT);
   hs.conv.lastT = t;
   if (dt > 0 && outcomeRng && current.pulseless !== true) {

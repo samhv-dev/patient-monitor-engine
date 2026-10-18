@@ -1,9 +1,11 @@
-// Stage 7d organ pipeline (plan "Architecture"): one plain-data OrgansState in the engine's PipelineState, advanced
-// by the engine right BEFORE the haemodynamics in every pass (after 7g's PK, Stage 3/7b's gas and 7c/7e's inserts),
-// so the Cushing surge written into L1 `coupled` reaches the same pass's beats after Stage 3's gas step has refreshed
-// its own couplings. 7d owns no drug ids: once per pass it OBSERVES 7g's `bus.doses` (mannitol, hypertonic saline).
-//   10 Hz: stepBrain → effects (effects.ts) · 125 Hz: `icp` samples (wave.ts) · 1 Hz: kidney, liver, 7c seams,
-//   published `kidney.gfrRel` (7g) and `liver.glucoseF` (7e), `organs` event and measurement {icpMean, cpp, pbto2, uop}.
+// Organ pipeline: one plain-data OrgansState in the engine's PipelineState, advanced by the engine right BEFORE the
+// haemodynamics in every pass (after the drug PK, the lungs' gas step and the blood and endocrine inserts), so the
+// Cushing surge written into L1 `coupled` reaches the same pass's beats after the gas step has refreshed its own
+// couplings. The organ model owns no drug ids: once per pass it OBSERVES the drug model's `bus.doses` (mannitol,
+// hypertonic saline).
+//   10 Hz: stepBrain → effects (effects.ts) · 125 Hz: `icp` samples (wave.ts) · 1 Hz: kidney, liver, blood-model seams,
+//   published `kidney.gfrRel` (drug model) and `liver.glucoseF` (endocrine model), `organs` event and measurement
+//   {icpMean, cpp, pbto2, uop}.
 import { l1Target, type L1State } from '../../l1/state.ts';
 import type { Command, EngineEvent, Measured, PatientProfile } from '../../types.ts';
 import type { OrgansEvent } from '../../types-organs.ts';
@@ -24,12 +26,13 @@ export const ORGAN_CHANNELS = ['icp'] as const;
 export type OrganChannel = (typeof ORGAN_CHANNELS)[number];
 const ICP_MEAN_WINDOW_S = 4; // displayed ICP mean over 4 s [ENG]
 const PBTO2_PROBE_TAU_S = 60; // Clark-type probe response [ENG]
-/** MAP and CVP the organs see: a 4 s mean [ENG]. 7a's `hemo.pv` is the instantaneous RA pressure (0–9 mmHg within a
- *  cycle in the prototype) and `lastSite.map` one beat, so the 1 Hz kidney sampled noise (GFR 49–187 in MODELED HFrEF). */
+/** MAP and CVP the organs see: a 4 s mean [ENG]. The circulation's `hemo.pv` is the instantaneous RA pressure (0–9
+ *  mmHg within a cycle in the prototype) and `lastSite.map` one beat, so a 1 Hz kidney would sample noise (GFR 49–187
+ *  in MODELED HFrEF). */
 const ORGAN_LP_TAU_S = 4;
-/** Decision 6: Stage 3 `thermal` general anaesthesia with no hypnotic on 7g's bus ≈ propofol E 0.6 (CMRO2 ×0.7). */
+/** The `thermal` general anaesthesia with no hypnotic on the drug model's bus ≈ propofol E 0.6 (CMRO2 ×0.7). */
 const GA_FALLBACK: BrainDrugs = drugsOf({ ...NO_ANAESTHESIA, propofolE: 0.6 });
-const URINE_NA = 100; // mmol/L [ENG] — 7c seam only
+const URINE_NA = 100; // mmol/L [ENG] — blood-model seam only
 const URINE_K = 50; // mmol/L [ENG]
 const FUROSEMIDE_NA_BOOST = 0.5; // urine Na × (1 + 0.5·E) [ENG]
 const GLUCONATE_EXCRETED = 0.9; // fraction of the filtered gluconate excreted (renal clearance ≈ 0.9·GFR) [ENG]
@@ -45,8 +48,8 @@ export interface OrgansState {
   co0: number;
   brain: BrainState;
   renal: RenalState;
-  liver: LiverState; // publishes `liver.glucoseF` (7e reads `organs.liver.glucoseF`)
-  kidney: { gfrRel: number }; // PUBLISHED key (7g's pkCtx reads `organs.kidney.gfrRel`); the model is `renal`
+  liver: LiverState; // Publishes `liver.glucoseF` (the endocrine model reads `organs.liver.glucoseF`)
+  kidney: { gfrRel: number }; // PUBLISHED key (the drug pkCtx reads `organs.kidney.gfrRel`); the model is `renal`
   iap: number;
   lp: { map: number; cvp: number }; // ORGAN_LP_TAU_S means
   sensors: { icp: 'on' | 'off'; pbto2: 'on' | 'off'; urometer: 'on' | 'off' };
@@ -63,19 +66,19 @@ export interface OrgansCtx extends OrganSources {
   setHr: (bpm: number, t: number) => void;
 }
 
-/** Brain drug input: 7f/7g when they carry an effect, else the Stage 3 `thermal` GA fallback (decision 6). */
+/** Brain drug input: the neuro and drug models when they carry an effect, else the `thermal` GA fallback. */
 function brainDrugs(v: OrganView): BrainDrugs {
   const d = v.drugs;
   if (d.cmro2Mult !== 1 || d.cbfVaso !== 1) return { cmro2Mult: d.cmro2Mult, cbfVaso: d.cbfVaso };
   return v.anaesthesia === 'general' ? GA_FALLBACK : NO_DRUGS;
 }
 const brainIn = (v: OrganView): BrainInputs => ({
-  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v), osm: v.osm, // FU-9 F11
+  map: v.map, cvp: v.cvp, paco2: v.paco2, pao2: v.pao2, sao2: v.sao2, hb: v.hb, tempC: v.tempC, drugs: brainDrugs(v), osm: v.osm,
 });
 const renalIn = (os: OrgansState, v: OrganView): RenalInputs => ({
   map: v.map, cvp: v.cvp, iap: os.iap, coLpm: v.coLpm, bvRel: v.bvRel, albuminGL: v.albuminGL, anaesthesia: v.anaesthesia,
-  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, hct: (3 * v.hb) / 100, tempC: v.tempC, // FU-9 H1, H2, H10
-  ...(v.mannitolMmol !== null ? { mannitolMmol: v.mannitolMmol } : {}), // FU-9 H8: 7c's pool
+  pawExcessCmH2O: v.pawExcessCmH2O, alphaExcess: alphaExcess(v), sepsis: v.drugs.sepsis, demandRel: v.demandRel, hct: (3 * v.hb) / 100, tempC: v.tempC,
+  ...(v.mannitolMmol !== null ? { mannitolMmol: v.mannitolMmol } : {}), // The blood model's pool
   ...(v.drugs.furoCe !== undefined ? { furoCe: v.drugs.furoCe } : {}),
 });
 function liverIn(os: OrgansState, v: OrganView): LiverInputs {
@@ -83,7 +86,7 @@ function liverIn(os: OrgansState, v: OrganView): LiverInputs {
   return {
     coLpm: v.coLpm, co0Lpm: os.co0, bvRel: v.bvRel, alphaE: Math.min(1, v.drugs.alphaNe / ALPHA_E_FULL), volatileMac: v.drugs.volatileMac,
     tempC: v.tempC, gfrRel: os.kidney.gfrRel, do2MlKgMin: do2, ...(v.hbfRel !== null ? { hbfRel: v.hbfRel } : {}),
-    outflowMmHg: Math.max(v.cvp, os.iap), // FU-9 H3
+    outflowMmHg: Math.max(v.cvp, os.iap),
   };
 }
 
@@ -160,36 +163,38 @@ function icpAt(os: OrgansState, rs: RespState, ts: number): number {
   return icpSample(os.brain.icp, os.brain.elast, pp, since, rr, respBreathU(rs, ts));
 }
 
-/** 7c's renal seam (R51 addendum 14): the water (mL/h) and solutes (mmol/h) the urine takes out of 7c's body water. Na,
- *  K, Cl from fixed urine concentrations [ENG]; gluconate filtered at GFR × 7c's plasma gluconate, 90 % excreted [ENG].
- *  §10 of the 7d gate (on the real 7c): 7c's water and electrolyte balance has no intake term — its own fallback
- *  eliminates only blood volume ABOVE BV0, i.e. it assumes the basal urine is replaced by a basal intake. So the seam
- *  carries the urine ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition);
- *  below it the balance is neutral, as in 7c's fallback (no retention term). Reporting the whole urine drained a resting
- *  patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band ±0.02). */
+/** The blood model's renal seam: the water (mL/h) and solutes (mmol/h) the urine takes out of its body water. Na,
+ *  K, Cl from fixed urine concentrations [ENG]; gluconate filtered at GFR × the plasma gluconate, 90 % excreted [ENG].
+ *  The blood model's water and electrolyte balance has no intake term — its own fallback eliminates only blood
+ *  volume ABOVE BV0, i.e. it assumes the basal urine is replaced by a basal intake. So the seam carries the urine
+ *  ABOVE that basal turnover (the reference flow UOP0 = 1 mL/kg/h at the kidney's urine composition); below it the
+ *  balance is neutral, as in the blood model's fallback (no retention term). Reporting the whole urine would drain a
+ *  resting patient by 1 mL/kg/h with no intake: blood volume −2.8 % in 6 h at rest, lactate drifting +0.09 (soak band
+ *  ±0.02). */
 function renalSeam(s: RenalState, gluconate: number, natriuresis = { share: 0, naMmolL: URINE_NA }, kRel = 1, mannitolMmolH = 0): RenalSeam {
   const lH = Math.max(0, s.uopMlMin * 60 - UOP0_ML_KG_H * s.p.weightKg) / 1000;
-  // FU-9 F1/R4: the expansion diuresis is NATRIURETIC (ANP): its share of the urine leaves at the plasma Na, not the
-  // basal urine's URINE_NA [ENG] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
+  // The expansion diuresis is NATRIURETIC (ANP): its share of the urine leaves at the plasma Na, not the basal urine's
+  // URINE_NA [ENG] — otherwise excreting a load concentrates the plasma (hypertonic saline Na +7.08)
   const naUrine = natriuresis.share * natriuresis.naMmolL + (1 - natriuresis.share) * URINE_NA;
   const na = lH * naUrine * (1 + FUROSEMIDE_NA_BOOST * s.furoE);
-  // FU-9 F6: distal K secretion follows the plasma K (÷ the patient's own set point: at rest the basal excretion
-  // balances the basal intake) and the distal flow, sublinearly (Good & Wright 1979 Am J Physiol 236:F192; Young 1988
-  // Am J Physiol 255:F811) — so a loop diuretic's flow and a high K excrete more, and an oliguric kidney RETAINS the
-  // intake's K (negative: KCl kept, the AKI hyperkalaemia). Replaces URINE_K × the urine above basal.
+  // Distal K secretion follows the plasma K (÷ the patient's own set point: at rest the basal excretion balances the
+  // basal intake) and the distal flow, sublinearly (Good & Wright 1979 Am J Physiol 236:F192; Young 1988 Am J Physiol
+  // 255:F811) — so a loop diuretic's flow and a high K excrete more, and an oliguric kidney RETAINS the intake's K
+  // (negative: KCl kept, the AKI hyperkalaemia). Replaces URINE_K × the urine above basal.
   const k0 = (UOP0_ML_KG_H * s.p.weightKg * URINE_K) / 1000; // mmol/h at the basal urine
   const k = k0 * (kRel * Math.sqrt(Math.max(0, s.uopMlMin * 60) / (UOP0_ML_KG_H * s.p.weightKg)) - 1);
   return { uopAboveBasalMlH: lH * 1000, excretion: { k, na, cl: 0.9 * (na + k), gluconate: ((s.gfr * 60) / 1000) * gluconate * GLUCONATE_EXCRETED, mannitol: mannitolMmolH } };
 }
 
-/** 7g's accepted boluses (R51 §3: 7d OBSERVES, never consumes): mannitol → brain water and osmotic diuresis; hypertonic
- *  saline → brain water (its sodium load is 7c's, from the same log entry). Other agents are not ours. */
+/** The drug model's accepted boluses (the organ model OBSERVES, never consumes): mannitol → brain water and osmotic
+ *  diuresis; hypertonic saline → brain water (its sodium load is the blood model's, from the same log entry). Other
+ *  agents are not ours. */
 function observeDoses(os: OrgansState, doses: readonly OrganDose[], blood7c = false): void {
   for (const d of doses) {
     if (d.agent === 'mannitol') {
       const g = d.amount / (MG_PER_G[d.amountUnit] ?? 1000);
       giveOsmotherapy(os.brain, 'mannitol', g * MANNITOL_MOSM_PER_G);
-      if (!blood7c) giveMannitolRenal(os.renal, g); // FU-9 H8: with 7c the plasma pool is 7c's (the kidney reads it)
+      if (!blood7c) giveMannitolRenal(os.renal, g); // Plasma pool: the blood model's when present (the kidney reads it)
     } else if (d.agent === 'hypertonicSaline' && d.amountUnit === 'mL') {
       giveOsmotherapy(os.brain, 'hypertonicSaline', ((d.amount * (d.concentrationPct ?? 3)) / 100) * NACL_MOSM_PER_G);
     }
@@ -203,16 +208,16 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
   stepRenal(os.renal, renalIn(os, v), 1);
   os.kidney.gfrRel = os.renal.gfr / Math.max(1, os.renal.p.gfrSet);
   const core = bloodCore(ctx.blood);
-  stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // with 7c its pool is authoritative (decision 12)
+  stepLiver(os.liver, liverIn(os, v), 1, core ? lacProdBasal() : undefined); // With the blood model its pool is authoritative
   if (core) {
-    core.liver = os.liver.liverFn * os.liver.tempF; // function only: 7c multiplies its own hbfRel (addendum 14)
-    core.hbfFactor = hbfFactor(liverIn(os, v)); // FU-9 H3: the splanchnic/outflow factor 7c multiplies with CO/CO0
+    core.liver = os.liver.liverFn * os.liver.tempF; // Function only: the blood model multiplies its own hbfRel
+    core.hbfFactor = hbfFactor(liverIn(os, v)); // The splanchnic/outflow factor the blood model multiplies with CO/CO0
     const naPl = core.out?.na;
-    const natri = { share: 1 - 1 / expansionFactor(v.bvRel), naMmolL: typeof naPl === 'number' && naPl > 0 ? naPl : URINE_NA }; // FU-9 F1/R4
+    const natri = { share: 1 - 1 / expansionFactor(v.bvRel), naMmolL: typeof naPl === 'number' && naPl > 0 ? naPl : URINE_NA };
     const kSet = core.so?.set?.k;
     const kNow = core.out?.k;
-    const kRel = typeof kSet === 'number' && typeof kNow === 'number' && kSet > 0 ? kNow / kSet : 1; // FU-9 F6
-    const manH = mannitolExcretionGMin(os.renal, renalIn(os, v)) * 60 * MANNITOL_MOSM_PER_G; // FU-9 H8: mmol/h cleared from 7c's pool
+    const kRel = typeof kSet === 'number' && typeof kNow === 'number' && kSet > 0 ? kNow / kSet : 1;
+    const manH = mannitolExcretionGMin(os.renal, renalIn(os, v)) * 60 * MANNITOL_MOSM_PER_G; // mmol/h cleared from the blood pool
     core.renal = renalSeam(os.renal, v.gluconate, natri, kRel, manH);
   }
   if (os.num.accN > 0) {
@@ -245,9 +250,9 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
     kidney: {
       rbf: os.renal.rbf, gfr: os.renal.gfr, gfrRel: os.kidney.gfrRel, uopMlKgH: (os.renal.uopMlMin * 60) / os.weightKg, uop1hMlKgH: uopOver(os.renal, 60),
       cumMl: os.renal.cumMl, bagMl: os.renal.bagMl, bladderMl: os.renal.bladderMl,
-      // FU-8 (review pack "fires too early"; R-FU5-8): the flag needs at least one COMPLETED 10-min urine bin — with none,
-      // `uopOver` returned the instantaneous rate, which flagged a 1.75 L bleed at 508 s (before 10 min of urine had been
-      // collected), cleared it at 600 s (the first bin, 0.83 mL/kg/h) and flagged it again at 1200 s
+      // The flag needs at least one COMPLETED 10-min urine bin — with none, `uopOver` returns the instantaneous rate,
+      // which would flag a 1.75 L bleed at 508 s (before 10 min of urine had been collected), clear it at 600 s (the
+      // first bin, 0.83 mL/kg/h) and flag it again at 1200 s
       oliguria: os.renal.bins.length >= 1 && uopOver(os.renal, 60 / os.renal.timeScale) < OLIGURIA_ML_KG_H,
       akiStage: os.renal.akiStage,
     },
@@ -261,7 +266,7 @@ function oneHz(os: OrgansState, ctx: OrgansCtx, v: OrganView, t: number): void {
 
 export function advanceOrgans(os: OrgansState, ctx: OrgansCtx, mEnd: number, write: (ch: OrganChannel, m: number, v: number) => void): void {
   const tEnd = mEnd / ICP_RATE;
-  observeDoses(os, readDrugView(ctx).doses, bloodCore(ctx.blood) !== null); // once per engine pass: 7g lists each accepted bolus for exactly one pass
+  observeDoses(os, readDrugView(ctx).doses, bloodCore(ctx.blood) !== null); // Once per pass: the drug model lists each accepted bolus for one pass
   while (os.k * BRAIN_DT_S <= tEnd + 1e-9) {
     const t = os.k * BRAIN_DT_S;
     if (os.k > 0) {
@@ -278,10 +283,10 @@ export function advanceOrgans(os: OrgansState, ctx: OrgansCtx, mEnd: number, wri
     }
     os.k++;
   }
-  // FU-2 item 6 (the MANUAL "tracker ringing" at HR 48): Stage 3's gas step deletes L1 `coupled` sbp/dbp every 100 ms
-  // (its retired Paw coupling) and its 62.5 Hz grid can run a gas step one engine pass before the brain's 10 Hz step
-  // at the same time, so the haemodynamics saw the surge vanish for part of every 100 ms and 7a's per-beat tracker
-  // chased 110/72 ↔ 162/106. Re-assert the (idempotent) effects on every pass, after Stage 3 and before the haemodynamics.
+  // The gas step deletes L1 `coupled` sbp/dbp every 100 ms (its retired Paw coupling) and its 62.5 Hz grid can run a
+  // gas step one engine pass before the brain's 10 Hz step at the same time, so the haemodynamics would see the surge
+  // vanish for part of every 100 ms and the circulation's per-beat tracker would chase 110/72 ↔ 162/106. Re-assert the
+  // (idempotent) effects on every pass, after the gas step and before the haemodynamics.
   if (os.k > 1) applyOrganEffects(os.fx, os.brain, ctx, tEnd);
   collectBeats(os, ctx.rhythm, tEnd);
   for (; os.m <= mEnd; os.m++) {
@@ -296,7 +301,7 @@ export function advanceOrgans(os: OrgansState, ctx: OrgansCtx, mEnd: number, wri
 const inRange = (name: string, v: unknown, lo: number, hi: number): string | undefined =>
   v === undefined || (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi) ? undefined : `${name} must be ${lo}–${hi}`;
 
-/** undefined = accepted, string = rejected, null = not a Stage 7d command (plan decision 16). */
+/** undefined = accepted, string = rejected, null = not an organ command. */
 export function validateOrgansCommand(cmd: Command): string | undefined | null {
   if (cmd.type === 'attachSensor') {
     if (!OWN_SENSORS.includes(cmd.sensor)) return null;

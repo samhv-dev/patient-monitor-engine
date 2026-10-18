@@ -137,7 +137,7 @@ function startApp(): void {
     mods({ tcp: tcp ? { mode: 'demand', ratePpm: 70, mA: 90, thresholdMa: 70 } : null });
   });
 
-  // --- ACLS strip sequencer (BUILD-PLAN Stage 5 demo): sinus → VT → VF coarse → CPR → shock → asystole → ROSC --
+  // --- ACLS strip sequencer: sinus → VT → VF coarse → CPR → shock → asystole → ROSC --
   const steps: Array<[number, string, () => void]> = [
     [0, 'sinus', () => void send({ type: 'setRhythm', rhythm: 'sinus', when: 'now' })],
     [8, 'VT', () => void send({ type: 'setRhythm', rhythm: 'vtMono', when: 'now' })],

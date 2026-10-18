@@ -1,13 +1,13 @@
-// Stage 7e pipeline: the per-pass endocrine/thermal work the engine calls after 7c's `advanceBlood` (R51 addendum 14
-// order: pk → resp/lung → blood → endo → organs → hemo). Every pass: observe 7g's accepted doses and hand 7g's
-// dantrolene effect to the heat model. 1 Hz steps on Stage 3's temperature grid: read the inputs through adapters.ts,
+// The endocrine pipeline: the per-pass endocrine/thermal work the engine calls after the blood's `advanceBlood`
+// (order: pk → resp/lung → blood → endo → organs → hemo). Every pass: observe the drug model's accepted doses and hand
+// its dantrolene effect to the heat model. 1 Hz steps on the temperature grid: read the inputs through adapters.ts,
 // step the endocrine core, write the thermal inputs (endocrine heat, fever set point) and emit the `endo` event.
-// Commands: `stimulus` (R51 addendum 12: the one shape; 7f observes it), `meal`, `thermal7e` and the 7e `condition`
-// ids. 7e owns NO drug ids (R51 §3). Everything is plain JSON-safe data.
+// Commands: `stimulus` (the one shape; the neuro model observes it), `meal`, `thermal7e` and the endocrine `condition`
+// ids. The endocrine model owns NO drug ids. Everything is plain JSON-safe data.
 import type { L1State } from '../../l1/state.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import type { EndoClinicalEvent } from '../../types-endo.ts';
-import { VAGAL_SITES } from '../../types-neuro.ts'; // FU-4 G7: the stimulus's optional vagal site
+import { VAGAL_SITES } from '../../types-neuro.ts'; // The stimulus's optional vagal site
 import type { HemoState } from '../hemo/pipeline.ts';
 import type { RespState } from '../resp/pipeline.ts';
 import { cascade, thermalMetabolic, type Cascade } from '../thermal/metabolic.ts';
@@ -25,12 +25,12 @@ export interface EndoState {
   k: number; // next 1 Hz step index (time k s)
   noxious: number;
   weightKg: number;
-  ageY: number; // FU-10 E6: written into the heat model's `ageY` (the thresholds fall with age; Stage 3 owns `resp`)
+  ageY: number; // Written into the heat model's `ageY` (the thresholds fall with age; the resp pipeline owns `resp`)
   ecg: { tempC: number; shiver: number }; // last values pushed as ECG modifier deltas
-  kfMult: number; // last capillary-leak multiplier written into 7c
-  lungSev: number; // last 7b anaphylaxis severity written
-  cascade: Cascade; // cascade(th) at the last 1 Hz step: 7f reads endo.cascade.macF (R-7f-8)
-  mhOwner?: MhOwner; // FU-10 E1 (D3): who made the MH state once an exposure was seen (absent = no exposure yet)
+  kfMult: number; // Last capillary-leak multiplier written into the blood model
+  lungSev: number; // Last lung anaphylaxis severity written
+  cascade: Cascade; // cascade(th) at the last 1 Hz step: the neuro model reads endo.cascade.macF
+  mhOwner?: MhOwner; // Who made the MH state once an exposure was seen (absent = no exposure yet)
   out: EngineEvent[];
 }
 
@@ -38,7 +38,7 @@ export interface EndoCtx {
   l1: L1State;
   hemo: HemoState;
   resp: RespState;
-  ps: object; // the engine's PipelineState (duck-typed reads of 7g `pk`, 7c `blood`, 7d `organs`, 7f `neuro`)
+  ps: object; // the engine's PipelineState (duck-typed reads of `pk`, `blood`, `organs`, `neuro`)
 }
 
 export function resolveEndoProfile(profile: PatientProfile | undefined): EndoProfile {
@@ -53,14 +53,14 @@ export function createEndoState(profile: PatientProfile | undefined, weightKg: n
   };
 }
 
-/** Advance to time tEnd (s): this pass's 7g doses at once, then the 1 Hz steps. */
+/** Advance to time tEnd (s): this pass's drug doses at once, then the 1 Hz steps. */
 export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
   const th = ctx.resp.temp;
   const pk = pkOf(ctx.ps);
-  th.ageY = es.ageY; // FU-10 E6: the patient's age reaches the thermoregulatory thresholds (Stage 3 creates the state)
+  th.ageY = es.ageY; // The patient's age reaches the thermoregulatory thresholds (the resp pipeline creates the state)
   observeDoses(es, pk);
-  th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // Stage 7g's dantrolene effect → the MH suppression (thermal/mh.ts)
-  // FU-10 E1: an MH-susceptible patient's triggers (7f's exposure times) start the MH state 7e owns (R51 §6)
+  th.dantE = pk?.bus?.metabolic?.dantroleneE ?? 0; // The drug model's dantrolene effect → the MH suppression (thermal/mh.ts)
+  // An MH-susceptible patient's triggers (the neuro model's exposure times) start the MH state the endocrine model owns
   const mhx = (ctx.ps as { neuro?: { mhExposure?: MhExposure } }).neuro?.mhExposure;
   if (mhx) {
     const r = mhFromExposure(th.mh, mhx, es.mhOwner, tEnd);
@@ -74,7 +74,7 @@ export function advanceEndo(es: EndoState, ctx: EndoCtx, tEnd: number): void {
     const o = es.core.out;
     th.extraX = o.vo2F; // endocrine metabolic heat (thyroid, sepsis, hypermetabolic)
     th.feverShift = o.setShiftC;
-    es.cascade = cascade(th); // R-7f-8: 7f's hypothermic MAC reduction reads macF
+    es.cascade = cascade(th); // The neuro model's hypothermic MAC reduction reads macF
     es.out.push({
       type: 'endo', t,
       glucoseMgDl: Math.round(o.glucoseMgDl), glucoseMmolL: Math.round(o.glucoseMmol * 10) / 10,
@@ -91,19 +91,19 @@ const range = (name: string, v: number | undefined, lo: number, hi: number) =>
   v === undefined || (Number.isFinite(v) && v >= lo && v <= hi) ? undefined : `${name} must be a finite number in ${lo}–${hi}`;
 const ENDO_CONDITIONS = ['sepsis', 'anaphylaxis', 'sirs', 'hypermetabolic', 'thyroidStorm'];
 
-/** Validation hook: a reason, undefined (accepted) or null (not a Stage 7e command). Runs BEFORE Stage 3's. */
+/** Validation hook: a reason, undefined (accepted) or null (not an endocrine command). Runs BEFORE the resp hook. */
 export function validateEndoCommand(cmd: Command): string | undefined | null {
   if (cmd.type !== 'applyEvent') return null;
   const ev = cmd.event as EndoClinicalEvent | { kind: string; id?: string };
   switch (ev.kind) {
     case 'stimulus': {
       const i = (ev as { intensity?: number }).intensity;
-      const site = (ev as { site?: string }).site; // FU-4 G7: the optional vagal site (7a observes it)
+      const site = (ev as { site?: string }).site; // The optional vagal site (the circulation observes it)
       if (site !== undefined && !(VAGAL_SITES as readonly string[]).includes(site)) return `site must be ${VAGAL_SITES.join(', ')}`;
       return i === undefined ? 'intensity is required' : range('intensity', i, 0, 2);
     }
     case 'meal': {
-      // FU-11 (F11): the amount is required (an empty meal was accepted and its undefined grams poisoned the gut model)
+      // The amount is required (an empty meal was accepted and its undefined grams poisoned the gut model)
       const g = (ev as { carbohydrateG?: number }).carbohydrateG;
       return g === undefined ? 'carbohydrateG is required' : range('carbohydrateG', g, 0, 300);
     }
@@ -114,8 +114,8 @@ export function validateEndoCommand(cmd: Command): string | undefined | null {
     }
     case 'condition': {
       const c = ev as { id: string; severity?: number; phase?: string; rampS?: number };
-      if (!ENDO_CONDITIONS.includes(c.id)) return null; // Stage 3 (mh), 7a, 7c (burns, dka) …
-      if (c.phase !== undefined && !(typeof c.phase === 'string' && Object.hasOwn(SEPSIS_PHASES, c.phase))) return 'phase must be sirs, sepsis, warm or cold'; // FU-11 (F11)
+      if (!ENDO_CONDITIONS.includes(c.id)) return null; // resp (mh), the circulation, the blood (burns, dka) …
+      if (c.phase !== undefined && !(typeof c.phase === 'string' && Object.hasOwn(SEPSIS_PHASES, c.phase))) return 'phase must be sirs, sepsis, warm or cold';
       return range('severity', c.severity, 0, 1) ?? range('rampS', c.rampS, 10, 7200) ?? (c.severity === undefined ? 'severity is required' : undefined);
     }
     default:
@@ -123,7 +123,7 @@ export function validateEndoCommand(cmd: Command): string | undefined | null {
   }
 }
 
-/** Apply hook: true when the command was a Stage 7e command. */
+/** Apply hook: true when the command was an endocrine command. */
 export function applyEndoCommand(es: EndoState, rs: RespState, cmd: Command, t: number): boolean {
   void t;
   if (cmd.type !== 'applyEvent') return false;

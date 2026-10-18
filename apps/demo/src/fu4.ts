@@ -1,8 +1,8 @@
-// FU-4 evidence page (plan Task 23): seven scripted scenarios on the philips-like skin — the orchestrator inspects them
-// before Ali tests again (R53). MODELED circulation, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit rig). The side
-// panel shows TRUTH (rhythm, pulseless, MAP, coronary perfusion pressure CoPP, flow share kIsch) from the engine's
-// `state` and `circ` events; the monitor shows what the patient's monitor would. The pulse-oximeter dropout at low
-// perfusion is FU-5's. Pattern: stage7e.ts (mountMonitor, send() with atTick, a window hook).
+// Arrest evidence page: seven scripted scenarios on the philips-like skin, for inspection before the owner tests again.
+// MODELED circulation, ETT + VCV 12 × 600 / PEEP 5 / FiO2 0.5 (the audit rig). The side panel shows TRUTH (rhythm,
+// pulseless, MAP, coronary perfusion pressure CoPP, flow share kIsch) from the engine's `state` and `circ` events; the
+// monitor shows what the patient's monitor would. The pulse-oximeter dropout at low perfusion is the monitor-fidelity
+// model's. Pattern: stage7e.ts (mountMonitor, send() with atTick, a window hook).
 import type { Command, EngineEvent, EngineOptions, PatientProfile } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 

@@ -1,5 +1,5 @@
-// Stage 6b demo: the host monitor runs a scenario. Hidden instructor panel (Scenario tab: load, state, next
-// transitions, triggers, goto, timeline), a learner action bar (applyEvent), and the Stage 6a remote page, which
+// Scenario-runner demo: the host monitor runs a scenario. Hidden instructor panel (Scenario tab: load, state, next
+// transitions, triggers, goto, timeline), a learner action bar (applyEvent), and the controller's remote page, which
 // now shows the scenario's manual-trigger buttons. URL: ?session=CODE&scenario=<built-in id>&seed=<engine seed>.
 import {
   ControllerSession,
@@ -48,7 +48,7 @@ const panel = mountInstructorPanel(document.body, {
   sound: { enable: () => mon.enableSound() },
 });
 
-// FU-1 item 5: the host page plugs its own Device tab into the panel through the tab-registration API.
+// The host page plugs its own Device tab into the panel through the tab-registration API.
 panel.registerTab({
   id: 'device',
   title: 'Device',

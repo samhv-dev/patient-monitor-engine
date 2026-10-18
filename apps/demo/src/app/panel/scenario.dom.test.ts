@@ -1,8 +1,8 @@
 // @vitest-environment happy-dom
-// A scenario card's manual-trigger button pressed as the case changes state (Stage 10 finding, WebKit: "MH crisis"
-// pressed the instant the case reached "Established" did nothing). The panel repaints ≤ 2 Hz, so a button can be the
-// one drawn for the previous state: the press resolves its label against the CURRENT state, and a press the current
-// state cannot take is said in a toast and not logged as an instructor action.
+// A scenario card's manual-trigger button pressed as the case changes state (WebKit: "MH crisis" pressed the instant
+// the case reached "Established" did nothing). The panel repaints ≤ 2 Hz, so a button can be the one drawn for the
+// previous state: the press resolves its label against the CURRENT state, and a press the current state cannot take is
+// said in a toast and not logged as an instructor action.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioView, type AckResult, type CommandInput, type ScenarioDoc } from '@pme/controller';
 import type { Link } from '../link.ts';

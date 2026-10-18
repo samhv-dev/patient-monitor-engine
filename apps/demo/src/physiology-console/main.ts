@@ -1,6 +1,7 @@
-// Stage 7x page entry: the real monitor (mountMonitor, any skin via ?skin=, worker when available) with the engine's
-// opt-in truth event at 1 Hz, wired to the console. Commands go to the same engine the monitor draws; the truth tree
-// crosses the worker boundary inside the monitor's ordinary event batches (a pruned structured clone, < 50 KB).
+// The physiology console's page entry: the real monitor (mountMonitor, any skin via ?skin=, worker when available) with
+// the engine's opt-in truth event at 1 Hz, wired to the console. Commands go to the same engine the monitor draws; the
+// truth tree crosses the worker boundary inside the monitor's ordinary event batches (a pruned structured clone,
+// < 50 KB).
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { PRESETS } from './actions.ts';

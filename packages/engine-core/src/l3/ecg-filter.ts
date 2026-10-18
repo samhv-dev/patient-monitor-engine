@@ -52,7 +52,7 @@ export const FILTER_BANDS: Readonly<Record<'monitor' | 'diagnostic', readonly [n
   diagnostic: [0.05, 150],
 };
 
-/** Band limits accepted for 'band:<lo>-<hi>' (Stage 4b, request E-4a-1): every skin band lies inside [ENG]. */
+/** Band limits accepted for 'band:<lo>-<hi>': every skin band lies inside [ENG]. */
 export const BAND_LO_RANGE = [0.01, 10] as const;
 export const BAND_HI_RANGE = [10, 200] as const;
 /** A band filter gets the mains notch when its upper corner is below this (research/05 §2.2: Mindray notches the

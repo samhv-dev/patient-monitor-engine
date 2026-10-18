@@ -21,10 +21,10 @@ export function ventView(session: AppSession): View {
       // WebKit, messages to the iframe — BroadcastChannel or postMessage — came seconds late or never once the view was
       // hidden: a speed change was lost, and without `clock` messages the cockpit stopped). `&via=parent` tells the cockpit.
       const port = createFramePort(link, () => frame.contentWindow);
-      // FU-11 (R50 F10): a NEW patient (patient restart, scenario load) unloads the cockpit. It kept running with the
-      // last case's settings and re-attached to every new monitor, so a case run after the Ventilator view had been
-      // opened was ventilated by the old cockpit (haemorrhage: pulse lost 10:08 instead of 10:03). The next visit
-      // loads a fresh cockpit, as on a fresh page; if the view is on screen it reloads at once.
+      // A NEW patient (patient restart, scenario load) unloads the cockpit. It kept running with the last case's
+      // settings and re-attached to every new monitor, so a case run after the Ventilator view had been opened was
+      // ventilated by the old cockpit (haemorrhage: pulse lost 10:08 instead of 10:03). The next visit loads a fresh
+      // cockpit, as on a fresh page; if the view is on screen it reloads at once.
       let mounts = 0;
       const offReset = session.onMount(() => {
         if (++mounts === 1) return; // the patient the cockpit was opened for
@@ -32,7 +32,7 @@ export function ventView(session: AppSession): View {
         offAttach();
         offScale();
         detach();
-        session.ventLink = null; // Stage 10
+        session.ventLink = null;
         port.close();
         frame.onload = null;
         frame.src = 'about:blank';
@@ -45,9 +45,9 @@ export function ventView(session: AppSession): View {
       let detach: () => void = () => {};
       const offAttach = session.onMount((m) => {
         detach();
-        const link = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r)); // FU-11 (K2)
+        const link = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r));
         detach = link;
-        session.ventLink = link; // Stage 10 (owner's decision 6): a fast-forward steps this cockpit with the engine
+        session.ventLink = link; // A fast-forward steps this cockpit with the engine
       });
       // as the Stage V link page does: once the cockpit has loaded, send it an empty patch (its first control message)
       // and this session's speed
@@ -55,8 +55,8 @@ export function ventView(session: AppSession): View {
         port.post({ v: 1, kind: 'control', patch: {} });
         port.post({ v: 1, kind: 'time', action: 'scale', value: session.timeScale });
       };
-      // FU-11 (D3, presenter rehearsal): the cockpit follows every later speed change too — opened at ×1 and then run at
-      // ×4 it ventilated at a quarter of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal
+      // The cockpit follows every later speed change too — opened at ×1 and then run at ×4 it ventilated at a quarter
+      // of the patient's pace (RR 3–7, SpO2 85–89) while its own screen looked normal (presenter rehearsal)
       const offScale = session.onTimeScale((k) => port.post({ v: 1, kind: 'time', action: 'scale', value: k }));
       frame.src = `./vent-hamilton.html?link=${link}&profile=normal&via=parent`;
     },

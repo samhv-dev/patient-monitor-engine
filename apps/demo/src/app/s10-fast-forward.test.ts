@@ -1,5 +1,5 @@
-// Stage 10 Task 5 (the owner's fast-forward): the clinical log says where a fast-forward began and ended and lists the
-// alarms raised during it, with their times (they were shown, not sounded); the log line of the command reads in words.
+// The clinical log says where a fast-forward began and ended and lists the alarms raised during it, with their times
+// (they were shown, not sounded); the log line of the command reads in words.
 import { ControllerSession, createInProcessHub, createStamper } from '@pme/controller';
 import { describe, expect, it } from 'vitest';
 import { describeCommand, spanText } from './describe.ts';

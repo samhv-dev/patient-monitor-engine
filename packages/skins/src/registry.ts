@@ -1,6 +1,6 @@
-// Every shipped skin, base, theme and preset (brief §3.8; build order R14: saadat-like → philips-like → zoll-like,
-// then mindray-like, ge-like, lifepak-like). JSON imports are typed loosely, so they are cast once here; the
-// schema tests are what guarantee the shapes.
+// Every shipped skin, base, theme and preset (brief §3.8; build order saadat-like → philips-like → zoll-like, then
+// mindray-like, ge-like, lifepak-like). JSON imports are typed loosely, so they are cast once here; the schema tests
+// are what guarantee the shapes.
 import iecDefaults from './data/base/iec-defaults.json';
 import iranIcuAsFound from './data/presets/iran-icu-as-found.json';
 import geLike from './data/skins/ge-like.json';

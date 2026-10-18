@@ -26,7 +26,7 @@ export const EXHALED_C = 34; // exhaled gas temperature, saturated [TXT]
 export const ROOM_RH = 0.5; // theatre relative humidity [ENG]
 export const HME_RECOVERY = 0.5; // heat–moisture exchanger returns half the respiratory loss [TXT]
 export const FORCED_AIR_C = 43; // "high" setting [TXT]
-export const FORCED_AIR_H = 10; // W/m²/°C air-to-skin under the blanket [ENG: fitted to R39-7 warmed −0.9 °C and +0.5–1 °C/h]
+export const FORCED_AIR_H = 10; // W/m²/°C air-to-skin under the blanket [ENG: fitted to warmed −0.9 °C and +0.5–1 °C/h]
 /** The blanket, skin and subcutaneous tissue take time to warm: the delivered power follows on/off with this τ [ENG]. */
 export const FORCED_AIR_TAU_S = 1800;
 export const FORCED_AIR_AREA = 0.35; // upper-body blanket fraction of the body area [ENG]
@@ -83,7 +83,7 @@ export function calibrateInsulation(bsa: number, tp: number, ta: number, airMs: 
 
 /** Forced-air warming: heat INTO the periphery, W (the covered area's own dry loss is removed by the caller). */
 export function forcedAirW(env: Envelope, tp: number, airC = FORCED_AIR_C): number {
-  return FORCED_AIR_H * env.bsa * FORCED_AIR_AREA * (airC - tp); // FU-4 item 1: the blanket's set air temperature
+  return FORCED_AIR_H * env.bsa * FORCED_AIR_AREA * (airC - tp); // The blanket's set air temperature
 }
 
 /** An IV infusion at `tempC` (warmer: 37) removes heat from the core, W (negative = heat lost). */
@@ -91,7 +91,10 @@ export function infusionW(mlPerMin: number, tempC: number, tc: number): number {
   return (-(mlPerMin / 60) * WATER_J_ML_C * (tc - tempC));
 }
 
-/** A running IV line as Stage 7c keeps it (duck-typed `blood.core.fl.flows[]`): mL/min, until, volume left, composition. */
+/**
+ * A running IV line as the blood model keeps it (duck-typed `blood.core.fl.flows[]`): mL/min, until, volume left,
+ * composition.
+ */
 export interface IvFlowLike {
   rate: number;
   until: number;
@@ -102,10 +105,10 @@ export interface IvFlowLike {
 export const STORED_BLOOD_C = 4;
 
 /**
- * The IV inflow the heat model sees (exception E-7e-1: 7c's pipeline writes it into `rs.temp.iv` every 100 ms instead of
- * its −0.25 °C-per-unit shortcut): every running infusion except haemorrhage; blood-bank (citrated) products at 4 °C
- * while an unwarmed unit is running, else 37 °C (warmed); crystalloids and colloids at room temperature. One unit of
- * RBC (280 mL at 4 °C) then removes 38 kJ ≈ 0.24 °C of a 70 kg core — the tables' 0.25 °C per unit, now physical.
+ * The IV inflow the heat model sees (the blood model's pipeline writes it into `rs.temp.iv` every 100 ms): every
+ * running infusion except haemorrhage; blood-bank (citrated) products at 4 °C while an unwarmed unit is running, else
+ * 37 °C (warmed); crystalloids and colloids at room temperature. One unit of RBC (280 mL at 4 °C) then removes
+ * 38 kJ ≈ 0.24 °C of a 70 kg core — the tables' 0.25 °C per unit.
  */
 export function ivInflow(flows: readonly IvFlowLike[], coldRunning: boolean, t: number, roomC: number): { mlPerMin: number; tempC: number } {
   let ml = 0;

@@ -1,5 +1,5 @@
 // Public ECG vocabulary (brief §5 rhythm library + modifiers, §7.2 setRhythm/setModifiers). types.ts re-exports
-// everything here, so the public surface stays `import { … } from '@pme/engine-core'`. Stage 5 owns this file.
+// everything here, so the public surface stays `import { … } from '@pme/engine-core'`.
 import type { SimSeconds } from '../../types.ts';
 
 /** Every v1 rhythm (brief §5 table, plus `mat`, research 03 §1.5 "MAT"). */
@@ -94,7 +94,7 @@ export interface StSpec {
   mm: number;
 }
 
-/** Transcutaneous pacing as seen by the ECG (brief §6.5). Stage 4's pacer device writes this modifier. */
+/** Transcutaneous pacing as seen by the ECG (brief §6.5). The pacer device writes this modifier. */
 export interface TcpSpec {
   mode: 'demand' | 'fixed';
   ratePpm: number;
@@ -109,7 +109,7 @@ export interface CprSpec {
   depth: number;
 }
 
-/** A defibrillator discharge at sim time atS (brief §6.5 "Shock artefact"). Stage 4's defib writes this. */
+/** A defibrillator discharge at sim time atS (brief §6.5 "Shock artefact"). The defib writes this. */
 export interface ShockSpec {
   atS: SimSeconds;
   energyJ: number;
@@ -123,7 +123,7 @@ export interface BurstSpec {
 
 /** Artefact levels (brief §5 "Artefacts"): numbers are 0–1 levels unless stated. */
 export interface ArtefactSpec {
-  /** Additive white noise: 1 = 0.025 mV SD (Stage 1). */
+  /** Additive white noise: 1 = 0.025 mV SD. */
   noise: number;
   /** Extra baseline wander, 0.05–0.3 mV at 0.1–0.5 Hz. */
   wander: number;

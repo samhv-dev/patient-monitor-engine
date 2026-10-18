@@ -1,4 +1,4 @@
-// Stage 12: the learner monitor's states (the follower reducer), phone and second screen.
+// The learner monitor's states (the follower reducer), phone and second screen.
 import { describe, expect, it } from 'vitest';
 import { COCKPIT_QUIET_MS, followerStatus, HOST_SILENT_MS, NO_PHONE_LAYOUT, phoneStyle, UNREACHABLE_MS, type FollowerInput } from './follower-status.ts';
 

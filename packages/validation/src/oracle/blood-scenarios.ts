@@ -1,8 +1,7 @@
-// Stage 7c Pulse oracle scenarios (annex §D O2, O3, O10 + a bicarbonate bolus), blood-chemistry channels only.
+// Pulse oracle scenarios for the blood (annex §D O2, O3, O10 + a bicarbonate bolus), blood-chemistry channels only.
 // Expected disagreements are ENCODED (annex §C): a Pulse fix then shows up as a failing `expect-differ` row.
 // Compare TRUTH (our `labs` event) with Pulse data requests (pulse-node.ts PULSE_REQUESTS); K in mg/L (D14).
-// Adopted from 7c's uncommitted copy (FU-3 item 10): loads Pulse through pulse-node.ts (7c's Node shim is the same
-// three globals + local fetch), compares with compare.ts, and runs our engine MODELED like O2/O4/O11.
+// Loads Pulse through pulse-node.ts, compares with compare.ts, and runs our engine MODELED like O2/O4/O11.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { compareRow } from './compare.ts';
 import type { PulseOracle, PulseRequest } from './pulse-node.ts';
@@ -37,7 +36,7 @@ export const PULSE_BLOOD: Record<BloodChannel, { key: PulseRequest; toOurs: (v: 
 
 const act = (a: Record<string, unknown>) => JSON.stringify({ AnyAction: [{ PatientAction: a }] });
 // Pulse's CDM field is `FlowRate` (the spike used `Severity`); an unknown field makes ProcessActions return false, which
-// the harness throws on — Stage 7a's O2 draft used `Flow` (request to 7a).
+// the harness throws on.
 const bleed = (mlPerMin: number) => act({ Hemorrhage: { Compartment: 'RightLeg', FlowRate: { ScalarVolumePerTime: { Value: mlPerMin, Unit: 'mL/min' } } } });
 const saline = act({ SubstanceCompoundInfusion: { SubstanceCompound: 'Saline', BagVolume: { ScalarVolume: { Value: 1000, Unit: 'mL' } }, Rate: { ScalarVolumePerTime: { Value: 33.3, Unit: 'mL/min' } } } });
 const bolus = (sub: string, conc: number, unit: string, ml: number) =>
@@ -98,9 +97,9 @@ export async function runBloodOracle(sc: BloodOracleScenario, pulse: Pick<PulseO
     const s = e.snapshot().state as { st: { blood: { core: { fl: { vp: number; hbG: number } } } } };
     return s.st.blood.core.fl.vp + 3 * s.st.blood.core.fl.hbG; // plasma + RBC (MCHC 0.33 g/mL)
   };
-  // Both engines take their actions when the loop reaches them, AFTER the baseline read at `baselineS` (FU-3 item 10:
-  // 7c's copy dispatched ours up front with atTick = tS × 50, so tick 3000 applied the dose before our 60 s panel —
-  // O13b baseline Na 143 post-dose vs 140 — while Pulse's baseline was pre-dose).
+  // Both engines take their actions when the loop reaches them, AFTER the baseline read at `baselineS` (dispatching
+  // ours up front with atTick = tS × 50 would apply the dose at tick 3000, before our 60 s panel — O13b baseline Na 143
+  // post-dose vs 140 — while Pulse's baseline is pre-dose).
   const acts = [...sc.pulse].sort((a, b) => a.tS - b.tS);
   const mine = [...sc.ours].sort((a, b) => a.tS - b.tS);
   let t = 0;

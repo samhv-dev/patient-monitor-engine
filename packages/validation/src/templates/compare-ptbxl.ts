@@ -1,6 +1,6 @@
-// Report-only comparison of the engine's normal beat with PTB-XL normal median beats (CC BY 4.0). Ruling R17
-// fixes the lead ratios "as implemented", so nothing is refitted: the per-lead correlations are written to
-// docs/gates/stage-5/ptbxl-normal-comparison.json for the gate review and for Stage 8's validation harness.
+// Report-only comparison of the engine's normal beat with PTB-XL normal median beats (CC BY 4.0). The lead ratios are
+// fixed "as implemented", so nothing is refitted: the per-lead correlations are written to
+// docs/gates/stage-5/ptbxl-normal-comparison.json for review and for the validation harness.
 // Usage: node --experimental-strip-types packages/validation/src/templates/compare-ptbxl.ts [cacheDir] [outJson] [n]
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';

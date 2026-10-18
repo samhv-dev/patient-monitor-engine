@@ -1,8 +1,8 @@
-// Stage 7c pipeline: the engine-facing half of the blood. advanceBlood() runs right after Stage 3's advanceResp on the
-// same 10 Hz grid (after Stage 7g's advancePk), OBSERVES 7g's accepted doses (`ps.pk.bus.doses`, R51 §3), steps
-// core.ts, publishes the BloodView Stage 3's gas step reads and the `out` block other stages read, emits `labs`
-// (1 Hz) and delayed `labResult`, moves blood-volume changes into Stage 7a's circuit, writes the lung-water key for
-// 7b, applies cold units to the heat model, and exposes the ECG deltas the engine pushes into Modifiers.
+// The blood pipeline: the engine-facing half of the blood. advanceBlood() runs right after advanceResp on the same
+// 10 Hz grid (after the drug model's advancePk), OBSERVES the drug model's accepted doses (`ps.pk.bus.doses`), steps
+// core.ts, publishes the BloodView the gas step reads and the `out` block the other modules read, emits `labs` (1 Hz)
+// and delayed `labResult`, moves blood-volume changes into the circulation's circuit, writes the lung-water key for the
+// lungs, applies cold units to the heat model, and exposes the ECG deltas the engine pushes into Modifiers.
 import type { L1State } from '../../l1/state.ts';
 import type { BloodClinicalEvent, BloodDrugId } from '../../types-blood.ts';
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
@@ -14,13 +14,16 @@ import { bloodMl, ecfMl, type Flow } from './fluids.ts';
 import { LAB_TURNAROUND_S, labPanel, type LabInputs, type PendingLab } from './labs.ts';
 import { BLOOD_DT_S, COLD_UNIT_C, FLUIDS, hypertonicSaline, MG_MMOL_PER_G, NORMAL, PRODUCTS, SIGMA_PROTEIN, storedComp, type Composition, type FluidId, type ProductId } from './params.ts';
 import { BLOOD_DRUGS, bicarbCo2MlMin, CA_MMOL_PER_G } from './treatments.ts';
-import { ivInflow } from '../thermal/environment.ts'; // Stage 7e (E-7e-1)
-import { MANNITOL_MOSM_PER_G } from '../brain/params.ts'; // FU-9 H8
+import { ivInflow } from '../thermal/environment.ts';
+import { MANNITOL_MOSM_PER_G } from '../brain/params.ts';
 
 export interface BloodState {
   k: number; // next step index (time k·0.1 s)
   core: BloodCore;
-  /** = core.out after every step: the block other stages read (7g hbfRel; 7d hb, albuminGL, bvRel, lactate; 7b cop). */
+  /**
+   * = core.out after every step: the block the other modules read (drugs: hbfRel; organs: hb, albuminGL, bvRel,
+   * lactate; lungs: cop).
+   */
   out: BloodOut;
   view: BloodView;
   labs: PendingLab[];
@@ -30,37 +33,37 @@ export interface BloodState {
   keto: { rate: number; until: number } | null;
   /** What the engine has already pushed into Modifiers (plan decision 9). */
   ecg: { k: number; qtc: number };
-  /** FU-7 (addendum 24): the neuro-profile Mg last applied to the Mg set point (undefined = not yet seen). */
+  /** The neuro-profile Mg last applied to the Mg set point (undefined = not yet seen). */
   mgSeen?: number;
-  /** Lung-water seam (G7b ruling 8): filtered pulmonary capillary pressure (mmHg) and the extra EVLWI (mL/kg). */
+  /** Lung-water seam: filtered pulmonary capillary pressure (mmHg) and the extra EVLWI (mL/kg). */
   lung: { pCap: number; evlwi: number };
   /** Output events (`labs`, `labResult`) waiting for the engine's flush. */
   events: EngineEvent[];
   /**
-   * R51 addendum 15 (5): the resting-CO reference. `coLp` low-passes the circuit's CO (gas-model flow units) from 7a's
-   * `ref.co` until `latched` (settle window over, or the first perturbation); then it is CO0 for hbfRel and lactate.
+   * The resting-CO reference. `coLp` low-passes the circuit's CO (gas-model flow units) from the circulation's `ref.co`
+   * until `latched` (settle window over, or the first perturbation); then it is CO0 for hbfRel and lactate.
    */
   rest: { coLp: number; latched: boolean };
-  /** Cumulative blood-volume change pushed into 7a's circuit, mL (R51 addendum 15 (1): refill = circNetMl + core.bledMl). */
+  /** Cumulative blood-volume change pushed into the circulation's circuit, mL (refill = circNetMl + core.bledMl). */
   circNetMl: number;
-  /** TEST-ONLY seam (R51 addendum 15 (4)): when set, the published `out.hbfRel` is pinned to it (7g tests). */
+  /** TEST-ONLY seam: when set, the published `out.hbfRel` is pinned to it (drug-model tests). */
   pinHbfRel?: number;
 }
 
 export interface BloodCtx {
   resp: RespState;
-  hemo: unknown; // HemoState; Stage 7a's `circ`/`circOut` are duck-typed
+  hemo: unknown; // HemoState; the circulation model's `circ`/`circOut` are duck-typed
   l1: L1State;
-  pk?: unknown; // Stage 7g's PkState (duck-typed: `bus.doses`, `bus.metabolic.kShift`); absent → 7c's own drug fallback
-  /** FU-7 (addendum 24 / audit D6, D12): 7f's neuro profile (duck-typed) — its Mg re-baselines 7c's ONE Mg state and its
-   * burn/denervation upregulation reaches the succinylcholine K+ surge. */
+  pk?: unknown; // PkState (duck-typed: `bus.doses`, `bus.metabolic.kShift`); absent → the blood model's drug fallback
+  /** Neuro profile (duck-typed) — its Mg re-baselines the blood model's ONE Mg state and its burn/denervation
+   * upregulation reaches the succinylcholine K+ surge. */
   neuroProfile?: { nm: string; mgMmolL: number };
 }
 
-/** Create the blood for a profile. With 7a present CO0 becomes the circuit's settled resting CO (advanceBlood, addendum 15). */
+/** Create the blood for a profile. With the circulation present CO0 becomes the circuit's settled resting CO (advanceBlood). */
 export function createBloodState(profile: PatientProfile | undefined): BloodState {
   const gp = gasPatient(profile);
-  const core = createBloodCore(profile, CI_LPM_PER_KG * gp.effKg, gp.paco2Rest); // FU-9 F7: the patient's own resting PaCO2
+  const core = createBloodCore(profile, CI_LPM_PER_KG * gp.effKg, gp.paco2Rest); // The patient's own resting PaCO2
   return {
     k: 0, core, out: core.out, view: { odc: { ...core.odc }, coFactor: 1, co2LoadMlMin: 0 }, labs: [], cold: [], keto: null,
     ecg: { k: 0, qtc: 0 }, lung: { pCap: 8, evlwi: 0 }, events: [], rest: { coLp: 0, latched: false }, circNetMl: 0,
@@ -72,7 +75,7 @@ export function qtcDeltaCa(iCa: number): number {
   return iCa < 1.1 ? (1.1 - iCa) * 100 : iCa > 1.3 ? -(iCa - 1.3) * 100 : 0;
 }
 
-/** Torsades-risk hook for 7g/rhythms (0–1): long QTc, low Mg, low K [ENG]. Exposed, not acted on in 7c. */
+/** Torsades-risk hook for the drug model/rhythms (0–1): long QTc, low Mg, low K [ENG]. Exposed, not acted on here. */
 export function tdpRisk(qtc: number, mg: number, k: number): number {
   const q = Math.max(0, (qtc - 470) / 100);
   return Math.min(1, q * (mg < 0.7 ? 1.5 : 1) * (k < 3 ? 1.5 : 1));
@@ -82,39 +85,42 @@ function labInputs(rs: RespState, t: number): LabInputs {
   return { paco2: rs.co2.pf, pao2: rs.o2.pao2, tempC: rs.temp.tc, vco2: rs.pat.vco2 * metabolic(rs, t), coLpm: rs.coRatio * CI_LPM_PER_KG * rs.pat.effKg };
 }
 
-// --- Stage 7g observer (R51 §3; R50 F1/F2) ------------------------------------------------------------------------
-/** The part of 7g's DoseLogEntry 7c reads; `concentrationPct` is 7d's optional field for hypertonic saline (R51 addendum 14). */
+// --- Drug-model observer ------------------------------------------------------------------------------------------
+/**
+ * The part of the drug model's DoseLogEntry the blood reads; `concentrationPct` is the organ model's optional field
+ * for hypertonic saline.
+ */
 export interface DoseLike { agent: string; amount: number; amountUnit: string; t: number; concentrationPct?: number }
 interface BusLike { doses: DoseLike[]; kShift: number; active: boolean }
 
-/** 7g's bus (duck-typed), or null when 7g is absent. */
+/** The drug model's bus (duck-typed), or null when the drug model is absent. */
 export function pkBus(pk: unknown): BusLike | null {
   const b = (pk as { bus?: { doses?: unknown; metabolic?: { kShift?: unknown } } } | null | undefined)?.bus;
   if (!b || !Array.isArray(b.doses)) return null;
   const k = b.metabolic?.kShift;
   const n = (o: unknown) => (o && typeof o === 'object' ? Object.keys(o).length : 0);
   const x = b as { agents?: unknown; volatiles?: unknown };
-  // `active`: any agent or volatile on 7g's bus — a drug already perturbs the circulation (R51 addendum 15 (5))
+  // `active`: any agent or volatile on the drug model's bus — a drug already perturbs the circulation
   return { doses: b.doses as DoseLike[], kShift: typeof k === 'number' && Number.isFinite(k) ? k : 0, active: n(x.agents) + n(x.volatiles) > 0 };
 }
 
 /**
- * Resting-CO reference (R51 addendum 15 (5)) [ENG]: the circuit's running resting CO sits −13…+25 % from 7a's
- * stabilised `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional
- * lactate threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from
- * `ref.co` and latches at 120 s, or at the first perturbation (a volume/chemistry command or a 7g drug).
+ * Resting-CO reference [ENG]: the circuit's running resting CO sits −13…+25 % from the circulation's stabilised
+ * `ref.co` depending on the rig (ventilation, PEEP, anaesthesia), which would move hbfRel and the regional lactate
+ * threshold at rest. The reference low-passes the CO (τ 20 s: over breathing and the baroreflex swings) from `ref.co`
+ * and latches at 120 s, or at the first perturbation (a volume/chemistry command or a drug).
  */
 export const CO0_SETTLE_S = 120;
 export const CO0_TAU_S = 20;
 
-/** Hypertonic saline runs in over this time when 7g's log gives no duration [ENG]. */
+/** Hypertonic saline runs in over this time when the drug model's log gives no duration [ENG]. */
 export const HTS_OVER_MIN = 15;
 
 /**
- * Turn 7g's accepted boluses into 7c's mass balance and effect curves, in 7g's library units (sux mcg; calcium salts
- * mg; NaHCO3 mmol; insulin–dextrose units; MgSO4 mg; hypertonic saline mL). Salbutamol, insulin and epinephrine are
- * NOT read here: their K shift arrives once, as `bus.metabolic.kShift` (R50 F2). Each entry is listed for exactly one
- * advance pass, so each dose is observed exactly once.
+ * Turn the drug model's accepted boluses into the blood's mass balance and effect curves, in the drug library's units
+ * (sux mcg; calcium salts mg; NaHCO3 mmol; insulin–dextrose units; MgSO4 mg; hypertonic saline mL). Salbutamol,
+ * insulin and epinephrine are NOT read here: their K shift arrives once, as `bus.metabolic.kShift`. Each entry is
+ * listed for exactly one advance pass, so each dose is observed exactly once.
  */
 export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
   const c = bs.core;
@@ -134,10 +140,10 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
         c.doses.push({ id: d.agent, t0: d.t, amount: mmol });
         break;
       }
-      // FU-7.1 A5 (Ali 2026-10-10): infused potassium chloride is a K AND Cl load on 7c's own pool — no new curve. The
-      // pool's kinetics then own the course: K into cells with τ K_TAU_MIN (43 min, tables `vK`) and the Na/K-ATPase set
-      // point following total-body K (K_TBK_MMOL 300, Sterns 1981). The chloride keeps the SID honest (a K load without
-      // its anion would alkalinise the patient). 7g logs the infused amount once per advance pass (A5, pipeline.ts).
+      // Infused potassium chloride is a K AND Cl load on the blood's own pool — no new curve. The pool's kinetics then
+      // own the course: K into cells with τ K_TAU_MIN (43 min, tables `vK`) and the Na/K-ATPase set point following
+      // total-body K (K_TBK_MMOL 300, Sterns 1981). The chloride keeps the SID honest (a K load without its anion would
+      // alkalinise the patient). The drug model logs the infused amount once per advance pass (pk/pipeline.ts).
       case 'potassiumChloride':
         if (d.amountUnit === 'mmol') {
           c.so.k += d.amount;
@@ -153,7 +159,7 @@ export function observeDoses(bs: BloodState, doses: readonly DoseLike[]): void {
       case 'magnesium':
         c.so.mg += g * MG_MMOL_PER_G;
         break;
-      case 'mannitol': // FU-9 H8: an effective ECF osmole in 7c's pool; 7d's kidney clears it from here
+      case 'mannitol': // An effective ECF osmole in the blood pool; the kidney clears it from here
         c.so.mannitol = (c.so.mannitol ?? 0) + g * MANNITOL_MOSM_PER_G;
         break;
       case 'hypertonicSaline':
@@ -171,8 +177,8 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
   const bus = pkBus(ctx.pk);
   const c = bs.core;
   if (bus) observeDoses(bs, bus.doses);
-  // FU-7 (addendum 24 / audit D12, D6): ONE Mg state — a CHANGED neuro-profile Mg re-baselines 7c's set point and amount
-  // (the first sight only records it: creation already used it); ONE upregulation answer for the sux K+ surge.
+  // ONE Mg state — a CHANGED neuro-profile Mg re-baselines the blood model's set point and amount (the first sight only
+  // records it: creation already used it); ONE upregulation answer for the sux K+ surge.
   const np = ctx.neuroProfile;
   if (np) {
     if (bs.mgSeen !== undefined && np.mgMmolL !== bs.mgSeen && c.out.mg > 0) {
@@ -182,9 +188,8 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     bs.mgSeen = np.mgMmolL;
     c.nmUpreg = np.nm === 'burn' || np.nm === 'denervation' ? 1 : 0;
   }
-  // CO0 in L/min (coRatio × CI × effKg = the circuit's CO since FU-4 F4): the circuit's settled resting CO, starting from
-  // 7a's stabilised `ref.co` (fallback) — R51 addendum 15 (5), superseding R50 F4's `ref.co` alone. FU-8 (A28): the start
-  // was still in the pre-F4 gas units (× effKg/70), so a non-70 kg patient's co0 began off by that factor
+  // CO0 in L/min (coRatio × CI × effKg = the circuit's CO): the circuit's settled resting CO, starting from the
+  // circulation's stabilised `ref.co` (fallback) rather than `ref.co` alone
   const settling = circ?.ref !== undefined && !bs.rest.latched;
   if (circ?.ref && bs.rest.coLp === 0) bs.rest.coLp = circ.ref.co;
   if (settling && bus && (bus.active || bus.doses.length > 0)) bs.rest.latched = true;
@@ -207,24 +212,24 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
     }, BLOOD_DT_S);
     bs.out = bs.pinHbfRel === undefined ? c.out : { ...c.out, hbfRel: bs.pinHbfRel }; // test seam (addendum 15 (4))
     const bvRatio = c.out.bvRel;
-    const kChem = chemistryContractility(c.ab.ph, c.out.iCa, c.out.kEcg); // FU-4 G3: + K
+    const kChem = chemistryContractility(c.ab.ph, c.out.iCa, c.out.kEcg);
     if (circ) {
       pushCircVolume(circ, bloodMl(c.fl) - bv0, BLOOD_DT_S);
       bs.circNetMl += bloodMl(c.fl) - bv0;
       setCircChemistry(circ, kChem);
-      if (ctx.l1.mode === 'modeled') setCircViscosity(circ, c.odc.hb / c.pat.hbRef, rs.coRatio); // FU-6 R11 (MODELED: MANUAL's trackers own SVR); G-FU6-1: fades with flow
-      circ.ext.kEcg = c.out.kEcg; // FU-4 G3: the membrane-effective K for the sinus node and the arrest hazard (7a arrest.ts)
+      if (ctx.l1.mode === 'modeled') setCircViscosity(circ, c.odc.hb / c.pat.hbRef, rs.coRatio); // MODELED only (MANUAL's trackers own SVR); fades with flow
+      circ.ext.kEcg = c.out.kEcg; // The membrane-effective K for the sinus node and the arrest hazard (circ arrest.ts)
     } else applyL1Fallback(ctx.l1, t, bvRatio, kChem);
-    rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // Stage 7e (E-7e-1): IV fluids and unwarmed units as a physical heat term (replaces decision 16's −0.25 °C per unit)
+    rs.temp.iv = ivInflow(c.fl.flows, bs.cold.some((u) => t < u.until), t, rs.temp.ta); // IV fluids and unwarmed units as a physical heat term
     bs.cold = bs.cold.filter((u) => u.until > t);
     bs.view.odc = { ...c.odc };
     bs.view.coFactor = circ ? 1 : volumeCoFactor(bvRatio);
     bs.view.co2LoadMlMin = bicarbCo2MlMin(c.doses, t);
     c.doses = c.doses.filter((d) => t - d.t0 < 6 * 3600); // every effect is < 1 % after 6 h
     if (pPv !== null) {
-      // lung water (G7b ruling 8): 10 s filter on the pulmonary venous pressure; 7b re-resolves at ≥ 0.25 mL/kg change
-      // FU-6 R3(b) (E-FU6-4): obstructed efforts lower the alveolar (≈ interstitial) pressure, so the capillary
-      // TRANSMURAL pressure rises by it — negative-pressure pulmonary oedema through the same Starling step
+      // Lung water: 10 s filter on the pulmonary venous pressure; the lungs re-resolve at ≥ 0.25 mL/kg change.
+      // Obstructed efforts lower the alveolar (≈ interstitial) pressure, so the capillary TRANSMURAL pressure rises by
+      // it — negative-pressure pulmonary oedema through the same Starling step
       bs.lung.pCap += (pPv - (rs.palvObs ?? 0) - bs.lung.pCap) * (BLOOD_DT_S / 10);
       bs.lung.evlwi = lungWaterStep(bs.lung.evlwi, bs.lung.pCap, c.out.cop, c.fl.kfMult, c.fl.sigma / SIGMA_PROTEIN, BLOOD_DT_S);
       if (Math.abs(bs.lung.evlwi - (rs.evlwiExtra ?? 0)) >= 0.25) {
@@ -242,9 +247,9 @@ export function advanceBlood(bs: BloodState, ctx: BloodCtx, tEnd: number): void 
 }
 
 /** ECG targets the engine pushes as deltas: K for Modifiers.k, ΔQTc for Modifiers.qtc. */
-/** `qtcAdd` (FU-7, addendum 24): 7g's drug-added QTc, ms (ondansetron), added to the iCa term. */
+/** `qtcAdd`: drug-added QTc, ms (ondansetron), added to the iCa term. */
 export function bloodEcgTargets(bs: BloodState, qtcAdd = 0): { k: number; qtc: number } {
-  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) + Math.max(0, qtcAdd) }; // FU-4 G3: absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
+  return { k: bs.core.out.kEcg - NORMAL.k, qtc: qtcDeltaCa(bs.core.out.iCa) + Math.max(0, qtcAdd) }; // Absolute K (NORMAL.k = the Modifiers default 4.2) — a hyperkalaemic profile draws its ECG
 }
 
 // --- commands ----------------------------------------------------------------------------------------------------
@@ -254,14 +259,14 @@ const DRUG_UNITS: Record<BloodDrugId, readonly string[]> = {
 };
 const num = (name: string, v: number | undefined, lo: number, hi: number) =>
   v === undefined || (Number.isFinite(v) && v >= lo && v <= hi) ? undefined : `${name} must be a finite number in ${lo}–${hi}`;
-/** 7a's `crystalloid`/`colloid`/`blood` map to saline / gelatin / whole blood (R50 F5). */
+/** The circulation model's `crystalloid`/`colloid`/`blood` map to saline / gelatin / whole blood. */
 const ALIAS: Record<string, Composition> = { crystalloid: FLUIDS.saline, colloid: FLUIDS.gelatin, blood: storedComp('wholeBlood', 14) };
 const FLUID_IDS = [...Object.keys(FLUIDS), ...Object.keys(ALIAS)];
 
 /**
- * Validation hook: a reason, undefined (accepted) or null (not a Stage 7c command). Runs after Stage 7g's (which owns
- * every `drug` event when present — the `drug` case here is the fallback for an engine without 7g) and BEFORE
- * Stage 3's (whose `condition` rejects unknown ids).
+ * Validation hook: a reason, undefined (accepted) or null (not a blood command). Runs after the drug model's (which
+ * owns every `drug` event when present — the `drug` case here is the fallback for an engine without the drug model)
+ * and BEFORE the respiratory one (whose `condition` rejects unknown ids).
  */
 export function validateBloodCommand(cmd: Command): string | undefined | null {
   if (cmd.type !== 'applyEvent') return null;
@@ -292,7 +297,7 @@ export function validateBloodCommand(cmd: Command): string | undefined | null {
     }
     case 'condition': {
       const c = ev as { id: string; severity: number };
-      if (c.id !== 'burns' && c.id !== 'dka') return null; // Stage 3 (mh), Stage 7a (tamponade, pe, …)
+      if (c.id !== 'burns' && c.id !== 'dka') return null; // mh: resp; tamponade, pe, …: circulation
       return c.severity === undefined ? 'severity is required' : num('severity', c.severity, 0, 1);
     }
     case 'lab': {
@@ -304,7 +309,7 @@ export function validateBloodCommand(cmd: Command): string | undefined | null {
   }
 }
 
-/** Apply hook: true when the command was a Stage 7c command. `t` is the sim time; `rs` for lab snapshots. */
+/** Apply hook: true when the command was a blood command. `t` is the sim time; `rs` for lab snapshots. */
 export function applyBloodCommand(bs: BloodState, cmd: Command, t: number, rs: RespState): boolean {
   const ok = applyBloodEvent(bs, cmd, t, rs);
   // any accepted command except a blood draw perturbs the patient: the resting-CO reference stops settling (addendum 15 (5))
@@ -337,14 +342,15 @@ function applyBloodEvent(bs: BloodState, cmd: Command, t: number, rs: RespState)
       const x = ev as { product: ProductId; units: number; overS?: number; storageDays?: number; warmed?: boolean };
       const p = PRODUCTS[x.product];
       const over = x.overS ?? 600 * x.units; // 10 min per unit unless told
-      const comp = storedComp(x.product, x.storageDays ?? 14); // FU-9 F5 (R1): the aged, electroneutral unit
+      const comp = storedComp(x.product, x.storageDays ?? 14); // The aged, electroneutral unit
       const fl: Flow = { rate: (p.ml * x.units * 60) / over, until: 1e9, leftMl: p.ml * x.units, comp };
       c.fl.flows.push(fl);
       if (x.warmed !== true) bs.cold.push({ until: t + over, cPerS: (COLD_UNIT_C * x.units) / over });
       return true;
     }
     case 'drug': {
-      // FALLBACK (no Stage 7g in the engine): with 7g, its validator claims every `drug` event and 7c observes bus.doses
+      // FALLBACK (no drug model in the engine): with one, its validator claims every `drug` event and the blood
+      // model observes bus.doses
       const d = ev as { drugId: BloodDrugId; dose: number; unit: string };
       if (!(BLOOD_DRUGS as readonly string[]).includes(d.drugId)) return false;
       let amount = d.dose;

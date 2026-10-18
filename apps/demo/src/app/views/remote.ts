@@ -1,8 +1,8 @@
 // Remote (research/13 §4.4): on the host screen, how to pair (the code, "open here", and a QR code only where another
 // device can use it); in a window opened at #/remote, the instructor panel alone, joined by the 6-letter code over the
-// Stage 6a transports (BroadcastChannel in the same browser; the relay when the link carries ?relay=). Version 1.0 is
-// same-browser only (review F2, orchestrator ruling 6): tablet pairing over the relay is version 1.1. The Remote never
-// runs an engine: it sends commands and reads state, as the 6a remote does.
+// controller's transports (BroadcastChannel in the same browser; the relay when the link carries ?relay=). Version 1.0
+// is same-browser only: tablet pairing over the relay is version 1.1. The Remote never runs an engine: it sends
+// commands and reads state, as the controller's remote page does.
 import { ControllerSession, createBroadcastChannelTransport, createStamper, createWebSocketTransport, newPeerId, normalizeSessionCode, type ManagedTransport, type WireMessage } from '@pme/controller';
 import { Link } from '../link.ts';
 import { mountPanel } from '../panel/panel.ts';
@@ -60,16 +60,16 @@ export function remoteView(o: { site: SiteProfile; hostless: boolean; bar: HTMLE
     join.hidden = true;
     holder.append(status);
     mountSessionBar(o.bar, link);
-    mountFastForward(document.body, ctl, { simT: () => link.simT }); // Stage 10
+    mountFastForward(document.body, ctl, { simT: () => link.simT });
     o.bar.hidden = false;
     const panel = mountPanel(link, { site: o.site, weightKg: () => link.ctl.scenario.doc?.patient?.weightKg ?? 70 });
     holder.append(panel.el);
     // Connected once the host has answered the hello (its snapshot) OR once its 1 Hz state reaches this page: the state
     // is all the panel needs (on a cold Vite start a remote once waited over 10 s for the snapshot answer).
     const draw = throttle(() => setText(status, ctl.hostOnline || ctl.state ? `Connected to ${code}` : `Waiting for the monitor ${code}…`), 500);
-    // Joining is robust to a lost or unanswered hello: until the host has answered (snapshot) or its state has arrived,
-    // the remote says hello again every 2 s (from its own peer id, so the host's duplicate filter never drops it); the
-    // host answers every hello with a fresh snapshot (Stage 6a late join). What arrives is counted for the e2e diagnostics.
+    // Joining is robust to a lost or unanswered hello: until the host has answered (snapshot) or its state has arrived, the
+    // remote says hello again every 2 s (from its own peer id, so the host's duplicate filter never drops it); the host
+    // answers every hello with a fresh snapshot (late join). What arrives is counted for the e2e diagnostics.
     const diag = { sent: 0, received: {} as Record<string, number>, transport: () => transport.status };
     transport.onMessage((m: WireMessage) => void (diag.received[m.kind] = (diag.received[m.kind] ?? 0) + 1));
     const stamp = createStamper(code, newPeerId('rejoin'));

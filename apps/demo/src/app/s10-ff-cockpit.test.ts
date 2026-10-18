@@ -1,7 +1,7 @@
-// Stage 10 Task 5 (owner's decision 6: the Ventilator view supports the fast-forward): the bronchospasm showcase case on
-// the cockpit, run twice from one seed — once stepped (0.5 s steps, the cockpit's frames produced before each step, the
-// scenario polled after it), once with a 300 s fast-forward in the middle. The truth of every second, the scenario's
-// path, the commands it applied, the final state and the cockpit's frames (one on every tick of the span) are identical.
+// The bronchospasm showcase case on the cockpit (the Ventilator view supports the fast-forward), run twice from one
+// seed — once stepped (0.5 s steps, the cockpit's frames produced before each step, the scenario polled after it), once
+// with a 300 s fast-forward in the middle. The truth of every second, the scenario's path, the commands it applied, the
+// final state and the cockpit's frames (one on every tick of the span) are identical.
 import { ControllerSession, createInProcessHub, HostSession, type AppliedResolution, type HostTarget, type ScenarioEvent, type WireEvent } from '@pme/controller';
 import { engineOptionsOf, ScenarioDriver, validateScenario } from '@pme/controller/scenario';
 import { createEngine, type Command, type DispatchResult, type EngineEvent } from '@pme/engine-core';

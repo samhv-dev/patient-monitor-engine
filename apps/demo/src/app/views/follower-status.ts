@@ -1,13 +1,13 @@
-// Stage 12: what a learner monitor says and does, from what it knows — one pure function, so every state a phone can be
-// in (a relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the
-// patient) is unit-tested without a browser. The second screen (same browser) meets only the last four rows.
+// What a learner monitor says and does, from what it knows — one pure function, so every state a phone can be in (a
+// relay it cannot reach, a full session, a lost socket, a silent instructor, the Ventilator view driving the patient)
+// is unit-tested without a browser. The second screen (same browser) meets only the last four rows.
 import type { TransportStatus } from '@pme/controller';
 
-/** R50 F5: no message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. */
+/** No message from a RUNNING host for this long → "not answering" (it sends its state every second) [ENG]. */
 export const HOST_SILENT_MS = 5000;
-/** Stage 12: the phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. */
+/** The phone has not reached the relay for this long: it is probably not on the classroom network [ENG]. */
 export const UNREACHABLE_MS = 6000;
-/** Stage 12: the host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. */
+/** The host's `cockpit` events come once a second; this long without one, the Ventilator view has closed [ENG]. */
 export const COCKPIT_QUIET_MS = 2500;
 
 export interface FollowerInput {
@@ -40,13 +40,13 @@ export interface FollowerView {
   hold: boolean;
 }
 
-/** Stage 12 (owner ruling Q4): said under a phone's monitor when the instructor's style has no upright (phone) layout. */
+/** Said under a phone's monitor when the instructor's style has no upright (phone) layout. */
 export const NO_PHONE_LAYOUT = 'This monitor style has no phone layout: showing the default style';
 
 /**
- * Stage 12 (owner ruling Q4): the style a PHONE wears — the instructor's (it comes in the follow stream), upright. A style
- * the phone cannot draw upright (not in `upright`: every shipped style can, measured at 375 px) falls back to `fallback`,
- * the default style, and says so; an unknown theme falls back to the style's own look ('').
+ * The style a PHONE wears — the instructor's (it comes in the follow stream), upright. A style the phone cannot draw
+ * upright (not in `upright`: every shipped style can, measured at 375 px) falls back to `fallback`, the default style, and
+ * says so; an unknown theme falls back to the style's own look ('').
  */
 export function phoneStyle(want: { skin: string; theme: string }, upright: ReadonlySet<string>, themes: ReadonlySet<string>, fallback: string): { skin: string; theme: string; note: string | null } {
   const theme = themes.has(want.theme) ? want.theme : '';

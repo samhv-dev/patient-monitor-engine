@@ -90,7 +90,7 @@ export class ScenarioView {
     return Math.max(0, end - this.enteredT - this.pausedTotal);
   }
 
-  /** FU-8 (R-S9-2): `lx` prints clinical words for engine ids (the host's glossary); states default to their labels. */
+  /** `lx` prints clinical words for engine ids (the host's glossary); states default to their labels. */
   next(lx: Labeller = {}): NextTransition[] {
     const state = lx.state ?? ((id: string) => this.stateLabel(id));
     return (this.current()?.transitions ?? []).map((t) => ({

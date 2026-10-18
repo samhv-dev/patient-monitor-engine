@@ -1,5 +1,5 @@
-// Stage 7x: the console's data model — current leaves (truth tree + folded events + monitor numerics), the baseline,
-// 60 s histories, rows grouped by organ, and the JSON/CSV export. No DOM.
+// The console's data model — current leaves (truth tree + folded events + monitor numerics), the baseline, 60 s
+// histories, rows grouped by organ, and the JSON/CSV export. No DOM.
 import type { EngineEvent } from '@pme/engine-core';
 import { flatten, foldEvent, type Leaf, type Leaves } from './flatten.ts';
 import { changeDir, fmtDelta, fmtValue, type Dir } from './format.ts';

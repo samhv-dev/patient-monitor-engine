@@ -1,5 +1,5 @@
-// Stage 2 demo (BUILD-PLAN Stage 2 "Demo"): ECG II + V5, ABP, pleth and CVP lanes; HR, ABP, CVP, PR, PI and
-// NIBP tiles; instructor controls for targets with ramps, rhythm, line damping, flush/zero, NIBP and sensors.
+// Haemodynamics demo: ECG II + V5, ABP, pleth and CVP lanes; HR, ABP, CVP, PR, PI and NIBP tiles; instructor controls
+// for targets with ramps, rhythm, line damping, flush/zero, NIBP and sensors.
 import { RHYTHM_IDS, type Command, type RhythmId, type RhythmOpts } from '@pme/engine-core';
 import { mountMonitor } from '@pme/renderer';
 
@@ -99,7 +99,7 @@ toggle('sCvp', (p) => void send({ type: 'attachSensor', sensor: 'cvp', state: p 
 toggle('sSpo2', (p) => void send({ type: 'attachSensor', sensor: 'spo2', state: p ? 'on' : 'off' }));
 toggle('sNibp', (p) => void send({ type: 'attachSensor', sensor: 'nibp', state: p ? 'on' : 'off' }));
 
-// Arrest: VF when the rhythm library has it (Stage 5), else pulseless VT 220
+// Arrest: VF when the rhythm library has it, else pulseless VT 220
 $('vf').addEventListener('click', () => {
   const vf = (RHYTHM_IDS as readonly string[]).includes('vfCoarse');
   void send(vf ? ({ type: 'setRhythm', rhythm: 'vfCoarse' as RhythmId, when: 'now' } as CommandBody) : { type: 'setRhythm', rhythm: 'vtMono', opts: { rateBpm: 220 }, when: 'now' });

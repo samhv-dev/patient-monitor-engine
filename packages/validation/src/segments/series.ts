@@ -1,4 +1,4 @@
-// Series recorded during a validation run, and the per-segment reductions of brief §9 / R40.
+// Series recorded during a validation run, and the per-segment reductions of brief §9.
 import type { EngineEvent } from '@pme/engine-core';
 import type { Reduce } from './types.ts';
 
@@ -25,7 +25,7 @@ export class SeriesStore {
       }
     }
     if (e.type === 'measurement') for (const [k, m] of Object.entries(e.values)) if (m && m.value !== null) this.push(`numeric:${k}`, e.t, m.value);
-    if (e.type === 'breath') this.push('breath:etco2True', e.t, e.etco2True); // the breath's own EtCO2 (Stage 3 acc. 4)
+    if (e.type === 'breath') this.push('breath:etco2True', e.t, e.etco2True); // the breath's own EtCO2
     if (e.type === 'alarm') this.push(`alarm:${e.id}`, e.t, e.state === 'raised' ? 1 : 0);
     if ('t' in e) this.push(`event:${e.type}`, e.t, 1);
   }

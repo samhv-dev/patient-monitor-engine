@@ -19,9 +19,9 @@ export interface Co2Inputs {
   cs: number;
   kfs: number;
   extraGradient: number; // added Pa − Et (bronchospasm) mmHg
-  /** FU-6 R8: inspired PCO2 (mmHg) of the gas the breaths bring (rebreathing, exhausted absorber); absent = 0. */
+  /** Inspired PCO2 (mmHg) of the gas the breaths bring (rebreathing, exhausted absorber); absent = 0. */
   pico2?: number;
-  /** FU-7.1 B3: the alveolar gas volume the breaths wash out (L); absent = LOW_FLOW_ALV_L. */
+  /** The alveolar gas volume the breaths wash out (L); absent = LOW_FLOW_ALV_L. */
   alvVolL?: number;
 }
 
@@ -40,13 +40,13 @@ export function createCo2State(paco2: number): Co2State {
  */
 export function stepCo2(st: Co2State, x: Co2Inputs, dtS: number): void {
   const target = lowFlowFactor(x.coRatio);
-  // FU-7.1 B3: the FALL is the alveolar store's washout by the breaths that continue (τ = V_alv/VA); the RISE is the
-  // tissue CO2 coming back once flow returns (LOW_FLOW_TAU_S). Apnoeic (VA ≈ 0) keeps the slow τ: nothing washes out.
+  // The FALL is the alveolar store's washout by the breaths that continue (τ = V_alv/VA); the RISE is the tissue CO2
+  // coming back once flow returns (LOW_FLOW_TAU_S). Apnoeic (VA ≈ 0) keeps the slow τ: nothing washes out.
   const tauWash = x.vaLpm > 0 ? Math.max(LOW_FLOW_WASHOUT_MIN_S, (60 * (x.alvVolL ?? LOW_FLOW_ALV_L)) / x.vaLpm) : LOW_FLOW_TAU_S;
   const tau = target < st.flow ? Math.min(LOW_FLOW_TAU_S, tauWash) : LOW_FLOW_TAU_S;
   st.flow += (target - st.flow) * (1 - Math.exp(-dtS / tau));
   const dt = dtS / 60;
-  const elim = (st.flow * x.vaLpm * (st.pf - (x.pico2 ?? 0))) / K_CO2; // FU-6 R8: VA·(PACO2 − PICO2)/0.863 (Nunn ch. 7)
+  const elim = (st.flow * x.vaLpm * (st.pf - (x.pico2 ?? 0))) / K_CO2; // VA·(PACO2 − PICO2)/0.863 (Nunn ch. 7)
   const ex = x.kfs * (st.pf - st.ps);
   // low flow: CO2 the blood does not carry away stays in the tissues (slow compartment) → ROSC washout [ENG]
   st.pf = Math.max(0, st.pf + ((st.flow * x.vco2 - elim - ex) / x.cf) * dt);
@@ -64,8 +64,8 @@ export function vaForPaco2(vco2: number, paco2: number): number {
 }
 
 /**
- * Stage 7b: end-tidal PCO2 from the lung module's mixing point — g = EtCO2/PaCO2 of the unit mix (healthy 0.925 →
- * PaCO2 − 3 at 40, tables §4.4), the bronchospasm term and the low-flow factor φ as etco2True.
+ * End-tidal PCO2 from the lung module's mixing point — g = EtCO2/PaCO2 of the unit mix (healthy 0.925 → PaCO2 − 3 at
+ * 40, tables §4.4), the bronchospasm term and the low-flow factor φ as etco2True.
  */
 export function etco2Mixed(st: Co2State, g: number, extraGradient: number): number {
   return Math.max(0, (st.pf * g - extraGradient) * st.flow);

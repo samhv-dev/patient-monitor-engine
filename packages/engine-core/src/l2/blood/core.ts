@@ -1,11 +1,12 @@
-// Stage 7c core step (the part of pipeline.ts that does not touch the engine): fluids → solutes → oxygen/lactate → pH.
+// The blood model core step (the part of pipeline.ts that does not touch the engine): fluids → solutes → oxygen/lactate
+// → pH.
 import type { PatientProfile } from '../../types.ts';
 import { solvePh, anionGap, type AcidBase } from './acid-base.ts';
 import { albGL, bloodMl, createFluids, ecfMl, hbOf, stepFluids, copPlasma, type FluidState } from './fluids.ts';
 import { contentDB, type OdcCtx } from './odc.ts';
 import { o2Delivery, stepLactate, type O2Out } from './oxygen.ts';
 import { bloodPatient, CHRONIC_HCO3_PER_MMHG, HBF_EXP, NORMAL, type BloodPatient } from './params.ts';
-import { MANNITOL_KE_PER_MIN } from '../renal/params.ts'; // FU-9 H8: 7d's renal mannitol clearance, the fallback without 7d
+import { MANNITOL_KE_PER_MIN } from '../renal/params.ts'; // Renal mannitol clearance, the fallback without the organ model
 import { addFluid, calibrateXa, concOf, createSolutes, ionisedCa, K_TBK_MMOL, osmEcf, removePlasma, sidOf, stepSolutes, type Conc, type SoluteState } from './solutes.ts';
 import { caMembrane, insulinEffect, INSULIN_K_SHIFT, K_PUMP_GAIN, salbutamolEffect, SALBUTAMOL_K_SHIFT, suxDeltaK, type Dose } from './treatments.ts';
 
@@ -16,39 +17,40 @@ export interface BloodInputs {
   pao2: number;
   tempC: number;
   vo2Demand: number; // mL/min
-  /** VO2 demand ÷ the awake resting VO2 (Stage 3's metabolic factor); default vo2Demand ÷ the profile's 3.5 mL/kg/min. */
+  /** VO2 demand ÷ the awake resting VO2 (the metabolic factor); default vo2Demand ÷ the profile's 3.5 mL/kg/min. */
   demandRel?: number;
   /**
-   * Stage 7g's β2-agonist/insulin/epinephrine K shift (`bus.metabolic.kShift`, mmol/L). Given → it is the ONLY
-   * β2/insulin-row shift (7c's own salbutamol AND insulin–dextrose curves are off); absent → 7c's own curves (fallback,
-   * R50 F2). FU-10 E-FU10-14: the `insulinDextrose` row's insulin now carries 7g's insulin K⁺ PD (the plain insulin row's
-   * mechanism), so its empirical curve is retired whenever 7g is present, exactly as salbutamol's.
+   * The drug model's β2-agonist/insulin/epinephrine K shift (`bus.metabolic.kShift`, mmol/L). Given → it is the ONLY
+   * β2/insulin-row shift (the blood model's own salbutamol AND insulin–dextrose curves are off); absent → the blood
+   * model's own curves (fallback). The `insulinDextrose` row's insulin now carries the drug model's insulin K⁺ PD (the
+   * plain insulin row's mechanism), so its empirical curve is retired whenever the drug model is present, exactly as
+   * salbutamol's.
    */
   kShiftExt?: number;
 }
 
 /**
- * 7d's kidney (R51 addendum 14: `blood.core.renal = { uopAboveBasalMlH, excretion: { k, na, cl, gluconate } }`, rates
- * per hour). When 7d fills it, the seam REPLACES the fixed volume-receptor elimination and its isotonic solute loss;
- * `null` (the default) = the fixed elimination (K_EL_AWAKE, GA ×0.2) until 7d. The balance has no intake term, so the
- * seam carries only the urine ABOVE the basal turnover (7d's UOP0, 1 mL/kg/h) — the basal urine is taken as replaced
- * by a basal intake, as in the fallback (G7d follow-through 2; renamed from `uopMlH` in FU-3 item 8).
+ * The kidney (`blood.core.renal = { uopAboveBasalMlH, excretion: { k, na, cl, gluconate } }`, rates per hour). When the
+ * organ model fills it, the seam REPLACES the fixed volume-receptor elimination and its isotonic solute loss; `null`
+ * (the default) = the fixed elimination (K_EL_AWAKE, GA ×0.2). The balance has no intake term, so the seam carries only
+ * the urine ABOVE the basal turnover (the kidney's UOP0, 1 mL/kg/h) — the basal urine is taken as replaced by a basal
+ * intake, as in the fallback.
  */
 export interface RenalSeam {
   uopAboveBasalMlH: number; // mL/h, ≥ 0: urine above the basal 1 mL/kg/h (0 at a resting kidney)
-  excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number }; // mmol/h (gluconate: Plasma-Lyte's anion, decision 3; FU-9 H8: mannitol)
+  excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number }; // mmol/h (gluconate: Plasma-Lyte's anion, mannitol)
 }
 
-/** What other stages read (7g: hbfRel; 7d: hb, albuminGL, bvRel, lactate; 7b: cop). */
+/** What other modules read (drugs: hbfRel; organs: hb, albuminGL, bvRel, lactate; lungs: cop). */
 export interface BloodOut {
   na: number; k: number; kEcg: number; cl: number; iCa: number; mg: number; lactate: number; hb: number;
-  albGL: number; albuminGL: number; // albuminGL = albGL (the name 7d reads)
+  albGL: number; albuminGL: number; // albuminGL = albGL (the name the organ model reads)
   ag: number; osm: number; cop: number; hbfRel: number;
-  bvRel: number; // blood volume ÷ the profile's (7d)
-  dkaSeverity: number; // R51 addendum 16: ketoacid drive 0–1 (keto ÷ DKA_KETO_MMOL_L) that 7c applies; Stage 7e reads it
+  bvRel: number; // Blood volume ÷ the profile's
+  dkaSeverity: number; // Ketoacid drive 0–1 (keto ÷ DKA_KETO_MMOL_L), applied here and read by the endocrine model
 }
 
-/** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity` (R51 addendum 16). */
+/** Established DKA: ketoacid anions 25 mmol/L at `condition dka` severity 1 [ENG]; the scale of `out.dkaSeverity`. */
 export const DKA_KETO_MMOL_L = 25;
 
 export interface BloodCore {
@@ -61,20 +63,20 @@ export interface BloodCore {
   odc: OdcCtx;
   doses: Dose[];
   burns: number;
-  /** FU-7 (addendum 24 / audit D6): 7f's nm-profile receptor upregulation (burn, denervation), 0–1 — the sux K+ surge. */
+  /** The neuro model's nm-profile receptor upregulation (burn, denervation), 0–1 — the sux K+ surge. */
   nmUpreg?: number;
-  liver: number; // 7d writes liverFn·tempF (function only, R51 addendum 14); hepatic FLOW is 7c's hbfRel, applied once
-  renal: RenalSeam | null; // 7d fills it (null = fixed elimination)
-  co0: number; // reference CO (L/min): the circuit's settled resting CO, from 7a's `ref.co` (pipeline, addendum 15), else CI × weight
+  liver: number; // The organ model writes liverFn·tempF (function only); hepatic FLOW is hbfRel here, applied once
+  renal: RenalSeam | null; // The organ model fills it (null = fixed elimination)
+  co0: number; // Reference CO (L/min): the circuit's settled resting CO, from the circulation's `ref.co` (pipeline), else CI × weight
   ecf0: number;
   k1Hz: number; // next 1 Hz solve time
-  bledMl: number; // haemorrhage accounting: cumulative volume removed by bleed events, mL (R51 addendum 15 (1))
+  bledMl: number; // Haemorrhage accounting: cumulative volume removed by bleed events, mL
   out: BloodOut;
 }
 
 /**
- * FU-6 R11 (E-FU6-4): COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1
- * (Weaver 2009 NEJM 360:1217) [ENG exponent fit to both anchors]. No ongoing exposure (the profile sets the load).
+ * COHb washout — first order, t½ = 320 min × (95/PaO2)^0.8: 320 min on air, ≈ 74 min on FiO2 1 (Weaver 2009 NEJM
+ * 360:1217) [ENG exponent fit to both anchors]. No ongoing exposure (the profile sets the load).
  */
 export const COHB_T_HALF_AIR_MIN = 320;
 export function cohbWashout(cohb: number, pao2: number, dtS: number): number {
@@ -88,23 +90,23 @@ export function createBloodCore(profile: PatientProfile | undefined, co0: number
   const b = profile?.blood ?? {};
   const fl = createFluids(pat, b.albuminGL ?? NORMAL.albGL);
   const e0 = ecfMl(fl);
-  // FU-7 (addendum 24 / audit D12): ONE magnesium state — a neuro-profile Mg (7f's `neuroProfile.mgMmolL`) is 7c's
-  // baseline when the blood profile gives none
+  // ONE magnesium state — a neuro-profile Mg (the neuro model's `neuroProfile.mgMmolL`) is the blood model's baseline
+  // when the blood profile gives none
   const mg0 = b.mg ?? (profile as { neuro?: { mgMmolL?: number } } | undefined)?.neuro?.mgMmolL ?? NORMAL.mg;
   const so = createSolutes({ na: b.na ?? NORMAL.na, k: b.k ?? NORMAL.k, cl: b.cl ?? NORMAL.cl, iCa: b.iCa ?? NORMAL.iCa, mg: mg0, lactate: b.lactate ?? NORMAL.lactate }, e0, pat.vLacL, pat.icfMl);
   const odc: OdcCtx = { hb: pat.hb, ph: 7.4, dpgMmolL: b.dpgMmolL ?? NORMAL.dpgMmolL, cohb: b.cohb ?? 0, methb: b.methb ?? 0 };
   // calibrate the unmeasured anions so the profile's HCO3 (default 24.4) holds at PaCO2 40 (tables §5b.1 normal row).
-  // FU-9 F8: without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its
-  // weak-acid deficit — the Figge picture (low AG, mild alkalosis) that the same albumin reached by dilution shows
-  // (Figge 1998 Crit Care Med 26:1807; Fencl 2000 AJRCCM 162:2246); a given profile HCO3 is honoured as measured.
-  // FU-9 F7: a chronic hypercapnic profile (resting PaCO2 above 40) starts with its chronic renal compensation, +0.35
-  // mmol/L HCO3 per mmHg (tables §5b.1 "chronic (profile only): +0.35–0.4 per mmHg … set by the profile"; Brackett 1965,
+  // Without a profile HCO3 the calibration uses the NORMAL albumin, so a profile hypoalbuminaemia keeps its weak-acid
+  // deficit — the Figge picture (low AG, mild alkalosis) that the same albumin reached by dilution shows (Figge 1998
+  // Crit Care Med 26:1807; Fencl 2000 AJRCCM 162:2246); a given profile HCO3 is honoured as measured.
+  // A chronic hypercapnic profile (resting PaCO2 above 40) starts with its chronic renal compensation, +0.35 mmol/L
+  // HCO3 per mmHg (tables §5b.1 "chronic (profile only): +0.35–0.4 per mmHg … set by the profile"; Brackett 1965,
   // Schwartz 1965), calibrated at that PaCO2; a given profile HCO3 is honoured
   const hco3 = b.hco3 ?? NORMAL.hco3 + CHRONIC_HCO3_PER_MMHG * Math.max(0, paco2 - NORMAL.paco2);
   const ph0 = 6.1 + Math.log10(hco3 / (0.0307 * Math.max(NORMAL.paco2, paco2)));
   const c = concOf(so, e0, pat.vLacL, e0);
   const alb = albGL(fl);
-  const albCal = b.hco3 === undefined && b.albuminGL !== undefined ? NORMAL.albGL : alb; // on the profile's fields, not floats (R50 F8)
+  const albCal = b.hco3 === undefined && b.albuminGL !== undefined ? NORMAL.albGL : alb; // On the profile's fields, not floats
   const sidNeed = hco3 + albCal * (0.123 * ph0 - 0.631) + c.pi * (0.309 * ph0 - 0.469) + ((1.43 * pat.hb) / 3) * (ph0 - 7.4);
   calibrateXa(so, e0, sidOf(c, ionisedCa(c, ph0)), sidNeed);
   const ab = solvePh(paco2, { sid: sidNeed, albGL: alb, piMmolL: c.pi, hb: pat.hb });
@@ -126,7 +128,7 @@ function effects(bc: BloodCore, t: number): { ins: number; salb: number; sux: nu
     const tm = (t - d.t0) / 60;
     if (d.id === 'insulinDextrose') ins += insulinEffect(tm);
     else if (d.id === 'salbutamol') salb += salbutamolEffect(tm);
-    else if (d.id === 'succinylcholine') sux += suxDeltaK(tm, Math.max(bc.burns, bc.nmUpreg ?? 0)); // FU-7 (addendum 24 / DI-37c)
+    else if (d.id === 'succinylcholine') sux += suxDeltaK(tm, Math.max(bc.burns, bc.nmUpreg ?? 0));
     else if (d.id === 'calciumChloride' || d.id === 'calciumGluconate') caMem = Math.max(caMem, caMembrane(tm));
   }
   return { ins, salb, sux, caMem };
@@ -142,45 +144,45 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
   bc.bledMl += r.bledMl;
   if (r.bledPlasmaMl > 0) removePlasma(so, r.bledPlasmaMl, ecfBefore, c0);
   if (rn) {
-    // 7d's urine: each solute at the kidney's own rate (mmol/h)
+    // The organ model's urine: each solute at the kidney's own rate (mmol/h)
     const dtH = dtS / 3600;
     so.na = Math.max(0, so.na - rn.excretion.na * dtH);
     so.k = Math.max(0, so.k - rn.excretion.k * dtH);
     so.cl = Math.max(0, so.cl - rn.excretion.cl * dtH);
     so.xa -= rn.excretion.gluconate * dtH;
-    if (so.mannitol) so.mannitol = Math.max(0, so.mannitol - (rn.excretion.mannitol ?? 0) * dtH); // FU-9 H8: the kidney clears it
+    if (so.mannitol) so.mannitol = Math.max(0, so.mannitol - (rn.excretion.mannitol ?? 0) * dtH); // The kidney clears it
   } else if (r.elimMl > 0) {
     // eliminated volume leaves as ISOTONIC fluid at the ECF composition (a solute-free loss concentrates Na: the Pulse
     // oracle O3b caught Na +2.0 vs Pulse +0.9 after 1 L saline) [ENG until 7d's urine composition]
     removePlasma(so, r.elimMl, ecfBefore, c0);
   }
-  if (!rn && so.mannitol) so.mannitol *= Math.exp((-MANNITOL_KE_PER_MIN * dtS) / 60); // FU-9 H8: no 7d — the kidney's own t½ 2 h
+  if (!rn && so.mannitol) so.mannitol *= Math.exp((-MANNITOL_KE_PER_MIN * dtS) / 60); // No organ model — the kidney's own t½ 2 h
   for (const g of r.given) addFluid(so, g.ml, g.comp);
   // 2. homeostasis / transcellular shifts
-  // FU-9 H3 (research/13): with 7d, hepatic flow = CO/CO0 × 7d's splanchnic/outflow factor (sympathetic, α-agonist,
-  // volatile, CVP/IAP); without 7d, the (CO/CO0)^HBF_EXP fallback
+  // With the organ model, hepatic flow = CO/CO0 × the organ model's splanchnic/outflow factor (sympathetic, α-agonist,
+  // volatile, CVP/IAP); without the organ model, the (CO/CO0)^HBF_EXP fallback (research/13)
   const coRel = Math.max(0, x.coLpm / bc.co0);
   const hf = (bc as { hbfFactor?: number }).hbfFactor;
   const hbfRel = Math.min(1.5, hf === undefined ? coRel ** HBF_EXP : coRel * hf);
   const ef = effects(bc, x.t);
-  const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source (R50 F2)
-  const insCurve = x.kShiftExt === undefined ? INSULIN_K_SHIFT * ef.ins : 0; // FU-10 E-FU10-14: 7g present → 7g's insulin PD is the source
-  const drug = insCurve + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Stage 7e (E-7e-3): endogenous epinephrine β2, secreted insulin, MH K efflux
-  // FU-10 E7 (E-FU10-2, ruling R-2): Stage 7e's NET ketone rate — production from the insulin deficit minus its
-  // insulin-dependent utilisation of 7c's pool (which 7c owns, the instructor's `condition dka` pool included): the
+  const beta = x.kShiftExt ?? SALBUTAMOL_K_SHIFT * ef.salb; // ONE β2/insulin-row source
+  const insCurve = x.kShiftExt === undefined ? INSULIN_K_SHIFT * ef.ins : 0; // Drug model present → its insulin PD is the source
+  const drug = insCurve + beta + ((bc as { endoKShift?: number }).endoKShift ?? 0); // Endogenous epinephrine β2, secreted insulin, MH K efflux
+  // The endocrine model's NET ketone rate — production from the insulin deficit minus its insulin-dependent utilisation
+  // of the blood model's pool (which the blood model owns, the instructor's `condition dka` pool included): the
   // acidaemia, the anion gap, `out.dkaSeverity` and the Kussmaul drive emerge from it, and insulin treats it
   const kx = bc as { endoKetoMmolMin?: number; endoKetoUtilPerMin?: number };
   so.keto = Math.max(0, so.keto + (Math.max(0, kx.endoKetoMmolMin ?? 0) - so.keto * Math.max(0, kx.endoKetoUtilPerMin ?? 0)) * (dtS / 60));
-  // Q45; FU-9 F6: the set point follows the total-body K — an external K loss (or gain) is shared by the cells instead of
-  // being refilled from an unlimited store: plasma K falls 1 mmol/L per K_TBK_MMOL of total-body deficit (Sterns 1981)
+  // Q45; the set point follows the total-body K — an external K loss (or gain) is shared by the cells instead of being
+  // refilled from an unlimited store: plasma K falls 1 mmol/L per K_TBK_MMOL of total-body deficit (Sterns 1981)
   const kSet = so.set.k + (so.kIcf + so.k - (so.set.kIcf + so.set.k * (bc.ecf0 / 1000))) / K_TBK_MMOL - 4.0 * (bc.phNonOrg - so.set.ph) + drug;
-  // FU-9 F5: citrate and acetate are metabolised by the liver AND by muscle/kidney (Kramer 2003 Crit Care Med 31:2450),
-  // so their clearance follows whole-body flow (CO/CO0), not the splanchnic (CO/CO0)² that lactate's hepatic uptake uses
+  // Citrate and acetate are metabolised by the liver AND by muscle/kidney (Kramer 2003 Crit Care Med 31:2450), so their
+  // clearance follows whole-body flow (CO/CO0), not the splanchnic (CO/CO0)² that lactate's hepatic uptake uses
   const flowRel = Math.min(1.5, Math.max(0, x.coLpm / bc.co0));
   stepSolutes(so, ecfMl(fl), dtS, kSet, flowRel * bc.liver, 1 + K_PUMP_GAIN * Math.abs(drug)); // flow × function, each once
   // 3. oxygen delivery → lactate
   bc.odc.hb = hbOf(fl);
-  bc.odc.cohb = cohbWashout(bc.odc.cohb, x.pao2, dtS); // FU-6 R11
+  bc.odc.cohb = cohbWashout(bc.odc.cohb, x.pao2, dtS);
   bc.odc.ph = bc.ab.ph;
   const cao2 = contentDB(x.pao2, x.paco2, x.tempC, bc.odc);
   const d = o2Delivery(x.coLpm, bc.co0, cao2, x.vo2Demand, pat.weightKg, x.demandRel ?? x.vo2Demand / pat.vo2Rest);
@@ -203,7 +205,7 @@ export function stepBloodCore(bc: BloodCore, x: BloodInputs, dtS: number): void 
     na: c.na, k, kEcg: k - 0.5 * ef.caMem * Math.max(0, k - 5), cl: c.cl, iCa, mg: c.mg, lactate: c.lactate, hb: bc.odc.hb,
     albGL: chem.albGL, albuminGL: chem.albGL, ag: anionGap(c.na, c.cl, bc.ab.hco3), osm: osmEcf(c), cop: copPlasma(fl), hbfRel,
     bvRel: bloodMl(fl) / fl.ref.bv,
-    dkaSeverity: Math.min(1, Math.max(0, c.keto / DKA_KETO_MMOL_L)), // R51 addendum 16
+    dkaSeverity: Math.min(1, Math.max(0, c.keto / DKA_KETO_MMOL_L)),
   };
 }
 export type { Conc };

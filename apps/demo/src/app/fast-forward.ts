@@ -1,10 +1,10 @@
-// Stage 10 (the owner's fast-forward, 22 Oct demonstration; his decisions of 7 Oct): while the host fast-forwards, the
-// window dims and blurs behind one centred panel — a slowly pulsing double chevron, "FAST FORWARD · 5 MIN" in amber in
-// the monitor's typeface, the simulated clock running from the start to the end time over a thin progress bar, and
-// "sound muted". After it the panel fades and a banner says for FF_DONE_SHOW_MS what was skipped and the alarms raised
-// during it, with their times; the alarms that came and went are latched on this window's monitor (`latch`). It reads a
-// source (a ControllerSession on the instructor's page and a Remote, a ViewerSync on the second screen) and sits above
-// every view, the monitor in full screen included.
+// While the host fast-forwards, the window dims and blurs behind one centred panel — a slowly pulsing double chevron,
+// "FAST FORWARD · 5 MIN" in amber in the monitor's typeface, the simulated clock running from the start to the end time
+// over a thin progress bar, and "sound muted" (the owner's fast-forward, 22 Oct demonstration; his decisions of 7 Oct).
+// After it the panel fades and a banner says for FF_DONE_SHOW_MS what was skipped and the alarms raised during it, with
+// their times; the alarms that came and went are latched on this window's monitor (`latch`). It reads a source (a
+// ControllerSession on the instructor's page and a Remote, a ViewerSync on the second screen) and sits above every
+// view, the monitor in full screen included.
 import type { FastForwardAlarm, FastForwardDone } from '@pme/controller';
 import { spanText } from './describe.ts';
 import { clock, h, setText } from './ui.ts';

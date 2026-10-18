@@ -30,7 +30,7 @@ export function tableNormal(s: Sfc32State): number {
 }
 
 /** Atrial waves (AF f-waves, flutter F-waves) fade in and out over this long, so a rhythm switch leaves no step
- *  (review L8: leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG]. */
+ *  (leaving AF cut the f-waves with a step of up to ~0.15 mV) [ENG]. */
 export const FWAVE_FADE_S = 0.08;
 
 /** Add one continuous atrial wave (a sum of sinusoids along its VCG direction) at time s into acc[0..2]. */
@@ -51,7 +51,7 @@ export interface GenInputs {
   hrv: HrvPhase;
   noiseLevel: number; // Modifiers.artefact.noise
   noise: Sfc32State;
-  /** Stage 5.1 (R-S3-3): respiratory clock for the wander; absent = Stage 1's fixed 15/min clock. */
+  /** Respiratory clock for the wander; absent = the fixed 15/min clock. */
   breath?: BreathClock | undefined;
 }
 

@@ -1,8 +1,8 @@
 // The Pulse Physiology Engine 4.3.2 wasm build (research/pulse-spike/web, Apache-2.0, Kitware) loaded in Node as a
-// differential-test ORACLE (R34). Run time only: pulse.js/pulse.wasm/pulse.data come from PME_PULSE_DIR and are
-// never committed or bundled (annex §E). The build is web/worker-only, so Node gets three shims and a fetch that
-// reads local files (decision 13). The data package holds /bench/drm.json (the 45 data requests below, in order)
-// and /states/StandardMale.json (pre-stabilised). One engine per scenario.
+// differential-test ORACLE. Run time only: pulse.js/pulse.wasm/pulse.data come from PME_PULSE_DIR and are never
+// committed or bundled (annex §E). The build is web/worker-only, so Node gets three shims and a fetch that reads local
+// files. The data package holds /bench/drm.json (the 45 data requests below, in order) and /states/StandardMale.json
+// (pre-stabilised). One engine per scenario.
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';

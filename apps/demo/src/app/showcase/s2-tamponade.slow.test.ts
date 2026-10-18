@@ -1,11 +1,11 @@
-// Stage 11 S2 (showcase-tamponade): a stab wound filling the pericardium (250 mL + 15 mL/min) → PEA → CPR → pericardio-
-// centesis → ROSC, run through the card's buttons on the engine (FU-7.1 B4: drainage during good CPR restores the
-// circulation by itself; undrained, never). Bands: docs/plans/stage-11-scenarios.md (R45).
+// showcase-tamponade: a stab wound filling the pericardium (250 mL + 15 mL/min) → PEA → CPR → pericardio-
+// centesis → ROSC, run through the card's buttons on the engine (drainage during good CPR restores the
+// circulation by itself; undrained, never).
 import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '@pme/engine-core';
 import { bands, entered, first, near, range, runCard, type Act } from './harness.ts';
 
-/** R45 bands: the measured prototype ± the plan's tolerances (docs/plans/stage-11-scenarios.md, "Bands"). Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S2 happy': { refused: [0, 0], hrAt60: [94, 104], sysAt60: [101, 111], diaAt60: [82, 92], cvpAt60: [15, 19], etco2At60: [29, 35], pulsusMean: [0, 1.9], pulsusMax: [0, 2.6], deterioratingS: [336, 410], hrAtDeteriorating: [130, 140], cvpAtDeteriorating: [18, 22], pulseLossS: [424, 518], peaStateS: [425, 519], pea: [1, 1], drainS: [542, 662], roscAfterDrainS: [81, 111], sysPlus60: [113, 123], hrPlus60: [58, 68], cvpPlus60: [8, 12], etco2Plus60: [32, 38], sysMaxAtRosc: [150, 160], pulseHeld: [1, 1] },
   'S2 epinephrine': { refused: [0, 0], roscAfterDrainS: [79, 109] },

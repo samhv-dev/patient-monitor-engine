@@ -15,7 +15,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     toast(msg);
   };
   const skin = () => {
-    if (session) void session.setSkin(site.skin, site.theme); // the session applies the alarm colours (review F5)
+    if (session) void session.setSkin(site.skin, site.theme); // The session applies the alarm colours
     else applySkinAlarmColours(site.skin, site.theme);
     document.documentElement.dataset.theme = site.theme === 'projector-light' ? 'bench' : '';
   };
@@ -53,7 +53,7 @@ export function settingsView(site: SiteProfile, session: AppSession | null): Vie
     h('h2', {}, 'Monitor'), h('div', { class: 'grid2' }, mon.el, theme.el),
     h('h2', {}, 'Display'), field('Frame rate', fps), field('Instructor panel on wide screens', panel), field('Gas pressures in tables', gas), field('Drug names', names),
     h('h2', {}, 'New patients'), h('label', { class: 'check', for: 'set-sensors' }, sensors, 'Start with the sensors off (traces appear when they are attached)'),
-    h('h2', {}, 'About'), h('p', { 'data-about': '' }, ABOUT_LINE), // Stage 8b
+    h('h2', {}, 'About'), h('p', { 'data-about': '' }, ABOUT_LINE),
     h('h2', {}, 'Language'), h('p', {}, 'English. The monitor labels follow the clinical glossary; other languages can be added later.'),
     h('h2', {}, 'Site profile'),
     h('div', { class: 'actions' },

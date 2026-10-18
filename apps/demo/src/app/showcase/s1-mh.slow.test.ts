@@ -1,13 +1,13 @@
-// Stage 11 S1 (showcase-mh): malignant hyperthermia from the instructor's condition at induction (types-resp.ts
+// showcase-mh: malignant hyperthermia from the instructor's condition at induction (types-resp.ts
 // `{ kind: 'condition', id: 'mh', severity }`, research/24 §P2), run through the card's buttons on the engine —
 // treated early (2 min into the early signs), treated late (1 min into the established crisis: the run-sheet path) and
-// untreated (VF from hyperthermia). Bands: docs/plans/stage-11-scenarios.md (R45).
+// untreated (VF from hyperthermia).
 import { describe, expect, it } from 'vitest';
 import { ConsoleModel } from '../../physiology-console/model.ts';
 import { labelOf } from '../glossary.ts';
 import { bands, entered, first, near, range, runCard, type Act, type Sample } from './harness.ts';
 
-/** R45 bands: the measured prototype ± the plan's tolerances (docs/plans/stage-11-scenarios.md, "Bands"). Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S1 untreated': { refused: [0, 0], earlyMin: [6.16, 7.54], establishedMin: [16.89, 20.65], etco2AtEstablished: [78, 84], hrAtEstablished: [137, 147], phAtEstablished: [7.06, 7.12], kAtEstablished: [5.4, 6], lactateAtEstablished: [4.1, 5.1], mapAtEstablished: [93, 103], hrMax: [185, 195], kMax: [6.1, 6.7], lossMin: [39.91, 48.79], tcAtLoss: [42.14, 42.54], kAtLoss: [6.1, 6.7], vf: [1, 1], arrestStateMin: [40.23, 49.17] },
   'S1 early': { refused: [0, 0], crisisMin: [7.96, 9.73], pulseLost: [0, 0], recoveringMin: [15.27, 18.67], established: [0, 0], tcMax: [37.81, 38.21], hrMax: [88, 98], kMax: [4.5, 5.1], etco2Plus5: [44, 50], hrPlus15: [80, 90] },

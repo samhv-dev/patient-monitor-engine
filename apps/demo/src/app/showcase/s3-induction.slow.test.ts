@@ -1,11 +1,11 @@
-// Stage 11 S3 (showcase-induction): the healthy induction, run through its buttons on the engine — the prompt path
+// showcase-induction: the healthy induction, run through its buttons on the engine — the prompt path
 // (induce at 3:00, intubate 90 s later), the airway-not-secured path left alone to the arrest, the same path induced a
 // minute late (the oxygen is held until "Induce now": waiting costs nothing), an early bag-mask rescue, a late tube
-// rescue, and CPR after the hypoxic arrest. Bands: docs/plans/stage-11-scenarios.md (R45).
+// rescue, and CPR after the hypoxic arrest.
 import { describe, it } from 'vitest';
 import { alarmAt, bands, entered, first, near, range, runCard } from './harness.ts';
 
-/** R45 bands: the measured prototype ± the plan's tolerances (docs/plans/stage-11-scenarios.md, "Bands"). Never widened. */
+/** Bands: the measured prototype ± a stated tolerance. Never widened. */
 const BANDS = {
   'S3 prompt': { refused: [0, 0], mapBefore: [90, 100], hrBefore: [66, 76], apnoeaAlarmS: [41, 71], mapNadir: [60, 70], mapNadirS: [90, 120], hrMax5: [74, 84], hrMin5: [65, 75], capnoS: [0, 21], etco2At2min: [34, 40], spo2Min: [97, 100], mapAt4min: [67, 77] },
   'S3 untreated': { refused: [0, 0], apnoeaAlarmS: [41, 71], lastBreathS: [33, 63], desatStateS: [445, 543], bradyStateS: [509, 623], hrAtBrady: [39, 49], spo2ZeroS: [652, 796], mapAtSpo2Zero: [72, 82], pulseLossS: [1080, 1320], sao260ToLossS: [571, 697], pulselessStateS: [1084, 1324], asystole: [1, 1], firstSpontS: [831, 1015], firstSpontMl: [31, 41], spontMaxMl: [36, 46], effortStateS: [831, 1015], effortLabelLagS: [-15, 15], etco2DuringEfforts: [0, 3], awrrDuringEfforts: [0, 2] },

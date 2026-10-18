@@ -1,4 +1,4 @@
-// Stage 4b demo (BUILD-PLAN Stage 4 "Demo"): the live monitor in each skin, alarm test controls, defibrillator and
+// Device-layer demo: the live monitor in each skin, alarm test controls, defibrillator and
 // pacer controls, the 12-lead report, trends and the event log with export. window.__pme4b is the e2e hook.
 import { RHYTHM_IDS, type Capture12, type Command, type EngineEvent, type NumericId, type RhythmId } from '@pme/engine-core';
 import { draw12Lead, drawTrend, mountMonitor, type TrendSeries } from '@pme/renderer';

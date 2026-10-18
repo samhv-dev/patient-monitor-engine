@@ -9,11 +9,11 @@ import type { ClockAnchor, CoreOptions, FromWorker, Size, ToWorker } from './pro
 
 export type RenderPath = 'worker-raf' | 'worker-pump' | 'main';
 export type EventsHandler = (anchor: ClockAnchor, events: EngineEvent[]) => void;
-export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' }>; // Stage 4b: plan
+export type ControlMsg = Extract<ToWorker, { type: 'resize' | 'timeScale' | 'pause' | 'resume' | 'fps' | 'calibrate' | 'plan' }>;
 
 export const READY_TIMEOUT_MS = 2000;
 const HIDDEN_PUMP_MS = 1000;
-/** FU-11 (F06, BA06): a worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. */
+/** A worker silent this long with requests waiting is dead (its frames post every ≤ 250 ms) [ENG]. */
 export const WORKER_SILENT_MS = 3000;
 /** …unless the page caught up a hidden stretch this recently (one catch-up can run several seconds) [ENG]. */
 const CATCHUP_GRACE_MS = 30_000;
@@ -22,17 +22,17 @@ const WATCH_MS = 500;
 export interface Host {
   readonly canvas: HTMLCanvasElement;
   readonly path: Promise<RenderPath>;
-  /** FU-11 (K2): the main-thread core, for a viewer monitor's synchronous clock (absent on the worker path). */
+  /** The main-thread core, for a viewer monitor's synchronous clock (absent on the worker path). */
   readonly core?: MonitorCore;
   command(cmd: Command): Promise<DispatchResult>;
   control(msg: ControlMsg): void;
-  /** Engine snapshot (renderer request R-1, ruling R25). */
+  /** Engine snapshot. */
   snapshot(): Promise<PatientSnapshot>;
   /** Restore the engine and put the sim clock at the snapshot's tick (R-1). */
   restore(s: PatientSnapshot): Promise<void>;
-  /** Stage 4b: the last 10 s as a 12-lead capture (brief §6.6). */
+  /** The last 10 s as a 12-lead capture (brief §6.6). */
   capture12(): Promise<Capture12>;
-  /** Stage 10: one fast-forward step (MonitorCore.advance); resolves after the step's events were delivered. */
+  /** One fast-forward step (MonitorCore.advance); resolves after the step's events were delivered. */
   advance(ticks: number, last: boolean): Promise<{ tick: number; simT: number }>;
   destroy(): void;
 }
@@ -74,18 +74,18 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
     path: Promise.resolve('main'),
     command: (cmd) => Promise.resolve(core.command(cmd)),
     snapshot: () => Promise.resolve(core.engine.snapshot()),
-    restore: async (s) => core.restore(s), // FU-11 (F05, BA01): the lanes restart with the engine
+    restore: async (s) => core.restore(s), // The lanes restart with the engine
     control: (m) => {
       if (m.type === 'resize') core.resize(m.size);
       else if (m.type === 'timeScale') core.clock.timeScale = m.k;
       else if (m.type === 'pause') core.clock.pause();
       else if (m.type === 'resume') core.clock.resume();
       else if (m.type === 'fps') core.setFps(m.fps);
-      else if (m.type === 'plan') core.setPlan(m.plan); // Stage 4b
+      else if (m.type === 'plan') core.setPlan(m.plan);
       else core.calibrate(m.pxPerMm);
     },
-    capture12: () => Promise.resolve().then(() => core.capture12()), // Stage 4b
-    advance: (ticks, last) => Promise.resolve().then(() => core.advance(ticks, last)), // Stage 10
+    capture12: () => Promise.resolve().then(() => core.capture12()),
+    advance: (ticks, last) => Promise.resolve().then(() => core.advance(ticks, last)),
     destroy: () => {
       cancelAnimationFrame(raf);
       if (hiddenTimer !== null) clearInterval(hiddenTimer);
@@ -95,14 +95,14 @@ function mainHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEv
 }
 
 function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, onEvents: EventsHandler): Host {
-  const worker = new EngineWorker({ name: 'pme-engine' }); // Stage 8b: engine.worker.ts starts only under this name
+  const worker = new EngineWorker({ name: 'pme-engine' }); // engine.worker.ts starts only under this name
   const offscreen = canvas.transferControlToOffscreen();
-  // FU-11 (F06, BA06): ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker
-  // crashed after ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call
-  // at once — a bookmark, a command or a capture can no longer wait forever, nor block the host's command chain.
+  // ONE table of outstanding requests, each with its resolve AND reject. A terminal failure (the worker crashed after
+  // ready, went silent, or the monitor was destroyed) rejects every one of them once and every later call at once — a
+  // bookmark, a command or a capture cannot wait forever, nor block the host's command chain.
   const requests = new Map<number, { resolve: (v: never) => void; reject: (e: Error) => void; command?: boolean }>();
   let failure: Error | null = null;
-  // FU-11 Gate A: a COMMAND waiting at destroy (or sent after it) is refused like any refusal, not rejected — a fire-and-
+  // A COMMAND waiting at destroy (or sent after it) is refused like any refusal, not rejected — a fire-and-
   // forget dispatch (a remounting page, the ventilator link, mount's ECG-filter command) must not become an unhandled
   // rejection; snapshots, restores and captures still reject
   let destroyed = false;
@@ -130,7 +130,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     stopWatch();
     for (const r of requests.values()) r.reject(err);
     requests.clear();
-    // R50 M15: the failure is final (no fallback); the page hears it — bubbling from the canvas — and can say so
+    // The failure is final (no fallback); the page hears it — bubbling from the canvas — and can say so
     if (report) canvas.dispatchEvent(new CustomEvent('pme-monitor-failed', { bubbles: true, detail: { reason: err.message } }));
   };
   const settle = (id: number, f: (r: { resolve: (v: never) => void; reject: (e: Error) => void }) => void) => {
@@ -178,7 +178,7 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
       else if (m.type === 'result') settle(m.reqId, (r) => r.resolve(m.result as never));
       else if (m.type === 'snapshot') settle(m.reqId, (r) => r.resolve(m.snapshot as never));
       else if (m.type === 'restored') settle(m.reqId, (r) => (m.error === undefined ? r.resolve(undefined as never) : r.reject(new Error(m.error))));
-      else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never)); // Stage 10
+      else if (m.type === 'advanced') settle(m.reqId, (r) => r.resolve({ tick: m.tick, simT: m.simT } as never));
       else if (m.type === 'capture12') settle(m.reqId, (r) => (m.capture ? r.resolve(m.capture as never) : r.reject(new Error(m.error ?? 'capture12 failed'))));
       else if (m.reqId !== undefined) settle(m.reqId, (r) => r.reject(new Error(m.message)));
       else if (!ready) {
@@ -221,8 +221,8 @@ function workerHost(canvas: HTMLCanvasElement, size: Size, opts: CoreOptions, on
     snapshot: () => request<PatientSnapshot>((reqId) => ({ type: 'snapshot', reqId })),
     restore: (snapshot) => request<void>((reqId) => ({ type: 'restore', reqId, snapshot })),
     control: (m) => post(m),
-    capture12: () => request<Capture12>((reqId) => ({ type: 'capture12', reqId })), // Stage 4b
-    advance: (ticks, last) => request<{ tick: number; simT: number }>((reqId) => ({ type: 'advance', reqId, ticks, last })), // Stage 10
+    capture12: () => request<Capture12>((reqId) => ({ type: 'capture12', reqId })),
+    advance: (ticks, last) => request<{ tick: number; simT: number }>((reqId) => ({ type: 'advance', reqId, ticks, last })),
     destroy: () => {
       destroyed = true;
       for (const [id, r] of requests) {

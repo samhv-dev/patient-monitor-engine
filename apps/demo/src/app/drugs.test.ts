@@ -1,5 +1,5 @@
-// FU-7.1 A1 (research/24 P1): the dose picker gives every neuromuscular blocker its intubating dose in mg/kg, and that
-// dose — sent exactly as the panel builds it — paralyses: apnoea and a flat capnogram by 180 s after cisatracurium.
+// The dose picker gives every neuromuscular blocker its intubating dose in mg/kg, and that dose — sent exactly as the
+// panel builds it — paralyses: apnoea and a flat capnogram by 180 s after cisatracurium (research/24 P1).
 import { createEngine, type Command, type EngineEvent } from '@pme/engine-core';
 import { describe, expect, it } from 'vitest';
 import { DRUG_LIST, doseUnits } from './drugs.ts';
