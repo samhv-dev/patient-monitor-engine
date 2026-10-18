@@ -18,7 +18,7 @@ const PATIENT = '#D55E00';
 const SCENARIO = '#767676';
 /** The strip's drawing units: 4 per mm of the 182 mm content width, so height ≤ 320 is ≤ 80 mm. */
 export const COURSE_W = 728;
-const L = 92, R = 10, BADGES = 26, LANE = 58, GAP = 4, AXIS = 18;
+const L = 92, R = 10, BADGES = 24, LANE = 46, GAP = 4, AXIS = 18;
 /** Badges closer than this (drawing units) are moved right of the one before. */
 const BADGE_MIN = 15;
 
@@ -32,8 +32,13 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
   const top = BADGES, bottom = BADGES + lanes.length * (LANE + GAP);
   const inBand = (t: number) => spans.some(([a, b]) => a <= t && t <= b);
 
-  const bands = spans.map(([a, b]) => `<g class="db-band"><rect x="${x(a).toFixed(1)}" y="${top}" width="${Math.max(1, x(b) - x(a)).toFixed(1)}" height="${bottom - top}" fill="#e9e9e9"/>`
-    + `<text x="${(x(a) + 3).toFixed(1)}" y="${bottom - 4}" class="db-band-l" paint-order="stroke" stroke="#e9e9e9" stroke-width="3">pulseless ${span(b - a)}</text></g>`).join('');
+  const bands = spans.map(([a, b]) => `<rect class="db-pulseless" x="${x(a).toFixed(1)}" y="${top}" width="${Math.max(1, x(b) - x(a)).toFixed(1)}" height="${bottom - top}" fill="#e9e9e9"/>`).join('');
+  // each band's label over the lines, on a patch of the band's own grey
+  const bandLabels = spans.map(([a, b]) => {
+    const text = `pulseless ${span(b - a)}`;
+    return `<g class="db-pulseless-l"><rect x="${(x(a) + 1).toFixed(1)}" y="${bottom - 13}" width="${(text.length * 4.7 + 4).toFixed(1)}" height="11" fill="#e9e9e9"/>`
+      + `<text x="${(x(a) + 3).toFixed(1)}" y="${bottom - 4}">${text}</text></g>`;
+  }).join('');
 
   const rows = lanes.map((k, i) => {
     const m = trendMeta(k);
@@ -81,5 +86,5 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
 
   const label = `${o.learner ? 'Your run' : 'The course'}, ${mmss(0)} to ${mmss(end)}${moments.length ? `: ${moments.map((m) => `${m.n} at ${mmss(m.t)}, ${m.who}, ${m.text}`).join('; ')}` : ''}`;
   return `<svg class="db-course-svg${o.learner ? ' learner' : ''}" viewBox="0 0 ${COURSE_W} ${H}" role="img" aria-label="${esc(label)}">`
-    + `${bands}${rows}<line class="axis" x1="${L}" x2="${COURSE_W - R}" y1="${bottom}" y2="${bottom}"/><g class="ticks">${ticks}</g>${badges}</svg>`;
+    + `${bands}${rows}<line class="axis" x1="${L}" x2="${COURSE_W - R}" y1="${bottom}" y2="${bottom}"/><g class="ticks">${ticks}</g>${bandLabels}${badges}</svg>`;
 }

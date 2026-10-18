@@ -5,7 +5,9 @@
    timeline and bookmarks share one); the tables' headers repeat on each page; the undone course struck through (with
    its words), set-up rows grey. The footer and the build on every page: @page margin boxes (the view's <style>, Chromium); where
    the browser has none (WebKit: .db-nomargin), a footer line before each forced page break. The @page size and margins
-   apply to printing any route of the app (R50 M-9). */
+   apply to printing any route of the app (R50 M-9). Redesign B: page 1 is the header band, the key-time tiles, the
+   course strip and the objectives; the key moments start page 2 (only when there is one); the learner handout prints
+   alone when the view carries data-print="handout" (E51) and never with the report. */
 .debrief .db-tools { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin: var(--s-3) 0; }
 .debrief { --db-team: #0072B2; --db-patient: #D55E00; } /* E45: the two accents, each with a shape and a legend in words */
 .debrief .db-team { color: var(--db-team); }
@@ -14,7 +16,7 @@
 /* the header band: a small-capital kicker (the h1, named "Debrief"), the case's title, one sub-line, a thick rule */
 .debrief .db-band { border-bottom: 3px solid var(--text-strong); padding-bottom: var(--s-2); margin-bottom: var(--s-3); }
 .debrief .db-band h1 { font-size: var(--t-13); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; color: var(--text-muted); }
-.debrief .db-title { font-size: var(--t-22); font-weight: 700; line-height: 1.2; margin: var(--s-1) 0; }
+.debrief .db-title, .debrief .db-htitle { font-size: var(--t-22); font-weight: 700; line-height: 1.2; margin: var(--s-1) 0; }
 .debrief .db-sub { margin: 0; color: var(--text-muted); }
 .debrief .db-runby:empty { display: inline-block; min-width: 14em; border-bottom: 1px solid var(--line-strong); vertical-align: bottom; } /* a line to write on */
 .debrief .db-facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-1) var(--s-4); margin: var(--s-3) 0; }
@@ -55,6 +57,40 @@
 .debrief .db-pearl p { margin: var(--s-1) 0 0; color: var(--text-muted); font-size: var(--t-13); }
 .debrief .db-notes { min-height: 6em; border: 1px solid var(--line-strong); border-radius: var(--r-control); padding: var(--s-2); white-space: pre-wrap; }
 .debrief .db-foot { margin: var(--s-6) 0 var(--s-4); font-size: var(--t-13); color: var(--text-muted); border-top: 1px solid var(--line); padding-top: var(--s-2); }
+.debrief .db-subhead { margin: 0 0 var(--s-2); color: var(--text-muted); font-size: var(--t-13); }
+/* key times: up to six tiles, a caption of at most two lines, the interval big, the times under it */
+.debrief .db-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
+.debrief .db-tile { border: 1px solid var(--line-strong); border-radius: var(--r-control); padding: var(--s-2); }
+.debrief .db-tile.met { border-left: 3px solid var(--text-strong); }
+.debrief .db-tile.unticked { border-style: dashed; }
+.debrief .db-tile-cap { font-size: var(--t-13); color: var(--text-muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.debrief .db-tile-v { font-size: var(--t-22); font-weight: 700; line-height: 1.25; }
+.debrief .db-tile-sub { font-size: var(--t-13); color: var(--text-muted); }
+/* the course strip (an SVG string from debrief-course.ts) */
+.debrief .db-course svg { display: block; width: 100%; height: auto; max-width: 60rem; }
+.debrief .db-course text { font: 9px sans-serif; fill: var(--text-muted); }
+.debrief .db-course .db-lane-l { font-weight: 700; fill: var(--text-strong); }
+.debrief .db-course .db-badge-n { font: 700 10px sans-serif; }
+.debrief .db-course path { stroke: var(--text-strong); stroke-width: 1.2; }
+.debrief .db-course .axis, .debrief .db-course .ticks line { stroke: var(--text-muted); }
+.debrief .db-course .grid { stroke: var(--line); stroke-dasharray: 2 3; }
+.debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: var(--line); }
+.debrief .db-svg .db-mk-n { font-size: 9px; font-weight: 700; fill: var(--text-strong); }
+/* an objective's measured interval: the outline is the time asked */
+.debrief .db-measure { display: inline-flex; align-items: center; gap: 0.3em; margin-left: var(--s-2); font-size: var(--t-13); white-space: nowrap; }
+.debrief .db-bar svg { display: block; }
+.debrief .db-moments td.num { width: auto; }
+.debrief .db-moments tr.db-alarms td { color: var(--text-muted); font-size: var(--t-12, 12px); border-bottom-style: dotted; }
+.debrief .db-whocell { white-space: nowrap; }
+.debrief .db-note60 { font-size: var(--t-13); color: var(--text-muted); }
+/* the learner handout: on screen at the end of the view, under its own heading */
+.debrief .db-kicker { font-size: var(--t-13); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+.debrief .db-handout-live { border: 1px dashed var(--line-strong); border-radius: var(--r-control); padding: var(--s-3); }
+.debrief .db-hsec h3 { font-size: var(--t-15, 15px); margin: var(--s-3) 0 var(--s-1); }
+.debrief .db-hsec .db-course svg { max-width: 40rem; }
+.debrief .db-qs { padding-left: 1.4em; }
+.debrief .db-ruled { height: 1.6em; border-bottom: 1px solid var(--line-strong); }
+.debrief .db-intro, .debrief .db-next { margin: var(--s-2) 0; }
 .sessionbar .sb-debrief[data-ready='true'] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 
 @page { size: A4 portrait; margin: 14mm 14mm 16mm; }
@@ -75,7 +111,7 @@
   .debrief .db-band { border-bottom: 1.5pt solid #000; padding-bottom: 2mm; margin-bottom: 3mm; }
   .debrief .db-band h1 { font-size: 8.5pt; margin: 0; }
   .debrief .db-runby:empty { min-width: 30mm; border-bottom: 0.6pt solid #000; }
-  .debrief .db-title { font-size: 16pt; }
+  .debrief .db-title, .debrief .db-htitle { font-size: 16pt; }
   .debrief .page { max-width: none; padding: 0; margin: 0; }
   .debrief { font-size: 10.5pt; }
   .debrief h2 { font-size: 13pt; break-after: avoid; }
@@ -103,4 +139,43 @@
   .debrief .db-pearl { border: 1px solid #000; min-height: 22mm; padding: 1.5mm 2mm; }
   .debrief .db-pearl p { font-size: 8.5pt; line-height: 1.3; }
   .debrief .db-foot { border-top: 1px solid #000; }
+  /* redesign B: page 1, page 2, the handout */
+  .debrief #db-live-1 > .db-sec { margin-top: 4mm; }
+  .debrief #db-live-1 h2 { margin: 0 0 2mm; padding-bottom: 0.8mm; }
+  .debrief .db-legend { margin: 0 0 1mm; font-size: 8.5pt; }
+  .debrief #db-moments { break-before: page; }
+  .debrief #db-keytimes, .debrief #db-course, .debrief .db-tile, .debrief #db-moments tr { break-inside: avoid; }
+  .debrief .db-tiles { gap: 2mm; }
+  .debrief .db-tile { border: 0.6pt solid #000; padding: 1.5mm 2mm; }
+  .debrief .db-tile.met { border-left: 2pt solid #000; }
+  .debrief .db-tile.unticked { border-style: dashed; }
+  .debrief .db-tile-cap { font-size: 8pt; }
+  .debrief .db-tile-v { font-size: 14pt; }
+  .debrief .db-tile-sub { font-size: 8pt; }
+  .debrief .db-course svg { max-width: none; }
+  .debrief .db-course text { fill: #000; }
+  .debrief .db-course .db-badge-n { fill: #fff; }
+  .debrief .db-course .db-scenario .db-badge-n { fill: #000; }
+  .debrief .db-course path { stroke: #000; }
+  .debrief .db-course .axis, .debrief .db-course .ticks line, .debrief .db-course .grid { stroke: #555; }
+  .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: #e6e6e6; }
+  .debrief .db-course, .debrief .db-course *, .debrief .db-bar, .debrief .db-bar * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .debrief .db-subhead, .debrief .db-note60 { font-size: 8.5pt; }
+  .debrief .db-obj li { margin-bottom: 1.5mm; }
+  .debrief .db-why { font-size: 8.5pt; }
+  .debrief .db-moments { font-size: 9pt; }
+  .debrief .db-moments tr.db-alarms td { font-size: 8pt; color: #333 !important; }
+  .debrief:not([data-print='handout']) #db-handout { display: none; }
+  .debrief[data-print='handout'] .page > :not(#db-handout):not(.db-foot) { display: none !important; }
+  .debrief #db-handout { margin-top: 0; }
+  .debrief #db-handout > h2 { display: none; }
+  .debrief .db-handout-live { border: 0; padding: 0; }
+  .debrief .db-hsec h3 { font-size: 11pt; margin: 2.5mm 0 1mm; break-after: avoid; }
+  .debrief .db-hsec .db-course svg { width: 135mm; max-width: 100%; }
+  .debrief .db-hmoments { font-size: 8.5pt; }
+  .debrief .db-hmoments td, .debrief .db-hmoments th { padding-top: 0.6mm; padding-bottom: 0.6mm; }
+  .debrief .db-qs li { break-inside: avoid; margin-bottom: 0.5mm; }
+  .debrief .db-ruled { height: 5.5mm; border-bottom: 0.5pt solid #000; }
+  .debrief .db-intro, .debrief .db-next { margin: 1.5mm 0; font-size: 9.5pt; }
+  .debrief[data-print='handout'] { font-size: 10pt; }
 }

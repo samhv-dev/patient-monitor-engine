@@ -27,7 +27,7 @@ describe('courseSvg on A3.1', () => {
     expect([...svg.matchAll(/data-n="(\d+)"/g)].map((m) => Number(m[1]))).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(count(svg, /class="db-badge db-team"/g)).toBe(4);
     expect(count(svg, /class="db-badge db-patient"/g)).toBe(3);
-    expect(count(svg, /class="db-band"/g)).toBe(1);
+    expect(count(svg, /<rect class="db-pulseless"/g)).toBe(1);
     expect(svg).toContain('pulseless 3 min 07 s');
   });
 
