@@ -14,7 +14,8 @@ const root = resolve(import.meta.dirname, '../../..');
 const read = (p: string) => (existsSync(join(root, p)) ? readFileSync(join(root, p), 'utf8') : '');
 const regen = 'run: node --experimental-strip-types scripts/model-docs.ts && node --experimental-strip-types scripts/known-misses.ts';
 
-describe('model documentation is generated from the code', () => {
+// Generating the 22 pages and the index reads every source and test file: ≈ 5 s alone, more on a loaded runner.
+describe('model documentation is generated from the code', { timeout: 120_000 }, () => {
   it('docs/validation/known-misses.md is current', () => {
     expect(read('docs/validation/known-misses.md') === renderKnownMisses(root), regen).toBe(true);
   });

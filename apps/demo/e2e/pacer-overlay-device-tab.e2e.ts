@@ -31,7 +31,7 @@ async function open(page: Page, skin: string) {
   await expect.poll(() => hook(page)).toBeGreaterThan(0);
 }
 
-test('TCP pace marks drawn as overlays on a pacer skin', async ({ page }) => {
+test('TCP pace marks drawn as overlays on a pacer skin', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1300, height: 640 });
   await open(page, 'zoll-like');
