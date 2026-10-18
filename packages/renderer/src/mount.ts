@@ -3,7 +3,7 @@
 // device tones follow the skin, `setSkin` switches without restarting the engine, and the handle exposes the 12-lead
 // capture, the trends and the event log. Without `skin` the legacy look stays.
 import {
-  AlarmSounder, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
+  AlarmSounder, beepMsAt, createTonePlayer, getAlarmProfile, playBeep, ToneScheduler, unlockAudio, type AudioOut, type ToneHandle, type ToneLogEntry, type ToneRequest,
 } from '@pme/audio';
 import { EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
@@ -207,9 +207,10 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const playerFor = (out: AudioOut, sk: ResolvedSkin | null) =>
     sk
       ? createTonePlayer(out.ctx, out.master, { profile: getAlarmProfile(sk.audio.alarm.profile), toneSet: sk.skin.defib?.toneSet ?? 'zoll-like' }) // RR-6
-      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880);
+      : (tone: ToneRequest, when: number) => playBeep(out.ctx, out.master, when, tone.freqHz ?? 880, 0.25, tone.durMs);
   let anchor: { simT: number; perfMs: number; timeScale: number } = { simT: 0, perfMs: performance.now(), timeScale: 1 };
   let nominalRate: number | undefined; // a viewer's session speed (set by ViewerSync); a host gates on its own rate
+  let lastBeatT: number | null = null; // sim time of the last beat tone: the beat interval that caps the beep's length
   const simNow = () => anchor.simT + ((performance.now() - anchor.perfMs) / 1000) * anchor.timeScale;
   const onEvents = (a: ClockAnchor, events: EngineEvent[]) => {
     anchor = { simT: a.simT, perfMs: a.epochMs - performance.timeOrigin, timeScale: a.timeScale };
@@ -267,9 +268,13 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
         const n = formatNibp(e, nibpLast);
         nibpTile.set(n.main, n.sub, n.status);
       }
+      const beat = e.type === 'tone' && (e.kind === 'qrs' || e.kind === 'pulse');
+      const rr = beat && lastBeatT !== null ? e.t - lastBeatT : 0; // ≤ 0 after a rewind or a re-posted tone: no cap
+      if (beat) lastBeatT = e.t;
       if (e.type === 'tone' && !ff && beatToneAt(e.kind, a.timeScale, nominalRate) && (e.kind !== 'qrs' || !r || r.audio.beep.enabled)) {
         scheduler?.enqueue({
           t: e.t, id: e.id, kind: e.kind,
+          ...(rr > 0 ? { durMs: beepMsAt(60 / rr, nominalRate ?? a.timeScale) } : {}), // the same speed as the gate
           ...(e.freqHz !== undefined ? { freqHz: e.freqHz } : {}),
           ...(e.refT !== undefined ? { refT: e.refT } : {}),
           ...(e.chargeS !== undefined ? { chargeS: e.chargeS } : {}),
