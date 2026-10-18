@@ -111,7 +111,7 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           f=playwright-report-${{ matrix.browser }}.json
-          [ -f "$f" ] || { echo "no e2e JSON report ($f)"; exit 0; }
+          [ -f "$f" ] || { echo "::error title=e2e JSON report::no e2e JSON report ($f): the retry check cannot run"; exit 1; }
           jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky")
             | "\(if ($s.tags | index("known-flaky")) then "known" else "new" end)\t\($s.file):\($s.line) [\(.projectName)] \($s.title)"' "$f" > "$RUNNER_TEMP/flaky.raw" \
             || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }

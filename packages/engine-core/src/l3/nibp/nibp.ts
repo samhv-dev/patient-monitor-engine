@@ -45,7 +45,7 @@ export const NIBP = {
   A_MIN_ENVELOPE: 0.3, // a smaller envelope peak is not a measurement [ENG] (MAP 13 / PP 3 fails)
   MIN_SBP: 50, // "SBP below about 50–60 fails" (brief §4.5)
   RESULT_SD: 4, // noise SD on SBP/DBP, mmHg (brief §4.5); MAP gets half
-  SAFETY_S: 170, // adult safety auto-deflate (brief §4.5); neonatal 85 s in the skin data
+  SAFETY_S: 170, // adult safety auto-deflate (brief §4.5); neonatal 85 s (brief §4.5) is not modelled
   STAT_S: 300, // STAT = back-to-back for 5 min
   CUFF_EMIT_S: 0.2, // live cuff pressure at 5 Hz (brief §3.4)
 } as const;

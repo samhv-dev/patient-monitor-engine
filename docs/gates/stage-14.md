@@ -11,6 +11,9 @@ copy; its differences are in `stage-14/tool-fixes.diff` (see "Tool fixes").
 - `v1.0.0-rc.1` → 3db25a3b; `stage-8b` (PR #66), `stage-10`, `stage-11`, `stage-12`, `stage-13`, `fu-11-d` are
   ancestors of `origin/main` (the plan's `stage-8b-release` is named `stage-8b`); the four 8b files exist. Hold list
   empty.
+- Branch name: the plan names the branch `stage-14-cleanup` (`docs/plans/stage-14-cleanup.md:47,326`). The branch
+  used is `stage-14`, as the orchestrator's brief says, and it is the PR's head. The worktree is
+  `scratch/wt-stage-14`, as the plan says.
 - Vent-view gate (Question 6), from the e2e jobs (the e2e now runs in per-browser jobs, not in `build`): on the launch
   commit's push run 39112120136 and on 3db25a3b's 39102881541, `vent-view-speed` [webkit] ✓ on the first attempt;
   `vent-view-restore` [webkit] is skipped on CI by the skip that names its fixer finding, F-FX1-1 (nothing appended).
@@ -23,7 +26,7 @@ copy; its differences are in `stage-14/tool-fixes.diff` (see "Tool fixes").
 
 | Measure | Launch tree 16b5c93e | After this stage |
 |---|---|---|
-| History references in source comments (Task 1 scope) | 3,872 lines in 410 files; lines a 391, b 2,552, m 726, c 61, k 142; blocks a 391, b 2,257, m 442, c 29, k 127 | 212 lines in 112 files: a 0, b 7, m 5, c 0, k 200 (the 12 b/m are facts, below) |
+| History references in source comments (Task 1 scope) | 3,872 lines in 410 files; lines a 391, b 2,552, m 726, c 61, k 142; blocks a 391, b 2,257, m 442, c 29, k 127 | 212 lines in 112 files: a 0, b 7, m 5, c 0, k 200 (the 12 b/m are facts, below), as counted by `rewrite.py`'s `DETECT` (`rewrite.py:45`), which misses some history (see below) |
 | Files named after a stage (the Task 2 Step 1 pattern) | 291 paths | 0 |
 | Test titles naming the history | 939 in 471 files (84 `it.fails`) + 15 e2e page/finding titles + 10 engine titles with review ids | 5: three false positives (acceptance rows "7.", "7b.", the D50 dose), annex D14, and `docs honesty (Stage 8b)` (left, see "Open") |
 | Expected failures | 150 `it.fails` + 1 `it.fails.each` + 1 conditional `it.fails` + 1 stale conditional `test.fail` | 152 (151 `it.fails` + 1 `it.fails.each`), all read by the lister and in `docs/validation/known-misses.md` by module |
@@ -53,8 +56,29 @@ copy; its differences are in `stage-14/tool-fixes.diff` (see "Tool fixes").
   PTB-XL gate path, and the `wired` values `'stage7a'`/`'stage7b'` in `ventilator/pathology/catalogue.ts` (data
   strings in the code; the `research/20 gap V1` row of the plan's list is now class k).
 - Evidence: `stage-14/{comment-rewrites.tsv,per-file.tsv,summary.txt,inventory.tsv,lost-facts.tsv}` (281 lost-fact
-  rows) and the second read, `stage-14/second-read.tsv` + `second-read-summary.md`. **The PR reviewer's sample of
-  `lost-facts.tsv` (≥ 30 rows), of ≥ 50 script-decided b rows and of ≥ 20 m/c rows is still to be done.**
+  rows) and the second read, `stage-14/second-read.tsv` + `second-read-summary.md`.
+- **The PR reviewer's sample (Task 7 Step 4; gate review of 2026-10-18, `scratch/plans-backup/stage-14-gate-review.md`,
+  read-only, seeded `random.Random` samples):**
+
+  | Sample | Sampled | FAIL |
+  |---|---|---|
+  | script-decided b rows of `comment-rewrites.tsv` | 50 | 0 |
+  | m and c rows | 25 | 1 |
+  | `lost-facts.tsv` rows | 30 | 0 |
+  | renamed test titles | 30 | 0 |
+  | `same-code` files (20 of them also by an independent token-stream check) | 391 | 0 |
+  | numbers on the model pages, against the cited declarations | 21 | 0 |
+
+  The one FAIL was fixed here. The rewrite of `l3/nibp/nibp.ts:48` (key `f44b3a1a03e1`, class m) said "neonatal 85 s
+  in the skin data", which is false: the skins' `"neo": 85` is the neonatal initial inflation in mmHg, and the 85 s
+  neonatal safety deflate is only in the design brief §4.5, not modelled. It now reads "neonatal 85 s (brief §4.5) is
+  not modelled" (`decisions-at-execution.json`; `same-code`: 1 file, 0 code changes; `model-docs`: 0 pages changed).
+  The reviewer's MINOR items and its other non-blocking notes are queued separately by the orchestrator.
+- **What the history count misses.** The 212 lines left come from `rewrite.py`'s `DETECT` regex (`rewrite.py:45`),
+  which matches neither `Stage V`, `V.1` nor `E-<x>-<n>` ids, although `data/REVIEW-RULES.md` calls them history. The
+  gate review counted, in the Task 1 scope (test files excluded): about 43 lines with `Stage V(.1)`, 14 lines with
+  `E-…-n` ids (for example `E-S9-5`, `E-4a-3`), and 12 lines of "7x's" that the inventory classed k. They are left for
+  a follow-up decision pass with the same `same-code` proof (see "Open").
 - Task 6 changed two more comments, outside the decision file. This follows the public-text rule ("a later release",
   never a next-version number), because the model pages quote these comments: `l2/lung/params.ts` and
   `l2/lung/volumes.ts` now say "a later release" where they named the next minor version. `same-code`: 2 files, 0
@@ -129,8 +153,10 @@ copy; its differences are in `stage-14/tool-fixes.diff` (see "Tool fixes").
   `app-instructor-tasks` skip at :25. "Its report is not yet in this repository" now links the published audit.
 - **One environment read is left in the shipped engine:** `l2/ecg/rhythm-engine.ts` `nonFiniteIsLoud()` reads
   `process.env.NODE_ENV === 'test'`. It makes a non-finite scheduled time throw in tests and clamp elsewhere. It
-  predates the plan, and changing it would change test behaviour, so it is not changed here (see "Open"). The Task 5
-  commit message's "the engine reads no environment" is true only of the two `PME_VAG_*` reads.
+  predates the plan, and changing it would change test behaviour, so it is not changed here (see "Open").
+  **Correction:** the plan's Goal (which the PR body quoted) and the Task 5 commit headline (4948e355, prescribed by
+  the plan) both say "the shipped engine reads no environment". That is not true. The two `PME_VAG_*` reads are gone;
+  one `NODE_ENV` read remains. The merge commit message should carry this correction; the commit is not rewritten.
 - Step 6: 8b's `"types": ["node", "vite/client"]` in the `tsconfig.build.json` files are left. Engine-core needs them
   only for that `NODE_ENV` read.
 
@@ -207,7 +233,10 @@ adaptations below were accepted by the orchestrator (2026-10-18).
 - Deviation 1, `ci/apply_ci_edit.py`: since PR #55 the e2e runs in per-browser jobs. Each job writes
   `playwright-report-<browser>.json` (`--reporter=list,json`) and already had an echo-only step of the same name, so
   the plan's step would have been skipped and its jq would have read a file that is never written. The rule now
-  replaces the echo-only step (with no `continue-on-error`) and reads the job's report.
+  replaces the echo-only step (with no `continue-on-error`) and reads the job's report. After the gate review, a
+  MISSING report also fails the step ("::error … no e2e JSON report (…): the retry check cannot run", exit 1); the
+  plan's tool line had exited 0 (`ci/apply_ci_edit.py:35`). It was tested on a missing report (exit 1), the synthetic
+  reports (exit 1 / 0), the truncated one (exit 1) and the converted real log (exit 0).
 - Deviation 2, `task5_edits.py`: step d is dropped. The CLI reporter overrides the config's, so a config JSON reporter would be
   dead.
 - `post8b_docs.py`: a README already resolved by hand counts as "already", so the two 8b pages are still written.
@@ -222,7 +251,10 @@ adaptations below were accepted by the orchestrator (2026-10-18).
 2. `packages/validation/test/docs-honesty.test.ts`'s describe title still says "(Stage 8b)". The orchestrator ruled
    to leave it: the plan never edits that file (Question 1).
 3. The kit rehearsal result (above).
-4. The `NODE_ENV` read in `rhythm-engine.ts` (above).
+4. The `NODE_ENV` read in `rhythm-engine.ts` (above), and the correction of the "reads no environment" wording in the
+   merge commit message.
+   Also: a follow-up pass over the comment history that `DETECT` misses: `Stage V`/`V.1` (≈ 43 lines), `E-…-n` ids
+   (≈ 14) and "7x's" (≈ 12), with decisions and the `same-code` proof.
 5. Pre-existing next-version wording outside this stage's decisions: comments in `apps/demo/src/app/{patients,
    scenario-meta}.ts` and `views/{explore,remote}.ts`, the data value `later` in `patients.ts` (not shown: the app
    renders "not in this release"), and docs under `docs/physiology/` and `docs/showcase/i18n/README.md`. This stage

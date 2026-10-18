@@ -96,6 +96,11 @@
   },
   "db3368121d90": {
    "accepted": "// Sibling @pme packages stay imports (npm consumers get one copy of each); third-party code stays bundled."
+  },
+  "f44b3a1a03e1": {
+   "after": "// adult safety auto-deflate (brief §4.5); neonatal 85 s (brief §4.5) is not modelled",
+   "note": "gate review 2026-10-18 (FAIL-meaning): the skin data holds no neonatal 85 s (its \"neo\": 85 is the initial cuff inflation in mmHg); the 85 s neonatal deflate is in DESIGN-BRIEF §4.5 only and is not modelled",
+   "before_fix": "// adult safety auto-deflate (brief §4.5); neonatal 85 s in the skin data"
   }
  },
  "titles": {
