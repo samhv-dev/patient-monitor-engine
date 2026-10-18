@@ -66,7 +66,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(values[facts['Lowest ART M / NIBP M'] as number]).toMatch(/^\d+ mmHg at \d\d:\d\d$/);
   expect(values[facts['Labs (the model): last (lowest–highest)'] as number]).toMatch(/^K⁺ \d\.\d mmol\/L \(\d\.\d–\d\.\d\) · Lactate \d+\.\d mmol\/L .* · pH \d\.\d\d \(.* · Glucose .* · Tcore \d+\.\d °C/); // Q7
   const objectives = await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => [x.getAttribute('data-status'), x.querySelector('.db-mark')?.textContent]));
-  expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Met'], ['not met', '✗ Not met']]);
+  expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
   await expect(view.locator('.db-chart svg')).toHaveCount(6);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
@@ -84,16 +84,19 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   expect(dl.suggestedFilename()).toMatch(/^debrief-showcase-anaphylaxis-\d{4}-\d\d-\d\d\.json$/);
   const json = readFileSync(await dl.path(), 'utf8');
-  const j = JSON.parse(json) as { schema: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }> };
-  expect(j.schema).toBe('pme-debrief/1');
+  const j = JSON.parse(json) as { schema: string; version: string; build: string; record: { rows: unknown[] }; objectives: Array<{ verdict: { status: string } }> };
+  expect(j.schema).toBe('pme-debrief/2');
+  expect(j.version).toMatch(/^\d+\.\d+\.\d+/); // the renderer's version: the footer below is built from it, never written here
   expect(j.objectives.map((o) => o.verdict.status)).toEqual(['not assessable', 'met', 'not met']);
   expect(j.record.rows.length).toBeGreaterThanOrEqual(rows.length); // the run goes on while the view is open
   expect(json).not.toContain('Dr Instructor');
   expect(json).not.toContain('closed-loop');
   const build = j.build;
-  await expect(view.locator('.db-foot')).toHaveText(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version 1.0.0-rc.1 (pre-release), build ${build}.`);
+  const foot = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${j.version}${j.version.includes('-') ? ' (pre-release)' : ''}, build ${build}.`;
+  await expect(view.locator('.db-foot')).toHaveText(foot);
 
-  // print layout, both engines: only the report; trends and timeline on new pages; a chart never split
+  // print layout, both engines: only the report; trends and the appendix on new pages (drugs, the timeline and
+  // bookmarks share one); a chart never split
   await page.emulateMedia({ media: 'print' });
   const layout = await page.evaluate(() => {
     const vis = (s: string) => { const e = document.querySelector(s); return !!e && getComputedStyle(e).display !== 'none'; };
@@ -109,7 +112,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'page', minutes: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 3 });
   mkdirSync(out, { recursive: true });
   await page.screenshot({ path: `${out}/debrief-print-${browserName}.png`, fullPage: true });
 
@@ -118,18 +121,18 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     writeFileSync(`${out}/debrief.pdf`, pdf);
     const info = pdfInfo(pdf); // every platform: no font read
     expect(info.title).toMatch(/^Debrief Anaphylaxis under anaesthesia \d{4}-\d\d-\d\d$/);
-    expect(info.boxes.length).toBeGreaterThanOrEqual(5); // header, trends, timeline, appendix: at least five A4 pages
+    expect(info.boxes.length).toBeGreaterThanOrEqual(4); // header, trends, drugs + timeline + bookmarks, appendix (Decision 12)
     for (const b of info.boxes) expect([Math.round(b[2] ?? 0), Math.round(b[3] ?? 0)]).toEqual([595, 842]);
     if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
       const { text, pages } = pdfText(pdf);
       expect(pages).toBe(info.boxes.length);
       const t = squash(text);
-      for (const want of ['Debrief', 'Anaphylaxis under anaesthesia', 'Run by', 'Dr Instructor, two residents', 'Scenario state: Anaphylaxis — undone by return 1',
-        'Epinephrine 100 µg IV', '✓ Met', '✗ Not met', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
-        'Appendix: one row per minute']) expect(t, want).toContain(squash(want));
+      for (const want of ['DEBRIEF', 'Anaphylaxis under anaesthesia', 'Run by', 'Dr Instructor, two residents', 'Scenario state: Anaphylaxis — undone by return 1',
+        'Epinephrine 100 µg IV', '✓ Observed', '✗ Not observed', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
+        'Talking points', 'Appendix: one row per minute']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
       expect(text.split('\f')[0], 'objectives and facts on page 1').toContain('Measured facts');
       text.split('\f').forEach((p, i) => {
-        expect(squash(p), `page ${i + 1}: the footer and the build`).toContain(squash(`For education only. Not a medical device and not clinically validated: never use it for patient care. Version 1.0.0-rc.1 (pre-release), build ${build}.`));
+        expect(squash(p), `page ${i + 1}: the footer and the build`).toContain(squash(foot));
         expect(squash(p), `page ${i + 1}: its number`).toContain(squash(`Page ${i + 1} of ${pages}`));
       });
     } else test.info().annotations.push({ type: 'pdf text', description: 'not read on this platform (R50 I-2): page count, A4 and title only' });
@@ -158,4 +161,33 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
   await expect(notes).toBeVisible();
   await page.waitForTimeout(500);
   await expect(notes).toHaveText('');
+});
+
+// Decision 12: a free run (no scenario) prints in at most four A4 pages — the header band with facts, talking points and
+// notes; trends; drugs, timeline and bookmarks; the appendix. Its /2 export is saved for the Persian check (A7 Step 4).
+test('a free run prints in at most four pages; its export is pme-debrief/2', async ({ page, browserName }) => {
+  test.setTimeout(120_000);
+  await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
+  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×8' }).click();
+  await page.waitForTimeout(25_000); // ≈ 3 sim-min
+  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible();
+  await expect(view.locator('.db-title')).toHaveText('No scenario (free run)');
+  await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
+  const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
+  const json = readFileSync(await dl.path(), 'utf8');
+  const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
+  expect([j.schema, j.keyTimes, j.keyMoments]).toEqual(['pme-debrief/2', [], []]);
+  const results = resolve(import.meta.dirname, '../../../test-results');
+  mkdirSync(results, { recursive: true });
+  if (browserName === 'chromium') {
+    writeFileSync(`${results}/debrief-a.json`, json);
+    await page.emulateMedia({ media: 'print' });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${results}/debrief-a-free-run.pdf`, pdf);
+    const pages = pdfInfo(pdf).boxes.length;
+    test.info().annotations.push({ type: 'free-run pages', description: String(pages) });
+    expect(pages).toBeLessThanOrEqual(4);
+  }
 });

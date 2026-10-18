@@ -40,7 +40,8 @@ function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.undone}` : '');
 /** A set-up row of the timeline (speed, alarms on, airway and ventilator settings): given or scripted, with no run
- *  event, and not the scenario's load. Printed grey, its words unchanged. */
+ *  event, and not the scenario's load. Printed grey, its words unchanged (class `db-setup`: the app's own `.setup` is
+ *  the Start screen's card). */
 const setup = (r: Row): boolean => (r.kind === 'action' || r.kind === 'remote' || r.kind === 'scenario') && !r.ev && !r.text.startsWith('Scenario loaded: ');
 
 type Who = 'team' | 'patient' | 'scenario';
@@ -195,7 +196,7 @@ export function debriefView(session: AppSession, link: Link): View {
         totals.length ? h('ul', { class: 'db-totals' }, ...totals.map((x) => h('li', {}, `${drugName(x.drugId)}: ${x.total} in ${x.n} ${x.n === 1 ? 'bolus' : 'boluses'}`))) : null),
       section('timeline', 'Timeline', h('table', { class: 'db-table db-timeline' },
         h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Kind'), h('th', { scope: 'col' }, 'Event'))),
-        h('tbody', {}, ...d.rows.map((r) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : setup(r) ? { class: 'setup' } : {}) },
+        h('tbody', {}, ...d.rows.map((r) => h('tr', { 'data-kind': r.kind, ...(r.undone ? { class: 'undone' } : setup(r) ? { class: 'db-setup' } : {}) },
           h('td', { class: 'num' }, mmss(r.t)), h('td', {}, KIND[r.kind]), h('td', {}, r.text + undoneText(r))))))),
       section('bookmarks', 'Bookmarks', marks.length
         ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, `${mmss(r.t)} ${r.text}${undoneText(r)}`)))
