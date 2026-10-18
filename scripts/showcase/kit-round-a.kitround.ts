@@ -263,7 +263,15 @@ class Run {
     await this.row(`Load "${title}" at ×${speed}, Bookmark`);
   }
 
-  /** Session bar → Debrief: objectives (status and text), facts, the timeline, the minute rows; then back to the panel. */
+  /** Scenario tab: tick the running card's objective whose words match (the instructor's judgement, E54/E52). */
+  async tick(re: RegExp): Promise<void> {
+    await this.teachTab('scenario');
+    await this.page.locator('section[aria-label="Running scenario"] ul[aria-label="Objectives"] li').filter({ hasText: re }).locator('input[type=checkbox]').check();
+    await this.row(`objective ticked: ${re.source}`);
+  }
+
+  /** Session bar → Debrief: objectives (status and text), facts, the timeline, the minute rows, the key-time tiles
+   *  (caption → value, each as recorded) and the key moments; then back to the panel. */
   async debrief(o: { json?: boolean } = {}): Promise<Row> {
     const p = this.page;
     const at = await this.sim();
@@ -276,7 +284,9 @@ class Run {
     const dds = await view.locator('#db-facts dd').allInnerTexts();
     const timeline = (await view.locator('#db-timeline tbody tr').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim());
     const minuteRows = await view.locator('#db-minutes tbody tr').count();
-    const d: Row = { openedAt: mmss(at), objectives, facts: Object.fromEntries(dts.map((k, i) => [k, dds[i]])), timelineRows: timeline.length, timeline, minuteRows };
+    const keyTimes = Object.fromEntries(await view.locator('#db-keytimes .db-tile').evaluateAll((t) => t.map((x) => [x.querySelector('.db-tile-cap')?.textContent ?? '', `${x.querySelector('.db-tile-v')?.textContent ?? ''} (${x.querySelector('.db-tile-sub')?.textContent ?? ''})`])));
+    const moments = (await view.locator('#db-moments tbody tr[data-n]').allInnerTexts()).map((x) => x.replace(/\s+/g, ' ').trim());
+    const d: Row = { openedAt: mmss(at), objectives, facts: Object.fromEntries(dts.map((k, i) => [k, dds[i]])), keyTimes, moments, timelineRows: timeline.length, timeline, minuteRows };
     this.r.debrief = d;
     if (o.json) {
       // Q1: the report's own JSON export (Stage 13 Q3), as the presenter's button saves it (input of debrief-fa.mjs)
@@ -1110,6 +1120,7 @@ test('A3 tamponade: the cue card path (CPR from PEA, x4/x1, drainage 1:30 into C
     await R.start('Stab wound: tamponade, PEA and pericardiocentesis', 8, 'after-alarms');
     await R.untilT(R.t0 + 60);
     await R.row('1:00 (CVP on the IBP2 tile)', { ibp2: await page.locator('.stage .pme-stile[data-param=IBP2] [data-pme=v]').first().innerText().catch(() => null) });
+    await R.tick(/^Name the tamponade/); // E54: when the cues appear (CVP rising, narrow pulse pressure); the tile shows this time as recorded
     await R.untilT(R.t0 + 420);
     await R.speed(1);
     await R.row('7:00 ×1');
@@ -1158,6 +1169,15 @@ test('A3 tamponade: the cue card path (CPR from PEA, x4/x1, drainage 1:30 into C
       const info = pdfInfo(pdf);
       R.r.measures.pdf = { pages: info.boxes.length, a4: info.boxes.every((b) => Math.round(b[2] ?? 0) === 595 && Math.round(b[3] ?? 0) === 842), title: info.title };
     } else R.r.measures.pdf = 'WebKit: Playwright has no page.pdf(); print-media screenshot only';
+    // the learner handout (E51): the view's print mode, as its button sets it
+    await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+    await page.screenshot({ path: join(OUTDIR, `a3-tamponade-handout-print-${R.r.browser}.png`), fullPage: true }).catch(() => undefined);
+    if (R.r.browser === 'chromium') {
+      const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+      writeFileSync(join(OUTDIR, 'a3-tamponade-handout-chromium.pdf'), pdf);
+      R.r.measures.handoutPdf = { pages: pdfInfo(pdf).boxes.length };
+    }
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
     await page.emulateMedia({ media: 'screen' });
     await page.evaluate(() => (location.hash = '#/teach'));
     await page.waitForTimeout(800);
@@ -1446,8 +1466,8 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await Tm.start('Stab wound: tamponade, PEA and pericardiocentesis', 8, 'after-alarms', { phones, cardOrder: true });
     await Tm.untilT(Tm.t0 + 60);
     const ibp2 = await page.locator('.stage .pme-stile[data-param=IBP2] [data-pme=v]').first().innerText().catch(() => null);
-    await page.locator('section[aria-label="Running scenario"] ul[aria-label="Objectives"] input[type=checkbox]').first().check().catch(() => undefined);
-    await Tm.row('1:00 CVP on the IBP2 tile; objective 1 ticked', { ibp2 });
+    await Tm.row('1:00 CVP on the IBP2 tile', { ibp2 });
+    await Tm.tick(/^Name the tamponade/); // E54: when the cues appear
     await Tm.untilT(Tm.t0 + 420);
     await Tm.speed(1);
     await Tm.row('7:00 ×1');
@@ -1520,6 +1540,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await M.row('6:30 ×4: watch the CO2 tile');
     const tEarly = await M.until('earlySigns', 600);
     await M.row('state Early signs');
+    await M.tick(/^Name malignant hyperthermia/); // E52: with the early call, just before MH crisis
     await M.react();
     const tC = await M.press(CRISIS, 'triggerOff');
     await M.untilT(tC + 20);
