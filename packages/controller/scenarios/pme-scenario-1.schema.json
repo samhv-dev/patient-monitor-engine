@@ -16,6 +16,7 @@
     "category": { "type": "string", "minLength": 1, "description": "FU-8 (Stage 9 R-S9-4): the scenario library's group (e.g. 'ACLS', 'Induction', 'Neuromuscular')." },
     "story": { "type": "string", "description": "FU-8 (R-S9-4): the learner-facing case text shown before the start (no engine words)." },
     "objectives": { "type": "array", "items": { "anyOf": [{ "type": "string", "minLength": 1 }, { "$ref": "#/definitions/objective" }] }, "description": "FU-8 (R-S9-4): learning objectives, one per line. Stage 13: an objective may carry a debrief rule, { text, rule }; one without a rule is listed as not assessable." },
+    "takeHome": { "type": "array", "maxItems": 3, "items": { "type": "string", "minLength": 1 }, "description": "Optional: up to three take-home lines the learner handout prints, as written (the author's reviewed words)." },
     "durationMin": { "type": "number", "exclusiveMinimum": 0, "description": "FU-8 (R-S9-4): the expected run time in minutes." },
     "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
     "mode": { "enum": ["manual", "modeled"] },
