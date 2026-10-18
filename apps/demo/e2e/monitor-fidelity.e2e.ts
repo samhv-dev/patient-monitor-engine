@@ -39,7 +39,7 @@ const tile = (page: Page, p: string, k: 'v' | 's' | 'lbl') => page.locator(`.pme
 const shot = async (page: Page, name: string) => page.locator('#monitor').screenshot({ path: resolve(out, name) });
 
 async function open(page: Page, skin: string) {
-  await page.goto(`${base}/stage4b-device.html?skin=${skin}`);
+  await page.goto(`${base}/dev/device-layer.html?skin=${skin}`);
   await expect.poll(() => hook(page), { timeout: 30_000 }).toBe(true);
   await page.evaluate(() => (window as unknown as { __pme4b: Hook }).__pme4b.pm.setTimeScale(4));
   await send(page, ev({ kind: 'airwayDevice', device: 'ett' }));

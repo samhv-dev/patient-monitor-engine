@@ -26,7 +26,7 @@ const shot = async (name, clip) => {
 await page.goto(`${base}/vent-hamilton.html`);
 await page.waitForTimeout(9000);
 await shot('hamilton', { x: 0, y: 0, width: W, height: H });
-await page.goto(`${base}/vent-link.html`);
+await page.goto(`${base}/dev/vent-link.html`);
 await page.selectOption('#speed', '4');
 await page.waitForTimeout(12_000);
 await shot('combined', { x: 0, y: 0, width: W, height: H });

@@ -53,7 +53,7 @@ add one:
 2. Import and list it in `packages/skins/src/registry.ts` (`SKINS`, `PRESETS` or `THEMES`).
 3. Run `pnpm --filter @pme/skins test`: schema validity, provenance coverage, colour contrast on the background and
    the snapshot tests. Update a snapshot only for your new id.
-4. Mount it: `mountMonitor(el, { skin: 'or-teaching' })`, and look at it in `apps/demo/stage4a-skins.html`.
+4. Mount it: `mountMonitor(el, { skin: 'or-teaching' })`, and look at it in `apps/demo/dev/skins.html`.
 5. If the skin reproduces a real device's behaviour (alarm tones, NIBP cycle, limits), cite the manual pages in
    provenance and add a row to `NOTICES.md` for any table you transcribed.
 

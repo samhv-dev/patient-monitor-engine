@@ -1,5 +1,5 @@
 // FU-5: the FU-3 gate screenshot reproduced and fixed (G-FU3 ruling 7; research/10 §0 item 2). FU-3's evidence run
-// (apps/demo/scripts/fu3-neuro-tiles-shots.mjs: the 7f page, the induction script, sim ≈ 460 s) showed a red,
+// (apps/demo/scripts/neuro-tiles-shots.mjs: the 7f page, the induction script, sim ≈ 460 s) showed a red,
 // live-looking, audible "APNEA (RESP)" on philips-like while the ventilator breathed. After FU-5: one apnoea raised one
 // "***APNEA" (the capnograph is the RR source), and once ventilation resumed it is shown LATCHED — framed, lamp off,
 // silent — per the IntelliVue #H30 setting (research/05 §6 [S1] p. 135–136, [S2] p. 40); saadat-like does not latch.
@@ -36,7 +36,7 @@ for (const skin of ['philips-like', 'saadat-like']) {
     test.setTimeout(420_000);
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.goto(`${base}/stage7f.html?skin=${skin}&bvmAt=${BVM_AT}`);
+    await page.goto(`${base}/dev/depth-neuromuscular.html?skin=${skin}&bvmAt=${BVM_AT}`);
     await expect.poll(() => simT(page), { timeout: 30_000 }).toBeGreaterThan(1);
     const tClick = await simT(page); // the script's times are relative to the click (≈ 1–5 s: later on a loaded machine)
     await page.click('#induction'); // propofol at sim +120 s (apnoea), BVM at +BVM_AT s (FU-8), ventilator at +330 s (× 4)

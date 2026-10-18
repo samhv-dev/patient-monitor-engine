@@ -49,7 +49,7 @@ test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({
   test.setTimeout(180_000);
   const errs = errorsOf(page);
   await page.setViewportSize({ width: 1400, height: 820 });
-  await page.goto(`${base}/vent-link.html`);
+  await page.goto(`${base}/dev/vent-link.html`);
   await page.selectOption('#speed', '4');
   // vent → engine: the monitor counts the ventilator's 14/min
   await expect.poll(() => last(page, 'awrr'), { timeout: 30_000 }).toBe(14);

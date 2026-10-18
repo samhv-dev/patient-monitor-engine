@@ -6,7 +6,7 @@ import { describeCommand } from './describe.ts';
 import { LIBRARY } from './scenarios.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { transitionText } from './triggers.ts';
-import { LEARNER_ACTIONS } from '../stage6b/actions.ts';
+import { LEARNER_ACTIONS } from './learner-actions.ts';
 import { drugWords } from './glossary.ts';
 
 /** camelCase or dotted engine ids ("etco2", "vfCoarse", "mon.hr"), build stages and rulings. */

@@ -12,7 +12,7 @@ test.afterAll(async () => vite?.close());
 type W = { __pmeApp: { session: { simNow(): number; monitor: { trends: { latestS: number } } }; link: { simT: number; onChange(fn: () => void): () => void } }; __clk?: Array<[number, number]> };
 const speed = (page: import('@playwright/test').Page, x: string) => page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: x }).click();
 
-test('Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09)', async ({ page }) => {
+test('Return here: the clock, the trends and the waveforms go back with the patient', async ({ page }) => {
   test.setTimeout(120_000);
   await openApp(page, base, '?scenario=showcase-induction', { warmMs: 1500 });
   await speed(page, '×4');

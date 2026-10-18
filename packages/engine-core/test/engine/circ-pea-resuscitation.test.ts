@@ -1,4 +1,4 @@
-// FU-8 gate finding G-FU8A-1: the FU-4 demo page's class IV scenario (apps/demo/src/fu4.ts scenario 3) — 2.5 L over
+// FU-8 gate finding G-FU8A-1: the FU-4 demo page's class IV scenario (apps/demo/src/dev/arrest-evidence.ts scenario 3) — 2.5 L over
 // 10 min from 60 s, then "CPR + 2 L + adrenaline" 60 s after the page sees the patient pulseless. Seed 7, MODELED,
 // ventilated (ETT + VCV 12 × 600, PEEP 5, FiO2 0.5), the page's own pulseless rule (a no-beat rhythm, or 5 consecutive
 // `circ` events without ejection). SLOW_A.

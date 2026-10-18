@@ -45,7 +45,7 @@ async function shot(page: Page, name: string) {
 test('the live MODELED page: SVT 180, sinus bradycardia 40 and AF 100 keep their own rates', async ({ page }) => {
   test.setTimeout(300_000);
   await page.setViewportSize({ width: 1120, height: 620 });
-  await page.goto(`${base}/stage7a.html`);
+  await page.goto(`${base}/dev/circulation.html`);
   await page.waitForFunction(() => (window as unknown as { __pme7a?: { ready: boolean } }).__pme7a?.ready === true);
   await page.evaluate(() => (window as unknown as { __pme7a: Hook }).__pme7a.timeScale(4));
   // AF: the reflex may move the response by ≤ 10 % (AV_MOD_MAX) — the others hold their rate exactly

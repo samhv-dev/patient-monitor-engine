@@ -11,7 +11,7 @@ test.afterAll(async () => vite?.close());
 type W = { __pmeApp: { session: { simNow(): number; monitor: { trends: { latestS: number } } }; link: { simT: number } } };
 const speed = (page: import('@playwright/test').Page, x: string) => page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: x }).click();
 
-test('the Ventilator view takes a speed change made after it opened (D3)', async ({ page }) => {
+test('the Ventilator view takes a speed change made after it opened', async ({ page }) => {
   test.setTimeout(60_000);
   await openApp(page, base, '#/vent', { warmMs: 1000 });
   const frame = page.frameLocator('iframe.vent');

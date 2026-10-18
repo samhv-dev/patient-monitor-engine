@@ -3,7 +3,7 @@
 // scenario's card meta does (`learnerControls`); loading another scenario or restarting the patient switches it off.
 // Each button is what the team at the bedside does (charge, shock, CPR, a drug); it goes through the same link as the
 // instructor's commands and is logged as a learner action. The actions are the scenario runner's own list (imported).
-import { LEARNER_ACTIONS, type LearnerAction } from '../stage6b/actions.ts';
+import { LEARNER_ACTIONS, type LearnerAction } from './learner-actions.ts';
 import { describeCommand } from './describe.ts';
 import { drugWords } from './glossary.ts';
 import type { Link } from './link.ts';

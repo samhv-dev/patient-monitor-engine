@@ -19,8 +19,8 @@ Options: `--port` (default 8787), `--host` (default `0.0.0.0`, i.e. reachable on
 app on the same port), `--max-peers N` (default 60 per session), `--remote-roles viewer|all` (what another device may
 be; default `viewer` with `--static`, else `all`).
 
-Then open the host monitor with the relay URL, e.g. `http://<laptop-ip>:5173/stage6a.html?relay=ws://<laptop-ip>:8787/`,
-and use **Open remote** / **Open viewer**, or type the session code on a phone at `/stage6a-remote.html`.
+Then open the host monitor with the relay URL, e.g. `http://<laptop-ip>:5173/dev/controller-host.html?relay=ws://<laptop-ip>:8787/`,
+and use **Open remote** / **Open viewer**, or type the session code on a phone at `/dev/controller-remote.html`.
 
 ## The classroom (Stage 12: learners' phones)
 

@@ -42,7 +42,7 @@ test('physiology console: monitor + organ tree; phenylephrine → one log entry,
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(`${base}/physiology-console.html`);
+  await page.goto(`${base}/dev/physiology-console.html`);
   await page.waitForFunction(() => (window as unknown as { __pmeConsole?: Hook }).__pmeConsole?.ready === true);
   await page.selectOption('[data-id="speed"]', '4');
   // the auto-baseline waits for the modeled reflexes to settle: the first truth event at sim ≥ 60 s (×4: ≈ 15 s)

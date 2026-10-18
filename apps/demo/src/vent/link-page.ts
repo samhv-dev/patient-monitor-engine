@@ -53,7 +53,7 @@ function onEvent(e: EngineEvent) {
 }
 
 function loadVent(id: ProfileId, patch: Partial<VentConfig> = {}) {
-  $<HTMLIFrameElement>('vent').src = `vent-hamilton.html?link=${session}&profile=${id}`;
+  $<HTMLIFrameElement>('vent').src = `../vent-hamilton.html?link=${session}&profile=${id}`;
   $<HTMLIFrameElement>('vent').onload = () => {
     post({ patch });
     port.post({ v: 1, kind: 'time', action: 'scale', value: Number($<HTMLSelectElement>('speed').value) });

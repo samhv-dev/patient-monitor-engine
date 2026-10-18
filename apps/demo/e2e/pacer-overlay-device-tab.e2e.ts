@@ -26,12 +26,12 @@ const events = (p: Page, type: string, kind?: string) =>
   p.evaluate(([type, kind]) => (window as unknown as { __pme4b: Hook }).__pme4b.events.filter((e) => e.type === type && (kind === undefined || e.kind === kind)), [type, kind] as const);
 
 async function open(page: Page, skin: string) {
-  await page.goto(`${base}/stage4b-device.html?skin=${skin}`);
+  await page.goto(`${base}/dev/device-layer.html?skin=${skin}`);
   await page.waitForFunction(() => (window as unknown as { __pme4b?: { ready: boolean } }).__pme4b?.ready === true);
   await expect.poll(() => hook(page)).toBeGreaterThan(0);
 }
 
-test('R-51-1: TCP pace marks drawn as overlays on a pacer skin', async ({ page }) => {
+test('TCP pace marks drawn as overlays on a pacer skin', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1300, height: 640 });
   await open(page, 'zoll-like');
@@ -41,10 +41,10 @@ test('R-51-1: TCP pace marks drawn as overlays on a pacer skin', async ({ page }
   await page.locator('#monitor').screenshot({ path: resolve(out, 'tcp-marks-zoll-like.png') });
 });
 
-test('item 5: a host page registers a Device tab in the instructor panel (registerTab)', async ({ page }) => {
+test('a host page registers a Device tab in the instructor panel (registerTab)', async ({ page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto(`${base}/stage6b-acls.html?session=FUONE2&seed=42`);
+  await page.goto(`${base}/dev/scenario-runner.html?session=FUONE2&seed=42`);
   await page.keyboard.press('i');
   await expect(page.locator('.pme-tabs [role=tab]')).toHaveText(['Controls', 'Log', 'Bookmarks', 'Scenario', 'Device']);
   await page.locator('[data-tab=device]').click();

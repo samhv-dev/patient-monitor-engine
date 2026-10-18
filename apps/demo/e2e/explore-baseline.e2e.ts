@@ -19,7 +19,7 @@ const baselineAt1Min = async (page: import('@playwright/test').Page) => {
   await expect(stamp).toHaveText(/Changes are from the baseline at 01:0\d/);
 };
 
-test('Explore compares with the 1-minute baseline although it was opened later (D5)', async ({ page }) => {
+test('Explore compares with the 1-minute baseline although it was opened later', async ({ page }) => {
   test.setTimeout(120_000);
   await openApp(page, base, '#/teach', { warmMs: 500 });
   await speed(page, '×4');
