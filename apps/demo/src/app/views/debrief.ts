@@ -12,13 +12,14 @@ import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, per
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
+import { version } from '@pme/renderer';
 import type { View } from '../shell.ts';
 import { button, download, h, toast } from '../ui.ts';
 
 /** The build this page was served from (vite.config.ts `define`: the git commit, "+" with uncommitted changes, the date). */
 declare const __PME_BUILD__: string;
 const BUILD = typeof __PME_BUILD__ === 'string' ? __PME_BUILD__ : 'development';
-const FOOT = `For education only. Not a medical device: never use it for patient care. Build ${BUILD}.`;
+const FOOT = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;
 
 const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
 const MARK: Readonly<Record<Status, string>> = { met: '✓ Met', 'not met': '✗ Not met', 'not assessable': '– Not assessable' };

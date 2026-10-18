@@ -3,8 +3,9 @@
 An open-source (MIT) **simulated patient monitor** for web-based teaching simulators: ACLS/BLS, operating-room and
 anaesthesia training, and the Hamilton-style ventilator simulator in this repository.
 
-**Status: release candidate `1.0.0-rc.1` — a pre-release, not a final v1.0.** What remains before 1.0.0 and the plan
-for v2.0 are in the [roadmap](docs/roadmap/README.md).
+**Status: release candidate `1.0.0-rc.1` — a pre-release, not a final v1.0. For education only: not a medical device
+and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 are in the
+[roadmap](docs/roadmap/README.md).
 
 ![The monitor with the philips-like skin](docs/images/monitor-philips-like.jpg)
 
@@ -13,11 +14,11 @@ for v2.0 are in the [roadmap](docs/roadmap/README.md).
 - **A one-page clinical teaching app** (`apps/demo`, `index.html`): set up a patient, run the monitor, give drugs and
   fluids, explore the physiology and drive the ventilator view, from one page (Start, Monitor, Instructor, Explore
   physiology, Ventilator, Validate, Developer and Settings, plus Remote and the Debrief report). Time runs at up to ×8
-  with a 2- or 5-minute fast-forward; a learner monitor can follow on a second screen in the same browser or on
-  learners' phones over a classroom relay (Node ≥ 22 on the instructor's computer; not yet tested on a real phone at
-  this release candidate); a Debrief report prints to PDF. Learners' phones need the classroom relay running on the
-  instructor's computer (the local kit); a static copy of the app on a web host, such as GitHub Pages, cannot pair
-  phones.
+  with a 2- or 5-minute fast-forward; a learner monitor can follow on a second screen in the same browser, or,
+  read-only, on learners' phones over a classroom relay on the instructor's computer. The relay comes in the classroom kit, built from a source checkout
+  with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22; its double-click launchers are for macOS); it is not a
+  release asset, and it has not yet been tested with a real phone at this release candidate. A static copy of the app
+  on a web host, such as GitHub Pages, cannot pair phones. A Debrief report prints to PDF from the browser.
 
 - **Channels:** ECG (3/5/12-lead), invasive pressures (ABP, CVP, PAP, and ICP where the organ model supplies it),
   NIBP with a real cuff cycle, SpO2 and pleth, EtCO2 and capnogram, temperature, respiratory rate.
@@ -31,8 +32,10 @@ for v2.0 are in the [roadmap](docs/roadmap/README.md).
   IEC-style alarms with sound, pacer and defibrillator, 12-lead capture, trends and an event log.
 - **Skins as data:** six monitor looks (`saadat-like`, `philips-like`, `zoll-like`, `ge-like`, `mindray-like`,
   `lifepak-like`) and two themes, validated JSON with a provenance for every value.
-- **Control:** a same-screen instructor panel, remote controllers over BroadcastChannel, WebSocket or WebRTC, and a
-  scenario runner for `pme-scenario/1` documents.
+- **Control:** a same-screen instructor panel, a remote controller in another window of the same browser
+  (BroadcastChannel), library transports for WebSocket (with a relay) and WebRTC (WebRTC is tested against a
+  simulated peer connection and in Chromium only; a tablet remote over the network is an untested preview in the
+  app), and a scenario runner for `pme-scenario/1` documents.
 - **Embeddable:** ES modules, or **one file** — `patient-monitor.iife.js` works from `file://` with no server.
 
 ## What it is not
@@ -46,6 +49,8 @@ for v2.0 are in the [roadmap](docs/roadmap/README.md).
   done yet.
 - **Adults only, and not complete.** Among the limits of this release candidate: there is no decompensation or
   reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
+- **Tested browsers:** desktop Chromium and WebKit by automated tests (Playwright); real Safari, phones and
+  tablets only by hand checks that are still open at this release candidate; Firefox is not tested.
 - **Not affiliated with any monitor manufacturer.** The `-like` skins evoke a general look; no logos or trade dress.
   Alarms are "IEC-style"; no IEC 60601-1-8 compliance is claimed.
 
@@ -115,5 +120,7 @@ PhysioNet databases under ODC-By 1.0, and some modules are derived from Apache-2
 its attribution is listed in [NOTICES.md](NOTICES.md), and the full third-party licence texts are in
 [LICENSES/](LICENSES/); both travel with every build and release asset. Validation datasets are
 downloaded, never committed. To cite this software, use [CITATION.cff](CITATION.cff).
+Whether the attribution in NOTICES.md and the build banner is sufficient for ODC-By templates bundled in MIT-licensed
+code has not yet had a legal review.
 
 [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)

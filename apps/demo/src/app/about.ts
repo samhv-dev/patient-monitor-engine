@@ -3,5 +3,5 @@
 import { version } from '@pme/renderer';
 
 export const RELEASE_LABEL = `Version ${version}${version.includes('-') ? ' (pre-release)' : ''}`;
-export const EDUCATION_LINE = 'For education only. Not a medical device: never use it for patient care.';
+export const EDUCATION_LINE = 'For education only. Not a medical device and not clinically validated: never use it for patient care.';
 export const ABOUT_LINE = `${RELEASE_LABEL}. ${EDUCATION_LINE}`;

@@ -139,9 +139,9 @@ circuit (FU-8 A13).
 | `pe` | both | PVR by the obstruction fraction, one command for circulation and lungs; massive PE: EtCO2 33 → 17, but SaO2 stays 97.8 % and CVP/MAP 9.3/82 (bands < 90 %, ≥ 15/< 65: recorded misses, `docs/gates/fu-4.md`) |
 | `tensionPtx` | both | an alias of the lungs' `ptxTension`: pleural pressure fills through a one-way valve; PEA at +9.75 min (`docs/gates/fu-4.md` S8) |
 | `rvInfarct` | both | RV contractility loss; CVP rises only +1.3–1.8 (`docs/gates/stage-7a.md`), and the validation rows miss their bands (CVP 6.9 vs 14–18, PAWP 3.3 vs 8–12, MAP 86 vs 60–70; [known-deviations.md](known-deviations.md)) |
-| `hfref` | both | LV Ees ×0.45, dilatation, LVEDP 18, MAP set point 75; reflex terms MODELED only |
+| `hfref` | both | LV Ees ×0.45, dilatation, LVEDP 18; MAP set point 75 and reflex terms MODELED only |
 | `hfpef` | both | LV stiffness ×2.5, arterial compliance ×0.7, LVEDP 18 |
-| `htn` | both | MAP set point +20, stiffer arteries, SVR ×1.2 |
+| `htn` | both | MAP set point +20 and SVR ×1.2 (MODELED only; in MANUAL the trackers fit SVR to the instructor's pressures), stiffer arteries |
 | `as` | both | aortic stenosis by valve area grade, concentric hypertrophy |
 | `ar` | both | aortic regurgitation by orifice grade |
 | `mr` | both | mitral regurgitation by orifice grade (severe: PAWP 19.4, `docs/gates/stage-7a.md`) |
@@ -174,7 +174,7 @@ link's `anaphylaxis-bronchospasm` and `air-embolism` profiles still set their sh
 | `bronchospasm` | both | resistance ×(1 + 5·sev^1.5), slow compartment, auto-PEEP, steep capnogram |
 | `asthma` | both | chronic grades to acute severe: resistance, gas trapping, compliance |
 | `anaphylaxis` | both | the respiratory component (bronchospasm by grade I–V); the circulation part is under Endocrine below |
-| `copd` | both | resistance, gas trapping, V/Q, PVR; chronic hypercapnia by GOLD grade, PaCO2 40/40/45/55 (`docs/gates/stage-fu-9b.md`) |
+| `copd` | both | resistance, gas trapping, V/Q, PVR; chronic hypercapnia by GOLD grade (resting PaCO2 set to 40/40/45/55; GOLD 4 measured 50.5, `docs/gates/stage-fu-9b.md`) |
 | `ards` | both | low compliance, atelectasis and consolidation, recruitability, shunt, PEEP response |
 | `ild` | both | stiff small lungs, diffusion limit, shunt |
 | `ssc` | both | systemic sclerosis: ILD with a stiff chest wall |
@@ -242,7 +242,7 @@ clock; their SVR, contractility and venous terms act in MODELED only (`l2/endo/a
 | `id` | Mode | Effect |
 |---|---|---|
 | `mh` | both | rising VCO2 and EtCO2 (63 mmHg at 10 min), core +1.17 °C at 15 min, K 6.0, HR 75 → 141 at 20 min; dantrolene turns it (7e) |
-| `sepsis` | both | HR, fever awake and glucose (MANUAL: HR 120, core 38.76 °C, glucose 169, 7e); the vasodilatory shock is MODELED only and misses 5 bands; no fever under GA; not fit for teaching (below) |
+| `sepsis` | both | HR, fever awake and glucose (MANUAL: HR 120, core 38.76 °C, glucose 169, 7e); the vasodilatory shock is MODELED only; in the engine tests warm CO (5.0 vs 7–9 L/min) and warm SVR (861 vs 500–700) miss, and the validation document reads MAP 87 against 55–60 (its heart rate is held by the runner); no fever under GA; not fit for teaching (below) |
 | `anaphylaxis` | both | HR, capillary leak and bronchospasm; the vasoplegic shock (grade III MAP 94 → 62, epinephrine rescue) is MODELED only |
 | `sirs` | both | HR and metabolic rate; vasoplegia MODELED only |
 | `hypermetabolic` | both | VO2 up to ×3, heat, HR (serotonin syndrome, NMS) |
@@ -255,8 +255,8 @@ clock; their SVR, contractility and venous terms act in MODELED only (`l2/endo/a
 - **Ventilatory drive:** drug depression of the drive acts in both modes (MANUAL: multipliers on the instructor's
   RR/VT, apnoea at RR 0; MODELED: on the chemoreflex). The CO2 response itself (e.g. Winter's compensation of a
   metabolic acidosis, PaCO2 29.4 at HCO3 13.6) is **MODELED only** (7f Task 13).
-- **Neuromuscular block (both):** effect sites for thumb and diaphragm, TOF and PTC, interactions with volatiles,
-  temperature, magnesium, potassium and myasthenia, reversal by sugammadex and neostigmine (7f; FU-9 B1).
+- **Neuromuscular block (both):** effect sites for thumb and diaphragm, TOF and PTC, interactions with volatiles
+  (+13 % against 20–45 %, a recorded miss), temperature, magnesium, potassium and myasthenia, reversal by sugammadex and neostigmine (7f; FU-9 B1).
 
 ## Drugs (Stage 7g)
 
@@ -318,7 +318,7 @@ top of the held targets; its direct HR term and every reflex response do not. 65
 | `potassiumChloride` | electrolyte | both | infused in mmol into 7c's potassium pool (FU-7.1 a A5) | same |
 | `sodiumBicarbonate` | electrolyte | both | SID, HCO3, pH | same |
 | `insulinDextrose` | metabolic | both | K shift, glucose | same |
-| `magnesium` | electrolyte | both | SVR fall, bronchodilation, block potentiation | same |
+| `magnesium` | electrolyte | both | SVR fall, bronchodilation, block potentiation (+11 % against 20–90 %, a recorded miss) | same |
 | `salbutamol` | β2 agonist | both | bronchodilation, K shift, HR | default |
 | `insulin` | metabolic | both | glucose, K shift, ketone clearance (FU-10) | same |
 | `dextrose` | metabolic | both | glucose | same |
@@ -342,8 +342,9 @@ From `docs/gates/fu-4.md`. These behaviours come from the reflexes, the arrest m
 are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 
 - **State-dependent drug effects (MODELED only):** anaesthetic sympatholysis suppresses the delivered sympathetic
-  output (G2). Propofol 2 mg/kg: healthy MAP −23 %, severe tamponade −79 % with PEA at +170 s, class III −68 % with
-  no arrest, massive PE PEA at +60 s (§3). MANUAL: healthy −21 %, hypovolaemia −35 % (nadir 35).
+  output (G2). Propofol 2 mg/kg: healthy MAP −23 % (just short of the −25…−40 % band, a recorded miss), severe tamponade −79 %
+  with PEA at +170 s, class III −68 % with no arrest (nadir 26.6 against 30–50, a recorded miss), massive PE PEA at
+  +60 s (§3). MANUAL: healthy −21 %, hypovolaemia −35 % (nadir 35).
 - **Low-flow arrest:** an arrest state machine declares low flow, no flow (MAP < 25 for 60 s) and hazards, with
   pre-arrest bradycardia, an untreated PEA that decays to asystole, and ROSC at CoPP ≥ 15 (G1, G9, 18b). The low-flow
   and no-flow declaration runs in both modes; the hypoxic arrest is MODELED only (`l2/hemo/pipeline.ts`). Class IV
@@ -366,9 +367,9 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 | FU-8 B | resting (tonic) sympathetic share, drug-library items, sensor state, perfusion index, pacing pain (`stage-fu-8b.md`) | tonic share and skin tone MODELED only |
 | FU-9 A, C | blood, fluids, acid–base and kidney: expansion, filtration, citrate, leak, albumin, potassium, mannitol, osmolality, intra-abdominal pressure (`fu-9.md`) | both |
 | FU-9 B | hypokalaemia potentiates rocuronium; COPD carries chronic hypercapnia (`stage-fu-9b.md`) | both |
-| FU-10 A | endocrine and thermal: MH triggers, neuraxial and surgical heat loss, etomidate cortisol, adrenal insufficiency, ketogenesis; fever under GA withdrawn (`stage-fu-10.md`) | both; adrenal haemodynamics MODELED only |
+| FU-10 A | endocrine and thermal: MH triggers, neuraxial and surgical heat loss, etomidate cortisol, adrenal insufficiency, ketogenesis; fever under GA not reached (sepsis 36.60 °C, thyroid storm 36.34 °C against ≥ 38.5: recorded misses) (`stage-fu-10.md`) | both; adrenal haemodynamics MODELED only |
 | 7k | respiratory mechanics and lung-volume readouts, one owner per quantity (`stage-7k.md`) | both |
-| FU-7.1 a | blockers dosed in mg/kg, opioid–hypnotic vascular synergy, first effort after a blocker, potassium chloride (`fu-7.1-a.md`) | both |
+| FU-7.1 a | blockers dosed in mg/kg, opioid–hypnotic vascular synergy (weaker than its band: 1.16× against 1.7–2.1×), first effort after a blocker, potassium chloride (`fu-7.1-a.md`) | both |
 | FU-7.1 b | acidosis blunts the surge, venous reservoir kept in arrest (tamponade ROSC after drainage +200 s), breath VT, COPD first gas, failed cuff shows `---` (`fu-7.1-b.md`) | both |
 | FU-11 a–d | hardening: relay, audio, snapshots and one timeline, command boundary, second-screen learner monitor; no physiology (`fu-11-a.md` … `fu-11-d.md`) | both |
 | Stage 10 | time control: ×8 and a paced 5- or 2-minute fast-forward; no physiology (`stage-10.md`) | both |
@@ -378,27 +379,29 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **No decompensation or reflex-collapse model:** the autonomic hub, the perfusion floor and decompensation moved to
   v2.0; an awake patient who loses half the blood volume settles at a mean pressure of about 63 mmHg and never
   arrests (`docs/roadmap/v1.0-remaining.md`; `docs/roadmap/v2.0/evidence/cardiac-reflexes-audit.md` F1, F2: no
-  bradycardic phase).
+  bradycardic phase). No reflex can take the sinus rate below 30/min or stop the heart (no vasovagal, spinal or
+  oculocardiac asystole), and vagal events lower the heart rate without lowering the blood pressure.
 - **No neuraxial (spinal/epidural) block haemodynamics:** a neuraxial block changes only heat balance (and the
   kidney's anaesthesia flag); there is no sympathectomy, no hypotension or bradycardia from the block, and local
   anaesthetics can be given only intravenously (other routes are refused). The validation document for a term spinal
   cannot be measured.
 - **No sepsis model fit for teaching:** the `sepsis` id exists (7e) but its MODELED shock misses its bands
-  (`docs/gates/stage-7e.md`), the septic and thyrotoxic patient under GA stays afebrile (36.60 °C, a recorded miss in
+  (`packages/engine-core/test/engine/endo-circ-acceptance.test.ts`; [known-deviations.md](known-deviations.md)), the
+  septic and thyrotoxic patient under GA stays afebrile (36.60 / 36.34 °C, recorded misses in
   `packages/engine-core/test/engine/fu10-fever.test.ts`), and lactate in sepsis is v2.0 work
   (`docs/roadmap/v1.0-remaining.md`). No sepsis scenario ships.
 - **Pulsus paradoxus is not reproduced:** 3.1 mmHg against ≥ 10 in tamponade (`docs/gates/fu-4.md` S3); the
   follow-up that would address it (FU-7.1 c) was never started.
 - **Adults only:** no paediatric or obstetric physiology (`docs/roadmap/v1.0-remaining.md`, moved to v2.0). The age
-  bands, the `pregnancy` and `neonatalRds` lung ids and the child baselines scale size and lungs only; they are not
-  teaching cases.
+  bands, the `pregnancy` and `neonatalRds` lung ids and the child baselines scale size, lungs, resting values and
+  reflex gains; they are not validated as paediatric or obstetric teaching cases.
 - **Heart-rate response in the validation documents:** the documents that expect the heart rate to change read
   75 bpm because the validation runner holds the baseline rate (a harness defect); 27 validation rows are outside
   their band and the blind realism review has not been run ([validation summary](validation-summary.md)).
 - **VA-ECMO and cardiopulmonary bypass:** typed in `l2/circ/devices.ts` but no event drives them.
 - **Lundberg A/B waves:** the ICP waveform has P1/P2/P3 and the respiratory component only
   (`docs/plans/stage-7d-organs.md`, decision 15).
-- **Laboratory values as a feature, and coagulation** (tranexamic acid has no effect): v2.0
+- **Coagulation, and laboratory tests beyond the ABG/VBG panel** (tranexamic acid has no effect): v2.0
   (`docs/roadmap/README.md`).
 - **Endocrine and thermal Part B** (the remaining cells): v2.0 (`docs/roadmap/v1.0-remaining.md`).
 - **From the brief's v2 candidates** (`docs/DESIGN-BRIEF.md` §1): Pulse as a backend, multi-patient engines and

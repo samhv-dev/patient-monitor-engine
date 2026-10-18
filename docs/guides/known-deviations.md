@@ -20,7 +20,7 @@ questions it cites (Q…, R-…, E-…) are listed in that note.
 
 | Test file | Band and measured value (test title, verbatim) | Tracked in |
 |---|---|---|
-| `apps/demo/e2e/stage9-tasks.e2e.ts` | ΔP (driving pressure) is published by Stage 7k, not yet merged (R-S9-3) | `docs/gates/stage-9.md` §1 "What shipped" and §5 "Five timed tasks" (R-S9-3). Conditional `test.fail`: inactive on this tree, since glossary entry 148 now has its truth key (`resp.mechanics.dp`, Stage 7k), so the ΔP line is asserted; the call is removed in Stage 14 (`docs/plans/stage-8b-release.md` Decision 27) |
+| `apps/demo/e2e/stage9-tasks.e2e.ts` | ΔP (driving pressure) is published by Stage 7k, not yet merged (R-S9-3) | `docs/gates/stage-9.md` §1 "What shipped" and §5 "Five timed tasks" (R-S9-3). Conditional `test.fail`: inactive on this tree, since glossary entry 148 now has its truth key (`resp.mechanics.dp`, Stage 7k), so the ΔP line is asserted and this marker is inert; removing it is left for the clean-up after this release (no plan on this branch). |
 | `packages/engine-core/test/engine/af-rate-control.test.ts` | amiodarone 150 mg over 10 min: AF 130 slows by 20–30 % at its peak (10–13 min) (measured 14.0) | `docs/gates/stage-7e.md` "Expected failures (`it.fails`)"; `docs/gates/fu-3.md` §2 "Numbers vs bands", row 7 (13.4 %) |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / Stage 3 acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it) | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (+30 s: 9.3); §1 "Tasks, before and after", B3 |
 | `packages/engine-core/test/engine/arrest-etco2.test.ts` | VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after) — measured 15.9 with the FU-7.1 B3 washout | `docs/gates/fu-7.1-b.md` §5 "Records this branch creates" (CPR +2 min: 15.9); history in `docs/gates/fu-8-part-a.md` §4 "The rows FU-8 moves" |
@@ -179,7 +179,7 @@ Behaviour that has a test title but no running test yet: each is a known gap, no
 
 | Test file | What is not tested yet (test title, verbatim) | Tracked in |
 |---|---|---|
-| `packages/engine-core/test/l2/circ/lvad.test.ts` | 7h: VA-ECMO pulsatility fades with flow fraction (tables §8.5) — marked for Stage 7h | `docs/gates/stage-7x.md` §6 "For Ali", item 5 (ECMO has no owning stage yet); the LVAD/VA-ECMO interface came with Stage 7a (`docs/gates/stage-7a.md`) |
+| `packages/engine-core/test/l2/circ/lvad.test.ts` | 7h: VA-ECMO pulsatility fades with flow fraction (tables §8.5) — marked for Stage 7h | Not tracked: no stage owns ECMO and the 'Stage 7h' in the title does not exist; VA-ECMO pulsatility versus flow fraction is untested (the LVAD/VA-ECMO interface came with `docs/gates/stage-7a.md`). |
 
 ## Lung-condition signatures outside their band (allow-list, not `it.fails`)
 
@@ -202,29 +202,25 @@ tree's (`grep -n "webkit' && !!process.env.CI" apps/demo/e2e/*.ts`).
 |---|---|---|---|
 | `apps/demo/e2e/fu11-follower.e2e.ts:16` | the whole file (3 tests: the second-screen learner monitor follows commands, a restore and a restart; follows while the Ventilator view drives; wears the instructor's monitor style) | F-49-2: BroadcastChannel drops messages in one direction between pages on Playwright Linux WebKit; F-49-1: follower exactness at ×4 also fails there (FALLBACK ruling 2026-10-11; `docs/gates/stage-12.md` §0 "Formal gate on a075fd39") | **H20**: the second screen in real Safari follows within 5 s (`docs/RESUME.md`; `docs/showcase/SHOWCASE-2-RUN-SHEET.md`) |
 | `apps/demo/e2e/s10-time-control.e2e.ts:14` | the whole file (×8 and a 5-minute fast-forward from the instructor view, at :30; the ×8 rate / frame time / fast-forward pace measurement, at :147) | S10-F5: the runner holds about ×5.3, not ×8; a fast-forward from the Ventilator view once went unanswered (FX-2b, with F-49-1) (FALLBACK ruling 2026-10-12; `docs/gates/stage-10.md` §12) | **H18**: the fast-forward look in real Safari (`docs/gates/stage-10.md` §12; `docs/RESUME.md`) |
-| `apps/demo/e2e/s12-mobile-learner.e2e.ts:97` | one test, at :90: the QR sheet, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins | FX-2: the runner cannot hold an instructor, a phone and the relay in step (runs 38205878761, 38211190394; `docs/gates/stage-12.md` §0, CI table) | **H17**: the owner's own phone through the six cards (`docs/gates/stage-12-real-phone.md`; `docs/gates/stage-12.md` §4, PENDING-OWNER) |
-| `apps/demo/e2e/s12-mobile-learner.e2e.ts:171` | one test, at :170: while the Ventilator view drives the patient the phone holds; it follows again with the next patient | S12-F1: the hidden cockpit iframe is throttled on CI Linux WebKit, so the hold ends (FALLBACK ruling 2026-10-12, PR #57 run 38194080645; `docs/gates/stage-12.md` §6) | **H21**: bronchospasm with the Ventilator view, then the Monitor view for 30 s, with a phone following (`docs/gates/stage-12-real-phone.md` "Hand check H21") |
+| `apps/demo/e2e/s12-mobile-learner.e2e.ts:97` | one test, at :91: the QR sheet, then a phone follows in the instructor's style through ×4, ×8, a style change, a pause and a 2-minute fast-forward that another phone joins | FX-2: the runner cannot hold an instructor, a phone and the relay in step (runs 38205878761, 38211190394; PR #61 description) | **H17**: the owner's own phone through the six cards (`docs/gates/stage-12-real-phone.md`; `docs/gates/stage-12.md` §4, PENDING-OWNER) |
+| `apps/demo/e2e/s12-mobile-learner.e2e.ts:171` | one test, at :170: while the Ventilator view drives the patient the phone holds; it follows again with the next patient | S12-F1: the hidden cockpit iframe is throttled on CI Linux WebKit, so the hold ends (FALLBACK ruling 2026-10-12, PR #57 run 38194080645; `docs/gates/stage-12.md` §6) | **H21**: bronchospasm with the Ventilator view, then the Monitor view for 30 s, with a phone following (`docs/gates/stage-12-real-phone.md` "Hand check H21") Open: if real Safari also throttles the hidden cockpit, the Ventilator view stops ventilating the patient while another view is shown (`docs/gates/stage-12.md` §0, 'Open beyond this PR'). |
 | `apps/demo/e2e/fu11-vent-restore.e2e.ts:43` | one test, at :42: after "Return here" on the Ventilator view the replayed minute matches the first one | F-FX1-1: CI Linux WebKit page crash after "Return here" in this ×4 Ventilator-view flow (3–7 of 18 runs; PR #58 runs 38212560444, 38214428810, and before FX-1 run 38203086536, as the test's comment records; FX-1 is in `docs/RESUME.md`, "Fixer round") | no dedicated hand check: the flow runs on local macOS WebKit and CI Chromium; F-FX1-1 itself is open |
+
+Also not run on any WebKit (`test.skip(browserName === 'webkit', …)`): heavy evidence and screenshot runs, plus these behaviour tests: `physiology-console.e2e.ts:40`, `stage4b-device.e2e.ts:118` (audio clock), `vent-link.e2e.ts:48`, `vent-embed.e2e.ts:53`, `fu4.e2e.ts:20`, `stage7e.e2e.ts:24`, `stage6a.e2e.ts:55` (WebRTC), `stage9-tasks.e2e.ts:26`. The Pulse-oracle unit suites run only when `PME_PULSE_DIR` is set, never in CI; the oracle numbers come from `pnpm validate`.
 
 ## Browser tests that passed only on a retry
 
-These end-to-end tests passed only on a retry on `main`'s CI between 2026-10-11 and 2026-10-17. They are known-flaky
-candidates for the clean-up stage (Stage 14), not misses of a band: most are wall-clock or runner-speed reads on the
-loaded 2-vCPU runner, and the ones marked "crash" are the WebKit page or browser closing under the test (class (r) in
-`docs/gates/ci-webkit-3.md`). CI's "e2e tests that passed only on retry" step (`.github/workflows/ci.yml`, echo only)
-lists them on every run; the release commit's run is recorded in the Stage 8b gate note. Each file exists under
-`apps/demo/e2e/`; titles are as on this tree.
+These end-to-end tests passed only on a retry in CI runs between 2026-10-10 and 2026-10-17 (main runs 38092760192 … 39067903552 and the release PR runs 39066929916, 39076653954; `gh run view <id> --log`, step 'e2e tests that passed only on retry', or the Playwright 'flaky' summary before 2026-10-12). They are flaky, not band misses: most are wall-clock or runner-speed reads on the loaded 2-vCPU runner; 'crash' marks the WebKit page or browser closing under the test. They are left for the clean-up after this release.
 
 | Test (file:line as CI reported it) | Test title | Note |
 |---|---|---|
-| `scenario-choose-another.e2e.ts:14` | the scenario library opened before the first repaint stays open until a scenario is loaded | `docs/gates/ci-webkit-3.md` "(c) findings" |
+| `scenario-choose-another.e2e.ts:14` | the scenario library opened before the first repaint stays open until a scenario is loaded | the regression test for a fixed product defect (`docs/gates/ci-webkit-3.md` "(c) findings"); passed only on retry on CI WebKit in 11 of 12 main runs, so the fix is not confirmed on slow WebKit |
 | `fu11-restore.e2e.ts:15` | Return here: the clock, the trends and the waveforms go back with the patient (F03–F05, F09) | `docs/gates/ci-webkit-3.md` "Classification" |
 | `fu11-explore-baseline.e2e.ts` (tests at :22 and :31) | Explore compares with the 1-minute baseline although it was opened later (D5); a bookmark restore to before the baseline drops it; it is taken again at 1 minute (R50 M14) | `docs/gates/ci-webkit-3.md` "Classification" (listed there at :14 and :23) |
 | `stage6a-worker.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | `docs/gates/stage-10.md` §12 (99 against < 82) |
 | `stage7d.e2e.ts:36` | stage7d page: check 19 starts, the ICP tile shows a rising ICP, no page errors | crash class |
 | `stage9-app.e2e.ts:15` | every view shares the one engine session | `docs/gates/stage-10.md` §12 (2.497 s against > 2.5 s) |
-| `stage9-app.e2e.ts:43` | changing the monitor on Start updates the mirrored alarm colours (review F5) | on this tree the test starts at :42; :43 is its first line |
-| `stage9-app.e2e.ts:71` | a remote pairs by code and changes the host patient | |
+| `stage9-app.e2e.ts:43` | learner controls: off by default, switched on per scenario, logged as learner actions (ruling 4) | at :53 on this tree; `docs/gates/ci-webkit-3.md` "Classification" |
 | `showcase-clock.e2e.ts:19` | loading another scenario restarts the session clock and the time in state, which then count up | `docs/gates/stage-10.md` §12 (F-49-3) |
 | `s10-time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium (the file is skipped on CI WebKit, above) |
 | `fu11-vent-new-case.e2e.ts:16` | the cockpit is unloaded by a new patient and reloads fresh on the next visit (or at once when shown) | |
@@ -232,9 +228,13 @@ lists them on every run; the release commit's run is recorded in the Stage 8b ga
 | `fu11-vent-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium (skipped on CI WebKit, above) |
 | `validation-bedside.e2e.ts:19` | asystole demo measures the saadat-like delay; results download | |
 | `fu11-alarm-label.e2e.ts:15` | the top-bar alarm count says which alarms are off, and Sound stays reachable in a narrow window (K3) | |
-| `showcase-capnogram.e2e.ts:27` | Saadat-style monitor: CO2 replaces RESP and RR while the line is attached; RESP and RR return when it is detached | |
 | `fu6.e2e.ts:30` | fu6 page: the bronchospasm demo runs, EtCO2 shows, no page errors | crash class |
-| `stage9-a11y.e2e.ts:15` | accessibility: laptop 1280×800 / accessibility: iPad portrait 820×1180 (one loop, two tests) | crash class |
+| `stage9-a11y.e2e.ts:15` | accessibility: iPad portrait 820×1180 | crash class (the "laptop" case is not found in any main run of the window) |
+| `s12-mobile-learner.e2e.ts:193` | a relay restart, a full session and a relay the phone cannot reach | [webkit], run 38386662185 |
+| `stage13-debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | [chromium, webkit], run 38386662185 |
+| `vent-link.e2e.ts:29` | vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP | [webkit], run 38386662185 |
+| `scenario-panel-stale-press.e2e.ts:18` | a card button drawn for the previous state acts on the current one, or says why not | [webkit], run 39063479453 |
+| `vent-embed.e2e.ts:34` | vent embed: loads from file:// with no errors; the ventilator breathes and the monitor counts its breaths | [webkit], release PR run 39066929916; the test's timeout was then raised to the 120 s its own waits need |
 
 ## Validation harness: rows outside their band
 
