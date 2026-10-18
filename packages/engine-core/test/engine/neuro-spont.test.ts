@@ -30,14 +30,14 @@ describe('MODELED spontaneous drive through the engine', { timeout: 300_000 }, (
   // calibration used to impose on MODELED too); a MODELED patient's own resting pattern is the one its drive settles at
   // for its OWN resting PaCO2 (`pat.paco2Rest` 40) with its physical dead space. Measured: RR 13.6 at PaCO2 38.9 over
   // minutes 5–10 (the MANUAL run, 15.2 / 38.5, stays logged for the record).
-  it('no drugs, normal chemistry: the drive holds the patient\'s own resting pattern (RR within 10 %, PaCO2 within 2 mmHg over 10 min) — reference re-derived, E-FU4-17', async () => {
+  it('no drugs, normal chemistry: the drive holds the patient\'s own resting pattern (RR within 10 %, PaCO2 within 2 mmHg over 10 min)', async () => {
     const man = await breathe({ patient: ADULT, mode: 'manual' }, 600);
     const r = await breathe({ patient: ADULT }, 600);
     console.log(`resting: MODELED RR ${r.rr(60, 180).toFixed(1)} → ${r.rr(300, 600).toFixed(1)} PaCO2 ${r.paco2.toFixed(1)} (own rest ${r.paco2Rest}) vs MANUAL ${man.rr(300, 600).toFixed(1)} / ${man.paco2.toFixed(1)}`);
     expect(Math.abs(r.rr(300, 600) / r.rr(60, 180) - 1)).toBeLessThan(0.1);
     expect(Math.abs(r.paco2 - r.paco2Rest)).toBeLessThan(2);
   });
-  it('metabolic acidosis (7c profile HCO3 15): VE rises and PaCO2 settles at Winter\'s 1.5·HCO3 + 8 ± 2 (≈ 30.5 ± 2)', async () => {
+  it('metabolic acidosis (blood profile HCO3 15): VE rises and PaCO2 settles at Winter\'s 1.5·HCO3 + 8 ± 2 (≈ 30.5 ± 2)', async () => {
     const ctl = await breathe({ patient: ADULT }, 1200);
     const r = await breathe({ patient: { ...ADULT, blood: { hco3: 15 } } }, 1200);
     console.log(`acidosis: HCO3 ${r.hco3.toFixed(1)} → PaCO2 ${r.paco2.toFixed(1)} (Winter's ${(1.5 * r.hco3 + 8).toFixed(1)}); VE ${r.ve(900, 1200).toFixed(1)} vs ${ctl.ve(900, 1200).toFixed(1)} L/min; RR ${r.rr(900, 1200).toFixed(1)} vs ${ctl.rr(900, 1200).toFixed(1)}`);

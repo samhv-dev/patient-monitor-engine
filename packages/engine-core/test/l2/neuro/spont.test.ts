@@ -6,7 +6,7 @@ const X: SpontInputs = { t: 0, paco2: 40, pao2: 100, hco3: 24, rr0: 12, vt0: 500
 const V0 = { opioid: 0, propofol: 0, midazolam: 0, ketamine: 0 };
 const nr = (v: Partial<typeof V0>, diaBlock = 0) => neuroResp({ vent: { ...V0, ...v }, macVolatile: 0, diaBlock, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false });
 
-describe('MODELED spontaneous drive (7b drive/pti/fatigue + Winter\'s, G7b ruling 8)', () => {
+describe('MODELED spontaneous drive (lung drive/pti/fatigue + Winter\'s)', () => {
   it('Winter\'s: 1.5·HCO3 + 8; the set point falls only in metabolic acidosis', () => {
     expect(winterPaco2(15)).toBeCloseTo(30.5, 9);
     expect(paco2SetPoint(40, 24)).toBe(40); // Winter's 44 > resting: no shift
@@ -38,7 +38,7 @@ describe('MODELED spontaneous drive (7b drive/pti/fatigue + Winter\'s, G7b rulin
     expect(s.paco2Set).toBeCloseTo(30.5, 9);
     expect(s.ve / 6).toBeCloseTo((6 + 1.5 * 9.5) / 6, 6);
   });
-  it('7f on top: opioid slows the rate; a blocked diaphragm (< 5 % strength) stops breathing; weakness shrinks VT', () => {
+  it('neuro on top: opioid slows the rate; a blocked diaphragm (< 5 % strength) stops breathing; weakness shrinks VT', () => {
     const a = createSpontDrive();
     stepSpontDrive(a, { ...X, neuro: nr({ opioid: 2 }) });
     expect(a.rr).toBeLessThan(0.6 * 12);

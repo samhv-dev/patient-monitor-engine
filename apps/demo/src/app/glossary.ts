@@ -1,6 +1,6 @@
-// The R56 glossary at run time: engine key → clinical label, long name, unit and adult normal range. Every label the app
-// shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the DOM of a
-// clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
+// The clinical glossary at run time: engine key → clinical label, long name, unit and adult normal range. Every label
+// the app shows for a physiological quantity comes from here (research/11 §5.16 rule 1); engine keys never reach the
+// DOM of a clinical view. `#` in a key is a side index (0 = L, 1 = R), `*` and `<id>` stand for any one path segment.
 import { DRUGS, type StateVar } from '@pme/engine-core';
 import { DRUG_NAMES, GLOSSARY, GLOSSARY_S9, KEY_LABELS, LUNG_LABELS, SAME_AS, SHORT, type GlossaryEntry } from './glossary-data.ts';
 
@@ -58,7 +58,7 @@ export interface Lookup {
   key: string;
   /** The segments the wildcards matched, in order ('' for an exact key). */
   caps: string[];
-  /** The drug or agent a '<id>'/'<agent>' wildcard matched, when the 7g library knows it. */
+  /** The drug or agent a '<id>'/'<agent>' wildcard matched, when the drug library knows it. */
   drug: string | null;
 }
 
@@ -81,7 +81,7 @@ export function lookup(path: string): Lookup | null {
 
 /**
  * The label for a truth path ("R CL", "SvO₂", "NIBP D", "Cp (Propofol)"), or null. A multi-quantity entry uses its
- * per-key label; a per-drug path names the drug, so two drugs' concentrations never share a label (review F1).
+ * per-key label; a per-drug path names the drug, so two drugs' concentrations never share a label.
  */
 export function labelOf(path: string): string | null {
   const l = lookup(path);
@@ -101,14 +101,16 @@ export function rowKey(path: string): string | null {
   return l && labelOf(path) !== null ? `${canon(l.e.n)}|${l.side}${KEY_LABELS[path] ?? KEY_LABELS[l.key] ?? ''}|${l.caps.join('.')}` : null;
 }
 
-// ---- drug names (orchestrator ruling 5): one display set for the whole app, chosen in the site profile ----
+// ---- drug names: one display set for the whole app, chosen in the site profile ----
 export type DrugNameSet = 'us' | 'uk';
 let nameSet: DrugNameSet = 'us';
 /** Choose the display set: 'us' = "epinephrine / norepinephrine" (default), 'uk' = "adrenaline / noradrenaline". */
 export const setDrugNames = (set: DrugNameSet): void => void (nameSet = set);
 export const drugNameSet = (): DrugNameSet => nameSet;
 
-/** A drug's display name in the site's set (glossary `DRUG_NAMES`; the 7g library's name for a drug without a row). */
+/**
+ * A drug's display name in the site's set (glossary `DRUG_NAMES`; the drug library's name for a drug without a row).
+ */
 export function drugName(id: string): string {
   const row = DRUG_NAMES[id];
   if (row) return nameSet === 'uk' && row.uk ? row.uk : row.name;
@@ -158,7 +160,7 @@ export const DISPLAY_SCALE: Readonly<Record<string, number>> = {
   'ev.lungState.atelectasisFrac': 100, 'ev.lungState.vqAdmixture': 100, 'mon.tofRatio': 1,
 };
 
-/** Task 26: the short screen name of a 7b lung condition (the catalogue's full text belongs in its tooltip). */
+/** The short screen name of a lung condition (the catalogue's full text belongs in its tooltip). */
 export function lungLabel(id: string, catalogueLabel = ''): string {
   return LUNG_LABELS[id] ?? (catalogueLabel.split(/ \(| \//)[0] || 'Lung condition');
 }

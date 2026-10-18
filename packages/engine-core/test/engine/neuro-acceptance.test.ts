@@ -26,13 +26,13 @@ const VENT = { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, fio
 const SEVO_1MAC = { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 6 };
 const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
 
-describe('Stage 7f acceptance (engine)', { timeout: 600_000 }, () => {
+describe('neuro acceptance (engine)', { timeout: 600_000 }, () => {
   // FU-6 R3(d) (D21, E-FU6-10 reasoning; R45): this rig has NO hypnotic, so it is Eikermann's AWAKE patient (AJRCCM
   // 2003 167:1024: near-normal VT at TOFR 0.5–0.7). Since UA_AROUSAL the awake residual-block share is 0.25 of the
   // tables' (the sedated patient's), and the band — written from the tables — is missed: blocked VT 402 vs control
   // 500 mL (ratio 0.80, band < 0.75). Not re-specified here (the file is outside E-FU6-10's two named files): it.fails
   // with its number; gate note Q-FU6-4 follow-up.
-  it.fails('residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (FU-6 R3(d), band < 0.75)', async () => {
+  it.fails('residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (band < 0.75)', async () => {
     const vt = async (roc: boolean) => {
       const e = createEngine({ seed: 21, patient: ADULT });
       const b: number[] = [];
@@ -76,7 +76,7 @@ describe('Stage 7f acceptance (engine)', { timeout: 600_000 }, () => {
     expect(wake && (wake.t - 1800) / 60).toBeGreaterThan(5);
     expect(wake && (wake.t - 1800) / 60).toBeLessThan(12);
   });
-  it('no drugs: the neuro hook is neutral — spontaneous breaths keep Stage 3\'s size', async () => {
+  it('no drugs: the neuro hook is neutral — spontaneous breaths keep their size', async () => {
     const e = createEngine({ seed: 23, patient: ADULT });
     const b: EngineEvent[] = [];
     e.on((x) => b.push(x), ['breath']);
@@ -85,7 +85,7 @@ describe('Stage 7f acceptance (engine)', { timeout: 600_000 }, () => {
     expect(vts.length).toBeGreaterThan(20);
     expect(Math.min(...vts)).toBeGreaterThan(300);
   });
-  it('CPU: the neuro step itself (PD + events; the PK is 7g\'s) costs ≤ 0.05 ms per 20 ms tick with every agent on the bus', () => {
+  it('CPU: the neuro step itself (PD + events; the PK is the drug model\'s) costs ≤ 0.05 ms per 20 ms tick with every agent on the bus', () => {
     const ns = createNeuroState(ADULT, 24);
     applyNeuroCommand(ns, cmd({ type: 'device', action: { device: 'tof', action: 'start' } } as Body), 0);
     applyNeuroCommand(ns, cmd({ type: 'device', action: { device: 'depth', action: 'on' } } as Body), 0);

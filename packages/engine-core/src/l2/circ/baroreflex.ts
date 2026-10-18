@@ -1,6 +1,6 @@
-// Arterial baroreflex (B §4.9 MODELED summary; tables §1.1 G_v, g_hs/g_R/g_V/g_c; audit A5 resetting, A6 venous
-// compliance effector). Stepped at 10 Hz from the mean arterial pressure (never from a drug: A11 — reflex responses
-// to a pressor are emergent). Error e = MAP_set − MAP (positive = hypotension).
+// Arterial baroreflex (B §4.9 MODELED summary; tables §1.1 G_v, g_hs/g_R/g_V/g_c; resetting, venous compliance
+// effector). Stepped at 10 Hz from the mean arterial pressure (never from a drug — reflex responses to a pressor
+// are emergent). Error e = MAP_set − MAP (positive = hypotension).
 //   vagal: RR_v = G_v·(−e_v) ms, e_v = LPF τ 1 s of delay(0.3 s)(e)        fast limb, both directions
 //   sympathetic: e_s = LPF τ 10 s of delay(2.5 s)(e), saturating at ±SYMP_SAT (fraction):
 //     HR ×(1 + g_hs·e_s), SVR ×(1 + g_R·e_s), Emax ×(1 + g_c·e_s), venous V0 −g_V·e_s mL, cSv ×(1 − g_C·e_s)
@@ -14,8 +14,8 @@ export const G_HS = 0.04; // /mmHg HR (B §4.9 "HR ×(1+g_hs·e_s)") [ENG within
 /** Sympathetic WITHDRAWAL (hypertension side) is weaker than activation (sigmoid baroreflex curve, operating point
  * near the lower plateau) → gains × 0.3 when e_s < 0 [ENG, prototype: phenylephrine HR −5–15 with class II HR 100–120]. */
 export const SYMP_WITHDRAW = 0.3;
-/** R45(b): the chronotropic withdrawal is weaker still — reflex bradycardia to a pressor is mainly vagal (B §4.9 sanity 1,
- * HR −5–15 at MAP +15–25) once g_hs rises to 0.04 for the class II/III tachycardia [ENG]. */
+/** The chronotropic withdrawal is weaker still — reflex bradycardia to a pressor is mainly vagal (B §4.9 sanity 1, HR
+ * −5–15 at MAP +15–25) once g_hs rises to 0.04 for the class II/III tachycardia [ENG]. */
 export const SYMP_WITHDRAW_HR = 0.1;
 export const G_R = 0.02; // /mmHg SVR [ENG: above B §4.9 0.01–0.02 — needed for class II "SBP near normal" in the prototype]
 export const G_C = 0.008; // /mmHg contractility [ENG]
@@ -35,11 +35,11 @@ export const RESET_FRAC = 0.05;
 export const RESET_HOLD_S = 420;
 export const RESET_GAIN = 0.35;
 /**
- * R45(b) cardiopulmonary (low-pressure) limb: atrial stretch receptors sense the TRANSMURAL right-atrial pressure;
+ * Cardiopulmonary (low-pressure) limb: atrial stretch receptors sense the TRANSMURAL right-atrial pressure;
  * unloading (mild hypovolaemia, PEEP) causes vasoconstriction and venoconstriction before the arterial pressure falls,
  * with little HR change — which is why class I–II haemorrhage narrows PP while SBP holds (ATLS; tables §1/§7).
  * e_cp = RA_tm,set − LPF_τ(RA_tm); SVR ×(1 + G_CP_R·e_cp); venous unstressed volume −G_CP_V·e_cp (stressed-volume
- * recruitment from the splanchnic reservoir) [ENG magnitudes, calibration pass R44].
+ * recruitment from the splanchnic reservoir) [ENG magnitudes, calibration pass].
  */
 export const CP_TAU_S = 3;
 export const G_CP_R = 0.06; // /mmHg of transmural RA pressure
@@ -49,26 +49,26 @@ export const CP_CLAMP = 10; // mmHg of e_cp that the limb can use
  * (Guyton; Magder) → 12 mL/kg [ENG]. Once it is spent (class III), venous return — and pressure — fall. */
 export const V0_RECRUIT_MAX_ML_KG = 12;
 /**
- * R45(b): carotid/aortic receptors fire with pulsatility as well as mean pressure (Chapleau & Abboud 1987): at the
- * same mean, a narrower pulse pressure unloads them. The reflex senses MAP + K_PP·(PP − PP_set) [ENG].
+ * Carotid/aortic receptors fire with pulsatility as well as mean pressure (Chapleau & Abboud 1987): at the same mean, a
+ * narrower pulse pressure unloads them. The reflex senses MAP + K_PP·(PP − PP_set) [ENG].
  */
 export const K_PP = 0.3;
 /**
- * FU-4 F1(b): brainstem perfusion of the vasomotor centre. The neural arm is intact while cerebral flow is at or above
+ * Brainstem perfusion of the vasomotor centre. The neural arm is intact while cerebral flow is at or above
  * `CBF_REFLEX_FULL` of normal and gone once it falls to `CBF_REFLEX_ZERO`; between them it fails linearly. During an
  * arrest the reflex therefore withdraws instead of holding SVR at its ceiling for the whole resuscitation, and the
  * relaxation-phase aortic pressure is set by intrinsic tone plus circulating catecholamines (Paradis 1990's CPP band).
- * Same signal as E-FU3-10's respiratory gate (7d `brain.cbfRel`), which closes at 0.2 [ENG thresholds].
+ * Same signal as the respiratory gate (the brain's `brain.cbfRel`), which closes at 0.2 [ENG thresholds].
  */
-// FU-4 (Task 18d re-measure): FULL moved 0.9 → 0.6. At 0.9 any CBF fall that is NOT ischaemia withdrew the reflex —
-// hypocapnia (PaCO2 30: CBF ≈ 0.7), the autoregulated hypotension of warm sepsis, raised ICP — measured: warm-sepsis HR
-// 131 → 98 and MAP 56 → 45, the Cushing HR ratio 0.82 (band ≤ 0.8). The vasomotor centre fails on the way from the
-// electrical-failure threshold (≈ 15–25 mL/100 g/min, 0.3–0.5 of normal) to membrane failure (≈ 10, 0.2): Astrup J,
-// Siesjö BK, Symon L, Stroke 1981;12:723–725 [P]. CPR at 70 s (CBF 0.43): CoPP 24.7, RA relaxation 16.4 — still in
-// Paradis 15–25 (0.9 gave 23.3 / 15.8).
+// FULL is 0.6, not 0.9. At 0.9 any CBF fall that is NOT ischaemia withdrew the reflex — hypocapnia (PaCO2 30:
+// CBF ≈ 0.7), the autoregulated hypotension of warm sepsis, raised ICP — measured: warm-sepsis HR 131 → 98 and MAP
+// 56 → 45, the Cushing HR ratio 0.82 (band ≤ 0.8). The vasomotor centre fails on the way from the electrical-failure
+// threshold (≈ 15–25 mL/100 g/min, 0.3–0.5 of normal) to membrane failure (≈ 10, 0.2): Astrup J, Siesjö BK, Symon L,
+// Stroke 1981;12:723–725 [P]. CPR at 70 s (CBF 0.43): CoPP 24.7, RA relaxation 16.4 — still in Paradis 15–25 (0.9
+// gave 23.3 / 15.8).
 export const CBF_REFLEX_FULL = 0.6;
 export const CBF_REFLEX_ZERO = 0.2;
-/** FU-4 F1(b): × on the delivered sympathetic output from brainstem perfusion (1 when 7d is absent). */
+/** × on the delivered sympathetic output from brainstem perfusion (1 when the organ model is absent). */
 export function brainstemOutF(cbfRel: number | undefined): number {
   if (cbfRel === undefined || !Number.isFinite(cbfRel)) return 1;
   return Math.min(1, Math.max(0, (cbfRel - CBF_REFLEX_ZERO) / (CBF_REFLEX_FULL - CBF_REFLEX_ZERO)));
@@ -81,7 +81,7 @@ export interface BaroState {
   es: number; // sympathetic filtered error
   offT: number; // time the MAP has been > 5 % off the set point
   mapLp: number; // LPF 1 s of the input MAP
-  cpSet: number; // R45(b): transmural RA set point, mmHg (NaN = limb off)
+  cpSet: number; // Transmural RA set point, mmHg (NaN = limb off)
   cpLp: number; // LPF of the transmural RA pressure
 }
 
@@ -93,28 +93,27 @@ export interface BaroGains {
   weightScale: number; // W/70
   pinnedSet: boolean; // MAP_set pinned by the instructor: no resetting
   hrGain?: number; // × on the sympathetic HR arm only (drug depression of the chronotropic reflex)
-  /** FU-4 G2: × on the delivered sympathetic output (both limbs), after saturation — central sympatholysis (1 = none). */
+  /** × on the delivered sympathetic output (both limbs), after saturation — central sympatholysis (1 = none). */
   outF?: number;
-  /** FU-4 G2: × on the set point the error is taken against (anaesthetic resetting; 1 = none). */
+  /** × on the set point the error is taken against (anaesthetic resetting; 1 = none). */
   setF?: number;
   /**
-   * FU-4 F1(b): × on the delivered sympathetic output from BRAINSTEM PERFUSION. The vasomotor centre is itself
-   * perfused: once cerebral flow collapses the neural arm fails and arrest SVR falls to intrinsic × circulating
-   * catecholamines, instead of a reflex that stays saturated through the whole arrest (1 = intact).
+   * × on the delivered sympathetic output from BRAINSTEM PERFUSION. The vasomotor centre is itself perfused: once
+   * cerebral flow collapses the neural arm fails and arrest SVR falls to intrinsic × circulating catecholamines,
+   * instead of a reflex that stays saturated through the whole arrest (1 = intact).
    */
   brainF?: number;
   /**
-   * FU-8 (C1, research/19; Part B, for Ali's review): the TONIC sympathetic share of resting SVR and contractility
-   * (0–1). At rest the delivered output is 1 and nothing changes; when an anaesthetic lowers the delivered output
-   * (`outF` < 1) it removes this share of the RESTING tone too, not only the reflex response — so a patient whose
-   * resting pressure depends on sympathetic tone (elderly, hypertensive, heart failure: MSNA rises with each) falls more.
-   * Removed in proportion to the ANAESTHETIC's delivered-output factor `outF` only (plan D15's formula) — NOT `brainF`:
-   * research/23 §6.3 note 4 keeps the tonic level uncoupled from the perfusion state, and `brainF` reads `cbfRel`, which
-   * the GA flow–metabolism coupling lowers at a normal MAP (FU-9 H1 and F5 moved when `o = outF × brainF` was used, the
-   * prototype's line). The reflex RESPONSE keeps `o`. The share itself is a profile constant.
-   * DECISION (research/23 §6.3 note 3): the venous effectors (`dV0`, `cSvF`) carry NO tonic share in FU-8 — only SVR and
-   * contractility (as prototyped and agreed, A23). The resting venous tone is also sympathetically maintained, so a later
-   * stage (FU-12's hub) that gives `dV0`/`cSvF` a tonic share ADDS a term here; it changes no FU-8 number by omission.
+   * The TONIC sympathetic share of resting SVR and contractility (0–1) (research/19). At rest the delivered output is
+   * 1 and nothing changes; when an anaesthetic lowers the delivered output (`outF` < 1) it removes this share of the
+   * RESTING tone too, not only the reflex response — so a patient whose resting pressure depends on sympathetic tone
+   * (elderly, hypertensive, heart failure: MSNA rises with each) falls more.
+   * Removed in proportion to the ANAESTHETIC's delivered-output factor `outF` only — NOT `brainF`: research/23 §6.3
+   * note 4 keeps the tonic level uncoupled from the perfusion state, and `brainF` reads `cbfRel`, which the GA
+   * flow–metabolism coupling lowers at a normal MAP. The reflex RESPONSE keeps `o = outF × brainF`. The share itself
+   * is a profile constant.
+   * The venous effectors (`dV0`, `cSvF`) carry NO tonic share (research/23 §6.3 note 3) — only SVR and contractility.
+   * The resting venous tone is also sympathetically maintained, so giving `dV0`/`cSvF` a tonic share ADDS a term here.
    */
   tonic?: number;
 }
@@ -134,13 +133,13 @@ export function createBaro(set: number, cpSet = Number.NaN): BaroState {
 }
 
 const clampSat = (x: number) => Math.min(SYMP_SAT, Math.max(-SYMP_SAT, x));
-/** FU-8 (C1): the contractility share of the tonic sympathetic support, relative to the SVR share [ENG]. */
+/** The contractility share of the tonic sympathetic support, relative to the SVR share [ENG]. */
 export const TONIC_EES_SHARE = 0.5;
 
 /** One 10 Hz step with the current mean arterial pressure; returns the effector factors. */
 export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number): BaroOut {
   b.mapLp += (map - b.mapLp) * (1 - Math.exp(-BARO_DT / MAP_TAU_S));
-  const set = b.set * (g.setF ?? 1); // FU-4 G2: an anaesthetic resets the reflex to a lower pressure (Sellgren 1994)
+  const set = b.set * (g.setF ?? 1); // An anaesthetic resets the reflex to a lower pressure (Sellgren 1994)
   const e = set - b.mapLp;
   b.q.push(e);
   b.q.shift();
@@ -164,11 +163,11 @@ export function stepBaro(b: BaroState, map: number, g: BaroGains, raTm?: number)
     ecp = Math.min(CP_CLAMP, Math.max(-CP_CLAMP, b.cpSet - b.cpLp));
   }
   const scp = g.gSymp * (ecp < 0 ? SYMP_WITHDRAW : 1);
-  const o = (g.outF ?? 1) * (g.brainF ?? 1); // FU-4 G2 + F1(b): the delivered output, after each factor's saturation
+  const o = (g.outF ?? 1) * (g.brainF ?? 1); // The delivered output, after each factor's saturation
   return {
     rrMs: Math.min(VAGAL_MAX_MS, Math.max(-VAGAL_WITHDRAW_MS, -VAGAL_STEADY * g.gVagal * b.ev)),
     hrF: 1 + o * clampSat(G_HS * g.gSymp * (g.hrGain ?? 1) * (b.es < 0 ? SYMP_WITHDRAW_HR : 1) * beta * b.es),
-    svrF: 1 - (g.tonic ?? 0) * (1 - (g.outF ?? 1)) + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp), // FU-8 (C1): − the tonic share the anaesthetic removes
+    svrF: 1 - (g.tonic ?? 0) * (1 - (g.outF ?? 1)) + o * clampSat(G_R * s * b.es + G_CP_R * scp * ecp), // − the tonic share the anaesthetic removes
     eesF: 1 - TONIC_EES_SHARE * (g.tonic ?? 0) * (1 - (g.outF ?? 1)) + o * clampSat(G_C * s * betaC * b.es),
     dV0: o * Math.max(-V0_RECRUIT_MAX_ML_KG * 70 * g.weightScale, -G_V * g.weightScale * s * Math.min(40, Math.max(-40, b.es)) - G_CP_V * g.weightScale * scp * ecp),
     cSvF: 1 - o * clampSat(G_CSV * s * b.es) * 0.5,

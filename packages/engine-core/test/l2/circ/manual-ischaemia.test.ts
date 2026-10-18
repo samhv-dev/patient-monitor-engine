@@ -15,7 +15,7 @@ function kLv(eesF: number, kIschRef: number, kIsch: number, env = MANUAL_ENV): n
   return m.kLv;
 }
 
-describe('MANUAL held LV Emax against coronary ischaemia (FU-3 item 4)', () => {
+describe('MANUAL held LV Emax against coronary ischaemia', () => {
   it('recovery above the tracked kIsch does not raise the delivered Emax: ×2.5 set at kIsch 0.2, kIsch back to 1 → 0.5', () => {
     expect(kLv(2.5, 0.2, 1)).toBeCloseTo(0.5, 9);
     expect(kLv(2.5, 0.2, 0.6)).toBeCloseTo(0.5, 9);
@@ -24,7 +24,7 @@ describe('MANUAL held LV Emax against coronary ischaemia (FU-3 item 4)', () => {
     expect(kLv(1, 0.8, 0.4)).toBeCloseTo(0.4, 9);
     expect(kLv(1.5, 1, 0.5)).toBeCloseTo(0.75, 9);
   });
-  it('the default reference (1) leaves 7a unchanged in both modes', () => {
+  it('the default reference (1) leaves the circulation unchanged in both modes', () => {
     expect(kLv(1.2, 1, 0.7)).toBeCloseTo(0.84, 9);
     const m = createCircModel();
     stepCircModel(m, CTL_DT / 2, RESTING_ENV, createOut());

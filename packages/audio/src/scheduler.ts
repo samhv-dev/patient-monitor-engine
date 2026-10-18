@@ -1,6 +1,6 @@
 // Look-ahead tone scheduler (brief §3.6): a 25 ms timer schedules every tone due in the next 100 ms on
 // the audio clock. Tones are also tried the moment they arrive.
-// Lateness policy (Gate 1 ruling R15, with the review's refinement, docs/gates/stage-1-review.md §6.3):
+// Lateness policy:
 // - a late tone plays at once (a QRS beep is a DETECTION event, as on a real monitor);
 // - `now − when` includes the output device's latency (`when` is output-mapped through getOutputTimestamp),
 //   so the measured output latency (fallback 20 ms) is subtracted before judging staleness;
@@ -11,9 +11,9 @@ import { ClockMap } from './clock-map.ts';
 
 export const TIMER_MS = 25;
 export const LOOKAHEAD_S = 0.1;
-/** A QRS tone is stale (dropped) if it would sound more than this after its R (ruling R15). */
+/** A QRS tone is stale (dropped) if it would sound more than this after its R. */
 export const MAX_QRS_AFTER_R_S = 0.15;
-/** Output latency assumed when the browser reports none (ruling R15). */
+/** Output latency assumed when the browser reports none. */
 export const DEFAULT_OUTPUT_LATENCY_S = 0.02;
 const LOG_MAX = 500;
 const FORGET_AFTER_S = 2; // keep played ids this long after their voice ends, for dedupe [ENG]
@@ -29,7 +29,7 @@ export interface ToneRequest {
 
 export interface ToneHandle {
   stop(): void;
-  /** FU-11 (F19, BA08): audio time the voice ends on its own; the scheduler owns the handle until then. */
+  /** Audio time the voice ends on its own; the scheduler owns the handle until then. */
   readonly endsAt?: number;
 }
 
@@ -120,7 +120,7 @@ export class ToneScheduler {
     const now = this.deps.audioNow();
     for (const [id, l] of [...this.live]) {
       if (!match(id, l)) continue;
-      // FU-11 (F19, BA08): a voice that is still sounding stops too — not only one scheduled for later
+      // A voice that is still sounding stops too — not only one scheduled for later
       if (l.handle && !((l.handle.endsAt ?? Infinity) <= now)) l.handle.stop();
       this.live.delete(id);
     }
@@ -131,7 +131,7 @@ export class ToneScheduler {
   pump(): void {
     if (!this.clock.hasAnchor) return;
     const now = this.deps.audioNow();
-    // FU-11 (F19, BA08): forget a tone only after its voice has ended (a 60 s ready tone outlives the 2 s dedupe window)
+    // Forget a tone only after its voice has ended (a 60 s ready tone outlives the 2 s dedupe window)
     for (const [id, l] of this.live) if ((l.handle?.endsAt ?? l.at) + FORGET_AFTER_S < now) this.live.delete(id);
     while (this.queue.length > 0) {
       const tone = this.queue[0] as ToneRequest;

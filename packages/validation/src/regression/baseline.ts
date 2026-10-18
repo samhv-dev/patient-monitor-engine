@@ -1,6 +1,6 @@
-// Waveform regression baselines (R40 borrow #1, audit N-P02): fixed scenarios, 5 s windows per channel, compared
-// sample by sample with a 2 % limit. The limit's floor (5 % of the window's peak-to-peak) stops samples near zero
-// from turning into huge relative errors [ENG, decision 9]. Baselines are our own engine output (MIT), JSON.
+// Waveform regression baselines (N-P02): fixed scenarios, 5 s windows per channel, compared sample by sample with a 2 %
+// limit. The limit's floor (5 % of the window's peak-to-peak) stops samples near zero from turning into huge relative
+// errors [ENG]. Baselines are our own engine output (MIT), JSON.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { ChannelId, Command } from '@pme/engine-core';
@@ -32,8 +32,8 @@ export interface WaveCompare { case: string; channel: string; n: number; failed:
 
 /** Per-sample 2 % comparison; green = every sample within, yellow ≤ 1 % of samples outside, else red. */
 export function compareWave(caseId: string, channel: string, base: number[], now: ArrayLike<number>): WaveCompare {
-  // FU-11 (F02): a NaN or infinite sample on either side, or nothing to compare, is red — NaN differences compared false
-  // against the limit, so an all-NaN waveform graded green
+  // A NaN or infinite sample on either side, or nothing to compare, is red — NaN differences compared false against the
+  // limit, so an all-NaN waveform graded green
   let invalid = base.length === 0 || now.length === 0 ? 1 : 0;
   for (let i = 0; i < base.length; i++) if (!Number.isFinite(base[i] as number)) invalid++;
   for (let i = 0; i < now.length; i++) if (!Number.isFinite(now[i] as number)) invalid++;

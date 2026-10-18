@@ -1,8 +1,8 @@
 // VF hybrid generator (brief §4.1 "Special generators", §11 C1; research 03 §1.8):
 //   f_dom(t) = 5.5 − 2.25·(1 − e^(−t_noCPR/8 min)) Hz (+ CPR boost 0.75 Hz, + epinephrine 0.5 Hz)
-//              (Stage 5.1, R39 item 3: 5.5 Hz at onset, 5.0 at 2 min, 4.6 at 4, 4.3 at 6, 3.9 at 10 min)
+//              (5.5 Hz at onset, 5.0 at 2 min, 4.6 at 4, 4.3 at 6, 3.9 at 10 min)
 //   A(t)     = A0·e^(−t_eff/τ_A), τ_A 7 min without CPR, 17.5 min with CPR (t_eff runs slower during CPR)
-//   VF(t)    = A(t)/(2√2) · two jittered texture channels along two VCG directions (Stage 5.1)
+//   VF(t)    = A(t)/(2√2) · two jittered texture channels along two VCG directions
 // A is the peak-to-peak-equivalent amplitude in lead II (2√2·RMS). Recorded CUDB texture is time-warped to
 // f_dom(t); without templates the AR(2) resonator bank is used. Coarse → fine at 0.2 mV; asystole hazard
 // 0.02/min, forced below 0.05 mV. The generator integrates the clocks sample by sample (so CPR/epinephrine
@@ -17,7 +17,7 @@ import type { EcgGenInputs } from '../ecg-gen.ts';
 import { tableNormal } from '../generator.ts';
 
 export const F0_HZ = 5.5; // brief §4.1
-export const F_DROP_HZ = 2.25; // Stage 5.1 (R39 item 3, research/09-evidence-rulings.md): 3.9 Hz at 10 min (was 1.5 → 4.4 Hz)
+export const F_DROP_HZ = 2.25; // 3.9 Hz at 10 min (research/09-evidence-rulings.md)
 export const F_TAU_S = 8 * 60;
 export const TAU_A_S = 7 * 60; // τ_A 6–8 min without CPR
 export const TAU_A_CPR_S = 17.5 * 60; // 15–20 min with CPR
@@ -26,15 +26,15 @@ const CPR_BOOST_TAU_S = 30; // [ENG]
 export const EPI_A_GAIN = 0.3; // +20–40% A
 export const EPI_F_HZ = 0.5; // +0.5 Hz
 export const EPI_S = 180; // 2–4 min
-export const A0_MV = 1.2; // coarse VF onset (Stage 5.1, R39 item 3: 1.2 mV; 2 min 0.9, 4 min 0.7, 10 min 0.33; was 0.8)
-export const FINE_MV = 0.2; // coarse/fine split (R39 item 3: fine VF ≤ 0.2 mV, very fine ≤ 0.1)
+export const A0_MV = 1.2; // Coarse VF onset (1.2 mV; 2 min 0.9, 4 min 0.7, 10 min 0.33)
+export const FINE_MV = 0.2; // coarse/fine split (fine VF ≤ 0.2 mV, very fine ≤ 0.1)
 export const ASYSTOLE_MV = 0.05;
 export const HAZARD_PER_S = 0.02 / 60;
 const FINE_START_MV = 0.15; // vfFine starts here [ENG]
 /**
- * Stage 5.1: two independent texture channels along two VCG directions, so the VF vector wanders in 3-D and no
- * lead is ever the null lead of a single fixed direction (G5-obs: V1 was 24–36 % of II). DIR_A is inferior (II),
- * DIR_B anterior-leftward (V1–V5). Lead gains per unit (A, B): II 1.00/0.12, V1 0.28/0.58, V5 0.44/0.57 [ENG].
+ * Two independent texture channels along two VCG directions, so the VF vector wanders in 3-D and no lead is ever the
+ * null lead of a single fixed direction (with one direction V1 was 24–36 % of II). DIR_A is inferior (II), DIR_B
+ * anterior-leftward (V1–V5). Lead gains per unit (A, B): II 1.00/0.12, V1 0.28/0.58, V5 0.44/0.57 [ENG].
  */
 export const VF_DIR_A = [0.25, 0.85, -0.3] as const;
 export const VF_DIR_B = [0.45, -0.1, -0.9] as const;
@@ -47,7 +47,7 @@ export const VF_AMP_TAU_S = 0.4;
 /**
  * The per-cycle speed jitter raises the measured spectral peak by ≈ 4.7 % over f_dom(t) (16 seeds × 0/2/4/6/10 min:
  * +0.32/+0.12/+0.38/+0.08/+0.20 Hz against the same runs without jitter), so the jittered speed is scaled back to keep
- * the measured dominant frequency on R39 item 3's 5.5 → 3.9 Hz course [ENG, Stage 5.1 executor calibration].
+ * the measured dominant frequency on the 5.5 → 3.9 Hz course [ENG, calibration].
  */
 export const VF_FREQ_JITTER_BIAS = 1 / 1.047;
 /** Hop to another recorded window every 1–2.5 s (was: play each 8 s window to its end) [ENG]. */
@@ -69,7 +69,7 @@ export interface VfState {
   boost: number;
   rng: Sfc32State;
   tex: TexState | null;
-  /** Stage 5.1: second texture channel (along VF_DIR_B) and the OU jitter states [log-speed, gainA, gainB]. */
+  /** Second texture channel (along VF_DIR_B) and the OU jitter states [log-speed, gainA, gainB]. */
   tex2: TexState | null;
   ou: [number, number, number];
   ar: ArState;
@@ -130,7 +130,7 @@ export function vfSource(g: EcgGenInputs, n: number, s: number, acc: Float64Arra
     v.tNoCpr += dt;
   }
   v.boost += ((cpr ? CPR_BOOST_HZ : 0) - v.boost) * (dt / CPR_BOOST_TAU_S);
-  // Stage 5.1 jitter: three OU processes (unit stationary SD) → per-cycle speed and per-channel gain.
+  // Jitter: three OU processes (unit stationary SD) → per-cycle speed and per-channel gain.
   const ou = v.ou;
   ou[0] += -ou[0] * (DT / VF_FREQ_TAU_S) + Math.sqrt((2 * DT) / VF_FREQ_TAU_S) * tableNormal(v.rng);
   ou[1] += -ou[1] * (DT / VF_AMP_TAU_S) + Math.sqrt((2 * DT) / VF_AMP_TAU_S) * tableNormal(v.rng);

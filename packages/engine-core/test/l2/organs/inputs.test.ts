@@ -10,7 +10,7 @@ const base = () => {
 };
 
 describe('organ input adapter', () => {
-  it('reads the Stage 2/3/7a/7b truths with physiological defaults; no 7c/7g → neutral', () => {
+  it('reads the haemodynamic, respiratory, circulation and lung truths with physiological defaults; no blood/drug model → neutral', () => {
     const c = base();
     const v = readOrganView(c, 0);
     expect(v.map).toBeGreaterThan(85);
@@ -28,30 +28,30 @@ describe('organ input adapter', () => {
     expect(v.blood).toBe(false);
     expect(circExt(c.hemo) === null).toBe(!v.circ);
   });
-  it('without 7c, blood volume comes from MANUAL volumeStatus (0 → −40 %)', () => {
+  it('without the blood model, blood volume comes from MANUAL volumeStatus (0 → −40 %)', () => {
     const c = base();
     setL1Target(c.l1, 'volumeStatus', 0, 0);
     expect(readOrganView(c, 1).bvRel).toBeCloseTo(0.6, 9);
   });
-  it('without 7c, MODELED blood volume is 7a\'s circulating volume ÷ the profile\'s (≈ 1 at rest)', () => {
+  it('without the blood model, MODELED blood volume is the circulation\'s circulating volume ÷ the profile\'s (≈ 1 at rest)', () => {
     const c = base();
     c.l1.mode = 'modeled';
     expect(readOrganView(c, 0).bvRel).toBeCloseTo(1, 1);
   });
-  it('7c present (duck-typed, addendum 14 names): Hb, albuminGL, bvRel, hbfRel, lactate and the core seam', () => {
+  it('blood present (duck-typed): Hb, albuminGL, bvRel, hbfRel, lactate and the core seam', () => {
     const blood = { core: { liver: 1 }, out: { hb: 9, albuminGL: 30, bvRel: 0.8, hbfRel: 0.7, lactate: 3.1, gluconate: 2 } };
     const v = readOrganView({ ...base(), blood }, 0);
     expect([v.blood, v.hb, v.albuminGL, v.bvRel, v.hbfRel, v.lactate, v.gluconate]).toEqual([true, 9, 30, 0.8, 0.7, 3.1, 2]);
     expect(bloodCore(blood)?.liver).toBe(1);
     expect(bloodCore(undefined)).toBeNull();
   });
-  it('7c created but not yet stepped (its `out` all zeros, the engine\'s t = 0 rebaseline): the fallbacks, not Hb 0 / albumin 0 (gate §10)', () => {
+  it('blood created but not yet stepped (its `out` all zeros, the engine\'s t = 0 rebaseline): the fallbacks, not Hb 0 / albumin 0', () => {
     const blood = { core: { liver: 1 }, out: { hb: 0, albuminGL: 0, bvRel: 1, hbfRel: 1, lactate: 0, gluconate: 0 } };
     const v = readOrganView({ ...base(), blood }, 0);
     expect([v.blood, v.hb, v.albuminGL, v.bvRel, v.hbfRel, v.lactate]).toEqual([true, 14, 42, 1, null, null]);
     expect(bloodCore(blood)?.liver).toBe(1); // the seam itself is live from t = 0
   });
-  it('7g/7f/7e present: CMRO2 (7f wins), cbfVaso, volatile MAC without N2O, hypnotic → GA, furosemide, α load, sepsis, doses', () => {
+  it('drug/neuro/endocrine present: CMRO2 (neuro wins), cbfVaso, volatile MAC without N2O, hypnotic → GA, furosemide, α load, sepsis, doses', () => {
     const pk = {
       bus: {
         cns: { cmro2Mult: 0.7, cbfVaso: 1.2, propCe: 3, macBrain: 0, ketamineCe: 0 },

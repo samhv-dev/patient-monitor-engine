@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { CircClinicalEvent, CircEvent, TeachingChannel } from '../src/types-circ.ts';
 import type { ChannelId, Command, EngineEvent, PatientProfile } from '../src/types.ts';
 
-describe('Stage 7a public types', () => {
-  it('Command, EngineEvent, ChannelId and PatientProfile carry the Stage 7a variants', () => {
+describe('circulation public types', () => {
+  it('Command, EngineEvent, ChannelId and PatientProfile carry the circulation variants', () => {
     const drug: CircClinicalEvent = { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' };
     const cmds: Command[] = [
       { id: '1', issuedBy: 't', type: 'applyEvent', event: drug },

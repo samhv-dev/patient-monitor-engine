@@ -4,7 +4,7 @@ import { createThermal, stepThermal } from '../../../src/l2/thermal/heat.ts';
 import { cascade, thermalMetabolic } from '../../../src/l2/thermal/metabolic.ts';
 
 describe('thermal metabolism and cascade', () => {
-  it('at rest every factor is exactly 1 (no drift into Stage 1–3 outputs)', () => {
+  it('at rest every factor is exactly 1 (no drift into the haemodynamic and respiratory outputs)', () => {
     const st = createThermal(36.8, 70);
     stepThermal(st, 1, 1);
     expect(thermalMetabolic(st, 1)).toEqual({ vo2F: 1, vco2F: 1, mhActivity: 0 });

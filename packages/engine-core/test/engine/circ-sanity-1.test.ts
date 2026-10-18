@@ -35,7 +35,7 @@ describe('sanity scenarios I (MODELED)', () => {
     expect(dHr).toBeLessThanOrEqual(-5);
     expect(dHr).toBeGreaterThanOrEqual(-16); // prototype −15.0 at 60 s (band −15; 1 bpm tolerance)
   }, 300_000);
-  it('R45(b) class II haemorrhage (25 % over 10 min, ventilated): HR 100–125, SBP ≥ 85 % of baseline, PP narrowed ≥ 30 %, PPV > 13 %', async () => {
+  it('class II haemorrhage (25 % over 10 min, ventilated): HR 100–125, SBP ≥ 85 % of baseline, PP narrowed ≥ 30 %, PPV > 13 %', async () => {
     const r = await run({}, [[120, { kind: 'bleed', volumeMl: 1225, overS: 600 }]], 780);
     expect(r.st(740, 780, 'hr')).toBeGreaterThanOrEqual(100);
     expect(r.st(740, 780, 'hr')).toBeLessThanOrEqual(125);
@@ -77,11 +77,11 @@ describe('sanity scenarios I (MODELED)', () => {
       return { ratio, dHr };
     }));
   })();
-  it('propofol 2 mg/kg: little HR rise (< +15) — was +16.6 before FU-4', async () => {
+  it('propofol 2 mg/kg: little HR rise (< +15)', async () => {
     expect((await propofol()).dHr).toBeLessThan(15);
   }, 300_000);
   // FU-8 B4 (E-FU8B-1): flipped — propofol removes the tonic sympathetic share of resting tone (research/19 C1, owner A23)
-  it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.727 after FU-8 B4 (0.802 before it; 0.801 at FU-4 Task 18e; 0.72 after Task 2, 0.913 before FU-4; Q1)', async () => {
+  it('propofol 2 mg/kg: MAP ≈ 70 % of baseline at 2 min (60–80 %) — measured 0.727 when propofol removes the tonic sympathetic share (0.802 when it does not)', async () => {
     const { ratio } = await propofol();
     expect(ratio).toBeGreaterThanOrEqual(0.6);
     expect(ratio).toBeLessThanOrEqual(0.8);

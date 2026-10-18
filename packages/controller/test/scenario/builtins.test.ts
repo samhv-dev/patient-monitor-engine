@@ -11,7 +11,7 @@ const all = (d: ScenarioDoc): DocCommand[] => d.states.flatMap((s) => [...(s.onE
 
 describe('built-in scenarios', () => {
   // FU-8 (Stage 9 R-S9-2, declared exception E-FU8-2): the list pin grows from the five Stage 6b documents to all eleven
-  it('lists the five Stage 6b scenarios and the six Stage 7f ones', () => {
+  it('lists the five resuscitation/induction scenarios and the six neuro ones', () => {
     expect(BUILTIN_CATALOGUE.map((c) => c.id)).toEqual([
       'acls-vf-witnessed', 'acls-pea-hypovolaemia', 'acls-bradycardia-unstable', 'svt-adenosine', 'or-induction-hypotension',
       'depth-awareness', 'depth-light-anaesthesia', 'depth-opioid-apnoea', 'nmb-mh-trigger', 'nmb-residual-block', 'nmb-sux-burn',

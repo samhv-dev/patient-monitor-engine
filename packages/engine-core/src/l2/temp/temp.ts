@@ -1,5 +1,5 @@
-// Stage 7e: the Stage 3 heat model now lives in `l2/thermal/**` (tables §5c, annex B3). This file keeps Stage 3's
-// public names so its importers (resp pipeline, L3 temperature numerics, the Stage 3 tests) are unchanged.
+// The heat model lives in `l2/thermal/**` (tables §5c, annex B3). This file keeps the older public names so
+// its importers (resp pipeline, L3 temperature numerics, their tests) are unchanged.
 import { mhActivity } from '../thermal/mh.ts';
 import { MH_HEAT_X } from '../thermal/params.ts';
 import { createThermal, setCoreTarget, stepThermal, type ThermalState } from '../thermal/heat.ts';
@@ -10,7 +10,7 @@ export {
 } from '../thermal/params.ts';
 export { SITES, setCoreTarget } from '../thermal/heat.ts';
 
-/** Stage 3 name: MH heat multiplier at activity 1 (heat = m0·(factor − 1)·activity). */
+/** Legacy name: MH heat multiplier at activity 1 (heat = m0·(factor − 1)·activity). */
 export const MH_MAX_FACTOR = 1 + MH_HEAT_X;
 export type TempState = ThermalState;
 

@@ -12,8 +12,8 @@ const CTX: PdContext = { ph: 7.4, betaBlockC: 0, vasoResp: 1, ageY: 40, macBrain
 const block = (id: string, c: number) => combine([{ row: DRUGS[id] as DrugRow, c }], CTX).bus.avNodeBlock;
 const give = (event: Record<string, unknown>) => ({ type: 'applyEvent', event }) as unknown as Command;
 
-describe('AV-nodal block on the drug bus (FU-2 AF rate control)', () => {
-  it('esmolol 150 µg/kg/min 0.25, metoprolol 5 mg 0.25, labetalol 20 mg 0.2, amiodarone 150 mg 0.15 (its 7g entry)', () => {
+describe('AV-nodal block on the drug bus (AF rate control)', () => {
+  it('esmolol 150 µg/kg/min 0.25, metoprolol 5 mg 0.25, labetalol 20 mg 0.2, amiodarone 150 mg 0.15 (its drug entry)', () => {
     expect(block('esmolol', 150)).toBeCloseTo(0.25, 9);
     expect(block('metoprolol', 2)).toBeCloseTo(0.25, 9);
     expect(block('labetalol', 2)).toBeCloseTo(0.2, 9);

@@ -12,8 +12,8 @@ const adult = { ageY: 40, weightKg: 70, heightCm: 175, sex: 'M' as const };
  */
 const gap40 = (rs: ReturnType<typeof resp>) => 40 * (1 - rs.lung.co2.g);
 
-describe('Stage 7b wiring II: gas exchange through the mixing point', { timeout: 300_000 }, () => {
-  it('healthy: EtCO2 = PaCO2 − 3 ± 0.8 (the Stage 3 gradient now emerges)', async () => {
+describe('lung wiring II: gas exchange through the mixing point', { timeout: 300_000 }, () => {
+  it('healthy: EtCO2 = PaCO2 − 3 ± 0.8 (the gradient now emerges)', async () => {
     const r = rig3({ patient: adult });
     r.e.dispatch(ev3(vent));
     for (let m = 1; m <= 5; m++) { r.e.advanceTo(60 * m); await new Promise((res) => setImmediate(res)); }

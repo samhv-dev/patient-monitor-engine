@@ -1,10 +1,9 @@
-// Stage 7c constants and patient scaling (tables §1.1–1.5, §5.3, §5b.1–5b.4; annex §5b). Every number cites its
-// row, or [ENG] with the prototype number it was tuned to (plan "Prototype results"). Units: mmol/L, g/L albumin,
-// g/dL Hb, mL, mmHg, s (see the plan's Global Constraints).
+// Blood constants and patient scaling (tables §1.1–1.5, §5.3, §5b.1–5b.4; annex §5b). Every number cites its
+// row, or [ENG] with the prototype number it was tuned to. Units: mmol/L, g/L albumin, g/dL Hb, mL, mmHg, s.
 import type { PatientProfile } from '../../types.ts';
-import { sizeWeightKg } from '../body-size.ts'; // FU-9 Part C (R3): FU-8's one body-size rule
+import { sizeWeightKg } from '../body-size.ts'; // The one body-size rule
 
-export const BLOOD_DT_S = 0.1; // 10 Hz, with Stage 3's gas step (brief §3.2)
+export const BLOOD_DT_S = 0.1; // 10 Hz, with the gas step (brief §3.2)
 
 /** Molar masses, g/mol (IUPAC). K is 39.098 — Pulse's 31.1 (annex D14) must never appear. */
 export const MOLAR_MASS = { na: 22.99, k: 39.098, cl: 35.453, ca: 40.078, mg: 24.305, lactate: 89.07, hco3: 61.017, glucose: 180.16 } as const;
@@ -16,10 +15,10 @@ export const NORMAL = {
   dpgMmolL: 4.65, glucoseMgDl: 100, ureaMmolL: 5,
 } as const;
 /** Chronic renal compensation of a chronic hypercapnia, mmol/L HCO3 per mmHg PaCO2 above 40 (tables §5b.1 "chronic
- *  (profile only): +0.35–0.4 per mmHg"; Brackett/Schwartz 1965) — FU-9: ONE constant, read by 7f's set point (F9) and by
- *  7c's profile calibration (F7). */
+ * (profile only): +0.35–0.4 per mmHg"; Brackett/Schwartz 1965) — ONE constant, read by the ventilatory drive's set
+ * point and by the blood model's profile calibration. */
 export const CHRONIC_HCO3_PER_MMHG = 0.35;
-/** FU-9 F8: plasma globulins at the normal albumin, g/L — their own mass (fluids.ts `copPlasma`), carried by plasma products. */
+/** Plasma globulins at the normal albumin, g/L — their own mass (fluids.ts `copPlasma`), carried by plasma products. */
 export const GLOBULIN_GL = 24;
 /** Ionised share of total Mg for the SID (≈ 0.6 of 0.85 mmol/L) [TXT]. */
 export const MG_ION_FRAC = 0.6;
@@ -46,7 +45,7 @@ export const LYMPH_GAIN = 2;
 export const PI_ISF0 = 8;
 /**
  * Renal elimination of excess volume, 1/min on the BLOOD-volume excess (plasma is shed): awake 0.03 (total excess t½ ≈ 30 min, fitted), general
- * anaesthesia ×0.2 (t½ ≈ 150 min) — tables `t12El` 30 / 150 [TXT, Q47]. 7d replaces this with its UOP.
+ * anaesthesia ×0.2 (t½ ≈ 150 min) — tables `t12El` 30 / 150 [TXT, Q47]. The organ model replaces this with its UOP.
  */
 export const K_EL_AWAKE = 0.03;
 export const K_EL_GA_FACTOR = 0.2;
@@ -99,19 +98,18 @@ export interface BloodPatient {
   weightKg: number;
   bvMl: number; // blood volume
   hb: number; // g/dL
-  hbRef: number; // FU-6 R11: the band's sex-normal Hb (g/dL), the viscosity reference
+  hbRef: number; // The band's sex-normal Hb (g/dL), the viscosity reference
   plasmaMl: number;
   isfMl: number;
   icfMl: number;
   vLacL: number;
-  vo2Rest: number; // awake mL/min (tables §1.1: 3.5 mL/kg/min adult) — used only when Stage 3 is absent
+  vo2Rest: number; // Awake mL/min (tables §1.1: 3.5 mL/kg/min adult) — used only without the respiratory pipeline
 }
 
 /**
- * Patient scaling. Blood volume by band (tables §1.1) on FU-8's ONE continuous body-size rule (`l2/body-size.ts`,
- * Lemmens-indexed size weight anchored on the default adult — FU-9 Part C, R50 ruling R3; it replaces 7c's own capped
- * Lemmens branch, so blood and circulation hold one volume: 4 900 mL at 70 kg / 175 cm, was 4 807). TBW 0.6 (M) / 0.5 (F)
- * L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct).
+ * Patient scaling. Blood volume by band (tables §1.1) on the ONE continuous body-size rule (`l2/body-size.ts`,
+ * Lemmens-indexed size weight anchored on the default adult), so blood and circulation hold one volume: 4 900 mL at
+ * 70 kg / 175 cm. TBW 0.6 (M) / 0.5 (F) L/kg of the ACTUAL weight; ICF 2/3; ECF 1/3; plasma = BV·(1 − Hct).
  */
 export function bloodPatient(p: PatientProfile | undefined): BloodPatient {
   const band = ageBandB(p?.ageY ?? 40);
@@ -133,9 +131,9 @@ export interface Composition {
   na: number; k: number; cl: number; ca: number; mg: number;
   lactate: number; // metabolised to bicarbonate (liver)
   metab: number; // acetate (metabolised to bicarbonate, τ 15 min)
-  xa: number; // gluconate: an unmeasured anion here (renal excretion is 7d's) [ENG]
+  xa: number; // Gluconate: an unmeasured anion here (renal excretion is the organ model's) [ENG]
   albGL: number; // true albumin g/L (oncotic AND acid–base)
-  globGL: number; // globulins g/L (oncotic only; plasma products carry the plasma's) — FU-9 F8
+  globGL: number; // Globulins g/L (oncotic only; plasma products carry the plasma's)
   colloidGL: number; // synthetic colloid, albumin-equivalent oncotic g/L
   osmOther: number; // non-Na effective osmoles (glycine) mOsm/L
   hct: number; // red-cell volume fraction
@@ -152,7 +150,7 @@ export const FLUIDS = {
   glycine: { ...Z, osmOther: 200 }, // 1.5 % glycine irrigant (TURP/hysteroscopy absorption)
 } as const satisfies Record<string, Composition>;
 export type FluidId = keyof typeof FLUIDS;
-/** Hypertonic saline of `pct` % NaCl (3 % → 513 mmol/L Na and Cl; NaCl 58.44 g/mol): observed from 7g's dose log (R51 addendum 14). */
+/** Hypertonic saline of `pct` % NaCl (3 % → 513 mmol/L Na and Cl; NaCl 58.44 g/mol): observed from the drug dose log. */
 export const hypertonicSaline = (pct: number): Composition => {
   const m = (pct * 10 * 1000) / 58.44;
   return { ...FLUIDS.d5w, na: m, cl: m };
@@ -160,11 +158,11 @@ export const hypertonicSaline = (pct: number): Composition => {
 /** Magnesium sulfate heptahydrate (246.5 g/mol): mmol Mg per gram [TXT]. */
 export const MG_MMOL_PER_G = 4.06;
 
-/** FU-9 F5: citrate³⁻ is a strong anion until it is metabolised; `sidOf` (solutes.ts) counts it once, net of the Ca it complexes. */
+/** Citrate³⁻ is a strong anion until it is metabolised; `sidOf` (solutes.ts) counts it once, net of the Ca it complexes. */
 export const CITRATE_CHARGE = 3;
 /**
- * FU-9 F5 (R1): the blood products are ELECTRONEUTRAL, built from their sourced ingredients instead of the unbalanced
- * Stage 7c rows (RBC Na 150 / Cl 150 / citrate 55.7 mmol/L gave an apparent SID of −167 mEq/L):
+ * The blood products are ELECTRONEUTRAL, built from their sourced ingredients instead of unbalanced rows (RBC Na 150 /
+ * Cl 150 / citrate 55.7 mmol/L would give an apparent SID of −167 mEq/L):
  * - CPD (D'Amici GM et al. Blood Transfus 2012;10 Suppl 2:s46–54, Table I): per litre trisodium citrate 89.4 mmol
  *   (2.630 g/100 mL dihydrate), citric acid 15.6 mmol (0.327 g/100 mL monohydrate), NaH2PO4 16.1 mmol [TXT];
  * - ACD-A (US formula A, AABB Technical Manual): trisodium citrate 74.8 mmol, citric acid 38.0 mmol per litre [TXT];
@@ -205,10 +203,10 @@ export const storedK = (days: number): number => Math.min(50, Math.max(1, days))
  *  mean 6.7 days in 100 units) [TXT], capped at 40 [ENG]. */
 export const storedLactate = (days: number): number => Math.min(40, 1.4 * Math.max(0, days));
 /**
- * FU-9 F5 (R1): a cellular product after `days` of storage. K leaks out for Na (the cold-inhibited pump: an
- * electroneutral exchange); lactic acid accumulates — its H+ is buffered by the unit's bicarbonate and the cells, so the
- * supernatant's SID falls by the lactate until the bicarbonate is spent (Sümpelmann 2001: pH 6.79, HCO3 11 at 6.7 days),
- * after which Cl⁻ moves into the cells (the chloride shift). The recipient receives the lactate as a metabolisable anion.
+ * A cellular product after `days` of storage. K leaks out for Na (the cold-inhibited pump: an electroneutral exchange);
+ * lactic acid accumulates — its H+ is buffered by the unit's bicarbonate and the cells, so the supernatant's SID falls
+ * by the lactate until the bicarbonate is spent (Sümpelmann 2001: pH 6.79, HCO3 11 at 6.7 days), after which Cl⁻ moves
+ * into the cells (the chloride shift). The recipient receives the lactate as a metabolisable anion.
  */
 export function storedComp(product: ProductId, days: number): Composition {
   const c: Composition = PRODUCTS[product].comp;

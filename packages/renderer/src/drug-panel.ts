@@ -1,5 +1,5 @@
-// Stage 7g drug panel: a compact table (drug, Cp, Ce, pump/TCI, total, 50 % decrement) plus a 10-minute Ce sparkline
-// per drug on one canvas, and the volatile line (FI/FA/brain, MAC). Plain DOM; theme via CSS variables.
+// Drug panel: a compact table (drug, Cp, Ce, pump/TCI, total, 50 % decrement) plus a 10-minute Ce sparkline per drug on
+// one canvas, and the volatile line (FI/FA/brain, MAC). Plain DOM; theme via CSS variables.
 import type { DrugsEvent } from '@pme/engine-core';
 
 export interface DrugPanel {

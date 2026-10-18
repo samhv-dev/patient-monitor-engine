@@ -16,7 +16,7 @@ function fires(ageY: number, seed: number, muscBlock = 0, gapS = 300): boolean {
 }
 const SEEDS = Array.from({ length: 40 }, (_, i) => i + 1);
 
-describe('FU-4 G7: the repeat-succinylcholine draw', () => {
+describe('the repeat-succinylcholine draw', () => {
   it('the paediatric rate exceeds the adult rate over 40 seeds (and each lies near its probability)', () => {
     const adult = SEEDS.filter((s) => fires(40, s)).length / SEEDS.length;
     const child = SEEDS.filter((s) => fires(4, s)).length / SEEDS.length;

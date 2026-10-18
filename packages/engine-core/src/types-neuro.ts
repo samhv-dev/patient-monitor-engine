@@ -1,6 +1,7 @@
-// Stage 7f public types (R32: neuromuscular block, anaesthetic depth, respiratory-drive depression), in their own file
-// so parallel stages do not collide in types.ts; types.ts adds each to its union with one line marked `// Stage 7f`.
-// The `drug` and `vaporiser` events are Stage 7g's (types-pk.ts; R51 §3–4): 7f declares none and consumes none.
+// Neuro public types (neuromuscular block, anaesthetic depth, respiratory-drive depression), in their own file
+// so parallel modules do not collide in types.ts; types.ts adds each to its union with one line.
+// The `drug` and `vaporiser` events are the drug model's (types-pk.ts): the neuro model declares none and consumes
+// none.
 import type { SimSeconds } from './types.ts';
 import type { NeuroAgentId, VolatileId } from './l2/neuro/bus.ts';
 import type { NeuroOutputs } from './l2/neuro/outputs.ts';
@@ -11,28 +12,28 @@ export type { NeuroOutputs, NmProfile };
 /** Patient-profile additions (brief §7.4 `patient`), all optional. */
 export interface NeuroProfile {
   nm?: NmProfile;
-  /** Plasma cholinesterase phenotype; the engine hands it to 7g's PK patient as `pche` (R51 addendum 10). */
+  /** Plasma cholinesterase phenotype; the engine hands it to the drug model's PK patient as `pche`. */
   cholinesterase?: 'normal' | 'heterozygous' | 'homozygous';
   mhSusceptible?: boolean;
-  /** Plasma magnesium, mmol/L (default 0.9); 7c supplies it when it lands. */
+  /** Plasma magnesium, mmol/L (default 0.9); the blood model supplies it when present. */
   mgMmolL?: number;
 }
 
 /**
- * The ONE `stimulus` shape (R51 addenda 12 and 17): Stage 7e's — nociception 0 none … 1 incision … 1.5
- * laryngoscopy/sternotomy … 2 maximal; it holds until the next `stimulus` event (intensity 0 ends it). 7e consumes it
- * (stress hormones); 7f OBSERVES it (apply returns false) for its antinociception/movement/EMG terms. If 7e's
- * types-endo.ts lands after this file, 7e imports this type instead of declaring its own (the 7e plan's Task 1 note).
+ * The ONE `stimulus` shape, the endocrine model's — nociception 0 none … 1 incision … 1.5 laryngoscopy/sternotomy …
+ * 2 maximal; it holds until the next `stimulus` event (intensity 0 ends it). The endocrine model consumes it (stress
+ * hormones); the neuro model OBSERVES it (apply returns false) for its antinociception/movement/EMG terms.
+ * types-endo.ts imports this type instead of declaring its own.
  */
 export type StimulusEvent = { kind: 'stimulus'; intensity: number; site?: VagalSite };
 /**
- * FU-4 G7 (Tasks 12, 18f): the ONE optional field the stimulus gains (addendum 12: one shape) — where the stimulus is,
- * for the reflexes that are VAGAL rather than nociceptive. 7e still consumes the event; 7a only observes the site.
+ * The ONE optional field the stimulus gains — where the stimulus is, for the reflexes that are VAGAL rather than
+ * nociceptive. The endocrine model consumes the event; the circulation only observes the site.
  */
 export type VagalSite = 'laryngoscopy' | 'oculocardiac' | 'peritoneal';
 export const VAGAL_SITES: readonly VagalSite[] = ['laryngoscopy', 'oculocardiac', 'peritoneal'];
 
-/** Brief §7.2 ClinicalEvent members Stage 7f validates (`stimulus` only until 7e lands: decision 17). */
+/** Brief §7.2 ClinicalEvent members the neuro model validates. */
 export type NeuroClinicalEvent =
   | StimulusEvent
   | { kind: 'airwayDevice'; device: 'none' | 'ett' | 'sga' }
@@ -51,9 +52,9 @@ export type NeuroMarkKind =
 
 export type NeuroEvent =
   /**
-   * 1 Hz instructor "anaesthetic state" (truth, not measured). Concentrations in ng/mL (propofol too), read from 7g's
-   * bus. `mac` = END-TIDAL MAC fraction (Σ fet/macAge, what the gas monitor shows); `macBrain` = the BRAIN fraction
-   * (Σ 7g's macFrac, what the depth index uses); `macEff` = brain MAC after opioid reduction.
+   * 1 Hz instructor "anaesthetic state" (truth, not measured). Concentrations in ng/mL (propofol too), read from the
+   * drug model's bus. `mac` = END-TIDAL MAC fraction (Σ fet/macAge, what the gas monitor shows); `macBrain` = the BRAIN
+   * fraction (Σ the drug model's macFrac, what the depth index uses); `macEff` = brain MAC after opioid reduction.
    */
   | {
       type: 'anaesthesia'; t: SimSeconds;

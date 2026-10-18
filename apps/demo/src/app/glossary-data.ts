@@ -1,7 +1,7 @@
-// R56 clinical glossary: engine key → clinical label, full name, unit, adult normal range (research/11-capability-inventory-
-// and-glossary.md §5, 294 entries, generated 2026-09-28 by the Stage 9 plan writer from the workspace research file; edits
-// go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>` = any segment.
-// Entries without keys are planned labels (R57/R58/R59) that the UI already uses for placeholders.
+// The clinical glossary: engine key → clinical label, full name, unit, adult normal range
+// (research/11-capability-inventory-and-glossary.md §5, 294 entries, generated 2026-09-28 from the workspace research
+// file; edits go HERE and are reviewed by Ali). `keys` are console truth paths; `#` = side index (0 L, 1 R), `*`/`<id>`
+// = any segment. Entries without keys are planned labels that the UI already uses for placeholders.
 export interface GlossaryEntry {
   n: number;
   /** research/11 section (5.1 monitor … 5.15 obstetric). */
@@ -314,9 +314,9 @@ export const GLOSSARY: readonly GlossaryEntry[] = [
 ];
 
 /**
- * Stage 9 additions (Ali reviews them with the glossary, R56): labels the instructor controls need that research/11 does
- * not list as a monitored quantity. Numbers 295–299 are these five; entries added at Task 0/2 (the labels of the truth
- * leaves FU-4, V.1, FU-6, FU-7 and 7k add) start at 300. research/11's numbers 1–294 never change.
+ * The clinical app's additions (Ali reviews them with the glossary): labels the instructor controls need that
+ * research/11 does not list as a monitored quantity. Numbers 295–299 are these five; the labels of the truth leaves
+ * added later start at 300. research/11's numbers 1–294 never change.
  */
 export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 295, s: 'S9', keys: [], label: 'BP', name: 'Arterial blood pressure target (systolic / diastolic): what ART and NIBP read', unit: 'mmHg', normal: '90–140 / 60–90' },
@@ -324,13 +324,13 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 297, s: 'S9', keys: [], label: 'Onset', name: 'Time over which a change reaches its target', unit: 's', normal: '' },
   { n: 298, s: 'S9', keys: ['ev.state.values.contractility'], label: 'Contractility (×)', name: 'Instructor input in MANUAL mode: contractility as a multiple of the patient\'s baseline', unit: '× baseline', normal: '1' },
   { n: 299, s: 'S9', keys: ['ev.state.values.volumeStatus'], label: 'Volume status (×)', name: 'Instructor input in MANUAL mode: 1 = normal circulating volume, 0 = severe hypovolaemia', unit: '× baseline', normal: '1' },
-  // Task 0/2 (R-S9-7): truth leaves V.1 and FU-6 added, with the labels their plans proposed (for Ali's review)
+  // Ventilator-link and respiratory-integration truth leaves, labelled as their plans proposed (for Ali's review)
   { n: 300, s: 'S9', keys: ['resp.lung.lp.waterShunt'], label: 'Lung-water shunt', name: 'Lung-water shunt (PEEP-responsive part of the extra shunt)', unit: 'fraction', normal: '0' },
   { n: 301, s: 'S9', keys: ['ev.lungState.pleuralCmH2O'], label: 'Ppl (extra)', name: 'Pleural pressure from an effusion, haemothorax or pneumothorax', unit: 'cmH₂O', normal: '0' },
   { n: 302, s: 'S9', keys: ['neuro.resp.loc'], label: 'LOC', name: 'Loss of consciousness (its effect on the ventilatory drive)', unit: '0–1', normal: '0' },
   { n: 303, s: 'S9', keys: ['neuro.resp.pain'], label: 'Nociceptive drive', name: 'Nociceptive (pain) drive to breathe', unit: '0–1', normal: '0' },
   { n: 304, s: 'S9', keys: ['neuro.resp.hvrDep'], label: 'HVR depression', name: 'Hypoxic ventilatory response depression', unit: '0–1', normal: '0' },
-  // Stage 7k's new truth leaves (its plan's N1–N7, numbered after 304; for Ali's review)
+  // The respiratory-mechanics model's new truth leaves (numbered after 304; for Ali's review)
   { n: 305, s: 'S9', keys: ['resp.volumes.frcSit'], label: 'FRC (seated, PFT)', name: 'Functional residual capacity, seated (pulmonary function test)', unit: 'mL', normal: 'ECSC predicted' },
   { n: 306, s: 'S9', keys: ['resp.vd.peco2'], label: 'PĒCO₂', name: 'Mixed-expired CO₂ tension', unit: 'mmHg', normal: '≈ 25–30' },
   { n: 307, s: 'S9', keys: ['resp.mechanics.elErs'], label: 'EL/Ers', name: 'Lung share of respiratory-system elastance', unit: 'ratio', normal: '≈ 0.5–0.8' },
@@ -339,7 +339,7 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 310, s: 'S9', keys: ['resp.volumes.pattern'], label: 'Spirometry pattern', name: 'Spirometry pattern (normal, obstructive, restrictive or mixed)', unit: '', normal: 'normal' },
   { n: 311, s: 'S9', keys: ['resp.volumes.pred.tlc', 'resp.volumes.pred.rv', 'resp.volumes.pred.frc', 'resp.volumes.pred.vc', 'resp.volumes.pred.fvc', 'resp.volumes.pred.fev1', 'resp.volumes.pred.ratio', 'resp.volumes.pred.pef'], label: 'Predicted', name: 'Predicted value (ECSC 1993 adults, Zapletal children)', unit: '', normal: '—' },
   { n: 312, s: 'S9', keys: ['resp.lung.lp.side.#.vdAlv'], label: 'VD alv fraction', name: 'Alveolar dead space as a fraction of alveolar ventilation, per lung', unit: 'fraction', normal: '≈ 0 healthy' },
-  // FU-9's new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for Ali's review)
+  // The new truth leaves (blood, fluids, acid–base and kidney integration; numbered after 312, for Ali's review)
   { n: 313, s: 'S9', keys: ['blood.core.fl.globG'], label: 'Globulins (plasma)', name: 'Plasma globulin mass: with albumin it sets the colloid osmotic pressure', unit: 'g', normal: '≈ 65 at 70 kg (24 g/L)' },
   { n: 314, s: 'S9', keys: ['blood.core.hbfFactor'], label: 'HBF factor', name: 'Hepatic blood-flow factor: splanchnic constriction, volatile agent and hepatic outflow pressure (CVP or intra-abdominal pressure)', unit: '× baseline', normal: '1' },
   { n: 315, s: 'S9', keys: ['blood.core.renal.excretion.mannitol'], label: 'Mannitol excretion', name: 'Renal mannitol excretion', unit: 'mmol/h', normal: '0' },
@@ -351,9 +351,9 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 321, s: 'S9', keys: ['organs.view.demandRel'], label: 'O₂ demand (×)', name: 'Whole-body oxygen demand relative to rest: anaesthesia, temperature, fever', unit: '× rest', normal: '1 awake; ≈ 0.85 under GA' },
   { n: 322, s: 'S9', keys: ['organs.view.mannitolMmol'], label: 'Mannitol (kidney input)', name: 'Plasma mannitol as the kidney reads it (osmotic diuresis)', unit: 'mmol', normal: '0' },
   { n: 323, s: 'S9', keys: ['organs.view.osm'], label: 'Osm (organ input)', name: 'Plasma osmolality as the brain and kidney read it', unit: 'mOsm/kg', normal: '275–295' },
-  // FU-7's new truth leaves (drug-layer integration; numbered after FU-9's 323; labels from research/11 §5 where it has them —
-  // the FU-7 plan's Task 19 console rows — and clinical wording for the rest; for Ali's review). Copies of these values
-  // in 7f's input cache (`neuro.last.*`), 7c's copy of the profile magnesium (`blood.mgSeen`) and the hooks' clock
+  // The drug layer's new truth leaves (numbered after 323; labels from research/11 §5 where it has them and clinical
+  // wording for the rest; for Ali's review). Copies of these values in the neuro model's input cache
+  // (`neuro.last.*`), the blood model's copy of the profile magnesium (`blood.mgSeen`) and the hooks' clock
   // (`pkHooks.conv.lastT`) stay model internals.
   { n: 324, s: 'S9', keys: ['pk.bus.cns.hypPropEq'], label: 'Ce prop-eq', name: 'Propofol-equivalent effect-site concentration: every hypnotic given, expressed as propofol', unit: 'µg/mL', normal: '0' },
   { n: 325, s: 'S9', keys: ['pk.bus.cns.opioidCeFentEq'], label: 'Ce fent-eq', name: 'Fentanyl-equivalent effect-site concentration: every opioid given, expressed as fentanyl', unit: 'ng/mL', normal: '0' },
@@ -370,7 +370,7 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 336, s: 'S9', keys: ['hemo.circ.ext.surgeF'], label: 'Baroreflex set-point shift (surge)', name: 'Baroreflex set-point factor raised by the stimulus surge', unit: '×', normal: '1' },
   { n: 337, s: 'S9', keys: ['hemo.circ.ext.histamine'], label: 'Histamine (vessels)', name: 'Histamine effect on the vessels: arteriolar and venous dilatation (morphine, atracurium, mivacurium)', unit: '0–1', normal: '0' },
   { n: 338, s: 'S9', keys: ['blood.core.nmUpreg'], label: 'AChR upregulation', name: 'Extrajunctional acetylcholine-receptor upregulation (burns, denervation): the succinylcholine potassium rise', unit: '0–1', normal: '0' },
-  // FU-10's new truth leaves (endocrine and thermal integration, Part A; numbered after FU-7's 338, for Ali's review)
+  // The new truth leaves (endocrine and thermal integration; numbered after 338, for Ali's review)
   { n: 339, s: 'S9', keys: ['resp.temp.ageY'], label: 'Age (thermoregulation)', name: 'Patient age as the thermoregulatory thresholds read it: the cold-defence thresholds fall with age under anaesthesia', unit: 'years', normal: '—' },
   { n: 340, s: 'S9', keys: ['endo.ageY'], label: 'Age (endocrine)', name: 'Patient age as the endocrine model holds it', unit: 'years', normal: '—' },
   { n: 341, s: 'S9', keys: ['endo.core.etomSuppr'], label: 'Etomidate adrenal suppression', name: 'Adrenal 11β-hydroxylase suppression left by etomidate: blunts the cortisol response, recovers over hours', unit: '0–1', normal: '0' },
@@ -380,19 +380,19 @@ export const GLOSSARY_S9: readonly GlossaryEntry[] = [
   { n: 345, s: 'S9', keys: ['neuro.mhExposure.sux'], label: 'MH trigger: succinylcholine', name: 'When an MH-susceptible patient was first given succinylcholine', unit: 's', normal: 'never' },
   { n: 346, s: 'S9', keys: ['neuro.mhExposure.volatile', 'neuro.mhExposure.volatileAgent'], label: 'MH trigger: volatile', name: 'When an MH-susceptible patient was first exposed to a volatile agent, and which agent', unit: 's', normal: 'never' },
   { n: 347, s: 'S9', keys: ['endo.mhOwner'], label: 'MH source', name: 'Whether the malignant hyperthermia came from its triggers or from the instructor', unit: '', normal: '—' },
-  // FU-8 Part B's new truth leaf (numbered after FU-10's 347)
+  // The circulation's skin-tone truth leaf (numbered after 347)
   { n: 348, s: 'S9', keys: ['hemo.circ.skinTone'], label: 'Skin vasomotor tone', name: 'Cutaneous vasomotor tone the finger pleth reads: falls when an anaesthetic removes sympathetic tone (PI rises), rises with vasoconstriction', unit: '× rest', normal: '1' },
 ];
 
 /**
- * Stage 9: the per-key label where one research/11 entry names several quantities ("NIBP S/D/M", "Dial / FGF"): each
- * truth path gets its own part (research/11 §5.16 rule 3: collisions resolved by the label). Reviewed with the glossary.
+ * The per-key label where one research/11 entry names several quantities ("NIBP S/D/M", "Dial / FGF"): each truth path
+ * gets its own part (research/11 §5.16 rule 3: collisions resolved by the label). Reviewed with the glossary.
  */
 export const KEY_LABELS: Readonly<Record<string, string>> = {
-  // Stage 7k (its plan's Requests → Stage 9): one label per truth path where an entry names two readings
+  // Respiratory mechanics: one label per truth path where an entry names two readings
   'resp.mechanics.plEi': 'PL,ei', 'resp.mechanics.plEe': 'PL,ee', 'resp.mechanics.pesEi': 'Pes,ei (est.)', 'resp.mechanics.pesEe': 'Pes,ee (est.)',
   'resp.mechanics.rinsp': 'Rinsp',
-  // FU-10: entry 346 names two readings
+  // Entry 346 names two readings
   'neuro.mhExposure.volatile': 'MH trigger: volatile (time)', 'neuro.mhExposure.volatileAgent': 'MH trigger: volatile (agent)',
   'resp.volumes.pred.tlc': 'TLC predicted', 'resp.volumes.pred.rv': 'RV predicted', 'resp.volumes.pred.frc': 'FRC (seated) predicted', 'resp.volumes.pred.vc': 'VC predicted',
   'resp.volumes.pred.fvc': 'FVC predicted', 'resp.volumes.pred.fev1': 'FEV₁ predicted', 'resp.volumes.pred.ratio': 'FEV₁/FVC predicted', 'resp.volumes.pred.pef': 'PEF predicted',
@@ -418,30 +418,29 @@ export const KEY_LABELS: Readonly<Record<string, string>> = {
   // pattern keys (the key string as written in `keys`): one entry, several quantities per drug or site
   'ev.drugs.drugs.<id>.rate': 'Infusion rate', 'ev.drugs.drugs.<id>.tci': 'TCI target',
   'pk.bus.agents.<id>.nmj': 'Ce NMJ', 'pk.bus.agents.<id>.dia': 'Ce diaphragm', 'pk.bus.agents.<id>.vent': 'Ce ventilatory',
-  // a '*' key names several quantities under one label: only the paths named here get a clinical label (review F1)
+  // a '*' key names several quantities under one label: only the paths named here get a clinical label
   'resp.temp.sites.oesophageal': 'Toes', 'resp.temp.sites.nasopharyngeal': 'Tnaso', 'resp.temp.sites.tympanic': 'Ttymp',
   'resp.temp.sites.bladder': 'Tblad', 'resp.temp.sites.rectal': 'Trect', 'resp.temp.sites.axilla': 'Taxil',
 };
 
 /**
- * Stage 9 (review F1): the screen label where research/11's label, shortened, would name two different quantities.
- * "T1" is both the core temperature (19) and the first twitch of the train-of-four (263); "UO" is mL/h (34) and
- * mL/kg/h (245). Reviewed by Ali with the glossary.
+ * The screen label where research/11's label, shortened, would name two different quantities. "T1" is both the core
+ * temperature (19) and the first twitch of the train-of-four (263); "UO" is mL/h (34) and mL/kg/h (245). Reviewed by
+ * Ali with the glossary.
  */
 export const SHORT: Readonly<Record<number, string>> = { 245: 'UO/kg', 263: 'TOF T1' };
 
 /**
- * Stage 9 (review F1): entries that are the same quantity as another entry (the truth copy of a monitor value), so a
- * screen may show them under one label and Explore shows one row. Every other pair of entries must differ in label.
+ * Entries that are the same quantity as another entry (the truth copy of a monitor value), so a screen may show them
+ * under one label and Explore shows one row. Every other pair of entries must differ in label.
  */
 export const SAME_AS: Readonly<Record<number, number>> = { 233: 31, 234: 32, 256: 193 };
 
 /**
- * Drug display names (orchestrator ruling 5 on the R50 review: drug names join the glossary, R56). One row per drug of
- * the 7g library (placeholders without PD excluded), generated once from its `DRUGS` names and edited by hand from now
- * on. `uk` is the name the site's "adrenaline / noradrenaline" set shows; the set is a site-profile option, default
- * "epinephrine / norepinephrine" (Ali's open question Q13). A drug a later stage adds shows its library name until it
- * gets a row here.
+ * Drug display names (drug names are part of the glossary). One row per drug of the drug library (placeholders without
+ * PD excluded), generated once from its `DRUGS` names and edited by hand from now on. `uk` is the name the site's
+ * "adrenaline / noradrenaline" set shows; the set is a site-profile option, default "epinephrine / norepinephrine" (an
+ * open question for Ali). A drug a later stage adds shows its library name until it gets a row here.
  */
 export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>> = {
   adenosine: { name: "Adenosine" }, amiodarone: { name: "Amiodarone" }, atropine: { name: "Atropine" },
@@ -458,20 +457,20 @@ export const DRUG_NAMES: Readonly<Record<string, { name: string; uk?: string }>>
   midazolam: { name: "Midazolam" }, milrinone: { name: "Milrinone" }, morphine: { name: "Morphine" },
   naloxone: { name: "Naloxone" }, neostigmine: { name: "Neostigmine" }, nitroglycerin: { name: "Nitroglycerin" },
   n2o: { name: "Nitrous oxide" }, norepinephrine: { name: "Norepinephrine", uk: "Noradrenaline" }, phenylephrine: { name: "Phenylephrine" },
-  potassiumChloride: { name: "Potassium chloride" }, // FU-7.1 A5
+  potassiumChloride: { name: "Potassium chloride" },
   propofol: { name: "Propofol" }, remifentanil: { name: "Remifentanil" }, rocuronium: { name: "Rocuronium" },
   ropivacaine: { name: "Ropivacaine" }, salbutamol: { name: "Salbutamol (IV/neb)" }, sevoflurane: { name: "Sevoflurane" },
   sodiumBicarbonate: { name: "Sodium bicarbonate 8.4 %" }, succinylcholine: { name: "Succinylcholine" }, sufentanil: { name: "Sufentanil" },
   sugammadex: { name: "Sugammadex" }, thiopental: { name: "Thiopental" }, vasopressin: { name: "Vasopressin" },
   vecuronium: { name: "Vecuronium" },
-  // FU-7's new library rows
+  // The drug layer's new library rows
   atracurium: { name: "Atracurium" }, mivacurium: { name: "Mivacurium" }, nitroprusside: { name: "Sodium nitroprusside" },
   glucagon: { name: "Glucagon" }, procainamide: { name: "Procainamide" }, verapamil: { name: "Verapamil" },
 };
 
 /**
- * Task 26: short screen names for the 7b lung catalogue (the catalogue's full text, with its grading notes, goes in the
- * tooltip). Reviewed with the glossary; an id missing here shows the catalogue text up to its first "(" or " /".
+ * Short screen names for the lung catalogue (the catalogue's full text, with its grading notes, goes in the tooltip).
+ * Reviewed with the glossary; an id missing here shows the catalogue text up to its first "(" or " /".
  */
 export const LUNG_LABELS: Readonly<Record<string, string>> = {
   ph: 'Pulmonary hypertension', bronchospasm: 'Bronchospasm', asthma: 'Asthma', anaphylaxis: 'Anaphylactic bronchospasm', copd: 'COPD',

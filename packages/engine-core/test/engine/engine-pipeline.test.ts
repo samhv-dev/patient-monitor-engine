@@ -110,7 +110,7 @@ describe('engine pipeline', () => {
     for (let i = 1; i < ts.length; i++) expect(ts[i]!).toBeGreaterThanOrEqual(ts[i - 1]!);
   });
 
-  it('posts a QRS tone 20–45 ms after each true R (BEEP_DELAY 30 ms, ruling R15), before the tone is due', () => {
+  it('posts a QRS tone 20–45 ms after each true R (BEEP_DELAY 30 ms), before the tone is due', () => {
     const e = createEngine({ seed: 3 });
     const beats: number[] = [];
     const tones: Array<{ t: number; postedAt: number }> = [];

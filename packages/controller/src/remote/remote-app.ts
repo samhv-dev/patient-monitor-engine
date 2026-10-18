@@ -64,7 +64,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
   const status = q<HTMLElement>('.pme-status');
   if (o.session) codeIn.value = o.session;
   let session: ControllerSession | null = null;
-  let transport: ManagedTransport | null = null; // FU-11 (F18, BA07): the remote OWNS the transport it creates
+  let transport: ManagedTransport | null = null; // The remote OWNS the transport it creates
   let off: (() => void) | null = null;
 
   const join = (code: string, via: Via): ControllerSession => {
@@ -72,7 +72,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
     if (!s0) throw new Error(`invalid session code ${code}`);
     off?.();
     session?.close();
-    transport?.close(); // FU-11 (F18, BA07): a rejoin closes the previous link (session.close() never owned it)
+    transport?.close(); // A rejoin closes the previous link (session.close() never owned it)
     transport = o.connect(s0, via);
     const s = new ControllerSession({ session: s0, transport, issuedBy: 'remote' });
     session = s;
@@ -106,7 +106,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
       const target = (ev.target as HTMLElement).closest('button')?.dataset.target;
       if (target) fire({ type: 'scenario', action: 'trigger', target });
     };
-    /** Stage 6b: the scenario's current state and its manual-trigger buttons. */
+    /** The scenario's current state and its manual-trigger buttons. */
     const renderScenario = () => {
       const v = s.scenario;
       scn.hidden = !v.doc;
@@ -168,7 +168,7 @@ export function mountRemote(parent: HTMLElement, o: RemoteOptions): RemoteHandle
     destroy() {
       off?.();
       session?.close();
-      transport?.close(); // FU-11 (F18, BA07): no socket or reconnect timer outlives the remote
+      transport?.close(); // No socket or reconnect timer outlives the remote
       transport = null;
       root.remove();
     },

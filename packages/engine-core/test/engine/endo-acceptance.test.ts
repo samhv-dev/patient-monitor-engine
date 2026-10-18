@@ -14,12 +14,12 @@ const hrAt = (ev: EngineEvent[], t0: number, t1: number) => {
 };
 const drug = (drugId: string, dose: number, unit: string) => ev3({ kind: 'drug', drugId, dose, unit, route: 'iv' });
 
-describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
+describe('endocrine acceptance (MANUAL)', { timeout: 600_000 }, () => {
   // R45 (FU-4, the one physical dead space): this MANUAL rig ventilates 12 × 500 through the ventilator, whose dead space
   // fell 204 + fit → 127 + fit (an ETT replaces the upper airway it bypasses), so the same MH VCO2 raises EtCO2 more
   // slowly — measured 36/42/54/71/86 at 0/5/10/15/20 min (slope 3.4/min still in band). The "≥ 60 by 10 min" edge is
   // split out as a record; the rig is not re-tuned (its "fixed ventilation" premise has no PaCO2 target to re-derive to).
-  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 after FU-4\'s dead-space root', async () => {
+  it.fails('MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 with the corrected dead space', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'thermal', anaesthesia: 'general' }));
     e.dispatch(vent(12));
@@ -67,7 +67,7 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
   // R45 (FU-4, the one physical dead space — as the MH row above): the lower alveolar dead-space load washes the CO2
   // out sooner after dantrolene — measured peak at +4.0 min (band 5–10, asserted from 4.5 min). FU-6: the peak is at
   // +5.0 min (EtCO2 91) on the FU-6 branch at Task 11 — the pre-declared it.fails is met, flipped (R45).
-  it('MH + dantrolene 2.5 mg/kg at 20 min (7g), fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21) — was +4.0 min after FU-4\'s dead-space root, +5.0 with FU-6', async () => {
+  it('MH + dantrolene 2.5 mg/kg at 20 min, fixed MV: EtCO2 turns 5–10 min after the dose (tables §7 check 21)', async () => {
     const ev = await mhDantrolene(false);
     const et = (a: number) => mean(numSeries(ev, 'etco2', a - 20, a).map(([, v]) => v));
     let peak = t0;
@@ -79,7 +79,7 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
 
   // R45 miss (prototype: HR 121 at +20 min, core 39.8 °C): the fever term (× 1.27) and the hypercapnic epinephrine keep
   // the HR up; the tables' "HR normal" assumes active cooling, which 7e does not model (Q-7e-5). Not widened.
-  it.fails('MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21; measured 129/121 at +15/+20 min, core 39.78 °C; Q-7e-5)', async () => {
+  it.fails('MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21; measured 129/121 at +15/+20 min, core 39.78 °C)', async () => {
     const ev = await mhDantrolene(true);
     const hr20 = hrAt(ev, t0 + 1140, t0 + 1200);
     const tc = stateSeries(ev, 'tempCore');
@@ -109,7 +109,7 @@ describe('Stage 7e acceptance (MANUAL)', { timeout: 600_000 }, () => {
     expect(g.top / g.base - 1).toBeLessThan(0.5 * (l.top / l.base - 1));
   });
 
-  it('glucose through 7g: dextrose 25 g → > 250 mg/dL at once, < 130 by 60 min; insulin infusion 4 U/h → < 70 by 2 h; 7c’s lab panel shows it', async () => {
+  it('glucose through the drugs: dextrose 25 g → > 250 mg/dL at once, < 130 by 60 min; insulin infusion 4 U/h → < 70 by 2 h; the blood lab panel shows it', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 60);
     e.dispatch(drug('dextrose', 25, 'g'));

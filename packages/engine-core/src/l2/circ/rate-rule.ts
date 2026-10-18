@@ -1,12 +1,12 @@
-// FU-2 (NR-7g-5, G7g): who owns the ventricular rate in MODELED mode. Only the sinus node answers to the
-// circulation's HR set point (baroreflex, chemoreflex, drugs); every other pacemaker — ectopic atrial foci, the AF
-// junction, re-entry circuits, junctional and ventricular foci, escape rhythms, pacemakers — keeps its own rate and
-// the circulation follows IT. Two bounded exceptions: in AF the reflex modulates AV-nodal conduction, so the
-// ventricular response moves with sympathetic/vagal tone by a bounded fraction, and falls with the drugs' AV-nodal
-// block (β-blockers, amiodarone, adenosine: the drug bus's avNodeBlock); an atrial-sensing pacemaker (AAI,
-// DDD) is inhibited when the intrinsic sinus runs faster than its lower rate, so the reflex can raise the rate above
-// the programmed lower rate but never pull it below. An explicit instructor rate on a sinus-family rhythm overrides
-// the reflex exactly as in MANUAL until a sinus-family rhythm is set without a rate.
+// Who owns the ventricular rate in MODELED mode. Only the sinus node answers to the circulation's HR set point
+// (baroreflex, chemoreflex, drugs); every other pacemaker — ectopic atrial foci, the AF junction, re-entry circuits,
+// junctional and ventricular foci, escape rhythms, pacemakers — keeps its own rate and the circulation follows IT. Two
+// bounded exceptions: in AF the reflex modulates AV-nodal conduction, so the ventricular response moves with
+// sympathetic/vagal tone by a bounded fraction, and falls with the drugs' AV-nodal block (β-blockers, amiodarone,
+// adenosine: the drug bus's avNodeBlock); an atrial-sensing pacemaker (AAI, DDD) is inhibited when the intrinsic sinus
+// runs faster than its lower rate, so the reflex can raise the rate above the programmed lower rate but never pull it
+// below. An explicit instructor rate on a sinus-family rhythm overrides the reflex exactly as in MANUAL until a
+// sinus-family rhythm is set without a rate.
 import { rampValue, type RampState } from '../../l1/ramp.ts';
 import { RHYTHMS } from '../ecg/rhythms.ts';
 import type { RhythmId } from '../../types.ts';
@@ -23,10 +23,10 @@ export const PACER_SENSING: ReadonlySet<string> = new Set(IDS.filter((id) => RHY
 /** Rhythms whose ventricular response the reflex modulates through AV-nodal conduction. Flutter conducts at a
  * fixed ratio (a discrete 2:1 → 4:1 change is not a bounded modulation), so it is not listed. */
 export const AV_MODULATED: ReadonlySet<string> = new Set(['afib']);
-/** Largest fractional change of the AF ventricular response the reflex can cause [ENG, calibration pass R44]. */
+/** Largest fractional change of the AF ventricular response the reflex can cause [ENG, calibrated]. */
 export const AV_MOD_MAX = 0.1;
 /** AV-nodal share of the sinus node's autonomic rate change (the node's conduction is less tone-sensitive than the
- * sinus node's automaticity) [ENG, calibration pass R44]. */
+ * sinus node's automaticity) [ENG, calibrated]. */
 export const AV_GAIN = 0.25;
 
 /**

@@ -1,0 +1,3 @@
+history-bearing comment lines: 3872 in 410 files; by class: a=391, b=2552, m=726, c=61, k=142
+blocks: a=391, b=2257, m=442, c=29, k=127; reviewed: 1156
+lines by package: engine-core=2855, demo=485, renderer=220, controller=152, validation=62, ventilator=49, skins=29, audio=16, playwright.config.ts=2, playwright.validation.config.ts=1, classroom=1

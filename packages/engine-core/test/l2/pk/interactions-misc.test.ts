@@ -23,7 +23,7 @@ function hrFall(drugId: string, dose: number, unit = 'mg/kg', min = 10): number 
   return 1 - lo;
 }
 
-describe('FU-7: single-target rows', () => {
+describe('single-target rows', () => {
   it('sugammadex (DI-45): 16 mg/kg gives a 15–30 % HR fall (MHRA/EMA; M10 ch. 24)', () => {
     const f16 = hrFall('sugammadex', 16);
     console.log(`FU-7 T12: sugammadex HR fall 16 mg/kg ${(100 * f16).toFixed(1)} %`);
@@ -38,7 +38,7 @@ describe('FU-7: single-target rows', () => {
 });
 
 /** FU-7 Task 13 (addendum 24 / audit D14): local-anaesthetic toxicity is ADDITIVE by potency-weighted dose (ASRA 2020). */
-describe('LAST additivity (R51 addendum 24)', () => {
+describe('LAST additivity', () => {
   const TH = LAST_THRESHOLDS;
   /** Every second for 10 min: the published effects and the fractional sums of the agents' concentrations (pH 7.4, no lipid). */
   function trace(doses: [string, number, string][]) {
@@ -52,7 +52,7 @@ describe('LAST additivity (R51 addendum 24)', () => {
     });
     return out;
   }
-  it('a sole agent keeps the pre-FU-7 effect exactly: hill(c/th, 1, 1, 3) ≡ hill(c, th, 1, 3), and 0.5 at its threshold', () => {
+  it('a sole agent keeps the plain Hill effect exactly: hill(c/th, 1, 1, 3) ≡ hill(c, th, 1, 3), and 0.5 at its threshold', () => {
     expect(hill(1, 1, 1, 3)).toBe(0.5);
     for (const x of trace([['bupivacaine', 100, 'mg']])) {
       expect(x.cnsE).toBeCloseTo(hill(x.uCns * TH.bupivacaine!.cns, TH.bupivacaine!.cns, 1, 3), 12);
@@ -77,7 +77,7 @@ describe('LAST additivity (R51 addendum 24)', () => {
 });
 
 /** FU-7 Task 15 (addendum 24): the second-gas effect and the end-tidal desflurane surge trigger. */
-describe('volatiles: second gas and the desflurane trigger (R51 addendum 24)', () => {
+describe('volatiles: second gas and the desflurane trigger', () => {
   /** FA/FI of the potent agent and of N2O after `min` minutes of `agent` at `dial` % with `n2o` (fraction), FGF 6. */
   function faFi(agent: 'sevoflurane' | 'desflurane', dial: number, n2o: number, min = 5) {
     const r = rig();
@@ -127,7 +127,7 @@ describe('volatiles: second gas and the desflurane trigger (R51 addendum 24)', (
 });
 
 /** FU-7 Task 16 (addendum 24 / audit D15): the histamine releasers publish `bus.airway.histamine`. */
-describe('histamine release (R51 addendum 24)', () => {
+describe('histamine release', () => {
   const peakHist = (id: string, dose: number, unit: string) => {
     const r = rig();
     give(r, id, dose, unit);
@@ -152,7 +152,7 @@ describe('histamine release (R51 addendum 24)', () => {
 });
 
 /** FU-7 Task 17 (addendum 24): the re-fitted sizes and the new rows, read on 7g's own multipliers. */
-describe('inotrope / vasodilator sizes (R51 addendum 24)', () => {
+describe('inotrope / vasodilator sizes', () => {
   let n = 0;
   const ev = (event: Record<string, unknown>) => ({ id: `t17-${++n}`, issuedBy: 'test', type: 'applyEvent', event }) as unknown as Command;
   /** fx.svr every second for `min` minutes after a dexmedetomidine 1 µg/kg load over 10 min. */
@@ -174,7 +174,7 @@ describe('inotrope / vasodilator sizes (R51 addendum 24)', () => {
   });
   // Pre-declared as it.fails (Task 17 Step 4), but MET on this tree: the late fall comes from the row's own SVR −0.3 entry
   // (FU-4's dexmedetomidine `symp` row, Requests → FU-4 item 1, has not landed) — written as `it` (R45).
-  it('dexmedetomidine: SVR is below baseline by 15 min (measured × 0.963; was pre-declared it.fails pending FU-4\'s symp row)', () => {
+  it('dexmedetomidine: SVR is below baseline by 15 min (measured × 0.963)', () => {
     expect(dexSvr()[899]!).toBeLessThan(1);
   });
   /** Nitroprusside 1 µg/kg/min for 10 min, then stopped: the SVR reduction at 10 min and 2 min after stopping. */
@@ -212,7 +212,7 @@ describe('inotrope / vasodilator sizes (R51 addendum 24)', () => {
 });
 
 /** FU-7 Task 18 (addendum 24; D12): the inert rows act (dexamethasone, ondansetron) or are documented (tranexamic acid). */
-describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook (R51 addendum 24)', () => {
+describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook', () => {
   /** 7g's real PK and 7e's real pipeline stepped together each second (7e reads `ps.pk`), 60 y / 70 kg. Returns glucose
    * (mmol/L) and 7e's HR/SVR multipliers each minute, from the bolus at t = 0. */
   function endoArm(diabetes: 'none' | 'type2', dexMg: number, min: number) {
@@ -232,7 +232,7 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook (R51 
     return out;
   }
   const MGDL = 18.016;
-  it('dexamethasone 8 mg raises glucose 10–60 mg/dL within an hour (DI-76: Hans 2006; M10 ch. 47) and 7e\'s HR/SVR terms do not move', () => {
+  it('dexamethasone 8 mg raises glucose 10–60 mg/dL within an hour (Hans 2006; M10 ch. 47) and the endocrine HR/SVR terms do not move', () => {
     const dex = endoArm('none', 8, 60);
     const none = endoArm('none', 0, 60);
     const d = (dex.at(-1)!.glu - none.at(-1)!.glu) * MGDL;
@@ -269,7 +269,7 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook (R51 
     expect(t2).toBeLessThanOrEqual(4);
   });
 
-  it('ondansetron 4 mg adds 10–20 ms of QTc (FDA 2012) through 7c\'s ECG QTc delta; no rhythm or haemodynamic output', () => {
+  it('ondansetron 4 mg adds 10–20 ms of QTc (FDA 2012) through the blood model\'s ECG QTc delta; no rhythm or haemodynamic output', () => {
     const r = rig();
     give(r, 'ondansetron', 4, 'mg');
     let peak = 0;
@@ -285,7 +285,7 @@ describe('inert rows: dexamethasone glucose, ondansetron QTc, the TXA hook (R51 
     expect(d).toBeLessThanOrEqual(20);
   });
 
-  it('tranexamic acid 1 g is QUIET until 7i (DI-73; R58): no 7g output moves, and its dose is logged for 7i to read', () => {
+  it('tranexamic acid 1 g is QUIET until a coagulation model exists: no drug output moves, and its dose is logged for that model to read', () => {
     const r = rig();
     give(r, 'tranexamicAcid', 1000, 'mg');
     let logged = false;

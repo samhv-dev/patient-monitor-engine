@@ -3,7 +3,7 @@ import { createEngine } from '../../src/engine.ts';
 import type { EngineEvent } from '../../src/types.ts';
 import { cmd, read, rig } from '../helpers/hemo.ts';
 
-describe('engine + Stage 2 pipeline wiring', () => {
+describe('engine + haemodynamic pipeline wiring', () => {
   it('pleth exists by default; abp/cvp/pap exist only once attached, at 125 Hz with the look-ahead filled', () => {
     const e = createEngine({ seed: 1 });
     expect(e.latestSampleIndex('abp')).toBe(-1);
@@ -25,7 +25,7 @@ describe('engine + Stage 2 pipeline wiring', () => {
     expect(e.latestSampleIndex('abp')).toBeGreaterThan(300);
   });
 
-  it('validates Stage 2 commands', () => {
+  it('validates haemodynamic commands', () => {
     const e = createEngine();
     const r = (c: Record<string, unknown>) => e.dispatch(cmd(c));
     expect(r({ type: 'setTarget', variable: 'sbp', value: 90, ramp: { durationS: 30 } }).accepted).toBe(true);

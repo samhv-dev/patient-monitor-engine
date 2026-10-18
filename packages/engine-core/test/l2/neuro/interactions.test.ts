@@ -16,11 +16,11 @@ function rec25(ec50: number, tempC = 37): number {
   return on + untilTof(r, (p) => p.tof.t1 >= 0.25, 200, m);
 }
 
-describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
+describe('NMB interactions', { timeout: 120_000 }, () => {
   // R45 (FU-7 gate review, condition 2): the ORIGINAL assertion against the tables' size (× 0.67, i.e. 1/(1 + 0.5)) is
   // kept as it was written. FU-7 Task 14 (E-FU7-10 a) re-sized the divisor to VOL_NMB_K 0.18 [ENG; fit target DI-51's
   // engine duration +25–80 %], so the multiplier is now × 0.847 and this size is a measured miss.
-  it.fails('1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)', () => {
+  it.fails('1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, was met at × 0.667)', () => {
     const m = ec50Multipliers({ ...N, volatileMac: 1 }).rocuronium;
     expect(m).toBeCloseTo(1 / 1.5, 6);
   });
@@ -35,7 +35,7 @@ describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
     expect(ratio).toBeGreaterThan(1.2);
     expect(ratio).toBeLessThan(1.45);
   });
-  it('magnesium 2 mmol/L potentiates; hypothermia 34 °C: EC50 × 0.64 plus 7g\'s slower clearance prolong ≥ 30 %', () => {
+  it('magnesium 2 mmol/L potentiates; hypothermia 34 °C: EC50 × 0.64 plus the drug model\'s slower clearance prolong ≥ 30 %', () => {
     expect(ec50Multipliers({ ...N, mgMmolL: 2 }).rocuronium).toBeCloseTo(1 / 1.3, 6);
     const cold = ec50Multipliers({ ...N, tempC: 34 }).rocuronium;
     expect(cold).toBeCloseTo(0.64, 6);
@@ -55,7 +55,7 @@ describe('NMB interactions (scope 7f-1)', { timeout: 120_000 }, () => {
 });
 
 /** FU-7 Task 14 (addendum 24 / audit D12): ONE magnesium state and ONE calcium state — 7c's blood values. */
-describe('FU-7: one magnesium and one calcium state (R51 addendum 24)', { timeout: 120_000 }, () => {
+describe('one magnesium and one calcium state', { timeout: 120_000 }, () => {
   it('blood Mg 2.1 mmol/L prolongs rocuronium exactly as profile Mg 2.1 does — the two paths agree to 1e-9 (DI-90: was +0.5 % vs +39 %)', () => {
     const r = rig();
     give(r, 'rocuronium', 0.6);

@@ -1,5 +1,5 @@
 // The physiology sanity set as pme-validation/1 documents (brief §4.9 checks 1–9 = V8; tables
-// docs/physiology/stage-7-parameter-tables.md §7 checks 10–25; R39 bands). Built by helpers so each row reads as
+// docs/physiology/parameter-tables.md §7 checks 10–25; R39 bands). Built by helpers so each row reads as
 // its source sentence. Checks that need Stage 7 modules (drugs, bleeding, conditions, MODELED mode) are NOT
 // MEASURABLE on a build without them (the engine refuses the command, decision 8) and become live as 7a–7g merge.
 // Default tolerance for a stated change is ±15 % (tables §7 header) [ENG]; stated ranges are used as Range targets.

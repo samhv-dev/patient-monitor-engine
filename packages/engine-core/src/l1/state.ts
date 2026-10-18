@@ -1,6 +1,6 @@
 // L1 patient truth, MANUAL mode (brief §4.9): the shared PatientState schema, instructor targets with
 // ramps (linear / exp / sigmoid, delay, mid-ramp retarget from the CURRENT value), control flags and
-// pin / release. 'hr' keeps living in the engine's Stage 1 ramp; every other StateVar lives here.
+// pin / release. 'hr' keeps living in the engine's own hr ramp; every other StateVar lives here.
 // All state is plain JSON-safe data (the engine clones it every tick for the look-ahead).
 import type { ControlFlag } from '../types-hemo.ts';
 import type { PatientProfile, Ramp, StateVar } from '../types.ts';
@@ -39,21 +39,21 @@ export const STATE_SCHEMA: Readonly<Record<StateVar, VarSpec>> = {
   k: { def: 4.2, min: 2, max: 9, stage: 5, manual: 'target' },
   qtc: { def: 400, min: 300, max: 650, stage: 5, manual: 'target' },
   volumeStatus: { def: 1, min: 0, max: 1, stage: 2, manual: 'target' }, // 1 = normovolaemic, 0 = severe hypovolaemia
-  paceThresholdMa: { def: 70, min: 10, max: 200, stage: 4, manual: 'target' }, // R39-4: adult TCP threshold 70 mA (patients 40–120)
+  paceThresholdMa: { def: 70, min: 10, max: 200, stage: 4, manual: 'target' }, // Adult TCP threshold 70 mA (patients 40–120)
 };
 
 export const STATE_VARS = Object.keys(STATE_SCHEMA) as StateVar[];
-/** Stage 3: how far a coupled truth may sit from its target before the 'override' flag shows. */
+/** How far a coupled truth may sit from its target before the 'override' flag shows. */
 const overrideTol = (v: StateVar): number => (v === 'fio2' || v === 'shunt' ? 0.01 : v === 'volumeStatus' ? 0.02 : 0.5);
 export type L1Var = Exclude<StateVar, 'hr'>;
 
 export interface L1State {
-  mode: 'manual' | 'modeled'; // Stage 7a (Task 15 switches it)
+  mode: 'manual' | 'modeled';
   vars: Record<L1Var, RampState>;
   pinned: StateVar[];
-  /** Stage 3: coupled truths (coupling rules and the gas/temperature models); absent → the ramp is the truth. */
+  /** Coupled truths (coupling rules and the gas/temperature models); absent → the ramp is the truth. */
   coupled?: Partial<Record<L1Var, number>>;
-  /** Stage 9 (E-S9-5): in MODELED mode, each held value's target from before the hold; a release puts it back. */
+  /** In MODELED mode, each held value's target from before the hold; a release puts it back. */
   preHold?: Partial<Record<L1Var, number>>;
 }
 
@@ -67,13 +67,13 @@ export function createL1State(profile?: PatientProfile): L1State {
   return { mode: 'manual', vars, pinned: [] };
 }
 
-/** Truth of an L1 variable at time t (sim seconds): the coupled truth when a coupling rule sets one (Stage 3). */
+/** Truth of an L1 variable at time t (sim seconds): the coupled truth when a coupling rule sets one. */
 export function l1Value(st: L1State, v: L1Var, t: number): number {
   const c = st.coupled?.[v];
   return c !== undefined ? c : rampValue(st.vars[v], t);
 }
 
-/** Stage 3: the instructor's target (ramp) itself, ignoring couplings. */
+/** The instructor's target (ramp) itself, ignoring couplings. */
 export function l1Target(st: L1State, v: L1Var, t: number): number {
   return rampValue(st.vars[v], t);
 }
@@ -107,7 +107,7 @@ export function pinVar(st: L1State, v: StateVar): void {
   if (!st.pinned.includes(v)) st.pinned.push(v);
 }
 
-/** MANUAL release: drops the 'pinned' flag and keeps the value (MODELED blends to the model, Stage 7). */
+/** MANUAL release: drops the 'pinned' flag and keeps the value (MODELED blends to the model). */
 export function releaseVar(st: L1State, v: StateVar | 'all'): void {
   st.pinned = v === 'all' ? [] : st.pinned.filter((x) => x !== v);
 }
@@ -125,7 +125,7 @@ export function l1Flags(
   const out: Partial<Record<StateVar, ControlFlag>> = {};
   for (const v of STATE_VARS) {
     const r = v === 'hr' ? hrRamp : st.vars[v];
-    const c = v === 'hr' ? undefined : st.coupled?.[v]; // Stage 3: a coupled truth away from its target
+    const c = v === 'hr' ? undefined : st.coupled?.[v]; // A coupled truth away from its target
     if (overrides.includes(v) || (c !== undefined && Math.abs(c - rampValue(r, t)) > overrideTol(v))) out[v] = 'override';
     else if (st.pinned.includes(v)) out[v] = 'pinned';
     else if (isRamping(r, t)) out[v] = 'ramping';

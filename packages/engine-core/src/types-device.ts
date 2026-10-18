@@ -1,5 +1,5 @@
-// Stage 4b public types (brief §6.4–§6.7, §7.2–§7.3): the device layer's commands and events. Kept in their own
-// file, like types-hemo.ts, so concurrent stages do not collide in types.ts; types.ts adds these to its unions.
+// Device-layer public types (brief §6.4–§6.7, §7.2–§7.3): the device layer's commands and events. Kept in their own
+// file, like types-hemo.ts, so parallel modules do not collide in types.ts; types.ts adds these to its unions.
 import type { NumericId, RhythmId, SimSeconds } from './types.ts';
 
 /** Alarm levels, 1 = highest (brief §3.8 `alarms.levels`; IEC high/medium/low and Saadat 1/2/3 are display names). */
@@ -44,7 +44,7 @@ export type AlarmDeviceAction = {
   lane?: never;
 };
 
-/** Stage 4b: the skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). */
+/** The skin (and age band) the device layer follows; `setSkin` without an engine restart (brief §3.8). */
 export type MonitorDeviceAction = { device: 'monitor'; action: 'skin' | 'ageBand'; value: string; lane?: never };
 
 /** One active (or latched) alarm as the renderer shows it. */
@@ -60,8 +60,8 @@ export interface AlarmEntry {
   latched: boolean;
   acked: boolean;
   /**
-   * FU-5: the alarm sound plays — raised and not acknowledged, and while latched only under the skin's AUDIBLE latching
-   * (philips-like #H30: visual only). Absent in pre-FU-5 events: read as `!acked`.
+   * The alarm sound plays — raised and not acknowledged, and while latched only under the skin's AUDIBLE latching
+   * (philips-like #H30: visual only). Absent in older events: read as `!acked`.
    */
   sounding?: boolean;
 }
@@ -77,7 +77,7 @@ export interface LimitState {
   approximate: boolean;
 }
 
-/** Stage 4b device events (additive to brief §7.3). */
+/** Device-layer events (additive to brief §7.3). */
 export type DeviceEvent =
   | {
       /** The alarm manager's whole visible state, on every change and at 1 Hz: the renderer's single source. */

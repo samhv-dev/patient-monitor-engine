@@ -1,23 +1,23 @@
 // Oscillometric NIBP (brief §4.5, §6.3; research 03 §5): a measurement over sim time, never a readout.
 //   inflate to 165 mmHg (adult; later cycles previous SBP + 10, GE rule) at 20 mmHg/s → step-deflate by
 //   8 mmHg, holding each step for two matched pulses (up to 4 in AF) → oscillation amplitude per pulse sampled
-//   from the ACTUAL site beats:  A(Pc) = Amax·exp(−((Pc − MAP)/w)²), Amax = 4·tanh(PP/50) mmHg (FU-5),
+//   from the ACTUAL site beats:  A(Pc) = Amax·exp(−((Pc − MAP)/w)²), Amax = 4·tanh(PP/50) mmHg,
 //   w_hi = (SBP − MAP)/√(−ln Rs), w_lo = (MAP − DBP)/√(−ln Rd), Rs 0.50, Rd 0.80 → invert the envelope at
 //   Rs/Rd, MAP = envelope peak, + noise SD 4 mmHg → result + timestamp, or fail.
 // Irregular rhythms (AF): a step's amplitude is the mean of its pulses, an empty step waits for the longest
 // recent RR, the envelope is smoothed across steps and deflation continues until it is well below the DBP ratio,
-// so beat-to-beat pulse-pressure scatter makes the reading noisy but not biased (Stage 2 gate ruling).
+// so beat-to-beat pulse-pressure scatter makes the reading noisy but not biased.
 // Failures: an envelope peak < 0.3 mmHg or SBP < 50 (no reliable envelope, e.g. SBP 45 / no pulse) fail the attempt;
 // the second failed attempt raises the "NBP measurement failed" INOP. CPR corrupts every pulse → the cycle runs to
 // the 170 s safety deflation and fails. Envelope not bracketed above SBP → one re-pump to +40 mmHg.
-// FU-5 (audit M4): the old Amax = 0.05·PP against a 1.0 mmHg floor failed EVERY pulse pressure ≤ 20 at any MAP
-// (103/83, 81/63, 59/39 all failed); a narrow pulse pressure with an adequate MAP now measures. The skin sets the
-// initial inflation, the next-inflation rule and the STAT spacing (skin `nibp.*`, NibpState.cfg).
+// A narrow pulse pressure with an adequate MAP measures (an Amax of 0.05·PP against a 1.0 mmHg floor would fail EVERY
+// pulse pressure ≤ 20 at any MAP). The skin sets the initial inflation, the next-inflation rule and the STAT spacing
+// (skin `nibp.*`, NibpState.cfg).
 import { normal, type Sfc32State } from '../../rng/sfc32.ts';
 import type { NibpPhase, NibpSite } from '../../types-hemo.ts';
 
 export const NIBP = {
-  INITIAL_TARGET: 165, // adult (Philips 165 ± 15) — paediatric 130, neonatal 100 are Stage 4 skin data
+  INITIAL_TARGET: 165, // adult (Philips 165 ± 15) — paediatric 130, neonatal 100 are skin data
   NEXT_TARGET_ABOVE_SBP: 10, // GE rule (brief §4.5)
   REPUMP_ABOVE: 40, // [ENG]
   INFLATE_RATE: 20, // mmHg/s → under 10 s [ENG rate]
@@ -34,18 +34,18 @@ export const NIBP = {
   MIN_CUFF: 30, // stop deflating below this [ENG]
   RS: 0.5, // Rs 0.45–0.57 → 0.50 (brief §4.5)
   RD: 0.8, // Rd 0.75–0.86 → 0.80
-  // FU-5 (M4): the cuff oscillation is the arterial volume pulse under the cuff. With a sigmoid arterial P–V curve the
-  // peak oscillation (cuff ≈ MAP, transmural pressure swinging ±PP/2 around 0) is A_SAT·tanh(PP / PP_KNEE): linear in
-  // PP where the wall is most compliant, saturating at a wide PP (Drzewiecki 1994 Ann Biomed Eng 22:88; Babbs 2012
-  // BioMed Eng OnLine 11:56). 1.5 / 2.7 / 3.7 mmHg at PP 20 / 40 / 80 keeps the brief's 1–4 mmHg; PP 10 gives 0.8.
+  // The cuff oscillation is the arterial volume pulse under the cuff. With a sigmoid arterial P–V curve the peak
+  // oscillation (cuff ≈ MAP, transmural pressure swinging ±PP/2 around 0) is A_SAT·tanh(PP / PP_KNEE): linear in PP
+  // where the wall is most compliant, saturating at a wide PP (Drzewiecki 1994 Ann Biomed Eng 22:88; Babbs 2012 BioMed
+  // Eng OnLine 11:56). 1.5 / 2.7 / 3.7 mmHg at PP 20 / 40 / 80 keeps the brief's 1–4 mmHg; PP 10 gives 0.8.
   A_SAT: 4, // mmHg [ENG, fitted to the brief's 1–4 mmHg band]
   PP_KNEE: 50, // mmHg [ENG]
   AMP_NOISE: 0.05, // per-pulse amplitude noise (fraction) [ENG]
-  A_DETECT: 0.1, // pulses smaller than this are not seen, mmHg [ENG] (FU-5: 0.2 → 0.1)
-  A_MIN_ENVELOPE: 0.3, // a smaller envelope peak is not a measurement [ENG] (FU-5: 1.0 → 0.3; MAP 13 / PP 3 fails)
+  A_DETECT: 0.1, // pulses smaller than this are not seen, mmHg [ENG]
+  A_MIN_ENVELOPE: 0.3, // a smaller envelope peak is not a measurement [ENG] (MAP 13 / PP 3 fails)
   MIN_SBP: 50, // "SBP below about 50–60 fails" (brief §4.5)
   RESULT_SD: 4, // noise SD on SBP/DBP, mmHg (brief §4.5); MAP gets half
-  SAFETY_S: 170, // adult safety auto-deflate (brief §4.5); neonatal 85 s in Stage 4
+  SAFETY_S: 170, // adult safety auto-deflate (brief §4.5); neonatal 85 s (brief §4.5) is not modelled
   STAT_S: 300, // STAT = back-to-back for 5 min
   CUFF_EMIT_S: 0.2, // live cuff pressure at 5 Hz (brief §3.4)
 } as const;
@@ -85,11 +85,11 @@ export interface NibpState {
   last: NibpResult | null;
   lastEmitT: number;
   /**
-   * FU-5: the active skin's cuff settings (skin `nibp.initialInflation` for the age band, `nextInflation`, `stat`);
-   * absent = the NIBP constants (165 mmHg, previous SBP + 10, STAT back-to-back for 300 s).
+   * The active skin's cuff settings (skin `nibp.initialInflation` for the age band, `nextInflation`, `stat`); absent =
+   * the NIBP constants (165 mmHg, previous SBP + 10, STAT back-to-back for 300 s).
    */
   cfg?: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
-  /** FU-5: measurements started in the current STAT series. */
+  /** Measurements started in the current STAT series. */
   statN?: number;
 }
 
@@ -283,7 +283,7 @@ function finishAttempt(nb: NibpState, t: number, rng: Sfc32State, out: NibpOut[]
 
 function fail(nb: NibpState, _t: number, out: NibpOut[]): void {
   nb.phase = 'failed';
-  if (nb.mode === 'stat') nb.statUntil = -1; // FU-5: a failure ends a STAT series (research/06 §4.1 "stopping on error")
+  if (nb.mode === 'stat') nb.statUntil = -1; // A failure ends a STAT series (research/06 §4.1 "stopping on error")
   out.push({ kind: 'phase', phase: 'failed', cuff: nb.cuff });
   out.push({ kind: 'failed', text: 'NBP measurement failed' });
 }
@@ -367,7 +367,7 @@ export function nibpStep(nb: NibpState, t: number, dt: number, rng: Sfc32State, 
 function schedule(nb: NibpState, t: number): void {
   if (nb.mode === 'stat') {
     if (t < nb.statUntil && (nb.statN ?? 0) < (nb.cfg?.statCount ?? Infinity)) {
-      nb.nextStartT = Math.max(t, nb.startT + (nb.cfg?.statSpacingS ?? 0)); // FU-5: Saadat 30 s start to start
+      nb.nextStartT = Math.max(t, nb.startT + (nb.cfg?.statSpacingS ?? 0)); // Saadat 30 s start to start
       return;
     }
     nb.mode = nb.prevMode;

@@ -1,4 +1,4 @@
-// PD primitives (Stage 7g decision 6/7). Pure functions; every constant is cited where it is used.
+// PD primitives. Pure functions; every constant is cited where it is used.
 
 /** Sigmoid Emax: emax·c^n/(c^n + ec50^n); emax may be negative (depressant). */
 export function hill(c: number, ec50: number, emax: number, n = 1): number {
@@ -27,18 +27,18 @@ export const responseSurface = (uh: number, uo: number, alpha = SURFACE_ALPHA): 
 export const tachy = (nRecent: number, f: number): number => f ** Math.max(0, nRecent);
 
 /**
- * β-receptor occupancy by a β-blocker drug blunts the RISE of a catecholamine-driven multiplier (7e's surge
- * `endoHrF`/`endoEesF`, R51 addendum 11): 1 + (f − 1)·(1 − occupancy) for f > 1; a fall passes unchanged [ENG:
- * the same competitive picture as the β-agonist EC50 shift, collapsed to the fraction of receptors left].
+ * β-receptor occupancy by a β-blocker drug blunts the RISE of a catecholamine-driven multiplier (the endocrine model's
+ * surge `endoHrF`/`endoEesF`): 1 + (f − 1)·(1 − occupancy) for f > 1; a fall passes unchanged [ENG: the same
+ * competitive picture as the β-agonist EC50 shift, collapsed to the fraction of receptors left].
  */
 export function betaBlunt(f: number, occupancy: number): number {
   if (!(f > 1)) return f;
   return 1 + (f - 1) * (1 - Math.min(1, Math.max(0, occupancy)));
 }
 
-/** Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d, R51 addendum 11). */
+/** Eleveld BIS Ce50 age slope: Ce50(age) = Ce50(35)·e^(−0.00635·(age − 35)) (tables §5d). */
 export const ELEVELD_CE50_AGE_K = 0.00635;
-/** FU-7 (D16; Orchestrator ruling (FU-7 review) 4): fentanyl's VENTILATORY potency relative to remifentanil — 7f's
- * deviation D-7f-3 (Q54: 0.55×, C50 ≈ 1.7 ng/mL; the tables' EEG-derived 1.6× made 1.5 µg/kg apnoeic). ONE source:
- * the fentanyl row's `ventRemiEq`, `combine`'s fentanyl-equivalent and 7f's `FENT_VENT_POT` all read this. */
+/** Fentanyl's VENTILATORY potency relative to remifentanil — a deviation from the tables (Q54: 0.55×, C50 ≈
+ * 1.7 ng/mL; the tables' EEG-derived 1.6× made 1.5 µg/kg apnoeic). ONE source: the fentanyl row's `ventRemiEq`,
+ * `combine`'s fentanyl-equivalent and the neuro model's `FENT_VENT_POT` all read this. */
 export const FENT_VENT_REMI_EQ = 0.55;

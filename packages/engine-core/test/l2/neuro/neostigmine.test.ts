@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NEO_G50, NEO_SMAX, neoEc50Mult } from '../../../src/l2/neuro/neostigmine.ts';
 
 describe('neostigmine EC50 shift from 7g\'s acetylcholine gain (tables §5d Neo row)', () => {
-  it('neutral without neostigmine; monotone; bounded by the ceiling; 1.5 at 7g\'s peak gain for 0.05 mg/kg', () => {
+  it('neutral without neostigmine; monotone; bounded by the ceiling; 1.5 at the drug model\'s peak gain for 0.05 mg/kg', () => {
     expect(neoEc50Mult(1)).toBe(1);
     expect(neoEc50Mult(0.5)).toBe(1);
     let prev = 1;

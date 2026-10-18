@@ -2,11 +2,11 @@
 // Each frame: (1) take the sample range since the last frame, (2) clear the erase gap ahead of the cursor,
 // (3) draw the new samples min/max-decimated per device-pixel column, (4) re-stroke the previous frame's
 // tail so joins are seamless. Static chrome (labels, cal bar) is drawn elsewhere, once.
-// Erase/redraw ordering (review H2): each frame clears a band that starts at the LEFT edge of the last drawn
+// Erase/redraw ordering: each frame clears a band that starts at the LEFT edge of the last drawn
 // device column (a frame often ends mid-column, and the new samples continue it) minus the columns that half a line
 // width reaches into, re-strokes every earlier point whose stroke reaches into that band, and clips all strokes to
 // the band. So every pixel in the band is drawn
-// exactly once and nothing outside it is touched again. Stage 1 re-stroked only the last two points, which lost
+// exactly once and nothing outside it is touched again. Re-stroking only the last two points would lose
 // that column's first→min→max run and cut gaps of up to ~19 px into QRS strokes at DPR 1.
 import { sweepPxPerS } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
@@ -40,8 +40,8 @@ export type SampleSource = (from: number, out: Float32Array) => number;
 type Pt = { x: number; y: number }; // x unwrapped CSS px relative to lane start, y CSS px
 type Rect = [number, number, number, number]; // canvas CSS px
 
-/** FU-8 (R-S9-1a): the backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would
- * start at the oldest sample instead of the one asked for [ENG margin]. */
+/** The backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would start at the
+ * oldest sample instead of the one asked for [ENG margin]. */
 const BACKFILL_MAX_S = 100;
 
 export class SweepLane {
@@ -161,9 +161,9 @@ export class SweepLane {
     const endIdx = Math.floor(t * c.rate + 1e-9);
     const cursor = this.xOf(endIdx) % c.width;
     if (this.lastIndex < 0 || endIdx - this.lastIndex > (c.width / this.pxPerS) * c.rate) {
-      // First frame, or a jump longer than one lane (hidden tab): start clean. FU-8 (Stage 9 R-S9-1a): redraw the last
-      // lane-width of samples (less the erase gap) in this frame, so a resize or a view change does not blank the sweep
-      // until the cursor has gone round once; the engine's buffer holds them (a read returns what it has).
+      // First frame, or a jump longer than one lane (hidden tab): start clean. Redraw the last lane-width of samples
+      // (less the erase gap) in this frame, so a resize or a view change does not blank the sweep until the cursor has
+      // gone round once; the engine's buffer holds them (a read returns what it has).
       this.reset(ctx);
       const back = Math.min(Math.floor(((c.width - c.eraseGapPx) / this.pxPerS) * c.rate), BACKFILL_MAX_S * c.rate);
       this.lastIndex = Math.max(-1, endIdx - 1 - back);

@@ -26,8 +26,9 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
   - **MANUAL** — the instructor sets targets and ramps; fixed coupling rules keep the channels consistent.
   - **MODELED** — a lumped, teaching-grade physiology: four-chamber time-varying-elastance circulation, two-compartment
     lungs with gas exchange, blood chemistry, brain/kidney/liver, endocrine and thermal state, pharmacokinetics and
-    pharmacodynamics of 65 drugs, a ventilatory drive and neuromuscular block. See
-    [the physiology overview](docs/guides/physiology-overview.md) for what is modelled and what is not.
+    pharmacodynamics of the drugs listed in [the pharmacology page](docs/model/pharmacology.md), a ventilatory drive
+    and neuromuscular block. See [the physiology overview](docs/guides/physiology-overview.md) for what is modelled and
+    what is not, and [the model documentation](docs/model/README.md) for each module in detail.
 - **Device behaviour, not only waveforms:** numerics are *measured* (averaging, lags, probe states), NIBP cycles,
   IEC-style alarms with sound, pacer and defibrillator, 12-lead capture, trends and an event log.
 - **Skins as data:** six monitor looks (`saadat-like`, `philips-like`, `zoll-like`, `ge-like`, `mindray-like`,
@@ -43,10 +44,11 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
 - **Not a medical device** and not for diagnosis, monitoring or treatment of real patients.
 - **Not clinically validated.** The waveforms and the physiology have been *measured* against public recordings,
   published models and a reference physiology engine, and the misses found so far are listed in the
-  [validation summary](docs/guides/validation-summary.md) and the [known deviations](docs/guides/known-deviations.md).
-  The list is not yet complete: an evidence audit of the test targets found that many targets are themselves wrong
-  and that some passing tests hide misses. The MODELED physiology is a teaching model whose calibration has not been
-  done yet.
+  [validation summary](docs/guides/validation-summary.md), the [known deviations](docs/guides/known-deviations.md)
+  and, module by module, the [known misses](docs/validation/known-misses.md). The list is not yet complete: an
+  [evidence audit of the test targets](docs/validation/target-audit/30-target-audit.md) found that many targets are
+  themselves wrong and that some passing tests hide misses. The MODELED physiology is a teaching model whose
+  calibration has not been done yet.
 - **Adults only, and not complete.** Among the limits of this release candidate: there is no decompensation or
   reflex-collapse model; there is no sepsis model fit for teaching. The full list is in the [CHANGELOG](CHANGELOG.md) under "Known limitations".
 - **Tested browsers:** desktop Chromium and WebKit by automated tests (Playwright); real Safari, phones and
@@ -54,7 +56,7 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
 - **Not affiliated with any monitor or ventilator manufacturer (the ventilator's Hamilton-style look included).** The `-like` skins evoke a general look; no logos or trade dress.
   Alarms are "IEC-style"; no IEC 60601-1-8 compliance is claimed.
 
-## Quick start
+## Embed it
 
 **One file, from `file://`.** Download `patient-monitor.iife.js` from the
 [latest release](https://github.com/samhv-dev/patient-monitor-engine/releases/latest), then:
@@ -69,14 +71,24 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
 ```
 
 **ES modules.** Build from source (below) and depend on the workspace packages; the packages are publishable
-(`pnpm pack`) but are not on npm at this release candidate. See the [embedding guide](docs/guides/embedding.md).
+(`pnpm pack`) but are not on npm at this release candidate.
+
+```ts
+import { mountMonitor } from '@pme/renderer';
+
+const pm = mountMonitor(document.querySelector('#pm')!, { skin: 'philips-like', engine: { seed: 1, mode: 'modeled' } });
+pm.on((e) => { if (e.type === 'alarm') console.log(e.id, e.priority); });
+```
+
+`@pme/engine-core` alone runs headless (Node or a worker) through `createEngine`. Options, commands, events and the
+ventilator example are in the [embedding guide](docs/guides/embedding.md).
 
 **The ventilator with the monitor.** The release asset `ventilator-monitor-embed-v1.0.0-rc.1.zip` opens by double-click:
 the Hamilton-style ventilator on the left drives the monitor's physiology on the right.
 
 ![The ventilator simulator with the embedded monitor](docs/images/ventilator-embed.jpg)
 
-## Build from source
+## Run it
 
 Node ≥ 22.12 and pnpm 9.15.9 (`corepack enable`, or prefix every command with `npx -y pnpm@9.15.9`).
 
@@ -87,7 +99,18 @@ pnpm --filter @pme/demo dev          # the clinical app (and the developer pages
 pnpm test:e2e                        # Playwright browser checks
 pnpm docs:api                        # TypeDoc API reference → docs/api/
 pnpm validate                        # the validation harness (30–60 min; downloads public datasets)
+node --experimental-strip-types scripts/model-docs.ts    # regenerate docs/model/ after a model change
+node --experimental-strip-types scripts/known-misses.ts  # regenerate docs/validation/known-misses.md
 ```
+
+## The model
+
+The physiology is documented by module, not by the history of its construction: [docs/model/](docs/model/README.md)
+has one page per module (circulation, lungs, gas exchange, breathing, blood, brain/kidney/liver, endocrine and
+temperature, anaesthetic depth and neuromuscular block, pharmacology, rhythms, the monitor's measurements, alarms,
+defibrillator and pacer, the ventilator, …). Each page gives the module's purpose, its state, its equations in words,
+its parameters with units and sources, its known misses and its tests. The state, parameter, miss and test sections are
+generated from the code, so they match the release they ship with; a test fails when they are out of date.
 
 ## Repository
 
@@ -101,7 +124,7 @@ pnpm validate                        # the validation harness (30–60 min; down
 | `packages/ventilator` | the ventilator simulation and its two-way link to the engine |
 | `packages/validation` | the validation harness, blind-review tool and reports |
 | `apps/demo` | demo pages, the ventilator embed and the Playwright tests |
-| `docs/` | [design brief](docs/DESIGN-BRIEF.md), [build plan](docs/BUILD-PLAN.md), [guides](docs/guides/), stage plans and gate notes |
+| `docs/` | [the model](docs/model/README.md), [guides](docs/guides/), [validation](docs/validation/), [design brief](docs/DESIGN-BRIEF.md), [roadmap](docs/roadmap/README.md); the build plan, plans and gate notes record how it was built |
 
 ## Documentation
 
@@ -109,7 +132,9 @@ pnpm validate                        # the validation harness (30–60 min; down
 - [Scenario authoring](docs/guides/scenario-authoring.md) — `pme-scenario/1`
 - [Skin authoring](docs/guides/skin-authoring.md)
 - [Physiology overview](docs/guides/physiology-overview.md) — what MANUAL and MODELED do, organ by organ
-- [Validation summary](docs/guides/validation-summary.md) and [known deviations](docs/guides/known-deviations.md)
+- [The model, module by module](docs/model/README.md) — state, equations, parameters with sources, known misses, tests
+- [Validation summary](docs/guides/validation-summary.md), [known deviations](docs/guides/known-deviations.md) and
+  [known misses by module](docs/validation/known-misses.md)
 - API reference: `pnpm docs:api`, or `api-reference-<version>.zip` on each release
 - [Roadmap](docs/roadmap/README.md) — what remains for 1.0.0 and the v2.0 plan
 

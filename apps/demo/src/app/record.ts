@@ -1,10 +1,11 @@
-// Stage 13: the debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every
-// command applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks and
-// returns to them, the pulse lost and back (from the model), ventilated breaths beginning, the instructor's notes, and a
-// 1 Hz trend of six numerics and five laboratory values of the model (Q7: K⁺, lactate, pH, glucose, core temperature). It lives beside the engine, NOT in its snapshot: a return to a bookmark rewinds the
-// engine, the trends and the clocks (FU-11 Part E) but not this record — the discarded course stays, marked undone, so
-// the debrief shows the run as it happened, and its rules and charts read the course that was kept. A new patient or
-// scenario (a 'restart' timeline) starts a new record. Plain JSON data; no DOM.
+// The debrief's record of one run — what happened, in order, at the simulated time the monitor showed: every command
+// applied (from the panel, a Remote or the scenario), the scenario's states, the alarms raised, bookmarks and returns
+// to them, the pulse lost and back (from the model), ventilated breaths beginning, the instructor's notes, and a 1 Hz
+// trend of six numerics and five laboratory values of the model (K⁺, lactate, pH, glucose, core temperature). It lives
+// beside the engine, NOT in its snapshot: a return to a bookmark rewinds the engine, the trends and the clocks but not
+// this record — the discarded course stays, marked undone, so the debrief shows the run as it happened, and its rules
+// and charts read the course that was kept. A new patient or scenario (a 'restart' timeline) starts a new record. Plain
+// JSON data; no DOM.
 import type { EngineEvent } from '@pme/engine-core';
 import type { AppliedResolution, WireEvent } from '@pme/controller';
 import type { ScenarioDoc } from '@pme/controller/scenario';
@@ -32,7 +33,7 @@ export const TREND = { hr: ['hr'], map: ['abpMean', 'nibpMean'], spo2: ['spo2'],
 export type TrendKey = keyof typeof TREND;
 export const TREND_KEYS = Object.keys(TREND) as TrendKey[];
 /**
- * Stage 13 Q7: the model's laboratory values, 1 Hz, each with the glossary key that labels it: K⁺, lactate and pH from
+ * The model's laboratory values, 1 Hz, each with the glossary key that labels it: K⁺, lactate and pH from
  * the engine's `labs` event (the arterial panel the Labs view shows), glucose from its `endo` event, the core
  * temperature from the truth. They are the model's values, not samples the instructor drew.
  */
@@ -222,8 +223,8 @@ export class RunRecord {
    * after it (same time, later order), and a breath reaches the record when it ends, seconds after the time it carries
    * (earlier time, later order). The breath, pulse and alarm trackers go back to where they stood at the bookmark, so the
    * restored engine's repeat of a breath already under way is no new "began" and an alarm active at the bookmark is not
-   * raised again (R50 M-2). A bookmark this record never saw: the rows after `t`, the trackers from the kept rows, and
-   * every alarm the restored engine reports is raised.
+   * raised again. A bookmark this record never saw: the rows after `t`, the trackers from the kept rows, and every alarm
+   * the restored engine reports is raised.
    */
   private undo(label: string, t: number): void {
     const n = ++this.data.returns;

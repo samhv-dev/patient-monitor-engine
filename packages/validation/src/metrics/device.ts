@@ -3,7 +3,7 @@
 //   (IEC-style, brief §6.1) — error distribution in bpm;
 // - NIBP vs ABP: each NIBP MAP minus the invasive MAP averaged over the 40 s before it (the cuff cycle) [ENG];
 // - EtCO2 − PaCO2: each arterial PaCO2 lab value against the median EtCO2 of the 120 s before it (recorded only;
-//   the engine has no public PaCO2 until Stage 7c, the report says so).
+//   the report says so).
 import { median } from '../stats.ts';
 import type { PulseBeat } from './abp.ts';
 

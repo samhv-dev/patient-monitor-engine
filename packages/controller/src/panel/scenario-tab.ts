@@ -1,7 +1,7 @@
-// The instructor panel's Scenario tab (Stage 6b): load (built-in list, file, URL), the current state and time in
-// it, the current state's transitions with their conditions and a Press/Force button each, goto, pause/resume,
-// and a timeline of states with authored jump points. Reads ControllerSession.scenario (a ScenarioView); every
-// action is a `scenario` command to the host, which validates and runs it.
+// The instructor panel's Scenario tab: load (built-in list, file, URL), the current state and time in it, the current
+// state's transitions with their conditions and a Press/Force button each, goto, pause/resume, and a timeline of states
+// with authored jump points. Reads ControllerSession.scenario (a ScenarioView); every action is a `scenario` command to
+// the host, which validates and runs it.
 import type { ControllerSession } from '../session/controller-session.ts';
 import type { CommandInput } from '../protocol.ts';
 

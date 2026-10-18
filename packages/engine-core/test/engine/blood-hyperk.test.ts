@@ -8,7 +8,7 @@ const qrs = (ev: EngineEvent[], t0: number, t1: number) => {
   return b.reduce((a, x) => a + x.qrsMs, 0) / Math.max(1, b.length);
 };
 
-describe('7c sanity III — hyperkalaemia after succinylcholine in burns', { timeout: 300_000 }, () => {
+describe('blood sanity III — hyperkalaemia after succinylcholine in burns', { timeout: 300_000 }, () => {
   it('K ≈ 7.5–8 at 4 min with a wider QRS; CaCl2 narrows it within 3 min; insulin–dextrose lowers K ≥ 1 by 30 min', async () => {
     const { e, ev } = rigB({ patient: { ...MAN, blood: { burns: 0.5 } } });
     await runTo(e, 60);
@@ -30,7 +30,7 @@ describe('7c sanity III — hyperkalaemia after succinylcholine in burns', { tim
     expect(q7).toBeLessThan(q4);
     expect(kIns - labsAt(ev, 2280).k).toBeGreaterThanOrEqual(1);
   });
-  it('nebulised salbutamol 10 mg (7g’s bus.metabolic.kShift, one source): K −0.5 to −1.0 at 30 min against a no-dose control (tables §5b.2)', async () => {
+  it('nebulised salbutamol 10 mg (the drugs\' bus.metabolic.kShift, one source): K −0.5 to −1.0 at 30 min against a no-dose control (tables §5b.2)', async () => {
     const k30 = async (dose: boolean) => {
       const { e } = rigB({ seed: 5 });
       await runTo(e, 60);

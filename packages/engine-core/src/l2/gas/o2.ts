@@ -2,10 +2,10 @@
 // capillary equilibrium, shunt mixing, a mixed-venous blood buffer, apnoeic mass flow, and the Severinghaus
 // dissociation curve with a virtual-PO2 shift for temperature and PCO2. Plain data; stepped at 10 Hz.
 import { BLOOD_VENOUS_FRACTION, HB_G_DL, MASS_FLOW_DEFICIT_ML_MIN, PB_MMHG, PH2O_MMHG, RQ } from './params.ts';
-import { contentDB, satDB, type OdcCtx } from '../blood/odc.ts'; // Stage 7c
+import { contentDB, satDB, type OdcCtx } from '../blood/odc.ts';
 
 const PI_DRY = PB_MMHG - PH2O_MMHG; // 713 mmHg
-/** Stage 7c: the ODC context when no blood state is present (Stage 3's patient: Hb 14, pH 7.40, no dyshaemoglobin). */
+/** The ODC context when no blood state is present (the default patient: Hb 14, pH 7.40, no dyshaemoglobin). */
 export const ODC_STAGE3: OdcCtx = { hb: HB_G_DL, ph: 7.4, dpgMmolL: 4.65, cohb: 0, methb: 0 };
 
 /**
@@ -14,16 +14,16 @@ export const ODC_STAGE3: OdcCtx = { hb: HB_G_DL, ph: 7.4, dpgMmolL: 4.65, cohb: 
  * (research 03 §11 #14); pH is not modelled in v1.
  */
 export function odc(po2: number, tempC = 37, pco2 = 40, ctx: OdcCtx = ODC_STAGE3): number {
-  return satDB(po2, pco2, tempC, ctx); // Stage 7c: Dash–Bassingthwaighte (N-P09) replaces Severinghaus/Kelman
+  return satDB(po2, pco2, tempC, ctx); // Dash–Bassingthwaighte (N-P09) replaces Severinghaus/Kelman
 }
 
 /** O2 content, mL/L: 1.34·Hb·SO2 + 0.003·PO2 per dL (brief §4.3). */
 export function content(po2: number, tempC = 37, pco2 = 40, ctx: OdcCtx = ODC_STAGE3): number {
-  return contentDB(po2, pco2, tempC, ctx); // Stage 7c: 13.4·Hb·S·(1 − COHb − MetHb) + 0.03·PO2
+  return contentDB(po2, pco2, tempC, ctx); // 13.4·Hb·S·(1 − COHb − MetHb) + 0.03·PO2
 }
 
 /** PO2 whose content is `c` (bisection; content is monotonic in PO2). */
-export function po2ForContent(c: number, tempC = 37, pco2 = 40, ctx: OdcCtx = ODC_STAGE3): number { // Stage 7c: ctx
+export function po2ForContent(c: number, tempC = 37, pco2 = 40, ctx: OdcCtx = ODC_STAGE3): number {
   let lo = 0;
   let hi = 800;
   for (let i = 0; i < 40; i++) {
@@ -46,7 +46,7 @@ export interface O2Inputs {
   tempC: number;
   frcMl: number;
   bloodL: number;
-  /** Stage 7c: Hb, pH, DPG, COHb, MetHb from the blood (absent → ODC_STAGE3). */
+  /** Hb, pH, DPG, COHb, MetHb from the blood (absent → ODC_STAGE3). */
   odc?: OdcCtx;
 }
 
@@ -62,7 +62,7 @@ export function o2Steady(x: O2Inputs, shunt: number): O2State | null {
   if (x.vaLpm < 0.3) return null;
   const faco2 = x.paco2 / PI_DRY;
   const fa = Math.max(0.01, x.fio2 - (1 / RQ - 1) * faco2 - x.vo2 / (x.vaLpm * 1000));
-  const k = x.odc ?? ODC_STAGE3; // Stage 7c
+  const k = x.odc ?? ODC_STAGE3;
   const cc = content(fa * PI_DRY, x.tempC, x.paco2, k);
   const d = x.vo2 / Math.max(0.3, x.qLpm);
   const s = Math.min(0.95, Math.max(0, shunt));
@@ -101,7 +101,7 @@ export function createO2State(x: O2Inputs): O2State {
 export function stepO2(st: O2State, x: O2Inputs, dtS: number): void {
   const dt = dtS / 60;
   const s = Math.min(0.95, Math.max(0, x.shunt));
-  const k = x.odc ?? ODC_STAGE3; // Stage 7c
+  const k = x.odc ?? ODC_STAGE3;
   const cc = content(st.fa * PI_DRY, x.tempC, x.paco2, k);
   const ca = (1 - s) * cc + s * st.cv;
   const uptake = x.qLpm * (1 - s) * (cc - st.cv);

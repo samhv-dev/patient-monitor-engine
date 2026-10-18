@@ -1,9 +1,12 @@
-// The blood's contacts with the circulation and the lungs (plan decision 10; G7b ruling 8). Stage 7a's
-// CircModelState is read by DUCK TYPING (`hemo.circ` with a numeric `t`, a `vol` array and `ext`), so 7c never
-// imports from l2/circ/**; on main `hs.circ` always exists, the Stage 2 fallback serves unit rigs without a circuit.
+// The blood's contacts with the circulation and the lungs. The circulation's CircModelState is read by DUCK TYPING
+// (`hemo.circ` with a numeric `t`, a `vol` array and `ext`), so the blood model never imports from l2/circ/**; on main
+// `hs.circ` always exists, the haemodynamics-only fallback serves unit rigs without a circuit.
 import { l1Target, type L1State } from '../../l1/state.ts';
 
-/** The part of Stage 7a's CircModelState this adapter touches (`t`, `vol`, `ext`, the resting reference `ref.co`). */
+/**
+ * The part of the circulation model's CircModelState this adapter touches (`t`, `vol`, `ext`, the resting reference
+ * `ref.co`).
+ */
 export interface CircLike {
   t: number;
   vol: { rate: number; until: number }[]; // mL/s until sim time
@@ -17,9 +20,9 @@ export function circOf(hemo: unknown): CircLike | null {
 }
 
 /**
- * 7a present: the blood-volume change of this step (mL) enters the circuit over the next `dtS`. `until` sits 1 µs
- * early so float round-off in the circuit's 2 ms clock never counts a 51st step (the prototype lost 500.7 mL for a
- * 500 mL bleed without it: 7a's circ-events test).
+ * The circulation model present: the blood-volume change of this step (mL) enters the circuit over the next `dtS`.
+ * `until` sits 1 µs early so float round-off in the circuit's 2 ms clock never counts a 51st step (the prototype lost
+ * 500.7 mL for a 500 mL bleed without it: the circulation model's circ-events test).
  */
 export function pushCircVolume(c: CircLike, dMl: number, dtS: number): void {
   if (Math.abs(dMl) < 1e-9) return;
@@ -27,16 +30,16 @@ export function pushCircVolume(c: CircLike, dMl: number, dtS: number): void {
 }
 
 /**
- * FU-6 R11 (E-FU6-4): blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6
- * (Weiskopf 1998 JAMA 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; 7a's optional `ext.viscF`.
+ * Blood viscosity follows the haematocrit, so the systemic resistance does: SVR × (Hb/Hb_ref)^0.6 (Weiskopf 1998 JAMA
+ * 279:217, acute isovolaemic Hb 14 → 5: SVR −47 %) [ENG exponent]; the circulation model's optional `ext.viscF`.
  */
 export const VISC_EXP = 0.6;
 /**
- * FU-6 gate G-FU6-1 (orchestrator ruling on PR #28): blood is SHEAR-THINNING — at the very low shear rates of CPR and
- * no-flow states its apparent viscosity rises (Chien S, Science 1970;168:977–979; Merrill EW, Physiol Rev 1969;49:863),
- * so haemodilution's resistance reduction does not hold there. The factor fades with the patient's own flow ratio (the
- * resp pipeline's `coRatio`, the one the low-flow CO2 code reads): full effect at the resting output (1.0), none at
- * CPR-level flow (0.3 — CPR delivers 25–33 % of normal output, the CPR coRatio band). Two anchors, no other constant.
+ * Blood is SHEAR-THINNING — at the very low shear rates of CPR and no-flow states its apparent viscosity rises (Chien
+ * S, Science 1970;168:977–979; Merrill EW, Physiol Rev 1969;49:863), so haemodilution's resistance reduction does not
+ * hold there. The factor fades with the patient's own flow ratio (the resp pipeline's `coRatio`, the one the low-flow
+ * CO2 code reads): full effect at the resting output (1.0), none at CPR-level flow (0.3 — CPR delivers 25–33 % of
+ * normal output, the CPR coRatio band). Two anchors, no other constant.
  */
 export const VISC_FLOW_FULL = 1.0;
 export const VISC_FLOW_NONE = 0.3;
@@ -45,14 +48,17 @@ export function setCircViscosity(c: CircLike, hbRel: number, flowRatio = 1): voi
   c.ext.viscF = 1 + (Math.max(0.2, hbRel) ** VISC_EXP - 1) * fade;
 }
 
-/** 7a present: the chemistry contractility multiplier (7a's optional `ext.kChem`, written unconditionally; R50 F3). */
+/**
+ * The circulation model present: the chemistry contractility multiplier (the circulation model's optional `ext.kChem`,
+ * written unconditionally).
+ */
 export function setCircChemistry(c: CircLike, k: number): void {
   c.ext.kChem = k;
 }
 
 /**
- * 7a ABSENT (unit rigs): cardiac-output factor from blood volume [ENG]: none for the first 10 % loss (compensated),
- * then −16 % per further 10 % (class III, 35 % → 0.6), +6 % per 10 % overload, clamped 0.2–1.15.
+ * The circulation model ABSENT (unit rigs): cardiac-output factor from blood volume [ENG]: none for the first 10 % loss
+ * (compensated), then −16 % per further 10 % (class III, 35 % → 0.6), +6 % per 10 % overload, clamped 0.2–1.15.
  */
 export function volumeCoFactor(bvRatio: number): number {
   const loss = 1 - bvRatio;
@@ -60,8 +66,8 @@ export function volumeCoFactor(bvRatio: number): number {
 }
 
 /**
- * 7a ABSENT (unit rigs): Stage 2's `volumeStatus` coupled truth = min(current, target × volume factor), factor 1 at
- * BV0 and 0 at 35 % loss [ENG]; `contractility` coupled truth = target × chemistry factor (cleared at 1).
+ * The circulation model ABSENT (unit rigs): the `volumeStatus` coupled truth = min(current, target × volume factor),
+ * factor 1 at BV0 and 0 at 35 % loss [ENG]; `contractility` coupled truth = target × chemistry factor (cleared at 1).
  */
 export function applyL1Fallback(l1: L1State, t: number, bvRatio: number, kChem: number): void {
   const c = (l1.coupled ??= {});
@@ -77,15 +83,18 @@ export function applyL1Fallback(l1: L1State, t: number, bvRatio: number, kChem: 
  */
 export function chemistryContractility(ph: number, iCa: number, kEcg = 4.2): number {
   const acid = ph < 7.2 ? Math.max(0.3, 1 - 1.5 * (7.2 - ph)) : 1;
-  const kF = kEcg > K_CONTRACT ? Math.max(0.3, 1 - K_CONTRACT_SLOPE * (kEcg - K_CONTRACT)) : 1; // FU-4 G3
+  const kF = kEcg > K_CONTRACT ? Math.max(0.3, 1 - K_CONTRACT_SLOPE * (kEcg - K_CONTRACT)) : 1;
   return acid * Math.min(1, (iCa / 1.1) ** 1.5) * kF;
 }
-/** FU-4 G3: severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
+/** Severe hyperkalaemia depresses contractility above K_CONTRACT (membrane-effective), −20 %/mmol/L [ENG, Q5]. */
 export const K_CONTRACT = 8;
 export const K_CONTRACT_SLOPE = 0.2;
 
-// --- lung water (G7b ruling 8): the blood's COP and capillary leak → 7b's EVLWI key ---------------------------
-/** Pulmonary capillary pressure (mmHg): 7a's pulmonary venous pressure `circOut.pPv`, or null without a circuit. */
+// --- lung water: the blood's COP and capillary leak → the lung model's EVLWI key ------------------------------
+/**
+ * Pulmonary capillary pressure (mmHg): the circulation model's pulmonary venous pressure `circOut.pPv`, or null without
+ * a circuit.
+ */
 export function pulmCapPressure(hemo: unknown): number | null {
   const o = (hemo as { circOut?: { pPv?: unknown } } | null)?.circOut;
   return o && typeof o.pPv === 'number' ? o.pPv : null;

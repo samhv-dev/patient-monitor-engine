@@ -16,7 +16,7 @@
 // extremes incl. untreated cardiac arrest) and bisected to 1e-4 pH. A root outside the bracket returns the bound with `atBound` set and the
 // residual reported — the residual is never pushed into bicarbonate (audit never-copy list).
 
-export const PH_MIN = 6.5; // audit A13
+export const PH_MIN = 6.5;
 export const PH_MAX = 7.9;
 export const CO2_SOL = 0.0307; // mmol/L/mmHg
 export const PH_TOL = 1e-4;

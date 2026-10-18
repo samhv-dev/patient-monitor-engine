@@ -17,7 +17,7 @@ async function atIcp20() {
   return r;
 }
 
-describe('check 19 treatments through the engine (drugs are 7g events; 7d observes bus.doses)', { timeout: 300_000 }, () => {
+describe('check 19 treatments through the engine (drugs are drug-model events; the organs observe bus.doses)', { timeout: 300_000 }, () => {
   // One hyperventilation run, shared by the band's two edges (seeded, deterministic).
   let hv: Promise<{ atTarget: number; drop: number }> | undefined;
   const hyperventilation = () => (hv ??= (async () => {
@@ -52,7 +52,7 @@ describe('check 19 treatments through the engine (drugs are 7g events; 7d observ
     expect(atTarget).toBeGreaterThan(0); // PaCO2 30 was reached
     expect(drop).toBeGreaterThanOrEqual(0.25); // tables −25–30 %
   });
-  it('mannitol 1 g/kg (7g drug event): ICP −25 % vs a same-seed control over 15–30 min; osmotic diuresis', async () => {
+  it('mannitol 1 g/kg (drug event): ICP −25 % vs a same-seed control over 15–30 min; osmotic diuresis', async () => {
     const ctl = await atIcp20();
     const man = await atIcp20();
     man.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'mannitol', dose: 1, unit: 'g/kg', route: 'iv' } });
@@ -73,7 +73,7 @@ describe('check 19 treatments through the engine (drugs are 7g events; 7d observ
     }
     expect(man.last().kidney.uopMlKgH).toBeGreaterThan(2 * ctl.last().kidney.uopMlKgH); // osmotic diuresis
   });
-  it('hypertonic saline 3 % 250 mL (7g drug event, concentrationPct — E-7d-1): ICP −20–40 % at 10 min', async () => {
+  it('hypertonic saline 3 % 250 mL (drug event, concentrationPct): ICP −20–40 % at 10 min', async () => {
     const ctl = await atIcp20();
     const hts = await atIcp20();
     hts.send({ type: 'applyEvent', event: { kind: 'drug', drugId: 'hypertonicSaline', dose: 250, unit: 'mL', route: 'iv', concentrationPct: 3 } });
@@ -84,7 +84,7 @@ describe('check 19 treatments through the engine (drugs are 7g events; 7d observ
     expect(rel).toBeGreaterThanOrEqual(0.2);
     expect(rel).toBeLessThanOrEqual(0.4);
   });
-  it('E-7d-1: 7g validates concentrationPct (HTS only: 3, 7.5, 23.4; default 3) and logs it on bus.doses', () => {
+  it('the drug model validates concentrationPct (HTS only: 3, 7.5, 23.4; default 3) and logs it on bus.doses', () => {
     const e = createEngine({ seed: 1, patient: { weightKg: 70 } });
     let n = 0;
     const d = (event: Record<string, unknown>) => e.dispatch({ id: `h${++n}`, issuedBy: 't', type: 'applyEvent', event: { kind: 'drug', route: 'iv', ...event } } as never);

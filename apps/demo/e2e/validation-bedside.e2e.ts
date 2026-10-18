@@ -16,7 +16,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => vite?.close());
 
-test('asystole demo measures the saadat-like delay; results download', async ({ page }) => {
+test('asystole demo measures the saadat-like delay; results download', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(150_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));

@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { ChannelId, Command, EngineEvent, NumericId, PatientProfile } from '../../../src/types.ts';
 import type { OrgansEvent } from '../../../src/types-organs.ts';
 
-describe('Stage 7d public types', () => {
+describe('organ public types', () => {
   it('commands, channel, numerics and event are in the public unions', () => {
     const cmds: Command[] = [
       { id: '1', issuedBy: 't', type: 'applyEvent', event: { kind: 'brain', massRateMlPerMin: 1 } },

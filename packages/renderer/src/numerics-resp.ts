@@ -1,5 +1,5 @@
-// Stage 3 numeric tiles (brief §6.1, §6.8): SpO2 with PI, EtCO2 with FiCO2 and awRR, RR (impedance) and
-// temperature T1/T2. Pure formatters are exported for tests (Node has no DOM); the tiles reuse PressureTile.
+// Respiratory numeric tiles (brief §6.1, §6.8): SpO2 with PI, EtCO2 with FiCO2 and awRR, RR (impedance) and temperature
+// T1/T2. Pure formatters are exported for tests (Node has no DOM); the tiles reuse PressureTile.
 import type { Measured } from '@pme/engine-core';
 
 const ok = (m: Measured | undefined): m is Measured & { value: number } => !!m && m.value !== null && m.flag !== 'invalid';

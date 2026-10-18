@@ -7,7 +7,7 @@ describe('l2/ecg/intervals', () => {
     for (const [hr, qt] of table) expect(Math.abs(qtFridericiaMs(60 / hr) - qt)).toBeLessThanOrEqual(1);
   });
 
-  it('PR rule: PR60 = 160 ms (ruling R16) at ≤60 bpm, −0.4 ms/bpm above, floor 110 ms', () => {
+  it('PR rule: PR60 = 160 ms at ≤60 bpm, −0.4 ms/bpm above, floor 110 ms', () => {
     expect(prMs(50)).toBe(160);
     expect(prMs(60)).toBe(160);
     expect(prMs(150)).toBeCloseTo(124, 9);

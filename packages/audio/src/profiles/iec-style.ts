@@ -1,6 +1,6 @@
-// `iec-style` profile (brief §6.4 burst table; research 05 §2.5 quoting the IEC 60601-1-8 Table 3/4 ranges via
-// US 9,814,817 B2). Values are chosen INSIDE the quoted ranges; the profile is labelled IEC-style and no
-// compliance is claimed (R12, brief §11 C7).
+// `iec-style` profile (brief §6.4 burst table; research 05 §2.5 quoting the IEC 60601-1-8 Table 3/4 ranges via US
+// 9,814,817 B2). Values are chosen INSIDE the quoted ranges; the profile is labelled IEC-style and no compliance is
+// claimed (brief §11 C7).
 import type { AlarmSoundProfile } from './types.ts';
 
 const TD_HIGH = 150; // t_d high, 75–200 ms

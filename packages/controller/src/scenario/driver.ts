@@ -2,8 +2,8 @@
 // simulation, so the scenario runs there). It
 // - wraps the HostTarget (`driver.host`): every accepted command is also a runner input (applyEvent → latched
 //   event, attachSensor → sensor level, setTarget → target value), and applyEvent/attachSensor that the engine
-//   rejects as "not implemented" are accepted as scenario-only until Stages 3/4/7 model them;
-// - feeds engine `measurement` (and, from Stage 2, `state`) events to the vital triggers;
+//   rejects as "not implemented" are accepted as scenario-only until the engine models them;
+// - feeds engine `measurement` and `state` events to the vital triggers;
 // - handles every `scenario` command through `driver.hook` (load/goto/trigger/pause/resume, and bookmarks that
 //   hold the engine snapshot AND the runner state);
 // - on poll() advances the runner at the engine's sim time and dispatches each command batch as one stage group.
@@ -186,9 +186,10 @@ export class ScenarioDriver {
         res = { accepted: true, tick: Math.max(c.atTick ?? 0, r.tick + 1), reason: `scenario only: the engine does not model ${w.type} yet` };
       }
       if (!res.accepted) return res;
-      // Stage 3: engine-core's event union adds `thermal` and ventilation fico2/effort (plan decisions 6 and 8), outside the brief's verbatim ClinicalEvent.
+      // Engine-core's event union adds `thermal` and ventilation fico2/effort, outside the brief's verbatim
+      // ClinicalEvent.
       if (w.type === 'applyEvent') this.pending.push({ kind: 'clinical', event: structuredClone(w.event) as ClinicalEvent });
-      else if (w.type === 'attachSensor' && w.sensor !== 'pv' && w.sensor !== 'icp' && w.sensor !== 'pbto2' && w.sensor !== 'urometer') this.pending.push({ kind: 'sensor', sensor: w.sensor, state: w.state }); // Stage 7a: 'pv' (teaching channels) is not a scenario sensor; Stage 7d: nor are icp/pbto2/urometer (pme-scenario/1 has none)
+      else if (w.type === 'attachSensor' && w.sensor !== 'pv' && w.sensor !== 'icp' && w.sensor !== 'pbto2' && w.sensor !== 'urometer') this.pending.push({ kind: 'sensor', sensor: w.sensor, state: w.state }); // 'pv' (teaching channels) is not a scenario sensor; nor are icp/pbto2/urometer (pme-scenario/1 has none)
       else if (w.type === 'setTarget') this.pending.push({ kind: 'values', rank: 1, values: { [w.variable]: w.value } });
       return res;
     };
@@ -202,7 +203,7 @@ export class ScenarioDriver {
       on: (fn) => inner.on(fn),
       now: () => inner.now(),
       time: (a, v) => inner.time(a, v),
-      // Stage 10: the runner keeps running through a fast-forward — it is polled after every step, at the step's sim time
+      // The runner keeps running through a fast-forward — it is polled after every step, at the step's sim time
       ...(inner.fastForwardStep
         ? {
             fastForwardStep: async (n: number, last: boolean) => {

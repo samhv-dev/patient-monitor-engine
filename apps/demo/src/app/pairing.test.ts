@@ -6,7 +6,7 @@ const at = (href: string) => {
   return { origin: u.origin, hostname: u.hostname, pathname: u.pathname, search: u.search };
 };
 
-describe('remote pairing (review F2, ruling 6)', () => {
+describe('remote pairing', () => {
   it('without a relay: same browser only, no QR code', () => {
     const p = pairingOf('AGD5YJ', at('http://127.0.0.1:5173/'));
     expect(p).toMatchObject({ url: 'http://127.0.0.1:5173/#/remote?code=AGD5YJ', relay: null, qr: false });

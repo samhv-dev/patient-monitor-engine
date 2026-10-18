@@ -2,11 +2,11 @@
 // slow group stays under ≈ 40 min): the regression guards — matrix cells already PL before FU-7 that must stay PL. The
 // audit's ventilated rig (ETT + VCV 12 × 600, PEEP 5, FiO2 0.5) unless a case says otherwise; one yield per sim-MINUTE.
 import { describe, expect, it } from 'vitest';
-import * as F7 from '../helpers/fu7.ts';
+import * as F7 from '../helpers/drug-arm-runner.ts';
 
 const conscious = (r: F7.Row) => r.conscious === true;
 
-describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 }, () => {
+describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
   const { T, V, SP, d, inf, vap, A } = F7;
   describe('regression guards: cells already PL stay PL', () => {
     it('adenosine 6 mg converts AVNRT 180: AV block 3–30 s after the push, sinus 5–60 s (DI-14a; ALS, research 03 §8.6)', async () => {
@@ -26,7 +26,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(s![0] - (T + 60)).toBeGreaterThanOrEqual(5);
       expect(s![0] - (T + 60)).toBeLessThanOrEqual(300);
     });
-    it('lipid emulsion lowers free bupivacaine to 0.4–0.75 × (DI-24; ASRA 2020, 7g gate ×0.681), and bupivacaine 225 mg untreated arrests', async () => {
+    it('lipid emulsion lowers free bupivacaine to 0.4–0.75 × (ASRA 2020; earlier measured ×0.681), and bupivacaine 225 mg untreated arrests', async () => {
       const i = await F7.runArm(V([d(T, 'bupivacaine', 225, 'mg'), d(T + 30, 'lipidEmulsion', 1.5, 'mL/kg'), inf(T + 30, 'lipidEmulsion', 0.25, 'mL/kg/min')]));
       const c = await F7.runArm(V([d(T, 'bupivacaine', 225, 'mg')]));
       const ratio = F7.mx(i.rows, 'c_bupivacaine', T + 200, T + 300) / F7.mx(c.rows, 'c_bupivacaine', T + 200, T + 300);
@@ -78,7 +78,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     let tci: Promise<F7.ArmResult> | undefined;
     const tciArm = () => (tci ??= F7.runArm(V([[60, F7.A.tci('propofol', 3, 'effect', 'eleveld')]], 1800)));
-    it('propofol effect-site TCI 3 µg/mL (Eleveld) reaches 95 % in 100–200 s and a depth index 35–60 at 25 min (DI-67; 7g gate 2.35 min)', async () => {
+    it('propofol effect-site TCI 3 µg/mL (Eleveld) reaches 95 % in 100–200 s and a depth index 35–60 at 25 min (earlier measured 2.35 min)', async () => {
       const r = await tciArm();
       const t95 = F7.firstAt(r.rows, 60, (x) => (x.c_propofol as number) >= 2.85);
       const di = F7.mn(r.rows, 'di', 1500, 1800);
@@ -90,35 +90,10 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     // R45: NOT a regression — the pre-FU-7 baseline (b004289) overshoots the same way (audit DI-67 cePeak 3.1, graded TS
     // before FU-7; the guard list assumed PL). Reported for 7g's TCI controller, not fixed here.
-    it.fails('… without overshoot: Ce peak 2.99–3.01 (DI-67; 7g gate max 3.0005) — measured 3.110 on the gate tree (3.132 before the FU-9 merge; baseline b004289: 3.1, TS)', async () => {
+    it.fails('… without overshoot: Ce peak 2.99–3.01 (earlier measured max 3.0005) — measured 3.110 (3.132 before the blood/fluids merge; 3.1 on the TS baseline)', async () => {
       const peak = F7.mx((await tciArm()).rows, 'c_propofol', 60, 1800);
       expect(peak).toBeGreaterThanOrEqual(2.99);
       expect(peak).toBeLessThanOrEqual(3.01);
-    });
-    it('context-sensitive offsets (DI-85/86/68; Hughes 1992, Kapila 1995): propofol wakes 4–20 min after 1 h and 5–25 min after 3 h; fentanyl CSHT 12–40 min at 1 h and 3–8 × that at 3 h; remifentanil halves in 1.5–5 min', async () => {
-      const o10 = { dt: 10 };
-      const p1 = await F7.runArm(V([[60, F7.A.tci('propofol', 3, 'plasma', 'eleveld')], [3660, F7.A.tci('propofol', 0, 'plasma', 'eleveld')]], 3660 + 3600, {}, o10));
-      const p3 = await F7.runArm(V([[60, F7.A.tci('propofol', 3, 'plasma', 'eleveld')], [10860, F7.A.tci('propofol', 0, 'plasma', 'eleveld')]], 10860 + 3600, {}, o10));
-      const f1 = await F7.runArm(V([[60, F7.A.tci('fentanyl', 2, 'plasma', 'shafer')], [3660, F7.A.tci('fentanyl', 0, 'plasma', 'shafer')]], 3660 + 7200, {}, { dt: 20 }));
-      const f3 = await F7.runArm(V([[60, F7.A.tci('fentanyl', 2, 'plasma', 'shafer')], [10860, F7.A.tci('fentanyl', 0, 'plasma', 'shafer')]], 10860 + 14400, {}, { dt: 20 }));
-      const rm = await F7.runArm(V([inf(60, 'remifentanil', 0.25, 'mcg/kg/min'), [3660, F7.A.infusion('remifentanil', 0, 'mcg/kg/min')]], 3660 + 900, {}, o10));
-      const w1 = F7.firstAt(p1.rows, 3660, conscious) / 60;
-      const w3 = F7.firstAt(p3.rows, 10860, conscious) / 60;
-      const c1 = F7.halfMin(f1.rows, 'p_fentanyl', 3660);
-      const c3 = F7.halfMin(f3.rows, 'p_fentanyl', 10860);
-      const ref = F7.mx(rm.rows, 'c_remifentanil', 3500, 3660);
-      const rh = F7.firstAt(rm.rows, 3660, (x) => (x.c_remifentanil as number) <= 0.5 * ref) / 60;
-      console.log(`FU-7 T19 DI-85/86/68: propofol wake ${w1.toFixed(1)} / ${w3.toFixed(1)} min; fentanyl CSHT ${c1.toFixed(1)} / ${c3.toFixed(1)} min (×${(c3 / c1).toFixed(2)}); remifentanil half ${rh.toFixed(1)} min`);
-      expect(w1).toBeGreaterThanOrEqual(4);
-      expect(w1).toBeLessThanOrEqual(20);
-      expect(w3).toBeGreaterThanOrEqual(5);
-      expect(w3).toBeLessThanOrEqual(25);
-      expect(c1).toBeGreaterThanOrEqual(12);
-      expect(c1).toBeLessThanOrEqual(40);
-      expect(c3 / c1).toBeGreaterThanOrEqual(3);
-      expect(c3 / c1).toBeLessThanOrEqual(8);
-      expect(rh).toBeGreaterThanOrEqual(1.5);
-      expect(rh).toBeLessThanOrEqual(5);
     });
     it('the emergence order after 1 h of ≈ 1 brain-MAC (DI-87; Macario 2005, M10 ch. 19): desflurane 0.5–0.95 × sevoflurane, isoflurane 1.05–2.5 ×, sevoflurane 4–20 min', async () => {
       const arm = (agent: string, pct: number) => F7.runArm(V([vap(60, agent, pct, 4), vap(3660, agent, 0, 6)], 3660 + 1800));

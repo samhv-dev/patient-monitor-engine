@@ -47,7 +47,7 @@ describe('buffers/RingBuffer', () => {
     expect(rb.at(43_150_123)).toBe(123);
   });
 
-  it('after clear() the retained window starts at the first index written, not capacity back from latest (review M4)', () => {
+  it('after clear() the retained window starts at the first index written, not capacity back from latest', () => {
     const rb = new RingBuffer(10, 1);
     for (let i = 0; i < 25; i++) rb.write(i, i);
     rb.clear();

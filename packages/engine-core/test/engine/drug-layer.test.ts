@@ -3,8 +3,8 @@
 // regression guards (case 7) are in drug-layer-guards.test.ts.
 import { describe, expect, it, vi } from 'vitest';
 import type { MonitorEngine } from '../../src/types.ts';
-import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
-import * as F7 from '../helpers/fu7.ts';
+import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
+import * as F7 from '../helpers/drug-arm-runner.ts';
 import { createHookState, rhythmRequest } from '../../src/l2/pk/hooks.ts';
 import type { PkState } from '../../src/l2/pk/pipeline.ts';
 import { seedStream } from '../../src/rng/sfc32.ts';
@@ -40,8 +40,8 @@ const pctMin = (i: Row[], c: Row[], k: 'map' | 'svr', t0: number, t1: number) =>
   Math.min(...i.filter((r) => r.t >= t0 && r.t <= t1).map((r) => (100 * (r[k] - at(c, r.t)[k])) / at(c, r.t)[k]));
 const dMax = (i: Row[], c: Row[], k: 'hr', t0: number, t1: number) => Math.max(...i.filter((r) => r.t >= t0 && r.t <= t1).map((r) => r[k] - at(c, r.t)[k]));
 
-describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
-  describe('Task 16: histamine release acts (R51 addendum 24 / audit D15)', () => {
+describe('drug layer through the engine', { timeout: 1_800_000 }, () => {
+  describe('histamine release acts', () => {
     /** DI-42's rig: fast morphine 10 mg at 300 s vs the same arm without it, over 15 min. */
     const morphine = async () => {
       const i = await vented([[300, drug('morphine', 10, 'mg')]], 1200);
@@ -58,7 +58,7 @@ describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
       expect(r.hr).toBeLessThanOrEqual(25);
     });
     // R45 (Task 16 UNPROTOTYPED): HIST_SVR 0.22 is the plan's size; the reflex tachycardia (+20.6) buffers the pressure.
-    it.fails('… and MAP by 8–25 % (T6.3; DI-42) — measured −6.7 % (SVR −10.8 %, HR +20.6: the reflex holds the pressure; −5.6 % before the FU-9 merge)', async () => {
+    it.fails('… and MAP by 8–25 % (T6.3) — measured −6.7 % (SVR −10.8 %, HR +20.6: the reflex holds the pressure; −5.6 % before the blood/fluids merge)', async () => {
       const r = await (mo ??= morphine());
       expect(r.map).toBeLessThanOrEqual(-8);
       expect(r.map).toBeGreaterThanOrEqual(-25);
@@ -113,7 +113,7 @@ describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
     }
     // R45 (CM amendment, finding 2): the row's sizes are not raised to force it — the missing SV is the failing
     // ventricle's afterload sensitivity, 7a's gap (research/19 C9).
-    it.fails('SV rises ≥ 8 % while MAP falls ≤ 15 % (Cohn & Franciosa 1977) — measured SV +1.2 %, MAP −12.8 % (hydralazine on the same rig: SV +0.1 %); 7a afterload sensitivity (research/19 C9)', async () => {
+    it.fails('SV rises ≥ 8 % while MAP falls ≤ 15 % (Cohn & Franciosa 1977) — measured SV +1.2 %, MAP −12.8 % (hydralazine on the same rig: SV +0.1 %); the circulation\'s afterload sensitivity (research/19 C9)', async () => {
       const i = await hf(true);
       const c = await hf(false);
       const w = i.filter((r) => r.t >= 300);
@@ -127,15 +127,15 @@ describe('FU-7 drug layer through the engine', { timeout: 1_800_000 }, () => {
 });
 
 // ---- FU-7 Task 19 (R54): the flipped matrix cells as engine tests -------------------------------------------------------
-// The drug audit's rigs (research/14 §1) through `helpers/fu7.ts`: adult 40 y / 70 kg / 175 cm, male, ABP/CVP/PAP/SpO2/
+// The drug audit's rigs (research/14 §1) through `helpers/drug-arm-runner.ts`: adult 40 y / 70 kg / 175 cm, male, ABP/CVP/PAP/SpO2/
 // CO2/temp on, seed 7; "vent" = ETT + VCV 12 × 600, PEEP 5, FiO2 0.5 from t = 1 s; interventions at T = 300 s. Every band
 // carries its source in the title. Task 0 Step 6b PASSED (CM-15c kIschMin40 0.90), so the AF arms run at their natural
 // length (case 8). Cells another FU-7 engine file already holds are not run twice: DI-42 (Task 16 above), DI-70
-// (fu7-volatile.test.ts), DI-71's VE / DI-03 / DI-89 (drug-apnoea.test.ts), Task 10's surge (stimulus-surge.test.ts).
+// (drug-desflurane-surge.test.ts), DI-71's VE / DI-03 / DI-89 (drug-apnoea.test.ts), Task 10's surge (stimulus-surge.test.ts).
 const conscious = (r: F7.Row) => r.conscious === true;
 const unconscious = (r: F7.Row) => r.conscious === false;
 
-describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 }, () => {
+describe('the flipped matrix cells', { timeout: 3_600_000 }, () => {
   const { T, V, SP, d, inf, vap, A } = F7;
 
   describe('addendum 19: onset', () => {
@@ -197,7 +197,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(loc(r)).toBeGreaterThanOrEqual(20);
       expect(loc(r)).toBeLessThanOrEqual(60);
     });
-    it('ketamine 1.5 mg/kg: unconscious with a depth index > 60 (the dissociative paradox, D3) and emerging at 10–20 min (M10 Table 21.1; D20 measured 11.9)', async () => {
+    it('ketamine 1.5 mg/kg: unconscious with a depth index > 60 (the dissociative paradox) and emerging at 10–20 min (M10 Table 21.1; measured 11.9)', async () => {
       const r = await arm('k', 'ketamine', 1.5);
       const out = r.rows.filter((x) => (x.t as number) > T && x.conscious === false);
       const diMin = Math.min(...out.map((x) => x.di as number));
@@ -208,7 +208,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(wake(r) / 60).toBeLessThanOrEqual(20);
     });
     // R45 (D20, named in advance): ketamine's arm–brain onset is faster than the label's 30–60 s on this chain.
-    it.fails('ketamine 1.5 mg/kg loses consciousness no faster than 30 s (M10 Table 21.1) — measured 16 s at 1 s sampling (D20: 20 s at the audit\'s 5 s)', async () => {
+    it.fails('ketamine 1.5 mg/kg loses consciousness no faster than 30 s (M10 Table 21.1) — measured 16 s at 1 s sampling (20 s at 5 s sampling)', async () => {
       const r = await arm('k', 'ketamine', 1.5);
       expect(loc(r)).toBeGreaterThanOrEqual(30);
     });
@@ -221,7 +221,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     // The plan's "Expected it.fails" table pre-declared DI-01c as `it.fails` at −0.4 % (FU-4's `symp` rows for opioids,
     // Requests → FU-4 item 1; FU-7 adds no `symp` row). The finisher measured it on the gate tree instead of assuming it.
-    it('propofol 2 mg/kg + remifentanil 1 µg/kg are more than additive on MAP (DI-01c; Bouillon 2004, M10 ch. 22: one response surface): the pair\'s MAP fall exceeds the sum of each alone, no arrest — measured excess −3.5 % (was −0.4 % before FU-7, pre-declared it.fails)', async () => {
+    it('propofol 2 mg/kg + remifentanil 1 µg/kg are more than additive on MAP (Bouillon 2004, M10 ch. 22: one response surface): the pair\'s MAP fall exceeds the sum of each alone, no arrest — measured excess −3.5 %', async () => {
       const pro = d(T, 'propofol', 2, 'mg/kg');
       const rem = d(T, 'remifentanil', 1, 'mcg/kg');
       const [i, p, r, c] = await Promise.all([V([pro, rem]), V([pro]), V([rem]), V([])].map((a) => F7.runArm(a)));
@@ -241,7 +241,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       }
       return hi;
     }
-    it('the elderly arm (review F5, D19a): at 80 y midazolam needs 0.4–0.6 × the 35-y LOC dose (M10 ch. 21: 20–50 % less) and thiopental 0.6–0.8 × (Homer & Stanski 1985)', async () => {
+    it('the elderly arm: at 80 y midazolam needs 0.4–0.6 × the 35-y LOC dose (M10 ch. 21: 20–50 % less) and thiopental 0.6–0.8 × (Homer & Stanski 1985)', async () => {
       const mz = [await locDose('midazolam', 35, 0.01, 0.3), await locDose('midazolam', 80, 0.01, 0.3)];
       const th = [await locDose('thiopental', 35, 0.5, 5), await locDose('thiopental', 80, 0.5, 5)];
       console.log(`FU-7 T19 F5: LOC dose midazolam ${mz[0]!.toFixed(3)} → ${mz[1]!.toFixed(3)} mg/kg (${(mz[1]! / mz[0]!).toFixed(2)}), thiopental ${th[0]!.toFixed(2)} → ${th[1]!.toFixed(2)} (${(th[1]! / th[0]!).toFixed(2)})`);
@@ -365,7 +365,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(ex).toBeGreaterThan(0.02);
     });
     // R45 (Task 15, named in advance): the one-way second-gas term is smaller than Epstein's.
-    it.fails('second gas (DI-19; Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %\'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the 7g rig, Task 15)', async () => {
+    it.fails('second gas (Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %\'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the standalone drug rig)', async () => {
       const i = await F7.runArm(V([vap(60, 'sevoflurane', 2, 4, 0.66)], 400, {}, { dt: 10 }));
       const c = await F7.runArm(V([vap(60, 'sevoflurane', 2, 4, 0)], 400, {}, { dt: 10 }));
       const dlt = F7.mx(i.rows, 'faFi', 350, 370) - F7.mx(c.rows, 'faFi', 350, 370);
@@ -393,7 +393,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
     });
     // R45 (Task 14 Step 5, reported there): the two Mg paths agree at EQUAL blood Mg (fu7-nmb unit test, 1e-9), but the
     // 60 mg/kg load peaks at 2.1 mmol/L in 7c's blood and falls through the block, so the drug arm prolongs less.
-    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (DI-90; M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the FU-9 merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
+    it.fails('a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the blood/fluids merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)', async () => {
       const r = await mgArms();
       expect((100 * (r.drug - r.c)) / r.c).toBeGreaterThanOrEqual(20);
       expect((100 * (r.drug - r.c)) / r.c).toBeLessThanOrEqual(90);
@@ -424,7 +424,7 @@ describe('FU-7 Task 19: the flipped matrix cells (R54)', { timeout: 3_600_000 },
       expect(dh).toBeLessThanOrEqual(-5);
       expect(dh).toBeGreaterThanOrEqual(-30);
     });
-    it('atracurium 0.5 mg/kg leaves the TOF unchanged (declared v1 limitation: histamine release only, NO neuromuscular block) — TOF count 4 and ratio within 0.02 of baseline for 10 min, while MAP falls (review F12, D19f)', async () => {
+    it('atracurium 0.5 mg/kg leaves the TOF unchanged (declared v1 limitation: histamine release only, NO neuromuscular block) — TOF count 4 and ratio within 0.02 of baseline for 10 min, while MAP falls', async () => {
       const i = await F7.runArm(V([d(T, 'atracurium', 0.5, 'mg/kg')], T + 600));
       const c = await F7.runArm(V([], T + 600));
       const w = i.rows.filter((r) => (r.t as number) > T);

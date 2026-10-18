@@ -1,7 +1,7 @@
-// Capnogram angles, the ONE measurement convention for recorded and generated capnograms (R39 item 6, brief §4.4).
-// Moved verbatim from packages/engine-core/test/helpers/resp.ts (Stage 3): phase II slope between the 25 % and 75 %
-// crossings of the plateau-end value P, phase III slope by regression from the 90 % crossing + 0.2 s to the plateau
-// end, α = 180° − atan(s_II/25) + atan(s_III/25) on the 25 mmHg/s axis scale. Input in mmHg.
+// Capnogram angles, the ONE measurement convention for recorded and generated capnograms (brief §4.4): phase II
+// slope between the 25 % and 75 % crossings of the plateau-end value P, phase III slope by regression from the 90 %
+// crossing + 0.2 s to the plateau end, α = 180° − atan(s_II/25) + atan(s_III/25) on the 25 mmHg/s axis scale. Input
+// in mmHg.
 export interface CapnoBreath { alpha: number; riseIII: number; plateau: number; slopeIII: number }
 
 export function capnoAngles(x: ArrayLike<number>, rate = 62.5): CapnoBreath[] {

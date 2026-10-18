@@ -6,18 +6,18 @@ import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp } from './numerics-hemo.ts';
-import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts'; // FU-3 item 11; FU-8 AGENTS
+import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
 type DeviceStatus = Extract<EngineEvent, { type: 'deviceStatus' }>;
 
 const UNIT: Partial<Record<TileParam, string>> = {
   HR: 'bpm', NIBP: 'mmHg', ART: 'mmHg', CVP: 'mmHg', PAP: 'mmHg', IBP1: 'mmHg', IBP2: 'mmHg', IBP3: 'mmHg', IBP4: 'mmHg', SpO2: '%', TEMP: '°C', RR: 'rpm', CO2: 'mmHg', ST: 'mV',
-  ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h', // Stage 7d
-  NMT: 'TOF', // FU-3 item 11 (the depth index has no unit)
-  AGENTS: '%', // FU-8 (A10-E5)
+  ICP: 'mmHg', PbtO2: 'mmHg', UO: 'mL/h',
+  NMT: 'TOF', // The depth index has no unit
+  AGENTS: '%',
 };
-/** FU-5: skin `hr.autoPriority` entries → the pulse numeric each publishes (engine profile.ts PULSE_SOURCE). */
+/** Skin `hr.autoPriority` entries → the pulse numeric each publishes (engine profile.ts PULSE_SOURCE). */
 const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 'prAbp', SpO2: 'pr' };
 const BELL_OFF_SVG =
   '<svg viewBox="0 0 16 16" width="14" height="14" aria-label="alarm off"><path d="M8 2a4 4 0 0 0-4 4v3l-1.5 2h11L12 9V6a4 4 0 0 0-4-4zm-1.5 11a1.5 1.5 0 0 0 3 0" fill="none" stroke="#F00000" stroke-width="1.4"/><path d="M2 14L14 2" stroke="#F00000" stroke-width="1.6"/></svg>';
@@ -33,7 +33,7 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-hdr{display:flex;align-items:center;gap:10px;height:30px;padding:0 8px;font-size:15px;box-sizing:border-box}',
     '.pme-bar{flex:1;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden;font-weight:600}',
     '.pme-lamp{width:18px;height:18px;border-radius:50%;flex:none}',
-    '.pme-bar.latched{outline:2px solid currentColor;outline-offset:-2px}', // FU-5: the latched style (text in the level colour, framed)
+    '.pme-bar.latched{outline:2px solid currentColor;outline-offset:-2px}', // The latched style (text in the level colour, framed)
     '.pme-inop{max-width:40%;height:22px;line-height:22px;padding:0 8px;border-radius:2px;white-space:nowrap;overflow:hidden}',
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
     '.pme-dev{font-weight:600;white-space:nowrap}',
@@ -46,7 +46,7 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.large .v{font-size:60px}',
     '.pme-stile .s{font-size:16px;text-align:right;font-variant-numeric:tabular-nums;min-height:18px}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
-    // Stage 12: portrait tiles (a phone): a third of the width each, numerics as large as that leaves
+    // Portrait tiles (a phone): a third of the width each, numerics as large as that leaves
     '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
     '.pme-portrait .pme-stile .h{font-size:12px;gap:3px}',
     '.pme-portrait .pme-stile .lim{display:none}',
@@ -87,7 +87,7 @@ export class DeviceUI {
   private values: Partial<Record<NumericId, Measured>> = {};
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
-  private nibpPr: number | null = null; // FU-5: the cuff's pulse rate (the NIBP tile's PR extra)
+  private nibpPr: number | null = null; // The cuff's pulse rate (the NIBP tile's PR extra)
   private status: AlarmStatus | null = null;
   private dev: DeviceStatus | null = null;
   private readonly lamp: HTMLDivElement;
@@ -99,7 +99,7 @@ export class DeviceUI {
   private readonly badge: HTMLSpanElement;
   private readonly date: HTMLSpanElement;
 
-  /** Stage 12: the tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
+  /** The tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
   private readonly portrait: boolean;
 
   constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false) {
@@ -122,7 +122,7 @@ export class DeviceUI {
     this.badge = q('badge');
     this.date = q('date');
     this.tiles = doc.createElement('div');
-    // Stage 12: portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
+    // Portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
     this.tiles.style.cssText = portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
     if (portrait) this.tiles.className = 'pme-portrait';
     this.watermark = doc.createElement('div');
@@ -148,10 +148,10 @@ export class DeviceUI {
     const doc = this.tiles.ownerDocument;
     for (const col of r.skin.layout.tiles) {
       const c = doc.createElement('div');
-      c.style.cssText = this.portrait ? 'display:contents' : `width:180px;border-left:1px solid ${r.skin.chrome.divider};`; // Stage 12
+      c.style.cssText = this.portrait ? 'display:contents' : `width:180px;border-left:1px solid ${r.skin.chrome.divider};`;
       for (const spec of col) {
         const el = doc.createElement('div');
-        // the HR tile keeps the Stage 1 class `pme-tile`, which the IIFE smoke test (and embedders) look up
+        // The HR tile keeps the original class `pme-tile`, which the IIFE smoke test (and embedders) look up
         el.className = `${spec.param === 'HR' ? 'pme-tile ' : ''}pme-stile${spec.size === 'large' ? ' large' : ''}`;
         el.dataset.param = spec.param;
         el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
@@ -172,8 +172,8 @@ export class DeviceUI {
     if (e.type === 'measurement') {
       Object.assign(this.values, e.values);
       if (e.values.nibpSys?.value != null) this.nibpLast = { sys: e.values.nibpSys.value, dia: e.values.nibpDia?.value ?? 0, map: e.values.nibpMean?.value ?? 0, at: e.t };
-      // FU-7.1 B8 (Ali 2026-10-10): a failed cuff cycle blanks the numerics (`invalid`, null) — the last result must go
-      // too, or the tile returns to the pre-arrest pressure with the device's next idle event
+      // A failed cuff cycle blanks the numerics (`invalid`, null) — the last result must go too, or the tile returns to
+      // the pre-arrest pressure with the device's next idle event (Ali 2026-10-10)
       else if (e.values.nibpSys?.flag === 'invalid') {
         this.nibpLast = null;
         this.nibpPr = null; // the cuff's pulse rate belonged to the same result
@@ -187,9 +187,9 @@ export class DeviceUI {
   }
 
   /**
-   * FU-11 (F05, BA01): the timeline went back (a bookmark restore, or a viewer's resync). The numerics, the NIBP result
-   * and the alarm and device status belonged to the discarded run — a sensor the restored patient does not have would
-   * otherwise keep its last number; they are cleared and refill from the restored engine's next events (≤ 1 s).
+   * The timeline went back (a bookmark restore, or a viewer's resync). The numerics, the NIBP result and the alarm and
+   * device status belonged to the discarded run — a sensor the restored patient does not have would otherwise keep its
+   * last number; they are cleared and refill from the restored engine's next events (≤ 1 s).
    */
   reset(t: number): void {
     this.values = {};
@@ -208,9 +208,9 @@ export class DeviceUI {
   }
 
   /**
-   * A numeric as the tile prints it. FU-5 (audit M1, M8): a questionable value carries the skin's mark ("97?", brief
-   * §4.3, research/06 §3.2); an invalid one whose technical alarm is active shows the skin's INOP glyph ("-?-", [S2]
-   * IFU p. 55–62); otherwise the no-value dashes.
+   * A numeric as the tile prints it. A questionable value carries the skin's mark ("97?", brief §4.3, research/06
+   * §3.2); an invalid one whose technical alarm is active shows the skin's INOP glyph ("-?-", [S2] IFU p. 55–62);
+   * otherwise the no-value dashes.
    */
   private text(m: Measured | undefined, digits = 0, id?: NumericId): string {
     const g = this.r.skin.glyphs;
@@ -219,9 +219,9 @@ export class DeviceUI {
   }
 
   /**
-   * FU-5 (audit M3): the HR tile. The ECG rate; with the leads off an AUTO skin that relabels shows the first valid pulse
-   * of its priority list under that label (saadat-like "PR", research/06 §4.1); otherwise the skin's HR-unavailable
-   * glyph (philips-like "-?-", [S2] IFU p. 55 — the pulse stays in its own tile). Never a "0".
+   * The HR tile. The ECG rate; with the leads off an AUTO skin that relabels shows the first valid pulse of its
+   * priority list under that label (saadat-like "PR", research/06 §4.1); otherwise the skin's HR-unavailable glyph
+   * (philips-like "-?-", [S2] IFU p. 55 — the pulse stays in its own tile). Never a "0".
    */
   private hrTile(): { main: string; label: string } {
     const g = this.r.skin.glyphs;
@@ -241,8 +241,8 @@ export class DeviceUI {
   }
 
   /**
-   * FU-5 (audit M11): the skin's tile extras ("PR 76", "PI 1.6", "awRR 12", "T2 36.4", "ΔT 0.4", "ST-II -0.1"). MEAN is the
-   * pressure tiles' own sub-line and NMT/BFA extras are drawn by their formatters (FU-3).
+   * The skin's tile extras ("PR 76", "PI 1.6", "awRR 12", "T2 36.4", "ΔT 0.4", "ST-II -0.1"). MEAN is the pressure
+   * tiles' own sub-line and NMT/BFA extras are drawn by their formatters.
    */
   private extras(spec: TileSpec): string {
     const v = this.values;
@@ -252,7 +252,7 @@ export class DeviceUI {
       else if (x === 'PR') out.push(`PR ${this.text(v.pr)}`);
       else if (x === 'PI') out.push(`PI ${this.text(v.pi, 1)}`);
       else if (x === 'AWRR') out.push(`awRR ${this.text(v.awrr)}`);
-      else if (x === 'IMCO2') out.push(`${this.r.skin.id === 'philips-like' ? 'imCO2' : 'FiCO2'} ${this.text(v.imco2)}`); // FU-8 (A10-E5): glossary #16
+      else if (x === 'IMCO2') out.push(`${this.r.skin.id === 'philips-like' ? 'imCO2' : 'FiCO2'} ${this.text(v.imco2)}`); // Glossary #16
       else if (x === 'T2') out.push(`T2 ${this.text(v.tempSite, 1)}`);
       else if (x === 'ST') out.push(`ST-II ${this.text(v.stII, 1)}`); // research/11 glossary #22 (the lead-II ST numeric)
       else if (x === 'DT') {
@@ -274,17 +274,17 @@ export class DeviceUI {
       let main = g.noValue;
       let sub = '';
       let label: string = p;
-      tile.el.style.display = modulePresent(p, v, t) ? '' : 'none'; // FU-3 item 11: NMT/BFA only while the module publishes
-      if (p === 'HR') ({ main, label } = this.hrTile()); // FU-5 (M3)
-      else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue)); // FU-3 item 11
-      else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue)); // FU-3 item 11
+      tile.el.style.display = modulePresent(p, v, t) ? '' : 'none'; // NMT/BFA only while the module publishes
+      if (p === 'HR') ({ main, label } = this.hrTile());
+      else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
+      else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
       else if (p === 'AGENTS') {
-        ({ main, sub } = formatAgents(v, g.noValue)); // FU-8 (A10-E5)
+        ({ main, sub } = formatAgents(v, g.noValue));
         label = 'EtAA';
       }
       else if (p === 'NIBP') {
         const n = formatNibp(this.nibpEv, this.nibpLast);
-        // FU-5 (audit M11): a failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)
+        // A failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)
         main = this.nibpEv?.phase === 'failed' ? g.nibpFail : n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;
         sub = `${n.sub === '(---)' ? '' : n.sub} ${n.status}`.trim();
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
@@ -295,7 +295,7 @@ export class DeviceUI {
         const id = TILE_NUMERICS[p].numerics[0] as NumericId;
         main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
       }
-      const extra = this.extras(tile.spec); // FU-5 (M11): was a hard-coded "PR … PI …" on SpO2 only
+      const extra = this.extras(tile.spec);
       if (extra) sub = sub ? `${sub}  ${extra}` : extra;
       tile.label.textContent = label;
       tile.value.textContent = main;

@@ -5,7 +5,7 @@ import { createEngine } from '../../src/engine.ts';
 import type { Command } from '../../src/types.ts';
 import { cmd } from '../helpers/hemo.ts';
 
-describe('Stage 2 determinism and drift', () => {
+describe('haemodynamic determinism and drift', () => {
   it('same seed + same commands → identical SHA-256 over 60 s of abp, cvp, pap and pleth; another seed differs', () => {
     const script: Array<[number, Command]> = [
       [5, cmd({ type: 'setTarget', variable: 'sbp', value: 100, ramp: { durationS: 10 } })],

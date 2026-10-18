@@ -1,7 +1,8 @@
-// How the host offers a Remote (review F2; orchestrator ruling 6). Version 1.0 pairs a Remote in the SAME browser only:
-// the default transport is a BroadcastChannel, which never leaves the browser profile. A tablet on the network needs
-// the Stage 6a relay (?relay=ws://…) and a network address the tablet can reach; that path is an untested preview at 1.0.0-rc.1 (Stage 8b: no "version 1.1" on screen),
-// so without a relay the host shows no QR code and says so. No DOM here: the host view and its test read the result.
+// How the host offers a Remote. Version 1.0 pairs a Remote in the SAME browser only: the default transport is a
+// BroadcastChannel, which never leaves the browser profile. A tablet on the network needs the controllers' relay
+// (?relay=ws://…) and a network address the tablet can reach; that path is an untested preview at 1.0.0-rc.1 (the
+// screen promises no later version), so without a relay the host shows no QR code and says so. No DOM here: the
+// host view and its test read the result.
 
 export interface PairingLocation {
   origin: string;

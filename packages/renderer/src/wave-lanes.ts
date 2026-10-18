@@ -1,15 +1,15 @@
-// Stage 2 waveform lanes (brief §3.5, §6.8 colours): ABP red, pleth cyan, CVP blue, PAP yellow, drawn by the
+// Haemodynamic waveform lanes (brief §3.5, §6.8 colours): ABP red, pleth cyan, CVP blue, PAP yellow, drawn by the
 // existing SweepLane at 125 Hz. SweepLane maps "mV" to y through baseline + gainMmPerMv; a pressure lane maps
 // mmHg instead, so the scale range [lo, hi] becomes baseline = hi/(hi − lo) and gain = height/((hi − lo)·pxPerMm).
 // The pleth is auto-scaled (brief §4.3: "the display is auto-scaled; PI is kept as a number").
-export type WaveLaneId = 'abp' | 'pleth' | 'cvp' | 'pap' | 'co2' | 'resp' | 'icp'; // Stage 3: co2, resp (62.5 Hz); Stage 7d: icp
+export type WaveLaneId = 'abp' | 'pleth' | 'cvp' | 'pap' | 'co2' | 'resp' | 'icp'; // co2, resp (62.5 Hz); icp
 
 export interface WaveStyle {
   label: string;
   color: string;
   /** Fixed scale in mmHg, or null for auto-scale (pleth). */
   range: readonly [number, number] | null;
-  /** Stage 3: channel sample rate (default 125) and sweep speed in mm/s (default 25). */
+  /** Channel sample rate (default 125) and sweep speed in mm/s (default 25). */
   rate?: 125 | 62.5;
   mmPerS?: number;
 }
@@ -20,10 +20,10 @@ export const WAVE_STYLE: Readonly<Record<WaveLaneId, WaveStyle>> = {
   pleth: { label: 'Pleth', color: '#00e5ff', range: null },
   cvp: { label: 'CVP', color: '#3d8bff', range: [-5, 20] },
   pap: { label: 'PAP', color: '#ffe14d', range: [0, 40] },
-  // Stage 3 (brief §6.8; BUILD-PLAN Stage 3 demo): CO2 yellow 0–50 mmHg at 6.25 mm/s; Resp yellow, auto-scaled
+  // CO2 yellow 0–50 mmHg at 6.25 mm/s; Resp yellow, auto-scaled (brief §6.8)
   co2: { label: 'CO2', color: '#f0f030', range: [0, 50], rate: 62.5, mmPerS: 6.25 },
   resp: { label: 'RESP', color: '#f0f030', range: null, rate: 62.5, mmPerS: 6.25 },
-  icp: { label: 'ICP', color: '#ffffff', range: [0, 40] }, // Stage 7d (brief §6.8 has no ICP colour; skins override)
+  icp: { label: 'ICP', color: '#ffffff', range: [0, 40] }, // Brief §6.8 has no ICP colour; skins override
 };
 
 /** SweepLane baseline and gain that map [lo, hi] onto a lane of `height` CSS px. */
@@ -32,7 +32,7 @@ export function scaleFor(lo: number, hi: number, height: number, pxPerMm: number
 }
 
 /** Pleth auto-scale [ENG]: the last 4 s fill 80% of the lane, centred; flat traces keep a 0.1 % span. */
-export function autoRange(samples: ArrayLike<number>, count: number, minSpan = 0.1): [number, number] { // Stage 3: minSpan
+export function autoRange(samples: ArrayLike<number>, count: number, minSpan = 0.1): [number, number] { // minSpan
   let lo = Infinity;
   let hi = -Infinity;
   for (let i = 0; i < count; i++) {

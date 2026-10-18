@@ -2,7 +2,7 @@
 // RS14's proposed band +6–10 at 20 min is missed (measured +5.7 / +5.0: the body's slow CO2 store fills with τ ≈ 80 min,
 // so 20 min is ≈ 70 % of the +8 steady state) → it.fails with the numbers (R45); the mechanism check (was +0) is an it.
 import { describe, expect, it } from 'vitest';
-import { rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 async function run(fico2: number) {
   const e = rig6();
@@ -13,7 +13,7 @@ async function run(fico2: number) {
   return { pa: st6(e).resp.co2.pf as number, et: st6(e).resp.etco2 as number };
 }
 
-describe('FU-6 R8: rebreathing acts on PaCO2 (was 46.6 = control)', { timeout: 600_000 }, () => {
+describe('rebreathing acts on PaCO2', { timeout: 600_000 }, () => {
   it('FiCO2 8 for 20 min: PaCO2 and EtCO2 rise over control (mechanism present: > 3; measured +6.66 / +5.98; plan +5.7 / +5.0)', async () => {
     const c = await run(0);
     const r = await run(8);
@@ -24,7 +24,7 @@ describe('FU-6 R8: rebreathing acts on PaCO2 (was 46.6 = control)', { timeout: 6
   // FU-8 B4 (E-FU8B-7): flipped — the anaesthetised rig's output moves with the tonic sympathetic share; EtCO2 +5.98 → +6.1
   // R45 (FU-7.1 B3; OWNER RULING Q5, 2026-10-10, the same assertion as resp-suite RS14): recorded with its number, NOT
   // widened — the alveolar-washout fall moves the EtCO2 rise to +5.99994, red by 6 × 10⁻⁵. PaCO2 +6.7 unchanged.
-  it.fails('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 after FU-7.1 B3 (+6.1 after FU-8 B4, +5.98 before it; FU-6 R8; plan +5.7 / +5.0)', async () => {
+  it.fails('RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)', async () => {
     const c = await run(0);
     const r = await run(8);
     expect(r.pa - c.pa).toBeGreaterThanOrEqual(6);

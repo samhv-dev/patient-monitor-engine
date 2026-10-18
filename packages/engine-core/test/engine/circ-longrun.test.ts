@@ -6,7 +6,7 @@ import { driver, runTo, ventEnv } from '../helpers/circ.ts';
 import { createEngine } from '../../src/engine.ts';
 import { cmd } from '../helpers/hemo.ts';
 
-describe('Stage 7a long runs', () => {
+describe('circulation long runs', () => {
   it('CPU: the circulation (circuit + control) costs ≤ 0.3 ms per 20 ms tick in Node', () => {
     const m = createCircModel();
     const dr = driver(m);

@@ -5,7 +5,7 @@ import { healthyParams, mechParams } from '../../../src/l2/lung/side.ts';
 const healthy = () => mechParams(healthyParams(70), [1, 1], [false, false]);
 const total = (v: number[]) => v.reduce((a, b) => a + b, 0);
 
-describe('four-unit mechanics (R43, tables §4.3)', () => {
+describe('four-unit mechanics (tables §4.3)', () => {
   it('a homogeneous lung behaves as one RC: Paw jumps by R·Q, volume splits 45/55', () => {
     const mp = healthy();
     const ms = createMech();

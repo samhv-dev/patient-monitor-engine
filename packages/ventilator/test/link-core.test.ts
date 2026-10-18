@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { createLinkCore, createLinkedSim, createVent, linkEvent, linkTick, LUNG_PATHOLOGIES, patchVent, PROFILES } from '../src/index.ts';
 
 describe('link core', () => {
-  it('one profile per row, carrying its engine lung conditions; the first tick sends the remaining stand-ins, then a frame each tick — never a shunt target or a 7a PE/tension condition (V.1)', () => {
+  it('one profile per row, carrying its engine lung conditions; the first tick sends the remaining stand-ins, then a frame each tick — never a shunt target or a circulation PE/tension condition', () => {
     expect(Object.keys(PROFILES).sort()).toEqual(LUNG_PATHOLOGIES.map((r) => r.id).sort());
     expect(PROFILES['ards-moderate']!.patient.lungConditions).toEqual([{ id: 'ards', severity: 0.67 }]);
     expect(PROFILES['ards-severe-recruitable']!.patient.lungConditions).toEqual([{ id: 'ards', severity: 1, recruitFrac: 0.5 }]);

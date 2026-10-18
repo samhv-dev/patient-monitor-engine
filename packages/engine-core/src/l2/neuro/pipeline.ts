@@ -1,14 +1,15 @@
-// Stage 7f pipeline (R32): the neuro state, its commands, and the 10 Hz step the engine runs inside advance() AFTER
-// Stage 7g's advancePk (it reads ps.pk.bus) and BEFORE Stage 3's respiratory pipeline (R51 §3 chain order). 7f has NO
-// PK (R51 §1) and consumes no drug or vaporiser event: it observes 7g's accepted doses on `bus.doses`. Plain JSON-safe
+// Neuro pipeline: the neuro state, its commands, and the 10 Hz step the engine runs inside advance() AFTER the drug
+// model's advancePk (it reads ps.pk.bus) and BEFORE the respiratory pipeline (chain order). The neuro model has NO PK
+// and consumes no drug or vaporiser event: it observes the drug model's accepted doses on `bus.doses`. Plain JSON-safe
 // data throughout (look-ahead clone, snapshots).
-// `stimulus` is Stage 7e's event (R51 addenda 12, 17: `{ kind: 'stimulus', intensity: 0–2 }`, held until the next one):
-// 7f OBSERVES it (apply returns false) and maps intensity → its 0–1 depth stimulus (STIM_FULL). 7e validates it (7f's
-// temporary validator was deleted when 7e merged, R-7f-4). 7e's two outputs 7f reads are duck-typed
-// seams with neutral fallbacks (NeuroEnv.neuroglycopenia, NeuroEnv.macF).
+// `stimulus` is the endocrine model's event (`{ kind: 'stimulus', intensity: 0–2 }`, held until the next one): the
+// neuro model OBSERVES it (apply returns false) and maps intensity → its 0–1 depth stimulus (STIM_FULL). The
+// endocrine model validates it. Its two outputs read here are duck-typed seams with neutral fallbacks
+// (NeuroEnv.neuroglycopenia, NeuroEnv.macF).
 //   step: doses (bus.doses) → bus (bus.ts) → NMB block + TOF (nmb.ts, neostigmine.ts, interactions.ts) → depth
-//         (depth.ts) → drive (drive.ts: ns.resp is the hook Stage 3/7b read) → outputs (outputs.ts; ns.antinoc/nmb/
-//         thermoDepth for 7e) → marks, TOF device, depth/agent numerics (1 Hz) and the instructor `anaesthesia` event (1 Hz).
+//         (depth.ts) → drive (drive.ts: ns.resp is the hook the lungs read) → outputs (outputs.ts; ns.antinoc/nmb/
+//         thermoDepth for the endocrine model) → marks, TOF device, depth/agent numerics (1 Hz) and the instructor
+//         `anaesthesia` event (1 Hz).
 import { seedStream } from '../../rng/sfc32.ts';
 import type { Command, EngineEvent, Measured, NumericId, PatientProfile } from '../../types.ts';
 import { DRUG_BUS_NEUTRAL, type DrugBus } from '../../types-pk.ts';
@@ -26,26 +27,32 @@ export const NEURO_DT_S = 0.1;
 /** Fasciculations after succinylcholine: from 25 s to 45 s after the dose (block is complete at ~60 s) [TXT; ENG timing]. */
 export const FASC_FROM_S = 25;
 export const FASC_TO_S = 45;
-/** Potent-volatile brain MAC above which an MH-susceptible patient is exposed (mhTrigger mark; MH itself is 7e's) [ENG]. */
+/**
+ * Potent-volatile brain MAC above which an MH-susceptible patient is exposed (mhTrigger mark; MH itself is the
+ * endocrine model's) [ENG].
+ */
 export const MH_VOLATILE_MAC = 0.1;
-/** 7e's stimulus intensity that is 7f's full (1.0) noxious stimulus: 1.5 = laryngoscopy/sternotomy (7e's scale) [ENG]. */
+/**
+ * The endocrine model's stimulus intensity that is the neuro model's full (1.0) noxious stimulus: 1.5 =
+ * laryngoscopy/sternotomy (the endocrine model's scale) [ENG].
+ */
 export const STIM_FULL = 1.5;
 
 export interface NeuroEnv {
   tempC: number;
   mechanical: boolean;
-  /** Stage 7e `endo.core.out.neuroglycopenia` 0–1 (duck-typed by the engine; 0 without 7e). */
+  /** The endocrine model's `endo.core.out.neuroglycopenia` 0–1 (duck-typed by the engine; 0 without it). */
   neuroglycopenia?: number;
-  /** Stage 7e `cascade(th).macF` — MAC requirement × (−5 %/°C below 37; tables §5.3); 1 without 7e (request R-7f-8). */
+  /** The endocrine model's `cascade(th).macF` — MAC requirement × (−5 %/°C below 37; tables §5.3); 1 without it. */
   macF?: number;
-  /** FU-7 (D7): `resp.spont.rr` as committed by the previous pass (MODELED only — spontaneous OR ventilated; undefined
-   * in MANUAL and before the drive has run once). */
+  /** `resp.spont.rr` as committed by the previous pass (MODELED only — spontaneous OR ventilated; undefined in
+   * MANUAL and before the drive has run once). */
   spontRr?: number;
-  /** FU-7 (addendum 24 / audit D12): 7c's `blood.out.mg` / `blood.out.iCa` (mmol/L) — ONE magnesium and ONE calcium
-   * state; undefined without 7c (the profile's mgMmolL is then the fallback). */
+  /** The blood model's `blood.out.mg` / `blood.out.iCa` (mmol/L) — ONE magnesium and ONE calcium state; undefined
+   * without the blood model (the profile's mgMmolL is then the fallback). */
   mgMmolL?: number;
   iCaMmolL?: number;
-  /** FU-9 F10: 7c's plasma K (`blood.out.k`, mmol/L); undefined without 7c. */
+  /** The blood model's plasma K (`blood.out.k`, mmol/L); undefined without the blood model. */
   kMmolL?: number;
 }
 
@@ -53,8 +60,8 @@ export interface NeuroState {
   k: number; // next step index (time k·0.1 s)
   ageY: number;
   profile: { nm: NmProfile; mhSusceptible: boolean; mgMmolL: number };
-  doseSeenT: number; // latest bus.doses time already observed (R51 §3)
-  stim: { intensity: number; level: number }; // 7e's intensity 0–2 (held) and 7f's 0–1 level
+  doseSeenT: number; // Latest bus.doses time already observed
+  stim: { intensity: number; level: number }; // the endocrine model's intensity 0–2 (held) and the neuro 0–1 level
   airway: 'auto' | 'none' | 'ett' | 'sga';
   depthOn: boolean;
   diShown: number;
@@ -62,24 +69,24 @@ export interface NeuroState {
   last: { tof: TofReading; thumb: number; dia: number; d: DepthOut; x: NeuroInputs };
   resp: NeuroResp;
   outputs: NeuroOutputs;
-  /** Read by Stage 7e as ps.neuro.{antinoc, nmb, thermoDepth} (R51 §6; the 7e plan's Requests): mirrors of `outputs`. */
+  /** Read by the endocrine model as ps.neuro.{antinoc, nmb, thermoDepth}: mirrors of `outputs`. */
   antinoc: number;
-  /** FU-7 (R51 addendum 25): the OPIOID + lidocaine share of `antinoc` — 7e's nociceptive surge state reads it. */
+  /** The OPIOID + lidocaine share of `antinoc` — the endocrine model's nociceptive surge state reads it. */
   antinocOp: number;
   nmb: number;
   thermoDepth: number;
   flags: { conscious: boolean; aware: boolean; moved: boolean; recovered: boolean; recurarised: boolean; mhMarked: boolean };
   fasc: { from: number; to: number };
   emgBase: number | null; // ECG EMG artefact before fasciculations (engine)
-  /** FU-10 E1: when an MH-susceptible patient was first exposed to each trigger (s) — read by Stage 7e, which owns MH
-   * (R51 §6) and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. */
+  /** When an MH-susceptible patient was first exposed to each trigger (s) — read by the endocrine model, which owns
+   * MH and turns the exposure into the MH state with the trigger's onset latency. Absent = never exposed. */
   mhExposure?: { sux?: number; volatile?: number; volatileAgent?: string };
   out: EngineEvent[];
 }
 
 const IDLE_RESP: NeuroResp = {
   opioidDep: 0, hypnoticDep: 0, totalDep: 0, veRest: 1, rrMult: 1, vtMult: 1, apnoea: false, pMaxMult: 1, obstruction: 0, nmbVtMult: 1, cleft: 0,
-  loc: 0, pain: 0, hvrDep: 0, // FU-6
+  loc: 0, pain: 0, hvrDep: 0,
 };
 
 export function createNeuroState(profile: PatientProfile | undefined, seed: number): NeuroState {
@@ -95,7 +102,7 @@ export function createNeuroState(profile: PatientProfile | undefined, seed: numb
     last: { tof: tofFrom(0, 0, 0), thumb: 0, dia: 0, d: d0, x: x0 },
     resp: { ...IDLE_RESP },
     outputs: neuroOutputs({ diRaw: d0.diRaw, opioidFentEq: 0, antinoc: 0, thumbBlock: 0, hypEq: 0 }),
-    antinoc: 0, antinocOp: 0, nmb: 0, thermoDepth: 0, // FU-7 (addendum 25): antinocOp
+    antinoc: 0, antinocOp: 0, nmb: 0, thermoDepth: 0, // antinocOp
     flags: { conscious: true, aware: false, moved: false, recovered: false, recurarised: false, mhMarked: false },
     fasc: { from: -1, to: -1 }, emgBase: null, out: [],
   };
@@ -104,8 +111,9 @@ export function createNeuroState(profile: PatientProfile | undefined, seed: numb
 // --- commands ------------------------------------------------------------------------------------------------
 
 /**
- * Validation hook: a reason, undefined (accepted) or null (not a Stage 7f command). Every `drug` and `vaporiser` event
- * is 7g's — null here; the engine runs this hook AFTER 7g's (R51 §3), so 7f never sees one it could consume.
+ * Validation hook: a reason, undefined (accepted) or null (not a neuro command). Every `drug` and `vaporiser` event is
+ * the drug model's — null here; the engine runs this hook AFTER the drug model's, so the neuro model never sees one it
+ * could consume.
  */
 export function validateNeuroCommand(cmd: Command): string | undefined | null {
   if (cmd.type === 'device') {
@@ -131,7 +139,7 @@ export function validateNeuroCommand(cmd: Command): string | undefined | null {
       return p.cholinesterase === undefined ? undefined : 'cholinesterase is a patient-profile field (set at creation; 7g\'s PK reads it)';
     }
     default:
-      return null; // drug, vaporiser, …: 7g validates and consumes them; 7f observes bus.doses
+      return null; // Drug, vaporiser, …: the drug model validates and consumes them; the neuro model observes bus.doses
   }
 }
 
@@ -154,7 +162,7 @@ export function applyNeuroCommand(ns: NeuroState, cmd: Command, t: number): bool
   const ev = cmd.event as NeuroClinicalEvent | { kind: string };
   switch (ev.kind) {
     case 'stimulus': {
-      // OBSERVED, never consumed (7e's event, R51 addenda 12/17): held until the next stimulus event
+      // OBSERVED, never consumed (the endocrine model's event, addenda 12/17): held until the next stimulus event
       const i = Math.max(0, (ev as StimulusEvent).intensity);
       ns.stim = { intensity: i, level: Math.min(1, i / STIM_FULL) };
       ns.flags.moved = false;
@@ -182,7 +190,10 @@ function mark(ns: NeuroState, t: number, kind: NeuroMarkKind): void {
 
 const r2 = (x: number) => Math.round(x * 100) / 100;
 
-/** Doses 7g accepted since the last pass (R51 §3): succinylcholine → fasciculation window and, if susceptible, the MH mark. */
+/**
+ * Doses the drug model accepted since the last pass: succinylcholine → fasciculation window and, if susceptible, the
+ * MH mark.
+ */
 function observeDoses(ns: NeuroState, bus: DrugBus): void {
   const { doses, seenT } = newDoses(bus, ns.doseSeenT);
   ns.doseSeenT = seenT;
@@ -190,7 +201,7 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
     if (d.agent !== 'succinylcholine') continue;
     ns.fasc = { from: d.t + FASC_FROM_S, to: d.t + FASC_TO_S };
     if (ns.profile.mhSusceptible) {
-      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t }; // FU-10 E1: 7e reads it
+      ns.mhExposure = { ...ns.mhExposure, sux: ns.mhExposure?.sux ?? d.t }; // The endocrine model reads it
       if (!ns.flags.mhMarked) {
         mark(ns, d.t, 'mhTrigger');
         ns.flags.mhMarked = true;
@@ -201,9 +212,9 @@ function observeDoses(ns: NeuroState, bus: DrugBus): void {
 
 function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): void {
   // NMB
-  // FU-7 (addendum 24 / audit D12): ONE magnesium state and ONE calcium state — 7c's blood, with the profile as the
-  // baseline when 7c is absent (`env.mgMmolL`/`env.iCaMmolL` are duck-typed in engine.ts's neuro context).
-  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC, kMmolL: env.kMmolL }); // FU-9 F10: 7c's K on FU-7's one electrolyte path
+  // ONE magnesium state and ONE calcium state — the blood model's, with the profile as the baseline when the blood
+  // model is absent (`env.mgMmolL`/`env.iCaMmolL` are duck-typed in engine.ts's neuro context).
+  const m = ec50Multipliers({ profile: ns.profile.nm, volatileMac: x.macPotent, mgMmolL: env.mgMmolL ?? ns.profile.mgMmolL, iCaMmolL: env.iCaMmolL, tempC: env.tempC, kMmolL: env.kMmolL }); // The blood model's K on the one electrolyte path
   const neo = neoEc50Mult(x.achGain);
   const mult: Record<NmbAgent, number> = { rocuronium: m.rocuronium * neo, vecuronium: m.vecuronium * neo, cisatracurium: m.cisatracurium * neo, succinylcholine: m.succinylcholine };
   const th = siteBlock(x.nmj, 'thumb', mult);
@@ -211,24 +222,25 @@ function stepOnce(ns: NeuroState, t: number, env: NeuroEnv, x: NeuroInputs): voi
   const ndShare = th.b > 0 ? th.nd / Math.max(1e-9, th.nd + th.dep) : 0;
   const tof = tofFrom(th.b, ndShare, phase2Fraction(x.suxCumMgPerKg));
   // depth
-  // 7e's hypothermic MAC reduction (cascade macF: the same brain tension is a larger MAC fraction) and neuroglycopenia
+  // The endocrine model's hypothermic MAC reduction (cascade macF: the same brain tension is a larger MAC fraction) and
+  // neuroglycopenia
   const macF = Math.max(0.3, env.macF ?? 1);
   const d = depth({ ageY: ns.ageY, ce: x.brain, macPotent: x.macPotent / macF, macN2o: x.macN2o / macF, t1: tof.t1, stimulus: ns.stim.level, glyco: env.neuroglycopenia ?? 0,
-    hypPropEq: x.hypPropEq, opioidFentEqIn: x.opioidFentEq, dissoc: x.dissoc, antinocAdd: x.antinocAdd }); // FU-7 (addenda 20, 22)
+    hypPropEq: x.hypPropEq, opioidFentEqIn: x.opioidFentEq, dissoc: x.dissoc, antinocAdd: x.antinocAdd });
   ns.diShown = smoothDi(ns.diShown, d.diRaw, NEURO_DT_S);
   // drive
   const natural = ns.airway === 'none' || (ns.airway === 'auto' && !env.mechanical);
   const wasApnoeic = ns.resp.apnoea;
-  ns.resp = neuroResp({ vent: x.vent, hypVentPropEq: x.hypVentPropEq, benzoShare: x.benzoShare, macVolatile: x.macPotent, diaBlock: di.b, diaNd: di.nd + di.dep > 0 ? di.nd / (di.nd + di.dep) : 0, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, spontRr: env.spontRr, hypnotic: d.hypnotic, stress: d.stress }); // FU-6: consciousness and nociception reach the drive; FU-7 (addendum 20; D7): the hypnotic equivalent, its benzodiazepine share and the chemoreflex's committed rate
-  // outputs (7d, 7e)
+  ns.resp = neuroResp({ vent: x.vent, hypVentPropEq: x.hypVentPropEq, benzoShare: x.benzoShare, macVolatile: x.macPotent, diaBlock: di.b, diaNd: di.nd + di.dep > 0 ? di.nd / (di.nd + di.dep) : 0, tofr: tof.count === 4 ? tof.ratio : 0, di: d.diRaw, naturalAirway: natural, wasApnoeic, spontRr: env.spontRr, hypnotic: d.hypnotic, stress: d.stress }); // Consciousness and nociception reach the drive; the hypnotic equivalent, its benzodiazepine share and the chemoreflex's committed rate
+  // outputs (for the organs and the endocrine model)
   ns.outputs = neuroOutputs({ diRaw: d.diRaw, opioidFentEq: opioidFentEq(x.brain), antinoc: d.antinoc, thumbBlock: th.b, hypEq: d.hypEq });
   ns.antinoc = ns.outputs.antinoc;
-  ns.antinocOp = d.antinocOp; // FU-7 (R51 addendum 25): 7e reads this for the catecholamine release
+  ns.antinocOp = d.antinocOp; // The endocrine model reads this for the catecholamine release
   ns.nmb = ns.outputs.nmb;
   ns.thermoDepth = ns.outputs.thermoDepth;
-  // MH exposure to a potent volatile: a mark only (MH is 7e's, R51 §6)
+  // MH exposure to a potent volatile: a mark only (MH is the endocrine model's)
   if (ns.profile.mhSusceptible && x.macPotent > MH_VOLATILE_MAC && ns.mhExposure?.volatile === undefined) {
-    // FU-10 E1: 7e reads the time and the agent (the potent volatile with the largest end-tidal MAC fraction)
+    // The endocrine model reads the time and the agent (the potent volatile with the largest end-tidal MAC fraction)
     let agent = '';
     let best = -1;
     for (const [id, v] of Object.entries(x.et)) {
@@ -273,8 +285,8 @@ function emitSecond(ns: NeuroState, t: number): void {
     values.di = { value: emg ? null : Math.round(ns.diShown), flag: emg ? 'questionable' : 'valid', at: t };
     values.sr = { value: Math.round(d.sr), flag: 'valid', at: t };
   }
-  // gas monitor: END-TIDAL MAC (Σ fet/macAge, all agents: R51 addendum 17) and the dominant potent agent's Fet,
-  // from 7g's bus (decision 13); the brain MAC (7g's macFrac) is the anaesthesia event's `macBrain`
+  // gas monitor: END-TIDAL MAC (Σ fet/macAge, all agents) and the dominant potent agent's Fet,
+  // from the drug model's bus; the brain MAC (its macFrac) is the anaesthesia event's `macBrain`
   let dom: VolatileId | null = null;
   for (const a of VOLATILE_IDS) {
     const e = x.et[a];
@@ -319,8 +331,9 @@ export function fasciculating(ns: NeuroState, t: number): boolean {
 }
 
 /**
- * Step the neuro state on its 10 Hz grid up to and including time tEnd (s). `bus` is 7g's DrugBus as `advancePk` left
- * it in the same pass (the engine calls this right after `advancePk`); every sub-step of the pass reads that one bus.
+ * Step the neuro state on its 10 Hz grid up to and including time tEnd (s). `bus` is the drug model's DrugBus as
+ * `advancePk` left it in the same pass (the engine calls this right after `advancePk`); every sub-step of the pass
+ * reads that one bus.
  */
 export function stepNeuroTo(ns: NeuroState, tEnd: number, env: NeuroEnv, bus: DrugBus): void {
   observeDoses(ns, bus);

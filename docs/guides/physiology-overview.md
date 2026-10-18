@@ -58,6 +58,8 @@ cell, any part that is MODELED only.
 
 ## Device layer (both)
 
+Details: [docs/model/monitor.md](../model/monitor.md), [docs/model/alarms.md](../model/alarms.md), [docs/model/defib-pacer.md](../model/defib-pacer.md).
+
 The monitor layer measures the L1 truth the same way in either mode (brief §6).
 
 - **HR:** the last 12 R–R intervals averaged without the longest and shortest (IEC-style; the `philips-like` skin
@@ -77,6 +79,8 @@ The monitor layer measures the L1 truth the same way in either mode (brief §6).
 - **Trends and event log:** 1 Hz numerics for 8 h; every command, alarm, drug and shock logged (§6.7).
 
 ## Rhythms (both)
+
+Details: [docs/model/rhythms-ecg.md](../model/rhythms-ecg.md).
 
 36 rhythm ids (`RHYTHM_IDS`, `packages/engine-core/src/l2/ecg/rhythms.ts`). Each is a configuration of the atrial
 and ventricular clocks, the AV node, an optional focus and an optional pacemaker. Any organised rhythm can be made
@@ -123,7 +127,9 @@ the sensing pacemakers modulated within bounds (`l2/circ/rate-rule.ts`).
 | `pacedVVI` | Paced, VVI | both | |
 | `pacedDDD` | Paced, DDD | both | |
 
-## Circulation (Stage 7a)
+## Circulation
+
+Details: [docs/model/circulation.md](../model/circulation.md), [docs/model/pressure-waveforms.md](../model/pressure-waveforms.md).
 
 A circuit of four time-varying-elastance chambers, four valves (stenosis and regurgitant orifice), a pericardium, a
 continuous pleural pressure, a systemic 4-element Windkessel with an aorta-to-radial resonator, systemic veins, a
@@ -154,7 +160,9 @@ circuit (FU-8 A13).
 | `rvFailure` | both | RV Ees ×0.5 |
 | `ph` | both | PVR 3/5/10 Wood units by grade, RV Ees ×1.3–2 (FU-8 A18) |
 
-## Lungs, ventilation and gas exchange (Stage 3, 7b, V, V.1)
+## Lungs, ventilation and gas exchange
+
+Details: [docs/model/lungs.md](../model/lungs.md), [docs/model/gas-exchange.md](../model/gas-exchange.md), [docs/model/breathing.md](../model/breathing.md), [docs/model/ventilator.md](../model/ventilator.md).
 
 Two lung compartments (per-side compliance, resistance, aeration, recruitability) feed one gas-mixing point with
 V/Q admixture, shunt, alveolar dead space and hypoxic pulmonary vasoconstriction; O2 and CO2 stores with their own
@@ -165,7 +173,7 @@ kinetics give EtCO2 at once and SpO2 late after an airway loss (Stage 3, `docs/g
 The ventilator link sends frames in and reads an absolute `lungState` out, on the 7b lungs since V.1
 (`docs/gates/stage-V.md`, `docs/gates/stage-v1.md`). Respiratory mechanics readouts (Pplat, ΔP, PEEPi, VD/VT, lung
 volumes) are 7k's (`docs/gates/stage-7k.md`). The 32 catalogue conditions (`LUNG_CONDITION_IDS`;
-`docs/physiology/stage-7-lung-pathology-catalogue.md`) take a severity; sided ones take L or R. The 7b gate
+`docs/physiology/lung-pathology-catalogue.md`) take a severity; sided ones take L or R. The 7b gate
 measured all 32: 23 meet every band, 9 carry recorded misses (`docs/gates/stage-7b.md` §1). INTERIM: the ventilator
 link's `anaphylaxis-bronchospasm` and `air-embolism` profiles still set their shock as MANUAL targets
 (`packages/ventilator/src/link/profiles.ts`).
@@ -205,7 +213,9 @@ link's `anaphylaxis-bronchospasm` and `air-embolism` profiles still set their sh
 | `covidPneumonitis` | both | L to H phenotype: compliance, shunt, HPV |
 | `smokeInhalation` | both | lower-airway component: resistance, V/Q, dead space |
 
-## Blood, acid–base, electrolytes and fluids (Stage 7c)
+## Blood, acid–base, electrolytes and fluids
+
+Details: [docs/model/blood.md](../model/blood.md).
 
 Oxygen dissociation curve feeding the lungs' mixing point; Stewart acid–base with dynamic SID and a bounded pH
 solver; Na, K, Cl, iCa, Mg; lactate from the O2 deficit, cleared by the liver; haemoglobin, haemorrhage and
@@ -220,7 +230,9 @@ FU-9 added fluid expansion and filtration, citrate, albumin, alkalosis, osmolali
 | `burns` | both | succinylcholine K surge up to +6.5 (burns + sux: K 7.7 at 4 min, `docs/gates/stage-7c.md`); non-depolariser resistance; capillary leak |
 | `dka` | both | ketoacid load: AG 27, HCO3 8.6, pH 7.08 at severity 0.8 (7c); the respiratory compensation is MODELED only |
 
-## Brain, kidney, liver (Stage 7d)
+## Brain, kidney, liver
+
+Details: [docs/model/organs.md](../model/organs.md).
 
 Brain: Monro–Kellie pressure–volume, CSF with a finite reserve, autoregulation, CO2/O2 reactivity, drug CMRO2 and
 vasodilation, ICP/CPP/CBF/PbtO2/SjvO2, Cushing's response with both triggers, osmotherapy, head-up and herniation;
@@ -234,7 +246,9 @@ circulation's own flows (`l2/organs/inputs.ts`).
 | `hepaticFailure` | both | lower lactate and drug clearance |
 | `aki` | both | lower GFR and urine output |
 
-## Endocrine, thermal and system conditions (Stage 7e)
+## Endocrine, thermal and system conditions
+
+Details: [docs/model/endocrine-thermal.md](../model/endocrine-thermal.md).
 
 Stress hormones (catecholamines, cortisol, the humoral AVP/angiotensin arm of FU-4), glucose and insulin, ketones,
 thyroid, and thermoregulation: anaesthesia-induced hypothermia (unwarmed GA −0.93 / −1.26 °C at 30 / 60 min),
@@ -250,7 +264,9 @@ clock; their SVR, contractility and venous terms act in MODELED only (`l2/endo/a
 | `hypermetabolic` | both | VO2 up to ×3, heat, HR (serotonin syndrome, NMS) |
 | `thyroidStorm` | both | core 38.60 °C, VO2 ×1.57, HR 135 awake at 2 h (7e); SVR ×0.60 MODELED only; no fever under GA |
 
-## Depth of anaesthesia, drive and neuromuscular block (Stage 7f)
+## Depth of anaesthesia, drive and neuromuscular block
+
+Details: [docs/model/neuro.md](../model/neuro.md).
 
 - **Depth index (both):** from one hypnotic-potency and one opioid-potency output (FU-7); propofol Ce 3 / 4 µg/mL →
   DI 47.7 / 37.7, 1.0 MAC → 42.0; a cold core lowers MAC (7e) (`docs/gates/stage-7f.md`).
@@ -260,7 +276,9 @@ clock; their SVR, contractility and venous terms act in MODELED only (`l2/endo/a
 - **Neuromuscular block (both):** effect sites for thumb and diaphragm, TOF and PTC, interactions with volatiles
   (+13 % against 20–45 %, a recorded miss), temperature, magnesium, potassium and myasthenia, reversal by sugammadex and neostigmine (7f; FU-9 B1).
 
-## Drugs (Stage 7g)
+## Drugs
+
+Details: [docs/model/pharmacology.md](../model/pharmacology.md).
 
 PK models: Eleveld, Schnider and Marsh (propofol, with TCI to plasma or effect site), Minto (remifentanil), Shafer
 (fentanyl), Gepts (sufentanil); a dose-response time course for the other boluses and infusions; per-kg rate
@@ -338,7 +356,9 @@ top of the held targets; its direct HR term and every reflex response do not. 65
 | `ondansetron` | placeholder | both | QTc prolongation, no arrhythmia hazard | same |
 | `dexamethasone` | placeholder | both | glucose rise over 1–2 h | same |
 
-## Integration and state dependence (FU-4)
+## Integration and state dependence
+
+Details: [docs/model/integration.md](../model/integration.md).
 
 From `docs/gates/fu-4.md`. These behaviours come from the reflexes, the arrest model and the humoral arm, so they
 are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
@@ -358,7 +378,7 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **Clinical scenario suite:** 28 rows (S1–S16 and the CPR and MANUAL rows); eleven are recorded misses plus the
   pulsus row. The table with every number is in [known-deviations.md](known-deviations.md#clinical-scenario-suite-results-fu-4).
 
-## Later follow-ups (FU-5 to FU-11, 7k, FU-7.1, Stage 10)
+## Later changes
 
 | Stage | What changed (gate note) | Mode |
 |---|---|---|
@@ -390,7 +410,7 @@ are **MODELED only** unless marked; the MANUAL rows of the suite are listed.
 - **No sepsis model fit for teaching:** the `sepsis` id exists (7e) but its MODELED shock misses its bands
   (`packages/engine-core/test/engine/endo-circ-acceptance.test.ts`; [known-deviations.md](known-deviations.md)), the
   septic and thyrotoxic patient under GA stays afebrile (36.60 / 36.34 °C, recorded misses in
-  `packages/engine-core/test/engine/fu10-fever.test.ts`), and lactate in sepsis is v2.0 work
+  `packages/engine-core/test/engine/thermal-fever-ga.test.ts`), and lactate in sepsis is v2.0 work
   (`docs/roadmap/v1.0-remaining.md`). No sepsis scenario ships.
 - **Pulsus paradoxus is not reproduced:** 3.1 mmHg against ≥ 10 in tamponade (`docs/gates/fu-4.md` S3); the
   follow-up that would address it (FU-7.1 c) was never started.

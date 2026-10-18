@@ -1,5 +1,5 @@
-// Stage 7c: the lab / ABG panel (a DOM widget, like numerics-dom.ts). Shows the latest `labs` truth (or a frozen
-// `labResult`), each value flagged against its reference range (tables §5b normal rows).
+// The lab / ABG panel (a DOM widget, like numerics-dom.ts). Shows the latest `labs` truth (or a frozen `labResult`),
+// each value flagged against its reference range (tables §5b normal rows).
 import type { LabPanel } from '@pme/engine-core';
 
 type Row = { key: keyof LabPanel; label: string; unit: string; lo: number; hi: number };

@@ -1,8 +1,8 @@
-// Four alveolar units (left/right × fast/slow; R43, tables §4.3) behind one tube, sharing one linear chest wall.
-// Each unit: Venegas lung P–V (venegas.ts), its own inspiratory/expiratory airway resistance. The airway is driven by
-// a FLOW source (volume-controlled or spontaneous inspiration: the breath driver's flow), a PRESSURE source
-// (expiration to PEEP, a VentFrame's Paw) or is CLOSED (an inspiratory or expiratory hold). Explicit Euler at
-// MECH_H = 4 ms; plain JSON-safe data.
+// Four alveolar units (left/right × fast/slow; tables §4.3) behind one tube, sharing one linear chest wall. Each unit:
+// Venegas lung P–V (venegas.ts), its own inspiratory/expiratory airway resistance. The airway is driven by a FLOW
+// source (volume-controlled or spontaneous inspiration: the breath driver's flow), a PRESSURE source (expiration to
+// PEEP, a VentFrame's Paw) or is CLOSED (an inspiratory or expiratory hold). Explicit Euler at MECH_H = 4 ms; plain
+// JSON-safe data.
 import { MECH_H, N_UNITS } from './params.ts';
 import { pressureAt, type Sigmoid } from './venegas.ts';
 
@@ -23,7 +23,7 @@ export interface MechState {
   q: number[]; // mL/s into each unit (last sub-step)
   paw: number; // airway-opening pressure, cmH2O (relative to atmosphere)
   pcar: number; // carina pressure
-  /** FU-6 R9: active respiratory-muscle pressure on the chest wall, cmH2O (+ expiratory: a cough/buck); absent = 0. */
+  /** Active respiratory-muscle pressure on the chest wall, cmH2O (+ expiratory: a cough/buck); absent = 0. */
   pMus?: number;
 }
 
@@ -46,10 +46,10 @@ export function chestWallPressure(mp: MechParams, ms: MechState): number {
  * One sub-step. mode 'flow': `x` = total inspiratory flow (mL/s) forced through the tube; 'pressure': `x` = airway
  * opening pressure (cmH2O); 'closed': no flow at the airway (units still redistribute: pendelluft).
  */
-// FU-6 R7: `pLimit` (cmH2O; default none) makes a 'flow' sub-step pressure-limited — a VCV Pmax: if forcing `x` would put
-// the airway opening above pLimit, this sub-step holds the airway AT pLimit instead (what a ventilator's Pmax does)
+// `pLimit` (cmH2O; default none) makes a 'flow' sub-step pressure-limited — a VCV Pmax: if forcing `x` would put the
+// airway opening above pLimit, this sub-step holds the airway AT pLimit instead (what a ventilator's Pmax does)
 export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'pressure' | 'closed', x: number, h = MECH_H, pLimit = Infinity): void {
-  const pcw = chestWallPressure(mp, ms) + (ms.pMus ?? 0); // FU-6 R9: a cough raises every unit's alveolar pressure
+  const pcw = chestWallPressure(mp, ms) + (ms.pMus ?? 0); // A cough raises every unit's alveolar pressure
   let gSum = 0;
   let gp = 0;
   const pa = [0, 0, 0, 0];
@@ -62,7 +62,7 @@ export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'press
     gp += (g[u] as number) * (pa[u] as number);
   }
   let pc: number;
-  let limited = false; // FU-6 R7
+  let limited = false;
   if (mode === 'flow') {
     pc = gSum > 0 ? (x + gp) / gSum : 0;
     if (pc + mp.rTube * x > pLimit) { limited = true; pc = (pLimit / mp.rTube + gp) / (1 / mp.rTube + gSum); }
@@ -76,7 +76,7 @@ export function mechSubstep(mp: MechParams, ms: MechState, mode: 'flow' | 'press
     qt += q;
   }
   ms.pcar = pc;
-  ms.paw = limited ? pLimit : mode === 'pressure' ? x : pc + mp.rTube * qt; // FU-6 R7
+  ms.paw = limited ? pLimit : mode === 'pressure' ? x : pc + mp.rTube * qt;
 }
 
 /** Total flow at the airway opening, mL/s. */

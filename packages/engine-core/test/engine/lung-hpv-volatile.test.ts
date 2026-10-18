@@ -1,7 +1,7 @@
 // FU-6 R13 (audit F3; suite RS12 sevoflurane row; D15): during one-lung ventilation at FiO2 1, sevoflurane toward 1 MAC
 // lowers PaO2 by 5–20 % against the paired no-volatile run (HPV inhibition ≈ 20 % at < 1 MAC: Miller 10e ch. 49).
 import { describe, expect, it } from 'vitest';
-import { rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 async function olv(sevo: boolean) {
   const e = rig6();
@@ -15,7 +15,7 @@ async function olv(sevo: boolean) {
   return { pao2: st6(e).resp.o2.pao2 as number, mac: st6(e).pk.bus.cns?.macBrain ?? 0 };
 }
 
-describe('FU-6 R13: volatile HPV inhibition (was no change)', { timeout: 600_000 }, () => {
+describe('volatile HPV inhibition', { timeout: 600_000 }, () => {
   it('sevoflurane toward 1 MAC during OLV at FiO2 1: PaO2 −5 to −20 % vs the paired control (measured 78 → 68, −11.9 % at MAC 0.84)', async () => {
     const c = await olv(false);
     const s = await olv(true);

@@ -1,4 +1,4 @@
-// DOM numeric tiles (brief §3.1: DOM numerics ≤1 Hz). Stage 1 has the HR tile only.
+// DOM numeric tiles (brief §3.1: DOM numerics ≤1 Hz).
 import type { Measured } from '@pme/engine-core';
 
 /** Text for a numeric: dashes when there is no valid value (brief §6.2 "dashes"). */

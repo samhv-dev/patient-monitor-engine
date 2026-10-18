@@ -47,13 +47,13 @@ describe('depth index (tables §5d)', () => {
     expect(di({}, { potent: 0.5 }, 40, 0, 1).movement).toBe(false);
     expect(di({ fentanyl: 2 }, { potent: 1 }, 40, 1, 1).stress).toBeLessThan(0.2);
   });
-  it('antinociception (7e reads it): 0 awake, > 0.8 with fentanyl 2 ng/mL + 1 MAC; hypnotic MAC-equivalents rise with the agents', () => {
+  it('antinociception (the endocrine model reads it): 0 awake, > 0.8 with fentanyl 2 ng/mL + 1 MAC; hypnotic MAC-equivalents rise with the agents', () => {
     expect(di({}).antinoc).toBe(0);
     expect(di({ fentanyl: 2 }, { potent: 1 }).antinoc).toBeGreaterThan(0.8);
     expect(di({}, { potent: 1 }).hypEq).toBeCloseTo(1, 9);
     expect(di({ propofol: 3000 }, {}, 35).hypEq).toBeCloseTo(3000 / 3080, 9);
   });
-  it('neuroglycopenia (7e seam, decision 19): 1 → unconscious with the index < 60; absent → neutral', () => {
+  it('neuroglycopenia (endocrine seam): 1 → unconscious with the index < 60; absent → neutral', () => {
     const g = depth({ ageY: 40, ce: C0, macPotent: 0, macN2o: 0, t1: 1, stimulus: 0, glyco: 1 });
     expect(g.conscious).toBe(false);
     expect(g.diRaw).toBeLessThan(60);
@@ -116,7 +116,7 @@ describe('respiratory-drive depression (tables §5d)', () => {
   // row is the SEDATED patient and KEEPS its bands on the unconscious arm; the awake arm follows Eikermann 2003 AJRCCM
   // 167:1024 (near-normal VT at TOFR 0.5–0.7 with impaired dilator function). Re-specified, not widened: both
   // quantities are still asserted, on both arms, and the awake values are the formula's (0.8·0.75·UA_AROUSAL scaling).
-  it('NMB: diaphragm 97 % blocked → apnoea; 50 % → full VT; residual TOFR 0.6 with a natural airway → the tables\' obstruction when unconscious, a small load with a near-normal VT when awake (Eikermann 2003; E-FU6-10, the awake row was > 0.4 — measured 0.150)', () => {
+  it('NMB: diaphragm 97 % blocked → apnoea; 50 % → full VT; residual TOFR 0.6 with a natural airway → the tables\' obstruction when unconscious, a small load with a near-normal VT when awake (Eikermann 2003; awake measured 0.150)', () => {
     const base = { vent: V0, macVolatile: 0, tofr: 1, di: 93, naturalAirway: false, wasApnoeic: false };
     expect(neuroResp({ ...base, diaBlock: 0.97 }).apnoea).toBe(true);
     expect(neuroResp({ ...base, diaBlock: 0.5 }).vtMult).toBeCloseTo(1, 5);
@@ -139,7 +139,7 @@ describe('respiratory-drive depression (tables §5d)', () => {
 describe('interactions', () => {
   // R45 (FU-7 gate review, condition 2): the ORIGINAL band (0.62–0.72, the tables' ~33 %) is kept as written; FU-7
   // Task 14 (E-FU7-10 b) re-sized VOL_NMB_K to 0.18 [ENG; fit target DI-51's engine duration], so it is a measured miss.
-  it.fails('1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)', () => {
+  it.fails('1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, was met at × 0.667)', () => {
     const v = ec50Multipliers({ profile: 'normal', volatileMac: 1, mgMmolL: 0.9, tempC: 37 });
     expect(v.rocuronium).toBeGreaterThan(0.62);
     expect(v.rocuronium).toBeLessThan(0.72);

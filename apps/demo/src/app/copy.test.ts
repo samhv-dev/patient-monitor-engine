@@ -1,12 +1,12 @@
 // The UX-copy rules as tests: scenario cards, trigger text and log lines never show an engine id, a build-stage or a
-// ruling number (research/13 brief; R56).
+// ruling number (research/13 brief).
 import { describe, expect, it } from 'vitest';
 import type { ScenarioDoc } from '@pme/controller';
 import { describeCommand } from './describe.ts';
 import { LIBRARY } from './scenarios.ts';
 import { SCENARIO_META } from './scenario-meta.ts';
 import { transitionText } from './triggers.ts';
-import { LEARNER_ACTIONS } from '../stage6b/actions.ts';
+import { LEARNER_ACTIONS } from './learner-actions.ts';
 import { drugWords } from './glossary.ts';
 
 /** camelCase or dotted engine ids ("etco2", "vfCoarse", "mon.hr"), build stages and rulings. */
@@ -16,7 +16,7 @@ describe('clinical copy', () => {
   it('the library holds every scenario document and every card has meta written for learners', () => {
     expect(LIBRARY.length).toBeGreaterThanOrEqual(11);
     for (const c of LIBRARY) {
-      // card meta from scenario-meta.ts, or the document's own card fields (pme-scenario/1 since FU-8; the showcase cases)
+      // Card meta from scenario-meta.ts, or the document's own card fields (pme-scenario/1; the showcase cases)
       expect(SCENARIO_META[c.id] ?? (c.doc.story ? c.doc : undefined), `${c.id} has card meta`).toBeDefined();
       expect(`${c.title} ${c.story} ${c.objectives.join(' ')}`).not.toMatch(LEAK);
       expect(c.title).not.toMatch(/^\[draft\]/i);
@@ -52,7 +52,7 @@ describe('clinical copy', () => {
     expect(lines).toContain('Norepinephrine 0.1 µg/kg/min infusion started');
     expect(lines).toContain('Rhythm: Coarse VF');
   });
-  it('learner controls read clinically in either drug-name set (rulings 4 and 5)', () => {
+  it('learner controls read clinically in either drug-name set', () => {
     for (const a of LEARNER_ACTIONS) expect(drugWords(a.label), a.id).not.toMatch(LEAK);
     expect(LEARNER_ACTIONS.map((a) => a.label)).toContain('Epinephrine 1 mg');
   });

@@ -2,10 +2,10 @@
 //   average the last 12 RR, dropping the max and the min (IEC-style; the Philips-like skin uses the plain
 //   mean of 12); if the last 3 RR are all > 1200 ms use the last 4; update at most once per second.
 // Asystole: with no QRS for 4.0 s (Philips adult asystole delay, brief §6.4) the HR reads 0.
-// The "up to 8 RR during PVC runs" rule needs arrhythmia classification and arrives in Stage 4.
-// FU-1 (E-4a-2): a skin may set `hr.averaging: { kind: 'beats' | 'seconds', n }` — the plain mean of the last n RR,
+// The "up to 8 RR during PVC runs" rule needs arrhythmia classification and is not applied here.
+// A skin may set `hr.averaging: { kind: 'beats' | 'seconds', n }` — the plain mean of the last n RR,
 // or of the RR ending in the last n seconds (at least the last 2). Without it the HR is computed as above.
-// FU-3 (Q-FU2-11): the method (trimmed or plain mean of 12) is the active skin's (`hrMeasure`'s `method`), not the
+// The method (trimmed or plain mean of 12) is the active skin's (`hrMeasure`'s `method`), not the
 // state's creation default: on AF's right-skewed RR the trimmed mean reads 3–5 % high at 130–145, and philips-like
 // discloses the plain mean (research 03 §1.12).
 import type { Measured } from '../types.ts';
@@ -16,7 +16,7 @@ export const HR_WINDOW = 12;
 /** RR kept for the averaging option (the longest 'beats' window; 'seconds' windows up to 60 s at ≥ 64 bpm). */
 const RR_KEEP = 64;
 
-/** Skin `hr.averaging` (FU-1, E-4a-2). */
+/** Skin `hr.averaging`. */
 export interface HrAveraging {
   kind: 'beats' | 'seconds';
   n: number;
@@ -28,7 +28,7 @@ export const MOVING_AVERAGE_DEFAULT_S = 8;
 /**
  * The skin's HR averaging option, or undefined (the default method). An explicit `averaging` wins; otherwise a skin
  * that declares `method: 'moving-average-seconds'` (saadat-like) gets the time window it declares as its default
- * (FU-2 item 5: saadat-like's 8 s).
+ * (saadat-like's 8 s).
  */
 export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: string; windowDefault?: number | null } }): HrAveraging | undefined {
   if (skin.hr.averaging) return skin.hr.averaging;
@@ -38,8 +38,8 @@ export function hrAveragingOf(skin: { hr: { averaging?: HrAveraging; method?: st
 const SLOW_RR_S = 1.2;
 const ASYSTOLE_S = 4.0;
 /**
- * FU-5 (audit M16): an R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the
- * first beats after it are not averaged with it (the HR read "3" for a second after an asystole) [ENG, 10 bpm].
+ * An R–R longer than this is a gap (asystole, leads off), not a rate: the history restarts, so the first beats after it
+ * are not averaged with it (the HR read "3" for a second after an asystole) [ENG, 10 bpm].
  */
 export const RESET_RR_S = 6;
 const MIN_RR_S = 0.2; // shorter intervals are double counts and are ignored
@@ -48,7 +48,7 @@ export interface HrState {
   method: HrMethod;
   rrs: number[]; // seconds, oldest first, at most HR_WINDOW
   lastR: number; // sim seconds of the last detected R, or -1
-  /** FU-1 averaging option: the last RR_KEEP RR and the R time ending each (absent in pre-FU-1 snapshots). */
+  /** Averaging option: the last RR_KEEP RR and the R time ending each (absent in older snapshots). */
   long?: { rr: number[]; end: number[] };
 }
 
@@ -81,9 +81,9 @@ export function hrOnQrs(st: HrState, tR: number): void {
 }
 
 /**
- * The HR numeric at time t (call once per second); `avg` is the skin's optional averaging (FU-1), `method` the
- * skin's 12-RR method (FU-3; defaults to the state's), `asystoleS` the skin's asystole time (FU-5: saadat-like reads 0
- * at its 10 s alarm, not 6 s before it).
+ * The HR numeric at time t (call once per second); `avg` is the skin's optional averaging, `method` the skin's 12-RR
+ * method (defaults to the state's), `asystoleS` the skin's asystole time (saadat-like reads 0 at its 10 s alarm, not
+ * 6 s before it).
  */
 export function hrMeasure(st: HrState, t: number, avg?: HrAveraging, method: HrMethod = st.method, asystoleS = ASYSTOLE_S): Measured {
   if (st.lastR >= 0 && t - st.lastR >= asystoleS) return { value: 0, flag: 'valid', at: t };

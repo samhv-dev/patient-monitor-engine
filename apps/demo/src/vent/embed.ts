@@ -1,8 +1,8 @@
-// The ventilator-simulator embed (BUILD-PLAN Stage 8, Stage 8b): the Hamilton ventilator and the patient monitor
-// in ONE page that opens from file:// with no server. The monitor is the release IIFE (window.PatientMonitor, its
-// own <script>); this file becomes dist/embed/pme-ventilator-embed.iife.js (vite.embed.config.ts, global
-// PmeVentilatorEmbed). Ventilator and monitor talk over an in-page LinkPort pair: the same R27 messages
-// vent-link.html sends over BroadcastChannel (frames in, lungState out, the engine as master clock).
+// The ventilator-simulator embed: the Hamilton ventilator and the patient monitor in ONE page that opens from
+// file:// with no server. The monitor is the release IIFE (window.PatientMonitor, its own <script>); this file
+// becomes dist/embed/pme-ventilator-embed.iife.js (vite.embed.config.ts, global PmeVentilatorEmbed). Ventilator and
+// monitor talk over an in-page LinkPort pair: the same link messages vent-link.html sends over BroadcastChannel
+// (frames in, lungState out, the engine as master clock).
 import type { MonitorHandle, MountOptions } from '@pme/renderer';
 import { attachMonitorToLink, createLocalPortPair, createVentDriver, monitorMatchedFlow, PROFILES, type ProfileId, type VentConfig, type VentDriver } from '@pme/ventilator';
 import { mountHamiltonUi } from './hamilton-ui.ts';
@@ -52,8 +52,8 @@ export function mountEmbed(o: EmbedOptions): Embed {
   void monitor.dispatch({ id: 'embed-ga', issuedBy: 'vent-embed', type: 'applyEvent', event: { kind: 'thermal', anaesthesia: 'general' } });
   const detach = attachMonitorToLink(monitor, monitorSide, (c, r) => console.warn('link command rejected', c.type, r));
   const vent = createVentDriver(ventSide, id);
-  // As vent-hamilton.html does when linked (FU-11 H5): VC runs at the monitor ventilator's flow for the set VT and rate
-  // until the user sets Flow or Pause here, so the same settings deliver the same volume.
+  // As vent-hamilton.html does when linked: VC runs at the monitor ventilator's flow for the set VT and rate until the
+  // user sets Flow or Pause here, so the same settings deliver the same volume.
   let matched = true;
   const onInput = (e: Event) => {
     const k = (e.target as HTMLElement | null)?.dataset?.key;

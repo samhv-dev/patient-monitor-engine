@@ -22,7 +22,7 @@ describe('respiratory pipeline', () => {
     expect(rs.out.find((e) => e.type === 'lungState')).toBeDefined();
   });
 
-  it('validates and applies Stage 3 commands; leaves Stage 2 commands alone', () => {
+  it('validates and applies respiratory commands; leaves haemodynamic commands alone', () => {
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'airway', state: 'kinked' } }))).toMatch(/airway state/);
     expect(validateRespCommand(c({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', fio2: 0.1 } }))).toMatch(/fio2/);
     // Stage 7a: pe/tamponade/tensionPtx/rvInfarct are circulation conditions (null = not a Stage 3 command); others still wait

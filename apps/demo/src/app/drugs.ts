@@ -1,6 +1,6 @@
-// The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own library
-// (7g `DRUGS`), so a drug a later stage adds is listed without a code change. The presets below are DRAFTS for Ali's
-// review (brief Q6: "start from the 7g library's ranges; Ali reviews one table before Stage 9 code").
+// The dose picker's data (research/13 brief §7 "Dose picker"). Drug names and classes come from the engine's own
+// library (the drug library's `DRUGS`), so a drug added to the library is listed without a code change. The presets
+// below are DRAFTS from the drug library's ranges, for Ali's review as one table.
 import { DRUGS, type DoseUnit, type RateUnit } from '@pme/engine-core';
 import { drugName } from './glossary.ts';
 
@@ -23,9 +23,9 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   remifentanil: { infusion: [[0.1, 'mcg/kg/min'], [0.2, 'mcg/kg/min']] },
   morphine: { bolus: [[2, 'mg'], [5, 'mg']] },
   rocuronium: { bolus: [[0.6, 'mg/kg'], [1.2, 'mg/kg']] },
-  // FU-7.1 A1 (research/24 P1): every neuromuscular blocker opens on its intubating dose in mg/kg — without a preset
-  // the dose started at 0 in µg and "0.15" gave 0.15 µg. Doses [TXT]: the drug labels (Nimbex 0.15–0.2 mg/kg;
-  // vecuronium 0.08–0.1; atracurium 0.4–0.5; Mivacron 0.15–0.2 mg/kg, 0.2 over 30 s) as the 7g rows quote them.
+  // Every neuromuscular blocker opens on its intubating dose in mg/kg — without a preset the dose started at 0 in µg
+  // and "0.15" gave 0.15 µg (research/24 P1). Doses [TXT]: the drug labels (Nimbex 0.15–0.2 mg/kg; vecuronium 0.08–0.1;
+  // atracurium 0.4–0.5; Mivacron 0.15–0.2 mg/kg, 0.2 over 30 s) as the drug rows quote them.
   cisatracurium: { bolus: [[0.15, 'mg/kg'], [0.2, 'mg/kg']] },
   vecuronium: { bolus: [[0.1, 'mg/kg']] },
   atracurium: { bolus: [[0.5, 'mg/kg']] },
@@ -46,9 +46,9 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
   amiodarone: { bolus: [[150, 'mg'], [300, 'mg']] },
   adenosine: { bolus: [[6, 'mg'], [12, 'mg']] },
   calciumChloride: { bolus: [[10, 'mg/kg'], [1, 'g']] },
-  // FU-7.1 A5 (Ali 2026-10-10): potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the
-  // peripheral 10 mmol/h and the central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset. The
-  // engine warns, with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
+  // Potassium chloride is INFUSED, never pushed — the picker opens on Infusion with the peripheral 10 mmol/h and the
+  // central 20 mmol/h (10 and 20 mmol over the hour), and offers no bolus preset (Ali 2026-10-10). The engine warns,
+  // with its source, if a bolus or a faster rate is ordered anyway (l2/pk rows-other.ts maxRatePerH).
   potassiumChloride: { infusion: [[10, 'mmol/h'], [20, 'mmol/h']], aka: ['kcl', 'potassium'] },
   magnesium: { bolus: [[2, 'g']] },
   dantrolene: { bolus: [[2.5, 'mg/kg']] },
@@ -58,7 +58,7 @@ export const PRESETS: Readonly<Record<string, DrugPreset>> = {
 
 export interface DrugItem {
   id: string;
-  /** The display name in the site's set (glossary `DRUG_NAMES`, orchestrator ruling 5): read at use, not stored. */
+  /** The display name in the site's set (glossary `DRUG_NAMES`): read at use, not stored. */
   readonly name: string;
   cls: string;
   /** The unit the engine's library doses this drug in (mg, mcg, units, mmol, mL). */
@@ -69,8 +69,8 @@ export interface DrugItem {
 /** The neuromuscular blockers' classes: dosed in µg by the engine's rows, prescribed in mg/kg. */
 const NMB_CLASSES = new Set(['nmb', 'depolariser']);
 
-/** Dose units offered for a drug: its own unit and per kg, plus g for drugs dosed in mg (FU-7.1 A1: mg/kg for the
- * neuromuscular blockers, the unit they are prescribed in; not for the other µg drugs, where mg/kg is a 1000× trap). */
+/** Dose units offered for a drug: its own unit and per kg, plus g for drugs dosed in mg (mg/kg for the neuromuscular
+ * blockers, the unit they are prescribed in; not for the other µg drugs, where mg/kg is a 1000× trap). */
 export function doseUnits(d: DrugItem): DoseUnit[] {
   const a = d.amountUnit as DoseUnit;
   const u: DoseUnit[] = [a];
@@ -85,7 +85,7 @@ export function rateUnits(d: DrugItem): RateUnit[] {
   if (a === 'mcg') return ['mcg/kg/min', 'mcg/min'];
   if (a === 'mg') return ['mcg/kg/min', 'mg/kg/h', 'mg/h', 'mg/min'];
   if (a === 'units') return ['units/min', 'units/h'];
-  if (a === 'mmol') return ['mmol/h']; // FU-7.1 A5: potassium chloride (10–20 mmol/h)
+  if (a === 'mmol') return ['mmol/h']; // Potassium chloride (10–20 mmol/h)
   return ['mL/h'];
 }
 

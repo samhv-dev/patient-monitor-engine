@@ -20,7 +20,7 @@ test('the IIFE loads from file:// and exposes window.PatientMonitor.version', as
   expect(errors).toEqual([]);
 });
 
-test('Stage 1: mountMonitor draws two ECG lanes and an HR number from file://', async ({ page }) => {
+test('mountMonitor draws two ECG lanes and an HR number from file://', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(smokeUrl);

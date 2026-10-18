@@ -1,5 +1,5 @@
-// Stage 7k (R57): the Ventilation panel — the console group "Respiratory mechanics and volumes" (Stage 9's Explore
-// section title) with glossary labels (research/11 §5.6), fed by a running engine on the internal ventilator.
+// The Ventilation panel — the console group "Respiratory mechanics and volumes" (the Explore section title) with
+// glossary labels (research/11 §5.6), fed by a running engine on the internal ventilator.
 import { describe, expect, it } from 'vitest';
 import { createEngine, type Command } from '@pme/engine-core';
 import { ConsoleModel } from './model.ts';
@@ -8,7 +8,7 @@ import { GROUPS, groupOf, isInternal } from './organs.ts';
 
 const ev = (event: Record<string, unknown>) => ({ id: `c${Math.random()}`, issuedBy: 'test', type: 'applyEvent', event }) as unknown as Command;
 
-describe('Stage 7k: Ventilation panel', () => {
+describe('Ventilation panel', () => {
   it('the group follows "Lungs & gas exchange" and takes resp.mechanics, resp.vd and resp.volumes', () => {
     const ids = GROUPS.map((g) => g.id as string);
     expect(ids.indexOf('mechanics')).toBe(ids.indexOf('lungs') + 1);
@@ -23,7 +23,7 @@ describe('Stage 7k: Ventilation panel', () => {
     ['resp.mechanics.dp', 'ΔP', 'cmH₂O', 1], ['resp.mechanics.cstat', 'Cstat', 'mL/cmH₂O', 1], ['resp.mechanics.pesEe', 'Pes,ee est.', 'cmH₂O', 1],
     ['resp.vd.vdvt', 'VD/VT', '%', 100], ['resp.volumes.ratio', 'FEV₁/FVC', '%', 100], ['resp.volumes.pef', 'PEF', 'L/min', 0.06],
   ] as const)('%s → "%s" (%s)', (path, label, unit, scale) => expect(metaOf(path)).toMatchObject({ label, unit, scale }));
-  it('a ventilated engine fills the panel: ΔP and Cstat rows (Stage 9 timed task 5), every visible leaf labelled', () => {
+  it('a ventilated engine fills the panel: ΔP and Cstat rows, every visible leaf labelled', () => {
     const e = createEngine({ seed: 7, mode: 'modeled', patient: { ageY: 40, sex: 'M', weightKg: 70, heightCm: 175 }, truthHz: 1 });
     const m = new ConsoleModel();
     e.on((x) => void m.ingest(x));

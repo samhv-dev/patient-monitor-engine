@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { advanceBlood, createBloodState } from '../../src/l2/blood/pipeline.ts';
 import { evB, labsAt, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('7c budget, determinism, 24 h', { timeout: 300_000 }, () => {
+describe('blood budget, determinism, 24 h', { timeout: 300_000 }, () => {
   it('the blood step costs ≤ 0.1 ms per 20 ms tick', () => {
     const { e } = rigB();
     e.advanceTo(10);
@@ -28,7 +28,7 @@ describe('7c budget, determinism, 24 h', { timeout: 300_000 }, () => {
     };
     expect(await run()).toBe(await run());
   });
-  it('24 h at rest (blood stepped against a steady Stage 3 state, yielding hourly): no drift after settling', async () => {
+  it('24 h at rest (blood stepped against a steady respiratory state, yielding hourly): no drift after settling', async () => {
     const { e } = rigB();
     await runTo(e, 600);
     const s = st(e);

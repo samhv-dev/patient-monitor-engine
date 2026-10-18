@@ -1,6 +1,6 @@
 // Transcutaneous pacer device (brief §6.5 "Pacer (TCP)"; research/05 §2.6): mode, rate, output, pause, and the
-// instructor faults. It only decides the Modifiers.tcp the ECG draws (Stage 5 l2/ecg/tcp.ts: spikes, capture iff
-// mA ≥ threshold, demand inhibition); captured beats carry k_rhythm 0.9, which Stage 2's haemodynamics ejects.
+// instructor faults. It only decides the Modifiers.tcp the ECG draws (l2/ecg/tcp.ts: spikes, capture iff mA ≥
+// threshold, demand inhibition); captured beats carry k_rhythm 0.9, which the haemodynamics ejects.
 import type { PacerEvent } from '../../types-device.ts';
 import type { TcpSpec } from '../../types.ts';
 import type { DeviceProfile } from '../alarms/profile.ts';

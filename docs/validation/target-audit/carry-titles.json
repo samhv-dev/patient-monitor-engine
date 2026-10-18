@@ -1,0 +1,322 @@
+[
+ {
+  "before": "%s: the CPR window\\'s EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions after FU-7.1 B3 (mean 15.3–15.6, max 20–21)",
+  "after": "%s: the CPR window\\'s EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions with the alveolar washout (mean 15.3–15.6, max 20–21)"
+ },
+ {
+  "before": "1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)",
+  "after": "1 MAC volatile lowers non-depolariser EC50 by ~33 % (0.62–0.72, tables §5d) — measured × 0.847, −15 % (VOL_NMB_K 0.18, was met at × 0.667)"
+ },
+ {
+  "before": "1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, FU-7 Task 14; was met at × 0.667)",
+  "after": "1 MAC volatile: EC50 × 0.67 (tables §5d) — measured × 0.847 (VOL_NMB_K 0.18, was met at × 0.667)"
+ },
+ {
+  "before": "10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 after FU-8 A19, 0.91 before) — measured 1.00 after FU-6 G-FU6-2 (the unventilated rig is apnoeic while pulseless)",
+  "after": "10 min of VF with standard-quality CPR alone: the myocardium stays ischaemic, flow share kIsch < 0.9 throughout (Weisfeldt & Becker 2002; measured max 0.89 with the outflow limiter, 0.91 without) — measured 1.00 with the pulseless apnoea (the unventilated rig is apnoeic while pulseless)"
+ },
+ {
+  "before": "12 × 100 mL: displayed EtCO2 < 15 — measured 15.0 (FU-6 R5, band < 15; 0.0 on the pre-FU-4 tree)",
+  "after": "12 × 100 mL: displayed EtCO2 < 15 — measured 15.0 (band < 15)"
+ },
+ {
+  "before": "1b: the untreated hypertensive\\'s pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 (Prys-Roberts 1971) — measured 1.19 (HTN +29.8 vs healthy +25.0; CM-03c before 1.19 at +10.8 / +9.1); the resting-tone half is FU-8 Part B\\'s C1",
+  "after": "1b: the untreated hypertensive\\'s pressor response is exaggerated: ΔMAP ratio HTN / healthy ≥ 1.3 (Prys-Roberts 1971) — measured 1.19 (HTN +29.8 vs healthy +25.0; earlier 1.19 at +10.8 / +9.1); the resting-tone half is the tonic sympathetic share\\'s"
+ },
+ {
+  "before": "5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9; FU-2 item 3)",
+  "after": "5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9)"
+ },
+ {
+  "before": "ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the 7b lungs)",
+  "after": "ARDS moderate PEEP 5 → 15 (FiO2 0.6): SpO2 rises ≥ 5 over 1–4 min (recruitment), falls again within 60 s of PEEP 5 (measured +2.0 / 0.0 on the lungs)"
+ },
+ {
+  "before": "COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue\\'s GOLD 1 rawExp 1.5; Q-7k-2)",
+  "after": "COPD GOLD 1 (severity 0.25): FEV1 ≥ 80 % pred with FEV1/FVC < 0.70 — measured 71 % (the catalogue\\'s GOLD 1 rawExp 1.5)"
+ },
+ {
+  "before": "COPD GOLD 3, VCV 490 × 14: PEEPi 4–8 (catalogue §5 band at the reference rate) — measured 3.6 (lungState 3.7: the 7b lung\\'s own value, not a 7k measurement; R46 calibration row)",
+  "after": "COPD GOLD 3, VCV 490 × 14: PEEPi 4–8 (catalogue §5 band at the reference rate) — measured 3.6 (lungState 3.7: the lung\\'s own value, not a respiratory-mechanics measurement; calibration row)"
+ },
+ {
+  "before": "CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 — measured 0.363 (FU-8 A22 CPR flow; was 0.293)",
+  "after": "CPR (quality 1, 110/min): the adult’s coRatio in the same 0.25–0.33 — measured 0.363 (the circulation\\'s CPR flow; 0.293 without it)"
+ },
+ {
+  "before": "CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min after G-FU4-1 (was +105 s)",
+  "after": "CPR + 2 L + adrenaline 1 mg after full exsanguination: a pulse within 4 min of the first compression — measured none in 10 min with the humoral fade (+105 s without it)"
+ },
+ {
+  "before": "CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit\\'s chatter criterion) — measured 4 on philips-like and 4 on mindray-like with the vendor alarm on-delays (FU-5 Task 9a; 11 and 9 before it; 5 in the A1 MAP ladder and 1 in the G1 hover before it, was 100): the displayed CVP swings 9–11 across the limit 10 with the ventilation and the rhythm changes, wider than D9\\'s one-unit hysteresis (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5)",
+  "after": "CVP limit chatter on a stable ventilated patient: CVP_M_HIGH raised ≤ 2 times in the 11-min MANUAL rhythm tour (the audit\\'s chatter criterion) — measured 4 on philips-like and 4 on mindray-like with the vendor alarm on-delays (11 and 9 without them): the displayed CVP swings 9–11 across the limit 10 with the ventilation and the rhythm changes, wider than the one-unit hysteresis"
+ },
+ {
+  "before": "Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex — measured ratio 0.803 (FU-6 R9, band 0.6–0.8; 0.799 before FU-6 R9)",
+  "after": "Cushing through circ.ext.rSysF: HR −20–40 % from the baroreflex — measured ratio 0.803 (band 0.6–0.8; 0.799 without the patient\\'s own breathing effort)"
+ },
+ {
+  "before": "FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the 7b oedema shunt does not desaturate)",
+  "after": "FiO2 0.4: SpO2 rises ≥ 2 (measured SpO2 98 → 98, SaO2 98.7 → 99.1: the lung oedema shunt does not desaturate)"
+ },
+ {
+  "before": "Hb 5 vs 15: CO ≥ +30 % (Weiskopf CI +66 %) — measured +25 % (5.49 → 6.87; FU-6 R11; plan +24 %)",
+  "after": "Hb 5 vs 15: CO ≥ +30 % (Weiskopf CI +66 %) — measured +25 % (5.49 → 6.87)"
+ },
+ {
+  "before": "IAP 14 under GA: CO −10–30 % at +15 min (SP-08a, Joris 1993; 7a, handed) — measured 0.0 %",
+  "after": "IAP 14 under GA: CO −10–30 % at +15 min (Joris 1993; left to the circulation) — measured 0.0 %"
+ },
+ {
+  "before": "IAP 25: UOP < 0.1 mL/kg/h (WSACS) — measured 0.69 (FU-9 H4; the 7a half is handed)",
+  "after": "IAP 25: UOP < 0.1 mL/kg/h (WSACS) — measured 0.69 (the circulation half is left to the circulation)"
+ },
+ {
+  "before": "MANUAL AF 150, 11 cycles: |SBP bias| ≤ 6 mmHg against the TRUE radial pressure (the audit\\'s AF criterion) — measured +10.8 (the first two readings 125/78 and 117/67: +24 and +13; DBP +2.7): the truth beat-mean counts AF\\'s non-ejecting beats (FU-4\\'s T2, ruling 5 there), which the cuff and the line do not see; Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5",
+  "after": "MANUAL AF 150, 11 cycles: |SBP bias| ≤ 6 mmHg against the TRUE radial pressure (the audit\\'s AF criterion) — measured +10.8 (the first two readings 125/78 and 117/67: +24 and +13; DBP +2.7): the truth beat-mean counts AF\\'s non-ejecting beats, which the cuff and the line do not see"
+ },
+ {
+  "before": "MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor\\'s 77/67 — measured 80/56 (PP 24); the truth reaches only 81/62 (PP 19: the MANUAL tracker, FU-4\\'s side) and the cuff widens it by 5 (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5)",
+  "after": "MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor\\'s 77/67 — measured 80/56 (PP 24); the truth reaches only 81/62 (PP 19: the MANUAL tracker) and the cuff widens it by 5"
+ },
+ {
+  "before": "MANUAL target 18/10 mmHg: the displayed arterial pressure reaches the target (≤ 25/15) — the tracker floors it (monitor audit T4: 65/30; Q9)",
+  "after": "MANUAL target 18/10 mmHg: the displayed arterial pressure reaches the target (≤ 25/15) — the tracker floors it (the monitor showed 65/30)"
+ },
+ {
+  "before": "MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21; measured 129/121 at +15/+20 min, core 39.78 °C; Q-7e-5)",
+  "after": "MH + dantrolene + MV × 2 at 20 min: HR normal (< 100) by 15–20 min after the dose (tables §7 check 21; measured 129/121 at +15/+20 min, core 39.78 °C)"
+ },
+ {
+  "before": "MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 after FU-4\\'s dead-space root",
+  "after": "MH severity 1 at fixed ventilation (tables §7 check 21): EtCO2 ≥ 60 by 10 min — measured 54 with the corrected dead space"
+ },
+ {
+  "before": "MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3",
+  "after": "MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout"
+ },
+ {
+  "before": "R23: AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it",
+  "after": "AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it"
+ },
+ {
+  "before": "R23: the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min)",
+  "after": "the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min)"
+ },
+ {
+  "before": "RS1 healthy intubated, VCV 12 × 7 mL/kg IBW, man and woman: PaCO2 35–42 at 30 min, VD/VT 0.25–0.4 — measured PaCO2 32.2 / 33.7, VD/VT 0.26 / 0.28 (FU-6 R4 + FU-4 R1; was 50.0 / 0.54 on 94040f7)",
+  "after": "RS1 healthy intubated, VCV 12 × 7 mL/kg IBW, man and woman: PaCO2 35–42 at 30 min, VD/VT 0.25–0.4 — measured PaCO2 32.2 / 33.7, VD/VT 0.26 / 0.28"
+ },
+ {
+  "before": "RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 after FU-7.1 B3 (+6.1 after FU-8 B4, +5.98 before it; 94040f7: +5.9 / +5.1)",
+  "after": "RS14 rebreathing FiCO2 8 for 20 min at fixed VCV: PaCO2 and EtCO2 +6–10 — measured +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)"
+ },
+ {
+  "before": "RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 after FU-7.1 B3 (+6.1 after FU-8 B4, +5.98 before it; FU-6 R8; plan +5.7 / +5.0)",
+  "after": "RS14: FiCO2 8 for 20 min: PaCO2 and EtCO2 +6–10 over control — measured PaCO2 +6.7 / EtCO2 +5.99994 with the alveolar washout (+6.1 without it; +5.98 when propofol also does not remove the tonic sympathetic share)"
+ },
+ {
+  "before": "RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.38) (FU-6 R10 / R4; 7j, FU-4 R1 owners)",
+  "after": "RS2 pregnancy 2.5–4.5 (measured 4.82) and child 4 y 2–3.2 (measured 3.38)"
+ },
+ {
+  "before": "RS3 capnogram < 15 mmHg while VT < dead space (from 10 s after the first such breath) — measured 26.8 on the merged main (15.6 on 94040f7: FU-4’s smaller physical VDs moves the Fowler ramp down, as predicted; Q-FU6-12)",
+  "after": "RS3 capnogram < 15 mmHg while VT < dead space (from 10 s after the first such breath) — measured 26.8 (the smaller physical VDs move the Fowler ramp down; 15.6 with the larger ones)"
+ },
+ {
+  "before": "RS5 remifentanil 0.1 awake: RR 6–10 and, at 0.2, PaCO2 +5–15 — measured RR 5.58 (audit D1 5.6: 7f/7g opioid rate depression, calibration row) and ΔPaCO2 +13.3 (met; +15.0 on 94040f7)",
+  "after": "RS5 remifentanil 0.1 awake: RR 6–10 and, at 0.2, PaCO2 +5–15 — measured RR 5.58 (opioid rate depression, calibration row) and ΔPaCO2 +13.3 (met)"
+ },
+ {
+  "before": "S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 after FU-8 A19, 25.1–28.8 before)",
+  "after": "S13 VF + standard-quality CPR (q 0.8, no adrenaline): the continuous coronary perfusion pressure (CoPP) 15–25 mmHg (Paradis 1990; measured 24.9–28.0 with the outflow limiter, 25.1–28.8 without)"
+ },
+ {
+  "before": "S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (audit S4 proposal; Q2; measured MAP 50.5, CO −21 % after FU-8 B4 — 58.9 / −17 % before it, 59.7 / −15 % at FU-4, 57 / −15 % on the prototype)",
+  "after": "S4b severe tamponade, propofol 1 mg/kg: MAP < 55 within 3 min and CO −25 % (measured MAP 50.5, CO −21 % when propofol removes the tonic sympathetic share — 58.9 / −17 % when it does not; 57 / −15 % on the prototype)"
+ },
+ {
+  "before": "S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest after FU-8 B4 — 26.5, −68 % before it, 27.0 at FU-4, 28.7 on the prototype; Q1)",
+  "after": "S6a the same: MAP falls 40–60 % to a nadir of 30–50 over 1–3 min (the expected picture; measured nadir 2.7, −97 % with an arrest when propofol removes the tonic sympathetic share — 26.5, −68 % when it does not, 28.7 on the prototype)"
+ },
+ {
+  "before": "SV rises ≥ 8 % while MAP falls ≤ 15 % (Cohn & Franciosa 1977) — measured SV +1.2 %, MAP −12.8 % (hydralazine on the same rig: SV +0.1 %); 7a afterload sensitivity (research/19 C9)",
+  "after": "SV rises ≥ 8 % while MAP falls ≤ 15 % (Cohn & Franciosa 1977) — measured SV +1.2 %, MAP −12.8 % (hydralazine on the same rig: SV +0.1 %); the circulation\\'s afterload sensitivity (research/19 C9)"
+ },
+ {
+  "before": "VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 DV-02a band 0.2–0.45) — measured 0.45 after FU-8 (a model limitation for the calibration pass)",
+  "after": "VF + CPR q 1: CBF 0.30–0.40 of normal (Meaney 2013 consensus [VERIFY]; research/20 band 0.2–0.45) — measured 0.45 (a model limitation for the calibration pass)"
+ },
+ {
+  "before": "VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR (measured 16.5 before FU-8, 18.0 after) — measured 15.9 with the FU-7.1 B3 washout",
+  "after": "VF with CPR q 0.8 from +30 s: EtCO2 ≥ 17 already at +2 min of CPR — measured 15.9 with the alveolar washout"
+ },
+ {
+  "before": "VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / Stage 3 acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it)",
+  "after": "VF without CPR: EtCO2 < 5 mmHg already at +30 s (research 03 §4.4 / respiratory acceptance 4) — measured 9.3 with the alveolar washout (24.2 before it)"
+ },
+ {
+  "before": "[R-7f-7] underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall",
+  "after": "underdosed sugammadex (0.5 mg/kg at PTC after rocuronium 1.2) → recovery then recurarisation (TOFR falls ≥ 0.04) — capacity-limited: measured peak 0.833 at +90 min (ideal-binder ceiling 0.834), no fall"
+ },
+ {
+  "before": "a PEA onset still shows organised electrical activity 6–10 min after the arrest — measured 0 beats (the PEA decayed to asystole first; FU-4 F5)",
+  "after": "a PEA onset still shows organised electrical activity 6–10 min after the arrest — measured 0 beats (the PEA decayed to asystole first)"
+ },
+ {
+  "before": "a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (DI-90; M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the FU-9 merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)",
+  "after": "a magnesium sulfate load 60 mg/kg prolongs rocuronium T1 25 % by 20–90 % (M10 ch. 24 p. 698) — measured +11.4 % (+12.0 % before the blood/fluids merge; blood Mg peak 2.1, falling; the profile Mg 2.5 gives +39.7 %)"
+ },
+ {
+  "before": "awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band, orchestrator ruling 2026-09-28) — ΔMAP measured 40.3 after FU-7.1 B3 (38.4 before)",
+  "after": "awake laryngoscopy raises MAP 20–40 mmHg and HR 12–30 (M10; the sourced awake band) — ΔMAP measured 40.3 with the alveolar washout (38.4 without it)"
+ },
+ {
+  "before": "awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min — measured VT 15.4 mL/kg (246 mL, RR 7.4; PaCO2 36.1, lactate +0.01) (FU-6 R15, band 4.2–10.4)",
+  "after": "awake: PaCO2 35–45, VT 4.2–10.4 mL/kg, lactate rise < 0.5 over 15 min — measured VT 15.4 mL/kg (246 mL, RR 7.4; PaCO2 36.1, lactate +0.01) (band 4.2–10.4)"
+ },
+ {
+  "before": "check 20 (MANUAL contractility, FU-2): premise UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min",
+  "after": "check 20 (MANUAL contractility): premise UOP 0.1–0.15; dobutamine → CO +20–40 %, UOP 0.2–0.3 in 30–60 min"
+ },
+ {
+  "before": "child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.38 on the tree merged with FU-8 (3.33 before it; 3.50 on the prototype; was 7.83); FU-6 Task 17 re-measures",
+  "after": "child 4 y 16 kg: 2–3.2 min (Patel 160 ± 31 s) — measured 3.38 (3.50 on the prototype)"
+ },
+ {
+  "before": "decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (FU-6 R9 triggering; origin/main: MAP ≥ 65 at +5 s)",
+  "after": "decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (ventilator triggering; MAP ≥ 65 at +5 s without it)"
+ },
+ {
+  "before": "dobutamine 5 µg/kg/min: CO +20–40 % (measured +13.6 on the FU-7 tree; +11.8 with the FU-2 β venous term)",
+  "after": "dobutamine 5 µg/kg/min: CO +20–40 % (measured +13.6; +11.8 with the β venous term)"
+ },
+ {
+  "before": "ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) — measured direct SVR increments 0.040 / 0.010 / 0.005 (the pressor moved to sympDrive, FU-7 Task 9)",
+  "after": "ephedrine 10 mg ×3 at 10 min: the third dose adds ≤ 0.6 × the SVR increment of the first (tachyphylaxis 0.7²) — measured direct SVR increments 0.040 / 0.010 / 0.005 (the pressor moved to sympDrive)"
+ },
+ {
+  "before": "furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.029 (FU-9 F6; −0.042 before H1–H10 in the plan prototype)",
+  "after": "furosemide 40 mg at K 7.5: K ≥ 0.1 lower at 3 h — measured −0.029"
+ },
+ {
+  "before": "glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.26 (FU-9 F11)",
+  "after": "glycine 3 L: ICP ≥ 1 mmHg above the control — measured +0.26"
+ },
+ {
+  "before": "healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 CM-15c quiet band) — measured 0.89 in this rig after FU-8, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance, R50 F9 — Ali Q8)",
+  "after": "healthy 40 y, AF 150/min: kIsch ≥ 0.9 throughout (research/19 quiet band) — measured 0.89 in this rig, a MODEL LIMITATION (sinus 150 holds 1.00; the residual is beat-to-beat variance)"
+ },
+ {
+  "before": "healthy adult under GA on VCV: Enghoff VD/VT 0.30–0.45 (Nunn 8e: ≈ 0.3 awake, higher under anaesthesia) — measured 0.28 (VD phys 140 mL: FU-4\\'s ETT bypass + HEALTHY_VDALV 0.075; Q-7k-5)",
+  "after": "healthy adult under GA on VCV: Enghoff VD/VT 0.30–0.45 (Nunn 8e: ≈ 0.3 awake, higher under anaesthesia) — measured 0.28 (VD phys 140 mL: the ETT bypass + HEALTHY_VDALV 0.075)"
+ },
+ {
+  "before": "healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (FU-6 R7, band ±5)",
+  "after": "healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (band ±5)"
+ },
+ {
+  "before": "hypocapnia PaCO2 25: CBF ≤ 40 % of the anaesthetised baseline — measured 0.4019 after FU-7.1 B3 (0.394 before it)",
+  "after": "hypocapnia PaCO2 25: CBF ≤ 40 % of the anaesthetised baseline — measured 0.4019 with the alveolar washout (0.394 without it)"
+ },
+ {
+  "before": "iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.958, BE −0.2 (FU-9 F5)",
+  "after": "iCa nadir 0.6–0.95 and BE ≤ −10 (ATLS class IV) — measured iCa 0.958, BE −0.2"
+ },
+ {
+  "before": "induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min — measured 0.015 (audit A3b: 0.02 → 0.04; calibration row)",
+  "after": "induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min — measured 0.015 (calibration row)"
+ },
+ {
+  "before": "ketamine 1.5 mg/kg loses consciousness no faster than 30 s (M10 Table 21.1) — measured 16 s at 1 s sampling (D20: 20 s at the audit\\'s 5 s)",
+  "after": "ketamine 1.5 mg/kg loses consciousness no faster than 30 s (M10 Table 21.1) — measured 16 s at 1 s sampling (20 s at 5 s sampling)"
+ },
+ {
+  "before": "massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.137 vs 1.033 (FU-9 F5; main 1.076)",
+  "after": "massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.137 vs 1.033"
+ },
+ {
+  "before": "no opioid: ΔMAP 20–30 mmHg (ET-16a band; Shribman 1987 via R51 addendum 25; Q17) — measured +19.1 on the gate tree (+19.3 before the FU-9 merge; was +7.7)",
+  "after": "no opioid: ΔMAP 20–30 mmHg (Shribman 1987) — measured +19.1 (+19.3 before the blood/fluids merge)"
+ },
+ {
+  "before": "noxious stimulus 1.5 under remifentanil 0.1 + propofol 50 (SGA, FiO2 0.5): VE ≥ +20 % — measured +3.3 % (3.29 → 3.40 L/min; prototype +0.6 %, 7f antinoc 0.77)",
+  "after": "noxious stimulus 1.5 under remifentanil 0.1 + propofol 50 (SGA, FiO2 0.5): VE ≥ +20 % — measured +3.3 % (3.29 → 3.40 L/min; prototype +0.6 %, neuro antinoc 0.77)"
+ },
+ {
+  "before": "permissive hypercapnia raises mean PAP ≥ 2 mmHg — measured 18.1 → 19.2 (+1.1) at PaCO2 32.3 → 55.0 (FU-6 R14, band ≥ +2; plan 17.9 → 21.6 at PaCO2 92; was 18.8 → 19.7 at PaCO2 70)",
+  "after": "permissive hypercapnia raises mean PAP ≥ 2 mmHg — measured 18.1 → 19.2 (+1.1) at PaCO2 32.3 → 55.0 (band ≥ +2)"
+ },
+ {
+  "before": "philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats — measured 6 (27/21) at 6 samples after FU-4 (FU-5 follow-up)",
+  "after": "philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats — measured 6 (27/21) at 6 samples"
+ },
+ {
+  "before": "preoxygenated apnoea to SaO2 90 %: 2.5–4.5 min — measured 4.82 (plan 4.83; was 5.75 after Task 7; FU-6 R10)",
+  "after": "preoxygenated apnoea to SaO2 90 %: 2.5–4.5 min — measured 4.82"
+ },
+ {
+  "before": "preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 — measured 22 s (+200 / +222 s) (FU-6 R15, band ≤ 20 s)",
+  "after": "preoxygenated apnoea: displayed SpO2 < 90 no more than 20 s after SaO2 < 90 — measured 22 s (+200 / +222 s) (band ≤ 20 s)"
+ },
+ {
+  "before": "quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.5 / 25.2 / 26.6 / 26.6 after FU-8",
+  "after": "quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.5 / 25.2 / 26.6 / 26.6 at the circulation\\'s CPR flow"
+ },
+ {
+  "before": "residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (FU-6 R3(d), band < 0.75)",
+  "after": "residual block at extubation (TOFR < 0.9, natural airway): smaller breaths than the unblocked control — measured ratio 0.80 (band < 0.75)"
+ },
+ {
+  "before": "restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — on main + 7e MAP 86.6 (premise 77–84 missed), CBF 0.891",
+  "after": "restoring PaCO2 35 and MAP ≈ 80: CBF > 80 % — measured MAP 86.6 (premise 77–84 missed), CBF 0.891"
+ },
+ {
+  "before": "saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) — measured 9 s (the review measured 10 s to its settle rule; Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5)",
+  "after": "saadat-like: 80 → 120 within 8 s (B9 manual M p. 65–66: 6 s at the 8 s averaging window, research/06 §4.1; ± 2 s as philips-like) — measured 9 s (10 s to the review\\'s settle rule)"
+ },
+ {
+  "before": "second gas (DI-19; Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %\\'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the 7g rig, Task 15)",
+  "after": "second gas (Epstein 1964, M10 ch. 19): 66 % N2O raises sevoflurane 2 %\\'s FA/FI at 5 min by ≥ +0.03 — measured +0.014 in the engine (+0.021 in the standalone drug rig)"
+ },
+ {
+  "before": "term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min after FU-8 (isometric §2.2 scaling: Ali, plan \"Waiting on Ali\")",
+  "after": "term neonate 3.5 kg: cardiac output ≥ 150 mL/kg/min (PALS ≈ 200) — measured 0.31 L/min = 89 mL/kg/min (isometric §2.2 scaling)"
+ },
+ {
+  "before": "the 8a soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; FU-5: no raise since the displayed 10 is not above the limit — was 27–57 s)",
+  "after": "the validation-harness soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; no raise since the displayed 10 is not above the limit)"
+ },
+ {
+  "before": "the Bailey pair (DI-03), a POPULATION claim over FU-6\\'s seeds 1–20: apnoea (VE < 1 L/min) in ≥ 4 of 20 (Bailey 1990: 6/12) — measured 0 of 20",
+  "after": "the Bailey pair, a POPULATION claim over seeds 1–20: apnoea (VE < 1 L/min) in ≥ 4 of 20 (Bailey 1990: 6/12) — measured 0 of 20"
+ },
+ {
+  "before": "ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of origin/main 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until FU-4 publishes a cutaneous tone (R-FU5-9)",
+  "after": "ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until the circulation publishes a cutaneous tone"
+ },
+ {
+  "before": "ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 after FU-8",
+  "after": "ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 at the circulation\\'s CPR flow"
+ },
+ {
+  "before": "warm CO 7–9 L/min (measured 5.0; 4.9 with FU-4, 4.9 at the gate; Q-7e-7)",
+  "after": "warm CO 7–9 L/min (measured 5.0)"
+ },
+ {
+  "before": "warm SVR 500–700 dyn·s/cm⁵ (measured 861; 792 with FU-4, 767 at the gate; Q-7e-7)",
+  "after": "warm SVR 500–700 dyn·s/cm⁵ (measured 861)"
+ },
+ {
+  "before": "warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +0.90 vs +1.68 mL/kg, PaO2 +10 (FU-9 F4)",
+  "after": "warm septic shock + 30 mL/kg: extra EVLWI more than healthy and PaO2 falls — measured +0.90 vs +1.68 mL/kg, PaO2 +10"
+ },
+ {
+  "before": "… and MAP by 8–25 % (T6.3; DI-42) — measured −6.7 % (SVR −10.8 %, HR +20.6: the reflex holds the pressure; −5.6 % before the FU-9 merge)",
+  "after": "… and MAP by 8–25 % (T6.3) — measured −6.7 % (SVR −10.8 %, HR +20.6: the reflex holds the pressure; −5.6 % before the blood/fluids merge)"
+ },
+ {
+  "before": "… without overshoot: Ce peak 2.99–3.01 (DI-67; 7g gate max 3.0005) — measured 3.110 on the gate tree (3.132 before the FU-9 merge; baseline b004289: 3.1, TS)",
+  "after": "… without overshoot: Ce peak 2.99–3.01 (earlier measured max 3.0005) — measured 3.110 (3.132 before the blood/fluids merge; 3.1 on the TS baseline)"
+ }
+]

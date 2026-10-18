@@ -1,4 +1,4 @@
-// R50 review F4: the alarm mirror speaks glossary words, never the vendor's aliases.
+// The alarm mirror speaks glossary words, never the vendor's aliases.
 import { describe, expect, it } from 'vitest';
 import type { NumericId } from '@pme/engine-core';
 import { alarmLine, FIXED_ALARM_WORDS, limitsOffTitle } from './alarms.ts';
@@ -25,7 +25,7 @@ describe('alarm mirror wording', () => {
   });
 });
 
-describe('FU-11 (owner ruling Q4): the "Limit alarms off" tooltip', () => {
+describe('the "Limit alarms off" tooltip', () => {
   it('names what the skin lists as always on, in the table\'s words; drops apnoea under APNEA LIMIT OFF; generic when none', () => {
     expect(limitsOffTitle(['ASYSTOLE', 'VFIB', 'VTAC', 'APNEA'])).toBe('Limit alarms are off on this monitor. Still alarming: Asystole, Ventricular fibrillation or tachycardia, Ventricular tachycardia, Apnoea.');
     expect(limitsOffTitle(['ASYSTOLE', 'APNEA'], true)).toBe('Limit alarms are off on this monitor. Still alarming: Asystole.');

@@ -14,8 +14,8 @@ function course(mgKg: number, seconds: number): MhState {
   return mh;
 }
 
-describe('MH and dantrolene (7g effect curve)', () => {
-  it('untreated: Stage 3 ramp — severity × min(1, (t − t0)/900 s); no dantrolene → s stays undefined', () => {
+describe('MH and dantrolene (drug effect curve)', () => {
+  it('untreated: the ramp — severity × min(1, (t − t0)/900 s); no dantrolene → s stays undefined', () => {
     const mh: MhState = { severity: 1, t0: 600 };
     expect(mhActivity(mh, 600)).toBe(0);
     expect(mhActivity(mh, 1050)).toBeCloseTo(0.5, 9);
@@ -33,7 +33,7 @@ describe('MH and dantrolene (7g effect curve)', () => {
     expect(late).toBeLessThan(0.35);
   });
 
-  it('5 mg/kg suppresses more than 2.5 mg/kg; as 7g’s curve wanes the activity creeps back (recrudescence)', () => {
+  it('5 mg/kg suppresses more than 2.5 mg/kg; as the drug curve wanes the activity creeps back (recrudescence)', () => {
     expect(mhActivity(course(5, 3600), 0)).toBeLessThan(mhActivity(course(2.5, 3600), 0));
     const mh = course(2.5, 3600);
     const a1 = mhActivity(mh, 0);

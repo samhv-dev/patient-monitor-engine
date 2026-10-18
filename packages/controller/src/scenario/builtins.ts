@@ -4,7 +4,7 @@ import aclsPea from '../../scenarios/acls-pea-hypovolaemia.json';
 import aclsBrady from '../../scenarios/acls-bradycardia-unstable.json';
 import svtAdenosine from '../../scenarios/svt-adenosine.json';
 import orInduction from '../../scenarios/or-induction-hypotension.json';
-// FU-8 (Stage 9 R-S9-2): the six Stage 7f documents join the list — the driver loaded only the first five by id
+// The six neuro documents
 import depthAwareness from '../../scenarios/depth-awareness.json';
 import depthLight from '../../scenarios/depth-light-anaesthesia.json';
 import depthOpioidApnoea from '../../scenarios/depth-opioid-apnoea.json';

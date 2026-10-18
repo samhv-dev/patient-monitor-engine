@@ -1,18 +1,18 @@
-// The Stage 7a circuit (R31, R42; tables §2.1 as amended by audit A1/A2): four time-varying-elastance chambers,
-// four valves, the Stage 2 systemic 4-element Windkessel (+ its aorta→radial resonator), systemic veins, a
-// pulmonary arterial compartment with characteristic impedance, two parallel lung vascular beds, pulmonary veins,
-// a pericardium and a continuous pleural (intrathoracic) pressure. Integrated with classical RK4 at 2 ms.
+// The circulation's circuit (tables §2.1): four time-varying-elastance chambers, four valves, the systemic 4-element
+// Windkessel (+ its aorta→radial resonator), systemic veins, a pulmonary arterial compartment with characteristic
+// impedance, two parallel lung vascular beds, pulmonary veins, a pericardium and a continuous pleural (intrathoracic)
+// pressure. Integrated with classical RK4 at 2 ms.
 //
 // State s (plain number[]; volumes in mL):
-//   0 PC  systemic capacitor pressure (Stage 2 s[0])      C(P)·dPC/dt = Q_ao − (PC − P_sv)/R_sys
-//   1 QL  Windkessel inertance flow (Stage 2 s[1])        L·dQL/dt = Zc·(Q_ao − QL)
-//   2 X, 3 XD  aorta→radial resonator (Stage 2 s[2], s[3])
+//   0 PC  systemic capacitor pressure                    C(P)·dPC/dt = Q_ao − (PC − P_sv)/R_sys
+//   1 QL  Windkessel inertance flow                       L·dQL/dt = Zc·(Q_ao − QL)
+//   2 X, 3 XD  aorta→radial resonator
 //   4 VSV systemic venous volume (total)                  P_sv = (VSV − v0Sv)/cSv
 //   5 VRA, 6 VRV, 9 VLA, 10 VLV chamber volumes           P = E(t)·(V − V0) (+ EDPVR) + P_peri + P_it
 //   7 VPA pulmonary arterial stressed volume              P_pa = VPA/cPa + P_it ; root = P_pa + Zpa·Q_pv
 //   8 VPV pulmonary venous stressed volume                P_pv = VPV/cPv + P_it   (≈ PCWP)
 // Chamber pressure (Smith 2004 form): ventricles P = a·Emax·(V − V0) + (1 − a)·A·(e^{β(V − V0)} − 1); atria
-// P = (Emin + a·(Emax − Emin))·(V − V0); every intrathoracic compartment adds P_it (pleural, audit R-B) and the
+// P = (Emin + a·(Emax − Emin))·(V − V0); every intrathoracic compartment adds P_it (pleural) and the
 // four chambers add P_peri = A_p·(e^{λ(V_LV + V_RV + vFluid − v0Peri)} − 1) floored at 0 (tables §2.2).
 import { compliance } from '../hemo/circulation.ts';
 import { RADIAL_FR_HZ, RADIAL_GAIN, RADIAL_ZETA, WK_C, WK_CK, WK_L, WK_P0 } from '../hemo/params.ts';
@@ -35,7 +35,7 @@ const L_ZC_AO = ZC_AO;
 const L_valveFlow = valveFlow;
 
 /**
- * FU-8 (F6, I-07; R50 F4, orchestrator ruling 3 — Option D): a compartment cannot give blood it does not hold. A flow
+ * A compartment cannot give blood it does not hold. A flow
  * OUT of a compartment is scaled by min(1, V / vEmpty) of that compartment's volume (chambers: absolute volume;
  * pulmonary arteries/veins: stressed volume — below it the vessels collapse, West zone 1); the systemic veins and the
  * atria collapse instead of holding a negative transmural pressure (floors in `evaluate`). Without it the passive
@@ -58,14 +58,14 @@ export interface CircParams {
   eesRv: number; v0Rv: number; aRv: number; betaRv: number;
   eminRa: number; emaxRa: number; v0Ra: number;
   eminLa: number; emaxLa: number; v0La: number;
-  rSys: number; cArt: number; // cArt multiplies Stage 2's C(P) (arterial stiffness)
+  rSys: number; cArt: number; // cArt multiplies the C(P) (arterial stiffness)
   cSv: number; v0Sv: number; rVr: number;
   cPa: number; zPa: number; pvrL: number; pvrR: number; cPv: number; rPvla: number;
   tv: Valve; pv: Valve; mv: Valve; av: Valve;
   periA: number; periLambda: number; v0Peri: number; vFluid: number;
-  /** FU-4 F1(a): reference resting intrathoracic stressed volume the compression works against, mL. */
+  /** Reference resting intrathoracic stressed volume the compression works against, mL. */
   vCprRef: number;
-  /** FU-8 (F6): the volume below which a compartment's outflow is throttled, mL (absent = V_EMPTY_ML; profile ×W/70). */
+  /** The volume below which a compartment's outflow is throttled, mL (absent = V_EMPTY_ML; profile ×W/70). */
   vEmpty?: number;
 }
 
@@ -78,7 +78,7 @@ export interface CircDrive {
   pIt: (t: number) => number; // pleural pressure, mmHg
   cprCardiac: (t: number) => number; // direct compression on the four chambers, mmHg
   cprThoracic: (t: number) => number; // thoracic pump on intrathoracic compartments and the aortic root, mmHg
-  /** FU-4 F1(c): thoracic pressure retained on the VENOUS side through the release phase, mmHg (0 outside CPR). */
+  /** Thoracic pressure retained on the VENOUS side through the release phase, mmHg (0 outside CPR). */
   cprRelease: (t: number) => number;
   qIn: number; // net volume in (+ fluid, − bleed), mL/s, into the systemic veins
   qVad: (lvp: number, aop: number) => number; // LV → aorta device flow (LVAD), mL/s
@@ -126,8 +126,8 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
   let ct = d.cprThoracic(t);
   let cr = 0;
   if (cc > 0 || ct > 0 || (cr = d.cprRelease(t)) > 0) {
-    // FU-4 F1(a): a compression displaces blood. The pressure it generates scales with the intrathoracic stressed
-    // volume available to displace, so an exsanguinated thorax generates no aortic pressure and no CPP.
+    // A compression displaces blood. The pressure it generates scales with the intrathoracic stressed volume available
+    // to displace, so an exsanguinated thorax generates no aortic pressure and no CPP.
     const vStr =
       Math.max(0, vlv - p.v0Lv) + Math.max(0, vrv - p.v0Rv) +
       Math.max(0, (s[5] as number) - p.v0Ra) + Math.max(0, (s[9] as number) - p.v0La) +
@@ -138,21 +138,21 @@ export function evaluate(s: readonly number[], t: number, p: CircParams, d: Circ
     cr *= f;
   }
   const peri = Math.max(0, p.periA * (Math.exp(p.periLambda * (vlv + vrv + p.vFluid - p.v0Peri)) - 1));
-  // FU-4 F1(c): incomplete chest recoil leaves a residual pressure on the collapsible venous side (RA, pulmonary bed)
-  // through the release phase; the stiff pressurised aorta is not held up by it, so the Ao − RA gradient narrows to
-  // the Paradis 1990 band instead of the ≈ 46 the full release gave.
+  // Incomplete chest recoil leaves a residual pressure on the collapsible venous side (RA, pulmonary bed) through the
+  // release phase; the stiff pressurised aorta is not held up by it, so the Ao − RA gradient narrows to the Paradis
+  // 1990 band instead of the ≈ 46 the full release gave.
   const ext = pit + ct + peri; // external pressure on the chambers (thoracic pump acts on everything intrathoracic)
   const extV = ext + cr; // venous/right-heart side: + the retained release pressure
   const dl = vlv - p.v0Lv;
   const dr = vrv - p.v0Rv;
   const pLv = a * p.eesLv * d.kLv * dl + (1 - a) * p.aLv * (Math.exp(p.betaLv * dl) - 1) + ext + cc;
   const pRv = a * p.eesRv * d.kRv * dr + (1 - a) * p.aRv * (Math.exp(p.betaRv * dr) - 1) + ext + cc;
-  // FU-4 F1(c): while the chest is being compressed the thin-walled right heart and great veins are a Starling
-  // resistor — they collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks
-  // the intrathoracic pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not
-  // the ≈ 4 an uncollapsed chamber gives). FU-8 (F6): outside CPR too — an atrium below its unstressed volume, and the
-  // systemic veins below theirs, collapse instead of sucking (the transmural pressure is negative only then, so every
-  // calibrated CVP rig is unchanged).
+  // While the chest is being compressed the thin-walled right heart and great veins are a Starling resistor — they
+  // collapse rather than hold a negative transmural pressure, so the MEASURED atrial pressure tracks the intrathoracic
+  // pressure (which is what a catheter reads: Paradis 1990's RA relaxation pressure of 15–25, not the ≈ 4 an
+  // uncollapsed chamber gives). Outside CPR too — an atrium below its unstressed volume, and the systemic veins below
+  // theirs, collapse instead of sucking (the transmural pressure is negative only then, so every calibrated CVP rig is
+  // unchanged).
   const traRa = (p.eminRa + aa * (p.emaxRa - p.eminRa)) * ((s[5] as number) - p.v0Ra);
   const traLa = (p.eminLa + aa * (p.emaxLa - p.eminLa)) * ((s[9] as number) - p.v0La);
   const pRa = Math.max(0, traRa) + extV + cc;
@@ -232,7 +232,7 @@ export function stepCirc(s: number[], t: number, h: number, p: CircParams, d: Ci
   }
 }
 
-/** Stressed arterial volume ∫₀^PC C(p) dp for Stage 2's C(P) = WK_C·clamp(e^{−k(P−P0)}, 0.5, 3), × cArt. */
+/** Stressed arterial volume ∫₀^PC C(p) dp for C(P) = WK_C·clamp(e^{−k(P−P0)}, 0.5, 3), × cArt. */
 export function arterialVolume(pc: number, cArt: number): number {
   const lo = L_WK_P0 - Math.log(3) / L_WK_CK; // below: C = 3·WK_C
   const hi = L_WK_P0 + Math.log(2) / L_WK_CK; // above: C = 0.5·WK_C

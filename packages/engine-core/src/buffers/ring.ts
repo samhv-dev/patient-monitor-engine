@@ -20,7 +20,7 @@ export class RingBuffer {
     return this._latest;
   }
 
-  /** Oldest absolute index still held (never before the first index written: review M4). */
+  /** Oldest absolute index still held (never before the first index written). */
   get oldest(): number {
     return Math.max(0, this._first, this._latest - this.capacity + 1);
   }

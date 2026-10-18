@@ -53,7 +53,7 @@ describe('clock/Clock', () => {
     expect(clock.advance(40)).toBe(2);
   });
 
-  it('rejects timeScale outside 0.25–8 (Stage 10: ×8 is the fastest speed)', () => {
+  it('rejects timeScale outside 0.25–8 (×8 is the fastest speed)', () => {
     const clock = new Clock();
     expect(() => {
       clock.timeScale = 0.1;

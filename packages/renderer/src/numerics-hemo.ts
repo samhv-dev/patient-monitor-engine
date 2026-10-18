@@ -1,4 +1,4 @@
-// Stage 2 numeric tiles (brief §6.1, §6.3): ABP/PAP "S/D (M)", CVP mean, PR, PI and NIBP with its measuring
+// Haemodynamic numeric tiles (brief §6.1, §6.3): ABP/PAP "S/D (M)", CVP mean, PR, PI and NIBP with its measuring
 // state, live cuff pressure and "hh:mm" timestamp. Pure formatters are exported for tests (Node has no DOM).
 import type { EngineEvent, Measured } from '@pme/engine-core';
 

@@ -17,7 +17,7 @@ async function drop(warm: false | 'default' | 32 | 38 | 43): Promise<number> {
   return at(3600) - at(0);
 }
 
-describe('FU-4 item 1: forced-air warming at a set air temperature', { timeout: 600_000 }, () => {
+describe('forced-air warming at a set air temperature', { timeout: 600_000 }, () => {
   it('GA 60 min: unwarmed < 38 °C < 43 °C (monotone in the set temperature); 43 °C and the default identical', async () => {
     const none = await drop(false);
     const w38 = await drop(38);

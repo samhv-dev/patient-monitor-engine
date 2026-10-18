@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { evB, labsAt, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('7c sanity I — haemorrhage and transfusion', { timeout: 300_000 }, () => {
+describe('blood sanity I — haemorrhage and transfusion', { timeout: 300_000 }, () => {
   it('17a class III (1750 mL over 10 min): lactate 3–5 at 30 min, BE ≤ −1, Hb falls with refill; 4 RBC + 1 L RL clear lactate', async () => {
     const { e, ev } = rigB();
     await runTo(e, 60);

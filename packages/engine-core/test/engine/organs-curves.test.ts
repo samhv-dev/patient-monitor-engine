@@ -13,7 +13,7 @@ async function holdMap(r: OrgansRig, sbp: number, dbp: number, s: number) {
 /** Tables §5.2 U(RPP): 0 at ≤ 40, linear to 1 at 100 (then 3× at 150). */
 const uTables = (rpp: number) => Math.max(0, Math.min(1, (rpp - 40) / 60));
 
-describe('Stage 7d curves through the engine (MANUAL, awake adult)', { timeout: 300_000 }, () => {
+describe('organ curves through the engine (MANUAL, awake adult)', { timeout: 300_000 }, () => {
   it('autoregulation (tables A): CBF = A(CPP)·C(PaCO2) at the measured inputs; plateau 1 ± 0.05 over CPP 60–150', async () => {
     const r = organsRig({ seed: 21, patient: { weightKg: 70 } });
     await r.run(120);
@@ -98,7 +98,7 @@ describe('Stage 7d curves through the engine (MANUAL, awake adult)', { timeout: 
   // function 7d writes into `blood.core.liver`. The rig used to load only 7d's fallback pool, which 7c's report then
   // hid (1.008 at 30 min: nothing had been loaded into the pool being reported). It now loads 7c's pool — the
   // property (the whole-body clearance half-life through 7d's liver) is the same — and still checks the fallback pool.
-  it('lactate clearance (tables kLac t½ 20–60 min): 7c\'s pool (reported) and 7d\'s fallback pool from 5 mmol/L are 2.4–3.8 after 30 min (t½ 30 → 3.0)', async () => {
+  it('lactate clearance (tables kLac t½ 20–60 min): the blood\'s pool (reported) and the organs\' fallback pool from 5 mmol/L are 2.4–3.8 after 30 min (t½ 30 → 3.0)', async () => {
     const r = organsRig({ seed: 26, patient: { weightKg: 70 } });
     await r.run(60);
     const bc = (r.e as unknown as { st: { blood: { core: { so: { lac: number }; out: { lactate: number } } } } }).st.blood.core;

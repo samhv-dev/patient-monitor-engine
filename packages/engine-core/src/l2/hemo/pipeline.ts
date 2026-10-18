@@ -1,4 +1,4 @@
-// Stage 2 haemodynamic pipeline: the per-tick work the engine calls after the ECG (brief §3.3 tick order):
+// Haemodynamic pipeline: the per-tick work the engine calls after the ECG (brief §3.3 tick order):
 //   L1 targets (l1/state.ts) → per-beat core (beat records → LV/RV ejections, CVP waves, pleth pulses; M1–M3)
 //   → circulation RK4 at 2 ms (circulation.ts) → lines/transducers (line.ts) → 125 Hz ring-buffer samples
 //   → L3: pulse detection, pressure numerics, PI/PR, NIBP cycle → events (measurement, state, nibp, alarm).
@@ -7,33 +7,33 @@ import { l1Flags, l1Value, pinVar, releaseVar, setL1Target, STATE_SCHEMA, STATE_
 import { rampValue, type RampState } from '../../l1/ramp.ts';
 import { createNibpState, nibpCommand, nibpNextIn, nibpOnPulse, nibpStep, AUTO_INTERVALS_MIN, type NibpOut, type NibpState } from '../../l3/nibp/nibp.ts';
 import { createWaveNumerics, numericsStep, piNumeric, pressureNumerics, prNumeric, type WaveNumerics } from '../../l3/pressure-numerics/numerics.ts';
-import { uniform, type Sfc32State, type StreamName } from '../../rng/sfc32.ts'; // FU-3 item 16: uniform
+import { uniform, type Sfc32State, type StreamName } from '../../rng/sfc32.ts';
 import type { AbpSite, HemoClinicalEvent, LineSensorState, NibpSite, PressureChannel, Spo2Site } from '../../types-hemo.ts';
-import type { CircEvent } from '../../types-circ.ts'; // Stage 7a
-import type { DeviceAction } from '../../types.ts'; // Stage 7a
+import type { CircEvent } from '../../types-circ.ts';
+import type { DeviceAction } from '../../types.ts';
 import type { ChannelId, Command, EngineEvent, Measured, NumericId, PatientProfile, Ramp, RhythmId, RhythmOpts, StateVar } from '../../types.ts';
-import type { ModifiersPatch } from '../ecg/api-types.ts'; // FU-8 (DV-23a): the CPR artefact through the ST seam
+import type { ModifiersPatch } from '../ecg/api-types.ts'; // The CPR artefact through the ST seam
 import { addPlethPulse, createPlethState, plethAt, plethDelayS, prunePleth, setPlethSensor, type PlethState } from '../pleth/pleth.ts';
 import { createCvpState, cvpOnBeat, cvpOnP, pruneCvp, type CvpState } from './cvp.ts';
 import { applyLineEvent, createLineState, displaySample, lineActive, lineInput, LINE_SENSOR_STATES, setLineSensor, stepTransducer, validateLineEvent, type LineState } from './line.ts';
 import { ARREST_AFTER_S, CPR_DUTY, CPR_QUALITY_DEFAULT, G_MAX, K_OPEN, gainCeiling, HEMO_RATE, H_S, PULSELESS_RHYTHMS, SUBSTEPS, SV_REF_ML } from './params.ts';
 import { createTracker, isReferenceBeat, trackBeat, type TrackerState } from './tracker.ts';
-import { createOut, type CircOut } from '../circ/circuit.ts'; // Stage 7a
-import { createBaro } from '../circ/baroreflex.ts'; // Stage 7a
-import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts'; // Stage 7a
-import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts'; // Stage 7a (FU-3 item 16: SAO2_REF; FU-4 G4: NO_BEAT_RHYTHMS; F1(d): VF_RHYTHMS)
-import { createIabp, createLvad, iabpFlow, iabpSchedule, iabpStop, LVAD_SUCTION_PVC_P, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts'; // Stage 7a (FU-8: iabpSchedule)
-import { CO_TAU_S, circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts'; // Stage 7a (FU-8: CO_TAU_S)
-import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts'; // Stage 7a
-import { modeledHrRequest } from '../circ/rate-rule.ts'; // FU-2
-import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts'; // FU-3 item 16
-import { arrestStep, peaDecayStep, roscStep } from '../circ/arrest.ts'; // FU-4 G1; F5: peaDecayStep
-import { effectiveRateBpm } from '../ecg/rhythms.ts'; // FU-2
-import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts'; // Stage 7a
+import { createOut, type CircOut } from '../circ/circuit.ts';
+import { createBaro } from '../circ/baroreflex.ts';
+import { applyCircCondition, CIRC_CONDITIONS, type CircConditionId } from '../circ/conditions.ts';
+import { NO_BEAT_RHYTHMS, SAO2_REF, stepCoronary, stPatchOf, VF_RHYTHMS } from '../circ/coronary.ts';
+import { createIabp, createLvad, iabpFlow, iabpSchedule, iabpStop, LVAD_SUCTION_PVC_P, lvadFlow, lvadNumerics, type IabpState, type LvadState } from '../circ/devices.ts';
+import { CO_TAU_S, circCardiacOutput, circOnAtrial, circOnBeat, circVolume, createCircModel, stepCircModel, type CircBeat, type CircEnv, type CircModelState } from '../circ/model.ts';
+import { DEFAULT_PROFILE, type CircProfile, type ConditionId } from '../circ/profile.ts';
+import { modeledHrRequest } from '../circ/rate-rule.ts';
+import { hypoxicArrestRequest } from '../circ/hypoxic-arrest.ts';
+import { arrestStep, peaDecayStep, roscStep } from '../circ/arrest.ts';
+import { effectiveRateBpm } from '../ecg/rhythms.ts';
+import { CPR_CARDIAC_MMHG, CPR_RELEASE_RESIDUAL, CPR_THORACIC_MMHG as CPR_THORACIC_7A, H_S as CIRC_H, P_PL0 } from '../circ/params.ts';
 
 export const HEMO_CHANNELS = ['abp', 'cvp', 'pap', 'pleth'] as const satisfies readonly ChannelId[];
 export type HemoChannel = (typeof HEMO_CHANNELS)[number];
-/** Stage 7a: PV-loop teaching channels (truth, no transducer), present only while the 'pv' sensor is on. */
+/** PV-loop teaching channels (truth, no transducer), present only while the 'pv' sensor is on. */
 export const HEMO_TEACHING = ['lvp', 'lvv', 'lap', 'rap', 'rvp', 'pat'] as const satisfies readonly ChannelId[];
 export type HemoTeachingChannel = (typeof HEMO_TEACHING)[number];
 const DT = 1 / HEMO_RATE;
@@ -45,19 +45,19 @@ const ABP_SITES: readonly string[] = ['leftRadial', 'rightRadial', 'femoral'];
 const NIBP_SITES: readonly string[] = ['rightArm', 'leftArm', 'leg'];
 if (H_S !== CIRC_H) throw new Error('hemo and circ steps differ');
 
-/** Stage 7a: aortic root → radial transport delay as a 2 ms delay line (Stage 2 RADIAL_DELAY_S 0.045 → 22 steps). */
+/** Aortic root → radial transport delay as a 2 ms delay line (RADIAL_DELAY_S 0.045 → 22 steps). */
 export const RAD_DELAY_STEPS = 22;
-/** Stage 7a: the rhythm engine's k_rhythm of a VT ≤ 150/min — the reference for ventricular-rhythm efficiency. */
+/** The rhythm engine's k_rhythm of a VT ≤ 150/min — the reference for ventricular-rhythm efficiency. */
 export const VT_K_REF = 0.6;
 
-/** Stage 7a: PatientProfile → CircProfile (R22 minimal layer; unknown condition ids are ignored). */
+/** PatientProfile → CircProfile (minimal layer; unknown condition ids are ignored). */
 export function circProfileOf(profile: PatientProfile | undefined): CircProfile {
   const known: readonly string[] = ['hfref', 'hfpef', 'htn', 'as', 'ar', 'mr', 'ms', 'tr', 'cad', 'betaBlocked', 'rvFailure', 'ph'];
   return {
     ageY: profile?.ageY ?? DEFAULT_PROFILE.ageY,
     sex: profile?.sex ?? DEFAULT_PROFILE.sex,
     weightKg: profile?.weightKg ?? DEFAULT_PROFILE.weightKg,
-    ...(profile?.heightCm !== undefined ? { heightCm: profile.heightCm } : {}), // FU-8 (C4): the body-size rule
+    ...(profile?.heightCm !== undefined ? { heightCm: profile.heightCm } : {}), // The body-size rule
     conditions: (profile?.conditions ?? []).filter((c) => known.includes(c.id)).map((c) => ({ ...c, id: c.id as ConditionId })),
   };
 }
@@ -66,7 +66,7 @@ export function circProfileOf(profile: PatientProfile | undefined): CircProfile 
 export interface RhythmView {
   id: string;
   records: readonly EngineEvent[];
-  opts?: RhythmOpts; // FU-2: for the state event's effective rate
+  opts?: RhythmOpts; // For the state event's effective rate
 }
 
 export interface HemoCtx {
@@ -75,15 +75,15 @@ export interface HemoCtx {
   rhythm: RhythmView;
   rng: Record<StreamName, Sfc32State>;
   phi: number; // respiratory phase shared with the ECG's RSA (hrv.phi)
-  u?: (t: number) => number; // Stage 3 seam: the respiratory driver's breath signal (replaces breathU when present)
-  pIt?: (t: number) => number; // Stage 7a: continuous pleural pressure (mmHg) from Stage 3's breath driver; absent → resting −4
+  u?: (t: number) => number; // The respiratory driver's breath signal (replaces breathU when present)
+  pIt?: (t: number) => number; // Continuous pleural pressure (mmHg) from the breath driver; absent → resting −4
   /**
-   * R46 (7b): an external pleural source (alveolar pressure × per-condition airway-to-pleura transmission). When it
-   * returns a number that value is the intrathoracic pressure; undefined → the Stage 3 path (pIt) is the fallback.
+   * An external pleural source (alveolar pressure × per-condition airway-to-pleura transmission). When it returns a
+   * number that value is the intrathoracic pressure; undefined → the breath driver's path (pIt) is the fallback.
    */
   pItExternal?: (t: number) => number | undefined;
-  requestHr?: (bpm: number) => void; // Stage 7a: MODELED mode drives the rhythm engine's rate (Task 15)
-  requestRhythm?: (id: RhythmId, opts: RhythmOpts) => void; // FU-3 item 16: MODELED hypoxaemic arrest switches the rhythm
+  requestHr?: (bpm: number) => void; // MODELED mode drives the rhythm engine's rate
+  requestRhythm?: (id: RhythmId, opts: RhythmOpts) => void; // MODELED hypoxaemic arrest switches the rhythm
 }
 
 export interface SiteBeatStat {
@@ -99,30 +99,30 @@ export interface SiteBeatStat {
 
 export interface HemoState {
   m: number; // next 125 Hz sample index to generate
-  circ: CircModelState; // Stage 7a: the circulation (L1-owned integrator, audit A4)
-  circOut: CircOut; // Stage 7a: algebraic outputs at the last 2 ms step
-  radQ: number[]; // Stage 7a: radial delay line (RAD_DELAY_STEPS + 1 values)
-  beatT: number; // Stage 7a: onset time of the last CircBeat turned into a site beat
-  stPatch: ModifiersPatch | null; // Stage 7a: ST modifier patch for the engine to apply (R23); FU-8: + the CPR artefact
-  stApplied: number; // Stage 7a: the ischaemic ST depression last handed to the ECG, mV
-  iabp: IabpState; // Stage 7a: intra-aortic balloon pump (R28, tables §8.1)
-  iabpAug: number; // Stage 7a: peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
+  circ: CircModelState; // The circulation (L1-owned integrator)
+  circOut: CircOut; // Algebraic outputs at the last 2 ms step
+  radQ: number[]; // Radial delay line (RAD_DELAY_STEPS + 1 values)
+  beatT: number; // Onset time of the last CircBeat turned into a site beat
+  stPatch: ModifiersPatch | null; // ST modifier patch for the engine to apply, plus the CPR artefact
+  stApplied: number; // The ischaemic ST depression last handed to the ECG, mV
+  iabp: IabpState; // Intra-aortic balloon pump (tables §8.1)
+  iabpAug: number; // Peak aortic pressure of the last assisted beat (diastolic augmentation), mmHg
   /**
-   * FU-8 (research/20 DV-13d, DV-M5, DV-03): the aortic valve's own events at 2 ms — the last opening and closure (the
-   * balloon's pressure trigger), the aortic pressure summed over the running diastole (closure → opening), the last
-   * complete diastole's mean, and the unassisted (mean − minimum) offset — and the pulmonary blood flow (LPF τ CO_TAU_S,
-   * mL/s: the gas exchange's flow during CPR).
+   * The aortic valve's own events at 2 ms — the last opening and closure (the balloon's pressure trigger), the aortic
+   * pressure summed over the running diastole (closure → opening), the last complete diastole's mean, and the
+   * unassisted (mean − minimum) offset — and the pulmonary blood flow (LPF τ CO_TAU_S, mL/s: the gas exchange's flow
+   * during CPR) (research/20).
    */
   av: { ej: boolean; openT: number; closeT: number; sum: number; n: number; mean: number; off: number; qLung: number };
-  /** FU-8 (research/20 DV-01b): the rhythm key the arrest state last saw (a new pulseless rhythm enters the arrest state). */
+  /** The rhythm key the arrest state last saw (a new pulseless rhythm enters the arrest state) (research/20). */
   arrestKey: string;
-  /** FU-8 (research/20 DV-23a): the CPR compression artefact this pipeline put on the ECG (cleared when CPR stops). */
+  /** The CPR compression artefact this pipeline put on the ECG (cleared when CPR stops) (research/20). */
   cprArt: boolean;
-  lvadPvc: boolean; // FU-8 (A26): this pipeline set the suction ectopy
-  lvad: LvadState; // Stage 7a: continuous-flow LVAD (R28, tables §8.2)
-  pvOn: boolean; // Stage 7a: teaching channels on
+  lvadPvc: boolean; // This pipeline set the suction ectopy
+  lvad: LvadState; // Continuous-flow LVAD (tables §8.2)
+  pvOn: boolean; // Teaching channels on
   /**
-   * Stage 7a MANUAL set-and-hold: the volume/PVR tracker (active, okS) and the per-beat pressure tracker (pActive,
+   * MANUAL set-and-hold: the volume/PVR tracker (active, okS) and the per-beat pressure tracker (pActive,
    * pOkS) run while an INSTRUCTOR action is being met (a target, the HR or the rhythm changed) and stop once it holds;
    * physiological perturbations (PEEP, bleeding, drugs, conditions) then act on top of the instructor's picture.
    */
@@ -170,9 +170,9 @@ export function createHemoState(profile: PatientProfile | undefined, l1: L1State
   const flow = (SV_REF_ML * Math.max(30, hr0)) / 60;
   const sens = profile?.sensors ?? {};
   const spo2 = sens.spo2 === 'off' || sens.spo2 === 'motion' ? sens.spo2 : 'on';
-  const circ = createCircModel(circProfileOf(profile)); // Stage 7a
-  // FU-8 (A29; V.1 gate note §10 item 1): FU-4 G6's alias (aliases.ts) for a PROFILE — a lung condition the circulation
-  // also owns applies to both, as a dispatched event does: a profile's massive PE carried the lungs' dead space and no PVR
+  const circ = createCircModel(circProfileOf(profile));
+  // The alias (aliases.ts) for a PROFILE — a lung condition the circulation also owns applies to both, as a
+  // dispatched event does: a profile's massive PE carries the PVR as well as the lungs' dead space
   for (const lc of profile?.lungConditions ?? []) if (lc.id === 'pe') applyCircCondition(circ, 'pe', lc.severity);
   return {
     m: 0,
@@ -203,7 +203,7 @@ export function hemoChannelActive(hs: HemoState, ch: HemoChannel): boolean {
 }
 
 function isArrested(hs: HemoState, t: number): boolean {
-  return t - hs.circ.lastEjT > Math.max(ARREST_AFTER_S, 2.2 * hs.lastRR); // Stage 7a: from the aortic valve
+  return t - hs.circ.lastEjT > Math.max(ARREST_AFTER_S, 2.2 * hs.lastRR); // From the aortic valve
 }
 
 function sameLimb(a: AbpSite | Spo2Site, cuff: NibpSite): boolean {
@@ -217,13 +217,14 @@ function passFraction(hs: HemoState, cuff: number): number {
 }
 
 // --- per-beat core ------------------------------------------------------------------------------------
-/** Stage 7a: the beat schedules a ventricular activation; SV, PP, PESP and AF effects emerge (decisions 11/13). */
+/** The beat schedules a ventricular activation; SV, PP, PESP and AF effects emerge. */
 function onBeat(hs: HemoState, ctx: HemoCtx, b: Extract<EngineEvent, { type: 'beat' }>): void {
   const rr = hs.lastBeatT >= 0 ? Math.max(0.15, b.t - hs.lastBeatT) : hs.lastRR;
   const perfused = !PULSELESS_RHYTHMS.has(ctx.rhythm.id) && b.mech.perfused;
-  // ventricular beats (PVCs included: mechanical restitution makes a premature beat weak): the rhythm engine's k_rhythm (brief §4.8, shared by both modes) sets the
-  // dyssynchronous contraction's efficiency — full at a VT ≤ 150/min (k 0.6), none at or below Stage 2's K_OPEN 0.25
-  // (VT > 200, torsades: the contraction cannot open the aortic valve → pulseless, as in Stage 2)
+  // ventricular beats (PVCs included: mechanical restitution makes a premature beat weak): the rhythm engine's
+  // k_rhythm (brief §4.8, shared by both modes) sets the dyssynchronous contraction's efficiency — full at a VT
+  // ≤ 150/min (k 0.6), none at or below the haemodynamic K_OPEN 0.25 (VT > 200, torsades: the contraction cannot
+  // open the aortic valve → pulseless)
   const eff = b.origin === 'ventricular' && b.template !== 'pvc' ? Math.min(1, Math.max(0, (b.mech.kSV - K_OPEN) / (VT_K_REF - K_OPEN))) : 1;
   circOnBeat(hs.circ, b.t, 60 / rr, b.origin, perfused && eff > 0, eff);
   hs.lastBeatT = b.t;
@@ -237,7 +238,7 @@ function intake(hs: HemoState, ctx: HemoCtx): void {
       if ((r.kind === 'p' || r.kind === 'retrograde' || r.kind === 'paced') && r.t > hs.lastPT) {
         hs.lastPT = r.t;
         cvpOnP(hs.cvp, r.t);
-        circOnAtrial(hs.circ, r.t); // Stage 7a: atrial kick; AF ('fib') and flutter records give none
+        circOnAtrial(hs.circ, r.t); // Atrial kick; AF ('fib') and flutter records give none
       }
     } else if (r.type === 'beat' && r.seq > hs.beatSeq) {
       hs.beatSeq = r.seq;
@@ -246,7 +247,7 @@ function intake(hs: HemoState, ctx: HemoCtx): void {
   }
 }
 
-/** Stage 7a: compressions are pressures on the circuit (decision 12); this keeps the cycle clock for the pleth/EtCO2. */
+/** Compressions are pressures on the circuit; this keeps the cycle clock for the pleth/EtCO2. */
 function planCompressions(hs: HemoState, ctx: HemoCtx, until: number): void {
   const c = hs.cpr;
   while (c.active && c.nextT <= until) {
@@ -267,31 +268,31 @@ export function cprPressure(c: HemoState['cpr'], t: number): number {
 }
 
 const zeroFn = () => 0;
-/** R46: the pleural input — the external (7b) source when it has a value, else the Stage 3 breath driver, else rest. */
+/** The pleural input — the lungs' external source when it has a value, else the resp breath driver, else rest. */
 export function pleuralSource(ctx: Pick<HemoCtx, 'pIt' | 'pItExternal'>): (t: number) => number {
   const base = ctx.pIt ?? (() => P_PL0);
   const ext = ctx.pItExternal;
   if (!ext) return base;
   return (t) => ext(t) ?? base(t);
 }
-/** Stage 7a: the circulation's environment for one sample (pleural input; CPR and devices arrive in Tasks 17, 20–21). */
+/** The circulation's environment for one sample (pleural input, CPR and devices). */
 function circEnv(hs: HemoState, ctx: HemoCtx): CircEnv {
   return {
     pIt: pleuralSource(ctx),
     cprCardiac: (t) => CPR_CARDIAC_MMHG * cprPressure(hs.cpr, t),
     cprThoracic: (t) => CPR_THORACIC_7A * cprPressure(hs.cpr, t),
-    // FU-4 F1(c): incomplete recoil — a residual thoracic pressure on the venous side through the release phase
+    // Incomplete recoil — a residual thoracic pressure on the venous side through the release phase
     cprRelease: (t) => (hs.cpr.active ? CPR_THORACIC_7A * CPR_RELEASE_RESIDUAL * hs.cpr.quality : 0),
-    // FU-8 (A26): the LVAD's collapse volume scales with the LV's own resting EDV
+    // The LVAD's collapse volume scales with the LV's own resting EDV
     qVad: (lvp, aop) => lvadFlow(hs.lvad, lvp, aop, hs.circ.s[10] as number, hs.circ.ref.lvedv), qAortaSrc: (t) => iabpFlow(hs.iabp, t), modeled: ctx.l1.mode === 'modeled' };
 }
 
-/** Stage 7a: a completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
+/** A completed CircBeat → site beat (tracker in MANUAL, NIBP oscillations), pleth pulse. */
 function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void {
   const ejected = cb.avOpen >= 0 && cb.sv > 1;
   // a reference beat: ejected, with no big stroke-volume swing against the previous beat (brief §4.9 M2)
   const prev = hs.siteBeats[hs.siteBeats.length - 1];
-  // ventricular beats (PVCs, VT, idioventricular) neither drive nor get cancelled by the tracker (Stage 2 M2 rule)
+  // Ventricular beats (PVCs, VT, idioventricular) neither drive nor get cancelled by the tracker (M2 rule)
   const steady = ejected && cb.origin !== 'ventricular' && (!prev || Math.abs(cb.sv - prev.sv) <= 0.25 * Math.max(1, prev.sv));
   const ref = hs.prevRef && steady;
   hs.prevRef = steady;
@@ -300,19 +301,18 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   hs.siteBeats.push(beat);
   if (hs.siteBeats.length > 16) hs.siteBeats.shift();
   if (ejected) hs.lastEjT = cb.t + cb.avOpen;
-  // FU-8 (DV-13d): the running diastole's mean aortic pressure (closure → now), else the last complete one
+  // The running diastole's mean aortic pressure (closure → now), else the last complete one
   const av = hs.av;
   const diaMean = !av.ej && av.n > 0 ? av.sum / av.n : av.mean;
   if (hs.iabp.on) {
     hs.iabpAug = cb.aoSys;
-    // FU-8 (DV-M5): the pressure trigger reads the valve's own last closure and opening, carried one R–R ahead (the
-    // completed beat record's closure was the previous ejection's tail in a heart whose systole spills past the next R)
+    // The pressure trigger reads the valve's own last closure and opening, carried one R–R ahead (the completed beat
+    // record's closure was the previous ejection's tail in a heart whose systole spills past the next R)
     const notch = av.closeT >= 0 ? av.closeT : cb.t + (cb.avClose > 0 ? cb.avClose : 0.3);
     const open = av.openT >= 0 ? av.openT : cb.t + Math.max(0, cb.avOpen);
     iabpSchedule(hs.iabp, t, cb.dur, notch, open);
-    // FU-8 (DV-13d): under a balloon the beat's minimum is the post-deflation dip; the coronary step reads the
-    // augmented diastole instead — its mean less the unassisted (mean − minimum) offset, so an unassisted beat reads
-    // exactly its minimum
+    // Under a balloon the beat's minimum is the post-deflation dip; the coronary step reads the augmented diastole
+    // instead — its mean less the unassisted (mean − minimum) offset, so an unassisted beat reads exactly its minimum
     if (Number.isFinite(diaMean) && Number.isFinite(av.off)) (cb as CircBeat & { aoDiaEff?: number }).aoDiaEff = diaMean - av.off;
   } else if (Number.isFinite(diaMean)) av.off = Number.isFinite(av.off) ? av.off + (diaMean - cb.aoDia - av.off) / 8 : diaMean - cb.aoDia;
   // Task 14 MANUAL tracker; frozen while a device reshapes the waveform (its targets describe the native heart)
@@ -320,11 +320,11 @@ function onCircBeat(hs: HemoState, ctx: HemoCtx, cb: CircBeat, t: number): void 
   nibpOnPulse(hs.nibp, t, beat, hs.cpr.active || beat.cpr, ctx.rng.measurement);
 }
 
-export const MANUAL_CVP_GAIN = 0.3; // Stage 7a [ENG]: dV0 −= gain·(CVP* − CVP)·cSv per second
-export const MANUAL_HOLD_S = 8; // Stage 7a [ENG]: a MANUAL tracker stops after its target has held this long
-/** Stage 7a [ENG]: the volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP). */
+export const MANUAL_CVP_GAIN = 0.3; // dV0 −= gain·(CVP* − CVP)·cSv per second [ENG]
+export const MANUAL_HOLD_S = 8; // A MANUAL tracker stops after its target has held this long [ENG]
+/** The volume tracker gives up after this long (a CVP the physiology cannot reach, e.g. under PEEP) [ENG]. */
 export const MANUAL_TRACK_MAX_S = 60;
-export const MANUAL_HOLD_MMHG = 1; // Stage 7a [ENG]: SBP/DBP hold tolerance of the per-beat pressure tracker
+export const MANUAL_HOLD_MMHG = 1; // SBP/DBP hold tolerance of the per-beat pressure tracker [ENG]
 /** Decision 9: hypovolaemia (volumeStatus < 1) lowers the CVP the tracker aims for, so stressed volume falls. */
 export function volumeStatusCvp(cvpTarget: number, vs: number): number {
   return cvpTarget - 0.8 * cvpTarget * (1 - Math.min(1, Math.max(0, vs)));
@@ -336,17 +336,17 @@ function manHoldInit(cvp: number, vs: number, pamT: number, sbp: number, dbp: nu
   return { cvpT: volumeStatusCvp(cvp, vs), pamT, active: true, okS: 0, runS: 0, key: '', pActive: true, pOkS: 0, pRunS: 0, sbpAvg: sbp, dbpAvg: dbp };
 }
 
-/** Stage 7a MANUAL M2: the Stage 2 tracker algorithm, its gain acting on LV Emax and its R on systemic resistance. */
+/** MANUAL M2: the haemodynamic tracker algorithm, its gain acting on LV Emax and its R on systemic resistance. */
 function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   const target = { sbp: l1Value(ctx.l1, 'sbp', b.t), dbp: l1Value(ctx.l1, 'dbp', b.t) };
   const tr = hs.manHold;
-  // FU-2 item 7: an instructor contractility (≠ 1) IS both ventricles' Emax factor; the tracker then holds MAP with the
-  // systemic resistance alone and pulse pressure (and CO) follow the heart — low output narrows PP, SVR rises (derived)
+  // An instructor contractility (≠ 1) IS both ventricles' Emax factor; the tracker then holds MAP with the systemic
+  // resistance alone and pulse pressure (and CO) follow the heart — low output narrows PP, SVR rises (derived)
   const cT = l1Value(ctx.l1, 'contractility', b.t);
   const cOwned = Math.abs(cT - 1) > 1e-9;
   if (cOwned || hs.circ.man.eesRvF !== 1) hs.circ.man.eesRvF = cT;
   if (cOwned) hs.circ.man.eesF = cT;
-  // FU-3 item 4: while the tracker owns LV Emax it is set against the current ischaemia; the hold keeps that reference
+  // While the tracker owns LV Emax it is set against the current ischaemia; the hold keeps that reference
   hs.circ.man.kIschRef = cOwned ? 1 : tr.pActive ? hs.circ.cor.kIsch : hs.circ.man.kIschRef;
   if (!tr.pActive) return; // set-and-hold (see HemoState.manHold)
   if (b.ref) {
@@ -361,7 +361,7 @@ function trackCircBeat(hs: HemoState, ctx: HemoCtx, b: SiteBeatStat): void {
   }
   hs.sys.g = hs.circ.man.eesF;
   hs.sys.R = hs.circ.man.rSys ?? hs.circ.base.rSys;
-  trackBeat(hs.sys, b, target, hs.circOut.pSv, cOwned ? { ...CIRC_LIMITS, gMin: cT, gMax: cT } : CIRC_LIMITS, cOwned ? cT : CIRC_LIMITS.gMax); // FU-2 item 7
+  trackBeat(hs.sys, b, target, hs.circOut.pSv, cOwned ? { ...CIRC_LIMITS, gMin: cT, gMax: cT } : CIRC_LIMITS, cOwned ? cT : CIRC_LIMITS.gMax);
   hs.circ.man.eesF = hs.sys.g;
   hs.circ.man.rSys = hs.sys.R;
 }
@@ -371,12 +371,12 @@ function nibpEvents(hs: HemoState, outs: NibpOut[], t: number): void {
   for (const o of outs) {
     if (o.kind === 'failed') {
       hs.out.push({ type: 'alarm', t, id: 'nibp-failed', priority: 'low', category: 'technical', state: 'raised', text: o.text });
-      // FU-7.1 B8 (Ali 2026-10-10): a cuff that found no envelope must stop SHOWING the last pressure. The device
-      // already fails every attempt in an arrest (no oscillations: measured PEA, asystole and VF all fail, and every
-      // compression pulse is rejected as artefact, brief §4.5) — but only an INOP was emitted, so the tile kept the
-      // pre-arrest 129/76 for the rest of the case. Real monitors blank the reading when the attempt fails (Philips
-      // IntelliVue and GE CARESCAPE show "---" / "XX" with the INOP; DESIGN-BRIEF §4.5 "result + timestamp, or fail").
-      // The numerics go `invalid` (the renderer's one convention for "---", numerics-dom.ts), never a made-up number.
+      // A cuff that found no envelope must stop SHOWING the last pressure. The device already fails every attempt in
+      // an arrest (no oscillations: measured PEA, asystole and VF all fail, and every compression pulse is rejected
+      // as artefact, brief §4.5) — but only an INOP was emitted, so the tile kept the pre-arrest 129/76 for the rest
+      // of the case. Real monitors blank the reading when the attempt fails (Philips IntelliVue and GE CARESCAPE show
+      // "---" / "XX" with the INOP; DESIGN-BRIEF §4.5 "result + timestamp, or fail"). The numerics go `invalid` (the
+      // renderer's one convention for "---", numerics-dom.ts), never a made-up number.
       hs.out.push({
         type: 'measurement', t,
         values: {
@@ -418,30 +418,29 @@ function overrides(hs: HemoState, t: number): StateVar[] {
 }
 
 function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
-  // Stage 7a (R23): coronary supply/demand at 1 Hz → contractility (ext.kIsch) and the ST patch
+  // Coronary supply/demand at 1 Hz → contractility (ext.kIsch) and the ST patch
   const c = hs.circ;
   c.chemo = { sao2: l1Value(ctx.l1, 'spo2', t) / 100, paco2: l1Value(ctx.l1, 'etco2', t) + 5 }; // Task 19 chemoreflex inputs
   c.cor.eesF = c.kLv;
-  const pulseless = ctx.rhythm.opts?.pulseless === true; // FU-3 item 16
+  const pulseless = ctx.rhythm.opts?.pulseless === true;
   const hyp0 = c.cor.hyp;
-  // FU-4 G4: with no beat to read (pulseless rhythm, or no beat for 3 s) the coronary step reads the arrest's own
-  // pressures — the relaxation-phase aortic − RA pressure accumulated at 2 ms (CPR's CPP, Paradis 1990)
+  // With no beat to read (pulseless rhythm, or no beat for 3 s) the coronary step reads the arrest's own pressures —
+  // the relaxation-phase aortic − RA pressure accumulated at 2 ms (CPR's CPP, Paradis 1990)
   const lb0 = c.beats[c.beats.length - 1];
   const noBeat = pulseless || NO_BEAT_RHYTHMS.has(ctx.rhythm.id) || !lb0 || t - lb0.t > 3;
   const cppCont = c.cppAcc.n > 0 ? c.cppAcc.sum / c.cppAcc.n : 0;
   c.cppAcc = { sum: 0, n: 0 };
-  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled'); // FU-3 item 16: O2 content in the supply (MODELED); FU-4 G1/G4: the no-beat CPP, MODELED balance
-  // FU-3 item 16 (R50 review finding 1): a pulseless heart is not reperfused, so its hypoxic depression (and the
-  // SA-node depression it drives) is held, never unwound, while the rhythm is pulseless (FU-4 G1: unless CPR perfuses it)
+  stepCoronary(c.cor, c.beats, c.prof.cfr, 1, 60 / Math.max(0.2, hs.lastRR), ctx.l1.mode === 'modeled' ? Math.min(1, c.chemo.sao2 / SAO2_REF) : 1, noBeat ? { cpp: cppCont, dtf: hs.cpr.active ? 1 - CPR_DUTY : 1, vf: VF_RHYTHMS.has(ctx.rhythm.id) } : undefined, ctx.l1.mode === 'modeled'); // O2 content in the supply (MODELED); the no-beat CPP, MODELED balance
+  // A pulseless heart is not reperfused, so its hypoxic depression (and the SA-node depression it drives) is held,
+  // never unwound, while the rhythm is pulseless (unless CPR perfuses it)
   if (pulseless && !hs.cpr.active) c.cor.hyp = Math.max(hyp0, c.cor.hyp);
   c.ext.kIsch = c.cor.kIsch;
-  // FU-8 (research/20 DV-01b, gap V1; MODELED; orchestrator ruling OQ3): every pulseless ELECTRICAL rhythm (PEA) carries
-  // the arrest state. Only the engine's own declaration used to create it, so a PEA made by a shock (the defibrillator's
-  // `pea` outcome) or set by the instructor never decayed and never regained a pulse (0 of 11 shock-PEAs under 8 min of
-  // CPR at CoPP 27–28, myocardial state 1.00). A new organised pulseless rhythm with no arrest state enters one at its
-  // onset (a different organised one takes over the onset rate). An instructor-selected VF does NOT gain it in v1.0 —
-  // that moved FU-4's CPR rows (a sinus selected after 4 min of VF with CPR re-arrested at +10 s); MANUAL keeps the
-  // instructor's rhythm (Q9).
+  // Every pulseless ELECTRICAL rhythm (PEA) carries the arrest state (research/20, gap V1; MODELED). Only the engine's
+  // own declaration used to create it, so a PEA made by a shock (the defibrillator's `pea` outcome) or set by the
+  // instructor never decayed and never regained a pulse (0 of 11 shock-PEAs under 8 min of CPR at CoPP 27–28,
+  // myocardial state 1.00). A new organised pulseless rhythm with no arrest state enters one at its onset (a different
+  // organised one takes over the onset rate). An instructor-selected VF does NOT gain it in v1.0 — that moved the CPR
+  // rows (a sinus selected after 4 min of VF with CPR re-arrested at +10 s); MANUAL keeps the instructor's rhythm.
   const rKey = `${ctx.rhythm.id}|${pulseless}`;
   if (ctx.l1.mode === 'modeled' && rKey !== hs.arrestKey) {
     hs.arrestKey = rKey;
@@ -453,11 +452,11 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     }
   }
   if (ctx.requestRhythm) {
-    // FU-4 G1 (D5, D6): FU-3's hypoxic declaration first (MODELED), then the low-flow / no-flow / hazard declaration
-    // (both modes); an engine-declared PEA regains its pulse through roscStep. One requestRhythm path (E-FU3-8).
+    // The hypoxic declaration first (MODELED), then the low-flow / no-flow / hazard declaration (both modes); an
+    // engine-declared PEA regains its pulse through roscStep. One requestRhythm path.
     const u = () => uniform(ctx.rng.outcome);
     const hrNow = rampValue(ctx.hr, t);
-    const hx = ctx.l1.mode === 'modeled' ? hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, hrNow, u) : null; // FU-3 item 16
+    const hx = ctx.l1.mode === 'modeled' ? hypoxicArrestRequest(c, ctx.rhythm.id, pulseless, hrNow, u) : null;
     const req = hx ? { ...hx, cause: 'hypoxia' } : arrestStep(c, ctx.rhythm.id, pulseless, hrNow, u, 1);
     if (req) {
       const r0 = req.opts.rateBpm ?? Math.round(Math.max(20, hrNow));
@@ -467,8 +466,8 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
       const back = roscStep(c, ctx.rhythm.id, pulseless, cppCont, 1);
       if (back) ctx.requestRhythm(back.id, back.opts);
       else {
-        // FU-4 F5 (ruling 7): the untreated organised PEA decays — slower, then idioventricular, then asystole
-        let netIn = 0; // FU-8 (G-FU8A-1): the net volume going in now (fluid minus bleed), mL/s
+        // The untreated organised PEA decays — slower, then idioventricular, then asystole
+        let netIn = 0; // The net volume going in now (fluid minus bleed), mL/s
         for (const v of c.vol) if (v.until > t) netIn += v.rate;
         const dec = peaDecayStep(c, ctx.rhythm.id, pulseless, cppCont, u, 1, { cpr: hs.cpr.active, netInMlS: netIn });
         if (dec) {
@@ -485,15 +484,15 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   }
   const v: Partial<Record<NumericId, Measured>> = {};
   if (lineActive(hs.lines.abp)) {
-    // FU-5 (audit M8): a zero in progress measures the atmosphere — no numerics, the ABP ZEROING INOP instead
+    // A zero in progress measures the atmosphere — no numerics, the ABP ZEROING INOP instead
     const zeroing = hs.lines.abp.sensor === 'zeroing' || t < hs.lines.abp.zeroUntil;
     const none: Measured = { value: null, flag: 'invalid', at: t };
     const p = zeroing ? { sys: none, dia: none, mean: none, pulsatile: false } : pressureNumerics(hs.num.abp, t);
     v.abpSys = p.sys;
     v.abpDia = p.dia;
     v.abpMean = p.mean;
-    // FU-5 (E-FU5-3): the arterial line's own pulse rate ("Pulse (ABP)"), invalid while non-pulsatile ([S2] p. 57:
-    // "Pulse numeric is displayed with -?-")
+    // The arterial line's own pulse rate ("Pulse (ABP)"), invalid while non-pulsatile ([S2] p. 57: "Pulse numeric is
+    // displayed with -?-")
     v.prAbp = p.pulsatile ? prNumeric(hs.num.abp, t) : { value: null, flag: 'invalid', at: t };
   }
   if (lineActive(hs.lines.pap)) {
@@ -503,41 +502,41 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
     v.papMean = p.mean;
   }
   if (lineActive(hs.lines.cvp)) v.cvpMean = { value: hs.num.cvpAvg, flag: 'valid', at: t };
-  // FU-5 (E-FU5-3, audit M12): PR is the oximeter's pulse rate only — the SpO2 tile never shows an arterial-line rate
+  // PR is the oximeter's pulse rate only — the SpO2 tile never shows an arterial-line rate
   v.pr = hs.pleth.state === 'on' ? prNumeric(hs.num.pleth, t) : { value: null, flag: 'invalid', at: t };
   v.pi = hs.pleth.state === 'on' ? piNumeric(hs.num.pleth, t) : { value: null, flag: 'invalid', at: t };
   hs.out.push({ type: 'measurement', t, values: v });
 
   const values: Partial<Record<StateVar, number>> = {};
   for (const s of STATE_VARS) values[s] = s === 'hr' ? rampValue(ctx.hr, t) : l1Value(ctx.l1, s, t);
-  values.svr = hs.circ.p.rSys; // Stage 7a
+  values.svr = hs.circ.p.rSys;
   const flags = l1Flags(ctx.l1, t, ctx.hr, overrides(hs, t));
   if (ctx.l1.mode === 'modeled') {
-    // Stage 7a: the model's truths, flagged 'modeled' unless the instructor pinned them (brief §4.9)
-    const flat = isArrested(hs, t); // FU-4 G4: no ejection for > 3 s — the pressure is the equalised circuit's, not the last beat's
+    // The model's truths, flagged 'modeled' unless the instructor pinned them (brief §4.9)
+    const flat = isArrested(hs, t); // No ejection for > 3 s — the pressure is the equalised circuit's, not the last beat's
     values.sbp = flat ? hs.circ.mapNow : hs.lastSite.sbp;
     values.dbp = flat ? hs.circ.mapNow : hs.lastSite.dbp;
     values.cvp = hs.circOut.pRa;
     values.pawp = hs.circOut.pPv;
     for (const v of ['sbp', 'dbp', 'cvp', 'papSys', 'papDia', 'pawp', 'svr'] as const) if (!ctx.l1.pinned.includes(v)) flags[v] = 'modeled';
   }
-  const rid = ctx.rhythm.id as RhythmId; // FU-2 (G-FU1 item 6): controllers follow engine-initiated rhythm changes
+  const rid = ctx.rhythm.id as RhythmId; // Controllers follow engine-initiated rhythm changes
   const rhythm = { id: rid, rateBpm: Math.round(effectiveRateBpm(rid, ctx.rhythm.opts ?? {}, rampValue(ctx.hr, t)) * 10) / 10 };
   hs.out.push({ type: 'state', t, tick: Math.round(t * 50), mode: ctx.l1.mode, values, control: flags, rhythm });
-  // Stage 7a: the 1 Hz circulation summary (tables §2.1 step 5, §3)
+  // The 1 Hz circulation summary (tables §2.1 step 5, §3)
   const lb = c.beats[c.beats.length - 1];
   const svRvMean = c.beats.length ? c.beats.reduce((a, b) => a + b.svRv, 0) / c.beats.length : 0;
   const ce: CircEvent = {
     type: 'circ', t, co: circCardiacOutput(c), sv: lb?.sv ?? 0, svRv: svRvMean, ef: lb ? (lb.lvedv - lb.lvesv) / Math.max(1, lb.lvedv) : 0,
     lvedv: lb?.lvedv ?? 0, lvesv: lb?.lvesv ?? 0, lvedp: lb?.lvedp ?? 0, lvsp: lb?.lvsp ?? 0,
     pmsf: ((c.s[4] as number) - c.p.v0Sv) / c.p.cSv, pvr: (c.p.pvrL * c.p.pvrR) / (c.p.pvrL + c.p.pvrR), svr: c.p.rSys,
-    cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // FU-4 G4: the CPP the coronary step used
+    cpp: c.cor.cpp, supplyDemand: c.cor.ratio, kIsch: c.cor.kIsch, // The CPP the coronary step used
   };
   if (hs.iabp.on) ce.iabp = { ratio: hs.iabp.ratio, augmentation: hs.iabpAug };
-  if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad) }; // FU-8 (A26): suction = any event in the second
-  // FU-8 (A26; research/20 V9): the suction event's consumer — ventricular ectopy while the LV wall sits on the inlet
-  // (suction-induced PVCs), through the same one-shot modifier seam as the ST and CPR artefact (R23; A23). Cleared when a
-  // second passes without suction or the pump stops (only ectopy this pipeline set; while it stands it replaces an
+  if (hs.lvad.on) ce.lvad = { rpm: hs.lvad.rpm, ...lvadNumerics(hs.lvad) }; // Suction = any event in the second
+  // The suction event's consumer (research/20 V9) — ventricular ectopy while the LV wall sits on the inlet
+  // (suction-induced PVCs), through the same one-shot modifier seam as the ST and CPR artefact. Cleared when a second
+  // passes without suction or the pump stops (only ectopy this pipeline set; while it stands it replaces an
   // instructor's own PVC setting — recorded)
   const sucking = ce.lvad?.suction === true;
   if (sucking && !hs.lvadPvc) {
@@ -576,7 +575,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
     const cuff = hs.nibp.cuff;
     const abpPass = cuff > 0 && sameLimb(hs.abpSite, hs.nibp.site) ? passFraction(hs, cuff) : 1;
     const atCatheter = (p: number) => (abpPass >= 1 ? p : abpPass * p + (1 - abpPass) * Math.min(cuff, hs.lastSite.map));
-    const wedged = (p: number) => (hs.wedge.w < 1e-3 ? p : (1 - hs.wedge.w) * p + hs.wedge.w * hs.circOut.pPv); // Stage 7a: wedge = pulmonary venous (LA) pressure
+    const wedged = (p: number) => (hs.wedge.w < 1e-3 ? p : (1 - hs.wedge.w) * p + hs.wedge.w * hs.circOut.pPv); // Wedge = pulmonary venous (LA) pressure
     if (m > 0) {
       const env = circEnv(hs, ctx);
       for (let j = 0; j < SUBSTEPS; j++) {
@@ -587,7 +586,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         const pa0 = o.pPaRoot;
         const cv0 = o.pRa;
         stepCircModel(hs.circ, tb, env, o);
-        // FU-8: the aortic valve's events and the running diastole (DV-13d/M5); the pulmonary flow (DV-03)
+        // The aortic valve's events and the running diastole; the pulmonary flow
         const av = hs.av;
         const ej = o.qAv > 1;
         if (ej !== av.ej) {
@@ -611,18 +610,16 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         if (pa.sensor !== 'none') stepTransducer(pa, lineInput(pa, wedged(pa0), ta), lineInput(pa, wedged(o.pPaRoot), tb), H_S);
         if (cv.sensor !== 'none') stepTransducer(cv, lineInput(cv, cv0, ta), lineInput(cv, o.pRa, tb), H_S);
       }
-      // Stage 7a: a pleth pulse per aortic-valve opening, placed when it happens (a CircBeat completes one beat late)
+      // A pleth pulse per aortic-valve opening, placed when it happens (a CircBeat completes one beat late)
       const c = hs.circ;
       if (c.opens.length > 0 && !hs.cpr.active) {
         const bs = c.beats;
-        // FU-5 (E-FU5-1, audit M1): SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a
-        // running mean of the last 16 beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
-        // In MODELED, vasoconstriction (systemic R above rest) lowers PI too [ENG exponent 0.5]; the factor is never above 1
-        // and is 1 in MANUAL (FU-5 review ruling 1: an uncapped factor made PI rise as the MANUAL tracker lowered SVR, and
-        // fall after propofol; the vasodilated finger waits for FU-4's cutaneous tone, R-FU5-9).
-        // FU-8 (B3, R-FU5-9): the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
-        // MANUAL tracker, no viscosity) and is no longer capped at 1, so a dilated finger (an anaesthetic's sympatholysis)
-        // raises PI; MANUAL keeps 1. Same [ENG] exponent 0.5; bounded 0.25–2 [ENG].
+        // SV_0 is the settled RESTING stroke volume (brief §4.3 "PI × (SV_i/SV_0)"), not a running mean of the last 16
+        // beats (which drew a 0.6 mL beat as a normal pulse: SpO2 98 / PI 2.5 at MAP 2).
+        // In MODELED the factor reads the circulation's CUTANEOUS tone (`circ.skinTone`: vasomotor factors only, no
+        // MANUAL tracker, no viscosity): vasoconstriction lowers PI and a dilated finger (an anaesthetic's
+        // sympatholysis) raises it [ENG exponent 0.5; bounded 0.25–2 ENG]. MANUAL keeps 1 (a factor there made PI rise
+        // as the MANUAL tracker lowered SVR, and fall after propofol).
         const svRef = Math.max(1, c.ref.sv || 70);
         const tone = ctx.l1.mode === 'modeled' ? Math.min(2, Math.max(0.25, 1 / Math.sqrt(c.skinTone ?? 1))) : 1;
         const lb = bs[bs.length - 1];
@@ -630,16 +627,16 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
         for (const op of c.opens) addPlethPulse(hs.pleth, op.t + plethDelayS(hs.pleth.site), (l1Value(ctx.l1, 'pi', t1) * tone * op.sv) / svRef, lvet, c.p.rSys);
       }
       c.opens.length = 0;
-      hs.pv = hs.circOut.pRa; // Stage 7a: the Stage 2 consumers' venous/PAWP truths come from the chambers
+      hs.pv = hs.circOut.pRa; // The haemodynamic consumers' venous/PAWP truths come from the chambers
       hs.pla = hs.circOut.pPv;
     }
     if (ctx.l1.mode !== 'modeled' && m % 12 === 0 && !isArrested(hs, t1) && !hs.cpr.active) {
-      // Stage 7a MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
+      // MANUAL: slow CVP (venous unstressed volume) and PA-mean (PVR) trackers at ≈ 10 Hz
       const c = hs.circ;
       const tr = hs.manHold;
       const cvpT = volumeStatusCvp(l1Value(ctx.l1, 'cvp', t1), l1Value(ctx.l1, 'volumeStatus', t1));
-      // the instructor's CVP is the filling state: pleural (PEEP, tension PTX) and pericardial (tamponade) pressure
-      // changes still show on top of it, as Stage 3's MANUAL Paw coupling did (decision 8)
+      // The instructor's CVP is the filling state: pleural (PEEP, tension PTX) and pericardial (tamponade) pressure
+      // changes still show on top of it, as the MANUAL Paw coupling did
       const vh = (c.s[10] as number) + (c.s[6] as number);
       const periFluid = hs.circOut.pPeri - Math.max(0, c.p.periA * (Math.exp(c.p.periLambda * (vh - c.p.v0Peri)) - 1)); // tamponade share
       const cvpNow = hs.circOut.pRa - Math.max(0, hs.circOut.pIt - P_PL0) - periFluid; // spontaneous dips average out
@@ -648,8 +645,8 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       const pamT = padT + (pasT - padT) / 3;
       // SET-AND-HOLD: the volume and PVR trackers run when the instructor's target moves and stop once it is met
       // (±0.5 mmHg for 5 s); later perturbations (PEEP, bleeding, tamponade) then act on top — PEEP lowers CO as it
-      // did under Stage 3's MANUAL coupling. The Ees/SVR pressure tracker below keeps defending SBP/DBP per beat.
-      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}/${Math.round(l1Value(ctx.l1, 'contractility', t1) * 100)}`; // FU-2 item 7: contractility
+      // did under the respiratory MANUAL coupling. The Ees/SVR pressure tracker below keeps defending SBP/DBP per beat.
+      const key = `${Math.round(l1Value(ctx.l1, 'sbp', t1) * 10)}/${Math.round(l1Value(ctx.l1, 'dbp', t1) * 10)}/${Math.round(rampValue(ctx.hr, t1) * 10)}/${ctx.rhythm.id}/${Math.round(l1Value(ctx.l1, 'contractility', t1) * 100)}`; // Contractility
       if (key !== tr.key) {
         tr.key = key;
         tr.pActive = true;
@@ -679,10 +676,10 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
       }
     }
     if (ctx.l1.mode === 'modeled' && m % 12 === 0 && !ctx.l1.pinned.includes('hr') && ctx.requestHr) {
-      const want = modeledHrRequest(hs.circ, ctx.rhythm.id, t1); // FU-2 (NR-7g-5): only the sinus node follows the reflex (AF conduction, AAI/DDD: bounded)
+      const want = modeledHrRequest(hs.circ, ctx.rhythm.id, t1); // Only the sinus node follows the reflex (AF conduction, AAI/DDD: bounded)
       if (want !== null && Math.abs(want - rampValue(ctx.hr, t1)) > 0.2) ctx.requestHr(want);
     }
-    // Stage 7a: completed CircBeats → site beats (tracker, NIBP, pleth)
+    // Completed CircBeats → site beats (tracker, NIBP, pleth)
     for (const cb of hs.circ.beats) {
       if (cb.t <= hs.beatT) continue;
       hs.beatT = cb.t;
@@ -729,7 +726,7 @@ export function advanceHemo(hs: HemoState, ctx: HemoCtx, mEnd: number, write: (c
 }
 
 // --- commands -----------------------------------------------------------------------------------------
-/** Validation hook. Returns a rejection reason, undefined (accepted) or null (not a Stage 2 command). */
+/** Validation hook. Returns a rejection reason, undefined (accepted) or null (not a haemodynamic command). */
 export function validateHemoCommand(cmd: Command, hs: HemoState): string | undefined | null {
   switch (cmd.type) {
     case 'setTarget':
@@ -749,7 +746,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
         if (c.quality !== undefined && !(c.quality >= 0 && c.quality <= 1.5)) return 'cpr quality must be 0–1.5';
         return undefined;
       }
-      // Stage 7a: fluid, bleed and circulation conditions act on the circulation (drugs: Stage 7g, l2/pk)
+      // Fluid, bleed and circulation conditions act on the circulation (drugs: the drug model, l2/pk)
       if (ev.kind === 'bleed' || ev.kind === 'fluid') {
         const b = cmd.event as { volumeMl?: number; overS?: number; rateMlPerMin?: number };
         if (b.rateMlPerMin !== undefined) return Number.isFinite(b.rateMlPerMin) && b.rateMlPerMin >= 0 && b.rateMlPerMin <= 2000 ? undefined : 'rateMlPerMin must be 0–2000';
@@ -760,7 +757,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
       if (ev.kind === 'condition') {
         const c = cmd.event as { id: string; severity: number; volumeMl?: number; rateMlPerMin?: number };
         if (!(CIRC_CONDITIONS as readonly string[]).includes(c.id)) return null;
-        if (c.volumeMl !== undefined && !(Number.isFinite(c.volumeMl) && c.volumeMl >= 0 && c.volumeMl <= 500)) return 'volumeMl must be 0–500'; // FU-4 G6
+        if (c.volumeMl !== undefined && !(Number.isFinite(c.volumeMl) && c.volumeMl >= 0 && c.volumeMl <= 500)) return 'volumeMl must be 0–500';
         if (c.rateMlPerMin !== undefined && !(Number.isFinite(c.rateMlPerMin) && c.rateMlPerMin >= -200 && c.rateMlPerMin <= 200)) return 'rateMlPerMin must be −200…200';
         return Number.isFinite(c.severity) && c.severity >= 0 && c.severity <= 1 ? undefined : 'severity must be 0–1';
       }
@@ -768,7 +765,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
     }
     case 'attachSensor': {
       const { sensor, state, site } = cmd;
-      if (sensor === 'pv') return state === 'on' || state === 'off' ? undefined : 'pv state must be on or off'; // Stage 7a
+      if (sensor === 'pv') return state === 'on' || state === 'off' ? undefined : 'pv state must be on or off';
       if (sensor === 'abp' || sensor === 'cvp' || sensor === 'pap') {
         if (!(LINE_SENSOR_STATES as readonly string[]).includes(state)) return `${sensor} state must be ${LINE_SENSOR_STATES.join(', ')}`;
         if (site !== undefined && (sensor !== 'abp' || !ABP_SITES.includes(site))) return `site must be one of ${ABP_SITES.join(', ')} (abp only)`;
@@ -812,7 +809,7 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
   }
 }
 
-/** Apply hook. Returns true when the command was a Stage 2 command. `setHr` retargets the Stage 1 hr ramp. */
+/** Apply hook. Returns true when the command was a haemodynamic command. `setHr` retargets the L1 hr ramp. */
 export function applyHemoCommand(
   hs: HemoState,
   l1: L1State,
@@ -843,7 +840,7 @@ export function applyHemoCommand(
         c.baro = createBaro(hs.lastSite.map, c.baro.cpLp); // no step on entry (brief §4.9): the reflexes start at rest
         c.base.rSys = c.man.rSys ?? c.base.rSys; // the MANUAL solution becomes the model's baseline
         c.base.v0Sv += c.man.dV0;
-        c.base.eesLv *= c.man.eesF * Math.min(1, c.man.kIschRef / Math.max(1e-6, c.ext.kIsch)); // FU-3 item 4: the delivered Emax
+        c.base.eesLv *= c.man.eesF * Math.min(1, c.man.kIschRef / Math.max(1e-6, c.ext.kIsch)); // The delivered Emax
         c.base.eesRv *= c.man.eesRvF;
         if (c.man.pvr !== null) {
           const f = c.man.pvr / ((c.base.pvrL * c.base.pvrR) / (c.base.pvrL + c.base.pvrR));
@@ -875,9 +872,9 @@ export function applyHemoCommand(
         } else {
           hs.cpr.active = false;
         }
-        // FU-8 (research/20 DV-23a, gap V7): one clinical act, one command — the compressions put their artefact on the
-        // ECG at the compression rate, deeper with the quality (brief §4.1: depth 0–1 → 0.2–2 mV), and take it off when
-        // they stop (only an artefact this pipeline set: an instructor's own `artefact.cpr` is left alone)
+        // One clinical act, one command — the compressions put their artefact on the ECG at the compression rate,
+        // deeper with the quality (brief §4.1: depth 0–1 → 0.2–2 mV), and take it off when they stop (only an artefact
+        // this pipeline set: an instructor's own `artefact.cpr` is left alone) (research/20, gap V7)
         if (hs.cpr.active) {
           hs.stPatch = { ...hs.stPatch, artefact: { cpr: { rateCpm: hs.cpr.rate, depth: Math.min(1, hs.cpr.quality) } } };
           hs.cprArt = true;
@@ -898,7 +895,7 @@ export function applyHemoCommand(
       }
       if (ev.kind === 'condition') {
         const c = ev as unknown as { id: CircConditionId; severity: number; volumeMl?: number; rateMlPerMin?: number };
-        applyCircCondition(hs.circ, c.id, c.severity, { ...(c.volumeMl !== undefined ? { volumeMl: c.volumeMl } : {}), ...(c.rateMlPerMin !== undefined ? { rateMlPerMin: c.rateMlPerMin } : {}) }); // FU-4 G6
+        applyCircCondition(hs.circ, c.id, c.severity, { ...(c.volumeMl !== undefined ? { volumeMl: c.volumeMl } : {}), ...(c.rateMlPerMin !== undefined ? { rateMlPerMin: c.rateMlPerMin } : {}) });
         return true;
       }
       return false;
@@ -906,18 +903,18 @@ export function applyHemoCommand(
     case 'attachSensor': {
       const { sensor, state, site } = cmd;
       if (sensor === 'pv') {
-        hs.pvOn = state === 'on'; // Stage 7a
+        hs.pvOn = state === 'on';
         return true;
       }
       if (sensor === 'abp' || sensor === 'cvp' || sensor === 'pap') {
         if (sensor === 'abp' && site !== undefined) hs.abpSite = site as AbpSite;
-        const pNow = sensor === 'abp' ? (hs.circ.s[0] as number) : sensor === 'cvp' ? hs.circOut.pRa : hs.circOut.pPaRoot; // Stage 7a
+        const pNow = sensor === 'abp' ? (hs.circ.s[0] as number) : sensor === 'cvp' ? hs.circOut.pRa : hs.circOut.pPaRoot;
         setLineSensor(hs.lines[sensor], state as LineSensorState, t, pNow);
         return true;
       }
       if (sensor === 'spo2') {
-        // FU-8 (F5, G-FU5 ruling 2): when a motion episode ends the oximeter restarts its pulse search — the pulses
-        // detected on the artefact leave the PI/PR average (they held PI 8.21 and PR 81 for 5–9 s after the motion)
+        // When a motion episode ends the oximeter restarts its pulse search — the pulses detected on the artefact leave
+        // the PI/PR average (they held PI 8.21 and PR 81 for 5–9 s after the motion)
         if (hs.pleth.state === 'motion' && state !== 'motion') Object.assign(hs.num.pleth, { beats: [], feet: [], n: -1 });
         setPlethSensor(hs.pleth, state as PlethState['state'], spo2Site(site), rng.artefact);
         return true;

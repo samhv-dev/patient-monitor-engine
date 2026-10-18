@@ -1,6 +1,6 @@
 // Airway & ventilation (research/13 §4.3 item 4): airway state, who breathes (spontaneous, bag-mask, ventilator) with
-// the ventilator's settings in clinical units, lung conditions from the 7b catalogue with their graded severities and
-// side, and the full ventilator one tap away (the Stage V cockpit beside this monitor).
+// the ventilator's settings in clinical units, lung conditions from the lung catalogue with their graded severities and
+// side, and the full ventilator one tap away (the cockpit beside this monitor).
 import { LUNG_CONDITIONS } from '@pme/engine-core';
 import { lungCondition, ventilation } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';

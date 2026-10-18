@@ -1,7 +1,7 @@
 // Drugs & fluids (research/13 brief §7 "Dose picker"): find a drug by name (or another name: "noradrenaline"), pick a
-// preset or type a dose, see the absolute dose for this patient's weight, then Give (applies now: a bolus is urgent)
-// or Stage it with the other changes. Infusions keep a running list with rate change and stop. The vaporiser and
-// fluids sit below. Doses go to the engine in the units shown; the engine converts (7g `toAmount`).
+// preset or type a dose, see the absolute dose for this patient's weight, then Give (applies now: a bolus is urgent) or
+// Stage it with the other changes. Infusions keep a running list with rate change and stop. The vaporiser and fluids
+// sit below. Doses go to the engine in the units shown; the engine converts (the drug model's `toAmount`).
 import type { ClinicalEvent } from '@pme/controller';
 import { bleed, fluid, infusion, vaporiser } from '../../physiology-console/actions.ts';
 import { describeCommand } from '../describe.ts';

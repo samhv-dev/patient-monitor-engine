@@ -5,7 +5,7 @@
 // 30–60 s). Bands [ENG, D5; Q-FU6-1]: seed 7 alone 10–90 s; + fentanyl 2 µg/kg 60–240 s; + remifentanil 0.1 ≥ 90 s;
 // 2.5 mg/kg longer than 2 mg/kg; seeds 1–20: the label's shape. SGA (no obstruction), room air.
 import { describe, expect, it } from 'vitest';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 
 async function induce(propMgKg: number, pre?: Record<string, unknown>, seed = 7) {
   const e = rig6(undefined, 'modeled', seed);
@@ -22,7 +22,7 @@ async function induce(propMgKg: number, pre?: Record<string, unknown>, seed = 7)
   return { apnoeaS, pa60, pa299 };
 }
 
-describe('FU-6 R3(a): induction apnoea (was none: RR 17–20 via SGA)', { timeout: 600_000 }, () => {
+describe('induction apnoea', { timeout: 600_000 }, () => {
   it('awake baseline unchanged; propofol 2 mg/kg alone, seed 7 (the modal draw): a short apnoea, 10–90 s (measured 38 s; plan 28 s, 42 s R1-emulated)', async () => {
     const r = await induce(2);
     expect(Math.abs(r.pa299 - r.pa60)).toBeLessThan(1); // the central lag moves no resting value
@@ -38,12 +38,12 @@ describe('FU-6 R3(a): induction apnoea (was none: RR 17–20 via SGA)', { timeou
   // flattened slope: fentanyl 411 s overshot its 60–240 s band and remifentanil 559 s met its ≥ 90 s band. On the tree
   // merged with FU-8 Part A (its propofol/body-size changes): fentanyl 110 s, remifentanil 190 s — both met (the fentanyl
   // it.fails flipped, R45). No constant names these bands as its fit target — not tuned; Q-FU6-1 (gate note).
-  it('an opioid prolongs it: fentanyl 2 µg/kg 60–240 s (measured 110 s on the tree merged with FU-8 Part A; was 411 s at FU-6 Task 10, 36 s before it; plan 62 s)', async () => {
+  it('an opioid prolongs it: fentanyl 2 µg/kg 60–240 s (measured 110 s)', async () => {
     const f = await induce(2, { kind: 'drug', drugId: 'fentanyl', dose: 2, unit: 'mcg/kg', route: 'iv' });
     expect(f.apnoeaS).toBeGreaterThanOrEqual(60);
     expect(f.apnoeaS).toBeLessThanOrEqual(240);
   });
-  it('an opioid prolongs it: remifentanil 0.1 µg/kg/min ≥ 90 s (measured 190 s merged with FU-8 Part A; 559 s at FU-6 Task 10, 38 s before it; plan 124 s)', async () => {
+  it('an opioid prolongs it: remifentanil 0.1 µg/kg/min ≥ 90 s (measured 190 s)', async () => {
     const r = await induce(2, { kind: 'infusion', drugId: 'remifentanil', rate: 0.1, unit: 'mcg/kg/min' });
     expect(r.apnoeaS).toBeGreaterThanOrEqual(90);
   });

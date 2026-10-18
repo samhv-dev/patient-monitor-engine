@@ -1,5 +1,5 @@
-// report.md + report.json + calibration-queue.md (brief §9; R40 grades; R44: the calibration queue lists every row
-// that fell outside its band, for Ali's calibration pass). Pure functions of the Report; the CLI writes the files.
+// report.md + report.json + calibration-queue.md (brief §9; the calibration queue lists every row
+// that fell outside its band, for the calibration pass). Pure functions of the Report; the CLI writes the files.
 import type { Grade } from '../segments/types.ts';
 import type { QueueItem, Report } from './types.ts';
 

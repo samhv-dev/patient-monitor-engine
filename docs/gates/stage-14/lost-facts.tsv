@@ -1,0 +1,282 @@
+key	file	line	class	dropped
+844cacccefa6	apps/demo/src/app/glossary-data.ts	1	m	11 and-glossary.md
+948a4ef4253e	apps/demo/src/app/glossary-data.ts	316	m	2
+104421ed9ce8	apps/demo/src/app/glossary-data.ts	327	m	2
+d71c81bd5480	apps/demo/src/app/glossary-data.ts	354	m	7
+c62128cdd008	apps/demo/src/app/learner.ts	1	m	6
+213ff774c1c5	apps/demo/src/app/main.ts	46	m	docs/gates/stage-8a.md
+d37900736922	apps/demo/src/app/pairing.ts	1	m	1.1
+d5b128dde8e4	apps/demo/src/app/scenarios.ts	1	b	6
+278ec9563517	apps/demo/src/app/showcase/harness.ts	1	b	4
+29b83d9521a4	apps/demo/src/app/showcase/harness.ts	144	m	docs/plans/stage-11-scenarios.md
+c24e38399668	apps/demo/src/app/showcase/s1-mh.slow.test.ts	1	m	docs/plans/stage-11-scenarios.md
+f06665bc6d7d	apps/demo/src/app/showcase/s1-mh.slow.test.ts	10	m	docs/plans/stage-11-scenarios.md
+f9a0669907bf	apps/demo/src/app/showcase/s2-tamponade.slow.test.ts	1	m	docs/plans/stage-11-scenarios.md
+ae547fbc1524	apps/demo/src/app/showcase/s2-tamponade.slow.test.ts	8	m	docs/plans/stage-11-scenarios.md
+b3c2a233c6e9	apps/demo/src/app/showcase/s3-induction.slow.test.ts	1	m	docs/plans/stage-11-scenarios.md
+acd5ecbbf8a9	apps/demo/src/app/showcase/s3-induction.slow.test.ts	8	m	docs/plans/stage-11-scenarios.md
+b25cc5f3c5cd	apps/demo/src/app/showcase/s4-premed.slow.test.ts	1	m	docs/plans/stage-11-scenarios.md
+f3471efb182e	apps/demo/src/app/showcase/s4-premed.slow.test.ts	7	m	docs/plans/stage-11-scenarios.md
+7d80e96ed158	apps/demo/src/app/showcase/s5-kept.slow.test.ts	1	m	docs/plans/stage-11-scenarios.md
+573f68bd2924	apps/demo/src/app/showcase/s5-kept.slow.test.ts	7	m	docs/plans/stage-11-scenarios.md
+b7bb49d7b5cd	apps/demo/src/app/views/follower.ts	1	c	docs/plans/stage-12-mobile-learner.md
+7a4a0f9ba0bb	apps/demo/src/app/views/remote.ts	1	m	6
+eabe69181b75	apps/demo/src/fu7.ts	1	m	2
+7fca3f458897	apps/demo/src/physiology-console/actions.ts	1	m	7
+3211f6e7e55f	apps/demo/src/physiology-console/actions.ts	11	m	1
+1be162419a9e	apps/demo/src/physiology-console/format.test.ts	21	m	1
+088b0e3b22c9	apps/demo/src/physiology-console/format.test.ts	91	m	1
+abb9efc2752a	apps/demo/src/physiology-console/lung-labels.test.ts	1	m	1
+a7fadd5c986d	apps/demo/src/physiology-console/meta.ts	63	b	1
+25ad7b8b9819	apps/demo/src/physiology-console/meta.ts	73	m	1
+0d97f826657f	apps/demo/src/physiology-console/meta.ts	128	m	1
+e2332134b0e1	apps/demo/src/physiology-console/meta.ts	142	m	1
+e2332134b0e1	apps/demo/src/physiology-console/meta.ts	143	m	1
+e2332134b0e1	apps/demo/src/physiology-console/meta.ts	172	m	1
+22702088c6fa	apps/demo/src/physiology-console/model.test.ts	34	m	1
+eb576d7e7442	apps/demo/src/physiology-console/organs.test.ts	18	m	1
+309bab674baa	apps/demo/src/physiology-console/organs.ts	44	m	1
+ede2f312ba69	apps/demo/src/physiology-console/organs.ts	89	m	3
+baec6bea96fb	apps/demo/src/physiology-console/organs.ts	94	b	1
+3ef8808bc8d4	apps/demo/src/stage4a/preview.ts	121	b	1
+9ed2074acf63	apps/demo/src/stage4a/sample-waves.ts	1	b	3
+feea81c9f4be	apps/demo/src/stage7f.ts	95	b	12 17
+84cc70d12892	apps/demo/src/stage7g.ts	1	m	7
+65daf5b87b5c	apps/demo/src/vent/demos.ts	26	b	13 5
+f64589467b4a	packages/audio/src/scheduler.ts	1	m	1 6.3 docs/gates/stage-1-review.md
+8f3b0155d4b4	packages/controller/src/panel/render-controls.ts	1	m	5
+73be1c699b3e	packages/controller/src/panel/render-controls.ts	100	m	6
+9d85c3f2c3ef	packages/controller/src/scenario/driver.ts	1	m	4 7
+d6b3d6bbd8f9	packages/controller/src/scenario/driver.ts	189	b	8
+1886b27e25fc	packages/controller/src/scenario/types.ts	70	m	7
+d5335acc79f6	packages/controller/src/session/controller-session.ts	1	b	2 3
+c04dbc80f32f	packages/controller/src/vocabulary.ts	1	m	5
+0045caf6df70	packages/controller/src/vocabulary.ts	18	b	6
+f12f4c7ef902	packages/engine-core/src/engine.ts	90	b	1 40
+0c3039166213	packages/engine-core/src/engine.ts	149	b	12 17
+79903e341e0a	packages/engine-core/src/engine.ts	253	b	4
+333b6dfea315	packages/engine-core/src/engine.ts	422	m	7
+15520228a46e	packages/engine-core/src/engine.ts	424	m	7
+db6654aee0a4	packages/engine-core/src/engine.ts	429	m	7
+18e29ac1e1b8	packages/engine-core/src/engine.ts	432	m	7
+4a0766386a1f	packages/engine-core/src/engine.ts	433	m	7
+1d0d753846ff	packages/engine-core/src/engine.ts	542	m	1 10 2 5
+1d069ce252af	packages/engine-core/src/engine.ts	635	b	18
+3da70aecebb8	packages/engine-core/src/engine.ts	654	m	7
+9d2ae537dfca	packages/engine-core/src/engine.ts	662	m	7
+01d2b292f150	packages/engine-core/src/engine.ts	671	m	7 7
+da9ae3c02cbd	packages/engine-core/src/engine.ts	810	m	7
+9a668d19926a	packages/engine-core/src/engine.ts	814	m	7
+a077f4b5f154	packages/engine-core/src/engine.ts	816	m	7
+5f1e1c2a2a2e	packages/engine-core/src/engine.ts	896	m	7
+9f9705cc66ec	packages/engine-core/src/engine.ts	899	m	7
+82b8a7d364bf	packages/engine-core/src/engine.ts	960	b	6
+d108d3771374	packages/engine-core/src/l1/ramp.ts	18	b	5
+79cbff5e5f86	packages/engine-core/src/l2/blood/circ-adapter.ts	34	m	28
+9dbc9ff5e121	packages/engine-core/src/l2/blood/core.ts	30	m	2 7 `uopMlH`
+e0136c2bff74	packages/engine-core/src/l2/blood/core.ts	68	m	7
+b8f9aeab01c7	packages/engine-core/src/l2/blood/core.ts	71	m	1
+edc39a29a952	packages/engine-core/src/l2/blood/params.ts	18	m	7
+6f5774339c3f	packages/engine-core/src/l2/blood/params.ts	110	b	4 807
+9f66bec3b937	packages/engine-core/src/l2/blood/params.ts	155	m	7
+7bf03a1e1f0a	packages/engine-core/src/l2/blood/pipeline.ts	39	b	5 7
+4efa526cc34c	packages/engine-core/src/l2/blood/pipeline.ts	44	m	1
+d339ff1619fb	packages/engine-core/src/l2/blood/pipeline.ts	46	m	4
+1e92e985a529	packages/engine-core/src/l2/blood/pipeline.ts	75	m	7
+057852b874ce	packages/engine-core/src/l2/blood/pipeline.ts	97	m	5
+e3673f1e5b5e	packages/engine-core/src/l2/blood/pipeline.ts	101	m	5 7
+543f07bbd3db	packages/engine-core/src/l2/blood/pipeline.ts	113	m	7
+693da33eab9c	packages/engine-core/src/l2/blood/pipeline.ts	137	b	10 10 2026 pipeline.ts
+5fff91e90d87	packages/engine-core/src/l2/blood/pipeline.ts	156	m	7
+e6d30f69ee8a	packages/engine-core/src/l2/blood/pipeline.ts	185	m	0 5 70 70
+9932a748a982	packages/engine-core/src/l2/blood/pipeline.ts	218	b	0.25
+1d8865a84548	packages/engine-core/src/l2/blood/solutes.ts	16	m	7
+e54b24b304ea	packages/engine-core/src/l2/blood/treatments.ts	1	m	7 7
+6d3bf9fd2247	packages/engine-core/src/l2/blood/treatments.ts	29	b	0.5
+7f2652606670	packages/engine-core/src/l2/brain/flow.ts	9	c	7
+7cc182244d7b	packages/engine-core/src/l2/brain/model.ts	148	b	9
+511bfacb50dd	packages/engine-core/src/l2/brain/params.ts	1	m	docs/plans/stage-7d-organs.md
+4a976b691191	packages/engine-core/src/l2/brain/params.ts	42	m	7
+50f2bdb48124	packages/engine-core/src/l2/circ/activation.ts	1	b	1.1 4
+f2e636c03abf	packages/engine-core/src/l2/circ/arrest.ts	92	m	2 20 30 30 30 5 84
+de1ecbed9881	packages/engine-core/src/l2/circ/arrest.ts	132	b	018 071 3 93
+1d84e1539b97	packages/engine-core/src/l2/circ/baroreflex.ts	106	m	`o`
+16ad7481b9f5	packages/engine-core/src/l2/circ/circuit.ts	1	m	0 1 2 3
+44b1ed0d4bf0	packages/engine-core/src/l2/circ/coronary.ts	27	m	0.06 0.2 0.5 1.35 1.5 1.90 10.00 110 130 14 14 150 150 18 18 180 180 20 200 200 200 220 220 220 230 240 260 260 3 3.00 3.00 300 300 300 330 360 360 4.33 4.50 4.78 4.83 4.93 40 40 400 400 450 450 5 5 5 5.10 5.62 5.80 5.83 500 6 6 6.35 6.35 6.63 6.90 6.98 600 7.10 7.65 7.85 9.92 9.92
+da909411098e	packages/engine-core/src/l2/circ/coronary.ts	57	m	1
+72ab43e16439	packages/engine-core/src/l2/circ/coronary.ts	130	m	16
+a4ac6de66e78	packages/engine-core/src/l2/circ/coronary.ts	230	m	1
+5c3957019cce	packages/engine-core/src/l2/circ/devices.ts	161	m	7
+9d93815e953c	packages/engine-core/src/l2/circ/drugs.ts	1	b	7
+23c9726e49e6	packages/engine-core/src/l2/circ/drugs.ts	43	m	1.7 1.8
+5f008e66821c	packages/engine-core/src/l2/circ/model.ts	61	b	3 3
+33d97a22495a	packages/engine-core/src/l2/circ/model.ts	72	m	3
+40bedcb3d9f1	packages/engine-core/src/l2/circ/model.ts	91	b	1
+5af34846a270	packages/engine-core/src/l2/circ/model.ts	288	m	7
+20c0cd64af4d	packages/engine-core/src/l2/circ/model.ts	364	b	3
+213d7f68a93b	packages/engine-core/src/l2/circ/params.ts	1	b	1.1 4 5
+ff11ca8af983	packages/engine-core/src/l2/circ/params.ts	99	m	7
+f6d13beb4021	packages/engine-core/src/l2/circ/params.ts	133	m	7
+66b5c7e9b367	packages/engine-core/src/l2/circ/params.ts	142	m	7
+9d4c2aed886a	packages/engine-core/src/l2/circ/profile.ts	255	b	1.6 3 5.9
+4f178d8c6397	packages/engine-core/src/l2/co2/capno.ts	42	m	10
+d4f749d0f7cd	packages/engine-core/src/l2/ecg/arrest/vf.ts	29	b	0.8
+61e14f9a4b28	packages/engine-core/src/l2/ecg/foci-ventricular.ts	8	m	0.6
+3d7e6495759e	packages/engine-core/src/l2/ecg/foci-ventricular.ts	13	b	11.4 3 4.5 8
+e2095c577661	packages/engine-core/src/l2/ecg/intervals.ts	8	b	1 190
+86def5448a00	packages/engine-core/src/l2/ecg/morphology/electrolytes.ts	17	m	8 9
+a00dd6dcd349	packages/engine-core/src/l2/ecg/rhythm-engine.ts	235	b	3
+dc7b458cf648	packages/engine-core/src/l2/ecg/templates.ts	1	m	1
+f80281c17144	packages/engine-core/src/l2/ecg/templates.ts	36	b	1
+5f71ed04d819	packages/engine-core/src/l2/endo/adapters.ts	106	b	20 21
+6b3a5513be1e	packages/engine-core/src/l2/endo/adapters.ts	147	m	7 7
+16781a21209c	packages/engine-core/src/l2/endo/core.ts	38	b	20 21
+dfe95d38f0be	packages/engine-core/src/l2/endo/core.ts	218	m	7
+7b2a43b2b34b	packages/engine-core/src/l2/endo/core.ts	241	b	20 21 25
+543c11e3faa3	packages/engine-core/src/l2/endo/effects.ts	1	m	7
+5c0ef2b6db90	packages/engine-core/src/l2/endo/effects.ts	39	m	7
+e21b5a349765	packages/engine-core/src/l2/endo/params.ts	17	m	1 10
+b839f87220ed	packages/engine-core/src/l2/endo/pipeline.ts	1	m	7
+d24ff7cdb96f	packages/engine-core/src/l2/gas/coupling.ts	24	c	1.9 `cprFlowFactor`
+5704d75def20	packages/engine-core/src/l2/gas/params.ts	28	b	09 1.9 2026 28 40 7.9
+782a47751b70	packages/engine-core/src/l2/gas/params.ts	34	b	4
+c5e30043b66b	packages/engine-core/src/l2/gas/params.ts	76	b	12 500
+1981e436f44e	packages/engine-core/src/l2/gas/params.ts	87	b	265 329 4 459 50
+3f3cc63fac0a	packages/engine-core/src/l2/gas/params.ts	98	b	09 127 2026 204 28 70
+1b1c4a81e25d	packages/engine-core/src/l2/hemo/pipeline.ts	24	m	2
+4034a56efa9c	packages/engine-core/src/l2/hemo/pipeline.ts	174	m	1 10
+8fffc2b15b35	packages/engine-core/src/l2/hemo/pipeline.ts	220	b	13
+f294f7dee159	packages/engine-core/src/l2/hemo/pipeline.ts	277	b	17 20 21
+378a392b2ae5	packages/engine-core/src/l2/hemo/pipeline.ts	374	b	10 10 2026
+abc85a54d43b	packages/engine-core/src/l2/hemo/pipeline.ts	618	b	0.5 1 1 1
+a54f542d8bd9	packages/engine-core/src/l2/lung/circ-link.ts	1	m	7
+62defbc1c0c8	packages/engine-core/src/l2/lung/conditions.ts	35	m	09 2026 28
+eefb766aecc4	packages/engine-core/src/l2/lung/conditions.ts	141	m	`rawEvent`
+20a920bff003	packages/engine-core/src/l2/lung/drive.ts	48	m	09 2026 28
+87c1a9c329de	packages/engine-core/src/l2/lung/drive.ts	60	m	09 11 14.5 2026 28 6.6 8.4
+74c4328bb365	packages/engine-core/src/l2/lung/lung.ts	1	b	13 15
+372c382f5f7a	packages/engine-core/src/l2/lung/params.ts	70	m	25 `set`
+c60db4a04690	packages/engine-core/src/l2/lung/perfusion.ts	39	m	0 `volatileMac`
+f8493c442f49	packages/engine-core/src/l2/neuro/bus.ts	52	m	7
+a8e5f2386b26	packages/engine-core/src/l2/neuro/depth.ts	10	m	7
+3233afab349f	packages/engine-core/src/l2/neuro/depth.ts	23	b	300 3080 3080 800
+91d780fc1a3b	packages/engine-core/src/l2/neuro/drive.ts	1	m	7
+c9de65d2c6fe	packages/engine-core/src/l2/neuro/drive.ts	25	m	04 10 2026
+6f8c58cbf68a	packages/engine-core/src/l2/neuro/drive.ts	76	b	5
+829c377984d6	packages/engine-core/src/l2/neuro/drive.ts	151	m	7
+c5b86896bc06	packages/engine-core/src/l2/neuro/interactions.ts	1	m	1
+220220d421a8	packages/engine-core/src/l2/neuro/interactions.ts	36	c	0.5 1 127 25 4 80
+1f6c966785f4	packages/engine-core/src/l2/neuro/interactions.ts	69	b	9
+db1f95f84def	packages/engine-core/src/l2/neuro/nmb.ts	25	m	5
+cd69c20ed4a4	packages/engine-core/src/l2/neuro/outputs.ts	1	m	2 3 6
+f97dcc5b08c6	packages/engine-core/src/l2/neuro/pipeline.ts	1	b	12 17
+014d03e45bb5	packages/engine-core/src/l2/neuro/pipeline.ts	217	b	20 22
+78c944ae6d4a	packages/engine-core/src/l2/neuro/pipeline.ts	276	m	7
+ecfb52db6e36	packages/engine-core/src/l2/neuro/spont.ts	1	b	7
+989196c7232f	packages/engine-core/src/l2/neuro/spont.ts	178	m	28
+a6d1f372c09d	packages/engine-core/src/l2/neuro/tof-device.ts	1	b	1
+09d6380daa40	packages/engine-core/src/l2/organs/effects.ts	1	m	7
+badd475e286d	packages/engine-core/src/l2/organs/inputs.ts	13	m	7
+60483eb228d7	packages/engine-core/src/l2/organs/inputs.ts	39	m	7
+c577b08a30ba	packages/engine-core/src/l2/organs/inputs.ts	58	b	2
+babbee869cbf	packages/engine-core/src/l2/organs/inputs.ts	80	b	10
+2e83d1c4a520	packages/engine-core/src/l2/organs/pipeline.ts	1	m	7
+c6945e289624	packages/engine-core/src/l2/organs/pipeline.ts	30	m	6
+a5474930e550	packages/engine-core/src/l2/organs/pipeline.ts	163	b	10 7
+acd07382d90d	packages/engine-core/src/l2/organs/pipeline.ts	215	m	7
+e3dc09b3a413	packages/engine-core/src/l2/organs/pipeline.ts	281	m	48
+62ae45b0c543	packages/engine-core/src/l2/pk/combine.ts	1	b	7
+5f322c595e3b	packages/engine-core/src/l2/pk/combine.ts	33	c	2
+a5b9d6cc7fa1	packages/engine-core/src/l2/pk/combine.ts	181	b	20 21
+00a63b7c337b	packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	77	b	900
+6ba6201821fa	packages/engine-core/src/l2/pk/data/rows-anaesthetic.ts	137	b	1
+7c69e5e951d9	packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	83	m	0.5 0.5 0.5 18.8 9.2
+f1deb4a62491	packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	91	m	0.25 12.9
+a93f311712da	packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	111	m	4
+82be5a19a954	packages/engine-core/src/l2/pk/data/rows-cardiovascular.ts	139	b	4
+ea2a06670ad9	packages/engine-core/src/l2/pk/data/rows-other.ts	22	m	7
+b2cdec2f1dbd	packages/engine-core/src/l2/pk/data/rows-other.ts	25	b	10 10 10 11 2026 2026 52
+8a08f74a6e40	packages/engine-core/src/l2/pk/data/rows-other.ts	99	m	7
+9b452af50fd8	packages/engine-core/src/l2/pk/hooks.ts	1	b	12
+5283326d33cd	packages/engine-core/src/l2/pk/hooks.ts	16	m	3
+99005d32112a	packages/engine-core/src/l2/pk/hooks.ts	49	m	25 3
+2cc58c632102	packages/engine-core/src/l2/pk/hooks.ts	120	m	3
+a829cf96526e	packages/engine-core/src/l2/pk/nmb.ts	24	m	0.04 0.17 0.2 10 5 5 5 8
+36177715ace3	packages/engine-core/src/l2/pk/nmb.ts	36	m	0.0029 0.003 0.003 0.015 0.2 0.2 10 10 4 8 `hom`
+6aeb6b178ccc	packages/engine-core/src/l2/pk/pd.ts	1	b	7
+91f928d09b74	packages/engine-core/src/l2/pk/pipeline.ts	64	m	3
+6f530198560a	packages/engine-core/src/l2/pk/pipeline.ts	197	m	3
+7acd8d597361	packages/engine-core/src/l2/pk/pipeline.ts	368	m	3
+d2ed74adc43e	packages/engine-core/src/l2/pk/pipeline.ts	579	m	3
+5ead140e68b2	packages/engine-core/src/l2/pk/row.ts	18	b	20 21
+dd61469ab780	packages/engine-core/src/l2/renal/model.ts	96	b	7
+64b2e0663874	packages/engine-core/src/l2/renal/model.ts	159	m	7
+21a23a76a487	packages/engine-core/src/l2/renal/params.ts	73	b	0.35 0.75
+1a4d8c66d695	packages/engine-core/src/l2/resp/pipeline.ts	93	m	7
+e513d415b12a	packages/engine-core/src/l2/resp/pipeline.ts	150	m	2
+dedc864d195c	packages/engine-core/src/l2/resp/pipeline.ts	156	b	10 2 4 6 7.485
+52b9f600752a	packages/engine-core/src/l2/resp/pipeline.ts	243	b	09 127 154 154 2026 204 28 50 50 70 77 `alveolarVentilation` `seriesDeadSpace`
+5e39e20139a1	packages/engine-core/src/l2/resp/pipeline.ts	253	m	0.05 8
+f315b5da36ca	packages/engine-core/src/l2/resp/pipeline.ts	455	m	3 7 70 `h.cpr.active ? CO_REF_LPM : coRefLpm(rs.pat)`
+f474b6b83dc4	packages/engine-core/src/l2/resp/pipeline.ts	599	b	7
+f7539b6678a4	packages/engine-core/src/l2/resp/pipeline.ts	790	b	`withdraw`
+787310dd66ef	packages/engine-core/src/l2/thermal/environment.ts	104	b	0.25
+1561a0011489	packages/engine-core/src/l2/thermal/heat.ts	89	m	7
+fd386f5390d6	packages/engine-core/src/l2/thermal/heat.ts	165	m	7
+e0bd13088e23	packages/engine-core/src/l2/thermal/heat.ts	212	m	7
+712e2c6d2c65	packages/engine-core/src/l2/thermal/mh.ts	1	m	3
+84e7bbe35044	packages/engine-core/src/l2/thermal/params.ts	16	m	03 10 2026
+f7895a249668	packages/engine-core/src/l3/alarms/conditions.ts	71	b	20
+c6a9b2f097f0	packages/engine-core/src/l3/alarms/conditions.ts	130	b	0 5397
+acfd271a2fe0	packages/engine-core/src/l3/alarms/conditions.ts	253	b	09 2026 28
+2a3a761dea71	packages/engine-core/src/l3/alarms/conditions.ts	292	b	09 2026 28
+c89a711999c5	packages/engine-core/src/l3/alarms/conditions.ts	325	b	09 2026 28
+f4133dbf9761	packages/engine-core/src/l3/alarms/manager.ts	257	c	09 2026 29
+ebc7bf27a2d7	packages/engine-core/src/l3/capture12/capture.ts	53	b	120
+bfe677b407f1	packages/engine-core/src/l3/nibp/nibp.ts	1	b	103 39 59 63 81 83
+eee071233e7b	packages/engine-core/src/l3/nibp/nibp.ts	44	b	0.1 0.2
+0ec3e8e3dc80	packages/engine-core/src/l3/nibp/nibp.ts	45	b	0.3 1.0
+dd07fb128a0b	packages/engine-core/src/l3/qrs.ts	21	b	0 09 2026 29 5397
+19df8bab569b	packages/engine-core/src/l3/spo2/spo2.ts	88	b	9
+61f392fff022	packages/engine-core/src/types-blood.ts	1	b	13
+01dc410d89aa	packages/engine-core/src/types-circ.ts	5	m	7
+b5b1bc2fb1dc	packages/engine-core/src/types-hemo.ts	1	m	types.ts
+d8004df40868	packages/engine-core/src/types-lung.ts	59	b	13 5
+dec68f8bf913	packages/engine-core/src/types-neuro.ts	1	m	`// Stage 7f`
+9e71111158df	packages/engine-core/src/types-neuro.ts	21	b	12 17
+9851ebadf837	packages/engine-core/src/types-neuro.ts	28	b	12 18
+689636a83406	packages/engine-core/src/types-neuro.ts	35	m	7 `stimulus`
+18fb3c814bd3	packages/engine-core/src/types-neuro.ts	53	b	7
+d3200ff3e10c	packages/engine-core/src/types-pk.ts	58	b	20 21
+4fb70d27d791	packages/engine-core/src/types-pk.ts	60	m	7
+c12d970cff04	packages/engine-core/src/types-pk.ts	69	m	7
+0a9c8c091e21	packages/engine-core/src/types-resp.ts	19	m	7
+31ca119526d5	packages/engine-core/src/types.ts	73	m	12
+e9a006ab3f8f	packages/engine-core/vite.config.ts	31	b	19
+2f3e78dcba29	packages/engine-core/vite.config.ts	72	m	16 19
+51c866261061	packages/engine-core/vite.config.ts	73	m	7
+7c7c6b5e27e0	packages/engine-core/vite.config.ts	76	m	10 6 docs/gates/stage-fu-10.md
+5c580595ccd8	packages/engine-core/vite.config.ts	186	b	6
+95336e4c5990	packages/renderer/src/alarm-audio.ts	1	b	4
+5741c865fea3	packages/renderer/src/device-ui.ts	298	b	2
+29d263765200	packages/renderer/src/monitor-core.ts	40	b	4
+a7ca27c0a0bd	packages/renderer/src/monitor-core.ts	283	b	4
+4e1526d014b5	packages/renderer/src/mount.ts	1	m	2
+e3ab0c95b2aa	packages/renderer/src/mount.ts	23	m	2
+c292f6ced15c	packages/renderer/src/numerics-neuro.ts	39	b	8
+4c9f0cf0580e	packages/renderer/src/skin-plan.ts	1	m	2
+c1292ae94ebb	packages/renderer/src/skin-plan.ts	80	b	2 5
+e74c87dd2526	packages/renderer/src/skin-plan.ts	132	m	2
+bbde48237034	packages/skins/src/types.ts	32	b	2
+4fc014dbbea0	packages/validation/src/metrics/capno.ts	1	b	packages/engine-core/test/helpers/resp.ts
+f255ad52e264	packages/validation/src/metrics/device.ts	1	m	2
+82cff0835ae8	packages/validation/src/oracle/blood-scenarios.ts	1	m	7
+ae32a14937e8	packages/validation/src/oracle/blood-scenarios.ts	39	b	`Flow`
+e36629ae4d63	packages/validation/src/perf/cli-ticks.ts	8	b	8
+89945d0eaf17	packages/validation/src/segments/series.ts	28	m	4
+b304ff96ea37	packages/ventilator/src/link/profiles.ts	1	c	13 5
+8230a37c93c6	packages/ventilator/src/link/profiles.ts	39	b	13 5
+f12e0b795d52	packages/ventilator/src/link/profiles.ts	44	m	5
+3e318d0e67a5	packages/ventilator/src/lung-input.ts	1	m	13 5
+a144554a9b23	packages/ventilator/src/mechanics.ts	49	b	1
+0aadc04b49bb	playwright.config.ts	10	b	1

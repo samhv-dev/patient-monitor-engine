@@ -1,8 +1,7 @@
-// Stage 13: what the debrief states from a run record — each objective met / not met / not assessable from its rule
-// (types.ts `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measure.
-// Both read the KEPT course (a return to a bookmark undoes what came after it: the retry is what is judged). Labels come
-// from the glossary and the alarm table (R56). Also the one-row-per-minute table (Q1) and the JSON of the report (Q3).
-// No DOM.
+// What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts
+// `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measure. Both
+// read the KEPT course (a return to a bookmark undoes what came after it: the retry is what is judged). Labels come
+// from the glossary and the alarm table. Also the one-row-per-minute table and the JSON of the report. No DOM.
 import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { CONDITIONS } from './describe.ts';
@@ -40,7 +39,7 @@ function first(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): R
   return kept(d).find((r) => r.t >= from && isEvent(r.ev, want)) ?? null;
 }
 /** Whether `want` could be seen from `from` on: a row event always; a value event only when its trend or lab was
- *  measured then (R50 I-3: a value never measured is "not assessable", never "did not happen"). A list: any of them. */
+ *  measured then (a value never measured is "not assessable", never "did not happen"). A list: any of them. */
 function measured(d: RunData, want: RunEventId | RunEventId[], from = -Infinity): boolean {
   if (Array.isArray(want)) return want.some((w) => measured(d, w, from));
   const v = VALUE.exec(want);
@@ -78,7 +77,7 @@ export function trendMeta(k: ValueKey): { label: string; unit: string; digits: n
   const l = lookup(keys[0] as string);
   return { label: keys.map((key) => labelOf(key) ?? '').filter(Boolean).join(' / '), unit: l ? unitOf(l.e) : '', digits: DIGITS[k] ?? 0 };
 }
-/** DV-2 (orchestrator ruling 2026-10-11): the least span of a trend chart's axis, so a few-point wobble is not drawn at
+/** The least span of a trend chart's axis, so a few-point wobble is not drawn at
  *  full height; RR has no floor (± 1 when flat, as before). */
 const AXIS_FLOOR: Partial<Record<TrendKey, number>> = { spo2: 20, hr: 40, map: 40, etco2: 20, temp: 2 };
 /** The axis of one trend chart: the data's own range, or the floor centred on the data (SpO₂ never above 100, and never
@@ -102,7 +101,7 @@ export function verdict(rule: ObjectiveRule | undefined, d: RunData): Verdict {
   const no = (why: string): Verdict => ({ status: 'not assessable', why });
   if (!rule) return no('This objective has no rule: the instructor judges it.');
   const end = endOf(d);
-  // R50: `from` — the rule's events count only at or after the first `from` ("after the crisis was called")
+  // `from` — the rule's events count only at or after the first `from` ("after the crisis was called")
   const fromEv = rule.kind === 'stayed' ? undefined : rule.from;
   const start = fromEv ? first(d, fromEv) : null;
   if (fromEv && !start) return no(`${cap(eventWords(fromEv, d))} did not happen.`);
@@ -271,7 +270,7 @@ export function perMinute(d: RunData): Array<{ t: number; values: Record<ValueKe
   return out;
 }
 
-/** Q3: the report as JSON (`pme-debrief/1`) — the record, the verdicts, the facts and the minute table, with the build
- *  that made it. Not the "Run by" line or the notes box: they are printed only, never stored (Q2). */
+/** The report as JSON (`pme-debrief/1`) — the record, the verdicts, the facts and the minute table, with the build
+ *  that made it. Not the "Run by" line or the notes box: they are printed only, never stored. */
 export const debriefJson = (d: RunData, build: string): string =>
   JSON.stringify({ schema: 'pme-debrief/1', build, record: d, objectives: objectives(d), facts: facts(d), minutes: perMinute(d) }, null, 1);

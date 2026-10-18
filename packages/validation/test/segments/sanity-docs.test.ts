@@ -20,7 +20,7 @@ describe('sanity documents (brief §4.9 + tables §7)', () => {
       for (const t of s.targets) expect(t.source.length).toBeGreaterThan(5);
     }
   });
-  it('profile documents carry their patient in pme-scenario/1 patient.profile (FU-3 item 9), never only in notes', () => {
+  it('profile documents carry their patient in pme-scenario/1 patient.profile, never only in notes', () => {
     const withProfile = SANITY_DOCS.filter((d) => (d.scenario as { patient?: { profile?: unknown } }).patient?.profile).map((d) => d.id);
     expect(withProfile).toEqual(['t10-as-cad-propofol', 't11-chronic-mr-fluid', 't17b-class3-bb', 't18-htn-hypocapnia-cbf', 't19-tbi-haematoma', 't20-low-flow-oliguria', 't22-term-spinal', 't23-term-apnoea']);
     for (const d of SANITY_DOCS) expect(JSON.stringify(d), d.id).not.toMatch(/R22 profile|"profile":"/);

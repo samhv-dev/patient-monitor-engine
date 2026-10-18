@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { bloodPatient, FLUIDS, MOLAR_MASS, PRODUCTS, storedK } from '../../../src/l2/blood/params.ts';
 
-describe('7c constants and patient scaling (tables §1.1–1.3, §5b.4)', () => {
+describe('blood constants and patient scaling (tables §1.1–1.3, §5b.4)', () => {
   it('70 kg man: BV 70 mL/kg, Hb 15, TBW 0.6 L/kg; woman 65 mL/kg, Hb 13.5, TBW 0.5; obese BV by Lemmens', () => {
     const m = bloodPatient({ ageY: 40, sex: 'M', weightKg: 70, heightCm: 175 });
     expect(m.bvMl).toBeCloseTo(70 * 70, 6); // FU-9 Part C (R3): FU-8's size weight — the default adult is exactly 70 kg (was 4 807 by 7c's capped Lemmens)

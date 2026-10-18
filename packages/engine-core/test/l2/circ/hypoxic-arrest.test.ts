@@ -11,8 +11,8 @@ const beat = (o: Partial<CircBeat> = {}): CircBeat => ({
   avOpen: 0.08, avClose: 0.37, dur: 60 / 70, ...o,
 });
 
-describe('FU-3 item 16: hypoxaemic myocardial depression', () => {
-  it('o2Rel defaults to 1: the R23 flow-only supply and no hypoxic depression (MANUAL path unchanged)', () => {
+describe('hypoxaemic myocardial depression', () => {
+  it('o2Rel defaults to 1: the flow-only coronary supply and no hypoxic depression (MANUAL path unchanged)', () => {
     const a = createCoronary(ref);
     const b = createCoronary(ref);
     for (let i = 0; i < 60; i++) {
@@ -44,7 +44,7 @@ describe('FU-3 item 16: hypoxaemic myocardial depression', () => {
   });
 });
 
-describe('FU-3 item 16: the arrest request', () => {
+describe('the arrest request', () => {
   const at = (hyp: number) => {
     const m = createCircModel();
     m.cor.hyp = hyp;

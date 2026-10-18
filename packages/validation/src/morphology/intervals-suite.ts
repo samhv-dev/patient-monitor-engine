@@ -1,5 +1,5 @@
 // V5: ECG intervals of PTB-XL NORM records (CC BY 4.0) vs the engine's 12-lead capture, one method (intervalsOf).
-// PTB-XL: the first `n` records with "'NORM': 100.0" in scp_codes (Stage 5's selection), lead II at 500 Hz.
+// PTB-XL: the first `n` records with "'NORM': 100.0" in scp_codes (the rhythm library's selection), lead II at 500 Hz.
 // Engine: capture12() lead II after 40 s at HR 60/75/90/100, seeds 1–3.
 import { createEngine, capture12 } from '@pme/engine-core';
 import { fetchCached } from '../templates/fetch.ts';

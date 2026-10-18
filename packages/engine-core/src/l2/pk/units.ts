@@ -1,4 +1,4 @@
-// Dose and rate normalisation (Stage 7g). The API keeps the brief's units; each library row has ONE amount unit.
+// Dose and rate normalisation. The API keeps the brief's units; each library row has ONE amount unit.
 import type { DoseUnit, RateUnit } from '../../types-pk.ts';
 
 export type AmountUnit = 'mg' | 'mcg' | 'units' | 'mmol' | 'mL';
@@ -12,7 +12,7 @@ export function toAmount(dose: number, unit: DoseUnit | RateUnit, amountUnit: Am
   if (base === amountUnit) return d; // before the volume rule: a drug dosed in mL (lipid, hypertonic saline) needs no concentration
   if (base === 'mL') return perMl !== undefined ? d * perMl : 'a volume dose needs the drug concentration';
   if (base in MASS && amountUnit in MASS) return (d * (MASS[base] as number)) / (MASS[amountUnit] as number);
-  if (base === 'mEq' && amountUnit === 'mmol') return d; // monovalent (bicarbonate); 7c converts divalent ions itself
+  if (base === 'mEq' && amountUnit === 'mmol') return d; // Monovalent (HCO3⁻); the blood model converts divalent ions
   return `unit ${unit} does not fit a drug dosed in ${amountUnit}`;
 }
 

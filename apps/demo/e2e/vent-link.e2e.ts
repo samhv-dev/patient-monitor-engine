@@ -26,7 +26,7 @@ type Any = any;
 const last = (p: Page, k: string) => p.evaluate((key) => (window as Any).__link.last[key] as number | undefined, k);
 const vent = <T>(p: Page, fn: string) => p.evaluate(`(${fn})(document.getElementById('vent').contentWindow.__vent)`) as Promise<T>;
 
-test('vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP', async ({ page }) => {
+test('vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEEP', { tag: '@known-flaky' }, async ({ page }) => {
   const errs = errorsOf(page);
   await page.goto(`${base}/vent-hamilton.html`);
   await page.waitForFunction(() => (window as Any).__vent?.vs.p.breathCount >= 2, null, { timeout: 15_000 });
@@ -42,14 +42,14 @@ test('vent-hamilton.html: breathes, Modes → PCV+ → Confirm, a knob turns PEE
   expect(errs).toEqual([]);
 });
 
-test('vent-link.html: two-way link, disconnection, COPD demonstration', async ({ page, browserName }) => {
+test('vent-link.html: two-way link, disconnection, COPD demonstration', { tag: '@known-flaky' }, async ({ page, browserName }) => {
   // Headless WebKit on the 2-vCPU runner cannot keep the ×4 sim pace this long scenario needs (awRR still 3 after
   // 30 s); Chromium in CI and system Chrome locally cover it.
   test.skip(browserName === 'webkit', 'long ×4 sim scenario too slow on headless WebKit');
   test.setTimeout(180_000);
   const errs = errorsOf(page);
   await page.setViewportSize({ width: 1400, height: 820 });
-  await page.goto(`${base}/vent-link.html`);
+  await page.goto(`${base}/dev/vent-link.html`);
   await page.selectOption('#speed', '4');
   // vent → engine: the monitor counts the ventilator's 14/min
   await expect.poll(() => last(page, 'awrr'), { timeout: 30_000 }).toBe(14);

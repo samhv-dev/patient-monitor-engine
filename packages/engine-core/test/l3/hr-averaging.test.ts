@@ -60,7 +60,7 @@ describe('HR averaging option (E-4a-2)', () => {
     expect(hrMeasure(st, 25, { kind: 'seconds', n: 8 }).value).toBe(0);
   });
 
-  it('skin field: optional and validated; only saadat-like (declared moving average) averages by default (FU-2 item 5)', () => {
+  it('skin field: optional and validated; only saadat-like (declared moving average) averages by default', () => {
     for (const id of ['philips-like', 'zoll-like', 'ge-like', 'mindray-like', 'lifepak-like']) expect(hrAveragingOf(resolveSkin(id).skin)).toBeUndefined();
     expect(resolveSkin('saadat-like').skin.hr.method).toBe('moving-average-seconds');
     expect(hrAveragingOf(resolveSkin('saadat-like').skin)).toEqual({ kind: 'seconds', n: 8 });
@@ -72,7 +72,7 @@ describe('HR averaging option (E-4a-2)', () => {
     expect(validate('skin', s).errors.length).toBeGreaterThan(0);
   });
 
-  it("FU-2 item 5: 'moving-average-seconds' maps to its declared windowDefault; an explicit averaging field wins", () => {
+  it("'moving-average-seconds' maps to its declared windowDefault; an explicit averaging field wins", () => {
     const hr = (over: Record<string, unknown>) => ({ hr: { method: 'moving-average-seconds', windowDefault: 8, ...over } });
     expect(hrAveragingOf(hr({}))).toEqual({ kind: 'seconds', n: 8 });
     expect(hrAveragingOf(hr({ windowDefault: 16 }))).toEqual({ kind: 'seconds', n: 16 });

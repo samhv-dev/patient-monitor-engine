@@ -1,5 +1,5 @@
-// The R27 lungState payload from the lung module (plan decision 15): the seven Stage 3 fields as ABSOLUTE values,
-// plus the per-lung (R43) and catalogue-lead (Q95) fields. Rounded so the pipeline can throttle on changes.
+// The lungState payload from the lung module: the seven respiratory-signal fields as ABSOLUTE values,
+// plus the per-lung and catalogue-lead (Q95) fields. Rounded so the pipeline can throttle on changes.
 import type { LungConditionSpec, LungStateExt, LungStateLung } from '../../types-lung.ts';
 import { staticCompliance, shuntFraction, type LungState } from './lung.ts';
 import { complianceAt } from './venegas.ts';
@@ -13,8 +13,9 @@ export interface LungStateCore {
   shunt: number; deadSpaceMl: number; frcMl: number;
 }
 
-/** Stage 7k: THE bedside FRC (mL) — the gas the lungs hold at end-expiration: the patient's FRC (FU-6's awake →
- * anaesthetised `frcNow`) × the conditions' FRC multiplier × the aerated share. lungState and the 7k volume set read it. */
+/** THE bedside FRC (mL) — the gas the lungs hold at end-expiration: the patient's FRC (the awake → anaesthetised
+ * `frcNow`) × the conditions' FRC multiplier × the aerated share. lungState and the respiratory-mechanics volume set
+ * read it. */
 export function aeratedFrc(ls: LungState, frcMl: number): number {
   return frcMl * ls.lp.frcMult * (SIDE_SHARE[0] * (ls.aer[0] as number) + SIDE_SHARE[1] * (ls.aer[1] as number));
 }
@@ -47,7 +48,7 @@ export function lungStatePayload(
     autoPeepTendency: r2(Math.min(1, autoPeep / 10)), // tables §4.3: PEEPi/10 clamped 0–1
     shunt: r2(shuntFraction(ls, x.baseShunt)),
     deadSpaceMl: Math.round(x.deadSpaceMl),
-    frcMl: Math.round(aeratedFrc(ls, x.frcMl)), // Stage 7k: the one bedside FRC
+    frcMl: Math.round(aeratedFrc(ls, x.frcMl)), // The one bedside FRC
     lungs,
     complianceSlowMlPerCmH2O: Math.round(cSlow),
     tauSlowS: r2(Math.max(lp.side[0]!.tauSlowS, lp.side[1]!.tauSlowS)),

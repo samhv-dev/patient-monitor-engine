@@ -124,7 +124,7 @@ export function applyRhythm(st: RhythmState, id: RhythmId, opts: RhythmOpts, at:
   }
   if (d.atria !== 'fib' && wasFib) endFWaves(st, 'fib', t0);
 
-  // Flutter: a continuous sawtooth phase-locked to the F events (ruling R18); rebuilt only if the rate changes
+  // Flutter: a continuous sawtooth phase-locked to the F events; rebuilt only if the rate changes
   if (d.atria === 'flutter') {
     const rate = atrialRate(st, d, t0, ctx);
     const open = st.fwaves.find((fw) => fw.kind === 'flutter' && fw.end >= NEVER);
@@ -161,8 +161,8 @@ function isConducted(p: PendingV): boolean {
 export function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx): boolean {
   const t = p.t;
   // Concealed if the ventricle is refractory (brief §4.1). Primary pacemakers (p.bypass) are exempt: foci, the AF
-  // junction and PVC runs set their own cycle [ENG]. A conducted beat after a conducted beat is exempt too: the AV
-  // node (AV_NODE_ERP_S in atria.ts) limits supraventricular conduction (Stage 1.1, review H1).
+  // junction and PVC runs set their own cycle [ENG]. A conducted beat after a conducted beat is exempt too: the AV node
+  // (AV_NODE_ERP_S in atria.ts) limits supraventricular conduction.
   const afterConducted = isConducted(p) && st.lastConducted;
   if (st.respectRefractory && !p.bypass && !afterConducted && t < st.refractoryUntil) return false;
   const d = RHYTHMS[st.id];
@@ -194,8 +194,8 @@ export function activateVentricle(st: RhythmState, p: PendingV, ctx: RhythmCtx):
   st.records.push(beat);
   st.refractoryUntil = t + qrsMs / 1000 + (REFRACTORY_QT_FRACTION * qtDrawn) / 1000;
   st.lastVT = t;
-  // A beat that is not the focus's own (a sinus capture during VT) depolarises the ventricle and resets the focus,
-  // so the focus cannot fire 15–40 ms later on top of it (Stage 1.1, review M2) [ENG].
+  // A beat that is not the focus's own (a sinus capture during VT) depolarises the ventricle and resets the focus, so
+  // the focus cannot fire 15–40 ms later on top of it [ENG].
   if (d.focus !== 'none' && !p.bypass) st.focusNextT = t + 60 / rate;
   const er = escapeRate(st, d, t, ctx);
   st.escapeNextT = er > 0 ? t + 60 / er + (d.rateDrives === 'escape' ? ESCAPE_JITTER_SD_S * ctx.mods.hrvScale * normal(ctx.rng.hrv) : 0) : NEVER;
@@ -233,12 +233,11 @@ export interface ClockSource {
 const EXTRA_CLOCKS: ClockSource[] = [pacerClock, tcpClock, vfClock, leadOffClock];
 
 /**
- * FU-4 (E-FU4-18, FU-6's Request 3; D26): a non-finite scheduled time is a physiology bug upstream (a rate of 0/NaN
- * reaching `60 / rate`), and the guard is deliberately ASYMMETRIC. In tests (Vitest sets `NODE_ENV=test`) it THROWS
- * with the value, the clock it came from and the sim time, so the bug is found; everywhere else (the demo, a relay) it
- * clamps that clock to one second after the last planned instant (the 60/min default interval), keeps running and
- * warns ONCE per rhythm state, so an operator never loses the session. Inert when every value is finite (one
- * `Number.isFinite` per scheduled event, as before).
+ * A non-finite scheduled time is a physiology bug upstream (a rate of 0/NaN reaching `60 / rate`), and the guard is
+ * deliberately ASYMMETRIC. In tests (Vitest sets `NODE_ENV=test`) it THROWS with the value, the clock it came from and
+ * the sim time, so the bug is found; everywhere else (the demo, a relay) it clamps that clock to one second after the
+ * last planned instant (the 60/min default interval), keeps running and warns ONCE per rhythm state, so an operator
+ * never loses the session. Inert when every value is finite (one `Number.isFinite` per scheduled event).
  */
 export const NON_FINITE_FALLBACK_S = 1;
 const warnedNonFinite = new WeakSet<RhythmState>();
@@ -260,7 +259,7 @@ HOOKS.apply = applyRhythm;
 
 /** Process every internal rhythm event with time ≤ T. */
 export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
-  let tPrev = st.planT; // FU-4 (E-FU4-18): the last instant processed — the clamp's reference
+  let tPrev = st.planT; // The last instant processed — the clamp's reference
   for (let guard = 0; guard < 1_000_000; guard++) {
     const d = RHYTHMS[st.id];
     let tA = d.atria === 'none' ? NEVER : st.atria.nextT;
@@ -278,9 +277,9 @@ export function planUntil(st: RhythmState, T: number, ctx: RhythmCtx): void {
       }
     }
     let t = Math.min(tA, tP, tF, tE, tJ, tX);
-    // A NaN/Infinity rate would otherwise make every clock NaN and spin to the guard on every tick (review M5).
-    // FU-4 (E-FU4-18): loud in tests, clamped per clock in the demo — the stored clocks take the fallback instant, a
-    // derived one (the junction, the extra clocks) is skipped for this pass.
+    // A NaN/Infinity rate would otherwise make every clock NaN and spin to the guard on every tick. Loud in tests,
+    // clamped per clock in the demo — the stored clocks take the fallback instant, a derived one (the junction, the
+    // extra clocks) is skipped for this pass.
     if (!Number.isFinite(t)) {
       const fb = tPrev + NON_FINITE_FALLBACK_S;
       if (!Number.isFinite(tA)) tA = st.atria.nextT = finiteOr(st, tA, fb, 'atria.nextT', tPrev);

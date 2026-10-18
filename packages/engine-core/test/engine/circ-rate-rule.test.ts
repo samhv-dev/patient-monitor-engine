@@ -31,7 +31,7 @@ async function run(rhythm: RhythmId | null, opts: Record<string, unknown>, drug?
 const PHE = { kind: 'infusion', drugId: 'phenylephrine', rate: 1, unit: 'mcg/kg/min' };
 const BLEED = { kind: 'bleed', volumeMl: 1225, overS: 60 }; // 25 % of an adult's blood volume in a minute: reflex tachycardia
 
-describe('MODELED rate ownership (NR-7g-5)', () => {
+describe('MODELED rate ownership', () => {
   it('SVT (AVNRT) set at 180 reads 180 ± 5 on the monitor (was 140: the reflex request, clamped to the SVT range)', async () => {
     const r = await run('svtAvnrt', { rateBpm: 180 }, undefined, 120);
     console.log(`FU-2 SVT 180 MODELED: monitor ${r.hr(80, 120).toFixed(1)}`);

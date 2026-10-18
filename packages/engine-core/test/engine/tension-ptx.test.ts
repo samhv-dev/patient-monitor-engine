@@ -39,7 +39,7 @@ async function run(ppv: boolean, endS: number, decompressAt?: number): Promise<C
 }
 const at = (xs: number[], s: number) => xs[s - 1] as number; // index 0 = +1 s after onset
 
-describe('FU-4 F3: the tension pneumothorax builds through a one-way valve', { timeout: 600_000 }, () => {
+describe('the tension pneumothorax builds through a one-way valve', { timeout: 600_000 }, () => {
   const ppv = run(true, 60 + 12 * 60);
   it('PPV: the pleural pressure rises monotonically over minutes, and PEA arrives within the 12-min run (not before 3 min)', async () => {
     const c = await ppv;
@@ -57,7 +57,7 @@ describe('FU-4 F3: the tension pneumothorax builds through a one-way valve', { t
   // FU-6 (executor, gate): this rig is awake, undrugged and unparalysed on VCV; since FU-6 R9 its hypoxic, hypercapnic
   // drive triggers the ventilator above the set 12/min, so the per-breath one-way valve fills faster (pPtx +240 s 21.3
   // vs 19.4 on origin/main; MAP +240 s 27 vs 61) and PEA comes at +3.87 min — the band is met (flipped).
-  it('PPV: PEA arrives ≤ 10 min after onset — was +10.45 min with the humoral arm (+8.65 after Task 18c), +3.87 with FU-6 (R45 flip)', async () => {
+  it('PPV: PEA arrives ≤ 10 min after onset — measured +3.87 min', async () => {
     const c = await ppv;
     expect(c.tPea).toBeDefined();
     expect(((c.tPea as number) - 60) / 60).toBeLessThanOrEqual(10);
@@ -72,7 +72,7 @@ describe('FU-4 F3: the tension pneumothorax builds through a one-way valve', { t
   // R45 (FU-6 executor, gate): see the PEA row — with FU-6's assist-control the unparalysed rig arrests before +4 min,
   // so decompression finds a pulseless patient. it.fails with the number; the rig question (paralyse, as FU-6's D19
   // does for its own ventilated rigs, or decompress earlier) is FU-4's — gate note.
-  it.fails('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (FU-6 R9 triggering; origin/main: MAP ≥ 65 at +5 s)', async () => {
+  it.fails('decompression at +4 min on PPV: MAP ≥ 65 within 1 min, and the pleural pressure falls with PTX_DRAIN_TAU_S — measured: no MAP at all, the patient is in PEA from +3.87 min, before the decompression (ventilator triggering; MAP ≥ 65 at +5 s without it)', async () => {
     const c = await run(true, 60 + 6 * 60, 60 + 240);
     const back = c.mapAfterDecomp.find(([, m]) => m >= 65);
     const p = c.pPtx[240 + PTX_DRAIN_TAU_S - 1] as number; // τ after the decompression

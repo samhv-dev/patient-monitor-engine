@@ -20,7 +20,7 @@ function stepSeries(skin: string): (number | null)[] {
   return [32, 33, 34, 35, 36, 37, 38, 39, 40].map((t) => at.get(t) ?? null);
 }
 
-describe('saadat-like 8 s HR averaging (FU-2 item 5)', () => {
+describe('saadat-like 8 s HR averaging', () => {
   it('saadat-like: 64, 71, 78, 85, 92, 99, 106, 113, 120 at +2 … +10 s (8 s moving average)', () => {
     expect(stepSeries('saadat-like')).toEqual([64, 71, 78, 85, 92, 99, 106, 113, 120]);
   });

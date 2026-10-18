@@ -1,4 +1,4 @@
-// 7x.1 (FU-3 item 12): the 7b lung tree (`resp.lung`) is labelled for a clinician — per side (0 = L, 1 = R) and per
+// The lung tree (`resp.lung`) is labelled for a clinician — per side (0 = L, 1 = R) and per
 // mechanical unit (0/1 = L fast/slow, 2/3 = R fast/slow: engine-core l2/lung/side.ts `mechParams`) — instead of raw
 // keys and bare indices ("cL", "0").
 import { describe, expect, it } from 'vitest';
@@ -8,7 +8,7 @@ import { ConsoleModel } from './model.ts';
 import { metaOf } from './meta.ts';
 import { isInternal } from './organs.ts';
 
-describe('7b lung paths: curated labels and units', () => {
+describe('lung paths: curated labels and units', () => {
   it.each([
     ['resp.lung.lp.side.0.cL', 'L lung compliance', 'mL/cmH₂O', 1],
     ['resp.lung.lp.side.1.rLung', 'R airway resistance', 'cmH₂O/L/s', 1],
@@ -23,7 +23,7 @@ describe('7b lung paths: curated labels and units', () => {
     ['resp.lung.co2.pA.0', 'L fast unit PACO₂', 'mmHg', 1],
     ['resp.lung.mp.units.3.rIn', 'R slow unit R insp', 'cmH₂O/L/s', 1000],
     ['resp.lung.lp.ccw', 'Chest-wall compliance', 'mL/cmH₂O', 1],
-    ['resp.lung.peepTot', 'Mean end-expiratory alveolar pressure', 'cmH₂O', 1], // Stage 7k (R56): PEEPtot is the expiratory-hold reading, resp.mechanics.peepTot
+    ['resp.lung.peepTot', 'Mean end-expiratory alveolar pressure', 'cmH₂O', 1], // PEEPtot is the expiratory-hold reading, resp.mechanics.peepTot
   ] as const)('%s → "%s" (%s)', (path, label, unit, scale) => {
     expect(metaOf(path)).toMatchObject({ label, unit, scale });
     expect(metaOf(path).rank).toBeLessThan(Number.POSITIVE_INFINITY);

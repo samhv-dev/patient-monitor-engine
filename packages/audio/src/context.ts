@@ -30,10 +30,9 @@ function validTs(r: ClockReadings): { contextTime: number; performanceTime: numb
 }
 
 /**
- * performance.now() ms → the audio time that is HEARD at that moment. With a valid output timestamp:
- * contextTime + (perfMs − performanceTime)/1000. Fallback (no getOutputTimestamp, or performanceTime 0 right after
- * resume): the sample at currentTime is heard base + output latency after now, so that latency is SUBTRACTED
- * (review M6; the Stage 1 code added baseLatency).
+ * performance.now() ms → the audio time that is HEARD at that moment. With a valid output timestamp: contextTime +
+ * (perfMs − performanceTime)/1000. Fallback (no getOutputTimestamp, or performanceTime 0 right after resume): the
+ * sample at currentTime is heard base + output latency after now, so that latency is SUBTRACTED.
  */
 export function mapPerfToAudio(perfMs: number, r: ClockReadings): number {
   const ts = validTs(r);
@@ -42,8 +41,8 @@ export function mapPerfToAudio(perfMs: number, r: ClockReadings): number {
 }
 
 /**
- * Output latency (s): AudioContext.outputLatency when reported (> 0), else how far the output position
- * (from getOutputTimestamp) trails currentTime, else undefined (the scheduler then assumes 20 ms, ruling R15).
+ * Output latency (s): AudioContext.outputLatency when reported (> 0), else how far the output position (from
+ * getOutputTimestamp) trails currentTime, else undefined (the scheduler then assumes 20 ms).
  */
 export function measureOutputLatency(r: ClockReadings): number | undefined {
   if (r.outputLatency !== undefined && Number.isFinite(r.outputLatency) && r.outputLatency > 0) return r.outputLatency;
@@ -55,9 +54,9 @@ export function measureOutputLatency(r: ClockReadings): number | undefined {
 type ResumableContext = EventTarget & { readonly state: string; resume(): Promise<void> };
 
 /**
- * iOS suspends or interrupts the AudioContext when the page is backgrounded and never resumes it (review M7).
- * Resume on visibilitychange (when visible) and pageshow; report every non-running state change so queued tones
- * (whose audio times froze) can be cleared. Returns a function that removes the listeners.
+ * iOS suspends or interrupts the AudioContext when the page is backgrounded and never resumes it. Resume on
+ * visibilitychange (when visible) and pageshow; report every non-running state change so queued tones (whose audio
+ * times froze) can be cleared. Returns a function that removes the listeners.
  */
 export function keepContextRunning(
   ctx: ResumableContext,

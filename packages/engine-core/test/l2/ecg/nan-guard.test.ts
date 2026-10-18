@@ -28,7 +28,7 @@ function nanRig(id: RhythmId = 'sinus') {
   return { st, ctx };
 }
 
-describe('FU-4 18g: the non-finite scheduled-time guard', () => {
+describe('the non-finite scheduled-time guard', () => {
   const env = process.env.NODE_ENV;
   afterEach(() => { process.env.NODE_ENV = env; vi.restoreAllMocks(); });
 

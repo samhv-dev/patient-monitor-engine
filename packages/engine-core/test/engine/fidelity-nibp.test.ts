@@ -11,7 +11,7 @@ const truthAt = (run: MonRun, t: number, k: 'sbp' | 'dbp') => avg(run.rows.filte
 const artMeanAt = (run: MonRun, t: number) => run.rows.filter((r) => r.t > t - 30 && r.t <= t && r.m.abpMean?.value != null).map((r) => r.m.abpMean?.value as number);
 const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 
-describe('FU-5 fidelity 10: NIBP envelope', () => {
+describe('NIBP envelope', () => {
   it('MANUAL pulse pressure 10 at MAP 70 (77/67): measures, MAP within ± 8 of the arterial line (was FAILED: PP ≤ 20 never measured)', async () => {
     const run = await monitorRun({ mode: 'manual', tEnd: 200, steps: [...VENTED, [60, M.target('sbp', 77)], [60, M.target('dbp', 67)], [120, M.nibp('start')]] });
     const r = results(run)[0];
@@ -19,7 +19,7 @@ describe('FU-5 fidelity 10: NIBP envelope', () => {
     expect(Math.abs((r?.result?.map ?? 0) - avg(artMeanAt(run, r?.t ?? 0)))).toBeLessThanOrEqual(8);
   }, 120_000);
 
-  it.fails('MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor\'s 77/67 — measured 80/56 (PP 24); the truth reaches only 81/62 (PP 19: the MANUAL tracker, FU-4\'s side) and the cuff widens it by 5 (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5)', async () => {
+  it.fails('MANUAL pulse pressure 10 (77/67): the cuff shows the narrow pulse pressure — S/D within ± 8 of the instructor\'s 77/67 — measured 80/56 (PP 24); the truth reaches only 81/62 (PP 19: the MANUAL tracker) and the cuff widens it by 5', async () => {
     const run = await monitorRun({ mode: 'manual', tEnd: 200, steps: [...VENTED, [60, M.target('sbp', 77)], [60, M.target('dbp', 67)], [120, M.nibp('start')]] });
     const r = results(run)[0];
     expect(Math.abs((r?.result?.sys ?? 0) - 77)).toBeLessThanOrEqual(8);
@@ -33,7 +33,7 @@ describe('FU-5 fidelity 10: NIBP envelope', () => {
     expect(Math.abs((r.result?.dia ?? 0) - artAt(run, r.t, 'abpDia'))).toBeLessThanOrEqual(8);
   }, 120_000);
 
-  it('MANUAL AF 150, NIBP auto 1 min, 11 cycles: |bias| ≤ 6 mmHg against the displayed arterial line (Stage 2 acceptance 9\'s definition, there at AF 75) — measured SBP +0.1, DBP +3.6', async () => {
+  it('MANUAL AF 150, NIBP auto 1 min, 11 cycles: |bias| ≤ 6 mmHg against the displayed arterial line (haemodynamic acceptance 9\'s definition, there at AF 75) — measured SBP +0.1, DBP +3.6', async () => {
     const run = await monitorRun({ mode: 'manual', tEnd: 780, steps: [...VENTED, [30, M.rhythm('afib', { rateBpm: 150 })], [60, M.nibp('auto', 1)]] });
     const rs = results(run);
     expect(rs.length).toBeGreaterThanOrEqual(10);
@@ -41,7 +41,7 @@ describe('FU-5 fidelity 10: NIBP envelope', () => {
     expect(Math.abs(avg(rs.map((x) => (x.result?.dia ?? 0) - artAt(run, x.t, 'abpDia'))))).toBeLessThanOrEqual(6);
   }, 120_000);
 
-  it.fails('MANUAL AF 150, 11 cycles: |SBP bias| ≤ 6 mmHg against the TRUE radial pressure (the audit\'s AF criterion) — measured +10.8 (the first two readings 125/78 and 117/67: +24 and +13; DBP +2.7): the truth beat-mean counts AF\'s non-ejecting beats (FU-4\'s T2, ruling 5 there), which the cuff and the line do not see; Orchestrator ruling (FU-5 review), 2026-09-28, ruling 5', async () => {
+  it.fails('MANUAL AF 150, 11 cycles: |SBP bias| ≤ 6 mmHg against the TRUE radial pressure (the audit\'s AF criterion) — measured +10.8 (the first two readings 125/78 and 117/67: +24 and +13; DBP +2.7): the truth beat-mean counts AF\'s non-ejecting beats, which the cuff and the line do not see', async () => {
     const run = await monitorRun({ mode: 'manual', tEnd: 780, steps: [...VENTED, [30, M.rhythm('afib', { rateBpm: 150 })], [60, M.nibp('auto', 1)]] });
     const rs = results(run);
     expect(Math.abs(avg(rs.map((x) => (x.result?.sys ?? 0) - truthAt(run, x.t, 'sbp'))))).toBeLessThanOrEqual(6);

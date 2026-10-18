@@ -11,7 +11,7 @@ describe('pruneTruth', () => {
     expect(r.leaves).toBe(4);
     expect(r.truncated).toBe(false);
   });
-  it('Stage 7c: keeps blood.out — the published chemistry block, the one `out` that is physiology, not an event queue', () => {
+  it('keeps blood.out — the published chemistry block, the one `out` that is physiology, not an event queue', () => {
     const chem = { k: 4.2, lactate: 1 };
     const st = { resp: { out: [{ type: 'x' }] }, blood: { out: chem, core: { out: chem, ab: { ph: 7.4 } }, events: [] } };
     expect(pruneTruth(st).tree).toEqual({ resp: {}, blood: { out: { k: 4.2, lactate: 1 }, core: { ab: { ph: 7.4 } }, events: [] } });
@@ -34,7 +34,7 @@ describe('pruneTruth', () => {
     expect(r.tree).toEqual({ resp: { aer: [0.9, 0.8] }, pk: { rows: { propofol: { drugId: 'propofol', ce: 2.1 }, sevoflurane: { agent: 'sevoflurane', fet: 1.8 }, 2: { x: 1 } } }, hemo: {} });
     expect(r.dropped).toBe(2);
   });
-  it('skips the alarm profile and 7a\'s reference copies by path, nothing else of the same name', () => {
+  it('skips the alarm profile and the circulation\'s reference copies by path, nothing else of the same name', () => {
     const st = { hemo: { circ: { p: { rSys: 1 }, prof: { eesLv: 2 }, base: { eesLv: 2 }, ref: { sv: 70 }, cor: { ref: { sv: 70 } } } }, resp: { prof: 1 } };
     const r = pruneTruth(st, { alarms: { profile: { limits: { hr: { low: 50 } } }, silenced: false } });
     expect(r.tree).toEqual({ dev: { alarms: { silenced: false } }, hemo: { circ: { p: { rSys: 1 }, cor: { ref: { sv: 70 } } } }, resp: { prof: 1 } });

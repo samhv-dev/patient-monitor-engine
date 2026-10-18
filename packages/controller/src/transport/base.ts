@@ -7,7 +7,7 @@ export abstract class TransportBase implements ManagedTransport {
   abstract readonly kind: TransportKind;
   private readonly msgFns = new Set<(m: WireMessage) => void>();
   private readonly statusFns = new Set<(s: TransportStatus) => void>();
-  private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>(); // FU-11 (BA12)
+  private readonly presenceFns = new Set<(p: { hostOnline: boolean }) => void>();
   private current: TransportStatus = 'connecting';
   protected closed = false;
   /** Messages refused by parseWireMessage (malformed, oversized or carrying samples). */
@@ -40,7 +40,7 @@ export abstract class TransportBase implements ManagedTransport {
     };
   }
 
-  /** FU-11 (BA12): presence reports from the link (only links that know call presence()). */
+  /** Presence reports from the link (only links that know call presence()). */
   onPresence(fn: (p: { hostOnline: boolean }) => void): () => void {
     this.presenceFns.add(fn);
     return () => {

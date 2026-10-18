@@ -8,7 +8,7 @@ import { activeIds, M, monitorRun, VENTED, type MonRun } from '../helpers/monito
 const APNOEA = ['apnoea-co2', 'apnoea-resp'];
 const raised = (run: MonRun, ids: string[], from = 0, to = Infinity) => run.alarms.filter((a) => a.state === 'raised' && ids.includes(a.id) && a.t >= from && a.t < to);
 
-describe('FU-5 fidelity 6: a 60 s apnoea, then ventilation resumes (no acknowledge)', () => {
+describe('a 60 s apnoea, then ventilation resumes (no acknowledge)', () => {
   it.each([['philips-like', true], ['mindray-like', false], ['saadat-like', false]] as const)(
     '%s: ONE apnoea alarm, 20 ± 5 s after ventilation stops; once it stands no RR / awRR / EtCO2 LOW beside it (the falling RR and EtCO2 may alarm first); after resumption latched and silent only where the vendor latches (%s); awRR shown again',
     async (skin, latches) => {
@@ -36,7 +36,7 @@ describe('FU-5 fidelity 6: a 60 s apnoea, then ventilation resumes (no acknowled
   }, 120_000);
 });
 
-describe('FU-5 fidelity 7: paralysed apnoea with the CO2 line off (impedance only)', () => {
+describe('paralysed apnoea with the CO2 line off (impedance only)', () => {
   it('the cardiac overlay is not counted as breathing: APNEA stays from ≤ 25 s after the stop, RR never tracks the HR, no RR HIGH', async () => {
     const run = await monitorRun({ mode: 'modeled', sensors: { co2: 'off' }, tEnd: 420, steps: [[1, M.ett()], [1, M.vent(5, 0.21)], [100, M.drug('rocuronium', 0.6, 'mg/kg')], [120, M.ventOff()]] });
     const apnoea = run.rows.filter((r) => r.t >= 145);
@@ -47,7 +47,7 @@ describe('FU-5 fidelity 7: paralysed apnoea with the CO2 line off (impedance onl
   }, 120_000);
 });
 
-describe('FU-5 fidelity 8: disconnection and oesophageal intubation', () => {
+describe('disconnection and oesophageal intubation', () => {
   it('CO2 apnoea ≤ 25 s after the disconnect; EtCO2 < 5 mmHg within 6 breaths (30 s) of the oesophageal tube', async () => {
     const ev = (state: string) => ({ type: 'applyEvent', event: { kind: 'airway', state } });
     const run = await monitorRun({ mode: 'modeled', tEnd: 240, steps: [...VENTED, [60, ev('disconnected')], [120, ev('patent')], [180, ev('oesophageal')]] });
@@ -56,7 +56,7 @@ describe('FU-5 fidelity 8: disconnection and oesophageal intubation', () => {
   }, 120_000);
 });
 
-describe('FU-5 fidelity 9: desaturation lag, finger vs ear', () => {
+describe('desaturation lag, finger vs ear', () => {
   const run = (site?: string) => monitorRun({ mode: 'modeled', tEnd: 600, steps: [[1, M.ett()], [1, M.vent(5, 0.21)], ...(site ? [[2, M.sensor('spo2', 'on', site)] as [number, Record<string, unknown>]] : []), [120, M.ventOff()], [400, M.vent(5, 1)]] });
   const lag = (r: MonRun, from: number, below: boolean) => {
     const tt = r.rows.find((x) => x.t > from && (below ? x.sao2 < 90 : x.sao2 > 90))?.t ?? NaN;
@@ -76,7 +76,7 @@ describe('FU-5 fidelity 9: desaturation lag, finger vs ear', () => {
   // E-FU4-20 (orchestrator ruling at the FU-4 gate, 2026-09-29; R45 re-statement, declared): FU-4's dead-space root
   // (Task 18d, the patient's own resting PaCO2 and ventilator defaults) changes the apnoeic desaturation course the lag
   // is measured on — 12 → 13 s; the band's upper edge is re-stated to the measured 13 s, the lower edge unchanged.
-  it('ear: displayed lag 5–13 s (was 5–12; measured 13 after FU-4, E-FU4-20)', async () => {
+  it('ear: displayed lag 5–13 s (measured 13)', async () => {
     const r = await run('ear');
     expect(lag(r, 120, true)).toBeGreaterThanOrEqual(5);
     expect(lag(r, 120, true)).toBeLessThanOrEqual(13);

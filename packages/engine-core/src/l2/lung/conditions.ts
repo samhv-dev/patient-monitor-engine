@@ -1,5 +1,5 @@
 // Conditions → per-lung parameters (catalogue §33 stacking, Q93; severity knots after Pulse's severity-table
-// pattern, audit borrow #9 / N-P13). Pure: the same specs always resolve to the same LungParams.
+// pattern, N-P13). Pure: the same specs always resolve to the same LungParams.
 import { HEALTHY, LUNG_CONDITIONS, type Effect, type EffectKey, type Knots, type LungConditionData } from '../../../data/lung-pathology.ts';
 import type { LungConditionSpec, LungSide } from '../../types-lung.ts';
 import { R_TUBE, SIDE_SHARE } from './params.ts';
@@ -11,9 +11,9 @@ const SIDE_ADD: readonly EffectKey[] = ['atel', 'consol', 'vqLow', 'vdAlv'];
 const WATER_SHUNT_IDS: readonly string[] = ['pulmOedema', 'aspiration'];
 
 /**
- * FU-6 R2: airway smooth muscle. The reversible (bronchoconstrictor) part of a condition relaxes with the ONE
- * bronchodilation state B (0–1: 7g's `bus.airway.bronchodilation` — β2 agonists, epinephrine, volatile anaesthetics,
- * ketamine, magnesium, each with its own 7g time course). The condition's effective severity for the listed keys is
+ * Airway smooth muscle. The reversible (bronchoconstrictor) part of a condition relaxes with the ONE bronchodilation
+ * state B (0–1: the drug model's `bus.airway.bronchodilation` — β2 agonists, epinephrine, volatile anaesthetics,
+ * ketamine, magnesium, each with its own time course). The condition's effective severity for the listed keys is
  * s·(1 − frac·B). frac = the largest reversible share of the condition's airway obstruction:
  *   bronchospasm 0.85, anaphylaxis 0.85: acute smooth-muscle spasm, near-complete reversal with β2 agonist/epinephrine
  *     and deepening with a volatile (Dewachter 2009 Anesthesiology 111:1141; Miller 10e bronchospasm management);
@@ -22,8 +22,8 @@ const WATER_SHUNT_IDS: readonly string[] = ['pulmOedema', 'aspiration'];
  *     GINA 2023; Rodrigo 2002 Chest 122:160) [ENG 0.7].
  *   copd 0.2, raw only: bronchodilator response in ventilated COPD, inspiratory resistance −15–20 % (Dhand 1996 AJRCCM
  *     154:388) [ENG 0.2]; emphysema's compliance, dead space and diffusion do not reverse.
- * `shark`: the condition draws the Stage 3 shark-fin capnogram (R39-6 SHARK_TAU_II) at its equivalent bronchospasm
- * severity (FU-6 R6, Task 3: one capnogram whatever command started the spasm).
+ * `shark`: the condition draws the shark-fin capnogram (SHARK_TAU_II) at its equivalent bronchospasm severity (one
+ * capnogram whatever command started the spasm).
  */
 export const SMOOTH_MUSCLE: Readonly<Record<string, { frac: number; keys: readonly EffectKey[] | 'all'; shark: boolean }>> = {
   bronchospasm: { frac: 0.85, keys: 'all', shark: true },
@@ -33,33 +33,34 @@ export const SMOOTH_MUSCLE: Readonly<Record<string, { frac: number; keys: readon
 };
 
 /**
- * FU-6 F6 (Orchestrator ruling (FU-6 review), 2026-09-28): the reversible share is not a constant — a REFRACTORY spasm
- * exists. `frac` above is the share a FRESH, severe-but-not-near-fatal spasm reverses; two things take it away, both
- * because the obstruction stops being smooth muscle:
- *   SEVERITY. In the R39-6 near-fatal range (severity 1.0 → 1.25, reached through the airway `bronchospasm` alias) the
+ * The reversible share is not a constant — a REFRACTORY spasm exists. `frac` above is the share a FRESH,
+ * severe-but-not-near-fatal spasm reverses; two things take it away, both because the obstruction stops being smooth
+ * muscle:
+ *   SEVERITY. In the near-fatal range (severity 1.0 → 1.25, reached through the airway `bronchospasm` alias) the
  *     lumen fills with mucosal oedema and mucus plugs rather than tone (extensive luminal plugging in fatal asthma:
  *     Kuyper et al. 2003 Am J Med 115:6), so the reversible share falls to (1 − REFRACT_SEV) of itself at 1.25 [ENG 0.6].
  *   DURATION. A slow-onset attack — hours of inflammation, oedema and plugging — responds less and more slowly to a β2
  *     agonist than a sudden-onset, mostly bronchospastic one (McFadden 2003 AJRCCM 168:740; Rodrigo & Rodrigo 2000
  *     Chest 118:1547; Rodrigo, Rodrigo & Hall 2004 Chest 125:1081), so the share decays toward (1 − REFRACT_DUR_MAX) of
- *     itself with τ REFRACT_TAU_MIN [ENG 0.9 and 360 min (the 6 h slow-onset boundary); fit target: Task 2's
- *     non-responder row — a 12 h severe asthma improves < 15 % with a saturating β2 dose (measured −14 %) — and every
- *     fresh arm keeping ≥ 95 % of `frac` (0.963 at 15 min)].
+ *     itself with τ REFRACT_TAU_MIN [ENG 0.9 and 360 min (the 6 h slow-onset boundary); fit target: a non-responder —
+ *     a 12 h severe asthma improves < 15 % with a saturating β2 dose (measured −14 %) — and every fresh arm keeping
+ *     ≥ 95 % of `frac` (0.963 at 15 min)].
  * The age is sim time since the condition appeared plus the spec's `ageMin` (the attack's age when it was sent), so
  * status asthmaticus is one command: `lungCondition asthma 1, ageMin 720` keeps ≈ 0.7 · 0.22 ≈ 0.16 of its airway
- * obstruction reversible. FU-6 adds NO dose-response of its own — B is 7g's; this function is the MAXIMUM reversal.
+ * obstruction reversible. This adds NO dose-response of its own — B is the drug model's; this function is the MAXIMUM
+ * reversal.
  */
-/** FU-7 (addendum 24): a drug-driven bronchospasm severity — histamine release (morphine, atracurium, mivacurium) and
- * anaphylactic mediators act on the SAME smooth muscle FU-6's `relaxed()` relieves, so the drug's contribution is an
- * added SEVERITY on the `bronchospasm` spec, not a second state. 0.35 at full histamine [ENG; direction: M10 ch. 22 /
- * ch. 24 (wheeze and bronchospasm after a fast benzylisoquinolinium or morphine bolus), size has no source]. A plain
- * scalable input: a future per-profile airway-reactivity gain (research/19 CM-11a) multiplies it in one place. */
+/** A drug-driven bronchospasm severity — histamine release (morphine, atracurium, mivacurium) and anaphylactic
+ * mediators act on the SAME smooth muscle `relaxed()` relieves, so the drug's contribution is an added SEVERITY on the
+ * `bronchospasm` spec, not a second state. 0.35 at full histamine [ENG; direction: M10 ch. 22 / ch. 24 (wheeze and
+ * bronchospasm after a fast benzylisoquinolinium or morphine bolus), size has no source]. A plain scalable input: a
+ * future per-profile airway-reactivity gain (research/19) multiplies it in one place. */
 export const HIST_SPASM = 0.35;
 export const REFRACT_SEV = 0.6;
 export const REFRACT_DUR_MAX = 0.9;
 export const REFRACT_TAU_MIN = 360;
 
-/** FU-6 F6: the share of a smooth-muscle condition's severity that bronchodilation can reverse (0–`frac`). */
+/** The share of a smooth-muscle condition's severity that bronchodilation can reverse (0–`frac`). */
 export function reversibleShare(frac: number, severity: number, ageMin = 0): number {
   const sev = 1 - REFRACT_SEV * Math.min(1, Math.max(0, (severity - 1) / 0.25)); // near-fatal: oedema and plugging
   const dur = 1 - REFRACT_DUR_MAX * (1 - Math.exp(-Math.max(0, ageMin) / REFRACT_TAU_MIN)); // slow-onset attack
@@ -67,9 +68,9 @@ export function reversibleShare(frac: number, severity: number, ageMin = 0): num
 }
 
 /**
- * FU-6 R6: the shark-fin capnogram's severity (0 = none) from the smooth-muscle conditions after bronchodilation —
- * bronchospasm at its own (unclamped, 1.25 = the R39-6 near-fatal extreme) severity; the others at the bronchospasm
- * severity with the same airway resistance (Stage 3's raw = 1 + 5·s^1.5 inverted). `ageMin` as `resolveLung` (F6).
+ * The shark-fin capnogram's severity (0 = none) from the smooth-muscle conditions after bronchodilation — bronchospasm
+ * at its own (unclamped, 1.25 = the near-fatal extreme) severity; the others at the bronchospasm severity with the same
+ * airway resistance (raw = 1 + 5·s^1.5 inverted). `ageMin` as `resolveLung`.
  */
 export function spasmSeverity(specs: readonly LungConditionSpec[], bd = 0, exempt: readonly string[] = [], ageMin: Readonly<Record<string, number>> = {}): number {
   let out = 0;
@@ -87,13 +88,13 @@ export function spasmSeverity(specs: readonly LungConditionSpec[], bd = 0, exemp
 }
 
 /**
- * Effective severity of `spec` for effect `key` under bronchodilation B (FU-6 R2); `exempt` ids keep their own.
- * `ageMin` = the attack's age in minutes (FU-6 F6; 0 = fresh).
+ * Effective severity of `spec` for effect `key` under bronchodilation B; `exempt` ids keep their own. `ageMin` = the
+ * attack's age in minutes (0 = fresh).
  */
 export function relaxed(spec: LungConditionSpec, key: EffectKey, s: number, bd: number, exempt: readonly string[], ageMin = 0): number {
   const sm = SMOOTH_MUSCLE[spec.id];
   if (!sm || bd <= 0 || exempt.includes(spec.id)) return s;
-  const frac = reversibleShare(sm.frac, spec.severity, ageMin); // FU-6 F6: the non-reversible share
+  const frac = reversibleShare(sm.frac, spec.severity, ageMin); // The non-reversible share
   return sm.keys === 'all' || sm.keys.includes(key) ? s * (1 - frac * Math.min(1, bd)) : s;
 }
 
@@ -139,13 +140,12 @@ export interface Resolved {
 }
 
 /**
- * Resolve condition specs for a patient of `ibwKg`. `bronchoDil` = FU-6 R2's bronchodilation state B (0 = none; the
- * Stage 3 airway multiplier `rawEvent` it replaced is retired: the airway `bronchospasm` event is an alias of the lung
- * condition, FU-6 R6); `bdExempt` = condition ids whose owner already applies the relief (7e's anaphylaxis);
- * `smAgeMin` = each smooth-muscle condition's age in minutes (FU-6 F6).
- * `evlwiAdd` = Stage 7c's lung water from the blood (mL/kg above the conditions' EVLWI; G7b ruling 8, E-7c-1).
- * Sided conditions (decision 13): 'affected' effects act on the chosen side; 'both' crs/raw are whole-system
- * multipliers converted onto that side, vdAlv/vqLow adds go to that side ÷ its share, global keys stay global.
+ * Resolve condition specs for a patient of `ibwKg`. `bronchoDil` = the bronchodilation state B (0 = none; the airway
+ * `bronchospasm` event is an alias of the lung condition); `bdExempt` = condition ids whose owner already applies the
+ * relief (the endocrine model's anaphylaxis); `smAgeMin` = each smooth-muscle condition's age in minutes. `evlwiAdd` =
+ * the lung water from the blood model (mL/kg above the conditions' EVLWI). Sided conditions: 'affected' effects act on
+ * the chosen side; 'both' crs/raw are whole-system multipliers converted onto that side, vdAlv/vqLow adds go to that
+ * side ÷ its share, global keys stay global.
  */
 export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, evlwiAdd = 0, bronchoDil = 0, bdExempt: readonly string[] = [], smAgeMin: Readonly<Record<string, number>> = {}): Resolved {
   const sides: Acc[] = [fresh(), fresh()];
@@ -163,7 +163,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
     let consolSum = 0;
     const local: Acc[] = [fresh(), fresh()];
     for (const e of d.effects) {
-      const v = effectValue(e, relaxed(spec, e.key, s, bronchoDil, bdExempt, smAgeMin[spec.id] ?? 0)); // FU-6 R2: the reversible part relaxes (F6: by age)
+      const v = effectValue(e, relaxed(spec, e.key, s, bronchoDil, bdExempt, smAgeMin[spec.id] ?? 0)); // The reversible part relaxes (by age)
       if (e.key === 'extraShunt' && e.op === 'add' && WATER_SHUNT_IDS.includes(d.id)) waterAdd += v; // Stage V.1 (E-V1-2)
       if (GLOBAL.includes(e.key)) { apply(g, e.key, e.op, v); continue; }
       if (!d.sided) { apply(local[0] as Acc, e.key, e.op, v); apply(local[1] as Acc, e.key, e.op, v); }
@@ -198,7 +198,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
   const crsH = HEALTHY.crs * w;
   const ccwH = HEALTHY.ccw * w;
   // lung water (tables §4.5, Q25): shunt +0.03 per mL/kg above 10; lung compliance ×(1 − 0.04·(EVLWI − 7)₊) ≥ 0.5; R ×(1 + 0.03·(EVLWI − 7)₊)
-  const ew = Math.max(0, g.evlwi + evlwiAdd - 7); // Stage 7c: + the blood's lung water (E-7c-1)
+  const ew = Math.max(0, g.evlwi + evlwiAdd - 7); // + the blood's lung water
   const water = { c: Math.max(0.5, 1 - 0.04 * ew), r: 1 + 0.03 * ew, shunt: 0.03 * Math.max(0, g.evlwi + evlwiAdd - 10) };
   for (let k = 0; k < 2; k++) {
     const a = sides[k] as Acc;
@@ -213,7 +213,7 @@ export function resolveLung(specs: readonly LungConditionSpec[], ibwKg: number, 
     sp.atel = a.atel * scale;
     sp.consol = a.consol * scale;
     sp.aerRef = Math.max(0.05, 1 - sp.atel - sp.consol);
-    sp.rLung = Math.max(0.5, (HEALTHY.raw * a.raw * water.r - R_TUBE)) / w / share; // FU-6 R6: no Stage 3 multiplier
+    sp.rLung = Math.max(0.5, (HEALTHY.raw * a.raw * water.r - R_TUBE)) / w / share; // no airway-event multiplier
     sp.rawExp = a.rawExp;
     sp.fSlow = a.fSlow;
     sp.tauSlowS = Math.max(0.2, a.tauSlowS);

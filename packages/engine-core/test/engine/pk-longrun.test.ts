@@ -7,7 +7,7 @@ import { cmd } from '../helpers/hemo.ts';
 import { yieldNow } from '../helpers/pk.ts';
 import { expectedIndex, LONGRUN_HOURS, LONGRUN_S } from '../helpers/longrun.ts';
 
-describe('Stage 7g long run', () => {
+describe('drug long run', () => {
   // FU-9 Gate: the run is shared by the `it` and the `it.fails` below (memoised: one 6 h run, R50 F10)
   let memo: Promise<{ e: ReturnType<typeof createEngine>; last: Extract<EngineEvent, { type: 'drugs' }> | null }> | undefined;
   const longRun = () => (memo ??= (async () => {
@@ -44,7 +44,7 @@ describe('Stage 7g long run', () => {
   // know the patient's liver flow — real pumps do not either; whether the pump's model should see it is Ali's question.
   // FU-9 → FU-10 Gate (E-FU10-13) → FU-8 B4 (E-FU8B-3): the declared FU-9 `it.fails` (2.5098) is back inside the unchanged
   // band — FU-10 Part A measured 2.4995, FU-8 Part B alone 2.5021; the merged tree's value is in the title.
-  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5033 on the merged tree with FU-10 Part A and FU-8 Part B (2.4995 FU-10 alone, 2.5021 FU-8 alone, 2.5098 with FU-9)`, { timeout: 1_800_000 }, async () => {
+  it(`${LONGRUN_HOURS} h: TCI propofol effect site held at 2.5 ± 0.005 — measured 2.5033`, { timeout: 1_800_000 }, async () => {
     const { last } = await longRun();
     const l = last as unknown as Extract<EngineEvent, { type: 'drugs' }>;
     console.log(`pk-longrun ${LONGRUN_HOURS} h propofol Ce ${l.drugs.find((x) => x.id === 'propofol')!.ce.toFixed(4)}`);

@@ -1,6 +1,6 @@
-// Stage 7g pipeline: plain-data drug state stepped at 10 Hz on the absolute grid, commands, clearance factors and
-// the PD combination. Outputs: pk.fx (7a DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce, volatiles,
-// the dose log; R51 §2–3), pk.out (1 Hz `drugs`). 7g consumes EVERY library drug event (decision 10).
+// Drug-model pipeline: plain-data drug state stepped at 10 Hz on the absolute grid, commands, clearance factors and
+// the PD combination. Outputs: pk.fx (the circulation's DrugEffect), pk.betaBlockAdd, pk.bus (DrugBus — per-agent Ce,
+// volatiles, the dose log), pk.out (1 Hz `drugs`). The drug model consumes EVERY library drug event.
 import type { Command, EngineEvent, PatientProfile } from '../../types.ts';
 import { DRUG_BUS_NEUTRAL, type BusAgent, type BusVolatile, type DoseLogEntry, type DrugBus, type DrugPanelRow, type PkClinicalEvent, type PkRoute, type RateUnit } from '../../types-pk.ts';
 import type { DrugEffect } from '../circ/drugs.ts';
@@ -34,14 +34,14 @@ export interface DrugInst {
   model: string | null; // propofol TCI model choice
   x: number[]; // compartment state (pk/nmb rows); [] for gamma/volatile/blood rows
   factor: number; // clearance factor the params were built with (quantised)
-  dist?: number; // FU-4 G10: cardiac-output ratio the distribution was built with (quantised; rows with flowDist)
+  dist?: number; // Cardiac-output ratio the distribution was built with (quantised; rows with flowDist)
   rate: number; // amount/min
   rateUntil: number; // s (NEVER = until changed)
   tci: { mode: 'plasma' | 'effect'; target: number; maxRate: number; next: number } | null;
   doses: GammaDose[];
   infC: number; // gamma infusion state, reference units
   infTarget: number;
-  /** FU-7.1 A5: amount infused since the last advance pass (blood rows only), logged to `bus.doses` there. */
+  /** Amount infused since the last advance pass (blood rows only), logged to `bus.doses` there. */
   acc?: number;
   total: number; // amount given
   bound: number; // amount bound by sugammadex in plasma (rocuronium/vecuronium)
@@ -61,10 +61,10 @@ export interface PkState {
   lastC: Record<string, number>; // last PD concentration per drug (panel, tests, hooks)
   desSurgeT: number; // desflurane sympathetic surge start (−NEVER: none)
   macPrev: number[]; // desflurane MAC over the last 60 s at 1 Hz
-  /** FU-4 G10 (review F12(3)): the cardiac-output ratio distFactor gave at the last advance (1 before any). */
+  /** The cardiac-output ratio distFactor gave at the last advance (1 before any). */
   distQ?: number;
-  /** FU-4 G10 (E-FU4-10): TEST-ONLY seam — pins the cardiac-output ratio (as `pinCoreTemp`/`pinHbfRel` do) so a rig can
-   * assert PK equality under pinned conditions. Never set by the engine. */
+  /** TEST-ONLY seam — pins the cardiac-output ratio (as `pinCoreTemp`/`pinHbfRel` do) so a rig can assert PK
+   * equality under pinned conditions. Never set by the engine. */
   pinDistQ?: number;
   panelNext: number;
   dec: Record<string, number>; // decrement-from-now per running drug, min (Task 19)
@@ -72,9 +72,9 @@ export interface PkState {
 }
 
 /** Context gathered by the engine each pass from the other modules (duck-typed; neutral when absent). */
-/** FU-7 (R51 addendum 25): endogenous catecholamines act through 7g's OWN adrenergic rows — the same receptors, Loewe
- * sums, β-occupancy shift and acidosis/vasopressor-responsiveness scaling as an injected dose. Circulatory targets only:
- * endogenous adrenaline's metabolic effects stay 7e's (stressEffects), so nothing is counted twice. */
+/** Endogenous catecholamines act through the drug model's OWN adrenergic rows — the same receptors, Loewe sums,
+ * β-occupancy shift and acidosis/vasopressor-responsiveness scaling as an injected dose. Circulatory targets only:
+ * endogenous adrenaline's metabolic effects stay the endocrine model's (stressEffects), so nothing is counted twice. */
 const ENDO_CIRC_TARGETS: readonly PdTarget[] = ['hr', 'ees', 'svr', 'pvr', 'v0Frac'];
 const endoRow = (id: string): DrugRow | null => {
   const r = DRUGS[id];
@@ -91,14 +91,17 @@ function endoCatActives(cat: PkCtx['endoCat']): Active[] {
 
 export interface PkCtx {
   coLpm: number; vaLpm: number; frcL: number; tempC: number; ph: number;
-  coRefLpm?: number; // FU-4 G10: the circulation's resting output (the reference distFactor divides by)
+  coRefLpm?: number; // The circulation's resting output (the reference distFactor divides by)
   hepFlow: number; hepFn: number; renal: number; betaBlockC: number; vasoResp: number;
-  /** FU-7 (addendum 21): the 7a profile's β-receptor occupancy and its selectivity. */
+  /** The circulation profile's β-receptor occupancy and its selectivity. */
   betaOcc?: number; betaNonSel?: boolean;
-  /** FU-7 (R51 addendum 25): 7e's nociceptive CIRCULATING catecholamines, rate-equivalents of 7g's own rows (MODELED). */
+  /**
+   * The endocrine model's nociceptive CIRCULATING catecholamines, rate-equivalents of the drug model's own rows
+   * (MODELED).
+   */
   endoCat?: { ne: number; epi: number };
-  /** FU-2 item 9: hepFn already carries the temperature (7d's `blood.core.liver = liverFn·tempF`), so clFactor must not
-   * apply its own temperature term to the hepatic share again. */
+  /** hepFn already carries the temperature (the organ model's `blood.core.liver = liverFn·tempF`), so clFactor must
+   * not apply its own temperature term to the hepatic share again. */
   hepFnTemp: boolean;
 }
 export const NEUTRAL_PK_CTX: PkCtx = { coLpm: 5, vaLpm: 4.2, frcL: 2.1, tempC: 37, ph: 7.4, hepFlow: 1, hepFn: 1, renal: 1, betaBlockC: 0, vasoResp: 1, hepFnTemp: false, betaOcc: 0, betaNonSel: false };
@@ -119,7 +122,7 @@ export function createPkState(patient: PkPatient = DEFAULT_PK_PATIENT): PkState 
   };
 }
 
-/** The row's concentration unit — the unit of every BusAgent field and of the panel's Ce (R51 §2). */
+/** The row's concentration unit — the unit of every BusAgent field and of the panel's Ce. */
 export function concUnit(row: DrugRow): string {
   if (row.pk.kind === 'gamma') return '× ref dose';
   if (row.pk.kind === 'perKg' && row.pk.conc === 'rateEq') return 'µg/kg/min eq';
@@ -155,7 +158,7 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
   switch (row.pk.kind) {
     case 'model': {
       const b = modelParams(pk, inst.model ?? row.pk.model);
-      // opioids: a SEPARATE ventilatory effect site after the model's own (R51 §2) → x[4]
+      // Opioids: a SEPARATE ventilatory effect site after the model's own → x[4]
       return row.pk.ventKe0 !== undefined ? { ...b, ke0: [...b.ke0, row.pk.ventKe0] } : b;
     }
     case 'perKg':
@@ -170,9 +173,9 @@ function baseParams(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null 
 }
 
 /**
- * Clearance factor from liver flow/function, kidney and temperature (decision 7), quantised to 1 % (cache hits).
- * FU-2 item 9: temperature is applied once — when `hepFn` carries it (7d), the low-extraction hepatic share takes
- * `hepFn` alone and 7g's own term scales the rest (flow-limited hepatic, renal, other).
+ * Clearance factor from liver flow/function, kidney and temperature, quantised to 1 % (cache hits). Temperature is
+ * applied once — when `hepFn` carries it, the low-extraction hepatic share takes `hepFn` alone and the drug model's own
+ * term scales the rest (flow-limited hepatic, renal, other).
  */
 export function clFactor(row: DrugRow, ctx: PkCtx): number {
   const h = row.elim?.hepatic ?? 0;
@@ -183,8 +186,8 @@ export function clFactor(row: DrugRow, ctx: PkCtx): number {
   return Math.round(organ * 100) / 100;
 }
 
-/** FU-7 (research/13 H9): the decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the
- * clearance-governed share of the chain's decline (ke, Task 2); f = clFactor. 1 without `elim.t12S` or a chain. */
+/** The decline-rate multiplier of a gamma row, 1 − φ·(1 − f), φ = min(1, (ln 2/t½β)/ke) — the clearance-governed
+ * share of the chain's decline (ke); f = clFactor (research/13 H9). 1 without `elim.t12S` or a chain. */
 export function gammaDeclineRate(row: DrugRow, f: number): number {
   const t12 = row.elim?.t12S;
   if (row.pk.kind !== 'gamma' || !t12 || f === 1 || gammaN(row.pk.tpS, row.pk.t10S) >= ONSET_N_MIN) return 1;
@@ -192,10 +195,10 @@ export function gammaDeclineRate(row: DrugRow, f: number): number {
   return 1 - phi * (1 - f);
 }
 
-/** FU-4 G10: cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075
- * L/min/kg), quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps 7g's model. */
-/** FU-4 G10 (review F12(3)): resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation
- * times, Guyton & Hall [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
+/** Cardiac output ÷ the patient's own resting output (the circulation's stabilised reference; else 0.075 L/min/kg),
+ * quantised to 5 % in 0.3–1.5 (cache hits) — exactly 1 at rest, so a resting engine keeps the unscaled model. */
+/** Resting arm-to-brain circulation time, s (10–15 s: the classic dye/decholin circulation times, Guyton & Hall
+ * [TXT]) [ENG value]; the lag at output ratio q is ARM_BRAIN_S·(1/q − 1). */
 export const ARM_BRAIN_S = 12;
 export function distFactor(ctx: PkCtx, weightKg: number): number {
   const q = ctx.coLpm / (ctx.coRefLpm ?? 0.075 * weightKg);
@@ -207,7 +210,7 @@ function params(pk: PkState, row: DrugRow, inst: DrugInst): PkParams | null {
   if (!b) return null;
   const q = inst.dist ?? 1;
   if (q === 1) return { ...b, k10: b.k10 * inst.factor };
-  const vF = 0.5 + 0.5 * q; // FU-4 G10: V1 × vF, CL2/CL3 × q, CL1 unchanged (D12)
+  const vF = 0.5 + 0.5 * q; // V1 × vF, CL2/CL3 × q, CL1 unchanged
   return { ...b, v1: b.v1 * vF, k10: (b.k10 * inst.factor) / vF, k12: (b.k12 * q) / vF, k13: (b.k13 * q) / vF, k21: b.k21 * q, k31: b.k31 * q };
 }
 
@@ -252,8 +255,8 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   }
   const bloodBolusOnly = `${row.id} is given as a bolus in v1; 7c owns its kinetics`;
   if (ev.kind === 'infusion') {
-    if (row.pk.kind === 'blood' && !row.rateActsVia) return bloodBolusOnly; // FU-7.1 A5: KCl declares its rate consumer
-    if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia) return `${row.id} has no infusion model: give it as a bolus`; // FU-8 (B1)
+    if (row.pk.kind === 'blood' && !row.rateActsVia) return bloodBolusOnly; // KCl declares its rate consumer
+    if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia) return `${row.id} has no infusion model: give it as a bolus`;
     const c = ev as Extract<PkClinicalEvent, { kind: 'infusion' }>;
     if (!(c.rate >= 0 && Number.isFinite(c.rate))) return 'rate must be ≥ 0';
     const perMl = c.concentration ? toAmount(c.concentration.amount, c.concentration.unit, row.amountUnit, w) : row.syringePerMl;
@@ -262,23 +265,23 @@ export function validatePkCommand(cmd: Command, _pk: PkState): string | undefine
   }
   const d = ev as Extract<PkClinicalEvent, { kind: 'drug' }>;
   if (!(Number.isFinite(d.dose) && d.dose >= 0)) return 'dose must be ≥ 0';
-  if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4'; // Stage 7d E-7d-1
+  if (d.concentrationPct !== undefined && (row.id !== 'hypertonicSaline' || ![3, 7.5, 23.4].includes(d.concentrationPct))) return 'concentrationPct is hypertonic saline only: 3, 7.5 or 23.4';
   const isRate = d.unit.includes('/min') || d.unit.includes('/h');
-  if (row.pk.kind === 'blood' && (isRate || d.infusion) && !row.rateActsVia) return bloodBolusOnly; // FU-7.1 A5
-  // FU-8 (B1): the route is explicit — the engine's kinetics are intravenous; any other route is refused, not given as IV
+  if (row.pk.kind === 'blood' && (isRate || d.infusion) && !row.rateActsVia) return bloodBolusOnly;
+  // The route is explicit — the engine's kinetics are intravenous; any other route is refused, not given as IV
   const routes = row.routes ?? IV_ROUTES;
   if (d.route !== undefined && !routes.includes(d.route)) return `${row.id}: route ${d.route} is not modelled — the engine gives ${routes.join(', ')} doses only`; // an event without a route (scenario/oracle JSON) is IV, as before
-  // FU-8 (B1): a curve-based row without an infusion reference cannot act as an infusion (it was accepted and did nothing)
+  // A curve-based row without an infusion reference cannot act as an infusion (it was accepted and did nothing)
   if (row.pk.kind === 'gamma' && row.pk.refRate === undefined && !row.rateActsVia && (isRate || d.infusion)) return `${row.id} has no infusion model: give it as a bolus`;
   if (!isRate && d.dose === 0) return 'dose must be > 0';
   const r = isRate ? toRate(d.dose, d.unit as never, row.amountUnit, w, row.syringePerMl) : toAmount(d.dose, d.unit, row.amountUnit, w, row.syringePerMl);
   return typeof r === 'string' ? r : undefined;
 }
 
-/** FU-8 (B1): the routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
+/** The routes whose kinetics the engine's intravenous models honour (IO and a central line are IV). */
 export const IV_ROUTES: readonly PkRoute[] = ['iv', 'io', 'central'];
 
-/** Apply a validated command. True for every drug/infusion/tci/vaporiser command (7g consumes them all, R51 §3). */
+/** Apply a validated command. True for every drug/infusion/tci/vaporiser command (the drug model consumes them all). */
 export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   if (cmd.type !== 'applyEvent') return false;
   const ev = cmd.event as PkClinicalEvent;
@@ -296,13 +299,13 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   const row = DRUGS[ev.drugId] as DrugRow;
   const d = inst(pk, row.id);
   const w = pk.patient.weightKg;
-  const pct = ev.kind === 'drug' && row.id === 'hypertonicSaline' ? (ev.concentrationPct ?? 3) : undefined; // Stage 7d E-7d-1
+  const pct = ev.kind === 'drug' && row.id === 'hypertonicSaline' ? (ev.concentrationPct ?? 3) : undefined;
   const logDose = (amount: number) => pk.pending.push({ agent: row.id, mgPerKg: mgPerKgOf(row, amount, w), amount, amountUnit: row.amountUnit, t, ...(pct !== undefined ? { concentrationPct: pct } : {}) });
   if (row.pk.kind === 'blood') {
-    // 7c's chemistry (decision 10): validated as a bolus; 7g records and logs it, 7c's mass balance acts on bus.doses
-    // FU-7.1 A5: a row that declares `rateActsVia` may also be INFUSED (potassium chloride, 10–20 mmol/h). The ordered
-    // rate accrues into the dose log one entry per advance pass, so 7c's mass balance sees the same stream it already
-    // reads for a bolus — 7g keeps no kinetics of its own for these rows.
+    // Blood chemistry: validated as a bolus; the drug model records and logs it, the blood model's mass balance acts
+    // on bus.doses. A row that declares `rateActsVia` may also be INFUSED (potassium chloride, 10–20 mmol/h). The
+    // ordered rate accrues into the dose log one entry per advance pass, so the blood model's mass balance sees the
+    // same stream it already reads for a bolus — the drug model keeps no kinetics of its own for these rows.
     const rateLimit = row.maxRatePerH;
     if (row.rateActsVia && (ev.kind === 'infusion' || (ev.kind === 'drug' && (ev.infusion || ev.unit.includes('/min') || ev.unit.includes('/h'))))) {
       const unit = ev.kind === 'infusion' ? ev.unit : (ev.unit as RateUnit);
@@ -316,8 +319,8 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
     }
     const e = ev as Extract<PkClinicalEvent, { kind: 'drug' }>;
     const amt = toAmount(e.dose, e.unit, row.amountUnit, w, row.syringePerMl) as number;
-    // FU-7.1 A5: a row with a documented maximum RATE ordered as a bolus — the dose is given as ordered (FU-8 B1: no
-    // silent clamp) with a warning naming the rate it should have run at. KCl by iv push is the error the warning is for.
+    // A row with a documented maximum RATE ordered as a bolus — the dose is given as ordered (no silent clamp) with a
+    // warning naming the rate it should have run at. KCl by iv push is the error the warning is for.
     if (rateLimit) {
       pk.out.push({ type: 'drugWarning', t, drugId: row.id, text: `${row.name}: ${+amt.toFixed(1)} ${row.amountUnit} ordered as a bolus — it must be infused at ${rateLimit.amount * (rateLimit.perKg ? w : 1)} ${row.amountUnit}/h or less (${rateLimit.src})` });
     }
@@ -327,8 +330,8 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
   }
   const refScale = row.pk.kind === 'gamma' ? row.pk.refDose * (row.pk.perKg ? w : 1) : 1;
   const setRate = (amountPerMin: number) => {
-    if (row.pk.kind === 'gamma') d.infTarget = row.pk.refRate ? amountPerMin / (row.pk.refRate * ((row.pk.refRatePerKg ?? row.pk.perKg) ? w : 1)) : 0; // FU-8 (B1)
-    d.rate = amountPerMin; // Stage 7e (E-7e-4): the ordered rate, gamma rows too (their PK never reads it; 7e reads insulin/dextrose here)
+    if (row.pk.kind === 'gamma') d.infTarget = row.pk.refRate ? amountPerMin / (row.pk.refRate * ((row.pk.refRatePerKg ?? row.pk.perKg) ? w : 1)) : 0;
+    d.rate = amountPerMin; // The ordered rate, gamma rows too (their PK never reads it; the endocrine model reads insulin/dextrose here)
     d.rateUntil = NEVER;
   };
   if (ev.kind === 'tci') {
@@ -347,7 +350,7 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
     } else {
       const amt = toAmount(ev.dose, ev.unit, row.amountUnit, w, row.syringePerMl) as number;
       logDose(amt);
-      // FU-8 (B1): above the documented maximum → a warning event; the dose is given as ordered (no silent clamp)
+      // Above the documented maximum → a warning event; the dose is given as ordered (no silent clamp)
       const mx = row.maxDose;
       if (mx) {
         const lim = mx.amount * (mx.perKg ? w : 1);
@@ -364,11 +367,12 @@ export function applyPkCommand(pk: PkState, cmd: Command, t: number): boolean {
         d.bolusTimes.push(t);
       } else {
         d.total += amt;
-        d.bolusTimes.push(t); // FU-4 G7: every bolus is recorded, not only the gamma rows' (the repeat-sux hook reads it)
-        // the engine's committed pk state can trail the command time by < 1 step: the bolus lands on its own grid instant
-        // FU-4 G10 (review F12(3)): a low output delays the onset by the arm-to-brain circulation time — a pure transit
-        // lag ARM_BRAIN_S·(1/q − 1) before the bolus reaches the central compartment. Not a slower ke0: cerebral flow is
-        // autoregulated in shock, and scaling ke0 by q lowered the peak (measured 0.87× at q 0.6) instead of delaying it.
+        d.bolusTimes.push(t); // Every bolus is recorded, not only the gamma rows' (the repeat-sux hook reads it)
+        // The engine's committed pk state can trail the command time by < 1 step: the bolus lands on its own grid
+        // instant. A low output delays the onset by the arm-to-brain circulation time — a pure transit lag
+        // ARM_BRAIN_S·(1/q − 1) before the bolus reaches the central compartment. Not a slower ke0: cerebral flow is
+        // autoregulated in shock, and scaling ke0 by q lowered the peak (measured 0.87× at q 0.6) instead of
+        // delaying it.
         const tIn = t + (row.flowDist ? ARM_BRAIN_S * (1 / (pk.distQ ?? 1) - 1) : 0);
         if (tIn > pk.t + 1e-9) pk.due.push({ id: row.id, amt, t: tIn });
         else d.x[0] = (d.x[0] as number) + amt;
@@ -397,7 +401,7 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
     case 'nmb':
       return { c: d.x[3] as number, plasma: p ? cp(p, d.x) : 0, nmj: d.x[3] as number, dia: d.x[4] as number };
     case 'gamma': {
-      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S), row.pk.t10S) + d.infC; // FU-7 (addendum 19): zero-slope onset
+      const c = gammaConc(d.doses, t, row.pk.tpS, gammaN(row.pk.tpS, row.pk.t10S), row.pk.t10S) + d.infC; // Zero-slope onset
       return { c, plasma: c };
     }
     default:
@@ -406,7 +410,7 @@ function siteConc(pk: PkState, row: DrugRow, d: DrugInst, p: PkParams | null, t:
 }
 
 function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
-  // FU-7 (R51 addendum 25): the surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
+  // The surge's circulating catecholamines join the adrenergic rows' PD (never `agents`/`doses`)
   const actives: Active[] = endoCatActives(ctx.endoCat);
   let lipid = 0;
   for (const d of Object.values(pk.drugs)) {
@@ -417,13 +421,13 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       const tpS = row.pk.tpS;
       const n = gammaN(tpS, row.pk.t10S);
       d.doses = d.doses.filter((x) => t - x.t < tpS * (4 + 12 / Math.sqrt(n))); // pruned when < 1e-4 of peak [ENG bound]
-      // FU-7 (research/13 H9): organ function slows the ELIMINATION share of the decline — each dose past its peak ages at
-      // rate g (dose time moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution).
+      // Organ function slows the ELIMINATION share of the decline — each dose past its peak ages at rate g (dose time
+      // moved forward by dt·(1 − g)); before the peak nothing changes (onset is distribution) (research/13 H9).
       d.factor = clFactor(row, ctx);
       const g = gammaDeclineRate(row, d.factor);
       if (g !== 1) for (const x of d.doses) if (t - x.t > tpS) x.t += PK_DT_S * (1 - g);
     } else if (row.pk.kind === 'blood') {
-      // FU-7.1 A5: an infused blood row accrues its ordered rate; `acc` is logged once per advance pass (advancePk)
+      // An infused blood row accrues its ordered rate; `acc` is logged once per advance pass (advancePk)
       if (t > d.rateUntil) {
         d.rate = 0;
         d.rateUntil = NEVER;
@@ -436,7 +440,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
     } else if (d.x.length) {
       const f = clFactor(row, ctx);
       if (f !== d.factor) d.factor = f;
-      if (row.flowDist) d.dist = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // FU-4 G10 (E-FU4-10: test pin)
+      if (row.flowDist) d.dist = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // Test pin
       const p = params(pk, row, d) as PkParams;
       if (d.tci && t >= d.tci.next - 1e-9) {
         d.rate = tciRate(p, d.x, d.tci.mode, d.tci.target, d.tci.maxRate);
@@ -450,7 +454,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       d.total += (d.rate * PK_DT_S) / 60;
     }
   }
-  // sugammadex: instant 1:1 molar binding in plasma AND at both effect sites (R51 §5; decision 6; Task 5, D7)
+  // Sugammadex: instant 1:1 molar binding in plasma AND at both effect sites
   const sgx = pk.drugs.sugammadex;
   if (sgx && sgx.x.length) {
     for (const nmb of ['rocuronium', 'vecuronium'] as const) {
@@ -460,13 +464,13 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       bindSugammadexSites(d.x, sgx.x, MW[nmb]);
     }
   }
-  // volatiles (R51 §2 / addendum 9: every inhaled agent incl. N2O on the bus)
+  // Volatiles (every inhaled agent incl. N2O on the bus)
   let macBrain = 0;
   const volatiles: DrugBus['volatiles'] = {};
   if (pk.vap) {
     const env = { vaLpm: ctx.vaLpm, coLpm: ctx.coLpm, frcL: ctx.frcL, weightKg: pk.patient.weightKg };
-    // FU-7 (addendum 24): the second-gas effect. N2O's uptake augments the potent agent's effective alveolar
-    // ventilation (M10 ch. 19; Epstein 1964), so the potent agent is stepped with VA + U_N2O and N2O with VA.
+    // The second-gas effect. N2O's uptake augments the potent agent's effective alveolar ventilation (M10 ch. 19;
+    // Epstein 1964), so the potent agent is stepped with VA + U_N2O and N2O with VA.
     const uN2o = Math.max(0, uptakeLpm(pk.vap.n2o, env.coLpm));
     stepVolatile(pk.vap.s, { ...env, vaLpm: env.vaLpm + (env.vaLpm > 0 ? uN2o : 0) }, PK_DT_S);
     stepVolatile(pk.vap.n2o, env, PK_DT_S);
@@ -482,7 +486,7 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
   const lip = pk.drugs.lipidEmulsion;
   if (lip) lipid = hill(siteConc(pk, DRUGS.lipidEmulsion as DrugRow, lip, null, t).c, 1, 0.5);
   const freeF = (1 + 2 * Math.max(0, 7.4 - ctx.ph)) * (1 - lipid);
-  // FU-7 (addendum 24): potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
+  // Potency-weighted fractional sums over the local anaesthetics present (ASRA 2020 additivity)
   let uCns = 0;
   let uCv = 0;
   let uSeiz = 0;
@@ -496,16 +500,16 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       c *= freeF;
       const th = LAST_THRESHOLDS[row.id];
       if (th) {
-        // FU-7 (addendum 24 / audit D14): local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice
-        // advisory; M10 ch. 25: the doses share one maximum). The fractional sums replace the per-agent maximum, and each
-        // is fed to the SAME Hill as before, so a sole agent at its threshold gives exactly the pre-FU-7 effect.
+        // Local-anaesthetic toxicity is ADDITIVE between agents (ASRA 2020 practice advisory; M10 ch. 25: the doses
+        // share one maximum). The fractional sums replace the per-agent maximum, and each is fed to the SAME Hill as
+        // before, so a sole agent at its threshold gives exactly the per-agent-maximum effect.
         uCns += c / th.cns;
         uCv += c / th.cv;
         uSeiz += c / th.seizure;
       }
     }
     pk.lastC[d.id] = c;
-    actives.push({ row, c, ...(sc.vent !== undefined ? { vent: sc.vent } : {}) }); // FU-7 (addendum 20): the ventilatory site
+    actives.push({ row, c, ...(sc.vent !== undefined ? { vent: sc.vent } : {}) }); // The ventilatory site
     agents[d.id] = {
       unit: concUnit(row), plasma: sc.plasma, brain: c,
       ...(sc.vent !== undefined ? { vent: sc.vent } : {}),
@@ -514,17 +518,17 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
       ...(row.id === 'rocuronium' || row.id === 'vecuronium' ? { sgxBoundFrac: d.total > 0 ? Math.min(1, d.bound / d.total) : 0 } : {}),
     };
   }
-  // FU-7 (addendum 24): one Hill per endpoint on the summed fractions (h 3, as each agent had)
+  // One Hill per endpoint on the summed fractions (h 3, as each agent had)
   const cnsE = hill(uCns, 1, 1, 3);
   const cvE = hill(uCv, 1, 1, 3);
   const seizure = uSeiz >= 1;
-  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain }); // FU-7 (addendum 21)
+  const r = combine(actives, { ph: ctx.ph, betaBlockC: ctx.betaBlockC, betaOccProfile: ctx.betaOcc, betaNonSel: ctx.betaNonSel, vasoResp: ctx.vasoResp, ageY: pk.patient.ageY, macBrain });
   // desflurane sympathetic surge on a rapid rise above 1 MAC (T6.3): HR +25 %, SVR +20 % over 2–4 min [TXT]
   if (pk.vap?.agent === 'desflurane' && Math.abs(t - Math.round(t)) < PK_DT_S / 2) {
-    // FU-7 (addendum 24 / DI-70): the surge is an AIRWAY-RECEPTOR reflex to the rate of rise of the INSPIRED/end-tidal
-    // fraction (Weiskopf 1994: a rapid increase in desflurane concentration, not a brain level, releases catecholamines),
-    // so the trigger reads the end-tidal MAC fraction, which a dial step moves within seconds. The brain-MAC trigger
-    // never fired: a 3 → 12 % step gave HR +1 bpm.
+    // The surge is an AIRWAY-RECEPTOR reflex to the rate of rise of the INSPIRED/end-tidal fraction (Weiskopf 1994: a
+    // rapid increase in desflurane concentration, not a brain level, releases catecholamines), so the trigger reads
+    // the end-tidal MAC fraction, which a dial step moves within seconds. The brain-MAC trigger never fired: a 3 → 12 %
+    // step gave HR +1 bpm.
     const etMac = (100 * pk.vap.s.fa) / macForAge(pk.vap.s.agent, pk.patient.ageY); // END-TIDAL (alveolar) MAC fraction
     pk.macPrev.push(etMac);
     if (pk.macPrev.length > 60) pk.macPrev.shift();
@@ -573,11 +577,12 @@ function stepOnce(pk: PkState, ctx: PkCtx, t: number): void {
 /**
  * Step to tEnd on the absolute grid t_k = k·PK_DT_S. First, the boluses accepted since the previous call become
  * `bus.doses` (and the previous pass's list is dropped): the engine calls this once per advance pass, before every
- * consumer, so each dose is observed exactly once (decision 10, R51 §3).
+ * consumer, so each dose is observed exactly once.
  */
 export function advancePk(pk: PkState, ctx: PkCtx, tEnd: number): void {
-  pk.distQ = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // FU-4 G10 (F12(3)): the bolus transit lag reads it
-  // FU-7.1 A5: an infused blood row's accrued amount joins the same dose stream 7c reads for a bolus, one entry per pass
+  pk.distQ = pk.pinDistQ ?? distFactor(ctx, pk.patient.weightKg); // The bolus transit lag reads it
+  // An infused blood row's accrued amount joins the same dose stream the blood model reads for a bolus, one entry per
+  // pass
   for (const d of Object.values(pk.drugs)) {
     if (!d.acc) continue;
     const row = DRUGS[d.id] as DrugRow;

@@ -1,6 +1,6 @@
-// Stage 7d organ input adapter (plan decision 16, R51 addendum 14): everything the brain, kidney and liver read,
-// from whichever stage provides it. Stage 7c's blood, 7g's drug bus, 7f's neuro outputs and 7e's sepsis are
-// DUCK-TYPED (each with a neutral fallback), so this file compiles and runs whichever of them has merged.
+// Organ input adapter: everything the brain, kidney and liver read, from whichever module provides it. The blood, the
+// drug bus, the neuro outputs and the endocrine model's sepsis are DUCK-TYPED (each with a neutral fallback), so this
+// file compiles and runs whichever of them is present.
 import { l1Value, type L1State } from '../../l1/state.ts';
 import { totalVolume } from '../circ/circuit.ts';
 import type { CircModelState } from '../circ/model.ts';
@@ -10,9 +10,9 @@ import { staticCompliance } from '../lung/lung.ts';
 import { meanAirwayPressure } from '../resp/driver.ts';
 import { metabolic, type RespState } from '../resp/pipeline.ts';
 
-export const HB_DEFAULT = 14; // Stage 3 HB_G_DL until 7c
+export const HB_DEFAULT = 14; // the gas model's HB_G_DL without the blood
 export const ALBUMIN_DEFAULT = 42; // g/L (annex B2 oncotic reference)
-export const PAW_REF_CMH2O = 10; // Stage 3: only mean Paw above 10 cmH2O acts (research 03 §8.7)
+export const PAW_REF_CMH2O = 10; // Only mean Paw above 10 cmH2O acts (research 03 §8.7)
 /** Anaesthetised by drugs (kidney stress S, GA fallback) [ENG]: propofol Ce ≥ 1.5 µg/mL, ≥ 0.5 MAC, ketamine ≥ 0.5 ×
  *  its reference dose, or a drug CMRO2 multiplier ≤ 0.85 (any other hypnotic). */
 export const GA_PROP_CE = 1.5;
@@ -31,42 +31,41 @@ export interface OrganView {
   map: number; pp: number; cvp: number; coLpm: number;
   paco2: number; pao2: number; sao2: number; tempC: number;
   hb: number; albuminGL: number; bvRel: number;
-  osm: number | null; // FU-9 F11: 7c's plasma effective osmolality, mOsm/kg (null without 7c)
-  demandRel: number; // FU-9 H1: Stage 3's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
-  mannitolMmol: number | null; // FU-9 H8: 7c's plasma mannitol, mmol (null without 7c: the kidney's own depot)
-  hbfRel: number | null; // 7c's hepatic flow ÷ baseline (null without 7c: the liver computes its fallback)
-  lactate: number | null; // 7c's lactate (null without 7c: the liver's fallback pool)
-  gluconate: number; // 7c's plasma gluconate, mmol/L (0 until 7c exposes it)
-  anaesthesia: 'none' | 'general' | 'neuraxial'; // Stage 3 `thermal`, raised to 'general' by drugs
+  osm: number | null; // The blood model's plasma effective osmolality, mOsm/kg (null without the blood model)
+  demandRel: number; // The resp pipeline's O2 demand ÷ rest (GA, temperature, fever) — the kidney's reference output
+  mannitolMmol: number | null; // The blood model's plasma mannitol, mmol (null without the blood model: the kidney's own depot)
+  hbfRel: number | null; // The blood model's hepatic flow ÷ baseline (null without the blood model: the liver computes its fallback)
+  lactate: number | null; // The blood model's lactate (null without the blood model: the liver's fallback pool)
+  gluconate: number; // The blood model's plasma gluconate, mmol/L (0 until the blood model exposes it)
+  anaesthesia: 'none' | 'general' | 'neuraxial'; // the resp pipeline's `thermal`, raised to 'general' by drugs
   pawExcessCmH2O: number;
   drugs: DrugView;
   circ: boolean; blood: boolean;
 }
-/** 7g's accepted boluses the organs act on (R51 §3: 7d OBSERVES; addendum 14: HTS carries `concentrationPct`). */
+/** The drug model's accepted boluses the organs act on (the organ model OBSERVES; HTS carries `concentrationPct`). */
 export interface OrganDose { agent: string; amount: number; amountUnit: string; concentrationPct?: number; t: number }
 export interface DrugView {
-  present: boolean; // 7g's bus found
-  cmro2Mult: number; // 7f `neuro.outputs.cmro2Mult`, else 7g `bus.cns.cmro2Mult`, else 1
-  cbfVaso: number; // 7g `bus.cns.cbfVaso`, else 1
-  volatileMac: number; // sevoflurane + isoflurane + desflurane MAC fractions (7g `bus.volatiles`; N2O excluded)
+  present: boolean; // The drug model's bus found
+  cmro2Mult: number; // `neuro.outputs.cmro2Mult`, else `bus.cns.cmro2Mult`, else 1
+  cbfVaso: number; // `bus.cns.cbfVaso`, else 1
+  volatileMac: number; // Sevoflurane + isoflurane + desflurane MAC fractions (`bus.volatiles`; N2O excluded)
   hypnotic: boolean; // anaesthetised by drugs (GA_* thresholds)
-  furoCe: number | undefined; // 7g furosemide level in reference doses (20 mg); undefined without 7g
+  furoCe: number | undefined; // furosemide level in reference doses (20 mg); undefined without the drug model
   alphaNe: number; // α-agonist, NE-eq µg/kg/min
   sepsis: number; // 0–1 from 7e's sepsis stage (1 SIRS → 0, 2 sepsis → 0.5, ≥ 3 septic shock → 1)
   doses: OrganDose[]; // this pass's `bus.doses` (mannitol, hypertonic saline; the rest are ignored)
 }
-/** 7c's seam 7d fills (R51 addendum 14): the urine ABOVE the basal UOP0 (mL/h, G7d follow-through 2) and the renal
- *  excretion rates, mmol/h. */
-export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number } }; // FU-9 H8
+/** The blood's seam the organs fill: the urine ABOVE the basal UOP0 (mL/h) and the renal excretion rates, mmol/h. */
+export type RenalSeam = { uopAboveBasalMlH: number; excretion: { k: number; na: number; cl: number; gluconate: number; mannitol?: number } };
 type BloodLike = {
-  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number }; mannitol?: number }; out?: { k?: number; na?: number } }; // FU-9 F6/R4/H3/H8
+  core?: { liver?: number; hbfFactor?: number; renal?: RenalSeam; so?: { set?: { k?: number }; mannitol?: number }; out?: { k?: number; na?: number } };
   out?: { hb?: number; albuminGL?: number; bvRel?: number; hbfRel?: number; lactate?: number; gluconate?: number; osm?: number };
 };
 
 const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : d);
 const obj = (v: unknown): Record<string, unknown> | null => (v !== null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null);
 
-/** Stage 7a's `circ.ext` (multipliers other stages write) when the circulation is present, else null. */
+/** The circulation's `circ.ext` (multipliers other modules write) when the circulation is present, else null. */
 export function circExt(hs: HemoState): Record<string, number | undefined> | null {
   const c = obj((hs as unknown as { circ: unknown }).circ);
   return c ? (obj(c.ext) as Record<string, number | undefined> | null) : null;
@@ -77,20 +76,24 @@ function bloodOf(blood: unknown): BloodLike | null {
   return b && ('core' in b || 'out' in b) ? (b as BloodLike) : null;
 }
 
-/** 7c's `out` once 7c has stepped, else undefined. §10 of the 7d gate: 7c creates `out` all zeros and fills it on its
- *  first step, but the engine rebaselines the organs at t = 0 before any blood step, so the kidney's TGF was settled on
- *  albumin 0 (RBF 380 mL/min at t = 0) and the brain on Hb 0. Hb 0 is not a patient: read the fallbacks until then. */
+/** The blood's `out` once the blood has stepped, else undefined. The blood creates `out` all zeros and fills it on
+ *  its first step, but the engine rebaselines the organs at t = 0 before any blood step, so the kidney's TGF would
+ *  settle on albumin 0 (RBF 380 mL/min at t = 0) and the brain on Hb 0. Hb 0 is not a patient: read the fallbacks
+ *  until then. */
 function bloodOut(b: BloodLike | null): BloodLike['out'] {
   const o = b?.out;
   return o && num(o.hb, 0) > 0 ? o : undefined;
 }
 
-/** 7c's `core` (where 7d writes `liver` and `renal`), or null. */
+/** The blood model's `core` (where the organ model writes `liver` and `renal`), or null. */
 export function bloodCore(blood: unknown): BloodLike['core'] | null {
   return bloodOf(blood)?.core ?? null;
 }
 
-/** 7g's bus (`ps.pk.bus`), 7f's CMRO2 (`ps.neuro.outputs.cmro2Mult`) and 7e's sepsis (`ps.endo.core.cond.sepsis.cur`). */
+/**
+ * The drug model's bus (`ps.pk.bus`), the neuro model's CMRO2 (`ps.neuro.outputs.cmro2Mult`) and the endocrine model's
+ * sepsis (`ps.endo.core.cond.sepsis.cur`).
+ */
 export function readDrugView(src: { pk?: unknown; neuro?: unknown; endo?: unknown }): DrugView {
   const bus = obj(obj(src.pk)?.bus);
   const cns = obj(bus?.cns);
@@ -135,19 +138,19 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
   const rs = ctx.resp;
   const b = bloodOf(ctx.blood);
   const site = hs.lastSite;
-  // without 7c: MODELED reads 7a's circulating volume (a 7a `bleed` or `fluid` changes it); MANUAL maps the instructor's
-  // volumeStatus 1 → normovolaemic, 0 → −40 % (brief §4.9 "severe hypovolaemia") [ENG]
+  // Without the blood: MODELED reads the circulation's circulating volume (its `bleed` or `fluid` changes it); MANUAL
+  // maps the instructor's volumeStatus 1 → normovolaemic, 0 → −40 % (brief §4.9 "severe hypovolaemia") [ENG]
   const circ = ctx.l1.mode === 'modeled' ? (hs as unknown as { circ?: CircModelState }).circ : undefined;
   const bvFallback = circ
     ? totalVolume(circ.s, circ.p) / circ.prof.bloodVolumeMl
     : 0.6 + 0.4 * Math.min(1, Math.max(0, l1Value(ctx.l1, 'volumeStatus', t)));
-  const paw = meanAirwayPressure(rs.driver, t, staticCompliance(rs.lung)); // Stage 7b: the lung module's compliance
+  const paw = meanAirwayPressure(rs.driver, t, staticCompliance(rs.lung)); // The lung module's compliance
   const drugs = readDrugView(ctx);
   const out = bloodOut(b);
   const hbf = out?.hbfRel;
   const lac = out?.lactate;
   return {
-    map: (hs as unknown as { circ?: { mapNow?: number } }).circ?.mapNow ?? site.map, // FU-4 G4: the circulation's current MAP (no beat during an arrest)
+    map: (hs as unknown as { circ?: { mapNow?: number } }).circ?.mapNow ?? site.map, // The circulation's current MAP (no beat during an arrest)
     pp: Math.max(0, site.sbp - site.dbp),
     cvp: hs.pv,
     coLpm: cardiacOutput(hs, t),
@@ -158,9 +161,9 @@ export function readOrganView(ctx: OrganSources, t: number): OrganView {
     hb: num(out?.hb, HB_DEFAULT),
     albuminGL: num(out?.albuminGL, ALBUMIN_DEFAULT),
     bvRel: num(out?.bvRel, bvFallback),
-    osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null, // FU-9 F11
-    demandRel: metabolic(rs, t, 'o2'), // FU-9 H1
-    mannitolMmol: b?.core ? (b.core.so?.mannitol ?? 0) : null, // FU-9 H8
+    osm: typeof out?.osm === 'number' && Number.isFinite(out.osm) && out.osm > 0 ? out.osm : null,
+    demandRel: metabolic(rs, t, 'o2'),
+    mannitolMmol: b?.core ? (b.core.so?.mannitol ?? 0) : null,
     hbfRel: typeof hbf === 'number' && Number.isFinite(hbf) ? hbf : null,
     lactate: typeof lac === 'number' && Number.isFinite(lac) ? lac : null,
     gluconate: num(out?.gluconate, 0),

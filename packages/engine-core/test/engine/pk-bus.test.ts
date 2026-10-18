@@ -5,8 +5,8 @@ import { cmd } from '../helpers/hemo.ts';
 
 const stOf = (e: ReturnType<typeof createEngine>) => (e.snapshot().state as { st: { pk: { bus: DrugBus }; resp: { vaLpm?: number } } }).st;
 
-describe('Stage 7g bus', () => {
-  it('Stage 3 publishes the alveolar ventilation; the vaporiser raises the MAC fraction with it (per agent, N2O included)', () => {
+describe('drug bus', () => {
+  it('the lungs publish the alveolar ventilation; the vaporiser raises the MAC fraction with it (per agent, N2O included)', () => {
     const e = createEngine({ seed: 3, mode: 'modeled', patient: { ageY: 40 } });
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'vaporiser', agent: 'sevoflurane', dialPct: 2.5, fgfLpm: 4, n2oFrac: 0.5 } }));
@@ -19,7 +19,7 @@ describe('Stage 7g bus', () => {
   }, 300_000);
   // Was it.fails at 2.818 L/min: Stage 3's VT 500 − anatomical 154 − apparatus − the MANUAL EtCO2 fit vdExtraMl 61 at RR 12
   // (VD/VT 0.53). FU-4 G11: MODELED mechanical ventilation drops the MANUAL fit — measured 3.55. Band unchanged (R45).
-  it('Stage 3 alveolar ventilation at VT 500 × 12 exceeds 3 L/min — was 2.82 before FU-4 G11', () => {
+  it('alveolar ventilation at VT 500 × 12 exceeds 3 L/min', () => {
     const e = createEngine({ seed: 3, mode: 'modeled', patient: { ageY: 40 } });
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'ventilation', source: 'ventilator', rr: 12, vtMl: 500, peep: 5 } }));
     // FU-6 R9 (E-FU6-7): paralysed — an unparalysed patient triggers extra breaths since FU-6, which would "pass" this
@@ -29,7 +29,7 @@ describe('Stage 7g bus', () => {
     e.advanceTo(60);
     expect(stOf(e).resp.vaLpm).toBeGreaterThan(3);
   }, 300_000);
-  it('TCI propofol + remifentanil: per-agent brain Ce on target, a separate remifentanil vent site, the surface exceeds the sum (no drive values: 7f)', () => {
+  it('TCI propofol + remifentanil: per-agent brain Ce on target, a separate remifentanil vent site, the surface exceeds the sum (no drive values: the neuro model)', () => {
     const e = createEngine({ seed: 3, mode: 'modeled' });
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'propofol', mode: 'effect', target: 2 } }));
     e.dispatch(cmd({ type: 'applyEvent', event: { kind: 'tci', drugId: 'remifentanil', mode: 'effect', target: 2 } }));

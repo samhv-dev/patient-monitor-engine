@@ -60,7 +60,7 @@ describe('neuromuscular blockers', () => {
     expect(hom.dur).toBeGreaterThan(240); // prototype 5.2 h (tables "homozygous 4–8 h")
     expect(hom.dur).toBeLessThan(480);
   });
-  it('sugammadex binds free rocuronium 1:1 molar at both effect sites (R51 §5); the excess stays free', () => {
+  it('sugammadex binds free rocuronium 1:1 molar at both effect sites; the excess stays free', () => {
     const roc = [0, 0, 0, 1300, 900]; // ng/mL = µg/L at the thumb and diaphragm sites
     const sgx = [0, 0, 0, 1, 10]; // mg/L at the same sites
     bindSugammadexSites(roc, sgx);

@@ -45,8 +45,8 @@ export function renalHaemo(pa: number, pv: number, k: number, rAff: number, effF
 }
 
 /**
- * FU-9 H2 (research/13): filtration equilibrium. The glomerular oncotic pressure rises along the capillary as protein-free
- * fluid leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol
+ * Filtration equilibrium (research/13). The glomerular oncotic pressure rises along the capillary as protein-free fluid
+ * leaves it; its mean is π̄ = π_a·(1 + 1/(1 − FF))/2 with FF = GFR/RPF (Deen, Robertson & Brenner 1972 Am J Physiol
  * 223:1178). π_a follows the albumin as before, normalised at the tables' resting FF so the healthy reference keeps GFR
  * 125. GFR is the root of G = Kf·(P_gc − P_B − π̄(G/RPF)), found by bisection (monotone), so FF saturates near 0.3–0.35
  * and GFR now falls when the plasma flow does (class III, PEEP) instead of being held at any RBF.
@@ -70,8 +70,8 @@ export const meanOncotic = (ff: number): number => (1 + 1 / (1 - Math.min(0.95, 
 export function tgfTarget(pa: number, pv: number, k: number, effF: number, kfF: number, albuminGL: number, gfrSet: number, pb = P_BOWMAN, hct = HCT_REF): number {
   const post = (k * (R_GLOM / 2 + R_EFF * effF + R_PT + R_RV)) / 2;
   const piA = (PI_GLOM0 * (albuminGL / ALBUMIN0_G_L)) / meanOncotic(FF_REF);
-  // FU-9 H2: the oncotic pressure the target GFR meets depends on the plasma flow the target resistance gives — a
-  // short fixed point from the resting filtration fraction (converges in 3–4 steps)
+  // The oncotic pressure the target GFR meets depends on the plasma flow the target resistance gives — a short fixed
+  // point from the resting filtration fraction (converges in 3–4 steps)
   let rAff = R_AFF;
   let ff = FF_REF;
   for (let i = 0; i < 4; i++) {

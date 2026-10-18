@@ -1,4 +1,4 @@
-// Stage 5 beat templates, layered on the Stage 1 ones in templates.ts (which stays untouched).
+// Rhythm-library beat templates, layered on the base ones in templates.ts (which stays untouched).
 // Vectors are VCG (X, Y, Z) in mV through the Dower rows (vcg.ts). Values are [ENG] unless cited; the lead
 // projections quoted in comments are what the numbers produce and what the tests check.
 import { K_STRIDE, WAVE, kernel, qrsSpanMs } from './kernels.ts';
@@ -7,7 +7,7 @@ import type { Vec3 } from './vcg.ts';
 
 export type BeatTemplateId = TemplateId | 'wpw' | 'aberrant' | 'pacedV' | 'pvc2' | 'pvc3' | 'agonal';
 
-/** RBBB terminal R′ (Stage 5.1: V1 +0.80, I −0.25, V6 −0.43, II ≈ 0 per unit; solved on the Dower rows) [ENG]. */
+/** RBBB terminal R′ (V1 +0.80, I −0.25, V6 −0.43, II ≈ 0 per unit; solved on the Dower rows) [ENG]. */
 export const RBBB_RPRIME_VEC: Vec3 = [-0.33, 0, -0.69];
 /** PR (P onset → delta onset) for pre-excited conduction (research 03 §1.5: PR < 120 ms). */
 export const WPW_PR_MS = 100;
@@ -61,7 +61,7 @@ export function beatKernels(id: BeatTemplateId, qtMs: number, scale = 1, pre = 1
     case 'aberrant':
       return [...narrowKernels(qtMs, scale), ...kernel(0.085, 0.016, 0.016, RBBB_RPRIME_VEC, WAVE.S, scale)];
     case 'pacedV':
-      return wideFrom(PACED_VEC, qtMs, scale, [0.06, 0.026], [0.125, 0.018], [0.07, 0.045]); // Stage 5.1: broader, lower slope (was R 55/22, S 115/14)
+      return wideFrom(PACED_VEC, qtMs, scale, [0.06, 0.026], [0.125, 0.018], [0.07, 0.045]); // Broader, lower slope
     case 'pvc2':
     case 'pvc3':
       return wideFrom(PVC_FOCI[id], qtMs, scale, [0.05, 0.022], [0.11, 0.02], [0.06, 0.04]);

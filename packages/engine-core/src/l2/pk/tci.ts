@@ -1,4 +1,4 @@
-// Target-controlled infusion (Stage 7g). Every TCI_DT_S the controller chooses ONE rate for the next interval:
+// Target-controlled infusion. Every TCI_DT_S the controller chooses ONE rate for the next interval:
 //   plasma targeting (Jacobs 1990): the rate that puts Cp exactly on target at the end of the interval;
 //   effect-site targeting (Shafer & Gregg 1992): the largest rate for which the predicted Ce never exceeds the
 //   target over the horizon, given that the pump stops after this interval. By linearity

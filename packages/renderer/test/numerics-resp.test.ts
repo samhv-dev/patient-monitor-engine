@@ -4,7 +4,7 @@ import { autoRange, WAVE_STYLE } from '../src/wave-lanes.ts';
 
 const v = (value: number | null, flag: 'valid' | 'questionable' | 'invalid' = 'valid') => ({ value, flag, at: 1 });
 
-describe('numerics-resp formatters (brief §6.1) and Stage 3 lanes', () => {
+describe('numerics-resp formatters (brief §6.1) and respiratory lanes', () => {
   it('SpO2 with PI, questionable mark, LOW PERF and NO PULSE', () => {
     expect(formatSpo2(v(97), v(2.14))).toEqual({ main: '97', sub: 'PI 2.1', status: '' });
     expect(formatSpo2(v(95, 'questionable'), v(0.21))).toEqual({ main: '95?', sub: 'PI 0.21', status: 'LOW PERF' });

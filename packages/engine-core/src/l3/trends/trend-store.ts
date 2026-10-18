@@ -53,9 +53,9 @@ export class TrendStore {
   }
 
   /**
-   * FU-11 (F05, BA01): the timeline went back to sim time `t` (a bookmark restore). Every second after floor(t) belonged
-   * to the discarded future: it is emptied and the newest second becomes floor(t), so the next measurements are kept
-   * and a trend never shows a run that no longer happened. A rewind older than the ring empties it.
+   * The timeline went back to sim time `t` (a bookmark restore). Every second after floor(t) belonged to the discarded
+   * future: it is emptied and the newest second becomes floor(t), so the next measurements are kept and a trend never
+   * shows a run that no longer happened. A rewind older than the ring empties it.
    */
   rewind(t: number): void {
     const keep = Math.floor(t + 1e-6);

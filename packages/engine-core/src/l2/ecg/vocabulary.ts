@@ -1,5 +1,5 @@
-// ECG vocabulary (brief §7.1 `vocabulary()`: bounds, normals, enums, constraints). The engine-level vocabulary()
-// (Stage 6) merges this with the other layers; controllers build their rhythm/modifier menus from it.
+// ECG vocabulary (brief §7.1 `vocabulary()`: bounds, normals, enums, constraints). The engine-level vocabulary() merges
+// this with the other layers; controllers build their rhythm/modifier menus from it.
 import type { RhythmGroup, RhythmId } from '../../types.ts';
 import { RHYTHMS } from './rhythms.ts';
 import { defaultModifiers } from '../../modifiers.ts';

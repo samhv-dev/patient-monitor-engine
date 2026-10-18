@@ -6,8 +6,8 @@ import { createEngine } from '../../../src/engine.ts';
 
 const ODC14 = { hb: 14, ph: 7.4, dpgMmolL: 4.65, cohb: 0, methb: 0 };
 
-describe('Stage 3 gas step reads the blood view (Stage 7c)', () => {
-  it('a CO factor, extra CO2 and a low Hb change the gas step; no view = Stage 3', () => {
+describe('the respiratory gas step reads the blood view', () => {
+  it('a CO factor, extra CO2 and a low Hb change the gas step; no view = the plain gas step', () => {
     /** 5 s at the neutral view (the MANUAL EtCO2 calibration at t = 0 must not see the change), then `after` for 60 s. */
     const run = (after?: Partial<BloodView>) => {
       const e = createEngine({ seed: 1 }); // for a rhythm view only

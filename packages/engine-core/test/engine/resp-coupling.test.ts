@@ -6,7 +6,7 @@ import { plethRr } from '../../src/l3/resp/impedance.ts';
 import type { EngineEvent } from '../../src/types.ts';
 import { ADULT, beatsIn, breaths, cmd, ev3, hemoOf, mean, numSeries, rig3, stateSeries, vent, run } from '../helpers/resp.ts';
 
-describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { timeout: 300_000 }, () => {
+describe('respiratory acceptance: coupling, RR, ventilator link', { timeout: 300_000 }, () => {
   it('M6: PPV through the respiratory driver — ventilated 5–10 % (g 0.05) and 15–30 % (g 0.2); spontaneous is smaller', async () => {
     const ppv = async (g: number, ventilated: boolean) => {
       const { e, ev } = rig3({ patient: { ...ADULT, sensors: { abp: 'connected' } } });
@@ -127,7 +127,7 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     expect(swing(765)).toBeGreaterThan(1.3 * s500);
   }, 300_000); // 39 000 frames, each a dispatch + a tick with its look-ahead
 
-  it('R27: lungState at start from the profile, again on bronchospasm (resistance ×4, auto-PEEP tendency)', async () => {
+  it('lungState at start from the profile, again on bronchospasm (resistance ×4, auto-PEEP tendency)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 1);
     const ls = ev.filter((x): x is Extract<EngineEvent, { type: 'lungState' }> => x.type === 'lungState');
@@ -157,7 +157,7 @@ describe('Stage 3 acceptance: respiratory coupling, RR, ventilator link', { time
     if (sp === 90) expect(Math.abs(tone.freqHz! - 830.6)).toBeLessThanOrEqual(1);
   });
 
-  it('R39-7 GA redistribution, default adult: core −0.9 °C at 30 min (−0.7 to −1.1), −1.3 °C at 60 min (−1.0 to −1.6); forced-air warming −0.9 at 60 min (−0.6 to −1.2)', async () => {
+  it('GA redistribution, default adult: core −0.9 °C at 30 min (−0.7 to −1.1), −1.3 °C at 60 min (−1.0 to −1.6); forced-air warming −0.9 at 60 min (−0.6 to −1.2)', async () => {
     // research 09 §7: unwarmed, draped, 21–22 °C OR; the change is measured from the L1 core truth at induction.
     // Measured at 3.1: −0.97 / −1.28 °C unwarmed, −0.68 °C warmed (the warm edge of its band; constants kept per R39-7).
     const drop = async (warming: boolean) => {

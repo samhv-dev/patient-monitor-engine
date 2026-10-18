@@ -73,7 +73,7 @@ describe('engineOptionsOf: the scenario patient → the engine at t = 0', () => 
     expect(st.organs.conds).toContainEqual({ id: 'tbi', severity: 1 }); // 7d: TBI brain parameters
   });
 
-  it('carries 7c blood and 7f neuro (already in the schema) through to the engine', () => {
+  it('carries blood and neuro (already in the schema) through to the engine', () => {
     const o = engineOptionsOf(doc({ blood: { burns: 0.5 }, neuro: { cholinesterase: 'homozygous', mhSusceptible: true } }));
     expect(o.patient).toEqual({ blood: { burns: 0.5 }, neuro: { cholinesterase: 'homozygous', mhSusceptible: true } });
   });

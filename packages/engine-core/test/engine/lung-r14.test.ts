@@ -3,7 +3,7 @@
 // PEEP 15 after recruitment than before (Gattinoni 2006, RS11); induction at FiO2 1.0: shunt ≥ 0.07 by 20 min
 // (Hedenstierna & Edmark 2010: 8–10 %).
 import { describe, expect, it } from 'vitest';
-import { rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 /** Mean pulmonary-artery pressure over [t0, t1] (7a's instantaneous `circOut.pPa`, sampled every 0.1 s). */
 async function papMean(e: Parameters<typeof st6>[0], t0: number, t1: number): Promise<number> {
@@ -14,11 +14,11 @@ async function papMean(e: Parameters<typeof st6>[0], t0: number, t1: number): Pr
   return sum / Math.max(1, n);
 }
 
-describe('FU-6 R14', { timeout: 900_000 }, () => {
+describe('pulmonary vascular tone, recruitment and induction shunt', { timeout: 900_000 }, () => {
   // R45 (FU-6 executor, merged main): after FU-4's R1 root the hypercapnic arm reaches PaCO2 55 (not 92), and 7a's chemo
   // input is EtCO2 + 5, so K_PVR_CO2 0.015 (sourced range 0.01–0.02; its comment names no fit target) adds ≈ +15 % PVR:
   // mean PAP +1.1 mmHg. Not tuned; it.fails with the number (calibration row).
-  it.fails('permissive hypercapnia raises mean PAP ≥ 2 mmHg — measured 18.1 → 19.2 (+1.1) at PaCO2 32.3 → 55.0 (FU-6 R14, band ≥ +2; plan 17.9 → 21.6 at PaCO2 92; was 18.8 → 19.7 at PaCO2 70)', async () => {
+  it.fails('permissive hypercapnia raises mean PAP ≥ 2 mmHg — measured 18.1 → 19.2 (+1.1) at PaCO2 32.3 → 55.0 (band ≥ +2)', async () => {
     const run = async (vt: number) => {
       const e = rig6();
       await ventRig(e, { fio2: 0.8 });
@@ -33,7 +33,7 @@ describe('FU-6 R14', { timeout: 900_000 }, () => {
     expect(h.sa).toBeGreaterThan(0.95); // FiO2 0.8 keeps hypoxic vasoconstriction out of the comparison
     expect(h.pap - c.pap).toBeGreaterThanOrEqual(2);
   });
-  it('RS11: ARDS high recruiter — driving pressure lower at PEEP 15 after recruitment, with the delivered VT intact (measured 13.1 → 11.8 at 420 mL; plan 13.1 → 11.7; was 13.8 at every PEEP, audit F1)', async () => {
+  it('RS11: ARDS high recruiter — driving pressure lower at PEEP 15 after recruitment, with the delivered VT intact (measured 13.1 → 11.8 at 420 mL)', async () => {
     const e = rig6({ ageY: 40, sex: 'M', weightKg: 70, heightCm: 175, lungConditions: [{ id: 'ards', severity: 1, recruitFrac: 0.5 }] });
     // FU-6 F2/F5c (Orchestrator ruling (FU-6 review), 2026-09-28): unlimited arm + a delivered-VT guard. At Pplat 27.2
     // with the default Pmax 40 a pressure-limited breath could lower ΔP by delivering less volume, which is not the
@@ -51,7 +51,7 @@ describe('FU-6 R14', { timeout: 900_000 }, () => {
     expect(vt1).toBeGreaterThanOrEqual(0.95 * 420); // F5c: a truncated breath must not be read as a compliance gain
     expect(dp1).toBeLessThan(dp0 - 1);
   });
-  it.fails('induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min — measured 0.015 (audit A3b: 0.02 → 0.04; calibration row)', async () => {
+  it.fails('induction at FiO2 1.0 (no thermal switch): Qs/Qt ≥ 0.07 by 20 min — measured 0.015 (calibration row)', async () => {
     const e = rig6();
     await runTo(e, 1);
     send(e, { kind: 'airwayDevice', device: 'ett' });

@@ -1,8 +1,8 @@
-// Stage 11: runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at
-// 1 Hz, the patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a script,
-// so a test reads what the presenter will see. The driver is polled every `pollS` of sim time: the app polls every 100 ms
-// of WALL time, i.e. every 0.1 s of sim at ×1, 0.4 s at ×4 and 0.8 s at ×8. Every loop yields once per sim-minute (CI
-// amendment 4). Test-only: nothing in the app imports this file.
+// Runs a showcase card on a bare engine the way the app does (engine seed 7, the document's mode, truth at 1 Hz, the
+// patient's sensors; apps/demo/src/app/session.ts loadScenario) and presses the card's OWN buttons on a script, so a
+// test reads what the presenter will see. The driver is polled every `pollS` of sim time: the app polls every 100 ms of
+// WALL time, i.e. every 0.1 s of sim at ×1, 0.4 s at ×4 and 0.8 s at ×8. Every loop yields once per sim-minute.
+// Test-only: nothing in the app imports this file.
 import { createEngine, type EngineEvent } from '@pme/engine-core';
 import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } from '@pme/controller/scenario';
 import { expect } from 'vitest';
@@ -142,9 +142,9 @@ export const entered = (run: Run, id: string): number => run.states.find(([, s])
 export const alarmAt = (run: Run, re: RegExp, from = 0): number => run.alarms.find((a) => a.t >= from && re.test(a.text))?.t ?? Number.NaN;
 
 /**
- * R45 bands: every number a card promises sits in [lo, hi], taken from the measured prototype ± the tolerance named in
- * docs/plans/stage-11-scenarios.md ("Bands"). They are never widened to make a later change pass: a number that leaves
- * its band goes to the owner with both values. PME_SHOWCASE_PRINT=1 prints every measured number (for the gate note).
+ * The bands: every number a card promises sits in [lo, hi], taken from the measured prototype ± a stated tolerance.
+ * They are never widened to make a later change pass: a number that leaves its band goes to the owner with both values.
+ * PME_SHOWCASE_PRINT=1 prints every measured number (for the gate note).
  */
 export function bands(card: string, got: Record<string, number>, want: Record<string, readonly [number, number]>): void {
   if (process.env.PME_SHOWCASE_PRINT) console.log(`${card} ${JSON.stringify(Object.fromEntries(Object.entries(got).map(([k, x]) => [k, Math.round(x * 100) / 100])))}`);

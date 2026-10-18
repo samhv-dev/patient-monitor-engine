@@ -12,7 +12,7 @@ describe('alarm engine in the engine', () => {
   // target is 130 (was 150): a rise to 150 crosses philips-like's EXTREME TACHY threshold 140 within the 3 s, and the
   // live red alarm then supersedes HR HIGH (the FU-5 chain, D6) — the subject, the limit alarm's timing and priority,
   // is unchanged.
-  it('philips-like: HR above 120 (target 130) raises **HR 3 s after the first displayed value over the limit (the IntelliVue system alarm delay "less than 3 seconds", IFU [S2] p. 28, 294; FU-5 Task 9a), medium', () => {
+  it('philips-like: HR above 120 (target 130) raises **HR 3 s after the first displayed value over the limit (the IntelliVue system alarm delay "less than 3 seconds", IFU [S2] p. 28, 294), medium', () => {
     const { e, ev } = devRig('philips-like');
     e.advanceTo(10);
     e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 130 }));
@@ -74,7 +74,7 @@ describe('alarm engine in the engine', () => {
     }
   });
 
-  it('age band switch: HR 135 is HIGH for an adult (50–120; FU-5: below the 140 extreme-tachy threshold, which now alarms with arrhythmia analysis off) and inside the paediatric window (75–160)', () => {
+  it('age band switch: HR 135 is HIGH for an adult (50–120; below the 140 extreme-tachy threshold, which now alarms with arrhythmia analysis off) and inside the paediatric window (75–160)', () => {
     const { e, ev } = devRig('philips-like');
     e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 135 }));
     e.advanceTo(20);

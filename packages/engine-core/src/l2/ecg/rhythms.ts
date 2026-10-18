@@ -36,7 +36,7 @@ export interface RhythmDef {
 }
 
 const BACKUP_JUNCTIONAL_BPM = 40; // [ENG] junctional escape 40–60 (brief §5); low end so Wenckebach pauses stay visible
-const DISSOCIATED_ATRIAL_BPM = 80; // [ENG] (Stage 1 default)
+const DISSOCIATED_ATRIAL_BPM = 80; // [ENG] (default)
 
 type Row = Omit<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm'> &
   Partial<Pick<RhythmDef, 'continuous' | 'pacing' | 'conductedTemplate' | 'atrialDefaultBpm' | 'escapeTemplate' | 'backupEscapeBpm'>>;
@@ -110,11 +110,11 @@ export const DEFAULT_DISSOCIATED_ATRIAL_BPM = DISSOCIATED_ATRIAL_BPM;
 export const DEFAULT_FLUTTER_ATRIAL_BPM = 300;
 
 /**
- * FU-2 (G-FU1 item 6): the rate the hr ramp drives when it reads `hr` — rate-driven rhythms clamp it to their range
- * (as rhythmRate does), so it is the ventricular rate where every beat conducts, but the hr-driven ATRIAL (sinus) rate
- * for the 2:1, high-grade and Mobitz blocks (their conducted ventricular rate is lower); flutter conducts its atrial
- * rate at the ratio (variable counts as 3:1, as the engine's startRate); arrest rhythms and VF run at 0. Published on
- * the 1 Hz `state` event.
+ * The rate the hr ramp drives when it reads `hr` — rate-driven rhythms clamp it to their range (as rhythmRate does), so
+ * it is the ventricular rate where every beat conducts, but the hr-driven ATRIAL (sinus) rate for the 2:1, high-grade
+ * and Mobitz blocks (their conducted ventricular rate is lower); flutter conducts its atrial rate at the ratio
+ * (variable counts as 3:1, as the engine's startRate); arrest rhythms and VF run at 0. Published on the 1 Hz `state`
+ * event.
  */
 export function effectiveRateBpm(id: RhythmId, opts: RhythmOpts, hr: number): number {
   const d = RHYTHMS[id];

@@ -1,4 +1,4 @@
-// Instructor target ramps (brief §7.1 `Ramp`; curves per BUILD-PLAN Stage 2 scope, used by 'hr' from Stage 1).
+// Instructor target ramps (brief §7.1 `Ramp`), also used by 'hr'.
 import type { Ramp } from '../types.ts';
 
 /** Plain-data ramp state: value goes from `from` (at t0 + delay) to `to` over durationS. */
@@ -17,7 +17,7 @@ export function constantRamp(value: number): RampState {
 
 /**
  * Shape functions on u ∈ [0,1], each 0 at u=0 and exactly 1 at u=1. 'exp' uses τ = duration/3 (brief §4.9
- * ramp semantics; Stage 1 had τ = duration/5); 'sigmoid' is logistic with 10–90% inside the middle of the ramp.
+ * ramp semantics); 'sigmoid' is logistic with 10–90% inside the middle of the ramp.
  */
 function shape(curve: RampState['curve'], u: number): number {
   if (curve === 'exp') return (1 - Math.exp(-3 * u)) / (1 - Math.exp(-3));
@@ -30,9 +30,9 @@ function shape(curve: RampState['curve'], u: number): number {
 
 export function rampValue(r: RampState, t: number): number {
   const start = r.t0 + r.delayS;
-  // FU-8 (Task A27; research/20 DV-M3): a zero-duration step takes effect AT its start. With `t <= start` a step read at
-  // its own instant returned `from`, so "set, then ramp from here" at one instant (the device layer's post-ROSC pressure:
-  // 50 % of the target, back to 100 % over 30–120 s) retargeted from the OLD value and the ramp ran 120 → 120
+  // A zero-duration step takes effect AT its start (research/20). With `t <= start` a step read at its own instant
+  // returned `from`, so "set, then ramp from here" at one instant (the device layer's post-ROSC pressure: 50 % of the
+  // target, back to 100 % over 30–120 s) retargeted from the OLD value and the ramp ran 120 → 120
   if (t < start || (t === start && r.durationS > 0)) return r.from;
   if (r.durationS <= 0 || t >= start + r.durationS) return r.to;
   return r.from + (r.to - r.from) * shape(r.curve, (t - start) / r.durationS);

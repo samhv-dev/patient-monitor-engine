@@ -124,7 +124,7 @@ export class ScenarioRunner {
     this.s.lastT = t;
     const p = this.doc.patient;
     const setup: DocCommand[] = [];
-    if (this.doc.mode) setup.push({ type: 'setMode', mode: this.doc.mode }); // FU-11 (F17): MANUAL is explicit too
+    if (this.doc.mode) setup.push({ type: 'setMode', mode: this.doc.mode }); // MANUAL is explicit too
     if (p?.rhythm) setup.push({ type: 'setRhythm', rhythm: p.rhythm.id, when: 'now', ...(p.rhythm.opts ? { opts: p.rhythm.opts } : {}) });
     for (const [variable, value] of Object.entries(p?.baseline ?? {})) {
       if (value !== undefined) setup.push({ type: 'setTarget', variable: variable as never, value });
@@ -269,7 +269,7 @@ export class ScenarioRunner {
     if ('sensor' in w) return { ok: this.s.sensors[w.sensor.sensor] === w.sensor.state, events: [] };
     if ('manual' in w) return { ok: pressed, events: [] };
     if ('all' in w) {
-      // FU-11 (F16): tentative — an `all` that fails gives back the events its earlier members took
+      // Tentative — an `all` that fails gives back the events its earlier members took
       const trial = new Set(used);
       const events: number[] = [];
       for (let i = 0; i < w.all.length; i++) {
@@ -281,7 +281,7 @@ export class ScenarioRunner {
       return { ok: true, events };
     }
     for (let i = 0; i < w.any.length; i++) {
-      const trial = new Set(used); // FU-11 (F16): a failed alternative consumes nothing the next one needs
+      const trial = new Set(used); // A failed alternative consumes nothing the next one needs
       const r = this.holds(w.any[i] as When, `${key}.${i}`, pressed, trial);
       if (r.ok) {
         for (const e of trial) used.add(e);

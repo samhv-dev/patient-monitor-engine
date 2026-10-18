@@ -18,7 +18,7 @@ export interface PacerState {
   nextV: number;
 }
 
-/** Escape interval at the programmed lower rate (FU-3: never the hr above it, which is the intrinsic rate). */
+/** Escape interval at the programmed lower rate (never the hr above it, which is the intrinsic rate). */
 function interval(st: RhythmState, t: number, ctx: RhythmCtx): number {
   return 60 / pacerLowerRate(st, t, ctx);
 }

@@ -10,7 +10,7 @@ import { createRngState } from '../../src/rng/sfc32.ts';
 import type { EngineEvent } from '../../src/types.ts';
 import { beatsOf, cmd, footAfter, mean, numeric, read, riseAfter, rig, rmssd } from '../helpers/hemo.ts';
 
-describe('Stage 2 acceptance (engine level)', () => {
+describe('haemodynamic acceptance (engine level)', () => {
   // Stage 7a re-specification (plan Task 23, decision 1): PEP and LVET are EMERGENT from the elastance heart. The aortic
   // valve opens 59–72 ms after the R peak (Weissler's PEP is measured from Q onset, ≈ 40 ms earlier), so R→radial foot
   // is 119–150 ms (was 150–220 with PEP taken from R: 59 ms + 44 ms transport + the transducer) and the pleth foot 175–245 ms (opening + the 100 ms finger delay + the pulse kernel's foot). The valve closure is asserted on
@@ -119,7 +119,7 @@ describe('Stage 2 acceptance (engine level)', () => {
   // p1 20 reaches −8.0. Slower run-off raises the pre-beat DBP by 1.4–3 mmHg, but the ejection then fills a more
   // compliant bed, so SBP barely moves. The mechanism cannot reach +8–15; the gap is the elastance heart's filling
   // through the pause (EDV +5 %). C(P) stays Stage 2's; measured −10.9 (seed 5). Calibration pass (R44).
-  it.fails('5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9; FU-2 item 3)', () => {
+  it.fails('5c. post-PVC potentiation: the next beat SBP is +8–15 mmHg on average over isolated PVCs (measured −10.9)', () => {
     const { e, ev } = rig({ seed: 5, hrv: false });
     for (const t0 of [20, 35, 50, 65, 80, 95]) {
       e.advanceTo(t0);
@@ -201,7 +201,7 @@ describe('Stage 2 acceptance (engine level)', () => {
   // (CPR_RELEASE_RESIDUAL 0.65, fitted to Paradis 1990's RA relaxation 15–25 and CoPP 15–25) — measured 30.6 at quality 1.
   // Split out of test 7 unchanged, kept as a record; the rest of test 7 still asserts.
   // FU-8 (E-FU8-9): flipped by the outflow limiter (A19): an emptied chamber no longer holds the suction-drawn volume
-  it('7b. CPR at 110/min, quality 1: arterial trough ≤ 30 mmHg — measured 30.6 after FU-4 F1, 25.2 after FU-8', () => {
+  it('7b. CPR at 110/min, quality 1: arterial trough ≤ 30 mmHg — measured 25.2', () => {
     const { e } = rig({ seed: 8 });
     e.advanceTo(10);
     e.dispatch(cmd({ type: 'setRhythm', rhythm: 'asystole' }));

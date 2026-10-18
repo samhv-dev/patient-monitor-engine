@@ -2,8 +2,8 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import type { Command, EngineEvent, NumericId, PatientProfile } from '../src/types.ts';
 import type { NeuroClinicalEvent, NeuroEvent, StimulusEvent, VagalSite } from '../src/types-neuro.ts';
 
-describe('Stage 7f public types', () => {
-  it('commands, events, numerics and the profile accept the neuro members; drug/vaporiser events stay 7g\'s', () => {
+describe('neuro public types', () => {
+  it('commands, events, numerics and the profile accept the neuro members; drug/vaporiser events stay the drug model\'s', () => {
     const c: Command = { id: '1', issuedBy: 't', type: 'applyEvent', event: { kind: 'airwayDevice', device: 'none' } };
     const s: Command = { id: '3', issuedBy: 't', type: 'applyEvent', event: { kind: 'stimulus', intensity: 1.5 } };
     const d: Command = { id: '2', issuedBy: 't', type: 'device', action: { device: 'tof', action: 'start', intervalS: 15 } };

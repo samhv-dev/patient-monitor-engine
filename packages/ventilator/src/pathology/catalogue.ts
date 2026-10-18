@@ -1,14 +1,15 @@
-// Lung pathology catalogue (rulings R36/R37): one row per condition, weight-of-evidence defaults (`value`) and the
-// band the sources span (`lo`–`hi`). Reference patient: passive intubated adult, PBW 70 kg, 8.0 ETT; reference
-// settings REF_SETTINGS (VC 490 mL, 14/min, PEEP 5, 60 L/min square, 0.3 s pause) unless a row gives `ref`.
-// With them the ventilator shows plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau =
-// R_insp × 1 L/s; `signature` bands are the clinically reported ranges and the tests require the model inside
-// them. Textbook citations: "Miller 10e pdf p. N" (running heads carry no chapter number in the extraction),
-// "Co-Existing 8e ch. N p. M", "Dellinger 5e ch. N p. M". `ENG` = engineering judgement, reasoning given; every
-// ENG number is a row for Ali's review in docs/physiology/stage-7-parameter-tables.md §4b.
-// `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (Stage 3 shunt input),
-// 'stage7a' (PVR/HPV/RV: the two-sided heart), 'stage7b' (dead space, diffusion: the lung module), 'not-modelled'.
-import { ventReference, VENT_ROW_MAP } from '@pme/engine-core'; // Stage 7b (Task 27)
+// Lung pathology catalogue: one row per condition, weight-of-evidence defaults (`value`) and the band the sources span
+// (`lo`–`hi`). Reference patient: passive intubated adult, PBW 70 kg, 8.0 ETT; reference settings REF_SETTINGS (VC
+// 490 mL, 14/min, PEEP 5, 60 L/min square, 0.3 s pause) unless a row gives `ref`. With them the ventilator shows
+// plateau = PEEP + autoPEEP + VT/C, driving pressure = VT/C, peak − plateau = R_insp × 1 L/s; `signature` bands are the
+// clinically reported ranges and the tests require the model inside them. Textbook citations: "Miller 10e pdf p. N"
+// (running heads carry no chapter number in the extraction), "Co-Existing 8e ch. N p. M", "Dellinger 5e ch. N p. M".
+// `ENG` = engineering judgement, reasoning given; every ENG number is a row for Ali's review in
+// docs/physiology/parameter-tables.md §4b.
+// `wired`: what acts on the field TODAY — 'vent' (ventilator mechanics), 'engine-now' (the respiratory signals' shunt
+// input), 'stage7a' (PVR/HPV/RV: the two-sided heart), 'stage7b' (dead space, diffusion: the lung module),
+// 'not-modelled'.
+import { ventReference, VENT_ROW_MAP } from '@pme/engine-core';
 
 export interface Band { value: number; lo: number; hi: number }
 export interface Cite { field: string; src: string }
@@ -185,7 +186,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(25, 18, 32), rInsp: b(15, 12, 18), rExp: b(15, 12, 18), autoPeepTendency: 0,
     shunt: b(0.4, 0.25, 0.5), deadSpaceFraction: b(0.6, 0.5, 0.7), diffusionFactor: 1, pvrMultiplier: b(1.8, 1.3, 2.5), hpvSensitivity: 0.5,
     recruitability: 'high', recruitP50: 12,
-    signature: { plateau: b(25, 20, 32), drivingPressure: b(20, 15, 27), autoPeep: NO_AP, peakMinusPlateau: b(15, 11.7, 18) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(25, 20, 32), drivingPressure: b(20, 15, 27), autoPeep: NO_AP, peakMinusPlateau: b(15, 11.7, 18) }, // Signature widened to the engine-generated mechanics (gate note)
     wired: W_STD, monitor: 'P/F < 100; high PEEP improves SpO2 AND compliance (ΔP falls).',
     pitfall: 'Recruitment takes tens of seconds to minutes; derecruitment on disconnection takes seconds.',
     sources: [{ field: 'recruitability', src: 'Dellinger 5e ch. 9 (pdf 200) cites Meade, JAMA 2008;299:637 ("low tidal volumes, recruitment maneuvers, and high positive end-expiratory pressure")' }, { field: 'signature', src: S_MECH }],
@@ -195,7 +196,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(22, 15, 30), rInsp: b(15, 12, 18), rExp: b(15, 12, 18), autoPeepTendency: 0,
     shunt: b(0.4, 0.35, 0.45), deadSpaceFraction: b(0.65, 0.55, 0.75), diffusionFactor: 0.9, pvrMultiplier: b(2, 1.5, 3), hpvSensitivity: 0.5,
     recruitability: 'low', recruitP50: 20,
-    signature: { plateau: b(27, 20, 35), drivingPressure: b(22, 16, 33), autoPeep: NO_AP, peakMinusPlateau: b(15, 11.7, 18) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(27, 20, 35), drivingPressure: b(22, 16, 33), autoPeep: NO_AP, peakMinusPlateau: b(15, 11.7, 18) }, // Signature widened to the engine-generated mechanics (gate note)
     wired: W_STD, monitor: 'Raising PEEP raises plateau and ΔP, SpO2 barely moves, BP falls.',
     pitfall: 'High PEEP here only overdistends and depresses CO — the reason PEEP must be titrated, not prescribed.',
     sources: [{ field: 'recruitability', src: 'ENG: the non-recruitable phenotype of the recruitment trials (Dellinger 5e ch. 36); shunt band narrow because PEEP barely changes it' }, { field: 'signature', src: S_MECH }],
@@ -303,7 +304,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(40, 25, 55), rInsp: b(12, 10, 15), rExp: b(12, 10, 15), autoPeepTendency: 0,
     shunt: b(0.25, 0.15, 0.4), deadSpaceFraction: b(0.55, 0.45, 0.65), diffusionFactor: 0.8, pvrMultiplier: b(1.5, 1, 2.5), hpvSensitivity: 0.4,
     recruitability: 'low', recruitP50: 12,
-    signature: { plateau: b(17, 13, 25), drivingPressure: b(12, 9, 20), autoPeep: NO_AP, peakMinusPlateau: b(12, 9.7, 15) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(17, 13, 25), drivingPressure: b(12, 9, 20), autoPeep: NO_AP, peakMinusPlateau: b(12, 9.7, 15) }, // Signature widened to the engine-generated mechanics (gate note)
     wired: W_STD, monitor: 'Hypoxaemia out of proportion to mechanics early (lost HPV, microthrombi: high dead space).',
     pitfall: 'High PEEP in the compliant early phenotype overdistends without improving SpO2.',
     sources: [{ field: 'hpvSensitivity', src: 'ENG: the "L vs H phenotype" debate; values mid-way' }, { field: 'signature', src: S_MECH }],
@@ -352,7 +353,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(42, 30, 52), rInsp: b(11, 8, 14), rExp: b(11, 8, 14), autoPeepTendency: 0,
     shunt: b(0.2, 0.1, 0.3), deadSpaceFraction: b(0.45, 0.35, 0.55), diffusionFactor: 0.9, pvrMultiplier: b(2, 1.3, 3), hpvSensitivity: 1,
     recruitability: 'moderate', recruitP50: 10,
-    signature: { plateau: b(17, 14, 22), drivingPressure: b(12, 8.8, 17), autoPeep: NO_AP, peakMinusPlateau: b(11, 8, 14) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(17, 14, 22), drivingPressure: b(12, 8.8, 17), autoPeep: NO_AP, peakMinusPlateau: b(11, 8, 14) }, // Signature widened to the engine-generated mechanics (gate note)
     wired: W_STD, monitor: 'Hypoxaemia 24–72 h after long-bone fracture/fixation, then an ARDS-like picture; EtCO2 dip at reaming.',
     pitfall: 'The triad (hypoxaemia, neurological change, petechiae) is incomplete under anaesthesia.',
     sources: [{ field: 'group', src: 'Dellinger 5e ch. 26 p. 386 cites "Fat embolism in patients with an isolated fracture of the femoral shaft. J Trauma. 1988;28:383"' }, { field: 'signature', src: S_MECH }],
@@ -392,8 +393,8 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(18, 10, 25), rInsp: b(14, 10, 18), rExp: b(14, 10, 18), autoPeepTendency: 0,
     shunt: b(0.3, 0.2, 0.45), deadSpaceFraction: b(0.45, 0.35, 0.6), diffusionFactor: 1, pvrMultiplier: b(1.5, 1, 2.5), hpvSensitivity: 1,
     recruitability: 'none',
-    // Stage V.1 (G7b ruling 5): plateau and ΔP back to the authored clinical bands — the ventilator now re-opens the lung
-    // against the engine's pleural pressure (mechanics.ts pleuralOpening); peak − plateau keeps 7b's widening (R_insp 9.8)
+    // Plateau and ΔP back to the authored clinical bands — the ventilator now re-opens the lung against the engine's
+    // pleural pressure (mechanics.ts pleuralOpening); peak − plateau keeps the lung model's widening (R_insp 9.8)
     signature: { plateau: b(32, 25, 50), drivingPressure: b(27, 20, 45), autoPeep: NO_AP, peakMinusPlateau: b(14, 9.7, 18) },
     wired: { ...W_STD, pvr: 'stage7a' }, monitor: 'Airway pressures climb breath by breath, SpO2 falls, then BP collapses with a high CVP (obstructive shock).',
     pitfall: 'Treated as "hypotension and hypoxaemia" without examining the chest — a framing error; decompress before imaging.',
@@ -404,7 +405,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(35, 25, 45), rInsp: b(11, 8, 14), rExp: b(11, 8, 14), autoPeepTendency: 0,
     shunt: b(0.15, 0.08, 0.25), deadSpaceFraction: b(0.35, 0.28, 0.45), diffusionFactor: 1, pvrMultiplier: PV1, hpvSensitivity: 1,
     recruitability: 'moderate', recruitP50: 10,
-    signature: { plateau: b(19, 15, 25), drivingPressure: b(14, 10.6, 20), autoPeep: NO_AP, peakMinusPlateau: b(11, 8, 14) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(19, 15, 25), drivingPressure: b(14, 10.6, 20), autoPeep: NO_AP, peakMinusPlateau: b(11, 8, 14) }, // Signature widened to the engine-generated mechanics (gate note)
     wired: W_STD, monitor: 'Effusion mechanics plus haemorrhage (BP ↓, HR ↑, PPV ↑).',
     pitfall: 'The circulation, not the lung, usually decides the outcome: it is a haemorrhage.',
     sources: [{ field: 'complianceMl', src: 'ENG: as a large effusion (compressive atelectasis), Co-Existing 8e ch. 3' }, { field: 'signature', src: S_MECH }],
@@ -437,7 +438,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(40, 30, 50), rInsp: b(12, 10, 15), rExp: b(12, 10, 15), autoPeepTendency: 0,
     shunt: b(0.12, 0.06, 0.2), deadSpaceFraction: b(0.45, 0.35, 0.6), diffusionFactor: 1, pvrMultiplier: PV1, hpvSensitivity: 1,
     recruitability: 'low', recruitP50: 12,
-    signature: { plateau: b(17, 14, 21), drivingPressure: b(12, 8.8, 16), autoPeep: NO_AP, peakMinusPlateau: b(12, 9.8, 15) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note) // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(17, 14, 21), drivingPressure: b(12, 8.8, 16), autoPeep: NO_AP, peakMinusPlateau: b(12, 9.8, 15) }, // Signature widened to the engine-generated mechanics
     wired: { ...W_STD, mechanics: 'vent' }, monitor: 'VTE < VTI (leak through the chest drain) — the leak is NOT modelled by the single-compartment ventilator yet.',
     pitfall: 'Every extra cmH2O of PEEP/plateau enlarges the leak; lowest pressures that oxygenate.',
     sources: [{ field: 'monitor', src: 'ENG: leak not modelled (single compartment, no leak path); listed so the picker is complete' }, { field: 'signature', src: S_MECH }],
@@ -467,7 +468,7 @@ const AUTHORED: readonly LungPathology[] = [
     complianceMl: b(45, 35, 55), rInsp: b(10, 8, 12), rExp: b(10, 8, 12), autoPeepTendency: 0,
     shunt: b(0.08, 0.04, 0.12), deadSpaceFraction: b(0.3, 0.25, 0.35), diffusionFactor: 1, pvrMultiplier: PV1, hpvSensitivity: 1,
     recruitability: 'moderate', recruitP50: 7,
-    signature: { plateau: b(16, 13, 19.3), drivingPressure: b(11, 8, 14.3), autoPeep: NO_AP, peakMinusPlateau: b(10, 7, 14.6) }, // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note) // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note) // Stage 7b (Task 27): signature widened to the engine-generated mechanics (gate note)
+    signature: { plateau: b(16, 13, 19.3), drivingPressure: b(11, 8, 14.3), autoPeep: NO_AP, peakMinusPlateau: b(10, 7, 14.6) }, // Signature widened to the engine-generated mechanics
     ref: { pbwKg: 57 }, wired: W_STD, monitor: 'Fast desaturation (FRC −20–25 %, VO2 +20 %); normal PaCO2 is ~30 mmHg.',
     pitfall: 'An EtCO2 of 38 is hypoventilation in late pregnancy; supine aortocaval compression lowers CO.',
     sources: [{ field: 'complianceMl', src: 'Co-Existing 8e ch. 3 p. 54: "Intrinsic lung compliance is unaffected by pregnancy. At term, FRC decreases by another 25% in the supine compared to the sitting position." (chest-wall compliance falls: ENG 45)' }, { field: 'signature', src: S_MECH }],
@@ -485,12 +486,12 @@ const AUTHORED: readonly LungPathology[] = [
   },
 ];
 
-// Stage 7b (Task 27): the engine's lung module owns the mechanics and gas-exchange numbers; this table keeps the
-// ventilator-facing text and signature bands. Values are regenerated at load from the engine's own reference run at
-// the row's PBW (ventReference: resolved Crs and Rinsp, mainstem block included); bands widen to
-// include them. Rows the engine does not map, and the neonatal row (the engine data is adult-frame until R22's
-// neonatal profile), keep their authored numbers. Stage V.1: the pleural pressure is generated too, and the fields the
-// link profile's `lungConditions` now put into the engine (shunt, PVR, HPV) are wired 'engine-now'.
+// The engine's lung module owns the mechanics and gas-exchange numbers; this table keeps the ventilator-facing text and
+// signature bands. Values are regenerated at load from the engine's own reference run at the row's PBW (ventReference:
+// resolved Crs and Rinsp, mainstem block included); bands widen to include them. Rows the engine does not map, and the
+// neonatal row (the engine data is adult-frame until a neonatal profile exists), keep their authored numbers. The
+// pleural pressure is generated too, and the fields the link profile's `lungConditions` put into the engine (shunt,
+// PVR, HPV) are wired 'engine-now'.
 const NOW = (w: LungPathology['wired']): LungPathology['wired'] =>
   Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v === 'stage7a' || v === 'stage7b' ? 'engine-now' : v]));
 const widen = (bd: Band, v: number): Band => ({ value: v, lo: Math.min(bd.lo, v), hi: Math.max(bd.hi, v) });

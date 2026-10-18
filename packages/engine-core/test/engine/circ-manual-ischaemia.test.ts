@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import type { CircEvent } from '../../src/index.ts';
 import { organsRig } from '../helpers/organs.ts';
 
-describe('MANUAL MAP target in a stiff elderly ventricle (FU-3 item 4)', () => {
+describe('MANUAL MAP target in a stiff elderly ventricle', () => {
   it.fails('90/52 in the 75 y HTN profile under GA: no ischaemic spiral (kIsch > 0.9) and LVEDP back under the congestion threshold (18) in the last 2 min — measured kIsch 0.200, LVEDP 46.1', async () => {
     const r = organsRig({ seed: 4, patient: { ageY: 75, weightKg: 70, conditions: [{ id: 'htn' }], baseline: { sbp: 140, dbp: 80 } } });
     const circ: CircEvent[] = [];

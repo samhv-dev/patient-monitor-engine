@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { circCoLpm, circVolumeMl, evB, labsAt, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('Stage 7c commands and labs (plan decisions 11, 13)', { timeout: 300_000 }, () => {
-  it('validates the 7c kinds, leaves drugs to 7g and passes everything else on', () => {
+describe('blood commands and labs', { timeout: 300_000 }, () => {
+  it('validates the blood kinds, leaves drugs to the drug model and passes everything else on', () => {
     const { e } = rigB();
     expect(e.dispatch(evB({ kind: 'fluid', fluid: 'saline', volumeMl: 500, overS: 600 })).accepted).toBe(true);
     expect(e.dispatch(evB({ kind: 'fluid', fluid: 'colloid', volumeMl: 500, overS: 600 })).accepted).toBe(true); // 7a's id
@@ -33,7 +33,7 @@ describe('Stage 7c commands and labs (plan decisions 11, 13)', { timeout: 300_00
     expect(r.t - r.drawnAt).toBeCloseTo(120, 0);
     expect(r.values.hb).toBeCloseTo(15, 0); // drawn before the bleed
   });
-  it('a bleed moves out of Stage 7a’s circuit (volume and CO fall), kChem is written, no Stage 2 fallback', async () => {
+  it('a bleed moves out of the circulation (volume and CO fall), kChem is written, no haemodynamic fallback', async () => {
     const { e } = rigB();
     await runTo(e, 20);
     const v0 = circVolumeMl(e);

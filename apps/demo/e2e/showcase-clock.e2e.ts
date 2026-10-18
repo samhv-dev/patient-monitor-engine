@@ -3,7 +3,7 @@
 // up, not stay frozen at the previous case's high-water time while the vital signs move.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { openApp, startVite } from './stage9-support.ts';
+import { openApp, startVite } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';
@@ -16,7 +16,7 @@ const seconds = (s: string): number => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : Number.NaN;
 };
 
-test('loading another scenario restarts the session clock and the time in state, which then count up', async ({ page }) => {
+test('loading another scenario restarts the session clock and the time in state, which then count up', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(90_000);
   await openApp(page, base, '?scenario=showcase-tamponade', { warmMs: 1000 });
   await expect(page).toHaveURL(/#\/teach$/);

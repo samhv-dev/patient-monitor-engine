@@ -1,9 +1,10 @@
-// Bolus drug effect curves for the drugs the demo offers in 7a (tables §6.2–§6.3; B §4.9 "Drug effect"). 7g replaces
-// these with PK + effect-site models; until then each bolus is a Bateman curve on the mechanism multipliers,
+// Bolus drug effect curves for the drugs the demo offers in the circulation (tables §6.2–§6.3; B §4.9 "Drug effect").
+// The drug model replaces these with PK + effect-site models; until then each bolus is a Bateman curve on the mechanism
+// multipliers,
 //   E(t) = Emax·(e^{−t/τoff} − e^{−t/τon}) / peak   (peak-normalised, so Emax is the effect at the peak),
 // scaled by dose/refDose (capped at 2× the reference effect), and repeated boluses add (tachyphylaxis for ephedrine
-// × 0.7 per repeat). Effects on the same multiplier combine MULTIPLICATIVELY (audit A11); no drug ever moves the
-// baroreflex set point (A11) — reflex bradycardia to phenylephrine is emergent.
+// × 0.7 per repeat). Effects on the same multiplier combine MULTIPLICATIVELY; no drug ever moves the baroreflex set
+// point — reflex bradycardia to phenylephrine is emergent.
 export type DrugId = 'phenylephrine' | 'ephedrine' | 'nitroglycerin' | 'esmolol' | 'propofol';
 
 export interface DrugEffect {
@@ -15,16 +16,16 @@ export interface DrugEffect {
   gv: number; // × on the vagal and sympathetic reflex gains
   gvHr: number; // × on the sympathetic HR arm only (propofol depresses the baroreflex HR response most: Cullen 1987)
   /**
-   * FU-4 G2: × on the central sympathetic OUTPUT (arterial and cardiopulmonary limbs, applied after the reflex
-   * saturation): anaesthetic sympatholysis (MSNA suppression), 1 = none. Unlike a gain scale, it lowers the ceiling of
-   * what the reflex can deliver, so a patient held up by a saturated reflex loses most (state-dependence).
+   * × on the central sympathetic OUTPUT (arterial and cardiopulmonary limbs, applied after the reflex saturation):
+   * anaesthetic sympatholysis (MSNA suppression), 1 = none. Unlike a gain scale, it lowers the ceiling of what the
+   * reflex can deliver, so a patient held up by a saturated reflex loses most (state-dependence).
    */
   symp: number;
-  /** FU-4 G2: × on the baroreflex set point (anaesthetic resetting to a lower pressure), 1 = none. */
+  /** × on the baroreflex set point (anaesthetic resetting to a lower pressure), 1 = none. */
   setF: number;
-  /** FU-4 G7: vagal RR increment, ms (opioids, anticholinesterases), already × (1 − muscBlock); 0 = none. */
+  /** Vagal RR increment, ms (opioids, anticholinesterases), already × (1 − muscBlock); 0 = none. */
   vagalMs?: number;
-  /** FU-4 G7: muscarinic block 0–1 (atropine, glycopyrrolate): removes the vagal limb and every vagal event. */
+  /** Muscarinic block 0–1 (atropine, glycopyrrolate): removes the vagal limb and every vagal event. */
   muscBlock?: number;
 }
 
@@ -40,7 +41,8 @@ interface DrugRow {
 
 /** Peak effects at the reference dose (tables §6.2/§6.3; [ENG] where marked there). */
 export const DRUGS: Record<DrugId, DrugRow> = {
-  // phenylephrine 100 µg: SVR ×1.7 at peak [ENG, refitted to MAP +15–25 against the emergent reflex: prototype ×1.8, ×1.7 after the R45(b) reflex/Zc changes; tables said ×1.35], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
+  // phenylephrine 100 µg: SVR ×1.7 at peak [ENG, refitted to MAP +15–25 against the emergent reflex; tables said
+  // ×1.35], V −3 %, PVR ×1.1; onset 30–60 s, peak 1–2 min
   phenylephrine: { refDose: 0.1, unit: 'mg', tauOn: 30, tauOff: 300, peak: { hr: 0, ees: 0, svr: 0.7, v0Frac: -0.03, pvr: 0.1 } },
   // ephedrine 10 mg: HR +12 %, contractility +18 %, SVR +12 %, V −3 %; peak 4–5 min, ~1 h; tachyphylaxis ×0.7
   ephedrine: { refDose: 10, unit: 'mg', tauOn: 90, tauOff: 1800, peak: { hr: 0.12, ees: 0.18, svr: 0.12, v0Frac: -0.03, pvr: 0 }, betaMediated: true, tachyphylaxis: 0.7 },
@@ -50,8 +52,8 @@ export const DRUGS: Record<DrugId, DrugRow> = {
   esmolol: { refDose: 0.5, unit: 'mg/kg', tauOn: 30, tauOff: 540, peak: { hr: -0.2, ees: -0.15, svr: 0, v0Frac: 0, pvr: 0 } },
   // propofol 2 mg/kg: tables §6.3 row at E = 0.9 (the upper end of E = Ce/(Ce + 3.5) after 2 mg/kg): SVR ×(1 − 0.45E),
   // Ees ×(1 − 0.2E), V0 +8 %·E, reflex ×(1 − 0.6E); plus the sympathetic HR arm ×0.3 at peak (tables "HR ~/↓";
-  // propofol depresses the baroreflex HR response most, Cullen 1987) [ENG, fitted in Task 24 to brief sanity check 3:
-  // the prototype's E 0.6 row gave MAP 88 % and HR +33 against the R45(b) reflexes]
+  // propofol depresses the baroreflex HR response most, Cullen 1987) [ENG, fitted to brief sanity check 3:
+  // the prototype's E 0.6 row gave MAP 88 % and HR +33 against the reflexes]
   propofol: { refDose: 2, unit: 'mg/kg', tauOn: 40, tauOff: 420, peak: { hr: 0, ees: -0.18, svr: -0.405, v0Frac: 0.072, pvr: 0, gv: -0.54, gvHr: -0.7 } },
 };
 
@@ -65,7 +67,7 @@ export function bolusScale(drug: DrugId, doseMg: number, weightKg: number, previ
   const row = DRUGS[drug];
   const dose = row.unit === 'mg/kg' ? doseMg / weightKg : doseMg;
   const n = previous.filter((b) => b.drug === drug).length;
-  return Math.min(2, dose / row.refDose) * (row.tachyphylaxis ?? 1) ** n; // Stage 7g: age sensitivity lives in the Eleveld models (l2/pk)
+  return Math.min(2, dose / row.refDose) * (row.tachyphylaxis ?? 1) ** n; // Age sensitivity lives in the Eleveld models (l2/pk)
 }
 
 function bateman(t: number, on: number, off: number): number {

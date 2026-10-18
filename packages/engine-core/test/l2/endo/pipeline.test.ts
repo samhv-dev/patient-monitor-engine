@@ -15,7 +15,7 @@ function rig(ps: Record<string, unknown> = {}, profile: Record<string, unknown> 
   return { es, resp: resp as { temp: typeof temp }, ctx: { l1: createL1State(), hemo: {} as never, resp, ps } };
 }
 
-describe('Stage 7e pipeline', () => {
+describe('endocrine pipeline', () => {
   it('validates its own commands and returns null for everything else (every drug, mh, dka, airway)', () => {
     expect(validateEndoCommand(ev({ kind: 'stimulus', intensity: 1.5 }))).toBeUndefined();
     expect(validateEndoCommand(ev({ kind: 'stimulus', intensity: 3 }))).toMatch(/intensity/);
@@ -39,7 +39,7 @@ describe('Stage 7e pipeline', () => {
     expect((e[4] as { glucoseMgDl: number }).glucoseMgDl).toBe(144);
   });
 
-  it('applies stimulus, thermal7e and conditions; hands 7g’s dantrolene effect to the heat model every pass', () => {
+  it('applies stimulus, thermal7e and conditions; hands the drug model’s dantrolene effect to the heat model every pass', () => {
     const { es, resp, ctx } = rig({ pk: { bus: { metabolic: { dantroleneE: 0.5 } } } });
     const r = resp as never;
     expect(applyEndoCommand(es, r, ev({ kind: 'stimulus', intensity: 1 }), 0)).toBe(true);
@@ -81,7 +81,7 @@ describe('Stage 7e pipeline', () => {
     expect(o.svrF).toBeLessThanOrEqual(0.65);
   });
 
-  it('stores cascade(th) on EndoState every second for 7f (R-7f-8): neutral when created, macF < 1 when the core is cold', () => {
+  it('stores cascade(th) on EndoState every second for the neuro model: neutral when created, macF < 1 when the core is cold', () => {
     const { es, resp, ctx } = rig();
     expect(es.cascade.macF).toBe(1);
     resp.temp.tc = 34;

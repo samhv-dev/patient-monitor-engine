@@ -5,7 +5,7 @@ const R = (id: string, s: number, bd = 0, exempt: string[] = []) => resolveLung(
 const rL = (lp: ReturnType<typeof R>) => lp.side.map((x) => x.rLung);
 const near = (a: number[], b: number[]) => a.forEach((x, i) => expect(x).toBeCloseTo(b[i] as number, 9));
 
-describe('FU-6 R2: one airway-smooth-muscle state (D1)', () => {
+describe('one airway-smooth-muscle state', () => {
   it('bronchospasm: B relaxes every effect to severity s·(1 − 0.85·B)', () => {
     expect(SMOOTH_MUSCLE.bronchospasm?.frac).toBe(0.85);
     near(rL(R('bronchospasm', 1, 1)), rL(R('bronchospasm', 0.15)));
@@ -22,7 +22,7 @@ describe('FU-6 R2: one airway-smooth-muscle state (D1)', () => {
     expect(c.side[0]?.vdAlv).toBe(R('copd', 1).side[0]?.vdAlv); // emphysema's dead space does not reverse
     expect(rL(c)[0]).toBeLessThan(rL(R('copd', 1))[0] as number);
   });
-  it('an exempt condition (7e owns its relief) and a non-smooth-muscle condition ignore B', () => {
+  it('an exempt condition (the endocrine model owns its relief) and a non-smooth-muscle condition ignore B', () => {
     expect(rL(R('anaphylaxis', 1, 1, ['anaphylaxis']))).toEqual(rL(R('anaphylaxis', 1)));
     expect(R('ards', 0.67, 1)).toEqual(R('ards', 0.67));
   });

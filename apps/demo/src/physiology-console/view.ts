@@ -1,6 +1,6 @@
-// Stage 7x: the console page controller — header (clock, speed, baseline, filters, export), the actions rail, the
-// change log and the organ sections. Plain DOM; one small canvas per sparkline. The engine is reached only through
-// ConsoleHost, so the happy-dom test drives it with a real engine on the main thread and the page with mountMonitor.
+// The console page controller — header (clock, speed, baseline, filters, export), the actions rail, the change log and
+// the organ sections. Plain DOM; one small canvas per sparkline. The engine is reached only through ConsoleHost, so the
+// happy-dom test drives it with a real engine on the main thread and the page with mountMonitor.
 import type { EngineEvent, PatientSnapshot } from '@pme/engine-core';
 import { RHYTHM_IDS } from '@pme/engine-core';
 import * as A from './actions.ts';
@@ -343,7 +343,7 @@ export function mountConsole(root: HTMLElement, host: ConsoleHost, o: { autoBase
     mode: () => void send(A.setMode(f('mode').value as 'manual' | 'modeled')),
     restart: () => {
       host.restart(f('preset').value, f('mode').value as 'manual' | 'modeled');
-      if (paused) host.pause(true); // Stage 8b (FU-11 F24): a restart keeps the pause, as the clinical app's does
+      if (paused) host.pause(true); // A restart keeps the pause, as the clinical app's does
       model.clear();
       baseSnap = null;
       simT = 0;

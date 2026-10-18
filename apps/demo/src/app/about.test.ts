@@ -1,5 +1,5 @@
-// Stage 8b: the in-app release label and education-only line (Start and Settings → About) match the packages' version
-// and the Debrief's print footer; no "version 1.1" promise is left on screen.
+// The in-app release label and education-only line (Start and Settings → About) match the packages' version and the
+// Debrief's print footer; no "version 1.1" promise is left on screen.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -7,7 +7,7 @@ import { version } from '@pme/renderer';
 import { ABOUT_LINE, EDUCATION_LINE, RELEASE_LABEL } from './about.ts';
 import { pairingOf } from './pairing.ts';
 
-describe('about line (Stage 8b)', () => {
+describe('about line', () => {
   it('names the package version, flags a pre-release, and says education only like the Debrief footer', () => {
     expect(RELEASE_LABEL).toBe(`Version ${version} (pre-release)`);
     expect(ABOUT_LINE).toContain(EDUCATION_LINE);

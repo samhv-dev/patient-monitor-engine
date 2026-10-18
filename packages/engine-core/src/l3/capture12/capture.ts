@@ -3,7 +3,7 @@
 // a lead II rhythm strip, 25 mm/s, 10 mm/mV, with calibration pulses. Uses only the public MonitorEngine API.
 import { projectLeads } from '../../l2/ecg/vcg.ts';
 import { createFilterState, designEcgFilter, filterSample, FILTER_BANDS } from '../ecg-filter.ts';
-import { createQrsState, qrsStep } from '../qrs.ts'; // FU-8: QRS_RATE = CAPTURE_RATE = 500 Hz
+import { createQrsState, qrsStep } from '../qrs.ts'; // QRS_RATE = CAPTURE_RATE = 500 Hz
 import { LEAD_IDS, type LeadId, type MonitorEngine } from '../../types.ts';
 
 export const CAPTURE_S = 10;
@@ -50,9 +50,9 @@ export function capture12(e: MonitorEngine, endT: number = e.now().simT): Captur
   const fs = [createFilterState(sec), createFilterState(sec), createFilterState(sec)];
   const leads = Object.fromEntries(LEAD_IDS.map((l) => [l, new Float32Array(n)])) as Record<LeadId, Float32Array>;
   const tmp = new Float64Array(12);
-  // FU-8 (review pack: "asystole reads HR 120"): the R peaks are the monitor's own QRS detections (l3/qrs.ts) on lead
-  // II over the pre-roll and the window, not local maxima above 60 % of the strip's maximum — which found 93/min in
-  // asystole (noise), 25 in P-wave asystole (P waves) and 49/65 in coarse/fine VF
+  // The R peaks are the monitor's own QRS detections (l3/qrs.ts) on lead II over the pre-roll and the window, not local
+  // maxima above 60 % of the strip's maximum — which found 93/min in asystole (noise), 25 in P-wave asystole (P waves)
+  // and 49/65 in coarse/fine VF
   const qrs = createQrsState(0);
   const rs: number[] = [];
   for (let i = 0; i < total; i++) {

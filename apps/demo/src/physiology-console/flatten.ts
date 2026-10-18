@@ -1,7 +1,7 @@
-// Stage 7x: flatten the truth tree and the engine's summary events into one map of dotted paths → leaf values.
-// Paths: the truth tree as-is (`hemo.circ.p.rSys`), events under `ev.<type>.` (`ev.circ.svr`), monitor numerics under
-// `mon.<id>` (the value the monitor shows). Arrays of objects are keyed by `id`/`drugId`/`agent` when they carry one
-// (7g's `drugs` rows → `ev.drugs.drugs.propofol.ce`), by index otherwise — as the engine's pruneTruth does.
+// Flatten the truth tree and the engine's summary events into one map of dotted paths → leaf values. Paths: the truth
+// tree as-is (`hemo.circ.p.rSys`), events under `ev.<type>.` (`ev.circ.svr`), monitor numerics under `mon.<id>` (the
+// value the monitor shows). Arrays of objects are keyed by `id`/`drugId`/`agent` when they carry one (the drug model's
+// `drugs` rows → `ev.drugs.drugs.propofol.ce`), by index otherwise — as the engine's pruneTruth does.
 import type { EngineEvent } from '@pme/engine-core';
 
 export type Leaf = number | boolean | string | null;

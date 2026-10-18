@@ -3,7 +3,7 @@ import { createL1State } from '../../../src/l1/state.ts';
 import { applyL1Fallback, chemistryContractility, circOf, lungWaterStep, pulmCapPressure, pushCircVolume, setCircChemistry, volumeCoFactor } from '../../../src/l2/blood/circ-adapter.ts';
 
 describe('circulation adapter (plan decision 10)', () => {
-  it('finds a Stage 7a CircModelState by duck typing, pushes 100 ms volume events and writes ext.kChem unconditionally', () => {
+  it('finds a circulation CircModelState by duck typing, pushes 100 ms volume events and writes ext.kChem unconditionally', () => {
     expect(circOf({})).toBeNull();
     expect(circOf({ circ: { t: 1 } })).toBeNull();
     // 7a's ext initialiser omits the optional kChem key (R51 addendum 14): 7c must still write it
@@ -33,7 +33,7 @@ describe('circulation adapter (plan decision 10)', () => {
     expect(chemistryContractility(7.0, 1.2)).toBeCloseTo(0.7, 6);
     expect(chemistryContractility(7.4, 0.9)).toBeCloseTo((0.9 / 1.1) ** 1.5, 6);
   });
-  it('lung water (G7b ruling 8): none below COP − 2; +10 mL/kg at steady state 10 mmHg above it; a leak lowers the threshold', () => {
+  it('lung water: none below COP − 2; +10 mL/kg at steady state 10 mmHg above it; a leak lowers the threshold', () => {
     expect(pulmCapPressure({})).toBeNull();
     expect(pulmCapPressure({ circOut: { pPv: 9 } })).toBe(9);
     const run = (pCap: number, cop: number, kf: number, sig: number, min: number) => {

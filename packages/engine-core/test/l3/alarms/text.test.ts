@@ -11,7 +11,7 @@ describe('alarm texts', () => {
     expect(fixedText(ph, 'ASYSTOLE', 1, false)).toBe('***ASYSTOLE');
     expect(fixedText(ph, 'ecgLeadsOff', 3, true)).toBe('ECG LEADS OFF');
   });
-  it("FU-5 (audit M6): the tile's decimals — temperature one ('**Temp 35.9<36.0', was '**Temp 36<36'), pressures none", () => {
+  it("the tile's decimals — temperature one ('**Temp 35.9<36.0', was '**Temp 36<36'), pressures none", () => {
     expect(limitText(ph, ph.limits.TEMP!, 'LOW', 35.9)).toBe('**Temp 35.9<36.0');
     expect(limitText(ph, ph.limits.CVP_M!, 'HIGH', 11)).toBe('**CVP 11>10');
   });

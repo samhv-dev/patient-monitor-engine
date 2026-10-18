@@ -67,10 +67,10 @@ export class ViewerSync {
   beatDriftMs = 0;
   /** Wall-clock lag behind the host's anchored now, s (≈ delayS when locked). */
   lagS = 0;
-  /** Stage 10: the host's fast-forward while it runs, and the last one that ended (a second screen's marker reads them). */
+  /** The host's fast-forward while it runs, and the last one that ended (a second screen's marker reads them). */
   fastForward: { fromT: SimSeconds; toT: SimSeconds } | null = null;
   lastFastForward: FastForwardDone | null = null;
-  /** Stage 10: the host's sim time during its fast-forward (from its events; the second screen's panel runs its clock). */
+  /** The host's sim time during its fast-forward (from its events; the second screen's panel runs its clock). */
   fastForwardAt: SimSeconds | null = null;
   private readonly o: ViewerSyncOptions;
   private readonly delayS: number;
@@ -85,10 +85,10 @@ export class ViewerSync {
   private early: Command[] = [];
   private anchor: { simT: number; wallMs: number } | null = null;
   private hostPaused = false;
-  private hostFastForward = false; // Stage 10: the host is fast-forwarding — wait, then take a fresh snapshot
+  private hostFastForward = false; // The host is fast-forwarding — wait, then take a fresh snapshot
   private hostRate = 1;
   private readonly mirrored = new Set<string>(); // commandIds already applied (an engine that emits its own
-  // commandApplied from Stage 5 on must not make the viewer apply a command twice)
+  // commandApplied must not make the viewer apply a command twice)
   private readonly hostBeats = new Map<number, number>();
   private readonly localBeats = new Map<number, number>();
 
@@ -134,14 +134,14 @@ export class ViewerSync {
     }
     if (err < -0.05) return t.setPaused(true); // ahead of the host: wait for it
     t.setPaused(false);
-    t.setRate(Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, this.hostRate * (1 + Math.max(-0.1, Math.min(0.1, 0.5 * err)))))); // Stage 10: ×8
+    t.setRate(Math.min(MAX_TIME_SCALE, Math.max(MIN_TIME_SCALE, this.hostRate * (1 + Math.max(-0.1, Math.min(0.1, 0.5 * err)))))); // ×8
   }
 
   close(): void {
     for (const off of this.offs) off();
   }
 
-  /** Stage 12: start again from a fresh snapshot of the host (a phone that held while it could not follow). */
+  /** Start again from a fresh snapshot of the host (a phone that held while it could not follow). */
   resync(): void {
     this.requestSync(true);
   }
@@ -170,8 +170,8 @@ export class ViewerSync {
     // duplicates are dropped; a lost connection shows up as a transport 'open' → requestSync().
     if (this.seqs.check(m) === 'duplicate') return;
     if (m.kind === 'hello' && m.role === 'host') {
-      // host (re)started, reloaded or restored a bookmark. R50 F5: a reloaded host has its own speed and pause — the old
-      // host's are forgotten here; the sticky time commands it replays to our hello set them again
+      // host (re)started, reloaded or restored a bookmark. A reloaded host has its own speed and pause — the old host's
+      // are forgotten here; the sticky time commands it replays to our hello set them again
       this.hostRate = 1;
       this.hostPaused = false;
       return this.requestSync(true);
@@ -199,16 +199,16 @@ export class ViewerSync {
   }
 
   private onEvent(e: WireEvent): void {
-    // FU-11 (showcase hotfix note; F04, BA04): a new timeline (patient restart, bookmark restore) — drop the anchor and
-    // take a fresh snapshot; a restart sends no host hello, so without this the viewer mirrored onto the old body
+    // A new timeline (patient restart, bookmark restore) — drop the anchor and take a fresh snapshot; a restart sends
+    // no host hello, so without this the viewer mirrored onto the old body
     if (e.type === 'timeline') {
-      this.hostFastForward = false; // Stage 10: a fast-forward ends with its timeline
+      this.hostFastForward = false; // A fast-forward ends with its timeline
       this.fastForward = null;
       return this.requestSync(true);
     }
     if (e.type === 'fastForward') {
-      // Stage 10: the host runs minutes in seconds — this viewer waits (paused) and then starts again from the host's
-      // snapshot at the end, rather than running every skipped tick itself on the same machine
+      // The host runs minutes in seconds — this viewer waits (paused) and then starts again from the host's snapshot at
+      // the end, rather than running every skipped tick itself on the same machine
       this.hostFastForward = e.phase === 'start';
       this.fastForward = e.phase === 'start' ? { fromT: e.fromT, toT: e.toT } : null;
       if (e.phase === 'end') {
@@ -238,9 +238,9 @@ export class ViewerSync {
       if (c.action === 'pause') this.hostPaused = true;
       if (c.action === 'resume') {
         this.hostPaused = false;
-        // Stage 10 Task 6: the host sent no state while paused (nor while it fast-forwarded), so the old anchor would
-        // project the whole pause forward (up to MAX_EXTRAPOLATE_S × rate) and the viewer leapt ahead, then froze.
-        // Re-anchor at the host's time of the resume, on the wall clock of now.
+        // The host sent no state while paused (nor while it fast-forwarded), so the old anchor would project the whole
+        // pause forward (up to MAX_EXTRAPOLATE_S × rate) and the viewer leapt ahead, then froze. Re-anchor at the
+        // host's time of the resume, on the wall clock of now.
         if (this.anchor && !res?.replay) this.anchor = { simT: e.tick * TICK_S, wallMs: this.now() };
       }
       if (c.action === 'scale' && typeof c.value === 'number') {
@@ -252,13 +252,13 @@ export class ViewerSync {
         this.hostRate = c.value;
       }
       if (c.action === 'jump' && res?.replay && typeof c.value === 'number') {
-        this.hostFastForward = true; // Stage 10: joined during a fast-forward (atTick = where it began)
+        this.hostFastForward = true; // Joined during a fast-forward (atTick = where it began)
         this.fastForward = { fromT: (c.atTick ?? e.tick) * TICK_S, toT: (c.atTick ?? e.tick) * TICK_S + c.value };
       }
       return;
     }
     if (c.type === 'scenario' || c.type === 'pin' || c.type === 'release' || c.type === 'setFactor' || c.type === 'setMode') return;
-    const m = c as Command; // applyEvent/attachSensor are mirrored too; the engine validates them (Stage 6b)
+    const m = c as Command; // applyEvent/attachSensor are mirrored too; the engine validates them
     if (res?.replay) {
       if (this.awaiting) this.replays.push(m);
       return;

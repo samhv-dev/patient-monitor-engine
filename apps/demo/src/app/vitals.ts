@@ -6,7 +6,7 @@ import { entry, shortLabel, unitOf } from './glossary.ts';
 
 export interface VitalSpec {
   v: StateVar;
-  /** Glossary entry number (research/11 §5 or the Stage 9 additions). */
+  /** Glossary entry number (research/11 §5 or the clinical app's additions). */
   n: number;
   /** Display = engine value × scale. */
   scale: number;

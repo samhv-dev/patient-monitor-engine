@@ -1,9 +1,9 @@
-// Stage 7e endocrine/metabolic core: one engine-independent 1 Hz step that combines stress hormones, glucose–insulin,
+// Endocrine/metabolic core: one engine-independent 1 Hz step that combines stress hormones, glucose–insulin,
 // thyroid, system conditions and MH/thermal metabolism into EndoOut — the only thing the adapters read. Plain data.
-// Drugs are Stage 7g's (R51 §1–3): dextrose/insulin reach the glucose model through the pipeline's dose observer,
-// exogenous epinephrine arrives as a plasma-equivalent input, dantrolene acts in the thermal module. DKA is Stage 7c's
-// condition: its severity (7c's `blood.out.dkaSeverity`) is an INPUT here, never an output (no ketone drive back).
-import { acidosisFactor } from '../pk/pd.ts'; // FU-7.1 B1: ONE pH → catecholamine-efficacy curve (tables §5b.1, Q44)
+// Drugs are the drug model's: dextrose/insulin reach the glucose model through the pipeline's dose observer,
+// exogenous epinephrine arrives as a plasma-equivalent input, dantrolene acts in the thermal module. DKA is the blood
+// model's condition: its severity (`blood.out.dkaSeverity`) is an INPUT here, never an output (no ketone drive back).
+import { acidosisFactor } from '../pk/pd.ts'; // ONE pH → catecholamine-efficacy curve (tables §5b.1, Q44)
 import { tempHrF } from '../thermal/metabolic.ts';
 import { conditionEffects, createConditions, stepConditions, type ConditionEffects, type ConditionState } from './conditions.ts';
 import { stressEffects, type StressEffects } from './effects.ts';
@@ -19,7 +19,7 @@ import { thyroidEffects, type ThyroidState } from './thyroid.ts';
 
 export interface EndoProfile {
   diabetes: 'none' | 'type1' | 'type2';
-  /** FU-10 E7: type 1 only — false omits the long-acting basal insulin (insulin-deficient: ketogenesis, K⁺ efflux). */
+  /** Type 1 only — false omits the long-acting basal insulin (insulin-deficient: ketogenesis, K⁺ efflux). */
   basalInsulin: boolean;
   thyroid: ThyroidState;
   adrenalInsufficiency: boolean;
@@ -29,37 +29,37 @@ export const DEFAULT_ENDO_PROFILE: EndoProfile = { diabetes: 'none', thyroid: 'n
 
 /** Resolved per-profile glucose parameters (tables §5c SI diabetic 1–3e-4 → × 0.3; type 2 fasting ≈ 8 mmol/L). */
 export function glucoseProfile(p: EndoProfile): { gb: number; si: number; beta: number; glucagon: number; basalExo: boolean } {
-  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: p.basalInsulin !== false }; // FU-10 E7
+  if (p.diabetes === 'type1') return { gb: 130, si: 1, beta: 0, glucagon: 0, basalExo: p.basalInsulin !== false };
   if (p.diabetes === 'type2') return { gb: 144, si: 0.3, beta: 1, glucagon: 1, basalExo: false };
   return { gb: 100, si: 1, beta: 1, glucagon: 1, basalExo: false };
 }
 
 export interface EndoInputs {
-  /** FU-7 (addenda 20–21): 7g's indirect-sympathomimetic drive (`pk.bus.cns.sympDrive`), 0–3; 0 without 7g. */
+  /** The drug model's indirect-sympathomimetic drive (`pk.bus.cns.sympDrive`), 0–3; 0 without the drug model. */
   sympDrug?: number;
   noxious: number;
   antinoc: number;
-  /** FU-7 (R51 addendum 25): the OPIOID + lidocaine share of the antinociception — the nociceptive surge state reads it
-   * (a hypnotic does not abolish the humoral stress response, Desborough 2000). Absent = the total. */
+  /** The OPIOID + lidocaine share of the antinociception — the nociceptive surge state reads it (a hypnotic does not
+   * abolish the humoral stress response, Desborough 2000). Absent = the total. */
   antinocOp?: number;
   mapMmHg: number;
-  /** FU-4 F2(a): the patient's own mean-pressure set point (7a `baro.set`) — the humoral arm's unloading reference. */
+  /** The patient's own mean-pressure set point (circulation `baro.set`) — the humoral arm's unloading reference. */
   mapSetMmHg: number;
   sao2: number;
   paco2: number;
-  /** FU-7.1 B1: arterial pH (7c `blood.core.ab.ph`); absent/neutral 7.4. The catecholamine responsiveness reads it. */
+  /** Arterial pH (`blood.core.ab.ph`); absent/neutral 7.4. The catecholamine responsiveness reads it. */
   ph?: number;
   tempC: number; // core temperature (the fever HR term)
   mhActivity: number; // thermal (0–1)
-  liverF: number; // 7d `organs.liver.glucoseF` (1 normal)
+  liverF: number; // `organs.liver.glucoseF` (1 normal)
   weightKg: number;
-  betaBlock: number; // 7a `prof.betaBlock` (HR)
-  betaBlockC: number; // 7a `prof.betaBlockC` (contractility)
-  epiExoPgMl: number; // 7g epinephrine as plasma pg/mL
-  /** FU-7 (addendum 24 / DI-76): 7g's exogenous glucocorticoid, cortisol-equivalent nmol/L above basal (0 without 7g). */
+  betaBlock: number; // The circulation's `prof.betaBlock` (HR)
+  betaBlockC: number; // `prof.betaBlockC` (contractility)
+  epiExoPgMl: number; // drug-model epinephrine as plasma pg/mL
+  /** The drug model's exogenous glucocorticoid, cortisol-equivalent nmol/L above basal (0 without the drug model). */
   cortExoNmolL?: number;
-  bronchoDilExt: number; // 7g `bus.airway.bronchodilation` (0–1)
-  dkaSeverity: number; // 7c (0–1)
+  bronchoDilExt: number; // `bus.airway.bronchodilation` (0–1)
+  dkaSeverity: number; // 0–1
 }
 
 export const NEUTRAL_ENDO_INPUTS: EndoInputs = {
@@ -72,52 +72,54 @@ export interface EndoCore {
   hormones: HormoneState;
   glucose: GlucoseState;
   cond: ConditionState;
-  x: EndoInputs; // the last inputs (compose reads the β-block, temperature, MH and 7g's bronchodilation from them)
-  /** FU-10 E10: 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
+  x: EndoInputs; // The last inputs (compose reads the β-block, temperature, MH and the drug bronchodilation from them)
+  /** 11β-hydroxylase suppression left by an etomidate dose (0–1), recovering with ETOM_SUPPR_T12_S. */
   etomSuppr?: number;
-  /** FU-10 E7 (R-2): the ketogenic insulin deficit (0–1), the current deficit smoothed with KETO_TAU_S. */
+  /** The ketogenic insulin deficit (0–1), the current deficit smoothed with KETO_TAU_S. */
   ketoDef?: number;
   out: EndoOut;
 }
 
 export interface EndoOut {
-  hrF: number; // stress × thyroid HR (β-mediated: 7a/7g blunt it)
+  hrF: number; // Stress × thyroid HR (β-mediated: the circulation and drug models blunt it)
   condHrF: number; // the conditions' HR rows (tables §5e `hrRest +`): the MANUAL composite of their reflex and fever tachycardia
-  feverHrF: number; // core-temperature HR term (NOT β-mediated: applied unblunted, R51 addendum 16) — MODELED
+  feverHrF: number; // Core-temperature HR term (NOT β-mediated: applied unblunted) — MODELED
   feverHrFExcess: number; // the same above the endocrine set-point shift (the conditions' fever is in condHrF) — MANUAL
   svrF: number;
   eesF: number;
-  dV0Frac: number; // + fraction of BLOOD VOLUME moved into the unstressed pool (+ = venodilation); 7a's sign is the opposite
-  /** FU-4 F2(a): the HUMORAL arm's venous recruitment, published on its own because it shares 7a's ONE unstressed-volume
-   * reservoir with the baroreflex and the β-agonists (FU-2 F4) — added to `dV0Frac` it would double-count the splanchnic
-   * bed. − = venoconstriction, as a fraction of blood volume. */
+  dV0Frac: number; // + fraction of BLOOD VOLUME into the unstressed pool (+ = venodilation); circulation's sign is opposite
+  /** The HUMORAL arm's venous recruitment, published on its own because it shares the circulation model's ONE
+   * unstressed-volume reservoir with the baroreflex and the β-agonists — added to `dV0Frac` it would double-count the
+   * splanchnic bed. − = venoconstriction, as a fraction of blood volume. */
   humDV0Frac: number;
-  /** FU-4 G-FU4-1: the humoral arm's own × on SVR (already inside `svrF`), published so 7a can withdraw its EFFECT under no-flow ischaemia. */
+  /** The humoral arm's own × on SVR (already inside `svrF`), published so the circulation can withdraw its EFFECT
+   * under no-flow ischaemia. */
   humSvrF: number;
   vo2F: number; // endocrine metabolic rate × (thyroid, conditions): VO2, VCO2 and heat (thermal.extraX)
   setShiftC: number; // fever set point added to the thermal thresholds
-  kShift: number; // mmol/L ENDOGENOUS K set-point shift (endogenous epinephrine β2, secreted insulin, MH efflux) → 7c
-  /** FU-10 E7: ketoacid production from the INSULIN DEFICIT, mmol/min → 7c's ketoacid pool (`blood.core.endoKetoMmolMin`). */
+  kShift: number; // mmol/L ENDOGENOUS K set-point shift (epinephrine β2, secreted insulin, MH efflux) → the blood
+  /** Ketoacid production from the INSULIN DEFICIT, mmol/min → the blood's ketoacid pool
+   * (`blood.core.endoKetoMmolMin`). */
   ketoMmolMin: number;
-  /** FU-10 E7 (R-2): insulin-dependent ketone utilisation, fraction of 7c's pool per minute (`blood.core.endoKetoUtilPerMin`). */
+  /** Insulin-dependent ketone utilisation, fraction of the blood model's pool per minute (`blood.core.endoKetoUtilPerMin`). */
   ketoUtilPerMin: number;
-  kfMult: number; // → 7c `blood.core.fl.kfMult`
-  vasoResp: number; // → `ps.cond.vasoResp` (7g)
-  anaphLung: number; // 7b `lungCondition anaphylaxis` severity (0–1; grade/5 relieved by β2 bronchodilation)
+  kfMult: number; // → `blood.core.fl.kfMult`
+  vasoResp: number; // → `ps.cond.vasoResp`
+  anaphLung: number; // `lungCondition anaphylaxis` severity (0–1; grade/5 relieved by β2 bronchodilation)
   glucoseMgDl: number;
   glucoseMmol: number;
   insulinUuMl: number;
-  epiPgMl: number; // total plasma epinephrine (endogenous + 7g's)
+  epiPgMl: number; // Total plasma epinephrine (endogenous + the drug model's)
   nePgMl: number;
   cortisolNmolL: number;
-  catReserve: number; // FU-7 (audit D9): 7e's releasable catecholamine store (0–1), scales 7g's indirect drive
+  catReserve: number; // Releasable catecholamine store (0–1), scales the drug model's indirect drive
   symp: number;
-  /** FU-7 (addendum 22; ruling 1): × on 7a's baroreflex set point from the NOCICEPTIVE surge (1 = none). */
+  /** × on the circulation model's baroreflex set point from the NOCICEPTIVE surge (1 = none). */
   surgeF: number;
-  /** FU-7 (R51 addendum 25): the nociceptive circulating catecholamines, 7g rate-equivalents — 7g's `PkCtx.endoCat`. */
+  /** The nociceptive circulating catecholamines as drug-model rate-equivalents — the drug model's `PkCtx.endoCat`. */
   surgeCat: { ne: number; epi: number };
   stressIndex: number; // 0–100, instructor only
-  neuroglycopenia: number; // 0–1 → 7f BIS/depth
+  neuroglycopenia: number; // 0–1 → neuro BIS/depth
   stress: StressEffects;
   cond: ConditionEffects;
 }
@@ -138,23 +140,26 @@ export function createEndoCore(profile: EndoProfile = DEFAULT_ENDO_PROFILE, weig
 }
 
 /**
- * FU-10 E10/E13: the adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile (as before) and, on top
- * of it, suppressed by an 11β-hydroxylase inhibitor the patient has had (etomidate: `etomSuppr`, 0–1).
+ * The adrenal's cortisol RESPONSE — halved by the adrenal-insufficiency profile and, on top of it, suppressed by an
+ * 11β-hydroxylase inhibitor the patient has had (etomidate: `etomSuppr`, 0–1).
  */
 export function cortResponseOf(c: EndoCore): number {
   return (c.profile.adrenalInsufficiency ? 0.5 : 1) * Math.max(0, 1 - ETOM_SUPPR_MAX * Math.min(1, Math.max(0, c.etomSuppr ?? 0)));
 }
 
-/** FU-10 E7: the insulinopenia that shifts K⁺ out of the cells — the patient's own (smoothed) insulin deficit, or the
- * instructor's `dka` condition, which IS insulinopenia even though the profile's insulin is normal (research/14 ET-23c). */
+/** The insulinopenia that shifts K⁺ out of the cells — the patient's own (smoothed) insulin deficit, or the
+ * instructor's `dka` condition, which IS insulinopenia even though the profile's insulin is normal (research/14). */
 export function insulinopenia(c: EndoCore): number {
   return Math.max(c.ketoDef ?? 0, Math.min(1, Math.max(0, c.x.dkaSeverity)));
 }
 
-/** FU-10 E13: the × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
+/** The × on the BASAL cortisol of this patient (adrenal insufficiency is a resting deficit too). */
 export const cortBasalF = (p: EndoProfile): number => (p.adrenalInsufficiency ? AI_CORT_BASAL_F : 1);
 
-/** β2 bronchodilation of endogenous + 7g epinephrine and 7g's other β2 agonists (independent effects combine). */
+/**
+ * β2 bronchodilation of endogenous + drug-model epinephrine and the drug model's other β2 agonists (independent
+ * effects combine).
+ */
 const orCombine = (a: number, b: number) => 1 - (1 - a) * (1 - Math.min(1, Math.max(0, b)));
 
 function compose(c: EndoCore): EndoOut {
@@ -167,15 +172,15 @@ function compose(c: EndoCore): EndoOut {
   // catecholamine responsiveness (tables §5e `vasoResp`: septic hyporesponsiveness, cortisol's permissive effect) and the
   // thyroid β sensitivity scale the EXCESS of the stress effects (neural and humoral), not the condition rows
   const vr = st.vasoResp * cd.vasoResp;
-  // FU-7.1 B1 (research/24 P2; tables §5b.1 row "pH → catecholamine response `vasoResp`", Q44 — a row nothing read
-  // until now): acidaemia blunts the VASCULAR response to the patient's OWN catecholamines exactly as 7g blunts an
-  // infused one — the SAME curve (`acidosisFactor`, pd.ts: ×(1 − 2.5·(7.4 − pH)), floor 0.4), one source for both.
-  // It scales the EXCESS `alpha()` scales (SVR, venous tone). The chronotropic/inotropic arm `beta()` is NOT scaled:
-  // the row names the vasopressor response, and blunting HR as well misses both sourced septic HR bands (tables §5e
-  // MANUAL 110–130 → measured 107; §7 check 16 MODELED 115–130 → 114.8). Owner question Q-FU71-1.
+  // Acidaemia blunts the VASCULAR response to the patient's OWN catecholamines exactly as the drug model blunts an
+  // infused one — the SAME curve (`acidosisFactor`, pd.ts: ×(1 − 2.5·(7.4 − pH)), floor 0.4), one source for both
+  // (research/24; tables §5b.1 row "pH → catecholamine response `vasoResp`", Q44). It scales the EXCESS `alpha()`
+  // scales (SVR, venous tone). The chronotropic/inotropic arm `beta()` is NOT scaled: the row names the vasopressor
+  // response, and blunting HR as well misses both sourced septic HR bands (tables §5e MANUAL 110–130 → measured 107; §7
+  // check 16 MODELED 115–130 → 114.8).
   const vrA = vr * acidosisFactor(x.ph ?? 7.4);
   const beta = (v: number) => 1 + (v - 1) * th.betaSens * vr;
-  const alpha = (v: number) => 1 + (v - 1) * vrA; // FU-7.1 B1
+  const alpha = (v: number) => 1 + (v - 1) * vrA;
   const h = c.hormones;
   const g = c.glucose;
   const setShiftC = th.setShiftC + cd.setShiftC;
@@ -189,24 +194,24 @@ function compose(c: EndoCore): EndoOut {
     // MANUAL: the fever tachycardia of a condition is already in its HR row, so the temperature term sees only the core
     // ABOVE the endocrine set-point shift (MH, exogenous heat, a MANUAL target) — prototype: counting it twice gave HR 153
     feverHrFExcess: tempHrF(x.tempC - setShiftC),
-    svrF: alpha(st.svrF) * th.svrF * cd.svrF * st.humSvrF, // FU-4 F2(a): the humoral arm is outside alpha() (V1/AT1, not catecholamine-responsiveness-scaled)
+    svrF: alpha(st.svrF) * th.svrF * cd.svrF * st.humSvrF, // The humoral arm is outside alpha() (V1/AT1, not catecholamine-responsiveness-scaled)
     eesF: beta(st.eesF) * th.eesF * cd.eesF,
     dV0Frac: st.dV0Frac + cd.dV0Frac,
-    humDV0Frac: st.humDV0Frac, // FU-4 F2(a)
-    humSvrF: st.humSvrF, // FU-4 G-FU4-1
+    humDV0Frac: st.humDV0Frac,
+    humSvrF: st.humSvrF,
     vo2F: th.vo2F * cd.vo2F,
     setShiftC,
     kShift: st.kShift + INS_K_PER_UU * Math.max(0, g.i - g.iExo - IB_UU_ML) + MH_K_EFFLUX * x.mhActivity
-      // FU-10 E7: insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
-      // high at presentation despite a total-body deficit) — the two DKA causes the old K path had no term for.
-      // The instructor's `dka` condition (7c's severity) IS insulinopenia, so it carries the same efflux even though the
-      // patient's own insulin is normal — without this DKA presented HYPOkalaemic (research/14 ET-23c)
+      // Insulin deficiency and hyperosmolar hyperglycaemia drive K OUT of the cells (JBDS DKA 2023: K is often
+      // high at presentation despite a total-body deficit) — two of the DKA causes of hyperkalaemia. The instructor's
+      // `dka` condition (the blood model's severity) IS insulinopenia, so it carries the same efflux even though the
+      // patient's own insulin is normal — without this DKA would present HYPOkalaemic (research/14)
       + insulinopenia(c) * (KETO_K_EFFLUX + HYPEROSM_K_PER_MGDL * Math.max(0, g.g - HYPEROSM_FROM_MGDL)),
     ketoMmolMin: KETO_MMOL_MIN_MAX * (c.ketoDef ?? 0) * (x.weightKg / 70),
     ketoUtilPerMin: KETO_UTIL_PER_MIN * Math.min(KETO_UTIL_INS_MAX, g.i / IB_UU_ML),
     kfMult: cd.kfMult,
     vasoResp: vr,
-    anaphLung: 0.8 * c.cond.anaph.mediator * (1 - 0.6 * bd), // mediator 0.75 (grade III) → 7b severity 0.6 (its grade III)
+    anaphLung: 0.8 * c.cond.anaph.mediator * (1 - 0.6 * bd), // mediator 0.75 (grade III) → lung 0.6 (its grade III)
     glucoseMgDl: g.g,
     glucoseMmol: g.g / MGDL_PER_MMOL,
     insulinUuMl: g.i,
@@ -214,9 +219,9 @@ function compose(c: EndoCore): EndoOut {
     nePgMl: h.ne,
     cortisolNmolL: h.cort,
     symp: h.symp,
-    surgeF: st.surgeF, // FU-7 (addendum 22; ruling 1): the nociceptive set-point factor 7a defends
-    surgeCat: { ne: st.surgeNe, epi: st.surgeEpi }, // FU-7 (R51 addendum 25): acted out by 7g's adrenergic rows
-    catReserve: h.catReserve, // FU-7 (audit D9)
+    surgeF: st.surgeF, // The nociceptive set-point factor the circulation model defends
+    surgeCat: { ne: st.surgeNe, epi: st.surgeEpi }, // Acted out by the drug model's adrenergic rows
+    catReserve: h.catReserve,
     stressIndex: Math.round(100 * (1 - Math.exp(-(h.symp + lg / 2) / 1.5))),
     neuroglycopenia: Math.min(1, Math.max(0, (NEUROGLYCOPENIA_MGDL + 10 - g.g) / 30)), // 0 at 60 mg/dL, 1 at 30
     stress: st,
@@ -229,21 +234,22 @@ export function stepEndoCore(c: EndoCore, x: EndoInputs, dtS: number): void {
   const g = c.glucose;
   const hypo = Math.max(0, HYPO_EPI_THRESHOLD_MGDL - g.g) * SYMP_HYPOGLY_PER_MGDL;
   const cd = c.out.cond;
-  // FU-10 E10: an 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
+  // An 11β-hydroxylase inhibitor's suppression recovers first-order (etomidate: 6–12 h)
   if ((c.etomSuppr ?? 0) > 0) c.etomSuppr = (c.etomSuppr ?? 0) * Math.exp((-Math.LN2 * dtS) / ETOM_SUPPR_T12_S);
-  // FU-10 E7 (R-2): the ketogenic deficit follows the CURRENT insulin deficit within tens of minutes — in a patient with
-  // NO β-cell reserve only (type 1). A pancreas that secretes less because glucose fell (after an insulin bolus) is not
-  // insulinopenic, and the instructor's `dka` pool is already the ketosis its suppression of secretion stands for (final
-  // review I1/I2: before this gate a non-diabetic made ketones and a K⁺ rebound after insulin, and `dka 1` grew unbounded)
+  // The ketogenic deficit follows the CURRENT insulin deficit within tens of minutes — in a patient with NO β-cell
+  // reserve only (type 1). A pancreas that secretes less because glucose fell (after an insulin bolus) is not
+  // insulinopenic, and the instructor's `dka` pool is already the ketosis its suppression of secretion stands for
+  // (without this gate a non-diabetic would make ketones and a K⁺ rebound after insulin, and `dka 1` would grow
+  // unbounded)
   const kd = glucoseProfile(c.profile).beta === 0 ? Math.max(0, 1 - g.i / IB_UU_ML) : 0;
   c.ketoDef = kd + ((c.ketoDef ?? 0) - kd) * Math.exp(-dtS / KETO_TAU_S);
   stepHormones(c.hormones, {
-    noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve, // FU-7 (addenda 20–21, 25)
+    noxious: x.noxious, antinoc: x.antinoc, antinocOp: x.antinocOp, extraSymp: cd.extraSymp + hypo + 2 * x.mhActivity + (x.sympDrug ?? 0) * c.out.catReserve,
     glucoseMgDl: g.g, mapMmHg: x.mapMmHg, mapSetMmHg: x.mapSetMmHg, sao2: x.sao2, paco2: x.paco2,
     cortResponse: cortResponseOf(c), cortBasalF: cortBasalF(c.profile), epiExoPgMl: x.epiExoPgMl,
   }, dtS);
   stepConditions(c.cond, c.out.stress.mastB2, dtS);
-  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponseOf(c), x.cortExoNmolL ?? 0); // FU-7 (addendum 24) + FU-10 E10/E13
+  const st = stressEffects(c.hormones, { hr: x.betaBlock, c: x.betaBlockC }, cortResponseOf(c), x.cortExoNmolL ?? 0);
   const gp = glucoseProfile(c.profile);
   const dka = Math.min(1, Math.max(0, x.dkaSeverity));
   stepGlucose(g, {

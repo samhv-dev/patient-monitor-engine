@@ -1,9 +1,9 @@
-// The transport-agnostic half of the R27 link: what the ventilator side sends every 20 ms tick, and what it does
+// The transport-agnostic half of the ventilator link: what the ventilator side sends every 20 ms tick, and what it does
 // with the engine's events. Both the in-process link (in-process.ts) and the window link (port.ts) use it.
-//   vent → engine: one `externalDrive` VentFrame per tick (50 Hz, the R27 ceiling); at start the profile's remaining
+//   vent → engine: one `externalDrive` VentFrame per tick (50 Hz, the link's ceiling); at start the profile's remaining
 //                  stand-ins; `applyEvent airway disconnected|patent` when the circuit is
-//                  opened/closed at the Y-piece (so EtCO2 goes flat at once, Stage 3 M4). The lung itself — shunt,
-//                  recruitment, pleural pressure — is the engine's (the profile's `lungConditions`, Stage V.1).
+//                  opened/closed at the Y-piece (so EtCO2 goes flat at once). The lung itself — shunt,
+//                  recruitment, pleural pressure — is the engine's (the profile's `lungConditions`).
 //   engine → vent: `lungState` → applyLungState (lung-input.ts), read as absolute values.
 import type { Command, EngineEvent } from '@pme/engine-core';
 import { applyLungState, createLungLink, LUNG_KEYS, lungBaseOf, type LungLink } from '../lung-input.ts';
@@ -18,9 +18,9 @@ export const LINK_TICK_S = 0.02; // the engine tick; one frame per tick = 50 Hz
 /** The monitor's own ventilator: I:E 1:2 (engine-core l2/resp/driver.ts `vent.ie`, default 2). */
 export const MONITOR_IE = 2;
 /**
- * FU-11 (H5): the VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no
- * pause — so the same VT, rate and Pmax deliver the same volume on the same lungs (the cockpit's preset 60 L/min + 0.3 s
- * pause reached Pmax early in bronchospasm: VTE 204 vs 424, measured). L/min, whole.
+ * The VC flow that gives the monitor's own ventilator breath — x = VT / Ti, Ti = 60 / rate / (1 + I:E), no pause — so
+ * the same VT, rate and Pmax deliver the same volume on the same lungs (the cockpit's preset 60 L/min + 0.3 s pause
+ * reached Pmax early in bronchospasm: VTE 204 vs 424, measured). L/min, whole.
  */
 export function monitorMatchedFlow(c: { vt: number; rate: number }): { vcFlow: number; pause: number } {
   const ti = 60 / Math.max(4, c.rate) / (1 + MONITOR_IE);

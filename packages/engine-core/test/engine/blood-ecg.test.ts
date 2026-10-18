@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cmd, evB, MAN, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('Stage 7c ECG hooks (plan decision 9)', { timeout: 300_000 }, () => {
+describe('blood ECG hooks', { timeout: 300_000 }, () => {
   it('succinylcholine in a burned patient raises Modifiers.k; calcium lowers the ECG K; insulin lowers plasma K', async () => {
     const { e } = rigB({ patient: { ...MAN, blood: { burns: 0.5 } } });
     await runTo(e, 30);

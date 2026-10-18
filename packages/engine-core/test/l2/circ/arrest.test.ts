@@ -10,7 +10,7 @@ const counter = (x = 0.5) => {
   return d;
 };
 
-describe('FU-4: arrest declaration', () => {
+describe('arrest declaration', () => {
   it('a perfused heart with normal K and temperature takes no draw and requests nothing', () => {
     const m = createCircModel();
     const d = counter();
@@ -60,7 +60,7 @@ describe('FU-4: arrest declaration', () => {
   });
 });
 
-describe('FU-4: ROSC of an engine-declared PEA', () => {
+describe('ROSC of an engine-declared PEA', () => {
   it(`needs CPP ≥ ${CPP_ROSC} and kIsch·(1 − hyp) ≥ ${M_ROSC} held ${ROSC_HOLD_S} s; then the same rhythm with a pulse`, () => {
     const m = createCircModel();
     m.arrest = { cause: 'lowFlow', t: 0, from: 'sinus', roscS: 0, rate0: 60, rateNow: 60 };
@@ -83,7 +83,7 @@ describe('FU-4: ROSC of an engine-declared PEA', () => {
   });
 });
 
-describe('FU-4 F5: the PEA decays', () => {
+describe('the PEA decays', () => {
   const pea = (ms: number, rate0 = 60, rateNow = 60) => {
     const m = createCircModel();
     m.arrest = { cause: 'lowFlow', t: 0, from: 'sinus', roscS: 0, rate0, rateNow };

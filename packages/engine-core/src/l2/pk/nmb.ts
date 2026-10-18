@@ -1,6 +1,6 @@
-// Neuromuscular blockers, succinylcholine and sugammadex (Stage 7g; tables §5d/§6.1). Per-kg 2-compartment PK with
-// TWO effect sites [adductor pollicis, diaphragm/larynx] (Plaud 1995: the diaphragm needs ≈ 1.7× the concentration
-// and equilibrates faster). Amount unit µg → concentrations ng/mL. 7f owns the block/TOF PD; `testT1` is its
+// Neuromuscular blockers, succinylcholine and sugammadex (tables §5d/§6.1). Per-kg 2-compartment PK with TWO effect
+// sites [adductor pollicis, diaphragm/larynx] (Plaud 1995: the diaphragm needs ≈ 1.7× the concentration and
+// equilibrates faster). Amount unit µg → concentrations ng/mL. The neuro model owns the block/TOF PD; `testT1` is its
 // formula, used here only to fit and test onset/duration against the labels.
 import { fromClearances, type PkParams } from './compartment.ts';
 
@@ -22,11 +22,10 @@ export const VECURONIUM: PerKgPk = { v1: 0.05, v2: 0.3, v3: 0, cl1: 0.0045, cl2:
 /** Cisatracurium: Hofmann elimination, CL ≈ 5 mL/kg/min organ-independent, Vss ≈ 0.15 L/kg [P label]; ke0 0.08 [ENG, fitted 0.15 mg/kg → 2.82 / 42.4 min]. */
 export const CISATRACURIUM: PerKgPk = { v1: 0.045, v2: 0.11, v3: 0, cl1: 0.0052, cl2: 0.009, cl3: 0, ke0: [0.08, 0.128] };
 /**
- * Succinylcholine (FU-3 item 1 re-fit; R51 addendum 17). Roy JJ, Donati F, Boismenu D, Varin F, Anesthesiology 2002;
+ * Succinylcholine. Roy JJ, Donati F, Boismenu D, Varin F, Anesthesiology 2002;
  * 97:1082 "Concentration-effect relation of succinylcholine chloride during propofol anesthesia" (arterial sampling,
  * n = 7): total body clearance 37 ± 7 mL·min⁻¹·kg⁻¹ and elimination rate constant 0.97 ± 0.30 /min [P], so
- * CL 0.037 L/kg/min and V1 = CL/k = 0.037/0.97 = 0.038 L/kg [P, derived]. The pre-FU-3 values (CL 0.2 L/kg/min with
- * V1 0.04 → k10 5/min, "plasma t½ ≈ 8 s") were 5× the measured elimination rate and put T1 ≤ 5 % at 0.17 min.
+ * CL 0.037 L/kg/min and V1 = CL/k = 0.037/0.97 = 0.038 L/kg [P, derived].
  * ke0 0.1475 (thumb) / 0.236 (diaphragm, ×1.6 as for rocuronium 0.16 → 0.26, Plaud 1995) [ENG, fitted 1 mg/kg →
  * T1 ≤ 5 % at 0.73 min, T1 10 % 6.98, T1 90 % 11.98 min against the label (§5d: block ~1 min, T1 10 % 7.1, 90 % 10.9)]:
  * Roy's own ke0 0.058 ± 0.026 /min cannot reproduce the label recovery (effect-site t½ 12 min → T1 90 % ≈ 18–21 min),
@@ -34,17 +33,15 @@ export const CISATRACURIUM: PerKgPk = { v1: 0.045, v2: 0.11, v3: 0, cl1: 0.0052,
  */
 export const SUCCINYLCHOLINE: PerKgPk = { v1: 0.038, v2: 0, v3: 0, cl1: 0.037, cl2: 0, cl3: 0, ke0: [0.1475, 0.236] };
 /**
- * Plasma-cholinesterase clearance multipliers — the ONE value 7g and 7f use (R51 addendum 10). Tables §5d give
+ * Plasma-cholinesterase clearance multipliers — the ONE value the drug and neuro models use. Tables §5d give
  * the phenotypes' DURATIONS (Sux-label; Lee 2009: heterozygous ×2, homozygous 4–8 h) but no enzyme-activity value,
- * so both multipliers are [ENG, fitted to those durations]: het 0.5 → 14.2 min (×1.71), hom 0.011 → 4.7 h. FU-3 item 1
- * re-fitted `hom` with the new CL: the multiplier scales 7g's clearance, so when CL fell from 0.2 to Roy's 0.037
- * L/kg/min the old 0.003 became k10 0.0029/min (> 10 h block, outside the 4–8 h band); 0.011 restores k10 0.0107/min,
- * i.e. the same residual hydrolysis rate the 0.003 × 0.2 pair encoded (0.015/min).
+ * so both multipliers are [ENG, fitted to those durations]: het 0.5 → 14.2 min (×1.71), hom 0.011 → 4.7 h. The
+ * multiplier scales the drug model's clearance (Roy's 0.037 L/kg/min), so hom 0.011 is k10 0.0107/min.
  */
 export const PCHE_CL_MULT = { normal: 1, het: 0.5, hom: 0.011 } as const;
 /**
  * Sugammadex: Vss 11–14 L, CL 88 mL/min, t½ 2 h (label) [P]; one compartment per kg. Two effect sites [thumb,
- * diaphragm] through which it reaches the junction and binds there (R51 §5): ke0 0.095 / 0.152 [ENG, fitted, D7:
+ * diaphragm] through which it reaches the junction and binds there: ke0 0.095 / 0.152 [ENG, fitted:
  * 2 mg/kg at T2 → TOFR 0.9 in 2.11 min (label 2.2); 4 mg/kg at T1 ≥ 1 % → 2.22 (label 2.7, IQR 2.1–4.3);
  * 16 mg/kg 3 min after roc 1.2 → T1 10 % at 1.80 (label 1.2)]. Rocuronium's own 0.16/0.26 reverses in 1.4 min.
  */
@@ -55,13 +52,13 @@ export const NMB_PD = {
   rocuronium: { thumb: { ec50: 823, gamma: 4.8 }, dia: { ec50: 1424, gamma: 4.8 } },
   vecuronium: { thumb: { ec50: 150, gamma: 4.5 }, dia: { ec50: 255, gamma: 4.5 } },
   cisatracurium: { thumb: { ec50: 230, gamma: 6.9 }, dia: { ec50: 390, gamma: 6.9 } },
-  succinylcholine: { thumb: { ec50: 1160, gamma: 6 }, dia: { ec50: 2007, gamma: 6 } }, // FU-3 item 1: Roy 2002 measured 734 ± 211 ng/mL at the effect site [P]; 1160 = the nearest value that holds the §5d label course on the paper's CL/V1 [ENG fit], dia ×1.73
+  succinylcholine: { thumb: { ec50: 1160, gamma: 6 }, dia: { ec50: 2007, gamma: 6 } }, // Roy 2002 measured 734 ± 211 ng/mL at the effect site [P]; 1160 = the nearest value that holds the §5d label course on the paper's CL/V1 [ENG fit], dia ×1.73
 } as const;
 
 /** Molar masses (g/mol) of the salts as dosed: rocuronium bromide, vecuronium bromide, sugammadex sodium. */
 export const MW = { rocuronium: 609.7, vecuronium: 637.7, sugammadex: 2178 } as const;
 
-/** 7f's block formula (tables §5d): T1 = 1 − Ce^γ/(Ce^γ + EC50^γ). */
+/** The neuro model's block formula (tables §5d): T1 = 1 − Ce^γ/(Ce^γ + EC50^γ). */
 export const testT1 = (ce: number, ec50: number, gamma: number): number => 1 - ce ** gamma / (ce ** gamma + ec50 ** gamma);
 
 /**
@@ -78,10 +75,10 @@ export function bindSugammadex(nmb: number[], sgx: number[], mwNmb: number = MW.
 }
 
 /**
- * The same 1:1 molar binding at both effect sites (x[3] thumb, x[4] diaphragm; R51 §5), in concentration terms:
+ * The same 1:1 molar binding at both effect sites (x[3] thumb, x[4] diaphragm), in concentration terms:
  * the NMB's Ce in ng/mL = µg/L → µmol/L = Ce/MW; sugammadex's Ce in mg/L → µmol/L = Ce·1000/MW. The effect sites are
  * the model's hypothetical compartments, so binding there is [ENG] (tables §5d "Ce washout via rocuronium ke0" is
- * the plasma-only form; D7). Mutates both vectors.
+ * the plasma-only form). Mutates both vectors.
  */
 export function bindSugammadexSites(nmb: number[], sgx: number[], mwNmb: number = MW.rocuronium): void {
   for (const i of [3, 4]) {

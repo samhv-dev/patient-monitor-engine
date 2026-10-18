@@ -15,11 +15,11 @@ export interface Condition {
   /** Must hold continuously this long before the alarm is raised (s). */
   delayS: number;
   numeric?: NumericId;
-  /** FU-5: explained by a higher alarm (conditions.ts CHAIN): not raised, and an active entry clears without latching. */
+  /** Explained by a higher alarm (conditions.ts CHAIN): not raised, and an active entry clears without latching. */
   suppressed?: boolean;
-  /** FU-5: once raised, the entry stays at least this long (an event alarm such as PAUSE; audit M13). */
+  /** Once raised, the entry stays at least this long (an event alarm such as PAUSE). */
   holdS?: number;
-  /** FU-8 (R50 F6): kept only by a clear hysteresis — the value is not beyond the limit; the entry keeps its last text. */
+  /** Kept only by a clear hysteresis — the value is not beyond the limit; the entry keeps its last text. */
   held?: boolean;
 }
 
@@ -39,28 +39,28 @@ export interface AlarmMgrState {
   pending: Record<string, number>;
   active: Record<string, AlarmEntry>;
   silencedUntil: number | null;
-  /** FU-11 (owner ruling Q1, AL01): the highest priority (lowest level) sounding when Silence was pressed; a new alarm
-   *  above it ends the silence on every profile. null = nothing was sounding (a pre-silence); absent in older snapshots. */
+  /** The highest priority (lowest level) sounding when Silence was pressed; a new alarm above it ends the silence on
+   *  every profile. null = nothing was sounding (a pre-silence); absent in older snapshots. */
   silencedLevel?: AlarmLevel | null;
   pausedUntil: number | null;
-  /** FU-11 G3 (owner ruling Q7): the highest priority (lowest level) active when the pause began; a new alarm above it
-   *  ends the pause, by D-14's rule for silence. null = nothing was alarming (a pre-pause); absent in older snapshots. */
+  /** The highest priority (lowest level) active when the pause began; a new alarm above it ends the pause, as a
+   *  higher priority ends a silence. null = nothing was alarming (a pre-pause); absent in older snapshots. */
   pausedLevel?: AlarmLevel | null;
   lastStatusT: number;
   dirty: boolean;
-  /** FU-5: alarm id → the time before which a raised event alarm is kept (Condition.holdS); absent in older snapshots. */
+  /** Alarm id → the time before which a raised event alarm is kept (Condition.holdS); absent in older snapshots. */
   hold?: Record<string, number>;
 }
 
 export const LEVEL_PRIORITY: Readonly<Record<AlarmLevel, AlarmPriority>> = { 1: 'high', 2: 'medium', 3: 'low' };
 /**
- * FU-5: the alarms visual latching 'lethal' keeps — the lethal arrhythmias (research/00 FU-5 ruling, IEC 60601-1-8
- * convention: they latch visually until acknowledged; limit alarms do not latch). The set is Mindray's "High,
- * unadjustable" arrhythmia group (research/05 §6 [S4] BeneVision N App. C.1.1.2: asystole, VF, V-Tach, extreme rates).
+ * The alarms visual latching 'lethal' keeps — the lethal arrhythmias (research/00, IEC 60601-1-8 convention: they latch
+ * visually until acknowledged; limit alarms do not latch). The set is Mindray's "High, unadjustable" arrhythmia group
+ * (research/05 §6 [S4] BeneVision N App. C.1.1.2: asystole, VF, V-Tach, extreme rates).
  */
 export const LETHAL_ALARMS: ReadonlySet<string> = new Set(['ASYSTOLE', 'VFIB', 'VTAC', 'EXTREME_BRADY', 'EXTREME_TACHY']);
 
-/** FU-5: whether a latching mode covers an alarm. INOPs never latch (Philips IFU [S2] p. 40). */
+/** Whether a latching mode covers an alarm. INOPs never latch (Philips IFU [S2] p. 40). */
 export function latchCovers(mode: 'off' | 'lethal' | 'red' | 'redYellow', e: Pick<AlarmEntry, 'id' | 'level' | 'category'>): boolean {
   if (e.category === 'technical' || mode === 'off') return false;
   if (mode === 'lethal') return LETHAL_ALARMS.has(e.id);
@@ -158,8 +158,8 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
   const p = s.profile;
   switch (a.action) {
     case 'silence': {
-      // FU-5: Philips' Silence and Mindray's Alarm Reset acknowledge every active alarm and INOP; there is no mute timer,
-      // so a new alarm sounds at once (research/05 §6 [S2] p. 11, 32; [S4] §10.8)
+      // Philips' Silence and Mindray's Alarm Reset acknowledge every active alarm and INOP; there is no mute timer, so
+      // a new alarm sounds at once (research/05 §6 [S2] p. 11, 32; [S4] §10.8)
       if (p.silence.mode === 'acknowledge') {
         acknowledgeAll(s, t, out);
         return;
@@ -182,7 +182,7 @@ export function applyAlarmAction(s: AlarmMgrState, a: AlarmDeviceAction, t: numb
     case 'pause': {
       s.pausedUntil = t + (p.pauseS as number);
       const levels = Object.values(s.active).map((e) => e.level);
-      s.pausedLevel = levels.length ? (Math.min(...levels) as AlarmLevel) : null; // FU-11 G3 (Q7)
+      s.pausedLevel = levels.length ? (Math.min(...levels) as AlarmLevel) : null;
       for (const e of Object.values(s.active)) emitAlarm(out, t, e, 'paused');
       s.active = {};
       s.pending = {};
@@ -226,8 +226,8 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     s.silencedUntil = null;
     s.dirty = true;
   }
-  // FU-11 G3 (owner ruling Q7): a condition of HIGHER priority than the alarms paused ends the pause once it would be
-  // raised (its delay held while paused), as a higher priority ends a silence (B4, Q1) — no vendor source documents a
+  // A condition of HIGHER priority than the alarms paused ends the pause once it would be
+  // raised (its delay held while paused), as a higher priority ends a silence — no vendor source documents a
   // pause that holds through one; the loop below then raises it, and the rest, as after a pause that ran out
   if (s.pausedUntil !== null && s.pausedLevel != null) {
     for (const c of conds) {
@@ -254,10 +254,10 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
         e.sounding = !e.acked;
         s.dirty = true;
       }
-      // FU-8 (F1, G-FU4 2026-09-29): the message carries the value NOW — "the message shows **SpO2 94<96 (deviation
-      // and limit)" (research/05 §2.4, [S2]). The text was frozen at the raise: `**ABPm 66<70` stood while the mean
-      // fell to 19 in Ali's tamponade PEA, and `**ABPm 252>110` 13 s after ROSC while the mean was back near 120. A
-      // condition only the clear hysteresis holds keeps the last violating text (R50 F6: no `**ABPs 90<90`)
+      // The message carries the value NOW — "the message shows **SpO2 94<96 (deviation and limit)" (research/05 §2.4,
+      // [S2]). A text frozen at the raise misleads: `**ABPm 66<70` stood while the mean fell to 19 in a tamponade PEA,
+      // and `**ABPm 252>110` 13 s after ROSC while the mean was back near 120. A condition only the clear hysteresis
+      // holds keeps the last violating text (no `**ABPs 90<90`)
       if (e.text !== c.text && c.held !== true) {
         e.text = c.text;
         s.dirty = true;
@@ -271,8 +271,8 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
     if (c.numeric) entry.numeric = c.numeric;
     if (c.holdS) (s.hold ??= {})[c.id] = t + c.holdS;
     s.active[c.id] = entry;
-    // brief §6.4.1: on a profile with cancelOnNewAlarm any new alarm ends silence; FU-11 (owner ruling Q1, AL01): on every
-    // profile a new alarm of HIGHER priority than those silenced does (no vendor source documents a mute that holds)
+    // Brief §6.4.1: on a profile with cancelOnNewAlarm any new alarm ends silence; on every profile a new alarm of
+    // HIGHER priority than those silenced does (no vendor source documents a mute that holds)
     const above = s.silencedLevel != null && entry.level < s.silencedLevel;
     if (s.silencedUntil !== null && (p.silence.cancelOnNewAlarm || above)) s.silencedUntil = null;
     emitAlarm(out, t, entry, 'raised');
@@ -281,12 +281,12 @@ export function stepAlarms(s: AlarmMgrState, t: number, conds: readonly Conditio
   for (const id of Object.keys(s.pending)) if (!now.has(id)) delete s.pending[id];
   for (const [id, e] of Object.entries(s.active)) {
     if (now.has(id)) continue;
-    const gone = superseded?.has(id) === true; // FU-5: superseded by a higher alarm — cleared, never latched
+    const gone = superseded?.has(id) === true; // Superseded by a higher alarm — cleared, never latched
     const holdUntil = s.hold?.[id];
     if (!gone && holdUntil !== undefined && t < holdUntil) continue;
     if (s.hold && holdUntil !== undefined) delete s.hold[id];
-    // FU-5: latching per vendor (skin `alarms.latching`): the message stays until acknowledged, the sound only under
-    // audible latching; an acknowledged alarm whose condition ends clears ([S2] p. 40)
+    // Latching per vendor (skin `alarms.latching`): the message stays until acknowledged, the sound only under audible
+    // latching; an acknowledged alarm whose condition ends clears ([S2] p. 40)
     if (!gone && !e.acked && latchCovers(p.latching.visual, e)) {
       if (!e.latched) {
         e.latched = true;

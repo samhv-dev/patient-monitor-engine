@@ -17,30 +17,30 @@ export const CLEAR_TEMP_PER_C = 0.1; // tables `clearTemp` −10 %/°C below 37 
 export const HEPATIC_FAILURE_LOSS = 0.7;
 export const SPLANCHNIC_GAIN = 0.4; // hbfFactor ×0.6 at full sympathetic splanchnic constriction (tables `hbfFactor`)
 export const VOLATILE_HBF_PER_MAC = 0.2; // ×0.8 at 1 MAC volatile (tables `hbfFactor`)
-export const HEPATIC_OUTFLOW_PER_MMHG = 0.02; // FU-9 H3 [ENG]
+export const HEPATIC_OUTFLOW_PER_MMHG = 0.02; // [ENG]
 export const DO2_CRIT = 6; // mL/kg/min, tables `do2Crit` (Q42) — fallback lactate production only
 export const K_ANAER = 0.03; // mmol lactate per mL O2 deficit, tables `kAnaer` (Q41) — fallback only
 
 export interface LiverInputs {
   coLpm: number; co0Lpm: number;
   bvRel: number; // blood volume ÷ baseline (sympathetic splanchnic constriction below 0.9)
-  alphaE: number; // 0–1 α-agonist effect (7g); 0 until then
+  alphaE: number; // 0–1 α-agonist effect (the drug model's); 0 without it
   volatileMac: number;
   tempC: number;
-  /** FU-9 H3: the hepatic outflow pressure, max(CVP, IAP), mmHg; absent → 5 (no outflow term). */
+  /** The hepatic outflow pressure, max(CVP, IAP), mmHg; absent → 5 (no outflow term). */
   outflowMmHg?: number;
   gfrRel: number; // kidney's GFR ÷ its set point (renal share of lactate clearance)
-  hbfRel?: number; // 7c's `blood.out.hbfRel` (7c owns hepatic flow); absent → CO × hbfFactor (fallback)
-  do2MlKgMin: number; // global O2 delivery (fallback lactate production when 7c is absent)
+  hbfRel?: number; // The blood model's `blood.out.hbfRel` (the blood model owns hepatic flow); absent → CO × hbfFactor (fallback)
+  do2MlKgMin: number; // Global O2 delivery (fallback lactate production when the blood model is absent)
 }
 export interface LiverState {
   t: number;
   weightKg: number;
   failure: number; // 0–1 hepatic failure condition
   hbfRel: number; liverFn: number; tempF: number;
-  glucoseF: number; // published for 7e (`organs.liver.glucoseF`): hepatic glucose output factor = liver function
+  glucoseF: number; // Published for the endocrine model (`organs.liver.glucoseF`): hepatic glucose output factor = liver function
   kLacPerH: number; // whole-body lactate clearance rate constant
-  lactate: number; // mmol/L — the FALLBACK pool (7c's pool is authoritative when present)
+  lactate: number; // mmol/L — the FALLBACK pool (the blood model's pool is authoritative when present)
   inr: number; // coagulopathy placeholder (not used by any model in 7d)
 }
 
@@ -55,9 +55,9 @@ export function createLiver(weightKg: number, inp: LiverInputs, failure = 0): Li
 
 /**
  * Splanchnic/hepatic flow factor: sympathetic constriction with volume loss (full at −30 %) or α-agonists, volatile
- * ×0.8/MAC, and (FU-9 H3) the hepatic OUTFLOW pressure — CVP or intra-abdominal pressure above 5 mmHg lowers the portal
- * and hepatic-arterial flow 2 %/mmHg [ENG, research/13: PEEP 15 HBF −10–35 %; IAP 20 −30–40 %, Diebel 1992]. FU-9 H3:
- * 7c multiplies it with CO/CO0 (7d writes it into `blood.core.hbfFactor`), so it is no longer dead code with 7c present.
+ * ×0.8/MAC, and the hepatic OUTFLOW pressure — CVP or intra-abdominal pressure above 5 mmHg lowers the portal and
+ * hepatic-arterial flow 2 %/mmHg [ENG, research/13: PEEP 15 HBF −10–35 %; IAP 20 −30–40 %, Diebel 1992]. The blood
+ * model multiplies it with CO/CO0 (the organ model writes it into `blood.core.hbfFactor`).
  */
 export function hbfFactor(inp: LiverInputs): number {
   const symp = Math.min(1, Math.max(inp.alphaE, (1 - inp.bvRel) / 0.3));

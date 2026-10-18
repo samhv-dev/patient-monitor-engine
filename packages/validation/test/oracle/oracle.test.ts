@@ -41,7 +41,7 @@ describe('oracle comparator (annex §C)', () => {
     expect(r.rows.map((x) => [x.id, x.grade])).toEqual([['x', 'green'], ['late', 'yellow']]);
     expect(r.rows[1]?.note).toContain('Pulse aborted');
   });
-  it('Stage 7 scenarios run our engine MODELED, so a propofol bolus moves our MAP (in MANUAL the delta was exactly 0)', { timeout: 60_000 }, async () => {
+  it('scenarios run our engine MODELED, so a propofol bolus moves our MAP (in MANUAL the delta was exactly 0)', { timeout: 60_000 }, async () => {
     expect(ORACLE.filter((s) => s.ours.mode === 'modeled').map((s) => s.id)).toEqual(['O2', 'O4']);
     const o4 = ORACLE.find((s) => s.id === 'O4') as OracleScenario;
     const r = await runOracle({ ...o4, durationS: 200, compare: o4.compare.filter((c) => c.id === 'map-delta') }, null); // MAP delta read at 180 s

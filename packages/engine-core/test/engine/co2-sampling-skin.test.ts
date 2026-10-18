@@ -29,7 +29,7 @@ const BANDS: Record<string, [[number, number], [number, number]]> = {
   'ge-like': [[3.0, 4.5], [0.25, 0.31]],
 };
 
-describe('R39-5 sidestream CO2 delay and rise per skin', () => {
+describe('sidestream CO2 delay and rise per skin', () => {
   it.each(Object.keys(BANDS))('%s: step response of the skin-configured sampler is in its band', (id) => {
     const p = deviceProfile(id);
     const s = createSampler('sidestream');

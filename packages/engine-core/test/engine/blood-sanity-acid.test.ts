@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { cmd, evB, labsAt, rigB, runTo, st } from '../helpers/blood.ts';
 
-describe('7c sanity II — acid–base', { timeout: 300_000 }, () => {
+describe('blood sanity II — acid–base', { timeout: 300_000 }, () => {
   const twoLitres = async (fluid: string) => {
     const { e, ev } = rigB();
     await runTo(e, 60);

@@ -15,7 +15,7 @@ export type Target = {
   id: string;
   series: SeriesRef;
   reduce: Reduce;
-  /** Evidence row this target encodes (tables §7 check, gate acceptance, R39 item…). Printed in the report. */
+  /** Evidence row this target encodes (tables §7 check, gate acceptance). Printed in the report. */
   source: string;
   /** For `scenario`: the state whose entry time is measured. */
   stateId?: string;
@@ -48,8 +48,8 @@ export interface ValidationDoc {
   /** Timed actions on top of the scenario: commands (as in a scenario document) or manual transition triggers. */
   actions?: Array<{ t: number; command?: DocCommand; trigger?: string }>;
   segments: Segment[];
-  /** Informational: the stages whose modules the document needs (e.g. ["7a", "7g"]). The patient profile (R22:
-   *  conditions, pregnancy) rides in the scenario's `patient.profile` (FU-3 item 9). */
+  /** Informational: the stages whose modules the document needs (e.g. ["7a", "7g"]). The patient profile (conditions,
+   *  pregnancy) rides in the scenario's `patient.profile`. */
   requires?: string[];
 }
 

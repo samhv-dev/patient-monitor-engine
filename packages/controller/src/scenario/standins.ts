@@ -1,6 +1,6 @@
-// Rhythm stand-ins: scenarios name the brief §5 rhythm ids (vfCoarse, vfFine, pacedVVI, pWaveAsystole …) that
-// Stage 5 adds. Until the host engine has an id, the driver sends the closest rhythm this engine HAS, decided at
-// run time from the engine's own RHYTHM_IDS — so the real rhythm appears by itself once Stage 5 is merged, and no
+// Rhythm stand-ins: scenarios name the brief §5 rhythm ids (vfCoarse, vfFine, pacedVVI, pWaveAsystole …) of the
+// rhythm library. Until the host engine has an id, the driver sends the closest rhythm this engine HAS, decided at
+// run time from the engine's own RHYTHM_IDS — so the real rhythm appears by itself once the engine has it, and no
 // scenario file changes. Every substitution is recorded in the run log and shown in the panel.
 import type { RhythmId, RhythmOpts } from '@pme/engine-core';
 

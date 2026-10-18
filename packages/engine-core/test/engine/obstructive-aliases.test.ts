@@ -40,7 +40,7 @@ async function run(event: Record<string, unknown>) {
   };
 }
 
-describe('FU-4 G6: one PE event, one tension-pneumothorax source', () => {
+describe('one PE event, one tension-pneumothorax source', () => {
   it('condition pe 1 ≡ lungCondition pe 1: identical PVR, lung parameters and SaO2', async () => {
     const a = await run({ kind: 'condition', id: 'pe', severity: 1 });
     const b = await run({ kind: 'lungCondition', id: 'pe', severity: 1 });
@@ -50,7 +50,7 @@ describe('FU-4 G6: one PE event, one tension-pneumothorax source', () => {
     expect(b.lp).toBe(a.lp);
     expect(b.sao2).toBe(a.sao2);
   }, 120_000);
-  it('condition tensionPtx 1 ≡ lungCondition ptxTension 1 (R): identical lp; 7a keeps no second pleural source', async () => {
+  it('condition tensionPtx 1 ≡ lungCondition ptxTension 1 (R): identical lp; the circulation keeps no second pleural source', async () => {
     const a = await run({ kind: 'condition', id: 'tensionPtx', severity: 1 });
     const b = await run({ kind: 'lungCondition', id: 'ptxTension', severity: 1, side: 'R' });
     expect([a.accepted, b.accepted]).toEqual([true, true]);
@@ -59,7 +59,7 @@ describe('FU-4 G6: one PE event, one tension-pneumothorax source', () => {
   }, 120_000);
 });
 
-describe('FU-4 G6: the one-command massive-PE picture at 3 min (S9 sides, truth values)', () => {
+describe('the one-command massive-PE picture at 3 min (S9 sides, truth values)', () => {
   let r: Awaited<ReturnType<typeof run>> | undefined;
   const pe = async () => (r ??= await run({ kind: 'condition', id: 'pe', severity: 1 }));
   it('EtCO2 falls ≥ 30 % (dead space); SBP < 90 is the it.fails below', async () => {
@@ -71,7 +71,7 @@ describe('FU-4 G6: the one-command massive-PE picture at 3 min (S9 sides, truth 
   // (AVP/angiotensin, unsuppressed) — SBP at 3 min 88.7 → 92.8. Split out of the test above unchanged, kept as a record.
   // FU-6 (R45 flip, executor at the gate): with FU-6 the SBP at 3 min is 84.6 — the pre-declared it.fails is met
   // (not bisected to one task; the PE row now also drives breathing, R12, and the viscosity/PVR terms act, R11/R14).
-  it('SBP < 90 at 3 min (massive PE: sustained SBP < 90) — was 92.8 with the humoral arm (88.7 before it), 84.6 with FU-6', async () => {
+  it('SBP < 90 at 3 min (massive PE: sustained SBP < 90) — measured 84.6', async () => {
     expect((await pe()).sbp).toBeLessThan(90);
   }, 120_000);
   it.fails('CVP ≥ 15 mmHg — measured 11.5 (RV wall-stress demand added, Task 11 Step 1b)', async () => {

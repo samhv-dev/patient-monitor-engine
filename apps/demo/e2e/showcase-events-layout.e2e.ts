@@ -6,8 +6,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
-import { shot8 } from './stage9-png8.ts';
-import { openApp, startVite, tab } from './stage9-support.ts';
+import { shot8 } from './indexed-png.ts';
+import { openApp, startVite, tab } from './app-support.ts';
 
 let vite: ViteDevServer;
 let base = '';

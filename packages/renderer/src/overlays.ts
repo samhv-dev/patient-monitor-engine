@@ -6,7 +6,7 @@ import type { Ctx2D } from './ctx.ts';
 import type { RenderPlan } from './skin-plan.ts';
 import type { SweepLane } from './sweep-lane.ts';
 
-/** Stage 10: a sim time as the app's session clock shows it (mm:ss), for the seam and the latched alarms. */
+/** A sim time as the app's session clock shows it (mm:ss), for the seam and the latched alarms. */
 export const simClock = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 
 /** Marks are drawn once the render time is this far past them [ENG]: ≥ 4 px behind the cursor at 25 mm/s. */
@@ -18,7 +18,7 @@ const TCP_MIN_MM = 5;
 
 export interface OverlayMark {
   t: number;
-  kind: 'pace' | 'sync' | 'shock' | 'seam'; // Stage 10: 'seam' = where a fast-forward jumped, on every lane
+  kind: 'pace' | 'sync' | 'shock' | 'seam'; // 'seam' = where a fast-forward jumped, on every lane
   tcp?: boolean;
   label?: string;
 }
@@ -117,9 +117,9 @@ export function drawMark(ctx: Ctx2D, lane: SweepLane, m: OverlayMark, plan: Rend
       ctx.stroke();
     }
   } else if (m.kind === 'seam') {
-    // Stage 10: a thin line where the fast-forward jumped, labelled with the new time; the sweep erases it a lap later.
-    // The label sits BEHIND the line (right-aligned to its left), where the sweep has already drawn: ahead of the line the
-    // erase gap wiped it within half a second (gate dry run)
+    // A thin line where the fast-forward jumped, labelled with the new time; the sweep erases it a lap later. The label
+    // sits BEHIND the line (right-aligned to its left), where the sweep has already drawn: ahead of the line the erase
+    // gap wiped it within half a second (gate dry run)
     ctx.lineWidth = 1;
     vline(ctx, x, c.y, c.y + c.height);
     ctx.font = `12px ${plan.font}`;

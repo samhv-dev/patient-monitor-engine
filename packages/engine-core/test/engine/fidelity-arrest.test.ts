@@ -13,7 +13,7 @@ const raisedAt = (run: MonRun, id: string) => run.alarms.filter((a) => a.id === 
 const firstRow = (run: MonRun, from: number, ok: (r: MonRun['rows'][number]) => boolean) => run.rows.find((r) => r.t > from && ok(r))?.t ?? Infinity;
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 
-describe('FU-5 fidelity 2: PEA (sinus 90 pulseless)', () => {
+describe('PEA (sinus 90 pulseless)', () => {
   // E-FU4-20 (orchestrator ruling at the FU-4 gate, 2026-09-29; R45 re-statement, criterion unchanged): the electrical
   // rate is no longer the commanded 90 — FU-4's continuous MAP (Task 3) reaches 7e, whose stress response scales the
   // MANUAL sinus-family clock (endoHrF 1.085 by 149 s), so the rate rises 91 → 98; measured HR 94.3 vs electrical 94.7
@@ -24,7 +24,7 @@ describe('FU-5 fidelity 2: PEA (sinus 90 pulseless)', () => {
     [0.5, (e: { on: (f: (x: { type: string; t: number }) => void, k: string[]) => void }) => e.on((x) => { if (x.type === 'beat') beats.push(x.t); }, ['beat'])] as unknown as Step,
     ...arrest('sinus', { rateBpm: 90, pulseless: true }),
   ] }));
-  it('HR = the electrical rate ± 3 (measured 94.3 vs 94.7, E-FU4-20); PR and SpO2 invalid within 15 s; the ART pulse valid only from the fresh pre-arrest beats (≤ 6 s), then static with ABP NON-PULSATILE ([S2] p. 57, review ruling 3); ABPm LOW held until CPR', async () => {
+  it('HR = the electrical rate ± 3 (measured 94.3 vs 94.7); PR and SpO2 invalid within 15 s; the ART pulse valid only from the fresh pre-arrest beats (≤ 6 s), then static with ABP NON-PULSATILE ([S2] p. 57); ABPm LOW held until CPR', async () => {
     const run = await peaRun();
     const pea = run.rows.filter((r) => r.t >= 70);
     const b = beats.filter((t) => t >= 70 && t <= 149);
@@ -41,7 +41,7 @@ describe('FU-5 fidelity 2: PEA (sinus 90 pulseless)', () => {
   // E-FU4-20 (FU-5 follow-up): this assertion was masked by the HR one on FU-5's trial merge; measured after FU-4 the
   // kept static S/D reach 27/21 (spread 6 mmHg) at 83, 98, 103, 108, 118, 128 s — the flat line's 2 s max/min now
   // carries the PEA's atrial/ventricular contraction ripple at the risen rate. Split out as a record, band unchanged.
-  it.fails('philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats — measured 6 (27/21) at 6 samples after FU-4 (FU-5 follow-up)', async () => {
+  it.fails('philips-like keeps S/D/M of the flat line: no pulsatile S/D (spread ≤ 5) after the fresh beats — measured 6 (27/21) at 6 samples', async () => {
     const run = await peaRun();
     // no pulsatile S/D after the fresh beats: the kept static S/D are the flat line's 2 s max/min (e.g. 25/21 (22) with
     // the ventilator swing; 136/90 before the arrest) — review ruling 3
@@ -49,7 +49,7 @@ describe('FU-5 fidelity 2: PEA (sinus 90 pulseless)', () => {
   }, 120_000);
 });
 
-describe('FU-5 fidelity 3: VF → CPR → ROSC, per skin', () => {
+describe('VF → CPR → ROSC, per skin', () => {
   it.each([['philips-like', true], ['mindray-like', false], ['saadat-like', false]] as const)(
     '%s: VFIB ≤ 5 s; no HR / EXTREME / VTAC alarm raised while VFIB stands; CPR: SpO2 not valid, PR = 110 ± 5, EtCO2 ≤ 25; NIBP FAILED ≤ 180 s after VF onset (sim ≤ 240 s); after ROSC VFIB latched (silent) only where the vendor latches (%s)',
     async (skin, latches) => {
@@ -79,7 +79,7 @@ describe('FU-5 fidelity 3: VF → CPR → ROSC, per skin', () => {
   // research/26 T3 bands CPR as 5–10 poor / 10–20 adequate, so the engine's first-20-s value is defensible; the band
   // is NOT widened — the floor goes back to the owner with the number (FU-7.1 Q9).
   it.fails.each([['philips-like'], ['mindray-like'], ['saadat-like']] as const)(
-    '%s: the CPR window\'s EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions after FU-7.1 B3 (mean 15.3–15.6, max 20–21)',
+    '%s: the CPR window\'s EtCO2 floor is 10 mmHg (research/10 §13) — measured 7 in the first 15 s of compressions with the alveolar washout (mean 15.3–15.6, max 20–21)',
     async (skin) => {
       const run = await monitorRun({ mode: 'manual', skin, steps: arrest('vfCoarse'), tEnd: 330 });
       const et = run.rows.filter((r) => r.t >= 170 && r.t <= 295).map((r) => r.m.etco2?.value ?? -1);
@@ -89,7 +89,7 @@ describe('FU-5 fidelity 3: VF → CPR → ROSC, per skin', () => {
   );
 });
 
-describe('FU-5 fidelity 4: asystole, per skin', () => {
+describe('asystole, per skin', () => {
   it.each([['philips-like', 4], ['mindray-like', 5], ['saadat-like', 10]] as const)(
     '%s: ASYSTOLE %i s after the rhythm stops (± 1.5 s); no HR LOW or EXTREME BRADY beside it',
     async (skin, s) => {
@@ -103,9 +103,9 @@ describe('FU-5 fidelity 4: asystole, per skin', () => {
   );
 });
 
-describe('FU-5 fidelity 4b: an agonal rhythm shows ONE arrest alarm (Orchestrator ruling (FU-5 review), 2026-09-28, ruling 6)', () => {
+describe('an agonal rhythm shows ONE arrest alarm', () => {
   it.each(['philips-like', 'mindray-like', 'saadat-like'])(
-    '%s: pulseless agonal rhythm 60–300 s: ASYSTOLE raised once, no EXTREME BRADY or HR LOW (was 11 EXTREME BRADY raises in Ali\'s case after FU-4, 15 ASYSTOLE raises on mindray-like)',
+    '%s: pulseless agonal rhythm 60–300 s: ASYSTOLE raised once, no EXTREME BRADY or HR LOW',
     async (skin) => {
       const run = await monitorRun({ mode: 'manual', skin, tEnd: 300, steps: [...VENTED, [60, M.rhythm('agonal', { pulseless: true })]] });
       expect(raisedAt(run, 'ASYSTOLE').length).toBeLessThanOrEqual(1);

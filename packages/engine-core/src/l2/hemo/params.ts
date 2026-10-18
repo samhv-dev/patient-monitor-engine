@@ -1,6 +1,5 @@
 // Haemodynamic constants and per-beat rules (brief §4.2, §4.8, §4.9 M1–M3; research 03 §2.1, §2.5, §2.8,
-// §8.2–8.3). Every number cites its source, or [ENG] when it is an engineering choice tuned by the
-// Stage 2 prototype (plan "Prototype results").
+// §8.2–8.3). Every number cites its source, or [ENG] when it is an engineering choice tuned by the prototype.
 
 export const HEMO_RATE = 125; // ABP/CVP/PAP/pleth sample rate (brief §3.2)
 export const SUBSTEPS = 4; // RK4 at 2 ms substeps, four per 125 Hz sample (brief §4.2) [ENG]
@@ -71,7 +70,7 @@ export function pmsf(volumeStatus: number): number {
 }
 
 // CPR pump (brief §4.2; research 03 §2.8 "CPR pump")
-/** Learner default `cpr.quality` when the event gives none: real manual CPR falls 10–20 % short (R39-2, research 09 §2). */
+/** Learner default `cpr.quality` when the event gives none: real manual CPR falls 10–20 % short (research 09 §2). */
 export const CPR_QUALITY_DEFAULT = 0.8;
 export const CPR_SV_FRAC = 0.2; // SV_cpr 15–30% of normal SV, × quality
 export const CPR_THORACIC_MMHG = 40; // thoracic-pump term 30–80 mmHg, × quality, on ABP and CVP
@@ -136,9 +135,9 @@ export function volumeStatusForGHyp(g: number): number {
 export const INSUFFLATION_GAIN = 0.03; // in-phase Δup term 0.02–0.04 (research 03 §2.5)
 
 /**
- * Fixed-rate breath clock until Stage 3's respiratory driver (as Stage 1 did for RSA): 15 breaths/min, phase
- * shared with the ECG's RSA phase φ so RSA and PPV stay coherent. u ∈ [0, 1] is the normalised
- * intrathoracic pressure of a positive-pressure breath (research 03 §2.5 `u(t)`).
+ * Fixed-rate breath clock without the respiratory driver: 15 breaths/min, phase shared with the ECG's RSA phase φ so
+ * RSA and PPV stay coherent. u ∈ [0, 1] is the normalised intrathoracic pressure of a positive-pressure breath
+ * (research 03 §2.5 `u(t)`).
  */
 export const BREATH_HZ = 0.25;
 export function breathU(t: number, phi: number): number {
@@ -150,10 +149,10 @@ export function breathU(t: number, phi: number): number {
  * insufflation term, t_lag ≈ 2 beats. Normalised so the breath-cycle mean is 1 (the M2 tracker then meets
  * the targets on average).
  */
-export function respFactor(t: number, rr: number, phi: number, g: number, u: (t: number) => number = (x) => breathU(x, phi)): number { // Stage 3 seam: u
+export function respFactor(t: number, rr: number, phi: number, g: number, u: (t: number) => number = (x) => breathU(x, phi)): number { // Breath seam: u
   const lagged = u(t - 2 * rr);
   return (1 - g * lagged + INSUFFLATION_GAIN * u(t)) / (1 - g / 2 + INSUFFLATION_GAIN / 2);
 }
 
-/** Rhythms with electrical activity but no mechanical output (brief §4.8: VF, asystole, PEA → k 0). Stage 5 adds the IDs. */
+/** Rhythms with electrical activity but no mechanical output (brief §4.8: VF, asystole, PEA → k 0). */
 export const PULSELESS_RHYTHMS: ReadonlySet<string> = new Set(['asystole', 'vf', 'vfCoarse', 'vfFine', 'pea']);

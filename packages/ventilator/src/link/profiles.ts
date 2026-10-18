@@ -1,13 +1,14 @@
 // Link profiles: one per lung-pathology row (pathology/catalogue.ts). Each has
-//  • `patient` — the engine PatientProfile; since Stage V.1 (G7b rulings 4+5+13) it carries the row's engine
+//  • `patient` — the engine PatientProfile; it carries the row's engine
 //                `lungConditions` (VENT_ROW_MAP: condition, severity, side, recruitability), so shunt, recruitment,
-//                dead space, PVR/HPV and pleural pressure are the 7b lungs' own and lungState is read as absolute.
+//                dead space, PVR/HPV and pleural pressure are the lungs' own and lungState is read as absolute.
 //  • `vent`    — the ventilator's lung before the first lungState (mechanicsToVent: the row, generated from the
 //                same engine data) plus the row's reference settings when it has its own (neonate, OLV).
-//  • `standIn` — engine targets set at link start that STAND IN for physiology no stage models yet (vasoplegia in
-//                anaphylaxis, RV outflow air lock in air embolism). Massive PE and tension pneumothorax no longer
-//                send 7a's circulation condition: the lung condition is the one event (V.1; `ptxTension` builds its
-//                pleural pressure through FU-4 F3's one-way valve; the PE's PVR: see CIRC_CONDITIONS below).
+//  • `standIn` — engine targets set at link start that STAND IN for physiology the engine does not model yet
+//                (vasoplegia in anaphylaxis, RV outflow air lock in air embolism). Massive PE and tension
+//                pneumothorax do not send the circulation's condition: the lung condition is the one event
+//                (`ptxTension` builds its pleural pressure through the one-way valve; the PE's PVR: see
+//                CIRC_CONDITIONS below).
 import type { LungConditionSpec, PatientProfile, StateVar } from '@pme/engine-core';
 import { VENT_ROW_MAP } from '@pme/engine-core';
 import type { VentConfig } from '../types.ts';
@@ -36,18 +37,18 @@ const PATIENTS: Record<string, PatientProfile> = {
   pregnancy: { ageY: 30, weightKg: 80, heightCm: 165, sex: 'F', sensors: SENSORS, baseline: { hr: 92 } },
   'neonatal-rds': { ageY: 0.01, weightKg: 3, heightCm: 50, sex: 'M', sensors: SENSORS, baseline: { hr: 150, sbp: 55, dbp: 32 } },
   'copd-gold-3-4': { ...ADULT, ageY: 68, baseline: { volumeStatus: 0.6 } },
-  // Stage V.1 (G7a NR-3 → G7b ruling 4+5+13): cardiogenic oedema is LV failure — 7a's hfref, moderate
+  // Cardiogenic oedema is LV failure — the circulation's hfref, moderate
   'oedema-cardiogenic': { ...ADULT, ageY: 70, baseline: { volumeStatus: 0.8 }, conditions: [{ id: 'hfref', severity: 0.67 }] },
 };
 const shock = (sbp: number, dbp: number, cvp: number, hr: number): StandIn[] =>
   ([['sbp', sbp], ['dbp', dbp], ['cvp', cvp], ['hr', hr]] as const).map(([variable, value]) => ({ variable, value, rampS: 20 }));
 /**
- * 7a's own circulation condition for massive PE (φ 0.6, PE_VASO 1.0: PVR ×4.0). Stage V.1: NO profile sends it any
- * more — the profile sends the lung `pe` (severity 1) only. Since FU-4 G6 a DISPATCHED `pe` of either spelling applies
- * BOTH owners (engine aliases.ts: 7a's φ mapping is the one PE PVR source, the lungs the dead space and shunt), but a
- * profile's `lungConditions` are set at creation and never pass through that alias, so this profile's PE carries no
- * PVR rise at all (measured V.1 gate note §5; request for the next follow-up). Kept for the R36 massive-PE test, whose rig NR-3 closed (it sends both spellings,
- * each aliased to both owners). Tension pneumothorax: the lungs' `ptxTension` pPtx reaches 7a through respPleural.
+ * The circulation's own condition for massive PE (φ 0.6, PE_VASO 1.0: PVR ×4.0). NO profile sends it — the profile
+ * sends the lung `pe` (severity 1) only. A DISPATCHED `pe` of either spelling applies BOTH owners (engine aliases.ts:
+ * the circulation's φ mapping is the one PE PVR source, the lungs the dead space and shunt), but a profile's
+ * `lungConditions` are set at creation and never pass through that alias, so this profile's PE carries no PVR rise at
+ * all. Kept for the massive-PE test (it sends both spellings, each aliased to both owners). Tension pneumothorax: the
+ * lungs' `ptxTension` pPtx reaches the circulation through respPleural.
  */
 export interface CircConditionStandIn { id: 'pe' | 'tensionPtx'; severity: number }
 export const CIRC_CONDITIONS: Record<string, CircConditionStandIn> = {
@@ -62,9 +63,12 @@ export function lungConditionsOf(id: string): LungConditionSpec[] {
   const rf = RECRUIT_FRAC[id];
   return [{ id: m.id as LungConditionSpec['id'], severity: m.severity, ...(m.side ? { side: m.side } : {}), ...(rf !== undefined ? { recruitFrac: rf } : {}) }];
 }
-/** INTERIM (R41; deleted when Stage 7a's right heart consumes pvrMultiplier): Stage 7a/7g stand-ins [ENG] — the haemodynamic picture each condition produces, set as MANUAL targets. */
+/**
+ * INTERIM (deleted when the circulation's right heart consumes pvrMultiplier): stand-ins for the circulation and drug
+ * models [ENG] — the haemodynamic picture each condition produces, set as MANUAL targets.
+ */
 export const STAND_INS: Record<string, StandIn[]> = {
-  'anaphylaxis-bronchospasm': shock(70, 35, 3, 125), // vasoplegia (Stage 7g)
+  'anaphylaxis-bronchospasm': shock(70, 35, 3, 125), // vasoplegia (drug model)
   'air-embolism': shock(80, 50, 12, 110), // RV outflow air lock
 };
 

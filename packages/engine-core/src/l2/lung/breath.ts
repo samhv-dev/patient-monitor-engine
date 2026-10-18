@@ -1,16 +1,16 @@
-// Stage 7k (R57): per-breath respiratory mechanics, measured the way a clinician measures them (Hess & Kacmarek,
+// Per-breath respiratory mechanics, measured the way a clinician measures them (Hess & Kacmarek,
 // Essentials of Mechanical Ventilation 4e ch. 3 "Pulmonary mechanics"; Arnal 2018; the lung module's own measure.ts
 // method): Ppeak = the airway-opening pressure at the end of inspiratory flow (the highest Paw of the breath); Pplat =
 // the airway pressure after an END-INSPIRATORY HOLD; PEEPtot = the airway pressure after an END-EXPIRATORY HOLD;
 // PEEPi = PEEPtot − set PEEP; ΔP = Pplat − PEEPtot; Cstat = VT/(Pplat − PEEPtot); Cdyn = VT/(Ppeak − PEEPtot);
 // Rinsp = (Ppeak − Pplat)/V̇insp (square-flow volume control). Both holds run on a COPY of the unit state
 // (measure.ts `holdPressure`), so measuring never disturbs the patient — the truth is "what a hold would read on
-// this breath"; the ventilator link has its own hold buttons (V.1's `Measured.PLAT`/`autoPEEP`), which 7k does not
-// duplicate. VT is the volume the lung received (FU-6: a pressure-limited breath delivers less than the set VT).
+// this breath"; the ventilator link has its own hold buttons (`Measured.PLAT`/`autoPEEP`), which this module does not
+// duplicate. VT is the volume the lung received (a pressure-limited breath delivers less than the set VT).
 //
 // OESOPHAGEAL PRESSURE IS AN ESTIMATE (glossary: "Pes (estimate)"), not a simulated balloon, and its reference depends
-// on the context (orchestrator ruling on the 7k R50 review, F4):
-//   AWAKE, SPONTANEOUS (upright-teaching context): Pes = the lung model's own pleural pressure (7a/7b `respPleural`,
+// on the context:
+//   AWAKE, SPONTANEOUS (upright-teaching context): Pes = the lung model's own pleural pressure (`respPleural`,
 //     mmHg → cmH2O): −5.4 cmH2O at FRC (P_PL0 −4 mmHg) falling ≈ 4 cmH2O in a quiet inspiration — West's textbook
 //     values (Ppl ≈ −5 at FRC, ≈ −8 at end-inspiration; Respiratory Physiology ch. 7), so PL,ee ≈ +5, as a
 //     spontaneously breathing lung at FRC must read (a positive transpulmonary pressure holds it open).
@@ -20,9 +20,9 @@
 //     6.9 ± 2.8, seated −3.3 — the mediastinal weight and the dependent position); the BMI slope 0.22 cmH2O per kg/m² is
 //     the line through the same study's two group means (6.9 at BMI 22.5, 9.3 at 33.3) [ENG line through two means;
 //     applied to children too, [ENG], no paediatric balloon data]. ΔPpl(t) on a PASSIVE breath is the lung model's own
-//     chest-wall recoil ΣV/Ccw (+ `lp.pPtx`/7a `ext.pPtx`, + a cough's `pMus`), so ΔPes/ΔPaw = Ecw/Ers = Crs/Ccw
-//     (≈ 0.27 healthy), as a balloon measures it — NOT 7a's haemodynamic transmission T_IT 0.65, tuned to pulse-
-//     pressure variation (R45 (b)); on a spontaneous breath under GA, 7a's pleural swing.
+//     chest-wall recoil ΣV/Ccw (+ `lp.pPtx`/`ext.pPtx`, + a cough's `pMus`), so ΔPes/ΔPaw = Ecw/Ers = Crs/Ccw
+//     (≈ 0.27 healthy), as a balloon measures it — NOT the circulation's transmission T_IT 0.65, tuned to pulse-
+//     pressure variation; on a spontaneous breath under GA, the circulation's pleural swing.
 // PL (transpulmonary, "direct" method, Talmor 2008 NEJM 359:2095) = Paw − Pes at the two holds (Paw 0 when
 // spontaneous). EL/Ers (the lung's share of the respiratory-system elastance) is published too: the elastance-derived
 // PL,ei = Pplat × EL/Ers (Chiumello 2008 AJRCCM 178:346).
@@ -94,7 +94,7 @@ export function breathMechanics(x: BreathInputs): Mechanics {
 
 export interface DeadSpace { anat: number; app: number; alv: number; phys: number; vdvt: number; peco2: number }
 /**
- * The dead-space set of one breath. anat + app = FU-4's `physicalDeadSpace()` (the one series dead space); VD/VT is
+ * The dead-space set of one breath. anat + app = `physicalDeadSpace()` (the one series dead space); VD/VT is
  * ENGHOFF's with the inspired-CO2 correction, (PaCO2 − PĒCO2)/(PaCO2 − PICO2). The mixed-expired PCO2 of the breath
  * follows from the CO2 the lung actually eliminates (gas/co2.ts: V̇CO2,exp = φ·V̇A·e·(PaCO2 − PICO2)/0.863 above the
  * inspired CO2): PĒCO2 = PICO2 + φ·e·(1 − VDs/VT)·(PaCO2 − PICO2) — e is the lung's CO2-elimination efficiency

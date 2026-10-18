@@ -54,7 +54,7 @@ describe('circuit ODE', () => {
     expect(s[S.VSV]).toBeGreaterThan(0);
   });
 
-  it('FU-2 item 3 (G7a NR-1): arterial compliance already rises as pressure falls — C(P) = C0·e^(−0.01(P − 95)), ×1.42 at 60 mmHg', () => {
+  it('arterial compliance already rises as pressure falls — C(P) = C0·e^(−0.01(P − 95)), ×1.42 at 60 mmHg', () => {
     expect(compliance(60) / compliance(95)).toBeCloseTo(Math.exp(0.35), 9);
     expect(compliance(60)).toBeGreaterThan(compliance(80));
     expect(compliance(80)).toBeGreaterThan(compliance(120));

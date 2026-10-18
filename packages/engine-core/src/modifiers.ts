@@ -1,6 +1,6 @@
 import type { ArtefactSpec, Modifiers, ModifiersPatch } from './types.ts';
 
-/** Default artefact levels: only Stage 1's white noise is on. */
+/** Default artefact levels: only the white noise is on. */
 export function defaultArtefact(): ArtefactSpec {
   return { noise: 1, wander: 0, mains: 0, emg: 0, shiver: 0, motion: 0, leadOff: false, electrosurgery: null, cpr: null, shock: null };
 }

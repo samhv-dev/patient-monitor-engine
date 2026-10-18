@@ -17,7 +17,7 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe('controls follow an engine-initiated rhythm change (FU-2 item 4)', () => {
+describe('controls follow an engine-initiated rhythm change', () => {
   it('VF → shock → asystole (zoll-like, seed 4): ControllerSession.rhythm and the panel select show asystole', async () => {
     const host = manualHost({ seed: 4, device: { skin: 'zoll-like' } });
     const outcomes: string[] = [];

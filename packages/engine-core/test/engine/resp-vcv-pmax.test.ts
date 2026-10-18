@@ -2,7 +2,7 @@
 // with Pmax 80 the flow source delivers 500 mL at a peak above 40; with the default Pmax 40 the peak stays ≤ 40.5 and
 // the delivered VT falls below the set VT (and VA with it). Healthy breaths are untouched (peak 16.7, VT 500).
 import { describe, expect, it } from 'vitest';
-import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
 async function spasm(pmax?: number) {
   const e = rig6();
@@ -18,11 +18,11 @@ async function spasm(pmax?: number) {
   return { healthy, vtHealthy, peak: w.peak, vt };
 }
 
-describe('FU-6 R7: the internal VCV has a Pmax (was an unlimited flow source)', { timeout: 300_000 }, () => {
+describe('the internal VCV has a Pmax', { timeout: 300_000 }, () => {
   // R45 (FU-6 executor, merged main): the healthy breath's cycle VT now reads the DELIVERED volume 494.3 mL (the
   // end-inspiration replacement fires at delivered < set − 5; the prototype on 94040f7 read 500) — its own row, it.fails
   // with the number; the limit rows below are met (40.0 / 476 mL; Pmax 80: 44.0 / 500 mL).
-  it.fails('healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (FU-6 R7, band ±5)', async () => {
+  it.fails('healthy breaths untouched: delivered VT within 5 mL of the set 500 — measured 494.3 (band ±5)', async () => {
     const lim = await spasm();
     expect(Math.abs(lim.vtHealthy - 500)).toBeLessThanOrEqual(5);
   });

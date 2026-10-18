@@ -13,7 +13,7 @@ async function cprEtco2(quality: number | undefined, rr = 10): Promise<number> {
   return mean(numSeries(ev, 'etco2', 120, 660).map(([, v]) => v).filter(Number.isFinite));
 }
 
-describe('R39-2 CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
+describe('CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   it('the learner default cpr.quality is 0.8', () => {
     const { e } = rig3({ patient: ADULT });
     e.dispatch(ev3({ kind: 'cpr', active: true }));
@@ -25,7 +25,7 @@ describe('R39-2 CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   // interim quality^1.9 fit this map was calibrated on. The circulation's CPR flow is filling-limited above quality 0.8
   // (0.87 / 1.08 / 1.64 / 1.80 / 1.75 L/min at 0.4 / 0.5 / 0.8 / 1.0 / 1.2), so the map is missed: R45, an it.fails with
   // its numbers; the CPR flow's quality dependence is the R44 calibration pass's (plan "Waiting on Ali" W22)
-  it.fails('quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.5 / 25.2 / 26.6 / 26.6 after FU-8', async () => {
+  it.fails('quality map at 10 breaths/min: 0.5 → 12 (8–15), default 0.8 → 20 (17–23), 1.0 → 25 (22–28), 1.2 mechanical-grade → 29 (26–32) — measured 20.5 / 25.2 / 26.6 / 26.6 at the circulation\'s CPR flow', async () => {
     const poor = await cprEtco2(0.5);
     const learner = await cprEtco2(undefined);
     const perfect = await cprEtco2(1.0);
@@ -41,7 +41,7 @@ describe('R39-2 CPR EtCO2 (research 09 §2)', { timeout: 300_000 }, () => {
   });
 
   // FU-8 (E-FU8-10): at the circulation's CPR flow the same +10 breaths/min lower EtCO2 by 4.8 (R45: it.fails)
-  it.fails('ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 after FU-8', async () => {
+  it.fails('ventilation: +10 breaths/min lowers EtCO2 by ≈ 3 mmHg (−2 to −4.5) at the learner default — measured −4.8 at the circulation\'s CPR flow', async () => {
     const d = (await cprEtco2(0.8, 20)) - (await cprEtco2(0.8, 10));
     expect(d).toBeLessThanOrEqual(-2);
     expect(d).toBeGreaterThanOrEqual(-4.5);

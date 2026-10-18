@@ -37,7 +37,7 @@ describe('baroreflex', () => {
     expect(b.hrF - 1).toBeCloseTo((a.hrF - 1) * 0.4, 6);
     expect(b.svrF).toBeCloseTo(a.svrF, 9);
   });
-  it('resetting: a 10 % offset held 420 s moves the set point 35 % of the way (A5); a pinned set point never moves', () => {
+  it('resetting: a 10 % offset held 420 s moves the set point 35 % of the way; a pinned set point never moves', () => {
     const b = createBaro(100);
     run(b, 110, RESET_HOLD_S + 2);
     expect(b.set).toBeGreaterThan(103);

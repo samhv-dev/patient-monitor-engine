@@ -8,7 +8,7 @@ import type { MorphStage } from './index.ts';
 import { addShaped, jPointS, leadOf, mainT, scaleWaves } from './ops.ts';
 
 /**
- * Injury vectors (VCG), solved on the Dower rows (Stage 5.1, weighted least squares) so that one unit of the vector
+ * Injury vectors (VCG), solved on the Dower rows (weighted least squares) so that one unit of the vector
  * projects ≈ 1 in every INDEX lead of the territory and negative in its RECIPROCAL leads. `mm` is the mean ST shift
  * over the index leads at J + 60 ms (1 mm = 0.1 mV at 10 mm/mV). Per unit (index | reciprocal):
  * inferior II 0.99 III 1.01 aVF 1.00 | aVL −0.52; anterior V2 0.96 V3 1.05 | III −0.37 aVF −0.30;

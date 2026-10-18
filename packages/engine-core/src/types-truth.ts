@@ -1,5 +1,5 @@
-// Stage 7x public types (R52): the opt-in, read-only `truth` event that carries a pruned copy of the pipeline state
-// for developer tools. Its own file so parallel stages do not collide in types.ts (one union line there).
+// Physiology-console public types: the opt-in, read-only `truth` event that carries a pruned copy of the pipeline
+// state for developer tools. Its own file so parallel modules do not collide in types.ts (one union line there).
 import type { SimSeconds } from './types.ts';
 
 /** A leaf of the truth tree: finite numbers stay numbers; NaN/±Infinity arrive as the strings 'NaN', 'Infinity', '-Infinity'. */

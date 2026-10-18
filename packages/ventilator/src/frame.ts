@@ -1,11 +1,11 @@
-// vent → engine: one R27 VentFrame from the ventilator's current step. Volume is the volume delivered since the
+// vent → engine: one VentFrame from the ventilator's current step. Volume is the volume delivered since the
 // breath started (a real ventilator's VT trace), so trapped gas (auto-PEEP) never inflates the engine's VT.
 // Pause and inspiratory hold count as inspiration (Ti includes the pause, as a ventilator reports it).
 import type { VentFrameExt } from '@pme/engine-core';
 import type { VentState } from './types.ts';
 import { pleuralOpening } from './mechanics.ts';
 
-/** The R27 frame: Stage 3's VentFrame + Stage V's optional alveolar pressure and mode (engine-core types-vent-link.ts). */
+/** The VentFrame with the optional alveolar pressure and mode (engine-core types-vent-link.ts). */
 export type LinkFrame = VentFrameExt & { palvCmH2O: number; mode: string };
 
 export function toVentFrame(vs: VentState, mode: string): LinkFrame {

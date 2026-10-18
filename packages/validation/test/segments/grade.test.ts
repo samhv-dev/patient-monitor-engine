@@ -5,7 +5,7 @@ import type { Target } from '../../src/segments/types.ts';
 const ctx = { segValue: (id: string) => (id === 'base' ? 80 : Number.NaN) };
 const T = (t: Partial<Target> & Pick<Target, 'type'>): Target => ({ id: 'x', series: 'state:hr', reduce: 'mean', source: 'test', ...t }) as Target;
 
-describe('R40 grading: green < 10 %, yellow 10–30 %, red ≥ 30 %; a band replaces the green zone', () => {
+describe('grading: green < 10 %, yellow 10–30 %, red ≥ 30 %; a band replaces the green zone', () => {
   it('EqualTo', () => {
     expect(gradeTarget(T({ type: 'EqualTo', value: 100 }), 108, ctx).grade).toBe('green');
     expect(gradeTarget(T({ type: 'EqualTo', value: 100 }), 115, ctx).grade).toBe('yellow');

@@ -49,7 +49,7 @@ describe('sanity scenarios II', () => {
   // HR 70, LVEDP 12, CPP 45, S/D 1.00, kIsch 0.93 — hypotension without the ischaemic spiral: venodilation and the
   // R45(b) venous recruitment lower LVEDP (tables' worked example: DBP 45, LVEDP 25, S/D 0.78). Phenylephrine restores
   // 146/86, S/D 1.6, kIsch 0.98 within 90 s (the rescue half of R23 holds).
-  it.fails('R23: AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it', async () => {
+  it.fails('AS + CAD propofol → hypotension → ischaemia (kIsch falls, ST ↓) → phenylephrine reverses it', async () => {
     const r = await run(AS_CAD, [SGA, O2, [60, propofol], [210, { kind: 'drug', drugId: 'phenylephrine', dose: 100, unit: 'mcg', route: 'iv' }]], 420);
     r.trace('AS+CAD phe', [55, 180, 205, 240, 270, 300, 360, 410]);
     expect(r.avg(170, 205, 'kIsch')).toBeLessThan(0.85); // falling contractility
@@ -58,7 +58,7 @@ describe('sanity scenarios II', () => {
     expect(r.avg(380, 420, 'kIsch')).toBeGreaterThan(0.95); // recovered within 3 min of the rescue
   }, 300_000);
   // NR-2: ephedrine leaves S/D 1.08 and kIsch 0.96–0.97 at +3 min (the deficit persists but stays shallow).
-  it.fails('R23: the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min)', async () => {
+  it.fails('the same run rescued with ephedrine 10 mg keeps the deficit longer (kIsch still < 0.95 at +3 min)', async () => {
     const r = await run(AS_CAD, [SGA, O2, [60, propofol], [210, { kind: 'drug', drugId: 'ephedrine', dose: 10, unit: 'mg', route: 'iv' }]], 420);
     r.trace('AS+CAD eph', [240, 300, 360, 410]);
     expect(r.avg(380, 420, 'kIsch')).toBeLessThan(0.95);

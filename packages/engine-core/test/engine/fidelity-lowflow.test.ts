@@ -27,7 +27,7 @@ const shortCycles = (alarms: Alarm[], level: number, minS: number) => {
 /** First row from which MAP stays < 30 for 20 s. */
 const lowFlowOnset = (rows: MonRow[]) => rows.find((r, i) => rows.slice(i, i + 20).length === 20 && rows.slice(i, i + 20).every((x) => x.map < 30));
 
-describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
+describe('SpO2, PI and pleth follow the perfusion', () => {
   // FU-4 × FU-5 (E-FU4-20, orchestrator ruling at the FU-4 gate, 2026-09-29): FU-4's low-flow and PEA-decay physiology
   // meets FU-5's alarm layer; the short-cycle guards are split out as `it.fails` with their measured cycles and listed
   // under "FU-5 follow-up" in docs/gates/fu-4.md — every other assertion of both tests is unchanged.
@@ -54,11 +54,11 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     expect(contradictions.map((r) => r.t)).toEqual([]);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the LOW PERF clear hysteresis no longer holds a PENDING INOP (was 1 cycle, 601 s, 1.0 s)
-  it('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 0 after FU-8 (1: SpO2 LOW PERF at 601 s, 1.0 s, after FU-4; LOW PERF ×7 at 1–2 s before FU-5)', async () => {
+  it('MODELED 3 L bleed: no technical raise/clear cycle shorter than 5 s — measured 0', async () => {
     expect(shortCycles((await bleedRun()).alarms, 3, 5)).toEqual([]);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — one QRS per agonal complex; the agonal ASYSTOLE hold counts complexes, not detections
-  it('MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (1: EXTREME BRADY at 956 s, 3.6 s, after FU-4)', async () => {
+  it('MODELED 3 L bleed: no red raise/clear cycle shorter than 5 s — measured 0', async () => {
     expect(shortCycles((await bleedRun()).alarms, 1, 5)).toEqual([]);
   }, 120_000);
 
@@ -75,7 +75,7 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
   // (brief §4.3, PI 0.3), so the oximeter shows SpO2 99 valid at MAP 19–20 for 6 s (rows 760–765). It is the FU-5 audit's
   // own M1 class of defect (a normal saturation in a nearly pulseless patient), 0.03 of PI wide and 6 s long, and it
   // goes back to the owner with these numbers (FU-7.1 Q10) rather than being hidden by a wider bound.
-  it.fails("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) after FU-7.1 B3", async () => {
+  it.fails("MODELED Ali's case: at MAP < 30 the SpO2 is never shown valid and PI stays < 0.3 — measured SpO2 99 valid at 760–765 s (MAP 19–20, PI 0.31–0.33) with the alveolar washout", async () => {
     const { rows } = await aliRun();
     const on = lowFlowOnset(rows);
     const after = rows.filter((r) => r.t >= (on as MonRow).t + 20);
@@ -83,7 +83,7 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
     expect(Math.max(...after.map((r) => r.m.pi?.value ?? 0))).toBeLessThan(0.3);
   }, 120_000);
   // FU-8 (Task A2, E-FU8-1): flipped — the detector counted every agonal complex twice (0.14–0.24 s apart)
-  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0 after FU-8 (3 EXTREME BRADY cycles after FU-4: 948 s +3.3, 989 s +3.1, 1000 s +3.6)", async () => {
+  it("MODELED Ali's case: no red raise/clear cycle shorter than 5 s — measured 0", async () => {
     expect(shortCycles((await aliRun()).alarms, 1, 5)).toEqual([]); // after FU-4's arrest this is the agonal EXTREME BRADY guard (Task 18)
   }, 120_000);
 });
@@ -96,7 +96,7 @@ describe('FU-5 fidelity 1: SpO2, PI and pleth follow the perfusion', () => {
 const piMean = (rows: MonRow[], a: number, b: number) => mean(rows.filter((r) => r.t >= a && r.t <= b && r.m.pi?.value != null).map((r) => r.m.pi?.value as number));
 const bp = (t: number, s: number, d: number): Array<[number, Record<string, unknown>]> => [[t, M.target('sbp', s)], [t, M.target('dbp', d)]];
 
-describe('FU-5 fidelity 1b: PI of the normal patient and its direction (review ruling 1)', () => {
+describe('PI of the normal patient and its direction', () => {
   it('rest PI (30–58 s): MODELED spontaneous 1.82 and MANUAL ventilated 1.84, each ± 5 % (characterisation) and within ± 10 % of the L1 target 2', async () => {
     const spont = await monitorRun({ mode: 'modeled', tEnd: 60, steps: [] });
     const man = await monitorRun({ mode: 'manual', tEnd: 60, steps: [...VENTED] });
@@ -107,12 +107,12 @@ describe('FU-5 fidelity 1b: PI of the normal patient and its direction (review r
     }
   }, 120_000);
 
-  it.fails('ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of origin/main 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until FU-4 publishes a cutaneous tone (R-FU5-9)', async () => {
+  it.fails('ventilated normal patient (MODELED, PPV from 1 s): rest PI within ± 5 % of 1.80 — measured 1.49 (−17 %): SV₀ is the spontaneous settle (80 mL) against 68 mL under PPV; PI follows SV only until the circulation publishes a cutaneous tone', async () => {
     const { rows } = await monitorRun({ mode: 'modeled', tEnd: 60, steps: [...VENTED] });
     expect(Math.abs(piMean(rows, 30, 58) / 1.8 - 1)).toBeLessThanOrEqual(0.05);
   }, 120_000);
 
-  it('MANUAL MAP ladder 106 → 99 → 61 → 45 → 44 → 38 (A1): PI never rises as MAP falls (was 1.92 → 2.18 at MAP 62 with the uncapped tone); 1.84 → 1.53 → 1.18 → 0.03', async () => {
+  it('MANUAL MAP ladder 106 → 99 → 61 → 45 → 44 → 38: PI never rises as MAP falls (was 1.92 → 2.18 at MAP 62 with the uncapped tone); 1.84 → 1.53 → 1.18 → 0.03', async () => {
     const { rows } = await monitorRun({ mode: 'manual', tEnd: 660, steps: [...VENTED, ...bp(60, 135, 82), ...bp(180, 80, 50), ...bp(300, 55, 32), ...bp(420, 35, 20), ...bp(540, 18, 10)] });
     const steps = [[30, 58], [120, 175], [240, 295], [360, 415], [480, 535], [600, 655]] as const;
     const pi = steps.map(([a, b]) => piMean(rows, a, b));
@@ -122,7 +122,7 @@ describe('FU-5 fidelity 1b: PI of the normal patient and its direction (review r
   }, 120_000);
 
   // FU-8 B3 (R-FU5-9): flipped — the pleth reads the circulation's cutaneous tone (`circ.skinTone`), no longer capped at 1
-  it('propofol 2 mg/kg in a ventilated patient: PI RISES after induction (the sympatholysis sign) — measured 1.50 → 1.66 (+11 %) at 180–240 s after FU-8 B3 (MAP 96 → 69 with B4\'s tonic share); 1.50 → 1.40 on B4 alone, 1.49 → 1.17 (−21 %) at FU-5: PI followed SV only', async () => {
+  it('propofol 2 mg/kg in a ventilated patient: PI RISES after induction (the sympatholysis sign) — measured 1.50 → 1.66 (+11 %) at 180–240 s with the cutaneous tone (MAP 96 → 69 when propofol removes the tonic sympathetic share); 1.50 → 1.40 on that removal alone, 1.49 → 1.17 (−21 %) when PI followed SV only', async () => {
     const { rows } = await monitorRun({ mode: 'modeled', tEnd: 300, steps: [...VENTED, [60, M.drug('propofol', 2, 'mg/kg')]] });
     expect(piMean(rows, 180, 240)).toBeGreaterThan(piMean(rows, 30, 58));
   }, 120_000);

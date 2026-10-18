@@ -1,6 +1,6 @@
-// vent-link.html: the Hamilton ventilator (iframe, its own window context) and the patient monitor side by side,
-// linked over BroadcastChannel `pme-vent/<session>` (R27 both ways). The profile picker remounts the monitor
-// with the profile's patient and tells the ventilator to load the profile's lung; the demo buttons run DEMOS.
+// vent-link.html: the Hamilton ventilator (iframe, its own window context) and the patient monitor side by side, linked
+// over BroadcastChannel `pme-vent/<session>` (both ways). The profile picker remounts the monitor with the profile's
+// patient and tells the ventilator to load the profile's lung; the demo buttons run DEMOS.
 import type { EngineEvent } from '@pme/engine-core';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { attachMonitorToLink, createBroadcastPort, PROFILES, type LinkMsg, type ProfileId, type VentConfig } from '@pme/ventilator';
@@ -53,7 +53,7 @@ function onEvent(e: EngineEvent) {
 }
 
 function loadVent(id: ProfileId, patch: Partial<VentConfig> = {}) {
-  $<HTMLIFrameElement>('vent').src = `vent-hamilton.html?link=${session}&profile=${id}`;
+  $<HTMLIFrameElement>('vent').src = `../vent-hamilton.html?link=${session}&profile=${id}`;
   $<HTMLIFrameElement>('vent').onload = () => {
     post({ patch });
     port.post({ v: 1, kind: 'time', action: 'scale', value: Number($<HTMLSelectElement>('speed').value) });

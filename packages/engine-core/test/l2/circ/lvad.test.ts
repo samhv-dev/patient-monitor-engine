@@ -38,7 +38,7 @@ describe('LVAD (tables §8.2)', () => {
     const e: BypassDevice = { kind: 'vaEcmo', on: true, flowLpm: 4 };
     expect(() => bypassFlow(e, 5, 70)).toThrow(/7h/);
   });
-  it.skip('7h: VA-ECMO pulsatility fades with flow fraction (tables §8.5) — marked for Stage 7h', () => {});
+  it.skip('VA-ECMO pulsatility fades with flow fraction (tables §8.5) — awaits the bypass-device model', () => {});
 });
 
 function createLvadOn() {

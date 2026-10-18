@@ -29,7 +29,7 @@ describe('barView', () => {
     expect(barView(s, sa, 10)).toMatchObject({ text: 'ECG CHECK LA/RA/LL', bg: '#E0E0E0', lamp: 'off', countdownS: 120, countdownKind: 'silence' });
     expect(barView(s, sa, 10, true)).toMatchObject({ text: 'ECG ASYSTOLE', bg: '#F00000' });
   });
-  it('IEC-style mute (zoll-like 90 s) keeps the visuals (audio only) with a countdown; philips-like Silence acknowledges (FU-5: no countdown); same-level messages rotate every 2 s', () => {
+  it('IEC-style mute (zoll-like 90 s) keeps the visuals (audio only) with a countdown; philips-like Silence acknowledges (no countdown); same-level messages rotate every 2 s', () => {
     const zl = resolveSkin('zoll-like');
     const a2 = { ...asy, id: 'VFIB', text: '***VFIB/VTACH', since: 6 };
     const s = status({ active: [{ ...asy, text: '***ASYSTOLE' }, a2], silencedUntil: 100 });
@@ -39,9 +39,9 @@ describe('barView', () => {
   });
 });
 
-describe('FU-5 barView: latched style, INOP visibility (audit M2, M3)', () => {
+describe('barView: latched style, INOP visibility', () => {
   const vf = { ...asy, id: 'VFIB', text: '***VFIB/VTACH', since: 6 };
-  it('a latched alarm keeps its message in the latched style (level colour as text, lamp off); under a live yellow it stays in the rotation (philips-like rotates every message, [S2] p. 29–30; review ruling 4) or on top (other skins), never hidden', () => {
+  it('a latched alarm keeps its message in the latched style (level colour as text, lamp off); under a live yellow it stays in the rotation (philips-like rotates every message, [S2] p. 29–30) or on top (other skins), never hidden', () => {
     const s = status({ active: [{ ...vf, latched: true }] });
     expect(barView(s, ph, 12)).toMatchObject({ text: '***VFIB/VTACH', latched: true, lamp: 'off', fg: '#FF0000' });
     const both = status({ active: [{ ...vf, latched: true }, { ...hr, text: '**HR 130>120' }] });

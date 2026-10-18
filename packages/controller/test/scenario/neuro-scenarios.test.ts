@@ -9,7 +9,7 @@ import { validateScenario } from '../../src/scenario/validate.ts';
 const IDS = ['nmb-residual-block', 'nmb-sux-burn', 'depth-light-anaesthesia', 'depth-awareness', 'depth-opioid-apnoea', 'nmb-mh-trigger'];
 const load = (id: string) => JSON.parse(readFileSync(new URL(`../../scenarios/${id}.json`, import.meta.url), 'utf8')) as ScenarioDoc;
 
-describe('Stage 7f scenarios', () => {
+describe('neuro scenarios', () => {
   it.each(IDS)('%s is a valid [draft] scenario whose commands the engine accepts', (id) => {
     const d = load(id);
     const r = validateScenario(d, {});

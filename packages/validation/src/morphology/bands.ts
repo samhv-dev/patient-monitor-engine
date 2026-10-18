@@ -1,6 +1,6 @@
-// Pass criteria for the recorded-vs-engine morphology suite. Evidence bands first (R37/R39: the band IS the test);
-// where the brief gives a rule relative to the recording (V1/V2 "±20 ms of the VitalDB median"), the band is built
-// around the recorded statistic at run time. [ENG] rows are engineering tolerances awaiting Ali's calibration pass.
+// Pass criteria for the recorded-vs-engine morphology suite. Evidence bands first (the band IS the test); where the
+// brief gives a rule relative to the recording (V1/V2 "±20 ms of the VitalDB median"), the band is built around the
+// recorded statistic at run time. [ENG] rows are engineering tolerances awaiting Ali's calibration pass.
 export type BandKind = 'absolute' | 'deltaToRecorded' | 'ratioToRecorded';
 
 export interface MetricBand {

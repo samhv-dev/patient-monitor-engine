@@ -7,7 +7,7 @@ import { hemoOf, ev3, rig3 } from '../helpers/resp.ts';
 
 const circ = (e: Parameters<typeof hemoOf>[0]) => hemoOf(e) as HemoState & { circ: { ext: Record<string, number>; p: { pvrL: number; pvrR: number } }; circOut: { qLungL: number; qLungR: number } };
 
-describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () => {
+describe('lungs ↔ circulation', { timeout: 300_000 }, () => {
   // Stage 7c (R51 addendum 15, ruling 2): the rig ventilates at RR 40 (was 14) toward normocapnia — PaCO2 42 → 50 mmHg over
   // the 30 min (at RR 14: 49 → 97, pH 7.09). RR alone cannot hold 38–45 at VT 350 in this awake rig (Stage 3's calibrated
   // dead space, NR-7g-3). Re-measured share 0.307 (RR 14: 0.325; without 7c: 0.302): the band is still missed, so this
@@ -16,7 +16,7 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
   // Candidate mechanism (calibration queue): a mixed-venous PO2 term and HPV potentiation by hypercapnia/acidosis.
   // FU-4 (the one physical dead space, ETT bypass credit — FU-6 review ruling): the ventilated rig's dead space falls
   // 154 + 50 + fit → 77 + 50 + fit, and the share is now inside the band (measured 0.294). Band unchanged (R45).
-  it('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow — was 0.307 before FU-4', async () => {
+  it('OLV: HPV raises the isolated lung\'s PVR and its measured flow falls to ≤ 30 % of pulmonary flow', async () => {
     const r = rig3({ patient: { ageY: 55, weightKg: 70, heightCm: 175, sex: 'M' } });
     r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 40, vtMl: 350, peep: 5, ie: 2, fio2: 1 }));
     r.e.dispatch(ev3({ kind: 'lungCondition', id: 'olv', severity: 1, side: 'L' }));
@@ -55,7 +55,7 @@ describe('lungs ↔ Stage 7a circulation (R45, R43)', { timeout: 300_000 }, () =
     console.log(`lung-circ COPD MAP RR 10 ${m10.map.toFixed(1)} → RR 26 ${m26.map.toFixed(1)}; CO ${m10.co.toFixed(2)} → ${m26.co.toFixed(2)}`);
     return { m10, m26 };
   })());
-  it('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — MAP falls vs RR 10 by > 2 mmHg (R27 demo direction; MODELED mode) — measured 2.5 (102.0 → 99.5) with FU-9 F7 (was 1.79, it.fails)', async () => {
+  it('COPD GOLD 3 at RR 26: auto-PEEP reaches the heart — MAP falls vs RR 10 by > 2 mmHg (demo direction; MODELED mode) — measured 2.5 (102.0 → 99.5) with the chronic renal compensation', async () => {
     const { m10, m26 } = await copdRun();
     // Executor deviation (recorded for a ruling): in MODELED mode the baroreflex holds MAP; the plan's ≥ 10 % fall is
     // not reached (measured −2.8 %, 101.8 → 98.9). Asserted: the direction (MAP falls ≥ 2 mmHg) — cf. 7a's NR-3 (link COPD MAP −9.4)

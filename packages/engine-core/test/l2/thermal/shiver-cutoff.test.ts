@@ -8,7 +8,7 @@ import { shiverW, thresholds } from '../../../src/l2/thermal/thresholds.ts';
 const thr = thresholds(0, 0);
 const W = (tc: number) => shiverW(tc, thr, 80, 70, 0);
 
-describe('FU-4 G12: shivering stops in moderate hypothermia', () => {
+describe('shivering stops in moderate hypothermia', () => {
   it('33 °C awake: shivering (> 0), unchanged by the cut-off', () => {
     expect(W(33)).toBeGreaterThan(0);
     expect(W(SHIVER_STOP_C + SHIVER_STOP_SPAN_C)).toBeCloseTo(W(33), 9); // the deficit term is saturated below 34 °C

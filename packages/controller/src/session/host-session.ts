@@ -29,8 +29,8 @@ export interface HostTarget {
   /** Remote equivalents of the lifecycle calls (brief §7.2 `time`): pause, resume, scale (0.25–8, the engine clock's range). */
   time(action: 'pause' | 'resume' | 'scale', value?: number): void;
   /**
-   * Stage 10 (fast-forward): run `ticks` sim ticks now without drawing; resolve once their events reached the `on`
-   * listeners. The monitor holds its clock from the first step to the `last`. Absent: this monitor cannot fast-forward.
+   * Run `ticks` sim ticks now without drawing; resolve once their events reached the `on` listeners (fast-forward). The
+   * monitor holds its clock from the first step to the `last`. Absent: this monitor cannot fast-forward.
    */
   fastForwardStep?(ticks: number, last: boolean): { tick: Tick; simT: SimSeconds } | Promise<{ tick: Tick; simT: SimSeconds }>;
 }
@@ -38,8 +38,8 @@ export interface HostTarget {
 /** What the scenario hook answers; `applied` replaces the command in commandApplied (e.g. a load with its doc). */
 export type ScenarioHookResult = DispatchResult & { applied?: ScenarioCommand };
 /**
- * Stage 6b's ScenarioDriver plugs in here. With a hook, EVERY scenario action (bookmarks included: they then hold
- * the runner state too) goes to it; without one, bookmarks are engine snapshots and the rest is rejected.
+ * The ScenarioDriver plugs in here. With a hook, EVERY scenario action (bookmarks included: they then hold the runner
+ * state too) goes to it; without one, bookmarks are engine snapshots and the rest is rejected.
  */
 export type ScenarioHook = (cmd: ScenarioCommand) => ScenarioHookResult | Promise<ScenarioHookResult>;
 
@@ -56,13 +56,13 @@ export interface HostSessionOptions {
   /** Latency instrumentation: called when a remote command has been dispatched. */
   onCommand?: (info: { commandId: string; from: string; receivedAt: number; tick: Tick; accepted: boolean }) => void;
   /**
-   * Stage 10 (owner's decision 1): the wall time a whole fast-forward takes at least, ms — paced so the room sees the clock
-   * run (the app: FF_WALL_MS, ≈ 10 s). 0 (default): as fast as the monitor runs.
+   * The wall time a whole fast-forward takes at least, ms — paced so the room sees the clock run (the app:
+   * FF_WALL_MS, ≈ 10 s). 0 (default): as fast as the monitor runs.
    */
   fastForwardWallMs?: number;
   /**
-   * Stage 10 (orchestrator ruling 2026-10-11): the fast-forward pacer's wait, read with `wallNow`, so a test drives the
-   * pace on a fake clock. Default: a real `setTimeout`.
+   * The fast-forward pacer's wait, read with `wallNow`, so a test drives the pace on a fake clock. Default: a real
+   * `setTimeout`.
    */
   sleep?: (ms: number) => Promise<void>;
 }
@@ -72,25 +72,26 @@ export const STAGE_LEAD_TICKS = 3;
 const STAGE_GROUP_TTL_MS = 5000;
 const SEEN_MAX = 500;
 /**
- * FU-11 (BA11; R50 F2): a hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each
- * (200 events reached 379 KB) — every wire message holds at most this much JSON and this many events, so it passes
- * the receivers' 256 KB budget (guard.ts) [ENG: half the budget].
+ * A hidden-tab catch-up arrives as ONE batch, and the app's 1 Hz truth events are up to 27 KB each (200 events reached
+ * 379 KB) — every wire message holds at most this much JSON and this many events, so it passes the receivers' 256 KB
+ * budget (guard.ts) [ENG: half the budget].
  */
 export const MESSAGE_BUDGET_BYTES = 128 * 1024;
 export const EVENTS_PER_MESSAGE = 200;
 /** Events that stay on the host: audio is scheduled locally by every monitor from its own engine. */
 const LOCAL_ONLY = new Set<WireEvent['type']>(['tone', 'toneCancel']);
 const TICK_S = 0.02;
-/** FU-11 (K2): a viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every resync) [ENG]. */
+/** A viewer that said hello this recently still gets the mirrored link commands (it re-hellos on every
+ *  resync) [ENG]. */
 const VIEWER_TTL_MS = 600_000;
-/** Stage 12: while the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. */
+/** While the Ventilator view drives the patient, a `cockpit` event goes to the network at most this often [ENG]. */
 export const COCKPIT_EVENT_MS = 1000;
 /**
- * Stage 10: a fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and
- * its commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG].
+ * A fast-forward runs in steps of this many ticks (0.5 s of sim); the host's scenario is polled after each and its
+ * commands land before the next — finer than the app's own 100 ms wall poll at ×8 (0.8 s of sim) [ENG].
  */
 export const FF_STEP_TICKS = 25;
-/** Stage 10: the longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG]. */
+/** The longest fast-forward the host accepts, s (the owner asked for 5 min) [ENG]. */
 export const FF_MAX_S = 600;
 
 type AckBody = Extract<WireBody, { kind: 'ack' }>;
@@ -114,11 +115,11 @@ export class HostSession {
   private readonly offEngine: () => void;
   private readonly timer: ReturnType<typeof setInterval> | null;
   private bookmarkN = 0;
-  private viewerSeenAt = -Infinity; // FU-11 (K2): wall ms of the last viewer hello
-  private cockpitSaidAt = -Infinity; // Stage 12: wall ms of the last `cockpit` event
-  private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // Stage 10: the fast-forward running
-  private activeAlarms = new Set<string>(); // Stage 10: the alarm ids of the last alarmStatus (what is NEW during a span)
-  private timelines = 0; // Stage 10: newTimeline() count — a fast-forward stops when its timeline ends
+  private viewerSeenAt = -Infinity; // Wall ms of the last viewer hello
+  private cockpitSaidAt = -Infinity; // Wall ms of the last `cockpit` event
+  private ff: { fromTick: Tick; toTick: Tick; alarms: FastForwardAlarm[] } | null = null; // The fast-forward running
+  private activeAlarms = new Set<string>(); // The alarm ids of the last alarmStatus (what is NEW during a span)
+  private timelines = 0; // newTimeline() count — a fast-forward stops when its timeline ends
   readonly stats = { applied: 0, rejected: 0, duplicates: 0, snapshotsSent: 0 };
 
   constructor(o: HostSessionOptions) {
@@ -129,7 +130,7 @@ export class HostSession {
     this.offEngine = o.target.on((e) => {
       if (e.type === ('state' as EngineEvent['type'])) this.engineState = true; // the engine emits its own (E1)
       if (e.type === 'alarmStatus') {
-        // Stage 10: an alarm raised during a fast-forward did not sound — the end event lists it (banner, log, monitor)
+        // An alarm raised during a fast-forward did not sound — the end event lists it (banner, log, monitor)
         if (this.ff) for (const a of e.active) if (!this.activeAlarms.has(a.id) && !this.ff.alarms.some((x) => x.id === a.id)) this.ff.alarms.push({ ...a, ended: false });
         this.activeAlarms = new Set(e.active.map((a) => a.id));
       }
@@ -159,7 +160,7 @@ export class HostSession {
     return [...this.marks.keys()];
   }
 
-  /** Stage 10: a fast-forward is running (controllers' commands are refused until it ends). */
+  /** A fast-forward is running (controllers' commands are refused until it ends). */
   get fastForwarding(): boolean {
     return this.ff !== null;
   }
@@ -184,29 +185,29 @@ export class HostSession {
   }
 
   /**
-   * FU-11 (K2): a command the host's monitor applied OUTSIDE this session (the Ventilator view's link drives it directly,
+   * A command the host's monitor applied OUTSIDE this session (the Ventilator view's link drives it directly,
    * up to 400 commands a second at ×8) — sent as a `mirror` commandApplied so a second-screen viewer applies it at the
    * same tick, and only while a viewer has said hello (no traffic in a session without one) [ENG: 10 min].
-   * R50 F3 (orchestrator ruling; a DECLARED deviation from brief §3.7): these are the ventilator's frames — pressure,
+   * A DECLARED deviation from brief §3.7: these are the ventilator's frames — pressure,
    * flow and volume every 20 ms of sim, i.e. samples — so they go ONLY to same-browser BroadcastChannel transports,
    * never to the relay, WebRTC or the in-process panel (and the relay refuses them, relay/server.ts). Mirroring the
    * cockpit's SETTINGS instead cannot be exact: a frame one tick off moves the beats 3.5 ms (five ticks: 18 ms; the
    * viewer resyncs above 1 ms), and a follower-side cockpit learns its own tick offset.
    */
   mirror(cmd: Command, result: DispatchResult): void {
-    if (!result.accepted || this.ff) return; // Stage 10: a viewer waits out a fast-forward
-    this.cockpitNotice(result.tick); // Stage 12: whether or not a viewer said hello lately (a phone that joined long ago)
+    if (!result.accepted || this.ff) return; // A viewer waits out a fast-forward
+    this.cockpitNotice(result.tick); // Whether or not a viewer said hello lately (a phone that joined long ago)
     if (this.now() - this.viewerSeenAt > VIEWER_TTL_MS) return;
     const m = this.stamp({ kind: 'event', body: [{ type: 'commandApplied', commandId: cmd.id, tick: result.tick, resolved: { command: { ...cmd, atTick: result.tick }, mirror: true } satisfies AppliedResolution }] });
     for (const t of this.transports.keys()) if (t.kind === 'broadcastChannel') t.send(m);
   }
 
-  /** Stage 12: a viewer on the network gets no frames — it is told the cockpit drives (once a second), and holds. */
+  /** A viewer on the network gets no frames — it is told the cockpit drives (once a second), and holds. */
   private cockpitNotice(tick: Tick): void {
     const now = this.now();
     if (now - this.cockpitSaidAt < COCKPIT_EVENT_MS) return;
     const net = [...this.transports.keys()].filter((t) => t.kind === 'websocket' || t.kind === 'webrtc');
-    if (net.length === 0) return; // nothing stamped for nobody (R50 M1)
+    if (net.length === 0) return; // Nothing stamped for nobody
     this.cockpitSaidAt = now;
     const c = this.stamp({ kind: 'event', body: [{ type: 'cockpit', t: tick * TICK_S, tick }] });
     for (const t of net) t.send(c);
@@ -245,14 +246,14 @@ export class HostSession {
    * Per-timeline host state (stage groups, set targets, the scenario run) ends with the old engine.
    */
   newTimeline(cause: TimelineCause = 'restart'): void {
-    this.timelines++; // Stage 10: a fast-forward on the old timeline stops
+    this.timelines++; // A fast-forward on the old timeline stops
     this.flush();
     this.groups.clear();
     this.targets.clear();
     if (cause === 'restart') {
       this.sticky.delete('scenario.load');
       this.sticky.delete('scenario.run');
-      // FU-11 (showcase hotfix note): the old engine's lead and filter choices are not the new monitor's
+      // The old engine's lead and filter choices are not the new monitor's
       for (const k of [...this.sticky.keys()]) if (k.startsWith('ecg.')) this.sticky.delete(k);
     }
     const { tick, simT } = this.o.target.now();
@@ -299,13 +300,13 @@ export class HostSession {
     for (const t of this.transports.keys()) t.send(m);
   }
 
-  /** Peers whose last hello said `viewer` (R50 M13). */
+  /** Peers whose last hello said `viewer`. */
   private readonly viewerPeers = new Set<string>();
 
   private async receive(t: ManagedTransport, m: WireMessage): Promise<void> {
-    if (m.session !== this.o.session) return; // FU-11 (BA11): a message for another session is not ours, whatever channel it came on
-    // R50 M13: a peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket;
-    // a BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport)
+    if (m.session !== this.o.session) return; // A message for another session is not ours, whatever channel it came on
+    // A peer that said hello as a viewer sends no commands — the relay already refuses them on a WebSocket; a
+    // BroadcastChannel peer is held to the same rule (one trust model per role, whatever the transport)
     if (m.kind === 'hello') (m.role === 'viewer' ? this.viewerPeers.add(m.from) : this.viewerPeers.delete(m.from));
     if (m.from === this.peerId || this.seqs.check(m) === 'duplicate') return;
     if (m.kind === 'hello' && m.role === 'viewer') this.viewerSeenAt = this.now();
@@ -341,7 +342,7 @@ export class HostSession {
       t.send(this.stamp(prior)); // idempotent: same ack, no second application
       return;
     }
-    // Stage 10: while the host fast-forwards, a controller's command waits for nothing — it is refused with the reason
+    // While the host fast-forwards, a controller's command waits for nothing — it is refused with the reason
     const { result, applied } = this.ff ? { result: { accepted: false, tick: this.o.target.now().tick, reason: 'the simulation is fast-forwarding; try again when it ends' }, applied: cmd } : await this.apply(cmd);
     const ack: AckBody = {
       kind: 'ack', commandId: cmd.id, accepted: result.accepted, tick: result.tick,
@@ -361,8 +362,8 @@ export class HostSession {
   }
 
   /**
-   * FU-11 (F06, BA06): a target that throws or rejects (a failed or destroyed worker) answers with a refusal — the
-   * controller gets its ack and the host's command chain moves on instead of waiting behind a promise that never settles.
+   * A target that throws or rejects (a failed or destroyed worker) answers with a refusal — the controller gets its ack
+   * and the host's command chain moves on instead of waiting behind a promise that never settles.
    */
   private async apply(cmd: WireCommand): Promise<{ result: DispatchResult; applied: WireCommand }> {
     try {
@@ -379,8 +380,7 @@ export class HostSession {
     const reject = (reason: string) => ({ result: { accepted: false, tick, reason }, applied: cmd });
     if (cmd.type === 'time') return this.time(cmd);
     if (cmd.type === 'scenario') return this.scenario(cmd);
-    // Stage 9 (E-S9-2): pin, release and setMode go to the engine, which validates them (7a implemented MODELED; this
-    // guard predated it and refused every pin from a panel or a remote). setFactor reaches the engine too and is refused
+    // Pin, release and setMode go to the engine, which validates them. setFactor reaches the engine too and is refused
     // there with its own reason until the engine models factors.
     // applyEvent/attachSensor are not in engine-core's Command union yet; the engine validates them at run time.
     let c = cmd as Command;
@@ -408,9 +408,9 @@ export class HostSession {
   private time(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
     const { tick } = this.o.target.now();
     if (cmd.action === 'step') return { result: { accepted: false, tick, reason: 'time step is not supported' }, applied: cmd };
-    if (cmd.action === 'jump') return this.fastForward(cmd); // Stage 10
+    if (cmd.action === 'jump') return this.fastForward(cmd);
     if (cmd.action === 'scale' && !(typeof cmd.value === 'number' && cmd.value >= MIN_TIME_SCALE && cmd.value <= MAX_TIME_SCALE)) {
-      return { result: { accepted: false, tick, reason: `scale must be ${MIN_TIME_SCALE}–${MAX_TIME_SCALE}` }, applied: cmd }; // Stage 10: the clock's own range (×8)
+      return { result: { accepted: false, tick, reason: `scale must be ${MIN_TIME_SCALE}–${MAX_TIME_SCALE}` }, applied: cmd }; // The clock's own range (×8)
     }
     this.o.target.time(cmd.action, cmd.value);
     this.sticky.set(cmd.action === 'scale' ? 'time.scale' : 'time.run', cmd);
@@ -418,12 +418,12 @@ export class HostSession {
   }
 
   /**
-   * Stage 10: fast-forward `value` sim seconds, paced to `fastForwardWallMs` of wall time (the owner: ≈ 10 s, so the room
-   * sees the clock run). Accepted at once; the run goes on outside the command chain in steps of FF_STEP_TICKS. A first
-   * empty step reads the monitor's own tick, so the span is exact. After each step the host's scenario has polled
-   * (ScenarioDriver wraps `fastForwardStep`) and what it submitted is applied before the next step, so the span keeps the
-   * engine's event order and gives the patient a run polled every 0.5 s would. Every peer sees a `fastForward` start and
-   * end (the end lists the alarms raised during it); a late joiner gets the jump as a sticky replay.
+   * Fast-forward `value` sim seconds, paced to `fastForwardWallMs` of wall time (the owner: ≈ 10 s, so the room sees the
+   * clock run). Accepted at once; the run goes on outside the command chain in steps of FF_STEP_TICKS. A first empty step
+   * reads the monitor's own tick, so the span is exact. After each step the host's scenario has polled (ScenarioDriver
+   * wraps `fastForwardStep`) and what it submitted is applied before the next step, so the span keeps the engine's event
+   * order and gives the patient a run polled every 0.5 s would. Every peer sees a `fastForward` start and end (the end
+   * lists the alarms raised during it); a late joiner gets the jump as a sticky replay.
    */
   private fastForward(cmd: TimeCommand): { result: DispatchResult; applied: WireCommand } {
     const { tick } = this.o.target.now();
@@ -499,7 +499,7 @@ export class HostSession {
       const snap = cmd.target !== undefined ? this.marks.get(cmd.target) : undefined;
       if (!snap) return { result: { accepted: false, tick, reason: `no bookmark ${String(cmd.target)}` }, applied: cmd };
       await this.o.target.restore(snap);
-      this.newTimeline('restore'); // FU-11 (F09, BA05): every controller's clock goes back with the engine
+      this.newTimeline('restore'); // Every controller's clock goes back with the engine
       queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' })); // viewers re-hello and resync
       return { result: { accepted: true, tick: snap.tick }, applied: cmd };
     }
@@ -515,7 +515,7 @@ export class HostSession {
     }
     if (c.action === 'pause' || c.action === 'resume') this.sticky.set('scenario.run', c);
     if (c.action === 'restoreBookmark') {
-      this.newTimeline('restore'); // FU-11 (F09, BA05)
+      this.newTimeline('restore');
       queueMicrotask(() => this.broadcast({ kind: 'hello', role: 'host' }));
     }
   }

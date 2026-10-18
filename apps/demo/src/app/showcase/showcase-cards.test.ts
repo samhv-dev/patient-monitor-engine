@@ -1,7 +1,7 @@
-// Stage 11: the Showcase cards as content — every document is valid, every button's commands are accepted by an engine
-// built from the card's own patient, every state can be reached from the start, the card fields read like a case, the
-// objectives are checkable (a number or a time in each), and the library lists the Showcase cards in the demonstration
-// order. The physiology of each card is in the *.slow.test.ts files beside this one (PME_TEST_SET=showcase).
+// The Showcase cards as content — every document is valid, every button's commands are accepted by an engine built from
+// the card's own patient, every state can be reached from the start, the card fields read like a case, the objectives
+// are checkable (a number or a time in each), and the library lists the Showcase cards in the demonstration order. The
+// physiology of each card is in the *.slow.test.ts files beside this one (PME_TEST_SET=showcase).
 import { createEngine, type Command } from '@pme/engine-core';
 import { engineOptionsOf, validateScenario, type DocCommand, type ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
@@ -11,7 +11,7 @@ import { SHOWCASE_IDS, showcaseDoc } from './harness.ts';
 const SHOWCASE = ['showcase-induction', 'showcase-induction-premed', 'showcase-anaphylaxis', 'showcase-mh', 'showcase-tamponade', 'showcase-haemorrhage'];
 const NEW = ['showcase-induction', 'showcase-induction-premed', 'showcase-mh', 'showcase-tamponade'];
 
-describe('Stage 11 Showcase cards', () => {
+describe('Showcase cards', () => {
   it('the Showcase group is the six cards, in the demonstration order, first in the library; bronchospasm stays in the library', () => {
     expect(SHOWCASE_ORDER).toEqual(SHOWCASE);
     expect(LIBRARY.filter((c) => c.category === 'Showcase').map((c) => c.id)).toEqual(SHOWCASE);
@@ -45,7 +45,7 @@ describe('Stage 11 Showcase cards', () => {
     expect(doc.title).not.toMatch(/^\[draft\]/i);
     expect(doc.story?.length ?? 0).toBeGreaterThan(120);
     expect(doc.objectives?.length ?? 0).toBeGreaterThanOrEqual(3);
-    for (const o of (doc.objectives ?? []).map(objectiveText)) expect(o, `objective without a number: ${o}`).toMatch(/\d/); // Stage 13: { text, rule }
+    for (const o of (doc.objectives ?? []).map(objectiveText)) expect(o, `objective without a number: ${o}`).toMatch(/\d/); // { text, rule }
     for (const s of doc.states) {
       expect(s.label?.length ?? 0, s.id).toBeGreaterThan(5);
       const manual = (s.transitions ?? []).flatMap((t) => ('manual' in t.when ? [t.when.manual.label] : 'any' in t.when ? t.when.any.flatMap((w) => ('manual' in w ? [w.manual.label] : [])) : []));
@@ -53,7 +53,7 @@ describe('Stage 11 Showcase cards', () => {
     }
   });
 
-  it('E22 (owner ruling 2026-10-17): the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
+  it('the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
     const doc: ScenarioDoc = showcaseDoc('showcase-mh');
     const vent = (doc.objectives ?? []).find((o) => typeof o !== 'string' && o.rule?.kind === 'heldThen');
     expect(vent).toEqual({

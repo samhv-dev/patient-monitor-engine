@@ -8,7 +8,7 @@ const cmd = (c: Record<string, unknown>) => ({ id: `l${++n}`, issuedBy: 'test', 
 const ev = (event: Record<string, unknown>) => cmd({ type: 'applyEvent', event });
 const ADULT = { weightKg: 70, heightCm: 170, ageY: 40, sex: 'M' as const };
 
-describe('Stage 7f long run', () => {
+describe('neuro long run', () => {
   it(`${LONGRUN_HOURS} h with a maintenance anaesthetic: no NaN, TOF trains keep their cadence, DI stays in band`, { timeout: 1_800_000 }, async () => {
     const e = createEngine({ seed: 25, patient: ADULT });
     let bad = 0;

@@ -1,4 +1,4 @@
-// Stage 5 ECG generation seam. The engine calls generateEcg (instead of Stage 1's generateVcg directly) and passes
+// ECG generation seam. The engine calls generateEcg (instead of generateVcg directly) and passes
 // every lane sample through ecgFrontEnd before the L3 filter. Continuous VCG sources (VF texture, AF f-wave
 // texture, CPR, EMG, wander, TCP artefact) register in VCG_SOURCES; per-lead electrode/amplifier effects (mains,
 // motion, lead-off, diathermy, defibrillator saturation) register in FRONT_END_STAGES. Artefacts are summed
@@ -35,7 +35,7 @@ export function ecgGenInputs(
   mainsHz: 50 | 60,
 ): EcgGenInputs {
   return {
-    ...(ps.breath ? { breath: ps.breath } : {}), // Stage 5.1 (R-S3-3)
+    ...(ps.breath ? { breath: ps.breath } : {}),
     events: ps.rhythm.events,
     fwaves: ps.rhythm.fwaves,
     hrv: ps.hrv,
@@ -48,7 +48,7 @@ export function ecgGenInputs(
   };
 }
 
-/** Stage 1's generateVcg plus the registered continuous sources. */
+/** generateVcg plus the registered continuous sources. */
 export function generateEcg(g: EcgGenInputs, from: number, to: number, sink: (index: number, x: number, y: number, z: number) => void): void {
   const acc = new Float64Array(3);
   generateVcg(g, from, to, (n, x, y, z) => {

@@ -1,9 +1,9 @@
-// The lung module (R31, R43): mechanics at 250 Hz inside the 62.5 Hz respiratory loop, slow dynamics and the mixing
-// point at the 10 Hz gas step. Plain JSON-safe state; the resp pipeline (Tasks 13–15) owns one LungState.
+// The lung module: mechanics at 250 Hz inside the 62.5 Hz respiratory loop, slow dynamics and the mixing point at the
+// 10 Hz gas step. Plain JSON-safe state; the resp pipeline owns one LungState.
 import { complianceAt, pressureAt } from './venegas.ts';
 import { airwayFlow, createMech, mechSubstep, type MechParams, type MechState } from './mechanics.ts';
 import { createO2Lung, stepO2Lung, type O2LungState } from './mix-o2.ts';
-import type { OdcCtx } from '../blood/odc.ts'; // Stage 7c (E-7c-1)
+import type { OdcCtx } from '../blood/odc.ts';
 import { mixCo2, type Co2Mix } from './mix-co2.ts';
 import { CO2_SLOPE_BLOOD, K_TAU_II, MECH_H, N_UNITS, SIDE_SHARE, TAU_EXP_REF, TAU_II_MAX } from './params.ts';
 import { createHpv, perfusion, stepHpv, type HpvState, type Perfusion } from './perfusion.ts';
@@ -56,13 +56,13 @@ export function createLung(lp: LungParams, frcGaMl: number, fa0: number, cv0: nu
 
 /**
  * Advance the mechanics by one 62.5 Hz sample (4 sub-steps). mode/x as mechSubstep. Breaths are found from the airway
- * flow: an inspiration starts when flow turns positive (flow mode: x > 0; pressure mode: > 50 mL/s, Stage 3's frame
- * threshold) and ends when it stops being positive outside a hold.
+ * flow: an inspiration starts when flow turns positive (flow mode: x > 0; pressure mode: > 50 mL/s, the respiratory
+ * frame threshold) and ends when it stops being positive outside a hold.
  */
-export function lungMechStep(ls: LungState, mode: 'flow' | 'pressure' | 'closed', x: number, dt: number, pLimit = Infinity): void { // FU-6 R7: pLimit
+export function lungMechStep(ls: LungState, mode: 'flow' | 'pressure' | 'closed', x: number, dt: number, pLimit = Infinity): void { // pLimit
   const n = Math.max(1, Math.round(dt / MECH_H));
   for (let i = 0; i < n; i++) {
-    mechSubstep(ls.mp, ls.mech, mode, x, dt / n, pLimit); // FU-6 R7
+    mechSubstep(ls.mp, ls.mech, mode, x, dt / n, pLimit);
     ls.t += dt / n;
     const insp = mode === 'flow' ? x > 0 : mode === 'closed' ? ls.inInsp : airwayFlow(ls.mech) > 50;
     if (insp && !ls.inInsp) {
@@ -107,25 +107,25 @@ function maxAlveolar(ls: LungState): number {
 }
 
 export interface GasInputs {
-  va: number; // Stage 3 alveolar ventilation now (L/min)
+  va: number; // the resp pipeline's alveolar ventilation now (L/min)
   q: number; // pulmonary blood flow (L/min)
-  baseShunt: number; // Stage 3 `shunt` (MANUAL-calibrated), fraction of CO
+  baseShunt: number; // the resp pipeline's `shunt` (MANUAL-calibrated), fraction of CO
   fio2: number;
   massFlowFio2: number | null;
   vo2: number;
   vco2: number;
-  paco2: number; // Stage 3 fast compartment
+  paco2: number; // the resp pipeline's fast compartment
   tempC: number;
   bloodL: number;
   coRatio: number;
   ga: boolean;
   indFactor: number;
-  hpvInhibit: number; // FU-6 R13: 7g's bus.hpvInhibit (0–1)
-  /** 7a adapter: measured per-lung flows (L/min) when the circulation exists, else null (fallback split). */
+  hpvInhibit: number; // The drug model's bus.hpvInhibit (0–1)
+  /** Circulation adapter: measured per-lung flows (L/min) when the circulation exists, else null (fallback split). */
   sideFlow: number[] | null;
   /** Executor addition (Task 14): reference pulmonary flow (L/min, CO_ref); the CO2 mix never sees less. */
   qRef?: number;
-  /** Stage 7c (E-7c-1): the blood's ODC context, passed to the O2 mixing point (absent → Stage 3's patient). */
+  /** The blood's ODC context, passed to the O2 mixing point (absent → the gas model's patient). */
   odc?: OdcCtx;
 }
 
@@ -146,10 +146,10 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   const sidePao2 = ls.o2.fa.map((f) => f * 713);
   ls.perf = perfusion(lp.side, non, sidePao2, ls.hpv, x.hpvInhibit);
   stepHpv(ls.hpv, ls.perf.hypoxic, dt);
-  // flows. Executor deviation (Task 14): the O2 side uses the actual flow floored at 0.05 L/min (arrest: q = 0 gave
+  // flows. Deviation: the O2 side uses the actual flow floored at 0.05 L/min (arrest: q = 0 gave
   // 0/0 = NaN in both mixes); the CO2 mix sees at least the reference flow `qRef`, so a low cardiac output does not
-  // lower g/e on top of Stage 3's low-flow factor φ, which already owns low-flow CO2 kinetics (R39-2 CPR retune;
-  // plan decision 7: "the CPR kinetics are untouched").
+  // lower g/e on top of the gas model's low-flow factor φ, which already owns low-flow CO2 kinetics (the CPR kinetics
+  // are untouched).
   const qO2 = Math.max(0.05, x.q);
   const qCo2 = Math.max(qO2, x.qRef ?? 0);
   const extra = Math.min(0.6, x.baseShunt + extraShuntAt(lp, ls.peepTot)); // Stage V.1 (E-V1-2)
@@ -189,11 +189,11 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
     va: x.va, vent, perf: perfU.map((p) => p * kC), qLow: (qLow[0]! + qLow[1]!) * kC, qShunt: qShunt * kC, vdAlv, tauEx, teS: Math.min(10, Math.max(0.3, ls.teS)), paco2: x.paco2, vco2: x.vco2,
   });
   const frcSide = [0, 1].map((s) => ls.frcGaMl * lp.frcMult * (SIDE_SHARE[s] as number) * (aer[s] as number));
-  // Executor addition (Task 14): the end-tidal ratio g follows the alveolar gas, which relaxes toward the mixing
-  // point's steady state with the alveolar CO2 time constant τ = C_A/(Q·S + VA/713), C_A = aerated FRC/713 mL/mmHg
-  // (≈ 6 s ventilated, 8 s apnoeic in the healthy adult). During apnoea g → 1 (alveolar gas equilibrates with the
-  // capillary blood), so the first breath after an apnoea shows the accumulated CO2 (Stage 3 M4), and the
-  // momentary va = 0 at the start of every externally driven breath no longer flips EtCO2 by 8 %.
+  // The end-tidal ratio g follows the alveolar gas, which relaxes toward the mixing point's steady state with the
+  // alveolar CO2 time constant τ = C_A/(Q·S + VA/713), C_A = aerated FRC/713 mL/mmHg (≈ 6 s ventilated, 8 s apnoeic in
+  // the healthy adult). During apnoea g → 1 (alveolar gas equilibrates with the capillary blood), so the first breath
+  // after an apnoea shows the accumulated CO2, and the momentary va = 0 at the start of every externally driven breath
+  // does not flip EtCO2 by 8 %.
   if (ls.nGas > 0) {
     const cA = (frcSide[0]! + frcSide[1]!) / 713;
     const gk = qCo2 * CO2_SLOPE_BLOOD + (x.va * 1000) / 713;
@@ -205,15 +205,15 @@ export function lungGasStep(ls: LungState, x: GasInputs, dt: number): void {
   stepO2Lung(ls.o2, {
     va: x.va, vent, perf: perfU, vdAlv, qLow, qShunt, fio2: x.fio2, massFlowFio2: x.massFlowFio2, blocked, vo2: x.vo2,
     paco2: x.paco2, pA: ls.co2.pA, tempC: x.tempC, frcSide, bloodL: x.bloodL, dl: lp.side.map((s) => s.dl), coRatio: x.coRatio,
-    arterialHold: x.coRatio <= 0, // FU-3 item 16 (E-FU3-9): no ejection → the arteries receive no new blood
-    ...(x.odc ? { odc: x.odc } : {}), // Stage 7c (E-7c-1)
+    arterialHold: x.coRatio <= 0, // No ejection → the arteries receive no new blood
+    ...(x.odc ? { odc: x.odc } : {}),
   }, dt);
 }
 
 /**
- * Stage V.1 (E-V1-2): the extra shunt at the current total PEEP. Its lung-water part (flooded alveoli: pulmonary
- * oedema, aspiration pneumonitis, 7c's lung water) is relieved by PEEP ×(1 − 0.04·PEEP) (tables §4.5, catalogue §13
- * "PEEP / CPAP response strong"; the data row's own rule, not applied until V.1 retired the link's interim shunt).
+ * The extra shunt at the current total PEEP. Its lung-water part (flooded alveoli: pulmonary oedema, aspiration
+ * pneumonitis, the blood model's lung water) is relieved by PEEP ×(1 − 0.04·PEEP) (tables §4.5, catalogue §13 "PEEP /
+ * CPAP response strong"; the data row's own rule).
  */
 export function extraShuntAt(lp: LungParams, peepTot: number): number {
   return lp.extraShunt - lp.waterShunt * Math.min(1, 0.04 * Math.max(0, peepTot));
@@ -228,10 +228,10 @@ export function shuntFraction(ls: LungState, baseShunt: number): number {
 
 /**
  * Whole respiratory-system static compliance (mL/cmH2O): ventilated units in parallel, in series with the chest wall.
- * Executor deviation (Task 13): each unit's lung compliance is the CHORD over the last breath (tidal volume / its
- * transpulmonary pressure change from the end-expiratory volume v0), the tangent at v0 before the first breath — so
- * the value is a per-breath Cstat that does not ripple within a breath (the plan's tangent at the instantaneous
- * volume moved lungState and the Stage 2 breath signal u(t) by ±2 mL/cmH2O inside every breath).
+ * Each unit's lung compliance is the CHORD over the last breath (tidal volume / its transpulmonary pressure change from
+ * the end-expiratory volume v0), the tangent at v0 before the first breath — so the value is a per-breath Cstat that
+ * does not ripple within a breath (a tangent at the instantaneous volume moved lungState and the breath signal u(t) by
+ * ±2 mL/cmH2O inside every breath).
  */
 export function staticCompliance(ls: LungState): number {
   let cl = 0;

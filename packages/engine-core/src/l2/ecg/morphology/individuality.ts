@@ -1,5 +1,5 @@
 // Per-patient morphology fingerprint (brief §5 "Individuality: patientSeed, morphologyVariation"; research 04 §5,
-// Squiggler's "every patient drawn has an ECG fingerprint of their own"). Stage 5.1 bounds (at mv = 1): P, QRS and T
+// Squiggler's "every patient drawn has an ECG fingerprint of their own"). Bounds (at mv = 1): P, QRS and T
 // amplitude ±10 %, P, QRS and T width ±10 %, measured frontal QRS axis ±15° from the textbook beat. A stable
 // function of patientSeed (its own PRNG copy, never the engine's streams); mv = 0 leaves the textbook beat untouched.
 import { createRngState, uniform } from '../../../rng/sfc32.ts';

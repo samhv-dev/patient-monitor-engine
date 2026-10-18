@@ -1,6 +1,5 @@
-// How the hidden same-screen panel is revealed (BUILD-PLAN Stage 6: three-finger long-press or Ctrl+Shift+I;
-// this plan adds the plain `i` key and a 5-tap top-left corner for iPads without keyboards). Pure logic; the
-// DOM wiring is attachReveal().
+// How the hidden same-screen panel is revealed: a three-finger long-press, Ctrl+Shift+I, the plain `i` key or a 5-tap
+// top-left corner (for iPads without keyboards). Pure logic; the DOM wiring is attachReveal().
 export interface RevealOptions {
   cornerPx: number; // tap zone size at the top-left corner
   taps: number; // taps needed

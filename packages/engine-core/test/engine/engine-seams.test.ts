@@ -4,8 +4,8 @@ import type { Command, EngineEvent } from '../../src/types.ts';
 
 const cmd = (c: Record<string, unknown>, id = 'x'): Command => ({ id, issuedBy: 'test', ...c }) as Command;
 
-describe('engine seams (Stage 5)', () => {
-  it('setModifiers accepts every Stage 5 key and merges artefact levels key by key', () => {
+describe('engine seams', () => {
+  it('setModifiers accepts every rhythm-library key and merges artefact levels key by key', () => {
     const e = createEngine({ seed: 3 });
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { bbb: 'rbbb', k: 6, artefact: { mains: 0.2 } } })).accepted).toBe(true);
     expect(e.dispatch(cmd({ type: 'setModifiers', modifiers: { artefact: { emg: 0.1 } } })).accepted).toBe(true);
@@ -16,7 +16,7 @@ describe('engine seams (Stage 5)', () => {
     expect(st.st.mods.bbb).toBe('rbbb');
   });
 
-  it('every Stage 5 rhythm id is accepted and produces events without throwing', () => {
+  it('every rhythm id is accepted and produces events without throwing', () => {
     const e = createEngine({ seed: 2 });
     const ev: EngineEvent[] = [];
     e.on((x) => ev.push(x));

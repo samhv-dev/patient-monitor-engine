@@ -12,7 +12,7 @@ import { fmt, run, snap } from './helpers.ts';
 
 const log = (tag: string, o: Record<string, number>) => { if (process.env.PRINT) console.log(`R36 ${tag}: ${fmt(o)}`); };
 
-describe('R36 demonstrations', { timeout: 300_000 }, () => {
+describe('lung-pathology demonstrations through the link', { timeout: 300_000 }, () => {
   // 32 rows × 60 sim-s of a full engine (7a+7b+7c on main): ≈ 300 s on the shared CI runner (timed out at the 300 s
   // default in PR #20's run); 900 s budget, the loop yields per row through run().
   it('every catalogue row is a link profile and starts cleanly (60 s, no rejected command)', { timeout: 900_000 }, async () => {
@@ -26,7 +26,7 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
 
   // Orchestrator ruling (V.1 review) 7: the profile now carries 7b's `ph` lungs on 7a's right heart; EtCO2 +5.0 sits on
   // the band edge (+6.8 in the plan's prototype, +6.0 on main before V.1) — calibration row. If a merge takes it below +5 → it.fails with the numbers (R45).
-  it('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (V.1 on the 7b `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row)', async () => {
+  it('PH crisis: PEEP 15 + RR 8 → EtCO2 rises ≥ 5 mmHg, CVP rises ≥ 1.5, MAP falls ≥ 8 (on the engine\'s `ph` lungs: +5.0 / +2.1 / −11.1; EtCO2 on the band edge, calibration row)', async () => {
     const s = createLinkedSim({ profile: 'pulmonary-hypertension' });
     await run(s, 180);
     const a = snap(s, 150, 180);
@@ -62,7 +62,7 @@ describe('R36 demonstrations', { timeout: 300_000 }, () => {
   // On FU-4's tree the lungs' tension builds its pleural pressure through F3's one-way valve toward the catalogue ceiling
   // (0.8 × 25 mmHg = 27.2 cmH2O): 17.5 cmH2O at 90 s (the plan's step model had 27.2 at once) — the plateau is inside
   // the band from the pressure built so far (gate note §1, §8).
-  it('tension-pneumothorax profile (G7b ruling 5, calibration row "tension-ptx ventilator plateau"): plateau 25–50, ΔP 20–45 on the engine\'s lungs (90 s: plateau 26.0, ΔP 21.0, pleural 17.5 building toward 27.2)', async () => {
+  it('tension-pneumothorax profile (calibration row "tension-ptx ventilator plateau"): plateau 25–50, ΔP 20–45 on the engine\'s lungs (90 s: plateau 26.0, ΔP 21.0, pleural 17.5 building toward 27.2)', async () => {
     const s = createLinkedSim({ profile: 'pneumothorax-tension', vent: { pmax: 60 } });
     await run(s, 90);
     const m = s.vs.p.measured;

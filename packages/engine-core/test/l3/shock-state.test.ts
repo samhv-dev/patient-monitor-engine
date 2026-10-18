@@ -5,8 +5,8 @@ const VF: ShockContext = { cls: 'vf', synced: false, energyJ: 200, defaultJ: 200
 const rosc = (c: ShockContext) => outcomeProbabilities(c).rosc ?? 0;
 
 /** FU-7 (addendum 23): shock success depends on the state the shock lands in. */
-describe('shock state factor (R51 addendum 23)', () => {
-  it('no state information = the pre-FU-7 table exactly', () => {
+describe('shock state factor', () => {
+  it('no state information = the plain table exactly', () => {
     expect(shockStateFactor(VF)).toBe(1);
     expect(rosc(VF)).toBeCloseTo(0.1, 9);
   });
@@ -71,7 +71,7 @@ describe('shock outcome â€” DV amendment (research/20 DV-01a, DV-24a/b, DV-06aâ€
     expect(cv('afib', 20)).toBeLessThanOrEqual(0.3);
     expect(cv('afib', 200) - cv('afib', 20)).toBeGreaterThan(0.3); // DV-06a energy dependence (direction, tol 30)
   });
-  it('no rhythm id keeps the flat pre-FU-7 cardioversion 0.8', () => {
+  it('no rhythm id keeps the flat cardioversion 0.8', () => {
     expect(cv(undefined, 20)).toBeCloseTo(0.8, 9);
   });
 });

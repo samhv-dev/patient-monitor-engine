@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import type { HemoClinicalEvent, LineSensorState } from '../src/types-hemo.ts';
 import type { Command, EngineEvent, PatientProfile } from '../src/types.ts';
 
-describe('Stage 2 public types', () => {
-  it('Command, EngineEvent and PatientProfile carry the Stage 2 variants', () => {
+describe('haemodynamic public types', () => {
+  it('Command, EngineEvent and PatientProfile carry the haemodynamic variants', () => {
     const line: HemoClinicalEvent = { kind: 'line', line: 'abp', action: 'damp', value: 0.2, fnHz: 10 };
     const state: LineSensorState = 'connected';
     const cmds: Command[] = [

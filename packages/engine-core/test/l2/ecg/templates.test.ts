@@ -16,7 +16,7 @@ describe('l2/ecg/templates', () => {
     expect(p('ecgII', VEC.U)).toBeCloseTo(0.03, 2);
   });
 
-  it('ruling R17: lead II exact (above), QRS peak-to-peak in I 70% and III 30% of II (±25%; limb leads only)', () => {
+  it('lead II exact (above), QRS peak-to-peak in I 70% and III 30% of II (±25%; limb leads only)', () => {
     const pp = (lead: LeadId) => {
       const v = [p(lead, VEC.Q), p(lead, VEC.R), p(lead, VEC.S), 0];
       return Math.max(...v) - Math.min(...v);
@@ -28,7 +28,7 @@ describe('l2/ecg/templates', () => {
     expect(pp('ecgIII') / ii).toBeLessThan(0.3 * 1.25);
   });
 
-  it('ruling R17: chest leads follow a normal R-wave progression (no V-lead ratio target)', () => {
+  it('chest leads follow a normal R-wave progression (no V-lead ratio target)', () => {
     // Measured on the drawn narrow QRS: r = the largest positive and S = the largest negative deflection.
     const ev = makeEvent(0, narrowKernels(400));
     const rs = (lead: LeadId) => {
@@ -55,7 +55,7 @@ describe('l2/ecg/templates', () => {
     expect(v[5]!.r).toBeGreaterThan(v[5]!.S);
   });
 
-  it('narrow QRS 70–100 ms, wide QRS 120–200 ms with a discordant T and 1.5–2× amplitude in II (brief §5; review L12)', () => {
+  it('narrow QRS 70–100 ms, wide QRS 120–200 ms with a discordant T and 1.5–2× amplitude in II (brief §5)', () => {
     expect(templateQrsMs('narrow')).toBeGreaterThanOrEqual(70);
     expect(templateQrsMs('narrow')).toBeLessThanOrEqual(100);
     expect(templateQrsMs('wide')).toBeGreaterThanOrEqual(120);

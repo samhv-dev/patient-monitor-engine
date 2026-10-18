@@ -12,13 +12,13 @@ describe('metadata', () => {
     ['resp.pat.deadSpaceMl', 'mL'], ['blood.core.rateMlPerMin', 'mL/min'], ['hemo.lvad.flowLpm', 'L/min'], ['ev.beat.qtMs', 'ms'],
     ['resp.pat.weightKg', 'kg'], ['dev.pacer.ratePpm', '/min'], ['organs.renal.uopMlMin', 'mL/min'], ['hemo.circ.ref.lvedp', 'mmHg'],
     ['ev.lungState.complianceMlPerCmH2O', 'mL/cmH₂O'], ['hemo.circ.kLv', ''],
-    // concentration and rate suffixes of 7c/7e/7g come before the bare …Ml / …Kg rules
+    // The blood, endocrine and drug models' concentration and rate suffixes come before the bare …Ml / …Kg rules
     ['endo.core.out.cortisolNmolL', 'nmol/L'], ['endo.core.out.insulinUuMl', 'µU/mL'], ['endo.core.out.adrenalinePgMl', 'pg/mL'],
     ['blood.core.out.glucoseMgDl', 'mg/dL'], ['organs.kidney.uopMlKgH', 'mL/kg/h'], ['x.y.vasopressinNgMl', 'ng/mL'],
     ['blood.core.out.tempC', '°C'], ['mods.tempC', '°C'], ['x.bloodTempC', '°C'], ['pk.bus.agents.rocuronium.cumulativeMgPerKg', 'mg/kg'],
     // curated: thermal model, model EtCO2, ECG potassium, NIBP and QTc numerics
     ['resp.temp.tc', '°C'], ['resp.etco2', 'mmHg'], ['mods.k', 'mmol/L'], ['mon.nibpSys', 'mmHg'], ['mon.nibpMean', 'mmHg'], ['mon.qtc', 'ms'],
-    ['organs.iap', 'mmHg'], // 7x.1
+    ['organs.iap', 'mmHg'],
   ])('unit of %s is "%s" from the field name', (path, unit) => expect(metaOf(path).unit).toBe(unit));
   it('a sibling unit leaf names the unit of a number that has none in its name', () => {
     const tree = new Map<string, unknown>([
@@ -88,7 +88,7 @@ describe('formatting', () => {
     ['mods.k', 4.2, 4.35, 4.45, 'up'], // 0.2 mmol/L (2 % would be 0.08)
     ['blood.core.out.k', 4.2, 4.05, 3.95, 'down'],
     ['blood.core.out.lactate', 1, 1.2, 1.4, 'up'], // 0.3 mmol/L (2 % would be 0.02)
-    // 7x.1 (FU-3 item 12): BE and HCO3 1 mmol/L (2 % of a BE near 0 is nothing: every 0.001 flagged; of HCO3 24, 0.48)
+    // BE and HCO3 1 mmol/L (2 % of a BE near 0 is nothing: every 0.001 flagged; of HCO3 24, 0.48)
     ['blood.core.ab.be', 0, 0.8, 1.2, 'up'],
     ['ev.labs.values.be', -2, -2.8, -3.2, 'down'],
     ['blood.core.ab.hco3', 24, 23.2, 22.8, 'down'],

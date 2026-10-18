@@ -11,7 +11,7 @@ async function alpha(severity: number): Promise<{ alpha: number; riseIII: number
   return { alpha: mean(a.map((x) => x.alpha)), riseIII: mean(a.map((x) => x.riseIII)) };
 }
 
-describe('capnogram α emerges from the lungs (R39-6, Q72)', { timeout: 300_000 }, () => {
+describe('capnogram α emerges from the lungs', { timeout: 300_000 }, () => {
   it('healthy 100–110°; COPD α rises with GOLD grade; GOLD 3 120–130°, GOLD 4 ≤ 135°', async () => {
     const h = await alpha(0);
     const g = [await alpha(0.25), await alpha(0.5), await alpha(0.75), await alpha(1)];

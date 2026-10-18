@@ -57,7 +57,7 @@ describe('relay', () => {
     expect(host.wire('event')).toEqual([]);
   });
 
-  it('Stage 12: a viewer gets only the events a viewer uses; a controller gets them all', async () => {
+  it('a viewer gets only the events a viewer uses; a controller gets them all', async () => {
     const host = await client('h', 'host');
     const c = await client('c', 'controller');
     const v = await client('v', 'viewer');
@@ -69,7 +69,7 @@ describe('relay', () => {
     expect(v.wire('event').length).toBe(1); // the measurement-only message is not sent to the viewer at all
   });
 
-  it("Stage 12: the host's answer to a hello (its sticky replays) goes to the peers waiting on a snapshot, not the room", async () => {
+  it("the host's answer to a hello (its sticky replays) goes to the peers waiting on a snapshot, not the room", async () => {
     const host = await client('h', 'host');
     const v1 = await client('v1', 'viewer');
     await waitFor(() => host.wire('hello').length === 1);
@@ -86,7 +86,7 @@ describe('relay', () => {
     expect(v1.wire('event')).toEqual([]);
   });
 
-  it('Stage 12 (R50 M2): an event flagged `replay: true` itself (the style a welcome carries) marks the welcome too', async () => {
+  it('an event flagged `replay: true` itself (the style a welcome carries) marks the welcome too', async () => {
     const host = await client('h', 'host');
     const c1 = await client('c1', 'controller'); // controllers get every event: the routing alone is under test
     await waitFor(() => host.wire('hello').length === 1);

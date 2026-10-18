@@ -5,7 +5,7 @@ import { DRUGS } from '@pme/engine-core';
 import { DRUG_NAMES } from './glossary-data.ts';
 import { VITALS } from './vitals.ts';
 
-describe('R56 glossary', () => {
+describe('glossary', () => {
   it('has unique entry numbers, and every entry the app refers to exists', () => {
     const ns = ALL_ENTRIES.map((e) => e.n);
     expect(new Set(ns).size).toBe(ns.length);
@@ -31,7 +31,7 @@ describe('R56 glossary', () => {
     expect(labelOf('ev.labs.values.so2')).toBe('FO₂Hb');
     expect(labelOf('resp.o2.sa')).toBe('SaO₂');
   });
-  it('never gives two different quantities the same label (review F1; research/11 §5.16 rule 3)', () => {
+  it('never gives two different quantities the same label (research/11 §5.16 rule 3)', () => {
     // every key of every entry, with its wildcards filled in: both sides, two drugs, any segment
     const fill = (k: string): string[] =>
       k.includes('#') ? [...fill(k.replace('#', '0')), ...fill(k.replace('#', '1'))]
@@ -59,7 +59,7 @@ describe('R56 glossary', () => {
     expect(labelOf('resp.temp.sites.nasopharyngeal')).toBe('Tnaso');
     expect(labelOf('pk.bus.cns.loc')).toBeNull(); // '*' key: Model internals
   });
-  it('drug names come from the glossary, in the site\'s set (orchestrator ruling 5)', () => {
+  it('drug names come from the glossary, in the site\'s set', () => {
     for (const d of Object.values(DRUGS)) if (d.cls !== 'placeholder') expect(DRUG_NAMES[d.id], d.id).toBeDefined();
     expect(drugName('norepinephrine')).toBe('Norepinephrine'); // default set: epinephrine / norepinephrine
     expect(labelOf('ev.endo.norepinephrinePgMl')).toBe('Norepinephrine'); // the plasma level follows the drug's name

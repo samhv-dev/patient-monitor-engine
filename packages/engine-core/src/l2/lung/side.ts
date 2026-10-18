@@ -31,7 +31,7 @@ export interface LungParams {
   waterShunt: number;
   frcMult: number;
   ibwKg: number;
-  /** Values the lung module only passes on (7a, 7f): */
+  /** Values the lung module only passes on (to the circulation and neuro models): */
   pvr: number;
   tIt: number;
   pPtx: number;

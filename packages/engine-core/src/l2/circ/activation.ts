@@ -1,7 +1,7 @@
-// Time-varying-elastance activation (R42; audit §1.1 #4): the double-Hill shape of Stergiopulos, Meister &
-// Westerhof 1996, normalised to a peak of exactly 1, with its period T taken from the Weissler PEP + LVET at the
-// current heart rate (audit A3) rather than ∝ RR (Pulse defect 11). One activation per mechanical beat (ventricles)
-// or per atrial depolarisation (atria); activations are plain data so the pipeline state stays JSON-safe.
+// Time-varying-elastance activation: the double-Hill shape of Stergiopulos, Meister & Westerhof 1996, normalised to
+// a peak of exactly 1, with its period T taken from the Weissler PEP + LVET at the current heart rate rather than ∝ RR
+// (Pulse defect 11). One activation per mechanical beat (ventricles) or per atrial depolarisation (atria);
+// activations are plain data so the pipeline state stays JSON-safe.
 import { lvetS, pepS } from '../hemo/params.ts';
 import { DH_A1, DH_A2, DH_N1, DH_N2, T_ACT_PER_SYSTOLE } from './params.ts';
 // hot-loop locals: module bindings of imported constants go through getters under the vitest transform [perf]
@@ -44,7 +44,7 @@ export interface Activation {
   t0: number;
   T: number;
   amp: number;
-  origin?: string; // Stage 7a: the beat's origin (ventricular beats never drive the MANUAL tracker)
+  origin?: string; // The beat's origin (ventricular beats never drive the MANUAL tracker)
 }
 
 /** Activation level at time t: the largest of the scheduled activations (overlaps never exceed 1). */

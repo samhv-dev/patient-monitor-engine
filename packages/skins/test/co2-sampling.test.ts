@@ -12,7 +12,7 @@ const EXPECTED: Record<string, [number, number, string]> = {
   'lifepak-like': [2.6, 200, 'assumed'],
 };
 
-describe('R39-5 sidestream CO2 sampling per skin', () => {
+describe('sidestream CO2 sampling per skin', () => {
   it.each(Object.keys(EXPECTED))('%s: delay/rise and its own provenance', (id) => {
     const [delay, rise, tag] = EXPECTED[id]!;
     const { skin } = resolveSkin(id);

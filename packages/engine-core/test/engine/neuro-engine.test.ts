@@ -18,8 +18,8 @@ async function run(e: ReturnType<typeof createEngine>, toS: number): Promise<voi
   e.advanceTo(toS);
 }
 
-describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout: 180_000 }, () => {
-  it('rocuronium 0.6 mg/kg: the stimulator reads TOF 0 by 2 min and spontaneous TOFR ≥ 90 % at 55–95 min (R51 addendum 17)', async () => {
+describe('neuro through the engine (drug events through the drug model)', { timeout: 180_000 }, () => {
+  it('rocuronium 0.6 mg/kg: the stimulator reads TOF 0 by 2 min and spontaneous TOFR ≥ 90 % at 55–95 min', async () => {
     const e = createEngine({ seed: 3, patient: ADULT });
     const tofs: Extract<EngineEvent, { type: 'tof' }>[] = [];
     e.on((x) => { if (x.type === 'tof') tofs.push(x); }, ['tof']);
@@ -80,7 +80,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     await run(e, 1500);
     expect(breaths - before).toBeGreaterThan(40); // RR ≈ 12 × 5 min, opioid tail allowed
   });
-  it('naloxone (F2): remifentanil 0.3 µg/kg/min makes the patient apnoeic; naloxone 0.4 mg restores spontaneous breaths within 3 min', async () => {
+  it('naloxone: remifentanil 0.3 µg/kg/min makes the patient apnoeic; naloxone 0.4 mg restores spontaneous breaths within 3 min', async () => {
     const e = createEngine({ seed: 10, patient: ADULT });
     const marks: { t: number; k: string }[] = [];
     const breaths: number[] = [];
@@ -98,7 +98,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     expect(back && (back.t - 600) / 60).toBeLessThan(3);
     expect(breaths.filter((t) => t > 780).length).toBeGreaterThan(10); // RR ≥ 5/min over the last 2 min, the infusion still running
   });
-  it('stimulus is 7e\'s event, observed by 7f: accepted by the engine (7f validates it until 7e lands), laryngoscopy under 0.5 MAC → movement', async () => {
+  it('stimulus is the endocrine model\'s event, observed by neuro: accepted by the engine, laryngoscopy under 0.5 MAC → movement', async () => {
     const e = createEngine({ seed: 11, patient: ADULT });
     const marks: string[] = [];
     e.on((x) => { if (x.type === 'neuroMark') marks.push(x.kind); });
@@ -110,7 +110,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     await run(e, 960);
     expect(marks).toContain('movement');
   });
-  it('anaesthesia event every second with depth, MAC and TOF; propofol (7g\'s Eleveld Ce) deepens the index', async () => {
+  it('anaesthesia event every second with depth, MAC and TOF; propofol (the drug model\'s Eleveld Ce) deepens the index', async () => {
     const e = createEngine({ seed: 6, patient: ADULT });
     const an: Extract<EngineEvent, { type: 'anaesthesia' }>[] = [];
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
@@ -132,7 +132,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
   // the band edge. it.fails with the number. FU-9 Task A12 (H3) flips it (bisected: 52 at A11, 50 at A12): hepatic flow
   // = CO/CO0 × 7d's factor, so propofol's flow-limited clearance under this rig is slightly lower and the nadir is back
   // below 52.
-  it('propofol 2 mg/kg: depth-index nadir < 52 — measured 50 with FU-9 A12 (52 after FU-4 F4, 51 before, 51 after FU-8 A28, 52 again with FU-6)', async () => {
+  it('propofol 2 mg/kg: depth-index nadir < 52 — measured 50', async () => {
     const e = createEngine({ seed: 6, patient: ADULT });
     const an: Extract<EngineEvent, { type: 'anaesthesia' }>[] = [];
     e.on((x) => { if (x.type === 'anaesthesia') an.push(x); }, ['anaesthesia']);
@@ -141,7 +141,7 @@ describe('Stage 7f through the engine (drug events through 7g, R51)', { timeout:
     console.log(`neuro-engine propofol 2 mg/kg: depth-index nadir ${Math.min(...an.map((a) => a.di))}`);
     expect(Math.min(...an.map((a) => a.di))).toBeLessThan(52);
   });
-  it('succinylcholine: 7g consumes the dose, 7f observes it (fasciculation mark); 7f leaves ECG potassium alone (7c owns it, R51 §3)', async () => {
+  it('succinylcholine: the drug model consumes the dose, neuro observes it (fasciculation mark) and leaves ECG potassium alone (the blood owns it)', async () => {
     const e = createEngine({ seed: 7, patient: { ...ADULT, neuro: { nm: 'burn' } } });
     const marks: string[] = [];
     e.on((x) => { if (x.type === 'neuroMark') marks.push(x.kind); });

@@ -14,11 +14,11 @@ describe('lung pathology catalogue — ventilator signatures at the reference se
 });
 
 describe('catalogue coverage', () => {
-  it('has the R36 parenchymal/restrictive rows (Task 10)', () => {
+  it('has the catalogue\'s parenchymal/restrictive rows', () => {
     const ids = LUNG_PATHOLOGIES.map((r) => r.id);
     for (const id of ['ards-mild', 'ards-moderate', 'ards-severe-recruitable', 'ards-severe-nonrecruitable', 'fibrosis-ild', 'scleroderma', 'chest-wall-restriction', 'obesity-ohs', 'pneumonia-lobar', 'atelectasis', 'oedema-cardiogenic', 'oedema-noncardiogenic', 'aspiration', 'covid-pneumonitis']) expect(ids).toContain(id);
   });
-  it('has all 39 R36 rows, unique ids, and every row cites its compliance and signature (Task 11)', () => {
+  it('has all 39 catalogue rows, unique ids, and every row cites its compliance and signature', () => {
     expect(LUNG_PATHOLOGIES).toHaveLength(39);
     expect(new Set(LUNG_PATHOLOGIES.map((r) => r.id)).size).toBe(39);
     for (const r of LUNG_PATHOLOGIES) {

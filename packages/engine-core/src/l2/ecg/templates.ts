@@ -1,18 +1,19 @@
 // Beat templates built from the brief §4.1 seed table (lead II at 60 bpm, τ from QRS onset):
 //   P  τ −PR+45 σ 22 a 0.15 | Q τ 12 σ 8 a −0.08 | R τ 40 σ 10 a 1.1 | S τ 62 σ 9 a −0.25
 //   T  τ QT−2σ_fall (= QT−60) σ 45 rise / 30 fall a 0.30 | U τ QT+70 σ 35 a 0.03
-// (The seed table's T peak at QT−110 drew a tangent-method QT 50 ms short, review H4; see T_SIGMA_FALL_S.)
-// Each wave's VCG vector (X, Y, Z in mV) was fitted in Stage 1 so that, through the Dower rows (vcg.ts),
-// lead II reproduces the seed amplitudes exactly, lead I is 70 % and lead III 30 % of II (Gate 1 ruling R17; these
+// (The seed table's T peak at QT−110 drew a tangent-method QT 50 ms short; see T_SIGMA_FALL_S.)
+// Each wave's VCG vector (X, Y, Z in mV) was fitted so that, through the Dower rows (vcg.ts),
+// lead II reproduces the seed amplitudes exactly, lead I is 70 % and lead III 30 % of II (these
 // limb ratios match ProSim-class simulators, research 01 §4.16, and are Einthoven-consistent), and the chest leads
 // follow a normal R-wave progression (V1 rS, transition V3–V4, dominant R in V5–V6). ProSim's V1 24 % / V4 120 %
-// ratios are NOT a target (R17: a scaled-copy test-signal convention, not physiology). The PTB-XL refit is Stage 5.
+// ratios are NOT a target (a scaled-copy test-signal convention, not physiology). The PTB-XL refit belongs to the
+// rhythm library.
 import { K_STRIDE, WAVE, kernel, qrsSpanMs } from './kernels.ts';
 import type { Vec3 } from './vcg.ts';
 
 export const VEC: Readonly<Record<'P' | 'Q' | 'R' | 'S' | 'T' | 'U', Vec3>> = {
   P: [0.165, 0.105, 0.007],
-  Q: [-0.097, -0.0722, -0.15], // Stage 1.1: more anterior (−Z) septal vector so r(V1) ≈ 0.15 mV and r(V2) > r(V1) (R17)
+  Q: [-0.097, -0.0722, -0.15], // More anterior (−Z) septal vector so r(V1) ≈ 0.15 mV and r(V2) > r(V1)
   R: [1.521, 0.708, 0.091],
   S: [-0.319, -0.089, 0.609],
   T: [0.394, 0.181, -0.111],
@@ -21,7 +22,7 @@ export const VEC: Readonly<Record<'P' | 'Q' | 'R' | 'S' | 'T' | 'U', Vec3>> = {
 
 /**
  * Wide ventricular complex (PVC, VT, ventricular escape) [ENG]: LBBB-like, upright in II, discordant T.
- * Scaled ×1.2 in Stage 1.1 so R in II is 1.63× the normal beat (brief §5: 1.5–2× amplitude; review L12).
+ * Scaled ×1.2 so R in II is 1.63× the normal beat (brief §5: 1.5–2× amplitude).
  */
 const WIDE_GAIN = 1.2;
 export const WIDE_VEC: Readonly<Record<'R' | 'S' | 'T', Vec3>> = {
@@ -36,7 +37,7 @@ export const RETRO_P_VEC: Vec3 = [-0.05, -0.12, 0.02];
 /**
  * Flutter F-wave direction (lead II gain 1): large in II/III/aVF, small in I, small upright in V1 [ENG, 03 §1.5].
  * Research 03 §1.5 (rhythm table): typical flutter shows a continuous negative "sawtooth" in II/III/aVF, ~0.1–0.3 mV,
- * with no isoelectric line (Gate 1 ruling R18).
+ * with no isoelectric line.
  */
 export const FLUTTER_DIR: Vec3 = [0.1 / 0.996, 0.9 / 0.996, -0.1 / 0.996];
 /** F-wave peak-to-peak in lead II, mV: the top of research 03 §1.5's 0.1–0.3 mV (the Gate 1 trace was too faint). */
@@ -99,8 +100,8 @@ const WIDE_T_SIGMA_RISE_S = 0.06;
 const WIDE_T_SIGMA_FALL_S = 0.04;
 /**
  * Where the drawn T ends. The tangent through the steepest point of a half-Gaussian's falling limb (τ + σ, value
- * a·e^−½, slope −a·e^−½/σ) meets the baseline at τ + 2σ. So the T peak is placed 2σ_fall before the target QT and
- * the tangent-method QT on screen equals the Fridericia QT (review H4; measured by the waveform test).
+ * a·e^−½, slope −a·e^−½/σ) meets the baseline at τ + 2σ. So the T peak is placed 2σ_fall before the target QT and the
+ * tangent-method QT on screen equals the Fridericia QT (measured by the waveform test).
  */
 export function tEndAfterPeakS(sigmaFall: number): number {
   return 2 * sigmaFall;

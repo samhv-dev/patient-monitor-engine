@@ -5,7 +5,7 @@ import { ev3, rig3 } from '../helpers/resp.ts';
 type LS = Extract<EngineEvent, { type: 'lungState' }>;
 const last = (ev: EngineEvent[]): LS => ev.filter((x): x is LS => x.type === 'lungState').at(-1)!;
 
-describe('lungState (R27) with per-lung fields (R43)', { timeout: 300_000 }, () => {
+describe('lungState with per-lung fields', { timeout: 300_000 }, () => {
   it('healthy ventilated adult: C ≈ 55, R ≈ 10, two ventilated lungs 45/55', () => {
     const r = rig3({ patient: { ageY: 40, weightKg: 70, heightCm: 175, sex: 'M' } });
     r.e.dispatch(ev3({ kind: 'ventilation', source: 'ventilator', rr: 14, vtMl: 490, peep: 5, ie: 2, fio2: 0.4 }));
@@ -47,7 +47,7 @@ describe('lungState (R27) with per-lung fields (R43)', { timeout: 300_000 }, () 
   // lungs' `ptxTension` (7a's ext.pPtx is no longer written). The plan's step to 27.2 at +20 s is therefore replaced by
   // the seam itself: lungState carries the lungs' pleural pressure in cmH2O (max-combined with 7a's ext.pPtx, never
   // summed). Measured: +10 s 7.9, +20 s 11.1, +40 s 14.7, +10 min 20.9 (ceiling 27.2 not reached on this ventilator).
-  it('Stage V.1: pleuralCmH2O is 0 in healthy lungs and the lungs\' accumulated pPtx in cmH2O with ptxTension 0.8 (FU-4 valve: 11.1 at +20 s, 20.9 at +10 min, ceiling 27.2) and with 7a\'s tensionPtx 1 (an alias since FU-4 G6: max-combined, not added)', () => {
+  it('pleuralCmH2O is 0 in healthy lungs and the lungs\' accumulated pPtx in cmH2O with ptxTension 0.8 (valve: 11.1 at +20 s, 20.9 at +10 min, ceiling 27.2) and with the circulation\'s tensionPtx 1 (an alias: max-combined, not added)', () => {
     const r = rig3({ patient: { ageY: 40, weightKg: 70, heightCm: 175, sex: 'M' } });
     const lungPtx = () => (r.e.snapshot().state as { st: { resp: { lung: { lp: { pPtx: number } }; circPtx: number } } }).st.resp;
     const seam = () => Math.round((Math.max(lungPtx().lung.lp.pPtx, lungPtx().circPtx) / 0.7356) * 10) / 10;

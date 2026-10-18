@@ -55,8 +55,8 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
       h('div', { class: 'edit' }, st.el, set, release), note, bar);
     g.append(row);
     const entry = { s, row, now, chip, st, set, release, bar, note, seeded: false };
-    // the first state seeds the stepper with the live value, unless the instructor has already typed or stepped one:
-    // a late first state must never overwrite what they chose (R50 review F7: the remote pinned the old value)
+    // The first state seeds the stepper with the live value, unless the instructor has already typed or stepped one: a
+    // late first state must never overwrite what they chose (the remote pinned the old value)
     const touched = () => void (entry.seeded = true);
     st.input.addEventListener('input', touched);
     st.input.addEventListener('change', touched);
@@ -74,7 +74,7 @@ export function vitalsTab(c: PanelCtx): HTMLElement {
     const st = link.ctl.state;
     const m = mode();
     // "Set" stages a pin in MODELED and a target in MANUAL, so it waits for the monitor's first state: a remote that has
-    // just connected does not know the mode yet, and staging a target where a pin was meant held nothing (R50 review F7)
+    // just connected does not know the mode yet, and staging a target where a pin was meant held nothing
     const known = st !== null && st !== undefined;
     for (const r of rows) {
       const owned = !!r.s.modelOwned && m === 'modeled';

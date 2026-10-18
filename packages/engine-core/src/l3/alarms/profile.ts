@@ -15,8 +15,8 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
   ART_D: { numeric: 'abpDia', label: 'ABPd', upper: 'ART DIA' },
   ART_M: { numeric: 'abpMean', label: 'ABPm', upper: 'ART MEAN' },
   CVP_M: { numeric: 'cvpMean', label: 'CVP', upper: 'CVP MEAN' },
-  ICP: { numeric: 'icpMean', label: 'ICP', upper: 'ICP MEAN' }, // Stage 7d (skins carry ICP limits, brief §6.8)
-  CPP: { numeric: 'cpp', label: 'CPP', upper: 'CPP' }, // Stage 7d (no factory limit: inert until a limit is set)
+  ICP: { numeric: 'icpMean', label: 'ICP', upper: 'ICP MEAN' }, // Skins carry ICP limits, brief §6.8
+  CPP: { numeric: 'cpp', label: 'CPP', upper: 'CPP' }, // No factory limit: inert until a limit is set
   PAP_S: { numeric: 'papSys', label: 'PAPs', upper: 'PAP SYS' },
   PAP_D: { numeric: 'papDia', label: 'PAPd', upper: 'PAP DIA' },
   PAP_M: { numeric: 'papMean', label: 'PAPm', upper: 'PAP MEAN' },
@@ -30,11 +30,11 @@ export const LIMIT_KEYS: Readonly<Record<string, { numeric: NumericId; label: st
   ST_mV: { numeric: 'stII', label: 'ST-II', upper: 'ST-II' },
 };
 
-/** %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg, R12) [ENG 760 mmHg]. */
+/** %V → mmHg at the simulated barometric pressure (brief §6.8: the engine shows CO2 in mmHg) [ENG 760 mmHg]. */
 export const BAROMETRIC_MMHG = 760;
 /** Skins whose HR reads dashes and whose HR alarms are off while the pacer runs (research/05 §2.6, LIFEPAK 15). */
 export const PACING_HR_DASHES: ReadonlySet<string> = new Set(['lifepak-like']);
-/** FU-5: skin `hr.autoPriority` entries → the pulse numeric that source publishes (the engine's IBP1 is the ABP line). */
+/** Skin `hr.autoPriority` entries → the pulse numeric that source publishes (the engine's IBP1 is the ABP line). */
 const PULSE_SOURCE: Readonly<Record<string, NumericId>> = { ART: 'prAbp', IBP1: 'prAbp', SpO2: 'pr' };
 /** Apnoea time when the skin's limit table has none (brief §6.4 "apnoea (20 s)"). */
 export const APNEA_DEFAULT_S = 20;
@@ -54,24 +54,24 @@ export interface DeviceProfile {
   ageBand: AgeBand;
   /** 'asterisks' → IEC-style `***HR 130>120`; 'none' → Saadat-like `HR TOO HIGH` (brief §6.4, §6.4.1). */
   prefix: 'asterisks' | 'none';
-  /** Stage 9 (E-S9-4, R-FU5-6): the skin's own words for fixed alarm texts (skin `alarms.wording.texts`); absent = IEC. */
+  /** The skin's own words for fixed alarm texts (skin `alarms.wording.texts`); absent = IEC. */
   texts?: Readonly<Partial<Record<string, string>>>;
   factoryEnabled: boolean;
   /** Preset per-parameter switches by limit-key group ('HR', 'NIBP', 'SpO2', …) over factoryEnabled (brief §6.9). */
   switches: Record<string, boolean>;
   alwaysOn: string[];
-  /** FU-5: visual / audible latching per vendor (skin `alarms.latching`; manager.ts `latchCovers`). */
+  /** Visual / audible latching per vendor (skin `alarms.latching`; manager.ts `latchCovers`). */
   latching: Skin['alarms']['latching'];
   delayS: number;
   spo2DelayS: number;
-  /** FU-5: `mode` 'acknowledge' = Silence acknowledges (Philips, Mindray); 'mute' = timed mute (`durationS`). */
+  /** `mode` 'acknowledge' = Silence acknowledges (Philips, Mindray); 'mute' = timed mute (`durationS`). */
   silence: { mode: 'mute' | 'acknowledge'; durationS: number | null; suppressesVisual: boolean; cancelOnNewAlarm: boolean; technicalActsAsAck: boolean };
   pauseS: number | null;
   volume: { min: number; max: number; default: number };
   limits: Record<string, LimitDef>;
-  /** Skin apnoea time (`apneaS`, brief §6.4 / §6.4.1); FU-5: the impedance detector runs at it; null = APNEA LIMIT OFF (preset). */
+  /** Skin apnoea time (`apneaS`, brief §6.4 / §6.4.1); the impedance detector runs at it; null = APNEA LIMIT OFF (preset). */
   apneaS: number | null;
-  /** FU-5: the capnograph's apnoea time (skin `gasApneaS`, else `apneaS`; saadat-like 20 s vs RESP 10 s); null = OFF. */
+  /** The capnograph's apnoea time (skin `gasApneaS`, else `apneaS`; saadat-like 20 s vs RESP 10 s); null = OFF. */
   gasApneaS: number | null;
   /** SpO2 desaturation threshold (%), level 1 (brief §6.4), or null. */
   desat: number | null;
@@ -81,11 +81,11 @@ export interface DeviceProfile {
     pause: { s: number } | { ratio: number };
     vtacRate: number;
     vtacCount: number;
-    /** FU-5: absolute extreme brady/tachy limits (skin limit table `HR_extremeBrady/Tachy`); null = HR limit ∓ 20. */
+    /** Absolute extreme brady/tachy limits (skin limit table `HR_extremeBrady/Tachy`); null = HR limit ∓ 20. */
     extreme: { brady: number | null; tachy: number | null };
     tachy: number | null;
     brady: number | null;
-    /** FU-5: the PAUSE alarm's factory switch (skin `arrhythmia.pauseAlarm`; mindray-like Off, [S4] App. C.1.1.2). */
+    /** The PAUSE alarm's factory switch (skin `arrhythmia.pauseAlarm`; mindray-like Off, [S4] App. C.1.1.2). */
     pauseAlarm: boolean;
   };
   /** PVCs/min alarm threshold (brief §6.4 "PVCs/min (10)"). */
@@ -96,22 +96,22 @@ export interface DeviceProfile {
   nibpDoneTone: boolean;
   hrDashesWhilePacing: boolean;
   /**
-   * FU-5 (audit M3, M11): the skin's HR source. 'AUTO': with no valid ECG heart rate the first valid pulse in `pulse`
-   * order (skin `hr.autoPriority`: ART/IBP1 → `prAbp`, SpO2 → `pr`) becomes the HR/alarm source; `relabel` is the tile
-   * label then (saadat-like "PR"; null = the HR tile keeps its glyph and the pulse stays in its own tile, philips-like).
+   * The skin's HR source. 'AUTO': with no valid ECG heart rate the first valid pulse in `pulse` order (skin
+   * `hr.autoPriority`: ART/IBP1 → `prAbp`, SpO2 → `pr`) becomes the HR/alarm source; `relabel` is the tile label then
+   * (saadat-like "PR"; null = the HR tile keeps its glyph and the pulse stays in its own tile, philips-like).
    */
   hr: { source: 'ECG' | 'AUTO'; pulse: NumericId[]; relabel: string | null };
-  /** Sidestream CO2 module of this skin (R39-5): transport delay and adult 10–90 % rise, both in s. */
+  /** Sidestream CO2 module of this skin: transport delay and adult 10–90 % rise, both in s. */
   co2Sidestream: { delayS: number; riseS: number };
-  /** FU-5: the skin's SpO2 averaging window and display update (skin `spo2.avgDefault`, 1 / `spo2.updateHz`), s. */
+  /** The skin's SpO2 averaging window and display update (skin `spo2.avgDefault`, 1 / `spo2.updateHz`), s. */
   spo2: { averagingS: number; updateS: number };
-  /** FU-5: how a static pressure is shown (skin `ibp.staticDisplay`: philips-like/IEC 'keep', saadat-like 'mean-only'). */
+  /** How a static pressure is shown (skin `ibp.staticDisplay`: philips-like/IEC 'keep', saadat-like 'mean-only'). */
   ibpStaticDisplay: 'keep' | 'mean-only';
-  /** FU-5: the arterial-line disconnect alarm is on (skin `alarms.abpDisconnectDefault`; saadat-like off). */
+  /** The arterial-line disconnect alarm is on (skin `alarms.abpDisconnectDefault`; saadat-like off). */
   abpDisconnect: boolean;
-  /** FU-5: the invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
+  /** The invasive-pressure display filter (skin `ibp.filterDefaultHz`), Hz. */
   ibpFilterHz: number;
-  /** FU-5: the cuff settings of the skin (and age band): NibpState.cfg. */
+  /** The cuff settings of the skin (and age band): NibpState.cfg. */
   nibp: { initial: number; nextAbove: number; statSpacingS: number; statCount: number; statWindowS: number };
 }
 
@@ -144,7 +144,7 @@ function limitsFor(r: ResolvedSkin, band: AgeBand): Record<string, LimitDef> {
     const scale = key.endsWith('_pctV') ? BAROMETRIC_MMHG / 100 : 1;
     out[key] = {
       numeric: k.numeric,
-      label: r.skin.alarms.wording?.limitLabels?.[key] ?? k.label, // Stage 9 (E-S9-4): the skin's own label
+      label: r.skin.alarms.wording?.limitLabels?.[key] ?? k.label, // The skin's own label
       upper: k.upper,
       low: v[0] * scale,
       high: v[1] * scale,

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LUNG_CONDITION_IDS, type LungCommandBody } from '../src/types-lung.ts';
 import type { Command, EngineEvent, PatientProfile } from '../src/types.ts';
 
-describe('Stage 7b public types', () => {
+describe('lung public types', () => {
   it('32 unique catalogue condition ids', () => {
     expect(LUNG_CONDITION_IDS.length).toBe(32);
     expect(new Set(LUNG_CONDITION_IDS).size).toBe(32);

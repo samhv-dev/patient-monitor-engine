@@ -63,8 +63,8 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
   // R45 (FU-9 F5, E-FU9-1; R50 ruling R1): the rule (tables citrateUnit, Q46) was fitted to a row that put 15.6 mmol of
   // citrate in every RBC unit; a SAGM unit keeps ≈ 0.24 mmol (its residual CPD-plasma — params.ts), so 10 RBC units no
   // longer chelate what the rule assumed. Main: 1.076 (margin 0.007); FU-9: 1.137. The chelation term itself is pinned in
-  // fu9-citrate.test.ts; massive-transfusion hypocalcaemia is carried by FFP/platelets (fu9-transfusion).
-  it.fails('massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.137 vs 1.033 (FU-9 F5; main 1.076)', () => {
+  // citrate.test.ts; massive-transfusion hypocalcaemia is carried by FFP/platelets (fu9-transfusion).
+  it.fails('massive transfusion: iCa −0.1 per unit-per-5-min of rate (tables citrateUnit, Q46) — measured 1.137 vs 1.033', () => {
     expect(Math.abs(massive().out.iCa - rule)).toBeLessThanOrEqual(0.05);
   });
   const crystalloid2L = (id: 'saline' | 'balanced') => {
@@ -90,7 +90,7 @@ describe('blood core step (tables §5b, §7)', { timeout: 300_000 }, () => {
     expect(s.ab.be).toBeLessThanOrEqual(-3);
     expect(s.ab.be).toBeGreaterThanOrEqual(-5);
   });
-  it('7d renal seam (R51 addendum 14): core.renal replaces the fixed elimination — urine water and each solute at its rate', () => {
+  it('renal seam: core.renal replaces the fixed elimination — urine water and each solute at its rate', () => {
     const a = createBloodCore(MAN, CO0, 40);
     const b = createBloodCore(MAN, CO0, 40);
     b.renal = { uopAboveBasalMlH: 600, excretion: { k: 6, na: 60, cl: 60, gluconate: 0 } }; // 10 mL/min of urine, Na/Cl 100 mmol/L, K 10

@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { give, rig, runTo, vaporiser } from '../../helpers/neuro.ts';
 
-describe('7g → 7f bus contract (R51 §2–3, addenda 9–10)', { timeout: 120_000 }, () => {
+describe('drug → neuro bus contract', { timeout: 120_000 }, () => {
   it('opioids publish a separate ventilatory site: remifentanil vent leads brain early (ke0 0.92 vs Minto)', () => {
     const r = rig();
     give(r, 'remifentanil', 0.5, 'mcg/kg');
@@ -43,7 +43,7 @@ describe('7g → 7f bus contract (R51 §2–3, addenda 9–10)', { timeout: 120_
     expect(v.n2o?.fet ?? 0).toBeGreaterThan(20);
     expect(r.pk.bus.cns.macBrain).toBeGreaterThan(0);
   });
-  it('naloxone publishes bus.antagonist.opioid > 1 and applies it to cns.opioidCeRemiEq but not to the per-agent totals (F2: 7f divides them)', () => {
+  it('naloxone publishes bus.antagonist.opioid > 1 and applies it to cns.opioidCeRemiEq but not to the per-agent totals (neuro divides them)', () => {
     const r = rig();
     give(r, 'remifentanil', 0.3, 'mcg/kg/min', true);
     runTo(r, 10);

@@ -5,7 +5,7 @@
 // Apnoea = spontaneous VE < 1 L/min (the audit's `apnoeic`), or the committed rate 0 where the case says so.
 import { describe, expect, it } from 'vitest';
 import type { MonitorEngine } from '../../src/types.ts';
-import { rig6, runTo, send, st6 } from '../helpers/fu6.ts';
+import { rig6, runTo, send, st6 } from '../helpers/resp-modeled-rig.ts';
 import { NEURO_DT_S } from '../../src/l2/neuro/pipeline.ts';
 
 const T = 300; // the audit's intervention time
@@ -64,7 +64,7 @@ async function induce(agent: Record<string, unknown>, seed = 7): Promise<number>
   return s;
 }
 
-describe('FU-7 D7: the apnoea flag is the chemoreflex\'s own state; the drug layer reaches the drive', { timeout: 1_800_000 }, () => {
+describe('the apnoea flag is the chemoreflex\'s own state; the drug layer reaches the drive', { timeout: 1_800_000 }, () => {
   it('the apnoea flag never contradicts the breathing (DI-89): propofol 2 mg/kg + remifentanil 1 µg/kg, FiO2 0.5, 20 min — 0 s of flag-while-breathing (was 180 s on the merged main, 255 s on main 3ff2fb0)', async () => {
     const { rows } = await spontRig([drug('propofol', 2, 'mg/kg'), drug('remifentanil', 1, 'mcg/kg')], T + 1200, { fio2: 0.5, settle: true });
     // FU-8 (E-FU8B-8): a contradiction counts unless it is gone one 7f step later (the in-pass ordering edge, see `settle`)
@@ -109,21 +109,21 @@ describe('FU-7 D7: the apnoea flag is the chemoreflex\'s own state; the drug lay
     expect(minSpo2(z.rows)).toBeGreaterThanOrEqual(93);
   });
 
-  it.fails('the Bailey pair (DI-03), a POPULATION claim over FU-6\'s seeds 1–20: apnoea (VE < 1 L/min) in ≥ 4 of 20 (Bailey 1990: 6/12) — measured 0 of 20', async () => {
+  it.fails('the Bailey pair, a POPULATION claim over seeds 1–20: apnoea (VE < 1 L/min) in ≥ 4 of 20 (Bailey 1990: 6/12) — measured 0 of 20', async () => {
     const n: number[] = [];
     for (let seed = 1; seed <= 20; seed++) n.push(apnoeaS((await spontRig([drug('fentanyl', 2, 'mcg/kg'), drug('midazolam', 0.05, 'mg/kg')], T + 1200, { seed })).rows));
     console.log(`FU-7 DI-03 seeds 1–20 apnoea s: ${n.join(' ')}; apnoeic ${n.filter((x) => x > 0).length}/20`);
     expect(n.filter((x) => x > 0).length).toBeGreaterThanOrEqual(4);
   });
 
-  it('propofol 2 mg/kg alone is briefly apnoeic (seed 7, u 0.737 — FU-6\'s modal patient and rig): 10–90 s, FU-6\'s fit unchanged by FU-7\'s surface', async () => {
+  it('propofol 2 mg/kg alone is briefly apnoeic (seed 7, u 0.737 — the respiratory fit\'s modal patient and rig): 10–90 s, the fit unchanged by the drug response surface', async () => {
     const s = await induce(drug('propofol', 2, 'mg/kg'));
     console.log(`FU-7 guard: propofol 2 mg/kg seed 7 apnoea ${s} s (FU-6 measured 38 s)`);
     expect(s).toBeGreaterThanOrEqual(10);
     expect(s).toBeLessThanOrEqual(90);
   });
 
-  it('etomidate 0.3 mg/kg is less apnoeic than thiopental 4 mg/kg (review F9: ventShare 0.7 vs 1.0; M10 ch. 21 p. 541)', async () => {
+  it('etomidate 0.3 mg/kg is less apnoeic than thiopental 4 mg/kg (ventShare 0.7 vs 1.0; M10 ch. 21 p. 541)', async () => {
     const et = await induce(drug('etomidate', 0.3, 'mg/kg'));
     const th = await induce(drug('thiopental', 4, 'mg/kg'));
     console.log(`FU-7 F9: apnoea etomidate ${et} s vs thiopental ${th} s (seed 7)`);
@@ -142,7 +142,7 @@ describe('FU-7 D7: the apnoea flag is the chemoreflex\'s own state; the drug lay
     await runTo(e, T + 1200, (u) => rows.push(sample(e, u)), 1);
     return rows;
   }
-  it('a VENTILATED patient\'s flag is the chemoreflex\'s too (review F11): ETT + VCV 12 × 600, FiO2 0.5, remifentanil 1 µg/kg — 0 s of disagreement, the flag set while the committed rate is 0', async () => {
+  it('a VENTILATED patient\'s flag is the chemoreflex\'s too: ETT + VCV 12 × 600, FiO2 0.5, remifentanil 1 µg/kg — 0 s of disagreement, the flag set while the committed rate is 0', async () => {
     const rows = await ventilated();
     const disagree = rows.filter((r) => r.flag !== (r.rr === 0));
     console.log(`FU-7 F11 ventilated: flag ${rows.filter((r) => r.flag).length} s of ${rows.length}, disagreement ${disagree.length} s, max committed rate ${Math.max(...rows.map((r) => r.rr))}`);

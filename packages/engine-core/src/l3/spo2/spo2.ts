@@ -6,8 +6,8 @@ import type { Measured } from '../../types.ts';
 
 export const SPO2_LAG_TAU_S = 3; // brief §4.3 step 3 [ENG]
 /**
- * Masimo-SET-like default of the first skin (saadat-like, R13/R14): average 8 s, update 1 s (brief §4.3, §6.1). FU-5: a
- * skin's `spo2.avgDefault` / `updateHz` replace it through `Spo2State.avgS/updS` (philips-like 10 s / 2 s).
+ * Masimo-SET-like default of the first skin (saadat-like): average 8 s, update 1 s (brief §4.3, §6.1). A skin's
+ * `spo2.avgDefault` / `updateHz` replace it through `Spo2State.avgS/updS` (philips-like 10 s / 2 s).
  */
 export const SPO2_PROFILE = { averagingS: 8, updateS: 1 } as const;
 export const SPO2_STEP_S = 0.1;
@@ -19,7 +19,7 @@ export const LOW_PERF_SLOWDOWN = 2; // low perfusion doubles the averaging windo
 export interface Spo2Inputs {
   siteSa: number; // SaO2 at the probe site (0–1)
   probe: 'on' | 'off' | 'motion';
-  lastFootT: number; // end of the last COMPLETED pleth pulse (s), −Infinity if none (FU-5: one lone foot is not a pulse)
+  lastFootT: number; // End of the last COMPLETED pleth pulse (s), −Infinity if none (one lone foot is not a pulse)
   pi: number | null; // measured PI (%), null when invalid
   cuffOnLimb: boolean; // same-limb NIBP cuff inflated: hold the value (brief §4.3 artefacts)
   cpr: boolean;
@@ -33,7 +33,7 @@ export interface Spo2State {
   nextUpdate: number;
   validSince: number; // time the pulse returned after an invalid spell (averaging must refill); 1e12 = invalid now
   bias: number; // per-patient device offset (%)
-  /** FU-5: the active skin's averaging window and display update (s); absent = SPO2_PROFILE. */
+  /** The active skin's averaging window and display update (s); absent = SPO2_PROFILE. */
   avgS?: number;
   updS?: number;
 }
@@ -86,8 +86,8 @@ export function spo2Measured(st: Spo2State, t: number): Measured {
 }
 
 /**
- * QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = 880·2^(−(100 − SpO2)·s/12) with
- * s = 0.1 semitone per % ("standard", ≈ 5 Hz/% near 880 Hz). 90 % → 830.6 Hz (BUILD-PLAN Stage 3 test 9).
+ * QRS/pulse tone pitch from the displayed SpO2 (research 03 §3.6 item 6): f = 880·2^(−(100 − SpO2)·s/12) with s = 0.1
+ * semitone per % ("standard", ≈ 5 Hz/% near 880 Hz). 90 % → 830.6 Hz.
  */
 export function spo2PitchHz(spo2: number | null, semitonePerPct = 0.1): number {
   return spo2 === null ? 880 : 880 * 2 ** ((-(100 - spo2) * semitonePerPct) / 12);

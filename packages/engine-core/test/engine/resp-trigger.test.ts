@@ -4,9 +4,9 @@
 // stimulated, unsedated, unparalysed patient drives the peak ≥ 15 cmH2O above his resting peak (McCool 2006).
 import { describe, expect, it } from 'vitest';
 import { numSeries } from '../helpers/resp.ts';
-import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/fu6.ts';
+import { fineWindow, rig6, runTo, send, st6, ventRig } from '../helpers/resp-modeled-rig.ts';
 
-describe('FU-6 R9: kink, triggering, bucking (was Paw = PEEP; set RR only)', { timeout: 600_000 }, () => {
+describe('kink, triggering, bucking', { timeout: 600_000 }, () => {
   it('kinked tube: Ppeak at Pmax, VT ≤ 100 mL, EtCO2 flat; release restores VT 500 (measured 40.0 / 68 mL / EtCO2 max 1.0 at VDs ≈ 127 mL / 494)', async () => {
     const e = rig6();
     const ev: Array<Parameters<Parameters<typeof e.on>[0]>[0]> = [];

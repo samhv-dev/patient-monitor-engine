@@ -8,7 +8,7 @@ import { cmd, read, rig } from '../helpers/hemo.ts';
 
 type Nibp = Extract<EngineEvent, { type: 'nibp' }>;
 
-describe('Stage 2 acceptance 6: VF (Stage 5 rhythms)', () => {
+describe('haemodynamic acceptance 6: VF (rhythm-library rhythms)', () => {
   for (const rhythm of ['vfCoarse', 'vfFine'] as const) {
     it(`${rhythm}: ABP flat at Pmsf within 20 s, pleth flat, PR invalid, NIBP fails with the INOP`, () => {
       const { e, ev } = rig({ seed: 7 });

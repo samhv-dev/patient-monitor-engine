@@ -1,12 +1,13 @@
-// Stage 7e heat balance (annex B3 "Take the 2-node core/skin circuit + environment; Fix: GA thresholds, vasomotion as
-// a skin-flow factor, drug effects"). Two compartments (core 2/3, periphery 1/3 of the body, 3.5 kJ/kg/°C: Stage 3):
+// Heat balance (annex B3 "Take the 2-node core/skin circuit + environment; Fix: GA thresholds, vasomotion as
+// a skin-flow factor, drug effects"). Two compartments (core 2/3, periphery 1/3 of the body, 3.5 kJ/kg/°C):
 //   Cc·dTc = M − k_cp·(Tc − Tp) − Q_resp + Q_iv
 //   Cp·dTp = k_cp·(Tc − Tp) − Q_dry − Q_skinEvap − Q_sweat + Q_forcedAir
 //   M = m0·(1 − (1 − GA_M)·min(1, d)) + shivering + MH muscle heat + m0·(extraX − 1)   (extraX: thyroid/sepsis/…)
 // k_cp comes from the vasomotor tone around the depth-dependent vasoconstriction threshold (thresholds.ts); under
-// GA at depth 1 it is Stage 3's formula exactly, so redistribution, the linear phase and the plateau are Stage 3's.
-// The awake patient at 21 °C is calibrated to Stage 3's balance (m0, gradient 4.3 °C) with the respiratory loss now
-// on the core and the insulation solved from the environment terms (environment.ts). Stepped at 1 Hz. Plain data.
+// GA at depth 1 it is the temperature signal's heat-model formula exactly, so redistribution, the linear phase and the
+// plateau are unchanged. The awake patient at 21 °C is calibrated to that heat model's balance (m0, gradient 4.3 °C)
+// with the respiratory loss on the core and the insulation solved from the environment terms (environment.ts).
+// Stepped at 1 Hz. Plain data.
 import type { TempSite } from '../../types-resp.ts';
 import {
   bsaM2, calibrateInsulation, dryW, forcedAirW, infusionW, respiratoryW, AIR_SPEED_MS, FORCED_AIR_AREA, FORCED_AIR_TAU_S, PREP_EVAP_W_70,
@@ -19,7 +20,7 @@ import {
 } from './params.ts';
 import { shiverW, sweatW, thresholds, vasoDilation, type Thresholds } from './thresholds.ts';
 
-/** Site lag τ (s) and offset (°C) behind core (brief §4.6 table; Stage 3). */
+/** Site lag τ (s) and offset (°C) behind core (brief §4.6 table). */
 export const SITES: Readonly<Record<TempSite, { tauS: number; offset: number }>> = {
   oesophageal: { tauS: 45, offset: 0 }, // 0.5–1 min
   nasopharyngeal: { tauS: 120, offset: 0 }, // 1–3 min
@@ -61,34 +62,33 @@ export interface ThermalState {
   ta: number;
   capCore: number; // J/°C
   capPer: number;
-  k0: number; // awake k_cp W/°C (Stage 3 meaning)
-  h: number; // Stage 3's lumped loss conductance at calibration (kept for reference; not used by the step)
+  k0: number; // awake k_cp W/°C (the heat model's meaning)
+  h: number; // The lumped loss conductance at calibration (kept for reference; not used by the step)
   m0: number; // basal metabolic heat W at the set point
   effKg: number;
-  ageY: number; // FU-10 E6: the thermoregulatory thresholds fall with age (Kurz 1993)
+  ageY: number; // The thermoregulatory thresholds fall with age (Kurz 1993)
   env: Envelope;
   anaesthesia: 'none' | 'general' | 'neuraxial';
   warming: boolean; // forced air
   warmLag: number; // 0–1 delivered fraction of the forced-air power (first-order, τ FORCED_AIR_TAU_S)
-  warmAirC?: number; // FU-4 item 1: the blanket's set air temperature, °C (absent = FORCED_AIR_C 43)
+  warmAirC?: number; // The blanket's set air temperature, °C (absent = FORCED_AIR_C 43)
   mh: MhState | null;
   sites: Record<TempSite, number>;
-  // --- Stage 7e ---
   depth: number; // thermoregulatory depth (0 awake … 1 GA): follows `anaesthesia` unless depthIn is set
-  depthIn: number | null; // 7f's `ps.neuro.thermoDepth` (duck-typed seam); the depth is max(depthIn, the `anaesthesia` flag's)
+  depthIn: number | null; // `ps.neuro.thermoDepth` (neuro, duck-typed); depth = max(depthIn, the `anaesthesia` flag's)
   setShift: number; // °C added to every threshold (MANUAL target)
   feverShift: number; // °C added to every threshold by 7e's endocrine core (sepsis, SIRS, thyroid storm)
-  nmb: number; // 0–1 neuromuscular block (7f), abolishes shivering
-  shiverShift: number; // °C added to the shivering threshold only (pethidine, opioids: 7f/7g) — negative lowers it
+  nmb: number; // 0–1 neuromuscular block, abolishes shivering
+  shiverShift: number; // °C added to the shivering threshold only (pethidine, opioids) — negative lowers it
   airMs: number;
   exposure: Exposure;
   vent: Ventilation;
-  iv: { mlPerMin: number; tempC: number }; // IV fluid entering the core: 7c writes it every 100 ms (E-7e-1, `ivInflow`)
+  iv: { mlPerMin: number; tempC: number }; // IV fluid into the core: the blood model's `ivInflow`, every 100 ms
   fluidWarmer: boolean; // IV fluid warmed to 37 °C
   extraX: number; // endocrine/condition metabolic heat multiplier (1 = none), written by 7e's endo core
-  dantE: number; // Stage 7g's dantrolene effect `bus.metabolic.dantroleneE` (0–1), written by 7e's pipeline every pass
+  dantE: number; // The drug model's dantrolene effect `bus.metabolic.dantroleneE` (0–1), set by the endocrine pipeline
   out: ThermalOut;
-  /** Test-only seam (R51 addendum 18, like 7c's `pinHbfRel`): when set, the core is held at this value (°C). */
+  /** Test-only seam (like the blood model's `pinHbfRel`): when set, the core is held at this value (°C). */
   pinCoreTemp?: number;
 }
 
@@ -116,18 +116,18 @@ export function createThermal(tCore: number, effKg: number, heightCm = 175, ageY
 }
 
 /** Current thresholds (depth, set point; the drugs' shivering-only shift; a neuraxial block lowers both cold-defence
- * thresholds — FU-10 E3, ruling R-7). */
+ * thresholds). */
 export function currentThresholds(st: ThermalState): Thresholds {
   const thr = thresholds(st.depth, st.setShift + st.feverShift, st.ageY);
   const nx = st.anaesthesia === 'neuraxial' ? NEURAXIAL_THR_SHIFT_C : 0;
   return { ...thr, vaso: thr.vaso + nx, shiver: thr.shiver + st.shiverShift + nx };
 }
 
-/** FU-10 E3: the fraction of the effectors (vasomotor tone, shivering) a neuraxial block abolishes; 0 otherwise. */
+/** The fraction of the effectors (vasomotor tone, shivering) a neuraxial block abolishes; 0 otherwise. */
 const blocked = (st: ThermalState): number => (st.anaesthesia === 'neuraxial' ? NEURAXIAL_BLOCK_FRAC : 0);
 
 function kcp(st: ThermalState, tc: number, thr: Thresholds): { k: number; f: number } {
-  // FU-10 E3: below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
+  // Below a neuraxial block the vessels are fully dilated; above it they keep their thermoregulatory tone
   const b = blocked(st);
   const f = b + (1 - b) * vasoDilation(tc, thr);
   return { k: st.k0 * (VASOCONSTRICT_KCP + (GA_KCP - VASOCONSTRICT_KCP) * f), f };
@@ -149,7 +149,7 @@ function balance(st: ThermalState, t: number): ThermalOut {
   return {
     vasoF: f, kcp: k,
     metabolicW: basalW(st) + st.m0 * (st.extraX - 1),
-    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)), // FU-10 E3: no shivering below a block
+    shiverW: shiverW(st.tc, thr, st.m0, st.effKg, st.nmb) * (1 - blocked(st)), // No shivering below a block
     mhW: st.m0 * MH_HEAT_X * mhActivity(st.mh, t),
     sweatW: sweatW(st.tc, thr, st.effKg),
     dryW: dryW(env, st.tp, st.ta, st.airMs, ex.area * (1 - warmArea)) * neur,
@@ -162,10 +162,10 @@ function balance(st: ThermalState, t: number): ThermalOut {
 
 /** One step of dtS seconds (≤ 1 s). */
 export function stepThermal(st: ThermalState, t: number, dtS: number): void {
-  // depth = max(7f's thermoDepth, the Stage 3 `thermal` flag's depth) (R51 addendum 16): a Stage 3 scenario that sets
-  // anaesthesia 'general' without drugs keeps its R39-7 course after 7f lands. Neuraxial (FU-10 E3): no central depth of
-  // its own — the block acts on the effectors below it (kcp, shivering) and lowers the shivering threshold; sedation
-  // reaches the thresholds through 7f's depth.
+  // depth = max(the neuro model's thermoDepth, the `thermal` flag's depth): a scenario that sets anaesthesia
+  // 'general' without drugs keeps its course. Neuraxial: no central depth of its own — the block acts on the effectors
+  // below it (kcp, shivering) and lowers the shivering threshold; sedation reaches the thresholds through the neuro
+  // model's depth.
   const target = Math.max(st.depthIn ?? 0, st.anaesthesia === 'general' ? 1 : 0);
   // induction is fast (drug onset); emergence follows the elimination of the agent (τ EMERGE_TAU_S) [ENG]
   st.depth = target >= st.depth ? target : target + (st.depth - target) * Math.exp(-dtS / EMERGE_TAU_S);
@@ -184,9 +184,8 @@ export function stepThermal(st: ThermalState, t: number, dtS: number): void {
 }
 
 /**
- * MANUAL target (Stage 3 plan decision 2): a steady state with core = tCore. The set point moves with it (a fever is
- * a raised set point: every threshold shifts), the periphery is re-solved from the current flows and m0 re-solved so
- * nothing drifts afterwards.
+ * MANUAL target: a steady state with core = tCore. The set point moves with it (a fever is a raised set point: every
+ * threshold shifts), the periphery is re-solved from the current flows and m0 re-solved so nothing drifts afterwards.
  */
 export function setCoreTarget(st: ThermalState, tCore: number): void {
   st.setShift += tCore - st.tc;
@@ -210,14 +209,15 @@ export function setCoreTarget(st: ThermalState, tCore: number): void {
 }
 
 /**
- * Restore of a pre-7e snapshot: its `resp.temp` is Stage 3's TempState (no `env`). Keep Stage 3's live fields and
- * take the 7e fields from a fresh normothermic state of the same body (the set point is the normal one).
+ * Restore of an older snapshot without thermoregulation: its `resp.temp` is the heat model's TempState (no `env`).
+ * Keep its live fields and take the thermoregulation fields from a fresh normothermic state of the same body (the
+ * set point is the normal one).
  */
 export function upgradeThermal(st: ThermalState): ThermalState {
   if ((st as Partial<ThermalState>).env !== undefined) return st;
   const fresh = createThermal(T_NORMAL, (st.m0 / M_AWAKE_W_70) * 70, 175, st.ageY ?? 40);
   return {
     ...fresh, tc: st.tc, tp: st.tp, ta: st.ta, anaesthesia: st.anaesthesia, warming: st.warming, mh: st.mh, sites: st.sites,
-    depth: st.anaesthesia === 'general' ? 1 : 0, // FU-10 E3: a neuraxial block has no central depth
+    depth: st.anaesthesia === 'general' ? 1 : 0, // a neuraxial block has no central depth
   };
 }

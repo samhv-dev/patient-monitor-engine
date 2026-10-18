@@ -1,4 +1,4 @@
-// The Stage 4b device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the
+// The device layer (brief §3.2 L3 "alarm engine, pacer and defibrillator"): one JSON-safe state object the
 // engine keeps beside its pipeline state. The engine calls validate/apply for device commands and step() once per
 // committed tick with the events that became due; the layer returns the events it adds (alarm, alarmStatus,
 // marker, tone, deviceStatus). It changes the patient's signals only through the host (modifiers, rhythm, L1
@@ -25,7 +25,7 @@ export const SYNC_DELAY_S = 0.02;
 export const T_PEAK_QT_FRACTION = 0.65;
 /** After a terminating shock: 1–5 s isoelectric, then 30–60 bpm accelerating over 10–60 s to ROSC_HR; pressure
  * targets ramp from 50 % to 100 % over 30–120 s (brief §6.5 "After successful termination"; the k_SV 0.2 → 1 ramp is
- * expressed through the MANUAL-mode sbp/dbp targets, which the Stage 2 M2 tracker follows) [ENG where not cited]. */
+ * expressed through the MANUAL-mode sbp/dbp targets, which the M2 tracker follows) [ENG where not cited]. */
 export const ISO_S = [1, 5] as const;
 export const ROSC_START_BPM = [30, 60] as const;
 export const ROSC_RAMP_S = [10, 60] as const;
@@ -66,9 +66,9 @@ export interface DeviceHost {
   pulseless: boolean;
   spo2Probe: 'on' | 'off' | 'motion';
   leadsOff: boolean;
-  /** FU-5: the capnograph's sensor state (the apnoea source while 'on'). */
+  /** The capnograph's sensor state (the apnoea source while 'on'). */
   co2: 'off' | 'warmup' | 'on' | 'occluded';
-  /** FU-5: the arterial transducer ('zeroing' while a zero runs) and the temperature probe. */
+  /** The arterial transducer ('zeroing' while a zero runs) and the temperature probe. */
   abp: LineSensorState;
   temp: 'off' | 'on';
   /** First ECG sample index not yet committed. */
@@ -82,8 +82,9 @@ export interface DeviceHost {
   setRhythm(id: RhythmId, opts: RhythmOpts): void;
   setHr(value: number, ramp?: Ramp): void;
   setL1(v: StateVar, value: number, ramp?: Ramp): void;
-  /** FU-7 (addendum 23): the state a shock lands in (7g's antiarrhythmic occupancy, 7c's K/pH, 7a's continuous CPP,
-   * the arrest clock, the core temperature). Optional: a host that does not provide it keeps the state-free table. */
+  /** The state a shock lands in (the drug model's antiarrhythmic occupancy, the blood model's K/pH, the circulation
+   * model's continuous CPP, the arrest clock, the core temperature). Optional: a host that does not provide it keeps
+   * the state-free table. */
   shockState?: () => { antiarrhythmicU?: number; kEcg?: number; ph?: number; cppMmHg?: number; arrestS?: number; tempC?: number };
 }
 
@@ -196,8 +197,8 @@ function deliverShock(d: DeviceState, host: DeviceHost, atS: number, synced: boo
   if (d.defib.preselect !== null) outcome = d.defib.preselect;
   else {
     const vfDurationS = d.inputs.vfSince === null ? 0 : t - d.inputs.vfSince;
-    // FU-7 (addendum 23, E-FU7-6): the shock's state context, duck-typed from the host (absent = the pre-FU-7 table);
-    // the rhythm id selects the cardioversion curve (DV amendment)
+    // The shock's state context, duck-typed from the host (absent = the state-free table); the rhythm id selects the
+    // cardioversion curve
     const st = host.shockState?.() ?? {};
     outcome = drawOutcome({ cls, synced, energyJ: d.defib.energyJ, defaultJ: defibSpec(d).energyAdultJ, vfDurationS, onTPeak, rhythmId: host.rhythmId, ...st }, rng);
   }
@@ -301,7 +302,7 @@ export function stepDevice(d: DeviceState, host: DeviceHost, due: readonly Engin
   const vf = VF_RHYTHMS.has(host.rhythmId);
   if (vf && inp.vfSince === null) inp.vfSince = t;
   if (!vf) inp.vfSince = null;
-  if (inp.spo2Probe === 'off' && host.spo2Probe !== 'off') inp.spo2OnSince = t; // FU-5: the oximeter starts acquiring
+  if (inp.spo2Probe === 'off' && host.spo2Probe !== 'off') inp.spo2OnSince = t; // The oximeter starts acquiring
   inp.spo2Probe = host.spo2Probe;
   inp.co2 = host.co2;
   inp.abp = host.abp;

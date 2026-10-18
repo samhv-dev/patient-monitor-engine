@@ -33,13 +33,13 @@ export interface CapnoCtx {
 }
 
 /**
- * Bronchospasm severity → phase II τ (s), piecewise linear (R39-6, research 09 §6). Knots fitted so the α angle
- * measured on the 25 mmHg/s axis scale (brief §4.4; test/helpers/resp.ts capnoAngles) is 105° / 125° / 135° / 145° at
- * severity 0 / 0.5 / 0.8 / 1.0; severity 1.25 is the near-fatal extreme (157°), reachable only on purpose.
+ * Bronchospasm severity → phase II τ (s), piecewise linear (research 09 §6). Knots fitted so the α angle measured on
+ * the 25 mmHg/s axis scale (brief §4.4; test/helpers/resp.ts capnoAngles) is 105° / 125° / 135° / 145° at severity 0 /
+ * 0.5 / 0.8 / 1.0; severity 1.25 is the near-fatal extreme (157°), reachable only on purpose.
  */
 export const SHARK_TAU_II: ReadonlyArray<readonly [number, number]> = [[0, 0.09], [0.5, 0.26], [0.8, 0.315], [1, 0.4], [1.25, 0.6]];
 
-/** Phase III rise added per unit bronchospasm severity (mmHg) [ENG, fitted with SHARK_TAU_II; was 10 before R39-6]. */
+/** Phase III rise added per unit bronchospasm severity (mmHg) [ENG, fitted with SHARK_TAU_II]. */
 export const SHARK_RISE_III = 6;
 
 function sharkTauII(sev: number): number {
@@ -55,7 +55,7 @@ function sharkTauII(sev: number): number {
 
 function shapeOf(c: Cycle) {
   const s0 = SHAPES[c.shape];
-  // Stage 7b: the lung module's heterogeneity terms (0 for a homogeneous lung; plan decision 9)
+  // The lung module's heterogeneity terms (0 for a homogeneous lung)
   const s = { tauII: s0.tauII + (c.lungTauII ?? 0), tau0: s0.tau0, riseIII: s0.riseIII + (c.lungRiseIII ?? 0) };
   if (c.shape !== 'shark') return s;
   return { tauII: sharkTauII(c.severity), tau0: s.tau0, riseIII: s.riseIII + SHARK_RISE_III * c.severity };
@@ -64,7 +64,7 @@ function shapeOf(c: Cycle) {
 /** Plateau-end level of a cycle (what its expiration ends at). */
 function level(c: Cycle, x: CapnoCtx): number {
   if (c.sampled === 'gastric') return c.gastric;
-  return c.sampled === 'alveolar' ? x.etco2 * (c.alvFrac ?? 1) : 0; // FU-6 R5: no plateau below the dead space
+  return c.sampled === 'alveolar' ? x.etco2 * (c.alvFrac ?? 1) : 0; // No plateau below the dead space
 }
 
 /** Airway CO2 at the end of cycle c (for the next inspiration's downstroke and for apnoea decay). */
@@ -131,7 +131,7 @@ export interface SamplerState {
   mode: 'sidestream' | 'mainstream';
   neonatal: boolean;
   y: number; // LPF output
-  /** The active skin's sidestream module (R39-5): delay (s) and adult 10–90 % rise (s); absent → SAMPLING.sidestream. */
+  /** The active skin's sidestream module: delay (s) and adult 10–90 % rise (s); absent → SAMPLING.sidestream. */
   side?: { delayS: number; riseS: number };
 }
 

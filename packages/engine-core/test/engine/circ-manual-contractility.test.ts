@@ -36,7 +36,7 @@ async function manual(c: number, sbp: number, dbp: number, cvp: number) {
   return r;
 }
 
-describe('MANUAL contractility acts through the trackers (FU-2 item 7)', () => {
+describe('MANUAL contractility acts through the trackers', () => {
   it('contractility 0.5 at 110/70: CO falls ≥ 20 %, MAP held (± 5), SVR rises, pulse pressure narrows', async () => {
     const a = await manual(1, 110, 70, 6);
     const b = await manual(0.5, 110, 70, 6);

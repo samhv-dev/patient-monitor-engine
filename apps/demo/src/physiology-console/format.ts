@@ -1,4 +1,4 @@
-// Stage 7x: value, delta and change formatting (monospace table cells).
+// Value, delta and change formatting (monospace table cells).
 import type { Leaf } from './flatten.ts';
 import type { Meta } from './meta.ts';
 

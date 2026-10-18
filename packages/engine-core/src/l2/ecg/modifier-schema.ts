@@ -57,7 +57,7 @@ export function validateModifiers(m: ModifiersPatch): string | undefined {
   if (a) {
     const badA = Object.keys(a).filter((k) => !ART_KEYS.has(k));
     if (badA.length) return `unknown artefact keys: ${badA.join(', ')}`;
-    if (a.noise !== undefined && !inRange(a.noise, 0, 10)) return 'artefact.noise must be 0–10'; // Stage 1.1 range
+    if (a.noise !== undefined && !inRange(a.noise, 0, 10)) return 'artefact.noise must be 0–10';
     for (const k of ['wander', 'mains', 'emg', 'shiver', 'motion'] as const) {
       if (a[k] !== undefined && !inRange(a[k], 0, 1)) return `artefact.${k} must be 0–1`;
     }

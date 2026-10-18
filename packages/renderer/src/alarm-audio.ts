@@ -1,6 +1,6 @@
-// Engine alarm state → alarm sound (request E-4a-3; brief §6.4, §6.4.1): the `alarmStatus` event is the single
-// source; the bridge raises and clears alarms on the 4a AlarmSounder (which sounds only the highest priority,
-// ties first raised) and mirrors the engine's silence/pause. Acknowledged alarms are silent. FU-5: so are latched
+// Engine alarm state → alarm sound (brief §6.4, §6.4.1): the `alarmStatus` event is the single
+// source; the bridge raises and clears alarms on the audio AlarmSounder (which sounds only the highest priority,
+// ties first raised) and mirrors the engine's silence/pause. Acknowledged alarms are silent. So are latched
 // alarms under visual-only latching — the engine's `sounding` flag decides (absent in older events: not acknowledged).
 import type { AlarmLevel } from '@pme/audio';
 import type { AlarmStatus } from './alarm-view.ts';
@@ -20,14 +20,14 @@ export class AlarmAudioBridge {
   private quietUntil: number | null = null;
   private readonly sounder: SounderLike;
   private readonly timeScale: () => number;
-  /** FU-11 (owner ruling Q3): this window's own Silence, when it manages its sound itself; ack = until a new alarm. */
+  /** This window's own Silence, when it manages its sound itself; ack = until a new alarm. */
   private own: { ack: boolean } | null = null;
   private readonly windowSilence: boolean;
 
   /**
-   * `windowSilence` (FU-11, owner ruling Q3; the second-screen learner monitor): this window's alarm SOUND is managed
-   * here — the instructor's Silence (a mute timer or an acknowledge) does not quiet it, and its own Silence
-   * (`silenceWindow`) reaches no engine. The alarm conditions and what the monitor shows stay the shared patient's.
+   * `windowSilence` (the second-screen learner monitor): this window's alarm SOUND is managed here — the instructor's
+   * Silence (a mute timer or an acknowledge) does not quiet it, and its own Silence (`silenceWindow`) reaches no
+   * engine. The alarm conditions and what the monitor shows stay the shared patient's.
    */
   constructor(sounder: SounderLike, timeScale: () => number = () => 1, o: { windowSilence?: boolean } = {}) {
     this.sounder = sounder;
@@ -35,7 +35,7 @@ export class AlarmAudioBridge {
     this.windowSilence = o.windowSilence === true;
   }
 
-  /** FU-11 (Q3): this window's own Silence, by the skin's rule (a mute timer, or until a new alarm); pressed again, it
+  /** This window's own Silence, by the skin's rule (a mute timer, or until a new alarm); pressed again, it
    *  ends. Returns whether this window is now silenced. Only for a bridge made with `windowSilence`. */
   silenceWindow(t: number, s: { durationS: number | null; mode: 'mute' | 'acknowledge' }): boolean {
     if (this.sounder.silencedUntil !== null) {

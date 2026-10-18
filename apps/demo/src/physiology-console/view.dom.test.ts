@@ -172,7 +172,7 @@ describe('physiology console page', { timeout: 30_000 }, () => {
     f.truthAt(4);
     expect(document.querySelector('[data-id="t"]')?.textContent).toBe('0:04');
   });
-  it('the rail sends 7b lung, 7c fluid/lab and 7g TCI/N2O bodies', async () => {
+  it('the rail sends lung, blood fluid/lab and drug TCI/N2O bodies', async () => {
     const f = fakeHost();
     ui = mountConsole(document.body, f.host);
     expect(document.querySelector('[data-id="base"]')?.textContent).toBe('baseline: pending (auto at 1:00)');

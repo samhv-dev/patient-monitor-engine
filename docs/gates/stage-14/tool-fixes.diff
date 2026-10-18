@@ -1,0 +1,67 @@
+--- stage-14-plan-tools/ci/apply_ci_edit.py	2026-10-11 18:20:27
++++ tools-copy/ci/apply_ci_edit.py	2026-10-18 16:39:40
+@@ -31,17 +31,21 @@
+ STEP='''      - name: e2e tests that passed only on retry (fails unless the test is tagged @known-flaky)
+         if: ${{ !cancelled() }}
+         run: |
+-          f=playwright-report/e2e.json
+-          [ -f "$f" ] || { echo "no e2e JSON report"; exit 0; }
++          f=playwright-report-${{ matrix.browser }}.json
++          [ -f "$f" ] || { echo "::error title=e2e JSON report::no e2e JSON report ($f): the retry check cannot run"; exit 1; }
+           jq -r '.. | objects | select(has("specs")) | .specs[] | . as $s | .tests[] | select(.status == "flaky")
+             | "\\(if ($s.tags | index("known-flaky")) then "known" else "new" end)\\t\\($s.file):\\($s.line) [\\(.projectName)] \\($s.title)"' "$f" > "$RUNNER_TEMP/flaky.raw" \\
+-            || { echo "::error title=e2e JSON report::playwright-report/e2e.json could not be read: the retry check cannot run"; exit 1; }
++            || { echo "::error title=e2e JSON report::$f could not be read: the retry check cannot run"; exit 1; }
+           sort -u "$RUNNER_TEMP/flaky.raw" > "$RUNNER_TEMP/flaky.tsv"
+           { echo "### e2e tests that passed only on retry: $(wc -l < "$RUNNER_TEMP/flaky.tsv")"; sed -e 's/^known\\t/- (@known-flaky) /' -e 's/^new\\t/- **NEW** /' "$RUNNER_TEMP/flaky.tsv"; } >> "$GITHUB_STEP_SUMMARY"
+           while IFS="$(printf '\\t')" read -r k l; do echo "::warning title=e2e passed only on retry::$l"; done < "$RUNNER_TEMP/flaky.tsv"
+           if grep -q '^new' "$RUNNER_TEMP/flaky.tsv"; then echo "::error title=e2e passed only on retry::a test without the @known-flaky tag passed only on retry: a retry is not a pass"; exit 1; fi
+ '''
+-if e2e and 'e2e tests that passed only on retry' not in s:
+-    a='      - run: pnpm test:e2e\n'; assert s.count(a)==1,'e2e anchor'
+-    s=s.replace(a,a+STEP)
++# Since the per-browser e2e jobs (main after the plan was written): the job already writes
++# playwright-report-<browser>.json (--reporter=list,json) and has an echo-only step of the same name; the rule
++# REPLACES that step (its comment line included). Executor fix 2026-10-18, recorded in the gate note.
++if e2e and '(fails unless the test is tagged @known-flaky)' not in s:
++    m=re.search(r'^      # echo only, never fails the job[^\n]*\n      - name: e2e tests that passed only on retry\n.*?(?=^\n|^  \S)',s,re.M|re.S)
++    assert m, 'echo-only retry step not found'
++    s=s[:m.start()]+STEP+s[m.end():]
+ open(p,'w').write(s)
+--- stage-14-plan-tools/model/model-docs.test.ts	2026-10-11 17:43:55
++++ tools-copy/model/model-docs.test.ts	2026-10-18 13:24:43
+@@ -14,7 +14,8 @@
+ const read = (p: string) => (existsSync(join(root, p)) ? readFileSync(join(root, p), 'utf8') : '');
+ const regen = 'run: node --experimental-strip-types scripts/model-docs.ts && node --experimental-strip-types scripts/known-misses.ts';
+ 
+-describe('model documentation is generated from the code', () => {
++// Generating the 22 pages and the index reads every source and test file: ≈ 5 s alone, more on a loaded runner.
++describe('model documentation is generated from the code', { timeout: 120_000 }, () => {
+   it('docs/validation/known-misses.md is current', () => {
+     expect(read('docs/validation/known-misses.md') === renderKnownMisses(root), regen).toBe(true);
+   });
+--- stage-14-plan-tools/post8b_docs.py	2026-10-11 18:07:42
++++ tools-copy/post8b_docs.py	2026-10-18 13:06:31
+@@ -21,6 +21,10 @@
+ cur = open('README.md').read()
+ if 'one-page clinical teaching app' not in cur: raise SystemExit('post8b_docs: README.md has no "A one-page clinical teaching app" bullet: is Stage 8b merged?')
+ r = subprocess.run(['git', 'merge-file', '-p', 'README.md', base, tpl], capture_output=True, text=True)
++# executor fix 2026-10-18: once the conflicts are resolved by hand, the README carries this stage's sections; a re-run
++# then keeps it (the merge against the hand resolution would conflict again) and goes on to the two 8b pages.
++_resolved = r.returncode != 0 and '\n## The model\n' in cur and '\n## Embed it\n' in cur and '<<<<<<<' not in cur
++if _resolved: r = subprocess.CompletedProcess(r.args, 0, cur, '')
+ if r.returncode != 0: raise SystemExit(f"post8b_docs: README.md: {r.returncode} merge conflict(s) between the README 8b merged and this stage's; resolve by hand (git merge-file README.md {base} {tpl})")
+ new = r.stdout
+ if 'FILL:' in new: raise SystemExit('post8b_docs: a FILL: marker is left in README.md (8b did not fill it)')
+--- stage-14-plan-tools/task5_edits.py	2026-10-11 17:48:20
++++ tools-copy/task5_edits.py	2026-10-18 12:58:27
+@@ -80,7 +80,8 @@
+                      "  // On CI a JSON report as well: ci.yml lists every test that passed only on a retry and fails the job unless the\n"
+                      "  // test carries the @known-flaky tag (a retry is not a pass).\n"
+                      "  reporter: ci ? [['list'], ['json', { outputFile: 'playwright-report/e2e.json' }]] : 'list',\n", 1)
+-edit('playwright.config.ts', d, 'd. Playwright JSON report on CI')
++# d. dropped by the executor 2026-10-18: ci.yml's e2e jobs already pass --reporter=list,json with
++# PLAYWRIGHT_JSON_OUTPUT_FILE (a CLI reporter overrides the config's), so a config JSON reporter would be dead.
+ 
+ # e. @known-flaky tags (title regexes; the file is found by its test title, wherever Task 2/4 moved it)
+ import os

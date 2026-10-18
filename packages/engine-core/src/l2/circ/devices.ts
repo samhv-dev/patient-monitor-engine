@@ -1,6 +1,6 @@
-// Mechanical support devices as circuit elements (R42; R28; tables §8.1–§8.2). The seam: a device contributes a
-// volume source in the aorta (IABP), an LV → aorta pump flow (LVAD), or — 7h — a venous → arterial pump flow
-// (VA-ECMO, CPB). Devices are plain data; their flow functions are built per interval by the hemo pipeline.
+// Mechanical support devices as circuit elements (tables §8.1–§8.2). The seam: a device contributes a
+// volume source in the aorta (IABP), an LV → aorta pump flow (LVAD), or — not implemented — a venous → arterial pump
+// flow (VA-ECMO, CPB). Devices are plain data; their flow functions are built per interval by the hemo pipeline.
 
 export interface CircuitDevice {
   kind: 'iabp' | 'lvad' | 'vaEcmo' | 'cpb';
@@ -23,7 +23,7 @@ export interface IabpState extends CircuitDevice {
   beatN: number;
   inflateAt: number;
   deflateAt: number;
-  /** FU-8 (DV-13d): the previous cycle, while its deflation is still owed (−1 = none). */
+  /** The previous cycle, while its deflation is still owed (−1 = none). */
   prevInflateAt?: number;
   prevDeflateAt?: number;
 }
@@ -42,15 +42,15 @@ export function iabpOnBeat(d: IabpState, beatT: number, rr: number, avCloseS: nu
 }
 
 /**
- * FU-8 (research/20 DV-13d, DV-M5; the tables' §8.1 pressure trigger): schedule the next balloon cycle at `now`, when a
- * beat has completed. `notchT` / `openT` are the absolute times of the LAST aortic-valve closure and opening; each is
- * carried forward by whole R–R intervals `rr` to the first one still to come: inflate at the next notch (+ offset),
- * deflate so the balloon is empty IABP_DEFLATE_LEAD_S before the next opening (+ offset). Before, the schedule was
- * built from the completed beat record (R + the record's own closure): in the MANUAL cardiogenic-shock rig, whose
- * ejection starts ≈ 400 ms after R and spills into the next record, every "correctly timed" balloon deflated ≈ 270 ms
- * AFTER the valve opened. A deflation still owed by the previous cycle is KEPT (brought forward to end before the new
- * inflation if it had not begun): overwriting it left up to 40 mL in the aorta, 7 of 63 cycles a minute in the HFrEF +
- * MI rig, and the patient arrested at +8.8 min. Every ratio-th beat.
+ * Schedule the next balloon cycle at `now`, when a beat has completed (research/20, the tables' §8.1 pressure trigger).
+ * `notchT` / `openT` are the absolute times of the LAST aortic-valve closure and opening; each is carried forward by
+ * whole R–R intervals `rr` to the first one still to come: inflate at the next notch (+ offset), deflate so the balloon
+ * is empty IABP_DEFLATE_LEAD_S before the next opening (+ offset). Before, the schedule was built from the completed
+ * beat record (R + the record's own closure): in the MANUAL cardiogenic-shock rig, whose ejection starts ≈ 400 ms after
+ * R and spills into the next record, every "correctly timed" balloon deflated ≈ 270 ms AFTER the valve opened. A
+ * deflation still owed by the previous cycle is KEPT (brought forward to end before the new inflation if it had not
+ * begun): overwriting it left up to 40 mL in the aorta, 7 of 63 cycles a minute in the HFrEF + MI rig, and the patient
+ * arrested at +8.8 min. Every ratio-th beat.
  */
 export function iabpSchedule(d: IabpState, now: number, rr: number, notchT: number, openT: number): void {
   if (!d.on) return;
@@ -96,24 +96,24 @@ export const LVAD_RPM = 5400;
 export const LVAD_KH = 0.45; // mL/s per mmHg of (P_ao − P_LV) [ENG HQ slope]
 export const LVAD_SUCTION_ML = 40; // LV volume below which the inflow cannula sucks (tables §8.2) [ENG]
 /**
- * FU-8 (Task A26; research/20 DV-17, gap V9): the inflow depends on filling. The tables' 40 mL is the collapse volume of
- * a normal adult LV (resting EDV ≈ LVAD_REF_EDV_ML); a dilated LV collapses onto the cannula at a larger volume, so the
- * collapse volume scales with the LV's own resting EDV. Above it the inflow falls smoothly over LVAD_INFLOW_MARGIN of
- * the collapse volume (the LV wall approaching the inlet), to LVAD_SUCTION_FLOW at and below it (the old suction
- * factor). Before, a 1.5 L bleed in the HFrEF rig (resting EDV 197 mL) lowered the pump flow only 4.04 → 3.70 L/min
- * and never sucked: the LV emptied to 73 mL, far above an absolute 40 mL [ENG: anchor, margin].
+ * The inflow depends on filling (research/20, gap V9). The tables' 40 mL is the collapse volume of a normal adult LV
+ * (resting EDV ≈ LVAD_REF_EDV_ML); a dilated LV collapses onto the cannula at a larger volume, so the collapse volume
+ * scales with the LV's own resting EDV. Above it the inflow falls smoothly over LVAD_INFLOW_MARGIN of the collapse
+ * volume (the LV wall approaching the inlet), to LVAD_SUCTION_FLOW at and below it (the old suction factor). Before, a
+ * 1.5 L bleed in the HFrEF rig (resting EDV 197 mL) lowered the pump flow only 4.04 → 3.70 L/min and never sucked: the
+ * LV emptied to 73 mL, far above an absolute 40 mL [ENG: anchor, margin].
  */
 export const LVAD_REF_EDV_ML = 120;
 export const LVAD_INFLOW_MARGIN = 0.25;
 export const LVAD_SUCTION_FLOW = 0.3;
-/** FU-8 (A26): the chance of a PVC per supraventricular beat while suction stands (suction-induced ectopy) [ENG]. */
+/** The chance of a PVC per supraventricular beat while suction stands (suction-induced ectopy) [ENG]. */
 export const LVAD_SUCTION_PVC_P = 0.2;
 
 export interface LvadState extends CircuitDevice {
   kind: 'lvad';
   rpm: number;
   suction: boolean;
-  /** FU-8 (A26): a suction event since the last console read (the 1 Hz numerics), not only at the read's instant. */
+  /** A suction event since the last console read (the 1 Hz numerics), not only at the read's instant. */
   suctionSeen: boolean;
   qMin: number;
   qMax: number;
@@ -127,7 +127,7 @@ export function createLvad(): LvadState {
 
 /**
  * Pump flow LV → aorta (mL/s) at LV pressure pLv, aortic pressure pAo, LV volume vLv (mL) and the LV's resting EDV
- * lvSizeMl (FU-8 A26: the collapse volume scales with it; default the normal adult LV, i.e. the tables' 40 mL).
+ * lvSizeMl (the collapse volume scales with it; default the normal adult LV, i.e. the tables' 40 mL).
  */
 export function lvadFlow(d: LvadState, pLv: number, pAo: number, vLv: number, lvSizeMl = LVAD_REF_EDV_ML): number {
   if (!d.on) return 0;
@@ -158,7 +158,7 @@ export function lvadNumerics(d: LvadState): { flowLpm: number; pi: number; power
   return out;
 }
 
-// --- VA-ECMO / CPB (R42 interface; implemented in 7h) ---
+// --- VA-ECMO / CPB (interface) ---
 export interface BypassDevice extends CircuitDevice {
   kind: 'vaEcmo' | 'cpb';
   flowLpm: number;

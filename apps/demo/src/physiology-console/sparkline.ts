@@ -1,5 +1,5 @@
-// Stage 7x: 60 s sparklines — a bounded history per numeric path (one sample per truth event, 1 Hz) and a tiny canvas
-// plot, newest sample at the right edge, auto-scaled to the window's min–max and the baseline (drawn as a faint line).
+// 60 s sparklines — a bounded history per numeric path (one sample per truth event, 1 Hz) and a tiny canvas plot,
+// newest sample at the right edge, auto-scaled to the window's min–max and the baseline (drawn as a faint line).
 export const SPARK_N = 60;
 
 export function pushHist(h: number[], v: number, n = SPARK_N): void {

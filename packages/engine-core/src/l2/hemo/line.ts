@@ -20,7 +20,7 @@ import {
 
 export const DISPLAY_FILTER: readonly Biquad[] = [lowpass(DISPLAY_FILTER_HZ, HEMO_RATE)];
 const FILTERS = new Map<number, readonly Biquad[]>([[DISPLAY_FILTER_HZ, DISPLAY_FILTER]]);
-/** FU-5 (E-FU5-4): the display low-pass of a skin's IBP filter setting (skin `ibp.filterDefaultHz`: Philips 12, Saadat 16). */
+/** The display low-pass of a skin's IBP filter setting (skin `ibp.filterDefaultHz`: Philips 12, Saadat 16). */
 export function displayFilter(hz: number = DISPLAY_FILTER_HZ): readonly Biquad[] {
   let f = FILTERS.get(hz);
   if (!f) {
@@ -43,7 +43,7 @@ export interface LineState {
   x: number; // transducer output (mmHg)
   v: number; // its derivative
   f: number[]; // display filter state
-  /** FU-5: the display filter corner (Hz) of the active skin; absent = DISPLAY_FILTER_HZ (12). */
+  /** The display filter corner (Hz) of the active skin; absent = DISPLAY_FILTER_HZ (12). */
   fHz?: number;
 }
 

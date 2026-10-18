@@ -37,7 +37,7 @@ describe('CircModel sanity (prototype numbers)', () => {
     expect(dHr45).toBeLessThanOrEqual(-5);
     expect(dHr45).toBeGreaterThanOrEqual(-16);
   }, 60_000);
-  it('R45(b) class II (25 % over 10 min, ventilated): SBP near normal (≥ 85 % of baseline), HR 100–120, PP narrowed ≥ 30 %, PPV > 13 %', () => {
+  it('class II (25 % over 10 min, ventilated): SBP near normal (≥ 85 % of baseline), HR 100–120, PP narrowed ≥ 30 %, PPV > 13 %', () => {
     const r = run(undefined, (m) => circVolume(m, -0.25 * m.prof.bloodVolumeMl, 600), 120, 780);
     const b0 = beatsIn(r.m, r.all, 100, 120);
     const b1 = beatsIn(r.m, r.all, 740, 780);
@@ -63,7 +63,7 @@ describe('CircModel sanity (prototype numbers)', () => {
     expect(r.hrIn(740, 780)).toBeGreaterThanOrEqual(80);
     expect(r.hrIn(740, 780)).toBeLessThanOrEqual(95);
   }, 120_000);
-  it('R45(a): the beat after a premature one (perfused or not) gets a one-beat Emax boost scaled by prematurity', () => {
+  it('the beat after a premature one (perfused or not) gets a one-beat Emax boost scaled by prematurity', () => {
     const m = createCircModel();
     for (let k = 0; k < 10; k++) circOnBeat(m, k * 0.8, 75, 'sinus', true);
     circOnBeat(m, 7.2 + 0.44, 75, 'ventricular', false); // PVC at 55 % coupling, no ejection

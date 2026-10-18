@@ -12,7 +12,7 @@ const hrAt = (ev: EngineEvent[], t0: number, t1: number) => {
   return (60 * (b.length - 1)) / (b[b.length - 1]!.t - b[0]!.t);
 };
 
-describe('Stage 7e engine wiring', { timeout: 300_000 }, () => {
+describe('endocrine engine wiring', { timeout: 300_000 }, () => {
   it('rest: endo event at 1 Hz, every factor neutral (endoHrF 1, circ.ext.endo* absent in MANUAL)', async () => {
     const { e, ev } = rig3({ patient: ADULT });
     await run(e, 10);
@@ -47,7 +47,7 @@ describe('Stage 7e engine wiring', { timeout: 300_000 }, () => {
     expect(s.endoHrF).toBe(1);
   });
 
-  it('restore of a pre-7e snapshot (no endo, Stage 3 TempState) upgrades and runs on', async () => {
+  it('restore of an older snapshot (no endo, the respiratory TempState) upgrades and runs on', async () => {
     const { e } = rig3({ patient: ADULT });
     await run(e, 30);
     const snap = e.snapshot() as PatientSnapshot;

@@ -25,7 +25,7 @@ async function swing(severity: number): Promise<number> {
   return w.reduce((a, b) => a + b, 0) / Math.max(1, w.length);
 }
 
-describe('FU-4 G6: pulsus paradoxus (spontaneous breathing)', () => {
+describe('pulsus paradoxus (spontaneous breathing)', () => {
   it('healthy control: beat-to-beat SBP swing < 5 mmHg (measured 2.4)', async () => {
     const s = await swing(0);
     console.log(`healthy SBP swing ${s.toFixed(1)} mmHg`);

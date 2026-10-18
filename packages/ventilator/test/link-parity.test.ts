@@ -58,30 +58,30 @@ async function both(spasm: boolean) {
   return out;
 }
 
-describe('FU-6 R7: link parity (RS15; audit I-b: link VT 207 / SpO2 0 vs internal VT 400 / SpO2 98)', { timeout: 900_000 }, () => {
+describe('link parity (RS15)', { timeout: 900_000 }, () => {
   // R45 (FU-6 executor, merged main with V.1): healthy parity is met (10/30 min: PaCO2 35.8/33.3 vs 34.5/31.8, EtCO2
   // 32.7/30 vs 31/28.8, SpO2 99/99, Pplat 14.1/14.1, VT 500 vs 494; Ppeak 24.0 vs 16.7 logged). In bronchospasm 1 at
   // 30 min both paths sit at Pmax 40 but the link delivers VT 238 vs the engine's 476 (Pplat 13.5 vs 25.9), so PaCO2
   // 59.2 vs 39.6 and EtCO2 40.7 vs 23.8 (SpO2 99 both): the link's VC is a square 60 L/min flow that meets Pmax early
   // in inspiration, the engine's ≈ 18 L/min flow holds at Pmax for the rest of Ti — a ventilator-package behaviour
   // (packages/ventilator/src is V.1's), gate-note item. The spasm row is it.fails with these numbers.
-  for (const spasm of [false, true]) {
-    (spasm ? it.fails : it)(`${spasm ? 'bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (FU-6 R7, band 3 mmHg / 10 %)' : 'healthy'}: gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ, F5b)`, async () => {
-      for (const r of await both(spasm)) {
-        if (r.t === 1200) continue; // the spasm step is sent at 20 min: compare 10 and 30 min
-        expect(Math.abs(r.paLink! - r.paEng!)).toBeLessThanOrEqual(3);
-        expect(Math.abs(r.etLink! - r.etEng!)).toBeLessThanOrEqual(3);
-        expect(Math.abs(r.spLink! - r.spEng!)).toBeLessThanOrEqual(2);
-        // FU-6 F5b (Orchestrator ruling (FU-6 review), 2026-09-28): Ppeak is NOT comparable while the two paths use
-        // different inspiratory flows — the link's `presets.ts` drives VC with a square `vcFlow: 60` L/min + `pause: 0.3`
-        // while the engine's VCV uses x = vt / ti ≈ 18 L/min, and at rTube ≈ 5 cmH2O/L/s that difference is ≈ 3.5 cmH2O of
-        // resistive peak by itself (most of the measured 23.8 vs 16.8 healthy gap). Either MATCH the flows — set the
-        // link's `vcFlow`/`pause` so its inspiratory time equals the engine's cycle Ti — and then band Ppeak, or band the
-        // FLOW-INDEPENDENT plateau and the delivered volume and LOG both peaks. This file does the latter and states the
-        // flows, so the row measures the lung rather than the flow pattern.
-        expect(Math.abs(r.pplatLink! - r.pplatEng!)).toBeLessThanOrEqual(0.1 * r.pplatEng!);
-        expect(Math.abs(r.vtLink! - r.vtEng!)).toBeLessThanOrEqual(0.1 * r.vtEng!);
-      }
-    });
-  }
+  const parity = async (spasm: boolean) => {
+    for (const r of await both(spasm)) {
+      if (r.t === 1200) continue; // the spasm step is sent at 20 min: compare 10 and 30 min
+      expect(Math.abs(r.paLink! - r.paEng!)).toBeLessThanOrEqual(3);
+      expect(Math.abs(r.etLink! - r.etEng!)).toBeLessThanOrEqual(3);
+      expect(Math.abs(r.spLink! - r.spEng!)).toBeLessThanOrEqual(2);
+      // FU-6 F5b (Orchestrator ruling (FU-6 review), 2026-09-28): Ppeak is NOT comparable while the two paths use
+      // different inspiratory flows — the link's `presets.ts` drives VC with a square `vcFlow: 60` L/min + `pause: 0.3`
+      // while the engine's VCV uses x = vt / ti ≈ 18 L/min, and at rTube ≈ 5 cmH2O/L/s that difference is ≈ 3.5 cmH2O of
+      // resistive peak by itself (most of the measured 23.8 vs 16.8 healthy gap). Either MATCH the flows — set the
+      // link's `vcFlow`/`pause` so its inspiratory time equals the engine's cycle Ti — and then band Ppeak, or band the
+      // FLOW-INDEPENDENT plateau and the delivered volume and LOG both peaks. This file does the latter and states the
+      // flows, so the row measures the lung rather than the flow pattern.
+      expect(Math.abs(r.pplatLink! - r.pplatEng!)).toBeLessThanOrEqual(0.1 * r.pplatEng!);
+      expect(Math.abs(r.vtLink! - r.vtEng!)).toBeLessThanOrEqual(0.1 * r.vtEng!);
+    }
+  };
+  it("healthy: gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ)", () => parity(false));
+  it.fails("bronchospasm 1 at 20 min — measured at 30 min PaCO2 59.2 vs 39.6, VT 238 vs 476 (band 3 mmHg / 10 %): gas within 3 mmHg / 3 mmHg / 2 %, Pplat and delivered VT within 10 % (Ppeak logged — the two paths' inspiratory flows differ)", () => parity(true));
 });

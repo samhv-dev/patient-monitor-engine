@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createEngine, type Command, type EngineEvent } from '../../src/index.ts';
 
 // R-S3-3: with Stage 3 merged, RSA follows the breath driver's cycles (public events only).
-describe('Stage 5.1: ECG RSA follows the breath driver', () => {
+describe('ECG RSA follows the breath driver', () => {
   it('beat-to-beat RR correlates with the phase of the emitted breaths (r ≥ 0.8; measured 0.83)', { timeout: 300_000 }, async () => {
     const e = createEngine({ seed: 5 });
     const ev: EngineEvent[] = [];

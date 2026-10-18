@@ -46,7 +46,7 @@ const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / xs.length
 const raises = (ev: EngineEvent[], id: string): number[] =>
   ev.flatMap((x) => (x.type === 'alarm' && x.id === id && x.state === 'raised' && x.level !== undefined ? [x.t] : []));
 
-describe('MANUAL CVP under positive-pressure ventilation (FU-3 item 7)', () => {
+describe('MANUAL CVP under positive-pressure ventilation', () => {
   it.fails('brief §4.9: CVP 6 ventilated from t = 0, PEEP 15 reads 30–50 % of the 10 cmH2O step (2.2–3.7 mmHg) above PEEP 5 (measured 4.82: T_IT 0.65)', { timeout: 120_000 }, async () => {
     const a = soak('philips-like', 5);
     const b = soak('philips-like', 15);
@@ -59,7 +59,7 @@ describe('MANUAL CVP under positive-pressure ventilation (FU-3 item 7)', () => {
     expect(d).toBeLessThanOrEqual(0.5 * step);
   });
 
-  it.fails('the 8a soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; FU-5: no raise since the displayed 10 is not above the limit — was 27–57 s)', { timeout: 120_000 }, async () => {
+  it.fails('the validation-harness soak patient (CVP 6, PEEP 5) stays under the philips-like 10 mmHg limit with its ventilatory ripple: max < 9.5 and no CVP_M_HIGH in 120 s (measured max 10.17; no raise since the displayed 10 is not above the limit)', { timeout: 120_000 }, async () => {
     const s = soak('philips-like', 5);
     await run(s.e, 120);
     const v = cvpMeans(s.ev, 30, 120);

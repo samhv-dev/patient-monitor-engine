@@ -13,14 +13,14 @@ const beat = (o: Partial<CircBeat> = {}): CircBeat => ({
 /** Class IV haemorrhage at the audit's C4 nadir: DBP 20, HR 186, LVSP 25, LVEDV 30. */
 const shock = beat({ aoDia: 20, dbp: 20, map: 22, lvsp: 25, lvedv: 30, lvedp: 1, avClose: 0.2 });
 
-describe('FU-4 G1: coronary myocardial state', () => {
+describe('coronary myocardial state', () => {
   it('rest is unchanged: ratio ≈ CFR, kIsch 1 (the absolute basis cancels at the resting pleural pressure)', () => {
     const c = createCoronary(ref);
     for (let i = 0; i < 60; i++) stepCoronary(c, [beat()], 3.5, 1, 70);
     expect(c.ratio).toBeCloseTo(3.5, 1);
     expect(c.kIsch).toBe(1);
   });
-  it('MODELED: class IV shock drives kIsch through 0.1 within 90 s (no floor); MANUAL (R23 balance) parks at 0.2', () => {
+  it('MODELED: class IV shock drives kIsch through 0.1 within 90 s (no floor); MANUAL (supply/demand balance) parks at 0.2', () => {
     const m = createCoronary(ref);
     const n = createCoronary(ref);
     let tCross = -1;

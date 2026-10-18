@@ -1,5 +1,5 @@
-// Stage 7d brain constants (tables §5.1; R26). Every number cites its tables row or is [ENG] with the prototype
-// number it was tuned to (docs/plans/stage-7d-organs.md "Prototype results"). Q numbers point at tables §9.
+// Brain constants (tables §5.1). Every number cites its tables row or is [ENG] with the prototype number it was tuned
+// to. Q numbers point at tables §9.
 export const BRAIN_DT_S = 0.1; // brain step 10 Hz, on the gas grid (brief §3.2)
 export const BRAIN_G = 1400; // adult brain mass, g [TXT] (CBF0 50 mL/100 g/min ≈ 700 mL/min)
 export const CBF0 = 50; // mL/100 g/min, tables `CBF0` [P] LITFL-CBF
@@ -39,7 +39,7 @@ export const PBTO2_HYPEROXIA = 0.004; // tables PbtO2 formula (1 + 0.004·(PaO2 
 export const OER0 = 0.33; // [ENG] resting cerebral O2 extraction, chosen so SjvO2 = 0.97·(1 − 0.33) ≈ 0.65 (textbook 55–75 %; tables have no row)
 export const OER_MAX = 0.75; // [ENG] extraction ceiling (tables §5.3 `erMax` range 0.6–0.75, top end: the brain extracts more than the body)
 export const Q10_BRAIN = 0.07; // CMRO2 −7 %/°C, tables `q10Brain` [P]
-export const HB_DEFAULT = 14; // g/dL until 7c's blood exists (Stage 3 HB_G_DL)
+export const HB_DEFAULT = 14; // g/dL without the blood model (the gas model's HB_G_DL)
 export const HEAD_HEIGHT_CM = 25; // tragus above the heart at 90° head-up [ENG]; 30° → 12.5 cm → MAP_head −9.2
 /** Venous/CSF volume that leaves the skull at 30° head-up [ENG]: ICP 20 → 14.4 at PVI 20 (tables: −5.6 mmHg). */
 export const HEADUP_VOL_ML_30 = 2.9;
@@ -54,7 +54,7 @@ export const HTS_TAU_OUT_MIN = 240;
 export const MANNITOL_MOSM_PER_G = 1000 / 182.17; // 5.49 mOsm/g
 export const NACL_MOSM_PER_G = 2000 / 58.44; // 34.2 mOsm/g
 /**
- * FU-9 F11: brain water follows a FALL in plasma effective osmolality (7c `blood.out.osm`) — acute hyponatraemia swells
+ * Brain water follows a FALL in plasma effective osmolality (`blood.out.osm`) — acute hyponatraemia swells
  * the brain (Hahn 2006 BJA 96:8; Adrogué & Madias 2000 NEJM 342:1581). The gain is the osmotherapy calibration's own:
  * OSM_VMAX_ML × the saturation of 1 g/kg mannitol (384 mOsm, 0.885) ÷ its ECF rise (384 mOsm / 14 L = +27.4 mOsm/kg)
  * = 0.145 mL per mOsm/kg [ENG, derived]; it moves with HTS_TAU_IN_MIN (the barrier's water equilibration). Only the fall
@@ -68,8 +68,9 @@ export const CUSH_DELAY_S = 30;
 export const CUSH_OFF_S = 30; // CPP ≥ 40 this long (on the pre-surge MAP) ends the response
 export const CUSH_TAU_ON_S = 15;
 export const CUSH_TAU_OFF_S = 60;
-/** mmHg at full drive: the centre of the tables' +30–50 [ENG]. With 50 the MANUAL engine read +54 (the 7a waveform's
- *  area MAP at HR 48 sits ≈ 0.45 of the pulse pressure above the diastolic, not the 1/3 the coupled split assumes). */
+/** mmHg at full drive: the centre of the tables' +30–50 [ENG]. With 50 the MANUAL engine read +54 (the circulation
+ *  waveform's area MAP at HR 48 sits ≈ 0.45 of the pulse pressure above the diastolic, not the 1/3 the coupled split
+ *  assumes). */
 export const CUSH_DMAP = 40;
 export const CUSH_HR_DROP = 0.4; // HR × (1 − 0.4·drive): 80 → 48
 export const MAP_BASE_TAU_S = 120; // pre-surge MAP reference (frozen while the surge is on)

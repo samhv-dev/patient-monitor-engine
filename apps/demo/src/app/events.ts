@@ -1,8 +1,8 @@
-// Acute events (Task 26, showcase additions): the engine's systemic conditions an instructor starts and stops during a
-// case — tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the rest of
-// the `applyEvent { kind: 'condition' }` catalogue (7a circulation, 7c blood, 7d organs, 7e endocrine, Stage 3 MH).
-// Each is one command with a severity 0–1; severity 0 stops it. Two classic events have no command of their own, so
-// their rows say how to produce them with what the engine does model. No DOM here.
+// Acute events (showcase additions): the engine's systemic conditions an instructor starts and stops during a case —
+// tamponade, tension pneumothorax, massive PE, anaphylaxis, septic shock, malignant hyperthermia and the rest of the
+// `applyEvent { kind: 'condition' }` catalogue (circulation, blood, organs, endocrine, MH). Each is one command with a
+// severity 0–1; severity 0 stops it. Two classic events have no command of their own, so their rows say how to produce
+// them with what the engine does model. No DOM here.
 import type { CommandInput } from '@pme/controller';
 
 export interface AcuteEvent {

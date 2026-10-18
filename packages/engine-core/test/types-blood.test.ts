@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BloodClinicalEvent, Command, EngineEvent, LabPanel, PatientProfile } from '../src/index.ts';
 
-describe('Stage 7c public types', () => {
+describe('blood public types', () => {
   it('blood events are Commands, labs are EngineEvents, the profile carries blood chemistry', () => {
     const ev: BloodClinicalEvent = { kind: 'transfusion', product: 'rbc', units: 2, storageDays: 35 };
     const c: Command = { id: 'x', issuedBy: 't', type: 'applyEvent', event: ev };

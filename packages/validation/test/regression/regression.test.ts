@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compareWave, CASES, generate } from '../../src/regression/baseline.ts';
 import { hashRun } from '../../src/regression/determinism.ts';
 
-describe('2 % per-sample waveform regression (R40, decision 9)', () => {
+describe('2 % per-sample waveform regression', () => {
   const base = [0, 0.5, 1, 0.5, 0, -0.2];
   it('identical → green; a 1.5 % change → green; a 3 % change on one sample of six → red', () => {
     expect(compareWave('c', 'x', base, base).grade).toBe('green');

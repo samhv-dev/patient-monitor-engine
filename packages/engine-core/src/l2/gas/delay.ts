@@ -8,9 +8,9 @@ export const DELAY_SMOOTH_S = 5; // the delay itself moves with τ 5 s so the re
 const HIST = 72; // 71 s of whole-second points (1 Hz) — see DelayLine
 
 /**
- * History of pulmonary SaO2 as whole-second points plus the current gas step. 1 Hz is enough for a signal whose
- * fastest change is a few %/s, and it keeps the state small: the engine structured-clones the whole state every
- * tick for its look-ahead, and a 700-point 10 Hz ring made this the largest object in it (Stage 3 perf fix).
+ * History of pulmonary SaO2 as whole-second points plus the current gas step. 1 Hz is enough for a signal whose fastest
+ * change is a few %/s, and it keeps the state small: the engine structured-clones the whole state every tick for its
+ * look-ahead, and a 700-point 10 Hz ring made this the largest object in it.
  */
 export interface DelayLine {
   hist: number[]; // ring: hist[s % HIST] holds the SaO2 at whole second s (gas step s·10)

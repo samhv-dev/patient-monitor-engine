@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { createL1State, l1Flags, l1Target, l1Value, setL1Target, validateTarget } from '../../src/l1/state.ts';
 import { constantRamp } from '../../src/l1/ramp.ts';
 
-describe('l1/state: Stage 3 coupled truths', () => {
-  it('spo2, rr, vt, etco2, fio2, shunt and tempCore are accepted; k (Stage 5) is not', () => {
+describe('l1/state: coupled respiratory truths', () => {
+  it('spo2, rr, vt, etco2, fio2, shunt and tempCore are accepted; k is not', () => {
     for (const v of ['spo2', 'rr', 'vt', 'etco2', 'fio2', 'shunt', 'tempCore'] as const) expect(validateTarget(v, undefined, undefined)).toBeUndefined();
     expect(validateTarget('fio2', 0.1, undefined)).toMatch(/0.21/);
     expect(validateTarget('k', 5, undefined)).toMatch(/Stage 5/);

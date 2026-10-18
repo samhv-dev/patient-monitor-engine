@@ -1,4 +1,4 @@
-// THE drug library (Stage 7g): every v1 drug as data. Rows live in three files by family; this is the index.
+// THE drug library: every v1 drug as data. Rows live in three files by family; this is the index.
 import type { DrugRow } from '../row.ts';
 import { ANAESTHETIC_ROWS } from './rows-anaesthetic.ts';
 import { CARDIOVASCULAR_ROWS } from './rows-cardiovascular.ts';

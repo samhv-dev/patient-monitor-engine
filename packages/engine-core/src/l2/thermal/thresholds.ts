@@ -27,7 +27,7 @@ export interface Thresholds {
 
 const lerp = (a: number, b: number, d: number) => a + (b - a) * d;
 
-/** FU-10 E6: the age shift of the cold-defence thresholds, °C (0 up to 60 y, THR_AGE_SHIFT_C from 80 y; linear). */
+/** The age shift of the cold-defence thresholds, °C (0 up to 60 y, THR_AGE_SHIFT_C from 80 y; linear). */
 export function ageShiftC(ageY: number): number {
   const f = Math.min(1, Math.max(0, (ageY - THR_AGE_FROM_Y) / (THR_AGE_TO_Y - THR_AGE_FROM_Y)));
   return THR_AGE_SHIFT_C * f;
@@ -35,11 +35,11 @@ export function ageShiftC(ageY: number): number {
 
 /**
  * Thresholds at depth d with every threshold shifted by `setShiftC` (fever raises the set point) and the cold-defence
- * thresholds by the patient's age in proportion to the depth (FU-10 E6). The depth is capped at the GA row (FU-10 E5).
+ * thresholds by the patient's age in proportion to the depth. The depth is capped at the GA row.
  */
 export function thresholds(depth: number, setShiftC: number, ageY = 40): Thresholds {
   const d = Math.min(THR_DEPTH_MAX, Math.max(0, depth));
-  const age = ageShiftC(ageY) * d; // FU-10 E6 (R-6): under anaesthesia only
+  const age = ageShiftC(ageY) * d; // Under anaesthesia only
   return {
     vaso: lerp(THR_VASO_AWAKE, VASOCONSTRICT_C, d) + setShiftC + age,
     vasoW: lerp(W_VASO_AWAKE, W_VASO_GA, d),
@@ -62,7 +62,7 @@ export function shiverW(tc: number, thr: Thresholds, m0: number, effKg: number, 
   const deficit = thr.shiver - tc;
   if (deficit <= 0) return 0;
   const summit = Math.min(SUMMIT_W_PER_KG075 * effKg ** 0.75, SHIVER_MAX_X * m0);
-  const stop = Math.min(1, Math.max(0, (tc - SHIVER_STOP_C) / SHIVER_STOP_SPAN_C)); // FU-4 G12: gone below 30 °C
+  const stop = Math.min(1, Math.max(0, (tc - SHIVER_STOP_C) / SHIVER_STOP_SPAN_C)); // Gone below 30 °C
   return Math.max(0, summit - m0) * Math.min(1, deficit / SHIVER_SPAN_C) * (1 - Math.min(1, Math.max(0, nmb))) * stop;
 }
 

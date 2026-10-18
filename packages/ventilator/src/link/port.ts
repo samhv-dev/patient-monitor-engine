@@ -1,7 +1,7 @@
-// The window link (R27 second transport): the ventilator in its own window/iframe, the monitor elsewhere in the
+// The window link (the second transport): the ventilator in its own window/iframe, the monitor elsewhere in the
 // same browser. A tiny versioned message set over a `LinkPort` — BroadcastChannel `pme-vent/<session>` across
 // windows, or a local pair in one page. It deliberately does NOT go through the controller's HostSession (roles,
-// auth, samples guard): the ventilator is a device on the host, not a controller. FX-1: the app's own cockpit iframe
+// auth, samples guard): the ventilator is a device on the host, not a controller. The app's own cockpit iframe
 // uses `createFramePort` (direct same-origin delivery) instead of BroadcastChannel.
 //   vent → monitor: { kind: 'cmds' }      the linkTick commands of ventilator tick `tick` (frame, shunt, airway);
 //                                         the monitor side stamps them `atTick` so bursts replay on their own ticks
@@ -9,7 +9,7 @@
 //                   { kind: 'clock' }     the ventilator tick it may run up to: the ENGINE is the master clock, the
 //                                         ventilator never runs more than MAX_AHEAD_TICKS ahead of the newest engine
 //                                         event (a slow worker, a busy tab or an unheld time scale slow both alike)
-//                   { kind: 'run' }       Stage 10 (fast-forward): run up to this ventilator tick NOW, not on the wall
+//                   { kind: 'run' }       fast-forward: run up to this ventilator tick NOW, not on the wall
 //                                         clock — the cockpit steps through the span with the engine
 //   either way:     { kind: 'time' }      pause / resume / scale, so both sides stay on one sim time base
 //   page → vent:    { kind: 'control' }   settings patch, circuit, profile (the combined page's scripted demos)
@@ -22,7 +22,7 @@ export type LinkMsg =
   | { v: 1; kind: 'cmds'; tick: number; cmds: Command[] }
   | { v: 1; kind: 'lungState'; ev: LungStateEvent }
   | { v: 1; kind: 'clock'; ventTick: number }
-  | { v: 1; kind: 'run'; ventTick: number } // Stage 10
+  | { v: 1; kind: 'run'; ventTick: number }
   | { v: 1; kind: 'time'; action: 'pause' | 'resume' | 'scale'; value?: number }
   | { v: 1; kind: 'control'; patch?: Partial<VentConfig>; circuit?: 'connected' | 'disconnected'; profile?: ProfileId };
 
@@ -136,11 +136,11 @@ export interface MonitorLike {
 export const LEAD_TICKS = 5;
 /** The ventilator may run this far ahead of the newest engine event (events carry sim time; beats and 1 Hz state). */
 export const MAX_AHEAD_TICKS = 75;
-/** Stage 10: a cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
+/** A cockpit that has not answered a `run` in this long is given up on (the engine's own drive timeout then
  *  takes over, as when the cockpit is closed), wall ms [ENG]. */
 export const RUN_TIMEOUT_MS = 2000;
 
-/** The link's detach function; Stage 10: also `runTo`, the fast-forward's lockstep with the cockpit. */
+/** The link's detach function; also `runTo`, the fast-forward's lockstep with the cockpit. */
 export type LinkDetach = (() => void) & {
   /**
    * Have the ventilator's frames for every engine tick up to `engTick` dispatched (with their `atTick`) before the
@@ -163,7 +163,7 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   let lastTick = -1;
   let allowed = -Infinity;
   let engTick = 0;
-  let waiter: { ventTick: number; done: () => void } | null = null; // Stage 10: a fast-forward step waits for frames
+  let waiter: { ventTick: number; done: () => void } | null = null; // A fast-forward step waits for frames
   const publishClock = () => {
     if (offset === null) return;
     const allow = engTick - offset + MAX_AHEAD_TICKS;
@@ -181,14 +181,14 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
         gen++;
       }
       lastTick = m.tick;
-      const w = waiter !== null && m.tick >= waiter.ventTick ? waiter : null; // Stage 10: released after these dispatches
+      const w = waiter !== null && m.tick >= waiter.ventTick ? waiter : null; // Released after these dispatches
       for (const c of m.cmds) {
         const at = offset === null ? undefined : m.tick + offset;
         const probe = offset === null && !learning;
         if (probe) learning = true;
         const g = gen;
-        // FU-11 (F08): a probe that is refused, throws or rejects frees the next command to probe (before, `learning`
-        // stayed true, no offset was ever learnt, no clock was published and the ventilator stalled for good)
+        // A probe that is refused, throws or rejects frees the next command to probe (otherwise `learning` stays true,
+        // no offset is ever learnt, no clock is published and the ventilator stalls for good)
         const failed = (reason?: string) => {
           if (probe && g === gen) learning = false;
           onRejected(c, reason);
@@ -227,11 +227,11 @@ export function attachMonitorToLink(mon: MonitorLike, port: LinkPort, onRejected
   const offEng = mon.on((e) => {
     const tk = 't' in e ? Math.floor(e.t / 0.02 + 1e-6) : 0; // every event but toneCancel carries sim time
     if (e.type === 'toneCancel' && e.ids === undefined) {
-      // FU-11 (R50 F1): the engine was RESTORED (its restore marker: a toneCancel without ids; a new engine re-attaches
-      // instead). The old timeline's offset stamped every later frame in the restored future (50 s late after a 50 s
-      // rewind) and no clock was published: the cockpit stopped ventilating the patient while its own screen looked
-      // normal. Start a new generation: the next frame probes, the clock is published again from the restored time.
-      // (Event times alone cannot tell: a breath or a beat may carry a time seconds before "now".)
+      // The engine was RESTORED (its restore marker: a toneCancel without ids; a new engine re-attaches instead). The
+      // old timeline's offset stamped every later frame in the restored future (50 s late after a 50 s rewind) and no
+      // clock was published: the cockpit stopped ventilating the patient while its own screen looked normal. Start a
+      // new generation: the next frame probes, the clock is published again from the restored time. (Event times alone
+      // cannot tell: a breath or a beat may carry a time seconds before "now".)
       offset = null;
       allowed = -Infinity;
       learning = false;

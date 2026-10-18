@@ -19,17 +19,17 @@ export type Provenance = Record<string, ProvEntry>;
 
 export const COLOR_KEYS = [
   'ECG', 'HR', 'ST', 'PVC', 'SpO2', 'PLETH', 'PR', 'PI', 'NIBP', 'ART', 'CVP', 'PAP', 'ICP',
-  'PbtO2', 'UO', // Stage 7d
+  'PbtO2', 'UO',
   'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'AWRR', 'TEMP', 'BFA', 'AGENTS',
-  'NMT', // Stage 7f: neuromuscular transmission (TOF) tile
+  'NMT', // Neuromuscular transmission (TOF) tile
 ] as const;
 export type ColorKey = (typeof COLOR_KEYS)[number];
 /** Colour keys every skin must define (the rest are optional). */
 export const REQUIRED_COLOR_KEYS = ['ECG', 'HR', 'SpO2', 'PLETH', 'NIBP', 'RESP', 'CO2', 'TEMP'] as const;
 
-export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'ICP'] as const; // Stage 7d: ICP
+export const LANE_IDS = ['ECG1', 'ECG2', 'ECG3', 'PLETH', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'RESP', 'CO2', 'ICP'] as const;
 export type LaneId = (typeof LANE_IDS)[number];
-export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'NMT', 'BFA', 'ICP', 'PbtO2', 'UO', 'AGENTS'] as const; // Stage 7f: NMT, BFA; Stage 7d: ICP, PbtO2, UO; FU-8 (A10-E5): AGENTS
+export const TILE_PARAMS = ['HR', 'NIBP', 'ART', 'CVP', 'PAP', 'IBP1', 'IBP2', 'IBP3', 'IBP4', 'SpO2', 'TEMP', 'RR', 'CO2', 'ST', 'NMT', 'BFA', 'ICP', 'PbtO2', 'UO', 'AGENTS'] as const;
 export type TileParam = (typeof TILE_PARAMS)[number];
 export const PAGE_KINDS = ['standard', 'multiEcg', 'dualSpo2', 'ibp', 'bigNumber', 'pump'] as const;
 export type PageKind = (typeof PAGE_KINDS)[number];
@@ -45,8 +45,8 @@ export type PitchMapId = (typeof PITCH_MAPS)[number];
 export interface TileSpec {
   param: TileParam;
   size?: 'large' | 'normal';
-  /** Secondary values drawn in the tile ('PI', 'PR', 'T2', 'DT', 'EtCO2', 'FiCO2', 'AWRR', 'PPV', 'MEAN'; FU-8: 'IMCO2' — the
-   * inspired minimum CO2 under the vendor's word, imCO2 on Philips, FiCO2 elsewhere, research/11 glossary #16). */
+  /** Secondary values drawn in the tile ('PI', 'PR', 'T2', 'DT', 'EtCO2', 'FiCO2', 'AWRR', 'PPV', 'MEAN', 'IMCO2' —
+   * the inspired minimum CO2 under the vendor's word, imCO2 on Philips, FiCO2 elsewhere, research/11 glossary #16). */
   extras?: string[];
 }
 /** Sensors whose attachment can swap a lane and a tile (showcase hotfix item 4: the Saadat-style capnogram). */
@@ -127,7 +127,7 @@ export interface Skin {
     menuRegion: 'popup' | 'wave-area-bottom';
     header: HeaderItem[];
     messageBars: 'single-under-header' | 'split-technical-physiological';
-    /** Text drawn in the header when the layout is not taken from the vendor's manual (Stage 4b, gate G4a). */
+    /** Text drawn in the header when the layout is not taken from the vendor's manual. */
     badge?: string;
     /** Lanes and tiles a sensor takes over while it is attached (saadat-like: CO2 replaces RESP and RR). */
     whenAttached?: Partial<Record<SwapSensor, SensorSwap>>;
@@ -171,7 +171,7 @@ export interface Skin {
     source: string;
     autoPriority: string[];
     relabelNonEcgAs: string | null;
-    /** FU-1 (E-4a-2): optional HR averaging; absent = the `method` default. */
+    /** Optional HR averaging; absent = the `method` default. */
     averaging?: { kind: 'beats' | 'seconds'; n: number };
   };
   spo2: {
@@ -183,7 +183,7 @@ export interface Skin {
     updateHz: number;
   };
   nibp: {
-    /** Recorded, not modelled (FU-5): the engine's NIBP is command-driven and idle at power-on on every skin. */
+    /** Recorded, not modelled: the engine's NIBP is command-driven and idle at power-on on every skin. */
     modeDefault: 'MANUAL' | 'AUTO';
     autoIntervalMin: number | null;
     autoIntervalsMin: number[];
@@ -201,7 +201,7 @@ export interface Skin {
     /** Label → [low, mid, high] mmHg. */
     scales: Record<string, [number, number, number]>;
     /**
-     * FU-5: a STATIC (non-pulsatile) pressure is shown with its systolic/diastolic/mean kept and only the pulse "-?-"
+     * A STATIC (non-pulsatile) pressure is shown with its systolic/diastolic/mean kept and only the pulse "-?-"
      * ('keep', Philips IFU [S2] p. 57) or with the mean only ('mean-only', Saadat, research/06 §4.1).
      */
     staticDisplay: 'keep' | 'mean-only';
@@ -210,9 +210,9 @@ export interface Skin {
     unit: 'mmHg' | 'kPa' | '%';
     scale: number;
     scaleUnit: 'mmHg' | '%';
-    /** Sidestream transport delay (s) of this vendor's CO2 module (R39-5, research 09 §5); mainstream stays 0. */
+    /** Sidestream transport delay (s) of this vendor's CO2 module (research 09 §5); mainstream stays 0. */
     sidestreamDelayS: number;
-    /** Sidestream 10–90 % rise time (ms), adult (R39-5); the engine keeps its own neonatal rise. */
+    /** Sidestream 10–90 % rise time (ms), adult; the engine keeps its own neonatal rise. */
     riseTimeMs: number;
   };
   alarms: {
@@ -225,11 +225,11 @@ export interface Skin {
     lowPulses?: 1 | 2;
     volume: { min: number; max: number; default: number };
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
-    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** FU-5: rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
+    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
     /**
-     * Stage 9 (E-S9-4, FU-5 R-FU5-6): the vendor's own words for alarm texts, where they differ from the IEC table's
-     * Philips aliases — `texts` by fixed alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key
-     * ('ART_S', 'TEMP', …). Wording only: levels, timing and latching are unchanged. Absent = the IEC table.
+     * The vendor's own words for alarm texts, where they differ from the IEC table's Philips aliases — `texts` by fixed
+     * alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key ('ART_S', 'TEMP', …). Wording only:
+     * levels, timing and latching are unchanged. Absent = the IEC table.
      */
     wording?: { texts?: Partial<Record<string, string>>; limitLabels?: Partial<Record<string, string>> };
     numericFlash: boolean;
@@ -239,19 +239,20 @@ export interface Skin {
     alwaysOn: string[];
     alarmOffIcon: 'crossed-bell-red' | 'bell-off';
     /**
-     * FU-5: `mode` 'mute' = Silence mutes for `durationS` (ZOLL, Saadat); 'acknowledge' = Silence acknowledges every
-     * active alarm and INOP, new alarms sound at once, no timer (`durationS` null; research/05 §6 [S2] Philips IntelliVue IFU p. 32, Mindray
-     * Alarm Reset [S4] §10.8).
+     * `mode` 'mute' = Silence mutes for `durationS` (ZOLL, Saadat); 'acknowledge' = Silence acknowledges every
+     * active alarm and INOP, new alarms sound at once, no timer (`durationS` null; research/05 §6 [S2] Philips
+     * IntelliVue IFU p. 32, Mindray Alarm Reset [S4] §10.8).
      */
     silence: { mode: 'mute' | 'acknowledge'; durationS: number | null; suppressesVisual: boolean; cancelOnNewAlarm: boolean; headerCountdown: boolean; technicalActsAsAck: boolean };
     pause: { durationS: number } | null;
     /**
-     * FU-5: what stays on screen (visual) and sounding (audible) after the condition ends, until acknowledged.
-     * 'lethal' = ASYSTOLE, VFIB, VTAC, EXTREME BRADY/TACHY; 'red' = every level-1 alarm; 'redYellow' = levels 1–2.
-     * Technical alarms (INOPs) never latch (research/05 §6 [S2] Philips IntelliVue IFU p. 40).
+     * What stays on screen (visual) and sounding (audible) after the condition ends, until acknowledged. 'lethal' =
+     * ASYSTOLE, VFIB, VTAC, EXTREME BRADY/TACHY; 'red' = every level-1 alarm; 'redYellow' = levels 1–2. Technical
+     * alarms (INOPs) never latch (research/05 §6 [S2] Philips IntelliVue IFU p. 40).
      */
     latching: { visual: 'off' | 'lethal' | 'red' | 'redYellow'; audible: 'off' | 'red' | 'redYellow' };
-    /** FU-5: the arterial-line disconnect alarm (static, mean < 10 mmHg) is ON by default (Philips [S2] p. 44; Saadat OFF). */
+    /** The arterial-line disconnect alarm (static, mean < 10 mmHg) is ON by default (Philips [S2] p. 44; Saadat
+     * OFF). */
     abpDisconnectDefault: boolean;
     delayS: number;
     spo2DelayS: number | null;
@@ -268,7 +269,7 @@ export interface Skin {
     tachy: number | null;
     brady: number | null;
     freqPvcPerMin: number;
-    /** FU-5: the PAUSE alarm's factory switch (Mindray: Off, [S4] App. C.1.1.2). */
+    /** The PAUSE alarm's factory switch (Mindray: Off, [S4] App. C.1.1.2). */
     pauseAlarm: boolean;
   };
   st: { defaultOn: boolean; isoMs: number; stMs: number; updateS: number };
@@ -285,8 +286,8 @@ export interface Skin {
   pacer: { rateDefault: number; rateRange: LimitPair; mADefault: number; mARange: LimitPair; mAStep: { up: number; down: number }; modeDefault: 'demand' | 'fixed'; pausePct: number | null } | null;
   trend: { style: 'line' | 'filled-area'; hours: number };
   /**
-   * FU-5: `questionable` is appended to a questionable numeric ("97?"); `inop` replaces a numeric whose technical alarm
-   * is active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
+   * `questionable` is appended to a questionable numeric ("97?"); `inop` replaces a numeric whose technical alarm is
+   * active ("-?-" on the research/05 §6 [S2] Philips IntelliVue IFU p. 55–62).
    */
   glyphs: { noValue: string; hrUnavailable: string; nibpFail: string; questionable: string; inop: string };
   provenance: Provenance;

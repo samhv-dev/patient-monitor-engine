@@ -59,7 +59,7 @@ describe('truth event', () => {
   // (`hemo.circ.cor.ref`) is asserted KEPT by 7x's own truth.test.ts — so the cap is a question for the orchestrator.
   // Flipped at the FU-4 gate (R45): with FU-5's SKIP_PATH entries (`hemo.num`, `resp.num`, `hemo.nibp`) merged in, the
   // tree is back under the cap (2 041 leaves).
-  it('the synthetic 12-drug future tree is not cut by the leaf cap — was 2 101 leaves (cap 2 100) after FU-4 Task 18d, before the FU-5 merge', () => {
+  it('the synthetic 12-drug future tree is not cut by the leaf cap', () => {
     const e = createEngine(adult);
     e.advanceTo(30);
     const { st, dev } = e.snapshot().state as { st: Record<string, unknown>; dev: object };
@@ -69,7 +69,7 @@ describe('truth event', () => {
     console.log(`truth 12-drug tree: ${r.leaves} leaves`);
     expect(r.truncated).toBe(false);
   });
-  it('costs < 0.2 ms per call on today\'s state (logged; CI asserts 1 ms) and fits 50 KB with 7b–7g-sized sub-trees', () => {
+  it('costs < 0.2 ms per call on today\'s state (logged; CI asserts 1 ms) and fits 50 KB with module-sized sub-trees', () => {
     const e = createEngine(adult);
     e.advanceTo(30);
     const { st, dev } = e.snapshot().state as { st: Record<string, unknown>; dev: object };

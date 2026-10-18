@@ -1,6 +1,6 @@
-// Stage V.1: prints docs/physiology/stage-v-lung-pathology-data.md — loads catalogue-md.ts through Vite's SSR loader
+// Stage V.1: prints docs/physiology/vent-lung-pathology-data.md — loads catalogue-md.ts through Vite's SSR loader
 // (workspace packages, TypeScript and JSON imports resolved as the tests resolve them).
-// Run from the repo root: node packages/ventilator/scripts/catalogue-md.mjs > docs/physiology/stage-v-lung-pathology-data.md
+// Run from the repo root: node packages/ventilator/scripts/catalogue-md.mjs > docs/physiology/vent-lung-pathology-data.md
 import { resolve } from 'node:path';
 import { createServer } from 'vite';
 

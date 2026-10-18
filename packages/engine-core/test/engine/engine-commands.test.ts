@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 describe('engine commands', () => {
-  it('dispatch accepts Stage 1 commands for the next tick and rejects the rest with a reason', () => {
+  it('dispatch accepts valid commands for the next tick and rejects the rest with a reason', () => {
     const e = createEngine();
     expect(e.dispatch(cmd({ type: 'setRhythm', rhythm: 'afib' }))).toEqual({ accepted: true, tick: 1 });
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'k', value: 5 })).accepted).toBe(false); // Stage 5 (Stage 3 accepts spo2)
@@ -31,7 +31,7 @@ describe('engine commands', () => {
     expect(e.dispatch(cmd({ type: 'setTarget', variable: 'hr', value: 100, atTick: 50 })).tick).toBe(50);
   });
 
-  it('rejects NaN / Infinity / out-of-range numeric inputs and never corrupts the pipeline (review M5)', () => {
+  it('rejects NaN / Infinity / out-of-range numeric inputs and never corrupts the pipeline', () => {
     const e = createEngine({ seed: 3, patient: { baseline: { hr: 75 } } });
     const bad: Array<Record<string, unknown>> = [
       { type: 'setTarget', variable: 'hr', value: 80, ramp: { durationS: Infinity } },
@@ -65,7 +65,7 @@ describe('engine commands', () => {
     expect(Math.abs(hr[hr.length - 1]! - 75)).toBeLessThanOrEqual(2);
   });
 
-  it('planUntil refuses a non-finite event time instead of spinning (review M5)', () => {
+  it('planUntil refuses a non-finite event time instead of spinning', () => {
     const rng = createRngState(1);
     const ctx = { hrAt: () => Number.NaN, mods: defaultModifiers(), rng, hrv: { phi: 0, psi: 0 } };
     const st = createRhythmState('sinus', {}, 0, ctx);
@@ -115,7 +115,7 @@ describe('engine commands', () => {
     expect(rrAt(25)).toBeCloseTo(0.5, 3);
   });
 
-  it('a command every tick (slider drag) still gives exactly one tone per R and never re-posts a live tone (review H3)', () => {
+  it('a command every tick (slider drag) still gives exactly one tone per R and never re-posts a live tone', () => {
     const e = createEngine({ seed: 7 });
     const ev = collect(e);
     let i = 0;
@@ -157,7 +157,7 @@ describe('engine commands', () => {
     for (let k = 1; k < tones.length; k++) expect(tones[k]! - tones[k - 1]!).toBeGreaterThan(0.2); // no double beeps
   });
 
-  it('switching lane 0 to a small lead (aVL) keeps the HR: detection runs on the primary lead II (review M3)', () => {
+  it('switching lane 0 to a small lead (aVL) keeps the HR: detection runs on the primary lead II', () => {
     const e = createEngine({ seed: 12, patient: { baseline: { hr: 75 } } });
     const hr: Array<{ t: number; v: number | null }> = [];
     e.on((x) => {
@@ -195,7 +195,7 @@ describe('engine commands', () => {
     expect(Array.from(b)).toEqual(Array.from(a));
   });
 
-  it('restore() refuses a snapshot from another engine version or mains frequency (exact replay only on the same build; review L10)', () => {
+  it('restore() refuses a snapshot from another engine version or mains frequency (exact replay only on the same build)', () => {
     const snap60 = createEngine({ seed: 1, device: { mainsHz: 60 } }).snapshot();
     expect(() => createEngine({ seed: 1, device: { mainsHz: 50 } }).restore(snap60)).toThrow(/mains/);
     const snap = createEngine({ seed: 1 }).snapshot();
@@ -203,7 +203,7 @@ describe('engine commands', () => {
     expect(() => createEngine({ seed: 1 }).restore(snap)).not.toThrow();
   });
 
-  it('restore() drops the discarded timeline from the sample buffers (review M4)', () => {
+  it('restore() drops the discarded timeline from the sample buffers', () => {
     const e = createEngine({ seed: 9 });
     e.advanceTo(10);
     const snap = e.snapshot();

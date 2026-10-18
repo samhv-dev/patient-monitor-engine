@@ -1,5 +1,5 @@
-// Venegas sigmoid P–V on the lung (audit borrow #8; Venegas, Harris & Simon 1998, J Appl Physiol 84:389). Pulse puts
-// the sigmoid on the chest wall; here it is on the lung and the chest wall is linear and shared (A9). Pure functions.
+// Venegas sigmoid P–V on the lung (Venegas, Harris & Simon 1998, J Appl Physiol 84:389). Pulse puts the sigmoid on the
+// chest wall; here it is on the lung and the chest wall is linear and shared. Pure functions.
 import { VENEGAS_C } from './params.ts';
 
 export interface Sigmoid {

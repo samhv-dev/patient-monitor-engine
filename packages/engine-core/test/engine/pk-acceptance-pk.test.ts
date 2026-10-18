@@ -4,7 +4,7 @@ import { eleveldPropofol, mintoRemifentanil, schniderPropofol } from '../../src/
 import type { MonitorEngine } from '../../src/types.ts';
 import { runPk } from '../helpers/pk.ts';
 
-describe('7g acceptance — PK through the engine', () => {
+describe('drug acceptance — PK through the engine', () => {
   // Stage 7c (R51 addendum 15, ruling 4): with the blood on main 7g's high-extraction clearance follows 7c's live hepatic
   // flow (blood.out.hbfRel), which is correct behaviour. The equality is asserted with hbfRel pinned to 1 through 7c's
   // test-only seam (`blood.pinHbfRel`); the second assertion documents the flow-scaled value.

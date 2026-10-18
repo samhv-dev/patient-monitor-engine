@@ -1,7 +1,7 @@
-// Pulse differential oracle (R34; docs/physiology/pulse-parameter-annex.md §C–§D). Identical scenarios run in Pulse
-// (JSON actions) and in our engine (a pme-validation/1 document through the segment runner); truth values are
-// compared within tolerances. Known Pulse errors are EXPECTED DISAGREEMENTS: the comparator asserts Pulse is still
-// on the wrong side, so a future Pulse fix is noticed (annex §C "expect-differ").
+// Pulse differential oracle (docs/physiology/pulse-parameter-annex.md §C–§D). Identical scenarios run in Pulse (JSON
+// actions) and in our engine (a pme-validation/1 document through the segment runner); truth values are compared within
+// tolerances. Known Pulse errors are EXPECTED DISAGREEMENTS: the comparator asserts Pulse is still on the wrong side,
+// so a future Pulse fix is noticed (annex §C "expect-differ").
 // Patient: our adult set to Pulse's StandardMale (44 y, M, 77.1 kg, 180 cm, HR 72, BP 114/73.5; annex §D).
 import type { DocCommand } from '@pme/controller/scenario';
 import { runValidationDoc } from '../segments/run.ts';
@@ -15,7 +15,7 @@ export interface OracleScenario {
   title: string;
   durationS: number;
   pulseActions: Array<{ t: number; json: string }>;
-  /** `mode: 'modeled'` for scenarios that compare Stage 7 physiology: in MANUAL the targets stay put and a bleed or a
+  /** `mode: 'modeled'` for scenarios that compare MODELED physiology: in MANUAL the targets stay put and a bleed or a
    *  drug moves nothing (measured: O2/O4 deltas exactly 0). O1 and O-VF stay MANUAL (baseline targets; see O-VF). */
   ours: { actions: Array<{ t: number; command: DocCommand }>; requires?: string[]; mode?: 'modeled' };
   compare: Compare[];
@@ -68,7 +68,10 @@ export const ORACLE: OracleScenario[] = [
   },
 ];
 
-/** O3, O5–O12 (annex §D): added when our 7c–7g modules land and each Pulse action JSON is verified in this harness. */
+/**
+ * O3, O5–O12 (annex §D): added when our blood, organ, endocrine, neuro and drug modules land and each Pulse action JSON
+ * is verified in this harness.
+ */
 export const ORACLE_BACKLOG = ['O3 crystalloid 1 L', 'O5 norepinephrine 0.1 µg/kg/min', 'O6 apnoea after FiO2 1.0', 'O7 PEEP 5 → 15 (PCV)', 'O8 FiO2 1.0 for 60 min', 'O9 hypothermia 33 °C', 'O10 glucose/insulin', 'O11 renal MAP 60', 'O12 hepatic clearance in haemorrhage'];
 
 export interface OracleRow { scenario: string; id: string; ours: number; pulse: number; expected: string; grade: Grade; note: string }
