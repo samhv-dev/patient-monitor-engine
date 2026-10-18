@@ -176,7 +176,9 @@ CI on the final push: recorded below once the run completes (section 18).
   falls over the next 2 min; (5) set Rate to 6: EtCO2 climbs over minutes and awRR reads 6; (6) Safari → Develop →
   Show JavaScript Console shows no error; record the result and the Safari version (Safari → About Safari) here.
 - **Release checklist items 8–9** (`RELEASE.md`): the 600 s tick gate on an idle machine and the busy Ventilator-view
-  soak — owner/orchestrator steps before the tag; not run by the executor (shared machine).
+  soak (frame p95 read as the FU-11 D gate did: `requestAnimationFrame` intervals in the host window) —
+  owner/orchestrator steps before the tag; not run by the executor (shared machine). Also listed as open in the
+  CHANGELOG.
 
 ## 12. FU-11 hand-overs (Task 13b)
 
@@ -229,6 +231,8 @@ stale `stage9-tasks` `test.fail` (now inert: its condition is false) and the FU-
 Stage 14); a DOI (Q5, at 1.0.0).
 
 ## 15. Licence items for legal review before the v1.0 tag (brief §10)
+
+Which tag the two "open, for Ali" rows must precede — `v1.0.0-rc.1` or `v1.0.0` — is the **owner's choice, open**.
 
 | §10 item | Status at this release |
 |---|---|

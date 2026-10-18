@@ -26,7 +26,11 @@ commit and creates the GitHub release with its assets.
    stated bound "p99 ≪ 6 ms", measured 0.53 ms; `docs/gates/stage-8a.md`). CI does not run it (shared runners). The run
    rewrites `docs/validation/perf/ticks.json`: restore it unless the release lands a new measurement on purpose.
 9. Soak with a busy Ventilator view (FU-11). With the Ventilator view open at ×4 and a Remote paired, the Remote shows
-   its first state within 5 s and the host's frame p95 stays ≤ 20 ms for 10 min (record both numbers).
+   its first state within 5 s and the host's frame p95 stays ≤ 20 ms for 10 min (record both numbers). The frame p95
+   is read as the FU-11 D gate read it (`docs/gates/fu-11-d.md`, "Host frame p95"; evidence
+   `docs/gates/fu-11-d/step4-*.json`: n ≈ 60 per second): the intervals between `requestAnimationFrame` callbacks in
+   the host window, collected by a Playwright script on the dev server (that gate's script was a scratch file, not
+   committed) or pasted into the host window's console, and their 95th percentile over the 10 minutes.
 
 ## Tag (orchestrator only)
 

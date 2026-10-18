@@ -78,7 +78,9 @@ realism review have not run, and the limits below are known.
 - Not yet checked by hand at this release (PENDING-OWNER): learners' phones on a real phone (Stage 12 gate step 4,
   hand checks H17 and H21, `docs/gates/stage-12-real-phone.md`); the Debrief's print preview in Safari and Chrome
   (Stage 13); the fast-forward look and the second screen in real Safari (H18, H20); the hidden-tab watchdog (H19);
-  the `file://` ventilator embed opened by double-click in real Safari (H22). None of these is verified.
+  the `file://` ventilator embed opened by double-click in real Safari (H22); and the two release-checklist runs of
+  `RELEASE.md` — the 600 s tick-cost gate on an idle machine (item 8) and the 10-minute soak with a busy Ventilator
+  view and a paired Remote (item 9). None of these is verified.
 - For education only. Not a medical device; never connect it to a patient or use it for clinical decisions.
 - The ES module packages are publishable but not on npm at this release candidate (build from source); the `@pme/*`
   package names are provisional until a first npm publish. No DOI yet (planned for 1.0.0).
