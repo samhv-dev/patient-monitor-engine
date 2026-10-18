@@ -6,8 +6,16 @@
    the browser has none (WebKit: .db-nomargin), a footer line before each forced page break. The @page size and margins
    apply to printing any route of the app (R50 M-9). */
 .debrief .db-tools { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; margin: var(--s-3) 0; }
+.debrief { --db-team: #0072B2; --db-patient: #D55E00; } /* E45: the two accents, each with a shape and a legend in words */
+.debrief .db-team { color: var(--db-team); }
+.debrief .db-patient { color: var(--db-patient); }
 .debrief .db-who { max-width: 32rem; }
-.debrief .db-meta, .debrief .db-facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-1) var(--s-4); margin: var(--s-3) 0; }
+/* the header band: a small-capital kicker (the h1, named "Debrief"), the case's title, one sub-line, a thick rule */
+.debrief .db-band { border-bottom: 3px solid var(--text-strong); padding-bottom: var(--s-2); margin-bottom: var(--s-3); }
+.debrief .db-band h1 { font-size: var(--t-13); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; color: var(--text-muted); }
+.debrief .db-title { font-size: var(--t-22); font-weight: 700; line-height: 1.2; margin: var(--s-1) 0; }
+.debrief .db-sub { margin: 0; color: var(--text-muted); }
+.debrief .db-facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--s-1) var(--s-4); margin: var(--s-3) 0; }
 .debrief dt { color: var(--text-muted); }
 .debrief dd { margin: 0; }
 .debrief .db-sec { margin-top: var(--s-5); }
@@ -48,10 +56,19 @@
   .app[data-route='debrief'] > .topbar, .app[data-route='debrief'] .sessionbar, .app[data-route='debrief'] .stage,
   .app[data-route='debrief'] .skip, body:has(.app[data-route='debrief']) .toasts, .debrief .db-tools { display: none !important; }
   .app[data-route='debrief'] .main, .app[data-route='debrief'] .view[data-view='debrief'] { display: block; overflow: visible; height: auto; }
-  .debrief, .debrief * { color: #000 !important; background: #fff !important; box-shadow: none !important; }
+  /* black on white, except what carries an accent or a fill (E45): the discuss chip, the team and patient words and
+     marks; only those print their colour exactly */
+  .debrief, .debrief *:not(.db-chip, .db-team, .db-patient, .db-mk, .db-mk *) { color: #000 !important; background: #fff !important; box-shadow: none !important; }
+  .debrief .db-chip { color: #000; background: #fff; }
+  .debrief li[data-mark='not-assessable'] .db-chip { color: #555; border-color: #555; }
+  .debrief li[data-mark='discuss'] .db-chip { background: #ececec; }
+  .debrief .db-team, .debrief .db-patient, .debrief .db-mk { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .debrief .db-who { display: none; }
+  .debrief .db-band { border-bottom: 1.5pt solid #000; padding-bottom: 2mm; margin-bottom: 3mm; }
+  .debrief .db-band h1 { font-size: 8.5pt; margin: 0; }
+  .debrief .db-title { font-size: 16pt; }
   .debrief .page { max-width: none; padding: 0; margin: 0; }
   .debrief { font-size: 10.5pt; }
-  .debrief h1 { font-size: 18pt; margin: 0 0 4mm; }
   .debrief h2 { font-size: 13pt; break-after: avoid; }
   .debrief .db-sec { margin-top: 6mm; }
   .debrief #db-trends, .debrief #db-timeline, .debrief #db-minutes { break-before: page; }

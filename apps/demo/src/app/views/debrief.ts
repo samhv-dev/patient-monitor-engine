@@ -100,8 +100,16 @@ function minutes(d: RunData): HTMLElement {
 export function debriefView(session: AppSession, link: Link): View {
   const who = h('input', { class: 'input', id: 'db-who', autocomplete: 'off', placeholder: 'Instructor and learners' });
   const notes = h('div', { class: 'db-notes', contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-labelledby': 'db-notes-h' });
-  const body = h('div', { class: 'db-body' });
-  const tail = h('div', { class: 'db-tail' });
+  // Decision 11: render() rebuilds only the two live containers; the Run by field, the talking points and the notes
+  // between them are created once here and never re-created or re-appended, so typing in them is never interrupted
+  const live1 = h('div', { id: 'db-live-1' });
+  const live2 = h('div', { id: 'db-live-2' });
+  const pearls = h('div', { id: 'db-pearls' });
+  const runBy = (): void => {
+    const s = live1.querySelector('.db-runby');
+    if (s) s.textContent = who.value;
+  };
+  who.addEventListener('input', runBy);
   let started = -1;
   const render = () => {
     const d = session.record.data;
@@ -113,18 +121,19 @@ export function debriefView(session: AppSession, link: Link): View {
     const end = endOf(d);
     const card = d.doc ? cardOf(d.doc) : null;
     const wall = Math.max(0, (d.lastWall - d.startedAt) / 1000);
-    const meta = h('dl', { class: 'db-meta' },
-      h('dt', {}, 'Scenario'), h('dd', {}, card ? card.title : 'No scenario (free run)'),
-      h('dt', {}, 'Patient'), h('dd', {}, d.patient),
-      h('dt', {}, 'Started'), h('dd', {}, new Date(d.startedAt).toLocaleString()),
-      h('dt', {}, 'Duration'), h('dd', {}, `${mmss(end)} simulated · ${span(wall)} on the clock`));
+    // the header band: the kicker (the h1 keeps its accessible name "Debrief"), the case, one sub-line
+    const band = h('header', { class: 'db-band' },
+      h('h1', { id: 'db-h' }, 'Debrief', h('span', { 'aria-hidden': 'true' }, ' · Simulated case')),
+      h('div', { class: 'db-title' }, card ? card.title : 'No scenario (free run)'),
+      h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated (${span(wall)} on the clock) · ${new Date(d.startedAt).toLocaleString()} · Run by: `,
+        h('span', { class: 'db-runby' }, who.value)));
     const obj = objectives(d);
     const fs = facts(d);
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
     const marks = d.rows.filter((r) => r.kind === 'bookmark' || r.kind === 'restore');
-    body.replaceChildren(
-      meta,
+    live1.replaceChildren(
+      band,
       section('objectives', 'Objectives', obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
           const m = markOf(o);
@@ -134,6 +143,8 @@ export function debriefView(session: AppSession, link: Link): View {
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),
+    );
+    live2.replaceChildren(
       runFoot(),
       section('trends', 'Trends', h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end)))),
       section('drugs', 'Drugs and fluids', meds.length
@@ -149,8 +160,9 @@ export function debriefView(session: AppSession, link: Link): View {
       section('bookmarks', 'Bookmarks', marks.length
         ? h('ul', {}, ...marks.map((r) => h('li', r.undone ? { class: 'undone' } : {}, `${mmss(r.t)} ${r.text}${undoneText(r)}`)))
         : h('p', { class: 'muted' }, 'No bookmarks.')),
+      runFoot(),
+      section('minutes', 'Appendix: one row per minute', minutes(d)),
     );
-    tail.replaceChildren(runFoot(), section('minutes', 'Appendix: one row per minute', minutes(d)));
   };
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
@@ -161,11 +173,11 @@ export function debriefView(session: AppSession, link: Link): View {
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
         }, 'ghost'),
         h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
-      h('h1', { id: 'db-h' }, 'Debrief'),
+      live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
-      body,
+      pearls,
       section('notes', 'Notes', notes),
-      tail,
+      live2,
       h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
   // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
