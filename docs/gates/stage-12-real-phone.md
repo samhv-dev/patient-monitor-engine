@@ -1,8 +1,27 @@
 # Stage 12 gate, Step 4: one real phone through the six cards (the OWNER's step)
 
-STATE: **PENDING-OWNER.** Stage 12 merged (PR #57, main 8698a86e); the owner's result in this table still closes gate
-step 4. Prepared on the pre-merge dry run
+STATE: **RUN BY THE OWNER, 2026-10-18** (was PENDING-OWNER; results in "The owner's run" below). H17, H18, H20 and
+H21 pass; H19 failed with two findings (FX-14, FX-15), both for a later release. Stage 12 merged (PR #57, main
+8698a86e). Prepared on the pre-merge dry run
 (kit built from `stage-12` at 806b00bc in `Desktop/Claude/_sandbox/pme-classroom-dryrun/kit`).
+
+## The owner's run (2026-10-18)
+
+Environment: the owner's Mac, macOS 27.0.1 (Build 26A434), Safari Version 27.0.1 (22625.1.29.11.28), Chrome 155, kit
+`pme-showcase-kit-62e521c3` (dev build) over the Mac's hotspot, one real phone.
+
+| Check | Result |
+|---|---|
+| Setup | Safari; QR sheet shown; phone followed; numbers matched the Mac. |
+| H17 (own phone) | **PASS** — "Phone followed; numbers match". |
+| H18 (fast-forward look) | **PASS** — "As expected on both" (Mac and phone). |
+| H19 (host tab hidden 7 min) | **FAIL**, two findings: the **phone lost the session** (FX-14), and on the Mac the **scenario clock did not advance** while the Safari tab was hidden (FX-15: Safari suspends the hidden tab, so the host simulation pauses; likely the same root as FX-14). Day rule: the Mac's tab stays visible and frontmost for the whole talk. Both are for a later release. |
+| H20 (same-browser second screen) | **PASS** — the learner's monitor window opened from the first page stays in sync, including after fast-forward. |
+| H21 (Ventilator-view hold) | **PASS** — see the H21 table below. |
+| H22 (ventilator embed by double-click in real Safari) | **PASS** — this check belongs to the Stage 8b gate: `docs/gates/stage-8b.md` §11. |
+
+The per-card table below was not filled card by card: the owner recorded the overall result above ("Phone followed;
+numbers match"), not per-card times, resync counts or the "Once" lines.
 
 ## The run
 
@@ -34,7 +53,7 @@ Once:
 
 | # | Check | Result (y/n) | Notes |
 |---|---|---|---|
-| H21 | Bronchospasm with the Ventilator view: once the cockpit ventilates and the phone shows "The ventilator is on the main screen", switch the main screen to the **Monitor** view for 30 s. On the phone, does the hold stay? On the main screen, does the patient keep ventilating (EtCO2 steady, awRR at the cockpit's rate)? Then load the next case: does the phone follow again? | | |
+| H21 | Bronchospasm with the Ventilator view: once the cockpit ventilates and the phone shows "The ventilator is on the main screen", switch the main screen to the **Monitor** view for 30 s. On the phone, does the hold stay? On the main screen, does the patient keep ventilating (EtCO2 steady, awRR at the cockpit's rate)? Then load the next case: does the phone follow again? | **y** (owner, 2026-10-18) | **PASS** — the phone held; EtCO2 rose steadily at a low rate over the next few minutes (bronchospasm, no salbutamol, breaths kept going). |
 
 Why: on CI's Linux WebKit, the hidden cockpit stopped sending frames once the Monitor view was shown, so the phone's
 hold ended (PR #57, CI run 38194080645). The cockpit is meant to keep ventilating whichever view is on screen. This

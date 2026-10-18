@@ -7,6 +7,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Known limitations
+
+- FX-15 (with FX-14): in Safari a hidden host tab is suspended, so the host simulation pauses (the scenario clock does not advance) and a following phone loses the session (owner's hand check H19, 2026-10-18). The fix is for a later release; until then keep the host tab visible and frontmost.
+
 ## [1.0.0-rc.1] - 2026-10-18
 
 First public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a

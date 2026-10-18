@@ -23,6 +23,8 @@ These replace the round-B defaults D1–D6 [R00 2026-10-17 "OWNER ANSWERS"].
 | E20 | Monitor skin | **Saadat-style**, no style change during the talk (after a change to Philips-style the phones' AGENTS tile read "---" against the instructor's "0.0" for the 30 s watched, finding FX-9) [MEAS §8] | §1 |
 | E21 | Limit alarms after a Load | **"All alarms on" after every Load stays a presenter step** (no code change). The **Bookmark is taken AFTER pressing it**: Return here then keeps the alarms on [A3.2] | every case |
 | E22 | MH "ventilation back" objective | **Changed** (PR #69, fix-e22-mh-rule; owner ruling E23 keeps the 2-min hold, ordering A) to "hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; normalising early is "not met" [R00 2026-10-17]. The presenter **keeps hyperventilating through the fast-forwards** and presses **EtCO₂ normal: ventilation back to 12 × 500** only at **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** | Case 3 |
+| E13 | Which Mac presents (2026-10-18) | **The kit on a Mac** ("Kit on mac is alright"); GitHub Pages is the fallback (§7). **Pending:** the presenting Mac is not yet in the owner's hands; `node -v` (22 or later) and one Start Classroom run on it remain to do before Thursday | §1, §7 |
+| E14 | The network for the phones (2026-10-18) | **A travel router** | §1 |
 
 ## What changed in round C
 
@@ -83,7 +85,7 @@ unchanged [MEAS §7]; a higher-priority alarm ends an alarm pause [R00 2026-10-1
 | G12 / G12P | `docs/gates/stage-12.md` / `docs/gates/stage-12-real-phone.md` (phones; the owner's step) |
 | CR12 | `docs/showcase/CLASSROOM.md` (also `_sandbox/pme-classroom-dryrun/CLASSROOM.md`) |
 | PF / OPT | `_sandbox/pme-classroom-dryrun/PRE-FLIGHT.md` / `OWN-PHONE-TEST.md` |
-| KIT | `_sandbox/pme-classroom-dryrun/kit/VERSION.txt`; `_sandbox/pme-kit-main-62e521c3/README.txt` |
+| KIT | `_sandbox/pme-classroom-dryrun/kit/VERSION.txt`; `_sandbox/pme-kit-release-3db25a3b/README.txt` (the release-build kit). The owner's sandbox kits are now the 3db25a3b release build: `pme-classroom-dryrun/kit` and `pme-debrief-dryrun/pme-showcase-kit-3db25a3b` |
 | G13 / DB-T / DB-MH | `docs/gates/stage-13.md` / `docs/gates/stage-13/rehearsal/debrief-tamponade-*.json` / `debrief-mh-*.json` (kit 58b2c13c) |
 | PRINT | `_sandbox/pme-debrief-dryrun/HOW-TO-CHECK-THE-PRINT.txt` |
 | CARD | `apps/demo/src/app/showcase/showcase-*.json` (objective text, Debrief rule, states, button labels) |
@@ -151,15 +153,19 @@ phones [R31 §3]. Tick every line.
 
 **The kit** (matches `PRE-FLIGHT.md` [PF])
 - [ ] The kit is built from **main at 62e521c3 or later**: the kit's `VERSION.txt` line `Commit:` reads `62e521c3…` or a
-      later main commit [KIT: "Commit: 62e521c37df5…", built 2026-10-13]. Older kits (51a37063 to 56f3761f) have the
+      later main commit [KIT: the owner's sandbox kits are now the 3db25a3b release build, `pme-classroom-dryrun/kit`
+      ("Commit: 3db25a3b3f1c…") and `pme-debrief-dryrun/pme-showcase-kit-3db25a3b`; the owner's hand checks of
+      2026-10-18 ran on the 62e521c3 kit, built 2026-10-13]. Older kits (51a37063 to 56f3761f) have the
       relay that dies at the first phone (KR-A1) [MEAS §9 item 1]. A3 ran on a ca0d2dbb kit, relay test 2 of 2 [A3].
       **For the MH card: a kit that carries the E22 rule (PR fix-e22-mh-rule) once it is merged**; on an older kit the
       Debrief's MH ventilation line still uses the old rule.
-- [ ] **The relay test passed**: the kit's README says `check-relay.mjs` **PASS** (the 62e521c3 kits: 2 of 2 runs)
+- [ ] **The relay test passed**: the kit's README says `check-relay.mjs` **PASS** (the 62e521c3 kits: 2 of 2 runs; the 3db25a3b release kit: 2 of 2 runs, 2026-10-18)
       [KIT README; MEAS §11]; and on this Mac, 10 s after the simulator opens, the black window still says **THE
       CLASSROOM IS RUNNING** [PF §2].
 - [ ] Presenting Mac has **Node.js 22 or later**: Terminal `node -v` prints `v22…` or later; otherwise install the LTS
-      from nodejs.org [PF §1; KIT: `runtime/` left empty, the Mac's own Node is used].
+      from nodejs.org [PF §1; KIT: `runtime/` left empty, the Mac's own Node is used]. **E13 (2026-10-18): the
+      presenting Mac is not yet in the owner's hands; this line and one Start Classroom run on it remain to do before
+      Thursday.**
 - [ ] Double-click **Start Classroom**; its window says **THE CLASSROOM IS RUNNING** and lists "learners' phones reach it
       at: http://…"; click **Allow** if macOS asks about "node"; the browser opens `http://127.0.0.1:8650/?relay#/`.
       Keep the black window open all session [PF §2].
@@ -172,23 +178,29 @@ phones [R31 §3]. Tick every line.
       ≈ 200].
 
 **The owner's hand checks** (all ticked before the day; [R31 §2; G12P])
-- [ ] **H17** your own phone through the Showcase cards over the hotspot, on the 62e521c3 (or later) kit; fill
-      `OWN-PHONE-TEST.md` [OPT; G12P: PENDING-OWNER]. (Kits before 62e521c3 could not pass it: KR-A1 [R00 2026-10-13].)
-- [ ] **H18** the fast-forward look in real Safari: dimmed AND blurred page, amber "FAST FORWARD · 5 MIN" panel, clock,
+- [x] **H17** your own phone through the Showcase cards over the hotspot, on the 62e521c3 (or later) kit; fill
+      `OWN-PHONE-TEST.md` [OPT; G12P]. (Kits before 62e521c3 could not pass it: KR-A1 [R00 2026-10-13].) **PASS,
+      2026-10-18** (Safari 27.0.1, kit 62e521c3, the Mac's hotspot, one phone): "Phone followed; numbers match" [G12P].
+- [x] **H18** the fast-forward look in real Safari: dimmed AND blurred page, amber "FAST FORWARD · 5 MIN" panel, clock,
       banner, waveform seam [R31 H18; G10 §6: WebKit screenshots cannot capture the blur]. Not re-checked in the kit
-      round [MEAS §10].
-- [ ] **H19** hidden tab: the Instructor page behind another tab for at least 6.5–7 min in real Chrome and Safari, then
+      round [MEAS §10]. **PASS, 2026-10-18**: "As expected on both" (Mac and phone) [G12P].
+- [x] **H19** hidden tab: the Instructor page behind another tab for at least 6.5–7 min in real Chrome and Safari, then
       Bookmark or a command: the monitor is live, no "The monitor stopped" message [R31 H19; F11A §5: never measured on
-      any machine].
-- [ ] **H20** the second screen in real Safari follows within 5 s [R31 H20].
-- [ ] **H21** bronchospasm with the Ventilator view, the main screen on the Monitor view for 30 s: the phone keeps its
+      any machine]. **FAIL, 2026-10-18** (Safari, tab hidden 7 min): the phone lost the session (FX-14) and the Mac's
+      scenario clock did not advance while the tab was hidden (FX-15); both for a later release. **Day rule: the Mac's
+      tab stays visible and frontmost for the whole talk** [G12P].
+- [x] **H20** the second screen in real Safari follows within 5 s [R31 H20]. **PASS, 2026-10-18**: the learner's
+      monitor window opened from the first page stays in sync, including after fast-forward [G12P].
+- [x] **H21** bronchospasm with the Ventilator view, the main screen on the Monitor view for 30 s: the phone keeps its
       hold and EtCO₂ stays steady [G12P H21]. **Passed in the kit round on both engines** (phones held on every 2-s
       sample; EtCO₂ 34–35 → 33–34; 6 020 / 6 017 contiguous cockpit frames) [MEAS §6], **and in A3 for the Instructor
       view with ×8 and a 2-min span** (11 690 / 11 681 contiguous frames, phones held) [A3.3]. Playwright's WebKit is
-      not Safari: the real-Safari check is still yours.
-- [ ] **Print** the tamponade Debrief in Chrome and Safari [R31 "Print"; PRINT]. A3 printed it to PDF from Chromium
+      not Safari: the real-Safari check is still yours. **PASS in real Safari, 2026-10-18**: the phone held; EtCO₂ rose
+      steadily at a low rate over the next few minutes (bronchospasm, no salbutamol, breaths kept going) [G12P].
+- [x] **Print** the tamponade Debrief in Chrome and Safari [R31 "Print"; PRINT]. A3 printed it to PDF from Chromium
       (6 A4 pages) and took only a print-media screenshot in WebKit [A3.1]: a real print dialog in either browser is
-      still yours.
+      still yours. **PASS, 2026-10-18** [G13 §0]: Chrome, footer and "Page n of N" on 5 of 5 pages; Safari, footer on
+      pages 1, 3, 4, 5 and none on page 2 (Trends), the known limit, ruled acceptable by the owner.
 
 **Monitor style** (the owner's answer E20)
 - [ ] Settings → Monitor: **Saadat-style** (the default). On it, **Pause alarms** is greyed out with "This monitor has
@@ -212,7 +224,7 @@ phones [R31 §3]. Tick every line.
 - [ ] At ×8 there is no beat tone (by design) [G10 §6b]; a fast-forward ends with one two-tone cue [G10 §6].
 
 **Network and the QR relay test (one phone)**
-- [ ] Choose the network (E14): ☐ venue Wi-Fi ☐ travel router (recommended for 30 phones) ☐ the Mac's hotspot ☐ none
+- [ ] Choose the network (E14): ☐ venue Wi-Fi ☒ travel router (recommended for 30 phones; **the owner's choice, E14, 2026-10-18**) ☐ the Mac's hotspot ☐ none
       (Start Simulator + second screen) [PF "Decide"; CR12 "(b)"]. Hotspot capacity was NOT measured [MEAS §10].
 - [ ] Monitor view → pointer to the top edge → **Phones**; the code shows `http://<this Mac's address>:8650/?join=…`,
       never the hosted https site [PF §3, §5].
@@ -471,6 +483,7 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 
 | What happens | What to do | Source |
 |---|---|---|
+| The kit cannot start on the day | If the kit cannot start on the day: open the GitHub Pages site in Safari; everything runs except the phones — skip the QR moment (0:30–2:15) and use that time for the second-screen window; needs internet. | [E13, E14: owner 2026-10-18] |
 | The QR relay fails, "Start Classroom" needs Node, or phones say "cannot reach the instructor's laptop" | Carry on with **Start Simulator** and **Open on a second screen** (the same browser) for the projector; phones are not needed for any case | [CR12 "(c)" and "If something goes wrong"] |
 | The sheet says "The relay does not answer", or the black window stops | Close the Classroom window, double-click **Start Classroom** again, reload the page, **Sound on**. A kit before 62e521c3 stops at the first phone (KR-A1): use the 62e521c3 kit or later | [CR12; MEAS §9 item 1] |
 | Sound fails | Say so (*"the sound has failed; the alarms still show on screen"*) and continue; alarms stay visual | [G10 §7] |
@@ -484,7 +497,7 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 | A phone says "This session is full" | 60 phones are following: ask a neighbour to share | [CR12] |
 | A phone says "The ventilator is on the main screen" | Expected during the bronchospasm case | [CR12; MEAS §6; A3.3] |
 | The phones show "---" where the screen shows a number after a style change | You changed the monitor style mid-session (FX-9). Change it back, or re-load the case | [MEAS §8] |
-| "The monitor stopped" toast (hidden-tab watchdog) | Reload the page and re-load the card; if this showed in H19, do not switch tabs during the talk | [ADD2 H19; F11A §5] |
+| "The monitor stopped" toast (hidden-tab watchdog) | Reload the page and re-load the card; if this showed in H19, do not switch tabs during the talk. H19 in Safari (2026-10-18): with the tab hidden 7 min the phone lost the session and the scenario clock did not advance (FX-14, FX-15): **keep the Mac's tab visible and frontmost for the whole talk** | [ADD2 H19; F11A §5; G12P] |
 | Running long | Cut questions, then the MH third span, then the bronchospasm Explore line (§ "The programme at a glance") | — |
 
 ---
@@ -500,10 +513,13 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
    page with the phones joined once. The MH Load needs **Choose another scenario** first (the tamponade is still
    loaded), and the bookmark list then still holds the tamponade's bookmark [Q1].
 4. **The 30-minute programme as a whole**: the talk allowances are planning figures; only the case runs are measured.
-5. **Real devices**: H17 (own phone, hotspot capacity), H18 (the fast-forward look in Safari), H19 (hidden tab), H20
-   (second screen in Safari), H21 in real Safari (it passed in Playwright's WebKit [MEAS §6; A3.3]), sound by ear, and
-   a print from a real print dialog (A3 printed to PDF from Chromium only) [MEAS §10; A3.1].
-6. **E13 / E14**: which Mac presents, its Node.js version, and the network on the day [R31 §3].
+5. **Real devices**: measured since by the owner (2026-10-18, one phone over the Mac's hotspot) [G12P; G13 §0]: H17,
+   H18, H20 and H21 pass in real Safari; H19 failed (FX-14, FX-15: keep the tab visible); the print passes in Chrome
+   and in Safari (the known page-2 footer limit, ruled acceptable). Still not measured: hotspot or router capacity
+   with a room of phones, and sound by ear [MEAS §10].
+6. **E13 / E14**: decided 2026-10-18: the kit on a Mac, with a travel router; GitHub Pages is the fallback (no
+   phones; needs internet). Still to do: the presenting Mac's `node -v` and one Start Classroom run on it, before
+   Thursday [R31 §3].
 7. **A human's reaction time**: the kit rounds used a fixed 2 s of wall [MEAS §10]. The tamponade CPR window is about
    8 s of wall from the PEA state at ×1 (07:49 → 07:57).
 8. **The Explore line has no press**: the Explore physiology view is not opened on the 30-minute path.

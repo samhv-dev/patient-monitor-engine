@@ -99,7 +99,8 @@ design). CI: run 39066929916 — `e2e (chromium)` 108 passed, 3 skipped in 25.7 
 55,521 B.
 
 **Safari double-click: not done by the executor** (no way to drive real Safari 27.0.1 here); it is owner hand check
-**H22** (section 11).
+**H22** (section 11). **The owner ran it on 2026-10-18: PASS** in Safari 27.0.1 (22625.1.29.11.28), console clean
+(section 11).
 
 ## 7. CI and the release workflow (Task 9)
 
@@ -164,7 +165,21 @@ have shared the machine; heavy suites one at a time):
 
 CI on the final push: recorded below once the run completes (section 18).
 
-## 11. Owner items — PENDING-OWNER (not verified; stated as open in the CHANGELOG)
+## 11. Owner items — run by the owner on 2026-10-18 (were PENDING-OWNER; the rc.1 CHANGELOG states them as open, as they were at the release)
+
+**Results (owner, 2026-10-18).** The owner's Mac, macOS 27.0.1 (Build 26A434), Safari Version 27.0.1
+(22625.1.29.11.28), Chrome 155; kit `pme-showcase-kit-62e521c3` (dev build) over the Mac's hotspot, one real phone.
+- **H17 PASS**, **H18 PASS**, **H20 PASS**, **H21 PASS**; **H19 FAIL** (the phone lost the session, FX-14; the Mac's
+  scenario clock did not advance while the Safari tab was hidden, FX-15; both for a later release; day rule: the Mac's
+  tab stays visible and frontmost). Details: `docs/gates/stage-12-real-phone.md`, "The owner's run".
+- **Stage 13 print check: PASS** in Chrome (footer and "Page n of N" on 5 of 5 pages) and **PASS with the known limit**
+  in Safari (no footer on page 2, Trends; ruled acceptable). Details: `docs/gates/stage-13.md` §0.
+- **H22 PASS** — release build 3db25a3b, `apps/demo/dist/embed/ventilator-monitor.html` built from the tag
+  `v1.0.0-rc.1`, double-clicked in real Safari: all six steps as described; Safari 27.0.1 (22625.1.29.11.28); console
+  clean.
+- Release checklist items 8–9 (below) were not part of the owner's checks of 2026-10-18.
+
+The items as they were set out before the release:
 
 - **Stage 12 gate step 4** — the owner's real phone (H17) and the bronchospasm Ventilator-view hold (H21):
   `docs/gates/stage-12-real-phone.md`.
@@ -234,18 +249,20 @@ Stage 14); a DOI (Q5, at 1.0.0).
 
 ## 15. Licence items for legal review before the v1.0 tag (brief §10)
 
-Which tag the two "open, for Ali" rows must precede — `v1.0.0-rc.1` or `v1.0.0` — is the **owner's choice, open**.
+Which tag the two "open, for Ali" rows must precede — `v1.0.0-rc.1` or `v1.0.0` — was the owner's choice, open.
+**Closed by the owner on 2026-10-18:** both rows are closed (dated in the table), so neither holds a tag. No lawyer
+review is sought.
 
 | §10 item | Status at this release |
 |---|---|
 | ECGSYN-derived "MIT" ports | not used: ECGSYN is a forbidden source (brief §8; R6); no file derives from it |
-| ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for Ali |
+| ODC-By templates bundled in an MIT package (N-050, N-051) | bundled with attribution in NOTICES.md, the IIFE banner and every distribution's `NOTICES.md`; whether ODC-By attribution-by-NOTICES suffices: open, for Ali — **closed by the owner 2026-10-18**: attribution by NOTICES is sufficient ("Enough, close the item") |
 | VitalDB DUA (vitaldb.net) vs the PhysioNet CC BY copy | validation only, the PhysioNet CC BY 4.0 copy; nothing bundled |
 | PWDB PDDL on Zenodo | validation only (not fetched: Zenodo 403 in 8a and on 2026-10-17); nothing bundled |
 | CapnoBase | excluded (brief §8) |
 | MIMIC ODbL share-alike | excluded (brief §8) |
 | Apache NOTICE obligations (N-P rows, TypeDoc assets) | `LICENSES/Apache-2.0.txt` and the NOTICES excerpt ship with every artefact (npm `dist/`, embed zip, `LICENSES.zip`, API zip); statement of changes per N-P row |
-| PTB-XL licence mismatch (§11 C5) | R6 listed PTB-XL as ODC-By, the PhysioNet page says CC BY 4.0; both allow the use; NOTICES N-052 records CC BY 4.0; report-only comparison, nothing bundled — resolved in the repository's records; a lawyer's confirmation: open, for Ali |
+| PTB-XL licence mismatch (§11 C5) | R6 listed PTB-XL as ODC-By, the PhysioNet page says CC BY 4.0; both allow the use; NOTICES N-052 records CC BY 4.0; report-only comparison, nothing bundled — resolved in the repository's records; a lawyer's confirmation: open, for Ali — **closed by the owner 2026-10-18**: resolved (CC BY 4.0 on record; report-only; nothing bundled); no lawyer review is sought |
 
 ## 16. BUILD-PLAN Stage 8 acceptance (8a + 8b) — never an unmet item as met
 
@@ -255,7 +272,7 @@ Which tag the two "open, for Ali" rows must precede — `v1.0.0-rc.1` or `v1.0.0
 2. **Blind realism review — NOT MET**: not run.
 3. Performance — partly: 8a's soak, frames and ticks; the iPad and the projector not measured.
 4. Size ✓ — 282.2 KB gzip -9 of 400.
-5. Embed ✓ — Chrome by e2e (numbers in §6); Safari by hand is H22, open.
+5. Embed ✓ — Chrome by e2e (numbers in §6); Safari by hand is H22: PASS by the owner, 2026-10-18 (section 11).
 6. Licence ✓ — `check-notices`, the extended `check-licences` and §15.
 
 Definition of done: 1 and 8 not met (as acceptance 1–2); 9 — the IIFE and the ESM packages are built and publishable
@@ -303,7 +320,9 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
   rule kind `heldThen`; PR #69, merging before the tag). CHANGELOG and CITATION dated 2026-10-18.
 - GitHub Pages (plan Task 15): run by the executor only after the orchestrator reports the `v1.0.0-rc.1` tag.
 - Open for the owner, unchanged: the hand checks (H17–H22, the Stage 13 print check, `RELEASE.md` items 8–9) and the
-  licence rows marked "open, for Ali" (section 15).
+  licence rows marked "open, for Ali" (section 15). **Since then (owner, 2026-10-18):** H17–H22 and the print check
+  are run (section 11; H19 failed: FX-14, FX-15) and both licence rows are closed (section 15); `RELEASE.md` items 8–9
+  were not part of those checks.
 
 ## 20. Main merged before the tag (2026-10-18)
 

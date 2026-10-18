@@ -59,6 +59,8 @@ are written in Persian script (اپی‌نفرین، دانترولن، سالب
 
 ## Register and numerals (the choices to review)
 
+**Reviewed 2026-10-18:** the owner accepted the register as written.
+
 - **Register:** formal academic/clinical Persian (رسمی‌علمی، نگارش علمی): full written verb forms («است»، «شد»), no
   «می‌باشد», objectives as verbal nouns («تشخیص…»، «شروع احیای قلبی‌ریوی…»), «احیای قلبی‌ریوی» rather than "CPR" in
   prose, Persian punctuation (، ؛ «») and نیم‌فاصله throughout; no em dashes.
@@ -78,6 +80,10 @@ While any entry printed in a PDF is unreviewed, the first page carries the line 
 تأیید بالینی نرسیده است. متن مرجع، گزارش انگلیسی همین اجراست.»; it disappears by itself when every entry used is set
 to `reviewed: true`. To correct a term, edit its `fa` (keep the placeholders) and set `reviewed: true`; a `note` field
 marks the few entries with a question for the reviewer.
+
+**Owner review, 2026-10-18:** the owner accepted all 12 terms put to him (the owner sheet of 18 October, part 4) and
+the register as written. This note does not change the `reviewed` flags in `fa-debrief.json`: the sentence above stays
+true of the table until those flags are set.
 
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 
