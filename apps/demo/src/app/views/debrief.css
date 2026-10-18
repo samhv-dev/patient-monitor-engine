@@ -15,7 +15,11 @@
 .debrief .db-obj { padding-left: 1.4em; }
 .debrief .db-obj li { margin-bottom: var(--s-2); }
 .debrief .db-mark { display: inline-block; min-width: 9.5em; }
-.debrief .db-obj li[data-status='not met'] .db-mark { text-decoration: underline; }
+/* the verdict chips (E43): black or grey, each with a glyph and its words; the border's style carries the rest */
+.debrief .db-chip { min-width: 8.5em; margin-right: var(--s-1); padding: 0 0.4em; border: 1px solid var(--text-strong); border-radius: 3px; font-weight: 600; }
+.debrief li[data-mark='not-observed'] .db-chip { border-width: 2px; font-weight: 800; }
+.debrief li[data-mark='not-assessable'] .db-chip { border-style: dashed; border-color: var(--text-muted); color: var(--text-muted); font-weight: 400; }
+.debrief li[data-mark='discuss'] .db-chip { background: #ececec; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .debrief .db-why { color: var(--text-muted); font-size: var(--t-13); }
 .debrief .db-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--s-3) var(--s-4); }
 .debrief .db-chart { margin: 0; }

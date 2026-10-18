@@ -7,7 +7,7 @@
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta, type Status } from '../debrief.ts';
+import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta } from '../debrief.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
@@ -21,7 +21,15 @@ const BUILD = typeof __PME_BUILD__ === 'string' ? __PME_BUILD__ : 'development';
 const FOOT = `For education only. Not a medical device and not clinically validated: never use it for patient care. Version ${version}${version.includes('-') ? ' (pre-release)' : ''}, build ${BUILD}.`;
 
 const KIND: Readonly<Record<Row['kind'], string>> = { action: 'Action', remote: 'Remote', scenario: 'Scenario', alarm: 'Alarm', bookmark: 'Bookmark', restore: 'Return', patient: 'Patient', note: 'Note' };
-const MARK: Readonly<Record<Status, string>> = { met: '✓ Met', 'not met': '✗ Not met', 'not assessable': '– Not assessable' };
+/** The verdict words (E42–E44): the mark (`data-mark`), its words with a glyph, and the reason printed under it. A
+ *  rule-less objective the instructor ticked reads Observed, with the tick's time as its reason. */
+function markOf(o: ReturnType<typeof objectives>[number]): { mark: 'observed' | 'not-observed' | 'not-assessable' | 'discuss'; words: string; why: string } {
+  const v = o.verdict;
+  if (v.status === 'met') return { mark: 'observed', words: '✓ Observed', why: v.why };
+  if (v.status === 'not met') return o.discuss ? { mark: 'discuss', words: '◆ Discuss', why: v.why } : { mark: 'not-observed', words: '✗ Not observed', why: v.why };
+  if (v.tickedT !== undefined) return { mark: 'observed', words: '✓ Observed', why: `Observed by the instructor at ${mmss(v.tickedT)}.` };
+  return { mark: 'not-assessable', words: '– Not assessable', why: v.why };
+}
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.undone}` : '');
 
@@ -118,7 +126,10 @@ export function debriefView(session: AppSession, link: Link): View {
     body.replaceChildren(
       meta,
       section('objectives', 'Objectives', obj.length
-        ? h('ol', { class: 'db-obj' }, ...obj.map((o) => h('li', { 'data-status': o.verdict.status }, h('b', { class: 'db-mark' }, MARK[o.verdict.status]), ' ', o.text, h('div', { class: 'db-why' }, o.verdict.why))))
+        ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
+          const m = markOf(o);
+          return h('li', { 'data-status': o.verdict.status, 'data-mark': m.mark }, h('b', { class: 'db-mark db-chip' }, m.words), ' ', o.text, h('div', { class: 'db-why' }, m.why));
+        }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
