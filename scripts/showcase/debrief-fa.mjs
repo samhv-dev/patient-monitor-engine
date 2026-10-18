@@ -186,7 +186,10 @@ class Doc {
 
 // --- the English report's arithmetic (apps/demo/src/app/debrief.ts and views/debrief.ts), ported for the JSON's record
 const mmss = (t) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-const span = (s) => (s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, '0')} s`);
+const span = (s) => {
+  const t = Math.round(s); // whole seconds before the split: 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13)
+  return t < 60 ? `${t} s` : `${Math.floor(t / 60)} min ${String(t % 60).padStart(2, '0')} s`;
+};
 const kept = (d) => d.rows.filter((r) => r.undone === undefined);
 const endOf = (d) => Math.max(0, ...kept(d).map((r) => r.t), ...d.samples.map((s) => s.t));
 /** Trend and lab labels and units (debrief.ts trendMeta, from the R56 glossary). */

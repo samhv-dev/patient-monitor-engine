@@ -17,8 +17,11 @@ export interface Verdict {
 
 /** mm:ss of simulated time (the session bar's clock). */
 export const mmss = (t: number): string => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-/** A span: "40 s", "2 min 05 s". */
-export const span = (s: number): string => (s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, '0')} s`);
+/** A span: "40 s", "2 min 05 s". Rounded to whole seconds before the split, so 119.7 s is "2 min 00 s", never "1 min 60 s" (FX-13). */
+export const span = (s: number): string => {
+  const t = Math.round(s);
+  return t < 60 ? `${t} s` : `${Math.floor(t / 60)} min ${String(t % 60).padStart(2, '0')} s`;
+};
 
 const kept = (d: RunData): Row[] => d.rows.filter((r) => r.undone === undefined);
 /** An event id matches itself and its own longer ids up to a hyphen ('alarm:apnoea' ⊃ 'alarm:apnoea-co2'). */
