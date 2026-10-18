@@ -305,3 +305,20 @@ the eight `test-slow` groups (`slow-a` … `slow-g`, `showcase`).
 - Open for the owner, unchanged: the hand checks (H17–H22, the Stage 13 print check, `RELEASE.md` items 8–9) and the
   licence rows marked "open, for Ali" (section 15).
 
+## 20. Main merged before the tag (2026-10-18)
+
+`origin/main` **`ab10903e`** (PR #69 E22, the `heldThen` objective rule; #67, #68 kit rounds; #70 the Persian Debrief
+handout script) merged into this branch as `ae9ed260`, with no conflict: the Debrief footer (this stage) and the
+`heldThen` evaluator (E22) sit in different files (`views/debrief.ts`, `app/debrief.ts`). After the merge:
+typecheck clean; fast set all pass (audio 65, skins 191, engine-core 1,431 + 1 skipped, controller 284, ventilator
+113, renderer 110, validation 141 + 11 skipped, demo 299; a first run hit a Vitest worker RPC timeout with every test
+passed, while the machine's load average was about 60 from another job, and the re-run was clean); `docs-honesty` 7/7
+and `release-versions` 3/3; showcase set 20/20; the showcase and Debrief e2e on Chromium 5/5.
+
+Run 39084185298 (`61a57016`, read after it finished): `e2e (chromium)` 108 passed, no retries; `e2e (webkit)` 71
+passed, 1 flaky (`scenario-choose-another.e2e.ts:14`, retry #2) and **1 failed: `vent-embed.e2e.ts:34` failed all three
+attempts on CI WebKit** (the monitor's awRR read 13 for the whole 30 s poll instead of the ventilator's 14). It passed
+first time on WebKit in runs 39068579366 and 39076653954 and on retry in 39066929916. Recorded in known-deviations.md;
+whether to keep it, skip it on CI WebKit like the five others, or bound it differently is for the orchestrator (the
+heavy embed test is Chromium-only by design).
+
