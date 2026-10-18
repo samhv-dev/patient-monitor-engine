@@ -5,7 +5,7 @@
 answers of 2026-10-17 applied and the kit-round-A3 measurements of 2026-10-17 folded in. The four cases dropped from
 the slot are kept, unchanged, in the appendix "Cases held in reserve". Where something is still not measured, the
 sheet says so and names why ("Still not measured", before the appendix). One number is a visible placeholder on
-purpose: the MH "ventilation back" press time, **[E22 time: filled from the E22 measurement]**.*
+purpose: the MH "ventilation back" press time, **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**.*
 
 Companions: [`SHOWCASE-2-PRESENTER-GUIDE.md`](SHOWCASE-2-PRESENTER-GUIDE.md) (one page: what to remember, keys, the
 alarm rule, the validation answer) and [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) (one printed page per case).
@@ -22,7 +22,7 @@ These replace the round-B defaults D1–D6 [R00 2026-10-17 "OWNER ANSWERS"].
 | — | Dropped to the reserve | premed induction, plain induction, anaphylaxis, haemorrhage with Explore | Appendix |
 | E20 | Monitor skin | **Saadat-style**, no style change during the talk (after a change to Philips-style the phones' AGENTS tile read "---" against the instructor's "0.0" for the 30 s watched, finding FX-9) [MEAS §8] | §1 |
 | E21 | Limit alarms after a Load | **"All alarms on" after every Load stays a presenter step** (no code change). The **Bookmark is taken AFTER pressing it**: Return here then keeps the alarms on [A3.2] | every case |
-| E22 | MH "ventilation back" objective | **Being changed** (PR fix-e22-mh-rule) to "hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; normalising early is "not met" [R00 2026-10-17]. The presenter **keeps hyperventilating through the fast-forwards** and presses **EtCO₂ normal: ventilation back to 12 × 500** only at **[E22 time: filled from the E22 measurement]** | Case 3 |
+| E22 | MH "ventilation back" objective | **Changed** (PR #69, fix-e22-mh-rule; owner ruling E23 keeps the 2-min hold, ordering A) to "hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; normalising early is "not met" [R00 2026-10-17]. The presenter **keeps hyperventilating through the fast-forwards** and presses **EtCO₂ normal: ventilation back to 12 × 500** only at **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** | Case 3 |
 
 ## What changed in round C
 
@@ -45,8 +45,8 @@ These replace the round-B defaults D1–D6 [R00 2026-10-17 "OWNER ANSWERS"].
    needed.
 9. **MH: the hyperventilation is kept through the fast-forwards** (E22). The round-B instruction "ventilation back the
    moment Recovering shows" would now be "not met" [R00 2026-10-17], and it is what made the EtCO₂ rebound to 57–61
-   with `ETCO2 TOO HIGH` [KR62 MH C]. Kept on, the EtCO₂ read 38 and 36 after the first two spans, no alarm [KR MH
-   early-call C].
+   with `ETCO2 TOO HIGH` [KR62 MH C]. Kept on through span 1, the EtCO₂ read 38 at 12:55; after the press at 13:03 it rose to a peak of 55
+   inside span 2 (`ETCO2 TOO HIGH` 14:13), read 45 after span 2 and 42 at the end [MEAS E22].
 
 The round-B corrections that still hold on the 30-minute path: "All alarms on" after every Load [MEAS §7]; tamponade
 CPR from the PEA state, never from `SPO2 NO PULSE` [MEAS §0, §5]; stop CPR only on the return of circulation, never on
@@ -106,7 +106,7 @@ measured").
 | 1 | Severe bronchospasm with the Ventilator view (+ the Explore line) | ×4, ×8, two 2-min FF | **1:27** to 8:44 [KR bronchospasm C] + the reload | **5:00** | 3:00–8:00 |
 | 2 | Stab wound: tamponade → CPR → drainage | ×8, ×1, ×4 | **3:35** to the crystalloid at 11:28 (W 3:36) [A3.1 raw C / W] | **5:30** | 8:00–13:30 |
 | 3 | The Debrief moment (tamponade report, print) | — | — | **3:30** | 13:30–17:00 |
-| 4 | Malignant hyperthermia, early call | ×8, ×4, three 5-min FF | **1:49** to 23:30 with the hyperventilation kept [KR MH early-call C]; **2:05** to 24:34 on the round-B path [KR62 MH C]. Both include the three spans (10.4–10.6 s each, ≈ 31–32 s) [MEAS §1]. The E22 path itself: not yet measured | **5:30** | 17:00–22:30 |
+| 4 | Malignant hyperthermia, early call | ×8, ×4, three 5-min FF | **1:49** to 23:34 on the E22 path, ordering A (press at 13:03) [MEAS E22]. It includes the three spans (10.4–10.6 s each, ≈ 31–32 s) [MEAS §1] | **5:30** | 17:00–22:30 |
 | 5 | Close: roadmap and the ask to the deans | — | — | **3:00** | 22:30–25:30 |
 | 6 | Questions | — | — | **4:00** | 25:30–29:30 |
 | | Buffer (a re-press, a "Not available now", a slow Load) | | | **0:30** | 29:30–30:00 |
@@ -136,7 +136,7 @@ measured").
 > **If running over, cut in this order**
 >
 > 1. **Questions** (4:00 → 2:00, then out).
-> 2. **The MH third fast-forward**: end the case at the point after span 2 (18:11, EtCO₂ 36 [KR MH early-call C]),
+> 2. **The MH third fast-forward**: end the case at the point after span 2 (18:20, EtCO₂ 45 [MEAS E22]),
 >    provided **the E22 press has already been made**; saves its 10.4–10.6 s of wall [MEAS §1] and about 0:30 of talk.
 > 3. **The bronchospasm Explore line** (0:30).
 
@@ -389,11 +389,11 @@ ventilation 20 × 600 → MH treatment under way → Recovering: EtCO₂ below 4
 ventilation back to 12 × 500** is offered **only in the Recovering state** [CARD transitions].
 
 The owner's answers: call at **Early signs** (E19a); **keep the hyperventilation (20 × 600) through the fast-forwards**
-and press **ventilation back** only at **[E22 time: filled from the E22 measurement]** (E22). The rule being written
+and press **ventilation back** only at **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** (E22). The rule being written
 tonight: "hyperventilation kept until EtCO₂ < 40 for 2 min, then normalised"; normalising early is "not met" [R00
-2026-10-17]. **The E22 path has not been run on a kit.** The rows below are the measured run that kept the
-hyperventilation through the first two spans (13 October, kit 56f3761f, both engines) [KR MH early-call C; MEAS §1
-"Early call"]; only the press row waits for the E22 measurement.
+2026-10-17]. The rows below to 12:55 are the measured run that kept the hyperventilation (13 October, kit 56f3761f, both
+engines) [KR MH early-call C; MEAS §1 "Early call"]; from the press on they are the E22 run, ordering A (kit b08a972b,
+both engines) [MEAS E22].
 
 | W | Sim | Speed | Press / do | Point at (measured, C; W within a second) |
 |---|---|---|---|---|
@@ -407,17 +407,19 @@ hyperventilation through the first two spans (13 October, kit 56f3761f, both eng
 | — | 7:27 | ×4 | — | **EtCO₂ falls below 40**, 26 s after the call [MEAS §0]; 38 at 07:35 [KR MH early-call C] |
 | ≈ 1:05 | 7:42 | — | **5 min** fast-forward (1 of 3). **Hyperventilation stays on** | 10.4 s of wall; banner "Fast-forwarded 5 min, 07:42 → 12:42. During it: no alarms." [KR MH early-call C]. "Recovering" shows during it (08:36 / 08:35, C / W) [MEAS §1]: **do NOT press ventilation back at Recovering** (E22: early is "not met") |
 | 1:19 | 12:55 | ×4 | **Pause**, point; **Resume** | state Recovering; **EtCO₂ 38**, ART 136/90 (104), HR 83 [KR MH early-call C] |
-| **[E22]** | **[E22 time: filled from the E22 measurement]** | ×4 | **EtCO₂ normal: ventilation back to 12 × 500**, at this time and not before. Until then the hyperventilation stays on, through every span that comes before it. If the time falls after span 2, press it at the 18:11 pause instead | [E22 verdict: filled from the E22 measurement]. The measured path pressed it at **18:13** (after span 2) [KR MH early-call C] |
-| 1:20 | 12:57 | — | **5 min** fast-forward (2 of 3), hyperventilation on unless the E22 press came before it | 10.5 s of wall; "During it: no alarms." [KR MH early-call C] |
-| 1:34 | 18:11 | ×4 | **Pause**, point; **Resume** | **EtCO₂ 36**, ART 150/97 (115), HR 84 [KR MH early-call C] |
-| ≈ 1:36 | ≈ 18:16 | — | **5 min** fast-forward (3 of 3; the second thing to cut if running over, once the E22 press is made) | `ART SYS TOO HIGH` 22:40 during it [MEAS §1] |
-| 1:49 | 23:30 | ×4 | end: **Pause** | after the ventilation went back at 18:13: **EtCO₂ 41**, ART 151/95 (114), HR 82 [KR MH early-call C]; `**ABPm 114>110`, `**ABPd 95>90` at 23:49 [MEAS §1] |
+| 1:22 | **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** | ×4 | **EtCO₂ normal: ventilation back to 12 × 500**, at this time and not before. The hyperventilation stayed on through span 1 | Debrief ✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)"); EtCO₂ 38 at the press [MEAS E22 (A)] |
+| ≈ 1:23 | ≈ 13:07 | — | **5 min** fast-forward (2 of 3) | banner "During it: ETCO2 TOO HIGH 14:13, ART MEAN TOO HIGH 17:00, RR TOO HIGH 18:06."; EtCO₂ peaks at **55** inside it (17:22) [MEAS E22 (A)] |
+| 1:36 | 18:20 | ×4 | **Pause**, say: "EtCO₂ rose to the alarm limit while CO₂ production settled; the alarm caught it; we keep watching"; **Resume** | **EtCO₂ 45**, ART 147/95 (112), HR 85 [MEAS E22 (A)] |
+| ≈ 1:37 | ≈ 18:21 | — | **5 min** fast-forward (3 of 3; the second thing to cut if running over) | `ART SYS TOO HIGH` 22:39 during it [MEAS E22 (A)] |
+| 1:49 | 23:34 | ×4 | end: **Pause** | **EtCO₂ 42**, ART 150/95 (113), HR 82 [MEAS E22 (A)] |
 
 Each 5-min fast-forward took 10.4–10.6 s of wall, and ×4 stayed ×4 after it [MEAS §1].
 
-**Repeat dantrolene: not expected on this path.** While the hyperventilation was kept, EtCO₂ read 38 and 36, and 41
-after the ventilation went back at 18:13 [KR MH early-call C]; the card's objective is a repeat dose "while EtCO₂ is
-still above 45" [CARD]. If the EtCO₂ climbs back above 45 after the E22 press, give it then. **Do not give a dose just
+**Repeat dantrolene: – (not needed; do NOT give it on the alarm).** While the hyperventilation was kept, EtCO₂ read
+38 at 12:55. After the press at 13:03 it went 38 → 49 at +1 min → a peak of 55 inside span 2 (not visible on the
+monitor), with `ETCO2 TOO HIGH` at 14:13 shown latched after span 2; it read 45 after span 2 and 42 at the end
+[MEAS E22]. That is the CO₂ production settling, not a relapse: say the presenter line at the 18:20 pause, not a dose.
+The card's repeat objective has no rule (the instructor judges it) [CARD]. **Do not give a dose just
 before the E22 time**: a dose moves the card out of Recovering ("Dantrolene given" → the crisis checklist), and the
 ventilation-back button comes back only after EtCO₂ has been below 45 for a minute [CARD transitions].
 
@@ -431,12 +433,13 @@ G11 §5 Q8]. Do not give the potassium treatment on this path: K⁺ stays 4.2–
 
 **Why the hyperventilation stays on (E22), measured:** when the ventilation went back at "Recovering" (08:43), the
 muscle was still producing CO₂: EtCO₂ rebounded to 57 after span 1 and 61 at its highest, with `ETCO2 TOO HIGH` at
-10:07 [KR62 MH C; MEAS §0, §1]. Kept on, it stayed 36–38 through two spans, no alarm [KR MH early-call C].
+10:07 [KR62 MH C; MEAS §0, §1]. Kept on through span 1, it stayed 36–38 with no alarm, and after the press at 13:03 it peaked at 55 inside span 2
+and was 42 at the end [MEAS E22].
 
 **Debrief objectives and the expected verdict** [CARD; MEAS §0, §1] (the Debrief is not opened for MH on the day):
 ✓ call within 120 s of the early signs (9 s) · ✓ dantrolene within 300 s of the call (21 s) · – repeat dantrolene (no
 rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never above 5.5) · ventilation back:
-**[E22 verdict: filled from the E22 measurement]**.
+**✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)")** [MEAS E22].
 
 ---
 
@@ -485,12 +488,8 @@ rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never
 
 ## Still not measured (on the 30-minute path)
 
-1. **E22**: the MH "ventilation back" press time and its Debrief verdict under the new rule. The placeholder
-   **[E22 time: filled from the E22 measurement]** stays visible until the measurement lands. The MH rows are the
-   13 October run that kept the hyperventilation through two spans [KR MH early-call C]; the E22 path as such was not
-   run. In particular: "EtCO₂ below 40 for 2 min" is first reached about 09:27 (07:27 + 2:00, computed), inside span 1
-   on this path (07:42 → 12:42), while the page refuses commands; whether span 1 must wait for the press is for the
-   E22 measurement to say.
+1. **E22**: measured since [MEAS E22]. "EtCO₂ below 40 for 2 min" is reached at 09:26–09:27, inside span 1; the press
+   comes as span 1 ends, measured at 13:03 / 13:04 (C / W). Not measured: a human presenter's delay after span 1.
 2. **Bronchospasm as one run with the presses from the Instructor view and salbutamol**: A3 ran ×8 and the span from
    the Instructor view without salbutamol [A3.3]; the run with salbutamol sent the same commands through the ventilator
    link [MEAS §6]. The 8:44 → ×1 step at the end is the H21 run's ×4 step in kind [KR bronchospasm C 11:08], not

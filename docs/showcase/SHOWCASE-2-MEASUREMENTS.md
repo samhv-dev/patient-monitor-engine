@@ -431,3 +431,70 @@ Everything else on card 6 matched as written:
 - "30 s later ART about 117/79, HR 64" (measured 115/77, HR 64);
 - the Debrief line "The pulse loss at 07:48";
 - "CVP on the IBP2 tile: 17".
+
+---
+
+## E22. MH: "ventilation back" only after 2 min of EtCO₂ below 40 (owner ruling 2026-10-17)
+
+*Measured 2026-10-17/18 on kit `pme-showcase-kit-b08a972b` (branch `fix-e22-mh-rule`: the new rule and card text),
+served by its own Start Classroom launcher, Chromium and WebKit, 3 phones, a 2 s reaction, load average 2.2–6.9 (the
+WebKit probe ran at up to 12.9). Script: `scripts/showcase/kit-round-a.kitround.ts`, tests "MH E22 …". Raw files:
+`kit-round-a/malignant-hyperthermia-e22-<variant>-kit-round-<browser>.{json,md}`.*
+
+**The rule.** Before: `eventWithin` from `state:triggerOff`, after `value:etco2<40`, → `state:normoventilated` within
+300 s ("Bring the ventilation back to 12 × 500 within 300 s of EtCO₂ falling below 40 mmHg"). That rewarded the press
+at "Recovering" (08:43). After: `heldThen` from `state:triggerOff`, `etco2` below 40 for 120 s, → `state:normoventilated`
+("Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)").
+The FIRST press is judged: before the 2 min it is ✗ (a second press does not mend it). No press is ✗.
+
+**When the 2 min complete.** The early call path as the cue card runs it: Early signs 06:52, call 07:00–07:01,
+dantrolene 07:21–07:22, Cool 07:31–07:32, hyperventilation 20 × 600 kept. EtCO₂ first below 40 at **07:26–07:27**, and it
+stays at 36–40 under hyperventilation. So the 2 min complete at **09:26–09:27** (2.4 min after the call), on both
+browsers and in every variant. With hyperventilation kept, EtCO₂ never rebounds: 37–38 at 8:45, at 12:55 and at 14:00.
+
+| Ordering (C / W) | Span 1 | Press "ventilation back" | EtCO₂ at press | EtCO₂ after the press (per minute from the press) | Peak after the press | ETCO2 TOO HIGH | Repeat dantrolene cue (> 55 after a span) | Debrief |
+|---|---|---|---|---|---|---|---|---|
+| **(A) span 1 at 07:41, press as it ends** | 07:41 → 12:41 | **13:03 / 13:04** | 38 | 38 · 49 · 51 · 53 · 54 · 49 · 44 · 44 · 43 · 43 · 43 | **55** at 17:22 / 17:32 (+4.3 / 4.5 min, inside span 2) | 14:13 (inside span 2) | **no**: 45 after span 2 (18:20), 42 at the end (23:34) | ✓ ✓ – – ✓ |
+| (B) hold span 1 until the 2 min, press, then the spans | 09:39 → 14:39 (after the press) | **09:35 / 09:36** | 37 | 37 · 49 · 51 · 53–54 · 55 · 57 · 59 · 59 · 60 · 45–46 · 45 · 44 … 41 | **60** at 16:45 / 17:19 (+7.1 / 7.7 min) | 10:51 / 10:55 (inside span 1) | **yes**: 57–58 after span 1 → dantrolene 14:53; "Recovering" again 20:04 / 20:05; 41 at the end (25:23) | ✓ ✓ – – ✓ |
+| (old card's timing) span 1 at 8:45, press as it ends | 08:45 → 13:45 | 14:08 / 14:08 | 38 | 38 · 49 · 51 · 52 · 46 · 43 · 43 … 42 | 53 at 17:27 / 17:17 | 15:23 / 15:13 | no: 43 after span 2 | ✓ ✓ – – ✓ |
+
+Debrief on every path: ✓ call (8–9 s after the early signs) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium
+(K⁺ never above 5.5: max 4.7–4.8) · ✓ ventilation, reading *"The state "Ventilation back to 12 × 500, O₂ 100 %" at
+13:03, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)."* (A, Chromium). The old press at
+"Recovering" (08:43) would now read ✗ *"… when EtCO₂ had been below 40 mmHg for 1 min 16 s (2 min 00 s asked)"*
+(the engine-run Debrief test in `debrief-showcase.test.ts` pins both).
+
+**EtCO₂ after the press does NOT stay under 45 on any ordering.** It crosses 45 about 20 s after every press (+0.3
+min) and peaks at 53–60. The 2-min hold satisfies the rule, but the model's CO₂ production is still raised. The later
+the press, the smaller the rebound: 60 at 09:35, 55 at 13:03, 53 at 14:08. On the kit-round early path the press came at
+18:13, and EtCO₂ was 41–42 five minutes later (§1). This is the model, not the rule: no physiology was changed. Whether the
+owner wants a longer hold (for example "below 40 for 5 min"), or a rebound line for the presenter, is the owner's call.
+
+**Card facts (confirmed).** "EtCO₂ normal: ventilation back to 12 × 500" is a transition of the **Recovering** state
+only (`showcase-mh.json`). On the kit it was not offered in Early signs, Trigger off or MH treatment under way. It was
+offered in Recovering just before every press. A dantrolene press in Recovering (probe, 08:45) takes the card through
+"Dantrolene given" (2 s) to "MH treatment under way". The button came back **63 s / 64.5 s** later (Recovering
+09:47 / 09:48), once EtCO₂ had been below 45 for a minute again. Under hyperventilation that is about a minute. Cool,
+potassium and bicarbonate take the same route. When EtCO₂ is above 45 the gap is longer: in (B), dantrolene went in at
+14:53 and Recovering came back at 20:04. One probe artefact: the check made within 250 ms of entering Recovering read
+"not offered", because the panel had not repainted yet. The press-time checks, ≥ 10 s into Recovering, read "offered".
+
+**Recommendation for the cue card: ordering (A).**
+
+1. Call at Early signs, then dantrolene and Cool, as now.
+2. Start **span 1 at 07:41** (≈ 40 s after the call), as the early path already does. The 2 min complete inside it
+   (09:26–09:27), and the page takes no presses during a span.
+3. Press **"EtCO₂ normal: ventilation back to 12 × 500" at once when span 1 ends**. Measured press: **13:03**
+   (Chromium) / **13:04** (WebKit). Any press from 12:41, the span's end, is ✓.
+4. Then span 2. EtCO₂ reads 45 after it (peak 55 inside it, with ETCO2 TOO HIGH at 14:13 in the span's banner). No
+   repeat-dantrolene cue: nothing above 55 is shown at a span's end.
+5. Then span 3. EtCO₂ is 42 at the end (23:34).
+
+(B) costs about 30 s more of wall time at ×4 before span 1. It also gives a larger rebound: a peak of 60, and 57–58
+showing after span 1. And it needs the repeat dantrolene at 14:53. (A) keeps the card's spans and
+puts the rebound inside span 2. The margin to the "above 55" cue is nil: the peak is exactly 55, and it falls inside the
+span, so the presenter never sees it.
+
+**Not measured:** a human presenter's actual delay after span 1 (modelled as 2 s of wall time, plus the script's 3 s
+check, so 12:41 → 13:03). Real Safari and real phones. A press between 09:27 and 12:41, which the spans of (A) make
+impossible.

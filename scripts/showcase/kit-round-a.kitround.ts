@@ -895,6 +895,122 @@ for (const path of ['early', 'late', 'early-normo'] as const) {
   });
 }
 
+// E22 (owner ruling 2026-10-17): the MH objective is now "hyperventilation kept until EtCO2 has stayed below 40 mmHg for
+// 2 min, then ventilation normalised" (rule `heldThen`; an earlier press is not met). The early call as the cue card runs
+// it, then "ventilation back" at the first moment the 2 min are complete and the page takes a press: `at-hold` (B) holds
+// span 1 until then (≈ 9:27) and presses; `span-1-at-7-42` (A) runs span 1 40 s after the call (07:42, as the early path
+// above) and presses as it ends (the 2 min complete inside the span, when the page refuses presses); `span-1-at-8-45`
+// runs span 1 at the old cue card's 8:45 and presses after it. Then the remaining 5-min fast-forwards (three in all), the
+// repeat dantrolene if EtCO2 is above 45 after a span (as the early path above), and EtCO2's course after the press from
+// the page's 1 Hz history.
+const NORMO = 'EtCO₂ normal: ventilation back to 12 × 500';
+for (const variant of ['at-hold', 'span-1-at-7-42', 'span-1-at-8-45'] as const) {
+  test(`MH E22, early call, ventilation back once EtCO2 has stayed below 40 for 2 min (${variant})`, async ({ page, browser }) => {
+    test.setTimeout(40 * 60_000);
+    const R = new Run(page, browser, `Malignant hyperthermia E22 ${variant} (kit round)`);
+    /** The start of the current unbroken stretch of EtCO2 below 40 since `from` (a measurement without EtCO2 is skipped). */
+    const below40Since = async (from: number): Promise<number | null> => {
+      let run: number | null = null;
+      for (const x of await hist(page, from, Infinity)) if (x.etco2 !== undefined) run = typeof x.etco2 === 'number' && x.etco2 < 40 ? (run ?? x.t) : null;
+      return run;
+    };
+    const held = async (from: number, now: number) => {
+      const h = await below40Since(from);
+      return h !== null && now - h >= 120;
+    };
+    try {
+      await R.start('Malignant hyperthermia', 8);
+      await R.untilT(R.t0 + 240);
+      await R.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
+      await R.untilT(R.t0 + 390);
+      await R.speed(4);
+      await R.row('6:30 ×4: watch the CO2 tile');
+      const tEarly = await R.until('earlySigns', 600);
+      await R.row('state Early signs');
+      await R.react();
+      const tC = await R.press(CRISIS, 'triggerOff');
+      await R.untilT(tC + 20);
+      await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+      await R.untilT(tC + 30);
+      await R.press('Cool: 2 L saline at room temperature', 'cooling');
+      let ffDone = 0;
+      if (variant !== 'at-hold') {
+        await R.untilT(variant === 'span-1-at-7-42' ? tC + 40 : 525);
+        await R.row(variant === 'span-1-at-7-42' ? 'span 1, 40 s after the call' : '8:45: span 1 as the old cue card');
+        await R.ff(5);
+        ffDone++;
+      }
+      const tHeld = await R.waitSim(600, async (now) => held(tC, now));
+      const holdFrom = await below40Since(tC);
+      await R.row('EtCO2 below 40 for 2 min since the call', { holdFrom: holdFrom === null ? null : mmss(holdFrom), heldAt: holdFrom === null ? null : mmss(holdFrom + 120), seenAt: tHeld === null ? null : mmss(tHeld) });
+      await R.react();
+      R.r.measures.buttonsBeforePress = { state: await stateId(page), normoOffered: (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0 };
+      const tP = await R.press(NORMO, 'normoventilated');
+      let repeat: number | null = null;
+      while (ffDone < 3) {
+        await R.ff(5);
+        ffDone++;
+        const et = (await latest(page)).etco2;
+        await R.row(`after span ${ffDone}`, { co2: et });
+        if (repeat === null && typeof et === 'number' && et > 45) repeat = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+      }
+      await R.row('end of the path');
+      // EtCO2 after the press: per minute (the first measurement of each minute), the maximum, the first time at 45 or above
+      const after = (await hist(page, tP, Infinity)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+      const perMin = Array.from({ length: Math.floor(((after.at(-1)?.t ?? tP) - tP) / 60) + 1 }, (_, m) => after.find((x) => x.t >= tP + m * 60)).map((x, m) => `+${m} min ${x ? Math.round(x.etco2) : '–'}`);
+      const max = after.reduce<{ t: number; etco2: number } | null>((b, x) => (!b || x.etco2 > b.etco2 ? x : b), null);
+      const at45 = after.find((x) => x.etco2 >= 45);
+      const before = (await hist(page, tC, tP)).filter((x) => typeof x.etco2 === 'number') as Array<{ t: number; etco2: number }>;
+      R.r.measures.e22 = {
+        variant, earlySignsAt: tEarly === null ? null : mmss(tEarly), callAt: mmss(tC), etco2FirstBelow40: (() => { const x = before.find((y) => y.etco2 < 40); return x ? mmss(x.t) : null; })(),
+        holdFrom: holdFrom === null ? null : mmss(holdFrom), heldAt: holdFrom === null ? null : mmss(holdFrom + 120), heldAfterCallMin: holdFrom === null ? null : r1((holdFrom + 120 - tC) / 60),
+        pressAt: mmss(tP), pressAfterCallMin: r1((tP - tC) / 60), etco2AtPress: r1((await hist(page, tP - 2, tP)).filter((x) => typeof x.etco2 === 'number').at(-1)?.etco2),
+        etco2MaxAfterPress: max ? `${r1(max.etco2)} at ${mmss(max.t)} (+${r1((max.t - tP) / 60)} min)` : null, etco2First45AfterPress: at45 ? `${mmss(at45.t)} (+${r1((at45.t - tP) / 60)} min)` : 'never', etco2PerMinuteAfterPress: perMin.join(' · '),
+        historySamplesAfterPress: after.length, repeatDantrolene: repeat === null ? null : mmss(repeat), fastForwards: ffDone,
+      };
+      await R.debrief();
+    } finally {
+      await R.finish();
+    }
+  });
+}
+
+// E22 card fact: "ventilation back" is offered only in "Recovering"; a dantrolene press there (as any checklist button)
+// takes the card through "Dantrolene given" (2 s) to "MH treatment under way", and the button returns only when EtCO2 has
+// been below 45 for a minute again. Measured on the early call under hyperventilation: the button's absence after the press.
+test('MH E22 probe: "ventilation back" offered only in Recovering; gone after a dantrolene press there', async ({ page, browser }) => {
+  test.setTimeout(30 * 60_000);
+  const R = new Run(page, browser, 'Malignant hyperthermia E22 probe dantrolene in Recovering (kit round)');
+  const offered = async () => (await page.locator('section[aria-label="Running scenario"]').getByRole('button', { name: NORMO, exact: true }).count()) > 0;
+  try {
+    await R.start('Malignant hyperthermia', 8);
+    await R.untilT(R.t0 + 240);
+    await R.press('Start surgery: rocuronium 0.6 mg/kg', 'surgery');
+    await R.untilT(R.t0 + 390);
+    await R.speed(4);
+    await R.until('earlySigns', 600);
+    const seen: Row = { earlySigns: await offered() };
+    await R.react();
+    const tC = await R.press(CRISIS, 'triggerOff');
+    seen.triggerOff = await offered();
+    await R.untilT(tC + 20);
+    await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+    await R.untilT(tC + 30);
+    await R.press('Cool: 2 L saline at room temperature', 'cooling');
+    seen.treating = await offered();
+    const tRec = await R.until('recovering', 300);
+    seen.recovering = await offered();
+    await R.untilT((tRec ?? (await R.sim())) + 10);
+    const tD = await R.press('Dantrolene 2.5 mg/kg', 'dantrolene');
+    seen.afterDantrolene = await offered();
+    const tBack = await R.waitSim(300, async () => offered());
+    await R.row('ventilation back offered again', { stateNow: await stateId(page) });
+    R.r.measures.e22probe = { offeredIn: seen, dantroleneInRecoveringAt: mmss(tD), offeredAgainAt: tBack === null ? 'not within 5 min' : mmss(tBack), goneForS: tBack === null ? null : r1(tBack - tD) };
+  } finally {
+    await R.finish();
+  }
+});
+
 test('session mechanics: reload survival, Silence on the Saadat-style skin, the version label', async ({ page, browser }) => {
   const R = new Run(page, browser, 'Session mechanics (kit round)');
   try {

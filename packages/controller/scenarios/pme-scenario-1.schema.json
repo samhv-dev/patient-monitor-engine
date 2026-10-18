@@ -66,6 +66,13 @@
             "below": { "type": "number" }, "after": { "$ref": "#/definitions/runEvents" }, "forS": { "type": "number", "exclusiveMinimum": 0 }
           },
           "required": ["value"], "anyOf": [{ "properties": { "above": { "type": "number" } }, "required": ["above"] }, { "properties": { "below": { "type": "number" } }, "required": ["below"] }], "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "heldThen" }, "value": { "enum": ["hr", "map", "spo2", "etco2", "rr", "temp", "k", "lactate", "ph", "glucose", "tcore"] }, "above": { "type": "number" },
+            "below": { "type": "number" }, "forS": { "type": "number", "exclusiveMinimum": 0 }, "event": { "$ref": "#/definitions/runEvents" }, "from": { "$ref": "#/definitions/runEvents" }
+          },
+          "required": ["value", "forS", "event"], "anyOf": [{ "properties": { "above": { "type": "number" } }, "required": ["above"] }, { "properties": { "below": { "type": "number" } }, "required": ["below"] }], "additionalProperties": false
         }
       ]
     },

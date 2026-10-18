@@ -1,0 +1,209 @@
+{
+ "skill": "persian-writing 1.4.0 (bundled paknevis/davat toolkit: scripts/persian_cleanup.py, fa_lint.py, verify_pdf.py)",
+ "register": "formal academic/clinical Persian (رسمی‌علمی، نگارش علمی): detected from the deliverable (a clinical teaching report for university deans and senior clinicians), held for every string",
+ "editorial_pass": {
+  "steps": [
+   "fix_arabic_chars",
+   "fix_persian_punctuation",
+   "fix_zwnj_verbs",
+   "fix_zwnj_suffixes",
+   "fix_zwnj_possessives",
+   "fix_zwnj_compound_verbs",
+   "fix_punctuation_spacing",
+   "fix_ellipsis",
+   "fix_repeated_punctuation",
+   "remove_extra_spaces"
+  ],
+  "left_out": {
+   "convert_digits": "clinical values keep Western digits (the brief); prose counts and dates are written in Persian digits by the script",
+   "fix_ezafe": "it rewrites «‌ی» after silent heh as «ٔ»; the table keeps «لوله‌ی» consistently"
+  },
+  "protected": "Latin runs, Western-digit values with their units, and {placeholders} are lifted out before the steps and restored after",
+  "table_entries_checked": 443,
+  "table_changes": 0,
+  "printed_strings_checked": 176,
+  "printed_changes": 0
+ },
+ "spellcheck_report": {
+  "note": "run word by word on Persian words only, as a report: the checker replaces any word missing from its dictionary by the nearest one, which is unsafe for transliterated drug names and clinical terms",
+  "distinct_suggestions": 31,
+  "accepted": {
+   "هدف‌مند": "هدفمند (accepted: the attached form, also in the dictionary)"
+  },
+  "rejected": {
+   "آگونال": {
+    "suggested": "آتونال",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "انقباض‌پذیری": {
+    "suggested": "انقباض‌پذیر",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "باله‌ی": {
+    "suggested": "هاله‌ی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "بدترشدن": {
+    "suggested": "بهترشدن",
+    "why": "rejected: would invert the meaning (worse to better)"
+   },
+   "بی‌حس‌کننده‌ی": {
+    "suggested": "بی‌حس‌کننده‌",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "بی‌نبضی": {
+    "suggested": "بی‌نبض",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "تأیید": {
+    "suggested": "تایید",
+    "why": "rejected: «تأیید» with hamza is the standard spelling"
+   },
+   "تهویه‌ی": {
+    "suggested": "تهیه‌ی",
+    "why": "rejected: «تهیه» (preparation) is a different word"
+   },
+   "تورساد": {
+    "suggested": "ورساد",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "تک‌شکلی": {
+    "suggested": "تک‌شغلی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "جانکشنال": {
+    "suggested": "فانکشنال",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "دبریفینگ": {
+    "suggested": "بریفینگ",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "دفیبریلاسیون": {
+    "suggested": "فیبریلاسیون",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "دکمه‌ی": {
+    "suggested": "دخمه‌ی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "رگولار": {
+    "suggested": "رگولر",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "ریه‌ی": {
+    "suggested": "ریشه‌ی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "عضله‌ی": {
+    "suggested": "فضله‌ی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "قفسه‌ی": {
+    "suggested": "قفسهای",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "لغوشده": {
+    "suggested": "لغوشدن",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "لوبار": {
+    "suggested": "لوار",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "موبیتز": {
+    "suggested": "چوبیتز",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "نشانک": {
+    "suggested": "نشان",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "نشانک:": {
+    "suggested": "نشان:",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "نشانکی": {
+    "suggested": "نشانی",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "نشانک‌ها": {
+    "suggested": "نشانه‌ها",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "نیتروس": {
+    "suggested": "نیتروز",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "هیپرونتیلاسیون": {
+    "suggested": "هیپوونتیلاسیون",
+    "why": "rejected: would invert the meaning (hyper- to hypo-ventilation)"
+   },
+   "وکورونیوم": {
+    "suggested": "وکرونیوم",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "پنومونیت": {
+    "suggested": "پنومونی‌",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   },
+   "پیس‌شده": {
+    "suggested": "پرس‌شده",
+    "why": "rejected: a correct clinical or Persian term missing from the general dictionary"
+   }
+  },
+  "tool_artefact": "the checker also turned the Persian digits ۱ and ۲ into «و» (ignored)"
+ },
+ "lint_fa_lint_check": {
+  "table": {
+   "bidi-start": 15,
+   "latin-digits": 33,
+   "before_rewrites": {
+    "bidi-start": 31,
+    "latin-digits": 33
+   }
+  },
+  "printed_text": {
+   "bidi-start": 12,
+   "latin-digits": 75
+  },
+  "register_and_ai_tells": "none found (no می‌باشد، در راستای، لازم به ذکر است، em dash, attached میشود, هکسره)",
+  "kept_on_purpose": {
+   "latin-digits": "clinical values in Western digits (the brief)",
+   "bidi-start": "lines that open with a monitor label or a value («ART D پایین», «36.8 °C در 00:01»): in the PDF every cell is dir=rtl and each Latin run is an isolated left-to-right run, so they render right to left; the 16 sentence templates and alarm words that opened with a Latin word were rewritten to open with a Persian one"
+  }
+ },
+ "pdf_checks": {
+  "verify_pdf.py --expect-font Vazirmatn": "OK: all checks passed (3 of 3)",
+  "pdffonts": "Vazirmatn-Regular and Vazirmatn-Bold only (before the fixes: Helvetica and Lucida Grande fallbacks for ₂, ⁺ and the arrows)",
+  "glyph_check": "Vazirmatn lacks ← → ₂ ⁺: the clock spans are written «از … تا …», O₂ and K⁺ are drawn with sub/sup of the font's own digits",
+  "bidi": "every Latin/Western-digit run (value + unit) is one left-to-right isolate that never wraps; measured in Chromium: O₂ 100 % reads left to right with the Persian text to its right"
+ },
+ "before_after": [
+  {
+   "what": "alarm word (fa_lint bidi-start: a Persian line opened with a Latin word)",
+   "before": "ART: فشار ضربان‌دار ثبت نمی‌شود",
+   "after": "فشار شریانی تهاجمی (ART): فشار ضربان‌دار ثبت نمی‌شود"
+  },
+  {
+   "what": "reason line clock span (font glyph check: no arrow in Vazirmatn; Persian wording)",
+   "before": "(07:51 ← 09:21؛ مهلت تعیین‌شده: 2 دقیقه و 00 ثانیه)",
+   "after": "(از 07:51 تا 09:21؛ مهلت تعیین‌شده: 2 دقیقه و 00 ثانیه)"
+  },
+  {
+   "what": "start date (Persian punctuation: the Intl full date carried a Latin comma that scrambled the line)",
+   "before": "۱۴۰۵ مهر ۲۵, شنبه ساعت ۲۳:۴۹",
+   "after": "شنبه ۲۵ مهر ۱۴۰۵، ساعت ۲۳:۴۹"
+  },
+  {
+   "what": "spell-check suggestion accepted",
+   "before": "انفوزیون هدف‌مند (TCI)",
+   "after": "انفوزیون هدفمند (TCI)"
+  },
+  {
+   "what": "reason template (lead with a Persian word)",
+   "before": "{label} در {t} برابر {v} بود (معیار: {limit}).",
+   "after": "مقدار {label} در {t} برابر {v} بود (معیار: {limit})."
+  }
+ ]
+}

@@ -251,6 +251,7 @@ An objective is a string (as today) or `{ "text": "…", "rule": { … } }`. Wit
 | `occurred` | `event`, optional `from` | it happened (at or after the first `from`) | `from` never happened; a value event never measured |
 | `never` | `event`, optional `from` | it did not happen | as `occurred` |
 | `stayed` | `value` (`hr`, `map`, `spo2`, `etco2`, `rr`, `temp`, `k`, `lactate`, `ph`, `glucose`, `tcore`), `above` and/or `below`, optional `after` + `forS` | every sample in the window was past the limit | nothing measured in the window; `after` never happened; the window had not closed (and nothing broke the limit) |
+| `heldThen` (E22, owner ruling 2026-10-17) | `value`, `above` and/or `below` (as `stayed`), `forS` > 0, `event`, optional `from` | the FIRST `event` (at or after the first `from`) came once the value had stayed past the limit for `forS` s on end (counted from `from`; a sample outside the limit or unmeasured restarts it). An earlier `event` is **not met** (a second one does not mend it); no `event` after the hold is not met | `from` never happened; the value never measured; the run ended before the hold with no `event` yet |
 
 Events (`RunEventId`): `start` · `state:<stateId>` · `alarm:<alarmId>` (matches its own longer ids: `alarm:apnoea` =
 the CO₂ or impedance apnoea alarm) · `drug:<drugId>` (bolus, infusion or TCI) · `fluid` · `cpr` (started) · `shock` ·

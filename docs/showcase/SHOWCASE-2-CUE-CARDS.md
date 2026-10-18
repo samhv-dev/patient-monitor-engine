@@ -3,8 +3,8 @@
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
 follows each card). Clock = the session-bar clock (Load = 0:00). Every number is measured: kit round A (13 October)
 and kit round A3 (17 October) (`SHOWCASE-2-MEASUREMENTS.md`, section given at the foot of each card). The owner's final
-answers of 17 October are marked ◆. **[E22 time: filled from the E22 measurement]** is a placeholder on purpose: it is
-filled when the new MH rule is measured. The run sheet has the full rows and sources. The four dropped cases are at
+answers of 17 October are marked ◆. The MH press time, **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**,
+is the E22 measurement (owner ruling E23: ordering A). The run sheet has the full rows and sources. The four dropped cases are at
 the end, under "Cases held in reserve".*
 
 <div style="page-break-after: always;"></div>
@@ -148,24 +148,26 @@ Ventilation back to 12 × 500
 | ≈ 7:20 | | **Dantrolene 2.5 mg/kg**, then **Cool: 2 L saline** |
 | 7:42 | EtCO₂ 38 | **5 min** fast-forward (1). **Hyperventilation stays on** |
 | 12:55 | state **Recovering** · EtCO₂ 38 | **Pause** · point · **Resume**. Do NOT press ventilation back yet |
-| ◆ **[E22 time: filled from the E22 measurement]** | | **EtCO₂ normal: ventilation back to 12 × 500**, not before this time |
-| 12:57 | | **5 min** fast-forward (2), hyperventilation still on unless the E22 time has passed |
-| 18:11 | EtCO₂ 36 | **Pause** · point · **Resume** (press ventilation back here if the E22 time falls after span 2) |
-| ≈ 18:15 | | **5 min** (3) (cut first in MH if running over, once ventilation back is pressed) |
-| 23:30 | EtCO₂ 41 | end · **Pause** |
+| ◆ **13:03 (as fast-forward 1 ends; any press from 12:41 is met)** | | **EtCO₂ normal: ventilation back to 12 × 500**, not before this time |
+| ≈ 13:07 | | **5 min** fast-forward (2) |
+| 18:20 | EtCO₂ 45 (peak 55 inside span 2, not visible; ETCO2 TOO HIGH 14:13 shown latched) | **Pause** · say: "EtCO₂ rose to the alarm limit while CO₂ production settled; the alarm caught it; we keep watching" · **Resume** |
+| ≈ 18:21 | | **5 min** (3) (cut first in MH if running over) |
+| 23:34 | EtCO₂ 42 | end · **Pause** |
 
-**Point at:** EtCO₂ below 40 at 7:27, 26 s after the call · it stays 36–38 while the hyperventilation is kept · the
+**Point at:** EtCO₂ below 40 at 7:27, 26 s after the call · it stays 36–38 while the hyperventilation is kept · after
+the press: 38 → 49 at +1 min, peak 55 inside span 2, 45 after it, 42 at the end · the
 pressure stays high after the crisis (systolic 136–151: a known miss).
 
 **Debrief would say:** ✓ call (9 s) · ✓ dantrolene (21 s) · – repeat (instructor) · – potassium (never above 5.5) ·
-ventilation back: [E22 verdict: filled from the E22 measurement].
+ventilation back ✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)").
 
 **Traps:** ◆ **do NOT press ventilation back at "Recovering"**: early is "not met" under the new rule, and it made the
 EtCO₂ rebound to 57–61 with ETCO2 TOO HIGH. **No repeat dantrolene just before the E22 time**: a dose takes the
-ventilation-back button off the card for at least a minute. Repeat only if EtCO₂ climbs back above 45. No potassium
+ventilation-back button off the card for at least a minute. **Repeat dantrolene: – (not needed; do NOT give it on the
+ETCO2 TOO HIGH alarm after span 2)**: the presenter line explains the settling production. No potassium
 treatment on this path.
 
-*Measurements §0, §1 (early call); E22: [filled from the E22 measurement].*
+*Measurements §0, §1 (early call); E22 (ordering A).*
 
 <div style="page-break-after: always;"></div>
 

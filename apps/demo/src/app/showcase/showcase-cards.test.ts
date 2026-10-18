@@ -52,4 +52,15 @@ describe('Stage 11 Showcase cards', () => {
       expect(new Set(manual).size, `${s.id}: a button label twice`).toBe(manual.length);
     }
   });
+
+  it('E22 (owner ruling 2026-10-17): the MH ventilation objective judges 2 min of EtCO₂ below 40 before the ventilation goes back', () => {
+    const doc: ScenarioDoc = showcaseDoc('showcase-mh');
+    const vent = (doc.objectives ?? []).find((o) => typeof o !== 'string' && o.rule?.kind === 'heldThen');
+    expect(vent).toEqual({
+      text: 'Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)',
+      rule: { kind: 'heldThen', from: 'state:triggerOff', value: 'etco2', below: 40, forS: 120, event: 'state:normoventilated' },
+    });
+    expect((doc.objectives ?? []).map(objectiveText)).not.toContainEqual(expect.stringMatching(/within 300 s of EtCO₂ falling below 40/));
+    expect(doc.objectives).toHaveLength(5); // the other four unchanged
+  });
 });

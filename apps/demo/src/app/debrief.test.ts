@@ -110,6 +110,34 @@ describe('Stage 13: objective rules', () => {
     expect(v({ kind: 'stayed', value: 'etco2', below: 45 }, run([], [sample(0, { etco2: 52 })])).why).toBe('EtCO₂ 52 mmHg at 00:00 (asked: below 45 mmHg).');
   });
 
+  it('heldThen (E22, owner ruling 2026-10-17): ventilation back only once EtCO₂ has stayed below 40 for 2 min; earlier is not met', () => {
+    // the MH early-call course measured on the kit: crisis called 07:01, EtCO₂ 46 until 07:26, below 40 from 07:27
+    const mh = { ...DOC, states: [{ id: 'triggerOff', label: 'Trigger off' }, { id: 'normoventilated', label: 'Ventilation back to 12 × 500' }] };
+    const course = (to: number, etco2 = (t: number): number | null => (t < 447 ? 46 : 36)) => Array.from({ length: to - 400 + 1 }, (_, i) => sample(400 + i, { etco2: etco2(400 + i) }));
+    const call: Row = { t: 421, kind: 'scenario', text: 'Trigger off', ev: 'state:triggerOff' };
+    const back = (t: number): Row => ({ t, kind: 'scenario', text: 'Ventilation back', ev: 'state:normoventilated' });
+    const at = (rows: Row[], xs: Sample[]): RunData => ({ ...run(rows, xs), doc: mh as never });
+    const rule: ObjectiveRule = { kind: 'heldThen', from: 'state:triggerOff', value: 'etco2', below: 40, forS: 120, event: 'state:normoventilated' };
+    // (a) pressed at "Recovering" (08:43): EtCO₂ below 40 for only 1 min 16 s
+    expect(v(rule, at([call, back(523)], course(700)))).toEqual({ status: 'not met', why: 'The state "Ventilation back to 12 × 500" at 08:43, when EtCO₂ had been below 40 mmHg for 1 min 16 s (2 min 00 s asked).' });
+    // (b) pressed after 2 min of EtCO₂ below 40 (held 07:27 → 09:27)
+    expect(v(rule, at([call, back(600)], course(700)))).toEqual({ status: 'met', why: 'The state "Ventilation back to 12 × 500" at 10:00, after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:27 → 09:27).' });
+    // (c) never pressed
+    expect(v(rule, at([call], course(700)))).toEqual({ status: 'not met', why: 'The state "Ventilation back to 12 × 500" did not happen; EtCO₂ had stayed below 40 mmHg for 2 min 00 s by 09:27.' });
+    // only the first press is judged: an early press is not mended by a second one
+    expect(v(rule, at([call, back(523), back(800)], course(900))).status).toBe('not met');
+    // a value back at 40 restarts the 2 min; a press before the restart is complete is not met
+    const bounce = (t: number) => (t < 447 ? 46 : t >= 500 && t < 510 ? 41 : 36);
+    expect(v(rule, at([call, back(600)], course(700, bounce))).why).toBe('The state "Ventilation back to 12 × 500" at 10:00, when EtCO₂ had been below 40 mmHg for 1 min 30 s (2 min 00 s asked).');
+    expect(v(rule, at([call, back(640)], course(700, bounce))).status).toBe('met');
+    // pressed while EtCO₂ was not below 40 at all
+    expect(v(rule, at([call, back(430)], course(700))).why).toBe('The state "Ventilation back to 12 × 500" at 07:10, when EtCO₂ was not below 40 mmHg (2 min 00 s asked).');
+    // not assessable: the crisis never called; the run ended before the 2 min (no press yet); EtCO₂ never measured
+    expect(v(rule, at([], course(700))).why).toBe('The state "Trigger off" did not happen.');
+    expect(v(rule, at([call], course(520)))).toEqual({ status: 'not assessable', why: 'The run ended before EtCO₂ had stayed below 40 mmHg for 2 min 00 s after the state "Trigger off" at 07:01; the state "Ventilation back to 12 × 500" had not happened.' });
+    expect(v(rule, at([call], course(700, () => null))).why).toBe('EtCO₂ was not measured after the state "Trigger off" at 07:01.');
+  });
+
   it('objectives: strings and rule-less objects are not assessable; a tick in the Scenario tab is reported', () => {
     const d = run([apnoea(66), vent(100), { t: 140, kind: 'note', text: 'Objective met: Confirm ventilation with the capnogram' }], [sample(200)]);
     d.doc = { ...(DOC as never as NonNullable<RunData['doc']>), objectives: ['Anticipate the fall in arterial pressure after propofol', { text: 'Ventilate within 90 s of the apnoea alarm', rule: within }, { text: 'Confirm ventilation with the capnogram' }] };
@@ -184,9 +212,10 @@ describe('Stage 13: the objective rule in pme-scenario/1', () => {
       { text: 'F', rule: { kind: 'eventWithin', after: 'value:k>5.5', event: ['drug:calciumChloride', 'drug:insulinDextrose'], withinS: 300 } },
       { text: 'G', rule: { kind: 'stayed', value: 'ph', above: 7.2 } },
       { text: 'H', rule: { kind: 'eventWithin', from: 'state:triggerOff', after: 'value:etco2<40', event: 'state:normoventilated', withinS: 300 } },
+      { text: 'I', rule: { kind: 'heldThen', from: 'state:triggerOff', value: 'etco2', below: 40, forS: 120, event: 'state:normoventilated' } },
     ]));
     expect(r.ok, r.ok ? '' : r.errors.join('\n')).toBe(true);
-    if (r.ok) expect(cardOf(r.doc).objectives).toEqual(['Plain words', 'No rule', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']);
+    if (r.ok) expect(cardOf(r.doc).objectives).toEqual(['Plain words', 'No rule', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']);
   });
   it.each([
     [{ text: 'x', rule: { kind: 'soon', event: 'cpr' } }],
@@ -197,6 +226,9 @@ describe('Stage 13: the objective rule in pme-scenario/1', () => {
     [{ text: 'x', rule: { kind: 'occurred', event: 'value:na>150' } }],
     [{ text: 'x', rule: { kind: 'occurred', event: [] } }],
     [{ text: 'x', rule: { kind: 'stayed', value: 'spo2', above: 90, from: 'start' } }],
+    [{ text: 'x', rule: { kind: 'heldThen', value: 'etco2', below: 40, event: 'state:normoventilated' } }],
+    [{ text: 'x', rule: { kind: 'heldThen', value: 'etco2', forS: 120, event: 'state:normoventilated' } }],
+    [{ text: 'x', rule: { kind: 'heldThen', value: 'etco2', below: 40, forS: 120 } }],
   ])('refuses %j', (o) => {
     expect(validateScenario(doc([o])).ok).toBe(false);
   });
