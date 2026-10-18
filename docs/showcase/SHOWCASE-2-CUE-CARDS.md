@@ -24,7 +24,13 @@ the end, under "Cases held in reserve".*
 - **"Not available now"** → press again.
 - ◆ **Saadat-style monitor. Never change the monitor style during the talk.**
 - **Silence lasts only until the next alarm.** There is no alarm pause on this monitor.
-- Something went wrong → **Bookmark list → Return here**.
+- Something went wrong → **Restart patient, then Return here** (a page reload loses the bookmarks).
+  *Measured on the release build (kit round Q1, FX-12): after this sequence the session bar reads **No scenario**.
+  The patient goes back to the bookmark, the case does not: no card buttons, and the Debrief reads "No scenario
+  (free run)". After Restart patient the bookmark list was often not on screen at all (3 of 6 tries). So, after
+  Restart patient: **load the case again** (Scenario → Load · All alarms on · speed · Bookmark) and run it from 0:00.*
+- **Return here: take the LAST bookmark in the list.** The list keeps the bookmarks of the earlier cases of this page,
+  named only by their clock ("Bookmark 1 at 00:06" was the tamponade's while MH ran) (Q1).
 
 ### ◆ Order (30 min)
 
@@ -141,7 +147,7 @@ Ventilation back to 12 × 500
 
 | Clock | Cue | Press |
 |---|---|---|
-| 0:00 | | **Load · All alarms on · ×8 · Bookmark** |
+| 0:00 | | **Choose another scenario** (the tamponade is still loaded, so the library is hidden) · **Load · All alarms on · ×8 · Bookmark** |
 | 4:00 | | **Start surgery: rocuronium 0.6 mg/kg** |
 | 6:30 | | **×4** · watch the CO₂ tile climb |
 | ◆ **6:52** | state **Early signs** (EtCO₂ 46) | **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** |
@@ -167,7 +173,7 @@ ventilation-back button off the card for at least a minute. **Repeat dantrolene:
 ETCO2 TOO HIGH alarm after span 2)**: the presenter line explains the settling production. No potassium
 treatment on this path.
 
-*Measurements §0, §1 (early call); E22 (ordering A).*
+*Measurements §0, §1 (early call); E22 (ordering A); Q1 (the release build: the same path and verdicts).*
 
 <div style="page-break-after: always;"></div>
 

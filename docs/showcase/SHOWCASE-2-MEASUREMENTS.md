@@ -498,3 +498,97 @@ span, so the presenter never sees it.
 **Not measured:** a human presenter's actual delay after span 1 (modelled as 2 s of wall time, plus the script's 3 s
 check, so 12:41 → 13:03). Real Safari and real phones. A press between 09:27 and 12:41, which the spans of (A) make
 impossible.
+
+---
+
+## Q1 — rehearsal on the release build
+
+*Measured 2026-10-18 on kit `pme-showcase-kit-3db25a3b`, built by `make-bundle.mjs` from a clean checkout of main
+3db25a3b (PR #66 merge, Stage 8b, v1.0.0-rc.1). Served as built by its own Start Classroom launcher; three emulated
+phones (Pixel 7 on Chromium, iPhone 13 on WebKit) joined once at the QR moment and followed the whole talk. Chromium,
+then WebKit, one run at a time; load average 2.2–6.0. Script: `scripts/showcase/kit-round-a.kitround.ts`, tests "Q1 …"
+(`KITROUND_OUTDIR=docs/showcase/kit-round-a/q1 … -g Q1`). Raw files: `docs/showcase/kit-round-a/q1/`.*
+
+**The kit.** `check-relay.mjs`: **PASS, 2 of 2 runs** (relay alone; through Start Classroom), node v26.11.1
+(`q1/relay-3db25a3b.json`). The Start view and Settings → About both read **"Version 1.0.0-rc.1 (pre-release). For
+education only. Not a medical device and not clinically validated: never use it for patient care."** The Debrief footer
+reads "… Version 1.0.0-rc.1 (pre-release), build 3db25a3b 2026-10-18." The engine's snapshot key in the kit is
+`1.0.0-rc.1+dev`: the demo's Vite build does not set `PME_BUILD`, so the build half is "dev" (the 62e521c3 kit's engine
+was 0.0.0, so its bookmarks and snapshots do not restore here either way).
+
+**How it ran.** One page for the whole talk, the cue cards' presses at their clock times, 2 s of wall as the
+presenter's reaction, "Load · All alarms on · speed · Bookmark" in that order, All alarms on pressed after EVERY Load.
+Opening → card 1 → H21 → reload, Sound on → card 2 → card 3 (Debrief read, Run by and Notes filled, printed) → card 4
+→ the close (S12-F2, FX-12). No talk: 9 min 38–39 s of wall from the opening to the end of the close.
+
+| Case (C / W) | Wall from Load | Debrief verdicts | Alarms | Phones | Against the cue card |
+|---|---|---|---|---|---|
+| 0 Opening + QR | — | — | — | the sheet: `http://192.168.1.100:8760/?join=…`, "0 phones following" → **"3 phones following"** 2.5 / 2.9 s after the joins began | as written |
+| 1 Bronchospasm, Ventilator view | ×1 pressed at W 1:36 (09:32); reload at W 2:18 (after H21 and a Debrief read) | – recognise · **✓ salbutamol at 02:06 / 02:07** · – watch; 17 rows | **RR TOO LOW 00:12 (C) / RR TOO HIGH 00:09 (W)**, `%SPO2 LOW` 00:35, lowest SpO₂ 86 % at 00:37–00:39 | held ("The ventilator is on the main screen") and `synced` throughout; 6 resyncs; after the reload still `synced` (15 s later) | VTE 300 → 501 → 501, Ppeak 35 → 33 → 32, MV 4.2 → 7.0 → 7.0, Pmax banner gone after span 1: as the card. ×8 stayed ×8 after span 2. **New: the RR alarm at 00:09–00:12** (the Ventilator view opened at 00:25, ×4 now pressed after All alarms on). The ×1 press at 09:32 instead of ≈ 8:45 is the script's 3-s rate check after each span at ×8, not the app |
+| 2 Tamponade, A3 path | crystalloid at W 3:42 / 3:43 (sheet 3:35) | – name it ("ticked it at 01:03 / 01:01") · **✓ CPR 3 s / 4 s** (07:48 → 07:51) · **✓ drainage 1 min 30 s** (09:21) · **✓ stop CPR 2 s** (10:55 → 10:57 / 10:56 → 10:58) · **✗ Better** ("The pulse loss at 07:48"); 42 / 43 timeline rows, 12 minute rows | as A3.1, plus `HR TOO HIGH` 10:07 / 10:21 during CPR; `ART DIA` + `ART MEAN TOO HIGH` 11:03–11:04; no `SPO2 NO PULSE` | `synced`; 11 resyncs; largest difference HR / IBP1 for 1.5 s while the value swung (no S12-F2) | PEA 07:49, ROSC 93.5 / 94.6 s after the drainage, the line 70/33 at the return then **108 / 136 systolic within 6 s** ("jumps to about 100": holds), 30 s after the stop 115/77, HR 64 (C) / 115/78, HR 65 (W). Facts as card 3 (pulseless 3 min 07 / 08 s, lowest mean 20 at 07:51). **Printed: 6 A4 pages** (Chromium PDF), title "Debrief Stab wound: tamponade, PEA and pericardiocentesis 2026-10-18". Rows 42–43 against the card's 41: the objective-1 tick and one HR alarm |
+| 3 Debrief moment | 4.1–4.3 s for the script (open, read, fill, print) | as above | — | — | as written |
+| 4 MH, early call | end (Pause at 23:37–23:38) at W 2:00 (sheet 1:49; two 3-s pauses at 12:55 and 18:20 and Choose another scenario add the difference) | **✓ call 8–9 s** (06:51–06:52 → 07:00) · **✓ dantrolene 21 s** · – repeat · – potassium (did not rise above 5.5) · **✓ ventilation back at 13:04 / 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)"**; 41 / 42 rows | span 1 none; span 2 **`ETCO2 TOO HIGH` 14:13 / 14:18**, `ART MEAN TOO HIGH` 17:00 / 16:59, `RR TOO HIGH` 18:06 / 18:05; span 3 `ART SYS TOO HIGH` 22:39 | `synced`; 17–19 resyncs | Early signs 06:52, EtCO₂ < 40 at 07:26, 36–38 while hyperventilated, 38 at the press, then 38 · 49 · 51–52 · 53 · 54 · 49 · 44 … 43 per minute, **peak 55** at 17:22 / 17:32, 44 after span 2, 42 at the end: E22 (A) to the unit. **New step: "Choose another scenario" before Load** (the tamponade is still loaded, so the library is hidden) |
+
+Spans: every fast-forward took 10.1–10.6 s of wall and left the speed as it was (×4 → ×4, ×8 → ×8). No console or page
+error in any run.
+
+**H21** (card 1's end, at ×1: the main screen on the Monitor view for 30 s, then back to the Ventilator view):
+
+| | Chromium | WebKit |
+|---|---|---|
+| Phones keep "The ventilator is on the main screen" | **yes, every 2-s sample, all three** | yes |
+| EtCO₂ before → during; awRR | 34 → **34** (120 samples); awRR 14 | 34 → 34; 14 |
+| The cockpit keeps driving (frame-port tap) | **1 507 frames, contiguous** (30.1 s of sim = 1 506 ticks) | **1 505, contiguous** |
+| Back on the Ventilator view | VTE 501, Ppeak 31, MV 7.0 | same |
+
+**S12-F2** (the close: one style change Saadat-style → Philips-style, phones following, MH running at ×1): the
+instructor's **AGENTS tile read "0.0" and every phone "---"** before the change and for the whole 30 s after it, on
+both engines (29.6 s, the probe's longest difference). Before the change the longest difference in the MH run was
+2.5 s (a moving value; the probe keeps only the longest). Unchanged since §8: the owner's rule
+E20 (no style change during the talk) stays.
+
+**FX-12** ("Restart patient, then Return here", the new "something went wrong" line):
+
+| | Talk, C | Talk, W | Probe 1, C | Probe 1, W | Probe 2, C | Probe 2, W |
+|---|---|---|---|---|---|---|
+| Session bar after Restart patient | **No scenario** | No scenario | No scenario | No scenario | No scenario | No scenario |
+| "Return here" on screen after Restart patient | yes (3 s later) | yes | yes | **no** | **no** | **no** |
+| Session bar after Return here (and 10 s later) | **No scenario** | **No scenario** | **No scenario** | — | — | — |
+| Patient and clock | restored to the MH bookmark (00:04), clock running, limits back on | same | restored (00:06) | — | — | — |
+| The case | not checked (the talk ends here) | not checked | **gone**: the Scenario tab shows the library, no card buttons ("Start surgery" not offered at 4:00), the Debrief reads "No scenario (free run)" with no objectives | — | — | — |
+
+So the sequence brings the patient back but not the case, and after Restart patient the bookmark list is not on
+screen half of the time (the Scenario tab repaints to the library). What the presenter should do after Restart
+patient: **load the case again** (Load · All alarms on · speed · Bookmark) and run it from 0:00. Probes: `q1/q1-fx-12-probe-*`
+(MH loaded, 1 min at ×8, Restart patient, Return here). Probe 1 W timed out waiting for the button and was stopped by
+hand; probe 2 records the panel's state instead.
+
+**Bookmarks across cases.** The bookmark list keeps the bookmarks of the earlier cases of the page. While MH ran it
+read "Bookmark 1 at 00:06" (the tamponade's) and "Bookmark 2 at 00:04" (MH's): names carry only the clock. A first
+try of the close returned to the first one and restored the TAMPONADE patient under the MH card (state "arrival",
+session bar "No scenario"). The current case's bookmark is the last one in the list.
+
+**Persian MH handout.** From `q1/debrief-q1-4-malignant-hyperthermia-early-call-13-03-chromium.json` (the 13:04
+path above): `q1/debrief-q1-4-malignant-hyperthermia-early-call-13-03-chromium.fa.pdf`, **6 A4 pages, 96 table entries
+(all unreviewed), 0 strings without translation**; `verify_pdf.py --expect-font Vazirmatn` OK, Vazirmatn Regular and
+Bold only. The `heldThen` reason line prints as «وضعیت «بازگشت تهویه به 12 × 500، O₂ 100 %» در 13:04، پس از آنکه EtCO₂
+به مدت 2 دقیقه و 00 ثانیه کمتر از 40 mmHg ماند (از 07:26 تا 09:26).». The template was already in the table (PR #70
+wrote it against the E22 branch); its `source` notes now name main.
+
+**Findings.**
+1. **MH Load needs "Choose another scenario" first** when the tamponade is still loaded (cards and sheet updated).
+2. **FX-12 confirmed**, and worse than the bar: the case is not restored and Return here is often unreachable after
+   Restart patient (cards and sheet updated with what to do).
+3. **The bookmark list mixes cases**, named only by clock (cards and sheet: take the last one).
+4. **New RR alarm at 00:09–00:12 in bronchospasm** with the cards' press order (sheet row updated).
+5. **The Debrief's duration line can read "1 min 60 s"**: `span()` in `apps/demo/src/app/debrief.ts` rounds the seconds
+   after flooring the minutes (MH: "23:38 simulated · 1 min 60 s on the clock"). Reported, not fixed.
+6. **The Persian footer is the pre-release wording**: `debrief-fa.mjs` builds its own English footer ("Not a medical
+   device: … Build …"), so the Persian page lacks "not clinically validated" and the version. Reported, not fixed (a
+   script change, outside this round).
+7. The kit's engine snapshot key is `1.0.0-rc.1+dev` (above).
+8. WebKit only: on the fresh page before bronchospasm, the Scenario tab still showed "Choose another scenario" with no
+   case loaded (the script pressed it; the library came up and the Load went through).
+
+**Not measured:** the talk itself (presses only), a human's delay, real Safari and real phones, sound by ear, a real
+print dialog.

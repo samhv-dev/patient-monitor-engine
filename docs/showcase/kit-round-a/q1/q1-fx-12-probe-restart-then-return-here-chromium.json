@@ -1,0 +1,155 @@
+{
+  "case": "Q1 FX-12 probe restart then return here",
+  "browser": "chromium",
+  "kit": "3db25a3b",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-18T07:19:15.043Z",
+  "loadAvg": {
+    "start": 2.74,
+    "end": 2.74,
+    "min": 2.74,
+    "max": 3.24
+  },
+  "setup": {
+    "sessionCode": "SARY7F",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "alarmButtonRightAfterLoad": "Limit alarms off",
+    "allOnAgainAfterLoadAt": "00:03",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "bookmarkAt": "00:06",
+    "alarmButtonAtEnd": "Limit alarms off"
+  },
+  "rows": [
+    {
+      "wall": 2.6,
+      "clock": "00:06",
+      "simS": 6.3,
+      "speed": 8,
+      "state": "induction",
+      "load1": 3.24,
+      "what": "Load \"Malignant hyperthermia\" at ×8, Bookmark",
+      "hr": 70,
+      "art": "–/– (–)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    }
+  ],
+  "presses": [],
+  "spans": [],
+  "states": [
+    {
+      "t": 1.1,
+      "clock": "00:01",
+      "id": "induction"
+    },
+    {
+      "t": 0,
+      "clock": "00:00",
+      "id": null
+    }
+  ],
+  "alarms": [],
+  "measures": {
+    "fx12probe": {
+      "before": {
+        "bar": "Malignant hyperthermia: Induced: propofol, succinylcholine 1.5 mg/kg (masseter rigidity), intubated; sevoflurane 2 % 00:59",
+        "state": "induction",
+        "clock": "01:03"
+      },
+      "afterRestart": {
+        "bar": "No scenario",
+        "state": null,
+        "clock": "00:23",
+        "allOff": true
+      },
+      "bookmarkList": [],
+      "panelAfterRestart": {
+        "runningSectionVisible": false,
+        "libraryVisible": true,
+        "returnHereVisible": 0
+      },
+      "returnHereReachable": false,
+      "panelAfter15s": {
+        "runningSectionVisible": false,
+        "libraryVisible": true,
+        "returnHereVisible": 0
+      }
+    }
+  },
+  "debrief": {
+    "openedAt": "02:26",
+    "objectives": [],
+    "facts": {
+      "Lowest SpO₂": "96 % at 00:10",
+      "Highest EtCO₂": "37 mmHg at 00:20",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.40 (7.40–7.41) · Glucose 5.6 mmol/L (5.6–5.6) · Tcore 36.8 °C (36.8–36.8)"
+    },
+    "timelineRows": 0,
+    "timeline": [],
+    "minuteRows": 3
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 58,
+        "compared": 54,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 27,
+        "holdSamples": 0,
+        "status": {
+          "synced": 58
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 58,
+        "compared": 54,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 27,
+        "holdSamples": 0,
+        "status": {
+          "synced": 58
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 58,
+        "compared": 54,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 25,
+        "holdSamples": 0,
+        "status": {
+          "synced": 58
+        },
+        "resyncs": 3,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "phone 0 (Pixel 7 emulation) synced before Load",
+    "phone 1 (Pixel 7 emulation) synced before Load",
+    "phone 2 (Pixel 7 emulation) synced before Load"
+  ],
+  "errors": []
+}

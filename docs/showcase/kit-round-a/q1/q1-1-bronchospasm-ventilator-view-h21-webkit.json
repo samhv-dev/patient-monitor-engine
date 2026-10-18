@@ -1,0 +1,889 @@
+{
+  "case": "Q1 1 bronchospasm, Ventilator view, H21",
+  "browser": "webkit",
+  "kit": "3db25a3b",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-18T06:56:54.682Z",
+  "loadAvg": {
+    "start": 2.68,
+    "end": 3.65,
+    "min": 2.42,
+    "max": 6.01
+  },
+  "setup": {
+    "sessionCode": "EC7SHR",
+    "alarmButtonAtOpen": "Limit alarms off",
+    "phonesAtStart": [
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      }
+    ],
+    "alarmButtonAfterAllOn": "No alarms",
+    "soundButton": "Sound on",
+    "choseAnotherScenarioFirst": true,
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "limitsAfterLoad": "Limit alarms OFF after Load",
+    "alarmButtonRightAfterLoad": "Limit alarms off",
+    "allOnAgainAfterLoadAt": "00:03",
+    "alarmButtonAfterAllOnAgain": "No alarms",
+    "bookmarkAt": "00:05",
+    "alarmButtonAtEnd": "No alarms"
+  },
+  "rows": [
+    {
+      "wall": 2.6,
+      "clock": "00:05",
+      "simS": 5,
+      "speed": 4,
+      "state": "spasm",
+      "load1": 2.63,
+      "what": "Load \"Severe bronchospasm on the ventilator\" at ×4, Bookmark",
+      "hr": 70,
+      "art": "–/– (–)",
+      "spo2": null,
+      "etco2": null,
+      "rr": null
+    },
+    {
+      "wall": 7.6,
+      "clock": "00:25",
+      "simS": 25.2,
+      "speed": 4,
+      "state": "spasm",
+      "load1": 2.42,
+      "what": "Ventilator view opened",
+      "hr": 75,
+      "art": "115/83 (95)",
+      "spo2": 93,
+      "etco2": 31,
+      "rr": 15,
+      "phones": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        }
+      ]
+    },
+    {
+      "wall": 23.2,
+      "clock": "01:27",
+      "simS": 87.4,
+      "speed": 4,
+      "state": "spasm",
+      "load1": 2.68,
+      "what": "≈ 1:25 point (before salbutamol)",
+      "hr": 77,
+      "art": "116/85 (96)",
+      "spo2": 95,
+      "etco2": 33,
+      "rr": 14,
+      "vte": 300,
+      "ppeak": 35,
+      "mv": 4.2,
+      "pmaxBanner": true,
+      "phones": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 2
+        }
+      ],
+      "ventText": "⚠ High pressure (Pmax) i Modes (S)CMV+ Adult 14 fTotal /min 300 VTE ml 35 Ppeak cmH₂O 4.2 ExpMinVol l/min 24 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC In"
+    },
+    {
+      "wall": 33.9,
+      "clock": "02:10",
+      "simS": 130.4,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 3.44,
+      "what": "press **Give salbutamol 250 µg**",
+      "hr": 78,
+      "art": "116/86 (97)",
+      "spo2": 94,
+      "etco2": 33,
+      "rr": 14
+    },
+    {
+      "wall": 76.6,
+      "clock": "06:21",
+      "simS": 381.3,
+      "speed": 4,
+      "state": "treatedByButton",
+      "load1": 6.01,
+      "what": "after the 2-min fast-forward",
+      "hr": 86,
+      "art": "116/86 (97)",
+      "spo2": 98,
+      "etco2": 33,
+      "rr": 14
+    },
+    {
+      "wall": 78.5,
+      "clock": "06:36",
+      "simS": 396.1,
+      "speed": 8,
+      "state": "treatedByButton",
+      "load1": 5.52,
+      "what": "≈ 6:15 point (after span 1 + ×8)",
+      "hr": 85,
+      "art": "116/85 (97)",
+      "spo2": 98,
+      "etco2": 34,
+      "rr": 14,
+      "vte": 501,
+      "ppeak": 33,
+      "mv": 7,
+      "pmaxBanner": false,
+      "phones": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 4
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 4
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 4
+        }
+      ],
+      "ventText": "No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 33 Ppeak cmH₂O 7.0 ExpMinVol l/min 20 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independ"
+    },
+    {
+      "wall": 92.7,
+      "clock": "09:10",
+      "simS": 550.1,
+      "speed": 8,
+      "state": "treatedByButton",
+      "load1": 5.5,
+      "what": "after the 2-min fast-forward",
+      "hr": 87,
+      "art": "116/86 (97)",
+      "spo2": 98,
+      "etco2": 34,
+      "rr": 14
+    },
+    {
+      "wall": 94.3,
+      "clock": "09:22",
+      "simS": 562.3,
+      "speed": 8,
+      "state": "treatedByButton",
+      "load1": 5.14,
+      "what": "≈ 8:45 end",
+      "hr": 87,
+      "art": "116/86 (97)",
+      "spo2": 98,
+      "etco2": 34,
+      "rr": 14,
+      "vte": 501,
+      "ppeak": 32,
+      "mv": 7,
+      "pmaxBanner": false,
+      "phones": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        }
+      ],
+      "ventText": "No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 32 Ppeak cmH₂O 7.0 ExpMinVol l/min 19 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independ"
+    },
+    {
+      "wall": 95.8,
+      "clock": "09:32",
+      "simS": 572.2,
+      "speed": 1,
+      "state": "treatedByButton",
+      "load1": 5.14,
+      "what": "Instructor → ×1",
+      "hr": 88,
+      "art": "116/86 (97)",
+      "spo2": 98,
+      "etco2": 34,
+      "rr": 14
+    },
+    {
+      "wall": 133.4,
+      "clock": "10:09",
+      "simS": 609.8,
+      "speed": 1,
+      "state": "treatedByButton",
+      "load1": 3.65,
+      "what": "H21: back on the Ventilator view after 30 s on the Monitor view",
+      "hr": 87,
+      "art": "116/86 (97)",
+      "spo2": 98,
+      "etco2": 34,
+      "rr": 14,
+      "vte": 501,
+      "ppeak": 31,
+      "mv": 7,
+      "pmaxBanner": false,
+      "phones": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        }
+      ],
+      "ventText": "No active alarms i Modes (S)CMV+ Adult 14 fTotal /min 501 VTE ml 31 Ppeak cmH₂O 7.0 ExpMinVol l/min 18 Pmean cmH₂O Graphics Dynamic Lung 500 ml VT 14 b/min Rate 5 cmH₂O PEEP 40 % Oxygen Controls Alarms Freeze Insp hold Exp hold Patient Man. breath Reset Monitoring Utilities Events System AC Independ"
+    }
+  ],
+  "presses": [
+    {
+      "label": "Give salbutamol 250 µg",
+      "clock": "02:07",
+      "simS": 127.1,
+      "wall": 33.9,
+      "before": "spasm",
+      "after": "treatedByButton",
+      "load1": 3.44,
+      "toast": "The scenario has ended: the debrief is ready (Debrief, in the session bar)"
+    }
+  ],
+  "spans": [
+    {
+      "min": 2,
+      "via": "button",
+      "clockBefore": "04:07",
+      "fromT": 247.3,
+      "endT": 367.3,
+      "wallS": 10.5,
+      "speedBefore": 4,
+      "speedAfter": 4,
+      "rateAfter3s": 4,
+      "banner": "Fast-forwarded 2 min, 04:07 → 06:07. During it: no alarms.",
+      "alarms": [],
+      "load1": 6.01
+    },
+    {
+      "min": 2,
+      "via": "button",
+      "clockBefore": "06:45",
+      "fromT": 405.6,
+      "endT": 525.6,
+      "wallS": 10.1,
+      "speedBefore": 8,
+      "speedAfter": 8,
+      "rateAfter3s": 8,
+      "banner": "Fast-forwarded 2 min, 06:45 → 08:45. During it: no alarms.",
+      "alarms": [],
+      "load1": 5.5
+    }
+  ],
+  "states": [
+    {
+      "t": 1.1,
+      "clock": "00:01",
+      "id": "spasm"
+    },
+    {
+      "t": 127.1,
+      "clock": "02:07",
+      "id": "treatedByButton"
+    }
+  ],
+  "alarms": [
+    "00:09 RR TOO HIGH",
+    "00:35 %SPO2 LOW"
+  ],
+  "measures": {
+    "h21": {
+      "speed": 1,
+      "holdBefore": [
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        },
+        {
+          "hold": true,
+          "status": "synced",
+          "resyncs": 6
+        }
+      ],
+      "perTwoSeconds": [
+        {
+          "wallS": 2,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 4,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 6,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 8,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 10,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 12,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 14,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 16.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 18.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 20.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 22.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 24.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 26.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 28.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        },
+        {
+          "wallS": 30.1,
+          "etco2": 34,
+          "awrr": 14,
+          "phones": [
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            },
+            {
+              "hold": true,
+              "status": "synced",
+              "resyncs": 6
+            }
+          ]
+        }
+      ],
+      "etco2Before30s": {
+        "min": 34,
+        "max": 34
+      },
+      "etco2DuringMonitor30s": {
+        "min": 34,
+        "max": 34,
+        "samples": 120
+      },
+      "awrrDuringMonitor30s": {
+        "min": 14,
+        "max": 14
+      },
+      "cockpitDuringMonitor30s": {
+        "frames": 1505,
+        "firstTick": 28504,
+        "lastTick": 30008,
+        "contiguous": true
+      },
+      "simSpanS": 30.1,
+      "expectedTicks": 1506,
+      "cockpitKeptDriving": true,
+      "holdKeptEverySample": true,
+      "ventAfter": {
+        "vte": 501,
+        "ppeak": 31,
+        "mv": 7,
+        "pmaxBanner": false,
+        "etco2": 34
+      }
+    },
+    "vent": {
+      "salbutamolAt": "02:07",
+      "before": {
+        "vte": 300,
+        "ppeak": 35,
+        "mv": 4.2,
+        "pmaxBanner": true,
+        "etco2": 33
+      },
+      "at615": {
+        "vte": 501,
+        "ppeak": 33,
+        "mv": 7,
+        "pmaxBanner": false,
+        "etco2": 34
+      },
+      "at845": {
+        "vte": 501,
+        "ppeak": 32,
+        "mv": 7,
+        "pmaxBanner": false,
+        "etco2": 34
+      },
+      "spans": [
+        {
+          "min": 2,
+          "via": "button",
+          "clockBefore": "04:07",
+          "fromT": 247.3,
+          "endT": 367.3,
+          "wallS": 10.5,
+          "speedBefore": 4,
+          "speedAfter": 4,
+          "rateAfter3s": 4,
+          "banner": "Fast-forwarded 2 min, 04:07 → 06:07. During it: no alarms.",
+          "alarms": [],
+          "load1": 6.01
+        },
+        {
+          "min": 2,
+          "via": "button",
+          "clockBefore": "06:45",
+          "fromT": 405.6,
+          "endT": 525.6,
+          "wallS": 10.1,
+          "speedBefore": 8,
+          "speedAfter": 8,
+          "rateAfter3s": 8,
+          "banner": "Fast-forwarded 2 min, 06:45 → 08:45. During it: no alarms.",
+          "alarms": [],
+          "load1": 5.5
+        }
+      ]
+    },
+    "wallLoadToReloadS": 137.6
+  },
+  "debrief": {
+    "openedAt": "10:11",
+    "objectives": [
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Recognise bronchospasm on the ventilator: high peak pressure, shark-fin capnogram, auto-PEEPThis objective has no rule: the instructor judges it."
+      },
+      {
+        "status": "met",
+        "text": "✓ Met Treat with a bronchodilatorSalbutamol (IV/neb) at 02:07"
+      },
+      {
+        "status": "not assessable",
+        "text": "– Not assessable Watch the delivered tidal volume and minute volume recover as air trapping easesThis objective has no rule: the instructor judges it."
+      }
+    ],
+    "facts": {
+      "Lowest SpO₂": "86 % at 00:37",
+      "Lowest ART M / NIBP M": "95 mmHg at 00:15",
+      "Highest EtCO₂": "34 mmHg at 06:22",
+      "Highest T1 / T2": "36.8 °C at 00:01",
+      "Labs (the model): last (lowest–highest)": "K⁺ 4.2 mmol/L (4.2–4.2) · Lactate 1.0 mmol/L (1.0–1.0) · pH 7.37 (7.33–7.41) · Glucose 5.6 mmol/L (5.6–5.6) · Tcore 36.8 °C (36.8–36.8)"
+    },
+    "timelineRows": 17,
+    "timeline": [
+      "00:00 Scenario Scenario loaded: Severe bronchospasm on the ventilator",
+      "00:00 Scenario Scenario state: Severe bronchospasm",
+      "00:00 Scenario Tracheal tube in place",
+      "00:00 Scenario Ventilator: RR 12 /min, VT 500 mL, PEEP 5 cmH₂O, FiO₂ 50 %",
+      "00:00 Scenario Airway bronchospasm",
+      "00:00 Patient Ventilated breaths began",
+      "00:02 Action All alarms on",
+      "00:03 Action Speed ×4",
+      "00:05 Bookmark Bookmark: Bookmark 1 at 00:04",
+      "00:09 Alarm RR high",
+      "00:35 Alarm SpO₂ low",
+      "02:07 Scenario Scenario state: Salbutamol given: ventilation recovering",
+      "02:07 Scenario Salbutamol (IV/neb) 250 µg IV",
+      "04:07 Action Fast-forward 2 min",
+      "06:21 Action Speed ×8",
+      "06:45 Action Fast-forward 2 min",
+      "09:31 Action Speed ×1"
+    ],
+    "minuteRows": 11
+  },
+  "phones": {
+    "rule": "a parameter whose NUMBER differs (> 1 unit, or a number vs a blank; a trailing quality mark such as \"?\" ignored and counted apart) for more than 2 s while comparable = S12-F2 seen",
+    "s12f2Seen": false,
+    "marks": [],
+    "perPhone": [
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 270,
+        "compared": 1,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 1,
+        "holdSamples": 239,
+        "status": {
+          "synced": 270
+        },
+        "resyncs": 6,
+        "lagS": 0
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 270,
+        "compared": 1,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 1,
+        "holdSamples": 238,
+        "status": {
+          "synced": 270
+        },
+        "resyncs": 6,
+        "lagS": 0.1
+      },
+      {
+        "maxMismatchS": 0,
+        "worst": null,
+        "samples": 270,
+        "compared": 1,
+        "commonTiles": 10,
+        "sameNumberOtherMarkSamples": 1,
+        "holdSamples": 239,
+        "status": {
+          "synced": 270
+        },
+        "resyncs": 6,
+        "lagS": 0.1
+      }
+    ]
+  },
+  "notes": [
+    "cockpit frame tap installed (__pmeVentRx)"
+  ],
+  "errors": []
+}
