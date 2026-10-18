@@ -3,7 +3,8 @@
 Plan: `docs/plans/stage-13-debrief.md` (READY, R50), Tasks 0–4 plus Appendix B, with deviations DV-1 (test only) and
 DV-2 (trend axes, orchestrator ruling). Executor: one session (Claude Opus 5.5). The formal gate (§0) ran on
 `cb4fb17e` = `origin/main` 8698a86e merged into `stage-13`. Sections 1–9 are the pre-merge dry run of 2026-10-11 on
-`8d6a2275`, kept as the record. **Owner's print check in Safari and Chrome: PENDING-OWNER.**
+`8d6a2275`, kept as the record. **Owner's print check in Safari and Chrome: run 2026-10-18, PASS in both (Safari with the known footer limit, ruled
+acceptable by the owner; §0).**
 
 ## 0. Formal gate (2026-10-12, on cb4fb17e)
 
@@ -58,9 +59,15 @@ cb4fb17e and `HOW-TO-CHECK-THE-PRINT.txt`. Older copies are in `_to_delete/`.
 
 **CI:** see §0.1.
 
-**PENDING-OWNER:** the print preview in real Safari and Chrome (Task 4 Step 5). For each browser, record whether the
-report prints alone, whether the page breaks are right, where the footer appears, and anything unreadable. Safari is
-expected to show the footer only at the end of each section (D-8).
+**Owner's print check (was PENDING-OWNER; run 2026-10-18):** the print preview in real Safari and Chrome (Task 4 Step
+5). For each browser, record whether the report prints alone, whether the page breaks are right, where the footer
+appears, and anything unreadable. Safari is expected to show the footer only at the end of each section (D-8).
+
+Run on the owner's Mac (macOS 27.0.1, Build 26A434), kit `pme-showcase-kit-62e521c3` (dev build), 2026-10-18:
+- **Chrome 155 (Skia/PDF m155): PASS** — the report alone, breaks right, footer "For education only. Not a medical
+  device: never use it for patient care. Build 62e521c3 2026-10-13." with "Page n of N" on 5 of 5 pages.
+- **Safari 27.0.1 (Quartz PDFContext): PASS with the known limit** — footer on pages 1, 3, 4, 5; none on page 2
+  (Trends). The owner ruled the per-section footer **acceptable**.
 
 ## 0.1 CI on PR #60
 
@@ -197,7 +204,8 @@ The verdicts judge the rehearsal script's own timing, and the rules read them co
 
 ## 7. Not done in the dry run
 
-- The hand check of the print preview in real Safari and Chrome is PENDING-OWNER (§0).
+- The hand check of the print preview in real Safari and Chrome was PENDING-OWNER here; the owner ran it on
+  2026-10-18: PASS in Chrome, PASS in Safari with the known footer limit (§0).
 - The PR and the formal gate were done afterwards (§0).
 
 ## 8. For the owner (Q5): draft numbers to confirm
