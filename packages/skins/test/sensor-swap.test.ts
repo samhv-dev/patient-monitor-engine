@@ -17,7 +17,7 @@ describe('layout.whenAttached: the Saadat-style capnogram', () => {
     expect(i).toBeGreaterThan(0);
     expect(on.render.lanes.map((l) => l.lane)).toEqual(offLanes.map((l) => (l === 'RESP' ? 'CO2' : l)));
     expect(on.render.lanes[i]).toEqual({ lane: 'CO2', color: on.skin.colors.CO2, mmPerS: on.skin.sweep.co2.default, gainMmPerMv: 10, autoGain: false, label: 'CO2' });
-    expect(on.render.lanes[i]?.mmPerS).toBe(12.5);
+    expect(on.render.lanes[i]?.mmPerS).toBe(6); // research/34 T1: "6 mm/s" on the real unit's CO2 lane
     expect(on.render.lanes[i]?.color).toBe('#F0F030');
     const offTiles = tileParams(id, false);
     expect(tileParams(id, true)).toEqual(offTiles.map((p) => (p === 'RR' ? 'CO2' : p)));

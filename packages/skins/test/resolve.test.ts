@@ -19,9 +19,11 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
     expect(r.render.background).toBe('#000000');
     expect(r.render.eraseGapPx).toBe(4);
     expect(r.render.lanes.map((l) => [l.lane, l.color, l.mmPerS])).toEqual([
-      ['ECG1', '#00F000', 25], ['PLETH', '#F000F0', 25], ['IBP1', '#E08080', 12.5], ['IBP2', '#B0D0E8', 12.5], ['RESP', '#F0F030', 6],
+      // research/34 Tuesday set (owner's photo IMG_8113): ECG, ECG, CO2/RESP, IBP1, IBP2 in mid blue (T4), pleth last (T3)
+      ['ECG1', '#00F000', 25], ['ECG2', '#00F000', 25], ['RESP', '#F0F030', 6], ['IBP1', '#E08080', 12.5], ['IBP2', '#6C9CF8', 12.5], ['PLETH', '#F000F0', 25],
     ]);
     expect(r.render.lanes[0]).toMatchObject({ gainMmPerMv: 10, autoGain: true, label: 'II  X1  NORMAL' });
+    expect(r.render.lanes[1]).toMatchObject({ autoGain: true, label: 'II  X1  NORMAL' }); // second lead not in the photo (E70): laneLeads[0] reused
     expect(r.render.ecgFilter).toEqual({ name: 'NORMAL', band: [0.5, 40], engineMode: 'monitor', exact: true });
     expect(r.render.hrMethod).toEqual({ skin: 'moving-average-seconds', engine: null });
     expect(r.render.tileColors).toMatchObject({ HR: '#00F000', SpO2: '#F000F0', NIBP: '#F0F0F0', TEMP: '#00F0F0', RR: '#F0F030' });

@@ -4,12 +4,15 @@ import { resolveSkin } from '@pme/skins';
 import { ecgLabel, filterModeFor, legacyPlan, renderPlan } from '../src/skin-plan.ts';
 
 describe('renderPlan', () => {
-  it('saadat-like: ECG II auto-gain, pleth, IBP1 → abp (ART scale 40–200), IBP2 → cvp, resp at 6 mm/s; 4 px gap; NORMAL filter', () => {
+  it('saadat-like (research/34 T3, IMG_8113): two ECG II auto-gain, resp at 6 mm/s, IBP1 → abp (ART scale 40–200), IBP2 → cvp, pleth last; 4 px gap; NORMAL filter', () => {
     const p = renderPlan(resolveSkin('saadat-like'));
-    expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['PLETH', 'pleth'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['RESP', 'resp']]);
+    expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['RESP', 'resp'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
     expect(p.lanes[0]).toMatchObject({ autoGain: true, color: '#00F000', mmPerS: 25 });
-    expect(p.lanes[2]).toMatchObject({ range: [40, 200], mmPerS: 12.5 });
-    expect(p.lanes[4]?.mmPerS).toBe(6);
+    expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#00F000', mmPerS: 25 });
+    expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 12.5 });
+    expect(p.lanes[4]).toMatchObject({ color: '#6C9CF8', range: [-10, 30] }); // T4 mid blue
+    expect(p.lanes[2]?.mmPerS).toBe(6);
+    expect(p.lanes[5]).toMatchObject({ channel: 'pleth', mmPerS: 25, range: null });
     expect(p.eraseGapPx).toBe(4);
     expect(p.filterNames.monitor).toBe('NORMAL');
     expect(p.filterNames['band:0.5-24']).toBe('MONITOR');
@@ -19,8 +22,9 @@ describe('renderPlan', () => {
 
   it('saadat-like with the CO2 line attached (showcase hotfix item 4): the capnogram in the RESP lane\'s place', () => {
     const p = renderPlan(resolveSkin('saadat-like', { sensors: { co2: true } }));
-    expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['PLETH', 'pleth'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['CO2', 'co2']]);
-    expect(p.lanes[4]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 12.5, range: [0, 76] }); // 10 %V scale (research/06 §3.2)
+    expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['CO2', 'co2'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
+    // research/34 T1/T2: 6 mm/s on a 0–50 mmHg scale, as photographed ("6 mm/s", "50mmHg"); EtCO2 above 50 clips (E63)
+    expect(p.lanes[2]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 6, range: [0, 50] });
     expect(renderPlan(resolveSkin('iran-icu-as-found', { sensors: { co2: true } })).lanes.map((l) => l.id)).toEqual(['ECG1', 'ECG2', 'PLETH', 'CO2']);
   });
 

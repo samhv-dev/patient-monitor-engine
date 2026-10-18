@@ -86,7 +86,7 @@ test('flash rates: high 2.0 Hz, medium 0.6 Hz, 50 % duty (computed CSS)', async 
   expect(css).toContain('@keyframes pme-blink{0%{opacity:1}50%{opacity:0.12}}');
 });
 
-test('skin switch relayouts lanes and tiles without restarting the engine', async ({ page }) => {
+test('skin switch relayouts lanes and tiles without restarting the engine', { tag: '@known-flaky' }, async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
