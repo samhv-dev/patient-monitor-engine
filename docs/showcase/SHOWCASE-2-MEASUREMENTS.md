@@ -575,6 +575,19 @@ Bold only. The `heldThen` reason line prints as «وضعیت «بازگشت ته
 به مدت 2 دقیقه و 00 ثانیه کمتر از 40 mmHg ماند (از 07:26 تا 09:26).». The template was already in the table (PR #70
 wrote it against the E22 branch); its `source` notes now name main.
 
+**Persian handouts, all three on the release build** (2026-10-18, after the round; PR #75, which also fixes finding 6).
+Bronchospasm had no Debrief JSON from this build, so the talk was run again on the same kit up to the end of card 1
+(`KITROUND_Q1_STOP=bronchospasm`, Chromium, 3 phones; the card's presses as above, then the Debrief with its JSON
+export): `q1/debrief-q1-1-bronchospasm-ventilator-view-h21-chromium.json`, run record
+`q1/q1-1-bronchospasm-ventilator-view-h21-chromium-debrief-export.{json,md}`. Salbutamol at 02:06, the two 2-min spans
+at 04:06 and 06:44, 10:15 simulated; verdicts: not assessable (recognise, no rule), **met** ("Salbutamol (IV/neb) at
+02:06"), not assessable (watch the volumes recover, no rule). The tamponade input is the Debrief JSON of the first
+Chromium run of this talk (`q1/debrief-q1-2-tamponade-a3-path-and-3-debrief-chromium-run1.json`, CPR 07:51,
+pericardiocentesis 09:21, "Pulse back" 10:57, the same five verdicts as above); the MH input is the one above. Rendered
+with `debrief-fa.mjs --version 1.0.0-rc.1`: bronchospasm 5 pages, tamponade 6, MH 6, 0 strings in English each; the
+footer on every page reads «… از نظر بالینی اعتبارسنجی نشده است؛ … نسخه‌ی 1.0.0-rc.1 (پیش‌انتشار)، ساخت 3db25a3b
+2026-10-18.».
+
 **Findings.**
 1. **MH Load needs "Choose another scenario" first** when the tamponade is still loaded (cards and sheet updated).
 2. **FX-12 confirmed**, and worse than the bar: the case is not restored and Return here is often unreachable after
@@ -585,7 +598,7 @@ wrote it against the E22 branch); its `source` notes now name main.
    after flooring the minutes (MH: "23:38 simulated · 1 min 60 s on the clock"). Reported, not fixed.
 6. **The Persian footer is the pre-release wording**: `debrief-fa.mjs` builds its own English footer ("Not a medical
    device: … Build …"), so the Persian page lacks "not clinically validated" and the version. Reported, not fixed (a
-   script change, outside this round).
+   script change, outside this round). **Fixed in PR #75.**
 7. The kit's engine snapshot key is `1.0.0-rc.1+dev` (above).
 8. WebKit only: on the fresh page before bronchospasm, the Scenario tab still showed "Choose another scenario" with no
    case loaded (the script pressed it; the library came up and the Load went through).

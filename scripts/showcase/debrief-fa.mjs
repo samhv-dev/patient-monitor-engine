@@ -3,10 +3,11 @@
 // schema pme-debrief/1, Stage 13 Q3) and prints a right-to-left A4 PDF with the English report's sections in its order:
 // the case, objectives with their verdicts, measured facts (the labs row included), trends, drugs and fluids, the
 // timeline (the undone course struck through), bookmarks, notes and the one-row-per-minute appendix; the footer (the
-// release wording of views/debrief.ts FOOT, with the version and the build) and "page n of N" on every page. A handout script, NOT an app feature: the app and its tests are untouched (the in-app
-// translation is a v1.1 item). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is
-// printed in English and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and
-// their units; prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
+// release wording of views/debrief.ts FOOT, with the version and the build) and "page n of N" on every page. A handout
+// script, NOT an app feature: the app and its tests are untouched (the in-app translation is planned for a later
+// release). Words come from docs/showcase/i18n/fa-debrief.json; a string the table does not cover is printed in English
+// and listed at the end of the run. Clinical values (vital signs, doses, times) keep Western digits and their units;
+// prose counts and dates use Persian digits. Rendering: headless Chromium through Playwright, the path the
 // Stage 13 print checks already use (no new dependency); the Vazirmatn font (SIL OFL) is embedded from local TTFs.
 //   node scripts/showcase/debrief-fa.mjs <debrief.json>... --version X.Y.Z [--out-dir DIR] [--fonts DIR] [--html] [--text]
 //   --version: the version the build printed on its Start screen (e.g. 1.0.0-rc.1). pme-debrief/1 carries the build but

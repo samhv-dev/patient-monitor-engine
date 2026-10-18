@@ -3,7 +3,7 @@
 A **handout script, not an app feature.** `scripts/showcase/debrief-fa.mjs` reads the JSON that the Debrief view saves
 ("Download the record (JSON)", schema `pme-debrief/1`, Stage 13 ruling Q3: the same data as the printed report) and
 prints a right-to-left A4 PDF in Persian. The app, its tests, scenarios and bands are untouched; an in-app translation
-is the v1.1 roadmap item. The English report stays the reference.
+is planned for a later release. The English report stays the reference.
 
 ## How to run
 
