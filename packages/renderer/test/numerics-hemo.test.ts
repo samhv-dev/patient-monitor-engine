@@ -17,4 +17,11 @@ describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
     expect(formatNibp({ type: 'nibp', t: 10, phase: 'failed', cuffMmHg: 30 }, null)).toEqual({ main: '---/---', sub: '(---)', status: 'NBP measurement failed' });
     expect(formatNibp(undefined, null).status).toBe('MANUAL');
   });
+
+  it('rounds the NIBP countdown to whole seconds before the m:ss split, so it never reads "next 3:60" (FX-19)', () => {
+    const next = (nextInS: number) => formatNibp({ type: 'nibp', t: 10, phase: 'idle', nextInS }, null).status;
+    expect(next(239.6)).toBe('next 4:00');
+    expect(next(239.4)).toBe('next 3:59');
+    expect(next(0)).toBe('next 0:00');
+  });
 });
