@@ -146,14 +146,14 @@
   .debrief #db-moments { break-before: page; }
   .debrief #db-keytimes, .debrief #db-course, .debrief .db-tile, .debrief #db-moments tr { break-inside: avoid; }
   .debrief .db-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2mm; } /* R-B C1: MH page 1 within one A4 page */
-  .debrief .db-tile { border: 0.6pt solid #000; padding: 1.5mm 2mm; }
+  .debrief .db-tile { border: 0.6pt solid #000; padding: 1mm 1.5mm; line-height: 1.2; }
   .debrief .db-tile.met { border-left: 2pt solid #000; }
   .debrief .db-tile.unticked { border-style: dashed; }
   .debrief .db-tile-cap { font-size: 8pt; }
-  .debrief .db-tile-v { font-size: 14pt; }
+  .debrief .db-tile-v { font-size: 13pt; }
   .debrief .db-tile-sub { font-size: 8pt; }
   .debrief .db-course svg { max-width: none; }
-  .debrief #db-course .db-course svg { width: 88%; }
+  .debrief #db-course .db-course svg { width: 80%; }
   .debrief .db-course text { fill: #000; }
   .debrief .db-course .db-badge-n { fill: #fff; }
   .debrief .db-course .db-scenario .db-badge-n { fill: #000; }
@@ -162,8 +162,8 @@
   .debrief .db-course .db-pulseless, .debrief .db-course .db-pulseless-l rect { fill: #e6e6e6; }
   .debrief .db-course, .debrief .db-course *, .debrief .db-bar, .debrief .db-bar * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .debrief .db-subhead, .debrief .db-note60 { font-size: 8.5pt; }
-  .debrief .db-obj li { margin-bottom: 1.5mm; }
-  .debrief .db-why { font-size: 8.5pt; }
+  .debrief .db-obj li { margin-bottom: 1.2mm; line-height: 1.3; }
+  .debrief .db-why { font-size: 8.5pt; line-height: 1.25; }
   .debrief .db-moments { font-size: 9pt; }
   .debrief .db-moments tr.db-alarms td { font-size: 8pt; color: #333 !important; }
   .debrief:not([data-print='handout']) #db-handout { display: none; }
@@ -172,9 +172,9 @@
   .debrief #db-handout > h2 { display: none; }
   .debrief .db-handout-live { border: 0; padding: 0; }
   .debrief .db-hsec h3 { font-size: 11pt; margin: 2.5mm 0 1mm; break-after: avoid; }
-  .debrief .db-hsec .db-course svg { width: 100mm; max-width: 100%; }
+  .debrief .db-hsec .db-course svg { width: 90mm; max-width: 100%; }
   .debrief .db-hmoments { font-size: 8.5pt; }
-  .debrief .db-hmoments td, .debrief .db-hmoments th { padding-top: 0.6mm; padding-bottom: 0.6mm; }
+  .debrief .db-hmoments td, .debrief .db-hmoments th { padding-top: 0.3mm; padding-bottom: 0.3mm; line-height: 1.25; }
   .debrief .db-qs li { break-inside: avoid; margin-bottom: 0.5mm; }
   .debrief .db-ruled { height: 4.5mm; border-bottom: 0.5pt solid #000; }
   .debrief .db-intro, .debrief .db-next { margin: 1.5mm 0; font-size: 9.5pt; }
