@@ -243,7 +243,7 @@ None recorded.
 
 ## Tests
 
-130 tests in 44 files; 0 expected failures, 0 skipped.
+131 tests in 44 files; 0 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -278,7 +278,7 @@ None recorded.
 | [`perf/tick-bench.test.ts`](../../packages/validation/test/perf/tick-bench.test.ts) | 1 | 0 | 0 |
 | [`regression/regression.test.ts`](../../packages/validation/test/regression/regression.test.ts) | 4 | 0 | 0 |
 | [`release-manifests.test.ts`](../../packages/validation/test/release-manifests.test.ts) | 2 | 0 | 0 |
-| [`release-versions.test.ts`](../../packages/validation/test/release-versions.test.ts) | 3 | 0 | 0 |
+| [`release-versions.test.ts`](../../packages/validation/test/release-versions.test.ts) | 4 | 0 | 0 |
 | [`report/write.test.ts`](../../packages/validation/test/report/write.test.ts) | 4 | 0 | 0 |
 | [`review/review.test.ts`](../../packages/validation/test/review/review.test.ts) | 4 | 0 | 0 |
 | [`segments/gate-docs.test.ts`](../../packages/validation/test/segments/gate-docs.test.ts) | 2 | 0 | 0 |
