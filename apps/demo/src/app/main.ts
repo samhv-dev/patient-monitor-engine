@@ -21,6 +21,7 @@ import { debriefView } from './views/debrief.ts';
 import { devView } from './views/dev.ts';
 import { exploreView } from './views/explore.ts';
 import { mountFastForward } from './fast-forward.ts';
+import { watchHiddenTab } from './hidden-tab.ts';
 import { followUrl, mountFollower, publishStyle } from './views/follower.ts';
 import { monitorView } from './views/monitor.ts';
 import { remoteView } from './views/remote.ts';
@@ -116,6 +117,9 @@ if (follow) {
   shell.add(settingsView(site, session));
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
+  // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
+  // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch)
+  watchHiddenTab(document, { role: 'host', paused: () => session.paused, send: (action) => void link.send({ type: 'time', action }), notify: toast });
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
