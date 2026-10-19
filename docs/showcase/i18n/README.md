@@ -60,7 +60,7 @@ one left-to-right run (LRI…PDI) held to the word before them by a no-break spa
 «ساخت» from its id.
 
 `fa-debrief.json` is the translation table. Every entry carries `en`, `fa`, `source` (the app file the English comes
-from) and `reviewed: false`. It has three parts:
+from) and `reviewed` (`false` until the owner approves it). It has three parts:
 
 - **groups**: vocabularies a sentence may name: drug names (all 65 of the glossary's `DRUG_NAMES`, with the drug id),
   conditions, lung conditions, rhythms, alarm words, sensors, monitor labels, and the **titles, state labels and
@@ -106,6 +106,10 @@ marks the few entries with a question for the reviewer.
 **Owner review, 2026-10-18:** the owner accepted all 12 terms put to him (the owner sheet of 18 October, part 4) and
 the register as written. This note does not change the `reviewed` flags in `fa-debrief.json`: the sentence above stays
 true of the table until those flags are set.
+
+**Owner approval, 2026-10-19:** the E60 sentence under the key-moments table ("SpO₂ –: no reliable saturation reading
+without a pulse; …") is the first entry set to `reviewed: true`, with the owner's own Persian. His rule for it: the
+prefix "SpO₂ –:" is what the cell shows and is not translated. Every other entry is still `reviewed: false`.
 
 ## The Persian-writing pass (skill `persian-writing` 1.4.0)
 
