@@ -141,6 +141,8 @@ export interface ScenarioDoc extends C {
   story?: string;
   objectives?: Array<string | Objective>;
   durationMin?: number;
+  /** Optional: up to three take-home lines the learner handout prints, as written (the author's reviewed words). */
+  takeHome?: string[];
   /** Seeds the runner's `scenario` PRNG stream (the engine keeps the host's own seed). */
   seed?: number;
   mode?: 'manual' | 'modeled';

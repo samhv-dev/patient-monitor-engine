@@ -32,13 +32,18 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
    - tamponade: **drainage 1:30 into CPR (09:21)**; the rule is 2:00 [A3.1];
    - tamponade: **stop CPR only when the systolic jumps to about 100**; compressions alone read **about 70/33**, and
      stopping on them re-arrests the patient [A3.1; MEAS §5 probe];
-   - MH: **call at Early signs (06:52)** (E19a) [MEAS §0, §1];
+   - tamponade: **tick *Name the tamponade*** on the Scenario tab when the cues appear (CVP rising on the IBP2 tile,
+     narrow pulse pressure; ≈ 1:00) (E54): the Debrief's recognition tile shows the time you ticked;
+   - MH: **call at Early signs (06:52)** (E19a) [MEAS §0, §1], and **tick *Name malignant hyperthermia*** as you call
+     it (E52);
    - MH: **keep the hyperventilation through the fast-forwards**; press **ventilation back** only at **13:03 (as fast-forward 1 ends; any press from 12:41 is met)**, never at "Recovering" (early is "not met" under the new rule) (E22) [R00 2026-10-17].
 6. **"Not available now" → press again**: the button now belongs to the current state [G10 §8].
 7. **The one line to discuss of the day (◆ Discuss)** is the tamponade's **"Better: pericardiocentesis before the
    pulse loss"**. Every timed objective is ✓ Observed (measured: CPR 3 s, drainage 1 min 30 s, stop 2 s); name the ◆
    line as the lesson, the better course of action (drain before the arrest), not a timing (E17, E43) [A3.1].
-8. **Debrief before loading the next case**: it reports the current run. It prints **6 A4 pages** on this path [A3.1].
+8. **Debrief before loading the next case**: it reports the current run. Page 1 reads the **Key times**, **The course**
+   and the objectives; page 2 the **Key moments** (SpO₂ "–" while pulseless). It prints **6 A4 pages** on this path
+   [A3.1; B e2e], and **Print the learner handout** prints the learner's sheet on 1 page, without marks (optional).
    Print from Chrome if you can (footer on every page); Safari puts the footer only at section ends [PRINT].
    **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).**
 9. **Saadat-style monitor, and no style change during the talk** (E20): the phones' AGENTS tile read "---" for 30 s
@@ -52,7 +57,7 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
 |---|---|
 | Bronchospasm | VTE 300 → 501 mL; minute volume 4.2 → 7.0 L/min; the Pmax banner goes out [MEAS §6] |
 | Tamponade | CVP on **IBP2** (17); pulse loss 07:48, PEA 07:49, CPR 07:51; drainage 09:21; compressions alone about 70/33; return 10:55 (93.7 s after drainage), the systolic jumping to about 100 3 s later; 30 s after stopping 115/77, HR 64 [A3.1; MEAS §5] |
-| Debrief | ✓ (ticked; – if not) ✓ ✓ ✓ ◆; pulseless 3 min 07 s; 41 timeline rows; 6 A4 pages [A3.1] |
+| Debrief | tiles: your tick · 7 min 51 s · 3 s · 1 min 30 s · 2 s · pulseless 3 min 07 s; ✓ (ticked; – if not) ✓ ✓ ✓ ◆; 7 key moments; 41 timeline rows; 6 A4 pages; handout 1 page [A3.1; B e2e] |
 | MH | Early signs 06:52; call lands 07:01; EtCO₂ < 40 at 07:27; kept on, EtCO₂ 38 at 12:55; ventilation back at 13:03 (as fast-forward 1 ends; any press from 12:41 is met); then 38 → 49 at +1 min → peak 55 inside span 2 (not visible), ETCO2 TOO HIGH 14:13 shown latched, 45 after span 2, 42 at the end; repeat dantrolene – (not needed; not on the alarm); say "EtCO₂ rose to the alarm limit while CO₂ production settled; the alarm caught it; we keep watching" [MEAS §0, §1, E22] |
 
 ## Keys and buttons
@@ -68,7 +73,7 @@ anaphylaxis and haemorrhage are in the reserve appendix of the run sheet and the
 | Pause alarms | greyed out on the Saadat-style monitor: "This monitor has no alarm pause. Silence mutes for 120 s." [MEAS §7] |
 | NIBP now / all shortcuts | **Shift+N** / **?** [`panel/panel.ts`] |
 | Back from full-screen Monitor | **i** key, or top-right **Instructor view** [SC1] |
-| Debrief | session bar **Debrief** → **Run by** → **Print or save as PDF** [G13] |
+| Debrief | session bar **Debrief** → **Run by** → **Print or save as PDF** [G13]; **Print the learner handout** (optional) |
 
 ## The alarm-pause rule
 

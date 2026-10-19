@@ -69,6 +69,9 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(objectives).toEqual([['not assessable', '– Not assessable'], ['met', '✓ Observed'], ['not met', '✗ Not observed']]); // E42–E44
   await expect(view.locator('#db-objectives li').nth(1)).toContainText(/Epinephrine \d+ s after the state "Anaphylaxis" \(01:0\d → 01:\d\d; within 2 min 00 s asked\)/);
   await expect(view.locator('.db-chart svg')).toHaveCount(6);
+  // redesign B (B6 b): key times and key moments on this run
+  expect(await view.locator('#db-keytimes .db-tile').count()).toBeGreaterThanOrEqual(1);
+  expect(await view.locator('#db-moments tbody tr').count()).toBeGreaterThanOrEqual(1);
   const minuteRows = await view.locator('#db-minutes tbody tr').allInnerTexts(); // Q1: one row per minute
   expect(minuteRows.length).toBeGreaterThanOrEqual(2); // the kept course is ≈ 1½–2 sim-min
   expect(minuteRows[0]).toMatch(/^00:00\s+\d+/);
@@ -103,7 +106,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     const css = (s: string, p: string) => getComputedStyle(document.querySelector(s) as Element).getPropertyValue(p);
     return {
       topbar: vis('.topbar'), stage: vis('.stage'), bar: vis('.sessionbar'), tools: vis('.db-tools'), report: vis('.debrief'),
-      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'),
+      trends: css('#db-trends', 'break-before'), timeline: css('#db-timeline', 'break-before'), minutes: css('#db-minutes', 'break-before'), moments: css('#db-moments', 'break-before'),
       chart: css('.db-chart', 'break-inside'), ink: css('.db-svg path', 'stroke'), body: css('body', 'overflow'),
       undone: css('#db-timeline tbody tr.undone td', 'text-decoration-line'),
       // the footer on every page: @page margin boxes where the browser has them (Chromium), else a line before each break
@@ -112,7 +115,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
     };
   });
   const boxes = browserName === 'chromium';
-  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 3 });
+  expect(layout).toEqual({ topbar: false, stage: false, bar: false, tools: false, report: true, trends: 'page', timeline: 'auto', minutes: 'page', moments: 'page', chart: 'avoid', ink: 'rgb(0, 0, 0)', body: 'visible', undone: 'line-through', marginBoxes: boxes, runFeet: boxes ? 0 : 4 });
   mkdirSync(out, { recursive: true });
   await page.screenshot({ path: `${out}/debrief-print-${browserName}.png`, fullPage: true });
 
@@ -130,7 +133,12 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
       for (const want of ['DEBRIEF', 'Anaphylaxis under anaesthesia', 'Run by', 'Dr Instructor, two residents', 'Scenario state: Anaphylaxis — undone by return 1',
         'Epinephrine 100 µg IV', '✓ Observed', '✗ Not observed', '– Not assessable', 'Epinephrine, boluses in all', '100 µg (1 dose)', 'Good closed-loop communication.',
         'Talking points', 'Appendix: one row per minute']) expect(t, want).toContain(squash(want)); // the h1 prints as the band's capital kicker
-      expect(text.split('\f')[0], 'objectives and facts on page 1').toContain('Measured facts');
+      // B6 (a): page 1 is the key times, the course and the objectives; the facts follow the key moments on page 2
+      const page1 = squash(text.split('\f')[0] ?? '');
+      for (const want of ['Key times', 'The course']) expect(page1, want).toContain(squash(want));
+      for (const o of await view.locator('#db-objectives li').evaluateAll((li) => li.map((x) => x.childNodes[2]?.textContent ?? ''))) expect(page1, `objective on page 1: ${o}`).toContain(squash(o));
+      expect(page1, 'facts not on page 1').not.toContain(squash('Measured facts'));
+      expect(squash(text.split('\f')[1] ?? ''), 'key moments and facts on page 2').toContain(squash('Measured facts'));
       text.split('\f').forEach((p, i) => {
         expect(squash(p), `page ${i + 1}: the footer and the build`).toContain(squash(foot));
         expect(squash(p), `page ${i + 1}: its number`).toContain(squash(`Page ${i + 1} of ${pages}`));
@@ -180,6 +188,7 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', asy
   await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible();
   await expect(view.locator('.db-title')).toHaveText('No scenario (free run)');
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
+  await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
   const [dl] = await Promise.all([page.waitForEvent('download'), view.getByRole('button', { name: 'Download the record (JSON)' }).click()]);
   const json = readFileSync(await dl.path(), 'utf8');
   const j = JSON.parse(json) as { schema: string; keyTimes: unknown[]; keyMoments: unknown[] };
@@ -194,5 +203,162 @@ test('a free run prints in at most four pages; its export is pme-debrief/2', asy
     const pages = pdfInfo(pdf).boxes.length;
     test.info().annotations.push({ type: 'free-run pages', description: String(pages) });
     expect(pages).toBeLessThanOrEqual(4);
+  }
+});
+
+// Debrief redesign B on the recorded tamponade path of kit round A3.1 (its record shown in the view, the card's
+// objectives as they are now): page 1 (key times, the course, the objectives) within one A4 page, the key moments with
+// SpO₂ "–" while pulseless (E60), the learner handout without verdicts (E51) printing alone on one page, its button,
+// and typing in Run by and Notes across a refresh (Decision 11). Both engines; Chromium also prints both PDFs.
+const A31 = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json');
+const TAMPONADE = resolve(import.meta.dirname, '../src/app/showcase/showcase-tamponade.json');
+// R-B C2: the committed full MH run (kit round A, early call, ventilation back) with the card's six objectives (E52)
+const MH_RUN = resolve(import.meta.dirname, '../../../docs/showcase/kit-round-a/fa/debrief-malignant-hyperthermia-early-normo-call-kit-round-chromium.json');
+const MH = resolve(import.meta.dirname, '../src/app/showcase/showcase-mh.json');
+const MM = 96 / 25.4;
+const VERDICT = /Observed|Not observed|Not assessable|Discuss|✓|✗|◆/;
+
+/** The view with a recorded run in place of the live one (its scenario's objectives as the card holds them now): the
+ *  simulation paused first, so nothing is added to it; the Debrief opened by its route, not the session-bar link. */
+async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<void> {
+  const rec = JSON.parse(readFileSync(run, 'utf8')).record;
+  rec.doc.objectives = JSON.parse(readFileSync(card, 'utf8')).objectives;
+  await page.setViewportSize({ width: Math.round(182 * MM), height: 1000 }); // the A4 content width (182 mm)
+  await openApp(page, base, '#/teach', { warmMs: 1000 });
+  await page.locator('.sessionbar').getByRole('button', { name: 'Pause' }).click();
+  await page.waitForTimeout(500);
+  await page.evaluate((r) => ((window as unknown as { __pmeApp: { session: { record: { data: unknown } } } }).__pmeApp.session.record.data = r), rec);
+  await page.evaluate(() => (location.hash = '#/debrief'));
+  await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
+}
+/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout. */
+const printHeights = (page: Page) => page.evaluate((mm) => {
+  const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
+  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm };
+}, MM);
+
+test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page);
+  const view = page.locator('[data-view=debrief]');
+
+  // page 1: six tiles, the course with seven numbered moments and one pulseless band
+  const tiles = await view.locator('#db-keytimes .db-tile').evaluateAll((t) => t.map((x) => [x.getAttribute('data-key'), x.querySelector('.db-tile-v')?.textContent]));
+  expect(tiles).toEqual([['recognition', '–'], ['firstTeam', '7 min 51 s'], ['objective:1', '3 s'], ['objective:2', '1 min 30 s'], ['objective:3', '2 s'], ['pulseless', '3 min 07 s']]);
+  await expect(view.locator('#db-keytimes [data-key=recognition] .db-tile-sub')).toHaveText('not ticked');
+  await expect(view.locator('#db-course .db-badge')).toHaveCount(7);
+  await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(1);
+  await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · │ scenario state · numbers match Key moments');
+  await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
+
+  // page 2: the key moments, SpO₂ "–" from the pulse loss to the return of circulation, and the sentence that says why
+  const moments = await view.locator('#db-moments tbody tr[data-n]').evaluateAll((tr) => tr.map((x) => [...x.querySelectorAll('td')].map((td) => td.textContent?.trim())));
+  expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '–'], ['3', '07:51', '–'], ['4', '09:21', '–'], ['5', '10:55', '–'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
+  expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
+  await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
+  await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
+
+  // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay
+  const who = view.locator('#db-who');
+  await who.click();
+  await page.keyboard.type('Dr A');
+  await page.waitForTimeout(5_600);
+  await page.keyboard.type(', Dr B');
+  await expect(who).toHaveValue('Dr A, Dr B');
+  await expect(view.locator('.db-runby')).toHaveText('Dr A, Dr B');
+  const notes = view.locator('.db-notes');
+  await notes.click();
+  await page.keyboard.type('first');
+  await page.waitForTimeout(5_600);
+  await page.keyboard.type(' second');
+  await expect(notes).toHaveText('first second');
+
+  // the button: the handout mode for the print, cleared after it, the file name from the case
+  await page.evaluate(() => {
+    window.print = () => {
+      (window as unknown as { printed: unknown }).printed = [document.querySelector('.debrief')?.getAttribute('data-print'), document.title];
+      dispatchEvent(new Event('afterprint'));
+    };
+  });
+  await view.getByRole('button', { name: 'Print the learner handout' }).click();
+  const printed = await page.evaluate(() => (window as unknown as { printed: string[] }).printed);
+  expect(printed[0]).toBe('handout');
+  expect(printed[1]).toMatch(/^Learner handout Stab wound: tamponade, PEA and pericardiocentesis \d{4}-\d\d-\d\d$/);
+  await expect(page.locator('.debrief')).not.toHaveAttribute('data-print');
+
+  // (f) print media at the 182 mm content width: page 1 and the handout each within one A4 page (267 mm)
+  await page.emulateMedia({ media: 'print' });
+  const report = await printHeights(page);
+  expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
+  const foot = (await view.locator('.db-foot').textContent()) ?? '';
+  let reportPdf: Buffer | null = null;
+  if (browserName === 'chromium') reportPdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+
+  // (e) the handout alone, no verdict and no objective in its visible text (a DOM check, both engines, every platform)
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const seen = await page.evaluate(() => {
+    const d = document.querySelector('.debrief') as HTMLElement;
+    const shown = [...d.querySelectorAll('.page > *')].filter((e) => getComputedStyle(e).display !== 'none').map((e) => e.id || e.className);
+    return { text: d.innerText, shown };
+  });
+  expect(seen.shown).toEqual(browserName === 'webkit' ? ['db-handout', 'db-foot db-runfoot'] : ['db-handout']); // the footer: margin boxes or Safari's line
+  expect(seen.text).toContain('Questions to think about');
+  expect(seen.text).toContain('Your take-home points'); // no takeHome on the card: blank lines (Decision 6)
+  expect(seen.text).not.toMatch(VERDICT);
+  for (const o of JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>) expect(seen.text).not.toContain(o.text);
+  if (browserName === 'webkit') expect(seen.text).toContain(foot); // Safari's footer line (Chromium prints it in the margin)
+  const ho = await printHeights(page);
+  expect(ho.handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  mkdirSync(out, { recursive: true });
+  await page.screenshot({ path: `${out}/debrief-b-handout-${browserName}.png`, fullPage: true });
+  test.info().annotations.push({ type: 'A3.1 heights (mm)', description: `page 1 ${report.page1.toFixed(1)}, handout ${ho.handout.toFixed(1)}` });
+
+  if (browserName === 'chromium' && reportPdf) {
+    const handoutPdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-b-a31.pdf`, reportPdf);
+    writeFileSync(`${out}/debrief-b-a31-handout.pdf`, handoutPdf);
+    const pages = pdfInfo(reportPdf).boxes.length;
+    test.info().annotations.push({ type: 'A3.1 pages', description: String(pages) });
+    expect(pages).toBeLessThanOrEqual(7); // B6 Step 3: measured, expected 6–7 (Review Focus 6)
+    expect(pdfInfo(handoutPdf).boxes).toHaveLength(1);
+    if (process.platform === 'darwin' || process.env.PME_PDF_TEXT === '1') {
+      // (a) page 1 holds the key times, the course and every objective; (c) the handout's one page, its footer, no verdict
+      const page1 = squash(pdfText(reportPdf).text.split('\f')[0] ?? '');
+      for (const want of ['Key times', 'The course', ...(JSON.parse(readFileSync(TAMPONADE, 'utf8')).objectives as Array<{ text: string }>).map((o) => o.text)]) expect(page1, want).toContain(squash(want));
+      const h = pdfText(handoutPdf);
+      expect(h.pages).toBe(1);
+      expect(squash(h.text)).toContain(squash('Questions to think about'));
+      expect(squash(h.text)).toContain(squash(foot));
+      expect(squash(h.text)).toContain(squash('Page 1 of 1'));
+      expect(h.text).not.toMatch(VERDICT);
+    }
+  }
+});
+
+// B6 (f) on the malignant hyperthermia card (six objectives, E52), on its recorded full run (R-B C2): page 1 and the
+// learner handout each within one A4 page, both engines; Chromium prints the handout on one page.
+test('Debrief B on the MH card: page 1 and the handout within one A4 page', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await showRecorded(page, MH_RUN, MH);
+  const view = page.locator('[data-view=debrief]');
+  await expect(view.locator('#db-objectives li')).toHaveCount(6);
+  await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
+  await page.emulateMedia({ media: 'print' });
+  const { page1 } = await printHeights(page);
+  await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
+  const { handout } = await printHeights(page);
+  test.info().annotations.push({ type: 'MH heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
+  expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
+  expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  if (browserName === 'chromium') {
+    mkdirSync(out, { recursive: true });
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-b-mh-handout.pdf`, pdf);
+    expect(pdfInfo(pdf).boxes).toHaveLength(1);
+    await page.evaluate(() => document.querySelector('.debrief')?.removeAttribute('data-print'));
+    const report = await page.pdf({ preferCSSPageSize: true, printBackground: false });
+    writeFileSync(`${out}/debrief-b-mh.pdf`, report);
+    test.info().annotations.push({ type: 'MH pages', description: String(pdfInfo(report).boxes.length) });
   }
 });

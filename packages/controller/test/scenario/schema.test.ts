@@ -84,5 +84,9 @@ describe('the Debrief fields (Debrief redesign A)', () => {
   it('refuses an unknown debrief value', () => {
     expect(errs(withObjective({ text: 'Name it', debrief: 'structural' })).join()).toMatch(/debrief/);
   });
-  it.todo('refuses four takeHome lines (turned on by B5a)');
+  it('accepts up to three takeHome lines and refuses four (B5a)', () => {
+    expect(validateScenario({ ...base(), takeHome: ['One.', 'Two.', 'Three.'] }).ok).toBe(true);
+    expect(errs({ ...base(), takeHome: ['One.', 'Two.', 'Three.', 'Four.'] }).join()).toMatch(/takeHome/);
+    expect(errs({ ...base(), takeHome: [''] }).join()).toMatch(/takeHome/);
+  });
 });

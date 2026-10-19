@@ -335,7 +335,7 @@ The owner's answer E17: meet every timed objective. **This path was run as writt
 | W | Sim | Speed | Press / do | Point at (measured; C, W within 1 unit unless given) |
 |---|---|---|---|---|
 | 0:00 | 0:00 | **×8** | **Load**, **All alarms on**, **Bookmark** | `CVP MEAN TOO HIGH` at 00:22 [A3.1] |
-| 0:08 | 1:00 | ×8 | Name it aloud: tachycardia, narrow pulse pressure, raised CVP. Tick objective 1 on the Scenario tab (before 3:00) | HR 97, ART 105/85 (91), SpO₂ 98, EtCO₂ 32 [A3.1 raw 01:04]; **the CVP is the IBP2 tile: 17** (limits −5–15) [MEAS §5; A3 "matched as written"] |
+| 0:08 | 1:00 | ×8 | **When the cues appear (CVP rising on the IBP2 tile, narrow pulse pressure, tachycardia): name it aloud and tick *Name the tamponade* on the Scenario tab** (E54; muffled heart sounds can only be narrated: the engine has no auscultation). The Debrief's recognition tile shows the time you ticked | HR 97, ART 105/85 (91), SpO₂ 98, EtCO₂ 32 [A3.1 raw 01:04]; **the CVP is the IBP2 tile: 17** (limits −5–15) [MEAS §5; A3 "matched as written"] |
 | 0:45 | 6:00 | ×8 | — | `SPO2 LOW PERFUSION` 05:59, `ART SYS TOO LOW` 06:06; state Deteriorating 06:14 / 06:13 (C / W) [A3.1] |
 | 0:53 | 7:00 | **×1** | slow down for the arrest | HR 147, ART 62/54 (57), EtCO₂ 21 [A3.1 raw 07:06]; then `ART MEAN TOO LOW` 07:03, `HR TOO HIGH` 07:10, `ART DIA TOO LOW` 07:17, `ETCO2 TOO LOW` 07:21 [A3.1] |
 | 1:18 | 7:31 | ×1 | `IBP1 STATIC PRESSURE`: **the arterial trace is going flat.** Hand on the Scenario tab | [A3.1]; then `HR TOO LOW` 07:45 [A3.1] |
@@ -364,9 +364,9 @@ bring him back (40/19 before drainage); drainage during good CPR brings the puls
 pulsus paradoxus in this model [SYN (b); R24 P3: SBP swing 3.4 mmHg against > 10 expected].
 
 **Debrief objectives and the verdict, measured** [CARD; A3.1, identical in both engines]:
-- Name the tamponade within 180 s (no rule): **– Not assessable**, "This objective has no rule: the instructor judges
-  it.", when nobody ticked it; **✓ Observed**, "Observed by the instructor at mm:ss.", when you ticked it in the
-  Scenario tab (E44) [`apps/demo/src/app/views/debrief.ts`].
+- Name the tamponade within 180 s (no rule): **✓ Observed**, "Observed by the instructor at mm:ss.", with the time you
+  ticked it in the Scenario tab when the cues appeared (≈ 01:00 on this path, E54); **– Not assessable**, "This
+  objective has no rule: the instructor judges it.", when nobody ticked it (E44) [`apps/demo/src/app/views/debrief.ts`].
 - ✓ Observed: CPR within 10 s of the pulse loss: "CPR 3 s after the pulse loss (07:48 → 07:51)".
 - ✓ Observed: pericardiocentesis within 120 s of starting CPR: "1 min 30 s after CPR (07:51 → 09:21)".
 - ✓ Observed: stop CPR within 30 s of the pulse returning: "2 s after the return of circulation (10:55 → 10:57)".
@@ -384,13 +384,13 @@ before the arrest [CARD: objective 5, whose rule is that the pulse loss never ha
 
 | T+ (within the slot) | Do | The audience sees |
 |---|---|---|
-| 0:00 | Session bar → **Debrief** | the report of the run just finished: header, objectives, measured facts [G13 §5] |
+| 0:00 | Session bar → **Debrief** | the report of the run just finished: page 1 the header, **Key times**, **The course** and the objectives; page 2 the **Key moments** and the measured facts [Debrief redesign B] |
 | 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** | — |
-| 0:30 | Read the objectives aloud | ✓ Observed: name the tamponade ("Observed by the instructor at mm:ss." when ticked; – Not assessable if not) · ✓ Observed: CPR 3 s · ✓ Observed: pericardiocentesis 1 min 30 s · ✓ Observed: stop CPR 2 s · **◆ Discuss: "Better: pericardiocentesis before the pulse loss…" — "The pulse loss at 07:48"** [A3.1] |
+| 0:30 | Read the **Key times** tiles, then the objectives aloud | tiles: recognition = the time you ticked (≈ 1 min) · start → first team action **7 min 51 s** · CPR **3 s** (asked ≤ 10 s) · drainage **1 min 30 s** (asked ≤ 2 min) · stop CPR **2 s** (asked ≤ 30 s) · pulseless in all **3 min 07 s** [A3.1 record, B e2e]. Objectives: ✓ Observed: name the tamponade ("Observed by the instructor at mm:ss." when ticked; – Not assessable if not) · ✓ Observed: CPR 3 s · ✓ Observed: pericardiocentesis 1 min 30 s · ✓ Observed: stop CPR 2 s · **◆ Discuss: "Better: pericardiocentesis before the pulse loss…" — "The pulse loss at 07:48"** [A3.1] |
 | 1:00 | Say: *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* | — |
-| 1:20 | Point at **Measured facts** | lowest SpO₂ 95 % at 00:28 · lowest ART M / NIBP M **20 mmHg at 07:51** · highest EtCO₂ 36 at 00:09 · **pulseless 3 min 07 s in all, first lost at 07:48** · return of circulation 3 min 07 s after the pulse loss (10:55) · labs: K⁺ 4.2 · lactate 2.2 · pH 7.28 [A3.1] |
+| 1:20 | Point at **Key moments** (page 2; the numbers match the course strip) | 7 rows: 06:13 deteriorating · 07:48 pulse lost · PEA · 07:51 CPR · 09:21 drained · 10:55 circulation returned · 10:57 CPR stopped · 11:27 crystalloid, each with HR, MAP, SpO₂ and EtCO₂ at that second; SpO₂ prints "–" from the pulse loss to the return of circulation, with the sentence that says why (E60) [A3.1 record, B e2e]. **Measured facts** follow: lowest SpO₂ 95 % at 00:28 · lowest ART M / NIBP M **20 mmHg at 07:51** · highest EtCO₂ 36 at 00:09 · **pulseless 3 min 07 s in all, first lost at 07:48** · return of circulation 3 min 07 s after the pulse loss (10:55) · labs: K⁺ 4.2 · lactate 2.2 · pH 7.28 [A3.1] |
 | 1:50 | Scroll to **Timeline** | undone rows struck through [G13 §5]; **41 timeline rows, 12 minute rows** [A3.1] |
-| 2:15 | **Print or save as PDF** → save. **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** | **6 A4 pages** on this path (Chromium), title "Debrief Stab wound: tamponade, PEA and pericardiocentesis ‹date›" [A3.1]; footer and build on every page in Chrome; in Safari the footer only ends each section [PRINT] |
+| 2:15 | **Print or save as PDF** → save. **In the print dialog, untick Headers and footers (Chrome: More settings; Safari: Show Details → Print headers and footers).** Then **Print the learner handout** (optional on the day; same dialog setting) | the handout: **1 A4 page**, no marks (the course, the key moments, three questions, take-home lines) [B e2e]. The report: **6 A4 pages** on this path (Chromium; B e2e on the A3.1 record), title "Debrief Stab wound: tamponade, PEA and pericardiocentesis ‹date›" [A3.1]; footer and build on every page in Chrome; in Safari the footer only ends each section [PRINT] |
 | 3:00 | *"The report is a debrief aid: it reads the run, it does not grade the person."* | — |
 
 Do the Debrief BEFORE loading the next case: it reports the current run.
@@ -417,7 +417,7 @@ both engines) [MEAS E22].
 | 0:00 | 0:00 | **×8** | **Choose another scenario** first (the tamponade is still loaded, so the Scenario tab hides the library until it is pressed [Q1]), then **Load**, **All alarms on**, **Bookmark** | — |
 | 0:31 | 4:00 | ×8 | **Start surgery: rocuronium 0.6 mg/kg** | state Surgery 04:05; HR 79, ART 99/66 (75), EtCO₂ 40 [KR MH early-call C 04:11] |
 | 0:50 | 6:30 | **×4** | watch the CO₂ tile climb at the same ventilation | EtCO₂ 45 at 06:37 [KR MH early-call C] |
-| 0:54 | **6:52** | ×4 | state **Early signs** → **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** at once (the rule allows 120 s) | EtCO₂ 46, HR 86, ART 105/70 (80) [KR MH early-call C 06:53]. No limit alarm before the call: EtCO₂ peaks at 46, under the 49.4 limit [MEAS §1] |
+| 0:54 | **6:52** | ×4 | state **Early signs** → **tick *Name malignant hyperthermia* on the Scenario tab as you call it** (E52), then **MH crisis: stop sevoflurane, O₂ 100 % at 10 L/min, hyperventilate** at once (the rule allows 120 s) | EtCO₂ 46, HR 86, ART 105/70 (80) [KR MH early-call C 06:53]. No limit alarm before the call: EtCO₂ peaks at 46, under the 49.4 limit [MEAS §1] |
 | 0:57 | 7:01 | ×4 | (the call lands: state Trigger off, ventilation 20 × 600) | 9 s after Early signs [MEAS §0]. If "Not available now": press again [G10 §8 item 1] |
 | 1:02 | 7:22 | ×4 | **Dantrolene 2.5 mg/kg** (≈ 20 s after the call) | 21 s after the call [MEAS §1] |
 | 1:04 | 7:32 | ×4 | **Cool: 2 L saline at room temperature** | — |
@@ -454,7 +454,7 @@ muscle was still producing CO₂: EtCO₂ rebounded to 57 after span 1 and 61 at
 and was 42 at the end [MEAS E22].
 
 **Debrief objectives and the expected verdict** [CARD; MEAS §0, §1] (the Debrief is not opened for MH on the day):
-– name malignant hyperthermia (E52: the instructor's tick; ticked, it reads ✓ Observed at the tick time) · ✓ call within 120 s of the early signs (9 s) · ✓ dantrolene within 300 s of the call (21 s) · – repeat dantrolene (no
+✓ Observed (instructor, ≈ 06:52): name malignant hyperthermia (E52: the tick time as recorded; – Not assessable if not ticked) · ✓ call within 120 s of the early signs (9 s) · ✓ dantrolene within 300 s of the call (21 s) · – repeat dantrolene (no
 rule: the instructor judges it) · – potassium (**not assessable**: K⁺ never above 5.5) · ventilation back:
 **✓ (pressed 13:03, "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:26 → 09:26)")** [MEAS E22].
 

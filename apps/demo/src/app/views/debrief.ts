@@ -1,14 +1,17 @@
 // Debrief: the report of the run, read from the session's run record — the case, the objectives judged by their rules,
 // the measured facts, trend charts drawn as inline SVG, drugs and fluids, the timeline (the discarded course of a
 // return to a bookmark included, struck through as undone), bookmarks, the instructor's notes and a one-row-per-minute
-// appendix. The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
+// appendix; page 1 reads the key times, the course strip and the objectives, page 2 the key moments with what the
+// monitor showed (Debrief redesign B), and a learner handout without verdicts prints on its own (E51). The browser PRINTS it to PDF (debrief.css: A4 portrait, the app's chrome hidden, no colour needed to read
 // it; the footer and the build on every page); no PDF library. "Download the record (JSON)" saves the same data. Opened
 // from the session bar; when a scenario reaches a state with no way out, a toast says the debrief is ready.
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
 import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta } from '../debrief.ts';
+import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
+import { courseSvg } from './debrief-course.ts';
 import { cardOf } from '../scenarios.ts';
 import type { AppSession } from '../session.ts';
 import { version } from '@pme/renderer';
@@ -44,22 +47,8 @@ const undoneText = (r: Row): string => (r.undone ? ` — undone by return ${r.un
  *  the Start screen's card). */
 const setup = (r: Row): boolean => (r.kind === 'action' || r.kind === 'remote' || r.kind === 'scenario') && !r.ev && !r.text.startsWith('Scenario loaded: ');
 
-type Who = 'team' | 'patient' | 'scenario';
-/** The event marks on the trend charts, from the kept rows: the pulse loss and return are the patient's; a drug, fluid,
- *  shock or CPR given from the panel or a remote is the team's; every other state after the run's first is the
- *  scenario's. (The redesign's B replaces them with the numbered key moments.) */
-export function chartMarks(d: RunData): Array<{ t: number; who: Who }> {
-  const rows = d.rows.filter((r) => r.undone === undefined);
-  const firstState = rows.find((r) => r.ev?.startsWith('state:'));
-  return rows.flatMap((r): Array<{ t: number; who: Who }> => {
-    const ev = r.ev ?? '';
-    if (ev === 'pulseLoss' || ev === 'rosc') return [{ t: r.t, who: 'patient' }];
-    if ((r.kind === 'action' || r.kind === 'remote') && (ev.startsWith('drug:') || ['fluid', 'shock', 'cpr'].includes(ev))) return [{ t: r.t, who: 'team' }];
-    if (ev.startsWith('state:') && r !== firstState) return [{ t: r.t, who: 'scenario' }];
-    return [];
-  });
-}
-/** A mark on a chart: a thin dashed line with a shape on top, ■ team (blue), ● patient (vermillion), │ scenario (grey). */
+/** A mark on a chart, one per key moment: a thin dashed line with a shape on top, ■ team (blue), ● patient (vermillion),
+ *  │ scenario (grey), and the moment's number (the numbers of Key moments and the course strip). */
 const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
   team: (x, top) => `<rect x="${(x - 3.5).toFixed(1)}" y="${top - 1}" width="7" height="7" fill="#0072B2"/>`,
   patient: (x, top) => `<circle cx="${x.toFixed(1)}" cy="${top + 2.5}" r="3.8" fill="#D55E00"/>`,
@@ -68,8 +57,9 @@ const MARK_SVG: Readonly<Record<Who, (x: number, top: number) => string>> = {
 const MARK_INK: Readonly<Record<Who, string>> = { team: '#0072B2', patient: '#D55E00', scenario: '#777' };
 
 /** One trend as inline SVG over the kept course: a black line with gaps where nothing was measured, the first and
- *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark, and the event marks. */
-function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: number; who: Who }> = []): HTMLElement {
+ *  last value of the axis, minutes on the time axis, a dashed line at each return to a bookmark, and the numbered key
+ *  moments. */
+function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: number; who: Who; n: number }> = []): HTMLElement {
   const m = trendMeta(k);
   const fig = h('figure', { class: 'db-chart', 'data-trend': k }, h('figcaption', {}, m.label, m.unit ? h('span', { class: 'unit' }, m.unit) : null));
   const pts = d.samples.filter((s) => s[k] !== null);
@@ -95,7 +85,7 @@ function chart(d: RunData, k: TrendKey, end: number, marks: ReadonlyArray<{ t: n
   for (let t = 0; t <= end; t += step) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}"/><text x="${x(t)}" y="${H - 4}" text-anchor="middle">${mmss(t)}</text>`;
   const returns = d.rows.filter((r) => r.kind === 'restore' && r.undone === undefined)
     .map((r) => `<line class="ret" x1="${x(r.t)}" x2="${x(r.t)}" y1="${T}" y2="${H - B}"/><text x="${x(r.t) + 3}" y="${T + 9}">↺</text>`).join('');
-  const mks = marks.map((mk) => `<g class="db-mk" data-who="${mk.who}"><line x1="${x(mk.t).toFixed(1)}" x2="${x(mk.t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${MARK_INK[mk.who]}" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>${MARK_SVG[mk.who](x(mk.t), T)}</g>`).join('');
+  const mks = marks.map((mk) => `<g class="db-mk" data-who="${mk.who}"><line x1="${x(mk.t).toFixed(1)}" x2="${x(mk.t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="${MARK_INK[mk.who]}" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"/>${MARK_SVG[mk.who](x(mk.t), T)}<text x="${(x(mk.t) + 5).toFixed(1)}" y="${T + 7}" class="db-mk-n">${mk.n}</text></g>`).join('');
   const f = (v: number) => v.toFixed(m.digits);
   const min = pts.reduce((b, s) => ((s[k] as number) < (b[k] as number) ? s : b));
   const max = pts.reduce((b, s) => ((s[k] as number) > (b[k] as number) ? s : b));
@@ -132,6 +122,80 @@ function minutes(d: RunData): HTMLElement {
       ...keys.map((k) => h('td', { class: 'num' }, r.values[k] === null ? '–' : (r.values[k] as number).toFixed(trendMeta(k).digits))))))));
 }
 
+/** The legend of the course strip and the trend charts: each accent with its shape and its words (E45). */
+const legend = (tail = ''): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, '│'), ` scenario state${tail}`);
+const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
+const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
+const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
+/** At most this many key moments in the table; the rest are in the timeline. */
+const MOMENTS_MAX = 12;
+/** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11). */
+const SPO2_DASH = 'SpO₂ –: no reliable oximeter reading without a pulse (during CPR the pleth is compression artefact).';
+/** The learner handout's fixed text (E51; the owner's list, item 3: non-clinical, as drafted unless he changes it). */
+const HANDOUT = {
+  intro: 'This sheet is yours to keep. It shows what happened and when; it does not mark you. The conversation, not this page, is the debrief.',
+  prompts: [
+    'What did you notice first on the monitor, and when?',
+    'Take one key moment: what were you thinking then, and what did you do?',
+    'One thing you will keep doing, and one thing you will do differently.',
+  ],
+  next: 'Next time, run the case again from its start and compare your key moments.',
+} as const;
+const kids = (...xs: Array<Node | null>): Node[] => xs.filter((x): x is Node => x !== null);
+const ruled = (n: number): HTMLElement[] => Array.from({ length: n }, () => h('div', { class: 'db-ruled', 'aria-hidden': 'true' }));
+
+/** One key-time tile: its caption, the interval as a big value, and the times it runs between. A tile whose end is
+ *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44). */
+function tile(k: KeyTime, moments: KeyMoment[]): HTMLElement | null {
+  if (k.state === 'noneAfter') return null;
+  const ticked = k.state !== 'notTicked';
+  const taken = k.totalS ?? (k.toT !== null && k.fromT !== null ? k.toT - k.fromT : null);
+  let sub = '';
+  if (!ticked) sub = 'not ticked';
+  else if (k.id === 'pulseless') sub = `first lost ${mmss(k.fromT ?? 0)}`;
+  else if (k.fromT !== null && k.toT !== null) {
+    const action = k.id === 'firstTeam' ? moments.find((m) => m.t === k.toT)?.text : undefined;
+    sub = `${mmss(k.fromT)} → ${mmss(k.toT)}${k.askedS !== undefined ? ` · asked ≤ ${span(k.askedS)}` : ''}${action ? ` (${action})` : ''}`;
+  }
+  const met = k.askedS !== undefined && taken !== null && taken <= k.askedS;
+  return h('div', { class: `db-tile${met ? ' met' : ''}${ticked ? '' : ' unticked'}`, 'data-key': k.id, 'data-state': k.state },
+    h('div', { class: 'db-tile-cap', title: k.label }, k.label),
+    h('div', { class: 'db-tile-v' }, taken === null ? '–' : span(taken)),
+    h('div', { class: 'db-tile-sub' }, sub));
+}
+
+/** An objective's measured interval as a bar: the outline is the time asked, the fill the time taken; time past the
+ *  asked is drawn hatched beyond the outline (at most as long again). */
+function bar(m: { fromT: number; toT: number; askedS: number }): HTMLElement {
+  const taken = m.toT - m.fromT;
+  const W = 60, over = Math.min(Math.max(taken - m.askedS, 0) / m.askedS, 1) * W, fill = Math.min(taken / m.askedS, 1) * W;
+  const vw = (W + 1 + (over > 0 ? over + 1 : 0)).toFixed(1);
+  const svg = h('span', { class: 'db-bar' });
+  svg.innerHTML = `<svg viewBox="0 0 ${vw} 8" width="${vw}" height="8" aria-hidden="true"><defs><pattern id="db-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="3" stroke="#000" stroke-width="1.2"/></pattern></defs>`
+    + `<rect x="0.5" y="0.5" width="${fill.toFixed(1)}" height="7" fill="#000"/>${over > 0 ? `<rect x="${W + 0.5}" y="0.5" width="${over.toFixed(1)}" height="7" fill="url(#db-hatch)" stroke="#000" stroke-width="0.6"/>` : ''}`
+    + `<rect x="0.5" y="0.5" width="${W}" height="7" fill="none" stroke="#000" stroke-width="1"/></svg>`;
+  return h('span', { class: 'db-measure' }, svg, ` ${span(taken)} of ${span(m.askedS)}`);
+}
+
+/** The key moments with what the monitor showed at that second (values rounded; SpO₂ "–" while pulseless, E60), and the
+ *  alarms raised since the row before. */
+function momentsTable(ms: KeyMoment[]): Node[] {
+  const v = (x: number | null) => h('td', { class: 'num' }, x === null ? '–' : String(Math.round(x)));
+  const shown = ms.slice(0, MOMENTS_MAX);
+  return kids(
+    h('p', { class: 'db-subhead' }, 'values at that second'),
+    h('table', { class: 'db-table db-moments' },
+      h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened', 'HR', 'MAP', 'SpO₂', 'EtCO₂'].map((c) => h('th', { scope: 'col' }, c)))),
+      h('tbody', {}, ...shown.flatMap((m) => [
+        h('tr', { 'data-n': String(m.n), ...(m.pulseless ? { 'data-pulseless': 'true' } : {}) }, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text),
+          v(m.values.hr), v(m.values.map), v(m.values.spo2), v(m.values.etco2)),
+        ...(m.alarms.length ? [h('tr', { class: 'db-alarms' }, h('td', {}), h('td', { colspan: '7' }, `Alarms since the last row: ${m.alarms.join(', ')}`))] : []),
+      ]))),
+    ms.length > MOMENTS_MAX ? h('p', { class: 'muted' }, `${ms.length - MOMENTS_MAX} more in the timeline`) : null,
+    ms.some((m) => m.pulseless) ? h('p', { class: 'db-note60' }, SPO2_DASH) : null,
+  );
+}
+
 export function debriefView(session: AppSession, link: Link): View {
   const who = h('input', { class: 'input', id: 'db-who', autocomplete: 'off', placeholder: 'Instructor and learners' });
   const notes = h('div', { class: 'db-notes', contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true', 'aria-labelledby': 'db-notes-h' });
@@ -141,6 +205,7 @@ export function debriefView(session: AppSession, link: Link): View {
   const live2 = h('div', { id: 'db-live-2' });
   const pearls = section('pearls', 'Talking points', h('div', { class: 'db-pearls' },
     ...PEARLS.map(([phase, prompt]) => h('div', { class: 'db-pearl' }, h('b', {}, phase), h('p', {}, prompt)))));
+  const handout = h('div', { class: 'db-handout-live' });
   const runBy = (): void => {
     const s = live1.querySelector('.db-runby');
     if (s) s.textContent = who.value;
@@ -171,24 +236,32 @@ export function debriefView(session: AppSession, link: Link): View {
     const meds = d.rows.filter((r) => r.ev?.startsWith('drug:') || r.ev === 'fluid');
     const totals = drugTotals(d);
     const marks = d.rows.filter((r) => r.kind === 'bookmark' || r.kind === 'restore');
-    const cm = chartMarks(d);
-    live1.replaceChildren(
+    const ms = keyMoments(d);
+    const kt = keyTimes(d, ms);
+    const tiles = kt.map((k) => tile(k, ms)).filter((x): x is HTMLElement => x !== null);
+    const course = h('div', { class: 'db-course' });
+    course.innerHTML = courseSvg(d, ms, { trends: TRENDS4 });
+    live1.replaceChildren(...kids(
       band,
-      section('objectives', 'Objectives', obj.length
+      tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
+      d.samples.length ? section('course', 'The course', legend(' · numbers match Key moments'), course) : null,
+      section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
           const m = markOf(o);
-          return h('li', { 'data-status': o.verdict.status, 'data-mark': m.mark }, h('b', { class: 'db-mark db-chip' }, m.words), ' ', o.text, h('div', { class: 'db-why' }, m.why));
+          return h('li', { 'data-status': o.verdict.status, 'data-mark': m.mark }, h('b', { class: 'db-mark db-chip' }, m.words), ' ', o.text,
+            o.verdict.measure ? bar(o.verdict.measure) : null, h('div', { class: 'db-why' }, m.why));
         }))
         : h('p', { class: 'muted' }, 'This run has no objectives.')),
+      ...(ms.length ? [runFoot(), section('moments', 'Key moments and what the monitor showed', ...momentsTable(ms))] : []),
       section('facts', 'Measured facts', fs.length
         ? h('dl', { class: 'db-facts' }, ...fs.flatMap((x) => [h('dt', {}, x.label), h('dd', {}, x.value)]))
         : h('p', { class: 'muted' }, 'Nothing was measured yet.')),
-    );
+    ));
     live2.replaceChildren(
       runFoot(),
       section('trends', 'Trends',
-        h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, '│'), ' scenario state'),
-        h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, cm)))),
+        legend(),
+        h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, ms)))),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
           h('tbody', {}, ...meds.map((r) => h('tr', r.undone ? { class: 'undone' } : {}, h('td', { class: 'num' }, mmss(r.t)), h('td', {}, r.text + undoneText(r))))))
@@ -204,6 +277,26 @@ export function debriefView(session: AppSession, link: Link): View {
       runFoot(),
       section('minutes', 'Appendix: one row per minute', minutes(d)),
     );
+    // the learner handout (E51): what happened and when, no verdict, no objective, no value
+    const take = d.doc?.takeHome ?? [];
+    const learnerCourse = h('div', { class: 'db-course' });
+    learnerCourse.innerHTML = courseSvg(d, ms, { trends: TRENDS4, learner: true });
+    handout.replaceChildren(...kids(
+      h('header', { class: 'db-band' },
+        h('div', { class: 'db-kicker' }, 'Learner handout · Your case · No marks'),
+        h('div', { class: 'db-htitle' }, card ? card.title : 'No scenario (free run)'),
+        h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated`)),
+      h('p', { class: 'db-intro' }, HANDOUT.intro),
+      h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend(), learnerCourse),
+      ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
+        h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
+        h('tbody', {}, ...ms.slice(0, MOMENTS_MAX).map((m) => h('tr', {}, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
+      h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' }, ...HANDOUT.prompts.map((q) => h('li', {}, q, ...ruled(3))))),
+      h('section', { class: 'db-hsec' }, h('h3', {}, 'Take-home points'), take.length
+        ? h('ol', { class: 'db-take' }, ...take.map((t) => h('li', {}, t)))
+        : h('div', {}, h('p', { class: 'db-subhead' }, 'Your take-home points'), ...ruled(3))),
+      h('p', { class: 'db-next' }, HANDOUT.next),
+    ));
   };
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
@@ -213,12 +306,24 @@ export function debriefView(session: AppSession, link: Link): View {
           const d = session.record.data;
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
         }, 'ghost'),
+        button('Print the learner handout', () => {
+          const d = session.record.data;
+          const title = document.title;
+          el.dataset.print = 'handout';
+          document.title = `Learner handout ${d.doc ? cardOf(d.doc).title : 'free run'} ${new Date(d.startedAt).toISOString().slice(0, 10)}`;
+          addEventListener('afterprint', () => {
+            delete el.dataset.print;
+            document.title = title;
+          }, { once: true });
+          window.print();
+        }, 'ghost'),
         h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
       live1,
       h('div', { class: 'field db-who' }, h('label', { for: 'db-who' }, 'Run by'), who),
       pearls,
       section('notes', 'Notes', notes),
       live2,
+      h('section', { class: 'db-sec', id: 'db-handout', 'aria-labelledby': 'db-handout-h' }, h('h2', { id: 'db-handout-h' }, 'Learner handout (printed separately)'), handout),
       h('footer', { class: 'db-foot db-runfoot' }, FOOT)));
   // WebKit (Safari) prints no @page margin boxes: there the footer lines before each page break stand in
   el.classList.toggle('db-nomargin', typeof (window as { CSSMarginRule?: unknown }).CSSMarginRule !== 'function');
