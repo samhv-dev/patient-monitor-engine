@@ -1,4 +1,4 @@
-# Showcase 2: cue cards (22 October 2026, the 30-minute slot)
+# Showcase 2: cue cards (Wednesday 28 October 2026, the 30-minute slot)
 
 *One card per page, for the lectern. Print from a Markdown preview at 150 % or more, one card per page (a page break
 follows each card). Clock = the session-bar clock (Load = 0:00). Every number is measured: kit round A (13 October)
@@ -122,7 +122,7 @@ before the pulse loss"** (the one line to discuss: the lesson, not a timing).
 | Within the slot | Do |
 |---|---|
 | 0:00 | Session bar **Debrief** |
-| 0:15 | **Run by**: "Showcase 2, 22 October"; one line in **Notes** |
+| 0:15 | **Run by**: "Showcase 2, 28 October"; one line in **Notes** |
 | 0:30 | read the **Key times** tiles: your tick · 7 min 51 s to the first team action · CPR 3 s · drainage 1 min 30 s · stop CPR 2 s · pulseless 3 min 07 s; then the objectives |
 | 1:00 | ◆ *"Everything was done in time, and the report still marks one line to discuss: the better course was to drain before he lost his pulse. That is the lesson."* |
 | 1:20 | **Key moments** (page 2): 7 rows, the numbers of the course strip; SpO₂ "–" while pulseless (07:48 → 10:55) |

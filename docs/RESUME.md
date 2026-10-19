@@ -1,7 +1,7 @@
 # RESUME — how to pick this build up after a usage cap, a crash, or a new session
 
-*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-13 (kit round part A, part 2;
-main 62e521c3).*
+*Source of truth for resumption. Updated by the orchestrator at every gate. Last update: 2026-10-20 (v1.0.0-rc.2 tagged on
+b39b3d87; the rc.2 release-day docs PR). The sections from 2026-10-13 below are kept as history.*
 
 ## Where everything is
 - Repo: `/Users/samhv/Desktop/Claude/projects/patient-monitor-engine/repo` (remote `origin` = github.com/samhv-dev/patient-monitor-engine, branch `main`).
@@ -9,7 +9,18 @@ main 62e521c3).*
 - Spec: `docs/DESIGN-BRIEF.md`. Roadmap: `docs/roadmap/` (v1.0, v1.x, v2.0). Per-stage task plans: `docs/plans/stage-*.md`. Gate evidence: `docs/gates/*.md`.
 - Each executing stage works in its OWN git worktree: `../scratch/wt-<name>/` on its own branch; the ticked plan is committed in that branch.
 - pnpm is not installed: run every pnpm command as `npx -y pnpm@9.15.9 …`. No `timeout` on macOS. Playwright's own Chromium and WebKit are installed.
-- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one from main is `_sandbox/pme-kit-main-62e521c3/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`); smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
+- Showcase kits: built with `node scripts/showcase/make-bundle.mjs <dir>`; the current one is the rc.2 release kit `_sandbox/pme-kit-release-b39b3d87/` (also in `_sandbox/pme-classroom-dryrun/kit/` and `_sandbox/pme-debrief-dryrun/`), with the rc.1 release kit `_sandbox/pme-kit-release-3db25a3b/` as the fallback; smoke-test a kit's classroom relay with `node scripts/showcase/check-relay.mjs <kit>`.
+
+## State on 2026-10-20 (v1.0.0-rc.2)
+
+- **`v1.0.0-rc.2` is tagged** (annotated) on main **b39b3d87** (#91), 2026-10-20 00:17 (+0330); its GitHub release
+  (run 39322222807) is a **Pre-release** with 8 assets, SHA256SUMS 7/7. Gate: `docs/gates/rc2-release.md`.
+- The classroom kit was rebuilt from the tag, its relay passed 2 of 2, and the 30-minute talk was rehearsed on it in
+  both engines (kit round Q2, `SHOWCASE-2-MEASUREMENTS.md` section Q2): no gate failure. The Persian handouts were
+  regenerated (0 strings in English). The Pages tree is built (`gh-pages-rc2`); its push and the owner's smoke check
+  are pending.
+- Next: a **v1.0.0-rc.3** (freeze Saturday 24 October 18:00, rehearsal-ready Monday 26); the demo is **Wednesday
+  28 October 2026**. Plan: `docs/plans/rc2-release-day.md` (re-dated).
 
 ## State on 2026-10-13 (main 62e521c3)
 

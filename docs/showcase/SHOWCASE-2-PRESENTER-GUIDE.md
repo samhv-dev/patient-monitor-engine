@@ -1,6 +1,6 @@
 # Showcase 2: presenter guide (one page, the 30-minute slot)
 
-*22 October 2026, 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
+*Wednesday 28 October 2026, 30 minutes. Rehearse from [`SHOWCASE-2-RUN-SHEET.md`](SHOWCASE-2-RUN-SHEET.md); print
 [`SHOWCASE-2-CUE-CARDS.md`](SHOWCASE-2-CUE-CARDS.md) for the lectern. This page is what to remember. Source keys are
 those of the run sheet; MEAS = `SHOWCASE-2-MEASUREMENTS.md` (kit round A, 2026-10-13), A3 = its section A3 (kit round
 A3, 2026-10-17). The owner's final answers of 2026-10-17 (E17, E19a, E19c, E20, E21, E22) are listed at the top of the
