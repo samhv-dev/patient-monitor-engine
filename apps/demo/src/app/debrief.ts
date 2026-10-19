@@ -1,15 +1,14 @@
 // What the debrief states from a run record — each objective met / not met / not assessable from its rule (types.ts
 // `ObjectiveRule`), with the reason and the simulated times in one line, and the facts the engine can measure. Both
 // read the KEPT course (a return to a bookmark undoes what came after it: the retry is what is judged). Labels come
-// from the glossary and the alarm table. Also the one-row-per-minute table and the JSON of the report. No DOM.
+// from the glossary and the alarm table. Also the one-row-per-minute table and the export's shape (written by
+// `debrief-export.ts`). No DOM.
 import type { ObjectiveRule, RunEventId } from '@pme/controller/scenario';
 import { FIXED_ALARM_WORDS } from './alarms.ts';
 import { CONDITIONS } from './describe.ts';
 import { drugName, drugWords, labelOf, lookup, unitOf } from './glossary.ts';
 import { LAB_KEYS, LABS, TREND, TREND_KEYS, type LabKey, type Row, type RunData, type Sample, type TrendKey, type ValueKey } from './record.ts';
 import { objectiveText } from './scenarios.ts';
-import { keyMoments, keyTimes } from './debrief-moments.ts';
-import { version } from '@pme/renderer';
 
 export type Status = 'met' | 'not met' | 'not assessable';
 export interface Verdict {
@@ -304,11 +303,3 @@ export interface DebriefExport {
   }>;
   minutes: ReturnType<typeof perMinute>;
 }
-/** The report as JSON (`pme-debrief/2`, `DebriefExport`) — the record, the verdicts, the facts, the key times and
- *  moments, and the minute table, with the version and build that made it. Not the "Run by" line or the notes box:
- *  they are printed only, never stored. */
-export const debriefJson = (d: RunData, build: string): string => {
-  const moments = keyMoments(d);
-  const out: DebriefExport = { schema: 'pme-debrief/2', version, build, record: d, objectives: objectives(d), facts: facts(d), keyTimes: keyTimes(d, moments), keyMoments: moments, minutes: perMinute(d) };
-  return JSON.stringify(out, null, 1);
-};

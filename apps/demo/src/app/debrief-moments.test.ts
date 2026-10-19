@@ -3,7 +3,7 @@
 import type { ScenarioDoc } from '@pme/controller/scenario';
 import { describe, expect, it } from 'vitest';
 import a31 from '../../../../docs/showcase/kit-round-a/fa/debrief-a3-tamponade-cue-card-path-kit-round-chromium.json';
-import { debriefJson } from './debrief.ts';
+import { debriefJson } from './debrief-export.ts';
 import { keyMoments, keyTimes, pulselessAt, whoOf } from './debrief-moments.ts';
 import { drugWords } from './glossary.ts';
 import { emptyRun, type Row, type RunData, type Sample } from './record.ts';
@@ -118,6 +118,32 @@ describe('key times', () => {
     ticked.rows.push(tickOf(doc, T));
     expect(keyTimes(ticked).find((k) => k.id === 'recognition')).toMatchObject({ fromT: 0, toT: T, state: 'measured' });
     expect(keyTimes(base()).find((k) => k.id === 'recognition')).toMatchObject({ toT: null, state: 'notTicked' });
+  });
+
+  it('the six-tile cap counts only tiles the view draws: a pulse loss with no CPR does not push "Pulseless in all" out (R-B N1)', () => {
+    const doc: ScenarioDoc = {
+      ...structuredClone(card),
+      objectives: [
+        { text: 'Name it', debrief: 'recognition' },
+        { text: 'Shock within 60 s of the fluid', rule: { kind: 'eventWithin', after: 'fluid', event: 'shock', withinS: 60 } },
+        { text: 'Adrenaline within 60 s of the shock', rule: { kind: 'eventWithin', after: 'shock', event: 'drug:adrenaline', withinS: 60 } },
+        { text: 'Pulse loss within 60 s of the adrenaline', rule: { kind: 'eventWithin', after: 'drug:adrenaline', event: 'pulseLoss', withinS: 60 } },
+      ],
+    };
+    const d: RunData = {
+      ...emptyRun('N1', 70, 0), doc,
+      samples: Array.from({ length: 200 }, (_, t) => sampleAt(t)),
+      rows: [
+        { t: 10, kind: 'action', text: 'Fluid 500 mL', ev: 'fluid' },
+        { t: 20, kind: 'action', text: 'Shock 150 J', ev: 'shock' },
+        { t: 30, kind: 'action', text: 'Adrenaline 1 mg', ev: 'drug:adrenaline' },
+        { t: 40, kind: 'patient', text: 'Pulse lost (the model)', ev: 'pulseLoss' },
+      ],
+    };
+    const ks = keyTimes(d);
+    expect(ks.map((k) => k.id)).toEqual(['recognition', 'firstTeam', 'objective:1', 'objective:2', 'objective:3', 'pulseLostToCpr', 'pulseless']);
+    expect(ks.filter((k) => k.state !== 'noneAfter')).toHaveLength(6);
+    expect(ks.find((k) => k.id === 'pulseLostToCpr')?.state).toBe('noneAfter');
   });
 
   it('a run with no scenario: the pulse loss and its return are the moments; no CPR after it', () => {

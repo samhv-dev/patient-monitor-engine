@@ -1,6 +1,6 @@
 // The Debrief's course strip: the run on one time axis as an SVG string (no DOM state). It draws the trends HR, MAP,
 // SpO₂ and EtCO₂ as small multiples (E56), with the numbered key moments as badges (■ team in blue, ● patient in
-// vermillion, grey for a scenario state; the numbers are those of the key-moments table), and a grey band over each
+// vermillion, □ an open grey square for a scenario state; the numbers are those of the key-moments table), and a grey band over each
 // pulseless span, where the SpO₂ line is broken (E60). A trend never measured is left out. The legend is the view's.
 import { axisRange, endOf, mmss, span, trendMeta } from '../debrief.ts';
 import { pulselessSpans, type KeyMoment } from '../debrief-moments.ts';

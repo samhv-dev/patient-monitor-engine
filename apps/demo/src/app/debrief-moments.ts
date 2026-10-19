@@ -90,8 +90,9 @@ export function keyMoments(d: RunData): KeyMoment[] {
 }
 
 /** The key times, in order: recognition, the first team action, the objectives' measured intervals (document order),
- *  the pulse loss to CPR, the time pulseless; at most six. A generic interval equal to an objective's is left out (the
- *  objective's is kept). */
+ *  the pulse loss to CPR, the time pulseless; at most six that print a tile. A `noneAfter` interval prints none (the
+ *  view drops it), so it does not count toward the six (R-B N1). A generic interval equal to an objective's is left
+ *  out (the objective's is kept). */
 export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyTime[] {
   const objs = objectives(d);
   const docObjs = d.doc?.objectives ?? [];
@@ -119,5 +120,6 @@ export function keyTimes(d: RunData, moments: KeyMoment[] = keyMoments(d)): KeyT
     out.push({ id: 'pulseless', label: 'Pulseless in all', fromT: loss.t, toT: null, totalS: off, state: 'measured' });
   }
   const same = (a: KeyTime) => objTiles.some((o) => o !== a && o.fromT === a.fromT && o.toT === a.toT);
-  return out.filter((k) => k.id.startsWith('objective:') || !same(k)).slice(0, MAX_TILES);
+  let drawn = 0;
+  return out.filter((k) => k.id.startsWith('objective:') || !same(k)).filter((k) => k.state === 'noneAfter' || ++drawn <= MAX_TILES);
 }

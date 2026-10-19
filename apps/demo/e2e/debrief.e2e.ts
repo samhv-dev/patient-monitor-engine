@@ -248,7 +248,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   await expect(view.locator('#db-keytimes [data-key=recognition] .db-tile-sub')).toHaveText('not ticked');
   await expect(view.locator('#db-course .db-badge')).toHaveCount(7);
   await expect(view.locator('#db-course rect.db-pulseless')).toHaveCount(1);
-  await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · │ scenario state · numbers match Key moments');
+  await expect(view.locator('#db-course .db-legend')).toHaveText('■ team action · ● patient event · □ scenario state · numbers match Key moments');
   await expect(view.locator('#db-objectives .db-measure')).toHaveText(['3 s of 10 s', '1 min 30 s of 2 min 00 s', '2 s of 30 s']);
 
   // page 2: the key moments, SpO₂ "–" from the pulse loss to the return of circulation, and the sentence that says why

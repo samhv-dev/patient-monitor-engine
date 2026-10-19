@@ -8,7 +8,8 @@
 import './debrief.css';
 import { drugName } from '../glossary.ts';
 import type { Link } from '../link.ts';
-import { axisRange, debriefJson, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta } from '../debrief.ts';
+import { axisRange, drugTotals, endOf, facts, mmss, objectives, perMinute, span, trendMeta } from '../debrief.ts';
+import { debriefJson } from '../debrief-export.ts';
 import { keyMoments, keyTimes, type KeyMoment, type KeyTime, type Who } from '../debrief-moments.ts';
 import { LAB_KEYS, TREND_KEYS, type Row, type RunData, type TrendKey } from '../record.ts';
 import { courseSvg } from './debrief-course.ts';
@@ -122,8 +123,9 @@ function minutes(d: RunData): HTMLElement {
       ...keys.map((k) => h('td', { class: 'num' }, r.values[k] === null ? '–' : (r.values[k] as number).toFixed(trendMeta(k).digits))))))));
 }
 
-/** The legend of the course strip and the trend charts: each accent with its shape and its words (E45). */
-const legend = (tail = ''): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, '│'), ` scenario state${tail}`);
+/** The legend of the course strip and the trend charts: each accent with its shape and its words (E45). A scenario
+ *  state is an open grey square on the course strip (`debrief-course.ts`) and a bare line on a trend chart (R-B N2). */
+const legend = (scen: '□' | '│', tail = ''): HTMLElement => h('p', { class: 'db-legend' }, h('span', { class: 'db-team' }, '■'), ' team action · ', h('span', { class: 'db-patient' }, '●'), ' patient event · ', h('span', { class: 'db-scen' }, scen), ` scenario state${tail}`);
 const WHO: Readonly<Record<Who, string>> = { team: 'Team', patient: 'Patient', scenario: 'Scenario' };
 const whoCell = (w: Who): HTMLElement => h('td', { class: 'db-whocell' }, w === 'scenario' ? null : h('span', { class: `db-${w}` }, w === 'team' ? '■ ' : '● '), WHO[w]);
 const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same four for every case
@@ -244,7 +246,7 @@ export function debriefView(session: AppSession, link: Link): View {
     live1.replaceChildren(...kids(
       band,
       tiles.length ? section('keytimes', 'Key times', h('div', { class: 'db-tiles' }, ...tiles)) : null,
-      d.samples.length ? section('course', 'The course', legend(' · numbers match Key moments'), course) : null,
+      d.samples.length ? section('course', 'The course', legend('□', ' · numbers match Key moments'), course) : null,
       section('objectives', 'Objectives', h('p', { class: 'db-subhead' }, 'What the record shows: it reads the run, it does not grade the person'), obj.length
         ? h('ol', { class: 'db-obj' }, ...obj.map((o) => {
           const m = markOf(o);
@@ -260,7 +262,7 @@ export function debriefView(session: AppSession, link: Link): View {
     live2.replaceChildren(
       runFoot(),
       section('trends', 'Trends',
-        legend(),
+        legend('│'),
         h('div', { class: 'db-charts' }, ...TREND_KEYS.map((k) => chart(d, k, end, ms)))),
       section('drugs', 'Drugs and fluids', meds.length
         ? h('table', { class: 'db-table' }, h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Time'), h('th', { scope: 'col' }, 'Given'))),
@@ -287,7 +289,7 @@ export function debriefView(session: AppSession, link: Link): View {
         h('div', { class: 'db-htitle' }, card ? card.title : 'No scenario (free run)'),
         h('p', { class: 'db-sub' }, `${d.patient} · ${mmss(end)} simulated`)),
       h('p', { class: 'db-intro' }, HANDOUT.intro),
-      h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend(), learnerCourse),
+      h('section', { class: 'db-hsec' }, h('h3', {}, 'Your run at a glance'), legend('□'), learnerCourse),
       ms.length ? h('section', { class: 'db-hsec' }, h('h3', {}, 'Key moments'), h('table', { class: 'db-table db-hmoments' },
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
         h('tbody', {}, ...ms.slice(0, MOMENTS_MAX).map((m) => h('tr', {}, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
