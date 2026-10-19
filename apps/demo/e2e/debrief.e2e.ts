@@ -256,6 +256,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   expect(moments.map((m) => [m[0], m[1], m[6]])).toEqual([['1', '06:13', '99'], ['2', '07:48', '–'], ['3', '07:51', '–'], ['4', '09:21', '–'], ['5', '10:55', '–'], ['6', '10:57', '99'], ['7', '11:27', '99']]);
   expect(moments.map((m) => m[5])).toEqual(['71', '21', '20', '28', '45', '63', '90']); // MAP rounded
   await expect(view.locator('#db-moments .db-note60')).toHaveCount(1);
+  await expect(view.locator('#db-moments .db-note60')).toHaveText('SpO₂ –: no reliable saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation.'); // the owner's ruling, 2026-10-19
   await expect(view.locator('#db-moments tr.db-alarms').first()).toHaveText(/Alarms since the last row: CVP high, SpO₂: low perfusion, ART S low/);
 
   // (g) typing in Run by and Notes across a 5 s refresh: the text and the caret stay

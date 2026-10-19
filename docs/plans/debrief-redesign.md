@@ -941,8 +941,9 @@ whose `fromT`/`toT` equal an objective tile's is dropped, and the objective tile
   - **`keyMoments()`** sets `values.spo2 = null` and `pulseless: true` on such a moment (Decision 4, B1). The view's
     SpO₂ cell then prints `–`.
   - **The fixed sentence** under the table, shown only when at least one row is pulseless: "SpO₂ –: no reliable
-    oximeter reading without a pulse (during CPR the pleth is compression artefact)." (the check's wording; owner list
-    item 11).
+    saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation." (owner
+    list item 11; reworded by the owner's ruling of 2026-10-19, which replaced the check's wording "no reliable oximeter
+    reading without a pulse (during CPR the pleth is compression artefact)").
   - **Unchanged:** HR, MAP and EtCO₂ print as recorded. The trend charts are unchanged; the course strip follows B3a.
   - **Unit test:** `pulselessAt` on the A3.1 fixture is true at 468, 471.15, 561.37 and 655 (the `rosc` row itself),
     and false at 373.62, 657.26 and 687.43.
@@ -1199,8 +1200,8 @@ grep -c "^- \[ \] OPEN" ../scratch/debrief-gate-rc2/gate-note.md                
 10. **The PEARLS prompts in Persian (E59; by Monday 19:00, from A7 Step 2 or B7a):** the title `Talking points`, the
     four phase names and the four prompts of item 2, as produced with the `persian-writing` skill. Please confirm or
     correct them by Tuesday 12:00. Without an answer, they print marked unreviewed, as the table does today.
-11. **The sentence under the key-moments table (E60):** "SpO₂ –: no reliable oximeter reading without a pulse (during
-    CPR the pleth is compression artefact)."
+11. **The sentence under the key-moments table (E60):** "SpO₂ –: no reliable saturation reading without a pulse; a
+    pleth signal during CPR reflects compression flow, not oxygenation." (Reworded by the owner's ruling of 2026-10-19.)
 
 ---
 
