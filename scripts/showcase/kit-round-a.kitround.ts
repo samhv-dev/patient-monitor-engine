@@ -205,8 +205,8 @@ class Run {
     // Q1 finding: with a case running the library is hidden; the presenter presses "Choose another scenario" first
     const choose = p.locator('section[aria-label="Running scenario"]').getByRole('button', { name: 'Choose another scenario' });
     if (await choose.isVisible().catch(() => false)) {
-      await choose.click();
-      this.r.setup.choseAnotherScenarioFirst = true;
+      // Q2: on a fresh page the button can show for a moment and go (the tab repaints to the library): a bounded click
+      this.r.setup.choseAnotherScenarioFirst = await choose.click({ timeout: 3000 }).then(() => true, () => 'shown, then gone before the click');
       await p.waitForTimeout(500);
     }
     const chip = title === 'Severe bronchospasm on the ventilator' ? 'Airway and breathing' : 'Showcase';
