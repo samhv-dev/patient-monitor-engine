@@ -609,3 +609,112 @@ footer on every page reads «… از نظر بالینی اعتبارسنجی �
 
 **Not measured:** the talk itself (presses only), a human's delay, real Safari and real phones, sound by ear, a real
 print dialog.
+
+## Q2-pretag — the rc.2 candidate rehearsed before the tag (main 8cd1fae5, A + V + B)
+
+*Measured 2026-10-19 (04:45–05:30 +0330) on kit `pme-showcase-kit` built by `make-bundle.mjs` from a clean worktree at
+main **8cd1fae5** (#88, Debrief redesign B, on A #84 and the rc.2 version bump). `VERSION.txt`: `Commit: 8cd1fae5…`,
+no "(with uncommitted changes)"; the app's build id **`8cd1fae5 2026-10-19`** (no `+`); `1.0.0-rc.2` in 3 of the app's
+scripts, `1.0.0-rc.1` in none. Served as built by its own Start Classroom launcher; three emulated phones (Pixel 7 on
+Chromium, iPhone 13 on WebKit) joined once at the QR moment. Chromium, then WebKit, then the A3 test, one run at a time;
+load average 1.9–8.2 (one reading of 21.7 at the Chromium tamponade Load). Script: `kit-round-a.kitround.ts` with the
+Q2 edits of `docs/plans/rc2-release-day.md` Task 4 Step 2 (this PR). One output folder per run:
+`docs/showcase/kit-round-a/q2-pretag-chromium/`, `q2-pretag-webkit/`, `q2-pretag-a3/`. This is a rehearsal of the
+candidate, not of the tag: Task 4 runs again on the tag kit (`q2/`).*
+
+**The kit.** `check-relay.mjs`: **PASS, 2 of 2 runs**, node v26.11.1 (`q2-pretag-chromium/relay-8cd1fae5.json`). The
+Start view and Settings → About both read **"Version 1.0.0-rc.2 (pre-release). For education only. Not a medical
+device and not clinically validated: never use it for patient care."** (both engines). The Debrief footer reads "For
+education only. Not a medical device and not clinically validated: never use it for patient care. Version 1.0.0-rc.2
+(pre-release), build 8cd1fae5 2026-10-19." (both engines, and on all 6 pages of the Chromium PDF). The script's
+`about.preRelease` reads `false`: its regex still names rc.1 (Task 4 Step 2 says leave it; the label text is the check).
+
+**The script edits** (Task 4 Step 2). The MH tick at Early signs and the tamponade tick at 1:00 were already in the
+script (B6 Step 2, #88: `M.tick(/^Name malignant hyperthermia/)` after `state Early signs`, `Tm.tick(/^Name the
+tamponade/)` after the 1:00 row), so only the plan's screenshot lines were added: three `.stage` captures
+(`q2-bronchospasm-monitor-*` at "Instructor → ×1", `q2-tamponade-monitor-1min-*` after the 1:00 tick,
+`q2-mh-monitor-early-signs-*` after the Early-signs tick), and the Q1 talk's Run by → "Showcase 2, 24 October" with the
+Notes line "Kit round Q2 rehearsal on the rc.2 release build." (selected by its Notes neighbour; the A3 test's line is
+unchanged): **+5/−2**, the plan's "with B's tick already present". A second commit bounds one click (below, note 1).
+
+**Verdict marks against the plan's table (Task 4 Step 4)** — every mark the same KIND on both engines:
+
+| Segment | Expected | Chromium | WebKit |
+|---|---|---|---|
+| 0 Opening + QR | label rc.2 (pre-release) · `3 phones following` · errors 0 | as expected; joins 2.4 s | as expected; joins 3.4 s |
+| 1 Bronchospasm + H21 | – ✓ – (salbutamol ≈ 02:06) · H21 hold and cockpit `true` | **– ✓ –** (salbutamol 02:06) · hold `true`, cockpit `true` (1 506 frames, contiguous) | **– ✓ –** (02:06) · `true`, `true` (1 506) |
+| 2 Tamponade A3 path + Debrief | ✓ ✓ ✓ ✓ ◆ (the 1:00 tick · CPR 3–4 s · drainage 1 min 30 s · stop 2 s · ◆ better course) · footer · PDF A4, ≈ 6 pages | **✓ ✓ ✓ ✓ ◆** ("Observed by the instructor at 01:07" · 3 s · 1 min 30 s · 2 s · ◆ "The pulse loss at 07:48") · footer as above · **PDF A4, 6 pages** | **✓ ✓ ✓ ✓ ◆** (01:05 · 3 s · 1 min 30 s · 2 s · ◆ 07:48) · footer as above · print-media screenshot |
+| 4 MH early call, 13:03 | ✓ ✓ ✓ – – ✓ · Early signs ≈ 06:51–06:52, call ≈ 07:00, press 13:03–13:04, < 40 at ≈ 07:26 | **✓ ✓ ✓ – – ✓** ("Observed by the instructor at 06:54" · call 11 s · dantrolene 21 s · – repeat · – potassium "did not happen" · ventilation back 13:03 "after EtCO₂ had stayed below 40 mmHg for 2 min 00 s (07:29 → 09:29)") · Early signs 06:52 (state; e22 reader 06:53), call 07:03, press 13:03, < 40 at 07:29 | **✓ ✓ ✓ – – ✓** (06:53 · 11 s · 21 s · – · – · 13:03, 07:28 → 09:28) · Early signs 06:51–06:52, call 07:02, press 13:03, < 40 at 07:28 |
+
+Errors (page and console): **0** in every segment, both engines, and in the A3 test.
+
+**Key times tiles** (B; "tick time as recorded"):
+
+| | Chromium | WebKit |
+|---|---|---|
+| Bronchospasm | Recognition – (not ticked) · first team action 2 min 07 s (02:06) | same |
+| Tamponade (talk) | Recognition **1 min 07 s** (01:07) · first team action **7 min 51 s** · CPR **3 s** · drainage **1 min 30 s** · stop CPR **2 s** · pulseless **3 min 07 s** | 1 min 05 s · 7 min 51 s · 3 s · 1 min 30 s · 2 s · 3 min 08 s |
+| MH | Recognition **6 min 54 s** (06:54), not a dash · first team action 4 min 02 s (04:01, surgery) · call 11 s · dantrolene 21 s | 6 min 54 s (06:53) · 4 min 01 s · 11 s · 21 s |
+
+Key moments: bronchospasm 1, **tamponade 7** (06:14 deteriorating · 07:48 pulse lost · 07:51 CPR · 09:21 drained ·
+10:55 circulation returned · 10:57 CPR stopped · 11:27 crystalloid), MH 9 (04:01 surgery … 13:03 ventilation back).
+Timeline rows: bronchospasm 17 / 17, tamponade 42 / 42 (Q1 42 / 43), MH 43 / 42 (Q1 41 / 42; the tick adds one).
+
+**F10 — the A3 test on this kit** (`-g "A3 tamponade: the cue card path"`, both projects, `q2-pretag-a3/`): **2
+passed**. Marks ✓ ✓ ✓ ✓ ◆ on both. **Learner handout PDF (Chromium): 1 A4 page, 0 verdict words** (`Observed|Not
+observed|Not assessable|Discuss|✓|✗|◆`), "Questions to think about" and the rc.2 footer present. Facilitator PDF 6 A4
+pages. `keyTimes` present on both engines: recognition 1 min 08 s (C 01:07, W 01:08) · first team action 7 min 51 s
+(C) / 7 min 52 s (W) · CPR 3 s / 4 s · drainage 1 min 31 s / 1 min 29 s · stop CPR 2 s · pulseless 3 min 08 s;
+**moments 7** on both; errors 0. F10 does not fire.
+
+**The six monitor captures** (`q2-*-monitor-{chromium,webkit}.png`, the Saadat-style skin): six lanes, top to bottom
+**ECG (II), ECG (II), CO₂, IBP1, IBP2, pleth** on all six (E70: lead II twice, by design). Tamponade at 1:00: every lane
+drawn, IBP2 the CVP wave, "CVP MEAN TOO HIGH" in the alarm bar, CVP 17–18 on the tile. Bronchospasm and MH: the IBP2
+lane is empty and its tile reads `---`: neither card connects a CVP line (as the older rehearsal shots of
+bronchospasm show), so it is not a missing lane (note 2). MH at Early signs: EtCO₂ 46, below the 50 mmHg top, so the
+E63 clip is not in this frame.
+
+**Persian, the three `/2` exports** (Chromium JSONs, `debrief-fa.mjs --version 1.0.0-rc.2 --text`): bronchospasm **6
+A4 pages** (78 table entries), tamponade **6** (106), MH **7** (109), each **0 strings without translation**, all
+entries unreviewed. `verify_pdf.py --expect-font Vazirmatn`: exit 0, unexpected fonts 0, errors 0, no WARN, for each.
+Each `.fa.txt` names 1.0.0-rc.2 and 8cd1fae5; the MH one carries the instructor line «مربی آن را در 06:54 مشاهده
+کرد.» (Western digits) and the Talking points box (محورهای گفت‌وگو) once with its four prompts. The renders are in
+`q2-pretag-chromium/*.fa.{pdf,txt}`.
+
+**Phones and relay.** `3 phones following` at the QR moment; every phone `synced` at every segment's end and after the
+reload (15 s); H21 hold kept every 2-s sample. Resyncs: 6–7 by bronchospasm's end, 11–12 by the tamponade's, 16–18 by
+MH's. S12-F2 at the close as in Q1: the instructor's AGENTS tile "0.0", every phone "---", before and 30 s after the
+style change (29.6 / 29.7 s, the probe's longest difference).
+
+**Gate reading (Task 4 Step 7, for the candidate):** F1 no (commit 8cd1fae5, no `+`; Branch reads `kit-round-q2`, the
+tag worktree will read `HEAD`) · F2 no (2/2) · F3 no (rc.2 label and footer; no rc.1 anywhere) · F4 no (every mark as
+the table; Debriefs opened, printed, JSON downloaded) · F5 no · F6 no (PEA, ROSC, Early signs, Recovering all came) ·
+F7 no (0 errors) · F8 no (A4, 6 pages) · F9 no (note 2) · F10 no. **No F-failure.**
+
+**Notes** (recorded, not fixed):
+1. **The talk hung once at the bronchospasm Load (Chromium).** On the fresh page the Scenario tab showed "Choose
+   another scenario" for a moment with no case loaded (Q1 note 8, then WebKit only), the script saw it visible, and the
+   click then waited on a hidden button with no time-out: 11.6 min, interrupted by hand (the partial run is kept
+   outside the repo, not in these folders). The click is now bounded to 3 s and records `"shown, then gone before the
+   click"` if it misses; in the runs above it was pressed in time (`choseAnotherScenarioFirst: true` for Chromium
+   bronchospasm and both MH Loads). For the presenter nothing changes: the library comes up either way.
+2. IBP2 lane empty on bronchospasm and MH (no CVP line in those cards), not F9.
+3. **A key-time tile and its interval can disagree by 1 s**: MH WebKit "6 min 54 s (00:00 → 06:53)", A3 Chromium
+   "1 min 08 s (00:00 → 01:07)" and "1 min 31 s (07:51 → 09:21)". The duration is rounded from fractional times while
+   the clock times are floored (the family of Q1 note 5). Cosmetic.
+4. MH call 10–11 s after Early signs (Q1 8–9 s): the tick now comes first. Within ±10 s; < 40 at 07:28–07:29 (Q1
+   07:26); EtCO₂ after the press 38 · 49 · 51–52 · 53 · 54 · 49 · 44 … 43, peak 55 at 17:22 (Q1 the same).
+5. Bronchospasm: `RR TOO HIGH` at 00:09 (C) / 00:10 (W) and `%SPO2 LOW` 00:35 / 00:37 (Q1: RR TOO LOW 00:12 on C).
+6. Tamponade Chromium: one phone-vs-instructor HR difference of 3.5 s while the value swung (Q1 1.5 s; the probe's
+   S12-F2 flag), at a load average of 21.7; WebKit 1.5 s. Alarms as the cards, plus `ART DIA` / `ART MEAN TOO HIGH`
+   at 11:03–11:04 as in Q1.
+7. FX-12 as Q1: "No scenario" after Restart patient on both; "Return here" not on screen on Chromium, two buttons on
+   WebKit.
+8. `debrief-fa.mjs` found no Vazirmatn in the default font folders of this Mac; the render used `--fonts` pointing at
+   the persian-writing skill's `assets/fonts` (Vazirmatn Regular and Bold). Task 5's command needs the same flag here.
+9. After the close's style change, MH alarms print in Philips style (`**ABPm 114>110`).
+10. Not run in this pre-tag round: FX-16 on WebKit (Step 3b) and the re-take of the six showcase-card shots (Step 6);
+    both stay on the tag-kit run.
+
+**Page counts:** facilitator report (tamponade, Chromium) **6 A4 pages** in the talk and in the A3 test; learner handout
+**1 A4 page**; Persian handouts 6 / 6 / 7.

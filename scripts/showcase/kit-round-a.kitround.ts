@@ -205,8 +205,8 @@ class Run {
     // Q1 finding: with a case running the library is hidden; the presenter presses "Choose another scenario" first
     const choose = p.locator('section[aria-label="Running scenario"]').getByRole('button', { name: 'Choose another scenario' });
     if (await choose.isVisible().catch(() => false)) {
-      await choose.click();
-      this.r.setup.choseAnotherScenarioFirst = true;
+      // Q2: on a fresh page the button can show for a moment and go (the tab repaints to the library): a bounded click
+      this.r.setup.choseAnotherScenarioFirst = await choose.click({ timeout: 3000 }).then(() => true, () => 'shown, then gone before the click');
       await p.waitForTimeout(500);
     }
     const chip = title === 'Severe bronchospasm on the ventilator' ? 'Airway and breathing' : 'Showcase';
@@ -1406,6 +1406,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await toTeach(B);
     await B.speed(1);
     await B.row('Instructor → ×1');
+    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-bronchospasm-monitor-${B.r.browser}.png`) }).catch(() => undefined);
     // H21: the main screen on the Monitor view for 30 s (at ×1, the card's talk), then back to the Ventilator view
     await toVent();
     await page.waitForTimeout(2000);
@@ -1468,6 +1469,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     const ibp2 = await page.locator('.stage .pme-stile[data-param=IBP2] [data-pme=v]').first().innerText().catch(() => null);
     await Tm.row('1:00 CVP on the IBP2 tile', { ibp2 });
     await Tm.tick(/^Name the tamponade/); // E54: when the cues appear
+    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-tamponade-monitor-1min-${Tm.r.browser}.png`) }).catch(() => undefined);
     await Tm.untilT(Tm.t0 + 420);
     await Tm.speed(1);
     await Tm.row('7:00 ×1');
@@ -1508,8 +1510,8 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 22 October');
-    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q1 rehearsal on the release build.').catch(() => undefined);
+    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 24 October');
+    await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.2 release build.').catch(() => undefined);
     await page.emulateMedia({ media: 'print' });
     mkdirSync(OUTDIR, { recursive: true });
     await page.screenshot({ path: join(OUTDIR, `q1-tamponade-debrief-print-${Tm.r.browser}.png`), fullPage: true }).catch(() => undefined);
@@ -1541,6 +1543,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     const tEarly = await M.until('earlySigns', 600);
     await M.row('state Early signs');
     await M.tick(/^Name malignant hyperthermia/); // E52: with the early call, just before MH crisis
+    await page.locator('.stage').screenshot({ path: join(OUTDIR, `q2-mh-monitor-early-signs-${M.r.browser}.png`) }).catch(() => undefined);
     await M.react();
     const tC = await M.press(CRISIS, 'triggerOff');
     await M.untilT(tC + 20);

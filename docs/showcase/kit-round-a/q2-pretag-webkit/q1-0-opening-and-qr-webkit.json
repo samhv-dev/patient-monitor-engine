@@ -1,0 +1,65 @@
+{
+  "case": "Q1 0 opening and QR",
+  "browser": "webkit",
+  "kit": "8cd1fae5",
+  "server": "Start Classroom.command (relay + static app, node, as built)",
+  "base": "http://127.0.0.1:8760",
+  "reactS": 2,
+  "phonesN": 3,
+  "startedAt": "2026-10-19T01:37:46.575Z",
+  "loadAvg": {
+    "start": 5.28,
+    "end": 5,
+    "min": 5.28,
+    "max": 5.28
+  },
+  "setup": {
+    "sessionCode": "DJWU5Y",
+    "alarmButtonAtEnd": "Limit alarms off"
+  },
+  "rows": [],
+  "presses": [],
+  "spans": [],
+  "states": [],
+  "alarms": [],
+  "measures": {
+    "about": {
+      "start": "Version 1.0.0-rc.2 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+      "settings": "Version 1.0.0-rc.2 (pre-release). For education only. Not a medical device and not clinically validated: never use it for patient care.",
+      "preRelease": false,
+      "notMedicalDevice": true
+    },
+    "qr": {
+      "url": "http://192.168.1.100:8760/?join=DJWU5Y",
+      "code": "DJWU5Y",
+      "countBefore": "0 phones following",
+      "joinWallS": 3.4,
+      "countAfter": "3 phones following"
+    },
+    "phonesAfterJoin": [
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      },
+      {
+        "hold": false,
+        "status": "synced",
+        "resyncs": 0
+      }
+    ]
+  },
+  "debrief": null,
+  "phones": null,
+  "notes": [
+    "phone 0 (iPhone 13 emulation) synced before Load",
+    "phone 1 (iPhone 13 emulation) synced before Load",
+    "phone 2 (iPhone 13 emulation) synced before Load"
+  ],
+  "errors": []
+}
