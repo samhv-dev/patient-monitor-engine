@@ -7,6 +7,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Fixed
+
+- FX-19: the NIBP "next m:ss" countdown could read 'next 3:60' just after a cuff deflation.
+
 ## [1.0.0-rc.2] - 2026-10-20
 
 Second public **pre-release** (release candidate) of a teaching simulator. It is for education only: it is not a

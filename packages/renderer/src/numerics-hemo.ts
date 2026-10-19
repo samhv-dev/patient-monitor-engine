@@ -30,7 +30,9 @@ export function formatNibp(e: NibpEvent | undefined, last: { sys: number; dia: n
   if (!e) return { ...res, status: last ? formatClock(last.at) : 'MANUAL' };
   if (e.phase === 'inflating' || e.phase === 'deflating') return { main: String(e.cuffMmHg ?? 0), sub: 'mmHg', status: e.phase === 'inflating' ? 'NBP inflating' : 'NBP measuring' };
   if (e.phase === 'failed') return { ...res, status: 'NBP measurement failed' };
-  const next = e.nextInS !== undefined ? `  next ${Math.floor(e.nextInS / 60)}:${String(Math.round(e.nextInS % 60)).padStart(2, '0')}` : '';
+  // Whole seconds first, then the m:ss split, so 239.6 s reads "4:00", never "3:60" (FX-19; the FX-13 pattern).
+  const nextS = e.nextInS !== undefined ? Math.round(e.nextInS) : undefined;
+  const next = nextS !== undefined ? `  next ${Math.floor(nextS / 60)}:${String(nextS % 60).padStart(2, '0')}` : '';
   return { ...res, status: `${last ? formatClock(last.at) : ''}${next}`.trim() || 'MANUAL' };
 }
 
