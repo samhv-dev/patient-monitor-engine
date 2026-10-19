@@ -693,7 +693,7 @@ Each condition is a time-varying bundle of the multipliers already defined. A sc
 | Sugammadex | binding model: 1:1 molar with free rocuronium/vecuronium | — | instantaneous in plasma; Ce washout via rocuronium ke0 | §5d targets | Sgx-label | [P]/[ENG] | Q51 |
 | Volatile agents | alveolar wash-in (FA/FI) from the ventilator link + brain τ | FA/FI at 30 min: des ~0.9, sevo ~0.85, iso ~0.73 [VERIFY] | brain τ 2–4 min | MAC-indexed effects (§6.3) | Yasuda 1991 [TXT] | [VERIFY] | — |
 
-**Kept as gamma effect curves** (brief §4.9 `E(t) = Emax·(t/tp)^n·e^(n(1 − t/tp))`, onset/peak/duration from research 03 §8.6): all vasoactive **boluses**, atropine, glycopyrrolate, neostigmine, adenosine, amiodarone, lidocaine (antiarrhythmic), calcium, bicarbonate, magnesium, ketamine, etomidate, midazolam, morphine, pethidine, dexmedetomidine and thiopental in v1. Of these, ketamine, midazolam and dexmedetomidine are candidates for Ce models in v1.1. **Infusions** use a first-order approach to the steady-state effect with τ_on/τ_off from each row below.
+**Kept as gamma effect curves** (brief §4.9 `E(t) = Emax·(t/tp)^n·e^(n(1 − t/tp))`, onset/peak/duration from research 03 §8.6): all vasoactive **boluses**, atropine, glycopyrrolate, neostigmine, adenosine, amiodarone, lidocaine (antiarrhythmic), calcium, bicarbonate, magnesium, ketamine, etomidate, midazolam, morphine, pethidine, dexmedetomidine and thiopental in v1. Of these, ketamine, midazolam and dexmedetomidine are candidates for Ce models in a later release. **Infusions** use a first-order approach to the steady-state effect with τ_on/τ_off from each row below.
 
 ### 6.2 Vasoactive dose–response (infusions: `E = Emax·C^n/(C^n + EC50^n)` on each multiplier; `n` = 1 unless stated)
 
@@ -759,7 +759,7 @@ Brief §4.9's nine checks stay: phenylephrine 100 µg, ATLS I–IV, propofol ind
 
 ---
 
-## 8. Device modules (R28; sub-stage 7h, v1.1): summary rows only
+## 8. Device modules (R28; sub-stage 7h, a later release): summary rows only
 
 These rows are for framing, not a full specification. Every device reads the §2 circulation, and its waveform signatures come out of that model rather than being drawn by hand. **Q64.**
 
@@ -869,7 +869,7 @@ These rows are for framing, not a full specification. Every device reads the §2
 **Brain, kidney, liver, metabolism (§5–5e)**
 37. CSF buffering τ 5 min for slow masses [ENG]: plausible?
 38. CO2 reactivity 3 %/mmHg (OpenAnesthesia says ~4 %). Which do you teach?
-39. ICP waveform P2/P1 ratios (0.8 → 1.0 at ICP 20 → 1.3–1.5 exhausted) and Lundberg waves: wanted in v1, or v1.1?
+39. ICP waveform P2/P1 ratios (0.8 → 1.0 at ICP 20 → 1.3–1.5 exhausted) and Lundberg waves: wanted in v1, or in a later release?
 40. KDIGO oliguria needs 6 h. Scenarios need time compression (e.g. a 30 min low-UOP window counts as "oliguria" in teaching mode). Acceptable?
 41. Lactate clearance t½ 30 min (derived) and anaerobic yield (30 min at 2 mL/kg/min O2 deficit → +3–5 mmol/L) are [ENG]. Do they match your ICU experience of how fast lactate rises in shock and falls after resuscitation?
 42. Critical DO2 6 mL/kg/min (literature 4.9–8.2). Should it depend on anaesthesia and temperature?
@@ -897,8 +897,8 @@ These rows are for framing, not a full specification. Every device reads the §2
 62. Propofol haemodynamic Ce50 3.5 µg/mL is fitted so 2 mg/kg gives MAP ~70 % at 2 min. Should an elderly/ASA 3 profile fall further (to 55–60 %)?
 
 **Scenarios and devices (§7–8)**
-63. ★ Of scenarios 10–25, which six must pass for v1.0? The rest become v1.1 regression tests.
-64. Devices: which of IABP, LVAD, ECMO (VA/VV), ICD do your trainees meet? That sets the v1.1 order (R28 proposes IABP and LVAD first). Should LVAD show a specific pump (HeartMate 3-like)?
+63. ★ Of scenarios 10–25, which six must pass for v1.0? The rest become regression tests in a later release.
+64. Devices: which of IABP, LVAD, ECMO (VA/VV), ICD do your trainees meet? That sets their order in a later release (R28 proposes IABP and LVAD first). Should LVAD show a specific pump (HeartMate 3-like)?
 
 
 ---
