@@ -21,6 +21,10 @@ const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frame
 // in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
 const RESP_MIN_SPAN = 0.5;
 const EVENT_POST_MS = 250; // post the clock anchor at least this often even without events
+/** FX-15: a frame gap longer than this is a stall (a suspended tab or worker), not a slow frame — frames post every
+ *  ≤ 250 ms. It is credited in full like a hidden stretch (catchUp) instead of being clamped to 250 ms, so the hidden
+ *  minutes are not lost when the worker's rAF wakes before the page's visibility catch-up. [ENG] */
+export const STALL_MS = 1000;
 /** Auto gain (RR-2) [ENG]: every 2 s the last 4 s of the lead should fill ≤ 60 % of the lane height. */
 export const AUTO_GAIN_EVERY_S = 2;
 export const AUTO_GAIN_WINDOW_S = 4;
@@ -202,6 +206,7 @@ export class MonitorCore {
   /** One animation frame. `epochMs` = performance.timeOrigin + frame timestamp (ms). */
   frame(epochMs: number): void {
     if (this.ffWasPaused !== null) return; // A fast-forward runs the clock; nothing is drawn until it ends
+    if (this.lastEpoch !== null && epochMs - this.lastEpoch > STALL_MS) this.catchUp(epochMs); // A stall: no clamp
     if (this.fps === 30 && this.parity++ % 2 === 1) return; // 30 fps mode: skip every other frame
     const dt = this.lastEpoch === null ? 0 : epochMs - this.lastEpoch;
     this.lastEpoch = epochMs;
