@@ -10,6 +10,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
 ### Fixed
 
 - FX-19: the NIBP "next m:ss" countdown could read 'next 3:60' just after a cuff deflation.
+- FX-14 / FX-15: when the instructor's tab was hidden, Safari suspended it after about 4 minutes; the phones then said
+  "The instructor's monitor is not answering", and on return the hidden minutes were lost (the engine worker's first
+  frame clamped the gap to 250 ms before the page's catch-up ran). The instructor's page now pauses the session while its
+  tab is hidden (the Pause button's own command, so phones show "(paused)") and resumes it on return with a toast
+  "Paused while this tab was hidden (m:ss)". A session the instructor paused stays paused; a reload or a closed tab
+  sends no pause; learner pages are unchanged. The policy is one switch, `HIDDEN_TAB_POLICY` in
+  `apps/demo/src/app/hidden-tab.ts` (`'pause'` by default; `'continue'` keeps the old behaviour), pending the owner's
+  question E82. The monitor's clock also credits a frame gap over 1 s (`STALL_MS`) in full, as a hidden stretch,
+  instead of clamping it to 250 ms.
 
 ## [1.0.0-rc.2] - 2026-10-20
 
