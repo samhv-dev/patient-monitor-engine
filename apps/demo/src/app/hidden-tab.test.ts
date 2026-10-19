@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { HIDDEN_TAB_POLICY, hiddenFor, hiddenTabAction, watchHiddenTab, type HiddenTabPolicy } from './hidden-tab.ts';
 
 /** A page whose visibility the test sets, and a session that takes the pause/resume commands it is sent. */
-function page(o: { role?: 'host' | 'follower'; policy?: HiddenTabPolicy; paused?: boolean } = {}) {
+function page(o: { role?: 'host' | 'follower'; policy?: HiddenTabPolicy; paused?: boolean; fastForwarding?: boolean } = {}) {
   const doc = Object.assign(new EventTarget(), { visibilityState: 'visible' as DocumentVisibilityState, defaultView: new EventTarget() });
-  const s = { paused: o.paused ?? false, sent: [] as string[], toasts: [] as string[], t: 0 };
+  const s = { paused: o.paused ?? false, ff: o.fastForwarding ?? false, sent: [] as string[], toasts: [] as string[], t: 0 };
   watchHiddenTab(doc as unknown as Document, {
     role: o.role ?? 'host',
     ...(o.policy ? { policy: o.policy } : {}),
-    paused: () => s.paused,
+    paused: () => s.paused || s.ff, // as main.ts: a fast-forward refuses every command, the pause included
     send: (a) => (s.sent.push(a), (s.paused = a === 'pause')),
     notify: (text) => s.toasts.push(text),
     now: () => s.t,
@@ -72,6 +72,15 @@ describe('pause while the instructor tab is hidden (FX-14/15, E82)', () => {
     show('visible', 100);
     show('hidden', 200);
     expect(s.sent).toEqual(['pause']);
+  });
+
+  it('hidden during a fast-forward: no pause sent (the host would refuse it), no resume and no toast on return', () => {
+    const { s, show } = page({ fastForwarding: true });
+    show('hidden', 0);
+    s.ff = false; // the fast-forward ends while the tab is hidden
+    show('visible', 60_000);
+    expect(s.sent).toEqual([]);
+    expect(s.toasts).toEqual([]);
   });
 
   it('a follower page and the "continue" policy do nothing', () => {

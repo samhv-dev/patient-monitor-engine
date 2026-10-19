@@ -6,7 +6,8 @@
 // session the instructor had paused stays paused. Only the instructor's page does this (main.ts mounts it there alone).
 
 /** Owner question E82: pause or continue while the instructor's tab is hidden. Unanswered: pause (the diagnosis's
- *  recommendation). 'continue' is the behaviour before rc.3 (nothing happens on hide). */
+ *  recommendation). 'continue' does nothing on hide; the clock then credits the hidden span in full on return
+ *  (STALL_MS in the renderer), as a jump without a fast-forward banner. */
 export type HiddenTabPolicy = 'pause' | 'continue';
 export const HIDDEN_TAB_POLICY: HiddenTabPolicy = 'pause';
 

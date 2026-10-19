@@ -118,8 +118,9 @@ if (follow) {
   shell.add(debriefView(session, link));
   mountSessionBar(shell.bar, link);
   // FX-14/15: a hidden instructor tab pauses the session through the Pause button's own command, so the phones show
-  // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch)
-  watchHiddenTab(document, { role: 'host', paused: () => session.paused, send: (action) => void link.send({ type: 'time', action }), notify: toast });
+  // "(paused)" instead of "not answering", and resumes it on return (HIDDEN_TAB_POLICY, the owner's E82 switch). A
+  // fast-forward refuses every command, the pause included: a hide then sends nothing and claims nothing.
+  watchHiddenTab(document, { role: 'host', paused: () => session.paused || session.host.fastForwarding, send: (action) => void link.send({ type: 'time', action }), notify: toast });
   mountFastForward(shell.root, link.ctl, { simT: () => link.simT, font: () => session.monitor?.skin?.render.fontStack, latch: (a) => session.monitor?.latchAlarms(a) }); // Above every view
 
   // top-right: alarm count in the skin's colours (steady), sound, remote code
