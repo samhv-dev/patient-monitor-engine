@@ -130,7 +130,7 @@ const TRENDS4: TrendKey[] = ['hr', 'map', 'spo2', 'etco2']; // E56: the same fou
 /** At most this many key moments in the table; the rest are in the timeline. */
 const MOMENTS_MAX = 12;
 /** The fixed sentence under the key moments when a row is pulseless (E60; the owner's list, item 11). */
-const SPO2_DASH = 'SpO₂ –: no reliable oximeter reading without a pulse (during CPR the pleth is compression artefact).';
+const SPO2_DASH = 'SpO₂ –: no reliable saturation reading without a pulse; a pleth signal during CPR reflects compression flow, not oxygenation.';
 /** The learner handout's fixed text (E51; the owner's list, item 3: non-clinical, as drafted unless he changes it). */
 const HANDOUT = {
   intro: 'This sheet is yours to keep. It shows what happened and when; it does not mark you. The conversation, not this page, is the debrief.',
