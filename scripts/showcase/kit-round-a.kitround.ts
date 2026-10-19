@@ -1510,7 +1510,7 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
     const view = page.locator('[data-view=debrief]');
     await view.getByRole('heading', { level: 1, name: 'Debrief' }).waitFor({ timeout: 15_000 });
-    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 24 October');
+    await view.getByRole('textbox', { name: 'Run by' }).fill('Showcase 2, 28 October');
     await view.getByRole('textbox', { name: 'Notes' }).fill('Kit round Q2 rehearsal on the rc.2 release build.').catch(() => undefined);
     await page.emulateMedia({ media: 'print' });
     mkdirSync(OUTDIR, { recursive: true });
@@ -1614,8 +1614,10 @@ test('Q1 30-minute talk on the release build: opening, bronchospasm + H21, tampo
     if ((await page.getByRole('button', { name: 'Return here' }).count()) > 0) {
       // the bookmarks of earlier cases in this page stay in the list (Q1 finding): the MH bookmark is the LAST one
       fx.returnedTo = list.at(-1) ?? null;
-      await page.getByRole('button', { name: 'Return here' }).last().click();
-      await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click();
+      // Q2 (tag kit): the page-wide last "Return here" was a hidden one and the click waited for ever (both engines): click
+      // the Running-scenario list's last one, bounded, and record whether it was clicked
+      fx.returnClicked = await ret.last().getByRole('button', { name: 'Return here' }).click({ timeout: 5000 }).then(() => true, () => 'not clickable within 5 s');
+      if (fx.returnClicked === true) await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click({ timeout: 5000 }).catch(() => (fx.returnDialog = 'no Return dialog within 5 s'));
       await page.waitForTimeout(3000);
       await record(page); // the restart made a new engine: the recorder is re-attached to read the restored patient
       await page.waitForTimeout(4000);
