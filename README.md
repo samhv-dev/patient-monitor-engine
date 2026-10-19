@@ -3,7 +3,7 @@
 An open-source (MIT) **simulated patient monitor** for web-based teaching simulators: ACLS/BLS, operating-room and
 anaesthesia training, and the Hamilton-style ventilator simulator in this repository.
 
-**Status: release candidate `1.0.0-rc.1` — a pre-release, not a final v1.0. For education only: not a medical device
+**Status: release candidate `1.0.0-rc.2` — a pre-release, not a final v1.0. For education only: not a medical device
 and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 are in the
 [roadmap](docs/roadmap/README.md).
 
@@ -83,7 +83,7 @@ pm.on((e) => { if (e.type === 'alarm') console.log(e.id, e.priority); });
 `@pme/engine-core` alone runs headless (Node or a worker) through `createEngine`. Options, commands, events and the
 ventilator example are in the [embedding guide](docs/guides/embedding.md).
 
-**The ventilator with the monitor.** The release asset `ventilator-monitor-embed-v1.0.0-rc.1.zip` opens by double-click:
+**The ventilator with the monitor.** The release asset `ventilator-monitor-embed-v1.0.0-rc.2.zip` opens by double-click:
 the Hamilton-style ventilator on the left drives the monitor's physiology on the right.
 
 ![The ventilator simulator with the embedded monitor](docs/images/ventilator-embed.jpg)

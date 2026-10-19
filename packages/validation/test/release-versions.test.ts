@@ -30,4 +30,13 @@ describe('release versions', () => {
     expect(heading?.[1], 'CHANGELOG.md has a dated section for this version').toBeDefined();
     expect(/^date-released: "?(\d{4}-\d{2}-\d{2})"?$/m.exec(cff)?.[1]).toBe(heading?.[1]);
   });
+  it('README.md names the package version and no older release candidate', () => {
+    // The rc.2 tag shipped a README whose status line and embed-asset name still said rc.1 (found 2026-10-20).
+    const readme = readFileSync(resolve(pkgs, '..', 'README.md'), 'utf8');
+    const v = pkgVersion('renderer');
+    expect(readme, 'status line').toContain(`**Status: release candidate \`${v}\``);
+    expect(readme, 'embed asset name').toContain(`ventilator-monitor-embed-v${v}.zip`);
+    const stale = readme.match(/1\.0\.0-rc\.\d+/g)?.filter((s) => s !== v) ?? [];
+    expect(stale, 'older release-candidate versions in README.md').toEqual([]);
+  });
 });
