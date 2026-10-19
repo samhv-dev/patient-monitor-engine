@@ -3,9 +3,10 @@
   "browser": "chromium",
   "server": "perl (through the launcher)",
   "base": "http://127.0.0.1:8700",
+  "t0": 3.558283323542676,
   "steps": [
     {
-      "simT": 3.5,
+      "simT": 3.6,
       "what": "loaded \"Healthy induction\" at ×4",
       "state": "awake",
       "hr": null,
@@ -15,21 +16,21 @@
       "rr": null
     },
     {
-      "simT": 124.6,
+      "simT": 125.2,
       "what": "first case running 2 min",
       "state": "awake",
-      "hr": 71,
-      "art": "122.9/80.7 (94.7)",
+      "hr": 70,
+      "art": "122.3/80.1 (94.2)",
       "spo2": 99,
       "etco2": 38,
       "rr": 14,
-      "clock": "02:04"
+      "clock": "02:03"
     },
     {
       "simT": 5.8,
       "what": "second case loaded",
-      "state": "tamponade",
-      "hr": 71,
+      "state": "arrival",
+      "hr": 72,
       "art": "null/null (null)",
       "spo2": null,
       "etco2": null,
@@ -40,11 +41,11 @@
     {
       "simT": 37.9,
       "what": "8 s (wall) later",
-      "state": "tamponade",
+      "state": "arrival",
       "hr": 100,
-      "art": "111.2/90.5 (97.4)",
+      "art": "110.1/89.3 (96)",
       "spo2": 96,
-      "etco2": 35,
+      "etco2": 34,
       "rr": 14,
       "clock": "00:37"
     },
@@ -52,29 +53,51 @@
       "alarmsRaised": []
     }
   ],
+  "sheet": [
+    {
+      "clock": "0:00",
+      "monitor": "HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state awake",
+      "presenter": "loaded \"Healthy induction\" at ×4"
+    },
+    {
+      "clock": "2:01",
+      "monitor": "HR 70, ART 122/80 (94), SpO2 99, EtCO2 38, RR 14 · state awake",
+      "presenter": "first case running 2 min"
+    },
+    {
+      "clock": "0:02",
+      "monitor": "HR 72, ART –/– (–), SpO2 –, EtCO2 –, RR – · state arrival",
+      "presenter": "second case loaded"
+    },
+    {
+      "clock": "0:34",
+      "monitor": "HR 100, ART 110/89 (96), SpO2 96, EtCO2 34, RR 14 · state arrival",
+      "presenter": "8 s (wall) later"
+    }
+  ],
   "labels": {
-    "alarmButtonAtOpen": "Alarms off",
+    "alarmButtonAtOpen": "Limit alarms off",
     "tab": "Scenario",
-    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
     "toast": "Scenario loaded: Healthy induction",
     "speed": "×4 (session bar) → toast \"Speed ×4\"",
-    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nInduce now\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "alarmButtonAfterLoad": "Alarms off",
-    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 00:02 00:02 ×1 ×2 ×4 Pause Bookmark",
+    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nAirway not secured: SpO₂ below 90 %\nSpO₂ below 60 %: hypoxic bradycardia\nFirst diaphragmatic efforts: about 35 mL, too small for the capnogram\nHypoxic cardiac arrest\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nReturn of circulation\nBag-mask ventilation, FiO₂ 1.0\nRescued: intubated, FiO₂ 1.0\nIntubated and ventilated\nTime in state\n00:03\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nInduce now\nObjectives\nInduce after at least 180 s of preoxygenation\nIntubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)\nConfirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation\nAirway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)\nVentilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction 00:03 00:03 ×1 ×2 ×4 ×8 Pause 2 min 5 min Bookmark Debrief",
     "libraryDuringRun": "Scenario library | Back to the running case | All | Showcase",
     "backButton": "Back to the running case",
-    "second_alarmButtonAtOpen": "Alarms off",
+    "second_alarmButtonAtOpen": "Limit alarms off",
     "second_tab": "Scenario",
-    "second_showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "second_showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
     "second_confirm": "dialog \"Load this scenario?\" → Load scenario",
-    "second_toast": "Scenario loaded: Severe tamponade, then induction",
-    "finalRun": "Severe tamponade, then induction\nChoose another scenario\nA 58-year-old man after cardiac surgery with a severe pericardial collection. He is compensating — tachycardic, pressure just holding. Induction with propofol removes the compensation: expect PEA within minutes. Drain the pericardium to treat the cause.\nTamponade, compensating\nAfter induction: compensation lost\nAfter induction: compensation lost\nPericardium drained\nTime in state\n00:37\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nPropofol given: After induction: compensation lost\nYou press \"Give propofol 2 mg/kg\": After induction: compensation lost\nGive propofol 2 mg/kg\nObjectives\nRecognise tamponade physiology: low pressure, high CVP, tachycardia\nPredict the effect of a standard induction dose\nTreat PEA from tamponade: CPR and pericardial drainage\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "second_toast": "Scenario loaded: Stab wound: tamponade, PEA and pericardiocentesis",
+    "finalRun": "Stab wound: tamponade, PEA and pericardiocentesis\nChoose another scenario\nA 30-year-old man with a stab wound to the left chest. He arrives tachycardic, with a narrow pulse pressure and a raised CVP; blood is collecting in the pericardium. Without drainage he loses his pulse (PEA) about 8 minutes after arrival. CPR alone cannot bring him back; pericardiocentesis during good CPR brings the pulse back about a minute and a half later.\nArrival: tachycardic, narrow pulse pressure, raised CVP\nDeteriorating: systolic below 80\nPropofol 2 mg/kg given: compensation lost\nPEA: organised rhythm, no pulse; the pericardium holds about 370 mL\nPEA after propofol: organised rhythm, no pulse\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nCPR: pericardium drained, catheter left in\nCPR, drained: epinephrine 1 mg given\nReturn of circulation: ventilated, catheter in the pericardium\nPost-ROSC: 500 mL crystalloid running\nPost-ROSC: catheter aspirated\nPericardium drained before the arrest, catheter left in\nCatheter aspirated again\nTime in state\n00:37\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Pericardiocentesis\": Pericardium drained before the arrest, catheter left in\nPericardiocentesis\nYou press \"Induce for intubation: propofol 2 mg/kg\": Propofol 2 mg/kg given: compensation lost\nInduce for intubation: propofol 2 mg/kg\nART S < 80 mmHg for 5 s: Deteriorating: systolic below 80\nObjectives\nName the tamponade within 180 s of arrival from the monitor: tachycardia, narrow pulse pressure, CVP above 15 mmHg (instructor-assessed)\nStart CPR within 10 s of the pulse loss\nPericardiocentesis within 120 s of starting CPR\nStop CPR (“Pulse back”) within 30 s of the pulse returning on the arterial line and the capnogram\nBetter: pericardiocentesis before the pulse loss, while the systolic pressure is above 60 mmHg — then no PEA follows\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
       "what": "the clock restarts on the second load",
       "expected": "session-bar clock < 00:20 just after loading",
-      "observed": "02:04 → 00:04 (time in state 00:04)",
+      "observed": "02:03 → 00:04 (time in state 00:04)",
       "pass": true
     },
     {

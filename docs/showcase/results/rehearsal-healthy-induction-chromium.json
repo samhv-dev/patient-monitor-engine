@@ -3,9 +3,10 @@
   "browser": "chromium",
   "server": "perl (through the launcher)",
   "base": "http://127.0.0.1:8700",
+  "t0": 3.5626833236380433,
   "steps": [
     {
-      "simT": 3.5,
+      "simT": 3.6,
       "what": "loaded \"Healthy induction\" at ×4",
       "state": "awake",
       "hr": null,
@@ -15,118 +16,159 @@
       "rr": null
     },
     {
-      "simT": 33.8,
-      "what": "baseline (15–30 s after load)",
+      "simT": 184.3,
+      "what": "3 min of preoxygenation (FiO2 1.0 held until induction)",
       "state": "awake",
       "hr": 70,
-      "art": "122.9/81 (94.9)",
-      "spo2": 98,
+      "art": "122.6/80.5 (94.5)",
+      "spo2": 99,
       "etco2": 39,
-      "rr": 13,
+      "rr": 14,
       "baselineMap": 94.8
     },
     {
-      "simT": 37.2,
-      "what": "pressed \"Induce now\"",
+      "simT": 187.7,
+      "what": "press **Induce now**",
       "state": "induced",
-      "hr": 70,
-      "art": "122.3/80.1 (94.3)",
+      "hr": 69,
+      "art": "122/80.1 (94.1)",
       "spo2": 99,
       "etco2": 39,
-      "rr": 13
+      "rr": 14
     },
     {
-      "simT": 97.9,
+      "simT": 240.5,
       "what": "apnoea alarm",
       "state": "induced",
-      "hr": 75,
-      "art": "97.6/63.7 (74)",
-      "spo2": 99,
-      "etco2": 0,
-      "rr": 0,
-      "apnoeaAlarm": "CO2 APNEA",
-      "alarmButton": "Alarms off",
-      "co2Tile": "CO2 mmHg 0 FiCO2 0 awRR 0"
-    },
-    {
-      "simT": 154.5,
-      "what": "2 min after induction",
-      "state": "induced",
-      "hr": 77,
-      "art": "98.1/64.4 (74.7)",
-      "spo2": 99,
-      "etco2": 0,
-      "rr": 0
-    },
-    {
-      "simT": 157.9,
-      "what": "pressed \"Intubate and ventilate\"",
-      "state": "ventilated",
-      "hr": 77,
-      "art": "98.5/64.6 (75.2)",
-      "spo2": 99,
-      "etco2": 0,
-      "rr": 4
-    },
-    {
-      "simT": 162,
-      "what": "EtCO2 back on the monitor CO2 tile",
-      "state": "ventilated",
       "hr": 78,
-      "art": "93/61.5 (71.1)",
+      "art": "101.8/67 (77.8)",
       "spo2": 99,
-      "etco2": 46,
-      "rr": 4,
-      "co2Tile": "CO2 mmHg 46 FiCO2 46 awRR 3"
+      "etco2": 0,
+      "rr": 10,
+      "apnoeaAlarm": "CO2 APNEA",
+      "co2Tile": "CO2 mmHg 0 FiCO2 0 awRR 14"
     },
     {
-      "simT": 275.1,
+      "simT": 278.3,
+      "what": "press **Intubate and ventilate**",
+      "state": "ventilated",
+      "hr": 77,
+      "art": "97.8/64.3 (74.6)",
+      "spo2": 99,
+      "etco2": 0,
+      "rr": 5
+    },
+    {
+      "simT": 280.4,
+      "what": "EtCO2 back on the CO2 tile",
+      "state": "ventilated",
+      "hr": 79,
+      "art": "95.7/63.8 (73.5)",
+      "spo2": 99,
+      "etco2": 44,
+      "rr": 5,
+      "co2Tile": "CO2 mmHg 44 FiCO2 44 awRR 4"
+    },
+    {
+      "simT": 424.6,
       "what": "4 min after induction",
       "state": "ventilated",
-      "hr": 75,
-      "art": "94.4/61.4 (71.4)",
+      "hr": 74,
+      "art": "94.6/61.4 (71.5)",
       "spo2": 99,
-      "etco2": 38,
+      "etco2": 37,
       "rr": 12,
-      "mapNadir": 65.7
+      "mapNadir": 64.8
+    },
+    {
+      "simT": 483.6,
+      "what": "end (8:00)",
+      "state": "ventilated",
+      "hr": 74,
+      "art": "97.1/63.5 (73.7)",
+      "spo2": 99,
+      "etco2": 37,
+      "rr": 12
     },
     {
       "alarmsRaised": [
-        "96.6 s CO2 APNEA"
+        "236.7 s CO2 APNEA"
       ]
     }
   ],
+  "sheet": [
+    {
+      "clock": "0:00",
+      "monitor": "HR –, ART –/– (–), SpO2 –, EtCO2 –, RR – · state awake",
+      "presenter": "loaded \"Healthy induction\" at ×4"
+    },
+    {
+      "clock": "3:00",
+      "monitor": "HR 70, ART 123/80 (95), SpO2 99, EtCO2 39, RR 14 · state awake",
+      "presenter": "3 min of preoxygenation (FiO2 1.0 held until induction)"
+    },
+    {
+      "clock": "3:04",
+      "monitor": "HR 69, ART 122/80 (94), SpO2 99, EtCO2 39, RR 14 · state induced",
+      "presenter": "press **Induce now**"
+    },
+    {
+      "clock": "3:56",
+      "monitor": "HR 78, ART 102/67 (78), SpO2 99, EtCO2 0, RR 10 · state induced",
+      "presenter": "apnoea alarm"
+    },
+    {
+      "clock": "4:34",
+      "monitor": "HR 77, ART 98/64 (75), SpO2 99, EtCO2 0, RR 5 · state ventilated",
+      "presenter": "press **Intubate and ventilate**"
+    },
+    {
+      "clock": "4:36",
+      "monitor": "HR 79, ART 96/64 (73), SpO2 99, EtCO2 44, RR 5 · state ventilated",
+      "presenter": "EtCO2 back on the CO2 tile"
+    },
+    {
+      "clock": "7:01",
+      "monitor": "HR 74, ART 95/61 (72), SpO2 99, EtCO2 37, RR 12 · state ventilated",
+      "presenter": "4 min after induction"
+    },
+    {
+      "clock": "8:00",
+      "monitor": "HR 74, ART 97/63 (74), SpO2 99, EtCO2 37, RR 12 · state ventilated",
+      "presenter": "end (8:00)"
+    }
+  ],
   "labels": {
-    "alarmButtonAtOpen": "Alarms off",
+    "alarmButtonAtOpen": "Limit alarms off",
     "tab": "Scenario",
-    "showcaseCards": "Anaphylaxis under anaesthesia | Class IV haemorrhage, PEA and resuscitation | Healthy induction | Severe bronchospasm on the ventilator | Severe tamponade, then induction",
+    "showcaseCards": "Healthy induction | Induction after fentanyl and midazolam | Anaphylaxis under anaesthesia | Malignant hyperthermia | Stab wound: tamponade, PEA and pericardiocentesis | Class IV haemorrhage, PEA and resuscitation",
     "toast": "Scenario loaded: Healthy induction",
     "speed": "×4 (session bar) → toast \"Speed ×4\"",
-    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nInduce now\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "alarmButtonAfterLoad": "Alarms off",
-    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenated 00:01 00:01 ×1 ×2 ×4 Pause Bookmark",
+    "running": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nAirway not secured: SpO₂ below 90 %\nSpO₂ below 60 %: hypoxic bradycardia\nFirst diaphragmatic efforts: about 35 mL, too small for the capnogram\nHypoxic cardiac arrest\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nReturn of circulation\nBag-mask ventilation, FiO₂ 1.0\nRescued: intubated, FiO₂ 1.0\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Induce now\": Induced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nInduce now\nObjectives\nInduce after at least 180 s of preoxygenation\nIntubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)\nConfirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation\nAirway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)\nVentilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "alarmButtonAfterLoad": "Limit alarms off",
+    "sessionBar": "M 40 y 75 kg MODELED Healthy induction: Awake, preoxygenating: FiO₂ 1.0 by face mask until induction 00:02 00:02 ×1 ×2 ×4 ×8 Pause 2 min 5 min Bookmark Debrief",
     "co2TileAwake": "CO2 mmHg 39 FiCO2 0 awRR 13",
-    "afterInduce": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Intubate and ventilate\": Intubated and ventilated\nIntubate and ventilate\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "afterIntubate": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)",
-    "finalRun": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery. Induce with propofol and rocuronium, watch the pressure fall and the breathing stop, then intubate and ventilate.\nAwake, preoxygenated\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg\nIntubated and ventilated\nTime in state\n01:58\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nAnticipate the fall in arterial pressure after propofol\nRecognise apnoea and falling SpO₂ before intubation\nConfirm ventilation with the capnogram\nBookmarks\nNo bookmarks yet (Shift+B)"
+    "after Induce now": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nAirway not secured: SpO₂ below 90 %\nSpO₂ below 60 %: hypoxic bradycardia\nFirst diaphragmatic efforts: about 35 mL, too small for the capnogram\nHypoxic cardiac arrest\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nReturn of circulation\nBag-mask ventilation, FiO₂ 1.0\nRescued: intubated, FiO₂ 1.0\nIntubated and ventilated\nTime in state\n00:02\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nYou press \"Intubate and ventilate\": Intubated and ventilated\nIntubate and ventilate\nYou press \"Bag-mask ventilate, FiO₂ 1.0\": Bag-mask ventilation, FiO₂ 1.0\nBag-mask ventilate, FiO₂ 1.0\nSpO₂ < 90 %: Airway not secured: SpO₂ below 90 %\nObjectives\nInduce after at least 180 s of preoxygenation\nIntubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)\nConfirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation\nAirway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)\nVentilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "after Intubate and ventilate": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nAirway not secured: SpO₂ below 90 %\nSpO₂ below 60 %: hypoxic bradycardia\nFirst diaphragmatic efforts: about 35 mL, too small for the capnogram\nHypoxic cardiac arrest\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nReturn of circulation\nBag-mask ventilation, FiO₂ 1.0\nRescued: intubated, FiO₂ 1.0\nIntubated and ventilated\nTime in state\n00:01\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nInduce after at least 180 s of preoxygenation\nIntubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)\nConfirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation\nAirway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)\nVentilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)\nBookmarks\nNo bookmarks yet (Shift+B)",
+    "finalRun": "Healthy induction\nChoose another scenario\nA fit 40-year-old man for elective surgery, preoxygenated with FiO₂ 1.0 by face mask: the oxygen stays on until you press “Induce now” (at 3:00 or later) and the mask comes off once the breathing has stopped. Watch the pressure fall after propofol and rocuronium and the breathing stop, then secure the airway. If nobody does, the case runs on: SpO₂ below 90 % about 8 minutes after induction, hypoxic bradycardia a minute later, the first tiny diaphragmatic efforts at about 15 minutes, too small to ventilate, and asystole at about 20 minutes. Ventilate at any point before the arrest to rescue him: asystole after prolonged hypoxia is rarely recoverable; ventilate before this point.\nAwake, preoxygenating: FiO₂ 1.0 by face mask until induction\nInduced: propofol 2 mg/kg, rocuronium 0.6 mg/kg — airway not yet secured\nAirway not secured: SpO₂ below 90 %\nSpO₂ below 60 %: hypoxic bradycardia\nFirst diaphragmatic efforts: about 35 mL, too small for the capnogram\nHypoxic cardiac arrest\nCPR, ventilated with FiO₂ 1.0\nCPR: epinephrine 1 mg given\nCPR: epinephrine 1 mg repeated\nReturn of circulation\nBag-mask ventilation, FiO₂ 1.0\nRescued: intubated, FiO₂ 1.0\nIntubated and ventilated\nTime in state\n03:27\nHold the timer\nBookmark\nLearner controls on the monitor\nCharge, shock, CPR and drugs as buttons under the learner monitor, logged as learner actions.\nWhat happens next\nObjectives\nInduce after at least 180 s of preoxygenation\nIntubate and ventilate within 90 s of the CO₂ apnoea alarm (it sounds about 55 s after induction)\nConfirm the tube: EtCO₂ above 25 mmHg within 30 s of intubation\nAirway not secured: ventilate (bag-mask or tube) within 60 s of SpO₂ falling below 90 % (about 8 minutes after induction)\nVentilate within 300 s of SpO₂ falling below 60 % (the pulse is lost about 10½ minutes after it)\nBookmarks\nNo bookmarks yet (Shift+B)"
   },
   "checks": [
     {
       "what": "apnoea alarm after \"Induce now\"",
-      "expected": "within 70 s sim",
-      "observed": "62.5 s \"CO2 APNEA\"",
+      "expected": "within 75 s sim",
+      "observed": "55.8 s \"CO2 APNEA\"",
       "pass": true
     },
     {
-      "what": "EtCO2 number on the Saadat CO2 tile after \"Intubate and ventilate\"",
-      "expected": "> 25 mmHg",
-      "observed": "46 after 7.3 s",
+      "what": "EtCO2 on the CO2 tile after \"Intubate and ventilate\"",
+      "expected": "> 25 mmHg within 90 s",
+      "observed": "5.3 s",
       "pass": true
     },
     {
       "what": "arterial mean falls after induction",
       "expected": "≥ 10 mmHg below baseline",
-      "observed": "94.8 → nadir 65.7",
+      "observed": "94.8 → nadir 64.8",
       "pass": true
     },
     {
