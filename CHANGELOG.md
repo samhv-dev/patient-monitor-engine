@@ -7,6 +7,11 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Added
+
+- Optional skin keys (`pme-skin/1`; a skin without them draws as before): `co2.fill`, `co2.displaySmoothMs`,
+  `ibp.scaleLineColor` and `layout.laneText`. `ibp.scaleLines` is now drawn. See `packages/skins/CONTRACT.md`.
+
 ### Changed
 
 - FX-23 (the owner's review of the fast-forward on rc.2): during a fast-forward the panel shows the double chevron inside
@@ -15,6 +20,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   reader still hears them). After it, the banner is about 25 % larger (text and padding, same place) and reads on three
   lines: "Fast-forwarded 5 min", "00:08 → 05:08", and the alarms during it with their times or "No alarms"; the
   wording lives in one function, `fastForwardDoneLines` in `apps/demo/src/app/fast-forward.ts`.
+- Saadat-like: the area under the capnogram is filled yellow, as on the real unit.
+- Saadat-like: the small heartbeat ripple on the capnogram's plateau is drawn softer and fainter (about half its
+  height), as the owner asked. Only the drawing changes: the CO2 signal and the EtCO2 number are the same.
+- Saadat-like: the IBP lanes have dotted lines at their upper, middle and lower scale values, and print the middle value.
+- Saadat-like: the lane text is white; wave labels and the sweep speed of every lane sit at the right of the lane; the
+  CO2 scale reads "50mmHg"; the second ECG lane has no label while it shows the same lead as the first.
+- Saadat-like: the IBP lanes sweep at 25 mm/s (was 12.5), as in the owner's photo.
+- Saadat-like: the colours are those of the owner-approved mock-up of the photo (greener ECG, purer yellow CO2, lighter
+  pink IBP1, brighter blue IBP2, violet SpO2 and pleth, slightly blue-white text).
 
 ### Fixed
 
