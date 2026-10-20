@@ -38,7 +38,7 @@ describe('saadat-like lane text', () => {
     const fg = resolveSkin('saadat-like').render.foreground;
     expect(plan.laneText).toEqual({ color: fg });
     for (const t of ['II  X1  NORMAL', '25 mm/s', '200', 'IBP', 'X1']) expect(fillTexts(ctx, t).every((c) => c.color === fg)).toBe(true);
-    expect(fillTexts(ctx, 'NORMAL')[0]!.color).toBe('#F0F030');
+    expect(fillTexts(ctx, 'NORMAL')[0]!.color).toBe('#ECE84A');
   });
 
   it('the second ECG lane has no label and no speed (as photographed) until its lead differs from the first', () => {

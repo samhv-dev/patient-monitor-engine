@@ -7,10 +7,10 @@ describe('renderPlan', () => {
   it('saadat-like (research/34 T3, IMG_8113): two ECG II auto-gain, resp at 6 mm/s, IBP1 → abp (ART scale 40–200), IBP2 → cvp, pleth last; 4 px gap; NORMAL filter', () => {
     const p = renderPlan(resolveSkin('saadat-like'));
     expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['RESP', 'resp'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
-    expect(p.lanes[0]).toMatchObject({ autoGain: true, color: '#00F000', mmPerS: 25 });
-    expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#00F000', mmPerS: 25 });
+    expect(p.lanes[0]).toMatchObject({ autoGain: true, color: '#22F046', mmPerS: 25 });
+    expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#22F046', mmPerS: 25 });
     expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 25 }); // IMG_8113: "25 mm/s" on both IBP lanes (D6)
-    expect(p.lanes[4]).toMatchObject({ color: '#6C9CF8', range: [-10, 30] }); // T4 mid blue
+    expect(p.lanes[4]).toMatchObject({ color: '#5C9CFF', range: [-10, 30] }); // T4 mid blue
     // research/34 row 11: dotted lines at the upper, middle and lower scale values, the middle value printed
     expect(p.lanes[3]).toMatchObject({ scaleLines: [200, 120, 40], scaleMid: 120 });
     expect(p.lanes[4]).toMatchObject({ scaleLines: [30, 10, -10], scaleMid: 10 });
@@ -30,7 +30,7 @@ describe('renderPlan', () => {
     const p = renderPlan(resolveSkin('saadat-like', { sensors: { co2: true } }));
     expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['CO2', 'co2'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
     // research/34 T1/T2: 6 mm/s on a 0–50 mmHg scale, as photographed ("6 mm/s", "50mmHg"); EtCO2 above 50 clips (E63)
-    expect(p.lanes[2]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 6, range: [0, 50] });
+    expect(p.lanes[2]).toMatchObject({ label: 'CO2', color: '#F0F000', mmPerS: 6, range: [0, 50] });
     expect(p.lanes[2]).toMatchObject({ fill: true }); // research/34 row 2: the capnogram is filled
     expect(p.lanes.filter((l) => l.id !== 'CO2').every((l) => l.fill === false)).toBe(true);
     // owner correction M2: the drawn capnogram is smoothed over 320 ms (display only); every other lane is not
