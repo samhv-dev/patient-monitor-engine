@@ -1,7 +1,7 @@
 // A recording stand-in for CanvasRenderingContext2D (tests run in Node without a canvas).
 import type { Ctx2D } from '../src/ctx.ts';
 
-export type Call = { op: string; args: number[]; style?: string; clip?: number[][] | null };
+export type Call = { op: string; args: number[]; style?: string; clip?: number[][] | null; color?: string };
 
 export class FakeCtx implements Ctx2D {
   fillStyle: string | CanvasGradient | CanvasPattern = '#000';
@@ -30,9 +30,12 @@ export class FakeCtx implements Ctx2D {
   stroke(): void {
     this.calls.push({ op: 'stroke', args: [], style: String(this.strokeStyle), clip: this.clipRect });
   }
+  fill(): void {
+    this.calls.push({ op: 'fill', args: [], style: String(this.fillStyle), clip: this.clipRect });
+  }
   fillText(text: string, x: number, y: number): void {
     this.texts.push(text);
-    this.calls.push({ op: 'fillText', args: [x, y], style: `${this.textAlign}:${text}` });
+    this.calls.push({ op: 'fillText', args: [x, y], style: `${this.textAlign}:${text}`, color: String(this.fillStyle) });
   }
   setTransform(): void {}
   /** Active clip: a union of rectangles [x, y, w, h] (null = whole canvas); tracked through save/restore. */

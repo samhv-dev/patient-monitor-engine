@@ -61,6 +61,18 @@ tiles. A skin without the rule resolves byte-identically either way (test `senso
 so `iran-icu-as-found`) declares `co2: RESP → CO2` and `RR → CO2 (IMCO2, AWRR)` (research/06 §3.1 F6, §5). The
 renderer's `mountMonitor` starts from the engine's `patient.sensors.co2` and follows every accepted `attachSensor co2`.
 
+## Lanes as on the real unit (rc.3, PR-L; every key optional)
+
+A skin without these keys draws exactly as before. Only `saadat-like` (and so `iran-icu-as-found`) sets them.
+
+| Skin key | Renderer | Notes |
+|---|---|---|
+| `co2.fill?: boolean` | `PlanLane.fill` → `LaneConfig.fill` (`sweep-lane.ts` `fillWrapped`) | the area under the capnogram down to the 0 line, in the CO2 colour, drawn under the line |
+| `co2.displaySmoothMs?: number` (0–500) | `PlanLane.smoothMs` → `LaneConfig.smoothN` (+ `smoothGate`, `monitor-core.ts` `SMOOTH_GATE_MMHG`) | a moving average of the DRAWN capnogram only, applied where the window's range is under 1.5–3 mmHg (the cardiogenic ripple), so an upstroke or a curare cleft is drawn as it is; the engine signal and EtCO2 are unchanged |
+| `ibp.scaleLines` | `PlanLane.scaleLines`/`scaleMid` → `LaneConfig.hLines` | now read: `'dotted-upper-mid-lower'` draws dotted lines at the IBP scale's three values and prints the middle value; `'none'` as before |
+| `ibp.scaleLineColor?: Hex` | `RenderPlan.scaleLineColor` | the dots' colour (absent = the lane colour); themes darken it like `colors` |
+| `layout.laneText?: { labels?: { <lane>: { text, color?, sub? } } }` | `RenderPlan.laneText`, `PlanLane.rightLabel`/`scaleSuffix` (`monitor-core.ts` `drawChrome`, `repaintRightTexts`) | its presence draws the lane text in the foreground colour, each wave label and every sweep speed at the right of its lane (repainted as the erase bar passes), the CO2 scale with its unit ("50mmHg"), and no label or speed on an ECG lane that repeats an earlier lane's lead. `labels` overrides a label's text and colour (themes darken it) and adds a second line `sub`. Pages that name their lanes keep the old chrome |
+
 ## Alarm visuals (data only in 4a)
 
 `r.skin.alarms.lamp` (`L1..L3` style plus `flashHz` and `duty`), `messageBar` (`bg`/`fg` per level, idle, acknowledged,

@@ -32,6 +32,22 @@ export interface LaneConfig {
   grid?: { minorMm: number; majorMm: number; minor: string; major: string } | null;
   /** A 1-px line at the leading edge of the erase gap (request RR-3; every shipped skin says false). */
   cursorLine?: boolean;
+  /** Fill the area between the trace and the lane's zero line in the trace colour (skin `co2.fill`; research/34 row 2). */
+  fill?: boolean;
+  /**
+   * Display-side moving average over this many samples (0 or 1 = off): each drawn sample is the mean of itself and
+   * the `smoothN − 1` before it. Only what is drawn changes, never the engine signal (owner correction M2).
+   */
+  smoothN?: number;
+  /**
+   * With `smoothN`: the window's range (max − min, signal units) below which the average is drawn in full, and above
+   * which the sample is drawn as it is, blended linearly in between. So only small fluctuations (the cardiogenic ripple)
+   * are smoothed, and an upstroke or a curare cleft keeps its shape. Absent: always the average.
+   */
+  smoothGate?: readonly [number, number];
+  /** Dotted horizontal scale lines at these values (signal units), repainted wherever the lane is cleared (skin
+   *  `ibp.scaleLines`; research/34 row 11). */
+  hLines?: { values: readonly number[]; color: string } | null;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -43,6 +59,9 @@ type Rect = [number, number, number, number]; // canvas CSS px
 /** The backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would start at the
  * oldest sample instead of the one asked for [ENG margin]. */
 const BACKFILL_MAX_S = 100;
+/** Dotted scale lines: a 1.4 px dot every 14 px, as the approved mock-up draws them (NOTES.md; IMG_8113). */
+const DOT_PITCH_PX = 14;
+const DOT_PX = 1.4;
 
 export class SweepLane {
   cfg: LaneConfig;
@@ -52,6 +71,7 @@ export class SweepLane {
   private lastCol = -1;
   private tail: Pt[] = [];
   private scratch = new Float32Array(4096);
+  private smoothed = new Float32Array(4096);
   private cols: Column[] = [];
 
   constructor(cfg: LaneConfig, dpr: number) {
@@ -66,12 +86,20 @@ export class SweepLane {
   /** Forget drawn history (after resize, calibration change, or a big time jump). */
   reset(ctx: Ctx2D, dpr: number = this.dpr): void {
     this.dpr = dpr;
+    this.resets++;
     this.lastIndex = -1;
     this.lastCol = -1;
     this.tail = [];
     ctx.fillStyle = this.cfg.background;
     ctx.fillRect(this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height);
     this.paintGrid(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
+    this.paintHLines(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
+  }
+
+  private resets = 0;
+  /** Counts the times the lane was cleared whole, so text drawn over it knows to come back. */
+  get generation(): number {
+    return this.resets;
   }
 
   /** Absolute index of the last sample drawn (-1 after a reset). */
@@ -105,6 +133,29 @@ export class SweepLane {
         ctx.lineTo(r[0] + r[2], c.y + k * step);
       }
       ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /**
+   * Paint the dotted scale lines inside one cleared rect. The dots are anchored to the lane's left edge (they do not
+   * crawl) and snapped to device pixels; a line on the lane's bottom edge is drawn one dot inside it (review L-1).
+   */
+  private paintHLines(ctx: Ctx2D, r: Rect): void {
+    const h = this.cfg.hLines;
+    if (!h || r[2] <= 0) return;
+    const c = this.cfg;
+    const s = Math.max(1, Math.round(DOT_PX * this.dpr)) / this.dpr;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(...r);
+    ctx.clip();
+    ctx.fillStyle = h.color;
+    for (const v of h.values) {
+      const y = Math.min(c.y + c.height - s, Math.max(c.y, Math.round(this.yOf(v) * this.dpr) / this.dpr));
+      for (let k = Math.max(0, Math.ceil((r[0] - c.x - s) / DOT_PITCH_PX)); c.x + k * DOT_PITCH_PX < Math.min(r[0] + r[2], c.x + c.width); k++) {
+        ctx.fillRect(c.x + k * DOT_PITCH_PX, y, s, s);
+      }
     }
     ctx.restore();
   }
@@ -149,6 +200,7 @@ export class SweepLane {
       ctx.fillStyle = c.background;
       ctx.fillRect(...r);
       this.paintGrid(ctx, r);
+      this.paintHLines(ctx, r);
       rects.push(r);
       a = end;
     }
@@ -169,11 +221,14 @@ export class SweepLane {
       this.lastIndex = Math.max(-1, endIdx - 1 - back);
     }
     if (endIdx <= this.lastIndex) return cursor;
-    const need = endIdx - this.lastIndex;
+    const sn = Math.max(1, Math.floor(c.smoothN ?? 1));
+    const pre = Math.min(sn - 1, this.lastIndex + 1); // samples before the new ones that the average needs
+    const need = endIdx - this.lastIndex + pre;
     if (this.scratch.length < need) this.scratch = new Float32Array(need * 2);
-    const out = this.scratch.subarray(0, need);
-    const got = read(this.lastIndex + 1, out);
+    let out: Float32Array = this.scratch.subarray(0, need);
+    const got = read(this.lastIndex + 1 - pre, out) - pre;
     if (got <= 0) return cursor;
+    if (sn > 1) out = this.smooth(out, pre, got, sn, c.smoothGate);
     const first = this.lastIndex + 1;
     const last = first + got - 1;
     const xFrom = this.lastCol >= 0 ? this.bandStart(this.lastCol) : this.xOf(first);
@@ -192,6 +247,7 @@ export class SweepLane {
       }
       pts.push({ x, y: this.yOf(col.last) });
     }
+    if (c.fill) this.fillWrapped(ctx, pts, band);
     this.strokeWrapped(ctx, pts, band);
     // Keep for re-stroking every point whose stroke (half the line width) reaches into the next band, plus one
     // point before them for the joining segment (the band clip hides everything outside it).
@@ -208,6 +264,68 @@ export class SweepLane {
       ctx.fillRect(c.x + ((this.xOf(last) + c.eraseGapPx - 1) % c.width), c.y, 1 / this.dpr, c.height);
     }
     return cursor;
+  }
+
+  /**
+   * The `got` samples after `pre` leading ones, each replaced by the mean of itself and up to `n − 1` before it; with a
+   * gate, by a blend of the mean and the sample by the window's range (LaneConfig.smoothGate).
+   */
+  private smooth(src: Float32Array, pre: number, got: number, n: number, gate?: readonly [number, number]): Float32Array {
+    if (this.smoothed.length < got) this.smoothed = new Float32Array(got * 2);
+    const dst = this.smoothed;
+    let sum = 0;
+    for (let k = 0; k < pre; k++) sum += src[k] as number;
+    for (let k = 0; k < got; k++) {
+      const i = pre + k;
+      const v = src[i] as number;
+      sum += v;
+      if (i >= n) sum -= src[i - n] as number;
+      const mean = sum / Math.min(n, i + 1);
+      let a = 1;
+      if (gate) {
+        let lo = v;
+        let hi = v;
+        for (let j = Math.max(0, i - n + 1); j < i; j++) {
+          const u = src[j] as number;
+          if (u < lo) lo = u;
+          if (u > hi) hi = u;
+        }
+        a = Math.min(1, Math.max(0, (gate[1] - (hi - lo)) / (gate[1] - gate[0])));
+      }
+      dst[k] = v + a * (mean - v);
+    }
+    return dst;
+  }
+
+  /**
+   * Fill under a polyline (unwrapped x) down to the lane's zero line, one polygon per lap, clipped to `band`. Drawn before
+   * the stroke so the line stays on top; the tail points are filled again with the band, so the joins have no gaps.
+   */
+  private fillWrapped(ctx: Ctx2D, pts: Pt[], band: readonly Rect[]): void {
+    const c = this.cfg;
+    if (pts.length < 2) return;
+    const base = Math.min(c.y + c.height, Math.max(c.y, c.y + c.baseline * c.height));
+    ctx.save();
+    ctx.beginPath();
+    for (const r of band) ctx.rect(...r);
+    ctx.clip();
+    ctx.fillStyle = c.color;
+    let i = 0;
+    while (i < pts.length) {
+      const lap = Math.floor((pts[i] as Pt).x / c.width);
+      const off = c.x - lap * c.width;
+      ctx.beginPath();
+      ctx.moveTo(off + (pts[i] as Pt).x, base);
+      let x = 0;
+      for (; i < pts.length && Math.floor((pts[i] as Pt).x / c.width) === lap; i++) {
+        const p = pts[i] as Pt;
+        x = off + p.x;
+        ctx.lineTo(x, p.y);
+      }
+      ctx.lineTo(x, base);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   /** Stroke a polyline given in unwrapped x, splitting it where it crosses the right edge, clipped to `band`. */

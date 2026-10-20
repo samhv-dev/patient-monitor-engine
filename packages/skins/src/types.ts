@@ -51,6 +51,12 @@ export interface TileSpec {
 }
 /** Sensors whose attachment can swap a lane and a tile (showcase hotfix item 4: the Saadat-style capnogram). */
 export const SWAP_SENSORS = ['co2'] as const;
+/** A right-hand lane label (layout.laneText.labels). */
+export interface LaneTextLabel {
+  text: string;
+  color?: string;
+  sub?: string;
+}
 export type SwapSensor = (typeof SWAP_SENSORS)[number];
 /**
  * What a sensor takes over while it is attached: `lanes` maps a lane to the lane drawn in its place (same position),
@@ -131,6 +137,12 @@ export interface Skin {
     badge?: string;
     /** Lanes and tiles a sensor takes over while it is attached (saadat-like: CO2 replaces RESP and RR). */
     whenAttached?: Partial<Record<SwapSensor, SensorSwap>>;
+    /**
+     * Lane text as on the real unit (optional): its presence draws the lane text in the foreground colour, the wave
+     * labels and the sweep speeds at the right of each lane, and the CO2 scale with its unit. `labels` overrides a
+     * lane's right-hand label (text, colour, and a second line `sub` in the foreground). Themes darken the colours.
+     */
+    laneText?: { labels?: Partial<Record<LaneId, LaneTextLabel>> };
   };
   pages: PageSpec[];
   defaultPage: string;
@@ -205,6 +217,8 @@ export interface Skin {
      * ('keep', Philips IFU [S2] p. 57) or with the mean only ('mean-only', Saadat, research/06 §4.1).
      */
     staticDisplay: 'keep' | 'mean-only';
+    /** Colour of the dotted scale lines (optional; absent = the lane colour). Themes darken it like `colors`. */
+    scaleLineColor?: string;
   };
   co2: {
     unit: 'mmHg' | 'kPa' | '%';
@@ -214,6 +228,10 @@ export interface Skin {
     sidestreamDelayS: number;
     /** Sidestream 10–90 % rise time (ms), adult; the engine keeps its own neonatal rise. */
     riseTimeMs: number;
+    /** Fill the area under the capnogram in the CO2 colour (optional; absent = an outline only). */
+    fill?: boolean;
+    /** Display-side smoothing (ms) of the DRAWN capnogram only; the engine signal and EtCO2 are unchanged (absent = 0). */
+    displaySmoothMs?: number;
   };
   alarms: {
     levels: 3;

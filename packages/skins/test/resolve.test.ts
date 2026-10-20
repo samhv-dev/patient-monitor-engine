@@ -20,13 +20,15 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
     expect(r.render.eraseGapPx).toBe(4);
     expect(r.render.lanes.map((l) => [l.lane, l.color, l.mmPerS])).toEqual([
       // research/34 Tuesday set (owner's photo IMG_8113): ECG, ECG, CO2/RESP, IBP1, IBP2 in mid blue (T4), pleth last (T3)
-      ['ECG1', '#00F000', 25], ['ECG2', '#00F000', 25], ['RESP', '#F0F030', 6], ['IBP1', '#E08080', 12.5], ['IBP2', '#6C9CF8', 12.5], ['PLETH', '#F000F0', 25],
+      ['ECG1', '#22F046', 25], ['ECG2', '#22F046', 25], ['RESP', '#F0F000', 6], ['IBP1', '#FF9A96', 25], ['IBP2', '#5C9CFF', 25], ['PLETH', '#D060FF', 25],
     ]);
     expect(r.render.lanes[0]).toMatchObject({ gainMmPerMv: 10, autoGain: true, label: 'II  X1  NORMAL' });
     expect(r.render.lanes[1]).toMatchObject({ autoGain: true, label: 'II  X1  NORMAL' }); // second lead not in the photo (E70): laneLeads[0] reused
     expect(r.render.ecgFilter).toEqual({ name: 'NORMAL', band: [0.5, 40], engineMode: 'monitor', exact: true });
     expect(r.render.hrMethod).toEqual({ skin: 'moving-average-seconds', engine: null });
-    expect(r.render.tileColors).toMatchObject({ HR: '#00F000', SpO2: '#F000F0', NIBP: '#F0F0F0', TEMP: '#00F0F0', RR: '#F0F030' });
+    expect(r.render.tileColors).toMatchObject({ HR: '#22F046', SpO2: '#DD44FF', NIBP: '#F0F0F0', TEMP: '#00F0F0', RR: '#F0F000' });
+    // the owner-approved mock-up's white-balanced colours (NOTES.md; review L-9: shipped with the lanes)
+    expect([r.render.foreground, r.skin.chrome.divider, r.skin.colors.PI, r.skin.colors.PR]).toEqual(['#E8F4F6', '#C6D7D8', '#DD44FF', '#DD44FF']);
     expect(r.audio.alarm).toMatchObject({ profile: 'saadat', volume: { min: 1, max: 7, default: 1 }, silence: { durationS: 120, cancelOnNewAlarm: true } });
     expect(r.audio.beep).toMatchObject({ enabled: true, pitchMap: 'none', source: 'HR_SOURCE' });
   });
@@ -43,7 +45,7 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
   it('resolving twice gives equal results and never mutates the registry', () => {
     expect(resolveSkin('saadat-like')).toEqual(resolveSkin('saadat-like'));
     resolveSkin('saadat-like').skin.colors.ECG = '#123456';
-    expect(resolveSkin('saadat-like').skin.colors.ECG).toBe('#00F000');
+    expect(resolveSkin('saadat-like').skin.colors.ECG).toBe('#22F046');
   });
 
   it('unknown ids throw', () => {

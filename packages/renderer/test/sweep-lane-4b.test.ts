@@ -1,6 +1,7 @@
 // RR-3 cursor line and RR-4 grid painter on the erase bar.
 import { describe, expect, it } from 'vitest';
 import { SweepLane, type LaneConfig } from '../src/sweep-lane.ts';
+import { scaleFor } from '../src/wave-lanes.ts';
 import { FakeCtx } from './fake-ctx.ts';
 
 const cfg = (extra: Partial<LaneConfig>): LaneConfig => ({
@@ -44,5 +45,127 @@ describe('SweepLane 4b options', () => {
     expect(bar[0]!.args[0]).toBeCloseTo(((150 / 500) * 100 + 16 - 1) % 400, 6);
     expect(bar[0]!.args[2]).toBe(1);
     expect(lane.lastDrawnIndex).toBe(150);
+  });
+
+  const capCfg = (extra: Partial<LaneConfig>): LaneConfig =>
+    cfg({ rate: 62.5, mmPerS: 6, color: '#F0F030', ...scaleFor(0, 50, 100, 4), ...extra });
+  const const40 = (_from: number, out: Float32Array) => {
+    out.fill(40);
+    return out.length;
+  };
+
+  it('a filled lane fills under the trace down to the zero line, clipped to the band, in the lane colour', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({ fill: true }), 1);
+    lane.draw(ctx, 0.5, const40);
+    lane.draw(ctx, 1, const40);
+    const fills = ctx.calls.filter((c) => c.op === 'fill');
+    expect(fills.length).toBeGreaterThanOrEqual(1);
+    for (const f of fills) {
+      expect(f.style).toBe('#F0F030');
+      expect(f.clip).not.toBeNull();
+    }
+    const c = lane.cfg;
+    expect(ctx.calls.some((k) => k.op === 'lineTo' && k.args[1] === c.y + c.height)).toBe(true);
+    // the stroke comes after the fill, so the line stays on top
+    const ops = ctx.calls.map((k) => k.op);
+    expect(ops.lastIndexOf('stroke')).toBeGreaterThan(ops.lastIndexOf('fill'));
+  });
+
+  // A synthetic capnogram at 62.5 Hz: 0 mmHg for 1 s, then a 38 mmHg plateau with a 50 ms cardiogenic bump at 1.6 Hz;
+  // `cleft` adds a 5 mmHg curare cleft at 4 s (a feature the smoothing must keep).
+  const RATE = 62.5;
+  const capno = (cleft: boolean) => (from: number, out: Float32Array) => {
+    for (let k = 0; k < out.length; k++) {
+      const t = (from + k) / RATE;
+      let v = t < 1 ? 0 : 38;
+      if (t >= 1) for (let j = 0; j < 16; j++) v += 0.5 * Math.exp(-(((t - (1.3 + j / 1.6)) / 0.05) ** 2));
+      if (cleft) v -= 5 * Math.exp(-(((t - 4) / 0.12) ** 2));
+      out[k] = v;
+    }
+    return out.length;
+  };
+  /** Draw 8 s in 0.1 s frames; return the stroke points and the `from` of every read. */
+  const run = (extra: Partial<LaneConfig>, cleft = false) => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({ width: 400, ...extra }), 1);
+    const froms: number[] = [];
+    const src = capno(cleft);
+    for (let f = 1; f <= 80; f++) lane.draw(ctx, f / 10, (from, out) => (froms.push(from), src(from, out)));
+    const pts = ctx.calls.filter((k) => k.op === 'lineTo' || k.op === 'moveTo').map((k) => [k.args[0]!, k.args[1]!] as const);
+    return { lane, pts, froms };
+  };
+  type P = readonly (readonly [number, number])[];
+  const plateauDev = (pts: P, x0: number) => {
+    const ys = pts.filter(([x]) => x >= x0).map(([, y]) => y).sort((a, b) => a - b);
+    const med = ys[Math.floor(ys.length / 2)]!;
+    return Math.max(...ys.map((y) => Math.abs(y - med)));
+  };
+  const M2 = { smoothN: 20, smoothGate: [1.5, 3] as const }; // saadat-like: 320 ms at 62.5 Hz, gate in mmHg
+
+  it('smoothing halves a 50 ms plateau ripple; the 0→38 mmHg upstroke is drawn as it is', () => {
+    const raw = run({});
+    const sm = run(M2);
+    const pxPerS = raw.lane.pxPerS;
+    const x0 = raw.lane.cfg.x + 1.5 * pxPerS; // the plateau, past the upstroke
+    const devRaw = plateauDev(raw.pts, x0);
+    expect(devRaw).toBeGreaterThan(0.5); // ≈ 1 px: the ripple is there to begin with
+    expect(plateauDev(sm.pts, x0)).toBeLessThanOrEqual(0.5 * devRaw);
+    // and the coarse steps go: the largest point-to-point step on the plateau shrinks by half or more (review L-4)
+    const maxStep = (pts: P) => {
+      const ys = pts.filter(([x]) => x >= x0).map(([, y]) => y);
+      return Math.max(...ys.slice(1).map((y, k) => Math.abs(y - ys[k]!)));
+    };
+    expect(maxStep(raw.pts)).toBeGreaterThan(0.2);
+    expect(maxStep(sm.pts)).toBeLessThanOrEqual(0.5 * maxStep(raw.pts));
+    const y90 = raw.lane.cfg.y + raw.lane.cfg.height * (1 - (0.9 * 38) / 50);
+    const xUp = (pts: P) => Math.min(...pts.filter(([, y]) => y <= y90).map(([x]) => x));
+    expect(xUp(sm.pts)).toBe(xUp(raw.pts));
+  });
+
+  it('a change larger than the gate is drawn unsmoothed: a 5 mmHg curare cleft keeps its depth', () => {
+    const deepest = (pts: P) => Math.max(...pts.filter(([x]) => x > 3 * 24 && x < 5 * 24).map(([, y]) => y));
+    const raw = deepest(run({}, true).pts);
+    expect(Math.abs(deepest(run(M2, true).pts) - raw)).toBeLessThanOrEqual(0.5);
+    expect(raw - deepest(run({ smoothN: 20 }, true).pts)).toBeGreaterThan(2); // an ungated average would fill it in
+  });
+
+  it('no smoothN: the sample reads and the drawn points are unchanged', () => {
+    const plain = run({});
+    for (const extra of [{ smoothN: 0 }, { smoothN: 1 }, { smoothGate: [1.5, 3] as const }]) {
+      const r = run(extra);
+      expect(r.froms).toEqual(plain.froms);
+      expect(r.pts).toEqual(plain.pts);
+    }
+  });
+
+  it('scale lines are dotted: a dot every 14 px at each value, the lowest inside the lane, repainted wherever the lane is cleared', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(cfg({ ...scaleFor(40, 200, 100, 4), hLines: { values: [200, 120, 40], color: '#8A8C92' } }), 1);
+    lane.reset(ctx);
+    const dots = () => ctx.calls.filter((k) => k.op === 'fillRect' && k.style === '#8A8C92').map((k) => k.args);
+    const rows = new Map<number, number[]>();
+    for (const [x, y] of dots()) rows.set(y!, [...(rows.get(y!) ?? []), x!]);
+    // 200 at the lane top, 120 at yOf(120), 40 one pixel inside the bottom edge (review L-1: never clipped away)
+    expect([...rows.keys()].sort((a, b) => a - b)).toEqual([0, 50, 99]);
+    for (const xs of rows.values()) {
+      expect(Math.abs(xs.length - Math.floor(400 / 14))).toBeLessThanOrEqual(1);
+      expect(xs.every((x) => x % 14 === 0)).toBe(true); // anchored to the lane's left edge: the dots do not crawl
+    }
+    expect(dots().every(([, , w, h]) => w === 1 && h === 1)).toBe(true);
+    lane.draw(ctx, 0.5, flat);
+    ctx.clear();
+    lane.draw(ctx, 0.6, flat);
+    const bands = ctx.calls.filter((k) => k.op === 'fillRect' && k.style === '#fff8f4').map((k) => k.args);
+    expect(dots().length).toBeGreaterThan(0);
+    for (const [x] of dots()) expect(bands.some(([bx, , bw]) => x! >= bx! && x! < bx! + bw!)).toBe(true);
+  });
+
+  it('fill omitted: no fill call (every other lane and skin is unchanged)', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({}), 1);
+    lane.draw(ctx, 0.5, const40);
+    lane.draw(ctx, 1, const40);
+    expect(ctx.calls.filter((c) => c.op === 'fill')).toEqual([]);
   });
 });
