@@ -136,6 +136,13 @@ function applySensors(skin: Skin, sensors: ResolveOptions['sensors']): Skin {
     out.layout.lanes = out.layout.lanes.map(lane);
     for (const pg of out.pages) if (pg.lanes) pg.lanes = pg.lanes.map(lane);
     out.layout.tiles = out.layout.tiles.map((col) => col.map((t) => structuredClone(rule.tiles?.[t.param] ?? t)));
+    // layout.grid places tiles by param: a cell (or the strip) naming a swapped tile places its replacement
+    const g = out.layout.grid;
+    const tile = (p: TileParam): TileParam => rule.tiles?.[p]?.param ?? p;
+    if (g) {
+      for (const c of g.cells) c.params = c.params.map(tile);
+      g.strip.tile.param = tile(g.strip.tile.param);
+    }
   }
   return out;
 }
