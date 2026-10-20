@@ -11,6 +11,12 @@ describe('renderPlan', () => {
     expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#00F000', mmPerS: 25 });
     expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 12.5 });
     expect(p.lanes[4]).toMatchObject({ color: '#6C9CF8', range: [-10, 30] }); // T4 mid blue
+    // research/34 row 11: dotted lines at the upper, middle and lower scale values, the middle value printed
+    expect(p.lanes[3]).toMatchObject({ scaleLines: [200, 120, 40], scaleMid: 120 });
+    expect(p.lanes[4]).toMatchObject({ scaleLines: [30, 10, -10], scaleMid: 10 });
+    expect(p.lanes[0]!.scaleLines).toBeNull();
+    expect(p.lanes[5]!.scaleLines).toBeNull();
+    expect(p.scaleLineColor).toBe('#8A8C92');
     expect(p.lanes[2]?.mmPerS).toBe(6);
     expect(p.lanes[5]).toMatchObject({ channel: 'pleth', mmPerS: 25, range: null });
     expect(p.eraseGapPx).toBe(4);
@@ -40,6 +46,8 @@ describe('renderPlan', () => {
     expect(p.lanes.map((l) => l.channel)).toEqual(['ecgII', 'V1', 'abp', 'pleth', 'co2']);
     expect(ecgLabel(p.lanes[1]!.label, 'V1', 1, p.gainLabel, p.filterNames.monitor!)).toBe('V1  M');
     expect(p.lanes[4]?.range).toEqual([0, 40]);
+    expect(p.lanes.every((l) => l.scaleLines === null && l.scaleMid === null)).toBe(true); // iec-defaults scaleLines "none"
+    expect(p.scaleLineColor).toBeNull();
     expect(renderPlan(resolveSkin('zoll-like')).syncMarker).toBe('r-above');
   });
 

@@ -139,6 +139,28 @@ describe('SweepLane 4b options', () => {
     }
   });
 
+  it('scale lines are dotted: a dot every 14 px at each value, the lowest inside the lane, repainted wherever the lane is cleared', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(cfg({ ...scaleFor(40, 200, 100, 4), hLines: { values: [200, 120, 40], color: '#8A8C92' } }), 1);
+    lane.reset(ctx);
+    const dots = () => ctx.calls.filter((k) => k.op === 'fillRect' && k.style === '#8A8C92').map((k) => k.args);
+    const rows = new Map<number, number[]>();
+    for (const [x, y] of dots()) rows.set(y!, [...(rows.get(y!) ?? []), x!]);
+    // 200 at the lane top, 120 at yOf(120), 40 one pixel inside the bottom edge (review L-1: never clipped away)
+    expect([...rows.keys()].sort((a, b) => a - b)).toEqual([0, 50, 99]);
+    for (const xs of rows.values()) {
+      expect(Math.abs(xs.length - Math.floor(400 / 14))).toBeLessThanOrEqual(1);
+      expect(xs.every((x) => x % 14 === 0)).toBe(true); // anchored to the lane's left edge: the dots do not crawl
+    }
+    expect(dots().every(([, , w, h]) => w === 1 && h === 1)).toBe(true);
+    lane.draw(ctx, 0.5, flat);
+    ctx.clear();
+    lane.draw(ctx, 0.6, flat);
+    const bands = ctx.calls.filter((k) => k.op === 'fillRect' && k.style === '#fff8f4').map((k) => k.args);
+    expect(dots().length).toBeGreaterThan(0);
+    for (const [x] of dots()) expect(bands.some(([bx, , bw]) => x! >= bx! && x! < bx! + bw!)).toBe(true);
+  });
+
   it('fill omitted: no fill call (every other lane and skin is unchanged)', () => {
     const ctx = new FakeCtx();
     const lane = new SweepLane(capCfg({}), 1);

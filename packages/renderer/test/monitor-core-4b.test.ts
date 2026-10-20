@@ -20,7 +20,8 @@ const cmd = (body: Record<string, unknown>) => ({ id: `c${Math.random()}`, issue
 describe('MonitorCore with a skin plan', () => {
   it('saadat-like lanes and chrome (research/34 T3, IMG_8113): II X1 NORMAL twice, RESP (auto-scaled, no numbers), IBP1 200/40, IBP2 30/-10, PLETH last', () => {
     const { ctx } = make('saadat-like');
-    expect(ctx.texts).toEqual(['II  X1  NORMAL', 'II  X1  NORMAL', 'RESP', 'IBP1', '200', '40', 'IBP2', '30', '-10', 'PLETH']);
+    expect(ctx.texts).toEqual(['II  X1  NORMAL', 'II  X1  NORMAL', 'RESP', 'IBP1', '200', '120', '40', 'IBP2', '30', '10', '-10', 'PLETH']);
+    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#8A8C92')).toBe(true); // the dotted scale lines
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#000000')).toBe(true);
   });
 

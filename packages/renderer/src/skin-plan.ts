@@ -24,6 +24,10 @@ export interface PlanLane {
   fill: boolean;
   /** Display-side smoothing window (ms) of the drawn trace; 0 = none (a CO2 lane of a skin with `co2.displaySmoothMs`). */
   smoothMs: number;
+  /** Dotted scale lines [upper, middle, lower] (skin `ibp.scaleLines` 'dotted-upper-mid-lower' on an IBP lane); null = none. */
+  scaleLines: [number, number, number] | null;
+  /** The middle scale value printed beside its line; null = none. */
+  scaleMid: number | null;
 }
 
 export interface RenderPlan {
@@ -45,6 +49,8 @@ export interface RenderPlan {
   devicePacer: boolean;
   syncMarker: Skin['syncMarker'];
   hideScaleNumbers: boolean;
+  /** Colour of the dotted scale lines (skin `ibp.scaleLineColor`, theme-darkened); null = the lane colour. */
+  scaleLineColor: string | null;
   lanes: PlanLane[];
 }
 
@@ -99,20 +105,22 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
   const filterNames: Record<string, string> = {};
   for (const [name, band] of Object.entries(s.ecg.filters)) filterNames[filterModeFor(band)] = s.ecg.filterLabel === 'letter' ? name.charAt(0) : name;
   let ecgIndex = 0;
+  const dotted = s.ibp.scaleLines === 'dotted-upper-mid-lower';
   const lanes = laneIds.map((id): PlanLane => {
     const rl = r.render.lanes.find((l) => l.lane === id);
     const color = rl?.color ?? s.foreground;
     const mmPerS = rl?.mmPerS ?? s.sweep.ibp.default;
     if (id.startsWith('ECG')) {
       const lead = leadAt(ecgIndex++);
-      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0 };
+      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null };
     }
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
     const range: [number, number] | null =
       id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // A skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
-      smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0 };
+      smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
+      scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : null, scaleMid: dotted && sc ? sc[1] : null };
   });
   return {
     skin: r.id,
@@ -130,6 +138,7 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     devicePacer: s.pacer !== null,
     syncMarker: s.syncMarker,
     hideScaleNumbers: pg?.pump?.hideScaleNumbers ?? false,
+    scaleLineColor: s.ibp.scaleLineColor ?? null,
     lanes,
   };
 }
@@ -137,17 +146,17 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
 export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[]): RenderPlan {
   const ecg = leads.map((lead): PlanLane => ({
-    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0,
+    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null,
   }));
   const wv = waves.map((w): PlanLane => ({
     id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // co2/resp 6.25 mm/s
     autoGain: false, gainOptions: [],
-    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0,
+    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null,
   }));
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,
     font: 'system-ui, sans-serif', gainLabel: 'mm-per-mV', filterNames: { monitor: 'M', diagnostic: 'D' },
-    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false,
+    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null,
     lanes: [...ecg, ...wv],
   };
 }

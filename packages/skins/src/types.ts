@@ -205,6 +205,8 @@ export interface Skin {
      * ('keep', Philips IFU [S2] p. 57) or with the mean only ('mean-only', Saadat, research/06 §4.1).
      */
     staticDisplay: 'keep' | 'mean-only';
+    /** Colour of the dotted scale lines (optional; absent = the lane colour). Themes darken it like `colors`. */
+    scaleLineColor?: string;
   };
   co2: {
     unit: 'mmHg' | 'kPa' | '%';

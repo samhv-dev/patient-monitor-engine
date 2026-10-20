@@ -110,6 +110,10 @@ function applyTheme(skin: Skin, themeId: string): Skin {
   out.alarms.messageBar.acknowledged = { ...theme.messageBarIdle };
   for (const k of Object.keys(out.provenance)) if (k.startsWith('colors.')) delete out.provenance[k];
   out.provenance.colors = { tag: 'eng', source: `ENG: theme ${themeId} darkens the skin colours to ${min}:1` };
+  if (out.ibp.scaleLineColor) {
+    out.ibp.scaleLineColor = darkenToContrast(out.ibp.scaleLineColor, theme.background, min);
+    out.provenance['ibp.scaleLineColor'] = out.provenance.colors;
+  }
   for (const [k, v] of Object.entries(theme.provenance)) if (k !== 'colorTransform') out.provenance[k] = v;
   return out;
 }

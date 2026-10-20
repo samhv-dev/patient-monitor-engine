@@ -128,6 +128,7 @@
     "filterDefaultHz": 16,
     "gridDefault": false,
     "scaleLines": "dotted-upper-mid-lower",
+    "scaleLineColor": "#8A8C92",
     "staticDisplay": "mean-only",
     "meanOnlyLabels": ["CVP", "LAP", "RAP"],
     "scales": {
@@ -281,6 +282,8 @@
     "nibp.nextInflation": { "tag": "documented", "source": "research/06 §4.1; brief §3.8" },
     "nibp.doneTone": { "tag": "unverified", "source": "research/06 §4.1", "note": "no NIBP-done tone described" },
     "ibp": { "tag": "documented", "source": "research/06 §3.2 (M p.304-305); research/06 §4.1 (M p.149-161)" },
+    "ibp.scaleLines": { "tag": "measured", "source": "research/34 §3 row 11 (IMG_8113: dotted lines 130/80/30 and 100/70/40, middle value indented)" },
+    "ibp.scaleLineColor": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours: dotted scale lines, 2026-10-20)" },
     "ibp.staticDisplay": { "tag": "documented", "source": "research/06 §4.1 (static pressure: SYS/DIA hidden, a larger mean shown)" },
     "co2.unit": { "tag": "documented", "source": "research/06 §4.1 (M p.270); research/00 R12" },
     "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clip at the lane top, as on the real unit; the EtCO2 number is unaffected (owner E63, accepted 2026-10-18)" },

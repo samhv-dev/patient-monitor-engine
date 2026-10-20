@@ -178,15 +178,18 @@ export const skinSchema: JsonSchema = {
       nextInflation: en(['prevSys+30', 'prevSys+10']),
       doneTone: bool,
     }),
-    ibp: obj({
-      filterOptionsHz: arr(num(1, 100), 1),
-      filterDefaultHz: num(1, 100),
-      gridDefault: bool,
-      scaleLines: en(['dotted-upper-mid-lower', 'none']),
-      staticDisplay: en(['keep', 'mean-only']),
-      meanOnlyLabels: arr(str),
-      scales: record(triple),
-    }),
+    ibp: obj(
+      {
+        filterOptionsHz: arr(num(1, 100), 1),
+        filterDefaultHz: num(1, 100),
+        gridDefault: bool,
+        scaleLines: en(['dotted-upper-mid-lower', 'none']),
+        staticDisplay: en(['keep', 'mean-only']),
+        meanOnlyLabels: arr(str),
+        scales: record(triple),
+      },
+      { scaleLineColor: hex },
+    ),
     co2: obj(
       { unit: en(['mmHg', 'kPa', '%']), scale: num(1, 100), scaleUnit: en(['mmHg', '%']), sidestreamDelayS: num(0, 10), riseTimeMs: num(20, 1000) },
       { fill: bool, displaySmoothMs: num(0, 500) },

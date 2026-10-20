@@ -20,6 +20,12 @@ const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
  *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
  *  cleft of 3–15 mmHg) is drawn as it is [ENG]. */
 const SMOOTH_GATE_MMHG = [1.5, 3] as const;
+/** The middle IBP scale value is indented and sits just above its dotted line (IMG_8113; the mock-up's "80"/"70"). */
+const MID_LABEL_X = 20;
+function midLabelY(pl: PlanLane, y0: number, h: number): number {
+  const [lo, hi] = pl.range as [number, number];
+  return y0 + ((hi - (pl.scaleMid as number)) / (hi - lo)) * h - 13;
+}
 const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
 // Impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple (0.1) stays small
 // in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
@@ -318,6 +324,7 @@ export class MonitorCore {
           x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color,
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
+          hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null,
           ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: pl.gainMmPerMv } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,
@@ -376,6 +383,7 @@ export class MonitorCore {
         ctx.fillText(pl.label, 6, y0 + 6);
         if (pl.range && !p.hideScaleNumbers) {
           ctx.fillText(String(pl.range[1]), 6, y0 + 24);
+          if (pl.scaleMid !== null) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midLabelY(pl, y0, h));
           ctx.fillText(String(pl.range[0]), 6, y0 + h - 18);
         }
         continue;

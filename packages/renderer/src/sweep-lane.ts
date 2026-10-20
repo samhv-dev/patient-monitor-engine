@@ -45,6 +45,9 @@ export interface LaneConfig {
    * are smoothed, and an upstroke or a curare cleft keeps its shape. Absent: always the average.
    */
   smoothGate?: readonly [number, number];
+  /** Dotted horizontal scale lines at these values (signal units), repainted wherever the lane is cleared (skin
+   *  `ibp.scaleLines`; research/34 row 11). */
+  hLines?: { values: readonly number[]; color: string } | null;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -56,6 +59,9 @@ type Rect = [number, number, number, number]; // canvas CSS px
 /** The backfill never reaches past the engine's 120 s buffer (`BUFFER_SECONDS`), where a read would start at the
  * oldest sample instead of the one asked for [ENG margin]. */
 const BACKFILL_MAX_S = 100;
+/** Dotted scale lines: a 1.4 px dot every 14 px, as the approved mock-up draws them (NOTES.md; IMG_8113). */
+const DOT_PITCH_PX = 14;
+const DOT_PX = 1.4;
 
 export class SweepLane {
   cfg: LaneConfig;
@@ -86,6 +92,7 @@ export class SweepLane {
     ctx.fillStyle = this.cfg.background;
     ctx.fillRect(this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height);
     this.paintGrid(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
+    this.paintHLines(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
   }
 
   /** Absolute index of the last sample drawn (-1 after a reset). */
@@ -119,6 +126,29 @@ export class SweepLane {
         ctx.lineTo(r[0] + r[2], c.y + k * step);
       }
       ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /**
+   * Paint the dotted scale lines inside one cleared rect. The dots are anchored to the lane's left edge (they do not
+   * crawl) and snapped to device pixels; a line on the lane's bottom edge is drawn one dot inside it (review L-1).
+   */
+  private paintHLines(ctx: Ctx2D, r: Rect): void {
+    const h = this.cfg.hLines;
+    if (!h || r[2] <= 0) return;
+    const c = this.cfg;
+    const s = Math.max(1, Math.round(DOT_PX * this.dpr)) / this.dpr;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(...r);
+    ctx.clip();
+    ctx.fillStyle = h.color;
+    for (const v of h.values) {
+      const y = Math.min(c.y + c.height - s, Math.max(c.y, Math.round(this.yOf(v) * this.dpr) / this.dpr));
+      for (let k = Math.max(0, Math.ceil((r[0] - c.x - s) / DOT_PITCH_PX)); c.x + k * DOT_PITCH_PX < Math.min(r[0] + r[2], c.x + c.width); k++) {
+        ctx.fillRect(c.x + k * DOT_PITCH_PX, y, s, s);
+      }
     }
     ctx.restore();
   }
@@ -163,6 +193,7 @@ export class SweepLane {
       ctx.fillStyle = c.background;
       ctx.fillRect(...r);
       this.paintGrid(ctx, r);
+      this.paintHLines(ctx, r);
       rects.push(r);
       a = end;
     }
