@@ -63,6 +63,14 @@ the public API is what the packages export (see the API reference), the `pme-sce
   suites' load failed it with the engine unchanged (p50 6.56, 7.74 and 8.42 ms on 2026-10-20; 7.26 and 7.20 ms on a
   main run and its re-run). A real engine slowdown raises every sample and still fails; the local 2 ms bound stays on
   one sample.
+- FX-24: right after a fast-forward, and when it joined, a learner's phone or second screen drew its waveforms squeezed
+  for up to 0.75 s (the first beats after the jump drawn over and over, at 5–24 times the sweep speed) and the ECG gain
+  label jumped to X4 for about 2 s. The follower restores the instructor's snapshot at those moments, and a restore
+  starts the waveform history afresh; the lanes and the ECG auto-gain read back past its start. The lanes now draw from
+  the jump on at the normal speed (the part before it stays blank until the sweep comes round), the ECG gain stays what
+  it was (across a resize of the monitor too, which the phone does at the end of a fast-forward; the auto-gain then
+  re-judges it), and a monitor that has just joined keeps its skin's gain until it has 4 s of signal to judge, as at any
+  start. A bookmark restore on the instructor's own monitor takes the same path and is fixed with it.
 - FX-23: after a fast-forward a thin vertical line with the new time ("05:08") was drawn across every lane, including
   empty ones, each at that lane's own sweep position (so the CO2 and IBP lines sat apart from the ECG and pleth ones).
   The lanes now simply carry on, as a monitor would: no line, no label, no gap. The clinical log keeps its
