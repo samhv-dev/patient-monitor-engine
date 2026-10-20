@@ -61,6 +61,30 @@ describe('saadat-like lane text', () => {
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#000000' && c.args[3] === 18 && Math.abs(c.args[0]! + c.args[2]! - 394) < 1e-6)).toBe(true);
   });
 
+  it('"50mmHg" runs past the 56 px chrome, so its tail is repainted like a long ECG label (1280x800 screenshot)', () => {
+    const { ctx, run } = make({ co2: 'on' }, 400);
+    ctx.texts = [];
+    run(20); // CO2 at 6 mm/s crosses 344 px in ≈ 15 s
+    expect(ctx.texts.filter((t) => t === '50mmHg').length).toBeGreaterThan(1);
+    // the repainted tail covers the whole word ("mm" is wide: the 8.5 px/char estimate left the "g" cut)
+    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[1] === 2 * 100 + 4 && c.args[2]! >= 6 + 6 * 10.5 - 56)).toBe(true);
+  });
+
+  it('a cleared CO2 lane gets "50mmHg" back at once, with its right-hand texts', () => {
+    const { core, ctx, run } = make({ co2: 'on' }, 400);
+    run(2);
+    ctx.texts = [];
+    core.command({ id: 'd2', issuedBy: 't', type: 'attachSensor', sensor: 'co2', state: 'off' } as never);
+    run(1);
+    expect(ctx.texts).toEqual(expect.arrayContaining(['50mmHg', 'CO2', '6 mm/s']));
+  });
+
+  it('a right-hand box is wide enough for capitals (the screenshot clipped "NORMAL" to "ORMAL")', () => {
+    const { ctx } = make({});
+    const box = ctx.calls.find((c, k) => c.op === 'fillRect' && ctx.calls[k + 1]?.style === 'right:NORMAL');
+    expect(box?.args[2]).toBeGreaterThanOrEqual(6 * 10.5);
+  });
+
   it('a lane that is cleared (its line detached) gets its texts back at once', () => {
     const { core, ctx, run } = make({ abp: 'connected' }, 400);
     run(2);

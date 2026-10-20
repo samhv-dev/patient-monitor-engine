@@ -15,6 +15,8 @@ import { autoRange, scaleFor } from './wave-lanes.ts';
 export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', grid: '#222' } as const; // legacy look (legacyPlan)
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
 const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
+/** A width per character that holds capitals and "m" ("NORMAL" ≈ 60 px, "50mmHg" ≈ 57 px at 14 px): lane-text boxes are clipped. */
+const WIDE_CHAR_W = 10.5;
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
 /** Display smoothing of a capnogram (skin `co2.displaySmoothMs`, owner correction M2): a window whose range is under
  *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
@@ -231,6 +233,7 @@ export class MonitorCore {
         const lane = this.lanes[i] as SweepLane;
         if (pl.kind === 'wave') {
           this.drawWave(pl, i, t);
+          this.repaintLabelTail(i, lane); // "50mmHg" (lane text) runs past the chrome, as a long ECG label does
           return this.repaintRightTexts(i, lane); // review L-3: most right-hand texts are on wave lanes
         }
         const before = lane.lastDrawnIndex;
@@ -370,7 +373,7 @@ export class MonitorCore {
 
   /** The box a right-hand text occupies: right-aligned 6 px from the right edge, one label row high. */
   private rightBox(text: string, y: number): [number, number, number, number] {
-    const w = text.length * LABEL_CHAR_W;
+    const w = text.length * WIDE_CHAR_W;
     return [this.size.cssW - 6 - w, y - 2, w, LABEL_STRIP_H];
   }
 
@@ -404,6 +407,7 @@ export class MonitorCore {
     if (lane.generation !== this.rightGen[i]) {
       this.rightGen[i] = lane.generation;
       for (const t of ts) this.paintRightText(t);
+      this.repaintLabelTail(i, lane, true); // the cleared lane took the label's tail ("50mmHg") with it too
       return;
     }
     if (lane.lastDrawnIndex < 0) return;
@@ -421,11 +425,11 @@ export class MonitorCore {
    * Repaint the part of a long ECG label that lies in the sweep area while the erase bar passes under it (the label
    * stays on top of the trace, as on the monitor). Clipped to x ≥ LABEL_W so the chrome part is not overdrawn.
    */
-  private repaintLabelTail(i: number, lane: SweepLane): void {
+  private repaintLabelTail(i: number, lane: SweepLane, force = false): void {
     const tail = this.labelTail[i];
-    if (!tail || lane.lastDrawnIndex < 0) return;
+    if (!tail || (!force && lane.lastDrawnIndex < 0)) return;
     const head = (lane.xOf(lane.lastDrawnIndex) + lane.cfg.eraseGapPx) % lane.cfg.width;
-    if (head > tail.w + lane.cfg.eraseGapPx + LABEL_REPAINT_SLACK_PX) return;
+    if (!force && head > tail.w + lane.cfg.eraseGapPx + LABEL_REPAINT_SLACK_PX) return;
     const ctx = this.ctx;
     const y0 = lane.cfg.y;
     const pl = this.plan.lanes[i] as PlanLane;
@@ -462,6 +466,17 @@ export class MonitorCore {
       ctx.strokeStyle = pl.color;
       if (pl.kind === 'wave') {
         if (!lt) ctx.fillText(pl.label, 6, y0 + 6); // with lane text the label is at the right, and the top value takes its place
+        if (lt) {
+          const old = this.labelTail[i];
+          if (old) {
+            ctx.fillStyle = p.background;
+            ctx.fillRect(LABEL_W, y0 + 4, old.w, LABEL_STRIP_H);
+            ctx.fillStyle = textColor;
+          }
+          const top = pl.range && !p.hideScaleNumbers ? `${pl.range[1]}${pl.scaleSuffix}` : '';
+          const w = 6 + top.length * WIDE_CHAR_W - LABEL_W;
+          this.labelTail[i] = w > 0 ? { text: top, w } : null; // the top value at the label row is repainted like a label
+        }
         if (pl.range && !p.hideScaleNumbers) {
           ctx.fillText(`${pl.range[1]}${pl.scaleSuffix}`, 6, lt ? y0 + 6 : y0 + 24);
           if (pl.scaleMid !== null) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midLabelY(pl, y0, h));
