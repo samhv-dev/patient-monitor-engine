@@ -11,6 +11,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 - Optional skin keys (`pme-skin/1`; a skin without them draws as before): `co2.fill`, `co2.displaySmoothMs`,
   `ibp.scaleLineColor` and `layout.laneText`. `ibp.scaleLines` is now drawn. See `packages/skins/CONTRACT.md`.
+- Optional skin keys for the Saadat-like tiles and header (a skin without them draws as before): `layout.headerStyle`,
+  `layout.showAlways`, `alarms.messageBar.rotateS`, `alarms.limitsDisplay`, `alarms.limitsColor`, `hr.statusColor`,
+  `nibp.applyAtStart` and the tile keys `label`, `unit`, `weight`, `italic`, `split`, `parts`, `status`, `limitsLayout`;
+  `glyphs.noValue` and `glyphs.inop` may be empty. See `packages/skins/CONTRACT.md`.
+- Engine: `nibp` events carry the cuff's optional `mode` and `intervalMin`, and a `nibp manual` action turns auto
+  cycling off without aborting a running measurement.
 
 ### Changed
 
@@ -29,6 +35,18 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - Saadat-like: the IBP lanes sweep at 25 mm/s (was 12.5), as in the owner's photo.
 - Saadat-like: the colours are those of the owner-approved mock-up of the photo (greener ECG, purer yellow CO2, lighter
   pink IBP1, brighter blue IBP2, violet SpO2 and pleth, slightly blue-white text).
+- Saadat-like: every alarm limit the monitor carries is shown in small red beside its value, ON or OFF; the IBP limits
+  sit in one row under the value.
+- Saadat-like: the tiles carry the photo's labels, units and weights; the CO2 tile is split EtCo2 | FiCo2 | AWRR, the
+  temperature tile T1 / T2 / DT and the depth tile BFI% / BS% / SQI% / EMG%; an unconnected probe reads blank, not dashes.
+- Saadat-like: the PR tile names its rate source ("(ECG)", "(IBP1)", "(SPO2)") in that channel's colour, with a heart
+  that blinks per beat and the PACE / ST / PVCs status lines.
+- Saadat-like: the NIBP tile reads "119 / 90" with "(101)", the cuff's mode ("AUTO(5Min)") and the time of the result.
+- Saadat-like: a two-row header (page, bed, patient category, date over a real-time clock; the message bar under them),
+  and same-level messages rotate every 6 seconds.
+- Saadat-like and its "Iranian ICU as found" preset: the NIBP starts on AUTO every 5 minutes with the patient; every
+  other skin keeps its idle cuff.
+- The free-play patient starts without the CO2 sampling line (RESP and RR shown); the Ventilator view attaches it.
 
 ### Fixed
 
