@@ -86,6 +86,7 @@ export class SweepLane {
   /** Forget drawn history (after resize, calibration change, or a big time jump). */
   reset(ctx: Ctx2D, dpr: number = this.dpr): void {
     this.dpr = dpr;
+    this.resets++;
     this.lastIndex = -1;
     this.lastCol = -1;
     this.tail = [];
@@ -93,6 +94,12 @@ export class SweepLane {
     ctx.fillRect(this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height);
     this.paintGrid(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
     this.paintHLines(ctx, [this.cfg.x, this.cfg.y, this.cfg.width, this.cfg.height]);
+  }
+
+  private resets = 0;
+  /** Counts the times the lane was cleared whole, so text drawn over it knows to come back. */
+  get generation(): number {
+    return this.resets;
   }
 
   /** Absolute index of the last sample drawn (-1 after a reset). */

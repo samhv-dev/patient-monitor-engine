@@ -1,7 +1,7 @@
 // ResolvedSkin → RenderPlan: the plain-data lane layout the worker draws from. It runs on the main thread (where
 // @pme/skins is resolved) and crosses to the worker as JSON. A plan built from the legacy options (`legacyPlan`)
 // reproduces the old hard-coded look exactly, so pages without a skin keep it.
-import { engineFilterFor, type LaneId, type ResolvedSkin, type Skin } from '@pme/skins';
+import { engineFilterFor, type LaneId, type LaneTextLabel, type ResolvedSkin, type Skin } from '@pme/skins';
 import type { ChannelId, EcgFilterMode, LeadId } from '@pme/engine-core';
 import { WAVE_STYLE, type WaveLaneId } from './wave-lanes.ts';
 
@@ -28,6 +28,10 @@ export interface PlanLane {
   scaleLines: [number, number, number] | null;
   /** The middle scale value printed beside its line; null = none. */
   scaleMid: number | null;
+  /** The label at the right of a wave lane (skin `layout.laneText`); null = the old label at the left. */
+  rightLabel: { text: string; color: string; sub?: string } | null;
+  /** Unit printed after the top scale value ('mmHg' on a CO2 lane with lane text, as "50mmHg"); '' = none. */
+  scaleSuffix: string;
 }
 
 export interface RenderPlan {
@@ -51,7 +55,14 @@ export interface RenderPlan {
   hideScaleNumbers: boolean;
   /** Colour of the dotted scale lines (skin `ibp.scaleLineColor`, theme-darkened); null = the lane colour. */
   scaleLineColor: string | null;
+  /** Lane text as on the real unit (skin `layout.laneText`; not on pages that name their lanes); null = the old chrome. */
+  laneText: { color: string } | null;
   lanes: PlanLane[];
+}
+
+/** A sweep speed as the lane prints it: '25 mm/s', '6 mm/s', '12.5 mm/s'. */
+export function formatSpeed(mmPerS: number): string {
+  return `${Number(mmPerS.toFixed(2))} mm/s`;
 }
 
 const LEAD_OF: Record<string, LeadId> = {
@@ -106,13 +117,14 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
   for (const [name, band] of Object.entries(s.ecg.filters)) filterNames[filterModeFor(band)] = s.ecg.filterLabel === 'letter' ? name.charAt(0) : name;
   let ecgIndex = 0;
   const dotted = s.ibp.scaleLines === 'dotted-upper-mid-lower';
+  const lt = only ? undefined : s.layout.laneText;
   const lanes = laneIds.map((id): PlanLane => {
     const rl = r.render.lanes.find((l) => l.lane === id);
     const color = rl?.color ?? s.foreground;
     const mmPerS = rl?.mmPerS ?? s.sweep.ibp.default;
     if (id.startsWith('ECG')) {
       const lead = leadAt(ecgIndex++);
-      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null };
+      return { id, kind: 'ecg', channel: lead, color, mmPerS, gainMmPerMv: rl?.gainMmPerMv ?? 10, autoGain: rl?.autoGain ?? false, gainOptions, range: null, label: s.ecg.laneLabel, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '' };
     }
     const scaleKey = IBP_SCALE_KEY[id];
     const sc = scaleKey ? s.ibp.scales[scaleKey] : undefined;
@@ -120,7 +132,9 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
       id === 'PLETH' || id === 'RESP' ? null : id === 'CO2' ? [0, s.co2.scaleUnit === '%' ? (s.co2.scale * 760) / 100 : s.co2.scale] : sc ? [sc[0], sc[2]] : id === 'ICP' ? [0, 40] : [0, 150]; // A skin without an ICP scale row (philips-like) draws ICP 0–40 (WAVE_STYLE.icp), not the IBP 0–150
     return { id, kind: 'wave', channel: WAVE_CHANNEL[id] ?? null, color, mmPerS, gainMmPerMv: 10, autoGain: false, gainOptions: [], range, label: id === 'PLETH' ? 'PLETH' : id, fill: id === 'CO2' && s.co2.fill === true,
       smoothMs: id === 'CO2' ? (s.co2.displaySmoothMs ?? 0) : 0,
-      scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : null, scaleMid: dotted && sc ? sc[1] : null };
+      scaleLines: dotted && sc ? [sc[2], sc[1], sc[0]] : null, scaleMid: dotted && sc ? sc[1] : null,
+      rightLabel: lt ? rightLabel(lt.labels?.[id], id === 'PLETH' ? 'PLETH' : id, r.render.foreground) : null,
+      scaleSuffix: lt && id === 'CO2' ? s.co2.scaleUnit : '' };
   });
   return {
     skin: r.id,
@@ -139,24 +153,29 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     syncMarker: s.syncMarker,
     hideScaleNumbers: pg?.pump?.hideScaleNumbers ?? false,
     scaleLineColor: s.ibp.scaleLineColor ?? null,
+    laneText: lt ? { color: r.render.foreground } : null,
     lanes,
   };
+}
+
+function rightLabel(l: LaneTextLabel | undefined, text: string, fg: string): PlanLane['rightLabel'] {
+  return { text: l?.text ?? text, color: l?.color ?? fg, ...(l?.sub ? { sub: l.sub } : {}) };
 }
 
 /** The legacy look (monitor-core THEME, WAVE_STYLE) for pages that pass `lanes`/`waves` and no skin. */
 export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[]): RenderPlan {
   const ecg = leads.map((lead): PlanLane => ({
-    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null,
+    id: 'ECG', kind: 'ecg', channel: lead, color: '#00ff66', mmPerS: 25, gainMmPerMv: 10, autoGain: false, gainOptions: [], range: null, label: '{lead}  {FILTER}', fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '',
   }));
   const wv = waves.map((w): PlanLane => ({
     id: w, kind: 'wave', channel: w, color: WAVE_STYLE[w].color, mmPerS: WAVE_STYLE[w].mmPerS ?? 25, gainMmPerMv: 10, // co2/resp 6.25 mm/s
     autoGain: false, gainOptions: [],
-    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null,
+    range: WAVE_STYLE[w].range ? [WAVE_STYLE[w].range[0], WAVE_STYLE[w].range[1]] : null, label: WAVE_STYLE[w].label, fill: false, smoothMs: 0, scaleLines: null, scaleMid: null, rightLabel: null, scaleSuffix: '',
   }));
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,
     font: 'system-ui, sans-serif', gainLabel: 'mm-per-mV', filterNames: { monitor: 'M', diagnostic: 'D' },
-    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null,
+    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null, laneText: null,
     lanes: [...ecg, ...wv],
   };
 }

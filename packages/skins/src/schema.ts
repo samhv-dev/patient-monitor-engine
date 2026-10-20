@@ -125,7 +125,11 @@ export const skinSchema: JsonSchema = {
       menuRegion: en(['popup', 'wave-area-bottom']),
       header: arr(en(HEADER_ITEMS), 1),
       messageBars: en(['single-under-header', 'split-technical-physiological']),
-    }, { badge: str, whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))) }),
+    }, {
+      badge: str,
+      whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))),
+      laneText: obj({}, { labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))) }),
+    }),
     pages: arr(page, 1),
     defaultPage: { type: 'string', pattern: '^P[0-9]{1,2}$' },
     calendar: obj({

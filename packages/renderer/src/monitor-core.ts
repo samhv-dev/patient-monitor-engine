@@ -8,7 +8,7 @@ import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
-import { ecgLabel, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
+import { ecgLabel, formatSpeed, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
 import { autoRange, scaleFor } from './wave-lanes.ts';
 
@@ -58,6 +58,8 @@ export class MonitorCore {
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
   /** ECG labels wider than LABEL_W (e.g. Saadat-like `II  X1  NORMAL`) run into the sweep area; kept to repaint them. */
   private labelTail: Array<{ text: string; w: number } | null> = [];
+  /** The lane generation the right-hand texts were last painted on (a cleared lane gets them back at once). */
+  private rightGen: number[] = [];
   private readonly overlays = new Overlays();
   private size: Size;
   private pxPerMm: number;
@@ -148,7 +150,7 @@ export class MonitorCore {
         const i = ecgLanes[cmd.action.lane] as number;
         (this.plan.lanes[i] as PlanLane).channel = cmd.action.value as LeadId;
         this.lanes[i]?.reset(this.ctx);
-        this.drawChrome([i]);
+        this.drawChrome(this.plan.laneText ? ecgLanes : [i]); // with lane text a repeated lead is unlabelled: all may change
       } else this.layout();
     }
     return r;
@@ -227,11 +229,15 @@ export class MonitorCore {
       if (t - this.autoGainT >= AUTO_GAIN_EVERY_S) this.autoGain(t);
       this.plan.lanes.forEach((pl, i) => {
         const lane = this.lanes[i] as SweepLane;
-        if (pl.kind === 'wave') return this.drawWave(pl, i, t);
+        if (pl.kind === 'wave') {
+          this.drawWave(pl, i, t);
+          return this.repaintRightTexts(i, lane); // review L-3: most right-hand texts are on wave lanes
+        }
         const before = lane.lastDrawnIndex;
         lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(pl.channel as LeadId, from, out));
         if (this.overlays.leadsOff && before >= 0) drawLeadOffDashes(this.ctx, lane, before, lane.lastDrawnIndex);
         this.repaintLabelTail(i, lane);
+        this.repaintRightTexts(i, lane);
       });
       const marks = this.overlays.due(t);
       for (const m of marks) {
@@ -336,6 +342,79 @@ export class MonitorCore {
     this.autoRangeT = p.lanes.map(() => -1);
     this.autoGainT = -Infinity;
     this.drawChrome(p.lanes.map((_, i) => i));
+    this.rightGen = this.lanes.map((l) => l.generation);
+  }
+
+  /** With lane text, an ECG lane showing the same lead as an earlier ECG lane has no label and no speed (IMG_8113). */
+  private ecgUnlabelled(i: number): boolean {
+    const p = this.plan;
+    const pl = p.lanes[i] as PlanLane;
+    return p.laneText !== null && pl.kind === 'ecg' && p.lanes.slice(0, i).some((l) => l.kind === 'ecg' && l.channel === pl.channel);
+  }
+
+  /** The right-hand texts of lane i (lane text only): its label (and a second line), then the sweep speed at the bottom. */
+  private rightTexts(i: number): Array<{ text: string; color: string; y: number }> {
+    const p = this.plan;
+    if (!p.laneText || this.ecgUnlabelled(i)) return [];
+    const pl = p.lanes[i] as PlanLane;
+    const h = this.size.cssH / Math.max(1, p.lanes.length);
+    const y0 = i * h;
+    const out: Array<{ text: string; color: string; y: number }> = [];
+    if (pl.rightLabel) {
+      out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
+      if (pl.rightLabel.sub) out.push({ text: pl.rightLabel.sub, color: p.laneText.color, y: y0 + 6 + LABEL_STRIP_H });
+    }
+    out.push({ text: formatSpeed(pl.mmPerS), color: p.laneText.color, y: y0 + h - 18 });
+    return out;
+  }
+
+  /** The box a right-hand text occupies: right-aligned 6 px from the right edge, one label row high. */
+  private rightBox(text: string, y: number): [number, number, number, number] {
+    const w = text.length * LABEL_CHAR_W;
+    return [this.size.cssW - 6 - w, y - 2, w, LABEL_STRIP_H];
+  }
+
+  /** Clear a right-hand text's box and draw the text on top (it stays over the trace, as the ECG label tail does). */
+  private paintRightText(t: { text: string; color: string; y: number }): void {
+    const ctx = this.ctx;
+    const r = this.rightBox(t.text, t.y);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(...r);
+    ctx.clip();
+    ctx.fillStyle = this.plan.background;
+    ctx.fillRect(...r);
+    ctx.font = `14px ${this.plan.font}`;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = t.color;
+    ctx.fillText(t.text, this.size.cssW - 6, t.y);
+    ctx.textAlign = 'start'; // the seam label and the chrome rely on it
+    ctx.restore();
+  }
+
+  /**
+   * Repaint the right-hand texts of lane i while the erase bar passes under them (the same window as the label tail,
+   * taken modulo the lane width because these boxes sit at the right edge, where the sweep wraps), and at once after
+   * the lane was cleared whole (a detached line, a jump).
+   */
+  private repaintRightTexts(i: number, lane: SweepLane): void {
+    const ts = this.rightTexts(i);
+    if (ts.length === 0) return;
+    if (lane.generation !== this.rightGen[i]) {
+      this.rightGen[i] = lane.generation;
+      for (const t of ts) this.paintRightText(t);
+      return;
+    }
+    if (lane.lastDrawnIndex < 0) return;
+    const c = lane.cfg;
+    const pen = lane.xOf(lane.lastDrawnIndex) % c.width;
+    for (const t of ts) {
+      const [x, , w] = this.rightBox(t.text, t.y);
+      const start = x - c.x - c.eraseGapPx - LABEL_REPAINT_SLACK_PX;
+      const d = (((pen - start) % c.width) + c.width) % c.width;
+      if (d <= w + c.eraseGapPx + 2 * LABEL_REPAINT_SLACK_PX) this.paintRightText(t);
+    }
   }
 
   /**
@@ -358,7 +437,7 @@ export class MonitorCore {
     ctx.fillRect(LABEL_W, y0 + 4, tail.w, LABEL_STRIP_H);
     ctx.font = `14px ${this.plan.font}`;
     ctx.textBaseline = 'top';
-    ctx.fillStyle = pl.color;
+    ctx.fillStyle = this.plan.laneText?.color ?? pl.color;
     ctx.fillText(tail.text, 6, y0 + 6);
     ctx.restore();
   }
@@ -374,31 +453,42 @@ export class MonitorCore {
     }
     ctx.font = `14px ${p.font}`;
     ctx.textBaseline = 'top';
+    const lt = p.laneText;
     for (const i of lanes) {
       const pl = p.lanes[i] as PlanLane;
       const y0 = i * h;
-      ctx.fillStyle = pl.color;
+      const textColor = lt?.color ?? pl.color;
+      ctx.fillStyle = textColor;
       ctx.strokeStyle = pl.color;
       if (pl.kind === 'wave') {
-        ctx.fillText(pl.label, 6, y0 + 6);
+        if (!lt) ctx.fillText(pl.label, 6, y0 + 6); // with lane text the label is at the right, and the top value takes its place
         if (pl.range && !p.hideScaleNumbers) {
-          ctx.fillText(String(pl.range[1]), 6, y0 + 24);
+          ctx.fillText(`${pl.range[1]}${pl.scaleSuffix}`, 6, lt ? y0 + 6 : y0 + 24);
           if (pl.scaleMid !== null) ctx.fillText(String(pl.scaleMid), MID_LABEL_X, midLabelY(pl, y0, h));
           ctx.fillText(String(pl.range[0]), 6, y0 + h - 18);
         }
+        for (const t of this.rightTexts(i)) this.paintRightText(t);
         continue;
       }
       const filterName = p.filterNames[this.filterMode] ?? this.filterMode.replace('band:', '');
-      const text = ecgLabel(pl.label, pl.channel as LeadId, this.gainMult[i] ?? 1, p.gainLabel, filterName);
+      const unlabelled = this.ecgUnlabelled(i);
+      const text = unlabelled ? '' : ecgLabel(pl.label, pl.channel as LeadId, this.gainMult[i] ?? 1, p.gainLabel, filterName);
       const old = this.labelTail[i];
       if (old) {
         ctx.fillStyle = p.background; // erase the previous label's tail (it lies in the sweep area)
         ctx.fillRect(LABEL_W, y0 + 4, old.w, LABEL_STRIP_H);
-        ctx.fillStyle = pl.color;
+        ctx.fillStyle = textColor;
       }
       const w = 6 + text.length * LABEL_CHAR_W - LABEL_W;
       this.labelTail[i] = w > 0 ? { text, w } : null;
-      ctx.fillText(text, 6, y0 + 6);
+      if (unlabelled) {
+        ctx.fillStyle = p.background; // a lane that has just become unlabelled loses its speed text too
+        ctx.fillRect(...this.rightBox(formatSpeed(pl.mmPerS), y0 + h - 18));
+        ctx.fillStyle = textColor;
+      } else {
+        ctx.fillText(text, 6, y0 + 6);
+        for (const t of this.rightTexts(i)) this.paintRightText(t);
+      }
       const base = y0 + 0.6 * h;
       const mv = Math.min(0.5 * h, (this.gainMult[i] ?? 1) * 10 * this.pxPerMm); // 1 mV at the lane gain
       ctx.lineWidth = 1.5;

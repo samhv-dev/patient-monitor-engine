@@ -4180,7 +4180,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP1",
         "lane": "IBP1",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,
@@ -4188,7 +4188,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP2",
         "lane": "IBP2",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,
@@ -4630,7 +4630,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP1",
         "lane": "IBP1",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,
@@ -4638,7 +4638,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP2",
         "lane": "IBP2",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,
@@ -5075,7 +5075,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP1",
         "lane": "IBP1",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,
@@ -5083,7 +5083,7 @@ exports[`resolveSkin: saadat-like and the renderer/audio contract > snapshot saa
         "gainMmPerMv": 10,
         "label": "IBP2",
         "lane": "IBP2",
-        "mmPerS": 12.5,
+        "mmPerS": 25,
       },
       {
         "autoGain": false,

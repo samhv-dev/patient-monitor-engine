@@ -20,7 +20,7 @@ describe('resolveSkin: saadat-like and the renderer/audio contract', () => {
     expect(r.render.eraseGapPx).toBe(4);
     expect(r.render.lanes.map((l) => [l.lane, l.color, l.mmPerS])).toEqual([
       // research/34 Tuesday set (owner's photo IMG_8113): ECG, ECG, CO2/RESP, IBP1, IBP2 in mid blue (T4), pleth last (T3)
-      ['ECG1', '#00F000', 25], ['ECG2', '#00F000', 25], ['RESP', '#F0F030', 6], ['IBP1', '#E08080', 12.5], ['IBP2', '#6C9CF8', 12.5], ['PLETH', '#F000F0', 25],
+      ['ECG1', '#00F000', 25], ['ECG2', '#00F000', 25], ['RESP', '#F0F030', 6], ['IBP1', '#E08080', 25], ['IBP2', '#6C9CF8', 25], ['PLETH', '#F000F0', 25],
     ]);
     expect(r.render.lanes[0]).toMatchObject({ gainMmPerMv: 10, autoGain: true, label: 'II  X1  NORMAL' });
     expect(r.render.lanes[1]).toMatchObject({ autoGain: true, label: 'II  X1  NORMAL' }); // second lead not in the photo (E70): laneLeads[0] reused

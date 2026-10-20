@@ -32,6 +32,13 @@ describe('themes', () => {
     expect(resolveSkin('philips-like', { theme: 'projector-light' }).skin.ibp.scaleLineColor).toBeUndefined();
   });
 
+  it('themes darken the lane-text label colours like the lane colours', () => {
+    for (const t of THEME_IDS) {
+      const r = resolveSkin('saadat-like', { theme: t });
+      expect(contrastRatio(r.skin.layout.laneText!.labels!.PLETH!.color!, r.render.background)).toBeGreaterThanOrEqual(THEMES[t]!.colorTransform.minRatio);
+    }
+  });
+
   it('ecg-grid: 1 mm / 5 mm grid on paper', () => {
     expect(resolveSkin('philips-like', { theme: 'ecg-grid' }).render.grid).toMatchObject({ minorMm: 1, majorMm: 5 });
   });

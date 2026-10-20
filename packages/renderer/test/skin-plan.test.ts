@@ -9,7 +9,7 @@ describe('renderPlan', () => {
     expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['RESP', 'resp'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
     expect(p.lanes[0]).toMatchObject({ autoGain: true, color: '#00F000', mmPerS: 25 });
     expect(p.lanes[1]).toMatchObject({ kind: 'ecg', autoGain: true, color: '#00F000', mmPerS: 25 });
-    expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 12.5 });
+    expect(p.lanes[3]).toMatchObject({ range: [40, 200], mmPerS: 25 }); // IMG_8113: "25 mm/s" on both IBP lanes (D6)
     expect(p.lanes[4]).toMatchObject({ color: '#6C9CF8', range: [-10, 30] }); // T4 mid blue
     // research/34 row 11: dotted lines at the upper, middle and lower scale values, the middle value printed
     expect(p.lanes[3]).toMatchObject({ scaleLines: [200, 120, 40], scaleMid: 120 });
