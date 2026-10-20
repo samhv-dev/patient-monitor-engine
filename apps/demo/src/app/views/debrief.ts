@@ -107,8 +107,13 @@ const section = (id: string, title: string, ...kids: Array<Node | null>): HTMLEl
 const runFoot = (): HTMLElement => h('p', { class: 'db-runfoot', 'aria-hidden': 'true' }, FOOT);
 /** The page footer where the browser prints @page margin boxes (Chromium): the footer and the build left, page n of N
  *  right, on every page. A <style> because the build is known only at run time. */
-const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; }
-@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7pt sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
+const PAGE_CSS = `@page { @bottom-left { content: "${FOOT}"; font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; }
+@bottom-right { content: "Page " counter(page) " of " counter(pages); font: 7pt 'Inter Print', sans-serif; color: #000; vertical-align: top; padding-top: 2mm; border-top: 0.5pt solid #000; } }`;
+
+/** The bundled print font (debrief.css @font-face): loaded on entering the view, and awaited before the print buttons
+ *  print, so a print never lays out in a fallback font. A failed load still prints (in the system font). */
+const loadPrintFont = (): Promise<unknown> => (document.fonts?.load("1em 'Inter Print'") ?? Promise.resolve()).catch(() => undefined);
+const printWithFont = (): void => void loadPrintFont().then(() => window.print());
 
 /** Q1: the appendix table — the six trends and the five labs, the first sample of each minute. */
 function minutes(d: RunData): HTMLElement {
@@ -303,7 +308,7 @@ export function debriefView(session: AppSession, link: Link): View {
 
   const el = h('section', { class: 'debrief', 'aria-labelledby': 'db-h' },
     h('div', { class: 'page wide' },
-      h('div', { class: 'db-tools' }, button('Print or save as PDF', () => window.print(), 'primary'),
+      h('div', { class: 'db-tools' }, button('Print or save as PDF', printWithFont, 'primary'),
         button('Download the record (JSON)', () => {
           const d = session.record.data;
           download(`debrief-${d.doc?.id ?? 'free-run'}-${new Date(d.startedAt).toISOString().slice(0, 10)}.json`, debriefJson(d, BUILD), 'application/json');
@@ -317,7 +322,7 @@ export function debriefView(session: AppSession, link: Link): View {
             delete el.dataset.print;
             document.title = title;
           }, { once: true });
-          window.print();
+          printWithFont();
         }, 'ghost'),
         h('span', { class: 'hint' }, 'Choose "Save as PDF" as the printer. The report reads the run so far; it refreshes while open. The JSON holds the record, not the "Run by" line or the notes.')),
       live1,
@@ -346,6 +351,7 @@ export function debriefView(session: AppSession, link: Link): View {
     id: 'debrief', el, bench: true,
     enter: () => {
       document.head.append(pageStyle);
+      void loadPrintFont();
       render();
       iv ??= setInterval(render, 5000);
       // the print file's name (Save as PDF): the shell sets the title after enter()
