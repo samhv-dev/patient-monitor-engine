@@ -96,6 +96,31 @@ describe('MonitorCore hidden-tab catch-up', () => {
     expect(Math.abs(core.clock.renderT - 60.6)).toBeLessThan(0.021);
   });
 
+  it('FX-15: a frame after a 7-min stall (the worker woke first) credits the whole gap; a slow frame is still clamped', () => {
+    const { core } = make();
+    core.frame(1000);
+    core.frame(1016);
+    core.frame(1016 + 420_000); // Safari thawed the suspended worker; its rAF ran before the page's catchUp
+    expect(core.clock.simT).toBeGreaterThanOrEqual(419.98);
+    expect(core.clock.simT).toBeLessThanOrEqual(420.02);
+    expect(core.engine.now().simT).toBe(core.clock.simT);
+    core.catchUp(1016 + 420_010); // the page's catch-up then finds no gap left to double-count
+    expect(core.clock.simT).toBeLessThanOrEqual(420.03);
+    const t = core.clock.simT;
+    core.frame(1016 + 420_010 + 900); // under STALL_MS: a slow frame, clamped to 250 ms as before
+    expect(core.clock.simT - t).toBeLessThanOrEqual(0.2501);
+  });
+
+  it('FX-15: a stall while paused credits nothing', () => {
+    const { core } = make();
+    core.frame(1000);
+    core.clock.pause();
+    core.frame(1000 + 300_000);
+    core.clock.resume();
+    core.frame(1000 + 300_016);
+    expect(core.clock.simT).toBeLessThan(0.05);
+  });
+
   it('posts the events generated while hidden instead of letting the batch grow', () => {
     const { core, posts } = make();
     core.frame(1000);
