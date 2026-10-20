@@ -1,7 +1,7 @@
 // Alarm header and tile views (brief §6.4 visual table, §6.4.1) as pure functions.
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, resolveSkin } from '@pme/skins';
-import { barView, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
+import { barView, rotateS, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
 
 const sa = resolveSkin('saadat-like');
 const ph = resolveSkin('philips-like');
@@ -61,6 +61,17 @@ describe('barView: latched style, INOP visibility', () => {
     const b = barView(status({ active: [{ ...asy, id: 'apnoea-co2', text: '***APNEA' }, { ...leads, text: 'ECG LEADS OFF' }] }), mr, 14);
     expect(b.text).toBe('***APNEA');
     expect(b.inop?.text).toBe('ECG LEADS OFF');
+  });
+});
+
+describe('barView: rotation period', () => {
+  it('saadat-like rotates same-level messages every 6 s (research/34 §2: 5.5–7 s measured); philips-like keeps 2 s', () => {
+    const a = { ...leads, id: 'a', text: 'MSG A', since: 1 };
+    const b = { ...leads, id: 'b', text: 'MSG B', since: 2 };
+    const s = status({ active: [a, b] });
+    expect([12, 17, 18].map((t) => barView(s, sa, t).text)).toEqual(['MSG A', 'MSG A', 'MSG B']);
+    expect(rotateS(sa)).toBe(6);
+    expect(rotateS(ph)).toBe(2);
   });
 });
 

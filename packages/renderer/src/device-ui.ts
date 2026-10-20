@@ -5,7 +5,7 @@
 import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
-import { formatNibp } from './numerics-hemo.ts';
+import { formatNibp, formatWallTime } from './numerics-hemo.ts';
 import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
@@ -38,6 +38,16 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-cd{min-width:4.5em;font-variant-numeric:tabular-nums}',
     '.pme-dev{font-weight:600;white-space:nowrap}',
     '.pme-badge{font-size:11px;border:1px solid currentColor;padding:1px 4px;opacity:.9}',
+    // Two-row header (skin layout.headerStyle, research/34 §3 row 7): rows of 5.8 % and 3.0 % of the monitor height
+    // [MOCKUP] once the layout sets --pme-h, never below 40 / 22 px; the bar is 43 % of the wave-area width
+    '.pme-hdr.two{height:auto;flex-direction:column;align-items:stretch;gap:0;padding:0}',
+    '.pme-hdr.two .r1{display:flex;align-items:center;gap:10px;height:max(40px,calc(5.8 * var(--pme-h, 0px) / 100));padding:0 8px;box-sizing:border-box}',
+    '.pme-hdr.two .r2{display:flex;align-items:center;gap:8px;height:max(22px,calc(3 * var(--pme-h, 0px) / 100));padding:0 8px 0 0;box-sizing:border-box}',
+    '.pme-hdr.two .r2 .pme-bar{flex:none;width:calc(0.43 * (100% - var(--pme-tiles-w, 0px)));font-weight:400}',
+    '.pme-hdr.two .pg{font-size:18px;padding:2px 8px;font-weight:600}',
+    '.pme-hdr.two .stk{display:flex;flex-direction:column;font-size:15px;line-height:17px;white-space:nowrap}',
+    '.pme-hdr.two .sp{flex:1}',
+    '.pme-hdr.two .dt{text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile{padding:4px 10px;line-height:1.05;border-top:1px solid var(--pme-divider)}',
     '.pme-stile .h{display:flex;gap:6px;align-items:center;font-size:13px}',
     '.pme-stile .h .u{margin-left:auto;opacity:.8}',
@@ -90,6 +100,7 @@ export class DeviceUI {
   private nibpPr: number | null = null; // The cuff's pulse rate (the NIBP tile's PR extra)
   private status: AlarmStatus | null = null;
   private dev: DeviceStatus | null = null;
+  /** Header items, built once and only re-arranged by a skin switch (one row, or the two-row header). */
   private readonly lamp: HTMLDivElement;
   private readonly bar: HTMLDivElement;
   private readonly inop: HTMLSpanElement;
@@ -98,29 +109,41 @@ export class DeviceUI {
   private readonly devEl: HTMLSpanElement;
   private readonly badge: HTMLSpanElement;
   private readonly date: HTMLSpanElement;
+  private readonly hx: Record<'page' | 'bed' | 'cat' | 'time' | 'who' | 'sp' | 'when' | 'r1' | 'r2', HTMLElement>;
+  /** The two-row header is in use (skin `layout.headerStyle`, never in portrait). */
+  private two = false;
+  private clock: ReturnType<typeof setInterval> | null = null;
+  private readonly bed: string;
+  private page: string | undefined;
 
   /** The tiles in a grid UNDER the waveforms (a phone held upright), not in columns beside them. */
   private readonly portrait: boolean;
 
-  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false) {
+  constructor(doc: Document, waveArea: HTMLElement, r: ResolvedSkin, page?: string, portrait = false, bed = 'BED 01') {
     this.r = r;
     this.portrait = portrait;
+    this.bed = bed;
     this.style = doc.createElement('style');
     doc.head.append(this.style);
     this.header = doc.createElement('div');
-    this.header.className = 'pme-hdr';
-    this.header.innerHTML =
-      '<div class="pme-lamp" data-pme="lamp"></div><div class="pme-bar" data-pme="bar"></div><span class="pme-inop" data-pme="inop"></span><span class="pme-cd" data-pme="cd"></span>' +
-      '<span class="pme-dev" data-pme="dev"></span><span data-pme="alloff"></span><span class="pme-badge" data-pme="badge"></span><span data-pme="date"></span>';
-    const q = <T extends HTMLElement>(k: string) => this.header.querySelector(`[data-pme="${k}"]`) as T;
-    this.lamp = q('lamp');
-    this.bar = q('bar');
-    this.inop = q('inop');
-    this.cd = q('cd');
-    this.allOff = q('alloff');
-    this.devEl = q('dev');
-    this.badge = q('badge');
-    this.date = q('date');
+    const mk = <T extends HTMLElement>(tag: string, cls: string, key?: string): T => {
+      const e = doc.createElement(tag) as T;
+      if (cls) e.className = cls;
+      if (key) e.dataset.pme = key;
+      return e;
+    };
+    this.lamp = mk('div', 'pme-lamp', 'lamp');
+    this.bar = mk('div', 'pme-bar', 'bar');
+    this.inop = mk('span', 'pme-inop', 'inop');
+    this.cd = mk('span', 'pme-cd', 'cd');
+    this.devEl = mk('span', 'pme-dev', 'dev');
+    this.allOff = mk('span', '', 'alloff');
+    this.badge = mk('span', 'pme-badge', 'badge');
+    this.date = mk('span', '', 'date');
+    this.hx = {
+      page: mk('span', 'pg', 'page'), bed: mk('span', '', 'bed'), cat: mk('span', '', 'cat'), time: mk('span', '', 'time'),
+      who: mk('span', 'stk'), sp: mk('span', 'sp'), when: mk('span', 'stk dt'), r1: mk('div', 'r1'), r2: mk('div', 'r2'),
+    };
     this.tiles = doc.createElement('div');
     // Portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
     this.tiles.style.cssText = portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
@@ -137,8 +160,12 @@ export class DeviceUI {
     this.pump = pg?.kind === 'pump';
     this.watermark.textContent = pg?.pump?.watermark ?? '';
     this.watermark.style.color = r.skin.colors.ECG ?? r.render.foreground;
+    this.page = pg?.label;
     this.style.textContent = flashCss(r);
+    this.buildHeader();
     this.header.style.cssText = `background:${r.render.background};color:${r.render.foreground};font-family:${r.render.fontStack};border-bottom:1px solid ${r.skin.chrome.divider};`;
+    // the bar is 43 % of the WAVE-AREA width [MOCKUP]; in the columns layout the header also spans the tile columns
+    if (this.two) this.header.style.setProperty('--pme-tiles-w', `${r.skin.layout.tiles.length * 181}px`);
     this.badge.textContent = r.skin.layout.badge ?? '';
     this.badge.style.display = r.skin.layout.badge ? '' : 'none';
     this.tiles.style.background = r.render.background;
@@ -166,6 +193,55 @@ export class DeviceUI {
     }
     this.paintTiles(this.status?.t ?? 0);
     this.paintHeader(this.status?.t ?? 0);
+  }
+
+  /**
+   * The header's DOM for this skin: the one-row header, or (skin `layout.headerStyle: 'two-row'`, research/34 §3 row 7)
+   * page box, bed, category, lamp, … date over time in row 1 and the message bar in row 2. Rebuilt on every skin
+   * switch, so a switch between the two leaves nothing behind.
+   */
+  private buildHeader(): void {
+    const r = this.r;
+    const h = this.hx;
+    if (this.clock !== null) clearInterval(this.clock);
+    this.clock = null;
+    // a phone held upright keeps the one-row header (as PR-G keeps the columns in portrait)
+    this.two = r.skin.layout.headerStyle === 'two-row' && !this.portrait;
+    const items = new Set(r.skin.layout.header);
+    const show = (el: HTMLElement, on: boolean) => (el.style.display = on ? '' : 'none');
+    show(this.lamp, !this.two || items.has('alarmState'));
+    show(this.cd, !this.two || items.has('silenceCountdown'));
+    if (!this.two) {
+      this.header.className = 'pme-hdr';
+      this.header.replaceChildren(this.lamp, this.bar, this.inop, this.cd, this.devEl, this.allOff, this.badge, this.date);
+      return;
+    }
+    this.header.className = 'pme-hdr two';
+    h.who.replaceChildren(h.bed, h.cat);
+    h.when.replaceChildren(this.date, h.time);
+    h.r1.replaceChildren(h.page, h.who, h.sp, this.lamp, this.cd, this.devEl, this.allOff, this.badge, h.when);
+    h.r2.replaceChildren(this.bar, this.inop);
+    this.header.replaceChildren(h.r1, h.r2);
+    h.page.style.background = r.skin.chrome.pageBox.bg;
+    h.page.style.color = r.skin.chrome.pageBox.fg;
+    h.bed.style.color = h.cat.style.color = r.skin.chrome.patientCategoryColor;
+    show(h.page, items.has('page'));
+    show(h.bed, items.has('bed'));
+    show(h.cat, items.has('category'));
+    show(h.when, items.has('datetime'));
+    // battery, recorder and network are listed by the skin but not modelled: not drawn
+    // E104: the clock is the wall clock and runs on its own, also while the simulation is paused or fast
+    if (items.has('datetime')) this.clock = setInterval(() => this.paintClock(), 1000);
+  }
+
+  /** Two-row header: the local date over the local time (the one-row header keeps its own date call). */
+  private paintClock(): void {
+    if (!this.two) return;
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    const cal = this.r.skin.calendar;
+    this.date.textContent = formatDate(local, cal.default, cal.gregorianFormat);
+    this.hx.time.textContent = formatWallTime(now.getTime());
   }
 
   onEvent(e: EngineEvent): void {
@@ -332,11 +408,21 @@ export class DeviceUI {
     this.cd.className = `pme-cd${b.countdownKind === 'silence' ? ' pme-f2' : ''}`;
     this.allOff.innerHTML = b.allOffBell ? BELL_OFF_SVG : '';
     this.devEl.textContent = deviceText(this.dev);
+    if (this.two) {
+      this.hx.page.textContent = this.page ?? '';
+      this.hx.bed.textContent = this.bed;
+      const band = this.status?.ageBand ?? 'adult'; // before the first status: ADULT [GUESS]
+      this.hx.cat.textContent = band === 'paed' ? 'PEDIATRIC' : band === 'neo' ? 'NEONATE' : 'ADULT';
+      this.paintClock();
+      return;
+    }
     const cal = this.r.skin.calendar;
     this.date.textContent = formatDate(new Date(), cal.default, cal.gregorianFormat);
   }
 
   destroy(): void {
+    if (this.clock !== null) clearInterval(this.clock);
+    this.clock = null;
     this.style.remove();
     this.watermark.remove();
   }

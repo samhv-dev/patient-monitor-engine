@@ -50,6 +50,8 @@ export interface MountOptions {
    * waveforms (a learner's phone held upright). Needs `skin`.
    */
   portrait?: boolean;
+  /** The bed line of a two-row header (skin `layout.headerStyle`); default "BED 01" (rc.3, E96). */
+  bed?: string;
 }
 
 /** A monitor either owns the simulation ('host') or mirrors one from its snapshot and commands ('viewer'). */
@@ -164,7 +166,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   wrap.append(canvas);
   const tiles = doc.createElement('div');
   tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Scroll
-  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait) : null; // Device layer; portrait
+  const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait, opts.bed) : null; // Device layer; portrait
   root.append(wrap, ui ? ui.tiles : tiles);
   if (ui) outer.append(ui.header);
   outer.append(root);

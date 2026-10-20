@@ -143,6 +143,11 @@ export interface Skin {
      * lane's right-hand label (text, colour, and a second line `sub` in the foreground). Themes darken the colours.
      */
     laneText?: { labels?: Partial<Record<LaneId, LaneTextLabel>> };
+    /**
+     * 'two-row': the header's first row holds the page box, bed, patient category, lamp and date over time; the message
+     * bar has a row of its own under it (saadat-like, research/34 §3 row 7). Absent = the one-row header.
+     */
+    headerStyle?: 'two-row';
   };
   pages: PageSpec[];
   defaultPage: string;
@@ -243,7 +248,7 @@ export interface Skin {
     lowPulses?: 1 | 2;
     volume: { min: number; max: number; default: number };
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
-    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
+    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean; /** Seconds per rotated message; absent = 2 s. */ rotateS?: number };
     /**
      * The vendor's own words for alarm texts, where they differ from the IEC table's Philips aliases — `texts` by fixed
      * alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key ('ART_S', 'TEMP', …). Wording only:

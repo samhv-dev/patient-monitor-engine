@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClock, formatNibp, formatPressure } from '../src/numerics-hemo.ts';
+import { formatClock, formatNibp, formatPressure, formatWallTime } from '../src/numerics-hemo.ts';
 
 describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
   it('pressure S/D (M), with dashes when invalid', () => {
@@ -23,5 +23,12 @@ describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
     expect(next(239.6)).toBe('next 4:00');
     expect(next(239.4)).toBe('next 3:59');
     expect(next(0)).toBe('next 0:00');
+  });
+});
+
+describe('wall-clock time (rc.3 saadat-like header and NIBP time)', () => {
+  it('formatWallTime is the local HH:MM:SS', () => {
+    expect(formatWallTime(new Date(2026, 9, 20, 3, 28, 57).getTime())).toBe('03:28:57');
+    expect(formatWallTime(new Date(2026, 9, 20, 23, 5, 0).getTime())).toBe('23:05:00');
   });
 });

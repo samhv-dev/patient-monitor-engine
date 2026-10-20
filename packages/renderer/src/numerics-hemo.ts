@@ -18,6 +18,12 @@ export function formatClock(simT: number): string {
   return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
 
+/** Epoch ms → the LOCAL wall time "HH:MM:SS" (the two-row header clock and the NIBP result time, rc.3). */
+export function formatWallTime(ms: number): string {
+  const d = new Date(ms);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
+}
+
 export interface NibpView {
   main: string; // last result "S/D" or the live cuff pressure while measuring
   sub: string; // "(M)" or the phase

@@ -7,6 +7,10 @@ import type { LampStyle, ResolvedSkin, TileParam } from '@pme/skins';
 export type AlarmStatus = Extract<EngineEvent, { type: 'alarmStatus' }>;
 /** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. */
 export const ROTATE_S = 2;
+/** The skin's rotation period (saadat-like 6 s, research/34 §2), else ROTATE_S. */
+export function rotateS(r: ResolvedSkin): number {
+  return r.skin.alarms.messageBar.rotateS ?? ROTATE_S;
+}
 
 export interface BarView {
   text: string;
@@ -63,7 +67,7 @@ export function barView(st: AlarmStatus | null, r: ResolvedSkin, t: number, pump
   const shown = st ? visibleAlarms(st, r, t, pumpPage) : [];
   const split = r.skin.layout.messageBars === 'split-technical-physiological';
   const techs = shown.filter((e) => e.category === 'technical');
-  const pick = (xs: AlarmEntry[]) => (a.messageBar.rotate ? (xs[Math.floor(t / ROTATE_S) % xs.length] as AlarmEntry) : (xs[0] as AlarmEntry));
+  const pick = (xs: AlarmEntry[]) => (a.messageBar.rotate ? (xs[Math.floor(t / rotateS(r)) % xs.length] as AlarmEntry) : (xs[0] as AlarmEntry));
   const style = (e: AlarmEntry) =>
     e.acked ? a.messageBar.acknowledged : e.latched ? { bg: a.messageBar.idle.bg, fg: a.messageBar[`L${e.level}`].bg } : a.messageBar[`L${e.level}`];
   const inopE = split && techs.length > 0 ? pick(techs) : null;
