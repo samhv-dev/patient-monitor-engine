@@ -48,6 +48,9 @@ export interface LaneConfig {
   /** Dotted horizontal scale lines at these values (signal units), repainted wherever the lane is cleared (skin
    *  `ibp.scaleLines`; research/34 row 11). */
   hLines?: { values: readonly number[]; color: string } | null;
+  /** FX-24: the first sample index the source holds (default 0). A restored engine holds nothing before its snapshot,
+   *  and a read from earlier returns its first sample as if it were the one asked for, so the backfill starts here. */
+  firstIndex?: number;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -218,11 +221,11 @@ export class SweepLane {
       // gone round once; the engine's buffer holds them (a read returns what it has).
       this.reset(ctx);
       const back = Math.min(Math.floor(((c.width - c.eraseGapPx) / this.pxPerS) * c.rate), BACKFILL_MAX_S * c.rate);
-      this.lastIndex = Math.max(-1, endIdx - 1 - back);
+      this.lastIndex = Math.max((c.firstIndex ?? 0) - 1, endIdx - 1 - back);
     }
     if (endIdx <= this.lastIndex) return cursor;
     const sn = Math.max(1, Math.floor(c.smoothN ?? 1));
-    const pre = Math.min(sn - 1, this.lastIndex + 1); // samples before the new ones that the average needs
+    const pre = Math.min(sn - 1, this.lastIndex + 1 - (c.firstIndex ?? 0)); // samples before the new ones that the average needs
     const need = endIdx - this.lastIndex + pre;
     if (this.scratch.length < need) this.scratch = new Float32Array(need * 2);
     let out: Float32Array = this.scratch.subarray(0, need);
