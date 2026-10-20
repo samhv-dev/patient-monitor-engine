@@ -112,4 +112,13 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
     expect(nb.nextStartT).toBeGreaterThan(1e11); // NEVER
     expect(nibpCommand(createNibpState('off'), 'manual', 0, undefined, out)).toBeUndefined();
   });
+
+  it('manual while idle between auto readings reports the idle phase, so the display drops the AUTO label', () => {
+    const nb = createNibpState('on');
+    nb.mode = 'auto';
+    nb.nextStartT = 300;
+    const out: Parameters<typeof nibpCommand>[4] = [];
+    nibpCommand(nb, 'manual', 10, undefined, out);
+    expect(out).toEqual([{ kind: 'phase', phase: 'idle', cuff: nb.cuff }]);
+  });
 });

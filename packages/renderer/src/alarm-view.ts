@@ -151,9 +151,12 @@ function pairFmt(key: string, v: number | null): string {
 export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: ResolvedSkin, t: number, pumpPage = false, partKeys: string[] = []): TileAlarmView {
   const spec = TILE_NUMERICS[param];
   const keys = spec.limits.filter((k) => st?.limits[k]);
+  // a tile's own pairs are those of its own numerics (the RR tile lists AWRR, the CO2 line's, which it does not show);
+  // a part's key is its own (R-T I2)
   const pairs = [...new Set([...spec.limits, ...partKeys])].flatMap((key) => {
     const l = st?.limits[key];
-    return l ? [{ key, high: pairFmt(key, l.high), low: pairFmt(key, l.low) }] : [];
+    if (!l || (!partKeys.includes(key) && !(spec.numerics as string[]).includes(l.numeric))) return [];
+    return [{ key, high: pairFmt(key, l.high), low: pairFmt(key, l.low) }];
   });
   if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '', pairs };
   const enabled = keys.some((k) => st.limits[k]?.enabled);

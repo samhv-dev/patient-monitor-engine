@@ -151,4 +151,17 @@ describe('haemodynamic acceptance 9: NIBP', () => {
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'manual' } })).accepted).toBe(true);
     expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'bogus' } })).reason).toBe('nibp action must be start, stat, stop, auto or manual');
   });
+
+  it('manual while the cuff is idle in AUTO emits an idle nibp event with mode manual', () => {
+    const { e, ev } = rig({ seed: 4 });
+    e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 5 } }));
+    for (let k = 0; k < 200 && !ev.some(isEnd); k++) e.advanceTo(e.now().simT + 0.5);
+    e.advanceTo(e.now().simT + 5);
+    const tm = e.now().simT;
+    expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'manual' } })).accepted).toBe(true);
+    e.advanceTo(tm + 1);
+    const after = ev.filter((x): x is Nibp => x.type === 'nibp' && x.t >= tm);
+    expect(after.length).toBeGreaterThan(0);
+    expect(after[after.length - 1]).toMatchObject({ phase: 'idle', mode: 'manual' });
+  });
 });

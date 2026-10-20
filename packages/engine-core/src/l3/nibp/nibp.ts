@@ -148,6 +148,8 @@ export function nibpCommand(nb: NibpState, action: 'start' | 'stat' | 'stop' | '
     case 'manual': // auto cycling off; a running measurement finishes (rc.3, the panel's "Off (manual)")
       nb.mode = 'manual';
       nb.nextStartT = NEVER;
+      // idle between auto readings: say so now, or the display keeps the AUTO label until the next reading (R-T I1)
+      if (!nibpMeasuring(nb)) out.push({ kind: 'phase', phase: 'idle', cuff: nb.cuff });
       return undefined;
     case 'stop':
       if (nb.mode === 'stat') nb.mode = nb.prevMode;

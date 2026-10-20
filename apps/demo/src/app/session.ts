@@ -362,7 +362,8 @@ export class AppSession {
     const m = this.monitor;
     const action = this.spec.attached && m?.skin ? nibpStartCommand(m.skin.skin) : null;
     if (m && action) {
-      const c = { id: `nibp-default-${seed}-${++this.nibpStarts}`, issuedBy: 'device', type: 'device', action } as Command;
+      const c = { id: `nibp-default-${seed}-${Date.now()}-${++this.nibpStarts}`, // unique across host reloads too (R-T m4)
+        issuedBy: 'device', type: 'device', action } as Command;
       void m.dispatch(c).then((r) => this.host.mirror(c, r));
     }
   }

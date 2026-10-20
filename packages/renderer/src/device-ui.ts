@@ -57,17 +57,17 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile .s{font-size:16px;text-align:right;font-variant-numeric:tabular-nums;min-height:18px}',
     // rc.3 tile skeleton (opt-in, saadat-like; research/34 §3 rows 4, 8, 12, 14): limit pairs beside the value, high
     // over low; split tiles as parts side by side ('row') or stacked ('column')
-    '.pme-stile.b9 .vrow,.pme-stile.b9 .srow{display:flex;align-items:center;gap:4px}',
-    '.pme-stile.b9 .vrow .v,.pme-stile.b9 .srow .s{flex:1;min-width:0}',
-    '.pme-stile.b9 .lim.a,.pme-stile.b9 .lim.b,.pme-stile.b9 .lim.c,.pme-stile.b9 .part .lim{display:flex;flex-direction:column;gap:2px;font-size:11px;line-height:1;min-height:0;text-align:left;opacity:1}',
-    '.pme-stile.b9 [data-lim]{display:flex;flex-direction:column;gap:2px}',
-    '.pme-stile.b9 .limrow{display:flex;justify-content:space-around;font-size:11px;line-height:1;min-height:11px}',
-    '.pme-stile.b9 .limrow [data-lim]{flex-direction:row;gap:6px}',
-    '.pme-stile.b9 [data-pme="ntime"],.pme-stile.b9 [data-pme="mode"]{font-size:12px;white-space:nowrap}',
-    '.pme-stile.b9 [data-pme="src"]{font-size:12px}',
-    '.pme-stile.b9 .h{gap:4px;white-space:nowrap}',
-    '.pme-stile.b9 .h .u{font-size:11px}',
-    '.pme-stile.b9 [data-pme="mode"]{font-size:11px}',
+    '.pme-stile.rc3 .vrow,.pme-stile.rc3 .srow{display:flex;align-items:center;gap:4px}',
+    '.pme-stile.rc3 .vrow .v,.pme-stile.rc3 .srow .s{flex:1;min-width:0}',
+    '.pme-stile.rc3 .lim.a,.pme-stile.rc3 .lim.b,.pme-stile.rc3 .lim.c,.pme-stile.rc3 .part .lim{display:flex;flex-direction:column;gap:2px;font-size:11px;line-height:1;min-height:0;text-align:left;opacity:1}',
+    '.pme-stile.rc3 [data-lim]{display:flex;flex-direction:column;gap:2px}',
+    '.pme-stile.rc3 .limrow{display:flex;justify-content:space-around;font-size:11px;line-height:1;min-height:11px}',
+    '.pme-stile.rc3 .limrow [data-lim]{flex-direction:row;gap:6px}',
+    '.pme-stile.rc3 [data-pme="ntime"],.pme-stile.rc3 [data-pme="mode"]{font-size:12px;white-space:nowrap}',
+    '.pme-stile.rc3 [data-pme="src"]{font-size:12px}',
+    '.pme-stile.rc3 .h{gap:4px;white-space:nowrap}',
+    '.pme-stile.rc3 .h .u{font-size:11px}',
+    '.pme-stile.rc3 [data-pme="mode"]{font-size:11px}',
     '.pme-stile.split .parts{display:flex;gap:4px}',
     '.pme-stile.split.column .parts{flex-direction:column;gap:0}',
     '.pme-stile.split .part{flex:1;min-width:0}',
@@ -79,10 +79,10 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.split.column .pv{font-size:20px}',
     '.pme-stile.split.column .part{margin-bottom:3px}',
     '.pme-stile.split .s:empty{display:none}',
-    '.pme-stile.b9 [data-pme="heart"]{margin-left:6px;opacity:0}',
-    '.pme-stile.b9 [data-pme="heart"].on{opacity:1}',
-    '.pme-stile.b9 [data-pme="st"]{font-size:12px;line-height:1.3}',
-    '.pme-stile.b9 .stl{display:flex;align-items:center;gap:4px}',
+    '.pme-stile.rc3 [data-pme="heart"]{margin-left:6px;opacity:0}',
+    '.pme-stile.rc3 [data-pme="heart"].on{opacity:1}',
+    '.pme-stile.rc3 [data-pme="st"]{font-size:12px;line-height:1.3}',
+    '.pme-stile.rc3 .stl{display:flex;align-items:center;gap:4px}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
     // Portrait tiles (a phone): a third of the width each, numerics as large as that leaves
     '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
@@ -92,7 +92,7 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
     '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
     // the rc.3 limit pairs stay off a phone, as the old limits do (review T-12)
-    '.pme-portrait .pme-stile.b9 .lim.a,.pme-portrait .pme-stile.b9 .lim.b,.pme-portrait .pme-stile.b9 .lim.c,.pme-portrait .pme-stile.b9 .part .lim,.pme-portrait .pme-stile.b9 .limrow{display:none}',
+    '.pme-portrait .pme-stile.rc3 .lim.a,.pme-portrait .pme-stile.rc3 .lim.b,.pme-portrait .pme-stile.rc3 .lim.c,.pme-portrait .pme-stile.rc3 .part .lim,.pme-portrait .pme-stile.rc3 .limrow{display:none}',
   ].join('\n');
 }
 
@@ -116,11 +116,11 @@ interface Tile {
   /** The old skeleton's "50–150" limits; null in the rc.3 skeleton (limit pairs instead). */
   lim: HTMLSpanElement | null;
   /** The rc.3 skeleton (skin `alarms.limitsDisplay: 'always'` or a split tile), or null for the old one. */
-  b9: TileB9 | null;
+  rc3: TileRc3 | null;
 }
 
 /** The rc.3 tile skeleton's parts (research/34 §3 rows 4, 8, 12, 14; IMG_8113). */
-interface TileB9 {
+interface TileRc3 {
   /** Limit-pair slots: a left of the value, b right of it, c under the left; row = one row under the value. */
   slots: { a: HTMLElement | null; b: HTMLElement | null; c: HTMLElement | null; row: HTMLElement | null };
   /** Split tiles: part k's label, value and limit slot (part 0's label and value ARE [data-pme=lbl] and [data-pme=v]). */
@@ -248,14 +248,14 @@ export class DeviceUI {
     el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
     el.style.fontFamily = r.render.fontStack;
     const q = <T extends HTMLElement>(sel: string) => el.querySelector(sel) as T;
-    const b9 = r.skin.alarms.limitsDisplay === 'always' || spec.split !== undefined;
-    if (!b9) {
+    const rc3 = r.skin.alarms.limitsDisplay === 'always' || spec.split !== undefined;
+    if (!rc3) {
       el.innerHTML = `<div class="h"><span data-pme="lbl">${spec.param}</span><span data-pme="bell"></span><span class="u">${spec.unit ?? UNIT[spec.param] ?? ''}</span></div><div class="lim"><span data-pme="lim"></span></div><div class="v" data-pme="v"></div><div class="s" data-pme="s"></div>`;
       const v = q<HTMLDivElement>('[data-pme="v"]');
       v.style.fontWeight = String(spec.weight ?? r.render.numericWeight);
-      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: q('[data-pme="lim"]'), b9: null };
+      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: q('[data-pme="lim"]'), rc3: null };
     }
-    el.classList.add('b9');
+    el.classList.add('rc3');
     if (spec.split) {
       el.classList.add('split', spec.split);
       const parts = spec.parts ?? [{ label: spec.label ?? spec.param }];
@@ -272,7 +272,7 @@ export class DeviceUI {
         return { label: root.querySelector('.pl') as HTMLElement, value, lim: root.querySelector('.lim') as HTMLElement, limitKey: pt.limit };
       });
       const v = q<HTMLDivElement>('[data-pme="v"]');
-      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null, b9: { slots: { a: null, b: null, c: null, row: null }, parts: partEls, painted: new Map() } };
+      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null, rc3: { slots: { a: null, b: null, c: null, row: null }, parts: partEls, painted: new Map() } };
     }
     el.innerHTML =
       `<div class="h"><span data-pme="lbl"></span><span data-pme="src"></span><span data-pme="bell"></span><span data-pme="mode"></span><span class="u"></span>${spec.status ? `<span data-pme="heart" style="color:${r.skin.colors.PR ?? r.render.foreground}">♥</span>` : ''}</div>` +
@@ -286,7 +286,7 @@ export class DeviceUI {
     if (spec.italic) v.style.fontStyle = 'italic';
     return {
       spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null,
-      b9: { slots: { a: q('.lim.a'), b: q('.lim.b'), c: q('.lim.c'), row: el.querySelector('.limrow') }, parts: [], painted: new Map() },
+      rc3: { slots: { a: q('.lim.a'), b: q('.lim.b'), c: q('.lim.c'), row: el.querySelector('.limrow') }, parts: [], painted: new Map() },
     };
   }
 
@@ -313,7 +313,7 @@ export class DeviceUI {
 
   /** rc.3 skeleton: each limit pair into its slot (a part's own key into its part), in the skin's limit colour. */
   private paintPairs(tile: Tile, pairs: Array<{ key: string; high: string; low: string }>): void {
-    const b = tile.b9 as TileB9;
+    const b = tile.rc3 as TileRc3;
     const html = new Map<HTMLElement, string>();
     for (const slot of [b.slots.a, b.slots.b, b.slots.c, b.slots.row, ...b.parts.map((pt) => pt.lim)]) if (slot) html.set(slot, '');
     const color = this.r.skin.alarms.limitsColor ?? '';
@@ -524,7 +524,7 @@ export class DeviceUI {
         // A failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)
         main = this.nibpEv?.phase === 'failed' ? g.nibpFail : n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;
         sub = `${n.sub === '(---)' ? '' : n.sub} ${n.status}`.trim();
-        if (tile.b9) {
+        if (tile.rc3) {
           // rc.3 (research/34 §3 row 8, IMG_8113): "119 / 90" spaced, "(101)" under it, the mode label and the time of
           // the result; the inflating and measuring states keep their text
           const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
@@ -543,29 +543,29 @@ export class DeviceUI {
         const id = TILE_NUMERICS[p].numerics[0] as NumericId;
         main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
       }
-      const split = tile.b9 !== null && tile.b9.parts.length > 0;
+      const split = tile.rc3 !== null && tile.rc3.parts.length > 0;
       const extra = split ? '' : this.extras(tile.spec);
       if (extra) sub = sub ? `${sub}  ${extra}` : extra;
       if (tile.spec.label !== undefined && label === p) label = tile.spec.label; // a relabel ("PR") wins over the spec's label
       if (split) {
         sub = '';
         const xs = this.extraParts(tile.spec);
-        (tile.b9 as TileB9).parts.forEach((pt, k) => {
+        (tile.rc3 as TileRc3).parts.forEach((pt, k) => {
           if (k > 0) pt.value.textContent = xs[k - 1]?.value ?? '';
         });
         label = tile.spec.parts?.[0]?.label ?? label;
       }
       tile.label.textContent = label;
       tile.value.textContent = main;
-      if (p === 'HR' && tile.b9) this.paintPrTile(tile, source);
+      if (p === 'HR' && tile.rc3) this.paintPrTile(tile, source);
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
       if (!split) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;
-      const partKeys = tile.b9?.parts.flatMap((pt) => (pt.limitKey ? [pt.limitKey] : [])) ?? [];
+      const partKeys = tile.rc3?.parts.flatMap((pt) => (pt.limitKey ? [pt.limitKey] : [])) ?? [];
       const av = tileAlarmView(p, this.status, this.r, t, this.pump, partKeys);
       tile.bell.innerHTML = av.bellOff && this.r.skin.alarms.alarmOffIcon === 'crossed-bell-red' ? BELL_OFF_SVG : av.bellOff ? '🔕' : '';
       if (tile.lim) tile.lim.textContent = av.limits;
-      if (tile.b9) this.paintPairs(tile, av.pairs);
+      if (tile.rc3) this.paintPairs(tile, av.pairs);
       const base = split ? 'pv' : 'v';
       tile.value.className = av.flash === 1 ? `${base} pme-f1` : av.flash === 2 ? `${base} pme-f2` : base;
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;

@@ -10,9 +10,14 @@ import { DeviceUI } from '../src/device-ui.ts';
 const m = (value: number | null, t: number): Measured => ({ value, flag: value === null ? 'invalid' : 'valid', at: t });
 const meas = (t: number, values: Record<string, Measured>): EngineEvent => ({ type: 'measurement', t, values }) as EngineEvent;
 type Lim = { low: number; high: number; enabled?: boolean };
+/** The numeric each limit key watches (engine l3/alarms/profile.ts). */
+const NUMERIC: Record<string, string> = {
+  HR: 'hr', SpO2: 'spo2', RR: 'rr', AWRR: 'awrr', EtCO2_pctV: 'etco2', T1: 'tempCore', T2: 'tempSite',
+  NIBP_S: 'nibpSys', NIBP_D: 'nibpDia', NIBP_M: 'nibpMean', ART_S: 'abpSys', ART_D: 'abpDia', ART_M: 'abpMean', CVP_M: 'cvpMean',
+};
 const status = (t: number, limits: Record<string, Lim>): EngineEvent => ({
   type: 'alarmStatus', t, skin: 'saadat-like', ageBand: 'adult', silencedUntil: null, pausedUntil: null, allOff: false, arrhythmiaAnalysis: false, volume: 1, active: [],
-  limits: Object.fromEntries(Object.entries(limits).map(([k, l]) => [k, { numeric: 'hr', low: l.low, high: l.high, enabled: l.enabled ?? false, level: 2, approximate: false }])),
+  limits: Object.fromEntries(Object.entries(limits).map(([k, l]) => [k, { numeric: NUMERIC[k] ?? 'hr', low: l.low, high: l.high, enabled: l.enabled ?? false, level: 2, approximate: false }])),
 }) as EngineEvent;
 
 function mount(id: string, co2 = false) {
@@ -173,5 +178,13 @@ describe('saadat-like tile skeleton', () => {
     ui.reset(10);
     expect(tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent).toBe('');
     expect(tile('NIBP').querySelector('[data-pme="mode"]')?.textContent).toBe('');
+  });
+
+  it('a tile prints only the pairs of its own numerics: RR shows RR, not the AWRR limit of a CO2 line that is not attached', () => {
+    const { ui, tile } = mount('saadat-like');
+    ui.onEvent(status(5, { HR: { low: 50, high: 150 }, RR: { low: 5, high: 25 }, AWRR: { low: 5, high: 30 }, EtCO2_pctV: { low: 19.76, high: 49.4 }, T1: { low: 35, high: 39 }, T2: { low: 36, high: 40 } }));
+    ui.paint(5);
+    expect([...tile('RR').querySelectorAll('[data-lim]')].map((e) => e.getAttribute('data-lim'))).toEqual(['RR']);
+    expect([...tile('TEMP').querySelectorAll('[data-lim]')].map((e) => e.getAttribute('data-lim'))).toEqual(['T1', 'T2']);
   });
 });

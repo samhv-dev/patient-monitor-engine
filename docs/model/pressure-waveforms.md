@@ -321,7 +321,7 @@ Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFa
 
 ## Tests
 
-58 tests in 16 files; 1 expected failures, 0 skipped.
+59 tests in 16 files; 1 expected failures, 0 skipped.
 
 | File | Tests | Expected failures | Skipped |
 |---|---|---|---|
@@ -329,7 +329,7 @@ Exported without a doc comment: `createCvpState`, `createLineState`, `ejectionFa
 | [`engine/hemo-engine.test.ts`](../../packages/engine-core/test/engine/hemo-engine.test.ts) | 6 | 0 | 0 |
 | [`engine/hemo-longrun.test.ts`](../../packages/engine-core/test/engine/hemo-longrun.test.ts) | 2 | 0 | 0 |
 | [`engine/hemo-nibp-arrest.test.ts`](../../packages/engine-core/test/engine/hemo-nibp-arrest.test.ts) | 1 | 0 | 0 |
-| [`engine/hemo-nibp.test.ts`](../../packages/engine-core/test/engine/hemo-nibp.test.ts) | 7 | 0 | 0 |
+| [`engine/hemo-nibp.test.ts`](../../packages/engine-core/test/engine/hemo-nibp.test.ts) | 8 | 0 | 0 |
 | [`engine/hemo-vf.test.ts`](../../packages/engine-core/test/engine/hemo-vf.test.ts) | 1 | 0 | 0 |
 | [`engine/spo2-motion-recovery.test.ts`](../../packages/engine-core/test/engine/spo2-motion-recovery.test.ts) | 1 | 0 | 0 |
 | [`l2/hemo/breath-signal-seam.test.ts`](../../packages/engine-core/test/l2/hemo/breath-signal-seam.test.ts) | 1 | 0 | 0 |
