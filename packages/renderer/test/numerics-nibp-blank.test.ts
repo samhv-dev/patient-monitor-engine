@@ -13,7 +13,7 @@ const meas = (t: number, values: Record<string, Measured>): EngineEvent => ({ ty
 const nibp = (t: number, phase: string, result?: object): EngineEvent => ({ type: 'nibp', t, phase, cuffMmHg: 0, ...(result ? { result } : {}) }) as EngineEvent;
 
 describe('a failed cuff cycle does not leave the last pressure on the tile', () => {
-  for (const [id, noValue] of [['saadat-like', '---'], ['philips-like', '---'], ['mindray-like', '---']] as const) {
+  for (const [id, noValue] of [['saadat-like', ''], ['philips-like', '---'], ['mindray-like', '---']] as const) {
     it(`${id}: done 121/76 → failed + blanked numerics → idle: the tile reads no value, not 121/76`, () => {
       const ui = new DeviceUI(document, document.createElement('div'), resolveSkin(id));
       const v = () => ui.tiles.querySelector('.pme-stile[data-param="NIBP"] [data-pme="v"]')?.textContent;

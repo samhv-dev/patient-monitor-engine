@@ -119,12 +119,29 @@ export interface TileAlarmView {
   bellOff: boolean;
   /** "50–150" style limits, shown only when the alarm is ON (brief §6.4.1); '~' marks approximate (brief §6.8). */
   limits: string;
+  /**
+   * Every limit pair of the tile (its own keys, then the parts' keys) that the alarm status carries, ON or OFF — the
+   * skins that print limits always (`alarms.limitsDisplay: 'always'`, saadat-like, research/34 §3 row 12). Whole
+   * numbers, except temperatures (one decimal); '' for a missing side.
+   */
+  pairs: Array<{ key: string; high: string; low: string }>;
 }
 
-export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: ResolvedSkin, t: number, pumpPage = false): TileAlarmView {
+const TEMP_KEYS = new Set(['TEMP', 'T1', 'T2', 'dT']);
+/** A limit as the pair prints it: CO2 limits come in mmHg from %V × 7.6 (engine profile.ts), so whole numbers. */
+function pairFmt(key: string, v: number | null): string {
+  if (v === null) return '';
+  return TEMP_KEYS.has(key) || key === 'ST_mV' ? v.toFixed(1) : String(Math.round(v));
+}
+
+export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: ResolvedSkin, t: number, pumpPage = false, partKeys: string[] = []): TileAlarmView {
   const spec = TILE_NUMERICS[param];
   const keys = spec.limits.filter((k) => st?.limits[k]);
-  if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '' };
+  const pairs = [...new Set([...spec.limits, ...partKeys])].flatMap((key) => {
+    const l = st?.limits[key];
+    return l ? [{ key, high: pairFmt(key, l.high), low: pairFmt(key, l.low) }] : [];
+  });
+  if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '', pairs };
   const enabled = keys.some((k) => st.limits[k]?.enabled);
   const shown = r.skin.alarms.numericFlash ? visibleAlarms(st, r, t, pumpPage) : [];
   const mine = shown.filter((a) => !a.acked && a.category === 'physiological' && a.numeric !== undefined && spec.numerics.includes(a.numeric)); // INOPs mark, not flash
@@ -132,5 +149,5 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
   const l = st.limits[keys[0] as string];
   const fmt = (v: number | null) => (v === null ? '--' : String(Math.round(v * 10) / 10));
   const limits = enabled && l ? `${l.approximate ? '~' : ''}${fmt(l.low)}–${fmt(l.high)}` : '';
-  return { flash, bellOff: !enabled, limits };
+  return { flash, bellOff: !enabled, limits, pairs };
 }

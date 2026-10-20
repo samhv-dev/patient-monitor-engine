@@ -39,6 +39,14 @@ describe('themes', () => {
     }
   });
 
+  it('themes darken the limit colour', () => {
+    const r = resolveSkin('saadat-like', { theme: 'projector-light' });
+    const lim = r.skin.alarms.limitsColor as string;
+    expect(lim).toBeDefined();
+    expect(lim).not.toBe(resolveSkin('saadat-like').skin.alarms.limitsColor);
+    expect(contrastRatio(lim, r.render.background)).toBeGreaterThanOrEqual(THEMES['projector-light']!.colorTransform.minRatio);
+  });
+
   it('ecg-grid: 1 mm / 5 mm grid on paper', () => {
     expect(resolveSkin('philips-like', { theme: 'ecg-grid' }).render.grid).toMatchObject({ minorMm: 1, majorMm: 5 });
   });

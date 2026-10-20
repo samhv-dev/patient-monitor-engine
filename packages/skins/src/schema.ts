@@ -56,7 +56,20 @@ const colors: JsonSchema = {
   additionalProperties: false,
 };
 
-const tile = obj({ param: en(TILE_PARAMS) }, { size: en(['large', 'normal']), extras: arr({ type: 'string', pattern: '^[A-Za-z0-9%]+$' }) });
+const tilePart = obj({ label: str }, { unit: str, limit: { type: 'string', pattern: '^[A-Za-z0-9_]+$' } });
+const tile = obj({ param: en(TILE_PARAMS) }, {
+  size: en(['large', 'normal']),
+  extras: arr({ type: 'string', pattern: '^[A-Za-z0-9%]+$' }),
+  // rc.3 (opt-in): label, unit, weight, split parts, status lines, limit row (types.ts TileSpec)
+  label: str,
+  unit: str,
+  weight: int(100, 900),
+  italic: bool,
+  split: en(['row', 'column']),
+  parts: arr(tilePart, 1),
+  status: arr(en(['PACE', 'ST', 'PVCS']), 1),
+  limitsLayout: en(['row']),
+});
 /** layout.whenAttached: per sensor, lane → lane drawn in its place and tile → tile drawn in its place (types.ts SensorSwap). */
 const sensorSwap = obj({}, {
   lanes: { type: 'object', properties: Object.fromEntries(LANE_IDS.map((k) => [k, en(LANE_IDS)])), additionalProperties: false, minProperties: 1 },
@@ -98,6 +111,8 @@ const alarms = obj(
     repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),
     lowPulses: en([1, 2]),
     numericStyle: en(['flash-text', 'flash-box']),
+    limitsDisplay: en(['when-on', 'always']),
+    limitsColor: hex,
     wording: obj({}, { texts: record(str, '^[A-Za-z0-9_-]+$'), limitLabels: record(str) }),
   },
 );
@@ -129,6 +144,7 @@ export const skinSchema: JsonSchema = {
       badge: str,
       whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))),
       headerStyle: en(['two-row']),
+      showAlways: arr(en(TILE_PARAMS), 1),
       laneText: obj({}, { labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))) }),
     }),
     pages: arr(page, 1),
@@ -243,7 +259,8 @@ export const skinSchema: JsonSchema = {
       }),
     ),
     trend: obj({ style: en(['line', 'filled-area']), hours: num(1, 168) }),
-    glyphs: obj({ noValue: str, hrUnavailable: str, nibpFail: str, questionable: str, inop: str }),
+    // noValue and inop may be empty: a blank field (saadat-like, research/34 §8 O1)
+    glyphs: obj({ noValue: { type: 'string' }, hrUnavailable: str, nibpFail: str, questionable: str, inop: { type: 'string' } }),
     provenance: provenanceSchema,
   }),
   allOf: [

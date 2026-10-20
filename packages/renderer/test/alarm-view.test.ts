@@ -77,9 +77,24 @@ describe('barView: rotation period', () => {
 
 describe('tileAlarmView', () => {
   it('limits shown only when ON; crossed bell when OFF; flash level from the alarm on its numeric', () => {
-    expect(tileAlarmView('HR', status({ active: [hr] }), sa, 10)).toEqual({ flash: 2, bellOff: false, limits: '50–150' });
+    expect(tileAlarmView('HR', status({ active: [hr] }), sa, 10)).toEqual({ flash: 2, bellOff: false, limits: '50–150', pairs: [{ key: 'HR', high: '150', low: '50' }] });
     const off = status({ limits: { HR: { numeric: 'hr', low: 50, high: 150, enabled: false, level: 1, approximate: true } } });
-    expect(tileAlarmView('HR', off, sa, 10)).toEqual({ flash: null, bellOff: true, limits: '' });
+    expect(tileAlarmView('HR', off, sa, 10)).toEqual({ flash: null, bellOff: true, limits: '', pairs: [{ key: 'HR', high: '150', low: '50' }] });
     expect(tileAlarmView('HR', status({ active: [hr], silencedUntil: 100 }), sa, 10).flash).toBeNull(); // saadat-like silence hides it
+  });
+  it('pairs: every limit key of the tile, ON or OFF (saadat-like shows them always)', () => {
+    const l = (low: number, high: number) => ({ numeric: 'nibpSys' as const, low, high, enabled: false, level: 2 as const, approximate: false });
+    const st = status({ limits: { NIBP_S: l(90, 160), NIBP_D: l(50, 90), NIBP_M: l(60, 110) } });
+    const v = tileAlarmView('NIBP', st, sa, 10);
+    expect(v.pairs).toEqual([{ key: 'NIBP_S', high: '160', low: '90' }, { key: 'NIBP_D', high: '90', low: '50' }, { key: 'NIBP_M', high: '110', low: '60' }]);
+    expect(v.limits).toBe('');
+    expect(v.bellOff).toBe(true);
+  });
+  it('pairs: whole mmHg for the CO2 limits (the engine converts %V × 7.6), one decimal for temperatures; part keys included', () => {
+    const l = (low: number, high: number) => ({ numeric: 'etco2' as const, low, high, enabled: false, level: 2 as const, approximate: false });
+    const co2 = tileAlarmView('CO2', status({ limits: { EtCO2_pctV: l(19.76, 49.4), AWRR: l(5, 30) } }), sa, 10, false, ['AWRR']);
+    expect(co2.pairs).toEqual([{ key: 'EtCO2_pctV', high: '49', low: '20' }, { key: 'AWRR', high: '30', low: '5' }]);
+    const temp = tileAlarmView('TEMP', status({ limits: { T1: l(35, 39), T2: l(36, 40) } }), sa, 10, false, ['T2']);
+    expect(temp.pairs).toEqual([{ key: 'T1', high: '39.0', low: '35.0' }, { key: 'T2', high: '40.0', low: '36.0' }]);
   });
 });

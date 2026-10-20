@@ -55,6 +55,25 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile .v{font-size:40px;text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile.large .v{font-size:60px}',
     '.pme-stile .s{font-size:16px;text-align:right;font-variant-numeric:tabular-nums;min-height:18px}',
+    // rc.3 tile skeleton (opt-in, saadat-like; research/34 §3 rows 4, 8, 12, 14): limit pairs beside the value, high
+    // over low; split tiles as parts side by side ('row') or stacked ('column')
+    '.pme-stile.b9 .vrow,.pme-stile.b9 .srow{display:flex;align-items:center;gap:4px}',
+    '.pme-stile.b9 .vrow .v,.pme-stile.b9 .srow .s{flex:1;min-width:0}',
+    '.pme-stile.b9 .lim.a,.pme-stile.b9 .lim.b,.pme-stile.b9 .lim.c,.pme-stile.b9 .part .lim{display:flex;flex-direction:column;gap:2px;font-size:11px;line-height:1;min-height:0;text-align:left;opacity:1}',
+    '.pme-stile.b9 [data-lim]{display:flex;flex-direction:column;gap:2px}',
+    '.pme-stile.b9 .limrow{display:flex;justify-content:space-around;font-size:11px;line-height:1;min-height:11px}',
+    '.pme-stile.b9 .limrow [data-lim]{flex-direction:row;gap:6px}',
+    '.pme-stile.b9 [data-pme="ntime"],.pme-stile.b9 [data-pme="mode"]{font-size:12px;white-space:nowrap}',
+    '.pme-stile.b9 [data-pme="src"]{font-size:12px}',
+    '.pme-stile.split .parts{display:flex;gap:4px}',
+    '.pme-stile.split.column .parts{flex-direction:column;gap:0}',
+    '.pme-stile.split .part{flex:1;min-width:0}',
+    '.pme-stile.split .ph{display:flex;gap:4px;align-items:baseline;font-size:13px;white-space:nowrap}',
+    '.pme-stile.split .pu{font-size:10px;opacity:.85}',
+    '.pme-stile.split .pr{display:flex;align-items:center;gap:3px}',
+    '.pme-stile.split .pv{flex:1;font-size:28px;line-height:1.05;min-height:1.05em;text-align:right;font-variant-numeric:tabular-nums}',
+    '.pme-stile.split.column .pv{font-size:20px}',
+    '.pme-stile.split .s:empty{display:none}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
     // Portrait tiles (a phone): a third of the width each, numerics as large as that leaves
     '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
@@ -83,7 +102,20 @@ interface Tile {
   value: HTMLDivElement;
   sub: HTMLDivElement;
   bell: HTMLSpanElement;
-  lim: HTMLSpanElement;
+  /** The old skeleton's "50–150" limits; null in the rc.3 skeleton (limit pairs instead). */
+  lim: HTMLSpanElement | null;
+  /** The rc.3 skeleton (skin `alarms.limitsDisplay: 'always'` or a split tile), or null for the old one. */
+  b9: TileB9 | null;
+}
+
+/** The rc.3 tile skeleton's parts (research/34 §3 rows 4, 8, 12, 14; IMG_8113). */
+interface TileB9 {
+  /** Limit-pair slots: a left of the value, b right of it, c under the left; row = one row under the value. */
+  slots: { a: HTMLElement | null; b: HTMLElement | null; c: HTMLElement | null; row: HTMLElement | null };
+  /** Split tiles: part k's label, value and limit slot (part 0's label and value ARE [data-pme=lbl] and [data-pme=v]). */
+  parts: Array<{ label: HTMLElement; value: HTMLElement; lim: HTMLElement; limitKey: string | undefined }>;
+  /** Last limit HTML per slot (a repaint only touches the DOM when it changes). */
+  painted: Map<HTMLElement, string>;
 }
 
 export class DeviceUI {
@@ -177,22 +209,90 @@ export class DeviceUI {
       const c = doc.createElement('div');
       c.style.cssText = this.portrait ? 'display:contents' : `width:180px;border-left:1px solid ${r.skin.chrome.divider};`;
       for (const spec of col) {
-        const el = doc.createElement('div');
-        // The HR tile keeps the original class `pme-tile`, which the IIFE smoke test (and embedders) look up
-        el.className = `${spec.param === 'HR' ? 'pme-tile ' : ''}pme-stile${spec.size === 'large' ? ' large' : ''}`;
-        el.dataset.param = spec.param;
-        el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
-        el.style.fontFamily = r.render.fontStack;
-        el.innerHTML = `<div class="h"><span data-pme="lbl">${spec.param}</span><span data-pme="bell"></span><span class="u">${UNIT[spec.param] ?? ''}</span></div><div class="lim"><span data-pme="lim"></span></div><div class="v" data-pme="v"></div><div class="s" data-pme="s"></div>`;
-        const v = el.querySelector('[data-pme="v"]') as HTMLDivElement;
-        v.style.fontWeight = String(r.render.numericWeight);
-        this.tileList.push({ spec, el, label: el.querySelector('[data-pme="lbl"]') as HTMLSpanElement, value: v, sub: el.querySelector('[data-pme="s"]') as HTMLDivElement, bell: el.querySelector('[data-pme="bell"]') as HTMLSpanElement, lim: el.querySelector('[data-pme="lim"]') as HTMLSpanElement });
+        const tile = this.buildTile(spec);
+        this.tileList.push(tile);
+        const el = tile.el;
         c.append(el);
       }
       this.tiles.append(c);
     }
     this.paintTiles(this.status?.t ?? 0);
     this.paintHeader(this.status?.t ?? 0);
+  }
+
+  /**
+   * One tile. The old skeleton (label, bell, unit / "50–150" / value / sub-line) for every skin that does not opt in;
+   * the rc.3 skeleton when the skin prints limits always (`alarms.limitsDisplay`) or the tile is split (`split`).
+   */
+  private buildTile(spec: TileSpec): Tile {
+    const r = this.r;
+    const doc = this.tiles.ownerDocument;
+    const el = doc.createElement('div');
+    // The HR tile keeps the original class `pme-tile`, which the IIFE smoke test (and embedders) look up
+    el.className = `${spec.param === 'HR' ? 'pme-tile ' : ''}pme-stile${spec.size === 'large' ? ' large' : ''}`;
+    el.dataset.param = spec.param;
+    el.style.color = r.render.tileColors[spec.param] ?? r.render.foreground;
+    el.style.fontFamily = r.render.fontStack;
+    const q = <T extends HTMLElement>(sel: string) => el.querySelector(sel) as T;
+    const b9 = r.skin.alarms.limitsDisplay === 'always' || spec.split !== undefined;
+    if (!b9) {
+      el.innerHTML = `<div class="h"><span data-pme="lbl">${spec.param}</span><span data-pme="bell"></span><span class="u">${spec.unit ?? UNIT[spec.param] ?? ''}</span></div><div class="lim"><span data-pme="lim"></span></div><div class="v" data-pme="v"></div><div class="s" data-pme="s"></div>`;
+      const v = q<HTMLDivElement>('[data-pme="v"]');
+      v.style.fontWeight = String(spec.weight ?? r.render.numericWeight);
+      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: q('[data-pme="lim"]'), b9: null };
+    }
+    el.classList.add('b9');
+    if (spec.split) {
+      el.classList.add('split', spec.split);
+      const parts = spec.parts ?? [{ label: spec.label ?? spec.param }];
+      el.innerHTML =
+        `<div class="h"><span data-pme="bell"></span><span class="u">${spec.unit ?? ''}</span></div><div class="parts">` +
+        parts.map((pt, k) => `<div class="part" data-part="${k}"><div class="ph"><span class="pl"${k === 0 ? ' data-pme="lbl"' : ''}></span><span class="pu"></span></div><div class="pr"><span class="lim"></span><div class="pv"${k === 0 ? ' data-pme="v"' : ''}></div></div></div>`).join('') +
+        '</div><div class="s" data-pme="s"></div>';
+      const partEls = parts.map((pt, k) => {
+        const root = q<HTMLElement>(`[data-part="${k}"]`);
+        (root.querySelector('.pl') as HTMLElement).textContent = pt.label;
+        (root.querySelector('.pu') as HTMLElement).textContent = pt.unit ?? '';
+        const value = root.querySelector('.pv') as HTMLElement;
+        value.style.fontWeight = String(r.render.numericWeight); // M1: the parts' digits at the NIBP weight
+        return { label: root.querySelector('.pl') as HTMLElement, value, lim: root.querySelector('.lim') as HTMLElement, limitKey: pt.limit };
+      });
+      const v = q<HTMLDivElement>('[data-pme="v"]');
+      return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null, b9: { slots: { a: null, b: null, c: null, row: null }, parts: partEls, painted: new Map() } };
+    }
+    el.innerHTML =
+      '<div class="h"><span data-pme="lbl"></span><span data-pme="src"></span><span data-pme="bell"></span><span data-pme="mode"></span><span class="u"></span></div>' +
+      '<div class="vrow"><span class="lim a"></span><div class="v" data-pme="v"></div><span class="lim b"></span></div>' +
+      (spec.limitsLayout === 'row' ? '<div class="limrow"></div>' : '') +
+      '<div class="srow"><span class="lim c"></span><div class="s" data-pme="s"></div><span data-pme="ntime"></span></div><div data-pme="st"></div>';
+    q<HTMLElement>('.u').textContent = spec.unit ?? UNIT[spec.param] ?? '';
+    const v = q<HTMLDivElement>('[data-pme="v"]');
+    v.style.fontWeight = String(spec.weight ?? r.render.numericWeight);
+    if (spec.italic) v.style.fontStyle = 'italic';
+    return {
+      spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null,
+      b9: { slots: { a: q('.lim.a'), b: q('.lim.b'), c: q('.lim.c'), row: el.querySelector('.limrow') }, parts: [], painted: new Map() },
+    };
+  }
+
+  /** rc.3 skeleton: each limit pair into its slot (a part's own key into its part), in the skin's limit colour. */
+  private paintPairs(tile: Tile, pairs: Array<{ key: string; high: string; low: string }>): void {
+    const b = tile.b9 as TileB9;
+    const html = new Map<HTMLElement, string>();
+    for (const slot of [b.slots.a, b.slots.b, b.slots.c, b.slots.row, ...b.parts.map((pt) => pt.lim)]) if (slot) html.set(slot, '');
+    const color = this.r.skin.alarms.limitsColor ?? '';
+    for (const pr of pairs) {
+      const part = b.parts.find((pt) => pt.limitKey === pr.key);
+      const slot = part ? part.lim : b.slots.row ?? (pr.key.endsWith('_D') ? b.slots.b : pr.key.endsWith('_M') ? b.slots.c : b.slots.a);
+      if (!slot) continue;
+      const [x, y] = slot === b.slots.row ? [pr.low, pr.high] : [pr.high, pr.low]; // stacked high over low; the row reads low, high
+      html.set(slot, `${html.get(slot) ?? ''}<span data-lim="${pr.key}" style="color:${color}"><span>${x}</span><span>${y}</span></span>`);
+    }
+    for (const [slot, h] of html) {
+      if (b.painted.get(slot) === h) continue;
+      slot.innerHTML = h;
+      b.painted.set(slot, h);
+    }
   }
 
   /**
@@ -317,28 +417,36 @@ export class DeviceUI {
   }
 
   /**
-   * The skin's tile extras ("PR 76", "PI 1.6", "awRR 12", "T2 36.4", "ΔT 0.4", "ST-II -0.1"). MEAN is the pressure
-   * tiles' own sub-line and NMT/BFA extras are drawn by their formatters.
+   * The skin's tile extras in order, one entry each: label, value, and whether the one-line sub-text prints it ("PR 76",
+   * "PI 1.6", "awRR 12", "T2 36.4", "ΔT 0.4", "ST-II -0.1"). MEAN is the pressure tiles' own sub-line and NMT/BFA
+   * extras are drawn by their formatters; a split tile shows them as its parts (part k = entry k − 1), where an extra
+   * the engine does not publish (SQI%, EMG%) is a blank value under its label (research/34 §8 O1).
    */
-  private extras(spec: TileSpec): string {
+  private extraParts(spec: TileSpec): Array<{ label: string; value: string; text: boolean }> {
     const v = this.values;
-    const out: string[] = [];
-    for (const x of spec.extras ?? []) {
-      if (x === 'PR' && spec.param === 'NIBP') out.push(`PR ${this.nibpPr ?? this.r.skin.glyphs.noValue}`);
-      else if (x === 'PR') out.push(`PR ${this.text(v.pr)}`);
-      else if (x === 'PI') out.push(`PI ${this.text(v.pi, 1)}`);
-      else if (x === 'AWRR') out.push(`awRR ${this.text(v.awrr)}`);
-      else if (x === 'IMCO2') out.push(`${this.r.skin.id === 'philips-like' ? 'imCO2' : 'FiCO2'} ${this.text(v.imco2)}`); // Glossary #16
-      else if (x === 'T2') out.push(`T2 ${this.text(v.tempSite, 1)}`);
-      else if (x === 'ST') out.push(`ST-II ${this.text(v.stII, 1)}`); // research/11 glossary #22 (the lead-II ST numeric)
-      else if (x === 'DT') {
+    const g = this.r.skin.glyphs;
+    return (spec.extras ?? []).map((x) => {
+      if (x === 'PR' && spec.param === 'NIBP') return { label: 'PR', value: this.nibpPr !== null ? String(this.nibpPr) : g.noValue, text: true };
+      if (x === 'PR') return { label: 'PR', value: this.text(v.pr), text: true };
+      if (x === 'PI') return { label: 'PI', value: this.text(v.pi, 1), text: true };
+      if (x === 'AWRR') return { label: 'awRR', value: this.text(v.awrr), text: true };
+      if (x === 'IMCO2') return { label: this.r.skin.id === 'philips-like' ? 'imCO2' : 'FiCO2', value: this.text(v.imco2), text: true }; // Glossary #16
+      if (x === 'T2') return { label: 'T2', value: this.text(v.tempSite, 1), text: true };
+      if (x === 'ST') return { label: 'ST-II', value: this.text(v.stII, 1), text: true }; // research/11 glossary #22 (the lead-II ST numeric)
+      if (x === 'DT') {
         const a = v.tempCore;
         const b = v.tempSite;
         const ok = a && b && a.value !== null && b.value !== null && a.flag !== 'invalid' && b.flag !== 'invalid';
-        out.push(`ΔT ${ok ? Math.abs((a.value as number) - (b.value as number)).toFixed(1) : this.r.skin.glyphs.noValue}`);
+        return { label: 'ΔT', value: ok ? Math.abs((a.value as number) - (b.value as number)).toFixed(1) : g.noValue, text: true };
       }
-    }
-    return out.join('  ');
+      if (x === 'BS%' || x === 'SR') return { label: x, value: this.text(v.sr), text: false }; // the BFA formatter's sub-line
+      return { label: x, value: '', text: false };
+    });
+  }
+
+  /** The one-line extras text of the old skeleton and the unsplit rc.3 tiles. */
+  private extras(spec: TileSpec): string {
+    return this.extraParts(spec).filter((p) => p.text).map((p) => `${p.label} ${p.value}`).join('  ');
   }
 
   private paintTiles(t: number): void {
@@ -350,7 +458,8 @@ export class DeviceUI {
       let main = g.noValue;
       let sub = '';
       let label: string = p;
-      tile.el.style.display = modulePresent(p, v, t) ? '' : 'none'; // NMT/BFA only while the module publishes
+      // NMT/BFA only while the module publishes, unless the skin shows the module always (blank, research/34 §8 O1)
+      tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
       if (p === 'HR') ({ main, label } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
@@ -371,17 +480,30 @@ export class DeviceUI {
         const id = TILE_NUMERICS[p].numerics[0] as NumericId;
         main = this.text(v[id], p === 'TEMP' || p === 'ST' ? 1 : 0, id);
       }
-      const extra = this.extras(tile.spec);
+      const split = tile.b9 !== null && tile.b9.parts.length > 0;
+      const extra = split ? '' : this.extras(tile.spec);
       if (extra) sub = sub ? `${sub}  ${extra}` : extra;
+      if (tile.spec.label !== undefined && label === p) label = tile.spec.label; // a relabel ("PR") wins over the spec's label
+      if (split) {
+        sub = '';
+        const xs = this.extraParts(tile.spec);
+        (tile.b9 as TileB9).parts.forEach((pt, k) => {
+          if (k > 0) pt.value.textContent = xs[k - 1]?.value ?? '';
+        });
+        label = tile.spec.parts?.[0]?.label ?? label;
+      }
       tile.label.textContent = label;
       tile.value.textContent = main;
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
-      tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
+      if (!split) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;
-      const av = tileAlarmView(p, this.status, this.r, t, this.pump);
+      const partKeys = tile.b9?.parts.flatMap((pt) => (pt.limitKey ? [pt.limitKey] : [])) ?? [];
+      const av = tileAlarmView(p, this.status, this.r, t, this.pump, partKeys);
       tile.bell.innerHTML = av.bellOff && this.r.skin.alarms.alarmOffIcon === 'crossed-bell-red' ? BELL_OFF_SVG : av.bellOff ? '🔕' : '';
-      tile.lim.textContent = av.limits;
-      tile.value.className = av.flash === 1 ? 'v pme-f1' : av.flash === 2 ? 'v pme-f2' : 'v';
+      if (tile.lim) tile.lim.textContent = av.limits;
+      if (tile.b9) this.paintPairs(tile, av.pairs);
+      const base = split ? 'pv' : 'v';
+      tile.value.className = av.flash === 1 ? `${base} pme-f1` : av.flash === 2 ? `${base} pme-f2` : base;
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';
