@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { COMORBIDITIES, PATIENT_PRESETS, oneLiner, profileOf } from './patients.ts';
+import { resolveSkin } from '@pme/skins';
+import { COMORBIDITIES, PATIENT_PRESETS, nibpStartCommand, oneLiner, profileOf } from './patients.ts';
 
 describe('patient profiles', () => {
   it('map comorbidities 1:1 onto the engine profile and never include a later (v1.1) condition', () => {
@@ -14,6 +15,14 @@ describe('patient profiles', () => {
     if (!base) return;
     expect(Object.values(profileOf({ ...base, attached: false }).sensors ?? {})).toEqual(['off', 'off', 'off', 'off', 'off']);
     expect(Object.values(profileOf(base).sensors ?? {}).every((s) => s === 'on')).toBe(true);
+  });
+  it('O2: the NIBP start command follows the skin (saadat-like and its preset AUTO 5 min; every other skin none)', () => {
+    for (const id of ['saadat-like', 'iran-icu-as-found']) expect(nibpStartCommand(resolveSkin(id).skin)).toEqual({ device: 'nibp', action: 'auto', intervalMin: 5 });
+    for (const id of ['philips-like', 'ge-like', 'mindray-like', 'zoll-like', 'lifepak-like']) expect(nibpStartCommand(resolveSkin(id).skin)).toBeNull();
+  });
+  it('O3: no invasive line is attached by default', () => {
+    const s = profileOf(PATIENT_PRESETS[0]!.spec).sensors ?? {};
+    for (const k of ['abp', 'cvp', 'pap']) expect(s).not.toHaveProperty(k);
   });
   it('writes the session-bar one-liner in clinical words', () => {
     expect(oneLiner({ ageY: 60, sex: 'M', weightKg: 80, heightCm: 175, comorbid: ['hfref', 'betaBlocked'], attached: true })).toBe('M 60 y 80 kg, heart failure (reduced EF), β-blocked');

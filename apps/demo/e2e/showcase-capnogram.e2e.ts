@@ -36,6 +36,8 @@ test('Saadat-style monitor: CO2 replaces RESP and RR while the line is attached;
   expect(await lanes()).toBe('ECG1 ECG2 CO2 IBP1 IBP2 PLETH');
   await expect(page.locator('.pme-stile[data-param="CO2"] [data-pme="lbl"]')).toHaveText('EtCo2'); // rc.3: the split EtCo2 | FiCo2 | AWRR tile (IMG_8113)
   await expect(tileV('CO2')).toHaveText(/^\d+$/, { timeout: 20_000 });
+  // O2 (rc.3): the cuff started on AUTO every 5 min with the patient; the NIBP tile says so
+  await expect(page.locator('.pme-stile[data-param="NIBP"] [data-pme="mode"]')).toHaveText('AUTO(5Min)', { timeout: 20_000 });
   await expect(page.locator('.pme-stile[data-param="CO2"]')).toContainText('AWRR');
   await expect(page.locator('.pme-stile[data-param="RR"]')).toHaveCount(0);
   await page.waitForTimeout(4000); // a few breaths drawn for the screenshot

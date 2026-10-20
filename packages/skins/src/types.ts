@@ -227,8 +227,12 @@ export interface Skin {
     updateHz: number;
   };
   nibp: {
-    /** Recorded, not modelled: the engine's NIBP is command-driven and idle at power-on on every skin. */
+    /**
+     * Recorded, not modelled: the engine's NIBP is command-driven and idle at power-on on every skin — except a skin with
+     * `applyAtStart`, whose default the demo app applies at patient start (rc.3, saadat-like, research/34 §8 O2).
+     */
     modeDefault: 'MANUAL' | 'AUTO';
+    applyAtStart?: boolean;
     autoIntervalMin: number | null;
     autoIntervalsMin: number[];
     stat: { count: number; spacingS: number; windowS: number };

@@ -66,6 +66,15 @@ export function profileOf(s: PatientSpec): PatientProfile {
   };
 }
 
+/**
+ * O2 (research/34 §8 O2): the NIBP command the app sends at patient start — AUTO at the skin's interval — for a skin that
+ * opts in with `nibp.applyAtStart` (saadat-like and its preset); null for every other skin (today's idle cuff).
+ */
+export function nibpStartCommand(skin: { nibp: { modeDefault: string; autoIntervalMin: number | null; applyAtStart?: boolean } }): { device: 'nibp'; action: 'auto'; intervalMin: number } | null {
+  const n = skin.nibp;
+  return n.applyAtStart === true && n.modeDefault === 'AUTO' && n.autoIntervalMin !== null ? { device: 'nibp', action: 'auto', intervalMin: n.autoIntervalMin } : null;
+}
+
 /** The session bar's one-liner: "M 60 y 80 kg, heart failure (reduced EF), β-blocked". */
 export function oneLiner(s: PatientSpec): string {
   const lc = (t: string) => (/^[A-Z]{2}/.test(t) ? t : `${t.charAt(0).toLowerCase()}${t.slice(1)}`);

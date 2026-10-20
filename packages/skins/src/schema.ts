@@ -198,7 +198,7 @@ export const skinSchema: JsonSchema = {
       initialInflation: obj({ adult: num(50, 300), paed: num(50, 300), neo: num(40, 200) }),
       nextInflation: en(['prevSys+30', 'prevSys+10']),
       doneTone: bool,
-    }),
+    }, { applyAtStart: bool }),
     ibp: obj(
       {
         filterOptionsHz: arr(num(1, 100), 1),

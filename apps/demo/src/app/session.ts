@@ -12,7 +12,7 @@ import { engineOptionsOf, ScenarioDriver, validateScenario, type ScenarioDoc } f
 import type { ManagedTransport } from '@pme/controller';
 import { mountMonitor, type MonitorHandle } from '@pme/renderer';
 import { FF_WALL_MS } from './fast-forward.ts';
-import { ageBandOf, oneLiner, profileOf, type PatientSpec } from './patients.ts';
+import { ageBandOf, nibpStartCommand, oneLiner, profileOf, type PatientSpec } from './patients.ts';
 import { RunRecord } from './record.ts';
 import { applySkinAlarmColours } from './shell.ts';
 
@@ -66,6 +66,7 @@ export class AppSession {
   /** The Ventilator view's link (it sets it): a fast-forward steps the cockpit with the engine through it. */
   ventLink: { runTo(engTick: number): Promise<void> } | null = null;
   private ventFrameAt = -Infinity; // Wall ms of the Ventilator view's last frame
+  private nibpStarts = 0; // O2 start commands sent: each gets a fresh id (a follower skips an id it has applied)
   private ffWaiters: Array<() => void> = []; // A cockpit opened during a fast-forward waits for its end
   private ffTick: number | null = null; // The monitor's tick during a fast-forward (from its own steps)
   private ffCockpit = false; // The cockpit was ventilating when the fast-forward began: it steps with it
@@ -356,6 +357,14 @@ export class AppSession {
     }
     const patient = profileOf(this.spec);
     this.mountWith({ seed, mode: this.mode, patient, truthHz: 1, device: { ageBand: ageBandOf(this.spec) } });
+    // O2 (research/34 §8 O2): a skin with nibp.applyAtStart starts the cuff on AUTO at the free-play patient's start —
+    // once per start (not per skin switch, not for scenarios or ?load=perf8), mirrored to a learner monitor
+    const m = this.monitor;
+    const action = this.spec.attached && m?.skin ? nibpStartCommand(m.skin.skin) : null;
+    if (m && action) {
+      const c = { id: `nibp-default-${seed}-${++this.nibpStarts}`, issuedBy: 'device', type: 'device', action } as Command;
+      void m.dispatch(c).then((r) => this.host.mirror(c, r));
+    }
   }
 
   private mountWith(engine: NonNullable<Parameters<typeof mountMonitor>[1]>['engine']): void {
