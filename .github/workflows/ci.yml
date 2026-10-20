@@ -30,6 +30,13 @@ jobs:
       - run: pnpm test
         env:
           PME_TEST_SET: fast # the slow engine set runs in the test-slow job
+      # The tick benchmark, alone on the runner (the fast set leaves it out): inside `pnpm test` the other suites' load
+      # pushed its p50 over 6 ms with the engine unchanged. `vitest run` without --passWithNoTests, so a set that
+      # matches no file fails instead of passing empty.
+      - name: tick benchmark (alone)
+        run: pnpm --filter @pme/validation exec vitest run --reporter=dot
+        env:
+          PME_TEST_SET: perf
       - run: pnpm build
       - run: pnpm check-notices
       - run: pnpm check-licences # Stage 8b: allow-listed licences; shipped packages named in NOTICES with their LICENSES/ texts

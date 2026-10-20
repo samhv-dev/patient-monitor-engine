@@ -32,10 +32,12 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
-- CI: the tick benchmark (`packages/validation/test/perf/tick-bench.test.ts`) asserts the 6 ms p50 budget on the best
-  of three 10-s samples instead of one, so a burst of load from the other suites on the shared runner no longer fails it
-  (p50 6.56, 7.74 and 8.42 ms on 2026-10-20 with the engine unchanged). A real engine slowdown raises every sample and
-  still fails; the local 2 ms bound stays on one sample.
+- CI: the tick benchmark (`packages/validation/test/perf/tick-bench.test.ts`) runs alone, in its own build-job step
+  after `pnpm test` (`PME_TEST_SET=fast` now leaves it out and `PME_TEST_SET=perf` runs only it; a local `pnpm test`
+  still runs it), and asserts the 6 ms p50 budget on the best of three 10-s samples. Inside `pnpm test` the other
+  suites' load failed it with the engine unchanged (p50 6.56, 7.74 and 8.42 ms on 2026-10-20; 7.26 and 7.20 ms on a
+  main run and its re-run). A real engine slowdown raises every sample and still fails; the local 2 ms bound stays on
+  one sample.
 - FX-23: after a fast-forward a thin vertical line with the new time ("05:08") was drawn across every lane, including
   empty ones, each at that lane's own sweep position (so the CO2 and IBP lines sat apart from the ECG and pleth ones).
   The lanes now simply carry on, as a monitor would: no line, no label, no gap. The clinical log keeps its
