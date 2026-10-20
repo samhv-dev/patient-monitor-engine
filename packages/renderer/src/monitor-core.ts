@@ -57,6 +57,9 @@ export class MonitorCore {
   private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
   private autoGainT = -Infinity;
+  /** FX-24: sim time of the oldest sample the engine holds — 0 for a new engine, the snapshot's time after a restore (it
+   *  clears the buffers). The lanes' backfill and the auto-gain never read before it. */
+  private historyT = 0;
   private gainMult: number[] = []; // per lane, ECG gain multiplier (label and auto gain)
   /** ECG labels wider than LABEL_W (e.g. Saadat-like `II  X1  NORMAL`) run into the sweep area; kept to repaint them. */
   private labelTail: Array<{ text: string; w: number } | null> = [];
@@ -116,6 +119,7 @@ export class MonitorCore {
   /** Switch skin/page/theme: new lanes and chrome, same engine (no restart, tick continuity). */
   setPlan(plan: RenderPlan): void {
     this.plan = plan;
+    this.gainMult = []; // the new plan's own gains
     this.overlays.clear();
     this.sendLeads();
     this.layout();
@@ -134,9 +138,10 @@ export class MonitorCore {
   restore(s: PatientSnapshot): void {
     this.engine.restore(s);
     this.clock.setTick(s.tick);
+    this.historyT = this.clock.simT;
     this.lastEpoch = null; // the clock restarts at the bookmark on the next frame: the restore's own wall time is not sim time
     this.overlays.clear();
-    this.layout();
+    this.layout(); // FX-24: the lanes keep their ECG gain (the auto-gain waits for a full window of the new signal)
   }
 
   /** Apply a command (lane/filter changes also update the chrome). */
@@ -266,7 +271,7 @@ export class MonitorCore {
     this.autoGainT = t;
     const changed: number[] = [];
     this.plan.lanes.forEach((pl, i) => {
-      if (!pl.autoGain || pl.gainOptions.length === 0 || t < AUTO_GAIN_WINDOW_S) return;
+      if (!pl.autoGain || pl.gainOptions.length === 0 || t - AUTO_GAIN_WINDOW_S < this.historyT) return; // FX-24: a full window
       const n = this.engine.readSamples(pl.channel as LeadId, Math.floor((t - AUTO_GAIN_WINDOW_S) * 500), this.gainScratch);
       let lo = Infinity;
       let hi = -Infinity;
@@ -323,18 +328,19 @@ export class MonitorCore {
     this.ctx.fillStyle = p.background;
     this.ctx.fillRect(0, 0, cssW, cssH);
     const h = cssH / Math.max(1, p.lanes.length);
-    this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
+    // FX-24: the ECG gain survives a resize or a restore (the auto-gain re-judges it); a new plan starts from its own
+    if (this.gainMult.length !== p.lanes.length) this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
     this.labelTail = [];
     this.lanes = p.lanes.map((pl, i) => {
       const rate = pl.kind === 'ecg' ? 500 : pl.channel ? this.engine.sampleRate(pl.channel) : 125;
       const [lo, hi] = pl.range ?? [-0.5, 3];
       const lane = new SweepLane(
         {
-          x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color,
+          x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color, firstIndex: Math.ceil(this.historyT * rate - 1e-6),
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
           hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null,
-          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: pl.gainMmPerMv } : scaleFor(lo, hi, h, this.pxPerMm)),
+          ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: (this.gainMult[i] as number) * 10 } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,
       );
