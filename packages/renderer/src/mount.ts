@@ -8,7 +8,7 @@ import {
 import { EventLog, MAX_TIME_SCALE, MIN_TIME_SCALE, TrendStore, type AlarmEntry, type Capture12, type Command, type DispatchResult, type EngineEvent, type EngineOptions, type LeadId, type Measured, type PatientSnapshot } from '@pme/engine-core';
 import { resolveSkin, type ResolvedSkin } from '@pme/skins';
 import { AlarmAudioBridge } from './alarm-audio.ts';
-import { DeviceUI } from './device-ui.ts';
+import { DeviceUI, gridOf } from './device-ui.ts';
 import { NumericTile } from './numerics-dom.ts';
 import { formatNibp, formatPressure, PressureTile } from './numerics-hemo.ts';
 import { filterModeFor, renderPlan, type LaneOverride } from './skin-plan.ts';
@@ -160,17 +160,40 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   const root = doc.createElement('div');
   root.style.cssText = `display:flex;flex:1;min-height:0;width:100%;background:${r?.render.background ?? '#000'};overflow:hidden;${opts.portrait ? 'flex-direction:column;' : ''}`;
   const wrap = doc.createElement('div');
-  wrap.style.cssText = 'flex:1;position:relative;min-width:0;';
+  wrap.style.cssText = 'flex:1;position:relative;min-width:0;min-height:0;';
+  // The wave column: box-less (display:contents) for the tile columns; with a skin's layout.grid (rc.3) it holds the
+  // header over the waves at the skin's width, and the bottom strip runs under it and the tiles (place())
+  const left = doc.createElement('div');
+  left.append(wrap);
   const canvas = doc.createElement('canvas');
   canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
   wrap.append(canvas);
   const tiles = doc.createElement('div');
   tiles.style.cssText = `width:${TILE_W}px;flex:none;border-left:1px solid #222;overflow-y:auto;`; // Scroll
   const ui = r ? new DeviceUI(doc, wrap, r, page, opts.portrait, opts.bed) : null; // Device layer; portrait
-  root.append(wrap, ui ? ui.tiles : tiles);
-  if (ui) outer.append(ui.header);
+  root.append(left, ui ? ui.tiles : tiles);
   outer.append(root);
+  if (ui) outer.append(ui.strip);
   el.append(outer);
+  /** The header, the wave column and the strip for the current skin (at mount and after every DeviceUI.setSkin). */
+  const place = () => {
+    if (!ui || !r) {
+      left.style.cssText = 'display:contents';
+      return;
+    }
+    const g = gridOf(r, opts.portrait === true);
+    if (g) {
+      left.style.cssText = `display:flex;flex-direction:column;flex:0 0 ${r.skin.layout.waveAreaFraction * 100}%;min-width:0;min-height:0;`;
+      left.prepend(ui.header);
+    } else {
+      left.style.cssText = 'display:contents';
+      outer.prepend(ui.header);
+    }
+  };
+  place();
+  // The monitor height for the skin's size rules (--pme-h: the two-row header, layout.grid's font sizes)
+  const setH = () => outer.style.setProperty('--pme-h', `${outer.clientHeight}px`);
+  setH();
   const legacy = !ui;
   const hrTile = legacy ? new NumericTile(tiles, { label: 'HR', unit: 'bpm', color: '#00ff66' }) : null;
   // Pressure/pleth tiles (brief §6.1, §6.3)
@@ -316,8 +339,12 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   if (r) void hostP.then((h) => h.command(skinCmd({ type: 'device', action: { device: 'ecg', action: 'filter', value: filterModeFor(r!.render.ecgFilter.band) } })));
 
   // Resize and DPR changes (brief §3.5: backing store = CSS size × DPR; watch DPR through matchMedia).
-  const ro = new ResizeObserver(() => void hostP.then((h) => h.control({ type: 'resize', size: sizeOf() })));
+  const ro = new ResizeObserver((entries) => {
+    if (entries.some((e) => e.target === outer)) setH();
+    if (entries.some((e) => e.target === wrap)) void hostP.then((h) => h.control({ type: 'resize', size: sizeOf() }));
+  });
   ro.observe(wrap);
+  ro.observe(outer);
   let mq: MediaQueryList | null = null;
   const watchDpr = () => {
     mq?.removeEventListener('change', onDpr);
@@ -379,6 +406,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     h.control({ type: 'plan', plan });
     markLanes(plan.lanes);
     ui.setSkin(next, page);
+    place();
   };
   /** An accepted command's effects on this page (the log, the CO2 lane swap, the kept ECG leads), shared by a
    *  viewer's mirrored commands. */
@@ -480,6 +508,7 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
       h.control({ type: 'plan', plan });
       markLanes(plan.lanes);
       ui.setSkin(next, page);
+      place();
       root.style.background = next.render.background;
       if (soundChanged && audio) {
         play = playerFor(audio, next);

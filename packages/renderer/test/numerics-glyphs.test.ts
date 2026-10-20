@@ -14,7 +14,8 @@ const status = (t: number, skin: string, active: Partial<AlarmEntry>[]): EngineE
 }) as EngineEvent;
 function mount(id: string) {
   const ui = new DeviceUI(document, document.createElement('div'), resolveSkin(id));
-  const q = (p: string, k: 'v' | 's' | 'lbl') => ui.tiles.querySelector(`.pme-stile[data-param="${p}"] [data-pme="${k}"]`)?.textContent;
+  // the tile may sit in the tile area or in the bottom strip (saadat-like's SpO2, layout.grid)
+  const q = (p: string, k: 'v' | 's' | 'lbl') => (ui.tiles.querySelector(`.pme-stile[data-param="${p}"] [data-pme="${k}"]`) ?? ui.strip.querySelector(`.pme-stile[data-param="${p}"] [data-pme="${k}"]`))?.textContent;
   return { ui, q };
 }
 
