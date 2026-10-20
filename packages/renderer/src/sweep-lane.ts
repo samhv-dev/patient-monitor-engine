@@ -34,6 +34,17 @@ export interface LaneConfig {
   cursorLine?: boolean;
   /** Fill the area between the trace and the lane's zero line in the trace colour (skin `co2.fill`; research/34 row 2). */
   fill?: boolean;
+  /**
+   * Display-side moving average over this many samples (0 or 1 = off): each drawn sample is the mean of itself and
+   * the `smoothN − 1` before it. Only what is drawn changes, never the engine signal (owner correction M2).
+   */
+  smoothN?: number;
+  /**
+   * With `smoothN`: the window's range (max − min, signal units) below which the average is drawn in full, and above
+   * which the sample is drawn as it is, blended linearly in between. So only small fluctuations (the cardiogenic ripple)
+   * are smoothed, and an upstroke or a curare cleft keeps its shape. Absent: always the average.
+   */
+  smoothGate?: readonly [number, number];
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -54,6 +65,7 @@ export class SweepLane {
   private lastCol = -1;
   private tail: Pt[] = [];
   private scratch = new Float32Array(4096);
+  private smoothed = new Float32Array(4096);
   private cols: Column[] = [];
 
   constructor(cfg: LaneConfig, dpr: number) {
@@ -171,11 +183,14 @@ export class SweepLane {
       this.lastIndex = Math.max(-1, endIdx - 1 - back);
     }
     if (endIdx <= this.lastIndex) return cursor;
-    const need = endIdx - this.lastIndex;
+    const sn = Math.max(1, Math.floor(c.smoothN ?? 1));
+    const pre = Math.min(sn - 1, this.lastIndex + 1); // samples before the new ones that the average needs
+    const need = endIdx - this.lastIndex + pre;
     if (this.scratch.length < need) this.scratch = new Float32Array(need * 2);
-    const out = this.scratch.subarray(0, need);
-    const got = read(this.lastIndex + 1, out);
+    let out: Float32Array = this.scratch.subarray(0, need);
+    const got = read(this.lastIndex + 1 - pre, out) - pre;
     if (got <= 0) return cursor;
+    if (sn > 1) out = this.smooth(out, pre, got, sn, c.smoothGate);
     const first = this.lastIndex + 1;
     const last = first + got - 1;
     const xFrom = this.lastCol >= 0 ? this.bandStart(this.lastCol) : this.xOf(first);
@@ -211,6 +226,37 @@ export class SweepLane {
       ctx.fillRect(c.x + ((this.xOf(last) + c.eraseGapPx - 1) % c.width), c.y, 1 / this.dpr, c.height);
     }
     return cursor;
+  }
+
+  /**
+   * The `got` samples after `pre` leading ones, each replaced by the mean of itself and up to `n − 1` before it; with a
+   * gate, by a blend of the mean and the sample by the window's range (LaneConfig.smoothGate).
+   */
+  private smooth(src: Float32Array, pre: number, got: number, n: number, gate?: readonly [number, number]): Float32Array {
+    if (this.smoothed.length < got) this.smoothed = new Float32Array(got * 2);
+    const dst = this.smoothed;
+    let sum = 0;
+    for (let k = 0; k < pre; k++) sum += src[k] as number;
+    for (let k = 0; k < got; k++) {
+      const i = pre + k;
+      const v = src[i] as number;
+      sum += v;
+      if (i >= n) sum -= src[i - n] as number;
+      const mean = sum / Math.min(n, i + 1);
+      let a = 1;
+      if (gate) {
+        let lo = v;
+        let hi = v;
+        for (let j = Math.max(0, i - n + 1); j < i; j++) {
+          const u = src[j] as number;
+          if (u < lo) lo = u;
+          if (u > hi) hi = u;
+        }
+        a = Math.min(1, Math.max(0, (gate[1] - (hi - lo)) / (gate[1] - gate[0])));
+      }
+      dst[k] = v + a * (mean - v);
+    }
+    return dst;
   }
 
   /**

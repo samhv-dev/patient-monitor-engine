@@ -216,6 +216,8 @@ export interface Skin {
     riseTimeMs: number;
     /** Fill the area under the capnogram in the CO2 colour (optional; absent = an outline only). */
     fill?: boolean;
+    /** Display-side smoothing (ms) of the DRAWN capnogram only; the engine signal and EtCO2 are unchanged (absent = 0). */
+    displaySmoothMs?: number;
   };
   alarms: {
     levels: 3;

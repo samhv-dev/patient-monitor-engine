@@ -16,6 +16,10 @@ export const THEME = { background: '#000', ecg: '#00ff66', label: '#00ff66', gri
 export const LABEL_W = 56; // CSS px reserved at the left of each lane for chrome
 const LABEL_CHAR_W = 8.5; // CSS px per character of the 14 px label font, generous estimate (Ctx2D has no measureText) [ENG]
 const LABEL_STRIP_H = 18; // CSS px: the 14 px label row [ENG]
+/** Display smoothing of a capnogram (skin `co2.displaySmoothMs`, owner correction M2): a window whose range is under
+ *  1.5 mmHg (the cardiogenic ripple, ≈ 1 mmHg peak to peak) is averaged in full; one over 3 mmHg (an upstroke, a curare
+ *  cleft of 3–15 mmHg) is drawn as it is [ENG]. */
+const SMOOTH_GATE_MMHG = [1.5, 3] as const;
 const LABEL_REPAINT_SLACK_PX = 24; // keep repainting the label tail a few frames after the erase bar passed [ENG]
 // Impedance auto-scale never spans less than 0.5 units (a 250 mL breath), so the cardiogenic ripple (0.1) stays small
 // in apnoea instead of being gained up to a full-height trace that reads as tachypnoea.
@@ -313,6 +317,7 @@ export class MonitorCore {
         {
           x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color,
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
+          smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
           ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: pl.gainMmPerMv } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,

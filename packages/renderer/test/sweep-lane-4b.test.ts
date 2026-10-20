@@ -72,6 +72,66 @@ describe('SweepLane 4b options', () => {
     expect(ops.lastIndexOf('stroke')).toBeGreaterThan(ops.lastIndexOf('fill'));
   });
 
+  // A synthetic capnogram at 62.5 Hz: 0 mmHg for 1 s, then a 38 mmHg plateau with a 50 ms cardiogenic bump at 1.6 Hz;
+  // `cleft` adds a 5 mmHg curare cleft at 4 s (a feature the smoothing must keep).
+  const RATE = 62.5;
+  const capno = (cleft: boolean) => (from: number, out: Float32Array) => {
+    for (let k = 0; k < out.length; k++) {
+      const t = (from + k) / RATE;
+      let v = t < 1 ? 0 : 38;
+      if (t >= 1) for (let j = 0; j < 16; j++) v += 0.5 * Math.exp(-(((t - (1.3 + j / 1.6)) / 0.05) ** 2));
+      if (cleft) v -= 5 * Math.exp(-(((t - 4) / 0.12) ** 2));
+      out[k] = v;
+    }
+    return out.length;
+  };
+  /** Draw 8 s in 0.1 s frames; return the stroke points and the `from` of every read. */
+  const run = (extra: Partial<LaneConfig>, cleft = false) => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({ width: 400, ...extra }), 1);
+    const froms: number[] = [];
+    const src = capno(cleft);
+    for (let f = 1; f <= 80; f++) lane.draw(ctx, f / 10, (from, out) => (froms.push(from), src(from, out)));
+    const pts = ctx.calls.filter((k) => k.op === 'lineTo' || k.op === 'moveTo').map((k) => [k.args[0]!, k.args[1]!] as const);
+    return { lane, pts, froms };
+  };
+  type P = readonly (readonly [number, number])[];
+  const plateauDev = (pts: P, x0: number) => {
+    const ys = pts.filter(([x]) => x >= x0).map(([, y]) => y).sort((a, b) => a - b);
+    const med = ys[Math.floor(ys.length / 2)]!;
+    return Math.max(...ys.map((y) => Math.abs(y - med)));
+  };
+  const M2 = { smoothN: 20, smoothGate: [1.5, 3] as const }; // saadat-like: 320 ms at 62.5 Hz, gate in mmHg
+
+  it('smoothing halves a 50 ms plateau ripple; the 0→38 mmHg upstroke is drawn as it is', () => {
+    const raw = run({});
+    const sm = run(M2);
+    const pxPerS = raw.lane.pxPerS;
+    const x0 = raw.lane.cfg.x + 1.5 * pxPerS; // the plateau, past the upstroke
+    const devRaw = plateauDev(raw.pts, x0);
+    expect(devRaw).toBeGreaterThan(0.5); // ≈ 1 px: the ripple is there to begin with
+    expect(plateauDev(sm.pts, x0)).toBeLessThanOrEqual(0.5 * devRaw);
+    const y90 = raw.lane.cfg.y + raw.lane.cfg.height * (1 - (0.9 * 38) / 50);
+    const xUp = (pts: P) => Math.min(...pts.filter(([, y]) => y <= y90).map(([x]) => x));
+    expect(xUp(sm.pts)).toBe(xUp(raw.pts));
+  });
+
+  it('a change larger than the gate is drawn unsmoothed: a 5 mmHg curare cleft keeps its depth', () => {
+    const deepest = (pts: P) => Math.max(...pts.filter(([x]) => x > 3 * 24 && x < 5 * 24).map(([, y]) => y));
+    const raw = deepest(run({}, true).pts);
+    expect(Math.abs(deepest(run(M2, true).pts) - raw)).toBeLessThanOrEqual(0.5);
+    expect(raw - deepest(run({ smoothN: 20 }, true).pts)).toBeGreaterThan(2); // an ungated average would fill it in
+  });
+
+  it('no smoothN: the sample reads and the drawn points are unchanged', () => {
+    const plain = run({});
+    for (const extra of [{ smoothN: 0 }, { smoothN: 1 }, { smoothGate: [1.5, 3] as const }]) {
+      const r = run(extra);
+      expect(r.froms).toEqual(plain.froms);
+      expect(r.pts).toEqual(plain.pts);
+    }
+  });
+
   it('fill omitted: no fill call (every other lane and skin is unchanged)', () => {
     const ctx = new FakeCtx();
     const lane = new SweepLane(capCfg({}), 1);

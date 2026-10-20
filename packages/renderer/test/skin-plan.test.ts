@@ -27,6 +27,10 @@ describe('renderPlan', () => {
     expect(p.lanes[2]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 6, range: [0, 50] });
     expect(p.lanes[2]).toMatchObject({ fill: true }); // research/34 row 2: the capnogram is filled
     expect(p.lanes.filter((l) => l.id !== 'CO2').every((l) => l.fill === false)).toBe(true);
+    // owner correction M2: the drawn capnogram is smoothed over 320 ms (display only); every other lane is not
+    expect(p.lanes[2]?.smoothMs).toBe(320);
+    expect(p.lanes.filter((l) => l.id !== 'CO2').map((l) => l.smoothMs)).toEqual([0, 0, 0, 0, 0]);
+    expect(renderPlan(resolveSkin('philips-like', { sensors: { co2: true } })).lanes.every((l) => l.smoothMs === 0)).toBe(true);
     expect(renderPlan(resolveSkin('philips-like', { sensors: { co2: true } })).lanes.every((l) => l.fill === false)).toBe(true);
     expect(renderPlan(resolveSkin('iran-icu-as-found', { sensors: { co2: true } })).lanes.map((l) => l.id)).toEqual(['ECG1', 'ECG2', 'PLETH', 'CO2']);
   });
