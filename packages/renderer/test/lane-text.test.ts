@@ -51,27 +51,27 @@ describe('saadat-like lane text', () => {
   });
 
   it('right-hand lane texts on wave lanes are repainted as the erase bar passes them (review L-3)', () => {
-    const { ctx, run } = make({ abp: 'connected', cvp: 'connected' }, 400);
+    const { ctx, run } = make({ abp: 'connected', cvp: 'connected' }, 240);
     ctx.texts = [];
     ctx.clear();
-    run(25); // RESP at 6 mm/s crosses 344 px in ≈ 15 s; IBP at 25 mm/s in ≈ 3.6 s
+    run(10); // a light test (CI runs it beside the tick bench): RESP at 6 mm/s crosses 184 px in ≈ 8 s; IBP at 25 mm/s in ≈ 2 s
     expect(ctx.texts.filter((t) => t === '6 mm/s').length).toBeGreaterThan(1);
     expect(ctx.texts.filter((t) => t === 'IBP').length).toBeGreaterThan(6);
     // each repaint clears its own box first (background, 18 px high, ending 6 px from the right edge)
-    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#000000' && c.args[3] === 18 && Math.abs(c.args[0]! + c.args[2]! - 394) < 1e-6)).toBe(true);
+    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.style === '#000000' && c.args[3] === 18 && Math.abs(c.args[0]! + c.args[2]! - 234) < 1e-6)).toBe(true);
   });
 
   it('"50mmHg" runs past the 56 px chrome, so its tail is repainted like a long ECG label (1280x800 screenshot)', () => {
-    const { ctx, run } = make({ co2: 'on' }, 400);
+    const { ctx, run } = make({ co2: 'on' }, 240);
     ctx.texts = [];
-    run(20); // CO2 at 6 mm/s crosses 344 px in ≈ 15 s
+    run(10); // CO2 at 6 mm/s crosses 184 px in ≈ 8 s
     expect(ctx.texts.filter((t) => t === '50mmHg').length).toBeGreaterThan(1);
     // the repainted tail covers the whole word ("mm" is wide: the 8.5 px/char estimate left the "g" cut)
     expect(ctx.calls.some((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[1] === 2 * 100 + 4 && c.args[2]! >= 6 + 6 * 10.5 - 56)).toBe(true);
   });
 
   it('a cleared CO2 lane gets "50mmHg" back at once, with its right-hand texts', () => {
-    const { core, ctx, run } = make({ co2: 'on' }, 400);
+    const { core, ctx, run } = make({ co2: 'on' }, 240);
     run(2);
     ctx.texts = [];
     core.command({ id: 'd2', issuedBy: 't', type: 'attachSensor', sensor: 'co2', state: 'off' } as never);
@@ -86,7 +86,7 @@ describe('saadat-like lane text', () => {
   });
 
   it('a lane that is cleared (its line detached) gets its texts back at once', () => {
-    const { core, ctx, run } = make({ abp: 'connected' }, 400);
+    const { core, ctx, run } = make({ abp: 'connected' }, 240);
     run(2);
     ctx.texts = [];
     core.command({ id: 'd1', issuedBy: 't', type: 'attachSensor', sensor: 'abp', state: 'none' } as never);
