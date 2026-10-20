@@ -51,7 +51,9 @@ export const PATIENT_PRESETS: readonly PatientPreset[] = [
   { id: 'child', label: 'Child, 6 years', spec: { ...base, ageY: 6, sex: 'F', weightKg: 20, heightCm: 115 } },
 ];
 
-const MONITORING: Partial<Record<SensorId, string>> = { ecg: 'on', spo2: 'on', nibp: 'on', co2: 'on', temp: 'on' };
+// O4 (research/34 §8 O4, rc.3): a spontaneously breathing patient starts without the CO2 sampling line (RR from the
+// impedance); the Ventilator view attaches it. Explicit 'off': the engine's default would otherwise apply.
+const MONITORING: Partial<Record<SensorId, string>> = { ecg: 'on', spo2: 'on', nibp: 'on', co2: 'off', temp: 'on' };
 const DETACHED: Partial<Record<SensorId, string>> = { ecg: 'off', spo2: 'off', nibp: 'off', co2: 'off', temp: 'off' };
 
 export function profileOf(s: PatientSpec): PatientProfile {

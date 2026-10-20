@@ -14,7 +14,10 @@ describe('patient profiles', () => {
     expect(base).toBeDefined();
     if (!base) return;
     expect(Object.values(profileOf({ ...base, attached: false }).sensors ?? {})).toEqual(['off', 'off', 'off', 'off', 'off']);
-    expect(Object.values(profileOf(base).sensors ?? {}).every((s) => s === 'on')).toBe(true);
+    expect(profileOf(base).sensors).toEqual({ ecg: 'on', spo2: 'on', nibp: 'on', co2: 'off', temp: 'on' });
+  });
+  it('O4: a spontaneously breathing patient starts without the CO2 line (research/34 §8 O4; the Ventilator view attaches it)', () => {
+    for (const p of PATIENT_PRESETS) expect(profileOf(p.spec).sensors?.co2).toBe('off');
   });
   it('O2: the NIBP start command follows the skin (saadat-like and its preset AUTO 5 min; every other skin none)', () => {
     for (const id of ['saadat-like', 'iran-icu-as-found']) expect(nibpStartCommand(resolveSkin(id).skin)).toEqual({ device: 'nibp', action: 'auto', intervalMin: 5 });

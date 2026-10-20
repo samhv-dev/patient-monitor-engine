@@ -1,6 +1,7 @@
 // Ventilator (research/13 §4.6): the Stage V cockpit beside THIS session's monitor, linked both ways over the Stage V
 // link (a direct same-origin frame port since FX-1). The cockpit keeps its own device look inside its frame (research/13 P13). It loads on first
 // visit; the link re-attaches when the patient restarts (a new engine).
+import type { Command } from '@pme/engine-core';
 import { attachMonitorToLink, createFramePort } from '@pme/ventilator';
 import { parseRoute } from '../router.ts';
 import type { AppSession } from '../session.ts';
@@ -48,6 +49,10 @@ export function ventView(session: AppSession): View {
         const link = attachMonitorToLink(session.linked(m), port, (c, r) => console.warn('vent link rejected', c.type, r));
         detach = link;
         session.ventLink = link; // A fast-forward steps this cockpit with the engine
+        // O4 (research/34 §8 O4): the patient starts without the CO2 line; the cockpit ventilating it attaches the line,
+        // through the link so a learner monitor mirrors it
+        const co2 = (session.last.state as { sensors?: Record<string, string> } | undefined)?.sensors?.co2;
+        if (co2 === undefined || co2 === 'off') void session.linked(m).dispatch({ id: `vent-co2-${Date.now()}`, issuedBy: 'device', type: 'attachSensor', sensor: 'co2', state: 'on' } as Command);
       });
       // as the Stage V link page does: once the cockpit has loaded, send it an empty patch (its first control message)
       // and this session's speed

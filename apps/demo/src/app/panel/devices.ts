@@ -52,7 +52,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
 
   // ---- sensors ----
   const host = link.host;
-  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : false]));
+  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'temp'].includes(s) : false]));
   const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
     attached.set(s, on);
     void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
