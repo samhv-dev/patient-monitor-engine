@@ -24,6 +24,8 @@ const box = (page: Page) =>
       host: r('.stage > .monitor-host'), hdr: r('.pme-hdr'), canvas: r('canvas[data-lanes]'), strip: r('.pme-strip'), tiles: r('.pme-grid'),
       fields: document.querySelectorAll('.pme-sfield').length, hr: document.querySelectorAll('.pme-stile[data-param="HR"]').length,
       spo2: document.querySelectorAll('.pme-stile[data-param="SpO2"]').length,
+      // the monitor height the grid's sizes scale with; unset without a grid (the rollback reproduces main exactly)
+      pmeH: (document.querySelector('.stage > .monitor-host > div') as HTMLElement | null)?.style.getPropertyValue('--pme-h') ?? null,
     };
   });
 
@@ -47,6 +49,7 @@ function expectGrid(b: Awaited<ReturnType<typeof box>>): void {
   expect(b.fields).toBe(6);
   expect(b.hr).toBe(1);
   expect(b.spo2).toBe(1);
+  expect(b.pmeH).toBe(`${Math.round(host.h)}px`);
 }
 
 test('a Settings switch saadat-like → philips-like → saadat-like: grid, columns, grid, nothing left over', async ({ page }) => {
@@ -59,6 +62,7 @@ test('a Settings switch saadat-like → philips-like → saadat-like: grid, colu
   expect(p.strip).toBeNull();
   expect(p.tiles).toBeNull();
   expect(p.fields).toBe(0);
+  expect(p.pmeH).toBe('');
   expect((p.hdr as NonNullable<typeof p.hdr>).w).toBeCloseTo(host.w, 0); // the header over the whole width again
   // the canvas beside the philips-like tile columns (180 px each: the app sizes boxes border-box), as before PR-G
   const cols = await page.evaluate(() => document.querySelectorAll('.stage .pme-stile[data-param="HR"]')[0]?.parentElement?.parentElement?.children.length ?? 0);

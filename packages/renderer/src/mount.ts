@@ -175,13 +175,22 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
   outer.append(root);
   if (ui) outer.append(ui.strip);
   el.append(outer);
+  // The monitor height the grid's sizes scale with (--pme-h: layout.grid's fonts and the two-row header's rows). Set only
+  // with a grid: without one (other skins, portrait, the rollback by data) the monitor draws exactly as before (R-G 3)
+  let grid = false;
+  const setH = () => {
+    if (grid) outer.style.setProperty('--pme-h', `${outer.clientHeight}px`);
+    else outer.style.removeProperty('--pme-h');
+  };
   /** The header, the wave column and the strip for the current skin (at mount and after every DeviceUI.setSkin). */
   const place = () => {
+    const g = ui && r ? gridOf(r, opts.portrait === true) : null;
+    grid = g !== null;
+    setH();
     if (!ui || !r) {
       left.style.cssText = 'display:contents';
       return;
     }
-    const g = gridOf(r, opts.portrait === true);
     if (g) {
       left.style.cssText = `display:flex;flex-direction:column;flex:0 0 ${r.skin.layout.waveAreaFraction * 100}%;min-width:0;min-height:0;`;
       left.prepend(ui.header);
@@ -191,9 +200,6 @@ export function mountMonitor(el: HTMLElement, opts: MountOptions = {}): MonitorH
     }
   };
   place();
-  // The monitor height for the skin's size rules (--pme-h: the two-row header, layout.grid's font sizes)
-  const setH = () => outer.style.setProperty('--pme-h', `${outer.clientHeight}px`);
-  setH();
   const legacy = !ui;
   const hrTile = legacy ? new NumericTile(tiles, { label: 'HR', unit: 'bpm', color: '#00ff66' }) : null;
   // Pressure/pleth tiles (brief §6.1, §6.3)
