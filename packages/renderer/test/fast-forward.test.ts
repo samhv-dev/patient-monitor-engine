@@ -1,6 +1,6 @@
 // Stage 10 Task 2 (the owner's fast-forward, 22 Oct demonstration): MonitorCore runs a fast-forward in steps without
-// drawing, posts every step's events, holds its clock between steps, and gives the clock back as it found it; after it a
-// seam marks the jump on every lane (owner's decision 1); above ×4 the beat tones are off (owner's decision 4).
+// drawing, posts every step's events, holds its clock between steps, and gives the clock back as it found it; after it the
+// lanes run on with no mark at the jump (FX-23); above ×4 the beat tones are off (owner's decision 4).
 import { describe, expect, it } from 'vitest';
 import type { EngineEvent } from '@pme/engine-core';
 import { MonitorCore } from '../src/monitor-core.ts';
@@ -99,40 +99,46 @@ describe('MonitorCore.advance (fast-forward steps)', () => {
     expect(ra).toEqual(rb);
   }, 180_000); // pure CPU comparison of 300 s at two speeds: 43 s on a loaded CI runner (run 38169697950), 4 s alone
 
-  it('after the last step a seam marks the jump on every lane, labelled with the new time (mm:ss)', () => {
-    const ctx = new FakeCtx();
-    const c = make([], ctx);
-    frames(c, 0, 1000);
-    const end = c.engine.now().tick + 15_000; // 5 min
-    for (let k = c.engine.now().tick; k < end; k += 25) c.advance(25, k + 25 >= end);
-    const t = c.clock.renderT;
-    const label = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
-    ctx.texts.length = 0;
-    frames(c, 1000, 1200);
-    expect(label).toMatch(/^05:0\d$/);
-    expect(ctx.texts.filter((x) => x === label)).toHaveLength(lanes(c).length); // ECG and pleth lanes alike
-  });
+  // FX-23 (owner's review of rc.2): a fast-forward used to leave a thin line and a "05:08" label on every lane, each at
+  // that lane's own sweep cursor. The lanes now look like a monitor that simply ran on.
+  const fastForward = (c: MonitorCore, ticks: number) => {
+    const end = c.engine.now().tick + ticks;
+    for (let k = c.engine.now().tick; k < end; k += 25) c.advance(Math.min(25, end - k), k + 25 >= end);
+  };
 
-  it('the seam label stays readable: it is drawn behind the line, where the sweep has passed (gate dry run: erased at once)', () => {
-    // the sweep clears an erase gap AHEAD of its cursor every frame; a label drawn to the right of the line (ahead) was
-    // wiped within half a second on every lane with a trace — only the line stayed (the owner's screenshots showed no time)
+  it('after a fast-forward no mark is queued and none is drawn: no time label, no full-height line on any lane', () => {
     const ctx = new FakeCtx();
     const c = make([], ctx);
     frames(c, 0, 1000);
-    const end = c.engine.now().tick + 6000; // 2 min
-    for (let k = c.engine.now().tick; k < end; k += 25) c.advance(25, k + 25 >= end);
-    const t = c.clock.renderT;
-    const label = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    fastForward(c, 15_000); // 5 min
+    expect((c as unknown as { overlays: { due(t: number): unknown[] } }).overlays.due(Infinity)).toEqual([]);
     ctx.calls.length = 0;
     ctx.texts.length = 0;
-    frames(c, 1000, 2000); // 1 s of frames after the span
-    const drawn = ctx.calls.flatMap((k, i) => (k.op === 'fillText' && k.style === `right:${label}` ? [i] : []));
-    expect(drawn).toHaveLength(lanes(c).length);
-    const W = 44; // "mm:ss" at 12 px plus the gap: the label occupies [x − W, x] right-aligned at x
-    for (const i of drawn) {
-      const [lx, ly] = ctx.calls[i]!.args as [number, number];
-      const wiped = ctx.calls.slice(i + 1).filter((k) => k.op === 'fillRect' && k.args[0]! < lx && k.args[0]! + k.args[2]! > lx - W && k.args[1]! <= ly && k.args[1]! + k.args[3]! > ly);
-      expect(wiped).toHaveLength(0);
+    frames(c, 1000, 13_000); // 12 s of frames after the span (the old mark stayed a lap)
+    expect(ctx.texts.filter((x) => /^\d\d:\d\d$/.test(x))).toEqual([]);
+    for (const l of lanes(c)) {
+      const { x, y, width, height } = l.cfg;
+      const tall = ctx.calls.filter((k, i) => {
+        const prev = ctx.calls[i - 1];
+        return k.op === 'lineTo' && prev?.op === 'moveTo' && prev.args[0] === k.args[0] && k.args[0]! >= x && k.args[0]! <= x + width && Math.abs(k.args[1]! - prev.args[1]!) >= 0.9 * height && Math.min(k.args[1]!, prev.args[1]!) >= y - 1;
+      });
+      expect(tall).toEqual([]);
+    }
+  });
+
+  it('after a fast-forward every lane is backfilled across its width at once: no gap is left at the jump', () => {
+    const c = make();
+    frames(c, 0, 1000);
+    fastForward(c, 6000); // 2 min
+    const reads: Array<{ ch: string; from: number; n: number }> = [];
+    const read = c.engine.readSamples.bind(c.engine);
+    c.engine.readSamples = (ch, from, out) => (reads.push({ ch, from, n: out.length }), read(ch, from, out));
+    frames(c, 1000, 1000); // the first frame after the span
+    for (const l of lanes(c)) {
+      const { width, eraseGapPx, rate } = l.cfg;
+      const endIdx = l.lastDrawnIndex;
+      const span = ((width - eraseGapPx) / l.pxPerS) * rate;
+      expect(reads.some((r) => r.from <= endIdx - 0.95 * span && r.from + r.n - 1 >= endIdx)).toBe(true);
     }
   });
 });

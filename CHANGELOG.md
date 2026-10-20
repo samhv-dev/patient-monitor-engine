@@ -7,8 +7,21 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ## [Unreleased]
 
+### Changed
+
+- FX-23 (the owner's review of the fast-forward on rc.2): during a fast-forward the panel shows the double chevron inside
+  a ring of the same amber, the ring and the icon blinking together, with no running clock beside it; the progress bar
+  no longer shows the start and end times; the muted-sound icon stands alone, without the words "sound muted" (a screen
+  reader still hears them). After it, the banner is about 25 % larger (text and padding, same place) and reads on three
+  lines: "Fast-forwarded 5 min", "00:08 → 05:08", and the alarms during it with their times or "No alarms"; the
+  wording lives in one function, `fastForwardDoneLines` in `apps/demo/src/app/fast-forward.ts`.
+
 ### Fixed
 
+- FX-23: after a fast-forward a thin vertical line with the new time ("05:08") was drawn across every lane, including
+  empty ones, each at that lane's own sweep position (so the CO2 and IBP lines sat apart from the ECG and pleth ones).
+  The lanes now simply carry on, as a monitor would: no line, no label, no gap. The clinical log keeps its
+  fast-forward entries.
 - FX-19: the NIBP "next m:ss" countdown could read 'next 3:60' just after a cuff deflation.
 - FX-14 / FX-15: when the instructor's tab was hidden, Safari suspended it after about 4 minutes; the phones then said
   "The instructor's monitor is not answering", and on return the hidden minutes were lost (the engine worker's first
