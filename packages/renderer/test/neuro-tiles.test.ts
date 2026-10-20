@@ -49,7 +49,7 @@ describe('DeviceUI draws the NMT and BFA tiles (philips-like, saadat-like)', () 
       ui.paint(10);
       expect(tile('NMT')).not.toBeNull();
       expect(tile('NMT')?.style.display).toBe('none');
-      expect(tile('BFA')?.style.display).toBe('none');
+      expect(tile('BFA')?.style.display).toBe(id === 'saadat-like' ? '' : 'none'); // rc.3: saadat-like shows BFA always (layout.showAlways, O1)
       expect(tile('HR')?.style.display).not.toBe('none');
       ui.destroy();
     }
@@ -79,7 +79,8 @@ describe('DeviceUI draws the NMT and BFA tiles (philips-like, saadat-like)', () 
     ui.onEvent(meas(61, { di: m(38, 61), sr: m(2, 61) }));
     ui.paint(61);
     expect(text('BFA', 'v')).toBe('38');
-    expect(text('BFA', 's')).toBe('BS% 2');
+    expect([...(ui.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pl') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['BFI%', 'BS%', 'SQI%', 'EMG%']);
+    expect([...(ui.tiles.querySelectorAll('.pme-stile[data-param="BFA"] [data-part] .pv') as NodeListOf<HTMLElement>)].map((e) => e.textContent)).toEqual(['38', '2', '', '']);
     ui.destroy();
   });
 });

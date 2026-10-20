@@ -51,7 +51,9 @@ export const PATIENT_PRESETS: readonly PatientPreset[] = [
   { id: 'child', label: 'Child, 6 years', spec: { ...base, ageY: 6, sex: 'F', weightKg: 20, heightCm: 115 } },
 ];
 
-const MONITORING: Partial<Record<SensorId, string>> = { ecg: 'on', spo2: 'on', nibp: 'on', co2: 'on', temp: 'on' };
+// O4 (research/34 §8 O4, rc.3): a spontaneously breathing patient starts without the CO2 sampling line (RR from the
+// impedance); the Ventilator view attaches it. Explicit 'off': the engine's default would otherwise apply.
+const MONITORING: Partial<Record<SensorId, string>> = { ecg: 'on', spo2: 'on', nibp: 'on', co2: 'off', temp: 'on' };
 const DETACHED: Partial<Record<SensorId, string>> = { ecg: 'off', spo2: 'off', nibp: 'off', co2: 'off', temp: 'off' };
 
 export function profileOf(s: PatientSpec): PatientProfile {
@@ -64,6 +66,15 @@ export function profileOf(s: PatientSpec): PatientProfile {
     ...(conditions.length ? { conditions } : {}),
     ...(lungConditions.length ? { lungConditions } : {}),
   };
+}
+
+/**
+ * O2 (research/34 §8 O2): the NIBP command the app sends at patient start — AUTO at the skin's interval — for a skin that
+ * opts in with `nibp.applyAtStart` (saadat-like and its preset); null for every other skin (today's idle cuff).
+ */
+export function nibpStartCommand(skin: { nibp: { modeDefault: string; autoIntervalMin: number | null; applyAtStart?: boolean } }): { device: 'nibp'; action: 'auto'; intervalMin: number } | null {
+  const n = skin.nibp;
+  return n.applyAtStart === true && n.modeDefault === 'AUTO' && n.autoIntervalMin !== null ? { device: 'nibp', action: 'auto', intervalMin: n.autoIntervalMin } : null;
 }
 
 /** The session bar's one-liner: "M 60 y 80 kg, heart failure (reduced EF), β-blocked". */

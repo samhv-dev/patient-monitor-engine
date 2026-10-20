@@ -37,7 +37,8 @@ describe('alarm latching, silence and limits per vendor', () => {
 
   it('the documented NIBP mode defaults are kept as data, recorded not modelled (documented data is never deleted)', () => {
     expect(resolveSkin('philips-like').skin.nibp).toMatchObject({ modeDefault: 'AUTO', autoIntervalMin: 15 });
-    expect(resolveSkin('saadat-like').skin.nibp).toMatchObject({ modeDefault: 'MANUAL', autoIntervalMin: null });
+    expect(resolveSkin('saadat-like').skin.nibp).toMatchObject({ modeDefault: 'AUTO', autoIntervalMin: 5, applyAtStart: true }); // rc.3 O2 (research/34 §8 O2)
+    expect(resolveSkin('philips-like').skin.nibp.applyAtStart).toBeUndefined(); // opt-in: other skins keep today's start-up
     expect(resolveSkin('lifepak-like').skin.nibp).toMatchObject({ modeDefault: 'MANUAL', autoIntervalMin: null });
     expect(resolveSkin('mindray-like').provenance['nibp.autoIntervalMin']?.source).toMatch(/C\.1\.5/);
   });

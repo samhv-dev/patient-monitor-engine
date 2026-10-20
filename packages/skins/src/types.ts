@@ -48,6 +48,29 @@ export interface TileSpec {
   /** Secondary values drawn in the tile ('PI', 'PR', 'T2', 'DT', 'EtCO2', 'FiCO2', 'AWRR', 'PPV', 'MEAN', 'IMCO2' —
    * the inspired minimum CO2 under the vendor's word, imCO2 on Philips, FiCO2 elsewhere, research/11 glossary #16). */
   extras?: string[];
+  /** rc.3 (opt-in, saadat-like): the label printed instead of the param ('%SPO2'). */
+  label?: string;
+  /** The unit printed in the tile head instead of the renderer's default ('BPM', '(mmHg)'). */
+  unit?: string;
+  /** CSS weight of the main value (100–900; absent = the skin font's numericWeight). */
+  weight?: number;
+  italic?: boolean;
+  /**
+   * A split tile: the main value and the extras side by side ('row') or stacked ('column'), each a part with its own
+   * label, unit and limit pair. Part 0 is the main value; part k is extras[k − 1].
+   */
+  split?: 'row' | 'column';
+  parts?: TilePart[];
+  /** The HR tile's status lines (rc.3 PR tile: PACE, ST, PVCs). */
+  status?: Array<'PACE' | 'ST' | 'PVCS'>;
+  /** 'row': the limit pairs in one row under the value, low then high, in key order (the IBP tiles of IMG_8113). */
+  limitsLayout?: 'row';
+}
+export interface TilePart {
+  label: string;
+  unit?: string;
+  /** The limit key whose pair is drawn in this part. */
+  limit?: string;
 }
 /** Sensors whose attachment can swap a lane and a tile (showcase hotfix item 4: the Saadat-style capnogram). */
 export const SWAP_SENSORS = ['co2'] as const;
@@ -143,6 +166,13 @@ export interface Skin {
      * lane's right-hand label (text, colour, and a second line `sub` in the foreground). Themes darken the colours.
      */
     laneText?: { labels?: Partial<Record<LaneId, LaneTextLabel>> };
+    /**
+     * 'two-row': the header's first row holds the page box, bed, patient category, lamp and date over time; the message
+     * bar has a row of its own under it (saadat-like, research/34 §3 row 7). Absent = the one-row header.
+     */
+    headerStyle?: 'two-row';
+    /** Module tiles drawn even while their module publishes nothing (blank values, research/34 §8 O1). */
+    showAlways?: TileParam[];
   };
   pages: PageSpec[];
   defaultPage: string;
@@ -183,6 +213,8 @@ export interface Skin {
     source: string;
     autoPriority: string[];
     relabelNonEcgAs: string | null;
+    /** Colour of the PR tile's PACE/ST/PVCs status lines (rc.3, saadat-like); absent = colors.HR. Themes darken it. */
+    statusColor?: Hex;
     /** Optional HR averaging; absent = the `method` default. */
     averaging?: { kind: 'beats' | 'seconds'; n: number };
   };
@@ -195,8 +227,12 @@ export interface Skin {
     updateHz: number;
   };
   nibp: {
-    /** Recorded, not modelled: the engine's NIBP is command-driven and idle at power-on on every skin. */
+    /**
+     * Recorded, not modelled: the engine's NIBP is command-driven and idle at power-on on every skin — except a skin with
+     * `applyAtStart`, whose default the demo app applies at patient start (rc.3, saadat-like, research/34 §8 O2).
+     */
     modeDefault: 'MANUAL' | 'AUTO';
+    applyAtStart?: boolean;
     autoIntervalMin: number | null;
     autoIntervalsMin: number[];
     stat: { count: number; spacingS: number; windowS: number };
@@ -243,7 +279,7 @@ export interface Skin {
     lowPulses?: 1 | 2;
     volume: { min: number; max: number; default: number };
     lamp: { L1: LampStyle; L2: LampStyle; L3: LampStyle; flashHz: { L1: number; L2: number }; duty: number };
-    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean };
+    messageBar: { L1: MessageBarColors; L2: MessageBarColors; L3: MessageBarColors; idle: MessageBarColors; acknowledged: MessageBarColors; prefix: 'asterisks' | 'none'; rotate: boolean; /** Rotate EVERY unacknowledged message (live or latched), not only the top level (Philips [S2] p. 29–30). */ rotateAll: boolean; /** Seconds per rotated message; absent = 2 s. */ rotateS?: number };
     /**
      * The vendor's own words for alarm texts, where they differ from the IEC table's Philips aliases — `texts` by fixed
      * alarm id ('abpNonPulsatile', 'tempProbeOff', …), `limitLabels` by limit key ('ART_S', 'TEMP', …). Wording only:
@@ -251,6 +287,10 @@ export interface Skin {
      */
     wording?: { texts?: Partial<Record<string, string>>; limitLabels?: Partial<Record<string, string>> };
     numericFlash: boolean;
+    /** 'always': every limit pair of a tile is printed, ON or OFF (saadat-like, IMG_8113); absent = only when ON. */
+    limitsDisplay?: 'when-on' | 'always';
+    /** Colour of the limit pairs (themes darken it as they darken `colors`); absent = the tile colour. */
+    limitsColor?: Hex;
     /** How an alarmed numeric flashes: the text ('flash-text', default) or a level-coloured box ('flash-box', Mindray-like). */
     numericStyle?: 'flash-text' | 'flash-box';
     factoryEnabled: boolean;

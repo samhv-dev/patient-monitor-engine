@@ -126,4 +126,42 @@ describe('haemodynamic acceptance 9: NIBP', () => {
     const t1 = cuff[cuff.length - 1]!.t;
     expect(Math.max(...read(e, 'pleth', t0, t1))).toBeLessThan(0.05);
   });
+
+  it('nibp events carry the mode and the auto interval; manual stops cycling without aborting', () => {
+    const { e, ev } = rig({ seed: 4 });
+    e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 5 } }));
+    e.advanceTo(1);
+    const first = ev.find((x): x is Nibp => x.type === 'nibp');
+    expect(first).toMatchObject({ mode: 'auto', intervalMin: 5 });
+    // into the deflation, then manual: accepted, the measurement still ends with a result
+    for (let k = 0; k < 200 && !ev.some((x) => x.type === 'nibp' && x.phase === 'deflating'); k++) e.advanceTo(e.now().simT + 0.5);
+    const tm = e.now().simT;
+    expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'manual' } })).accepted).toBe(true);
+    for (let k = 0; k < 200 && !ev.some((x) => isEnd(x) && x.t > tm); k++) e.advanceTo(e.now().simT + 0.5);
+    const end = ev.find((x): x is Nibp => isEnd(x) && x.t > tm);
+    expect(end?.phase).toBe('done');
+    expect(end?.result).toBeDefined();
+    e.advanceTo(e.now().simT + 5);
+    const idle = ev.filter((x): x is Nibp => x.type === 'nibp' && x.phase === 'idle' && x.t > tm);
+    expect(idle.length).toBeGreaterThan(0);
+    expect(idle[idle.length - 1]).toMatchObject({ mode: 'manual' });
+    expect(idle[idle.length - 1]!.nextInS).toBeUndefined();
+    // manual with the cuff off: accepted; an unknown action: rejected with the new list
+    e.dispatch(cmd({ type: 'attachSensor', sensor: 'nibp', state: 'off' }));
+    expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'manual' } })).accepted).toBe(true);
+    expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'bogus' } })).reason).toBe('nibp action must be start, stat, stop, auto or manual');
+  });
+
+  it('manual while the cuff is idle in AUTO emits an idle nibp event with mode manual', () => {
+    const { e, ev } = rig({ seed: 4 });
+    e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'auto', intervalMin: 5 } }));
+    for (let k = 0; k < 200 && !ev.some(isEnd); k++) e.advanceTo(e.now().simT + 0.5);
+    e.advanceTo(e.now().simT + 5);
+    const tm = e.now().simT;
+    expect(e.dispatch(cmd({ type: 'device', action: { device: 'nibp', action: 'manual' } })).accepted).toBe(true);
+    e.advanceTo(tm + 1);
+    const after = ev.filter((x): x is Nibp => x.type === 'nibp' && x.t >= tm);
+    expect(after.length).toBeGreaterThan(0);
+    expect(after[after.length - 1]).toMatchObject({ phase: 'idle', mode: 'manual' });
+  });
 });

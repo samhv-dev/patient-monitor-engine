@@ -56,7 +56,20 @@ const colors: JsonSchema = {
   additionalProperties: false,
 };
 
-const tile = obj({ param: en(TILE_PARAMS) }, { size: en(['large', 'normal']), extras: arr({ type: 'string', pattern: '^[A-Za-z0-9%]+$' }) });
+const tilePart = obj({ label: str }, { unit: str, limit: { type: 'string', pattern: '^[A-Za-z0-9_]+$' } });
+const tile = obj({ param: en(TILE_PARAMS) }, {
+  size: en(['large', 'normal']),
+  extras: arr({ type: 'string', pattern: '^[A-Za-z0-9%]+$' }),
+  // rc.3 (opt-in): label, unit, weight, split parts, status lines, limit row (types.ts TileSpec)
+  label: str,
+  unit: str,
+  weight: int(100, 900),
+  italic: bool,
+  split: en(['row', 'column']),
+  parts: arr(tilePart, 1),
+  status: arr(en(['PACE', 'ST', 'PVCS']), 1),
+  limitsLayout: en(['row']),
+});
 /** layout.whenAttached: per sensor, lane → lane drawn in its place and tile → tile drawn in its place (types.ts SensorSwap). */
 const sensorSwap = obj({}, {
   lanes: { type: 'object', properties: Object.fromEntries(LANE_IDS.map((k) => [k, en(LANE_IDS)])), additionalProperties: false, minProperties: 1 },
@@ -80,7 +93,7 @@ const alarms = obj(
     soundProfile: en(SOUND_PROFILES),
     volume: obj({ min: int(0, 10), max: int(1, 10), default: int(0, 10) }),
     lamp: obj({ L1: lamp, L2: lamp, L3: lamp, flashHz: obj({ L1: num(0.1, 5), L2: num(0.1, 5) }), duty: num(0.2, 0.6) }),
-    messageBar: obj({ L1: barColors, L2: barColors, L3: barColors, idle: barColors, acknowledged: barColors, prefix: en(['asterisks', 'none']), rotate: bool, rotateAll: bool }),
+    messageBar: obj({ L1: barColors, L2: barColors, L3: barColors, idle: barColors, acknowledged: barColors, prefix: en(['asterisks', 'none']), rotate: bool, rotateAll: bool }, { rotateS: num(1, 30) }),
     numericFlash: bool,
     factoryEnabled: bool,
     alwaysOn: arr(str),
@@ -98,6 +111,8 @@ const alarms = obj(
     repeatS: obj({}, { L1: nullable(num(1, 60)), L2: nullable(num(1, 60)), L3: nullable(num(1, 60)) }),
     lowPulses: en([1, 2]),
     numericStyle: en(['flash-text', 'flash-box']),
+    limitsDisplay: en(['when-on', 'always']),
+    limitsColor: hex,
     wording: obj({}, { texts: record(str, '^[A-Za-z0-9_-]+$'), limitLabels: record(str) }),
   },
 );
@@ -128,6 +143,8 @@ export const skinSchema: JsonSchema = {
     }, {
       badge: str,
       whenAttached: obj({}, Object.fromEntries(SWAP_SENSORS.map((k) => [k, sensorSwap]))),
+      headerStyle: en(['two-row']),
+      showAlways: arr(en(TILE_PARAMS), 1),
       laneText: obj({}, { labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))) }),
     }),
     pages: arr(page, 1),
@@ -164,7 +181,7 @@ export const skinSchema: JsonSchema = {
       source: str,
       autoPriority: arr(str),
       relabelNonEcgAs: nullable(str),
-    }, { averaging: obj({ kind: en(['beats', 'seconds']), n: num(1, 60) }) }), // optional
+    }, { averaging: obj({ kind: en(['beats', 'seconds']), n: num(1, 60) }), statusColor: hex }), // optional
     spo2: obj({
       avgOptions: arr({ anyOf: [num(1, 30), str] }, 1),
       avgDefault: num(1, 30),
@@ -181,7 +198,7 @@ export const skinSchema: JsonSchema = {
       initialInflation: obj({ adult: num(50, 300), paed: num(50, 300), neo: num(40, 200) }),
       nextInflation: en(['prevSys+30', 'prevSys+10']),
       doneTone: bool,
-    }),
+    }, { applyAtStart: bool }),
     ibp: obj(
       {
         filterOptionsHz: arr(num(1, 100), 1),
@@ -242,7 +259,8 @@ export const skinSchema: JsonSchema = {
       }),
     ),
     trend: obj({ style: en(['line', 'filled-area']), hours: num(1, 168) }),
-    glyphs: obj({ noValue: str, hrUnavailable: str, nibpFail: str, questionable: str, inop: str }),
+    // noValue and inop may be empty: a blank field (saadat-like, research/34 §8 O1)
+    glyphs: obj({ noValue: { type: 'string' }, hrUnavailable: str, nibpFail: str, questionable: str, inop: { type: 'string' } }),
     provenance: provenanceSchema,
   }),
   allOf: [

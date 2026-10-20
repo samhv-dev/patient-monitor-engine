@@ -7,6 +7,10 @@ import type { LampStyle, ResolvedSkin, TileParam } from '@pme/skins';
 export type AlarmStatus = Extract<EngineEvent, { type: 'alarmStatus' }>;
 /** Same-level messages rotate every this many seconds (brief §6.4.1 "messages rotate") [ENG]. */
 export const ROTATE_S = 2;
+/** The skin's rotation period (saadat-like 6 s, research/34 §2), else ROTATE_S. */
+export function rotateS(r: ResolvedSkin): number {
+  return r.skin.alarms.messageBar.rotateS ?? ROTATE_S;
+}
 
 export interface BarView {
   text: string;
@@ -63,7 +67,7 @@ export function barView(st: AlarmStatus | null, r: ResolvedSkin, t: number, pump
   const shown = st ? visibleAlarms(st, r, t, pumpPage) : [];
   const split = r.skin.layout.messageBars === 'split-technical-physiological';
   const techs = shown.filter((e) => e.category === 'technical');
-  const pick = (xs: AlarmEntry[]) => (a.messageBar.rotate ? (xs[Math.floor(t / ROTATE_S) % xs.length] as AlarmEntry) : (xs[0] as AlarmEntry));
+  const pick = (xs: AlarmEntry[]) => (a.messageBar.rotate ? (xs[Math.floor(t / rotateS(r)) % xs.length] as AlarmEntry) : (xs[0] as AlarmEntry));
   const style = (e: AlarmEntry) =>
     e.acked ? a.messageBar.acknowledged : e.latched ? { bg: a.messageBar.idle.bg, fg: a.messageBar[`L${e.level}`].bg } : a.messageBar[`L${e.level}`];
   const inopE = split && techs.length > 0 ? pick(techs) : null;
@@ -108,6 +112,20 @@ export const TILE_NUMERICS: Readonly<Record<TileParam, { numerics: NumericId[]; 
   UO: { numerics: ['uop'], limits: [] },
 };
 
+/**
+ * The PR tile's status lines (rc.3 saadat-like, research/34 §3 row 4, IMG_8113), from data the renderer has: PACE from
+ * the skin's pace-detect default, ST from the skin's ST default (no runtime ST switch exists) and its alarm switch, PVCs
+ * from the analysis switch — blank when on (there is no PVC numeric, research/34 §8 O1).
+ */
+export function hrStatusLines(r: ResolvedSkin, st: AlarmStatus | null, stII: string): Array<{ text: string; bellOff: boolean }> {
+  const arr = st?.arrhythmiaAnalysis === true;
+  return [
+    { text: `PACE: ${r.skin.ecg.paceDetectDefault ? 'ON' : 'OFF'}`, bellOff: false },
+    { text: r.skin.st.defaultOn ? `ST: ${stII}` : 'ST: OFF', bellOff: !st?.limits.ST_mV?.enabled },
+    { text: arr ? 'PVCs: ' : 'PVCs: OFF', bellOff: !arr },
+  ];
+}
+
 export interface TileAlarmView {
   /** Flash level of the numeric (1 or 2), or null. */
   flash: 1 | 2 | 3 | null;
@@ -115,12 +133,32 @@ export interface TileAlarmView {
   bellOff: boolean;
   /** "50–150" style limits, shown only when the alarm is ON (brief §6.4.1); '~' marks approximate (brief §6.8). */
   limits: string;
+  /**
+   * Every limit pair of the tile (its own keys, then the parts' keys) that the alarm status carries, ON or OFF — the
+   * skins that print limits always (`alarms.limitsDisplay: 'always'`, saadat-like, research/34 §3 row 12). Whole
+   * numbers, except temperatures (one decimal); '' for a missing side.
+   */
+  pairs: Array<{ key: string; high: string; low: string }>;
 }
 
-export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: ResolvedSkin, t: number, pumpPage = false): TileAlarmView {
+const TEMP_KEYS = new Set(['TEMP', 'T1', 'T2', 'dT']);
+/** A limit as the pair prints it: CO2 limits come in mmHg from %V × 7.6 (engine profile.ts), so whole numbers. */
+function pairFmt(key: string, v: number | null): string {
+  if (v === null) return '';
+  return TEMP_KEYS.has(key) || key === 'ST_mV' ? v.toFixed(1) : String(Math.round(v));
+}
+
+export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: ResolvedSkin, t: number, pumpPage = false, partKeys: string[] = []): TileAlarmView {
   const spec = TILE_NUMERICS[param];
   const keys = spec.limits.filter((k) => st?.limits[k]);
-  if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '' };
+  // a tile's own pairs are those of its own numerics (the RR tile lists AWRR, the CO2 line's, which it does not show);
+  // a part's key is its own (R-T I2)
+  const pairs = [...new Set([...spec.limits, ...partKeys])].flatMap((key) => {
+    const l = st?.limits[key];
+    if (!l || (!partKeys.includes(key) && !(spec.numerics as string[]).includes(l.numeric))) return [];
+    return [{ key, high: pairFmt(key, l.high), low: pairFmt(key, l.low) }];
+  });
+  if (!st || keys.length === 0) return { flash: null, bellOff: false, limits: '', pairs };
   const enabled = keys.some((k) => st.limits[k]?.enabled);
   const shown = r.skin.alarms.numericFlash ? visibleAlarms(st, r, t, pumpPage) : [];
   const mine = shown.filter((a) => !a.acked && a.category === 'physiological' && a.numeric !== undefined && spec.numerics.includes(a.numeric)); // INOPs mark, not flash
@@ -128,5 +166,5 @@ export function tileAlarmView(param: TileParam, st: AlarmStatus | null, r: Resol
   const l = st.limits[keys[0] as string];
   const fmt = (v: number | null) => (v === null ? '--' : String(Math.round(v * 10) / 10));
   const limits = enabled && l ? `${l.approximate ? '~' : ''}${fmt(l.low)}–${fmt(l.high)}` : '';
-  return { flash, bellOff: !enabled, limits };
+  return { flash, bellOff: !enabled, limits, pairs };
 }

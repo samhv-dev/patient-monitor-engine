@@ -8,6 +8,7 @@ import type { SensorId } from '@pme/engine-core';
 import { alarmCaps, alarmRefusal, noPauseReason } from '../alarm-caps.ts';
 import { alarmLine } from '../alarms.ts';
 import { describeCommand, SENSORS } from '../describe.ts';
+import { nibpStartCommand } from '../patients.ts';
 import { LEVEL_MARK, LEVEL_NAME } from '../shell.ts';
 import { button, clock, h, select, setText, toast, toggle } from '../ui.ts';
 import type { PanelCtx } from './ctx.ts';
@@ -51,7 +52,7 @@ export function devicesTab(c: PanelCtx): HTMLElement {
 
   // ---- sensors ----
   const host = link.host;
-  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'co2', 'temp'].includes(s) : false]));
+  const attached = new Map<SensorId, boolean>(CHANNELS.map(([s]) => [s, host ? host.spec.attached && ['ecg', 'spo2', 'nibp', 'temp'].includes(s) : false]));
   const toggles = CHANNELS.map(([s, onState]) => toggle(SENSORS[s] ?? 'Sensor', attached.get(s) ?? false, (on) => {
     attached.set(s, on);
     void now({ type: 'attachSensor', sensor: s, state: on ? onState : s === 'abp' || s === 'cvp' || s === 'pap' ? 'none' : 'off' });
@@ -62,7 +63,10 @@ export function devicesTab(c: PanelCtx): HTMLElement {
   const sensors = h('div', { class: 'toggles' }, ...toggles);
 
   // ---- NIBP ----
-  const interval = select('Automatic interval', [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']], '0', (v) =>
+  // O2: the host shows the interval its skin started the cuff on (saadat-like 5 min); a Remote does not know it ('0')
+  const startSkin = host?.monitor?.skin?.skin;
+  const initial = host && host.spec.attached && startSkin ? String(nibpStartCommand(startSkin)?.intervalMin ?? 0) : '0';
+  const interval = select('Automatic interval', [['0', 'Off (manual)'], ['1', 'Every 1 min'], ['3', 'Every 3 min'], ['5', 'Every 5 min'], ['10', 'Every 10 min'], ['15', 'Every 15 min']], initial, (v) =>
     void dev(Number(v) > 0 ? { device: 'nibp', action: 'auto', intervalMin: Number(v) } : { device: 'nibp', action: 'manual' }));
   const nibp = h('div', { class: 'row' }, button('Start NIBP now', () => void dev({ device: 'nibp', action: 'start' })), interval.el);
 

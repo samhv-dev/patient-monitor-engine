@@ -33,7 +33,7 @@ describe('tile glyphs, sources and extras', () => {
     sa.ui.onEvent(meas(31, { spo2: m(null, 31) }));
     sa.ui.onEvent(status(31, 'saadat-like', [{ id: 'spo2NonPulsatile', numeric: 'spo2' }]));
     sa.ui.paint(31);
-    expect(sa.q('SpO2', 'v')).toBe('---');
+    expect(sa.q('SpO2', 'v')).toBe(''); // rc.3 O1: blank, not dashes (research/34 §8 O1)
   });
 
   it('leads off: philips-like HR "-?-" (the pulse stays in the SpO2 tile); saadat-like relabels the tile PR with the arterial pulse', () => {
@@ -46,16 +46,30 @@ describe('tile glyphs, sources and extras', () => {
     sa.ui.onEvent(meas(40, { hr: m(null, 40), pr: m(76, 40), prAbp: m(75, 40) }));
     sa.ui.onEvent(status(40, 'saadat-like', [{ id: 'ecgLeadsOff' }]));
     sa.ui.paint(40);
-    expect([sa.q('HR', 'lbl'), sa.q('HR', 'v')]).toEqual(['PR', '75']);
+    const src = (u: ReturnType<typeof mount>) => u.ui.tiles.querySelector('.pme-stile[data-param="HR"] [data-pme="src"]')?.textContent;
+    expect([sa.q('HR', 'lbl'), src(sa), sa.q('HR', 'v')]).toEqual(['PR', '(IBP1)', '75']); // rc.3 PR tile source label (E99)
+    expect(ph.ui.tiles.querySelector('.pme-stile[data-param="HR"] [data-pme="src"]')).toBeNull();
+    const color = (u: ReturnType<typeof mount>) => (u.ui.tiles.querySelector('.pme-stile[data-param="HR"]') as HTMLElement).style.color; // inherited by the label, source and digits
+    const sp = mount('saadat-like'); // no arterial line: the SpO2 pulse, in the SpO2 colour
+    sp.ui.onEvent(meas(40, { hr: m(null, 40), pr: m(76, 40) }));
+    sp.ui.onEvent(status(40, 'saadat-like', [{ id: 'ecgLeadsOff' }]));
+    sp.ui.paint(40);
+    expect([sp.q('HR', 'lbl'), src(sp), sp.q('HR', 'v')]).toEqual(['PR', '(SPO2)', '76']);
+    expect(color(sp)).toBe(resolveSkin('saadat-like').skin.colors.PR); // the SpO2 / pulse colour (inline hex in happy-dom)
+    const ec = mount('saadat-like'); // the ECG rate: green (ECG)
+    ec.ui.onEvent(meas(40, { hr: m(72, 40), pr: m(76, 40) }));
+    ec.ui.paint(40);
+    expect([ec.q('HR', 'lbl'), src(ec), ec.q('HR', 'v')]).toEqual(['HR', '(ECG)', '72']);
+    expect(color(ec)).toBe(resolveSkin('saadat-like').skin.colors.HR);
   });
 
-  it('a failed NIBP shows the skin glyph ("-?-" philips-like, "?" saadat-like); saadat-like NIBP PR extra is the cuff rate', () => {
+  it('a failed NIBP shows the skin glyph ("-?-" philips-like, "?" saadat-like); saadat-like NIBP block has no PR (rc.3)', () => {
     for (const [id, glyph] of [['philips-like', '-?-'], ['saadat-like', '?']] as const) {
       const { ui, q } = mount(id);
       ui.onEvent({ type: 'nibp', t: 50, phase: 'done', cuffMmHg: 0, result: { sys: 118, dia: 76, map: 90, pr: 72 } } as EngineEvent);
       ui.onEvent(meas(50, { nibpSys: m(118, 50), nibpDia: m(76, 50), nibpMean: m(90, 50) }));
       ui.paint(50);
-      if (id === 'saadat-like') expect(q('NIBP', 's')).toContain('PR 72');
+      if (id === 'saadat-like') expect(q('NIBP', 's')).not.toContain('PR'); // rc.3: no PR in the NIBP block (IMG_8113); the pulse has its own tile
       ui.onEvent({ type: 'nibp', t: 90, phase: 'failed', cuffMmHg: 0 } as EngineEvent);
       ui.paint(90);
       expect(q('NIBP', 'v')).toBe(glyph);
@@ -71,9 +85,12 @@ describe('tile glyphs, sources and extras', () => {
     const sa = mount('saadat-like');
     sa.ui.onEvent(meas(20, { tempCore: m(36.8, 20), tempSite: m(36.2, 20) }));
     sa.ui.paint(20);
-    expect([sa.q('TEMP', 'v'), sa.q('TEMP', 's')]).toEqual(['36.8', 'T2 36.2  ΔT 0.6']);
+    expect(sa.q('TEMP', 'v')).toBe('36.8');
+    const parts = (p: string) => [...(sa.ui.tiles.querySelectorAll(`.pme-stile[data-param="${p}"] [data-part] .pv`) as NodeListOf<HTMLElement>)].map((e) => e.textContent);
+    expect(parts('TEMP')).toEqual(['36.8', '36.2', '0.6']); // rc.3: the split T1 / T2 / DT tile
     sa.ui.onEvent(meas(21, { hr: m(72, 21), stII: m(-0.1, 21), di: m(45, 21), sr: m(12, 21) }));
     sa.ui.paint(21);
-    expect([sa.q('HR', 's'), sa.q('BFA', 's')]).toEqual(['ST-II -0.1', 'BS% 12']);
+    expect(sa.q('HR', 's')).toBe(''); // rc.3: the HR tile's ST extra gave way to the status lines
+    expect(parts('BFA')).toEqual(['45', '12', '', '']); // BFI%, BS%, SQI%, EMG% (no SQI/EMG numerics: blank, O1)
   });
 });

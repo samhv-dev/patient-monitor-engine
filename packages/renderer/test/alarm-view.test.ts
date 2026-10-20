@@ -1,7 +1,7 @@
 // Alarm header and tile views (brief §6.4 visual table, §6.4.1) as pure functions.
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, resolveSkin } from '@pme/skins';
-import { barView, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
+import { barView, hrStatusLines, rotateS, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
 
 const sa = resolveSkin('saadat-like');
 const ph = resolveSkin('philips-like');
@@ -64,11 +64,47 @@ describe('barView: latched style, INOP visibility', () => {
   });
 });
 
+describe('barView: rotation period', () => {
+  it('saadat-like rotates same-level messages every 6 s (research/34 §2: 5.5–7 s measured); philips-like keeps 2 s', () => {
+    const a = { ...leads, id: 'a', text: 'MSG A', since: 1 };
+    const b = { ...leads, id: 'b', text: 'MSG B', since: 2 };
+    const s = status({ active: [a, b] });
+    expect([12, 17, 18].map((t) => barView(s, sa, t).text)).toEqual(['MSG A', 'MSG A', 'MSG B']);
+    expect(rotateS(sa)).toBe(6);
+    expect(rotateS(ph)).toBe(2);
+  });
+});
+
+describe('hrStatusLines (rc.3 PR tile, research/34 §3 row 4)', () => {
+  it('hrStatusLines: PACE/ST/PVCs OFF with crossed bells on ST and PVCs (saadat-like defaults, IMG_8113)', () => {
+    expect(hrStatusLines(sa, status(), '')).toEqual([{ text: 'PACE: OFF', bellOff: false }, { text: 'ST: OFF', bellOff: true }, { text: 'PVCs: OFF', bellOff: true }]);
+  });
+  it('PVCs line follows arrhythmiaAnalysis', () => {
+    expect(hrStatusLines(sa, status({ arrhythmiaAnalysis: true }), '')[2]).toEqual({ text: 'PVCs: ', bellOff: false });
+  });
+});
+
 describe('tileAlarmView', () => {
   it('limits shown only when ON; crossed bell when OFF; flash level from the alarm on its numeric', () => {
-    expect(tileAlarmView('HR', status({ active: [hr] }), sa, 10)).toEqual({ flash: 2, bellOff: false, limits: '50–150' });
+    expect(tileAlarmView('HR', status({ active: [hr] }), sa, 10)).toEqual({ flash: 2, bellOff: false, limits: '50–150', pairs: [{ key: 'HR', high: '150', low: '50' }] });
     const off = status({ limits: { HR: { numeric: 'hr', low: 50, high: 150, enabled: false, level: 1, approximate: true } } });
-    expect(tileAlarmView('HR', off, sa, 10)).toEqual({ flash: null, bellOff: true, limits: '' });
+    expect(tileAlarmView('HR', off, sa, 10)).toEqual({ flash: null, bellOff: true, limits: '', pairs: [{ key: 'HR', high: '150', low: '50' }] });
     expect(tileAlarmView('HR', status({ active: [hr], silencedUntil: 100 }), sa, 10).flash).toBeNull(); // saadat-like silence hides it
+  });
+  it('pairs: every limit key of the tile, ON or OFF (saadat-like shows them always)', () => {
+    const l = (numeric: 'nibpSys' | 'nibpDia' | 'nibpMean', low: number, high: number) => ({ numeric, low, high, enabled: false, level: 2 as const, approximate: false });
+    const st = status({ limits: { NIBP_S: l('nibpSys', 90, 160), NIBP_D: l('nibpDia', 50, 90), NIBP_M: l('nibpMean', 60, 110) } });
+    const v = tileAlarmView('NIBP', st, sa, 10);
+    expect(v.pairs).toEqual([{ key: 'NIBP_S', high: '160', low: '90' }, { key: 'NIBP_D', high: '90', low: '50' }, { key: 'NIBP_M', high: '110', low: '60' }]);
+    expect(v.limits).toBe('');
+    expect(v.bellOff).toBe(true);
+  });
+  it('pairs: whole mmHg for the CO2 limits (the engine converts %V × 7.6), one decimal for temperatures; part keys included', () => {
+    const l = (low: number, high: number) => ({ numeric: 'etco2' as const, low, high, enabled: false, level: 2 as const, approximate: false });
+    const co2 = tileAlarmView('CO2', status({ limits: { EtCO2_pctV: l(19.76, 49.4), AWRR: { ...l(5, 30), numeric: 'awrr' as const } } }), sa, 10, false, ['AWRR']);
+    expect(co2.pairs).toEqual([{ key: 'EtCO2_pctV', high: '49', low: '20' }, { key: 'AWRR', high: '30', low: '5' }]);
+    const t = (numeric: 'tempCore' | 'tempSite', low: number, high: number) => ({ ...l(low, high), numeric });
+    const temp = tileAlarmView('TEMP', status({ limits: { T1: t('tempCore', 35, 39), T2: t('tempSite', 36, 40) } }), sa, 10, false, ['T2']);
+    expect(temp.pairs).toEqual([{ key: 'T1', high: '39.0', low: '35.0' }, { key: 'T2', high: '40.0', low: '36.0' }]);
   });
 });

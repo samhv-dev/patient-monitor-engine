@@ -44,6 +44,15 @@ describe('shipped skins against the schema', () => {
     expect(validate('skin', sa).ok).toBe(false);
   });
 
+  it('glyphs.noValue may be empty (saadat-like O1); hrUnavailable may not', () => {
+    const s = structuredClone(resolveSkin('philips-like').skin);
+    s.glyphs.noValue = '';
+    s.glyphs.inop = '';
+    expect(validate('skin', s).errors).toEqual([]);
+    s.glyphs.hrUnavailable = '';
+    expect(validate('skin', s).ok).toBe(false);
+  });
+
   it.each(ALL)('%s: defaults are members of their option lists', (id) => {
     const { skin } = resolveSkin(id);
     expect(Object.keys(skin.ecg.filters)).toContain(skin.ecg.filterDefault);

@@ -22,6 +22,9 @@ const SIZES = [[1280, 800, false], [1920, 1080, false], [1180, 820, true], [820,
 async function save(page: Page, name: string, w: number): Promise<void> {
   let buf = await shot8(page, w > 1440 ? 0.75 : 1);
   if (buf.length > 60 * 1024) buf = await shot8(page, w > 1440 ? 0.6 : 0.8);
+  // rc.3 PR-T: the saadat-like tiles (limit pairs, split parts, status lines) carry more detail; a third, smaller scale
+  // keeps the evidence under the same 60 KB budget
+  if (buf.length > 60 * 1024) buf = await shot8(page, w > 1440 ? 0.5 : 0.7);
   writeFileSync(`${out}/${name}.png`, buf);
   expect(buf.length, `${name}.png ≤ 60 KB`).toBeLessThanOrEqual(60 * 1024);
 }

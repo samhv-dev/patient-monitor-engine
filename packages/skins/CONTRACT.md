@@ -124,8 +124,9 @@ A `null` table or cell means "not published" and must never be filled with inven
   latched, every 2 s (philips-like, IFU p. 29–30), instead of the top level only.
 
 **Recorded, not modelled (kept as documented data — FU-5 review ruling 5: documented data is never deleted):**
-`nibp.modeDefault` and `nibp.autoIntervalMin` (the engine's NIBP is command-driven and idle at power-on on every
-skin; the vendors' defaults are Philips/IEC AUTO 15 min [brief §6.8], LIFEPAK auto OFF [research/05 §2.4], Saadat MANUAL
+`nibp.modeDefault` and `nibp.autoIntervalMin` — applied at patient start only by skins with `nibp.applyAtStart`
+(rc.3: saadat-like and its preset, AUTO 5 min, research/34 §8 O2); recorded, not modelled, elsewhere (the engine's NIBP
+is command-driven and idle at power-on; the vendors' defaults are Philips/IEC AUTO 15 min [brief §6.8], LIFEPAK auto OFF [research/05 §2.4], Saadat MANUAL
 [research/06 §4.1, M p.128], Mindray 15 min in other departments / 5 min in the OR with Start Mode Clock [S4] App.
 C.1.5); the Philips Alarm Reminder (factory default On, 3 min: a tone repeat for an acknowledged alarm still present,
 [S1] p. 135, 141 — decided as the vendor's default, not modelled; Stage 9 or a later FU); silencing some Philips INOPs
@@ -142,3 +143,30 @@ Tile `extras` the renderer draws: `PR` (SpO2: the pleth rate; NIBP: the cuff's),
 `MEAN` is the pressure tiles' own sub-line; NMT/BFA extras name their second readout (FU-3). The printed labels are
 research/11's glossary labels (R56): "PR", "PI" (perfusion index; the LVAD index is never "PI"), "awRR", "T2", "ΔT",
 "ST-II"; BFA's `BS%` (saadat-like) is the B9's alias of SR, the burst-suppression ratio.
+
+## rc.3: tiles, header and the NIBP start (PR-T; all keys optional, set only by saadat-like)
+
+Every key below is optional; without it the renderer and the app take today's path. Only `saadat-like` sets them, and
+`iran-icu-as-found` inherits them (research/34 §3, §8; the owner-approved mock-up of IMG_8113).
+
+| Key | Read by | Meaning |
+|---|---|---|
+| `layout.headerStyle: 'two-row'` | `DeviceUI` header | Row 1: page box (`chrome.pageBox`), bed (`MountOptions.bed`, default "BED 01") over the patient category (`chrome.patientCategoryColor`, from the alarm status's age band), lamp, countdown, local date over the wall-clock time; row 2: the message bar (43 % of the wave-area width). Items render only if `layout.header` lists them; battery, recorder and network are not modelled and not drawn. A phone held upright keeps the one-row header. |
+| `alarms.messageBar.rotateS` | `barView` | Seconds per rotated message (saadat-like 6, measured 5.5–7 s); absent = 2. |
+| `alarms.limitsDisplay: 'always'` | `DeviceUI` tiles | The rc.3 tile skeleton: every limit pair the alarm status carries, ON or OFF, small, high over low (`[data-lim=<key>]`): `_S` left of the value, `_D` right, `_M` under the left, a single key left, a part's own key inside its part. Whole numbers, temperatures to one decimal. A limit the status does not carry is never printed (O1). |
+| `alarms.limitsColor` | the same | The pairs' colour; themes darken it like `colors`. |
+| `hr.statusColor` | the PR tile | Colour of the PACE / ST / PVCs status lines; themes darken it. |
+| `layout.showAlways` | `DeviceUI` | Module tiles drawn with blank values when the module publishes nothing (saadat-like BFA). |
+| `nibp.applyAtStart` | the demo app | At a free-play patient start the app sends `nibp auto <autoIntervalMin>` (a fresh command id per start); not on a skin switch, a scenario or `?load=perf8`. |
+| TileSpec `label`, `unit`, `weight`, `italic` | tiles | The printed label ('%SPO2'), unit ('BPM', '(mmHg)'), value weight (HR 700, upright) and style. |
+| TileSpec `split`, `parts` | tiles | A split tile: part 0 is the main value, part k is `extras[k − 1]`, side by side (`row`) or stacked (`column`), each with its label, unit and limit key. Part 0's label and value ARE `[data-pme=lbl]` and `[data-pme=v]`. An extra the engine does not publish (SQI%, EMG%) is a blank value under its label. |
+| TileSpec `status` | the PR tile | Status lines: `PACE: OFF/ON` (`ecg.paceDetectDefault`), `ST: OFF` or the ST value (`st.defaultOn`; crossed bell when the ST limit is off), `PVCs: OFF` or blank (arrhythmia analysis; crossed bell when off). |
+| TileSpec `limitsLayout: 'row'` | tiles | The pairs in one row under the value, low then high (the IBP tiles of IMG_8113). |
+| `glyphs.noValue`, `glyphs.inop` may be `''` | tiles | A blank field (O1): "IBP1" with no sensor reads `/` and `()`. |
+
+The PR tile (HR) shows its rate source on skins with `hr.relabelNonEcgAs`: `(ECG)` in the HR colour, `(IBP1)` or
+`(SPO2)` with the tile in that channel's colour, and a heart that lights 200 ms per beat tone. The NIBP tile prints
+"S / D", "(M)", the engine's mode ("AUTO(5Min)", "MANUAL", "STAT": the `nibp` event's optional `mode` and
+`intervalMin`) and the wall time at which this window received the result (blank after a restore or a late join).
+This reverses FU-5's removal of the HR `PACE`/`PVCs` and BFA `SQI`/`EMG` extras, as labels with blank values. The
+engine gains a `nibp manual` action: auto cycling off without aborting a running measurement, allowed without a cuff.
