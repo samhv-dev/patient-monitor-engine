@@ -125,8 +125,8 @@ function begin(nb: NibpState, t: number, out: NibpOut[]): void {
 }
 
 /** device nibp commands (brief §4.5 "Modes"; §6.3). Returns a rejection reason or undefined. */
-export function nibpCommand(nb: NibpState, action: 'start' | 'stat' | 'stop' | 'auto', t: number, intervalMin: number | undefined, out: NibpOut[]): string | undefined {
-  if (action !== 'stop' && nb.sensor !== 'on') return 'cuff not connected';
+export function nibpCommand(nb: NibpState, action: 'start' | 'stat' | 'stop' | 'auto' | 'manual', t: number, intervalMin: number | undefined, out: NibpOut[]): string | undefined {
+  if (action !== 'stop' && action !== 'manual' && nb.sensor !== 'on') return 'cuff not connected';
   switch (action) {
     case 'start':
       nb.mode = 'manual'; // a manual start turns auto-cycling off (CAE, brief §4.5)
@@ -144,6 +144,10 @@ export function nibpCommand(nb: NibpState, action: 'start' | 'stat' | 'stop' | '
       nb.statUntil = t + (nb.cfg?.statWindowS ?? NIBP.STAT_S);
       nb.statN = 0;
       if (!nibpMeasuring(nb)) begin(nb, t, out);
+      return undefined;
+    case 'manual': // auto cycling off; a running measurement finishes (rc.3, the panel's "Off (manual)")
+      nb.mode = 'manual';
+      nb.nextStartT = NEVER;
       return undefined;
     case 'stop':
       if (nb.mode === 'stat') nb.mode = nb.prevMode;

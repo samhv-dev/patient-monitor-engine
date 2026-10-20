@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatClock, formatNibp, formatPressure, formatWallTime } from '../src/numerics-hemo.ts';
+import { formatClock, formatNibp, formatPressure, formatWallTime, nibpModeLabel } from '../src/numerics-hemo.ts';
 
 describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
   it('pressure S/D (M), with dashes when invalid', () => {
@@ -27,6 +27,13 @@ describe('numerics-hemo formatters (brief §6.1, §6.3)', () => {
 });
 
 describe('wall-clock time (rc.3 saadat-like header and NIBP time)', () => {
+  it('nibpModeLabel: AUTO(nMin), MANUAL, STAT, blank without a mode', () => {
+    expect(nibpModeLabel({ type: 'nibp', t: 1, phase: 'idle', mode: 'auto', intervalMin: 5 })).toBe('AUTO(5Min)');
+    expect(nibpModeLabel({ type: 'nibp', t: 1, phase: 'idle', mode: 'manual', intervalMin: 15 })).toBe('MANUAL');
+    expect(nibpModeLabel({ type: 'nibp', t: 1, phase: 'inflating', mode: 'stat', intervalMin: 15 })).toBe('STAT');
+    expect(nibpModeLabel({ type: 'nibp', t: 1, phase: 'idle' })).toBe('');
+    expect(nibpModeLabel(undefined)).toBe('');
+  });
   it('formatWallTime is the local HH:MM:SS', () => {
     expect(formatWallTime(new Date(2026, 9, 20, 3, 28, 57).getTime())).toBe('03:28:57');
     expect(formatWallTime(new Date(2026, 9, 20, 23, 5, 0).getTime())).toBe('23:05:00');

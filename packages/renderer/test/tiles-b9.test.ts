@@ -144,4 +144,34 @@ describe('saadat-like tile skeleton', () => {
     expect(lines[0]?.style.color).toMatch(/^(rgb\(68, 221, 85\)|#44DD55)$/i);
     expect(mount('philips-like').tile('HR').querySelector('[data-pme="st"]')).toBeNull();
   });
+
+  it('the NIBP tile as photographed: "119 / 90", "(101)", AUTO(5Min) and the time of the result; philips-like unchanged', () => {
+    const feed = (ui: DeviceUI) => {
+      ui.onEvent({ type: 'nibp', t: 50, phase: 'done', cuffMmHg: 0, result: { sys: 119, dia: 90, map: 101, pr: 72 }, mode: 'auto', intervalMin: 5 } as EngineEvent);
+      ui.onEvent(meas(50, { nibpSys: m(119, 50), nibpDia: m(90, 50), nibpMean: m(101, 50) }));
+      ui.onEvent({ type: 'nibp', t: 50.5, phase: 'idle', nextInS: 299, mode: 'auto', intervalMin: 5 } as EngineEvent);
+      ui.paint(51);
+    };
+    const { ui, tile } = mount('saadat-like');
+    feed(ui);
+    const q = (k: string) => tile('NIBP').querySelector(`[data-pme="${k}"]`)?.textContent;
+    expect(q('v')).toBe('119 / 90');
+    expect(q('s')).toBe('(101)');
+    expect(q('mode')).toBe('AUTO(5Min)');
+    expect(q('ntime')).toMatch(/^\d\d:\d\d:\d\d$/);
+    const ph = mount('philips-like');
+    feed(ph.ui);
+    expect(ph.tile('NIBP').querySelector('[data-pme="v"]')?.textContent).toBe('119/90');
+  });
+
+  it('after reset() the NIBP time is blank', () => {
+    const { ui, tile } = mount('saadat-like');
+    ui.onEvent({ type: 'nibp', t: 50, phase: 'done', cuffMmHg: 0, result: { sys: 119, dia: 90, map: 101, pr: 72 }, mode: 'auto', intervalMin: 5 } as EngineEvent);
+    ui.onEvent(meas(50, { nibpSys: m(119, 50), nibpDia: m(90, 50), nibpMean: m(101, 50) }));
+    ui.paint(51);
+    expect(tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent).not.toBe('');
+    ui.reset(10);
+    expect(tile('NIBP').querySelector('[data-pme="ntime"]')?.textContent).toBe('');
+    expect(tile('NIBP').querySelector('[data-pme="mode"]')?.textContent).toBe('');
+  });
 });

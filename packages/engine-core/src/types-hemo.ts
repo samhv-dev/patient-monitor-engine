@@ -36,7 +36,8 @@ export type HemoCommandBody =
     };
 
 /** Brief §7.2 DeviceAction, nibp member. */
-export type NibpDeviceAction = { device: 'nibp'; action: 'start' | 'stat' | 'stop' | 'auto'; intervalMin?: number };
+/** 'manual' (rc.3): auto cycling off without aborting a running measurement (a monitor's "Off (manual)" interval). */
+export type NibpDeviceAction = { device: 'nibp'; action: 'start' | 'stat' | 'stop' | 'auto' | 'manual'; intervalMin?: number };
 
 export type NibpPhase = 'idle' | 'inflating' | 'deflating' | 'done' | 'failed';
 export type ControlFlag = 'modeled' | 'pinned' | 'ramping' | 'override';
@@ -46,6 +47,8 @@ export type HemoEvent =
   | {
       type: 'nibp'; t: SimSeconds; phase: NibpPhase; cuffMmHg?: number; nextInS?: number;
       result?: { sys: number; dia: number; map: number; pr: number };
+      /** The cuff's cycling mode and auto interval at this event (rc.3), so a restore or a phone shows "AUTO(5Min)". */
+      mode?: 'manual' | 'auto' | 'stat'; intervalMin?: number;
     }
   | {
       type: 'state'; t: SimSeconds; tick: number; mode: 'manual' | 'modeled';

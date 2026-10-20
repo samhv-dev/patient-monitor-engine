@@ -24,6 +24,12 @@ export function formatWallTime(ms: number): string {
   return [d.getHours(), d.getMinutes(), d.getSeconds()].map((n) => String(n).padStart(2, '0')).join(':');
 }
 
+/** The NIBP mode label of the rc.3 saadat-like tile: "AUTO(5Min)", "MANUAL", "STAT"; blank before the engine says. */
+export function nibpModeLabel(e: NibpEvent | undefined): string {
+  if (!e?.mode) return '';
+  return e.mode === 'auto' ? `AUTO(${e.intervalMin ?? ''}Min)` : e.mode === 'stat' ? 'STAT' : 'MANUAL';
+}
+
 export interface NibpView {
   main: string; // last result "S/D" or the live cuff pressure while measuring
   sub: string; // "(M)" or the phase

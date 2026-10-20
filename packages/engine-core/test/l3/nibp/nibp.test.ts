@@ -100,4 +100,16 @@ describe('l3/nibp (brief §4.5, §6.3)', () => {
     nb.sensor = 'off';
     expect(nibpCommand(createNibpState('off'), 'start', 0, undefined, out)).toBe('cuff not connected');
   });
+
+  it('manual: auto cycling stops, a running measurement is not aborted, allowed without a cuff', () => {
+    const nb = createNibpState('on');
+    const out: Parameters<typeof nibpCommand>[4] = [];
+    nibpCommand(nb, 'auto', 1, 5, out);
+    expect(nb.phase).toBe('inflating');
+    expect(nibpCommand(nb, 'manual', 2, undefined, out)).toBeUndefined();
+    expect(nb.mode).toBe('manual');
+    expect(nb.phase).toBe('inflating'); // not aborted
+    expect(nb.nextStartT).toBeGreaterThan(1e11); // NEVER
+    expect(nibpCommand(createNibpState('off'), 'manual', 0, undefined, out)).toBeUndefined();
+  });
 });

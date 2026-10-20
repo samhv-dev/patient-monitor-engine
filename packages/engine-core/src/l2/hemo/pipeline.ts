@@ -386,9 +386,9 @@ function nibpEvents(hs: HemoState, outs: NibpOut[], t: number): void {
         },
       });
     } else if (o.kind === 'cuff') {
-      hs.out.push({ type: 'nibp', t, phase: o.phase, cuffMmHg: Math.round(o.cuff) });
+      hs.out.push({ type: 'nibp', t, phase: o.phase, cuffMmHg: Math.round(o.cuff), mode: hs.nibp.mode, intervalMin: hs.nibp.intervalMin });
     } else {
-      const e: EngineEvent = { type: 'nibp', t, phase: o.phase, cuffMmHg: Math.round(o.cuff) };
+      const e: EngineEvent = { type: 'nibp', t, phase: o.phase, cuffMmHg: Math.round(o.cuff), mode: hs.nibp.mode, intervalMin: hs.nibp.intervalMin };
       if (o.nextInS !== undefined) e.nextInS = o.nextInS;
       if (o.result) {
         e.result = { sys: o.result.sys, dia: o.result.dia, map: o.result.map, pr: o.result.pr };
@@ -549,7 +549,7 @@ function emitSecond(hs: HemoState, ctx: HemoCtx, t: number): void {
   hs.out.push(ce);
   if (hs.nibp.phase === 'idle') {
     const next = nibpNextIn(hs.nibp, t);
-    if (next !== undefined) hs.out.push({ type: 'nibp', t, phase: 'idle', nextInS: Math.round(next) });
+    if (next !== undefined) hs.out.push({ type: 'nibp', t, phase: 'idle', nextInS: Math.round(next), mode: hs.nibp.mode, intervalMin: hs.nibp.intervalMin });
   }
 }
 
@@ -797,8 +797,8 @@ export function validateHemoCommand(cmd: Command, hs: HemoState): string | undef
         return x.rpm === undefined || (Number.isFinite(x.rpm) && x.rpm >= 3000 && x.rpm <= 9000) ? undefined : 'rpm must be 3000–9000';
       }
       if (a.device !== 'nibp') return null;
-      if (!['start', 'stat', 'stop', 'auto'].includes(a.action)) return 'nibp action must be start, stat, stop or auto';
-      if (a.action !== 'stop' && hs.nibp.sensor !== 'on') return 'cuff not connected';
+      if (!['start', 'stat', 'stop', 'auto', 'manual'].includes(a.action)) return 'nibp action must be start, stat, stop, auto or manual';
+      if (a.action !== 'stop' && a.action !== 'manual' && hs.nibp.sensor !== 'on') return 'cuff not connected';
       if (a.intervalMin !== undefined && !(AUTO_INTERVALS_MIN as readonly number[]).includes(a.intervalMin)) {
         return `intervalMin must be one of ${AUTO_INTERVALS_MIN.join(', ')}`;
       }

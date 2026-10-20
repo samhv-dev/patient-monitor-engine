@@ -5,7 +5,7 @@
 import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, hrStatusLines, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
-import { formatNibp, formatWallTime } from './numerics-hemo.ts';
+import { formatNibp, formatWallTime, nibpModeLabel } from './numerics-hemo.ts';
 import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
 
 type NibpEvent = Extract<EngineEvent, { type: 'nibp' }>;
@@ -65,14 +65,19 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.b9 .limrow [data-lim]{flex-direction:row;gap:6px}',
     '.pme-stile.b9 [data-pme="ntime"],.pme-stile.b9 [data-pme="mode"]{font-size:12px;white-space:nowrap}',
     '.pme-stile.b9 [data-pme="src"]{font-size:12px}',
+    '.pme-stile.b9 .h{gap:4px;white-space:nowrap}',
+    '.pme-stile.b9 .h .u{font-size:11px}',
+    '.pme-stile.b9 [data-pme="mode"]{font-size:11px}',
     '.pme-stile.split .parts{display:flex;gap:4px}',
     '.pme-stile.split.column .parts{flex-direction:column;gap:0}',
     '.pme-stile.split .part{flex:1;min-width:0}',
     '.pme-stile.split .ph{display:flex;gap:4px;align-items:baseline;font-size:13px;white-space:nowrap}',
+    '.pme-stile.split.row .ph{flex-direction:column;align-items:flex-start;gap:0;line-height:1.1}', // label over unit: three parts fit a 180 px column
     '.pme-stile.split .pu{font-size:10px;opacity:.85}',
     '.pme-stile.split .pr{display:flex;align-items:center;gap:3px}',
     '.pme-stile.split .pv{flex:1;font-size:28px;line-height:1.05;min-height:1.05em;text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile.split.column .pv{font-size:20px}',
+    '.pme-stile.split.column .part{margin-bottom:3px}',
     '.pme-stile.split .s:empty{display:none}',
     '.pme-stile.b9 [data-pme="heart"]{margin-left:6px;opacity:0}',
     '.pme-stile.b9 [data-pme="heart"].on{opacity:1}',
@@ -86,6 +91,8 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-portrait .pme-stile .v{font-size:min(9vw,36px);white-space:nowrap}',
     '.pme-portrait .pme-stile.large .v{font-size:min(11vw,44px)}',
     '.pme-portrait .pme-stile .s{font-size:12px;white-space:nowrap;overflow:hidden;min-height:14px}',
+    // the rc.3 limit pairs stay off a phone, as the old limits do (review T-12)
+    '.pme-portrait .pme-stile.b9 .lim.a,.pme-portrait .pme-stile.b9 .lim.b,.pme-portrait .pme-stile.b9 .lim.c,.pme-portrait .pme-stile.b9 .part .lim,.pme-portrait .pme-stile.b9 .limrow{display:none}',
   ].join('\n');
 }
 
@@ -134,6 +141,8 @@ export class DeviceUI {
   private nibpLast: { sys: number; dia: number; map: number; at: number } | null = null;
   private nibpEv: NibpEvent | undefined;
   private nibpPr: number | null = null; // The cuff's pulse rate (the NIBP tile's PR extra)
+  /** Wall time at which THIS window received the last NIBP result (rc.3 tile; blank after a restore or a late join, E102). */
+  private nibpWallMs: number | null = null;
   private status: AlarmStatus | null = null;
   private dev: DeviceStatus | null = null;
   /** Header items, built once and only re-arranged by a skin switch (one row, or the two-row header). */
@@ -394,7 +403,10 @@ export class DeviceUI {
       }
     } else if (e.type === 'nibp') {
       this.nibpEv = e;
-      if (e.result) this.nibpPr = e.result.pr;
+      if (e.result) {
+        this.nibpPr = e.result.pr;
+        this.nibpWallMs = Date.now();
+      }
     }
     else if (e.type === 'alarmStatus') this.status = e;
     else if (e.type === 'deviceStatus') this.dev = e;
@@ -410,6 +422,7 @@ export class DeviceUI {
     this.nibpLast = null;
     this.nibpEv = undefined;
     this.nibpPr = null;
+    this.nibpWallMs = null;
     this.status = null;
     this.dev = null;
     this.paint(t);
@@ -511,6 +524,17 @@ export class DeviceUI {
         // A failed measurement shows the skin's glyph ("-?-" [S2] IFU p. 56; Saadat "?", research/06 §3.2)
         main = this.nibpEv?.phase === 'failed' ? g.nibpFail : n.main === '---/---' ? `${g.noValue}/${g.noValue}` : n.main;
         sub = `${n.sub === '(---)' ? '' : n.sub} ${n.status}`.trim();
+        if (tile.b9) {
+          // rc.3 (research/34 §3 row 8, IMG_8113): "119 / 90" spaced, "(101)" under it, the mode label and the time of
+          // the result; the inflating and measuring states keep their text
+          const measuring = this.nibpEv?.phase === 'inflating' || this.nibpEv?.phase === 'deflating';
+          if (!measuring && this.nibpEv?.phase !== 'failed' && this.nibpLast) main = `${this.nibpLast.sys} / ${this.nibpLast.dia}`;
+          if (!measuring) sub = n.sub === '(---)' ? '' : n.sub;
+          const mode = tile.el.querySelector('[data-pme="mode"]');
+          const time = tile.el.querySelector('[data-pme="ntime"]');
+          if (mode) mode.textContent = nibpModeLabel(this.nibpEv);
+          if (time) time.textContent = this.nibpWallMs !== null ? formatWallTime(this.nibpWallMs) : '';
+        }
       } else if (TILE_NUMERICS[p].numerics.length === 3) {
         const [s, d, m] = TILE_NUMERICS[p].numerics.map((k) => v[k]);
         main = `${this.text(s)}/${this.text(d)}`;

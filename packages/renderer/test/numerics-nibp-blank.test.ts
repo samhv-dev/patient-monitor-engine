@@ -16,7 +16,8 @@ describe('a failed cuff cycle does not leave the last pressure on the tile', () 
   for (const [id, noValue] of [['saadat-like', ''], ['philips-like', '---'], ['mindray-like', '---']] as const) {
     it(`${id}: done 121/76 → failed + blanked numerics → idle: the tile reads no value, not 121/76`, () => {
       const ui = new DeviceUI(document, document.createElement('div'), resolveSkin(id));
-      const v = () => ui.tiles.querySelector('.pme-stile[data-param="NIBP"] [data-pme="v"]')?.textContent;
+      // saadat-like prints "121 / 76" spaced (rc.3, IMG_8113): the value is compared without spaces
+      const v = () => ui.tiles.querySelector('.pme-stile[data-param="NIBP"] [data-pme="v"]')?.textContent?.replace(/ /g, '');
       ui.onEvent(nibp(51, 'done', { sys: 121, dia: 76, map: 95, pr: 70 }));
       ui.onEvent(meas(51, { nibpSys: m(121, 51), nibpDia: m(76, 51), nibpMean: m(95, 51) }));
       ui.onEvent(nibp(52, 'idle'));
