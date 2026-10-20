@@ -11,6 +11,7 @@ Node ≥ 22.12, pnpm 9.15.9 (`corepack enable`, or `npx -y pnpm@9.15.9 …`).
 pnpm install
 pnpm typecheck
 PME_TEST_SET=fast pnpm test                       # what CI's build job runs
+PME_TEST_SET=perf pnpm --filter @pme/validation exec vitest run   # the tick benchmark, alone (CI's next step)
 PME_TEST_SET=slow pnpm --filter @pme/engine-core test   # the multi-sim-hour set (CI's test-slow job)
 pnpm build && pnpm check-notices && pnpm check-licences && pnpm check-size
 pnpm test:e2e                                      # Playwright; PW_SYSTEM_CHROME=1 uses your installed Chrome
