@@ -55,12 +55,12 @@ describe('tile glyphs, sources and extras', () => {
     sp.ui.onEvent(status(40, 'saadat-like', [{ id: 'ecgLeadsOff' }]));
     sp.ui.paint(40);
     expect([sp.q('HR', 'lbl'), src(sp), sp.q('HR', 'v')]).toEqual(['PR', '(SPO2)', '76']);
-    expect(color(sp)).toMatch(/^(rgb\(240, 0, 240\)|#F000F0)$/i);
+    expect(color(sp)).toBe(resolveSkin('saadat-like').skin.colors.PR); // the SpO2 / pulse colour (inline hex in happy-dom)
     const ec = mount('saadat-like'); // the ECG rate: green (ECG)
     ec.ui.onEvent(meas(40, { hr: m(72, 40), pr: m(76, 40) }));
     ec.ui.paint(40);
     expect([ec.q('HR', 'lbl'), src(ec), ec.q('HR', 'v')]).toEqual(['HR', '(ECG)', '72']);
-    expect(color(ec)).toMatch(/^(rgb\(0, 240, 0\)|#00F000)$/i);
+    expect(color(ec)).toBe(resolveSkin('saadat-like').skin.colors.HR);
   });
 
   it('a failed NIBP shows the skin glyph ("-?-" philips-like, "?" saadat-like); saadat-like NIBP block has no PR (rc.3)', () => {
