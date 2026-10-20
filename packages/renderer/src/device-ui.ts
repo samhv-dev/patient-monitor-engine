@@ -130,8 +130,10 @@ function gridCss(g: LayoutGrid): string {
     // the strip's tile has no sub-line (its extras are the strip's fields)
     '.pme-strip .pme-stile.rc3 .srow{display:none}',
     '.pme-strip .pme-stile .v{line-height:1}',
-    '.pme-sfield{flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:2px 8px;line-height:1.05}',
-    '.pme-sfield .ph{display:flex;gap:6px;white-space:nowrap}',
+    // the strip's fields centred under their labels, the SpO2 cell boxed off from them (NOTES.md strip anchors)
+    '.pme-sfield{flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:2px 8px;line-height:1.05;text-align:center}',
+    '.pme-strip>.pme-stile{border-right:1px solid var(--pme-divider)}',
+    '.pme-sfield .ph{display:flex;justify-content:center;gap:6px;white-space:nowrap}',
     '.pme-sfield .u{opacity:.85}',
     '.pme-sfield [data-pme="fv"]{font-variant-numeric:tabular-nums;min-height:1.05em}',
   ].join('\n');
