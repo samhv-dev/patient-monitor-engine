@@ -18,7 +18,11 @@ const PATIENT = '#D55E00';
 const SCENARIO = '#767676';
 /** The strip's drawing units: 4 per mm of the 182 mm content width, so height ≤ 320 is ≤ 80 mm. */
 export const COURSE_W = 728;
-const L = 92, R = 10, BADGES = 24, LANE = 46, GAP = 4, AXIS = 18;
+/** L: the label column (rc.3: 108, was 92, so "ART M / NIBP M" in bold clears its scale values). */
+const L = 108, R = 10, BADGES = 24, GAP = 4, AXIS = 18;
+/** A trend's lane height. The learner's copy prints at the full 182 mm width so its 9-unit labels read at 6.4 pt
+ *  (rc.3; at 90 mm they were ≈ 3.2 pt), with lanes about half as tall so the strip stays ≈ 40 mm high. */
+const LANE = 46, LANE_LEARNER = 26;
 /** Badges closer than this (drawing units) are moved right of the one before. */
 const BADGE_MIN = 15;
 
@@ -27,9 +31,10 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
   const end = Math.max(endOf(d), 1);
   const spans = pulselessSpans(d);
   const lanes = o.trends.filter((k) => d.samples.some((s) => s[k] !== null));
-  const H = BADGES + lanes.length * (LANE + GAP) + AXIS;
+  const LANE_H = o.learner ? LANE_LEARNER : LANE;
+  const H = BADGES + lanes.length * (LANE_H + GAP) + AXIS;
   const x = (t: number) => L + (t / end) * (COURSE_W - L - R);
-  const top = BADGES, bottom = BADGES + lanes.length * (LANE + GAP);
+  const top = BADGES, bottom = BADGES + lanes.length * (LANE_H + GAP);
   const inBand = (t: number) => spans.some(([a, b]) => a <= t && t <= b);
 
   const bands = spans.map(([a, b]) => `<rect class="db-pulseless" x="${x(a).toFixed(1)}" y="${top}" width="${Math.max(1, x(b) - x(a)).toFixed(1)}" height="${bottom - top}" fill="#e9e9e9"/>`).join('');
@@ -42,7 +47,7 @@ export function courseSvg(d: RunData, moments: KeyMoment[], o: CourseOptions): s
 
   const rows = lanes.map((k, i) => {
     const m = trendMeta(k);
-    const y0 = top + i * (LANE + GAP) + 2, y1 = y0 + LANE - 4;
+    const y0 = top + i * (LANE_H + GAP) + 2, y1 = y0 + LANE_H - 4;
     const vals = d.samples.map((s) => s[k]).filter((v): v is number => v !== null);
     const [lo, hi] = axisRange(k, Math.min(...vals), Math.max(...vals));
     const y = (v: number) => y0 + (1 - (v - lo) / (hi - lo)) * (y1 - y0);

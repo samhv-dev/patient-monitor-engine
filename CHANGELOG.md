@@ -20,6 +20,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Changed
 
+- The Debrief report and the learner handout print in a bundled font, Inter 4.1 (SIL OFL 1.1; the Latin subset,
+  variable weight, 47 KB, NOTICES N-016), so a printed page measures the same on every platform: before, the system
+  font stack printed the MH report's page 1 ≈ 5 mm taller on Linux than on macOS. Only the print rules use it (the
+  screen is unchanged); the Debrief view loads it on opening, and its two print buttons wait for it.
+- The learner handout's course strip prints at the full page width with shorter lanes, so its labels read at 6.4 pt
+  (were ≈ 3.2 pt) and the strip is ≈ 40 mm high (was 30 mm); the strip's label column is wider in both copies so
+  "ART M / NIBP M" no longer runs into its scale values.
 - FX-23 (the owner's review of the fast-forward on rc.2): during a fast-forward the panel shows the double chevron inside
   a ring of the same amber, the ring and the icon blinking together, with no running clock beside it; the progress bar
   no longer shows the start and end times; the muted-sound icon stands alone, without the words "sound muted" (a screen

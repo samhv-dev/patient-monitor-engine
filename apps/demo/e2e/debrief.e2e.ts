@@ -231,10 +231,16 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<vo
   await page.evaluate(() => (location.hash = '#/debrief'));
   await expect(page.locator('[data-view=debrief] #db-moments')).toBeVisible();
 }
-/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout. */
+/** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout; whether
+ *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
+ *  of the handout course strip's labels (0 when the handout is not shown). */
 const printHeights = (page: Page) => page.evaluate((mm) => {
   const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
-  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm };
+  const strip = document.querySelector('#db-handout .db-course svg') as SVGSVGElement;
+  const label = strip.querySelector('.db-lane-l') as SVGTextElement;
+  const stripPt = (strip.getBoundingClientRect().width / strip.viewBox.baseVal.width) * parseFloat(getComputedStyle(label).fontSize) * 0.75;
+  const printFont = [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded');
+  return { page1: (r('#db-objectives').bottom - r('#db-live-1 > .db-band').top) / mm, handout: r('#db-handout').height / mm, printFont, stripPt };
 }, MM);
 
 test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, the learner handout', async ({ page, browserName }) => {
@@ -282,6 +288,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
     };
   });
   await view.getByRole('button', { name: 'Print the learner handout' }).click();
+  await expect.poll(() => page.evaluate(() => !!(window as unknown as { printed?: string[] }).printed)).toBe(true); // rc.3: printed once the print font is loaded
   const printed = await page.evaluate(() => (window as unknown as { printed: string[] }).printed);
   expect(printed[0]).toBe('handout');
   expect(printed[1]).toMatch(/^Learner handout Stab wound: tamponade, PEA and pericardiocentesis \d{4}-\d\d-\d\d$/);
@@ -290,6 +297,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   // (f) print media at the 182 mm content width: page 1 and the handout each within one A4 page (267 mm)
   await page.emulateMedia({ media: 'print' });
   const report = await printHeights(page);
+  expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   await expect(view.locator('#db-handout')).toBeHidden(); // never with the report
   const foot = (await view.locator('.db-foot').textContent()) ?? '';
@@ -311,6 +319,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
   if (browserName === 'webkit') expect(seen.text).toContain(foot); // Safari's footer line (Chromium prints it in the margin)
   const ho = await printHeights(page);
   expect(ho.handout, 'handout (mm)').toBeLessThanOrEqual(267);
+  expect(ho.stripPt, 'handout course labels (pt)').toBeGreaterThanOrEqual(6); // rc.3: were ≈ 3.2 pt
   mkdirSync(out, { recursive: true });
   await page.screenshot({ path: `${out}/debrief-b-handout-${browserName}.png`, fullPage: true });
   test.info().annotations.push({ type: 'A3.1 heights (mm)', description: `page 1 ${report.page1.toFixed(1)}, handout ${ho.handout.toFixed(1)}` });
@@ -346,9 +355,11 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
   await page.emulateMedia({ media: 'print' });
-  const { page1 } = await printHeights(page);
+  const { page1, printFont } = await printHeights(page);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
-  const { handout } = await printHeights(page);
+  const { handout, stripPt } = await printHeights(page);
+  expect(printFont, 'the bundled print font is loaded').toBe(true);
+  expect(stripPt, 'handout course labels (pt)').toBeGreaterThanOrEqual(6);
   test.info().annotations.push({ type: 'MH heights (mm)', description: `page 1 ${page1.toFixed(1)}, handout ${handout.toFixed(1)}` });
   expect(page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
   expect(handout, 'handout (mm)').toBeLessThanOrEqual(267);

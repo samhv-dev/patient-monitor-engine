@@ -35,7 +35,7 @@ describe('courseSvg on A3.1', () => {
     const path = (k: string) => new RegExp(`data-trend="${k}"[^]*?<path d="([^"]*)"`).exec(svg)?.[1] ?? '';
     const xs = (p: string) => [...p.matchAll(/[ML]([\d.]+) /g)].map((m) => Number(m[1]));
     const end = Math.max(...d.samples.map((s) => s.t));
-    const x = (t: number) => 92 + (t / end) * (COURSE_W - 92 - 10);
+    const x = (t: number) => 108 + (t / end) * (COURSE_W - 108 - 10);
     const inside = (p: string) => xs(p).filter((v) => v > x(468) + 0.5 && v < x(655) - 0.5).length;
     expect(inside(path('spo2'))).toBe(0);
     expect(inside(path('hr'))).toBeGreaterThan(100);
