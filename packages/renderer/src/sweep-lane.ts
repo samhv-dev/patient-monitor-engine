@@ -32,6 +32,8 @@ export interface LaneConfig {
   grid?: { minorMm: number; majorMm: number; minor: string; major: string } | null;
   /** A 1-px line at the leading edge of the erase gap (request RR-3; every shipped skin says false). */
   cursorLine?: boolean;
+  /** Fill the area between the trace and the lane's zero line in the trace colour (skin `co2.fill`; research/34 row 2). */
+  fill?: boolean;
 }
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
@@ -192,6 +194,7 @@ export class SweepLane {
       }
       pts.push({ x, y: this.yOf(col.last) });
     }
+    if (c.fill) this.fillWrapped(ctx, pts, band);
     this.strokeWrapped(ctx, pts, band);
     // Keep for re-stroking every point whose stroke (half the line width) reaches into the next band, plus one
     // point before them for the joining segment (the band clip hides everything outside it).
@@ -208,6 +211,37 @@ export class SweepLane {
       ctx.fillRect(c.x + ((this.xOf(last) + c.eraseGapPx - 1) % c.width), c.y, 1 / this.dpr, c.height);
     }
     return cursor;
+  }
+
+  /**
+   * Fill under a polyline (unwrapped x) down to the lane's zero line, one polygon per lap, clipped to `band`. Drawn before
+   * the stroke so the line stays on top; the tail points are filled again with the band, so the joins have no gaps.
+   */
+  private fillWrapped(ctx: Ctx2D, pts: Pt[], band: readonly Rect[]): void {
+    const c = this.cfg;
+    if (pts.length < 2) return;
+    const base = Math.min(c.y + c.height, Math.max(c.y, c.y + c.baseline * c.height));
+    ctx.save();
+    ctx.beginPath();
+    for (const r of band) ctx.rect(...r);
+    ctx.clip();
+    ctx.fillStyle = c.color;
+    let i = 0;
+    while (i < pts.length) {
+      const lap = Math.floor((pts[i] as Pt).x / c.width);
+      const off = c.x - lap * c.width;
+      ctx.beginPath();
+      ctx.moveTo(off + (pts[i] as Pt).x, base);
+      let x = 0;
+      for (; i < pts.length && Math.floor((pts[i] as Pt).x / c.width) === lap; i++) {
+        const p = pts[i] as Pt;
+        x = off + p.x;
+        ctx.lineTo(x, p.y);
+      }
+      ctx.lineTo(x, base);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   /** Stroke a polyline given in unwrapped x, splitting it where it crosses the right edge, clipped to `band`. */

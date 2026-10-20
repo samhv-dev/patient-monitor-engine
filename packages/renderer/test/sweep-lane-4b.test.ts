@@ -1,6 +1,7 @@
 // RR-3 cursor line and RR-4 grid painter on the erase bar.
 import { describe, expect, it } from 'vitest';
 import { SweepLane, type LaneConfig } from '../src/sweep-lane.ts';
+import { scaleFor } from '../src/wave-lanes.ts';
 import { FakeCtx } from './fake-ctx.ts';
 
 const cfg = (extra: Partial<LaneConfig>): LaneConfig => ({
@@ -44,5 +45,38 @@ describe('SweepLane 4b options', () => {
     expect(bar[0]!.args[0]).toBeCloseTo(((150 / 500) * 100 + 16 - 1) % 400, 6);
     expect(bar[0]!.args[2]).toBe(1);
     expect(lane.lastDrawnIndex).toBe(150);
+  });
+
+  const capCfg = (extra: Partial<LaneConfig>): LaneConfig =>
+    cfg({ rate: 62.5, mmPerS: 6, color: '#F0F030', ...scaleFor(0, 50, 100, 4), ...extra });
+  const const40 = (_from: number, out: Float32Array) => {
+    out.fill(40);
+    return out.length;
+  };
+
+  it('a filled lane fills under the trace down to the zero line, clipped to the band, in the lane colour', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({ fill: true }), 1);
+    lane.draw(ctx, 0.5, const40);
+    lane.draw(ctx, 1, const40);
+    const fills = ctx.calls.filter((c) => c.op === 'fill');
+    expect(fills.length).toBeGreaterThanOrEqual(1);
+    for (const f of fills) {
+      expect(f.style).toBe('#F0F030');
+      expect(f.clip).not.toBeNull();
+    }
+    const c = lane.cfg;
+    expect(ctx.calls.some((k) => k.op === 'lineTo' && k.args[1] === c.y + c.height)).toBe(true);
+    // the stroke comes after the fill, so the line stays on top
+    const ops = ctx.calls.map((k) => k.op);
+    expect(ops.lastIndexOf('stroke')).toBeGreaterThan(ops.lastIndexOf('fill'));
+  });
+
+  it('fill omitted: no fill call (every other lane and skin is unchanged)', () => {
+    const ctx = new FakeCtx();
+    const lane = new SweepLane(capCfg({}), 1);
+    lane.draw(ctx, 0.5, const40);
+    lane.draw(ctx, 1, const40);
+    expect(ctx.calls.filter((c) => c.op === 'fill')).toEqual([]);
   });
 });

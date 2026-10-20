@@ -30,6 +30,9 @@ export class FakeCtx implements Ctx2D {
   stroke(): void {
     this.calls.push({ op: 'stroke', args: [], style: String(this.strokeStyle), clip: this.clipRect });
   }
+  fill(): void {
+    this.calls.push({ op: 'fill', args: [], style: String(this.fillStyle), clip: this.clipRect });
+  }
   fillText(text: string, x: number, y: number): void {
     this.texts.push(text);
     this.calls.push({ op: 'fillText', args: [x, y], style: `${this.textAlign}:${text}` });

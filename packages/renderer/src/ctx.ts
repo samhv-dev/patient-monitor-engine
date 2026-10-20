@@ -14,6 +14,7 @@ export interface Ctx2D {
   moveTo(x: number, y: number): void;
   lineTo(x: number, y: number): void;
   stroke(): void;
+  fill(): void;
   fillText(text: string, x: number, y: number): void;
   setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void;
   save(): void;

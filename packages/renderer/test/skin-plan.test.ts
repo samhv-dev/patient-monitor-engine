@@ -25,6 +25,9 @@ describe('renderPlan', () => {
     expect(p.lanes.map((l) => [l.id, l.channel])).toEqual([['ECG1', 'ecgII'], ['ECG2', 'ecgII'], ['CO2', 'co2'], ['IBP1', 'abp'], ['IBP2', 'cvp'], ['PLETH', 'pleth']]);
     // research/34 T1/T2: 6 mm/s on a 0–50 mmHg scale, as photographed ("6 mm/s", "50mmHg"); EtCO2 above 50 clips (E63)
     expect(p.lanes[2]).toMatchObject({ label: 'CO2', color: '#F0F030', mmPerS: 6, range: [0, 50] });
+    expect(p.lanes[2]).toMatchObject({ fill: true }); // research/34 row 2: the capnogram is filled
+    expect(p.lanes.filter((l) => l.id !== 'CO2').every((l) => l.fill === false)).toBe(true);
+    expect(renderPlan(resolveSkin('philips-like', { sensors: { co2: true } })).lanes.every((l) => l.fill === false)).toBe(true);
     expect(renderPlan(resolveSkin('iran-icu-as-found', { sensors: { co2: true } })).lanes.map((l) => l.id)).toEqual(['ECG1', 'ECG2', 'PLETH', 'CO2']);
   });
 

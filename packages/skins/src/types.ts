@@ -214,6 +214,8 @@ export interface Skin {
     sidestreamDelayS: number;
     /** Sidestream 10–90 % rise time (ms), adult; the engine keeps its own neonatal rise. */
     riseTimeMs: number;
+    /** Fill the area under the capnogram in the CO2 colour (optional; absent = an outline only). */
+    fill?: boolean;
   };
   alarms: {
     levels: 3;

@@ -312,7 +312,7 @@ export class MonitorCore {
       const lane = new SweepLane(
         {
           x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color,
-          background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine,
+          background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           ...(pl.kind === 'ecg' ? { baseline: 0.6, gainMmPerMv: pl.gainMmPerMv } : scaleFor(lo, hi, h, this.pxPerMm)),
         },
         dpr,

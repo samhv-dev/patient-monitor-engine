@@ -135,7 +135,7 @@
       "LAP": [-10, 15, 40], "RAP": [-10, 10, 30], "ICP": [-10, 15, 40]
     }
   },
-  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200 },
+  "co2": { "unit": "mmHg", "scale": 50, "scaleUnit": "mmHg", "sidestreamDelayS": 2.6, "riseTimeMs": 200, "fill": true },
   "alarms": {
     "levels": 3,
     "levelNames": ["1", "2", "3"],
@@ -284,6 +284,7 @@
     "ibp.staticDisplay": { "tag": "documented", "source": "research/06 §4.1 (static pressure: SYS/DIA hidden, a larger mean shown)" },
     "co2.unit": { "tag": "documented", "source": "research/06 §4.1 (M p.270); research/00 R12" },
     "co2.scale": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was 10 %V (research/06 §3.2, M p.305). Values above 50 mmHg clip at the lane top, as on the real unit; the EtCO2 number is unaffected (owner E63, accepted 2026-10-18)" },
+    "co2.fill": { "tag": "measured", "source": "research/34 §3 row 2 (IMG_8113: area under the capnogram filled yellow, 4 of 4 units)" },
     "co2.scaleUnit": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 row 2 (\"50mmHg\" scale label, IMG_8112–8116)", "note": "Tuesday set T2: was \"%\"" },
     "alarms.levels": { "tag": "documented", "source": "research/06 §4.2 (M p.21, 47); brief §6.4.1" },
     "alarms.levelNames": { "tag": "documented", "source": "research/06 §4.2; brief §6.4.1" },
