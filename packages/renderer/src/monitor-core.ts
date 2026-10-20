@@ -6,7 +6,7 @@
 import { capture12, Clock, createEngine, type Capture12, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
-import { drawLeadOffDashes, drawMark, Overlays, shows, simClock } from './overlays.ts';
+import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
 import type { ClockAnchor, CoreOptions, Size } from './protocol.ts';
 import { ecgLabel, legacyPlan, type PlanLane, type RenderPlan } from './skin-plan.ts';
 import { SweepLane } from './sweep-lane.ts';
@@ -181,7 +181,8 @@ export class MonitorCore {
   /**
    * Run `ticks` ticks now, without drawing, and post their events (fast-forward). The clock is held from the first step to
    * the `last` one (a frame neither advances nor draws meanwhile); `last` gives it back in the pause state it had before.
-   * The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers.
+   * The lanes restart on the next drawn frame (the jump exceeds a lane) from the engine's buffers, with no mark at the jump:
+   * they look like a monitor that simply ran on.
    */
   advance(ticks: number, last: boolean): { tick: number; simT: number } {
     if (this.ffWasPaused === null) {
@@ -191,7 +192,6 @@ export class MonitorCore {
     if (this.clock.step(ticks) > 0) this.engine.advanceTo(this.clock.simT);
     this.overlays.due(this.clock.renderT); // marks from the skipped span are not drawn
     if (last) {
-      this.overlays.add({ t: this.clock.renderT, kind: 'seam', label: simClock(this.clock.renderT) }); // the jump, on every lane
       if (!this.ffWasPaused) this.clock.resume();
       this.ffWasPaused = null;
       this.lastEpoch = null; // the next frame counts from itself, not from the fast-forward's start
@@ -226,7 +226,7 @@ export class MonitorCore {
       const marks = this.overlays.due(t);
       for (const m of marks) {
         if (!shows(this.plan, m)) continue;
-        for (const i of m.kind === 'seam' ? this.plan.lanes.keys() : this.ecgLaneIndices()) drawMark(this.ctx, this.lanes[i] as SweepLane, m, this.plan, this.pxPerMm);
+        for (const i of this.ecgLaneIndices()) drawMark(this.ctx, this.lanes[i] as SweepLane, m, this.plan, this.pxPerMm);
       }
     }
     if (this.batch.length > 0 || epochMs - this.lastPost >= EVENT_POST_MS) {
