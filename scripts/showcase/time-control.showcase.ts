@@ -96,9 +96,10 @@ async function fastForward(r: Result, page: Page, min: 2 | 5, during?: () => Pro
   const veil = page.locator('.ff-veil.on');
   await expect(veil).toBeVisible({ timeout: 5000 });
   const title = await veil.locator('.ff-title').innerText();
-  const c0 = await veil.locator('.ff-now').innerText();
+  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width); // FX-23: no clock on the panel; the bar fills
+  const c0 = await fillW();
   await page.waitForTimeout(atMs);
-  const c1 = await veil.locator('.ff-now').innerText().catch(() => '(gone)');
+  const c1 = await fillW().catch(() => '(gone)');
   if (during) await during();
   await expect(page.locator('.ff-veil.on')).toHaveCount(0, { timeout: 90_000 });
   const wallS = (Date.now() - w0) / 1000;
@@ -107,10 +108,10 @@ async function fastForward(r: Result, page: Page, min: 2 | 5, during?: () => Pro
   const span = { min, title, clockAtShow: c0, clockLater: c1, wallS: r1(wallS), fromT: r1(ff?.fromT), endT: r1(ff?.endT), simStart: r1(t0), banner, alarms: ff?.alarms.map((a) => `${mmss(a.since)} ${a.text}${a.ended ? ' (came and went)' : ''}`) ?? [] };
   r.spans.push(span);
   check(r, `fast-forward ${min} min: panel title`, `FAST FORWARD · ${min} MIN`, title, title === `FAST FORWARD · ${min} MIN`);
-  check(r, `fast-forward ${min} min: the clock runs on the panel`, 'changes', `${c0} → ${c1}`, c0 !== c1);
+  check(r, `fast-forward ${min} min: the bar fills on the panel`, 'changes', `${c0} → ${c1}`, c0 !== c1);
   check(r, `fast-forward ${min} min: exact span`, `${min * 60} s`, ff ? r1(ff.endT - ff.fromT) : null, !!ff && Math.abs(ff.endT - ff.fromT - min * 60) < 1e-6);
   check(r, `fast-forward ${min} min: paced`, '9.5–20 s of wall time (click to panel gone)', r1(wallS), wallS >= 9.5 && wallS <= 20);
-  check(r, `fast-forward ${min} min: banner`, `"Fast-forwarded ${min} min, mm:ss → mm:ss. During it: …"`, banner, new RegExp(`^Fast-forwarded ${min} min, \\d\\d:\\d\\d → \\d\\d:\\d\\d\\. During it: .+\\.$`).test(banner.trim()));
+  check(r, `fast-forward ${min} min: banner`, `three lines: "Fast-forwarded ${min} min" / "mm:ss → mm:ss" / the alarms or "No alarms"`, banner, new RegExp(`^Fast-forwarded ${min} min\\n\\d\\d:\\d\\d → \\d\\d:\\d\\d\\n.+$`).test(banner.trim()));
   return span;
 }
 

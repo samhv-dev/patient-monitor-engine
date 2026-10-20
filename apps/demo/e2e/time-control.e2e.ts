@@ -1,9 +1,9 @@
 // Stage 10 (the owner's request for the 22 Oct demonstration and his decisions of 7 Oct): ×8 with the beat tone off,
 // and a fast-forward of 5 or 2 min from the instructor view, on both engines. The span is paced to ≈ 10 s behind one
-// panel (dimmed, blurred page; the clock running; "sound muted") on every window (instructor, monitor, Explore,
-// Ventilator, a second screen); no tone inside it, one two-tone cue at its end; the banner, the clinical log and the
-// trends hold the span; a latched fast-forward alarm clears on the next acknowledge; the Ventilator view's cockpit
-// ventilates the patient through a span.
+// panel (dimmed, blurred page; the ringed chevrons and a filling bar, no times; the muted-sound icon) on every window
+// (instructor, monitor, Explore, Ventilator, a second screen); no tone inside it, one two-tone cue at its end; the
+// three-line banner, the clinical log and the trends hold the span; a latched fast-forward alarm clears on the next
+// acknowledge; the Ventilator view's cockpit ventilates the patient through a span.
 import { expect, test } from '@playwright/test';
 import type { ViteDevServer } from 'vite';
 import { openApp, startVite } from './app-support.ts';
@@ -65,12 +65,15 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   const veil = page.locator('.ff-veil.on');
   await expect(veil).toBeVisible({ timeout: 5000 });
   await expect(veil.locator('.ff-title')).toHaveText('FAST FORWARD · 5 MIN');
-  await expect(veil.locator('.ff-mute')).toHaveText('sound muted');
+  await expect(veil.locator('.ff-mute svg')).toBeVisible(); // FX-23: the icon, no words on screen
+  expect(await veil.innerText()).not.toMatch(/\d\d:\d\d/); // no clock, no start or end time
+  await expect(veil.locator('.ff-mute > :not(svg):not(.sr-only)')).toHaveCount(0); // no words beside the icon on screen
   await expect(second.locator('.ff-veil.on .ff-title')).toHaveText('FAST FORWARD · 5 MIN');
-  // the clock runs visibly
-  const c0 = await veil.locator('.ff-now').textContent();
+  // the bar fills visibly
+  const fillW = () => veil.locator('.ff-fill').evaluate((el) => (el as HTMLElement).style.width);
+  const c0 = await fillW();
   await page.waitForTimeout(1500);
-  expect(await veil.locator('.ff-now').textContent()).not.toBe(c0);
+  expect(await fillW()).not.toBe(c0);
   // the panel is above every view: instructor, monitor, Explore, Ventilator (opened here for the first time)
   for (const r of ['monitor', 'explore', 'vent', 'teach']) {
     await page.evaluate((h) => (location.hash = h), `#/${r}`);
@@ -85,8 +88,9 @@ test('×8 and a 5-minute fast-forward from the instructor view: paced panel ever
   expect(ff).not.toBeNull();
   const { fromT, endT } = ff as { fromT: number; endT: number };
   expect(endT - fromT).toBeCloseTo(300, 6);
-  await expect(page.locator('.ff-banner')).toContainText(/^Fast-forwarded 5 min, \d\d:\d\d → \d\d:\d\d\. During it: .+\.$/);
-  await expect(second.locator('.ff-banner')).toContainText('Fast-forwarded 5 min');
+  // FX-23: three lines — the span, from → to, the alarms during it (or "No alarms")
+  await expect(page.locator('.ff-banner > div')).toHaveText(['Fast-forwarded 5 min', /^\d\d:\d\d → \d\d:\d\d$/, /^(No alarms|.+ \d\d:\d\d)$/]);
+  await expect(second.locator('.ff-banner > div').first()).toHaveText('Fast-forwarded 5 min');
 
   // the trends hold the span: HR in at least 290 of its 300 seconds
   const held = await page.evaluate((r) => Array.from((window as unknown as Win).__pmeApp.session.monitor.trends.series('hr', r.from, r.to)).filter((v) => Number.isFinite(v)).length, { from: Math.ceil(fromT), to: Math.floor(endT) });
