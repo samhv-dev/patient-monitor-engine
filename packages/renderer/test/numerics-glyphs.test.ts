@@ -46,7 +46,21 @@ describe('tile glyphs, sources and extras', () => {
     sa.ui.onEvent(meas(40, { hr: m(null, 40), pr: m(76, 40), prAbp: m(75, 40) }));
     sa.ui.onEvent(status(40, 'saadat-like', [{ id: 'ecgLeadsOff' }]));
     sa.ui.paint(40);
-    expect([sa.q('HR', 'lbl'), sa.q('HR', 'v')]).toEqual(['PR', '75']);
+    const src = (u: ReturnType<typeof mount>) => u.ui.tiles.querySelector('.pme-stile[data-param="HR"] [data-pme="src"]')?.textContent;
+    expect([sa.q('HR', 'lbl'), src(sa), sa.q('HR', 'v')]).toEqual(['PR', '(IBP1)', '75']); // rc.3 PR tile source label (E99)
+    expect(ph.ui.tiles.querySelector('.pme-stile[data-param="HR"] [data-pme="src"]')).toBeNull();
+    const color = (u: ReturnType<typeof mount>) => (u.ui.tiles.querySelector('.pme-stile[data-param="HR"]') as HTMLElement).style.color; // inherited by the label, source and digits
+    const sp = mount('saadat-like'); // no arterial line: the SpO2 pulse, in the SpO2 colour
+    sp.ui.onEvent(meas(40, { hr: m(null, 40), pr: m(76, 40) }));
+    sp.ui.onEvent(status(40, 'saadat-like', [{ id: 'ecgLeadsOff' }]));
+    sp.ui.paint(40);
+    expect([sp.q('HR', 'lbl'), src(sp), sp.q('HR', 'v')]).toEqual(['PR', '(SPO2)', '76']);
+    expect(color(sp)).toMatch(/^(rgb\(240, 0, 240\)|#F000F0)$/i);
+    const ec = mount('saadat-like'); // the ECG rate: green (ECG)
+    ec.ui.onEvent(meas(40, { hr: m(72, 40), pr: m(76, 40) }));
+    ec.ui.paint(40);
+    expect([ec.q('HR', 'lbl'), src(ec), ec.q('HR', 'v')]).toEqual(['HR', '(ECG)', '72']);
+    expect(color(ec)).toMatch(/^(rgb\(0, 240, 0\)|#00F000)$/i);
   });
 
   it('a failed NIBP shows the skin glyph ("-?-" philips-like, "?" saadat-like); saadat-like NIBP block has no PR (rc.3)', () => {

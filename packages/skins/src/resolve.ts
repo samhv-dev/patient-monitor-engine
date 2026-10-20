@@ -107,6 +107,7 @@ function applyTheme(skin: Skin, themeId: string): Skin {
   const min = theme.colorTransform.minRatio;
   for (const [k, v] of Object.entries(out.colors)) if (v) (out.colors as Record<string, string>)[k] = darkenToContrast(v, theme.background, min);
   if (out.alarms.limitsColor) out.alarms.limitsColor = darkenToContrast(out.alarms.limitsColor, theme.background, min);
+  if (out.hr.statusColor) out.hr.statusColor = darkenToContrast(out.hr.statusColor, theme.background, min);
   out.alarms.messageBar.idle = { ...theme.messageBarIdle };
   out.alarms.messageBar.acknowledged = { ...theme.messageBarIdle };
   for (const k of Object.keys(out.provenance)) if (k.startsWith('colors.')) delete out.provenance[k];

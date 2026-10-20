@@ -213,6 +213,8 @@ export interface Skin {
     source: string;
     autoPriority: string[];
     relabelNonEcgAs: string | null;
+    /** Colour of the PR tile's PACE/ST/PVCs status lines (rc.3, saadat-like); absent = colors.HR. Themes darken it. */
+    statusColor?: Hex;
     /** Optional HR averaging; absent = the `method` default. */
     averaging?: { kind: 'beats' | 'seconds'; n: number };
   };

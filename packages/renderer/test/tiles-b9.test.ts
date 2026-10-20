@@ -2,7 +2,7 @@
 // rc.3 PR-T T2 (research/34 §3 rows 4, 8, 12, 14; §8 O1, M1; IMG_8113): the saadat-like tiles — limit pairs always
 // shown in small red, high over low; units; per-tile weight; split tiles (EtCo2 | FiCo2 | AWRR, T1/T2/DT, BFI% …);
 // blank values where the engine publishes none. Other skins keep the old tile skeleton.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { EngineEvent, Measured } from '@pme/engine-core';
 import { resolveSkin } from '@pme/skins';
 import { DeviceUI } from '../src/device-ui.ts';
@@ -111,5 +111,37 @@ describe('saadat-like tile skeleton', () => {
     expect(tile('NIBP').querySelector('.lim.a [data-lim="NIBP_S"]')).not.toBeNull();
     expect(tile('NIBP').querySelector('.lim.b [data-lim="NIBP_D"]')).not.toBeNull();
     expect(tile('NIBP').querySelector('.lim.c [data-lim="NIBP_M"]')).not.toBeNull();
+  });
+
+  it('the heart lights for 200 ms on each beat tone and the timer dies with destroy()', () => {
+    vi.useFakeTimers();
+    try {
+      const { ui, tile } = mount('saadat-like');
+      const heart = tile('HR').querySelector('[data-pme="heart"]') as HTMLElement;
+      expect(heart.classList.contains('on')).toBe(false);
+      ui.onEvent({ type: 'tone', t: 1, id: 'q1', kind: 'qrs' } as EngineEvent);
+      expect(heart.classList.contains('on')).toBe(true);
+      vi.advanceTimersByTime(199);
+      expect(heart.classList.contains('on')).toBe(true);
+      vi.advanceTimersByTime(2);
+      expect(heart.classList.contains('on')).toBe(false);
+      ui.onEvent({ type: 'tone', t: 2, id: 'q2', kind: 'qrs' } as EngineEvent);
+      ui.destroy();
+      expect(vi.getTimerCount()).toBe(0);
+      expect(mount('philips-like').tile('HR').querySelector('[data-pme="heart"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('the PR tile status lines: PACE, ST, PVCs in the status colour, crossed bells on ST and PVCs', () => {
+    const { ui, tile } = mount('saadat-like');
+    ui.onEvent(status(5, { HR: { low: 50, high: 150 } }));
+    ui.paint(5);
+    const lines = [...tile('HR').querySelectorAll('[data-pme="st"] .stl')] as HTMLElement[];
+    expect(lines.map((l) => l.querySelector('.stt')?.textContent)).toEqual(['PACE: OFF', 'ST: OFF', 'PVCs: OFF']);
+    expect(lines.map((l) => l.querySelector('svg') !== null)).toEqual([false, true, true]);
+    expect(lines[0]?.style.color).toMatch(/^(rgb\(68, 221, 85\)|#44DD55)$/i);
+    expect(mount('philips-like').tile('HR').querySelector('[data-pme="st"]')).toBeNull();
   });
 });

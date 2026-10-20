@@ -4,7 +4,7 @@
 // watermark. What to show comes from alarm-view.ts; this file only paints the DOM.
 import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
 import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
-import { barView, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
+import { barView, hrStatusLines, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp, formatWallTime } from './numerics-hemo.ts';
 import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
 
@@ -74,6 +74,10 @@ export function flashCss(r: ResolvedSkin): string {
     '.pme-stile.split .pv{flex:1;font-size:28px;line-height:1.05;min-height:1.05em;text-align:right;font-variant-numeric:tabular-nums}',
     '.pme-stile.split.column .pv{font-size:20px}',
     '.pme-stile.split .s:empty{display:none}',
+    '.pme-stile.b9 [data-pme="heart"]{margin-left:6px;opacity:0}',
+    '.pme-stile.b9 [data-pme="heart"].on{opacity:1}',
+    '.pme-stile.b9 [data-pme="st"]{font-size:12px;line-height:1.3}',
+    '.pme-stile.b9 .stl{display:flex;align-items:center;gap:4px}',
     '.pme-watermark{position:absolute;left:30%;top:2%;font-size:64px;font-weight:700;opacity:.25;pointer-events:none}',
     // Portrait tiles (a phone): a third of the width each, numerics as large as that leaves
     '.pme-portrait .pme-stile{padding:3px 6px;border-left:1px solid var(--pme-divider);min-width:0}',
@@ -145,6 +149,7 @@ export class DeviceUI {
   /** The two-row header is in use (skin `layout.headerStyle`, never in portrait). */
   private two = false;
   private clock: ReturnType<typeof setInterval> | null = null;
+  private heartTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly bed: string;
   private page: string | undefined;
 
@@ -261,10 +266,11 @@ export class DeviceUI {
       return { spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null, b9: { slots: { a: null, b: null, c: null, row: null }, parts: partEls, painted: new Map() } };
     }
     el.innerHTML =
-      '<div class="h"><span data-pme="lbl"></span><span data-pme="src"></span><span data-pme="bell"></span><span data-pme="mode"></span><span class="u"></span></div>' +
+      `<div class="h"><span data-pme="lbl"></span><span data-pme="src"></span><span data-pme="bell"></span><span data-pme="mode"></span><span class="u"></span>${spec.status ? `<span data-pme="heart" style="color:${r.skin.colors.PR ?? r.render.foreground}">♥</span>` : ''}</div>` +
       '<div class="vrow"><span class="lim a"></span><div class="v" data-pme="v"></div><span class="lim b"></span></div>' +
       (spec.limitsLayout === 'row' ? '<div class="limrow"></div>' : '') +
-      '<div class="srow"><span class="lim c"></span><div class="s" data-pme="s"></div><span data-pme="ntime"></span></div><div data-pme="st"></div>';
+      '<div class="srow"><span class="lim c"></span><div class="s" data-pme="s"></div><span data-pme="ntime"></span></div>' +
+      (spec.status ? '<div data-pme="st"></div>' : '');
     q<HTMLElement>('.u').textContent = spec.unit ?? UNIT[spec.param] ?? '';
     const v = q<HTMLDivElement>('[data-pme="v"]');
     v.style.fontWeight = String(spec.weight ?? r.render.numericWeight);
@@ -273,6 +279,27 @@ export class DeviceUI {
       spec, el, label: q('[data-pme="lbl"]'), value: v, sub: q('[data-pme="s"]'), bell: q('[data-pme="bell"]'), lim: null,
       b9: { slots: { a: q('.lim.a'), b: q('.lim.b'), c: q('.lim.c'), row: el.querySelector('.limrow') }, parts: [], painted: new Map() },
     };
+  }
+
+  /**
+   * rc.3 PR tile (research/34 §3 row 4; E99): the rate source "(ECG)" / "(IBP1)" / "(SPO2)" on skins that relabel a
+   * non-ECG rate, the tile in that source's colour (label, source, digits), and the PACE / ST / PVCs status lines.
+   */
+  private paintPrTile(tile: Tile, source: string | null): void {
+    const r = this.r;
+    const src = tile.el.querySelector('[data-pme="src"]') as HTMLElement | null;
+    const relabels = r.skin.hr.relabelNonEcgAs !== null;
+    if (src) src.textContent = relabels && source ? `(${source.toUpperCase()})` : '';
+    const c = r.skin.colors;
+    const color = source === 'SpO2' ? c.PR : source === 'IBP1' || source === 'ART' ? (c.IBP1 ?? c.ART) : undefined;
+    tile.el.style.color = (relabels && color) || (r.render.tileColors.HR ?? r.render.foreground);
+    const st = tile.el.querySelector('[data-pme="st"]') as HTMLElement | null;
+    if (!st || !tile.spec.status) return;
+    const want = { PACE: 'PACE:', ST: 'ST:', PVCS: 'PVCs:' } as const;
+    const lines = hrStatusLines(r, this.status, this.text(this.values.stII, 1)).filter((l) => tile.spec.status?.some((k) => l.text.startsWith(want[k])));
+    const color2 = r.skin.hr.statusColor ?? c.HR ?? r.render.foreground;
+    const html = lines.map((l) => `<div class="stl" style="color:${color2}"><span class="stt">${l.text}</span>${l.bellOff ? BELL_OFF_SVG : ''}</div>`).join('');
+    if (st.innerHTML !== html) st.innerHTML = html;
   }
 
   /** rc.3 skeleton: each limit pair into its slot (a part's own key into its part), in the skin's limit colour. */
@@ -354,6 +381,17 @@ export class DeviceUI {
         this.nibpLast = null;
         this.nibpPr = null; // the cuff's pulse rate belonged to the same result
       }
+    } else if (e.type === 'tone' && (e.kind === 'qrs' || e.kind === 'pulse')) {
+      // E105: the PR tile's heart blinks with each beat (lit 200 ms per beat tone)
+      const heart = this.tiles.querySelector('[data-pme="heart"]');
+      if (heart) {
+        heart.classList.add('on');
+        if (this.heartTimer !== null) clearTimeout(this.heartTimer);
+        this.heartTimer = setTimeout(() => {
+          heart.classList.remove('on');
+          this.heartTimer = null;
+        }, 200);
+      }
     } else if (e.type === 'nibp') {
       this.nibpEv = e;
       if (e.result) this.nibpPr = e.result.pr;
@@ -399,21 +437,21 @@ export class DeviceUI {
    * priority list under that label (saadat-like "PR", research/06 §4.1); otherwise the skin's HR-unavailable glyph
    * (philips-like "-?-", [S2] IFU p. 55 — the pulse stays in its own tile). Never a "0".
    */
-  private hrTile(): { main: string; label: string } {
+  private hrTile(): { main: string; label: string; source: string | null } {
     const g = this.r.skin.glyphs;
-    if (this.dev?.hrDashes) return { main: g.hrUnavailable, label: 'HR' };
+    if (this.dev?.hrDashes) return { main: g.hrUnavailable, label: 'HR', source: null };
     const hr = this.values.hr;
-    if (hr && hr.value !== null && hr.flag !== 'invalid') return { main: this.text(hr), label: 'HR' };
-    if (!this.status?.active.some((a) => a.id === 'ecgLeadsOff')) return { main: g.noValue, label: 'HR' };
+    if (hr && hr.value !== null && hr.flag !== 'invalid') return { main: this.text(hr), label: 'HR', source: 'ECG' };
+    if (!this.status?.active.some((a) => a.id === 'ecgLeadsOff')) return { main: g.noValue, label: 'HR', source: null };
     const h = this.r.skin.hr;
     if (h.source === 'AUTO' && h.relabelNonEcgAs) {
       for (const k of h.autoPriority) {
         const src = PULSE_SOURCE[k];
         const m = src ? this.values[src] : undefined;
-        if (m && m.value !== null && m.flag === 'valid') return { main: this.text(m), label: h.relabelNonEcgAs };
+        if (m && m.value !== null && m.flag === 'valid') return { main: this.text(m), label: h.relabelNonEcgAs, source: k };
       }
     }
-    return { main: g.hrUnavailable, label: 'HR' };
+    return { main: g.hrUnavailable, label: 'HR', source: null };
   }
 
   /**
@@ -460,7 +498,8 @@ export class DeviceUI {
       let label: string = p;
       // NMT/BFA only while the module publishes, unless the skin shows the module always (blank, research/34 §8 O1)
       tile.el.style.display = modulePresent(p, v, t) || this.r.skin.layout.showAlways?.includes(p) ? '' : 'none';
-      if (p === 'HR') ({ main, label } = this.hrTile());
+      let source: string | null = null; // the HR tile's rate source (ECG, IBP1, SpO2)
+      if (p === 'HR') ({ main, label, source } = this.hrTile());
       else if (p === 'NMT') ({ main, sub } = formatNmt(v, g.noValue));
       else if (p === 'BFA') ({ main, sub } = formatBfa(v, tile.spec.extras?.[0] ?? 'SR', g.noValue));
       else if (p === 'AGENTS') {
@@ -494,6 +533,7 @@ export class DeviceUI {
       }
       tile.label.textContent = label;
       tile.value.textContent = main;
+      if (p === 'HR' && tile.b9) this.paintPrTile(tile, source);
       // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
       if (!split) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;
@@ -545,6 +585,8 @@ export class DeviceUI {
   destroy(): void {
     if (this.clock !== null) clearInterval(this.clock);
     this.clock = null;
+    if (this.heartTimer !== null) clearTimeout(this.heartTimer);
+    this.heartTimer = null;
     this.style.remove();
     this.watermark.remove();
   }

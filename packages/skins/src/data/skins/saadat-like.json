@@ -35,7 +35,7 @@
     "lanes": ["ECG1", "ECG2", "RESP", "IBP1", "IBP2", "PLETH"],
     "tiles": [
       [
-        { "param": "HR", "size": "large", "label": "HR", "unit": "BPM", "weight": 700 },
+        { "param": "HR", "size": "large", "label": "HR", "unit": "BPM", "weight": 700, "status": ["PACE", "ST", "PVCS"] },
         { "param": "NIBP", "unit": "(mmHg)" },
         { "param": "IBP1", "unit": "(mmHg)", "extras": ["MEAN"], "limitsLayout": "row" },
         { "param": "IBP2", "unit": "(mmHg)", "extras": ["MEAN"], "limitsLayout": "row" }
@@ -107,7 +107,8 @@
     "updateHz": 1,
     "source": "AUTO",
     "autoPriority": ["ECG", "IBP1", "IBP2", "IBP3", "IBP4", "SpO2"],
-    "relabelNonEcgAs": "PR"
+    "relabelNonEcgAs": "PR",
+    "statusColor": "#44DD55"
   },
   "spo2": {
     "avgOptions": ["2-4", "4-6", 8, 10, 12, 14, 16],
@@ -284,6 +285,7 @@
     "ecg.paceMarker": { "tag": "documented", "source": "research/06 §4.2 (M p.69); brief §6.5" },
     "ecg.laneLabel": { "tag": "documented", "source": "research/06 §3.2 (M p.38); brief §3.8" },
     "hr": { "tag": "documented", "source": "research/06 §4.1 (M p.65-67); brief §3.8" },
+    "hr.statusColor": { "tag": "measured", "source": "research/34 §3 row 4 (IMG_8113); research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md, 2026-10-20)", "note": "rc.3: the PACE/ST/PVCs lines, photo #3BB853 white-balance corrected to #44DD55 [MOCKUP]" },
     "spo2": { "tag": "documented", "source": "research/06 §4.1 (M p.108-113, 302)" },
     "nibp.modeDefault": { "tag": "documented", "source": "research/06 §4.1 (M p.128)", "note": "FU-5: recorded, not modelled (the engine's NIBP is command-driven)" },
     "nibp.autoIntervalMin": { "tag": "documented", "source": "research/06 §4.1", "note": "MANUAL mode: no auto interval" },

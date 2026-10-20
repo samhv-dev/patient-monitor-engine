@@ -112,6 +112,20 @@ export const TILE_NUMERICS: Readonly<Record<TileParam, { numerics: NumericId[]; 
   UO: { numerics: ['uop'], limits: [] },
 };
 
+/**
+ * The PR tile's status lines (rc.3 saadat-like, research/34 §3 row 4, IMG_8113), from data the renderer has: PACE from
+ * the skin's pace-detect default, ST from the skin's ST default (no runtime ST switch exists) and its alarm switch, PVCs
+ * from the analysis switch — blank when on (there is no PVC numeric, research/34 §8 O1).
+ */
+export function hrStatusLines(r: ResolvedSkin, st: AlarmStatus | null, stII: string): Array<{ text: string; bellOff: boolean }> {
+  const arr = st?.arrhythmiaAnalysis === true;
+  return [
+    { text: `PACE: ${r.skin.ecg.paceDetectDefault ? 'ON' : 'OFF'}`, bellOff: false },
+    { text: r.skin.st.defaultOn ? `ST: ${stII}` : 'ST: OFF', bellOff: !st?.limits.ST_mV?.enabled },
+    { text: arr ? 'PVCs: ' : 'PVCs: OFF', bellOff: !arr },
+  ];
+}
+
 export interface TileAlarmView {
   /** Flash level of the numeric (1 or 2), or null. */
   flash: 1 | 2 | 3 | null;

@@ -181,7 +181,7 @@ export const skinSchema: JsonSchema = {
       source: str,
       autoPriority: arr(str),
       relabelNonEcgAs: nullable(str),
-    }, { averaging: obj({ kind: en(['beats', 'seconds']), n: num(1, 60) }) }), // optional
+    }, { averaging: obj({ kind: en(['beats', 'seconds']), n: num(1, 60) }), statusColor: hex }), // optional
     spo2: obj({
       avgOptions: arr({ anyOf: [num(1, 30), str] }, 1),
       avgDefault: num(1, 30),

@@ -1,7 +1,7 @@
 // Alarm header and tile views (brief §6.4 visual table, §6.4.1) as pure functions.
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, resolveSkin } from '@pme/skins';
-import { barView, rotateS, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
+import { barView, hrStatusLines, rotateS, tileAlarmView, type AlarmStatus } from '../src/alarm-view.ts';
 
 const sa = resolveSkin('saadat-like');
 const ph = resolveSkin('philips-like');
@@ -72,6 +72,15 @@ describe('barView: rotation period', () => {
     expect([12, 17, 18].map((t) => barView(s, sa, t).text)).toEqual(['MSG A', 'MSG A', 'MSG B']);
     expect(rotateS(sa)).toBe(6);
     expect(rotateS(ph)).toBe(2);
+  });
+});
+
+describe('hrStatusLines (rc.3 PR tile, research/34 §3 row 4)', () => {
+  it('hrStatusLines: PACE/ST/PVCs OFF with crossed bells on ST and PVCs (saadat-like defaults, IMG_8113)', () => {
+    expect(hrStatusLines(sa, status(), '')).toEqual([{ text: 'PACE: OFF', bellOff: false }, { text: 'ST: OFF', bellOff: true }, { text: 'PVCs: OFF', bellOff: true }]);
+  });
+  it('PVCs line follows arrhythmiaAnalysis', () => {
+    expect(hrStatusLines(sa, status({ arrhythmiaAnalysis: true }), '')[2]).toEqual({ text: 'PVCs: ', bellOff: false });
   });
 });
 
