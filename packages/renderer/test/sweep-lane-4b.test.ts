@@ -111,6 +111,13 @@ describe('SweepLane 4b options', () => {
     const devRaw = plateauDev(raw.pts, x0);
     expect(devRaw).toBeGreaterThan(0.5); // ≈ 1 px: the ripple is there to begin with
     expect(plateauDev(sm.pts, x0)).toBeLessThanOrEqual(0.5 * devRaw);
+    // and the coarse steps go: the largest point-to-point step on the plateau shrinks by half or more (review L-4)
+    const maxStep = (pts: P) => {
+      const ys = pts.filter(([x]) => x >= x0).map(([, y]) => y);
+      return Math.max(...ys.slice(1).map((y, k) => Math.abs(y - ys[k]!)));
+    };
+    expect(maxStep(raw.pts)).toBeGreaterThan(0.2);
+    expect(maxStep(sm.pts)).toBeLessThanOrEqual(0.5 * maxStep(raw.pts));
     const y90 = raw.lane.cfg.y + raw.lane.cfg.height * (1 - (0.9 * 38) / 50);
     const xUp = (pts: P) => Math.min(...pts.filter(([, y]) => y <= y90).map(([x]) => x));
     expect(xUp(sm.pts)).toBe(xUp(raw.pts));
