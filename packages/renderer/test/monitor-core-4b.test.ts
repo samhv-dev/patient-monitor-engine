@@ -37,7 +37,7 @@ describe('MonitorCore with a skin plan', () => {
   });
 
   it('auto gain (RR-2): lead II (~1.4 mV p-p) in a 60 px lane settles on ×0.5 and relabels', () => {
-    const { ctx, run } = make('saadat-like', {}, 360); // six saadat-like lanes (research/34 T3) → 60 px each
+    const { ctx, run } = make('saadat-like', {}, 320); // six saadat-like lanes (research/34 T3) at the photo's weights: ECG1 115/614 × 320 ≈ 60 px
     ctx.texts = [];
     run(6.5);
     expect(ctx.texts).toContain('II  X0.5  NORMAL');
