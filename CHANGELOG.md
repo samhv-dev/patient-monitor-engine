@@ -68,6 +68,9 @@ the public API is what the packages export (see the API reference), the `pme-sce
   read back past that start. The lane now starts blank at the attach point and draws the capnogram from there at the
   sweep speed, filled or not, on every skin; any waveform whose sensor is attached later (an arterial line, say) takes
   the same path. Only the drawing changes: the CO2 signal and the EtCO2 number are the same.
+- CI: the two Debrief B browser tests wait, up to 10 s, for the Debrief view's own load of the bundled print font
+  before measuring print heights and asserting the font is loaded; the MH test measured 2.6 s in, before that load had
+  finished, and passed only on a retry on Chromium (main run 39598457184). The test never loads the font itself.
 - CI: the Debrief and FX-25 browser tests hold on the loaded CI WebKit runner, which failed them on all three attempts
   with no product change (PR #97 run 39338820903; PR #105 runs 39524573921 and 39534643448; PR #107 run 39578631031,
   attempts 1–3; Chromium passed every test there). On CI WebKit only, the Debrief's two live runs (the anaphylaxis card
