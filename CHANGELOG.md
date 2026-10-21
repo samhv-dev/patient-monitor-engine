@@ -17,6 +17,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
   `glyphs.noValue` and `glyphs.inop` may be empty. See `packages/skins/CONTRACT.md`.
 - Engine: `nibp` events carry the cuff's optional `mode` and `intervalMin`, and a `nibp manual` action turns auto
   cycling off without aborting a running measurement.
+- Classroom kit: Windows launchers, `Start Classroom.cmd` and `Start Simulator.cmd` (UNTESTED ON WINDOWS at this
+  release; the owner's 10-line test checklist is in the kit's `READ ME FIRST.txt`, section WINDOWS). They need Node.js
+  22 or later on the PC and run `server/launch.mjs`, which does what the macOS `.command` launchers do (first free
+  port, the address, the browser, Ctrl+C or closing the window stops the server). For Windows, the relay and the kit's
+  `serve.mjs` now test "inside the app folder" with `path.relative` (the `'/'` prefix test refused every file on
+  Windows paths), and the QR code's address list puts a Windows Mobile hotspot, Wi-Fi and Ethernet before Hyper-V,
+  WSL, VirtualBox, VMware and Bluetooth adapters.
 
 ### Changed
 

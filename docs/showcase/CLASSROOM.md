@@ -26,6 +26,8 @@ and **the presenting Mac's Node.js**. Until they are settled, tick every line:
   instructor's laptop" means the Wi-Fi keeps devices apart: plan on the hotspot or a travel router.
 - [ ] **The QR code points at this laptop**, never at the hosted site: the code shows `http://<this Mac's address>:…`.
   The hosted (https) copy cannot reach the laptop; a phone that opens it only waits ("Waiting for the instructor…").
+- [ ] **A Windows PC as the backup** (optional): `Start Classroom.cmd` in the kit, untested on Windows at rc.3; tick the
+  10-line checklist in the kit's `READ ME FIRST.txt` (section WINDOWS) on the room's PC before the day.
 
 ## What the room sees
 

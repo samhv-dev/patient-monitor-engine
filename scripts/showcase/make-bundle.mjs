@@ -5,7 +5,10 @@
 //   app/                      the built site (the whole dist: the one-page app plus the pages it frames)
 //   Start Simulator.command   double-click launcher (macOS)
 //   Start Classroom.command   Stage 12: the relay on the network address, for learners' phones (needs Node.js ≥ 22)
+//   Start Simulator.cmd, Start Classroom.cmd   the same on Windows (Node.js ≥ 22 on the PC; they run server/launch.mjs;
+//                             CRLF, ASCII: kit-launchers.mjs). UNTESTED ON WINDOWS until the owner's checklist is run
 //   server/                   serve.mjs (bundled node), serve.rb (ruby/WEBrick), serve.pl (core perl), serve.py;
+//                             launch.mjs (what the Windows launchers run);
 //                             relay.mjs (Stage 12: pme-relay in one file, its `ws` dependency inside)
 //   runtime/                  node-<arch> ONLY if this machine's node is an official signed Node.js build; else empty
 //   READ ME FIRST.txt, VERSION.txt
@@ -16,6 +19,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WINDOWS_LAUNCHERS, writeWindowsLaunchers } from './kit-launchers.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '../..');
@@ -43,7 +47,7 @@ else console.log('node_modules present');
 
 step(`clean the kit's entries in ${out}`);
 mkdirSync(out, { recursive: true });
-const KIT = ['app', 'server', 'runtime', 'Start Simulator.command', 'Start Classroom.command', 'READ ME FIRST.txt', 'VERSION.txt', 'NOTICES.md', 'LICENSES'];
+const KIT = ['app', 'server', 'runtime', 'Start Simulator.command', 'Start Classroom.command', ...WINDOWS_LAUNCHERS.map(([, name]) => name), 'READ ME FIRST.txt', 'VERSION.txt', 'NOTICES.md', 'LICENSES'];
 for (const k of KIT) rmSync(join(out, k), { recursive: true, force: true });
 
 step('build apps/demo (vite build --base ./)');
@@ -61,6 +65,7 @@ cpSync(join(here, 'server'), join(out, 'server'), { recursive: true });
 for (const f of readdirSync(join(out, 'server'))) chmodSync(join(out, 'server', f), 0o755);
 copyFileSync(join(kit, 'start-classroom.command'), join(out, 'Start Classroom.command')); // Stage 12
 chmodSync(join(out, 'Start Classroom.command'), 0o755);
+writeWindowsLaunchers(kit, out); // Windows: Start Simulator.cmd, Start Classroom.cmd (CRLF, ASCII only)
 
 step('classroom relay (Stage 12: one file, ws inside; runs on any Node.js >= 22)');
 const { build } = await import('vite');
@@ -115,6 +120,7 @@ writeFileSync(join(out, 'VERSION.txt'), [
   `Runtime:  ${runtimeNote}`,
   'Servers tried in order: bundled node, /usr/bin/ruby (WEBrick), /usr/bin/perl (core modules), python3 (only a real one).',
   'Classroom: server/relay.mjs (pme-relay + ws 8.21.3, MIT) on runtime/node-* or an installed Node.js >= 22.',
+  'Windows: Start Simulator.cmd / Start Classroom.cmd run server/launch.mjs on an installed Node.js >= 22 (untested on Windows at this release).',
   '',
 ].join('\n'));
 

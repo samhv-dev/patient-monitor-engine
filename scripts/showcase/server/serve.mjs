@@ -4,7 +4,7 @@
 //   GET and HEAD; path traversal refused; MIME types for everything the built app uses.
 import { createReadStream, realpathSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join } from 'node:path';
+import { extname, isAbsolute, join, relative, sep } from 'node:path';
 
 const [rootArg, startPortArg, portFile] = process.argv.slice(2);
 if (!portFile) {
@@ -43,7 +43,9 @@ const server = createServer((req, res) => {
     if (statSync(file).isDirectory()) file = join(file, 'index.html');
     const real = realpathSync(file);
     const st = statSync(real);
-    if (!real.startsWith(root + '/') || !st.isFile()) return send(res, 404, 'Not found\n', head);
+    // inside root by path.relative, not a '/' prefix: Windows paths use '\\' (the prefix test refused every file there)
+    const rel = relative(root, real);
+    if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) || !st.isFile()) return send(res, 404, 'Not found\n', head);
     res.writeHead(200, {
       'Content-Type': MIME[extname(real).toLowerCase()] ?? 'application/octet-stream',
       'Content-Length': st.size, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff',
