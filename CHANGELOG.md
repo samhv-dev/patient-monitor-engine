@@ -61,6 +61,13 @@ the public API is what the packages export (see the API reference), the `pme-sce
 
 ### Fixed
 
+- FX-25: attaching the CO2 sampling line (on the instructor's Devices tab, or by the Ventilator view when it starts
+  ventilating) painted the CO2 lane, within a second, from its left edge to the sweep cursor with the first moments of
+  the capnogram drawn over and over side by side; on a ventilated patient with the Saadat-like fill that was a solid
+  yellow block, which stayed until the sweep came round. The engine's CO2 history starts at the attach, and the lane
+  read back past that start. The lane now starts blank at the attach point and draws the capnogram from there at the
+  sweep speed, filled or not, on every skin; any waveform whose sensor is attached later (an arterial line, say) takes
+  the same path. Only the drawing changes: the CO2 signal and the EtCO2 number are the same.
 - CI: the tick benchmark (`packages/validation/test/perf/tick-bench.test.ts`) runs alone, in its own build-job step
   after `pnpm test` (`PME_TEST_SET=fast` now leaves it out and `PME_TEST_SET=perf` runs only it; a local `pnpm test`
   still runs it), and asserts the 6 ms p50 budget on the best of three 10-s samples. Inside `pnpm test` the other

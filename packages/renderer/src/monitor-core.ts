@@ -3,7 +3,7 @@
 // (engine-core Clock), and lanes draw at clock.renderT, so sweep speed is independent of frame rate.
 // The layout comes from a RenderPlan (skin-plan.ts), a skin switch relayouts without restarting the engine, ECG
 // lanes can auto-gain, and event overlays (pace, sync, shock, lead-off) are drawn.
-import { capture12, Clock, createEngine, type Capture12, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
+import { capture12, Clock, createEngine, type Capture12, type ChannelId, type Command, type DispatchResult, type EngineEvent, type LeadId, type MonitorEngine, type PatientSnapshot } from '@pme/engine-core';
 import { DEFAULT_PX_PER_MM } from './calibration.ts';
 import type { Ctx2D } from './ctx.ts';
 import { drawLeadOffDashes, drawMark, Overlays, shows } from './overlays.ts';
@@ -41,6 +41,8 @@ export const STALL_MS = 1000;
 export const AUTO_GAIN_EVERY_S = 2;
 export const AUTO_GAIN_WINDOW_S = 4;
 export const AUTO_GAIN_FILL = 0.6;
+/** FX-25: how far back heldFrom looks — past the lanes' 100-s backfill, inside the engine's 120-s buffer [ENG]. */
+const HELD_PROBE_S = 110;
 
 export interface CanvasTarget {
   width: number;
@@ -56,6 +58,7 @@ export class MonitorCore {
   private autoRangeT: number[] = []; // sim time of the last auto-scale, per lane
   private readonly plethScratch = new Float32Array(1250); // 10 s at 125 Hz
   private readonly gainScratch = new Float32Array(AUTO_GAIN_WINDOW_S * 500);
+  private heldScratch = new Float32Array(0); // heldFrom's read, sized on first use
   private autoGainT = -Infinity;
   /** FX-24: sim time of the oldest sample the engine holds — 0 for a new engine, the snapshot's time after a restore (it
    *  clears the buffers). The lanes' backfill and the auto-gain never read before it. */
@@ -316,7 +319,18 @@ export class MonitorCore {
       const [lo, hi] = autoRange(this.plethScratch, n, ch === 'resp' ? RESP_MIN_SPAN : undefined);
       Object.assign(lane.cfg, scaleFor(lo, hi, lane.cfg.height, this.pxPerMm));
     }
-    lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(ch, from, out));
+    lane.draw(this.ctx, t, (from, out) => this.engine.readSamples(ch, from, out), () => this.heldFrom(ch));
+  }
+
+  /**
+   * FX-25: the first sample index the engine holds of `ch` within the last HELD_PROBE_S (a sensor's buffer starts at its
+   * attach). The engine has no call for it, but a read that reaches the newest sample copies exactly the held ones.
+   */
+  private heldFrom(ch: ChannelId): number {
+    const latest = this.engine.latestSampleIndex(ch);
+    const k = Math.ceil(HELD_PROBE_S * this.engine.sampleRate(ch));
+    if (this.heldScratch.length < k) this.heldScratch = new Float32Array(k);
+    return latest + 1 - this.engine.readSamples(ch, latest + 1 - k, this.heldScratch.subarray(0, k));
   }
 
   private layout(): void {
