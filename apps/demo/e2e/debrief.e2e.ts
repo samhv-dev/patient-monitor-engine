@@ -262,6 +262,13 @@ async function showRecorded(page: Page, run = A31, card = TAMPONADE): Promise<vo
 /** Heights in print media (mm): the page-1 block (header band to the end of the objectives) and the handout; whether
  *  the bundled print font is loaded (rc.3: the heights are measured in it on every platform); and the printed size (pt)
  *  of the handout course strip's labels (0 when the handout is not shown). */
+/** The view loads the bundled print font on entering (loadPrintFont, not awaited) and its print buttons await it; a
+ *  measurement taken straight after opening could beat that load (main run 39598457184, Chromium attempt 1: not loaded
+ *  2.6 s into the MH test). Wait, bounded, for the view's own load: the test never loads the font itself. */
+async function printFontLoaded(page: Page): Promise<void> {
+  await expect.poll(() => page.evaluate(() => [...document.fonts].some((f) => f.family.replace(/["']/g, '') === 'Inter Print' && f.status === 'loaded')),
+    { timeout: 10_000, message: 'the Debrief view has loaded the bundled print font' }).toBe(true);
+}
 const printHeights = (page: Page) => page.evaluate((mm) => {
   const r = (s: string) => (document.querySelector(s) as Element).getBoundingClientRect();
   const strip = document.querySelector('#db-handout .db-course svg') as SVGSVGElement;
@@ -324,6 +331,7 @@ test('Debrief B on the A3.1 tamponade path: key times, the course, key moments, 
 
   // (f) print media at the 182 mm content width: page 1 and the handout each within one A4 page (267 mm)
   await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
   const report = await printHeights(page);
   expect(report.printFont, 'the bundled print font is loaded').toBe(true);
   expect(report.page1, 'page 1 (mm)').toBeLessThanOrEqual(267);
@@ -383,6 +391,7 @@ test('Debrief B on the MH card: page 1 and the handout within one A4 page', asyn
   await expect(view.locator('#db-objectives li')).toHaveCount(6);
   await expect(view.locator('#db-keytimes [data-key=recognition]')).toBeVisible(); // the MH recognition objective (E52)
   await page.emulateMedia({ media: 'print' });
+  await printFontLoaded(page);
   const { page1, printFont } = await printHeights(page);
   await page.evaluate(() => document.querySelector('.debrief')?.setAttribute('data-print', 'handout'));
   const { handout, stripPt } = await printHeights(page);
