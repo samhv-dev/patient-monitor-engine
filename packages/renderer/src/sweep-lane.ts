@@ -55,6 +55,8 @@ export interface LaneConfig {
 
 /** Reads samples starting at absolute index `from` into `out`; returns the count (out[0] = sample `from`). */
 export type SampleSource = (from: number, out: Float32Array) => number;
+/** FX-25: the first sample index the source holds now (a sensor attached a moment ago holds nothing before it). */
+export type HeldFrom = () => number;
 
 type Pt = { x: number; y: number }; // x unwrapped CSS px relative to lane start, y CSS px
 type Rect = [number, number, number, number]; // canvas CSS px
@@ -70,6 +72,8 @@ export class SweepLane {
   cfg: LaneConfig;
   private dpr: number;
   private lastIndex = -1;
+  /** The first sample index the source holds, as of the last (re)start: neither the backfill nor the smoothing reads before it. */
+  private heldFrom = 0;
   /** Unwrapped device-pixel column of the last drawn sample (-1: nothing drawn since reset). */
   private lastCol = -1;
   private tail: Pt[] = [];
@@ -211,7 +215,7 @@ export class SweepLane {
   }
 
   /** Draw everything up to render time `t` (sim seconds). Returns the cursor x inside the lane (CSS px). */
-  draw(ctx: Ctx2D, t: number, read: SampleSource): number {
+  draw(ctx: Ctx2D, t: number, read: SampleSource, held?: HeldFrom): number {
     const c = this.cfg;
     const endIdx = Math.floor(t * c.rate + 1e-9);
     const cursor = this.xOf(endIdx) % c.width;
@@ -219,13 +223,17 @@ export class SweepLane {
       // First frame, or a jump longer than one lane (hidden tab): start clean. Redraw the last lane-width of samples
       // (less the erase gap) in this frame, so a resize or a view change does not blank the sweep until the cursor has
       // gone round once; the engine's buffer holds them (a read returns what it has).
+      // FX-25: but never from before the source's first sample (a sensor attached less than a lane ago): a read from there
+      // returns that first sample in place of the one asked for, and the lane drew the samples since the attach over and
+      // over from its left edge until it caught up (a solid block in a filled capnogram). It starts at the attach point.
       this.reset(ctx);
+      this.heldFrom = Math.max(c.firstIndex ?? 0, held?.() ?? 0);
       const back = Math.min(Math.floor(((c.width - c.eraseGapPx) / this.pxPerS) * c.rate), BACKFILL_MAX_S * c.rate);
-      this.lastIndex = Math.max((c.firstIndex ?? 0) - 1, endIdx - 1 - back);
+      this.lastIndex = Math.max(this.heldFrom - 1, endIdx - 1 - back);
     }
     if (endIdx <= this.lastIndex) return cursor;
     const sn = Math.max(1, Math.floor(c.smoothN ?? 1));
-    const pre = Math.min(sn - 1, this.lastIndex + 1 - (c.firstIndex ?? 0)); // samples before the new ones that the average needs
+    const pre = Math.min(sn - 1, this.lastIndex + 1 - this.heldFrom); // samples before the new ones that the average needs
     const need = endIdx - this.lastIndex + pre;
     if (this.scratch.length < need) this.scratch = new Float32Array(need * 2);
     let out: Float32Array = this.scratch.subarray(0, need);
