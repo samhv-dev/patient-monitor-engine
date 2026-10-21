@@ -17,7 +17,8 @@ describe('portrait tiles', () => {
     expect(order).toEqual(r.skin.layout.tiles.flat().map((t) => t.param));
   });
   it('landscape (the default): tile columns 180 px wide beside the waveforms, as before', () => {
-    const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('saadat-like'));
+    // philips-like: saadat-like places its tiles in its own grid since rc.3 (layout.grid, grid-layout.test.ts)
+    const ui = new DeviceUI(document, document.createElement('div'), resolveSkin('philips-like'));
     expect(ui.tiles.className).toBe('');
     expect(ui.tiles.style.display).toBe('flex');
     for (const c of ui.tiles.children) expect((c as HTMLElement).style.width).toBe('180px');

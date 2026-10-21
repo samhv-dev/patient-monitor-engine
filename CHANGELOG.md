@@ -54,6 +54,10 @@ the public API is what the packages export (see the API reference), the `pme-sce
 - Saadat-like and its "Iranian ICU as found" preset: the NIBP starts on AUTO every 5 minutes with the patient; every
   other skin keeps its idle cuff.
 - The free-play patient starts without the CO2 sampling line (RESP and RR shown); the Ventilator view attaches it.
+- Saadat-like: the screen layout of the real unit (64 % wave area with the photo's lane heights, the header over the
+  waves, a tile grid with the PR tile at the top edge and the narrow T column, and a full-width bottom strip with
+  %SPO2, PI and the pulse-oximetry labels) (pre-release). Opt-in by the optional skin key `layout.grid`
+  (`packages/skins/CONTRACT.md`); other skins keep their tile columns.
 
 ### Fixed
 

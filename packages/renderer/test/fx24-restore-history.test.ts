@@ -12,7 +12,7 @@ import { FakeCtx } from './fake-ctx.ts';
 
 const plan = () => renderPlan(resolveSkin('saadat-like'));
 const make = (ctx = new FakeCtx()) =>
-  new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 500, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: plan() }, () => {});
+  new MonitorCore({ width: 0, height: 0 }, ctx, { cssW: 1056, cssH: 444, dpr: 1 }, { engine: { seed: 1, device: { skin: 'saadat-like' } }, plan: plan() }, () => {});
 const lanes = (c: MonitorCore) => (c as unknown as { lanes: SweepLane[] }).lanes;
 const FRAME_MS = 1000 / 60;
 const gainOf = (texts: string[]) => texts.filter((t) => /^II\s+X/.test(t)).at(-1);
@@ -48,7 +48,7 @@ describe('FX-24: the lanes and the ECG gain after a restore (a follower joining,
   });
 
   it('after a fast-forward the ECG gain stays the one the follower showed (the auto-gain waits for 4 s of new signal)', () => {
-    expect(hostGain).toBe('II  X0.5  NORMAL'); // this test's short lanes (500 px / 6): the auto-gain halves the skin's X1
+    expect(hostGain).toBe('II  X0.5  NORMAL'); // this test's short ECG lane (444 px at the photo's lane weights: 115 / 614 × 444 ≈ 83 px, as 500 / 6 before PR-G): the auto-gain halves the skin's X1
     const ctx = new FakeCtx();
     const f = make(ctx);
     for (let ms = 0; ms <= 10_000; ms += FRAME_MS) f.frame(2_000_000 + ms); // a follower that has been following

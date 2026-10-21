@@ -57,6 +57,8 @@ export interface RenderPlan {
   scaleLineColor: string | null;
   /** Lane text as on the real unit (skin `layout.laneText`; not on pages that name their lanes); null = the old chrome. */
   laneText: { color: string } | null;
+  /** Relative lane heights (skin `layout.grid.laneWeights`, one per lane); null = equal lanes. */
+  laneWeights: number[] | null;
   lanes: PlanLane[];
 }
 
@@ -154,6 +156,9 @@ export function renderPlan(r: ResolvedSkin, page?: string, only?: LaneOverride):
     hideScaleNumbers: pg?.pump?.hideScaleNumbers ?? false,
     scaleLineColor: s.ibp.scaleLineColor ?? null,
     laneText: lt ? { color: r.render.foreground } : null,
+    // the photo's lane heights only for the skin's own lanes (not a page or a demo that names its lanes) and only when
+    // the counts match (the iran-icu-as-found preset's four lanes are equal)
+    laneWeights: !only && !pg?.lanes && s.layout.grid?.laneWeights.length === laneIds.length ? [...s.layout.grid.laneWeights] : null,
     lanes,
   };
 }
@@ -175,7 +180,7 @@ export function legacyPlan(leads: readonly LeadId[], waves: readonly WaveLaneId[
   return {
     skin: 'legacy', background: '#000', foreground: '#00ff66', lineWidth: 1.75, eraseGapPx: 16, cursorLine: false, grid: null,
     font: 'system-ui, sans-serif', gainLabel: 'mm-per-mV', filterNames: { monitor: 'M', diagnostic: 'D' },
-    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null, laneText: null,
+    paceMarker: { style: 'marker-above', heightMm: 2 }, paceDetect: false, devicePacer: false, syncMarker: null, hideScaleNumbers: false, scaleLineColor: null, laneText: null, laneWeights: null,
     lanes: [...ecg, ...wv],
   };
 }

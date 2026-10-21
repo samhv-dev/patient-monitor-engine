@@ -3,7 +3,7 @@
 // numeric tiles (colours, fonts, glyphs, crossed bells, limits, flashing numerics; request RR-5) and the PUMP
 // watermark. What to show comes from alarm-view.ts; this file only paints the DOM.
 import type { EngineEvent, Measured, NumericId } from '@pme/engine-core';
-import { formatDate, type ResolvedSkin, type TileParam, type TileSpec } from '@pme/skins';
+import { formatDate, type LayoutGrid, type ResolvedSkin, type StripField, type TileParam, type TileSpec } from '@pme/skins';
 import { barView, hrStatusLines, tileAlarmView, TILE_NUMERICS, type AlarmStatus } from './alarm-view.ts';
 import { formatNibp, formatWallTime, nibpModeLabel } from './numerics-hemo.ts';
 import { formatAgents, formatBfa, formatNmt, modulePresent } from './numerics-neuro.ts';
@@ -96,6 +96,49 @@ export function flashCss(r: ResolvedSkin): string {
   ].join('\n');
 }
 
+/**
+ * The skin's screen layout (rc.3, skin `layout.grid`): the tiles placed in a grid with spans beside a wave column, and a
+ * bottom strip. Null without the key or in portrait (a phone keeps its 3-column tile grid).
+ */
+export function gridOf(r: ResolvedSkin, portrait: boolean): LayoutGrid | null {
+  return portrait ? null : (r.skin.layout.grid ?? null);
+}
+
+/** A font size of layout.grid (px at an 800 px monitor) scaled with the monitor height (--pme-h, set by the mount). */
+const gridFont = (px: number): string => `calc(${px} * var(--pme-h, 800px) / 800)`;
+
+/** Grid-mode CSS (rc.3): label and limit sizes from the skin, tiles filling their cells, the strip's fields. */
+function gridCss(g: LayoutGrid): string {
+  const lbl = gridFont(g.fontPx.label ?? 14);
+  const lim = gridFont(g.fontPx.limit ?? 11);
+  return [
+    '.pme-grid>div,.pme-strip{display:flex;min-width:0;min-height:0;overflow:hidden}',
+    '.pme-grid>div>.pme-stile,.pme-strip>.pme-stile{flex:1 1 0;min-width:0;border-top:0;padding:2px 8px;overflow:hidden;position:relative}',
+    `.pme-grid .pme-stile .h,.pme-grid .pme-stile .ph,.pme-strip .pme-stile .h,.pme-sfield .ph{font-size:${lbl}}`,
+    `.pme-grid .pme-stile.rc3 .lim.a,.pme-grid .pme-stile.rc3 .lim.b,.pme-grid .pme-stile.rc3 .lim.c,.pme-grid .pme-stile.rc3 .part .lim,.pme-grid .pme-stile.rc3 .limrow,.pme-strip .pme-stile.rc3 .lim.a{font-size:${lim}}`,
+    // values centred in their cells; the PR tile's status lines in a column at its right, and the IBP means at the right
+    // of the value row, as photographed (research/34 §3 rows 4 and 12; the mock-up's 30 px means) [MOCKUP]
+    '.pme-grid .pme-stile .v,.pme-strip .pme-stile .v{text-align:center}',
+    '.pme-grid .pme-stile.rc3 [data-pme="st"]{position:absolute;right:8px;top:22%}',
+    '.pme-grid .pme-stile.rc3:has([data-pme="st"]) .vrow{padding-right:calc(100 * var(--pme-h, 800px) / 800)}',
+    '.pme-grid .pme-stile.rc3:has(.limrow) .srow{position:absolute;right:8px;top:32%}',
+    '.pme-grid .pme-stile.rc3:has(.limrow) .s{font-size:calc(30 * var(--pme-h, 800px) / 800);min-height:0}',
+    // split tiles: the bell and the unit at the top right, so the parts take the cell's height (CO2 row 12.6 %)
+    '.pme-grid .pme-stile.split>.h{position:absolute;right:6px;top:2px}',
+    '.pme-grid .pme-stile.split .pv{line-height:1}',
+    '.pme-grid .pme-stile.split.row .ph{flex-direction:row;align-items:baseline;gap:4px}',
+    // the strip's tile has no sub-line (its extras are the strip's fields)
+    '.pme-strip .pme-stile.rc3 .srow{display:none}',
+    '.pme-strip .pme-stile .v{line-height:1}',
+    // the strip's fields centred under their labels, the SpO2 cell boxed off from them (NOTES.md strip anchors)
+    '.pme-sfield{flex:1 1 0;min-width:0;display:flex;flex-direction:column;padding:2px 8px;line-height:1.05;text-align:center}',
+    '.pme-strip>.pme-stile{border-right:1px solid var(--pme-divider)}',
+    '.pme-sfield .ph{display:flex;justify-content:center;gap:6px;white-space:nowrap}',
+    '.pme-sfield .u{opacity:.85}',
+    '.pme-sfield [data-pme="fv"]{font-variant-numeric:tabular-nums;min-height:1.05em}',
+  ].join('\n');
+}
+
 /** Defibrillator / pacer readout for the header (brief §6.5: energy, charging/ready, SYNC; pacer mode, rate, output). */
 export function deviceText(d: DeviceStatus | null): string {
   const out: string[] = [];
@@ -132,6 +175,10 @@ interface TileRc3 {
 export class DeviceUI {
   readonly header: HTMLDivElement;
   readonly tiles: HTMLDivElement;
+  /** The full-width bottom strip of a skin with layout.grid (class pme-strip); display:none otherwise. */
+  readonly strip: HTMLDivElement;
+  /** The strip's label fields and the numeric each prints (blank without one, research/34 §8 O1). */
+  private fields: Array<{ spec: StripField; value: HTMLElement }> = [];
   private readonly style: HTMLStyleElement;
   private readonly watermark: HTMLDivElement;
   private r: ResolvedSkin;
@@ -191,9 +238,7 @@ export class DeviceUI {
       who: mk('span', 'stk'), sp: mk('span', 'sp'), when: mk('span', 'stk dt'), r1: mk('div', 'r1'), r2: mk('div', 'r2'),
     };
     this.tiles = doc.createElement('div');
-    // Portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
-    this.tiles.style.cssText = portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
-    if (portrait) this.tiles.className = 'pme-portrait';
+    this.strip = doc.createElement('div');
     this.watermark = doc.createElement('div');
     this.watermark.className = 'pme-watermark';
     waveArea.append(this.watermark);
@@ -207,17 +252,35 @@ export class DeviceUI {
     this.watermark.textContent = pg?.pump?.watermark ?? '';
     this.watermark.style.color = r.skin.colors.ECG ?? r.render.foreground;
     this.page = pg?.label;
-    this.style.textContent = flashCss(r);
+    const grid = gridOf(r, this.portrait);
+    this.style.textContent = grid ? `${flashCss(r)}\n${gridCss(grid)}` : flashCss(r);
     this.buildHeader();
     this.header.style.cssText = `background:${r.render.background};color:${r.render.foreground};font-family:${r.render.fontStack};border-bottom:1px solid ${r.skin.chrome.divider};`;
     // the bar is 43 % of the WAVE-AREA width [MOCKUP]; in the columns layout the header also spans the tile columns
-    if (this.two) this.header.style.setProperty('--pme-tiles-w', `${r.skin.layout.tiles.length * 181}px`);
+    // (with layout.grid the header lies in the wave column, D5)
+    if (this.two) this.header.style.setProperty('--pme-tiles-w', grid ? '0px' : `${r.skin.layout.tiles.length * 181}px`);
     this.badge.textContent = r.skin.layout.badge ?? '';
     this.badge.style.display = r.skin.layout.badge ? '' : 'none';
+    // Portrait — the skin's tile columns flow into a 3-column grid, in the skin's order
+    this.tiles.style.cssText = this.portrait ? 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));flex:none;overflow:hidden;' : 'display:flex;flex:none;overflow:hidden;';
+    this.tiles.className = this.portrait ? 'pme-portrait' : '';
     this.tiles.style.background = r.render.background;
     this.tiles.style.setProperty('--pme-divider', r.skin.chrome.divider);
     this.tiles.replaceChildren();
+    this.strip.replaceChildren();
+    this.strip.className = 'pme-strip';
+    this.strip.style.cssText = 'display:none';
     this.tileList = [];
+    this.fields = [];
+    if (grid) this.placeGrid(grid);
+    else this.placeColumns();
+    this.paintTiles(this.status?.t ?? 0);
+    this.paintHeader(this.status?.t ?? 0);
+  }
+
+  /** Today's tile columns (180 px each, beside the waves), or portrait's 3-column grid. */
+  private placeColumns(): void {
+    const r = this.r;
     const doc = this.tiles.ownerDocument;
     for (const col of r.skin.layout.tiles) {
       const c = doc.createElement('div');
@@ -230,8 +293,65 @@ export class DeviceUI {
       }
       this.tiles.append(c);
     }
-    this.paintTiles(this.status?.t ?? 0);
-    this.paintHeader(this.status?.t ?? 0);
+  }
+
+  /**
+   * layout.grid (rc.3): the skin's tiles placed in the grid's cells (one cell may hold several tiles side by side), the
+   * strip's tile and its label fields. The tile list stays `layout.tiles` (resolved through the CO2 swap); the grid only
+   * places tiles, by param.
+   */
+  private placeGrid(g: LayoutGrid): void {
+    const r = this.r;
+    const doc = this.tiles.ownerDocument;
+    const divider = r.skin.chrome.divider;
+    const specs = new Map(r.skin.layout.tiles.flat().map((t) => [t.param, t]));
+    const track = (ws: number[]) => ws.map((w) => `minmax(0, ${w}fr)`).join(' ');
+    this.tiles.className = 'pme-grid';
+    this.tiles.style.cssText = `display:grid;grid-template-columns:${track(g.columns)};grid-template-rows:${track(g.rows)};flex:1 1 0;min-width:0;overflow:hidden;`;
+    this.tiles.style.background = r.render.background;
+    this.tiles.style.setProperty('--pme-divider', divider);
+    const add = (spec: TileSpec, parent: HTMLElement): HTMLDivElement => {
+      const tile = this.buildTile(spec);
+      this.tileList.push(tile);
+      this.sizeValues(tile, g);
+      parent.append(tile.el);
+      return tile.el;
+    };
+    for (const cell of g.cells) {
+      const c = doc.createElement('div');
+      c.style.cssText = `grid-row:${cell.row} / span ${cell.rowSpan ?? 1};grid-column:${cell.col} / span ${cell.colSpan ?? 1};border-left:1px solid ${divider};border-top:1px solid ${divider};`;
+      for (const p of cell.params) {
+        const spec = specs.get(p);
+        if (spec) add(spec, c);
+      }
+      this.tiles.append(c);
+    }
+    this.strip.style.cssText = `display:flex;flex:0 0 ${g.strip.heightPct}%;background:${r.render.background};border-top:1px solid ${divider};font-family:${r.render.fontStack};`;
+    this.strip.style.setProperty('--pme-divider', divider);
+    const st = specs.get(g.strip.tile.param);
+    if (st) add({ ...st, extras: g.strip.tile.extras ?? st.extras ?? [] }, this.strip).style.flex = `0 0 ${g.strip.tile.widthPct}%`;
+    for (const f of g.strip.fields) {
+      const el = doc.createElement('div');
+      el.className = 'pme-sfield';
+      el.dataset.field = f.label;
+      el.style.color = (f.color && r.skin.colors[f.color]) || r.render.foreground;
+      el.innerHTML = '<div class="ph"><span class="pl"></span><span class="u"></span></div><div data-pme="fv"></div>';
+      (el.querySelector('.pl') as HTMLElement).textContent = f.label;
+      (el.querySelector('.u') as HTMLElement).textContent = f.unit ?? '';
+      const value = el.querySelector('[data-pme="fv"]') as HTMLElement;
+      value.style.fontSize = gridFont(g.fontPx.field ?? 40);
+      value.style.fontWeight = String(r.render.numericWeight);
+      this.strip.append(el);
+      this.fields.push({ spec: f, value });
+    }
+  }
+
+  /** Grid mode: a tile's main value (or each split part) at the skin's size, scaled with the monitor height. */
+  private sizeValues(tile: Tile, g: LayoutGrid): void {
+    const px = g.fontPx[tile.spec.param];
+    if (px === undefined) return;
+    const parts = tile.rc3?.parts ?? [];
+    for (const e of parts.length > 0 ? parts.map((pt) => pt.value) : [tile.value]) e.style.fontSize = gridFont(px);
   }
 
   /**
@@ -501,6 +621,8 @@ export class DeviceUI {
   }
 
   private paintTiles(t: number): void {
+    this.paintFields();
+    const grid = gridOf(this.r, this.portrait) !== null;
     const g = this.r.skin.glyphs;
     const box = this.r.skin.alarms.numericStyle === 'flash-box';
     for (const tile of this.tileList) {
@@ -558,8 +680,9 @@ export class DeviceUI {
       tile.label.textContent = label;
       tile.value.textContent = main;
       if (p === 'HR' && tile.rc3) this.paintPrTile(tile, source);
-      // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG]
-      if (!split) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
+      // a three-part pressure ("117/80") overflows a 180 px column at the 40 px numeric size on wide skin fonts [ENG];
+      // the grid sizes its values from the skin (layout.grid.fontPx)
+      if (!split && !grid) tile.value.style.fontSize = main.length > 5 ? (tile.spec.size === 'large' ? '48px' : '32px') : '';
       tile.sub.textContent = sub;
       const partKeys = tile.rc3?.parts.flatMap((pt) => (pt.limitKey ? [pt.limitKey] : [])) ?? [];
       const av = tileAlarmView(p, this.status, this.r, t, this.pump, partKeys);
@@ -571,6 +694,15 @@ export class DeviceUI {
       const bar = av.flash !== null ? this.r.skin.alarms.messageBar[`L${av.flash}`] : null;
       tile.value.style.background = box && bar ? bar.bg : '';
       tile.value.style.color = box && bar ? bar.fg : '';
+    }
+  }
+
+  /** The strip's label fields: the engine numeric each names, or blank (research/34 §8 O1). */
+  private paintFields(): void {
+    for (const f of this.fields) {
+      const n = f.spec.numeric as NumericId | undefined;
+      const text = n ? this.text(this.values[n], f.spec.digits ?? 0) : '';
+      if (f.value.textContent !== text) f.value.textContent = text;
     }
   }
 

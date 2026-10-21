@@ -164,6 +164,25 @@ Every key below is optional; without it the renderer and the app take today's pa
 | TileSpec `limitsLayout: 'row'` | tiles | The pairs in one row under the value, low then high (the IBP tiles of IMG_8113). |
 | `glyphs.noValue`, `glyphs.inop` may be `''` | tiles | A blank field (O1): "IBP1" with no sensor reads `/` and `()`. |
 
+## rc.3: the screen layout of the real unit (PR-G; optional, set only by saadat-like)
+
+`layout.grid` only PLACES the tiles of `layout.tiles` (resolved through the CO2 swap); the tiles themselves are the
+rc.3 tiles above. Without the key (every other skin, a phone held upright, or the rollback by data) the renderer takes
+today's path: the header over the whole width, 180 px tile columns, equal lanes. `iran-icu-as-found` inherits it.
+
+| Key | Read by | Meaning |
+|---|---|---|
+| `layout.waveAreaFraction` | the Stage 4a preview; `mountMonitor` with `layout.grid` | The WIDTH share of the wave column (saadat-like 0.641, the mock-up's x 0–821 of 1280). Without a grid the live monitor ignores it (the canvas takes what the tile columns leave). |
+| `layout.grid.laneWeights` | `RenderPlan.laneWeights`, `MonitorCore.laneBox` | Relative lane heights, one per `layout.lanes` entry. Any other lane count (a preset's four lanes), a page that names its lanes (P7) or a demo page that passes `lanes`/`waves` draws equal lanes with the old arithmetic. |
+| `layout.grid.columns`, `rows` | `DeviceUI` | The tile area's tracks (`minmax(0, <w>fr)`), right of the wave column. |
+| `layout.grid.cells[]: { params, row, col, rowSpan?, colSpan? }` | `DeviceUI` | One cell (1-based row and column, spans) holding the tiles of `params` side by side. A cell naming RR places the CO2 tile while the CO2 line is attached (`applySensors`). Every tile is placed once, in a cell or the strip. |
+| `layout.grid.strip: { heightPct, tile: { param, widthPct, extras? }, fields[] }` | `DeviceUI.strip` (`.pme-strip`), `mountMonitor` | A full-width strip under the waves and the tiles, `heightPct` of the monitor height: one tile at `widthPct` of the width (its `extras` replace the tile's own), then label fields of equal width (`.pme-sfield[data-field=<label>]`: `.pl` label, `.u` unit, `[data-pme=fv]` value). A field prints the engine numeric it names (`numeric`, `digits`) or stays blank (O1); a field prints no limits (E100). `color` is a colour key. |
+| `layout.grid.fontPx` | `DeviceUI` | Font sizes in px at an 800 px monitor height, scaled with the monitor's height (`--pme-h`, set by `mountMonitor`): the main value per tile param (each part of a split tile), `field` for strip values, `label` and `limit`. |
+
+With a grid, `mountMonitor` puts the header (two-row, `--pme-tiles-w: 0px`) inside the wave column, so the PR tile
+reaches the top edge (plan D5). Rollback by data: delete `layout.grid` from `saadat-like.json` together with its
+provenance entry `layout.grid` (the provenance test reports a dangling entry otherwise); `waveAreaFraction` may stay.
+
 The PR tile (HR) shows its rate source on skins with `hr.relabelNonEcgAs`: `(ECG)` in the HR colour, `(IBP1)` or
 `(SPO2)` with the tile in that channel's colour, and a heart that lights 200 ms per beat tone. The NIBP tile prints
 "S / D", "(M)", the engine's mode ("AUTO(5Min)", "MANUAL", "STAT": the `nibp` event's optional `mode` and

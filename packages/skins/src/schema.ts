@@ -146,6 +146,18 @@ export const skinSchema: JsonSchema = {
       headerStyle: en(['two-row']),
       showAlways: arr(en(TILE_PARAMS), 1),
       laneText: obj({}, { labels: obj({}, Object.fromEntries(LANE_IDS.map((k) => [k, obj({ text: str }, { color: hex, sub: str })]))) }),
+      grid: obj({
+        laneWeights: arr(num(1, 1000), 1),
+        columns: arr(num(1, 1000), 1),
+        rows: arr(num(1, 1000), 1),
+        fontPx: obj({}, Object.fromEntries([...TILE_PARAMS, 'field', 'label', 'limit'].map((k) => [k, num(6, 200)]))),
+        cells: arr(obj({ params: arr(en(TILE_PARAMS), 1), row: int(1, 20), col: int(1, 20) }, { rowSpan: int(1, 20), colSpan: int(1, 20) }), 1),
+        strip: obj({
+          heightPct: num(5, 30),
+          tile: obj({ param: en(TILE_PARAMS), widthPct: num(5, 60) }, { extras: arr(str) }),
+          fields: arr(obj({ label: str }, { unit: str, numeric: { type: 'string', pattern: '^[a-zA-Z0-9]+$' }, digits: int(0, 3), color: en(COLOR_KEYS) })),
+        }),
+      }),
     }),
     pages: arr(page, 1),
     defaultPage: { type: 'string', pattern: '^P[0-9]{1,2}$' },

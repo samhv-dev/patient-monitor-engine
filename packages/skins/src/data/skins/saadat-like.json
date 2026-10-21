@@ -31,7 +31,7 @@
   "colorBinding": "byChannel",
   "ecgColorLocked": true,
   "layout": {
-    "waveAreaFraction": 0.41,
+    "waveAreaFraction": 0.641,
     "lanes": ["ECG1", "ECG2", "RESP", "IBP1", "IBP2", "PLETH"],
     "tiles": [
       [
@@ -57,7 +57,31 @@
     "whenAttached": {
       "co2": { "lanes": { "RESP": "CO2" }, "tiles": { "RR": { "param": "CO2", "extras": ["IMCO2", "AWRR"], "split": "row", "parts": [{ "label": "EtCo2", "unit": "mmHg", "limit": "EtCO2_pctV" }, { "label": "FiCo2", "unit": "mmHg" }, { "label": "AWRR", "unit": "BrPM", "limit": "AWRR" }] } } }
     },
-    "laneText": { "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1" } } }
+    "laneText": { "labels": { "IBP1": { "text": "IBP" }, "IBP2": { "text": "IBP" }, "PLETH": { "text": "NORMAL", "color": "#ECE84A", "sub": "X1" } } },
+    "grid": {
+      "laneWeights": [115, 117, 96, 102, 98, 86],
+      "columns": [362, 97],
+      "rows": [175, 138, 101, 97, 96, 77],
+      "fontPx": { "HR": 109, "NIBP": 57, "CO2": 52, "IBP1": 46, "IBP2": 46, "SpO2": 78, "field": 57, "label": 16, "limit": 15 },
+      "cells": [
+        { "params": ["HR"], "row": 1, "col": 1, "colSpan": 2 },
+        { "params": ["NIBP"], "row": 2, "col": 1 },
+        { "params": ["TEMP"], "row": 2, "col": 2, "rowSpan": 2 },
+        { "params": ["RR"], "row": 3, "col": 1 },
+        { "params": ["IBP1"], "row": 4, "col": 1, "colSpan": 2 },
+        { "params": ["IBP2"], "row": 5, "col": 1, "colSpan": 2 },
+        { "params": ["BFA", "NMT", "AGENTS"], "row": 6, "col": 1, "colSpan": 2 }
+      ],
+      "strip": {
+        "heightPct": 14.5,
+        "tile": { "param": "SpO2", "widthPct": 21.7, "extras": [] },
+        "fields": [
+          { "label": "PI", "numeric": "pi", "digits": 1, "color": "PI" },
+          { "label": "PVI", "color": "PI" }, { "label": "SpOC", "color": "PI" }, { "label": "%SpCo", "color": "IBP1" },
+          { "label": "%SpMet", "color": "CO2" }, { "label": "SpHb", "unit": "g/dL", "color": "PI" }
+        ]
+      }
+    }
   },
   "pages": [
     { "id": "P1", "kind": "standard", "label": "P1" },
@@ -247,7 +271,8 @@
     "colors.AGENTS": { "tag": "unverified", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md colours, white-balance corrected, 2026-10-20)", "note": "no agent module in the photo: follows the CO2 yellow; the tag stays unverified; was #F0F030 (research/06 §3.2; brief §6.8; not in the manual. FU-8 (A10-E5): now drawn — the AGENTS module tile (EtAA %, MAC) at the foot of column 2, shown only while an agent is measured [ENG layout])" },
     "colorBinding": { "tag": "documented", "source": "research/06 §3.2 (M p.308); brief §3.8" },
     "ecgColorLocked": { "tag": "documented", "source": "research/06 §3.2 (M p.40, 308); brief §3.8" },
-    "layout.waveAreaFraction": { "tag": "measured", "source": "research/06 §3.1 F1" },
+    "layout.waveAreaFraction": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md: wave area x 0-821 of 1280 = 64.1 %); research/34 §3 row 1 said 63 %", "note": "rc.3: a WIDTH fraction, read by the live renderer with layout.grid (and by the Stage 4a preview); was 0.41 (research/06 §3.1 F1, likely the area share 0.63 x 0.65, plan D4)" },
+    "layout.grid": { "tag": "measured", "source": "research/34 §8 (owner-approved mock-up, scratch/skin-mockup/NOTES.md, 2026-10-20); research/34 §3 rows 1, 4, 8, 16; research/34 §8 O1", "note": "pixel extents on the 1280x800 rectified IMG_8113: lanes y 70-185-302-398-500-598-684; tile rows y 0-175-313-414-511-607-684; NIBP / T split at x 1183; strip y 684-798 (14.5 %); %SPO2 cell x 6-284 (21.7 %). fontPx are mock-up sizes at an 800 px screen height. The pulse-oximetry strip fields other than PI are labels only (no engine numeric, O1) and carry no limits (E100); PI prints the engine perfusion index (pi). Field colours as the mock-up: %SpCo in the IBP1 colour, %SpMet yellow (the CO2 key, #F0F000 for the mock-up #ECE84A), the rest in the PI colour" },
     "layout.lanes": { "tag": "measured", "source": "owner's photos of a real unit, 2026-10-18, research/34 §3 rows 3 and 13 (IMG_8113, ruled by the owner 2026-10-18 as the correct order)", "note": "Tuesday set T3: top to bottom ECG, ECG, CO2, IBP1, IBP2, pleth, as in IMG_8113 (was ECG1, PLETH, IBP1, IBP2, RESP from research/06 §3.1 F1, §5). RESP still becomes CO2 while the line is attached (layout.whenAttached). The second ECG lane's lead is not visible in the photo (owner question E70): with ecg.laneLeads [\"II\"] it shows lead II, as the iran-icu-as-found preset does" },
     "layout.tiles": { "tag": "documented", "source": "research/06 §3.1 F1; research/06 §3.2", "note": "FU-3 item 11 [ENG]: NMT and BFA module tiles appended to the second column, drawn only while the stimulator / depth monitor publishes. BFA is a B9 option module (BFI 0–100, BS%, EMG%, SQI%: research/06 §2); no NMT module is documented for the B9 [unverified]. FU-5: IBP1's PPV extra removed — the engine has no PPV numeric and the B9's PPV is OFF by default (research/06 §4.1, M p.149–161); HR's PACE and PVCs and BFA's SQI and EMG extras removed — the engine publishes no pacer-status, PVC-count, SQI or EMG numeric (recorded here, research/06 §3.1 F1, §2). rc.3 (research/34 §3 rows 4, 8, 14; research/34 §8 O1, IMG_8113): labels, units and weights as photographed (HR upright bold, D11); split CO2/TEMP/BFA parts and the PR tile's status lines as photographed — this reverses FU-5's removal of SQI/EMG/PACE/PVCs as blank labels (no numbers, O1); HR's ST extra gave way to the status lines; the NIBP block has no PR (the pulse has its own tile); the IBP limit pairs sit in one row under the value; NMT and AGENTS stay at the foot of column 2" },
     "layout.menuRegion": { "tag": "documented", "source": "research/06 §3.1 F4; brief §3.8" },

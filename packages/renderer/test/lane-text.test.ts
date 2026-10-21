@@ -26,11 +26,12 @@ describe('saadat-like lane text', () => {
     expect(ctx.texts).toEqual([
       'II  X1  NORMAL', '25 mm/s', '50mmHg', '0', 'CO2', '6 mm/s', '200', '120', '40', 'IBP', '25 mm/s', '30', '10', '-10', 'IBP', '25 mm/s', 'NORMAL', 'X1', '25 mm/s',
     ]);
-    const h = 600 / 6;
-    expect(fillTexts(ctx, '50mmHg')[0]).toMatchObject({ style: 'start:50mmHg', args: [6, 2 * h + 6] });
+    // the CO2 lane (the third) at the photo's lane weights 115, 117, 96, … of 614 (layout.grid, PR-G)
+    const [top, bottom] = [(600 * 232) / 614, (600 * 328) / 614];
+    expect(fillTexts(ctx, '50mmHg')[0]).toMatchObject({ style: 'start:50mmHg', args: [6, top + 6] });
     for (const t of ['CO2', '6 mm/s']) expect(fillTexts(ctx, t)[0]!.style).toBe(`right:${t}`);
-    expect(fillTexts(ctx, 'CO2')[0]!.args).toEqual([1056 - 6, 2 * h + 6]);
-    expect(fillTexts(ctx, '6 mm/s')[0]!.args).toEqual([1056 - 6, 3 * h - 18]);
+    expect(fillTexts(ctx, 'CO2')[0]!.args).toEqual([1056 - 6, top + 6]);
+    expect(fillTexts(ctx, '6 mm/s')[0]!.args).toEqual([1056 - 6, bottom - 18]);
   });
 
   it('lane text is drawn in the skin foreground; the pleth label in its own colour, its gain in the foreground', () => {
@@ -44,7 +45,7 @@ describe('saadat-like lane text', () => {
   it('the second ECG lane has no label and no speed (as photographed) until its lead differs from the first', () => {
     const { core, ctx } = make({});
     expect(fillTexts(ctx, 'II  X1  NORMAL')).toHaveLength(1);
-    expect(fillTexts(ctx, '25 mm/s').filter((c) => c.args[1]! < 200)).toHaveLength(1); // ECG1 only (lanes 0–1 are y < 200)
+    expect(fillTexts(ctx, '25 mm/s').filter((c) => c.args[1]! < 200)).toHaveLength(1); // ECG1 only (lanes 0–1 end at y 600 × 232 / 614 ≈ 227)
     ctx.texts = [];
     core.command({ id: 'l1', issuedBy: 't', type: 'device', action: { device: 'ecg', action: 'lead', value: 'V1', lane: 1 } } as never);
     expect(ctx.texts).toContain('V1  X1  NORMAL');
@@ -67,7 +68,7 @@ describe('saadat-like lane text', () => {
     run(6); // CO2 at 6 mm/s crosses 104 px in ≈ 4.6 s
     expect(ctx.texts.filter((t) => t === '50mmHg').length).toBeGreaterThan(1);
     // the repainted tail covers the whole word ("mm" is wide: the 8.5 px/char estimate left the "g" cut)
-    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[1] === 2 * 100 + 4 && c.args[2]! >= 6 + 6 * 10.5 - 56)).toBe(true);
+    expect(ctx.calls.some((c) => c.op === 'fillRect' && c.args[0] === 56 && c.args[1] === (600 * 232) / 614 + 4 && c.args[2]! >= 6 + 6 * 10.5 - 56)).toBe(true);
   });
 
   it('a cleared CO2 lane gets "50mmHg" back at once, with its right-hand texts', () => {

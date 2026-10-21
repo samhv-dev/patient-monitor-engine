@@ -327,16 +327,16 @@ export class MonitorCore {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.fillStyle = p.background;
     this.ctx.fillRect(0, 0, cssW, cssH);
-    const h = cssH / Math.max(1, p.lanes.length);
     // FX-24: the ECG gain survives a resize or a restore (the auto-gain re-judges it); a new plan starts from its own
     if (this.gainMult.length !== p.lanes.length) this.gainMult = p.lanes.map((l) => l.gainMmPerMv / 10);
     this.labelTail = [];
     this.lanes = p.lanes.map((pl, i) => {
       const rate = pl.kind === 'ecg' ? 500 : pl.channel ? this.engine.sampleRate(pl.channel) : 125;
       const [lo, hi] = pl.range ?? [-0.5, 3];
+      const { y, h } = this.laneBox(i);
       const lane = new SweepLane(
         {
-          x: LABEL_W, y: i * h, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color, firstIndex: Math.ceil(this.historyT * rate - 1e-6),
+          x: LABEL_W, y, width: cssW - LABEL_W, height: h, rate, mmPerS: pl.mmPerS, pxPerMm: this.pxPerMm, color: pl.color, firstIndex: Math.ceil(this.historyT * rate - 1e-6),
           background: p.background, lineWidth: p.lineWidth, eraseGapPx: p.eraseGapPx, grid: p.grid, cursorLine: p.cursorLine, fill: pl.fill,
           smoothN: Math.max(1, Math.round((pl.smoothMs / 1000) * rate)), smoothGate: SMOOTH_GATE_MMHG,
           hLines: pl.scaleLines ? { values: pl.scaleLines, color: p.scaleLineColor ?? pl.color } : null,
@@ -354,6 +354,22 @@ export class MonitorCore {
     this.rightGen = this.lanes.map((l) => l.generation);
   }
 
+  /**
+   * Lane i's top and height in CSS px: equal lanes (today's arithmetic, byte-identical) or, with the skin's lane weights
+   * (layout.grid, rc.3), the cumulative share of each weight.
+   */
+  private laneBox(i: number): { y: number; h: number } {
+    const { cssH } = this.size;
+    const w = this.plan.laneWeights;
+    if (!w) {
+      const h = cssH / Math.max(1, this.plan.lanes.length);
+      return { y: i * h, h };
+    }
+    const sum = w.reduce((a, b) => a + b, 0);
+    const before = w.slice(0, i).reduce((a, b) => a + b, 0);
+    return { y: (cssH * before) / sum, h: (cssH * (w[i] ?? 0)) / sum };
+  }
+
   /** With lane text, an ECG lane showing the same lead as an earlier ECG lane has no label and no speed (IMG_8113). */
   private ecgUnlabelled(i: number): boolean {
     const p = this.plan;
@@ -366,8 +382,7 @@ export class MonitorCore {
     const p = this.plan;
     if (!p.laneText || this.ecgUnlabelled(i)) return [];
     const pl = p.lanes[i] as PlanLane;
-    const h = this.size.cssH / Math.max(1, p.lanes.length);
-    const y0 = i * h;
+    const { y: y0, h } = this.laneBox(i);
     const out: Array<{ text: string; color: string; y: number }> = [];
     if (pl.rightLabel) {
       out.push({ text: pl.rightLabel.text, color: pl.rightLabel.color, y: y0 + 6 });
@@ -456,17 +471,17 @@ export class MonitorCore {
   private drawChrome(lanes: number[]): void {
     const ctx = this.ctx;
     const p = this.plan;
-    const h = this.size.cssH / Math.max(1, p.lanes.length);
     for (const i of lanes) {
+      const { y, h } = this.laneBox(i);
       ctx.fillStyle = p.background;
-      ctx.fillRect(0, i * h, LABEL_W, h);
+      ctx.fillRect(0, y, LABEL_W, h);
     }
     ctx.font = `14px ${p.font}`;
     ctx.textBaseline = 'top';
     const lt = p.laneText;
     for (const i of lanes) {
       const pl = p.lanes[i] as PlanLane;
-      const y0 = i * h;
+      const { y: y0, h } = this.laneBox(i);
       const textColor = lt?.color ?? pl.color;
       ctx.fillStyle = textColor;
       ctx.strokeStyle = pl.color;

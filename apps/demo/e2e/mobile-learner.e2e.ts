@@ -83,7 +83,9 @@ async function phone(browser: Browser, browserName: string, code: string, relayU
 }
 const synced = (p: Page) => p.waitForFunction(() => (window as unknown as W).__pmeFollower?.sync?.status === 'synced', null, { timeout: 30_000 });
 const sync = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollower.sync as Sync);
-const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-stile')].map((e) => `${(e as HTMLElement).dataset.param}:${e.querySelector('[data-pme="v"]')?.textContent}`).join(' '));
+// sorted by param: the instructor's saadat-like screen PLACES its tiles in a grid and a strip (rc.3 layout.grid) while a
+// phone held upright keeps the skin's order, so the same tiles and values appear in a different DOM order
+const tiles = (p: Page) => p.evaluate(() => [...document.querySelectorAll('.pme-stile')].map((e) => `${(e as HTMLElement).dataset.param}:${e.querySelector('[data-pme="v"]')?.textContent}`).sort().join(' '));
 const same = (f: Page, p: Page) => expect.poll(async () => (await tiles(f)) === (await tiles(p)) || `${await tiles(f)} | ${await tiles(p)}`, { timeout: 15_000, intervals: [100] }).toBe(true);
 const status = (p: Page) => p.locator('.follower-bar .status-pill');
 const styleOf = (p: Page) => p.evaluate(() => (window as unknown as W).__pmeFollower.style.skin);

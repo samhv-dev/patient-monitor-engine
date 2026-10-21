@@ -81,6 +81,36 @@ export interface LaneTextLabel {
   sub?: string;
 }
 export type SwapSensor = (typeof SWAP_SENSORS)[number];
+/** One cell of layout.grid: the tiles of `params` side by side, at a 1-based row and column of the tile grid. */
+export interface GridCell {
+  params: TileParam[];
+  row: number;
+  col: number;
+  rowSpan?: number;
+  colSpan?: number;
+}
+/** A label field of the bottom strip: a label, an optional unit, and the engine numeric it prints (blank without). */
+export interface StripField {
+  label: string;
+  unit?: string;
+  numeric?: string;
+  digits?: number;
+  color?: ColorKey;
+}
+/** layout.grid (rc.3, saadat-like): see Skin['layout']['grid']. Track and lane sizes are relative weights. */
+export interface LayoutGrid {
+  /** Relative lane heights, one per layout.lanes entry; any other lane count draws equal lanes. */
+  laneWeights: number[];
+  /** Tile-area column tracks (fr), right of the wave area. */
+  columns: number[];
+  /** Tile-area row tracks (fr). */
+  rows: number[];
+  /** Font sizes in px at an 800 px monitor height (scaled with the height): tile main values, strip values, labels, limits. */
+  fontPx: Partial<Record<TileParam | 'field' | 'label' | 'limit', number>>;
+  cells: GridCell[];
+  /** Full-width strip under the waves and the tiles: one tile, then label fields of equal width. */
+  strip: { heightPct: number; tile: { param: TileParam; widthPct: number; extras?: string[] }; fields: StripField[] };
+}
 /**
  * What a sensor takes over while it is attached: `lanes` maps a lane to the lane drawn in its place (same position),
  * `tiles` a tile to the tile drawn in its place. Applied in one place, resolveSkin's `sensors` option; a skin without
@@ -173,6 +203,12 @@ export interface Skin {
     headerStyle?: 'two-row';
     /** Module tiles drawn even while their module publishes nothing (blank values, research/34 §8 O1). */
     showAlways?: TileParam[];
+    /**
+     * rc.3 (opt-in, saadat-like): the screen layout of the real unit. The wave area takes `waveAreaFraction` of the
+     * width, the lanes take `laneWeights`, the header moves into the wave column, `layout.tiles` are PLACED in a grid
+     * with spans, and a full-width strip runs under the waves and the tiles. Absent = the tile columns (never in portrait).
+     */
+    grid?: LayoutGrid;
   };
   pages: PageSpec[];
   defaultPage: string;
