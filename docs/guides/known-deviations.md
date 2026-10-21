@@ -234,7 +234,7 @@ release.
 | `explore-baseline.e2e.ts:23` | a bookmark restore to before the baseline drops it; it is taken again at 1 minute | WebKit | 7 | 1 | 76 | timing | 38100631999 / 38381261724 | at :31 on this tree (CI reported :23 before PR #55); 3/3 in main 38172300684 |
 | `organs-page.e2e.ts:36` | organs page: check 19 starts, the ICP tile shows a rising ICP, no page errors | WebKit | 7 |  | 76 | crash | 38107292797 / 39082091200 |  |
 | `iife-transports-snapshot.e2e.ts:24` | MonitorHandle snapshot/restore/role (worker: auto) | WebKit | 6 | 2 | 76 | capacity | 38100631999 / 38182829101 | none after 2026-10-11 |
-| `debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | WebKit | 5 | 1 | 35 | timing | 38208532262 / 39082572086 | 3/3 in 38208532262 |
+| `debrief.e2e.ts:48` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | WebKit | 5 | 1 | 35 | timing | 38208532262 / 39082572086 | 3/3 in 38208532262; at :24 before the 2026-10-21 change below |
 | `debrief.e2e.ts:24` | a showcase run ends in a debrief that prints (timeline, facts, objectives) | Chromium | 1 |  | 33 | unknown | 38386662185 / 38386662185 |  |
 | `time-control.e2e.ts:30` | ×8 and a 5-minute fast-forward from the instructor view: paced panel everywhere, sound muted, cue, banner, log, trends | Chromium | 4 |  | 46 | capacity | 38193355147 / 38212119356 | the file is skipped on CI WebKit (above) |
 | `app-accessibility.e2e.ts:15` | accessibility: iPad portrait 820×1180 | WebKit | 4 |  | 76 | crash | 38145499655 / 39067888843 | the laptop case never failed |
@@ -249,6 +249,25 @@ release.
 | `respiratory-evidence-page.e2e.ts:30` | respiratory-evidence page: the bronchospasm demo runs, EtCO2 shows, no page errors | WebKit | 1 |  | 76 | crash | 38216030108 / 38216030108 | in this window on a feature-branch run only; on main in 38092760192 (2026-10-10) |
 | `vent-view-restore.e2e.ts:42` | after "Return here" on the Ventilator view the replayed minute matches the first one | Chromium | 2 |  |  | capacity | 38377803966 / 39065636299 | **tagged known-flaky** (orchestrator ruling 2026-10-18): 2 retry-passes after FX-1, main 38377803966 and 39065636299; replayed minute differed (SpO2 |Δ| 5 > 3). Skipped on CI WebKit (above) |
 | `vent-view-speed.e2e.ts:14` | the Ventilator view takes a speed change made after it opened | WebKit | 6 |  |  | unknown | 38114676150 / 38227924181 | none since FX-1 merged (run 38240122427) |
+
+## Browser tests held on the loaded CI WebKit runner (2026-10-21)
+
+These failed all three attempts of the CI WebKit leg (Playwright Linux WebKit on the shared 4-vCPU runner) with no
+product change between attempts, while CI Chromium passed every test on the same commits without a retry. They are not
+skipped: on CI WebKit only, the Debrief's two live runs go at ×2 instead of ×4 (S10-F5: the runner holds about ×5.3),
+their waits are on the page's own clock or scaled to the speed, and the Debrief opens only once the host has
+acknowledged a pause — the session bar's button reads "Resume" as soon as it is pressed, before the host answers; the
+click is then checked to have been followed (`#/debrief`) and the heading to be drawn, each within 30 s. FX-25 judges its
+two times on the page's sim clock. Every assertion is kept; local WebKit and Chromium run as before. Read a run with
+`gh run view <id> --attempt <n> --log`; the failure lines are those of the tree the run tested.
+
+| Test (file:line, this tree) | Run (attempt): what failed | What changed |
+|---|---|---|
+| `debrief.e2e.ts:48` (showcase run) | PR #97 run 39338820903 (attempts 1 and 2, 2026-10-19/20): the Return not landed within 5 s (sim time 88.0, 89.0, 98.0 against < 20, :33) in three tries; the Debrief heading absent 5 s after the click (:46); "00:0x Patient Ventilated breaths began" missing (:59); the retry's "01:0x Scenario state: Anaphylaxis" missing (:55) | ×2, the waits scaled; the 24 s after the epinephrine on the page's sim clock; paused and acknowledged before the Debrief opens |
+| `debrief.e2e.ts:48` (showcase run) | PR #105 run 39534643448 (attempt 1): the retry's state not at 01:0x (:55); the Return not landed (89.0, :33); the reaction's button not back within 40 s (:36). Attempt 2 passed on a retry | as above |
+| `debrief.e2e.ts:48` (showcase run) | PR #107 run 39578631031 (attempt 2): the Return not landed (37, :33); "01:0x … Anaphylaxis — undone by return 1" missing (:53); "Ventilated breaths began" missing (:59) | as above |
+| `debrief.e2e.ts:207` (free run) | PR #105 run 39524573921 (attempt 1): the Debrief heading not found 5 s after the click (:188), twice, then passed on the second retry; PR #107 run 39578631031 (attempts 1 and 3): the same, three times each. The page snapshot at the failure shows the Instructor view still up, the clock at 02:50 and the button reading "Resume": the click had not been followed | ×2 to 3 sim-min on the page's clock; the host's pause awaited; the route, then the heading, within 30 s |
+| `fx25-co2-attach.e2e.ts:74` | PR #107 run 39578631031 (attempt 2): "the capnogram is drawn right of the attach point within 2 s" false in three tries — the first capture came at +2.50–3.15 s with 43–52 inked columns, so the trace had begun ≈ 0.8–1.2 s after the click; attempt 3 the same once (first capture +3.13 s), then passed on a retry. Main run 39539902747 (attempt 1) failed once on a WebKit page crash (F-FX1-1 class), which this change does not address | the 2 s and 4 s bounds judged on the page's sim time since the click, each column dated back from the newest at the fastest sweep the test allows (25 px/s), against a clock read after the capture |
 
 ## Validation harness: rows outside their band
 

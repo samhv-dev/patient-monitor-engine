@@ -18,32 +18,59 @@ let base = '';
 test.beforeAll(async () => ({ vite, base } = await startVite()));
 test.afterAll(async () => vite?.close());
 
-type W = { __pmeApp: { link: { simT: number }; engineIds: string[] } };
+type W = { __pmeApp: { link: { simT: number; ctl: { hostPaused: boolean } }; engineIds: string[] } };
 const simT = (page: Page) => page.evaluate(() => (window as unknown as W).__pmeApp.link.simT);
 
+// CI Linux WebKit (the shared 4-vCPU runner, S10-F5): under ×4 the page served clicks and drew the Debrief late — the
+// Return not landed within 5 s, timeline states seconds late, the Debrief heading absent 5 s after the click (PR #97 run
+// 39338820903, PR #105 39524573921 and 39534643448, PR #107 39578631031; docs/guides/known-deviations.md). There the
+// two live runs go at ×2, their waits are on the page's own clock or scaled to the speed, and the session is paused
+// (the host's acknowledgement awaited) before the Debrief opens, so the click is served by an idle page. Every
+// assertion is the same; local WebKit and Chromium keep ×4.
+const loadedWebKit = (browserName: string) => !!process.env.CI && browserName === 'webkit';
+
+/** Pause, and wait for the host to have paused: the button reads "Resume" as soon as it is pressed, before the host answers. */
+async function pauseHost(page: Page): Promise<void> {
+  const bar = page.locator('.sessionbar');
+  await bar.getByRole('button', { name: 'Pause' }).click();
+  await expect(bar.getByRole('button', { name: 'Resume' })).toBeVisible({ timeout: 10_000 });
+  await expect.poll(() => page.evaluate(() => (window as unknown as W).__pmeApp.link.ctl.hostPaused), { timeout: 20_000, message: 'the host has paused' }).toBe(true);
+}
+
+/** The session bar's Debrief link, clicked: the route first (was the click served?), then the view's heading (was it drawn?). */
+async function openDebrief(page: Page, busy: boolean): Promise<void> {
+  await page.locator('.sessionbar').getByRole('link', { name: 'Debrief' }).click();
+  const timeout = busy ? 30_000 : 5_000; // the loaded CI WebKit page only
+  await expect.poll(() => page.evaluate(() => location.hash), { timeout, message: 'the Debrief link was followed' }).toBe('#/debrief');
+  await expect(page.locator('[data-view=debrief]').getByRole('heading', { level: 1, name: 'Debrief' }), 'the Debrief is drawn').toBeVisible({ timeout });
+}
+
 test('a showcase run ends in a debrief that prints (timeline, facts, objectives)', { tag: '@known-flaky' }, async ({ page, browserName }) => {
-  test.setTimeout(180_000);
+  const busy = loadedWebKit(browserName);
+  const k = busy ? 2 : 1; // wall time per sim second, against ×4
+  test.setTimeout(busy ? 300_000 : 180_000);
   await openApp(page, base, '?scenario=showcase-anaphylaxis', { warmMs: 1500 });
-  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
+  await page.locator('.sessionbar').getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
   await page.click('[role=tab][data-tab=scenario]');
   await page.locator('.sessionbar').getByRole('button', { name: 'Bookmark' }).click();
-  await expect.poll(() => simT(page), { timeout: 40_000 }).toBeGreaterThan(70); // the reaction starts at 60 s
+  await expect.poll(() => simT(page), { timeout: 40_000 * k }).toBeGreaterThan(70); // the reaction starts at 60 s
   await page.getByRole('button', { name: 'Return here' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Return' }).click();
-  await expect.poll(() => simT(page), { timeout: 5_000 }).toBeLessThan(20);
+  await expect.poll(() => simT(page), { timeout: busy ? 15_000 : 5_000 }).toBeLessThan(20);
   const give = page.getByRole('button', { name: 'Give epinephrine 100 µg' });
-  await expect(give).toBeHidden(); // the panel repaints at ≤ 2 Hz: the first reaction's button goes first
-  await expect(give).toBeVisible({ timeout: 40_000 }); // the reaction again, 60 s after the bookmark's state began
+  await expect(give).toBeHidden({ timeout: busy ? 15_000 : 5_000 }); // the panel repaints at ≤ 2 Hz: the first reaction's button goes first
+  await expect(give).toBeVisible({ timeout: 40_000 * k }); // the reaction again, 60 s after the bookmark's state began
+  const tGive = await simT(page);
   await give.click();
 
   // the end of the run: the session bar's Debrief is marked and a toast says so
   const open = page.locator('.sessionbar').getByRole('link', { name: 'Debrief' });
-  await expect(open).toHaveAttribute('data-ready', 'true', { timeout: 10_000 });
+  await expect(open).toHaveAttribute('data-ready', 'true', { timeout: 10_000 * k });
   await expect(page.locator('.toast', { hasText: 'the debrief is ready' })).toBeVisible();
-  await page.waitForTimeout(6000); // ≈ 24 s of sim after the epinephrine: its effect reaches the trends
-  await open.click();
+  await expect.poll(() => simT(page), { timeout: 30_000 * k }).toBeGreaterThan(tGive + 24); // ≈ 24 s of sim after the epinephrine: its effect reaches the trends
+  if (busy) await pauseHost(page);
+  await openDebrief(page, busy);
   const view = page.locator('[data-view=debrief]');
-  await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible();
 
   const timeline = await view.locator('#db-timeline tbody tr').allInnerTexts();
   const rows = timeline.map((r) => r.replace(/\s+/g, ' ').trim());
@@ -91,7 +118,7 @@ test('a showcase run ends in a debrief that prints (timeline, facts, objectives)
   expect(j.schema).toBe('pme-debrief/2');
   expect(j.version).toMatch(/^\d+\.\d+\.\d+/); // the renderer's version: the footer below is built from it, never written here
   expect(j.objectives.map((o) => o.verdict.status)).toEqual(['not assessable', 'met', 'not met']);
-  expect(j.record.rows.length).toBeGreaterThanOrEqual(rows.length); // the run goes on while the view is open
+  expect(j.record.rows.length).toBeGreaterThanOrEqual(rows.length); // the run goes on while the view is open (paused on CI WebKit)
   expect(json).not.toContain('Dr Instructor');
   expect(json).not.toContain('closed-loop');
   const build = j.build;
@@ -174,18 +201,19 @@ test('FX-20: notes typed right after opening the app on the Debrief are kept; a 
 // Decision 12: a free run (no scenario) prints in at most four A4 pages — the header band with facts, talking points and
 // notes; trends; drugs, timeline and bookmarks; the appendix. Its /2 export is saved for the Persian check (A7 Step 4).
 // The run goes at ×4 and is paused before the Debrief opens: the CI Linux WebKit runner cannot hold ×8 (S10-F5), and
-// there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3).
+// there a click on the session bar's Debrief link at ×8 was not served within 5 s (main run 39173099640, 3 of 3). At ×4
+// it then failed the same way (PR #105 run 39524573921, PR #107 39578631031 attempts 1 and 3): there it now goes at ×2
+// to 3 sim-min on the page's clock, and the Debrief is opened once the host has acknowledged the pause.
 test('a free run prints in at most four pages; its export is pme-debrief/2', async ({ page, browserName }) => {
-  test.setTimeout(120_000);
+  const busy = loadedWebKit(browserName);
+  test.setTimeout(busy ? 240_000 : 120_000);
   await openApp(page, base, '#/teach', { warmMs: 1500 }); // the Monitor with the session bar, no scenario
   const bar = page.locator('.sessionbar');
-  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: '×4' }).click();
-  await page.waitForTimeout(45_000); // ≈ 3 sim-min
-  await bar.getByRole('button', { name: 'Pause' }).click();
-  await expect(bar.getByRole('button', { name: 'Resume' })).toBeVisible({ timeout: 10_000 });
-  await bar.getByRole('link', { name: 'Debrief' }).click();
+  await bar.getByRole('group', { name: 'Simulation speed' }).getByRole('button', { name: busy ? '×2' : '×4' }).click();
+  await expect.poll(() => simT(page), { timeout: busy ? 150_000 : 75_000 }).toBeGreaterThanOrEqual(180); // 3 sim-min
+  await pauseHost(page);
+  await openDebrief(page, busy);
   const view = page.locator('[data-view=debrief]');
-  await expect(view.getByRole('heading', { level: 1, name: 'Debrief' })).toBeVisible();
   await expect(view.locator('.db-title')).toHaveText('No scenario (free run)');
   await expect(view.locator('#db-pearls .db-pearl')).toHaveCount(4);
   await expect(view.locator('#db-moments')).toHaveCount(0); // B6 (d): no key moment, no page break for them
