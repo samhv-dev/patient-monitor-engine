@@ -48,3 +48,14 @@ OWNER'S TEST CHECKLIST FOR WINDOWS (on the room's PC, before the day; report any
 [ ] 8. Your own phone on that network scans the QR code: it shows the monitor and follows the case within seconds.
 [ ] 9. Ctrl+C in the black window, then Y: the window closes, and a reload of 127.0.0.1:8650 no longer loads.
 [ ] 10. Start Classroom twice (the first still running): the second window says port 8651 and also runs; close both.
+
+ROOM NETWORK (for learners' phones: a dedicated travel router)
+   The phones and the presenting Mac (or PC) must be on one network that lets them talk to each other. A venue Wi-Fi
+   may block this (client isolation); a laptop hotspot has been tested with one phone only.
+R1. Use a dedicated travel router in ROUTER mode, with DHCP on. No internet (WAN) cable is needed.
+R2. In its settings: client isolation / AP isolation OFF; one network name (SSID) for both bands (2.4 and 5 GHz).
+R3. The presenting Mac joins that network BEFORE you double-click "Start Classroom", so the QR code carries the
+    Mac's address on that network.
+R4. Learners join the same network name, then scan the QR code.
+R5. Recommended units: GL.iNet Slate AX (GL-AXT1800) or TP-Link Roam 6. The client counts in their specifications
+    are vendor maximums, not what a room of phones streaming the monitor will get: test with several phones first.

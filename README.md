@@ -16,9 +16,11 @@ and not clinically validated.** What remains before 1.0.0 and the plan for v2.0 
   physiology, Ventilator, Validate, Developer and Settings, plus Remote and the Debrief report). Time runs at up to ×8
   with a 2- or 5-minute fast-forward; a learner monitor can follow on a second screen in the same browser, or,
   read-only, on learners' phones over a classroom relay on the instructor's computer. The relay comes in the classroom kit, built from a source checkout
-  with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22; its double-click launchers are for macOS); it is not a
-  release asset, and it has not yet been tested with a real phone at this release candidate. A static copy of the app
-  on a web host, such as GitHub Pages, cannot pair phones. A Debrief report prints to PDF from the browser.
+  with `node scripts/showcase/make-bundle.mjs` (Node.js ≥ 22; double-click launchers for macOS, and for Windows,
+  untested on Windows at this release); it is not a release asset. The owner has tested it with a real phone over his
+  Mac's hotspot through the six showcase cards (2026-10-18); a room full of phones has not been tried, and there the
+  room's network is the limit (the kit's READ ME FIRST, "Room network"). A static copy of the app on a web host, such
+  as GitHub Pages, cannot pair phones. A Debrief report prints to PDF from the browser.
 
 - **Channels:** ECG (3/5/12-lead), invasive pressures (ABP, CVP, PAP, and ICP where the organ model supplies it),
   NIBP with a real cuff cycle, SpO2 and pleth, EtCO2 and capnogram, temperature, respiratory rate.

@@ -150,6 +150,12 @@ const HANDOUT = {
 } as const;
 const kids = (...xs: Array<Node | null>): Node[] => xs.filter((x): x is Node => x !== null);
 const ruled = (n: number): HTMLElement[] => Array.from({ length: n }, () => h('div', { class: 'db-ruled', 'aria-hidden': 'true' }));
+/** The handout's take-home section: the card's `takeHome` lines as written (the owner's words), else blank lines to
+ *  write on (Decision 6). */
+export const takeHomeSection = (take: readonly string[] = []): HTMLElement =>
+  h('section', { class: 'db-hsec' }, h('h3', {}, 'Take-home points'), take.length
+    ? h('ol', { class: 'db-take' }, ...take.map((t) => h('li', {}, t)))
+    : h('div', {}, h('p', { class: 'db-subhead' }, 'Your take-home points'), ...ruled(3)));
 
 /** One key-time tile: its caption, the interval as a big value, and the times it runs between. A tile whose end is
  *  absent is not drawn, except the recognition tile, which reads "–" "not ticked" (E44). */
@@ -285,7 +291,6 @@ export function debriefView(session: AppSession, link: Link): View {
       section('minutes', 'Appendix: one row per minute', minutes(d)),
     );
     // the learner handout (E51): what happened and when, no verdict, no objective, no value
-    const take = d.doc?.takeHome ?? [];
     const learnerCourse = h('div', { class: 'db-course' });
     learnerCourse.innerHTML = courseSvg(d, ms, { trends: TRENDS4, learner: true });
     handout.replaceChildren(...kids(
@@ -299,9 +304,7 @@ export function debriefView(session: AppSession, link: Link): View {
         h('thead', {}, h('tr', {}, ...['n', 'Time', 'Who', 'What happened'].map((c) => h('th', { scope: 'col' }, c)))),
         h('tbody', {}, ...ms.slice(0, MOMENTS_MAX).map((m) => h('tr', {}, h('td', { class: 'num' }, String(m.n)), h('td', { class: 'num' }, mmss(m.t)), whoCell(m.who), h('td', {}, m.text)))))) : null,
       h('section', { class: 'db-hsec' }, h('h3', {}, 'Questions to think about'), h('ol', { class: 'db-qs' }, ...HANDOUT.prompts.map((q) => h('li', {}, q, ...ruled(3))))),
-      h('section', { class: 'db-hsec' }, h('h3', {}, 'Take-home points'), take.length
-        ? h('ol', { class: 'db-take' }, ...take.map((t) => h('li', {}, t)))
-        : h('div', {}, h('p', { class: 'db-subhead' }, 'Your take-home points'), ...ruled(3))),
+      takeHomeSection(d.doc?.takeHome),
       h('p', { class: 'db-next' }, HANDOUT.next),
     ));
   };

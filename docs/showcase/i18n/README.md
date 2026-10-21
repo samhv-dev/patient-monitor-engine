@@ -66,7 +66,10 @@ from) and `reviewed` (`false` until the owner approves it). It has three parts:
   conditions, lung conditions, rhythms, alarm words, sensors, monitor labels, and the **titles, state labels and
   objective texts of the three showcase-2 cases** (bronchospasm, tamponade, malignant hyperthermia; plus the E22 MH
   objective text and the `heldThen` reason lines, written against branch `fix-e22-mh-rule` and on main since PR #69:
-  kit round Q1 printed the release build's MH report with 0 strings left in English);
+  kit round Q1 printed the release build's MH report with 0 strings left in English). The group **takeHome**, last so it
+  never shadows an earlier entry, holds the nine take-home lines of the three showcase-2 cards (the owner's English,
+  confirmed 2026-10-21; the Persian is unreviewed). The script does not print the learner handout yet, so it does not
+  use them;
 - **strings**: exact strings (section titles, verdict words, fixed timeline lines);
 - **templates**: the sentences the app builds (`describe.ts` event lines, `debrief.ts` reasons and facts,
   `alarms.ts` "label high/low") with placeholders: `{t}` mm:ss, `{span}` a duration, `{n}` a number, `{u}` a unit,

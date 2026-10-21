@@ -10,6 +10,11 @@
     { "text": "Treat with a bronchodilator", "rule": { "kind": "occurred", "event": "drug:salbutamol" } },
     "Watch the delivered tidal volume and minute volume recover as air trapping eases"
   ],
+  "takeHome": [
+    "High peak pressure, a shark-fin capnogram and auto-PEEP: think of bronchospasm.",
+    "Treat with a bronchodilator.",
+    "Watch the delivered tidal volume and minute volume recover as air trapping eases."
+  ],
   "notes": "Showcase case (Stage 9 Task 26): the airway event 'bronchospasm' at severity 1 (it aliases 7b's bronchospasm row); salbutamol's bronchodilation is FU-6's.",
   "seed": 7,
   "mode": "modeled",

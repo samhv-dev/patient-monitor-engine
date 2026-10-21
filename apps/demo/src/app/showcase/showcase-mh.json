@@ -13,6 +13,11 @@
     { "text": "Treat the potassium (calcium chloride, insulin with dextrose) within 300 s of K⁺ rising above 5.5 mmol/L", "rule": { "kind": "eventWithin", "after": "value:k>5.5", "event": ["drug:calciumChloride", "drug:insulinDextrose"], "withinS": 300 } },
     { "text": "Hyperventilation kept until EtCO₂ has stayed below 40 mmHg for 2 min, then ventilation normalised (back to 12 × 500)", "rule": { "kind": "heldThen", "from": "state:triggerOff", "value": "etco2", "below": 40, "forS": 120, "event": "state:normoventilated" } }
   ],
+  "takeHome": [
+    "A rising EtCO₂ at the same ventilation with a rising heart rate: think of MH early.",
+    "Trigger off, 100 % oxygen at high flow, hyperventilation, and dantrolene 2.5 mg/kg.",
+    "Keep hyperventilating until the EtCO₂ has stayed down, and treat the potassium."
+  ],
   "notes": "Showcase case (Stage 11). MODELED: the physiology produces every change; the buttons only give what their label says. Measured course and bands: docs/plans/stage-11-scenarios.md.",
   "seed": 7,
   "mode": "modeled",
