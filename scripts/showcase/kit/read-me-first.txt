@@ -22,12 +22,14 @@ LEARNERS' PHONES (optional; needs Node.js 22 or later on this Mac, and a network
 WINDOWS (a backup for a Windows PC; needs Node.js 22 or later on that PC)
 Windows launcher: untested on Windows at this release; test on the room's PC before the day (checklist below).
    Before the day: install Node.js from nodejs.org (the LTS, version 22 or later, the "Windows Installer (.msi)"; its
-   defaults are fine). Unzip the kit first (right-click the .zip > Extract All): the launchers cannot run inside a zip.
+   defaults are fine). Unzip the kit first: right-click the .zip > Properties > tick "Unblock" > OK (else Windows may
+   warn, or block, at every start), then right-click the .zip > Extract All. The launchers cannot run inside a zip.
 W1. Double-click "Start Classroom.cmd" (Windows may hide the ".cmd": it is "Start Classroom", type "Windows Command
     Script"). If Windows says "Windows protected your PC": click "More info", then "Run anyway".
 W2. A black window opens, then the simulator opens in the default browser (Edge or Chrome).
 W3. If Windows Defender Firewall asks about "Node.js JavaScript Runtime": tick BOTH "Private networks" and "Public
-    networks", then click "Allow access" (it may ask for an administrator). Without it, phones cannot connect.
+    networks", then click "Allow access" (it may ask for an administrator). Without it, phones cannot connect. If the
+    question was cancelled once, Windows blocks node.exe silently from then on: fix it as in checklist line 6.
 W4. Phones: the black window lists "learners' phones reach it at: http://192.168.x.x:8650/". Phones scan the QR code
     (Monitor view, "Phones") or type that address. They must be on the same Wi-Fi as this PC, or on this PC's own
     Mobile hotspot (Settings > Network & internet > Mobile hotspot; its address is then usually 192.168.137.1).
@@ -40,7 +42,8 @@ OWNER'S TEST CHECKLIST FOR WINDOWS (on the room's PC, before the day; report any
 [ ] 3. "Start Simulator.cmd": the browser shows the simulator at 127.0.0.1:8642, and no firewall question appears.
 [ ] 4. Close that black window: within a few seconds a reload of 127.0.0.1:8642 no longer loads.
 [ ] 5. "Start Classroom.cmd": the window says "THE CLASSROOM IS RUNNING"; the browser opens 127.0.0.1:8650/?relay.
-[ ] 6. The firewall question came once; Private and Public were both allowed (a second start does not ask again).
+[ ] 6. Windows Security > Firewall & network protection > "Allow an app through firewall": "Node.js JavaScript
+       Runtime" is ticked for BOTH Private and Public (if it is missing or unticked: "Change settings", tick both).
 [ ] 7. The "phones reach it at" address is this PC's Wi-Fi IPv4 address ("ipconfig", the Wi-Fi adapter's line).
 [ ] 8. Your own phone on that network scans the QR code: it shows the monitor and follows the case within seconds.
 [ ] 9. Ctrl+C in the black window, then Y: the window closes, and a reload of 127.0.0.1:8650 no longer loads.

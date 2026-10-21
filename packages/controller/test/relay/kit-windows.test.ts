@@ -36,6 +36,10 @@ describe('the kit gets the Windows launchers', () => {
       expect([...b].filter((c) => c > 0x7e || (c < 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d)), `${name}: non-ASCII bytes`).toEqual([]);
       expect(text).toContain('"%NODE%" "%~dp0server\\launch.mjs"');
       expect(text).toMatch(/^setlocal EnableExtensions DisableDelayedExpansion\r$/m);
+      // review fixes: a launcher started from inside the .zip says so; a node.exe that crashes (negative exit code) is caught
+      expect(text).toContain('if not exist "%~dp0server\\launch.mjs" goto nokit');
+      expect(text).toContain('if not "%ERRORLEVEL%"=="0" goto oldnode');
+      expect(text).not.toMatch(/^if errorlevel/m);
     }
   });
 
