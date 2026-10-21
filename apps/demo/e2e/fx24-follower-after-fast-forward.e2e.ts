@@ -4,10 +4,10 @@
 // buffers; the lanes' backfill and the ECG auto-gain read back from before the snapshot as if the samples were there.
 // Host + one emulated phone (Pixel 7 on Chromium, iPhone 13 on WebKit) over the relay. An init script watches the phone's
 // canvas: per frame, where the ECG trace's newest point is and the phone's sim time; and every ECG lane label drawn
-// ("II  X1  NORMAL"). For 5 s after a 2-min fast-forward, and after a second phone joins: every frame's newest point sits
+// ("II  X1  NORMAL"). For 5 s (and at least 100 frames) after a 2-min fast-forward, and after a second phone joins: every frame's newest point sits
 // at the sweep cursor (renderT × the measured sweep speed, modulo the lane), so nothing races or lags; after the
 // fast-forward every label drawn has the gain shown before it; a joining phone shows the skin's own gain until its
-// auto-gain has 4 s of signal, then the first phone's.
+// auto-gain has 4 s of signal, then the first phone's (within 6 s of its own sim time).
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -85,13 +85,24 @@ async function sweepSpeed(p: Page): Promise<number> {
 }
 
 /**
- * Frames in [from, from + 5 s) whose newest ECG point is away from the sweep cursor. The cursor is at
+ * How long the window from `from` runs: 5 s, or longer until it holds 100 ECG frames. CI's 2-vCPU Linux WebKit draws a
+ * phone that has just joined at 10–20 fps (50–97 frames in 5 s, runs 39515893432, 39524573921, 39526534572); a phone
+ * that takes over 15 s more for 100 frames fails here.
+ */
+async function windowMs(p: Page, from: number): Promise<number> {
+  const drawn = async () => (await trace(p, from, Infinity)).pts;
+  await expect.poll(async () => (await drawn()).length, { timeout: 15_000, message: 'the phone draws 100 ECG frames' }).toBeGreaterThan(100);
+  return Math.max(5000, ((await drawn())[100] as { at: number }).at - from + 1);
+}
+
+/**
+ * Frames in [from, from + ms) whose newest ECG point is away from the sweep cursor. The cursor is at
  * (sim time × px/s) modulo the lane width, so (x − that) is the same on every frame while the trace keeps up with the clock;
  * a frame more than 12 px from the window's median drew behind the clock (the FX-24 race: 4–15 frames on main, and an X4 label). One
  * frame at a restore may differ (its points were drawn before the restore moved the clock), so one is allowed.
  */
-async function offCursor(p: Page, from: number, pxPerS: number): Promise<{ off: number; frames: number; worst: number; at: string[]; step: string }> {
-  const { laneW, pts } = await trace(p, from, from + 5000);
+async function offCursor(p: Page, from: number, pxPerS: number, ms: number): Promise<{ off: number; frames: number; worst: number; at: string[]; step: string }> {
+  const { laneW, pts } = await trace(p, from, from + ms);
   const wrap = (v: number) => ((((v + laneW / 2) % laneW) + laneW) % laneW) - laneW / 2;
   const ref = (pts[0]?.x ?? 0) - (pts[0]?.t ?? 0) * pxPerS;
   const rel = pts.map((q) => wrap(q.x - q.t * pxPerS - ref));
@@ -106,6 +117,15 @@ async function offCursor(p: Page, from: number, pxPerS: number): Promise<{ off: 
 
 const labelsSince = (p: Page, from: number) => p.evaluate((t) => (window as unknown as Win).__fx24.labels.filter((l) => l.at >= t).map((l) => l.text), from);
 const lastLabel = (p: Page) => p.evaluate(() => (window as unknown as Win).__fx24.labels.at(-1)?.text ?? null);
+/** The phone's sim seconds from its first frame after `from` to the frame after it first drew `label` (null: not drawn). */
+const simUntil = (p: Page, from: number, label: string) =>
+  p.evaluate(([t, l]) => {
+    const w = (window as unknown as Win).__fx24;
+    const shown = w.labels.find((x) => x.at >= t && x.text === l);
+    const f0 = w.frames.find((f) => f.at >= t && f.simT !== null);
+    const f1 = shown && w.frames.find((f) => f.at >= shown.at && f.simT !== null);
+    return f0 && f1 ? (f1.simT as number) - (f0.simT as number) : null;
+  }, [from, label] as const);
 
 async function phone(browser: Browser, browserName: string, url: string): Promise<Page> {
   const { defaultBrowserType: _b, ...dev } = browserName === 'webkit' ? devices['iPhone 13'] : devices['Pixel 7'];
@@ -142,7 +162,7 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   await synced(a);
   const end = await now(a);
   await a.waitForTimeout(5500);
-  const ff = await offCursor(a, end, pxPerS);
+  const ff = await offCursor(a, end, pxPerS, await windowMs(a, end));
   const ffLabels = await labelsSince(a, end - 1000);
   console.log(`FX-24 ${browserName}: after the fast-forward ${ff.off} of ${ff.frames} frames off the cursor ${JSON.stringify(ff.at)} (worst ${ff.worst.toFixed(1)} px; largest clock step ${ff.step}); labels ${JSON.stringify([...new Set(ffLabels)])}`);
   expect(ff.frames).toBeGreaterThan(100);
@@ -155,9 +175,15 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   await synced(b);
   const joined = await now(b);
   await b.waitForTimeout(5500);
-  const jn = await offCursor(b, joined, pxPerS);
+  const jn = await offCursor(b, joined, pxPerS, await windowMs(b, joined));
+  // The auto-gain counts the phone's own sim time, which runs behind the wall clock on a slow runner (frames over 250 ms
+  // are clamped; the follower catches up 10 % faster, or jumps once 1 s behind): wait for the label, then bound the
+  // switch in sim time. Every failed attempt of the old 5.5-s wall window (7, in runs 39515893432, 39524573921,
+  // 39526534572) drew X1 only, on a phone drawing 10–20 fps; at 60 fps the switch came 4.5–4.8 sim s after joining.
+  await expect.poll(() => lastLabel(b), { timeout: 15_000, message: "the joining phone takes the first phone's gain" }).toBe(gain);
   const jnLabels = await labelsSince(b, joined - 1000);
-  console.log(`FX-24 ${browserName}: after joining ${jn.off} of ${jn.frames} frames off the cursor ${JSON.stringify(jn.at)} (worst ${jn.worst.toFixed(1)} px; largest clock step ${jn.step}); labels ${JSON.stringify([...new Set(jnLabels)])}`);
+  const switchS = await simUntil(b, joined, gain as string);
+  console.log(`FX-24 ${browserName}: after joining ${jn.off} of ${jn.frames} frames off the cursor ${JSON.stringify(jn.at)} (worst ${jn.worst.toFixed(1)} px; largest clock step ${jn.step}); labels ${JSON.stringify([...new Set(jnLabels)])}, the first phone's after ${switchS?.toFixed(2)} sim s`);
   expect(jn.frames).toBeGreaterThan(100);
   expect(jn.off).toBeLessThanOrEqual(1);
   expect(jnLabels.length).toBeGreaterThan(0);
@@ -165,6 +191,9 @@ test('a following phone sweeps at the cursor and keeps its ECG gain after a fast
   // signal, as at any monitor's start, then the same choice as the first phone; never one taken on a sliver of signal
   for (const l of jnLabels) expect([gain, 'II  X1  NORMAL']).toContain(l);
   expect(jnLabels.at(-1)).toBe(gain);
+  // ... and no later than one auto-gain judgement after that window (AUTO_GAIN_WINDOW_S 4 + AUTO_GAIN_EVERY_S 2)
+  expect(switchS).not.toBeNull();
+  expect(switchS as number).toBeLessThanOrEqual(6);
   await a.context().close();
   await b.context().close();
 });
