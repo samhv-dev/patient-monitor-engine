@@ -68,6 +68,15 @@ the public API is what the packages export (see the API reference), the `pme-sce
   read back past that start. The lane now starts blank at the attach point and draws the capnogram from there at the
   sweep speed, filled or not, on every skin; any waveform whose sensor is attached later (an arterial line, say) takes
   the same path. Only the drawing changes: the CO2 signal and the EtCO2 number are the same.
+- CI: the Debrief and FX-25 browser tests hold on the loaded CI WebKit runner, which failed them on all three attempts
+  with no product change (PR #97 run 39338820903; PR #105 runs 39524573921 and 39534643448; PR #107 run 39578631031,
+  attempts 1–3; Chromium passed every test there). On CI WebKit only, the Debrief's two live runs (the anaphylaxis card
+  and the free run) go at ×2 instead of ×4, wait on the page's own clock or for times scaled to the speed, and open the
+  Debrief only once the host has acknowledged a pause (the button reads "Resume" before the host answers); the click is
+  then checked to have been followed, and the heading to be drawn, within 30 s. FX-25's "drawn within 2 s" and "a breath
+  by 4 s" are judged on the page's sim time, each column dated back from the sweep cursor, because that runner's first
+  capture came 2.5–3.2 s after the click while the trace had begun ≈ 1 s after it. Every assertion is kept; local WebKit
+  and Chromium run as before. See `docs/guides/known-deviations.md`, "Browser tests held on the loaded CI WebKit runner".
 - CI: the tick benchmark (`packages/validation/test/perf/tick-bench.test.ts`) runs alone, in its own build-job step
   after `pnpm test` (`PME_TEST_SET=fast` now leaves it out and `PME_TEST_SET=perf` runs only it; a local `pnpm test`
   still runs it), and asserts the 6 ms p50 budget on the best of three 10-s samples. Inside `pnpm test` the other
